@@ -83,6 +83,7 @@ int OGRSQLiteBaseDataSource::InitNewSpatialite()
 {
     if( CSLTestBoolean(CPLGetConfigOption("SPATIALITE_LOAD", "TRUE")) )
     {
+        CPLAssert(hSpatialiteCtxt == NULL);
         hSpatialiteCtxt = spatialite_alloc_connection();
         if( hSpatialiteCtxt != NULL )
         {
@@ -102,6 +103,7 @@ void OGRSQLiteBaseDataSource::FinishNewSpatialite()
     if( hSpatialiteCtxt != NULL )
     {
         spatialite_cleanup_ex(hSpatialiteCtxt);
+        hSpatialiteCtxt = NULL;
     }
 }
 

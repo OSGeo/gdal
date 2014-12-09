@@ -31,6 +31,7 @@
 #include "ogr_geopackage.h"
 #include "ogr_p.h"
 #include "swq.h"
+#include "gdalwarper.h"
 
 /* 1.1.1: A GeoPackage SHALL contain 0x47503130 ("GP10" in ASCII) in the application id */
 /* http://opengis.github.io/geopackage/#_file_format */
@@ -40,6 +41,59 @@
 /* "GP10" in ASCII bytes */
 static const char aGpkgId[4] = {0x47, 0x50, 0x31, 0x30};
 static const size_t szGpkgIdPos = 68;
+
+/************************************************************************/
+/*                             Tiling schemes                           */
+/************************************************************************/
+
+typedef struct
+{
+    const char* pszName;
+    int         nEPSGCode;
+    double      dfMinX;
+    double      dfMaxY;
+    int         nTileXCountZoomLevel0;
+    int         nTileYCountZoomLevel0;
+    int         nTileWidth;
+    int         nTileHeight;
+    double      dfPixelXSizeZoomLevel0;
+    double      dfPixelYSizeZoomLevel0;
+} TilingSchemeDefinition;
+
+static const TilingSchemeDefinition asTilingShemes[] =
+{
+    /* See http://portal.opengeospatial.org/files/?artifact_id=35326 (WMTS 1.0), Annex E.3 */
+    { "GoogleCRS84Quad",
+      4326,
+      -180.0, 180.0,
+      1, 1,
+      256, 256,
+      360.0 / 256, 360.0 / 256 },
+
+    /* See http://portal.opengeospatial.org/files/?artifact_id=35326 (WMTS 1.0), Annex E.4 */
+    { "GoogleMapsCompatible",
+      3857,
+      -(156543.0339280410*256) /2, (156543.0339280410*256) /2,
+      1, 1,
+      256, 256,
+      156543.0339280410, 156543.0339280410 },
+
+    /* See global-geodetic at http://wiki.osgeo.org/wiki/Tile_Map_Service_Specification */
+    { "PseudoTMS_GlobalGeodetic",
+      4326,
+      -180.0, 90.0,
+      2, 1,
+      256, 256,
+      180.0 / 256, 180.0 / 256 },
+
+    /* See global-mercator at http://wiki.osgeo.org/wiki/Tile_Map_Service_Specification */
+    { "PseudoTMS_GlobalMercator",
+      3857,
+      -20037508.34, 20037508.34,
+      2, 2,
+      256, 256,
+      78271.516, 78271.516 },
+};
 
 /* Only recent versions of SQLite will let us muck with application_id */
 /* via a PRAGMA statement, so we have to write directly into the */
@@ -52,6 +106,9 @@ OGRErr GDALGeoPackageDataset::SetApplicationId()
     CPLAssert( hDB != NULL );
     CPLAssert( m_pszFilename != NULL );
 
+#ifdef SPATIALITE_412_OR_LATER
+    FinishNewSpatialite();
+#endif
     /* Have to flush the file before f***ing with the header */
     CloseDB();
 
@@ -343,7 +400,7 @@ GDALGeoPackageDataset::GDALGeoPackageDataset()
     m_adfGeoTransform[3] = 0.0;
     m_adfGeoTransform[4] = 0.0;
     m_adfGeoTransform[5] = 1.0;
-    m_nZoomLevel = 0;
+    m_nZoomLevel = -1;
     m_pabyCachedTiles = NULL;
     for(int i=0;i<4;i++)
     {
@@ -375,6 +432,7 @@ GDALGeoPackageDataset::GDALGeoPackageDataset()
     m_bInWriteTile = FALSE;
     m_hTempDB = NULL;
     m_bInFlushCache = FALSE;
+    m_osTilingScheme = "CUSTOM";
 }
 
 /************************************************************************/
@@ -722,6 +780,25 @@ int GDALGeoPackageDataset::InitRaster ( GDALGeoPackageDataset* poParentDS,
 }
 
 /************************************************************************/
+/*                      ComputeTileAndPixelShifts()                     */
+/************************************************************************/
+
+void GDALGeoPackageDataset::ComputeTileAndPixelShifts()
+{
+    int nTileWidth, nTileHeight;
+    GetRasterBand(1)->GetBlockSize(&nTileWidth, &nTileHeight);
+
+    // Compute shift between GDAL origin and TileMatrixSet origin
+    int nShiftXPixels = (int)floor(0.5 + (m_adfGeoTransform[0] - m_dfTMSMinX) /  m_adfGeoTransform[1]);
+    m_nShiftXTiles = (int)floor(1.0 * nShiftXPixels / nTileWidth);
+    m_nShiftXPixelsMod = ((nShiftXPixels % nTileWidth) + nTileWidth) % nTileWidth;
+    int nShiftYPixels = (int)floor(0.5 + (m_adfGeoTransform[3] - m_dfTMSMaxY) /  m_adfGeoTransform[5]);
+    m_nShiftYTiles = (int)floor(1.0 * nShiftYPixels / nTileHeight);
+    m_nShiftYPixelsMod = ((nShiftYPixels % nTileHeight) + nTileHeight) % nTileHeight;
+
+}
+
+/************************************************************************/
 /*                         InitRaster()                                 */
 /************************************************************************/
 
@@ -761,14 +838,6 @@ int GDALGeoPackageDataset::InitRaster ( GDALGeoPackageDataset* poParentDS,
     nRasterXSize = (int)dfRasterXSize;
     nRasterYSize = (int)dfRasterYSize;
 
-    // Compute shift between GDAL origin and TileMatrixSet origin
-    int nShiftXPixels = (int)floor(0.5 + (m_adfGeoTransform[0] - m_dfTMSMinX) /  m_adfGeoTransform[1]);
-    m_nShiftXTiles = (int)floor(1.0 * nShiftXPixels / nTileWidth);
-    m_nShiftXPixelsMod = ((nShiftXPixels % nTileWidth) + nTileWidth) % nTileWidth;
-    int nShiftYPixels = (int)floor(0.5 + (m_adfGeoTransform[3] - m_dfTMSMaxY) /  m_adfGeoTransform[5]);
-    m_nShiftYTiles = (int)floor(1.0 * nShiftYPixels / nTileHeight);
-    m_nShiftYPixelsMod = ((nShiftYPixels % nTileHeight) + nTileHeight) % nTileHeight;
-
     m_pabyCachedTiles = (GByte*) VSIMalloc3(4 * 4, nTileWidth, nTileHeight);
     if( m_pabyCachedTiles == NULL )
     {
@@ -777,6 +846,8 @@ int GDALGeoPackageDataset::InitRaster ( GDALGeoPackageDataset* poParentDS,
 
     for(int i = 1; i <= nBandCount; i ++)
         SetBand( i, new GDALGeoPackageRasterBand(this, i, nTileWidth, nTileHeight) );
+
+    ComputeTileAndPixelShifts();
 
     GDALPamDataset::SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
     GDALPamDataset::SetMetadataItem("ZOOM_LEVEL", CPLSPrintf("%d", m_nZoomLevel));
@@ -1046,6 +1117,22 @@ CPLErr GDALGeoPackageDataset::SetProjection( const char* pszProjection )
         return CE_Failure;
 
     m_nSRID = GetSrsId( &oSRS );
+    for(size_t iScheme = 0;
+               iScheme < sizeof(asTilingShemes)/sizeof(asTilingShemes[0]);
+               iScheme++ )
+    {
+        if( EQUAL(m_osTilingScheme, asTilingShemes[iScheme].pszName) )
+        {
+            if( m_nSRID != asTilingShemes[iScheme].nEPSGCode )
+            {
+                CPLError(CE_Failure, CPLE_NotSupported,
+                        "Projection should be EPSG:%d for %s tiling scheme",
+                         asTilingShemes[iScheme].nEPSGCode,
+                         m_osTilingScheme.c_str());
+                return CE_Failure;
+            }
+        }
+    }
 
     if( m_bGeoTransformValid )
         return FinalizeRasterRegistration();
@@ -1090,6 +1177,37 @@ CPLErr GDALGeoPackageDataset::SetGeoTransform( double* padfGeoTransform )
                  "Only north-up non rotated geotransform supported");
         return CE_Failure;
     }
+
+    for(size_t iScheme = 0;
+               iScheme < sizeof(asTilingShemes)/sizeof(asTilingShemes[0]);
+               iScheme++ )
+    {
+        if( EQUAL(m_osTilingScheme, asTilingShemes[iScheme].pszName) )
+        {
+            double dfPixelXSizeZoomLevel0 = asTilingShemes[iScheme].dfPixelXSizeZoomLevel0;
+            double dfPixelYSizeZoomLevel0 = asTilingShemes[iScheme].dfPixelYSizeZoomLevel0;
+            for( m_nZoomLevel = 0; m_nZoomLevel < 25; m_nZoomLevel++ )
+            {
+                double dfExpectedPixelXSize = dfPixelXSizeZoomLevel0 / (1 << m_nZoomLevel);
+                double dfExpectedPixelYSize = dfPixelYSizeZoomLevel0 / (1 << m_nZoomLevel);
+                if( fabs( padfGeoTransform[1] - dfExpectedPixelXSize ) < 1e-8 * dfExpectedPixelXSize &&
+                    fabs( fabs(padfGeoTransform[5]) - dfExpectedPixelYSize ) < 1e-8 * dfExpectedPixelYSize )
+                {
+                    break;
+                }
+            }
+            if( m_nZoomLevel == 25 )
+            {
+                m_nZoomLevel = -1;
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "Could not find an appropriate zoom level of %s tiling scheme that matches raster pixel size",
+                         m_osTilingScheme.c_str());
+                return CE_Failure;
+            }
+            break;
+        }
+    }
+
     memcpy(m_adfGeoTransform, padfGeoTransform, 6 * sizeof(double));
     m_bGeoTransformValid = TRUE;
     
@@ -1110,6 +1228,45 @@ CPLErr GDALGeoPackageDataset::FinalizeRasterRegistration()
     m_dfTMSMinX = m_adfGeoTransform[0];
     m_dfTMSMaxY = m_adfGeoTransform[3];
 
+    int nTileWidth, nTileHeight;
+    GetRasterBand(1)->GetBlockSize(&nTileWidth, &nTileHeight);
+    m_nTileMatrixWidth = (nRasterXSize + nTileWidth - 1) / nTileWidth;
+    m_nTileMatrixHeight = (nRasterYSize + nTileHeight - 1) / nTileHeight;
+
+    if( m_nZoomLevel < 0 )
+    {
+        m_nZoomLevel = 0;
+        while( (nRasterXSize >> m_nZoomLevel) > nTileWidth ||
+            (nRasterYSize >> m_nZoomLevel) > nTileHeight )
+            m_nZoomLevel ++;
+    }
+    
+    double dfPixelXSizeZoomLevel0 = m_adfGeoTransform[1] * (1 << m_nZoomLevel);
+    double dfPixelYSizeZoomLevel0 = fabs(m_adfGeoTransform[5]) * (1 << m_nZoomLevel);
+    int nTileXCountZoomLevel0 = ((nRasterXSize >> m_nZoomLevel) + nTileWidth - 1) / nTileWidth;
+    int nTileYCountZoomLevel0 = ((nRasterYSize >> m_nZoomLevel) + nTileHeight - 1) / nTileHeight;
+
+    for(size_t iScheme = 0;
+               iScheme < sizeof(asTilingShemes)/sizeof(asTilingShemes[0]);
+               iScheme++ )
+    {
+        if( EQUAL(m_osTilingScheme, asTilingShemes[iScheme].pszName) )
+        {
+            CPLAssert( m_nZoomLevel >= 0 );
+            m_dfTMSMinX = asTilingShemes[iScheme].dfMinX;
+            m_dfTMSMaxY = asTilingShemes[iScheme].dfMaxY;
+            dfPixelXSizeZoomLevel0 = asTilingShemes[iScheme].dfPixelXSizeZoomLevel0;
+            dfPixelYSizeZoomLevel0 = asTilingShemes[iScheme].dfPixelYSizeZoomLevel0;
+            nTileXCountZoomLevel0 = asTilingShemes[iScheme].nTileXCountZoomLevel0;
+            nTileYCountZoomLevel0 = asTilingShemes[iScheme].nTileYCountZoomLevel0;
+            m_nTileMatrixWidth = nTileXCountZoomLevel0 * (1 << m_nZoomLevel);
+            m_nTileMatrixHeight = nTileYCountZoomLevel0 * (1 << m_nZoomLevel);
+            break;
+        }
+    }
+
+    ComputeTileAndPixelShifts();
+
     double dfGDALMinX = m_adfGeoTransform[0];
     double dfGDALMinY = m_adfGeoTransform[3] + nRasterYSize * m_adfGeoTransform[5];
     double dfGDALMaxX = m_adfGeoTransform[0] + nRasterXSize * m_adfGeoTransform[1];
@@ -1128,30 +1285,14 @@ CPLErr GDALGeoPackageDataset::FinalizeRasterRegistration()
     if ( eErr != OGRERR_NONE )
         return CE_Failure;
 
-    m_nZoomLevel = 0;
-    int nTileWidth, nTileHeight;
-    GetRasterBand(1)->GetBlockSize(&nTileWidth, &nTileHeight);
-    m_nTileMatrixWidth = (nRasterXSize + nTileWidth - 1) / nTileWidth;
-    m_nTileMatrixHeight = (nRasterYSize + nTileHeight - 1) / nTileHeight;
-
-    while( (nRasterXSize >> m_nZoomLevel) > nTileWidth ||
-           (nRasterYSize >> m_nZoomLevel) > nTileHeight )
-        m_nZoomLevel ++;
-    
-    double dfPixelXSizeZoomLevel0 = m_adfGeoTransform[1] * (1 << m_nZoomLevel);
-    double dfPixelYSizeZoomLevel0 = fabs(m_adfGeoTransform[5]) * (1 << m_nZoomLevel);
-    int nTileXCountZoomLevel0 = ((nRasterXSize >> m_nZoomLevel) + nTileWidth - 1) / nTileWidth;
-    int nTileYCountZoomLevel0 = ((nRasterYSize >> m_nZoomLevel) + nTileHeight - 1) / nTileHeight;
-    double dfTMSMinX = m_adfGeoTransform[0];
-    double dfTMSMaxX = dfTMSMinX + nTileXCountZoomLevel0 * nTileWidth * dfPixelXSizeZoomLevel0;
-    double dfTMSMaxY = m_adfGeoTransform[3];
-    double dfTMSMinY = dfTMSMaxY - nTileYCountZoomLevel0 * nTileHeight * dfPixelYSizeZoomLevel0;
+    double dfTMSMaxX = m_dfTMSMinX + nTileXCountZoomLevel0 * nTileWidth * dfPixelXSizeZoomLevel0;
+    double dfTMSMinY = m_dfTMSMaxY - nTileYCountZoomLevel0 * nTileHeight * dfPixelYSizeZoomLevel0;
 
     pszSQL = sqlite3_mprintf("INSERT INTO gpkg_tile_matrix_set "
             "(table_name,srs_id,min_x,min_y,max_x,max_y) VALUES "
             "('%q',%d,%.18g,%.18g,%.18g,%.18g)",
             m_osRasterTable.c_str(), m_nSRID,
-            dfTMSMinX,dfTMSMinY,dfTMSMaxX,dfTMSMaxY);
+            m_dfTMSMinX,dfTMSMinY,dfTMSMaxX,m_dfTMSMaxY);
     eErr = SQLCommand(hDB, pszSQL);
     sqlite3_free(pszSQL);
     if ( eErr != OGRERR_NONE )
@@ -1162,10 +1303,22 @@ CPLErr GDALGeoPackageDataset::FinalizeRasterRegistration()
 
     for(int i=0; i<=m_nZoomLevel; i++)
     {
-        double dfPixelXSizeZoomLevel = m_adfGeoTransform[1] * (1 << (m_nZoomLevel-i));
-        double dfPixelYSizeZoomLevel = fabs(m_adfGeoTransform[5]) * (1 << (m_nZoomLevel-i));
-        int nTileMatrixWidth = ((nRasterXSize >> (m_nZoomLevel-i)) + nTileWidth - 1) / nTileWidth;
-        int nTileMatrixHeight = ((nRasterYSize >> (m_nZoomLevel-i)) + nTileHeight - 1) / nTileHeight;
+        double dfPixelXSizeZoomLevel, dfPixelYSizeZoomLevel;
+        int nTileMatrixWidth, nTileMatrixHeight;
+        if( EQUAL(m_osTilingScheme, "CUSTOM") )
+        {
+            dfPixelXSizeZoomLevel = m_adfGeoTransform[1] * (1 << (m_nZoomLevel-i));
+            dfPixelYSizeZoomLevel = fabs(m_adfGeoTransform[5]) * (1 << (m_nZoomLevel-i));
+            nTileMatrixWidth = ((nRasterXSize >> (m_nZoomLevel-i)) + nTileWidth - 1) / nTileWidth;
+            nTileMatrixHeight = ((nRasterYSize >> (m_nZoomLevel-i)) + nTileHeight - 1) / nTileHeight;
+        }
+        else
+        {
+            dfPixelXSizeZoomLevel = dfPixelXSizeZoomLevel0 / (1 << i);
+            dfPixelYSizeZoomLevel = dfPixelYSizeZoomLevel0 / (1 << i);
+            nTileMatrixWidth = nTileXCountZoomLevel0 * (1 << i);
+            nTileMatrixHeight = nTileYCountZoomLevel0 * (1 << i);
+        }
         pszSQL = sqlite3_mprintf("INSERT INTO gpkg_tile_matrix "
                 "(table_name,zoom_level,matrix_width,matrix_height,tile_width,tile_height,pixel_x_size,pixel_y_size) VALUES "
                 "('%q',%d,%d,%d,%d,%d,%.18g,%.18g)",
@@ -1929,15 +2082,57 @@ CPLErr GDALGeoPackageDataset::SetMetadataItem( const char * pszName,
 /************************************************************************/
 
 int GDALGeoPackageDataset::Create( const char * pszFilename,
-                                   int bFileExists,
                                    int nXSize,
                                    int nYSize,
                                    int nBands,
+                                   GDALDataType eDT,
                                    char **papszOptions )
 {
     CPLString osCommand;
     const char *pszSpatialRefSysRecord;
 
+    /* First, ensure there isn't any such file yet. */
+    VSIStatBufL sStatBuf;
+
+    if( nBands != 0 )
+    {
+        if( eDT != GDT_Byte )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported, "Only Byte supported");
+            return NULL;
+        }
+        if( nBands != 1 && nBands != 2 && nBands != 3 && nBands != 4 )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Only 1 (Grey/ColorTable), 2 (Grey+Alpha), 3 (RGB) or 4 (RGBA) band dataset supported");
+            return NULL;
+        }
+    }
+
+    int bFileExists = FALSE;
+    if( VSIStatL( pszFilename, &sStatBuf ) == 0 )
+    {
+        bFileExists = TRUE;
+        if( nBands != 0 )
+        {
+            if( CSLFetchNameValue(papszOptions, "RASTER_TABLE") == NULL )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined,
+                    "A file system object called '%s' already exists. "
+                    "TABLE creation option must be explicitely provided",
+                    pszFilename );
+                return NULL;
+            }
+        }
+        else
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                    "A file system object called '%s' already exists.",
+                    pszFilename );
+
+            return NULL;
+        }
+    }
     m_pszFilename = CPLStrdup(pszFilename);
     m_bNew = TRUE;
     bUpdate = TRUE;
@@ -2474,6 +2669,35 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
             if( !RegisterWebPExtension() )
                 return FALSE;
         }
+
+        const char* pszTilingScheme = CSLFetchNameValue(papszOptions, "TILING_SCHEME");
+        if( pszTilingScheme )
+        {
+            m_osTilingScheme = pszTilingScheme;
+            int bFound = FALSE;
+            for(size_t iScheme = 0;
+                iScheme < sizeof(asTilingShemes)/sizeof(asTilingShemes[0]);
+                 iScheme++ )
+            {
+                if( EQUAL(m_osTilingScheme, asTilingShemes[iScheme].pszName) )
+                {
+                    if( nTileWidth != asTilingShemes[iScheme].nTileWidth ||
+                        nTileHeight != asTilingShemes[iScheme].nTileHeight )
+                    {
+                        CPLError(CE_Failure, CPLE_NotSupported,
+                                "Tile dimension should be %dx%d for %s tiling scheme",
+                                asTilingShemes[iScheme].nTileWidth,
+                                asTilingShemes[iScheme].nTileHeight,
+                                m_osTilingScheme.c_str());
+                        return FALSE;
+                    }
+                    bFound = TRUE;
+                    break;
+                }
+            }
+            if( !bFound )
+                m_osTilingScheme = "CUSTOM";
+        }
     }
 
     /* Requirement 2: A GeoPackage SHALL contain 0x47503130 ("GP10" in ASCII) */
@@ -2484,6 +2708,288 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
 
 
     return TRUE;
+}
+
+/************************************************************************/
+/*                            CreateCopy()                              */
+/************************************************************************/
+
+typedef struct
+{
+    const char*         pszName;
+    GDALResampleAlg     eResampleAlg;
+} WarpResamplingAlg;
+
+static const WarpResamplingAlg asResamplingAlg[] =
+{
+    { "BILINEAR", GRA_Bilinear },
+    { "CUBIC", GRA_Cubic },
+    { "CUBICSPLINE", GRA_CubicSpline },
+    { "LANCZOS", GRA_Lanczos },
+    { "MODE", GRA_Mode },
+    { "AVERAGE", GRA_Average },
+};
+
+GDALDataset* GDALGeoPackageDataset::CreateCopy( const char *pszFilename,
+                                                   GDALDataset *poSrcDS, 
+                                                   int bStrict,
+                                                   char ** papszOptions,
+                                                   GDALProgressFunc pfnProgress, 
+                                                   void * pProgressData )
+{
+    const char* pszTilingScheme = 
+            CSLFetchNameValueDef(papszOptions, "TILING_SCHEME", "CUSTOM");
+    if( EQUAL(pszTilingScheme, "CUSTOM") )
+    {
+        GDALDriver* poThisDriver = (GDALDriver*)GDALGetDriverByName("GPKG");
+        if( !poThisDriver )
+            return NULL;
+        GDALDataset* poDS = poThisDriver->DefaultCreateCopy(
+                                    pszFilename, poSrcDS, bStrict, 
+                                    papszOptions, pfnProgress, pProgressData );
+        return poDS;
+    }
+    
+    int nBands = poSrcDS->GetRasterCount();
+    if( nBands != 1 && nBands != 2 && nBands != 3 && nBands != 4 )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                    "Only 1 (Grey/ColorTable), 2 (Grey+Alpha), 3 (RGB) or 4 (RGBA) band dataset supported");
+        return NULL;
+    }
+
+    int bFound = FALSE;
+    int nEPSGCode = 0;
+    size_t iScheme;
+    for(iScheme = 0;
+        iScheme < sizeof(asTilingShemes)/sizeof(asTilingShemes[0]);
+        iScheme++ )
+    {
+        if( EQUAL(pszTilingScheme, asTilingShemes[iScheme].pszName) )
+        {
+            nEPSGCode = asTilingShemes[iScheme].nEPSGCode;
+            bFound = TRUE;
+            break;
+        }
+    }
+    if( !bFound )
+        return NULL;
+
+    OGRSpatialReference oSRS;
+    if( oSRS.importFromEPSG(nEPSGCode) != OGRERR_NONE )
+        return NULL;
+    char* pszWKT = NULL;
+    oSRS.exportToWkt(&pszWKT);
+    char** papszTO = CSLSetNameValue( NULL, "DST_SRS", pszWKT );
+    void* hTransformArg = 
+            GDALCreateGenImgProjTransformer2( poSrcDS, NULL, papszTO );
+    if( hTransformArg == NULL )
+    {
+        CPLFree(pszWKT);
+        CSLDestroy(papszTO);
+        return NULL;
+    }
+
+    GDALTransformerInfo* psInfo = (GDALTransformerInfo*)hTransformArg;
+    double adfGeoTransform[6];
+    double adfExtent[4];
+    int    nXSize, nYSize;
+
+    if ( GDALSuggestedWarpOutput2( poSrcDS, 
+                                  psInfo->pfnTransform, hTransformArg, 
+                                  adfGeoTransform, 
+                                  &nXSize, &nYSize, 
+                                  adfExtent, 0 ) != CE_None )
+    {
+        CPLFree(pszWKT);
+        CSLDestroy(papszTO);
+        GDALDestroyGenImgProjTransformer( hTransformArg );
+        return NULL;
+    }
+
+    GDALDestroyGenImgProjTransformer( hTransformArg );
+    hTransformArg = NULL;
+
+    int nZoomLevel;
+    double dfComputedRes = adfGeoTransform[1];
+    double dfPrevRes = 0, dfRes = 0;
+    for(nZoomLevel = 0; nZoomLevel < 25; nZoomLevel++)
+    {
+        dfRes = asTilingShemes[iScheme].dfPixelXSizeZoomLevel0 / (1 << nZoomLevel);
+        if( dfComputedRes > dfRes )
+            break;
+        dfPrevRes = dfRes;
+    }
+    if( nZoomLevel == 25 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Could not find an appropriate zoom level");
+        CPLFree(pszWKT);
+        CSLDestroy(papszTO);
+        return NULL;
+    }
+    
+    const char* pszZoomLevelStrategy = CSLFetchNameValueDef(papszOptions,
+                                                            "ZOOM_LEVEL_STRATEGY",
+                                                            "AUTO");
+    if( fabs( dfComputedRes - dfRes ) / dfRes > 1e-8 )
+    {
+        if( EQUAL(pszZoomLevelStrategy, "LOWER") )
+        {
+            if( nZoomLevel > 0 )
+                nZoomLevel --;
+        }
+        else if( EQUAL(pszZoomLevelStrategy, "UPPER") )
+        {
+            /* do nothing */
+        }
+        else if( nZoomLevel > 0 )
+        {
+            if( dfPrevRes / dfComputedRes < dfComputedRes / dfRes )
+                nZoomLevel --;
+        }
+    }
+
+    dfRes = asTilingShemes[iScheme].dfPixelXSizeZoomLevel0 / (1 << nZoomLevel);
+
+    double dfMinX = adfExtent[0];
+    double dfMinY = adfExtent[1];
+    double dfMaxX = adfExtent[2];
+    double dfMaxY = adfExtent[3];
+
+    nXSize = (int) ( 0.5 + ( dfMaxX - dfMinX ) / dfRes );
+    nYSize = (int) ( 0.5 + ( dfMaxY - dfMinY ) / dfRes );
+    adfGeoTransform[1] = dfRes;
+    adfGeoTransform[5] = -dfRes;
+
+    int nTargetBands = nBands;
+    /* For grey level or RGB, if there's reprojection involved, add an alpha */
+    /* channel */
+    if( (nBands == 1 && poSrcDS->GetRasterBand(1)->GetColorTable() == NULL) ||
+        nBands == 3 )
+    {
+        OGRSpatialReference oSrcSRS;
+        oSrcSRS.SetFromUserInput(poSrcDS->GetProjectionRef());
+        oSrcSRS.AutoIdentifyEPSG();
+        if( oSrcSRS.GetAuthorityCode(NULL) == NULL ||
+            atoi(oSrcSRS.GetAuthorityCode(NULL)) != nEPSGCode )
+        {
+            nTargetBands ++;
+        }
+    }
+
+    GDALGeoPackageDataset* poDS = new GDALGeoPackageDataset();
+    if( !(poDS->Create( pszFilename, nXSize, nYSize, nTargetBands, GDT_Byte,
+                        papszOptions )) )
+    {
+        delete poDS;
+        CPLFree(pszWKT);
+        CSLDestroy(papszTO);
+        return NULL;
+    }
+    poDS->SetGeoTransform(adfGeoTransform);
+    poDS->SetProjection(pszWKT);
+    CPLFree(pszWKT);
+    pszWKT = NULL;
+
+    hTransformArg =
+        GDALCreateGenImgProjTransformer2( poSrcDS, poDS, papszTO );
+    CSLDestroy(papszTO);
+    if( hTransformArg == NULL )
+    {
+        delete poDS;
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Warp the transformer with a linear approximator                 */
+/* -------------------------------------------------------------------- */
+    hTransformArg =
+        GDALCreateApproxTransformer( GDALGenImgProjTransform, 
+                                     hTransformArg, 0.125 );
+    GDALApproxTransformerOwnsSubtransformer(hTransformArg, TRUE);
+
+/* -------------------------------------------------------------------- */
+/*      Setup warp options.                                             */
+/* -------------------------------------------------------------------- */
+    GDALWarpOptions *psWO = GDALCreateWarpOptions();
+
+    psWO->papszWarpOptions = NULL;
+    psWO->eWorkingDataType = GDT_Byte;
+    
+    GDALResampleAlg eResampleAlg = GRA_Bilinear;
+    const char* pszResampling = CSLFetchNameValue(papszOptions, "RESAMPLING");
+    if( pszResampling )
+    {
+        for(size_t iAlg = 0; iAlg < sizeof(asResamplingAlg)/sizeof(asResamplingAlg[0]); iAlg ++)
+        {
+            if( EQUAL(pszResampling, asResamplingAlg[iAlg].pszName) )
+            {
+                eResampleAlg = asResamplingAlg[iAlg].eResampleAlg;
+                break;
+            }
+        }
+    }
+    psWO->eResampleAlg = eResampleAlg;
+
+    psWO->hSrcDS = poSrcDS;
+    psWO->hDstDS = poDS;
+
+    psWO->pfnTransformer = GDALApproxTransform;
+    psWO->pTransformerArg = hTransformArg;
+
+    psWO->pfnProgress = pfnProgress;
+    psWO->pProgressArg = pProgressData;
+
+/* -------------------------------------------------------------------- */
+/*      Setup band mapping.                                             */
+/* -------------------------------------------------------------------- */
+
+    if( nBands == 2 || nBands == 4 )
+        psWO->nBandCount = nBands - 1;
+    else
+        psWO->nBandCount = nBands;
+
+    psWO->panSrcBands = (int *) CPLMalloc(psWO->nBandCount*sizeof(int));
+    psWO->panDstBands = (int *) CPLMalloc(psWO->nBandCount*sizeof(int));
+
+    for( int i = 0; i < psWO->nBandCount; i++ )
+    {
+        psWO->panSrcBands[i] = i+1;
+        psWO->panDstBands[i] = i+1;
+    }
+
+    if( nBands == 2 || nBands == 4 )
+    {
+        psWO->nSrcAlphaBand = nBands;
+    }
+    if( nTargetBands == 2 || nTargetBands == 4 )
+    {
+        psWO->nDstAlphaBand = nTargetBands;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Initialize and execute the warp.                                */
+/* -------------------------------------------------------------------- */
+    GDALWarpOperation oWO;
+
+    CPLAssert( oWO.Initialize( psWO ) == CE_None );
+
+    CPLErr eErr;
+    /*if( bMulti )
+        eErr = oWO.ChunkAndWarpMulti( 0, 0, nXSize, nYSize );
+    else*/
+    eErr = oWO.ChunkAndWarpImage( 0, 0, nXSize, nYSize );
+    if (eErr != CE_None)
+    {
+        delete poDS;
+        poDS = NULL;
+    }
+
+    GDALDestroyTransformer( hTransformArg );
+    GDALDestroyWarpOptions( psWO );
+
+    return poDS;
 }
 
 /************************************************************************/

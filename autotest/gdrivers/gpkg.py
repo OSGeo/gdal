@@ -2441,6 +2441,75 @@ def gpkg_25():
     return gpkg_22(tile_drv_name = None)
 
 ###############################################################################
+# Test TILING_SCHEME
+
+def gpkg_26():
+
+    if gdaltest.gpkg_dr is None: 
+        return 'skip'
+    if gdaltest.png_dr is None: 
+        return 'skip'
+
+    try:
+        os.remove('tmp/tmp.gpkg')
+    except:
+        pass
+
+    tests =  [ ('CUSTOM', [4672, 4672, 4672, 4873], None),
+               ('GoogleCRS84Quad', [3562, 3562, 3562, 3691], None),
+               ('GoogleCRS84Quad', [3562, 3562, 3562, 3691], ['RESAMPLING=BILINEAR']),
+               ('GoogleCRS84Quad', [3417, 3417, 3417, 3691], ['RESAMPLING=CUBIC']),
+               ('GoogleCRS84Quad', [3562, 3562, 3562, 3691], ['ZOOM_LEVEL_STRATEGY=AUTO']),
+               ('GoogleCRS84Quad', [14445, 14445, 14445, 14448], ['ZOOM_LEVEL_STRATEGY=UPPER']),
+               ('GoogleCRS84Quad', [3562, 3562, 3562, 3691], ['ZOOM_LEVEL_STRATEGY=LOWER']),
+               ('GoogleMapsCompatible', [4118, 4118, 4118, 4406], None),
+               ('PseudoTMS_GlobalGeodetic', [3562, 3562, 3562, 3691], None),
+               ('PseudoTMS_GlobalMercator', [4118, 4118, 4118, 4406], None) ]
+
+    for (scheme, expected_cs, other_options) in tests:
+
+        src_ds = gdal.Open('data/byte.tif')
+        options = ['DRIVER=PNG', 'TILING_SCHEME='+scheme]
+        if other_options:
+            options = options + other_options
+        ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', src_ds, options = options)
+        ds = None
+
+        ds = gdal.Open('tmp/tmp.gpkg')
+        got_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(4)]
+        if got_cs != expected_cs:
+            gdaltest.post_reason('fail')
+            print('For %s, got %s, expected %s' % (scheme, str(got_cs), str(expected_cs)))
+            return 'fail'
+        ds = None
+
+        os.remove('tmp/tmp.gpkg')
+
+    tests =  [ ('GoogleCRS84Quad', [42255, 47336, 24963, 35707], None),
+               ('GoogleMapsCompatible', [31480, 34797, 7941, 60492], None) ]
+
+    for (scheme, expected_cs, other_options) in tests:
+
+        src_ds = gdal.Open('data/small_world.tif')
+        options = ['DRIVER=PNG', 'TILING_SCHEME='+scheme]
+        if other_options:
+            options = options + other_options
+        ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', src_ds, options = options)
+        ds = None
+
+        ds = gdal.Open('tmp/tmp.gpkg')
+        got_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(4)]
+        if got_cs != expected_cs:
+            gdaltest.post_reason('fail')
+            print('For %s, got %s, expected %s' % (scheme, str(got_cs), str(expected_cs)))
+            return 'fail'
+        ds = None
+
+        os.remove('tmp/tmp.gpkg')
+
+    return 'success'
+
+###############################################################################
 #
 
 def gpkg_cleanup():
@@ -2487,9 +2556,10 @@ gdaltest_list = [
     gpkg_23,
     gpkg_24,
     gpkg_25,
+    gpkg_26,
     gpkg_cleanup,
 ]
-#gdaltest_list = [ gpkg_init, gpkg_22, gpkg_23, gpkg_24, gpkg_25, gpkg_cleanup ]
+#gdaltest_list = [ gpkg_init, gpkg_26, gpkg_cleanup ]
 if __name__ == '__main__':
 
     gdaltest.setup_run( 'gpkg' )
