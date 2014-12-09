@@ -935,11 +935,14 @@ def tiff_write_24():
 
     new_ds = None
 
-    os.unlink( 'tmp/stefan_full_greyunspecified.tif.aux.xml' )
-
     new_ds = gdal.Open( 'tmp/stefan_full_greyunspecified.tif' )
-    if new_ds.GetRasterBand(2).GetRasterColorInterpretation() != gdal.GCI_Undefined:
+    if new_ds.RasterCount != 2:
         return 'fail'
+    for i in range(2):
+        if new_ds.GetRasterBand(i+1).GetRasterColorInterpretation() != src_ds.GetRasterBand(i+1).GetRasterColorInterpretation():
+            return 'fail'
+        if new_ds.GetRasterBand(i+1).Checksum() != src_ds.GetRasterBand(i+1).Checksum():
+            return 'fail'
 
     new_ds = None
     src_ds = None
