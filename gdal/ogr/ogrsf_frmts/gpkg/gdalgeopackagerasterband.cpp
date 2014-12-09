@@ -527,9 +527,11 @@ GByte* GDALGeoPackageDataset::ReadTile(int nRow, int nCol, GByte* pabyData,
 
         if( m_hTempDB && (m_nShiftXPixelsMod || m_nShiftYPixelsMod) )
         {
-            const char* pszSQLNew = CPLSPrintf("SELECT tile_data FROM partial_tiles WHERE "
-                                            "zoom_level = %d AND tile_row = %d AND tile_column = %d",
-                                            m_nZoomLevel, nRow, nCol);
+            const char* pszSQLNew = CPLSPrintf(
+                "SELECT partial_flag, tile_data_band_1, tile_data_band_2, "
+                "tile_data_band_3, tile_data_band_4 FROM partial_tiles WHERE "
+                "zoom_level = %d AND tile_row = %d AND tile_column = %d",
+                m_nZoomLevel, nRow, nCol);
 #ifdef DEBUG_VERBOSE
             CPLDebug("GPKG", "%s", pszSQLNew);
 #endif
@@ -545,10 +547,22 @@ GByte* GDALGeoPackageDataset::ReadTile(int nRow, int nCol, GByte* pabyData,
             rc = sqlite3_step(hStmt);
             if ( rc == SQLITE_ROW )
             {
-                CPLAssert( sqlite3_column_bytes(hStmt, 0) == nBands * nBlockXSize * nBlockYSize );
-                memcpy( pabyData,
-                        sqlite3_column_blob(hStmt, 0),
-                        nBands * nBlockXSize * nBlockYSize );
+                int nPartialFlag = sqlite3_column_int(hStmt, 0);
+                for(int iBand = 1; iBand <= nBands; iBand ++ )
+                {
+                    GByte* pabyDestBand = pabyData + (iBand - 1) * nBlockXSize * nBlockYSize;
+                    if( nPartialFlag & (((1 << 4)-1) << (4 * (iBand - 1))) )
+                    {
+                        CPLAssert( sqlite3_column_bytes(hStmt, iBand) == nBlockXSize * nBlockYSize );
+                        memcpy( pabyDestBand,
+                                sqlite3_column_blob(hStmt, iBand),
+                                nBlockXSize * nBlockYSize );
+                    }
+                    else
+                    {
+                        memset(pabyDestBand, 0, nBlockXSize * nBlockYSize );
+                    }
+                }
             }
             else
             {
