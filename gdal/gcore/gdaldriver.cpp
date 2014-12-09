@@ -124,6 +124,8 @@ void CPL_STDCALL GDALDestroyDriver( GDALDriverH hDriver )
  * @param nBands number of bands.
  * @param eType type of raster.
  * @param papszOptions list of driver specific control parameters.
+ * The APPEND_SUBDATASET=YES option can be
+ * specified to avoid prior destruction of existing dataset.
  *
  * @return NULL on failure, or a new GDALDataset.
  */
@@ -210,6 +212,17 @@ GDALDataset * GDALDriver::Create( const char * pszFilename,
     if( !CSLFetchBoolean(papszOptions, "APPEND_SUBDATASET", FALSE) )
         QuietDelete( pszFilename );
 
+    char** papszOptionsToDelete = NULL;
+    int iIdxAppendSubdataset = 
+        CSLPartialFindString(papszOptions, "APPEND_SUBDATASET=");
+    if( iIdxAppendSubdataset >= 0 )
+    {
+       if( papszOptionsToDelete == NULL )
+            papszOptionsToDelete = CSLDuplicate(papszOptions);
+        papszOptions = CSLRemoveStrings(papszOptionsToDelete, iIdxAppendSubdataset, 1, NULL);
+        papszOptionsToDelete = papszOptions;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Validate creation options.                                      */
 /* -------------------------------------------------------------------- */
@@ -250,6 +263,8 @@ GDALDataset * GDALDriver::Create( const char * pszFilename,
 
         poDS->AddToDatasetOpenList();
     }
+
+    CSLDestroy(papszOptionsToDelete);
 
     return poDS;
 }
@@ -656,7 +671,8 @@ GDALDataset *GDALDriver::DefaultCreateCopy( const char * pszFilename,
  * normally FALSE indicating that the copy may adapt as needed for the 
  * output format. 
  * @param papszOptions additional format dependent options controlling 
- * creation of the output file. 
+ * creation of the output file. The APPEND_SUBDATASET=YES option can be
+ * specified to avoid prior destruction of existing dataset.
  * @param pfnProgress a function to be used to report progress of the copy.
  * @param pProgressData application data passed into progress function.
  *
@@ -711,16 +727,28 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
 /*      name.  But even if that seems to fail we will continue since    */
 /*      it might just be a corrupt file or something.                   */
 /* -------------------------------------------------------------------- */
-    if( !CSLFetchBoolean(papszOptions, "APPEND_SUBDATASET", FALSE) &&
+    int bAppendSubdataset = CSLFetchBoolean(papszOptions, "APPEND_SUBDATASET", FALSE);
+    if( !bAppendSubdataset &&
         CSLFetchBoolean(papszOptions, "QUIET_DELETE_ON_CREATE_COPY", TRUE) )
         QuietDelete( pszFilename );
 
+    char** papszOptionsToDelete = NULL;
+    int iIdxAppendSubdataset = 
+        CSLPartialFindString(papszOptions, "APPEND_SUBDATASET=");
+    if( iIdxAppendSubdataset >= 0 )
+    {
+        if( papszOptionsToDelete == NULL )
+            papszOptionsToDelete = CSLDuplicate(papszOptions);
+        papszOptions = CSLRemoveStrings(papszOptionsToDelete, iIdxAppendSubdataset, 1, NULL);
+        papszOptionsToDelete = papszOptions;
+    }
     int iIdxQuietDeleteOnCreateCopy = 
         CSLPartialFindString(papszOptions, "QUIET_DELETE_ON_CREATE_COPY=");
-    char** papszOptionsToDelete = NULL;
     if( iIdxQuietDeleteOnCreateCopy >= 0 )
     {
-        papszOptions = CSLRemoveStrings(CSLDuplicate(papszOptions), iIdxQuietDeleteOnCreateCopy, 1, NULL);
+        if( papszOptionsToDelete == NULL )
+            papszOptionsToDelete = CSLDuplicate(papszOptions);
+        papszOptions = CSLRemoveStrings(papszOptionsToDelete, iIdxQuietDeleteOnCreateCopy, 1, NULL);
         papszOptionsToDelete = papszOptions;
     }
 
@@ -770,8 +798,15 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
         }
     }
     else
+    {
+        if( bAppendSubdataset )
+        {
+            papszOptionsToDelete = papszOptions =
+                CSLSetNameValue(papszOptions, "APPEND_SUBDATASET", "YES");
+        }
         poDstDS = DefaultCreateCopy( pszFilename, poSrcDS, bStrict, 
                                   papszOptions, pfnProgress, pProgressData );
+    }
         
     CSLDestroy(papszOptionsToDelete);
     return poDstDS;
