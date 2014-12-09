@@ -165,6 +165,8 @@ GDALColorInterp GDALGeoPackageRasterBand::GetColorInterpretation()
     GDALGeoPackageDataset* poGDS = (GDALGeoPackageDataset* )poDS;
     if( poGDS->nBands == 1 )
         return GetColorTable() ? GCI_PaletteIndex : GCI_GrayIndex;
+    else if( poGDS->nBands == 2 )
+        return (nBand == 1) ? GCI_GrayIndex : GCI_AlphaBand;
     else
         return (GDALColorInterp) (GCI_RedBand + (nBand - 1));
 }
@@ -178,7 +180,10 @@ CPLErr GDALGeoPackageRasterBand::SetColorInterpretation( GDALColorInterp eInterp
     GDALGeoPackageDataset* poGDS = (GDALGeoPackageDataset* )poDS;
     if( eInterp == GCI_Undefined )
         return CE_None;
-    if( (eInterp == GCI_GrayIndex || eInterp == GCI_PaletteIndex) && poGDS->nBands == 1 )
+    if( poGDS->nBands == 1 && (eInterp == GCI_GrayIndex || eInterp == GCI_PaletteIndex) )
+        return CE_None;
+    if( poGDS->nBands == 2 &&
+        ((nBand == 1 && eInterp == GCI_GrayIndex) || (nBand == 2 && eInterp == GCI_AlphaBand)) )
         return CE_None;
     if( poGDS->nBands >= 3 && eInterp == GCI_RedBand + nBand - 1 )
         return CE_None;
@@ -233,7 +238,7 @@ CPLErr GDALGeoPackageDataset::ReadTile(const CPLString& osMemFileName,
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Cannot parse tile data");
-        memset(pabyTileData, 0, 4 * nBlockXSize * nBlockYSize );
+        memset(pabyTileData, 0, nBands * nBlockXSize * nBlockYSize );
         return CE_Failure;
     }
 
@@ -241,12 +246,12 @@ CPLErr GDALGeoPackageDataset::ReadTile(const CPLString& osMemFileName,
 
     if( !(poDSTile->GetRasterXSize() == nBlockXSize &&
           poDSTile->GetRasterYSize() == nBlockYSize &&
-          (nTileBandCount == 1 || nTileBandCount == 3 || nTileBandCount == 4)) )
+          (nTileBandCount >= 1 && nTileBandCount <= 4)) )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Inconsistent tiles characteristics");
         GDALClose(poDSTile);
-        memset(pabyTileData, 0, 4 * nBlockXSize * nBlockYSize );
+        memset(pabyTileData, 0, nBands * nBlockXSize * nBlockYSize );
         return CE_Failure;
     }
 
@@ -258,7 +263,7 @@ CPLErr GDALGeoPackageDataset::ReadTile(const CPLString& osMemFileName,
                         0, 0, 0, NULL) != CE_None )
     {
         GDALClose(poDSTile);
-        memset(pabyTileData, 0, 4 * nBlockXSize * nBlockYSize );
+        memset(pabyTileData, 0, nBands * nBlockXSize * nBlockYSize );
         return CE_Failure;
     }
 
@@ -318,15 +323,42 @@ CPLErr GDALGeoPackageDataset::ReadTile(const CPLString& osMemFileName,
     {
         CPLError(CE_Warning, CPLE_NotSupported, "Different color tables. Unhandled for now");
     }
-    else if( (nBands == 1 && nTileBandCount != 1) ||
-        (nBands == 1 && nTileBandCount == 1 && m_poCT != NULL && poCT == NULL) ||
-        (nBands == 1 && nTileBandCount == 1 && m_poCT == NULL && poCT != NULL) )
+    else if( (nBands == 1 && nTileBandCount >= 3) ||
+             (nBands == 1 && nTileBandCount == 1 && m_poCT != NULL && poCT == NULL) ||
+             ((nBands == 1 || nBands == 2) && nTileBandCount == 1 && m_poCT == NULL && poCT != NULL) )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Inconsistent dataset and tiles band characteristics");
     }
 
-    if( nTileBandCount == 1 && !(nBands == 1 && m_poCT != NULL) )
+    if( nBands == 2 )
+    {
+        if( nTileBandCount == 1 || nTileBandCount == 3 /* assuming that the RGB is Grey,Grey,Grey */ )
+        {
+            /* Create fully opaque alpha */
+            memset(pabyTileData + 1 * nBlockXSize * nBlockYSize,
+                   255, nBlockXSize * nBlockYSize);
+        }
+        else if( nTileBandCount == 4 )
+        {
+            /* Transfer alpha band */
+            memcpy(pabyTileData + 1 * nBlockXSize * nBlockYSize,
+                   pabyTileData + 3 * nBlockXSize * nBlockYSize,
+                   nBlockXSize * nBlockYSize);
+        }
+    }
+    else if( nTileBandCount == 2 )
+    {
+        /* Do Grey+Alpha -> RGBA */
+        memcpy(pabyTileData + 3 * nBlockXSize * nBlockYSize,
+               pabyTileData + 1 * nBlockXSize * nBlockYSize,
+               nBlockXSize * nBlockYSize);
+        memcpy(pabyTileData + 1 * nBlockXSize * nBlockYSize,
+               pabyTileData, nBlockXSize * nBlockYSize);
+        memcpy(pabyTileData + 2 * nBlockXSize * nBlockYSize,
+               pabyTileData, nBlockXSize * nBlockYSize);
+    }
+    else if( nTileBandCount == 1 && !(nBands == 1 && m_poCT != NULL) )
     {
         /* Expand color indexed to RGB(A) */
         if( poCT != NULL )
@@ -364,11 +396,14 @@ CPLErr GDALGeoPackageDataset::ReadTile(const CPLString& osMemFileName,
                 pabyTileData, nBlockXSize * nBlockYSize);
             memcpy(pabyTileData + 2 * nBlockXSize * nBlockYSize,
                 pabyTileData, nBlockXSize * nBlockYSize);
-            memset(pabyTileData + 3 * nBlockXSize * nBlockYSize,
-                255, nBlockXSize * nBlockYSize);
+            if( nBands == 4 )
+            {
+                memset(pabyTileData + 3 * nBlockXSize * nBlockYSize,
+                    255, nBlockXSize * nBlockYSize);
+            }
         }
     }
-    else if( nTileBandCount == 3 )
+    else if( nTileBandCount == 3 && nBands == 4 )
     {
         /* Create fully opaque alpha */
         memset(pabyTileData + 3 * nBlockXSize * nBlockYSize,
@@ -447,7 +482,7 @@ GByte* GDALGeoPackageDataset::ReadTile(int nRow, int nCol, GByte* pabyData,
     if( nRow < 0 || nCol < 0 || nRow >= m_nTileMatrixHeight ||
         nCol >= m_nTileMatrixWidth )
     {
-        memset(pabyData, 0, 4 * nBlockXSize * nBlockYSize );
+        memset(pabyData, 0, nBands * nBlockXSize * nBlockYSize );
         return pabyData;
     }
 
@@ -501,7 +536,7 @@ GByte* GDALGeoPackageDataset::ReadTile(int nRow, int nCol, GByte* pabyData,
             rc = sqlite3_prepare_v2(m_hTempDB, pszSQLNew, strlen(pszSQLNew), &hStmt, NULL);
             if ( rc != SQLITE_OK )
             {
-                memset(pabyData, 0, 4 * nBlockXSize * nBlockYSize );
+                memset(pabyData, 0, nBands * nBlockXSize * nBlockYSize );
                 CPLError( CE_Failure, CPLE_AppDefined, "sqlite3_prepare(%s) failed: %s",
                         pszSQLNew, sqlite3_errmsg( m_hTempDB ) );
                 return pabyData;
@@ -517,13 +552,13 @@ GByte* GDALGeoPackageDataset::ReadTile(int nRow, int nCol, GByte* pabyData,
             }
             else
             {
-                memset(pabyData, 0, 4 * nBlockXSize * nBlockYSize );
+                memset(pabyData, 0, nBands * nBlockXSize * nBlockYSize );
             }
             sqlite3_finalize(hStmt);
         }
         else
         {
-            memset(pabyData, 0, 4 * nBlockXSize * nBlockYSize );
+            memset(pabyData, 0, nBands * nBlockXSize * nBlockYSize );
         }
     }
 
@@ -785,7 +820,8 @@ CPLErr GDALGeoPackageDataset::WriteTileInternal()
     int iYCount = nBlockYSize;
 
     int bPartialTile = FALSE;
-    if( nBands != 4 )
+    int nAlphaBand = (nBands == 2) ? 2 : (nBands == 4) ? 4 : 0;
+    if( nAlphaBand == 0 )
     {
         if( nXOff < 0 )
         {
@@ -815,17 +851,6 @@ CPLErr GDALGeoPackageDataset::WriteTileInternal()
         CPLAssert(iYCount > 0);
         CPLAssert(iXOff + iXCount <= nBlockXSize);
         CPLAssert(iYOff + iYCount <= nBlockYSize);
-
-        if( bPartialTile )
-        {
-            memset(m_pabyCachedTiles + 3 * nBlockXSize * nBlockYSize, 0,
-                  nBlockXSize * nBlockYSize);
-            for(int iY = iYOff; iY < iYOff + iYCount; iY ++)
-            {
-                memset(m_pabyCachedTiles + (3 * nBlockYSize + iY) * nBlockXSize + iXOff,
-                       255, iXCount);
-            }
-        }
     }
 
     m_asCachedTilesDesc[0].nRow = -1;
@@ -839,12 +864,12 @@ CPLErr GDALGeoPackageDataset::WriteTileInternal()
     CPLErr eErr = CE_Failure;
 
     int bAllOpaque = TRUE;
-    if( nBands == 4 )
+    if( m_poCT == NULL && nAlphaBand != 0 )
     {
-        GByte byFirstAlphaVal =  m_pabyCachedTiles[3 * nBlockXSize * nBlockYSize];
+        GByte byFirstAlphaVal =  m_pabyCachedTiles[(nAlphaBand-1) * nBlockXSize * nBlockYSize];
         for(i=1;i<nBlockXSize * nBlockYSize;i++)
         {
-            if( m_pabyCachedTiles[3 * nBlockXSize * nBlockYSize + i] != byFirstAlphaVal )
+            if( m_pabyCachedTiles[(nAlphaBand-1) * nBlockXSize * nBlockYSize + i] != byFirstAlphaVal )
                 break;
         }
         if( i == nBlockXSize * nBlockYSize )
@@ -886,8 +911,9 @@ CPLErr GDALGeoPackageDataset::WriteTileInternal()
     CPLString osMemFileName;
     osMemFileName.Printf("/vsimem/gpkg_write_tile_%p", this);
     const char* pszDriverName = "PNG";
+    int bTileDriverSupports1Band = FALSE;
+    int bTileDriverSupports2Bands = FALSE;
     int bTileDriverSupports4Bands = FALSE;
-    int bTileDriverSupports1Band = TRUE;
     int bTileDriverSupportsCT = FALSE;
     
     if( nBands == 1 )
@@ -895,9 +921,11 @@ CPLErr GDALGeoPackageDataset::WriteTileInternal()
     
     if( m_eTF == GPKG_TF_PNG_JPEG )
     {
-        if( bPartialTile || (nBands == 4 && !bAllOpaque) || m_poCT != NULL )
+        bTileDriverSupports1Band = TRUE;
+        if( bPartialTile || (nBands == 2 && !bAllOpaque) || (nBands == 4 && !bAllOpaque) || m_poCT != NULL )
         {
             pszDriverName = "PNG";
+            bTileDriverSupports2Bands = TRUE;
             bTileDriverSupports4Bands = TRUE;
             bTileDriverSupportsCT = TRUE;
         }
@@ -908,18 +936,20 @@ CPLErr GDALGeoPackageDataset::WriteTileInternal()
              m_eTF == GPKG_TF_PNG8 )
     {
         pszDriverName = "PNG";
+        bTileDriverSupports1Band = TRUE;
+        bTileDriverSupports2Bands = TRUE;
         bTileDriverSupports4Bands = TRUE;
         bTileDriverSupportsCT = TRUE;
     }
     else if( m_eTF == GPKG_TF_JPEG )
     {
         pszDriverName = "JPEG";
+        bTileDriverSupports1Band = TRUE;
     }
     else if( m_eTF == GPKG_TF_WEBP )
     {
         pszDriverName = "WEBP";
         bTileDriverSupports4Bands = WEBPSupports4Bands();
-        bTileDriverSupports1Band = FALSE;
     }
     else
         CPLAssert(0);
@@ -930,10 +960,29 @@ CPLErr GDALGeoPackageDataset::WriteTileInternal()
         GDALDataset* poMEMDS = MEMDataset::Create("", nBlockXSize, nBlockYSize,
                                                   0, GDT_Byte, NULL);
         int nTileBands = nBands;
-        if( bPartialTile && bTileDriverSupports4Bands )
+        if( bPartialTile && nBands == 1 && m_poCT == NULL && bTileDriverSupports2Bands )
+            nTileBands = 2;
+        else if( bPartialTile && bTileDriverSupports4Bands )
             nTileBands = 4;
         else if( m_eTF == GPKG_TF_PNG8 && nBands >= 3 && bAllOpaque && !bPartialTile )
             nTileBands = 1;
+        else if( nBands == 2 )
+        {
+            if ( bAllOpaque )
+            {
+                if (bTileDriverSupports2Bands )
+                    nTileBands = 1;
+                else
+                    nTileBands = 3;
+            }
+            else if( !bTileDriverSupports2Bands )
+            {
+                if( bTileDriverSupports4Bands )
+                    nTileBands = 4;
+                else
+                    nTileBands = 3;
+            }
+        }
         else if( nBands == 4 && (bAllOpaque || !bTileDriverSupports4Bands) )
             nTileBands = 3;
         else if( nBands == 1 && m_poCT != NULL && !bTileDriverSupportsCT )
@@ -955,6 +1004,18 @@ CPLErr GDALGeoPackageDataset::WriteTileInternal()
         else if( nBands == 1 && m_poCT == NULL && !bTileDriverSupports1Band )
             nTileBands = 3;
 
+        if( bPartialTile && (nTileBands == 2 || nTileBands == 4) )
+        {
+            int nTargetAlphaBand = nTileBands;
+            memset(m_pabyCachedTiles + (nTargetAlphaBand-1) * nBlockXSize * nBlockYSize, 0,
+                  nBlockXSize * nBlockYSize);
+            for(int iY = iYOff; iY < iYOff + iYCount; iY ++)
+            {
+                memset(m_pabyCachedTiles + ((nTargetAlphaBand-1) * nBlockYSize + iY) * nBlockXSize + iXOff,
+                       255, iXCount);
+            }
+        }
+
         for(i=0;i<nTileBands;i++)
         {
             char** papszOptions = NULL;
@@ -962,8 +1023,10 @@ CPLErr GDALGeoPackageDataset::WriteTileInternal()
             int iSrc = i;
             if( nBands == 1 && m_poCT == NULL && nTileBands == 3 )
                 iSrc = 0;
-            else if( nBands == 1 && m_poCT == NULL && bPartialTile )
+            else if( nBands == 1 && m_poCT == NULL && bPartialTile && nTileBands == 4 )
                 iSrc = (i < 3) ? 0 : 3;
+            else if( nBands == 2 && nTileBands >= 3 )
+                iSrc = (i < 3) ? 0 : 1;
             int nRet = CPLPrintPointer(szDataPointer,
                                        m_pabyCachedTiles + iSrc * nBlockXSize * nBlockYSize,
                                        sizeof(szDataPointer));

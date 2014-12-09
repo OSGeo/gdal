@@ -109,9 +109,10 @@ static GDALDataset *OGRGeoPackageDriverCreate( const char * pszFilename,
             CPLError(CE_Failure, CPLE_NotSupported, "Only Byte supported");
             return NULL;
         }
-        if( nBands != 1 && nBands != 3 && nBands != 4 )
+        if( nBands != 1 && nBands != 2 && nBands != 3 && nBands != 4 )
         {
-            CPLError(CE_Failure, CPLE_NotSupported, "Only 1, 3 or 4 band dataset supported");
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Only 1 (Grey/ColorTable), 2 (Grey+Alpha), 3 (RGB) or 4 (RGBA) band dataset supported");
             return NULL;
         }
     }
