@@ -2153,18 +2153,8 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
     if( VSIStatL( pszFilename, &sStatBuf ) == 0 )
     {
         bFileExists = TRUE;
-        if( nBands != 0 )
-        {
-            if( CSLFetchNameValue(papszOptions, "RASTER_TABLE") == NULL )
-            {
-                CPLError( CE_Failure, CPLE_AppDefined,
-                    "A file system object called '%s' already exists. "
-                    "TABLE creation option must be explicitely provided",
-                    pszFilename );
-                return NULL;
-            }
-        }
-        else
+        if( nBands == 0 ||
+            !CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "APPEND_SUBDATASET", "NO")) )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                     "A file system object called '%s' already exists.",
@@ -2789,14 +2779,28 @@ GDALDataset* GDALGeoPackageDataset::CreateCopy( const char *pszFilename,
 {
     const char* pszTilingScheme = 
             CSLFetchNameValueDef(papszOptions, "TILING_SCHEME", "CUSTOM");
+
+    char** papszUpdatedOptions = CSLDuplicate(papszOptions);
+    if( CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "APPEND_SUBDATASET", "NO")) &&
+        CSLFetchNameValue(papszOptions, "RASTER_TABLE") == NULL )
+    {
+        papszUpdatedOptions = CSLSetNameValue(papszUpdatedOptions,
+                                              "RASTER_TABLE",
+                                              CPLGetBasename(poSrcDS->GetDescription()));
+    }
+
     if( EQUAL(pszTilingScheme, "CUSTOM") )
     {
         GDALDriver* poThisDriver = (GDALDriver*)GDALGetDriverByName("GPKG");
         if( !poThisDriver )
+        {
+            CSLDestroy(papszUpdatedOptions);
             return NULL;
+        }
         GDALDataset* poDS = poThisDriver->DefaultCreateCopy(
                                     pszFilename, poSrcDS, bStrict, 
-                                    papszOptions, pfnProgress, pProgressData );
+                                    papszUpdatedOptions, pfnProgress, pProgressData );
+        CSLDestroy(papszUpdatedOptions);
         return poDS;
     }
     
@@ -2805,6 +2809,7 @@ GDALDataset* GDALGeoPackageDataset::CreateCopy( const char *pszFilename,
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                     "Only 1 (Grey/ColorTable), 2 (Grey+Alpha), 3 (RGB) or 4 (RGBA) band dataset supported");
+        CSLDestroy(papszUpdatedOptions);
         return NULL;
     }
 
@@ -2823,11 +2828,17 @@ GDALDataset* GDALGeoPackageDataset::CreateCopy( const char *pszFilename,
         }
     }
     if( !bFound )
+    {
+        CSLDestroy(papszUpdatedOptions);
         return NULL;
+    }
 
     OGRSpatialReference oSRS;
     if( oSRS.importFromEPSG(nEPSGCode) != OGRERR_NONE )
+    {
+        CSLDestroy(papszUpdatedOptions);
         return NULL;
+    }
     char* pszWKT = NULL;
     oSRS.exportToWkt(&pszWKT);
     char** papszTO = CSLSetNameValue( NULL, "DST_SRS", pszWKT );
@@ -2835,6 +2846,7 @@ GDALDataset* GDALGeoPackageDataset::CreateCopy( const char *pszFilename,
             GDALCreateGenImgProjTransformer2( poSrcDS, NULL, papszTO );
     if( hTransformArg == NULL )
     {
+        CSLDestroy(papszUpdatedOptions);
         CPLFree(pszWKT);
         CSLDestroy(papszTO);
         return NULL;
@@ -2851,6 +2863,7 @@ GDALDataset* GDALGeoPackageDataset::CreateCopy( const char *pszFilename,
                                   &nXSize, &nYSize, 
                                   adfExtent, 0 ) != CE_None )
     {
+        CSLDestroy(papszUpdatedOptions);
         CPLFree(pszWKT);
         CSLDestroy(papszTO);
         GDALDestroyGenImgProjTransformer( hTransformArg );
@@ -2874,6 +2887,7 @@ GDALDataset* GDALGeoPackageDataset::CreateCopy( const char *pszFilename,
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Could not find an appropriate zoom level");
+        CSLDestroy(papszUpdatedOptions);
         CPLFree(pszWKT);
         CSLDestroy(papszTO);
         return NULL;
@@ -2930,13 +2944,16 @@ GDALDataset* GDALGeoPackageDataset::CreateCopy( const char *pszFilename,
 
     GDALGeoPackageDataset* poDS = new GDALGeoPackageDataset();
     if( !(poDS->Create( pszFilename, nXSize, nYSize, nTargetBands, GDT_Byte,
-                        papszOptions )) )
+                        papszUpdatedOptions )) )
     {
         delete poDS;
+        CSLDestroy(papszUpdatedOptions);
         CPLFree(pszWKT);
         CSLDestroy(papszTO);
         return NULL;
     }
+    CSLDestroy(papszUpdatedOptions);
+    papszUpdatedOptions = NULL;
     poDS->SetGeoTransform(adfGeoTransform);
     poDS->SetProjection(pszWKT);
     CPLFree(pszWKT);

@@ -323,7 +323,8 @@ Building of overviews of an existing GeoPackage
 </li>
 
 <li>
-Addition of a new subdataset to an existing GeoPackage
+Addition of a new subdataset to an existing GeoPackage, and choose a non
+default name for the raster table.
 <pre>
 % gdal_translate -of GPKG new.tif existing.gpkg -co APPEND_SUBDATASET=YES -co RASTER_TABLE=new_table
 </pre>
