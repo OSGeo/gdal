@@ -119,7 +119,8 @@ static void GDALRegister_NUMPY(void)
 
 {
     GDALDriver	*poDriver;
-
+    if (! GDAL_CHECK_VERSION("NUMPY driver"))
+        return;
     if( GDALGetDriverByName( "NUMPY" ) == NULL )
     {
         poDriver = new GDALDriver();
@@ -127,6 +128,7 @@ static void GDALRegister_NUMPY(void)
         poDriver->SetDescription( "NUMPY" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "Numeric Python Array" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         
         poDriver->pfnOpen = NUMPYDataset::Open;
 
