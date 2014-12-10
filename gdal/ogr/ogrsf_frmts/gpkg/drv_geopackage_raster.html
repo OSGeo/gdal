@@ -1,0 +1,361 @@
+<!DOCTYPE HTML SYSTEM>
+<html>
+<head>
+<title>GeoPackage raster</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>GeoPackage raster</h1>
+
+<p>Starting with GDAL 2.0, this driver implements full read/creation/update of
+tables containing raster tiles in the 
+<a href="http://www.geopackage.org/spec/">OGC GeoPackage format standard</a>.
+The GeoPackage standard uses a SQLite database file as a generic container, and the standard defines:
+</p>
+<ul>
+  <li>Expected metadata tables (<code>gpkg_contents</code>,
+     <code>gpkg_spatial_ref_sys</code>, <code>gpkg_tile_matrix</code>,
+     <code>gpkg_tile_matrix_set</code>, ...)</li>
+  <li>Tile format encoding (PNG and JPEG for base specification, WebP as extension) and tiling conventions</li>
+  <li>Naming and conventions for extensions</li>
+</ul>
+<p>This driver reads and writes SQLite files from the file system, so it must be
+run by a user with read/write access to the files it is working with.</p>
+
+<p>The driver can also handle GeoPackage vectors. See
+<a href="drv_geopackage.html">GeoPackage vector</a> documentation page</p>
+
+<p>Various kind of input datasets can be converted to GeoPackage raster :
+<ul>
+<li>Single band grey level</li>
+<li>Single band with R,G,B or R,G,B,A color table</li>
+<li>Two bands: first band with grey level, second band with alpha channel</li>
+<li>Three bands: Red, Green, Blue</li>
+<li>Four band: Red, Green, Blue, Alpha</li>
+</ul>
+GeoPackage rasters only support Byte data type.
+
+<p>
+All raster extensions standardized by the GeoPackage specification are supported in read and creation :
+</p>
+<ul>
+<li><i>gpkg_webp</i>: when storing WebP tiles, provided that GDAL is compiled against libwebp.</li>
+<li><i>gpkg_zoom_other</i>: when resolution of consecutive zoom levels does not vary with a factor of 2.</li>
+</ul>
+
+<h2>Opening options</h2>
+
+<p>By default, the driver will expose a GeoPackage dataset as a four band (Red,Green,
+Blue,Alpha) dataset, which gives the maximum compatibility with the various encodings of
+tiles that can be stored. It is possible to specify an explicit number of bands
+with the BAND_COUNT opening option.</p>
+
+<p>The driver will use the geographic/projected extent indicated in the
+<a href="http://www.geopackage.org/spec/#_contents"><i>gpkg_contents</i></a> table,
+and do necessary clipping, if needed, to respect
+that extent. However that information being optional, if omitted, the driver
+will use the extent provided by the
+<a href="http://www.geopackage.org/spec/#_tile_matrix_set"><i>gpkg_tile_matrix_set</i></a>,
+which covers the extent at all zoom levels. The user can also specify the USE_TILE_EXTENT=YES
+open option to use the actual extent of tiles at the maximum zoom level. Or
+it can specify any of MINX/MINY/MAXX/MAXY to have a custom extent.<p>
+
+The following open options are available:
+<ul>
+<li><b>TABLE</b>=table_name: Name of the table containing the tiles (called
+<a href="http://www.geopackage.org/spec/#tiles_user_tables">"Tile Pyramid User Data Table"</a>
+in the GeoPackage specification language). If
+the GeoPackage dataset only contains one table, this option is not necessary.
+Otherwise, it is required.</li>
+<li><b>ZOOM_LEVEL</b>=value: Integer value between 0 and the maximum filled in
+the <i>gpkg_tile_matrix</i> table. By default, the driver will select the maximum
+zoom level, such as at least one tile at that zoom level is found in the raster table.</li>
+<li><b>BAND_COUNT</b>=1/2/3/4: Number of bands of the dataset exposed after opening.
+Some conversions will be done when possible and implemented, but this might fail
+in some cases, depending on the BAND_COUNT value and the number of bands of the tile.
+Defaults to 4 (which is the always safe value).</li>
+<li><b>MINX</b>=value: Minimum longitude/easting of the area of interest.</li>
+<li><b>MINY</b>=value: Minimum latitude/northing of the area of interest.</li>
+<li><b>MAXX</b>=value: Maximum longitude/easting of the area of interest.</li>
+<li><b>MAXY</b>=value: Maximum latitude/northing of the area of interest.</li>
+<li><b>USE_TILE_EXTENT</b>=YES/NO: Whether to use the extent of actual existing
+tiles at the zoom level of the full resolution dataset. Defaults to NO.</li>
+<li><b>TILE_FORMAT</b>=PNG_JPEG/PNG/PNG8/JPEG/WEBP: Format used to store tiles. See
+<a href="#tile_format">Tile format</a> section. Only used in update mode. Defaults to PNG_JPEG.</li>
+<li><b>QUALITY</b>=1-100: Quality setting for JPEG and WEBP compression. Only used in update mode. Default to 75.</li>
+<li><b>ZLEVEL</b>=1-9: DEFLATE compression level for PNG tiles. Only used in update mode. Default to 6.</li>
+<li><b>DITHER</b>=YES/NO: Whether to use Floyd-Steinberg dithering (for TILE_FORMAT=PNG8).
+Only used in update mode. Defaults to NO.</li>
+</ul>
+
+Note: open options are typically specified with "-oo name=value" syntax in
+most GDAL utilities, or with the GDALOpenEx() API call.
+
+<h2>Creation issues</h2>
+
+<p>Depending of the number of bands of the input dataset and the tile format
+selected, the driver will do the necessary conversions to be compatible with the
+tile format.</p>
+
+<p>To add several tile tables to a GeoPackage dataset (seen as GDAL subdatasets),
+or to add a tile table to an existing vector-only GeoPackage, the generic
+APPEND_SUBDATASET=YES creation option must be provided.</p>
+
+<p>Fully transparent tiles will not be written to the database, as allowed by
+the format.</p>
+
+<p>The driver implements the Create() and IWriteBlock() methods, so that arbitrary
+writing of raster blocks is possible, enabling the direct use of GeoPackage as
+the output dataset of utilities such as gdalwarp.</p>
+
+<p>On creation, raster blocks can be written only if the geotransformation
+matrix has been set with SetGeoTransform() This is effectively needed to determine
+the zoom level of the full resolution dataset based on the pixel resolution, dataset
+and tile dimensions.</p>
+
+<p>Technical/implementation note: when a dataset is opened with a non-default area of interest
+(i.e. use of MINX,MINY,MAXX,MAXY or USE_TILE_EXTENT open option), or when creating/
+opening a dataset with a non-custom tiling scheme, it is possible that GDAL blocks
+do not exactly match a single GeoPackage tile. In which case, each GDAL
+block will overlap four GeoPackage tiles. This is easily handled on the read side,
+but on creation/update side, such configuration could cause numerous decompression/
+recompression of tiles to be done, which might cause unnecessary quality loss when using
+lossy compression (JPEG, WebP). To avoid that, the driver will create a temporary
+database next to the main GeoPackage file to store partial GeoPackage tiles in a
+lossless (and uncompressed) way. Once a tile has received data for its four quadrants
+and for all the bands (or the dataset is closed or explicitely flushed with FlushCache()),
+those uncompressed tiles are definitely transfered to the GeoPackage file with
+the appropriate compression. All of this is transparent to the user of GDAL API/utilities</p>
+
+<h3><a id="tile_formats">Tile formats</a></h3>
+
+<p>GeoPackage can store tiles in different formats, PNG and/or JPEG for the baseline
+specification, and WebP for extended GeoPackage. Support for those tile formats
+depend if the underlying drivers are available in GDAL, which is generally the
+case for PNG and JPEG, but not necessarily for WebP since it requires GDAL to
+be compiled against the optional libwebp.<p>
+
+<p>By default, GDAL will use a mix of PNG and JPEG tiles. PNG tiles will be used
+to store tiles that are not completely opaque, either because input dataset has
+an alpha channel with non fully opaque content, or because tiles are partial due
+to clipping at the right or bottom edges of the raster, or when a dataset is opened
+with a non-default area of interest, or with a non-custom tiling scheme. On the
+contrary, for fully opaque tiles, JPEG format will be used.</p>
+
+<p>It is possible to select one unique tile format by setting the creation/open
+option TILE_FORMAT to one of PNG, JPEG or WEBP. When using JPEG, the alpha channel
+will not be stored. When using WebP, the
+<a href="http://www.geopackage.org/spec/#extension_tiles_webp"><i>gpkg_webp</i></a>
+extension will be registered. The lossy compression of WebP is used.
+Note that a recent enough libwebp
+(&gt;=0.1.4) must be used to support alpha channel in WebP tiles.</p>
+
+<p>PNG8 can be selected to use 8-bit PNG with a color table up to 256 colors.
+On creation, an optimized color table is computed for each tile. The DITHER
+option can be set to YES to use Floyd/Steinberg dithering algorithm, which
+spreads the quantization error on neighbouring pixels for better rendering (note
+however than when zooming in, this can cause non desirable visual artifacts).
+Setting it to YES will generally cause less effective compression.
+Note that at that time, such an 8-bit PNG formulation is only used for fully opaque tiles,
+as the median-cut algorithm currently implemented to compute the optimal color
+table does not support alpha channel (even if PNG8 format would potentially allow
+color table with transparency). So when selecting PNG8, non fully opaque tiles
+will be stored as 32-bit PNG.</p>
+
+<h3><a id="tiling_schemes">Tiling schemes</a></h3>
+
+<p>
+By default, conversion to GeoPackage will create a custom tiling scheme, such
+that the input dataset can be losslessly converted, both at the pixel and
+georeferencing level (if using a lossless tile format such as PNG). That
+tiling scheme is such that its origin (<i>min_x</i>, <i>max_y</i>) in the
+<a href="http://www.geopackage.org/spec/#_tile_matrix_set"><i>gpkg_tile_matrix_set</i></a>
+table perfectly matches the top left corner of the dataset, and the selected
+resolution (<i>pixel_x_size</i>, <i>pixel_y_size</i>) at the computed maximum zoom_level of the
+<a href="http://www.geopackage.org/spec/#_tile_matrix"><i>gpkg_tile_matrix</i></a> table will
+match the pixel width and height of the raster.
+</p>
+<p>However to ease interoperability with other implementations, and enable use
+of GeoPackage with tile servicing software, it is possible to select a predefined
+tiling scheme that has world coverage. The available tiling schemes are :</p>
+<ul>
+<li><i>GoogleCRS84Quad</i>, as described in
+<a href="http://portal.opengeospatial.org/files/?artifact_id=35326">OGC 07-057r7
+WMTS 1.0</a> specification, Annex E.3. That tiling schemes consists of a single
+256x256 tile at its zoom level 0, in EPSG:4326 CRS, with extent in longitude and
+latitude in the range [-180,180]. Consequently, at zoom level 0, 64 lines are
+unused at the top and bottom of that tile.</li>
+<li><i>GoogleMapsCompatible</i>, as described in WMTS 1.0 specification, Annex E.4.
+That tiling schemes consists of a single 256x256 tile at its zoom level 0,
+in EPSG:3857 CRS, with extent in easting and northing in the range
+[-20037508.34,20037508.34].</li>
+<li><i>PseudoTMS_GlobalGeodetic</i>, based on the
+<a href="http://wiki.osgeo.org/wiki/Tile_Map_Service_Specification#global-geodetic">
+<i>global-geodetic</i></a> profile of OSGeo TMS (Tile Map Service) specification.
+That tiling schemes consists of two 256x256 tiles at its zoom level 0, in
+EPSG:4326 CRS, with extent in longitude in the range [-180,180] and in latitude
+in the range [-90,90]. Note however that full interoperability with TMS is not
+possible due to the origin of numbering of tiles being the top left corner in
+GeoPackage (consistently with WMTS convention), whereas TMS uses the bottom left
+corner as origin.</li>
+<li><i>PseudoTMS_GlobalMercator</i>, based on the
+<a href="http://wiki.osgeo.org/wiki/Tile_Map_Service_Specification#global-mercator">
+<i>global-mercator</i></a> profile of OSGeo TMS (Tile Map Service) specification.
+That tiling schemes consists of four 256x256 tiles at its zoom level 0,
+in EPSG:3857 CRS, with extent extent in easting and northing in the range
+[-20037508.34,20037508.34]. The same remark as with PseudoTMS_GlobalGeodetic applies
+regarding interoperability with TMS.</li>
+</ul>
+
+<p>In all the above tiling schemes, consecutive zoom levels defer by a resolution
+of a factor of two.</p>
+
+<h3>Creation options</h3>
+
+<p>The following creation options are available:</p>
+
+<ul>
+<li><b>RASTER_TABLE</b>=string. Name of tile user table. By default, based on
+the filename (i.e. if filename is foo.gpkg, the table will be called "foo").</li>
+<li><b>APPEND_SUBDATASET</b>=YES/NO: If set to YES, an existing GeoPackage
+will not be priorly destroyed, such as to be able to add new content to it. Defaults to NO.</li>
+<li><b>RASTER_IDENTIFIER</b>=string. Human-readable identifier (e.g. short name), put
+in the <i>identifier</i> column of the <i>gpkg_contents</i> table.</li>
+<li><b>RASTER_DESCRIPTION</b>=string. Human-readable description, put
+in the <i>description</i> column of the <i>gpkg_contents</i> table.</li>
+<li><b>BLOCKSIZE</b>=integer. Block size in width and height in pixels.
+Defaults to 256. Maximum supported is 4096. Should not be set when using a non-custom TILING_SCHEME.</li>
+<li><b>BLOCKXSIZE</b>=integer. Block width in pixels.
+Defaults to 256. Maximum supported is 4096.</li>
+<li><b>BLOCKYSIZE</b>=integer. Block height in pixels.
+Defaults to 256. Maximum supported is 4096.</li>
+<li><b>TILE_FORMAT</b>=PNG_JPEG/PNG/PNG8/JPEG/WEBP: Format used to store tiles. See
+<a href="#tile_formats">Tile formats</a> section. Defaults to PNG_JPEG.</li>
+<li><b>QUALITY</b>=1-100: Quality setting for JPEG and WEBP compression. Default to 75.</li>
+<li><b>ZLEVEL</b>=1-9: DEFLATE compression level for PNG tiles. Default to 6.</li>
+<li><b>DITHER</b>=YES/NO: Whether to use Floyd-Steinberg dithering (for TILE_FORMAT=PNG8).
+Defaults to NO.</li>
+<li><b>TILING_SCHEME</b>=CUSTOM/GoogleCRS84Quad/GoogleMapsCompatible/PseudoTMS_GlobalGeodetic/PseudoTMS_GlobalMercator.
+See <a href="#tiling_schemes">Tiling schemes</a> section. Defaults to CUSTOM.</li>
+<li><b>ZOOM_LEVEL_STRATEGY</b>=AUTO/LOWER/UPPER. Strategy to determine zoom level.
+Only used for TILING_SCHEME is different from CUSTOM. LOWER will select the
+zoom level immediately below the theoretical computed non-integral zoom level,
+leading to subsampling. On the contrary, UPPER will select the immedately above
+zoom level, leading to oversampling. Defaults to AUTO which selects the closest
+zoom level.</li>
+<li><b>RESAMPLING</b>=NEAREST/BILINEAR/CUBIC/CUBICSPLINE/LANCZOS/MODE/AVERAGE.
+Resampling algorithm. Only used for TILING_SCHEME is different from CUSTOM. Defaults
+to BILINEAR.</li>
+</ul>
+
+<h2>Overviews</h2>
+
+<p>gdaladdo / BuildOverviews() can be used to compute overviews. Power-of-two
+overview factors (2,4,8,16,...) should be favored to be conformant with the
+baseline GeoPackage specification. Use of other overview factors will work with the GDAL
+driver, and cause the <a href="http://www.geopackage.org/spec/#extension_zoom_other_intervals">
+<i>gpkg_zoom_other</i></a> extension to be registered, but
+that could potentially cause interoperability problems with other
+implementations that do not support that extension.</p>
+
+<p>Overviews can also be cleared with the -clean option of gdaladdo (or
+BuildOverviews() with nOverviews=0)</p>
+
+<h2>Metadata</h2>
+
+<p>GDAL uses the standardized <a href="http://www.geopackage.org/spec/#_metadata_table">
+<code>gpkg_metadata</code></a> and <a href="http://www.geopackage.org/spec/#_metadata_reference_table">
+<code>gpkg_metadata_reference</code></a> tables to read and write metadata.</p>
+
+<p>GDAL metadata, from the default metadata domain and possibly other metadata
+domains, is serialized in a single XML document, conformant with the format used
+in GDAL PAM (Persistent Auxiliary Metadata) .aux.xml files, and registered with
+md_scope=dataset and md_standard_uri=http://gdal.org in gpkg_metadata. In
+gpkg_metadata_reference, this entry is referenced with a reference_scope=table and
+table_name={name of the raster table}</p>
+
+<p>It is possible to read and write metadata that applies to the global GeoPackage,
+and not only to the raster table, by using the <i>GEOPACKAGE</i> metadata
+domain.</p>
+
+<p>Metadata not originating from GDAL can be read by the driver and will be
+exposed as metadata items with keys of the form GPKG_METADATA_ITEM_XXX and
+values the content of the <i>metadata</i> columns of the gpkg_metadata table.
+Update of such metadata is not currently supported through GDAL interfaces (
+although it can be through direct SQL commands).</p>
+
+<p>The specific DESCRIPTION and IDENTIFIER metadata item of the default metadata
+domain can be used in read/write to read from/update the corresponding columns of
+the gpkg_contents table.</p>
+
+<h2>Examples</h2>
+
+<ul>
+<li>
+Simple translation of a GeoTIFF into GeoPackage.  The table 'byte' will
+be created with the tiles.
+<pre>
+% gdal_translate -of GPKG byte.tif byte.gpkg
+</pre>
+</li>
+
+<li>
+Translation of a GeoTIFF into GeoPackage using WebP tiles
+<pre>
+% gdal_translate -of GPKG byte.tif byte.gpkg -co TILE_FORMAT=WEBP
+</pre>
+</li>
+
+<li>
+Translation of a GeoTIFF into GeoPackage using GoogleMapsCompatible tiling scheme
+(with reprojection and resampling if needed)
+<pre>
+% gdal_translate -of GPKG byte.tif byte.gpkg -co TILING_SCHEME=GoogleMapsCompatible
+</pre>
+</li>
+
+<li>
+Building of overviews of an existing GeoPackage
+<pre>
+% gdaladdo -r cubic my.gpkg 2 4 8 16 32 64
+</pre>
+</li>
+
+<li>
+Addition of a new subdataset to an existing GeoPackage
+<pre>
+% gdal_translate -of GPKG new.tif existing.gpkg -co APPEND_SUBDATASET=YES -co RASTER_TABLE=new_table
+</pre>
+</li>
+
+<li>
+Reprojection of an input dataset to GeoPackage
+<pre>
+% gdalwarp -of GPKG in.tif out.gpkg -t_srs EPSG:3857
+</pre>
+</li>
+
+<li>
+Open a specific raster table in a GeoPackage
+<pre>
+% gdalinfo my.gpkg -oo TABLE=a_table
+</pre>
+</li>
+
+</ul>
+
+<h3>See Also</h3>
+
+<ul>
+<li> <a href="http://sqlite.org/">SQLite</a>
+<li> <a href="drv_geopackage.html">GeoPackage vector</a> documentation page</li>
+<li> <a href="frmt_various.html#PNG">PNG driver</a> documentation page</li>
+<li> <a href="frmt_jpeg.html">JPEG driver</a> documentation page</li>
+<li> <a href="frmt_webp.html">WEBP driver</a> documentation page</li>
+<li> <a href="http://portal.opengeospatial.org/files/?artifact_id=35326">OGC 07-057r7 WMTS 1.0</a> specification</li>
+<li> <a href="http://wiki.osgeo.org/wiki/Tile_Map_Service_Specification">OSGeo TMS (Tile Map Service)</a> specification</li>
+</ul>
+
+</body>
+</html>
