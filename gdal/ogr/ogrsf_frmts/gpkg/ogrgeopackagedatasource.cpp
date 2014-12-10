@@ -1031,7 +1031,7 @@ int GDALGeoPackageDataset::OpenRaster( const char* pszTableName,
 
     // Do this after CheckUnknownExtensions() so that m_eTF is set to GPKG_TF_WEBP
     // if the table already registers the gpkg_webp extension
-    const char* pszTF = CSLFetchNameValue(papszOpenOptions, "DRIVER");
+    const char* pszTF = CSLFetchNameValue(papszOpenOptions, "TILE_FORMAT");
     if( pszTF )
     {
         if( !bUpdate )
@@ -2693,7 +2693,7 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
         if( m_osDescription.size() )
             GDALPamDataset::SetMetadataItem("DESCRIPTION", m_osDescription);
 
-        const char* pszTF = CSLFetchNameValue(papszOptions, "DRIVER");
+        const char* pszTF = CSLFetchNameValue(papszOptions, "TILE_FORMAT");
         if( pszTF )
             m_eTF = GetTileFormat(pszTF);
 
