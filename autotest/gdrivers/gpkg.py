@@ -1201,6 +1201,10 @@ def gpkg_14():
 
     ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', src_ds, options = ['APPEND_SUBDATASET=YES', 'RASTER_TABLE=other', 'BLOCKSIZE=64', 'TILE_FORMAT=PNG'])
     ds = None
+    another_src_ds = gdal.Open('data/byte.tif')
+    ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', another_src_ds, options = ['APPEND_SUBDATASET=YES'])
+    ds = None
+    another_src_ds = None
 
     ds = gdal.Open('tmp/tmp.gpkg')
     md = ds.GetMetadata('SUBDATASETS')
@@ -1217,6 +1221,14 @@ def gpkg_14():
         print(md)
         return 'fail'
     if md['SUBDATASET_2_DESC'] != 'other - other':
+        gdaltest.post_reason('fail')
+        print(md)
+        return 'fail'
+    if md['SUBDATASET_3_NAME'] != 'GPKG:tmp/tmp.gpkg:byte':
+        gdaltest.post_reason('fail')
+        print(md)
+        return 'fail'
+    if md['SUBDATASET_3_DESC'] != 'byte - byte':
         gdaltest.post_reason('fail')
         print(md)
         return 'fail'
