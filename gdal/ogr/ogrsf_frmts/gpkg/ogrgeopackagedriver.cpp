@@ -149,7 +149,7 @@ void RegisterOGRGeoPackage()
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte" );
 
 #define COMPRESSION_OPTIONS \
-"  <Option name='DRIVER' type='string-select' description='Format to use to create tiles' default='PNG_JPEG'>" \
+"  <Option name='TILE_FORMAT' type='string-select' description='Format to use to create tiles' default='PNG_JPEG'>" \
 "    <Value>PNG_JPEG</Value>" \
 "    <Value>PNG</Value>" \
 "    <Value>PNG8</Value>" \
@@ -158,7 +158,7 @@ void RegisterOGRGeoPackage()
 "  </Option>" \
 "  <Option name='QUALITY' type='int' min='1' max='100' description='Quality for JPEG and WEBP tiles' default='75'/>" \
 "  <Option name='ZLEVEL' type='int' min='1' max='9' description='DEFLATE compression level for PNG tiles' default='6'/>" \
-"  <Option name='DITHER' type='boolean' description='Whether to apply Floyd-Steinberg dithering (for DRIVER=PNG8)' default='NO'/>"
+"  <Option name='DITHER' type='boolean' description='Whether to apply Floyd-Steinberg dithering (for TILE_FORMAT=PNG8)' default='NO'/>"
 
         poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST, "<OpenOptionList>"
 "  <Option name='TABLE' type='string' description='Name of tile user-table'/>"
@@ -175,6 +175,7 @@ COMPRESSION_OPTIONS
 
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, "<CreationOptionList>"
 "  <Option name='RASTER_TABLE' type='string' description='Name of tile user table'/>"
+"  <Option name='APPEND_SUBDATASET' type='boolean' description='Set to YES to add a new tile user table to an existing GeoPackage instead of replacing it' default='NO'/>"
 "  <Option name='RASTER_IDENTIFIER' type='string' description='Human-readable identifier (e.g. short name)'/>"
 "  <Option name='RASTER_DESCRIPTION' type='string' description='Human-readable description'/>"
 "  <Option name='BLOCKSIZE' type='int' description='Block size in pixels' default='256' max='4096'/>"

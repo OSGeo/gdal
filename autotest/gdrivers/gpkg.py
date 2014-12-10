@@ -195,7 +195,7 @@ def gpkg_1():
     clamped_expected_cs = get_expected_checksums(ds, gdaltest.png_dr, 1, clamp_output = False)[0]
     expected_gt = ds.GetGeoTransform()
     expected_wkt = ds.GetProjectionRef()
-    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', ds, options = ['DRIVER=PNG'] )
+    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', ds, options = ['TILE_FORMAT=PNG'] )
     out_ds = None
     ds = None
 
@@ -254,7 +254,7 @@ def gpkg_1():
     # Without padding
     ds = gdal.Open('data/byte.tif')
     expected_cs = ds.GetRasterBand(1).Checksum()
-    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', ds, options = ['DRIVER=PNG', 'BLOCKSIZE=20'] )
+    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', ds, options = ['TILE_FORMAT=PNG', 'BLOCKSIZE=20'] )
     out_ds = None
     
     out_ds = gdal.Open('tmp/tmp.gpkg')
@@ -293,7 +293,7 @@ def gpkg_2():
     clamped_expected_cs = get_expected_checksums(ds, gdaltest.jpeg_dr, 3, clamp_output = False)
     clamped_expected_cs.append(17849)
 
-    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', ds, options = ['DRIVER=JPEG'] )
+    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', ds, options = ['TILE_FORMAT=JPEG'] )
     out_ds = None
 
     out_ds = gdal.Open('tmp/tmp.gpkg')
@@ -329,7 +329,7 @@ def gpkg_2():
     # Without padding
     ds = gdal.Open('data/byte.tif')
     expected_cs = get_expected_checksums(ds, gdaltest.jpeg_dr, 1, extend_src = False)[0]
-    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', ds, options = ['DRIVER=JPEG', 'BLOCKSIZE=20'] )
+    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', ds, options = ['TILE_FORMAT=JPEG', 'BLOCKSIZE=20'] )
     out_ds = None
     
     out_ds = gdal.Open('tmp/tmp.gpkg')
@@ -359,7 +359,7 @@ def gpkg_2():
     os.remove('tmp/tmp.gpkg')
     
     ds = gdal.Open('data/byte.tif')
-    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', ds, options = ['DRIVER=JPEG'] )
+    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', ds, options = ['TILE_FORMAT=JPEG'] )
     gdal.ErrorReset()
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     out_ds.FlushCache()
@@ -399,7 +399,7 @@ def gpkg_3():
     else:
         clamped_expected_cs.append(17849)
 
-    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', ds, options = ['DRIVER=WEBP'] )
+    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', ds, options = ['TILE_FORMAT=WEBP'] )
     out_ds = None
 
     out_ds = gdal.OpenEx('tmp/tmp.gpkg')
@@ -438,7 +438,7 @@ def gpkg_3():
     # Without padding
     ds = gdal.Open('data/byte.tif')
     expected_cs = get_expected_checksums(ds, gdaltest.webp_dr, 3, extend_src = False)
-    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', ds, options = ['DRIVER=WEBP', 'BLOCKSIZE=20'] )
+    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', ds, options = ['TILE_FORMAT=WEBP', 'BLOCKSIZE=20'] )
     out_ds = None
     
     out_ds = gdal.Open('tmp/tmp.gpkg')
@@ -480,12 +480,12 @@ def gpkg_3():
 
     os.remove('tmp/tmp.gpkg')
 
-    # Check updating a non-WEBP dataset with DRIVER=WEBP
+    # Check updating a non-WEBP dataset with TILE_FORMAT=WEBP
     out_ds = gdaltest.gpkg_dr.Create('tmp/tmp.gpkg', 1, 1 )
     out_ds.SetGeoTransform([0,1,0,0,0,-1])
     out_ds = None
 
-    out_ds = gdal.OpenEx('tmp/tmp.gpkg', gdal.OF_RASTER | gdal.OF_UPDATE, open_options=['DRIVER=WEBP'])
+    out_ds = gdal.OpenEx('tmp/tmp.gpkg', gdal.OF_RASTER | gdal.OF_UPDATE, open_options=['TILE_FORMAT=WEBP'])
     sql_lyr = out_ds.ExecuteSQL("SELECT * FROM gpkg_extensions WHERE table_name = 'tmp' AND column_name = 'tile_data' AND extension_name = 'gpkg_webp'")
     if sql_lyr.GetFeatureCount() != 1:
         gdaltest.post_reason('fail')
@@ -532,7 +532,7 @@ def gpkg_4(tile_drv_name = 'PNG'):
     else:
         clamped_expected_cs.append(30638)
 
-    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', ds, options = ['DRIVER=' + tile_drv_name] )
+    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', ds, options = ['TILE_FORMAT=' + tile_drv_name] )
     ds = None
     out_ds = None
 
@@ -561,7 +561,7 @@ def gpkg_4(tile_drv_name = 'PNG'):
     ds = gdal.Open('data/rgbsmall.tif')
     expected_cs = get_expected_checksums(ds, tile_drv, 3, extend_src = False)
     expected_cs.append(30658)
-    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', ds, options = ['DRIVER=' + tile_drv_name, 'BLOCKSIZE=50'] )
+    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', ds, options = ['TILE_FORMAT=' + tile_drv_name, 'BLOCKSIZE=50'] )
     out_ds = None
     
     out_ds = gdal.Open('tmp/tmp.gpkg')
@@ -631,7 +631,7 @@ def gpkg_7(tile_drv_name = 'PNG'):
         pass
 
     src_ds = get_georeferenced_rgba_ds()
-    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', src_ds, options = ['DRIVER=' + tile_drv_name] )
+    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', src_ds, options = ['TILE_FORMAT=' + tile_drv_name] )
     out_ds = None
 
     expected_cs = get_expected_checksums(src_ds, tile_drv, working_bands)
@@ -656,7 +656,7 @@ def gpkg_7(tile_drv_name = 'PNG'):
     tmp_ds = get_georeferenced_rgba_ds(alpha_fully_opaque = True)
     expected_cs = get_expected_checksums(tmp_ds, tile_drv, 3, extend_src = False)
     tmp_filename = tmp_ds.GetDescription()
-    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', tmp_ds, options = ['DRIVER=' + tile_drv_name, 'BLOCKXSIZE=%d' % tmp_ds.RasterXSize, 'BLOCKYSIZE=%d' % tmp_ds.RasterYSize] )
+    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', tmp_ds, options = ['TILE_FORMAT=' + tile_drv_name, 'BLOCKXSIZE=%d' % tmp_ds.RasterXSize, 'BLOCKYSIZE=%d' % tmp_ds.RasterYSize] )
     out_ds = None
     tmp_ds = None
     gdal.Unlink(tmp_filename)
@@ -676,7 +676,7 @@ def gpkg_7(tile_drv_name = 'PNG'):
     # Without padding with alpha fully transparent
     tmp_ds = get_georeferenced_rgba_ds(alpha_fully_transparent = True)
     tmp_filename = tmp_ds.GetDescription()
-    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', tmp_ds, options = ['DRIVER=' + tile_drv_name, 'BLOCKXSIZE=%d' % tmp_ds.RasterXSize, 'BLOCKYSIZE=%d' % tmp_ds.RasterYSize] )
+    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', tmp_ds, options = ['TILE_FORMAT=' + tile_drv_name, 'BLOCKXSIZE=%d' % tmp_ds.RasterXSize, 'BLOCKYSIZE=%d' % tmp_ds.RasterYSize] )
     out_ds = None
     tmp_ds = None
     gdal.Unlink(tmp_filename)
@@ -880,7 +880,7 @@ def gpkg_11(tile_drv_name = 'JPEG'):
     rgba_ds = gdal.Open(rgba_xml)
 
     tmp_ds = get_georeferenced_ds_with_pct32()
-    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', tmp_ds, options = ['DRIVER=' + tile_drv_name] )
+    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', tmp_ds, options = ['TILE_FORMAT=' + tile_drv_name] )
     out_ds = None
     tmp_filename = tmp_ds.GetDescription()
     tmp_ds = None
@@ -996,7 +996,7 @@ def gpkg_14():
         pass
 
     src_ds = gdal.Open('data/small_world.tif')
-    ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', src_ds, options = ['DRIVER=PNG', 'RASTER_TABLE=foo', 'RASTER_IDENTIFIER=bar', 'RASTER_DESCRIPTION=baz'])
+    ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', src_ds, options = ['TILE_FORMAT=PNG', 'RASTER_TABLE=foo', 'RASTER_IDENTIFIER=bar', 'RASTER_DESCRIPTION=baz'])
     ds = None
 
     ds = gdal.Open('tmp/tmp.gpkg')
@@ -1090,7 +1090,7 @@ def gpkg_14():
     ds = None
 
     # Open with exactly one tile shift
-    ds = gdal.OpenEx('tmp/tmp.gpkg', gdal.OF_UPDATE, open_options = ['DRIVER=PNG', 'MINX=-410.4','MAXY=320.4'])
+    ds = gdal.OpenEx('tmp/tmp.gpkg', gdal.OF_UPDATE, open_options = ['TILE_FORMAT=PNG', 'MINX=-410.4','MAXY=320.4'])
     if ds.RasterXSize != 400+256 or ds.RasterYSize != 200+256:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -1192,7 +1192,7 @@ def gpkg_14():
         return 'fail'
     ds = None
 
-    ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', src_ds, options = ['APPEND_SUBDATASET=YES', 'RASTER_TABLE=other', 'BLOCKSIZE=64', 'DRIVER=PNG'])
+    ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', src_ds, options = ['APPEND_SUBDATASET=YES', 'RASTER_TABLE=other', 'BLOCKSIZE=64', 'TILE_FORMAT=PNG'])
     ds = None
 
     ds = gdal.Open('tmp/tmp.gpkg')
@@ -1308,7 +1308,7 @@ def gpkg_14():
     ds.SetGeoTransform([0,1,0,0,0,-1])
     ds = None
 
-    ds = gdal.OpenEx('tmp/tmp.gpkg', gdal.OF_UPDATE, open_options = ['MINX=-5', 'MAXY=5', 'DRIVER=PNG'])
+    ds = gdal.OpenEx('tmp/tmp.gpkg', gdal.OF_UPDATE, open_options = ['MINX=-5', 'MAXY=5', 'TILE_FORMAT=PNG'])
     mem_ds = gdal.GetDriverByName('MEM').Create('', 256, 256)
     mem_ds.GetRasterBand(1).Fill(255)
     mem_ds.FlushCache()
@@ -1523,7 +1523,7 @@ def gpkg_16():
     except:
         pass
 
-    out_ds = gdaltest.gpkg_dr.Create('tmp/tmp.gpkg',1,1,3, options = ['DRIVER=JPEG'])
+    out_ds = gdaltest.gpkg_dr.Create('tmp/tmp.gpkg',1,1,3, options = ['TILE_FORMAT=JPEG'])
     out_ds.SetGeoTransform([0,1,0,0,0,-1])
     out_ds.GetRasterBand(1).Fill(255)
     out_ds.GetRasterBand(1).FlushCache()
@@ -1572,7 +1572,7 @@ def gpkg_17():
 
     # Without padding, immediately after create copy
     ds = gdal.Open('data/byte.tif')
-    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', ds, options = ['DRIVER=PNG', 'BLOCKSIZE=10'] )
+    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', ds, options = ['TILE_FORMAT=PNG', 'BLOCKSIZE=10'] )
     out_ds.BuildOverviews('NEAR', [2])
     out_ds = None
     ds = None
@@ -1593,10 +1593,10 @@ def gpkg_17():
 
     # Without padding, after reopening, and BAND_COUNT = 1
     ds = gdal.Open('data/byte.tif')
-    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', ds, options = ['DRIVER=PNG', 'BLOCKSIZE=10'] )
+    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', ds, options = ['TILE_FORMAT=PNG', 'BLOCKSIZE=10'] )
     out_ds = None
     # FIXME? Should we eventually write the driver somewhere in metadata ?
-    out_ds = gdal.OpenEx('tmp/tmp.gpkg', gdal.OF_RASTER | gdal.OF_UPDATE, open_options = ['DRIVER=PNG', 'BAND_COUNT=1'])
+    out_ds = gdal.OpenEx('tmp/tmp.gpkg', gdal.OF_RASTER | gdal.OF_UPDATE, open_options = ['TILE_FORMAT=PNG', 'BAND_COUNT=1'])
     out_ds.BuildOverviews('NEAR', [2])
     out_ds = None
     ds = None
@@ -1614,10 +1614,10 @@ def gpkg_17():
 
     # Without padding, after reopening
     ds = gdal.Open('data/byte.tif')
-    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', ds, options = ['DRIVER=PNG', 'BLOCKSIZE=10'] )
+    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', ds, options = ['TILE_FORMAT=PNG', 'BLOCKSIZE=10'] )
     out_ds = None
     # FIXME? Should we eventually write the driver somewhere in metadata ?
-    out_ds = gdal.OpenEx('tmp/tmp.gpkg', gdal.OF_RASTER | gdal.OF_UPDATE, open_options = ['DRIVER=PNG'])
+    out_ds = gdal.OpenEx('tmp/tmp.gpkg', gdal.OF_RASTER | gdal.OF_UPDATE, open_options = ['TILE_FORMAT=PNG'])
     out_ds.BuildOverviews('NEAR', [2])
     out_ds = None
     ds = None
@@ -1736,7 +1736,7 @@ def gpkg_18():
 
     # Without padding, immediately after create copy
     ds = gdal.Open('data/small_world.tif')
-    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', ds, options = ['DRIVER=PNG', 'BLOCKXSIZE=100', 'BLOCKYSIZE=100'] )
+    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', ds, options = ['TILE_FORMAT=PNG', 'BLOCKXSIZE=100', 'BLOCKYSIZE=100'] )
     out_ds.BuildOverviews('CUBIC', [2, 4])
     out_ds = None
     
@@ -1855,7 +1855,7 @@ def gpkg_18():
 
     # Without padding, immediately after create copy
     ds = gdal.Open('data/small_world.tif')
-    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', ds, options = ['DRIVER=PNG', 'BLOCKXSIZE=100', 'BLOCKYSIZE=100'] )
+    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', ds, options = ['TILE_FORMAT=PNG', 'BLOCKXSIZE=100', 'BLOCKYSIZE=100'] )
     # Should not result in gpkg_zoom_other
     ret = out_ds.BuildOverviews('NEAR', [8])
     if ret != 0:
@@ -1890,7 +1890,7 @@ def gpkg_19():
 
     # Without padding, immediately after create copy
     ds = gdal.Open('data/small_world_pct.tif')
-    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', ds, options = ['DRIVER=PNG', 'BLOCKXSIZE=100', 'BLOCKYSIZE=100'] )
+    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', ds, options = ['TILE_FORMAT=PNG', 'BLOCKXSIZE=100', 'BLOCKYSIZE=100'] )
     out_ds.BuildOverviews('NEAR', [2, 4])
     out_ds = None
     
@@ -1944,7 +1944,7 @@ def gpkg_20():
 
     # Without padding, with small tiles (<=256x256)
     ds = gdal.Open('data/small_world.tif')
-    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', ds, options = ['DRIVER=PNG8', 'BLOCKSIZE=200'] )
+    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', ds, options = ['TILE_FORMAT=PNG8', 'BLOCKSIZE=200'] )
     out_ds = None
     ds = None
 
@@ -1963,7 +1963,7 @@ def gpkg_20():
 
     # Without padding, with big tiles (>256x256)
     ds = gdal.Open('data/small_world.tif')
-    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', ds, options = ['DRIVER=PNG8', 'BLOCKXSIZE=400', 'BLOCKYSIZE=200'] )
+    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', ds, options = ['TILE_FORMAT=PNG8', 'BLOCKXSIZE=400', 'BLOCKYSIZE=200'] )
     out_ds = None
     ds = None
 
@@ -1982,7 +1982,7 @@ def gpkg_20():
 
     # With and without padding, with small tiles
     ds = gdal.Open('data/small_world.tif')
-    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', ds, options = ['DRIVER=PNG8', 'BLOCKSIZE=150'] )
+    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', ds, options = ['TILE_FORMAT=PNG8', 'BLOCKSIZE=150'] )
     out_ds = None
     ds = None
 
@@ -2008,7 +2008,7 @@ def gpkg_20():
     ds.GetRasterBand(2).Fill(2)
     ds.GetRasterBand(3).Fill(3)
     ds.SetGeoTransform([0,1,0,0,0,-1])
-    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', ds, options = ['DRIVER=PNG8', 'BLOCKSIZE=50'] )
+    out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', ds, options = ['TILE_FORMAT=PNG8', 'BLOCKSIZE=50'] )
     out_ds = None
     ds = None
 
@@ -2377,7 +2377,7 @@ def gpkg_22(tile_drv_name = 'PNG'):
 
     tmp_ds = get_georeferenced_greyalpha_ds()
     if tile_drv_name:
-        options = ['DRIVER=' + tile_drv_name, 'BLOCKSIZE=16']
+        options = ['TILE_FORMAT=' + tile_drv_name, 'BLOCKSIZE=16']
     else:
         options = ['BLOCKSIZE=16'] 
     out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', tmp_ds, options = options)
@@ -2465,7 +2465,7 @@ def gpkg_26():
     for (scheme, expected_cs, other_options) in tests:
 
         src_ds = gdal.Open('data/byte.tif')
-        options = ['DRIVER=PNG', 'TILING_SCHEME='+scheme]
+        options = ['TILE_FORMAT=PNG', 'TILING_SCHEME='+scheme]
         if other_options:
             options = options + other_options
         ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', src_ds, options = options)
@@ -2487,7 +2487,7 @@ def gpkg_26():
     for (scheme, expected_cs, other_options) in tests:
 
         src_ds = gdal.Open('data/small_world.tif')
-        options = ['DRIVER=PNG', 'TILING_SCHEME='+scheme]
+        options = ['TILE_FORMAT=PNG', 'TILING_SCHEME='+scheme]
         if other_options:
             options = options + other_options
         ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', src_ds, options = options)
