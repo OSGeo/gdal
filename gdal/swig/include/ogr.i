@@ -231,13 +231,13 @@ typedef void retGetPoints;
 %constant wkbMultiCurveZ = 1011;
 %constant wkbMultiSurfaceZ = 1012;
 
-%constant wkbPoint25D =              wkbPoint              + wkb25DBit;
-%constant wkbLineString25D =         wkbLineString         + wkb25DBit;
-%constant wkbPolygon25D =            wkbPolygon            + wkb25DBit;
-%constant wkbMultiPoint25D =         wkbMultiPoint         + wkb25DBit;
-%constant wkbMultiLineString25D =    wkbMultiLineString    + wkb25DBit;
-%constant wkbMultiPolygon25D =       wkbMultiPolygon       + wkb25DBit;
-%constant wkbGeometryCollection25D = wkbGeometryCollection + wkb25DBit;
+%constant wkbPoint25D =              0x80000001;
+%constant wkbLineString25D =         0x80000002;
+%constant wkbPolygon25D =            0x80000003;
+%constant wkbMultiPoint25D =         0x80000004;
+%constant wkbMultiLineString25D =    0x80000005;
+%constant wkbMultiPolygon25D =       0x80000006;
+%constant wkbGeometryCollection25D = 0x80000007;
 
 %constant OFTInteger = 0;
 %constant OFTIntegerList= 1;
