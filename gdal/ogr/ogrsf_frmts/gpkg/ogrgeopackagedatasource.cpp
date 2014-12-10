@@ -660,7 +660,12 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
             return FALSE;
         }
 
-        if( oResult.nRowCount == 1 )
+        if( oResult.nRowCount == 0 && osSubdatasetTableName.size() )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Cannot find table '%s' in GeoPackage dataset",
+                     osSubdatasetTableName.c_str());
+        }
+        else if( oResult.nRowCount == 1 )
         {
             const char *pszTableName = SQLResultGetValue(&oResult, 0, 0);
             const char* pszIdentifier = SQLResultGetValue(&oResult, 1, 0);

@@ -998,6 +998,13 @@ def gpkg_14():
     src_ds = gdal.Open('data/small_world.tif')
     ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', src_ds, options = ['TILE_FORMAT=PNG', 'RASTER_TABLE=foo', 'RASTER_IDENTIFIER=bar', 'RASTER_DESCRIPTION=baz'])
     ds = None
+    
+    gdal.PushErrorHandler()
+    ds = gdal.OpenEx('tmp/tmp.gpkg', open_options = ['TABLE=non_existing'])
+    gdal.PopErrorHandler()
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
 
     ds = gdal.Open('tmp/tmp.gpkg')
     sql_lyr = ds.ExecuteSQL("SELECT * FROM gpkg_contents WHERE table_name='foo'")
