@@ -624,10 +624,13 @@ class CPL_DLL OGRCircularString : public OGRSimpleCurve
  * Utility class to store a collection of curves. Used as a member of
  * OGRCompoundCurve and OGRCurvePolygon.
  *
+ * This class is only exported because of linking issues. It should never
+ * be directly used.
+ *
  * @since GDAL 2.0
  */
 
-class OGRCurveCollection
+class CPL_DLL OGRCurveCollection
 {
   protected:
     friend class OGRCompoundCurve;
