@@ -483,9 +483,6 @@ def gpkg_3():
     # Check updating a non-WEBP dataset with DRIVER=WEBP
     out_ds = gdaltest.gpkg_dr.Create('tmp/tmp.gpkg', 1, 1 )
     out_ds.SetGeoTransform([0,1,0,0,0,-1])
-    srs = osr.SpatialReference()
-    srs.ImportFromEPSG(4326)
-    out_ds.SetProjection(srs.ExportToWkt())
     out_ds = None
 
     out_ds = gdal.OpenEx('tmp/tmp.gpkg', gdal.OF_RASTER | gdal.OF_UPDATE, open_options=['DRIVER=WEBP'])
@@ -602,9 +599,6 @@ def get_georeferenced_rgba_ds(alpha_fully_transparent = False, alpha_fully_opaqu
     tmp_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tmp.tif',
                                     src_ds.RasterXSize, src_ds.RasterYSize, 4)
     tmp_ds.SetGeoTransform([0,10,0,0,0,-10])
-    srs = osr.SpatialReference()
-    srs.ImportFromEPSG(4326)
-    tmp_ds.SetProjection(srs.ExportToWkt())
     tmp_ds.WriteRaster(0, 0, src_ds.RasterXSize, src_ds.RasterYSize,
                        src_ds.ReadRaster(0, 0, src_ds.RasterXSize, src_ds.RasterYSize))
     if alpha_fully_opaque:
@@ -721,9 +715,6 @@ def get_georeferenced_ds_with_pct32():
     tmp_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tmp.tif',
                                     src_ds.RasterXSize, src_ds.RasterYSize)
     tmp_ds.SetGeoTransform([0,10,0,0,0,-10])
-    srs = osr.SpatialReference()
-    srs.ImportFromEPSG(4326)
-    tmp_ds.SetProjection(srs.ExportToWkt())
     tmp_ds.GetRasterBand(1).SetColorTable(src_ds.GetRasterBand(1).GetColorTable())
     tmp_ds.WriteRaster(0, 0, src_ds.RasterXSize, src_ds.RasterYSize,
                        src_ds.ReadRaster(0, 0, src_ds.RasterXSize, src_ds.RasterYSize))
@@ -1252,9 +1243,6 @@ def gpkg_14():
     # Open and fill with an area of interest larger/containing the natural extent
     ds = gdaltest.gpkg_dr.Create('tmp/tmp.gpkg', 20, 20, 1, options = ['BLOCKSIZE=20'])
     ds.SetGeoTransform([0,1,0,0,0,-1])
-    sr = osr.SpatialReference()
-    sr.ImportFromEPSG(4326)
-    ds.SetProjection(sr.ExportToWkt())
     ds = None
 
     ds = gdal.OpenEx('tmp/tmp.gpkg', gdal.OF_UPDATE, open_options = ['MINX=-5', 'MAXY=5', 'MAXX=25', 'MINY=-25', 'BAND_COUNT=1'])
@@ -1276,9 +1264,6 @@ def gpkg_14():
     # (and smaller than the block size actually)
     ds = gdaltest.gpkg_dr.Create('tmp/tmp.gpkg', 20, 20, 1, options = ['BLOCKSIZE=20'])
     ds.SetGeoTransform([0,1,0,0,0,-1])
-    sr = osr.SpatialReference()
-    sr.ImportFromEPSG(4326)
-    ds.SetProjection(sr.ExportToWkt())
     ds = None
 
     ds = gdal.OpenEx('tmp/tmp.gpkg', gdal.OF_UPDATE, open_options = ['MINX=5', 'MAXY=-5', 'MAXX=15', 'MINY=-15', 'BAND_COUNT=1'])
@@ -1301,9 +1286,6 @@ def gpkg_14():
     # size (because the raster size is smaller than the block size)
     ds = gdaltest.gpkg_dr.Create('tmp/tmp.gpkg', 400, 200, 1)
     ds.SetGeoTransform([-180,0.9,0,90,0,-0.9])
-    sr = osr.SpatialReference()
-    sr.ImportFromEPSG(4326)
-    ds.SetProjection(sr.ExportToWkt())
     ds = None
 
     ds = gdal.OpenEx('tmp/tmp.gpkg', gdal.OF_UPDATE, open_options = ['MINX=-5', 'MAXY=5', 'MAXX=25', 'MINY=-25', 'BAND_COUNT=1'])
@@ -1324,9 +1306,6 @@ def gpkg_14():
     # Test reading block from partial tile database
     ds = gdaltest.gpkg_dr.Create('tmp/tmp.gpkg', 512, 256, 4)
     ds.SetGeoTransform([0,1,0,0,0,-1])
-    sr = osr.SpatialReference()
-    sr.ImportFromEPSG(4326)
-    ds.SetProjection(sr.ExportToWkt())
     ds = None
 
     ds = gdal.OpenEx('tmp/tmp.gpkg', gdal.OF_UPDATE, open_options = ['MINX=-5', 'MAXY=5', 'DRIVER=PNG'])
@@ -1403,7 +1382,7 @@ def gpkg_15():
 
     os.remove('tmp/tmp.gpkg')
 
-    # Repeated SetGeoTransform() and SetProjection()
+    # Repeated SetGeoTransform()
     out_ds = gdaltest.gpkg_dr.Create('tmp/tmp.gpkg',1,1)
     ret = out_ds.SetGeoTransform([0,1,0,0,0,-1])
     if ret != 0:
@@ -1415,15 +1394,44 @@ def gpkg_15():
     if ret == 0:
         gdaltest.post_reason('fail')
         return 'fail'
+    out_ds = None
 
+    # Repeated SetProjection()
+    out_ds = gdal.Open('tmp/tmp.gpkg',gdal.GA_Update)
+    if out_ds.GetProjectionRef() != '':
+        gdaltest.post_reason('fail')
+        return 'fail'
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(4326)
     ret = out_ds.SetProjection(srs.ExportToWkt())
     if ret != 0:
         gdaltest.post_reason('fail')
         return 'fail'
+    if out_ds.GetProjectionRef().find('4326') < 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    out_ds = None
+    
+    out_ds = gdal.Open('tmp/tmp.gpkg',gdal.GA_Update)
+    if out_ds.GetProjectionRef().find('4326') < 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    out_ds.SetProjection('')
+    out_ds = None
+    
+    out_ds = gdal.Open('tmp/tmp.gpkg')
+    if out_ds.GetProjectionRef() != '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    # Test setting on read-only dataset
     gdal.PushErrorHandler()
-    ret = out_ds.SetProjection(srs.ExportToWkt())
+    ret = out_ds.SetProjection('')
+    gdal.PopErrorHandler()
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.PushErrorHandler()
+    ret = out_ds.SetGeoTransform([0,1,0,0,0,-1])
     gdal.PopErrorHandler()
     if ret == 0:
         gdaltest.post_reason('fail')
@@ -1435,7 +1443,6 @@ def gpkg_15():
     # Test SetColorInterpretation()
     out_ds = gdaltest.gpkg_dr.Create('tmp/tmp.gpkg',1,1)
     out_ds.SetGeoTransform([0,1,0,0,0,-1])
-    out_ds.SetProjection(srs.ExportToWkt())
     ret = out_ds.GetRasterBand(1).SetColorInterpretation(gdal.GCI_Undefined)
     if ret != 0:
         gdaltest.post_reason('fail')
@@ -1460,7 +1467,6 @@ def gpkg_15():
     
     out_ds = gdaltest.gpkg_dr.Create('tmp/tmp.gpkg',1,1,3)
     out_ds.SetGeoTransform([0,1,0,0,0,-1])
-    out_ds.SetProjection(srs.ExportToWkt())
     ret = out_ds.GetRasterBand(1).SetColorInterpretation(gdal.GCI_RedBand)
     if ret != 0:
         gdaltest.post_reason('fail')
@@ -1477,7 +1483,6 @@ def gpkg_15():
     
     out_ds = gdaltest.gpkg_dr.Create('tmp/tmp.gpkg',1,1,2)
     out_ds.SetGeoTransform([0,1,0,0,0,-1])
-    out_ds.SetProjection(srs.ExportToWkt())
     ret = out_ds.GetRasterBand(1).SetColorInterpretation(gdal.GCI_GrayIndex)
     if ret != 0:
         gdaltest.post_reason('fail')
@@ -1520,9 +1525,6 @@ def gpkg_16():
 
     out_ds = gdaltest.gpkg_dr.Create('tmp/tmp.gpkg',1,1,3, options = ['DRIVER=JPEG'])
     out_ds.SetGeoTransform([0,1,0,0,0,-1])
-    srs = osr.SpatialReference()
-    srs.ImportFromEPSG(4326)
-    out_ds.SetProjection(srs.ExportToWkt())
     out_ds.GetRasterBand(1).Fill(255)
     out_ds.GetRasterBand(1).FlushCache()
     # Rewrite same tile after re-reading it
@@ -2006,9 +2008,6 @@ def gpkg_20():
     ds.GetRasterBand(2).Fill(2)
     ds.GetRasterBand(3).Fill(3)
     ds.SetGeoTransform([0,1,0,0,0,-1])
-    srs = osr.SpatialReference()
-    srs.ImportFromEPSG(4326)
-    ds.SetProjection(srs.ExportToWkt())
     out_ds = gdaltest.gpkg_dr.CreateCopy('tmp/tmp.gpkg', ds, options = ['DRIVER=PNG8', 'BLOCKSIZE=50'] )
     out_ds = None
     ds = None
@@ -2049,9 +2048,6 @@ def gpkg_21():
 
     out_ds = gdaltest.gpkg_dr.Create('tmp/tmp.gpkg', 1, 1)
     out_ds.SetGeoTransform([0,1,0,0,0,-1])
-    srs = osr.SpatialReference()
-    srs.ImportFromEPSG(4326)
-    out_ds.SetProjection(srs.ExportToWkt())
     mddlist = out_ds.GetMetadataDomainList()
     if len(mddlist) != 2:
         gdaltest.post_reason('fail')
@@ -2341,9 +2337,6 @@ def get_georeferenced_greyalpha_ds():
     tmp_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tmp.tif',
                                     src_ds.RasterXSize, src_ds.RasterYSize, 2)
     tmp_ds.SetGeoTransform([0,10,0,0,0,-10])
-    srs = osr.SpatialReference()
-    srs.ImportFromEPSG(4326)
-    tmp_ds.SetProjection(srs.ExportToWkt())
     tmp_ds.WriteRaster(0, 0, src_ds.RasterXSize, src_ds.RasterYSize,
                        src_ds.ReadRaster(0, 0, src_ds.RasterXSize, src_ds.RasterYSize))
     return tmp_ds
@@ -2520,6 +2513,10 @@ def gpkg_26():
     os.remove('tmp/tmp.gpkg')
 
     ds = gdaltest.gpkg_dr.Create('tmp/tmp.gpkg', 1, 1, 1, options = ['TILING_SCHEME=GoogleCRS84Quad'])
+    # Test that implict SRS registration works
+    if ds.GetProjectionRef().find('4326') < 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
     gdal.PushErrorHandler()
     ret = ds.SetGeoTransform([0,10,0,0,0,-10])
     gdal.PopErrorHandler()

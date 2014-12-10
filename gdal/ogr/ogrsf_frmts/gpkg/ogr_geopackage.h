@@ -80,6 +80,7 @@ class GDALGeoPackageDataset : public OGRSQLiteBaseDataSource
     int                 m_bMetadataDirty;
     char              **m_papszSubDatasets;
     char               *m_pszProjection;
+    int                 m_bRecordInsertedInGPKGContent;
     int                 m_bGeoTransformValid;
     double              m_adfGeoTransform[6];
     int                 m_nSRID;

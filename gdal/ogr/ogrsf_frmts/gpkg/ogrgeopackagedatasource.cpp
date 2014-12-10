@@ -392,8 +392,9 @@ GDALGeoPackageDataset::GDALGeoPackageDataset()
     m_bMetadataDirty = FALSE;
     m_papszSubDatasets = NULL;
     m_pszProjection = NULL;
+    m_bRecordInsertedInGPKGContent = FALSE;
     m_bGeoTransformValid = FALSE;
-    m_nSRID = UNKNOWN_SRID;
+    m_nSRID = -1; /* unknown cartesian */
     m_adfGeoTransform[0] = 0.0;
     m_adfGeoTransform[1] = 1.0;
     m_adfGeoTransform[2] = 0.0;
@@ -446,11 +447,11 @@ GDALGeoPackageDataset::~GDALGeoPackageDataset()
     SetPamFlags(0);
 
     if( m_poParentDS == NULL && m_osRasterTable.size() &&
-        (!m_bGeoTransformValid || m_nSRID == UNKNOWN_SRID) )
+        !m_bGeoTransformValid )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Raster table %s not correctly initialized due to missing call "
-                 "to SetGeoTransform() and/or SetProjection()",
+                 "to SetGeoTransform()",
                  m_osRasterTable.c_str());
     }
     
@@ -862,7 +863,7 @@ int GDALGeoPackageDataset::InitRaster ( GDALGeoPackageDataset* poParentDS,
         m_nQuality = poParentDS->m_nQuality;
         m_nZLevel = poParentDS->m_nZLevel;
         m_bDither = poParentDS->m_bDither;
-        m_nSRID = poParentDS->m_nSRID;
+        /*m_nSRID = poParentDS->m_nSRID;*/
         m_osWHERE = poParentDS->m_osWHERE;
         SetDescription(CPLSPrintf("%s - zoom_level=%d",
                                   poParentDS->GetDescription(), m_nZoomLevel));
@@ -918,6 +919,7 @@ int GDALGeoPackageDataset::OpenRaster( const char* pszTableName,
     if( dfMinX >= dfMaxX || dfMinY >= dfMaxY )
         return FALSE;
 
+    m_bRecordInsertedInGPKGContent = TRUE;
     m_nSRID = nSRSId;
     if( nSRSId > 0 )
     {
@@ -1106,24 +1108,33 @@ CPLErr GDALGeoPackageDataset::SetProjection( const char* pszProjection )
                  "SetProjection() not supported on a dataset with 0 band");
         return CE_Failure;
     }
-    if( m_nSRID != UNKNOWN_SRID )
+    if( eAccess != GA_Update )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
-                 "Cannot modify projection once set");
+                 "SetProjection() not supported on read-only dataset");
         return CE_Failure;
     }
-    OGRSpatialReference oSRS;
-    if( oSRS.SetFromUserInput(pszProjection) != OGRERR_NONE )
-        return CE_Failure;
 
-    m_nSRID = GetSrsId( &oSRS );
+    int nSRID;
+    if( pszProjection == NULL || pszProjection[0] == '\0' )
+    {
+        nSRID = -1;
+    }
+    else
+    {
+        OGRSpatialReference oSRS;
+        if( oSRS.SetFromUserInput(pszProjection) != OGRERR_NONE )
+            return CE_Failure;
+        nSRID = GetSrsId( &oSRS );
+    }
+
     for(size_t iScheme = 0;
                iScheme < sizeof(asTilingShemes)/sizeof(asTilingShemes[0]);
                iScheme++ )
     {
         if( EQUAL(m_osTilingScheme, asTilingShemes[iScheme].pszName) )
         {
-            if( m_nSRID != asTilingShemes[iScheme].nEPSGCode )
+            if( nSRID != asTilingShemes[iScheme].nEPSGCode )
             {
                 CPLError(CE_Failure, CPLE_NotSupported,
                         "Projection should be EPSG:%d for %s tiling scheme",
@@ -1134,8 +1145,27 @@ CPLErr GDALGeoPackageDataset::SetProjection( const char* pszProjection )
         }
     }
 
-    if( m_bGeoTransformValid )
-        return FinalizeRasterRegistration();
+    m_nSRID = nSRID;
+    CPLFree(m_pszProjection);
+    m_pszProjection = pszProjection ? CPLStrdup(pszProjection) : CPLStrdup("");
+
+    if( m_bRecordInsertedInGPKGContent )
+    {
+        char* pszSQL = sqlite3_mprintf("UPDATE gpkg_contents SET srs_id = %d WHERE table_name = '%q'",
+                                        m_nSRID, m_osRasterTable.c_str());
+        OGRErr eErr = SQLCommand(hDB, pszSQL);
+        sqlite3_free(pszSQL);
+        if ( eErr != OGRERR_NONE )
+            return CE_Failure;
+
+        pszSQL = sqlite3_mprintf("UPDATE gpkg_tile_matrix_set SET srs_id = %d WHERE table_name = '%q'",
+                                 m_nSRID, m_osRasterTable.c_str());
+        eErr = SQLCommand(hDB, pszSQL);
+        sqlite3_free(pszSQL);
+        if ( eErr != OGRERR_NONE )
+            return CE_Failure;
+    }
+
     return CE_None;
 }
 
@@ -1162,6 +1192,12 @@ CPLErr GDALGeoPackageDataset::SetGeoTransform( double* padfGeoTransform )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "SetGeoTransform() not supported on a dataset with 0 band");
+        return CE_Failure;
+    }
+    if( eAccess != GA_Update )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "SetGeoTransform() not supported on read-only dataset");
         return CE_Failure;
     }
     if( m_bGeoTransformValid )
@@ -1210,10 +1246,8 @@ CPLErr GDALGeoPackageDataset::SetGeoTransform( double* padfGeoTransform )
 
     memcpy(m_adfGeoTransform, padfGeoTransform, 6 * sizeof(double));
     m_bGeoTransformValid = TRUE;
-    
-    if( m_nSRID != UNKNOWN_SRID )
-        return FinalizeRasterRegistration();
-    return CE_None;
+
+    return FinalizeRasterRegistration();
 }
 
 /************************************************************************/
@@ -1344,6 +1378,7 @@ CPLErr GDALGeoPackageDataset::FinalizeRasterRegistration()
         }
     }
     m_nOverviewCount = m_nZoomLevel;
+    m_bRecordInsertedInGPKGContent = TRUE;
 
     return CE_None;
 }
@@ -2691,6 +2726,16 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
                                 m_osTilingScheme.c_str());
                         return FALSE;
                     }
+
+                    /* Implicitely sets SRS */
+                    OGRSpatialReference oSRS;
+                    if( oSRS.importFromEPSG(asTilingShemes[iScheme].nEPSGCode) != OGRERR_NONE )
+                        return FALSE;
+                    char* pszWKT = NULL;
+                    oSRS.exportToWkt(&pszWKT);
+                    SetProjection(pszWKT);
+                    CPLFree(pszWKT);
+
                     bFound = TRUE;
                     break;
                 }
