@@ -83,14 +83,20 @@ static int OGRNASDriverIdentify( GDALOpenInfo* poOpenInfo )
         return FALSE;
     szPtr = (const char*)poOpenInfo->pabyHeader;
 
-    if( strstr(szPtr,"opengis.net/gml") == NULL
-        || (strstr(szPtr,"NAS-Operationen.xsd") == NULL &&
-            strstr(szPtr,"NAS-Operationen_optional.xsd") == NULL &&
-            strstr(szPtr,"AAA-Fachschema.xsd") == NULL ) )
-    {
+    if( strstr(szPtr,"opengis.net/gml") == NULL )
         return FALSE;
+
+    char **papszIndicators = CSLTokenizeStringComplex( CPLGetConfigOption( "NAS_INDICATOR", "NAS-Operationen.xsd;NAS-Operationen_optional.xsd;AAA-Fachschema.xsd" ), ";", 0, 0 );
+
+    bool bFound = FALSE;
+    for( int i = 0; papszIndicators[i] && !bFound; i++ )
+    {
+	bFound = strstr( szPtr, papszIndicators[i] ) != NULL;
     }
-    return TRUE;
+
+    CSLDestroy( papszIndicators );
+
+    return bFound;
 }
 
 /************************************************************************/

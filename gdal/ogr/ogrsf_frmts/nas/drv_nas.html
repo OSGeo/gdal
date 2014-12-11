@@ -17,6 +17,11 @@ library.<p>
 This driver was implemented within the context of the PostNAS project
 which has more information on it's use.<p>
 
+The driver looks for "opengis.net/gml" and one of the strings semicolon
+separated strings listed in the option NAS_INDICATOR (which defaults to
+"NAS-Operationen.xsd;NAS-Operationen_optional.xsd;AAA-Fachschema.xsd") to
+determine if a input is a NAS file and ignores all files without any matches.
+
 <h2>See Also</h2>
 
 <ul>
