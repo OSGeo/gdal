@@ -147,6 +147,16 @@ GDALResampleChunk32R_Near( double dfXRatioDstToSrc,
                         nDstXOff, nDstXOff2,
                         nDstYOff, nDstYOff2,
                         poOverview);
+    else if (eWrkDataType == GDT_UInt16)
+        return GDALResampleChunk32R_NearT(dfXRatioDstToSrc,
+                        dfYRatioDstToSrc,
+                        eWrkDataType,
+                        (GInt16 *) pChunk,
+                        nChunkXOff, nChunkXSize,
+                        nChunkYOff,
+                        nDstXOff, nDstXOff2,
+                        nDstYOff, nDstYOff2,
+                        poOverview);
     else if (eWrkDataType == GDT_Float32)
         return GDALResampleChunk32R_NearT(dfXRatioDstToSrc,
                         dfYRatioDstToSrc,
@@ -317,7 +327,7 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
         if (poColorTable == NULL)
         {
             if (bSrcXSpacingIsTwo && nSrcYOff2 == nSrcYOff + 2 &&
-                pabyChunkNodataMask == NULL && eWrkDataType == GDT_Byte)
+                pabyChunkNodataMask == NULL && (eWrkDataType == GDT_Byte || eWrkDataType == GDT_UInt16))
             {
                 /* Optimized case : no nodata, overview by a factor of 2 and regular x and y src spacing */
                 T* pSrcScanlineShifted = pChunk + panSrcXOffShifted[0] + (nSrcYOff - nChunkYOff) * nChunkXSize;
@@ -364,7 +374,7 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
 
                     if( nCount == 0 )
                         pDstScanline[iDstPixel] = tNoDataValue;
-                    else if (eWrkDataType == GDT_Byte)
+                    else if (eWrkDataType == GDT_Byte || eWrkDataType == GDT_UInt16)
                         pDstScanline[iDstPixel] = (T) ((dfTotal + nCount / 2) / nCount);
                     else
                         pDstScanline[iDstPixel] = (T) (dfTotal / nCount);
@@ -450,6 +460,19 @@ GDALResampleChunk32R_Average( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
         return GDALResampleChunk32R_AverageT<GByte, int>(dfXRatioDstToSrc, dfYRatioDstToSrc,
                         eWrkDataType,
                         (GByte *) pChunk,
+                        pabyChunkNodataMask,
+                        nChunkXOff, nChunkXSize,
+                        nChunkYOff, nChunkYSize,
+                        nDstXOff, nDstXOff2,
+                        nDstYOff, nDstYOff2,
+                        poOverview,
+                        pszResampling,
+                        bHasNoData, fNoDataValue,
+                        poColorTable);
+    else if (eWrkDataType == GDT_UInt16 && dfXRatioDstToSrc * dfYRatioDstToSrc < 65536 )
+        return GDALResampleChunk32R_AverageT<GUInt16, GUInt32>(dfXRatioDstToSrc, dfYRatioDstToSrc,
+                        eWrkDataType,
+                        (GUInt16 *) pChunk,
                         pabyChunkNodataMask,
                         nChunkXOff, nChunkXSize,
                         nChunkYOff, nChunkYSize,
@@ -1112,11 +1135,11 @@ template<class T> static inline void GDALResampleConvolutionVertical_2cols(
 #include <gdalsse_priv.h>
 
 /************************************************************************/
-/*              GDALResampleConvolutionHorizontal<GByte>                */
+/*              GDALResampleConvolutionHorizontalSSE2<T>                */
 /************************************************************************/
 
-template<> inline double GDALResampleConvolutionHorizontal<GByte>(
-                         const GByte* pChunk, const double* padfWeightsAligned, int nSrcPixelCount)
+template<class T> static inline double GDALResampleConvolutionHorizontalSSE2(
+                         const T* pChunk, const double* padfWeightsAligned, int nSrcPixelCount)
 {
     XMMReg4Double v_acc1 = XMMReg4Double::Zero();
     XMMReg4Double v_acc2 = XMMReg4Double::Zero();
@@ -1144,8 +1167,28 @@ template<> inline double GDALResampleConvolutionHorizontal<GByte>(
     return dfVal;
 }
 
-template<> inline void GDALResampleConvolutionHorizontalWithMask<GByte>(
-                            const GByte* pChunk, const GByte* pabyMask,
+/************************************************************************/
+/*              GDALResampleConvolutionHorizontal<GByte>                */
+/************************************************************************/
+
+template<> inline double GDALResampleConvolutionHorizontal<GByte>(
+                         const GByte* pChunk, const double* padfWeightsAligned, int nSrcPixelCount)
+{
+    return GDALResampleConvolutionHorizontalSSE2(pChunk, padfWeightsAligned, nSrcPixelCount);
+}
+
+template<> inline double GDALResampleConvolutionHorizontal<GUInt16>(
+                         const GUInt16* pChunk, const double* padfWeightsAligned, int nSrcPixelCount)
+{
+    return GDALResampleConvolutionHorizontalSSE2(pChunk, padfWeightsAligned, nSrcPixelCount);
+}
+
+/************************************************************************/
+/*              GDALResampleConvolutionHorizontalWithMaskSSE2<T>        */
+/************************************************************************/
+
+template<class T> static inline void GDALResampleConvolutionHorizontalWithMaskSSE2(
+                            const T* pChunk, const GByte* pabyMask,
                             const double* padfWeightsAligned, int nSrcPixelCount,
                             double& dfVal, double &dfWeightSum)
 {
@@ -1173,8 +1216,38 @@ template<> inline void GDALResampleConvolutionHorizontalWithMask<GByte>(
     }
 }
 
-template<> inline void GDALResampleConvolutionHorizontal_3rows<GByte>(
-                            const GByte* pChunkRow1, const GByte* pChunkRow2, const GByte* pChunkRow3,
+/************************************************************************/
+/*              GDALResampleConvolutionHorizontalWithMask<GByte>        */
+/************************************************************************/
+
+template<> inline void GDALResampleConvolutionHorizontalWithMask<GByte>(
+                            const GByte* pChunk, const GByte* pabyMask,
+                            const double* padfWeightsAligned, int nSrcPixelCount,
+                            double& dfVal, double &dfWeightSum)
+{
+    GDALResampleConvolutionHorizontalWithMaskSSE2(pChunk, pabyMask,
+                                                  padfWeightsAligned,
+                                                  nSrcPixelCount,
+                                                  dfVal, dfWeightSum);
+}
+
+template<> inline void GDALResampleConvolutionHorizontalWithMask<GUInt16>(
+                            const GUInt16* pChunk, const GByte* pabyMask,
+                            const double* padfWeightsAligned, int nSrcPixelCount,
+                            double& dfVal, double &dfWeightSum)
+{
+    GDALResampleConvolutionHorizontalWithMaskSSE2(pChunk, pabyMask,
+                                                  padfWeightsAligned,
+                                                  nSrcPixelCount,
+                                                  dfVal, dfWeightSum);
+}
+
+/************************************************************************/
+/*              GDALResampleConvolutionHorizontal_3rows_SSE2<T>         */
+/************************************************************************/
+
+template<class T> static inline void GDALResampleConvolutionHorizontal_3rows_SSE2(
+                            const T* pChunkRow1, const T* pChunkRow2, const T* pChunkRow3,
                             const double* padfWeightsAligned, int nSrcPixelCount,
                             double& dfRes1, double& dfRes2, double& dfRes3)
 {
@@ -1220,8 +1293,36 @@ template<> inline void GDALResampleConvolutionHorizontal_3rows<GByte>(
     }
 }
 
-template<> inline void GDALResampleConvolutionHorizontalPixelCountLess8_3rows<GByte>(
+/************************************************************************/
+/*              GDALResampleConvolutionHorizontal_3rows<GByte>          */
+/************************************************************************/
+
+template<> inline void GDALResampleConvolutionHorizontal_3rows<GByte>(
                             const GByte* pChunkRow1, const GByte* pChunkRow2, const GByte* pChunkRow3,
+                            const double* padfWeightsAligned, int nSrcPixelCount,
+                            double& dfRes1, double& dfRes2, double& dfRes3)
+{
+    GDALResampleConvolutionHorizontal_3rows_SSE2(pChunkRow1, pChunkRow2, pChunkRow3,
+                                                 padfWeightsAligned, nSrcPixelCount,
+                                                 dfRes1, dfRes2, dfRes3);
+}
+
+template<> inline void GDALResampleConvolutionHorizontal_3rows<GUInt16>(
+                            const GUInt16* pChunkRow1, const GUInt16* pChunkRow2, const GUInt16* pChunkRow3,
+                            const double* padfWeightsAligned, int nSrcPixelCount,
+                            double& dfRes1, double& dfRes2, double& dfRes3)
+{
+    GDALResampleConvolutionHorizontal_3rows_SSE2(pChunkRow1, pChunkRow2, pChunkRow3,
+                                                 padfWeightsAligned, nSrcPixelCount,
+                                                 dfRes1, dfRes2, dfRes3);
+}
+
+/************************************************************************/
+/*     GDALResampleConvolutionHorizontalPixelCountLess8_3rows_SSE2<T>   */
+/************************************************************************/
+
+template<class T> static inline void GDALResampleConvolutionHorizontalPixelCountLess8_3rows_SSE2(
+                            const T* pChunkRow1, const T* pChunkRow2, const T* pChunkRow3,
                             const double* padfWeightsAligned, int nSrcPixelCount,
                             double& dfRes1, double& dfRes2, double& dfRes3)
 {
@@ -1255,6 +1356,30 @@ template<> inline void GDALResampleConvolutionHorizontalPixelCountLess8_3rows<GB
         dfRes2 += pChunkRow2[i] * padfWeightsAligned[i];
         dfRes3 += pChunkRow3[i] * padfWeightsAligned[i];
     }
+}
+
+/************************************************************************/
+/*     GDALResampleConvolutionHorizontalPixelCountLess8_3rows<GByte>    */
+/************************************************************************/
+
+template<> inline void GDALResampleConvolutionHorizontalPixelCountLess8_3rows<GByte>(
+                            const GByte* pChunkRow1, const GByte* pChunkRow2, const GByte* pChunkRow3,
+                            const double* padfWeightsAligned, int nSrcPixelCount,
+                            double& dfRes1, double& dfRes2, double& dfRes3)
+{
+    GDALResampleConvolutionHorizontalPixelCountLess8_3rows_SSE2(pChunkRow1, pChunkRow2, pChunkRow3,
+                                                                padfWeightsAligned, nSrcPixelCount,
+                                                                dfRes1, dfRes2, dfRes3);
+}
+
+template<> inline void GDALResampleConvolutionHorizontalPixelCountLess8_3rows<GUInt16>(
+                            const GUInt16* pChunkRow1, const GUInt16* pChunkRow2, const GUInt16* pChunkRow3,
+                            const double* padfWeightsAligned, int nSrcPixelCount,
+                            double& dfRes1, double& dfRes2, double& dfRes3)
+{
+    GDALResampleConvolutionHorizontalPixelCountLess8_3rows_SSE2(pChunkRow1, pChunkRow2, pChunkRow3,
+                                                                padfWeightsAligned, nSrcPixelCount,
+                                                                dfRes1, dfRes2, dfRes3);
 }
 
 #endif /*  USE_SSE2 */
@@ -1608,6 +1733,19 @@ static CPLErr GDALResampleChunk32R_Convolution(
                         pfnFilterFunc,
                         pfnFilterFunc4Values,
                         nKernelRadius);
+   else if (eWrkDataType == GDT_UInt16)
+        return GDALResampleChunk32R_ConvolutionT(dfXRatioDstToSrc, dfYRatioDstToSrc,
+                        dfSrcXDelta, dfSrcYDelta,
+                        (GUInt16 *) pChunk, pabyChunkNodataMask,
+                        nChunkXOff, nChunkXSize, 
+                        nChunkYOff, nChunkYSize,
+                        nDstXOff, nDstXOff2,
+                        nDstYOff, nDstYOff2,
+                        poOverview,
+                        bHasNoData, fNoDataValue,
+                        pfnFilterFunc,
+                        pfnFilterFunc4Values,
+                        nKernelRadius);
     else if (eWrkDataType == GDT_Float32)
         return GDALResampleChunk32R_ConvolutionT(dfXRatioDstToSrc, dfYRatioDstToSrc,
                         dfSrcXDelta, dfSrcYDelta,
@@ -1947,6 +2085,14 @@ GDALDataType GDALGetOvrWorkDataType(const char* pszResampling,
          EQUAL(pszResampling,"BILINEAR")) &&
         eSrcDataType == GDT_Byte)
         return GDT_Byte;
+    else if( (EQUALN(pszResampling,"NEAR",4) ||
+         EQUALN(pszResampling,"AVER",4) ||
+         EQUAL(pszResampling,"CUBIC") ||
+         EQUAL(pszResampling,"CUBICSPLINE") ||
+         EQUAL(pszResampling,"LANCZOS") ||
+         EQUAL(pszResampling,"BILINEAR")) &&
+        eSrcDataType == GDT_UInt16)
+        return GDT_UInt16;
     else
         return GDT_Float32;
 }
@@ -2211,6 +2357,15 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
                         pabyChunk[i] = 255;
                 }
             }
+            else if (eType == GDT_UInt16)
+            {
+                GUInt16* pasChunk = (GUInt16*)pChunk;
+                for( i = nChunkYSizeQueried*nWidth - 1; i >= 0; i-- )
+                {
+                    if( pasChunk[i] == 1 )
+                        pasChunk[i] = 255;
+                }
+            }
             else {
                 CPLAssert(0);
             }
@@ -2241,6 +2396,17 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
                         pabyChunk[i] = 255;
                 }
             }
+            else if (eType == GDT_UInt16)
+            {
+                GUInt16* pasChunk = (GUInt16*)pChunk;
+                for( i = nChunkYSizeQueried*nWidth - 1; i >= 0; i-- )
+                {
+                    if( pasChunk[i] == 1 )
+                        pasChunk[i] = 0;
+                    else if( pasChunk[i] == 0 )
+                        pasChunk[i] = 255;
+                }
+            }
             else {
                 CPLAssert(0);
             }
@@ -2268,7 +2434,7 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
                 nDstYOff2 = nDstHeight;
             //CPLDebug("GDAL", "nDstYOff=%d, nDstYOff2=%d", nDstYOff, nDstYOff2);
 
-            if( eType == GDT_Byte || eType == GDT_Float32 )
+            if( eType == GDT_Byte || eType == GDT_UInt16 || eType == GDT_Float32 )
                 eErr = pfnResampleFn(dfXRatioDstToSrc, dfYRatioDstToSrc,
                                        0.0, 0.0,
                                               eType,

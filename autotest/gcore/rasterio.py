@@ -537,6 +537,28 @@ def rasterio_9():
         gdaltest.post_reason('failure')
         return 'fail'
 
+    # Test RasterBand.ReadRaster, with Bilinear and UInt16 data type
+    src_ds_uint16 = gdal.Open('data/uint16.tif')
+    tab = [ 0, None ]
+    data = src_ds_uint16.GetRasterBand(1).ReadRaster(buf_type = gdal.GDT_UInt16,
+                                          buf_xsize = 10,
+                                          buf_ysize = 10,
+                                          resample_alg = gdal.GRIORA_Bilinear,
+                                          callback = rasterio_9_progress_callback,
+                                          callback_data = tab)
+    if data is None:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    cs = rasterio_9_checksum(data, 10, 10, data_type = gdal.GDT_UInt16)
+    if cs != 1211: # checksum of gdal_translate data/byte.tif out.tif -outsize 10 10 -r BILINEAR
+        gdaltest.post_reason('failure')
+        print(cs)
+        return 'fail'
+
+    if abs(tab[0] - 1.0) > 1e-5:
+        gdaltest.post_reason('failure')
+        return 'fail'
+
 
     # Test RasterBand.ReadRaster, with Bilinear on Complex, thus using warp API
     tab = [ 0, None ]
