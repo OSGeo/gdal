@@ -2171,6 +2171,12 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
     if (!OpenOrCreateDB(bFileExists ? SQLITE_OPEN_READWRITE : SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE))
         return FALSE;
 
+    /* Default to synchronous=off for performance for new file */
+    if( !bFileExists && CPLGetConfigOption("OGR_SQLITE_SYNCHRONOUS", NULL) == NULL )
+    {
+        sqlite3_exec( hDB, "PRAGMA synchronous = OFF", NULL, NULL, NULL );
+    }
+
     /* OGR UTF-8 support. If we set the UTF-8 Pragma early on, it */
     /* will be written into the main file and supported henceforth */
     SQLCommand(hDB, "PRAGMA encoding = \"UTF-8\"");
@@ -2746,6 +2752,11 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
     /* is not zero length */
     SetApplicationId();
 
+    /* Default to synchronous=off for performance for new file */
+    if( !bFileExists && CPLGetConfigOption("OGR_SQLITE_SYNCHRONOUS", NULL) == NULL )
+    {
+        sqlite3_exec( hDB, "PRAGMA synchronous = OFF", NULL, NULL, NULL );
+    }
 
     return TRUE;
 }
