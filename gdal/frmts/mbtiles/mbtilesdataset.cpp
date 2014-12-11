@@ -1374,9 +1374,9 @@ int MBTilesGetBounds(OGRDataSourceH hDS,
             OGR_F_IsFieldSet(hFeat, 3))
         {
             nMinTileCol = OGR_F_GetFieldAsInteger(hFeat, 0);
-            nMaxTileCol = OGR_F_GetFieldAsInteger(hFeat, 1);
+            nMaxTileCol = OGR_F_GetFieldAsInteger(hFeat, 1) + 1;
             nMinTileRow = OGR_F_GetFieldAsInteger(hFeat, 2);
-            nMaxTileRow = OGR_F_GetFieldAsInteger(hFeat, 3);
+            nMaxTileRow = OGR_F_GetFieldAsInteger(hFeat, 3) + 1;
             bHasBounds = TRUE;
         }
 
@@ -1842,10 +1842,6 @@ GDALDataset* MBTilesDataset::Open(GDALOpenInfo* poOpenInfo)
         nMinTileRow = (int)(1.0 * nMinTileRow / (1 << nResolutions)) * (1 << nResolutions);
         nMaxTileCol = (int)ceil(1.0 * nMaxTileCol / (1 << nResolutions)) * (1 << nResolutions);
         nMaxTileRow = (int)ceil(1.0 * nMaxTileRow / (1 << nResolutions)) * (1 << nResolutions);
-        if( nMaxTileCol == nMinTileCol )
-            nMaxTileCol ++;
-        if( nMaxTileRow == nMinTileRow )
-            nMaxTileRow ++;
 
 /* -------------------------------------------------------------------- */
 /*      Compute raster size, geotransform and projection                */
