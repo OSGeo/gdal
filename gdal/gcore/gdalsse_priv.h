@@ -82,6 +82,13 @@ class XMMReg2Double
         return reg;
     }
 
+    static inline XMMReg2Double Load2Val(const unsigned short* ptr)
+    {
+        XMMReg2Double reg;
+        reg.nsLoad2Val(ptr);
+        return reg;
+    }
+    
     inline void nsLoad2Val(const double* ptr)
     {
         xmm = _mm_loadu_pd(ptr);
@@ -106,10 +113,20 @@ class XMMReg2Double
         memcpy(&i, ptr, 4);
         __m128i xmm_i = _mm_cvtsi32_si128(i);
         xmm_i = _mm_unpacklo_epi16(xmm_i,xmm_i); /* 0|0|0|0|0|0|b|a --> 0|0|0|0|b|b|a|a */
-        xmm_i = _mm_srai_epi32(xmm_i, 16);     /* 0|0|0|0|b|b|a|a --> 0|0|0|0|sign(b)|b|sign(a)|a */
+        xmm_i = _mm_srai_epi32(xmm_i, 16);       /* 0|0|0|0|b|b|a|a --> 0|0|0|0|sign(b)|b|sign(a)|a */
         xmm = _mm_cvtepi32_pd(xmm_i);
     }
 
+    inline void nsLoad2Val(const unsigned short* ptr)
+    {
+        int i;
+        memcpy(&i, ptr, 4);
+        __m128i xmm_i = _mm_cvtsi32_si128(i);
+        xmm_i = _mm_unpacklo_epi16(xmm_i,xmm_i); /* 0|0|0|0|0|0|b|a --> 0|0|0|0|b|b|a|a */
+        xmm_i = _mm_srli_epi32(xmm_i, 16);       /* 0|0|0|0|b|b|a|a --> 0|0|0|0|0|b|0|a */
+        xmm = _mm_cvtepi32_pd(xmm_i);
+    }
+    
     static inline void Load4Val(const unsigned char* ptr, XMMReg2Double& low, XMMReg2Double& high)
     {
         __m128i xmm_i = _mm_cvtsi32_si128(*(int*)(ptr));
@@ -120,6 +137,12 @@ class XMMReg2Double
     }
 
     static inline void Load4Val(const short* ptr, XMMReg2Double& low, XMMReg2Double& high)
+    {
+        low.nsLoad2Val(ptr);
+        high.nsLoad2Val(ptr+2);
+    }
+
+    static inline void Load4Val(const unsigned short* ptr, XMMReg2Double& low, XMMReg2Double& high)
     {
         low.nsLoad2Val(ptr);
         high.nsLoad2Val(ptr+2);
@@ -273,6 +296,12 @@ class XMMReg2Double
         high = ptr[1];
     }
 
+    inline void nsLoad2Val(const unsigned short* ptr)
+    {
+        low = ptr[0];
+        high = ptr[1];
+    }
+    
     static inline void Load4Val(const unsigned char* ptr, XMMReg2Double& low, XMMReg2Double& high)
     {
         low.low = ptr[0];
@@ -282,6 +311,12 @@ class XMMReg2Double
     }
 
     static inline void Load4Val(const short* ptr, XMMReg2Double& low, XMMReg2Double& high)
+    {
+        low.nsLoad2Val(ptr);
+        high.nsLoad2Val(ptr+2);
+    }
+
+    static inline void Load4Val(const unsigned short* ptr, XMMReg2Double& low, XMMReg2Double& high)
     {
         low.nsLoad2Val(ptr);
         high.nsLoad2Val(ptr+2);
@@ -395,6 +430,14 @@ class XMMReg4Double
     }
 
     static inline XMMReg4Double Load4Val(const short* ptr)
+    {
+        XMMReg4Double reg;
+        reg.low.nsLoad2Val(ptr);
+        reg.high.nsLoad2Val(ptr+2);
+        return reg;
+    }
+
+    static inline XMMReg4Double Load4Val(const unsigned short* ptr)
     {
         XMMReg4Double reg;
         reg.low.nsLoad2Val(ptr);
