@@ -895,7 +895,12 @@ CPLErr GDALRasterBand::RasterIOResampled( GDALRWFlag eRWFlag,
             if( (nDstBlockXSize == 1 && nDstBlockYSize == 1) ||
                 ((GIntBig)nFullResXChunk * nFullResYChunk <= 1024 * 1024) )
                 break;
-            if( nDstBlockXSize > 1 && nFullResXChunk > nFullResYChunk )
+            /* When operating on the full width of a raster whose block width is */
+            /* the raster width, prefer doing chunks in height */
+            if( nFullResXChunk >= nXSize && nXSize == nBlockXSize && nDstBlockYSize > 1 )
+                nDstBlockYSize /= 2;
+            /* Otherwise cut the maximal dimension */
+            else if( nDstBlockXSize > 1 && nFullResXChunk > nFullResYChunk )
                 nDstBlockXSize /= 2;
             else
                 nDstBlockYSize /= 2;
