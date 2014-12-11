@@ -133,11 +133,20 @@ int OGRNASDataSource::Open( const char * pszNewName, int bTestOpen )
 /* -------------------------------------------------------------------- */
 /*      Here, we expect the opening chevrons of NAS tree root element   */
 /* -------------------------------------------------------------------- */
-        if( szPtr[0] != '<'
-            || strstr(szPtr,"opengis.net/gml") == NULL
-            || (strstr(szPtr,"NAS-Operationen.xsd") == NULL &&
-                strstr(szPtr,"NAS-Operationen_optional.xsd") == NULL &&
-                strstr(szPtr,"AAA-Fachschema.xsd") == NULL ) )
+        bool bFound = FALSE;
+        if( szPtr[0] == '<' && strstr(szPtr,"opengis.net/gml") != NULL )
+        {
+            char **papszIndicators = CSLTokenizeStringComplex( CPLGetConfigOption( "NAS_INDICATOR", "NAS-Operationen.xsd;NAS-Operationen_optional.xsd;AAA-Fachschema.xsd" ), ";", 0, 0 );
+
+            for( int i = 0; papszIndicators[i] && !bFound; i++ )
+            {
+                bFound = strstr( szPtr, papszIndicators[i] ) != NULL;
+            }
+
+            CSLDestroy( papszIndicators );
+        }
+
+        if( !bFound )
         {
             /*CPLDebug( "NAS",
                       "Skipping. No chevrons of NAS found [%s]\n", szPtr );*/
