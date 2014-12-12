@@ -268,7 +268,8 @@ OGRErr OGRMILayerAttrIndex::LoadConfigFromXML(const char* pszRawXML)
 
     CPLDebug( "OGR", "Restored %d field indexes for layer %s from %s on %s.",
               nIndexCount, poLayer->GetLayerDefn()->GetName(), 
-              pszMetadataFilename, pszMIINDFilename );
+              pszMetadataFilename ? pszMetadataFilename : "--unknown--",
+              pszMIINDFilename );
 
     return OGRERR_NONE;
 }
