@@ -761,6 +761,9 @@ char** OGRCSVLayer::AutodetectFieldTypes(char** papszOpenOptions, int nFieldCoun
         {
             char** papszTokens = OGRCSVReadParseLineL( fpMem, chDelimiter, FALSE,
                                                        bQuotedFieldAsString );
+            /* Can happen if we just reach EOF while trying to read new bytes */
+            if( papszTokens == NULL )
+                break;
 
             /* Ignore last line if it is truncated */
             if( VSIFEofL(fpMem) && nRead == nRequested &&
