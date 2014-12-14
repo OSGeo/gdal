@@ -124,7 +124,7 @@ def test_gdal_merge_2():
     return 'success'
 
 ###############################################################################
-# Test -separate option
+# Test -separate and -v options
 
 def test_gdal_merge_3():
 
@@ -132,7 +132,7 @@ def test_gdal_merge_3():
     if script_path is None:
         return 'skip'
 
-    test_py_scripts.run_py_script(script_path, 'gdal_merge', '-separate -o tmp/test_gdal_merge_3.tif tmp/in1.tif tmp/in2.tif tmp/in3.tif tmp/in4.tif' )
+    test_py_scripts.run_py_script(script_path, 'gdal_merge', '-separate -v -o tmp/test_gdal_merge_3.tif tmp/in1.tif tmp/in2.tif tmp/in3.tif tmp/in4.tif' )
 
     ds = gdal.Open('tmp/test_gdal_merge_3.tif')
     if ds.GetProjectionRef().find('WGS 84') == -1:
