@@ -1282,34 +1282,28 @@ int CPLPrintPointer( char *pszBuffer, void *pValue, int nMaxLen )
  */
 
 int CPLPrintDouble( char *pszBuffer, const char *pszFormat,
-                    double dfValue, const char *pszLocale )
+                    double dfValue, CPL_UNUSED const char *pszLocale )
 {
-
-#define DOUBLE_BUFFER_SIZE 64
-
-    char    szTemp[DOUBLE_BUFFER_SIZE];
-    int     i;
-
     if ( !pszBuffer )
         return 0;
 
+    const int double_buffer_size = 64;
+    char szTemp[double_buffer_size];
+
 #if defined(HAVE_SNPRINTF)
-    CPLsnprintf( szTemp, DOUBLE_BUFFER_SIZE, pszFormat, dfValue );
+    CPLsnprintf( szTemp, double_buffer_size, pszFormat, dfValue );
 #else
     CPLsprintf( szTemp, pszFormat, dfValue );
 #endif
-    szTemp[DOUBLE_BUFFER_SIZE - 1] = '\0';
+    szTemp[double_buffer_size - 1] = '\0';
 
-    for( i = 0; szTemp[i] != '\0'; i++ )
+    for( int i = 0; szTemp[i] != '\0'; i++ )
     {
         if( szTemp[i] == 'E' || szTemp[i] == 'e' )
             szTemp[i] = 'D';
     }
 
     return CPLPrintString( pszBuffer, szTemp, 64 );
-
-#undef DOUBLE_BUFFER_SIZE
-
 }
 
 /************************************************************************/
