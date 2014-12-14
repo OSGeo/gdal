@@ -2946,7 +2946,7 @@ def ogr_gml_63():
     
     # check number of layers
     nlayers = ds.GetLayerCount()
-    if nlayers != 8: 
+    if nlayers != 11: 
         return 'fail'
 
     # check number of features
