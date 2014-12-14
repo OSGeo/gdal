@@ -691,9 +691,10 @@ typedef struct
     double dfXRatioDstToSrc, dfYRatioDstToSrc;
 } GDALRasterIOTransformerStruct;
 
-static int GDALRasterIOTransformer( void *pTransformerArg, 
-                        int bDstToSrc, int nPointCount, 
-                        double *x, double *y, double *z, int *panSuccess )
+static int GDALRasterIOTransformer( void *pTransformerArg,
+                                    CPL_UNUSED int bDstToSrc, int nPointCount,
+                                    double *x, double *y, CPL_UNUSED double *z,
+                                    int *panSuccess )
 {
     CPLAssert(bDstToSrc);
     GDALRasterIOTransformerStruct* psParams = (GDALRasterIOTransformerStruct*) pTransformerArg;
@@ -710,13 +711,12 @@ static int GDALRasterIOTransformer( void *pTransformerArg,
 /*                          RasterIOResampled()                         */
 /************************************************************************/
 
-CPLErr GDALRasterBand::RasterIOResampled( GDALRWFlag eRWFlag,
+CPLErr GDALRasterBand::RasterIOResampled( CPL_UNUSED GDALRWFlag eRWFlag,
                                   int nXOff, int nYOff, int nXSize, int nYSize,
                                   void * pData, int nBufXSize, int nBufYSize,
                                   GDALDataType eBufType,
                                   GSpacing nPixelSpace, GSpacing nLineSpace,
                                   GDALRasterIOExtraArg* psExtraArg )
-
 {
     CPLErr eErr = CE_None;
 
@@ -726,7 +726,7 @@ CPLErr GDALRasterBand::RasterIOResampled( GDALRWFlag eRWFlag,
         bUseWarp = FALSE;
     else
         bUseWarp = TRUE;
-    
+
     double dfXOff, dfYOff, dfXSize, dfYSize;
     if( psExtraArg->bFloatingPointWindowValidity )
     {

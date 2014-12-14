@@ -133,9 +133,10 @@ GDALResampleChunk32R_Near( double dfXRatioDstToSrc,
                         int nDstYOff, int nDstYOff2,
                         GDALRasterBand * poOverview,
                         CPL_UNUSED const char * pszResampling_unused,
-                        CPL_UNUSED int bHasNoData_unused, float fNoDataValue_unused,
+                        CPL_UNUSED int bHasNoData_unused,
+                        CPL_UNUSED float fNoDataValue_unused,
                         CPL_UNUSED GDALColorTable* poColorTable_unused,
-                        GDALDataType eSrcDataType)
+                        CPL_UNUSED GDALDataType eSrcDataType)
 {
     if (eWrkDataType == GDT_Byte)
         return GDALResampleChunk32R_NearT(dfXRatioDstToSrc,
@@ -454,7 +455,7 @@ GDALResampleChunk32R_Average( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
                         const char * pszResampling,
                         int bHasNoData, float fNoDataValue,
                         GDALColorTable* poColorTable,
-                        GDALDataType eSrcDataType)
+                        CPL_UNUSED GDALDataType eSrcDataType)
 {
     if (eWrkDataType == GDT_Byte)
         return GDALResampleChunk32R_AverageT<GByte, int>(dfXRatioDstToSrc, dfYRatioDstToSrc,
