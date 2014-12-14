@@ -37,4 +37,11 @@
                      elementValue="ST"
                      gfsSchemaLocation="ruian_vf_st_v1.gfs" />
     </namespace>
+    <namespace prefix="vf"
+               uri="urn:cz:isvs:ruian:schemas:SpecialniVymennyFormatTypy:v1 SpecialniVymennyFormatTypy.xsd"
+               useGlobalSRSName="true">
+        <featureType elementName="TypSouboru"
+                     elementValue="ST_UVOH"
+                     gfsSchemaLocation="ruian_vf_st_uvoh_v1.gfs" />
+    </namespace>
 </gml_registry>

@@ -35,7 +35,7 @@
       <Type>String</Type>
       <Width>32</Width>
     </PropertyDefn>
-    <!-- Identifikátor nesprávnosti na prvku (?) -->
+    <!-- Identifikátor nesprávnosti na prvku -->
     <PropertyDefn>
       <Name>Nespravny</Name>
       <ElementPath>Nespravny</ElementPath>
@@ -120,7 +120,7 @@
       <Type>String</Type>
       <Width>32</Width>
     </PropertyDefn>
-    <!-- Identifikátor nesprávnosti na prvku (?) -->
+    <!-- Identifikátor nesprávnosti na prvku -->
     <PropertyDefn>
       <Name>Nespravny</Name>
       <ElementPath>Nespravny</ElementPath>
@@ -211,7 +211,7 @@
       <Type>String</Type>
       <Width>32</Width>
     </PropertyDefn>
-    <!-- Identifikátor nesprávnosti na prvku (?) -->
+    <!-- Identifikátor nesprávnosti na prvku -->
     <PropertyDefn>
       <Name>Nespravny</Name>
       <ElementPath>Nespravny</ElementPath>
@@ -303,7 +303,7 @@
       <Type>String</Type>
       <Width>32</Width>
     </PropertyDefn>
-    <!-- Identifikátor nesprávnosti na prvku (?) -->
+    <!-- Identifikátor nesprávnosti na prvku -->
     <PropertyDefn>
       <Name>Nespravny</Name>
       <ElementPath>Nespravny</ElementPath>
@@ -394,7 +394,7 @@
       <Type>String</Type>
       <Width>32</Width>
     </PropertyDefn>
-    <!-- Identifikátor nesprávnosti na prvku (?) -->
+    <!-- Identifikátor nesprávnosti na prvku -->
     <PropertyDefn>
       <Name>Nespravny</Name>
       <ElementPath>Nespravny</ElementPath>
@@ -491,7 +491,7 @@
       <Type>String</Type>
       <Width>48</Width>
     </PropertyDefn>
-    <!-- Identifikátor nesprávnosti na prvku (?) -->
+    <!-- Identifikátor nesprávnosti na prvku -->
     <PropertyDefn>
       <Name>Nespravny</Name>
       <ElementPath>Nespravny</ElementPath>
@@ -581,7 +581,7 @@
       <Type>String</Type>
       <Width>48</Width>
     </PropertyDefn>
-    <!-- Identifikátor nesprávnosti na prvku (?) -->
+    <!-- Identifikátor nesprávnosti na prvku -->
     <PropertyDefn>
       <Name>Nespravny</Name>
       <ElementPath>Nespravny</ElementPath>
@@ -673,7 +673,7 @@
       <Type>String</Type>
       <Width>48</Width>
     </PropertyDefn>
-    <!-- Identifikátor nesprávnosti na prvku (?) -->
+    <!-- Identifikátor nesprávnosti na prvku -->
     <PropertyDefn>
       <Name>Nespravny</Name>
       <ElementPath>Nespravny</ElementPath>
@@ -839,7 +839,7 @@
       <Type>String</Type>
       <Width>32</Width>
     </PropertyDefn>
-    <!-- Identifikátor nesprávnosti na prvku (?) -->
+    <!-- Identifikátor nesprávnosti na prvku -->
     <PropertyDefn>
       <Name>Nespravny</Name>
       <ElementPath>Nespravny</ElementPath>
@@ -923,7 +923,7 @@
       <Type>String</Type>
       <Width>32</Width>
     </PropertyDefn>
-    <!-- Identifikátor nesprávnosti na prvku (?) -->
+    <!-- Identifikátor nesprávnosti na prvku -->
     <PropertyDefn>
       <Name>Nespravny</Name>
       <ElementPath>Nespravny</ElementPath>
@@ -1001,7 +1001,7 @@
       <Type>String</Type>
       <Width>48</Width>
     </PropertyDefn>
-    <!-- Identifikátor nesprávnosti na prvku (?) -->
+    <!-- Identifikátor nesprávnosti na prvku -->
     <PropertyDefn>
       <Name>Nespravny</Name>
       <ElementPath>Nespravny</ElementPath>
@@ -1142,7 +1142,7 @@
       <Type>String</Type>
       <Width>48</Width>
     </PropertyDefn>
-    <!-- Identifikátor nesprávnosti na prvku (?) -->
+    <!-- Identifikátor nesprávnosti na prvku -->
     <PropertyDefn>
       <Name>Nespravny</Name>
       <ElementPath>Nespravny</ElementPath>
@@ -1257,7 +1257,7 @@
       <Type>String</Type>
       <Width>48</Width>
     </PropertyDefn>
-    <!-- Identifikátor nesprávnosti na prvku (?) -->
+    <!-- Identifikátor nesprávnosti na prvku -->
     <PropertyDefn>
       <Name>Nespravny</Name>
       <ElementPath>Nespravny</ElementPath>
@@ -1383,7 +1383,7 @@
       <Type>String</Type>
       <Width>48</Width>
     </PropertyDefn>
-    <!-- Identifikátor nesprávnosti na prvku (?) -->
+    <!-- Identifikátor nesprávnosti na prvku -->
     <PropertyDefn>
       <Name>Nespravny</Name>
       <ElementPath>Nespravny</ElementPath>
