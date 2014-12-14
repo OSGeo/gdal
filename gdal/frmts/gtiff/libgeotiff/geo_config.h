@@ -4,6 +4,9 @@
 
 #include "cpl_config.h"
 #include "cpl_string.h"
+#ifdef sprintf
+#undef sprintf
+#endif
 #define sprintf CPLsprintf
 
 #ifdef RENAME_INTERNAL_LIBTIFF_SYMBOLS
