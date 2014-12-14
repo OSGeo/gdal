@@ -44,6 +44,7 @@ except:
 
 import sys
 import math
+import time
 
 __version__ = '$id$'[5:-1]
 verbose = 0
@@ -277,6 +278,7 @@ def main( argv=None ):
     band_type = None
     createonly = 0
     bTargetAlignedPixels = False
+    start_time = time.time()
     
     gdal.AllRegister()
     if argv is None:
@@ -486,9 +488,10 @@ def main( argv=None ):
         
         if verbose != 0:
             print("")
-            print("Processing file %5d of %5d, %6.3f%% completed." \
+            print("Processing file %5d of %5d, %6.3f%% completed in %d minutes." \
                   % (fi_processed+1,len(file_infos),
-                     fi_processed * 100.0 / len(file_infos)) )
+                     fi_processed * 100.0 / len(file_infos),
+                     int(round((time.time() - start_time)/60.0)) ))
             fi.report()
 
         if separate == 0 :
