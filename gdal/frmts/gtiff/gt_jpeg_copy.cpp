@@ -339,6 +339,7 @@ static void GTIFF_ErrorExitJPEG(j_common_ptr cinfo)
 /*                      GTIFF_Set_TIFFTAG_JPEGTABLES()                  */
 /************************************************************************/
 
+static
 void GTIFF_Set_TIFFTAG_JPEGTABLES(TIFF* hTIFF,
                                   jpeg_decompress_struct& sDInfo,
                                   jpeg_compress_struct& sCInfo)
@@ -346,8 +347,27 @@ void GTIFF_Set_TIFFTAG_JPEGTABLES(TIFF* hTIFF,
     char szTmpFilename[128];
     sprintf(szTmpFilename, "/vsimem/tables_%p", &sDInfo);
     VSILFILE* fpTABLES = VSIFOpenL(szTmpFilename, "wb+");
+    
+    uint16  nPhotometric;
+    TIFFGetField( hTIFF, TIFFTAG_PHOTOMETRIC, &nPhotometric );
 
     jpeg_vsiio_dest( &sCInfo, fpTABLES );
+
+    // Avoid unnecessary tables to be emitted
+    if( nPhotometric != PHOTOMETRIC_YCBCR )
+    {
+        JQUANT_TBL* qtbl;
+        JHUFF_TBL* htbl;
+        qtbl = sCInfo.quant_tbl_ptrs[1];
+        if (qtbl != NULL)
+            qtbl->sent_table = TRUE;
+        htbl = sCInfo.dc_huff_tbl_ptrs[1];
+        if (htbl != NULL)
+            htbl->sent_table = TRUE;
+        htbl = sCInfo.ac_huff_tbl_ptrs[1];
+        if (htbl != NULL)
+            htbl->sent_table = TRUE;
+    }
     jpeg_write_tables( &sCInfo );
 
     VSIFCloseL(fpTABLES);
