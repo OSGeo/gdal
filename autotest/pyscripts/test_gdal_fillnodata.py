@@ -65,11 +65,39 @@ def test_gdal_fillnodata_1():
     return 'success'
 
 ###############################################################################
+# Make sure we copy the no data value to the dst when created
+# No data value for nodata_byte.tif is 0.
+
+def test_gdal_fillnodata_2():
+
+    try:
+        x = gdal.FillNodata
+        gdaltest.have_ng = 1
+    except:
+        gdaltest.have_ng = 0
+        return 'skip'
+
+    script_path = test_py_scripts.get_py_script('gdal_fillnodata')
+    if script_path is None:
+        return 'skip'
+
+    test_py_scripts.run_py_script(script_path, 'gdal_fillnodata', '../gcore/data/nodata_byte.tif tmp/test_gdal_fillnodata_2.tif')
+
+    ds = gdal.Open('tmp/test_gdal_fillnodata_2.tif')
+    if ds.GetRasterBand(1).GetNoDataValue() != 0:
+        gdaltest.post_reason('Failed to copy No Data Value to dst dataset.')
+        return 'fail'
+    ds = None
+
+    return 'success'
+
+
+###############################################################################
 # Cleanup
 
 def test_gdal_fillnodata_cleanup():
 
-    lst = [ 'tmp/test_gdal_fillnodata_1.tif' ]
+    lst = [ 'tmp/test_gdal_fillnodata_1.tif', 'tmp/test_gdal_fillnodata_2.tif' ]
     for filename in lst:
         try:
             os.remove(filename)
@@ -80,6 +108,7 @@ def test_gdal_fillnodata_cleanup():
 
 gdaltest_list = [
     test_gdal_fillnodata_1,
+    test_gdal_fillnodata_2,
     test_gdal_fillnodata_cleanup
     ]
 
