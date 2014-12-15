@@ -431,7 +431,8 @@ def tiff_write_13():
         return 'skip'
 
     src_ds = gdal.Open('data/sasha.tif')
-    ds = gdaltest.tiff_drv.CreateCopy('tmp/sasha.tif', src_ds, options = [ 'TILED=YES',
+    ds = gdaltest.tiff_drv.CreateCopy('tmp/sasha.tif', src_ds, options = [ 'PROFILE=BASELINE',
+                                                                           'TILED=YES',
                                                                            'COMPRESS=JPEG',
                                                                            'PHOTOMETRIC=YCBCR',
                                                                            'JPEG_QUALITY=31' ])
@@ -441,9 +442,17 @@ def tiff_write_13():
     cs = ds.GetRasterBand(3).Checksum()
     ds = None
 
-    os.unlink('tmp/sasha.tif')
+    size = os.stat('tmp/sasha.tif').st_size
+
+    gdaltest.tiff_drv.Delete('tmp/sasha.tif')
     if cs != 17347 and cs != 14445:
+        gdaltest.post_reason('fail: bad checksum')
         print(cs)
+        return 'fail'
+
+    if size > 25015:
+        gdaltest.post_reason('fail: bad size')
+        print(size)
         return 'fail'
 
     return 'success'
@@ -4936,11 +4945,10 @@ def tiff_write_126():
     ds = None
 
     ds = gdal.Open('/vsimem/tiff_write_126.tif')
-    # We don't even have JPEGTABLES !
-    if ds.GetRasterBand(1).GetOverview(0) is not None:
+    if ds.GetRasterBand(1).GetOverview(0) is None:
         gdaltest.post_reason('fail')
         return 'fail'
-    if ds.GetRasterBand(1).GetMetadataItem('JPEGTABLES', 'TIFF') is not None:
+    if ds.GetRasterBand(1).GetMetadataItem('JPEGTABLES', 'TIFF') is None:
         gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetRasterBand(1).GetMetadataItem('BLOCK_OFFSET_0_0', 'TIFF') is not None:

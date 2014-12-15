@@ -9544,6 +9544,73 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
         CPLFree( panTBlue );
     }
 
+    /* Would perhaps works with libtiff 3.X but didn't bother trying */
+    /* This tricks create a temporary in-memory file and fetch his JPEG tables */
+    /* so that we can directly set them, before tif_jpeg.c compute them at */
+    /* the first strip/tile writing, which is too late, since we have already */
+    /* crystalized the directory. This way we avoid a directory rewriting */
+#if defined(BIGTIFF_SUPPORT)
+    if( nCompression == COMPRESSION_JPEG &&
+        strncmp(pszFilename, "/vsimem/gtiffdataset_jpg_tmp_",
+                strlen("/vsimem/gtiffdataset_jpg_tmp_")) != 0 )
+    {
+        CPLString osTmpFilename;
+        osTmpFilename.Printf("/vsimem/gtiffdataset_jpg_tmp_%p", hTIFF);
+        VSILFILE* fpTmp = NULL;
+        char** papszLocalParameters = NULL;
+        papszLocalParameters = CSLSetNameValue(papszLocalParameters,
+                                               "COMPRESS", "JPEG");
+        papszLocalParameters = CSLSetNameValue(papszLocalParameters,
+                "JPEG_QUALITY", CSLFetchNameValue(papszParmList, "JPEG_QUALITY"));
+        papszLocalParameters = CSLSetNameValue(papszLocalParameters,
+                "PHOTOMETRIC", CSLFetchNameValue(papszParmList, "PHOTOMETRIC"));
+        papszLocalParameters = CSLSetNameValue(papszLocalParameters,
+                                               "BLOCKYSIZE", "16");
+        papszLocalParameters = CSLSetNameValue(papszLocalParameters,
+                "NBITS", CSLFetchNameValue(papszParmList, "NBITS"));
+        TIFF* hTIFFTmp = CreateLL( osTmpFilename, 16, 16, (nBands <= 4) ? nBands : 1,
+                                   eType, 0.0, papszLocalParameters, &fpTmp );
+        CSLDestroy(papszLocalParameters);
+        if( hTIFFTmp )
+        {
+            uint16 nPhotometric;
+            TIFFGetField( hTIFFTmp, TIFFTAG_PHOTOMETRIC, &(nPhotometric) );
+            TIFFWriteCheck( hTIFFTmp, FALSE, "CreateLL" );
+            TIFFWriteDirectory( hTIFFTmp );
+            TIFFSetDirectory( hTIFFTmp, 0 );
+            // Now, reset quality and jpegcolormode. 
+            if(nJpegQuality > 0) 
+                TIFFSetField(hTIFFTmp, TIFFTAG_JPEGQUALITY, nJpegQuality); 
+            if( nPhotometric == PHOTOMETRIC_YCBCR 
+                && CSLTestBoolean( CPLGetConfigOption("CONVERT_YCBCR_TO_RGB",
+                                                    "YES") ) )
+            {
+                TIFFSetField(hTIFFTmp, TIFFTAG_JPEGCOLORMODE, JPEGCOLORMODE_RGB);
+            }
+
+            GByte abyZeroData[(16*16*4*3)/2];
+            memset(abyZeroData, 0, (16*16*4*3)/2);
+            int nBlockSize = 16 * 16 * ((nBands <= 4) ? nBands : 1);
+            if( nBitsPerSample == 12 )
+               nBlockSize = (nBlockSize * 3) / 2;
+            TIFFWriteEncodedStrip( hTIFFTmp, 0, abyZeroData, nBlockSize);
+
+            uint32 nJPEGTableSize = 0;
+            void* pJPEGTable = NULL;
+            if( TIFFGetField(hTIFFTmp, TIFFTAG_JPEGTABLES, &nJPEGTableSize, &pJPEGTable) )
+                TIFFSetField(hTIFF, TIFFTAG_JPEGTABLES, nJPEGTableSize, pJPEGTable);
+
+            float *ref;
+            if( TIFFGetField(hTIFFTmp, TIFFTAG_REFERENCEBLACKWHITE, &ref) )
+                TIFFSetField(hTIFF, TIFFTAG_REFERENCEBLACKWHITE, ref);
+
+            XTIFFClose(hTIFFTmp);
+            VSIFCloseL(fpTmp);
+        }
+        VSIUnlink(osTmpFilename);
+    }
+#endif
+
     *pfpL = fpL;
 
     return( hTIFF );
