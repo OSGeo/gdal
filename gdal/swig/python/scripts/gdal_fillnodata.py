@@ -181,7 +181,10 @@ if dst_filename is not None:
     
     dstband = dst_ds.GetRasterBand(1)
     CopyBand( srcband, dstband )
-    
+    ndv = srcband.GetNoDataValue()
+    if ndv is not None:
+        dstband.SetNoDataValue(ndv)
+
 else:
     dstband = srcband
 
