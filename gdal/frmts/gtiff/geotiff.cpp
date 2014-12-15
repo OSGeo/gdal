@@ -4809,10 +4809,11 @@ void GTiffDataset::Crystalize()
 
         // Keep zip and tiff quality, and jpegcolormode which get reset when we call 
         // TIFFWriteDirectory 
-        int jquality = -1, zquality = -1, nColorMode = -1; 
+        int jquality = -1, zquality = -1, nColorMode = -1, nJpegTablesMode = -1; 
         TIFFGetField(hTIFF, TIFFTAG_JPEGQUALITY, &jquality); 
         TIFFGetField(hTIFF, TIFFTAG_ZIPQUALITY, &zquality); 
         TIFFGetField( hTIFF, TIFFTAG_JPEGCOLORMODE, &nColorMode );
+        TIFFGetField( hTIFF, TIFFTAG_JPEGTABLESMODE, &nJpegTablesMode );
 
         TIFFWriteDirectory( hTIFF );
         TIFFSetDirectory( hTIFF, 0 );
@@ -4825,6 +4826,8 @@ void GTiffDataset::Crystalize()
             TIFFSetField(hTIFF, TIFFTAG_ZIPQUALITY, zquality);
         if (nColorMode >= 0)
             TIFFSetField(hTIFF, TIFFTAG_JPEGCOLORMODE, nColorMode);
+        if (nJpegTablesMode >= 0 )
+            TIFFSetField(hTIFF, TIFFTAG_JPEGTABLESMODE, nJpegTablesMode);
 
         nDirOffset = TIFFCurrentDirOffset( hTIFF );
     }
@@ -7111,10 +7114,40 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
             uint32 nJPEGTableSize = 0;
             void* pJPEGTable = NULL;
             if( !TIFFGetField(hTIFF, TIFFTAG_JPEGTABLES, &nJPEGTableSize, &pJPEGTable) )
-                CPLDebug("GTiff", "Could not guess JPEG quality. JPEG tables are missing, so going in TIFFTAG_JPEGTABLESMODE = 0 mode");
+            {
+                int bFoundNonEmptyBlock = FALSE;
+                toff_t *panByteCounts = NULL;
+                int nBlockCount;
+                if( poDS->nPlanarConfig == PLANARCONFIG_SEPARATE )
+                    nBlockCount = poDS->nBlocksPerBand * poDS->nBands;
+                else
+                    nBlockCount = poDS->nBlocksPerBand;
+                if( TIFFIsTiled( hTIFF ) )
+                    TIFFGetField( hTIFF, TIFFTAG_TILEBYTECOUNTS, &panByteCounts );
+                else
+                    TIFFGetField( hTIFF, TIFFTAG_STRIPBYTECOUNTS, &panByteCounts );
+                if( panByteCounts != NULL )
+                {
+                    for( int iBlock = 0; iBlock < nBlockCount; iBlock++ )
+                    {
+                        if( panByteCounts[iBlock] != 0 )
+                        {
+                            bFoundNonEmptyBlock = TRUE;
+                            break;
+                        }
+                    }
+                }
+                if( bFoundNonEmptyBlock )
+                {
+                    CPLDebug("GTiff", "Could not guess JPEG quality. JPEG tables are missing, so going in TIFFTAG_JPEGTABLESMODE = 0 mode");
+                    TIFFSetField(hTIFF, TIFFTAG_JPEGTABLESMODE, 0);
+                }
+            }
             else
+            {
                 CPLDebug("GTiff", "Could not guess JPEG quality although JPEG tables are present, so going in TIFFTAG_JPEGTABLESMODE = 0 mode");
-            TIFFSetField(hTIFF, TIFFTAG_JPEGTABLESMODE, 0);
+                TIFFSetField(hTIFF, TIFFTAG_JPEGTABLESMODE, 0);
+            }
         }
     }
 
@@ -9575,7 +9608,8 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
 #if defined(BIGTIFF_SUPPORT)
     if( nCompression == COMPRESSION_JPEG &&
         strncmp(pszFilename, "/vsimem/gtiffdataset_jpg_tmp_",
-                strlen("/vsimem/gtiffdataset_jpg_tmp_")) != 0 )
+                strlen("/vsimem/gtiffdataset_jpg_tmp_")) != 0 &&
+        CSLTestBoolean(CSLFetchNameValueDef(papszParmList, "WRITE_JPEGTABLE_TAG", "YES")) )
     {
         CPLString osTmpFilename;
         osTmpFilename.Printf("/vsimem/gtiffdataset_jpg_tmp_%p", hTIFF);
@@ -9695,9 +9729,7 @@ int GTiffDataset::GuessJPEGQuality()
         TIFFWriteCheck( hTIFFTmp, FALSE, "CreateLL" );
         TIFFWriteDirectory( hTIFFTmp );
         TIFFSetDirectory( hTIFFTmp, 0 );
-        // Now, reset quality and jpegcolormode. 
-        if(nJpegQuality > 0) 
-            TIFFSetField(hTIFFTmp, TIFFTAG_JPEGQUALITY, nJpegQuality); 
+        // Now reset jpegcolormode. 
         if( nPhotometric == PHOTOMETRIC_YCBCR 
             && CSLTestBoolean( CPLGetConfigOption("CONVERT_YCBCR_TO_RGB",
                                                 "YES") ) )
@@ -10159,6 +10191,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                       eType, dfExtraSpaceForOverviews, papszCreateOptions, &fpL );
 
     CSLDestroy( papszCreateOptions );
+    papszCreateOptions = NULL;
 
     if( hTIFF == NULL )
         return NULL;
@@ -10251,6 +10284,12 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             /* we assume RGB if it isn't explicitly YCbCr */
             CPLDebug( "GTiff", "Setting JPEGCOLORMODE_RGB" );
             TIFFSetField( hTIFF, TIFFTAG_JPEGCOLORMODE, JPEGCOLORMODE_RGB );
+        }
+
+        if( !CSLTestBoolean(CSLFetchNameValueDef(papszOptions,
+                                                "WRITE_JPEGTABLE_TAG", "YES")) )
+        {
+            TIFFSetField( hTIFF, TIFFTAG_JPEGTABLESMODE, 0 );
         }
     }
         
@@ -10696,6 +10735,11 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         if (poDS->nJpegQuality != -1)
         {
             TIFFSetField( hTIFF, TIFFTAG_JPEGQUALITY, poDS->nJpegQuality );
+        }
+        if( !CSLTestBoolean(CSLFetchNameValueDef(papszOptions,
+                                                "WRITE_JPEGTABLE_TAG", "YES")) )
+        {
+            TIFFSetField( hTIFF, TIFFTAG_JPEGTABLESMODE, 0 );
         }
     }
     else if( nCompression == COMPRESSION_LZMA)

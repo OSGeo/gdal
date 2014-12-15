@@ -5168,6 +5168,53 @@ def tiff_write_129():
     return 'success'
 
 ###############################################################################
+# Test cases where JPEG quality will fail
+
+def tiff_write_130():
+    md = gdaltest.tiff_drv.GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
+        return 'skip'
+
+    if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
+        return 'skip'
+
+    src_ds = gdal.Open('byte.tif', gdal.GA_Update)
+    shutil.copyfile('data/byte_jpg_unusual_jpegtable.tif', 'tmp/byte_jpg_unusual_jpegtable.tif')
+    ds = gdal.Open('tmp/byte_jpg_unusual_jpegtable.tif', gdal.GA_Update)
+    if ds.GetRasterBand(1).Checksum() != 4771:
+        gdaltest.post_reason('fail')
+        print(ds.GetRasterBand(1).Checksum())
+        return 'fail'
+    ds.WriteRaster(0,0,20,20,src_ds.ReadRaster())
+    ds = None
+    ds = gdal.Open('tmp/byte_jpg_unusual_jpegtable.tif')
+    if ds.GetRasterBand(1).Checksum() != 4743:
+        gdaltest.post_reason('fail')
+        print(ds.GetRasterBand(1).Checksum())
+        return 'fail'
+    ds = None
+    os.unlink('tmp/byte_jpg_unusual_jpegtable.tif')
+
+    src_ds = gdal.Open('byte.tif', gdal.GA_Update)
+    shutil.copyfile('data/byte_jpg_tablesmodezero.tif', 'tmp/byte_jpg_tablesmodezero.tif')
+    ds = gdal.Open('tmp/byte_jpg_tablesmodezero.tif', gdal.GA_Update)
+    if ds.GetRasterBand(1).Checksum() != 4743:
+        gdaltest.post_reason('fail')
+        print(ds.GetRasterBand(1).Checksum())
+        return 'fail'
+    ds.WriteRaster(0,0,20,20,src_ds.ReadRaster())
+    ds = None
+    ds = gdal.Open('tmp/byte_jpg_tablesmodezero.tif')
+    if ds.GetRasterBand(1).Checksum() != 4743:
+        gdaltest.post_reason('fail')
+        print(ds.GetRasterBand(1).Checksum())
+        return 'fail'
+    ds = None
+    os.unlink('tmp/byte_jpg_tablesmodezero.tif')
+
+    return 'success'
+
+###############################################################################
 # Ask to run again tests with GDAL_API_PROXY=YES
 
 def tiff_write_api_proxy():
@@ -5327,6 +5374,7 @@ gdaltest_list = [
     tiff_write_127,
     tiff_write_128,
     tiff_write_129,
+    tiff_write_130,
     #tiff_write_api_proxy,
     tiff_write_cleanup ]
 
