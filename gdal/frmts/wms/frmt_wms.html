@@ -18,7 +18,7 @@
 <p>
   Accessing several different types of web image services is possible
   using the WMS format in GDAL. Services are accessed by creating a
-  local service description XML file -- there are examples below for 
+  local service description XML file -- there are examples below for
   each of the supported image services. It is important that there be no
   spaces or other content before the <tt>&lt;GDAL_WMS&gt;</tt> element.
 </p>
@@ -206,14 +206,18 @@
 			<td class="xml">    &lt;UserAgent&gt;<span class="value">GDAL WMS driver (http://www.gdal.org/frmt_wms.html)</span>&lt;/UserAgent&gt;</td>
 			<td class="desc">HTTP User-agent string. Some servers might require a well-known user-agent such as "Mozilla/5.0" (optional, defaults to "GDAL WMS driver (http://www.gdal.org/frmt_wms.html)"). Added in GDAL 1.8.0</td>
 		</tr>
-        <tr>
-            <td class="xml">    &lt;UserPwd&gt;<span class="value">user:password</span>&lt;/UserPwd&gt;</td>
-            <td class="desc">User and Password for HTTP authentication (optional). Added in GDAL 1.10.0</td>
-        </tr>
-        <tr>
-            <td class="xml">    &lt;Referer&gt;<span class="value">http://example.foo/</span>&lt;/Referer&gt;</td>
-            <td class="desc">HTTP Referer string. Some servers might require it (optional). Added in GDAL 1.9.0</td>
-        </tr>
+		<tr>
+			<td class="xml">    &lt;UserPwd&gt;<span class="value">user:password</span>&lt;/UserPwd&gt;</td>
+			<td class="desc">User and Password for HTTP authentication (optional). Added in GDAL 1.10.0</td>
+		</tr>
+		<tr>
+			<td class="xml">    &lt;UnsafeSSL&gt;<span class="value">true</span>&lt;/UnsafeSSL&gt;</td>
+			<td class="desc">Skip SSL certificate verification. May be needed if server is using a self signed certificate (optional, defaults to false). Added in GDAL 1.8.0.</td>
+		</tr>
+		<tr>
+			<td class="xml">    &lt;Referer&gt;<span class="value">http://example.foo/</span>&lt;/Referer&gt;</td>
+			<td class="desc">HTTP Referer string. Some servers might require it (optional). Added in GDAL 1.9.0</td>
+		</tr>
 		<tr>
 			<td class="xml">    &lt;ZeroBlockHttpCodes&gt;<span class="value">204,404</span>&lt;/ZeroBlockHttpCodes&gt;</td>
 			<td class="desc">Comma separated list of HTTP response codes that will be interpreted as a 0 filled image (i.e. black for 3 bands, and transparent for 4 bands) instead of aborting the request. Added in GDAL 1.9.0. (optional, defaults to 204)</td>
@@ -234,13 +238,13 @@
 
 <h2>Minidrivers</h2>
 <p>
-  The GDAL WMS driver has support for several internal 'minidrivers', which 
+  The GDAL WMS driver has support for several internal 'minidrivers', which
   allow access to different web mapping services. Each of these services may
   support a different set of options in the Service block.
 </p>
 <h3>WMS</h3>
 <p>
-  Communications with an OGC WMS server. Has support for both tiled and 
+  Communications with an OGC WMS server. Has support for both tiled and
   untiled requests.
 </p>
 
@@ -305,12 +309,12 @@ Report pixel="248595" line="191985"&gt;
 
 <h3>TMS (GDAL 1.7.0 and later)</h3>
 <p>
-  The TMS Minidriver is designed primarily to support the users of the 
+  The TMS Minidriver is designed primarily to support the users of the
   <a href="http://wiki.osgeo.org/wiki/Tile_Map_Service_Specification">TMS
   Specification</a>. This service supports only access by tiles.
 </p>
 <p>
-  Because TMS is similar to many other 'x/y/z' flavored services on the web, 
+  Because TMS is similar to many other 'x/y/z' flavored services on the web,
   this service can also be used to access these services. To use it in this
   fashion, you can use replacement variables, of the format ${x}, ${y}, etc.
 </p>
@@ -329,7 +333,7 @@ Report pixel="248595" line="191985"&gt;
   A typical ServerURL might look like:<br />
   <tt>http://tilecache.osgeo.org/wms-c/Basic.py/${version}/${layer}/${z}/${x}/${y}.${format}</tt><br />
   In order to better suit TMS users, any URL that does not contain "${" will automatically have the string above (after "Basic.py/") appended to their URL.
-</p> 
+</p>
 <p>
   The TMS Service has 3 XML configuration elements that are different from
   other services: <tt>Format</tt> which defaults to <tt>jpg</tt>, <tt>Layer</tt> which has no default, and <tt>Version</tt> which defaults to <tt>1.0.0</tt>.
@@ -339,10 +343,10 @@ Report pixel="248595" line="191985"&gt;
   DataWindow level, which is the YOrigin element. This element should be one of
   <tt>bottom</tt> (the default in TMS) or <tt>top</tt>, which matches
   OpenStreetMap and many other popular tile services.
-</p>  
+</p>
 <p>
   Two examples of usage of the TMS service are included in the examples below.
-</p>  
+</p>
 
 <h3>OnEarth Tiled WMS (GDAL 1.9.0 and later)</h3>
 <p>
@@ -380,7 +384,7 @@ Access to web-based Virtual Earth tile services. Access is always tile based.<p>
 <li>BlockSizeX = 256</li>
 <li>BlockSizeY = 256</li>
 </ul>
-</p> 
+</p>
 
 <h2>Examples</h2>
 
@@ -394,10 +398,10 @@ Access to web-based Virtual Earth tile services. Access is always tile based.<p>
     </li>
 
     <li><p>
-	<a href="frmt_wms_metacarta_wmsc.xml">metacarta_wmsc.xml</a> - 
+	<a href="frmt_wms_metacarta_wmsc.xml">metacarta_wmsc.xml</a> -
 	It is possible to configure a WMS Service conforming to a WMS-C cache by
-	specifying a number of overviews and specifying the 'block size' as the 
-	tile size of the cache. The following example is a sample set up for 
+	specifying a number of overviews and specifying the 'block size' as the
+	tile size of the cache. The following example is a sample set up for
 	a 19-level "Global Profile" WMS-C cache.
 	<pre>gdal_translate -of PNG -outsize 500 250 metacarta_wmsc.xml metacarta_wmsc.png</pre>
 	<img src="http://sydney.freeearthfoundation.com/gdalwms/metacarta_wmsc.png" alt="example output">
