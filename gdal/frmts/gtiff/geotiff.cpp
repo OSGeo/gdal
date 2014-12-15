@@ -345,6 +345,8 @@ class GTiffDataset : public GDALPamDataset
     void           DiscardLsb(GByte* pabyBuffer, int nBytes, int iBand);
     void           GetDiscardLsbOption(char** papszOptions);
 
+    int            GuessJPEGQuality();
+
   protected:
     virtual int         CloseDependentDatasets();
 
@@ -7095,6 +7097,27 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
+    if( nCompression == COMPRESSION_JPEG && poOpenInfo->eAccess == GA_Update )
+    {
+        int nQuality = poDS->GuessJPEGQuality();
+        if( nQuality > 0 )
+        {
+            CPLDebug("GTiff", "Guessed JPEG quality to be %d", nQuality);
+            poDS->nJpegQuality = nQuality;
+            TIFFSetField( hTIFF, TIFFTAG_JPEGQUALITY, nQuality );
+        }
+        else
+        {
+            uint32 nJPEGTableSize = 0;
+            void* pJPEGTable = NULL;
+            if( !TIFFGetField(hTIFF, TIFFTAG_JPEGTABLES, &nJPEGTableSize, &pJPEGTable) )
+                CPLDebug("GTiff", "Could not guess JPEG quality. JPEG tables are missing, so going in TIFFTAG_JPEGTABLESMODE = 0 mode");
+            else
+                CPLDebug("GTiff", "Could not guess JPEG quality although JPEG tables are present, so going in TIFFTAG_JPEGTABLESMODE = 0 mode");
+            TIFFSetField(hTIFF, TIFFTAG_JPEGTABLESMODE, 0);
+        }
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
 /* -------------------------------------------------------------------- */
@@ -9617,6 +9640,98 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
 }
 
 /************************************************************************/
+/*                              GuessJPEGQuality()                      */
+/*                                                                      */
+/*      Guess JPEG quality from JPEGTABLES tag.                         */
+/************************************************************************/
+
+int GTiffDataset::GuessJPEGQuality()
+{
+    CPLAssert( nCompression == COMPRESSION_JPEG );
+    uint32 nJPEGTableSize = 0;
+    void* pJPEGTable = NULL;
+    if( !TIFFGetField(hTIFF, TIFFTAG_JPEGTABLES, &nJPEGTableSize, &pJPEGTable) )
+        return -1;
+
+    char** papszLocalParameters = NULL;
+    papszLocalParameters = CSLSetNameValue(papszLocalParameters,
+                                            "COMPRESS", "JPEG");
+    if( nPhotometric == PHOTOMETRIC_YCBCR )
+        papszLocalParameters = CSLSetNameValue(papszLocalParameters,
+                                            "PHOTOMETRIC", "YCBCR");
+    else if( nPhotometric == PHOTOMETRIC_SEPARATED )
+        papszLocalParameters = CSLSetNameValue(papszLocalParameters,
+                                            "PHOTOMETRIC", "CMYK");
+    papszLocalParameters = CSLSetNameValue(papszLocalParameters,
+                                            "BLOCKYSIZE", "16");
+    if( nBitsPerSample == 12 )
+        papszLocalParameters = CSLSetNameValue(papszLocalParameters,
+                                                "NBITS", "12");
+
+    CPLString osTmpFilename;
+    osTmpFilename.Printf("/vsimem/gtiffdataset_guess_jpeg_quality_tmp_%p", this);
+
+    int nRet = -1;
+    for(int nQuality=0;nQuality<=100 && nRet < 0;nQuality++)
+    {
+        VSILFILE* fpTmp = NULL;
+        if( nQuality == 0 )
+            papszLocalParameters = CSLSetNameValue(papszLocalParameters,
+                                                   "JPEG_QUALITY", "75");
+        else
+            papszLocalParameters = CSLSetNameValue(papszLocalParameters,
+                                "JPEG_QUALITY", CPLSPrintf("%d", nQuality));
+
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        TIFF* hTIFFTmp = CreateLL( osTmpFilename, 16, 16, (nBands <= 4) ? nBands : 1,
+                                   GetRasterBand(1)->GetRasterDataType(), 0.0,
+                                   papszLocalParameters, &fpTmp );
+        CPLPopErrorHandler();
+        if( !hTIFFTmp )
+        {
+            break;
+        }
+
+        TIFFWriteCheck( hTIFFTmp, FALSE, "CreateLL" );
+        TIFFWriteDirectory( hTIFFTmp );
+        TIFFSetDirectory( hTIFFTmp, 0 );
+        // Now, reset quality and jpegcolormode. 
+        if(nJpegQuality > 0) 
+            TIFFSetField(hTIFFTmp, TIFFTAG_JPEGQUALITY, nJpegQuality); 
+        if( nPhotometric == PHOTOMETRIC_YCBCR 
+            && CSLTestBoolean( CPLGetConfigOption("CONVERT_YCBCR_TO_RGB",
+                                                "YES") ) )
+        {
+            TIFFSetField(hTIFFTmp, TIFFTAG_JPEGCOLORMODE, JPEGCOLORMODE_RGB);
+        }
+
+        GByte abyZeroData[(16*16*4*3)/2];
+        memset(abyZeroData, 0, (16*16*4*3)/2);
+        int nBlockSize = (16 * 16 * ((nBands <= 4) ? nBands : 1) * nBitsPerSample) / 8;
+        TIFFWriteEncodedStrip( hTIFFTmp, 0, abyZeroData, nBlockSize);
+
+        uint32 nJPEGTableSizeTry = 0;
+        void* pJPEGTableTry = NULL;
+        if( TIFFGetField(hTIFFTmp, TIFFTAG_JPEGTABLES, &nJPEGTableSizeTry, &pJPEGTableTry) )
+        {
+            if( nJPEGTableSize == nJPEGTableSizeTry &&
+                memcmp(pJPEGTableTry, pJPEGTable, nJPEGTableSize) == 0 )
+            {
+                nRet = (nQuality == 0 ) ? 75 : nQuality;
+            }
+        }
+
+        XTIFFClose(hTIFFTmp);
+        VSIFCloseL(fpTmp);
+    }
+
+    CSLDestroy(papszLocalParameters);
+    VSIUnlink(osTmpFilename);
+
+    return nRet;
+}
+
+/************************************************************************/
 /*                               Create()                               */
 /*                                                                      */
 /*      Create a new GeoTIFF or TIFF file.                              */
@@ -11981,6 +12096,12 @@ void GDALRegister_GTiff()
                                    szCreateOptions );
         poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+
+#ifdef INTERNAL_LIBTIFF
+        poDriver->SetMetadataItem( "LIBTIFF", "INTERNAL" );
+#else
+        poDriver->SetMetadataItem( "LIBTIFF", TIFFLIB_VERSION_STR );
+#endif
 
         poDriver->pfnOpen = GTiffDataset::Open;
         poDriver->pfnCreate = GTiffDataset::Create;

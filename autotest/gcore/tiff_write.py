@@ -450,10 +450,11 @@ def tiff_write_13():
         print(cs)
         return 'fail'
 
-    if size > 25015:
-        gdaltest.post_reason('fail: bad size')
-        print(size)
-        return 'fail'
+    if md['LIBTIFF'] == 'INTERNAL':
+        if size > 25015:
+            gdaltest.post_reason('fail: bad size')
+            print(size)
+            return 'fail'
 
     return 'success'
 
@@ -3629,6 +3630,7 @@ def tiff_write_91():
 
 ###############################################################################
 # Test the effect of JPEG_QUALITY_OVERVIEW while creating (internal) overviews after re-opening
+# This will test that we correctly guess the quality of the main dataset
 
 def tiff_write_92():
     md = gdaltest.tiff_drv.GetMetadata()
@@ -3641,7 +3643,7 @@ def tiff_write_92():
 
     last_size = 0
     quality = 30
-    for use_jpeg_quality_overview in [False, True]:
+    for jpeg_quality_overview in [False, 30, 40]:
         src_ds = gdal.Open('../gdrivers/data/utm.tif')
 
         ds = gdal.GetDriverByName('GTiff').Create('tmp/tiff_write_92.tif', 1024, 1024, 3, \
@@ -3654,8 +3656,8 @@ def tiff_write_92():
         ds = None
 
         ds = gdal.Open('tmp/tiff_write_92.tif', gdal.GA_Update)
-        if use_jpeg_quality_overview:
-            gdal.SetConfigOption('JPEG_QUALITY_OVERVIEW', '%d' % quality)
+        if jpeg_quality_overview is not False:
+            gdal.SetConfigOption('JPEG_QUALITY_OVERVIEW', '%d' % jpeg_quality_overview)
         ds.BuildOverviews( 'NEAR', overviewlist = [2, 4])
         gdal.SetConfigOption('JPEG_QUALITY_OVERVIEW', None)
 
@@ -3669,9 +3671,15 @@ def tiff_write_92():
 
         #print('quality = %d, size = %d' % (quality, size))
 
-        if use_jpeg_quality_overview:
-            if size >= last_size:
-                gdaltest.post_reason('did not get decreasing file sizes')
+        if jpeg_quality_overview == 30:
+            if size != last_size:
+                gdaltest.post_reason('did not get equal file sizes')
+                print(size)
+                print(last_size)
+                return 'fail'
+        elif jpeg_quality_overview == 40:
+            if size <= last_size:
+                gdaltest.post_reason('did not get growing file sizes')
                 print(size)
                 print(last_size)
                 return 'fail'
@@ -5120,6 +5128,46 @@ def tiff_write_128():
     return 'success'
 
 ###############################################################################
+# Check effective guessing of existing JPEG quality
+
+def tiff_write_129():
+    md = gdaltest.tiff_drv.GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
+        return 'skip'
+
+    if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
+        return 'skip'
+
+    for photometric in [ 'RGB', 'YCBCR' ]:
+        cs_ref = 0
+        for i in range(2):
+            ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_129.tif', 64, 32, 3,
+                options = ['COMPRESS=JPEG', 'TILED=YES', 'BLOCKXSIZE=32', 'BLOCKYSIZE=32', 'JPEG_QUALITY=50', 'PHOTOMETRIC=' + photometric])
+            src_ds = gdal.Open('data/rgbsmall.tif')
+            data = src_ds.ReadRaster(0,0,32,32)
+            ds.WriteRaster(0,0,32,32,data)
+
+            # In second pass, we re-open the dataset
+            if i == 1:
+                ds = None
+                ds = gdal.Open('/vsimem/tiff_write_129.tif', gdal.GA_Update)
+            ds.WriteRaster(32,0,32,32,data)
+            ds = None
+
+            ds = gdal.Open('/vsimem/tiff_write_129.tif')
+            cs = ds.GetRasterBand(1).Checksum()
+            ds = None
+            gdaltest.tiff_drv.Delete('/vsimem/tiff_write_129.tif')
+            
+            if i == 0:
+                cs_ref = cs
+            elif cs != cs_ref:
+                gdaltest.post_reason('fail')
+                return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Ask to run again tests with GDAL_API_PROXY=YES
 
 def tiff_write_api_proxy():
@@ -5278,6 +5326,7 @@ gdaltest_list = [
     tiff_write_126,
     tiff_write_127,
     tiff_write_128,
+    tiff_write_129,
     #tiff_write_api_proxy,
     tiff_write_cleanup ]
 
