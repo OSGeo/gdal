@@ -5178,14 +5178,15 @@ def tiff_write_130():
     if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
         return 'skip'
 
-    src_ds = gdal.Open('byte.tif', gdal.GA_Update)
     shutil.copyfile('data/byte_jpg_unusual_jpegtable.tif', 'tmp/byte_jpg_unusual_jpegtable.tif')
     ds = gdal.Open('tmp/byte_jpg_unusual_jpegtable.tif', gdal.GA_Update)
     if ds.GetRasterBand(1).Checksum() != 4771:
         gdaltest.post_reason('fail')
         print(ds.GetRasterBand(1).Checksum())
         return 'fail'
+    src_ds = gdal.Open('data/byte.tif', gdal.GA_Update)
     ds.WriteRaster(0,0,20,20,src_ds.ReadRaster())
+    src_ds = None
     ds = None
     ds = gdal.Open('tmp/byte_jpg_unusual_jpegtable.tif')
     if ds.GetRasterBand(1).Checksum() != 4743:
@@ -5195,14 +5196,15 @@ def tiff_write_130():
     ds = None
     os.unlink('tmp/byte_jpg_unusual_jpegtable.tif')
 
-    src_ds = gdal.Open('byte.tif', gdal.GA_Update)
     shutil.copyfile('data/byte_jpg_tablesmodezero.tif', 'tmp/byte_jpg_tablesmodezero.tif')
     ds = gdal.Open('tmp/byte_jpg_tablesmodezero.tif', gdal.GA_Update)
     if ds.GetRasterBand(1).Checksum() != 4743:
         gdaltest.post_reason('fail')
         print(ds.GetRasterBand(1).Checksum())
         return 'fail'
+    src_ds = gdal.Open('data/byte.tif', gdal.GA_Update)
     ds.WriteRaster(0,0,20,20,src_ds.ReadRaster())
+    src_ds = None
     ds = None
     ds = gdal.Open('tmp/byte_jpg_tablesmodezero.tif')
     if ds.GetRasterBand(1).Checksum() != 4743:
