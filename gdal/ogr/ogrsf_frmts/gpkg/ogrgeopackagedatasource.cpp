@@ -78,6 +78,15 @@ static const TilingSchemeDefinition asTilingShemes[] =
       256, 256,
       156543.0339280410, 156543.0339280410 },
 
+    /* See InspireCRS84Quad at http://inspire.ec.europa.eu/documents/Network_Services/TechnicalGuidance_ViewServices_v3.0.pdf */
+    /* This is exactly the same as PseudoTMS_GlobalGeodetic */
+    { "InspireCRS84Quad",
+      4326,
+      -180.0, 90.0,
+      2, 1,
+      256, 256,
+      180.0 / 256, 180.0 / 256 },
+
     /* See global-geodetic at http://wiki.osgeo.org/wiki/Tile_Map_Service_Specification */
     { "PseudoTMS_GlobalGeodetic",
       4326,
@@ -2673,7 +2682,8 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
         const char* pszTileHeight = CSLFetchNameValueDef(papszOptions, "BLOCKYSIZE", pszTileSize);
         int nTileWidth = atoi(pszTileWidth);
         int nTileHeight = atoi(pszTileHeight);
-        if( nTileWidth < 8 || nTileWidth > 4096 || nTileHeight < 8 || nTileHeight > 4096 )
+        if( (nTileWidth < 8 || nTileWidth > 4096 || nTileHeight < 8 || nTileHeight > 4096) &&
+            !CSLTestBoolean(CPLGetConfigOption("GPKG_ALLOW_CRAZY_SETTINGS", "NO")) )
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Invalid block dimensions: %dx%d",
                      nTileWidth, nTileHeight);

@@ -186,6 +186,7 @@ COMPRESSION_OPTIONS
 "    <Value>CUSTOM</Value>"
 "    <Value>GoogleCRS84Quad</Value>"
 "    <Value>GoogleMapsCompatible</Value>"
+"    <Value>InspireCRS84Quad</Value>"
 "    <Value>PseudoTMS_GlobalGeodetic</Value>"
 "    <Value>PseudoTMS_GlobalMercator</Value>"
 "  </Option>"
