@@ -185,17 +185,25 @@ tiling scheme that has world coverage. The available tiling schemes are :</p>
 WMTS 1.0</a> specification, Annex E.3. That tiling schemes consists of a single
 256x256 tile at its zoom level 0, in EPSG:4326 CRS, with extent in longitude and
 latitude in the range [-180,180]. Consequently, at zoom level 0, 64 lines are
-unused at the top and bottom of that tile.</li>
+unused at the top and bottom of that tile. This may cause issues with some
+implementations of the specification, and there are some ambiguities about the
+exact definition of this tiling scheme. Using InspireCRS84Quad/PseudoTMS_GlobalGeodetic
+instead is therefore recommended.</li>
 <li><i>GoogleMapsCompatible</i>, as described in WMTS 1.0 specification, Annex E.4.
 That tiling schemes consists of a single 256x256 tile at its zoom level 0,
 in EPSG:3857 CRS, with extent in easting and northing in the range
 [-20037508.34,20037508.34].</li>
+<li><i>InspireCRS84Quad</i>, as described in
+<a href="http://inspire.ec.europa.eu/documents/Network_Services/TechnicalGuidance_ViewServices_v3.0.pdf">
+<i>Inspire View Services</i></a>.
+That tiling schemes consists of two 256x256 tiles at its zoom level 0, in
+EPSG:4326 CRS, with extent in longitude in the range [-180,180] and in latitude
+in the range [-90,90].</li>
 <li><i>PseudoTMS_GlobalGeodetic</i>, based on the
 <a href="http://wiki.osgeo.org/wiki/Tile_Map_Service_Specification#global-geodetic">
 <i>global-geodetic</i></a> profile of OSGeo TMS (Tile Map Service) specification.
-That tiling schemes consists of two 256x256 tiles at its zoom level 0, in
-EPSG:4326 CRS, with extent in longitude in the range [-180,180] and in latitude
-in the range [-90,90]. Note however that full interoperability with TMS is not
+This has exactly the same definition as <i>InspireCRS84Quad</i> tiling scheme. Note
+however that full interoperability with TMS is not
 possible due to the origin of numbering of tiles being the top left corner in
 GeoPackage (consistently with WMTS convention), whereas TMS uses the bottom left
 corner as origin.</li>
@@ -236,7 +244,7 @@ Defaults to 256. Maximum supported is 4096.</li>
 <li><b>ZLEVEL</b>=1-9: DEFLATE compression level for PNG tiles. Default to 6.</li>
 <li><b>DITHER</b>=YES/NO: Whether to use Floyd-Steinberg dithering (for TILE_FORMAT=PNG8).
 Defaults to NO.</li>
-<li><b>TILING_SCHEME</b>=CUSTOM/GoogleCRS84Quad/GoogleMapsCompatible/PseudoTMS_GlobalGeodetic/PseudoTMS_GlobalMercator.
+<li><b>TILING_SCHEME</b>=CUSTOM/GoogleCRS84Quad/GoogleMapsCompatible/InspireCRS84Quad/PseudoTMS_GlobalGeodetic/PseudoTMS_GlobalMercator.
 See <a href="#tiling_schemes">Tiling schemes</a> section. Defaults to CUSTOM.</li>
 <li><b>ZOOM_LEVEL_STRATEGY</b>=AUTO/LOWER/UPPER. Strategy to determine zoom level.
 Only used for TILING_SCHEME is different from CUSTOM. LOWER will select the
