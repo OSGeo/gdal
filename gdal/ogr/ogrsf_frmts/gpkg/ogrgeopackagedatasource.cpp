@@ -2148,13 +2148,13 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
         if( eDT != GDT_Byte )
         {
             CPLError(CE_Failure, CPLE_NotSupported, "Only Byte supported");
-            return NULL;
+            return FALSE;
         }
         if( nBands != 1 && nBands != 2 && nBands != 3 && nBands != 4 )
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                      "Only 1 (Grey/ColorTable), 2 (Grey+Alpha), 3 (RGB) or 4 (RGBA) band dataset supported");
-            return NULL;
+            return FALSE;
         }
     }
 
@@ -2169,7 +2169,7 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
                     "A file system object called '%s' already exists.",
                     pszFilename );
 
-            return NULL;
+            return FALSE;
         }
     }
     m_pszFilename = CPLStrdup(pszFilename);
