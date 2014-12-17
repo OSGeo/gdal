@@ -1631,6 +1631,8 @@ OGRErr create_field_map(OGRFeatureDefn *poDefn, int **map)
     if (n > 0) {
         *map = (int*)VSIMalloc(sizeof(int) * n);
         if (!(*map)) return OGRERR_NOT_ENOUGH_MEMORY;
+        for(int i=0;i<n;i++)
+            (*map)[i] = -1;
     }
     return ret;
 }
