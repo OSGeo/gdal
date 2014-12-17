@@ -3320,6 +3320,47 @@ def ogr_vrt_33():
     return 'success'
 
 ###############################################################################
+# Test SetIgnoredFields() with with PointFromColumns geometries
+
+def ogr_vrt_34():
+    if gdaltest.vrt_ds is None:
+        return 'skip'
+
+    f = open('tmp/test.csv', 'wb')
+    f.write('x,y\n'.encode('ascii'))
+    f.write('2,49\n'.encode('ascii'))
+    f.close()
+
+    try:
+        os.remove('tmp/test.csvt')
+    except:
+        pass
+
+    vrt_xml = """
+<OGRVRTDataSource>
+    <OGRVRTLayer name="test">
+        <SrcDataSource relativeToVRT="0">tmp/test.csv</SrcDataSource>
+        <SrcLayer>test</SrcLayer>
+        <GeometryField encoding="PointFromColumns" x="x" y="y"/>
+        <Field name="x" type="Real"/>
+        <Field name="y" type="Real"/>
+    </OGRVRTLayer>
+</OGRVRTDataSource>"""
+
+    ds = ogr.Open( vrt_xml )
+    lyr = ds.GetLayerByName( 'test' )
+    lyr.SetIgnoredFields(['x', 'y'])
+    f = lyr.GetNextFeature()
+    if f.GetGeometryRef().ExportToWkt() != 'POINT (2 49)':
+        f.DumpReadable()
+        return 'fail'
+    ds = None
+
+    os.unlink('tmp/test.csv')
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_vrt_cleanup():
@@ -3381,6 +3422,7 @@ gdaltest_list = [
     ogr_vrt_31,
     ogr_vrt_32,
     ogr_vrt_33,
+    ogr_vrt_34,
     ogr_vrt_cleanup ]
 
 if __name__ == '__main__':
