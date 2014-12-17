@@ -3325,7 +3325,6 @@ OGRErr OGRLayer::Update( OGRLayer *pLayerMethod,
         OGRGeometry *y_geom = y->GetGeometryRef();
         if (!y_geom) {delete y; continue;}
         OGRFeature *z = new OGRFeature(poDefnResult);
-        // FIXME: to be removed? as this will be without effect since set_result_schema() is called in non-combined mode
         if (mapMethod) z->SetFieldsFrom(y, mapMethod);
         z->SetGeometry(y_geom);
         delete y;
