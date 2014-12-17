@@ -48,16 +48,15 @@ namespace PCIDSK
     class MetadataSegment : virtual public CPCIDSKSegment
     {
 
-
     public:
         MetadataSegment( PCIDSKFile *file, int segment,
                          const char *segment_pointer );
         virtual     ~MetadataSegment();
 
-        void         FetchMetadata( const char *group, int id, 
-                                    std::map<std::string,std::string> &md_set );
-        void         SetMetadataValue( const char *group, int id,
-                                       const std::string& key, const std::string& value );
+        void         FetchGroupMetadata( const char *group, int id, 
+                                         std::map<std::string, std::string> &md_set );
+        void         SetGroupMetadataValue( const char *group, int id,
+                                            const std::string& key, const std::string& value );
 
         void         Synchronize();
                                    
