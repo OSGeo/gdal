@@ -2162,7 +2162,7 @@ OGRErr OGRSQLiteTableLayer::ICreateFeature( OGRFeature *poFeature )
             const char* pszTriggerSQL = papszResult[2*(i+1)+1];
             if( pszTriggerName!= NULL && pszTriggerSQL != NULL )
             {
-                const char* pszExpectedTrigger;
+                const char* pszExpectedTrigger = 0;
                 if( strncmp(pszTriggerName, "ggi_", 4) == 0 )
                 {
                     pszExpectedTrigger = CPLSPrintf(
