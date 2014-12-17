@@ -1193,6 +1193,20 @@ CPLErr GDALGeoPackageDataset::WriteTileInternal()
             vsi_l_offset nBlobSize;
             GByte* pabyBlob = VSIGetMemFileBuffer(osMemFileName, &nBlobSize, TRUE);
 
+            /* Create or commit and recreate transaction */
+            GDALGeoPackageDataset* poMainDS = m_poParentDS ? m_poParentDS : this;
+            if( poMainDS->m_nTileInsertionCount == 0 )
+            {
+                SQLCommand(GetDB(), "BEGIN");
+            }
+            else if( poMainDS->m_nTileInsertionCount == 1000 )
+            {
+                SQLCommand(GetDB(), "COMMIT");
+                SQLCommand(GetDB(), "BEGIN");
+                poMainDS->m_nTileInsertionCount = 0;
+            }
+            poMainDS->m_nTileInsertionCount ++;
+
             char* pszSQL = sqlite3_mprintf("INSERT OR REPLACE INTO '%q' "
                 "(zoom_level, tile_row, tile_column, tile_data) VALUES (%d, %d, %d, ?)",
                 m_osRasterTable.c_str(), m_nZoomLevel, nRow, nCol);

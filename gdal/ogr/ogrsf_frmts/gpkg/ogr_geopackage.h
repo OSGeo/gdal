@@ -116,6 +116,8 @@ class GDALGeoPackageDataset : public OGRSQLiteBaseDataSource
     CPLString           m_osTempDBFilename;
     
     int                 m_bInFlushCache;
+    
+    int                 m_nTileInsertionCount;
 
     CPLString           m_osTilingScheme;
 
