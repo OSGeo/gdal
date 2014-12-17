@@ -1458,7 +1458,7 @@ static int GetFloorPowerOfTwo(int n)
 CPLErr GDALGeoPackageDataset::IBuildOverviews( 
                         const char * pszResampling, 
                         int nOverviews, int * panOverviewList,
-                        int nBandsIn, int * panBandList,
+                        int nBandsIn, CPL_UNUSED int * panBandList,
                         GDALProgressFunc pfnProgress, void * pProgressData )
 {
     if( GetAccess() != GA_Update )
