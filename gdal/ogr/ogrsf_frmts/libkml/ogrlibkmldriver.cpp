@@ -47,7 +47,6 @@ static void OGRLIBKMLDriverUnload ( CPL_UNUSED GDALDriver* poDriver )
     if( hMutex != NULL )
         CPLDestroyMutex(hMutex);
     hMutex = NULL;
-    delete m_poKmlFactory;
     m_poKmlFactory = NULL;
 }
 
