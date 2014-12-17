@@ -1180,9 +1180,10 @@ CPLErr GDALGeoPackageDataset::WriteTileInternal()
             papszDriverOptions = CSLSetNameValue(
                 papszDriverOptions, "ZLEVEL", CPLSPrintf("%d", m_nZLevel));
         }
-
+#ifdef DEBUG
         VSIStatBufL sStat;
         CPLAssert(VSIStatL(osMemFileName, &sStat) != 0);
+#endif
         GDALDataset* poOutDS = poDriver->CreateCopy(osMemFileName, poMEMDS,
                                                     FALSE, papszDriverOptions, NULL, NULL);
         CSLDestroy( papszDriverOptions );
