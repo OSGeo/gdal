@@ -390,7 +390,7 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
             nYInc = nBlockYSize - (iSrcY % nBlockYSize);
 
             if( psExtraArg->pfnProgress != NULL &&
-                !psExtraArg->pfnProgress(1.0 * (iBufYOff + nYInc) / nBufYSize, "",
+                !psExtraArg->pfnProgress(1.0 * MIN(nBufYSize, iBufYOff + nYInc) / nBufYSize, "",
                                          psExtraArg->pProgressData) )
             {
                 return CE_Failure;
