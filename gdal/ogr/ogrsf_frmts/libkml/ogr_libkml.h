@@ -355,8 +355,6 @@ class OGRLIBKMLDataSource:public OGRDataSource
 
 class OGRLIBKMLDriver:public OGRSFDriver
 {
-    KmlFactory               *m_poKmlFactory;
-    
   public:
     OGRLIBKMLDriver           (  );
     ~OGRLIBKMLDriver          (  );
