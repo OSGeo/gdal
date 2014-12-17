@@ -99,7 +99,7 @@ void MetadataSet::Load()
 
     MetadataSegment *md_seg = dynamic_cast<MetadataSegment *>( seg );
 
-    md_seg->FetchMetadata( group.c_str(), id, md_set );
+    md_seg->FetchGroupMetadata( group.c_str(), id, md_set );
     loaded = true;
 }
 
@@ -124,7 +124,6 @@ std::string MetadataSet::GetMetadataValue( const std::string& key )
 /************************************************************************/
 
 void MetadataSet::SetMetadataValue( const std::string& key, const std::string& value )
-
 {
     if( !loaded )
         Load();
@@ -140,15 +139,15 @@ void MetadataSet::SetMetadataValue( const std::string& key, const std::string& v
 
     if( seg == NULL )
     {
-        file->CreateSegment( "METADATA", 
-                             "Please do not modify this metadata segment.", 
+        file->CreateSegment( "METADATA",
+                             "Please do not modify this metadata segment.",
                              SEG_SYS, 0 );
         seg = file->GetSegment( SEG_SYS , "METADATA");
     }
 
     MetadataSegment *md_seg = dynamic_cast<MetadataSegment *>( seg );
 
-    md_seg->SetMetadataValue( group.c_str(), id, key, value );
+    md_seg->SetGroupMetadataValue( group.c_str(), id, key, value );
 }
 
 /************************************************************************/
@@ -156,7 +155,6 @@ void MetadataSet::SetMetadataValue( const std::string& key, const std::string& v
 /************************************************************************/
 
 std::vector<std::string> MetadataSet::GetMetadataKeys()
-
 {
     if( !loaded )
         Load();
@@ -168,8 +166,6 @@ std::vector<std::string> MetadataSet::GetMetadataKeys()
     {
         keys.push_back( (*it).first );
     }
-         
+
     return keys;
 }
-
-
