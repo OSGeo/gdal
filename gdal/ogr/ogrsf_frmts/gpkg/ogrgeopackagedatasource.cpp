@@ -442,6 +442,7 @@ GDALGeoPackageDataset::GDALGeoPackageDataset()
     m_bInWriteTile = FALSE;
     m_hTempDB = NULL;
     m_bInFlushCache = FALSE;
+    m_nTileInsertionCount = 0;
     m_osTilingScheme = "CUSTOM";
 }
 
@@ -1320,6 +1321,8 @@ CPLErr GDALGeoPackageDataset::FinalizeRasterRegistration()
     double dfGDALMaxX = m_adfGeoTransform[0] + nRasterXSize * m_adfGeoTransform[1];
     double dfGDALMaxY = m_adfGeoTransform[3];
 
+    SQLCommand(hDB, "BEGIN");
+
     pszSQL = sqlite3_mprintf("INSERT INTO gpkg_contents "
         "(table_name,data_type,identifier,description,min_x,min_y,max_x,max_y,srs_id) VALUES "
         "('%q','tiles','%q','%q',%.18g,%.18g,%.18g,%.18g,%d)",
@@ -1391,6 +1394,9 @@ CPLErr GDALGeoPackageDataset::FinalizeRasterRegistration()
             m_papoOverviewDS[m_nZoomLevel-1-i] = poOvrDS;
         }
     }
+    
+    SQLCommand(hDB, "COMMIT");
+
     m_nOverviewCount = m_nZoomLevel;
     m_bRecordInsertedInGPKGContent = TRUE;
 
@@ -1426,6 +1432,13 @@ CPLErr GDALGeoPackageDataset::FlushCacheWithErrCode()
         {
             eErr = WriteTile();
         }
+    }
+
+    GDALGeoPackageDataset* poMainDS = m_poParentDS ? m_poParentDS : this;
+    if( poMainDS->m_nTileInsertionCount )
+    {
+        SQLCommand(GetDB(), "COMMIT");
+        poMainDS->m_nTileInsertionCount = 0;
     }
 
     m_bInFlushCache = FALSE;
@@ -2190,6 +2203,8 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
     /* will be written into the main file and supported henceforth */
     SQLCommand(hDB, "PRAGMA encoding = \"UTF-8\"");
 
+    SQLCommand(hDB, "BEGIN");
+
     if( !bFileExists )
     {
         /* Requirement 2: A GeoPackage SHALL contain 0x47503130 ("GP10" in ASCII) in the application id */
@@ -2755,6 +2770,8 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
                 m_osTilingScheme = "CUSTOM";
         }
     }
+
+    SQLCommand(hDB, "COMMIT");
 
     /* Requirement 2: A GeoPackage SHALL contain 0x47503130 ("GP10" in ASCII) */
     /* in the application id field of the SQLite database header */
