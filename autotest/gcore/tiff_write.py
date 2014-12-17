@@ -4813,6 +4813,7 @@ def tiff_write_126():
     src_ds = gdal.Open('../gdrivers/data/small_world_400pct.vrt')
 
     options_list = [ (['COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR'], [48788,56561], [61397,2463], [29605,33654], [10904,10453]),
+                     (['COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR', 'WRITE_JPEGTABLE_TAG=NO'], [48788,56561], [61397,2463], [29605,33654], [10904,10453]),
                      (['COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR', 'TILED=YES'], [48788,56561], [61397,2463], [29605,33654], [10904,10453]),
                      (['COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR', 'BLOCKYSIZE=800'], [48788,56561], [61397,2463], [29605,33654], [10904,10453]),
                      (['COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR', 'BLOCKYSIZE=64'], [48788,56561], [61397,2463], [29605,33654], [10904,10453]),
@@ -4824,7 +4825,11 @@ def tiff_write_126():
                    ]
 
     for (options, cs1, cs2, cs3, cs4) in options_list:
+        if 'WRITE_JPEGTABLE_TAG=NO' in options:
+            gdal.PushErrorHandler()
         ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_126.tif', src_ds, options = options)
+        if 'WRITE_JPEGTABLE_TAG=NO' in options:
+            gdal.PopErrorHandler()
         ds = None
 
         ds = gdal.Open('/vsimem/tiff_write_126.tif')

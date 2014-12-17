@@ -56,16 +56,14 @@ def extract_tile(ds, src_band_nbr, tile_x, tile_y, jpg_filename):
         return 1
 
     jpegtables = ds.GetRasterBand(src_band_nbr).GetMetadataItem('JPEGTABLES', 'TIFF')
-    if jpegtables is None:
-        print('ERROR: Cannot find JPEG tables')
-        return 1
-    if (len(jpegtables) % 2) != 0 or jpegtables[0:4] != 'FFD8' or jpegtables[-2:] != 'D9':
-        print('ERROR: Invalid JPEG tables')
-        print(jpegtables)
-        return 1
+    if jpegtables is not None:
+        if (len(jpegtables) % 2) != 0 or jpegtables[0:4] != 'FFD8' or jpegtables[-2:] != 'D9':
+            print('ERROR: Invalid JPEG tables')
+            print(jpegtables)
+            return 1
 
-    # Remove final D9
-    jpegtables = jpegtables[0:-2]
+        # Remove final D9
+        jpegtables = jpegtables[0:-2]
 
     tiff_f = gdal.VSIFOpenL(ds.GetDescription(), 'rb')
     if tiff_f is None:
@@ -79,19 +77,23 @@ def extract_tile(ds, src_band_nbr, tile_x, tile_y, jpg_filename):
         return 1
 
     # Write JPEG tables
-    for i in range(int(len(jpegtables)/2)):
-        c1 = ord(jpegtables[2*i])
-        c2 = ord(jpegtables[2*i+1])
-        if c1 >= ord('0') and c1 <= ord('9'):
-            val = c1 - ord('0')
-        else:
-            val = (c1 - ord('A')) + 10
-        val = val * 16
-        if c2 >= ord('0') and c2 <= ord('9'):
-            val = val + (c2 - ord('0'))
-        else:
-            val = val + (c2 - ord('A')) + 10
-        gdal.VSIFWriteL(chr(val), 1, 1, out_f)
+    if jpegtables is not None:
+        for i in range(int(len(jpegtables)/2)):
+            c1 = ord(jpegtables[2*i])
+            c2 = ord(jpegtables[2*i+1])
+            if c1 >= ord('0') and c1 <= ord('9'):
+                val = c1 - ord('0')
+            else:
+                val = (c1 - ord('A')) + 10
+            val = val * 16
+            if c2 >= ord('0') and c2 <= ord('9'):
+                val = val + (c2 - ord('0'))
+            else:
+                val = val + (c2 - ord('A')) + 10
+            gdal.VSIFWriteL(chr(val), 1, 1, out_f)
+    else:
+        gdal.VSIFWriteL(chr(0xFF), 1, 1, out_f)
+        gdal.VSIFWriteL(chr(0xD8), 1, 1, out_f)
 
     # Write Adobe APP14 marker if necessary
     interleave = ds.GetMetadataItem('INTERLEAVE', 'IMAGE_STRUCTURE')

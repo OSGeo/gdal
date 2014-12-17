@@ -4258,13 +4258,21 @@ int GTiffDataset::GetJPEGOverviewCount()
     /* Get JPEG tables */
     uint32 nJPEGTableSize = 0;
     void* pJPEGTable = NULL;
-    if( TIFFGetField(hTIFF, TIFFTAG_JPEGTABLES, &nJPEGTableSize, &pJPEGTable) != 1 ||
-        pJPEGTable == NULL || (int)nJPEGTableSize <= 0 ||
-        ((GByte*)pJPEGTable)[nJPEGTableSize-1] != 0xD9 )
+    GByte abyFFD8[] = { 0xFF, 0xD8 };
+    if( TIFFGetField(hTIFF, TIFFTAG_JPEGTABLES, &nJPEGTableSize, &pJPEGTable) )
     {
-        return 0;
+        if( pJPEGTable == NULL || (int)nJPEGTableSize <= 0 ||
+            ((GByte*)pJPEGTable)[nJPEGTableSize-1] != 0xD9 )
+        {
+            return 0;
+        }
+        nJPEGTableSize --; /* remove final 0xD9 */
     }
-    nJPEGTableSize --; /* remove final 0xD9 */
+    else
+    {
+        pJPEGTable = abyFFD8;
+        nJPEGTableSize = 2;
+    }
 
     papoJPEGOverviewDS = (GTiffJPEGOverviewDS**) CPLMalloc(
                         sizeof(GTiffJPEGOverviewDS*) * nJPEGOverviewCount );
