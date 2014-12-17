@@ -55,7 +55,6 @@ OGRLIBKMLDriver::~OGRLIBKMLDriver (  )
     if( hMutex != NULL )
         CPLDestroyMutex(hMutex);
     hMutex = NULL;
-    delete poKmlFactory;
     poKmlFactory = NULL;
 }
 
