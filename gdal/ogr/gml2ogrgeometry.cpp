@@ -2811,7 +2811,10 @@ OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
                             poMS = new OGRMultiPolygon();
                         else
                             poMS = new OGRMultiSurface();
-                        OGRErr eErr = poMS->addGeometryDirectly( poResult );
+#ifdef DEBUG
+                        OGRErr eErr =
+#endif
+                          poMS->addGeometryDirectly( poResult );
                         CPLAssert(eErr == OGRERR_NONE);
                         poResult = poMS;
                     }
@@ -2821,7 +2824,10 @@ OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
                         poMS = OGRMultiPolygon::CastToMultiSurface((OGRMultiPolygon*)poMS);
                         poResult = poMS;
                     }
-                    OGRErr eErr = poMS->addGeometryDirectly( poGeom );
+#ifdef DEBUG
+                    OGRErr eErr =
+#endif
+                      poMS->addGeometryDirectly( poGeom );
                     CPLAssert(eErr == OGRERR_NONE);
                 }
             }
