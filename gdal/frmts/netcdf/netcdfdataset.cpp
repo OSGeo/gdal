@@ -4230,8 +4230,11 @@ void netCDFDataset::CreateSubDatasetList( )
 /*                              IdentifyFormat()                      */
 /************************************************************************/
 
-int netCDFDataset::IdentifyFormat( GDALOpenInfo * poOpenInfo, bool bCheckExt = TRUE )
-
+int netCDFDataset::IdentifyFormat( GDALOpenInfo * poOpenInfo, 
+#ifndef HAVE_HDF5
+CPL_UNUSED
+#endif
+                                   bool bCheckExt = TRUE )
 {
 /* -------------------------------------------------------------------- */
 /*      Does this appear to be a netcdf file? If so, which format?      */
