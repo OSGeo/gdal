@@ -385,6 +385,7 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_ACE2();
     GDALRegister_SNODAS();
     GDALRegister_KRO();
+    GDALRegister_ROIPAC();
 #endif
 
 #ifdef FRMT_arg

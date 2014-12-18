@@ -1,0 +1,16 @@
+WIDTH                             12
+FILE_LENGTH                       10
+XMIN                              0
+XMAX                              11
+YMIN                              0
+YMAX                              9
+PROJECTION                        LL
+DATUM                             WGS84
+X_FIRST                           -180.0083333
+Y_FIRST                           -59.9916667
+X_STEP                            8.33333330000e-03
+Y_STEP                            -8.3333333000e-03
+X_UNIT                            degrees
+Y_UNIT                            degrees
+Z_OFFSET                          0.
+Z_SCALE                           1
