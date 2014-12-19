@@ -363,7 +363,8 @@ int ILI1Reader::ReadTable(CPL_UNUSED const char *layername) {
       else if (EQUAL(firsttok, "STPT"))
       {
         //Find next non-Point geometry
-        do { geomIdx++; } while (geomIdx < featureDef->GetGeomFieldCount() && featureDef->GetGeomFieldDefn(geomIdx)->GetType() == wkbPoint);
+        if (geomIdx < 0) geomIdx = 0;
+        while (geomIdx < featureDef->GetGeomFieldCount() && featureDef->GetGeomFieldDefn(geomIdx)->GetType() == wkbPoint) { geomIdx++; }
         OGRwkbGeometryType geomType = (geomIdx < featureDef->GetGeomFieldCount()) ? featureDef->GetGeomFieldDefn(geomIdx)->GetType() : wkbNone;
         ReadGeom(tokens, geomIdx, geomType, feature);
         if (EQUAL(featureDef->GetFieldDefn(featureDef->GetFieldCount()-1)->GetNameRef(), "ILI_Geometry"))
@@ -418,6 +419,10 @@ void ILI1Reader::ReadGeom(char **stgeom, int geomIdx, OGRwkbGeometryType eType, 
     OGRMultiLineString *ogrMultiLine = NULL; //current multi line
 
     //CPLDebug( "OGR_ILI", "ILI1Reader::ReadGeom geomIdx: %d", geomIdx);
+    if (eType == wkbNone)
+    {
+      CPLError(CE_Warning, CPLE_AppDefined, "Calling ILI1Reader::ReadGeom with wkbNone" );
+    }
     //tokens = ["STPT", "1111", "22222"]
     ogrPoint.setX(CPLAtof(stgeom[1])); ogrPoint.setY(CPLAtof(stgeom[2]));
     ogrLine = (eType == wkbPolygon) ? new OGRLinearRing() : new OGRLineString();
