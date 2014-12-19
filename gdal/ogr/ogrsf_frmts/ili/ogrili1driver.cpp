@@ -105,7 +105,7 @@ void RegisterOGRILI1() {
                                    "Interlis 1" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
                                    "drv_ili.html" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "itf xml ili" );
+        poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "itf ili imd" );
 
         poDriver->pfnOpen = OGRILI1DriverOpen;
         poDriver->pfnCreate = OGRILI1DriverCreate;
