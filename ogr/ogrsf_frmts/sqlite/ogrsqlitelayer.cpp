@@ -472,6 +472,7 @@ void OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
 const char *OGRSQLiteLayer::GetFIDColumn() 
 
 {
+    GetLayerDefn();
     if( pszFIDColumn != NULL )
         return pszFIDColumn;
     else
