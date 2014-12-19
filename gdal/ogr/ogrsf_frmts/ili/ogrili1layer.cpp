@@ -427,12 +427,12 @@ void OGRILI1Layer::JoinSurfaceLayer( OGRILI1Layer* poSurfacePolyLayer, int nSurf
     CPLDebug( "OGR_ILI", "Joining surface layer %s with geometries", GetLayerDefn()->GetName());
     poSurfacePolyLayer->ResetReading();
     while (OGRFeature *polyfeature = poSurfacePolyLayer->GetNextFeatureRef()) {
-        int reftid = polyfeature->GetFieldAsInteger(1);
+        long reftid = polyfeature->GetFID();
         OGRFeature *feature = GetFeatureRef(reftid);
         if (feature) {
             feature->SetGeomField(nSurfaceFieldIndex, polyfeature->GetGeomFieldRef(0));
         } else {
-            CPLDebug( "OGR_ILI", "Couldn't join feature FID %d", reftid );
+            CPLDebug( "OGR_ILI", "Couldn't join feature FID %ld", reftid );
         }
     }
 

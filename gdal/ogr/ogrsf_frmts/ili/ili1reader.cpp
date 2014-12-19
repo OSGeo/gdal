@@ -350,11 +350,17 @@ int ILI1Reader::ReadTable(CPL_UNUSED const char *layername) {
           }
           if (!warned && featureDef->GetFieldCount() != CSLCount(tokens)-1 && !(featureDef->GetFieldCount() == CSLCount(tokens) && EQUAL(featureDef->GetFieldDefn(featureDef->GetFieldCount()-1)->GetNameRef(), "ILI_Geometry"))) {
             CPLError(CE_Warning, CPLE_AppDefined,
-                "Field count doesn't match. %d declared, %d found", featureDef->GetFieldCount(), CSLCount(tokens)-1);
+                "Field count of table %s doesn't match. %d declared, %d found (e.g. ignored LINEATTR)", featureDef->GetName(), featureDef->GetFieldCount(), CSLCount(tokens)-1);
             warned = TRUE;
           }
           if (feature->GetFieldCount() > 0) {
-            feature->SetFID(atol(feature->GetFieldAsString(0))); //TODO: use IDENT field from model instead of TID
+            if (featureDef->GetFieldIndex("_RefTID") == 1) {
+              // Polygon geometry table: Use _RefTID as FID. References TID of attribute table.
+              feature->SetFID(atol(feature->GetFieldAsString(1)));
+            } else {
+              // USE _TID as FID. TODO: respect IDENT field from model
+              feature->SetFID(atol(feature->GetFieldAsString(0)));
+            }
           }
           curLayer->AddFeature(feature);
           geomIdx = -1; //Reset
@@ -418,7 +424,7 @@ void ILI1Reader::ReadGeom(char **stgeom, int geomIdx, OGRwkbGeometryType eType, 
     OGRPoint ogrPoint, arcPoint, endPoint; //points for arc interpolation
     OGRMultiLineString *ogrMultiLine = NULL; //current multi line
 
-    //CPLDebug( "OGR_ILI", "ILI1Reader::ReadGeom geomIdx: %d", geomIdx);
+    //CPLDebug( "OGR_ILI", "ILI1Reader::ReadGeom geomIdx: %d OGRGeometryType: %s", geomIdx, OGRGeometryTypeToName(eType));
     if (eType == wkbNone)
     {
       CPLError(CE_Warning, CPLE_AppDefined, "Calling ILI1Reader::ReadGeom with wkbNone" );
