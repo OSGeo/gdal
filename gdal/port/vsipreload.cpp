@@ -100,6 +100,7 @@ DECLARE_SYMBOL(fgetpos, int, (FILE *stream, fpos_t *pos));
 DECLARE_SYMBOL(fsetpos, int, (FILE *stream, fpos_t *pos));
 DECLARE_SYMBOL(fileno, int, (FILE *stream));
 DECLARE_SYMBOL(ferror, int, (FILE *stream));
+DECLARE_SYMBOL(clearerr, void, (FILE *stream));
 
 DECLARE_SYMBOL(fdopen, FILE*, (int fd, const char *mode));
 DECLARE_SYMBOL(freopen, FILE*, (const char *path, const char *mode, FILE *stream));
@@ -184,6 +185,7 @@ static void myinit(void)
     LOAD_SYMBOL(fsetpos);
     LOAD_SYMBOL(fileno);
     LOAD_SYMBOL(ferror);
+    LOAD_SYMBOL(clearerr);
 
     LOAD_SYMBOL(fdopen);
     LOAD_SYMBOL(freopen);
@@ -853,6 +855,24 @@ int ferror(FILE *stream)
     }
     else
         return pfnferror(stream);
+}
+
+/************************************************************************/
+/*                             clearerr()                               */
+/************************************************************************/
+
+void clearerr(FILE *stream)
+{
+    myinit();
+    VSILFILE* fpVSIL = getVSILFILE(stream);
+    int DEBUG_VSIPRELOAD_COND = GET_DEBUG_VSIPRELOAD_COND(fpVSIL);
+    if (DEBUG_VSIPRELOAD_COND) fprintf(stderr, "clearerr(stream=%p)\n", stream);
+    if( fpVSIL != NULL )
+    {
+        fprintf(stderr, "clearerr() unimplemented for VSILFILE\n");
+    }
+    else
+        pfnclearerr(stream);
 }
 
 /************************************************************************/
