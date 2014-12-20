@@ -923,6 +923,7 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
     void* hUniqueTransformArg = NULL;
     GDALDatasetH hUniqueSrcDS = NULL;
+    int bInitDestSetByUser = ( CSLFetchNameValue( papszWarpOptions, "INIT_DEST" ) != NULL );
 
     const char* pszWarpThreads = CSLFetchNameValue(papszWarpOptions, "NUM_THREADS");
     if( pszWarpThreads != NULL )
@@ -943,7 +944,7 @@ int main( int argc, char ** argv )
                                        papszOpenOptions);
         bCreateOutput = TRUE;
 
-        if( CSLFetchNameValue( papszWarpOptions, "INIT_DEST" ) == NULL )
+        if( !bInitDestSetByUser )
         {
             if ( pszDstNodata == NULL )
             {
@@ -1524,7 +1525,7 @@ int main( int argc, char ** argv )
                 }
             }
 
-            if( bCreateOutput && iSrc == 0 )
+            if( !bInitDestSetByUser && iSrc == 0 )
             {
                 /* As we didn't know at the beginning if there was source nodata */
                 /* we have initialized INIT_DEST=0. Override this with NO_DATA now */
