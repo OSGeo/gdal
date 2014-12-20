@@ -1621,11 +1621,16 @@ static void WriteWorkbook(const char* pszName, OGRDataSource* poDS)
 
 static void BuildColString(char szCol[5], int nCol)
 {
+    /*
+    A Z   AA AZ   BA BZ   ZA   ZZ   AAA    ZZZ      AAAA
+    0 25  26 51   52 77   676  701  702    18277    18278
+    */
     int k = 0;
     szCol[k++] = (nCol % 26) + 'A';
     while(nCol >= 26)
     {
         nCol /= 26;
+        nCol --; /* We wouldn't need that if this was a proper base 26 numeration scheme ! */
         szCol[k++] = (nCol % 26) + 'A';
     }
     szCol[k] = 0;
