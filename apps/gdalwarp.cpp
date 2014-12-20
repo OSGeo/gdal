@@ -888,8 +888,6 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
 /*      If not, we need to create it.                                   */
 /* -------------------------------------------------------------------- */
-    int   bInitDestSetForFirst = FALSE;
-
     void* hUniqueTransformArg = NULL;
     GDALDatasetH hUniqueSrcDS = NULL;
 
@@ -908,18 +906,18 @@ int main( int argc, char ** argv )
                                        &hUniqueSrcDS, bSetColorInterpretation);
         bCreateOutput = TRUE;
 
-        if( CSLFetchNameValue( papszWarpOptions, "INIT_DEST" ) == NULL 
-            && pszDstNodata == NULL )
+        if( CSLFetchNameValue( papszWarpOptions, "INIT_DEST" ) == NULL )
         {
-            papszWarpOptions = CSLSetNameValue(papszWarpOptions,
-                                               "INIT_DEST", "0");
-            bInitDestSetForFirst = TRUE;
-        }
-        else if( CSLFetchNameValue( papszWarpOptions, "INIT_DEST" ) == NULL )
-        {
-            papszWarpOptions = CSLSetNameValue(papszWarpOptions,
-                                               "INIT_DEST", "NO_DATA" );
-            bInitDestSetForFirst = TRUE;
+            if ( pszDstNodata == NULL )
+            {
+                papszWarpOptions = CSLSetNameValue(papszWarpOptions,
+                                                "INIT_DEST", "0");
+            }
+            else
+            {
+                papszWarpOptions = CSLSetNameValue(papszWarpOptions,
+                                                "INIT_DEST", "NO_DATA" );
+            }
         }
 
         CSLDestroy( papszCreateOptions );
@@ -1116,7 +1114,7 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
 /*      Clear temporary INIT_DEST settings after the first image.       */
 /* -------------------------------------------------------------------- */
-        if( bInitDestSetForFirst && iSrc == 1 )
+        if( bCreateOutput && iSrc == 1 )
             papszWarpOptions = CSLSetNameValue( papszWarpOptions, 
                                                 "INIT_DEST", NULL );
 
@@ -1413,7 +1411,7 @@ int main( int argc, char ** argv )
                 }
             }
 
-            if( bInitDestSetForFirst && iSrc == 0 )
+            if( bCreateOutput && iSrc == 0 )
             {
                 /* As we didn't know at the beginning if there was source nodata */
                 /* we have initialized INIT_DEST=0. Override this with NO_DATA now */
