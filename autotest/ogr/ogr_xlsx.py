@@ -286,7 +286,7 @@ def ogr_xlsx_7():
     feat = lyr.GetNextFeature()
     if feat.GetFID() != 2:
         gdaltest.post_reason('did not get expected FID')
-        feat.DumpReadabe()
+        feat.DumpReadable()
         return 'fail'
     feat.SetField(0, 'modified_value')
     lyr.SetFeature(feat)
@@ -298,11 +298,11 @@ def ogr_xlsx_7():
     feat = lyr.GetNextFeature()
     if feat.GetFID() != 2:
         gdaltest.post_reason('did not get expected FID')
-        feat.DumpReadabe()
+        feat.DumpReadable()
         return 'fail'
     if feat.GetField(0) != 'modified_value':
         gdaltest.post_reason('did not get expected value')
-        feat.DumpReadabe()
+        feat.DumpReadable()
         return 'fail'
     feat = None
     ds = None
@@ -311,6 +311,39 @@ def ogr_xlsx_7():
 
     return 'success'
 
+###############################################################################
+# Test number of columns > 26 (#5774)
+
+def ogr_xlsx_8():
+
+    drv = ogr.GetDriverByName('XLSX')
+    if drv is None:
+        return 'skip'
+
+    ds = drv.CreateDataSource('/vsimem/ogr_xlsx_8.xlsx')
+    lyr = ds.CreateLayer('foo')
+    for i in range(30):
+        lyr.CreateField(ogr.FieldDefn('Field%d' % (i+1)))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    for i in range(30):
+        f.SetField(i, 'val%d' % (i+1))
+    lyr.CreateFeature(f)
+    f = None
+    ds = None
+
+    f = gdal.VSIFOpenL('/vsizip//vsimem/ogr_xlsx_8.xlsx/xl/worksheets/sheet1.xml', 'rb')
+    content = gdal.VSIFReadL(1, 10000, f)
+    gdal.VSIFCloseL(f)
+
+    if str(content).find('<c r="AA1" t="s">') < 0:
+        print(content)
+        return 'fail'
+
+    gdal.Unlink('/vsimem/ogr_xlsx_8.xlsx')
+
+    return 'success'
+
+
 gdaltest_list = [
     ogr_xlsx_1,
     ogr_xlsx_2,
@@ -318,7 +351,8 @@ gdaltest_list = [
     ogr_xlsx_4,
     ogr_xlsx_5,
     ogr_xlsx_6,
-    ogr_xlsx_7
+    ogr_xlsx_7,
+    ogr_xlsx_8
 ]
 
 if __name__ == '__main__':
