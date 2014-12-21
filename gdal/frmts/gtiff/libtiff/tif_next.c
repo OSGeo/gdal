@@ -1,4 +1,4 @@
-/* $Id: tif_next.c,v 1.14 2014-12-21 15:15:32 erouault Exp $ */
+/* $Id: tif_next.c,v 1.15 2014-12-21 18:07:48 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -141,10 +141,27 @@ bad:
 	return (0);
 }
 
+static int
+NeXTPreDecode(TIFF* tif, uint16 s)
+{
+	static const char module[] = "NeXTPreDecode";
+	TIFFDirectory *td = &tif->tif_dir;
+	(void)s;
+
+	if( td->td_bitspersample != 2 )
+	{
+		TIFFErrorExt(tif->tif_clientdata, module, "Unsupported BitsPerSample = %d",
+					 td->td_bitspersample);
+		return (0);
+	}
+	return (1);
+}
+	
 int
 TIFFInitNeXT(TIFF* tif, int scheme)
 {
 	(void) scheme;
+	tif->tif_predecode = NeXTPreDecode;  
 	tif->tif_decoderow = NeXTDecode;  
 	tif->tif_decodestrip = NeXTDecode;  
 	tif->tif_decodetile = NeXTDecode;
