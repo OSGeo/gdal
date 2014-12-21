@@ -790,9 +790,16 @@ int VSICurlHandle::DownloadRegion(vsi_l_offset startOffset, int nBlocks)
     sWriteFuncHeaderData.bIsHTTP = strncmp(pszURL, "http", 4) == 0;
     sWriteFuncHeaderData.nStartOffset = startOffset;
     sWriteFuncHeaderData.nEndOffset = startOffset + nBlocks * DOWNLOAD_CHUNCK_SIZE - 1;
+    /* Some servers don't like we try to read after end-of-file (#5786) */
+    if( cachedFileProp->bHastComputedFileSize && 
+        sWriteFuncHeaderData.nEndOffset >= cachedFileProp->fileSize )
+    {
+        sWriteFuncHeaderData.nEndOffset = cachedFileProp->fileSize - 1;
+    }
 
     char rangeStr[512];
-    sprintf(rangeStr, CPL_FRMT_GUIB "-" CPL_FRMT_GUIB, startOffset, startOffset + nBlocks * DOWNLOAD_CHUNCK_SIZE - 1);
+    sprintf(rangeStr, CPL_FRMT_GUIB "-" CPL_FRMT_GUIB, startOffset,
+            sWriteFuncHeaderData.nEndOffset);
 
     if (ENABLE_DEBUG)
         CPLDebug("VSICURL", "Downloading %s (%s)...", rangeStr, pszURL);
@@ -991,6 +998,9 @@ size_t VSICurlHandle::Read( void *pBuffer, size_t nSize, size_t nMemb )
                     break;
                 }
             }
+
+            if( nBlocksToDownload > N_MAX_REGIONS )
+                nBlocksToDownload = N_MAX_REGIONS;
 
             if (DownloadRegion(nOffsetToDownload, nBlocksToDownload) == FALSE)
             {
