@@ -1,4 +1,4 @@
-/* $Id: tif_dirread.c,v 1.179 2014-08-31 20:32:53 bfriesen Exp $ */
+/* $Id: tif_dirread.c,v 1.181 2014-12-21 15:15:31 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -3430,6 +3430,8 @@ TIFFReadDirectory(TIFF* tif)
 	const TIFFField* fip;
 	uint32 fii=FAILED_FII;
         toff_t nextdiroff;
+    int bitspersample_read = FALSE;
+
 	tif->tif_diroff=tif->tif_nextdiroff;
 	if (!TIFFCheckDirOffset(tif,tif->tif_nextdiroff))
 		return 0;           /* last offset or bad offset (IFD looping) */
@@ -3706,6 +3708,8 @@ TIFFReadDirectory(TIFF* tif)
 					}
 					if (!TIFFSetField(tif,dp->tdir_tag,value))
 						goto bad;
+                    if( dp->tdir_tag == TIFFTAG_BITSPERSAMPLE )
+                        bitspersample_read = TRUE;
 				}
 				break;
 			case TIFFTAG_SMINSAMPLEVALUE:
@@ -3763,6 +3767,19 @@ TIFFReadDirectory(TIFF* tif)
 					uint32 countrequired;
 					uint32 incrementpersample;
 					uint16* value=NULL;
+                    /* It would be dangerous to instanciate those tag values */
+                    /* since if td_bitspersample has not yet been read (due to */
+                    /* unordered tags), it could be read afterwards with a */
+                    /* values greater than the default one (1), which may cause */
+                    /* crashes in user code */
+                    if( !bitspersample_read )
+                    {
+                        fip = TIFFFieldWithTag(tif,dp->tdir_tag);
+                        TIFFWarningExt(tif->tif_clientdata,module,
+                                       "Ignoring %s since BitsPerSample tag not found",
+                                       fip ? fip->field_name : "unknown tagname");
+                        continue;
+                    }
 					countpersample=(1L<<tif->tif_dir.td_bitspersample);
 					if ((dp->tdir_tag==TIFFTAG_TRANSFERFUNCTION)&&(dp->tdir_count==(uint64)countpersample))
 					{
@@ -4708,6 +4725,7 @@ TIFFFetchNormalTag(TIFF* tif, TIFFDirEntry* dp, int recover)
             return 0;
         }
 	fip=tif->tif_fields[fii];
+	assert(fip != NULL); /* should not happen */
 	assert(fip->set_field_type!=TIFF_SETGET_OTHER);  /* if so, we shouldn't arrive here but deal with this in specialized code */
 	assert(fip->set_field_type!=TIFF_SETGET_INT);    /* if so, we shouldn't arrive here as this is only the case for pseudo-tags */
 	err=TIFFReadDirEntryErrOk;
@@ -5355,7 +5373,7 @@ TIFFFetchNormalTag(TIFF* tif, TIFFDirEntry* dp, int recover)
 	}
 	if (err!=TIFFReadDirEntryErrOk)
 	{
-		TIFFReadDirEntryOutputErr(tif,err,module,fip ? fip->field_name : "unknown tagname",recover);
+		TIFFReadDirEntryOutputErr(tif,err,module,fip->field_name,recover);
 		return(0);
 	}
 	return(1);

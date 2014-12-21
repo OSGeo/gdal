@@ -1,4 +1,4 @@
-/* $Id: tif_getimage.c,v 1.82 2012-06-06 00:17:49 fwarmerdam Exp $ */
+/* $Id: tif_getimage.c,v 1.83 2014-12-21 15:15:31 erouault Exp $ */
 
 /*
  * Copyright (c) 1991-1997 Sam Leffler
@@ -182,8 +182,23 @@ TIFFRGBAImageOK(TIFF* tif, char emsg[1024])
 				    "Planarconfiguration", td->td_planarconfig);
 				return (0);
 			}
+			if( td->td_samplesperpixel != 3 )
+            {
+                sprintf(emsg,
+                        "Sorry, can not handle image with %s=%d",
+                        "Samples/pixel", td->td_samplesperpixel);
+                return 0;
+            }
 			break;
 		case PHOTOMETRIC_CIELAB:
+            if( td->td_samplesperpixel != 3 || td->td_bitspersample != 8 )
+            {
+                sprintf(emsg,
+                        "Sorry, can not handle image with %s=%d and %s=%d",
+                        "Samples/pixel", td->td_samplesperpixel,
+                        "Bits/sample", td->td_bitspersample);
+                return 0;
+            }
 			break;
 		default:
 			sprintf(emsg, "Sorry, can not handle image with %s=%d",
@@ -2541,7 +2556,7 @@ PickContigCase(TIFFRGBAImage* img)
 					 * must always be <= horizontal subsampling; so
 					 * there are only a few possibilities and we just
 					 * enumerate the cases.
-					 * Joris: added support for the [1,2] case, nonetheless, to accommodate
+					 * Joris: added support for the [1,2] case, nonetheless, to accomodate
 					 * some OJPEG files
 					 */
 					uint16 SubsamplingHor;
