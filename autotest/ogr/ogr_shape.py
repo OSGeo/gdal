@@ -1879,6 +1879,11 @@ def ogr_shape_43():
         gdaltest.post_reason('did not get expected SRS')
         return 'fail'
 
+    f = lyr.GetNextFeature()
+    if f is None:
+        gdaltest.post_reason('did not get expected feature')
+        return 'fail'
+
     return 'success'
 
 ###############################################################################
@@ -1910,6 +1915,11 @@ def ogr_shape_44():
     wkt = srs.ExportToWkt()
     if wkt.find('OSGB') == -1:
         gdaltest.post_reason('did not get expected SRS')
+        return 'fail'
+
+    f = lyr.GetNextFeature()
+    if f is None:
+        gdaltest.post_reason('did not get expected feature')
         return 'fail'
 
     return 'success'
