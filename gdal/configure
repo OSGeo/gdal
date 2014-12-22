@@ -16888,13 +16888,21 @@ $as_echo "#define VSI_NEED_LARGEFILE64_SOURCE 1" >>confdefs.h
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
 
-    ac_fn_c_check_func "$LINENO" "stat64" "ac_cv_func_stat64"
+    case "${host_os}" in
+      darwin*)
+        VSI_STAT64=stat
+        VSI_STAT64_T=stat
+        ;;
+      *)
+        ac_fn_c_check_func "$LINENO" "stat64" "ac_cv_func_stat64"
 if test "x$ac_cv_func_stat64" = xyes; then :
   VSI_STAT64=stat64 VSI_STAT64_T=stat64
 else
   VSI_STAT64=stat VSI_STAT64_T=stat
 fi
 
+        ;;
+    esac
     ac_fn_c_check_func "$LINENO" "fopen64" "ac_cv_func_fopen64"
 if test "x$ac_cv_func_fopen64" = xyes; then :
   VSI_FOPEN64=fopen64

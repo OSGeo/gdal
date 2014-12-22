@@ -177,13 +177,13 @@ endif
 	(cd alg; $(MAKE) install)
 	(cd ogr; $(MAKE) install)
 	(cd apps; $(MAKE) install)
-ifneq ($(BINDINGS),)
-	(cd swig; $(MAKE) install)
-endif
 	for f in LICENSE.TXT data/*.* ; do $(INSTALL_DATA) $$f $(DESTDIR)$(INST_DATA) ; done
 	$(LIBTOOL_FINISH) $(DESTDIR)$(INST_LIB)
 	$(INSTALL_DIR) $(DESTDIR)$(INST_LIB)/pkgconfig
 	$(INSTALL_DATA) gdal.pc $(DESTDIR)$(INST_LIB)/pkgconfig/gdal.pc
+ifneq ($(BINDINGS),)
+	(cd swig; $(MAKE) install)
+endif
 
 ifeq ($(HAVE_LIBTOOL),yes)
 
