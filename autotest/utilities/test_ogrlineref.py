@@ -80,7 +80,7 @@ def test_ogrlineref_2():
 
     ret = gdaltest.runexternal(test_cli_utilities.get_ogrlineref_path() + ' -get_pos -r tmp/parts.shp -x -1.4345 -y 51.9497 -quiet')
 
-    if ret.strip() != "15984.938840":
+    if ret.strip() != "15977.724709":
         return 'fail'
 
     return 'success'
@@ -92,7 +92,7 @@ def test_ogrlineref_3():
     if ogrtest.have_geos() is 0 or test_cli_utilities.get_ogrlineref_path() is None:
         return 'skip'
  
-    ret = gdaltest.runexternal(test_cli_utilities.get_ogrlineref_path() + ' -get_coord -r tmp/parts.shp -m 15984.938840 -quiet')
+    ret = gdaltest.runexternal(test_cli_utilities.get_ogrlineref_path() + ' -get_coord -r tmp/parts.shp -m 15977.724709 -quiet')
 
     if ret.strip() != "-1.435097,51.950080,0.000000":
         return 'fail'
