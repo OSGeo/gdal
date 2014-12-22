@@ -2158,17 +2158,18 @@ CPLXMLNode *VRTFuncSource::SerializeToXML( CPL_UNUSED const char * pszVRTPath )
 /*                              RasterIO()                              */
 /************************************************************************/
 
-CPLErr
+CPLErr 
 VRTFuncSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
-                         void *pData, int nBufXSize, int nBufYSize,
-                         GDALDataType eBufType,
+                         void *pData, int nBufXSize, int nBufYSize, 
+                         GDALDataType eBufType, 
                          GSpacing nPixelSpace,
                          GSpacing nLineSpace,
-                         CPL_UNUSED GDALRasterIOExtraArg* psExtraArg )
+                         GDALRasterIOExtraArg* psExtraArg )
+
 {
     if( nPixelSpace*8 == GDALGetDataTypeSize( eBufType )
-        && nLineSpace == nPixelSpace * nXSize
-        && nBufXSize == nXSize && nBufYSize == nYSize
+        && nLineSpace == nPixelSpace * nXSize 
+        && nBufXSize == nXSize && nBufYSize == nYSize 
         && eBufType == eType )
     {
         return pfnReadFunc( pCBData,

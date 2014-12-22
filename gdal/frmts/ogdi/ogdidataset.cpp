@@ -252,13 +252,14 @@ CPLErr OGDIRasterBand::IRasterIO( CPL_UNUSED GDALRWFlag eRWFlag,
                                   GDALDataType eBufType,
                                   GSpacing nPixelSpace,
                                   GSpacing nLineSpace,
-                                  CPL_UNUSED GDALRasterIOExtraArg* psExtraArg )
+                                  GDALRasterIOExtraArg* psExtraArg )
+
 {
-    OGDIDataset *poODS = (OGDIDataset *) poDS;
+    OGDIDataset	*poODS = (OGDIDataset *) poDS;
     CPLErr    eErr;
 #ifdef notdef
-    CPLDebug( "OGDIRasterBand",
-              "RasterIO(%d,%d,%d,%d -> %dx%d)",
+    CPLDebug( "OGDIRasterBand", 
+              "RasterIO(%d,%d,%d,%d -> %dx%d)", 
               nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize );
 #endif
 

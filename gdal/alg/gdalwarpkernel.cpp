@@ -1085,7 +1085,7 @@ static void GWKOverlayDensity( GDALWarpKernel *poWK, int iDstOffset,
 /************************************************************************/
 
 template<class T>
-/* static */ CPL_INLINE T GWKRoundValueT(double dfValue)
+static CPL_INLINE T GWKRoundValueT(double dfValue)
 {
     return (std::numeric_limits<T>::min() < 0) ? (T)floor(dfValue + 0.5) :
                                                  (T)(dfValue + 0.5);
@@ -1095,7 +1095,6 @@ template<> double GWKRoundValueT<double>(double dfValue)
 {
     return dfValue;
 }
-
 
 /************************************************************************/
 /*                            GWKClampValueT()                          */
@@ -1112,12 +1111,10 @@ static CPL_INLINE T GWKClampValueT(double dfValue)
         return GWKRoundValueT<T>(dfValue);
 }
 
-#if 0
 template<> double GWKClampValueT<double>(double dfValue)
 {
     return dfValue;
 }
-#endif
 
 /************************************************************************/
 /*                         GWKSetPixelValueRealT()                      */
