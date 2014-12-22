@@ -1085,7 +1085,8 @@ int OGRShapeLayer::GetFeatureCountWithSpatialFilterOnly()
         }
 
         /* Read full shape for point layers */
-        if (bExpectPoints)
+        if (bExpectPoints ||
+            hSHP->panRecOffset[iShape] == 0 /* lazy shx loading case */ )
             psShape = SHPReadObject( hSHP, iShape);
 
 /* -------------------------------------------------------------------- */

@@ -504,6 +504,7 @@ SHPOpenLL( const char * pszLayer, const char * pszAccess, SAHooks *psHooks )
     uchar		*pabyBuf;
     int			i;
     double		dValue;
+    int         bLazySHXLoading = FALSE;
     
 /* -------------------------------------------------------------------- */
 /*      Ensure the access string is one of the legal ones.  We          */
@@ -514,7 +515,10 @@ SHPOpenLL( const char * pszLayer, const char * pszAccess, SAHooks *psHooks )
         || strcmp(pszAccess,"r+") == 0 )
         pszAccess = "r+b";
     else
+    {
+        bLazySHXLoading = strchr(pszAccess, 'l') != NULL;
         pszAccess = "rb";
+    }
     
 /* -------------------------------------------------------------------- */
 /*	Establish the byte order on this machine.			*/
@@ -701,11 +705,14 @@ SHPOpenLL( const char * pszLayer, const char * pszAccess, SAHooks *psHooks )
         malloc(sizeof(unsigned int) * MAX(1,psSHP->nMaxRecords) );
     psSHP->panRecSize = (unsigned int *)
         malloc(sizeof(unsigned int) * MAX(1,psSHP->nMaxRecords) );
-    pabyBuf = (uchar *) malloc(8 * MAX(1,psSHP->nRecords) );
+    if( bLazySHXLoading )
+        pabyBuf = NULL;
+    else
+        pabyBuf = (uchar *) malloc(8 * MAX(1,psSHP->nRecords) );
 
     if (psSHP->panRecOffset == NULL ||
         psSHP->panRecSize == NULL ||
-        pabyBuf == NULL)
+        (!bLazySHXLoading && pabyBuf == NULL))
     {
         char szError[200];
 
@@ -721,6 +728,13 @@ SHPOpenLL( const char * pszLayer, const char * pszAccess, SAHooks *psHooks )
         if (pabyBuf) free( pabyBuf );
         free( psSHP );
         return( NULL );
+    }
+
+    if( bLazySHXLoading )
+    {
+        memset(psSHP->panRecOffset, 0, sizeof(unsigned int) * MAX(1,psSHP->nMaxRecords) );
+        memset(psSHP->panRecSize, 0, sizeof(unsigned int) * MAX(1,psSHP->nMaxRecords) );
+        return( psSHP );
     }
 
     if( (int) psSHP->sHooks.FRead( pabyBuf, 8, psSHP->nRecords, psSHP->fpSHX ) 
@@ -1684,6 +1698,32 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
 /* -------------------------------------------------------------------- */
     if( hEntity < 0 || hEntity >= psSHP->nRecords )
         return( NULL );
+
+/* -------------------------------------------------------------------- */
+/*      Read offset/length from SHX loading if necessary.               */
+/* -------------------------------------------------------------------- */
+    if( psSHP->panRecOffset[hEntity] == 0 && psSHP->fpSHX != NULL )
+    {
+        int32       nOffset, nLength;
+
+        if( psSHP->sHooks.FSeek( psSHP->fpSHX, 100 + 8 * hEntity, 0 ) != 0 ||
+            psSHP->sHooks.FRead( &nOffset, 1, 4, psSHP->fpSHX ) != 4 ||
+            psSHP->sHooks.FRead( &nLength, 1, 4, psSHP->fpSHX ) != 4 )
+        {
+            char str[128];
+            sprintf( str,
+                    "Error in fseek()/fread() reading object from .shx file at offset %d",
+                    100 + 8 * hEntity);
+
+            psSHP->sHooks.Error( str );
+            return NULL;
+        }
+        if( !bBigEndian ) SwapWord( 4, &nOffset );
+        if( !bBigEndian ) SwapWord( 4, &nLength );
+
+        psSHP->panRecOffset[hEntity] = nOffset*2;
+        psSHP->panRecSize[hEntity] = nLength*2;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Ensure our record buffer is large enough.                       */
