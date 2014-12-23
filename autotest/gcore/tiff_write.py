@@ -5222,6 +5222,19 @@ def tiff_write_130():
     return 'success'
 
 ###############################################################################
+# Test LZMA compression
+
+def tiff_write_131():
+
+    md = gdaltest.tiff_drv.GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('LZMA') == -1:
+        return 'skip'
+
+    ut = gdaltest.GDALTest( 'GTiff', 'byte.tif', 1, 4672,
+                            options = [ 'COMPRESS=LZMA', 'LZMA_PRESET=9' ] )
+    return ut.testCreateCopy()
+
+###############################################################################
 # Ask to run again tests with GDAL_API_PROXY=YES
 
 def tiff_write_api_proxy():
@@ -5382,6 +5395,7 @@ gdaltest_list = [
     tiff_write_128,
     tiff_write_129,
     tiff_write_130,
+    tiff_write_131,
     #tiff_write_api_proxy,
     tiff_write_cleanup ]
 
