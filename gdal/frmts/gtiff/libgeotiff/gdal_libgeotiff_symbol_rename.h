@@ -6,6 +6,7 @@
 #define FindCode gdal_FindCode
 #define FindName gdal_FindName
 #define frame_dummy gdal_frame_dummy
+#define GTIFAllocDefn gdal_GTIFAllocDefn
 #define GTIFAngleStringToDD gdal_GTIFAngleStringToDD
 #define GTIFAngleToDD gdal_GTIFAngleToDD
 #define _GTIFcalloc gdal__GTIFcalloc
@@ -15,6 +16,7 @@
 #define GTIFFetchProjParms gdal_GTIFFetchProjParms
 #define GTIFFree gdal_GTIFFree
 #define _GTIFFree gdal__GTIFFree
+#define GTIFFreeDefn gdal_GTIFFreeDefn
 #define GTIFFreeMemory gdal_GTIFFreeMemory
 #define GTIFGetDatumInfo gdal_GTIFGetDatumInfo
 #define GTIFGetDefn gdal_GTIFGetDefn
