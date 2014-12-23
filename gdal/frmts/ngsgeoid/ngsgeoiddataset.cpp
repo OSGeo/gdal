@@ -277,7 +277,7 @@ int NGSGEOIDDataset::GetHeaderInfo( const GByte* pBuffer,
     /*CPLDebug("NGSGEOID", "SLAT=%f, WLON=%f, DLAT=%f, DLON=%f, NLAT=%d, NLON=%d, IKIND=%d",
              dfSLAT, dfWLON, dfDLAT, dfDLON, nNLAT, nNLON, nIKIND);*/
 
-    if (nNLAT <= 0 || nNLON <= 0 || dfDLAT <= 0.0 || dfDLON <= 0.0)
+    if (nNLAT <= 0 || nNLON <= 0 || dfDLAT <= 1e-15 || dfDLON <= 1e-15)
         return FALSE;
 
     /* Grids go over +180 in longitude */
