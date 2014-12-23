@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: geo_normalize.c 2210 2012-05-16 00:18:02Z warmerdam $
+ * $Id: geo_normalize.c 2588 2014-12-23 12:43:22Z rouault $
  *
  * Project:  libgeotiff
  * Purpose:  Code to normalize PCS and other composite codes in a GeoTIFF file.
@@ -459,7 +459,6 @@ int GTIFGetEllipsoidInfo( int nEllipseCode, char ** ppszName,
     char	szSearchKey[24];
     double	dfSemiMajor=0.0, dfToMeters = 1.0;
     int		nUOMLength;
-    const char* pszFilename;
 
 /* -------------------------------------------------------------------- */
 /*      Try some well known ellipsoids.                                 */
@@ -515,10 +514,8 @@ int GTIFGetEllipsoidInfo( int nEllipseCode, char ** ppszName,
 /*      Get the semi major axis.                                        */
 /* -------------------------------------------------------------------- */
     sprintf( szSearchKey, "%d", nEllipseCode );
-    pszFilename = CSVFilename("ellipsoid.csv" );
-
     dfSemiMajor =
-        GTIFAtof(CSVGetField( pszFilename,
+        GTIFAtof(CSVGetField( CSVFilename("ellipsoid.csv"),
                           "ELLIPSOID_CODE", szSearchKey, CC_Integer,
                           "SEMI_MAJOR_AXIS" ) );
 
@@ -530,7 +527,7 @@ int GTIFGetEllipsoidInfo( int nEllipseCode, char ** ppszName,
 /* -------------------------------------------------------------------- */
 /*	Get the translation factor into meters.				*/
 /* -------------------------------------------------------------------- */
-    nUOMLength = atoi(CSVGetField( pszFilename,
+    nUOMLength = atoi(CSVGetField( CSVFilename("ellipsoid.csv"),
                                    "ELLIPSOID_CODE", szSearchKey, CC_Integer,
                                    "UOM_CODE" ));
     GTIFGetUOMLengthInfo( nUOMLength, NULL, &dfToMeters );
@@ -547,7 +544,7 @@ int GTIFGetEllipsoidInfo( int nEllipseCode, char ** ppszName,
     if( pdfSemiMinor != NULL )
     {
         *pdfSemiMinor =
-            GTIFAtof(CSVGetField( pszFilename,
+            GTIFAtof(CSVGetField( CSVFilename("ellipsoid.csv"),
                               "ELLIPSOID_CODE", szSearchKey, CC_Integer,
                               "SEMI_MINOR_AXIS" )) * dfToMeters;
 
@@ -556,7 +553,7 @@ int GTIFGetEllipsoidInfo( int nEllipseCode, char ** ppszName,
             double	dfInvFlattening;
             
             dfInvFlattening = 
-                GTIFAtof(CSVGetField( pszFilename,
+                GTIFAtof(CSVGetField( CSVFilename("ellipsoid.csv"),
                                   "ELLIPSOID_CODE", szSearchKey, CC_Integer,
                                   "INV_FLATTENING" ));
             *pdfSemiMinor = dfSemiMajor * (1 - 1.0/dfInvFlattening);
@@ -568,7 +565,7 @@ int GTIFGetEllipsoidInfo( int nEllipseCode, char ** ppszName,
 /* -------------------------------------------------------------------- */
     if( ppszName != NULL )
         *ppszName =
-            CPLStrdup(CSVGetField( pszFilename,
+            CPLStrdup(CSVGetField( CSVFilename("ellipsoid.csv"),
                                    "ELLIPSOID_CODE", szSearchKey, CC_Integer,
                                    "ELLIPSOID_NAME" ));
     
@@ -1421,6 +1418,58 @@ int GTIFGetProjTRFInfo( /* COORD_OP_CODE from coordinate_operation.csv */
 }
 
 /************************************************************************/
+/*                       GTIFKeyGetInternal()                           */
+/************************************************************************/
+
+static int GTIFKeyGetInternal( GTIF *psGTIF, geokey_t key,
+                           void* pData,
+                           int nIndex,
+                           int nCount,
+                           tagtype_t expected_tagtype )
+{
+    tagtype_t tagtype;
+    if( !GTIFKeyInfo(psGTIF, key, NULL, &tagtype) )
+        return 0;
+    if( tagtype != expected_tagtype )
+    {
+        static int nErrorCount = 0;
+        if( ++nErrorCount < 100 )
+        {
+            fprintf(stderr,
+                    "Expected key %s to be of type %s. Got %s",
+                    GTIFKeyName(key), GTIFTypeName(expected_tagtype),
+                    GTIFTypeName(tagtype));
+        }
+        return 0;
+    }
+    return GTIFKeyGet( psGTIF, key, pData, nIndex, nCount );
+}
+
+/************************************************************************/
+/*                          GTIFKeyGetSHORT()                           */
+/************************************************************************/
+
+static int GTIFKeyGetSHORT( GTIF *psGTIF, geokey_t key,
+                                 short* pnVal,
+                                 int nIndex,
+                                 int nCount )
+{
+    return GTIFKeyGetInternal(psGTIF, key, pnVal, nIndex, nCount, TYPE_SHORT);
+}
+
+/************************************************************************/
+/*                        GDALGTIFKeyGetDOUBLE()                        */
+/************************************************************************/
+
+static int GTIFKeyGetDOUBLE( GTIF *psGTIF, geokey_t key,
+                                 double* pdfVal,
+                                 int nIndex,
+                                 int nCount )
+{
+    return GTIFKeyGetInternal(psGTIF, key, pdfVal, nIndex, nCount, TYPE_DOUBLE);
+}
+
+/************************************************************************/
 /*                         GTIFFetchProjParms()                         */
 /*                                                                      */
 /*      Fetch the projection parameters for a particular projection     */
@@ -1435,21 +1484,22 @@ static void GTIFFetchProjParms( GTIF * psGTIF, GTIFDefn * psDefn )
     double dfFalseEasting = 0.0, dfFalseNorthing = 0.0, dfNatOriginScale = 1.0;
     double dfStdParallel1 = 0.0, dfStdParallel2 = 0.0, dfAzimuth = 0.0;
     int iParm;
+    int bHaveSP1, bHaveNOS;
 
 /* -------------------------------------------------------------------- */
 /*      Get the false easting, and northing if available.               */
 /* -------------------------------------------------------------------- */
-    if( !GTIFKeyGet(psGTIF, ProjFalseEastingGeoKey, &dfFalseEasting, 0, 1)
-        && !GTIFKeyGet(psGTIF, ProjCenterEastingGeoKey,
+    if( !GTIFKeyGetDOUBLE(psGTIF, ProjFalseEastingGeoKey, &dfFalseEasting, 0, 1)
+        && !GTIFKeyGetDOUBLE(psGTIF, ProjCenterEastingGeoKey,
                        &dfFalseEasting, 0, 1) 
-        && !GTIFKeyGet(psGTIF, ProjFalseOriginEastingGeoKey,
+        && !GTIFKeyGetDOUBLE(psGTIF, ProjFalseOriginEastingGeoKey,
                        &dfFalseEasting, 0, 1) )
         dfFalseEasting = 0.0;
         
-    if( !GTIFKeyGet(psGTIF, ProjFalseNorthingGeoKey, &dfFalseNorthing,0,1)
-        && !GTIFKeyGet(psGTIF, ProjCenterNorthingGeoKey,
+    if( !GTIFKeyGetDOUBLE(psGTIF, ProjFalseNorthingGeoKey, &dfFalseNorthing,0,1)
+        && !GTIFKeyGetDOUBLE(psGTIF, ProjCenterNorthingGeoKey,
                        &dfFalseNorthing, 0, 1)
-        && !GTIFKeyGet(psGTIF, ProjFalseOriginNorthingGeoKey,
+        && !GTIFKeyGetDOUBLE(psGTIF, ProjFalseOriginNorthingGeoKey,
                        &dfFalseNorthing, 0, 1) )
         dfFalseNorthing = 0.0;
         
@@ -1458,23 +1508,23 @@ static void GTIFFetchProjParms( GTIF * psGTIF, GTIFDefn * psDefn )
 /* -------------------------------------------------------------------- */
       case CT_Stereographic:
 /* -------------------------------------------------------------------- */
-        if( GTIFKeyGet(psGTIF, ProjNatOriginLongGeoKey, 
+        if( GTIFKeyGetDOUBLE(psGTIF, ProjNatOriginLongGeoKey, 
                        &dfNatOriginLong, 0, 1 ) == 0
-            && GTIFKeyGet(psGTIF, ProjFalseOriginLongGeoKey, 
+            && GTIFKeyGetDOUBLE(psGTIF, ProjFalseOriginLongGeoKey, 
                           &dfNatOriginLong, 0, 1 ) == 0
-            && GTIFKeyGet(psGTIF, ProjCenterLongGeoKey, 
+            && GTIFKeyGetDOUBLE(psGTIF, ProjCenterLongGeoKey, 
                           &dfNatOriginLong, 0, 1 ) == 0 )
             dfNatOriginLong = 0.0;
 
-        if( GTIFKeyGet(psGTIF, ProjNatOriginLatGeoKey, 
+        if( GTIFKeyGetDOUBLE(psGTIF, ProjNatOriginLatGeoKey, 
                        &dfNatOriginLat, 0, 1 ) == 0
-            && GTIFKeyGet(psGTIF, ProjFalseOriginLatGeoKey, 
+            && GTIFKeyGetDOUBLE(psGTIF, ProjFalseOriginLatGeoKey, 
                           &dfNatOriginLat, 0, 1 ) == 0
-            && GTIFKeyGet(psGTIF, ProjCenterLatGeoKey, 
+            && GTIFKeyGetDOUBLE(psGTIF, ProjCenterLatGeoKey, 
                           &dfNatOriginLat, 0, 1 ) == 0 )
             dfNatOriginLat = 0.0;
 
-        if( GTIFKeyGet(psGTIF, ProjScaleAtNatOriginGeoKey,
+        if( GTIFKeyGetDOUBLE(psGTIF, ProjScaleAtNatOriginGeoKey,
                        &dfNatOriginScale, 0, 1 ) == 0 )
             dfNatOriginScale = 1.0;
             
@@ -1495,29 +1545,85 @@ static void GTIFFetchProjParms( GTIF * psGTIF, GTIFDefn * psDefn )
         break;
 
 /* -------------------------------------------------------------------- */
-      case CT_LambertConfConic_1SP:
       case CT_Mercator:
+/* -------------------------------------------------------------------- */
+        if( GTIFKeyGetDOUBLE(psGTIF, ProjNatOriginLongGeoKey,
+                       &dfNatOriginLong, 0, 1 ) == 0
+            && GTIFKeyGetDOUBLE(psGTIF, ProjFalseOriginLongGeoKey,
+                          &dfNatOriginLong, 0, 1 ) == 0
+            && GTIFKeyGetDOUBLE(psGTIF, ProjCenterLongGeoKey,
+                          &dfNatOriginLong, 0, 1 ) == 0 )
+            dfNatOriginLong = 0.0;
+
+        if( GTIFKeyGetDOUBLE(psGTIF, ProjNatOriginLatGeoKey,
+                       &dfNatOriginLat, 0, 1 ) == 0
+            && GTIFKeyGetDOUBLE(psGTIF, ProjFalseOriginLatGeoKey,
+                          &dfNatOriginLat, 0, 1 ) == 0
+            && GTIFKeyGetDOUBLE(psGTIF, ProjCenterLatGeoKey,
+                          &dfNatOriginLat, 0, 1 ) == 0 )
+            dfNatOriginLat = 0.0;
+
+
+        bHaveSP1 = GTIFKeyGetDOUBLE(psGTIF, ProjStdParallel1GeoKey,
+                              &dfStdParallel1, 0, 1 );
+
+        bHaveNOS = GTIFKeyGetDOUBLE(psGTIF, ProjScaleAtNatOriginGeoKey,
+                              &dfNatOriginScale, 0, 1 );
+
+        /* Default scale only if dfStdParallel1 isn't defined either */
+        if( !bHaveNOS && !bHaveSP1)
+        {
+            bHaveNOS = TRUE;
+            dfNatOriginScale = 1.0;
+        }
+
+        /* notdef: should transform to decimal degrees at this point */
+
+        psDefn->ProjParm[0] = dfNatOriginLat;
+        psDefn->ProjParmId[0] = ProjNatOriginLatGeoKey;
+        psDefn->ProjParm[1] = dfNatOriginLong;
+        psDefn->ProjParmId[1] = ProjNatOriginLongGeoKey;
+        if( bHaveSP1 )
+        {
+            psDefn->ProjParm[2] = dfStdParallel1;
+            psDefn->ProjParmId[2] = ProjStdParallel1GeoKey;
+        }
+        if( bHaveNOS )
+        {
+            psDefn->ProjParm[4] = dfNatOriginScale;
+            psDefn->ProjParmId[4] = ProjScaleAtNatOriginGeoKey;
+        }
+        psDefn->ProjParm[5] = dfFalseEasting;
+        psDefn->ProjParmId[5] = ProjFalseEastingGeoKey;
+        psDefn->ProjParm[6] = dfFalseNorthing;
+        psDefn->ProjParmId[6] = ProjFalseNorthingGeoKey;
+
+        psDefn->nParms = 7;
+        break;
+
+/* -------------------------------------------------------------------- */
+      case CT_LambertConfConic_1SP:
       case CT_ObliqueStereographic:
       case CT_TransverseMercator:
       case CT_TransvMercator_SouthOriented:
 /* -------------------------------------------------------------------- */
-        if( GTIFKeyGet(psGTIF, ProjNatOriginLongGeoKey, 
+        if( GTIFKeyGetDOUBLE(psGTIF, ProjNatOriginLongGeoKey, 
                        &dfNatOriginLong, 0, 1 ) == 0
-            && GTIFKeyGet(psGTIF, ProjFalseOriginLongGeoKey, 
+            && GTIFKeyGetDOUBLE(psGTIF, ProjFalseOriginLongGeoKey, 
                           &dfNatOriginLong, 0, 1 ) == 0
-            && GTIFKeyGet(psGTIF, ProjCenterLongGeoKey, 
+            && GTIFKeyGetDOUBLE(psGTIF, ProjCenterLongGeoKey, 
                           &dfNatOriginLong, 0, 1 ) == 0 )
             dfNatOriginLong = 0.0;
 
-        if( GTIFKeyGet(psGTIF, ProjNatOriginLatGeoKey, 
+        if( GTIFKeyGetDOUBLE(psGTIF, ProjNatOriginLatGeoKey, 
                        &dfNatOriginLat, 0, 1 ) == 0
-            && GTIFKeyGet(psGTIF, ProjFalseOriginLatGeoKey, 
+            && GTIFKeyGetDOUBLE(psGTIF, ProjFalseOriginLatGeoKey, 
                           &dfNatOriginLat, 0, 1 ) == 0
-            && GTIFKeyGet(psGTIF, ProjCenterLatGeoKey, 
+            && GTIFKeyGetDOUBLE(psGTIF, ProjCenterLatGeoKey, 
                           &dfNatOriginLat, 0, 1 ) == 0 )
             dfNatOriginLat = 0.0;
 
-        if( GTIFKeyGet(psGTIF, ProjScaleAtNatOriginGeoKey,
+        if( GTIFKeyGetDOUBLE(psGTIF, ProjScaleAtNatOriginGeoKey,
                        &dfNatOriginScale, 0, 1 ) == 0 )
             dfNatOriginScale = 1.0;
             
@@ -1541,33 +1647,33 @@ static void GTIFFetchProjParms( GTIF * psGTIF, GTIFDefn * psDefn )
       case CT_ObliqueMercator: /* hotine */
       case CT_HotineObliqueMercatorAzimuthCenter: 
 /* -------------------------------------------------------------------- */
-        if( GTIFKeyGet(psGTIF, ProjNatOriginLongGeoKey, 
+        if( GTIFKeyGetDOUBLE(psGTIF, ProjNatOriginLongGeoKey, 
                        &dfNatOriginLong, 0, 1 ) == 0
-            && GTIFKeyGet(psGTIF, ProjFalseOriginLongGeoKey, 
+            && GTIFKeyGetDOUBLE(psGTIF, ProjFalseOriginLongGeoKey, 
                           &dfNatOriginLong, 0, 1 ) == 0
-            && GTIFKeyGet(psGTIF, ProjCenterLongGeoKey, 
+            && GTIFKeyGetDOUBLE(psGTIF, ProjCenterLongGeoKey, 
                           &dfNatOriginLong, 0, 1 ) == 0 )
             dfNatOriginLong = 0.0;
 
-        if( GTIFKeyGet(psGTIF, ProjNatOriginLatGeoKey, 
+        if( GTIFKeyGetDOUBLE(psGTIF, ProjNatOriginLatGeoKey, 
                        &dfNatOriginLat, 0, 1 ) == 0
-            && GTIFKeyGet(psGTIF, ProjFalseOriginLatGeoKey, 
+            && GTIFKeyGetDOUBLE(psGTIF, ProjFalseOriginLatGeoKey, 
                           &dfNatOriginLat, 0, 1 ) == 0
-            && GTIFKeyGet(psGTIF, ProjCenterLatGeoKey, 
+            && GTIFKeyGetDOUBLE(psGTIF, ProjCenterLatGeoKey, 
                           &dfNatOriginLat, 0, 1 ) == 0 )
             dfNatOriginLat = 0.0;
 
-        if( GTIFKeyGet(psGTIF, ProjAzimuthAngleGeoKey, 
+        if( GTIFKeyGetDOUBLE(psGTIF, ProjAzimuthAngleGeoKey, 
                        &dfAzimuth, 0, 1 ) == 0 )
             dfAzimuth = 0.0;
 
-        if( GTIFKeyGet(psGTIF, ProjRectifiedGridAngleGeoKey,
+        if( GTIFKeyGetDOUBLE(psGTIF, ProjRectifiedGridAngleGeoKey,
                        &dfRectGridAngle, 0, 1 ) == 0 )
             dfRectGridAngle = 90.0;
 
-        if( GTIFKeyGet(psGTIF, ProjScaleAtNatOriginGeoKey,
+        if( GTIFKeyGetDOUBLE(psGTIF, ProjScaleAtNatOriginGeoKey,
                        &dfNatOriginScale, 0, 1 ) == 0
-            && GTIFKeyGet(psGTIF, ProjScaleAtCenterGeoKey,
+            && GTIFKeyGetDOUBLE(psGTIF, ProjScaleAtCenterGeoKey,
                           &dfNatOriginScale, 0, 1 ) == 0 )
             dfNatOriginScale = 1.0;
             
@@ -1595,25 +1701,25 @@ static void GTIFFetchProjParms( GTIF * psGTIF, GTIFDefn * psDefn )
       case CT_CassiniSoldner:
       case CT_Polyconic:
 /* -------------------------------------------------------------------- */
-        if( GTIFKeyGet(psGTIF, ProjNatOriginLongGeoKey, 
+        if( GTIFKeyGetDOUBLE(psGTIF, ProjNatOriginLongGeoKey, 
                        &dfNatOriginLong, 0, 1 ) == 0
-            && GTIFKeyGet(psGTIF, ProjFalseOriginLongGeoKey, 
+            && GTIFKeyGetDOUBLE(psGTIF, ProjFalseOriginLongGeoKey, 
                           &dfNatOriginLong, 0, 1 ) == 0
-            && GTIFKeyGet(psGTIF, ProjCenterLongGeoKey, 
+            && GTIFKeyGetDOUBLE(psGTIF, ProjCenterLongGeoKey, 
                           &dfNatOriginLong, 0, 1 ) == 0 )
             dfNatOriginLong = 0.0;
 
-        if( GTIFKeyGet(psGTIF, ProjNatOriginLatGeoKey, 
+        if( GTIFKeyGetDOUBLE(psGTIF, ProjNatOriginLatGeoKey, 
                        &dfNatOriginLat, 0, 1 ) == 0
-            && GTIFKeyGet(psGTIF, ProjFalseOriginLatGeoKey, 
+            && GTIFKeyGetDOUBLE(psGTIF, ProjFalseOriginLatGeoKey, 
                           &dfNatOriginLat, 0, 1 ) == 0
-            && GTIFKeyGet(psGTIF, ProjCenterLatGeoKey, 
+            && GTIFKeyGetDOUBLE(psGTIF, ProjCenterLatGeoKey, 
                           &dfNatOriginLat, 0, 1 ) == 0 )
             dfNatOriginLat = 0.0;
 
-        if( GTIFKeyGet(psGTIF, ProjScaleAtNatOriginGeoKey,
+        if( GTIFKeyGetDOUBLE(psGTIF, ProjScaleAtNatOriginGeoKey,
                        &dfNatOriginScale, 0, 1 ) == 0
-            && GTIFKeyGet(psGTIF, ProjScaleAtCenterGeoKey,
+            && GTIFKeyGetDOUBLE(psGTIF, ProjScaleAtCenterGeoKey,
                           &dfNatOriginScale, 0, 1 ) == 0 )
             dfNatOriginScale = 1.0;
             
@@ -1641,19 +1747,19 @@ static void GTIFFetchProjParms( GTIF * psGTIF, GTIFDefn * psDefn )
       case CT_Orthographic:
       case CT_NewZealandMapGrid:
 /* -------------------------------------------------------------------- */
-        if( GTIFKeyGet(psGTIF, ProjNatOriginLongGeoKey, 
+        if( GTIFKeyGetDOUBLE(psGTIF, ProjNatOriginLongGeoKey, 
                        &dfNatOriginLong, 0, 1 ) == 0
-            && GTIFKeyGet(psGTIF, ProjFalseOriginLongGeoKey, 
+            && GTIFKeyGetDOUBLE(psGTIF, ProjFalseOriginLongGeoKey, 
                           &dfNatOriginLong, 0, 1 ) == 0
-            && GTIFKeyGet(psGTIF, ProjCenterLongGeoKey, 
+            && GTIFKeyGetDOUBLE(psGTIF, ProjCenterLongGeoKey, 
                           &dfNatOriginLong, 0, 1 ) == 0 )
             dfNatOriginLong = 0.0;
 
-        if( GTIFKeyGet(psGTIF, ProjNatOriginLatGeoKey, 
+        if( GTIFKeyGetDOUBLE(psGTIF, ProjNatOriginLatGeoKey, 
                        &dfNatOriginLat, 0, 1 ) == 0
-            && GTIFKeyGet(psGTIF, ProjFalseOriginLatGeoKey, 
+            && GTIFKeyGetDOUBLE(psGTIF, ProjFalseOriginLatGeoKey, 
                           &dfNatOriginLat, 0, 1 ) == 0
-            && GTIFKeyGet(psGTIF, ProjCenterLatGeoKey, 
+            && GTIFKeyGetDOUBLE(psGTIF, ProjCenterLatGeoKey, 
                           &dfNatOriginLat, 0, 1 ) == 0 )
             dfNatOriginLat = 0.0;
 
@@ -1674,23 +1780,23 @@ static void GTIFFetchProjParms( GTIF * psGTIF, GTIFDefn * psDefn )
 /* -------------------------------------------------------------------- */
       case CT_Equirectangular:
 /* -------------------------------------------------------------------- */
-        if( GTIFKeyGet(psGTIF, ProjNatOriginLongGeoKey, 
+        if( GTIFKeyGetDOUBLE(psGTIF, ProjNatOriginLongGeoKey, 
                        &dfNatOriginLong, 0, 1 ) == 0
-            && GTIFKeyGet(psGTIF, ProjFalseOriginLongGeoKey, 
+            && GTIFKeyGetDOUBLE(psGTIF, ProjFalseOriginLongGeoKey, 
                           &dfNatOriginLong, 0, 1 ) == 0
-            && GTIFKeyGet(psGTIF, ProjCenterLongGeoKey, 
+            && GTIFKeyGetDOUBLE(psGTIF, ProjCenterLongGeoKey, 
                           &dfNatOriginLong, 0, 1 ) == 0 )
             dfNatOriginLong = 0.0;
 
-        if( GTIFKeyGet(psGTIF, ProjNatOriginLatGeoKey, 
+        if( GTIFKeyGetDOUBLE(psGTIF, ProjNatOriginLatGeoKey, 
                        &dfNatOriginLat, 0, 1 ) == 0
-            && GTIFKeyGet(psGTIF, ProjFalseOriginLatGeoKey, 
+            && GTIFKeyGetDOUBLE(psGTIF, ProjFalseOriginLatGeoKey, 
                           &dfNatOriginLat, 0, 1 ) == 0
-            && GTIFKeyGet(psGTIF, ProjCenterLatGeoKey, 
+            && GTIFKeyGetDOUBLE(psGTIF, ProjCenterLatGeoKey, 
                           &dfNatOriginLat, 0, 1 ) == 0 )
             dfNatOriginLat = 0.0;
 
-        if( GTIFKeyGet(psGTIF, ProjStdParallel1GeoKey, 
+        if( GTIFKeyGetDOUBLE(psGTIF, ProjStdParallel1GeoKey, 
                        &dfStdParallel1, 0, 1 ) == 0 )
             dfStdParallel1 = 0.0;
 
@@ -1715,11 +1821,11 @@ static void GTIFFetchProjParms( GTIF * psGTIF, GTIFDefn * psDefn )
       case CT_Sinusoidal:
       case CT_VanDerGrinten:
 /* -------------------------------------------------------------------- */
-        if( GTIFKeyGet(psGTIF, ProjNatOriginLongGeoKey, 
+        if( GTIFKeyGetDOUBLE(psGTIF, ProjNatOriginLongGeoKey, 
                        &dfNatOriginLong, 0, 1 ) == 0
-            && GTIFKeyGet(psGTIF, ProjFalseOriginLongGeoKey, 
+            && GTIFKeyGetDOUBLE(psGTIF, ProjFalseOriginLongGeoKey, 
                           &dfNatOriginLong, 0, 1 ) == 0
-            && GTIFKeyGet(psGTIF, ProjCenterLongGeoKey, 
+            && GTIFKeyGetDOUBLE(psGTIF, ProjCenterLongGeoKey, 
                           &dfNatOriginLong, 0, 1 ) == 0 )
             dfNatOriginLong = 0.0;
 
@@ -1738,27 +1844,27 @@ static void GTIFFetchProjParms( GTIF * psGTIF, GTIFDefn * psDefn )
 /* -------------------------------------------------------------------- */
       case CT_PolarStereographic:
 /* -------------------------------------------------------------------- */
-        if( GTIFKeyGet(psGTIF, ProjStraightVertPoleLongGeoKey, 
+        if( GTIFKeyGetDOUBLE(psGTIF, ProjStraightVertPoleLongGeoKey, 
                        &dfNatOriginLong, 0, 1 ) == 0
-            && GTIFKeyGet(psGTIF, ProjNatOriginLongGeoKey, 
+            && GTIFKeyGetDOUBLE(psGTIF, ProjNatOriginLongGeoKey, 
                           &dfNatOriginLong, 0, 1 ) == 0
-            && GTIFKeyGet(psGTIF, ProjFalseOriginLongGeoKey, 
+            && GTIFKeyGetDOUBLE(psGTIF, ProjFalseOriginLongGeoKey, 
                           &dfNatOriginLong, 0, 1 ) == 0
-            && GTIFKeyGet(psGTIF, ProjCenterLongGeoKey, 
+            && GTIFKeyGetDOUBLE(psGTIF, ProjCenterLongGeoKey, 
                           &dfNatOriginLong, 0, 1 ) == 0 )
             dfNatOriginLong = 0.0;
 
-        if( GTIFKeyGet(psGTIF, ProjNatOriginLatGeoKey, 
+        if( GTIFKeyGetDOUBLE(psGTIF, ProjNatOriginLatGeoKey, 
                        &dfNatOriginLat, 0, 1 ) == 0
-            && GTIFKeyGet(psGTIF, ProjFalseOriginLatGeoKey, 
+            && GTIFKeyGetDOUBLE(psGTIF, ProjFalseOriginLatGeoKey, 
                           &dfNatOriginLat, 0, 1 ) == 0
-            && GTIFKeyGet(psGTIF, ProjCenterLatGeoKey, 
+            && GTIFKeyGetDOUBLE(psGTIF, ProjCenterLatGeoKey, 
                           &dfNatOriginLat, 0, 1 ) == 0 )
             dfNatOriginLat = 0.0;
 
-        if( GTIFKeyGet(psGTIF, ProjScaleAtNatOriginGeoKey,
+        if( GTIFKeyGetDOUBLE(psGTIF, ProjScaleAtNatOriginGeoKey,
                        &dfNatOriginScale, 0, 1 ) == 0
-            && GTIFKeyGet(psGTIF, ProjScaleAtCenterGeoKey,
+            && GTIFKeyGetDOUBLE(psGTIF, ProjScaleAtCenterGeoKey,
                           &dfNatOriginScale, 0, 1 ) == 0 )
             dfNatOriginScale = 1.0;
             
@@ -1781,27 +1887,27 @@ static void GTIFFetchProjParms( GTIF * psGTIF, GTIFDefn * psDefn )
 /* -------------------------------------------------------------------- */
       case CT_LambertConfConic_2SP:
 /* -------------------------------------------------------------------- */
-        if( GTIFKeyGet(psGTIF, ProjStdParallel1GeoKey, 
+        if( GTIFKeyGetDOUBLE(psGTIF, ProjStdParallel1GeoKey, 
                        &dfStdParallel1, 0, 1 ) == 0 )
             dfStdParallel1 = 0.0;
 
-        if( GTIFKeyGet(psGTIF, ProjStdParallel2GeoKey, 
+        if( GTIFKeyGetDOUBLE(psGTIF, ProjStdParallel2GeoKey, 
                        &dfStdParallel2, 0, 1 ) == 0 )
             dfStdParallel1 = 0.0;
 
-        if( GTIFKeyGet(psGTIF, ProjNatOriginLongGeoKey, 
+        if( GTIFKeyGetDOUBLE(psGTIF, ProjNatOriginLongGeoKey, 
                        &dfNatOriginLong, 0, 1 ) == 0
-            && GTIFKeyGet(psGTIF, ProjFalseOriginLongGeoKey, 
+            && GTIFKeyGetDOUBLE(psGTIF, ProjFalseOriginLongGeoKey, 
                           &dfNatOriginLong, 0, 1 ) == 0
-            && GTIFKeyGet(psGTIF, ProjCenterLongGeoKey, 
+            && GTIFKeyGetDOUBLE(psGTIF, ProjCenterLongGeoKey, 
                           &dfNatOriginLong, 0, 1 ) == 0 )
             dfNatOriginLong = 0.0;
 
-        if( GTIFKeyGet(psGTIF, ProjNatOriginLatGeoKey, 
+        if( GTIFKeyGetDOUBLE(psGTIF, ProjNatOriginLatGeoKey, 
                        &dfNatOriginLat, 0, 1 ) == 0
-            && GTIFKeyGet(psGTIF, ProjFalseOriginLatGeoKey, 
+            && GTIFKeyGetDOUBLE(psGTIF, ProjFalseOriginLatGeoKey, 
                           &dfNatOriginLat, 0, 1 ) == 0
-            && GTIFKeyGet(psGTIF, ProjCenterLatGeoKey, 
+            && GTIFKeyGetDOUBLE(psGTIF, ProjCenterLatGeoKey, 
                           &dfNatOriginLat, 0, 1 ) == 0 )
             dfNatOriginLat = 0.0;
 
@@ -1827,27 +1933,27 @@ static void GTIFFetchProjParms( GTIF * psGTIF, GTIFDefn * psDefn )
       case CT_AlbersEqualArea:
       case CT_EquidistantConic:
 /* -------------------------------------------------------------------- */
-        if( GTIFKeyGet(psGTIF, ProjStdParallel1GeoKey, 
+        if( GTIFKeyGetDOUBLE(psGTIF, ProjStdParallel1GeoKey, 
                        &dfStdParallel1, 0, 1 ) == 0 )
             dfStdParallel1 = 0.0;
 
-        if( GTIFKeyGet(psGTIF, ProjStdParallel2GeoKey, 
+        if( GTIFKeyGetDOUBLE(psGTIF, ProjStdParallel2GeoKey, 
                        &dfStdParallel2, 0, 1 ) == 0 )
             dfStdParallel2 = 0.0;
 
-        if( GTIFKeyGet(psGTIF, ProjNatOriginLongGeoKey, 
+        if( GTIFKeyGetDOUBLE(psGTIF, ProjNatOriginLongGeoKey, 
                        &dfNatOriginLong, 0, 1 ) == 0
-            && GTIFKeyGet(psGTIF, ProjFalseOriginLongGeoKey, 
+            && GTIFKeyGetDOUBLE(psGTIF, ProjFalseOriginLongGeoKey, 
                           &dfNatOriginLong, 0, 1 ) == 0
-            && GTIFKeyGet(psGTIF, ProjCenterLongGeoKey, 
+            && GTIFKeyGetDOUBLE(psGTIF, ProjCenterLongGeoKey, 
                           &dfNatOriginLong, 0, 1 ) == 0 )
             dfNatOriginLong = 0.0;
 
-        if( GTIFKeyGet(psGTIF, ProjNatOriginLatGeoKey, 
+        if( GTIFKeyGetDOUBLE(psGTIF, ProjNatOriginLatGeoKey, 
                        &dfNatOriginLat, 0, 1 ) == 0
-            && GTIFKeyGet(psGTIF, ProjFalseOriginLatGeoKey, 
+            && GTIFKeyGetDOUBLE(psGTIF, ProjFalseOriginLatGeoKey, 
                           &dfNatOriginLat, 0, 1 ) == 0
-            && GTIFKeyGet(psGTIF, ProjCenterLatGeoKey, 
+            && GTIFKeyGetDOUBLE(psGTIF, ProjCenterLatGeoKey, 
                           &dfNatOriginLat, 0, 1 ) == 0 )
             dfNatOriginLat = 0.0;
 
@@ -1872,15 +1978,15 @@ static void GTIFFetchProjParms( GTIF * psGTIF, GTIFDefn * psDefn )
 /* -------------------------------------------------------------------- */
       case CT_CylindricalEqualArea:
 /* -------------------------------------------------------------------- */
-        if( GTIFKeyGet(psGTIF, ProjStdParallel1GeoKey, 
+        if( GTIFKeyGetDOUBLE(psGTIF, ProjStdParallel1GeoKey, 
                        &dfStdParallel1, 0, 1 ) == 0 )
             dfStdParallel1 = 0.0;
 
-        if( GTIFKeyGet(psGTIF, ProjNatOriginLongGeoKey, 
+        if( GTIFKeyGetDOUBLE(psGTIF, ProjNatOriginLongGeoKey, 
                        &dfNatOriginLong, 0, 1 ) == 0
-            && GTIFKeyGet(psGTIF, ProjFalseOriginLongGeoKey, 
+            && GTIFKeyGetDOUBLE(psGTIF, ProjFalseOriginLongGeoKey, 
                           &dfNatOriginLong, 0, 1 ) == 0
-            && GTIFKeyGet(psGTIF, ProjCenterLongGeoKey, 
+            && GTIFKeyGetDOUBLE(psGTIF, ProjCenterLongGeoKey, 
                           &dfNatOriginLong, 0, 1 ) == 0 )
             dfNatOriginLong = 0.0;
 
@@ -1933,8 +2039,7 @@ static void GTIFFetchProjParms( GTIF * psGTIF, GTIFDefn * psDefn )
 
 /**
 @param psGTIF GeoTIFF information handle as returned by GTIFNew.
-@param psDefn Pointer to an existing GTIFDefn structure.  This structure
-does not need to have been pre-initialized at all.
+@param psDefn Pointer to an existing GTIFDefn structure allocated by GTIFAllocDefn().
 
 @return TRUE if the function has been successful, otherwise FALSE.
 
@@ -2071,8 +2176,10 @@ int GTIFGetDefn( GTIF * psGTIF, GTIFDefn * psDefn )
     psDefn->SemiMinor = 0.0;
     psDefn->PM = KvUserDefined;
     psDefn->PMLongToGreenwich = 0.0;
+#if !defined(GEO_NORMALIZE_DISABLE_TOWGS84)
     psDefn->TOWGS84Count = 0;
     memset( psDefn->TOWGS84, 0, sizeof(psDefn->TOWGS84) );
+#endif
 
     psDefn->ProjCode = KvUserDefined;
     psDefn->Projection = KvUserDefined;
@@ -2106,18 +2213,18 @@ int GTIFGetDefn( GTIF * psGTIF, GTIFDefn * psDefn )
 /* -------------------------------------------------------------------- */
 /*	Try to get the overall model type.				*/
 /* -------------------------------------------------------------------- */
-    GTIFKeyGet(psGTIF,GTModelTypeGeoKey,&(psDefn->Model),0,1);
+    GTIFKeyGetSHORT(psGTIF,GTModelTypeGeoKey,&(psDefn->Model),0,1);
 
 /* -------------------------------------------------------------------- */
 /*	Extract the Geog units.  					*/
 /* -------------------------------------------------------------------- */
     nGeogUOMLinear = 9001; /* Linear_Meter */
-    GTIFKeyGet(psGTIF, GeogLinearUnitsGeoKey, &nGeogUOMLinear, 0, 1 );
+    GTIFKeyGetSHORT(psGTIF, GeogLinearUnitsGeoKey, &nGeogUOMLinear, 0, 1 );
 
 /* -------------------------------------------------------------------- */
 /*      Try to get a PCS.                                               */
 /* -------------------------------------------------------------------- */
-    if( GTIFKeyGet(psGTIF,ProjectedCSTypeGeoKey, &(psDefn->PCS),0,1) == 1
+    if( GTIFKeyGetSHORT(psGTIF,ProjectedCSTypeGeoKey, &(psDefn->PCS),0,1) == 1
         && psDefn->PCS != KvUserDefined )
     {
         /*
@@ -2149,7 +2256,7 @@ int GTIFGetDefn( GTIF * psGTIF, GTIFDefn * psDefn )
 /*      If the Proj_ code is specified directly, use that.              */
 /* -------------------------------------------------------------------- */
     if( psDefn->ProjCode == KvUserDefined )
-        GTIFKeyGet(psGTIF, ProjectionGeoKey, &(psDefn->ProjCode), 0, 1 );
+        GTIFKeyGetSHORT(psGTIF, ProjectionGeoKey, &(psDefn->ProjCode), 0, 1 );
     
     if( psDefn->ProjCode != KvUserDefined )
     {
@@ -2177,7 +2284,7 @@ int GTIFGetDefn( GTIF * psGTIF, GTIFDefn * psDefn )
 /*      Try to get a GCS.  If found, it will override any implied by    */
 /*      the PCS.                                                        */
 /* -------------------------------------------------------------------- */
-    GTIFKeyGet(psGTIF, GeographicTypeGeoKey, &(psDefn->GCS), 0, 1 );
+    GTIFKeyGetSHORT(psGTIF, GeographicTypeGeoKey, &(psDefn->GCS), 0, 1 );
     if( psDefn->GCS < 1 || psDefn->GCS >= KvUserDefined )
         psDefn->GCS = KvUserDefined;
 
@@ -2194,7 +2301,7 @@ int GTIFGetDefn( GTIF * psGTIF, GTIFDefn * psDefn )
 /*      Handle the GCS angular units.  GeogAngularUnitsGeoKey           */
 /*      overrides the GCS or PCS setting.                               */
 /* -------------------------------------------------------------------- */
-    GTIFKeyGet(psGTIF, GeogAngularUnitsGeoKey, &(psDefn->UOMAngle), 0, 1 );
+    GTIFKeyGetSHORT(psGTIF, GeogAngularUnitsGeoKey, &(psDefn->UOMAngle), 0, 1 );
     if( psDefn->UOMAngle != KvUserDefined )
     {
         GTIFGetUOMAngleInfo( psDefn->UOMAngle, NULL,
@@ -2205,7 +2312,7 @@ int GTIFGetDefn( GTIF * psGTIF, GTIFDefn * psDefn )
 /*      Check for a datum setting, and then use the datum to derive     */
 /*      an ellipsoid.                                                   */
 /* -------------------------------------------------------------------- */
-    GTIFKeyGet(psGTIF, GeogGeodeticDatumGeoKey, &(psDefn->Datum), 0, 1 );
+    GTIFKeyGetSHORT(psGTIF, GeogGeodeticDatumGeoKey, &(psDefn->Datum), 0, 1 );
 
     if( psDefn->Datum != KvUserDefined )
     {
@@ -2216,7 +2323,7 @@ int GTIFGetDefn( GTIF * psGTIF, GTIFDefn * psDefn )
 /*      Check for an explicit ellipsoid.  Use the ellipsoid to          */
 /*      derive the ellipsoid characteristics, if possible.              */
 /* -------------------------------------------------------------------- */
-    GTIFKeyGet(psGTIF, GeogEllipsoidGeoKey, &(psDefn->Ellipsoid), 0, 1 );
+    GTIFKeyGetSHORT(psGTIF, GeogEllipsoidGeoKey, &(psDefn->Ellipsoid), 0, 1 );
 
     if( psDefn->Ellipsoid != KvUserDefined )
     {
@@ -2229,10 +2336,10 @@ int GTIFGetDefn( GTIF * psGTIF, GTIFDefn * psDefn )
 /*      to warn if they conflict with provided information, but for     */
 /*      now we just override.                                           */
 /* -------------------------------------------------------------------- */
-    GTIFKeyGet(psGTIF, GeogSemiMajorAxisGeoKey, &(psDefn->SemiMajor), 0, 1 );
-    GTIFKeyGet(psGTIF, GeogSemiMinorAxisGeoKey, &(psDefn->SemiMinor), 0, 1 );
+    GTIFKeyGetDOUBLE(psGTIF, GeogSemiMajorAxisGeoKey, &(psDefn->SemiMajor), 0, 1 );
+    GTIFKeyGetDOUBLE(psGTIF, GeogSemiMinorAxisGeoKey, &(psDefn->SemiMinor), 0, 1 );
     
-    if( GTIFKeyGet(psGTIF, GeogInvFlatteningGeoKey, &dfInvFlattening, 
+    if( GTIFKeyGetDOUBLE(psGTIF, GeogInvFlatteningGeoKey, &dfInvFlattening, 
                    0, 1 ) == 1 )
     {
         if( dfInvFlattening != 0.0 )
@@ -2245,7 +2352,7 @@ int GTIFGetDefn( GTIF * psGTIF, GTIFDefn * psDefn )
 /* -------------------------------------------------------------------- */
 /*      Get the prime meridian info.                                    */
 /* -------------------------------------------------------------------- */
-    GTIFKeyGet(psGTIF, GeogPrimeMeridianGeoKey, &(psDefn->PM), 0, 1 );
+    GTIFKeyGetSHORT(psGTIF, GeogPrimeMeridianGeoKey, &(psDefn->PM), 0, 1 );
 
     if( psDefn->PM != KvUserDefined )
     {
@@ -2253,7 +2360,7 @@ int GTIFGetDefn( GTIF * psGTIF, GTIFDefn * psDefn )
     }
     else
     {
-        GTIFKeyGet(psGTIF, GeogPrimeMeridianLongGeoKey,
+        GTIFKeyGetDOUBLE(psGTIF, GeogPrimeMeridianLongGeoKey,
                    &(psDefn->PMLongToGreenwich), 0, 1 );
 
         psDefn->PMLongToGreenwich =
@@ -2264,8 +2371,10 @@ int GTIFGetDefn( GTIF * psGTIF, GTIFDefn * psDefn )
 /* -------------------------------------------------------------------- */
 /*      Get the TOWGS84 parameters.                                     */
 /* -------------------------------------------------------------------- */
+#if !defined(GEO_NORMALIZE_DISABLE_TOWGS84)
     psDefn->TOWGS84Count = 
-        GTIFKeyGet(psGTIF, GeogTOWGS84GeoKey, &(psDefn->TOWGS84), 0, 7 );
+        GTIFKeyGetDOUBLE(psGTIF, GeogTOWGS84GeoKey, psDefn->TOWGS84, 0, 7 );
+#endif
 
 /* -------------------------------------------------------------------- */
 /*      Have the projection units of measure been overridden?  We       */
@@ -2273,7 +2382,7 @@ int GTIFGetDefn( GTIF * psGTIF, GTIFDefn * psDefn )
 /*      but these are very rarely not decimal degrees for actual        */
 /*      file coordinates.                                               */
 /* -------------------------------------------------------------------- */
-    GTIFKeyGet(psGTIF,ProjLinearUnitsGeoKey,&(psDefn->UOMLength),0,1);
+    GTIFKeyGetSHORT(psGTIF,ProjLinearUnitsGeoKey,&(psDefn->UOMLength),0,1);
 
     if( psDefn->UOMLength != KvUserDefined )
     {
@@ -2282,13 +2391,13 @@ int GTIFGetDefn( GTIF * psGTIF, GTIFDefn * psDefn )
     }
     else
     {
-        GTIFKeyGet(psGTIF,ProjLinearUnitSizeGeoKey,&(psDefn->UOMLengthInMeters),0,1);
+        GTIFKeyGetDOUBLE(psGTIF,ProjLinearUnitSizeGeoKey,&(psDefn->UOMLengthInMeters),0,1);
     }
 
 /* -------------------------------------------------------------------- */
 /*      Handle a variety of user defined transform types.               */
 /* -------------------------------------------------------------------- */
-    if( GTIFKeyGet(psGTIF,ProjCoordTransGeoKey,
+    if( GTIFKeyGetSHORT(psGTIF,ProjCoordTransGeoKey,
                    &(psDefn->CTProjection),0,1) == 1)
     {
         GTIFFetchProjParms( psGTIF, psDefn );
@@ -2541,6 +2650,7 @@ void GTIFPrintDefn( GTIFDefn * psDefn, FILE * fp )
 /* -------------------------------------------------------------------- */
 /*      Report TOWGS84 parameters.                                      */
 /* -------------------------------------------------------------------- */
+#if !defined(GEO_NORMALIZE_DISABLE_TOWGS84)
     if( psDefn->TOWGS84Count > 0 )
     {
         int i;
@@ -2556,6 +2666,7 @@ void GTIFPrintDefn( GTIFDefn * psDefn, FILE * fp )
 
         fprintf( fp, "\n" );
     }
+#endif
 
 /* -------------------------------------------------------------------- */
 /*      Report the projection units of measure (currently just          */
@@ -2604,4 +2715,28 @@ void GTIFDeaccessCSV()
 
 {
     CSVDeaccess( NULL );
+}
+
+/************************************************************************/
+/*                           GTIFAllocDefn()                            */
+/*                                                                      */
+/*      This allocates a GTIF structure in such a way that the          */
+/*      calling application doesn't need to know the size and           */
+/*      initializes it appropriately.                                   */
+/************************************************************************/
+
+GTIFDefn *GTIFAllocDefn()
+{
+    return (GTIFDefn *) CPLCalloc(sizeof(GTIFDefn),1);
+}
+
+/************************************************************************/
+/*                            GTIFFreeDefn()                            */
+/*                                                                      */
+/*      Free a GTIF structure allocated by GTIFAllocDefn().             */
+/************************************************************************/
+
+void GTIFFreeDefn( GTIFDefn *defn ) 
+{
+    VSIFree( defn );
 }

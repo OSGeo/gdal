@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: geo_normalize.h 1983 2011-03-10 02:10:00Z warmerdam $
+ * $Id: geo_normalize.h 2233 2012-10-09 01:33:11Z warmerdam $
  *
  * Project:  libgeotiff
  * Purpose:  Include file related to geo_normalize.c containing Code to
@@ -95,11 +95,15 @@ typedef struct {
     /** The length of the semi minor ellipse axis in meters. */
     double	SemiMinor;
 
+  /* this #if is primary intended to maintain binary compatability with older
+     versions of libgeotiff for MrSID binaries (for example) */
+#if !defined(GEO_NORMALIZE_DISABLE_TOWGS84)
     /** TOWGS84 transformation values (0/3/7) */
     short       TOWGS84Count;
 
     /** TOWGS84 transformation values */
     double      TOWGS84[7];
+#endif /* !defined(GEO_NORMALIZE_DISABLE_TOWGS84) */
 
     /** Projection id from ProjectionGeoKey.  For example Proj_UTM_11S. */
     short	ProjCode;
@@ -172,7 +176,8 @@ void CPL_DLL GTIFDeaccessCSV( void );
 
 int CPL_DLL GTIFGetDefn( GTIF *psGTIF, GTIFDefn * psDefn );
 void CPL_DLL GTIFPrintDefn( GTIFDefn *, FILE * );
-void CPL_DLL GTIFFreeDefn( GTIF * );
+GTIFDefn CPL_DLL *GTIFAllocDefn( void );
+void CPL_DLL GTIFFreeDefn( GTIFDefn * );
 
 void CPL_DLL SetCSVFilenameHook( const char *(*CSVFileOverride)(const char *) );
 
