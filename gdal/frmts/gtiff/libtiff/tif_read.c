@@ -1,4 +1,4 @@
-/* $Id: tif_read.c,v 1.43 2014-11-20 16:47:21 erouault Exp $ */
+/* $Id: tif_read.c,v 1.44 2014-12-23 10:15:35 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -458,7 +458,7 @@ TIFFReadRawStrip(TIFF* tif, uint32 strip, void* buf, tmsize_t size)
 		return ((tmsize_t)(-1));
 	}
 	bytecount = td->td_stripbytecount[strip];
-	if (bytecount <= 0) {
+	if ((int64)bytecount <= 0) {
 #if defined(__WIN32__) && (defined(_MSC_VER) || defined(__MINGW32__))
 		TIFFErrorExt(tif->tif_clientdata, module,
 			     "%I64u: Invalid strip byte count, strip %lu",
@@ -498,7 +498,7 @@ TIFFFillStrip(TIFF* tif, uint32 strip)
 	if ((tif->tif_flags&TIFF_NOREADRAW)==0)
 	{
 		uint64 bytecount = td->td_stripbytecount[strip];
-		if (bytecount <= 0) {
+		if ((int64)bytecount <= 0) {
 #if defined(__WIN32__) && (defined(_MSC_VER) || defined(__MINGW32__))
 			TIFFErrorExt(tif->tif_clientdata, module,
 				"Invalid strip byte count %I64u, strip %lu",
@@ -801,7 +801,7 @@ TIFFFillTile(TIFF* tif, uint32 tile)
 	if ((tif->tif_flags&TIFF_NOREADRAW)==0)
 	{
 		uint64 bytecount = td->td_stripbytecount[tile];
-		if (bytecount <= 0) {
+		if ((int64)bytecount <= 0) {
 #if defined(__WIN32__) && (defined(_MSC_VER) || defined(__MINGW32__))
 			TIFFErrorExt(tif->tif_clientdata, module,
 				"%I64u: Invalid tile byte count, tile %lu",
