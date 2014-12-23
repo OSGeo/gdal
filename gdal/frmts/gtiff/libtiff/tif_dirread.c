@@ -1,4 +1,4 @@
-/* $Id: tif_dirread.c,v 1.181 2014-12-21 15:15:31 erouault Exp $ */
+/* $Id: tif_dirread.c,v 1.182 2014-12-23 11:06:54 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -4295,7 +4295,8 @@ EstimateStripByteCounts(TIFF* tif, TIFFDirEntry* dir, uint16 dircount)
 	TIFFDirectory *td = &tif->tif_dir;
 	uint32 strip;
 
-    _TIFFFillStriles( tif );
+    if( !_TIFFFillStriles( tif ) )
+        return -1;
 
 	if (td->td_stripbytecount)
 		_TIFFfree(td->td_stripbytecount);
