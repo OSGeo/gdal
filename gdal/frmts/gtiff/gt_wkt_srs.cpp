@@ -252,6 +252,66 @@ static void GTIFCleanupImagineNames( char *pszCitation )
 }
 
 /************************************************************************/
+/*                       GDALGTIFKeyGet()                          */
+/************************************************************************/
+
+static int GDALGTIFKeyGet( GTIF *hGTIF, geokey_t key,
+                           void* pData,
+                           int nIndex,
+                           int nCount,
+                           tagtype_t expected_tagtype )
+{
+    tagtype_t tagtype;
+    if( !GTIFKeyInfo(hGTIF, key, NULL, &tagtype) )
+        return 0;
+    if( tagtype != expected_tagtype )
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "Expected key %s to be of type %s. Got %s",
+                 GTIFKeyName(key), GTIFTypeName(expected_tagtype), GTIFTypeName(tagtype));
+        return 0;
+    }
+    return GTIFKeyGet( hGTIF, key, pData, nIndex, nCount );
+}
+
+/************************************************************************/
+/*                       GDALGTIFKeyGetASCII()                          */
+/************************************************************************/
+
+static int GDALGTIFKeyGetASCII( GTIF *hGTIF, geokey_t key,
+                                char* szStr,
+                                int nIndex,
+                                int szStrMaxLen )
+{
+    CPLAssert(nIndex == 0);
+    return GDALGTIFKeyGet(hGTIF, key, szStr, nIndex, szStrMaxLen, TYPE_ASCII);
+}
+
+/************************************************************************/
+/*                       GDALGTIFKeyGetSHORT()                          */
+/************************************************************************/
+
+static int GDALGTIFKeyGetSHORT( GTIF *hGTIF, geokey_t key,
+                                short* pnVal,
+                                int nIndex,
+                                int nCount )
+{
+    return GDALGTIFKeyGet(hGTIF, key, pnVal, nIndex, nCount, TYPE_SHORT);
+}
+
+/************************************************************************/
+/*                        GDALGTIFKeyGetDOUBLE()                        */
+/************************************************************************/
+
+static int GDALGTIFKeyGetDOUBLE( GTIF *hGTIF, geokey_t key,
+                                 double* pdfVal,
+                                 int nIndex,
+                                 int nCount )
+{
+    return GDALGTIFKeyGet(hGTIF, key, pdfVal, nIndex, nCount, TYPE_DOUBLE);
+}
+
+/************************************************************************/
 /*                          GTIFGetOGISDefn()                           */
 /************************************************************************/
 
@@ -285,7 +345,7 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
         char    szPeStr[2400];
 
         /** check if there is a pe string citation key **/
-        if( GTIFKeyGet( hGTIF, PCSCitationGeoKey, szPeStr, 0, sizeof(szPeStr) ) &&
+        if( GDALGTIFKeyGetASCII( hGTIF, PCSCitationGeoKey, szPeStr, 0, sizeof(szPeStr) ) &&
             strstr(szPeStr, "ESRI PE String = " ) )
         {
             pszWKT = CPLStrdup( szPeStr + strlen("ESRI PE String = ") );
@@ -305,9 +365,9 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
             {
                 // Handle citation.
                 strcpy( szPCSName, "unnamed" );
-                if( !GTIFKeyGet( hGTIF, GTCitationGeoKey, szPCSName, 
+                if( !GDALGTIFKeyGetASCII( hGTIF, GTCitationGeoKey, szPCSName, 
                                  0, sizeof(szPCSName) ) )
-                    GTIFKeyGet( hGTIF, GeogCitationGeoKey, szPCSName, 
+                    GDALGTIFKeyGetASCII( hGTIF, GeogCitationGeoKey, szPCSName, 
                                 0, sizeof(szPCSName) );
 
                 GTIFCleanupImagineNames( szPCSName );
@@ -340,9 +400,9 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
         char    szName[300];
 
         strcpy( szName, "unnamed" );
-        if( !GTIFKeyGet( hGTIF, GTCitationGeoKey, szName, 
+        if( !GDALGTIFKeyGetASCII( hGTIF, GTCitationGeoKey, szName, 
                          0, sizeof(szName) ) )
-            GTIFKeyGet( hGTIF, GeogCitationGeoKey, szName, 
+            GDALGTIFKeyGetASCII( hGTIF, GeogCitationGeoKey, szName, 
                         0, sizeof(szName) );
 
         oSRS.SetGeocCS( szName );
@@ -412,7 +472,7 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
 /* -------------------------------------------------------------------- */
     short bLinearUnitsMarkedCorrect = FALSE;
     
-    GTIFKeyGet(hGTIF, (geokey_t) ProjLinearUnitsInterpCorrectGeoKey, 
+    GDALGTIFKeyGetSHORT(hGTIF, (geokey_t) ProjLinearUnitsInterpCorrectGeoKey, 
                &bLinearUnitsMarkedCorrect, 0, 1);
 
     if( EQUAL(pszLinearUnits,"BROKEN") 
@@ -464,7 +524,7 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
 
             oSRS.SetAuthority( "PROJCS", "EPSG", psDefn->PCS );
         }
-        else if(hGTIF && GTIFKeyGet( hGTIF, PCSCitationGeoKey, szCTString, 0, 
+        else if(hGTIF && GDALGTIFKeyGetASCII( hGTIF, PCSCitationGeoKey, szCTString, 0, 
                                      sizeof(szCTString)) )  
         {
             if (!SetCitationToSRS(hGTIF, szCTString, sizeof(szCTString),
@@ -475,7 +535,7 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
         {
             if( hGTIF )
             {
-                GTIFKeyGet( hGTIF, GTCitationGeoKey, szCTString, 0, sizeof(szCTString) );
+                GDALGTIFKeyGetASCII( hGTIF, GTCitationGeoKey, szCTString, 0, sizeof(szCTString) );
                 if(!SetCitationToSRS(hGTIF, szCTString, sizeof(szCTString),
                                      GTCitationGeoKey, &oSRS, &linearUnitIsSet))
                     oSRS.SetNode( "PROJCS", szCTString );
@@ -496,7 +556,7 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
 
         /* Handle ESRI PE string in citation */
         szCTString[0] = '\0';
-        if( hGTIF && GTIFKeyGet( hGTIF, GTCitationGeoKey, szCTString, 0, sizeof(szCTString) ) )
+        if( hGTIF && GDALGTIFKeyGetASCII( hGTIF, GTCitationGeoKey, szCTString, 0, sizeof(szCTString) ) )
             SetCitationToSRS(hGTIF, szCTString, sizeof(szCTString), GTCitationGeoKey, &oSRS, &linearUnitIsSet);
     }
     
@@ -514,7 +574,7 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
     
     if( !GTIFGetGCSInfo( psDefn->GCS, &pszGeogName, NULL, NULL, NULL )
         && hGTIF != NULL 
-        && GTIFKeyGet( hGTIF, GeogCitationGeoKey, szGCSName, 0, 
+        && GDALGTIFKeyGetASCII( hGTIF, GeogCitationGeoKey, szGCSName, 0, 
                        sizeof(szGCSName)) )
     {
         GetGeogCSFromCitation(szGCSName, sizeof(szGCSName),
@@ -538,8 +598,8 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
     }
     else
     {
-        GTIFKeyGet(hGTIF, GeogSemiMajorAxisGeoKey, &(psDefn->SemiMajor), 0, 1 );
-        GTIFKeyGet(hGTIF, GeogInvFlatteningGeoKey, &dfInvFlattening, 0, 1 );
+        GDALGTIFKeyGetDOUBLE(hGTIF, GeogSemiMajorAxisGeoKey, &(psDefn->SemiMajor), 0, 1 );
+        GDALGTIFKeyGetDOUBLE(hGTIF, GeogInvFlatteningGeoKey, &dfInvFlattening, 0, 1 );
     }
     if( !pszPMName )
     {
@@ -547,7 +607,7 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
         GTIFToCPLRecycleString( &pszPMName );
     }
     else
-        GTIFKeyGet(hGTIF, GeogPrimeMeridianLongGeoKey, &(psDefn->PMLongToGreenwich), 0, 1 );
+        GDALGTIFKeyGetDOUBLE(hGTIF, GeogPrimeMeridianLongGeoKey, &(psDefn->PMLongToGreenwich), 0, 1 );
     
     if( !pszAngularUnits )
     {
@@ -559,7 +619,7 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
     }
     else
     {
-        GTIFKeyGet(hGTIF, GeogAngularUnitSizeGeoKey, &(psDefn->UOMAngleInDegrees), 0, 1 );
+        GDALGTIFKeyGetDOUBLE(hGTIF, GeogAngularUnitSizeGeoKey, &(psDefn->UOMAngleInDegrees), 0, 1 );
         aUnitGot = TRUE;
     }
 
@@ -657,8 +717,8 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
             adfParm[2] *= psDefn->UOMAngleInDegrees;
             adfParm[3] *= psDefn->UOMAngleInDegrees; 
         }
-        int unitCode = 0;
-        GTIFKeyGet(hGTIF, ProjLinearUnitsGeoKey, &unitCode, 0, 1  );
+        short unitCode = 0;
+        GDALGTIFKeyGetSHORT(hGTIF, ProjLinearUnitsGeoKey, &unitCode, 0, 1  );
         if(unitCode != KvUserDefined)
         {
             adfParm[5] /= psDefn->UOMLengthInMeters;
@@ -855,14 +915,14 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
     char citation[2048];
 
     // Don't do anything if there is no apparent vertical information.
-    GTIFKeyGet( hGTIF, VerticalCSTypeGeoKey, &verticalCSType, 0, 1 );
-    GTIFKeyGet( hGTIF, VerticalDatumGeoKey, &verticalDatum, 0, 1 );
-    GTIFKeyGet( hGTIF, VerticalUnitsGeoKey, &verticalUnits, 0, 1 );
+    GDALGTIFKeyGetSHORT( hGTIF, VerticalCSTypeGeoKey, &verticalCSType, 0, 1 );
+    GDALGTIFKeyGetSHORT( hGTIF, VerticalDatumGeoKey, &verticalDatum, 0, 1 );
+    GDALGTIFKeyGetSHORT( hGTIF, VerticalUnitsGeoKey, &verticalUnits, 0, 1 );
 
     if( (verticalCSType != -1 || verticalDatum != -1 || verticalUnits != -1)
         && (oSRS.IsGeographic() || oSRS.IsProjected() || oSRS.IsLocal()) )
     {
-        if( !GTIFKeyGet( hGTIF, VerticalCitationGeoKey, &citation, 
+        if( !GDALGTIFKeyGetASCII( hGTIF, VerticalCitationGeoKey, citation, 
                          0, sizeof(citation) ) )
             strcpy( citation, "unknown" );
 
@@ -2101,10 +2161,10 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
 /* -------------------------------------------------------------------- */
     double dfFE = 0.0, dfFN = 0.0;
 
-    if( (GTIFKeyGet(psGTIF, ProjFalseEastingGeoKey, &dfFE, 0, 1)
-         || GTIFKeyGet(psGTIF, ProjFalseNorthingGeoKey, &dfFN, 0, 1)
-         || GTIFKeyGet(psGTIF, ProjFalseOriginEastingGeoKey, &dfFE, 0, 1)
-         || GTIFKeyGet(psGTIF, ProjFalseOriginNorthingGeoKey, &dfFN, 0, 1))
+    if( (GDALGTIFKeyGetDOUBLE(psGTIF, ProjFalseEastingGeoKey, &dfFE, 0, 1)
+         || GDALGTIFKeyGetDOUBLE(psGTIF, ProjFalseNorthingGeoKey, &dfFN, 0, 1)
+         || GDALGTIFKeyGetDOUBLE(psGTIF, ProjFalseOriginEastingGeoKey, &dfFE, 0, 1)
+         || GDALGTIFKeyGetDOUBLE(psGTIF, ProjFalseOriginNorthingGeoKey, &dfFN, 0, 1))
         && (dfFE != 0.0 || dfFN != 0.0) 
         && nUOMLengthCode != 9001 )
     {
@@ -2386,7 +2446,7 @@ CPLErr GTIFWktFromMemBufEx( int nSize, unsigned char *pabyBuffer,
 
     hGTIF = GTIFNew(hTIFF);
 
-    if( hGTIF != NULL && GTIFKeyGet(hGTIF, GTRasterTypeGeoKey, &nRasterType,
+    if( hGTIF != NULL && GDALGTIFKeyGetSHORT(hGTIF, GTRasterTypeGeoKey, &nRasterType,
                 0, 1 ) == 1
         && nRasterType == (short) RasterPixelIsPoint )
     {
