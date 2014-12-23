@@ -4846,73 +4846,68 @@ void GTiffDataset::Crystalize()
 #define IO_CACHE_PAGE_SIZE      4096
 
 static
-void GTiffCacheOffsetOrCount4(VSILFILE* fp,
-                              vsi_l_offset nBaseOffset,
-                              int nBlockId,
-                              uint32 nstrips,
-                              uint64* panVals)
+void GTiffCacheOffsetOrCount(VSILFILE* fp,
+                             vsi_l_offset nBaseOffset,
+                             int nBlockId,
+                             uint32 nstrips,
+                             uint64* panVals,
+                             size_t sizeofval)
 {
-    uint32 val;
     int i, iStartBefore;
     vsi_l_offset nOffset, nOffsetStartPage, nOffsetEndPage;
     GByte buffer[2 * IO_CACHE_PAGE_SIZE];
 
-    nOffset = nBaseOffset + sizeof(val) * nBlockId;
+    nOffset = nBaseOffset + sizeofval * nBlockId;
     nOffsetStartPage = (nOffset / IO_CACHE_PAGE_SIZE) * IO_CACHE_PAGE_SIZE;
     nOffsetEndPage = nOffsetStartPage + IO_CACHE_PAGE_SIZE;
 
-    if( nOffset + sizeof(val) > nOffsetEndPage )
+    if( nOffset + sizeofval > nOffsetEndPage )
         nOffsetEndPage += IO_CACHE_PAGE_SIZE;
+    vsi_l_offset nLastStripOffset = nBaseOffset + nstrips * sizeofval;
+    if( nLastStripOffset < nOffsetEndPage )
+        nOffsetEndPage  = nLastStripOffset;
+    if( nOffsetStartPage >= nOffsetEndPage )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, 
+                 "Cannot read offset/size for strile %d", nBlockId);
+        panVals[nBlockId] = 0;
+        return;
+    }
     VSIFSeekL(fp, nOffsetStartPage, SEEK_SET);
-    VSIFReadL(buffer, 1, (size_t)(nOffsetEndPage - nOffsetStartPage), fp);
-    iStartBefore = - (int)((nOffset - nOffsetStartPage) / sizeof(val));
+    size_t nToRead = (size_t)(nOffsetEndPage - nOffsetStartPage);
+    size_t nRead = VSIFReadL(buffer, 1, nToRead, fp);
+    if( nRead < nToRead )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Cannot read offset/size for strile around ~%d", nBlockId);
+        memset(buffer + nRead, 0, nToRead - nRead);
+    }
+    iStartBefore = - (int)((nOffset - nOffsetStartPage) / sizeofval);
     if( nBlockId + iStartBefore < 0 )
         iStartBefore = -nBlockId;
     for(i=iStartBefore; (uint32)(nBlockId + i) < nstrips &&
-        (GIntBig)nOffset + (i+1) * (int)sizeof(val) <= (GIntBig)nOffsetEndPage; i++)
+        (GIntBig)nOffset + (i+1) * (int)sizeofval <= (GIntBig)nOffsetEndPage; i++)
     {
-        memcpy(&val,
-            buffer + (nOffset - nOffsetStartPage) + i * sizeof(val),
-            sizeof(val));
-        panVals[nBlockId + i] = val;
+        if( sizeofval == 4 )
+        {
+            uint32 val;
+            memcpy(&val,
+                   buffer + (nOffset - nOffsetStartPage) + i * sizeof(val),
+                   sizeof(val));
+            panVals[nBlockId + i] = val;
+        }
+        else
+        {
+            uint64 val;
+            memcpy(&val,
+                   buffer + (nOffset - nOffsetStartPage) + i * sizeof(val),
+                   sizeof(val));
+            panVals[nBlockId + i] = val;
+        }
     }
 }
 
-/* Same code as GTiffCacheOffsetOrCount4 except the 'val' declaration */
-static
-void GTiffCacheOffsetOrCount8(VSILFILE* fp,
-                              vsi_l_offset nBaseOffset,
-                              int nBlockId,
-                              uint32 nstrips,
-                              uint64* panVals)
-{
-    uint64 val;
-    int i, iStartBefore;
-    vsi_l_offset nOffset, nOffsetStartPage, nOffsetEndPage;
-    GByte buffer[2 * IO_CACHE_PAGE_SIZE];
-
-    nOffset = nBaseOffset + sizeof(val) * nBlockId;
-    nOffsetStartPage = (nOffset / IO_CACHE_PAGE_SIZE) * IO_CACHE_PAGE_SIZE;
-    nOffsetEndPage = nOffsetStartPage + IO_CACHE_PAGE_SIZE;
-
-    if( nOffset + sizeof(val) > nOffsetEndPage )
-        nOffsetEndPage += IO_CACHE_PAGE_SIZE;
-    VSIFSeekL(fp, nOffsetStartPage, SEEK_SET);
-    VSIFReadL(buffer, 1, (size_t)(nOffsetEndPage - nOffsetStartPage), fp);
-    iStartBefore = - (int)((nOffset - nOffsetStartPage) / sizeof(val));
-    if( nBlockId + iStartBefore < 0 )
-        iStartBefore = -nBlockId;
-    for(i=iStartBefore; (uint32)(nBlockId + i) < nstrips &&
-        (GIntBig)nOffset + (i+1) * (int)sizeof(val) <= (GIntBig)nOffsetEndPage; i++)
-    {
-        memcpy(&val,
-            buffer + (nOffset - nOffsetStartPage) + i * sizeof(val),
-            sizeof(val));
-        panVals[nBlockId + i] = val;
-    }
-}
-
-#endif
+#endif /* INTERNAL_LIBTIFF */
 
 /************************************************************************/
 /*                          IsBlockAvailable()                          */
@@ -4969,19 +4964,21 @@ int GTiffDataset::IsBlockAvailable( int nBlockId )
             {
                 if( hTIFF->tif_dir.td_stripoffset_entry.tdir_type == TIFF_LONG )
                 {
-                    GTiffCacheOffsetOrCount4(fp,
-                                             hTIFF->tif_dir.td_stripoffset_entry.tdir_offset.toff_long,
-                                             nBlockId,
-                                             hTIFF->tif_dir.td_nstrips,
-                                             hTIFF->tif_dir.td_stripoffset);
+                    GTiffCacheOffsetOrCount(fp,
+                                            hTIFF->tif_dir.td_stripoffset_entry.tdir_offset.toff_long,
+                                            nBlockId,
+                                            hTIFF->tif_dir.td_nstrips,
+                                            hTIFF->tif_dir.td_stripoffset,
+                                            sizeof(uint32));
                 }
                 else
                 {
-                    GTiffCacheOffsetOrCount8(fp,
-                                             hTIFF->tif_dir.td_stripoffset_entry.tdir_offset.toff_long8,
-                                             nBlockId,
-                                             hTIFF->tif_dir.td_nstrips,
-                                             hTIFF->tif_dir.td_stripoffset);
+                    GTiffCacheOffsetOrCount(fp,
+                                            hTIFF->tif_dir.td_stripoffset_entry.tdir_offset.toff_long8,
+                                            nBlockId,
+                                            hTIFF->tif_dir.td_nstrips,
+                                            hTIFF->tif_dir.td_stripoffset,
+                                            sizeof(uint64));
                 }
             }
 
@@ -4989,26 +4986,28 @@ int GTiffDataset::IsBlockAvailable( int nBlockId )
             {
                 if( hTIFF->tif_dir.td_stripbytecount_entry.tdir_type == TIFF_LONG )
                 {
-                    GTiffCacheOffsetOrCount4(fp,
-                                             hTIFF->tif_dir.td_stripbytecount_entry.tdir_offset.toff_long,
-                                             nBlockId,
-                                             hTIFF->tif_dir.td_nstrips,
-                                             hTIFF->tif_dir.td_stripbytecount);
+                    GTiffCacheOffsetOrCount(fp,
+                                            hTIFF->tif_dir.td_stripbytecount_entry.tdir_offset.toff_long,
+                                            nBlockId,
+                                            hTIFF->tif_dir.td_nstrips,
+                                            hTIFF->tif_dir.td_stripbytecount,
+                                            sizeof(uint32));
                 }
                 else
                 {
-                    GTiffCacheOffsetOrCount8(fp,
-                                             hTIFF->tif_dir.td_stripbytecount_entry.tdir_offset.toff_long8,
-                                             nBlockId,
-                                             hTIFF->tif_dir.td_nstrips,
-                                             hTIFF->tif_dir.td_stripbytecount);
+                    GTiffCacheOffsetOrCount(fp,
+                                            hTIFF->tif_dir.td_stripbytecount_entry.tdir_offset.toff_long8,
+                                            nBlockId,
+                                            hTIFF->tif_dir.td_nstrips,
+                                            hTIFF->tif_dir.td_stripbytecount,
+                                            sizeof(uint64));
                 }
             }
             VSIFSeekL(fp, nCurOffset, SEEK_SET);
         }
         return hTIFF->tif_dir.td_stripbytecount[nBlockId] != 0;
     }
-#endif
+#endif /* INTERNAL_LIBTIFF */
     toff_t *panByteCounts = NULL;
 
     if( ( TIFFIsTiled( hTIFF ) 
