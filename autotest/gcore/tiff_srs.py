@@ -110,6 +110,52 @@ def tiff_srs_without_linear_units():
 
     return 'success'
 
+###############################################################################
+# Test COMPDCS without VerticalCSType
+
+def tiff_srs_compd_cs():
+
+    sr = osr.SpatialReference()
+    # EPSG:7400 without the Authority
+    sr.SetFromUserInput("""COMPD_CS["unknown",
+    GEOGCS["NTF (Paris)",
+        DATUM["Nouvelle_Triangulation_Francaise_Paris",
+            SPHEROID["Clarke 1880 (IGN)",6378249.2,293.4660212936265,
+                AUTHORITY["EPSG","7011"]],
+            TOWGS84[-168,-60,320,0,0,0,0],
+            AUTHORITY["EPSG","6807"]],
+        PRIMEM["Paris",2.5969213],
+        UNIT["grad",0.01570796326794897],
+        AUTHORITY["EPSG","4807"]],
+    VERT_CS["NGF-IGN69 height",
+        VERT_DATUM["Nivellement General de la France - IGN69",2005,
+            AUTHORITY["EPSG","5119"]],
+        UNIT["metre",1,
+            AUTHORITY["EPSG","9001"]],
+        AXIS["Up",UP]]]""")
+
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tiff_srs_compd_cs.tif',1,1)
+    ds.SetProjection(sr.ExportToWkt())
+    ds = None
+
+    gdal.SetConfigOption('GTIFF_REPORT_COMPD_CS','YES')
+    ds = gdal.Open('/vsimem/tiff_srs_compd_cs.tif')
+    wkt = ds.GetProjectionRef()
+    gdal.SetConfigOption('GTIFF_REPORT_COMPD_CS',None)
+    sr2 = osr.SpatialReference()
+    sr2.SetFromUserInput(wkt)
+    ds = None
+
+    gdal.Unlink('/vsimem/tiff_srs_compd_cs.tif')
+
+    if sr.IsSame(sr2) != 1:
+
+        gdaltest.post_reason('did not get expected SRS')
+        print(sr)
+        print(sr2)
+        return 'fail'
+
+    return 'success'
 
 gdaltest_list = []
 
@@ -132,7 +178,8 @@ tiff_srs_list = [ 2758, #tmerc
                   2056, #somerc
                   2027, #utm
                   4326, #longlat
-                  26943, #utm
+                  26943, #utm,
+                  4328, #geocentric
 ]
 
 for item in tiff_srs_list:
@@ -151,6 +198,7 @@ for item in tiff_srs_list:
     gdaltest_list.append( (ut.test, "tiff_srs_proj4_of_epsg_%d" % epsg_code) )
 
 gdaltest_list.append( tiff_srs_without_linear_units )
+gdaltest_list.append( tiff_srs_compd_cs )
 
 
 if __name__ == '__main__':
