@@ -7115,6 +7115,10 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
             CPLDebug("GTiff", "Guessed JPEG quality to be %d", nQuality);
             poDS->nJpegQuality = nQuality;
             TIFFSetField( hTIFF, TIFFTAG_JPEGQUALITY, nQuality );
+
+            /* This means we will use the quantization tables from the JpegTables */
+            /* tag, and for Huffman we will use optimized coding for each strile */
+            TIFFSetField( hTIFF, TIFFTAG_JPEGTABLESMODE, JPEGTABLESMODE_QUANT);
         }
         else
         {
@@ -7146,13 +7150,21 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
                 }
                 if( bFoundNonEmptyBlock )
                 {
-                    CPLDebug("GTiff", "Could not guess JPEG quality. JPEG tables are missing, so going in TIFFTAG_JPEGTABLESMODE = 0 mode");
+                    CPLDebug("GTiff", "Could not guess JPEG quality. "
+                             "JPEG tables are missing, so going in "
+                             "TIFFTAG_JPEGTABLESMODE = 2 mode");
+                    /* Write quantization tables in each strile and use
+                       optimized Huffman coding */
                     TIFFSetField(hTIFF, TIFFTAG_JPEGTABLESMODE, 0);
                 }
             }
             else
             {
-                CPLDebug("GTiff", "Could not guess JPEG quality although JPEG tables are present, so going in TIFFTAG_JPEGTABLESMODE = 0 mode");
+                CPLDebug("GTiff", "Could not guess JPEG quality although JPEG "
+                         "tables are present, so going in "
+                         "TIFFTAG_JPEGTABLESMODE = 0 mode");
+                /* Write quantization tables in each strile and use
+                   optimized Huffman coding */
                 TIFFSetField(hTIFF, TIFFTAG_JPEGTABLESMODE, 0);
             }
         }
@@ -9564,6 +9576,12 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
     else if( nCompression == COMPRESSION_LZMA && nLZMAPreset != -1)
         TIFFSetField( hTIFF, TIFFTAG_LZMAPRESET, nLZMAPreset );
 
+    if( nCompression == COMPRESSION_JPEG )
+    {
+        TIFFSetField( hTIFF, TIFFTAG_JPEGTABLESMODE,
+            atoi(CSLFetchNameValueDef(papszParmList, "JPEGTABLESMODE", "1")) );
+    }
+
 /* -------------------------------------------------------------------- */
 /*      If we forced production of a file with photometric=palette,     */
 /*      we need to push out a default color table.                      */
@@ -9632,13 +9650,17 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
                                                "BLOCKYSIZE", "16");
         papszLocalParameters = CSLSetNameValue(papszLocalParameters,
                 "NBITS", CSLFetchNameValue(papszParmList, "NBITS"));
+        papszLocalParameters = CSLSetNameValue(papszLocalParameters,
+                "JPEGTABLESMODE", CSLFetchNameValue(papszParmList, "JPEGTABLESMODE"));
         TIFF* hTIFFTmp = CreateLL( osTmpFilename, 16, 16, (nBands <= 4) ? nBands : 1,
                                    eType, 0.0, papszLocalParameters, &fpTmp );
         CSLDestroy(papszLocalParameters);
         if( hTIFFTmp )
         {
             uint16 nPhotometric;
+            int nJpegTablesMode;
             TIFFGetField( hTIFFTmp, TIFFTAG_PHOTOMETRIC, &(nPhotometric) );
+            TIFFGetField( hTIFFTmp, TIFFTAG_JPEGTABLESMODE, &nJpegTablesMode );
             TIFFWriteCheck( hTIFFTmp, FALSE, "CreateLL" );
             TIFFWriteDirectory( hTIFFTmp );
             TIFFSetDirectory( hTIFFTmp, 0 );
@@ -9651,6 +9673,8 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
             {
                 TIFFSetField(hTIFFTmp, TIFFTAG_JPEGCOLORMODE, JPEGCOLORMODE_RGB);
             }
+            if (nJpegTablesMode >= 0 )
+                TIFFSetField(hTIFFTmp, TIFFTAG_JPEGTABLESMODE, nJpegTablesMode);
 
             GByte abyZeroData[(16*16*4*3)/2];
             memset(abyZeroData, 0, (16*16*4*3)/2);
@@ -9685,6 +9709,67 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
 /*                                                                      */
 /*      Guess JPEG quality from JPEGTABLES tag.                         */
 /************************************************************************/
+
+static const GByte* GTIFFFindNextQuantTable(const GByte* paby, int nLen,
+                                            int* pnLenTable)
+{
+    for(int i = 0; i+1 < nLen; )
+    {
+        if( paby[i] != 0xFF )
+            return NULL;
+        i ++;
+        if( paby[i] == 0xD8 )
+        {
+            i ++;
+            continue;
+        }
+        if( i+2 >= nLen )
+            return NULL;
+        int nMarkerLen = paby[i+1] * 256 + paby[i+2];
+        if( i+1+nMarkerLen >= nLen )
+            return NULL;
+        if( paby[i] == 0xDB )
+        {
+            *pnLenTable = nMarkerLen;
+            return paby + i + 1;
+        }
+        i += 1 + nMarkerLen;
+    }
+    return NULL;
+}
+
+/* We assume that if there are several quantization tables, they are */
+/* in the same order. Which is a reasonable assumption for updating */
+/* a file generated by ourselves */
+static int GTIFFQuantizationTablesEqual(const GByte* paby1, int nLen1,
+                                        const GByte* paby2, int nLen2)
+{
+    int bFound = FALSE;
+    while(TRUE)
+    {
+        int nLenTable1 = 0;
+        int nLenTable2 = 0;
+        const GByte* paby1New = GTIFFFindNextQuantTable(paby1, nLen1, &nLenTable1);
+        const GByte* paby2New = GTIFFFindNextQuantTable(paby2, nLen2, &nLenTable2);
+        if( paby1New == NULL && paby2New == NULL )
+            return bFound;
+        if( paby1New == NULL && paby2New != NULL )
+            return FALSE;
+        if( paby1New != NULL && paby2New == NULL )
+            return FALSE;
+        if( nLenTable1 != nLenTable2 )
+            return FALSE;
+        if( memcmp(paby1New, paby2New, nLenTable1) != 0 )
+            return FALSE;
+        paby1New += nLenTable1;
+        paby2New += nLenTable2;
+        nLen1 -= (paby1New - paby1);
+        nLen2 -= (paby2New - paby2);
+        paby1 = paby1New;
+        paby2 = paby2New;
+        bFound = TRUE;
+    }
+}
 
 int GTiffDataset::GuessJPEGQuality()
 {
@@ -9751,10 +9836,11 @@ int GTiffDataset::GuessJPEGQuality()
 
         uint32 nJPEGTableSizeTry = 0;
         void* pJPEGTableTry = NULL;
-        if( TIFFGetField(hTIFFTmp, TIFFTAG_JPEGTABLES, &nJPEGTableSizeTry, &pJPEGTableTry) )
+        if( TIFFGetField(hTIFFTmp, TIFFTAG_JPEGTABLES,
+                         &nJPEGTableSizeTry, &pJPEGTableTry) )
         {
-            if( nJPEGTableSize == nJPEGTableSizeTry &&
-                memcmp(pJPEGTableTry, pJPEGTable, nJPEGTableSize) == 0 )
+            if( GTIFFQuantizationTablesEqual((GByte*)pJPEGTable, nJPEGTableSize,
+                                             (GByte*)pJPEGTableTry, nJPEGTableSizeTry) )
             {
                 nRet = (nQuality == 0 ) ? 75 : nQuality;
             }
@@ -10292,12 +10378,6 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             CPLDebug( "GTiff", "Setting JPEGCOLORMODE_RGB" );
             TIFFSetField( hTIFF, TIFFTAG_JPEGCOLORMODE, JPEGCOLORMODE_RGB );
         }
-
-        if( !CSLTestBoolean(CSLFetchNameValueDef(papszOptions,
-                                                "WRITE_JPEGTABLE_TAG", "YES")) )
-        {
-            TIFFSetField( hTIFF, TIFFTAG_JPEGTABLESMODE, 0 );
-        }
     }
         
 /* -------------------------------------------------------------------- */
@@ -10743,11 +10823,8 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         {
             TIFFSetField( hTIFF, TIFFTAG_JPEGQUALITY, poDS->nJpegQuality );
         }
-        if( !CSLTestBoolean(CSLFetchNameValueDef(papszOptions,
-                                                "WRITE_JPEGTABLE_TAG", "YES")) )
-        {
-            TIFFSetField( hTIFF, TIFFTAG_JPEGTABLESMODE, 0 );
-        }
+        TIFFSetField( hTIFF, TIFFTAG_JPEGTABLESMODE, 
+            atoi(CSLFetchNameValueDef(papszOptions, "JPEGTABLESMODE", "1")));
     }
     else if( nCompression == COMPRESSION_LZMA)
     {
@@ -12053,7 +12130,8 @@ void GDALRegister_GTiff()
         if (bHasJPEG)
         {
             strcat( szCreateOptions, ""
-"   <Option name='JPEG_QUALITY' type='int' description='JPEG quality 1-100' default='75'/>" );
+"   <Option name='JPEG_QUALITY' type='int' description='JPEG quality 1-100' default='75'/>"
+"   <Option name='JPEGTABLESMODE' type='int' description='Content of JPEGTABLES tag. 0=no JPEGTABLES tag, 1=Quantization tables only, 2=Huffman tables only, 3=Both' default='1'/>" );
 #ifdef JPEG_DIRECT_COPY
             strcat( szCreateOptions, ""
 "   <Option name='JPEG_DIRECT_COPY' type='boolean' description='To copy without any decompression/recompression a JPEG source file' default='NO'/>");
