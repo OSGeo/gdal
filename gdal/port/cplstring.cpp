@@ -69,9 +69,9 @@ CPLString &CPLString::vPrintf( const char *pszFormat, va_list args )
 
 #if !defined(HAVE_VSNPRINTF)
     char *pszBuffer = (char *) CPLMalloc(30000);
-    if( CPLvsprintf( pszBuffer, pszFormat, args) > 29998 )
+    if( CPLvsnprintf( pszBuffer, 30000, pszFormat, args) > 29998 )
     {
-        CPLError( CE_Fatal, CPLE_AppDefined, 
+        CPLError( CE_Fatal, CPLE_AppDefined,
                   "CPLString::vPrintf() ... buffer overrun." );
     }
     *this = pszBuffer;
