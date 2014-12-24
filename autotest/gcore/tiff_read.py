@@ -1152,6 +1152,11 @@ def tiff_read_online_2():
 
 def tiff_read_huge4GB():
 
+    # Need libtiff 4.X anyway
+    md = gdal.GetDriverByName('GTiff').GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
+        return 'skip'
+
     if (gdaltest.filesystem_supports_sparse_files('tmp') == False):
         ds = gdal.Open('data/huge4GB.tif')
         if ds is None:

@@ -367,6 +367,11 @@ def tiff_ovr_8():
 
 def tiff_ovr_9():
 
+    drv = gdal.GetDriverByName( 'GTiff' )
+    md = drv.GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
+        return 'skip'
+
     shutil.copyfile( 'data/rgbsmall.tif', 'tmp/ovr9.tif' )
 
     gdal.SetConfigOption('COMPRESS_OVERVIEW', 'JPEG')
@@ -1202,6 +1207,11 @@ def tiff_ovr_31():
 # Test Cubic sampling.
 
 def tiff_ovr_32():
+
+    drv = gdal.GetDriverByName( 'GTiff' )
+    md = drv.GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
+        return 'skip'
 
     # 4 regular band
     shutil.copyfile( 'data/stefan_full_rgba_photometric_rgb.tif', 'tmp/ovr32.tif' )
