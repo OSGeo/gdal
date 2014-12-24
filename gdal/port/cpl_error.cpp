@@ -235,7 +235,8 @@ void    CPLErrorV(CPLErr eErrClass, int err_no, const char *fmt, va_list args )
         va_end( wrk_args );
     }
 #else
-    CPLvsprintf( psCtx->szLastErrMsg, fmt, args);
+    // !HAVE_VSNPRINTF
+    CPLvsnprintf( psCtx->szLastErrMsg, psCtx->nLastErrMsgMax, fmt, args);
 #endif
 
 /* -------------------------------------------------------------------- */
