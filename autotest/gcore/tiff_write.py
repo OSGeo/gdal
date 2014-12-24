@@ -451,7 +451,7 @@ def tiff_write_13():
         return 'fail'
 
     if md['LIBTIFF'] == 'INTERNAL':
-        if size > 25015:
+        if size > 22804:
             gdaltest.post_reason('fail: bad size')
             print(size)
             return 'fail'
@@ -4813,7 +4813,7 @@ def tiff_write_126():
     src_ds = gdal.Open('../gdrivers/data/small_world_400pct.vrt')
 
     options_list = [ (['COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR'], [48788,56561], [61397,2463], [29605,33654], [10904,10453]),
-                     (['COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR', 'WRITE_JPEGTABLE_TAG=NO'], [48788,56561], [61397,2463], [29605,33654], [10904,10453]),
+                     (['COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR', 'JPEGTABLESMODE=0'], [48788,56561], [61397,2463], [29605,33654], [10904,10453]),
                      (['COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR', 'TILED=YES'], [48788,56561], [61397,2463], [29605,33654], [10904,10453]),
                      (['COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR', 'BLOCKYSIZE=800'], [48788,56561], [61397,2463], [29605,33654], [10904,10453]),
                      (['COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR', 'BLOCKYSIZE=64'], [48788,56561], [61397,2463], [29605,33654], [10904,10453]),
@@ -4825,11 +4825,7 @@ def tiff_write_126():
                    ]
 
     for (options, cs1, cs2, cs3, cs4) in options_list:
-        if 'WRITE_JPEGTABLE_TAG=NO' in options:
-            gdal.PushErrorHandler()
         ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_126.tif', src_ds, options = options)
-        if 'WRITE_JPEGTABLE_TAG=NO' in options:
-            gdal.PopErrorHandler()
         ds = None
 
         ds = gdal.Open('/vsimem/tiff_write_126.tif')
@@ -4952,6 +4948,11 @@ def tiff_write_126():
     ds = None
 
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_126.tif')
+
+    # We need libtiff 4.0.4 (unreleased at that time)
+    if md['LIBTIFF'] != 'INTERNAL':
+        print('skipping tests that will fail without internal libtiff')
+        return 'success'
 
     # Test with completely sparse file
     ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_126.tif', 1024, 1024, options = ['COMPRESS=JPEG', 'SPARSE_OK=YES'])
@@ -5143,32 +5144,36 @@ def tiff_write_129():
     if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
         return 'skip'
 
-    for photometric in [ 'RGB', 'YCBCR' ]:
-        cs_ref = 0
-        for i in range(2):
-            ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_129.tif', 64, 32, 3,
-                options = ['COMPRESS=JPEG', 'TILED=YES', 'BLOCKXSIZE=32', 'BLOCKYSIZE=32', 'JPEG_QUALITY=50', 'PHOTOMETRIC=' + photometric])
-            src_ds = gdal.Open('data/rgbsmall.tif')
-            data = src_ds.ReadRaster(0,0,32,32)
-            ds.WriteRaster(0,0,32,32,data)
+    for jpegtablesmode in [ '1', '3']:
+        for photometric in [ 'RGB', 'YCBCR' ]:
+            cs_ref = 0
+            for i in range(2):
+                ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_129.tif', 64, 32, 3,
+                    options = ['COMPRESS=JPEG', 'TILED=YES', 'BLOCKXSIZE=32', 'BLOCKYSIZE=32', 'JPEG_QUALITY=50', 'PHOTOMETRIC=' + photometric, 'JPEGTABLESMODE=' + jpegtablesmode])
+                src_ds = gdal.Open('data/rgbsmall.tif')
+                data = src_ds.ReadRaster(0,0,32,32)
+                ds.WriteRaster(0,0,32,32,data)
 
-            # In second pass, we re-open the dataset
-            if i == 1:
+                # In second pass, we re-open the dataset
+                if i == 1:
+                    ds = None
+                    ds = gdal.Open('/vsimem/tiff_write_129.tif', gdal.GA_Update)
+                ds.WriteRaster(32,0,32,32,data)
                 ds = None
-                ds = gdal.Open('/vsimem/tiff_write_129.tif', gdal.GA_Update)
-            ds.WriteRaster(32,0,32,32,data)
-            ds = None
 
-            ds = gdal.Open('/vsimem/tiff_write_129.tif')
-            cs = ds.GetRasterBand(1).Checksum()
-            ds = None
-            gdaltest.tiff_drv.Delete('/vsimem/tiff_write_129.tif')
-            
-            if i == 0:
-                cs_ref = cs
-            elif cs != cs_ref:
-                gdaltest.post_reason('fail')
-                return 'fail'
+                ds = gdal.Open('/vsimem/tiff_write_129.tif')
+                cs = ds.GetRasterBand(1).Checksum()
+                ds = None
+                gdaltest.tiff_drv.Delete('/vsimem/tiff_write_129.tif')
+                
+                if i == 0:
+                    cs_ref = cs
+                elif cs != cs_ref:
+                    gdaltest.post_reason('fail')
+                    print(jpegtablesmode)
+                    print(photometric)
+                    print(i)
+                    return 'fail'
 
     return 'success'
 

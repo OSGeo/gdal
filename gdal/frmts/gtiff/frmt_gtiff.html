@@ -213,6 +213,18 @@ Lossy compression scheme to be best used with PREDICTOR=2 and LZW/DEFLATE compre
 
 <li><p><b>JPEG_QUALITY=[1-100]</b>:  Set the JPEG quality when using JPEG compression.  A value of 100 is best quality (least compression), and 1 is worst quality (best compression).  The default is 75.</p></li>
 
+<li><p><b>JPEGTABLESMODE=0/1/2/3</b>:  (From GDAL 2.0) Configure how and where JPEG quantization and Huffman tables are written in the TIFF JpegTables tag and strip/tile. Default to 1.</p>
+<ul>
+<li>0: JpegTables is not written. Each strip/tile contains its own quantization tables and use optimized Huffman coding.</li>
+<li>1: JpegTables is written with only the quantization tables. Each strip/tile refers to those quantized tables and use optimized Huffman coding.
+This is generally the optimal choice for smallest file size, and consequently is the default.</li>
+<li>2: JpegTables is written with only the default Huffman tables. Each strip/tile refers to those Huffman tables
+    (thus no optimized Huffman coding) and contains its own quantization tables (identical). This option has no anticipated practical value.</li>
+<li>3: JpegTables is written with the quantization and default Huffman tables. Each strip/tile refers to those tables
+    (thus no optimized Huffman coding). This option could perhaps with some data be more efficient than 1, but this should only occur in rare circumstances.</li>
+</ul>
+</li>
+
 <li><p><b>ZLEVEL=[1-9]</b>:  Set the level of compression when using DEFLATE compression. A value of 9 is best, and 1 is least compression. The default is 6.</p></li>
 
 <li><p><b>PHOTOMETRIC=[MINISBLACK/MINISWHITE/RGB/CMYK/YCBCR/CIELAB/ICCLAB/ITULAB]</b>: 
