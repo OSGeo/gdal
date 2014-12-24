@@ -3328,6 +3328,11 @@ JPGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     if( pszVal )
         sCInfo.arith_code = CSLTestBoolean(pszVal);
 
+    /* Optimized Huffman coding. Supposedly slower according to libjpeg doc */
+    /* but no longer significant with today computer standards */
+    if( !sCInfo.arith_code )
+        sCInfo.optimize_coding = TRUE;
+
 #if JPEG_LIB_VERSION_MAJOR >= 8 && \
       (JPEG_LIB_VERSION_MAJOR > 8 || JPEG_LIB_VERSION_MINOR >= 3)
     pszVal = CSLFetchNameValue(papszOptions, "BLOCK");
