@@ -582,7 +582,7 @@ WCSDataset::DirectRasterIO( CPL_UNUSED GDALRWFlag eRWFlag,
                             int *panBandMap,
                             GSpacing nPixelSpace, GSpacing nLineSpace,
                             GSpacing nBandSpace,
-                            GDALRasterIOExtraArg* psExtraArg)
+                            CPL_UNUSED GDALRasterIOExtraArg* psExtraArg)
 {
     CPLDebug( "WCS", "DirectRasterIO(%d,%d,%d,%d) -> (%d,%d) (%d bands)\n",
               nXOff, nYOff, nXSize, nYSize,
@@ -592,8 +592,8 @@ WCSDataset::DirectRasterIO( CPL_UNUSED GDALRWFlag eRWFlag,
 /*      Get the coverage.                                               */
 /* -------------------------------------------------------------------- */
     CPLHTTPResult *psResult = NULL;
-    CPLErr eErr = 
-        GetCoverage( nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize, 
+    CPLErr eErr =
+        GetCoverage( nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize,
                      nBandCount, panBandMap, &psResult );
 
     if( eErr != CE_None )
