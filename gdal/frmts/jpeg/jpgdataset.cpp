@@ -3295,9 +3295,10 @@ JPGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
     struct jpeg_compress_struct sCInfo;
     struct jpeg_error_mgr sJErr;
-    jmp_buf setjmp_buffer;
+    GDALJPEGErrorStruct sErrorStruct;
+    sErrorStruct.bNonFatalErrorEncountered = FALSE;
     
-    if (setjmp(setjmp_buffer)) 
+    if (setjmp(sErrorStruct.setjmp_buffer)) 
     {
         VSIFCloseL( fpImage );
         return NULL;
@@ -3305,7 +3306,9 @@ JPGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     sCInfo.err = jpeg_std_error( &sJErr );
     sJErr.error_exit = JPGDataset::ErrorExit;
-    sCInfo.client_data = (void *) &(setjmp_buffer);
+    sErrorStruct.p_previous_emit_message = sJErr.emit_message;
+    sJErr.emit_message = JPGDataset::EmitMessage;
+    sCInfo.client_data = (void *) &(sErrorStruct);
 
     jpeg_create_compress( &sCInfo );
     
