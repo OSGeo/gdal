@@ -69,19 +69,17 @@ class CPL_DLL OGDIDataset : public GDALDataset
     char	**papszSubDatasets;
 
   public:
-    		OGDIDataset();
-    		~OGDIDataset();
-                
+    OGDIDataset();
+    ~OGDIDataset();
+
     static GDALDataset *Open( GDALOpenInfo * );
 
-    int		GetClientID() { return nClientID; }
+    int GetClientID() { return nClientID; }
 
     virtual const char *GetProjectionRef(void);
     virtual CPLErr GetGeoTransform( double * );
 
-    virtual void *GetInternalHandle( const char * );
-
-    virtual char      **GetMetadataDomainList();
+    virtual char **GetMetadataDomainList();
     virtual char **GetMetadata( const char * pszDomain = "" );
 };
 
@@ -252,14 +250,13 @@ CPLErr OGDIRasterBand::IRasterIO( CPL_UNUSED GDALRWFlag eRWFlag,
                                   GDALDataType eBufType,
                                   GSpacing nPixelSpace,
                                   GSpacing nLineSpace,
-                                  GDALRasterIOExtraArg* psExtraArg )
-
+                                  CPL_UNUSED GDALRasterIOExtraArg* psExtraArg )
 {
     OGDIDataset	*poODS = (OGDIDataset *) poDS;
     CPLErr    eErr;
 #ifdef notdef
-    CPLDebug( "OGDIRasterBand", 
-              "RasterIO(%d,%d,%d,%d -> %dx%d)", 
+    CPLDebug( "OGDIRasterBand",
+              "RasterIO(%d,%d,%d,%d -> %dx%d)",
               nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize );
 #endif
 
@@ -954,19 +951,6 @@ CPLErr OGDIDataset::GetGeoTransform( double * padfTransform )
 }
 
 /************************************************************************/
-/*                         GetInternalHandle()                          */
-/************************************************************************/
-
-void *OGDIDataset::GetInternalHandle( const char * pszRequest )
-
-{
-    if( EQUAL(pszRequest,"ClientID") )
-        return (void *) nClientID;
-    else
-        return NULL;
-}
-
-/************************************************************************/
 /*                          GDALRegister_OGDI()                        */
 /************************************************************************/
 
@@ -995,4 +979,3 @@ void GDALRegister_OGDI()
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
-
