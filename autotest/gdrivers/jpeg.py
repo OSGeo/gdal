@@ -957,6 +957,31 @@ def jpeg_23():
     return 'success'
 
 ###############################################################################
+# Test Arithmetic coding (and if not enabled, will trigger error code handling
+# in CreateCopy())
+
+def jpeg_24():
+
+    ds = gdal.Open('data/byte.tif')
+
+    gdal.PushErrorHandler()
+    ds = gdal.GetDriverByName('JPEG').CreateCopy( '/vsimem/byte.jpg', ds,
+                                                  options = ['ARITHMETIC=YES'] )
+    gdal.PopErrorHandler()
+    if ds is not None:
+        expected_cs = 4743
+
+        if ds.GetRasterBand(1).Checksum() != expected_cs:
+            gdaltest.post_reason( 'Wrong checksum on copied image.')
+            print(ds.GetRasterBand(1).Checksum())
+            return 'fail'
+
+        ds = None
+        gdal.GetDriverByName('JPEG').Delete( '/vsimem/byte.jpg' )
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def jpeg_cleanup():
@@ -996,6 +1021,7 @@ gdaltest_list = [
     jpeg_21,
     jpeg_22,
     jpeg_23,
+    jpeg_24,
     jpeg_cleanup ]
 
 if __name__ == '__main__':
