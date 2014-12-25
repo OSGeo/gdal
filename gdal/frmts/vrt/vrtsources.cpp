@@ -2158,33 +2158,32 @@ CPLXMLNode *VRTFuncSource::SerializeToXML( CPL_UNUSED const char * pszVRTPath )
 /*                              RasterIO()                              */
 /************************************************************************/
 
-CPLErr 
+CPLErr
 VRTFuncSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
-                         void *pData, int nBufXSize, int nBufYSize, 
-                         GDALDataType eBufType, 
+                         void *pData, int nBufXSize, int nBufYSize,
+                         GDALDataType eBufType,
                          GSpacing nPixelSpace,
                          GSpacing nLineSpace,
-                         GDALRasterIOExtraArg* psExtraArg )
-
+                         CPL_UNUSED GDALRasterIOExtraArg* psExtraArg )
 {
     if( nPixelSpace*8 == GDALGetDataTypeSize( eBufType )
-        && nLineSpace == nPixelSpace * nXSize 
-        && nBufXSize == nXSize && nBufYSize == nYSize 
+        && nLineSpace == nPixelSpace * nXSize
+        && nBufXSize == nXSize && nBufYSize == nYSize
         && eBufType == eType )
     {
         return pfnReadFunc( pCBData,
-                            nXOff, nYOff, nXSize, nYSize, 
+                            nXOff, nYOff, nXSize, nYSize,
                             pData );
     }
     else
     {
-        printf( "%d,%d  %d,%d, %d,%d %d,%d %d,%d\n", 
+        printf( "%d,%d  %d,%d, %d,%d %d,%d %d,%d\n",
                 (int)nPixelSpace*8, GDALGetDataTypeSize(eBufType),
-                (int)nLineSpace, (int)nPixelSpace * nXSize, 
-                nBufXSize, nXSize, 
-                nBufYSize, nYSize, 
+                (int)nLineSpace, (int)nPixelSpace * nXSize,
+                nBufXSize, nXSize,
+                nBufYSize, nYSize,
                 (int) eBufType, (int) eType );
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "VRTFuncSource::RasterIO() - Irregular request." );
         return CE_Failure;
     }
