@@ -197,7 +197,7 @@ protected:
     int    bHasDoneJpegStartDecompress;
 
     virtual CPLErr LoadScanline(int) = 0;
-    virtual void   Restart() = 0;
+    virtual CPLErr Restart() = 0;
 
     virtual int GetDataPrecision() = 0;
     virtual int GetOutColorSpace() = 0;
@@ -276,7 +276,7 @@ class JPGDataset : public JPGDatasetCommon
     struct jpeg_error_mgr sJErr;
 
     virtual CPLErr LoadScanline(int);
-    virtual void   Restart();
+    virtual CPLErr Restart();
     virtual int GetDataPrecision() { return sDInfo.data_precision; }
     virtual int GetOutColorSpace() { return sDInfo.out_color_space; }
 
@@ -1594,7 +1594,10 @@ CPLErr JPGDataset::LoadScanline( int iLine )
     }
 
     if( iLine < nLoadedScanline )
-        Restart();
+    {
+        if( Restart() != CE_None )
+            return CE_Failure;
+    }
         
     while( nLoadedScanline < iLine )
     {
@@ -1806,9 +1809,13 @@ void JPGDataset::SetScaleNumAndDenom()
 /*      Restart compressor at the beginning of the file.                */
 /************************************************************************/
 
-void JPGDataset::Restart()
+CPLErr JPGDataset::Restart()
 
 {
+    // setup to trap a fatal error.
+    if (setjmp(sErrorStruct.setjmp_buffer)) 
+        return CE_Failure;
+
     J_COLOR_SPACE colorSpace = sDInfo.out_color_space;
     J_COLOR_SPACE jpegColorSpace = sDInfo.jpeg_color_space;
 
@@ -1858,6 +1865,8 @@ void JPGDataset::Restart()
         jpeg_start_decompress( &sDInfo );
         bHasDoneJpegStartDecompress = TRUE;
     }
+
+    return CE_None;
 }
 
 #if !defined(JPGDataset)
