@@ -374,7 +374,12 @@ int MITABCoordSys2TABProjInfo(const char * pszCoordSys, TABProjInfo *psProj)
         && EQUAL(papszFields[0],"Earth")
         && EQUAL(papszFields[1],"Projection") )
     {
-        psProj->nProjId = (GByte)atoi(papszFields[2]);
+        int nProjId = atoi(papszFields[2]);
+        if (nProjId>=3000) nProjId -=3000;
+        else if (nProjId>=2000) nProjId -=2000;
+        else if (nProjId>=1000) nProjId -=1000;
+
+        psProj->nProjId = (GByte)nProjId;
         papszNextField = papszFields + 3;
     }
     else if (CSLCount( papszFields ) >= 2
