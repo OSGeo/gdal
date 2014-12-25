@@ -152,7 +152,9 @@ class PNGDataset : public GDALPamDataset
 
     virtual CPLErr      IRasterIO( GDALRWFlag, int, int, int, int,
                                    void *, int, int, GDALDataType,
-                                   int, int *, int, int, int,
+                                   int, int *,
+                                   GSpacing, GSpacing,
+                                   GSpacing,
                                    GDALRasterIOExtraArg* psExtraArg );
 
     // semi-private.
@@ -488,10 +490,11 @@ static int IsFullBandMap(int *panBandMap, int nBands)
 
 CPLErr PNGDataset::IRasterIO( GDALRWFlag eRWFlag,
                               int nXOff, int nYOff, int nXSize, int nYSize,
-                              void *pData, int nBufXSize, int nBufYSize, 
+                              void *pData, int nBufXSize, int nBufYSize,
                               GDALDataType eBufType,
-                              int nBandCount, int *panBandMap, 
-                              int nPixelSpace, int nLineSpace, int nBandSpace,
+                              int nBandCount, int *panBandMap,
+                              GSpacing nPixelSpace, GSpacing nLineSpace,
+                              GSpacing nBandSpace,
                               GDALRasterIOExtraArg* psExtraArg )
 
 {
