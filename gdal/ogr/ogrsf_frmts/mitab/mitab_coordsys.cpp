@@ -397,10 +397,6 @@ int MITABCoordSys2TABProjInfo(const char * pszCoordSys, TABProjInfo *psProj)
         return -1;
     }
 
-    if (psProj->nProjId>=3000) psProj->nProjId -=3000;
-    else if (psProj->nProjId>=2000) psProj->nProjId -=2000;
-    else if (psProj->nProjId>=1000) psProj->nProjId -=1000;
-
     /*-----------------------------------------------------------------
      * Fetch the datum information.
      *----------------------------------------------------------------*/
