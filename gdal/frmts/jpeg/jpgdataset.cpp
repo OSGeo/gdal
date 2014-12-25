@@ -3314,7 +3314,16 @@ JPGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         sCInfo.in_color_space = JCS_UNKNOWN;
 
     jpeg_set_defaults( &sCInfo );
-    
+
+    /* This is to address bug related in ticket #1795 */
+    if (CPLGetConfigOption("JPEGMEM", NULL) == NULL)
+    {
+        /* If the user doesn't provide a value for JPEGMEM, we want to be sure */
+        /* that at least 500 MB will be used before creating the temporary file */
+        sCInfo.mem->max_memory_to_use =
+                MAX(sCInfo.mem->max_memory_to_use, 500 * 1024 * 1024);
+    }
+
     if( eDT == GDT_UInt16 )
     {
         sCInfo.data_precision = 12;
