@@ -745,10 +745,12 @@ CPLErr GTIFF_CopyFromJPEG(GDALDataset* poDS, GDALDataset* poSrcDS,
 /* -------------------------------------------------------------------- */
     struct jpeg_error_mgr sJErr;
     struct jpeg_decompress_struct sDInfo;
+    memset(&sDInfo, 0, sizeof(sDInfo));
     jmp_buf setjmp_buffer;
     if (setjmp(setjmp_buffer))
     {
         VSIFCloseL(fpJPEG);
+        jpeg_destroy_decompress(&sDInfo);
         return CE_Failure;
     }
 
