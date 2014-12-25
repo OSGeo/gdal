@@ -4825,8 +4825,10 @@ def tiff_write_126():
                    ]
 
     for (options, cs1, cs2, cs3, cs4) in options_list:
+        os.environ['JPEGMEM'] =  '500M'
         ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_126.tif', src_ds, options = options)
         ds = None
+        del os.environ['JPEGMEM']
 
         ds = gdal.Open('/vsimem/tiff_write_126.tif')
         # Officially we have 0 public overviews...
@@ -4887,8 +4889,10 @@ def tiff_write_126():
                    ]
 
     for (options, cs1, cs3, cs4) in options_list:
+        os.environ['JPEGMEM'] =  '500M'
         ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_126.tif', src_ds, options = options)
         ds = None
+        del os.environ['JPEGMEM']
 
         ds = gdal.Open('/vsimem/tiff_write_126.tif')
         # Officially we have 0 public overviews...
