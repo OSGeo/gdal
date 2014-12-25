@@ -104,7 +104,7 @@ OGRCARTODBTableLayer::~OGRCARTODBTableLayer()
 /*                          GetLayerDefnInternal()                      */
 /************************************************************************/
 
-OGRFeatureDefn * OGRCARTODBTableLayer::GetLayerDefnInternal(json_object* poObjIn)
+OGRFeatureDefn * OGRCARTODBTableLayer::GetLayerDefnInternal(CPL_UNUSED json_object* poObjIn)
 {
     if( poFeatureDefn != NULL )
         return poFeatureDefn;
