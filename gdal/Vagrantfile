@@ -7,6 +7,10 @@ require 'socket'
 VAGRANTFILE_API_VERSION = "2"
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+
+  vm_ram = ENV['VAGRANT_VM_RAM'] || 1024
+  vm_cpu = ENV['VAGRANT_VM_CPU'] || 2
+
   config.vm.box = "precise64"
 
   config.vm.hostname = "gdal-vagrant"
@@ -16,14 +20,14 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.network :forwarded_port, guest: 80, host: 8080
 
   config.vm.provider :virtualbox do |vb|
-     vb.customize ["modifyvm", :id, "--memory", "1024"]
-     vb.customize ["modifyvm", :id, "--cpus", "2"]
+     vb.customize ["modifyvm", :id, "--memory", vm_ram]
+     vb.customize ["modifyvm", :id, "--cpus", vm_cpu]
      vb.customize ["modifyvm", :id, "--ioapic", "on"]
      vb.name = "gdal-vagrant"
    end  
 
   ppaRepos = [
-    "ppa:ubuntugis/ppa", "ppa:marlam/gta"
+    "ppa:ubuntugis/ubuntugis-unstable", "ppa:marlam/gta"
   ]
 
   packageList = [
@@ -33,6 +37,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     "postgis",
     "postgresql-server-dev-9.1",
     "postgresql-9.1-postgis",
+    "postgresql-9.1-postgis-scripts",
     "libmysqlclient-dev",
     #"mysql-server",
     "libpq-dev",
@@ -72,6 +77,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     "cmake", # for openjpeg
     "bison",
     "flex",
+    "doxygen",
     "vim"
   ];
 

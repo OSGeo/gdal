@@ -6,8 +6,7 @@ fi
 #NUMTHREADS=1 # disable MP
 export NUMTHREADS
 
-svn checkout https://svn.osgeo.org/gdal/trunk gdal
-cd gdal/gdal
+cd /vagrant
 #  --with-ecw=/usr/local --with-mrsid=/usr/local --with-mrsid-lidar=/usr/local --with-fgdb=/usr/local
 ./configure  --prefix=/usr --without-libtool --enable-debug --with-jpeg12 \
             --with-perl --with-python --with-poppler \
@@ -27,5 +26,3 @@ sudo make install
 sudo ldconfig
 # not sure why we need to do that
 sudo cp -r /usr/lib/python2.7/site-packages/*  /usr/lib/python2.7/dist-packages/
-
-cd ../..
