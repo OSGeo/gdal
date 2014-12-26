@@ -80,10 +80,12 @@ class OGRSVGLayer : public OGRLayer
     int                inInterestingElement;
 
     int                bStopParsing;
+#ifdef HAVE_EXPAT
     int                nWithoutEventCounter;
     int                nDataHandlerCounter;
 
     OGRSVGLayer       *poCurLayer;
+#endif
 
   private:
     void               LoadSchema();
@@ -136,7 +138,9 @@ class OGRSVGDataSource : public OGRDataSource
     OGRSVGLayer**       papoLayers;
     int                 nLayers;
 
+#ifdef HAVE_EXPAT
     OGRSVGValidity      eValidity;
+#endif
     int                 bIsCloudmade;
 
 #ifdef HAVE_EXPAT
