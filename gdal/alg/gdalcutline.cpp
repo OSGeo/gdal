@@ -42,13 +42,23 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 static CPLErr
-BlendMaskGenerator( int nXOff, int nYOff, int nXSize, int nYSize, 
+BlendMaskGenerator(
+#ifndef HAVE_GEOS
+                    CPL_UNUSED int nXOff, CPL_UNUSED int nYOff,
+                    CPL_UNUSED int nXSize, CPL_UNUSED int nYSize,
+                    CPL_UNUSED GByte *pabyPolyMask,
+                    CPL_UNUSED float *pafValidityMask,
+                    CPL_UNUSED OGRGeometryH hPolygon,
+                    CPL_UNUSED double dfBlendDist
+#else
+                    int nXOff, int nYOff, int nXSize, int nYSize,
                     GByte *pabyPolyMask, float *pafValidityMask,
-                    OGRGeometryH hPolygon, double dfBlendDist )
-
+                    OGRGeometryH hPolygon, double dfBlendDist
+#endif
+)
 {
-#ifndef HAVE_GEOS 
-    CPLError( CE_Failure, CPLE_AppDefined, 
+#ifndef HAVE_GEOS
+    CPLError( CE_Failure, CPLE_AppDefined,
               "Blend distance support not available without the GEOS library.");
     return CE_Failure;
 
@@ -59,7 +69,7 @@ BlendMaskGenerator( int nXOff, int nYOff, int nXSize, int nYSize,
 /*      measure distance from the edge even on the inside.              */
 /* -------------------------------------------------------------------- */
     OGRGeometry *poLines
-        = OGRGeometryFactory::forceToMultiLineString( 
+        = OGRGeometryFactory::forceToMultiLineString(
             ((OGRGeometry *) hPolygon)->clone() );
 
 /* -------------------------------------------------------------------- */
