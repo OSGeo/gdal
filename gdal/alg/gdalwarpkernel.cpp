@@ -1091,10 +1091,12 @@ static CPL_INLINE T GWKRoundValueT(double dfValue)
                                                  (T)(dfValue + 0.5);
 }
 
+#ifdef notused
 template<> double GWKRoundValueT<double>(double dfValue)
 {
     return dfValue;
 }
+#endif
 
 /************************************************************************/
 /*                            GWKClampValueT()                          */
@@ -1111,10 +1113,12 @@ static CPL_INLINE T GWKClampValueT(double dfValue)
         return GWKRoundValueT<T>(dfValue);
 }
 
+#ifdef notused
 template<> double GWKClampValueT<double>(double dfValue)
 {
     return dfValue;
 }
+#endif
 
 /************************************************************************/
 /*                         GWKSetPixelValueRealT()                      */
