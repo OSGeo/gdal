@@ -245,6 +245,20 @@ projection with a command like this:<p>
 gdalwarp HDF4_SDS:ASTER_L1B:"pg-PR1B0000-2002031402_100_001":2 pg-PR1B0000-2002031402_100_001_2.tif
 \endverbatim
 
+<p>
+\section gdalwarp_seealso SEE ALSO
+
+\if man
+http://trac.osgeo.org/gdal/wiki/UserDocs/GdalWarp :
+\else
+<a href="http://trac.osgeo.org/gdal/wiki/UserDocs/GdalWarp">
+\endif
+Wiki page discussing options and behaviours of gdalwarp
+\if man
+\else
+</a>
+\endif
+
 \if man
 \section gdalwarp_author AUTHORS
 Frank Warmerdam <warmerdam@pobox.com>, Silke Reimer <silke@intevation.de>
