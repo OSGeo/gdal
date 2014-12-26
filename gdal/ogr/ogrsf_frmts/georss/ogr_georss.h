@@ -81,29 +81,37 @@ class OGRGeoRSSLayer : public OGRLayer
     int                bInFeature;
     int                hasFoundLat;
     int                hasFoundLon;
+#ifdef HAVE_EXPAT
     double             latVal;
     double             lonVal;
+#endif
     char*              pszSubElementName;
     char*              pszSubElementValue;
     int                nSubElementValueLen;
+#ifdef HAVE_EXPAT
     int                iCurrentField;
+#endif
     int                bInSimpleGeometry;
     int                bInGMLGeometry;
     int                bInGeoLat;
     int                bInGeoLong;
+#ifdef HAVE_EXPAT
     int                bFoundGeom;
-    OGRwkbGeometryType eGeomType;
     int                bSameSRS;
+#endif
+    OGRwkbGeometryType eGeomType;
     char*              pszGMLSRSName;
     int                bInTagWithSubTag;
     char*              pszTagWithSubTag;
     int                currentDepth;
     int                featureDepth;
     int                geometryDepth;
+#ifdef HAVE_EXPAT
     OGRFieldDefn*      currentFieldDefn;
     int                nWithoutEventCounter;
-    CPLHashSet*        setOfFoundFields;
     int                nDataHandlerCounter;
+#endif
+    CPLHashSet*        setOfFoundFields;
 
     OGRFeature*        poFeature;
     OGRFeature **      ppoFeatureTab;
@@ -170,7 +178,9 @@ class OGRGeoRSSDataSource : public OGRDataSource
     /*  Export related */
     VSILFILE           *fpOutput; /* Virtual file API */
     
+#ifdef HAVE_EXPAT
     OGRGeoRSSValidity   validity;
+#endif
     OGRGeoRSSFormat     eFormat;
     OGRGeoRSSGeomDialect eGeomDialect;
     int                 bUseExtensions;
