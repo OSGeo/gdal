@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: geo_normalize.c 2588 2014-12-23 12:43:22Z rouault $
+ * $Id: geo_normalize.c 2591 2014-12-26 23:03:43Z rouault $
  *
  * Project:  libgeotiff
  * Purpose:  Code to normalize PCS and other composite codes in a GeoTIFF file.
@@ -1346,6 +1346,13 @@ int GTIFGetProjTRFInfo( /* COORD_OP_CODE from coordinate_operation.csv */
                 nEPSGCode = EPSGFalseEasting;
             else if ( nCTProjMethod == CT_ObliqueMercator && nEPSGCode == EPSGProjCenterNorthing )
                 nEPSGCode = EPSGFalseNorthing;
+            /* for CT_PolarStereographic try alternate parameter codes first */
+            /* because EPSG proj method 9829 uses EPSGLatOfStdParallel instead of EPSGNatOriginLat */
+            /* and EPSGOriginLong instead of EPSGNatOriginLong */
+            else if( nCTProjMethod == CT_PolarStereographic && nEPSGCode == EPSGNatOriginLat )
+                nEPSGCode = EPSGLatOfStdParallel;
+            else if( nCTProjMethod == CT_PolarStereographic && nEPSGCode == EPSGNatOriginLong )
+                nEPSGCode = EPSGOriginLong;
             else
                 continue;
                 
@@ -1436,7 +1443,7 @@ static int GTIFKeyGetInternal( GTIF *psGTIF, geokey_t key,
         if( ++nErrorCount < 100 )
         {
             fprintf(stderr,
-                    "Expected key %s to be of type %s. Got %s",
+                    "Expected key %s to be of type %s. Got %s\n",
                     GTIFKeyName(key), GTIFTypeName(expected_tagtype),
                     GTIFTypeName(tagtype));
         }

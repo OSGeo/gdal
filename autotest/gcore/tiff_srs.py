@@ -162,7 +162,8 @@ gdaltest_list = []
 tiff_srs_list = [ 2758, #tmerc
                   2036, #sterea
                   2046, #tmerc
-                  [3031, True, False], #stere
+                  3031, #polar stere (ticket #3220)
+                  3032, #polar stere (ticket #3220)
                   32661, #stere
                   3035, #laea
                   2062, #lcc
