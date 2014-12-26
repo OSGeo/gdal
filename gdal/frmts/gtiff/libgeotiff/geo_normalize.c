@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: geo_normalize.c 2591 2014-12-26 23:03:43Z rouault $
+ * $Id: geo_normalize.c 2592 2014-12-26 23:44:02Z rouault $
  *
  * Project:  libgeotiff
  * Purpose:  Code to normalize PCS and other composite codes in a GeoTIFF file.
@@ -146,7 +146,19 @@ int GTIFGetPCSInfo( int nPCSCode, char **ppszEPSGName,
                                          szSearchKey, CC_Integer );
 
         if( papszRecord == NULL )
+        {
+            static int bWarnedOrTried = FALSE;
+            if( !bWarnedOrTried )
+            {
+                FILE* f = VSIFOpen(CSVFilename( "pcs.csv" ), "rb");
+                if( f == NULL )
+                    CPLError(CE_Warning, CPLE_AppDefined, "Cannot find pcs.csv");
+                else
+                    VSIFClose(f);
+                bWarnedOrTried = TRUE;
+            }
             return FALSE;
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -398,6 +410,16 @@ int GTIFGetGCSInfo( int nGCSCode, char ** ppszName,
 
     if( nDatum < 1 )
     {
+        static int bWarnedOrTried = FALSE;
+        if( !bWarnedOrTried )
+        {
+            FILE* f = VSIFOpen(CSVFilename( "gcs.csv" ), "rb");
+            if( f == NULL )
+                CPLError(CE_Warning, CPLE_AppDefined, "Cannot find gcs.csv");
+            else
+                VSIFClose(f);
+            bWarnedOrTried = TRUE;
+        }
         return FALSE;
     }
 
@@ -521,6 +543,16 @@ int GTIFGetEllipsoidInfo( int nEllipseCode, char ** ppszName,
 
     if( dfSemiMajor == 0.0 )
     {
+        static int bWarnedOrTried = FALSE;
+        if( !bWarnedOrTried )
+        {
+            FILE* f = VSIFOpen(CSVFilename( "ellipsoid.csv" ), "rb");
+            if( f == NULL )
+                CPLError(CE_Warning, CPLE_AppDefined, "Cannot find ellipsoid.csv");
+            else
+                VSIFClose(f);
+            bWarnedOrTried = TRUE;
+        }
         return FALSE;
     }
 
@@ -609,7 +641,19 @@ int GTIFGetPMInfo( int nPMCode, char ** ppszName, double *pdfOffset )
                           "PRIME_MERIDIAN_CODE", szSearchKey, CC_Integer,
                           "UOM_CODE" ) );
     if( nUOMAngle < 1 )
+    {
+        static int bWarnedOrTried = FALSE;
+        if( !bWarnedOrTried )
+        {
+            FILE* f = VSIFOpen(CSVFilename( "prime_meridian.csv" ), "rb");
+            if( f == NULL )
+                CPLError(CE_Warning, CPLE_AppDefined, "Cannot find prime_meridian.csv");
+            else
+                VSIFClose(f);
+            bWarnedOrTried = TRUE;
+        }
         return FALSE;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Get the PM offset.                                              */
@@ -717,6 +761,18 @@ int GTIFGetDatumInfo( int nDatumCode, char ** ppszName, short * pnEllipsoid )
 
     if( nEllipsoid < 1 )
     {
+        static int bWarnedOrTried = FALSE;
+        if( !bWarnedOrTried )
+        {
+            FILE* f = VSIFOpen(CSVFilename( "datum.csv" ), "rb");
+            if( f == NULL )
+                f = VSIFOpen(CSVFilename( "gdal_datum.csv" ), "rb");
+            if( f == NULL )
+                CPLError(CE_Warning, CPLE_AppDefined, "Cannot find datum.csv or gdal_datum.csv");
+            else
+                VSIFClose(f);
+            bWarnedOrTried = TRUE;
+        }
         return FALSE;
     }
 
