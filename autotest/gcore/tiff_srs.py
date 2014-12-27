@@ -212,22 +212,29 @@ tiff_srs_list = [ 2758, #tmerc
                   3032, #polar stere (ticket #3220)
                   32661, #stere
                   3035, #laea
-                  2062, #lcc
+                  2062, #lcc 1SP
                   [2065, True, True], #krovak
                   [2066, False, True], #cass
                   2964, #aea
                   3410, #cea
-                  [3786, True, False], #eqc
+                  3786, #eqc spherical, method=9823
+                  32663, #eqc elliptical, method=9842
+                  4087, # eqc WGS 84 / World Equidistant Cylindrical method=1028
+                  4088, # eqc World Equidistant Cylindrical (Sphere) method=1029
                   2934, #merc
                   27200, #nzmg
                   2057, #omerc
-                  [29100, True, False], #poly
+                  29100, #poly
                   2056, #somerc
                   2027, #utm
                   4326, #longlat
-                  26943, #utm,
+                  26943, #lcc 2SP,
                   4328, #geocentric
                   3994, #mercator 2SP
+                  26920, # UTM NAD83 special case
+                  26720, # UTM NAD27 special case
+                  32630, # UTM WGS84 north special case
+                  32730, # UTM WGS84 south special case
 ]
 
 for item in tiff_srs_list:

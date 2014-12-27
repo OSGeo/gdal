@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: geo_normalize.c 2593 2014-12-27 16:26:34Z rouault $
+ * $Id: geo_normalize.c 2595 2014-12-27 22:59:32Z rouault $
  *
  * Project:  libgeotiff
  * Purpose:  Code to normalize PCS and other composite codes in a GeoTIFF file.
@@ -1090,6 +1090,9 @@ static int EPSGProjMethodToCTProjMethod( int nEPSG, int bReturnExtendedCTCode )
       case 9816: /* tunesia mining grid has no counterpart */
         return( KvUserDefined );
 
+      case 9818:
+        return( CT_Polyconic );
+
       case 9820:
       case 1027:
         return( CT_LambertAzimEqualArea );
@@ -1099,6 +1102,12 @@ static int EPSGProjMethodToCTProjMethod( int nEPSG, int bReturnExtendedCTCode )
 
       case 9834:
         return( CT_CylindricalEqualArea );
+        
+      case 1028:
+      case 1029:
+      case 9823: /* spherical */
+      case 9842: /* elliptical */
+        return( CT_Equirectangular );
 
       default: /* use the EPSG code for other methods */
         return nEPSG;
@@ -1136,6 +1145,7 @@ static int SetGTParmIds( int nCTProjection,
     {
       case CT_CassiniSoldner:
       case CT_NewZealandMapGrid:
+      case CT_Polyconic:
         panProjParmId[0] = ProjNatOriginLatGeoKey;
         panProjParmId[1] = ProjNatOriginLongGeoKey;
         panProjParmId[5] = ProjFalseEastingGeoKey;
@@ -1264,6 +1274,20 @@ static int SetGTParmIds( int nCTProjection,
         panEPSGCodes[1] = EPSGFalseOriginLong;
         panEPSGCodes[5] = EPSGFalseOriginEasting;
         panEPSGCodes[6] = EPSGFalseOriginNorthing;
+        return TRUE;
+
+      case CT_Equirectangular:
+        panProjParmId[0] = ProjCenterLatGeoKey;
+        panProjParmId[1] = ProjCenterLongGeoKey;
+        panProjParmId[2] = ProjStdParallel1GeoKey;
+        panProjParmId[5] = ProjFalseEastingGeoKey;
+        panProjParmId[6] = ProjFalseNorthingGeoKey;
+
+        panEPSGCodes[0] = EPSGNatOriginLat;
+        panEPSGCodes[1] = EPSGNatOriginLong;
+        panEPSGCodes[2] = EPSGStdParallel1Lat;
+        panEPSGCodes[5] = EPSGFalseEasting;
+        panEPSGCodes[6] = EPSGFalseNorthing;
         return TRUE;
 
       case CT_Ext_Mercator_2SP:
