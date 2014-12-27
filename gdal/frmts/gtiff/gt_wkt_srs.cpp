@@ -2022,37 +2022,6 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
                    poSRS->GetProjParm( SRS_PP_FALSE_NORTHING, 0.0 ) );
     }
     
-    else if( EQUAL(pszProjection,SRS_PT_ALBERS_CONIC_EQUAL_AREA) )
-    {
-        GTIFKeySet(psGTIF, GTModelTypeGeoKey, TYPE_SHORT, 1,
-                   ModelTypeProjected);
-        GTIFKeySet(psGTIF, ProjectedCSTypeGeoKey, TYPE_SHORT, 1,
-                   KvUserDefined );
-        GTIFKeySet(psGTIF, ProjectionGeoKey, TYPE_SHORT, 1,
-                   KvUserDefined );
-
-        GTIFKeySet(psGTIF, ProjCoordTransGeoKey, TYPE_SHORT, 1, 
-                   CT_AlbersEqualArea );
-
-        GTIFKeySet(psGTIF, ProjNatOriginLatGeoKey, TYPE_DOUBLE, 1,
-                   poSRS->GetNormProjParm( SRS_PP_LATITUDE_OF_CENTER, 0.0 ) );
-
-        GTIFKeySet(psGTIF, ProjNatOriginLongGeoKey, TYPE_DOUBLE, 1,
-                   poSRS->GetNormProjParm( SRS_PP_LONGITUDE_OF_CENTER, 0.0 ) );
-        
-        GTIFKeySet(psGTIF, ProjStdParallel1GeoKey, TYPE_DOUBLE, 1,
-                   poSRS->GetNormProjParm( SRS_PP_STANDARD_PARALLEL_1, 0.0 ) );
-        
-        GTIFKeySet(psGTIF, ProjStdParallel2GeoKey, TYPE_DOUBLE, 1,
-                   poSRS->GetNormProjParm( SRS_PP_STANDARD_PARALLEL_2, 0.0 ) );
-        
-        GTIFKeySet(psGTIF, ProjFalseEastingGeoKey, TYPE_DOUBLE, 1,
-                   poSRS->GetProjParm( SRS_PP_FALSE_EASTING, 0.0 ) );
-        
-        GTIFKeySet(psGTIF, ProjFalseNorthingGeoKey, TYPE_DOUBLE, 1,
-                   poSRS->GetProjParm( SRS_PP_FALSE_NORTHING, 0.0 ) );
-    }
-    
     else if( EQUAL(pszProjection,SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP) )
     {
         GTIFKeySet(psGTIF, GTModelTypeGeoKey, TYPE_SHORT, 1,
