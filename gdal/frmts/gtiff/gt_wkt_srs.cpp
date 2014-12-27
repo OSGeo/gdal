@@ -743,10 +743,22 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
             break;
 
           case CT_Mercator:
-            oSRS.SetMercator( adfParm[0], adfParm[1],
-                              adfParm[4],
-                              adfParm[5], adfParm[6] );
-                              
+            /* If a lat_ts was specified use 2SP, otherwise use 1SP */
+            if (psDefn->ProjParmId[2] == ProjStdParallel1GeoKey)
+            {
+                if (psDefn->ProjParmId[4] == ProjScaleAtNatOriginGeoKey)
+                    CPLError( CE_Warning, CPLE_AppDefined,
+                              "Mercator projection should not define both StdParallel1 and ScaleAtNatOrigin.\n"
+                              "Using StdParallel1 and ignoring ScaleAtNatOrigin.\n" );
+                oSRS.SetMercator2SP( adfParm[2],
+                                     adfParm[0], adfParm[1],
+                                     adfParm[5], adfParm[6]);
+            }
+            else
+                oSRS.SetMercator( adfParm[0], adfParm[1],
+                                  adfParm[4],
+                                  adfParm[5], adfParm[6] );
+
             if (psDefn->Projection == 1024 || psDefn->Projection == 9841) // override hack for google mercator. 
             {
                 oSRS.SetExtension( "PROJCS", "PROJ4",  
@@ -1515,10 +1527,14 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
 
         GTIFKeySet(psGTIF, ProjNatOriginLongGeoKey, TYPE_DOUBLE, 1,
                    poSRS->GetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, 0.0 ) );
-        
-        GTIFKeySet(psGTIF, ProjScaleAtNatOriginGeoKey, TYPE_DOUBLE, 1,
-                   poSRS->GetNormProjParm( SRS_PP_SCALE_FACTOR, 1.0 ) );
-        
+
+        if( EQUAL(pszProjection,SRS_PT_MERCATOR_2SP) )
+            GTIFKeySet(psGTIF, ProjStdParallel1GeoKey, TYPE_DOUBLE, 1,
+                       poSRS->GetNormProjParm( SRS_PP_STANDARD_PARALLEL_1, 0.0 ) );
+        else
+            GTIFKeySet(psGTIF, ProjScaleAtNatOriginGeoKey, TYPE_DOUBLE, 1,
+                       poSRS->GetNormProjParm( SRS_PP_SCALE_FACTOR, 1.0 ) );
+
         GTIFKeySet(psGTIF, ProjFalseEastingGeoKey, TYPE_DOUBLE, 1,
                    poSRS->GetProjParm( SRS_PP_FALSE_EASTING, 0.0 ) );
         

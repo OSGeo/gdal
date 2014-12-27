@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: geo_normalize.c 2592 2014-12-26 23:44:02Z rouault $
+ * $Id: geo_normalize.c 2593 2014-12-27 16:26:34Z rouault $
  *
  * Project:  libgeotiff
  * Purpose:  Code to normalize PCS and other composite codes in a GeoTIFF file.
@@ -72,6 +72,8 @@
 #define EPSGTopocentricOriginLat 8834
 #define EPSGTopocentricOriginLong 8835
 #define EPSGTopocentricOriginHeight 8836
+
+#define CT_Ext_Mercator_2SP     -CT_Mercator
 
 /************************************************************************/
 /*                           GTIFGetPCSInfo()                           */
@@ -1021,7 +1023,7 @@ int GTIFGetUOMAngleInfo( int nUOMAngleCode,
 /*      and the GeoTIFF CT codes.                                       */
 /************************************************************************/
 
-static int EPSGProjMethodToCTProjMethod( int nEPSG )
+static int EPSGProjMethodToCTProjMethod( int nEPSG, int bReturnExtendedCTCode )
 
 {
     /* see trf_method.csv for list of EPSG codes */
@@ -1041,7 +1043,10 @@ static int EPSGProjMethodToCTProjMethod( int nEPSG )
         return( CT_Mercator );  /* 1SP and 2SP not differentiated */
 
       case 9805:
-        return( CT_Mercator );  /* 1SP and 2SP not differentiated */
+        if( bReturnExtendedCTCode )
+            return( CT_Ext_Mercator_2SP );
+        else
+            return( CT_Mercator );  /* 1SP and 2SP not differentiated */
         
       /* Mercator 1SP (Spherical) For EPSG:3785 */
       case 9841:
@@ -1261,6 +1266,20 @@ static int SetGTParmIds( int nCTProjection,
         panEPSGCodes[6] = EPSGFalseOriginNorthing;
         return TRUE;
 
+      case CT_Ext_Mercator_2SP:
+        panProjParmId[0] = ProjNatOriginLatGeoKey;
+        panProjParmId[1] = ProjNatOriginLongGeoKey;
+        panProjParmId[2] = ProjStdParallel1GeoKey;
+        panProjParmId[5] = ProjFalseEastingGeoKey;
+        panProjParmId[6] = ProjFalseNorthingGeoKey;
+
+        panEPSGCodes[0] = EPSGNatOriginLat;
+        panEPSGCodes[1] = EPSGNatOriginLong;
+        panEPSGCodes[2] = EPSGStdParallel1Lat;
+        panEPSGCodes[5] = EPSGFalseEasting;
+        panEPSGCodes[6] = EPSGFalseNorthing;
+        return TRUE;
+
       default:
         return( FALSE );
     }
@@ -1349,7 +1368,7 @@ int GTIFGetProjTRFInfo( /* COORD_OP_CODE from coordinate_operation.csv */
 /*      Initialize a definition of what EPSG codes need to be loaded    */
 /*      into what fields in adfProjParms.                               */
 /* -------------------------------------------------------------------- */
-    nCTProjMethod = EPSGProjMethodToCTProjMethod( nProjMethod );
+    nCTProjMethod = EPSGProjMethodToCTProjMethod( nProjMethod, TRUE );
     SetGTParmIds( nCTProjMethod, NULL, anEPSGCodes );
 
 /* -------------------------------------------------------------------- */
@@ -2337,9 +2356,10 @@ int GTIFGetDefn( GTIF * psGTIF, GTIFDefn * psDefn )
          * Set the GeoTIFF identity of the parameters.
          */
         psDefn->CTProjection = (short) 
-            EPSGProjMethodToCTProjMethod( psDefn->Projection );
+            EPSGProjMethodToCTProjMethod( psDefn->Projection, FALSE );
 
-        SetGTParmIds( psDefn->CTProjection, psDefn->ProjParmId, NULL);
+        SetGTParmIds( EPSGProjMethodToCTProjMethod(psDefn->Projection, TRUE),
+                      psDefn->ProjParmId, NULL);
         psDefn->nParms = 7;
     }
 
