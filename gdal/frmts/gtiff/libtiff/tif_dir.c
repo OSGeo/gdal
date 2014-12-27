@@ -1,4 +1,4 @@
-/* $Id: tif_dir.c,v 1.118 2014-12-21 15:15:31 erouault Exp $ */
+/* $Id: tif_dir.c,v 1.119 2014-12-27 15:20:42 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -1322,8 +1322,20 @@ TIFFDefaultDirectory(TIFF* tif)
 	tif->tif_tagmethods.printdir = NULL;
 	/*
 	 *  Give client code a chance to install their own
-	 *  tag extensions & methods, prior to compression overloads.
+	 *  tag extensions & methods, prior to compression overloads,
+	 *  but do some prior cleanup first. (http://trac.osgeo.org/gdal/ticket/5054)
 	 */
+	if (tif->tif_nfieldscompat > 0) {
+		uint32 i;
+
+		for (i = 0; i < tif->tif_nfieldscompat; i++) {
+				if (tif->tif_fieldscompat[i].allocated_size)
+						_TIFFfree(tif->tif_fieldscompat[i].fields);
+		}
+		_TIFFfree(tif->tif_fieldscompat);
+		tif->tif_nfieldscompat = 0;
+		tif->tif_fieldscompat = NULL;
+	}
 	if (_TIFFextender)
 		(*_TIFFextender)(tif);
 	(void) TIFFSetField(tif, TIFFTAG_COMPRESSION, COMPRESSION_NONE);
