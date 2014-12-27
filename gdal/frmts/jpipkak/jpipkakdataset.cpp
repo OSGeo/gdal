@@ -391,6 +391,8 @@ JPIPKAKDataset::JPIPKAKDataset()
     bWindowDone = FALSE;
     bGeoTransformValid = FALSE;
 
+    bNeedReinitialize = FALSE;
+
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
     adfGeoTransform[2] = 0.0;
@@ -630,7 +632,10 @@ int JPIPKAKDataset::Initialize(const char* pszDatasetName, int bReinitializing )
 /*      hopefully the configuration is unchanged.                       */
 /* -------------------------------------------------------------------- */
         if( bReinitializing )
+        {
+            bNeedReinitialize = FALSE;
             return TRUE;
+        }
 
 /* -------------------------------------------------------------------- */
 /*      Collect GDAL raster configuration information.                  */
