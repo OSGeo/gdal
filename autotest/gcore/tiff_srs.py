@@ -181,6 +181,7 @@ tiff_srs_list = [ 2758, #tmerc
                   4326, #longlat
                   26943, #utm,
                   4328, #geocentric
+                  3994, #mercator 2SP
 ]
 
 for item in tiff_srs_list:
