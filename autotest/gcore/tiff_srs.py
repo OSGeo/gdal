@@ -157,6 +157,52 @@ def tiff_srs_compd_cs():
 
     return 'success'
 
+###############################################################################
+# Test reading a GeoTIFF with both StdParallel1 and ScaleAtNatOrigin defined (#5791)
+
+def tiff_srs_weird_mercator_2sp():
+    
+    ds = gdal.Open('data/weird_mercator_2sp.tif')
+    gdal.PushErrorHandler()
+    wkt = ds.GetProjectionRef()
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('warning expected')
+        return 'fail'
+    sr2 = osr.SpatialReference()
+    sr2.SetFromUserInput(wkt)
+    ds = None
+
+    sr = osr.SpatialReference()
+    # EPSG:7400 without the Authority
+    sr.SetFromUserInput("""PROJCS["Global Mercator",
+    GEOGCS["NAD83",
+        DATUM["North_American_Datum_1983",
+            SPHEROID["GRS 1980",6378137,298.2572221010002,
+                AUTHORITY["EPSG","7019"]],
+            TOWGS84[0,0,0,0,0,0,0],
+            AUTHORITY["EPSG","6269"]],
+        PRIMEM["Greenwich",0],
+        UNIT["degree",0.0174532925199433],
+        AUTHORITY["EPSG","4269"]],
+    PROJECTION["Mercator_2SP"],
+    PARAMETER["standard_parallel_1",47.667],
+    PARAMETER["central_meridian",0],
+    PARAMETER["false_easting",0],
+    PARAMETER["false_northing",0],
+    UNIT["metre",1,
+        AUTHORITY["EPSG","9001"]]]""")
+
+    if sr.IsSame(sr2) != 1:
+
+        gdaltest.post_reason('did not get expected SRS')
+        print(sr)
+        print(sr2)
+        return 'fail'
+
+    return 'success'
+
+
 gdaltest_list = []
 
 tiff_srs_list = [ 2758, #tmerc
@@ -201,6 +247,7 @@ for item in tiff_srs_list:
 
 gdaltest_list.append( tiff_srs_without_linear_units )
 gdaltest_list.append( tiff_srs_compd_cs )
+gdaltest_list.append( tiff_srs_weird_mercator_2sp )
 
 
 if __name__ == '__main__':
