@@ -186,7 +186,13 @@ typedef enum {
 #define SRS_PT_WAGNER_VI        "Wagner_VI"
 #define SRS_PT_WAGNER_VII       "Wagner_VII"
 #define SRS_PT_QSC              "Quadrilateralized_Spherical_Cube"
-                                
+#define SRS_PT_AITOFF           "Aitoff" 
+#define SRS_PT_WINKEL_I         "Winkel_I" 
+#define SRS_PT_WINKEL_II        "Winkel_II" 
+#define SRS_PT_WINKEL_TRIPEL    "Winkel_Tripel" 
+#define SRS_PT_CRASTER_PARABOLIC    "Craster_Parabolic" 
+#define SRS_PT_LOXIMUTHAL        "Loximuthal"
+#define SRS_PT_QUARTIC_AUTHALIC  "Quartic_Authalic"
 
 #define SRS_PP_CENTRAL_MERIDIAN         "central_meridian"
 #define SRS_PP_SCALE_FACTOR             "scale_factor"
@@ -217,6 +223,7 @@ typedef enum {
 #define SRS_PP_LONGITUDE_OF_1ST_POINT   "Longitude_Of_1st_Point"
 #define SRS_PP_LATITUDE_OF_2ND_POINT    "Latitude_Of_2nd_Point"
 #define SRS_PP_LONGITUDE_OF_2ND_POINT   "Longitude_Of_2nd_Point"
+#define SRS_PP_CENTRAL_PARALLEL         "central_parallel"
 
 #define SRS_UL_METER            "Meter"
 #define SRS_UL_FOOT             "Foot (International)" /* or just "FOOT"? */
