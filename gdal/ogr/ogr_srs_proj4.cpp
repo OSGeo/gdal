@@ -2221,6 +2221,87 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
                  GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
                  GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
     }
+    else if( EQUAL(pszProjection,SRS_PT_AITOFF) )
+    {
+        //+lat_ts=0.0
+        CPLsprintf( szProj4+strlen(szProj4),
+                 "+proj=aitoff +lat_0=%.16g +lon_0=%.16g"
+                 " +x_0=%.16g +y_0=%.16g ",
+                 GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
+                 GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
+                 GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
+                 GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
+    }
+ 
+    else if( EQUAL(pszProjection,SRS_PT_WINKEL_I) )
+    {
+        CPLsprintf( szProj4+strlen(szProj4),
+                 "+proj=wink1 +lat_0=%.16g +lon_0=%.16g lat_ts=%.16g"
+                 " +x_0=%.16g +y_0=%.16g ",
+                 GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
+                 GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
+                 GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1,45.0),
+                 GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
+                 GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0));
+    }
+
+    else if( EQUAL(pszProjection,SRS_PT_WINKEL_II) )
+    {
+        CPLsprintf( szProj4+strlen(szProj4),
+                 "+proj=wink2 +lat_0=%.16g +lon_0=%.16g +lat_1=%.16g"
+                 " +x_0=%.16g +y_0=%.16g ",
+                 GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
+                 GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
+                 GetNormProjParm(SRS_PP_CENTRAL_PARALLEL,40.0),
+                 GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
+                 GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0));
+    }
+
+    else if( EQUAL(pszProjection,SRS_PT_WINKEL_TRIPEL) )
+    {
+        CPLsprintf( szProj4+strlen(szProj4),
+                 "+proj=wintri +lat_0=%.16g +lon_0=%.16g +lat_1=%.16g"
+                 " +x_0=%.16g +y_0=%.16g ",
+                 GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
+                 GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
+                 GetNormProjParm(SRS_PP_CENTRAL_PARALLEL,40.0),
+                 GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
+                 GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0));
+    }
+
+    else if( EQUAL(pszProjection,SRS_PT_CRASTER_PARABOLIC) )
+    {
+        CPLsprintf( szProj4+strlen(szProj4),
+                 "+proj=crast +lat_0=%.16g +lon_0=%.16g"
+                 " +x_0=%.16g +y_0=%.16g ",
+                 GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
+                 GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
+                 GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
+                 GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0));
+    }
+
+    else if( EQUAL(pszProjection,SRS_PT_LOXIMUTHAL) )
+    {
+        CPLsprintf( szProj4+strlen(szProj4),
+                 "+proj=loxim +lat_0=%.16g +lon_0=%.16g +lat_1=%.16g"
+                 " +x_0=%.16g +y_0=%.16g ",
+                 GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
+                 GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
+                 GetNormProjParm(SRS_PP_CENTRAL_PARALLEL,40.0),
+                 GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
+                 GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0));
+    }
+
+    else if( EQUAL(pszProjection,SRS_PT_QUARTIC_AUTHALIC) )
+    {
+        CPLsprintf( szProj4+strlen(szProj4),
+                 "+proj=qua_aut +lat_0=%.16g +lon_0=%.16g"
+                 " +x_0=%.16g +y_0=%.16g ",
+                 GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
+                 GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
+                 GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
+                 GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0));
+    }
 
     else
     {
