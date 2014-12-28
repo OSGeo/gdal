@@ -223,7 +223,6 @@ typedef enum {
 #define SRS_PP_LONGITUDE_OF_1ST_POINT   "Longitude_Of_1st_Point"
 #define SRS_PP_LATITUDE_OF_2ND_POINT    "Latitude_Of_2nd_Point"
 #define SRS_PP_LONGITUDE_OF_2ND_POINT   "Longitude_Of_2nd_Point"
-#define SRS_PP_CENTRAL_PARALLEL         "central_parallel"
 
 #define SRS_UL_METER            "Meter"
 #define SRS_UL_FOOT             "Foot (International)" /* or just "FOOT"? */
