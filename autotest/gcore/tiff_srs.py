@@ -260,6 +260,7 @@ tiff_srs_list_proj4 = [ ['eqdc', '+proj=eqdc +lat_0=%.16g +lon_0=%.16g +lat_1=%.
                         ['mill', '+proj=mill +lat_0=%.16g +lon_0=%.16g +x_0=%.16g +y_0=%.16g +R_A' % (1,2,3,4)],
                         ['gnom', '+proj=gnom +lat_0=%.16g +lon_0=%.16g +x_0=%.16g +y_0=%.16g' % (1,2,3,4)],
                         ['robin', '+proj=robin +lon_0=%.16g +x_0=%.16g +y_0=%.16g' % (1,2,3)],
+                        ['sinu', '+proj=sinu +lon_0=%.16g +x_0=%.16g +y_0=%.16g' % (1,2,3)],
                         ]
 for (title, proj4) in tiff_srs_list_proj4:
     ut = TestTiffSRS( proj4, 0, False )
