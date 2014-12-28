@@ -2252,7 +2252,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
                  " +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
                  GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
-                 GetNormProjParm(SRS_PP_CENTRAL_PARALLEL,40.0),
+                 GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1,40.0),
                  GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
                  GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0));
     }
@@ -2264,7 +2264,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
                  " +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
                  GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
-                 GetNormProjParm(SRS_PP_CENTRAL_PARALLEL,40.0),
+                 GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1,40.0),
                  GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
                  GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0));
     }
@@ -2283,11 +2283,10 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
     else if( EQUAL(pszProjection,SRS_PT_LOXIMUTHAL) )
     {
         CPLsprintf( szProj4+strlen(szProj4),
-                 "+proj=loxim +lat_0=%.16g +lon_0=%.16g +lat_1=%.16g"
+                 "+proj=loxim +lon_0=%.16g +lat_1=%.16g"
                  " +x_0=%.16g +y_0=%.16g ",
-                 GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
                  GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
-                 GetNormProjParm(SRS_PP_CENTRAL_PARALLEL,40.0),
+                 GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,40.0),
                  GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
                  GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0));
     }
