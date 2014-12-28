@@ -50,11 +50,14 @@ class TestTiffSRS:
 
     def test( self ):
         sr = osr.SpatialReference()
-        sr.ImportFromEPSG(self.epsg_code)
-        if self.use_epsg_code == 0:
-            proj4str = sr.ExportToProj4()
-            #print(proj4str)
-            sr.SetFromUserInput(proj4str)
+        if isinstance(self.epsg_code, str):
+            sr.SetFromUserInput(self.epsg_code)
+        else:
+            sr.ImportFromEPSG(self.epsg_code)
+            if self.use_epsg_code == 0:
+                proj4str = sr.ExportToProj4()
+                #print(proj4str)
+                sr.SetFromUserInput(proj4str)
 
         ds = gdal.GetDriverByName('GTiff').Create('/vsimem/TestTiffSRS.tif',1,1)
         ds.SetProjection(sr.ExportToWkt())
@@ -223,7 +226,8 @@ tiff_srs_list = [ 2758, #tmerc
                   4088, # eqc World Equidistant Cylindrical (Sphere) method=1029
                   2934, #merc
                   27200, #nzmg
-                  2057, #omerc
+                  2057, #omerc Hotine_Oblique_Mercator_Azimuth_Center
+                  3591, #omerc Hotine_Oblique_Mercator
                   29100, #poly
                   2056, #somerc
                   2027, #utm
@@ -251,6 +255,15 @@ for item in tiff_srs_list:
     gdaltest_list.append( (ut.test, "tiff_srs_epsg_%d" % epsg_code) )
     ut = TestTiffSRS( epsg_code, 0, epsg_proj4_broken )
     gdaltest_list.append( (ut.test, "tiff_srs_proj4_of_epsg_%d" % epsg_code) )
+
+tiff_srs_list_proj4 = [ ['eqdc', '+proj=eqdc +lat_0=%.16g +lon_0=%.16g +lat_1=%.16g +lat_2=%.16g" +x_0=%.16g +y_0=%.16g' % (1,2,3,4,5,6)],
+                        ['mill', '+proj=mill +lat_0=%.16g +lon_0=%.16g +x_0=%.16g +y_0=%.16g +R_A' % (1,2,3,4)],
+                        ['gnom', '+proj=gnom +lat_0=%.16g +lon_0=%.16g +x_0=%.16g +y_0=%.16g' % (1,2,3,4)],
+                        ['robin', '+proj=robin +lon_0=%.16g +x_0=%.16g +y_0=%.16g' % (1,2,3)],
+                        ]
+for (title, proj4) in tiff_srs_list_proj4:
+    ut = TestTiffSRS( proj4, 0, False )
+    gdaltest_list.append( (ut.test, "tiff_srs_proj4_%s" % title) )
 
 gdaltest_list.append( tiff_srs_without_linear_units )
 gdaltest_list.append( tiff_srs_compd_cs )
