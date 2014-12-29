@@ -993,11 +993,12 @@ CPLErr GDALWarpOperation::CollectChunkList(
 /* -------------------------------------------------------------------- */
     int nSrcXOff, nSrcYOff, nSrcXSize, nSrcYSize;
     int nSrcXExtraSize, nSrcYExtraSize;
+    double dfSrcFillRatio;
     CPLErr eErr;
 
     eErr = ComputeSourceWindow( nDstXOff, nDstYOff, nDstXSize, nDstYSize,
                                 &nSrcXOff, &nSrcYOff, &nSrcXSize, &nSrcYSize,
-                                &nSrcXExtraSize, &nSrcYExtraSize );
+                                &nSrcXExtraSize, &nSrcYExtraSize, &dfSrcFillRatio );
     
     if( eErr != CE_None )
     {
@@ -1083,8 +1084,18 @@ CPLErr GDALWarpOperation::CollectChunkList(
                          &nBlockXSize, &nBlockYSize);
     }
     
-    if( dfTotalMemoryUse > psOptions->dfWarpMemoryLimit 
-        && (nDstXSize > 2 || nDstYSize > 2) )
+    // If size of working buffers need exceed the allow limit, then divide
+    // the target area
+    // Do it also if the "fill ratio" of the source is too low (#3120), but
+    // only if there's at least some source pixel intersecting. The
+    // SRC_FILL_RATIO_HEURISTICS warping option is undocumented and only here
+    // in case the heuristics would cause issues.
+    /*CPLDebug("WARP", "dst=(%d,%d,%d,%d) src=(%d,%d,%d,%d) srcfillratio=%.18g",
+             nDstXOff, nDstYOff, nDstXSize, nDstYSize,
+             nSrcXOff, nSrcYOff, nSrcXSize, nSrcYSize, dfSrcFillRatio);*/
+    if( (dfTotalMemoryUse > psOptions->dfWarpMemoryLimit && (nDstXSize > 2 || nDstYSize > 2)) ||
+        (dfSrcFillRatio > 0 && dfSrcFillRatio < 0.5 && (nDstXSize > 100 || nDstYSize > 100) &&
+         CSLFetchBoolean( psOptions->papszWarpOptions, "SRC_FILL_RATIO_HEURISTICS", TRUE )) )
     {
         CPLErr eErr2;
 
@@ -1486,7 +1497,7 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
         eErr = ComputeSourceWindow( nDstXOff, nDstYOff, nDstXSize, nDstYSize,
                                     &nSrcXOff, &nSrcYOff, 
                                     &nSrcXSize, &nSrcYSize,
-                                    &nSrcXExtraSize, &nSrcYExtraSize );
+                                    &nSrcXExtraSize, &nSrcYExtraSize, NULL );
     
         if( eErr != CE_None )
             return eErr;
@@ -2023,7 +2034,8 @@ CPLErr GDALWarpOperation::ComputeSourceWindow(int nDstXOff, int nDstYOff,
                                               int nDstXSize, int nDstYSize,
                                               int *pnSrcXOff, int *pnSrcYOff, 
                                               int *pnSrcXSize, int *pnSrcYSize,
-                                              int *pnSrcXExtraSize, int *pnSrcYExtraSize)
+                                              int *pnSrcXExtraSize, int *pnSrcYExtraSize,
+                                              double *pdfSrcFillRatio)
 
 {
 /* -------------------------------------------------------------------- */
@@ -2254,6 +2266,10 @@ CPLErr GDALWarpOperation::ComputeSourceWindow(int nDstXOff, int nDstYOff,
 /* -------------------------------------------------------------------- */
 /*      return bounds.                                                  */
 /* -------------------------------------------------------------------- */
+    /*CPLDebug("WARP", "dst=(%d,%d,%d,%d) raw src=(minx=%.8g,miny=%.8g,maxx=%.8g,maxy=%.8g)",
+             nDstXOff, nDstYOff, nDstXSize, nDstYSize,
+             dfMinXOut, dfMinYOut, dfMaxXOut, dfMaxYOut);
+    */
     *pnSrcXOff = MAX(0,(int) floor( dfMinXOut ) );
     *pnSrcYOff = MAX(0,(int) floor( dfMinYOut ) );
     *pnSrcXOff = MIN(*pnSrcXOff,GDALGetRasterXSize(psOptions->hSrcDS));
@@ -2285,8 +2301,16 @@ CPLErr GDALWarpOperation::ComputeSourceWindow(int nDstXOff, int nDstYOff,
     *pnSrcXSize = MAX(0,*pnSrcXSize);
     *pnSrcYSize = MAX(0,*pnSrcYSize);
 
-    *pnSrcXExtraSize = *pnSrcXSize - nSrcXSizeRaw;
-    *pnSrcYExtraSize = *pnSrcYSize - nSrcYSizeRaw;
+    if( pnSrcXExtraSize )
+        *pnSrcXExtraSize = *pnSrcXSize - nSrcXSizeRaw;
+    if( pnSrcYExtraSize )
+        *pnSrcYExtraSize = *pnSrcYSize - nSrcYSizeRaw;
+    
+    // Computed the ratio of the clamped source raster window size over
+    // the unclamped source raster window size
+    if( pdfSrcFillRatio )
+        *pdfSrcFillRatio = *pnSrcXSize * *pnSrcYSize / MAX(1.0,
+        (dfMaxXOut - dfMinXOut + 2 * nResWinSize) * (dfMaxYOut - dfMinYOut + 2 * nResWinSize)); 
 
     return CE_None;
 }

@@ -340,7 +340,8 @@ private:
                                          int nDstXSize, int nDstYSize,
                                          int *pnSrcXOff, int *pnSrcYOff, 
                                          int *pnSrcXSize, int *pnSrcYSize,
-                                         int *pnSrcXExtraSize, int *pnSrcYExtraSize );
+                                         int *pnSrcXExtraSize, int *pnSrcYExtraSize,
+                                         double* pdfSrcFillRatio );
 
     CPLErr          CreateKernelMask( GDALWarpKernel *, int iBand, 
                                       const char *pszType );
