@@ -50,6 +50,7 @@
 #include "gtiff.h"
 #include "gdal_csv.h"
 #include "gt_wkt_srs.h"
+#include "gt_wkt_srs_priv.h"
 #include "tifvsi.h"
 #include "cpl_multiproc.h"
 #include "cplkeywordparser.h"
@@ -7214,6 +7215,26 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
 }
 
 /************************************************************************/
+/*                      GTiffDatasetSetAreaOrPointMD()                  */
+/************************************************************************/
+
+static void GTiffDatasetSetAreaOrPointMD(GTIF* hGTIF,
+                                         GDALMultiDomainMetadata& oGTiffMDMD)
+{
+    // Is this a pixel-is-point dataset?
+    short nRasterType;
+
+    if( GDALGTIFKeyGetSHORT(hGTIF, GTRasterTypeGeoKey, &nRasterType,
+                    0, 1 ) == 1 )
+    {
+        if( nRasterType == (short) RasterPixelIsPoint )
+            oGTiffMDMD.SetMetadataItem( GDALMD_AREA_OR_POINT, GDALMD_AOP_POINT );
+        else
+            oGTiffMDMD.SetMetadataItem( GDALMD_AREA_OR_POINT, GDALMD_AOP_AREA );
+    }
+}
+
+/************************************************************************/
 /*                         LoadMDAreaOrPoint()                          */
 /************************************************************************/
 
@@ -7241,17 +7262,7 @@ void GTiffDataset::LoadMDAreaOrPoint()
     }
     else
     {
-        // Is this a pixel-is-point dataset?
-        short nRasterType;
-
-        if( GTIFKeyGet(hGTIF, GTRasterTypeGeoKey, &nRasterType,
-                       0, 1 ) == 1 )
-        {
-            if( nRasterType == (short) RasterPixelIsPoint )
-                oGTiffMDMD.SetMetadataItem( GDALMD_AREA_OR_POINT, GDALMD_AOP_POINT );
-            else
-                oGTiffMDMD.SetMetadataItem( GDALMD_AREA_OR_POINT, GDALMD_AOP_AREA );
-        }
+        GTiffDatasetSetAreaOrPointMD( hGTIF, oGTiffMDMD );
 
         GTIFFree( hGTIF );
     }
@@ -7317,9 +7328,6 @@ void GTiffDataset::LookForProjection()
             }
         }
 
-        // Is this a pixel-is-point dataset?
-        short nRasterType;
-
         // check the tif linear unit and the CS linear unit 
 #ifdef ESRI_BUILD
         AdjustLinearUnit(psGTIFDefn.UOMLength); 
@@ -7331,14 +7339,7 @@ void GTiffDataset::LookForProjection()
         CPLFree(psGTIFDefn);
 #endif
 
-        if( GTIFKeyGet(hGTIF, GTRasterTypeGeoKey, &nRasterType, 
-                       0, 1 ) == 1 )
-        {
-            if( nRasterType == (short) RasterPixelIsPoint )
-                oGTiffMDMD.SetMetadataItem( GDALMD_AREA_OR_POINT, GDALMD_AOP_POINT );
-            else
-                oGTiffMDMD.SetMetadataItem( GDALMD_AREA_OR_POINT, GDALMD_AOP_AREA );
-        }
+        GTiffDatasetSetAreaOrPointMD( hGTIF, oGTiffMDMD );
 
         GTIFFree( hGTIF );
     }
@@ -8338,7 +8339,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
 
         if( psGTIF )
         {
-            if( GTIFKeyGet(psGTIF, GTRasterTypeGeoKey, &nRasterType,
+            if( GDALGTIFKeyGetSHORT(psGTIF, GTRasterTypeGeoKey, &nRasterType,
                         0, 1 ) == 1
                 && nRasterType == (short) RasterPixelIsPoint )
             {
