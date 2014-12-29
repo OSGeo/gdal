@@ -1081,8 +1081,8 @@ int  TABMAPIndexBlock::PickSeedsForSplit(TABMAPIndexEntry *pasEntries,
     // corresponding dimension
     double dX, dY;
 
-    dX = (double)(nHighestMinX - nLowestMaxX) / nSrcWidth;
-    dY = (double)(nHighestMinY - nLowestMaxY) / nSrcHeight;
+    dX = (nSrcWidth == 0) ? 0 : (double)(nHighestMinX - nLowestMaxX) / nSrcWidth;
+    dY = (nSrcHeight == 0) ? 0 : (double)(nHighestMinY - nLowestMaxY) / nSrcHeight;
 
     // Choose the pair with the greatest normalized separation along
     // any dimension
