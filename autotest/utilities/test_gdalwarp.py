@@ -1246,6 +1246,57 @@ def test_gdalwarp_40():
     return 'success'
 
 ###############################################################################
+# Test source fill ratio heuristics (#3120)
+
+def test_gdalwarp_41():
+    if test_cli_utilities.get_gdalwarp_path() is None:
+        return 'skip'
+
+    src_ds = gdal.GetDriverByName('GTiff').Create('tmp/test_gdalwarp_41_src.tif',666,666)
+    src_ds.SetGeoTransform([-3333500,10010.510510510510358,0,3333500.000000000000000,0,-10010.510510510510358])
+    src_ds.SetProjection("""PROJCS["WGS_1984_Stereographic_South_Pole",
+    GEOGCS["WGS 84",
+        DATUM["WGS_1984",
+            SPHEROID["WGS 84",6378137,298.257223563,
+                AUTHORITY["EPSG","7030"]],
+            AUTHORITY["EPSG","6326"]],
+        PRIMEM["Greenwich",0],
+        UNIT["degree",0.0174532925199433],
+        AUTHORITY["EPSG","4326"]],
+    PROJECTION["Polar_Stereographic"],
+    PARAMETER["latitude_of_origin",-71],
+    PARAMETER["central_meridian",0],
+    PARAMETER["scale_factor",1],
+    PARAMETER["false_easting",0],
+    PARAMETER["false_northing",0],
+    UNIT["metre",1,
+        AUTHORITY["EPSG","9001"]]]""")
+    src_ds.GetRasterBand(1).Fill(255)
+    src_ds = None
+
+    # Check when source fill ratio heuristics is ON
+    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' tmp/test_gdalwarp_41_src.tif tmp/test_gdalwarp_41.tif -overwrite  -t_srs EPSG:4326 -te -180 -90 180 90  -wo INIT_DEST=127 -wo SKIP_NOSOURCE=YES')
+    
+    ds = gdal.Open('tmp/test_gdalwarp_41.tif')
+    if ds.GetRasterBand(1).Checksum() != 46583:
+        gdaltest.post_reason('failure')
+        print(ds.GetRasterBand(1).Checksum())
+        return 'fail'
+    ds = None
+
+    # Check when source fill ratio heuristics is OFF
+    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' tmp/test_gdalwarp_41_src.tif tmp/test_gdalwarp_41.tif -overwrite  -t_srs EPSG:4326 -te -180 -90 180 90  -wo INIT_DEST=127 -wo SKIP_NOSOURCE=YES -wo SRC_FILL_RATIO_HEURISTICS=NO')
+    
+    ds = gdal.Open('tmp/test_gdalwarp_41.tif')
+    if ds.GetRasterBand(1).Checksum() != 30582:
+        gdaltest.post_reason('failure')
+        print(ds.GetRasterBand(1).Checksum())
+        return 'fail'
+    ds = None
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def test_gdalwarp_cleanup():
@@ -1309,6 +1360,11 @@ def test_gdalwarp_cleanup():
         os.remove('tmp/test_gdalwarp_40.vrt')
     except:
         pass
+    try:
+        os.remove('tmp/test_gdalwarp_41_src.tif')
+        os.remove('tmp/test_gdalwarp_41.tif')
+    except:
+        pass
     return 'success'
 
 gdaltest_list = [
@@ -1353,6 +1409,7 @@ gdaltest_list = [
     test_gdalwarp_38,
     test_gdalwarp_39,
     test_gdalwarp_40,
+    test_gdalwarp_41,
     test_gdalwarp_cleanup
     ]
 
