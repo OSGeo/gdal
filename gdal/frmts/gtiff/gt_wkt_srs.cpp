@@ -3,8 +3,7 @@
  *
  * Project:  GeoTIFF Driver
  * Purpose:  Implements translation between GeoTIFF normalized projection
- *           definitions and OpenGIS WKT SRS format.  This code is intended to
- *           be moved into libgeotiff someday if possible.
+ *           definitions and OpenGIS WKT SRS format.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
@@ -60,7 +59,10 @@ CPL_CVSID("$Id$")
 CPL_C_START
 void CPL_DLL LibgeotiffOneTimeInit();
 void    LibgeotiffOneTimeCleanupMutex();
-
+#ifndef INTERNAL_LIBGEOTIFF
+void CPL_DLL gtSetCSVFilenameHook( const char *(*)(const char *) );
+#define SetCSVFilenameHook gtSetCSVFilenameHook
+#endif
 CPL_C_END
 
 // To remind myself not to use CPLString in this file!
