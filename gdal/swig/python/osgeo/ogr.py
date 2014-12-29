@@ -3053,6 +3053,33 @@ class Feature(_object):
         """
         return _ogr.Feature_GetFieldType(self, *args)
 
+    def SetFieldString(self, *args):
+        """
+        SetFieldString(self, int id, char value)
+
+        void
+        OGR_F_SetFieldString(OGRFeatureH hFeat, int iField, const char
+        *pszValue)
+
+        Set field to string value.
+
+        OFTInteger fields will be set based on an atoi() conversion of the
+        string. OFTReal fields will be set based on an atof() conversion of
+        the string. Other field types may be unaffected.
+
+        This function is the same as the C++ method OGRFeature::SetField().
+
+        Parameters:
+        -----------
+
+        hFeat:  handle to the feature that owned the field.
+
+        iField:  the field to fetch, from 0 to GetFieldCount()-1.
+
+        pszValue:  the value to assign. 
+        """
+        return _ogr.Feature_SetFieldString(self, *args)
+
     def Reference(self):
       pass
 
@@ -3157,6 +3184,30 @@ class Feature(_object):
         
         
         return self.GetFieldAsString(fld_index)
+
+
+
+    def SetField(self, *args):
+        """
+        SetField(self, int id, char value)
+        SetField(self, char name, char value)
+        SetField(self, int id, int value)
+        SetField(self, char name, int value)
+        SetField(self, int id, double value)
+        SetField(self, char name, double value)
+        SetField(self, int id, int year, int month, int day, int hour, int minute, 
+            int second, int tzflag)
+        SetField(self, char name, int year, int month, int day, int hour, 
+            int minute, int second, int tzflag)
+        """
+
+        if len(args) == 2 and str(type(args[1])) == "<type 'unicode'>":
+            fld_index = args[0]
+            if isinstance(fld_index, str):
+                fld_index = self.GetFieldIndex(fld_index)
+            return _ogr.Feature_SetFieldString(self, fld_index, args[1])
+
+        return _ogr.Feature_SetField(self, *args)
 
     def SetField2(self, fld_index, value):
         if isinstance(fld_index, str):

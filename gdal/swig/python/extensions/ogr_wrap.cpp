@@ -3958,6 +3958,9 @@ SWIGINTERN OGRFieldType OGRFeatureShadow_GetFieldType__SWIG_1(OGRFeatureShadow *
 	      OGR_F_GetFieldDefnRef( self,  i )
 	      );
   }
+SWIGINTERN void OGRFeatureShadow_SetFieldString(OGRFeatureShadow *self,int id,char const *value){
+    OGR_F_SetFieldString(self, id, value);
+  }
 
     static int ValidateOGRGeometryType(OGRwkbGeometryType field_type)
     {
@@ -14305,6 +14308,67 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_Feature_SetFieldString(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OGRFeatureShadow *arg1 = (OGRFeatureShadow *) 0 ;
+  int arg2 ;
+  char *arg3 = (char *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int val2 ;
+  int ecode2 = 0 ;
+  int bToFree3 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OOO:Feature_SetFieldString",&obj0,&obj1,&obj2)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRFeatureShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Feature_SetFieldString" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRFeatureShadow * >(argp1);
+  ecode2 = SWIG_AsVal_int(obj1, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "Feature_SetFieldString" "', argument " "2"" of type '" "int""'");
+  } 
+  arg2 = static_cast< int >(val2);
+  {
+    /* %typemap(in) (const char *utf8_path) */
+    arg3 = GDALPythonObjectToCStr( obj2, &bToFree3 );
+    if (arg3 == NULL)
+    {
+      PyErr_SetString( PyExc_RuntimeError, "not a string" );
+      SWIG_fail;
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      CPLErrorReset();
+    }
+    OGRFeatureShadow_SetFieldString(arg1,arg2,(char const *)arg3);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_Py_Void();
+  {
+    /* %typemap(freearg) (const char *utf8_path) */
+    GDALPythonFreeCStr(arg3, bToFree3);
+  }
+  return resultobj;
+fail:
+  {
+    /* %typemap(freearg) (const char *utf8_path) */
+    GDALPythonFreeCStr(arg3, bToFree3);
+  }
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *Feature_swigregister(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *obj;
   if (!PyArg_ParseTuple(args,(char*)"O:swigregister", &obj)) return NULL;
@@ -24122,6 +24186,30 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"Feature_GetFieldType", _wrap_Feature_GetFieldType, METH_VARARGS, (char *)"\n"
 		"GetFieldType(int id) -> OGRFieldType\n"
 		"Feature_GetFieldType(Feature self, char name) -> OGRFieldType\n"
+		""},
+	 { (char *)"Feature_SetFieldString", _wrap_Feature_SetFieldString, METH_VARARGS, (char *)"\n"
+		"Feature_SetFieldString(Feature self, int id, char value)\n"
+		"\n"
+		"void\n"
+		"OGR_F_SetFieldString(OGRFeatureH hFeat, int iField, const char\n"
+		"*pszValue)\n"
+		"\n"
+		"Set field to string value.\n"
+		"\n"
+		"OFTInteger fields will be set based on an atoi() conversion of the\n"
+		"string. OFTReal fields will be set based on an atof() conversion of\n"
+		"the string. Other field types may be unaffected.\n"
+		"\n"
+		"This function is the same as the C++ method OGRFeature::SetField().\n"
+		"\n"
+		"Parameters:\n"
+		"-----------\n"
+		"\n"
+		"hFeat:  handle to the feature that owned the field.\n"
+		"\n"
+		"iField:  the field to fetch, from 0 to GetFieldCount()-1.\n"
+		"\n"
+		"pszValue:  the value to assign. \n"
 		""},
 	 { (char *)"Feature_swigregister", Feature_swigregister, METH_VARARGS, NULL},
 	 { (char *)"delete_FeatureDefn", _wrap_delete_FeatureDefn, METH_VARARGS, (char *)"delete_FeatureDefn(FeatureDefn self)"},

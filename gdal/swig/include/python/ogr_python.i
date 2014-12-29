@@ -196,6 +196,13 @@ layer[0:4] would return a list of the first four features."""
 }
 
 %extend OGRFeatureShadow {
+
+  %apply ( const char *utf8_path ) { (const char* value) };
+  void SetFieldString(int id, const char* value) {
+    OGR_F_SetFieldString(self, id, value);
+  }
+  %clear (const char* value );
+  
   %pythoncode {
     def Reference(self):
       pass
@@ -301,6 +308,30 @@ layer[0:4] would return a list of the first four features."""
         #     return self.GetFieldAsDate(fld_index)
         # default to returning as a string.  Should we add more types?
         return self.GetFieldAsString(fld_index)
+
+    # With several override, SWIG cannot dispatch automatically unicode strings
+    # to the right implementation, so we have to do it at hand
+    def SetField(self, *args):
+        """
+        SetField(self, int id, char value)
+        SetField(self, char name, char value)
+        SetField(self, int id, int value)
+        SetField(self, char name, int value)
+        SetField(self, int id, double value)
+        SetField(self, char name, double value)
+        SetField(self, int id, int year, int month, int day, int hour, int minute, 
+            int second, int tzflag)
+        SetField(self, char name, int year, int month, int day, int hour, 
+            int minute, int second, int tzflag)
+        """
+
+        if len(args) == 2 and str(type(args[1])) == "<type 'unicode'>":
+            fld_index = args[0]
+            if isinstance(fld_index, str):
+                fld_index = self.GetFieldIndex(fld_index)
+            return _ogr.Feature_SetFieldString(self, fld_index, args[1])
+
+        return _ogr.Feature_SetField(self, *args)
 
     def SetField2(self, fld_index, value):
         if isinstance(fld_index, str):
