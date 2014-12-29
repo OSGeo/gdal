@@ -34,6 +34,7 @@
 
 #include "geovalues.h"
 #include "gt_citation.h"
+#include "gt_wkt_srs_priv.h"
 
 CPL_CVSID("$Id$");
 
@@ -317,7 +318,7 @@ void SetLinearUnitCitation(GTIF* psGTIF, char* pszLinearUOMName)
     char szName[512];
     CPLString osCitation;
     int n = 0;
-    if( GTIFKeyGet( psGTIF, PCSCitationGeoKey, szName, 0, sizeof(szName) ) )
+    if( GDALGTIFKeyGetASCII( psGTIF, PCSCitationGeoKey, szName, 0, sizeof(szName) ) )
         n = strlen(szName);
     if(n>0)
     {
@@ -348,7 +349,7 @@ void SetGeogCSCitation(GTIF * psGTIF, OGRSpatialReference *poSRS, char* angUnitN
     char szName[256];
     CPLString osCitation;
     size_t n = 0;
-    if( GTIFKeyGet( psGTIF, GeogCitationGeoKey, szName, 0, sizeof(szName) ) )
+    if( GDALGTIFKeyGetASCII( psGTIF, GeogCitationGeoKey, szName, 0, sizeof(szName) ) )
         n = strlen(szName);
     if (n == 0)
         return;
@@ -468,8 +469,7 @@ OGRBoolean SetCitationToSRS(GTIF* hGTIF, char* szCTString, int nCTStringLen,
                 }
             }
             if( unitSize == 0.0 )
-                GTIFKeyGet(hGTIF, ProjLinearUnitSizeGeoKey, &unitSize, 0,
-                           sizeof(unitSize) );
+                GDALGTIFKeyGetDOUBLE(hGTIF, ProjLinearUnitSizeGeoKey, &unitSize, 0, 1 );
             poSRS->SetLinearUnits( ctNames[CitLUnitsName], unitSize);
             *linearUnitIsSet = TRUE;
         }
@@ -571,7 +571,7 @@ OGRBoolean CheckCitationKeyForStatePlaneUTM(GTIF* hGTIF, GTIFDefn* psDefn, OGRSp
     units[0] = '\0';
 
     OGRBoolean hasUnits = FALSE;
-    if( GTIFKeyGet( hGTIF, GTCitationGeoKey, szCTString, 0, sizeof(szCTString) ) )
+    if( GDALGTIFKeyGetASCII( hGTIF, GTCitationGeoKey, szCTString, 0, sizeof(szCTString) ) )
     {
         CPLString osLCCT = szCTString;
 
@@ -658,7 +658,7 @@ OGRBoolean CheckCitationKeyForStatePlaneUTM(GTIF* hGTIF, GTIFDefn* psDefn, OGRSp
 
     /* check PCSCitationGeoKey if it exists */
     szCTString[0] = '\0';
-    if( hGTIF && GTIFKeyGet( hGTIF, PCSCitationGeoKey, szCTString, 0, sizeof(szCTString)) )  
+    if( hGTIF && GDALGTIFKeyGetASCII( hGTIF, PCSCitationGeoKey, szCTString, 0, sizeof(szCTString)) )  
     {
         /* For tif created by LEICA(ERDAS), ESRI state plane pe string was used and */
         /* the state plane zone is given in PCSCitation. Therefore try Esri pe string first. */

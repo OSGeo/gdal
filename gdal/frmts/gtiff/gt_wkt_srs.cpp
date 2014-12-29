@@ -43,6 +43,7 @@
 #include "gt_wkt_srs.h"
 #include "gt_wkt_srs_for_gdal.h"
 #include "gt_citation.h"
+#include "gt_wkt_srs_priv.h"
 
 CPL_CVSID("$Id$")
 
@@ -254,7 +255,7 @@ static void GTIFCleanupImagineNames( char *pszCitation )
 }
 
 /************************************************************************/
-/*                       GDALGTIFKeyGet()                          */
+/*                       GDALGTIFKeyGet()                               */
 /************************************************************************/
 
 static int GDALGTIFKeyGet( GTIF *hGTIF, geokey_t key,
@@ -280,7 +281,7 @@ static int GDALGTIFKeyGet( GTIF *hGTIF, geokey_t key,
 /*                       GDALGTIFKeyGetASCII()                          */
 /************************************************************************/
 
-static int GDALGTIFKeyGetASCII( GTIF *hGTIF, geokey_t key,
+int GDALGTIFKeyGetASCII( GTIF *hGTIF, geokey_t key,
                                 char* szStr,
                                 int nIndex,
                                 int szStrMaxLen )
@@ -293,7 +294,7 @@ static int GDALGTIFKeyGetASCII( GTIF *hGTIF, geokey_t key,
 /*                       GDALGTIFKeyGetSHORT()                          */
 /************************************************************************/
 
-static int GDALGTIFKeyGetSHORT( GTIF *hGTIF, geokey_t key,
+int GDALGTIFKeyGetSHORT( GTIF *hGTIF, geokey_t key,
                                 short* pnVal,
                                 int nIndex,
                                 int nCount )
@@ -305,7 +306,7 @@ static int GDALGTIFKeyGetSHORT( GTIF *hGTIF, geokey_t key,
 /*                        GDALGTIFKeyGetDOUBLE()                        */
 /************************************************************************/
 
-static int GDALGTIFKeyGetDOUBLE( GTIF *hGTIF, geokey_t key,
+int GDALGTIFKeyGetDOUBLE( GTIF *hGTIF, geokey_t key,
                                  double* pdfVal,
                                  int nIndex,
                                  int nCount )
