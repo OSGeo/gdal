@@ -1,4 +1,4 @@
-/* $Id: tif_getimage.c,v 1.83 2014-12-21 15:15:31 erouault Exp $ */
+/* $Id: tif_getimage.c,v 1.86 2014-12-29 12:09:11 erouault Exp $ */
 
 /*
  * Copyright (c) 1991-1997 Sam Leffler
@@ -875,6 +875,10 @@ gtStripContig(TIFFRGBAImage* img, uint32* raster, uint32 w, uint32 h)
 
 	TIFFGetFieldDefaulted(tif, TIFFTAG_ROWSPERSTRIP, &rowsperstrip);
 	TIFFGetFieldDefaulted(tif, TIFFTAG_YCBCRSUBSAMPLING, &subsamplinghor, &subsamplingver);
+	if( subsamplingver == 0 ) {
+		TIFFErrorExt(tif->tif_clientdata, TIFFFileName(tif), "Invalid vertical YCbCr subsampling");
+		return (0);
+	}
 	scanline = TIFFScanlineSize(tif);
 	fromskew = (w < imagewidth ? imagewidth - w : 0);
 	for (row = 0; row < h; row += nrow)
@@ -1867,7 +1871,7 @@ DECLAREContigPutFunc(putcontig8bitYCbCr42tile)
 
     (void) y;
     fromskew = (fromskew * 10) / 4;
-    if ((h & 3) == 0 && (w & 1) == 0) {
+    if ((w & 3) == 0 && (h & 1) == 0) {
         for (; h >= 2; h -= 2) {
             x = w>>2;
             do {
@@ -1944,7 +1948,7 @@ DECLAREContigPutFunc(putcontig8bitYCbCr41tile)
     /* XXX adjust fromskew */
     do {
 	x = w>>2;
-	do {
+	while(x>0) {
 	    int32 Cb = pp[4];
 	    int32 Cr = pp[5];
 
@@ -1955,7 +1959,8 @@ DECLAREContigPutFunc(putcontig8bitYCbCr41tile)
 
 	    cp += 4;
 	    pp += 6;
-	} while (--x);
+		x--;
+	}
 
         if( (w&3) != 0 )
         {
@@ -2046,7 +2051,7 @@ DECLAREContigPutFunc(putcontig8bitYCbCr21tile)
 	fromskew = (fromskew * 4) / 2;
 	do {
 		x = w>>1;
-		do {
+		while(x>0) {
 			int32 Cb = pp[2];
 			int32 Cr = pp[3];
 
@@ -2055,7 +2060,8 @@ DECLAREContigPutFunc(putcontig8bitYCbCr21tile)
 
 			cp += 2;
 			pp += 4;
-		} while (--x);
+			x --;
+		}
 
 		if( (w&1) != 0 )
 		{
@@ -2556,7 +2562,7 @@ PickContigCase(TIFFRGBAImage* img)
 					 * must always be <= horizontal subsampling; so
 					 * there are only a few possibilities and we just
 					 * enumerate the cases.
-					 * Joris: added support for the [1,2] case, nonetheless, to accomodate
+					 * Joris: added support for the [1,2] case, nonetheless, to accommodate
 					 * some OJPEG files
 					 */
 					uint16 SubsamplingHor;
