@@ -1,4 +1,4 @@
-/* $Id: tif_next.c,v 1.15 2014-12-21 18:07:48 erouault Exp $ */
+/* $Id: tif_next.c,v 1.16 2014-12-29 12:09:11 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -71,7 +71,7 @@ NeXTDecode(TIFF* tif, uint8* buf, tmsize_t occ, uint16 s)
 		TIFFErrorExt(tif->tif_clientdata, module, "Fractional scanlines cannot be read");
 		return (0);
 	}
-	for (row = buf; occ > 0; occ -= scanline, row += scanline) {
+	for (row = buf; cc > 0 && occ > 0; occ -= scanline, row += scanline) {
 		n = *bp++, cc--;
 		switch (n) {
 		case LITERALROW:
@@ -90,6 +90,8 @@ NeXTDecode(TIFF* tif, uint8* buf, tmsize_t occ, uint16 s)
 			 * The scanline has a literal span that begins at some
 			 * offset.
 			 */
+			if( cc < 4 )
+				goto bad;
 			off = (bp[0] * 256) + bp[1];
 			n = (bp[2] * 256) + bp[3];
 			if (cc < 4+n || off+n > scanline)

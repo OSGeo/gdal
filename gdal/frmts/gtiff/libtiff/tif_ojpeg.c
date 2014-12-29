@@ -1,4 +1,4 @@
-/* $Id: tif_ojpeg.c,v 1.57 2014-11-20 16:47:21 erouault Exp $ */
+/* $Id: tif_ojpeg.c,v 1.58 2014-12-25 18:29:11 erouault Exp $ */
 
 /* WARNING: The type of JPEG encapsulation defined by the TIFF Version 6.0
    specification is now totally obsolete and deprecated for new applications and
@@ -39,7 +39,7 @@
    OF THIS SOFTWARE.
 
    Joris Van Damme and/or AWare Systems may be available for custom
-   developement. If you like what you see, and need anything similar or related,
+   development. If you like what you see, and need anything similar or related,
    contact <info@awaresystems.be>.
 */
 
@@ -141,7 +141,7 @@
  * OJPEG_BUFFER: Define the size of the desired buffer here. Should be small enough so as to guarantee
  * 	instant processing, optimal streaming and optimal use of processor cache, but also big
  * 	enough so as to not result in significant call overhead. It should be at least a few
- * 	bytes to accomodate some structures (this is verified in asserts), but it would not be
+ * 	bytes to accommodate some structures (this is verified in asserts), but it would not be
  * 	sensible to make it this small anyway, and it should be at most 64K since it is indexed
  * 	with uint16. We recommend 2K.
  * EGYPTIANWALK: You could also define EGYPTIANWALK here, but it is not used anywhere and has
