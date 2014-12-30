@@ -118,6 +118,10 @@ versions prior to libjpeg 9.<p>
 <li> <b>SOURCE_ICC_PROFILE=value</b>: (Starting with GDAL 1.11).
 ICC profile encoded in Base64.<p>
 
+<li> <b>COMMENT=string</b>: (Starting with GDAL 2.0). String to embed in a
+comment JPEG marker. When reading, such strings are exposed in the COMMENT
+metadata item.<p>
+
 <li> <b>EXIF_THUMBNAIL=YES/NO</b>: (Starting with GDAL 2.0). Whether to generate
 an EXIF thumbnail(overview), itself JPEG compressed. Defaults to NO. If enabled,
 the maximum dimension of the thumbnail will be 128, if neither THUMBNAIL_WIDTH nor

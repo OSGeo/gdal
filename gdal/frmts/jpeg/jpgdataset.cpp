@@ -420,6 +420,11 @@ void JPGDatasetCommon::ReadXMPMetadata()
         if( VSIFReadL( abyChunkHeader, sizeof(abyChunkHeader), 1, fpImage ) != 1 )
             break;
 
+        nChunkLoc += 2 + abyChunkHeader[2] * 256 + abyChunkHeader[3];
+        // COM marker
+        if( abyChunkHeader[0] == 0xFF && abyChunkHeader[1] == 0xFE )
+            continue;
+
         if( abyChunkHeader[0] != 0xFF
             || (abyChunkHeader[1] & 0xf0) != 0xe0 )
             break; // Not an APP chunk.
@@ -430,8 +435,6 @@ void JPGDatasetCommon::ReadXMPMetadata()
             bFoundXMP = TRUE;
             break; // APP1 - XMP
         }
-
-        nChunkLoc += 2 + abyChunkHeader[2] * 256 + abyChunkHeader[3];
     }
 
     if (bFoundXMP)
@@ -506,7 +509,8 @@ const char *JPGDatasetCommon::GetMetadataItem( const char * pszName,
         return NULL;
     if (eAccess == GA_ReadOnly && !bHasReadEXIFMetadata &&
         (pszDomain == NULL || EQUAL(pszDomain, "")) &&
-        pszName != NULL && EQUALN(pszName, "EXIF_", 5))
+        pszName != NULL &&
+        (EQUAL(pszName, "COMMENT") || EQUALN(pszName, "EXIF_", 5)))
         ReadEXIFMetadata();
     if (eAccess == GA_ReadOnly && !bHasReadICCMetadata &&
         pszDomain != NULL && EQUAL(pszDomain, "COLOR_PROFILE"))
@@ -614,7 +618,7 @@ void JPGDatasetCommon::ReadICCProfile()
             }
         }
 
-        nChunkLoc += 2 + abyChunkHeader[2] * 256 + abyChunkHeader[3];
+        nChunkLoc += 2 + nChunkLength;
     }
 
     /* Get total size and verify that there are no missing segments */
@@ -700,20 +704,44 @@ int JPGDatasetCommon::EXIFInit(VSILFILE *fp)
 
         if( VSIFReadL( abyChunkHeader, sizeof(abyChunkHeader), 1, fp ) != 1 )
             return FALSE;
-
-        if( abyChunkHeader[0] != 0xFF 
-            || (abyChunkHeader[1] & 0xf0) != 0xe0 )
-            return FALSE; // Not an APP chunk.
-
-        if( abyChunkHeader[1] == 0xe1
-            && strncmp((const char *) abyChunkHeader + 4,"Exif",4) == 0 )
+        
+        int nChunkLength = abyChunkHeader[2] * 256 + abyChunkHeader[3];
+        // COM marker
+        if( abyChunkHeader[0] == 0xFF && abyChunkHeader[1] == 0xFE &&
+            nChunkLength >= 2 )
         {
-            nTIFFHEADER = nChunkLoc + 10;
-            break; // APP1 - Exif
+            char* pszComment = (char*)CPLMalloc(nChunkLength - 2 + 1);
+            if( nChunkLength > 2 &&
+                VSIFSeekL( fp, nChunkLoc + 4, SEEK_SET ) == 0 &&
+                VSIFReadL(pszComment, nChunkLength - 2, 1, fp) == 1 )
+            {
+                pszComment[nChunkLength-2] = 0;
+                /* Avoid setting the PAM dirty bit just for that */
+                int nOldPamFlags = nPamFlags;
+                /* Set ICC profile metadata */
+                SetMetadataItem( "COMMENT", pszComment );
+                nPamFlags = nOldPamFlags;
+            }
+            CPLFree(pszComment);
+        }
+        else
+        {
+            if( abyChunkHeader[0] != 0xFF 
+                || (abyChunkHeader[1] & 0xf0) != 0xe0 )
+                break; // Not an APP chunk.
+
+            if( abyChunkHeader[1] == 0xe1
+                && strncmp((const char *) abyChunkHeader + 4,"Exif",4) == 0 )
+            {
+                nTIFFHEADER = nChunkLoc + 10;
+            }
         }
 
-        nChunkLoc += 2 + abyChunkHeader[2] * 256 + abyChunkHeader[3];
+        nChunkLoc += 2 + nChunkLength;
     }
+    
+    if( nTIFFHEADER < 0 )
+        return FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      Read TIFF header                                                */
@@ -3414,6 +3442,14 @@ JPGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                         CreateCopy ); 
 
 /* -------------------------------------------------------------------- */
+/*      Add comment if available                                        */
+/* -------------------------------------------------------------------- */
+    const char *pszComment = CSLFetchNameValue(papszOptions, "COMMENT");
+    if( pszComment )
+        jpeg_write_marker(&sCInfo, JPEG_COM, (const JOCTET*)pszComment,
+                          (unsigned int)strlen(pszComment));
+
+/* -------------------------------------------------------------------- */
 /*      Save ICC profile if available                                   */
 /* -------------------------------------------------------------------- */
     const char *pszICCProfile = CSLFetchNameValue(papszOptions, "SOURCE_ICC_PROFILE");
@@ -3653,6 +3689,7 @@ const char *GDALJPGDriver::GetMetadataItem( const char * pszName,
 "       <Value>RGB1</Value>"
 "   </Option>"
 #endif
+"   <Option name='COMMENT' description='Comment' type='string'/>\n"
 "   <Option name='SOURCE_ICC_PROFILE' description='ICC profile encoded in Base64' type='string'/>\n"
 "   <Option name='EXIF_THUMBNAIL' type='boolean' description='whether to generate an EXIF thumbnail(overview). By default its max dimension will be 128' default='NO'/>\n"
 "   <Option name='THUMBNAIL_WIDTH' type='int' description='Forced thumbnail width' min='32' max='512'/>\n"

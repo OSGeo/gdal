@@ -868,6 +868,7 @@ def jpeg_22():
         return 'fail'
     ds = None
 
+    # With 3 bands
     src_ds = gdal.GetDriverByName('Mem').Create('', 2048, 4096, 3)
     src_ds.GetRasterBand(1).Fill(255)
     ds = gdal.GetDriverByName('JPEG').CreateCopy('/vsimem/jpeg_22.jpg', src_ds, options = ['EXIF_THUMBNAIL=YES'])
@@ -880,11 +881,15 @@ def jpeg_22():
         return 'fail'
     ds = None
 
+    # With comment
     src_ds = gdal.GetDriverByName('Mem').Create('', 2048, 4096)
     src_ds.GetRasterBand(1).Fill(255)
-    ds = gdal.GetDriverByName('JPEG').CreateCopy('/vsimem/jpeg_22.jpg', src_ds, options = ['EXIF_THUMBNAIL=YES', 'THUMBNAIL_WIDTH=40'])
+    ds = gdal.GetDriverByName('JPEG').CreateCopy('/vsimem/jpeg_22.jpg', src_ds, options = ['COMMENT=foo','EXIF_THUMBNAIL=YES', 'THUMBNAIL_WIDTH=40'])
     src_ds = None
     ovr = ds.GetRasterBand(1).GetOverview(3)
+    if ds.GetMetadataItem('COMMENT') != 'foo':
+        gdaltest.post_reason('failure')
+        return 'fail'
     if ovr.XSize != 40 or ovr.YSize != 80:
         gdaltest.post_reason('failure')
         print(ovr.XSize)
@@ -988,6 +993,26 @@ def jpeg_24():
     return 'success'
 
 ###############################################################################
+# Test COMMENT
+
+def jpeg_25():
+
+    src_ds = gdal.Open('data/byte.tif')
+    ds = gdal.GetDriverByName('JPEG').CreateCopy( '/vsimem/byte.jpg', src_ds,
+                                                  options = ['COMMENT=my comment'] )
+    ds = None
+    ds = gdal.Open( '/vsimem/byte.jpg' )
+    if ds.GetMetadataItem('COMMENT') != 'my comment':
+        gdaltest.post_reason( 'Wrong comment.')
+        print(ds.GetMetadata())
+        return 'fail'
+
+    ds = None
+    gdal.GetDriverByName('JPEG').Delete( '/vsimem/byte.jpg' )
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def jpeg_cleanup():
@@ -1028,6 +1053,7 @@ gdaltest_list = [
     jpeg_22,
     jpeg_23,
     jpeg_24,
+    jpeg_25,
     jpeg_cleanup ]
 
 if __name__ == '__main__':
