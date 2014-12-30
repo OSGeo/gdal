@@ -17,18 +17,18 @@ The GeoPackage standard uses a SQLite database file as a generic container, and 
   <li>Naming and conventions for extensions (extended feature types) and indexes (how to use SQLite r-tree in an interoperable manner)</li>
 </ul>
 <p>This driver reads and writes SQLite files from the file system, so it must be run by a user with read/write access to the files it is working with.</p>
-<p>Starting with GDAL 2.0, the driver also supports reading and writing the
+<p>Starting with GDAL 1.10, the driver also supports reading and writing the
 following non-linear geometry types :CIRCULARSTRING, COMPOUNDCURVE, CURVEPOLYGON, MULTICURVE and MULTISURFACE</p>
 
-<p>Starting with GDAL 2.0, GeoPackage raster/tiles are supported. See
+<p>Starting with GDAL 1.10, GeoPackage raster/tiles are supported. See
 <a href="drv_geopackage_raster.html">GeoPackage raster</a> documentation page</p>
 
 <h2>Limitations</h2>
 
 <ul>
 <li>GeoPackage only supports one geometry column per table.</li>
-<li>Before GDAL 2.0, the driver did not implement the GeoPackage spatial index extension.</li>
-<li>The core GeoPackage specification does not currently support non-spatial tables, but starting with GDAL 2.0, the driver allows creating and reading such tables via the <a href="geopackage_aspatial.html">Aspatial Support</a> (<code>gdal_aspatial</code>) extension.</li>
+<li>Before GDAL 1.10, the driver did not implement the GeoPackage spatial index extension.</li>
+<li>The core GeoPackage specification does not currently support non-spatial tables, but starting with GDAL 1.10, the driver allows creating and reading such tables via the <a href="geopackage_aspatial.html">Aspatial Support</a> (<code>gdal_aspatial</code>) extension.</li>
 </ul>
 
 <h2>SQL</h2>
@@ -38,7 +38,7 @@ following non-linear geometry types :CIRCULARSTRING, COMPOUNDCURVE, CURVEPOLYGON
   against the database.
 </p>
 <p>
-  Starting with GDAL 2.0, SQL SELECT statements passed to ExecuteSQL() are
+  Starting with GDAL 1.10, SQL SELECT statements passed to ExecuteSQL() are
   also executed directly against the database. If Spatialite is used, a recent
   version (4.2.0) is needed and use of explicit cast operators AsGPB(), GeomFromGPB()
   are required. It is also possible to use with any Spatialite version, but in
@@ -48,7 +48,7 @@ following non-linear geometry types :CIRCULARSTRING, COMPOUNDCURVE, CURVEPOLYGON
 
 <h3>SQL functions</h3>
 
-Starting with GDAL 2.0, the following SQL functions, from the GeoPackage specification, are available :
+Starting with GDAL 1.10, the following SQL functions, from the GeoPackage specification, are available :
 <ul>
 <li>ST_MinX(geom <i>Geometry</i>) : returns the minimum X coordinate of the geometry</li>
 <li>ST_MinY(geom <i>Geometry</i>) : returns the minimum Y coordinate of the geometry</li>
@@ -70,7 +70,7 @@ The following functions, with identical syntax and semantics as in Spatialite, a
 
 <h3>Link with Spatialite</h3>
 
-Starting with GDAL 2.0, if it has been compiled against Spatialite 4.2 or later, it is also possible
+Starting with GDAL 1.10, if it has been compiled against Spatialite 4.2 or later, it is also possible
 to use Spatialite SQL functions. Explicit transformation from GPKG geometry binary
 encoding to/from Spatialite geometry binary encoding must be done.
 
@@ -95,7 +95,7 @@ ogrinfo poly.gpkg -sql "SELECT AsGPB(ST_Buffer(CastAutomagic(geom),5)) FROM poly
 <li><b>GEOMETRY_COLUMN</b>: Column to use for the geometry column. Default to "geom"</li>
 <li><b>FID</b>: Column name to use for the OGR FID (primary key in the SQLite database). Default to "fid"</li>
 <li><b>OVERWRITE</b>: If set to "YES" will delete any existing layers that have the same name as the layer being created. Default to NO</li>
-<li><b>SPATIAL_INDEX</b>: (GDAL &gt;=2.0) If set to "YES" will create a spatial index for this layer. Default to YES</li>
+<li><b>SPATIAL_INDEX</b>: (GDAL &gt;=1.10) If set to "YES" will create a spatial index for this layer. Default to YES</li>
 
 </ul>
 
