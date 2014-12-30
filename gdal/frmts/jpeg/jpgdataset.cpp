@@ -101,26 +101,6 @@ CPL_C_END
 #  define JPEG_LIB_MK1_OR_12BIT 1
 #endif
 
-#define Q1table GDALJPEG_Q1table
-#define Q2table GDALJPEG_Q2table
-#define Q3table GDALJPEG_Q3table
-#define Q4table GDALJPEG_Q4table
-#define Q5table GDALJPEG_Q5table
-#define AC_BITS GDALJPEG_AC_BITS
-#define AC_HUFFVAL GDALJPEG_AC_HUFFVAL
-#define DC_BITS GDALJPEG_DC_BITS
-#define DC_HUFFVAL GDALJPEG_DC_HUFFVAL
-
-extern const GByte Q1table[64];
-extern const GByte Q2table[64];
-extern const GByte Q3table[64];
-extern const GByte Q4table[64];
-extern const GByte Q5table[64];
-extern const GByte AC_BITS[16];
-extern const GByte AC_HUFFVAL[256];
-extern const GByte DC_BITS[16];
-extern const GByte DC_HUFFVAL[256];
-
 class JPGDatasetCommon;
 GDALRasterBand* JPGCreateBand(JPGDatasetCommon* poDS, int nBand);
 
@@ -135,6 +115,10 @@ void   JPGAddEXIFOverview( GDALDataType eWorkDT,
                                      int, char **,
                                      GDALProgressFunc pfnProgress, 
                                      void * pProgressData ) );
+void JPGAddICCProfile( struct jpeg_compress_struct *pInfo,
+                       const char *pszICCProfile,
+                       void (*p_jpeg_write_m_header) (j_compress_ptr cinfo, int marker, unsigned int datalen),
+                       void (*p_jpeg_write_m_byte) (j_compress_ptr cinfo, int val));
 
 typedef struct
 {
@@ -205,8 +189,6 @@ protected:
     int    EXIFInit(VSILFILE *);
     void   ReadICCProfile();
 
-    int    nQLevel;
-
     void   CheckForMask();
     void   DecompressMask();
 
@@ -262,6 +244,8 @@ protected:
 
     static int          Identify( GDALOpenInfo * );
     static GDALDataset *Open( GDALOpenInfo * );
+
+    static void EmitMessage(j_common_ptr cinfo, int msg_level);
 };
 
 /************************************************************************/
@@ -280,7 +264,10 @@ class JPGDataset : public JPGDatasetCommon
     virtual int GetDataPrecision() { return sDInfo.data_precision; }
     virtual int GetOutColorSpace() { return sDInfo.out_color_space; }
 
+    int    nQLevel;
+#if !defined(JPGDataset)
     void   LoadDefaultTables(int);
+#endif
     void   SetScaleNumAndDenom();
 
   public:
@@ -299,7 +286,6 @@ class JPGDataset : public JPGDatasetCommon
                                     void * pProgressData );
 
     static void ErrorExit(j_common_ptr cinfo);
-    static void EmitMessage(j_common_ptr cinfo, int msg_level);
 };
 
 /************************************************************************/
@@ -1619,7 +1605,17 @@ CPLErr JPGDataset::LoadScanline( int iLine )
 
 #if !defined(JPGDataset)
 
-const GByte Q1table[64] =
+#define Q1table GDALJPEG_Q1table
+#define Q2table GDALJPEG_Q2table
+#define Q3table GDALJPEG_Q3table
+#define Q4table GDALJPEG_Q4table
+#define Q5table GDALJPEG_Q5table
+#define AC_BITS GDALJPEG_AC_BITS
+#define AC_HUFFVAL GDALJPEG_AC_HUFFVAL
+#define DC_BITS GDALJPEG_DC_BITS
+#define DC_HUFFVAL GDALJPEG_DC_HUFFVAL
+
+static const GByte Q1table[64] =
 {
    8,    72,  72,  72,  72,  72,  72,  72, // 0 - 7
     72,   72,  78,  74,  76,  74,  78,  89, // 8 - 15
@@ -1631,7 +1627,7 @@ const GByte Q1table[64] =
     255, 255, 255, 255, 255, 255, 255, 255  // 56 - 63
 };
 
-const GByte Q2table[64] =
+static const GByte Q2table[64] =
 {
     8, 36, 36, 36,
     36, 36, 36, 36, 36, 36, 39, 37, 38, 37, 39, 45, 41, 42, 42, 41, 45, 53,
@@ -1640,7 +1636,7 @@ const GByte Q2table[64] =
     178,190,178,243,243,255
 };
 
-const GByte Q3table[64] =
+static const GByte Q3table[64] =
 {
      8, 10, 10, 10,
     10, 10, 10, 10, 10, 10, 11, 10, 11, 10, 11, 13, 11, 12, 12, 11, 13, 15, 
@@ -1649,7 +1645,7 @@ const GByte Q3table[64] =
     50, 53, 50, 68, 68, 91 
 }; 
 
-const GByte Q4table[64] =
+static const GByte Q4table[64] =
 {
     8, 7, 7, 7,
     7, 7, 7, 7, 7, 7, 8, 7, 8, 7, 8, 9, 8, 8, 8, 8, 9, 11, 
@@ -1658,7 +1654,7 @@ const GByte Q4table[64] =
     36, 38, 36, 49, 49, 65
 };
 
-const GByte Q5table[64] =
+static const GByte Q5table[64] =
 {
     4, 4, 4, 4, 
     4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 6,
@@ -1667,10 +1663,10 @@ const GByte Q5table[64] =
     20, 21, 20, 27, 27, 36
 };
 
-const GByte AC_BITS[16] =
+static const GByte AC_BITS[16] =
 { 0, 2, 1, 3, 3, 2, 4, 3, 5, 5, 4, 4, 0, 0, 1, 125 };
 
-const GByte AC_HUFFVAL[256] = {
+static const GByte AC_HUFFVAL[256] = {
     0x01, 0x02, 0x03, 0x00, 0x04, 0x11, 0x05, 0x12,          
     0x21, 0x31, 0x41, 0x06, 0x13, 0x51, 0x61, 0x07,
     0x22, 0x71, 0x14, 0x32, 0x81, 0x91, 0xA1, 0x08,
@@ -1702,14 +1698,12 @@ const GByte AC_HUFFVAL[256] = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
-const GByte DC_BITS[16] =
+static const GByte DC_BITS[16] =
 { 0, 1, 5, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0 };
 
-const GByte DC_HUFFVAL[256] = {
+static const GByte DC_HUFFVAL[256] = {
     0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 
     0x08, 0x09, 0x0A, 0x0B };
-
-#endif // !defined(JPGDataset)
 
 void JPGDataset::LoadDefaultTables( int n )
 {
@@ -1787,6 +1781,7 @@ void JPGDataset::LoadDefaultTables( int n )
     }
 
 }
+#endif // !defined(JPGDataset)
 
 /************************************************************************/
 /*                       SetScaleNumAndDenom()                          */
@@ -1823,10 +1818,13 @@ CPLErr JPGDataset::Restart()
     jpeg_destroy_decompress( &sDInfo );
     jpeg_create_decompress( &sDInfo );
 
+
+#if !defined(JPGDataset)
     LoadDefaultTables( 0 );
     LoadDefaultTables( 1 );
     LoadDefaultTables( 2 );
     LoadDefaultTables( 3 );
+#endif // !defined(JPGDataset)
 
 /* -------------------------------------------------------------------- */
 /*      restart io.                                                     */
@@ -2266,7 +2264,7 @@ GDALDataset *JPGDataset::Open( const char* pszFilename,
     poDS->sDInfo.err = jpeg_std_error( &(poDS->sJErr) );
     poDS->sJErr.error_exit = JPGDataset::ErrorExit;
     poDS->sErrorStruct.p_previous_emit_message = poDS->sJErr.emit_message;
-    poDS->sJErr.emit_message = JPGDataset::EmitMessage;
+    poDS->sJErr.emit_message = JPGDatasetCommon::EmitMessage;
     poDS->sDInfo.client_data = (void *) &(poDS->sErrorStruct);
 
     jpeg_create_decompress( &(poDS->sDInfo) );
@@ -2284,10 +2282,13 @@ GDALDataset *JPGDataset::Open( const char* pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Preload default NITF JPEG quantization tables.                  */
 /* -------------------------------------------------------------------- */
+
+#if !defined(JPGDataset)
     poDS->LoadDefaultTables( 0 );
     poDS->LoadDefaultTables( 1 );
     poDS->LoadDefaultTables( 2 );
     poDS->LoadDefaultTables( 3 );
+#endif // !defined(JPGDataset)
 
 /* -------------------------------------------------------------------- */
 /*      If a fatal error occurs after this, we will return NULL         */
@@ -2702,11 +2703,13 @@ void JPGDataset::ErrorExit(j_common_ptr cinfo)
     longjmp(psErrorStruct->setjmp_buffer, 1);
 }
 
+#if !defined(JPGDataset)
+
 /************************************************************************/
 /*                             EmitMessage()                            */
 /************************************************************************/
 
-void JPGDataset::EmitMessage(j_common_ptr cinfo, int msg_level)
+void JPGDatasetCommon::EmitMessage(j_common_ptr cinfo, int msg_level)
 {
     GDALJPEGErrorStruct* psErrorStruct = (GDALJPEGErrorStruct* ) cinfo->client_data;
     if( msg_level >= 0 ) /* Trace message */
@@ -2750,7 +2753,10 @@ void JPGDataset::EmitMessage(j_common_ptr cinfo, int msg_level)
 /*      This function adds an ICC profile to a JPEG file.               */
 /************************************************************************/
 
-static void JPGAddICCProfile( struct jpeg_compress_struct *pInfo, const char *pszICCProfile )
+void JPGAddICCProfile( struct jpeg_compress_struct *pInfo,
+                       const char *pszICCProfile,
+                       void (*p_jpeg_write_m_header) (j_compress_ptr cinfo, int marker, unsigned int datalen),
+                       void (*p_jpeg_write_m_byte) (j_compress_ptr cinfo, int val))
 {
     if( pszICCProfile == NULL )
         return;
@@ -2770,20 +2776,20 @@ static void JPGAddICCProfile( struct jpeg_compress_struct *pInfo, const char *ps
         nEmbedLen -= nChunkLen;
 
         /* write marker and length. */
-        jpeg_write_m_header(pInfo, JPEG_APP0 + 2,
+        p_jpeg_write_m_header(pInfo, JPEG_APP0 + 2,
 			        (unsigned int) (nChunkLen + 14));
 
         /* Write identifier */
         for(int i = 0; i < 12; i++)
-            jpeg_write_m_byte(pInfo, paHeader[i]);
+            p_jpeg_write_m_byte(pInfo, paHeader[i]);
 
         /* Write ID and max ID */
-        jpeg_write_m_byte(pInfo, nSegmentID);
-        jpeg_write_m_byte(pInfo, nSegments);
+        p_jpeg_write_m_byte(pInfo, nSegmentID);
+        p_jpeg_write_m_byte(pInfo, nSegments);
 
         /* Write ICC Profile */
         for(int i = 0; i < nChunkLen; i++)
-            jpeg_write_m_byte(pInfo, pEmbedPtr[i]);
+            p_jpeg_write_m_byte(pInfo, pEmbedPtr[i]);
 
         nSegmentID++;
 
@@ -2792,8 +2798,6 @@ static void JPGAddICCProfile( struct jpeg_compress_struct *pInfo, const char *ps
 
     CPLFree(pEmbedBuffer);        
 }
-
-#if !defined(JPGDataset)
 
 /************************************************************************/
 /*                           JPGAppendMask()                            */
@@ -3307,7 +3311,7 @@ JPGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     sCInfo.err = jpeg_std_error( &sJErr );
     sJErr.error_exit = JPGDataset::ErrorExit;
     sErrorStruct.p_previous_emit_message = sJErr.emit_message;
-    sJErr.emit_message = JPGDataset::EmitMessage;
+    sJErr.emit_message = JPGDatasetCommon::EmitMessage;
     sCInfo.client_data = (void *) &(sErrorStruct);
 
     jpeg_create_compress( &sCInfo );
@@ -3404,7 +3408,8 @@ JPGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         pszICCProfile = poSrcDS->GetMetadataItem( "SOURCE_ICC_PROFILE", "COLOR_PROFILE" );
 
     if (pszICCProfile != NULL)
-        JPGAddICCProfile( &sCInfo, pszICCProfile );
+        JPGAddICCProfile( &sCInfo, pszICCProfile,
+                          jpeg_write_m_header, jpeg_write_m_byte );
 
 /* -------------------------------------------------------------------- */
 /*      Does the source have a mask?  If so, we will append it to the   */
