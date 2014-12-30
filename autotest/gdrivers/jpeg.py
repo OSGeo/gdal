@@ -962,13 +962,19 @@ def jpeg_23():
 
 def jpeg_24():
 
-    ds = gdal.Open('data/byte.tif')
+    if gdal.GetDriverByName('JPEG').GetMetadataItem('DMD_CREATIONOPTIONLIST').find('ARITHMETIC') >= 0:
+        has_arithmetic = True
+    else:
+        has_arithmetic = False
 
-    gdal.PushErrorHandler()
-    ds = gdal.GetDriverByName('JPEG').CreateCopy( '/vsimem/byte.jpg', ds,
+    src_ds = gdal.Open('data/byte.tif')
+    if not has_arithmetic:
+        gdal.PushErrorHandler()
+    ds = gdal.GetDriverByName('JPEG').CreateCopy( '/vsimem/byte.jpg', src_ds,
                                                   options = ['ARITHMETIC=YES'] )
-    gdal.PopErrorHandler()
-    if ds is not None:
+    if not has_arithmetic:
+        gdal.PopErrorHandler()
+    else:
         expected_cs = 4743
 
         if ds.GetRasterBand(1).Checksum() != expected_cs:

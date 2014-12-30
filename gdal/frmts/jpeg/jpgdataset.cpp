@@ -3553,6 +3553,98 @@ JPGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /************************************************************************/
 
 #if !defined(JPGDataset)
+
+class GDALJPGDriver: public GDALDriver
+{
+    public:
+        GDALJPGDriver() {}
+
+        char      **GetMetadata( const char * pszDomain = "" );
+        const char *GetMetadataItem( const char * pszName,
+                                      const char * pszDomain = "" );
+
+};
+
+char** GDALJPGDriver::GetMetadata( const char * pszDomain )
+{
+    GetMetadataItem(GDAL_DMD_CREATIONOPTIONLIST);
+    return GDALDriver::GetMetadata(pszDomain);
+}
+
+static void GDALJPEGIsArithmeticCodingAvailableErrorExit(j_common_ptr cinfo)
+{
+    jmp_buf* p_setjmp_buffer = (jmp_buf* ) cinfo->client_data;
+    /* Return control to the setjmp point */
+    longjmp(*p_setjmp_buffer, 1);
+}
+
+/* Runtime check if arithmetic coding is available */
+static int GDALJPEGIsArithmeticCodingAvailable()
+{
+    struct jpeg_compress_struct sCInfo;
+    struct jpeg_error_mgr sJErr;
+    jmp_buf     setjmp_buffer;
+    if (setjmp(setjmp_buffer)) 
+    {
+        jpeg_destroy_compress( &sCInfo );
+        return FALSE;
+    }
+    sCInfo.err = jpeg_std_error( &sJErr );
+    sJErr.error_exit = GDALJPEGIsArithmeticCodingAvailableErrorExit;
+    sCInfo.client_data = (void *) &(setjmp_buffer);
+    jpeg_create_compress( &sCInfo );
+    /* Hopefully nothing will be written */
+    jpeg_stdio_dest(&sCInfo, stderr);
+    sCInfo.image_width = 1;
+    sCInfo.image_height = 1;
+    sCInfo.input_components = 1;
+    sCInfo.in_color_space = JCS_UNKNOWN;
+    jpeg_set_defaults( &sCInfo );
+    sCInfo.arith_code = TRUE;
+    jpeg_start_compress( &sCInfo, FALSE );
+    jpeg_abort_compress( &sCInfo );
+    jpeg_destroy_compress( &sCInfo );
+    
+    return TRUE;
+}
+
+const char *GDALJPGDriver::GetMetadataItem( const char * pszName,
+                                            const char * pszDomain )
+{
+    if( pszName != NULL && EQUAL(pszName, GDAL_DMD_CREATIONOPTIONLIST) &&
+        (pszDomain == NULL || EQUAL(pszDomain, "")) &&
+        GDALDriver::GetMetadataItem(pszName, pszDomain) == NULL )
+    {
+        CPLString osCreationOptions =
+"<CreationOptionList>\n"
+"   <Option name='PROGRESSIVE' type='boolean' description='whether to generate a progressive JPEG' default='NO'/>\n"
+"   <Option name='QUALITY' type='int' description='good=100, bad=0, default=75'/>\n"
+"   <Option name='WORLDFILE' type='boolean' description='whether to geneate a worldfile' default='NO'/>\n"
+"   <Option name='INTERNAL_MASK' type='boolean' description='whether to generate a validity mask' default='YES'/>\n";
+        if( GDALJPEGIsArithmeticCodingAvailable() )
+            osCreationOptions +=
+"   <Option name='ARITHMETIC' type='boolean' description='whether to use arithmetic encoding' default='NO'/>\n";
+    osCreationOptions +=
+#if JPEG_LIB_VERSION_MAJOR >= 8 && \
+      (JPEG_LIB_VERSION_MAJOR > 8 || JPEG_LIB_VERSION_MINOR >= 3)
+"   <Option name='BLOCK' type='int' description='between 1 and 16'/>\n"
+#endif
+#if JPEG_LIB_VERSION_MAJOR >= 9
+"   <Option name='COLOR_TRANSFORM' type='string-select'>\n"
+"       <Value>RGB</Value>"
+"       <Value>RGB1</Value>"
+"   </Option>"
+#endif
+"   <Option name='SOURCE_ICC_PROFILE' description='ICC profile encoded in Base64' type='string'/>\n"
+"   <Option name='EXIF_THUMBNAIL' type='boolean' description='whether to generate an EXIF thumbnail(overview). By default its max dimension will be 128' default='NO'/>\n"
+"   <Option name='THUMBNAIL_WIDTH' type='int' description='Forced thumbnail width' min='32' max='512'/>\n"
+"   <Option name='THUMBNAIL_HEIGHT' type='int' description='Forced thumbnail height' min='32' max='512'/>\n"
+"</CreationOptionList>\n";
+        SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, osCreationOptions );
+    }
+    return GDALDriver::GetMetadataItem(pszName, pszDomain);
+}
+
 void GDALRegister_JPEG()
 
 {
@@ -3560,7 +3652,7 @@ void GDALRegister_JPEG()
 
     if( GDALGetDriverByName( "JPEG" ) == NULL )
     {
-        poDriver = new GDALDriver();
+        poDriver = new GDALJPGDriver();
         
         poDriver->SetDescription( "JPEG" );
         poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
@@ -3578,29 +3670,6 @@ void GDALRegister_JPEG()
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
                                    "Byte" );
 #endif
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, 
-"<CreationOptionList>\n"
-"   <Option name='PROGRESSIVE' type='boolean' description='whether to generate a progressive JPEG' default='NO'/>\n"
-"   <Option name='QUALITY' type='int' description='good=100, bad=0, default=75'/>\n"
-"   <Option name='WORLDFILE' type='boolean' description='whether to geneate a worldfile' default='NO'/>\n"
-"   <Option name='INTERNAL_MASK' type='boolean' description='whether to generate a validity mask' default='YES'/>\n"
-"   <Option name='ARITHMETIC' type='boolean' description='whether to use arithmetic encoding' default='NO'/>\n"
-#if JPEG_LIB_VERSION_MAJOR >= 8 && \
-      (JPEG_LIB_VERSION_MAJOR > 8 || JPEG_LIB_VERSION_MINOR >= 3)
-"   <Option name='BLOCK' type='int' description='between 1 and 16'/>\n"
-#endif
-#if JPEG_LIB_VERSION_MAJOR >= 9
-"   <Option name='COLOR_TRANSFORM' type='string-select'>\n"
-"       <Value>RGB</Value>"
-"       <Value>RGB1</Value>"
-"   </Option>"
-#endif
-"   <Option name='SOURCE_ICC_PROFILE' description='ICC profile encoded in Base64' type='string'/>\n"
-"   <Option name='EXIF_THUMBNAIL' type='boolean' description='whether to generate an EXIF thumbnail(overview). By default its max dimension will be 128' default='NO'/>\n"
-"   <Option name='THUMBNAIL_WIDTH' type='int' description='Forced thumbnail width' min='32' max='512'/>\n"
-"   <Option name='THUMBNAIL_HEIGHT' type='int' description='Forced thumbnail height' min='32' max='512'/>\n"
-"</CreationOptionList>\n" );
-
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
         poDriver->pfnIdentify = JPGDatasetCommon::Identify;
