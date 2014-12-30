@@ -155,8 +155,9 @@ def jpeg_copy_icc_64K():
     ds = driver_tiff.Create('tmp/icc_test.tiff', 64, 64, 3, gdal.GDT_Byte, options)
 
     # Check with dataset from CreateCopy()
-    ds2 = driver.CreateCopy('tmp/icc_test.jpg', ds)
+    ds2 = driver.CreateCopy('tmp/icc_test.jpg', ds, options = ['COMMENT=foo'])
     md = ds2.GetMetadata("COLOR_PROFILE")
+    comment = ds2.GetMetadataItem('COMMENT')
     ds2 = None
 
     try:
@@ -165,6 +166,10 @@ def jpeg_copy_icc_64K():
         return 'fail'
     except:
         pass
+    
+    if comment != 'foo':
+        gdaltest.post_reason('fail')
+        return 'fail'
     
     if md['SOURCE_ICC_PROFILE'] != icc:
         gdaltest.post_reason('fail')
