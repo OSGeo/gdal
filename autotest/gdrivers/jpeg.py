@@ -868,7 +868,7 @@ def jpeg_22():
         return 'fail'
     ds = None
 
-    src_ds = gdal.GetDriverByName('Mem').Create('', 2048, 4096)
+    src_ds = gdal.GetDriverByName('Mem').Create('', 2048, 4096, 3)
     src_ds.GetRasterBand(1).Fill(255)
     ds = gdal.GetDriverByName('JPEG').CreateCopy('/vsimem/jpeg_22.jpg', src_ds, options = ['EXIF_THUMBNAIL=YES'])
     src_ds = None

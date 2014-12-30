@@ -3018,17 +3018,30 @@ void   JPGAddEXIFOverview( GDALDataType eWorkDT,
     {
         GDALDataset* poMemDS = MEMDataset::Create("", nOvrWidth, nOvrHeight, nBands, eWorkDT, NULL);
         GDALRasterBand** papoSrcBands = (GDALRasterBand**)CPLMalloc(nBands * sizeof(GDALRasterBand*));
-        GDALRasterBand** papoOvrBands = (GDALRasterBand**)CPLMalloc(nBands * sizeof(GDALRasterBand*));
-        for(int i=0;i<nBands;i++)
+        GDALRasterBand*** papapoOverviewBands= (GDALRasterBand***)CPLMalloc(nBands * sizeof(GDALRasterBand**));
+        int i;
+        for(i=0;i<nBands;i++)
         {
             papoSrcBands[i] = poSrcDS->GetRasterBand(i+1);
-            papoOvrBands[i] = poMemDS->GetRasterBand(i+1);
+            papapoOverviewBands[i] = (GDALRasterBand**)CPLMalloc(sizeof(GDALRasterBand*));
+            papapoOverviewBands[i][0] = poMemDS->GetRasterBand(i+1);
         }
-        GDALRegenerateOverviewsMultiBand(nBands, papoSrcBands,
-                                        1, &papoOvrBands,
+        CPLErr eErr = GDALRegenerateOverviewsMultiBand(nBands, papoSrcBands,
+                                        1, papapoOverviewBands,
                                         "AVERAGE", NULL, NULL);
         CPLFree(papoSrcBands);
-        CPLFree(papoOvrBands);
+        for(i=0;i<nBands;i++)
+        {
+            CPLFree(papapoOverviewBands[i]);
+        }
+        CPLFree(papapoOverviewBands);
+
+        if( eErr != CE_None )
+        {
+            GDALClose(poMemDS);
+            return;
+        }
+
         CPLString osTmpFile(CPLSPrintf("/vsimem/ovrjpg%p",poMemDS));
         GDALDataset* poOutDS = pCreateCopy(osTmpFile, poMemDS, 0, NULL, GDALDummyProgress, NULL);
         delete poOutDS;
