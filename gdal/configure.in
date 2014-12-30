@@ -2139,20 +2139,23 @@ elif test "$with_ecw" = "yes" -o "$with_ecw" = "" ; then
       ECW_LIBS="-lecwj2 $CARBON_FRAMEWORK"
     fi
   fi
-  # ECWJP2 SDK 5.1 style
-  if test "$ECW_SETTING" = "no" ; then
-        if test -r /Intergraph/ERDASEcwJpeg2000SDK5.1/lib/libEcwJp2SDK.a; then
-                ECW_LIBDIR=/Intergraph/ERDASEcwJpeg2000SDK5.1/lib
-                ECW_INCLUDE=-I/Intergraph/ERDASEcwJpeg2000SDK5.1/include
-                ECW_LIBS="-L$ECW_LIBDIR -lEcwJp2SDK -framework Cocoa"
-                ECW_SETTING=yes
-                ECW_FLAGS="-DHAVE_ECW_BUILDNUMBER_H $ECW_FLAGS"
-                AC_MSG_RESULT([found Intergraph ERDAS EcwJpeg2000 SDK 5.1 in /Intergraph/ERDASEcwJpeg2000SDK5.1/.])
-        fi
-  fi
 else
 
-  AC_MSG_CHECKING([for libNCSEcw.so or libecwj2])
+  AC_MSG_CHECKING([for libNCSEcw.a or libecwj2])
+  ECW_ARCH=x86
+  ECW_CONF="release"
+  ECW_FLAGS="-DLINUX -DX86 -DPOSIX -DHAVE_COMPRESS -DECW_COMPRESS_RW_SDK_VERSION"
+  ECW_FRAMEWORK_COCOA=""
+  if test "`arch`" = "x86_64" ; then 
+    ECW_ARCH="x64"
+  fi
+  if test ! -z "`uname | grep Darwin`" ; then
+    ECW_ARCH=""
+    ECW_CONF=""
+    ECW_FLAGS=""
+    ECW_FRAMEWORK_COCOA=" -framework Cocoa "
+  fi
+  
   ECW_SETTING=yes
   if test -r $with_ecw/lib/libNCSCnet.so -o -r $with_ecw/lib/libNCSCnet.dylib ; then
     ECW_LIBS="-L$with_ecw/lib -lNCSEcw -lNCSEcwC -lNCSCnet -lNCSUtil"
@@ -2167,25 +2170,26 @@ else
     ECW_LIBS="-L$with_ecw/lib -lecwj2 $CARBON_FRAMEWORK"
     AC_MSG_RESULT([found libecwj2 in $with_ecw/lib.])
 
-  # ECW SDK 5.0 style
-  elif test -r $with_ecw/lib/x64/release/libNCSEcw.so ; then
-    if test `arch` == "x86_64" ; then
-      ECW_LIBDIR=$with_ecw/lib/x64/release
-    else
-      ECW_LIBDIR=$with_ecw/lib/x86/release
-    fi
-    ECW_FLAGS="-DLINUX -DX86 -DPOSIX -DHAVE_COMPRESS -DECW_COMPRESS_RW_SDK_VERSION"
-    ECW_LIBS="-L$ECW_LIBDIR -lNCSEcw"
+  # ECW SDK 5.0 style and also for the case where license type is included in path i.e. specific license type is requested.
+  elif test -r $with_ecw/lib/$ECW_ARCH/$ECW_CONF/libNCSEcw.a ; then
+    ECW_LIBDIR=$with_ecw/lib/$ECW_ARCH/$ECW_CONF
+    ECW_LIBS="-L$ECW_LIBDIR -lNCSEcw $ECW_FRAMEWORK_COCOA"
     AC_MSG_RESULT([found Intergraph 5.x+ SDK in ${ECW_LIBDIR}.])
  # ECWJP2 SDK 5.1 style
-  elif test -r $with_ecw/lib/libEcwJp2SDK.a; then
-        ECW_LIBDIR=$with_ecw/lib
-        ECW_INCLUDE=-I$with_ecw/include
-        ECW_LIBS="-L$ECW_LIBDIR -lEcwJp2SDK -framework Cocoa"
-        ECW_FLAGS="-DHAVE_ECW_BUILDNUMBER_H $ECW_FLAGS"
-        AC_MSG_RESULT([found Intergraph 5.1+ SDK in $ {with_ecw}.]) 
+  elif test -d $with_ecw; then
+    ecw_license_types=( "Desktop_Read-Write" "Server_Read-Only_EndUser" "Server_Read-Only" "Server_Read-Write" "Desktop_Read-Only"   )
+    for ecw_license_type in ${ecw_license_types@<:@@@:>@};
+      do
+        ECW_LIBDIR=$with_ecw/$ecw_license_type/lib/$ECW_ARCH/$ECW_CONF
+        if test -r $ECW_LIBDIR/libNCSEcw.a; then
+          ECW_LIBS="-L$ECW_LIBDIR -lNCSEcw $ECW_FRAMEWORK_COCOA"
+          with_ecw=$with_ecw/$ecw_license_type
+          AC_MSG_RESULT([found Intergraph 5.x+ SDK in ${ECW_LIBDIR}.])
+          break
+        fi
+      done
  else
-    AC_MSG_ERROR([not found in $with_ecw/lib or $with_ecw/bin.])
+    AC_MSG_ERROR([not found in $with_ecw.])
   fi
 
   AC_MSG_CHECKING([for NCSECWClient.h in $with_ecw/include])
