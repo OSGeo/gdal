@@ -1,4 +1,4 @@
-/* $Id: tif_jpeg.c,v 1.113 2014-12-15 15:40:07 erouault Exp $ */
+/* $Id: tif_jpeg.c,v 1.114 2014-12-30 16:37:22 erouault Exp $ */
 
 /*
  * Copyright (c) 1994-1997 Sam Leffler
@@ -658,7 +658,9 @@ alloc_downsampled_buffers(TIFF* tif, jpeg_component_info* comp_info,
 
 #define JPEG_MARKER_SOF0 0xC0
 #define JPEG_MARKER_SOF1 0xC1
-#define JPEG_MARKER_SOF3 0xC3
+#define JPEG_MARKER_SOF2 0xC2
+#define JPEG_MARKER_SOF9 0xC9
+#define JPEG_MARKER_SOF10 0xCA
 #define JPEG_MARKER_DHT 0xC4
 #define JPEG_MARKER_SOI 0xD8
 #define JPEG_MARKER_SOS 0xDA
@@ -817,8 +819,11 @@ JPEGFixupTagsSubsamplingSec(struct JPEGFixupTagsSubsamplingData* data)
 						JPEGFixupTagsSubsamplingSkip(data,n);
 				}
 				break;
-			case JPEG_MARKER_SOF0:
-			case JPEG_MARKER_SOF1:
+			case JPEG_MARKER_SOF0: /* Baseline sequential Huffman */
+			case JPEG_MARKER_SOF1: /* Extended sequential Huffman */
+			case JPEG_MARKER_SOF2: /* Progressive Huffman: normally not allowed by TechNote, but that doesn't hurt supporting it */
+			case JPEG_MARKER_SOF9: /* Extended sequential arithmetic */
+			case JPEG_MARKER_SOF10: /* Progressive arithmetic: normally not allowed by TechNote, but that doesn't hurt supporting it */
 				/* this marker contains the subsampling factors we're scanning for */
 				{
 					uint16 n;
@@ -1531,17 +1536,38 @@ JPEGSetupEncode(TIFF* tif)
 	assert(sp != NULL);
 	assert(!sp->cinfo.comm.is_decompressor);
 
+	sp->photometric = td->td_photometric;
+
 	/*
 	 * Initialize all JPEG parameters to default values.
 	 * Note that jpeg_set_defaults needs legal values for
 	 * in_color_space and input_components.
 	 */
-	sp->cinfo.c.in_color_space = JCS_UNKNOWN;
-	sp->cinfo.c.input_components = 1;
+	if (td->td_planarconfig == PLANARCONFIG_CONTIG) {
+		sp->cinfo.c.input_components = td->td_samplesperpixel;
+		if (sp->photometric == PHOTOMETRIC_YCBCR) {
+			if (sp->jpegcolormode == JPEGCOLORMODE_RGB) {
+				sp->cinfo.c.in_color_space = JCS_RGB;
+			} else {
+				sp->cinfo.c.in_color_space = JCS_YCbCr;
+			}
+		} else {
+			if ((td->td_photometric == PHOTOMETRIC_MINISWHITE || td->td_photometric == PHOTOMETRIC_MINISBLACK) && td->td_samplesperpixel == 1)
+				sp->cinfo.c.in_color_space = JCS_GRAYSCALE;
+			else if (td->td_photometric == PHOTOMETRIC_RGB && td->td_samplesperpixel == 3)
+				sp->cinfo.c.in_color_space = JCS_RGB;
+			else if (td->td_photometric == PHOTOMETRIC_SEPARATED && td->td_samplesperpixel == 4)
+				sp->cinfo.c.in_color_space = JCS_CMYK;
+			else
+				sp->cinfo.c.in_color_space = JCS_UNKNOWN;
+		}
+	} else {
+		sp->cinfo.c.input_components = 1;
+		sp->cinfo.c.in_color_space = JCS_UNKNOWN;
+	}
 	if (!TIFFjpeg_set_defaults(sp))
 		return (0);
 	/* Set per-file parameters */
-	sp->photometric = td->td_photometric;
 	switch (sp->photometric) {
 	case PHOTOMETRIC_YCBCR:
 		sp->h_sampling = td->td_ycbcrsubsampling[0];
@@ -1701,10 +1727,7 @@ JPEGPreEncode(TIFF* tif, uint16 s)
 	if (td->td_planarconfig == PLANARCONFIG_CONTIG) {
 		sp->cinfo.c.input_components = td->td_samplesperpixel;
 		if (sp->photometric == PHOTOMETRIC_YCBCR) {
-			if (sp->jpegcolormode == JPEGCOLORMODE_RGB) {
-				sp->cinfo.c.in_color_space = JCS_RGB;
-			} else {
-				sp->cinfo.c.in_color_space = JCS_YCbCr;
+			if (sp->jpegcolormode != JPEGCOLORMODE_RGB) {
 				if (sp->h_sampling != 1 || sp->v_sampling != 1)
 					downsampled_input = TRUE;
 			}
@@ -1717,21 +1740,11 @@ JPEGPreEncode(TIFF* tif, uint16 s)
 			sp->cinfo.c.comp_info[0].h_samp_factor = sp->h_sampling;
 			sp->cinfo.c.comp_info[0].v_samp_factor = sp->v_sampling;
 		} else {
-			if ((td->td_photometric == PHOTOMETRIC_MINISWHITE || td->td_photometric == PHOTOMETRIC_MINISBLACK) && td->td_samplesperpixel == 1)
-				sp->cinfo.c.in_color_space = JCS_GRAYSCALE;
-			else if (td->td_photometric == PHOTOMETRIC_RGB && td->td_samplesperpixel == 3)
-				sp->cinfo.c.in_color_space = JCS_RGB;
-			else if (td->td_photometric == PHOTOMETRIC_SEPARATED && td->td_samplesperpixel == 4)
-				sp->cinfo.c.in_color_space = JCS_CMYK;
-			else
-				sp->cinfo.c.in_color_space = JCS_UNKNOWN;
 			if (!TIFFjpeg_set_colorspace(sp, sp->cinfo.c.in_color_space))
 				return (0);
 			/* jpeg_set_colorspace set all sampling factors to 1 */
 		}
 	} else {
-		sp->cinfo.c.input_components = 1;
-		sp->cinfo.c.in_color_space = JCS_UNKNOWN;
 		if (!TIFFjpeg_set_colorspace(sp, JCS_UNKNOWN))
 			return (0);
 		sp->cinfo.c.comp_info[0].component_id = s;
