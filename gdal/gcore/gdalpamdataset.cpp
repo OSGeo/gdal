@@ -204,15 +204,18 @@ CPLXMLNode *GDALPamDataset::SerializeToXML( const char *pszUnused )
 /* -------------------------------------------------------------------- */
 /*      Metadata.                                                       */
 /* -------------------------------------------------------------------- */
-    CPLXMLNode *psMD;
-
-    psMD = oMDMD.Serialize();
-    if( psMD != NULL )
+    if( psPam->bHasMetadata )
     {
-        if( psMD->psChild == NULL && psMD->psNext == NULL )
-            CPLDestroyXMLNode( psMD );
-        else
-            CPLAddXMLChild( psDSTree, psMD );
+        CPLXMLNode *psMD;
+
+        psMD = oMDMD.Serialize();
+        if( psMD != NULL )
+        {
+            if( psMD->psChild == NULL && psMD->psNext == NULL )
+                CPLDestroyXMLNode( psMD );
+            else
+                CPLAddXMLChild( psDSTree, psMD );
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -294,6 +297,7 @@ void GDALPamDataset::PamInitialize()
     psPam->nGCPCount = 0;
     psPam->pasGCPList = NULL;
     psPam->pszGCPProjection = NULL;
+    psPam->bHasMetadata = FALSE;
 
     int iBand;
     
@@ -1218,7 +1222,10 @@ CPLErr GDALPamDataset::SetMetadata( char **papszMetadata,
     PamInitialize();
 
     if( psPam )
+    {
+        psPam->bHasMetadata = TRUE;
         MarkPamDirty();
+    }
 
     return GDALDataset::SetMetadata( papszMetadata, pszDomain );
 }
@@ -1235,7 +1242,10 @@ CPLErr GDALPamDataset::SetMetadataItem( const char *pszName,
     PamInitialize();
 
     if( psPam )
+    {
+        psPam->bHasMetadata = TRUE;
         MarkPamDirty();
+    }
 
     return GDALDataset::SetMetadataItem( pszName, pszValue, pszDomain );
 }
