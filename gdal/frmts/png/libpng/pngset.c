@@ -1,8 +1,8 @@
 
 /* pngset.c - storage of image information into info struct
  *
- * Last changed in libpng 1.2.49 [March 29, 2012]
- * Copyright (c) 1998-2012 Glenn Randers-Pehrson
+ * Last changed in libpng 1.2.51 [February 6, 2014]
+ * Copyright (c) 1998-2014 Glenn Randers-Pehrson
  * (Version 0.96 Copyright (c) 1996, 1997 Andreas Dilger)
  * (Version 0.88 Copyright (c) 1995, 1996 Guy Eric Schalnat, Group 42, Inc.)
  *
@@ -533,8 +533,10 @@ png_set_sRGB_gAMA_and_cHRM(png_structp png_ptr, png_infop info_ptr,
 #ifdef PNG_FLOATING_POINT_SUPPORTED
    float white_x, white_y, red_x, red_y, green_x, green_y, blue_x, blue_y;
 #endif
+#ifdef PNG_FIXED_POINT_SUPPORTED
    png_fixed_point int_white_x, int_white_y, int_red_x, int_red_y, int_green_x,
       int_green_y, int_blue_x, int_blue_y;
+#endif
 #endif
    png_debug1(1, "in %s storage function", "sRGB_gAMA_and_cHRM");
 
@@ -555,6 +557,7 @@ png_set_sRGB_gAMA_and_cHRM(png_structp png_ptr, png_infop info_ptr,
 #endif
 
 #ifdef PNG_cHRM_SUPPORTED
+#  ifdef PNG_FIXED_POINT_SUPPORTED
    int_white_x = 31270L;
    int_white_y = 32900L;
    int_red_x   = 64000L;
@@ -563,8 +566,12 @@ png_set_sRGB_gAMA_and_cHRM(png_structp png_ptr, png_infop info_ptr,
    int_green_y = 60000L;
    int_blue_x  = 15000L;
    int_blue_y  =  6000L;
+   png_set_cHRM_fixed(png_ptr, info_ptr,
+       int_white_x, int_white_y, int_red_x, int_red_y, int_green_x,
+       int_green_y, int_blue_x, int_blue_y);
+#  endif
 
-#ifdef PNG_FLOATING_POINT_SUPPORTED
+#  ifdef PNG_FLOATING_POINT_SUPPORTED
    white_x = (float).3127;
    white_y = (float).3290;
    red_x   = (float).64;
@@ -573,17 +580,9 @@ png_set_sRGB_gAMA_and_cHRM(png_structp png_ptr, png_infop info_ptr,
    green_y = (float).60;
    blue_x  = (float).15;
    blue_y  = (float).06;
-#endif
-
-#ifdef PNG_FIXED_POINT_SUPPORTED
-   png_set_cHRM_fixed(png_ptr, info_ptr,
-       int_white_x, int_white_y, int_red_x, int_red_y, int_green_x,
-       int_green_y, int_blue_x, int_blue_y);
-#endif
-#ifdef PNG_FLOATING_POINT_SUPPORTED
    png_set_cHRM(png_ptr, info_ptr,
        white_x, white_y, red_x, red_y, green_x, green_y, blue_x, blue_y);
-#endif
+#  endif
 #endif /* cHRM */
 }
 #endif /* sRGB */
@@ -849,6 +848,12 @@ png_set_tRNS(png_structp png_ptr, png_infop info_ptr,
 
    if (png_ptr == NULL || info_ptr == NULL)
       return;
+
+   if (num_trans < 0 || num_trans > PNG_MAX_PALETTE_LENGTH)
+      {
+        png_warning(png_ptr, "Ignoring invalid num_trans value");
+        return;
+      }
 
    if (trans != NULL)
    {
@@ -1184,7 +1189,7 @@ png_set_asm_flags (png_structp png_ptr, png_uint_32 asm_flags)
 /* Obsolete as of libpng-1.2.20 and will be removed from libpng-1.4.0 */
     if (png_ptr != NULL)
     png_ptr->asm_flags = 0;
-    asm_flags = asm_flags; /* Quiet the compiler */
+    PNG_UNUSED(asm_flags) /* Quiet the compiler */
 }
 
 /* This function was added to libpng 1.2.0 */
@@ -1197,8 +1202,8 @@ png_set_mmx_thresholds (png_structp png_ptr,
     if (png_ptr == NULL)
        return;
     /* Quiet the compiler */
-    mmx_bitdepth_threshold = mmx_bitdepth_threshold;
-    mmx_rowbytes_threshold = mmx_rowbytes_threshold;
+    PNG_UNUSED(mmx_bitdepth_threshold)
+    PNG_UNUSED(mmx_rowbytes_threshold)
 }
 #endif /* ?PNG_ASSEMBLER_CODE_SUPPORTED */
 
