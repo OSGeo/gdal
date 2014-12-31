@@ -1389,7 +1389,7 @@ void PNGDataset::WriteMetadataAsText(png_structp hPNG, png_infop psPNGInfo,
     sText.compression = PNG_TEXT_COMPRESSION_NONE;
     sText.key = (png_charp) pszKey;
     sText.text = (png_charp) pszValue;
-#if HAVE_ITXT_SUPPORT
+#ifdef HAVE_ITXT_SUPPORT
     // UTF-8 values should be written in iTXt, whereas TEXT should be LATIN-1 
     if( !IsASCII(pszValue) && CPLIsUTF8(pszValue, -1) )
         sText.compression = PNG_ITXT_COMPRESSION_NONE;
