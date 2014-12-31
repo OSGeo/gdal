@@ -99,6 +99,8 @@ public:
     CPLString   osPhysicalFilename;
     CPLString   osSubdatasetName;
     CPLString   osAuxFilename;
+
+    int         bHasMetadata;
 };
 
 /* ******************************************************************** */
