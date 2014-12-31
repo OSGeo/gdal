@@ -1,8 +1,8 @@
 
 /* pngwrite.c - general routines to write a PNG file
  *
- * Last changed in libpng 1.2.45 [July 7, 2011]
- * Copyright (c) 1998-2011 Glenn Randers-Pehrson
+ * Last changed in libpng 1.2.52 [November 20, 2014]
+ * Copyright (c) 1998-2014 Glenn Randers-Pehrson
  * (Version 0.96 Copyright (c) 1996, 1997 Andreas Dilger)
  * (Version 0.88 Copyright (c) 1995, 1996 Guy Eric Schalnat, Group 42, Inc.)
  *
@@ -525,15 +525,23 @@ png_create_write_struct_2(png_const_charp user_png_ver, png_voidp error_ptr,
 #endif /* PNG_USER_MEM_SUPPORTED */
    png_set_error_fn(png_ptr, error_ptr, error_fn, warn_fn);
 
-   if (user_png_ver)
+   if (user_png_ver != NULL)
    {
-      i = 0;
+      int found_dots = 0;
+      i = -1;
+
       do
       {
-         if (user_png_ver[i] != png_libpng_ver[i])
+         i++;
+         if (user_png_ver[i] != PNG_LIBPNG_VER_STRING[i])
             png_ptr->flags |= PNG_FLAG_LIBRARY_MISMATCH;
-      } while (png_libpng_ver[i++]);
+         if (user_png_ver[i] == '.')
+            found_dots++;
+      } while (found_dots < 2 && user_png_ver[i] != 0 &&
+            PNG_LIBPNG_VER_STRING[i] != 0);
    }
+   else
+      png_ptr->flags |= PNG_FLAG_LIBRARY_MISMATCH;
 
    if (png_ptr->flags & PNG_FLAG_LIBRARY_MISMATCH)
    {
@@ -684,8 +692,9 @@ png_write_init_3(png_structpp ptr_ptr, png_const_charp user_png_ver,
          png_warning(png_ptr,
  "Application uses deprecated png_write_init() and should be recompiled.");
 #endif
-      }
-   } while (png_libpng_ver[i++]);
+   }
+      i++;
+   } while (png_libpng_ver[i] != 0 && user_png_ver[i] != 0);
 
    png_debug(1, "in png_write_init_3");
 
@@ -1586,8 +1595,8 @@ png_write_png(png_structp png_ptr, png_infop info_ptr,
    /* It is REQUIRED to call this to finish writing the rest of the file */
    png_write_end(png_ptr, info_ptr);
 
-   transforms = transforms; /* Quiet compiler warnings */
-   params = params;
+   PNG_UNUSED(transforms) /* Quiet compiler warnings */
+   PNG_UNUSED(params)
 }
 #endif
 #endif /* PNG_WRITE_SUPPORTED */

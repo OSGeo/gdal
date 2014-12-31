@@ -1,8 +1,8 @@
 
 /* pngget.c - retrieval of values from info struct
  *
- * Last changed in libpng 1.2.43 [February 25, 2010]
- * Copyright (c) 1998-2010 Glenn Randers-Pehrson
+ * Last changed in libpng 1.2.51 [February 6, 2014]
+ * Copyright (c) 1998-2014 Glenn Randers-Pehrson
  * (Version 0.96 Copyright (c) 1996, 1997 Andreas Dilger)
  * (Version 0.88 Copyright (c) 1995, 1996 Guy Eric Schalnat, Group 42, Inc.)
  *
@@ -893,7 +893,7 @@ png_uint_32 PNGAPI
 png_get_asm_flagmask (int flag_select)
 {
     /* Obsolete, to be removed from libpng-1.4.0 */
-    flag_select=flag_select;
+    PNG_UNUSED(flag_select)
     return 0L;
 }
 
@@ -903,7 +903,7 @@ png_uint_32 PNGAPI
 png_get_mmx_flagmask (int flag_select, int *compilerID)
 {
     /* Obsolete, to be removed from libpng-1.4.0 */
-    flag_select=flag_select;
+    PNG_UNUSED(flag_select)
     *compilerID = -1;   /* unknown (i.e., no asm/MMX code compiled) */
     return 0L;
 }
