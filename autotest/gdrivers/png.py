@@ -272,6 +272,29 @@ def png_12():
     
     return 'success'
 
+###############################################################################
+# Test metadata
+
+def png_13():
+    
+    src_ds = gdal.GetDriverByName('MEM').Create('',1,1)
+    src_ds.SetMetadataItem('foo', 'bar')
+    src_ds.SetMetadataItem('COPYRIGHT', 'copyright value')
+    src_ds.SetMetadataItem('DESCRIPTION', 'will be overriden by creation option')
+    out_ds = gdal.GetDriverByName('PNG').CreateCopy('/vsimem/tmp.png', src_ds, options = ['WRITE_METADATA_AS_TEXT=YES', 'DESCRIPTION=my desc'])
+    md = out_ds.GetMetadata()
+    if len(md) != 3 or md['foo'] != 'bar' or md['Copyright'] != 'copyright value' or md['Description'] != 'my desc':
+        gdaltest.post_reason('failure')
+        print(md)
+        return 'fail'
+    out_ds = None
+    # check that no PAM file is created
+    if gdal.VSIStatL('/vsimem/tmp.png.aux.xml') == 0:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    gdal.Unlink('/vsimem/tmp.png')
+    return 'success'
+
 gdaltest_list = [
     png_1,
     png_2,
@@ -284,7 +307,9 @@ gdaltest_list = [
     png_9,
     png_10,
     png_11,
-    png_12 ]
+    png_12,
+    png_13
+    ]
 
 if __name__ == '__main__':
 
