@@ -187,6 +187,8 @@ class GDALGeoPackageDataset : public OGRSQLiteBaseDataSource
         int                     RegisterZoomOtherExtension();
         void                    ParseCompressionOptions(char** papszOptions);
 
+        int                     HasMetadataTables();
+        int                     CreateMetadataTables();
         const char*             CheckMetadataDomain( const char* pszDomain );
         void                    WriteMetadata(CPLXMLNode* psXMLNode, /* will be destroyed by the method /*/
                                               const char* pszTableName);
