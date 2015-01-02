@@ -1770,6 +1770,20 @@ const char* GDALGeoPackageDataset::CheckMetadataDomain( const char* pszDomain )
 }
 
 /************************************************************************/
+/*                           HasMetadataTables()                        */
+/************************************************************************/
+
+int GDALGeoPackageDataset::HasMetadataTables()
+{
+    OGRErr err;
+    int nCount = SQLGetInteger(hDB,
+                  "SELECT COUNT(*) FROM sqlite_master WHERE name IN "
+                  "('gpkg_metadata', 'gpkg_metadata_reference') "
+                  "AND type IN ('table', 'view')", &err);
+    return ( err == OGRERR_NONE && nCount == 2 );
+}
+
+/************************************************************************/
 /*                            GetMetadata()                             */
 /************************************************************************/
 
@@ -1785,12 +1799,7 @@ char **GDALGeoPackageDataset::GetMetadata( const char *pszDomain )
 
     m_bHasReadMetadataFromStorage = TRUE;
 
-    OGRErr err;
-    int nCount = SQLGetInteger(hDB,
-                  "SELECT COUNT(*) FROM sqlite_master WHERE name IN "
-                  "('gpkg_metadata', 'gpkg_metadata_reference') "
-                  "AND type IN ('table', 'view')", &err);
-    if ( err != OGRERR_NONE || nCount != 2 )
+    if ( !HasMetadataTables() )
         return GDALPamDataset::GetMetadata( pszDomain );
 
     char* pszSQL;
@@ -1812,7 +1821,7 @@ char **GDALGeoPackageDataset::GetMetadata( const char *pszDomain )
     }
 
     SQLResult oResult;
-    err = SQLQuery(hDB, pszSQL, &oResult);
+    OGRErr err = SQLQuery(hDB, pszSQL, &oResult);
     sqlite3_free(pszSQL);
     if  ( err != OGRERR_NONE )
     {
@@ -2006,13 +2015,201 @@ void GDALGeoPackageDataset::WriteMetadata(CPLXMLNode* psXMLNode, /* will be dest
 }
 
 /************************************************************************/
+/*                        CreateMetadataTables()                        */
+/************************************************************************/
+
+int GDALGeoPackageDataset::CreateMetadataTables()
+{
+    int bCreateTriggers = CSLTestBoolean(CPLGetConfigOption("CREATE_TRIGGERS", "YES"));
+    
+    /* From C.10. gpkg_metadata Table 35. gpkg_metadata Table Definition SQL  */
+    const char* pszMetadata =
+        "CREATE TABLE gpkg_metadata ("
+        "id INTEGER CONSTRAINT m_pk PRIMARY KEY ASC NOT NULL UNIQUE,"
+        "md_scope TEXT NOT NULL DEFAULT 'dataset',"
+        "md_standard_uri TEXT NOT NULL,"
+        "mime_type TEXT NOT NULL DEFAULT 'text/xml',"
+        "metadata TEXT NOT NULL"
+        ")";
+        
+    if ( OGRERR_NONE != SQLCommand(hDB, pszMetadata) )
+        return FALSE;
+
+    /* From D.2. metadata Table 40. metadata Trigger Definition SQL  */
+    const char* pszMetadataTriggers =
+    "CREATE TRIGGER 'gpkg_metadata_md_scope_insert' "
+    "BEFORE INSERT ON 'gpkg_metadata' "
+    "FOR EACH ROW BEGIN "
+    "SELECT RAISE(ABORT, 'insert on table gpkg_metadata violates "
+    "constraint: md_scope must be one of undefined | fieldSession | "
+    "collectionSession | series | dataset | featureType | feature | "
+    "attributeType | attribute | tile | model | catalogue | schema | "
+    "taxonomy software | service | collectionHardware | "
+    "nonGeographicDataset | dimensionGroup') "
+    "WHERE NOT(NEW.md_scope IN "
+    "('undefined','fieldSession','collectionSession','series','dataset', "
+    "'featureType','feature','attributeType','attribute','tile','model', "
+    "'catalogue','schema','taxonomy','software','service', "
+    "'collectionHardware','nonGeographicDataset','dimensionGroup')); "
+    "END; "
+    "CREATE TRIGGER 'gpkg_metadata_md_scope_update' "
+    "BEFORE UPDATE OF 'md_scope' ON 'gpkg_metadata' "
+    "FOR EACH ROW BEGIN "
+    "SELECT RAISE(ABORT, 'update on table gpkg_metadata violates "
+    "constraint: md_scope must be one of undefined | fieldSession | "
+    "collectionSession | series | dataset | featureType | feature | "
+    "attributeType | attribute | tile | model | catalogue | schema | "
+    "taxonomy software | service | collectionHardware | "
+    "nonGeographicDataset | dimensionGroup') "
+    "WHERE NOT(NEW.md_scope IN "
+    "('undefined','fieldSession','collectionSession','series','dataset', "
+    "'featureType','feature','attributeType','attribute','tile','model', "
+    "'catalogue','schema','taxonomy','software','service', "
+    "'collectionHardware','nonGeographicDataset','dimensionGroup')); "
+    "END";
+    if ( bCreateTriggers && OGRERR_NONE != SQLCommand(hDB, pszMetadataTriggers) )
+        return FALSE;
+
+    /* From C.11. gpkg_metadata_reference Table 36. gpkg_metadata_reference Table Definition SQL */
+    const char* pszMetadataReference =
+        "CREATE TABLE gpkg_metadata_reference ("
+        "reference_scope TEXT NOT NULL,"
+        "table_name TEXT,"
+        "column_name TEXT,"
+        "row_id_value INTEGER,"
+        "timestamp DATETIME NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),"
+        "md_file_id INTEGER NOT NULL,"
+        "md_parent_id INTEGER,"
+        "CONSTRAINT crmr_mfi_fk FOREIGN KEY (md_file_id) REFERENCES gpkg_metadata(id),"
+        "CONSTRAINT crmr_mpi_fk FOREIGN KEY (md_parent_id) REFERENCES gpkg_metadata(id)"
+        ")";
+        
+    if ( OGRERR_NONE != SQLCommand(hDB, pszMetadataReference) )
+        return FALSE;
+
+    /* From D.3. metadata_reference Table 41. gpkg_metadata_reference Trigger Definition SQL   */
+    const char* pszMetadataReferenceTriggers =
+        "CREATE TRIGGER 'gpkg_metadata_reference_reference_scope_insert' "
+        "BEFORE INSERT ON 'gpkg_metadata_reference' "
+        "FOR EACH ROW BEGIN "
+        "SELECT RAISE(ABORT, 'insert on table gpkg_metadata_reference "
+        "violates constraint: reference_scope must be one of \"geopackage\", "
+        "table\", \"column\", \"row\", \"row/col\"') "
+        "WHERE NOT NEW.reference_scope IN "
+        "('geopackage','table','column','row','row/col'); "
+        "END; "
+        "CREATE TRIGGER 'gpkg_metadata_reference_reference_scope_update' "
+        "BEFORE UPDATE OF 'reference_scope' ON 'gpkg_metadata_reference' "
+        "FOR EACH ROW BEGIN "
+        "SELECT RAISE(ABORT, 'update on table gpkg_metadata_reference "
+        "violates constraint: referrence_scope must be one of \"geopackage\", "
+        "\"table\", \"column\", \"row\", \"row/col\"') "
+        "WHERE NOT NEW.reference_scope IN "
+        "('geopackage','table','column','row','row/col'); "
+        "END; "
+        "CREATE TRIGGER 'gpkg_metadata_reference_column_name_insert' "
+        "BEFORE INSERT ON 'gpkg_metadata_reference' "
+        "FOR EACH ROW BEGIN "
+        "SELECT RAISE(ABORT, 'insert on table gpkg_metadata_reference "
+        "violates constraint: column name must be NULL when reference_scope "
+        "is \"geopackage\", \"table\" or \"row\"') "
+        "WHERE (NEW.reference_scope IN ('geopackage','table','row') "
+        "AND NEW.column_name IS NOT NULL); "
+        "SELECT RAISE(ABORT, 'insert on table gpkg_metadata_reference "
+        "violates constraint: column name must be defined for the specified "
+        "table when reference_scope is \"column\" or \"row/col\"') "
+        "WHERE (NEW.reference_scope IN ('column','row/col') "
+        "AND NOT NEW.table_name IN ( "
+        "SELECT name FROM SQLITE_MASTER WHERE type = 'table' "
+        "AND name = NEW.table_name "
+        "AND sql LIKE ('%' || NEW.column_name || '%'))); "
+        "END; "
+        "CREATE TRIGGER 'gpkg_metadata_reference_column_name_update' "
+        "BEFORE UPDATE OF column_name ON 'gpkg_metadata_reference' "
+        "FOR EACH ROW BEGIN "
+        "SELECT RAISE(ABORT, 'update on table gpkg_metadata_reference "
+        "violates constraint: column name must be NULL when reference_scope "
+        "is \"geopackage\", \"table\" or \"row\"') "
+        "WHERE (NEW.reference_scope IN ('geopackage','table','row') "
+        "AND NEW.column_nameIS NOT NULL); "
+        "SELECT RAISE(ABORT, 'update on table gpkg_metadata_reference "
+        "violates constraint: column name must be defined for the specified "
+        "table when reference_scope is \"column\" or \"row/col\"') "
+        "WHERE (NEW.reference_scope IN ('column','row/col') "
+        "AND NOT NEW.table_name IN ( "
+        "SELECT name FROM SQLITE_MASTER WHERE type = 'table' "
+        "AND name = NEW.table_name "
+        "AND sql LIKE ('%' || NEW.column_name || '%'))); "
+        "END; "
+        "CREATE TRIGGER 'gpkg_metadata_reference_row_id_value_insert' "
+        "BEFORE INSERT ON 'gpkg_metadata_reference' "
+        "FOR EACH ROW BEGIN "
+        "SELECT RAISE(ABORT, 'insert on table gpkg_metadata_reference "
+        "violates constraint: row_id_value must be NULL when reference_scope "
+        "is \"geopackage\", \"table\" or \"column\"') "
+        "WHERE NEW.reference_scope IN ('geopackage','table','column') "
+        "AND NEW.row_id_value IS NOT NULL; "
+        "SELECT RAISE(ABORT, 'insert on table gpkg_metadata_reference "
+        "violates constraint: row_id_value must exist in specified table when "
+        "reference_scope is \"row\" or \"row/col\"') "
+        "WHERE NEW.reference_scope IN ('row','row/col') "
+        "AND NOT EXISTS (SELECT rowid "
+        "FROM (SELECT NEW.table_name AS table_name) WHERE rowid = "
+        "NEW.row_id_value); "
+        "END; "
+        "CREATE TRIGGER 'gpkg_metadata_reference_row_id_value_update' "
+        "BEFORE UPDATE OF 'row_id_value' ON 'gpkg_metadata_reference' "
+        "FOR EACH ROW BEGIN "
+        "SELECT RAISE(ABORT, 'update on table gpkg_metadata_reference "
+        "violates constraint: row_id_value must be NULL when reference_scope "
+        "is \"geopackage\", \"table\" or \"column\"') "
+        "WHERE NEW.reference_scope IN ('geopackage','table','column') "
+        "AND NEW.row_id_value IS NOT NULL; "
+        "SELECT RAISE(ABORT, 'update on table gpkg_metadata_reference "
+        "violates constraint: row_id_value must exist in specified table when "
+        "reference_scope is \"row\" or \"row/col\"') "
+        "WHERE NEW.reference_scope IN ('row','row/col') "
+        "AND NOT EXISTS (SELECT rowid "
+        "FROM (SELECT NEW.table_name AS table_name) WHERE rowid = "
+        "NEW.row_id_value); "
+        "END; "
+        "CREATE TRIGGER 'gpkg_metadata_reference_timestamp_insert' "
+        "BEFORE INSERT ON 'gpkg_metadata_reference' "
+        "FOR EACH ROW BEGIN "
+        "SELECT RAISE(ABORT, 'insert on table gpkg_metadata_reference "
+        "violates constraint: timestamp must be a valid time in ISO 8601 "
+        "\"yyyy-mm-ddThh:mm:ss.cccZ\" form') "
+        "WHERE NOT (NEW.timestamp GLOB "
+        "'[1-2][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9]T[0-2][0-9]:[0-5][0-9]:[0-5][0-9].[0-9][0-9][0-9]Z' "
+        "AND strftime('%s',NEW.timestamp) NOT NULL); "
+        "END; "
+        "CREATE TRIGGER 'gpkg_metadata_reference_timestamp_update' "
+        "BEFORE UPDATE OF 'timestamp' ON 'gpkg_metadata_reference' "
+        "FOR EACH ROW BEGIN "
+        "SELECT RAISE(ABORT, 'update on table gpkg_metadata_reference "
+        "violates constraint: timestamp must be a valid time in ISO 8601 "
+        "\"yyyy-mm-ddThh:mm:ss.cccZ\" form') "
+        "WHERE NOT (NEW.timestamp GLOB "
+        "'[1-2][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9]T[0-2][0-9]:[0-5][0-9]:[0-5][0-9].[0-9][0-9][0-9]Z' "
+        "AND strftime('%s',NEW.timestamp) NOT NULL); "
+        "END";
+    if ( bCreateTriggers && OGRERR_NONE != SQLCommand(hDB, pszMetadataReferenceTriggers) )
+        return FALSE;
+
+    return TRUE;
+}
+
+/************************************************************************/
 /*                            FlushMetadata()                           */
 /************************************************************************/
 
 CPLErr GDALGeoPackageDataset::FlushMetadata()
 {
-    if( !m_bMetadataDirty || m_poParentDS != NULL )
+    if( !m_bMetadataDirty || m_poParentDS != NULL ||
+        !CSLTestBoolean(CPLGetConfigOption("CREATE_METADATA_TABLES", "YES")) )
         return CE_None;
+    if( !HasMetadataTables() && !CreateMetadataTables() )
+        return CE_Failure;
     m_bMetadataDirty = FALSE;
 
     if( m_osRasterTable.size() )
@@ -2205,6 +2402,8 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
 
     SQLCommand(hDB, "BEGIN");
 
+    int bCreateTriggers = CSLTestBoolean(CPLGetConfigOption("CREATE_TRIGGERS", "YES"));
+    int bCreateGeometryColumns = CSLTestBoolean(CPLGetConfigOption("CREATE_GEOMETRY_COLUMNS", "YES"));
     if( !bFileExists )
     {
         /* Requirement 2: A GeoPackage SHALL contain 0x47503130 ("GP10" in ASCII) in the application id */
@@ -2309,7 +2508,7 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
             "CONSTRAINT fk_gc_srs FOREIGN KEY (srs_id) REFERENCES gpkg_spatial_ref_sys (srs_id)"
             ")";
             
-        if ( OGRERR_NONE != SQLCommand(hDB, pszGeometryColumns) )
+        if ( bCreateGeometryColumns && OGRERR_NONE != SQLCommand(hDB, pszGeometryColumns) )
             return FALSE;
 
         /* From C.5. gpkg_tile_matrix_set Table 28. gpkg_tile_matrix_set Table Creation SQL  */
@@ -2408,183 +2607,12 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
         "SELECT RAISE(ABORT, 'update on table ''gpkg_tile_matrix'' violates constraint: pixel_y_size must be greater than 0') "
         "WHERE NOT (NEW.pixel_y_size > 0); "
         "END;";
-        if ( OGRERR_NONE != SQLCommand(hDB, pszTileMatrixTrigger) )
-            return FALSE;
-        
-        /* From C.10. gpkg_metadata Table 35. gpkg_metadata Table Definition SQL  */
-        const char* pszMetadata =
-            "CREATE TABLE gpkg_metadata ("
-            "id INTEGER CONSTRAINT m_pk PRIMARY KEY ASC NOT NULL UNIQUE,"
-            "md_scope TEXT NOT NULL DEFAULT 'dataset',"
-            "md_standard_uri TEXT NOT NULL,"
-            "mime_type TEXT NOT NULL DEFAULT 'text/xml',"
-            "metadata TEXT NOT NULL"
-            ")";
-            
-        if ( OGRERR_NONE != SQLCommand(hDB, pszMetadata) )
+        if ( bCreateTriggers && OGRERR_NONE != SQLCommand(hDB, pszTileMatrixTrigger) )
             return FALSE;
 
-        /* From D.2. metadata Table 40. metadata Trigger Definition SQL  */
-        const char* pszMetadataTriggers =
-        "CREATE TRIGGER 'gpkg_metadata_md_scope_insert' "
-        "BEFORE INSERT ON 'gpkg_metadata' "
-        "FOR EACH ROW BEGIN "
-        "SELECT RAISE(ABORT, 'insert on table gpkg_metadata violates "
-        "constraint: md_scope must be one of undefined | fieldSession | "
-        "collectionSession | series | dataset | featureType | feature | "
-        "attributeType | attribute | tile | model | catalogue | schema | "
-        "taxonomy software | service | collectionHardware | "
-        "nonGeographicDataset | dimensionGroup') "
-        "WHERE NOT(NEW.md_scope IN "
-        "('undefined','fieldSession','collectionSession','series','dataset', "
-        "'featureType','feature','attributeType','attribute','tile','model', "
-        "'catalogue','schema','taxonomy','software','service', "
-        "'collectionHardware','nonGeographicDataset','dimensionGroup')); "
-        "END; "
-        "CREATE TRIGGER 'gpkg_metadata_md_scope_update' "
-        "BEFORE UPDATE OF 'md_scope' ON 'gpkg_metadata' "
-        "FOR EACH ROW BEGIN "
-        "SELECT RAISE(ABORT, 'update on table gpkg_metadata violates "
-        "constraint: md_scope must be one of undefined | fieldSession | "
-        "collectionSession | series | dataset | featureType | feature | "
-        "attributeType | attribute | tile | model | catalogue | schema | "
-        "taxonomy software | service | collectionHardware | "
-        "nonGeographicDataset | dimensionGroup') "
-        "WHERE NOT(NEW.md_scope IN "
-        "('undefined','fieldSession','collectionSession','series','dataset', "
-        "'featureType','feature','attributeType','attribute','tile','model', "
-        "'catalogue','schema','taxonomy','software','service', "
-        "'collectionHardware','nonGeographicDataset','dimensionGroup')); "
-        "END";
-        if ( OGRERR_NONE != SQLCommand(hDB, pszMetadataTriggers) )
+        if( CSLTestBoolean(CPLGetConfigOption("CREATE_METADATA_TABLES", "YES")) &&
+            !CreateMetadataTables() )
             return FALSE;
-
-        /* From C.11. gpkg_metadata_reference Table 36. gpkg_metadata_reference Table Definition SQL */
-        const char* pszMetadataReference =
-            "CREATE TABLE gpkg_metadata_reference ("
-            "reference_scope TEXT NOT NULL,"
-            "table_name TEXT,"
-            "column_name TEXT,"
-            "row_id_value INTEGER,"
-            "timestamp DATETIME NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),"
-            "md_file_id INTEGER NOT NULL,"
-            "md_parent_id INTEGER,"
-            "CONSTRAINT crmr_mfi_fk FOREIGN KEY (md_file_id) REFERENCES gpkg_metadata(id),"
-            "CONSTRAINT crmr_mpi_fk FOREIGN KEY (md_parent_id) REFERENCES gpkg_metadata(id)"
-            ")";
-            
-        if ( OGRERR_NONE != SQLCommand(hDB, pszMetadataReference) )
-            return FALSE;
-
-        /* From D.3. metadata_reference Table 41. gpkg_metadata_reference Trigger Definition SQL   */
-        const char* pszMetadataReferenceTriggers =
-            "CREATE TRIGGER 'gpkg_metadata_reference_reference_scope_insert' "
-            "BEFORE INSERT ON 'gpkg_metadata_reference' "
-            "FOR EACH ROW BEGIN "
-            "SELECT RAISE(ABORT, 'insert on table gpkg_metadata_reference "
-            "violates constraint: reference_scope must be one of \"geopackage\", "
-            "table\", \"column\", \"row\", \"row/col\"') "
-            "WHERE NOT NEW.reference_scope IN "
-            "('geopackage','table','column','row','row/col'); "
-            "END; "
-            "CREATE TRIGGER 'gpkg_metadata_reference_reference_scope_update' "
-            "BEFORE UPDATE OF 'reference_scope' ON 'gpkg_metadata_reference' "
-            "FOR EACH ROW BEGIN "
-            "SELECT RAISE(ABORT, 'update on table gpkg_metadata_reference "
-            "violates constraint: referrence_scope must be one of \"geopackage\", "
-            "\"table\", \"column\", \"row\", \"row/col\"') "
-            "WHERE NOT NEW.reference_scope IN "
-            "('geopackage','table','column','row','row/col'); "
-            "END; "
-            "CREATE TRIGGER 'gpkg_metadata_reference_column_name_insert' "
-            "BEFORE INSERT ON 'gpkg_metadata_reference' "
-            "FOR EACH ROW BEGIN "
-            "SELECT RAISE(ABORT, 'insert on table gpkg_metadata_reference "
-            "violates constraint: column name must be NULL when reference_scope "
-            "is \"geopackage\", \"table\" or \"row\"') "
-            "WHERE (NEW.reference_scope IN ('geopackage','table','row') "
-            "AND NEW.column_name IS NOT NULL); "
-            "SELECT RAISE(ABORT, 'insert on table gpkg_metadata_reference "
-            "violates constraint: column name must be defined for the specified "
-            "table when reference_scope is \"column\" or \"row/col\"') "
-            "WHERE (NEW.reference_scope IN ('column','row/col') "
-            "AND NOT NEW.table_name IN ( "
-            "SELECT name FROM SQLITE_MASTER WHERE type = 'table' "
-            "AND name = NEW.table_name "
-            "AND sql LIKE ('%' || NEW.column_name || '%'))); "
-            "END; "
-            "CREATE TRIGGER 'gpkg_metadata_reference_column_name_update' "
-            "BEFORE UPDATE OF column_name ON 'gpkg_metadata_reference' "
-            "FOR EACH ROW BEGIN "
-            "SELECT RAISE(ABORT, 'update on table gpkg_metadata_reference "
-            "violates constraint: column name must be NULL when reference_scope "
-            "is \"geopackage\", \"table\" or \"row\"') "
-            "WHERE (NEW.reference_scope IN ('geopackage','table','row') "
-            "AND NEW.column_nameIS NOT NULL); "
-            "SELECT RAISE(ABORT, 'update on table gpkg_metadata_reference "
-            "violates constraint: column name must be defined for the specified "
-            "table when reference_scope is \"column\" or \"row/col\"') "
-            "WHERE (NEW.reference_scope IN ('column','row/col') "
-            "AND NOT NEW.table_name IN ( "
-            "SELECT name FROM SQLITE_MASTER WHERE type = 'table' "
-            "AND name = NEW.table_name "
-            "AND sql LIKE ('%' || NEW.column_name || '%'))); "
-            "END; "
-            "CREATE TRIGGER 'gpkg_metadata_reference_row_id_value_insert' "
-            "BEFORE INSERT ON 'gpkg_metadata_reference' "
-            "FOR EACH ROW BEGIN "
-            "SELECT RAISE(ABORT, 'insert on table gpkg_metadata_reference "
-            "violates constraint: row_id_value must be NULL when reference_scope "
-            "is \"geopackage\", \"table\" or \"column\"') "
-            "WHERE NEW.reference_scope IN ('geopackage','table','column') "
-            "AND NEW.row_id_value IS NOT NULL; "
-            "SELECT RAISE(ABORT, 'insert on table gpkg_metadata_reference "
-            "violates constraint: row_id_value must exist in specified table when "
-            "reference_scope is \"row\" or \"row/col\"') "
-            "WHERE NEW.reference_scope IN ('row','row/col') "
-            "AND NOT EXISTS (SELECT rowid "
-            "FROM (SELECT NEW.table_name AS table_name) WHERE rowid = "
-            "NEW.row_id_value); "
-            "END; "
-            "CREATE TRIGGER 'gpkg_metadata_reference_row_id_value_update' "
-            "BEFORE UPDATE OF 'row_id_value' ON 'gpkg_metadata_reference' "
-            "FOR EACH ROW BEGIN "
-            "SELECT RAISE(ABORT, 'update on table gpkg_metadata_reference "
-            "violates constraint: row_id_value must be NULL when reference_scope "
-            "is \"geopackage\", \"table\" or \"column\"') "
-            "WHERE NEW.reference_scope IN ('geopackage','table','column') "
-            "AND NEW.row_id_value IS NOT NULL; "
-            "SELECT RAISE(ABORT, 'update on table gpkg_metadata_reference "
-            "violates constraint: row_id_value must exist in specified table when "
-            "reference_scope is \"row\" or \"row/col\"') "
-            "WHERE NEW.reference_scope IN ('row','row/col') "
-            "AND NOT EXISTS (SELECT rowid "
-            "FROM (SELECT NEW.table_name AS table_name) WHERE rowid = "
-            "NEW.row_id_value); "
-            "END; "
-            "CREATE TRIGGER 'gpkg_metadata_reference_timestamp_insert' "
-            "BEFORE INSERT ON 'gpkg_metadata_reference' "
-            "FOR EACH ROW BEGIN "
-            "SELECT RAISE(ABORT, 'insert on table gpkg_metadata_reference "
-            "violates constraint: timestamp must be a valid time in ISO 8601 "
-            "\"yyyy-mm-ddThh:mm:ss.cccZ\" form') "
-            "WHERE NOT (NEW.timestamp GLOB "
-            "'[1-2][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9]T[0-2][0-9]:[0-5][0-9]:[0-5][0-9].[0-9][0-9][0-9]Z' "
-            "AND strftime('%s',NEW.timestamp) NOT NULL); "
-            "END; "
-            "CREATE TRIGGER 'gpkg_metadata_reference_timestamp_update' "
-            "BEFORE UPDATE OF 'timestamp' ON 'gpkg_metadata_reference' "
-            "FOR EACH ROW BEGIN "
-            "SELECT RAISE(ABORT, 'update on table gpkg_metadata_reference "
-            "violates constraint: timestamp must be a valid time in ISO 8601 "
-            "\"yyyy-mm-ddThh:mm:ss.cccZ\" form') "
-            "WHERE NOT (NEW.timestamp GLOB "
-            "'[1-2][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9]T[0-2][0-9]:[0-5][0-9]:[0-5][0-9].[0-9][0-9][0-9]Z' "
-            "AND strftime('%s',NEW.timestamp) NOT NULL); "
-            "END";
-        if ( OGRERR_NONE != SQLCommand(hDB, pszMetadataReferenceTriggers) )
-            return FALSE;
-
     }
     
     if( nBands != 0 )
@@ -2684,10 +2712,13 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
         m_osRasterTable.c_str(),
         m_osRasterTable.c_str()
         );
-        eErr = SQLCommand(hDB, pszSQLTriggers);
-        sqlite3_free(pszSQLTriggers);
-        if ( OGRERR_NONE != eErr )
-            return FALSE;
+        if( bCreateTriggers )
+        {
+            eErr = SQLCommand(hDB, pszSQLTriggers);
+            sqlite3_free(pszSQLTriggers);
+            if ( OGRERR_NONE != eErr )
+                return FALSE;
+        }
 
         nRasterXSize = nXSize;
         nRasterYSize = nYSize;
