@@ -42,27 +42,19 @@ CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                              HFAEntry()                              */
-/*                                                                      */
-/*      Construct an HFAEntry from the source file.                     */
 /************************************************************************/
 
-HFAEntry::HFAEntry( HFAInfo_t * psHFAIn, GUInt32 nPos,
-                    HFAEntry * poParentIn, HFAEntry * poPrevIn )
-
+HFAEntry::HFAEntry()
 {
-    psHFA = psHFAIn;
-    
-    nFilePos = nPos;
+    psHFA = NULL;
+
+    nFilePos = 0;
     bDirty = FALSE;
     bIsMIFObject = FALSE;
 
-    poParent = poParentIn;
-    poPrev = poPrevIn;
+    poParent = NULL;
+    poPrev = NULL;
 
-/* -------------------------------------------------------------------- */
-/*      Initialize fields to null values in case there is a read        */
-/*      error, so the entry will be in a harmless state.                */
-/* -------------------------------------------------------------------- */
     poNext = poChild = NULL;
 
     nDataPos = nDataSize = 0;
@@ -73,6 +65,24 @@ HFAEntry::HFAEntry( HFAInfo_t * psHFAIn, GUInt32 nPos,
     pabyData = NULL;
 
     poType = NULL;
+}
+
+/************************************************************************/
+/*                              HFAEntry()                              */
+/*                                                                      */
+/*      Construct an HFAEntry from the source file.                     */
+/************************************************************************/
+
+HFAEntry* HFAEntry::New( HFAInfo_t * psHFAIn, GUInt32 nPos,
+                         HFAEntry * poParentIn, HFAEntry * poPrevIn )
+
+{
+    HFAEntry* poEntry = new HFAEntry;
+    poEntry->psHFA = psHFAIn;
+    
+    poEntry->nFilePos = nPos;
+    poEntry->poParent = poParentIn;
+    poEntry->poPrev = poPrevIn;
 
 /* -------------------------------------------------------------------- */
 /*      Read the entry information from the file.                       */
@@ -80,37 +90,40 @@ HFAEntry::HFAEntry( HFAInfo_t * psHFAIn, GUInt32 nPos,
     GInt32	anEntryNums[6];
     int		i;
 
-    if( VSIFSeekL( psHFA->fp, nFilePos, SEEK_SET ) == -1
-        || VSIFReadL( anEntryNums, sizeof(GInt32), 6, psHFA->fp ) < 1 )
+    if( VSIFSeekL( poEntry->psHFA->fp, poEntry->nFilePos, SEEK_SET ) == -1
+        || VSIFReadL( anEntryNums, sizeof(GInt32), 6, poEntry->psHFA->fp ) < 1 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
                   "VSIFReadL(%p,6*4) @ %d failed in HFAEntry().\n%s",
-                  psHFA->fp, nFilePos, VSIStrerror( errno ) );
-        return;
+                  poEntry->psHFA->fp, poEntry->nFilePos, VSIStrerror( errno ) );
+        delete poEntry;
+        return NULL;
     }
 
     for( i = 0; i < 6; i++ )
         HFAStandard( 4, anEntryNums + i );
 
-    nNextPos = anEntryNums[0];
-    nChildPos = anEntryNums[3];
-    nDataPos = anEntryNums[4];
-    nDataSize = anEntryNums[5];
+    poEntry->nNextPos = anEntryNums[0];
+    poEntry->nChildPos = anEntryNums[3];
+    poEntry->nDataPos = anEntryNums[4];
+    poEntry->nDataSize = anEntryNums[5];
 
 /* -------------------------------------------------------------------- */
 /*      Read the name, and type.                                        */
 /* -------------------------------------------------------------------- */
-    if( VSIFReadL( szName, 1, 64, psHFA->fp ) < 1
-        || VSIFReadL( szType, 1, 32, psHFA->fp ) < 1 )
+    if( VSIFReadL( poEntry->szName, 1, 64, poEntry->psHFA->fp ) < 1
+        || VSIFReadL( poEntry->szType, 1, 32, poEntry->psHFA->fp ) < 1 )
     {
-        szName[sizeof(szName)-1] = '\0';
-        szType[sizeof(szType)-1] = '\0';
+        poEntry->szName[sizeof(poEntry->szName)-1] = '\0';
+        poEntry->szType[sizeof(poEntry->szType)-1] = '\0';
         CPLError( CE_Failure, CPLE_FileIO,
                   "VSIFReadL() failed in HFAEntry()." );
-        return;
+        delete poEntry;
+        return NULL;
     }
-    szName[sizeof(szName)-1] = '\0';
-    szType[sizeof(szType)-1] = '\0';
+    poEntry->szName[sizeof(poEntry->szName)-1] = '\0';
+    poEntry->szType[sizeof(poEntry->szType)-1] = '\0';
+    return poEntry;
 }
 
 /************************************************************************/
@@ -394,7 +407,9 @@ HFAEntry *HFAEntry::GetChild()
 /* -------------------------------------------------------------------- */
     if( poChild == NULL && nChildPos != 0 )
     {
-        poChild = new HFAEntry( psHFA, nChildPos, this, NULL );
+        poChild = HFAEntry::New( psHFA, nChildPos, this, NULL );
+        if( poChild == NULL )
+            nChildPos = 0;
     }
 
     return( poChild );
@@ -429,7 +444,9 @@ HFAEntry *HFAEntry::GetNext()
             return NULL;
         }
              
-        poNext = new HFAEntry( psHFA, nNextPos, poParent, this );
+        poNext = HFAEntry::New( psHFA, nNextPos, poParent, this );
+        if( poNext == NULL )
+            nNextPos = 0;
     }
 
     return( poNext );
@@ -583,22 +600,23 @@ void HFAEntry::DumpFieldValues( FILE * fp, const char * pszPrefix )
 
 std::vector<HFAEntry*> HFAEntry::FindChildren( const char *pszName,
                                                const char *pszType,
-                                               int nRecLevel )
+                                               int nRecLevel,
+                                               int* pbErrorDetected )
 
 {
     std::vector<HFAEntry*> apoChildren;
     HFAEntry *poEntry;
 
+    if( *pbErrorDetected )
+        return apoChildren;
     if( nRecLevel == 50 )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Bad entry structure: recursion detected !");
+        *pbErrorDetected = TRUE;
         return apoChildren;
     }
 
-    if( this == NULL )
-        return apoChildren;
-    
     for( poEntry = GetChild(); poEntry != NULL; poEntry = poEntry->GetNext() )
     {
         std::vector<HFAEntry*> apoEntryChildren;
@@ -608,13 +626,24 @@ std::vector<HFAEntry*> HFAEntry::FindChildren( const char *pszName,
             && (pszType == NULL || EQUAL(poEntry->GetType(),pszType)) )
             apoChildren.push_back( poEntry );
 
-        apoEntryChildren = poEntry->FindChildren( pszName, pszType, nRecLevel + 1 );
+        apoEntryChildren = poEntry->FindChildren( pszName, pszType, nRecLevel + 1,
+                                                  pbErrorDetected);
+        if( *pbErrorDetected )
+            return apoChildren;
 
         for( i = 0; i < apoEntryChildren.size(); i++ )
             apoChildren.push_back( apoEntryChildren[i] );
     }
 
     return apoChildren;
+}
+
+std::vector<HFAEntry*> HFAEntry::FindChildren( const char *pszName,
+                                               const char *pszType)
+
+{
+    int bErrorDetected = FALSE;
+    return FindChildren(pszName, pszType, 0, &bErrorDetected);
 }
 
 /************************************************************************/

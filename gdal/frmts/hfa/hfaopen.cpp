@@ -208,7 +208,12 @@ HFAHandle HFAOpen( const char * pszFilename, const char * pszAccess )
 /* -------------------------------------------------------------------- */
 /*      Instantiate the root entry.                                     */
 /* -------------------------------------------------------------------- */
-    psInfo->poRoot = new HFAEntry( psInfo, psInfo->nRootPos, NULL, NULL );
+    psInfo->poRoot = HFAEntry::New( psInfo, psInfo->nRootPos, NULL, NULL );
+    if( psInfo->poRoot == NULL )
+    {
+        CPLFree(psInfo);
+        return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Read the dictionary                                             */
@@ -2313,7 +2318,8 @@ HFAHandle HFACreate( const char * pszFilename,
     {
         nBlockSize = atoi( pszValue );
         // check for sane values
-        if ( ( nBlockSize < 32 ) || (nBlockSize > 2048) )
+        if ( (( nBlockSize < 32 ) || (nBlockSize > 2048))
+            && !CSLTestBoolean(CPLGetConfigOption("FORCE_BLOCKSIZE", "NO")) )
         {
             nBlockSize = 64;
         }

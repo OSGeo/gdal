@@ -360,20 +360,41 @@ CPLErr	HFABand::LoadBlockInfo()
 
     for( iBlock = 0; iBlock < nBlocks; iBlock++ )
     {
+        CPLErr  eErr = CE_None;
         char	szVarName[64];
         int	nLogvalid, nCompressType;
 
         sprintf( szVarName, "blockinfo[%d].offset", iBlock );
-        panBlockStart[iBlock] = (GUInt32)poDMS->GetIntField( szVarName );
+        panBlockStart[iBlock] = (GUInt32)poDMS->GetIntField( szVarName, &eErr);
+        if( eErr == CE_Failure )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Cannot read %s", szVarName);
+            return eErr;
+        }
         
         sprintf( szVarName, "blockinfo[%d].size", iBlock );
-        panBlockSize[iBlock] = poDMS->GetIntField( szVarName );
+        panBlockSize[iBlock] = poDMS->GetIntField( szVarName, &eErr );
+        if( eErr == CE_Failure )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Cannot read %s", szVarName);
+            return eErr;
+        }
         
         sprintf( szVarName, "blockinfo[%d].logvalid", iBlock );
-        nLogvalid = poDMS->GetIntField( szVarName );
+        nLogvalid = poDMS->GetIntField( szVarName, &eErr );
+        if( eErr == CE_Failure )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Cannot read %s", szVarName);
+            return eErr;
+        }
         
         sprintf( szVarName, "blockinfo[%d].compressionType", iBlock );
-        nCompressType = poDMS->GetIntField( szVarName );
+        nCompressType = poDMS->GetIntField( szVarName, &eErr );
+        if( eErr == CE_Failure )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Cannot read %s", szVarName);
+            return eErr;
+        }
 
         panBlockFlag[iBlock] = 0;
         if( nLogvalid )
