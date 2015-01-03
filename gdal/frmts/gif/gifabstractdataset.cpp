@@ -458,7 +458,8 @@ GIFAbstractRasterBand::GIFAbstractRasterBand(
     {
         unsigned char *pExtData;
 
-        if( psImage->ExtensionBlocks[iExtBlock].Function != 0xf9 )
+        if( psImage->ExtensionBlocks[iExtBlock].Function != 0xf9 ||
+            psImage->ExtensionBlocks[iExtBlock].ByteCount < 4 )
             continue;
 
         pExtData = (unsigned char *) psImage->ExtensionBlocks[iExtBlock].Bytes;
