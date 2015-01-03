@@ -8752,13 +8752,18 @@ void GTiffDataset::ScanDirectories()
 /* ==================================================================== */
 /*      Scan all directories.                                           */
 /* ==================================================================== */
-    char **papszSubdatasets = NULL;
+    CPLStringList aosSubdatasets;
     int  iDirIndex = 0;
 
     FlushDirectory();  
     while( !TIFFLastDirectory( hTIFF ) 
            && (iDirIndex == 0 || TIFFReadDirectory( hTIFF ) != 0) )
     {
+        /* Only libtiff 4.0.4 can handle between 32768 and 65535 directories */
+#if !defined(INTERNAL_LIBTIFF) && (!defined(TIFFLIB_VERSION) || (TIFFLIB_VERSION < 20120922))
+        if( iDirIndex == 32768 )
+            break;
+#endif
         toff_t	nThisDir = TIFFCurrentDirOffset(hTIFF);
         uint32	nSubType = 0;
 
@@ -8772,7 +8777,8 @@ void GTiffDataset::ScanDirectories()
         /* Embedded overview of the main image */
         if ((nSubType & FILETYPE_REDUCEDIMAGE) != 0 &&
             (nSubType & FILETYPE_MASK) == 0 &&
-            iDirIndex != 1 )
+            iDirIndex != 1 &&
+            nOverviewCount < 30 /* to avoid DoS */ )
         {
             GTiffDataset	*poODS;
                 
@@ -8885,10 +8891,8 @@ void GTiffDataset::ScanDirectories()
                            iDirIndex, iDirIndex, 
                            (int)nXSize, (int)nYSize, nSPP );
 
-            papszSubdatasets = 
-                CSLAddString( papszSubdatasets, osName );
-            papszSubdatasets = 
-                CSLAddString( papszSubdatasets, osDesc );
+            aosSubdatasets.AddString(osName);
+            aosSubdatasets.AddString(osDesc);
         }
 
         // Make sure we are stepping from the expected directory regardless
@@ -8921,12 +8925,10 @@ void GTiffDataset::ScanDirectories()
 /*      Only keep track of subdatasets if we have more than one         */
 /*      subdataset (pair).                                              */
 /* -------------------------------------------------------------------- */
-    if( CSLCount(papszSubdatasets) > 2 )
+    if( aosSubdatasets.size() > 2 )
     {
-        oGTiffMDMD.SetMetadata( papszSubdatasets, "SUBDATASETS" );
+        oGTiffMDMD.SetMetadata( aosSubdatasets.StealList(), "SUBDATASETS" );
     }
-    CSLDestroy( papszSubdatasets );
-    
 }
 
 
