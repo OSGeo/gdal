@@ -495,7 +495,9 @@ GIFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /*      Setup parameters.                                               */
 /* -------------------------------------------------------------------- */
     if (EGifPutScreenDesc(hGifFile, nXSize, nYSize, 
-                          psGifCT->ColorCount, 255, psGifCT) == GIF_ERROR)
+                          8, /* ColorRes */
+                          255, /* Background */
+                          psGifCT) == GIF_ERROR)
     {
         GifFreeMapObject(psGifCT);
         GDALPrintGifError(hGifFile, "Error writing gif file.");
