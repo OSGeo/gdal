@@ -45,6 +45,8 @@ CPL_C_END
 class GIFAbstractDataset : public GDALPamDataset
 {
   protected:
+    friend class    GIFAbstractRasterBand;
+
     VSILFILE        *fp;
 
     GifFileType *hGifFile;
@@ -79,6 +81,37 @@ class GIFAbstractDataset : public GDALPamDataset
     static GifFileType* myDGifOpen( void *userPtr, InputFunc readFunc );
     static int          myDGifCloseFile( GifFileType *hGifFile );
     static int          myEGifCloseFile( GifFileType *hGifFile );
+    static int          ReadFunc( GifFileType *psGFile, GifByteType *pabyBuffer, 
+                                  int nBytesToRead );
+};
+
+/************************************************************************/
+/* ==================================================================== */
+/*                        GIFAbstractRasterBand                         */
+/* ==================================================================== */
+/************************************************************************/
+
+class GIFAbstractRasterBand : public GDALPamRasterBand
+{
+  protected:
+    SavedImage  *psImage;
+
+    int         *panInterlaceMap;
+    
+    GDALColorTable *poColorTable;
+
+    int         nTransparentColor;
+
+  public:
+
+                   GIFAbstractRasterBand(GIFAbstractDataset *poDS, int nBand, 
+                                         SavedImage *psSavedImage, int nBackground,
+                                         int bAdvertizeInterlacedMDI );
+    virtual       ~GIFAbstractRasterBand();
+
+    virtual double GetNoDataValue( int *pbSuccess = NULL );
+    virtual GDALColorInterp GetColorInterpretation();
+    virtual GDALColorTable *GetColorTable();
 };
 
 
