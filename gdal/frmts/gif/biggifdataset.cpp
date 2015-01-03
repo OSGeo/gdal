@@ -478,6 +478,13 @@ GDALDataset *BIGGIFDataset::Open( GDALOpenInfo * poOpenInfo )
     
     poDS->nRasterXSize = poDS->hGifFile->SavedImages[0].ImageDesc.Width;
     poDS->nRasterYSize = poDS->hGifFile->SavedImages[0].ImageDesc.Height;
+    if( poDS->hGifFile->SavedImages[0].ImageDesc.ColorMap == NULL &&
+        poDS->hGifFile->SColorMap == NULL )
+    {
+        CPLDebug("GIF", "Skipping image without color table");
+        delete poDS;
+        return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
