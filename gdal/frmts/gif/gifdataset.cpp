@@ -457,9 +457,21 @@ GDALDataset *GIFDataset::Open( GDALOpenInfo * poOpenInfo )
             || psImage->ImageDesc.Height != poDS->nRasterYSize )
             continue;
 
+        if( psImage->ImageDesc.ColorMap == NULL &&
+            poDS->hGifFile->SColorMap == NULL )
+        {
+            CPLDebug("GIF", "Skipping image without color table");
+            continue;
+        }
+
         poDS->SetBand( poDS->nBands+1, 
                        new GIFRasterBand( poDS, poDS->nBands+1, psImage,
                                           hGifFile->SBackGroundColor ));
+    }
+    if( poDS->nBands == 0 )
+    {
+        delete poDS;
+        return NULL;
     }
 
 /* -------------------------------------------------------------------- */
