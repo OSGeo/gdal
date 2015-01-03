@@ -219,6 +219,16 @@ def gif_9():
     gdal.Unlink('/vsimem/tmp.gif')
 
     return 'success'
+    
+###############################################################################
+# Test interlacing
+
+def gif_10():
+
+    tst = gdaltest.GDALTest( 'GIF', 'byte.tif', 1, 4672,
+                             options = [ 'INTERLACING=YES' ] )
+
+    return tst.testCreateCopy( vsimem = 1 )
 
 ###############################################################################
 # Cleanup.
@@ -237,6 +247,7 @@ gdaltest_list = [
     gif_7,
     gif_8,
     gif_9,
+    gif_10,
     gif_cleanup ]
 
 if __name__ == '__main__':

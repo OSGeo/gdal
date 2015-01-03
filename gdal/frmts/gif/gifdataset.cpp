@@ -305,7 +305,10 @@ GDALDataset *GIFDataset::Open( GDALOpenInfo * poOpenInfo )
             CPLDebug("GIF", "Skipping image without color table");
             continue;
         }
-
+#if defined(GIFLIB_MAJOR) && GIFLIB_MAJOR >= 5
+        /* Since giflib 5, de-interlacing is done by DGifSlurp() */
+        psImage->ImageDesc.Interlace = 0;
+#endif
         poDS->SetBand( poDS->nBands+1, 
                        new GIFRasterBand( poDS, poDS->nBands+1, psImage,
                                           hGifFile->SBackGroundColor ));
