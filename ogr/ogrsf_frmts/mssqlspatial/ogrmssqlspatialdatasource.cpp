@@ -374,7 +374,7 @@ OGRLayer * OGRMSSQLSpatialDataSource::CreateLayer( const char * pszLayerName,
 
     if( eType == wkbNone ) 
     { 
-        oStmt.Appendf("CREATE TABLE [%s].[%s] ([ogr_fid] [int] IDENTITY(1,1) NOT NULL"
+        oStmt.Appendf("CREATE TABLE [%s].[%s] ([ogr_fid] [int] IDENTITY(1,1) NOT NULL, "
             "CONSTRAINT [PK_%s] PRIMARY KEY CLUSTERED ([ogr_fid] ASC))",
             pszSchemaName, pszTableName, pszTableName);
     }
