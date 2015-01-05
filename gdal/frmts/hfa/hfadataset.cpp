@@ -2897,7 +2897,7 @@ CPLErr HFARasterBand::BuildOverviews( const char *pszResampling,
         int i, iResult = -1, nReqOvLevel;
 
         nReqOvLevel = 
-            GDALOvLevelAdjust(panOverviewList[iOverview],nRasterXSize);
+            GDALOvLevelAdjust2(panOverviewList[iOverview],nRasterXSize,nRasterYSize);
 
         for( i = 0; i < nOverviews && papoOvBands[iOverview] == NULL; i++ )
         {
@@ -2909,8 +2909,10 @@ CPLErr HFARasterBand::BuildOverviews( const char *pszResampling,
                 continue;
             }
 
-            nThisOvLevel = (int) (0.5 + GetXSize() 
-                    / (double) papoOverviewBands[i]->GetXSize());
+            nThisOvLevel = GDALComputeOvFactor(papoOverviewBands[i]->GetXSize(),
+                                               GetXSize(),
+                                               papoOverviewBands[i]->GetYSize(),
+                                               GetYSize());
 
             if( nReqOvLevel == nThisOvLevel )
                 papoOvBands[iOverview] = papoOverviewBands[i];

@@ -1073,7 +1073,10 @@ int CPL_DLL GDALBandGetBestOverviewLevel(GDALRasterBand* poBand,
                                          int &nXSize, int &nYSize,
                                          int nBufXSize, int nBufYSize);
 
-int CPL_DLL GDALOvLevelAdjust( int nOvLevel, int nXSize );
+int CPL_DLL GDALOvLevelAdjust( int nOvLevel, int nXSize ) CPL_WARN_DEPRECATED("Use GDALOvLevelAdjust2 instead");
+int CPL_DLL GDALOvLevelAdjust2( int nOvLevel, int nXSize, int nYSize );
+int CPL_DLL GDALComputeOvFactor( int nOvrXSize, int nRasterXSize,
+                                 int nOvrYSize, int nRasterYSize );
 
 GDALDataset CPL_DLL *
 GDALFindAssociatedAuxFile( const char *pszBasefile, GDALAccess eAccess,

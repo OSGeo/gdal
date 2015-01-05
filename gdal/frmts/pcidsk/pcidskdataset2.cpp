@@ -1492,12 +1492,15 @@ CPLErr PCIDSK2Dataset::IBuildOverviews( const char *pszResampling,
             int    nOvFactor;
             GDALRasterBand * poOverview = poBand->GetOverview( j );
  
-            nOvFactor = (int) 
-                (0.5 + poBand->GetXSize() / (double) poOverview->GetXSize());
+            nOvFactor = GDALComputeOvFactor(poOverview->GetXSize(),
+                                            poBand->GetXSize(),
+                                            poOverview->GetYSize(),
+                                            poBand->GetYSize());
 
             if( nOvFactor == panOverviewList[i] 
-                || nOvFactor == GDALOvLevelAdjust( panOverviewList[i], 
-                                                   poBand->GetXSize() ) )
+                || nOvFactor == GDALOvLevelAdjust2( panOverviewList[i], 
+                                                    poBand->GetXSize(), 
+                                                    poBand->GetYSize() ) )
                 panOverviewList[i] *= -1;
         }
 
@@ -1562,12 +1565,15 @@ CPLErr PCIDSK2Dataset::IBuildOverviews( const char *pszResampling,
                 int    nOvFactor;
                 GDALRasterBand * poOverview = poBand->GetOverview( j );
 
-                nOvFactor = (int) 
-                    (0.5 + poBand->GetXSize() / (double) poOverview->GetXSize());
+                nOvFactor = GDALComputeOvFactor(poOverview->GetXSize(),
+                                            poBand->GetXSize(),
+                                            poOverview->GetYSize(),
+                                            poBand->GetYSize());
 
                 if( nOvFactor == panOverviewList[i] 
-                    || nOvFactor == GDALOvLevelAdjust( panOverviewList[i], 
-                                                       poBand->GetXSize() ) )
+                    || nOvFactor == GDALOvLevelAdjust2( panOverviewList[i], 
+                                                       poBand->GetXSize(), 
+                                                       poBand->GetYSize() ) )
                 {
                     papoOverviewBands[nNewOverviews++] = poOverview;
                     anRegenLevels.push_back( j );

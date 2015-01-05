@@ -2008,6 +2008,22 @@ def tiff_ovr_49():
     return 'success'
 
 ###############################################################################
+# Test overviews when X dimension is smaller than Y (#5794)
+
+def tiff_ovr_50():
+    
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tiff_ovr_50.tif', 6, 8192, 3,
+                                              options=['COMPRESS=DEFLATE'])
+    ds.GetRasterBand(1).Fill(255)
+    # We just check that it doesn't crash
+    ds.BuildOverviews( 'AVERAGE', overviewlist = [2,4,8,16,32] )
+    ds.BuildOverviews( 'AVERAGE', overviewlist = [2,4,8,16,32] )
+    ds = None
+    gdal.GetDriverByName('GTiff').Delete('/vsimem/tiff_ovr_50.tif')
+    
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def tiff_ovr_cleanup():
@@ -2101,6 +2117,7 @@ gdaltest_list_internal = [
     tiff_ovr_47,
     tiff_ovr_48,
     tiff_ovr_49,
+    tiff_ovr_50,
     tiff_ovr_cleanup ]
 
 def tiff_ovr_invert_endianness():
