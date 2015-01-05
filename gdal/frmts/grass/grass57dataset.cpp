@@ -92,6 +92,7 @@ CPL_C_END
 #define G_get_d_raster_row       Rast_get_d_row
 #define G_allocate_f_raster_buf  Rast_allocate_f_buf
 #define G_allocate_d_raster_buf  Rast_allocate_d_buf
+#define G__setenv                G_setenv_nogisrc
 #endif
 
 /************************************************************************/
@@ -440,9 +441,9 @@ CPLErr GRASSRasterBand::ResetReading ( struct Cell_head *sNewWindow )
 	G_set_window( sNewWindow );
 
 	/* Open raster */
-	G_setenv_nogisrc( "GISDBASE", ((GRASSDataset *)poDS)->pszGisdbase );
-	G_setenv_nogisrc( "LOCATION_NAME", ((GRASSDataset *)poDS)->pszLocation );
-	G_setenv_nogisrc( "MAPSET", pszMapset); 
+	G__setenv( "GISDBASE", ((GRASSDataset *)poDS)->pszGisdbase );
+	G__setenv( "LOCATION_NAME", ((GRASSDataset *)poDS)->pszLocation );
+	G__setenv( "MAPSET", pszMapset); 
 	G_reset_mapsets();
 	G_add_mapset_to_search_path ( pszMapset );
 	
@@ -901,9 +902,9 @@ GDALDataset *GRASSDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Set GRASS variables                                             */
 /* -------------------------------------------------------------------- */
 
-    G_setenv_nogisrc( "GISDBASE", pszGisdb );
-    G_setenv_nogisrc( "LOCATION_NAME", pszLoc );
-    G_setenv_nogisrc( "MAPSET", pszMapset); // group is searched only in current mapset 
+    G__setenv( "GISDBASE", pszGisdb );
+    G__setenv( "LOCATION_NAME", pszLoc );
+    G__setenv( "MAPSET", pszMapset); // group is searched only in current mapset 
     G_reset_mapsets();
     G_add_mapset_to_search_path ( pszMapset );
 
