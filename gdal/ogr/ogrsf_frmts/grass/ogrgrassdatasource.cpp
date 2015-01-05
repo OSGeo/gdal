@@ -180,9 +180,9 @@ int OGRGRASSDataSource::Open( const char * pszNewName, int bUpdate,
 /* -------------------------------------------------------------------- */
 /*      Set GRASS variables                                             */
 /* -------------------------------------------------------------------- */
-     G__setenv( "GISDBASE", pszGisdbase );
-     G__setenv( "LOCATION_NAME", pszLocation );
-     G__setenv( "MAPSET", pszMapset); 
+     G_setenv_nogisrc( "GISDBASE", pszGisdbase );
+     G_setenv_nogisrc( "LOCATION_NAME", pszLocation );
+     G_setenv_nogisrc( "MAPSET", pszMapset); 
      G_reset_mapsets();
      G_add_mapset_to_search_path ( pszMapset );
 
