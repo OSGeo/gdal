@@ -105,8 +105,23 @@ int OGRGRASSDriver::TestCapability( const char * pszCap )
 /************************************************************************/
 void RegisterOGRGRASS()
 {
+    OGRGRASSDriver	*poDriver;
+
     if (! GDAL_CHECK_VERSION("OGR/GRASS driver"))
         return;
-    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new OGRGRASSDriver );
+
+    if( GDALGetDriverByName( "OGR_GRASS" ) == NULL )
+    {
+        poDriver = new OGRGRASSDriver();
+        
+        poDriver->SetDescription( "GRASS" );
+        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
+                                   "GRASS Vectors (5.7+)" );
+        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
+                                   "drv_grass.html" );
+
+        OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( poDriver );
+    }
 }
 
