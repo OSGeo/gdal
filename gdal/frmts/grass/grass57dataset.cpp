@@ -1049,7 +1049,7 @@ void GDALRegister_GRASS()
         poDriver->SetDescription( "GRASS" );
         poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "GRASS Database Rasters (5.7+)" );
+                                   "GRASS Rasters (5.7+)" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
                                    "frmt_grass.html" );
         
