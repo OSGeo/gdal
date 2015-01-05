@@ -92,6 +92,7 @@ CPL_C_END
 #define G_get_d_raster_row       Rast_get_d_row
 #define G_allocate_f_raster_buf  Rast_allocate_f_buf
 #define G_allocate_d_raster_buf  Rast_allocate_d_buf
+#define G__setenv                G_setenv_nogisrc
 #endif
 
 /************************************************************************/
