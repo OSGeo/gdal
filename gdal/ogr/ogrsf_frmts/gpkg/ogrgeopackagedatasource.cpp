@@ -1449,15 +1449,6 @@ CPLErr GDALGeoPackageDataset::FlushCacheWithErrCode()
 /*                          IBuildOverviews()                           */
 /************************************************************************/
 
-/* See TIFF_OvLevelAdjust */
-static int GPKG_OvLevelAdjust( int nOvLevel, int nXSize )
-
-{
-    int nOXSize = (nXSize + nOvLevel - 1) / nOvLevel;
-    
-    return (int) (0.5 + nXSize / (double) nOXSize);
-}
-
 static int GetFloorPowerOfTwo(int n)
 {
     int p2 = 1;
@@ -1544,8 +1535,9 @@ CPLErr GDALGeoPackageDataset::IBuildOverviews(
             nMaxOvFactor = nOvFactor;
 
             if( nOvFactor == panOverviewList[i] 
-                || nOvFactor == GPKG_OvLevelAdjust( panOverviewList[i],
-                                                    GetRasterXSize() ) )
+                || nOvFactor == GDALOvLevelAdjust2( panOverviewList[i],
+                                                    GetRasterXSize(),
+                                                    GetRasterYSize() ) )
             {
                 bFound = TRUE;
                 break;
@@ -1711,12 +1703,15 @@ CPLErr GDALGeoPackageDataset::IBuildOverviews(
                 int    nOvFactor;
                 GDALDataset* poODS = m_papoOverviewDS[j];
 
-                nOvFactor = (int) 
-                    (0.5 + GetRasterXSize() / (double) poODS->GetRasterXSize());
+                nOvFactor = GDALComputeOvFactor(poODS->GetRasterXSize(),
+                                                GetRasterXSize(),
+                                                poODS->GetRasterYSize(),
+                                                GetRasterYSize());
 
                 if( nOvFactor == panOverviewList[i] 
-                    || nOvFactor == GPKG_OvLevelAdjust( panOverviewList[i],
-                                                        GetRasterXSize() ) )
+                    || nOvFactor == GDALOvLevelAdjust2( panOverviewList[i],
+                                                        GetRasterXSize(),
+                                                        GetRasterYSize() ) )
                 {
                     papapoOverviewBands[iBand][iCurOverview] = poODS->GetRasterBand(iBand+1);
                     iCurOverview++ ;

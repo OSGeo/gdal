@@ -396,6 +396,49 @@ int GDALOvLevelAdjust( int nOvLevel, int nXSize )
     return (int) (0.5 + nXSize / (double) nOXSize);
 }
 
+
+int GDALOvLevelAdjust2( int nOvLevel, int nXSize, int nYSize )
+
+{
+    /* Select the larger dimension to have increased accuracy, but */
+    /* with a slight preference to x even if (a bit) smaller than y */
+    /* in an attempt to behave closer as previous behaviour */
+    if( nXSize >= nYSize / 2 && !(nXSize < nYSize && nXSize < nOvLevel) )
+    {
+        int     nOXSize = (nXSize + nOvLevel - 1) / nOvLevel;
+    
+        return (int) (0.5 + nXSize / (double) nOXSize);
+    }
+    else
+    {
+        int     nOYSize = (nYSize + nOvLevel - 1) / nOvLevel;
+    
+        return (int) (0.5 + nYSize / (double) nOYSize);
+    }
+}
+
+/************************************************************************/
+/*                         GDALComputeOvFactor()                        */
+/************************************************************************/
+
+int GDALComputeOvFactor( int nOvrXSize, int nRasterXSize,
+                         int nOvrYSize, int nRasterYSize )
+{
+    /* Select the larger dimension to have increased accuracy, but */
+    /* with a slight preference to x even if (a bit) smaller than y */
+    /* in an attempt to behave closer as previous behaviour */
+    if( nRasterXSize >= nRasterYSize / 2 )
+    {
+        return (int) 
+                (0.5 + nRasterXSize / (double) nOvrXSize);
+    }
+    else
+    {
+        return (int) 
+                (0.5 + nRasterYSize / (double) nOvrYSize);
+    }
+}
+
 /************************************************************************/
 /*                           CleanOverviews()                           */
 /*                                                                      */
@@ -588,12 +631,15 @@ GDALDefaultOverviews::BuildOverviews(
             if (poOverview == NULL)
                 continue;
  
-            nOvFactor = (int) 
-                (0.5 + poBand->GetXSize() / (double) poOverview->GetXSize());
+            nOvFactor = GDALComputeOvFactor(poOverview->GetXSize(),
+                                             poBand->GetXSize(),
+                                             poOverview->GetYSize(),
+                                             poBand->GetYSize());
 
             if( nOvFactor == panOverviewList[i] 
-                || nOvFactor == GDALOvLevelAdjust( panOverviewList[i], 
-                                                   poBand->GetXSize() ) )
+                || nOvFactor == GDALOvLevelAdjust2( panOverviewList[i], 
+                                                   poBand->GetXSize(), 
+                                                   poBand->GetYSize() ) )
                 panOverviewList[i] *= -1;
         }
 
@@ -713,13 +759,16 @@ GDALDefaultOverviews::BuildOverviews(
                 if (bHasNoData)
                   poOverview->SetNoDataValue(noDataValue);
 
-                nOvFactor = (int) 
-                    (0.5 + poBand->GetXSize() / (double) poOverview->GetXSize());
+                nOvFactor = GDALComputeOvFactor(poOverview->GetXSize(),
+                                                 poBand->GetXSize(),
+                                                 poOverview->GetYSize(),
+                                                 poBand->GetYSize());
 
                 if( nOvFactor == - panOverviewList[i] 
                     || (panOverviewList[i] < 0 &&
-                        nOvFactor == GDALOvLevelAdjust( -panOverviewList[i],
-                                                       poBand->GetXSize() )) )
+                        nOvFactor == GDALOvLevelAdjust2( -panOverviewList[i],
+                                                       poBand->GetXSize(),
+                                                       poBand->GetYSize() )) )
                 {
                     papoOverviewBands[nNewOverviews++] = poOverview;
                     break;

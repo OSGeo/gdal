@@ -859,13 +859,16 @@ VRTWarpedDataset::IBuildOverviews( CPL_UNUSED const char *pszResampling,
         {
             int    nOvFactor;
             GDALDataset *poOverview = papoOverviews[j];
-            
-            nOvFactor = (int) 
-                (0.5+GetRasterXSize() / (double) poOverview->GetRasterXSize());
+
+            nOvFactor = GDALComputeOvFactor(poOverview->GetRasterXSize(),
+                                            GetRasterXSize(),
+                                            poOverview->GetRasterYSize(),
+                                            GetRasterYSize());
 
             if( nOvFactor == panOverviewList[i] 
-                || nOvFactor == GDALOvLevelAdjust( panOverviewList[i], 
-                                                   GetRasterXSize() ) )
+                || nOvFactor == GDALOvLevelAdjust2( panOverviewList[i], 
+                                                   GetRasterXSize(), 
+                                                   GetRasterYSize() ) )
                 panOverviewList[i] *= -1;
         }
 

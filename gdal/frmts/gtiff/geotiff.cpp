@@ -5135,32 +5135,6 @@ void GTiffDataset::FlushDirectory()
 }
 
 /************************************************************************/
-/*                         TIFF_OvLevelAdjust()                         */
-/*                                                                      */
-/*      Some overview levels cannot be achieved closely enough to be    */
-/*      recognised as the desired overview level.  This function        */
-/*      will adjust an overview level to one that is achievable on      */
-/*      the given raster size.                                          */
-/*                                                                      */
-/*      For instance a 1200x1200 image on which a 256 level overview    */
-/*      is request will end up generating a 5x5 overview.  However,     */
-/*      this will appear to the system be a level 240 overview.         */
-/*      This function will adjust 256 to 240 based on knowledge of      */
-/*      the image size.                                                 */
-/*                                                                      */
-/*      This is a copy of the GDALOvLevelAdjust() function in           */
-/*      gdaldefaultoverviews.cpp.                                       */
-/************************************************************************/
-
-static int TIFF_OvLevelAdjust( int nOvLevel, int nXSize )
-
-{
-    int	nOXSize = (nXSize + nOvLevel - 1) / nOvLevel;
-    
-    return (int) (0.5 + nXSize / (double) nOXSize);
-}
-
-/************************************************************************/
 /*                           CleanOverviews()                           */
 /************************************************************************/
 
@@ -5744,12 +5718,15 @@ CPLErr GTiffDataset::IBuildOverviews(
 
             poODS = papoOverviewDS[j];
 
-            nOvFactor = (int) 
-                (0.5 + GetRasterXSize() / (double) poODS->GetRasterXSize());
+            nOvFactor = GDALComputeOvFactor(poODS->GetRasterXSize(),
+                                             GetRasterXSize(),
+                                             poODS->GetRasterYSize(),
+                                             GetRasterYSize());
 
             if( nOvFactor == panOverviewList[i] 
-                || nOvFactor == TIFF_OvLevelAdjust( panOverviewList[i],
-                                                    GetRasterXSize() ) )
+                || nOvFactor == GDALOvLevelAdjust2( panOverviewList[i],
+                                                    GetRasterXSize(),
+                                                    GetRasterYSize() ) )
                 panOverviewList[i] *= -1;
         }
 
@@ -5865,8 +5842,10 @@ CPLErr GTiffDataset::IBuildOverviews(
                     int    nOvFactor;
                     GDALRasterBand * poOverview = poBand->GetOverview( j );
 
-                    nOvFactor = (int) 
-                    (0.5 + poBand->GetXSize() / (double) poOverview->GetXSize());
+                    nOvFactor = GDALComputeOvFactor(poOverview->GetXSize(),
+                                                     poBand->GetXSize(),
+                                                     poOverview->GetYSize(),
+                                                     poBand->GetYSize());
 
                     int bHasNoData;
                     double noDataValue = poBand->GetNoDataValue(&bHasNoData);
@@ -5875,8 +5854,9 @@ CPLErr GTiffDataset::IBuildOverviews(
                         poOverview->SetNoDataValue(noDataValue);
 
                     if( nOvFactor == panOverviewList[i] 
-                        || nOvFactor == TIFF_OvLevelAdjust( panOverviewList[i],
-                                                            poBand->GetXSize() ) )
+                        || nOvFactor == GDALOvLevelAdjust2( panOverviewList[i],
+                                                            poBand->GetXSize(),
+                                                            poBand->GetYSize() ) )
                     {
                         papapoOverviewBands[iBand][iCurOverview] = poOverview;
                         iCurOverview++ ;
@@ -5935,12 +5915,15 @@ CPLErr GTiffDataset::IBuildOverviews(
                     if (bHasNoData)
                         poOverview->SetNoDataValue(noDataValue);
 
-                    nOvFactor = (int) 
-                    (0.5 + poBand->GetXSize() / (double) poOverview->GetXSize());
+                    nOvFactor = GDALComputeOvFactor(poOverview->GetXSize(),
+                                                     poBand->GetXSize(),
+                                                     poOverview->GetYSize(),
+                                                     poBand->GetYSize());
 
                     if( nOvFactor == panOverviewList[i] 
-                        || nOvFactor == TIFF_OvLevelAdjust( panOverviewList[i],
-                                                            poBand->GetXSize() ) )
+                        || nOvFactor == GDALOvLevelAdjust2( panOverviewList[i],
+                                                            poBand->GetXSize(),
+                                                            poBand->GetYSize() ) )
                     {
                         papoOverviewBands[nNewOverviews++] = poOverview;
                         break;
