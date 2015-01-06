@@ -111,7 +111,7 @@ ds[0:4] would return a list of the first four layers."""
 }
 
 %extend OGRLayerShadow {
-  %pythoncode {
+  %pythoncode %{
     def Reference(self):
       "For backwards compatibility only."
       pass
@@ -183,12 +183,12 @@ layer[0:4] would return a list of the first four features."""
         return output
     schema = property(schema)
 
-  }
+  %}
 
 }
 
 %extend OGRFeatureShadow {
-  %pythoncode {
+  %pythoncode %{
     def Reference(self):
       pass
 
@@ -383,12 +383,12 @@ layer[0:4] would return a list of the first four features."""
         return output
 
 
-}
+%}
 
 }
 
 %extend OGRGeometryShadow {
-%pythoncode {
+%pythoncode %{
   def Destroy(self):
     self.__swig_destroy__(self) 
     self.__del__()
@@ -416,7 +416,7 @@ layer[0:4] would return a list of the first four features."""
           return subgeom
       else:
           raise StopIteration
-}
+%}
 }
 
 
@@ -449,12 +449,12 @@ layer[0:4] would return a list of the first four features."""
 }
 
 %extend OGRFieldDefnShadow {
-%pythoncode {
+%pythoncode %{
   def Destroy(self):
     "Once called, self has effectively been destroyed.  Do not access. For backwards compatiblity only"
     _ogr.delete_FieldDefn( self )
     self.thisown = 0
-}
+%}
 }
 
 %import typemaps_python.i
