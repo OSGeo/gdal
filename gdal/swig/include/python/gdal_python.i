@@ -150,7 +150,7 @@ int wrapper_VSIFReadL( void **buf, int nMembSize, int nMembCount, VSILFILE *fp)
 /* -------------------------------------------------------------------- */
 
 %extend GDAL_GCP {
-%pythoncode {
+%pythoncode %{
   def __str__(self):
     str = '%s (%.2fP,%.2fL) -> (%.7fE,%.7fN,%.2f) %s '\
           % (self.Id, self.GCPPixel, self.GCPLine,
@@ -172,7 +172,7 @@ int wrapper_VSIFReadL( void **buf, int nMembSize, int nMembCount, VSILFILE *fp)
     if with_Z:
         base.append([CXT_Attribute,'Z',[CXT_Text,zval]])        
     return base
-} /* pythoncode */
+%} /* pythoncode */
 }
 
 %extend GDALRasterBandShadow {
@@ -291,7 +291,7 @@ int wrapper_VSIFReadL( void **buf, int nMembSize, int nMembCount, VSILFILE *fp)
 %clear (void **buf );
 
 
-%pythoncode {
+%pythoncode %{
 
   def ReadRaster(self, xoff = 0, yoff = 0, xsize = None, ysize = None,
                    buf_xsize = None, buf_ysize = None, buf_type = None,
@@ -401,7 +401,7 @@ int wrapper_VSIFReadL( void **buf, int nMembSize, int nMembCount, VSILFILE *fp)
   def __get_array_interface__(self):
       shape = [1, self.XSize, self.YSize]
       
-}
+%}
 }
 
 %extend GDALDatasetShadow {
@@ -507,7 +507,7 @@ CPLErr ReadRaster1(  int xoff, int yoff, int xsize, int ysize,
 %clear (int*);
 %clear (GIntBig*);
 
-%pythoncode {
+%pythoncode %{
 
     def ReadAsArray(self, xoff=0, yoff=0, xsize=None, ysize=None, buf_obj=None,
                     resample_alg = GRIORA_NearestNeighbour,
@@ -691,20 +691,20 @@ CPLErr ReadRaster1(  int xoff, int yoff, int xsize, int ysize,
             return _gdal.Dataset_DeleteLayer(self, value)
         else:
             raise TypeError("Input %s is not of String or Int type" % type(value))
-}
+%}
 }
 
 %extend GDALMajorObjectShadow {
-%pythoncode {
+%pythoncode %{
   def GetMetadata( self, domain = '' ):
     if domain[:4] == 'xml:':
       return self.GetMetadata_List( domain )
     return self.GetMetadata_Dict( domain )
-}
+%}
 }
 
 %extend GDALRasterAttributeTableShadow {
-%pythoncode {
+%pythoncode %{
   def WriteArray(self, array, field, start=0):
       import gdalnumeric
 
@@ -714,7 +714,7 @@ CPLErr ReadRaster1(  int xoff, int yoff, int xsize, int ysize,
       import gdalnumeric
 
       return gdalnumeric.RATReadArray(self, field, start, length)
-}
+%}
 }
 
 %include "callback.i"
