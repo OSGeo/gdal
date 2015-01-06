@@ -488,7 +488,7 @@ layer[0:4] would return a list of the first four features."""
 }
 
 %extend OGRFieldDefnShadow {
-%pythoncode {
+%pythoncode %{
   def Destroy(self):
     "Once called, self has effectively been destroyed.  Do not access. For backwards compatiblity only"
     _ogr.delete_FieldDefn( self )
