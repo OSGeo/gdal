@@ -2123,12 +2123,12 @@ class Layer(gdal.MajorObject):
         """Returns the number of features in the layer"""
         return self.GetFeatureCount()
 
-
-
+    # To avoid __len__ being called when testing boolean value
+    # which can have side effects (#4758)
     def __nonzero__(self):
         return True
 
-
+    # For Python 3 compat
     __bool__ = __nonzero__
 
     def __getitem__(self, value):
@@ -2139,9 +2139,9 @@ class Layer(gdal.MajorObject):
             import sys
             output = []
             if value.stop == sys.maxint:
-                
-                
-                
+                #for an unending slice, sys.maxint is used
+                #We need to stop before that or GDAL will write an
+                ##error to stdout
                 stop = len(self) - 1
             else:
                 stop = value.stop
@@ -3098,8 +3098,8 @@ class Feature(_object):
     def __copy__(self):
         return self.Clone()
 
-
-
+    # This makes it possible to fetch fields in the form "feature.area". 
+    # This has some risk of name collisions.
     def __getattr__(self, key):
         """Returns the values of fields by the given name"""
         if key == 'this':
@@ -3115,8 +3115,8 @@ class Feature(_object):
         else:
             return self.GetField(idx)
 
-
-
+    # This makes it possible to set fields in the form "feature.area". 
+    # This has some risk of name collisions.
     def __setattr__(self, key, value):
         """Set the values of fields by the given name"""
         if key == 'this' or key == 'thisown':
@@ -3132,7 +3132,7 @@ class Feature(_object):
                 else:
                     self.__dict__[key] = value
 
-
+    # This makes it possible to fetch fields in the form "feature['area']". 
     def __getitem__(self, key):
         """Returns the values of fields by the given name / field_index"""
         if isinstance(key, str):
@@ -3147,7 +3147,7 @@ class Feature(_object):
         else:
             return self.GetField(fld_index)
 
-
+    # This makes it possible to set fields in the form "feature['area'] = 123". 
     def __setitem__(self, key, value):
         """Returns the value of a field by field name / index"""
         if isinstance(key, str):
@@ -3180,13 +3180,13 @@ class Feature(_object):
             return self.GetFieldAsIntegerList(fld_index)
         if fld_type == OFTRealList:
             return self.GetFieldAsDoubleList(fld_index)
-        
-        
-        
+        ## if fld_type == OFTDateTime or fld_type == OFTDate or fld_type == OFTTime:
+        #     return self.GetFieldAsDate(fld_index)
+        # default to returning as a string.  Should we add more types?
         return self.GetFieldAsString(fld_index)
 
-
-
+    # With several override, SWIG cannot dispatch automatically unicode strings
+    # to the right implementation, so we have to do it at hand
     def SetField(self, *args):
         """
         SetField(self, int id, char value)
