@@ -259,7 +259,7 @@ int VFKDataBlockSQLite::LoadGeometryLineStringSBP()
             if (ipcb == 1) {
                 poFeature = (VFKFeatureSQLite *) GetFeatureByIndex(iFID - 1);
                 CPLAssert(NULL != poFeature);
-                poFeature->SetFID(iFID);
+                poFeature->SetRowId(rowId);
                 
                 /* set geometry & reset */
                 if (poLine && !SetGeometryLineString(poLine, &oOGRLine,

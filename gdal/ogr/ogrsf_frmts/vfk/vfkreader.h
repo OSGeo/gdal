@@ -181,6 +181,7 @@ public:
     VFKFeatureSQLite(const VFKFeature *);
 
     OGRErr               LoadProperties(OGRFeature *);
+    void                 SetRowId(int);
 };
 
 /************************************************************************/
