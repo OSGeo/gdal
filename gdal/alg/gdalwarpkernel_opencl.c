@@ -593,7 +593,7 @@ cl_kernel get_kernel(struct oclWarper *warper, char useVec,
         "if (dstPtr[iDstOffset] == dstMinVal)\n"
             "dstPtr[iDstOffset] = dstMinVal + 1;\n"
         "else\n"
-            "dstPtr[iDstOffset] --;\n"
+            "dstPtr[iDstOffset] = dstPtr[iDstOffset] - 1;\n"
     "}\n"
 "}\n"
 "#endif\n"
