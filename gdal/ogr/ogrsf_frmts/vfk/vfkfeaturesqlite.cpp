@@ -85,6 +85,16 @@ OGRErr VFKFeatureSQLite::SetFIDFromDB()
 }
 
 /*!
+  \brief Set DB row id
+
+  \param iRowId row id to be set
+*/
+void VFKFeatureSQLite::SetRowId(int iRowId)
+{
+    m_iRowId = iRowId;
+}
+
+/*!
   \brief Finalize SQL statement
 */
 void VFKFeatureSQLite::FinalizeSQL()

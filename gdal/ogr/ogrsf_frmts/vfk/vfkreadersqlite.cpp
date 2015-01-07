@@ -639,7 +639,7 @@ OGRErr VFKReaderSQLite::AddFeature(IVFKDataBlock *poDataBlock, VFKFeature *poFea
             return OGRERR_NONE;
     }
         
-    poNewFeature = new VFKFeatureSQLite(poDataBlock, poDataBlock->GetFeatureCount() + 1,
+    poNewFeature = new VFKFeatureSQLite(poDataBlock, poDataBlock->GetRecordCount(RecordValid) + 1,
                                         poFeature->GetFID());
     poDataBlock->AddFeature(poNewFeature);
     
