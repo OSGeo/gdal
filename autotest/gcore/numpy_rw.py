@@ -550,6 +550,31 @@ def numpy_rw_14():
 
     return 'success'
 
+###############################################################################
+# Test NumPy GetGeoTransform/SetGeoTransform
+
+def numpy_rw_15():
+
+    if gdaltest.numpy_drv is None:
+        return 'skip'
+
+    import numpy
+    from osgeo import gdal_array
+
+    array = numpy.empty( [1,1,1], numpy.uint8 )
+    ds = gdal_array.OpenArray( array )
+    gt = ds.GetGeoTransform(can_return_null = True)
+    if gt is not None:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    ds.SetGeoTransform([1,2,3,4,5,-6])
+    gt = ds.GetGeoTransform()
+    if gt != (1,2,3,4,5,-6):
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    return 'success'
+
 def numpy_rw_cleanup():
     gdaltest.numpy_drv = None
 
@@ -570,6 +595,7 @@ gdaltest_list = [
     numpy_rw_12,
     numpy_rw_13,
     numpy_rw_14,
+    numpy_rw_15,
     numpy_rw_cleanup ]
 
 if __name__ == '__main__':
