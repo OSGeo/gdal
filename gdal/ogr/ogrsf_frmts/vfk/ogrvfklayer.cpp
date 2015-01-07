@@ -50,30 +50,9 @@ OGRVFKLayer::OGRVFKLayer(const char *pszName,
 {
     /* set spatial reference */
     if( poSRSIn == NULL ) {
-        /* default is S-JTSK 
-        const char *wktString = "PROJCS[\"Krovak\","
-            "GEOGCS[\"GCS_Bessel 1841\","
-            "DATUM[\"D_unknown\","
-            "SPHEROID[\"bessel\","
-            "6377397.155,299.1528128]],"
-            "PRIMEM[\"Greenwich\",0],"
-            "UNIT[\"Degree\",0.017453292519943295]],"
-            "PROJECTION[\"Krovak\"],"
-            "PARAMETER[\"latitude_of_center\",49.5],"
-            "PARAMETER[\"longitude_of_center\",24.83333333333333],"
-            "PARAMETER[\"azimuth\",0],"
-            "PARAMETER[\"pseudo_standard_parallel_1\",0],"
-            "PARAMETER[\"scale_factor\",0.9999],"
-            "PARAMETER[\"false_easting\",0],"
-            "PARAMETER[\"false_northing\",0],"
-            "UNIT[\"Meter\",1]]";
-        */
-        
+        /* default is S-JTSK (EPSG: 5514) */
         poSRS = new OGRSpatialReference();
-        /*
-        if (poSRS->importFromWkt((char **)&wktString) != OGRERR_NONE) {
-        */
-        if (poSRS->importFromEPSG(2065) != OGRERR_NONE) {
+        if (poSRS->importFromEPSG(5514) != OGRERR_NONE) {
             delete poSRS;
             poSRS = NULL;
         }
