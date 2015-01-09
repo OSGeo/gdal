@@ -35,7 +35,8 @@ from osgeo import osr
 
 def Usage():
     print('Usage: gdal_edit [--help-general] [-ro] [-a_srs srs_def] [-a_ullr ulx uly lrx lry]')
-    print('                 [-tr xres yres] [-unsetgt] [-unsetstats] [-a_nodata value] ')
+    print('                 [-tr xres yres] [-unsetgt] [-a_nodata value]')
+    print('                 [-unsetstats] [-stats] [-approx_stats]')
     print('                 [-gcp pixel line easting northing [elevation]]*')
     print('                 [-mo "META-TAG=VALUE"]*  datasetname')
     print('')
@@ -70,6 +71,8 @@ def gdal_edit(argv):
     yres = None
     unsetgt = False
     unsetstats = False
+    stats = False
+    approx_stats = False
     ro = False
     molist = []
     gcp_list = []
@@ -122,6 +125,11 @@ def gdal_edit(argv):
             unsetgt = True
         elif argv[i] == '-unsetstats' :
             unsetstats = True
+        elif argv[i] == '-approx_stats' :
+            stats = True
+            approx_stats = True
+        elif argv[i] == '-stats' :
+            stats = True
         elif argv[i][0] == '-':
             sys.stderr.write('Unrecognized option : %s\n' % argv[i])
             return Usage()
@@ -136,7 +144,7 @@ def gdal_edit(argv):
     if datasetname is None:
         return Usage()
 
-    if srs is None and lry is None and yres is None and not unsetgt and not unsetstats and nodata is None and len(molist) == 0:
+    if srs is None and lry is None and yres is None and not unsetgt and not unsetstats and not stats and nodata is None and len(molist) == 0:
         print('No option specified')
         print('')
         return Usage()
@@ -150,6 +158,11 @@ def gdal_edit(argv):
         exclusive_option = exclusive_option + 1
     if exclusive_option > 1:
         print('-a_ullr, -tr and -unsetgt options are exclusive.')
+        print('')
+        return Usage()
+
+    if unsetstats and stats:
+        print('-unsetstats and either -stats or -approx_stats options are exclusive.')
         print('')
         return Usage()
 
@@ -207,6 +220,10 @@ def gdal_edit(argv):
                 if key.find('STATISTICS_') != 0:
                     mt_out[key] = md[key]
             ds.GetRasterBand(i+1).SetMetadata(md_out)
+
+    if stats:
+        for i in range(ds.RasterCount):
+            ds.GetRasterBand(i+1).ComputeStatistics(approx_stats)
 
     if len(molist) != 0:
         ds.SetMetadata(molist)
