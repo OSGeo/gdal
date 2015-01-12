@@ -71,10 +71,27 @@ def roipac_2():
 
     return 'success'
 
+###############################################################################
+# Verify this can be exported losslessly.
+
+def roipac_3():
+
+    tst = gdaltest.GDALTest( 'roi_pac', 'srtm.dem', 1, 64074 )
+    return tst.testCreateCopy( check_gt = 1, new_filename = 'strm.tst.dem' )
+
+###############################################################################
+# Verify VSIF*L capacity
+
+def roipac_4():
+
+    tst = gdaltest.GDALTest( 'roi_pac', 'srtm.dem', 1, 64074 )
+    return tst.testCreateCopy( check_gt = 1, new_filename = 'strm.tst.dem', vsimem = 1 )
 
 gdaltest_list = [
     roipac_1,
     roipac_2,
+    roipac_3,
+    roipac_4,
     ]
   
 
