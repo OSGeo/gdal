@@ -1022,7 +1022,7 @@ software which is not liberal to this value.</li>
 
 <h2><a name="ROI_PAC">ROI_PAC</a></h2>
 
-<p>Read-only driver for the image formats used in the JPL's ROI_PAC 
+<p>Driver for the image formats used in the JPL's ROI_PAC 
 project (<a href="https://aws.roipac.org/">https://aws.roipac.org/</a>).
 All image type are supported excepted .raw images.</p>
 
@@ -1030,6 +1030,10 @@ All image type are supported excepted .raw images.</p>
 
 <p>Georeferencing is supported, but expect problems when using the UTM 
 projection, as ROI_PAC format do not store any hemisphere field.</p>
+
+<p>When creating files, you have to be able to specify the right data type
+corresponding to the file type (slc, int, etc), else the driver will output
+an error.</p>
 
 <p>NOTE: Implemented as <tt>gdal/frmts/raw/roipacdataset.cpp</tt>.</p>
 
