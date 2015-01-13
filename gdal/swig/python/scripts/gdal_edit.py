@@ -37,7 +37,7 @@ def Usage():
     print('Usage: gdal_edit [--help-general] [-ro] [-a_srs srs_def] [-a_ullr ulx uly lrx lry]')
     print('                 [-tr xres yres] [-unsetgt] [-unsetstats] [-a_nodata value] ')
     print('                 [-gcp pixel line easting northing [elevation]]*')
-    print('                 [-mo "META-TAG=VALUE"]*  datasetname')
+    print('                 [-unsetmd] [-mo "META-TAG=VALUE"]*  datasetname')
     print('')
     print('Edit in place various information of an existing GDAL dataset.')
     return -1
@@ -70,6 +70,7 @@ def gdal_edit(argv):
     yres = None
     unsetgt = False
     unsetstats = False
+    unsetmd = False
     ro = False
     molist = []
     gcp_list = []
@@ -122,6 +123,8 @@ def gdal_edit(argv):
             unsetgt = True
         elif argv[i] == '-unsetstats' :
             unsetstats = True
+        elif argv[i] == '-unsetmd':
+            unsetmd = True
         elif argv[i][0] == '-':
             sys.stderr.write('Unrecognized option : %s\n' % argv[i])
             return Usage()
@@ -136,7 +139,7 @@ def gdal_edit(argv):
     if datasetname is None:
         return Usage()
 
-    if srs is None and lry is None and yres is None and not unsetgt and not unsetstats and nodata is None and len(molist) == 0:
+    if srs is None and lry is None and yres is None and not unsetgt and not unsetstats and nodata is None and len(molist) == 0 and not unsetmd:
         print('No option specified')
         print('')
         return Usage()
@@ -209,7 +212,17 @@ def gdal_edit(argv):
             ds.GetRasterBand(i+1).SetMetadata(md_out)
 
     if len(molist) != 0:
-        ds.SetMetadata(molist)
+        if unsetmd:
+            md = {}
+        else:
+            md = ds.GetMetadata()
+        for moitem in molist:
+            equal_pos = moitem.find('=')
+            if equal_pos > 0:
+                md[moitem[0:equal_pos]] = moitem[equal_pos+1:]
+        ds.SetMetadata(md)
+    elif unsetmd:
+        ds.SetMetadata({})
 
     ds = None
 
