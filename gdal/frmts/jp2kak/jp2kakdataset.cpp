@@ -1779,9 +1779,9 @@ JP2KAKDataset::TestUseBlockIO( int nXOff, int nYOff, int nXSize, int nYSize,
         int    nXOff2=nXOff, nYOff2=nYOff, nXSize2=nXSize, nYSize2=nYSize;
 
         nOverview =
-            GDALBandGetBestOverviewLevel( poWrkBand, 
+            GDALBandGetBestOverviewLevel2( poWrkBand, 
                                           nXOff2, nYOff2, nXSize2, nYSize2,
-                                          nBufXSize, nBufYSize);
+                                          nBufXSize, nBufYSize, NULL);
         if (nOverview >= 0 )
             return TRUE;
     }

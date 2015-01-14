@@ -1071,7 +1071,12 @@ GDALDefaultBuildOverviews( GDALDataset *hSrcDS, const char * pszBasename,
 int CPL_DLL GDALBandGetBestOverviewLevel(GDALRasterBand* poBand,
                                          int &nXOff, int &nYOff,
                                          int &nXSize, int &nYSize,
-                                         int nBufXSize, int nBufYSize);
+                                         int nBufXSize, int nBufYSize) CPL_WARN_DEPRECATED("Use GDALBandGetBestOverviewLevel2 instead");
+int CPL_DLL GDALBandGetBestOverviewLevel2(GDALRasterBand* poBand,
+                                         int &nXOff, int &nYOff,
+                                         int &nXSize, int &nYSize,
+                                         int nBufXSize, int nBufYSize,
+                                         GDALRasterIOExtraArg* psExtraArg);
 
 int CPL_DLL GDALOvLevelAdjust( int nOvLevel, int nXSize ) CPL_WARN_DEPRECATED("Use GDALOvLevelAdjust2 instead");
 int CPL_DLL GDALOvLevelAdjust2( int nOvLevel, int nXSize, int nYSize );
@@ -1114,6 +1119,9 @@ int GDALReadTabFile2( const char * pszBaseFilename,
                       double *padfGeoTransform, char **ppszWKT,
                       int *pnGCPCount, GDAL_GCP **ppasGCPs,
                       char** papszSiblingFiles, char** ppszTabFileNameOut );
+
+void CPL_DLL GDALCopyRasterIOExtraArg(GDALRasterIOExtraArg* psDestArg,
+                                      GDALRasterIOExtraArg* psSrcArg);
 
 CPL_C_END
 
