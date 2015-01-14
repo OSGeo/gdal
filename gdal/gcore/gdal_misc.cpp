@@ -1262,7 +1262,7 @@ int CPL_STDCALL GDALLoadTabFile( const char *pszFilename,
 /*      possible.  Otherwise we will need to use them as GCPs.          */
 /* -------------------------------------------------------------------- */
     if( !GDALGCPsToGeoTransform( nCoordinateCount, asGCPs, padfGeoTransform, 
-                                 FALSE ) )
+                                 CSLTestBoolean(CPLGetConfigOption("TAB_APPROX_GEOTRANSFORM", "NO")) ) )
     {
         if (pnGCPCount && ppasGCPs)
         {
@@ -2143,10 +2143,12 @@ GDALGCPsToGeoTransform( int nGCPCount, const GDAL_GCP *pasGCPs,
 /* -------------------------------------------------------------------- */
     if( !bApproxOK )
     {
-        double dfPixelSize = ABS(padfGeoTransform[1]) 
+        // FIXME? Not sure if it is the more accurate way of computing
+        // pixel size
+        double dfPixelSize = 0.5 * (ABS(padfGeoTransform[1]) 
             + ABS(padfGeoTransform[2])
             + ABS(padfGeoTransform[4])
-            + ABS(padfGeoTransform[5]);
+            + ABS(padfGeoTransform[5]));
 
         for( i = 0; i < nGCPCount; i++ )
         {
@@ -2165,7 +2167,11 @@ GDALGCPsToGeoTransform( int nGCPCount, const GDAL_GCP *pasGCPs,
 
             if( ABS(dfErrorX) > 0.25 * dfPixelSize 
                 || ABS(dfErrorY) > 0.25 * dfPixelSize )
+            {
+                CPLDebug("GDAL", "dfErrorX/dfPixelSize = %.2f, dfErrorY/dfPixelSize = %.2f",
+                         ABS(dfErrorX)/dfPixelSize, ABS(dfErrorY)/dfPixelSize);
                 return FALSE;
+            }
         }
     }
 
