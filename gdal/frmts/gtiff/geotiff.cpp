@@ -1111,10 +1111,13 @@ CPLErr GTiffRasterBand::DirectIO( GDALRWFlag eRWFlag,
         && GetOverviewCount() > 0 && eRWFlag == GF_Read )
     {
         int         nOverview;
+        GDALRasterIOExtraArg sExtraArg;
+    
+        GDALCopyRasterIOExtraArg(&sExtraArg, psExtraArg);
 
         nOverview =
-            GDALBandGetBestOverviewLevel(this, nXOff, nYOff, nXSize, nYSize,
-                                        nBufXSize, nBufYSize);
+            GDALBandGetBestOverviewLevel2(this, nXOff, nYOff, nXSize, nYSize,
+                                        nBufXSize, nBufYSize, &sExtraArg);
         if (nOverview >= 0)
         {
             GDALRasterBand* poOverviewBand = GetOverview(nOverview);
@@ -1123,7 +1126,7 @@ CPLErr GTiffRasterBand::DirectIO( GDALRWFlag eRWFlag,
 
             return poOverviewBand->RasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                             pData, nBufXSize, nBufYSize, eBufType,
-                                            nPixelSpace, nLineSpace, psExtraArg );
+                                            nPixelSpace, nLineSpace, &sExtraArg );
         }
     }
 
@@ -1558,11 +1561,16 @@ CPLErr GTiffDataset::IRasterIO( GDALRWFlag eRWFlag,
     if( nBufXSize < nXSize && nBufYSize < nYSize )
     {
         int nXOffMod = nXOff, nYOffMod = nYOff, nXSizeMod = nXSize, nYSizeMod = nYSize;
+        GDALRasterIOExtraArg sExtraArg;
+    
+        GDALCopyRasterIOExtraArg(&sExtraArg, psExtraArg);
+        
         nJPEGOverviewVisibilityFlag ++;
-        int iOvrLevel = GDALBandGetBestOverviewLevel(papoBands[0],
+        int iOvrLevel = GDALBandGetBestOverviewLevel2(papoBands[0],
                                                      nXOffMod, nYOffMod,
                                                      nXSizeMod, nYSizeMod,
-                                                     nBufXSize, nBufYSize);
+                                                     nBufXSize, nBufYSize,
+                                                     &sExtraArg);
         nJPEGOverviewVisibilityFlag --;
 
         if( iOvrLevel >= 0 && papoBands[0]->GetOverview(iOvrLevel) != NULL &&
@@ -1572,7 +1580,7 @@ CPLErr GTiffDataset::IRasterIO( GDALRWFlag eRWFlag,
             eErr = papoBands[0]->GetOverview(iOvrLevel)->GetDataset()->RasterIO(
                 eRWFlag, nXOffMod, nYOffMod, nXSizeMod, nYSizeMod,
                 pData, nBufXSize, nBufYSize, eBufType,
-                nBandCount, panBandMap, nPixelSpace, nLineSpace, nBandSpace, psExtraArg);
+                nBandCount, panBandMap, nPixelSpace, nLineSpace, nBandSpace, &sExtraArg);
             nJPEGOverviewVisibilityFlag --;
             return eErr;
         }
