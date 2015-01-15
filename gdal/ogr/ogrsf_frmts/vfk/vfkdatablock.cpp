@@ -476,7 +476,7 @@ int IVFKDataBlock::LoadGeometry()
 
     if (nInvalid > 0) {
         CPLError(CE_Warning, CPLE_AppDefined, 
-                 "%s: %d features with invalid or empty geometry found", m_pszName, nInvalid);
+                 "%s: %d features with invalid or empty geometry", m_pszName, nInvalid);
     }
 
 #ifdef DEBUG_TIMING

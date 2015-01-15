@@ -117,9 +117,8 @@ bool VFKDataBlockSQLite::SetGeometryLineString(VFKFeatureSQLite *poLine, OGRLine
                                                bool& bValid, const char *ftype,
                                                std::vector<int>& rowIdFeat, int& nGeometries)
 {
-    static bool bPrintErr = TRUE;
-
-    VFKReaderSQLite    *poReader;
+    int              npoints;
+    VFKReaderSQLite *poReader;
 
     poReader  = (VFKReaderSQLite*) m_poReader;
 
@@ -129,42 +128,54 @@ bool VFKDataBlockSQLite::SetGeometryLineString(VFKFeatureSQLite *poLine, OGRLine
     if (bValid) {
         /* Feature types
            
-           Supported:
-           - '3'    - line (2 points)
-           - '4'    - linestring (at least two points)
-           
-           Unsupported:
-           - '11'   - curve (at least two points)
-           - '15'   - circle (3 points)
-           - '15 r' - circle (center point & radius)
-           - '16'   - arc (3 points)
+           - '3'    - line       (2 points)
+           - '4'    - linestring (at least 2 points)
+           - '11'   - curve      (at least 2 points)
+           - '15'   - circle     (3 points)
+           - '15 r' - circle     (center point & radius)
+           - '16'   - arc        (3 points)
         */
-        if (!EQUAL(ftype, "3") &&
-            !EQUAL(ftype, "4")) {
-            bValid = FALSE;
-            if (bPrintErr)
-                CPLError(CE_Warning, CPLE_NotSupported,
-                         "Invalid geometry ('%s') - curves, circles or arcs are not currently supported",
-                         ftype);
-            bPrintErr = FALSE;
-        }
 
-        if (EQUAL(ftype, "3") &&
-            oOGRLine->getNumPoints() > 2) {
+        npoints = oOGRLine->getNumPoints();
+        if (EQUAL(ftype, "3") && npoints > 2) {
             /* be less pedantic, just inform user about data
              * inconsistency
 
                bValid = FALSE;
             */
             CPLDebug("OGR-VFK", 
-                     "Line (fid=%ld) with more than two vertices found",
+                     "Line (fid=%ld) defined by more than two vertices",
                      poLine->GetFID());
+        }
+        else if (EQUAL(ftype, "11") && npoints < 2) { 
+            bValid = FALSE;
+            CPLError(CE_Warning, CPLE_AppDefined, 
+                     "Curve (fid=%ld) defined by less than two vertices",
+                     poLine->GetFID());
+        }
+        else if (EQUAL(ftype, "15") && npoints != 3) {
+            bValid = FALSE;
+            CPLError(CE_Warning, CPLE_AppDefined, 
+                     "Circle (fid=%ld) defined by invalid number of vertices (%d)",
+                     poLine->GetFID(), oOGRLine->getNumPoints());
+        }
+        else if (strlen(ftype) > 2 && EQUALN(ftype, "15", 2) && npoints != 1) {
+            bValid = FALSE;
+            CPLError(CE_Warning, CPLE_AppDefined, 
+                     "Circle (fid=%ld) defined by invalid number of vertices (%d)",
+                     poLine->GetFID(), oOGRLine->getNumPoints());
+        }
+        else if (EQUAL(ftype, "16") && npoints != 3) {
+            bValid = FALSE;
+            CPLError(CE_Warning, CPLE_AppDefined, 
+                     "Arc (fid=%ld) defined by invalid number of vertices (%d)",
+                     poLine->GetFID(), oOGRLine->getNumPoints());
         }
     }
 
     /* set geometry (NULL for invalid features) */
     if (bValid) {
-        if (!poLine->SetGeometry(oOGRLine)) {
+        if (!poLine->SetGeometry(oOGRLine, ftype)) {
             bValid = FALSE;
         }
     }
@@ -178,7 +189,7 @@ bool VFKDataBlockSQLite::SetGeometryLineString(VFKFeatureSQLite *poLine, OGRLine
     /* store also geometry in DB */
     CPLAssert(0 != rowIdFeat.size());
     if (bValid && poReader->IsSpatial() &&
-        SaveGeometryToDB(bValid ? oOGRLine : NULL,
+        SaveGeometryToDB(bValid ? poLine->GetGeometry() : NULL,
                          rowIdFeat[0]) != OGRERR_FAILURE)
         nGeometries++;
 
@@ -195,10 +206,9 @@ bool VFKDataBlockSQLite::SetGeometryLineString(VFKFeatureSQLite *poLine, OGRLine
 */
 int VFKDataBlockSQLite::LoadGeometryLineStringSBP()
 {
-    int       nInvalid, nGeometries, rowId;
-    CPLString szFType;
+    int       nInvalid, nGeometries, rowId, iIdx;
+    CPLString szFType, szFTypeLine;
     
-    long int iFID;
     GUIntBig id, ipcb;
     bool     bValid;
     
@@ -231,7 +241,7 @@ int VFKDataBlockSQLite::LoadGeometryLineStringSBP()
     osSQL.Printf("UPDATE %s SET %s = -1", m_pszName, FID_COLUMN);
     poReader->ExecuteSQL(osSQL.c_str());
     bValid = TRUE;
-    iFID = 1;
+    iIdx = 0;
     for (int i = 0; i < 2; i++) {
 	/* first collect linestrings related to HP, OB or DPM
 	   then collect rest of linestrings */
@@ -257,19 +267,20 @@ int VFKDataBlockSQLite::LoadGeometryLineStringSBP()
             rowId = sqlite3_column_int(hStmt, 3);
 
             if (ipcb == 1) {
-                poFeature = (VFKFeatureSQLite *) GetFeatureByIndex(iFID - 1);
+                poFeature = (VFKFeatureSQLite *) GetFeatureByIndex(iIdx);
                 CPLAssert(NULL != poFeature);
                 poFeature->SetRowId(rowId);
                 
                 /* set geometry & reset */
                 if (poLine && !SetGeometryLineString(poLine, &oOGRLine,
-                                                     bValid, szFType.c_str(), rowIdFeat, nGeometries)) {
+                                                     bValid, szFTypeLine, rowIdFeat, nGeometries)) {
                     nInvalid++;
                 }
                 
 		bValid = TRUE;
                 poLine = poFeature;
-                iFID++;
+                szFTypeLine = szFType;
+                iIdx++;
             }
             
             poPoint = (VFKFeatureSQLite *) poDataBlockPoints->GetFeature("ID", id);
@@ -969,7 +980,7 @@ bool VFKDataBlockSQLite::LoadGeometryFromDB()
 
     if (nInvalid > 0 && !bSkipInvalid) {
 	CPLError(CE_Warning, CPLE_AppDefined, 
-                 "%s: %d features with invalid or empty geometry found",
+                 "%s: %d features with invalid or empty geometry",
 		 m_pszName, nInvalid);
     }
 

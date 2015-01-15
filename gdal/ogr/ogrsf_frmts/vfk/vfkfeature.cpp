@@ -6,7 +6,7 @@
  * Author:   Martin Landa, landa.martin gmail.com
  *
  ******************************************************************************
- * Copyright (c) 2009-2010, 2012-2013, Martin Landa <landa.martin gmail.com>
+ * Copyright (c) 2009-2010, 2012-2015, Martin Landa <landa.martin gmail.com>
  * Copyright (c) 2012, Even Rouault <even dot rouault at mines-paris dot org>
  *
  * Permission is hereby granted, free of charge, to any person
@@ -95,10 +95,11 @@ void IVFKFeature::SetFID(long nFID)
   Also checks if given geometry is valid
 
   \param poGeom pointer to OGRGeometry
+  \param ftype geometry VFK type
 
   \return TRUE on valid feature or otherwise FALSE
 */
-bool IVFKFeature::SetGeometry(OGRGeometry *poGeom)
+bool IVFKFeature::SetGeometry(OGRGeometry *poGeom, const char *ftype)
 {
     m_bGeometry = TRUE;
 
@@ -112,8 +113,9 @@ bool IVFKFeature::SetGeometry(OGRGeometry *poGeom)
 
     /* check empty geometries */
     if (m_nGeometryType == wkbNone && poGeom->IsEmpty()) {
-	CPLDebug("OGR-VFK", "%s: empty geometry fid = %ld",
-		 m_poDataBlock->GetName(), m_nFID);
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "%s: empty geometry fid = %ld",
+                     m_poDataBlock->GetName(), m_nFID);
         m_bValid = FALSE;
     }
     
@@ -130,14 +132,6 @@ bool IVFKFeature::SetGeometry(OGRGeometry *poGeom)
         }
     }
 
-    /* check degenerated linestrings */
-    if (m_nGeometryType == wkbLineString &&
-        ((OGRLineString *) poGeom)->getNumPoints() < 2) {
-        CPLDebug("OGR-VFK", "%s: invalid linestring fid = %ld",
-		 m_poDataBlock->GetName(), m_nFID);
-        m_bValid = FALSE;
-    }
-    
     /* check degenerated polygons */
     if (m_nGeometryType == wkbPolygon) {
         OGRLinearRing *poRing;
@@ -149,8 +143,148 @@ bool IVFKFeature::SetGeometry(OGRGeometry *poGeom)
 	}
     }
 
-    if (m_bValid)
-        m_paGeom = (OGRGeometry *) poGeom->clone(); /* make copy */
+    if (m_bValid) {
+        if (ftype) {
+            OGRPoint pt;
+            OGRGeometry *poGeomCurved;
+            OGRCircularString poGeomString;
+                
+            poGeomCurved = NULL;
+            if (EQUAL(ftype, "15") || EQUAL(ftype, "16")) {         /* -> circle or arc */
+                int npoints;
+                
+                npoints = ((OGRLineString *) poGeom)->getNumPoints();
+                for (int i = 0; i < npoints; i++) {
+                    ((OGRLineString *) poGeom)->getPoint(i, &pt);
+                    poGeomString.addPoint(&pt);
+                }
+                if (EQUAL(ftype, "15")) {
+                    /* compute center and radius of a circle */
+                    double x[3], y[3];
+                    double m1, n1, m2, n2, c1, c2, mx;
+                    double c_x, c_y;
+                    
+                    for (int i = 0; i < npoints; i++) {
+                        ((OGRLineString *) poGeom)->getPoint(i, &pt);
+                        x[i] = pt.getX();
+                        y[i] = pt.getY();
+                    }
+                                        
+                    m1 = (x[0] + x[1]) / 2.0;
+                    n1 = (y[0] + y[1]) / 2.0;
+
+                    m2 = (x[0] + x[2]) / 2.0;
+                    n2 = (y[0] + y[2]) / 2.0;
+
+                    c1 = (x[1] - x[0]) * m1 + (y[1] - y[0]) * n1;
+                    c2 = (x[2] - x[0]) * m2 + (y[2] - y[0]) * n2;
+
+                    mx = (x[1] - x[0]) * (y[2] - y[0]) + (y[1] - y[0]) * (x[0] - x[2]);
+
+                    c_x = (c1 * (y[2] - y[0]) + c2 * (y[0] - y[1])) / mx;
+                    c_y = (c1 * (x[0] - x[2]) + c2 * (x[1] - x[0])) / mx;
+   
+                    /* compute a new intermediate point */
+                    pt.setX(c_x - (x[1] - c_x));
+                    pt.setY(c_y - (y[1] - c_y));
+                    poGeomString.addPoint(&pt);
+
+                    /* add last point */
+                    ((OGRLineString *) poGeom)->getPoint(0, &pt);
+                    poGeomString.addPoint(&pt);
+
+                }
+            }
+            else if (strlen(ftype) > 2 && EQUALN(ftype, "15", 2)) { /* -> circle with radius */
+                float r;
+                char s[3]; /* 15 */
+
+                r = 0;
+                if (2 != sscanf(ftype, "%s %f", s, &r) || r < 0) {
+                    CPLDebug("OGR-VFK", "%s: invalid circle (unknown or negative radius) "
+                             "fid = %ld", m_poDataBlock->GetName(), m_nFID);
+                    m_bValid = FALSE;
+                }
+                else {
+                    double c_x, c_y;
+                    
+                    ((OGRLineString *) poGeom)->getPoint(0, &pt);
+                    c_x = pt.getX();
+                    c_y = pt.getY();
+
+                    /* define first point on a circle */
+                    pt.setX(c_x + r);
+                    pt.setY(c_y);
+                    poGeomString.addPoint(&pt);
+
+                    /* define second point on a circle */
+                    pt.setX(c_x);
+                    pt.setY(c_y + r);
+                    poGeomString.addPoint(&pt);
+
+                    /* define third point on a circle */
+                    pt.setX(c_x - r);
+                    pt.setY(c_y);
+                    poGeomString.addPoint(&pt);
+
+                    /* define fourth point on a circle */
+                    pt.setX(c_x);
+                    pt.setY(c_y - r);
+                    poGeomString.addPoint(&pt);
+
+                    /* define last point (=first) on a circle */
+                    pt.setX(c_x + r);
+                    pt.setY(c_y);
+                    poGeomString.addPoint(&pt);
+                }
+
+            }
+            else if (EQUAL(ftype, "11")) {                          /* curve */
+                int npoints;
+
+                npoints = ((OGRLineString *) poGeom)->getNumPoints();
+                if (npoints > 2) { /* circular otherwise line string */
+                    for (int i = 0; i < npoints; i++) {
+                        ((OGRLineString *) poGeom)->getPoint(i, &pt);
+                        poGeomString.addPoint(&pt);
+                    }
+                }
+            }
+
+            if (!poGeomString.IsEmpty())
+                poGeomCurved = poGeomString.CurveToLine();
+            
+            if (poGeomCurved) {
+                int npoints;
+                
+                npoints = ((OGRLineString *) poGeomCurved)->getNumPoints();
+                CPLDebug("OGR-VFK", "%s: curve (type=%s) to linestring (npoints=%d) fid = %ld",
+                         m_poDataBlock->GetName(), ftype,
+                         npoints, m_nFID);
+                if (npoints > 1)
+                    m_paGeom = (OGRGeometry *) poGeomCurved->clone();
+                delete poGeomCurved;
+            }
+        }
+
+        if (!m_paGeom) {
+            /* check degenerated linestrings */
+            if (m_nGeometryType == wkbLineString) {
+                int npoints;
+                
+                npoints = ((OGRLineString *) poGeom)->getNumPoints();
+                if (npoints < 2) {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "%s: invalid linestring (%d vertices) fid = %ld",
+                             m_poDataBlock->GetName(), npoints, m_nFID);
+                    m_bValid = FALSE;
+                }
+            }
+
+            if (m_bValid)
+                m_paGeom = (OGRGeometry *) poGeom->clone(); /* make copy */
+        }
+    }
 
     return m_bValid;
 }
