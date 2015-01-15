@@ -714,7 +714,7 @@ int OGRMSSQLSpatialDataSource::Open( const char * pszNewName, int bUpdate,
                 while( oStmt.Fetch() )
                 {
                     if (papszGeomColumnNames == NULL)
-                            CSLAddString( papszGeomColumnNames, oStmt.GetColData(0) );
+                            papszGeomColumnNames = CSLAddString( papszGeomColumnNames, oStmt.GetColData(0) );
                     else if (*papszGeomColumnNames[iTable] == 0)
                     {
                         CPLFree(papszGeomColumnNames[iTable]);
