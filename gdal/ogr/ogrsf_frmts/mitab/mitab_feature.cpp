@@ -8407,6 +8407,8 @@ void  ITABFeaturePen::SetPenFromStyleString(const char *pszStyleString)
     for(i=0; i<numParts; i++)
     {
         poStylePart = poStyleMgr->GetPart(i);
+        if( poStylePart == NULL )
+            continue;
 
         if(poStylePart->GetType() == OGRSTCPen)
         {
@@ -8661,6 +8663,8 @@ void  ITABFeatureBrush::SetBrushFromStyleString(const char *pszStyleString)
     for(i=0; i<numParts; i++)
     {
         poStylePart = poStyleMgr->GetPart(i);
+        if( poStylePart == NULL )
+            continue;
 
         if(poStylePart->GetType() == OGRSTCBrush)
         {
@@ -8930,6 +8934,8 @@ void ITABFeatureSymbol::SetSymbolFromStyleString(const char *pszStyleString)
     for(i=0; i<numParts; i++)
     {
         poStylePart = poStyleMgr->GetPart(i);
+        if( poStylePart == NULL )
+            continue;
 
         if(poStylePart->GetType() == OGRSTCSymbol)
         {
