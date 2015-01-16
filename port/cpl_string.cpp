@@ -1912,51 +1912,54 @@ char *CPLBinaryToHex( int nBytes, const GByte *pabyData )
  * @return returns binary buffer of data - free with CPLFree().
  */
 
+static const unsigned char hex2char[256] = {
+    /* not Hex characters */
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    /* 0-9 */
+    0,1,2,3,4,5,6,7,8,9,0,0,0,0,0,0,
+       /* A-F */
+    0,10,11,12,13,14,15,0,0,0,0,0,0,0,0,0,
+    /* not Hex characters */
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+      /* a-f */
+    0,10,11,12,13,14,15,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    /* not Hex characters (upper 128 characters) */
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+};
+
 GByte *CPLHexToBinary( const char *pszHex, int *pnBytes )
-
 {
-    int     iSrc = 0, iDst = 0;
     size_t  nHexLen = strlen(pszHex);
-
-    GByte *pabyWKB;
+    size_t i;
+    register unsigned char h1, h2;
+    GByte *pabyWKB; 
 
     pabyWKB = (GByte *) CPLMalloc(nHexLen / 2 + 2);
-
-    while( pszHex[iSrc] != '\0' )
+            
+    for( i = 0; i < nHexLen/2; i++ )
     {
-        if( pszHex[iSrc] >= '0' && pszHex[iSrc] <= '9' )
-            pabyWKB[iDst] = pszHex[iSrc] - '0';
-        else if( pszHex[iSrc] >= 'A' && pszHex[iSrc] <= 'F' )
-            pabyWKB[iDst] = pszHex[iSrc] - 'A' + 10;
-        else if( pszHex[iSrc] >= 'a' && pszHex[iSrc] <= 'f' )
-            pabyWKB[iDst] = pszHex[iSrc] - 'a' + 10;
-        else 
-            break;
+        h1 = hex2char[(int)pszHex[2*i]];
+        h2 = hex2char[(int)pszHex[2*i+1]];
 
-        pabyWKB[iDst] *= 16;
-
-        iSrc++;
-
-        if( pszHex[iSrc] >= '0' && pszHex[iSrc] <= '9' )
-            pabyWKB[iDst] += pszHex[iSrc] - '0';
-        else if( pszHex[iSrc] >= 'A' && pszHex[iSrc] <= 'F' )
-            pabyWKB[iDst] += pszHex[iSrc] - 'A' + 10;
-        else if( pszHex[iSrc] >= 'a' && pszHex[iSrc] <= 'f' )
-            pabyWKB[iDst] += pszHex[iSrc] - 'a' + 10;
-        else
-            break;
-
-        iSrc++;
-        iDst++;
+        /* First character is high bits, second is low bits */
+        pabyWKB[i] = (GByte)((h1 << 4) | h2);
     }
+    pabyWKB[nHexLen/2] = 0;
+    *pnBytes = nHexLen/2;
     
-    pabyWKB[iDst] = 0;
-    *pnBytes = iDst;
-
     return pabyWKB;
+
 }
-
-
 
 /************************************************************************/
 /*                         CPLGetValueType()                            */
