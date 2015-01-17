@@ -256,6 +256,17 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
         curl_easy_setopt(http_handle, CURLOPT_HTTPHEADER, headers);
     }
 
+    // are we making a head request
+    const char* pszNoBody = NULL;
+    if ((pszNoBody = CSLFetchNameValue( papszOptions, "NO_BODY" )) != NULL)
+    {
+        if (CSLTestBoolean(pszNoBody)) 
+        {
+            CPLDebug ("HTTP", "HEAD Request: %s", pszURL);
+            curl_easy_setopt(http_handle, CURLOPT_NOBODY, 1L);           
+        }
+    }
+
     // capture response headers
     curl_easy_setopt(http_handle, CURLOPT_HEADERDATA, psResult);
     curl_easy_setopt(http_handle, CURLOPT_HEADERFUNCTION, CPLHdrWriteFct);

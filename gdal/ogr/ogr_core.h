@@ -375,7 +375,7 @@ typedef enum
 } OGRwkbVariant;
 
 
-/** @deprecated in GDAL 2.0. Use wkbHasZ() or wkbToZ() instead */
+/** @deprecated in GDAL 2.0. Use wkbHasZ() or wkbSetZ() instead */
 #ifndef GDAL_COMPILATION
 #define wkb25DBit 0x80000000
 #endif

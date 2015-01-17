@@ -232,6 +232,9 @@ void OGRRegisterAllInternal()
 #ifdef COUCHDB_ENABLED
     RegisterOGRCouchDB();
 #endif
+#ifdef CLOUDANT_ENABLED
+    RegisterOGRCloudant();
+#endif
 #ifdef IDRISI_ENABLED
     RegisterOGRIdrisi();
 #endif
