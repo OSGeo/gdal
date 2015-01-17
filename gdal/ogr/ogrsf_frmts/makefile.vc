@@ -169,6 +169,8 @@ GFT_OBJ = gft\*.obj
 !IFDEF CURL_LIB
 COUCHDBDIR = couchdb
 COUCHDB_OBJ = couchdb\*.obj
+CLOUDANTDIR = cloudant
+CLOUDANT_OBJ = cloudant\*.obj
 !ENDIF
 
 !IFDEF FREEXL_LIBS

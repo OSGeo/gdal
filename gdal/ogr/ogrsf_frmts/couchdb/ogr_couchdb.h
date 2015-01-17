@@ -81,7 +81,7 @@ protected:
    void                         BuildFeatureDefnFromDoc(json_object* poDoc);
    int                          BuildFeatureDefnFromRows(json_object* poAnswerObj);
 
-    int                         GetFeaturesToFetch() { return atoi(CPLGetConfigOption("COUCHDB_PAGE_SIZE", "500")); }
+   virtual int                  GetFeaturesToFetch() { return atoi(CPLGetConfigOption("COUCHDB_PAGE_SIZE", "500")); }
 
   public:
                          OGRCouchDBLayer(OGRCouchDBDataSource* poDS);
@@ -97,6 +97,8 @@ protected:
     virtual CouchDBLayerType    GetLayerType() = 0;
 
     virtual OGRErr              SetNextByIndex( long nIndex );
+
+    virtual OGRSpatialReference * GetSpatialRef();
 };
 
 /************************************************************************/
@@ -105,33 +107,18 @@ protected:
 
 class OGRCouchDBTableLayer : public OGRCouchDBLayer
 {
-    CPLString                 osName;
-    CPLString                 osEscapedName;
-
     int                       nNextFIDForCreate;
     int                       bInTransaction;
     std::vector<json_object*> aoTransactionFeatures;
-
-    OGRwkbGeometryType        eGeomType;
-
-    int                       bHasLoadedMetadata;
-    int                       bMustWriteMetadata;
-    CPLString                 osMetadataRev;
-    void                      LoadMetadata();
-    void                      WriteMetadata();
 
     virtual int               FetchNextRows();
 
     int                       bHasOGRSpatial;
     int                       bHasGeocouchUtilsMinimalSpatialView;
-    int                       bServerSideSpatialFilteringWorks;
-    int                       bMustRunSpatialFilter;
-    std::vector<CPLString>    aosIdsToFetch;
-    int                       RunSpatialFilterQueryIfNecessary();
+    int                       bServerSideAttributeFilteringWorks;
     int                       FetchNextRowsSpatialFilter();
 
     int                       bHasInstalledAttributeFilter;
-    int                       bServerSideAttributeFilteringWorks;
     CPLString                 osURIAttributeFilter;
     std::map<CPLString, int>  oMapFilterFields;
     CPLString                 BuildAttrQueryURI(int& bOutHasStrictComparisons);
@@ -144,17 +131,34 @@ class OGRCouchDBTableLayer : public OGRCouchDBLayer
     int                       bAlwaysValid;
     int                       FetchUpdateSeq();
 
+    int                       nCoordPrecision;
+
+    OGRFeature*               GetFeature( const char* pszId );
+    OGRErr                    DeleteFeature( OGRFeature* poFeature );
+
+    protected:
+
+    CPLString                 osName;
+    CPLString                 osEscapedName;
+    int                       bMustWriteMetadata;
+    int                       bMustRunSpatialFilter;
+    std::vector<CPLString>    aosIdsToFetch;   
+    int                       bServerSideSpatialFilteringWorks;
+    int                       bHasLoadedMetadata;
+    CPLString                 osMetadataRev;
     int                       bExtentValid;
+
     int                       bExtentSet;
     double                    dfMinX;
     double                    dfMinY;
     double                    dfMaxX;
     double                    dfMaxY;
 
-    int                       nCoordPrecision;
+    OGRwkbGeometryType        eGeomType;
 
-    OGRFeature*               GetFeature( const char* pszId );
-    OGRErr                    DeleteFeature( OGRFeature* poFeature );
+    virtual void              WriteMetadata();
+    virtual void              LoadMetadata();
+    virtual int               RunSpatialFilterQueryIfNecessary();
 
     public:
             OGRCouchDBTableLayer(OGRCouchDBDataSource* poDS,
@@ -230,6 +234,7 @@ class OGRCouchDBRowsLayer : public OGRCouchDBLayer
 
 class OGRCouchDBDataSource : public OGRDataSource
 {
+  protected:
     char*               pszName;
 
     OGRLayer**          papoLayers;
@@ -280,6 +285,7 @@ class OGRCouchDBDataSource : public OGRDataSource
 
     int                         IsReadWrite() const { return bReadWrite; }
 
+    char*                 GetETag(const char* pszURI);
     json_object*                GET(const char* pszURI);
     json_object*                PUT(const char* pszURI, const char* pszData);
     json_object*                POST(const char* pszURI, const char* pszData);
