@@ -248,6 +248,8 @@ void OGRCloudantTableLayer::WriteMetadata()
 
     if (pszSpatialDDoc == NULL)
         GetSpatialView();
+    if( pszSpatialDDoc == NULL )
+        return;
 
     CPLString osURI;
     osURI = "/";
@@ -391,6 +393,8 @@ void OGRCloudantTableLayer::LoadMetadata()
 
     if (pszSpatialDDoc == NULL)
         GetSpatialView();
+    if( pszSpatialDDoc == NULL )
+        return;
 
     CPLString osURI("/");
     osURI += osEscapedName;
