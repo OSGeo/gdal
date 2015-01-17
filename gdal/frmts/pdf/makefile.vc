@@ -1,9 +1,15 @@
 
 OBJ	=	pdfdataset.obj pdfio.obj pdfobject.obj pdfcreatecopy.obj ogrpdflayer.obj pdfwritabledataset.obj pdfreadvectors.obj
 
+PLUGIN_DLL =	gdal_PDF.dll
+
 GDAL_ROOT	=	..\..
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
+
+!IFDEF PDF_PLUGIN
+OBJ = $(OBJ) ..\..\ogr\ogrsf_frmts\mem\ogrmemdatasource.obj ..\..\ogr\ogrsf_frmts\mem\ogrmemdriver.obj ..\..\ogr\ogrsf_frmts\mem\ogrmemlayer.obj
+!ENDIF
 
 EXTRAFLAGS =  -I..\vrt -I..\mem -I..\..\ogr\ogrsf_frmts\mem $(POPPLER_EXTRAFLAGS) $(PODOFO_EXTRAFLAGS)
 
@@ -37,4 +43,13 @@ default:	$(OBJ)
 
 clean:
 	-del *.obj
+	
+plugin:	$(PLUGIN_DLL)
 
+$(PLUGIN_DLL): $(OBJ)
+	link /dll $(LDEBUG) /out:$(PLUGIN_DLL) $(OBJ) $(GDALLIB) $(POPPLER_LIBS) $(PODOFO_LIBS)
+	if exist $(PLUGIN_DLL).manifest mt -manifest $(PLUGIN_DLL).manifest -outputresource:$(PLUGIN_DLL);2
+
+plugin-install:
+	-mkdir $(PLUGINDIR)
+	$(INSTALL) $(PLUGIN_DLL) $(PLUGINDIR)
