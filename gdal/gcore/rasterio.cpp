@@ -1088,6 +1088,9 @@ CPLErr GDALRasterBand::RasterIOResampled( CPL_UNUSED GDALRWFlag eRWFlag,
                 }
             }
         }
+
+        CPLFree(pChunk);
+        CPLFree(pabyChunkNoDataMask);
     }
 
     GDALClose(poMEMDS);
