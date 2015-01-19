@@ -412,11 +412,13 @@ void OGRGeoPackageLayer::BuildFeatureDefn( const char *pszLayerName,
         if (pszDeclType != NULL)
         {
             OGRFieldSubType eSubType;
-            OGRFieldType eFieldType = GPkgFieldToOGR(pszDeclType, eSubType);
+            int nMaxWidth;
+            OGRFieldType eFieldType = GPkgFieldToOGR(pszDeclType, eSubType, nMaxWidth);
             if( (int)eFieldType <= OFTMaxType )
             {
                 oField.SetType(eFieldType);
                 oField.SetSubType(eSubType);
+                oField.SetWidth(nMaxWidth);
             }
         }
 

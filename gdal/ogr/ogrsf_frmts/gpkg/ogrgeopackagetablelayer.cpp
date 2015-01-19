@@ -222,8 +222,10 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters( OGRFeature *poFeature,
                 default:
                 {
                     const char *pszVal = poFeature->GetFieldAsString(i);
+                    int nValLengthBytes = (int)strlen(pszVal);
                     char szVal[32];
                     int nYear, nMonth, nDay, nHour, nMinute, nSecond, nTZFlag;
+                    CPLString osTemp;
                     if( poFieldDefn->GetType() == OFTDate )
                     {
                         poFeature->GetFieldAsDateTime(i, &nYear, &nMonth, &nDay, &nHour, &nMinute, &nSecond, &nTZFlag);
@@ -240,7 +242,51 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters( OGRFeature *poFeature,
                             pszVal = szVal;
                         }
                     }
-                    err = sqlite3_bind_text(poStmt, nColCount++, pszVal, strlen(pszVal), SQLITE_TRANSIENT);
+                    else if( poFieldDefn->GetType() == OFTString &&
+                             poFieldDefn->GetWidth() > 0 )
+                    {
+                        if( !CPLIsUTF8(pszVal, -1) )
+                        {
+                            CPLError(CE_Warning, CPLE_AppDefined,
+                                     "Value of field '%s' is not a valid UTF-8 string.%s",
+                                     poFeatureDefn->GetFieldDefn(i)->GetNameRef(),
+                                     m_bTruncateFields ? " Value will be laundered." : "");
+                            if( m_bTruncateFields )
+                            {
+                                char* pszTemp = CPLForceToASCII(pszVal, -1, '_');
+                                osTemp = pszTemp;
+                                pszVal = osTemp.c_str();
+                                CPLFree(pszTemp);
+                            }
+                        }
+
+                        if( CPLStrlenUTF8(pszVal) > poFieldDefn->GetWidth() )
+                        {
+                            CPLError(CE_Warning, CPLE_AppDefined,
+                                     "Value of field '%s' has %d characters, whereas maximum allowed is %d.%s",
+                                     poFeatureDefn->GetFieldDefn(i)->GetNameRef(),
+                                     CPLStrlenUTF8(pszVal),
+                                     poFieldDefn->GetWidth(),
+                                     m_bTruncateFields ? " Value will be truncated." : "");
+                            if( m_bTruncateFields )
+                            {
+                                int k = 0;
+                                nValLengthBytes = 0;
+                                while (pszVal[nValLengthBytes])
+                                {
+                                    if ((pszVal[nValLengthBytes] & 0xc0) != 0x80)
+                                    {
+                                        k++;
+                                        // Stop at the start of the character just beyond the maximum accepted
+                                        if( k > poFieldDefn->GetWidth() )
+                                            break;
+                                    }
+                                    nValLengthBytes++;
+                                }
+                            }
+                        }
+                    }
+                    err = sqlite3_bind_text(poStmt, nColCount++, pszVal, nValLengthBytes, SQLITE_TRANSIENT);
                     break;
                 }            
             }            
@@ -564,7 +610,8 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(int bIsSpatial)
         const char *pszType = SQLResultGetValue(&oResultTable, 2, iRecord);
         OGRBoolean bFid = SQLResultGetValueAsInteger(&oResultTable, 5, iRecord);
         OGRFieldSubType eSubType;
-        OGRFieldType oType = GPkgFieldToOGR(pszType, eSubType);
+        int nMaxWidth;
+        OGRFieldType oType = GPkgFieldToOGR(pszType, eSubType, nMaxWidth);
 
         /* Not a standard field type... */
         if ( (oType > OFTMaxType && osGeomColsType.size()) || EQUAL(osGeomColumnName, pszName) )
@@ -641,6 +688,7 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(int bIsSpatial)
             {
                 OGRFieldDefn oField(pszName, oType);
                 oField.SetSubType(eSubType);
+                oField.SetWidth(nMaxWidth);
                 m_poFeatureDefn->AddFieldDefn(&oField);
             }
         }
@@ -690,6 +738,8 @@ OGRGeoPackageTableLayer::OGRGeoPackageTableLayer(
     m_bHasSpatialIndex = -1;
     bDropRTreeTable = FALSE;
     memset(m_anHasGeometryExtension, 0, sizeof(m_anHasGeometryExtension));
+    m_bPreservePrecision = TRUE;
+    m_bTruncateFields = FALSE;
 }
 
 
@@ -738,19 +788,29 @@ OGRGeoPackageTableLayer::~OGRGeoPackageTableLayer()
 OGRErr OGRGeoPackageTableLayer::CreateField( OGRFieldDefn *poField,
                                              CPL_UNUSED int bApproxOK )
 {
+    OGRFieldDefn oFieldDefn(poField);
     if( !m_poDS->GetUpdate() )
     {
         return OGRERR_FAILURE;
     }
+    
+    int nMaxWidth = 0;
+    if( m_bPreservePrecision && poField->GetType() == OFTString )
+        nMaxWidth = poField->GetWidth();
+    else
+        oFieldDefn.SetWidth(0);
+    oFieldDefn.SetPrecision(0);
 
     OGRErr err = m_poDS->AddColumn(m_pszTableName,
                                    poField->GetNameRef(),
-                                   GPkgFieldFromOGR(poField->GetType(), poField->GetSubType()));
+                                   GPkgFieldFromOGR(poField->GetType(),
+                                                    poField->GetSubType(),
+                                                    nMaxWidth));
 
     if ( err != OGRERR_NONE )
         return err;
 
-    m_poFeatureDefn->AddFieldDefn( poField );
+    m_poFeatureDefn->AddFieldDefn( &oFieldDefn );
     panFieldOrdinals = (int *) CPLRealloc( panFieldOrdinals,
                                            sizeof(int) * m_poFeatureDefn->GetFieldCount() );
     panFieldOrdinals[ m_poFeatureDefn->GetFieldCount() - 1 ] =
