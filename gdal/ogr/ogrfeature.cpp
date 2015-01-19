@@ -2798,6 +2798,14 @@ void OGRFeature::SetField( int iField, int nBytes, GByte *pabyData )
 
         SetField( iField, &uField );
     }
+    else if( poFDefn->GetType() == OFTString )
+    {
+        char* pszStr = (char*)CPLMalloc(nBytes + 1);
+        memcpy(pszStr, pabyData, nBytes);
+        pszStr[nBytes] = 0;
+        SetField( iField, pszStr );
+        CPLFree( pszStr);
+    }
 }
 
 /************************************************************************/
