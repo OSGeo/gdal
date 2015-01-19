@@ -362,6 +362,8 @@ class OGRGeoPackageTableLayer : public OGRGeoPackageLayer
     int                         m_bHasSpatialIndex;
     int                         bDropRTreeTable;
     int                         m_anHasGeometryExtension[wkbMultiSurface+1];
+    int                         m_bPreservePrecision;
+    int                         m_bTruncateFields;
 
     virtual OGRErr      ResetStatement();
     
@@ -411,6 +413,10 @@ class OGRGeoPackageTableLayer : public OGRGeoPackageLayer
 
     int                 HasSpatialIndex();
     int                 CreateGeometryExtensionIfNecessary(OGRwkbGeometryType eGType);
+    void                SetPrecisionFlag( int bFlag )
+                                { m_bPreservePrecision = bFlag; }
+    void                SetTruncateFieldsFlag( int bFlag )
+                                { m_bTruncateFields = bFlag; }
 
     /************************************************************************/
     /* GPKG methods */

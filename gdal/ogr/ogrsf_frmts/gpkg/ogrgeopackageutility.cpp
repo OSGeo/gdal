@@ -221,9 +221,11 @@ OGRwkbGeometryType GPkgGeometryTypeToWKB(const char *pszGpkgType, int bHasZ)
 /* declared using one of the data types specified in table GeoPackage */
 /* Data Types. */
 /* http://opengis.github.io/geopackage/#table_column_data_types */
-OGRFieldType GPkgFieldToOGR(const char *pszGpkgType, OGRFieldSubType& eSubType)
+OGRFieldType GPkgFieldToOGR(const char *pszGpkgType, OGRFieldSubType& eSubType,
+                            int& nMaxWidth)
 {
     eSubType = OFSTNone;
+    nMaxWidth = 0;
 
     /* Integer types */
     if ( STRNCASECMP("INT", pszGpkgType, 3) == 0 )
@@ -256,7 +258,12 @@ OGRFieldType GPkgFieldToOGR(const char *pszGpkgType, OGRFieldSubType& eSubType)
         
     /* String/binary types */
     else if ( STRNCASECMP("TEXT", pszGpkgType, 4) == 0 )
+    {
+        if( pszGpkgType[4] == '(' )
+            nMaxWidth = atoi(pszGpkgType+5);
         return OFTString;
+    }
+        
     else if ( STRNCASECMP("BLOB", pszGpkgType, 4) == 0 )
         return OFTBinary;
         
@@ -275,7 +282,8 @@ OGRFieldType GPkgFieldToOGR(const char *pszGpkgType, OGRFieldSubType& eSubType)
 /* declared using one of the data types specified in table GeoPackage */
 /* Data Types. */
 /* http://opengis.github.io/geopackage/#table_column_data_types */
-const char* GPkgFieldFromOGR(OGRFieldType nType, OGRFieldSubType eSubType)
+const char* GPkgFieldFromOGR(OGRFieldType nType, OGRFieldSubType eSubType,
+                             int nMaxWidth)
 {
     switch(nType)
     {
@@ -296,7 +304,12 @@ const char* GPkgFieldFromOGR(OGRFieldType nType, OGRFieldSubType eSubType)
                 return "REAL";
         }
         case OFTString:
-            return "TEXT";
+        {
+            if( nMaxWidth > 0 )
+                return CPLSPrintf("TEXT(%d)", nMaxWidth);
+            else
+                return "TEXT";
+        }
         case OFTBinary:
             return "BLOB";
         case OFTDate:
