@@ -1518,21 +1518,20 @@ int   TABMAPFile::PrepareNewObjViaSpatialIndex(TABMAPObjHdr *poObjHdr)
             TABRawBinBlock *poBlock;
             poBlock = GetIndexObjectBlock( m_poHeader->m_nFirstIndexBlock );
             CPLAssert( poBlock != NULL && poBlock->GetBlockType() == TABMAP_OBJECT_BLOCK);
-            int nStartAddress = poBlock->GetStartAddress();
             delete poBlock;
+
             if (m_poSpIndex->AddEntry(m_poHeader->m_nXMin, m_poHeader->m_nYMin,
                                       m_poHeader->m_nXMax, m_poHeader->m_nYMax,
                                       m_poHeader->m_nFirstIndexBlock) != 0)
                 return -1;
-            m_poHeader->m_nFirstIndexBlock = nStartAddress;
 
             delete m_poCurObjBlock;
             m_poCurObjBlock = NULL;
+            delete m_poCurCoordBlock;
+            m_poCurCoordBlock = NULL;
         }
-        else
-        {
-            m_poHeader->m_nFirstIndexBlock = m_poSpIndex->GetNodeBlockPtr();
-        }
+
+        m_poHeader->m_nFirstIndexBlock = m_poSpIndex->GetNodeBlockPtr();
 
         /* We'll also need to create an object data block (later) */
         nObjBlockForInsert = -1;
