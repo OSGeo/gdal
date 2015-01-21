@@ -441,35 +441,50 @@ GDALFillNodata( GDALRasterBandH hTargetBand,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Create a work file to hold the Y "last value" indices.          */
+/*      Determine format driver for temp work files.                    */
 /* -------------------------------------------------------------------- */
     CPLString osTmpFileDriver = CSLFetchNameValueDef(
             papszOptions, "TEMP_FILE_DRIVER", "GTiff");
-    GDALDriverH  hDriver = GDALGetDriverByName(osTmpFileDriver);
+    GDALDriverH hDriver = GDALGetDriverByName((const char *) osTmpFileDriver);
+
     if (hDriver == NULL)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Temp file driver can not be found");
+                 "Given driver is not registered");
         return CE_Failure;
     }
-    
+
+    if (GDALGetMetadataItem(hDriver, GDAL_DCAP_CREATE, NULL) == NULL)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Given driver is incapable of creating temp work files");
+        return CE_Failure;
+    }
+
+    char **papszWorkFileOptions = NULL;
+    if (osTmpFileDriver == "GTiff") {
+        CSLSetNameValue(papszWorkFileOptions, "COMPRESS", "LZW");
+        CSLSetNameValue(papszWorkFileOptions, "BIGTIFF", "IF_SAFER");
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Create a work file to hold the Y "last value" indices.          */
+/* -------------------------------------------------------------------- */
     GDALDatasetH hYDS;
     GDALRasterBandH hYBand;
 
-    char **apszOptions = NULL;
-    if (osTmpFileDriver == "GTiff") {
-        CSLSetNameValue(apszOptions, "COMPRESS", "LZW");
-        CSLSetNameValue(apszOptions, "BIGTIFF", "IF_SAFER");
-    }
-
     CPLString osTmpFile = CPLGenerateTempFilename("");
     CPLString osYTmpFile = osTmpFile + "fill_y_work.tif";
-    
-    hYDS = GDALCreate( hDriver, osYTmpFile, nXSize, nYSize, 1, 
-                       eType, (char **) apszOptions );
-    
-    if( hYDS == NULL )
+
+    hYDS = GDALCreate( hDriver, osYTmpFile, nXSize, nYSize, 1,
+                       eType, (char **) papszWorkFileOptions );
+
+    if ( hYDS == NULL )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+            "Could not create Y index work file. Check driver capabilities.");
         return CE_Failure;
+    }
 
     hYBand = GDALGetRasterBand( hYDS, 1 );
 
@@ -483,10 +498,14 @@ GDALFillNodata( GDALRasterBandH hTargetBand,
 
     hValDS = GDALCreate( hDriver, osValTmpFile, nXSize, nYSize, 1,
                          GDALGetRasterDataType( hTargetBand ), 
-                         (char **) apszOptions );
-    
-    if( hValDS == NULL )
+                         (char **) papszWorkFileOptions );
+
+    if ( hValDS == NULL )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+            "Could not create XY value work file. Check driver capabilities.");
         return CE_Failure;
+    }
 
     hValBand = GDALGetRasterBand( hValDS, 1 );
 
@@ -497,13 +516,17 @@ GDALFillNodata( GDALRasterBandH hTargetBand,
     GDALDatasetH hFiltMaskDS;
     GDALRasterBandH hFiltMaskBand;
     CPLString osFiltMaskTmpFile = osTmpFile + "fill_filtmask_work.tif";
-    
+
     hFiltMaskDS = 
         GDALCreate( hDriver, osFiltMaskTmpFile, nXSize, nYSize, 1,
-                    GDT_Byte, (char **) apszOptions );
-    
-    if( hFiltMaskDS == NULL )
+                    GDT_Byte, (char **) papszWorkFileOptions );
+
+    if ( hFiltMaskDS == NULL )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+            "Could not create mask work file. Check driver capabilities.");
         return CE_Failure;
+    }
 
     hFiltMaskBand = GDALGetRasterBand( hFiltMaskDS, 1 );
 
@@ -851,7 +874,7 @@ end:
     GDALClose( hValDS );
     GDALClose( hFiltMaskDS );
 
-    CSLDestroy(apszOptions);
+    CSLDestroy(papszWorkFileOptions);
 
     GDALDeleteDataset( hDriver, osYTmpFile );
     GDALDeleteDataset( hDriver, osValTmpFile );
