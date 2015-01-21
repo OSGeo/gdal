@@ -221,10 +221,10 @@ static void DBFWriteHeader(DBFHandle psDBF)
 
     abyHeader[0] = 0x03;		/* memo field? - just copying 	*/
 
-    /* write out a dummy date */
-    abyHeader[1] = 95;			/* YY */
-    abyHeader[2] = 7;			/* MM */
-    abyHeader[3] = 26;			/* DD */
+    /* write out update date */
+    abyHeader[1] = psDBF->nUpdateYearSince1900;
+    abyHeader[2] = psDBF->nUpdateMonth;
+    abyHeader[3] = psDBF->nUpdateDay;
 
     /* record count preset at zero */
 
@@ -352,6 +352,9 @@ DBFUpdateHeader( DBFHandle psDBF )
     psDBF->sHooks.FSeek( psDBF->fp, 0, 0 );
     psDBF->sHooks.FRead( abyFileHeader, 32, 1, psDBF->fp );
     
+    abyFileHeader[1] = (unsigned char) psDBF->nUpdateYearSince1900;
+    abyFileHeader[2] = (unsigned char) psDBF->nUpdateMonth;
+    abyFileHeader[3] = (unsigned char) psDBF->nUpdateDay;
     abyFileHeader[4] = (unsigned char) (psDBF->nRecords % 256);
     abyFileHeader[5] = (unsigned char) ((psDBF->nRecords/256) % 256);
     abyFileHeader[6] = (unsigned char) ((psDBF->nRecords/(256*256)) % 256);
@@ -361,6 +364,18 @@ DBFUpdateHeader( DBFHandle psDBF )
     psDBF->sHooks.FWrite( abyFileHeader, 32, 1, psDBF->fp );
 
     psDBF->sHooks.FFlush( psDBF->fp );
+}
+
+/************************************************************************/
+/*                       DBFSetLastModifiedDate()                       */
+/************************************************************************/
+
+void SHPAPI_CALL
+DBFSetLastModifiedDate( DBFHandle psDBF, int nYYSince1900, int nMM, int nDD )
+{
+    psDBF->nUpdateYearSince1900 = nYYSince1900;
+    psDBF->nUpdateMonth = nMM;
+    psDBF->nUpdateDay = nDD;
 }
 
 /************************************************************************/
@@ -472,6 +487,8 @@ DBFOpenLL( const char * pszFilename, const char * pszAccess, SAHooks *psHooks )
         free( psDBF );
         return NULL;
     }
+    
+    DBFSetLastModifiedDate(psDBF, pabyBuf[1], pabyBuf[2], pabyBuf[3]);
 
     psDBF->nRecords = 
      pabyBuf[4] + pabyBuf[5]*256 + pabyBuf[6]*256*256 + pabyBuf[7]*256*256*256;
@@ -766,6 +783,7 @@ DBFCreateLL( const char * pszFilename, const char * pszCodePage, SAHooks *psHook
         psDBF->pszCodePage = (char * ) malloc( strlen(pszCodePage) + 1 );
         strcpy( psDBF->pszCodePage, pszCodePage );
     }
+    DBFSetLastModifiedDate(psDBF, 95, 7, 26); /* dummy date */
 
     return( psDBF );
 }
@@ -953,6 +971,7 @@ DBFAddNativeFieldType(DBFHandle psDBF, const char * pszFieldName,
 
     psDBF->nCurrentRecord = -1;
     psDBF->bCurrentRecordModified = FALSE;
+    psDBF->bUpdated = TRUE;
 
     return( psDBF->nFields-1 );
 }
@@ -1888,6 +1907,7 @@ DBFDeleteField(DBFHandle psDBF, int iField)
 
     psDBF->nCurrentRecord = -1;
     psDBF->bCurrentRecordModified = FALSE;
+    psDBF->bUpdated = TRUE;
 
     return TRUE;
 }
@@ -1998,6 +2018,7 @@ DBFReorderFields( DBFHandle psDBF, int* panMap )
 
     psDBF->nCurrentRecord = -1;
     psDBF->bCurrentRecordModified = FALSE;
+    psDBF->bUpdated = TRUE;
 
     return TRUE;
 }
@@ -2217,6 +2238,7 @@ DBFAlterFieldDefn( DBFHandle psDBF, int iField, const char * pszFieldName,
 
     psDBF->nCurrentRecord = -1;
     psDBF->bCurrentRecordModified = FALSE;
+    psDBF->bUpdated = TRUE;
 
     return TRUE;
 }

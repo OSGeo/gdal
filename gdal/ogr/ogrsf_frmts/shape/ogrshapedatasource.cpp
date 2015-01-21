@@ -392,6 +392,8 @@ int OGRShapeDataSource::OpenFile( const char *pszNewName, int bUpdate,
 
     poLayer = new OGRShapeLayer( this, pszNewName, hSHP, hDBF, NULL, FALSE, bUpdate,
                                  wkbNone );
+    poLayer->SetModificationDate(
+            CSLFetchNameValue( papszOpenOptions, "DBF_DATE_LAST_UPDATE" ) );
 
 /* -------------------------------------------------------------------- */
 /*      Add layer to data source layer list.                            */
@@ -701,6 +703,8 @@ OGRShapeDataSource::ICreateLayer( const char * pszLayerName,
 
     poLayer->SetResizeAtClose( CSLFetchBoolean( papszOptions, "RESIZE", FALSE ) );
     poLayer->CreateSpatialIndexAtClose( CSLFetchBoolean( papszOptions, "SPATIAL_INDEX", FALSE ) );
+    poLayer->SetModificationDate(
+        CSLFetchNameValue( papszOptions, "DBF_DATE_LAST_UPDATE" ) );
 
 /* -------------------------------------------------------------------- */
 /*      Add layer to data source layer list.                            */

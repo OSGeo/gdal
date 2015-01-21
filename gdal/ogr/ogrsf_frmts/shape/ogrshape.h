@@ -210,6 +210,7 @@ class OGRShapeLayer : public OGRAbstractProxiedLayer
     
     void                AddToFileList( CPLStringList& oFileList );
     void                CreateSpatialIndexAtClose( int bFlag ) { bCreateSpatialIndexAtClose = bFlag; }
+    void                SetModificationDate(const char* pszStr);
 };
 
 /************************************************************************/
