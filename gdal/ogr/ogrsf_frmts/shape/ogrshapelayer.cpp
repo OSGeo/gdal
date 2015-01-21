@@ -32,6 +32,7 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include "ogr_p.h"
+#include "cpl_time.h"
 
 #if defined(_WIN32_WCE)
 #  include <wce_errno.h>
@@ -119,6 +120,22 @@ OGRShapeLayer::OGRShapeLayer( OGRShapeDataSource* poDSIn,
         osEncoding = ConvertCodePage( hDBF->pszCodePage );
     }
     
+    if( hDBF != NULL )
+    {
+        if( !(hDBF->nUpdateYearSince1900 == 95 &&
+              hDBF->nUpdateMonth == 7 &&
+              hDBF->nUpdateDay == 26) )
+        {
+            SetMetadataItem( "DBF_DATE_LAST_UPDATE", CPLSPrintf("%04d-%02d-%02d",
+                            hDBF->nUpdateYearSince1900 + 1900,
+                            hDBF->nUpdateMonth, hDBF->nUpdateDay) );
+        }
+        struct tm tm;
+        CPLUnixTimeToYMDHMS(time(NULL), &tm);
+        DBFSetLastModifiedDate( hDBF, tm.tm_year,
+                                tm.tm_mon + 1, tm.tm_mday );
+    }
+    
     const char* pszShapeEncoding = NULL;
     pszShapeEncoding = CSLFetchNameValue(poDS->GetOpenOptions(), "ENCODING");
     if( pszShapeEncoding == NULL )
@@ -198,6 +215,26 @@ OGRShapeLayer::~OGRShapeLayer()
 
     if( hSBN != NULL )
         SBNCloseDiskTree( hSBN );
+}
+
+
+/************************************************************************/
+/*                       SetModificationDate()                          */
+/************************************************************************/
+
+void OGRShapeLayer::SetModificationDate(const char* pszStr)
+{
+    if( hDBF && pszStr )
+    {
+        int year, month, day;
+        if ((sscanf(pszStr, "%04d-%02d-%02d", &year, &month, &day) == 3 ||
+             sscanf(pszStr, "%04d/%02d/%02d", &year, &month, &day) == 3) &&
+            (year >= 1900 && year <= 1900 + 255 && month >= 1 && month <= 12 &&
+             day >= 1 && day <= 31))
+        {
+            DBFSetLastModifiedDate( hDBF, year - 1900, month, day );
+        }
+    }
 }
 
 /************************************************************************/
@@ -1996,7 +2033,9 @@ OGRErr OGRShapeLayer::SyncToDisk()
     }
 
     if( hDBF != NULL )
+    {
         hDBF->sHooks.FFlush( hDBF->fp );
+    }
 
     return OGRERR_NONE;
 }
