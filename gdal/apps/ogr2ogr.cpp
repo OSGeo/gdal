@@ -2557,6 +2557,26 @@ static OGRLayer* GetLayerAndOverwriteIfNecessary(GDALDataset *poDstDS,
 }
 
 /************************************************************************/
+/*                          ConvertType()                               */
+/************************************************************************/
+
+static OGRwkbGeometryType ConvertType(GeometryConversion sGeomConversion,
+                                      OGRwkbGeometryType eGType)
+{
+    OGRwkbGeometryType eRetType = eGType;
+    if ( sGeomConversion.bPromoteToMulti )
+    {
+        if( !OGR_GT_IsSubClassOf(eGType, wkbGeometryCollection) )
+            eRetType = OGR_GT_GetCollection(eGType);
+    }
+    else if ( sGeomConversion.bConvertToLinear )
+        eRetType = OGR_GT_GetLinear(eGType);
+    if ( sGeomConversion.bConvertToCurve )
+        eRetType = OGR_GT_GetCurve(eGType);
+    return eRetType;
+}
+
+/************************************************************************/
 /*                         SetupTargetLayer()                           */
 /************************************************************************/
 
@@ -2689,12 +2709,7 @@ static TargetLayerInfo* SetupTargetLayer( CPL_UNUSED GDALDataset *poSrcDS,
                 eGType = wkbNone;
 
             int bHasZ = wkbHasZ((OGRwkbGeometryType)eGType);
-            if ( sGeomConversion.bPromoteToMulti )
-                eGType = OGR_GT_GetCollection((OGRwkbGeometryType)eGType);
-            else if ( sGeomConversion.bConvertToLinear )
-                eGType = OGR_GT_GetLinear((OGRwkbGeometryType)eGType);
-            if ( sGeomConversion.bConvertToCurve )
-                eGType = OGR_GT_GetCurve((OGRwkbGeometryType)eGType);
+            eGType = ConvertType(sGeomConversion, (OGRwkbGeometryType)eGType);
 
             if ( bExplodeCollections )
             {
@@ -2773,12 +2788,7 @@ static TargetLayerInfo* SetupTargetLayer( CPL_UNUSED GDALDataset *poSrcDS,
                 else
                 {
                     eGType = oGFldDefn.GetType();
-                    if ( sGeomConversion.bPromoteToMulti )
-                        eGType = OGR_GT_GetCollection((OGRwkbGeometryType)eGType);
-                    else if ( sGeomConversion.bConvertToLinear )
-                        eGType = OGR_GT_GetLinear((OGRwkbGeometryType)eGType);
-                    if ( sGeomConversion.bConvertToCurve )
-                        eGType = OGR_GT_GetCurve((OGRwkbGeometryType)eGType);
+                    eGType = ConvertType(sGeomConversion, (OGRwkbGeometryType)eGType);
                     eGType = ForceCoordDimension(eGType, nCoordDim);
                     oGFldDefn.SetType((OGRwkbGeometryType) eGType);
                 }
@@ -3593,12 +3603,7 @@ static int TranslateLayer( TargetLayerInfo* psInfo,
                     if( poDstGeometry != NULL )
                     {
                         OGRwkbGeometryType eTargetType = poDstGeometry->getGeometryType();
-                        if( sGeomConversion.bPromoteToMulti )
-                            eTargetType = OGR_GT_GetCollection(eTargetType);
-                        if( sGeomConversion.bConvertToLinear )
-                            eTargetType = OGR_GT_GetLinear(eTargetType);
-                        else if( sGeomConversion.bConvertToCurve )
-                            eTargetType = OGR_GT_GetCurve(eTargetType);
+                        eTargetType = ConvertType(sGeomConversion, eTargetType);
                         poDstGeometry = OGRGeometryFactory::forceTo(poDstGeometry, eTargetType);
                         poDstFeature->SetGeomFieldDirectly(iGeom, poDstGeometry);
                     }
