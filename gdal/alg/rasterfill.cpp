@@ -463,8 +463,10 @@ GDALFillNodata( GDALRasterBandH hTargetBand,
 
     char **papszWorkFileOptions = NULL;
     if (osTmpFileDriver == "GTiff") {
-        CSLSetNameValue(papszWorkFileOptions, "COMPRESS", "LZW");
-        CSLSetNameValue(papszWorkFileOptions, "BIGTIFF", "IF_SAFER");
+        papszWorkFileOptions = CSLSetNameValue(
+                papszWorkFileOptions, "COMPRESS", "LZW");
+        papszWorkFileOptions = CSLSetNameValue(
+                papszWorkFileOptions, "BIGTIFF", "IF_SAFER");
     }
 
 /* -------------------------------------------------------------------- */
