@@ -1883,7 +1883,13 @@ CPLErr GTiffRasterBand::SetMetadata( char ** papszMD, const char *pszDomain )
     if( pszDomain == NULL || !EQUAL(pszDomain,"_temporary_") )
     {
         if( papszMD != NULL || GetMetadata(pszDomain) != NULL )
+        {
             poGDS->bMetadataChanged = TRUE;
+            // Cancel any existing metadata from PAM file
+            if( eAccess == GA_Update &&
+                GDALPamRasterBand::GetMetadata(pszDomain) != NULL )
+                GDALPamRasterBand::SetMetadata(papszMD, pszDomain);
+        }
     }
 
     return oGTiffMDMD.SetMetadata( papszMD, pszDomain );
@@ -1910,7 +1916,13 @@ CPLErr GTiffRasterBand::SetMetadataItem( const char *pszName,
 
 {
     if( pszDomain == NULL || !EQUAL(pszDomain,"_temporary_") )
+    {
         poGDS->bMetadataChanged = TRUE;
+        // Cancel any existing metadata from PAM file
+        if( eAccess == GA_Update &&
+            GDALPamRasterBand::GetMetadataItem(pszName, pszDomain) != NULL )
+            GDALPamRasterBand::SetMetadataItem(pszName, NULL, pszDomain);
+    }
 
     return oGTiffMDMD.SetMetadataItem( pszName, pszValue, pszDomain );
 }
@@ -10183,7 +10195,13 @@ CPLErr GTiffDataset::SetMetadata( char ** papszMD, const char *pszDomain )
     if ((papszMD != NULL) && (pszDomain != NULL) && EQUAL(pszDomain, "COLOR_PROFILE"))
         bColorProfileMetadataChanged = TRUE;
     else if( pszDomain == NULL || !EQUAL(pszDomain,"_temporary_") )
+    {
         bMetadataChanged = TRUE;
+        // Cancel any existing metadata from PAM file
+        if( eAccess == GA_Update &&
+            GDALPamDataset::GetMetadata(pszDomain) != NULL )
+            GDALPamDataset::SetMetadata(papszMD, pszDomain);
+    }
 
     if( (pszDomain == NULL || EQUAL(pszDomain, "")) &&
         CSLFetchNameValue(papszMD, GDALMD_AREA_OR_POINT) != NULL )
@@ -10250,7 +10268,13 @@ CPLErr GTiffDataset::SetMetadataItem( const char *pszName,
     if ((pszDomain != NULL) && EQUAL(pszDomain, "COLOR_PROFILE"))
         bColorProfileMetadataChanged = TRUE;
     else if( pszDomain == NULL || !EQUAL(pszDomain,"_temporary_") )
+    {
         bMetadataChanged = TRUE;
+        // Cancel any existing metadata from PAM file
+        if( eAccess == GA_Update &&
+            GDALPamDataset::GetMetadataItem(pszName, pszDomain) != NULL )
+            GDALPamDataset::SetMetadataItem(pszName, NULL, pszDomain);
+    }
 
     if( (pszDomain == NULL || EQUAL(pszDomain, "")) &&
         pszName != NULL && EQUAL(pszName, GDALMD_AREA_OR_POINT) )
