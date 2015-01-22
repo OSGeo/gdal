@@ -7,7 +7,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2008, Frank Warmerdam
- * Copyright (c) 2009-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2015, Sean Gillies <sean@mapbox.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -26,7 +26,7 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
- ****************************************************************************/
+ ***************************************************************************/
 
 #include "gdal_alg.h"
 #include "cpl_conv.h"
@@ -377,21 +377,21 @@ if( quad_value != nNoDataVal ) 						\
  * @param bDeprecatedOption unused argument, should be zero.
  * @param nSmoothingIterations the number of 3x3 smoothing filter passes to 
  * run (0 or more).
- * @param papszOptions additional name=value options in a string list (none 
- * supported at this time - just pass NULL).
+ * @param papszOptions additional name=value options in a string list (the
+ * temporary file driver can be specified like TEMP_FILE_DRIVER=MEM).
  * @param pfnProgress the progress function to report completion.
  * @param pProgressArg callback data for progress function.
- *
- * @return CE_None on success or CE_Failure if something goes wrong.
+ * 
+ * @return CE_None on success or CE_Failure if something goes wrong. 
  */
 
 CPLErr CPL_STDCALL
 GDALFillNodata( GDALRasterBandH hTargetBand,
                 GDALRasterBandH hMaskBand,
                 double dfMaxSearchDist,
-                CPL_UNUSED int bDeprecatedOption,
+                int bDeprecatedOption,
                 int nSmoothingIterations,
-                CPL_UNUSED char **papszOptions,
+                char **papszOptions,
                 GDALProgressFunc pfnProgress,
                 void * pProgressArg )
 
@@ -443,18 +443,25 @@ GDALFillNodata( GDALRasterBandH hTargetBand,
 /* -------------------------------------------------------------------- */
 /*      Create a work file to hold the Y "last value" indices.          */
 /* -------------------------------------------------------------------- */
-    GDALDriverH  hDriver = GDALGetDriverByName( "GTiff" );
+    CPLString osTmpFileDriver = CSLFetchNameValueDef(
+            papszOptions, "TEMP_FILE_DRIVER", "GTiff");
+    GDALDriverH  hDriver = GDALGetDriverByName(osTmpFileDriver);
     if (hDriver == NULL)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "GDALFillNodata needs GTiff driver");
+                 "Temp file driver can not be found");
         return CE_Failure;
     }
     
     GDALDatasetH hYDS;
     GDALRasterBandH hYBand;
-    static const char *apszOptions[] = { "COMPRESS=LZW", "BIGTIFF=IF_SAFER", 
-                                         NULL };
+
+    char **apszOptions = NULL;
+    if (osTmpFileDriver == "GTiff") {
+        CSLSetNameValue(apszOptions, "COMPRESS", "LZW");
+        CSLSetNameValue(apszOptions, "BIGTIFF", "IF_SAFER");
+    }
+
     CPLString osTmpFile = CPLGenerateTempFilename("");
     CPLString osYTmpFile = osTmpFile + "fill_y_work.tif";
     
@@ -843,6 +850,8 @@ end:
     GDALClose( hYDS );
     GDALClose( hValDS );
     GDALClose( hFiltMaskDS );
+
+    CSLDestroy(apszOptions);
 
     GDALDeleteDataset( hDriver, osYTmpFile );
     GDALDeleteDataset( hDriver, osValTmpFile );
