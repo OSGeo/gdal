@@ -40,7 +40,8 @@ import gdaltest
 import test_py_scripts
 
 #Usage: gdal_edit [--help-general] [-a_srs srs_def] [-a_ullr ulx uly lrx lry]
-#                 [-tr xres yres] [-unsetgt] [-a_nodata value] 
+#                 [-tr xres yres] [-a_nodata value]
+#                 [-unsetgt] [-stats] [-approx_stats]
 #                 [-gcp pixel line easting northing [elevation]]*
 #                 [-mo "META-TAG=VALUE"]*  datasetname
 
@@ -187,6 +188,63 @@ def test_gdal_edit_py_4():
     return 'success'
 
 ###############################################################################
+# Test -stats
+
+def test_gdal_edit_py_5():
+
+    script_path = test_py_scripts.get_py_script('gdal_edit')
+    if script_path is None:
+        return 'skip'
+
+    shutil.copy('../gcore/data/byte.tif', 'tmp/test_gdal_edit_py.tif')
+    ds = gdal.Open( 'tmp/test_gdal_edit_py.tif', gdal.GA_Update )
+    band = ds.GetRasterBand(1)
+    array = band.ReadAsArray()
+    # original minimum is 74; modify a pixel value from 99 to 22
+    array[15, 12] = 22
+    band.WriteArray(array)
+    ds = band = None
+
+    ds = gdal.Open('tmp/test_gdal_edit_py.tif')
+    if ds.ReadAsArray()[15, 12] != 22:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    test_py_scripts.run_py_script(script_path, 'gdal_edit', "tmp/test_gdal_edit_py.tif -stats")
+
+    ds = gdal.Open('tmp/test_gdal_edit_py.tif')
+    stat_min = ds.GetRasterBand(1).GetMetadataItem('STATISTICS_MINIMUM')
+    if stat_min is None or float(stat_min) != 22:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    ds = gdal.Open( 'tmp/test_gdal_edit_py.tif', gdal.GA_Update )
+    band = ds.GetRasterBand(1)
+    array = band.ReadAsArray()
+    array[15, 12] = 26
+    band.WriteArray(array)
+    ds = band = None
+
+    ds = gdal.Open('tmp/test_gdal_edit_py.tif')
+    if ds.ReadAsArray()[15, 12] != 26:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+    
+    test_py_scripts.run_py_script(script_path, 'gdal_edit', "tmp/test_gdal_edit_py.tif -stats")
+
+    ds = gdal.Open('tmp/test_gdal_edit_py.tif')
+    stat_min = ds.GetRasterBand(1).GetMetadataItem('STATISTICS_MINIMUM')
+    if stat_min is None or float(stat_min) != 26:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def test_gdal_edit_py_cleanup():
@@ -203,6 +261,7 @@ gdaltest_list = [
     test_gdal_edit_py_2,
     test_gdal_edit_py_3,
     test_gdal_edit_py_4,
+    test_gdal_edit_py_5,
     test_gdal_edit_py_cleanup,
     ]
 
