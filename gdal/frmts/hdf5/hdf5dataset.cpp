@@ -217,7 +217,15 @@ int HDF5Dataset::Identify( GDALOpenInfo * poOpenInfo )
     if( poOpenInfo->pabyHeader )
     {
         if( memcmp(poOpenInfo->pabyHeader,achSignature,8) == 0 )
+        {
+            /* Avoid opening kea files if the kea driver is available */
+            if( EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "KEA") &&
+                GDALGetDriverByName("KEA") != NULL )
+            {
+                return FALSE;
+            }
             return TRUE;
+        }
 
         if( memcmp(poOpenInfo->pabyHeader,"<HDF_UserBlock>",15) == 0)
         {

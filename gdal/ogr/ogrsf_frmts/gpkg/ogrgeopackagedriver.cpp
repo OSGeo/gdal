@@ -211,6 +211,8 @@ COMPRESSION_OPTIONS
 "  <Option name='GEOMETRY_COLUMN' type='string' description='Name of geometry column.' default='geom'/>"
 "  <Option name='FID' type='string' description='Name of the FID column to create' default='fid'/>"
 "  <Option name='OVERWRITE' type='boolean' description='Whether to overwrite an existing table with the layer name to be created' default='NO'/>"
+"  <Option name='PRECISION' type='boolean' description='Whether text fields created should keep the width' default='YES'/>"
+"  <Option name='TRUNCATE_FIELDS' type='boolean' description='Whether to truncate text content that exceeds maximum width' default='NO'/>"
 "  <Option name='SPATIAL_INDEX' type='boolean' description='Whether to create a spatial index' default='YES'/>"
 "</LayerCreationOptionList>");
 

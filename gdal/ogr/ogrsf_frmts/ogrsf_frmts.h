@@ -385,6 +385,7 @@ void CPL_DLL RegisterOGRGFT();
 void CPL_DLL RegisterOGRGME();
 void CPL_DLL RegisterOGRSVG();
 void CPL_DLL RegisterOGRCouchDB();
+void CPL_DLL RegisterOGRCloudant();
 void CPL_DLL RegisterOGRIdrisi();
 void CPL_DLL RegisterOGRARCGEN();
 void CPL_DLL RegisterOGRSEGUKOOA();

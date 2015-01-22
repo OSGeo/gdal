@@ -318,9 +318,10 @@ RFC 33: GTiff - Fixing PixelIsPoint Interpretation</a> for more details. Default
 <!-- not sure it is wise to advertize this one. I doubt it works correctly if set to NO. CONVERT_YCBCR_TO_RGB -->
 <!-- debug/autotest option : GTIFF_DELETE_ON_ERROR -->
 <li>GDAL_TIFF_OVR_BLOCKSIZE : See <a href="#overviews"><i>Overviews</i> section</a>.
-<li> GTIFF_LINEAR_UNITS: Can be set to BROKEN to read GeoTIFF files that 
+<li>GTIFF_LINEAR_UNITS: Can be set to BROKEN to read GeoTIFF files that 
 have false easting/northing improperly set in meters when it ought to be in
 coordinate system linear units.  (<a href="http://trac.osgeo.org/gdal/ticket/3901">Ticket #3901</a>). 
+<li>TAB_APPROX_GEOTRANSFORM=YES/NO: (GDAL &gt;= 2.0) To decide if an approximate geotransform is acceptable when reading a .tab file. Default value: NO
 </ul>
 </p>
 

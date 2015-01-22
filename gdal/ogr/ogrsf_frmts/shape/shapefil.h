@@ -583,6 +583,10 @@ typedef	struct
 
     int         iLanguageDriver;
     char        *pszCodePage;
+    
+    int         nUpdateYearSince1900; /* 0-255 */
+    int         nUpdateMonth; /* 1-12 */
+    int         nUpdateDay; /* 1-31 */
 } DBFInfo;
 
 typedef DBFInfo * DBFHandle;
@@ -689,6 +693,9 @@ char    SHPAPI_CALL
 
 const char SHPAPI_CALL1(*)
       DBFGetCodePage(DBFHandle psDBF );
+
+void SHPAPI_CALL
+    DBFSetLastModifiedDate( DBFHandle psDBF, int nYYSince1900, int nMM, int nDD );
 
 #ifdef __cplusplus
 }

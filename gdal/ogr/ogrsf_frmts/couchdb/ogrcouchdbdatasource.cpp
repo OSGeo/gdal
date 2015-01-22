@@ -120,6 +120,7 @@ OGRLayer* OGRCouchDBDataSource::OpenDatabase(const char* pszLayerName)
 {
     CPLString osTableName;
     CPLString osEscapedName;
+
     if (pszLayerName)
     {
         osTableName = pszLayerName;
@@ -215,7 +216,7 @@ int OGRCouchDBDataSource::Open( const char * pszFilename, int bUpdateIn)
     bReadWrite = bUpdateIn;
 
     pszName = CPLStrdup( pszFilename );
-
+ 
     if (bHTTP)
         osURL = pszFilename;
     else
@@ -1016,6 +1017,57 @@ void OGRCouchDBDataSource::ReleaseResultSet( OGRLayer * poLayer )
 }
 
 /************************************************************************/
+/*                               GetETag()                                 */
+/************************************************************************/
+
+char* OGRCouchDBDataSource::GetETag(const char* pszURI)
+{
+
+    // make a head request and only return the etag response header
+    char* pszEtag = NULL;
+    char **papszTokens;
+    char** papszOptions = NULL;
+
+    bMustCleanPersistant = TRUE;
+
+    papszOptions = CSLAddString(papszOptions, CPLSPrintf("PERSISTENT=CouchDB:%p", this));
+    papszOptions = CSLAddString(papszOptions, "HEADERS=Content-Type: application/json");
+    papszOptions = CSLAddString(papszOptions, "NO_BODY=1");
+    
+    if (osUserPwd.size())
+    {
+        CPLString osUserPwdOption("USERPWD=");
+        osUserPwdOption += osUserPwd;
+        papszOptions = CSLAddString(papszOptions, osUserPwdOption);
+    }
+
+    CPLDebug("CouchDB", "HEAD %s", pszURI);
+
+    CPLString osFullURL(osURL);
+    osFullURL += pszURI;
+    CPLPushErrorHandler(CPLQuietErrorHandler);
+
+    CPLHTTPResult * psResult = CPLHTTPFetch( osFullURL, papszOptions);
+    CPLPopErrorHandler();
+    CSLDestroy(papszOptions);
+    if (psResult == NULL)
+        return NULL;
+
+    if (CSLFetchNameValue(psResult->papszHeaders, "Etag") != NULL)
+    {
+        papszTokens = 
+            CSLTokenizeString2( CSLFetchNameValue(psResult->papszHeaders, "Etag"), "\"\r\n", 0 );
+        
+        pszEtag = CPLStrdup(papszTokens[0]);
+
+        CSLDestroy( papszTokens );
+    }
+
+    CPLHTTPDestroyResult(psResult);
+    return pszEtag;
+}
+
+/************************************************************************/
 /*                             REQUEST()                                */
 /************************************************************************/
 
@@ -1050,6 +1102,7 @@ json_object* OGRCouchDBDataSource::REQUEST(const char* pszVerb,
     CPLString osFullURL(osURL);
     osFullURL += pszURI;
     CPLPushErrorHandler(CPLQuietErrorHandler);
+
     CPLHTTPResult * psResult = CPLHTTPFetch( osFullURL, papszOptions);
     CPLPopErrorHandler();
     CSLDestroy(papszOptions);

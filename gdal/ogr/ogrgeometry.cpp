@@ -5170,13 +5170,13 @@ int OGR_GT_IsSubClassOf( OGRwkbGeometryType eType,
  * wkbLineString->wkbMultiLineString, wkbPolygon->wkbMultiPolygon,
  * wkbCircularString->wkbMultiCurve, wkbCompoundCurve->wkbMultiCurve,
  * wkbCurvePolygon->wkbMultiSurface.
- * In other cases, wkbNone is returned.
+ * In other cases, wkbUnknown is returned.
  *
  * Passed Z flag is preserved.
  *
  * @param eType Input geometry type
  *
- * @return the collection type that can contain the passed geometry type or wkbNone
+ * @return the collection type that can contain the passed geometry type or wkbUnknown
  *
  * @since GDAL 2.0
  */
@@ -5200,7 +5200,7 @@ OGRwkbGeometryType OGR_GT_GetCollection( OGRwkbGeometryType eType )
         eType = wkbMultiSurface;
     
     else
-        return wkbNone;
+        return wkbUnknown;
 
     if( wkbHasZ(eType) )
         eType = wkbSetZ(eType);

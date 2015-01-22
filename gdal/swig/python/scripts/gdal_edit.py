@@ -38,7 +38,7 @@ def Usage():
     print('                 [-tr xres yres] [-unsetgt] [-a_nodata value]')
     print('                 [-unsetstats] [-stats] [-approx_stats]')
     print('                 [-gcp pixel line easting northing [elevation]]*')
-    print('                 [-mo "META-TAG=VALUE"]*  datasetname')
+    print('                 [-unsetmd] [-mo "META-TAG=VALUE"]*  datasetname')
     print('')
     print('Edit in place various information of an existing GDAL dataset.')
     return -1
@@ -73,6 +73,7 @@ def gdal_edit(argv):
     unsetstats = False
     stats = False
     approx_stats = False
+    unsetmd = False
     ro = False
     molist = []
     gcp_list = []
@@ -123,13 +124,15 @@ def gdal_edit(argv):
             gcp_list.append(gcp)
         elif argv[i] == '-unsetgt' :
             unsetgt = True
-        elif argv[i] == '-unsetstats' :
+        elif argv[i] == '-unsetstats':
             unsetstats = True
-        elif argv[i] == '-approx_stats' :
+        elif argv[i] == '-approx_stats':
             stats = True
             approx_stats = True
-        elif argv[i] == '-stats' :
+        elif argv[i] == '-stats':
             stats = True
+        elif argv[i] == '-unsetmd':
+            unsetmd = True
         elif argv[i][0] == '-':
             sys.stderr.write('Unrecognized option : %s\n' % argv[i])
             return Usage()
@@ -144,7 +147,9 @@ def gdal_edit(argv):
     if datasetname is None:
         return Usage()
 
-    if srs is None and lry is None and yres is None and not unsetgt and not unsetstats and not stats and nodata is None and len(molist) == 0:
+    if (srs is None and lry is None and yres is None and not unsetgt
+            and not unsetstats and not stats and nodata is None
+            and len(molist) == 0 and not unsetmd):
         print('No option specified')
         print('')
         return Usage()
@@ -226,7 +231,17 @@ def gdal_edit(argv):
             ds.GetRasterBand(i+1).ComputeStatistics(approx_stats)
 
     if len(molist) != 0:
-        ds.SetMetadata(molist)
+        if unsetmd:
+            md = {}
+        else:
+            md = ds.GetMetadata()
+        for moitem in molist:
+            equal_pos = moitem.find('=')
+            if equal_pos > 0:
+                md[moitem[0:equal_pos]] = moitem[equal_pos+1:]
+        ds.SetMetadata(md)
+    elif unsetmd:
+        ds.SetMetadata({})
 
     ds = None
 

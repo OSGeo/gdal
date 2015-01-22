@@ -50,6 +50,17 @@ configuration option</a> may be used to override the encoding interpretation
 of the shapefile with any encoding supported by CPLRecode or to "" to avoid
 any recoding. (Recoding support is new for GDAL/OGR 1.9.0)</p>
 
+<h2>Open options</h2>
+
+<p>Starting with GDAL 2.0, the following open options are available.</p>
+<ul>
+<li><b>ENCODING</b>=encoding_name: to override the encoding interpretation of the
+sshapefile with any encoding supported by CPLRecode or to "" to avoid any
+recoding</li>
+<li><b>DBF_DATE_LAST_UPDATE=</b><i>YYYY-MM-DD</i>: Modification
+date to write in DBF header with year-month-day format. If not specified, current date is used.</li>
+</ul>
+
 <h2>Spatial and Attribute Indexing</h2>
 
 <p>The OGR Shapefile driver supports spatial indexing and a limited form of
@@ -222,6 +233,10 @@ size. See above "Field sizes" section. Defaults to NO.</li>
 for .SHP or .DBF files. Defaults to NO.</li>
 
 <li> <b>SPATIAL_INDEX=</b><i>YES/NO</i>: (OGR &gt;= 2.0) set the YES to create a spatial index (.qix). Defaults to NO.</li>
+
+<li> <b>DBF_DATE_LAST_UPDATE=</b><i>YYYY-MM-DD</i>: (OGR &gt;= 2.0) Modification
+date to write in DBF header with year-month-day format. If not specified, current date is used.
+Note: behaviour of past GDAL releases was to write 1995-07-26</li>
 
 </ul>
 

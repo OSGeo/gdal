@@ -96,7 +96,12 @@ ogrinfo poly.gpkg -sql "SELECT AsGPB(ST_Buffer(CastAutomagic(geom),5)) FROM poly
 <li><b>FID</b>: Column name to use for the OGR FID (primary key in the SQLite database). Default to "fid"</li>
 <li><b>OVERWRITE</b>: If set to "YES" will delete any existing layers that have the same name as the layer being created. Default to NO</li>
 <li><b>SPATIAL_INDEX</b>: (GDAL &gt;=2.0) If set to "YES" will create a spatial index for this layer. Default to YES</li>
-
+<li><b>PRECISION</b>: (GDAL &gt;=2.0)  This may be "YES" to force new fields created on this
+layer to try and represent the width of text fields (in terms of UTF-8 characters, not bytes), if available
+using TEXT(width) types. If "NO" then the type TEXT will be used instead. The default is "YES".<p>
+<li><b>TRUNCATE_FIELDS</b>: (GDAL &gt;=2.0)  This may be "YES" to force truncated of field values
+that exceed the maximum allowed width of text fields, and also to "fix" the passed string if needed
+to make it a valid UTF-8 string. If "NO" then the value is not truncated nor modified. The default is "NO".<p>
 </ul>
 
 <h3>Examples</h3>

@@ -1072,6 +1072,96 @@ def ogr_gpkg_20():
     return 'success'
 
 ###############################################################################
+# Test maximum width of text fields
+
+def ogr_gpkg_21():
+
+    if gdaltest.gpkg_dr is None:
+        return 'skip'
+
+    ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_21.gpkg')
+    lyr = ds.CreateLayer('test')
+    field_defn = ogr.FieldDefn('str', ogr.OFTString)
+    field_defn.SetWidth(2)
+    lyr.CreateField(field_defn)
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField(0, 'ab')
+    gdal.ErrorReset()
+    lyr.CreateFeature(f)
+    if gdal.GetLastErrorMsg() != '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetFieldBinaryFromHexString(0, '41E9')
+    gdal.ErrorReset()
+    gdal.PushErrorHandler()
+    lyr.CreateFeature(f)
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField(0, 'abc')
+    gdal.ErrorReset()
+    gdal.PushErrorHandler()
+    lyr.CreateFeature(f)
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    
+    f = lyr.GetFeature(f.GetFID())
+    if f.GetField(0) != 'abc':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.Unlink('/vsimem/ogr_gpkg_21.gpkg')
+
+
+    ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_21.gpkg')
+    lyr = ds.CreateLayer('test', options = ['TRUNCATE_FIELDS=YES'])
+    field_defn = ogr.FieldDefn('str', ogr.OFTString)
+    field_defn.SetWidth(2)
+    lyr.CreateField(field_defn)
+    
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetFieldBinaryFromHexString(0, '41E9')
+    gdal.ErrorReset()
+    gdal.PushErrorHandler()
+    lyr.CreateFeature(f)
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    f = lyr.GetFeature(f.GetFID())
+    if f.GetField(0) != 'A_':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField(0, 'abc')
+    gdal.ErrorReset()
+    gdal.PushErrorHandler()
+    lyr.CreateFeature(f)
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    
+    f = lyr.GetFeature(f.GetFID())
+    if f.GetField(0) != 'ab':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.Unlink('/vsimem/ogr_gpkg_21.gpkg')
+
+    return 'success'
+
+###############################################################################
 # Run test_ogrsf
 
 def ogr_gpkg_test_ogrsf():
@@ -1149,6 +1239,7 @@ gdaltest_list = [
     ogr_gpkg_18,
     ogr_gpkg_19,
     ogr_gpkg_20,
+    ogr_gpkg_21,
     ogr_gpkg_test_ogrsf,
     ogr_gpkg_cleanup,
 ]

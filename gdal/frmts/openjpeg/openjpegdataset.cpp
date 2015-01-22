@@ -349,10 +349,13 @@ CPLErr JP2OpenJPEGRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         && GetOverviewCount() > 0 && eRWFlag == GF_Read )
     {
         int         nOverview;
+        GDALRasterIOExtraArg sExtraArg;
+    
+        GDALCopyRasterIOExtraArg(&sExtraArg, psExtraArg);
 
         nOverview =
-            GDALBandGetBestOverviewLevel(this, nXOff, nYOff, nXSize, nYSize,
-                                        nBufXSize, nBufYSize);
+            GDALBandGetBestOverviewLevel2(this, nXOff, nYOff, nXSize, nYSize,
+                                        nBufXSize, nBufYSize, &sExtraArg);
         if (nOverview >= 0)
         {
             GDALRasterBand* poOverviewBand = GetOverview(nOverview);
@@ -361,7 +364,7 @@ CPLErr JP2OpenJPEGRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 
             return poOverviewBand->RasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                             pData, nBufXSize, nBufYSize, eBufType,
-                                            nPixelSpace, nLineSpace, psExtraArg );
+                                            nPixelSpace, nLineSpace, &sExtraArg );
         }
     }
 
@@ -566,17 +569,20 @@ CPLErr  JP2OpenJPEGDataset::IRasterIO( GDALRWFlag eRWFlag,
         && poBand->GetOverviewCount() > 0 && eRWFlag == GF_Read )
     {
         int         nOverview;
+        GDALRasterIOExtraArg sExtraArg;
+    
+        GDALCopyRasterIOExtraArg(&sExtraArg, psExtraArg);
 
         nOverview =
-            GDALBandGetBestOverviewLevel(poBand, nXOff, nYOff, nXSize, nYSize,
-                                        nBufXSize, nBufYSize);
+            GDALBandGetBestOverviewLevel2(poBand, nXOff, nYOff, nXSize, nYSize,
+                                          nBufXSize, nBufYSize, &sExtraArg);
         if (nOverview >= 0)
         {
             return papoOverviewDS[nOverview]->RasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                                         pData, nBufXSize, nBufYSize, eBufType,
                                                         nBandCount, panBandMap,
                                                         nPixelSpace, nLineSpace, nBandSpace,
-                                                        psExtraArg);
+                                                        &sExtraArg);
         }
     }
 

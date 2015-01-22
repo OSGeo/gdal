@@ -119,7 +119,7 @@ public:
     
     IVFKDataBlock       *GetDataBlock() const { return m_poDataBlock; }
     OGRwkbGeometryType   GetGeometryType() const { return m_nGeometryType; }
-    bool                 SetGeometry(OGRGeometry *);
+    bool                 SetGeometry(OGRGeometry *, const char * = NULL);
     OGRGeometry         *GetGeometry();
 
     bool                 LoadGeometry();
