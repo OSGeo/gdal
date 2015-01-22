@@ -4776,7 +4776,48 @@ def tiff_write_128():
     return 'success'
 
 ###############################################################################
-# Ask to run again tests with GDAL_API_PROXY=YES
+# Test that PAM metadata is cleared when internal metadata is set (#5807)
+
+def tiff_write_132():
+
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_132.tif', 1, 1)
+    ds = None
+
+    # Open in read-only
+    ds = gdal.Open('/vsimem/tiff_write_132.tif')
+    ds.SetMetadataItem('FOO', 'BAR')
+    ds.GetRasterBand(1).SetMetadataItem('FOO', 'BAR')
+    ds = None
+    
+    # Check that PAM file exists
+    if gdal.VSIStatL('/vsimem/tiff_write_132.tif.aux.xml') is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Open in read-write
+    ds = gdal.Open('/vsimem/tiff_write_132.tif', gdal.GA_Update)
+    ds.SetMetadataItem('FOO', 'BAZ')
+    ds.GetRasterBand(1).SetMetadataItem('FOO', 'BAZ')
+    ds = None
+    
+    # Check that PAM file no longer exists
+    if gdal.VSIStatL('/vsimem/tiff_write_132.tif.aux.xml') is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ds = gdal.Open('/vsimem/tiff_write_132.tif')
+    if ds.GetMetadataItem('FOO') != 'BAZ' or ds.GetRasterBand(1).GetMetadataItem('FOO') != 'BAZ':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    gdaltest.tiff_drv.Delete('/vsimem/tiff_write_132.tif')
+    
+    return 'success'
+
+
+###############################################################################
+## Ask to run again tests with GDAL_API_PROXY=YES
 
 def tiff_write_api_proxy():
 
@@ -4928,6 +4969,7 @@ gdaltest_list = [
     tiff_write_122,
     tiff_write_123,
     tiff_write_128,
+    tiff_write_132,
     #tiff_write_api_proxy,
     tiff_write_cleanup ]
 
