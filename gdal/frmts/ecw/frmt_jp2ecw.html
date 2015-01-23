@@ -7,30 +7,45 @@
 
 <h1>JP2ECW -- ERDAS JPEG2000 (.jp2)</h1>
 
-GDAL supports reading and writing JPEG2000 files using the ECW SDK from 
-ERDAS.<p>
+GDAL supports reading and writing JPEG2000 files using the ERDAS ECW/JP2 SDK developed by 
+Hexagon Geospatial (formerly Intergraph, ERDAS, ERMapper). Support is optional and 
+requires linking in the libraries available from the ECW/JP2 SDK Download page.<p>
 
 Coordinate system and georeferencing transformations are read, and 
 some degree of support is included for GeoJP2 (tm) (GeoTIFF-in-JPEG2000), 
 ERDAS GML-in-JPEG2000, and the new GML-in-JPEG2000 specification developed
 at OGC. <p>
 
-Support for the JP2ECW driver in GDAL is optional, and requires linking
-in external ECW SDK libraries provided by ERDAS.<p>
+<h3>Licensing</h3>
 
-<h2>Creation Issues</h2>
+The ERDAS ECW/JP2 SDK v5.x is available under multiple license types. For Desktop usage, decoding
+any sized ECW/JP2 image is made available free of charge. To compress, deploy on a Server platform, or decode 
+unlimited sized files on Mobile platforms a license must be purchased from Hexagon Geospatial.<p>
 
-The ECW 4.x SDK from ERDAS is only free for image decompression.  To 
-compress images it is necessary to build with the read/write SDK and to 
-provide an OEM licensing key at runtime which may be purchased from ERDAS.<p>
 
-For those still using the ECW 3.3 SDK, images less than 500MB may be 
-compressed for free, while larger images require licensing from ERDAS.  See
-the licensing agreement and the LARGE_OK option.<p>
+<h3>History</h3>
+<ul>
+<li>v3.x - Last release, 2006</li>
+<li>v4.x - Last release, 2012</li>
+<li>v5.x - Active development, 2013 - current</li>
+</ul>
 
-Creation Options:<p>
+<h2>Creation Options:</h2>
+
+Note: Only Licensing and compression target need to be specified. The ECW/JP2 SDK will default all other options to recommended settings based on the input characteristics.
+Changing other options can <i>substantially</i> impact decoding speed and compatibility with other JPEG2000 toolkits.
 
 <ul>
+
+<li> <b>LARGE_OK=YES</b>: <i>(v3.x SDK only)</i> Allow compressing files larger than 500MB in accordance with EULA terms. Deprecated since v4.x and 
+replaced by ECW_ENCODE_KEY & ECW_ENCODE_COMPANY.<p>
+
+<li> <b>ECW_ENCODE_KEY=key</b>: <i>(v4.x SDK or higher)</i> Provide the OEM encoding key to unlock encoding capability
+up to the licensed gigapixel limit.  The key is is approximately 129 hex digits long. The Company and Key must match and must be re-generated with each minor release of the SDK.  It may also be provided globally as a configuration option.<p>
+
+<li> <b>ECW_ENCODE_COMPANY=name</b>: <i>(v4.x SDK or higher)</i> Provide the name of the company in the issued
+OEM key (see ECW_ENCODE_KEY).  The Company and Key must match and must be re-generated with each minor release of the SDK.  It may also be provided 
+globally as a configuration option.<p>
 
 <li> <b>TARGET=percent</b>: Set the target size reduction as a percentage of 
 the original.  If not provided defaults to 75 for an 75% reduction.  TARGET=0 
@@ -42,20 +57,6 @@ Common examples are NUTM11, or GEODETIC.<p>
 <li> <b>DATUM=name</b>: Name of the ECW datum string to use. 
 Common examples are WGS84 or NAD83.<p>
 
-<li> <b>LARGE_OK=YES</b>: When built with the ECW 3.x SDK this option can be 
-set to allow compressing files larger than 500MB.  It is the users 
-responsibility to ensure that the licensing requirments for large file 
-compression are being adhered to.<p>
-
-<li> <b>ECW_ENCODE_KEY=key</b>: Provide the OEM encoding key purchased from 
-Erdas which permits encoding images.  The key is is approximately 129 hex 
-digits long.  It may also be provided globally as a configuration option.<p>
-
-<li> <b>ECW_ENCODE_COMPANY=name</b>: Provide the name of the company ERDAS
-issued the OEM encoding key (see ECW_ENCODE_KEY) to.  This must exactly match
-the name used by ERDAS in issuing the OEM key.  It may also be provided 
-globally as a configuration option.<p>
-
 <li> <b>GMLJP2=YES/NO</b>: Indicates whether a GML box conforming to the OGC GML in JPEG2000 specification should be included in the file.  Defaults to YES.<p>
 
 <li> <b>GeoJP2=YES/NO</b>: Indicates whether a UUID/GeoTIFF box conforming to the GeoJP2 (GeoTIFF in JPEG2000) specification should be included in the file.  Defaults to YES.<p>
@@ -65,35 +66,39 @@ NPJE or EPJE.  Review the ECW SDK documentation for details on profile
 meanings.<p>
 
 <li> <b>PROGRESSION=LRCP/RLCP/RPCL</b>: Set the progression order with
-which the JPEG2000 codestream is written.<p>
+which the JPEG2000 codestream is written. (Default, RPCL)<p>
 
 <li> <b>CODESTREAM_ONLY=YES/NO</b>: If set to YES, only the compressed
-imagery code stream will be written.  If NO (the default) a JP2 package
+imagery code stream will be written.  If NO a JP2 package
 will be written around the code stream including a variety of meta
-information.<p>
+information. (Default, NO)<p>
 
-<li> <b>LEVELS=n</b>: See ECW SDK for details.<p>
-<li> <b>LAYERS=n</b>: See ECW SDK for details.<p>
-<li> <b>PRECINCT_WIDTH=n</b>: See ECW SDK for details.<p>
-<li> <b>PRECINCT_HEIGHT=n</b>: See ECW SDK for details.<p>
-<li> <b>TILE_WIDTH=n</b>: See ECW SDK for details.<p>
-<li> <b>TILE_HEIGHT=n</b>: See ECW SDK for details.<p>
-<li> <b>INCLUDE_SOP=YES/NO</b>: See ECW SDK for details.<p>
-<li> <b>INCLUDE_EPH=YES/NO</b>: See ECW SDK for details.<p>
-<li> <b>DECOMPRESS_LAYERS=n</b>: See ECW SDK for details.<p>
-<li> <b>DECOMPRESS_RECONSTRUCTION_PARAMETER=n</b>: See ECW SDK for details.<p>
+    
+<li> <b>LEVELS=n</b>: Resolution levels in pyramid (by default so many that the size of the smallest thumbnail image is 64x64 pixels at maximum)<p>
+<li> <b>LAYERS=n</b>: Quality layers (default, 1)<p>
+<li> <b>PRECINCT_WIDTH=n</b>: Precinct Width (default, 64)<p>
+<li> <b>PRECINCT_HEIGHT=n</b>: Precinct Height (default 64)<p>
+<li> <b>TILE_WIDTH=n</b>: Tile Width (default, image width eg. 1 tile). Apart from GeoTIFF, in JPEG2000 tiling is not critical for speed if precincts are used. The minimum tile size allowed by the standard is 1024x1024 pixels.<p>
+<li> <b>TILE_HEIGHT=n</b>: Tile Height (default, image height eg. 1 tile)<p>
+<li> <b>INCLUDE_SOP=YES/NO</b>: Output Start of Packet Marker (default false)<p>
+<li> <b>INCLUDE_EPH=YES/NO</b>: Output End of Packet Header Marker (default true)<p>
+<li> <b>DECOMPRESS_LAYERS=n</b>: The number of quality layers to decode<p>
+<li> <b>DECOMPRESS_RECONSTRUCTION_PARAMETER=n</b>: IRREVERSIBLE_9x7 or REVERSIBLE_5x3<p>
 
 </ul>
 
-JPEG2000 format does not support creation of overviews since the format 
-is already considered to be optimized for "arbitrary overviews". <P>
+"JPEG2000 format does not support creation of GDAL overviews since the format 
+is already considered to be optimized for "arbitrary overviews". 
+JP2ECW driver also arranges JP2 codestream to allow optimal access to power of two overviews. 
+This is controlled with the creation option LEVELS." 
+<P>
 
 <h2> Configuration Options </h2>
 
-The ERDAS ECW SDK supports a variety of 
+The ERDAS ECW/JP2 SDK supports a variety of 
 <a href="http://trac.osgeo.org/gdal/wiki/ConfigOptions">runtime configuration 
 options</a> to control various features.  Most of these are exposed as GDAL 
-configuration options.  See the ECW SDK documentation for full details on the
+configuration options.  See the ECW/JP2 SDK documentation for full details on the
 meaning of these options. 
 
 <ul>
@@ -119,11 +124,34 @@ should be forgiving of errors in a file, trying to return as much data as is
 available.  Defaults to TRUE.  If set to FALSE an invalid file will result
 in an error.<p>
 
-<li> <b>ECW_ENCODE_KEY, ECW_ENCODE_COMPANY</b>: These values, as described
-in the creation options, may also be set as configuration options. See above.
-<p>
+</ul>
 
+<h2>Metadata</h2>
 
+Starting with GDAL 1.11.0, XMP metadata can be extracted from JPEG2000 files, and will be
+stored as XML raw content in the xml:XMP metadata domain.<p>
+
+ECW/JP2 SDK v5.1+ also advertises JPEG2000 structural information as generic File Metadata reported under "JPEG2000" metadata domain (-mdd): </p>
+<ul>
+<li><b>ALL_COMMENTS</b>: Generic comment text field</li><p>
+<li><b>PROFILE</b>: Profile type (0,1,2). Refer to ECW/JP2 SDK documentation for more info</li><p>
+<li><b>TILES_X</b>: Number of tiles on X (horizontal) Axis</li><p>
+<li><b>TILES_Y</b>: Number of tiles on Y (vertical) Axis</li><p>
+<li><b>TILE_WIDTH</b>: Tile size on X Axis</li><p>
+<li><b>TILE_HEIGHT</b>: Tile size on Y Axis</li><p>
+<li><b>PRECINCT_SIZE_X</b>: Precinct size for each resolution level (smallest to largest) on X Axis</li><p>
+<li><b>PRECINCT_SIZE_Y</b>: Precinct size for each resolution level (smallest to largest) on Y Axis</li><p>
+<li><b>CODE_BLOCK_SIZE_X</b>: Code block size on X Axis</li><p>
+<li><b>CODE_BLOCK_SIZE_Y</b>: Code block size on Y Axis</li><p>
+<li><b>PRECISION</b>: Precision / Bit-depth of each component eg. 8,8,8 for 8bit 3 band imagery.</li><p>
+<li><b>RESOLUTION_LEVELS</b>: Number of resolution levels</li><p>
+<li><b>QUALITY_LAYERS</b>: Number of quality layers</li><p>
+<li><b>PROGRESSION_ORDER</b>: Progression order (RPCL, LRCP, CPRL, RLCP)</li><p>
+<li><b>TRANSFORMATION_TYPE</b>: Filter transformation used (9x7, 5x3)</li><p>
+<li><b>USE_SOP</b>: Start of Packet marker detected (True/False)</li><p>
+<li><b>USE_EPH</b>: End of Packet header marker detected (True/False)</li><p>
+<li><b>GML_JP2_DATA</b>: OGC GML GeoReferencing box detected (True/False)</li><p>
+<li><b>COMPRESSION_RATE_TARGET</b>: Target compression rate used on encoding</li><p>
 </ul>
 
 <h2>See Also</h2>
@@ -131,8 +159,9 @@ in the creation options, may also be set as configuration options. See above.
 <ul>
 <li> Implemented as <tt>gdal/frmts/ecw/ecwdataset.cpp</tt>.<p>
 
-<li> ECW SDK available at <a href="http://www.erdas.com/products/ERDASECWJPEG2000SDK/Details.aspx">erdas.com</a>.
-
+<li> ECW/JP2 SDK available at <a href="http://hexagongeospatial.com/products/data-management-compression/ecw/erdas-ecw-jp2-sdk">www.hexagongeospatial.com</a>
+<li> Further product information available in the <a href="http://hexagongeospatial.com/products/data-management-compression/ecw/erdas-ecw-jp2-sdk/literature">User Guide</a>
+<li> Support for non-GDAL specific issues should be directed to the <a href="https://sgisupport.intergraph.com/infocenter/index?page=forums&forum=507301383c17ef4e013d8dfa30c2007ef1">Hexagon Geospatial public forum</a>
 <li> <a href="http://trac.osgeo.org/gdal/wiki/ECW">GDAL ECW Build Hints</a>
 </ul>
 

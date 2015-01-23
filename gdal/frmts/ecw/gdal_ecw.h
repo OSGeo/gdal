@@ -79,6 +79,9 @@
 
 #else
     #if ECWSDK_VERSION>=50
+		#if ECWSDK_VERSION>=51
+			#define JPEG2000_DOMAIN_NAME "JPEG2000"
+		#endif
         #include <NCSECWHeaderEditor.h>
         #include "NCSEcw/SDK/Box.h"
     #else 

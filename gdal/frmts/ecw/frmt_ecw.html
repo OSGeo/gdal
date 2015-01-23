@@ -1,88 +1,33 @@
 <html>
 <head>
-<title>ECW -- ERDAS Compress Wavelets (.ecw)</title>
+<title>ECW -- Enhanced Compressed Wavelets (.ecw)</title>
 </head>
 
 <body bgcolor="#ffffff">
 
-<h1>ECW -- ERDAS Compress Wavelets (.ecw)</h1>
+<h1>ECW -- Enhanced Compressed Wavelets (.ecw)</h1>
 
-GDAL supports .ecw format for read access and write.  The current 
-implementation reads any number of bands but returns only as eight bit
-image data.  Coordinate system and georeferencing transformations are read,
-but in some cases coordinate systems may not translate.<p>
+GDAL supports reading and writing ECW files using the ERDAS ECW/JP2 SDK developed by 
+Hexagon Geospatial (formerly Intergraph, ERDAS, ERMapper). Support is optional and 
+requires linking in the libraries available from the ECW/JP2 SDK Download page.<p>
 
-Support for the ECW driver in GDAL is optional, and requires linking
-in external ECW SDK libraries provided by Intergraph (previously ERDAS).<p>
+<h3>Licensing</h3>
 
-In addition to ECW files, this driver also supports access to network
-image services using the "ECWP" protocol.  Use the full ecwp:// url of 
-the service as the dataset name.  When built with SDK 4.1 or newer it
-is also possible to take advantage of 
-<a href="http://trac.osgeo.org/gdal/wiki/rfc24_progressive_data_support">
-RFC 24</a> style asynchronous access to ECWP services.<p>
+The ERDAS ECW/JP2 SDK v5.x is available under multiple license types. For Desktop usage, decoding
+any sized ECW/JP2 image is made available free of charge. To compress, deploy on a Server platform, or decode 
+unlimited sized files on Mobile platforms a license must be purchased from Hexagon Geospatial.<p>
 
-Starting with GDAL 1.9.0, XMP metadata can be extracted from JPEG2000 files, and will be
-stored as XML raw content in the xml:XMP metadata domain.<p>
 
-<h2>ECW metadata domain / Georeferencing update</h2>
-
-(Starting with GDAL 1.9.0)<p>
-
-The PROJ, DATUM and UNITS found in the ECW header are
-reported in the ECW metadata domain. They can also be set with the SetMetadataItem()
-method, in order to update the header information of an existing ECW file,
-opened in update mode, without modifying the imagery.<p>
-
-The geotransform and projection can also be modified with the SetGeoTransform()
-and SetProjection() methods. If the projection is set with SetProjection() and
-the PROJ, DATUM or UNITS with SetMetadataItem(), the later values will override the values
-built from the projection string.<p>
-
-<h2>ECW Version 3 Files</h2>
-(Starting with GDAL 1.10.0)<p>
-
-ECW 5.x SDK provides amended file format which allows to store data statistics, histograms,
-metadata, rpc metadata and supports UInt16 as band data type.
-
-Currently not everything is implemented: 
+<h3>History</h3>
 <ul>
-
-<li><B>Statistics and Histograms</B> - full implementation for writing and reading. No ECW_OEM_KEY neccessary.
-<li><B>File Metadata</B> - read only support. Statistics will also be preserved/updated during CreateCopy.
-<li><B>RPC Metadata</B> - supported by file format, not supported by driver. 
-<li><B>Header Metadata</B> - written by SDK itself. Reported by gdalinfo. 
+<li>v3.x - Last release, 2006</li>
+<li>v4.x - Last release, 2012</li>
+<li>v5.x - Active development, 2013 - current</li>
 </ul>
 
+<h2>Creation Options</h2>
 
-<h3>File Metadata Keys: </h3>
-
-<ul>
-<li>FILE_METADATA_ACQUISITION_DATE
-<li>FILE_METADATA_ACQUISITION_SENSOR_NAME
-<li>FILE_METADATA_ADDRESS
-<li>FILE_METADATA_AUTHOR
-<li>FILE_METADATA_CLASSIFICATION
-<li>FILE_METADATA_COMPANY - should be set to ECW_OEM_KEY
-<li>FILE_METADATA_COMPRESSION_SOFTWARE - updated during recompression
-<li>FILE_METADATA_COPYRIGHT
-<li>FILE_METADATA_EMAIL
-<li>FILE_METADATA_TELEPHONE
-</ul>
-
-<h3>Following Header Metadata will be reported: </h3>
-<ul>
-<li>CLOCKWISE_ROTATION_DEG
-<li>COLORSPACE (reported for V2 files as well)
-<li>COMPRESSION_DATE
-<li>COMPRESSION_RATE_ACTUAL
-<li>COMPRESSION_RATE_TARGET (reported for V2 files as well)
-<li>VERSION (reported for V2 files as well)
-</ul>
-
-<h2>Creation Issues</h2>
-
-The ECW 4.x SDK from ERDAS is only free for image decompression.  To 
+The ERDAS ECW/JP2 v4.x and v5.x SDK is only free for image decompression.  To 
 compress images it is necessary to build with the read/write SDK and to 
 provide an OEM licensing key at runtime which may be purchased from ERDAS.<p>
 
@@ -100,9 +45,22 @@ common coordinate systems are not mapped properly.  If you know the
 ECW name for the coordinate system you can force it to be set at
 creation time with the PROJ and DATUM creation options. <p>
 
-Creation Options:<p>
+ECW format does not support creation of overviews since the ECW format 
+is already considered to be optimized for "arbitrary overviews". <P>
+
+<h2>Creation Options:</h2>
 
 <ul>
+
+<li> <b>LARGE_OK=YES</b>: <i>(v3.x SDK only)</i> Allow compressing files larger than 500MB in accordance with EULA terms. Deprecated since v4.x and 
+replaced by ECW_ENCODE_KEY & ECW_ENCODE_COMPANY.<p>
+
+<li> <b>ECW_ENCODE_KEY=key</b>: <i>(v4.x SDK or higher)</i> Provide the OEM encoding key to unlock encoding capability
+up to the licensed gigapixel limit.  The key is is approximately 129 hex digits long. The Company and Key must match and must be re-generated with each minor release of the SDK.  It may also be provided globally as a configuration option.<p>
+
+<li> <b>ECW_ENCODE_COMPANY=name</b>: <i>(v4.x SDK or higher)</i> Provide the name of the company in the issued
+OEM key (see ECW_ENCODE_KEY).  The Company and Key must match and must be re-generated with each minor release of the SDK.  It may also be provided 
+globally as a configuration option.<p>
 
 <li> <b>TARGET=percent</b>: Set the target size reduction as a percentage of 
 the original.  If not provided defaults to 90% for greyscale images, and 95%
@@ -117,28 +75,10 @@ Common examples are WGS84 or NAD83.<p>
 <li> <b>UNITS=name</b>: (GDAL &gt;= 1.9.0) Name of the ECW projection units to use :
 METERS (default) or FEET (us-foot).<p>
 
-<li> <b>LARGE_OK=YES</b>: When built with the ECW 3.x SDK this option can be 
-set to allow compressing files larger than 500MB.  It is the users 
-responsibility to ensure that the licensing requirments for large file 
-compression are being adhered to.<p>
-
-<li> <b>ECW_ENCODE_KEY=key</b>: Provide the OEM encoding key purchased from 
-Erdas which permits encoding images.  The key is is approximately 129 hex 
-digits long.  It may also be provided globally as a configuration option.<p>
-
-<li> <b>ECW_ENCODE_COMPANY=name</b>: Provide the name of the company ERDAS
-issued the OEM encoding key (see ECW_ENCODE_KEY) to.  This must exactly match
-the name used by ERDAS in issuing the OEM key.  It may also be provided 
-globally as a configuration option.<p>
-
 <li> <b>ECW_FORMAT_VERSION=2/3</b>: (GDAL &gt;= 1.10.0) When build with the ECW 5.x SDK this option can be set to  
-allow ECW Version 3 files to be created. This would allow to write UInt16 data type
-rasters (new feature of ECW Version 3 files) . Default is 2 which will write ECW Version 2 files.<p>
+allow ECW Version 3 files to be created. Default, 2 to retain widest compatibility.<p>
 
 </ul>
-
-ECW format does not support creation of overviews since the ECW format 
-is already considered to be optimized for "arbitrary overviews". <P>
 
 <h2> Configuration Options </h2>
 
@@ -184,21 +124,73 @@ should be forgiving of errors in a file, trying to return as much data as is
 available.  Defaults to TRUE.  If set to FALSE an invalid file will result
 in an error.<p>
 
-<li> <b>ECW_ENCODE_KEY, ECW_ENCODE_COMPANY</b>: These values, as described
-in the creation options, may also be set as configuration options. See above.
-<p>
-
 </ul>
 
-<h2>See Also:</h2>
+<h3>ECW Version 3 Files</h3>
+(Starting with GDAL 1.10.0)<p>
+
+ECW 5.x SDK introduces a new file format version which,
+<ol>
+<li>Storage of data statistics, histograms, metadata, RPC information within the file header</li>
+<li>Support for UInt16 data type</li>
+<li>Ability to update regions within an existing ECW v3 file</li>
+<li>Introduces other space saving optimizations</li>
+</ol>
+
+Note: This version is not backward compatible and will fail to decode in v3.x or v4.x ECW/JP2 SDK's. The File VERSION Metadata will advertise whether the file is ECW v2 or ECW v3.
+
+<h3>ECWP</h3>
+In addition to local files, this driver also supports access to streaming network
+imagery services using the proprietary "ECWP" protocol from the ERDAS APOLLO product.  Use the full ecwp:// prefixed dataset url
+as input.  When built with ECW/JP2 SDK v4.1 or newer it
+is also possible to take advantage of 
+<a href="http://trac.osgeo.org/gdal/wiki/rfc24_progressive_data_support">
+RFC 24</a> for asynchronous / progressive streaming access to ECWP services.<p>
+
+<h3>Metadata / Georeferencing</h3>
+
+(Starting with GDAL 1.9.0)<p>
+
+The PROJ, DATUM and UNITS found in the ECW header are
+reported in the ECW metadata domain. They can also be set with the SetMetadataItem()
+method, in order to update the header information of an existing ECW file,
+opened in update mode, without modifying the imagery.<p>
+
+The geotransform and projection can also be modified with the SetGeoTransform()
+and SetProjection() methods. If the projection is set with SetProjection() and
+the PROJ, DATUM or UNITS with SetMetadataItem(), the later values will override the values
+built from the projection string.<p>
+
+<h3>File Metadata Keys: </h3>
 
 <ul>
-<li> Implemented in <tt>gdal/frmts/ecw</tt>.
+<li>FILE_METADATA_ACQUISITION_DATE
+<li>FILE_METADATA_ACQUISITION_SENSOR_NAME
+<li>FILE_METADATA_ADDRESS
+<li>FILE_METADATA_AUTHOR
+<li>FILE_METADATA_CLASSIFICATION
+<li>FILE_METADATA_COMPANY - should be set to ECW_ENCODE_COMPANY
+<li>FILE_METADATA_COMPRESSION_SOFTWARE - updated during recompression
+<li>FILE_METADATA_COPYRIGHT
+<li>FILE_METADATA_EMAIL
+<li>FILE_METADATA_TELEPHONE
+<li>CLOCKWISE_ROTATION_DEG
+<li>COLORSPACE 
+<li>COMPRESSION_DATE
+<li>COMPRESSION_RATE_ACTUAL
+<li>COMPRESSION_RATE_TARGET
+<li>VERSION 
+</ul>
 
-<li> ECW SDK available at <a href="http://geospatial.intergraph.com/products/other/ecw/ERDASECWJPEG2000SDK/Details.aspx">geospatial.intergraph.com</a>.
+<h2>See Also</h2>
 
+<ul>
+<li> Implemented as <tt>gdal/frmts/ecw/ecwdataset.cpp</tt>.<p>
+
+<li> ECW/JP2 SDK available at <a href="http://hexagongeospatial.com/products/data-management-compression/ecw/erdas-ecw-jp2-sdk">www.hexagongeospatial.com</a>
+<li> Further product information available in the <a href="http://hexagongeospatial.com/products/data-management-compression/ecw/erdas-ecw-jp2-sdk/literature">User Guide</a>
+<li> Support for non-GDAL specific issues should be directed to the <a href="https://sgisupport.intergraph.com/infocenter/index?page=forums&forum=507301383c17ef4e013d8dfa30c2007ef1">Hexagon Geospatial public forum</a>
 <li> <a href="http://trac.osgeo.org/gdal/wiki/ECW">GDAL ECW Build Hints</a>
-
 </ul>
 
 </body>
