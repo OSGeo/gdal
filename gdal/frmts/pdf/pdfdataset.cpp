@@ -2790,6 +2790,18 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
+    /* Sanity check to validate page count */
+    if( iPage != nPages )
+    {
+        poPagePoppler = poCatalogPoppler->getPage(nPages);
+        if ( poPagePoppler == NULL || !poPagePoppler->isOk() )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Invalid PDF : invalid page count");
+            PDFFreeDoc(poDocPoppler);
+            return NULL;
+        }
+    }
+
     poPagePoppler = poCatalogPoppler->getPage(iPage);
     if ( poPagePoppler == NULL || !poPagePoppler->isOk() )
     {
@@ -2903,6 +2915,10 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
 
     try
     {
+        /* Sanity check to validate page count */
+        if( iPage != nPages )
+            poPagePodofo = poDocPodofo->GetPage(nPages - 1);
+
         poPagePodofo = poDocPodofo->GetPage(iPage - 1);
     }
     catch(PoDoFo::PdfError& oError)
