@@ -466,7 +466,7 @@ OGRErr OGRS57DataSource::GetDSExtent( OGREnvelope *psExtent, int bForce )
 /************************************************************************/
 
 int OGRS57DataSource::Create( const char *pszFilename,
-                              CPL_UNUSED char **papszOptions )
+                              char **papszOptions )
 {
 /* -------------------------------------------------------------------- */
 /*      Instantiate the class registrar if possible.                    */
@@ -530,9 +530,52 @@ int OGRS57DataSource::Create( const char *pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Write out "header" records.                                     */
 /* -------------------------------------------------------------------- */
-    poWriter->WriteDSID( pszFilename, "20010409", "03.1", 540, "" );
+    int nEXPP = 1, nINTU = 4, nAGEN = 540, nNOMR = 0, nNOGR = 0,
+        nNOLR = 0, nNOIN = 0, nNOCN = 0, nNOED = 0;
+    const char
+        *pszEXPP = CSLFetchNameValue(papszOptions, "S57_EXPP"),
+        *pszINTU = CSLFetchNameValue(papszOptions, "S57_INTU"),
+        *pszEDTN = CSLFetchNameValue(papszOptions, "S57_EDTN"),
+        *pszUPDN = CSLFetchNameValue(papszOptions, "S57_UPDN"),
+        *pszUADT = CSLFetchNameValue(papszOptions, "S57_UADT"),
+        *pszISDT = CSLFetchNameValue(papszOptions, "S57_ISDT"),
+        *pszSTED = CSLFetchNameValue(papszOptions, "S57_STED"),
+        *pszAGEN = CSLFetchNameValue(papszOptions, "S57_AGEN"),
+        *pszCOMT = CSLFetchNameValue(papszOptions, "S57_COMT"),
+        *pszNOMR = CSLFetchNameValue(papszOptions, "S57_NOMR"),
+        *pszNOGR = CSLFetchNameValue(papszOptions, "S57_NOGR"),
+        *pszNOLR = CSLFetchNameValue(papszOptions, "S57_NOLR"),
+        *pszNOIN = CSLFetchNameValue(papszOptions, "S57_NOIN"),
+        *pszNOCN = CSLFetchNameValue(papszOptions, "S57_NOCN"),
+        *pszNOED = CSLFetchNameValue(papszOptions, "S57_NOED");
+    if (pszEXPP) nEXPP = atoi(pszEXPP);
+    if (pszINTU) nINTU = atoi(pszINTU);
+    if (pszAGEN) nAGEN = atoi(pszAGEN);
+    if (pszNOMR) nNOMR = atoi(pszNOMR);
+    if (pszNOGR) nNOGR = atoi(pszNOGR);
+    if (pszNOLR) nNOLR = atoi(pszNOLR);
+    if (pszNOIN) nNOIN = atoi(pszNOIN);
+    if (pszNOCN) nNOCN = atoi(pszNOCN);
+    if (pszNOED) nNOED = atoi(pszNOED);
+    poWriter->WriteDSID( nEXPP, nINTU, CPLGetFilename( pszFilename ),
+                         pszEDTN, pszUPDN, pszUADT, pszISDT, pszSTED, nAGEN,
+                         pszCOMT, nNOMR, nNOGR, nNOLR, nNOIN, nNOCN, nNOED );
 
-    poWriter->WriteDSPM();
+    int nHDAT = 2, nVDAT = 17, nSDAT = 23, nCSCL = 52000;
+    const char
+        *pszHDAT = CSLFetchNameValue(papszOptions, "S57_HDAT"),
+        *pszVDAT = CSLFetchNameValue(papszOptions, "S57_VDAT"),
+        *pszSDAT = CSLFetchNameValue(papszOptions, "S57_SDAT"),
+        *pszCSCL = CSLFetchNameValue(papszOptions, "S57_CSCL");
+    if (pszHDAT)
+        nHDAT = atoi(pszHDAT);
+    if (pszVDAT)
+        nVDAT = atoi(pszVDAT);
+    if (pszSDAT)
+        nSDAT = atoi(pszSDAT);
+    if (pszCSCL)
+        nCSCL = atoi(pszCSCL);
+    poWriter->WriteDSPM(nHDAT, nVDAT, nSDAT, nCSCL);
 
 
     return TRUE;

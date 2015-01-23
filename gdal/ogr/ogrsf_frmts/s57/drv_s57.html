@@ -184,13 +184,41 @@ support S-57 to S-57 conversion via OGR.<p>
 set OGR_S57_OPTIONS = "RETURN_PRIMITIVES=ON,RETURN_LINKAGES=ON,LNAM_REFS=ON"
 </pre>
 
+Since GDAL/OGR X.Y.Z, the following dataset creation options are supported to
+supply basic information for the S-57 data set descriptive records (DSID and
+DSPM, see the S-57 standard for a more detailed description):
+
+<ul>
+<li> <B>S57_EXPP</B>: Exchange purpose. Default is 1. <p>
+<li> <B>S57_INTU</B>: Intended usage. Default is 4. <p>
+<li> <B>S57_EDTN</B>: Edition number. Default is 2. <p>
+<li> <B>S57_UPDN</B>: Update number. Default is 0. <p>
+<li> <B>S57_UADT</B>: Update application date. Default is 20030801. <p>
+<li> <B>S57_ISDT</B>: Issue date. Default is 20030801. <p>
+<li> <B>S57_STED</B>: Edition number of S-57. Default is 03.1. <p>
+<li> <B>S57_AGEN</B>: Producing agency. Default is 540. <p>
+<li> <B>S57_COMT</B>: Comment. <p>
+<li> <B>S57_NOMR</B>: Number of meta records (objects with acronym starting with "M_"). Default is 0. <p>
+<li> <B>S57_NOGR</B>: Number of geo records. Default is 0. <p>
+<li> <B>S57_NOLR</B>: Number of collection records. Default is 0. <p>
+<li> <B>S57_NOIN</B>: Number of isolated node records. Default is 0. <p>
+<li> <B>S57_NOCN</B>: Number of connected node records. Default is 0. <p>
+<li> <B>S57_NOED</B>: Number of edge records. Default is 0. <p>
+<li> <B>S57_HDAT</B>: Horizontal geodetic datum. Default is 2. <p>
+<li> <B>S57_VDAT</B>: Vertical datum. Default is 17. <p>
+<li> <B>S57_SDAT</B>: Sounding datum. Default is 23. <p>
+<li> <B>S57_CSCL</B>: Compilation scale of data (1:X). Default is 52000. <p>
+</ul>
+
+
 <h3>See Also</h3>
 
 <ul>
 
-<li> <a href="http://www.s-57.com/">S-57 Online Object/Attribute Catalog</a>
-<li> <a href="http://home.gdal.org/projects/s57/index.html">Frank's S-57
-Page</a>: Links to other resources, and sample datasts.<p>
+<li> <a href="http://www.s-57.com/">S-57 Online Object/Attribute Catalog</a><p>
+<li> <a href="https://web.archive.org/web/20130730111701/http://home.gdal.org/projects/s57/index.html">Frank's S-57
+Page (at archive.org)</a>: Links to other resources, and sample datasts.<p>
+<li> <a href="http://www.iho.int/iho_pubs/standard/S-57Ed3.1/31Main.pdf">IHO S-57 Edition 3.1 (main)<p>
 
 </ul>
 

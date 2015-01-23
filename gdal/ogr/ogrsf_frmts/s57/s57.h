@@ -371,12 +371,24 @@ public:
     int                 WriteATTF( DDFRecord *, OGRFeature * );
     int                 WritePrimitive( OGRFeature *poFeature );
     int                 WriteCompleteFeature( OGRFeature *poFeature );
-    int                 WriteDSID( const char *pszDSNM = NULL, 
-                                   const char *pszISDT = NULL, 
+    int                 WriteDSID( int nEXPP = 1,
+                                   int nINTU = 4,
+                                   const char *pszDSNM = NULL,
+                                   const char *pszEDTN = NULL,
+                                   const char *pszUPDN = NULL,
+                                   const char *pszUADT = NULL,
+                                   const char *pszISDT = NULL,
                                    const char *pszSTED = NULL,
                                    int nAGEN = 0,
-                                   const char *pszCOMT = NULL );
-    int                 WriteDSPM( int nScale = 0 );
+                                   const char *pszCOMT = NULL,
+                                   int nNOMR = 0, int nNOGR = 0,
+                                   int nNOLR = 0, int nNOIN = 0,
+                                   int nNOCN = 0, int nNOED = 0
+                                 );
+    int                 WriteDSPM( int nHDAT = 0,
+                                   int nVDAT = 0,
+                                   int nSDAT = 0,
+                                   int nCSCL = 0 );
 
 // semi-private - for sophisticated writers.
     DDFRecord           *MakeRecord();
