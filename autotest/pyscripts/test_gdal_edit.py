@@ -161,22 +161,28 @@ def test_gdal_edit_py_4():
 
     shutil.copy('../gcore/data/byte.tif', 'tmp/test_gdal_edit_py.tif')
     ds = gdal.Open( 'tmp/test_gdal_edit_py.tif', gdal.GA_Update )
-    ds.GetRasterBand(1).ComputeStatistics(False)
-    ds = None
+    band = ds.GetRasterBand(1)
+    band.ComputeStatistics(False)
+    band.SetMetadataItem('FOO', 'BAR')
+    ds = band = None
 
     ds = gdal.Open('tmp/test_gdal_edit_py.tif')
-    if ds.GetRasterBand(1).GetMetadataItem('STATISTICS_MINIMUM') is None:
+    band = ds.GetRasterBand(1)
+    if (band.GetMetadataItem('STATISTICS_MINIMUM') is None
+            or band.GetMetadataItem('FOO') is None):
         gdaltest.post_reason('fail')
         return 'fail'
-    ds = None
+    ds = band = None
     
     test_py_scripts.run_py_script(script_path, 'gdal_edit', "tmp/test_gdal_edit_py.tif -unsetstats")
 
     ds = gdal.Open('tmp/test_gdal_edit_py.tif')
-    if ds.GetRasterBand(1).GetMetadataItem('STATISTICS_MINIMUM') is not None:
+    band = ds.GetRasterBand(1)
+    if (band.GetMetadataItem('STATISTICS_MINIMUM') is not None
+            or band.GetMetadataItem('FOO') is None):
         gdaltest.post_reason('fail')
         return 'fail'
-    ds = None
+    ds = band = None
     
     try:
         os.stat('tmp/test_gdal_edit_py.tif.aux.xml')

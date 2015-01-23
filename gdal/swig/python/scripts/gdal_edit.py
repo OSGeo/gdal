@@ -219,12 +219,10 @@ def gdal_edit(argv):
 
     if unsetstats:
         for i in range(ds.RasterCount):
-            md = ds.GetRasterBand(i+1).GetMetadata()
-            md_out = {}
-            for key in md:
-                if key.find('STATISTICS_') != 0:
-                    mt_out[key] = md[key]
-            ds.GetRasterBand(i+1).SetMetadata(md_out)
+            band = ds.GetRasterBand(i+1)
+            for key in band.GetMetadata().keys():
+                if key.startswith('STATISTICS_'):
+                    band.SetMetadataItem(key, None)
 
     if stats:
         for i in range(ds.RasterCount):
@@ -243,7 +241,7 @@ def gdal_edit(argv):
     elif unsetmd:
         ds.SetMetadata({})
 
-    ds = None
+    ds = band = None
 
     return 0
 
