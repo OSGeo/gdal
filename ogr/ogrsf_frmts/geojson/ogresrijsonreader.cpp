@@ -775,7 +775,7 @@ OGRLineString* OGRESRIJSONReadLineString( json_object* poObj)
 /*                          OGRESRIJSONReadPolygon()                    */
 /************************************************************************/
 
-OGRPolygon* OGRESRIJSONReadPolygon( json_object* poObj)
+OGRGeometry* OGRESRIJSONReadPolygon( json_object* poObj)
 {
     CPLAssert( NULL != poObj );
 
@@ -788,8 +788,6 @@ OGRPolygon* OGRESRIJSONReadPolygon( json_object* poObj)
         CPLError( CE_Warning, CPLE_AppDefined,
                   "Failed to parse hasZ and/or hasM from geometry" );
     }
-
-    OGRPolygon* poPoly = NULL;
 
     json_object* poObjRings = OGRGeoJSONFindMemberByName( poObj, "rings" );
     if( NULL == poObjRings )
@@ -808,23 +806,26 @@ OGRPolygon* OGRESRIJSONReadPolygon( json_object* poObj)
         return NULL;
     }
 
-    poPoly = new OGRPolygon();
-
     const int nRings = json_object_array_length( poObjRings );
+    OGRGeometry** papoGeoms = new OGRGeometry*[nRings];
     for(int iRing = 0; iRing < nRings; iRing ++)
     {
         json_object* poObjRing = json_object_array_get_idx( poObjRings, iRing );
         if ( poObjRing == NULL ||
                 json_type_array != json_object_get_type( poObjRing ) )
         {
-            delete poPoly;
+            for(int j=0;j<iRing;j++)
+                delete papoGeoms[j];
+            delete[] papoGeoms;
             CPLDebug( "ESRIJSON",
                     "Polygon: got non-array object." );
             return NULL;
         }
 
+        OGRPolygon* poPoly = new OGRPolygon();
         OGRLinearRing* poLine = new OGRLinearRing();
         poPoly->addRingDirectly(poLine);
+        papoGeoms[iRing] = poPoly;
 
         const int nPoints = json_object_array_length( poObjRing );
         for(int i = 0; i < nPoints; i++)
@@ -836,7 +837,9 @@ OGRPolygon* OGRESRIJSONReadPolygon( json_object* poObj)
             poObjCoords = json_object_array_get_idx( poObjRing, i );
             if( !OGRESRIJSONReaderParseXYZMArray (poObjCoords, &dfX, &dfY, &dfZ, &nNumCoords) )
             {
-                delete poPoly;
+                for(int j=0;j<=iRing;j++)
+                    delete papoGeoms[j];
+                delete[] papoGeoms;
                 return NULL;
             }
 
@@ -850,8 +853,14 @@ OGRPolygon* OGRESRIJSONReadPolygon( json_object* poObj)
             }
         }
     }
+    
+    OGRGeometry* poRet = OGRGeometryFactory::organizePolygons( papoGeoms,
+                                                               nRings,
+                                                               NULL,
+                                                               NULL);
+    delete[] papoGeoms;
 
-    return poPoly;
+    return poRet;
 }
 
 /************************************************************************/
