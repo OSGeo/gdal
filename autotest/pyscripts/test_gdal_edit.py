@@ -202,6 +202,11 @@ def test_gdal_edit_py_5():
     if script_path is None:
         return 'skip'
 
+    try:
+        from osgeo import gdalnumeric
+    except:
+        return 'skip'
+
     shutil.copy('../gcore/data/byte.tif', 'tmp/test_gdal_edit_py.tif')
     ds = gdal.Open( 'tmp/test_gdal_edit_py.tif', gdal.GA_Update )
     band = ds.GetRasterBand(1)
