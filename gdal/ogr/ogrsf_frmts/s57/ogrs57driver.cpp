@@ -199,6 +199,28 @@ void RegisterOGRS57()
 "  <Option name='" S57O_RETURN_LINKAGES "' type='boolean' description='Should additional attributes relating features to their underlying geometric primtives be attached' default='NO'/>"
 "  <Option name='" S57O_RECODE_BY_DSSI "' type='boolean' description='Should attribute values be recoded to UTF-8 from the character encoding specified in the S57 DSSI record.' default='NO'/>"
 "</OpenOptionList>");
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, 
+"<CreationOptionList>"
+"   <Option name='S57_EXPP' type='int' description='Exchange purpose' default='1'/>"
+"   <Option name='S57_INTU' type='int' description='Intended usage' default='4'/>"
+"   <Option name='S57_EDTN' type='string' description='Edition number' default='2'/>"
+"   <Option name='S57_UPDN' type='string' description='Update number' default='0'/>"
+"   <Option name='S57_UADT' type='string' description='Update application date' default='20030801'/>"
+"   <Option name='S57_ISDT' type='string' description='Issue date' default='20030801'/>"
+"   <Option name='S57_STED' type='string' description='Edition number of S-57' default='03.1'/>"
+"   <Option name='S57_AGEN' type='int' description='Producing agency' default='540'/>"
+"   <Option name='S57_COMT' type='string' description='Comment' default=''/>"
+"   <Option name='S57_NOMR' type='int' description='Number of meta records (objects with acronym starting with \"M_\")' default='0'/>"
+"   <Option name='S57_NOGR' type='int' description='Number of geo records' default='0'/>"
+"   <Option name='S57_NOLR' type='int' description='Number of collection records' default='0'/>"
+"   <Option name='S57_NOIN' type='int' description='Number of isolated node records' default='0'/>"
+"   <Option name='S57_NOCN' type='int' description='Number of connected node records' default='0'/>"
+"   <Option name='S57_NOED' type='int' description='Number of edge records' default='0'/>"
+"   <Option name='S57_HDAT' type='int' description='Horizontal geodetic datum' default='2'/>"
+"   <Option name='S57_VDAT' type='int' description='Vertical datum' default='17'/>"
+"   <Option name='S57_SDAT' type='int' description='Sounding datum' default='23'/>"
+"   <Option name='S57_CSCL' type='int' description='Compilation scale of data (1:X)' default='52000'/>"
+"</CreationOptionList>" );
 
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 

@@ -138,7 +138,8 @@ void DDFFieldDefn::AddSubfield( DDFSubfieldDefn *poNewSFDefn,
     _arrayDescr = (char *) 
         CPLRealloc(_arrayDescr, 
                    strlen(_arrayDescr)+strlen(poNewSFDefn->GetName())+2);
-    if( strlen(_arrayDescr) > 0 )
+    if( strlen(_arrayDescr) > 0 && 
+       (_arrayDescr[0] != '*' || strlen(_arrayDescr) > 1) )
         strcat( _arrayDescr, "!" );
     strcat( _arrayDescr, poNewSFDefn->GetName() );
 }

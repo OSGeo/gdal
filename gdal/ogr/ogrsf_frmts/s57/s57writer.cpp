@@ -274,7 +274,7 @@ int S57Writer::CreateS57File( const char *pszFilename )
     poFDefn = new DDFFieldDefn();
 
     poFDefn->Create( "SG2D", "2-D coordinate field", "*",
-                     dsc_array, dtc_mixed_data_type );
+                     dsc_array, dtc_bit_string );
 
     poFDefn->AddSubfield( "YCOO", "b24" );
     poFDefn->AddSubfield( "XCOO", "b24" );
@@ -287,7 +287,7 @@ int S57Writer::CreateS57File( const char *pszFilename )
     poFDefn = new DDFFieldDefn();
 
     poFDefn->Create( "SG3D", "3-D coordinate (sounding array) field", "*",
-                     dsc_array, dtc_mixed_data_type );
+                     dsc_array, dtc_bit_string );
 
     poFDefn->AddSubfield( "YCOO", "b24" );
     poFDefn->AddSubfield( "XCOO", "b24" );
@@ -427,9 +427,13 @@ int S57Writer::CreateS57File( const char *pszFilename )
 /*                             WriteDSID()                              */
 /************************************************************************/
 
-int S57Writer::WriteDSID( const char *pszDSNM, const char *pszISDT, 
-                          const char *pszSTED, int nAGEN, 
-                          const char *pszCOMT )
+int S57Writer::WriteDSID( int nEXPP /*1*/, int nINTU /*4*/,
+                          const char *pszDSNM, const char *pszEDTN,
+                          const char *pszUPDN, const char *pszUADT,
+                          const char *pszISDT, const char *pszSTED,
+                          int nAGEN, const char *pszCOMT,
+                          int nNOMR, int nNOGR, int nNOLR, int nNOIN,
+                          int nNOCN, int nNOED )
 
 {
 /* -------------------------------------------------------------------- */
@@ -437,8 +441,14 @@ int S57Writer::WriteDSID( const char *pszDSNM, const char *pszISDT,
 /* -------------------------------------------------------------------- */
     if( pszDSNM == NULL )
         pszDSNM = "";
+    if( pszEDTN == NULL )
+        pszEDTN = "2";
+    if( pszUPDN == NULL )
+        pszUPDN = "0";
     if( pszISDT == NULL )
         pszISDT = "20030801";
+    if( pszUADT == NULL )
+        pszUADT = pszISDT;
     if( pszSTED == NULL )
         pszSTED = "03.1";
     if( pszCOMT == NULL )
@@ -454,12 +464,12 @@ int S57Writer::WriteDSID( const char *pszDSNM, const char *pszISDT,
 
     poRec->SetIntSubfield   ( "DSID", 0, "RCNM", 0, 10 );
     poRec->SetIntSubfield   ( "DSID", 0, "RCID", 0, 1 );
-    poRec->SetIntSubfield   ( "DSID", 0, "EXPP", 0, 1 );
-    poRec->SetIntSubfield   ( "DSID", 0, "INTU", 0, 4 );
+    poRec->SetIntSubfield   ( "DSID", 0, "EXPP", 0, nEXPP );
+    poRec->SetIntSubfield   ( "DSID", 0, "INTU", 0, nINTU );
     poRec->SetStringSubfield( "DSID", 0, "DSNM", 0, pszDSNM );
-    poRec->SetStringSubfield( "DSID", 0, "EDTN", 0, "2" );
-    poRec->SetStringSubfield( "DSID", 0, "UPDN", 0, "0" );
-    poRec->SetStringSubfield( "DSID", 0, "UADT", 0, pszISDT );
+    poRec->SetStringSubfield( "DSID", 0, "EDTN", 0, pszEDTN );
+    poRec->SetStringSubfield( "DSID", 0, "UPDN", 0, pszUPDN );
+    poRec->SetStringSubfield( "DSID", 0, "UADT", 0, pszUADT );
     poRec->SetStringSubfield( "DSID", 0, "ISDT", 0, pszISDT );
     poRec->SetStringSubfield( "DSID", 0, "STED", 0, pszSTED );
     poRec->SetIntSubfield   ( "DSID", 0, "PRSP", 0, 1 );
@@ -475,17 +485,17 @@ int S57Writer::WriteDSID( const char *pszDSNM, const char *pszISDT,
 /* -------------------------------------------------------------------- */
     /* poField = */ poRec->AddField( poModule->FindFieldDefn( "DSSI" ) );
 
-    poRec->SetIntSubfield   ( "DSSI", 0, "DSTR", 0, 2 );
-    poRec->SetIntSubfield   ( "DSSI", 0, "AALL", 0, 1 );
-    poRec->SetIntSubfield   ( "DSSI", 0, "NALL", 0, 1 );
-    poRec->SetIntSubfield   ( "DSSI", 0, "NOMR", 0, 0 );
-    poRec->SetIntSubfield   ( "DSSI", 0, "NOCR", 0, 0 );
-    poRec->SetIntSubfield   ( "DSSI", 0, "NOGR", 0, 3 );
-    poRec->SetIntSubfield   ( "DSSI", 0, "NOLR", 0, 0 );
-    poRec->SetIntSubfield   ( "DSSI", 0, "NOIN", 0, 3 );
-    poRec->SetIntSubfield   ( "DSSI", 0, "NOCN", 0, 0 );
-    poRec->SetIntSubfield   ( "DSSI", 0, "NOED", 0, 0 );
-    poRec->SetIntSubfield   ( "DSSI", 0, "NOFA", 0, 0 );
+    poRec->SetIntSubfield   ( "DSSI", 0, "DSTR", 0, 2 ); // "Chain node"
+    poRec->SetIntSubfield   ( "DSSI", 0, "AALL", 0, 0 );
+    poRec->SetIntSubfield   ( "DSSI", 0, "NALL", 0, 0 );
+    poRec->SetIntSubfield   ( "DSSI", 0, "NOMR", 0, nNOMR ); // Meta records
+    poRec->SetIntSubfield   ( "DSSI", 0, "NOCR", 0, 0 ); // Cartographic records are not permitted in ENC
+    poRec->SetIntSubfield   ( "DSSI", 0, "NOGR", 0, nNOGR ); // Geo records
+    poRec->SetIntSubfield   ( "DSSI", 0, "NOLR", 0, nNOLR ); // Collection records
+    poRec->SetIntSubfield   ( "DSSI", 0, "NOIN", 0, nNOIN ); // Isolated node records
+    poRec->SetIntSubfield   ( "DSSI", 0, "NOCN", 0, nNOCN ); // Connected node records
+    poRec->SetIntSubfield   ( "DSSI", 0, "NOED", 0, nNOED ); // Edge records
+    poRec->SetIntSubfield   ( "DSSI", 0, "NOFA", 0, 0 ); // Face are not permitted in chain node structure
 
 /* -------------------------------------------------------------------- */
 /*      Write out the record.                                           */
@@ -500,11 +510,17 @@ int S57Writer::WriteDSID( const char *pszDSNM, const char *pszISDT,
 /*                             WriteDSPM()                              */
 /************************************************************************/
 
-int S57Writer::WriteDSPM( int nScale )
+int S57Writer::WriteDSPM( int nHDAT, int nVDAT, int nSDAT, int nCSCL )
 
 {
-    if( nScale == 0 )
-        nScale = 52000;
+    if( nHDAT == 0 )
+        nHDAT = 2;
+    if( nVDAT == 0 )
+        nVDAT = 17;
+    if( nSDAT == 0 )
+        nSDAT = 23;
+    if( nCSCL == 0 )
+        nCSCL = 52000;
 
 /* -------------------------------------------------------------------- */
 /*      Add the DSID field.                                             */
@@ -516,10 +532,10 @@ int S57Writer::WriteDSPM( int nScale )
 
     poRec->SetIntSubfield   ( "DSPM", 0, "RCNM", 0, 20 );
     poRec->SetIntSubfield   ( "DSPM", 0, "RCID", 0, 1 );
-    poRec->SetIntSubfield   ( "DSPM", 0, "HDAT", 0, 2 );
-    poRec->SetIntSubfield   ( "DSPM", 0, "VDAT", 0, 17 );
-    poRec->SetIntSubfield   ( "DSPM", 0, "SDAT", 0, 23 );
-    poRec->SetIntSubfield   ( "DSPM", 0, "CSCL", 0, nScale );
+    poRec->SetIntSubfield   ( "DSPM", 0, "HDAT", 0, nHDAT ); // Must be 2 for ENC
+    poRec->SetIntSubfield   ( "DSPM", 0, "VDAT", 0, nVDAT );
+    poRec->SetIntSubfield   ( "DSPM", 0, "SDAT", 0, nSDAT );
+    poRec->SetIntSubfield   ( "DSPM", 0, "CSCL", 0, nCSCL );
     poRec->SetIntSubfield   ( "DSPM", 0, "DUNI", 0, 1 );
     poRec->SetIntSubfield   ( "DSPM", 0, "HUNI", 0, 1 );
     poRec->SetIntSubfield   ( "DSPM", 0, "PUNI", 0, 1 );
@@ -548,14 +564,13 @@ DDFRecord *S57Writer::MakeRecord()
 {
     DDFRecord *poRec = new DDFRecord( poModule );
     DDFField *poField;
-    unsigned char abyData[3];
+    unsigned char abyData[2];
 
     abyData[0] = nNext0001Index % 256;
     abyData[1] = (unsigned char) (nNext0001Index / 256); 
-    abyData[2] = DDF_FIELD_TERMINATOR;
 
     poField = poRec->AddField( poModule->FindFieldDefn( "0001" ) );
-    poRec->SetFieldRaw( poField, 0, (const char *) abyData, 3 );
+    poRec->SetFieldRaw( poField, 0, (const char *) abyData, 2 );
 
     nNext0001Index++;
 
@@ -581,12 +596,11 @@ int S57Writer::WriteGeometry( DDFRecord *poRec, int nVertCount,
     poField = poRec->AddField( poModule->FindFieldDefn( pszFieldName ) );
 
     if( padfZ )
-        nRawDataSize = 12 * nVertCount + 1;
+        nRawDataSize = 12 * nVertCount;
     else
-        nRawDataSize = 8 * nVertCount + 1;
+        nRawDataSize = 8 * nVertCount;
 
     pabyRawData = (unsigned char *) CPLMalloc(nRawDataSize);
-    pabyRawData[nRawDataSize-1] = DDF_UNIT_TERMINATOR;
 
     for( i = 0; i < nVertCount; i++ )
     {
@@ -715,7 +729,8 @@ int S57Writer::WritePrimitive( OGRFeature *poFeature )
             padfY[i] = poLS->getY(i);
         }
 
-        WriteGeometry( poRec, nVCount, padfX, padfY, NULL );
+        if (nVCount)
+            WriteGeometry( poRec, nVCount, padfX, padfY, NULL );
 
         CPLFree( padfX );
         CPLFree( padfY );
@@ -888,9 +903,8 @@ int S57Writer::WriteCompleteFeature( OGRFeature *poFeature )
 
         CPLAssert( sizeof(int) == sizeof(GInt32) );
 
-        nRawDataSize = nItemCount * 8 + 1;
+        nRawDataSize = nItemCount * 8;
         pabyRawData = (unsigned char *) CPLMalloc(nRawDataSize);
-        pabyRawData[nRawDataSize-1] = DDF_UNIT_TERMINATOR;
 
         for( i = 0; i < nItemCount; i++ )
         {
