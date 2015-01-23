@@ -1227,12 +1227,16 @@ GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
     else if( (pszMethod == NULL || EQUAL(pszMethod,"GEOTRANSFORM"))
              && GDALGetGeoTransform( hSrcDS, psInfo->adfSrcGeoTransform ) 
              == CE_None
+#if 0
+// see http://lists.osgeo.org/pipermail/gdal-dev/2014-September/039980.html
              && (psInfo->adfSrcGeoTransform[0] != 0.0
                  || psInfo->adfSrcGeoTransform[1] != 1.0
                  || psInfo->adfSrcGeoTransform[2] != 0.0
                  || psInfo->adfSrcGeoTransform[3] != 0.0
                  || psInfo->adfSrcGeoTransform[4] != 0.0
-                 || ABS(psInfo->adfSrcGeoTransform[5]) != 1.0) )
+                 || ABS(psInfo->adfSrcGeoTransform[5]) != 1.0)
+#endif
+            )
     {
         if( !GDALInvGeoTransform( psInfo->adfSrcGeoTransform, 
                                   psInfo->adfSrcInvGeoTransform ) )
