@@ -59,6 +59,7 @@ def validate_layer(lyr, name, features, type, fields, box):
 
     if type != lyrDefn.GetGeomType():
         print('Wrong geometry type')
+        print(lyrDefn.GetGeomType())
         return False
 
     if fields != lyrDefn.GetFieldCount():
@@ -74,6 +75,7 @@ def validate_layer(lyr, name, features, type, fields, box):
 
     if max(minx, maxx, miny, maxy) > 0.0001:
         print('Wrong spatial extent of layer')
+        print(extent)
         return False
 
     return True
@@ -812,14 +814,14 @@ def ogr_geojson_18():
         gdaltest.post_reason('Missing layer called OGRGeoJSON')
         return 'fail'
 
-    extent = (2,3,49,50)
+    extent = (-3,3,49,50)
 
     rc = validate_layer(lyr, 'OGRGeoJSON', 1, ogr.wkbPolygon, 0, extent)
     if rc is not True:
         return 'fail'
 
     feature = lyr.GetNextFeature()
-    ref_geom = ogr.CreateGeometryFromWkt('POLYGON ((2 49,2 50,3 50,3 49,2 49))')
+    ref_geom = ogr.CreateGeometryFromWkt('MULTIPOLYGON (((2 49,2 50,3 50,3 49,2 49),(2.1 49.1,2.1 49.9,2.9 49.9,2.9 49.1,2.1 49.1)),((-2 49,-2 50,-3 50,-3 49,-2 49)))')
     if ogrtest.check_feature_geometry(feature, ref_geom) != 0:
         feature.DumpReadable()
         return 'fail'
