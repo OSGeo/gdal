@@ -648,7 +648,16 @@ int USGSDEMDataset::LoadFromFile(VSILFILE *InDem)
     }
 
     if (nCoordSystem == 1)	// UTM
+    {
         sr.SetUTM( iUTMZone, TRUE );
+        if( nGUnit == 1 )
+        {
+            sr.SetLinearUnitsAndUpdateParameters( SRS_UL_US_FOOT, CPLAtof(SRS_UL_US_FOOT_CONV) );
+            char    szUTMName[128];
+            sprintf( szUTMName, "UTM Zone %d, Northern Hemisphere, us-ft", iUTMZone );
+            sr.SetNode( "PROJCS", szUTMName );
+        }
+    }
 
     else if (nCoordSystem == 2)	// state plane
     {
