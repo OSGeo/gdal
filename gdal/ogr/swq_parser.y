@@ -466,8 +466,8 @@ value_expr_non_logical:
             else
             {
                 $$ = $3;
-                            $$->eNodeType = SNT_OPERATION;
-                            $$->nOperation = poOp->eOperation;
+                $$->eNodeType = SNT_OPERATION;
+                $$->nOperation = poOp->eOperation;
                 $$->ReverseSubExpressions();
                 delete $1;
             }
@@ -658,9 +658,9 @@ column_spec:
             {
                 CPLError( CE_Failure, CPLE_AppDefined,
                         "Syntax Error with %s(*).", 
-                    $1->string_value );
+                        $1->string_value );
                 delete $1;
-                    YYERROR;
+                YYERROR;
             }
 
             delete $1;
