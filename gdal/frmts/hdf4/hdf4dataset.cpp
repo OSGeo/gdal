@@ -1246,5 +1246,9 @@ void GDALRegister_HDF4()
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
-}
 
+#ifdef HDF4_PLUGIN
+    GDALRegister_HDF4Image();
+#endif
+
+}
