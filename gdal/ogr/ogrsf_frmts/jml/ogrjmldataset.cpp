@@ -133,9 +133,9 @@ GDALDataset* OGRJMLDataset::Open( GDALOpenInfo* poOpenInfo )
 /************************************************************************/
 
 GDALDataset* OGRJMLDataset::Create( const char *pszFilename, 
-                                CPL_UNUSED int nBands,
                                 CPL_UNUSED int nXSize,
                                 CPL_UNUSED int nYSize,
+                                CPL_UNUSED int nBands,
                                 CPL_UNUSED GDALDataType eDT,
                                 CPL_UNUSED char **papszOptions )
 {
