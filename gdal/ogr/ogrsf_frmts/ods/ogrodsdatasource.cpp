@@ -1532,11 +1532,20 @@ void OGRODSDataSource::FlushCache()
 
     /* Write uncopressed mimetype */
     char** papszOptions = CSLAddString(NULL, "COMPRESSED=NO");
-    CPLCreateFileInZip(hZIP, "mimetype", papszOptions );
-    CPLWriteFileInZip(hZIP, "application/vnd.oasis.opendocument.spreadsheet",
-                      strlen("application/vnd.oasis.opendocument.spreadsheet"));
-    CPLCloseFileInZip(hZIP);
+    if( CPLCreateFileInZip(hZIP, "mimetype", papszOptions ) != CE_None )
+    {
+        CSLDestroy(papszOptions);
+        CPLCloseZip(hZIP);
+        return;
+    }
     CSLDestroy(papszOptions);
+    if( CPLWriteFileInZip(hZIP, "application/vnd.oasis.opendocument.spreadsheet",
+                      strlen("application/vnd.oasis.opendocument.spreadsheet")) != CE_None )
+    {
+        CPLCloseZip(hZIP);
+        return;
+    }
+    CPLCloseFileInZip(hZIP);
 
     /* Now close ZIP file */
     CPLCloseZip(hZIP);
