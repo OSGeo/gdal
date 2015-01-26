@@ -1264,7 +1264,7 @@ YYSTYPE yylval YY_INITIAL_VALUE (= yyval_default);
        to reallocate them elsewhere.  */
 
     /* The state stack.  */
-    yytype_int16 yyssa[YYINITDEPTH]; /* workaround bug with gcc 4.1 -O2 */ memset(yyssa, 0, sizeof(yyssa));
+    yytype_int16 yyssa[YYINITDEPTH];
     yytype_int16 *yyss;
     yytype_int16 *yyssp;
 
@@ -1961,8 +1961,8 @@ yyreduce:
             else
             {
                 (yyval) = (yyvsp[-1]);
-                            (yyval)->eNodeType = SNT_OPERATION;
-                            (yyval)->nOperation = poOp->eOperation;
+                (yyval)->eNodeType = SNT_OPERATION;
+                (yyval)->nOperation = poOp->eOperation;
                 (yyval)->ReverseSubExpressions();
                 delete (yyvsp[-3]);
             }
@@ -2185,9 +2185,9 @@ yyreduce:
             {
                 CPLError( CE_Failure, CPLE_AppDefined,
                         "Syntax Error with %s(*).", 
-                    (yyvsp[-3])->string_value );
+                        (yyvsp[-3])->string_value );
                 delete (yyvsp[-3]);
-                    YYERROR;
+                YYERROR;
             }
 
             delete (yyvsp[-3]);
