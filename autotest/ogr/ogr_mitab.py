@@ -1967,6 +1967,49 @@ def ogr_mitab_35():
     return 'success'
 
 ###############################################################################
+# Test opening and modifying a file with polygons created with MapInfo that consists of
+# a single object block, without index block
+
+def ogr_mitab_36():
+
+    # Test modifying a new object
+    shutil.copy('data/polygon_without_index.tab', 'tmp')
+    shutil.copy('data/polygon_without_index.dat', 'tmp')
+    shutil.copy('data/polygon_without_index.id', 'tmp')
+    shutil.copy('data/polygon_without_index.map', 'tmp')
+    
+    ds = ogr.Open('tmp/polygon_without_index.tab', update = 1)
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    g = f.GetGeometryRef()
+    ring = g.GetGeometryRef(0)
+    ring.SetPoint_2D(1, ring.GetX(1) + 100, ring.GetY())
+    g = g.Clone()
+    f.SetGeometry(g)
+    lyr.SetFeature(f)
+    f = None
+    ds = None
+    
+    ds = ogr.Open('tmp/polygon_without_index.tab')
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    got_g = f.GetGeometryRef()
+    if ogrtest.check_feature_geometry(f, got_g, max_error=0.1):
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        print(g)
+        return 'fail'
+    while True:
+        f = lyr.GetNextFeature()
+        if f is None:
+            break
+    ds = None
+
+    ogr.GetDriverByName('MapInfo File').DeleteDataSource('tmp/polygon_without_index.tab')
+
+    return 'success'
+
+###############################################################################
 #
 
 def ogr_mitab_cleanup():
@@ -2016,6 +2059,7 @@ gdaltest_list = [
     ogr_mitab_33,
     ogr_mitab_34,
     ogr_mitab_35,
+    ogr_mitab_36,
     ogr_mitab_cleanup
     ]
 
