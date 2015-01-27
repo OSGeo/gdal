@@ -110,12 +110,19 @@ int OGRPGeoDataSource::Open( const char * pszNewName, int bUpdate,
 /*                                                                      */
 /* -------------------------------------------------------------------- */
     char *pszDSN;
+    const char* pszOptionName = "";
+    const char* pszDSNStringTemplate = NULL;
     if( EQUALN(pszNewName,"PGEO:",5) )
         pszDSN = CPLStrdup( pszNewName + 5 );
     else
     {
-        const char *pszDSNStringTemplate = NULL;
-        pszDSNStringTemplate = CPLGetConfigOption( "PGEO_DRIVER_TEMPLATE", "DRIVER=Microsoft Access Driver (*.mdb);DBQ=%s");
+        pszOptionName = "PGEO_DRIVER_TEMPLATE";
+        pszDSNStringTemplate = CPLGetConfigOption( pszOptionName, NULL );
+        if( pszDSNStringTemplate == NULL )
+        {
+            pszOptionName = "";
+            pszDSNStringTemplate = "DRIVER=Microsoft Access Driver (*.mdb);DBQ=%s";
+        }
         if (!CheckDSNStringTemplate(pszDSNStringTemplate))
         {
             CPLError( CE_Failure, CPLE_AppDefined,
@@ -133,11 +140,28 @@ int OGRPGeoDataSource::Open( const char * pszNewName, int bUpdate,
 
     if( !oSession.EstablishSession( pszDSN, NULL, NULL ) )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Unable to initialize ODBC connection to DSN for %s,\n"
-                  "%s", pszDSN, oSession.GetLastError() );
-        CPLFree( pszDSN );
-        return FALSE;
+        int bError = TRUE;
+        if( !EQUALN(pszNewName,"PGEO:",5) )
+        {
+            // Trying with another template (#5594)
+            pszDSNStringTemplate = "DRIVER=Microsoft Access Driver (*.mdb, *.accdb);DBQ=%s";
+            CPLFree( pszDSN );
+            pszDSN = (char *) CPLMalloc(strlen(pszNewName)+strlen(pszDSNStringTemplate)+100);
+            sprintf( pszDSN, pszDSNStringTemplate,  pszNewName );
+            CPLDebug( "PGeo", "EstablishSession(%s)", pszDSN );
+            if( oSession.EstablishSession( pszDSN, NULL, NULL ) )
+            {
+                bError = FALSE;
+            }
+        }
+        if( bError )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                    "Unable to initialize ODBC connection to DSN for %s,\n"
+                    "%s", pszDSN, oSession.GetLastError() );
+            CPLFree( pszDSN );
+            return FALSE;
+        }
     }
 
     CPLFree( pszDSN );
