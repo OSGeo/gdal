@@ -35,7 +35,7 @@ gdal_unit_test: $(OBJ)
 	$(CXX) $(CXXFLAGS) $^ $(LDFLAGS) -o $@
 
 testperfcopywords: testperfcopywords.cpp
-	$(CXX) $(CXXFLAGS) $< $(LDFLAGS) -o $@
+	$(CXX) -O2 $(CXXFLAGS) $< $(LDFLAGS) -o $@
 	
 testcopywords: testcopywords.cpp
 	$(CXX) -O2 $(CXXFLAGS) $< $(LDFLAGS) -o $@
