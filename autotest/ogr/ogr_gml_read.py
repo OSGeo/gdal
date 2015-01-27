@@ -301,9 +301,14 @@ def ogr_gml_8():
     gml_ds = ogr.Open( 'data/utf8.gml' )
     lyr = gml_ds.GetLayer()
     feat = lyr.GetNextFeature()
-    if feat.GetFieldAsString('name') != '\xc4\x80liamanu':
-        print(feat.GetFieldAsString('name'))
-        return 'fail'
+    if sys.version_info >= (3,0,0):
+        if feat.GetFieldAsString('name') != '\xc4\x80liamanu'.encode('latin1').decode('utf-8'):
+            print(feat.GetFieldAsString('name'))
+            return 'fail'
+    else:
+        if feat.GetFieldAsString('name') != '\xc4\x80liamanu':
+            print(feat.GetFieldAsString('name'))
+            return 'fail'
 
     gml_ds.Destroy()
 
@@ -323,7 +328,7 @@ def ogr_gml_9():
     lyr.CreateField(ogr.FieldDefn('test', ogr.OFTString))
 
     dst_feat = ogr.Feature( lyr.GetLayerDefn() )
-    dst_feat.SetField('test', '\x80bad')
+    dst_feat.SetFieldBinaryFromHexString('test', '80626164') # \x80bad'
 
     # Avoid the warning
     gdal.PushErrorHandler('CPLQuietErrorHandler')
@@ -340,12 +345,12 @@ def ogr_gml_9():
     ds = ogr.Open('tmp/broken_utf8.gml')
     lyr = ds.GetLayerByName('test')
     feat = lyr.GetNextFeature()
-
     if feat.GetField('test') != '?bad':
         gdaltest.post_reason('Unexpected content.')
+        print(feat.GetField('test'))
         return 'fail'
 
-    feat.Destroy();
+    feat.Destroy()
     ds.Destroy()
 
     os.remove('tmp/broken_utf8.gml')
