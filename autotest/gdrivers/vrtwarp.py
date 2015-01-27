@@ -364,8 +364,8 @@ def vrtwarp_8():
         return 'fail'
     if vrtwarp_ds.GetRasterBand(1).GetOverview(0).Checksum() != 1189:
         gdaltest.post_reason('fail')
-        print vrtwarp_ds.GetRasterBand(1).GetOverview(0).XSize
-        print vrtwarp_ds.GetRasterBand(1).GetOverview(0).YSize
+        print(vrtwarp_ds.GetRasterBand(1).GetOverview(0).XSize)
+        print(vrtwarp_ds.GetRasterBand(1).GetOverview(0).YSize)
         print(vrtwarp_ds.GetRasterBand(1).GetOverview(0).Checksum())
         return 'fail'
     vrtwarp_ds = None
@@ -412,7 +412,7 @@ def vrtwarp_9():
     </SimpleSource>
   </VRTRasterBand>
 </VRTDataset>
-''')
+'''.encode('ascii'))
     f.close()
     ds = gdal.Open('tmp/sstgeo.vrt', gdal.GA_Update)
     ds.BuildOverviews( 'NEAR', overviewlist = [2] )
@@ -435,8 +435,8 @@ def vrtwarp_9():
         return 'fail'
     if vrtwarp_ds.GetRasterBand(1).GetOverview(0).Checksum() != 63972:
         gdaltest.post_reason('fail')
-        print vrtwarp_ds.GetRasterBand(1).GetOverview(0).XSize
-        print vrtwarp_ds.GetRasterBand(1).GetOverview(0).YSize
+        print(vrtwarp_ds.GetRasterBand(1).GetOverview(0).XSize)
+        print(vrtwarp_ds.GetRasterBand(1).GetOverview(0).YSize)
         print(vrtwarp_ds.GetRasterBand(1).GetOverview(0).Checksum())
         return 'fail'
     vrtwarp_ds = None

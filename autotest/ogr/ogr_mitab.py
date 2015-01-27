@@ -742,11 +742,11 @@ def ogr_mitab_20():
         if i == 0:
             f.write(
 """Source = CoordSys Earth Projection 3, 33, "m", 3, 46.5, 44, 49, 700000, 6600000
-Destination=CoordSys Earth Projection 3, 33, "m", 3, 46.5, 44, 49.00000000001, 700000, 6600000 Bounds (-792421, 5278231) (3520778, 9741029)""")
+Destination=CoordSys Earth Projection 3, 33, "m", 3, 46.5, 44, 49.00000000001, 700000, 6600000 Bounds (-792421, 5278231) (3520778, 9741029)""".encode('ascii'))
         else:
             f.write(
 """Source = CoordSys Earth Projection 3, 33, "m", 3, 46.5, 44, 49, 700000, 6600000
-Destination=CoordSys Earth Projection 3, 33, "m", 3, 46.5, 44, 49.00000000002, 700000, 6600000 Bounds (75000, 6000000) (1275000, 7200000)""")
+Destination=CoordSys Earth Projection 3, 33, "m", 3, 46.5, 44, 49.00000000002, 700000, 6600000 Bounds (75000, 6000000) (1275000, 7200000)""".encode('ascii'))
         f.close()
 
         if i == 1 and sys.platform.startswith('linux'):
@@ -913,14 +913,14 @@ def ogr_mitab_24():
         ds = ogr.GetDriverByName('MapInfo File').CreateDataSource(filename)
         lyr = ds.CreateLayer('test')
         lyr.CreateField(ogr.FieldDefn('ID', ogr.OFTInteger))
-        for i in range(nb_features/2):
+        for i in range(int(nb_features/2)):
             feat = ogr.Feature(lyr.GetLayerDefn())
             feat.SetField('ID', i+1)
             feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT (0 0)"))
             lyr.CreateFeature(feat)
 
         lyr.ResetReading()
-        for i in range(nb_features/2):
+        for i in range(int(nb_features/2)):
             f = lyr.GetNextFeature()
             if f is None or f.GetField('ID') != i+1:
                 print(nb_features)
@@ -932,7 +932,7 @@ def ogr_mitab_24():
             gdaltest.post_reason('fail')
             return 'fail'
 
-        for i in range(nb_features/2):
+        for i in range(int(nb_features/2)):
             feat = ogr.Feature(lyr.GetLayerDefn())
             feat.SetField('ID', nb_features / 2 + i+1)
             feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT (0 0)"))
@@ -970,7 +970,7 @@ def ogr_mitab_25():
         ds = ogr.GetDriverByName('MapInfo File').CreateDataSource(filename)
         lyr = ds.CreateLayer('test')
         lyr.CreateField(ogr.FieldDefn('ID', ogr.OFTInteger))
-        for i in range(nb_features/2):
+        for i in range(int(nb_features/2)):
             feat = ogr.Feature(lyr.GetLayerDefn())
             feat.SetField('ID', i+1)
             feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT (%d %d)" % (i, i)))
@@ -1057,14 +1057,14 @@ def ogr_mitab_26():
                 lyr.CreateFeature(feat)
 
             if nb_features == 2:
-                if lyr.DeleteFeature(nb_features/2) != 0:
+                if lyr.DeleteFeature(int(nb_features/2)) != 0:
                     print(j)
                     print(nb_features)
                     gdaltest.post_reason('fail')
                     return 'fail'
             else:
-                for k in range(nb_features/2):
-                    if lyr.DeleteFeature(nb_features/4 + k) != 0:
+                for k in range(int(nb_features/2)):
+                    if lyr.DeleteFeature(int(nb_features/4) + k) != 0:
                         print(j)
                         print(k)
                         print(nb_features)
@@ -1075,7 +1075,7 @@ def ogr_mitab_26():
                 # Expected failure : already deleted feature
                 gdal.ErrorReset()
                 gdal.PushErrorHandler('CPLQuietErrorHandler')
-                ret = lyr.DeleteFeature(nb_features/2)
+                ret = lyr.DeleteFeature(int(nb_features/2))
                 gdal.PopErrorHandler()
                 if ret == 0 or gdal.GetLastErrorMsg() == '':
                     print(j)
@@ -1083,7 +1083,7 @@ def ogr_mitab_26():
                     gdaltest.post_reason('fail')
                     return 'fail'
 
-                feat = lyr.GetFeature(nb_features/2)
+                feat = lyr.GetFeature(int(nb_features/2))
                 if feat is not None:
                     print(j)
                     print(nb_features)
@@ -1709,11 +1709,13 @@ Data
 
 NONE
 """ % coordsys
+    content = content.encode('ascii')
     gdal.VSIFWriteL(content, 1, len(content),f)
     gdal.VSIFCloseL(f)
 
     f = gdal.VSIFOpenL(mif_filename[0:-3]+"mid", "wb")
     content = '""\n'
+    content = content.encode('ascii')
     gdal.VSIFWriteL(content, 1, len(content),f)
     gdal.VSIFCloseL(f)
 
@@ -1736,7 +1738,7 @@ def get_coordsys_from_srs(srs):
     lyr.CreateFeature(f)
     ds = None
     f = gdal.VSIFOpenL(mif_filename, "rb")
-    data = gdal.VSIFReadL(1, 10000, f)
+    data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
     gdal.VSIFCloseL(f)
     gdal.Unlink(mif_filename)
     gdal.Unlink(mif_filename[0:-3]+"mid")

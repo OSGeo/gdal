@@ -1167,14 +1167,14 @@ def ogr_csv_27():
 def ogr_csv_28():
 
     f = open('tmp/ogr_csv_28.csv', 'wb')
-    f.write('1,2\n')
+    f.write('1,2\n'.encode('ascii'))
     f.close()
 
     ds = ogr.Open('tmp/ogr_csv_28.csv', update = 1)
     ds = None
 
     f = open('tmp/ogr_csv_28.csv', 'rb')
-    data = f.read()
+    data = f.read().decode('ascii')
     f.close()
 
     os.unlink('tmp/ogr_csv_28.csv')

@@ -87,7 +87,7 @@ def kro_5():
     ds = None
 
     ds = gdal.Open('tmp/kro_5.kro')
-    ds.ReadRaster(ds.RasterXSize / 2, ds.RasterYSize / 2, 100, 100)
+    ds.ReadRaster(int(ds.RasterXSize / 2), int(ds.RasterYSize / 2), 100, 100)
     ds = None
 
     gdal.Unlink('tmp/kro_5.kro')

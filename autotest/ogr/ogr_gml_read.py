@@ -3005,7 +3005,7 @@ def ogr_gml_65():
         ds = None
 
         f = gdal.VSIFOpenL(filename, 'rb')
-        data = gdal.VSIFReadL(1, 10000, f)
+        data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
         gdal.VSIFCloseL(f)
 
         if data.find(expected) < 0:
