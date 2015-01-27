@@ -1986,7 +1986,7 @@ char **OGR_F_GetFieldAsStringList( OGRFeatureH hFeat, int iField )
 /**
  * \brief Fetch field value as binary data.
  *
- * Currently this method only works for OFTBinary fields.
+ * This method only works for OFTBinary and OFTString fields.
  *
  * This method is the same as the C function OGR_F_GetFieldAsBinary().
  *
@@ -2015,6 +2015,11 @@ GByte *OGRFeature::GetFieldAsBinary( int iField, int *pnBytes )
         *pnBytes = pauFields[iField].Binary.nCount;
         return pauFields[iField].Binary.paData;
     }
+    else if( poFDefn->GetType() == OFTString )
+    {
+        *pnBytes = (int)strlen(pauFields[iField].String);
+        return (GByte*)pauFields[iField].String;
+    }
     else
     {
         return NULL;
@@ -2028,7 +2033,7 @@ GByte *OGRFeature::GetFieldAsBinary( int iField, int *pnBytes )
 /**
  * \brief Fetch field value as binary.
  *
- * Currently this method only works for OFTBinary fields.
+ * This method only works for OFTBinary and OFTString fields.
  *
  * This function is the same as the C++ method 
  * OGRFeature::GetFieldAsBinary().
