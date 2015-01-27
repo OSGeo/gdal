@@ -427,6 +427,9 @@ def ogr_sql_17():
 
 def ogr_sql_18():
 
+    if sys.version_info >= (3,0,0):
+        return 'skip'
+
     name = 'data/departs.vrt'
 
     ds = ogr.Open( name )
