@@ -436,7 +436,11 @@ def DumpReadableFeature( poFeature, options = None ):
                     ogr.GetFieldTypeName(poFDefn.GetType()) )
 
             if poFeature.IsFieldSet( iField ):
-                line = line + "%s" % (poFeature.GetFieldAsString( iField ) )
+                try:
+                    line = line + "%s" % (poFeature.GetFieldAsString( iField ) )
+                except:
+                    # For Python3 on non-UTF8 strings
+                    line = line + "%s" % (poFeature.GetFieldAsBinary( iField ) )
             else:
                 line = line + "(null)"
 
