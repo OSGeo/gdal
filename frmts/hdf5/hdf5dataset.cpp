@@ -75,6 +75,11 @@ void GDALRegister_HDF5()
         poDriver->pfnIdentify = HDF5Dataset::Identify;
         GetGDALDriverManager()->RegisterDriver(poDriver);
     }
+
+#ifdef HDF5_PLUGIN
+    GDALRegister_HDF5Image();
+#endif
+
 }
 
 /************************************************************************/

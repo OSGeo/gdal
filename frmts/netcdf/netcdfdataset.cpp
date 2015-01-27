@@ -5913,6 +5913,10 @@ void GDALRegister_netCDF()
 
         GetGDALDriverManager( )->RegisterDriver( poDriver );
     }
+
+#ifdef NETCDF_PLUGIN
+    GDALRegister_GMT();
+#endif
 }
 
 /************************************************************************/

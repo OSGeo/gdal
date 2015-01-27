@@ -9,6 +9,11 @@ PLUGIN_DLL 	=	gdal_HDF5.dll
 
 EXTRAFLAGS 	= 	-I$(HDF5_DIR)\include -DWIN32 -D_HDF5USEDLL_ 
 
+!IF "$(HDF5_PLUGIN)" == "YES"
+EXTRAFLAGS = $(EXTRAFLAGS) -DHDF5_PLUGIN
+!ENDIF
+
+
 default:	$(OBJ)
 	$(INSTALL) *.obj ..\o
 
