@@ -75,13 +75,60 @@ OGRODBCDataSource::~OGRODBCDataSource()
 }
 
 /************************************************************************/
+/*                  CheckDSNStringTemplate()                            */
+/* The string will be used as the formatting argument of sprintf with   */
+/* a string in vararg. So let's check there's only one '%s', and nothing*/
+/* else                                                                 */
+/************************************************************************/
+
+static int CheckDSNStringTemplate(const char* pszStr)
+{
+    int nPercentSFound = FALSE;
+    while(*pszStr)
+    {
+        if (*pszStr == '%')
+        {
+            if (pszStr[1] != 's')
+            {
+                return FALSE;
+            }
+            else
+            {
+                if (nPercentSFound)
+                    return FALSE;
+                nPercentSFound = TRUE;
+            }
+        }
+        pszStr ++;
+    }
+    return TRUE;
+}
+
+/************************************************************************/
 /*                              OpenMDB()                               */
 /************************************************************************/
 
 int OGRODBCDataSource::OpenMDB( const char * pszNewName, int bUpdate )
 {
-    const char *pszDSNStringTemplate =
-        "DRIVER=Microsoft Access Driver (*.mdb);DBQ=%s";
+    const char* pszOptionName = "";
+    pszOptionName = "PGEO_DRIVER_TEMPLATE";
+    const char* pszDSNStringTemplate = CPLGetConfigOption( pszOptionName, NULL );
+    if( pszDSNStringTemplate == NULL )
+    {
+        pszOptionName = "MDB_DRIVER_TEMPLATE";
+        pszDSNStringTemplate = CPLGetConfigOption( pszOptionName, NULL );
+        if( pszDSNStringTemplate == NULL )
+        {
+            pszOptionName = "";
+            pszDSNStringTemplate = "DRIVER=Microsoft Access Driver (*.mdb);DBQ=%s";
+        }
+    }
+    if (!CheckDSNStringTemplate(pszDSNStringTemplate))
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                    "Illegal value for %s option", pszOptionName );
+        return FALSE;
+    }
     char* pszDSN = (char *) CPLMalloc(strlen(pszNewName)+strlen(pszDSNStringTemplate)+100);
     sprintf( pszDSN, pszDSNStringTemplate,  pszNewName );
 
@@ -92,11 +139,28 @@ int OGRODBCDataSource::OpenMDB( const char * pszNewName, int bUpdate )
 
     if( !oSession.EstablishSession( pszDSN, NULL, NULL ) )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Unable to initialize ODBC connection to DSN for %s,\n"
-                  "%s", pszDSN, oSession.GetLastError() );
-        CPLFree( pszDSN );
-        return FALSE;
+        int bError = TRUE;
+        if( EQUAL(pszDSN, "") )
+        {
+            // Trying with another template (#5594)
+            pszDSNStringTemplate = "DRIVER=Microsoft Access Driver (*.mdb, *.accdb);DBQ=%s";
+            CPLFree( pszDSN );
+            pszDSN = (char *) CPLMalloc(strlen(pszNewName)+strlen(pszDSNStringTemplate)+100);
+            sprintf( pszDSN, pszDSNStringTemplate,  pszNewName );
+            CPLDebug( "ODBC", "EstablishSession(%s)", pszDSN );
+            if( oSession.EstablishSession( pszDSN, NULL, NULL ) )
+            {
+                bError = FALSE;
+            }
+        }
+        if( bError )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                    "Unable to initialize ODBC connection to DSN for %s,\n"
+                    "%s", pszDSN, oSession.GetLastError() );
+            CPLFree( pszDSN );
+            return FALSE;
+        }
     }
 
     CPLFree( pszDSN );
