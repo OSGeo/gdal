@@ -232,7 +232,52 @@ del _Module
 
 
 import osr
-import gdal
+class MajorObject(_object):
+    """Proxy of C++ GDALMajorObjectShadow class"""
+    __swig_setmethods__ = {}
+    __setattr__ = lambda self, name, value: _swig_setattr(self, MajorObject, name, value)
+    __swig_getmethods__ = {}
+    __getattr__ = lambda self, name: _swig_getattr(self, MajorObject, name)
+    def __init__(self, *args, **kwargs): raise AttributeError("No constructor defined")
+    __repr__ = _swig_repr
+    def GetDescription(self, *args):
+        """GetDescription(self) -> char"""
+        return _ogr.MajorObject_GetDescription(self, *args)
+
+    def SetDescription(self, *args):
+        """SetDescription(self, char pszNewDesc)"""
+        return _ogr.MajorObject_SetDescription(self, *args)
+
+    def GetMetadataDomainList(self, *args):
+        """GetMetadataDomainList(self) -> char"""
+        return _ogr.MajorObject_GetMetadataDomainList(self, *args)
+
+    def GetMetadata_Dict(self, *args):
+        """GetMetadata_Dict(self, char pszDomain = "") -> char"""
+        return _ogr.MajorObject_GetMetadata_Dict(self, *args)
+
+    def GetMetadata_List(self, *args):
+        """GetMetadata_List(self, char pszDomain = "") -> char"""
+        return _ogr.MajorObject_GetMetadata_List(self, *args)
+
+    def SetMetadata(self, *args):
+        """
+        SetMetadata(self, char papszMetadata, char pszDomain = "") -> CPLErr
+        SetMetadata(self, char pszMetadataString, char pszDomain = "") -> CPLErr
+        """
+        return _ogr.MajorObject_SetMetadata(self, *args)
+
+    def GetMetadataItem(self, *args):
+        """GetMetadataItem(self, char pszName, char pszDomain = "") -> char"""
+        return _ogr.MajorObject_GetMetadataItem(self, *args)
+
+    def SetMetadataItem(self, *args):
+        """SetMetadataItem(self, char pszName, char pszValue, char pszDomain = "") -> CPLErr"""
+        return _ogr.MajorObject_SetMetadataItem(self, *args)
+
+MajorObject_swigregister = _ogr.MajorObject_swigregister
+MajorObject_swigregister(MajorObject)
+
 class StyleTable(_object):
     """Proxy of C++ OGRStyleTableShadow class"""
     __swig_setmethods__ = {}
@@ -278,13 +323,13 @@ class StyleTable(_object):
 StyleTable_swigregister = _ogr.StyleTable_swigregister
 StyleTable_swigregister(StyleTable)
 
-class Driver(gdal.MajorObject):
+class Driver(MajorObject):
     """Proxy of C++ OGRDriverShadow class"""
     __swig_setmethods__ = {}
-    for _s in [gdal.MajorObject]: __swig_setmethods__.update(getattr(_s,'__swig_setmethods__',{}))
+    for _s in [MajorObject]: __swig_setmethods__.update(getattr(_s,'__swig_setmethods__',{}))
     __setattr__ = lambda self, name, value: _swig_setattr(self, Driver, name, value)
     __swig_getmethods__ = {}
-    for _s in [gdal.MajorObject]: __swig_getmethods__.update(getattr(_s,'__swig_getmethods__',{}))
+    for _s in [MajorObject]: __swig_getmethods__.update(getattr(_s,'__swig_getmethods__',{}))
     __getattr__ = lambda self, name: _swig_getattr(self, Driver, name)
     def __init__(self, *args, **kwargs): raise AttributeError("No constructor defined")
     __repr__ = _swig_repr
@@ -491,13 +536,13 @@ class Driver(gdal.MajorObject):
 Driver_swigregister = _ogr.Driver_swigregister
 Driver_swigregister(Driver)
 
-class DataSource(gdal.MajorObject):
+class DataSource(MajorObject):
     """Proxy of C++ OGRDataSourceShadow class"""
     __swig_setmethods__ = {}
-    for _s in [gdal.MajorObject]: __swig_setmethods__.update(getattr(_s,'__swig_setmethods__',{}))
+    for _s in [MajorObject]: __swig_setmethods__.update(getattr(_s,'__swig_setmethods__',{}))
     __setattr__ = lambda self, name, value: _swig_setattr(self, DataSource, name, value)
     __swig_getmethods__ = {}
-    for _s in [gdal.MajorObject]: __swig_getmethods__.update(getattr(_s,'__swig_getmethods__',{}))
+    for _s in [MajorObject]: __swig_getmethods__.update(getattr(_s,'__swig_getmethods__',{}))
     __getattr__ = lambda self, name: _swig_getattr(self, DataSource, name)
     def __init__(self, *args, **kwargs): raise AttributeError("No constructor defined")
     __repr__ = _swig_repr
@@ -956,13 +1001,13 @@ class DataSource(gdal.MajorObject):
 DataSource_swigregister = _ogr.DataSource_swigregister
 DataSource_swigregister(DataSource)
 
-class Layer(gdal.MajorObject):
+class Layer(MajorObject):
     """Proxy of C++ OGRLayerShadow class"""
     __swig_setmethods__ = {}
-    for _s in [gdal.MajorObject]: __swig_setmethods__.update(getattr(_s,'__swig_setmethods__',{}))
+    for _s in [MajorObject]: __swig_setmethods__.update(getattr(_s,'__swig_setmethods__',{}))
     __setattr__ = lambda self, name, value: _swig_setattr(self, Layer, name, value)
     __swig_getmethods__ = {}
-    for _s in [gdal.MajorObject]: __swig_getmethods__.update(getattr(_s,'__swig_getmethods__',{}))
+    for _s in [MajorObject]: __swig_getmethods__.update(getattr(_s,'__swig_getmethods__',{}))
     __getattr__ = lambda self, name: _swig_getattr(self, Layer, name)
     def __init__(self, *args, **kwargs): raise AttributeError("No constructor defined")
     __repr__ = _swig_repr
