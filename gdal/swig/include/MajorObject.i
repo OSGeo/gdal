@@ -27,6 +27,12 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
+/* For Python we don't import, but include MajorObject.i to avoid */
+/* cyclic dependency betwenn gdal.py and ogr.py. Python2 is fine with that */
+/* but Python3 not */
+/* We should probably define a new module for MajorObject, or merge gdal and ogr */
+/* modules */
+#ifndef FROM_PYTHON_OGR_I
 #ifdef PERL_CPAN_NAMESPACE
 %module "Geo::GDAL"
 #elif defined(SWIGCSHARP)
@@ -34,6 +40,7 @@
 #else
 %module gdal
 #endif
+#endif /* FROM_PYTHON_OGR_I */
 
 %rename (MajorObject) GDALMajorObjectShadow;
 

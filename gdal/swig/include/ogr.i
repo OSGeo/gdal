@@ -371,8 +371,22 @@ typedef int OGRErr;
 %import osr.i
 
 #ifndef FROM_GDAL_I
+/* For Python we don't import, but include MajorObject.i to avoid */
+/* cyclic dependency betwenn gdal.py and ogr.py. Python2 is fine with that */
+/* but Python3 not */
+/* We should probably define a new module for MajorObject, or merge gdal and ogr */
+/* modules */
+#if defined(SWIGPYTHON)
+%{
+#include "gdal.h"
+%}
+#define FROM_PYTHON_OGR_I
+%include MajorObject.i
+#undef FROM_PYTHON_OGR_I
+#else /* defined(SWIGPYTHON) */
 %import MajorObject.i
-#endif
+#endif /* defined(SWIGPYTHON) */
+#endif /* FROM_GDAL_I */
 
 /************************************************************************/
 /*                               OGREnvelope                            */
