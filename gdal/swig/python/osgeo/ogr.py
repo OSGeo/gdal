@@ -275,6 +275,11 @@ class MajorObject(_object):
         """SetMetadataItem(self, char pszName, char pszValue, char pszDomain = "") -> CPLErr"""
         return _ogr.MajorObject_SetMetadataItem(self, *args)
 
+    def GetMetadata( self, domain = '' ):
+      if domain[:4] == 'xml:':
+        return self.GetMetadata_List( domain )
+      return self.GetMetadata_Dict( domain )
+
 MajorObject_swigregister = _ogr.MajorObject_swigregister
 MajorObject_swigregister(MajorObject)
 

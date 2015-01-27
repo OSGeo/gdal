@@ -500,6 +500,16 @@ layer[0:4] would return a list of the first four features."""
 
 #ifndef FROM_GDAL_I
 %include "callback.i"
+
+
+%extend GDALMajorObjectShadow {
+%pythoncode %{
+  def GetMetadata( self, domain = '' ):
+    if domain[:4] == 'xml:':
+      return self.GetMetadata_List( domain )
+    return self.GetMetadata_Dict( domain )
+%}
+}
 #endif
 
 
