@@ -1304,7 +1304,7 @@ def ogr_shape_29():
     shutil.copy('data/poly.shx', 'tmp/UPPERCASE/UPPERCASE.SHX')
     shutil.copy('data/poly.dbf', 'tmp/UPPERCASE/UPPERCASE.DBF')
     f = open('tmp/UPPERCASE/UPPERCASE.CPG', 'wb')
-    f.write('UTF-8')
+    f.write('UTF-8'.encode('ascii'))
     f.close()
 
     ds = ogr.Open('tmp/UPPERCASE', update = 1)

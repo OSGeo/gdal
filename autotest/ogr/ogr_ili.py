@@ -287,7 +287,7 @@ EMOD
 ENDE"""
         if expected not in itf:
             gdaltest.post_reason("Interlis output doesn't match.")
-            print itf
+            print(itf)
             return 'fail'
 
     return 'success'
@@ -351,9 +351,13 @@ def ogr_interlis1_7():
 
     dst_ds = None
 
-    with open(outfile) as file:
-        itf = file.read()
-        expected = """MTID INTERLIS1
+    try:
+        # Python 3
+        file = open(outfile, encoding='iso-8859-1')
+    except:
+        file = open(outfile)
+    itf = file.read()
+    expected = """MTID INTERLIS1
 MODL FormatDefault
 TABL FormatTable
 OBJE 2 0 äöü ÄÖÜ @ 1
@@ -361,11 +365,15 @@ ETAB
 ETOP
 EMOD
 ENDE"""
+    try:
+        # Python 2
         expected = expected.decode('utf8').encode('iso-8859-1')
-        if expected not in itf:
-            gdaltest.post_reason("Interlis output doesn't match.")
-            print itf
-            return 'fail'
+    except:
+        pass
+    if expected not in itf:
+        gdaltest.post_reason("Interlis output doesn't match.")
+        print(itf)
+        return 'fail'
 
     return 'success'
 
@@ -436,7 +444,7 @@ def ogr_interlis1_10():
 
     if feat.GetGeomFieldCount() != len(geom_field_values):
         gdaltest.post_reason( 'geom field count wrong.' )
-        print feat.GetGeomFieldCount()
+        print(feat.GetGeomFieldCount())
         return 'fail'
 
     for i in range(feat.GetGeomFieldCount()):
@@ -485,14 +493,14 @@ def ogr_interlis1_11():
 
     if feat.GetFieldCount() != 5:
         gdaltest.post_reason( 'field count wrong.' )
-        print feat.GetFieldCount()
+        print(feat.GetFieldCount())
         return 'fail'
 
     geom_columns = ['GeomLine', 'GeomPoint']
 
     if feat.GetGeomFieldCount() != len(geom_columns):
         gdaltest.post_reason( 'geom field count wrong.' )
-        print feat.GetGeomFieldCount()
+        print(feat.GetGeomFieldCount())
         return 'fail'
 
     for i in range(feat.GetGeomFieldCount()):
@@ -540,7 +548,7 @@ def ogr_interlis1_12():
 
     if feat.GetGeomFieldCount() != len(geom_columns):
         gdaltest.post_reason( 'geom field count wrong.' )
-        print feat.GetGeomFieldCount()
+        print(feat.GetGeomFieldCount())
         return 'fail'
 
     for i in range(feat.GetGeomFieldCount()):
@@ -597,7 +605,7 @@ def ogr_interlis1_13():
 
     if feat.GetGeomFieldCount() != len(geom_field_values):
         gdaltest.post_reason( 'geom field count wrong.' )
-        print feat.GetGeomFieldCount()
+        print(feat.GetGeomFieldCount())
         return 'fail'
 
     for i in range(feat.GetGeomFieldCount()):

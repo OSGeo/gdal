@@ -128,13 +128,13 @@ def runexternal(cmd, strin = None, check_memleak = True, display_live_on_parent_
             ret = ''
             ret_stdout = p.stdout
             while True:
-                c = p.stdout.read(1).decode('ascii')
+                c = p.stdout.read(1).decode('latin1')
                 if c == '':
                     break
                 ret = ret + c
                 sys.stdout.write(c)
         else:
-            ret = p.stdout.read().decode('ascii')
+            ret = p.stdout.read().decode('latin1')
         p.stdout.close()
     else:
         ret = ''

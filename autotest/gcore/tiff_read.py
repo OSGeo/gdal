@@ -926,7 +926,7 @@ def tiff_read_rpc_txt():
 
     if rpc_md['LINE_DEN_COEFF'].find(
         ' +1.000000000000000E+00  -5.207696939454288E-03') != 0:
-        print rpc_md['LINE_DEN_COEFF']
+        print(rpc_md['LINE_DEN_COEFF'])
         gdaltest.post_reason('LINE_DEN_COEFF wrong')
         return 'fail'
 
@@ -947,7 +947,7 @@ def tiff_read_rpc_tif():
         return 'fail'
 
     if rpc_md['LINE_DEN_COEFF'].find('1 -0.00520769693945429') != 0:
-        print rpc_md['LINE_DEN_COEFF']
+        print(rpc_md['LINE_DEN_COEFF'])
         gdaltest.post_reason('LINE_DEN_COEFF wrong')
         return 'fail'
 
@@ -1165,7 +1165,7 @@ def tiff_read_huge4GB():
         shutil.copy('data/huge4GB.tif', 'tmp/huge4GB.tif')
         f = open('tmp/huge4GB.tif', 'rb+')
         f.seek(65535 * 65535 + 401)
-        f.write(' ')
+        f.write(' '.encode('ascii'))
         f.close()
         ds = gdal.Open('tmp/huge4GB.tif')
         if ds is None:

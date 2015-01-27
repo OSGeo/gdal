@@ -126,7 +126,7 @@ def reproject_3():
     dst_ds.SetGeoTransform([10,2./3.,0,10,0,-1])
     
     gdal.ReprojectImage( src_ds, dst_ds, '', '', gdal.GRA_Bilinear)
-    got_data = dst_ds.GetRasterBand(1).ReadRaster(0,0,6,3)
+    got_data = dst_ds.GetRasterBand(1).ReadRaster(0,0,6,3).decode('latin1')
     expected_data = '\x03\x7f\x7f\x7f\x7f\x03\x03\x7f\x7f\x7f\x7f\x03\x03\x7f\x7f\x7f\x7f\x03'
     if got_data != expected_data:
         gdaltest.post_reason('fail')

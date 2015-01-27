@@ -741,7 +741,7 @@ def ogr_kml_write_schema():
     ds = None
 
     f = gdal.VSIFOpenL('/vsimem/ogr_kml_write_schema.kml', 'rb')
-    content = gdal.VSIFReadL(1,1000,f)
+    content = gdal.VSIFReadL(1,1000,f).decode('ascii')
     gdal.VSIFCloseL(f)
 
     gdal.Unlink('/vsimem/ogr_kml_write_schema.kml')
@@ -777,7 +777,7 @@ def ogr_kml_empty_layer():
     ds = None
 
     f = gdal.VSIFOpenL('/vsimem/ogr_kml_empty_layer.kml', 'rb')
-    content = gdal.VSIFReadL(1,1000,f)
+    content = gdal.VSIFReadL(1,1000,f).decode('ascii')
     gdal.VSIFCloseL(f)
 
     gdal.Unlink('/vsimem/ogr_kml_empty_layer.kml')
@@ -806,7 +806,7 @@ def ogr_kml_two_layers():
     ds = None
 
     f = gdal.VSIFOpenL('/vsimem/ogr_kml_two_layers.kml', 'rb')
-    content = gdal.VSIFReadL(1,1000,f)
+    content = gdal.VSIFReadL(1,1000,f).decode('ascii')
     gdal.VSIFCloseL(f)
 
     gdal.Unlink('/vsimem/ogr_kml_two_layers.kml')

@@ -1057,8 +1057,8 @@ def ecw_29():
             for i in range(2 * int((ds1.RasterXSize - tile/2) / tile)):
                 tmp_ds1 = gdal.GetDriverByName('MEM').Create('', tile ,tile, 1)
                 tmp_ds2 = gdal.GetDriverByName('MEM').Create('', tile ,tile, 1)
-                data1 = ds1.ReadRaster(i * (tile/2), j * (tile/2), tile, tile)
-                data2 = ds2.ReadRaster(i * (tile/2), j * (tile/2), tile, tile)
+                data1 = ds1.ReadRaster(i * int(tile/2), j * int(tile/2), tile, tile)
+                data2 = ds2.ReadRaster(i * int(tile/2), j * int(tile/2), tile, tile)
                 tmp_ds1.WriteRaster(0,0,tile,tile,data1)
                 tmp_ds2.WriteRaster(0,0,tile,tile,data2)
                 (ignored, ignored, mean1, stddev1) = tmp_ds1.GetRasterBand(1).GetStatistics(1,1)
@@ -1795,7 +1795,7 @@ def ecw_43():
         return 'fail'
     jp2_bands_data = ds.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize)
     jp2_fourth_band_data = fourth_band.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize)
-    jp2_fourth_band_subsampled_data = fourth_band.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize,ds.RasterXSize/16,ds.RasterYSize/16)
+    jp2_fourth_band_subsampled_data = fourth_band.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize,int(ds.RasterXSize/16),int(ds.RasterYSize/16))
 
     tmp_ds = gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/ecw_43.tif', ds)
     fourth_band = tmp_ds.GetRasterBand(4)

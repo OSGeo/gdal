@@ -152,7 +152,7 @@ def ogr_jml_2():
     ds = None
     
     f = gdal.VSIFOpenL('/vsimem/ogr_jml.jml', 'rb')
-    data = gdal.VSIFReadL(1, 1000, f)
+    data = gdal.VSIFReadL(1, 1000, f).decode('ascii')
     gdal.VSIFCloseL(f)
     
     if data != """<?xml version='1.0' encoding='UTF-8'?>
@@ -228,7 +228,7 @@ def ogr_jml_2():
     ds = None
     
     f = gdal.VSIFOpenL('/vsimem/ogr_jml.jml', 'rb')
-    data = gdal.VSIFReadL(1, 10000, f)
+    data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
     gdal.VSIFCloseL(f)
     
     if data != """<?xml version='1.0' encoding='UTF-8'?>
@@ -355,7 +355,7 @@ def ogr_jml_2():
     ds = None
     
     f = gdal.VSIFOpenL('/vsimem/ogr_jml.jml', 'rb')
-    data = gdal.VSIFReadL(1, 10000, f)
+    data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
     gdal.VSIFCloseL(f)
     
     if data.find('112233') < 0 or data.find('445566') < 0:
@@ -374,7 +374,7 @@ def ogr_jml_2():
     ds = None
     
     f = gdal.VSIFOpenL('/vsimem/ogr_jml.jml', 'rb')
-    data = gdal.VSIFReadL(1, 10000, f)
+    data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
     gdal.VSIFCloseL(f)
     
     if data.find('R_G_B') >= 0:
@@ -394,7 +394,7 @@ def ogr_jml_2():
     ds = None
     
     f = gdal.VSIFOpenL('/vsimem/ogr_jml.jml', 'rb')
-    data = gdal.VSIFReadL(1, 10000, f)
+    data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
     gdal.VSIFCloseL(f)
     
     if data.find('OGR_STYLE') < 0 or data.find('PEN(c:#445566)') < 0:
@@ -416,7 +416,7 @@ def ogr_jml_2():
     ds = None
     
     f = gdal.VSIFOpenL('/vsimem/ogr_jml.jml', 'rb')
-    data = gdal.VSIFReadL(1, 10000, f)
+    data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
     gdal.VSIFCloseL(f)
     
     if data.find('OGR_STYLE') < 0 or data.find('PEN(c:#445566)') < 0 or data.find('112233') < 0:
