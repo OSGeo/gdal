@@ -32,9 +32,8 @@ The following element types are supported:<p>
 <ul>
 <li> POINT: Produces a simple point geometry feature.
 <li> MTEXT, TEXT: Produces a point feature with LABEL style information.
-<li> LINE, POLYLINE, LWPOLYLINE: translated as a LINESTRING or POLYGON 
-depending on whether it is closed. Rounded polylines (those with their 
-vertices' budge attributes set) will be tesselated.
+<li> LINE, POLYLINE, LWPOLYLINE: translated as a LINESTRING. Rounded 
+polylines (those with their vertices' budge attributes set) will be tesselated.
 Single-vertex polylines are translated to POINT.
 <li> CIRCLE, ELLIPSE, ARC:  Translated as a LINESTRING, tesselating the 
 arc into line segments. 
@@ -47,6 +46,7 @@ DXF_MERGE_BLOCK_GEOMETRIES config option may be set to FALSE.
 leaders, and a feature with the dimension label.
 <li> HATCH: Line and arc boundaries are collected as a polygon geometry, but 
 no effort is currently made to represent the fill style of HATCH entities.
+<li> 3DFACE, SOLID: Translated as POLYGON.
 
 </ul>
 
@@ -118,17 +118,21 @@ on the styling information.<p>
 
 Point features without LABEL styling are written as POINT entities.<p>
 
-LineString, MultiLineString, Polygon and MultiPolygons are written as one or
-more LWPOLYLINE entities, closed in the case of polygon rings.  An effort is
+LineString and MultiLineString features are written as one or more 
+LWPOLYLINE entities, closed in the case of polygon rings.  An effort is
 made to preserve line width and color.<p>
+
+Polygon and MultiPolygon features are written as HATCH entities.
 
 The dataset creation supports the following dataset creation options:<p>
 
 <ul>
 
-<li> <b>HEADER=</b><i>filename</i>: Override the header file used - in place of header.dxf. <p>
+<li> <b>HEADER=</b><i>filename</i>: Override the header file used - in place 
+of header.dxf located in the GDAL_DATA directory.
 
-<li> <b>TRAILER=</b><i>filename</i>: Override the trailer file used - in place of trailer.dxf.<p>
+<li> <b>TRAILER=</b><i>filename</i>: Override the trailer file used - in place 
+of trailer.dxf located in the GDAL_DATA directory. <p>
 
 </ul>
 
@@ -189,5 +193,15 @@ The intention is that "dot dash" style patterns will be preserved when written
 to DXF and that specific linetypes can be predefined in the header template,
 and referenced using the Linetype field if desired.<p>
 
+<h3>Units</h2>
+
+At the moment GDAL writes DXF to report the the measurement units as "English - Inches". 
+For changing the units edit $MEASUREMENT and $INSUNITS variables in the header template.
+
+<h3>See also</h2>
+
+<a href="http://www.autodesk.com/techpubs/autocad/acad2000/dxf/">AutoCAD 2000 DXF Reference</a><p>
+
+<a href="http://www.autodesk.com/techpubs/autocad/acad2000/dxf/header_section_group_codes_dxf_02.htm">DXF header reference</a>
 </body>
 </html>
