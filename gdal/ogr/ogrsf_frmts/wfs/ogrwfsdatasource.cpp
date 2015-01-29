@@ -835,6 +835,12 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
                 CSLSetNameValue( papszHttpOptions,
                                 "USERPWD", pszParm );
 
+        pszParm = CPLGetXMLValue( psRoot, "COOKIE", NULL );
+        if( pszParm )
+            papszHttpOptions =
+                CSLSetNameValue( papszHttpOptions,
+                                "COOKIE", pszParm );
+
         pszParm = CPLGetXMLValue( psRoot, "Version", NULL );
         if( pszParm )
             osVersion = pszParm;
