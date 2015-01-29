@@ -116,6 +116,7 @@ OGRSQLiteTableLayer::~OGRSQLiteTableLayer()
             "WHERE Lower(f_table_name) = Lower('%q') AND Lower(f_geometry_column) = Lower('%q')",
             pszTableName, pszGeomCol);
         sqlite3_exec( poDS->GetDB(), pszSQL3, NULL, NULL, &pszErrMsg );
+        sqlite3_free( pszSQL3 );
         if( pszErrMsg )
             sqlite3_free( pszErrMsg );
         pszErrMsg = NULL;
