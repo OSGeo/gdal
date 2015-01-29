@@ -138,6 +138,7 @@ static size_t CPLHdrWriteFct(void *buffer, size_t size, size_t nmemb, void *reqI
  * <li>PROXYAUTH=[BASIC/NTLM/DIGEST/ANY] to specify an proxy authentication scheme to use.
  * <li>NETRC=[YES/NO] to enable or disable use of $HOME/.netrc, default YES.
  * <li>CUSTOMREQUEST=val, where val is GET, PUT, POST, DELETE, etc.. (GDAL >= 1.9.0)
+ * <li>COOKIE=val, where val is formatted as COOKIE1=VALUE1; COOKIE2=VALUE2; ...
  * </ul>
  *
  * Alternatively, if not defined in the papszOptions arguments, the PROXY,  
@@ -525,6 +526,12 @@ void CPLHTTPSetOptions(CURL *http_handle, char** papszOptions)
     {
         curl_easy_setopt(http_handle, CURLOPT_CUSTOMREQUEST, pszCustomRequest );
     }
+    
+    const char* pszCookie = CSLFetchNameValue(papszOptions, "COOKIE");
+    if (pszCookie == NULL)
+        pszCookie = CPLGetConfigOption("GDAL_HTTP_COOKIE", NULL);
+    if (pszCookie != NULL)
+        curl_easy_setopt(http_handle, CURLOPT_COOKIE, pszCookie);
 }
 #endif /* def HAVE_CURL */
 
