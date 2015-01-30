@@ -34,7 +34,7 @@ import os
 import numpy
 import sys
 
-from osgeo import gdal, gdal_array, osr
+from osgeo import gdal, gdal_array
 
 # Input looks like this:
 """

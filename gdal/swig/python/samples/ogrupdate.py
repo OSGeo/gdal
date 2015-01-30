@@ -79,10 +79,6 @@ def ogrupdate_analyse_args(argv, progress = None, progress_arg = None):
     matchfieldname = None
 
     # in case there's no existing matching feature in the target datasource
-    # should we try to create a new feature ? 
-    update_only = False
-
-    # in case there's no existing matching feature in the target datasource
     # should we preserve the FID of the source feature that will be inserted ?
     preserve_fid = False
     
@@ -343,7 +339,7 @@ def ogrupdate_process(src_layer, dst_layer, matchfieldname = None, update_mode =
                 if ret == 0:
                     inserted_count = inserted_count + 1
                 else:
-                    insert_failed = insert_failed + 1
+                    inserted_failed = inserted_failed + 1
 
             elif update_mode == APPEND_ONLY:
                 continue
@@ -403,7 +399,7 @@ def ogrupdate_process(src_layer, dst_layer, matchfieldname = None, update_mode =
                 if ret == 0:
                     inserted_count = inserted_count + 1
                 else:
-                    insert_failed = insert_failed + 1
+                    inserted_failed = inserted_failed + 1
 
             elif update_mode == APPEND_ONLY:
                 continue

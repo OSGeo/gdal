@@ -36,7 +36,6 @@ except ImportError:
     import osr
     import ogr
 
-import string
 import sys
 
 #############################################################################

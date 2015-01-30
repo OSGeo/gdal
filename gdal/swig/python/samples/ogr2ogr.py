@@ -184,8 +184,8 @@ def main(args = None, progress_func = TermProgress, progress_data = None):
     pszClipDstSQL = None
     pszClipDstLayer = None
     pszClipDstWhere = None
-    pszSrcEncoding = None
-    pszDstEncoding = None
+    #pszSrcEncoding = None
+    #pszDstEncoding = None
     bWrapDateline = False
     bExplodeCollections = False
     pszZField = None

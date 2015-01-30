@@ -31,11 +31,9 @@
 
 try:
     from osgeo import gdal
-    from osgeo.gdalconst import *
     gdal.TermProgress = gdal.TermProgress_nocb
 except ImportError:
     import gdal
-    from gdalconst import *
 
 try:
     import numpy as Numeric
@@ -49,7 +47,7 @@ except ImportError:
     import gdalnumeric
 
 import sys
-from math import *
+import math
 
 # =============================================================================
 def Usage():
@@ -78,36 +76,36 @@ def Usage():
 # =============================================================================
 def ParseType(type):
     if type == 'Byte':
-        return GDT_Byte
+        return gdal.GDT_Byte
     elif type == 'Int16':
-        return GDT_Int16
+        return gdal.GDT_Int16
     elif type == 'UInt16':
-        return GDT_UInt16
+        return gdal.GDT_UInt16
     elif type == 'Int32':
-        return GDT_Int32
+        return gdal.GDT_Int32
     elif type == 'UInt32':
-        return GDT_UInt32
+        return gdal.GDT_UInt32
     elif type == 'Float32':
-        return GDT_Float32
+        return gdal.GDT_Float32
     elif type == 'Float64':
-        return GDT_Float64
+        return gdal.GDT_Float64
     elif type == 'CInt16':
-        return GDT_CInt16
+        return gdal.GDT_CInt16
     elif type == 'CInt32':
-        return GDT_CInt32
+        return gdal.GDT_CInt32
     elif type == 'CFloat32':
-        return GDT_CFloat32
+        return gdal.GDT_CFloat32
     elif type == 'CFloat64':
-        return GDT_CFloat64
+        return gdal.GDT_CFloat64
     else:
-        return GDT_Byte
+        return gdal.GDT_Byte
 # =============================================================================
 
 infile = None
 outfile = None
 iBand = 1	    # The first band will be converted by default
 format = 'GTiff'
-type = GDT_Byte
+type = gdal.GDT_Byte
 
 lsrcaz = None
 lsrcel = None
@@ -174,15 +172,15 @@ if lsrcel is None:
     Usage()
 
 # translate angles from degrees to radians
-lsrcaz = lsrcaz / 180.0 * pi
-lsrcel = lsrcel / 180.0 * pi
+lsrcaz = lsrcaz / 180.0 * math.pi
+lsrcel = lsrcel / 180.0 * math.pi
 
-lx = -sin(lsrcaz) * cos(lsrcel)
-ly =  cos(lsrcaz) * cos(lsrcel)
-lz =  sin(lsrcel)
-lxyz = sqrt(lx**2 + ly**2 + lz**2)
+lx = -math.sin(lsrcaz) * math.cos(lsrcel)
+ly =  math.cos(lsrcaz) * math.cos(lsrcel)
+lz =  math.sin(lsrcel)
+lxyz = math.sqrt(lx**2 + ly**2 + lz**2)
 
-indataset = gdal.Open(infile, GA_ReadOnly)
+indataset = gdal.Open(infile, gdal.GA_ReadOnly)
 if indataset == None:
     print('Cannot open', infile)
     sys.exit(2)

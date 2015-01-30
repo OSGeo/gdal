@@ -29,7 +29,7 @@
 #  DEALINGS IN THE SOFTWARE.
 #******************************************************************************
 
-from osgeo import gdal, ogr
+from osgeo import gdal, ogr, osr
 import os
 import sys
 

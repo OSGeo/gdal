@@ -31,13 +31,9 @@
 ###############################################################################
 
 try:
-    from osgeo import osr
     from osgeo import ogr
 except ImportError:
-    import osr
     import ogr
-
-import string
 
 #############################################################################-
 # Open the datasource to operate on.

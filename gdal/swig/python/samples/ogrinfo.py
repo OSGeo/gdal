@@ -450,7 +450,7 @@ def DumpReadableFeature( poFeature, options = None ):
     if poFeature.GetStyleString() is not None:
 
         if 'DISPLAY_STYLE' not in options or EQUAL(options['DISPLAY_STYLE'], 'yes'):
-            print("  Style = %s" % GetStyleString() )
+            print("  Style = %s" % poFeature.GetStyleString() )
 
     nGeomFieldCount = poFeature.GetGeomFieldCount()
     if nGeomFieldCount > 0:

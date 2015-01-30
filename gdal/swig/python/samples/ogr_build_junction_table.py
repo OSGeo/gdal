@@ -33,7 +33,6 @@
 
 from osgeo import gdal
 from osgeo import ogr
-import os
 import sys
 
 

@@ -29,13 +29,10 @@
 ###############################################################################
 
 try:
-    from osgeo import osr
     from osgeo import ogr
 except ImportError:
-    import osr
     import ogr
 
-import string
 import sys
 
 #############################################################################

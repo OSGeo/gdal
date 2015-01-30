@@ -31,11 +31,10 @@
 ###############################################################################
 
 try:
-    from osgeo import osr, ogr, gdal
+    from osgeo import ogr, gdal
 except ImportError:
-    import osr, ogr, gdal
+    import  ogr, gdal
 
-import string
 import sys
 
 #############################################################################

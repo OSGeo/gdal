@@ -288,6 +288,7 @@ def ogr_dispatch(argv, progress = None, progress_arg = None):
     dst_filename = None
     format = "ESRI Shapefile"
     options = Options()
+    lco = []
     dsco = []
     pszWHERE = None
 

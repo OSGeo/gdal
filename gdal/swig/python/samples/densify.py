@@ -292,8 +292,8 @@ class Densify(Translator):
                     segcount = int(math.floor(d/threshold))
                     xa = None
                     ya = None
-                    xb = x0
-                    yb = y0
+                    #xb = x0
+                    #yb = y0
                     remainder = d % threshold
                     for p in range(segcount):
                         if not xa:

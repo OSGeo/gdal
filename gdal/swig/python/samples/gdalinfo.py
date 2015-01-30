@@ -59,7 +59,6 @@ def EQUAL(a, b):
 def main( argv = None ):
 
     bComputeMinMax = False
-    bSample = False
     bShowGCPs = True
     bShowMetadata = True
     bShowRAT=True
@@ -118,8 +117,6 @@ def main( argv = None ):
         elif EQUAL(argv[i], "-approx_stats"):
             bStats = True
             bApproxStats = True
-        elif EQUAL(argv[i], "-sample"):
-            bSample = True
         elif EQUAL(argv[i], "-checksum"):
             bComputeChecksum = True
         elif EQUAL(argv[i], "-nogcp"):
@@ -552,7 +549,8 @@ def main( argv = None ):
                             sEntry[3] ))
 
         if bShowRAT:
-            hRAT = hBand.GetDefaultRAT()
+            pass
+            #hRAT = hBand.GetDefaultRAT()
 
             #GDALRATDumpReadable( hRAT, None );
 
