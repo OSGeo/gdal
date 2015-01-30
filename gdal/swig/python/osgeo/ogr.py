@@ -3279,7 +3279,7 @@ class Feature(_object):
             int minute, int second, int tzflag)
         """
 
-        if len(args) == 2 and type(args[1]) == type(1):
+        if len(args) == 2 and (type(args[1]) == type(1) or type(args[1]) == type(12345678901234)):
             fld_index = args[0]
             if isinstance(fld_index, str):
                 fld_index = self.GetFieldIndex(fld_index)
@@ -3308,7 +3308,7 @@ class Feature(_object):
             if len(value) == 0:
                 self.UnsetField( fld_index )
                 return
-            if isinstance(value[0],int):
+            if isinstance(value[0],type(1)) or isinstance(value[0],type(12345678901234)):
                 self.SetFieldInteger64List(fld_index,value)
                 return
             elif isinstance(value[0],float):
