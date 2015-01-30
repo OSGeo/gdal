@@ -371,7 +371,7 @@ def ogr_dispatch(argv, progress = None, progress_arg = None):
 
     dst_ds = ogr.Open(dst_filename, update = 1)
     if dst_ds is not None:
-        if len(options.dsco) != 0:
+        if len(dsco) != 0:
             print('-dsco should not be specified for an existing datasource')
             return 1
     else:

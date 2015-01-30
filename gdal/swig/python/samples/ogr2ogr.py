@@ -337,7 +337,7 @@ def main(args = None, progress_func = TermProgress, progress_data = None):
 
         elif EQUAL(args[iArg],"-where") and iArg < nArgc-1:
             iArg = iArg + 1
-            pszWHERE = args[++iArg]
+            pszWHERE = args[iArg]
 
         elif EQUAL(args[iArg],"-select") and iArg < nArgc-1:
             iArg = iArg + 1
