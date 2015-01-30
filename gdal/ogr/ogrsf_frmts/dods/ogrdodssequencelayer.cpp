@@ -430,7 +430,7 @@ double OGRDODSSequenceLayer::GetFieldValueAsDouble( OGRDODSFieldDefn *poFDefn,
 /*                             GetFeature()                             */
 /************************************************************************/
 
-OGRFeature *OGRDODSSequenceLayer::GetFeature( long nFeatureId )
+OGRFeature *OGRDODSSequenceLayer::GetFeature( GIntBig nFeatureId )
 
 {
 /* -------------------------------------------------------------------- */
@@ -849,7 +849,7 @@ OGRFeature *OGRDODSSequenceLayer::GetFeature( long nFeatureId )
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
-int OGRDODSSequenceLayer::GetFeatureCount( int bForce )
+GIntBig OGRDODSSequenceLayer::GetFeatureCount( int bForce )
 
 {
     if( !bDataLoaded && !bForce )

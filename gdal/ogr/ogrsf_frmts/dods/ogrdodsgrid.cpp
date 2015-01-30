@@ -431,7 +431,7 @@ int OGRDODSGridLayer::ArrayEntryToField( Array *poArray, void *pRawData,
 /*                             GetFeature()                             */
 /************************************************************************/
 
-OGRFeature *OGRDODSGridLayer::GetFeature( long nFeatureId )
+OGRFeature *OGRDODSGridLayer::GetFeature( GIntBig nFeatureId )
 
 {
     if( nFeatureId < 0 || nFeatureId >= nMaxRawIndex )
@@ -589,7 +589,7 @@ int OGRDODSGridLayer::ProvideDataDDS()
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
-int OGRDODSGridLayer::GetFeatureCount( int bForce )
+GIntBig OGRDODSGridLayer::GetFeatureCount( int bForce )
 
 {
     if( m_poFilterGeom == NULL && m_poAttrQuery == NULL )

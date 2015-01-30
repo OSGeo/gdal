@@ -148,7 +148,7 @@ OGRFeature *OGRNASRelationLayer::GetNextFeature()
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
-int OGRNASRelationLayer::GetFeatureCount( int bForce )
+GIntBig OGRNASRelationLayer::GetFeatureCount( int bForce )
 
 {
     if( !bPopulated )

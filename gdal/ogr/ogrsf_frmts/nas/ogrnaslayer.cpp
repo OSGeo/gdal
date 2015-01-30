@@ -257,7 +257,7 @@ OGRFeature *OGRNASLayer::GetNextFeature()
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
-int OGRNASLayer::GetFeatureCount( int bForce )
+GIntBig OGRNASLayer::GetFeatureCount( int bForce )
 
 {
     if( poFClass == NULL )

@@ -427,6 +427,9 @@ const char * OGRFieldDefn::GetFieldTypeName( OGRFieldType eType )
       case OFTInteger:
         return "Integer";
 
+      case OFTInteger64:
+        return "Integer64";
+
       case OFTReal:
         return "Real";
 
@@ -435,6 +438,9 @@ const char * OGRFieldDefn::GetFieldTypeName( OGRFieldType eType )
 
       case OFTIntegerList:
         return "IntegerList";
+
+      case OFTInteger64List:
+        return "Integer64List";
 
       case OFTRealList:
         return "RealList";

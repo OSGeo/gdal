@@ -80,13 +80,13 @@ public:
 
 	virtual void                ResetReading();
     virtual OGRFeature         *GetNextFeature();
-    virtual OGRErr              SetNextByIndex(long nIndex);
-    virtual OGRFeature         *GetFeature(long nFID);
+    virtual OGRErr              SetNextByIndex(GIntBig nIndex);
+    virtual OGRFeature         *GetFeature(GIntBig nFID);
     virtual OGRFeatureDefn     *GetLayerDefn() { return poFeatureDefn;}
 
     virtual int                 TestCapability( const char * );
 
-    virtual int         GetFeatureCount(int bForce = TRUE);
+    virtual GIntBig     GetFeatureCount(int bForce = TRUE);
     virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
     virtual OGRSpatialReference *GetSpatialRef();
     virtual const char* GetFIDColumn();

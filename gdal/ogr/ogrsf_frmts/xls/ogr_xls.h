@@ -70,7 +70,7 @@ class OGRXLSLayer : public OGRLayer
     virtual OGRFeature *        GetNextFeature();
 
     virtual OGRFeatureDefn *    GetLayerDefn();
-    virtual int                 GetFeatureCount( int bForce = TRUE );
+    virtual GIntBig             GetFeatureCount( int bForce = TRUE );
 
     virtual const char         *GetName() { return pszName; }
     virtual OGRwkbGeometryType  GetGeomType() { return wkbNone; }

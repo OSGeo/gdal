@@ -235,6 +235,8 @@ void RegisterOGRJML()
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList/>"
 );
+        
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES, "Integer Integer64 Real String Date DateTime" );
 
         poDriver->pfnOpen = OGRJMLDataset::Open;
         poDriver->pfnIdentify = OGRJMLDataset::Identify;

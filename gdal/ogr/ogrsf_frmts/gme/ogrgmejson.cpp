@@ -60,7 +60,7 @@ json_object* OGRGMEFeatureToGeoJSON(OGRFeature* poFeature)
     pjoGeometry = OGRGMEGeometryToGeoJSON(poGeometry);
     if ( NULL == pjoGeometry ) {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "GME: NULL Geometry detected in feature %ld. Ignoring feature.",
+                  "GME: NULL Geometry detected in feature " CPL_FRMT_GIB ". Ignoring feature.",
                   poFeature->GetFID() );
         json_object_put( pjoFeature );
         return NULL;
@@ -437,10 +437,10 @@ json_object* OGRGMEAttributesToGeoJSON( OGRFeature* poFeature )
     int nGxId = poFeature->GetFieldIndex("gx_id");
     if (nGxId < 0) {
         json_object* pjoProperty = NULL;
-        long nFID = poFeature->GetFID();
+        GIntBig nFID = poFeature->GetFID();
 
         char acGxId[128];
-        snprintf(acGxId, 128, "GDAL-%ld", nFID);
+        snprintf(acGxId, 128, "GDAL-" CPL_FRMT_GIB, nFID);
         CPLDebug("GME", "gx_id is not set, so adding \"gx_id\": \"%s\" field.",
                  acGxId);
 

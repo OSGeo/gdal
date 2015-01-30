@@ -345,6 +345,7 @@ bool OGRToGDBFieldType(OGRFieldType ogrType, OGRFieldSubType eSubType, std::stri
             break;
         }
         case OFTReal:
+        case OFTInteger64:
         {
              if( eSubType == OFSTFloat32 )
                 *gdbType = "esriFieldTypeSingle";

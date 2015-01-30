@@ -84,7 +84,7 @@ class OGRWFSLayer : public OGRLayer
 
     CPLString           osGeometryColumnName;
     OGRwkbGeometryType  eGeomType;
-    int                 nFeatures;
+    GIntBig             nFeatures;
     int                 bCountFeaturesInGetNextFeature;
 
     int                 CanRunGetFeatureCountAndGetExtentTogether();
@@ -93,7 +93,7 @@ class OGRWFSLayer : public OGRLayer
     int                 MustRetryIfNonCompliantServer(const char* pszServerAnswer);
     OGRDataSource*      FetchGetFeature(int nMaxFeatures);
     OGRFeatureDefn*     DescribeFeatureType();
-    int                 ExecuteGetFeatureResultTypeHits();
+    GIntBig             ExecuteGetFeatureResultTypeHits();
 
     double              dfMinX, dfMinY, dfMaxX, dfMaxY;
     int                 bHasExtents;
@@ -146,7 +146,7 @@ class OGRWFSLayer : public OGRLayer
 
     virtual void                ResetReading();
     virtual OGRFeature*         GetNextFeature();
-    virtual OGRFeature*         GetFeature(long nFID);
+    virtual OGRFeature*         GetFeature(GIntBig nFID);
 
     virtual OGRFeatureDefn *    GetLayerDefn();
 
@@ -156,14 +156,14 @@ class OGRWFSLayer : public OGRLayer
 
     virtual OGRErr      SetAttributeFilter( const char * );
 
-    virtual int         GetFeatureCount( int bForce = TRUE );
+    virtual GIntBig     GetFeatureCount( int bForce = TRUE );
 
     void                SetExtents(double dfMinX, double dfMinY, double dfMaxX, double dfMaxY);
     virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
 
     virtual OGRErr      ICreateFeature( OGRFeature *poFeature );
     virtual OGRErr      ISetFeature( OGRFeature *poFeature );
-    virtual OGRErr      DeleteFeature( long nFID );
+    virtual OGRErr      DeleteFeature( GIntBig nFID );
 
     virtual OGRErr      StartTransaction();
     virtual OGRErr      CommitTransaction();

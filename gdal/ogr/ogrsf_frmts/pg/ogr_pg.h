@@ -63,6 +63,7 @@
 #define TEXTARRAYOID            1009
 #define BPCHARARRAYOID          1014
 #define VARCHARARRAYOID         1015
+#define INT8ARRAYOID            1016
 #define FLOAT4ARRAYOID          1021
 #define FLOAT8ARRAYOID          1022
 #define BPCHAROID		1042
@@ -162,7 +163,7 @@ class OGRPGLayer : public OGRLayer
     OGRPGFeatureDefn   *poFeatureDefn;
 
     int                 nCursorPage;
-    int                 iNextShapeId;
+    GIntBig             iNextShapeId;
 
     static char        *GByteArrayToBYTEA( const GByte* pabyData, int nLen);
     static char        *GeometryToBYTEA( OGRGeometry *, int bIsPostGIS1 );
@@ -221,7 +222,7 @@ class OGRPGLayer : public OGRLayer
 
     virtual const char *GetFIDColumn();
 
-    virtual OGRErr      SetNextByIndex( long nIndex );
+    virtual OGRErr      SetNextByIndex( GIntBig nIndex );
     
     OGRPGDataSource    *GetDS() { return poDS; }
 
@@ -268,9 +269,6 @@ class OGRPGTableLayer : public OGRPGLayer
     OGRErr		CreateFeatureViaInsert( OGRFeature *poFeature );
     CPLString           BuildCopyFields(int bSetFID);
 
-    void                AppendFieldValue(PGconn *hPGConn, CPLString& osCommand,
-                                         OGRFeature* poFeature, int i);
-                  
     int                 bHasWarnedIncompatibleGeom;
     void                CheckGeomTypeCompatibility(int iGeomField, OGRGeometry* poGeom);
 
@@ -306,10 +304,10 @@ public:
     void                SetGeometryInformation(PGGeomColumnDesc* pasDesc,
                                                int nGeomFieldCount);
 
-    virtual OGRFeature *GetFeature( long nFeatureId );
+    virtual OGRFeature *GetFeature( GIntBig nFeatureId );
     virtual void        ResetReading();
     virtual OGRFeature *GetNextFeature();
-    virtual int         GetFeatureCount( int );
+    virtual GIntBig     GetFeatureCount( int );
 
     virtual void        SetSpatialFilter( OGRGeometry *poGeom ) { SetSpatialFilter(0, poGeom); }
     virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom );
@@ -317,7 +315,7 @@ public:
     virtual OGRErr      SetAttributeFilter( const char * );
 
     virtual OGRErr      ISetFeature( OGRFeature *poFeature );
-    virtual OGRErr      DeleteFeature( long nFID );
+    virtual OGRErr      DeleteFeature( GIntBig nFID );
     virtual OGRErr      ICreateFeature( OGRFeature *poFeature );
 
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
@@ -398,7 +396,7 @@ class OGRPGResultLayer : public OGRPGLayer
     virtual             ~OGRPGResultLayer();
 
     virtual void        ResetReading();
-    virtual int         GetFeatureCount( int );
+    virtual GIntBig     GetFeatureCount( int );
 
     virtual void        SetSpatialFilter( OGRGeometry *poGeom ) { SetSpatialFilter(0, poGeom); }
     virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom );

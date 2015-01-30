@@ -56,6 +56,7 @@ typedef struct
 
 OGRErr              SQLCommand(sqlite3 *poDb, const char * pszSQL);
 int                 SQLGetInteger(sqlite3 * poDb, const char * pszSQL, OGRErr *err);
+GIntBig             SQLGetInteger64(sqlite3 * poDb, const char * pszSQL, OGRErr *err);
 
 OGRErr              SQLResultInit(SQLResult * poResult);
 OGRErr              SQLQuery(sqlite3 *poDb, const char * pszSQL, SQLResult * poResult);

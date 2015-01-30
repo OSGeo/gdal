@@ -238,7 +238,7 @@ class CPL_DLL OGRFeature
 {
   private:
 
-    long                nFID;
+    GIntBig              nFID;
     OGRFeatureDefn      *poDefn;
     OGRGeometry        **papoGeometries;
     OGRField            *pauFields;
@@ -288,9 +288,11 @@ class CPL_DLL OGRFeature
     OGRField           *GetRawFieldRef( int i ) { return pauFields + i; }
 
     int                 GetFieldAsInteger( int i );
+    GIntBig             GetFieldAsInteger64( int i );
     double              GetFieldAsDouble( int i );
     const char         *GetFieldAsString( int i );
     const int          *GetFieldAsIntegerList( int i, int *pnCount );
+    const GIntBig      *GetFieldAsInteger64List( int i, int *pnCount );
     const double       *GetFieldAsDoubleList( int i, int *pnCount );
     char              **GetFieldAsStringList( int i );
     GByte              *GetFieldAsBinary( int i, int *pnCount );
@@ -301,6 +303,8 @@ class CPL_DLL OGRFeature
 
     int                 GetFieldAsInteger( const char *pszFName )
                       { return GetFieldAsInteger( GetFieldIndex(pszFName) ); }
+    GIntBig             GetFieldAsInteger64( const char *pszFName )
+                      { return GetFieldAsInteger64( GetFieldIndex(pszFName) ); }
     double              GetFieldAsDouble( const char *pszFName )
                       { return GetFieldAsDouble( GetFieldIndex(pszFName) ); }
     const char         *GetFieldAsString( const char *pszFName )
@@ -308,6 +312,10 @@ class CPL_DLL OGRFeature
     const int          *GetFieldAsIntegerList( const char *pszFName,
                                                int *pnCount )
                       { return GetFieldAsIntegerList( GetFieldIndex(pszFName),
+                                                      pnCount ); }
+    const GIntBig      *GetFieldAsInteger64List( const char *pszFName,
+                                               int *pnCount )
+                      { return GetFieldAsInteger64List( GetFieldIndex(pszFName),
                                                       pnCount ); }
     const double       *GetFieldAsDoubleList( const char *pszFName,
                                               int *pnCount )
@@ -317,9 +325,11 @@ class CPL_DLL OGRFeature
                       { return GetFieldAsStringList(GetFieldIndex(pszFName)); }
 
     void                SetField( int i, int nValue );
+    void                SetField( int i, GIntBig nValue );
     void                SetField( int i, double dfValue );
     void                SetField( int i, const char * pszValue );
     void                SetField( int i, int nCount, int * panValues );
+    void                SetField( int i, int nCount, const GIntBig * panValues );
     void                SetField( int i, int nCount, double * padfValues );
     void                SetField( int i, char ** papszValues );
     void                SetField( int i, OGRField * puValue );
@@ -330,12 +340,17 @@ class CPL_DLL OGRFeature
 
     void                SetField( const char *pszFName, int nValue )
                            { SetField( GetFieldIndex(pszFName), nValue ); }
+    void                SetField( const char *pszFName, GIntBig nValue )
+                           { SetField( GetFieldIndex(pszFName), nValue ); }
     void                SetField( const char *pszFName, double dfValue )
                            { SetField( GetFieldIndex(pszFName), dfValue ); }
     void                SetField( const char *pszFName, const char * pszValue)
                            { SetField( GetFieldIndex(pszFName), pszValue ); }
     void                SetField( const char *pszFName, int nCount,
                                   int * panValues )
+                         { SetField(GetFieldIndex(pszFName),nCount,panValues);}
+    void                SetField( const char *pszFName, int nCount,
+                                  const GIntBig * panValues )
                          { SetField(GetFieldIndex(pszFName),nCount,panValues);}
     void                SetField( const char *pszFName, int nCount,
                                   double * padfValues )
@@ -352,8 +367,8 @@ class CPL_DLL OGRFeature
                                        nYear, nMonth, nDay, 
                                        nHour, nMinute, nSecond, nTZFlag ); }
 
-    long                GetFID() { return nFID; }
-    virtual OGRErr      SetFID( long nFIDIn );
+    GIntBig             GetFID() { return nFID; }
+    virtual OGRErr      SetFID( GIntBig nFIDIn );
 
     void                DumpReadable( FILE *, char** papszOptions = NULL );
 
@@ -392,7 +407,7 @@ class CPL_DLL OGRFeatureQuery
 
     char          **FieldCollector( void *, char ** );
 
-    long       *EvaluateAgainstIndices( swq_expr_node*, OGRLayer *, int& nFIDCount);
+    GIntBig       *EvaluateAgainstIndices( swq_expr_node*, OGRLayer *, GIntBig& nFIDCount);
     
     int         CanUseIndex( swq_expr_node*, OGRLayer * );
     
@@ -403,7 +418,7 @@ class CPL_DLL OGRFeatureQuery
     OGRErr      Compile( OGRFeatureDefn *, const char * );
     int         Evaluate( OGRFeature * );
 
-    long       *EvaluateAgainstIndices( OGRLayer *, OGRErr * );
+    GIntBig       *EvaluateAgainstIndices( OGRLayer *, OGRErr * );
     
     int         CanUseIndex( OGRLayer * );
 

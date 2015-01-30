@@ -1444,6 +1444,8 @@ OGRPGDataSource::ICreateLayer( const char * pszLayerName,
 /*      Create a basic table with the FID.  Also include the            */
 /*      geometry if this is not a PostGIS enabled table.                */
 /* -------------------------------------------------------------------- */
+    int bFID64 = CSLFetchBoolean(papszOptions, "FID64", FALSE);
+    const char* pszSerialType = bFID64 ? "BIGSERIAL": "SERIAL";
 
     CPLString osCreateTable;
     int bTemporary = CSLFetchNameValue( papszOptions, "TEMPORARY" ) != NULL &&
@@ -1465,11 +1467,12 @@ OGRPGDataSource::ICreateLayer( const char * pszLayerName,
         pszGFldName = "wkb_geometry";
         osCommand.Printf(
                  "%s ( "
-                 "    %s SERIAL, "
+                 "    %s %s, "
                  "   %s %s, "
                  "   PRIMARY KEY (%s)",
                  osCreateTable.c_str(),
                  pszFIDColumnName,
+                 pszSerialType,
                  pszGFldName,
                  pszGeomType,
                  pszFIDColumnName);
@@ -1477,9 +1480,10 @@ OGRPGDataSource::ICreateLayer( const char * pszLayerName,
     else if ( !bDifferedCreation && eType != wkbNone && EQUAL(pszGeomType, "geography") )
     {
         osCommand.Printf(
-                    "%s ( %s SERIAL, %s geography(%s%s%s), PRIMARY KEY (%s)",
+                    "%s ( %s %s, %s geography(%s%s%s), PRIMARY KEY (%s)",
                     osCreateTable.c_str(),
                     pszFIDColumnName,
+                    pszSerialType,
                     OGRPGEscapeColumnName(pszGFldName).c_str(), pszGeometryType,
                     nDimension == 2 ? "" : "Z",
                     nSRSId ? CPLSPrintf(",%d", nSRSId) : "", 
@@ -1489,9 +1493,10 @@ OGRPGDataSource::ICreateLayer( const char * pszLayerName,
               sPostGISVersion.nMajor >= 2 )
     {
         osCommand.Printf(
-                    "%s ( %s SERIAL, %s geometry(%s%s%s), PRIMARY KEY (%s)",
+                    "%s ( %s %s, %s geometry(%s%s%s), PRIMARY KEY (%s)",
                     osCreateTable.c_str(),
                     pszFIDColumnName,
+                    pszSerialType,
                     OGRPGEscapeColumnName(pszGFldName).c_str(), pszGeometryType,
                     nDimension == 2 ? "" : "Z",
                     nSRSId ? CPLSPrintf(",%d", nSRSId) : "", 
@@ -1500,9 +1505,10 @@ OGRPGDataSource::ICreateLayer( const char * pszLayerName,
     else
     {
         osCommand.Printf(
-                 "%s ( %s SERIAL, PRIMARY KEY (%s)",
+                 "%s ( %s %s, PRIMARY KEY (%s)",
                  osCreateTable.c_str(),
                  pszFIDColumnName,
+                 pszSerialType,
                  pszFIDColumnName );
     }
     osCreateTable = osCommand;
@@ -1666,6 +1672,8 @@ OGRPGDataSource::ICreateLayer( const char * pszLayerName,
     {
         poLayer->SetUseCopy();
     }
+    if( bFID64 )
+        poLayer->SetMetadataItem(OLMD_FID64, "YES");
 
 /* -------------------------------------------------------------------- */
 /*      Add layer to data source layer list.                            */

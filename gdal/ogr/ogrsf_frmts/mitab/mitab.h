@@ -167,7 +167,7 @@ class IMapInfoFile : public OGRLayer
   private:
 
   protected: 
-    int                 m_nCurFeatureId;
+    GIntBig             m_nCurFeatureId;
     TABFeature         *m_poCurFeature;
     GBool               m_bBoundsSet;
 
@@ -202,9 +202,9 @@ class IMapInfoFile : public OGRLayer
     ///////////////
     //  OGR methods for read support
     virtual void        ResetReading() = 0;
-    virtual int         GetFeatureCount (int bForce) = 0;
+    virtual GIntBig     GetFeatureCount (int bForce) = 0;
     virtual OGRFeature *GetNextFeature();
-    virtual OGRFeature *GetFeature(long nFeatureId);
+    virtual OGRFeature *GetFeature(GIntBig nFeatureId);
     virtual OGRErr      ICreateFeature(OGRFeature *poFeature);
     virtual int         TestCapability( const char * pszCap ) =0;
     virtual int         GetExtent(OGREnvelope *psExtent, int bForce) =0;
@@ -212,8 +212,8 @@ class IMapInfoFile : public OGRLayer
     ///////////////
     // Read access specific stuff
     //
-    virtual int GetNextFeatureId(int nPrevId) = 0;
-    virtual TABFeature *GetFeatureRef(int nFeatureId) = 0;
+    virtual GIntBig GetNextFeatureId(GIntBig nPrevId) = 0;
+    virtual TABFeature *GetFeatureRef(GIntBig nFeatureId) = 0;
     virtual OGRFeatureDefn *GetLayerDefn() = 0;
 
     virtual TABFieldType GetNativeFieldType(int nFieldId) = 0;
@@ -294,7 +294,7 @@ class TABFile: public IMapInfoFile
 
     int         m_nLastFeatureId;
 
-    long        *m_panMatchingFIDs;
+    GIntBig    *m_panMatchingFIDs;
     int         m_iMatchingFID;
 
     int         m_bNeedTABRewrite;
@@ -331,12 +331,12 @@ class TABFile: public IMapInfoFile
 
     virtual void        ResetReading();
     virtual int         TestCapability( const char * pszCap );
-    virtual int         GetFeatureCount (int bForce);
+    virtual GIntBig     GetFeatureCount (int bForce);
     virtual int         GetExtent(OGREnvelope *psExtent, int bForce);
 
     /* Implement OGRLayer's SetFeature() for random write, only with TABFile */
     virtual OGRErr      ISetFeature( OGRFeature * );
-    virtual OGRErr      DeleteFeature(long nFeatureId);
+    virtual OGRErr      DeleteFeature(GIntBig nFeatureId);
 
     virtual OGRErr      DeleteField( int iField );
     virtual OGRErr      ReorderFields( int* panMap );
@@ -350,8 +350,8 @@ class TABFile: public IMapInfoFile
 
     int         GetNextFeatureId_Spatial( int nPrevId );
 
-    virtual int GetNextFeatureId(int nPrevId);
-    virtual TABFeature *GetFeatureRef(int nFeatureId);
+    virtual GIntBig GetNextFeatureId(GIntBig nPrevId);
+    virtual TABFeature *GetFeatureRef(GIntBig nFeatureId);
     virtual OGRFeatureDefn *GetLayerDefn();
 
     virtual TABFieldType GetNativeFieldType(int nFieldId);
@@ -477,15 +477,15 @@ class TABView: public IMapInfoFile
 
     virtual void        ResetReading();
     virtual int         TestCapability( const char * pszCap );
-    virtual int         GetFeatureCount (int bForce);
+    virtual GIntBig     GetFeatureCount (int bForce);
     virtual int         GetExtent(OGREnvelope *psExtent, int bForce);
     
     ///////////////
     // Read access specific stuff
     //
 
-    virtual int GetNextFeatureId(int nPrevId);
-    virtual TABFeature *GetFeatureRef(int nFeatureId);
+    virtual GIntBig GetNextFeatureId(GIntBig nPrevId);
+    virtual TABFeature *GetFeatureRef(GIntBig nFeatureId);
     virtual OGRFeatureDefn *GetLayerDefn();
 
     virtual TABFieldType GetNativeFieldType(int nFieldId);
@@ -555,8 +555,6 @@ class TABSeamless: public IMapInfoFile
     OGRFeatureDefn *m_poFeatureDefnRef;
 
     TABFile     *m_poIndexTable;
-    int         m_nIndexTableFIDBits;
-    int         m_nIndexTableFIDMask;
     int         m_nTableNameField;
     int         m_nCurBaseTableId;
     TABFile     *m_poCurBaseTable;
@@ -571,9 +569,9 @@ class TABSeamless: public IMapInfoFile
                               GBool bTestOpenNoError = FALSE);
     int         OpenBaseTable(int nTableId, GBool bTestOpenNoError = FALSE);
     int         OpenNextBaseTable(GBool bTestOpenNoError =FALSE);
-    int         EncodeFeatureId(int nTableId, int nBaseFeatureId);
-    int         ExtractBaseTableId(int nEncodedFeatureId);
-    int         ExtractBaseFeatureId(int nEncodedFeatureId);
+    GIntBig     EncodeFeatureId(int nTableId, int nBaseFeatureId);
+    int         ExtractBaseTableId(GIntBig nEncodedFeatureId);
+    int         ExtractBaseFeatureId(GIntBig nEncodedFeatureId);
 
   public:
     TABSeamless();
@@ -594,15 +592,15 @@ class TABSeamless: public IMapInfoFile
 
     virtual void        ResetReading();
     virtual int         TestCapability( const char * pszCap );
-    virtual int         GetFeatureCount (int bForce);
+    virtual GIntBig     GetFeatureCount (int bForce);
     virtual int         GetExtent(OGREnvelope *psExtent, int bForce);
     
     ///////////////
     // Read access specific stuff
     //
 
-    virtual int GetNextFeatureId(int nPrevId);
-    virtual TABFeature *GetFeatureRef(int nFeatureId);
+    virtual GIntBig GetNextFeatureId(GIntBig nPrevId);
+    virtual TABFeature *GetFeatureRef(GIntBig nFeatureId);
     virtual OGRFeatureDefn *GetLayerDefn();
 
     virtual TABFieldType GetNativeFieldType(int nFieldId);
@@ -744,7 +742,7 @@ class MIFFile: public IMapInfoFile
                            {return m_poDefn?m_poDefn->GetName():"";};
 
     virtual int         TestCapability( const char * pszCap ) ;
-    virtual int         GetFeatureCount (int bForce);
+    virtual GIntBig     GetFeatureCount (int bForce);
     virtual void        ResetReading();
     virtual int         GetExtent(OGREnvelope *psExtent, int bForce);
 
@@ -752,8 +750,8 @@ class MIFFile: public IMapInfoFile
     // Read access specific stuff
     //
     
-    virtual int GetNextFeatureId(int nPrevId);
-    virtual TABFeature *GetFeatureRef(int nFeatureId);
+    virtual GIntBig GetNextFeatureId(GIntBig nPrevId);
+    virtual TABFeature *GetFeatureRef(GIntBig nFeatureId);
     virtual OGRFeatureDefn *GetLayerDefn();
 
     virtual TABFieldType GetNativeFieldType(int nFieldId);

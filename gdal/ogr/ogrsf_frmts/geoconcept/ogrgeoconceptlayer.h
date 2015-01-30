@@ -56,15 +56,15 @@ class OGRGeoconceptLayer : public OGRLayer
 //    OGRErr               SetAttributeFilter( const char* pszQuery );
     void                 ResetReading();
     OGRFeature*          GetNextFeature();
-//    OGRErr               SetNextByIndex( long nIndex );
+//    OGRErr               SetNextByIndex( GIntBig nIndex );
 
-//    OGRFeature*          GetFeature( long nFID );
+//    OGRFeature*          GetFeature( GIntBig nFID );
 //    OGRErr               ISetFeature( OGRFeature* poFeature );
-//    OGRErr               DeleteFeature( long nFID );
+//    OGRErr               DeleteFeature( GIntBig nFID );
     OGRErr               ICreateFeature( OGRFeature* poFeature );
     OGRFeatureDefn*      GetLayerDefn( ) { return _poFeatureDefn; } // FIXME
     OGRSpatialReference* GetSpatialRef( );
-    int                  GetFeatureCount( int bForce = TRUE );
+    GIntBig              GetFeatureCount( int bForce = TRUE );
     OGRErr               GetExtent( OGREnvelope *psExtent, int bForce = TRUE );
     int                  TestCapability( const char* pszCap );
 //    const char*          GetInfo( const char* pszTag );

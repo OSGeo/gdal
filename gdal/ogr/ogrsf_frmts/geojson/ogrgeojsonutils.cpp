@@ -184,30 +184,20 @@ OGRFieldType GeoJSONPropertyToFieldType( json_object* poObject,
     else if( json_type_int == type )
     {
         GIntBig nVal = json_object_get_int64(poObject);
-        if( nVal == MY_INT64_MIN || nVal == MY_INT64_MAX )
+        if( nVal != (GIntBig)(int) nVal )
         {
-            static int bWarned = FALSE;
-            if( !bWarned )
+            if( nVal == MY_INT64_MIN || nVal == MY_INT64_MAX )
             {
-                bWarned = TRUE;
-                CPLError(CE_Warning, CPLE_AppDefined,
-                         "Integer values ranging out of 64bit integer range "
-                         "have been found. Will be clamped to INT64_MIN/INT64_MAX");
+                static int bWarned = FALSE;
+                if( !bWarned )
+                {
+                    bWarned = TRUE;
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "Integer values probably ranging out of 64bit integer range "
+                             "have been found. Will be clamped to INT64_MIN/INT64_MAX");
+                }
             }
-            return OFTString;
-        }
-        // FIXME when we have 64bit integer
-        if( nVal != (int) nVal )
-        {
-            static int bWarned = FALSE;
-            if( !bWarned )
-            {
-                bWarned = TRUE;
-                CPLDebug("GeoJSON",
-                         "64b-bit integer have been found. Will be reported as "
-                         "strings");
-            }
-            return OFTString;
+            return OFTInteger64;
         }
         else
         {
@@ -234,6 +224,13 @@ OGRFieldType GeoJSONPropertyToFieldType( json_object* poObject,
                     return OFTStringList;
                 else if (type == json_type_double)
                     eType = OFTRealList;
+                else if (eType == OFTIntegerList &&
+                         type == json_type_int)
+                {
+                    GIntBig nVal = json_object_get_int64(poRow);
+                    if( nVal != (GIntBig)(int)nVal )
+                        eType = OFTInteger64List;
+                }
                 else if (type != json_type_int &&
                          type != json_type_boolean)
                     return OFTString;
@@ -254,7 +251,6 @@ OGRFieldType GeoJSONPropertyToFieldType( json_object* poObject,
 OGRFieldType GeoJSONStringPropertyToFieldType( json_object* poObject )
 {
     if (poObject == NULL) { return OFTString; }
-    CPLAssert( json_object_get_type( poObject ) == json_type_string );
     const char* pszStr = json_object_get_string( poObject );
 
     OGRField sWrkField;

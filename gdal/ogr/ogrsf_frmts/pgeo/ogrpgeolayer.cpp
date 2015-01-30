@@ -313,7 +313,7 @@ OGRFeature *OGRPGeoLayer::GetNextRawFeature()
 /*                             GetFeature()                             */
 /************************************************************************/
 
-OGRFeature *OGRPGeoLayer::GetFeature( long nFeatureId )
+OGRFeature *OGRPGeoLayer::GetFeature( GIntBig nFeatureId )
 
 {
     /* This should be implemented directly! */

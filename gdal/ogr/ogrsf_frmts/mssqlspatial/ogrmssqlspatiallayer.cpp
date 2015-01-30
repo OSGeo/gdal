@@ -384,7 +384,7 @@ OGRFeature *OGRMSSQLSpatialLayer::GetNextRawFeature()
 /*                             GetFeature()                             */
 /************************************************************************/
 
-OGRFeature *OGRMSSQLSpatialLayer::GetFeature( long nFeatureId )
+OGRFeature *OGRMSSQLSpatialLayer::GetFeature( GIntBig nFeatureId )
 
 {
     /* This should be implemented directly! */

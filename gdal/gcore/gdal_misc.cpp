@@ -2604,6 +2604,9 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
             if( CSLFetchNameValue( papszMD, GDAL_DMD_CREATIONDATATYPES ) )
                 printf( "  Creation Datatypes: %s\n",
                         CSLFetchNameValue( papszMD, GDAL_DMD_CREATIONDATATYPES ) );
+            if( CSLFetchNameValue( papszMD, GDAL_DMD_CREATIONFIELDDATATYPES ) )
+                printf( "  Creation Field Datatypes: %s\n",
+                        CSLFetchNameValue( papszMD, GDAL_DMD_CREATIONFIELDDATATYPES ) );
             if( CSLFetchNameValue( papszMD, GDAL_DMD_CREATIONOPTIONLIST ) )
             {
                 CPLXMLNode *psCOL = 

@@ -65,7 +65,7 @@ class OGRNASLayer : public OGRLayer
     void                ResetReading();
     OGRFeature *        GetNextFeature();
 
-    int                 GetFeatureCount( int bForce = TRUE );
+    GIntBig             GetFeatureCount( int bForce = TRUE );
     OGRErr              GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
 
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
@@ -93,7 +93,7 @@ class OGRNASRelationLayer : public OGRLayer
     void                ResetReading();
     OGRFeature *        GetNextFeature();
 
-    int                 GetFeatureCount( int bForce = TRUE );
+    GIntBig             GetFeatureCount( int bForce = TRUE );
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
     int                 TestCapability( const char * );
 

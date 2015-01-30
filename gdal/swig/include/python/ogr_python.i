@@ -296,12 +296,16 @@ layer[0:4] would return a list of the first four features."""
         fld_type = self.GetFieldType(fld_index)
         if fld_type == OFTInteger:
             return self.GetFieldAsInteger(fld_index)
+        if fld_type == OFTInteger64:
+            return self.GetFieldAsInteger64(fld_index)
         if fld_type == OFTReal:
             return self.GetFieldAsDouble(fld_index)
         if fld_type == OFTStringList:
             return self.GetFieldAsStringList(fld_index)
         if fld_type == OFTIntegerList:
             return self.GetFieldAsIntegerList(fld_index)
+        if fld_type == OFTInteger64List:
+            return self.GetFieldAsInteger64List(fld_index)
         if fld_type == OFTRealList:
             return self.GetFieldAsDoubleList(fld_index)
         ## if fld_type == OFTDateTime or fld_type == OFTDate or fld_type == OFTTime:
@@ -329,6 +333,13 @@ layer[0:4] would return a list of the first four features."""
             int minute, int second, int tzflag)
         """
 
+        if len(args) == 2 and str(type(args[1])) == "<type 'int'>":
+            fld_index = args[0]
+            if isinstance(fld_index, str):
+                fld_index = self.GetFieldIndex(fld_index)
+            return _ogr.Feature_SetFieldInteger64(self, fld_index, args[1])
+
+
         if len(args) == 2 and str(type(args[1])) == "<type 'unicode'>":
             fld_index = args[0]
             if isinstance(fld_index, str):
@@ -352,7 +363,7 @@ layer[0:4] would return a list of the first four features."""
                 self.UnsetField( fld_index )
                 return
             if isinstance(value[0],int):
-                self.SetFieldIntegerList(fld_index,value)
+                self.SetFieldInteger64List(fld_index,value)
                 return
             elif isinstance(value[0],float):
                 self.SetFieldDoubleList(fld_index,value)

@@ -126,7 +126,9 @@ typedef enum
   /** Raw Binary data */                        OFTBinary = 8,
   /** Date */                                   OFTDate = 9,
   /** Time */                                   OFTTime = 10,
-  /** Date and Time */                          OFTDateTime = 11
+  /** Date and Time */                          OFTDateTime = 11,
+  /** Single 64bit integer */                   OFTInteger64 = 12,
+  /** List of 64bit integers */                 OFTInteger64List = 13
 } OGRFieldType;
 
 %rename (FieldSubType) OGRFieldSubType;
@@ -251,6 +253,8 @@ typedef void retGetPoints;
 %constant OFTDate = 9;
 %constant OFTTime = 10;
 %constant OFTDateTime = 11;
+%constant OFTInteger64 = 12;
+%constant OFTInteger64List = 13;
 
 %constant OFSTNone = 0;
 %constant OFSTBoolean = 1;
@@ -296,6 +300,9 @@ typedef void retGetPoints;
 
 %constant char *ODrCCreateDataSource   = "CreateDataSource";
 %constant char *ODrCDeleteDataSource   = "DeleteDataSource";
+
+%constant char *OLMD_FID64             = "OLMD_FID64";
+
 #else
 typedef int OGRErr;
 
@@ -329,6 +336,9 @@ typedef int OGRErr;
 
 #define ODrCCreateDataSource   "CreateDataSource"
 #define ODrCDeleteDataSource   "DeleteDataSource"
+
+#define OLMD_FID64             "OLMD_FID64"
+
 #endif
 
 #if defined(SWIGCSHARP) || defined(SWIGJAVA)
@@ -777,7 +787,7 @@ public:
   }
 
 %newobject GetFeature;
-  OGRFeatureShadow *GetFeature(long fid) {
+  OGRFeatureShadow *GetFeature(GIntBig fid) {
     return (OGRFeatureShadow*) OGR_L_GetFeature(self, fid);
   }
   
@@ -786,7 +796,7 @@ public:
     return (OGRFeatureShadow*) OGR_L_GetNextFeature(self);
   }
   
-  OGRErr SetNextByIndex(long new_index) {
+  OGRErr SetNextByIndex(GIntBig new_index) {
     return OGR_L_SetNextByIndex(self, new_index);
   }
   
@@ -800,7 +810,7 @@ public:
   }
 %clear OGRFeatureShadow *feature;
 
-  OGRErr DeleteFeature(long fid) {
+  OGRErr DeleteFeature(GIntBig fid) {
     return OGR_L_DeleteFeature(self, fid);
   }
   
@@ -815,7 +825,7 @@ public:
 #ifndef SWIGJAVA
   %feature( "kwargs" ) GetFeatureCount;  
 #endif
-  int GetFeatureCount(int force=1) {
+  GIntBig GetFeatureCount(int force=1) {
     return OGR_L_GetFeatureCount(self, force);
   }
   
@@ -1209,6 +1219,24 @@ public:
 #endif
   /* ------------------------------------------- */  
 
+  /* ---- GetFieldAsInteger64 ------------------ */
+
+  GIntBig GetFieldAsInteger64(int id) {
+    return OGR_F_GetFieldAsInteger64(self, id);
+  }
+
+#ifndef SWIGPERL
+  GIntBig GetFieldAsInteger64(const char* name) {
+      int i = OGR_F_GetFieldIndex(self, name);
+      if (i == -1)
+      CPLError(CE_Failure, 1, "No such field: '%s'", name);
+      else
+      return OGR_F_GetFieldAsInteger64(self, i);
+      return 0;
+  }
+#endif
+  /* ------------------------------------------- */  
+
   /* ---- GetFieldAsDouble --------------------- */
 
   double GetFieldAsDouble(int id) {
@@ -1253,6 +1281,12 @@ public:
 #else
   void GetFieldAsIntegerList(int id, int *nLen, const int **pList) {
       *pList = OGR_F_GetFieldAsIntegerList(self, id, nLen);
+  }
+#endif
+
+#if defined(SWIGPYTHON)
+  void GetFieldAsInteger64List(int id, int *nLen, const GIntBig **pList) {
+      *pList = OGR_F_GetFieldAsInteger64List(self, id, nLen);
   }
 #endif
 
@@ -1372,11 +1406,11 @@ public:
       return OGR_F_GetGeomFieldIndex(self, name);
   }
 
-  int GetFID() {
+  GIntBig GetFID() {
     return OGR_F_GetFID(self);
   }
   
-  OGRErr SetFID(int fid) {
+  OGRErr SetFID(GIntBig fid) {
     return OGR_F_SetFID(self, fid);
   }
   
@@ -1418,7 +1452,12 @@ public:
   }
 #endif
   %clear (const char* value );
-  
+
+  void SetFieldInteger64(int id, GIntBig value) {
+    OGR_F_SetFieldInteger64(self, id, value);
+  }
+
+#ifndef SWIGPYTHON
   void SetField(int id, int value) {
     OGR_F_SetFieldInteger(self, id, value);
   }
@@ -1431,7 +1470,8 @@ public:
       else
 	  OGR_F_SetFieldInteger(self, i, value);
   }
-#endif
+#endif /* SWIGPERL */
+#endif /* SWIGPYTHON */
   
   void SetField(int id, double value) {
     OGR_F_SetFieldDouble(self, id, value);
@@ -1472,6 +1512,12 @@ public:
   void SetFieldIntegerList(int id, int nList, int *pList) {
       OGR_F_SetFieldIntegerList(self, id, nList, pList);
   }
+
+#if defined(SWIGPYTHON)
+  void SetFieldInteger64List(int id, int nList, GIntBig *pList) {
+      OGR_F_SetFieldInteger64List(self, id, nList, pList);
+  }
+#endif
 
   void SetFieldDoubleList(int id, int nList, double *pList) {
       OGR_F_SetFieldDoubleList(self, id, nList, pList);
@@ -1732,6 +1778,8 @@ public:
             case OFTDate:
             case OFTTime:
             case OFTDateTime:
+            case OFTInteger64:
+            case OFTInteger64List:
                 return TRUE;
             default:
                 CPLError(CE_Failure, CPLE_IllegalArg, "Illegal field type value");

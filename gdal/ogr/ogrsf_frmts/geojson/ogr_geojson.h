@@ -64,7 +64,7 @@ public:
     //
     OGRFeatureDefn* GetLayerDefn();
     
-    int GetFeatureCount( int bForce = TRUE );
+    GIntBig GetFeatureCount( int bForce = TRUE );
     void ResetReading();
     OGRFeature* GetNextFeature();
     int TestCapability( const char* pszCap );

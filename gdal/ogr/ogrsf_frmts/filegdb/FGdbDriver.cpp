@@ -306,6 +306,8 @@ void RegisterOGRFileGDB()
 "    <Value>GEOMETRY_AND_BLOB_OUTOFLINE</Value>"
 "  </Option>"
 "</LayerCreationOptionList>");
+    
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES, "Integer Real String Date DateTime Binary" );
 
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver(poDriver);
 }

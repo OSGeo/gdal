@@ -230,7 +230,7 @@ class OGRSQLiteLayer : public OGRLayer, public IOGRSQLiteGetSpatialWhere
   protected:
     OGRSQLiteFeatureDefn *poFeatureDefn;
 
-    int                 iNextShapeId;
+    GIntBig             iNextShapeId;
 
     sqlite3_stmt        *hStmt;
     int                  bDoStep;
@@ -279,7 +279,7 @@ class OGRSQLiteLayer : public OGRLayer, public IOGRSQLiteGetSpatialWhere
     virtual OGRFeature *GetNextRawFeature();
     virtual OGRFeature *GetNextFeature();
 
-    virtual OGRFeature *GetFeature( long nFeatureId );
+    virtual OGRFeature *GetFeature( GIntBig nFeatureId );
     
     virtual OGRFeatureDefn *GetLayerDefn() { return poFeatureDefn; }
     virtual OGRSQLiteFeatureDefn *myGetLayerDefn() { return poFeatureDefn; }
@@ -398,7 +398,7 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
     virtual const char* GetName();
     virtual OGRwkbGeometryType GetGeomType() { return (eGeomType != wkbUnknown) ? eGeomType : OGRLayer::GetGeomType(); }
 
-    virtual int         GetFeatureCount( int );
+    virtual GIntBig     GetFeatureCount( int );
     virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce);
 
     virtual OGRFeatureDefn *GetLayerDefn();
@@ -407,7 +407,7 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
     virtual void        SetSpatialFilter( OGRGeometry * );
     virtual OGRErr      SetAttributeFilter( const char * );
     virtual OGRErr      ISetFeature( OGRFeature *poFeature );
-    virtual OGRErr      DeleteFeature( long nFID );
+    virtual OGRErr      DeleteFeature( GIntBig nFID );
     virtual OGRErr      ICreateFeature( OGRFeature *poFeature );
 
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
@@ -417,9 +417,13 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
     virtual OGRErr      AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nFlags );
 
     virtual OGRFeature *GetNextFeature();
-    virtual OGRFeature *GetFeature( long nFeatureId );
+    virtual OGRFeature *GetFeature( GIntBig nFeatureId );
 
     virtual int         TestCapability( const char * );
+
+    virtual char      **GetMetadata( const char * pszDomain = "" );
+    virtual const char *GetMetadataItem( const char * pszName,
+                                         const char * pszDomain = "" );
 
     // follow methods are not base class overrides
     void                SetLaunderFlag( int bFlag ) 
@@ -499,12 +503,12 @@ class OGRSQLiteViewLayer : public OGRSQLiteLayer
     int                 HasLayerDefnError() { GetLayerDefn(); return bLayerDefnError; }
 
     virtual OGRFeature *GetNextFeature();
-    virtual int         GetFeatureCount( int );
+    virtual GIntBig     GetFeatureCount( int );
 
     virtual void        SetSpatialFilter( OGRGeometry * );
     virtual OGRErr      SetAttributeFilter( const char * );
 
-    virtual OGRFeature *GetFeature( long nFeatureId );
+    virtual OGRFeature *GetFeature( GIntBig nFeatureId );
 
     virtual int         TestCapability( const char * );
 
@@ -566,7 +570,7 @@ class OGRSQLiteSelectLayerCommonBehaviour
 
     void        ResetReading();
     OGRFeature *GetNextFeature();
-    int         GetFeatureCount( int );
+    GIntBig     GetFeatureCount( int );
     void        SetSpatialFilter( int iGeomField, OGRGeometry * );
     OGRErr      SetAttributeFilter( const char * );
     int         TestCapability( const char * );
@@ -595,7 +599,7 @@ class OGRSQLiteSelectLayer : public OGRSQLiteLayer, public IOGRSQLiteSelectLayer
     virtual void        ResetReading();
 
     virtual OGRFeature *GetNextFeature();
-    virtual int         GetFeatureCount( int );
+    virtual GIntBig     GetFeatureCount( int );
 
     virtual void        SetSpatialFilter( OGRGeometry * poGeom ) { SetSpatialFilter(0, poGeom); }
     virtual void        SetSpatialFilter( int iGeomField, OGRGeometry * );

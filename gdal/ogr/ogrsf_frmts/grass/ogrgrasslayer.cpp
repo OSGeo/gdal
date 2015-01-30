@@ -337,7 +337,7 @@ void OGRGRASSLayer::ResetReading()
 /*      If we already have an FID list, we can easily resposition       */
 /*      ourselves in it.                                                */
 /************************************************************************/
-OGRErr OGRGRASSLayer::SetNextByIndex( long nIndex )
+OGRErr OGRGRASSLayer::SetNextByIndex( GIntBig nIndex )
 {
     if( m_poFilterGeom != NULL || m_poAttrQuery != NULL ) 
     {
@@ -784,7 +784,7 @@ OGRFeature *OGRGRASSLayer::GetNextFeature()
 /************************************************************************/
 /*                             GetFeature()                             */
 /************************************************************************/
-OGRFeature *OGRGRASSLayer::GetFeature( long nFeatureId )
+OGRFeature *OGRGRASSLayer::GetFeature( GIntBig nFeatureId )
 
 {
     CPLDebug ( "GRASS", "OGRGRASSLayer::GetFeature nFeatureId = %ld", nFeatureId );
@@ -1014,7 +1014,7 @@ OGRErr OGRGRASSLayer::ICreateFeature( OGRFeature *poFeature )
 /*      Eventually we should consider implementing a more efficient     */
 /*      way of counting features matching a spatial query.              */
 /************************************************************************/
-int OGRGRASSLayer::GetFeatureCount( int bForce )
+GIntBig OGRGRASSLayer::GetFeatureCount( int bForce )
 {
     if( m_poFilterGeom != NULL || m_poAttrQuery != NULL )
         return OGRLayer::GetFeatureCount( bForce );

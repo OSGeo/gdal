@@ -204,6 +204,8 @@ for name in layer_list:
         src_fd = layerdef.GetFieldDefn( fld_index )
         if src_fd.GetType() == ogr.OFTInteger:
             type = 'Integer'
+        elif src_fd.GetType() == ogr.OFTInteger64:
+            type = 'Integer64'
         elif src_fd.GetType() == ogr.OFTString:
             type = 'String'
         elif src_fd.GetType() == ogr.OFTReal:
@@ -212,6 +214,8 @@ for name in layer_list:
             type = 'StringList'
         elif src_fd.GetType() == ogr.OFTIntegerList:
             type = 'IntegerList'
+        elif src_fd.GetType() == ogr.OFTInteger64List:
+            type = 'Integer64List'
         elif src_fd.GetType() == ogr.OFTRealList:
             type = 'RealList'
         elif src_fd.GetType() == ogr.OFTBinary:

@@ -60,7 +60,7 @@ class OGRGMELayer : public OGRLayer
     std::map<int, CPLString> omnosIdToGMEKey;
     std::map<int, OGRFeature *> omnpoUpdatedFeatures;
     std::map<int, OGRFeature *> omnpoInsertedFeatures;
-    std::vector<long> oListOfDeletedFeatures;
+    std::vector<GIntBig> oListOfDeletedFeatures;
     CPLString          osGeomColumnName;
 
     CPLString          osWhere;
@@ -124,7 +124,7 @@ class OGRGMELayer : public OGRLayer
 
     virtual OGRErr      ISetFeature( OGRFeature *poFeature );
     virtual OGRErr      ICreateFeature( OGRFeature *poFeature );
-    virtual OGRErr      DeleteFeature(long int);
+    virtual OGRErr      DeleteFeature(GIntBig);
     virtual OGRErr      CreateField( OGRFieldDefn *poField, int bApproxOK = TRUE );
 
     virtual OGRErr      StartTransaction();

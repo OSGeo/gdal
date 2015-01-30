@@ -123,6 +123,28 @@ void RegisterOGROCI()
                                    "Oracle Spatial" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
                                 "drv_oci.html" );
+
+    poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
+    "<LayerCreationOptionList>"
+    "  <Option name='LAUNDER' type='boolean' description='Whether layer and field names will be laundered' default='NO'/>"
+    "  <Option name='PRECISION' type='boolean' description='Whether fields created should keep the width and precision' default='YES'/>"
+    "  <Option name='OVERWRITE' type='boolean' description='Whether to overwrite an existing table with the layer name to be created' default='NO'/>"
+    "  <Option name='TRUNCATE' type='boolean' description='Whether to truncate an existing table' default='NO'/>"
+    "  <Option name='INDEX' type='boolean' description='Whether to create a spatial index' default='YES'/>"
+    "  <Option name='INDEX_PARAMETERS' type='string' description='Creation parameters when the spatial index is created'/>"
+    "  <Option name='ADD_LAYER_GTYPE' type='boolean' description='May be set to NO to disable the constraints on the geometry type in the spatial index' default='YES'/>"
+    "  <Option name='MULTI_LOAD' type='boolean' description='If enabled new features will be created in groups of 100 per SQL INSERT command' default='YES'/>"
+    "  <Option name='LOADER_FILE' type='string' description='If this option is set, all feature information will be written to a file suitable for use with SQL*Loader'/>"
+    "  <Option name='DIM' type='integer' description='Set to 2 to force the geometries to be 2D, or 3 to be 2.5D' default='3'/>"
+    "  <Option name='GEOMETRY_NAME' type='string' description='Name of geometry column.' default='ORA_GEOMETRY'/>"
+    "  <Option name='DIMINFO_X' type='string' description='xmin,xmax,xres values to control the X dimension info written into the USER_SDO_GEOM_METADATA table'/>"
+    "  <Option name='DIMINFO_Y' type='string' description='ymin,ymax,yres values to control the Y dimension info written into the USER_SDO_GEOM_METADATA table'/>"
+    "  <Option name='DIMINFO_Z' type='string' description='zmin,zmax,zres values to control the Z dimension info written into the USER_SDO_GEOM_METADATA table'/>"
+    "  <Option name='SRID' type='int' description='Forced SRID of the layer'/>"
+    "</LayerCreationOptionList>");
+        
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES, "Integer Integer64 Real String Date DateTime" );
+
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver(poDriver);
 }
 

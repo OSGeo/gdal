@@ -51,7 +51,9 @@ typedef enum {
     GMLPT_Boolean = 10,
     GMLPT_BooleanList = 11,
     GMLPT_Short = 12,
-    GMLPT_Float = 13
+    GMLPT_Float = 13,
+    GMLPT_Integer64 = 14,
+    GMLPT_Integer64List = 15
 } GMLPropertyType;
 
 /************************************************************************/
@@ -144,7 +146,7 @@ class CPL_DLL GMLFeatureClass
 
     int         m_bSchemaLocked;
 
-    int         m_nFeatureCount;
+    GIntBig     m_nFeatureCount;
 
     char        *m_pszExtraInfo;
 
@@ -190,8 +192,8 @@ public:
     const char  *GetExtraInfo();
     void        SetExtraInfo( const char * );
 
-    int         GetFeatureCount();
-    void        SetFeatureCount( int );
+    GIntBig     GetFeatureCount();
+    void        SetFeatureCount( GIntBig );
 
     int         HasExtents() const { return m_bHaveExtents; }
     void        SetExtents( double dfXMin, double dfXMax, 

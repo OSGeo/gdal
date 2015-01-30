@@ -333,7 +333,7 @@ OGRFeature *OGRODBCLayer::GetNextRawFeature()
 /*                             GetFeature()                             */
 /************************************************************************/
 
-OGRFeature *OGRODBCLayer::GetFeature( long nFeatureId )
+OGRFeature *OGRODBCLayer::GetFeature( GIntBig nFeatureId )
 
 {
     /* This should be implemented directly! */

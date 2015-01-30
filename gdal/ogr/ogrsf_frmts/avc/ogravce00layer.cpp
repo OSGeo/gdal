@@ -135,7 +135,7 @@ void OGRAVCE00Layer::ResetReading()
 /*                             GetFeature()                             */
 /************************************************************************/
 
-OGRFeature *OGRAVCE00Layer::GetFeature( long nFID )
+OGRFeature *OGRAVCE00Layer::GetFeature( GIntBig nFID )
 
 {
 /* -------------------------------------------------------------------- */
@@ -522,7 +522,7 @@ int OGRAVCE00Layer::AppendTableFields( OGRFeature *poFeature )
 }
 
 
-int OGRAVCE00Layer::GetFeatureCount(int bForce)
+GIntBig OGRAVCE00Layer::GetFeatureCount(int bForce)
 {
     if (m_poAttrQuery != NULL || m_poFilterGeom != NULL)
         return OGRAVCLayer::GetFeatureCount(bForce);

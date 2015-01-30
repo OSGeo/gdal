@@ -93,7 +93,7 @@ public:
     OGRFeatureDefn* GetLayerDefn();
     virtual void ResetReading() = 0;
     virtual OGRFeature* GetNextFeature() = 0;
-    virtual int GetFeatureCount(int bForce = TRUE) = 0;
+    virtual GIntBig GetFeatureCount(int bForce = TRUE) = 0;
     virtual OGRErr ICreateFeature(OGRFeature *poFeature) = 0;
 
     int TestCapability( const char* pszCap );
@@ -131,7 +131,7 @@ public:
     OGRErr ICreateFeature(OGRFeature *poFeature);
     void ResetReading();
     OGRFeature* GetNextFeature();
-    int GetFeatureCount(int bForce = TRUE);
+    GIntBig GetFeatureCount(int bForce = TRUE);
 
     enum WaypointFields{NAME, COMMENT, ICON, DATE};
 private:
@@ -152,7 +152,7 @@ public:
     OGRErr ICreateFeature(OGRFeature *poFeature);
     void ResetReading();
     OGRFeature* GetNextFeature();
-    int GetFeatureCount(int bForce = TRUE);
+    GIntBig GetFeatureCount(int bForce = TRUE);
     enum TrackFields{NAME, TYPE, COLOR};
 
 private:

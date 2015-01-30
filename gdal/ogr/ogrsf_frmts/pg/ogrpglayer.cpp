@@ -602,6 +602,14 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
                     CPL_MSBPTR32(&nVal);
                     poFeature->SetFID( nVal );
                 }
+                else if ( nTypeOID == INT8OID)
+                {
+                    GIntBig nVal;
+                    CPLAssert(PQgetlength(hCursorResult, iRecord, iField) == sizeof(GIntBig));
+                    memcpy( &nVal, PQgetvalue( hCursorResult, iRecord, iField ), sizeof(GIntBig) );
+                    CPL_MSBPTR64(&nVal);
+                    poFeature->SetFID( nVal );
+                }
                 else
                 {
                     CPLDebug("PG", "FID. Unhandled OID %d.", nTypeOID );
@@ -614,7 +622,7 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
                 char* pabyData = PQgetvalue(hCursorResult,iRecord,iField);
                 /* ogr_pg_20 may crash if PostGIS is unavailable and we don't test pabyData */
                 if (pabyData)
-                    poFeature->SetFID( atoi(pabyData) );
+                    poFeature->SetFID( CPLAtoGIntBig(pabyData) );
                 else
                     continue;
             }
@@ -918,6 +926,148 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
                 {
                     for( i = 0; i < nCount; i++ )
                         panList[i] = atoi(papszTokens[i]);
+                }
+                CSLDestroy( papszTokens );
+            }
+            poFeature->SetField( iOGRField, nCount, panList );
+            CPLFree( panList );
+        }
+
+        else if( eOGRType == OFTInteger64List)
+        {
+            GIntBig *panList;
+            int nCount, i;
+
+#if !defined(PG_PRE74)
+            if ( PQfformat( hCursorResult, iField ) == 1 ) // Binary data representation
+            {
+                if (nTypeOID == INT8ARRAYOID)
+                {
+                    char * pData = PQgetvalue( hCursorResult, iRecord, iField );
+
+                    // goto number of array elements
+                    pData += 3 * sizeof(int);
+                    memcpy( &nCount, pData, sizeof(int) );
+                    CPL_MSBPTR32( &nCount );
+
+                    panList = (GIntBig *) CPLCalloc(sizeof(GIntBig),nCount);
+
+                    // goto first array element
+                    pData += 2 * sizeof(int);
+
+                    for( i = 0; i < nCount; i++ )
+                    {
+                        // get element size
+                        int nSize = *(int *)(pData);
+                        CPL_MSBPTR32( &nSize );
+
+                        CPLAssert( nSize == sizeof(GIntBig) );
+
+                        pData += sizeof(int);
+
+                        memcpy( &panList[i], pData, nSize );
+                        CPL_MSBPTR64(&panList[i]);
+
+                        pData += nSize;
+                    }
+                }
+                else
+                {
+                    CPLDebug("PG", "Field %d: Incompatible OID (%d) with OFTInteger64List.", iOGRField, nTypeOID );
+                    continue;
+                }
+            }
+            else
+#endif /* notdef PG_PRE74 */
+            {
+                char **papszTokens;
+                papszTokens = CSLTokenizeStringComplex(
+                    PQgetvalue( hCursorResult, iRecord, iField ),
+                    "{,}", FALSE, FALSE );
+
+                nCount = CSLCount(papszTokens);
+                panList = (GIntBig *) CPLCalloc(sizeof(GIntBig),nCount);
+
+                if( poFeatureDefn->GetFieldDefn(iOGRField)->GetSubType() == OFSTBoolean )
+                {
+                    for( i = 0; i < nCount; i++ )
+                        panList[i] = EQUAL(papszTokens[i], "t");
+                }
+                else
+                {
+                    for( i = 0; i < nCount; i++ )
+                        panList[i] = CPLAtoGIntBig(papszTokens[i]);
+                }
+                CSLDestroy( papszTokens );
+            }
+            poFeature->SetField( iOGRField, nCount, panList );
+            CPLFree( panList );
+        }
+
+        else if( eOGRType == OFTInteger64List)
+        {
+            GIntBig *panList;
+            int nCount, i;
+
+#if !defined(PG_PRE74)
+            if ( PQfformat( hCursorResult, iField ) == 1 ) // Binary data representation
+            {
+                if (nTypeOID == INT8ARRAYOID)
+                {
+                    char * pData = PQgetvalue( hCursorResult, iRecord, iField );
+
+                    // goto number of array elements
+                    pData += 3 * sizeof(int);
+                    memcpy( &nCount, pData, sizeof(int) );
+                    CPL_MSBPTR32( &nCount );
+
+                    panList = (GIntBig *) CPLCalloc(sizeof(GIntBig),nCount);
+
+                    // goto first array element
+                    pData += 2 * sizeof(int);
+
+                    for( i = 0; i < nCount; i++ )
+                    {
+                        // get element size
+                        int nSize = *(int *)(pData);
+                        CPL_MSBPTR32( &nSize );
+
+                        CPLAssert( nSize == sizeof(GIntBig) );
+
+                        pData += sizeof(int);
+
+                        memcpy( &panList[i], pData, nSize );
+                        CPL_MSBPTR64(&panList[i]);
+
+                        pData += nSize;
+                    }
+                }
+                else
+                {
+                    CPLDebug("PG", "Field %d: Incompatible OID (%d) with OFTInteger64List.", iOGRField, nTypeOID );
+                    continue;
+                }
+            }
+            else
+#endif /* notdef PG_PRE74 */
+            {
+                char **papszTokens;
+                papszTokens = CSLTokenizeStringComplex(
+                    PQgetvalue( hCursorResult, iRecord, iField ),
+                    "{,}", FALSE, FALSE );
+
+                nCount = CSLCount(papszTokens);
+                panList = (GIntBig *) CPLCalloc(sizeof(GIntBig),nCount);
+
+                if( poFeatureDefn->GetFieldDefn(iOGRField)->GetSubType() == OFSTBoolean )
+                {
+                    for( i = 0; i < nCount; i++ )
+                        panList[i] = EQUAL(papszTokens[i], "t");
+                }
+                else
+                {
+                    for( i = 0; i < nCount; i++ )
+                        panList[i] = CPLAtoGIntBig(papszTokens[i]);
                 }
                 CSLDestroy( papszTokens );
             }
@@ -1229,8 +1379,7 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
                     CPL_MSBPTR32(&nVal[0]);
                     CPL_MSBPTR32(&nVal[1]);
                     llVal = (GIntBig) ((((GUIntBig)nVal[0]) << 32) | nVal[1]);
-                    /* FIXME : 64bit -> 32bit conversion */
-                    poFeature->SetField( iOGRField, (int)llVal );
+                    poFeature->SetField( iOGRField, llVal );
                 }
                 else if ( nTypeOID == FLOAT4OID )
                 {
@@ -1250,7 +1399,9 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
                 }
                 else
                 {
-                    CPLDebug("PG", "Field %d: Incompatible OID (%d) with %s.", iOGRField, nTypeOID,
+                    CPLDebug("PG", "Field %d(%s): Incompatible OID (%d) with %s.",
+                             iOGRField, poFeatureDefn->GetFieldDefn(iOGRField)->GetNameRef(),
+                             nTypeOID,
                              OGRFieldDefn::GetFieldTypeName( eOGRType ));
                     continue;
                 }
@@ -1469,7 +1620,7 @@ OGRFeature *OGRPGLayer::GetNextRawFeature()
 /*                           SetNextByIndex()                           */
 /************************************************************************/
 
-OGRErr OGRPGLayer::SetNextByIndex( long nIndex )
+OGRErr OGRPGLayer::SetNextByIndex( GIntBig nIndex )
 
 {
     GetLayerDefn();
@@ -1504,14 +1655,14 @@ OGRErr OGRPGLayer::SetNextByIndex( long nIndex )
     
     OGRPGClearResult( hCursorResult );
     
-    osCommand.Printf( "FETCH ABSOLUTE %ld in %s", nIndex+1, pszCursorName );
+    osCommand.Printf( "FETCH ABSOLUTE " CPL_FRMT_GIB " in %s", nIndex+1, pszCursorName );
     hCursorResult = OGRPG_PQexec(hPGConn, osCommand );
 
     if (PQresultStatus(hCursorResult) != PGRES_TUPLES_OK ||
         PQntuples(hCursorResult) != 1)
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "Attempt to read feature at invalid index (%ld).", nIndex );
+                  "Attempt to read feature at invalid index (" CPL_FRMT_GIB ").", nIndex );
 
         CloseCursor();
 
@@ -1991,6 +2142,8 @@ int OGRPGLayer::ReadResultDefinition(PGresult *hInitialResultIn)
             poFeatureDefn->AddGeomFieldDefn(poGeomFieldDefn, FALSE);
             continue;
         }
+            
+        //CPLDebug("PG", "Field %s, oid %d", oField.GetNameRef(), nTypeOID);
 
         if( nTypeOID == BYTEAOID )
         {
@@ -2030,8 +2183,7 @@ int OGRPGLayer::ReadResultDefinition(PGresult *hInitialResultIn)
         }
         else if ( nTypeOID == INT8OID )
         {
-            /* FIXME: OFTInteger can not handle 64bit integers */
-            oField.SetType( OFTInteger );
+            oField.SetType( OFTInteger64 );
         }
         else if( nTypeOID == FLOAT4OID )
         {
@@ -2076,6 +2228,10 @@ int OGRPGLayer::ReadResultDefinition(PGresult *hInitialResultIn)
         {
             oField.SetType ( OFTIntegerList );
         }
+        else if ( nTypeOID == INT8ARRAYOID )
+        {
+            oField.SetType ( OFTInteger64List );
+        }
         else if ( nTypeOID == FLOAT4ARRAYOID ||
                   nTypeOID == FLOAT8ARRAYOID )
         {
@@ -2107,7 +2263,8 @@ int OGRPGLayer::ReadResultDefinition(PGresult *hInitialResultIn)
         }
         else /* unknown type */
         {
-            CPLDebug("PG", "Unhandled OID (%d) for column %d. Defaulting to String.", nTypeOID, iRawField);
+            CPLDebug("PG", "Unhandled OID (%d) for column %s. Defaulting to String.",
+                     nTypeOID, oField.GetNameRef());
             oField.SetType( OFTString );
         }
 

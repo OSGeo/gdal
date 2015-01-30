@@ -52,7 +52,7 @@ class OGRGMLLayer : public OGRLayer
 {
     OGRFeatureDefn     *poFeatureDefn;
 
-    int                 iNextGMLId;
+    GIntBig             iNextGMLId;
     int                 nTotalGMLCount;
     int                 bInvalidFIDFound;
     char                *pszFIDPrefix;
@@ -80,7 +80,7 @@ class OGRGMLLayer : public OGRLayer
     void                ResetReading();
     OGRFeature *        GetNextFeature();
 
-    int                 GetFeatureCount( int bForce = TRUE );
+    GIntBig             GetFeatureCount( int bForce = TRUE );
     OGRErr              GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
 
     OGRErr              ICreateFeature( OGRFeature *poFeature );

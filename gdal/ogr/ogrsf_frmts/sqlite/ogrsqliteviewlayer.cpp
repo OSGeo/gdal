@@ -309,7 +309,7 @@ OGRFeature *OGRSQLiteViewLayer::GetNextFeature()
 /*                             GetFeature()                             */
 /************************************************************************/
 
-OGRFeature *OGRSQLiteViewLayer::GetFeature( long nFeatureId )
+OGRFeature *OGRSQLiteViewLayer::GetFeature( GIntBig nFeatureId )
 
 {
     if (HasLayerDefnError())
@@ -540,7 +540,7 @@ int OGRSQLiteViewLayer::TestCapability( const char * pszCap )
 /*      way of counting features matching a spatial query.              */
 /************************************************************************/
 
-int OGRSQLiteViewLayer::GetFeatureCount( int bForce )
+GIntBig OGRSQLiteViewLayer::GetFeatureCount( int bForce )
 
 {
     if (HasLayerDefnError())

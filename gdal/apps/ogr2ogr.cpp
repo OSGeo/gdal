@@ -44,7 +44,7 @@ CPL_CVSID("$Id$");
 static int bSkipFailures = FALSE;
 static int nGroupTransactions = 20000;
 static int bPreserveFID = FALSE;
-static int nFIDToFetch = OGRNullFID;
+static GIntBig nFIDToFetch = OGRNullFID;
 
 #define COORD_DIM_LAYER_DIM -2
 
@@ -90,7 +90,7 @@ static OGRLayer* GetLayerAndOverwriteIfNecessary(GDALDataset *poDstDS,
 static TargetLayerInfo* SetupTargetLayer( GDALDataset *poSrcDS,
                                                 OGRLayer * poSrcLayer,
                                                 GDALDataset *poDstDS,
-                                                char **papszLCO,
+                                                char **& papszLCO,
                                                 const char *pszNewLayerName,
                                                 OGRSpatialReference *poOutputSRS,
                                                 int bNullifyOutputSRS,
@@ -99,12 +99,14 @@ static TargetLayerInfo* SetupTargetLayer( GDALDataset *poSrcDS,
                                                 GeometryConversion sGeomConversion,
                                                 int nCoordDim, int bOverwrite,
                                                 char** papszFieldTypesToString,
+                                                char** papszMapFieldType,
                                                 int bUnsetFieldWidth,
                                                 int bExplodeCollections,
                                                 const char* pszZField,
                                                 char **papszFieldMap,
                                                 const char* pszWHERE,
-                                                int bExactFieldNameMatch );
+                                                int bExactFieldNameMatch,
+                                                int bQuiet );
 
 static void FreeTargetLayerInfo(TargetLayerInfo* psInfo);
 
@@ -124,7 +126,7 @@ static int TranslateLayer( TargetLayerInfo* psInfo,
                            int nCoordDim,
                            GeomOperation eGeomOp,
                            double dfGeomOpParam,
-                           long nCountLayerFeatures,
+                           GIntBig nCountLayerFeatures,
                            OGRGeometry* poClipSrc,
                            OGRGeometry *poClipDst,
                            int bExplodeCollections,
@@ -300,13 +302,13 @@ class OGRSplitListFieldLayer : public OGRLayer
                                                 void *pProgressArg);
 
     virtual OGRFeature          *GetNextFeature();
-    virtual OGRFeature          *GetFeature(long nFID);
+    virtual OGRFeature          *GetFeature(GIntBig nFID);
     virtual OGRFeatureDefn      *GetLayerDefn();
 
     virtual void                 ResetReading() { poSrcLayer->ResetReading(); }
     virtual int                  TestCapability(const char*) { return FALSE; }
 
-    virtual int                  GetFeatureCount( int bForce = TRUE )
+    virtual GIntBig              GetFeatureCount( int bForce = TRUE )
     {
         return poSrcLayer->GetFeatureCount(bForce);
     }
@@ -405,6 +407,7 @@ int  OGRSplitListFieldLayer::BuildLayerDefn(GDALProgressFunc pfnProgress,
     {
         OGRFieldType eType = poSrcFieldDefn->GetFieldDefn(i)->GetType();
         if (eType == OFTIntegerList ||
+            eType == OFTInteger64List ||
             eType == OFTRealList ||
             eType == OFTStringList)
         {
@@ -426,10 +429,10 @@ int  OGRSplitListFieldLayer::BuildLayerDefn(GDALProgressFunc pfnProgress,
         poSrcLayer->ResetReading();
         OGRFeature* poSrcFeature;
 
-        int nFeatureCount = 0;
+        GIntBig nFeatureCount = 0;
         if (poSrcLayer->TestCapability(OLCFastFeatureCount))
             nFeatureCount = poSrcLayer->GetFeatureCount();
-        int nFeatureIndex = 0;
+        GIntBig nFeatureIndex = 0;
 
         /* Scan the whole layer to compute the maximum number of */
         /* items for each field of list type */
@@ -497,6 +500,7 @@ int  OGRSplitListFieldLayer::BuildLayerDefn(GDALProgressFunc pfnProgress,
     {
         OGRFieldType eType = poSrcFieldDefn->GetFieldDefn(i)->GetType();
         if (eType == OFTIntegerList ||
+            eType == OFTInteger64List ||
             eType == OFTRealList ||
             eType == OFTStringList)
         {
@@ -508,6 +512,7 @@ int  OGRSplitListFieldLayer::BuildLayerDefn(GDALProgressFunc pfnProgress,
             {
                 OGRFieldDefn oFieldDefn(poSrcFieldDefn->GetFieldDefn(i)->GetNameRef(),
                                             (eType == OFTIntegerList) ? OFTInteger :
+                                            (eType == OFTInteger64List) ? OFTInteger64 :
                                             (eType == OFTRealList) ?    OFTReal :
                                                                         OFTString);
                 poFeatureDefn->AddFieldDefn(&oFieldDefn);
@@ -521,6 +526,7 @@ int  OGRSplitListFieldLayer::BuildLayerDefn(GDALProgressFunc pfnProgress,
                         poSrcFieldDefn->GetFieldDefn(i)->GetNameRef(), j+1);
                     OGRFieldDefn oFieldDefn(osFieldName.c_str(),
                                             (eType == OFTIntegerList) ? OFTInteger :
+                                            (eType == OFTInteger64List) ? OFTInteger64 :
                                             (eType == OFTRealList) ?    OFTReal :
                                                                         OFTString);
                     oFieldDefn.SetWidth(nWidth);
@@ -581,6 +587,18 @@ OGRFeature *OGRSplitListFieldLayer::TranslateFeature(OGRFeature* poSrcFeature)
                 iListField++;
                 break;
             }
+            case OFTInteger64List:
+            {
+                int nCount = psField->Integer64List.nCount;
+                if (nCount > nMaxSplitListSubFields)
+                    nCount = nMaxSplitListSubFields;
+                GIntBig* paList = psField->Integer64List.paList;
+                for(j=0;j<nCount;j++)
+                    poFeature->SetField(iDstField + j, paList[j]);
+                iDstField += pasListFields[iListField].nMaxOccurences;
+                iListField++;
+                break;
+            }
             case OFTRealList:
             {
                 int nCount = psField->RealList.nCount;
@@ -630,7 +648,7 @@ OGRFeature *OGRSplitListFieldLayer::GetNextFeature()
 /*                           GetFeature()                               */
 /************************************************************************/
 
-OGRFeature *OGRSplitListFieldLayer::GetFeature(long nFID)
+OGRFeature *OGRSplitListFieldLayer::GetFeature(GIntBig nFID)
 {
     return TranslateFeature(poSrcLayer->GetFeature(nFID));
 }
@@ -816,6 +834,32 @@ void ApplySpatialFilter(OGRLayer* poLayer, OGRGeometry* poSpatialFilter,
             poLayer->SetSpatialFilter( poSpatialFilter );
     }
 }
+             
+/************************************************************************/
+/*                          GetFieldType()                              */
+/************************************************************************/
+
+int GetFieldType(const char* pszArg)
+{
+    for( int iType = 0; iType <= (int) OFTMaxType; iType++ )
+     {
+         if( EQUAL(pszArg,OGRFieldDefn::GetFieldTypeName(
+                       (OGRFieldType)iType)) )
+         {
+             return iType;
+         }
+     }
+     return -1;
+}
+             
+/************************************************************************/
+/*                           IsFieldType()                              */
+/************************************************************************/
+
+static int IsFieldType(const char* pszArg)
+{
+    return GetFieldType(pszArg) >= 0;
+}
 
 /************************************************************************/
 /*                                main()                                */
@@ -861,6 +905,7 @@ int main( int nArgc, char ** papszArgv )
     GeomOperation eGeomOp = NONE;
     double       dfGeomOpParam = 0;
     char        **papszFieldTypesToString = NULL;
+    char        **papszMapFieldType = NULL;
     int          bUnsetFieldWidth = FALSE;
     int          bDisplayProgress = FALSE;
     GDALProgressFunc pfnProgress = NULL;
@@ -992,7 +1037,7 @@ int main( int nArgc, char ** papszArgv )
         else if( EQUAL(papszArgv[iArg],"-fid") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            nFIDToFetch = atoi(papszArgv[++iArg]);
+            nFIDToFetch = CPLAtoGIntBig(papszArgv[++iArg]);
         }
         else if( EQUAL(papszArgv[iArg],"-sql") )
         {
@@ -1149,16 +1194,7 @@ int main( int nArgc, char ** papszArgv )
             char** iter = papszFieldTypesToString;
             while(*iter)
             {
-                if (EQUAL(*iter, "Integer") ||
-                    EQUAL(*iter, "Real") ||
-                    EQUAL(*iter, "String") ||
-                    EQUAL(*iter, "Date") ||
-                    EQUAL(*iter, "Time") ||
-                    EQUAL(*iter, "DateTime") ||
-                    EQUAL(*iter, "Binary") ||
-                    EQUAL(*iter, "IntegerList") ||
-                    EQUAL(*iter, "RealList") ||
-                    EQUAL(*iter, "StringList"))
+                if (IsFieldType(*iter))
                 {
                     /* Do nothing */
                 }
@@ -1174,6 +1210,50 @@ int main( int nArgc, char ** papszArgv )
                     Usage(CPLSPrintf("Unhandled type for fieldtypeasstring option : %s",
                             *iter));
                 }
+                iter ++;
+            }
+        }
+        else if( EQUAL(papszArgv[iArg],"-mapFieldType") )
+        {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            papszMapFieldType =
+                    CSLTokenizeStringComplex(papszArgv[++iArg], " ,", 
+                                             FALSE, FALSE );
+            char** iter = papszMapFieldType;
+            while(*iter)
+            {
+                char* pszKey = NULL;
+                const char* pszValue = CPLParseNameValue(*iter, &pszKey);
+                if( pszKey && pszValue)
+                {
+                    if( !((IsFieldType(pszKey) || EQUAL(pszKey, "All")) && IsFieldType(pszValue)) )
+                    {
+                        Usage("Invalid value for -mapFieldType");
+                    }
+                }
+                CPLFree(pszKey);
+                iter ++;
+            }
+        }
+        else if( EQUAL(papszArgv[iArg],"-mapFieldType") )
+        {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            papszMapFieldType =
+                    CSLTokenizeStringComplex(papszArgv[++iArg], " ,", 
+                                             FALSE, FALSE );
+            char** iter = papszMapFieldType;
+            while(*iter)
+            {
+                char* pszKey = NULL;
+                const char* pszValue = CPLParseNameValue(*iter, &pszKey);
+                if( pszKey && pszValue)
+                {
+                    if( !((IsFieldType(pszKey) || EQUAL(pszKey, "All")) && IsFieldType(pszValue)) )
+                    {
+                        Usage("Invalid value for -mapFieldType");
+                    }
+                }
+                CPLFree(pszKey);
                 iter ++;
             }
         }
@@ -1418,6 +1498,11 @@ int main( int nArgc, char ** papszArgv )
     if (pszFieldMap && bAddMissingFields)
     {
         Usage("if -addfields is specified, -fieldmap cannot be used.");
+    }
+
+    if( papszFieldTypesToString && papszMapFieldType )
+    {
+        Usage("-fieldTypeToString and -mapFieldType are exclusive.");
     }
 
     if( pszSourceSRSDef != NULL && pszOutputSRSDef == NULL )
@@ -1734,7 +1819,7 @@ int main( int nArgc, char ** papszArgv )
                            pszGeomField);
             }
 
-            long nCountLayerFeatures = 0;
+            GIntBig nCountLayerFeatures = 0;
             if (bDisplayProgress)
             {
                 if (bSrcIsOSM)
@@ -1790,12 +1875,14 @@ int main( int nArgc, char ** papszArgv )
                                                 sGeomConversion,
                                                 nCoordDim, bOverwrite,
                                                 papszFieldTypesToString,
+                                                papszMapFieldType,
                                                 bUnsetFieldWidth,
                                                 bExplodeCollections,
                                                 pszZField,
                                                 papszFieldMap,
                                                 pszWHERE,
-                                                bExactFieldNameMatch );
+                                                bExactFieldNameMatch,
+                                                bQuiet);
 
             poPassedLayer->ResetReading();
 
@@ -1946,12 +2033,14 @@ int main( int nArgc, char ** papszArgv )
                                                     sGeomConversion,
                                                     nCoordDim, bOverwrite,
                                                     papszFieldTypesToString,
+                                                    papszMapFieldType,
                                                     bUnsetFieldWidth,
                                                     bExplodeCollections,
                                                     pszZField,
                                                     papszFieldMap,
                                                     pszWHERE,
-						    bExactFieldNameMatch );
+						    bExactFieldNameMatch,
+						    bQuiet);
 
                 if( psInfo == NULL && !bSkipFailures )
                     exit(1);
@@ -2106,9 +2195,9 @@ int main( int nArgc, char ** papszArgv )
             pszNewLayerName = CPLStrdup(CPLGetBasename(pszDestDataSource));
         }
 
-        long* panLayerCountFeatures = (long*) CPLCalloc(sizeof(long), nLayerCount);
-        long nCountLayersFeatures = 0;
-        long nAccCountFeatures = 0;
+        GIntBig* panLayerCountFeatures = (GIntBig*) CPLCalloc(sizeof(GIntBig), nLayerCount);
+        GIntBig nCountLayersFeatures = 0;
+        GIntBig nAccCountFeatures = 0;
         int iLayer;
 
         /* First pass to apply filters and count all features if necessary */
@@ -2222,12 +2311,14 @@ int main( int nArgc, char ** papszArgv )
                                                 sGeomConversion,
                                                 nCoordDim, bOverwrite,
                                                 papszFieldTypesToString,
+                                                papszMapFieldType,
                                                 bUnsetFieldWidth,
                                                 bExplodeCollections,
                                                 pszZField,
                                                 papszFieldMap,
                                                 pszWHERE,
-						bExactFieldNameMatch );
+						bExactFieldNameMatch,
+						bQuiet);
 
             poPassedLayer->ResetReading();
 
@@ -2295,6 +2386,7 @@ int main( int nArgc, char ** papszArgv )
 
     CSLDestroy(papszSelFields);
     CSLDestroy( papszFieldMap );
+    CSLDestroy( papszMapFieldType );
     CSLDestroy( papszArgv );
     CSLDestroy( papszLayers );
     CSLDestroy( papszDSCO );
@@ -2354,6 +2446,7 @@ static void Usage(const char* pszAdditionalMsg, int bShort)
             "               [-addfields]\n"
             "               [-relaxedFieldNameMatch]\n"
             "               [-fieldTypeToString All|(type1[,type2]*)] [-unsetFieldWidth]\n"
+            "               [-mapFieldType srctype|All=dsttype[,srctype2=dsttype2]*]\n"
             "               [-fieldmap identity | index1[,index2]*]\n"
             "               [-splitlistfields] [-maxsubfields val]\n"
             "               [-explodecollections] [-zfield field_name]\n"
@@ -2410,7 +2503,7 @@ static void Usage(const char* pszAdditionalMsg, int bShort)
             " -dim dimension: Force the coordinate dimension to the specified value.\n"
             " -fieldTypeToString type1,...: Converts fields of specified types to\n"
             "      fields of type string in the new layer. Valid types are : Integer,\n"
-            "      Real, String, Date, Time, DateTime, Binary, IntegerList, RealList,\n"
+            "      Integer64, Real, String, Date, Time, DateTime, Binary, IntegerList, Integer64List, RealList,\n"
             "      StringList. Special value All will convert all fields to strings.\n"
             " -fieldmap index1,index2,...: Specifies the list of field indexes to be\n"
             "      copied from the source to the destination. The (n)th value specified\n"
@@ -2577,13 +2670,103 @@ static OGRwkbGeometryType ConvertType(GeometryConversion sGeomConversion,
 }
 
 /************************************************************************/
+/*                        DoFieldTypeConversion()                       */
+/************************************************************************/
+
+void DoFieldTypeConversion(GDALDataset* poDstDS, OGRFieldDefn& oFieldDefn,
+                           char** papszFieldTypesToString,
+                           char** papszMapFieldType,
+                           int bUnsetFieldWidth,
+                           int bQuiet)
+{
+    if (papszFieldTypesToString != NULL &&
+        (CSLFindString(papszFieldTypesToString, "All") != -1 ||
+            CSLFindString(papszFieldTypesToString,
+                        OGRFieldDefn::GetFieldTypeName(oFieldDefn.GetType())) != -1))
+    {
+        oFieldDefn.SetSubType(OFSTNone);
+        oFieldDefn.SetType(OFTString);
+    }
+    else if (papszMapFieldType != NULL)
+    {
+        const char* pszType = CSLFetchNameValue(papszMapFieldType,
+            OGRFieldDefn::GetFieldTypeName(oFieldDefn.GetType()));
+        if( pszType == NULL )
+            pszType = CSLFetchNameValue(papszMapFieldType, "All");
+        if( pszType != NULL )
+        {
+            int iType = GetFieldType(pszType);
+            if( iType >= 0 )
+            {
+                oFieldDefn.SetSubType(OFSTNone);
+                oFieldDefn.SetType((OGRFieldType)iType);
+                if( iType == OFTInteger )
+                    oFieldDefn.SetWidth(0);
+            }
+        }
+    }
+    if( bUnsetFieldWidth )
+    {
+        oFieldDefn.SetWidth(0);
+        oFieldDefn.SetPrecision(0);
+    }
+
+    if( poDstDS->GetDriver() != NULL &&
+        poDstDS->GetDriver()->GetMetadataItem(GDAL_DMD_CREATIONFIELDDATATYPES) != NULL &&
+        strstr(poDstDS->GetDriver()->GetMetadataItem(GDAL_DMD_CREATIONFIELDDATATYPES),
+                OGRFieldDefn::GetFieldTypeName(oFieldDefn.GetType())) == NULL )
+    {
+        if( oFieldDefn.GetType() == OFTInteger64 )
+        {
+            if( !bQuiet )
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                        "The output driver does not seem to natively support %s "
+                        "type for field %s. Converting it to Real instead. "
+                        "-mapFieldType can be used to control field type conversion.",
+                        OGRFieldDefn::GetFieldTypeName(oFieldDefn.GetType()),
+                        oFieldDefn.GetNameRef());
+            }
+            oFieldDefn.SetType(OFTReal);
+        }
+        else if( !bQuiet )
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                        "The output driver does not natively support %s type for "
+                        "field %s. Misconversion can happen. "
+                        "-mapFieldType can be used to control field type conversion.",
+                        OGRFieldDefn::GetFieldTypeName(oFieldDefn.GetType()),
+                        oFieldDefn.GetNameRef());
+        }
+    }
+    else if( poDstDS->GetDriver() != NULL &&
+             poDstDS->GetDriver()->GetMetadataItem(GDAL_DMD_CREATIONFIELDDATATYPES) == NULL )
+    {
+        // All drivers supporting OFTInteger64 should advertize it theoretically
+        if( oFieldDefn.GetType() == OFTInteger64 )
+        {
+            if( !bQuiet )
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                        "The output driver does not seem to natively support %s type "
+                        "for field %s. Converting it to Real instead. "
+                        "-mapFieldType can be used to control field type conversion.",
+                        OGRFieldDefn::GetFieldTypeName(oFieldDefn.GetType()),
+                        oFieldDefn.GetNameRef());
+            }
+            oFieldDefn.SetType(OFTReal);
+        }
+    }
+}
+
+/************************************************************************/
 /*                         SetupTargetLayer()                           */
 /************************************************************************/
 
 static TargetLayerInfo* SetupTargetLayer( CPL_UNUSED GDALDataset *poSrcDS,
                                           OGRLayer * poSrcLayer,
                                           GDALDataset *poDstDS,
-                                          char **papszLCO,
+                                          char **& papszLCO,
                                           const char *pszNewLayerName,
                                           OGRSpatialReference *poOutputSRSIn,
                                           int bNullifyOutputSRS,
@@ -2592,12 +2775,14 @@ static TargetLayerInfo* SetupTargetLayer( CPL_UNUSED GDALDataset *poSrcDS,
                                           GeometryConversion sGeomConversion,
                                           int nCoordDim, int bOverwrite,
                                           char** papszFieldTypesToString,
+                                          char** papszMapFieldType,
                                           int bUnsetFieldWidth,
                                           int bExplodeCollections,
                                           const char* pszZField,
                                           char **papszFieldMap,
                                           const char* pszWHERE,
-                                          int bExactFieldNameMatch )
+                                          int bExactFieldNameMatch,
+                                          int bQuiet)
 {
     OGRLayer    *poDstLayer;
     OGRFeatureDefn *poSrcFDefn;
@@ -2754,6 +2939,18 @@ static TargetLayerInfo* SetupTargetLayer( CPL_UNUSED GDALDataset *poSrcDS,
         {
             eGCreateLayerType = wkbNone;
         }
+        
+        // Force FID column as 64 bit if the source feature has a 64 bit FID,
+        // the target driver supports 64 bit FID and the user didn't set it
+        // manually.
+        if( poSrcLayer->GetMetadataItem(OLMD_FID64) != NULL &&
+            EQUAL(poSrcLayer->GetMetadataItem(OLMD_FID64), "YES") &&
+            poDstDS->GetDriver()->GetMetadataItem(GDAL_DS_LAYER_CREATIONOPTIONLIST) != NULL &&
+            strstr(poDstDS->GetDriver()->GetMetadataItem(GDAL_DS_LAYER_CREATIONOPTIONLIST), "FID64") != NULL &&
+            CSLFetchNameValue(papszLCO, "FID64") == NULL )
+        {
+            papszLCO = CSLSetNameValue(papszLCO, "FID64", "YES");
+        }
 
         poDstLayer = poDstDS->CreateLayer( pszNewLayerName, poOutputSRS,
                                            (OGRwkbGeometryType) eGCreateLayerType,
@@ -2879,19 +3076,11 @@ static TargetLayerInfo* SetupTargetLayer( CPL_UNUSED GDALDataset *poSrcDS,
                 OGRFieldDefn* poSrcFieldDefn = poSrcFDefn->GetFieldDefn(iSrcField);
                 OGRFieldDefn oFieldDefn( poSrcFieldDefn );
 
-                if (papszFieldTypesToString != NULL &&
-                    (CSLFindString(papszFieldTypesToString, "All") != -1 ||
-                     CSLFindString(papszFieldTypesToString,
-                                   OGRFieldDefn::GetFieldTypeName(poSrcFieldDefn->GetType())) != -1))
-                {
-                    oFieldDefn.SetSubType(OFSTNone);
-                    oFieldDefn.SetType(OFTString);
-                }
-                if( bUnsetFieldWidth )
-                {
-                    oFieldDefn.SetWidth(0);
-                    oFieldDefn.SetPrecision(0);
-                }
+                DoFieldTypeConversion(poDstDS, oFieldDefn,
+                                      papszFieldTypesToString,
+                                      papszMapFieldType,
+                                      bUnsetFieldWidth,
+                                      bQuiet);
 
                 /* The field may have been already created at layer creation */
                 int iDstField = -1;
@@ -3001,19 +3190,11 @@ static TargetLayerInfo* SetupTargetLayer( CPL_UNUSED GDALDataset *poSrcDS,
             OGRFieldDefn* poSrcFieldDefn = poSrcFDefn->GetFieldDefn(iField);
             OGRFieldDefn oFieldDefn( poSrcFieldDefn );
 
-            if (papszFieldTypesToString != NULL &&
-                (CSLFindString(papszFieldTypesToString, "All") != -1 ||
-                 CSLFindString(papszFieldTypesToString,
-                               OGRFieldDefn::GetFieldTypeName(poSrcFieldDefn->GetType())) != -1))
-            {
-                oFieldDefn.SetSubType(OFSTNone);
-                oFieldDefn.SetType(OFTString);
-            }
-            if( bUnsetFieldWidth )
-            {
-                oFieldDefn.SetWidth(0);
-                oFieldDefn.SetPrecision(0);
-            }
+            DoFieldTypeConversion(poDstDS, oFieldDefn,
+                                  papszFieldTypesToString,
+                                  papszMapFieldType,
+                                  bUnsetFieldWidth,
+                                  bQuiet);
 
             /* The field may have been already created at layer creation */
             std::map<CPLString, int>::iterator oIter =
@@ -3325,7 +3506,7 @@ static int TranslateLayer( TargetLayerInfo* psInfo,
                            int nCoordDim,
                            GeomOperation eGeomOp,
                            double dfGeomOpParam,
-                           long nCountLayerFeatures,
+                           GIntBig nCountLayerFeatures,
                            OGRGeometry* poClipSrc,
                            OGRGeometry *poClipDst,
                            int bExplodeCollections,
@@ -3466,7 +3647,7 @@ static int TranslateLayer( TargetLayerInfo* psInfo,
                     poDstLayer->CommitTransaction();
 
                 CPLError( CE_Failure, CPLE_AppDefined,
-                        "Unable to translate feature %ld from layer %s.\n",
+                        "Unable to translate feature " CPL_FRMT_GIB " from layer %s.\n",
                         poFeature->GetFID(), poSrcLayer->GetName() );
 
                 OGRFeature::DestroyFeature( poFeature );
@@ -3621,7 +3802,7 @@ static int TranslateLayer( TargetLayerInfo* psInfo,
                     poDstLayer->RollbackTransaction();
 
                 CPLError( CE_Failure, CPLE_AppDefined,
-                        "Unable to write feature %ld from layer %s.\n",
+                        "Unable to write feature " CPL_FRMT_GIB " from layer %s.\n",
                         poFeature->GetFID(), poSrcLayer->GetName() );
 
                 OGRFeature::DestroyFeature( poFeature );
@@ -3630,7 +3811,7 @@ static int TranslateLayer( TargetLayerInfo* psInfo,
             }
             else
             {
-                CPLDebug( "OGR2OGR", "Unable to write feature %ld into layer %s.\n",
+                CPLDebug( "OGR2OGR", "Unable to write feature " CPL_FRMT_GIB " into layer %s.\n",
                            poFeature->GetFID(), poSrcLayer->GetName() );
             }
 

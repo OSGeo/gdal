@@ -234,7 +234,7 @@ void OGRDGNLayer::ResetReading()
 /*                             GetFeature()                             */
 /************************************************************************/
 
-OGRFeature *OGRDGNLayer::GetFeature( long nFeatureId )
+OGRFeature *OGRDGNLayer::GetFeature( GIntBig nFeatureId )
 
 {
     OGRFeature *poFeature;
@@ -752,7 +752,7 @@ int OGRDGNLayer::TestCapability( const char * pszCap )
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
-int OGRDGNLayer::GetFeatureCount( int bForce )
+GIntBig OGRDGNLayer::GetFeatureCount( int bForce )
 
 {
 /* -------------------------------------------------------------------- */

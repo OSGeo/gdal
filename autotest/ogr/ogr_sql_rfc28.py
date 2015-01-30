@@ -603,6 +603,10 @@ def ogr_rfc28_28():
         formulas.append( '5.' + operator + '3.' )
         formulas.append( '5' + operator + '3.' )
         formulas.append( '5.' + operator + '3' )
+        formulas.append( '1000000000000' + operator + '3' )
+        formulas.append( '3' + operator + '1000000000000' )
+        formulas.append( '1000000000000' + operator + '3.' )
+        formulas.append( '3.' + operator + '1000000000000' )
 
     for formula in formulas:
         lyr = gdaltest.ds.ExecuteSQL( "SELECT " + formula + " from poly where fid = 0" )
@@ -630,6 +634,9 @@ def ogr_rfc28_28():
         formulas.append( "'a'" + operator + "'a'" )
         formulas.append( "'a'" + operator + "'b'" )
         formulas.append( "'b'" + operator + "'a'" )
+        formulas.append( '3' + operator + '1000000000000' )
+        formulas.append( '1000000000000' + operator + '3' )
+        formulas.append( '1000000000000' + operator + '1000000000000' )
 
     for formula in formulas:
         expected_bool = eval(formula.replace(' = ','==').replace('<>','!='))
@@ -638,6 +645,7 @@ def ogr_rfc28_28():
             return ret
 
     formulas_and_expected_bool = [ [ '3 in (3,5)', True ],
+                                   [ '1000000000000 in (1000000000000, 1000000000001)', True],
                                    [ '4 in (3,5)', False ],
                                    [ '3. in (3.,4.)', True ],
                                    [ '4. in (3.,5.)', False ],
@@ -1007,6 +1015,102 @@ def ogr_rfc28_42():
     return 'success'
 
 ###############################################################################
+# Test integer64 support
+
+def ogr_rfc28_43():
+
+    ds = ogr.GetDriverByName('Memory').CreateDataSource('')
+    lyr = ds.CreateLayer('test')
+    fld_defn = ogr.FieldDefn('myint64', ogr.OFTInteger64)
+    lyr.CreateField(fld_defn)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField(0, -1000000000000)
+    lyr.CreateFeature(feat)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField(0, 100000000000)
+    lyr.CreateFeature(feat)
+
+    lyr = ds.ExecuteSQL( "SELECT 1000000000000, myint64, CAST(1 AS bigint), CAST(1 AS numeric(15,0)) FROM test WHERE myint64 < -9999999999 or myint64 > 9999999999" )
+    f = lyr.GetNextFeature()
+    if lyr.GetLayerDefn().GetFieldDefn(2).GetType() != ogr.OFTInteger64:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetLayerDefn().GetFieldDefn(3).GetType() != ogr.OFTInteger64:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if f.GetField(0) != 1000000000000 or f.GetField(1) != -1000000000000:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    gdaltest.ds.ReleaseResultSet( lyr )
+
+    lyr = ds.ExecuteSQL( "SELECT MIN(myint64), MAX(myint64), SUM(myint64) FROM test" )
+    f = lyr.GetNextFeature()
+    if f.GetField('MIN_myint64') != -1000000000000:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    if f.GetField('MAX_myint64') != 100000000000:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    if f.GetField('SUM_myint64') != -1000000000000 + 100000000000:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    gdaltest.ds.ReleaseResultSet( lyr )
+
+    return 'success'
+
+###############################################################################
+# Test integer64 support
+
+def ogr_rfc28_43():
+
+    ds = ogr.GetDriverByName('Memory').CreateDataSource('')
+    lyr = ds.CreateLayer('test')
+    fld_defn = ogr.FieldDefn('myint64', ogr.OFTInteger64)
+    lyr.CreateField(fld_defn)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField(0, -1000000000000)
+    lyr.CreateFeature(feat)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField(0, 100000000000)
+    lyr.CreateFeature(feat)
+
+    lyr = ds.ExecuteSQL( "SELECT 1000000000000, myint64, CAST(1 AS bigint), CAST(1 AS numeric(15,0)) FROM test WHERE myint64 < -9999999999 or myint64 > 9999999999" )
+    f = lyr.GetNextFeature()
+    if lyr.GetLayerDefn().GetFieldDefn(2).GetType() != ogr.OFTInteger64:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetLayerDefn().GetFieldDefn(3).GetType() != ogr.OFTInteger64:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if f.GetField(0) != 1000000000000 or f.GetField(1) != -1000000000000:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    gdaltest.ds.ReleaseResultSet( lyr )
+
+    lyr = ds.ExecuteSQL( "SELECT MIN(myint64), MAX(myint64), SUM(myint64) FROM test" )
+    f = lyr.GetNextFeature()
+    if f.GetField('MIN_myint64') != -1000000000000:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    if f.GetField('MAX_myint64') != 100000000000:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    if f.GetField('SUM_myint64') != -1000000000000 + 100000000000:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    gdaltest.ds.ReleaseResultSet( lyr )
+
+    return 'success'
+
+###############################################################################
 def ogr_rfc28_cleanup():
     gdaltest.lyr = None
     gdaltest.ds.Destroy()
@@ -1058,6 +1162,7 @@ gdaltest_list = [
     ogr_rfc28_40,
     ogr_rfc28_41,
     ogr_rfc28_42,
+    ogr_rfc28_43,
     ogr_rfc28_cleanup ]
 
 if __name__ == '__main__':

@@ -179,7 +179,7 @@ OGRFeature *OGRGeoconceptLayer::GetNextFeature()
     }
 
     CPLDebug( "GEOCONCEPT",
-              "FID : %ld\n"
+              "FID : " CPL_FRMT_GIB "\n"
               "%s  : %s",
               poFeature? poFeature->GetFID():-1L,
               poFeature && poFeature->GetFieldCount()>0? poFeature->GetFieldDefnRef(0)->GetNameRef():"-",
@@ -433,7 +433,7 @@ OGRSpatialReference *OGRGeoconceptLayer::GetSpatialRef()
 /*      the generic counter.  Otherwise we return the total count.      */
 /************************************************************************/
 
-int OGRGeoconceptLayer::GetFeatureCount( int bForce )
+GIntBig OGRGeoconceptLayer::GetFeatureCount( int bForce )
 
 {
     if( m_poFilterGeom != NULL || m_poAttrQuery != NULL )

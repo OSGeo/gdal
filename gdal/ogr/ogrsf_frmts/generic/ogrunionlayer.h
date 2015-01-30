@@ -80,7 +80,7 @@ class OGRUnionLayer : public OGRLayer
 
     int                 bPreserveSrcFID;
 
-    int                 nFeatureCount;
+    GIntBig             nFeatureCount;
 
     int                 iCurLayer;
     char               *pszAttributeFilter;
@@ -123,7 +123,7 @@ class OGRUnionLayer : public OGRLayer
     virtual void        ResetReading();
     virtual OGRFeature *GetNextFeature();
 
-    virtual OGRFeature *GetFeature( long nFeatureId );
+    virtual OGRFeature *GetFeature( GIntBig nFeatureId );
 
     virtual OGRErr      ICreateFeature( OGRFeature* poFeature );
 
@@ -133,7 +133,7 @@ class OGRUnionLayer : public OGRLayer
 
     virtual OGRSpatialReference *GetSpatialRef();
 
-    virtual int         GetFeatureCount( int );
+    virtual GIntBig     GetFeatureCount( int );
 
     virtual OGRErr      SetAttributeFilter( const char * );
 

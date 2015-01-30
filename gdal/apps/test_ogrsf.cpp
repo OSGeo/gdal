@@ -1086,7 +1086,7 @@ static int TestOGRLayerFeatureCount( GDALDataset* poDS, OGRLayer *poLayer, int b
 
 {
     int bRet = TRUE;
-    int         nFC = 0, nClaimedFC = LOG_ACTION(poLayer->GetFeatureCount());
+    GIntBig         nFC = 0, nClaimedFC = LOG_ACTION(poLayer->GetFeatureCount());
     OGRFeature  *poFeature;
     int         bWarnAboutSRS = FALSE;
     OGRFeatureDefn* poLayerDefn = LOG_ACTION(poLayer->GetLayerDefn());
@@ -1162,14 +1162,14 @@ static int TestOGRLayerFeatureCount( GDALDataset* poDS, OGRLayer *poLayer, int b
     if( nFC != nClaimedFC )
     {
         bRet = FALSE;
-        printf( "ERROR: Claimed feature count %d doesn't match actual, %d.\n",
+        printf( "ERROR: Claimed feature count " CPL_FRMT_GIB " doesn't match actual, " CPL_FRMT_GIB ".\n",
                 nClaimedFC, nFC );
     }
     else if( nFC != LOG_ACTION(poLayer->GetFeatureCount()) )
     {
         bRet = FALSE;
-        printf( "ERROR: Feature count at end of layer %d differs "
-                "from at start, %d.\n",
+        printf( "ERROR: Feature count at end of layer " CPL_FRMT_GIB " differs "
+                "from at start, " CPL_FRMT_GIB ".\n",
                 nFC, poLayer->GetFeatureCount() );
     }
     else if( bVerbose )
@@ -1193,8 +1193,8 @@ static int TestOGRLayerFeatureCount( GDALDataset* poDS, OGRLayer *poLayer, int b
             else if (nClaimedFC != poFeatCount->GetFieldAsInteger(0))
             {
                 bRet = FALSE;
-                printf( "ERROR: Claimed feature count %d doesn't match '%s' one, %d.\n",
-                        nClaimedFC, osSQL.c_str(), poFeatCount->GetFieldAsInteger(0) );
+                printf( "ERROR: Claimed feature count " CPL_FRMT_GIB " doesn't match '%s' one, " CPL_FRMT_GIB ".\n",
+                        nClaimedFC, osSQL.c_str(), poFeatCount->GetFieldAsInteger64(0) );
             }
             OGRFeature::DestroyFeature(poFeatCount);
             poDS->ReleaseResultSet(poSQLLyr);
@@ -1229,7 +1229,7 @@ static int TestOGRLayerRandomRead( OGRLayer *poLayer )
     if( LOG_ACTION(poLayer->GetFeatureCount()) < 5 )
     {
         if( bVerbose )
-            printf( "INFO: Only %d features on layer,"
+            printf( "INFO: Only " CPL_FRMT_GIB " features on layer,"
                     "skipping random read test.\n",
                     poLayer->GetFeatureCount() );
         
@@ -1264,7 +1264,7 @@ static int TestOGRLayerRandomRead( OGRLayer *poLayer )
     poFeature = LOG_ACTION(poLayer->GetFeature( papoFeatures[1]->GetFID() ));
     if (poFeature == NULL)
     {
-        printf( "ERROR: Cannot fetch feature %ld.\n",
+        printf( "ERROR: Cannot fetch feature " CPL_FRMT_GIB ".\n",
                  papoFeatures[1]->GetFID() );
         goto end;
     }
@@ -1272,7 +1272,7 @@ static int TestOGRLayerRandomRead( OGRLayer *poLayer )
     if( !poFeature->Equal( papoFeatures[1] ) )
     {
         bRet = FALSE;
-        printf( "ERROR: Attempt to randomly read feature %ld appears to\n"
+        printf( "ERROR: Attempt to randomly read feature " CPL_FRMT_GIB " appears to\n"
                 "       have returned a different feature than sequential\n"
                 "       reading indicates should have happened.\n",
                 papoFeatures[1]->GetFID() );
@@ -1291,7 +1291,7 @@ static int TestOGRLayerRandomRead( OGRLayer *poLayer )
     if( poFeature == NULL || !poFeature->Equal( papoFeatures[4] ) )
     {
         bRet = FALSE;
-        printf( "ERROR: Attempt to randomly read feature %ld appears to\n"
+        printf( "ERROR: Attempt to randomly read feature " CPL_FRMT_GIB " appears to\n"
                 "       have returned a different feature than sequential\n"
                 "       reading indicates should have happened.\n",
                 papoFeatures[4]->GetFID() );
@@ -1308,7 +1308,7 @@ static int TestOGRLayerRandomRead( OGRLayer *poLayer )
     if( poFeature == NULL || !poFeature->Equal( papoFeatures[2] ) )
     {
         bRet = FALSE;
-        printf( "ERROR: Attempt to randomly read feature %ld appears to\n"
+        printf( "ERROR: Attempt to randomly read feature " CPL_FRMT_GIB " appears to\n"
                 "       have returned a different feature than sequential\n"
                 "       reading indicates should have happened.\n",
                 papoFeatures[4]->GetFID() );
@@ -1351,7 +1351,7 @@ static int TestOGRLayerSetNextByIndex( OGRLayer *poLayer )
     if( LOG_ACTION(poLayer->GetFeatureCount()) < 5 )
     {
         if( bVerbose )
-            printf( "INFO: Only %d features on layer,"
+            printf( "INFO: Only " CPL_FRMT_GIB " features on layer,"
                     "skipping SetNextByIndex test.\n",
                     poLayer->GetFeatureCount() );
         
@@ -1487,7 +1487,7 @@ static int TestOGRLayerRandomWrite( OGRLayer *poLayer )
     if( LOG_ACTION(poLayer->GetFeatureCount()) < 5 )
     {
         if( bVerbose )
-            printf( "INFO: Only %d features on layer,"
+            printf( "INFO: Only " CPL_FRMT_GIB " features on layer,"
                     "skipping random write test.\n",
                     poLayer->GetFeatureCount() );
         
@@ -1622,7 +1622,7 @@ static int TestSpatialFilter( OGRLayer *poLayer, int iGeomField )
     OGRPolygon  oInclusiveFilter, oExclusiveFilter;
     OGRLinearRing oRing;
     OGREnvelope sEnvelope;
-    int         nInclusiveCount;
+    GIntBig         nInclusiveCount;
 
 /* -------------------------------------------------------------------- */
 /*      Read the target feature.                                        */
@@ -1962,7 +1962,7 @@ static int TestFullSpatialFilter( OGRLayer *poLayer, int iGeomField )
         if( poFeature == NULL )
         {
             bRet = FALSE;
-            printf( "ERROR: Spatial filter (%d) eliminated feature %ld unexpectedly!\n",
+            printf( "ERROR: Spatial filter (%d) eliminated feature " CPL_FRMT_GIB " unexpectedly!\n",
                     iGeomField, poTargetFeature->GetFID());
             OGRFeature::DestroyFeature(poTargetFeature);
             break;
@@ -2059,7 +2059,7 @@ static int TestAttributeFilter( GDALDataset* poDS, OGRLayer *poLayer )
 {
     int bRet = TRUE;
     OGRFeature  *poFeature, *poFeature2, *poFeature3, *poTargetFeature;
-    int         nInclusiveCount, nExclusiveCount, nTotalCount;
+    GIntBig        nInclusiveCount, nExclusiveCount, nTotalCount;
     CPLString osAttributeFilter;
 
 /* -------------------------------------------------------------------- */
@@ -2201,7 +2201,7 @@ static int TestAttributeFilter( GDALDataset* poDS, OGRLayer *poLayer )
 /* -------------------------------------------------------------------- */
     LOG_ACTION(poLayer->ResetReading());
 
-    int nExclusiveCountWhileIterating = 0;
+    GIntBig nExclusiveCountWhileIterating = 0;
     while( (poFeature = LOG_ACTION(poLayer->GetNextFeature())) != NULL )
     {
         if( poFeature->Equal(poTargetFeature) )
@@ -2248,7 +2248,7 @@ static int TestAttributeFilter( GDALDataset* poDS, OGRLayer *poLayer )
     {
         bRet = FALSE;
         printf( "ERROR: GetFeatureCount() may not be taking attribute "
-                "filter into account (nInclusiveCount = %d, nExclusiveCount = %d, nExclusiveCountWhileIterating = %d, nTotalCount = %d).\n",
+                "filter into account (nInclusiveCount = " CPL_FRMT_GIB ", nExclusiveCount = " CPL_FRMT_GIB ", nExclusiveCountWhileIterating = " CPL_FRMT_GIB ", nTotalCount = " CPL_FRMT_GIB ").\n",
                  nInclusiveCount, nExclusiveCount, nExclusiveCountWhileIterating, nTotalCount);
     }
     else if( bVerbose )
@@ -2331,7 +2331,7 @@ static int TestOGRLayerUTF8 ( OGRLayer *poLayer )
                     {
                         if (!bIsUTF8)
                         {
-                            printf( "ERROR: Found non-UTF8 content at field %d of feature %ld, but layer is advertized as UTF-8.\n",
+                            printf( "ERROR: Found non-UTF8 content at field %d of feature " CPL_FRMT_GIB ", but layer is advertized as UTF-8.\n",
                                     i, poFeature->GetFID() );
                             bRet = FALSE;
                             break;

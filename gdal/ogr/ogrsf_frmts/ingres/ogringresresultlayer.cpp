@@ -162,7 +162,7 @@ void OGRIngresResultLayer::ResetReading()
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
-int OGRIngresResultLayer::GetFeatureCount( int bForce )
+GIntBig OGRIngresResultLayer::GetFeatureCount( int bForce )
 
 {
     // I wonder if we could do anything smart here...

@@ -196,6 +196,7 @@ Advanced options :
                [[-simplify tolerance] | [-segmentize max_dist]]
                [-addfields]
                [-fieldTypeToString All|(type1[,type2]*)] [-unsetFieldWidth]
+               [-mapFieldType type1|All=type2[,type3=type4]*]
                [-fieldmap identity | index1[,index2]*]
                [-splitlistfields] [-maxsubfields val]
                [-explodecollections] [-zfield field_name]
@@ -305,9 +306,17 @@ Note: the algorithm used preserves topology per feature, in particular for polyg
 <dt> <b>-segmentize</b><em> max_dist</em>:</dt><dd> (starting with GDAL 1.6.0) maximum distance between 2 nodes.
 Used to create intermediate points</dd>
 <dt> <b>-fieldTypeToString</b><em> type1, ...</em>:</dt><dd> (starting with GDAL 1.7.0) converts any field of the
-specified type to a field of type string in the destination layer. Valid types are : Integer, Real, String, Date, Time,
-DateTime, Binary, IntegerList, RealList, StringList. Special value <b>All</b> can be used to convert all fields to strings.
-This is an alternate way to using the CAST operator of OGR SQL, that may avoid typing a long SQL query.</dd>
+specified type to a field of type string in the destination layer. Valid types are : Integer, Integer64, Real, String, Date, Time,
+DateTime, Binary, IntegerList, Integer64List, RealList, StringList. Special value <b>All</b> can be used to convert all fields to strings.
+This is an alternate way to using the CAST operator of OGR SQL, that may avoid typing a long SQL query.
+Note that this does not influence the field types used by the source driver, and is only an afterwards conversion.</dd>
+<dt> <b>-mapFieldType</b><em> srctype|All=dsttype, ...</em>:</dt><dd> (starting with GDAL 2.0) converts any field of the
+specified type to another type. Valid types are : Integer, Integer64, Real, String, Date, Time,
+DateTime, Binary, IntegerList, Integer64List, RealList, StringList.
+Special value <b>All</b> can be used to convert all fields to another type.
+This is an alternate way to using the CAST operator of OGR SQL, that may avoid typing a long SQL query. This is
+a generalization of -fieldTypeToString.
+Note that this does not influence the field types used by the source driver, and is only an afterwards conversion.</dd>
 <dt> <b>-unsetFieldWidth</b>:</dt><dd> (starting with GDAL 1.11) set field width and precision to 0.</dd>
 <dt> <b>-splitlistfields</b>:</dt><dd>(starting with GDAL 1.8.0) split fields of type StringList, RealList or IntegerList into as many fields of type String, Real or Integer as necessary.</dd>
 <dt> <b>-maxsubfields</b> <em>val</em>:</dt><dd>To be combined with -splitlistfields to limit the number of subfields created for each split field.</dd>

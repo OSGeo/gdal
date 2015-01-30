@@ -133,6 +133,8 @@ In C++ :
 
         if( poFieldDefn->GetType() == OFTInteger )
             printf( "%d,", poFeature->GetFieldAsInteger( iField ) );
+        else if( poFieldDefn->GetType() == OFTInteger64 )
+            printf( CPL_FRMT_GIB ",", poFeature->GetFieldAsInteger64( iField ) );
         else if( poFieldDefn->GetType() == OFTReal )
             printf( "%.3f,", poFeature->GetFieldAsDouble(iField) );
         else if( poFieldDefn->GetType() == OFTString )
@@ -153,6 +155,8 @@ In C :
 
         if( OGR_Fld_GetType(hFieldDefn) == OFTInteger )
             printf( "%d,", OGR_F_GetFieldAsInteger( hFeature, iField ) );
+        else if( OGR_Fld_GetType(hFieldDefn) == OFTInteger64 )
+            printf( CPL_FRMT_GIB ",", OGR_F_GetFieldAsInteger64( hFeature, iField ) );
         else if( OGR_Fld_GetType(hFieldDefn) == OFTReal )
             printf( "%.3f,", OGR_F_GetFieldAsDouble( hFeature, iField) );
         else if( OGR_Fld_GetType(hFieldDefn) == OFTString )
@@ -347,6 +351,8 @@ int main()
 
             if( poFieldDefn->GetType() == OFTInteger )
                 printf( "%d,", poFeature->GetFieldAsInteger( iField ) );
+            else if( poFieldDefn->GetType() == OFTInteger64 )
+                printf( CPL_FRMT_GIB ",", poFeature->GetFieldAsInteger64( iField ) );
             else if( poFieldDefn->GetType() == OFTReal )
                 printf( "%.3f,", poFeature->GetFieldAsDouble(iField) );
             else if( poFieldDefn->GetType() == OFTString )
@@ -413,6 +419,8 @@ int main()
 
             if( OGR_Fld_GetType(hFieldDefn) == OFTInteger )
                 printf( "%d,", OGR_F_GetFieldAsInteger( hFeature, iField ) );
+            else if( OGR_Fld_GetType(hFieldDefn) == OFTInteger64 )
+                printf( CPL_FRMT_GIB ",", OGR_F_GetFieldAsInteger64( hFeature, iField ) );
             else if( OGR_Fld_GetType(hFieldDefn) == OFTReal )
                 printf( "%.3f,", OGR_F_GetFieldAsDouble( hFeature, iField) );
             else if( OGR_Fld_GetType(hFieldDefn) == OFTString )
@@ -461,8 +469,8 @@ for feat in lyr:
 
         # Tests below can be simplified with just :
         # print feat.GetField(i)
-        if field_defn.GetType() == ogr.OFTInteger:
-            print "%d" % feat.GetFieldAsInteger(i)
+        if field_defn.GetType() == ogr.OFTInteger or field_defn.GetType() == ogr.OFTInteger64:
+            print "%d" % feat.GetFieldAsInteger64(i)
         elif field_defn.GetType() == ogr.OFTReal:
             print "%.3f" % feat.GetFieldAsDouble(i)
         elif field_defn.GetType() == ogr.OFTString:

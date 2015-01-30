@@ -113,7 +113,7 @@ OGRFeature *OGRILI2Layer::GetNextFeature()
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
-int OGRILI2Layer::GetFeatureCount( int bForce )
+GIntBig OGRILI2Layer::GetFeatureCount( int bForce )
 {
     if (m_poFilterGeom == NULL && m_poAttrQuery == NULL)
     {
@@ -282,7 +282,7 @@ OGRErr OGRILI2Layer::ICreateFeature( OGRFeature *poFeature ) {
     }
     else
     {
-        sprintf( szTempBuffer, "%ld", poFeature->GetFID() );
+        sprintf( szTempBuffer, CPL_FRMT_GIB, poFeature->GetFID() );
         tid = szTempBuffer;
     }
 

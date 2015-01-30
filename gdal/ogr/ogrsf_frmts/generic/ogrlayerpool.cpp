@@ -290,7 +290,7 @@ OGRFeature *OGRProxiedLayer::GetNextFeature()
 /*                           SetNextByIndex()                           */
 /************************************************************************/
 
-OGRErr      OGRProxiedLayer::SetNextByIndex( long nIndex )
+OGRErr      OGRProxiedLayer::SetNextByIndex( GIntBig nIndex )
 {
     if( poUnderlyingLayer == NULL && !OpenUnderlyingLayer() ) return OGRERR_FAILURE;
     return poUnderlyingLayer->SetNextByIndex(nIndex);
@@ -300,7 +300,7 @@ OGRErr      OGRProxiedLayer::SetNextByIndex( long nIndex )
 /*                             GetFeature()                             */
 /************************************************************************/
 
-OGRFeature *OGRProxiedLayer::GetFeature( long nFID )
+OGRFeature *OGRProxiedLayer::GetFeature( GIntBig nFID )
 {
     if( poUnderlyingLayer == NULL && !OpenUnderlyingLayer() ) return NULL;
     return poUnderlyingLayer->GetFeature(nFID);
@@ -330,7 +330,7 @@ OGRErr      OGRProxiedLayer::ICreateFeature( OGRFeature *poFeature )
 /*                           DeleteFeature()                            */
 /************************************************************************/
 
-OGRErr      OGRProxiedLayer::DeleteFeature( long nFID )
+OGRErr      OGRProxiedLayer::DeleteFeature( GIntBig nFID )
 {
     if( poUnderlyingLayer == NULL && !OpenUnderlyingLayer() ) return OGRERR_FAILURE;
     return poUnderlyingLayer->DeleteFeature(nFID);
@@ -401,7 +401,7 @@ OGRSpatialReference *OGRProxiedLayer::GetSpatialRef()
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
-int         OGRProxiedLayer::GetFeatureCount( int bForce )
+GIntBig         OGRProxiedLayer::GetFeatureCount( int bForce )
 {
     if( poUnderlyingLayer == NULL && !OpenUnderlyingLayer() ) return 0;
     return poUnderlyingLayer->GetFeatureCount(bForce);

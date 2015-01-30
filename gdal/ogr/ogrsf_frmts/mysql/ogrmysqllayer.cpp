@@ -177,7 +177,7 @@ OGRFeature *OGRMySQLLayer::RecordToFeature( char **papszRow,
                 return NULL;
             }
 
-            poFeature->SetFID( atoi(papszRow[iField]) );
+            poFeature->SetFID( CPLAtoGIntBig(papszRow[iField]) );
         }
 
         if( papszRow[iField] == NULL ) 
@@ -294,7 +294,7 @@ OGRFeature *OGRMySQLLayer::GetNextRawFeature()
 /*      Note that we actually override this in OGRMySQLTableLayer.      */
 /************************************************************************/
 
-OGRFeature *OGRMySQLLayer::GetFeature( long nFeatureId )
+OGRFeature *OGRMySQLLayer::GetFeature( GIntBig nFeatureId )
 
 {
     return OGRLayer::GetFeature( nFeatureId );

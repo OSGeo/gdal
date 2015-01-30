@@ -2058,11 +2058,13 @@ OGRSQLiteDataSource::ICreateLayer( const char * pszLayerNameIn,
     char *pszErrMsg;
     const char *pszGeomCol = NULL;
     CPLString osCommand;
+    
+    const char* pszSerialType = "INTEGER";
 
     if( eType == wkbNone )
         osCommand.Printf( 
-            "CREATE TABLE '%s' ( OGC_FID INTEGER PRIMARY KEY )", 
-            pszEscapedLayerName );
+            "CREATE TABLE '%s' ( OGC_FID %s PRIMARY KEY )", 
+            pszEscapedLayerName, pszSerialType );
     else
     {
         if( EQUAL(pszGeomFormat,"WKT") )
@@ -2070,9 +2072,10 @@ OGRSQLiteDataSource::ICreateLayer( const char * pszLayerNameIn,
             pszGeomCol = "WKT_GEOMETRY";
             osCommand.Printf(
                 "CREATE TABLE '%s' ( "
-                "  OGC_FID INTEGER PRIMARY KEY,"
+                "  OGC_FID %s PRIMARY KEY,"
                 "  '%s' VARCHAR )", 
                 pszEscapedLayerName,
+                pszSerialType,
                 OGRSQLiteEscape(pszGeomCol).c_str() );
         }
         else
@@ -2092,15 +2095,17 @@ OGRSQLiteDataSource::ICreateLayer( const char * pszLayerNameIn,
                 / will severely [and irremediably] corrupt the DB !!!
                 */
                 osCommand.Printf( "CREATE TABLE '%s' ( "
-                                  "  OGC_FID INTEGER PRIMARY KEY)",
-                                  pszEscapedLayerName);
+                                  "  OGC_FID %s PRIMARY KEY)",
+                                  pszEscapedLayerName,
+                                  pszSerialType);
             }
             else
             {
                 osCommand.Printf( "CREATE TABLE '%s' ( "
-                                  "  OGC_FID INTEGER PRIMARY KEY,"
+                                  "  OGC_FID %s PRIMARY KEY,"
                                   "  '%s' BLOB )", 
                                   pszEscapedLayerName,
+                                  pszSerialType,
                                   OGRSQLiteEscape(pszGeomCol).c_str() );
             }
         }

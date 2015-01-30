@@ -141,7 +141,7 @@ public:
 
   virtual void        ResetReading();
   virtual OGRFeature* GetNextFeature();
-  virtual OGRFeature* GetFeature( long nFeatureId );
+  virtual OGRFeature* GetFeature( GIntBig nFeatureId );
 
   Table* GetTable() { return m_pTable; }
 
@@ -156,10 +156,10 @@ public:
 
   virtual OGRErr      ICreateFeature( OGRFeature *poFeature );
   virtual OGRErr      ISetFeature( OGRFeature *poFeature );
-  virtual OGRErr      DeleteFeature( long nFID );
+  virtual OGRErr      DeleteFeature( GIntBig nFID );
 
   virtual OGRErr      GetExtent( OGREnvelope *psExtent, int bForce );
-  virtual int         GetFeatureCount( int bForce );
+  virtual GIntBig     GetFeatureCount( int bForce );
   virtual OGRErr      SetAttributeFilter( const char *pszQuery );
   virtual void 	      SetSpatialFilterRect (double dfMinX, double dfMinY, double dfMaxX, double dfMaxY);
   virtual void        SetSpatialFilter( OGRGeometry * );

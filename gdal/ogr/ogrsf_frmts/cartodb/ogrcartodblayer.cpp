@@ -144,7 +144,7 @@ OGRFeature *OGRCARTODBLayer::BuildFeature(json_object* poRowObj)
                 (json_object_get_type(poVal) == json_type_int ||
                  json_object_get_type(poVal) == json_type_boolean) )
             {
-                poFeature->SetField(i, (int)json_object_get_int64(poVal));
+                poFeature->SetField(i, (GIntBig)json_object_get_int64(poVal));
             }
             else if( poVal != NULL &&
                 json_object_get_type(poVal) == json_type_double )

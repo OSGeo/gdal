@@ -251,7 +251,7 @@ OGRFeature * OGRPCIDSKLayer::GetNextUnfilteredFeature()
 /*                             GetFeature()                             */
 /************************************************************************/
 
-OGRFeature *OGRPCIDSKLayer::GetFeature( long nFID )
+OGRFeature *OGRPCIDSKLayer::GetFeature( GIntBig nFID )
 
 {
 /* -------------------------------------------------------------------- */
@@ -467,10 +467,10 @@ int OGRPCIDSKLayer::TestCapability( const char * pszCap )
 }
 
 /************************************************************************/
-/*                          GetFeatureCount()                           */
+/*                         GetFeatureCount()                          */
 /************************************************************************/
 
-int OGRPCIDSKLayer::GetFeatureCount( int bForce )
+GIntBig OGRPCIDSKLayer::GetFeatureCount( int bForce )
 
 {
     if( m_poFilterGeom != NULL || m_poAttrQuery != NULL )
@@ -560,7 +560,7 @@ OGRErr OGRPCIDSKLayer::GetExtent (OGREnvelope *psExtent, int bForce)
 /*                           DeleteFeature()                            */
 /************************************************************************/
 
-OGRErr OGRPCIDSKLayer::DeleteFeature( long nFID )
+OGRErr OGRPCIDSKLayer::DeleteFeature( GIntBig nFID )
 
 {
     try {

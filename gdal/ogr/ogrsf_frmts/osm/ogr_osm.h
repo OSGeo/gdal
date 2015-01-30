@@ -143,7 +143,7 @@ class OGROSMLayer : public OGRLayer
     virtual int         TestCapability( const char * );
                                      
     virtual OGRFeature *GetNextFeature();
-    virtual int         GetFeatureCount( int bForce );
+    virtual GIntBig     GetFeatureCount( int bForce );
         
     virtual OGRErr      SetAttributeFilter( const char* pszAttrQuery );
 

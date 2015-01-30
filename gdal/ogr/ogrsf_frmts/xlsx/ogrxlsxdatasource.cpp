@@ -109,7 +109,7 @@ OGRFeature* OGRXLSXLayer::GetNextFeature()
 /*                           GetFeature()                               */
 /************************************************************************/
 
-OGRFeature* OGRXLSXLayer::GetFeature( long nFeatureId )
+OGRFeature* OGRXLSXLayer::GetFeature( GIntBig nFeatureId )
 {
     Init();
     OGRFeature* poFeature = OGRMemLayer::GetFeature(nFeatureId - (1 + bHasHeaderLine));
@@ -141,7 +141,7 @@ OGRErr OGRXLSXLayer::ISetFeature( OGRFeature *poFeature )
 /*                          DeleteFeature()                             */
 /************************************************************************/
 
-OGRErr OGRXLSXLayer::DeleteFeature( long nFID )
+OGRErr OGRXLSXLayer::DeleteFeature( GIntBig nFID )
 {
     Init();
     SetUpdated();
@@ -429,7 +429,13 @@ OGRFieldType OGRXLSXDataSource::GetOGRFieldType(const char* pszValue,
         if (eValueType == CPL_VALUE_STRING)
             return OFTString;
         else if (eValueType == CPL_VALUE_INTEGER)
-            return OFTInteger;
+        {
+            GIntBig nVal = CPLAtoGIntBig(pszValue);
+            if( (GIntBig)(int)nVal != nVal )
+                return OFTInteger64;
+            else
+                return OFTInteger;
+        }
         else
             return OFTReal;
     }
@@ -818,9 +824,13 @@ void OGRXLSXDataSource::endElementRow(CPL_UNUSED const char *pszName)
                         {
                             /* ok */
                         }
-                        else if (eFieldType == OFTReal && eValType == OFTInteger)
+                        else if (eFieldType == OFTReal && (eValType == OFTInteger || eValType == OFTInteger64))
                         {
                            /* ok */;
+                        }
+                        else if (eFieldType == OFTInteger64 && eValType == OFTInteger )
+                        {
+                            /* ok */;
                         }
                         else if (eFieldType != OFTString && eValType != eFieldType)
                         {
@@ -829,9 +839,11 @@ void OGRXLSXDataSource::endElementRow(CPL_UNUSED const char *pszName)
                             if ((eFieldType == OFTDate || eFieldType == OFTTime) &&
                                    eValType == OFTDateTime)
                                 oNewFieldDefn.SetType(OFTDateTime);
-                            else if (eFieldType == OFTInteger &&
+                            else if ((eFieldType == OFTInteger || eFieldType == OFTInteger64) &&
                                      eValType == OFTReal)
                                 oNewFieldDefn.SetType(OFTReal);
+                            else if( eFieldType == OFTInteger && eValType == OFTInteger64 )
+                                oNewFieldDefn.SetType(OFTInteger64);
                             else
                                 oNewFieldDefn.SetType(OFTString);
                             poCurLayer->AlterFieldDefn(i, &oNewFieldDefn,
@@ -1742,6 +1754,12 @@ static void WriteLayer(const char* pszName, OGRLayer* poLayer, int iLayer,
                 {
                     VSIFPrintfL(fp, "<c r=\"%s%d\">\n", szCol, iRow);
                     VSIFPrintfL(fp, "<v>%d</v>\n", poFeature->GetFieldAsInteger(j));
+                    VSIFPrintfL(fp, "</c>\n");
+                }
+                else if (eType == OFTInteger64)
+                {
+                    VSIFPrintfL(fp, "<c r=\"%s%d\">\n", szCol, iRow);
+                    VSIFPrintfL(fp, "<v>" CPL_FRMT_GIB "</v>\n", poFeature->GetFieldAsInteger64(j));
                     VSIFPrintfL(fp, "</c>\n");
                 }
                 else if (eType == OFTDate || eType == OFTDateTime || eType == OFTTime)

@@ -836,7 +836,7 @@ int  MIFFile::AddFields(const char *pszLine)
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
-int MIFFile::GetFeatureCount (int bForce)
+GIntBig MIFFile::GetFeatureCount (int bForce)
 {
     
     if( m_poFilterGeom != NULL || m_poAttrQuery != NULL )
@@ -1245,7 +1245,7 @@ int MIFFile::Close()
  * Returns feature id that follows nPrevId, or -1 if it is the
  * last feature id.  Pass nPrevId=-1 to fetch the first valid feature id.
  **********************************************************************/
-int MIFFile::GetNextFeatureId(int nPrevId)
+GIntBig MIFFile::GetNextFeatureId(GIntBig nPrevId)
 {
     if (m_eAccessMode != TABRead)
     {
@@ -1331,7 +1331,7 @@ GBool MIFFile::NextFeature()
  * error happened.  In any case, CPLError() will have been called to
  * report the reason of the failure.
  **********************************************************************/
-TABFeature *MIFFile::GetFeatureRef(int nFeatureId)
+TABFeature *MIFFile::GetFeatureRef(GIntBig nFeatureId)
 {
     const char *pszLine;
 
@@ -1356,7 +1356,7 @@ TABFeature *MIFFile::GetFeatureRef(int nFeatureId)
     if (GotoFeature(nFeatureId)!= 0 )
     {
         CPLError(CE_Failure, CPLE_IllegalArg,
-                 "GetFeatureRef() failed: invalid feature id %d", 
+                 "GetFeatureRef() failed: invalid feature id " CPL_FRMT_GIB, 
                  nFeatureId);
         return NULL;
     }

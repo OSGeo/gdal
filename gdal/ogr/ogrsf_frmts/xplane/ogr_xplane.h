@@ -70,9 +70,9 @@ class OGRXPlaneLayer : public OGRLayer
 
     virtual void              ResetReading();
     virtual OGRFeature *      GetNextFeature();
-    virtual OGRFeature *      GetFeature( long nFID );
-    virtual OGRErr            SetNextByIndex( long nIndex );
-    virtual int               GetFeatureCount( int bForce = TRUE );
+    virtual OGRFeature *      GetFeature( GIntBig nFID );
+    virtual OGRErr            SetNextByIndex( GIntBig nIndex );
+    virtual GIntBig           GetFeatureCount( int bForce = TRUE );
 
     virtual OGRFeatureDefn *  GetLayerDefn();
     virtual int               TestCapability( const char * pszCap );

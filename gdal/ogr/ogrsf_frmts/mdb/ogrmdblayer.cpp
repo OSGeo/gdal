@@ -201,7 +201,7 @@ void OGRMDBLayer::ResetReading()
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
-int OGRMDBLayer::GetFeatureCount(int bForce)
+GIntBig OGRMDBLayer::GetFeatureCount(int bForce)
 {
     if (m_poFilterGeom != NULL || m_poAttrQuery != NULL)
         return OGRLayer::GetFeatureCount(bForce);
@@ -357,7 +357,7 @@ OGRFeature *OGRMDBLayer::GetNextRawFeature()
 /*                             GetFeature()                             */
 /************************************************************************/
 
-OGRFeature *OGRMDBLayer::GetFeature( long nFeatureId )
+OGRFeature *OGRMDBLayer::GetFeature( GIntBig nFeatureId )
 
 {
     /* This should be implemented directly! */

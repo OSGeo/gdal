@@ -13893,6 +13893,13 @@ SWIG_init(void) {
   SWIG_Python_SetConstant(d, "SRS_PT_WAGNER_VI",SWIG_FromCharPtr("Wagner_VI"));
   SWIG_Python_SetConstant(d, "SRS_PT_WAGNER_VII",SWIG_FromCharPtr("Wagner_VII"));
   SWIG_Python_SetConstant(d, "SRS_PT_QSC",SWIG_FromCharPtr("Quadrilateralized_Spherical_Cube"));
+  SWIG_Python_SetConstant(d, "SRS_PT_AITOFF",SWIG_FromCharPtr("Aitoff"));
+  SWIG_Python_SetConstant(d, "SRS_PT_WINKEL_I",SWIG_FromCharPtr("Winkel_I"));
+  SWIG_Python_SetConstant(d, "SRS_PT_WINKEL_II",SWIG_FromCharPtr("Winkel_II"));
+  SWIG_Python_SetConstant(d, "SRS_PT_WINKEL_TRIPEL",SWIG_FromCharPtr("Winkel_Tripel"));
+  SWIG_Python_SetConstant(d, "SRS_PT_CRASTER_PARABOLIC",SWIG_FromCharPtr("Craster_Parabolic"));
+  SWIG_Python_SetConstant(d, "SRS_PT_LOXIMUTHAL",SWIG_FromCharPtr("Loximuthal"));
+  SWIG_Python_SetConstant(d, "SRS_PT_QUARTIC_AUTHALIC",SWIG_FromCharPtr("Quartic_Authalic"));
   SWIG_Python_SetConstant(d, "SRS_PP_CENTRAL_MERIDIAN",SWIG_FromCharPtr("central_meridian"));
   SWIG_Python_SetConstant(d, "SRS_PP_SCALE_FACTOR",SWIG_FromCharPtr("scale_factor"));
   SWIG_Python_SetConstant(d, "SRS_PP_STANDARD_PARALLEL_1",SWIG_FromCharPtr("standard_parallel_1"));
@@ -13991,3 +13998,4 @@ SWIG_init(void) {
   return;
 #endif
 }
+

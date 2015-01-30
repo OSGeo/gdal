@@ -129,7 +129,7 @@ class OGRAVCBinLayer : public OGRAVCLayer
 
     void		ResetReading();
     OGRFeature *	GetNextFeature();
-    OGRFeature *	GetFeature( long nFID );
+    OGRFeature *	GetFeature( GIntBig nFID );
 
     int                 TestCapability( const char * );
 };
@@ -195,8 +195,8 @@ class OGRAVCE00Layer : public OGRAVCLayer
 
     void		ResetReading();
     OGRFeature *	GetNextFeature();
-    OGRFeature *GetFeature( long nFID );
-    int GetFeatureCount(int bForce);
+    OGRFeature *GetFeature( GIntBig nFID );
+    GIntBig GetFeatureCount(int bForce);
     int CheckSetupTable(AVCE00Section *psTblSectionIn);
     int AppendTableFields( OGRFeature *poFeature );
 };

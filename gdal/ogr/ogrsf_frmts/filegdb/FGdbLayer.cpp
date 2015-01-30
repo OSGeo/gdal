@@ -477,7 +477,7 @@ OGRErr FGdbLayer::PopulateRowWithFeature( Row& fgdb_row, OGRFeature *poFeature )
                 hr = fgdb_row.SetShort(wfield_name, (short) fldvalue);
             }
         }
-        else if ( nOGRFieldType == OFTReal )
+        else if ( nOGRFieldType == OFTReal || nOGRFieldType == OFTInteger64 )
         {
             /* Doubles (we don't handle FGDB Floats) */
             double fldvalue = poFeature->GetFieldAsDouble(i);
@@ -657,7 +657,7 @@ OGRErr FGdbLayer::GetRow( EnumRows& enumRows, Row& row, long nFID )
 /*                           DeleteFeature()                            */
 /************************************************************************/
 
-OGRErr FGdbLayer::DeleteFeature( long nFID )
+OGRErr FGdbLayer::DeleteFeature( GIntBig nFID )
 
 {
     long           hr;
@@ -738,6 +738,13 @@ char* FGdbLayer::CreateFieldDefn(OGRFieldDefn& oField,
     if ( ! OGRToGDBFieldType(fldtype, oField.GetSubType(), &gdbFieldType) )
     {
         GDBErr(-1, "Failed converting field type.");
+        return NULL;
+    }
+    
+    if( oField.GetType() == OFTInteger64 && !bApproxOK )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Integer64 not supported in FileGDB");
         return NULL;
     }
 
@@ -2407,7 +2414,7 @@ OGRFeature* FGdbLayer::GetNextFeature()
 /*                             GetFeature()                             */
 /************************************************************************/
 
-OGRFeature *FGdbLayer::GetFeature( long oid )
+OGRFeature *FGdbLayer::GetFeature( GIntBig oid )
 {
     // do query to fetch individual row
     EnumRows       enumRows;
@@ -2433,7 +2440,7 @@ OGRFeature *FGdbLayer::GetFeature( long oid )
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
-int FGdbLayer::GetFeatureCount( CPL_UNUSED int bForce )
+GIntBig FGdbLayer::GetFeatureCount( CPL_UNUSED int bForce )
 {
     long           hr;
     int32          rowCount = 0;

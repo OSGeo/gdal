@@ -205,7 +205,7 @@ void OGRGeomediaTableLayer::ResetReading()
 /*                             GetFeature()                             */
 /************************************************************************/
 
-OGRFeature *OGRGeomediaTableLayer::GetFeature( long nFeatureId )
+OGRFeature *OGRGeomediaTableLayer::GetFeature( GIntBig nFeatureId )
 
 {
     if( pszFIDColumn == NULL )
@@ -218,7 +218,7 @@ OGRFeature *OGRGeomediaTableLayer::GetFeature( long nFeatureId )
     poStmt = new CPLODBCStatement( poDS->GetSession() );
     poStmt->Append( "SELECT * FROM " );
     poStmt->Append( poFeatureDefn->GetName() );
-    poStmt->Appendf( " WHERE %s = %ld", pszFIDColumn, nFeatureId );
+    poStmt->Appendf( " WHERE %s = " CPL_FRMT_GIB, pszFIDColumn, nFeatureId );
 
     if( !poStmt->ExecuteSQL() )
     {
@@ -280,7 +280,7 @@ int OGRGeomediaTableLayer::TestCapability( const char * pszCap )
 /*      way of counting features matching a spatial query.              */
 /************************************************************************/
 
-int OGRGeomediaTableLayer::GetFeatureCount( int bForce )
+GIntBig OGRGeomediaTableLayer::GetFeatureCount( int bForce )
 
 {
     if( m_poFilterGeom != NULL )

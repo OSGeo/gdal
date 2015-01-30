@@ -833,7 +833,7 @@ void OGRBNALayer::FastParseUntil ( int interestFID)
 /*                           GetFeature()                               */
 /************************************************************************/
 
-OGRFeature *  OGRBNALayer::GetFeature( long nFID )
+OGRFeature *  OGRBNALayer::GetFeature( GIntBig nFID )
 {
     OGRFeature  *poFeature;
     BNARecord* record;

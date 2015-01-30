@@ -72,11 +72,11 @@ class OGROGDILayer : public OGRLayer
     void                ResetReading();
     OGRFeature *        GetNextFeature();
 
-    OGRFeature         *GetFeature( long nFeatureId );
+    OGRFeature         *GetFeature( GIntBig nFeatureId );
 
     OGRFeatureDefn *    GetLayerDefn() { return m_poFeatureDefn; }
 
-    int                 GetFeatureCount( int );
+    GIntBig             GetFeatureCount( int );
 
     int                 TestCapability( const char * );
 

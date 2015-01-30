@@ -388,6 +388,8 @@ OGRPGDumpDataSource::ICreateLayer( const char * pszLayerName,
 /*      Create a basic table with the FID.  Also include the            */
 /*      geometry if this is not a PostGIS enabled table.                */
 /* -------------------------------------------------------------------- */
+    int bFID64 = CSLFetchBoolean(papszOptions, "FID64", FALSE);
+    const char* pszSerialType = bFID64 ? "BIGSERIAL": "SERIAL";
     
     CPLString osCreateTable;
     int bTemporary = CSLFetchNameValue( papszOptions, "TEMPORARY" ) != NULL &&
@@ -406,16 +408,16 @@ OGRPGDumpDataSource::ICreateLayer( const char * pszLayerName,
         if (eType == wkbNone)
             osCommand.Printf(
                     "%s ( "
-                    "   %s SERIAL, "
+                    "   %s %s, "
                     "   CONSTRAINT \"%s_pk\" PRIMARY KEY (%s) )",
-                    osCreateTable.c_str(), pszFIDColumnName, pszTableName, pszFIDColumnName );
+                    osCreateTable.c_str(), pszFIDColumnName, pszSerialType, pszTableName, pszFIDColumnName );
         else
             osCommand.Printf(
                     "%s ( "
-                    "   %s SERIAL, "
+                    "   %s %s, "
                     "   WKB_GEOMETRY %s, "
                     "   CONSTRAINT \"%s_pk\" PRIMARY KEY (%s) )",
-                    osCreateTable.c_str(), pszFIDColumnName, pszGeomType, pszTableName, pszFIDColumnName );
+                    osCreateTable.c_str(), pszFIDColumnName, pszSerialType, pszGeomType, pszTableName, pszFIDColumnName );
     }
     else if ( EQUAL(pszGeomType, "geography") )
     {
@@ -426,18 +428,18 @@ OGRPGDumpDataSource::ICreateLayer( const char * pszLayerName,
 
         if (nSRSId)
             osCommand.Printf(
-                     "%s ( %s SERIAL, \"%s\" geography(%s%s,%d), CONSTRAINT \"%s_pk\" PRIMARY KEY (%s) )",
-                     osCreateTable.c_str(), pszFIDColumnName, pszGFldName, pszGeometryType, nDimension == 2 ? "" : "Z", nSRSId, pszTableName, pszFIDColumnName );
+                     "%s ( %s %s, \"%s\" geography(%s%s,%d), CONSTRAINT \"%s_pk\" PRIMARY KEY (%s) )",
+                     osCreateTable.c_str(), pszFIDColumnName, pszSerialType, pszGFldName, pszGeometryType, nDimension == 2 ? "" : "Z", nSRSId, pszTableName, pszFIDColumnName );
         else
             osCommand.Printf(
-                     "%s ( %s SERIAL, \"%s\" geography(%s%s), CONSTRAINT \"%s_pk\" PRIMARY KEY (%s) )",
-                     osCreateTable.c_str(), pszFIDColumnName, pszGFldName, pszGeometryType, nDimension == 2 ? "" : "Z", pszTableName, pszFIDColumnName );
+                     "%s ( %s %s, \"%s\" geography(%s%s), CONSTRAINT \"%s_pk\" PRIMARY KEY (%s) )",
+                     osCreateTable.c_str(), pszFIDColumnName, pszSerialType, pszGFldName, pszGeometryType, nDimension == 2 ? "" : "Z", pszTableName, pszFIDColumnName );
     }
     else
     {
         osCommand.Printf(
-                 "%s ( %s SERIAL, CONSTRAINT \"%s_pk\" PRIMARY KEY (%s) )",
-                 osCreateTable.c_str(), pszFIDColumnName, pszTableName, pszFIDColumnName );
+                 "%s ( %s %s, CONSTRAINT \"%s_pk\" PRIMARY KEY (%s) )",
+                 osCreateTable.c_str(), pszFIDColumnName, pszSerialType, pszTableName, pszFIDColumnName );
     }
 
     if (bCreateTable)

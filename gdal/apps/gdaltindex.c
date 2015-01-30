@@ -352,7 +352,7 @@ int main(int argc, char *argv[])
         i_SrcSRSName = OGR_FD_GetFieldIndex( hFDefn, pszSrcSRSName );
 
     /* Load in memory existing file names in SHP */
-    nExistingFiles = OGR_L_GetFeatureCount(hLayer, FALSE);
+    nExistingFiles = (int)OGR_L_GetFeatureCount(hLayer, FALSE);
     if( nExistingFiles < 0)
         nExistingFiles = 0;
     if (nExistingFiles > 0)

@@ -125,7 +125,7 @@ OGRFeature *OGRNTFFeatureClassLayer::GetNextFeature()
 /*                             GetFeature()                             */
 /************************************************************************/
 
-OGRFeature *OGRNTFFeatureClassLayer::GetFeature( long nFeatureId )
+OGRFeature *OGRNTFFeatureClassLayer::GetFeature( GIntBig nFeatureId )
 
 {
     char        *pszFCName, *pszFCId;
@@ -156,7 +156,7 @@ OGRFeature *OGRNTFFeatureClassLayer::GetFeature( long nFeatureId )
 /*      way of counting features matching a spatial query.              */
 /************************************************************************/
 
-int OGRNTFFeatureClassLayer::GetFeatureCount( CPL_UNUSED int bForce )
+GIntBig OGRNTFFeatureClassLayer::GetFeatureCount( CPL_UNUSED int bForce )
 {
     return poDS->GetFCCount();
 }

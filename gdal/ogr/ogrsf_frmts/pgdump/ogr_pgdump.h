@@ -39,6 +39,21 @@ CPLString OGRPGDumpEscapeString(   const char* pszStrValue, int nMaxLength = -1,
 CPLString CPL_DLL OGRPGCommonLayerGetType(OGRFieldDefn& oField,
                                           int bPreservePrecision,
                                           int bApproxOK);
+typedef CPLString (*OGRPGCommonEscapeStringCbk)(void* userdata,
+                                                const char* pszValue, 
+                                                int nWidth,
+                                                const char* pszLayerName,
+                                                const char* pszFieldRef);
+void CPL_DLL OGRPGCommonAppendCopyFieldsExceptGeom(CPLString& osCommand,
+                                           OGRFeature* poFeature,
+                                           const char* pszFIDColumn,
+                                           int bFIDColumnInCopyFields,
+                                           OGRPGCommonEscapeStringCbk pfnEscapeString,
+                                           void* userdata);
+void CPL_DLL OGRPGCommonAppendFieldValue(CPLString& osCommand,
+                                 OGRFeature* poFeature, int i,
+                                 OGRPGCommonEscapeStringCbk pfnEscapeString,
+                                 void* userdata);
 
 /************************************************************************/
 /*                        OGRPGDumpGeomFieldDefn                        */
@@ -70,7 +85,7 @@ class OGRPGDumpLayer : public OGRLayer
     char                *pszFIDColumn;
     OGRFeatureDefn      *poFeatureDefn;
     OGRPGDumpDataSource *poDS;
-    int                 nFeatures;
+    GIntBig             nFeatures;
     int                 bLaunderColumnNames;
     int                 bPreservePrecision;
     int                 bUseCopy;
@@ -84,10 +99,6 @@ class OGRPGDumpLayer : public OGRLayer
     int                 bPostGIS2;
 
     char              **papszOverrideColumnTypes;
-
-    void                AppendFieldValue(CPLString& osCommand,
-                                       OGRFeature* poFeature, int i);
-    char*               GByteArrayToBYTEA( const GByte* pabyData, int nLen);
 
     OGRErr              StartCopy(int bSetFID);
     CPLString           BuildCopyFields(int bSetFID);
@@ -133,6 +144,8 @@ class OGRPGDumpLayer : public OGRLayer
     void                SetPostGIS2( int bFlag )
                                 { bPostGIS2 = bFlag; }
     OGRErr              EndCopy();
+
+    static char*        GByteArrayToBYTEA( const GByte* pabyData, int nLen);
 };
 
 /************************************************************************/

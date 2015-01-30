@@ -1267,7 +1267,7 @@ DBFGetFieldInfo( DBFHandle psDBF, int iField, char * pszFieldName,
              || psDBF->pachFieldType[iField] == 'F' )
     {
 	if( psDBF->panFieldDecimals[iField] > 0 
-            || psDBF->panFieldSize[iField] > 10 )
+            || psDBF->panFieldSize[iField] >= 10 )
 	    return( FTDouble );
 	else
 	    return( FTInteger );

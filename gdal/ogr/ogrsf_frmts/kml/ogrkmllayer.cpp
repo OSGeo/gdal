@@ -218,7 +218,7 @@ OGRFeature *OGRKMLLayer::GetNextFeature()
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
-int OGRKMLLayer::GetFeatureCount(
+GIntBig OGRKMLLayer::GetFeatureCount(
 #ifndef HAVE_EXPAT
 CPL_UNUSED
 #endif

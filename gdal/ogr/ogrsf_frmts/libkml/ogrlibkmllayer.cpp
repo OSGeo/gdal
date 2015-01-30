@@ -577,7 +577,7 @@ OGRErr OGRLIBKMLLayer::ICreateFeature (
         }
         else
         {
-            const char* pszId = CPLSPrintf("%s.%ld",
+            const char* pszId = CPLSPrintf("%s." CPL_FRMT_GIB,
                     OGRLIBKMLGetSanitizedNCName(GetName()).c_str(), poOgrFeat->GetFID());
             poOgrFeat->SetFID(nFeatures);
             poKmlFeature->set_id(pszId);
@@ -619,7 +619,7 @@ OGRErr OGRLIBKMLLayer::ISetFeature ( OGRFeature * poOgrFeat )
     poChange->add_object(poKmlFeature);
     m_poKmlUpdate->add_updateoperation(poChange);
     
-    const char* pszId = CPLSPrintf("%s.%ld",
+    const char* pszId = CPLSPrintf("%s." CPL_FRMT_GIB,
                     OGRLIBKMLGetSanitizedNCName(GetName()).c_str(), poOgrFeat->GetFID());
     poKmlFeature->set_targetid(pszId);
 
@@ -641,7 +641,7 @@ OGRErr OGRLIBKMLLayer::ISetFeature ( OGRFeature * poOgrFeat )
 
 ******************************************************************************/
 
-OGRErr OGRLIBKMLLayer::DeleteFeature( long nFID )
+OGRErr OGRLIBKMLLayer::DeleteFeature( GIntBig nFID )
 {
     if( !bUpdate || m_poKmlUpdate == NULL )
         return OGRERR_UNSUPPORTED_OPERATION;
@@ -652,7 +652,7 @@ OGRErr OGRLIBKMLLayer::DeleteFeature( long nFID )
     PlacemarkPtr poKmlPlacemark = poKmlFactory->CreatePlacemark();
     poDelete->add_feature(poKmlPlacemark);
     
-    const char* pszId = CPLSPrintf("%s.%ld",
+    const char* pszId = CPLSPrintf("%s." CPL_FRMT_GIB,
                     OGRLIBKMLGetSanitizedNCName(GetName()).c_str(), nFID);
     poKmlPlacemark->set_targetid(pszId);
 
@@ -676,7 +676,7 @@ OGRErr OGRLIBKMLLayer::DeleteFeature( long nFID )
                 
 ******************************************************************************/
 
-int OGRLIBKMLLayer::GetFeatureCount (
+GIntBig OGRLIBKMLLayer::GetFeatureCount (
                                      int bForce )
 {
 

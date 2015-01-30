@@ -4015,6 +4015,194 @@ def ogr_shape_84():
     return 'success'
 
 ###############################################################################
+# Test Integer64
+
+def ogr_shape_85():
+
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/ogr_shape_85.shp')
+    lyr = ds.CreateLayer('ogr_shape_85')
+    lyr.CreateField(ogr.FieldDefn('int', ogr.OFTInteger))
+    lyr.CreateField(ogr.FieldDefn('int64', ogr.OFTInteger64))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField(0, 123456789)
+    f.SetField(1, 123456789012345678)
+    lyr.CreateFeature(f)
+    f = None
+    ds = None
+
+    ds = ogr.Open('/vsimem/ogr_shape_85.shp', update = 1)
+    lyr = ds.GetLayer(0)
+    if lyr.GetLayerDefn().GetFieldDefn(0).GetType() != ogr.OFTInteger:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    if lyr.GetLayerDefn().GetFieldDefn(1).GetType() != ogr.OFTInteger64:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f.GetField(0) != 123456789 or f.GetField(1) != 123456789012345678:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    # Passing from 9 to 10 figures causes "promotion" to Integer64
+    f.SetField(0, 2000000000)
+    # Passing from 18 to 19 figures causes "promotion" to Real
+    f.SetField(1, 9000000000000000000)
+    lyr.SetFeature(f)
+    ds = None
+
+    ds = ogr.Open('/vsimem/ogr_shape_85.shp')
+    lyr = ds.GetLayer(0)
+    if lyr.GetLayerDefn().GetFieldDefn(0).GetType() != ogr.OFTInteger64:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    if lyr.GetLayerDefn().GetFieldDefn(1).GetType() != ogr.OFTReal:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f.GetField(0) != 2000000000 or f.GetField(1) != 9000000000000000000:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    ds = None
+    
+    # Test open option ADJUST_TYPE
+    ds = gdal.OpenEx('/vsimem/ogr_shape_85.shp', gdal.OF_VECTOR, open_options = ['ADJUST_TYPE=YES'])
+    lyr = ds.GetLayer(0)
+    if lyr.GetLayerDefn().GetFieldDefn(0).GetType() != ogr.OFTInteger:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    if lyr.GetLayerDefn().GetFieldDefn(1).GetType() != ogr.OFTInteger64:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f.GetField(0) != 2000000000 or f.GetField(1) != 9000000000000000000:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    ds = None
+    
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource( '/vsimem/ogr_shape_85.shp' )
+    
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/ogr_shape_85.shp')
+    lyr = ds.CreateLayer('ogr_shape_85')
+    lyr.CreateField(ogr.FieldDefn('int', ogr.OFTInteger))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField(0, 123456789)
+    lyr.CreateFeature(f)
+    fd = ogr.FieldDefn("foo", ogr.OFTInteger64)
+    ret = lyr.AlterFieldDefn(0, fd, ogr.ALTER_TYPE_FLAG)
+    if ret != 0:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    f.SetField(0, 123456789012345678)
+    lyr.SetFeature(f)
+    ds = None
+
+    ds = ogr.Open('/vsimem/ogr_shape_85.shp', update = 1)
+    lyr = ds.GetLayer(0)
+    if lyr.GetLayerDefn().GetFieldDefn(0).GetType() != ogr.OFTInteger64:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f.GetField(0) != 123456789012345678:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    ds = None
+    
+    return 'success'
+
+###############################################################################
+# Test Integer64
+
+def ogr_shape_85():
+
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/ogr_shape_85.shp')
+    lyr = ds.CreateLayer('ogr_shape_85')
+    lyr.CreateField(ogr.FieldDefn('int', ogr.OFTInteger))
+    lyr.CreateField(ogr.FieldDefn('int64', ogr.OFTInteger64))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField(0, 123456789)
+    f.SetField(1, 123456789012345678)
+    lyr.CreateFeature(f)
+    f = None
+    ds = None
+
+    ds = ogr.Open('/vsimem/ogr_shape_85.shp', update = 1)
+    lyr = ds.GetLayer(0)
+    if lyr.GetLayerDefn().GetFieldDefn(0).GetType() != ogr.OFTInteger:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    if lyr.GetLayerDefn().GetFieldDefn(1).GetType() != ogr.OFTInteger64:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f.GetField(0) != 123456789 or f.GetField(1) != 123456789012345678:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    # Passing from 9 to 10 figures causes "promotion" to Integer64
+    f.SetField(0, 2000000000)
+    # Passing from 18 to 19 figures causes "promotion" to Real
+    f.SetField(1, 9000000000000000000)
+    lyr.SetFeature(f)
+    ds = None
+
+    ds = ogr.Open('/vsimem/ogr_shape_85.shp')
+    lyr = ds.GetLayer(0)
+    if lyr.GetLayerDefn().GetFieldDefn(0).GetType() != ogr.OFTInteger64:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    if lyr.GetLayerDefn().GetFieldDefn(1).GetType() != ogr.OFTReal:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f.GetField(0) != 2000000000 or f.GetField(1) != 9000000000000000000:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    ds = None
+    
+    # Test open option ADJUST_TYPE
+    ds = gdal.OpenEx('/vsimem/ogr_shape_85.shp', gdal.OF_VECTOR, open_options = ['ADJUST_TYPE=YES'])
+    lyr = ds.GetLayer(0)
+    if lyr.GetLayerDefn().GetFieldDefn(0).GetType() != ogr.OFTInteger:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    if lyr.GetLayerDefn().GetFieldDefn(1).GetType() != ogr.OFTInteger64:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f.GetField(0) != 2000000000 or f.GetField(1) != 9000000000000000000:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    ds = None
+    
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource( '/vsimem/ogr_shape_85.shp' )
+    
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/ogr_shape_85.shp')
+    lyr = ds.CreateLayer('ogr_shape_85')
+    lyr.CreateField(ogr.FieldDefn('int', ogr.OFTInteger))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField(0, 123456789)
+    lyr.CreateFeature(f)
+    fd = ogr.FieldDefn("foo", ogr.OFTInteger64)
+    ret = lyr.AlterFieldDefn(0, fd, ogr.ALTER_TYPE_FLAG)
+    if ret != 0:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    f.SetField(0, 123456789012345678)
+    lyr.SetFeature(f)
+    ds = None
+
+    ds = ogr.Open('/vsimem/ogr_shape_85.shp', update = 1)
+    lyr = ds.GetLayer(0)
+    if lyr.GetLayerDefn().GetFieldDefn(0).GetType() != ogr.OFTInteger64:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f.GetField(0) != 123456789012345678:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    ds = None
+    
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_shape_cleanup():
@@ -4049,6 +4237,7 @@ def ogr_shape_cleanup():
     shape_drv.DeleteDataSource( '/vsimem/ogr_shape_81.shp' )
     shape_drv.DeleteDataSource( '/vsimem/ogr_shape_83.shp' )
     shape_drv.DeleteDataSource( '/vsimem/ogr_shape_84.shp' )
+    shape_drv.DeleteDataSource( '/vsimem/ogr_shape_85.shp' )
 
     return 'success'
 
@@ -4139,6 +4328,7 @@ gdaltest_list = [
     ogr_shape_82,
     ogr_shape_83,
     ogr_shape_84,
+    ogr_shape_85,
     ogr_shape_cleanup ]
 
 if __name__ == '__main__':

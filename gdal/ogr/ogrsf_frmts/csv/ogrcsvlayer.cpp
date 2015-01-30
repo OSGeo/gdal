@@ -528,6 +528,8 @@ void OGRCSVLayer::BuildFeatureDefn( const char* pszNfdcGeomField,
 
                 if (EQUAL(papszFieldTypes[iField], "Integer"))
                     oField.SetType(OFTInteger);
+                else if (EQUAL(papszFieldTypes[iField], "Integer64"))
+                    oField.SetType(OFTInteger64);
                 else if (EQUAL(papszFieldTypes[iField], "Real"))
                     oField.SetType(OFTReal);
                 else if (EQUAL(papszFieldTypes[iField], "String"))
@@ -808,7 +810,11 @@ char** OGRCSVLayer::AutodetectFieldTypes(char** papszOpenOptions, int nFieldCoun
                 int bIsBoolean = FALSE;
                 if( eType == CPL_VALUE_INTEGER )
                 {
-                    eOGRFieldType = OFTInteger;
+                    GIntBig nVal = CPLAtoGIntBig(papszTokens[iField]);
+                    if( (GIntBig)(int)nVal != nVal )
+                        eOGRFieldType = OFTInteger64;
+                    else
+                        eOGRFieldType = OFTInteger;
                 }
                 else if( eType == CPL_VALUE_REAL )
                 {
@@ -863,14 +869,25 @@ char** OGRCSVLayer::AutodetectFieldTypes(char** papszOpenOptions, int nFieldCoun
                     /* Promotion rules */
                     if( aeFieldType[iField] == OFTInteger )
                     {
-                        if( eOGRFieldType == OFTReal )
-                            aeFieldType[iField] = OFTReal;
+                        if( eOGRFieldType == OFTInteger64 ||
+                            eOGRFieldType == OFTReal )
+                            aeFieldType[iField] = eOGRFieldType;
                         else
                         {
                             aeFieldType[iField] = OFTString;
                             nStringFieldCount ++;
                         }
                     }
+                    else if( aeFieldType[iField] == OFTInteger64 )
+                    {
+                        if( eOGRFieldType == OFTReal )
+                            aeFieldType[iField] = eOGRFieldType;
+                        else if( eOGRFieldType != OFTInteger )
+                        {
+                            aeFieldType[iField] = OFTString;
+                            nStringFieldCount ++;
+                        }
+                    } 
                     else if ( aeFieldType[iField] == OFTReal )
                     {
                         if( eOGRFieldType != OFTInteger &&
@@ -928,6 +945,8 @@ char** OGRCSVLayer::AutodetectFieldTypes(char** papszOpenOptions, int nFieldCoun
                 osFieldType = "String";
             else if( aeFieldType[iField] == OFTInteger )
                 osFieldType = "Integer";
+            else if( aeFieldType[iField] == OFTInteger64 )
+                osFieldType = "Integer64";
             else if( aeFieldType[iField] == OFTReal )
                 osFieldType = "Real";
             else if( aeFieldType[iField] == OFTDateTime  )
@@ -945,7 +964,9 @@ char** OGRCSVLayer::AutodetectFieldTypes(char** papszOpenOptions, int nFieldCoun
             {
                 if( anFieldWidth[iField] > 0 &&
                     (aeFieldType[iField] == OFTString ||
-                    (bAutodetectWidthForIntOrReal && aeFieldType[iField] == OFTInteger)) )
+                    (bAutodetectWidthForIntOrReal &&
+                     (aeFieldType[iField] == OFTInteger ||
+                      aeFieldType[iField] == OFTInteger64))) )
                 {
                     osFieldType += CPLSPrintf(" (%d)", anFieldWidth[iField]);
                 }
@@ -1047,7 +1068,7 @@ char** OGRCSVLayer::GetNextLineTokens()
 /*                             GetFeature()                             */
 /************************************************************************/
 
-OGRFeature* OGRCSVLayer::GetFeature(long nFID)
+OGRFeature* OGRCSVLayer::GetFeature(GIntBig nFID)
 {
     if( nFID < 1 || fpCSV == NULL )
         return NULL;
@@ -1141,7 +1162,8 @@ OGRFeature * OGRCSVLayer::GetNextUnfilteredFeature()
                 }
             }
         }
-        else if( eFieldType == OFTReal || eFieldType == OFTInteger )
+        else if( eFieldType == OFTReal || eFieldType == OFTInteger ||
+                 eFieldType == OFTInteger64 )
         {
             if (papszTokens[iAttr][0] != '\0' && !poFieldDefn->IsIgnored() )
             {
@@ -1156,7 +1178,7 @@ OGRFeature * OGRCSVLayer::GetNextUnfilteredFeature()
                 {
                     poFeature->SetField( iOGRField, papszTokens[iAttr] );
                     if( !bWarningBadTypeOrWidth &&
-                        eFieldType == OFTInteger && eType == CPL_VALUE_REAL )
+                        (eFieldType == OFTInteger || eFieldType == OFTInteger64) && eType == CPL_VALUE_REAL )
                     {
                         bWarningBadTypeOrWidth = TRUE;
                         CPLError(CE_Warning, CPLE_AppDefined,
@@ -1441,6 +1463,7 @@ OGRErr OGRCSVLayer::CreateField( OGRFieldDefn *poNewField, int bApproxOK )
     switch( poNewField->GetType() )
     {
       case OFTInteger:
+      case OFTInteger64:
       case OFTReal:
       case OFTString:
         // these types are OK.
@@ -1641,6 +1664,9 @@ OGRErr OGRCSVLayer::WriteHeader()
                           VSIFPrintfL( fpCSVT, "%s", "Integer");
                       break;
                   }
+                  case OFTInteger64:
+                      VSIFPrintfL( fpCSVT, "%s", "Integer64");
+                      break;
                   case OFTReal:
                   {
                       if( poFeatureDefn->GetFieldDefn(iField)->GetSubType() == OFSTFloat32 )
@@ -1925,7 +1951,7 @@ void OGRCSVLayer::SetWriteBOM(int bWriteBOM)
 /*                        GetFeatureCount()                             */
 /************************************************************************/
 
-int OGRCSVLayer::GetFeatureCount( int bForce )
+GIntBig OGRCSVLayer::GetFeatureCount( int bForce )
 {
     if (bInWriteMode || m_poFilterGeom != NULL || m_poAttrQuery != NULL)
         return OGRLayer::GetFeatureCount(bForce);

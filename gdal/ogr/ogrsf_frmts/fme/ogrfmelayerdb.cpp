@@ -431,7 +431,7 @@ int OGRFMELayerDB::CreateReader()
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
-int OGRFMELayerDB::GetFeatureCount( int bForce )
+GIntBig OGRFMELayerDB::GetFeatureCount( int bForce )
 
 {
     /*

@@ -76,6 +76,26 @@ Out-of-tree drivers :
     GDALRasterBand and GDALDataset::RasterIO() take a new
     GDALRasterIOExtraArg* psExtraArg argument
 
+D) RFC 31: OGR 64bit Integer Fields and FIDs
+
+Link:http://trac.osgeo.org/gdal/wiki/rfc31_ogr_64
+
+C++ API:
+  * OGRLayer::GetFeature(), OGRLayer::DeleteFeature(), OGRLayer::SetNextByIndex() take a GIntBig instead of a long
+  * OGRFeature::GetFID() and OGRLayer::GetFeatureCount() now returns a GIntBig
+
+C API:
+  * OGR_L_GetFeature(), OGR_L_DeleteFeature(), OGR_L_SetNextByIndex() take a GIntBig instead of a long
+  * OGR_F_GetFID() and OGR_L_GetFeatureCount() now returns a GIntBig
+
+Behaviour changes :
+  * OFTInteger64 and OFTIntegerList64 can be returned whereas OGRFieldType is returned.
+
+Out-of-tree drivers :
+  * Virtual method signature change: OGRLayer::GetFeature(), OGRLayer::DeleteFeature(),
+    OGRLayer::SetNextByIndex() take a GIntBig argument instead of a long
+  * Virtual method signature change: OGRLayer::GetFeatureCount() now returns a GIntBig
+  * OGRFeature::GetFID() returns a GIntBig
 
 MIGRATION GUIDE FROM GDAL 1.10 to GDAL 1.11
 -------------------------------------------

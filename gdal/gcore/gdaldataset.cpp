@@ -3910,7 +3910,7 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
         if( poDstFeature->SetFrom( poFeature, panMap, TRUE ) != OGRERR_NONE )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
-                      "Unable to translate feature %ld from layer %s.\n",
+                      "Unable to translate feature " CPL_FRMT_GIB " from layer %s.\n",
                       poFeature->GetFID(), poSrcDefn->GetName() );
             OGRFeature::DestroyFeature( poFeature );
             CPLFree(panMap);
@@ -3961,7 +3961,7 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
             if( papoDstFeature[nFeatCount]->SetFrom( poFeature, panMap, TRUE ) != OGRERR_NONE )
             {
                 CPLError( CE_Failure, CPLE_AppDefined,
-                          "Unable to translate feature %ld from layer %s.\n",
+                          "Unable to translate feature " CPL_FRMT_GIB " from layer %s.\n",
                           poFeature->GetFID(), poSrcDefn->GetName() );
                 OGRFeature::DestroyFeature( poFeature );
                 bStopTransfer = TRUE;
@@ -5145,6 +5145,13 @@ OGRLayer* GDALDataset::BuildLayerFromSelectInfo(void* psSelectInfoIn,
                     sFieldList.types[iOutField] = SWQ_BOOLEAN;
                 else
                     sFieldList.types[iOutField] = SWQ_INTEGER;
+            }
+            else if( poFDefn->GetType() == OFTInteger64 )
+            {
+                if( poFDefn->GetSubType() == OFSTBoolean )
+                    sFieldList.types[iOutField] = SWQ_BOOLEAN;
+                else
+                    sFieldList.types[iOutField] = SWQ_INTEGER64;
             }
             else if( poFDefn->GetType() == OFTReal )
                 sFieldList.types[iOutField] = SWQ_FLOAT;

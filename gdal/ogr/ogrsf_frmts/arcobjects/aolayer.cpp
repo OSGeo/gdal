@@ -489,7 +489,7 @@ OGRFeature* AOLayer::GetNextFeature()
 /*                             GetFeature()                             */
 /************************************************************************/
 
-OGRFeature *AOLayer::GetFeature( long oid )
+OGRFeature *AOLayer::GetFeature( GIntBig oid )
 {
   HRESULT hr;
 
@@ -516,7 +516,7 @@ OGRFeature *AOLayer::GetFeature( long oid )
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
-int AOLayer::GetFeatureCount( int bForce )
+GIntBig AOLayer::GetFeatureCount( int bForce )
 {
   HRESULT hr;
 

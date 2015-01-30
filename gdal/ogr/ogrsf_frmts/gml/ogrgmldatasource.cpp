@@ -1230,6 +1230,8 @@ OGRGMLLayer *OGRGMLDataSource::TranslateGMLSchema( GMLFeatureClass *poClass )
                  poProperty->GetType() == GMLPT_Boolean ||
                  poProperty->GetType() == GMLPT_Short )
             eFType = OFTInteger;
+        else if( poProperty->GetType() == GMLPT_Integer64 )
+            eFType = OFTInteger64;
         else if( poProperty->GetType() == GMLPT_Real ||
                  poProperty->GetType() == GMLPT_Float )
             eFType = OFTReal;
@@ -1238,6 +1240,8 @@ OGRGMLLayer *OGRGMLDataSource::TranslateGMLSchema( GMLFeatureClass *poClass )
         else if( poProperty->GetType() == GMLPT_IntegerList ||
                  poProperty->GetType() == GMLPT_BooleanList )
             eFType = OFTIntegerList;
+        else if( poProperty->GetType() == GMLPT_Integer64List )
+            eFType = OFTInteger64List;
         else if( poProperty->GetType() == GMLPT_RealList )
             eFType = OFTRealList;
         else if( poProperty->GetType() == GMLPT_FeaturePropertyList )
@@ -1653,6 +1657,7 @@ void OGRGMLDataSource::InsertHeader()
             OGRFieldDefn *poFieldDefn = poFDefn->GetFieldDefn(iField);
 
             if( poFieldDefn->GetType() == OFTIntegerList ||
+                poFieldDefn->GetType() == OFTInteger64List ||
                 poFieldDefn->GetType() == OFTRealList ||
                 poFieldDefn->GetType() == OFTStringList )
             {
@@ -1987,6 +1992,66 @@ void OGRGMLDataSource::InsertHeader()
                 else
                 {
                     PrintLine( fpSchema, "            <xs:restriction base=\"xs:integer\">");
+                    PrintLine( fpSchema, "              <xs:totalDigits value=\"%d\"/>", nWidth);
+                }
+                PrintLine( fpSchema, "            </xs:restriction>");
+                PrintLine( fpSchema, "          </xs:simpleType>");
+                PrintLine( fpSchema, "        </xs:element>");
+            }
+            if( poFieldDefn->GetType() == OFTInteger64 ||
+                poFieldDefn->GetType() == OFTInteger64List  )
+            {
+                int nWidth;
+
+                if( poFieldDefn->GetWidth() > 0 )
+                    nWidth = poFieldDefn->GetWidth();
+                else
+                    nWidth = 16;
+
+                PrintLine( fpSchema, "        <xs:element name=\"%s\" nillable=\"true\" minOccurs=\"0\" maxOccurs=\"%s\">",
+                           poFieldDefn->GetNameRef(), poFieldDefn->GetType() == OFTInteger64List ? "unbounded": "1" );
+                PrintLine( fpSchema, "          <xs:simpleType>");
+                if( poFieldDefn->GetSubType() == OFSTBoolean )
+                {
+                    PrintLine( fpSchema, "            <xs:restriction base=\"xs:boolean\">");
+                }
+                else if( poFieldDefn->GetSubType() == OFSTInt16 )
+                {
+                    PrintLine( fpSchema, "            <xs:restriction base=\"xs:short\">");
+                }
+                else
+                {
+                    PrintLine( fpSchema, "            <xs:restriction base=\"xs:long\">");
+                    PrintLine( fpSchema, "              <xs:totalDigits value=\"%d\"/>", nWidth);
+                }
+                PrintLine( fpSchema, "            </xs:restriction>");
+                PrintLine( fpSchema, "          </xs:simpleType>");
+                PrintLine( fpSchema, "        </xs:element>");
+            }
+            if( poFieldDefn->GetType() == OFTInteger64 ||
+                poFieldDefn->GetType() == OFTInteger64List  )
+            {
+                int nWidth;
+
+                if( poFieldDefn->GetWidth() > 0 )
+                    nWidth = poFieldDefn->GetWidth();
+                else
+                    nWidth = 16;
+
+                PrintLine( fpSchema, "        <xs:element name=\"%s\" nillable=\"true\" minOccurs=\"0\" maxOccurs=\"%s\">",
+                           poFieldDefn->GetNameRef(), poFieldDefn->GetType() == OFTInteger64List ? "unbounded": "1" );
+                PrintLine( fpSchema, "          <xs:simpleType>");
+                if( poFieldDefn->GetSubType() == OFSTBoolean )
+                {
+                    PrintLine( fpSchema, "            <xs:restriction base=\"xs:boolean\">");
+                }
+                else if( poFieldDefn->GetSubType() == OFSTInt16 )
+                {
+                    PrintLine( fpSchema, "            <xs:restriction base=\"xs:short\">");
+                }
+                else
+                {
+                    PrintLine( fpSchema, "            <xs:restriction base=\"xs:long\">");
                     PrintLine( fpSchema, "              <xs:totalDigits value=\"%d\"/>", nWidth);
                 }
                 PrintLine( fpSchema, "            </xs:restriction>");

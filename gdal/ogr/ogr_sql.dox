@@ -198,6 +198,7 @@ Currently casting to the following target types are supported:
 <li> numeric(field_length, field_precision)
 <li> smallint(field_length) : 16 bit signed integer (GDAL &gt;= 2.0)
 <li> integer(field_length)
+<li> bigint(field_length), 64 bit integer, extension to SQL92 (GDAL &gt;= 2.0)
 <li> date(field_length)
 <li> time(field_length)
 <li> timestamp(field_length)

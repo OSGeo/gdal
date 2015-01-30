@@ -156,7 +156,7 @@ OGRFeature *OGRCouchDBLayer::GetNextRawFeature()
 /*                          SetNextByIndex()                            */
 /************************************************************************/
 
-OGRErr OGRCouchDBLayer::SetNextByIndex( long nIndex )
+OGRErr OGRCouchDBLayer::SetNextByIndex( GIntBig nIndex )
 {
     if (nIndex < 0)
         return OGRERR_FAILURE;

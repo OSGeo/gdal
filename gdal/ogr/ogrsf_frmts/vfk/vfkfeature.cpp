@@ -79,7 +79,7 @@ void IVFKFeature::SetGeometryType(OGRwkbGeometryType nGeomType)
   
   \param nFID feature id
 */
-void IVFKFeature::SetFID(long nFID)
+void IVFKFeature::SetFID(GIntBig nFID)
 {
     if (m_nFID > 0) {
         m_nFID = nFID;
@@ -114,7 +114,7 @@ bool IVFKFeature::SetGeometry(OGRGeometry *poGeom, const char *ftype)
     /* check empty geometries */
     if (m_nGeometryType == wkbNone && poGeom->IsEmpty()) {
             CPLError(CE_Warning, CPLE_AppDefined,
-                     "%s: empty geometry fid = %ld",
+                     "%s: empty geometry fid = " CPL_FRMT_GIB,
                      m_poDataBlock->GetName(), m_nFID);
         m_bValid = FALSE;
     }
@@ -126,7 +126,7 @@ bool IVFKFeature::SetGeometry(OGRGeometry *poGeom, const char *ftype)
         y = ((OGRPoint *) poGeom)->getY();
         if (x > -430000 || x < -910000 ||
             y > -930000 || y < -1230000) {
-            CPLDebug("OGR-VFK", "%s: invalid point fid = %ld",
+            CPLDebug("OGR-VFK", "%s: invalid point fid = " CPL_FRMT_GIB,
                      m_poDataBlock->GetName(), m_nFID);
             m_bValid = FALSE;
         }
@@ -137,7 +137,7 @@ bool IVFKFeature::SetGeometry(OGRGeometry *poGeom, const char *ftype)
         OGRLinearRing *poRing;
         poRing = ((OGRPolygon *) poGeom)->getExteriorRing();
         if (!poRing || poRing->getNumPoints() < 3) {
-	    CPLDebug("OGR-VFK", "%s: invalid polygon fid = %ld",
+	    CPLDebug("OGR-VFK", "%s: invalid polygon fid = " CPL_FRMT_GIB,
 		     m_poDataBlock->GetName(), m_nFID);
             m_bValid = FALSE;
 	}
@@ -202,7 +202,7 @@ bool IVFKFeature::SetGeometry(OGRGeometry *poGeom, const char *ftype)
                 r = 0;
                 if (2 != sscanf(ftype, "%s %f", s, &r) || r < 0) {
                     CPLDebug("OGR-VFK", "%s: invalid circle (unknown or negative radius) "
-                             "fid = %ld", m_poDataBlock->GetName(), m_nFID);
+                             "fid = " CPL_FRMT_GIB, m_poDataBlock->GetName(), m_nFID);
                     m_bValid = FALSE;
                 }
                 else {
@@ -258,7 +258,7 @@ bool IVFKFeature::SetGeometry(OGRGeometry *poGeom, const char *ftype)
                 int npoints;
                 
                 npoints = ((OGRLineString *) poGeomCurved)->getNumPoints();
-                CPLDebug("OGR-VFK", "%s: curve (type=%s) to linestring (npoints=%d) fid = %ld",
+                CPLDebug("OGR-VFK", "%s: curve (type=%s) to linestring (npoints=%d) fid = " CPL_FRMT_GIB,
                          m_poDataBlock->GetName(), ftype,
                          npoints, m_nFID);
                 if (npoints > 1)
@@ -275,7 +275,7 @@ bool IVFKFeature::SetGeometry(OGRGeometry *poGeom, const char *ftype)
                 npoints = ((OGRLineString *) poGeom)->getNumPoints();
                 if (npoints < 2) {
                     CPLError(CE_Warning, CPLE_AppDefined,
-                             "%s: invalid linestring (%d vertices) fid = %ld",
+                             "%s: invalid linestring (%d vertices) fid = " CPL_FRMT_GIB,
                              m_poDataBlock->GetName(), npoints, m_nFID);
                     m_bValid = FALSE;
                 }
@@ -350,7 +350,7 @@ bool IVFKFeature::LoadGeometry()
 
   \param poDataBlock pointer to VFKDataBlock instance
 */
-VFKFeature::VFKFeature(IVFKDataBlock *poDataBlock, long iFID) : IVFKFeature(poDataBlock)
+VFKFeature::VFKFeature(IVFKDataBlock *poDataBlock, GIntBig iFID) : IVFKFeature(poDataBlock)
 {
     m_nFID = iFID;
     m_propertyList.assign(poDataBlock->GetPropertyCount(), VFKProperty());

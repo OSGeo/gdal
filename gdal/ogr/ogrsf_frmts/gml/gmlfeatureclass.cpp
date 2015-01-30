@@ -272,10 +272,10 @@ size_t GMLFeatureClass::GetElementNameLen() const
 }
 
 /************************************************************************/
-/*                          GetFeatureCount()                           */
+/*                         GetFeatureCount()                          */
 /************************************************************************/
 
-int GMLFeatureClass::GetFeatureCount()
+GIntBig GMLFeatureClass::GetFeatureCount()
 
 {
     return m_nFeatureCount;
@@ -285,7 +285,7 @@ int GMLFeatureClass::GetFeatureCount()
 /*                          SetFeatureCount()                           */
 /************************************************************************/
 
-void GMLFeatureClass::SetFeatureCount( int nNewCount )
+void GMLFeatureClass::SetFeatureCount( GIntBig nNewCount )
 
 {
     m_nFeatureCount = nNewCount;
@@ -563,7 +563,7 @@ int GMLFeatureClass::InitializeFromXML( CPLXMLNode *psRoot )
 
         pszValue = CPLGetXMLValue( psDSI, "FeatureCount", NULL );
         if( pszValue != NULL )
-            SetFeatureCount( atoi(pszValue) );
+            SetFeatureCount( CPLAtoGIntBig(pszValue) );
 
         // Eventually we should support XML subtrees.
         pszValue = CPLGetXMLValue( psDSI, "ExtraInfo", NULL );
@@ -628,6 +628,10 @@ int GMLFeatureClass::InitializeFromXML( CPLXMLNode *psRoot )
                 {
                     poPDefn->SetType( GMLPT_Short );
                 }
+                else if( EQUAL(pszSubType, "Integer64") )
+                {
+                    poPDefn->SetType( GMLPT_Integer64 );
+                }
                 else
                 {
                     poPDefn->SetType( GMLPT_Integer );
@@ -655,7 +659,12 @@ int GMLFeatureClass::InitializeFromXML( CPLXMLNode *psRoot )
                     poPDefn->SetType( GMLPT_StringList );
             }
             else if( EQUAL(pszType,"IntegerList") )
-                poPDefn->SetType( GMLPT_IntegerList );
+            {
+                if( EQUAL(pszSubType, "Integer64") )
+                    poPDefn->SetType( GMLPT_Integer64List );
+                else
+                    poPDefn->SetType( GMLPT_IntegerList );
+            }
             else if( EQUAL(pszType,"RealList") )
                 poPDefn->SetType( GMLPT_RealList );
             else if( EQUAL(pszType,"Complex") )
@@ -750,7 +759,7 @@ CPLXMLNode *GMLFeatureClass::SerializeToXML()
         {
             char szValue[128];
 
-            sprintf( szValue, "%d", m_nFeatureCount );
+            sprintf( szValue, CPL_FRMT_GIB, m_nFeatureCount );
             CPLCreateXMLElementAndValue( psDSI, "FeatureCount", szValue );
         }
 
@@ -806,6 +815,7 @@ CPLXMLNode *GMLFeatureClass::SerializeToXML()
             
           case GMLPT_Integer:
           case GMLPT_Short:
+          case GMLPT_Integer64:
             pszTypeName = "Integer";
             break;
             
@@ -819,6 +829,7 @@ CPLXMLNode *GMLFeatureClass::SerializeToXML()
             break;
 
           case GMLPT_IntegerList:
+          case GMLPT_Integer64List:
             pszTypeName = "IntegerList";
             break;
 
@@ -850,6 +861,9 @@ CPLXMLNode *GMLFeatureClass::SerializeToXML()
             CPLCreateXMLElementAndValue( psPDefnNode, "Subtype", "Short" );
         else if( poPDefn->GetType() == GMLPT_Float )
             CPLCreateXMLElementAndValue( psPDefnNode, "Subtype", "Float" );
+        else if( poPDefn->GetType() == GMLPT_Integer64 ||
+                 poPDefn->GetType() == GMLPT_Integer64List )
+            CPLCreateXMLElementAndValue( psPDefnNode, "Subtype", "Integer64" );
 
         if( EQUAL(pszTypeName,"String") )
         {

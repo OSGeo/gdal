@@ -461,7 +461,9 @@ typedef enum
   /** Date */                                   OFTDate = 9,
   /** Time */                                   OFTTime = 10,
   /** Date and Time */                          OFTDateTime = 11,
-                                                OFTMaxType = 11
+  /** Single 64bit integer */                   OFTInteger64 = 12,
+  /** List of 64bit integers */                 OFTInteger64List = 13,
+                                                OFTMaxType = 13
 } OGRFieldType;
 
 /**
@@ -509,6 +511,7 @@ typedef enum
 
 typedef union {
     int         Integer;
+    GIntBig     Integer64;
     double      Real;
     char       *String;
     
@@ -517,6 +520,11 @@ typedef union {
         int     *paList;
     } IntegerList;
     
+    struct {
+        int     nCount;
+        GIntBig *paList;
+    } Integer64List;
+
     struct {
         int     nCount;
         double  *paList;
@@ -581,6 +589,10 @@ int CPL_DLL OGRParseDate( const char *pszInput, OGRField *psOutput,
 #define ODrCCreateDataSource   "CreateDataSource"
 #define ODrCDeleteDataSource   "DeleteDataSource"
 
+/* -------------------------------------------------------------------- */
+/*      Layer metadata items.                                           */
+/* -------------------------------------------------------------------- */
+#define OLMD_FID64             "OLMD_FID64"
 
 /************************************************************************/
 /*                  ogr_featurestyle.h related definitions.             */

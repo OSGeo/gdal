@@ -93,11 +93,11 @@ class OGRPDSLayer : public OGRLayer
 
     virtual int                 TestCapability( const char * );
 
-    virtual int                 GetFeatureCount(int bForce = TRUE );
+    virtual GIntBig             GetFeatureCount(int bForce = TRUE );
 
-    virtual OGRFeature         *GetFeature( long nFID );
+    virtual OGRFeature         *GetFeature( GIntBig nFID );
 
-    virtual OGRErr              SetNextByIndex( long nIndex );
+    virtual OGRErr              SetNextByIndex( GIntBig nIndex );
 };
 
 /************************************************************************/

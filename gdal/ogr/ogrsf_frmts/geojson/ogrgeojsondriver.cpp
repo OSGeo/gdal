@@ -186,6 +186,8 @@ void RegisterOGRGeoJSON()
 "</LayerCreationOptionList>");
 
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+        
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES, "Integer Integer64 Real String IntegerList Integer64List RealList StringList" );
 
         poDriver->pfnOpen = OGRGeoJSONDriverOpen;
         poDriver->pfnIdentify = OGRGeoJSONDriverIdentify;

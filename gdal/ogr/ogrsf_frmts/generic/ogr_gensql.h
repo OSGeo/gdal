@@ -66,11 +66,11 @@ class CPL_DLL OGRGenSQLResultsLayer : public OGRLayer
     
     int        *panGeomFieldToSrcGeomField;
 
-    int         nIndexSize;
-    long       *panFIDIndex;
+    GIntBig     nIndexSize;
+    GIntBig    *panFIDIndex;
     int         bOrderByValid;
 
-    int         nNextIndexFID;
+    GIntBig      nNextIndexFID;
     OGRFeature  *poSummaryFeature;
 
     int         iFIDFieldIndex;
@@ -80,8 +80,8 @@ class CPL_DLL OGRGenSQLResultsLayer : public OGRLayer
 
     OGRFeature *TranslateFeature( OGRFeature * );
     void        CreateOrderByIndex();
-    void        SortIndexSection( OGRField *pasIndexFields, 
-                                  int nStart, int nEntries );
+    int         SortIndexSection( OGRField *pasIndexFields, 
+                                  GIntBig nStart, GIntBig nEntries );
     int         Compare( OGRField *pasFirst, OGRField *pasSecond );
 
     void        ClearFilters();
@@ -109,12 +109,12 @@ class CPL_DLL OGRGenSQLResultsLayer : public OGRLayer
 
     virtual void        ResetReading();
     virtual OGRFeature *GetNextFeature();
-    virtual OGRErr      SetNextByIndex( long nIndex );
-    virtual OGRFeature *GetFeature( long nFID );
+    virtual OGRErr      SetNextByIndex( GIntBig nIndex );
+    virtual OGRFeature *GetFeature( GIntBig nFID );
 
     virtual OGRFeatureDefn *GetLayerDefn();
 
-    virtual int         GetFeatureCount( int bForce = TRUE );
+    virtual GIntBig     GetFeatureCount( int bForce = TRUE );
     virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE) { return GetExtent(0, psExtent, bForce); }
     virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce = TRUE);
 

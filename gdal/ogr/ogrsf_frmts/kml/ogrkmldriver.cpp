@@ -144,6 +144,8 @@ void RegisterOGRKML()
         poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST, "<LayerCreationOptionList/>" );
 
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+        
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES, "Integer Real String" );
 
         poDriver->pfnOpen = OGRKMLDriverOpen;
         poDriver->pfnIdentify = OGRKMLDriverIdentify;

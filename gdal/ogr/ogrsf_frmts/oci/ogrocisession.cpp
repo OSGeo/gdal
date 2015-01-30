@@ -444,12 +444,12 @@ OGROCISession::GetParmInfo( OCIParam *hParmDesc, OGRFieldDefn *poOGRDefn,
             }
             else if( byPrecision < 38 )
             {
-                poOGRDefn->SetType( OFTInteger );
+                poOGRDefn->SetType( (byPrecision < 10) ? OFTInteger : OFTInteger64 );
                 poOGRDefn->SetWidth( byPrecision );
             }
             else
             {
-                poOGRDefn->SetType( OFTInteger );
+                poOGRDefn->SetType( OFTInteger64 );
             }
         }
         break;

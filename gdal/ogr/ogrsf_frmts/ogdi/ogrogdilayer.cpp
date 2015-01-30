@@ -391,7 +391,7 @@ OGRFeature *OGROGDILayer::GetNextRawFeature()
 /*                             GetFeature()                             */
 /************************************************************************/
 
-OGRFeature *OGROGDILayer::GetFeature( long nFeatureId )
+OGRFeature *OGROGDILayer::GetFeature( GIntBig nFeatureId )
 
 {
     ecs_Result  *psResult;
@@ -451,7 +451,7 @@ OGRFeature *OGROGDILayer::GetFeature( long nFeatureId )
 /*      way of counting features matching a spatial query.              */
 /************************************************************************/
 
-int OGROGDILayer::GetFeatureCount( int bForce )
+GIntBig OGROGDILayer::GetFeatureCount( int bForce )
 
 {
     if( m_nTotalShapeCount == -1)

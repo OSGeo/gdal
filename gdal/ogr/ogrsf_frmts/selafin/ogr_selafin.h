@@ -80,12 +80,12 @@ class OGRSelafinLayer : public OGRLayer {
         OGRSpatialReference *GetSpatialRef() {return poSpatialRef;}
         long GetStepNumber() {return nStepNumber;}
         OGRFeature *GetNextFeature();
-        OGRFeature *GetFeature(long nFID);
+        OGRFeature *GetFeature(GIntBig nFID);
         void ResetReading();
-        OGRErr SetNextByIndex(long nIndex);
+        OGRErr SetNextByIndex(GIntBig nIndex);
         OGRFeatureDefn *GetLayerDefn() {return poFeatureDefn;}
         int TestCapability(const char *pszCap);
-        int GetFeatureCount(int bForce=TRUE);
+        GIntBig GetFeatureCount(int bForce=TRUE);
         OGRErr GetExtent(OGREnvelope *psExtent,int bForce=TRUE);
         OGRErr ISetFeature(OGRFeature *poFeature);
         OGRErr ICreateFeature(OGRFeature *poFeature);
@@ -93,7 +93,7 @@ class OGRSelafinLayer : public OGRLayer {
         OGRErr DeleteField(int iField);
         OGRErr ReorderFields(int *panMap);
         OGRErr AlterFieldDefn(int iField,OGRFieldDefn *poNewFieldDefn,int nFlags);
-        OGRErr DeleteFeature(long nFID);
+        OGRErr DeleteFeature(GIntBig nFID);
 };
 
 /************************************************************************/

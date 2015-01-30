@@ -492,7 +492,7 @@ OGRErr OGRIngresTableLayer::ISetFeature( OGRFeature *poFeature )
 /*                           DeleteFeature()                            */
 /************************************************************************/
 
-OGRErr OGRIngresTableLayer::DeleteFeature( long nFID )
+OGRErr OGRIngresTableLayer::DeleteFeature( GIntBig nFID )
 
 {
     CPLString           osCommand;
@@ -1132,7 +1132,7 @@ OGRErr OGRIngresTableLayer::CreateField( OGRFieldDefn *poFieldIn,
 /*                             GetFeature()                             */
 /************************************************************************/
 #ifdef notdef
-OGRFeature *OGRIngresTableLayer::GetFeature( long nFeatureId )
+OGRFeature *OGRIngresTableLayer::GetFeature( GIntBig nFeatureId )
 
 {
     if( pszFIDColumn == NULL )
@@ -1215,7 +1215,7 @@ OGRFeature *OGRIngresTableLayer::GetFeature( long nFeatureId )
 /************************************************************************/
 
 #ifdef notdef
-int OGRIngresTableLayer::GetFeatureCount( int bForce )
+GIntBig OGRIngresTableLayer::GetFeatureCount( int bForce )
 
 {
 /* -------------------------------------------------------------------- */
