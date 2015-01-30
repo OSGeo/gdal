@@ -775,6 +775,8 @@ class OGRSQLiteDataSource : public OGRSQLiteBaseDataSource
                                     const char *pszDialect );
     virtual void        ReleaseResultSet( OGRLayer * poLayer );
 
+    virtual void        FlushCache();
+
     OGRErr              SoftStartTransaction();
     OGRErr              SoftCommit();
     OGRErr              SoftRollback();

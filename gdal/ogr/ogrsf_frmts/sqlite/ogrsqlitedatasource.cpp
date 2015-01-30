@@ -233,11 +233,11 @@ OGRSQLiteDataSource::~OGRSQLiteDataSource()
 {
     int         i;
 
-    for( i = 0; i < nLayers; i++ )
+    for( int iLayer = 0; iLayer < nLayers; iLayer++ )
     {
-        if( papoLayers[i]->IsTableLayer() )
+        if( papoLayers[iLayer]->IsTableLayer() )
         {
-            OGRSQLiteTableLayer* poLayer = (OGRSQLiteTableLayer*) papoLayers[i];
+            OGRSQLiteTableLayer* poLayer = (OGRSQLiteTableLayer*) papoLayers[iLayer];
             poLayer->RunDeferredCreationIfNecessary();
             poLayer->CreateSpatialIndexIfNecessary();
         }
@@ -1603,6 +1603,24 @@ std::pair<OGRLayer*, IOGRSQLiteGetSpatialWhere*>
 {
     OGRSQLiteLayer* poRet = (OGRSQLiteLayer*) GetLayerByName(pszName);
     return std::pair<OGRLayer*, IOGRSQLiteGetSpatialWhere*>(poRet, poRet);
+}
+
+/************************************************************************/
+/*                              FlushCache()                            */
+/************************************************************************/
+
+void OGRSQLiteDataSource::FlushCache()
+{
+    for( int iLayer = 0; iLayer < nLayers; iLayer++ )
+    {
+        if( papoLayers[iLayer]->IsTableLayer() )
+        {
+            OGRSQLiteTableLayer* poLayer = (OGRSQLiteTableLayer*) papoLayers[iLayer];
+            poLayer->RunDeferredCreationIfNecessary();
+            poLayer->CreateSpatialIndexIfNecessary();
+        }
+    }
+    GDALDataset::FlushCache();
 }
 
 /************************************************************************/
