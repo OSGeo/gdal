@@ -104,7 +104,7 @@ void OGRSelafinLayer::ResetReading() {
 /************************************************************************/
 /*                           SetNextByIndex()                           */
 /************************************************************************/
-OGRErr OGRSelafinLayer::SetNextByIndex(long nIndex) {
+OGRErr OGRSelafinLayer::SetNextByIndex(GIntBig nIndex) {
     //CPLDebug("Selafin","SetNexByIndex(%li)",nIndex);
     if (nIndex<0 || nIndex>=poHeader->nPoints) return OGRERR_FAILURE;
     nCurrentId=nIndex-1;
@@ -138,8 +138,8 @@ int OGRSelafinLayer::TestCapability(const char *pszCap) {
 /************************************************************************/
 /*                            GetFeature()                              */
 /************************************************************************/
-OGRFeature* OGRSelafinLayer::GetFeature(long nFID) {
-    CPLDebug("Selafin","GetFeature(%li)",nFID);
+OGRFeature* OGRSelafinLayer::GetFeature(GIntBig nFID) {
+    CPLDebug("Selafin","GetFeature(" CPL_FRMT_GIB ")",nFID);
     if (nFID<0) return NULL;
     if (eType==POINTS) {
         if (nFID>=poHeader->nPoints) return NULL;
@@ -184,7 +184,7 @@ OGRFeature* OGRSelafinLayer::GetFeature(long nFID) {
 /************************************************************************/
 /*                           GetFeatureCount()                          */
 /************************************************************************/
-int OGRSelafinLayer::GetFeatureCount(int bForce) {
+GIntBig OGRSelafinLayer::GetFeatureCount(int bForce) {
     //CPLDebug("Selafin","GetFeatureCount(%i)",bForce);
     if (m_poFilterGeom==NULL && m_poAttrQuery==NULL) return (eType==POINTS)?poHeader->nPoints:poHeader->nElements;
     if (bForce==FALSE) return -1;
@@ -228,10 +228,10 @@ OGRErr OGRSelafinLayer::ISetFeature(OGRFeature *poFeature) {
             return OGRERR_FAILURE;
         }
         OGRPoint *poPoint=(OGRPoint*)poGeom;
-        long nFID=poFeature->GetFID();
+        GIntBig nFID=poFeature->GetFID();
         poHeader->paadfCoords[0][nFID]=poPoint->getX();
         poHeader->paadfCoords[1][nFID]=poPoint->getY();
-        CPLDebug("Selafin","SetFeature(%li,%f,%f)",nFID,poHeader->paadfCoords[0][nFID],poHeader->paadfCoords[1][nFID]);
+        CPLDebug("Selafin","SetFeature(" CPL_FRMT_GIB ",%f,%f)",nFID,poHeader->paadfCoords[0][nFID],poHeader->paadfCoords[1][nFID]);
         if (VSIFSeekL(poHeader->fp,88+16+40*poHeader->nVar+48+((poHeader->panStartDate!=0)?32:0)+24+(poHeader->nElements*poHeader->nPointsPerElement+2)*4+(poHeader->nPoints+2)*4+4+nFID*4,SEEK_SET)!=0) return OGRERR_FAILURE;
         CPLDebug("Selafin","Write_float(" CPL_FRMT_GUIB ",%f)",VSIFTellL(poHeader->fp),poHeader->paadfCoords[0][nFID]-poHeader->adfOrigin[0]);
         if (Selafin::write_float(poHeader->fp,poHeader->paadfCoords[0][nFID]-poHeader->adfOrigin[0])==0) return OGRERR_FAILURE;
@@ -256,7 +256,7 @@ OGRErr OGRSelafinLayer::ISetFeature(OGRFeature *poFeature) {
             return OGRERR_FAILURE;
         }
         CPLError(CE_Warning,CPLE_AppDefined,"The attributes of elements layer in Selafin files can't be updated.");
-        CPLDebug("Selafin","SetFeature(%li,%f,%f,%f,%f,%f,%f)",poFeature->GetFID(),poLinearRing->getX(0),poLinearRing->getY(0),poLinearRing->getX(1),poLinearRing->getY(1),poLinearRing->getX(2),poLinearRing->getY(2));   //!< This is not safe as we can't be sure there are at least three vertices in the linear ring, but we can assume that for a debug mode
+        CPLDebug("Selafin","SetFeature(" CPL_FRMT_GIB ",%f,%f,%f,%f,%f,%f)",poFeature->GetFID(),poLinearRing->getX(0),poLinearRing->getY(0),poLinearRing->getX(1),poLinearRing->getY(1),poLinearRing->getX(2),poLinearRing->getY(2));   //!< This is not safe as we can't be sure there are at least three vertices in the linear ring, but we can assume that for a debug mode
         long nFID=poFeature->GetFID();
         // Now we change the coordinates of points in the layer based on the vertices of the new polygon. We don't look at the order of points and we assume that it is the same as in the original layer.
         for (long i=0;i<poHeader->nPointsPerElement;++i) {
@@ -307,7 +307,7 @@ OGRErr OGRSelafinLayer::ICreateFeature(OGRFeature *poFeature) {
         // Now we check that we have the right number of vertices, or if this number was not defined yet (0), we define it at once
         OGRLinearRing *poLinearRing=((OGRPolygon*)poGeom)->getExteriorRing();
         poFeature->SetFID(poHeader->nElements);
-        CPLDebug("Selafin","CreateFeature(%li,%f,%f,%f,%f,%f,%f)",poFeature->GetFID(),poLinearRing->getX(0),poLinearRing->getY(0),poLinearRing->getX(1),poLinearRing->getY(1),poLinearRing->getX(2),poLinearRing->getY(2));   //!< This is not safe as we can't be sure there are at least three vertices in the linear ring, but we can assume that for a debug mode
+        CPLDebug("Selafin","CreateFeature(" CPL_FRMT_GIB ",%f,%f,%f,%f,%f,%f)",poFeature->GetFID(),poLinearRing->getX(0),poLinearRing->getY(0),poLinearRing->getX(1),poLinearRing->getY(1),poLinearRing->getX(2),poLinearRing->getY(2));   //!< This is not safe as we can't be sure there are at least three vertices in the linear ring, but we can assume that for a debug mode
         int nNum=poLinearRing->getNumPoints();
         if (poHeader->nPointsPerElement==0) {
             if (nNum<4) {
@@ -651,8 +651,8 @@ OGRErr OGRSelafinLayer::AlterFieldDefn(int iField,
 /************************************************************************/
 /*                          DeleteFeature()                             */
 /************************************************************************/
-OGRErr OGRSelafinLayer::DeleteFeature(long nFID) {
-    CPLDebug("Selafin","DeleteFeature(%li)",nFID);
+OGRErr OGRSelafinLayer::DeleteFeature(GIntBig nFID) {
+    CPLDebug("Selafin","DeleteFeature(" CPL_FRMT_GIB ")",nFID);
     if (VSIFSeekL(poHeader->fp,poHeader->getPosition(0),SEEK_SET)!=0) return OGRERR_FAILURE;
     // Change the header to delete the feature
     if (eType==POINTS) poHeader->removePoint(nFID); else {

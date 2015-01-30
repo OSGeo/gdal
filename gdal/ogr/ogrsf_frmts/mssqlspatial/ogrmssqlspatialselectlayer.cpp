@@ -186,7 +186,7 @@ void OGRMSSQLSpatialSelectLayer::ResetReading()
 /*                             GetFeature()                             */
 /************************************************************************/
 
-OGRFeature *OGRMSSQLSpatialSelectLayer::GetFeature( long nFeatureId )
+OGRFeature *OGRMSSQLSpatialSelectLayer::GetFeature( GIntBig nFeatureId )
 
 {
     return OGRMSSQLSpatialLayer::GetFeature( nFeatureId );
@@ -224,7 +224,7 @@ OGRErr OGRMSSQLSpatialSelectLayer::GetExtent(OGREnvelope *, int )
 /*      way of counting features matching a spatial query.              */
 /************************************************************************/
 
-int OGRMSSQLSpatialSelectLayer::GetFeatureCount( int bForce )
+GIntBig OGRMSSQLSpatialSelectLayer::GetFeatureCount( int bForce )
 
 {
     return OGRMSSQLSpatialLayer::GetFeatureCount( bForce );

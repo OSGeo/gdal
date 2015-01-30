@@ -502,7 +502,7 @@ OGRFeature *OGRGFTLayer::GetNextRawFeature()
 /*                          SetNextByIndex()                            */
 /************************************************************************/
 
-OGRErr OGRGFTLayer::SetNextByIndex( long nIndex )
+OGRErr OGRGFTLayer::SetNextByIndex( GIntBig nIndex )
 {
     if (nIndex < 0)
         return OGRERR_FAILURE;

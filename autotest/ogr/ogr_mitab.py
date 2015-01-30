@@ -2012,6 +2012,59 @@ def ogr_mitab_36():
     return 'success'
 
 ###############################################################################
+# Simple testing of Seamless tables
+
+def ogr_mitab_37():
+
+    ds = ogr.Open('data/seamless.tab')
+    lyr = ds.GetLayer(0)
+    if lyr.GetFeatureCount() != 4:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    f = lyr.GetNextFeature()
+    if f.GetFID() != 4294967297 or f.id != '1':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    f = lyr.GetNextFeature()
+    if f.GetFID() != 4294967298 or f.id != '2':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    f = lyr.GetNextFeature()
+    if f.GetFID() != 8589934593 or f.id != '3':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    f = lyr.GetNextFeature()
+    if f.GetFID() != 8589934594 or f.id != '4':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    f = lyr.GetFeature(4294967297)
+    if f.GetFID() != 4294967297 or f.id != '1':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    f = lyr.GetFeature(8589934594)
+    if f.GetFID() != 8589934594 or f.id != '4':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    f = lyr.GetFeature(8589934594+1)
+    if f is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    f = lyr.GetFeature(4294967297*2+1)
+    if f is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 #
 
 def ogr_mitab_cleanup():
@@ -2062,6 +2115,7 @@ gdaltest_list = [
     ogr_mitab_34,
     ogr_mitab_35,
     ogr_mitab_36,
+    ogr_mitab_37,
     ogr_mitab_cleanup
     ]
 

@@ -125,7 +125,8 @@ def ogr_sqlite_2():
     fields = [ ('AREA', ogr.OFTReal),
                ('EAS_ID', ogr.OFTInteger),
                ('PRFEDEA', ogr.OFTString),
-               ('BINCONTENT', ogr.OFTBinary)]
+               ('BINCONTENT', ogr.OFTBinary),
+               ('INT64', ogr.OFTInteger64) ]
     
     ogrtest.quick_create_layer_def( gdaltest.sl_lyr,
                                     fields )
@@ -152,6 +153,10 @@ def ogr_sqlite_2():
     if field_defn.GetType() != ogr.OFTInteger or field_defn.GetSubType() != ogr.OFSTBoolean:
         gdaltest.post_reason('failure')
         return 'fail'
+    field_defn = feature_def.GetFieldDefn(feature_def.GetFieldIndex('INT64'))
+    if field_defn.GetType() != ogr.OFTInteger64:
+        gdaltest.post_reason('failure')
+        return 'fail'
     
     ######################################################
     # Copy in poly.shp
@@ -172,6 +177,7 @@ def ogr_sqlite_2():
         gdaltest.poly_feat.append( feat )
 
         dst_feat.SetFrom( feat )
+        dst_feat.SetField('int64', 1234567890123)
         gdaltest.sl_lyr.CreateFeature( dst_feat )
 
         feat = shp_lyr.GetNextFeature()
@@ -221,6 +227,10 @@ def ogr_sqlite_3():
             if orig_feat.GetField(fld) != read_feat.GetField(fld):
                 gdaltest.post_reason( 'Attribute %d does not match' % fld )
                 return 'fail'
+        if read_feat.GetField('int64') != 1234567890123:
+            gdaltest.post_reason('failure')
+            read_feat.DumpReadable()
+            return 'fail'
 
         read_feat.Destroy()
         orig_feat.Destroy()
@@ -2558,6 +2568,44 @@ def ogr_sqlite_35():
     return 'success'
 
 ###############################################################################
+# Test FID64 support
+
+def ogr_sqlite_36():
+
+    if gdaltest.sl_ds is None:
+        return 'skip'
+    
+    try:
+        os.remove('tmp/ogr_sqlite_36.sqlite')
+    except:
+        pass
+
+    ds = ogr.GetDriverByName('SQLite').CreateDataSource('tmp/ogr_sqlite_36.sqlite')
+    lyr = ds.CreateLayer('test')
+    field_defn = ogr.FieldDefn('foo', ogr.OFTString)
+    lyr.CreateField(field_defn)
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField('foo', 'bar')
+    feat.SetFID(1234567890123)
+    lyr.CreateFeature(feat)
+    feat = None
+
+    ds = None
+    
+    ds = ogr.Open('tmp/ogr_sqlite_36.sqlite')
+    lyr = ds.GetLayer(0)
+    if lyr.GetMetadataItem(ogr.OLMD_FID64) is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f.GetFID() != 1234567890123:
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Test spatial filters with point extent
 
 def ogr_spatialite_9():
@@ -2673,6 +2721,10 @@ def ogr_sqlite_cleanup():
     except:
         pass
 
+    try:
+        os.remove( 'tmp/ogr_sqlite_36.sqlite' )
+    except:
+        pass
     return 'success'
 
 ###############################################################################
@@ -2737,6 +2789,7 @@ gdaltest_list = [
     ogr_sqlite_33,
     ogr_sqlite_34,
     ogr_sqlite_35,
+    ogr_sqlite_36,
     ogr_spatialite_9,
     ogr_sqlite_cleanup,
     ogr_sqlite_without_spatialite,

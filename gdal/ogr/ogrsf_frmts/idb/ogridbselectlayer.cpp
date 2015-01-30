@@ -133,7 +133,7 @@ void OGRIDBSelectLayer::ResetReading()
 /*                             GetFeature()                             */
 /************************************************************************/
 
-OGRFeature *OGRIDBSelectLayer::GetFeature( long nFeatureId )
+OGRFeature *OGRIDBSelectLayer::GetFeature( GIntBig nFeatureId )
 
 {
     return OGRIDBLayer::GetFeature( nFeatureId );
@@ -171,7 +171,7 @@ OGRErr OGRIDBSelectLayer::GetExtent(OGREnvelope *, int )
 /*      way of counting features matching a spatial query.              */
 /************************************************************************/
 
-int OGRIDBSelectLayer::GetFeatureCount( int bForce )
+GIntBig OGRIDBSelectLayer::GetFeatureCount( int bForce )
 
 {
     return OGRIDBLayer::GetFeatureCount( bForce );

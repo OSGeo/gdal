@@ -104,6 +104,26 @@ int GetSimpleTypeProperties(CPLXMLNode *psTypeNode,
         return TRUE;
     }
 
+    else if( EQUAL(pszBase,"long") )
+    {
+        *pGMLType = GMLPT_Integer64;
+        const char *pszWidth =
+            CPLGetXMLValue( psTypeNode,
+                        "restriction.totalDigits.value", "0" );
+        *pnWidth = atoi(pszWidth);
+        return TRUE;
+    }
+
+    else if( EQUAL(pszBase,"long") )
+    {
+        *pGMLType = GMLPT_Integer64;
+        const char *pszWidth =
+            CPLGetXMLValue( psTypeNode,
+                        "restriction.totalDigits.value", "0" );
+        *pnWidth = atoi(pszWidth);
+        return TRUE;
+    }
+
     else if( EQUAL(pszBase,"string") )
     {
         *pGMLType = GMLPT_String;
@@ -222,6 +242,8 @@ static GMLPropertyType GetListTypeFromSingleType(GMLPropertyType eType)
         return GMLPT_StringList;
     if( eType == GMLPT_Integer || eType == GMLPT_Short )
         return GMLPT_IntegerList;
+    if( eType == GMLPT_Integer64 )
+        return GMLPT_Integer64List;
     if( eType == GMLPT_Real || eType == GMLPT_Float )
         return GMLPT_RealList;
     if( eType == GMLPT_Boolean )
@@ -419,9 +441,10 @@ GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
             else if (EQUAL(pszStrippedNSType, "float") )
                 gmlType = GMLPT_Float;
             else if (EQUAL(pszStrippedNSType, "int") ||
-                     EQUAL(pszStrippedNSType, "integer") ||
-                     EQUAL(pszStrippedNSType, "long"))
+                     EQUAL(pszStrippedNSType, "integer"))
                 gmlType = GMLPT_Integer;
+            else if (EQUAL(pszStrippedNSType, "long"))
+                gmlType = GMLPT_Integer64;
             else if (EQUAL(pszStrippedNSType, "short") )
                 gmlType = GMLPT_Short;
             else if (EQUAL(pszStrippedNSType, "boolean") )

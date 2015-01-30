@@ -127,7 +127,9 @@ OPTIONAL_POD(int, int);
 %typemap(ctype, out="GIntBig") GIntBig  %{GIntBig%}
 %typemap(imtype, out="long") GIntBig "long"
 %typemap(cstype) GIntBig %{long%}
+%typemap(in) GIntBig %{ $1 = $input; %}
 %typemap(out) GIntBig %{ $result = $1; %}
+%typemap(csin) GIntBig "$csinput"
 %typemap(csout, excode=SWIGEXCODE) GIntBig {
     long res = $imcall;$excode
     return res;

@@ -152,12 +152,13 @@ int SQLResultGetValueAsInteger(const SQLResult * poResult, int iColNum, int iRow
 }
 
 /* Returns the first row of first column of SQL as integer */
-int SQLGetInteger(sqlite3 * poDb, const char * pszSQL, OGRErr *err)
+GIntBig SQLGetInteger64(sqlite3 * poDb, const char * pszSQL, OGRErr *err)
 {
     CPLAssert( poDb != NULL );
     
     sqlite3_stmt *poStmt;
-    int rc, i;
+    int rc;
+    GIntBig i;
     
     /* Prepare the SQL */
     rc = sqlite3_prepare_v2(poDb, pszSQL, strlen(pszSQL), &poStmt, NULL);
@@ -179,13 +180,17 @@ int SQLGetInteger(sqlite3 * poDb, const char * pszSQL, OGRErr *err)
     }
     
     /* Read the integer from the row */
-    i = sqlite3_column_int(poStmt, 0);
+    i = sqlite3_column_int64(poStmt, 0);
     sqlite3_finalize(poStmt);
     
     if ( err ) *err = OGRERR_NONE;
     return i;
 }
 
+int SQLGetInteger(sqlite3 * poDb, const char * pszSQL, OGRErr *err)
+{
+    return (int)SQLGetInteger64(poDb, pszSQL, err);
+}
 
 /* Requirement 20: A GeoPackage SHALL store feature table geometries */
 /* with the basic simple feature geometry types (Geometry, Point, */
@@ -229,7 +234,7 @@ OGRFieldType GPkgFieldToOGR(const char *pszGpkgType, OGRFieldSubType& eSubType,
 
     /* Integer types */
     if ( STRNCASECMP("INT", pszGpkgType, 3) == 0 )
-        return OFTInteger;
+        return OFTInteger64;
     else if ( EQUAL("MEDIUMINT", pszGpkgType) )
         return OFTInteger;
     else if ( EQUAL("SMALLINT", pszGpkgType) )
@@ -294,8 +299,10 @@ const char* GPkgFieldFromOGR(OGRFieldType nType, OGRFieldSubType eSubType,
             else if( eSubType == OFSTInt16 )
                 return "SMALLINT";
             else
-                return "INTEGER";
+                return "MEDIUMINT";
         }
+        case OFTInteger64:
+            return "INTEGER";
         case OFTReal:
         {
             if( eSubType == OFSTFloat32 )

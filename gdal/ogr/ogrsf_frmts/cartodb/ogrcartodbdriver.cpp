@@ -116,6 +116,18 @@ int OGRCARTODBDriver::TestCapability( const char * pszCap )
 void RegisterOGRCartoDB()
 
 {
-    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new OGRCARTODBDriver );
+    OGRSFDriver* poDriver = new OGRCARTODBDriver;
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
+                                "drv_cartodb.html" );
+
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, "<CreationOptionList/>");
+
+    poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
+"<LayerCreationOptionList>"
+"  <Option name='OVERWRITE' type='boolean' description='Whether to overwrite an existing table with the layer name to be created' default='NO'/>"
+"</LayerCreationOptionList>");
+    
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES, "Integer Integer64 Real String Date DateTime Time" );
+    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( poDriver );
 }
 

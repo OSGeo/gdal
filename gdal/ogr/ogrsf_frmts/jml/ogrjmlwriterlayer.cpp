@@ -294,7 +294,7 @@ OGRErr OGRJMLWriterLayer::ICreateFeature( OGRFeature *poFeature )
 /************************************************************************/
 
 OGRErr OGRJMLWriterLayer::CreateField( OGRFieldDefn *poFieldDefn,
-                                            CPL_UNUSED int bApproxOK )
+                                       int bApproxOK )
 {
     if( bFeaturesWritten )
         return OGRERR_FAILURE;
@@ -306,12 +306,32 @@ OGRErr OGRJMLWriterLayer::CreateField( OGRFieldDefn *poFieldDefn,
     OGRFieldType eType = poFieldDefn->GetType();
     if( eType == OFTInteger )
         pszType = "INTEGER";
+    else if( eType == OFTInteger64 )
+        pszType = "OBJECT";
     else if( eType == OFTReal )
         pszType = "DOUBLE";
     else if( eType == OFTDate || eType == OFTDateTime )
         pszType = "DATE";
     else
+    {
+        if( eType != OFTString )
+        {
+            if( bApproxOK )
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                        "Field of type %s unhandled natively. Converting to string",
+                        OGRFieldDefn::GetFieldTypeName(eType));
+            }
+            else
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Field of type %s unhandled natively.",
+                         OGRFieldDefn::GetFieldTypeName(eType));
+                return OGRERR_FAILURE;
+            }
+        }
         pszType = "STRING";
+    }
     WriteColumnDeclaration( poFieldDefn->GetNameRef(), pszType );
 
     poFeatureDefn->AddFieldDefn( poFieldDefn );

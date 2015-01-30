@@ -73,7 +73,7 @@ class OGRWarpedLayer : public OGRLayerDecorator
                                               double dfMaxX, double dfMaxY );
 
     virtual OGRFeature *GetNextFeature();
-    virtual OGRFeature *GetFeature( long nFID );
+    virtual OGRFeature *GetFeature( GIntBig nFID );
     virtual OGRErr      ISetFeature( OGRFeature *poFeature );
     virtual OGRErr      ICreateFeature( OGRFeature *poFeature );
 
@@ -81,7 +81,7 @@ class OGRWarpedLayer : public OGRLayerDecorator
 
     virtual OGRSpatialReference *GetSpatialRef();
 
-    virtual int         GetFeatureCount( int bForce = TRUE );
+    virtual GIntBig     GetFeatureCount( int bForce = TRUE );
     virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce = TRUE);
     virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
 

@@ -256,7 +256,7 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( GDALDataset *poSrcDS,
         }
 
         if( psColDef->col_func == SWQCF_COUNT )
-            oFDefn.SetType( OFTInteger );
+            oFDefn.SetType( OFTInteger64 );
         else if( poSrcFDefn != NULL )
         {
             if( psColDef->col_func != SWQCF_AVG ||
@@ -293,6 +293,9 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( GDALDataset *poSrcDS,
               case SWQ_INTEGER:
                 oFDefn.SetType( OFTInteger );
                 break;
+              case SWQ_INTEGER64:
+                oFDefn.SetType( OFTInteger64 );
+                break;
               case SWQ_FLOAT:
                 oFDefn.SetType( OFTReal );
                 break;
@@ -307,6 +310,10 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( GDALDataset *poSrcDS,
             {
               case SWQ_INTEGER:
                 oFDefn.SetType( OFTInteger );
+                break;
+
+              case SWQ_INTEGER64:
+                oFDefn.SetType( OFTInteger64 );
                 break;
 
               case SWQ_BOOLEAN:
@@ -331,6 +338,9 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( GDALDataset *poSrcDS,
             break;
           case SWQ_INTEGER:
             oFDefn.SetType( OFTInteger );
+            break;
+          case SWQ_INTEGER64:
+            oFDefn.SetType( OFTInteger64 );
             break;
           case SWQ_BOOLEAN:
             oFDefn.SetType( OFTInteger );
@@ -617,7 +627,7 @@ void OGRGenSQLResultsLayer::ResetReading()
 /*      ourselves in it.                                                */
 /************************************************************************/
 
-OGRErr OGRGenSQLResultsLayer::SetNextByIndex( long nIndex )
+OGRErr OGRGenSQLResultsLayer::SetNextByIndex( GIntBig nIndex )
 
 {
     swq_select *psSelectInfo = (swq_select *) pSelectInfo;
@@ -677,7 +687,7 @@ OGRErr OGRGenSQLResultsLayer::GetExtent( int iGeomField,
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
-int OGRGenSQLResultsLayer::GetFeatureCount( int bForce )
+GIntBig OGRGenSQLResultsLayer::GetFeatureCount( int bForce )
 
 {
     swq_select *psSelectInfo = (swq_select *) pSelectInfo;
@@ -836,14 +846,25 @@ int OGRGenSQLResultsLayer::PrepareSummary()
 
 /* -------------------------------------------------------------------- */
 /*      We treat COUNT(*) as a special case, and fill with              */
-/*      GetFeatureCount().                                              */
+/*      GetFeatureCount().                                            */
 /* -------------------------------------------------------------------- */
 
     if( psSelectInfo->result_columns == 1 
         && psSelectInfo->column_defs[0].col_func == SWQCF_COUNT
         && psSelectInfo->column_defs[0].field_index < 0 )
     {
-        poSummaryFeature->SetField( 0, poSrcLayer->GetFeatureCount( TRUE ) );
+        GIntBig nRes = poSrcLayer->GetFeatureCount( TRUE );
+        poSummaryFeature->SetField( 0, nRes );
+
+        if( (GIntBig)(int)nRes == nRes )
+        {
+            poDefn->GetFieldDefn(0)->SetType(OFTInteger);
+            delete poSummaryFeature;
+            poSummaryFeature = new OGRFeature( poDefn );
+            poSummaryFeature->SetFID( 0 );
+            poSummaryFeature->SetField( 0, (int)nRes );
+        }
+
         poSrcLayer->GetLayerDefn()->SetGeometryIgnored(bSaveIsGeomIgnored);
         return TRUE;
     }
@@ -934,6 +955,30 @@ int OGRGenSQLResultsLayer::PrepareSummary()
 /* -------------------------------------------------------------------- */
     if( psSelectInfo->query_mode == SWQM_SUMMARY_RECORD )
     {
+        for( iField = 0; iField < psSelectInfo->result_columns; iField++ )
+        {
+            swq_col_def *psColDef = psSelectInfo->column_defs + iField;
+            if (psSelectInfo->column_summary != NULL)
+            {
+                swq_summary *psSummary = psSelectInfo->column_summary + iField;
+                if( psColDef->col_func == SWQCF_COUNT )
+                {
+                    if( (GIntBig)(int)psSummary->count == psSummary->count ) 
+                    {
+                        delete poSummaryFeature;
+                        poSummaryFeature = NULL;
+                        poDefn->GetFieldDefn(iField)->SetType(OFTInteger);
+                    }
+                }
+            }
+        }
+
+        if( poSummaryFeature == NULL )
+        {
+            poSummaryFeature = new OGRFeature( poDefn );
+            poSummaryFeature->SetFID( 0 );
+        }
+
         for( iField = 0; iField < psSelectInfo->result_columns; iField++ )
         {
             swq_col_def *psColDef = psSelectInfo->column_defs + iField;
@@ -1038,6 +1083,18 @@ static swq_expr_node *OGRMultiFeatureFetcher( swq_expr_node *op,
                 poFeature->GetFieldAsInteger(op->field_index) );
         break;
 
+      case SWQ_INTEGER64:
+        if( poFeature == NULL 
+            || !poFeature->IsFieldSet(op->field_index) )
+        {
+            poRetNode = new swq_expr_node((GIntBig)0);
+            poRetNode->is_null = TRUE;
+        }
+        else
+            poRetNode = new swq_expr_node( 
+                poFeature->GetFieldAsInteger64(op->field_index) );
+        break;
+
       case SWQ_FLOAT:
         if( poFeature == NULL 
             || !poFeature->IsFieldSet(op->field_index) )
@@ -1138,7 +1195,8 @@ OGRFeature *OGRGenSQLResultsLayer::TranslateFeature( OGRFeature *poSrcFeat )
         // For the reverse case, joining a string column with a numeric column, the
         // string constant will be cast to float by SWQAutoConvertStringToNumeric (#4259)
         if( eSecondaryFieldType == OFTString &&
-            (ePrimaryFieldType == OFTInteger || ePrimaryFieldType == OFTReal) )
+            (ePrimaryFieldType == OFTInteger ||
+             ePrimaryFieldType == OFTInteger64 || ePrimaryFieldType == OFTReal) )
             osFilter.Printf("CAST(%s AS FLOAT) = ", poSecondaryFieldDefn->GetNameRef() );
         else
             osFilter.Printf("%s = ", poSecondaryFieldDefn->GetNameRef() );
@@ -1150,6 +1208,10 @@ OGRFeature *OGRGenSQLResultsLayer::TranslateFeature( OGRFeature *poSrcFeat )
         {
           case OFTInteger:
             osFilter += CPLString().Printf("%d", psSrcField->Integer );
+            break;
+
+          case OFTInteger64:
+            osFilter += CPLString().Printf(CPL_FRMT_GIB, psSrcField->Integer64 );
             break;
 
           case OFTReal:
@@ -1234,6 +1296,10 @@ OGRFeature *OGRGenSQLResultsLayer::TranslateFeature( OGRFeature *poSrcFeat )
         {
           case SWQ_BOOLEAN:
           case SWQ_INTEGER:
+            poDstFeat->SetField( iRegularField++, (int)poResult->int_value );
+            break;
+
+          case SWQ_INTEGER64:
             poDstFeat->SetField( iRegularField++, poResult->int_value );
             break;
             
@@ -1321,6 +1387,9 @@ OGRFeature *OGRGenSQLResultsLayer::TranslateFeature( OGRFeature *poSrcFeat )
               case SWQ_INTEGER:
                 poDstFeat->SetField( iRegularField, poSrcFeat->GetFieldAsInteger(psColDef->field_index) );
                 break;
+              case SWQ_INTEGER64:
+                poDstFeat->SetField( iRegularField, poSrcFeat->GetFieldAsInteger64(psColDef->field_index) );
+                break;
               case SWQ_FLOAT:
                 poDstFeat->SetField( iRegularField, poSrcFeat->GetFieldAsDouble(psColDef->field_index) );
                 break;
@@ -1335,6 +1404,10 @@ OGRFeature *OGRGenSQLResultsLayer::TranslateFeature( OGRFeature *poSrcFeat )
             {
               case SWQ_INTEGER:
                 poDstFeat->SetField( iRegularField, poSrcFeat->GetFieldAsInteger(psColDef->field_index) );
+                break;
+
+              case SWQ_INTEGER64:
+                poDstFeat->SetField( iRegularField, poSrcFeat->GetFieldAsInteger64(psColDef->field_index) );
                 break;
 
               case SWQ_FLOAT:
@@ -1456,7 +1529,7 @@ OGRFeature *OGRGenSQLResultsLayer::GetNextFeature()
 /*                             GetFeature()                             */
 /************************************************************************/
 
-OGRFeature *OGRGenSQLResultsLayer::GetFeature( long nFID )
+OGRFeature *OGRGenSQLResultsLayer::GetFeature( GIntBig nFID )
 
 {
     swq_select *psSelectInfo = (swq_select *) pSelectInfo;
@@ -1545,6 +1618,23 @@ OGRGeometry *OGRGenSQLResultsLayer::GetSpatialFilter()
 OGRFeatureDefn *OGRGenSQLResultsLayer::GetLayerDefn()
 
 {
+    swq_select *psSelectInfo = (swq_select *) pSelectInfo;
+    if( psSelectInfo->query_mode == SWQM_SUMMARY_RECORD &&
+        poSummaryFeature == NULL )
+    {
+        // Run PrepareSummary() is we have a COUNT column so as to be
+        // able to downcast it from OFTInteger64 to OFTInteger
+        for( int iField = 0; iField < psSelectInfo->result_columns; iField++ )
+        {
+            swq_col_def *psColDef = psSelectInfo->column_defs + iField;
+            if( psColDef->col_func == SWQCF_COUNT )
+            {
+                PrepareSummary();
+                break;
+            }
+        }
+    }
+
     return poDefn;
 }
 
@@ -1570,8 +1660,9 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
 {
     swq_select *psSelectInfo = (swq_select *) pSelectInfo;
     OGRField *pasIndexFields;
-    int      i, nOrderItems = psSelectInfo->order_specs;
-    long     *panFIDList;
+    GIntBig      i;
+    int nOrderItems = psSelectInfo->order_specs;
+    GIntBig *panFIDList;
 
     if( ! (psSelectInfo->order_specs > 0
            && psSelectInfo->query_mode == SWQM_RECORDSET
@@ -1593,7 +1684,7 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
     panFIDIndex = NULL;
     pasIndexFields = (OGRField *) 
         CPLCalloc(sizeof(OGRField), nOrderItems * nFeaturesAlloc);
-    panFIDList = (long *) CPLMalloc(sizeof(long) * nFeaturesAlloc);
+    panFIDList = (GIntBig *) CPLMalloc(sizeof(GIntBig) * nFeaturesAlloc);
 
 /* -------------------------------------------------------------------- */
 /*      Read in all the key values.                                     */
@@ -1607,12 +1698,22 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
 
         if (nIndexSize == nFeaturesAlloc)
         {
-            int nNewFeaturesAlloc = (nFeaturesAlloc * 4) / 3;
+            GIntBig nNewFeaturesAlloc = (nFeaturesAlloc * 4) / 3;
+            if( (GIntBig)(size_t)(sizeof(OGRField) * nOrderItems * nNewFeaturesAlloc) !=
+                    (GIntBig)sizeof(OGRField) * nOrderItems * nNewFeaturesAlloc )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "Cannot allocate pasIndexFields");
+                VSIFree(pasIndexFields);
+                VSIFree(panFIDList);
+                nIndexSize = 0;
+                return;
+            }
             OGRField* pasNewIndexFields = (OGRField *)
                 VSIRealloc(pasIndexFields,
                            sizeof(OGRField) * nOrderItems * nNewFeaturesAlloc);
             if (pasNewIndexFields == NULL)
             {
+                CPLError(CE_Failure, CPLE_AppDefined, "Cannot allocate pasIndexFields");
                 VSIFree(pasIndexFields);
                 VSIFree(panFIDList);
                 nIndexSize = 0;
@@ -1620,8 +1721,8 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
             }
             pasIndexFields = pasNewIndexFields;
 
-            long* panNewFIDList = (long *)
-                VSIRealloc(panFIDList, sizeof(long) *  nNewFeaturesAlloc);
+            GIntBig* panNewFIDList = (GIntBig *)
+                VSIRealloc(panFIDList, sizeof(GIntBig) *  nNewFeaturesAlloc);
             if (panNewFIDList == NULL)
             {
                 VSIFree(pasIndexFields);
@@ -1655,6 +1756,10 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
                         psDstField->Integer = poSrcFeat->GetFieldAsInteger(psKeyDef->field_index);
                         break;
 
+                      case SWQ_INTEGER64:
+                        psDstField->Integer64 = poSrcFeat->GetFieldAsInteger64(psKeyDef->field_index);
+                        break;
+
                       case SWQ_FLOAT:
                         psDstField->Real = poSrcFeat->GetFieldAsDouble(psKeyDef->field_index);
                         break;
@@ -1673,6 +1778,7 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
             psSrcField = poSrcFeat->GetRawFieldRef( psKeyDef->field_index );
 
             if( poFDefn->GetType() == OFTInteger 
+                || poFDefn->GetType() == OFTInteger64 
                 || poFDefn->GetType() == OFTReal
                 || poFDefn->GetType() == OFTDate
                 || poFDefn->GetType() == OFTTime
@@ -1698,14 +1804,30 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
 /* -------------------------------------------------------------------- */
 /*      Initialize panFIDIndex                                          */
 /* -------------------------------------------------------------------- */
-    panFIDIndex = (long *) CPLMalloc(sizeof(long) * nIndexSize);
+    panFIDIndex = (GIntBig *) VSIMalloc(sizeof(GIntBig) * nIndexSize);
+    if( panFIDIndex == NULL )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot allocate panFIDIndex");
+        VSIFree(pasIndexFields);
+        VSIFree(panFIDList);
+        nIndexSize = 0;
+        return;
+    }
     for( i = 0; i < nIndexSize; i++ )
         panFIDIndex[i] = i;
 
 /* -------------------------------------------------------------------- */
 /*      Quick sort the records.                                         */
 /* -------------------------------------------------------------------- */
-    SortIndexSection( pasIndexFields, 0, nIndexSize );
+    if( !SortIndexSection( pasIndexFields, 0, nIndexSize ) )
+    {
+        VSIFree(pasIndexFields);
+        VSIFree(panFIDList);
+        nIndexSize = 0;
+        VSIFree(panFIDIndex);
+        panFIDIndex = NULL;
+        return;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Rework the FID map to map to real FIDs.                         */
@@ -1783,27 +1905,33 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
 /*      Sort the records in a section of the index.                     */
 /************************************************************************/
 
-void OGRGenSQLResultsLayer::SortIndexSection( OGRField *pasIndexFields, 
-                                              int nStart, int nEntries )
+int OGRGenSQLResultsLayer::SortIndexSection( OGRField *pasIndexFields, 
+                                              GIntBig nStart, GIntBig nEntries )
 
 {
     if( nEntries < 2 )
-        return;
+        return TRUE;
 
     swq_select *psSelectInfo = (swq_select *) pSelectInfo;
     int      nOrderItems = psSelectInfo->order_specs;
 
-    int nFirstGroup = nEntries / 2;
-    int nFirstStart = nStart;
-    int nSecondGroup = nEntries - nFirstGroup;
-    int nSecondStart = nStart + nFirstGroup;
-    int iMerge = 0;
-    long *panMerged;
+    GIntBig nFirstGroup = nEntries / 2;
+    GIntBig nFirstStart = nStart;
+    GIntBig nSecondGroup = nEntries - nFirstGroup;
+    GIntBig nSecondStart = nStart + nFirstGroup;
+    GIntBig iMerge = 0;
+    GIntBig *panMerged;
 
-    SortIndexSection( pasIndexFields, nFirstStart, nFirstGroup );
-    SortIndexSection( pasIndexFields, nSecondStart, nSecondGroup );
+    if( !SortIndexSection( pasIndexFields, nFirstStart, nFirstGroup ) ||
+        !SortIndexSection( pasIndexFields, nSecondStart, nSecondGroup ) )
+        return FALSE;
 
-    panMerged = (long *) CPLMalloc( sizeof(long) * nEntries );
+    panMerged = (GIntBig *) VSIMalloc( sizeof(GIntBig) * nEntries );
+    if( panMerged == NULL )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot allocated panMerged");
+        return FALSE;
+    }
         
     while( iMerge < nEntries )
     {
@@ -1833,8 +1961,10 @@ void OGRGenSQLResultsLayer::SortIndexSection( OGRField *pasIndexFields,
 
     /* Copy the merge list back into the main index */
 
-    memcpy( panFIDIndex + nStart, panMerged, sizeof(long) * nEntries );
+    memcpy( panFIDIndex + nStart, panMerged, sizeof(GIntBig) * nEntries );
     CPLFree( panMerged );
+    
+    return TRUE;
 }
 
 /************************************************************************/
@@ -1879,6 +2009,12 @@ int OGRGenSQLResultsLayer::Compare( OGRField *pasFirstTuple,
                 else if( pasFirstTuple[iKey].Integer > pasSecondTuple[iKey].Integer )
                     nResult = 1;
                 break;
+              case SWQ_INTEGER64:
+                if( pasFirstTuple[iKey].Integer64 < pasSecondTuple[iKey].Integer64 )
+                    nResult = -1;
+                else if( pasFirstTuple[iKey].Integer64 > pasSecondTuple[iKey].Integer64 )
+                    nResult = 1;
+                break;
               case SWQ_FLOAT:
                 if( pasFirstTuple[iKey].Real < pasSecondTuple[iKey].Real )
                     nResult = -1;
@@ -1901,6 +2037,14 @@ int OGRGenSQLResultsLayer::Compare( OGRField *pasFirstTuple,
                 nResult = -1;
             else if( pasFirstTuple[iKey].Integer 
                      > pasSecondTuple[iKey].Integer )
+                nResult = 1;
+        }
+        else if( poFDefn->GetType() == OFTInteger64 )
+        {
+            if( pasFirstTuple[iKey].Integer64 < pasSecondTuple[iKey].Integer64 )
+                nResult = -1;
+            else if( pasFirstTuple[iKey].Integer64 
+                     > pasSecondTuple[iKey].Integer64 )
                 nResult = 1;
         }
         else if( poFDefn->GetType() == OFTString )

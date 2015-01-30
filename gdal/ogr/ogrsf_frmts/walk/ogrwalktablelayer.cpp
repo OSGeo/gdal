@@ -253,7 +253,7 @@ void OGRWalkTableLayer::ResetReading()
 /*                             GetFeature()                             */
 /************************************************************************/
 
-OGRFeature *OGRWalkTableLayer::GetFeature( long nFeatureId )
+OGRFeature *OGRWalkTableLayer::GetFeature( GIntBig nFeatureId )
 
 {
     if( pszFIDColumn == NULL )
@@ -267,7 +267,7 @@ OGRFeature *OGRWalkTableLayer::GetFeature( long nFeatureId )
     poStmt->Append( "SELECT * FROM " );
     poStmt->Append( poFeatureDefn->GetName() );
     poStmt->Append( "Features" );
-    poStmt->Appendf( " WHERE %s = %ld", pszFIDColumn, nFeatureId );
+    poStmt->Appendf( " WHERE %s = " CPL_FRMT_GIB, pszFIDColumn, nFeatureId );
 
     if( !poStmt->ExecuteSQL() )
     {
@@ -326,7 +326,7 @@ int OGRWalkTableLayer::TestCapability( const char * pszCap )
 /*      way of counting features matching a spatial query.              */
 /************************************************************************/
 
-int OGRWalkTableLayer::GetFeatureCount( int bForce )
+GIntBig OGRWalkTableLayer::GetFeatureCount( int bForce )
 
 {
     if( m_poFilterGeom != NULL )

@@ -264,7 +264,7 @@ OGRFeatureDefn * OGRXLSLayer::GetLayerDefn()
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
-int OGRXLSLayer::GetFeatureCount( int bForce )
+GIntBig OGRXLSLayer::GetFeatureCount( int bForce )
 {
     if  ( m_poAttrQuery == NULL /* && m_poFilterGeom == NULL */ )
     {

@@ -783,7 +783,7 @@ def ogr_gml_20():
 
     idx = ldefn.GetFieldIndex("cat")
     fddefn = ldefn.GetFieldDefn(idx)
-    if fddefn.GetFieldTypeName(fddefn.GetType()) != 'Integer':
+    if fddefn.GetFieldTypeName(fddefn.GetType()) != 'Integer64':
         gdaltest.post_reason('did not get expected column type for col "cat"')
         return 'fail'
     idx = ldefn.GetFieldIndex("str1")
@@ -3379,7 +3379,7 @@ def ogr_gml_66():
     return 'success'
 
 ###############################################################################
-# Test boolean and int16 type
+# Test boolean, int16, integer64 type
 
 def ogr_gml_67():
 
@@ -3404,12 +3404,24 @@ def ogr_gml_67():
     fld_defn = ogr.FieldDefn('float', ogr.OFTReal)
     fld_defn.SetSubType(ogr.OFSTFloat32)
     lyr.CreateField(fld_defn)
+    fld_defn = ogr.FieldDefn('int64', ogr.OFTInteger64)
+    lyr.CreateField(fld_defn)
+    fld_defn = ogr.FieldDefn('int64list', ogr.OFTInteger64List)
+    lyr.CreateField(fld_defn)
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetField(0, 1)
     f.SetField(1, 0)
     f.SetFieldIntegerList(2, [1,0])
     f.SetField(3, -32768)
     f.SetField(4, 1.23)
+    f.SetField(5, 1)
+    f.SetFieldInteger64List(6, [1])
+    lyr.CreateFeature(f)
+    
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetFID(1234567890123)
+    f.SetField(5, 1234567890123)
+    f.SetFieldInteger64List(6, [1, 1234567890123])
     lyr.CreateFeature(f)
     f = None
 
@@ -3442,8 +3454,22 @@ def ogr_gml_67():
                 print(i)
                 gdaltest.post_reason('fail')
                 return 'fail'
+        if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('int64')).GetType() != ogr.OFTInteger64:
+            print(i)
+            gdaltest.post_reason('fail')
+            return 'fail'
+        if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('int64list')).GetType() != ogr.OFTInteger64List:
+            print(i)
+            gdaltest.post_reason('fail')
+            return 'fail'
         f = lyr.GetNextFeature()
         if f.GetField('b1') != 1 or f.GetField('b2') != 0 or f.GetFieldAsString('bool_list') != '(2:1,0)' or f.GetField('short') != -32768 or f.GetField('float') != 1.23:
+            print(i)
+            gdaltest.post_reason('fail')
+            f.DumpReadable()
+            return 'fail'
+        f = lyr.GetNextFeature()
+        if f.GetFID() != 1234567890123 or f.GetField('int64') != 1234567890123 or f.GetField('int64list') != [1, 1234567890123]:
             print(i)
             gdaltest.post_reason('fail')
             f.DumpReadable()

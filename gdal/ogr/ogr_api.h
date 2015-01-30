@@ -354,9 +354,11 @@ void   CPL_DLL OGR_F_UnsetField( OGRFeatureH, int );
 OGRField CPL_DLL *OGR_F_GetRawFieldRef( OGRFeatureH, int );
 
 int    CPL_DLL OGR_F_GetFieldAsInteger( OGRFeatureH, int );
+GIntBig CPL_DLL OGR_F_GetFieldAsInteger64( OGRFeatureH, int );
 double CPL_DLL OGR_F_GetFieldAsDouble( OGRFeatureH, int );
 const char CPL_DLL *OGR_F_GetFieldAsString( OGRFeatureH, int );
 const int CPL_DLL *OGR_F_GetFieldAsIntegerList( OGRFeatureH, int, int * );
+const GIntBig CPL_DLL *OGR_F_GetFieldAsInteger64List( OGRFeatureH, int, int * );
 const double CPL_DLL *OGR_F_GetFieldAsDoubleList( OGRFeatureH, int, int * );
 char  CPL_DLL **OGR_F_GetFieldAsStringList( OGRFeatureH, int );
 GByte CPL_DLL *OGR_F_GetFieldAsBinary( OGRFeatureH, int, int * );
@@ -364,9 +366,11 @@ int   CPL_DLL  OGR_F_GetFieldAsDateTime( OGRFeatureH, int, int *, int *, int *,
                                          int *, int *, int *, int * );
 
 void   CPL_DLL OGR_F_SetFieldInteger( OGRFeatureH, int, int );
+void   CPL_DLL OGR_F_SetFieldInteger64( OGRFeatureH, int, GIntBig );
 void   CPL_DLL OGR_F_SetFieldDouble( OGRFeatureH, int, double );
 void   CPL_DLL OGR_F_SetFieldString( OGRFeatureH, int, const char * );
 void   CPL_DLL OGR_F_SetFieldIntegerList( OGRFeatureH, int, int, int * );
+void   CPL_DLL OGR_F_SetFieldInteger64List( OGRFeatureH, int, int, const GIntBig * );
 void   CPL_DLL OGR_F_SetFieldDoubleList( OGRFeatureH, int, int, double * );
 void   CPL_DLL OGR_F_SetFieldStringList( OGRFeatureH, int, char ** );
 void   CPL_DLL OGR_F_SetFieldRaw( OGRFeatureH, int, OGRField * );
@@ -388,8 +392,8 @@ OGRErr            CPL_DLL OGR_F_SetGeomFieldDirectly( OGRFeatureH hFeat,
 OGRErr            CPL_DLL OGR_F_SetGeomField( OGRFeatureH hFeat,
                                               int iField, OGRGeometryH hGeom );
 
-long   CPL_DLL OGR_F_GetFID( OGRFeatureH );
-OGRErr CPL_DLL OGR_F_SetFID( OGRFeatureH, long );
+GIntBig CPL_DLL OGR_F_GetFID( OGRFeatureH );
+OGRErr CPL_DLL OGR_F_SetFID( OGRFeatureH, GIntBig );
 void   CPL_DLL OGR_F_DumpReadable( OGRFeatureH, FILE * );
 OGRErr CPL_DLL OGR_F_SetFrom( OGRFeatureH, OGRFeatureH, int );
 OGRErr CPL_DLL OGR_F_SetFromWithMap( OGRFeatureH, OGRFeatureH, int , int * );
@@ -431,15 +435,15 @@ void     CPL_DLL OGR_L_SetSpatialFilterRectEx( OGRLayerH, int iGeomField,
 OGRErr CPL_DLL OGR_L_SetAttributeFilter( OGRLayerH, const char * );
 void   CPL_DLL OGR_L_ResetReading( OGRLayerH );
 OGRFeatureH CPL_DLL OGR_L_GetNextFeature( OGRLayerH );
-OGRErr CPL_DLL OGR_L_SetNextByIndex( OGRLayerH, long );
-OGRFeatureH CPL_DLL OGR_L_GetFeature( OGRLayerH, long );
+OGRErr CPL_DLL OGR_L_SetNextByIndex( OGRLayerH, GIntBig );
+OGRFeatureH CPL_DLL OGR_L_GetFeature( OGRLayerH, GIntBig );
 OGRErr CPL_DLL OGR_L_SetFeature( OGRLayerH, OGRFeatureH );
 OGRErr CPL_DLL OGR_L_CreateFeature( OGRLayerH, OGRFeatureH );
-OGRErr CPL_DLL OGR_L_DeleteFeature( OGRLayerH, long );
+OGRErr CPL_DLL OGR_L_DeleteFeature( OGRLayerH, GIntBig );
 OGRFeatureDefnH CPL_DLL OGR_L_GetLayerDefn( OGRLayerH );
 OGRSpatialReferenceH CPL_DLL OGR_L_GetSpatialRef( OGRLayerH );
 int    CPL_DLL OGR_L_FindFieldIndex( OGRLayerH, const char *, int bExactMatch );
-int    CPL_DLL OGR_L_GetFeatureCount( OGRLayerH, int );
+GIntBig CPL_DLL OGR_L_GetFeatureCount( OGRLayerH, int );
 OGRErr CPL_DLL OGR_L_GetExtent( OGRLayerH, OGREnvelope *, int );
 OGRErr  CPL_DLL OGR_L_GetExtentEx( OGRLayerH, int iGeomField,
                                    OGREnvelope *psExtent, int bForce );

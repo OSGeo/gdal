@@ -250,7 +250,7 @@ public class ogrtindex {
       String[] existingLayersTab = null;
       SpatialReference alreadyExistingSpatialRef = null;
       boolean alreadyExistingSpatialRefValid = false;
-      nExistingLayers = poDstLayer.GetFeatureCount();
+      nExistingLayers = (int)poDstLayer.GetFeatureCount();
       if (nExistingLayers > 0)
       {
          existingLayersTab = new String[nExistingLayers];

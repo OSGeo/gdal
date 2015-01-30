@@ -88,7 +88,7 @@ def ogr_mysql_2():
     ######################################################
     # Create Layer
     gdaltest.mysql_lyr = gdaltest.mysql_ds.CreateLayer( 'tpoly', srs = shp_lyr.GetSpatialRef(),
-                                                  options = [ 'DIM=3', 'ENGINE=MyISAM' ] )
+                                                  options = [ 'ENGINE=MyISAM' ] )
 
     ######################################################
     # Setup Schema
@@ -96,7 +96,8 @@ def ogr_mysql_2():
                                     [ ('AREA', ogr.OFTReal),
                                       ('EAS_ID', ogr.OFTInteger),
                                       ('PRFEDEA', ogr.OFTString),
-                                      ('SHORTNAME', ogr.OFTString, 8) ] )
+                                      ('SHORTNAME', ogr.OFTString, 8),
+                                      ('INT64', ogr.OFTInteger64) ] )
 
     ######################################################
     # Copy in poly.shp
@@ -111,6 +112,7 @@ def ogr_mysql_2():
         gdaltest.poly_feat.append( feat )
 
         dst_feat.SetFrom( feat )
+        dst_feat.SetField('INT64', 1234567890123)
         gdaltest.mysql_lyr.CreateFeature( dst_feat )
 
         feat = shp_lyr.GetNextFeature()
@@ -162,6 +164,9 @@ def ogr_mysql_3():
             if orig_feat.GetField(fld) != read_feat.GetField(fld):
                 gdaltest.post_reason( 'Attribute %d does not match' % fld )
                 return 'fail'
+        if read_feat.GetField('INT64') != 1234567890123:
+            gdaltest.post_reason( 'failure' )
+            return 'fail'
 
         read_feat.Destroy()
         orig_feat.Destroy()
@@ -728,6 +733,116 @@ def ogr_mysql_24():
     return 'success'
 
 ###############################################################################
+# Test 64 bit FID
+
+def ogr_mysql_72():
+
+    if gdaltest.mysql_ds is None:
+        return 'skip'
+    
+    # Regular layer with 32 bit IDs
+    lyr = gdaltest.mysql_ds.CreateLayer('ogr_mysql_72', geom_type = ogr.wkbNone)
+    if lyr.GetMetadataItem(ogr.OLMD_FID64) is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    lyr.CreateField(ogr.FieldDefn('foo'))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetFID(123456789012345)
+    f.SetField(0, 'bar')
+    if lyr.CreateFeature(f) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = lyr.GetFeature(123456789012345)
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    
+    lyr = gdaltest.mysql_ds.CreateLayer('ogr_mysql_72', geom_type = ogr.wkbNone, options = ['FID64=YES', 'OVERWRITE=YES'])
+    if lyr.GetMetadataItem(ogr.OLMD_FID64) is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    lyr.CreateField(ogr.FieldDefn('foo'))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetFID(123456789012345)
+    f.SetField(0, 'bar')
+    if lyr.CreateFeature(f) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.SetFeature(f) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    
+    gdaltest.mysql_ds = None
+    # Test with normal protocol
+    gdaltest.mysql_ds = ogr.Open( 'MYSQL:autotest', update = 1 )
+    lyr = gdaltest.mysql_ds.GetLayerByName('ogr_mysql_72')
+    if lyr.GetMetadataItem(ogr.OLMD_FID64) is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f.GetFID() != 123456789012345:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test 64 bit FID
+
+def ogr_mysql_72():
+
+    if gdaltest.mysql_ds is None:
+        return 'skip'
+    
+    # Regular layer with 32 bit IDs
+    lyr = gdaltest.mysql_ds.CreateLayer('ogr_mysql_72', geom_type = ogr.wkbNone)
+    if lyr.GetMetadataItem(ogr.OLMD_FID64) is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    lyr.CreateField(ogr.FieldDefn('foo'))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetFID(123456789012345)
+    f.SetField(0, 'bar')
+    if lyr.CreateFeature(f) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = lyr.GetFeature(123456789012345)
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    
+    lyr = gdaltest.mysql_ds.CreateLayer('ogr_mysql_72', geom_type = ogr.wkbNone, options = ['FID64=YES', 'OVERWRITE=YES'])
+    if lyr.GetMetadataItem(ogr.OLMD_FID64) is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    lyr.CreateField(ogr.FieldDefn('foo'))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetFID(123456789012345)
+    f.SetField(0, 'bar')
+    if lyr.CreateFeature(f) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.SetFeature(f) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    
+    gdaltest.mysql_ds = None
+    # Test with normal protocol
+    gdaltest.mysql_ds = ogr.Open( 'MYSQL:autotest', update = 1 )
+    lyr = gdaltest.mysql_ds.GetLayerByName('ogr_mysql_72')
+    if lyr.GetMetadataItem(ogr.OLMD_FID64) is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f.GetFID() != 123456789012345:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_mysql_cleanup():
@@ -741,6 +856,7 @@ def ogr_mysql_cleanup():
     gdaltest.mysql_ds.ExecuteSQL( 'DROP TABLE tablewithoutspatialindex' )
     gdaltest.mysql_ds.ExecuteSQL( 'DROP TABLE geometry_columns' )
     gdaltest.mysql_ds.ExecuteSQL( 'DROP TABLE spatial_ref_sys' )
+    gdaltest.mysql_ds.ExecuteSQL( 'DROP TABLE ogr_mysql_72' )
 
     gdaltest.mysql_ds.Destroy()
     gdaltest.mysql_ds = None
@@ -771,6 +887,7 @@ gdaltest_list = [
     ogr_mysql_22,
     ogr_mysql_23,
     ogr_mysql_24,
+    ogr_mysql_72,
     ogr_mysql_cleanup
     ]
 

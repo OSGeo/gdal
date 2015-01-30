@@ -1321,7 +1321,7 @@ OGRFeature* OGROpenFileGDBLayer::GetNextFeature()
 /*                          GetFeature()                               */
 /***********************************************************************/
 
-OGRFeature* OGROpenFileGDBLayer::GetFeature( long nFeatureId )
+OGRFeature* OGROpenFileGDBLayer::GetFeature( GIntBig nFeatureId )
 {
     if( !BuildLayerDefinition() )
         return NULL;
@@ -1352,7 +1352,7 @@ OGRFeature* OGROpenFileGDBLayer::GetFeature( long nFeatureId )
 /*                         SetNextByIndex()                            */
 /***********************************************************************/
 
-OGRErr OGROpenFileGDBLayer::SetNextByIndex( long nIndex )
+OGRErr OGROpenFileGDBLayer::SetNextByIndex( GIntBig nIndex )
 {
     if( m_poIterator != NULL )
         return OGRLayer::SetNextByIndex(nIndex);
@@ -1410,7 +1410,7 @@ OGRErr OGROpenFileGDBLayer::GetExtent( OGREnvelope *psExtent, int bForce )
 /*                         GetFeatureCount()                           */
 /***********************************************************************/
 
-int OGROpenFileGDBLayer::GetFeatureCount( int bForce )
+GIntBig OGROpenFileGDBLayer::GetFeatureCount( int bForce )
 {
     if( !BuildLayerDefinition() )
         return 0;

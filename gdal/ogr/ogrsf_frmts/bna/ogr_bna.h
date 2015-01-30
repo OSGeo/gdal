@@ -92,7 +92,7 @@ class OGRBNALayer : public OGRLayer
 
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
     
-    OGRFeature *        GetFeature( long nFID );
+    OGRFeature *        GetFeature( GIntBig nFID );
 
     int                 TestCapability( const char * );
 

@@ -59,6 +59,12 @@ sshapefile with any encoding supported by CPLRecode or to "" to avoid any
 recoding</li>
 <li><b>DBF_DATE_LAST_UPDATE=</b><i>YYYY-MM-DD</i>: Modification
 date to write in DBF header with year-month-day format. If not specified, current date is used.</li>
+<li><b>ADJUST_TYPE</b>=YES/NO: Set to YES (default is NO) to read the whole .dbf to adjust 
+Real->Integer/Integer64 or Integer64->Integer field types when possible. This
+can be used when field widths are ambiguous and that by default OGR would select
+the larger data type. For example, a numeric column with 0 decimal figures and with
+width of 10/11 character may hold Integer or Integer64, and with width 19/20 may
+hold Integer64 or larger integer (hold as Real)</li>
 </ul>
 
 <h2>Spatial and Attribute Indexing</h2>
@@ -137,7 +143,7 @@ with a serial number from 1 to 99. </p><p>For example:</p>
 <li>abcdefghijk &rarr; abcdefghij, abcdefghijkl &rarr; abcdefgh_1</li></ul>
 </li>
 
-<li><p> Only Integer, Real, String and Date (not DateTime, just year/month/day)
+<li><p> Only Integer, Integer64, Real, String and Date (not DateTime, just year/month/day)
 field types are supported.  The various list, and binary field types cannot
 be created.</p></li>
 
@@ -146,7 +152,11 @@ size in the .dbf file.  This means that strings longer than the field
 width, or numbers that don't fit into the indicated field format will suffer
 truncation.</p></li>
 
-<li><p> Integer fields without an explicit width are treated as width 11.</p></li>
+<li><p> Integer fields without an explicit width are treated as width 9, and
+extended to 10 or 11 if needed.</p></li>
+
+<li><p> Integer64 fields without an explicit width are treated as width 18, and
+extended to 19 or 20 if needed.</p></li>
 
 <li><p> Real (floating point) fields without an explicit width are treated as
 width 24 with 15 decimal places of precision.</p></li>

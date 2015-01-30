@@ -142,7 +142,7 @@ class OGRGeoRSSLayer : public OGRLayer
     
     int                 TestCapability( const char * );
     
-    int                 GetFeatureCount( int bForce );
+    GIntBig             GetFeatureCount( int bForce );
 
     void                LoadSchema();
 

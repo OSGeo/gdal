@@ -42,12 +42,12 @@ class OGRMemLayer : public OGRLayer
 {
     OGRFeatureDefn     *poFeatureDefn;
     
-    int                 nFeatureCount;
-    int                 nMaxFeatureCount;
+    GIntBig             nFeatureCount;
+    GIntBig             nMaxFeatureCount;
     OGRFeature        **papoFeatures;
 
-    int                 iNextReadFID;
-    int                 iNextCreateFID;
+    GIntBig             iNextReadFID;
+    GIntBig             iNextCreateFID;
 
     int                 bUpdatable;
     int                 bAdvertizeUTF8;
@@ -62,16 +62,16 @@ class OGRMemLayer : public OGRLayer
 
     void                ResetReading();
     OGRFeature *        GetNextFeature();
-    virtual OGRErr      SetNextByIndex( long nIndex );
+    virtual OGRErr      SetNextByIndex( GIntBig nIndex );
 
-    OGRFeature         *GetFeature( long nFeatureId );
+    OGRFeature         *GetFeature( GIntBig nFeatureId );
     OGRErr              ISetFeature( OGRFeature *poFeature );
     OGRErr              ICreateFeature( OGRFeature *poFeature );
-    virtual OGRErr      DeleteFeature( long nFID );
+    virtual OGRErr      DeleteFeature( GIntBig nFID );
     
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
 
-    int                 GetFeatureCount( int );
+    GIntBig             GetFeatureCount( int );
 
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
                                      int bApproxOK = TRUE );

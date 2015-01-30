@@ -65,6 +65,7 @@ typedef enum {
 
 typedef enum {
     SWQ_INTEGER,
+    SWQ_INTEGER64,
     SWQ_FLOAT,
     SWQ_STRING, 
     SWQ_BOOLEAN,  // integer
@@ -76,6 +77,8 @@ typedef enum {
     SWQ_OTHER,
     SWQ_ERROR
 } swq_field_type;
+
+#define SWQ_IS_INTEGER(x) ((x) == SWQ_INTEGER || (x) == SWQ_INTEGER64)
 
 typedef enum {
     SNT_CONSTANT,
@@ -102,6 +105,7 @@ public:
 
     swq_expr_node( const char * );
     swq_expr_node( int );
+    swq_expr_node( GIntBig );
     swq_expr_node( double );
     swq_expr_node( OGRGeometry* );
     swq_expr_node( swq_op );
@@ -132,7 +136,7 @@ public:
     /* only for SNT_CONSTANT */
     int         is_null;
     char        *string_value;
-    int         int_value;
+    GIntBig     int_value;
     double      float_value;
     OGRGeometry *geometry_value;
 };
@@ -250,7 +254,7 @@ typedef struct {
 } swq_col_def;
 
 typedef struct {
-    int         count;
+    GIntBig     count;
     
     char        **distinct_list; /* items of the list can be NULL */
     double      sum;

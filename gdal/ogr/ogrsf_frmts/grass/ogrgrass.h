@@ -55,16 +55,16 @@ class OGRGRASSLayer : public OGRLayer
 
     // Layer info
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
-    int                 GetFeatureCount( int );
+    GIntBig             GetFeatureCount( int );
     OGRErr              GetExtent(OGREnvelope *psExtent, int bForce);
     virtual OGRSpatialReference *GetSpatialRef();
     int                 TestCapability( const char * );
 
     // Reading
     void                ResetReading();
-    virtual OGRErr      SetNextByIndex( long nIndex );
+    virtual OGRErr      SetNextByIndex( GIntBig nIndex );
     OGRFeature *        GetNextFeature();
-    OGRFeature         *GetFeature( long nFeatureId );
+    OGRFeature         *GetFeature( GIntBig nFeatureId );
 
     // Filters
     virtual OGRErr 	SetAttributeFilter( const char *query );

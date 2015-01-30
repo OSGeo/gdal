@@ -335,6 +335,9 @@ void OGR2SQLITE_ogr_geocode_set_result(sqlite3_context* pContext,
             if( eType == OFTInteger )
                 sqlite3_result_int(pContext,
                                    poFeature->GetFieldAsInteger(nIdx));
+            else if( eType == OFTInteger64 )
+                sqlite3_result_int64(pContext,
+                                   poFeature->GetFieldAsInteger64(nIdx));
             else if( eType == OFTReal )
                 sqlite3_result_double(pContext,
                                       poFeature->GetFieldAsDouble(nIdx));

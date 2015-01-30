@@ -2064,7 +2064,7 @@ OGRFeature *OGRSDELayer::GetNextFeature()
 /*                             GetFeature()                             */
 /************************************************************************/
 
-OGRFeature *OGRSDELayer::GetFeature( long nFeatureId )
+OGRFeature *OGRSDELayer::GetFeature( GIntBig nFeatureId )
 
 {
     int nSDEErr;
@@ -2187,7 +2187,7 @@ OGRErr OGRSDELayer::ResetStream()
 /*      operator in the database.                                       */
 /************************************************************************/
 
-int OGRSDELayer::GetFeatureCount( int bForce )
+GIntBig OGRSDELayer::GetFeatureCount( int bForce )
 
 {
 /* -------------------------------------------------------------------- */
@@ -2504,7 +2504,7 @@ OGRErr OGRSDELayer::ICreateFeature( OGRFeature *poFeature )
 /************************************************************************/
 /*                           DeleteFeature()                            */
 /************************************************************************/
-OGRErr OGRSDELayer::DeleteFeature( long nFID )
+OGRErr OGRSDELayer::DeleteFeature( GIntBig nFID )
 
 {
     LONG                nSDEErr;

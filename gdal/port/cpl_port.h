@@ -219,16 +219,24 @@ typedef int             GBool;
 typedef __int64          GIntBig;
 typedef unsigned __int64 GUIntBig;
 
+#define GINTBIG_MIN     ((GIntBig)(0x80000000) << 32)
+#define GINTBIG_MAX     (((GIntBig)(0x7FFFFFFF) << 32) | 0xFFFFFFFFU)
+
 #elif HAVE_LONG_LONG
 
 typedef long long        GIntBig;
 typedef unsigned long long GUIntBig;
+
+#define GINTBIG_MIN     ((GIntBig)(0x80000000) << 32)
+#define GINTBIG_MAX     (((GIntBig)(0x7FFFFFFF) << 32) | 0xFFFFFFFFU)
 
 #else
 
 typedef long             GIntBig;
 typedef unsigned long    GUIntBig;
 
+#define GINTBIG_MIN     INT_MIN
+#define GINTBIG_MAX     INT_MAX
 #endif
 
 #if SIZEOF_VOIDP == 8

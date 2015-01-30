@@ -95,13 +95,13 @@ OGRFeature *OGRMutexedLayer::GetNextFeature()
     return OGRLayerDecorator::GetNextFeature();
 }
 
-OGRErr      OGRMutexedLayer::SetNextByIndex( long nIndex )
+OGRErr      OGRMutexedLayer::SetNextByIndex( GIntBig nIndex )
 {
     CPLMutexHolderOptionalLockD(m_hMutex);
     return OGRLayerDecorator::SetNextByIndex(nIndex);
 }
 
-OGRFeature *OGRMutexedLayer::GetFeature( long nFID )
+OGRFeature *OGRMutexedLayer::GetFeature( GIntBig nFID )
 {
     CPLMutexHolderOptionalLockD(m_hMutex);
     return OGRLayerDecorator::GetFeature(nFID);
@@ -119,7 +119,7 @@ OGRErr      OGRMutexedLayer::ICreateFeature( OGRFeature *poFeature )
     return OGRLayerDecorator::ICreateFeature(poFeature);
 }
 
-OGRErr      OGRMutexedLayer::DeleteFeature( long nFID )
+OGRErr      OGRMutexedLayer::DeleteFeature( GIntBig nFID )
 {
     CPLMutexHolderOptionalLockD(m_hMutex);
     return OGRLayerDecorator::DeleteFeature(nFID);
@@ -149,7 +149,7 @@ OGRSpatialReference *OGRMutexedLayer::GetSpatialRef()
     return OGRLayerDecorator::GetSpatialRef();
 }
 
-int         OGRMutexedLayer::GetFeatureCount( int bForce )
+GIntBig         OGRMutexedLayer::GetFeatureCount( int bForce )
 {
     CPLMutexHolderOptionalLockD(m_hMutex);
     return OGRLayerDecorator::GetFeatureCount(bForce);

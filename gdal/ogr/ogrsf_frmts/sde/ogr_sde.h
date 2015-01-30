@@ -122,9 +122,9 @@ class OGRSDELayer : public OGRLayer
     OGRErr              ResetStream();
 
     virtual OGRFeature *GetNextFeature();
-    virtual OGRFeature *GetFeature( long nFeatureId );
+    virtual OGRFeature *GetFeature( GIntBig nFeatureId );
     virtual OGRErr      GetExtent( OGREnvelope *psExtent, int bForce );
-    virtual int         GetFeatureCount( int bForce );
+    virtual GIntBig     GetFeatureCount( int bForce );
 
     virtual OGRErr      SetAttributeFilter( const char *pszQuery );
     
@@ -133,7 +133,7 @@ class OGRSDELayer : public OGRLayer
 
     virtual OGRErr      ISetFeature( OGRFeature *poFeature );
     virtual OGRErr      ICreateFeature( OGRFeature *poFeature );
-    virtual OGRErr      DeleteFeature( long nFID );
+    virtual OGRErr      DeleteFeature( GIntBig nFID );
     
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
     

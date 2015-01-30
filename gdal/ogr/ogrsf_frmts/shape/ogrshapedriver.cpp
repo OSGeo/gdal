@@ -252,6 +252,7 @@ void RegisterOGRShape()
 "<OpenOptionList>"
 "  <Option name='ENCODING' type='string' description='to override the encoding interpretation of the DBF with any encoding supported by CPLRecode or to \"\" to avoid any recoding'/>"
 "  <Option name='DBF_DATE_LAST_UPDATE' type='string' description='Modification date to write in DBF header with YYYY-MM-DD format'/>"
+"  <Option name='ADJUST_TYPE' type='boolean' description='Whether to read whole .dbf to adjust Real->Integer/Integer64 or Integer64->Integer field types if possible' default='NO'/>"
 "</OpenOptionList>");
 
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, "<CreationOptionList/>" );
@@ -275,6 +276,8 @@ void RegisterOGRShape()
 "  <Option name='SPATIAL_INDEX' type='boolean' description='To create a spatial index.' default='NO'/>"
 "  <Option name='DBF_DATE_LAST_UPDATE' type='string' description='Modification date to write in DBF header with YYYY-MM-DD format'/>"
 "</LayerCreationOptionList>");
+        
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES, "Integer Integer64 Real String Date DateTime" );
 
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 

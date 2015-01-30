@@ -34,6 +34,12 @@
   argvi++;
 }
 
+%typemap(in) GIntBig
+{
+  /* %typemap(in) GIntBig */
+  $1 = SvIV($input); //FIXME is that right ??
+}
+
 %typemap(out) GIntBig
 {
   /* %typemap(out) GIntBig */

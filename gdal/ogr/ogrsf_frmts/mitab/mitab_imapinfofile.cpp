@@ -291,7 +291,7 @@ OGRFeature *IMapInfoFile::GetNextFeature()
 {
     OGRFeature *poFeatureRef;
     OGRGeometry *poGeom;
-    int nFeatureId;
+    GIntBig nFeatureId;
 
     while( (nFeatureId = GetNextFeatureId(m_nCurFeatureId)) != -1 )
     {
@@ -459,7 +459,7 @@ OGRErr     IMapInfoFile::ICreateFeature(OGRFeature *poFeature)
  * to get the wanted (nFeatureId) feature, a NULL value will be 
  * returned on error.
  **********************************************************************/
-OGRFeature *IMapInfoFile::GetFeature(long nFeatureId)
+OGRFeature *IMapInfoFile::GetFeature(GIntBig nFeatureId)
 {
     OGRFeature *poFeatureRef;
     

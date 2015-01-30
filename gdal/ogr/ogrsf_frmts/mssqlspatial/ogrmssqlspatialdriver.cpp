@@ -126,5 +126,6 @@ void RegisterOGRMSSQLSpatial()
                                    "Microsoft SQL Server Spatial Database" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
                                 "drv_mssqlspatial.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES, "Integer Real String Date Time DateTime Binary" );
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver(poDriver);
 }

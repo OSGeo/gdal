@@ -90,7 +90,7 @@ class OGRCSVLayer : public OGRLayer
     int                 bIsEurostatTSV;
     int                 nEurostatDims;
 
-    int                 nTotalFeatures;
+    GIntBig             nTotalFeatures;
 
     char              **AutodetectFieldTypes(char** papszOpenOptions, int nFieldCount);
     
@@ -110,7 +110,7 @@ class OGRCSVLayer : public OGRLayer
 
     void                ResetReading();
     OGRFeature *        GetNextFeature();
-    virtual OGRFeature* GetFeature( long nFID );
+    virtual OGRFeature* GetFeature( GIntBig nFID );
 
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
 
@@ -129,7 +129,7 @@ class OGRCSVLayer : public OGRLayer
     void                SetCreateCSVT(int bCreateCSVT);
     void                SetWriteBOM(int bWriteBOM);
 
-    virtual int         GetFeatureCount( int bForce = TRUE );
+    virtual GIntBig     GetFeatureCount( int bForce = TRUE );
 
     OGRErr              WriteHeader();
 };

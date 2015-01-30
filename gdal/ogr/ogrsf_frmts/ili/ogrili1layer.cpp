@@ -154,7 +154,7 @@ OGRFeature *OGRILI1Layer::GetFeatureRef( long nFID )
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
-int OGRILI1Layer::GetFeatureCount( int bForce )
+GIntBig OGRILI1Layer::GetFeatureCount( int bForce )
 {
     if (m_poFilterGeom == NULL && m_poAttrQuery == NULL &&
         1 /*poAreaLineLayer == NULL*/)
@@ -510,7 +510,7 @@ void OGRILI1Layer::PolygonizeAreaLayer( OGRILI1Layer* poAreaLineLayer, int nArea
     CPLDebug( "OGR_ILI", "Resulting polygons: %d", polys->getNumGeometries());
     if (polys->getNumGeometries() != GetFeatureCount())
     {
-        CPLDebug( "OGR_ILI", "Feature count of layer %s: %d", GetLayerDefn()->GetName(), GetFeatureCount());
+        CPLDebug( "OGR_ILI", "Feature count of layer %s: " CPL_FRMT_GIB, GetLayerDefn()->GetName(), GetFeatureCount());
         CPLDebug( "OGR_ILI", "Polygonizing again with crossing line fix");
         delete polys;
         polys = Polygonize( gc, true ); //try again with crossing line fix

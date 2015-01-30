@@ -411,13 +411,11 @@ typedef struct
 
 struct StatBuf
 {
-%apply (GIntBig bigint) { GIntBig };
 %immutable;
   int         mode;
   GIntBig     size;
   GIntBig     mtime;
 %mutable;
-%clear (GIntBig bigint);
 
 %extend {
   StatBuf( StatBuf *psStatBuf ) {
@@ -461,11 +459,9 @@ VSILFILE   *VSIFOpenL( const char *utf8_path, const char *pszMode );
 void    VSIFCloseL( VSILFILE * );
 
 #if defined(SWIGPYTHON)
-%apply (GIntBig bigint) { GIntBig };
 int     VSIFSeekL( VSILFILE *, GIntBig, int );
 GIntBig    VSIFTellL( VSILFILE * );
 int     VSIFTruncateL( VSILFILE *, GIntBig );
-%clear (GIntBig bigint);
 #else
 int     VSIFSeekL( VSILFILE *, long, int );
 long    VSIFTellL( VSILFILE * );

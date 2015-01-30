@@ -128,6 +128,13 @@ SRS_PT_WAGNER_V = _osr.SRS_PT_WAGNER_V
 SRS_PT_WAGNER_VI = _osr.SRS_PT_WAGNER_VI
 SRS_PT_WAGNER_VII = _osr.SRS_PT_WAGNER_VII
 SRS_PT_QSC = _osr.SRS_PT_QSC
+SRS_PT_AITOFF = _osr.SRS_PT_AITOFF
+SRS_PT_WINKEL_I = _osr.SRS_PT_WINKEL_I
+SRS_PT_WINKEL_II = _osr.SRS_PT_WINKEL_II
+SRS_PT_WINKEL_TRIPEL = _osr.SRS_PT_WINKEL_TRIPEL
+SRS_PT_CRASTER_PARABOLIC = _osr.SRS_PT_CRASTER_PARABOLIC
+SRS_PT_LOXIMUTHAL = _osr.SRS_PT_LOXIMUTHAL
+SRS_PT_QUARTIC_AUTHALIC = _osr.SRS_PT_QUARTIC_AUTHALIC
 SRS_PP_CENTRAL_MERIDIAN = _osr.SRS_PP_CENTRAL_MERIDIAN
 SRS_PP_SCALE_FACTOR = _osr.SRS_PP_SCALE_FACTOR
 SRS_PP_STANDARD_PARALLEL_1 = _osr.SRS_PP_STANDARD_PARALLEL_1
@@ -807,3 +814,5 @@ CoordinateTransformation_swigregister(CoordinateTransformation)
 def CreateCoordinateTransformation(*args):
   """CreateCoordinateTransformation(SpatialReference src, SpatialReference dst) -> CoordinateTransformation"""
   return _osr.CreateCoordinateTransformation(*args)
+
+

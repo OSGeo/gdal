@@ -273,6 +273,13 @@ OGRErr OGROCIWritableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK 
         else
             strcpy( szFieldType, "INTEGER" );
     }
+    else if( oField.GetType() == OFTInteger64 )
+    {
+        if( bPreservePrecision && oField.GetWidth() != 0 )
+            sprintf( szFieldType, "NUMBER(%d)", oField.GetWidth() );
+        else
+            strcpy( szFieldType, "NUMBER(20)" );
+    }
     else if( oField.GetType() == OFTReal )
     {
         if( bPreservePrecision && oField.GetWidth() != 0 )

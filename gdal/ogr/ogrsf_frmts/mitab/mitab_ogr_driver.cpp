@@ -256,6 +256,8 @@ void RegisterOGRTAB()
 "    <Value>OPTIMIZED</Value>"
 "  </Option>"
 "</CreationOptionList>");
+        
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES, "Integer Real String Date DateTime Time" );
 
         poDriver->pfnOpen = OGRTABDriverOpen;
         poDriver->pfnIdentify = OGRTABDriverIdentify;

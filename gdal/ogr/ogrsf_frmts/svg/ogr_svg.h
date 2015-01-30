@@ -103,7 +103,7 @@ class OGRSVGLayer : public OGRLayer
     virtual const char*         GetName() { return osLayerName.c_str(); }
     virtual OGRwkbGeometryType  GetGeomType();
 
-    virtual int                 GetFeatureCount( int bForce = TRUE );
+    virtual GIntBig             GetFeatureCount( int bForce = TRUE );
 
     virtual OGRFeatureDefn *    GetLayerDefn();
     

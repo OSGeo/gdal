@@ -82,6 +82,8 @@ def ogr_sql_sqlite_1():
         lyr = ds.CreateLayer( "my_layer", geom_type = geom)
         field_defn = ogr.FieldDefn('intfield', ogr.OFTInteger)
         lyr.CreateField(field_defn)
+        field_defn = ogr.FieldDefn('int64field', ogr.OFTInteger64)
+        lyr.CreateField(field_defn)
         field_defn = ogr.FieldDefn('doublefield', ogr.OFTReal)
         lyr.CreateField(field_defn)
         field_defn = ogr.FieldDefn('strfield', ogr.OFTString)
@@ -109,18 +111,21 @@ def ogr_sql_sqlite_1():
         lyr.CreateField(field_defn)
         field_defn = ogr.FieldDefn('intlistfield', ogr.OFTIntegerList)
         lyr.CreateField(field_defn)
+        field_defn = ogr.FieldDefn('int64listfield', ogr.OFTInteger64List)
+        lyr.CreateField(field_defn)
         field_defn = ogr.FieldDefn('doublelistfield', ogr.OFTRealList)
         lyr.CreateField(field_defn)
         field_defn = ogr.FieldDefn('strlistfield', ogr.OFTStringList)
         lyr.CreateField(field_defn)
 
         # Test INSERT
-        sql_lyr = ds.ExecuteSQL( "INSERT INTO my_layer (intfield, nullablefield, doublefield, strfield, binaryfield, datetimefield, datefield, timefield, \"from\", boolfield, int16field, float32field, intlistfield, doublelistfield, strlistfield) VALUES (1,NULL,2.34,'foo',x'0001FF', '2012-08-23 21:24', '2012-08-23', '21:24', 'from_val', 1, -32768, 1.23, '(2:2,3)', '(1:1.23)', '(1:a)')", dialect = 'SQLite' )
+        sql_lyr = ds.ExecuteSQL( "INSERT INTO my_layer (intfield, int64field, nullablefield, doublefield, strfield, binaryfield, datetimefield, datefield, timefield, \"from\", boolfield, int16field, float32field, intlistfield, int64listfield, doublelistfield, strlistfield) VALUES (1,1234567890123456,NULL,2.34,'foo',x'0001FF', '2012-08-23 21:24', '2012-08-23', '21:24', 'from_val', 1, -32768, 1.23, '(2:2,3)', '(1:1234567890123456)', '(1:1.23)', '(1:a)')", dialect = 'SQLite' )
         ds.ReleaseResultSet( sql_lyr )
 
         lyr.ResetReading()
         feat = lyr.GetNextFeature()
         if feat.GetField('intfield') != 1 or \
+           feat.GetField('int64field') != 1234567890123456 or \
            feat.GetField('nullablefield') is not None or \
            feat.GetField('doublefield') != 2.34 or \
            feat.GetField('strfield') != 'foo' or \
@@ -135,12 +140,13 @@ def ogr_sql_sqlite_1():
         feat = None
 
         # Test UPDATE
-        sql_lyr = ds.ExecuteSQL( "UPDATE my_layer SET intfield = 2, doublefield = 3.45, strfield = 'bar', timefield = '12:34' WHERE ROWID = 0", dialect = 'SQLite' )
+        sql_lyr = ds.ExecuteSQL( "UPDATE my_layer SET intfield = 2, int64field = 234567890123, doublefield = 3.45, strfield = 'bar', timefield = '12:34' WHERE ROWID = 0", dialect = 'SQLite' )
         ds.ReleaseResultSet( sql_lyr )
 
         lyr.ResetReading()
         feat = lyr.GetNextFeature()
         if feat.GetField('intfield') != 2 or \
+           feat.GetField('int64field') != 234567890123 or \
            feat.GetField('doublefield') != 3.45 or \
            feat.GetField('strfield') != 'bar' or \
            feat.GetField('datetimefield') != '2012/08/23 21:24:00' or \
@@ -177,6 +183,7 @@ def ogr_sql_sqlite_1():
             return 'fail'
         feat = sql_lyr.GetNextFeature()
         if feat.GetField('intfield') != 2 or \
+           feat.GetField('int64field') != 234567890123 or \
            feat.GetField('nullablefield') is not None or \
            feat.GetField('doublefield') != 3.45 or \
            feat.GetField('strfield') != 'bar' or \
@@ -187,6 +194,7 @@ def ogr_sql_sqlite_1():
            feat.GetField('int16field') != -32768 or \
            feat.GetField('float32field') != 1.23 or \
            feat.GetField('intlistfield') != [2, 3] or \
+           feat.GetField('int64listfield') != [1234567890123456] or \
            feat.GetField('doublelistfield') != [1.23] or \
            feat.GetField('strlistfield') != ['a']:
             gdaltest.post_reason('failure')
@@ -213,6 +221,7 @@ def ogr_sql_sqlite_1():
 
         # Success filters
         for cond in [ 'intfield = 2', 'intfield > 1', 'intfield >= 2', 'intfield < 3', 'intfield <= 2',
+                      'int64field = 234567890123',
                         'doublefield = 3.45', 'doublefield > 3', 'doublefield >= 3.45', 'doublefield < 3.46', 'doublefield <= 3.45',
                         "strfield = 'bar'", "strfield > 'baq'", "strfield >= 'bar'", "strfield < 'bas'", "strfield <= 'bar'",
                         'nullablefield IS NULL',

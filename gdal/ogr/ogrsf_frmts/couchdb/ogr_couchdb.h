@@ -96,7 +96,7 @@ protected:
 
     virtual CouchDBLayerType    GetLayerType() = 0;
 
-    virtual OGRErr              SetNextByIndex( long nIndex );
+    virtual OGRErr              SetNextByIndex( GIntBig nIndex );
 
     virtual OGRSpatialReference * GetSpatialRef();
 };
@@ -171,10 +171,10 @@ class OGRCouchDBTableLayer : public OGRCouchDBLayer
 
     virtual const char *        GetName() { return osName.c_str(); }
 
-    virtual int                 GetFeatureCount( int bForce = TRUE );
+    virtual GIntBig             GetFeatureCount( int bForce = TRUE );
     virtual OGRErr              GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
 
-    virtual OGRFeature *        GetFeature( long nFID );
+    virtual OGRFeature *        GetFeature( GIntBig nFID );
 
     virtual void                SetSpatialFilter( OGRGeometry * );
     virtual OGRErr              SetAttributeFilter( const char * );
@@ -183,7 +183,7 @@ class OGRCouchDBTableLayer : public OGRCouchDBLayer
                                             int bApproxOK = TRUE );
     virtual OGRErr              ICreateFeature( OGRFeature *poFeature );
     virtual OGRErr              ISetFeature( OGRFeature *poFeature );
-    virtual OGRErr              DeleteFeature( long nFID );
+    virtual OGRErr              DeleteFeature( GIntBig nFID );
 
     virtual OGRErr              StartTransaction();
     virtual OGRErr              CommitTransaction();

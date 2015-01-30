@@ -164,7 +164,7 @@ class OGRMSSQLSpatialLayer : public OGRLayer
     virtual OGRFeature *GetNextRawFeature();
     virtual OGRFeature *GetNextFeature();
 
-    virtual OGRFeature *GetFeature( long nFeatureId );
+    virtual OGRFeature *GetFeature( GIntBig nFeatureId );
     
     virtual OGRFeatureDefn *GetLayerDefn() { return poFeatureDefn; }
 
@@ -225,7 +225,7 @@ class OGRMSSQLSpatialTableLayer : public OGRMSSQLSpatialLayer
     void                DropSpatialIndex();
 
     virtual void        ResetReading();
-    virtual int         GetFeatureCount( int );
+    virtual GIntBig     GetFeatureCount( int );
 
     virtual OGRFeatureDefn *GetLayerDefn();
 
@@ -234,7 +234,7 @@ class OGRMSSQLSpatialTableLayer : public OGRMSSQLSpatialLayer
     virtual OGRErr      SetAttributeFilter( const char * );
 
     virtual OGRErr      ISetFeature( OGRFeature *poFeature );
-    virtual OGRErr      DeleteFeature( long nFID );
+    virtual OGRErr      DeleteFeature( GIntBig nFID );
     virtual OGRErr      ICreateFeature( OGRFeature *poFeature );
 
     const char*         GetTableName() { return pszTableName; }
@@ -244,7 +244,7 @@ class OGRMSSQLSpatialTableLayer : public OGRMSSQLSpatialLayer
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
                                      int bApproxOK = TRUE );
    
-    virtual OGRFeature *GetFeature( long nFeatureId );
+    virtual OGRFeature *GetFeature( GIntBig nFeatureId );
 
     virtual int         TestCapability( const char * );
 
@@ -281,9 +281,9 @@ class OGRMSSQLSpatialSelectLayer : public OGRMSSQLSpatialLayer
                         ~OGRMSSQLSpatialSelectLayer();
 
     virtual void        ResetReading();
-    virtual int         GetFeatureCount( int );
+    virtual GIntBig     GetFeatureCount( int );
 
-    virtual OGRFeature *GetFeature( long nFeatureId );
+    virtual OGRFeature *GetFeature( GIntBig nFeatureId );
     
     virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
 

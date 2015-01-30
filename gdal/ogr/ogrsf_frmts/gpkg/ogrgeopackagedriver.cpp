@@ -215,6 +215,8 @@ COMPRESSION_OPTIONS
 "  <Option name='TRUNCATE_FIELDS' type='boolean' description='Whether to truncate text content that exceeds maximum width' default='NO'/>"
 "  <Option name='SPATIAL_INDEX' type='boolean' description='Whether to create a spatial index' default='YES'/>"
 "</LayerCreationOptionList>");
+        
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES, "Integer Integer64 Real String Date DateTime Binary" );
 
         poDriver->pfnOpen = OGRGeoPackageDriverOpen;
         poDriver->pfnIdentify = OGRGeoPackageDriverIdentify;

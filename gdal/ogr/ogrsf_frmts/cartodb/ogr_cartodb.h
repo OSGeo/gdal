@@ -114,7 +114,7 @@ class OGRCARTODBTableLayer : public OGRCARTODBLayer
 
     int                 bInTransaction;
     CPLString           osTransactionSQL;
-    long                nNextFID;
+    GIntBig             nNextFID;
     
     int                 bDifferedCreation;
 
@@ -129,8 +129,8 @@ class OGRCARTODBTableLayer : public OGRCARTODBLayer
     virtual const char*         GetName() { return osName.c_str(); }
     virtual OGRFeatureDefn *    GetLayerDefnInternal(json_object* poObjIn);
 
-    virtual int                 GetFeatureCount( int bForce = TRUE );
-    virtual OGRFeature         *GetFeature( long nFeatureId );
+    virtual GIntBig             GetFeatureCount( int bForce = TRUE );
+    virtual OGRFeature         *GetFeature( GIntBig nFeatureId );
 
     virtual int                 TestCapability( const char * );
 
@@ -141,7 +141,7 @@ class OGRCARTODBTableLayer : public OGRCARTODBLayer
 
     virtual OGRErr      ICreateFeature( OGRFeature *poFeature );
     virtual OGRErr      ISetFeature( OGRFeature *poFeature );
-    virtual OGRErr      DeleteFeature( long nFID );
+    virtual OGRErr      DeleteFeature( GIntBig nFID );
 
     virtual void        SetSpatialFilter( OGRGeometry *poGeom ) { SetSpatialFilter(0, poGeom); }
     virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom );

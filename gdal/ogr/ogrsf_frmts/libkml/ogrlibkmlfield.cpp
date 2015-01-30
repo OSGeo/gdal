@@ -1709,18 +1709,20 @@ void kml2FeatureDef (
             osName = poKmlSimpleField->get_name (  );
         }
 
-        if ( EQUAL ( pszType, "boolean" ) ||
+        if ( EQUAL ( pszType, "bool" ) ||
+             EQUAL ( pszType, "boolean" ) ||
              EQUAL ( pszType, "int" ) ||
              EQUAL ( pszType, "short" ) ||
              EQUAL ( pszType, "ushort" ) ) {
             OGRFieldDefn oOgrFieldName ( osName.c_str(), OFTInteger );
             poOgrFeatureDefn->AddFieldDefn ( &oOgrFieldName );
         }
+        else if ( EQUAL ( pszType, "uint" ) )  {
+            OGRFieldDefn oOgrFieldName ( osName.c_str(), OFTInteger64 );
+            poOgrFeatureDefn->AddFieldDefn ( &oOgrFieldName );
+        }
         else if ( EQUAL ( pszType, "float" ) ||
-                  EQUAL ( pszType, "double" ) ||
-
-                  /* a too big uint wouldn't fit in a int, so we map it to OFTReal for now ... */
-                  EQUAL ( pszType, "uint" ) ) {
+                  EQUAL ( pszType, "double" ) ) {
             OGRFieldDefn oOgrFieldName ( osName.c_str(), OFTReal );
             poOgrFeatureDefn->AddFieldDefn ( &oOgrFieldName );
         }

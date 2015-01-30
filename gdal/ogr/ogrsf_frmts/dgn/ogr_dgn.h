@@ -70,9 +70,9 @@ class OGRDGNLayer : public OGRLayer
 
     void                ResetReading();
     OGRFeature *        GetNextFeature();
-    OGRFeature *        GetFeature( long nFeatureId );
+    OGRFeature *        GetFeature( GIntBig nFeatureId );
 
-    virtual int         GetFeatureCount( int bForce = TRUE );
+    virtual GIntBig     GetFeatureCount( int bForce = TRUE );
     virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
 
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }

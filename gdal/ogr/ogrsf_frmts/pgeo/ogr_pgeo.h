@@ -52,7 +52,7 @@ class OGRPGeoLayer : public OGRLayer
     OGRSpatialReference *poSRS;
     int                 nSRSId;
 
-    int                 iNextShapeId;
+    GIntBig             iNextShapeId;
 
     OGRPGeoDataSource    *poDS;
 
@@ -76,7 +76,7 @@ class OGRPGeoLayer : public OGRLayer
     virtual OGRFeature *GetNextRawFeature();
     virtual OGRFeature *GetNextFeature();
 
-    virtual OGRFeature *GetFeature( long nFeatureId );
+    virtual OGRFeature *GetFeature( GIntBig nFeatureId );
     
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
 
@@ -118,10 +118,10 @@ class OGRPGeoTableLayer : public OGRPGeoLayer
                                     int bHasZ );
 
     virtual void        ResetReading();
-    virtual int         GetFeatureCount( int );
+    virtual GIntBig     GetFeatureCount( int );
 
     virtual OGRErr      SetAttributeFilter( const char * );
-    virtual OGRFeature *GetFeature( long nFeatureId );
+    virtual OGRFeature *GetFeature( GIntBig nFeatureId );
     
     virtual int         TestCapability( const char * );
 
@@ -147,9 +147,9 @@ class OGRPGeoSelectLayer : public OGRPGeoLayer
                         ~OGRPGeoSelectLayer();
 
     virtual void        ResetReading();
-    virtual int         GetFeatureCount( int );
+    virtual GIntBig     GetFeatureCount( int );
 
-    virtual OGRFeature *GetFeature( long nFeatureId );
+    virtual OGRFeature *GetFeature( GIntBig nFeatureId );
     
     virtual int         TestCapability( const char * );
 };

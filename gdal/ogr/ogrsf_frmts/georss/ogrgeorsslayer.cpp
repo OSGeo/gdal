@@ -2203,7 +2203,7 @@ int OGRGeoRSSLayer::TestCapability( const char * pszCap )
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
-int OGRGeoRSSLayer::GetFeatureCount( int bForce )
+GIntBig OGRGeoRSSLayer::GetFeatureCount( int bForce )
 
 {
     if (bWriteMode)

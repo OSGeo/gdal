@@ -269,7 +269,9 @@ static CPLString OGRAPISpyGetFieldType(OGRFieldType eType)
     switch(eType)
     {
         casePrefixOgrDot(OFTInteger)
+        casePrefixOgrDot(OFTInteger64)
         casePrefixOgrDot(OFTIntegerList)
+        casePrefixOgrDot(OFTInteger64List)
         casePrefixOgrDot(OFTReal)
         casePrefixOgrDot(OFTRealList)
         casePrefixOgrDot(OFTString)
@@ -530,7 +532,6 @@ void OGRAPISpy_DS_DeleteLayer( OGRDataSourceH hDS, int iLayer, CPL_UNUSED OGRErr
     OGRAPISpyFileClose();
 }
 
-
 void OGRAPISpy_L_GetFeatureCount( OGRLayerH hLayer, int bForce )
 {
     OGRAPISpyFlushDiffered();
@@ -564,18 +565,18 @@ void OGRAPISpy_L_SetAttributeFilter( OGRLayerH hLayer, const char* pszFilter )
     OGRAPISpyFileClose();
 }
 
-void OGRAPISpy_L_GetFeature( OGRLayerH hLayer, long nFeatureId )
+void OGRAPISpy_L_GetFeature( OGRLayerH hLayer, GIntBig nFeatureId )
 {
     OGRAPISpyFlushDiffered();
-    fprintf(fpSpyFile, "%s.GetFeature(%ld)\n",
+    fprintf(fpSpyFile, "%s.GetFeature(" CPL_FRMT_GIB ")\n",
             OGRAPISpyGetLayerVar(hLayer).c_str(), nFeatureId);
     OGRAPISpyFileClose();
 }
 
-void OGRAPISpy_L_SetNextByIndex( OGRLayerH hLayer, long nIndex )
+void OGRAPISpy_L_SetNextByIndex( OGRLayerH hLayer, GIntBig nIndex )
 {
     OGRAPISpyFlushDiffered();
-    fprintf(fpSpyFile, "%s.SetNextByIndex(%ld)\n",
+    fprintf(fpSpyFile, "%s.SetNextByIndex(" CPL_FRMT_GIB ")\n",
             OGRAPISpyGetLayerVar(hLayer).c_str(), nIndex);
     OGRAPISpyFileClose();
 }
@@ -601,7 +602,7 @@ static void OGRAPISpyDumpFeature( OGRLayerH hLayer, OGRFeatureH hFeat )
     fprintf(fpSpyFile, "f = ogr.Feature(%s_defn)\n",
             OGRAPISpyGetLayerVar(hLayer).c_str());
     if( poFeature->GetFID() != -1 )
-        fprintf(fpSpyFile, "f.SetFID(%ld)\n", poFeature->GetFID());
+        fprintf(fpSpyFile, "f.SetFID(" CPL_FRMT_GIB ")\n", poFeature->GetFID());
     int i;
     for(i = 0; i < poFeature->GetFieldCount(); i++)
     {
@@ -830,10 +831,10 @@ void OGRAPISpy_L_SetSpatialFilterRectEx( OGRLayerH hLayer, int iGeomField,
     OGRAPISpyFileClose();
 }
 
-void OGRAPISpy_L_DeleteFeature( OGRLayerH hLayer, long nFID )
+void OGRAPISpy_L_DeleteFeature( OGRLayerH hLayer, GIntBig nFID )
 {
     OGRAPISpyFlushDiffered();
-    fprintf(fpSpyFile, "%s.DeleteFeature(%ld)\n",
+    fprintf(fpSpyFile, "%s.DeleteFeature(" CPL_FRMT_GIB ")\n",
             OGRAPISpyGetLayerVar(hLayer).c_str(), nFID);
     OGRAPISpyFileClose();
 }

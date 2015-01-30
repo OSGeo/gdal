@@ -196,12 +196,16 @@
         <xs:restriction base="xs:string">
             <xs:enumeration value="Integer"/>
             <xs:enumeration value="integer"/>
+            <xs:enumeration value="Integer64"/>
+            <xs:enumeration value="integer64"/>
             <xs:enumeration value="Real"/>
             <xs:enumeration value="real"/>
             <xs:enumeration value="String"/>
             <xs:enumeration value="string"/>
             <xs:enumeration value="IntegerList"/>
             <xs:enumeration value="integerlist"/>
+            <xs:enumeration value="Integer64List"/>
+            <xs:enumeration value="integer64list"/>
             <xs:enumeration value="RealList"/>
             <xs:enumeration value="reallist"/>
             <xs:enumeration value="StringList"/>

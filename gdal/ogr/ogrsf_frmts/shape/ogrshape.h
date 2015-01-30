@@ -53,7 +53,8 @@ OGRFeature *SHPReadOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
 OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape, SHPObject *psShape );
 OGRFeatureDefn *SHPReadOGRFeatureDefn( const char * pszName,
                                        SHPHandle hSHP, DBFHandle hDBF,
-                                       const char *pszSHPEncoding );
+                                       const char *pszSHPEncoding,
+                                       int bAdjustType );
 OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
                            OGRFeatureDefn *poFeatureDefn,
                            OGRFeature *poFeature, const char *pszSHPEncoding,
@@ -112,7 +113,7 @@ class OGRShapeLayer : public OGRAbstractProxiedLayer
 
     int                 ScanIndices();
 
-    long               *panMatchingFIDs;
+    GIntBig            *panMatchingFIDs;
     int                 iMatchingFID;
     void                ClearMatchingFIDs();
 
@@ -185,17 +186,17 @@ class OGRShapeLayer : public OGRAbstractProxiedLayer
 
     void                ResetReading();
     OGRFeature *        GetNextFeature();
-    virtual OGRErr      SetNextByIndex( long nIndex );
+    virtual OGRErr      SetNextByIndex( GIntBig nIndex );
 
-    OGRFeature         *GetFeature( long nFeatureId );
+    OGRFeature         *GetFeature( GIntBig nFeatureId );
     OGRErr              ISetFeature( OGRFeature *poFeature );
-    OGRErr              DeleteFeature( long nFID );
+    OGRErr              DeleteFeature( GIntBig nFID );
     OGRErr              ICreateFeature( OGRFeature *poFeature );
     OGRErr              SyncToDisk();
     
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
 
-    int                 GetFeatureCount( int );
+    GIntBig             GetFeatureCount( int );
     OGRErr              GetExtent(OGREnvelope *psExtent, int bForce);
 
     virtual OGRErr      CreateField( OGRFieldDefn *poField,

@@ -316,7 +316,7 @@ void OGRIDBTableLayer::ResetReading()
 /*                             GetFeature()                             */
 /************************************************************************/
 
-OGRFeature *OGRIDBTableLayer::GetFeature( long nFeatureId )
+OGRFeature *OGRIDBTableLayer::GetFeature( GIntBig nFeatureId )
 
 {
     if( pszFIDColumn == NULL )
@@ -421,7 +421,7 @@ int OGRIDBTableLayer::TestCapability( const char * pszCap )
 /*      way of counting features matching a spatial query.              */
 /************************************************************************/
 
-int OGRIDBTableLayer::GetFeatureCount( int bForce )
+GIntBig OGRIDBTableLayer::GetFeatureCount( int bForce )
 
 {
     return OGRIDBLayer::GetFeatureCount( bForce );

@@ -2042,7 +2042,7 @@ def ogr_vrt_30():
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(4326)
     lyr = ds.CreateLayer('ogr_vrt_30_2', srs = sr)
-    lyr.CreateField(ogr.FieldDefn('id2', ogr.OFTInteger))
+    lyr.CreateField(ogr.FieldDefn('id2', ogr.OFTInteger64))
     lyr.CreateField(ogr.FieldDefn('id3', ogr.OFTInteger))
 
     for i in range(5):
@@ -2102,6 +2102,9 @@ def ogr_vrt_30():
         elif check == 3:
             if lyr.GetLayerDefn().GetFieldCount() != 3:
                 gdaltest.post_reason('did not get expected field count')
+                return 'fail'
+            if lyr.GetLayerDefn().GetFieldDefn(1).GetType() != ogr.OFTInteger64:
+                gdaltest.post_reason('did not get expected field type')
                 return 'fail'
         elif check == 4:
             feat = lyr.GetNextFeature()

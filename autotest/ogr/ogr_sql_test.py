@@ -1068,16 +1068,18 @@ def ogr_sql_36():
     lyr.CreateField(ogr.FieldDefn('intfield', ogr.OFTInteger))
     lyr.CreateField(ogr.FieldDefn('floatfield', ogr.OFTReal))
     lyr.CreateField(ogr.FieldDefn('strfield', ogr.OFTString))
+    lyr.CreateField(ogr.FieldDefn('int64field', ogr.OFTInteger64))
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetField(0, 1)
     feat.SetField(1, 2.3)
     feat.SetField(2, "456")
+    feat.SetField(3, 1234567890123)
     lyr.CreateFeature(feat)
     feat = ogr.Feature(lyr.GetLayerDefn())
     lyr.CreateFeature(feat)
     feat = None
 
-    for fieldname in ['intfield', 'floatfield', 'strfield']:
+    for fieldname in ['intfield', 'int64field', 'floatfield', 'strfield']:
         sql_lyr = ds.ExecuteSQL( "select distinct %s from layer order by %s asc" % (fieldname, fieldname))
         feat = sql_lyr.GetNextFeature()
         if feat.IsFieldSet(0) != 0:
@@ -1093,7 +1095,7 @@ def ogr_sql_36():
             return 'fail'
         ds.ReleaseResultSet( sql_lyr )
 
-    for fieldname in ['intfield', 'floatfield', 'strfield']:
+    for fieldname in ['intfield', 'int64field', 'floatfield', 'strfield']:
         sql_lyr = ds.ExecuteSQL( "select distinct %s from layer order by %s desc" % (fieldname, fieldname))
         feat = sql_lyr.GetNextFeature()
         if feat.IsFieldSet(0) == 0:
@@ -1357,6 +1359,50 @@ def ogr_sql_44():
 
     return 'success'
 
+###############################################################################
+# Test 64 bit GetFeatureCount()
+
+def ogr_sql_45():
+
+    ds = ogr.Open("""<OGRVRTDataSource>
+  <OGRVRTLayer name="poly">
+    <SrcDataSource relativeToVRT="0" shared="1">data/poly.shp</SrcDataSource>
+    <SrcLayer>poly</SrcLayer>
+    <GeometryType>wkbPolygon</GeometryType>
+    <Field name="AREA" type="Real" src="AREA"/>
+    <Field name="EAS_ID" type="Integer" src="EAS_ID"/>
+    <Field name="PRFEDEA" type="Integer" src="PRFEDEA"/>
+    <FeatureCount>1000000000000</FeatureCount>
+  </OGRVRTLayer>
+</OGRVRTDataSource>""")
+    lyr = ds.GetLayer(0)
+
+    if lyr.GetFeatureCount() != 1000000000000:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    sql_lyr = ds.ExecuteSQL('SELECT COUNT(*) FROM poly')
+    f = sql_lyr.GetNextFeature()
+    if f.GetField(0) != 1000000000000:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = None
+    ds.ReleaseResultSet(sql_lyr)
+
+    sql_lyr = ds.ExecuteSQL('SELECT COUNT(AREA) FROM poly')
+    if sql_lyr.GetLayerDefn().GetFieldDefn(0).GetType() != ogr.OFTInteger:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = sql_lyr.GetNextFeature()
+    if f.GetField(0) != 10:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = None
+    ds.ReleaseResultSet(sql_lyr)
+
+    return 'success'
+
+
 def ogr_sql_cleanup():
     gdaltest.lyr = None
     gdaltest.ds.Destroy()
@@ -1410,6 +1456,7 @@ gdaltest_list = [
     ogr_sql_42,
     ogr_sql_43,
     ogr_sql_44,
+    ogr_sql_45,
     ogr_sql_cleanup ]
 
 if __name__ == '__main__':

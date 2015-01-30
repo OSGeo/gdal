@@ -81,7 +81,7 @@ protected:
 
     virtual int                 TestCapability( const char * );
 
-    virtual OGRErr              SetNextByIndex( long nIndex );
+    virtual OGRErr              SetNextByIndex( GIntBig nIndex );
 
     const char *        GetDefaultGeometryColumnName() { return "geometry"; }
 
@@ -137,9 +137,9 @@ class OGRGFTTableLayer : public OGRGFTLayer
     virtual OGRFeatureDefn *    GetLayerDefn();
 
     virtual const char *        GetName() { return osTableName.c_str(); }
-    virtual int         GetFeatureCount( int bForce = TRUE );
+    virtual GIntBig     GetFeatureCount( int bForce = TRUE );
 
-    virtual OGRFeature *        GetFeature( long nFID );
+    virtual OGRFeature *        GetFeature( GIntBig nFID );
 
     virtual void        SetSpatialFilter( OGRGeometry * );
     virtual OGRErr      SetAttributeFilter( const char * );
@@ -148,7 +148,7 @@ class OGRGFTTableLayer : public OGRGFTLayer
                                      int bApproxOK = TRUE );
     virtual OGRErr      ICreateFeature( OGRFeature *poFeature );
     virtual OGRErr      ISetFeature( OGRFeature *poFeature );
-    virtual OGRErr      DeleteFeature( long nFID );
+    virtual OGRErr      DeleteFeature( GIntBig nFID );
 
     virtual OGRErr      StartTransaction();
     virtual OGRErr      CommitTransaction();

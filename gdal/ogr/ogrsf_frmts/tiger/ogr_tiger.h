@@ -162,7 +162,7 @@ public:
   virtual const char *GetModule() { return pszModule; }
   virtual int         SetWriteModule( const char *, int, OGRFeature * );
 
-  virtual int         GetFeatureCount() { return nFeatures; }
+  virtual GIntBig     GetFeatureCount() { return nFeatures; }
 
   OGRFeatureDefn     *GetFeatureDefn() { return poFeatureDefn; }
 
@@ -517,11 +517,11 @@ class OGRTigerLayer : public OGRLayer
 
     void                ResetReading();
     OGRFeature *        GetNextFeature();
-    OGRFeature         *GetFeature( long nFeatureId );
+    OGRFeature         *GetFeature( GIntBig nFeatureId );
 
     OGRFeatureDefn *    GetLayerDefn();
 
-    int                 GetFeatureCount( int );
+    GIntBig             GetFeatureCount( int );
 
     int                 TestCapability( const char * );
 

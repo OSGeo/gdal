@@ -34,6 +34,7 @@
 #include "cpl_string.h"
 #include "cpl_vsi.h"
 #include "cpl_multiproc.h"
+#include <errno.h>
 
 CPL_CVSID("$Id$");
 
@@ -925,6 +926,71 @@ GUIntBig CPLScanUIntBig( const char *pszString, int nMaxLength )
 
     CPLFree( pszValue );
     return iValue;
+}
+
+/************************************************************************/
+/*                           CPLAtoGIntBig()                            */
+/************************************************************************/
+
+/**
+ * Convert a string to a 64 bit signed integer.
+ * 
+ * @param pszString String containing 64 bit signed integer.
+ * @return 64 bit signed integer.
+ * @since GDAL 2.0
+ */
+
+GIntBig CPLAtoGIntBig( const char* pszString )
+{
+#if defined(__MSVCRT__) || (defined(WIN32) && defined(_MSC_VER))
+    return _atoi64( pszString );
+# elif HAVE_ATOLL
+    return atoll( pszString );
+#else
+    return atol( pszString );
+#endif
+}
+
+/************************************************************************/
+/*                          CPLAtoGIntBigEx()                           */
+/************************************************************************/
+
+/**
+ * Convert a string to a 64 bit signed integer.
+ * 
+ * @param pszString String containing 64 bit signed integer.
+ * @param bWarn Issue a warning if an overflow occurs during conversion
+ * @param pbOverflow Pointer to an integer to store if an overflow occured, or NULL
+ * @return 64 bit signed integer.
+ * @since GDAL 2.0
+ */
+
+GIntBig CPLAtoGIntBigEx( const char* pszString, int bWarn, int *pbOverflow )
+{
+    GIntBig nVal;
+    errno = 0;
+#if defined(__MSVCRT__) || (defined(WIN32) && defined(_MSC_VER))
+    nVal = _atoi64( pszString );
+# elif HAVE_ATOLL
+    nVal = atoll( pszString );
+#else
+    nVal = atol( pszString );
+#endif
+    if( errno == ERANGE )
+    {
+        if( pbOverflow ) *pbOverflow = TRUE;
+        if( bWarn )
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "64 bit integer overflow when converting %s",
+                     pszString);
+        }
+        while( *pszString == ' ' )
+            pszString ++;
+        return (*pszString == '-' ) ? GINTBIG_MIN : GINTBIG_MAX;
+    }
+    else if( pbOverflow ) *pbOverflow = FALSE;
+    return nVal;
 }
 
 /************************************************************************/

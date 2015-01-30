@@ -58,7 +58,7 @@ VFKFeatureSQLite::VFKFeatureSQLite(IVFKDataBlock *poDataBlock) : IVFKFeature(poD
   \param iRowId feature DB rowid (starts at 1)
   \param nFID feature id
 */
-VFKFeatureSQLite::VFKFeatureSQLite(IVFKDataBlock *poDataBlock, int iRowId, long nFID) : IVFKFeature(poDataBlock)
+VFKFeatureSQLite::VFKFeatureSQLite(IVFKDataBlock *poDataBlock, int iRowId, GIntBig nFID) : IVFKFeature(poDataBlock)
 {
     m_hStmt  = NULL;
     m_iRowId = iRowId;

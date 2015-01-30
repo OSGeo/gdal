@@ -285,6 +285,8 @@ void RegisterOGRCSV()
 "</OpenOptionList>");
 
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+        
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES, "Integer Integer64 Real String Date DateTime Time" );
 
         poDriver->pfnOpen = OGRCSVDriverOpen;
         poDriver->pfnIdentify = OGRCSVDriverIdentify;

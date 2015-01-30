@@ -6718,7 +6718,7 @@ public class Layer:public double[] GetExtent()
  @return 0 on success. Otherwise throws a RuntimeException (or an error code if DontUseExceptions() has been called).
 
 */
-public class Layer:public int DeleteFeature(int fid)
+public class Layer:public int DeleteFeature(long fid)
 
 /**
  Fetch a feature by its identifier.
@@ -6745,7 +6745,7 @@ public class Layer:public int DeleteFeature(int fid)
 
  @return a feature, or null on failure. 
 */
-public class Layer:public Feature GetFeature(int fid)
+public class Layer:public Feature GetFeature(long fid)
 
 /**
  Fetch the feature count in this layer. 
@@ -6763,7 +6763,7 @@ public class Layer:public Feature GetFeature(int fid)
 
  @return feature count, -1 if count not known. 
 */
-public class Layer:public int GetFeatureCount(int force)
+public class Layer:public long GetFeatureCount(int force)
 
 /**
   * Fetch the feature count in this layer.
@@ -6774,7 +6774,7 @@ public class Layer:public int GetFeatureCount(int force)
   *
   * @since Java bindings 1.7.0
   */
-public class Layer:public int GetFeatureCount()
+public class Layer:public long GetFeatureCount()
 
 /**
   * Return the total number of features read.
@@ -6969,7 +6969,7 @@ public class Layer:public int SetFeature(Feature feature)
 
  @return 0 on success. Otherwise throws a RuntimeException (or an error code if DontUseExceptions() has been called).
 */
-public class Layer:public int SetNextByIndex(int new_index)
+public class Layer:public int SetNextByIndex(long new_index)
 
 
 /** 
@@ -7635,7 +7635,7 @@ public class Feature:public FeatureDefn GetDefnRef()
  *
  * @return feature id or OGRNullFID if none has been assigned.
  */
-public class Feature:public int GetFID()
+public class Feature:public long GetFID()
 
 /**
  * Fetch field value as date and time.
@@ -7879,7 +7879,7 @@ public class Feature:public boolean IsFieldSet(String name)
  *
  * @return 0 on success. Otherwise throws a RuntimeException (or an error code if DontUseExceptions() has been called).
  */
-public class Feature:public int SetFID(int fid)
+public class Feature:public int SetFID(long fid)
 
 /**
  * Set field to double value. 

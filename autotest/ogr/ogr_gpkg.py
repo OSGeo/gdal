@@ -347,12 +347,14 @@ def ogr_gpkg_8():
     fld_defn = ogr.FieldDefn('fld_float', ogr.OFTReal)
     fld_defn.SetSubType(ogr.OFSTFloat32)
     ret = lyr.CreateField(fld_defn)
+    lyr.CreateField(ogr.FieldDefn('fld_integer64', ogr.OFTInteger64))
     
     geom = ogr.CreateGeometryFromWkt('LINESTRING(5 5,10 5,10 10,5 10)')
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetGeometry(geom)
     
     for i in range(10):
+        feat.SetFID(-1)
         feat.SetField('fld_integer', 10 + i)
         feat.SetField('fld_real', 3.14159/(i+1) )
         feat.SetField('fld_string', 'test string %d test' % i)
@@ -362,6 +364,7 @@ def ogr_gpkg_8():
         feat.SetField('fld_boolean', 1 )
         feat.SetField('fld_smallint', -32768 )
         feat.SetField('fld_float', 1.23 )
+        feat.SetField('fld_integer64', 1000000000000 + i)
     
         if lyr.CreateFeature(feat) != 0:
             gdaltest.post_reason('cannot create feature %d' % i)
@@ -394,7 +397,8 @@ def ogr_gpkg_8():
     if feat.GetField(0) != 10 or feat.GetField(1) != 'test string 0 test' or \
        feat.GetField(2) != 3.14159  or feat.GetField(3) != '2014/05/17' or \
        feat.GetField(4) != '2014/05/17 12:34:56' or feat.GetField(5) != 'FFFE' or \
-       feat.GetField(6) != 1 or feat.GetField(7) != -32768 or feat.GetField(8) != 1.23:
+       feat.GetField(6) != 1 or feat.GetField(7) != -32768 or feat.GetField(8) != 1.23 or \
+       feat.GetField(9) != 1000000000000:
         gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
@@ -412,6 +416,7 @@ def ogr_gpkg_8():
     feat.SetGeometry(geom)
 
     for i in range(10):
+        feat.SetFID(-1)
         feat.SetField('fld_string', 'my super string %d' % i)
         feat.SetField('fld_datetime', '2010-01-01' )
 
@@ -524,7 +529,7 @@ def ogr_gpkg_12():
     if sql_lyr.GetFeatureCount() != 11:
         gdaltest.post_reason('fail')
         return 'fail'
-    if sql_lyr.GetLayerDefn().GetFieldCount() != 9:
+    if sql_lyr.GetLayerDefn().GetFieldCount() != 10:
         gdaltest.post_reason('fail')
         return 'fail'
     if sql_lyr.GetLayerDefn().GetFieldDefn(6).GetSubType() != ogr.OFSTBoolean:
@@ -1155,6 +1160,75 @@ def ogr_gpkg_21():
     f = lyr.GetFeature(f.GetFID())
     if f.GetField(0) != 'ab':
         gdaltest.post_reason('fail')
+
+    gdal.Unlink('/vsimem/ogr_gpkg_21.gpkg')
+
+    return 'success'
+
+###############################################################################
+# Test FID64 support
+
+def ogr_gpkg_22():
+
+    if gdaltest.gpkg_dr is None:
+        return 'skip'
+    
+    ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_22.gpkg')
+    lyr = ds.CreateLayer('test')
+    field_defn = ogr.FieldDefn('foo', ogr.OFTString)
+    lyr.CreateField(field_defn)
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField('foo', 'bar')
+    feat.SetFID(1234567890123)
+    lyr.CreateFeature(feat)
+    feat = None
+
+    ds = None
+    
+    ds = ogr.Open('/vsimem/ogr_gpkg_22.gpkg')
+    lyr = ds.GetLayerByName('test')
+    if lyr.GetMetadataItem(ogr.OLMD_FID64) is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f.GetFID() != 1234567890123:
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    gdal.Unlink('/vsimem/ogr_gpkg_22.gpkg')
+
+    return 'success'
+
+###############################################################################
+# Test FID64 support
+
+def ogr_gpkg_21():
+
+    if gdaltest.gpkg_dr is None:
+        return 'skip'
+    
+    ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_21.gpkg')
+    lyr = ds.CreateLayer('test')
+    field_defn = ogr.FieldDefn('foo', ogr.OFTString)
+    lyr.CreateField(field_defn)
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField('foo', 'bar')
+    feat.SetFID(1234567890123)
+    lyr.CreateFeature(feat)
+    feat = None
+
+    ds = None
+    
+    ds = ogr.Open('/vsimem/ogr_gpkg_21.gpkg')
+    lyr = ds.GetLayerByName('test')
+    if lyr.GetMetadataItem(ogr.OLMD_FID64) is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f.GetFID() != 1234567890123:
+        gdaltest.post_reason('failure')
         return 'fail'
 
     gdal.Unlink('/vsimem/ogr_gpkg_21.gpkg')
@@ -1240,6 +1314,7 @@ gdaltest_list = [
     ogr_gpkg_19,
     ogr_gpkg_20,
     ogr_gpkg_21,
+    ogr_gpkg_22,
     ogr_gpkg_test_ogrsf,
     ogr_gpkg_cleanup,
 ]

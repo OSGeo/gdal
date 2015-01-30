@@ -591,7 +591,7 @@ OGRErr OGRGMELayer::BatchDelete()
 {
     json_object *pjoBatchDelete = json_object_new_object();
     json_object *pjoGxIds = json_object_new_array();
-    std::vector<long>::const_iterator fit;
+    std::vector<GIntBig>::const_iterator fit;
     CPLDebug("GME", "BatchDelete() - <%d>", (int)oListOfDeletedFeatures.size() );
     if (oListOfDeletedFeatures.size() == 0) {
         CPLDebug("GME", "Empty list, not doing BatchDelete");
@@ -599,10 +599,10 @@ OGRErr OGRGMELayer::BatchDelete()
     }
     for ( fit = oListOfDeletedFeatures.begin(); fit != oListOfDeletedFeatures.end(); fit++)
     {
-        long nFID = *fit;
+        GIntBig nFID = *fit;
         if (nFID > 0) {
             CPLString osGxId(omnosIdToGMEKey[nFID]);
-            CPLDebug("GME", "Deleting feature %ld -> '%s'", nFID, osGxId.c_str());
+            CPLDebug("GME", "Deleting feature " CPL_FRMT_GIB " -> '%s'", nFID, osGxId.c_str());
             json_object *pjoGxId = json_object_new_string(osGxId.c_str());
             omnosIdToGMEKey.erase(nFID);
             json_object_array_add( pjoGxIds, pjoGxId );
@@ -648,9 +648,9 @@ OGRErr OGRGMELayer::BatchRequest(const char *pszMethod, std::map<int, OGRFeature
     }
     for ( fit = omnpoFeatures.begin(); fit != omnpoFeatures.end(); fit++)
     {
-        long nFID = fit->first;
+        GIntBig nFID = fit->first;
         OGRFeature *poFeature = fit->second;
-        CPLDebug("GME", "Processing feature: %ld", nFID );
+        CPLDebug("GME", "Processing feature: " CPL_FRMT_GIB, nFID );
         json_object *pjoFeature = OGRGMEFeatureToGeoJSON(poFeature);
 
         if (pjoFeature != NULL)
@@ -722,22 +722,22 @@ OGRErr OGRGMELayer::ICreateFeature( OGRFeature *poFeature )
         return OGRERR_FAILURE;
     }
 
-    long nFID = ++m_nFeaturesRead;
+    GIntBig nFID = ++m_nFeaturesRead;
     poFeature->SetFID(nFID);
 
     int nGxId = poFeature->GetFieldIndex("gx_id");
     CPLDebug("GME", "gx_id is field %d", iGxIdField);
     CPLString osGxId;
-    CPLDebug("GME", "Inserting feature %ld as %s", poFeature->GetFID(), osGxId.c_str());
+    CPLDebug("GME", "Inserting feature " CPL_FRMT_GIB " as %s", poFeature->GetFID(), osGxId.c_str());
     if (nGxId >= 0) {
         iGxIdField = nGxId;
         if(poFeature->IsFieldSet(iGxIdField)) {
           osGxId = poFeature->GetFieldAsString(iGxIdField);
-          CPLDebug("GME", "Feature already has %ld gx_id='%s'", poFeature->GetFID(),
+          CPLDebug("GME", "Feature already has " CPL_FRMT_GIB " gx_id='%s'", poFeature->GetFID(),
                    osGxId.c_str());
         }
         else {
-            osGxId = CPLSPrintf("GDAL-%ld", nFID);
+            osGxId = CPLSPrintf("GDAL-" CPL_FRMT_GIB "", nFID);
             CPLDebug("GME", "Setting field %d as %s", iGxIdField, osGxId.c_str() );
             poFeature->SetField( iGxIdField, osGxId.c_str() );
         }
@@ -773,13 +773,13 @@ OGRErr OGRGMELayer::ISetFeature( OGRFeature *poFeature )
 {
     if (!poFeature)
         return OGRERR_FAILURE;
-    long nFID = poFeature->GetFID();
+    GIntBig nFID = poFeature->GetFID();
     if(bInTransaction) {
         std::map<int, OGRFeature *>::const_iterator fit;
         fit = omnpoInsertedFeatures.find(nFID);
         if (fit != omnpoInsertedFeatures.end()) {
             omnpoInsertedFeatures[nFID] = poFeature->Clone();
-            CPLDebug("GME", "Updated Feature %ld in Transaction", nFID);
+            CPLDebug("GME", "Updated Feature " CPL_FRMT_GIB " in Transaction", nFID);
         }
         else {
             unsigned int iBatchSize = GetBatchPatchSize();
@@ -807,14 +807,14 @@ OGRErr OGRGMELayer::ISetFeature( OGRFeature *poFeature )
 /*                           DeleteteFeature()                          */
 /************************************************************************/
 
-OGRErr OGRGMELayer::DeleteFeature( long nFID )
+OGRErr OGRGMELayer::DeleteFeature( GIntBig nFID )
 {
     if(bInTransaction) {
         std::map<int, OGRFeature *>::iterator fit;
         fit = omnpoInsertedFeatures.find(nFID);
         if (fit != omnpoInsertedFeatures.end()) {
             omnpoInsertedFeatures.erase(fit);
-            CPLDebug("GME", "Found %ld in omnpoInsertedFeatures", nFID);
+            CPLDebug("GME", "Found " CPL_FRMT_GIB " in omnpoInsertedFeatures", nFID);
         }
         else {
             unsigned int iBatchSize = GetBatchPatchSize();

@@ -117,9 +117,9 @@ class OGRLIBKMLLayer:public OGRLayer
     //OGRErr                    SetAttributeFilter (const char * );
     OGRErr                    ICreateFeature( OGRFeature * poOgrFeat );
     OGRErr                    ISetFeature( OGRFeature * poOgrFeat );
-    OGRErr                    DeleteFeature( long nFID );
+    OGRErr                    DeleteFeature( GIntBig nFID );
 
-    int                       GetFeatureCount ( int bForce = TRUE );
+    GIntBig                   GetFeatureCount ( int bForce = TRUE );
     OGRErr                    GetExtent ( OGREnvelope * psExtent,
                                           int bForce = TRUE );
 

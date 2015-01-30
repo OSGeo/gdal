@@ -191,7 +191,7 @@ int IVFKDataBlock::AddProperty(const char *pszName, const char *pszType)
   
   \return number of features
 */
-int IVFKDataBlock::GetFeatureCount()
+GIntBig IVFKDataBlock::GetFeatureCount()
 {
     if (m_nFeatureCount < 0) {
         m_poReader->ReadDataRecords(this); /* read VFK data records */
@@ -403,7 +403,7 @@ IVFKFeature *IVFKDataBlock::GetFeatureByIndex(int iIndex) const
 
   \return pointer to feature definition or NULL on failure (not found)
 */
-IVFKFeature *IVFKDataBlock::GetFeature(long nFID)
+IVFKFeature *IVFKDataBlock::GetFeature(GIntBig nFID)
 {
     if (m_nFeatureCount < 0) {
         m_poReader->ReadDataRecords(this);
@@ -719,7 +719,7 @@ VFKFeatureList VFKDataBlock::GetFeatures(int idx1, int idx2, GUIntBig value)
 
   \return number of features or -1 on error
 */
-int VFKDataBlock::GetFeatureCount(const char *pszName, const char *pszValue)
+GIntBig VFKDataBlock::GetFeatureCount(const char *pszName, const char *pszValue)
 {
     int nfeatures, propIdx;
     VFKFeature *poVFKFeature;

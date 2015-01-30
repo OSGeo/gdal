@@ -92,5 +92,9 @@ int OGRMemDriver::TestCapability( const char * pszCap )
 void RegisterOGRMEM()
 
 {
-    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new OGRMemDriver );
+    OGRSFDriver* poDriver = new OGRMemDriver;
+    
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES, "Integer Integer64 Real String Date DateTime Time IntegerList Integer64List RealList StringList Binary" );
+
+    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( poDriver );
 }

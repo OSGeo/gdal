@@ -598,7 +598,6 @@ void GDALAllRegister();
 void GDALDestroyDriverManager();
 
 #ifdef SWIGPYTHON
-%apply (GIntBig bigint) { GIntBig };
 %inline {
 GIntBig wrapper_GDALGetCacheMax()
 {

@@ -214,9 +214,13 @@ OGRFeature *OGRGeoPackageLayer::TranslateFeature( sqlite3_stmt* hStmt )
         switch( poFieldDefn->GetType() )
         {
             case OFTInteger:
-                //FIXME use int64 when OGR has 64bit integer support
                 poFeature->SetField( iField, 
                     sqlite3_column_int( hStmt, iRawField ) );
+                break;
+
+            case OFTInteger64:
+                poFeature->SetField( iField, 
+                    sqlite3_column_int64( hStmt, iRawField ) );
                 break;
 
             case OFTReal:
@@ -394,7 +398,16 @@ void OGRGeoPackageLayer::BuildFeatureDefn( const char *pszLayerName,
         switch( nColType )
         {
           case SQLITE_INTEGER:
-            oField.SetType( OFTInteger );
+            if( CSLTestBoolean(CPLGetConfigOption("OGR_PROMOTE_TO_INTEGER64", "FALSE")) )
+                oField.SetType( OFTInteger64 );
+            else
+            {
+                GIntBig nVal = sqlite3_column_int64(hStmt, iCol);
+                if( (GIntBig)(int)nVal == nVal )
+                    oField.SetType( OFTInteger );
+                else
+                    oField.SetType( OFTInteger64 );
+            }
             break;
 
           case SQLITE_FLOAT:

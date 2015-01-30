@@ -428,7 +428,7 @@ bool OGRGeoJSONReader::GenerateLayerDefn( OGRGeoJSONLayer* poLayer, json_object*
     {
         OGRFieldDefn* poDefn = poLayerDefn->GetFieldDefn(i);
         if( EQUAL( poDefn->GetNameRef(), OGRGeoJSONLayer::DefaultFIDColumn )
-            && OFTInteger == poDefn->GetType() )
+            && (OFTInteger == poDefn->GetType() || OFTInteger64 == poDefn->GetType()) )
         {
             poLayer->SetFIDColumn( poDefn->GetNameRef() );
             /* bHasFID = true; */
@@ -537,11 +537,35 @@ bool OGRGeoJSONReader::GenerateFeatureDefn( OGRGeoJSONLayer* poLayer, json_objec
                     {
                         poFDefn->SetSubType(OFSTNone);
                     }
-                    else if( eNewType == OFTReal || eNewType == OFTString )
+                    else if( eNewType == OFTInteger64 || eNewType == OFTReal || eNewType == OFTString )
                     {
                         poFDefn->SetType(eNewType);
                         poFDefn->SetSubType(OFSTNone);
                     }
+                }
+                else if( eType == OFTInteger64 )
+                {
+                    OGRFieldSubType eSubType;
+                    OGRFieldType eNewType = GeoJSONPropertyToFieldType( it.val, eSubType );
+                    if( eNewType == OFTReal || eNewType == OFTString )
+                    {
+                        poFDefn->SetType(eNewType);
+                        poFDefn->SetSubType(OFSTNone);
+                    }
+                }
+                else if( eType == OFTIntegerList || eType == OFTInteger64List )
+                {
+                    OGRFieldSubType eSubType;
+                    OGRFieldType eNewType = GeoJSONPropertyToFieldType( it.val, eSubType );
+                    if( eNewType == OFTInteger64List || eNewType == OFTRealList || eNewType == OFTStringList )
+                        poFDefn->SetType(eNewType);
+                }
+                else if( eType == OFTRealList )
+                {
+                    OGRFieldSubType eSubType;
+                    OGRFieldType eNewType = GeoJSONPropertyToFieldType( it.val, eSubType );
+                    if( eNewType == OFTStringList )
+                        poFDefn->SetType(eNewType);
                 }
                 else if( eType == OFTDate || eType == OFTTime || eType == OFTDateTime )
                 {
@@ -735,6 +759,14 @@ OGRFeature* OGRGeoJSONReader::ReadFeature( OGRGeoJSONLayer* poLayer, json_object
                 if( EQUAL( it.key, poLayer->GetFIDColumn() ) )
                     poFeature->SetFID( json_object_get_int(it.val) );
             }
+            else if( OFTInteger64 == eType )
+            {
+                poFeature->SetField( nField, (GIntBig)json_object_get_int64(it.val) );
+                
+                /* Check if FID available and set correct value. */
+                if( EQUAL( it.key, poLayer->GetFIDColumn() ) )
+                    poFeature->SetFID( (GIntBig)json_object_get_int64(it.val) );
+            }
             else if( OFTReal == eType )
             {
                 poFeature->SetField( nField, CPLAtof(json_object_get_string(it.val)) );
@@ -749,6 +781,36 @@ OGRFeature* OGRGeoJSONReader::ReadFeature( OGRGeoJSONLayer* poLayer, json_object
                     {
                         json_object* poRow = json_object_array_get_idx(it.val, i);
                         panVal[i] = json_object_get_int(poRow);
+                    }
+                    poFeature->SetField( nField, nLength, panVal );
+                    CPLFree(panVal);
+                }
+            }
+            else if( OFTInteger64List == eType )
+            {
+                if ( json_object_get_type(it.val) == json_type_array )
+                {
+                    int nLength = json_object_array_length(it.val);
+                    GIntBig* panVal = (GIntBig*)CPLMalloc(sizeof(GIntBig) * nLength);
+                    for(int i=0;i<nLength;i++)
+                    {
+                        json_object* poRow = json_object_array_get_idx(it.val, i);
+                        panVal[i] = (GIntBig)json_object_get_int64(poRow);
+                    }
+                    poFeature->SetField( nField, nLength, panVal );
+                    CPLFree(panVal);
+                }
+            }
+            else if( OFTInteger64List == eType )
+            {
+                if ( json_object_get_type(it.val) == json_type_array )
+                {
+                    int nLength = json_object_array_length(it.val);
+                    GIntBig* panVal = (GIntBig*)CPLMalloc(sizeof(GIntBig) * nLength);
+                    for(int i=0;i<nLength;i++)
+                    {
+                        json_object* poRow = json_object_array_get_idx(it.val, i);
+                        panVal[i] = (GIntBig)json_object_get_int64(poRow);
                     }
                     poFeature->SetField( nField, nLength, panVal );
                     CPLFree(panVal);
@@ -824,12 +886,13 @@ OGRFeature* OGRGeoJSONReader::ReadFeature( OGRGeoJSONLayer* poLayer, json_object
         poObjId = OGRGeoJSONFindMemberByName( poObj, OGRGeoJSONLayer::DefaultFIDColumn );
         if( NULL != poObjId
             && EQUAL( OGRGeoJSONLayer::DefaultFIDColumn, poLayer->GetFIDColumn() )
-            && OFTInteger == GeoJSONPropertyToFieldType( poObjId, eSubType ) )
+            && (OFTInteger == GeoJSONPropertyToFieldType( poObjId, eSubType ) ||
+                OFTInteger64 == GeoJSONPropertyToFieldType( poObjId, eSubType )) )
         {
-            poFeature->SetFID( json_object_get_int( poObjId ) );
+            poFeature->SetFID( (GIntBig)json_object_get_int64( poObjId ) );
             int nField = poFeature->GetFieldIndex( poLayer->GetFIDColumn() );
             if( -1 != nField )
-                poFeature->SetField( nField, (int) poFeature->GetFID() );
+                poFeature->SetField( nField, poFeature->GetFID() );
         }
     }
 
@@ -837,7 +900,7 @@ OGRFeature* OGRGeoJSONReader::ReadFeature( OGRGeoJSONLayer* poLayer, json_object
     {
         json_object* poObjId = OGRGeoJSONFindMemberByName( poObj, "id" );
         if (poObjId != NULL && json_object_get_type(poObjId) == json_type_int)
-            poFeature->SetFID( json_object_get_int( poObjId ) );
+            poFeature->SetFID( (GIntBig)json_object_get_int64( poObjId ) );
     }
 
 /* -------------------------------------------------------------------- */

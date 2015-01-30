@@ -349,7 +349,7 @@ int OGRElasticLayer::TestCapability(const char * pszCap) {
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
-int OGRElasticLayer::GetFeatureCount(CPL_UNUSED int bForce) {
+GIntBig OGRElasticLayer::GetFeatureCount(CPL_UNUSED int bForce) {
     CPLError(CE_Failure, CPLE_NotSupported,
             "Cannot read features when writing a Elastic file");
     return 0;

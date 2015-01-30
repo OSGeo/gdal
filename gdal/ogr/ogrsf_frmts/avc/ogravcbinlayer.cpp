@@ -116,7 +116,7 @@ void OGRAVCBinLayer::ResetReading()
 /*                             GetFeature()                             */
 /************************************************************************/
 
-OGRFeature *OGRAVCBinLayer::GetFeature( long nFID )
+OGRFeature *OGRAVCBinLayer::GetFeature( GIntBig nFID )
 
 {
 /* -------------------------------------------------------------------- */

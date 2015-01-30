@@ -97,13 +97,13 @@ class CPL_DLL OGRLayer : public GDALMajorObject
 
     virtual void        ResetReading() = 0;
     virtual OGRFeature *GetNextFeature() = 0;
-    virtual OGRErr      SetNextByIndex( long nIndex );
-    virtual OGRFeature *GetFeature( long nFID );
+    virtual OGRErr      SetNextByIndex( GIntBig nIndex );
+    virtual OGRFeature *GetFeature( GIntBig nFID );
 
     OGRErr      SetFeature( OGRFeature *poFeature );
     OGRErr      CreateFeature( OGRFeature *poFeature );
 
-    virtual OGRErr      DeleteFeature( long nFID );
+    virtual OGRErr      DeleteFeature( GIntBig nFID );
 
     virtual const char *GetName();
     virtual OGRwkbGeometryType GetGeomType();
@@ -112,7 +112,7 @@ class CPL_DLL OGRLayer : public GDALMajorObject
 
     virtual OGRSpatialReference *GetSpatialRef();
 
-    virtual int         GetFeatureCount( int bForce = TRUE );
+    virtual GIntBig     GetFeatureCount( int bForce = TRUE );
     virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
     virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent,
                                   int bForce = TRUE);

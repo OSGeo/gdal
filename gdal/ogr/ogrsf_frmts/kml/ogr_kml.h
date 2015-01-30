@@ -64,7 +64,7 @@ public:
     OGRErr CreateField( OGRFieldDefn* poField, int bApproxOK = TRUE );
     void ResetReading();
     OGRFeature* GetNextFeature();
-    int GetFeatureCount( int bForce = TRUE );
+    GIntBig GetFeatureCount( int bForce = TRUE );
     int TestCapability( const char* pszCap );
 
     //

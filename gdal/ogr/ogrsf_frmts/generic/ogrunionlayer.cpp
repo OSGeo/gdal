@@ -227,8 +227,19 @@ static void MergeFieldDefn(OGRFieldDefn* poFieldDefn,
     if( poFieldDefn->GetType() != poSrcFieldDefn->GetType() )
     {
         if( poSrcFieldDefn->GetType() == OFTReal &&
-            poFieldDefn->GetType() == OFTInteger)
+            (poFieldDefn->GetType() == OFTInteger ||
+             poFieldDefn->GetType() == OFTInteger64) )
             poFieldDefn->SetType(OFTReal);
+        if( poFieldDefn->GetType() == OFTReal &&
+            (poSrcFieldDefn->GetType() == OFTInteger ||
+             poSrcFieldDefn->GetType() == OFTInteger64) )
+            poFieldDefn->SetType(OFTReal);
+        else if( poSrcFieldDefn->GetType() == OFTInteger64 &&
+                 poFieldDefn->GetType() == OFTInteger)
+            poFieldDefn->SetType(OFTInteger64);
+        else if( poFieldDefn->GetType() == OFTInteger64 &&
+                 poSrcFieldDefn->GetType() == OFTInteger)
+            poFieldDefn->SetType(OFTInteger64);
         else
             poFieldDefn->SetType(OFTString);
     }
@@ -709,7 +720,7 @@ OGRFeature *OGRUnionLayer::GetNextFeature()
 /*                             GetFeature()                             */
 /************************************************************************/
 
-OGRFeature *OGRUnionLayer::GetFeature( long nFeatureId )
+OGRFeature *OGRUnionLayer::GetFeature( GIntBig nFeatureId )
 {
     OGRFeature* poFeature = NULL;
 
@@ -945,7 +956,7 @@ void OGRUnionLayer::ApplyAttributeFilterToSrcLayer(int iSubLayer)
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
-int OGRUnionLayer::GetFeatureCount( int bForce )
+GIntBig OGRUnionLayer::GetFeatureCount( int bForce )
 {
     if (nFeatureCount >= 0 &&
         m_poFilterGeom == NULL && m_poAttrQuery == NULL)
@@ -956,7 +967,7 @@ int OGRUnionLayer::GetFeatureCount( int bForce )
     if( !GetAttrFilterPassThroughValue() )
         return OGRLayer::GetFeatureCount(bForce);
 
-    int nRet = 0;
+    GIntBig nRet = 0;
     for(int i = 0; i < nSrcLayers; i++)
     {
         AutoWarpLayerIfNecessary(i);

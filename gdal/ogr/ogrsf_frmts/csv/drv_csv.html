@@ -33,12 +33,14 @@ if no field type information file (with .csvt extension) is
 available.</p>
 
 <p>Limited type recognition can be done for Integer, Real, String, Date 
-(YYYY-MM-DD), Time (HH:MM:SS+nn) and DateTime (YYYY-MM-DD HH:MM:SS+nn) columns
+(YYYY-MM-DD), Time (HH:MM:SS+nn), DateTime (YYYY-MM-DD HH:MM:SS+nn) columns
 through a descriptive file with the same name as the CSV file, but a .csvt extension.
 In a single line the types for each column have to be listed with double quotes and
 be comma separated (e.g., "Integer","String"). It is also possible to specify
 explicitly the width and precision of each column, e.g. "Integer(5)","Real(10.7)","String(15)".
-The driver will then use these types as specified for the csv columns.</p>
+The driver will then use these types as specified for the csv columns.
+Starting with GDAL 2.0, subtypes can be passed between parenthesis, such as
+"Integer(Boolean)", "Integer(Int16)" and "Real(Float32)"</p>
 
 <p>Starting with GDAL 2.0, automatic field type guessing can also be done if
 specifying the open options described in the below "Open options" section.</p>

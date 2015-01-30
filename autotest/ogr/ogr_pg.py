@@ -1111,7 +1111,7 @@ def ogr_pg_23():
     fld.SetSubType(ogr.OFSTInt16)
     lyr.CreateField(fld)
     gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_int4 int4' )
-    gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_int8 int8' )
+    lyr.CreateField(ogr.FieldDefn('my_int8', ogr.OFTInteger64))
     #gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_float4 float4' )
     fld = ogr.FieldDefn('my_float4', ogr.OFTReal)
     fld.SetSubType(ogr.OFSTFloat32)
@@ -1131,6 +1131,7 @@ def ogr_pg_23():
     gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_textarray text[]' )
     gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_varchararray character varying[]' )
     gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_int4array int4[]' )
+    lyr.CreateField(ogr.FieldDefn('my_int8array', ogr.OFTInteger64List))
     gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_float4array float4[]' )
     gdaltest.pg_ds.ExecuteSQL( 'ALTER TABLE datatypetest ADD COLUMN my_float8array float8[]' )
     fld = ogr.FieldDefn('my_boolarray', ogr.OFTIntegerList)
@@ -1145,7 +1146,7 @@ def ogr_pg_23():
         geom_str = "'\\\\001\\\\001\\\\000\\\\000\\\\000\\\\000\\\\000\\\\000\\\\000\\\\000\\\\000$@\\\\000\\\\000\\\\000\\\\000\\\\000\\\\0004@'"
         if gdaltest.pg_quote_with_E:
             geom_str = "E" + geom_str
-    gdaltest.pg_ds.ExecuteSQL( "INSERT INTO datatypetest ( my_numeric5, my_numeric5_3, my_bool, my_int2, my_int4, my_int8, my_float4, my_float8, my_real, my_char, my_varchar, my_varchar10, my_text, my_bytea, my_time, my_date, my_timestamp, my_timestamptz, my_chararray, my_textarray, my_varchararray, my_int4array, my_float4array, my_float8array, my_boolarray, wkb_geometry) VALUES ( 12345, 0.123, 'T', 12345, 12345678, 1234567901234, 0.123, 0.12345678, 0.876, 'a', 'ab', 'varchar10 ', 'abc', 'xyz', '12:34:56', '2000-01-01', '2000-01-01 00:00:00', '2000-01-01 00:00:00+00', '{a,b}', '{aa,bb}', '{cc,dd}', '{100,200}', '{100.1,200.1}', '{100.12,200.12}', '{1,0}', " + geom_str + " )" )
+    gdaltest.pg_ds.ExecuteSQL( "INSERT INTO datatypetest ( my_numeric5, my_numeric5_3, my_bool, my_int2, my_int4, my_int8, my_float4, my_float8, my_real, my_char, my_varchar, my_varchar10, my_text, my_bytea, my_time, my_date, my_timestamp, my_timestamptz, my_chararray, my_textarray, my_varchararray, my_int4array, my_int8array, my_float4array, my_float8array, my_boolarray, wkb_geometry) VALUES ( 12345, 0.123, 'T', 12345, 12345678, 1234567901234, 0.123, 0.12345678, 0.876, 'a', 'ab', 'varchar10 ', 'abc', 'xyz', '12:34:56', '2000-01-01', '2000-01-01 00:00:00', '2000-01-01 00:00:00+00', '{a,b}', '{aa,bb}', '{cc,dd}', '{100,200}', '{1234567901234}', '{100.1,200.1}', '{100.12,200.12}', '{1,0}', " + geom_str + " )" )
 
     return 'success'
 
@@ -1193,6 +1194,7 @@ def test_val_test_23(layer_defn, feat):
     feat.my_bool != 1 or \
     feat.my_int2 != 12345 or \
     feat.my_int4 != 12345678 or \
+    feat.my_int8 != 1234567901234 or \
     abs(feat.my_float4 - 0.123) > 1e-8 or \
     feat.my_float8 != 0.12345678 or \
     abs(feat.my_real - 0.876) > 1e-6 or \
@@ -1209,6 +1211,7 @@ def test_val_test_23(layer_defn, feat):
     feat.GetFieldAsString('my_textarray') != '(2:aa,bb)' or \
     feat.GetFieldAsString('my_varchararray') != '(2:cc,dd)' or \
     feat.GetFieldAsString('my_int4array') != '(2:100,200)' or \
+    feat.my_int8array != [ 1234567901234 ] or \
     feat.GetFieldAsString('my_boolarray') != '(2:1,0)' :
 #    feat.my_float4array != '(2:100.1,200.1)'
 #    feat.my_float4array != '(2:100.12,200.12)'
@@ -3071,11 +3074,13 @@ def ogr_pg_63():
     if not gdaltest.pg_has_postgis:
         return 'skip'
 
-    lyr = gdaltest.pg_ds.CreateLayer('ogr_pg_63', options = ['COLUMN_TYPES=foo=int8,bar=numeric(10,5),baz=hstore'])
+    lyr = gdaltest.pg_ds.CreateLayer('ogr_pg_63', options = ['COLUMN_TYPES=foo=int8,bar=numeric(10,5),baz=hstore,baw=numeric(20,0)'])
     lyr.CreateField(ogr.FieldDefn('foo', ogr.OFTString))
     lyr.CreateField(ogr.FieldDefn('bar', ogr.OFTString))
+    lyr.CreateField(ogr.FieldDefn('baw', ogr.OFTString))
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetField('foo', '123')
+    feat.SetField('baw', '123456789012345')
     lyr.StartTransaction()
     lyr.CreateFeature(feat)
     lyr.CommitTransaction()
@@ -3084,7 +3089,7 @@ def ogr_pg_63():
 
     ds = ogr.Open('PG:' + gdaltest.pg_connection_string)
     lyr = ds.GetLayerByName('ogr_pg_63')
-    if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('foo')).GetType() != ogr.OFTInteger:
+    if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('foo')).GetType() != ogr.OFTInteger64:
         gdaltest.post_reason('fail')
         return 'fail'
     if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('bar')).GetType() != ogr.OFTReal:
@@ -3093,6 +3098,9 @@ def ogr_pg_63():
 
     feat = lyr.GetNextFeature()
     if feat.GetField('foo') != 123:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if feat.GetField('baw') != 123456789012345:
         gdaltest.post_reason('fail')
         return 'fail'
 
@@ -3668,6 +3676,138 @@ def ogr_pg_71():
     return 'success'
 
 ###############################################################################
+# Test 64 bit FID
+
+def ogr_pg_72():
+
+    if gdaltest.pg_ds is None:
+        return 'skip'
+    
+    # Regular layer with 32 bit IDs
+    lyr = gdaltest.pg_ds.CreateLayer('ogr_pg_72')
+    if lyr.GetMetadataItem(ogr.OLMD_FID64) is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    lyr.CreateField(ogr.FieldDefn('foo'))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetFID(123456789012345)
+    f.SetField(0, 'bar')
+    if lyr.CreateFeature(f) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = lyr.GetFeature(123456789012345)
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    
+    lyr = gdaltest.pg_ds.CreateLayer('ogr_pg_72', options = ['FID64=YES', 'OVERWRITE=YES'])
+    if lyr.GetMetadataItem(ogr.OLMD_FID64) is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    lyr.CreateField(ogr.FieldDefn('foo'))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetFID(123456789012345)
+    f.SetField(0, 'bar')
+    if lyr.CreateFeature(f) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.SetFeature(f) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdaltest.pg_ds = None
+    # Test with binary protocol
+    gdaltest.pg_ds = ogr.Open( 'PGB:' + gdaltest.pg_connection_string, update = 1 )
+    lyr = gdaltest.pg_ds.GetLayerByName('ogr_pg_72')
+    if lyr.GetMetadataItem(ogr.OLMD_FID64) is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f.GetFID() != 123456789012345:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    gdaltest.pg_ds = None
+    # Test with normal protocol
+    gdaltest.pg_ds = ogr.Open( 'PG:' + gdaltest.pg_connection_string, update = 1 )
+    lyr = gdaltest.pg_ds.GetLayerByName('ogr_pg_72')
+    if lyr.GetMetadataItem(ogr.OLMD_FID64) is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f.GetFID() != 123456789012345:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test 64 bit FID
+
+def ogr_pg_72():
+
+    if gdaltest.pg_ds is None:
+        return 'skip'
+    
+    # Regular layer with 32 bit IDs
+    lyr = gdaltest.pg_ds.CreateLayer('ogr_pg_72')
+    if lyr.GetMetadataItem(ogr.OLMD_FID64) is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    lyr.CreateField(ogr.FieldDefn('foo'))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetFID(123456789012345)
+    f.SetField(0, 'bar')
+    if lyr.CreateFeature(f) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = lyr.GetFeature(123456789012345)
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    
+    lyr = gdaltest.pg_ds.CreateLayer('ogr_pg_72', options = ['FID64=YES', 'OVERWRITE=YES'])
+    if lyr.GetMetadataItem(ogr.OLMD_FID64) is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    lyr.CreateField(ogr.FieldDefn('foo'))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetFID(123456789012345)
+    f.SetField(0, 'bar')
+    if lyr.CreateFeature(f) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.SetFeature(f) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdaltest.pg_ds = None
+    # Test with binary protocol
+    gdaltest.pg_ds = ogr.Open( 'PGB:' + gdaltest.pg_connection_string, update = 1 )
+    lyr = gdaltest.pg_ds.GetLayerByName('ogr_pg_72')
+    if lyr.GetMetadataItem(ogr.OLMD_FID64) is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f.GetFID() != 123456789012345:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    gdaltest.pg_ds = None
+    # Test with normal protocol
+    gdaltest.pg_ds = ogr.Open( 'PG:' + gdaltest.pg_connection_string, update = 1 )
+    lyr = gdaltest.pg_ds.GetLayerByName('ogr_pg_72')
+    if lyr.GetMetadataItem(ogr.OLMD_FID64) is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f.GetFID() != 123456789012345:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_pg_table_cleanup():
@@ -3712,6 +3852,7 @@ def ogr_pg_table_cleanup():
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_67' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_68' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_70' )
+    gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_72' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:test_curve' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:test_curve_3d' )
     
@@ -3817,7 +3958,13 @@ gdaltest_list_internal = [
     ogr_pg_69,
     ogr_pg_70,
     ogr_pg_71,
+    ogr_pg_72,
     ogr_pg_cleanup ]
+
+#gdaltest_list_internal = [ 
+#    ogr_pg_table_cleanup,
+#    ogr_pg_72,
+#    ogr_pg_cleanup ]
 
 ###############################################################################
 # Run gdaltest_list_internal with PostGIS enabled and then with PostGIS disabled

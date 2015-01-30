@@ -122,6 +122,8 @@ void GMLPropertyDefn::AnalysePropertyValue( const GMLProperty* psGMLProperty,
         {
             if( m_eType == GMLPT_Integer )
                 m_eType = GMLPT_IntegerList;
+            else if( m_eType == GMLPT_Integer64 )
+                m_eType = GMLPT_Integer64List;
             else if( m_eType == GMLPT_Real )
                 m_eType = GMLPT_RealList;
             else if( m_eType == GMLPT_String )
@@ -142,21 +144,6 @@ void GMLPropertyDefn::AnalysePropertyValue( const GMLProperty* psGMLProperty,
 
         CPLValueType valueType = CPLGetValueType(pszValue);
 
-        /* This might not fit into a int32. For now, let's */
-        /* consider this as a real value then. */
-        /* FIXME once RFC31 / 64 bit support is set, we could */
-        /* choose a different behaviour */
-        if (valueType == CPL_VALUE_INTEGER && strlen(pszValue) >= 10)
-        {
-            /* Skip leading spaces */
-            while( isspace( (unsigned char)*pszValue ) )
-                pszValue ++;
-            char szVal[32];
-            sprintf(szVal, "%d", atoi(pszValue));
-            if (strcmp(pszValue, szVal) != 0)
-                valueType = CPL_VALUE_REAL;
-        }
-
         if (valueType == CPL_VALUE_STRING
             && m_eType != GMLPT_String 
             && m_eType != GMLPT_StringList )
@@ -171,7 +158,9 @@ void GMLPropertyDefn::AnalysePropertyValue( const GMLProperty* psGMLProperty,
                       strcmp(pszValue, "false") == 0) )
                     m_eType = GMLPT_StringList;
             }
-            else if( m_eType == GMLPT_IntegerList || m_eType == GMLPT_RealList )
+            else if( m_eType == GMLPT_IntegerList ||
+                     m_eType == GMLPT_Integer64List ||
+                     m_eType == GMLPT_RealList )
                 m_eType = GMLPT_StringList;
             else
                 m_eType = GMLPT_String;
@@ -190,16 +179,30 @@ void GMLPropertyDefn::AnalysePropertyValue( const GMLProperty* psGMLProperty,
                     SetWidth( nWidth );
             }
         }
-        else if( m_eType == GMLPT_Untyped || m_eType == GMLPT_Integer )
+        else if( m_eType == GMLPT_Untyped || m_eType == GMLPT_Integer ||
+                 m_eType == GMLPT_Integer64 )
         {
             if( bIsReal )
                 m_eType = GMLPT_Real;
-            else
-                m_eType = GMLPT_Integer;
+            else if( m_eType != GMLPT_Integer64 )
+            {
+                GIntBig nVal = CPLAtoGIntBig(pszValue);
+                if( (GIntBig)(int)nVal != nVal )
+                    m_eType = GMLPT_Integer64;
+                else
+                    m_eType = GMLPT_Integer;
+            }
         }
-        else if( m_eType == GMLPT_IntegerList && bIsReal )
+        else if( (m_eType == GMLPT_IntegerList ||
+                  m_eType == GMLPT_Integer64List) && bIsReal )
         {
             m_eType = GMLPT_RealList;
+        }
+        else if( m_eType == GMLPT_IntegerList && valueType == CPL_VALUE_INTEGER )
+        {
+            GIntBig nVal = CPLAtoGIntBig(pszValue);
+            if( (GIntBig)(int)nVal != nVal )
+                m_eType = GMLPT_Integer64List;
         }
     }
 }

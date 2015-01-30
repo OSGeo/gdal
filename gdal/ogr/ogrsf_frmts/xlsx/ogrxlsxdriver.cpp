@@ -199,6 +199,7 @@ void RegisterOGRXLSX()
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
                                 "drv_xlsx.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES, "Integer Integer64 Real String Date DateTime Time" );
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver(poDriver);
 }
 

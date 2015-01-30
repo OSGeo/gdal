@@ -192,7 +192,7 @@ OGRErr OGROSMLayer::SetAttributeFilter( const char* pszAttrQuery )
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
-int OGROSMLayer::GetFeatureCount( int bForce )
+GIntBig OGROSMLayer::GetFeatureCount( int bForce )
 {
     if( poDS->IsFeatureCountEnabled() )
         return OGRLayer::GetFeatureCount(bForce);
@@ -545,8 +545,7 @@ void OGROSMLayer::SetFieldsFromTags(OGRFeature* poFeature,
 {
     if( !bIsWayID )
     {
-        if( (long)nID == nID )
-            poFeature->SetFID( (long)nID ); /* Will not work with 32bit GDAL if id doesn't fit into 32 bits */
+        poFeature->SetFID( nID );
 
         if( bHasOSMId )
         {
@@ -557,8 +556,7 @@ void OGROSMLayer::SetFieldsFromTags(OGRFeature* poFeature,
     }
     else
     {
-        if( (long)nID == nID )
-            poFeature->SetFID( (long)nID ); /* Will not work with 32bit GDAL if id doesn't fit into 32 bits */
+        poFeature->SetFID( nID );
 
         if( nIndexOSMWayId >= 0 )
         {
@@ -693,6 +691,9 @@ void OGROSMLayer::SetFieldsFromTags(OGRFeature* poFeature,
                     if( eType == OFTInteger )
                         sqlite3_bind_int( oAttr.hStmt, j + 1,
                                           poFeature->GetFieldAsInteger(oAttr.anIndexToBind[j]) );
+                    else if( eType == OFTInteger64 )
+                        sqlite3_bind_int64( oAttr.hStmt, j + 1,
+                                          poFeature->GetFieldAsInteger64(oAttr.anIndexToBind[j]) );
                     else if( eType == OFTReal )
                         sqlite3_bind_double( oAttr.hStmt, j + 1,
                                              poFeature->GetFieldAsDouble(oAttr.anIndexToBind[j]) );
@@ -728,7 +729,7 @@ void OGROSMLayer::SetFieldsFromTags(OGRFeature* poFeature,
             {
                 case SQLITE_INTEGER:
                     poFeature->SetField( oAttr.nIndex,
-                            (int)sqlite3_column_int64(oAttr.hStmt, 0) );
+                            (GIntBig)sqlite3_column_int64(oAttr.hStmt, 0) );
                     break;
                 case SQLITE_FLOAT:
                     poFeature->SetField( oAttr.nIndex,

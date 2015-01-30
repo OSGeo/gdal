@@ -144,31 +144,31 @@ bool VFKDataBlockSQLite::SetGeometryLineString(VFKFeatureSQLite *poLine, OGRLine
                bValid = FALSE;
             */
             CPLDebug("OGR-VFK", 
-                     "Line (fid=%ld) defined by more than two vertices",
+                     "Line (fid=" CPL_FRMT_GIB ") defined by more than two vertices",
                      poLine->GetFID());
         }
         else if (EQUAL(ftype, "11") && npoints < 2) { 
             bValid = FALSE;
             CPLError(CE_Warning, CPLE_AppDefined, 
-                     "Curve (fid=%ld) defined by less than two vertices",
+                     "Curve (fid=" CPL_FRMT_GIB ") defined by less than two vertices",
                      poLine->GetFID());
         }
         else if (EQUAL(ftype, "15") && npoints != 3) {
             bValid = FALSE;
             CPLError(CE_Warning, CPLE_AppDefined, 
-                     "Circle (fid=%ld) defined by invalid number of vertices (%d)",
+                     "Circle (fid=" CPL_FRMT_GIB ") defined by invalid number of vertices (%d)",
                      poLine->GetFID(), oOGRLine->getNumPoints());
         }
         else if (strlen(ftype) > 2 && EQUALN(ftype, "15", 2) && npoints != 1) {
             bValid = FALSE;
             CPLError(CE_Warning, CPLE_AppDefined, 
-                     "Circle (fid=%ld) defined by invalid number of vertices (%d)",
+                     "Circle (fid=" CPL_FRMT_GIB ") defined by invalid number of vertices (%d)",
                      poLine->GetFID(), oOGRLine->getNumPoints());
         }
         else if (EQUAL(ftype, "16") && npoints != 3) {
             bValid = FALSE;
             CPLError(CE_Warning, CPLE_AppDefined, 
-                     "Arc (fid=%ld) defined by invalid number of vertices (%d)",
+                     "Arc (fid=" CPL_FRMT_GIB ") defined by invalid number of vertices (%d)",
                      poLine->GetFID(), oOGRLine->getNumPoints());
         }
     }
@@ -679,7 +679,7 @@ int VFKDataBlockSQLite::LoadGeometryPolygon()
 
   \return pointer to feature definition or NULL on failure (not found)
 */
-IVFKFeature *VFKDataBlockSQLite::GetFeature(long nFID)
+IVFKFeature *VFKDataBlockSQLite::GetFeature(GIntBig nFID)
 {
     int rowId;
     CPLString osSQL;
@@ -700,7 +700,7 @@ IVFKFeature *VFKDataBlockSQLite::GetFeature(long nFID)
     
     poReader = (VFKReaderSQLite*) m_poReader;
     
-    osSQL.Printf("SELECT rowid FROM %s WHERE %s = %ld",
+    osSQL.Printf("SELECT rowid FROM %s WHERE %s = " CPL_FRMT_GIB,
                  m_pszName, FID_COLUMN, nFID);
     if (EQUAL(m_pszName, "SBP")) {
         osSQL += " AND PORADOVE_CISLO_BODU = 1";
@@ -1026,7 +1026,7 @@ void VFKDataBlockSQLite::UpdateVfkBlocks(int nGeometries) {
   \param iFID feature id to set up
   \param rowId list of rows to update
 */
-void VFKDataBlockSQLite::UpdateFID(long int iFID, std::vector<int> rowId)
+void VFKDataBlockSQLite::UpdateFID(GIntBig iFID, std::vector<int> rowId)
 {
     CPLString osSQL, osValue;
     VFKReaderSQLite  *poReader;
@@ -1034,7 +1034,7 @@ void VFKDataBlockSQLite::UpdateFID(long int iFID, std::vector<int> rowId)
     poReader = (VFKReaderSQLite*) m_poReader;
     
     /* update number of geometries in VFK_DB_TABLE table */
-    osSQL.Printf("UPDATE %s SET %s = %ld WHERE rowid IN (",
+    osSQL.Printf("UPDATE %s SET %s = " CPL_FRMT_GIB " WHERE rowid IN (",
                  m_pszName, FID_COLUMN, iFID);
     for (size_t i = 0; i < rowId.size(); i++) {
 	if (i > 0)

@@ -72,7 +72,7 @@ public:
     ~OGRVFKLayer();
 
     OGRFeature          *GetNextFeature();
-    OGRFeature          *GetFeature(long);
+    OGRFeature          *GetFeature(GIntBig);
 
     OGRFeatureDefn      *GetLayerDefn() { return poFeatureDefn; }
 
@@ -80,7 +80,7 @@ public:
     
     int                  TestCapability(const char *);
 
-    int                  GetFeatureCount(int = TRUE);
+    GIntBig              GetFeatureCount(int = TRUE);
 };
 
 /************************************************************************/

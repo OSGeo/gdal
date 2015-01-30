@@ -157,7 +157,7 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters( OGRFeature *poFeature,
 
     if( bAddFID )
     {
-        err = sqlite3_bind_int(poStmt, nColCount++, poFeature->GetFID());
+        err = sqlite3_bind_int64(poStmt, nColCount++, poFeature->GetFID());
     }
 
     /* Bind data values to the statement, here bind the blob for geometry */
@@ -204,7 +204,7 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters( OGRFeature *poFeature,
             {
                 case SQLITE_INTEGER:
                 {
-                    err = sqlite3_bind_int(poStmt, nColCount++, poFeature->GetFieldAsInteger(i));
+                    err = sqlite3_bind_int64(poStmt, nColCount++, poFeature->GetFieldAsInteger64(i));
                     break;
                 }
                 case SQLITE_FLOAT:
@@ -318,11 +318,11 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindUpdateParameters( OGRFeature *poFeatu
         return err;
 
     /* Bind the FID to the "WHERE" clause */
-    err = sqlite3_bind_int(poStmt, nColCount, poFeature->GetFID());    
+    err = sqlite3_bind_int64(poStmt, nColCount, poFeature->GetFID());    
     if ( err != SQLITE_OK )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "failed to bind FID '%ld' to statement", poFeature->GetFID());
+                  "failed to bind FID '" CPL_FRMT_GIB "' to statement", poFeature->GetFID());
         return OGRERR_FAILURE;       
     }
     
@@ -670,8 +670,7 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(int bIsSpatial)
         else
         {
             /* Is this the FID column? */
-            /* FIXME: add OFTInteger64 when we support it ! */
-            if ( bFid && oType == OFTInteger )
+            if ( bFid && (oType == OFTInteger || oType == OFTInteger64) )
             {
                 if( bFidFound )
                 {
@@ -699,6 +698,28 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(int bIsSpatial)
     {
         CPLDebug("GPKG", 
                  "no integer primary key defined for table '%s'", m_pszTableName);
+    }
+    else
+    {
+    /* -------------------------------------------------------------------- */
+    /*      Find if the FID holds 64bit values                              */
+    /* -------------------------------------------------------------------- */
+        const char* pszSQLStatic = CPLSPrintf("SELECT MAX(%s) FROM '%s'",
+                            OGRSQLiteEscape(m_pszFidColumn).c_str(),
+                            m_pszTableName);
+        sqlite3_stmt* hColStmt = NULL;
+        int rc = sqlite3_prepare( poDb, pszSQLStatic, strlen(pszSQLStatic), &hColStmt, NULL ); 
+        if( rc == SQLITE_OK )
+        {
+            rc = sqlite3_step( hColStmt );
+            if( rc == SQLITE_ROW )
+            {
+                GIntBig nMaxId = sqlite3_column_int64( hColStmt, 0 );
+                if( nMaxId > INT_MAX )
+                    SetMetadataItem(OLMD_FID64, "YES");
+            }
+        }
+        sqlite3_finalize( hColStmt );
     }
 
     if ( bReadExtent )
@@ -731,6 +752,7 @@ OGRGeoPackageTableLayer::OGRGeoPackageTableLayer(
     m_bExtentChanged = FALSE;
     m_poQueryStatement = NULL;
     m_poUpdateStatement = NULL;
+    m_bInsertStatementWithFID = FALSE;
     m_poInsertStatement = NULL;
     m_soColumns = "";
     m_soFilter = "";
@@ -832,12 +854,19 @@ OGRErr OGRGeoPackageTableLayer::ICreateFeature( OGRFeature *poFeature )
         return OGRERR_FAILURE;
     }
 
+    if( m_poInsertStatement && (m_bInsertStatementWithFID != (poFeature->GetFID() != OGRNullFID)) )
+    {
+        sqlite3_finalize(m_poInsertStatement);
+        m_poInsertStatement = NULL;
+    }
+    
     if ( ! m_poInsertStatement ) 
     {
         /* Construct a SQL INSERT statement from the OGRFeature */
         /* Only work with fields that are set */
         /* Do not stick values into SQL, use placeholder and bind values later */    
-        CPLString osCommand = FeatureGenerateInsertSQL(poFeature, FALSE);
+        m_bInsertStatementWithFID = poFeature->GetFID() != OGRNullFID;
+        CPLString osCommand = FeatureGenerateInsertSQL(poFeature, m_bInsertStatementWithFID);
         
         /* Prepare the SQL into a statement */
         sqlite3 *poDb = m_poDS->GetDB();
@@ -852,7 +881,8 @@ OGRErr OGRGeoPackageTableLayer::ICreateFeature( OGRFeature *poFeature )
     }
     
     /* Bind values onto the statement now */
-    OGRErr errOgr = FeatureBindInsertParameters(poFeature, m_poInsertStatement, FALSE);
+    OGRErr errOgr = FeatureBindInsertParameters(poFeature, m_poInsertStatement,
+                                                m_bInsertStatementWithFID);
     if ( errOgr != OGRERR_NONE )
         return errOgr;
 
@@ -861,7 +891,8 @@ OGRErr OGRGeoPackageTableLayer::ICreateFeature( OGRFeature *poFeature )
     if ( ! (err == SQLITE_OK || err == SQLITE_DONE) )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "failed to execute insert");
+                  "failed to execute insert : %s",
+                  sqlite3_errmsg(m_poDS->GetDB()) ? sqlite3_errmsg(m_poDS->GetDB()) : "");
         return OGRERR_FAILURE; 
     }
 
@@ -877,7 +908,7 @@ OGRErr OGRGeoPackageTableLayer::ICreateFeature( OGRFeature *poFeature )
     }
 
     /* Read the latest FID value */
-    int iFid;
+    GIntBig iFid;
     if ( (iFid = sqlite3_last_insert_rowid(m_poDS->GetDB())) )
     {
         poFeature->SetFID(iFid);
@@ -1092,7 +1123,7 @@ OGRFeature* OGRGeoPackageTableLayer::GetNextFeature()
 /*                        GetFeature()                                  */
 /************************************************************************/
 
-OGRFeature* OGRGeoPackageTableLayer::GetFeature(long nFID)
+OGRFeature* OGRGeoPackageTableLayer::GetFeature(GIntBig nFID)
 {
     /* No FID, no answer. */
     if (nFID == OGRNullFID || m_pszFidColumn == NULL )
@@ -1105,7 +1136,7 @@ OGRFeature* OGRGeoPackageTableLayer::GetFeature(long nFID)
 
     /* No filters apply, just use the FID */
     CPLString soSQL;
-    soSQL.Printf("SELECT %s FROM \"%s\" WHERE \"%s\" = %ld",
+    soSQL.Printf("SELECT %s FROM \"%s\" WHERE \"%s\" = " CPL_FRMT_GIB,
                  m_soColumns.c_str(), m_pszTableName, m_pszFidColumn, nFID);
 
     int err = sqlite3_prepare(m_poDS->GetDB(), soSQL.c_str(), -1, &m_poQueryStatement, NULL);
@@ -1138,7 +1169,7 @@ OGRFeature* OGRGeoPackageTableLayer::GetFeature(long nFID)
 /*                        DeleteFeature()                               */
 /************************************************************************/
 
-OGRErr OGRGeoPackageTableLayer::DeleteFeature(long nFID) 
+OGRErr OGRGeoPackageTableLayer::DeleteFeature(GIntBig nFID) 
 {
     if( !m_poDS->GetUpdate() || m_pszFidColumn == NULL )
     {
@@ -1157,7 +1188,7 @@ OGRErr OGRGeoPackageTableLayer::DeleteFeature(long nFID)
 
     /* No filters apply, just use the FID */
     CPLString soSQL;
-    soSQL.Printf("DELETE FROM \"%s\" WHERE \"%s\" = %ld",
+    soSQL.Printf("DELETE FROM \"%s\" WHERE \"%s\" = " CPL_FRMT_GIB,
                  m_pszTableName, m_pszFidColumn, nFID);
 
     
@@ -1208,7 +1239,7 @@ OGRErr OGRGeoPackageTableLayer::RollbackTransaction()
 /*                        GetFeatureCount()                             */
 /************************************************************************/
 
-int OGRGeoPackageTableLayer::GetFeatureCount( CPL_UNUSED int bForce )
+GIntBig OGRGeoPackageTableLayer::GetFeatureCount( CPL_UNUSED int bForce )
 {
     if( m_poFilterGeom != NULL && !m_bFilterIsEnvelope )
         return OGRGeoPackageLayer::GetFeatureCount();
@@ -1222,7 +1253,7 @@ int OGRGeoPackageTableLayer::GetFeatureCount( CPL_UNUSED int bForce )
         soSQL.Printf("SELECT Count(*) FROM \"%s\" ", m_pszTableName);
 
     /* Just run the query directly and get back integer */
-    int iFeatureCount = SQLGetInteger(m_poDS->GetDB(), soSQL.c_str(), &err);
+    GIntBig iFeatureCount = SQLGetInteger64(m_poDS->GetDB(), soSQL.c_str(), &err);
 
     /* Generic implementation uses -1 for error condition, so we will too */
     if ( err == OGRERR_NONE )

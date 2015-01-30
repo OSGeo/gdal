@@ -41,8 +41,6 @@ CPL_CVSID("$Id$");
 
 
 #define USE_COPY_UNSET  -10
-static CPLString OGRPGEscapeStringList(PGconn *hPGConn,
-                                       char** papszItems, int bForInsertOrUpdate);
 
 #define UNSUPPORTED_OP_READ_ONLY "%s : unsupported operation on a read-only datasource."
 
@@ -277,9 +275,9 @@ int OGRPGTableLayer::ReadTableDefinition()
 
     const char* pszTypnameEqualsAnyClause;
     if (poDS->sPostgreSQLVersion.nMajor == 7 && poDS->sPostgreSQLVersion.nMinor <= 3)
-        pszTypnameEqualsAnyClause = "ANY(SELECT '{int2, int4, serial}')";
+        pszTypnameEqualsAnyClause = "ANY(SELECT '{int2, int4, int8, serial, bigserial}')";
     else
-        pszTypnameEqualsAnyClause = "ANY(ARRAY['int2','int4','serial'])";
+        pszTypnameEqualsAnyClause = "ANY(ARRAY['int2','int4','int8','serial','bigserial'])";
 
     CPLString osEscapedTableNameSingleQuote = OGRPGEscapeString(hPGConn, pszTableName);
     const char* pszEscapedTableNameSingleQuote = osEscapedTableNameSingleQuote.c_str();
@@ -304,12 +302,16 @@ int OGRPGTableLayer::ReadTableDefinition()
     {
         if ( PQntuples( hResult ) == 1 && PQgetisnull( hResult,0,0 ) == false )
         {
-            /* Check if single-field PK can be represented as 32-bit integer. */
+            /* Check if single-field PK can be represented as integer. */
             CPLString osValue(PQgetvalue(hResult, 0, 3));
             if( osValue == "t" )
             {
                 osPrimaryKey.Printf( "%s", PQgetvalue(hResult,0,0) );
-                CPLDebug( "PG", "Primary key name (FID): %s", osPrimaryKey.c_str() );
+                const char* pszFIDType = PQgetvalue(hResult, 0, 2);
+                CPLDebug( "PG", "Primary key name (FID): %s, type : %s",
+                          osPrimaryKey.c_str(), pszFIDType );
+                if( EQUAL(pszFIDType, "int8") )
+                    SetMetadataItem(OLMD_FID64, "YES");
             }
         }
         else if ( PQntuples( hResult ) > 1 )
@@ -492,8 +494,10 @@ int OGRPGTableLayer::ReadTableDefinition()
 
                 if( nPrecision == 0 )
                 {
-                    // FIXME : If nWidth > 10, OFTInteger may not be large enough */
-                    oField.SetType( OFTInteger );
+                    if( nWidth >= 10 )
+                        oField.SetType( OFTInteger64 );
+                    else
+                        oField.SetType( OFTInteger );
                 }
                 else
                     oField.SetType( OFTReal );
@@ -529,8 +533,11 @@ int OGRPGTableLayer::ReadTableDefinition()
         }
         else if( EQUAL(pszType,"int8") )
         {
-            /* FIXME: OFTInteger can not handle 64bit integers */
-            oField.SetType( OFTInteger );
+            oField.SetType( OFTInteger64 );
+        }
+        else if( EQUAL(pszFormatType,"bigint[]") )
+        {
+            oField.SetType( OFTInteger64List );
         }
         else if( EQUALN(pszType,"int",3) )
         {
@@ -1055,7 +1062,7 @@ OGRErr OGRPGTableLayer::SetAttributeFilter( const char *pszQuery )
 /*                           DeleteFeature()                            */
 /************************************************************************/
 
-OGRErr OGRPGTableLayer::DeleteFeature( long nFID )
+OGRErr OGRPGTableLayer::DeleteFeature( GIntBig nFID )
 
 {
     PGconn      *hPGConn = poDS->GetPGConn();
@@ -1084,7 +1091,7 @@ OGRErr OGRPGTableLayer::DeleteFeature( long nFID )
     if( pszFIDColumn == NULL )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "DeleteFeature(%ld) failed.  Unable to delete features in tables without\n"
+                  "DeleteFeature(" CPL_FRMT_GIB ") failed.  Unable to delete features in tables without\n"
                   "a recognised FID column.",
                   nFID );
         return OGRERR_FAILURE;
@@ -1094,7 +1101,7 @@ OGRErr OGRPGTableLayer::DeleteFeature( long nFID )
 /* -------------------------------------------------------------------- */
 /*      Form the statement to drop the record.                          */
 /* -------------------------------------------------------------------- */
-    osCommand.Printf( "DELETE FROM %s WHERE %s = %ld",
+    osCommand.Printf( "DELETE FROM %s WHERE %s = " CPL_FRMT_GIB,
                       pszSqlTableName, OGRPGEscapeColumnName(pszFIDColumn).c_str(), nFID );
 
 /* -------------------------------------------------------------------- */
@@ -1127,146 +1134,6 @@ OGRErr OGRPGTableLayer::DeleteFeature( long nFID )
     }
 
     return eErr;
-}
-
-/************************************************************************/
-/*                          AppendFieldValue()                          */
-/*                                                                      */
-/* Used by CreateFeatureViaInsert() and SetFeature() to format a        */
-/* non-empty field value                                                */
-/************************************************************************/
-
-void OGRPGTableLayer::AppendFieldValue(PGconn *hPGConn, CPLString& osCommand,
-                                       OGRFeature* poFeature, int i)
-{
-    OGRFieldType nOGRFieldType = poFeatureDefn->GetFieldDefn(i)->GetType();
-    OGRFieldSubType eSubType = poFeatureDefn->GetFieldDefn(i)->GetSubType();
-
-    // We need special formatting for integer list values.
-    if(  nOGRFieldType == OFTIntegerList )
-    {
-        int nCount, nOff = 0, j;
-        const int *panItems = poFeature->GetFieldAsIntegerList(i,&nCount);
-        char *pszNeedToFree = NULL;
-
-        pszNeedToFree = (char *) CPLMalloc(nCount * 13 + 10);
-        strcpy( pszNeedToFree, "'{" );
-        for( j = 0; j < nCount; j++ )
-        {
-            if( j != 0 )
-                strcat( pszNeedToFree+nOff, "," );
-
-            nOff += strlen(pszNeedToFree+nOff);
-            sprintf( pszNeedToFree+nOff, "%d", panItems[j] );
-        }
-        strcat( pszNeedToFree+nOff, "}'" );
-
-        osCommand += pszNeedToFree;
-        CPLFree(pszNeedToFree);
-
-        return;
-    }
-
-    // We need special formatting for real list values.
-    else if( nOGRFieldType == OFTRealList )
-    {
-        int nCount, nOff = 0, j;
-        const double *padfItems =poFeature->GetFieldAsDoubleList(i,&nCount);
-        char *pszNeedToFree = NULL;
-
-        pszNeedToFree = (char *) CPLMalloc(nCount * 40 + 10);
-        strcpy( pszNeedToFree, "'{" );
-        for( j = 0; j < nCount; j++ )
-        {
-            if( j != 0 )
-                strcat( pszNeedToFree+nOff, "," );
-
-            nOff += strlen(pszNeedToFree+nOff);
-            //Check for special values. They need to be quoted.
-            if( CPLIsNan(padfItems[j]) )
-                sprintf( pszNeedToFree+nOff, "NaN" );
-            else if( CPLIsInf(padfItems[j]) )
-                sprintf( pszNeedToFree+nOff, (padfItems[j] > 0) ? "Infinity" : "-Infinity" );
-            else
-                CPLsprintf( pszNeedToFree+nOff, "%.16g", padfItems[j] );
-        }
-        strcat( pszNeedToFree+nOff, "}'" );
-
-        osCommand += pszNeedToFree;
-        CPLFree(pszNeedToFree);
-
-        return;
-    }
-
-    // We need special formatting for string list values.
-    else if( nOGRFieldType == OFTStringList )
-    {
-        char **papszItems = poFeature->GetFieldAsStringList(i);
-
-        osCommand += OGRPGEscapeStringList(hPGConn, papszItems, TRUE);
-
-        return;
-    }
-
-    // Binary formatting
-    else if( nOGRFieldType == OFTBinary )
-    {
-        if (poDS->bUseEscapeStringSyntax)
-            osCommand += "E";
-
-        osCommand += "'";
-
-        int nLen = 0;
-        GByte* pabyData = poFeature->GetFieldAsBinary( i, &nLen );
-        char* pszBytea = GByteArrayToBYTEA( pabyData, nLen);
-
-        osCommand += pszBytea;
-
-        CPLFree(pszBytea);
-        osCommand += "'";
-
-        return;
-    }
-
-    // Flag indicating NULL or not-a-date date value
-    // e.g. 0000-00-00 - there is no year 0
-    OGRBoolean bIsDateNull = FALSE;
-
-    const char *pszStrValue = poFeature->GetFieldAsString(i);
-
-    // Check if date is NULL: 0000-00-00
-    if( nOGRFieldType == OFTDate )
-    {
-        if( EQUALN( pszStrValue, "0000", 4 ) )
-        {
-            pszStrValue = "NULL";
-            bIsDateNull = TRUE;
-        }
-    }
-    else if ( nOGRFieldType == OFTReal )
-    {
-        //Check for special values. They need to be quoted.
-        double dfVal = poFeature->GetFieldAsDouble(i);
-        if( CPLIsNan(dfVal) )
-            pszStrValue = "'NaN'";
-        else if( CPLIsInf(dfVal) )
-            pszStrValue = (dfVal > 0) ? "'Infinity'" : "'-Infinity'";
-    }
-    else if ( nOGRFieldType == OFTInteger && eSubType == OFSTBoolean )
-        pszStrValue = poFeature->GetFieldAsInteger(i) ? "'t'" : "'f'";
-
-    if( nOGRFieldType != OFTInteger && nOGRFieldType != OFTReal
-        && !bIsDateNull )
-    {
-        osCommand += OGRPGEscapeString(hPGConn, pszStrValue,
-                                        poFeatureDefn->GetFieldDefn(i)->GetWidth(),
-                                        poFeatureDefn->GetName(),
-                                        poFeatureDefn->GetFieldDefn(i)->GetNameRef() );
-    }
-    else
-    {
-        osCommand += pszStrValue;
-    }
 }
 
 /************************************************************************/
@@ -1457,14 +1324,15 @@ OGRErr OGRPGTableLayer::ISetFeature( OGRFeature *poFeature )
         }
         else
         {
-            AppendFieldValue(hPGConn, osCommand, poFeature, i);
+            OGRPGCommonAppendFieldValue(osCommand, poFeature, i,
+                                        (OGRPGCommonEscapeStringCbk)OGRPGEscapeString, hPGConn);
         }
     }
 
     /* Add the WHERE clause */
     osCommand += " WHERE ";
     osCommand = osCommand + OGRPGEscapeColumnName(pszFIDColumn) + " = ";
-    osCommand += CPLString().Printf( "%ld ", poFeature->GetFID() );
+    osCommand += CPLString().Printf( CPL_FRMT_GIB, poFeature->GetFID() );
 
 /* -------------------------------------------------------------------- */
 /*      Execute the update.                                             */
@@ -1473,7 +1341,7 @@ OGRErr OGRPGTableLayer::ISetFeature( OGRFeature *poFeature )
     if( PQresultStatus(hResult) != PGRES_COMMAND_OK )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "UPDATE command for feature %ld failed.\n%s\nCommand: %s",
+                  "UPDATE command for feature " CPL_FRMT_GIB " failed.\n%s\nCommand: %s",
                   poFeature->GetFID(), PQerrorMessage(hPGConn), osCommand.c_str() );
 
         OGRPGClearResult( hResult );
@@ -1513,6 +1381,33 @@ OGRErr OGRPGTableLayer::ICreateFeature( OGRFeature *poFeature )
 
     if( bDifferedCreation && RunDifferedCreationIfNecessary() != OGRERR_NONE )
         return OGRERR_FAILURE;
+
+    /* Auto-promote FID column to 64bit if necessary */
+    if( pszFIDColumn != NULL &&
+        (GIntBig)(int)poFeature->GetFID() != poFeature->GetFID() &&
+        GetMetadataItem(OLMD_FID64) == NULL )
+    {
+        CPLString osCommand;
+        osCommand.Printf( "ALTER TABLE %s ALTER COLUMN %s TYPE INT8",
+                        pszSqlTableName,
+                        OGRPGEscapeColumnName(pszFIDColumn).c_str() );
+        PGconn              *hPGConn = poDS->GetPGConn();
+        PGresult* hResult = OGRPG_PQexec(hPGConn, osCommand);
+        if( PQresultStatus(hResult) != PGRES_COMMAND_OK )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                    "%s\n%s",
+                    osCommand.c_str(),
+                    PQerrorMessage(hPGConn) );
+
+            OGRPGClearResult( hResult );
+
+            return OGRERR_FAILURE;
+        }
+        OGRPGClearResult( hResult );
+        
+        SetMetadataItem(OLMD_FID64, "YES");
+    }
 
     if( bFirstInsertion )
     {
@@ -1644,65 +1539,6 @@ CPLString OGRPGEscapeString(PGconn *hPGConn,
     osCommand += "'";
 
     return osCommand;
-}
-
-
-/************************************************************************/
-/*                       OGRPGEscapeStringList( )                         */
-/************************************************************************/
-
-static CPLString OGRPGEscapeStringList(PGconn *hPGConn,
-                                       char** papszItems, int bForInsertOrUpdate)
-{
-    int bFirstItem = TRUE;
-    CPLString osStr;
-    if (bForInsertOrUpdate)
-        osStr += "ARRAY[";
-    else
-        osStr += "{";
-    while(papszItems && *papszItems)
-    {
-        if (!bFirstItem)
-        {
-            osStr += ',';
-        }
-
-        char* pszStr = *papszItems;
-        if (*pszStr != '\0')
-        {
-            if (bForInsertOrUpdate)
-                osStr += OGRPGEscapeString(hPGConn, pszStr);
-            else
-            {
-                osStr += '"';
-
-                while(*pszStr)
-                {
-                    if (*pszStr == '"' )
-                        osStr += "\\";
-                    osStr += *pszStr;
-                    pszStr++;
-                }
-
-                osStr += '"';
-            }
-        }
-        else
-            osStr += "NULL";
-
-        bFirstItem = FALSE;
-
-        papszItems++;
-    }
-    if (bForInsertOrUpdate)
-    {
-        osStr += "]";
-        if( papszItems == NULL )
-            osStr += "::varchar[]";
-    }
-    else
-        osStr += "}";
-    return osStr;
 }
 
 /************************************************************************/
@@ -1868,7 +1704,7 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
     {
         if( bNeedComma )
             osCommand += ", ";
-        osCommand += CPLString().Printf( "%ld ", poFeature->GetFID() );
+        osCommand += CPLString().Printf( CPL_FRMT_GIB " ", poFeature->GetFID() );
         bNeedComma = TRUE;
     }
 
@@ -1883,7 +1719,8 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
         else
             bNeedComma = TRUE;
 
-        AppendFieldValue(hPGConn, osCommand, poFeature, i);
+        OGRPGCommonAppendFieldValue(osCommand, poFeature, i,
+                                    (OGRPGCommonEscapeStringCbk)OGRPGEscapeString, hPGConn);
     }
 
     osCommand += ")";
@@ -1912,8 +1749,7 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
         PQntuples(hResult) == 1 && PQnfields(hResult) == 1 )
     {
         const char* pszFID = PQgetvalue(hResult, 0, 0 );
-        long nFID = atol(pszFID);
-        poFeature->SetFID(nFID);
+        poFeature->SetFID(CPLAtoGIntBig(pszFID));
     }
     else if( bReturnRequested || PQresultStatus(hResult) != PGRES_COMMAND_OK )
     {
@@ -1990,179 +1826,12 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
         }
     }
     
-    /* Next process the field id column */
-    int nFIDIndex = -1;
-    if( bFIDColumnInCopyFields )
-    {
-        if (osCommand.size() > 0)
-            osCommand += "\t";
-
-        nFIDIndex = poFeatureDefn->GetFieldIndex( pszFIDColumn );
-
-        /* Set the FID */
-        if( poFeature->GetFID() != OGRNullFID )
-        {
-            osCommand += CPLString().Printf("%ld ", poFeature->GetFID());
-        }
-        else
-        {
-            osCommand += "\\N" ;
-        }
-    }
-
-
-    /* Now process the remaining fields */
-
-    int nFieldCount = poFeatureDefn->GetFieldCount();
-    int bAddTab = osCommand.size() > 0;
-
-    for( i = 0; i < nFieldCount;  i++ )
-    {
-        if (i == nFIDIndex)
-            continue;
-
-        const char *pszStrValue = poFeature->GetFieldAsString(i);
-        char *pszNeedToFree = NULL;
-
-        if (bAddTab)
-            osCommand += "\t";
-        bAddTab = TRUE;
-
-        if( !poFeature->IsFieldSet( i ) )
-        {
-            osCommand += "\\N" ;
-
-            continue;
-        }
-
-        int nOGRFieldType = poFeatureDefn->GetFieldDefn(i)->GetType();
-
-        // We need special formatting for integer list values.
-        if( nOGRFieldType == OFTIntegerList )
-        {
-            int nCount, nOff = 0, j;
-            const int *panItems = poFeature->GetFieldAsIntegerList(i,&nCount);
-
-            pszNeedToFree = (char *) CPLMalloc(nCount * 13 + 10);
-            strcpy( pszNeedToFree, "{" );
-            for( j = 0; j < nCount; j++ )
-            {
-                if( j != 0 )
-                    strcat( pszNeedToFree+nOff, "," );
-
-                nOff += strlen(pszNeedToFree+nOff);
-                sprintf( pszNeedToFree+nOff, "%d", panItems[j] );
-            }
-            strcat( pszNeedToFree+nOff, "}" );
-            pszStrValue = pszNeedToFree;
-        }
-
-        // We need special formatting for real list values.
-        else if( nOGRFieldType == OFTRealList )
-        {
-            int nCount, nOff = 0, j;
-            const double *padfItems =poFeature->GetFieldAsDoubleList(i,&nCount);
-
-            pszNeedToFree = (char *) CPLMalloc(nCount * 40 + 10);
-            strcpy( pszNeedToFree, "{" );
-            for( j = 0; j < nCount; j++ )
-            {
-                if( j != 0 )
-                    strcat( pszNeedToFree+nOff, "," );
-
-                nOff += strlen(pszNeedToFree+nOff);
-                //Check for special values. They need to be quoted.
-                if( CPLIsNan(padfItems[j]) )
-                    sprintf( pszNeedToFree+nOff, "NaN" );
-                else if( CPLIsInf(padfItems[j]) )
-                    sprintf( pszNeedToFree+nOff, (padfItems[j] > 0) ? "Infinity" : "-Infinity" );
-                else
-                    CPLsprintf( pszNeedToFree+nOff, "%.16g", padfItems[j] );
-
-            }
-            strcat( pszNeedToFree+nOff, "}" );
-            pszStrValue = pszNeedToFree;
-        }
-
-
-        // We need special formatting for string list values.
-        else if( nOGRFieldType == OFTStringList )
-        {
-            CPLString osStr;
-            char **papszItems = poFeature->GetFieldAsStringList(i);
-
-            pszStrValue = pszNeedToFree = CPLStrdup(OGRPGEscapeStringList(hPGConn, papszItems, FALSE));
-        }
-
-        // Binary formatting
-        else if( nOGRFieldType == OFTBinary )
-        {
-            int nLen = 0;
-            GByte* pabyData = poFeature->GetFieldAsBinary( i, &nLen );
-            char* pszBytea = GByteArrayToBYTEA( pabyData, nLen);
-
-            pszStrValue = pszNeedToFree = pszBytea;
-        }
-
-        else if( nOGRFieldType == OFTReal )
-        {
-            //Check for special values. They need to be quoted.
-            double dfVal = poFeature->GetFieldAsDouble(i);
-            if( CPLIsNan(dfVal) )
-                pszStrValue = "NaN";
-            else if( CPLIsInf(dfVal) )
-                pszStrValue = (dfVal > 0) ? "Infinity" : "-Infinity";
-        }
-
-        if( nOGRFieldType != OFTIntegerList &&
-            nOGRFieldType != OFTRealList &&
-            nOGRFieldType != OFTInteger &&
-            nOGRFieldType != OFTReal &&
-            nOGRFieldType != OFTBinary )
-        {
-            int         iChar;
-            int         iUTFChar = 0;
-
-            for( iChar = 0; pszStrValue[iChar] != '\0'; iChar++ )
-            {
-
-                if( poFeatureDefn->GetFieldDefn(i)->GetWidth() > 0
-                    && iUTFChar == poFeatureDefn->GetFieldDefn(i)->GetWidth() )
-                {
-                    CPLDebug( "PG",
-                              "Truncated %s.%s field value '%s' to %d characters.",
-                              poFeatureDefn->GetName(),
-                              poFeatureDefn->GetFieldDefn(i)->GetNameRef(),
-                              pszStrValue,
-                              poFeatureDefn->GetFieldDefn(i)->GetWidth() );
-                    break;
-                }
-
-                //count of utf chars
-                if ((pszStrValue[iChar] & 0xc0) != 0x80) 
-                    iUTFChar++;
-
-                /* Escape embedded \, \t, \n, \r since they will cause COPY
-                   to misinterpret a line of text and thus abort */
-                if( pszStrValue[iChar] == '\\' || 
-                    pszStrValue[iChar] == '\t' || 
-                    pszStrValue[iChar] == '\r' || 
-                    pszStrValue[iChar] == '\n'   )
-                {
-                    osCommand += '\\';
-                }
-
-                osCommand += pszStrValue[iChar];
-            }
-        }
-        else
-        {
-            osCommand += pszStrValue;
-        }
-
-        if( pszNeedToFree )
-            CPLFree( pszNeedToFree );
-    }
+    OGRPGCommonAppendCopyFieldsExceptGeom(osCommand,
+                                          poFeature,
+                                          pszFIDColumn,
+                                          bFIDColumnInCopyFields,
+                                          (OGRPGCommonEscapeStringCbk)OGRPGEscapeString,
+                                          hPGConn);
 
     /* Add end of line marker */
     osCommand += "\n";
@@ -2738,7 +2407,7 @@ OGRErr OGRPGTableLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn
 /*                             GetFeature()                             */
 /************************************************************************/
 
-OGRFeature *OGRPGTableLayer::GetFeature( long nFeatureId )
+OGRFeature *OGRPGTableLayer::GetFeature( GIntBig nFeatureId )
 
 {
     GetLayerDefn()->GetFieldCount();
@@ -2765,7 +2434,7 @@ OGRFeature *OGRPGTableLayer::GetFeature( long nFeatureId )
 
     osCommand.Printf(
              "DECLARE getfeaturecursor %s for "
-             "SELECT %s FROM %s WHERE %s = %ld",
+             "SELECT %s FROM %s WHERE %s = " CPL_FRMT_GIB,
               ( poDS->bUseBinaryCursor ) ? "BINARY CURSOR" : "CURSOR",
              osFieldList.c_str(), pszSqlTableName, OGRPGEscapeColumnName(pszFIDColumn).c_str(),
              nFeatureId );
@@ -2791,14 +2460,14 @@ OGRFeature *OGRPGTableLayer::GetFeature( long nFeatureId )
                 if (nRows > 1)
                 {
                     CPLError(CE_Warning, CPLE_AppDefined,
-                             "%d rows in response to the WHERE %s = %ld clause !",
+                             "%d rows in response to the WHERE %s = " CPL_FRMT_GIB " clause !",
                              nRows, pszFIDColumn, nFeatureId );
                 }
             }
             else
             {
                  CPLError( CE_Failure, CPLE_AppDefined,
-                  "Attempt to read feature with unknown feature id (%ld).", nFeatureId );
+                  "Attempt to read feature with unknown feature id (" CPL_FRMT_GIB ").", nFeatureId );
             }
         }
     }
@@ -2825,7 +2494,7 @@ OGRFeature *OGRPGTableLayer::GetFeature( long nFeatureId )
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
-int OGRPGTableLayer::GetFeatureCount( int bForce )
+GIntBig OGRPGTableLayer::GetFeatureCount( int bForce )
 
 {
     if( bDifferedCreation && RunDifferedCreationIfNecessary() != OGRERR_NONE )
@@ -2844,7 +2513,7 @@ int OGRPGTableLayer::GetFeatureCount( int bForce )
     PGconn              *hPGConn = poDS->GetPGConn();
     PGresult            *hResult = NULL;
     CPLString           osCommand;
-    int                 nCount = 0;
+    GIntBig              nCount = 0;
 
     osCommand.Printf(
         "SELECT count(*) FROM %s %s",
@@ -2852,7 +2521,7 @@ int OGRPGTableLayer::GetFeatureCount( int bForce )
 
     hResult = OGRPG_PQexec(hPGConn, osCommand);
     if( hResult != NULL && PQresultStatus(hResult) == PGRES_TUPLES_OK )
-        nCount = atoi(PQgetvalue(hResult,0,0));
+        nCount = CPLAtoGIntBig(PQgetvalue(hResult,0,0));
     else
         CPLDebug( "PG", "%s; failed.", osCommand.c_str() );
     OGRPGClearResult( hResult );

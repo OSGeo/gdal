@@ -41,7 +41,7 @@ CPL_CVSID("$Id$");
 int     bReadOnly = FALSE;
 int     bVerbose = TRUE;
 int     bSummaryOnly = FALSE;
-int     nFetchFID = OGRNullFID;
+GIntBig nFetchFID = OGRNullFID;
 char**  papszOptions = NULL;
 
 static void Usage(const char* pszErrorMsg = NULL);
@@ -107,7 +107,7 @@ int main( int nArgc, char ** papszArgv )
         else if( EQUAL(papszArgv[iArg],"-fid") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            nFetchFID = atoi(papszArgv[++iArg]);
+            nFetchFID = CPLAtoGIntBig(papszArgv[++iArg]);
         }
         else if( EQUAL(papszArgv[iArg],"-spat") )
         {
@@ -477,7 +477,7 @@ static void ReportOnLayer( OGRLayer * poLayer, const char *pszWHERE,
                     OGRGeometryTypeToName( poLayer->GetGeomType() ) );
         }
         
-        printf( "Feature Count: %d\n", poLayer->GetFeatureCount() );
+        printf( "Feature Count: " CPL_FRMT_GIB "\n", poLayer->GetFeatureCount() );
         
         OGREnvelope oExt;
         if( nGeomFieldCount > 1 )
@@ -586,7 +586,7 @@ static void ReportOnLayer( OGRLayer * poLayer, const char *pszWHERE,
         poFeature = poLayer->GetFeature( nFetchFID );
         if( poFeature == NULL )
         {
-            printf( "Unable to locate feature id %d on this layer.\n", 
+            printf( "Unable to locate feature id " CPL_FRMT_GIB " on this layer.\n", 
                     nFetchFID );
         }
         else

@@ -1195,7 +1195,7 @@ def ogr_geojson_25():
     return 'success'
 
 ###############################################################################
-# Test workaround for 64bit values (returned as strings)
+# Test 64bit support
 
 def ogr_geojson_26():
 
@@ -1203,31 +1203,69 @@ def ogr_geojson_26():
         return 'skip'
 
     ds = ogr.Open("""{"type": "FeatureCollection", "features":[
-{"type": "Feature",
+{"type": "Feature", "id": 1,
  "geometry": {"type":"Point","coordinates":[1,2]},
- "properties": { "intvalue" : 1 }},
-{"type": "Feature",
+ "properties": { "intvalue" : 1, "int64" : 1234567890123, "intlist" : [1] }},
+{"type": "Feature", "id": 1234567890123,
  "geometry": {"type":"Point","coordinates":[3,4]},
- "properties": { "intvalue" : 1234567890123 }},
+ "properties": { "intvalue" : 1234567890123, "intlist" : [1, 1234567890123] }},
  ]}""")
     if ds is None:
         gdaltest.post_reason('Failed to open datasource')
         return 'fail'
 
     lyr = ds.GetLayerByName('OGRGeoJSON')
-
+    if lyr.GetMetadataItem(ogr.OLMD_FID64) is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    
     feature = lyr.GetNextFeature()
-    if feature.GetFieldAsString("intvalue") != '1':
+    if feature.GetFID() != 1:
+        feature.DumpReadable()
+        return 'fail'
+    if feature.GetField("intvalue") != 1:
+        feature.DumpReadable()
+        return 'fail'
+    if feature.GetField("int64") != 1234567890123:
         feature.DumpReadable()
         return 'fail'
 
     feature = lyr.GetNextFeature()
-    if feature.GetFieldAsString("intvalue") != '1234567890123':
+    if feature.GetFID() != 1234567890123:
+        feature.DumpReadable()
+        return 'fail'
+    if feature.GetField("intvalue") != 1234567890123:
+        feature.DumpReadable()
+        return 'fail'
+    if feature.GetField("intlist") != [1, 1234567890123]:
         feature.DumpReadable()
         return 'fail'
 
     lyr = None
     ds = None
+    
+    ds = gdaltest.geojson_drv.CreateDataSource('/vsimem/ogr_geojson_26.json')
+    lyr = ds.CreateLayer('test')
+    lyr.CreateField(ogr.FieldDefn('int64', ogr.OFTInteger64))
+    lyr.CreateField(ogr.FieldDefn('int64list', ogr.OFTInteger64List))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetFID(1234567890123)
+    f.SetField(0, 1234567890123)
+    f.SetFieldInteger64List(1, [1234567890123])
+    lyr.CreateFeature(f)
+    f = None
+    ds = None
+    
+    fp = gdal.VSIFOpenL('/vsimem/ogr_geojson_26.json', 'rb')
+    data = gdal.VSIFReadL(1, 10000, fp).decode('ascii')
+    gdal.VSIFCloseL(fp)
+
+    gdal.Unlink('/vsimem/ogr_geojson_26.json')
+    
+    if data.find('{ "type": "Feature", "id": 1234567890123, "properties": { "int64": 1234567890123, "int64list": [ 1234567890123 ] }, "geometry": null }') < 0:
+        gdaltest.post_reason('failure')
+        print(data)
+        return 'fail'
 
     return 'success'
 
@@ -1254,12 +1292,12 @@ def ogr_geojson_27():
     lyr = ds.GetLayerByName('OGRGeoJSON')
 
     feature = lyr.GetNextFeature()
-    if feature.GetFieldAsString("intvalue") != '1':
+    if feature.GetField("intvalue") != 1:
         feature.DumpReadable()
         return 'fail'
 
     feature = lyr.GetNextFeature()
-    if feature.GetFieldAsString("intvalue") != '9223372036854775807':
+    if feature.GetField("intvalue") != 9223372036854775807:
         feature.DumpReadable()
         return 'fail'
 

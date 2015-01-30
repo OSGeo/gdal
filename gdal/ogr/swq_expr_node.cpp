@@ -57,6 +57,19 @@ swq_expr_node::swq_expr_node( int nValueIn )
 }
 
 /************************************************************************/
+/*                        swq_expr_node(GIntBig)                        */
+/************************************************************************/
+
+swq_expr_node::swq_expr_node( GIntBig nValueIn )
+
+{
+    Initialize();
+
+    field_type = SWQ_INTEGER64;
+    int_value = nValueIn;
+}
+
+/************************************************************************/
 /*                        swq_expr_node(double)                         */
 /************************************************************************/
 
@@ -306,8 +319,9 @@ void swq_expr_node::Dump( FILE * fp, int depth )
 
     if( eNodeType == SNT_CONSTANT )
     {
-        if( field_type == SWQ_INTEGER || field_type == SWQ_BOOLEAN )
-            fprintf( fp, "%s  %d\n", spaces, int_value );
+        if( field_type == SWQ_INTEGER || field_type == SWQ_INTEGER64 ||
+            field_type == SWQ_BOOLEAN )
+            fprintf( fp, "%s  " CPL_FRMT_GIB "\n", spaces, int_value );
         else if( field_type == SWQ_FLOAT )
             fprintf( fp, "%s  %.15g\n", spaces, float_value );
         else if( field_type == SWQ_GEOMETRY )
@@ -384,8 +398,9 @@ char *swq_expr_node::Unparse( swq_field_list *field_list, char chColumnQuote )
         if (is_null)
             return CPLStrdup("NULL");
 
-        if( field_type == SWQ_INTEGER || field_type == SWQ_BOOLEAN )
-            osExpr.Printf( "%d", int_value );
+        if( field_type == SWQ_INTEGER || field_type == SWQ_INTEGER64 ||
+            field_type == SWQ_BOOLEAN )
+            osExpr.Printf( CPL_FRMT_GIB, int_value );
         else if( field_type == SWQ_FLOAT )
         {
             osExpr.Printf( "%.15g", float_value );

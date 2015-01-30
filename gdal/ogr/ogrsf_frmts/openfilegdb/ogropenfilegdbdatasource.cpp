@@ -652,13 +652,13 @@ class OGROpenFileGDBSimpleSQLLayer: public OGRLayer
 
        virtual void        ResetReading();
        virtual OGRFeature* GetNextFeature();
-       virtual OGRFeature* GetFeature( long nFeatureId );
+       virtual OGRFeature* GetFeature( GIntBig nFeatureId );
        virtual OGRFeatureDefn* GetLayerDefn() { return poFeatureDefn; }
        virtual int         TestCapability( const char * );
        virtual const char* GetFIDColumn() { return poBaseLayer->GetFIDColumn(); }
        virtual OGRErr      GetExtent( OGREnvelope *psExtent, int bForce )
                             { return poBaseLayer->GetExtent(psExtent, bForce); }
-       virtual int         GetFeatureCount(int bForce);
+       virtual GIntBig     GetFeatureCount(int bForce);
 };
 
 /***********************************************************************/
@@ -733,7 +733,7 @@ void OGROpenFileGDBSimpleSQLLayer::ResetReading()
 /*                          GetFeature()                               */
 /***********************************************************************/
 
-OGRFeature* OGROpenFileGDBSimpleSQLLayer::GetFeature( long nFeatureId )
+OGRFeature* OGROpenFileGDBSimpleSQLLayer::GetFeature( GIntBig nFeatureId )
 {
     OGRFeature* poSrcFeature = poBaseLayer->GetFeature(nFeatureId);
     if( poSrcFeature == NULL )
@@ -782,7 +782,7 @@ OGRFeature* OGROpenFileGDBSimpleSQLLayer::GetNextFeature()
 /*                         GetFeatureCount()                           */
 /***********************************************************************/
 
-int OGROpenFileGDBSimpleSQLLayer::GetFeatureCount( int bForce )
+GIntBig OGROpenFileGDBSimpleSQLLayer::GetFeatureCount( int bForce )
 {
 
     /* No filter */

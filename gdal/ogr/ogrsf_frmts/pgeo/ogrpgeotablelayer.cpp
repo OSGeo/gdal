@@ -270,7 +270,7 @@ void OGRPGeoTableLayer::ResetReading()
 /*                             GetFeature()                             */
 /************************************************************************/
 
-OGRFeature *OGRPGeoTableLayer::GetFeature( long nFeatureId )
+OGRFeature *OGRPGeoTableLayer::GetFeature( GIntBig nFeatureId )
 
 {
     if( pszFIDColumn == NULL )
@@ -283,7 +283,7 @@ OGRFeature *OGRPGeoTableLayer::GetFeature( long nFeatureId )
     poStmt = new CPLODBCStatement( poDS->GetSession() );
     poStmt->Append( "SELECT * FROM " );
     poStmt->Append( poFeatureDefn->GetName() );
-    poStmt->Appendf( " WHERE %s = %ld", pszFIDColumn, nFeatureId );
+    poStmt->Appendf( " WHERE %s = " CPL_FRMT_GIB, pszFIDColumn, nFeatureId );
 
     if( !poStmt->ExecuteSQL() )
     {
@@ -348,7 +348,7 @@ int OGRPGeoTableLayer::TestCapability( const char * pszCap )
 /*      way of counting features matching a spatial query.              */
 /************************************************************************/
 
-int OGRPGeoTableLayer::GetFeatureCount( int bForce )
+GIntBig OGRPGeoTableLayer::GetFeatureCount( int bForce )
 
 {
     if( m_poFilterGeom != NULL )
@@ -369,7 +369,7 @@ int OGRPGeoTableLayer::GetFeatureCount( int bForce )
         return OGRPGeoLayer::GetFeatureCount(bForce);
     }
 
-    return atoi(oStmt.GetColData(0));
+    return CPLAtoGIntBig(oStmt.GetColData(0));
 }
 
 /************************************************************************/

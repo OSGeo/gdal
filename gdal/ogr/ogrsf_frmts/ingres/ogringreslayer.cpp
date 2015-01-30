@@ -536,7 +536,7 @@ OGRFeature *OGRIngresLayer::GetNextRawFeature()
 /*      Note that we actually override this in OGRIngresTableLayer.      */
 /************************************************************************/
 
-OGRFeature *OGRIngresLayer::GetFeature( long nFeatureId )
+OGRFeature *OGRIngresLayer::GetFeature( GIntBig nFeatureId )
 
 {
     return OGRLayer::GetFeature( nFeatureId );

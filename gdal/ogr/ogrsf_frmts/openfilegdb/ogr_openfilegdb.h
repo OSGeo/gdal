@@ -127,10 +127,10 @@ public:
 
   virtual void        ResetReading();
   virtual OGRFeature* GetNextFeature();
-  virtual OGRFeature* GetFeature( long nFeatureId );
-  virtual OGRErr      SetNextByIndex( long nIndex );
+  virtual OGRFeature* GetFeature( GIntBig nFeatureId );
+  virtual OGRErr      SetNextByIndex( GIntBig nIndex );
 
-  virtual int         GetFeatureCount( int bForce = TRUE );
+  virtual GIntBig     GetFeatureCount( int bForce = TRUE );
   virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
 
   virtual OGRFeatureDefn* GetLayerDefn();

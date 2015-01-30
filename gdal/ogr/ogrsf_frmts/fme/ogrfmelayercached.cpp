@@ -248,7 +248,7 @@ void OGRFMELayerCached::ResetReading()
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
-int OGRFMELayerCached::GetFeatureCount( int bForce )
+GIntBig OGRFMELayerCached::GetFeatureCount( int bForce )
 
 {
     int    nResult;

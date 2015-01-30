@@ -73,6 +73,8 @@ Set to OFF to prevent DROP TABLE from being emitted. Set to IF_EXISTS (default i
 spatial tables of type GEOMETRY (wkbUnknown), which was the behaviour prior to GDAL 1.8.0. Defaults to NO, in which case
 a regular table is created and not recorded in the PostGIS geometry_columns table.<p>
 <li> <b>FID</b>: (From GDAL 1.9.0) Name of the FID column to create. Defaults to 'ogc_fid'.<p>
+<li> <b>FID64</b>: (From GDAL 2.0) This may be "TRUE" to create a FID column that can support
+64 bit identifiers. The default value is "FALSE".</li>
 <li> <b>EXTRACT_SCHEMA_FROM_LAYER_NAME</b>: (From GDAL 1.9.0) Can be set to NO to avoid considering the dot character
 as the separator between the schema and the table name. Defaults to YES.<p>
 <li> <b>COLUMN_TYPES</b>: (From GDAL 1.10) A list of strings of format field_name=pg_field_type (separated by comma)

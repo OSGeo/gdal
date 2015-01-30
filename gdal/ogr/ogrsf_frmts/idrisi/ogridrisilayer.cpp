@@ -609,7 +609,7 @@ OGRErr OGRIdrisiLayer::GetExtent(OGREnvelope *psExtent, int bForce)
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
-int OGRIdrisiLayer::GetFeatureCount( int bForce )
+GIntBig OGRIdrisiLayer::GetFeatureCount( int bForce )
 {
     if (nTotalFeatures > 0 && m_poFilterGeom == NULL && m_poAttrQuery == NULL)
         return nTotalFeatures;

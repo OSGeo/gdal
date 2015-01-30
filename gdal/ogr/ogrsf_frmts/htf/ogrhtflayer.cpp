@@ -528,7 +528,7 @@ OGRFeature *OGRHTFSoundingLayer::GetNextRawFeature()
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
-int OGRHTFSoundingLayer::GetFeatureCount(int bForce)
+GIntBig OGRHTFSoundingLayer::GetFeatureCount(int bForce)
 {
     if (m_poFilterGeom != NULL || m_poAttrQuery != NULL)
         return OGRHTFLayer::GetFeatureCount(bForce);

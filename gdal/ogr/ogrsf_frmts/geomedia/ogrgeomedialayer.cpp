@@ -307,7 +307,7 @@ OGRFeature *OGRGeomediaLayer::GetNextRawFeature()
 /*                             GetFeature()                             */
 /************************************************************************/
 
-OGRFeature *OGRGeomediaLayer::GetFeature( long nFeatureId )
+OGRFeature *OGRGeomediaLayer::GetFeature( GIntBig nFeatureId )
 
 {
     /* This should be implemented directly! */

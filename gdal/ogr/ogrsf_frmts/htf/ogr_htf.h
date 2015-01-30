@@ -113,7 +113,7 @@ protected:
 
     virtual int                 TestCapability( const char * );
 
-    virtual int                 GetFeatureCount(int bForce = TRUE);
+    virtual GIntBig             GetFeatureCount(int bForce = TRUE);
 };
 
 /************************************************************************/

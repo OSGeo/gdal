@@ -237,7 +237,7 @@ int OGRVRTLayer::FastInitialize( CPLXMLNode *psLTree, const char *pszVRTDirector
      const char* pszFeatureCount = CPLGetXMLValue( psLTree, "FeatureCount", NULL );
      if( pszFeatureCount != NULL )
      {
-         nFeatureCount = atoi(pszFeatureCount);
+         nFeatureCount = CPLAtoGIntBig(pszFeatureCount);
      }
 
 /* -------------------------------------------------------------------- */
@@ -1123,7 +1123,8 @@ int OGRVRTLayer::ResetSourceReading()
             {
                 OGRFieldType xType = poXField->GetType();
                 OGRFieldType yType = poYField->GetType();
-                if (!((xType == OFTReal || xType == OFTInteger) && (yType == OFTReal || yType == OFTInteger)))
+                if (!((xType == OFTReal || xType == OFTInteger || xType == OFTInteger64) &&
+                      (yType == OFTReal || yType == OFTInteger || yType == OFTInteger64)))
                 {
                     CPLError(CE_Warning, CPLE_AppDefined,
                             "The '%s' and/or '%s' fields of the source layer are not declared as numeric fields,\n"
@@ -1391,7 +1392,7 @@ retry:
     if( iFIDField == -1 )
         poDstFeat->SetFID( poSrcFeat->GetFID() );
     else
-        poDstFeat->SetFID( poSrcFeat->GetFieldAsInteger( iFIDField ) );
+        poDstFeat->SetFID( poSrcFeat->GetFieldAsInteger64( iFIDField ) );
     
 /* -------------------------------------------------------------------- */
 /*      Handle style string.                                            */
@@ -1585,7 +1586,7 @@ retry:
 /*                             GetFeature()                             */
 /************************************************************************/
 
-OGRFeature *OGRVRTLayer::GetFeature( long nFeatureId )
+OGRFeature *OGRVRTLayer::GetFeature( GIntBig nFeatureId )
 
 {
     if (!bHasFullInitialized) FullInitialize();
@@ -1610,7 +1611,7 @@ OGRFeature *OGRVRTLayer::GetFeature( long nFeatureId )
         char* pszFIDQuery = (char*)CPLMalloc(strlen(pszFID) + 64);
 
         poSrcLayer->ResetReading();
-        sprintf( pszFIDQuery, "%s = %ld", pszFID, nFeatureId );
+        sprintf( pszFIDQuery, "%s = " CPL_FRMT_GIB, pszFID, nFeatureId );
         poSrcLayer->SetSpatialFilter( NULL );
         poSrcLayer->SetAttributeFilter( pszFIDQuery );
         CPLFree(pszFIDQuery);
@@ -1642,7 +1643,7 @@ OGRFeature *OGRVRTLayer::GetFeature( long nFeatureId )
 /*                          SetNextByIndex()                            */
 /************************************************************************/
 
-OGRErr OGRVRTLayer::SetNextByIndex( long nIndex )
+OGRErr OGRVRTLayer::SetNextByIndex( GIntBig nIndex )
 {
     if (!bHasFullInitialized) FullInitialize();
     if (!poSrcLayer || poDS->GetRecursionDetected()) return OGRERR_FAILURE;
@@ -1896,7 +1897,7 @@ OGRErr OGRVRTLayer::ISetFeature( OGRFeature* poVRTFeature )
 /*                           DeleteFeature()                            */
 /************************************************************************/
 
-OGRErr OGRVRTLayer::DeleteFeature( long nFID )
+OGRErr OGRVRTLayer::DeleteFeature( GIntBig nFID )
 
 {
     if (!bHasFullInitialized) FullInitialize();
@@ -2100,7 +2101,7 @@ OGRErr OGRVRTLayer::GetExtent( int iGeomField, OGREnvelope *psExtent, int bForce
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
-int OGRVRTLayer::GetFeatureCount( int bForce )
+GIntBig OGRVRTLayer::GetFeatureCount( int bForce )
 
 {
     if (nFeatureCount >= 0 &&

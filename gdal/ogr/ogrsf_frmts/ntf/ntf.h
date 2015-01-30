@@ -396,7 +396,7 @@ class OGRNTFLayer : public OGRLayer
     OGRFeature *        GetNextFeature();
 
 #ifdef notdef    
-    OGRFeature         *GetFeature( long nFeatureId );
+    OGRFeature         *GetFeature( GIntBig nFeatureId );
     OGRErr              ISetFeature( OGRFeature *poFeature );
     OGRErr              ICreateFeature( OGRFeature *poFeature );
 #endif
@@ -404,7 +404,7 @@ class OGRNTFLayer : public OGRLayer
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
 
 #ifdef notdef    
-    int                 GetFeatureCount( int );
+    GIntBig             GetFeatureCount( int );
 #endif
     
     int                 TestCapability( const char * );
@@ -436,11 +436,11 @@ class OGRNTFFeatureClassLayer : public OGRLayer
     void                ResetReading();
     OGRFeature *        GetNextFeature();
 
-    OGRFeature         *GetFeature( long nFeatureId );
+    OGRFeature         *GetFeature( GIntBig nFeatureId );
     
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
 
-    int                 GetFeatureCount( int = TRUE );
+    GIntBig             GetFeatureCount( int = TRUE );
     
     int                 TestCapability( const char * );
 };
@@ -477,11 +477,11 @@ class OGRNTFRasterLayer : public OGRLayer
     void                ResetReading();
     OGRFeature *        GetNextFeature();
 
-    OGRFeature         *GetFeature( long nFeatureId );
+    OGRFeature         *GetFeature( GIntBig nFeatureId );
     
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
 
-    int                 GetFeatureCount( int = TRUE );
+    GIntBig             GetFeatureCount( int = TRUE );
     
     int                 TestCapability( const char * );
 };
