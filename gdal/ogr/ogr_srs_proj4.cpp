@@ -1691,7 +1691,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
                  GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
     }
 
-    else if( EQUAL(pszProjection,SRS_PT_MERCATOR_AUXILARY_SPHERE) )
+    else if( EQUAL(pszProjection,SRS_PT_MERCATOR_AUXILIARY_SPHERE) )
     {
        // This is EPSG:3875 Pseudo Mercator. No point in trying to parse the
        // rest of the parameters, since we know pretty much everything at this

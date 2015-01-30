@@ -835,11 +835,11 @@ OGRErr OGRSpatialReference::importFromESRI( char **papszPrj )
                      OSR_GDV( papszPrj, "PARAM_3", 0.0 ) );
     }
 
-    else if( EQUAL(osProj, SRS_PT_MERCATOR_AUXILARY_SPHERE) )
+    else if( EQUAL(osProj, SRS_PT_MERCATOR_AUXILIARY_SPHERE) )
     {
        // This is EPSG:3875 Pseudo Mercator. We might as well import it from
        // the EPSG spec.
-       CPLString osAuxilarySphereType;
+       CPLString osAuxiliarySphereType;
        importFromEPSG(3857);
     }
 
