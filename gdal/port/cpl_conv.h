@@ -102,8 +102,8 @@ double CPL_DLL CPLScanDouble( const char *, int );
 long CPL_DLL CPLScanLong( const char *, int );
 unsigned long CPL_DLL CPLScanULong( const char *, int );
 GUIntBig CPL_DLL CPLScanUIntBig( const char *, int );
-GIntBig CPLAtoGIntBig( const char* pszString );
-GIntBig CPLAtoGIntBigEx( const char* pszString, int bWarn, int *pbOverflow );
+GIntBig CPL_DLL CPLAtoGIntBig( const char* pszString );
+GIntBig CPL_DLL CPLAtoGIntBigEx( const char* pszString, int bWarn, int *pbOverflow );
 void CPL_DLL *CPLScanPointer( const char *, int );
 
 /* -------------------------------------------------------------------- */
