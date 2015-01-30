@@ -36,7 +36,6 @@ except ImportError:
     import gdal
 
 import sys
-import string
 
 if len(sys.argv) < 3:
     print('Usage: attachpct.py <pctfile> <infile> <outfile>')

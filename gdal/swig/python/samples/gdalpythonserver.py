@@ -33,9 +33,9 @@
 
 import sys
 import os
-from struct import *
+import struct
 
-from osgeo import gdalconst, gdal
+from osgeo import gdal
 
 class GDALPythonServerRasterBand:
 
@@ -346,15 +346,15 @@ VERBOSE = 0
 
 def read_int():
     if sys.version_info >= (3,0,0):
-        return unpack('i', sys.stdin.read(4).encode('latin1'))[0]
+        return struct.unpack('i', sys.stdin.read(4).encode('latin1'))[0]
     else:
-        return unpack('i', sys.stdin.read(4))[0]
+        return struct.unpack('i', sys.stdin.read(4))[0]
 
 def read_double():
     if sys.version_info >= (3,0,0):
-        return unpack('d', sys.stdin.read(8).encode('latin1'))[0]
+        return struct.unpack('d', sys.stdin.read(8).encode('latin1'))[0]
     else:
-        return unpack('d', sys.stdin.read(8))[0]
+        return struct.unpack('d', sys.stdin.read(8))[0]
 
 def read_str():
     length = read_int()
@@ -374,11 +374,11 @@ def read_strlist():
 
 def write_int(i):
     if i is True:
-        v = pack('i', 1)
+        v = struct.pack('i', 1)
     elif i is False or i is None:
-        v = pack('i', 0)
+        v = struct.pack('i', 0)
     else:
-        v = pack('i', i)
+        v = struct.pack('i', i)
     if sys.version_info >= (3,0,0):
         sys.stdout.write(v.decode('latin1'))
     else:
@@ -386,9 +386,9 @@ def write_int(i):
 
 def write_double(d):
     if sys.version_info >= (3,0,0):
-        sys.stdout.write(pack('d', d).decode('latin1'))
+        sys.stdout.write(struct.pack('d', d).decode('latin1'))
     else:
-        sys.stdout.write(pack('d', d))
+        sys.stdout.write(struct.pack('d', d))
 
 def write_str(s):
     if s is None:
@@ -453,9 +453,9 @@ def main_loop():
 
         if instr == INSTR_GetGDALVersion:
             if sys.version_info >= (3,0,0):
-                lsb = unpack('B', sys.stdin.read(1).encode('latin1'))[0]
+                lsb = struct.unpack('B', sys.stdin.read(1).encode('latin1'))[0]
             else:
-                lsb = unpack('B', sys.stdin.read(1))[0]
+                lsb = struct.unpack('B', sys.stdin.read(1))[0]
             ver = read_str()
             vmajor = read_int()
             vminor = read_int()
@@ -531,7 +531,7 @@ def main_loop():
                 for cap in caps_list:
                     caps[int(cap / 8)] = caps[int(cap / 8)] | (1 << (cap % 8))
                 for i in range(16):
-                    sys.stdout.write(pack('B', caps[i])) # caps
+                    sys.stdout.write(struct.pack('B', caps[i])) # caps
                 write_str(server_ds.GetDescription())
                 drv = server_ds.GetDriver()
                 if drv is not None:
@@ -560,20 +560,20 @@ def main_loop():
         elif instr == INSTR_Create:
             filename = read_str()
             cwd = read_str()
-            xsize = read_int()
-            ysize = read_int()
-            bands = read_int()
-            datatype = read_int()
-            options = read_strlist()
+            read_int() # xsize = 
+            read_int() # ysize = 
+            read_int() # bands = 
+            read_int() # datatype = 
+            read_strlist() #options = 
             write_marker()
             # FIXME
             write_int(0)
         elif instr == INSTR_CreateCopy:
             filename = read_str()
-            src_description = read_str()
+            read_str() # src_description = 
             cwd = read_str()
-            strict = read_int()
-            options = read_strlist()
+            read_int() # strict = 
+            read_strlist() # options = 
             # FIXME
             write_int(0)
         elif instr == INSTR_QuietDelete:
@@ -633,7 +633,7 @@ def main_loop():
             nBufType = read_int()
             nBandCount = read_int()
             panBandMap = []
-            size = read_int()
+            read_int() # size = 
             for i in range(nBandCount):
                 panBandMap.append(read_int())
             nPixelSpace = read_int()

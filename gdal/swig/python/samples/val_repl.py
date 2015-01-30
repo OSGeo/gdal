@@ -35,11 +35,9 @@
 
 try:
     from osgeo import gdal
-    from osgeo.gdalconst import *
     gdal.TermProgress = gdal.TermProgress_nocb
 except ImportError:
     import gdal
-    from gdalconst import *
 
 try:
     import numpy
@@ -61,8 +59,8 @@ def Usage():
 # =============================================================================
 def ParseType(type):
     gdal_dt = gdal.GetDataTypeByName(type)
-    if gdal_dt is GDT_Unknown:
-        gdal_dt = GDT_Byte
+    if gdal_dt is gdal.GDT_Unknown:
+        gdal_dt = gdal.GDT_Byte
     return gdal_dt
 
 # =============================================================================
@@ -72,7 +70,7 @@ outNoData = None
 infile = None
 outfile = None
 format = 'GTiff'
-type = GDT_Byte
+type = gdal.GDT_Byte
 
 # Parse command line arguments.
 i = 1
@@ -115,7 +113,7 @@ if inNoData is None:
 if outNoData is None:
     Usage()
 
-indataset = gdal.Open( infile, GA_ReadOnly )
+indataset = gdal.Open( infile, gdal.GA_ReadOnly )
 
 out_driver = gdal.GetDriverByName(format)
 outdataset = out_driver.Create(outfile, indataset.RasterXSize, indataset.RasterYSize, indataset.RasterCount, type)

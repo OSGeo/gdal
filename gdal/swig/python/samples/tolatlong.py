@@ -32,12 +32,10 @@
 ###############################################################################
 
 try:
-    from osgeo import gdal
-    from osgeo import osr
-    from osgeo.gdalconst import *
+    from osgeo import gdal, osr
 except ImportError:
     import gdal
-    from gdalconst import *
+    import osr
 
 import sys
 
@@ -87,7 +85,7 @@ if line is None:
     Usage()
 
 # Open input dataset
-indataset = gdal.Open( infile, GA_ReadOnly )
+indataset = gdal.Open( infile, gdal.GA_ReadOnly )
 
 # Read geotransform matrix and calculate ground coordinates
 geomatrix = indataset.GetGeoTransform()

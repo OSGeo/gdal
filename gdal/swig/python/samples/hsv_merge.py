@@ -31,8 +31,7 @@
 #  DEALINGS IN THE SOFTWARE.
 #******************************************************************************
 
-from osgeo import gdal, gdal_array
-from osgeo.gdalconst import *
+from osgeo import gdal
 import numpy
 import sys
 
@@ -158,10 +157,10 @@ while i < len(argv):
 if dst_color_filename is None:
     Usage()
 
-datatype = GDT_Byte
+datatype = gdal.GDT_Byte
 
-hilldataset = gdal.Open( src_greyscale_filename, GA_ReadOnly )
-colordataset = gdal.Open( src_color_filename, GA_ReadOnly )
+hilldataset = gdal.Open( src_greyscale_filename, gdal.GA_ReadOnly )
+colordataset = gdal.Open( src_color_filename, gdal.GA_ReadOnly )
 
 #check for 3 or 4 bands in the color file
 if (colordataset.RasterCount != 3 and colordataset.RasterCount != 4):

@@ -39,7 +39,6 @@ except ImportError:
     import gdal
 
 import sys
-import os.path
 
 if len(sys.argv) < 3:
     print("Usage: gdalcopyproj.py source_file dest_file")

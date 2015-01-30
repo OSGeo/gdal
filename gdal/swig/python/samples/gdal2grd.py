@@ -33,18 +33,9 @@
 
 try:
     from osgeo import gdal
-    from osgeo.gdalconst import *
     gdal.TermProgress = gdal.TermProgress_nocb
 except ImportError:
     import gdal
-    from gdalconst import *
-
-try:
-    import numpy as Numeric
-    Numeric.arrayrange = Numeric.arange
-except ImportError:
-    import Numeric
-
 
 import sys
 
@@ -95,7 +86,7 @@ if infile is None:
 if  outfile is None:
     Usage()
 
-indataset = gdal.Open(infile, GA_ReadOnly)
+indataset = gdal.Open(infile, gdal.GA_ReadOnly)
 if infile == None:
     print('Cannot open', infile)
     sys.exit(2)

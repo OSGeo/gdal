@@ -43,8 +43,6 @@ except:
 
 
 import sys
-import string
-import os.path
 
 # =============================================================================
 #		read_lut()

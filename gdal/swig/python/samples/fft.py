@@ -32,12 +32,8 @@
 
 try:
     from osgeo import gdal
-    from osgeo.gdalconst import *
-    import numpy as Numeric
 except ImportError:
     import gdal
-    from gdalconst import *
-    import Numeric
     
 import FFT
 import sys
@@ -53,29 +49,29 @@ def Usage():
 # =============================================================================
 def ParseType(type):
     if type == 'Byte':
-        return GDT_Byte
+        return gdal.GDT_Byte
     elif type == 'Int16':
-        return GDT_Int16
+        return gdal.GDT_Int16
     elif type == 'UInt16':
-        return GDT_UInt16
+        return gdal.GDT_UInt16
     elif type == 'Int32':
-        return GDT_Int32
+        return gdal.GDT_Int32
     elif type == 'UInt32':
-        return GDT_UInt32
+        return gdal.GDT_UInt32
     elif type == 'Float32':
-        return GDT_Float32
+        return gdal.GDT_Float32
     elif type == 'Float64':
-        return GDT_Float64
+        return gdal.GDT_Float64
     elif type == 'CInt16':
-        return GDT_CInt16
+        return gdal.GDT_CInt16
     elif type == 'CInt32':
-        return GDT_CInt32
+        return gdal.GDT_CInt32
     elif type == 'CFloat32':
-        return GDT_CFloat32
+        return gdal.GDT_CFloat32
     elif type == 'CFloat64':
-        return GDT_CFloat64
+        return gdal.GDT_CFloat64
     else:
-        return GDT_Byte
+        return gdal.GDT_Byte
 # =============================================================================
 
 infile = None
@@ -92,7 +88,7 @@ while i < len(sys.argv):
     if arg == '-inv':
         transformation = 'inverse'
         if type == None:
-            type = GDT_Float32
+            type = gdal.GDT_Float32
         
     elif arg == '-of':
         i = i + 1
@@ -120,9 +116,9 @@ if  outfile is None:
     Usage()
 
 if type == None:
-    type = GDT_CFloat32
+    type = gdal.GDT_CFloat32
 
-indataset = gdal.Open( infile, GA_ReadOnly )
+indataset = gdal.Open( infile, gdal.GA_ReadOnly )
 
 out_driver = gdal.GetDriverByName(format)
 outdataset = out_driver.Create(outfile, indataset.RasterXSize, indataset.RasterYSize, indataset.RasterCount, type)
