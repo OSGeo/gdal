@@ -34,12 +34,10 @@ try:
     from osgeo import gdal
     from osgeo import ogr
     from osgeo import osr
-    from osgeo.gdalconst import *
 except:
     import gdal
     import ogr
     import osr
-    from gdalconst import *
 
 import sys
 import os
@@ -497,6 +495,7 @@ def createPyramidTile(levelMosaicInfo, offsetX, offsetY, width, height,tileName,
 
     if MemDriver is not None:
         tt_fh = Driver.CreateCopy( tileName, t_fh, 0, CreateOptions )
+        tt_fh.FlushCache()
 
     if Verbose:
         print(tileName + " : " + str(offsetX)+"|"+str(offsetY)+"-->"+str(width)+"-"+str(height))
@@ -569,6 +568,7 @@ def createTile( minfo, offsetX,offsetY,width,height, tilename,OGRDS):
 
     if MemDriver is not None:
         tt_fh = Driver.CreateCopy( tilename, t_fh, 0, CreateOptions )
+        tt_fh.FlushCache()
 
     if Verbose:
         print(tilename + " : " + str(offsetX)+"|"+str(offsetY)+"-->"+str(width)+"-"+str(height))
@@ -818,15 +818,15 @@ def main(args = None):
             i+=1
             ResamplingMethodString=argv[i]
             if ResamplingMethodString=="near":
-                ResamplingMethod=GRA_NearestNeighbour
+                ResamplingMethod=gdal.GRA_NearestNeighbour
             elif ResamplingMethodString=="bilinear":
-                 ResamplingMethod=GRA_Bilinear
+                 ResamplingMethod=gdal.GRA_Bilinear
             elif ResamplingMethodString=="cubic":
-                 ResamplingMethod=GRA_Cubic
+                 ResamplingMethod=gdal.GRA_Cubic
             elif ResamplingMethodString=="cubicspline":
-                 ResamplingMethod=GRA_CubicSpline
+                 ResamplingMethod=gdal.GRA_CubicSpline
             elif ResamplingMethodString=="lanczos":
-                ResamplingMethod=GRA_Lanczos
+                ResamplingMethod=gdal.GRA_Lanczos
             else:
                 print("Unknown resampling method: %s" % ResamplingMethodString)
                 return 1
@@ -919,7 +919,7 @@ def main(args = None):
 
 
     DriverMD = Driver.GetMetadata()
-    Extension=DriverMD.get(DMD_EXTENSION);
+    Extension=DriverMD.get(gdal.DMD_EXTENSION);
     if 'DCAP_CREATE' not in DriverMD:
         MemDriver=gdal.GetDriverByName("MEM")
 
@@ -999,7 +999,7 @@ def initGlobals():
 
     Source_SRS=None
     TargetDir=None
-    ResamplingMethod=GRA_NearestNeighbour
+    ResamplingMethod=gdal.GRA_NearestNeighbour
     Levels=0
     PyramidOnly=False
     LastRowIndx=-1
@@ -1026,7 +1026,7 @@ CsvDelimiter=";"
 CsvFileName=None
 Source_SRS=None
 TargetDir=None
-ResamplingMethod=GRA_NearestNeighbour
+ResamplingMethod=gdal.GRA_NearestNeighbour
 Levels=0
 PyramidOnly=False
 LastRowIndx=-1

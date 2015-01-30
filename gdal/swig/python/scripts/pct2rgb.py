@@ -48,7 +48,6 @@ except ImportError:
 
 
 import sys
-import os.path
 
 def Usage():
     print('Usage: pct2rgb.py [-of format] [-b <band>] [-rgba] source_file dest_file')

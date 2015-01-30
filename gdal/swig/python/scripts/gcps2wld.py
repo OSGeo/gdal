@@ -37,7 +37,6 @@ except ImportError:
     import gdal
 
 import sys
-import os.path
 
 if len(sys.argv) < 2:
     print("Usage: gcps2wld.py source_file")

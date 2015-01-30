@@ -100,8 +100,6 @@ I would like to know where it was used.
 Class is available under the open-source GDAL license (www.gdal.org).
 """
 
-import math
-
 MAXZOOMLEVEL = 32
 
 class GlobalMercator(object):
@@ -441,7 +439,7 @@ class Zoomify(object):
         self.tierImageSize = []
         self.tierImageSize.append( imagesize );
 
-        while (imagesize[0] > tilesize or imageSize[1] > tilesize ):
+        while (imagesize[0] > tilesize or imagesize[1] > tilesize ):
             imagesize = (math.floor( imagesize[0] / 2 ), math.floor( imagesize[1] / 2) )
             tiles = ( math.ceil( imagesize[0] / tilesize ), math.ceil( imagesize[1] / tilesize ) )
             self.tierSizeInTiles.append( tiles )
@@ -1055,7 +1053,8 @@ gdal2tiles temp.vrt""" % self.input )
 
                 def rastertileswne(x,y,z):
                     pixelsizex = (2**(self.tmaxz-z) * self.out_gt[1]) # X-pixel size in level
-                    pixelsizey = (2**(self.tmaxz-z) * self.out_gt[1]) # Y-pixel size in level (usually -1*pixelsizex)
+                    #Comment pixelsizey as unused...
+                    #pixelsizey = (2**(self.tmaxz-z) * self.out_gt[1]) # Y-pixel size in level (usually -1*pixelsizex)
                     west = self.out_gt[0] + x*self.tilesize*pixelsizex
                     east = west + self.tilesize*pixelsizex
                     south = self.ominy + y*self.tilesize*pixelsizex

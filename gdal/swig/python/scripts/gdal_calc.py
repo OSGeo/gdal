@@ -42,12 +42,9 @@
 # gdal_calc.py -A input.tif --outfile=result.tif --calc="A*(A>0)" --NoDataValue=0
 ################################################################
 
-try:
-    from osgeo import gdal
-    from osgeo.gdalnumeric import *
-except ImportError:
-    import gdal
-    from gdalnumeric import *
+from osgeo import gdal
+from osgeo import gdalnumeric
+import numpy
 
 from optparse import OptionParser
 import sys
@@ -258,7 +255,7 @@ def doit(opts, args):
                         myBandNo=bandNo
                     else:
                         myBandNo=myBands[i]
-                    myval=BandReadAsArray(myFiles[i].GetRasterBand(myBandNo),
+                    myval=gdalnumeric.BandReadAsArray(myFiles[i].GetRasterBand(myBandNo),
                                           xoff=myX, yoff=myY,
                                           win_xsize=nXValid, win_ysize=nYValid)
 
@@ -283,7 +280,7 @@ def doit(opts, args):
 
                 # write data block to the output file
                 myOutB=myOut.GetRasterBand(bandNo)
-                BandWriteArray(myOutB, myResult, xoff=myX, yoff=myY)
+                gdalnumeric.BandWriteArray(myOutB, myResult, xoff=myX, yoff=myY)
 
     print("100 - Done")
     #print("Finished - Results written to %s" %opts.outF)

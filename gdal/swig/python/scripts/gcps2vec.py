@@ -88,7 +88,7 @@ if out_file is None:
 # ----------------------------------------------------------------------------
 ds = gdal.Open( in_file )
 if ds is None:
-    print('Unable to open %s' % filename)
+    print('Unable to open %s' % in_file)
     sys.exit(1)
 
 gcp_srs = ds.GetGCPProjection()
