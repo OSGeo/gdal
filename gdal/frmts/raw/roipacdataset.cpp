@@ -280,6 +280,7 @@ GDALDataset *ROIPACDataset::Open( GDALOpenInfo *poOpenInfo )
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "Failed to re-open %s within ROI_PAC driver.\n",
                   poOpenInfo->pszFilename );
+        CSLDestroy( papszRsc );
         return NULL;
     }
 
@@ -306,6 +307,7 @@ GDALDataset *ROIPACDataset::Open( GDALOpenInfo *poOpenInfo )
         CPLError( CE_Failure, CPLE_NotSupported,
                   "Reading ROI_PAC raw files is not supported yet." );
         delete poDS;
+        CSLDestroy( papszRsc );
         return NULL;
 #endif
     }
@@ -340,6 +342,7 @@ GDALDataset *ROIPACDataset::Open( GDALOpenInfo *poOpenInfo )
     }
     else { /* Eeek */
         delete poDS;
+        CSLDestroy( papszRsc );
         return NULL;
     }
     int nPixelOffset;
