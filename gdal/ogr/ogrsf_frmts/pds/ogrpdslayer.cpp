@@ -719,7 +719,7 @@ OGRFeature *OGRPDSLayer::GetFeature( GIntBig nFID )
     if (nFID < 0 || nFID >= nRecords)
         return NULL;
 
-    nNextFID = nFID;
+    nNextFID = (int)nFID;
     VSIFSeekL( fpPDS, nStartBytes + nNextFID * nRecordSize, SEEK_SET );
     return GetNextRawFeature();
 }
@@ -736,7 +736,7 @@ OGRErr OGRPDSLayer::SetNextByIndex( GIntBig nIndex )
     if (nIndex < 0 || nIndex >= nRecords)
         return OGRERR_FAILURE;
 
-    nNextFID = nIndex;
+    nNextFID = (int)nIndex;
     VSIFSeekL( fpPDS, nStartBytes + nNextFID * nRecordSize, SEEK_SET );
     return OGRERR_NONE;
 }

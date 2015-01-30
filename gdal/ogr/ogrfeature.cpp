@@ -1517,7 +1517,7 @@ double OGRFeature::GetFieldAsDouble( int iField )
         switch (iSpecialField)
         {
         case SPF_FID:
-            return GetFID();
+            return (double)GetFID();
 
         case SPF_OGR_GEOM_AREA:
             if( GetGeomFieldCount() == 0 || papoGeometries[0] == NULL )
@@ -1543,7 +1543,7 @@ double OGRFeature::GetFieldAsDouble( int iField )
     else if( eType == OFTInteger )
         return pauFields[iField].Integer;
     else if( eType == OFTInteger64 )
-        return pauFields[iField].Integer64;
+        return (double) pauFields[iField].Integer64;
     else if( eType == OFTString )
     {
         if( pauFields[iField].String == NULL )
@@ -2571,7 +2571,7 @@ void OGRFeature::SetField( int iField, GIntBig nValue )
     }
     else if( eType == OFTReal )
     {
-        pauFields[iField].Real = nValue;
+        pauFields[iField].Real = (double) nValue;
     }
     else if( eType == OFTIntegerList )
     {
@@ -2589,7 +2589,7 @@ void OGRFeature::SetField( int iField, GIntBig nValue )
     }
     else if( eType == OFTRealList )
     {
-        double dfValue = nValue;
+        double dfValue = (double) nValue;
         SetField( iField, 1, &dfValue );
     }
     else if( eType == OFTString )

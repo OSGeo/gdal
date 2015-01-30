@@ -162,7 +162,7 @@ public:
   virtual const char *GetModule() { return pszModule; }
   virtual int         SetWriteModule( const char *, int, OGRFeature * );
 
-  virtual GIntBig     GetFeatureCount() { return nFeatures; }
+  virtual int         GetFeatureCount() { return nFeatures; }
 
   OGRFeatureDefn     *GetFeatureDefn() { return poFeatureDefn; }
 

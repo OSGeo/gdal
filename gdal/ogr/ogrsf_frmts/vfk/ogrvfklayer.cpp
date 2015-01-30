@@ -139,10 +139,10 @@ GIntBig OGRVFKLayer::GetFeatureCount(CPL_UNUSED int bForce)
     int nfeatures;
 
     /* note that 'nfeatures' is 0 when data are not read from DB */
-    nfeatures = poDataBlock->GetFeatureCount();
+    nfeatures = (int)poDataBlock->GetFeatureCount();
     if (m_poFilterGeom || m_poAttrQuery || nfeatures < 1) {
         /* force real feature count */
-        nfeatures = OGRLayer::GetFeatureCount();
+        nfeatures = (int)OGRLayer::GetFeatureCount();
     }
 
     CPLDebug("OGR-VFK", "OGRVFKLayer::GetFeatureCount(): name=%s -> n=%d",

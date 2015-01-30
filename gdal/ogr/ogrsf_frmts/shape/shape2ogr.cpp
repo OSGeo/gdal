@@ -1264,7 +1264,7 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
 
     if( hSHP != NULL )
     {
-        eErr = SHPWriteOGRObject( hSHP, poFeature->GetFID(),
+        eErr = SHPWriteOGRObject( hSHP, (int)poFeature->GetFID(),
                                   poFeature->GetGeometryRef() );
         if( eErr != OGRERR_NONE )
             return eErr;
@@ -1308,8 +1308,8 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
 /* -------------------------------------------------------------------- */
     if( DBFGetFieldCount( hDBF ) == 1 && poDefn->GetFieldCount() == 0 )
     {
-        DBFWriteIntegerAttribute( hDBF, poFeature->GetFID(), 0, 
-                                  poFeature->GetFID() );
+        DBFWriteIntegerAttribute( hDBF, (int)poFeature->GetFID(), 0, 
+                                  (int)poFeature->GetFID() );
     }
 
 /* -------------------------------------------------------------------- */
@@ -1319,7 +1319,7 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
     {
         if( !poFeature->IsFieldSet( iField ) )
         {
-            DBFWriteNULLAttribute( hDBF, poFeature->GetFID(), iField );
+            DBFWriteNULLAttribute( hDBF, (int)poFeature->GetFID(), iField );
             continue;
         }
 
@@ -1383,7 +1383,7 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
                   }
               }
 
-              DBFWriteStringAttribute( hDBF, poFeature->GetFID(), iField,
+              DBFWriteStringAttribute( hDBF, (int)poFeature->GetFID(), iField,
                                               pszStr );
 
               CPLFree( pszEncoded );
@@ -1407,7 +1407,7 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
                   }
               }
 
-              DBFWriteAttributeDirectly( hDBF, poFeature->GetFID(), iField, 
+              DBFWriteAttributeDirectly( hDBF, (int)poFeature->GetFID(), iField, 
                                          szValue );
 
               break;
@@ -1429,7 +1429,7 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
                     nCounter ++;
                 }
             }
-            int ret = DBFWriteDoubleAttribute( hDBF, poFeature->GetFID(), iField, 
+            int ret = DBFWriteDoubleAttribute( hDBF, (int)poFeature->GetFID(), iField, 
                                                dfVal );
             if( !ret )
             {
@@ -1454,7 +1454,7 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
                                "Year < 0 or > 9999 is not a valid date for shapefile");
                   }
                   else
-                      DBFWriteIntegerAttribute( hDBF, poFeature->GetFID(), iField, 
+                      DBFWriteIntegerAttribute( hDBF, (int)poFeature->GetFID(), iField, 
                                             nYear*10000 + nMonth*100 + nDay );
               }
           }

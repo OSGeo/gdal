@@ -145,7 +145,7 @@ json_object* OGRGeoJSONWriteAttributes( OGRFeature* poFeature )
         {
             if( eSubType == OFSTBoolean )
                 poObjProp = json_object_new_boolean( 
-                    poFeature->GetFieldAsInteger64( nField ) );
+                    (json_bool)poFeature->GetFieldAsInteger64( nField ) );
             else
                 poObjProp = json_object_new_int64( 
                     poFeature->GetFieldAsInteger64( nField ) );
@@ -184,7 +184,7 @@ json_object* OGRGeoJSONWriteAttributes( OGRFeature* poFeature )
             {
                 if( eSubType == OFSTBoolean )
                     json_object_array_add(poObjProp,
-                            json_object_new_boolean(panList[i]));
+                            json_object_new_boolean((json_bool)panList[i]));
                 else
                     json_object_array_add(poObjProp,
                             json_object_new_int64(panList[i]));

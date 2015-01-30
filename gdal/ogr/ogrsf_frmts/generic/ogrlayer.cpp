@@ -2028,7 +2028,7 @@ OGRErr OGRLayer::Intersection( OGRLayer *pLayerMethod,
     int *mapMethod = NULL;
     OGREnvelope sEnvelopeMethod;
     GBool bEnvelopeSet;
-    double progress_max = GetFeatureCount(0);
+    double progress_max = (double) GetFeatureCount(0);
     double progress_counter = 0;
     double progress_ticker = 0;
     int bSkipFailures = CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "SKIP_FAILURES", "NO"));
@@ -2293,7 +2293,7 @@ OGRErr OGRLayer::Union( OGRLayer *pLayerMethod,
     OGRGeometry *pGeometryInputFilter = NULL;
     int *mapInput = NULL;
     int *mapMethod = NULL;
-    double progress_max = GetFeatureCount(0) + pLayerMethod->GetFeatureCount(0);
+    double progress_max = (double) GetFeatureCount(0) + (double) pLayerMethod->GetFeatureCount(0);
     double progress_counter = 0;
     double progress_ticker = 0;
     int bSkipFailures = CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "SKIP_FAILURES", "NO"));
@@ -2637,7 +2637,7 @@ OGRErr OGRLayer::SymDifference( OGRLayer *pLayerMethod,
     OGRGeometry *pGeometryInputFilter = NULL;
     int *mapInput = NULL;
     int *mapMethod = NULL;
-    double progress_max = GetFeatureCount(0) + pLayerMethod->GetFeatureCount(0);
+    double progress_max = (double) GetFeatureCount(0) + (double) pLayerMethod->GetFeatureCount(0);
     double progress_counter = 0;
     double progress_ticker = 0;
     int bSkipFailures = CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "SKIP_FAILURES", "NO"));
@@ -2947,7 +2947,7 @@ OGRErr OGRLayer::Identity( OGRLayer *pLayerMethod,
     OGRGeometry *pGeometryMethodFilter = NULL;
     int *mapInput = NULL;
     int *mapMethod = NULL;
-    double progress_max = GetFeatureCount(0);
+    double progress_max = (double) GetFeatureCount(0);
     double progress_counter = 0;
     double progress_ticker = 0;
     int bSkipFailures = CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "SKIP_FAILURES", "NO"));
@@ -3221,7 +3221,7 @@ OGRErr OGRLayer::Update( OGRLayer *pLayerMethod,
     OGRGeometry *pGeometryMethodFilter = NULL;
     int *mapInput = NULL;
     int *mapMethod = NULL;
-    double progress_max = GetFeatureCount(0) + pLayerMethod->GetFeatureCount(0);
+    double progress_max = (double) GetFeatureCount(0) + (double) pLayerMethod->GetFeatureCount(0);
     double progress_counter = 0;
     double progress_ticker = 0;
     int bSkipFailures = CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "SKIP_FAILURES", "NO"));
@@ -3494,7 +3494,7 @@ OGRErr OGRLayer::Clip( OGRLayer *pLayerMethod,
     OGRFeatureDefn *poDefnResult = NULL;
     OGRGeometry *pGeometryMethodFilter = NULL;
     int *mapInput = NULL;
-    double progress_max = GetFeatureCount(0);
+    double progress_max = (double) GetFeatureCount(0);
     double progress_counter = 0;
     double progress_ticker = 0;
     int bSkipFailures = CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "SKIP_FAILURES", "NO"));
@@ -3730,7 +3730,7 @@ OGRErr OGRLayer::Erase( OGRLayer *pLayerMethod,
     OGRFeatureDefn *poDefnResult = NULL;
     OGRGeometry *pGeometryMethodFilter = NULL;
     int *mapInput = NULL;
-    double progress_max = GetFeatureCount(0);
+    double progress_max = (double) GetFeatureCount(0);
     double progress_counter = 0;
     double progress_ticker = 0;
     int bSkipFailures = CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "SKIP_FAILURES", "NO"));

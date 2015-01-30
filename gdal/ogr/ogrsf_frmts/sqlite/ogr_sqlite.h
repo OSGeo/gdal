@@ -534,7 +534,7 @@ class IOGRSQLiteSelectLayer
         virtual void                 BaseResetReading() = 0;
         virtual OGRFeature          *BaseGetNextFeature() = 0;
         virtual OGRErr               BaseSetAttributeFilter(const char* pszQuery) = 0;
-        virtual int                  BaseGetFeatureCount(int bForce) = 0;
+        virtual GIntBig              BaseGetFeatureCount(int bForce) = 0;
         virtual int                  BaseTestCapability( const char * ) = 0;
         virtual OGRErr               BaseGetExtent(OGREnvelope *psExtent, int bForce) = 0;
         virtual OGRErr               BaseGetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) = 0;
@@ -621,7 +621,7 @@ class OGRSQLiteSelectLayer : public OGRSQLiteLayer, public IOGRSQLiteSelectLayer
     virtual void                 BaseResetReading() { OGRSQLiteLayer::ResetReading(); }
     virtual OGRFeature          *BaseGetNextFeature() { return OGRSQLiteLayer::GetNextFeature(); }
     virtual OGRErr               BaseSetAttributeFilter(const char* pszQuery) { return OGRSQLiteLayer::SetAttributeFilter(pszQuery); }
-    virtual int                  BaseGetFeatureCount(int bForce) { return OGRSQLiteLayer::GetFeatureCount(bForce); }
+    virtual GIntBig              BaseGetFeatureCount(int bForce) { return OGRSQLiteLayer::GetFeatureCount(bForce); }
     virtual int                  BaseTestCapability( const char *pszCap ) { return OGRSQLiteLayer::TestCapability(pszCap); }
     virtual OGRErr               BaseGetExtent(OGREnvelope *psExtent, int bForce) { return OGRSQLiteLayer::GetExtent(psExtent, bForce); }
     virtual OGRErr               BaseGetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) { return OGRSQLiteLayer::GetExtent(iGeomField, psExtent, bForce); }

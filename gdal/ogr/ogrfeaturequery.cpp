@@ -332,9 +332,16 @@ int OGRFeatureQuery::CanUseIndex( swq_expr_node *psExpr,
 /*      multi-part queries with ranges.                                 */
 /************************************************************************/
 
-static int CompareGIntBig(const void *a, const void *b)
+static int CompareGIntBig(const void *pa, const void *pb)
 {
-	return (*(const GIntBig *)a) - (*(const GIntBig *)b);
+    GIntBig a = *((const GIntBig*)pa);
+    GIntBig b = *((const GIntBig*)pb);
+    if( a < b )
+        return -1;
+    else if( a > b )
+        return 1;
+    else
+        return 0;
 }
 
 GIntBig *OGRFeatureQuery::EvaluateAgainstIndices( OGRLayer *poLayer, 
@@ -363,7 +370,7 @@ GIntBig* OGRORGIntBigArray(GIntBig panFIDList1[], GIntBig nFIDCount1,
                            GIntBig& nFIDCount)
 {
     GIntBig nMaxCount = nFIDCount1 + nFIDCount2;
-    GIntBig* panFIDList = (GIntBig*) CPLMalloc((nMaxCount+1) * sizeof(GIntBig));
+    GIntBig* panFIDList = (GIntBig*) CPLMalloc((size_t)(nMaxCount+1) * sizeof(GIntBig));
     nFIDCount = 0;
 
     GIntBig i1 = 0, i2 =0;
@@ -436,7 +443,7 @@ GIntBig* OGRANDGIntBigArray(GIntBig panFIDList1[], GIntBig nFIDCount1,
                             GIntBig& nFIDCount)
 {
     GIntBig nMaxCount = MAX(nFIDCount1, nFIDCount2);
-    GIntBig* panFIDList = (GIntBig*) CPLMalloc((nMaxCount+1) * sizeof(GIntBig));
+    GIntBig* panFIDList = (GIntBig*) CPLMalloc((size_t)(nMaxCount+1) * sizeof(GIntBig));
     nFIDCount = 0;
 
     GIntBig i1 = 0, i2 =0;
@@ -588,7 +595,7 @@ GIntBig *OGRFeatureQuery::EvaluateAgainstIndices( swq_expr_node *psExpr,
         if (nFIDCount > 1)
         {
             /* the returned FIDs are expected to be in sorted order */
-            qsort(panFIDs, nFIDCount, sizeof(GIntBig), CompareGIntBig);
+            qsort(panFIDs, (size_t)nFIDCount, sizeof(GIntBig), CompareGIntBig);
         }
         return panFIDs;
     }
@@ -632,7 +639,7 @@ GIntBig *OGRFeatureQuery::EvaluateAgainstIndices( swq_expr_node *psExpr,
     if (nFIDCount > 1)
     {
         /* the returned FIDs are expected to be in sorted order */
-        qsort(panFIDs, nFIDCount, sizeof(GIntBig), CompareGIntBig);
+        qsort(panFIDs, (size_t)nFIDCount, sizeof(GIntBig), CompareGIntBig);
     }
     return panFIDs;
 }

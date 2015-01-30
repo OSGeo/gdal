@@ -139,7 +139,7 @@ class OGRMSSQLSpatialLayer : public OGRLayer
     OGRSpatialReference *poSRS;
     int                 nSRSId;
 
-    int                 iNextShapeId;
+    GIntBig             iNextShapeId;
 
     OGRMSSQLSpatialDataSource    *poDS;
 

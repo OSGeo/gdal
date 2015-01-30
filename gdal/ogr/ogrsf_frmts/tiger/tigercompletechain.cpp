@@ -364,7 +364,7 @@ int TigerCompleteChain::SetModule( const char * pszModule )
                           pszFilename );
         }
         else
-            panShapeRecordId = (int *)CPLCalloc(sizeof(int),GetFeatureCount());
+            panShapeRecordId = (int *)CPLCalloc(sizeof(int),(size_t)GetFeatureCount());
         
         CPLFree( pszFilename );
     }

@@ -149,7 +149,7 @@ OGRFeature *OGRTigerLayer::GetFeature( GIntBig nFeatureId )
     OGRFeature  *poFeature;
 
     poFeature =
-        poReader->GetFeature( nFeatureId-panModuleOffset[iLastModule]-1 );
+        poReader->GetFeature( (int)nFeatureId-panModuleOffset[iLastModule]-1 );
 
     if( poFeature != NULL )
     {

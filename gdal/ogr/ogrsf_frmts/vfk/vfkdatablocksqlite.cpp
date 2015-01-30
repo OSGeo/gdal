@@ -1001,7 +1001,7 @@ void VFKDataBlockSQLite::UpdateVfkBlocks(int nGeometries) {
     poReader = (VFKReaderSQLite*) m_poReader;
 
     /* update number of features in VFK_DB_TABLE table */    
-    nFeatCount = GetFeatureCount();
+    nFeatCount = (int)GetFeatureCount();
     if (nFeatCount > 0) {
         osSQL.Printf("UPDATE %s SET num_features = %d WHERE table_name = '%s'",
                      VFK_DB_TABLE, nFeatCount, m_pszName);

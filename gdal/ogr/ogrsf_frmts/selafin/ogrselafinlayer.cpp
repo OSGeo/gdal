@@ -148,7 +148,7 @@ OGRFeature* OGRSelafinLayer::GetFeature(GIntBig nFID) {
         poFeature->SetGeometryDirectly(new OGRPoint(poHeader->paadfCoords[0][nFID],poHeader->paadfCoords[1][nFID]));
         poFeature->SetFID(nFID);
         for (int i=0;i<poHeader->nVar;++i) {
-            VSIFSeekL(poHeader->fp,poHeader->getPosition(nStepNumber,nFID,i),SEEK_SET);
+            VSIFSeekL(poHeader->fp,poHeader->getPosition(nStepNumber,(long)nFID,i),SEEK_SET);
             if (Selafin::read_float(poHeader->fp,nData)==1) poFeature->SetField(i,nData);
         }
         return poFeature;
@@ -240,7 +240,7 @@ OGRErr OGRSelafinLayer::ISetFeature(OGRFeature *poFeature) {
         if (Selafin::write_float(poHeader->fp,poHeader->paadfCoords[1][nFID]-poHeader->adfOrigin[1])==0) return OGRERR_FAILURE;
         for (long i=0;i<poHeader->nVar;++i) {
             double nData=poFeature->GetFieldAsDouble(i);
-            if (VSIFSeekL(poHeader->fp,poHeader->getPosition(nStepNumber,nFID,i),SEEK_SET)!=0) return OGRERR_FAILURE;
+            if (VSIFSeekL(poHeader->fp,poHeader->getPosition(nStepNumber,(long)nFID,i),SEEK_SET)!=0) return OGRERR_FAILURE;
             if (Selafin::write_float(poHeader->fp,nData)==0) return OGRERR_FAILURE;
         }
     } else {
@@ -655,10 +655,10 @@ OGRErr OGRSelafinLayer::DeleteFeature(GIntBig nFID) {
     CPLDebug("Selafin","DeleteFeature(" CPL_FRMT_GIB ")",nFID);
     if (VSIFSeekL(poHeader->fp,poHeader->getPosition(0),SEEK_SET)!=0) return OGRERR_FAILURE;
     // Change the header to delete the feature
-    if (eType==POINTS) poHeader->removePoint(nFID); else {
+    if (eType==POINTS) poHeader->removePoint((long)nFID); else {
         // For elements layer, we only delete the element and not the vertices
         poHeader->nElements--;
-        for (long i=nFID;i<poHeader->nElements;++i)
+        for (long i=(long)nFID;i<poHeader->nElements;++i)
             for (long j=0;j<poHeader->nPointsPerElement;++j)
                 poHeader->panConnectivity[poHeader->nPointsPerElement*i+j]=poHeader->panConnectivity[poHeader->nPointsPerElement*(i+1)+j];
         poHeader->panConnectivity=(long*)CPLRealloc(poHeader->panConnectivity,sizeof(long)*poHeader->nPointsPerElement*poHeader->nElements);
@@ -699,7 +699,7 @@ OGRErr OGRSelafinLayer::DeleteFeature(GIntBig nFID) {
                 return OGRERR_FAILURE;
             }
             if (eType==POINTS) {
-                for (long k=nFID;k<=poHeader->nPoints;++k) padfValues[k-1]=padfValues[k];
+                for (long k=(long)nFID;k<=poHeader->nPoints;++k) padfValues[k-1]=padfValues[k];
             }
             if (Selafin::write_floatarray(fpNew,padfValues,poHeader->nPoints)==0) {
                 CPLFree(padfValues);

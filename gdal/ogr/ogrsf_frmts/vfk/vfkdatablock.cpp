@@ -598,7 +598,7 @@ void IVFKDataBlock::AddFeature(IVFKFeature *poNewFeature)
 */
 int IVFKDataBlock::GetRecordCount(RecordType iRec) const
 {
-    return m_nRecordCount[iRec];
+    return (int) m_nRecordCount[iRec];
 }
 
 /*!

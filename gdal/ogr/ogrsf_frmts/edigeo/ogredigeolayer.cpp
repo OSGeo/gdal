@@ -136,7 +136,7 @@ OGRFeature *OGREDIGEOLayer::GetNextRawFeature()
 OGRFeature * OGREDIGEOLayer::GetFeature(GIntBig nFID)
 {
     if (nFID >= 0 && nFID < (int)aosFeatures.size())
-        return aosFeatures[nFID]->Clone();
+        return aosFeatures[(int)nFID]->Clone();
     else
         return NULL;
 }

@@ -259,11 +259,11 @@ OGRFeature *OGRS57Layer::GetFeature( GIntBig nFeatureId )
 {
     S57Reader   *poReader = poDS->GetModule(0); // not multi-reader aware
 
-    if( poReader != NULL )
+    if( poReader != NULL && nFeatureId <= INT_MAX )
     {
         OGRFeature      *poFeature;
 
-        poFeature = poReader->ReadFeature( nFeatureId, poFeatureDefn );
+        poFeature = poReader->ReadFeature( (int)nFeatureId, poFeatureDefn );
         if( poFeature != NULL &&  poFeature->GetGeometryRef() != NULL )
             poFeature->GetGeometryRef()->assignSpatialReference(
                 GetSpatialRef() );

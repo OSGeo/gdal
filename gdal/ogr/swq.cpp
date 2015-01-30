@@ -362,9 +362,9 @@ swq_select_summarize( swq_select *select_info,
             char  **old_list = summary->distinct_list;
             
             summary->distinct_list = (char **) 
-                CPLMalloc(sizeof(char *) * (summary->count+1));
+                CPLMalloc(sizeof(char *) * (size_t)(summary->count+1));
             memcpy( summary->distinct_list, old_list, 
-                    sizeof(char *) * summary->count );
+                    sizeof(char *) * (size_t)summary->count );
             summary->distinct_list[(summary->count)++] = 
                 (value != NULL) ? CPLStrdup( value ) : NULL;
 
@@ -566,7 +566,7 @@ const char *swq_select_finish_summarize( swq_select *select_info )
     distinct_list = select_info->column_summary[0].distinct_list;
     count = select_info->column_summary[0].count;
 
-    qsort( distinct_list, count, sizeof(char *), compare_func );
+    qsort( distinct_list, (size_t)count, sizeof(char *), compare_func );
 
 /* -------------------------------------------------------------------- */
 /*      Do we want the list ascending in stead of descending?           */

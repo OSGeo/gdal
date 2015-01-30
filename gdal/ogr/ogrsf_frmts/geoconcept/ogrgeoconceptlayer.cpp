@@ -352,7 +352,7 @@ OGRErr OGRGeoconceptLayer::ICreateFeature( OGRFeature* poFeature )
       for( iGeom= 0; iGeom<nbGeom; iGeom++ )
       {
         nextField= StartWritingFeature_GCIO(_gcFeature,
-                                            isSingle? poFeature->GetFID():OGRNullFID);
+                                            isSingle? (int)poFeature->GetFID():OGRNullFID);
         while (nextField!=WRITECOMPLETED_GCIO)
         {
           if( nextField==WRITEERROR_GCIO )

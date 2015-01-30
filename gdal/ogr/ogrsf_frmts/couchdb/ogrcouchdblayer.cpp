@@ -158,10 +158,10 @@ OGRFeature *OGRCouchDBLayer::GetNextRawFeature()
 
 OGRErr OGRCouchDBLayer::SetNextByIndex( GIntBig nIndex )
 {
-    if (nIndex < 0)
+    if (nIndex < 0 || nIndex >= INT_MAX )
         return OGRERR_FAILURE;
     bEOF = FALSE;
-    nNextInSeq = nIndex;
+    nNextInSeq = (int)nIndex;
     return OGRERR_NONE;
 }
 

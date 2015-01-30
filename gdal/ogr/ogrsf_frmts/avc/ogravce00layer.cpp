@@ -491,7 +491,7 @@ int OGRAVCE00Layer::AppendTableFields( OGRFeature *poFeature )
     void *hRecord;
 
     if( nTableAttrIndex == -1 )
-        nRecordId = poFeature->GetFID();
+        nRecordId = (int) poFeature->GetFID();
     else
         nRecordId = poFeature->GetFieldAsInteger( nTableAttrIndex );
 
@@ -531,7 +531,7 @@ GIntBig OGRAVCE00Layer::GetFeatureCount(int bForce)
     {
         if (psSection->nFeatureCount < 0)
         {
-            nFeatureCount = OGRLayer::GetFeatureCount(bForce);
+            nFeatureCount = (int) OGRLayer::GetFeatureCount(bForce);
         }
         else
         {

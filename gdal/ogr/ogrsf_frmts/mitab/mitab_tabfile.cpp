@@ -1191,11 +1191,14 @@ GIntBig TABFile::GetNextFeatureId(GIntBig nPrevId)
         ResetReading();
     m_bLastOpWasRead = TRUE;
 
+    if( (GIntBig)(int)nPrevId != nPrevId )
+        return -1;
+
     /*-----------------------------------------------------------------
      * Are we using spatial rather than .ID based traversal?
      *----------------------------------------------------------------*/
     if( bUseSpatialTraversal )
-        return m_poMAPFile->GetNextFeatureId( nPrevId );
+        return m_poMAPFile->GetNextFeatureId( (int)nPrevId );
 
     /*-----------------------------------------------------------------
      * Should we use an attribute index traversal?
@@ -1225,7 +1228,7 @@ GIntBig TABFile::GetNextFeatureId(GIntBig nPrevId)
     if (nPrevId <= 0 && m_nLastFeatureId > 0)
         nFeatureId = 1;       // Feature Ids start at 1
     else if (nPrevId > 0 && nPrevId < m_nLastFeatureId)
-        nFeatureId = nPrevId + 1;
+        nFeatureId = (int)nPrevId + 1;
     else
     {
         // This was the last feature
@@ -1330,8 +1333,8 @@ TABFeature *TABFile::GetFeatureRef(GIntBig nFeatureId)
     m_bLastOpWasRead = TRUE;
 
     if (nFeatureId <= 0 || nFeatureId > m_nLastFeatureId ||
-        m_poMAPFile->MoveToObjId(nFeatureId) != 0 ||
-        m_poDATFile->GetRecordBlock(nFeatureId) == NULL )
+        m_poMAPFile->MoveToObjId((int)nFeatureId) != 0 ||
+        m_poDATFile->GetRecordBlock((int)nFeatureId) == NULL )
     {
         //     CPLError(CE_Failure, CPLE_IllegalArg,
         //    "GetFeatureRef() failed: invalid feature id %d", 
@@ -1438,8 +1441,8 @@ OGRErr TABFile::DeleteFeature(GIntBig nFeatureId)
         ResetReading();
 
     if (nFeatureId <= 0 || nFeatureId > m_nLastFeatureId ||
-        m_poMAPFile->MoveToObjId(nFeatureId) != 0 ||
-        m_poDATFile->GetRecordBlock(nFeatureId) == NULL )
+        m_poMAPFile->MoveToObjId((int)nFeatureId) != 0 ||
+        m_poDATFile->GetRecordBlock((int)nFeatureId) == NULL )
     {
         CPLError(CE_Failure, CPLE_IllegalArg,
                  "DeleteFeature() failed: invalid feature id " CPL_FRMT_GIB, 
@@ -1496,7 +1499,7 @@ int TABFile::WriteFeature(TABFeature *poFeature)
     int nFeatureId;
     if ( poFeature->GetFID() >= 0 )
     {
-        nFeatureId = poFeature->GetFID();
+        nFeatureId = (int)poFeature->GetFID();
     }
     else if (m_nLastFeatureId < 1)
     {
@@ -1627,22 +1630,22 @@ OGRErr TABFile::CreateFeature(TABFeature *poFeature)
         return OGRERR_FAILURE;
     }
 
-    long nFeatureId = poFeature->GetFID();
+    GIntBig nFeatureId = poFeature->GetFID();
     if (nFeatureId != OGRNullFID )
     {
         if (nFeatureId <= 0 || nFeatureId > m_nLastFeatureId )
         {
             CPLError(CE_Failure, CPLE_IllegalArg,
-                     "CreateFeature() failed: invalid feature id %ld", 
+                     "CreateFeature() failed: invalid feature id " CPL_FRMT_GIB, 
                       nFeatureId);
             return OGRERR_FAILURE;
         }
 
-        if( m_poDATFile->GetRecordBlock(nFeatureId) == NULL ||
+        if( m_poDATFile->GetRecordBlock((int)nFeatureId) == NULL ||
             !m_poDATFile->IsCurrentRecordDeleted() )
         {
             CPLError(CE_Failure, CPLE_IllegalArg,
-                    "CreateFeature() failed: cannot re-write already existing feature %ld", 
+                    "CreateFeature() failed: cannot re-write already existing feature " CPL_FRMT_GIB, 
                     nFeatureId);
             return OGRERR_FAILURE;
         }
@@ -1681,7 +1684,7 @@ OGRErr TABFile::ISetFeature( OGRFeature *poFeature )
         return OGRERR_FAILURE;
     }
     
-    long nFeatureId = poFeature->GetFID();
+    GIntBig nFeatureId = poFeature->GetFID();
     if (nFeatureId == OGRNullFID )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
@@ -1691,7 +1694,7 @@ OGRErr TABFile::ISetFeature( OGRFeature *poFeature )
     if (nFeatureId <= 0 || nFeatureId > m_nLastFeatureId )
     {
         CPLError(CE_Failure, CPLE_IllegalArg,
-                    "SetFeature() failed: invalid feature id %ld", 
+                    "SetFeature() failed: invalid feature id " CPL_FRMT_GIB, 
                     nFeatureId);
         return OGRERR_FAILURE;
     }
@@ -1713,10 +1716,10 @@ OGRErr TABFile::ISetFeature( OGRFeature *poFeature )
     if( m_bLastOpWasWrite )
         ResetReading();
 
-    if (m_poDATFile->GetRecordBlock(nFeatureId) == NULL )
+    if (m_poDATFile->GetRecordBlock((int)nFeatureId) == NULL )
     {
         CPLError(CE_Failure, CPLE_IllegalArg,
-                 "SetFeature() failed: invalid feature id %ld", 
+                 "SetFeature() failed: invalid feature id " CPL_FRMT_GIB, 
                  nFeatureId);
         delete poTABFeature;
         return OGRERR_FAILURE;
@@ -1731,7 +1734,7 @@ OGRErr TABFile::ISetFeature( OGRFeature *poFeature )
             /* Optimization: if old and new features are the same, do nothing */
             if( poOldFeature->Equal(poFeature) )
             {
-                CPLDebug("MITAB", "Un-modified object %ld", nFeatureId);
+                CPLDebug("MITAB", "Un-modified object " CPL_FRMT_GIB, nFeatureId);
                 delete poTABFeature;
                 delete poOldFeature;
                 return OGRERR_NONE;
@@ -1749,12 +1752,12 @@ OGRErr TABFile::ISetFeature( OGRFeature *poFeature )
                 if( (pszOldStyle == NULL && pszNewStyle == NULL) ||
                     (pszOldStyle != NULL && pszNewStyle != NULL && EQUAL(pszOldStyle, pszNewStyle)) )
                 {
-                    CPLDebug("MITAB", "Rewrite only attributes for object %ld", nFeatureId);
+                    CPLDebug("MITAB", "Rewrite only attributes for object " CPL_FRMT_GIB, nFeatureId);
                     if (poTABFeature->WriteRecordToDATFile(m_poDATFile, m_poINDFile,
                                                         m_panIndexNo) != 0 )
                     {
                         CPLError(CE_Failure, CPLE_FileIO,
-                                "Failed writing attributes for feature id %ld in %s",
+                                "Failed writing attributes for feature id " CPL_FRMT_GIB " in %s",
                                 nFeatureId, m_pszFname);
                         delete poTABFeature;
                         delete poOldFeature;

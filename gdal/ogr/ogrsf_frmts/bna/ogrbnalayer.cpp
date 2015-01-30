@@ -839,10 +839,10 @@ OGRFeature *  OGRBNALayer::GetFeature( GIntBig nFID )
     BNARecord* record;
     int ok;
     
-    if (nFID < 0)
+    if (nFID < 0 || (GIntBig)(int)nFID != nFID)
         return NULL;
 
-    FastParseUntil(nFID);
+    FastParseUntil((int)nFID);
 
     if (nFID >= nFeatures)
         return NULL;
@@ -851,7 +851,7 @@ OGRFeature *  OGRBNALayer::GetFeature( GIntBig nFID )
     curLine = offsetAndLineFeaturesTable[nFID].line;
     record =  BNA_GetNextRecord(fpBNA, &ok, &curLine, TRUE, bnaFeatureType);
 
-    poFeature = BuildFeatureFromBNARecord(record, nFID);
+    poFeature = BuildFeatureFromBNARecord(record, (int)nFID);
 
     BNA_FreeRecord(record);
 

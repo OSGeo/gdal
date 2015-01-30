@@ -208,7 +208,7 @@ OGRErr OGRMemLayer::ISetFeature( OGRFeature *poFeature )
         }
         papoFeatures = papoNewFeatures;
         memset( papoFeatures + nMaxFeatureCount, 0, 
-                sizeof(OGRFeature *) * (nNewCount - nMaxFeatureCount) );
+                sizeof(OGRFeature *) * (size_t)(nNewCount - nMaxFeatureCount) );
         nMaxFeatureCount = nNewCount;
     }
 
@@ -380,7 +380,7 @@ OGRErr OGRMemLayer::CreateField( OGRFieldDefn *poField,
     for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
     {
         if( i < poFeatureDefn->GetFieldCount() - 1 )
-            panRemap[i] = i;
+            panRemap[i] = (int)i;
         else
             panRemap[i] = -1;
     }
@@ -557,26 +557,7 @@ OGRErr OGRMemLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, in
                 OGRField* poFieldRaw = papoFeatures[i]->GetRawFieldRef(iField);
                 if( papoFeatures[i]->IsFieldSet(iField) )
                 {
-                    poFieldRaw->Real = poFieldRaw->Integer64;
-                }
-            }
-        }
-        else if (poNewFieldDefn->GetType() == OFTReal &&
-                 poFieldDefn->GetType() == OFTInteger64)
-        {
-    /* -------------------------------------------------------------------- */
-    /*      Update all the internal features.  Hopefully there aren't any   */
-    /*      external features referring to our OGRFeatureDefn!              */
-    /* -------------------------------------------------------------------- */
-            for( GIntBig i = 0; i < nMaxFeatureCount; i++ )
-            {
-                if( papoFeatures[i] == NULL )
-                    continue;
-
-                OGRField* poFieldRaw = papoFeatures[i]->GetRawFieldRef(iField);
-                if( papoFeatures[i]->IsFieldSet(iField) )
-                {
-                    poFieldRaw->Real = poFieldRaw->Integer64;
+                    poFieldRaw->Real = (double) poFieldRaw->Integer64;
                 }
             }
         }
@@ -660,7 +641,7 @@ OGRErr OGRMemLayer::CreateGeomField( OGRGeomFieldDefn *poGeomField,
     for( i = 0; i < poFeatureDefn->GetGeomFieldCount(); i++ )
     {
         if( i < poFeatureDefn->GetGeomFieldCount() - 1 )
-            panRemap[i] = i;
+            panRemap[i] = (int) i;
         else
             panRemap[i] = -1;
     }
