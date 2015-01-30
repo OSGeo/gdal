@@ -951,6 +951,24 @@ GIntBig CPLAtoGIntBig( const char* pszString )
 #endif
 }
 
+#if defined(__MINGW32__)
+
+// mingw atoll() doesn't return ERANGE in case of overflow
+int CPLAtoGIntBigExHasOverflow(const char* pszString, GIntBig nVal)
+{
+    if( strlen(pszString) <= 18 )
+        return FALSE;
+    while( *pszString == ' ' )
+        pszString ++;
+    if( *pszString == '+' )
+        pszString ++;
+    char szBuffer[32];
+    sprintf(szBuffer, CPL_FRMT_GIB, nVal);
+    return strcmp(szBuffer, pszString) != 0;
+}
+
+#endif
+
 /************************************************************************/
 /*                          CPLAtoGIntBigEx()                           */
 /************************************************************************/
@@ -976,7 +994,11 @@ GIntBig CPLAtoGIntBigEx( const char* pszString, int bWarn, int *pbOverflow )
 #else
     nVal = atol( pszString );
 #endif
-    if( errno == ERANGE )
+    if( errno == ERANGE
+#if defined(__MINGW32__)
+        || CPLAtoGIntBigExHasOverflow(pszString, nVal)
+#endif
+        )
     {
         if( pbOverflow ) *pbOverflow = TRUE;
         if( bWarn )
