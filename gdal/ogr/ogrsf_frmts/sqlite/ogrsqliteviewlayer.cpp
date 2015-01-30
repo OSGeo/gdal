@@ -49,6 +49,7 @@ OGRSQLiteViewLayer::OGRSQLiteViewLayer( OGRSQLiteDataSource *poDSIn )
     pszViewName = NULL;
     pszEscapedTableName = NULL;
     pszEscapedUnderlyingTableName = NULL;
+    bHasSpatialIndex = FALSE;
 
     bHasCheckedSpatialIndexTable = FALSE;
 
@@ -189,19 +190,18 @@ CPLErr OGRSQLiteViewLayer::EstablishFeatureDefn()
         return CE_Failure;
     }
 
-    const char* pszRealUnderlyingGeometryColumn = poUnderlyingLayer->GetGeometryColumn();
-    if ( pszRealUnderlyingGeometryColumn == NULL ||
-         !EQUAL(pszRealUnderlyingGeometryColumn, osUnderlyingGeometryColumn.c_str()) )
+    int nUnderlyingLayerGeomFieldIndex =
+        poUnderlyingLayer->GetLayerDefn()->GetGeomFieldIndex(osUnderlyingGeometryColumn);
+    if ( nUnderlyingLayerGeomFieldIndex < 0 )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Underlying layer %s for view %s has not expected geometry column name (%s instead of %s)",
+                 "Underlying layer %s for view %s has not expected geometry column name %s",
                  osUnderlyingTableName.c_str(), pszViewName,
-                 pszRealUnderlyingGeometryColumn ? pszRealUnderlyingGeometryColumn : "(null)",
                  osUnderlyingGeometryColumn.c_str());
         return CE_Failure;
     }
 
-    this->bHasSpatialIndex = poUnderlyingLayer->HasSpatialIndex();
+    this->bHasSpatialIndex = poUnderlyingLayer->HasSpatialIndex(nUnderlyingLayerGeomFieldIndex);
 
 /* -------------------------------------------------------------------- */
 /*      Get the column definitions for this table.                      */
@@ -234,8 +234,10 @@ CPLErr OGRSQLiteViewLayer::EstablishFeatureDefn()
 /* -------------------------------------------------------------------- */
 /*      Collect the rest of the fields.                                 */
 /* -------------------------------------------------------------------- */
-    std::set<CPLString> aosEmpty;
-    BuildFeatureDefn( pszViewName, hColStmt, osGeomColumn, aosEmpty );
+    std::set<CPLString> aosGeomCols;
+    std::set<CPLString> aosIgnoredCols;
+    aosGeomCols.insert(osGeomColumn);
+    BuildFeatureDefn( pszViewName, hColStmt, aosGeomCols, aosIgnoredCols );
     sqlite3_finalize( hColStmt );
 
 /* -------------------------------------------------------------------- */
@@ -243,12 +245,13 @@ CPLErr OGRSQLiteViewLayer::EstablishFeatureDefn()
 /* -------------------------------------------------------------------- */
     if( poFeatureDefn->GetGeomFieldCount() != 0 )
     {
-        poFeatureDefn->SetGeomType( poUnderlyingLayer->GetGeomType() );
+        OGRSQLiteGeomFieldDefn* poSrcGeomFieldDefn =
+            poUnderlyingLayer->myGetLayerDefn()->myGetGeomFieldDefn(nUnderlyingLayerGeomFieldIndex);
         OGRSQLiteGeomFieldDefn* poGeomFieldDefn =
             poFeatureDefn->myGetGeomFieldDefn(0);
-        poGeomFieldDefn->SetSpatialRef(poUnderlyingLayer->GetSpatialRef());
-        poGeomFieldDefn->nSRSId = poUnderlyingLayer->myGetLayerDefn()->
-            myGetGeomFieldDefn(0)->nSRSId;
+        poGeomFieldDefn->SetType(poSrcGeomFieldDefn->GetType());
+        poGeomFieldDefn->SetSpatialRef(poSrcGeomFieldDefn->GetSpatialRef());
+        poGeomFieldDefn->nSRSId = poSrcGeomFieldDefn->nSRSId;
         if( eGeomFormat != OSGF_None )
             poGeomFieldDefn->eGeomFormat = eGeomFormat;
     }

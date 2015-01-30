@@ -104,7 +104,7 @@ static GDALDataset *OGRSQLiteDriverOpen( GDALOpenInfo* poOpenInfo )
 
         char** papszOptions = CSLAddString(NULL, "SPATIALITE=YES");
         int nRet = poDS->Create( ":memory:", papszOptions );
-        poDS->SetName(poOpenInfo->pszFilename);
+        poDS->SetDescription(poOpenInfo->pszFilename);
         CSLDestroy(papszOptions);
         if (!nRet)
         {
@@ -134,6 +134,7 @@ static GDALDataset *OGRSQLiteDriverOpen( GDALOpenInfo* poOpenInfo )
         poDS->ExecuteSQL(pszSQL, NULL, NULL);
         CPLFree(pszSQL);
         CPLFree(pszSQLiteFilename);
+        poDS->SetUpdate(FALSE);
         return poDS;
     }
 

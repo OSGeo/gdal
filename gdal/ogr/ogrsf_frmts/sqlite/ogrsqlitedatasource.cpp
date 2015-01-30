@@ -238,6 +238,7 @@ OGRSQLiteDataSource::~OGRSQLiteDataSource()
         if( papoLayers[i]->IsTableLayer() )
         {
             OGRSQLiteTableLayer* poLayer = (OGRSQLiteTableLayer*) papoLayers[i];
+            poLayer->RunDeferredCreationIfNecessary();
             poLayer->CreateSpatialIndexIfNecessary();
         }
     }
@@ -1134,38 +1135,22 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn )
             if( pszTableName == NULL || pszGeomCol == NULL )
                 continue;
 
-            aoMapTableToSetOfGeomCols[pszTableName].insert(pszGeomCol);
+            aoMapTableToSetOfGeomCols[pszTableName].insert(CPLString(pszGeomCol).tolower());
         }
 
         for( iRow = 0; iRow < nRowCount; iRow++ )
         {
             char **papszRow = papszResult + iRow * 6 + 6;
-            OGRwkbGeometryType eGeomType = wkbUnknown;
-            int nSRID = 0;
             const char* pszTableName = papszRow[0];
-            const char* pszGeomCol = papszRow[1];
 
-            if (pszTableName == NULL ||
-                pszGeomCol == NULL ||
-                papszRow[2] == NULL ||
-                papszRow[3] == NULL)
+            if (pszTableName == NULL)
                 continue;
 
-            eGeomType = (OGRwkbGeometryType) atoi(papszRow[2]);
+            if( GDALDataset::GetLayerByName(pszTableName) == NULL )
+                OpenTable( pszTableName );
 
-            if( atoi(papszRow[3]) > 2 )
-                eGeomType = wkbSetZ(eGeomType);
-
-            if( papszRow[5] != NULL )
-                nSRID = atoi(papszRow[5]);
-
-            int nOccurences = (int)aoMapTableToSetOfGeomCols[pszTableName].size();
-
-            OpenTable( pszTableName, pszGeomCol, nOccurences > 1, eGeomType, papszRow[4],
-                       FetchSRS( nSRID ) );
-                       
             if (bListAllTables)
-                CPLHashSetInsert(hSet, CPLStrdup(papszRow[0]));
+                CPLHashSetInsert(hSet, CPLStrdup(pszTableName));
         }
 
         sqlite3_free_table(papszResult);
@@ -1287,72 +1272,21 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn )
             if( pszTableName == NULL || pszGeomCol == NULL )
                 continue;
 
-            aoMapTableToSetOfGeomCols[pszTableName].insert(pszGeomCol);
+            aoMapTableToSetOfGeomCols[pszTableName].insert(CPLString(pszGeomCol).tolower());
         }
 
         for ( iRow = 0; iRow < nRowCount; iRow++ )
         {
             char **papszRow = papszResult + iRow * 6 + 6;
-            OGRwkbGeometryType eGeomType = wkbUnknown;
-            int nSRID = 0;
-            int bHasM = FALSE;
-            int bHasSpatialIndex = FALSE;
             const char* pszTableName = papszRow[0];
-            const char* pszGeomCol = papszRow[1];
 
-            if (pszTableName == NULL ||
-                pszGeomCol == NULL ||
-                papszRow[2] == NULL ||
-                papszRow[3] == NULL)
+            if (pszTableName == NULL )
                 continue;
 
-            if( bSpatialite4Layout )
-            {
-                int nGeomType = atoi(papszRow[2]);
-
-                if( nGeomType >= 0 && nGeomType <= 7 ) /* XY */
-                    eGeomType = (OGRwkbGeometryType) nGeomType;
-                else if( nGeomType >= 1000 && nGeomType <= 1007 ) /* XYZ */
-                    eGeomType = wkbSetZ(eGeomType);
-                else if( nGeomType >= 2000 && nGeomType <= 2007 ) /* XYM */
-                {
-                    eGeomType = wkbFlatten(nGeomType);
-                    bHasM = TRUE;
-                }
-                else if( nGeomType >= 3000 && nGeomType <= 3007 ) /* XYZM */
-                {
-                    eGeomType = wkbSetZ(eGeomType);
-                    bHasM = TRUE;
-                }
-            }
-            else
-            {
-                eGeomType = OGRFromOGCGeomType(papszRow[2]);
-
-                if( strcmp ( papszRow[3], "XYZ" ) == 0 ||
-                    strcmp ( papszRow[3], "XYZM" ) == 0 ||
-                    strcmp ( papszRow[3], "3" ) == 0) // SpatiaLite's own 3D geometries
-                    eGeomType = wkbSetZ(eGeomType);
-
-                if( strcmp ( papszRow[3], "XYM" ) == 0 ||
-                    strcmp ( papszRow[3], "XYZM" ) == 0 ) // M coordinate declared
-                    bHasM = TRUE;
-            }
-
-
-            if( papszRow[4] != NULL )
-                nSRID = atoi(papszRow[4]);
-
-            if( papszRow[5] != NULL )
-                bHasSpatialIndex = atoi(papszRow[5]);
-
-            int nOccurences = (int)aoMapTableToSetOfGeomCols[pszTableName].size();
-
-            OpenTable( pszTableName, pszGeomCol, nOccurences > 1, eGeomType, "SpatiaLite",
-                       FetchSRS( nSRID ), nSRID, bHasSpatialIndex, bHasM );
-                       
+            if( GDALDataset::GetLayerByName(pszTableName) == NULL )
+                OpenTable( pszTableName);
             if (bListAllTables)
-                CPLHashSetInsert(hSet, CPLStrdup(papszRow[0]));
+                CPLHashSetInsert(hSet, CPLStrdup(pszTableName));
         }
 
         sqlite3_free_table(papszResult);
@@ -1503,12 +1437,21 @@ int OGRSQLiteDataSource::OpenVirtualTable(const char* pszName, const char* pszSQ
         }
     }
 
-    if (OpenTable(pszName, NULL, FALSE, wkbUnknown, NULL,
-                 (nSRID > 0) ? FetchSRS( nSRID ) : NULL, nSRID,
-                  FALSE, FALSE,
-                  pszVirtualShape != NULL))
+    if (OpenTable(pszName, pszVirtualShape != NULL))
     {
         OGRSQLiteLayer* poLayer = papoLayers[nLayers-1];
+        if( poLayer->GetLayerDefn()->GetGeomFieldCount() == 1 )
+        {
+            OGRSQLiteGeomFieldDefn* poGeomFieldDefn =
+                    poLayer->myGetLayerDefn()->myGetGeomFieldDefn(0);
+            poGeomFieldDefn->eGeomFormat = OSGF_SpatiaLite;
+            if( nSRID > 0 )
+            {
+                poGeomFieldDefn->nSRSId = nSRID;
+                poGeomFieldDefn->SetSpatialRef( FetchSRS( nSRID ) );
+            }
+        }
+
         OGRFeature* poFeature = poLayer->GetNextFeature();
         if (poFeature)
         {
@@ -1520,6 +1463,7 @@ int OGRSQLiteDataSource::OpenVirtualTable(const char* pszName, const char* pszSQ
         poLayer->ResetReading();
         return TRUE;
     }
+
     return FALSE;
 }
 
@@ -1528,12 +1472,6 @@ int OGRSQLiteDataSource::OpenVirtualTable(const char* pszName, const char* pszSQ
 /************************************************************************/
 
 int OGRSQLiteDataSource::OpenTable( const char *pszTableName,
-                                    const char *pszGeomCol,
-                                    int bMustIncludeGeomColName,
-                                    OGRwkbGeometryType eGeomType,
-                                    const char *pszGeomFormat,
-                                    OGRSpatialReference *poSRS, int nSRID,
-                                    int bHasSpatialIndex, int bHasM, 
                                     int bIsVirtualShapeIn )
 
 {
@@ -1543,12 +1481,7 @@ int OGRSQLiteDataSource::OpenTable( const char *pszTableName,
     OGRSQLiteTableLayer  *poLayer;
 
     poLayer = new OGRSQLiteTableLayer( this );
-
-    if( poLayer->Initialize( pszTableName, pszGeomCol, bMustIncludeGeomColName,
-                             eGeomType, pszGeomFormat,
-                             poSRS, nSRID, bHasSpatialIndex, 
-                             bHasM,
-                             bIsVirtualShapeIn) != CE_None )
+    if( poLayer->Initialize( pszTableName, bIsVirtualShapeIn, FALSE) != CE_None )
     {
         delete poLayer;
         return FALSE;
@@ -1612,6 +1545,8 @@ int OGRSQLiteDataSource::TestCapability( const char * pszCap )
         return bUpdate;
     else if( EQUAL(pszCap,ODsCCurveGeometries) )
         return !bIsSpatiaLiteDB;
+    else if EQUAL(pszCap,ODsCCreateGeomFieldAfterCreateLayer)
+        return bUpdate;
     else
         return FALSE;
 }
@@ -1693,6 +1628,15 @@ OGRLayer * OGRSQLiteDataSource::ExecuteSQL( const char *pszSQLCommand,
                                           const char *pszDialect )
 
 {
+    for( int iLayer = 0; iLayer < nLayers; iLayer++ )
+    {
+        if( papoLayers[iLayer]->IsTableLayer() )
+        {
+            OGRSQLiteTableLayer* poLayer = (OGRSQLiteTableLayer*) papoLayers[iLayer];
+            poLayer->RunDeferredCreationIfNecessary();
+        }
+    }
+
     if( pszDialect != NULL && EQUAL(pszDialect,"OGRSQL") )
         return GDALDataset::ExecuteSQL( pszSQLCommand, 
                                           poSpatialFilter, 
@@ -1935,7 +1879,7 @@ OGRSQLiteDataSource::ICreateLayer( const char * pszLayerNameIn,
     char                *pszLayerName;
     const char          *pszGeomFormat;
     int                  bImmediateSpatialIndexCreation = FALSE;
-    int                  bDeferedSpatialIndexCreation = FALSE;
+    int                  bDeferredSpatialIndexCreation = FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      Verify we are in update mode.                                   */
@@ -1950,14 +1894,20 @@ OGRSQLiteDataSource::ICreateLayer( const char * pszLayerNameIn,
         return NULL;
     }
 
+    for( int iLayer = 0; iLayer < nLayers; iLayer++ )
+    {
+        if( papoLayers[iLayer]->IsTableLayer() )
+        {
+            OGRSQLiteTableLayer* poLayer = (OGRSQLiteTableLayer*) papoLayers[iLayer];
+            poLayer->RunDeferredCreationIfNecessary();
+        }
+    }
+
     if( CSLFetchBoolean(papszOptions,"LAUNDER",TRUE) )
         pszLayerName = LaunderName( pszLayerNameIn );
     else
         pszLayerName = CPLStrdup( pszLayerNameIn );
 
-    CPLString osEscapedLayerName = OGRSQLiteEscape(pszLayerName);
-    const char* pszEscapedLayerName = osEscapedLayerName.c_str();
-    
     pszGeomFormat = CSLFetchNameValue( papszOptions, "FORMAT" );
     if( pszGeomFormat == NULL )
     {
@@ -2050,194 +2000,9 @@ OGRSQLiteDataSource::ICreateLayer( const char * pszLayerNameIn,
     else if( poSRS != NULL )
         nSRSId = FetchSRSId( poSRS );
 
-/* -------------------------------------------------------------------- */
-/*      Create a basic table with the FID.  Also include the            */
-/*      geometry if this is not a PostGIS enabled table.                */
-/* -------------------------------------------------------------------- */
-    int rc;
-    char *pszErrMsg;
-    const char *pszGeomCol = NULL;
-    CPLString osCommand;
-    
-    const char* pszSerialType = "INTEGER";
-
-    if( eType == wkbNone )
-        osCommand.Printf( 
-            "CREATE TABLE '%s' ( OGC_FID %s PRIMARY KEY )", 
-            pszEscapedLayerName, pszSerialType );
-    else
-    {
-        if( EQUAL(pszGeomFormat,"WKT") )
-        {
-            pszGeomCol = "WKT_GEOMETRY";
-            osCommand.Printf(
-                "CREATE TABLE '%s' ( "
-                "  OGC_FID %s PRIMARY KEY,"
-                "  '%s' VARCHAR )", 
-                pszEscapedLayerName,
-                pszSerialType,
-                OGRSQLiteEscape(pszGeomCol).c_str() );
-        }
-        else
-        {
-            pszGeomCol = "GEOMETRY";
-
-            /* Only if was created as a SpatiaLite DB */
-            if ( bIsSpatiaLiteDB )
-            {
-                /* 
-                / SpatiaLite full support: we must create the 
-                / Geometry in a second time using AddGeometryColumn()
-                /
-                / IMPORTANT NOTICE: on SpatiaLite any attempt aimed
-                / to directly creating some Geometry column 
-                / [by-passing AddGeometryColumn() as absolutely required]
-                / will severely [and irremediably] corrupt the DB !!!
-                */
-                osCommand.Printf( "CREATE TABLE '%s' ( "
-                                  "  OGC_FID %s PRIMARY KEY)",
-                                  pszEscapedLayerName,
-                                  pszSerialType);
-            }
-            else
-            {
-                osCommand.Printf( "CREATE TABLE '%s' ( "
-                                  "  OGC_FID %s PRIMARY KEY,"
-                                  "  '%s' BLOB )", 
-                                  pszEscapedLayerName,
-                                  pszSerialType,
-                                  OGRSQLiteEscape(pszGeomCol).c_str() );
-            }
-        }
-    }
-
-#ifdef DEBUG
-    CPLDebug( "OGR_SQLITE", "exec(%s)", osCommand.c_str() );
-#endif
-
-    rc = sqlite3_exec( hDB, osCommand, NULL, NULL, &pszErrMsg );
-    if( rc != SQLITE_OK )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Unable to create table %s: %s",
-                  pszLayerName, pszErrMsg );
-        sqlite3_free( pszErrMsg );
-        return FALSE;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Eventually we should be adding this table to a table of         */
-/*      "geometric layers", capturing the WKT projection, and           */
-/*      perhaps some other housekeeping.                                */
-/* -------------------------------------------------------------------- */
+    const char* pszSI = CSLFetchNameValue( papszOptions, "SPATIAL_INDEX" );
     if( bHaveGeometryColumns && eType != wkbNone )
     {
-        int nCoordDim;
-
-        /* Sometimes there is an old cruft entry in the geometry_columns
-         * table if things were not properly cleaned up before.  We make
-         * an effort to clean out such cruft.
-         */
-        osCommand.Printf(
-            "DELETE FROM geometry_columns WHERE f_table_name = '%s'", 
-            pszEscapedLayerName );
-                 
-#ifdef DEBUG
-        CPLDebug( "OGR_SQLITE", "exec(%s)", osCommand.c_str() );
-#endif
-
-        rc = sqlite3_exec( hDB, osCommand, NULL, NULL, &pszErrMsg );
-        if( rc != SQLITE_OK )
-        {
-            sqlite3_free( pszErrMsg );
-            return FALSE;
-        }
-        
-        if( eType == wkbFlatten(eType) )
-            nCoordDim = 2;
-        else
-            nCoordDim = 3;
-        
-        if ( bIsSpatiaLiteDB )
-        {
-            /*
-            / SpatiaLite full support: calling AddGeometryColumn()
-            /
-            / IMPORTANT NOTICE: on SpatiaLite any attempt aimed
-            / to directly INSERT a row into GEOMETRY_COLUMNS
-            / [by-passing AddGeometryColumn() as absolutely required]
-            / will severely [and irremediably] corrupt the DB !!!
-            */
-            const char *pszType = OGRToOGCGeomType(eType);
-            if (pszType[0] == '\0')
-                pszType = "GEOMETRY";
-
-            /*
-            / SpatiaLite v.2.4.0 (or any subsequent) is required
-            / to support 2.5D: if an obsolete version of the library
-            / is found we'll unconditionally activate 2D casting mode
-            */
-            int iSpatialiteVersion = GetSpatialiteVersionNumber();
-            if ( iSpatialiteVersion < 24 && nCoordDim == 3 )
-            {
-                CPLDebug("SQLITE", "Spatialite < 2.4.0 --> 2.5D geometry not supported. Casting to 2D");
-                nCoordDim = 2;
-            }
-
-            osCommand.Printf( "SELECT AddGeometryColumn("
-                              "'%s', '%s', %d, '%s', %d)",
-                              pszEscapedLayerName,
-                              OGRSQLiteEscape(pszGeomCol).c_str(), nSRSId,
-                              pszType, nCoordDim );
-        }
-        else
-        {
-            if( nSRSId > 0 )
-            {
-                osCommand.Printf(
-                    "INSERT INTO geometry_columns "
-                    "(f_table_name, f_geometry_column, geometry_format, "
-                    "geometry_type, coord_dimension, srid) VALUES "
-                    "('%s','%s','%s', %d, %d, %d)", 
-                    pszEscapedLayerName,
-                    OGRSQLiteEscape(pszGeomCol).c_str(), pszGeomFormat,
-                    (int) wkbFlatten(eType), nCoordDim, nSRSId );
-            }
-            else
-            {
-                osCommand.Printf(
-                    "INSERT INTO geometry_columns "
-                    "(f_table_name, f_geometry_column, geometry_format, "
-                    "geometry_type, coord_dimension) VALUES "
-                    "('%s','%s','%s', %d, %d)",
-                    pszEscapedLayerName,
-                    OGRSQLiteEscape(pszGeomCol).c_str(), pszGeomFormat,
-                    (int) wkbFlatten(eType), nCoordDim );
-            }
-        }
-
-#ifdef DEBUG
-        CPLDebug( "OGR_SQLITE", "exec(%s)", osCommand.c_str() );
-#endif
-
-        rc = sqlite3_exec( hDB, osCommand, NULL, NULL, &pszErrMsg );
-        if( rc != SQLITE_OK )
-        {
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                      "Unable to add %s table to geometry_columns:\n%s",
-                      pszLayerName, pszErrMsg );
-            sqlite3_free( pszErrMsg );
-            return FALSE;
-        }
-
-/* -------------------------------------------------------------------- */
-/*      Create the spatial index.                                       */
-/*                                                                      */
-/*      We're doing this before we add geometry and record to the table */
-/*      so this may not be exactly the best way to do it.               */
-/* -------------------------------------------------------------------- */
-
-        const char* pszSI = CSLFetchNameValue( papszOptions, "SPATIAL_INDEX" );
         if ( pszSI != NULL && CSLTestBoolean(pszSI) &&
              (bIsSpatiaLiteDB || EQUAL(pszGeomFormat, "SpatiaLite")) && !IsSpatialiteLoaded() )
         {
@@ -2258,9 +2023,16 @@ OGRSQLiteDataSource::ICreateLayer( const char * pszLayerNameIn,
             }
             else if( pszSI == NULL || CSLTestBoolean(pszSI) )
             {
-                bDeferedSpatialIndexCreation = TRUE;
+                bDeferredSpatialIndexCreation = TRUE;
             }
         }
+    }
+    else if( bHaveGeometryColumns )
+    {
+#ifdef HAVE_SPATIALITE
+        if( bIsSpatiaLiteDB && IsSpatialiteLoaded() && (pszSI == NULL || CSLTestBoolean(pszSI)) )
+            bDeferredSpatialIndexCreation = TRUE;
+#endif
     }
 
 /* -------------------------------------------------------------------- */
@@ -2270,30 +2042,8 @@ OGRSQLiteDataSource::ICreateLayer( const char * pszLayerNameIn,
 
     poLayer = new OGRSQLiteTableLayer( this );
 
-    if ( poLayer->Initialize( pszLayerName, pszGeomCol, FALSE, eType, pszGeomFormat,
-                              FetchSRS(nSRSId), nSRSId, FALSE, FALSE,
-                              FALSE ) != CE_None )
-    {
-        delete poLayer;
-        CPLFree( pszLayerName );
-        return NULL;
-    }
-
-    poLayer->InitFeatureCount();
-    poLayer->SetLaunderFlag( CSLFetchBoolean(papszOptions,"LAUNDER",TRUE) );
-    if ( CSLFetchBoolean(papszOptions,"COMPRESS_GEOM",FALSE) )
-        poLayer->SetUseCompressGeom( TRUE );
-    if( bImmediateSpatialIndexCreation )
-        poLayer->CreateSpatialIndex();
-    else if( bDeferedSpatialIndexCreation )
-        poLayer->SetDeferedSpatialIndexCreation( TRUE );
-    poLayer->SetCompressedColumns( CSLFetchNameValue(papszOptions,"COMPRESS_COLUMNS") );
-
-    if( bIsSpatiaLiteDB && nLayers == 0)
-    {
-        /* To create the layer_statistics and spatialite_history tables */
-        sqlite3_exec( hDB, "SELECT UpdateLayerStatistics()", NULL, NULL, NULL );
-    }
+    poLayer->Initialize( pszLayerName, FALSE, TRUE ) ;
+    poLayer->SetCreationParameters( eType, pszGeomFormat, poSRS, nSRSId );
 
 /* -------------------------------------------------------------------- */
 /*      Add layer to data source layer list.                            */
@@ -2302,6 +2052,16 @@ OGRSQLiteDataSource::ICreateLayer( const char * pszLayerNameIn,
         CPLRealloc( papoLayers,  sizeof(OGRSQLiteLayer *) * (nLayers+1) );
     
     papoLayers[nLayers++] = poLayer;
+
+    poLayer->InitFeatureCount();
+    poLayer->SetLaunderFlag( CSLFetchBoolean(papszOptions,"LAUNDER",TRUE) );
+    if ( CSLFetchBoolean(papszOptions,"COMPRESS_GEOM",FALSE) )
+        poLayer->SetUseCompressGeom( TRUE );
+    if( bImmediateSpatialIndexCreation )
+        poLayer->CreateSpatialIndex(0);
+    else if( bDeferredSpatialIndexCreation )
+        poLayer->SetDeferredSpatialIndexCreation( TRUE );
+    poLayer->SetCompressedColumns( CSLFetchNameValue(papszOptions,"COMPRESS_COLUMNS") );
 
     CPLFree( pszLayerName );
 
