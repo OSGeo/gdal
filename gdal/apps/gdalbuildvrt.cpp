@@ -1232,7 +1232,7 @@ static void add_file_to_list(const char* filename, const char* tile_index,
         }
     
         /* Load in memory existing file names in SHP */
-        int nTileIndexFiles = OGR_L_GetFeatureCount(hLayer, TRUE);
+        int nTileIndexFiles = (int)OGR_L_GetFeatureCount(hLayer, TRUE);
         if (nTileIndexFiles == 0)
         {
             fprintf( stderr, "Tile index %s is empty. Skipping it.\n", filename);

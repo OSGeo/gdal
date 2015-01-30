@@ -2286,7 +2286,7 @@ int main( int nArgc, char ** papszArgv )
                 else
                 {
                     pfnProgress = GDALScaledProgress;
-                    int nStart = 0;
+                    GIntBig nStart = 0;
                     if (poPassedLayer != poLayer && nMaxSplitListSubFields != 1)
                         nStart = panLayerCountFeatures[iLayer] / 2;
                     pProgressArg =
