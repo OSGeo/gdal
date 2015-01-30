@@ -1480,6 +1480,7 @@ def ogr_vrt_26():
     lyr = sqlite_ds.CreateLayer('test')
     lyr.CreateField(ogr.FieldDefn('foo', ogr.OFTString))
     lyr = None
+    sqlite_ds.SyncToDisk()
 
     vrt_ds = ogr.Open("""<OGRVRTDataSource>
     <OGRVRTLayer name="test">
