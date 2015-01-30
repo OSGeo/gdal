@@ -153,7 +153,7 @@ OGRFeature *OGRAVCBinLayer::GetFeature( GIntBig nFID )
     else
     {
         bNeedReset = TRUE;
-        pFeature = AVCBinReadObject( hFile, nFID );
+        pFeature = AVCBinReadObject( hFile, (int)nFID );
     }
         
     if( pFeature == NULL )

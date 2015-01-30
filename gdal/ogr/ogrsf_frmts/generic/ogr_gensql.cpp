@@ -1735,7 +1735,7 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
             memset(pasIndexFields + nFeaturesAlloc, 0,
                    sizeof(OGRField) * nOrderItems * (size_t)(nNewFeaturesAlloc - nFeaturesAlloc));
 
-            nFeaturesAlloc = nNewFeaturesAlloc;
+            nFeaturesAlloc = (size_t)nNewFeaturesAlloc;
         }
 
         for( iKey = 0; iKey < nOrderItems; iKey++ )
