@@ -651,7 +651,7 @@ OGRErr OGRShapeLayer::SetNextByIndex( GIntBig nIndex )
     if (!TouchLayer())
         return OGRERR_FAILURE;
 
-    if( nIndex < 0 )
+    if( nIndex < 0 || nIndex > INT_MAX )
         return OGRERR_FAILURE;
 
     // Eventually we should try to use panMatchingFIDs list 
@@ -659,7 +659,7 @@ OGRErr OGRShapeLayer::SetNextByIndex( GIntBig nIndex )
     if( m_poFilterGeom != NULL || m_poAttrQuery != NULL )
         return OGRLayer::SetNextByIndex( nIndex );
 
-    iNextShapeId = nIndex;
+    iNextShapeId = (int)nIndex;
 
     return OGRERR_NONE;
 }
@@ -816,11 +816,11 @@ OGRFeature *OGRShapeLayer::GetNextFeature()
 OGRFeature *OGRShapeLayer::GetFeature( GIntBig nFeatureId )
 
 {
-    if (!TouchLayer())
+    if (!TouchLayer() || nFeatureId > INT_MAX )
         return NULL;
 
     OGRFeature *poFeature = NULL;
-    poFeature = SHPReadOGRFeature( hSHP, hDBF, poFeatureDefn, nFeatureId, NULL,
+    poFeature = SHPReadOGRFeature( hSHP, hDBF, poFeatureDefn, (int)nFeatureId, NULL,
                                    osEncoding );
 
     if( poFeature != NULL )
@@ -904,7 +904,7 @@ OGRErr OGRShapeLayer::ISetFeature( OGRFeature *poFeature )
 OGRErr OGRShapeLayer::DeleteFeature( GIntBig nFID )
 
 {
-    if (!TouchLayer())
+    if (!TouchLayer() || nFID > INT_MAX )
         return OGRERR_FAILURE;
 
     if( !bUpdateAccess )
@@ -934,7 +934,7 @@ OGRErr OGRShapeLayer::DeleteFeature( GIntBig nFID )
         return OGRERR_FAILURE;
     }
 
-    if( DBFIsRecordDeleted( hDBF, nFID ) )
+    if( DBFIsRecordDeleted( hDBF, (int)nFID ) )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "Attempt to delete shape with feature id (" CPL_FRMT_GIB "), but it is marked deleted already.",
@@ -942,7 +942,7 @@ OGRErr OGRShapeLayer::DeleteFeature( GIntBig nFID )
         return OGRERR_FAILURE;
     }
 
-    if( !DBFMarkRecordDeleted( hDBF, nFID, TRUE ) )
+    if( !DBFMarkRecordDeleted( hDBF, (int)nFID, TRUE ) )
         return OGRERR_FAILURE;
 
     bHeaderDirty = TRUE;

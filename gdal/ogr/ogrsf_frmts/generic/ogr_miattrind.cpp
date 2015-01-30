@@ -711,7 +711,10 @@ OGRErr OGRMIAttrIndex::AddEntry( OGRField *psKey, GIntBig nFID )
     if( psKey == NULL )
         return OGRERR_FAILURE;
 
-    if( poINDFile->AddEntry( iIndex, pabyKey, nFID+1 ) != 0 )
+    if( nFID >= INT_MAX )
+        return OGRERR_FAILURE;
+
+    if( poINDFile->AddEntry( iIndex, pabyKey, (int)nFID+1 ) != 0 )
         return OGRERR_FAILURE;
     else
         return OGRERR_NONE;

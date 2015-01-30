@@ -263,10 +263,10 @@ swq_expr_node *SWQGeneralEvaluator( swq_expr_node *node,
         poRet->field_type = node->field_type;
 
         if( SWQ_IS_INTEGER(sub_node_values[0]->field_type) )
-            sub_node_values[0]->float_value = sub_node_values[0]->int_value;
+            sub_node_values[0]->float_value = (double) sub_node_values[0]->int_value;
         if( node->nSubExprCount > 1 &&
             SWQ_IS_INTEGER(sub_node_values[1]->field_type) )
-            sub_node_values[1]->float_value = sub_node_values[1]->int_value;
+            sub_node_values[1]->float_value = (double)sub_node_values[1]->int_value;
 
         if( node->nOperation != SWQ_ISNULL )
         {
@@ -1180,7 +1180,7 @@ swq_expr_node *SWQCastEvaluator( swq_expr_node *node,
                 case SWQ_INTEGER:
                 case SWQ_INTEGER64:
                 case SWQ_BOOLEAN:
-                    poRetNode->float_value = poSrcNode->int_value;
+                    poRetNode->float_value = (double) poSrcNode->int_value;
                     break;
 
                 case SWQ_FLOAT:
@@ -1266,7 +1266,7 @@ swq_expr_node *SWQCastEvaluator( swq_expr_node *node,
             {
                 int nWidth;
 
-                nWidth = sub_node_values[2]->int_value;
+                nWidth = (int) sub_node_values[2]->int_value;
                 if( nWidth > 0 && (int) strlen(osRet) > nWidth )
                     osRet.resize(nWidth);
             }

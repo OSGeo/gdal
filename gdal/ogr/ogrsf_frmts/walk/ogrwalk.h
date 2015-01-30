@@ -60,7 +60,7 @@ protected:
     // Layer spatial reference system
     OGRSpatialReference *poSRS;
 
-    int                 iNextShapeId;
+    GIntBig             iNextShapeId;
 
     OGRWalkDataSource    *poDS;
 

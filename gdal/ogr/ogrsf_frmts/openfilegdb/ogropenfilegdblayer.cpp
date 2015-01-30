@@ -571,11 +571,11 @@ static int CompValues(OGRFieldDefn* poFieldDefn,
             if (poValue1->field_type == SWQ_FLOAT)
                 n1 = (int) poValue1->float_value;
             else
-                n1 = poValue1->int_value;
+                n1 = (int) poValue1->int_value;
             if (poValue2->field_type == SWQ_FLOAT)
                 n2 = (int) poValue2->float_value;
             else
-                n2 = poValue2->int_value;
+                n2 = (int) poValue2->int_value;
             if( n1 < n2 )
                 return -1;
             if( n1 == n2 )
@@ -734,7 +734,7 @@ int FillTargetValueFromSrcExpr( OGRFieldDefn* poFieldDefn,
             if (poSrcValue->field_type == SWQ_FLOAT)
                 poTargetValue->Integer = (int) poSrcValue->float_value;
             else
-                poTargetValue->Integer = poSrcValue->int_value;
+                poTargetValue->Integer = (int) poSrcValue->int_value;
             break;
 
         case OFTReal:
@@ -1367,14 +1367,14 @@ OGRErr OGROpenFileGDBLayer::SetNextByIndex( GIntBig nIndex )
     {
         if( nIndex < 0 || nIndex >= m_nFilteredFeatureCount )
             return OGRERR_FAILURE;
-        m_iCurFeat = nIndex;
+        m_iCurFeat = (int) nIndex;
         return OGRERR_NONE;
     }
     else if( m_poLyrTable->GetValidRecordCount() == m_poLyrTable->GetTotalRecordCount() )
     {
         if( nIndex < 0 || nIndex >= m_poLyrTable->GetValidRecordCount() )
             return OGRERR_FAILURE;
-        m_iCurFeat = nIndex;
+        m_iCurFeat = (int) nIndex;
         return OGRERR_NONE;
     }
     else

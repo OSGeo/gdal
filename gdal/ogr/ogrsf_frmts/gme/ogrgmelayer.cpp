@@ -373,7 +373,7 @@ OGRFeature *OGRGMELayer::GetNextRawFeature()
     const char *gx_id = OGRGMEGetJSONString(properties_obj, "gx_id");
     if (gx_id) {
         CPLString gmeId(gx_id);
-        omnosIdToGMEKey[++m_nFeaturesRead] = gmeId;
+        omnosIdToGMEKey[(int)(++m_nFeaturesRead)] = gmeId;
         poFeature->SetFID(m_nFeaturesRead);
         CPLDebug("GME", "Mapping ids: \"%s\" to %d", gx_id, (int)m_nFeaturesRead);
     }
@@ -601,10 +601,10 @@ OGRErr OGRGMELayer::BatchDelete()
     {
         GIntBig nFID = *fit;
         if (nFID > 0) {
-            CPLString osGxId(omnosIdToGMEKey[nFID]);
+            CPLString osGxId(omnosIdToGMEKey[(int)nFID]);
             CPLDebug("GME", "Deleting feature " CPL_FRMT_GIB " -> '%s'", nFID, osGxId.c_str());
             json_object *pjoGxId = json_object_new_string(osGxId.c_str());
-            omnosIdToGMEKey.erase(nFID);
+            omnosIdToGMEKey.erase((int)nFID);
             json_object_array_add( pjoGxIds, pjoGxId );
         }
     }
@@ -752,8 +752,8 @@ OGRErr OGRGMELayer::ICreateFeature( OGRFeature *poFeature )
                 return iBatchInsertResult;
             }
         }
-        omnosIdToGMEKey[poFeature->GetFID()] = osGxId;
-        omnpoInsertedFeatures[nFID] = poFeature->Clone();
+        omnosIdToGMEKey[(int)poFeature->GetFID()] = osGxId;
+        omnpoInsertedFeatures[(int)nFID] = poFeature->Clone();
         CPLDebug("GME", "In Transaction, added feature to memory only");
         bDirty = true;
         return OGRERR_NONE;
@@ -776,9 +776,9 @@ OGRErr OGRGMELayer::ISetFeature( OGRFeature *poFeature )
     GIntBig nFID = poFeature->GetFID();
     if(bInTransaction) {
         std::map<int, OGRFeature *>::const_iterator fit;
-        fit = omnpoInsertedFeatures.find(nFID);
+        fit = omnpoInsertedFeatures.find((int)nFID);
         if (fit != omnpoInsertedFeatures.end()) {
-            omnpoInsertedFeatures[nFID] = poFeature->Clone();
+            omnpoInsertedFeatures[(int)nFID] = poFeature->Clone();
             CPLDebug("GME", "Updated Feature " CPL_FRMT_GIB " in Transaction", nFID);
         }
         else {
@@ -792,12 +792,12 @@ OGRErr OGRGMELayer::ISetFeature( OGRFeature *poFeature )
             }
             CPLDebug("GME", "In Transaction, add update to Transaction");
             bDirty = true;
-            omnpoUpdatedFeatures[nFID] = poFeature->Clone();
+            omnpoUpdatedFeatures[(int)nFID] = poFeature->Clone();
         }
         return OGRERR_NONE;
     }
     else {
-        omnpoUpdatedFeatures[nFID] = poFeature->Clone();
+        omnpoUpdatedFeatures[(int)nFID] = poFeature->Clone();
         CPLDebug("GME", "Not in Transaction, BatchPatch()");
         return BatchPatch();
     }
@@ -811,7 +811,7 @@ OGRErr OGRGMELayer::DeleteFeature( GIntBig nFID )
 {
     if(bInTransaction) {
         std::map<int, OGRFeature *>::iterator fit;
-        fit = omnpoInsertedFeatures.find(nFID);
+        fit = omnpoInsertedFeatures.find((int)nFID);
         if (fit != omnpoInsertedFeatures.end()) {
             omnpoInsertedFeatures.erase(fit);
             CPLDebug("GME", "Found " CPL_FRMT_GIB " in omnpoInsertedFeatures", nFID);

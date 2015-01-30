@@ -575,7 +575,7 @@ GIntBig TABSeamless::GetNextFeatureId(GIntBig nPrevId)
     int nId = ExtractBaseFeatureId(nPrevId);
     do
     {
-        nId = m_poCurBaseTable->GetNextFeatureId(nId);
+        nId = (int) m_poCurBaseTable->GetNextFeatureId(nId);
         if (nId != -1)
             return EncodeFeatureId(m_nCurBaseTableId, nId);  // Found one!
         else

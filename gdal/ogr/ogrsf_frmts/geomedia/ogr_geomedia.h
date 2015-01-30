@@ -53,7 +53,7 @@ class OGRGeomediaLayer : public OGRLayer
     OGRSpatialReference *poSRS;
     int                 nSRSId;
 
-    int                 iNextShapeId;
+    GIntBig             iNextShapeId;
 
     OGRGeomediaDataSource    *poDS;
 

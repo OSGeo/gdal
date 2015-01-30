@@ -363,8 +363,8 @@ OGRFeature *OGRNTFRasterLayer::GetFeature( GIntBig nFeatureId )
 /* -------------------------------------------------------------------- */
 /*      Do we need to load a different column.                          */
 /* -------------------------------------------------------------------- */
-    iReqColumn = (nFeatureId - 1) / poReader->GetRasterYSize();
-    iReqRow = nFeatureId - iReqColumn * poReader->GetRasterXSize() - 1;
+    iReqColumn = ((int)nFeatureId - 1) / poReader->GetRasterYSize();
+    iReqRow = (int)nFeatureId - iReqColumn * poReader->GetRasterXSize() - 1;
     
     if( iReqColumn != iColumnOffset )
     {

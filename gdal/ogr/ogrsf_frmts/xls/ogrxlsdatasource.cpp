@@ -127,7 +127,7 @@ int OGRXLSDataSource::Open( const char * pszFilename, int bUpdateIn)
     if (freexl_get_info (xlshandle, FREEXL_BIFF_SHEET_COUNT, &nSheets) != FREEXL_OK)
         return FALSE;
 
-    for(int i=0; i<(int)nSheets; i++)
+    for(unsigned short i=0; i<(unsigned short)nSheets; i++)
     {
         freexl_select_active_worksheet(xlshandle, i);
 

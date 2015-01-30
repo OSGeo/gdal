@@ -73,7 +73,7 @@ class OGRSelafinLayer : public OGRLayer {
         Selafin::Header *poHeader;
         OGRFeatureDefn *poFeatureDefn;
         OGRSpatialReference *poSpatialRef;
-        long nCurrentId;
+        GIntBig nCurrentId;
     public:
         OGRSelafinLayer( const char *pszLayerNameP, int bUpdateP,OGRSpatialReference *poSpatialRefP,Selafin::Header *poHeaderP,int nStepNumberP,SelafinTypeDef eTypeP);
         ~OGRSelafinLayer();

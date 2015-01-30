@@ -240,7 +240,7 @@ OGRFeature *OGRDGNLayer::GetFeature( GIntBig nFeatureId )
     OGRFeature *poFeature;
     DGNElemCore *psElement;
 
-    if( !DGNGotoElement( hDGN, nFeatureId ) )
+    if( nFeatureId > INT_MAX || !DGNGotoElement( hDGN, (int)nFeatureId ) )
         return NULL;
 
     // We should likely clear the spatial search region as it affects 

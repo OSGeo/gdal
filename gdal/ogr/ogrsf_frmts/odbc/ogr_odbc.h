@@ -51,7 +51,7 @@ class OGRODBCLayer : public OGRLayer
     OGRSpatialReference *poSRS;
     int                 nSRSId;
 
-    int                 iNextShapeId;
+    GIntBig             iNextShapeId;
 
     OGRODBCDataSource    *poDS;
 

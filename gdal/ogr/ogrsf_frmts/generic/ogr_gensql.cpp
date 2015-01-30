@@ -1679,7 +1679,7 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
 /* -------------------------------------------------------------------- */
 /*      Allocate set of key values, and the output index.               */
 /* -------------------------------------------------------------------- */
-    int nFeaturesAlloc = 100;
+    size_t nFeaturesAlloc = 100;
 
     panFIDIndex = NULL;
     pasIndexFields = (OGRField *) 
@@ -1696,7 +1696,7 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
     {
         int iKey;
 
-        if (nIndexSize == nFeaturesAlloc)
+        if ((size_t)nIndexSize == nFeaturesAlloc)
         {
             GIntBig nNewFeaturesAlloc = (nFeaturesAlloc * 4) / 3;
             if( (GIntBig)(size_t)(sizeof(OGRField) * nOrderItems * nNewFeaturesAlloc) !=
@@ -1710,7 +1710,7 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
             }
             OGRField* pasNewIndexFields = (OGRField *)
                 VSIRealloc(pasIndexFields,
-                           sizeof(OGRField) * nOrderItems * nNewFeaturesAlloc);
+                           sizeof(OGRField) * nOrderItems * (size_t)nNewFeaturesAlloc);
             if (pasNewIndexFields == NULL)
             {
                 CPLError(CE_Failure, CPLE_AppDefined, "Cannot allocate pasIndexFields");
@@ -1722,7 +1722,7 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
             pasIndexFields = pasNewIndexFields;
 
             GIntBig* panNewFIDList = (GIntBig *)
-                VSIRealloc(panFIDList, sizeof(GIntBig) *  nNewFeaturesAlloc);
+                VSIRealloc(panFIDList, sizeof(GIntBig) *  (size_t)nNewFeaturesAlloc);
             if (panNewFIDList == NULL)
             {
                 VSIFree(pasIndexFields);
@@ -1733,7 +1733,7 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
             panFIDList = panNewFIDList;
 
             memset(pasIndexFields + nFeaturesAlloc, 0,
-                   sizeof(OGRField) * nOrderItems * (nNewFeaturesAlloc - nFeaturesAlloc));
+                   sizeof(OGRField) * nOrderItems * (size_t)(nNewFeaturesAlloc - nFeaturesAlloc));
 
             nFeaturesAlloc = nNewFeaturesAlloc;
         }
@@ -1804,7 +1804,7 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
 /* -------------------------------------------------------------------- */
 /*      Initialize panFIDIndex                                          */
 /* -------------------------------------------------------------------- */
-    panFIDIndex = (GIntBig *) VSIMalloc(sizeof(GIntBig) * nIndexSize);
+    panFIDIndex = (GIntBig *) VSIMalloc(sizeof(GIntBig) * (size_t)nIndexSize);
     if( panFIDIndex == NULL )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot allocate panFIDIndex");
@@ -1926,7 +1926,7 @@ int OGRGenSQLResultsLayer::SortIndexSection( OGRField *pasIndexFields,
         !SortIndexSection( pasIndexFields, nSecondStart, nSecondGroup ) )
         return FALSE;
 
-    panMerged = (GIntBig *) VSIMalloc( sizeof(GIntBig) * nEntries );
+    panMerged = (GIntBig *) VSIMalloc( sizeof(GIntBig) * (size_t)nEntries );
     if( panMerged == NULL )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot allocated panMerged");
@@ -1961,7 +1961,7 @@ int OGRGenSQLResultsLayer::SortIndexSection( OGRField *pasIndexFields,
 
     /* Copy the merge list back into the main index */
 
-    memcpy( panFIDIndex + nStart, panMerged, sizeof(GIntBig) * nEntries );
+    memcpy( panFIDIndex + nStart, panMerged, sizeof(GIntBig) * (size_t)nEntries );
     CPLFree( panMerged );
     
     return TRUE;

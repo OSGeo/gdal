@@ -88,7 +88,7 @@
 #define PAGE_SIZE   4096
 
 /* compressSize should not be greater than 512, so COMPRESS_SIZE_TO_BYTE() fits on a byte */
-#define COMPRESS_SIZE_TO_BYTE(nCompressSize)  (((nCompressSize) - 8) / 2)
+#define COMPRESS_SIZE_TO_BYTE(nCompressSize)  (GByte)(((nCompressSize) - 8) / 2)
 #define ROUND_COMPRESS_SIZE(nCompressSize)    (((nCompressSize) + 1) / 2) * 2;
 #define COMPRESS_SIZE_FROM_BYTE(byte_on_size) ((byte_on_size) * 2 + 8)
 
@@ -1053,8 +1053,8 @@ static int DecompressSector(GByte* pabyIn, int nSectorSize, GByte* pabyOut)
         {
             if( bLastValid )
             {
-                pasLonLatOut[i].nLon = nLastLon + ReadVarSInt64(&pabyPtr);
-                pasLonLatOut[i].nLat = nLastLat + ReadVarSInt64(&pabyPtr);
+                pasLonLatOut[i].nLon = (int)(nLastLon + ReadVarSInt64(&pabyPtr));
+                pasLonLatOut[i].nLat = (int)(nLastLat + ReadVarSInt64(&pabyPtr));
             }
             else
             {
@@ -1556,8 +1556,8 @@ int OGROSMDataSource::UncompressWay( int nBytes, GByte* pabyCompressedWay,
     int nPoints = 1;
     do
     {
-        pasCoords[nPoints].nLon = pasCoords[nPoints-1].nLon + ReadVarSInt64(&pabyPtr);
-        pasCoords[nPoints].nLat = pasCoords[nPoints-1].nLat + ReadVarSInt64(&pabyPtr);
+        pasCoords[nPoints].nLon = (int)(pasCoords[nPoints-1].nLon + ReadVarSInt64(&pabyPtr));
+        pasCoords[nPoints].nLat = (int)(pasCoords[nPoints-1].nLat + ReadVarSInt64(&pabyPtr));
 
         nPoints ++;
     } while (pabyPtr < pabyCompressedWay + nBytes);
@@ -2013,7 +2013,7 @@ void OGROSMDataSource::NotifyWay (OSMWay* psWay)
                 psKD = oIterK->second;
             psKD->nOccurences ++;
 
-            pasAccumulatedTags[nAccumulatedTags].nKeyIndex = psKD->nKeyIndex;
+            pasAccumulatedTags[nAccumulatedTags].nKeyIndex = (short)psKD->nKeyIndex;
 
             /* to fit in 2 bytes, the theoretical limit would be 127 * 128 + 127 */
             if( psKD->asValues.size() < 1024 )

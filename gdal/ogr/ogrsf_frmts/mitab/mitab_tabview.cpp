@@ -879,13 +879,16 @@ TABFeature *TABView::GetFeatureRef(GIntBig nFeatureId)
         return NULL;
     }
 
+    if( (GIntBig)(int)nFeatureId != nFeatureId )
+        return NULL;
+
     if(m_poCurFeature)
     {
         delete m_poCurFeature;
         m_poCurFeature = NULL;
     }
 
-    m_poCurFeature = m_poRelation->GetFeature(nFeatureId);
+    m_poCurFeature = m_poRelation->GetFeature((int)nFeatureId);
     m_nCurFeatureId = nFeatureId;
     m_poCurFeature->SetFID(m_nCurFeatureId);
     return m_poCurFeature;
@@ -2071,7 +2074,7 @@ int TABRelation::WriteFeature(TABFeature *poFeature, int nFeatureId /*=-1*/)
     poMainFeature->SetField(m_nMainFieldNo, nRecordNo);
 
     if (m_poMainTable->CreateFeature(poMainFeature) != OGRERR_NONE)
-        nFeatureId = poMainFeature->GetFID();
+        nFeatureId = (int) poMainFeature->GetFID();
     else
         nFeatureId = -1;
 

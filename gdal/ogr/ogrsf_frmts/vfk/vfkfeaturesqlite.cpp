@@ -45,7 +45,7 @@
 VFKFeatureSQLite::VFKFeatureSQLite(IVFKDataBlock *poDataBlock) : IVFKFeature(poDataBlock)
 {
     m_hStmt  = NULL;
-    m_iRowId = m_poDataBlock->GetFeatureCount() + 1; /* starts at 1 */
+    m_iRowId = (int)m_poDataBlock->GetFeatureCount() + 1; /* starts at 1 */
 
     /* set FID from DB */
     SetFIDFromDB(); /* -> m_nFID */
@@ -156,7 +156,7 @@ VFKFeatureSQLite::VFKFeatureSQLite(const VFKFeature *poVFKFeature) : IVFKFeature
 {
     m_nFID   = poVFKFeature->m_nFID;
     m_hStmt  = NULL;
-    m_iRowId = m_poDataBlock->GetFeatureCount() + 1; /* starts at 1 */
+    m_iRowId = (int)m_poDataBlock->GetFeatureCount() + 1; /* starts at 1 */
 }
 
 /*!

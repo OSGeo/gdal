@@ -1360,7 +1360,7 @@ int TABDATFile::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nF
         }
         if (nFlags & ALTER_WIDTH_PRECISION_FLAG)
         {
-            m_pasFieldDef[iField].byLength = nWidth;
+            m_pasFieldDef[iField].byLength = (GByte)nWidth;
         }
         return 0;
     }

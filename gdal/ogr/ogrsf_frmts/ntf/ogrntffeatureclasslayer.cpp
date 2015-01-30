@@ -133,7 +133,7 @@ OGRFeature *OGRNTFFeatureClassLayer::GetFeature( GIntBig nFeatureId )
     if( nFeatureId < 0 || nFeatureId >= poDS->GetFCCount() )
         return NULL;
     
-    poDS->GetFeatureClass( nFeatureId, &pszFCId, &pszFCName );
+    poDS->GetFeatureClass( (int)nFeatureId, &pszFCId, &pszFCName );
     
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding feature.                                 */

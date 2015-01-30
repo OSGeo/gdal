@@ -128,7 +128,7 @@ OGRErr OGRXLSXLayer::ISetFeature( OGRFeature *poFeature )
     if (poFeature == NULL)
         return OGRMemLayer::ISetFeature(poFeature);
 
-    long nFID = poFeature->GetFID();
+    GIntBig nFID = poFeature->GetFID();
     if (nFID != OGRNullFID)
         poFeature->SetFID(nFID - (1 + bHasHeaderLine));
     SetUpdated();

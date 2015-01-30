@@ -1353,7 +1353,7 @@ TABFeature *MIFFile::GetFeatureRef(GIntBig nFeatureId)
         return NULL;
     }
 
-    if (GotoFeature(nFeatureId)!= 0 )
+    if ( (GIntBig)(int)nFeatureId != nFeatureId || GotoFeature((int)nFeatureId)!= 0 )
     {
         CPLError(CE_Failure, CPLE_IllegalArg,
                  "GetFeatureRef() failed: invalid feature id " CPL_FRMT_GIB, 
