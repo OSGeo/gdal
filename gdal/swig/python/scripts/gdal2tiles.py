@@ -433,7 +433,7 @@ class Zoomify(object):
 
         # Size (in tiles) for each tier of pyramid.
         self.tierSizeInTiles = []
-        self.tierSizeInTiles.push( tiles )
+        self.tierSizeInTiles.append( tiles )
 
         # Image size in pixels for each pyramid tierself
         self.tierImageSize = []
