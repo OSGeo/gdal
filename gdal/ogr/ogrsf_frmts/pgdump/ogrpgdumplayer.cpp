@@ -480,25 +480,6 @@ void OGRPGCommonAppendCopyFieldsExceptGeom(CPLString& osCommand,
             strcat( pszNeedToFree+nOff, "}" );
             pszStrValue = pszNeedToFree;
         }
-        
-        else if( nOGRFieldType == OFTInteger64List )
-        {
-            int nCount, nOff = 0, j;
-            const GIntBig *panItems = poFeature->GetFieldAsInteger64List(i,&nCount);
-
-            pszNeedToFree = (char *) CPLMalloc(nCount * 26 + 10);
-            strcpy( pszNeedToFree, "{" );
-            for( j = 0; j < nCount; j++ )
-            {
-                if( j != 0 )
-                    strcat( pszNeedToFree+nOff, "," );
-
-                nOff += strlen(pszNeedToFree+nOff);
-                sprintf( pszNeedToFree+nOff, CPL_FRMT_GIB, panItems[j] );
-            }
-            strcat( pszNeedToFree+nOff, "}" );
-            pszStrValue = pszNeedToFree;
-        }
 
         // We need special formatting for real list values.
         else if( nOGRFieldType == OFTRealList )
@@ -894,30 +875,6 @@ void OGRPGCommonAppendFieldValue(CPLString& osCommand,
 
             nOff += strlen(pszNeedToFree+nOff);
             sprintf( pszNeedToFree+nOff, "%d", panItems[j] );
-        }
-        strcat( pszNeedToFree+nOff, "}'" );
-
-        osCommand += pszNeedToFree;
-        CPLFree(pszNeedToFree);
-
-        return;
-    }
-    
-    else if(  nOGRFieldType == OFTInteger64List )
-    {
-        int nCount, nOff = 0, j;
-        const GIntBig *panItems = poFeature->GetFieldAsInteger64List(i,&nCount);
-        char *pszNeedToFree = NULL;
-
-        pszNeedToFree = (char *) CPLMalloc(nCount * 26 + 10);
-        strcpy( pszNeedToFree, "'{" );
-        for( j = 0; j < nCount; j++ )
-        {
-            if( j != 0 )
-                strcat( pszNeedToFree+nOff, "," );
-
-            nOff += strlen(pszNeedToFree+nOff);
-            sprintf( pszNeedToFree+nOff, CPL_FRMT_GIB, panItems[j] );
         }
         strcat( pszNeedToFree+nOff, "}'" );
 

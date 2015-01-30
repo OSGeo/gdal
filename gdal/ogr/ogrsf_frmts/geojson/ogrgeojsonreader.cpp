@@ -801,21 +801,6 @@ OGRFeature* OGRGeoJSONReader::ReadFeature( OGRGeoJSONLayer* poLayer, json_object
                     CPLFree(panVal);
                 }
             }
-            else if( OFTInteger64List == eType )
-            {
-                if ( json_object_get_type(it.val) == json_type_array )
-                {
-                    int nLength = json_object_array_length(it.val);
-                    GIntBig* panVal = (GIntBig*)CPLMalloc(sizeof(GIntBig) * nLength);
-                    for(int i=0;i<nLength;i++)
-                    {
-                        json_object* poRow = json_object_array_get_idx(it.val, i);
-                        panVal[i] = (GIntBig)json_object_get_int64(poRow);
-                    }
-                    poFeature->SetField( nField, nLength, panVal );
-                    CPLFree(panVal);
-                }
-            }
             else if( OFTRealList == eType )
             {
                 if ( json_object_get_type(it.val) == json_type_array )
