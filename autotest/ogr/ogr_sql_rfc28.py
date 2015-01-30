@@ -603,19 +603,26 @@ def ogr_rfc28_28():
         formulas.append( '5.' + operator + '3.' )
         formulas.append( '5' + operator + '3.' )
         formulas.append( '5.' + operator + '3' )
-        formulas.append( '1000000000000' + operator + '3' )
-        formulas.append( '3' + operator + '1000000000000' )
-        formulas.append( '1000000000000' + operator + '3.' )
-        formulas.append( '3.' + operator + '1000000000000' )
+        formulas.append( '3000000000000' + operator + '3' )
+        if operator != '/':
+            formulas.append( '3' + operator + '3000000000000' )
+        formulas.append( '3000000000000' + operator + '3.' )
+        if operator != '/':
+            formulas.append( '3.' + operator + '3000000000000' )
 
     for formula in formulas:
         lyr = gdaltest.ds.ExecuteSQL( "SELECT " + formula + " from poly where fid = 0" )
         expect = [ eval(formula) ]
+        f = lyr.GetNextFeature()
+        got = f.GetField(0)
+        lyr.ResetReading()
         tr = ogrtest.check_features_against_list( lyr, 'field_1', expect )
         gdaltest.ds.ReleaseResultSet( lyr )
 
         if tr == 0:
             gdaltest.post_reason('bad result for %s' % formula)
+            print(expect)
+            print(got)
             return 'fail'
 
     operators = [ '<', '<=', '>', '>=', ' = ', '<>' ]

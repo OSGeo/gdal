@@ -333,7 +333,7 @@ layer[0:4] would return a list of the first four features."""
             int minute, int second, int tzflag)
         """
 
-        if len(args) == 2 and str(type(args[1])) == "<type 'int'>":
+        if len(args) == 2 and type(args[1]) == type(1):
             fld_index = args[0]
             if isinstance(fld_index, str):
                 fld_index = self.GetFieldIndex(fld_index)
@@ -372,7 +372,7 @@ layer[0:4] would return a list of the first four features."""
                 self.SetFieldStringList(fld_index,value)
                 return
             else:
-                raise TypeError( 'Unsupported type of list in SetField2()' )
+                raise TypeError( 'Unsupported type of list in SetField2(). Type of element is %s' % str(type(value[0])) )
 
         try:
             self.SetField( fld_index, value )
