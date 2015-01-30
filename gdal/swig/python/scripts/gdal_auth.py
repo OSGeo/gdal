@@ -33,8 +33,6 @@
 from osgeo import gdal
 
 import sys
-import stat
-import os
 import time
 import webbrowser
 

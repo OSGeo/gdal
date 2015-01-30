@@ -30,13 +30,11 @@
 #******************************************************************************
 
 try:
-    from osgeo import gdal, ogr
+    from osgeo import gdal
 except ImportError:
     import gdal
-    import ogr
 
 import sys
-import os.path
 
 def CopyBand( srcband, dstband ):
     for line in range(srcband.YSize):

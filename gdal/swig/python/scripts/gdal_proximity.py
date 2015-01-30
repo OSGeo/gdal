@@ -36,7 +36,6 @@ except ImportError:
     import gdal
 
 import sys
-import os.path
 
 def Usage():
     print("""

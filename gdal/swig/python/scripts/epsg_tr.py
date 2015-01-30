@@ -51,8 +51,6 @@ def Usage():
 # =============================================================================
 def trHandleCode(code, gen_dict_line, report_error, output_format):
 
-    import time
-
     try:
         err = prj_srs.ImportFromEPSG( code )
     except:
