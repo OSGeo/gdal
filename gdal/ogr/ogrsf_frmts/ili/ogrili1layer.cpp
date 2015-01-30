@@ -428,7 +428,7 @@ void OGRILI1Layer::JoinSurfaceLayer( OGRILI1Layer* poSurfacePolyLayer, int nSurf
     poSurfacePolyLayer->ResetReading();
     while (OGRFeature *polyfeature = poSurfacePolyLayer->GetNextFeatureRef()) {
         GIntBig reftid = polyfeature->GetFID();
-        OGRFeature *feature = GetFeatureRef(reftid);
+        OGRFeature *feature = GetFeatureRef((int)reftid);
         if (feature) {
             feature->SetGeomField(nSurfaceFieldIndex, polyfeature->GetGeomFieldRef(0));
         } else {
