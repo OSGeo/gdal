@@ -2764,7 +2764,7 @@ void OGRFeature::SetField( int iField, const char * pszValue )
 {
     static int bWarn = -1;
     OGRFieldDefn *poFDefn = poDefn->GetFieldDefn( iField );
-    char *pszLast;
+    char *pszLast = NULL;
 
     if( bWarn < 0 )
         bWarn = CSLTestBoolean( CPLGetConfigOption( "OGR_SETFIELD_NUMERIC_WARNING", "YES" ) );

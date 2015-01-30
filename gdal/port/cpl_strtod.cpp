@@ -265,23 +265,41 @@ double CPLStrtodDelim(const char *nptr, char **endptr, char point)
     {
         if (strcmp(nptr, "-1.#QNAN") == 0 ||
             strcmp(nptr, "-1.#IND") == 0)
+        {
+            if( endptr ) *endptr = (char*)nptr + strlen(nptr);
             return NAN;
+        }
 
         if (strcmp(nptr,"-inf") == 0 ||
             strcmp(nptr,"-1.#INF") == 0)
+        {
+            if( endptr ) *endptr = (char*)nptr + strlen(nptr);
             return NEG_INFINITY;
+        }
     }
     else if (nptr[0] == '1')
     {
         if (strcmp(nptr, "1.#QNAN") == 0)
+        {
+            if( endptr ) *endptr = (char*)nptr + strlen(nptr);
             return NAN;
+        }
         if (strcmp (nptr,"1.#INF") == 0)
+        {
+            if( endptr ) *endptr = (char*)nptr + strlen(nptr);
             return INFINITY;
+        }
     }
     else if (nptr[0] == 'i' && strcmp(nptr,"inf") == 0)
+    {
+        if( endptr ) *endptr = (char*)nptr + strlen(nptr);
         return INFINITY;
+    }
     else if (nptr[0] == 'n' && strcmp(nptr,"nan") == 0)
+    {
+        if( endptr ) *endptr = (char*)nptr + strlen(nptr);
         return NAN;
+    }
 
 /* -------------------------------------------------------------------- */
 /*  We are implementing a simple method here: copy the input string     */
