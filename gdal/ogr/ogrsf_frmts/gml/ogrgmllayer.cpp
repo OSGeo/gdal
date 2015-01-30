@@ -873,30 +873,6 @@ OGRErr OGRGMLLayer::ICreateFeature( OGRFeature *poFeature )
                     }
                 }
             }
-            else if (eType == OFTInteger64List )
-            {
-                int nCount = 0;
-                const GIntBig* panVals = poFeature->GetFieldAsInteger64List( iField, &nCount );
-                if(  poFieldDefn->GetSubType() == OFSTBoolean )
-                {
-                    for(int i = 0; i < nCount; i++)
-                    {
-                        /* 0 and 1 are OK, but the canonical representation is false and true */
-                        GMLWriteField(poDS, fp, bWriteSpaceIndentation, pszPrefix,
-                                      bRemoveAppPrefix, poFieldDefn,
-                                      panVals[i] ? "true" : "false");
-                    }
-                }
-                else
-                {
-                    for(int i = 0; i < nCount; i++)
-                    {
-                        GMLWriteField(poDS, fp, bWriteSpaceIndentation, pszPrefix,
-                                      bRemoveAppPrefix, poFieldDefn,
-                                      CPLSPrintf(CPL_FRMT_GIB, panVals[i]));
-                    }
-                }
-            }
             else if (eType == OFTRealList )
             {
                 int nCount = 0;
