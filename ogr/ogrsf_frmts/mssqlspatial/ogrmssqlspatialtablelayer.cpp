@@ -430,6 +430,8 @@ CPLString OGRMSSQLSpatialTableLayer::BuildFields()
     int nColumn = 0;
     CPLString osFieldList;
 
+    GetLayerDefn();
+
     if( pszFIDColumn && poFeatureDefn->GetFieldIndex( pszFIDColumn ) == -1 )
     {
         /* Always get the FID column */
