@@ -224,8 +224,8 @@ def ogr_gme_transaction():
         return 'fail'
     id = 0
     size = 0
-    for longitude in xrange(-175,185,10):
-        for latitude in xrange(-85, 95, 10):
+    for longitude in range(-175,185,10):
+        for latitude in range(-85, 95, 10):
             lat = float(latitude)
             lng = float(longitude)
             id += 1
