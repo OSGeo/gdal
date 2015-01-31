@@ -30,14 +30,12 @@
 
 import os
 import sys
-import string
 
 sys.path.append( '../pymod' )
 
 import gdaltest
 import ogrtest
 from osgeo import ogr
-from osgeo import osr
 from osgeo import gdal
 
 def ogr_gpx_init():
@@ -200,6 +198,8 @@ def ogr_gpx_3():
     expect = ['route point name', None, None]
 
     tr = ogrtest.check_features_against_list( lyr, 'name', expect )
+    if not tr:
+        return 'fail'
     
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
@@ -255,6 +255,8 @@ def ogr_gpx_5():
     expect = ['track point name', None, None, None]
 
     tr = ogrtest.check_features_against_list( lyr, 'name', expect )
+    if not tr:
+        return 'fail'
     
     lyr.ResetReading()
     feat = lyr.GetNextFeature()

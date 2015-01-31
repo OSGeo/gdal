@@ -126,7 +126,10 @@ static int OGRAPISpyEnabled()
     fprintf(fpSpyFile, "from osgeo import ogr\n");
     fprintf(fpSpyFile, "from osgeo import osr\n");
     fprintf(fpSpyFile, "import os\n");
-    fprintf(fpSpyFile, "import shutil\n\n");
+    fprintf(fpSpyFile, "import shutil\n");
+    fprintf(fpSpyFile, "os.access\n"); // to make pyflakes happy in case it's unused later
+    fprintf(fpSpyFile, "shutil.copy\n"); // same here
+    fprintf(fpSpyFile, "\n");
 
     return TRUE;
 }

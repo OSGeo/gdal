@@ -33,7 +33,6 @@
 import os
 import os.path
 import sys
-import string
 import array
 import shutil
 from osgeo import gdal
@@ -1006,8 +1005,8 @@ def ecw_28():
     ds = None
 
     import struct
-    tab1 = struct.unpack('B' * 3, multiband_data)
-    tab2 = struct.unpack('B' * 3, data1 + data2 + data3)
+    struct.unpack('B' * 3, multiband_data)
+    struct.unpack('B' * 3, data1 + data2 + data3)
 
     # Due to the nature of ECW, reading one band or several bands does not give
     # the same results.
@@ -1098,7 +1097,7 @@ def ecw_30():
     data_readblock = ds.GetRasterBand(1).ReadBlock(0,0)
     ds = None
 
-    if data_readraster != data_readraster:
+    if data_readraster != data_readblock:
         return 'fail'
 
     return 'success'
@@ -1308,7 +1307,7 @@ def ecw_34():
     ds.GetRasterBand(1).Fill(65535)
     ref_data = ds.GetRasterBand(1).ReadRaster(0, 0, 128, 128, buf_type = gdal.GDT_UInt16)
     out_ds = gdaltest.ecw_drv.CreateCopy( 'tmp/UInt16_big_out.ecw', ds, options = ['ECW_FORMAT_VERSION=3','TARGET=1'] )
-    out_ds = None
+    del out_ds
     ds = None
 
     ds = gdal.Open( 'tmp/UInt16_big_out.ecw' )
@@ -1336,7 +1335,7 @@ def ecw_35():
     ds.GetRasterBand(1).Fill(65535)
     ref_data = ds.GetRasterBand(1).ReadRaster(0, 0, 128, 128, buf_type = gdal.GDT_UInt16)
     out_ds = gdaltest.jp2ecw_drv.CreateCopy( 'tmp/UInt16_big_out.jp2', ds, options = ['TARGET=1'] )
-    out_ds = None
+    del out_ds
     ds = None
 
     ds = gdal.Open( 'tmp/UInt16_big_out.jp2' )
@@ -1795,7 +1794,7 @@ def ecw_43():
         return 'fail'
     jp2_bands_data = ds.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize)
     jp2_fourth_band_data = fourth_band.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize)
-    jp2_fourth_band_subsampled_data = fourth_band.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize,int(ds.RasterXSize/16),int(ds.RasterYSize/16))
+    fourth_band.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize,int(ds.RasterXSize/16),int(ds.RasterYSize/16))
 
     tmp_ds = gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/ecw_43.tif', ds)
     fourth_band = tmp_ds.GetRasterBand(4)

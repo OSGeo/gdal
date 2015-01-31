@@ -29,9 +29,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import os
 import sys
-import string
 
 sys.path.append( '../pymod' )
 
@@ -169,7 +167,6 @@ def ogr_mem_4():
 
         gdaltest.mem_lyr.SetAttributeFilter( "PRFEDEA = '%s'" % item )
         feat_read = gdaltest.mem_lyr.GetNextFeature()
-        geom_read = feat_read.GetGeometryRef()
 
         if ogrtest.check_feature_geometry( feat_read, geom ) != 0:
             return 'fail'
@@ -592,7 +589,7 @@ def ogr_mem_15():
     if g.GetGeometryType() != ogr.wkbLineString:
         gdaltest.post_reason('fail')
         return 'fail'
-    ogr.SetNonLinearGeometriesEnabledFlag(True)
+    ogr.SetNonLinearGeometriesEnabledFlag(old_val)
 
     return 'success'
 

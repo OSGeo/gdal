@@ -30,12 +30,10 @@
 
 import os
 import sys
-import string
 
 sys.path.append( '../pymod' )
 
 import gdaltest
-import ogrtest
 from osgeo import ogr
 from osgeo import gdal
 
@@ -277,13 +275,6 @@ def ogr_rfc35_sqlite_3():
         return 'fail'
 
     lyr.AlterFieldDefn(lyr_defn.GetFieldIndex("baz15"), fd, ogr.ALTER_ALL_FLAG)
-
-    expected_values = [
-        [ 'foo0', None, None, None ],
-        [ 'foo1', 'bar1', None, None ],
-        [ 'foo2', 'bar2_01234', 'baz2_0123456789', None ],
-        [ 'foo3', 'bar3_01234', 'baz3_0123456789', 'baw3_012345678901234' ]
-    ]
 
     ret = CheckFeatures(lyr, baz = 'baz25')
     if ret != 'success':

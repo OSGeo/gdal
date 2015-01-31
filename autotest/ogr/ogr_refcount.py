@@ -26,14 +26,12 @@
 # Boston, MA 02111-1307, USA.
 ###############################################################################
 
-import os
 import sys
 
 sys.path.append( '../pymod' )
 
 import gdaltest
 from osgeo import ogr
-import ogrtest
 
 ###############################################################################
 # Open two datasets in shared mode.

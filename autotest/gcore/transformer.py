@@ -30,27 +30,18 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import os
 import sys
 
 sys.path.append( '../pymod' )
 
 import gdaltest
 from osgeo import gdal
-from osgeo import gdalconst
 from osgeo import osr
 
 ###############################################################################
 # Test simple Geotransform based transformer.
 
 def transformer_1():
-
-    try:
-        x = gdal.Transformer
-        gdaltest.have_ng = 1
-    except:
-        gdaltest.have_ng = 0
-        return 'skip'
 
     ds = gdal.Open('data/byte.tif')
     tr = gdal.Transformer( ds, None, [] )
@@ -82,9 +73,6 @@ def transformer_1():
 
 def transformer_2():
 
-    if not gdaltest.have_ng:
-        return 'skip'
-
     ds = gdal.Open('data/gcps.vrt')
     tr = gdal.Transformer( ds, None, [ 'METHOD=GCP_POLYNOMIAL' ] )
 
@@ -114,9 +102,6 @@ def transformer_2():
 # Test GCP based transformer with thin plate splines.
 
 def transformer_3():
-
-    if not gdaltest.have_ng:
-        return 'skip'
 
     ds = gdal.Open('data/gcps.vrt')
     tr = gdal.Transformer( ds, None, [ 'METHOD=GCP_TPS' ] )
@@ -148,9 +133,6 @@ def transformer_3():
 
 def transformer_4():
 
-    if not gdaltest.have_ng:
-        return 'skip'
-
     ds = gdal.Open('data/sstgeo.vrt')
     tr = gdal.Transformer( ds, None, [ 'METHOD=GEOLOC_ARRAY' ] )
 
@@ -180,9 +162,6 @@ def transformer_4():
 # Test RPC based transformer.
 
 def transformer_5():
-
-    if not gdaltest.have_ng:
-        return 'skip'
 
     ds = gdal.Open('data/rpc.vrt')
     tr = gdal.Transformer( ds, None, [ 'METHOD=RPC' ] )
@@ -377,9 +356,6 @@ def transformer_5():
 
 def transformer_6():
 
-    if not gdaltest.have_ng:
-        return 'skip'
-
     ds = gdal.Open('data/rpc_5395.vrt')
     tr = gdal.Transformer( ds, None, [ 'METHOD=RPC' ] )
 
@@ -400,9 +376,6 @@ def transformer_6():
 
 def transformer_7():
 
-    if not gdaltest.have_ng:
-        return 'skip'
-
     ds = gdal.Open('data/byte.tif')
     tr = gdal.Transformer( ds, None, [] )
 
@@ -422,9 +395,6 @@ def transformer_7():
 # Test handling of nodata in RPC DEM (#5680)
 
 def transformer_8():
-
-    if not gdaltest.have_ng:
-        return 'skip'
 
     ds = gdal.Open('data/rpc.vrt')
 

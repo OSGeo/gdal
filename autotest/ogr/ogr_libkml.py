@@ -29,9 +29,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import os
 import sys
-import string
 
 sys.path.append( '../pymod' )
 
@@ -322,7 +320,7 @@ def ogr_libkml_linestring_read():
     
     feat = lyr.GetNextFeature()
     if feat is None:
-        gdaltest.post_reason( 'expected feature not found.' % fid )
+        gdaltest.post_reason( 'expected feature not found.' )
         return 'fail'
  
     wkt = 'LINESTRING (-112.265654928602004 36.094476726025462 2357,-112.266038452823807 36.093426088386707 2357,-112.266813901345301 36.092510587768807 2357,-112.267782683444494 36.091898273579957 2357,-112.268855751095202 36.091313794118697 2357,-112.269481071721899 36.090367720752099 2357,-112.269526855561097 36.089321714872852 2357,-112.269014456727604 36.088509160604723 2357,-112.268152881533894 36.087538135979557 2357,-112.2670588176031 36.086826852625677 2357,-112.265737458732104 36.086463123013033 2357)'
@@ -353,7 +351,7 @@ def ogr_libkml_polygon_read():
     
     feat = lyr.GetNextFeature()
     if feat is None:
-        gdaltest.post_reason( 'expected feature not found.' % fid )
+        gdaltest.post_reason( 'expected feature not found.' )
         return 'fail'
  
     wkt = 'POLYGON ((-122.085741277148301 37.422270331552568 17,-122.085816976848093 37.422314088323461 17,-122.085852582875006 37.422303374697442 17,-122.085879994563896 37.422256861387893 17,-122.085886010140896 37.422231107613797 17,-122.085806915728796 37.422202501738553 17,-122.085837954265301 37.42214027058678 17,-122.085673264051906 37.422086902144081 17,-122.085602292640701 37.42214885429042 17,-122.085590277843593 37.422128290487002 17,-122.085584167223701 37.422081719672462 17,-122.085485206574106 37.42210455874995 17,-122.085506726435199 37.422142679498243 17,-122.085443071291493 37.422127838461719 17,-122.085099071490404 37.42251282407603 17,-122.085676981863202 37.422818153236513 17,-122.086016227378295 37.422449188587223 17,-122.085726032700407 37.422292396042529 17,-122.085741277148301 37.422270331552568 17))'
@@ -362,7 +360,7 @@ def ogr_libkml_polygon_read():
     
     feat = lyr.GetNextFeature()
     if feat is None:
-        gdaltest.post_reason( 'expected feature not found.' % fid )
+        gdaltest.post_reason( 'expected feature not found.' )
         return 'fail'
  
     wkt = 'POLYGON ((-122.085786228724203 37.421362088869692 25,-122.085731299060299 37.421369359894811 25,-122.085731299291794 37.421409349109027 25,-122.085607707367899 37.421383901665649 25,-122.085580242651602 37.42137299550869 25,-122.085218622197104 37.421372995043157 25,-122.085227776563897 37.421616565082651 25,-122.085259818934702 37.421605658944031 25,-122.085259818549901 37.421682001560001 25,-122.085236931147804 37.421700178603459 25,-122.085264395782801 37.421761979825753 25,-122.085323903274599 37.421761980139067 25,-122.085355945432397 37.421852864451999 25,-122.085410875246296 37.421889218237339 25,-122.085479537935697 37.42189285337048 25,-122.085543622981902 37.421889217975462 25,-122.085626017804202 37.421860134999257 25,-122.085937287963006 37.421860134536047 25,-122.085942871866607 37.42160898590042 25,-122.085965546986102 37.421579927591438 25,-122.085864046234093 37.421471150029568 25,-122.0858548911215 37.421405713261841 25,-122.085809116276806 37.4214057134039 25,-122.085786228724203 37.421362088869692 25))'
@@ -371,7 +369,7 @@ def ogr_libkml_polygon_read():
     
     feat = lyr.GetNextFeature()
     if feat is None:
-        gdaltest.post_reason( 'expected feature not found.' % fid )
+        gdaltest.post_reason( 'expected feature not found.' )
         return 'fail'
  
     wkt = 'POLYGON ((-122.084437112828397 37.421772530030907 19,-122.084511885574599 37.421911115428962 19,-122.0850470999805 37.421787551215353 19,-122.085071991339106 37.421436630231611 19,-122.084916406231997 37.421372378221157 19,-122.084219386816699 37.421372378016258 19,-122.084219386589993 37.421476171614962 19,-122.083808641999099 37.4214613409357 19,-122.083789972856394 37.421313064107963 19,-122.083279653469802 37.421293288405927 19,-122.083260981920702 37.421392139442979 19,-122.082937362173695 37.421372363998763 19,-122.082906242566693 37.421515697788713 19,-122.082850226966499 37.421762825764652 19,-122.082943578863507 37.421767769696352 19,-122.083217411188002 37.421792485526858 19,-122.0835970430103 37.421748007445601 19,-122.083945555677104 37.421693642376027 19,-122.084007789463698 37.421762838158529 19,-122.084113587521003 37.421748011043917 19,-122.084076247378405 37.421713412923751 19,-122.084144704773905 37.421678815345693 19,-122.084144704222993 37.421817206601972 19,-122.084250333307395 37.421817070044597 19,-122.084437112828397 37.421772530030907 19))'
@@ -932,10 +930,10 @@ def ogr_libkml_write_layer_lookat():
 
     ds = ogr.GetDriverByName('LIBKML').CreateDataSource("/vsimem/ogr_libkml_write_layer_lookat.kml")
     options = [ 'LOOKAT_LONGITUDE=2', 'LOOKAT_LATITUDE=49', 'LOOKAT_RANGE=150' ]
-    lyr = ds.CreateLayer('test', options = options)
+    ds.CreateLayer('test', options = options)
     options = [ 'LOOKAT_LONGITUDE=3', 'LOOKAT_LATITUDE=50', 'LOOKAT_RANGE=250',
                 'LOOKAT_ALTITUDE=100', 'LOOKAT_HEADING=70', 'LOOKAT_TILT=50', 'LOOKAT_ALTITUDEMODE=relativeToGround']
-    lyr = ds.CreateLayer('test2', options = options)
+    ds.CreateLayer('test2', options = options)
     ds = None
 
     f = gdal.VSIFOpenL('/vsimem/ogr_libkml_write_layer_lookat.kml', 'rb')
@@ -977,7 +975,7 @@ def ogr_libkml_write_layer_camera():
     ds = ogr.GetDriverByName('LIBKML').CreateDataSource("/vsimem/ogr_libkml_write_layer_camera.kml")
     options = [ 'CAMERA_LONGITUDE=3', 'CAMERA_LATITUDE=50', 'CAMERA_ALTITUDE=100',
                 'CAMERA_HEADING=70', 'CAMERA_TILT=50', 'CAMERA_ROLL=10', 'CAMERA_ALTITUDEMODE=relativeToGround']
-    lyr = ds.CreateLayer('test', options = options)
+    ds.CreateLayer('test', options = options)
     ds = None
 
     f = gdal.VSIFOpenL('/vsimem/ogr_libkml_write_layer_camera.kml', 'rb')
@@ -1086,7 +1084,7 @@ def ogr_libkml_write_atom_author():
 
     ds = ogr.GetDriverByName('LIBKML').CreateDataSource("/vsimem/ogr_libkml_write_atom_author.kml",
                                                         options = ['author_name=name', 'author_uri=http://foo', 'author_email=foo@bar.com'])
-    ds = None
+    del ds
 
     f = gdal.VSIFOpenL('/vsimem/ogr_libkml_write_atom_author.kml', 'rb')
     data = gdal.VSIFReadL(1, 2048, f)
@@ -1113,7 +1111,7 @@ def ogr_libkml_write_atom_link():
 
     ds = ogr.GetDriverByName('LIBKML').CreateDataSource("/vsimem/ogr_libkml_write_atom_link.kml",
                                                         options = ['link=http://foo'])
-    ds = None
+    del ds
 
     f = gdal.VSIFOpenL('/vsimem/ogr_libkml_write_atom_link.kml', 'rb')
     data = gdal.VSIFReadL(1, 2048, f)
@@ -1138,7 +1136,7 @@ def ogr_libkml_write_phonenumber():
 
     ds = ogr.GetDriverByName('LIBKML').CreateDataSource("/vsimem/ogr_libkml_write_phonenumber.kml",
                                                         options = ['phonenumber=tel:911'])
-    ds = None
+    del ds
 
     f = gdal.VSIFOpenL('/vsimem/ogr_libkml_write_phonenumber.kml', 'rb')
     data = gdal.VSIFReadL(1, 2048, f)
@@ -1169,7 +1167,7 @@ def ogr_libkml_write_region():
         'REGION_XMAX=180', 'REGION_YMIN=-90', 'REGION_YMAX=90', \
         'REGION_MIN_LOD_PIXELS=128', 'REGION_MAX_LOD_PIXELS=10000000', \
         'REGION_MIN_FADE_EXTENT=1', 'REGION_MAX_FADE_EXTENT=2' ])
-    ds = None
+    del ds
 
     f = gdal.VSIFOpenL('/vsimem/ogr_libkml_write_region.kml', 'rb')
     data = gdal.VSIFReadL(1, 2048, f)
@@ -1209,8 +1207,8 @@ def ogr_libkml_write_screenoverlay():
         return 'skip'
 
     ds = ogr.GetDriverByName('LIBKML').CreateDataSource("/vsimem/ogr_libkml_write_screenoverlay.kml")
-    lyr = ds.CreateLayer('auto', options = ['SO_HREF=http://foo'])
-    lyr = ds.CreateLayer('manual', options = ['SO_HREF=http://bar',
+    ds.CreateLayer('auto', options = ['SO_HREF=http://foo'])
+    ds.CreateLayer('manual', options = ['SO_HREF=http://bar',
                                               'SO_NAME=name',
                                               'SO_DESCRIPTION=description',
                                               'SO_OVERLAY_X=10',
@@ -1661,7 +1659,7 @@ def ogr_libkml_write_networklinkcontrol():
             name = "/vsimem/ogr_libkml_write_networklinkcontrol_dir"
 
         ds = ogr.GetDriverByName('LIBKML').CreateDataSource(name, options = options)
-        ds = None
+        del ds
 
         if i == 0:
             f = gdal.VSIFOpenL('/vsimem/ogr_libkml_write_networklinkcontrol.kml', 'rb')
@@ -1700,13 +1698,13 @@ def ogr_libkml_write_liststyle():
 
     options = [ 'LISTSTYLE_ICON_HREF=http://www.gdal.org/gdalicon.png' ]
     ds = ogr.GetDriverByName('LIBKML').CreateDataSource("/vsimem/ogr_libkml_write_liststyle.kml", options = options)
-    lyr = ds.CreateLayer('test', options = [ 'LISTSTYLE_ICON_HREF=http://foo'] )
-    lyr = ds.CreateLayer('test_check', options = [ 'LISTSTYLE_TYPE=check'] )
-    lyr = ds.CreateLayer('test_radioFolder', options = [ 'LISTSTYLE_TYPE=radioFolder'] )
-    lyr = ds.CreateLayer('test_checkOffOnly', options = [ 'LISTSTYLE_TYPE=checkOffOnly'] )
-    lyr = ds.CreateLayer('test_checkHideChildren', options = [ 'LISTSTYLE_TYPE=checkHideChildren'] )
-    lyr = ds.CreateLayer('test_error', options = [ 'LISTSTYLE_TYPE=error'] )
-    ds = None
+    ds.CreateLayer('test', options = [ 'LISTSTYLE_ICON_HREF=http://foo'] )
+    ds.CreateLayer('test_check', options = [ 'LISTSTYLE_TYPE=check'] )
+    ds.CreateLayer('test_radioFolder', options = [ 'LISTSTYLE_TYPE=radioFolder'] )
+    ds.CreateLayer('test_checkOffOnly', options = [ 'LISTSTYLE_TYPE=checkOffOnly'] )
+    ds.CreateLayer('test_checkHideChildren', options = [ 'LISTSTYLE_TYPE=checkHideChildren'] )
+    ds.CreateLayer('test_error', options = [ 'LISTSTYLE_TYPE=error'] )
+    del ds
 
     f = gdal.VSIFOpenL('/vsimem/ogr_libkml_write_liststyle.kml', 'rb')
     data = gdal.VSIFReadL(1, 2048, f)
@@ -1935,9 +1933,9 @@ def ogr_libkml_write_folder():
         return 'skip'
 
     ds = ogr.GetDriverByName('LIBKML').CreateDataSource("/vsimem/ogr_libkml_write_folder.kml")
-    lyr = ds.CreateLayer('test', options = [ 'LISTSTYLE_ICON_HREF=http://foo', 'FOLDER=YES' ] )
-    lyr = ds.CreateLayer('test2', options = [ 'FOLDER=YES' ] )
-    ds = None
+    ds.CreateLayer('test', options = [ 'LISTSTYLE_ICON_HREF=http://foo', 'FOLDER=YES' ] )
+    ds.CreateLayer('test2', options = [ 'FOLDER=YES' ] )
+    del ds
 
     f = gdal.VSIFOpenL('/vsimem/ogr_libkml_write_folder.kml', 'rb')
     data = gdal.VSIFReadL(1, 2048, f)
@@ -1965,8 +1963,8 @@ def ogr_libkml_write_container_properties():
 
     ds = ogr.GetDriverByName('LIBKML').CreateDataSource("/vsimem/ogr_libkml_write_container_properties.kml",
                                  options = [ 'NAME=ds_name', 'DESCRIPTION=ds_description', 'OPEN=1', 'VISIBILITY=1', 'SNIPPET=ds_snippet'])
-    lyr = ds.CreateLayer('test', options = [ 'NAME=lyr_name', 'DESCRIPTION=lyr_description', 'OPEN=0', 'VISIBILITY=0', 'SNIPPET=lyr_snippet'] )
-    ds = None
+    ds.CreateLayer('test', options = [ 'NAME=lyr_name', 'DESCRIPTION=lyr_description', 'OPEN=0', 'VISIBILITY=0', 'SNIPPET=lyr_snippet'] )
+    del ds
 
     f = gdal.VSIFOpenL('/vsimem/ogr_libkml_write_container_properties.kml', 'rb')
     data = gdal.VSIFReadL(1, 2048, f)

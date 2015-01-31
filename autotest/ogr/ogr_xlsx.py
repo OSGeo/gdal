@@ -30,13 +30,11 @@
 
 import os
 import sys
-import string
 import shutil
 
 sys.path.append( '../pymod' )
 
 import gdaltest
-import ogrtest
 from osgeo import gdal
 from osgeo import ogr
 

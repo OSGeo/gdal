@@ -29,7 +29,6 @@
 
 import os
 import sys
-import string
 
 sys.path.append( '../pymod' )
 

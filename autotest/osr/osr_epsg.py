@@ -30,14 +30,12 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import os
 import sys
 
 sys.path.append( '../pymod' )
 
 import gdaltest
 from osgeo import osr
-import string
 
 ###############################################################################
 #	Verify that EPSG:26591 picks up the entry from the pcs.override.csv

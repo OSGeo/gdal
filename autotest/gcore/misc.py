@@ -197,7 +197,7 @@ def misc_5():
         os.mkdir('tmp/tmp')
     except:
         try:
-            os.stat(dirname)
+            os.stat('tmp/tmp')
             # Hum the directory already exists... Not expected, but let's try to go on
         except:
             gdaltest.post_reason('Cannot create tmp/tmp')
@@ -364,7 +364,7 @@ def misc_6():
         os.mkdir('tmp/tmp')
     except:
         try:
-            os.stat(dirname)
+            os.stat('tmp/tmp')
             # Hum the directory already exists... Not expected, but let's try to go on
         except:
             gdaltest.post_reason('Cannot create tmp/tmp')
@@ -574,7 +574,7 @@ def misc_12():
                 # Test to detect memleaks
                 ds = gdal.GetDriverByName('VRT').CreateCopy('tmp/misc_12.vrt', src_ds)
                 (out, err) = gdaltest.runexternal_out_and_err(gdal_translate_path + ' -of ' + drv.ShortName + ' tmp/misc_12.vrt /nonexistingpath/nonexistingfile' + ext, check_memleak = False)
-                ds = None
+                del ds
                 gdal.Unlink('tmp/misc_12.vrt')
 
                 # If DEBUG_VSIMALLOC_STATS is defined, this is an easy way

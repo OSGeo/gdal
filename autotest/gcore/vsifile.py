@@ -31,7 +31,6 @@
 
 from osgeo import gdal
 import sys
-import os
 import time
 
 sys.path.append( '../pymod' )
@@ -69,7 +68,6 @@ def vsifile_generic(filename):
         return 'fail'
     if abs(start_time - statBuf.mtime) > 2:
         gdaltest.post_reason('failure')
-        print(t)
         print(statBuf.mtime)
         return 'fail'
 

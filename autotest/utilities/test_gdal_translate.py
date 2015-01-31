@@ -494,7 +494,6 @@ def test_gdal_translate_18():
 
     # Check that all datasets are closed
     if ret_stderr.find('Open GDAL Datasets') != -1:
-        print(ret)
         return 'fail'
 
     ds = gdal.Open('tmp/test18_2.tif')

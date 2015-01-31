@@ -28,9 +28,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import os
 import sys
-import string
 
 sys.path.append( '../pymod' )
 
@@ -75,7 +73,6 @@ def ogr_segy_1():
         return 'fail'
 
     feat = lyr.GetNextFeature()
-    geom = feat.GetGeometryRef()
     if ogrtest.check_feature_geometry(feat,'POINT (500000 4500000)',
                                       max_error = 0.0000001 ) != 0:
         print('did not get expected first geom')

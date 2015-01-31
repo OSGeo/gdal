@@ -170,7 +170,7 @@ def stats_nan_3():
         return 'fail'
 
     out_ds = gdaltest.gtiff_drv.CreateCopy('tmp/nan32_nodata.tif', src_ds)
-    out_ds = None
+    del out_ds
 
     src_ds = None
 
@@ -311,7 +311,7 @@ def stats_nodata_inf():
     ds.GetRasterBand(1).WriteRaster(1, 0, 1, 1, struct.pack('f', 1), buf_type = gdal.GDT_Float32 )
     ds.GetRasterBand(1).WriteRaster(2, 0, 1, 1, struct.pack('f', -2), buf_type = gdal.GDT_Float32 )
 
-    cs = ds.GetRasterBand(1).Checksum()
+    ds.GetRasterBand(1).Checksum()
     stats = ds.GetRasterBand(1).ComputeStatistics(False)
     ds = None
     

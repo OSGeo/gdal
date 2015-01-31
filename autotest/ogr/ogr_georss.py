@@ -31,12 +31,10 @@
 
 import os
 import sys
-import string
 
 sys.path.append( '../pymod' )
 
 import gdaltest
-import ogrtest
 from osgeo import ogr
 from osgeo import osr
 from osgeo import gdal
@@ -435,7 +433,7 @@ def ogr_georss_10():
         lyr = None
     gdal.PopErrorHandler()
     if lyr is not None:
-        gdal.post_reason('should not have accepted EPSG:32631 with GEOM_DIALECT != GML')
+        gdaltest.post_reason('should not have accepted EPSG:32631 with GEOM_DIALECT != GML')
         return 'fail'
 
     ds.Destroy()

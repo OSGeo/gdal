@@ -32,15 +32,14 @@
 
 import os
 import sys
-import string
 
 sys.path.append( '../pymod' )
 
 import gdaltest
 import ogrtest
+from osgeo import gdal
 from osgeo import ogr
 from osgeo import osr
-from osgeo import gdal
 import shutil
 
 ###############################################################################
@@ -586,7 +585,7 @@ def ogr_gml_14():
     gdal.SetConfigOption( 'GML_SKIP_RESOLVE_ELEMS', 'gml:directedNode' )
     gdal.SetConfigOption( 'GML_SAVE_RESOLVED_TO', 'tmp/cache/xlink2resolved.gml' )
     gml_ds = ogr.Open( 'tmp/cache/xlink1.gml' )
-    gml_ds = None
+    del gml_ds
     gdal.SetConfigOption( 'GML_SKIP_RESOLVE_ELEMS', None )
     gdal.SetConfigOption( 'GML_SAVE_RESOLVED_TO', None )
 

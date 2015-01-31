@@ -308,7 +308,7 @@ eiffer_tower_highlight:SYMBOL(id:"http://upload.wikimedia.org/wikipedia/commons/
     lyr_options = [ 'CAMERA_LONGITUDE=2.2945', 'CAMERA_LATITUDE=48.85825', 'CAMERA_ALTITUDE=30',
                     'CAMERA_HEADING=120', 'CAMERA_TILT=70', 'CAMERA_ROLL=10', 'CAMERA_ALTITUDEMODE=relativeToGround',
                     'FOLDER=YES', 'NAME=layer_name', 'DESCRIPTION=description', 'OPEN=1', 'VISIBILITY=1', 'SNIPPET=snippet' ]
-    lyr2 = ds.CreateLayer('test2', options = lyr_options)
+    ds.CreateLayer('test2', options = lyr_options)
 
     gdal.SetConfigOption('LIBKML_USE_SIMPLEFIELD', 'NO')
     lyr = ds.CreateLayer('test_data')
@@ -362,7 +362,7 @@ def generate_kmlsuperoverlay(filename):
     src_ds = gdal.GetDriverByName('MEM').Create('',512,256,3)
     src_ds.SetGeoTransform([-180,360./512,0,90,0,-180./256])
     ds = gdal.GetDriverByName('KMLSuperOverlay').CreateCopy(filename, src_ds)
-    ds = None
+    del ds
     src_ds = None
 
     return

@@ -34,7 +34,6 @@
 
 import os
 import sys
-import string
 import csv
 import gzip
 
@@ -808,7 +807,7 @@ def osr_esri_test_esri_ogc_esri( ifile, ofile_base, fix_config='NO', check_epsg=
         f = open(ifile,'rt')
     csv_reader = csv.DictReader(f,delimiter=';')
 
-    epsg_reader = csv.DictReader(gdal.FindFile('gdal','gcs.csv'), 'epsg_gcs2', 'GEOGCS', True)
+    csv.DictReader(gdal.FindFile('gdal','gcs.csv'), 'epsg_gcs2', 'GEOGCS', True)
 
     #set GDAL_FIX_ESRI_WKT option
     fix_config_bak = gdal.GetConfigOption('GDAL_FIX_ESRI_WKT')
@@ -830,7 +829,7 @@ def osr_esri_test_esri_ogc_esri( ifile, ofile_base, fix_config='NO', check_epsg=
         wkt1 = srs1.ExportToWkt()
         srs2 = srs1.Clone()
         srs2.MorphFromESRI()
-        wkt2 = srs2.ExportToWkt()
+        #wkt2 = srs2.ExportToWkt()
 
         #morph back to ESRI
         srs3 = srs2.Clone()
@@ -879,7 +878,7 @@ def osr_esri_test_esri_ogc_esri( ifile, ofile_base, fix_config='NO', check_epsg=
             of_wkt.write( 'wkt1: '+wkt1+'\n'+'wkt3: '+wkt3+'\n' )
 
     #revert
-    gdal.SetConfigOption('GDAL_FIX_ESRI_WKT', fix_config)
+    gdal.SetConfigOption('GDAL_FIX_ESRI_WKT', fix_config_bak)
     gdal.PopErrorHandler()
 
     #close files and report
@@ -1009,7 +1008,7 @@ def osr_esri_test_ogc_esri_ogc( ifile, ofile_base, fix_config='NO', check_epsg=F
         #morph to ESRI
         srs2 = srs1.Clone()
         srs2.MorphToESRI()
-        wkt2 = srs2.ExportToWkt()
+        #wkt2 = srs2.ExportToWkt()
 
         #morph back from ESRI
         srs3 = srs2.Clone()
@@ -1059,7 +1058,7 @@ def osr_esri_test_ogc_esri_ogc( ifile, ofile_base, fix_config='NO', check_epsg=F
             of_wkt.write( 'wkt1: '+wkt1+'\n'+'wkt3: '+wkt3+'\n' )
 
     #revert
-    gdal.SetConfigOption('GDAL_FIX_ESRI_WKT', fix_config)
+    gdal.SetConfigOption('GDAL_FIX_ESRI_WKT', fix_config_bak)
     gdal.PopErrorHandler()
 
     #close files and report

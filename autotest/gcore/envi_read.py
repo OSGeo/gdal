@@ -27,13 +27,11 @@
 # Boston, MA 02111-1307, USA.
 ###############################################################################
 
-import os
 import sys
 
 sys.path.append( '../pymod' )
 
 import gdaltest
-from osgeo import gdal
 
 ###############################################################################
 # When imported build a list of units based on the files available.

@@ -29,15 +29,12 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import os
 import sys
 from osgeo import ogr
-from osgeo import osr
 
 sys.path.append( '../pymod' )
 
 import gdaltest
-import ogrtest
 
 ###############################################################################
 def ogr_sosi_1():

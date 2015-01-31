@@ -128,7 +128,7 @@ def runexternal(cmd, strin = None, check_memleak = True, display_live_on_parent_
             ret = ''
             ret_stdout = p.stdout
             while True:
-                c = p.stdout.read(1).decode('latin1')
+                c = ret_stdout.read(1).decode('latin1')
                 if c == '':
                     break
                 ret = ret + c

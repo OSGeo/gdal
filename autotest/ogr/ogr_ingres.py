@@ -28,16 +28,13 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import os
 import sys
-import string
 
 sys.path.append( '../pymod' )
 
 import gdaltest
 import ogrtest
 from osgeo import ogr
-from osgeo import gdal
 
 ###############################################################################
 # Open INGRES test datasource.

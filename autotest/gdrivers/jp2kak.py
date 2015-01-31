@@ -30,7 +30,6 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import os
 import sys
 from osgeo import gdal
 
@@ -375,7 +374,7 @@ def jp2kak_16():
 
     jp2_ds = gdal.Open( 'data/small_200ppcm.jp2' )
     out_ds = gdaltest.jp2kak_drv.CreateCopy( 'tmp/jp2kak_16.jp2', jp2_ds )
-    out_ds = None
+    del out_ds
     jp2_ds = None
 
     jp2_ds = gdal.Open( 'tmp/jp2kak_16.jp2' )

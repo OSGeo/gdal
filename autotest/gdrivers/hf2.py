@@ -30,10 +30,6 @@
 
 import os
 import sys
-import string
-import struct
-from osgeo import gdal
-from osgeo import osr
 
 sys.path.append( '../pymod' )
 

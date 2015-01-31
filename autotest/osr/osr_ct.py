@@ -31,9 +31,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import os
 import sys
-import string
 
 sys.path.append( '../pymod' )
 
@@ -129,6 +127,8 @@ def osr_ct_3():
 
     pnt = ogr.CreateGeometryFromWkt( 'POINT(-117.5 32.0)', ll_srs )
     result = pnt.Transform( ct )
+    if result != 0:
+        return 'fail'
 
     ll_srs = None
     ct = None
@@ -179,14 +179,6 @@ def osr_ct_4():
 def osr_ct_5():
 
     if gdaltest.have_proj4 == 0:
-        return 'skip'
-
-    # Test NG bindings
-    try:
-        x = gdal.Transformer
-        gdaltest.have_ng = 1
-    except:
-        gdaltest.have_ng = 0
         return 'skip'
 
     utm_srs = osr.SpatialReference()
@@ -274,6 +266,8 @@ def osr_ct_7():
     expected_pnt = ogr.CreateGeometryFromWkt( 'POINT(%.10f %.10f)' % (exp_x, exp_y),
                                      ll_srs )
     result = pnt.Transform( gdaltest.ct )
+    if result != 0:
+        return 'fail'
     if (abs(expected_pnt.GetX() - pnt.GetX()) > 0.00001 or
         abs(expected_pnt.GetY() - pnt.GetY()) > 0.00001 or
         abs(expected_pnt.GetZ() - pnt.GetZ()) > 0.00001):

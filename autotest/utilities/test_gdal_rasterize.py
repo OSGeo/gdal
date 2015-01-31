@@ -32,7 +32,6 @@
 
 import sys
 import os
-import shutil
 
 sys.path.append( '../pymod' )
 sys.path.append( '../gcore' )
@@ -42,7 +41,6 @@ import gdaltest
 from osgeo import ogr
 from osgeo import osr
 import test_cli_utilities
-import tiff_ovr
 
 ###############################################################################
 # Simple polygon rasterization (adapted from alg/rasterize.py).
@@ -75,10 +73,9 @@ def test_gdal_rasterize_1():
               ogr.GetDriverByName('MapInfo File').CreateDataSource( 'tmp/rast1.tab' )
     rast_lyr = rast_ogr_ds.CreateLayer( 'rast1', srs=sr )
 
-    layer_defn = rast_lyr.GetLayerDefn()
+    rast_lyr.GetLayerDefn()
     field_defn = ogr.FieldDefn('foo')
     rast_lyr.CreateField(field_defn)
-    field_defn.Destroy()
 
     # Add a polygon.
     

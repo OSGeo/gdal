@@ -28,7 +28,6 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import os
 import sys
 from osgeo import gdal
 
@@ -60,6 +59,7 @@ def pgchip_1():
 
     ds_src = gdal.Open('data/byte.tif')
     ds = gdaltest.pgchipDriver.CreateCopy('PG:dbname=autotest\%layer=test_chip', ds_src)
+    del ds
 
     tst = gdaltest.GDALTest( 'PGCHIP', 'PG:dbname=autotest\%layer=test_chip', 1, 4672, filename_absolute = 1 )
 
@@ -75,6 +75,7 @@ def pgchip_2():
 
     ds_src = gdal.Open('../gcore/data/uint16.tif')
     ds = gdaltest.pgchipDriver.CreateCopy('PG:dbname=autotest\%layer=test_chip', ds_src)
+    del ds
 
     tst = gdaltest.GDALTest( 'PGCHIP', 'PG:dbname=autotest\%layer=test_chip', 1, 4672, filename_absolute = 1 )
 

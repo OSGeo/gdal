@@ -33,14 +33,12 @@ import os
 import sys
 from osgeo import gdal
 from osgeo import osr
-from gdalconst import *
 
 sys.path.append( '../pymod' )
 
 import gdaltest
 
 import imp # for netcdf_cf_setup()
-import netcdf
 from netcdf import netcdf_setup, netcdf_test_copy
 
 ###############################################################################
@@ -388,12 +386,11 @@ def netcdf_cfproj_testcopy(projTuples, origTiff, interFormats, inPath, outPath,
 
     resPerProj = {}
 
-    dsTiff =  gdal.Open( os.path.join(inPath, origTiff), GA_ReadOnly );
+    dsTiff =  gdal.Open( os.path.join(inPath, origTiff), gdal.GA_ReadOnly );
     s_srs_wkt = dsTiff.GetProjection()
 
     #objects to hold the various tests
     i_t = 0
-    tst = {}
     tst_res = {}
 
     for proj in projTuples:
@@ -411,8 +408,8 @@ def netcdf_cfproj_testcopy(projTuples, origTiff, interFormats, inPath, outPath,
 
         if not silent:
             print("About to create raster in chosen SRS")
-        projVrt = os.path.join(outPath, "%s_%s.vrt" % \
-            (origTiff.rstrip('.tif'), proj[0] ))
+        #projVrt = os.path.join(outPath, "%s_%s.vrt" % \
+        #    (origTiff.rstrip('.tif'), proj[0] ))
         projRaster = os.path.join(outPath, "%s_%s.%s" % \
             (origTiff.rstrip('.tif'), proj[0], intExt ))
         srs = osr.SpatialReference()
@@ -420,7 +417,7 @@ def netcdf_cfproj_testcopy(projTuples, origTiff, interFormats, inPath, outPath,
         t_srs_wkt = srs.ExportToWkt()
         if not silent:
             print("going to warp file "+origTiff+"\n" + s_srs_wkt + "\ninto file "+projRaster + "\n" + t_srs_wkt)
-        dswarp = gdal.AutoCreateWarpedVRT( dsTiff, s_srs_wkt, t_srs_wkt, GRA_NearestNeighbour, 0 );
+        dswarp = gdal.AutoCreateWarpedVRT( dsTiff, s_srs_wkt, t_srs_wkt, gdal.GRA_NearestNeighbour, 0 );
         drv_inter = gdal.GetDriverByName(intFmt);
         drv_netcdf = gdal.GetDriverByName("netcdf");
         dsw = drv_inter.CreateCopy(projRaster, dswarp, 0)
@@ -430,7 +427,7 @@ def netcdf_cfproj_testcopy(projTuples, origTiff, interFormats, inPath, outPath,
         projNc = os.path.join(outPath, "%s_%s.nc" % \
             (origTiff.rstrip('.tif'), proj[0] ))
         #Force GDAL tags to be written to make testing easier, with preserved datum etc
-        ncCoOpts = "-co WRITE_GDAL_TAGS=yes"
+        #ncCoOpts = "-co WRITE_GDAL_TAGS=yes"
         if not silent:
             print("About to translate to NetCDF")
         dst = drv_netcdf.CreateCopy(projNc, dsw, 0, [ 'WRITE_GDAL_TAGS='+bWriteGdalTags ])
@@ -438,7 +435,7 @@ def netcdf_cfproj_testcopy(projTuples, origTiff, interFormats, inPath, outPath,
         # saved to new raster file - which we'll reopen later and want
         # to be fully updated.
         dsw = None
-        dst = None
+        del dst
         if not silent:
             print("Translated to %s" % (projNc))
         

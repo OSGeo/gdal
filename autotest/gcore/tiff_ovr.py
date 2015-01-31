@@ -35,7 +35,6 @@ import sys
 from osgeo import osr
 from osgeo import gdal
 import shutil
-import string
 import array
 import stat
 
@@ -827,7 +826,7 @@ def tiff_ovr_20():
         return 'fail'
 
     gdal.SetConfigOption('BIGTIFF_OVERVIEW', 'YES')
-    err = ds.BuildOverviews( 'NEAREST', overviewlist = [2, 4] )
+    ds.BuildOverviews( 'NEAREST', overviewlist = [2, 4] )
     gdal.SetConfigOption('BIGTIFF_OVERVIEW', 'IF_NEEDED')
 
     ds = None
@@ -866,7 +865,7 @@ def tiff_ovr_21():
 
     # 170 k * 100 k = 17 GB. 17 GB / (2^2) = 4.25 GB > 4.2 GB
     # so BigTIFF is needed
-    err = ds.BuildOverviews( 'NONE', overviewlist = [2] )
+    ds.BuildOverviews( 'NONE', overviewlist = [2] )
 
     ds = None
 
@@ -938,7 +937,7 @@ def tiff_ovr_23():
 
     gdal.SetConfigOption('BIGTIFF_OVERVIEW', 'NO')
     gdal.SetConfigOption('COMPRESS_OVERVIEW', 'DEFLATE')
-    err = ds.BuildOverviews( 'NONE', overviewlist = [2] )
+    ds.BuildOverviews( 'NONE', overviewlist = [2] )
     gdal.SetConfigOption('BIGTIFF_OVERVIEW', 'IF_NEEDED')
     gdal.SetConfigOption('COMPRESS_OVERVIEW', '')
 
@@ -978,7 +977,7 @@ def tiff_ovr_24():
     # 85 k * 100 k = 8.5 GB, so BigTIFF might be needed as
     # 8.5 GB / 2 > 4.2 GB
     gdal.SetConfigOption('BIGTIFF_OVERVIEW', 'IF_SAFER')
-    err = ds.BuildOverviews( 'NONE', overviewlist = [16] )
+    ds.BuildOverviews( 'NONE', overviewlist = [16] )
     gdal.SetConfigOption('BIGTIFF_OVERVIEW', 'IF_NEEDED')
 
     ds = None
@@ -1027,11 +1026,6 @@ def tiff_ovr_25():
 
 def tiff_ovr_26():
 
-    try:
-        x = gdal.RegenerateOverview
-    except:
-        return 'skip'
-
     ds = gdaltest.tiff_drv.Create('tmp/ovr26.tif',100,100,1)
     ds.GetRasterBand(1).Fill(1)
     ds.GetRasterBand(1).FlushCache()
@@ -1053,11 +1047,6 @@ def tiff_ovr_26():
 # Test gdal.RegenerateOverviews()
 
 def tiff_ovr_27():
-
-    try:
-        x = gdal.RegenerateOverviews
-    except:
-        return 'skip'
 
     ds = gdaltest.tiff_drv.Create('tmp/ovr27.tif',100,100,1)
     ds.GetRasterBand(1).Fill(1)
@@ -1463,7 +1452,7 @@ def tiff_ovr_37():
 
     gdal.SetConfigOption('PREDICTOR_OVERVIEW', '2')
     gdal.SetConfigOption('COMPRESS_OVERVIEW', 'LZW')
-    err = ds.BuildOverviews( 'NEAR', overviewlist = [2] )
+    ds.BuildOverviews( 'NEAR', overviewlist = [2] )
     gdal.SetConfigOption('PREDICTOR_OVERVIEW', None)
     gdal.SetConfigOption('COMPRESS_OVERVIEW', None)
 
@@ -1520,7 +1509,7 @@ def tiff_ovr_39():
         return 'skip'
 
     src_ds = gdal.Open('data/byte.tif')
-    data = src_ds.GetRasterBand(1).ReadRaster(0,0,20,20)
+    src_ds.GetRasterBand(1).ReadRaster(0,0,20,20)
     src_ds = None
 
     for datatype in [gdal.GDT_Byte,

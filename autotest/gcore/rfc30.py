@@ -31,8 +31,6 @@
 
 from osgeo import gdal
 import sys
-import os
-import shutil
 from sys import version_info
 
 sys.path.append( '../pymod' )

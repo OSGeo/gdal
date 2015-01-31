@@ -29,8 +29,6 @@
 
 import os
 import sys
-import string
-import math
 
 sys.path.append( '../pymod' )
 
@@ -998,8 +996,6 @@ def ogr_pg_21():
     if layer is None:
         gdaltest.post_reason( 'did not get testgeom layer' )
         return 'fail'
-
-    fail = False
 
     feat = layer.GetNextFeature()
     while feat is not None:
@@ -2689,7 +2685,7 @@ def ogr_pg_53_bis():
     f.write('foo,bar\n')
     f.write('"baz","foo"\n')
     f.close()
-    ret = gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f PostgreSQL "' + 'PG:' + gdaltest.pg_connection_string + '" tmp/no_geometry_table.csv -overwrite')
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f PostgreSQL "' + 'PG:' + gdaltest.pg_connection_string + '" tmp/no_geometry_table.csv -overwrite')
 
     os.unlink('tmp/no_geometry_table.csv')
 
@@ -2933,7 +2929,7 @@ def ogr_pg_59():
     if test_cli_utilities.get_ogr2ogr_path() is None:
         return 'skip'
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -append -f PostgreSQL "' + 'PG:' + gdaltest.pg_connection_string + '" data/poly.shp -nln public.tpoly')
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -append -f PostgreSQL "' + 'PG:' + gdaltest.pg_connection_string + '" data/poly.shp -nln public.tpoly')
 
     ds = ogr.Open('PG:' + gdaltest.pg_connection_string)
     lyr = ds.GetLayerByName('tpoly')
@@ -3460,7 +3456,7 @@ def ogr_pg_69():
     if gdaltest.pg_ds.ExecuteSQL('has_run_load_tables') is not None:
         gdaltest.post_reason('fail')
         return 'fail'
-    feat = None
+    del feat
     gdaltest.pg_ds.ReleaseResultSet(sql_lyr)
 
     gdaltest.pg_ds.GetLayer(0)
@@ -3672,72 +3668,6 @@ def ogr_pg_71():
             print(wkt)
             print(out_wkt)
             return 'fail'
-
-    return 'success'
-
-###############################################################################
-# Test 64 bit FID
-
-def ogr_pg_72():
-
-    if gdaltest.pg_ds is None:
-        return 'skip'
-    
-    # Regular layer with 32 bit IDs
-    lyr = gdaltest.pg_ds.CreateLayer('ogr_pg_72')
-    if lyr.GetMetadataItem(ogr.OLMD_FID64) is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    lyr.CreateField(ogr.FieldDefn('foo'))
-    f = ogr.Feature(lyr.GetLayerDefn())
-    f.SetFID(123456789012345)
-    f.SetField(0, 'bar')
-    if lyr.CreateFeature(f) != 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    f = lyr.GetFeature(123456789012345)
-    if f is None:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    
-    lyr = gdaltest.pg_ds.CreateLayer('ogr_pg_72', options = ['FID64=YES', 'OVERWRITE=YES'])
-    if lyr.GetMetadataItem(ogr.OLMD_FID64) is None:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    lyr.CreateField(ogr.FieldDefn('foo'))
-    f = ogr.Feature(lyr.GetLayerDefn())
-    f.SetFID(123456789012345)
-    f.SetField(0, 'bar')
-    if lyr.CreateFeature(f) != 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if lyr.SetFeature(f) != 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    gdaltest.pg_ds = None
-    # Test with binary protocol
-    gdaltest.pg_ds = ogr.Open( 'PGB:' + gdaltest.pg_connection_string, update = 1 )
-    lyr = gdaltest.pg_ds.GetLayerByName('ogr_pg_72')
-    if lyr.GetMetadataItem(ogr.OLMD_FID64) is None:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    f = lyr.GetNextFeature()
-    if f.GetFID() != 123456789012345:
-        gdaltest.post_reason('fail')
-        f.DumpReadable()
-        return 'fail'
-    gdaltest.pg_ds = None
-    # Test with normal protocol
-    gdaltest.pg_ds = ogr.Open( 'PG:' + gdaltest.pg_connection_string, update = 1 )
-    lyr = gdaltest.pg_ds.GetLayerByName('ogr_pg_72')
-    if lyr.GetMetadataItem(ogr.OLMD_FID64) is None:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    f = lyr.GetNextFeature()
-    if f.GetFID() != 123456789012345:
-        gdaltest.post_reason('fail')
-        f.DumpReadable()
-        return 'fail'
 
     return 'success'
 

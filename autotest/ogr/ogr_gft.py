@@ -31,7 +31,6 @@
 
 import os
 import sys
-import string
 
 sys.path.append( '../pymod' )
 
@@ -211,7 +210,7 @@ def ogr_gft_ogr2ogr_non_spatial():
     f.write('"baz2","foo2"\n')
     f.write('"baz\'3","foo3"\n')
     f.close()
-    ret = gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f GFT "GFT:refresh=' + ogrtest.gft_refresh + '" tmp/no_geometry_table.csv -nln ' + layer_name + ' -overwrite')
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f GFT "GFT:refresh=' + ogrtest.gft_refresh + '" tmp/no_geometry_table.csv -nln ' + layer_name + ' -overwrite')
 
     os.unlink('tmp/no_geometry_table.csv')
 
@@ -266,10 +265,10 @@ def ogr_gft_ogr2ogr_spatial():
     f.close()
 
     # Create a first table
-    ret = gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f GFT "GFT:refresh=' + ogrtest.gft_refresh + '" tmp/geometry_table.csv -nln ' + layer_name + ' -select foo,bar -overwrite')
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f GFT "GFT:refresh=' + ogrtest.gft_refresh + '" tmp/geometry_table.csv -nln ' + layer_name + ' -select foo,bar -overwrite')
 
     # Test round-tripping
-    ret = gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f GFT "GFT:refresh=' + ogrtest.gft_refresh + '" "GFT:refresh=' + ogrtest.gft_refresh + '" ' + layer_name + ' -nln ' + copied_layer_name + ' -overwrite')
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f GFT "GFT:refresh=' + ogrtest.gft_refresh + '" "GFT:refresh=' + ogrtest.gft_refresh + '" ' + layer_name + ' -nln ' + copied_layer_name + ' -overwrite')
 
     os.unlink('tmp/geometry_table.csv')
     os.unlink('tmp/geometry_table.csvt')

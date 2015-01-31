@@ -30,7 +30,6 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import os
 import sys
 
 sys.path.append( '../pymod' )
@@ -279,14 +278,14 @@ def ogr_factory_6():
         else:
             src_geom = ogr.CreateGeometryFromWkt( src_wkt )
 
-        dst_geom1 = ogr.ForceToPolygon( src_geom )
-        dst_geom2 = ogr.ForceToMultiPolygon( src_geom )
-        dst_geom3 = ogr.ForceToMultiPoint( src_geom )
-        dst_geom4 = ogr.ForceToMultiLineString( src_geom )
-        dst_geom5 = ogr.ForceToLineString( src_geom )
+        ogr.ForceToPolygon( src_geom )
+        ogr.ForceToMultiPolygon( src_geom )
+        ogr.ForceToMultiPoint( src_geom )
+        ogr.ForceToMultiLineString( src_geom )
+        ogr.ForceToLineString( src_geom )
         for target_type in range(ogr.wkbMultiSurface):
             gdal.PushErrorHandler('CPLQuietErrorHandler')
-            dst_geom6 = ogr.ForceTo( src_geom, 1 +target_type )
+            ogr.ForceTo( src_geom, 1 +target_type )
             gdal.PopErrorHandler()
         #print(src_geom.ExportToWkt(), dst_geom1.ExportToWkt(), dst_geom2.ExportToWkt(), dst_geom3.ExportToWkt(), dst_geom4.ExportToWkt())
 

@@ -32,7 +32,6 @@
 
 import os
 import sys
-import string
 import shutil
 
 # Make sure we run from the directory of the script
@@ -277,8 +276,6 @@ def ogr_sqlite_4():
         if feat_read is None:
             gdaltest.post_reason( 'Did not get as many features as expected.')
             return 'fail'
-
-        geom_read = feat_read.GetGeometryRef()
 
         if ogrtest.check_feature_geometry( feat_read, geom ) != 0:
             return 'fail'
@@ -997,7 +994,7 @@ def ogr_sqlite_19():
     # EPSG:26632 has a ' character in it's WKT representation
     srs = osr.SpatialReference()
     srs.SetFromUserInput('EPSG:26632')
-    lyr = ds.CreateLayer( 'test', srs = srs )
+    ds.CreateLayer( 'test', srs = srs )
 
     ds.Destroy()
     ds = ogr.Open('tmp/spatialite_test_with_epsg.db')
@@ -1035,7 +1032,7 @@ def ogr_sqlite_20():
     # EPSG:26632 has a ' character in it's WKT representation
     srs = osr.SpatialReference()
     srs.SetFromUserInput('EPSG:26632')
-    lyr = ds.CreateLayer( 'test', srs = srs )
+    ds.CreateLayer( 'test', srs = srs )
 
     ds.Destroy()
     ds = ogr.Open('tmp/non_spatialite_test_with_epsg.db')

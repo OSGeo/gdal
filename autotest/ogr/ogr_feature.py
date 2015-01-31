@@ -29,15 +29,12 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import os
 import sys
-import string
 
 sys.path.append( '../pymod' )
 
 from osgeo import gdal, ogr
 import gdaltest
-import ogrtest
 
 ###############################################################################
 # Create a destination feature type with one field for each field in the source
@@ -717,7 +714,6 @@ def ogr_feature_cp_stringlist():
 # Test SetField() with unicode string
 
 def ogr_feature_unicode():
-    from sys import version_info
     if sys.version_info >= (3,0,0):
         return 'skip'
 

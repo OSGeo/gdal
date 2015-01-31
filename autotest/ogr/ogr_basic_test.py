@@ -27,7 +27,6 @@
 # Boston, MA 02111-1307, USA.
 ###############################################################################
 
-import os
 import sys
 
 sys.path.append( '../pymod' )
@@ -260,7 +259,6 @@ def ogr_basic_7():
     feat_clone = feat.Clone()
     if not feat.Equal(feat_clone):
         feat.DumpReadable()
-        feat_almost_clone.DumpReadable()
         return 'fail'
 
     feat_almost_clone = feat.Clone()

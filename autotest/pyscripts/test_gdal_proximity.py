@@ -37,19 +37,12 @@ sys.path.append( '../pymod' )
 import gdaltest
 import test_py_scripts
 
-from osgeo import gdal, gdalconst
+from osgeo import gdal
 
 ###############################################################################
 # Test a fairly default case.
 
 def test_gdal_proximity_1():
-
-    try:
-        x = gdal.ComputeProximity
-        gdaltest.have_ng = 1
-    except:
-        gdaltest.have_ng = 0
-        return 'skip'
 
     script_path = test_py_scripts.get_py_script('gdal_proximity')
     if script_path is None:
@@ -81,13 +74,6 @@ def test_gdal_proximity_1():
 # Try several options
 
 def test_gdal_proximity_2():
-
-    try:
-        x = gdal.ComputeProximity
-        gdaltest.have_ng = 1
-    except:
-        gdaltest.have_ng = 0
-        return 'skip'
 
     script_path = test_py_scripts.get_py_script('gdal_proximity')
     if script_path is None:

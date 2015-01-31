@@ -30,7 +30,6 @@
 
 from osgeo import gdal
 import random
-import struct
 
 COMPRESSION_NONE = 1
 PHOTOMETRIC_MINISBLACK = 1

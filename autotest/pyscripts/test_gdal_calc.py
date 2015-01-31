@@ -43,12 +43,10 @@ import test_py_scripts
 # test that gdalnumeric is available, if not skip all tests
 gdalnumeric_not_available = False
 try:
-    from osgeo.gdalnumeric import *
-except ImportError:
-    try:
-        from gdalnumeric import *
-    except ImportError:
-        gdalnumeric_not_available = True
+    from osgeo import gdalnumeric
+    gdalnumeric.BandRasterIONumPy
+except:
+    gdalnumeric_not_available = True
 
 #Usage: gdal_calc.py [-A <filename>] [--A_band] [-B...-Z filename] [other_options]
 

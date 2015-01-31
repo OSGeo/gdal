@@ -31,10 +31,7 @@
 
 import os
 import sys
-import string
-import struct
 from osgeo import gdal
-from osgeo import osr
 import shutil
 
 sys.path.append( '../pymod' )
@@ -66,7 +63,7 @@ def kmlsuperoverlay_3():
 
     src_ds = gdal.Open('data/utm.tif')
     ds = gdal.GetDriverByName('KMLSUPEROVERLAY').CreateCopy('tmp/tmp.kml', src_ds)
-    ds = None
+    del ds
     src_ds = None
 
     filelist = [ 'tmp/0/0/0.jpg',
@@ -220,7 +217,7 @@ def kmlsuperoverlay_5():
   </VRTRasterBand>
 </VRTDataset>""")
     ds = gdal.GetDriverByName('KMLSUPEROVERLAY').CreateCopy('tmp/tmp.kml', src_ds, options=['FIX_ANTIMERIDIAN=YES'])
-    ds = None
+    del ds
     src_ds = None
 
     files = [

@@ -29,7 +29,6 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import os
 import sys
 
 sys.path.append( '../pymod' )
@@ -47,10 +46,7 @@ def numpy_rw_1():
         from osgeo import gdalnumeric
         gdalnumeric.zeros
     except:
-        try:
-            import osgeo.gdal_array as gdalnumeric
-        except ImportError:
-            return 'skip'
+        return 'skip'
 
     try:
         import _gdal
@@ -101,8 +97,6 @@ def numpy_rw_3():
 
     if gdaltest.numpy_drv is None:
         return 'skip'
-
-    from osgeo import gdalnumeric
 
     ds = gdal.Open( 'data/cint_sar.tif' )
     array = ds.ReadAsArray()
@@ -233,7 +227,7 @@ def numpy_rw_8():
         
     ds = gdal.Open( 'data/rgbsmall.tif' )
     array = numpy.zeros( [ds.RasterCount,ds.RasterYSize, ds.RasterXSize], numpy.uint8 )
-    array_res = ds.ReadAsArray(buf_obj = array)
+    ds.ReadAsArray(buf_obj = array)
 
     ds2 = gdalnumeric.OpenArray( array )
     for i in range(1, ds.RasterCount):
@@ -480,7 +474,6 @@ def numpy_rw_14():
         return 'skip'
 
     import numpy
-    from osgeo import gdalnumeric
 
     ds = gdal.Open('data/byte.tif')
     
@@ -541,7 +534,7 @@ def numpy_rw_14():
 
     # Same but with a provided array
     array = numpy.empty( [ds.RasterCount, ds.RasterYSize, ds.RasterXSize], numpy.uint8 )
-    data = ds.ReadAsArray(buf_obj = data,
+    data = ds.ReadAsArray(buf_obj = array,
                           callback = numpy_rw_14_progress_callback_2,
                           callback_data = last_pct)
     if data is None or abs(last_pct[0] - 1.0) > 1e-5:

@@ -31,8 +31,6 @@
 
 import os
 import sys
-import string
-import array
 import shutil
 from osgeo import gdal
 from osgeo import osr
@@ -133,7 +131,7 @@ def jp2openjpeg_4(out_filename = 'tmp/jp2openjpeg_4.jp2'):
     gdal.Unlink(out_filename)
 
     out_ds = gdal.GetDriverByName('JP2OpenJPEG').CreateCopy(out_filename, vrt_ds, options = ['REVERSIBLE=YES', 'QUALITY=100'])
-    out_ds = None
+    del out_ds
 
     vrt_ds = None
     gdal.Unlink('/vsimem/jp2openjpeg_4.vrt')
@@ -298,12 +296,9 @@ def jp2openjpeg_10():
     src_ds = gdal.Open('data/rgbsmall.tif')
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_10.jp2', src_ds, options = ['YCBCR420=YES', 'RESOLUTIONS=3'])
     maxdiff = gdaltest.compare_ds(src_ds, out_ds)
-    out_ds = None
+    del out_ds
     src_ds = None
     gdal.Unlink('/vsimem/jp2openjpeg_10.jp2')
-
-    ds = None
-    ds_ref = None
 
     # Quite a bit of difference...
     if maxdiff > 12:
@@ -331,7 +326,7 @@ def jp2openjpeg_11():
         return 'fail'
     jp2_bands_data = ds.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize)
     jp2_fourth_band_data = fourth_band.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize)
-    jp2_fourth_band_subsampled_data = fourth_band.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize,int(ds.RasterXSize/16),int(ds.RasterYSize/16))
+    fourth_band.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize,int(ds.RasterXSize/16),int(ds.RasterYSize/16))
 
     tmp_ds = gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/jp2openjpeg_11.tif', ds)
     fourth_band = tmp_ds.GetRasterBand(4)

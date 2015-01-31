@@ -3,6 +3,8 @@ from osgeo import ogr
 from osgeo import osr
 import os
 import shutil
+os.access
+shutil.copy
 
 ogr.Open('non_existing', update = 0)
 ogr.Open('non_existing', update = 1)

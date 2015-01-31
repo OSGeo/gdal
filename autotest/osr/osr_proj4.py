@@ -31,13 +31,11 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import os
 import sys
-import string
 
 sys.path.append( '../pymod' )
 
-from osgeo import gdal, osr, ogr
+from osgeo import gdal, osr
 import gdaltest
 
 ###############################################################################
@@ -134,7 +132,7 @@ def osr_proj4_3():
 
     try:
         gdal.PushErrorHandler('CPLQuietErrorHandler')
-        proj4 = srs.ExportToProj4()
+        srs.ExportToProj4()
         gdal.PopErrorHandler()
         
     except RuntimeError:
@@ -159,7 +157,7 @@ def osr_proj4_4():
     
     try:
         gdal.PushErrorHandler('CPLQuietErrorHandler')
-        proj4 = srs.ExportToProj4()
+        srs.ExportToProj4()
         gdal.PopErrorHandler()
         
     except RuntimeError:
@@ -714,7 +712,6 @@ def osr_proj4_18():
         srs.ImportFromProj4('+proj=omerc +lat_0=57 +lonc=-133 +alpha=-36 +k=0.9999 +x_0=5000000 +y_0=-5000000 +%s +datum=NAD83 +units=m +no_defs' % p)
         if srs.Validate() != 0:
             gdaltest.post_reason( 'does not validate' )
-            print(proj4str)
             print(srs.ExportToPrettyWkt())
             return 'fail'
         out = srs.ExportToProj4()

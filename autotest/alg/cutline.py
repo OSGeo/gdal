@@ -30,12 +30,9 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import os
 import sys
 
 sys.path.append( '../pymod' )
-
-from osgeo import gdal
 
 import ogrtest
 import gdaltest

@@ -63,7 +63,8 @@ def test_rgb2pct_1():
 
 def test_pct2rgb_1():
     try:
-        import numpy
+        from osgeo import gdalnumeric
+        gdalnumeric.BandRasterIONumPy
     except:
         return 'skip'
 
@@ -148,7 +149,8 @@ def test_rgb2pct_3():
 
 def test_pct2rgb_4():
     try:
-        import numpy
+        from osgeo import gdalnumeric
+        gdalnumeric.BandRasterIONumPy
     except:
         return 'skip'
 

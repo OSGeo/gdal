@@ -29,7 +29,6 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import os
 import sys
 
 sys.path.append( '../pymod' )
@@ -37,18 +36,13 @@ sys.path.append( '../pymod' )
 import gdaltest
 import test_py_scripts
 
-from osgeo import gdal, gdalconst
+from osgeo import gdal
 
 ###############################################################################
 # Test a fairly default case.
 
 def test_gdal_sieve_1():
 
-    try:
-        x = gdal.SieveFilter
-    except:
-        return 'skip'
-    
     script_path = test_py_scripts.get_py_script('gdal_sieve')
     if script_path is None:
         return 'skip'

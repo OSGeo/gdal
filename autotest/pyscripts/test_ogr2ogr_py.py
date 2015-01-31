@@ -36,7 +36,6 @@ import shutil
 sys.path.append( '../pymod' )
 sys.path.append( '../ogr' )
 
-from osgeo import gdal
 from osgeo import ogr
 from osgeo import osr
 import gdaltest
@@ -725,7 +724,7 @@ def test_ogr2ogr_py_21():
 
     if ds is None:
         return 'fail'
-    layer_defn = ds.GetLayer(0).GetLayerDefn()
+    ds.GetLayer(0).GetLayerDefn()
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
     if feat.GetFieldAsString('name') != 'NAME' or \
@@ -757,7 +756,7 @@ def test_ogr2ogr_py_22():
 
     if ds is None:
         return 'fail'
-    layer_defn = ds.GetLayer(0).GetLayerDefn()
+    ds.GetLayer(0).GetLayerDefn()
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
     if feat.GetFieldAsString('name') != 'NAME' or \
@@ -790,7 +789,7 @@ def test_ogr2ogr_py_23():
 
     if ds is None:
         return 'fail'
-    layer_defn = ds.GetLayer(0).GetLayerDefn()
+    ds.GetLayer(0).GetLayerDefn()
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
     if feat.GetFieldAsString('name') != 'NAME' or \

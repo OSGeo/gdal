@@ -36,19 +36,11 @@ sys.path.append( '../pymod' )
 
 import gdaltest
 from osgeo import gdal
-from osgeo import gdalconst
 
 ###############################################################################
 # Verify the checksum and flags for "all valid" case.
 
 def mask_1():
-
-    try:
-        x = gdalconst.GMF_ALL_VALID
-        gdaltest.have_ng = 1
-    except:
-        gdaltest.have_ng = 0
-        return 'skip'
 
     ds = gdal.Open('data/byte.tif')
     
@@ -75,9 +67,6 @@ def mask_1():
 
 def mask_2():
 
-    if gdaltest.have_ng == 0:
-        return 'skip'
-
     ds = gdal.Open('data/byte.vrt')
     
     if ds is None:
@@ -102,9 +91,6 @@ def mask_2():
 # Verify the checksum and flags for "alpha" case.
 
 def mask_3():
-
-    if gdaltest.have_ng == 0:
-        return 'skip'
 
     ds = gdal.Open( 'data/stefan_full_rgba.png' )
 
@@ -158,9 +144,6 @@ def mask_3():
 
 def mask_4():
 
-    if gdaltest.have_ng == 0:
-        return 'skip'
-
     src_ds = gdal.Open('../gdrivers/data/masked.jpg')
     
     if src_ds is None:
@@ -202,9 +185,6 @@ def mask_5():
     # This crashes with libtiff 3.8.2, so skip it
     md = gdal.GetDriverByName('GTiff').GetMetadata()
     if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
-        return 'skip'
-
-    if gdaltest.have_ng == 0:
         return 'skip'
 
     ds = gdal.Open('tmp/mask_4.pnm',gdal.GA_Update)
@@ -271,9 +251,6 @@ def mask_5():
 
 def mask_6():
 
-    if gdaltest.have_ng == 0:
-        return 'skip'
-
     gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK_TO_8BIT', 'FALSE')
     ds = gdal.Open('data/test_with_mask_1bit.tif')
     
@@ -302,9 +279,6 @@ def mask_6():
 # Test a TIFF file with 3 bands and an embedded mask of 1 band of 1 bit
 
 def mask_7():
-
-    if gdaltest.have_ng == 0:
-        return 'skip'
 
     gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK_TO_8BIT', 'FALSE')
     ds = gdal.Open('data/test3_with_1mask_1bit.tif')
@@ -336,9 +310,6 @@ def mask_7():
 
 def mask_8():
 
-    if gdaltest.have_ng == 0:
-        return 'skip'
-
     ds = gdal.Open('data/test_with_mask_8bit.tif')
     
     if ds is None:
@@ -364,9 +335,6 @@ def mask_8():
 # Note : The TIFF6 specification, page 37, only allows 1 BitsPerSample && 1 SamplesPerPixel,
 
 def mask_9():
-
-    if gdaltest.have_ng == 0:
-        return 'skip'
 
     ds = gdal.Open('data/test3_with_mask_1bit.tif')
     
@@ -395,9 +363,6 @@ def mask_9():
 
 def mask_10():
 
-    if gdaltest.have_ng == 0:
-        return 'skip'
-
     ds = gdal.Open('data/test3_with_mask_8bit.tif')
     
     if ds is None:
@@ -424,9 +389,6 @@ def mask_10():
 # mask for the overview
 
 def mask_11():
-
-    if gdaltest.have_ng == 0:
-        return 'skip'
 
     gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK_TO_8BIT', 'FALSE')
     ds = gdal.Open('data/test_with_mask_1bit_and_ovr.tif')
@@ -486,9 +448,6 @@ def mask_11():
 
 def mask_12():
 
-    if gdaltest.have_ng == 0:
-        return 'skip'
-
     gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK_TO_8BIT', 'FALSE')
     ds = gdal.Open('data/test3_with_mask_1bit_and_ovr.tif')
 
@@ -545,9 +504,6 @@ def mask_12():
 # Test creation of external TIFF mask band
 
 def mask_13():
-
-    if gdaltest.have_ng == 0:
-        return 'skip'
 
     gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK','NO')
 
@@ -615,9 +571,6 @@ def mask_13():
 
 def mask_14():
 
-    if gdaltest.have_ng == 0:
-        return 'skip'
-
     src_ds = gdal.Open('data/byte.tif')
 
     if src_ds is None:
@@ -682,9 +635,6 @@ def mask_14():
 # Test creation of internal TIFF overview, mask band and mask band of overview
 
 def mask_and_ovr(order, method):
-
-    if gdaltest.have_ng == 0:
-        return 'skip'
 
     src_ds = gdal.Open('data/byte.tif')
 
@@ -806,9 +756,6 @@ def mask_18_avg():
 
 def mask_19():
 
-    if gdaltest.have_ng == 0:
-        return 'skip'
-
     ds = gdal.Open('data/test_nodatavalues.tif')
 
     if ds is None:
@@ -838,9 +785,6 @@ def mask_19():
 # Extensive test of nodata mask for all data types
 
 def mask_20():
-
-    if gdaltest.have_ng == 0:
-        return 'skip'
 
     types = [ gdal.GDT_Byte, gdal.GDT_Int16, gdal.GDT_UInt16,
               gdal.GDT_Int32, gdal.GDT_UInt32, gdal.GDT_Float32, gdal.GDT_Float64,
@@ -873,9 +817,6 @@ def mask_20():
 # Extensive test of NODATA_VALUES mask for all data types
 
 def mask_21():
-
-    if gdaltest.have_ng == 0:
-        return 'skip'
 
     types = [ gdal.GDT_Byte, gdal.GDT_Int16, gdal.GDT_UInt16,
               gdal.GDT_Int32, gdal.GDT_UInt32, gdal.GDT_Float32, gdal.GDT_Float64,
@@ -912,9 +853,6 @@ def mask_21():
 # Test creation of external TIFF mask band just after Create()
 
 def mask_22():
-
-    if gdaltest.have_ng == 0:
-        return 'skip'
 
     drv = gdal.GetDriverByName('GTiff')
     ds = drv.Create( 'tmp/mask_22.tif', 20 ,20 )
@@ -973,9 +911,6 @@ def mask_22():
 
 def mask_23():
 
-    if gdaltest.have_ng == 0:
-        return 'skip'
-
     drv = gdal.GetDriverByName('GTiff')
     md = drv.GetMetadata()
     if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
@@ -992,7 +927,7 @@ def mask_23():
     gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', 'NO')
     gdal.SetCacheMax(old_val)
     
-    ds = None
+    del ds
     error_msg = gdal.GetLastErrorMsg()
     src_ds = None
 

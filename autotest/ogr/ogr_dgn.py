@@ -25,17 +25,13 @@
 # Boston, MA 02111-1307, USA.
 ###############################################################################
 
-import os
 import sys
-import string
 
 sys.path.append( '../pymod' )
 
 import gdaltest
 import ogrtest
 from osgeo import ogr
-from osgeo import osr
-from osgeo import gdal
 
 ###############################################################################
 # Verify we can open the test file.

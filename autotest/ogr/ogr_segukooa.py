@@ -28,9 +28,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import os
 import sys
-import string
 
 sys.path.append( '../pymod' )
 
@@ -76,7 +74,6 @@ def ogr_segp1_points():
             feat.DumpReadable()
             return 'fail'
 
-    geom = feat.GetGeometryRef()
     if ogrtest.check_feature_geometry(feat,'POINT (2 49)',
                                       max_error = 0.0000001 ) != 0:
         print('did not get expected first geom')
@@ -111,7 +108,6 @@ def ogr_segp1_lines():
         feat.DumpReadable()
         return 'fail'
 
-    geom = feat.GetGeometryRef()
     if ogrtest.check_feature_geometry(feat,'LINESTRING (2 49,2.0 49.5)',
                                       max_error = 0.0000001 ) != 0:
         print('did not get expected first geom')
@@ -125,7 +121,6 @@ def ogr_segp1_lines():
         feat.DumpReadable()
         return 'fail'
 
-    geom = feat.GetGeometryRef()
     if ogrtest.check_feature_geometry(feat,'LINESTRING (-2 -49,-2.5 -49.0)',
                                       max_error = 0.0000001 ) != 0:
         print('did not get expected first geom')
@@ -171,7 +166,6 @@ def ogr_ukooa_points():
             feat.DumpReadable()
             return 'fail'
 
-    geom = feat.GetGeometryRef()
     if ogrtest.check_feature_geometry(feat,'POINT (2 49)',
                                       max_error = 0.0000001 ) != 0:
         print('did not get expected first geom')
@@ -206,7 +200,6 @@ def ogr_ukooa_lines():
         feat.DumpReadable()
         return 'fail'
 
-    geom = feat.GetGeometryRef()
     if ogrtest.check_feature_geometry(feat,'LINESTRING (2 49,2.0 49.5)',
                                       max_error = 0.0000001 ) != 0:
         print('did not get expected first geom')
@@ -220,7 +213,6 @@ def ogr_ukooa_lines():
         feat.DumpReadable()
         return 'fail'
 
-    geom = feat.GetGeometryRef()
     if ogrtest.check_feature_geometry(feat,'LINESTRING (-2 -49,-2.5 -49.0)',
                                       max_error = 0.0000001 ) != 0:
         print('did not get expected first geom')

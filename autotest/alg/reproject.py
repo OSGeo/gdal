@@ -29,24 +29,18 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import os
 import sys
 
 sys.path.append( '../pymod' )
 
 import gdaltest
 
-from osgeo import gdal, gdalconst, osr
+from osgeo import gdal,  osr
 
 ###############################################################################
 # Test a trivial case.
 
 def reproject_1():
-
-    try:
-        x = gdal.ReprojectImage
-    except:
-        return 'skip'
 
     drv = gdal.GetDriverByName( 'GTiff' )
     src_ds = gdal.Open('../gcore/data/byte.tif')
@@ -75,11 +69,6 @@ def reproject_1():
 # Test a real reprojection case.
 
 def reproject_2():
-
-    try:
-        x = gdal.ReprojectImage
-    except:
-        return 'skip'
 
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(32611)

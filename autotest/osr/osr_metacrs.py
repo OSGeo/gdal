@@ -30,10 +30,8 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import os
 import sys
 import csv
-import string
 
 sys.path.append( '../pymod' )
 

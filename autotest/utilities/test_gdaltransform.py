@@ -29,12 +29,10 @@
 ###############################################################################
 
 import sys
-import os
 
 sys.path.append( '../pymod' )
 
 import gdaltest
-import string
 import test_cli_utilities
 
 ###############################################################################

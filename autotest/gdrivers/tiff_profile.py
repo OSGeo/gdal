@@ -32,14 +32,12 @@
 
 import os
 import sys
-import string
-import shutil
 import base64
 
 sys.path.append( '../pymod' )
 
 import gdaltest
-from osgeo import gdal, osr
+from osgeo import gdal
 
 ###############################################################################
 # When imported build a list of units based on the files available.

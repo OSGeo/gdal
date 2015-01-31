@@ -29,9 +29,7 @@
 ###############################################################################
 
 import os
-import shutil
 import sys
-import string
 import math
 
 sys.path.append( '../pymod' )
@@ -172,11 +170,11 @@ def ogr_selafin_set_field():
         if "_p" in name:
             k=i
     layern=gdaltest.selafin_ds.GetLayer(k)
-    layere=gdaltest.selafin_ds.GetLayer(j)
+    gdaltest.selafin_ds.GetLayer(j)
     layern.CreateField(ogr.FieldDefn("reverse",ogr.OFTReal))
     layern.AlterFieldDefn(0,ogr.FieldDefn("new",ogr.OFTReal),ogr.ALTER_NAME_FLAG)
     layern.ReorderFields([1,0])
-    dfn=layern.GetLayerDefn()
+    layern.GetLayerDefn()
     for i in range(28):
         feat=layern.GetFeature(i)
         val=feat.GetFieldAsDouble(1)

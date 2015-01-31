@@ -35,7 +35,6 @@ import sys
 from osgeo import gdal
 from osgeo import osr
 import array
-import string
 import struct
 import shutil
 from sys import version_info
@@ -647,7 +646,7 @@ def nitf_29():
         return 'fail'
 
     new_ds = drv.CreateCopy( 'tmp/test_29_copy.ntf', ds )
-    new_ds = None
+    del new_ds
     ds = None
 
     ds = gdal.Open( 'tmp/test_29_copy.ntf' )
@@ -961,7 +960,7 @@ def nitf_38():
 
     ds = gdal.Open( 'NITF_IM:998:%s/tmp/nitf38.ntf' % os.getcwd() )
     out_ds = gdal.GetDriverByName('VRT').CreateCopy('tmp/nitf38.vrt', ds)
-    out_ds = None
+    del out_ds
     ds = None
 
     ds = gdal.Open('tmp/nitf38.vrt')
@@ -1110,7 +1109,7 @@ def nitf_42():
 
     ds = gdal.Open('data/U_4017A.NTF')
     out_ds = gdal.GetDriverByName('NITF').CreateCopy('tmp/nitf42.ntf', ds, options = ['IC=C3', 'FHDR=NITF02.10'])
-    out_ds = None
+    del out_ds
 
     ds = gdal.Open('tmp/nitf42.ntf')
     if ds.GetRasterBand(1).DataType != gdal.GDT_UInt16:

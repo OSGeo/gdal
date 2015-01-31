@@ -29,7 +29,6 @@
 
 import os
 import sys
-import string
 
 sys.path.append( '../pymod' )
 
@@ -1171,7 +1170,7 @@ def ogr_csv_28():
     f.close()
 
     ds = ogr.Open('tmp/ogr_csv_28.csv', update = 1)
-    ds = None
+    del ds
 
     f = open('tmp/ogr_csv_28.csv', 'rb')
     data = f.read().decode('ascii')
@@ -1452,7 +1451,7 @@ def ogr_csv_32():
         lyr = ds.GetLayer(0)
         gdal.ErrorReset()
         gdal.PushErrorHandler('CPLQuietErrorHandler')
-        feat = lyr.GetFeature(fid)
+        lyr.GetFeature(fid)
         gdal.PopErrorHandler()
         if gdal.GetLastErrorType() != gdal.CE_Warning:
             gdaltest.post_reason('fail')
@@ -1528,56 +1527,6 @@ def ogr_csv_33():
 
     gdal.Unlink('/vsimem/subtypes.csv')
     gdal.Unlink('/vsimem/subtypes.csvt')
-
-    return 'success'
-
-###############################################################################
-# Test Integer64 support
-
-def ogr_csv_34():
-
-    ds = gdal.OpenEx('data/testtypeautodetectinteger64.csv', gdal.OF_VECTOR, \
-        open_options = ['AUTODETECT_TYPE=YES'])
-    lyr = ds.GetLayer(0)
-    f = lyr.GetNextFeature()
-    col_values = [ 1,10000000000,10000000000,10000000000.0 ]
-    for i in range(lyr.GetLayerDefn().GetFieldCount()):
-        if f.GetField(i) != col_values[i]:
-            gdaltest.post_reason('fail')
-            print(i)
-            f.DumpReadable()
-            return 'fail'
-    f = lyr.GetNextFeature()
-    col_values = [ 10000000000,1,10000000000,1.0 ]
-    for i in range(lyr.GetLayerDefn().GetFieldCount()):
-        if f.GetField(i) != col_values[i]:
-            gdaltest.post_reason('fail')
-            print(i)
-            f.DumpReadable()
-            return 'fail'
-    ds = None
-    
-    ds = ogr.GetDriverByName('CSV').CreateDataSource('/vsimem/int64.csv')
-    lyr = ds.CreateLayer('test', options = ['CREATE_CSVT=YES'])
-    fld = ogr.FieldDefn('int64', ogr.OFTInteger64)
-    lyr.CreateField(fld)
-    f = ogr.Feature(lyr.GetLayerDefn())
-    f.SetField(0, 10000000000)
-    lyr.CreateFeature(f)
-    f = None
-    ds = None
-    
-    ds = ogr.Open('/vsimem/int64.csv')
-    lyr = ds.GetLayer(0)
-    f = lyr.GetNextFeature()
-    if f.GetField(0) != 10000000000:
-        gdaltest.post_reason('fail')
-        f.DumpReadable()
-        return 'fail'
-    ds = None
-
-    gdal.Unlink('/vsimem/int64.csv')
-    gdal.Unlink('/vsimem/int64.csvt')
 
     return 'success'
 

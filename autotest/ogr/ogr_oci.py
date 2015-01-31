@@ -28,7 +28,6 @@
 
 import os
 import sys
-import string
 
 sys.path.append( '../pymod' )
 
@@ -46,7 +45,7 @@ def ogr_oci_1():
     gdaltest.oci_ds = None
     
     try:
-        dods_dr = ogr.GetDriverByName( 'OCI' )
+        ogr.GetDriverByName( 'OCI' )
     except:
         return 'skip'
     
@@ -198,8 +197,6 @@ def ogr_oci_4():
 
         gdaltest.oci_lyr.SetAttributeFilter( "PRFEDEA = '%s'" % item )
         feat_read = gdaltest.oci_lyr.GetNextFeature()
-        geom_read = feat_read.GetGeometryRef()
-
         if ogrtest.check_feature_geometry( feat_read, geom ) != 0:
             return 'fail'
 

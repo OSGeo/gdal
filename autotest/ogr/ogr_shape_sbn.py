@@ -30,7 +30,6 @@
 ###############################################################################
 
 import sys
-import random
 import os
 
 sys.path.append( '../pymod' )

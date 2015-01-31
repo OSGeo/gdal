@@ -30,13 +30,12 @@
 
 import os
 import sys
-import string
 
 sys.path.append( '../pymod' )
 
 import gdaltest
 import ogrtest
-from osgeo import ogr, osr
+from osgeo import ogr
 
 # Other test data :
 # http://www.lv-bw.de/alkis.info/nas-bsp.html

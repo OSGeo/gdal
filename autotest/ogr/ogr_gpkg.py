@@ -32,8 +32,6 @@
 
 import os
 import sys
-import string
-import shutil
 
 # Make sure we run from the directory of the script
 if os.path.basename(sys.argv[0]) == os.path.basename(__file__):
@@ -44,7 +42,6 @@ sys.path.append( '../pymod' )
 
 from osgeo import ogr, osr, gdal
 import gdaltest
-import ogrtest
 
 ###############################################################################
 # Create a fresh database.
@@ -208,7 +205,7 @@ def ogr_gpkg_6():
         return 'fail'
 
     field_defn = ogr.FieldDefn('dummy', ogr.OFTString)
-    ret = lyr.CreateField(field_defn)
+    lyr.CreateField(field_defn)
 
     if lyr.GetLayerDefn().GetFieldDefn(0).GetType() != ogr.OFTString:
         gdaltest.post_reason( 'wrong field type' )
@@ -332,21 +329,21 @@ def ogr_gpkg_8():
         return 'fail'
 
     lyr.StartTransaction()
-    ret = lyr.CreateField(ogr.FieldDefn('fld_integer', ogr.OFTInteger))
-    ret = lyr.CreateField(ogr.FieldDefn('fld_string', ogr.OFTString))
-    ret = lyr.CreateField(ogr.FieldDefn('fld_real', ogr.OFTReal))
-    ret = lyr.CreateField(ogr.FieldDefn('fld_date', ogr.OFTDate))
-    ret = lyr.CreateField(ogr.FieldDefn('fld_datetime', ogr.OFTDateTime))
-    ret = lyr.CreateField(ogr.FieldDefn('fld_binary', ogr.OFTBinary))
+    lyr.CreateField(ogr.FieldDefn('fld_integer', ogr.OFTInteger))
+    lyr.CreateField(ogr.FieldDefn('fld_string', ogr.OFTString))
+    lyr.CreateField(ogr.FieldDefn('fld_real', ogr.OFTReal))
+    lyr.CreateField(ogr.FieldDefn('fld_date', ogr.OFTDate))
+    lyr.CreateField(ogr.FieldDefn('fld_datetime', ogr.OFTDateTime))
+    lyr.CreateField(ogr.FieldDefn('fld_binary', ogr.OFTBinary))
     fld_defn = ogr.FieldDefn('fld_boolean', ogr.OFTInteger)
     fld_defn.SetSubType(ogr.OFSTBoolean)
-    ret = lyr.CreateField(fld_defn)
+    lyr.CreateField(fld_defn)
     fld_defn = ogr.FieldDefn('fld_smallint', ogr.OFTInteger)
     fld_defn.SetSubType(ogr.OFSTInt16)
-    ret = lyr.CreateField(fld_defn)
+    lyr.CreateField(fld_defn)
     fld_defn = ogr.FieldDefn('fld_float', ogr.OFTReal)
     fld_defn.SetSubType(ogr.OFSTFloat32)
-    ret = lyr.CreateField(fld_defn)
+    lyr.CreateField(fld_defn)
     lyr.CreateField(ogr.FieldDefn('fld_integer64', ogr.OFTInteger64))
     
     geom = ogr.CreateGeometryFromWkt('LINESTRING(5 5,10 5,10 10,5 10)')
@@ -408,8 +405,8 @@ def ogr_gpkg_8():
         return 'fail'
 
     lyr.StartTransaction()
-    ret = lyr.CreateField(ogr.FieldDefn('fld_datetime', ogr.OFTDateTime))
-    ret = lyr.CreateField(ogr.FieldDefn('fld_string', ogr.OFTString))
+    lyr.CreateField(ogr.FieldDefn('fld_datetime', ogr.OFTDateTime))
+    lyr.CreateField(ogr.FieldDefn('fld_string', ogr.OFTString))
 
     geom = ogr.CreateGeometryFromWkt('POLYGON((5 5, 10 5, 10 10, 5 10, 5 5),(6 6, 6 7, 7 7, 7 6, 6 6))')
     feat = ogr.Feature(lyr.GetLayerDefn())
@@ -436,7 +433,7 @@ def ogr_gpkg_8():
     if lyr is None:
         return 'fail'
         
-    ret = lyr.CreateField(ogr.FieldDefn('fld_string', ogr.OFTString))
+    lyr.CreateField(ogr.FieldDefn('fld_string', ogr.OFTString))
     geom = ogr.CreateGeometryFromWkt('POLYGON((5 5 1, 10 5 2, 10 10 3, 5 104 , 5 5 1),(6 6 4, 6 7 5, 7 7 6, 7 6 7, 6 6 4))')
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetGeometry(geom)
@@ -780,8 +777,8 @@ def ogr_gpkg_16():
         return 'skip'
 
     ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpk_16.gpkg')
-    lyr = ds.CreateLayer('foo')
-    sql_lyr = ds.ExecuteSQL("INSERT INTO gpkg_extensions ( table_name, column_name, " + \
+    ds.CreateLayer('foo')
+    ds.ExecuteSQL("INSERT INTO gpkg_extensions ( table_name, column_name, " + \
         "extension_name, definition, scope ) VALUES ( 'foo', 'geom', 'myext', 'some ext', 'write-only' ) ")
     ds = None
     
@@ -800,7 +797,7 @@ def ogr_gpkg_16():
         gdaltest.post_reason('fail : warning expected')
         return 'fail'
 
-    sql_lyr = ds.ExecuteSQL("UPDATE gpkg_extensions SET scope = 'read-write' WHERE extension_name = 'myext'")
+    ds.ExecuteSQL("UPDATE gpkg_extensions SET scope = 'read-write' WHERE extension_name = 'myext'")
     ds = None
 
     # Warning since we open as read-only
@@ -824,8 +821,8 @@ def ogr_gpkg_16():
 
     # Test with unsupported geometry type
     ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpk_16.gpkg')
-    lyr = ds.CreateLayer('foo')
-    sql_lyr = ds.ExecuteSQL("INSERT INTO gpkg_extensions ( table_name, column_name, " + \
+    ds.CreateLayer('foo')
+    ds.ExecuteSQL("INSERT INTO gpkg_extensions ( table_name, column_name, " + \
         "extension_name, definition, scope ) VALUES ( 'foo', 'geom', 'gpkg_geom_CURVE', 'some ext', 'write-only' ) ")
     ds = None
 
@@ -840,8 +837,8 @@ def ogr_gpkg_16():
 
     # Test with database wide unknown extension
     ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpk_16.gpkg')
-    lyr = ds.CreateLayer('foo')
-    sql_lyr = ds.ExecuteSQL("INSERT INTO gpkg_extensions ( "+ \
+    ds.CreateLayer('foo')
+    ds.ExecuteSQL("INSERT INTO gpkg_extensions ( "+ \
         "extension_name, definition, scope ) VALUES ( 'myext', 'some ext', 'write-only' ) ")
     ds = None
 
@@ -860,7 +857,7 @@ def ogr_gpkg_16():
         gdaltest.post_reason('fail : warning expected')
         return 'fail'
 
-    sql_lyr = ds.ExecuteSQL("UPDATE gpkg_extensions SET scope = 'read-write' WHERE extension_name = 'myext'")
+    ds.ExecuteSQL("UPDATE gpkg_extensions SET scope = 'read-write' WHERE extension_name = 'myext'")
     ds = None
 
     # Warning since we open as read-only
@@ -1197,41 +1194,6 @@ def ogr_gpkg_22():
         return 'fail'
 
     gdal.Unlink('/vsimem/ogr_gpkg_22.gpkg')
-
-    return 'success'
-
-###############################################################################
-# Test FID64 support
-
-def ogr_gpkg_21():
-
-    if gdaltest.gpkg_dr is None:
-        return 'skip'
-    
-    ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_21.gpkg')
-    lyr = ds.CreateLayer('test')
-    field_defn = ogr.FieldDefn('foo', ogr.OFTString)
-    lyr.CreateField(field_defn)
-
-    feat = ogr.Feature(lyr.GetLayerDefn())
-    feat.SetField('foo', 'bar')
-    feat.SetFID(1234567890123)
-    lyr.CreateFeature(feat)
-    feat = None
-
-    ds = None
-    
-    ds = ogr.Open('/vsimem/ogr_gpkg_21.gpkg')
-    lyr = ds.GetLayerByName('test')
-    if lyr.GetMetadataItem(ogr.OLMD_FID64) is None:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    f = lyr.GetNextFeature()
-    if f.GetFID() != 1234567890123:
-        gdaltest.post_reason('failure')
-        return 'fail'
-
-    gdal.Unlink('/vsimem/ogr_gpkg_21.gpkg')
 
     return 'success'
 

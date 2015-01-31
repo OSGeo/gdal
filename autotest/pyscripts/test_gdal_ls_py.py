@@ -31,12 +31,10 @@
 
 from osgeo import gdal
 import sys
-import os
 
 sys.path.append( '../pymod' )
 
 import gdaltest
-import ogrtest
 import test_py_scripts
 
 ###############################################################################

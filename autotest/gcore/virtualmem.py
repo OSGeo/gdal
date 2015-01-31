@@ -44,6 +44,7 @@ def virtualmem_1():
 
     try:
         from osgeo import gdalnumeric
+        gdalnumeric.zeros
     except:
         return 'skip'
 
@@ -128,6 +129,7 @@ def virtualmem_2():
 
     try:
         from osgeo import gdalnumeric
+        gdalnumeric.zeros
     except:
         return 'skip'
 

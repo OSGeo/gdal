@@ -148,7 +148,7 @@ def vrtrawlink_4():
     band = None
 
     # Close and reopen to ensure we are getting data from disk.
-    gdaltest_rawlink_ds = None
+    gdaltest.rawlink_ds = None
     gdaltest.rawlink_ds = gdal.Open( 'tmp/rawlink.vrt', gdal.GA_Update )
 
     band = gdaltest.rawlink_ds.GetRasterBand(2)

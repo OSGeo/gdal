@@ -28,17 +28,13 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import os
 import sys
-import string
 
 sys.path.append( '../pymod' )
 
 import gdaltest
 import ogrtest
 from osgeo import ogr
-from osgeo import osr
-from osgeo import gdal
 
 def ogr_svg_init():
     gdaltest.svg_ds = None

@@ -202,7 +202,7 @@ def mrsid_3():
             print('')
             print('old = ', check_stat)
             print('new = ', new_stat)
-            post_reason( 'Statistics differ.' )
+            gdaltest.post_reason( 'Statistics differ.' )
             return 'fail'
     
     return 'success'

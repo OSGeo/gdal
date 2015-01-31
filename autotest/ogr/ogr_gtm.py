@@ -31,15 +31,12 @@
 
 import os
 import sys
-import string
 
 sys.path.append( '../pymod' )
 
 import gdaltest
 import ogrtest
 from osgeo import ogr
-from osgeo import osr
-from osgeo import gdal
 
 def ogr_gtm_init():
     gdaltest.gtm_ds = None
