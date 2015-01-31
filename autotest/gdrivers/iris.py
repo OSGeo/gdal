@@ -29,10 +29,8 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import os
 import sys
 from osgeo import gdal
-from osgeo import osr
 
 sys.path.append( '../pymod' )
 
@@ -56,10 +54,10 @@ def iris_2():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    got_wkt = ds.GetProjectionRef()
-    expected_wkt = """PROJCS["unnamed",GEOGCS["unnamed ellipse",DATUM["unknown",SPHEROID["unnamed",6371000.5,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Mercator_1SP"],PARAMETER["central_meridian",0],PARAMETER["scale_factor",1],PARAMETER["false_easting",0],PARAMETER["false_northing",0]]"""
-    got_srs = osr.SpatialReference(got_wkt)
-    expected_srs = osr.SpatialReference(expected_wkt)
+    ds.GetProjectionRef()
+    #expected_wkt = """PROJCS["unnamed",GEOGCS["unnamed ellipse",DATUM["unknown",SPHEROID["unnamed",6371000.5,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Mercator_1SP"],PARAMETER["central_meridian",0],PARAMETER["scale_factor",1],PARAMETER["false_easting",0],PARAMETER["false_northing",0]]"""
+    #got_srs = osr.SpatialReference(got_wkt)
+    #expected_srs = osr.SpatialReference(expected_wkt)
 
     # There are some differences in the values of the parameters between Linux and Windows
     # not sure if it is only due to rounding differences, different proj versions, etc...

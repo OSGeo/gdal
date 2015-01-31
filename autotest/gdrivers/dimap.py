@@ -30,8 +30,6 @@
 
 import os
 import sys
-import string
-import array
 import shutil
 from osgeo import gdal
 

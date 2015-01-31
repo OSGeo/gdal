@@ -207,7 +207,6 @@ def test_gdaltindex_5():
         return 'skip'
 
     drv = gdal.GetDriverByName('GTiff')
-    wkt = 'GEOGCS[\"WGS 72\",DATUM[\"WGS_1972\"]]'
 
     ds = drv.Create('tmp/gdaltindex6.tif', 10, 10, 1)
     sr = osr.SpatialReference()

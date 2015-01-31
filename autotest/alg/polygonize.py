@@ -29,7 +29,6 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import os
 import sys
 
 sys.path.append( '../pymod' )
@@ -37,19 +36,12 @@ sys.path.append( '../pymod' )
 import gdaltest
 import ogrtest
 
-from osgeo import gdal, gdalconst, ogr
+from osgeo import gdal, ogr
 
 ###############################################################################
 # Test a fairly simple case, with nodata masking.
 
 def polygonize_1():
-
-    try:
-        x = gdal.Polygonize
-        gdaltest.have_ng = 1
-    except:
-        gdaltest.have_ng = 0
-        return 'skip'
 
     src_ds = gdal.Open('data/polygonize_in.grd')
     src_band = src_ds.GetRasterBand(1)
@@ -65,6 +57,9 @@ def polygonize_1():
 
     # run the algorithm.
     result = gdal.Polygonize( src_band, src_band.GetMaskBand(), mem_layer, 0 )
+    if result != 0:
+        gdaltest.post_reason( 'Polygonize failed' )
+        return 'fail'
 
     # Confirm we get the set of expected features in the output layer.
 
@@ -96,9 +91,6 @@ def polygonize_1():
 
 def polygonize_2():
 
-    if not gdaltest.have_ng:
-        return 'skip'
-    
     src_ds = gdal.Open('data/polygonize_in.grd')
     src_band = src_ds.GetRasterBand(1)
 
@@ -113,6 +105,9 @@ def polygonize_2():
 
     # run the algorithm.
     result = gdal.Polygonize( src_band, None, mem_layer, 0 )
+    if result != 0:
+        gdaltest.post_reason( 'Polygonize failed' )
+        return 'fail'
 
     # Confirm we get the set of expected features in the output layer.
 
@@ -136,9 +131,6 @@ def polygonize_2():
 
 def polygonize_3():
 
-    if not gdaltest.have_ng:
-        return 'skip'
-    
     src_ds = gdal.Open('data/polygonize_in_2.grd')
     src_band = src_ds.GetRasterBand(1)
 
@@ -153,6 +145,9 @@ def polygonize_3():
 
     # run the algorithm.
     result = gdal.Polygonize( src_band, None, mem_layer, 0 )
+    if result != 0:
+        gdaltest.post_reason( 'Polygonize failed' )
+        return 'fail'
 
     # Confirm we get the expected count of features.
 
@@ -182,9 +177,6 @@ def polygonize_3():
 
 def polygonize_4():
 
-    if not gdaltest.have_ng:
-        return 'skip'
-    
     src_ds = gdal.Open('data/polygonize_in.grd')
     src_band = src_ds.GetRasterBand(1)
 
@@ -199,6 +191,9 @@ def polygonize_4():
 
     # run the algorithm.
     result = gdal.Polygonize( src_band, None, mem_layer, 0, ["8CONNECTED=8"] )
+    if result != 0:
+        gdaltest.post_reason( 'Polygonize failed' )
+        return 'fail'
 
     # Confirm we get the set of expected features in the output layer.
 

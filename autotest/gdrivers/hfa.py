@@ -32,7 +32,6 @@
 import os
 import sys
 from osgeo import gdal
-import string
 import array
 
 sys.path.append( '../pymod' )
@@ -88,7 +87,7 @@ def hfa_histwrite():
     drv = gdal.GetDriverByName('HFA')
     ds_src = gdal.Open('../gcore/data/utmsmall.img')
     out_ds = drv.CreateCopy( 'tmp/work.img', ds_src )
-    out_ds = None
+    del out_ds
     ds_src = None
     
     # Remove .aux.xml file as histogram can be written in it
@@ -128,7 +127,7 @@ def hfa_histrewrite():
     drv = gdal.GetDriverByName('HFA')
     ds_src = gdal.Open('../gcore/data/utmsmall.img')
     out_ds = drv.CreateCopy( 'tmp/work.img', ds_src )
-    out_ds = None
+    del out_ds
     ds_src = None
     
     # Remove .aux.xml file as histogram can be written in it
@@ -312,7 +311,7 @@ def hfa_int_read():
     ds = gdal.Open('data/int.img')
     band = ds.GetRasterBand(1)
     cs = band.Checksum()
-    data = band.ReadRaster(100, 100, 1, 1)
+    band.ReadRaster(100, 100, 1, 1)
     ds = None
 
     if cs != 6691:
@@ -370,7 +369,7 @@ def hfa_pe_write():
     drv = gdal.GetDriverByName('HFA')
     ds_src = gdal.Open('data/87test.img')
     out_ds = drv.CreateCopy( 'tmp/87test.img', ds_src )
-    out_ds = None
+    del out_ds
     ds_src = None
 
     expected = 'PROJCS["World_Cube",GEOGCS["GCS_WGS_1984",DATUM["WGS_1984",SPHEROID["WGS_84",6378137.0,298.257223563]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.017453292519943295]],PROJECTION["Cube"],PARAMETER["False_Easting",0.0],PARAMETER["False_Northing",0.0],PARAMETER["Central_Meridian",0.0],PARAMETER["Option",1.0],UNIT["Meter",1.0]]'
@@ -512,7 +511,7 @@ def hfa_clean_ige():
     # Create a file without a spill file, and verify old ige cleaned up.
     
     out_ds = drv.CreateCopy( 'tmp/igetest.img', src_ds )
-    out_ds = None
+    del out_ds
 
     try:
         open( 'tmp/igetest.ige' )
@@ -745,7 +744,7 @@ def hfa_proName():
     src_ds = gdal.Open('data/stateplane.vrt')
     dst_ds = drv.CreateCopy( 'tmp/proname.img', src_ds )
 
-    dst_ds = None
+    del dst_ds
     src_ds = None
 
     # Make sure we don't have interference from an .aux.xml
@@ -1315,7 +1314,7 @@ def hfa_createcopy_statistics():
         pass
     ds_src = gdal.Open('../gcore/data/byte.tif')
     out_ds = gdal.GetDriverByName('HFA').CreateCopy( '/vsimem/byte.img', ds_src, options = ['STATISTICS=YES'] )
-    out_ds = None
+    del out_ds
     ds_src = None
     if os.path.exists(tmpAuxXml): os.remove(tmpAuxXml)
 

@@ -29,24 +29,18 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import os
 import sys
 
 sys.path.append( '../pymod' )
 
 import gdaltest
 
-from osgeo import gdal, gdalconst
+from osgeo import gdal
 
 ###############################################################################
 # Test a fairly default case.
 
 def sieve_1():
-
-    try:
-        x = gdal.SieveFilter
-    except:
-        return 'skip'
 
     drv = gdal.GetDriverByName( 'GTiff' )
     src_ds = gdal.Open('data/sieve_src.grd')
@@ -79,12 +73,6 @@ def sieve_1():
 
 def sieve_2():
 
-
-    try:
-        x = gdal.SieveFilter
-    except:
-        return 'skip'
-
     drv = gdal.GetDriverByName( 'GTiff' )
     src_ds = gdal.Open('data/sieve_src.grd')
     src_band = src_ds.GetRasterBand(1)
@@ -116,11 +104,6 @@ def sieve_2():
 
 def sieve_3():
 
-    try:
-        x = gdal.SieveFilter
-    except:
-        return 'skip'
-
     drv = gdal.GetDriverByName( 'GTiff' )
     src_ds = gdal.Open('data/unmergable.grd')
     src_band = src_ds.GetRasterBand(1)
@@ -151,11 +134,6 @@ def sieve_3():
 # Try the bug 2634 simplified data.
 
 def sieve_4():
-
-    try:
-        x = gdal.SieveFilter
-    except:
-        return 'skip'
 
     drv = gdal.GetDriverByName( 'GTiff' )
     src_ds = gdal.Open('data/sieve_2634.grd')
@@ -189,11 +167,6 @@ def sieve_4():
 # This should yield the same result as we use an opaque band
 
 def sieve_5():
-
-    try:
-        x = gdal.SieveFilter
-    except:
-        return 'skip'
 
     drv = gdal.GetDriverByName( 'GTiff' )
     src_ds = gdal.Open('data/sieve_src.grd')

@@ -28,7 +28,6 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import os
 import sys
 
 sys.path.append( '../pymod' )
@@ -254,7 +253,7 @@ def gta_5():
 
     for compress in compress_list:
         out_ds = gdaltest.gta_drv.CreateCopy('/vsimem/gta_5.gta', src_ds, options = ['COMPRESS=' + compress])
-        out_ds = None
+        del out_ds
 
     gdaltest.gta_drv.Delete( '/vsimem/gta_5.gta' )
 

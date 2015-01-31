@@ -31,7 +31,6 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import os
 import sys
 from osgeo import gdal
 
@@ -147,7 +146,7 @@ def postgisraster_test_utm_open():
     
     # Get band data
     rb = src_ds.GetRasterBand(1)
-    st = rb.GetStatistics(0, 1)
+    rb.GetStatistics(0, 1)
     cs = rb.Checksum()
 
     main_ds = gdal.Open( gdaltest.postgisraster_connection_string + "table='utm'" )
@@ -171,7 +170,7 @@ def postgisraster_test_small_world_open_b1():
     
     # Get band data
     rb = src_ds.GetRasterBand(1)
-    st = rb.GetStatistics(0, 1)
+    rb.GetStatistics(0, 1)
     cs = rb.Checksum()
     
     
@@ -194,7 +193,7 @@ def postgisraster_test_small_world_open_b2():
     
     # Get band data
     rb = src_ds.GetRasterBand(2)
-    st = rb.GetStatistics(0, 1)
+    rb.GetStatistics(0, 1)
     cs = rb.Checksum()
     
     
@@ -217,7 +216,7 @@ def postgisraster_test_small_world_open_b3():
     
     # Get band data
     rb = src_ds.GetRasterBand(3)
-    st = rb.GetStatistics(0, 1)
+    rb.GetStatistics(0, 1)
     cs = rb.Checksum()
 
     main_ds = gdal.Open( gdaltest.postgisraster_connection_string + "table='small_world'" )

@@ -28,26 +28,18 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import os
 import sys
 
 sys.path.append( '../pymod' )
 
 import gdaltest
 
-from osgeo import gdal, gdalconst
+from osgeo import gdal
 
 ###############################################################################
 # Test a fairly default case.
 
 def proximity_1():
-
-    try:
-        x = gdal.ComputeProximity
-        gdaltest.have_ng = 1
-    except:
-        gdaltest.have_ng = 0
-        return 'skip'
 
     drv = gdal.GetDriverByName( 'GTiff' )
     src_ds = gdal.Open('data/pat.tif')
@@ -79,13 +71,6 @@ def proximity_1():
 # Try several options
 
 def proximity_2():
-
-    try:
-        x = gdal.ComputeProximity
-        gdaltest.have_ng = 1
-    except:
-        gdaltest.have_ng = 0
-        return 'skip'
 
     drv = gdal.GetDriverByName( 'GTiff' )
     src_ds = gdal.Open('data/pat.tif')

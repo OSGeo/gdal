@@ -32,8 +32,6 @@
 import os
 import sys
 from osgeo import gdal
-import array
-import string
 
 sys.path.append( '../pymod' )
 
@@ -147,6 +145,7 @@ def l1b_metadata_before_noaa_15():
     ds = gdal.Open('tmp/cache/n12gac10bit.l1b')
     gdal.SetConfigOption('L1B_FETCH_METADATA', None)
     gdal.SetConfigOption('L1B_METADATA_DIRECTORY', None)
+    del ds
 
     f = open('tmp/n12gac10bit.l1b_metadata.csv', 'rb')
     l = f.readline().decode('ascii')
@@ -244,6 +243,7 @@ def l1b_metadata_after_noaa_15():
     ds = gdal.Open('tmp/cache/n16gac10bit.l1b')
     gdal.SetConfigOption('L1B_FETCH_METADATA', None)
     gdal.SetConfigOption('L1B_METADATA_DIRECTORY', None)
+    del ds
 
     f = open('tmp/n16gac10bit.l1b_metadata.csv', 'rb')
     l = f.readline().decode('ascii')

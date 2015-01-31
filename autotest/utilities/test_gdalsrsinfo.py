@@ -30,7 +30,6 @@
 ###############################################################################
 
 import sys
-import os
 
 sys.path.append( '../pymod' )
 
@@ -319,7 +318,7 @@ def test_gdalsrsinfo_14():
 ###############################################################################
 # Test .shp format
 
-def test_gdalsrsinfo_14():
+def test_gdalsrsinfo_14bis():
     if test_cli_utilities.get_gdalsrsinfo_path() is None:
         return 'skip'
 
@@ -386,6 +385,7 @@ gdaltest_list = [
     test_gdalsrsinfo_12,
     test_gdalsrsinfo_13,
     test_gdalsrsinfo_14,
+    test_gdalsrsinfo_14bis,
     test_gdalsrsinfo_15,
     test_gdalsrsinfo_16,
     None

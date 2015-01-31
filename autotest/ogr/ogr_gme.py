@@ -33,7 +33,6 @@ import json
 import os
 import random
 import sys
-import string
 
 sys.path.append( '../pymod' )
 
@@ -154,9 +153,7 @@ def ogr_gme_write():
     expected_wkt = ("POLYGON ((1.1 1.1,4.1 1.1,4.1 4.1,1.1 4.1,1.1 1.1),"
                     "(2.1 2.1,3.1 2.1,3.1 3.1,2.1 3.1,2.1 2.1))")
     geom = ogr.CreateGeometryFromWkt(expected_wkt)
-    expected_geom = ogr.CreateGeometryFromWkt(expected_wkt)
     feature.SetGeometry(geom)
-    input_feature = feature
 
     if lyr.CreateFeature(feature) != 0:
         gdaltest.post_reason('CreateFeature() failed')
@@ -222,7 +219,6 @@ def ogr_gme_transaction():
     lyr.CreateField(ogr.FieldDefn('lng', ogr.OFTReal))
     lyr.CreateField(ogr.FieldDefn('n', ogr.OFTInteger))
 
-    plus_list = []
     if lyr.StartTransaction() != 0:
         gdaltest.post_reason('StartTransaction failed!')
         return 'fail'

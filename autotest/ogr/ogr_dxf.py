@@ -32,7 +32,6 @@
 
 import os
 import sys
-import string
 from sys import version_info
 
 sys.path.append( '../pymod' )
@@ -537,7 +536,7 @@ def ogr_dxf_13():
     # that the points lie along (or reasonably close to) said path.
 
     if geom.GetPointCount() != 146:
-        gdaltest.post_reason( 'did not get expected number of points, got %d' % (rgeom.GetPointCount()) )
+        gdaltest.post_reason( 'did not get expected number of points, got %d' % (geom.GetPointCount()) )
         return 'fail'
     
     if abs(geom.GetX(0)-251297.8179) > 0.001 \

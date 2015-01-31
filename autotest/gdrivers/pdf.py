@@ -887,7 +887,7 @@ def pdf_update_gcps(dpi = 300):
     got_gt = ds.GetGeoTransform()
     got_wkt = ds.GetProjectionRef()
     got_gcp_count = ds.GetGCPCount()
-    got_gcps = ds.GetGCPs()
+    ds.GetGCPs()
     got_gcp_wkt = ds.GetGCPProjection()
     got_neatline = ds.GetMetadataItem('NEATLINE')
     ds = None
@@ -924,7 +924,6 @@ def pdf_update_gcps(dpi = 300):
     if ogrtest.check_feature_geometry(got_geom, expected_geom) != 0:
         gdaltest.post_reason('bad neatline')
         print('got : %s' % got_neatline)
-        print('expected : %s' % expected_wkt)
         return 'fail'
 
     gdaltest.pdf_drv.Delete(out_filename)
@@ -1152,7 +1151,7 @@ def pdf_check_identity_iso32000():
 
     src_ds = gdal.Open('data/test_pdf.vrt')
     out_ds = gdaltest.pdf_drv.CreateCopy(out_filename, src_ds, options = ['STREAM_COMPRESS=NONE'])
-    out_ds = None
+    del out_ds
     src_ds = None
 
     f = open('data/test_iso32000.pdf', 'rb')
@@ -1184,7 +1183,7 @@ def pdf_check_identity_ogc_bp():
     src_ds = gdal.Open('data/test_pdf.vrt')
     gdal.SetConfigOption('GDAL_PDF_OGC_BP_WRITE_WKT', 'NO')
     out_ds = gdaltest.pdf_drv.CreateCopy(out_filename, src_ds, options = ['GEO_ENCODING=OGC_BP', 'STREAM_COMPRESS=NONE'])
-    out_ds = None
+    del out_ds
     gdal.SetConfigOption('GDAL_PDF_OGC_BP_WRITE_WKT', None)
     src_ds = None
 
@@ -1527,7 +1526,7 @@ def pdf_write_ogr_with_reprojection():
 
     src_ds = gdal.Open('data/byte.tif')
     ds = gdaltest.pdf_drv.CreateCopy('tmp/pdf_write_ogr.pdf', src_ds, options = options)
-    ds = None
+    del ds
     src_ds = None
 
     ogr_ds = ogr.Open('tmp/pdf_write_ogr.pdf')
@@ -1657,7 +1656,7 @@ def pdf_georef_on_image(src_filename = 'data/byte.tif'):
     src_ds = gdal.Open(src_filename)
     gdal.SetConfigOption('GDAL_PDF_WRITE_GEOREF_ON_IMAGE', 'YES')
     out_ds = gdaltest.pdf_drv.CreateCopy('tmp/pdf_georef_on_image.pdf', src_ds, options = ['MARGIN=10', 'GEO_ENCODING=NONE'])
-    out_ds = None
+    del out_ds
     gdal.SetConfigOption('GDAL_PDF_WRITE_GEOREF_ON_IMAGE', None)
     if pdf_checksum_available():
         src_cs = src_ds.GetRasterBand(1).Checksum()

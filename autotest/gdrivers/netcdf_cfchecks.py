@@ -49,7 +49,6 @@ Options:
 
 '''
 
-from sys import *
 import cdms2 as cdms, re, string, types, numpy.oldnumeric as Numeric, numpy
 
 from cdms2.axis import FileAxis
@@ -57,8 +56,8 @@ from cdms2.auxcoord import FileAuxAxis1D
 
 # Use ctypes to interface to the UDUNITS-2 shared library
 # The udunits2 library needs to be in a standard path o/w export LD_LIBRARY_PATH
-from ctypes import *
-udunits=CDLL("libudunits2.so")
+import ctypes
+udunits=ctypes.CDLL("libudunits2.so")
  
 STANDARDNAME="./cf-standard-name-table.xml"
 AREATYPES="./area-type-table.xml"
@@ -279,18 +278,18 @@ class CFChecker:
     # being dislayed see Trac #50)
     # Use ctypes callback functions to declare ut_error_message_handler (uemh)
     # Don't fully understand why this works!  Solution supplied by ctypes-mailing-list. 19.01.10
-    uemh = CFUNCTYPE(c_int,c_char_p)
-    ut_set_error_message_handler = CFUNCTYPE(uemh,uemh)(("ut_set_error_message_handler",udunits))
+    uemh = ctypes.CFUNCTYPE(ctypes.c_int,ctypes.c_char_p)
+    ut_set_error_message_handler = ctypes.CFUNCTYPE(uemh,uemh)(("ut_set_error_message_handler",udunits))
     ut_write_to_stderr = uemh(("ut_write_to_stderr",udunits))
     ut_ignore = uemh(("ut_ignore",udunits))
 
-    old_handler = ut_set_error_message_handler(ut_ignore)
+    ut_set_error_message_handler(ut_ignore)
                                            
     self.unitSystem=udunits.ut_read_xml(self.udunits)
     if not self.unitSystem:
         exit("Could not read the UDUNITS2 xml database from: %s" % self.udunits)
 
-    old_handler = ut_set_error_message_handler(ut_write_to_stderr)
+    ut_set_error_message_handler(ut_write_to_stderr)
 
     # Read in netCDF file
     try:
@@ -429,6 +428,7 @@ class CFChecker:
     print "ERRORS detected:",self.err
     print "WARNINGS given:",self.warn
     print "INFORMATION messages:",self.info
+    print "rc:",rc
 
     if self.err:
         # Return number of errors found
@@ -981,7 +981,7 @@ class CFChecker:
         axesFound=[0,0,0,0] # Holding array to record whether a dimension with an axis value has been found.
         i=-1
         lastPos=-1
-        trailing=0   # Flag to indicate trailing dimension
+        #trailing=0   # Flag to indicate trailing dimension
         
         # Flags to hold positions of first space/time dimension and
         # last Non-space/time dimension in variable declaration.
@@ -1297,7 +1297,7 @@ class CFChecker:
 
 
   #----------------------------------
-  def chkCellMethods(self,varName):
+  def chkCellMethods_redefined(self,varName):
   #----------------------------------
     """Checks on cell_methods attribute
        dim1: [dim2: [dim3: ...]] method [where type1 [over type2]] [ (comment) ]
@@ -1305,7 +1305,7 @@ class CFChecker:
     """
     
     rc=1
-    error = 0  # Flag to indicate validity of cell_methods string syntax
+    #error = 0  # Flag to indicate validity of cell_methods string syntax
     varDimensions={}
     var=self.f[varName]
     
@@ -2213,7 +2213,7 @@ class CFChecker:
   #--------------------------------------
     """A coordinate variable must have values that are strictly monotonic
     (increasing or decreasing)."""
-    rc=1
+    #rc=1
     var=self.f[varName]
     values=var.getValue()
     i=0

@@ -28,9 +28,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import os
 import sys
-import string
 
 sys.path.append( '../pymod' )
 
@@ -66,7 +64,6 @@ def ogr_arcgen_points():
         print('did not get expected ID')
         feat.DumpReadable()
         return 'fail'
-    geom = feat.GetGeometryRef()
     if ogrtest.check_feature_geometry(feat,'POINT (2 49)',
                                       max_error = 0.0000001 ) != 0:
         print('did not get expected first geom')
@@ -103,7 +100,6 @@ def ogr_arcgen_points25d():
         print('did not get expected ID')
         feat.DumpReadable()
         return 'fail'
-    geom = feat.GetGeometryRef()
     if ogrtest.check_feature_geometry(feat,'POINT (2 49 10)',
                                       max_error = 0.0000001 ) != 0:
         print('did not get expected first geom')
@@ -136,7 +132,6 @@ def ogr_arcgen_lines():
         print('did not get expected ID')
         feat.DumpReadable()
         return 'fail'
-    geom = feat.GetGeometryRef()
     if ogrtest.check_feature_geometry(feat,'LINESTRING (2 49,3 50)',
                                       max_error = 0.0000001 ) != 0:
         print('did not get expected first geom')
@@ -169,7 +164,6 @@ def ogr_arcgen_lines25d():
         print('did not get expected ID')
         feat.DumpReadable()
         return 'fail'
-    geom = feat.GetGeometryRef()
     if ogrtest.check_feature_geometry(feat,'LINESTRING (2 49 10,3 50 10)',
                                       max_error = 0.0000001 ) != 0:
         print('did not get expected first geom')
@@ -202,7 +196,6 @@ def ogr_arcgen_polygons():
         print('did not get expected ID')
         feat.DumpReadable()
         return 'fail'
-    geom = feat.GetGeometryRef()
     if ogrtest.check_feature_geometry(feat,'POLYGON ((2 49,2 50,3 50,3 49,2 49))',
                                       max_error = 0.0000001 ) != 0:
         print('did not get expected first geom')
@@ -235,7 +228,6 @@ def ogr_arcgen_polygons25d():
         print('did not get expected ID')
         feat.DumpReadable()
         return 'fail'
-    geom = feat.GetGeometryRef()
     if ogrtest.check_feature_geometry(feat,'POLYGON ((2 49 10,2 50 10,3 50 10,3 49 10,2 49 10))',
                                       max_error = 0.0000001 ) != 0:
         print('did not get expected first geom')

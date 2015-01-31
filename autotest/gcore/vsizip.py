@@ -29,9 +29,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import os
 import sys
-import shutil
 
 sys.path.append( '../pymod' )
 

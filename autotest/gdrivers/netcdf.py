@@ -143,6 +143,7 @@ def netcdf_test_deflate( ifile, checksum, zlevel=1, timeout=None ):
 
     try:
         from multiprocessing import Process
+        Process.is_alive
     except:
         print('from multiprocessing import Process failed')
         return 'skip'
@@ -280,7 +281,7 @@ def netcdf_2():
     src_ds = gdal.Open( 'data/byte.tif' )
     
     base_ds = gdaltest.netcdf_drv.CreateCopy( 'tmp/netcdf2.nc', src_ds)
-    base_ds = None
+    del base_ds
 
     tst = gdaltest.GDALTest( 'NetCDF', 'tmp/netcdf2.nc',
                              1, 4672,
@@ -1121,7 +1122,7 @@ def netcdf_31():
 
     ds = gdal.Open( 'data/trmm-2x2.nc' )
 
-    prj = ds.GetProjection( )
+    ds.GetProjection( )
 
     gt = ds.GetGeoTransform( )
 
@@ -1409,7 +1410,7 @@ def netcdf_39():
 
     src_ds = gdal.Open('NETCDF:"%s/data/two_vars_scale_offset.nc":z' % os.getcwd())
     out_ds = gdal.GetDriverByName('VRT').CreateCopy('tmp/netcdf_39.vrt', src_ds)
-    out_ds = None
+    del out_ds
     src_ds = None
 
     ds = gdal.Open('tmp/netcdf_39.vrt')

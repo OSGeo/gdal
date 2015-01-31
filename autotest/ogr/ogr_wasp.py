@@ -29,10 +29,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import os
-import shutil
 import sys
-import string
 import math
 
 sys.path.append( '../pymod' )
@@ -485,7 +482,7 @@ def ogr_wasp_merge():
         gdaltest.post_reason( 'there should be 6 boundaries and there are %d' %j )
         return 'fail'
 
-    if res != [(0,1) for i in range(6)]:
+    if res != [(0,1) for k in range(6)]:
         print(res)
         gdaltest.post_reason( 'wrong values f=in boundaries' )
         return 'fail'

@@ -27,7 +27,6 @@
 # Boston, MA 02111-1307, USA.
 ###############################################################################
 
-import os
 import sys
 
 sys.path.append( '../pymod' )
@@ -98,7 +97,7 @@ def ogr_sql_3():
 ###############################################################################
 # Test ORDER BY DESC handling 
 
-def ogr_sql_3():
+def ogr_sql_3_desc():
 
     expect = [169, 168, 166, 165, 158]
     
@@ -508,7 +507,7 @@ def ogr_sql_20():
 def ogr_sql_21():
 
     mem_ds = ogr.GetDriverByName("Memory").CreateDataSource( "my_ds")
-    mem_lyr = mem_ds.CreateLayer( "my_layer")
+    mem_ds.CreateLayer( "my_layer")
 
     sql_lyr = mem_ds.ExecuteSQL("SELECT *, fid from my_layer")
     if sql_lyr.GetLayerDefn().GetFieldCount() != 1:
@@ -852,7 +851,6 @@ def ogr_sql_28():
             return 'fail'
 
     ds = None
-    ds2 = None
 
     return 'success'
 
@@ -1055,7 +1053,6 @@ def ogr_sql_35():
     if count_cols == 1024:
         return 'success'
     else:
-        print(val)
         return 'fail'
 
 ###############################################################################
@@ -1415,6 +1412,7 @@ gdaltest_list = [
     ogr_sql_1,
     ogr_sql_2,
     ogr_sql_3,
+    ogr_sql_3_desc,
     ogr_sql_4,
     ogr_sql_5,
     ogr_sql_6,

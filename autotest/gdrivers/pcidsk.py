@@ -30,7 +30,6 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import os
 import sys
 from osgeo import gdal
 from osgeo import ogr
@@ -341,7 +340,7 @@ def pcidsk_13():
     ds = None
     ds = gdal.Open( '/vsimem/pcidsk_13.pix' )
     band = ds.GetRasterBand(1)
-    desc = band.GetDescription()
+    band.GetDescription()
     cs = band.Checksum()
     ds = None
 
@@ -363,7 +362,7 @@ def pcidsk_14():
 
     ds = gdal.GetDriverByName('PCIDSK').Create( '/vsimem/pcidsk_14.pix', 1, 1 )
     band = ds.GetRasterBand(1).SetDescription('mydescription')
-    src_ds = None
+    del ds
 
     gdal.Unlink( '/vsimem/pcidsk_14.pix.aux.xml' )
 
@@ -454,7 +453,7 @@ def pcidsk_15():
         return 'fail'
 
     ds2 = gdal.GetDriverByName('PCIDSK').CreateCopy( '/vsimem/pcidsk_15_2.pix', ds)
-    ds2 = None
+    del ds2
     ds = None
 
     ds = gdal.OpenEx('/vsimem/pcidsk_15_2.pix')

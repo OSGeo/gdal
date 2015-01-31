@@ -31,7 +31,6 @@
 
 import os
 import sys
-import string
 import shutil
 
 sys.path.append( '../pymod' )
@@ -423,8 +422,8 @@ def ogr_fgdb_6():
     srs.SetFromUserInput("WGS84")
 
     ds = ogrtest.fgdb_drv.CreateDataSource('tmp/test.gdb')
-    lyr = ds.CreateLayer('layer1', srs = srs, geom_type = ogr.wkbPoint, options = ['FEATURE_DATASET=featuredataset'])
-    lyr = ds.CreateLayer('layer2', srs = srs, geom_type = ogr.wkbPoint, options = ['FEATURE_DATASET=featuredataset'])
+    ds.CreateLayer('layer1', srs = srs, geom_type = ogr.wkbPoint, options = ['FEATURE_DATASET=featuredataset'])
+    ds.CreateLayer('layer2', srs = srs, geom_type = ogr.wkbPoint, options = ['FEATURE_DATASET=featuredataset'])
     ds = None
 
     ds = ogr.Open('tmp/test.gdb')
@@ -541,7 +540,7 @@ def ogr_fgdb_9():
         lyr = ds.CreateLayer(in_names[i], srs = srs, geom_type = ogr.wkbPoint)
     gdal.PopErrorHandler()
 
-    lyr_defn = lyr.GetLayerDefn()
+    lyr.GetLayerDefn()
     expected_names = [ 'FROM_',
                        '_1NUMBER',
                        'WITH_SPACE_AND_______special_characters',

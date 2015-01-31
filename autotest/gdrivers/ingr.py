@@ -197,7 +197,7 @@ def ingr_17():
 
     src_ds = gdal.Open('data/frmt09.cot')
     out_ds = gdal.GetDriverByName('INGR').CreateCopy('/vsimem/ingr_17.rle', src_ds)
-    out_ds = None
+    del out_ds
     ref_cs = src_ds.GetRasterBand(1).Checksum()
     src_ds = None
     

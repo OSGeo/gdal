@@ -126,7 +126,7 @@ def georaster_int16():
     if gdaltest.oci_ds is None:
         return 'skip'
 
-    connection = get_connection_str()
+    get_connection_str()
 
     ds_src = gdal.Open('data/int16.tif')
 
@@ -154,7 +154,7 @@ def georaster_int32():
     if gdaltest.oci_ds is None:
         return 'skip'
 
-    connection = get_connection_str()
+    get_connection_str()
 
     ds_src = gdal.Open('data/int32.tif')
 

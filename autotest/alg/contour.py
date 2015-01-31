@@ -36,7 +36,6 @@ sys.path.append( '../pymod' )
 from osgeo import gdal
 from osgeo import ogr
 import gdaltest
-import ogrtest
 import array
 
 ###############################################################################

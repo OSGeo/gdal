@@ -27,15 +27,11 @@
 # Boston, MA 02111-1307, USA.
 ###############################################################################
 
-import os
 import sys
 
 sys.path.append( '../pymod' )
 
 import gdaltest
-from osgeo import gdal
-
-
 
 ###############################################################################
 # Test creating an in memory copy.

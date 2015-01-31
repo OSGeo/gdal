@@ -30,8 +30,6 @@
 
 from osgeo import ogr
 import sys
-import os
-import shutil
 from sys import version_info
 
 sys.path.append( '../pymod' )
@@ -78,6 +76,8 @@ def ogr_rfc30_1_bis():
     if version_info >= (3,0,0):
         return 'skip'
 
+    filename = None
+    layer_name = None
     # Test that it also works with a regular string (non Unicode) with utf8 content on python 2.X
     exec("filename =  u'/vsimem/\u00e9.shp'.encode( 'utf-8' )")
     exec("layer_name = u'\u00e9'.encode( 'utf-8' )") # FIXME? we should perhaps accept Unicode strings for layernames as well

@@ -28,10 +28,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import os
 import sys
-import string
-import array
 from osgeo import gdal
 
 sys.path.append( '../pymod' )

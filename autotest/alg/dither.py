@@ -29,14 +29,13 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import os
 import sys
 
 sys.path.append( '../pymod' )
 
 import gdaltest
 
-from osgeo import gdal, gdalconst
+from osgeo import gdal
 
 ###############################################################################
 # Test

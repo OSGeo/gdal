@@ -30,8 +30,6 @@
 
 import os
 import sys
-import string
-import array
 from osgeo import gdal
 from osgeo import osr
 
@@ -130,8 +128,8 @@ def usgsdem_6():
     ds3 = gdal.GetDriverByName('USGSDEM').CreateCopy('tmp/file_2.dem', ds2, \
         options = [ 'TEMPLATE=tmp/file_1.dem', 'RESAMPLE=Nearest' ] )
 
-    ds2 = None
-    ds3 = None
+    del ds2
+    del ds3
 
     f1 = open('tmp/file_1.dem', 'rb')
     f2 = open('tmp/file_2.dem', 'rb')

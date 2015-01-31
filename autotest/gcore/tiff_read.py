@@ -29,7 +29,6 @@
 
 import os
 import sys
-import string
 import shutil
 
 sys.path.append( '../pymod' )
@@ -851,7 +850,7 @@ def tiff_read_corrupted_gtiff():
     gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
     ds = gdal.Open('data/corrupted_gtiff_tags.tif')
     gdal.PopErrorHandler()
-    ds = None
+    del ds
 
     err_msg = gdal.GetLastErrorMsg()
     if err_msg.find('IO error during') == -1 and \
@@ -871,7 +870,7 @@ def tiff_read_tag_without_null_byte():
     if gdal.GetLastErrorType() != 0:
         gdaltest.post_reason( 'should have not emitted a warning, but only a CPLDebug() message' )
         return 'fail'
-    ds = None
+    del ds
 
     return 'success'
 
@@ -987,7 +986,7 @@ def tiff_dos_strip_chop():
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ds = gdal.Open('data/tiff_dos_strip_chop.tif')
     gdal.PopErrorHandler()
-    ds = None
+    del ds
 
     return 'success'
 

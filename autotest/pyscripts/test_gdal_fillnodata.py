@@ -35,7 +35,6 @@ import os
 sys.path.append( '../pymod' )
 
 from osgeo import gdal
-from osgeo import osr
 import gdaltest
 import test_py_scripts
 
@@ -43,13 +42,6 @@ import test_py_scripts
 # Dummy test : there is no nodata value in the source dataset !
 
 def test_gdal_fillnodata_1():
-
-    try:
-        x = gdal.FillNodata
-        gdaltest.have_ng = 1
-    except:
-        gdaltest.have_ng = 0
-        return 'skip'
 
     script_path = test_py_scripts.get_py_script('gdal_fillnodata')
     if script_path is None:
@@ -69,13 +61,6 @@ def test_gdal_fillnodata_1():
 # No data value for nodata_byte.tif is 0.
 
 def test_gdal_fillnodata_2():
-
-    try:
-        x = gdal.FillNodata
-        gdaltest.have_ng = 1
-    except:
-        gdaltest.have_ng = 0
-        return 'skip'
 
     script_path = test_py_scripts.get_py_script('gdal_fillnodata')
     if script_path is None:

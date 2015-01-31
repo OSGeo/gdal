@@ -30,11 +30,9 @@
 import os
 import sys
 from osgeo import gdal
-import string
 import array
 import shutil
 from osgeo import osr
-import sys
 
 sys.path.append( '../pymod' )
 
@@ -474,8 +472,6 @@ def tiff_write_14():
 
 def tiff_write_15():
 
-    drv = gdal.GetDriverByName( 'GTiff' )
-
     ds_in = gdal.Open('data/byte.vrt')
 
     ds = gdaltest.tiff_drv.CreateCopy( 'tmp/tw_15.tif', ds_in, options=['PROFILE=BASELINE'] )
@@ -812,7 +808,6 @@ def tiff_write_20():
             return 'fail'
 
     new_ds = None
-    src_ds = None
 
     # Test just unsetting once, but leaving other unchanged
     ds = gdal.Open( 'tmp/tags.tif', gdal.GA_Update )
@@ -1046,7 +1041,7 @@ def tiff_write_27():
 
     ds = gdal.Open( 'tmp/ct16.tif' )
     new_ds = gdaltest.tiff_drv.CreateCopy( 'tmp/ct16_copy.tif', ds )
-    new_ds = None
+    del new_ds
     ds = None
 
     ds = gdal.Open( 'tmp/ct16_copy.tif' )
@@ -1208,7 +1203,7 @@ def tiff_write_32():
 
     # Test copy
     new_ds = gdaltest.tiff_drv.CreateCopy( 'tmp/byte_rotated_copy.tif', ds )
-    new_ds = None
+    del new_ds
 
     # Check copy
     ds = gdal.Open( 'tmp/byte_rotated_copy.tif' )
@@ -1222,7 +1217,6 @@ def tiff_write_32():
             return 'fail'
 
     ds = None
-    new_ds = None
 
     gdaltest.tiff_drv.Delete( 'tmp/byte_rotated.tif' )
     gdaltest.tiff_drv.Delete( 'tmp/byte_rotated_copy.tif' )
@@ -1512,7 +1506,7 @@ def tiff_write_44():
     ds2 = None
 
     ds2 = gdal.Open('tmp/tw_44_copy.tif')
-    bnd = ds.GetRasterBand(1)
+    bnd = ds2.GetRasterBand(1)
     md = bnd.GetMetadata('IMAGE_STRUCTURE')
     bnd = None
     if md['NBITS'] != '9':
@@ -1546,7 +1540,7 @@ def tiff_write_45():
     ds2 = None
 
     ds2 = gdal.Open('tmp/tw_45_copy.tif')
-    bnd = ds.GetRasterBand(1)
+    bnd = ds2.GetRasterBand(1)
     md = bnd.GetMetadata('IMAGE_STRUCTURE')
     bnd = None
     if md['NBITS'] != '17':
@@ -1668,7 +1662,7 @@ def tiff_write_49():
     # At this point, for the purpose of the copy, the dataset will have been opened as RAW
     if new_ds.GetRasterBand(1).GetRasterColorInterpretation()!= gdal.GCI_CyanBand:
         gdaltest.post_reason( 'Wrong color interpretation.')
-        print((ds.GetRasterBand(1).GetRasterColorInterpretation()))
+        print(new_ds.GetRasterBand(1).GetRasterColorInterpretation())
         return 'fail'
 
     new_ds = None
@@ -1703,7 +1697,7 @@ def tiff_write_50():
 
     if new_ds.GetRasterBand(1).GetRasterColorInterpretation()!= gdal.GCI_CyanBand:
         gdaltest.post_reason( 'Wrong color interpretation.')
-        print((ds.GetRasterBand(1).GetRasterColorInterpretation()))
+        print(new_ds.GetRasterBand(1).GetRasterColorInterpretation())
         return 'fail'
 
     new_ds = None
@@ -2469,8 +2463,8 @@ def tiff_write_72():
     for profile in ('GDALGeotiff', 'GEOTIFF', 'BASELINE'):
         src_ds = gdal.Open('tmp/byte.tif')
         out_ds = gdaltest.tiff_drv.CreateCopy('tmp/tiff_write_72.tif', src_ds, options = ['ENDIANNESS=LITTLE', 'PROFILE=' + profile])
+        del out_ds
         src_ds = None
-        out_ds = None
 
         fileobj = open( 'tmp/tiff_write_72.tif', mode='rb')
         binvalues = array.array('b')
@@ -3444,7 +3438,7 @@ def tiff_write_88():
             options = ['TILED=YES', 'COPY_SRC_OVERVIEWS=YES', 'ENDIANNESS=LITTLE'])
     gdal.PopErrorHandler()
     gdal.SetConfigOption('GTIFF_DELETE_ON_ERROR', None)
-    ds = None
+    del ds
     src_ds = None
 
     f = open('tmp/tiff_write_88_dst.tif', 'rb')
@@ -4004,7 +3998,7 @@ def tiff_write_99():
 
     src_ds = gdal.Open('data/rgbsmall.tif')
     new_ds = gdaltest.tiff_drv.CreateCopy( 'tmp/test_99.tif', src_ds, options = ['COMPRESS=JPEG'] )
-    new_ds = None
+    del new_ds
     src_ds = None
 
     ds = gdal.Open('tmp/test_99.tif')
@@ -4029,7 +4023,7 @@ def tiff_write_100():
     src_ds = gdaltest.tiff_drv.Create( '/vsimem/test_100_src.tif', 16, 16, 2 )
     src_ds.GetRasterBand(1).Fill(255)
     new_ds = gdaltest.tiff_drv.CreateCopy( '/vsimem/test_100_dst.tif', src_ds, options = ['COMPRESS=JPEG'] )
-    new_ds = None
+    del new_ds
     src_ds = None
 
     ds = gdal.Open('/vsimem/test_100_dst.tif')
@@ -4205,7 +4199,7 @@ def tiff_write_104():
     dst_ds = gdaltest.tiff_drv.CreateCopy( 'tmp/test_104.tif', src_ds )
 
     src_ds = None
-    dst_ds = None
+    del dst_ds
 
     ds = gdal.Open( 'tmp/test_104.tif' )
     wkt = ds.GetProjectionRef()
@@ -4694,7 +4688,7 @@ def tiff_write_123():
         return 'fail'
 
     new_ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_123.tif', src_ds)
-    new_ds = None
+    del new_ds
     statBuf = gdal.VSIStatL('/vsimem/tiff_write_123.tif.aux.xml', gdal.VSI_STAT_EXISTS_FLAG | gdal.VSI_STAT_NATURE_FLAG | gdal.VSI_STAT_SIZE_FLAG)
     if statBuf is not None:
         gdaltest.post_reason('did not expect PAM file')

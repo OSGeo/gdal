@@ -61,6 +61,7 @@ def get_py_script(script_name):
 ###############################################################################
 # Utility function of run_py_script_as_py_module()
 #
+has_main = False
 def find_main_in_module(names):
     global has_main
     has_main = 'main' in names

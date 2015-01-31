@@ -30,7 +30,6 @@
 import os
 import random
 import sys
-import string
 import shutil
 import time
 
@@ -1023,7 +1022,6 @@ def ogr_mitab_25():
                 gdaltest.post_reason('fail')
                 return 'fail'
                 
-        import test_cli_utilities
         if test_cli_utilities.get_test_ogrsf_path() is not None:
             ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro -fsf ' + filename)
             if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
@@ -1392,7 +1390,6 @@ def ogr_mitab_29():
     ds = ogr.Open('tmp/compr_symb_deleted_records.tab', update = 1)
     lyr = ds.GetLayer(0)
     # Re-add the 98x98 interior points
-    i = 0
     N2 = 98
     N = N2 * N2
     permutation = generate_permutation(N)

@@ -233,7 +233,7 @@ def arg_layername():
     ds2 = gdaltest.argDriver.CreateCopy('data/arg-int16-2.arg', ds, False)
 
     ds = None
-    ds2 = None
+    del ds2
 
     # open the new dataset
     ds = gdal.Open('data/arg-int16-2.arg')

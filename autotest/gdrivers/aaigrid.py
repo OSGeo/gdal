@@ -306,11 +306,10 @@ def aaigrid_11():
 
 def aaigrid_12():
 
-    retval = 'success'
     ds = gdal.Open('data/nodata_float.asc')
     ds2 = gdal.GetDriverByName('AAIGRID').CreateCopy('tmp/aaigrid.tmp', ds,
                                options = ['DECIMAL_PRECISION=3'] )
-    ds2 = None
+    del ds2
 
     aai = open('tmp/aaigrid.tmp')
     if not aai:
@@ -335,11 +334,10 @@ def aaigrid_12():
 
 def aaigrid_13():
 
-    retval = 'success'
     ds = gdal.Open('data/nodata_float.asc')
     ds2 = gdal.GetDriverByName('AAIGRID').CreateCopy('tmp/aaigrid.tmp', ds,
                                options = ['SIGNIFICANT_DIGITS=3'] )
-    ds2 = None
+    del ds2
 
     aai = open('tmp/aaigrid.tmp')
     if not aai:

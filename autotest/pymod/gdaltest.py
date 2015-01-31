@@ -30,7 +30,6 @@
 ###############################################################################
 
 import sys
-import string
 import os
 import time
 
@@ -56,16 +55,18 @@ jp2kak_drv = None
 jpeg2000_drv = None
 jp2ecw_drv = None
 jp2mrsid_drv = None
+jp2openjpeg_drv = None
 jp2kak_drv_unregistered = False
 jpeg2000_drv_unregistered = False
 jp2ecw_drv_unregistered = False
 jp2mrsid_drv_unregistered = False
+jp2openjpeg_drv_unregistered = False
 
 from sys import version_info
 if version_info >= (3,0,0):
-    from gdaltest_python3 import *
+    import gdaltest_python3 as gdaltestaux
 else:
-    from gdaltest_python2 import *
+    import gdaltest_python2 as gdaltestaux
 
 # Process commandline arguments for stuff like --debug, --locale, --config
 
@@ -1576,3 +1577,13 @@ def is_file_open(filename):
         if got_filename.find(filename) >= 0:
             return True
     return False
+
+###############################################################################
+run_func = gdaltestaux.run_func
+urlescape = gdaltestaux.urlescape
+gdalurlopen = gdaltestaux.gdalurlopen
+spawn_async = gdaltestaux.spawn_async
+wait_process = gdaltestaux.wait_process
+runexternal = gdaltestaux.runexternal
+read_in_thread = gdaltestaux.read_in_thread
+runexternal_out_and_err = gdaltestaux.runexternal_out_and_err

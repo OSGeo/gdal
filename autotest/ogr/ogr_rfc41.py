@@ -29,14 +29,11 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import os
 import sys
-import string
 
 sys.path.append( '../pymod' )
 
 import gdaltest
-import ogrtest
 from osgeo import ogr
 from osgeo import osr
 from osgeo import gdal
@@ -548,13 +545,13 @@ def ogr_rfc41_5():
         return 'fail'
 
     try:
-        a = f['inexisting_field']
+        f['inexisting_field']
         gdaltest.post_reason('fail')
         return 'fail'
     except:
         pass
     try:
-        a = f.inexisting_field
+        f.inexisting_field
         gdaltest.post_reason('fail')
         return 'fail'
     except:
@@ -926,7 +923,7 @@ def ogr_rfc41_6():
     # Test invalid geometry field index
     gdal.ErrorReset()
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    got_extent = sql_lyr.GetExtent(geom_field = 2)
+    sql_lyr.GetExtent(geom_field = 2)
     gdal.PopErrorHandler()
     if gdal.GetLastErrorMsg() == '':
         gdaltest.post_reason('fail')

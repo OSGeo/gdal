@@ -169,7 +169,7 @@ def png_8():
 
     # We're not interested in returned value but internal state of GDAL.
     gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
-    stats = b.ComputeBandStats()
+    b.ComputeBandStats()
     err = gdal.GetLastErrorNo()
     gdal.PopErrorHandler()
 

@@ -94,7 +94,7 @@ def adrg_2subdatasets():
     
     gdal.SetConfigOption('ADRG_SIMULATE_MULTI_IMG', 'ON')
     dstds = drv.CreateCopy( 'tmp/XXXXXX01.GEN', srcds )
-    dstds = None
+    del dstds
     gdal.SetConfigOption('ADRG_SIMULATE_MULTI_IMG', 'OFF')
     
     shutil.copy('tmp/XXXXXX01.IMG', 'tmp/XXXXXX02.IMG')

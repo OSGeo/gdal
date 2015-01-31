@@ -38,23 +38,12 @@ import gdaltest
 import ogrtest
 import test_py_scripts
 
-from osgeo import gdal
-from osgeo import gdalconst
 from osgeo import ogr
 
 ###############################################################################
 # Test a fairly simple case, with nodata masking.
 
 def test_gdal_polygonize_1():
-
-    #from osgeo import gdal, gdalconst, ogr
-
-    try:
-        x = gdal.Polygonize
-        gdaltest.have_ng = 1
-    except:
-        gdaltest.have_ng = 0
-        return 'skip'
 
     script_path = test_py_scripts.get_py_script('gdal_polygonize')
     if script_path is None:
@@ -87,7 +76,7 @@ def test_gdal_polygonize_1():
 
     expected_feature_number = 13
     if shp_lyr.GetFeatureCount() != expected_feature_number:
-        gdaltest.post_reason( 'GetFeatureCount() returned %d instead of %d' % (mem_layer.GetFeatureCount(), expected_feature_number) )
+        gdaltest.post_reason( 'GetFeatureCount() returned %d instead of %d' % (shp_lyr.GetFeatureCount(), expected_feature_number) )
         return 'fail'
 
     expect = [ 107, 123, 115, 115, 140, 148, 123, 140, 156,
@@ -117,9 +106,6 @@ def test_gdal_polygonize_1():
 # Test a simple case without masking.
 
 def test_gdal_polygonize_2():
-
-    if not gdaltest.have_ng:
-        return 'skip'
 
     script_path = test_py_scripts.get_py_script('gdal_polygonize')
     if script_path is None:

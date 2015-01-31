@@ -32,7 +32,6 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import os
 import sys
 from osgeo import gdal
 
@@ -215,7 +214,7 @@ def envi_10():
     src_ds = gdal.Open('data/envirpc.img')
     out_ds = gdal.GetDriverByName('ENVI').CreateCopy('/vsimem/envirpc.img', src_ds)
     src_ds = None
-    out_ds = None
+    del out_ds
 
     gdal.Unlink('/vsimem/envirpc.img.aux.xml')
 
@@ -255,7 +254,7 @@ def envi_12():
     src_ds = gdal.Open('data/testenviclasses')
     out_ds = gdal.GetDriverByName('ENVI').CreateCopy('/vsimem/testenviclasses', src_ds)
     src_ds = None
-    out_ds = None
+    del out_ds
 
     gdal.Unlink('/vsimem/testenviclasses.aux.xml')
 

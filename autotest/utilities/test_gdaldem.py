@@ -97,7 +97,6 @@ def test_gdaldem_hillshade_compressed_tiled_output():
         print(err)
         return 'fail'
 
-    src_ds = gdal.Open('../gdrivers/data/n43.dt0')
     ds = gdal.Open('tmp/n43_hillshade_compressed_tiled.tif')
     if ds is None:
         return 'fail'
@@ -108,7 +107,6 @@ def test_gdaldem_hillshade_compressed_tiled_output():
         print(cs)
         return 'fail'
 
-    src_ds = None
     ds = None
 
     stat_uncompressed = os.stat('tmp/n43_hillshade.tif')

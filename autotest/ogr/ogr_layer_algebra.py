@@ -29,7 +29,6 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import os
 import sys
 
 sys.path.append( '../pymod' )
@@ -37,10 +36,18 @@ sys.path.append( '../pymod' )
 import gdaltest
 import ogrtest
 
-from osgeo import gdal, gdalconst, ogr, osr
+from osgeo import ogr
 
 ###############################################################################
 # Common usage tests.
+
+ds = None
+A = None
+B = None
+C = None
+pointInB = None
+D1 = None
+D2 = None
 
 def recreate_layer_C():
     global C

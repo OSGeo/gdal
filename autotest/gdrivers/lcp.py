@@ -32,8 +32,6 @@
 import os
 import sys
 from osgeo import gdal
-import array
-import string
 
 sys.path.append( '../pymod' )
 
@@ -252,7 +250,6 @@ def lcp_3():
 
 def lcp_4():
 
-    retval = 'success'
     ds = gdal.Open('data/test_USGS_LFNM_Alb83.lcp')
     if ds == None:
         return 'fail'

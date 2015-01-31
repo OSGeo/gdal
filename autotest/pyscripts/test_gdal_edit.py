@@ -204,6 +204,7 @@ def test_gdal_edit_py_5():
 
     try:
         from osgeo import gdalnumeric
+        gdalnumeric.BandRasterIONumPy
     except:
         return 'skip'
 

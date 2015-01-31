@@ -412,7 +412,7 @@ class GDAL_HttpServer(HTTPServer):
             if version_info >= (2,6,0):
                 self.shutdown()
             else:
-                handle = gdaltest.gdalurlopen("http://127.0.0.1:%d/shutdown" % self.port)
+                gdaltest.gdalurlopen("http://127.0.0.1:%d/shutdown" % self.port)
         self.running = False
 
     def serve_until_stop_server(self):
@@ -497,7 +497,7 @@ def launch():
     return (process, port)
 
 def server_stop(process, port):
-    handle = gdaltest.gdalurlopen('http://127.0.0.1:%d/shutdown' % port)
+    gdaltest.gdalurlopen('http://127.0.0.1:%d/shutdown' % port)
     gdaltest.wait_process(process)
 
 def main():

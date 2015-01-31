@@ -29,14 +29,12 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import os
 import sys
 
 sys.path.append( '../pymod' )
 
 import gdaltest
 from osgeo import gdal
-from osgeo import gdalconst
 
 ###############################################################################
 # Test writing a 1x1 buffer to a 10x6 raster and read it back
@@ -234,7 +232,6 @@ def rasterio_5():
             print(error_msg)
             return 'fail'
 
-        import sys
         # This should only fail on a 32bit build
         try:
             maxsize = sys.maxint

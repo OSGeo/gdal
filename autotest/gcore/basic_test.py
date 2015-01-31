@@ -100,7 +100,7 @@ def basic_test_6():
 
 def basic_test_7_internal():
     try:
-        ds = gdal.Open('non_existing_ds', gdal.GA_ReadOnly)
+        gdal.Open('non_existing_ds', gdal.GA_ReadOnly)
         gdaltest.post_reason('opening should have thrown an exception')
         return 'fail'
     except:

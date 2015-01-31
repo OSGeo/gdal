@@ -31,7 +31,6 @@
 
 import os
 import sys
-import string
 
 sys.path.append( '../pymod' )
 
@@ -202,8 +201,6 @@ def ogr_wfs_geoserver():
         gdaltest.geoserver_wfs = False
         return 'skip'
     
-    geom = feat.GetGeometryRef()
-    geom_wkt = geom.ExportToWkt()
     if feat.GetField('NAME') != 'museam' or \
        ogrtest.check_feature_geometry(feat,'POINT (-74.0104611 40.70758763)',
                                       max_error = 0.000001 ) != 0:
@@ -218,8 +215,6 @@ def ogr_wfs_geoserver():
         return 'skip'
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
-    geom = feat.GetGeometryRef()
-    geom_wkt = geom.ExportToWkt()
     if feat.GetField('NAME') != 'museam' or \
        ogrtest.check_feature_geometry(feat,'POINT (-74.0104611 40.70758763)',
                                       max_error = 0.000001 ) != 0:
@@ -305,8 +300,6 @@ def ogr_wfs_geoserver_json():
         return 'fail'
 
     feat = lyr.GetNextFeature()
-    geom = feat.GetGeometryRef()
-    geom_wkt = geom.ExportToWkt()
     #if feat.GetField('name') != 'Alexander Bay' or \
     if ogrtest.check_feature_geometry(feat,'POINT (16.4827778 -28.5947222)',
                                       max_error = 0.000000001 ) != 0:
@@ -361,8 +354,6 @@ def ogr_wfs_geoserver_shapezip():
         return 'fail'
 
     feat = lyr.GetNextFeature()
-    geom = feat.GetGeometryRef()
-    geom_wkt = geom.ExportToWkt()
     #if feat.GetField('name') != 'Alexander Bay' or \
     if ogrtest.check_feature_geometry(feat,'POINT (16.4827778 -28.5947222)',
                                       max_error = 0.000000001 ) != 0:
@@ -484,8 +475,6 @@ def ogr_wfs_deegree():
         return 'fail'
 
     feat = lyr.GetNextFeature()
-    geom = feat.GetGeometryRef()
-    geom_wkt = geom.ExportToWkt()
     if feat.GetField('OBJECTID') != 1 or \
        ogrtest.check_feature_geometry(feat,'POINT (558750.703 4402882.05)',
                                       max_error = 0.000000001 ) != 0:

@@ -29,14 +29,12 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import os
 import sys
 
 sys.path.append( '../pymod' )
 
 import gdaltest
 from osgeo import osr
-import string
 
 ###############################################################################
 #	Check that EPSG:27572 lookup has the prime meridian properly set,

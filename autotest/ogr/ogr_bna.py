@@ -31,15 +31,12 @@
 
 import os
 import sys
-import string
 
 sys.path.append( '../pymod' )
 
 import gdaltest
 import ogrtest
 from osgeo import ogr
-from osgeo import osr
-from osgeo import gdal
 
 ###############################################################################
 # Test points bna layer.
@@ -53,6 +50,8 @@ def ogr_bna_1():
     expect = ['PID5', 'PID4']
 
     tr = ogrtest.check_features_against_list( lyr, 'Primary ID', expect )
+    if not tr:
+        return 'fail'
 
     lyr.ResetReading()
     feat = lyr.GetNextFeature()

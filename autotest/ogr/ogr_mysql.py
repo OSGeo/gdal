@@ -27,16 +27,13 @@
 # Boston, MA 02111-1307, USA.
 ###############################################################################
 
-import os
 import sys
-import string
 
 sys.path.append( '../pymod' )
 
 import gdaltest
 import ogrtest
 from osgeo import ogr
-from osgeo import osr
 from osgeo import gdal
 
 # E. Rouault : this is almost a copy & paste from ogr_pg.py
@@ -57,7 +54,7 @@ def ogr_mysql_1():
     gdaltest.mysql_ds = None
 
     try:
-        mysql_dr = ogr.GetDriverByName( 'MySQL' )
+        ogr.GetDriverByName( 'MySQL' )
     except:
 #        print 'no driver'
         return 'skip'
@@ -228,7 +225,6 @@ def ogr_mysql_4():
 
         gdaltest.mysql_lyr.SetAttributeFilter( "PRFEDEA = '%s'" % item )
         feat_read = gdaltest.mysql_lyr.GetNextFeature()
-        geom_read = feat_read.GetGeometryRef()
 
         if ogrtest.check_feature_geometry( feat_read, geom ) != 0:
             print('Geometry changed. Closing rings before trying again for wkt #',item)
@@ -728,61 +724,6 @@ def ogr_mysql_24():
 
     if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
         print(ret)
-        return 'fail'
-
-    return 'success'
-
-###############################################################################
-# Test 64 bit FID
-
-def ogr_mysql_72():
-
-    if gdaltest.mysql_ds is None:
-        return 'skip'
-    
-    # Regular layer with 32 bit IDs
-    lyr = gdaltest.mysql_ds.CreateLayer('ogr_mysql_72', geom_type = ogr.wkbNone)
-    if lyr.GetMetadataItem(ogr.OLMD_FID64) is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    lyr.CreateField(ogr.FieldDefn('foo'))
-    f = ogr.Feature(lyr.GetLayerDefn())
-    f.SetFID(123456789012345)
-    f.SetField(0, 'bar')
-    if lyr.CreateFeature(f) != 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    f = lyr.GetFeature(123456789012345)
-    if f is None:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    
-    lyr = gdaltest.mysql_ds.CreateLayer('ogr_mysql_72', geom_type = ogr.wkbNone, options = ['FID64=YES', 'OVERWRITE=YES'])
-    if lyr.GetMetadataItem(ogr.OLMD_FID64) is None:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    lyr.CreateField(ogr.FieldDefn('foo'))
-    f = ogr.Feature(lyr.GetLayerDefn())
-    f.SetFID(123456789012345)
-    f.SetField(0, 'bar')
-    if lyr.CreateFeature(f) != 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if lyr.SetFeature(f) != 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    
-    gdaltest.mysql_ds = None
-    # Test with normal protocol
-    gdaltest.mysql_ds = ogr.Open( 'MYSQL:autotest', update = 1 )
-    lyr = gdaltest.mysql_ds.GetLayerByName('ogr_mysql_72')
-    if lyr.GetMetadataItem(ogr.OLMD_FID64) is None:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    f = lyr.GetNextFeature()
-    if f.GetFID() != 123456789012345:
-        gdaltest.post_reason('fail')
-        f.DumpReadable()
         return 'fail'
 
     return 'success'

@@ -29,7 +29,6 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import os
 import sys
 
 sys.path.append( '../pymod' )
@@ -57,7 +56,7 @@ def tps_1():
     transformer = gdal.Transformer(ds, None,
                                           ['DST_SRS='+utm_wkt,
                                            'METHOD=GCP_TPS'] )
-    if gdal.GetLastErrorType() == 0:
+    if transformer is None or gdal.GetLastErrorType() == 0:
         return 'fail'
 
     return 'success' 

@@ -31,8 +31,6 @@
 import os
 import sys
 
-from osgeo import gdal
-
 import gdaltest
 
 cli_exe_path = { }

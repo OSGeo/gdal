@@ -28,16 +28,12 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import os
 import sys
 from osgeo import gdal
-import array
-import string
 
 sys.path.append( '../pymod' )
 
 import gdaltest
-from osgeo import osr
 
 ###############################################################################
 # Read a truncated and modified version of C3607614.NWS

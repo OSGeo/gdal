@@ -28,7 +28,6 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import os
 import sys
 
 sys.path.append( '../pymod' )
@@ -36,7 +35,7 @@ sys.path.append( '../pymod' )
 import gdaltest
 import ogrtest
 
-from osgeo import gdal, gdalconst, ogr, osr
+from osgeo import gdal, ogr, osr
 
 ###############################################################################
 # Simple polygon rasterization.
@@ -108,7 +107,6 @@ def rasterize_2():
 
     # Setup working spatial reference
     sr_wkt = 'LOCAL_CS["arbitrary"]'
-    sr = osr.SpatialReference( sr_wkt )
     
     # Create a memory raster to rasterize into.
 
