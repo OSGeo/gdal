@@ -140,7 +140,7 @@ def auto_noaa( options, loslas_list ):
                 options.append = 1
             have_nad27 = 1
 
-        print 'Integrate %s into %s.' % (los, ntv2_filename)
+        print('Integrate %s into %s.' % (los, ntv2_filename))
         
         TranslateLOSLAS( los, ntv2_filename, options )
         
