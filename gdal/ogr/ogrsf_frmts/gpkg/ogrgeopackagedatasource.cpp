@@ -1420,6 +1420,12 @@ CPLErr GDALGeoPackageDataset::FlushCacheWithErrCode()
     m_bInFlushCache = TRUE;
     // Short circuit GDALPamDataset to avoid serialization to .aux.xml
     GDALDataset::FlushCache();
+    
+    for( int i = 0; i < m_nLayers; i++ )
+    {
+        m_papoLayers[i]->RunDeferredCreationIfNecessary();
+        m_papoLayers[i]->CreateSpatialIndexIfNecessary();
+    }
 
     CPLErr eErr = CE_None;
     if( bUpdate )
@@ -3230,7 +3236,6 @@ OGRLayer* GDALGeoPackageDataset::ICreateLayer( const char * pszLayerName,
                                       char **papszOptions )
 {
     int iLayer;
-    OGRErr err;
 
 /* -------------------------------------------------------------------- */
 /*      Verify we are in update mode.                                   */
@@ -3302,100 +3307,12 @@ OGRLayer* GDALGeoPackageDataset::ICreateLayer( const char * pszLayerName,
         }
     }
 
-    /* Read our SRS_ID from the OGRSpatialReference */
-    int nSRSId = DEFAULT_SRID;
-    if( poSpatialRef != NULL )
-        nSRSId = GetSrsId( poSpatialRef );
-
-    int bIsSpatial = (eGType != wkbNone);
-
-    /* Requirement 25: The geometry_type_name value in a gpkg_geometry_columns */
-    /* row SHALL be one of the uppercase geometry type names specified in */
-    /* Geometry Types (Normative). */
-    const char *pszGeometryType = OGRToOGCGeomType(eGType);
-    
-    /* Create the table! */
-    char *pszSQL = NULL;
-    if ( bIsSpatial )
-    {
-        pszSQL = sqlite3_mprintf(
-            "CREATE TABLE \"%s\" ( "
-            "\"%s\" INTEGER PRIMARY KEY AUTOINCREMENT, "
-            "\"%s\" %s )",
-             pszLayerName, pszFIDColumnName, pszGeomColumnName, pszGeometryType);
-    }
-    else
-    {
-        pszSQL = sqlite3_mprintf(
-            "CREATE TABLE \"%s\" ( "
-            "\"%s\" INTEGER PRIMARY KEY AUTOINCREMENT )",
-             pszLayerName, pszFIDColumnName);
-    }
-    
-    err = SQLCommand(hDB, pszSQL);
-    sqlite3_free(pszSQL);
-    if ( OGRERR_NONE != err )
-        return NULL;
-
-    /* Only spatial tables need to be registered in the metadata (hmmm) */
-    if ( bIsSpatial )
-    {
-        /* Requirement 27: The z value in a gpkg_geometry_columns table row */
-        /* SHALL be one of 0 (none), 1 (mandatory), or 2 (optional) */
-        int bGeometryTypeHasZ = wkbHasZ(eGType);
-
-        /* Update gpkg_geometry_columns with the table info */
-        pszSQL = sqlite3_mprintf(
-            "INSERT INTO gpkg_geometry_columns "
-            "(table_name,column_name,geometry_type_name,srs_id,z,m)"
-            " VALUES "
-            "('%q','%q','%q',%d,%d,%d)",
-            pszLayerName,pszGeomColumnName,pszGeometryType,
-            nSRSId,bGeometryTypeHasZ,0);
-    
-        err = SQLCommand(hDB, pszSQL);
-        sqlite3_free(pszSQL);
-        if ( err != OGRERR_NONE )
-            return NULL;
-    }
-
-    /* Update gpkg_contents with the table info */
-    char *pszSRSId = NULL;
-    if ( !bIsSpatial )
-    {
-        err = CreateGDALAspatialExtension();
-        if ( err != OGRERR_NONE )
-            return NULL;
-    }
-    else
-    {
-        pszSRSId = sqlite3_mprintf("%d", nSRSId);
-    }
-
-    pszSQL = sqlite3_mprintf(
-        "INSERT INTO gpkg_contents "
-        "(table_name,data_type,identifier,last_change,srs_id)"
-        " VALUES "
-        "('%q','%q','%q',strftime('%%Y-%%m-%%dT%%H:%%M:%%fZ',CURRENT_TIMESTAMP),%Q)",
-        pszLayerName, (bIsSpatial ? "features": "aspatial"), pszLayerName, pszSRSId);
-
-    err = SQLCommand(hDB, pszSQL);
-    sqlite3_free(pszSQL);
-    if (pszSRSId) {
-        sqlite3_free(pszSRSId);
-    }
-    if ( err != OGRERR_NONE )
-        return NULL;
-
-    /* The database is now all set up, so create a blank layer and read in the */
-    /* info from the database. */
+    /* Create a blank layer. */
     OGRGeoPackageTableLayer *poLayer = new OGRGeoPackageTableLayer(this, pszLayerName);
-    
-    if( OGRERR_NONE != poLayer->ReadTableDefinition(eGType != wkbNone) )
-    {
-        delete poLayer;
-        return NULL;
-    }
+
+    poLayer->SetCreationParameters( eGType, pszGeomColumnName,
+                                    poSpatialRef,
+                                    pszFIDColumnName );
 
     /* Should we create a spatial index ? */
     const char *pszSI = CSLFetchNameValue( papszOptions, "SPATIAL_INDEX" );
@@ -3405,8 +3322,6 @@ OGRLayer* GDALGeoPackageDataset::ICreateLayer( const char * pszLayerName,
         poLayer->SetDeferedSpatialIndexCreation(TRUE);
     }
 
-    if( OGR_GT_IsNonLinear( eGType ) )
-        poLayer->CreateGeometryExtensionIfNecessary(eGType);
     poLayer->SetPrecisionFlag( CSLFetchBoolean(papszOptions,"PRECISION",TRUE));
     poLayer->SetTruncateFieldsFlag( CSLFetchBoolean(papszOptions,"TRUNCATE_FIELDS",FALSE));
 
@@ -3501,9 +3416,11 @@ OGRLayer * GDALGeoPackageDataset::ExecuteSQL( const char *pszSQLCommand,
 
 {
     m_bHasReadMetadataFromStorage = FALSE;
+
     FlushMetadata();
     for( int i = 0; i < m_nLayers; i++ )
     {
+        m_papoLayers[i]->RunDeferredCreationIfNecessary();
         m_papoLayers[i]->CreateSpatialIndexIfNecessary();
     }
 
