@@ -90,7 +90,7 @@ static OGRLayer* GetLayerAndOverwriteIfNecessary(GDALDataset *poDstDS,
 static TargetLayerInfo* SetupTargetLayer( GDALDataset *poSrcDS,
                                                 OGRLayer * poSrcLayer,
                                                 GDALDataset *poDstDS,
-                                                char **& papszLCO,
+                                                char ** papszLCO,
                                                 const char *pszNewLayerName,
                                                 OGRSpatialReference *poOutputSRS,
                                                 int bNullifyOutputSRS,
@@ -2766,7 +2766,7 @@ void DoFieldTypeConversion(GDALDataset* poDstDS, OGRFieldDefn& oFieldDefn,
 static TargetLayerInfo* SetupTargetLayer( CPL_UNUSED GDALDataset *poSrcDS,
                                           OGRLayer * poSrcLayer,
                                           GDALDataset *poDstDS,
-                                          char **& papszLCO,
+                                          char ** papszLCO,
                                           const char *pszNewLayerName,
                                           OGRSpatialReference *poOutputSRSIn,
                                           int bNullifyOutputSRS,
@@ -2940,6 +2940,7 @@ static TargetLayerInfo* SetupTargetLayer( CPL_UNUSED GDALDataset *poSrcDS,
             eGCreateLayerType = wkbNone;
         }
         
+        char** papszLCOTemp = CSLDuplicate(papszLCO);
         // Force FID column as 64 bit if the source feature has a 64 bit FID,
         // the target driver supports 64 bit FID and the user didn't set it
         // manually.
@@ -2949,12 +2950,13 @@ static TargetLayerInfo* SetupTargetLayer( CPL_UNUSED GDALDataset *poSrcDS,
             strstr(poDstDS->GetDriver()->GetMetadataItem(GDAL_DS_LAYER_CREATIONOPTIONLIST), "FID64") != NULL &&
             CSLFetchNameValue(papszLCO, "FID64") == NULL )
         {
-            papszLCO = CSLSetNameValue(papszLCO, "FID64", "YES");
+            papszLCOTemp = CSLSetNameValue(papszLCOTemp, "FID64", "YES");
         }
 
         poDstLayer = poDstDS->CreateLayer( pszNewLayerName, poOutputSRS,
                                            (OGRwkbGeometryType) eGCreateLayerType,
-                                           papszLCO );
+                                           papszLCOTemp );
+        CSLDestroy(papszLCOTemp);
 
         if( poDstLayer == NULL )
             return NULL;
