@@ -577,6 +577,8 @@ int OGR_AreTypeSubTypeCompatible( OGRFieldType eType, OGRFieldSubType eSubType )
  *
  * \brief Get the justification for this field.
  *
+ * Note: no driver is know to use the concept of field justification.
+ *
  * This method is the same as the C function OGR_Fld_GetJustify().
  *
  * @return the justification.
@@ -589,6 +591,8 @@ int OGR_AreTypeSubTypeCompatible( OGRFieldType eType, OGRFieldSubType eSubType )
  * \brief Get the justification for this field.
  *
  * This function is the same as the CPP method OGRFieldDefn::GetJustify().
+ *
+ * Note: no driver is know to use the concept of field justification.
  *
  * @param hDefn handle to the field definition to get justification from.
  * @return the justification.
@@ -609,6 +613,8 @@ OGRJustification OGR_Fld_GetJustify( OGRFieldDefnH hDefn )
  *
  * \brief Set the justification for this field.
  *
+ * Note: no driver is know to use the concept of field justification.
+ *
  * This method is the same as the C function OGR_Fld_SetJustify().
  *
  * @param eJustify the new justification.
@@ -619,6 +625,8 @@ OGRJustification OGR_Fld_GetJustify( OGRFieldDefnH hDefn )
 /************************************************************************/
 /**
  * \brief Set the justification for this field.
+ *
+ * Note: no driver is know to use the concept of field justification.
  *
  * This function is the same as the CPP method OGRFieldDefn::SetJustify().
  *
