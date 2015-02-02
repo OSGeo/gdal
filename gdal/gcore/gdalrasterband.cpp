@@ -125,7 +125,7 @@ GDALRasterBand::~GDALRasterBand()
  * on "block boundaries" as returned by GetBlockSize(), or use the
  * ReadBlock() and WriteBlock() methods.
  *
- * This method is the same as the C GDALRasterIO() function.
+ * This method is the same as the C GDALRasterIO() or GDALRasterIOEx() functions.
  *
  * @param eRWFlag Either GF_Read to read a region of data, or GF_Write to
  * write a region of data.
@@ -283,6 +283,9 @@ CPLErr GDALRasterBand::RasterIO( GDALRWFlag eRWFlag,
 /**
  * \brief Read/write a region of image data for this band.
  *
+ * Use GDALRasterIOEx() if 64 bit spacings or extra arguments (resampling
+ * resolution, progress callback, etc. are needed)
+ * 
  * @see GDALRasterBand::RasterIO()
  */
 

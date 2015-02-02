@@ -394,7 +394,11 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     CPLErr      RasterIO( GDALRWFlag, int, int, int, int,
                           void *, int, int, GDALDataType,
                           int, int *, GSpacing, GSpacing, GSpacing,
-                          GDALRasterIOExtraArg* psExtraArg OPTIONAL_OUTSIDE_GDAL(NULL) );
+                          GDALRasterIOExtraArg* psExtraArg
+#ifndef DOXYGEN_SKIP
+                          OPTIONAL_OUTSIDE_GDAL(NULL)
+#endif
+                          );
 
     int           Reference();
     int           Dereference();
@@ -653,7 +657,11 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     
     CPLErr      RasterIO( GDALRWFlag, int, int, int, int,
                           void *, int, int, GDALDataType,
-                          GSpacing, GSpacing, GDALRasterIOExtraArg* psExtraArg OPTIONAL_OUTSIDE_GDAL(NULL) );
+                          GSpacing, GSpacing, GDALRasterIOExtraArg* psExtraArg
+#ifndef DOXYGEN_SKIP
+                          OPTIONAL_OUTSIDE_GDAL(NULL)
+#endif
+                          );
     CPLErr      ReadBlock( int, int, void * );
 
     CPLErr      WriteBlock( int, int, void * );
