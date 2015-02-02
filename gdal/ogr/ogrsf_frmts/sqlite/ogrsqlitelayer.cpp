@@ -709,21 +709,36 @@ OGRFeature *OGRSQLiteLayer::GetNextRawFeature()
 
         int iRawField = panFieldOrdinals[iField];
 
-        if( sqlite3_column_type( hStmt, iRawField ) == SQLITE_NULL )
+        int nSQLite3Type = sqlite3_column_type( hStmt, iRawField );
+        if( nSQLite3Type == SQLITE_NULL )
             continue;
 
         switch( poFieldDefn->GetType() )
         {
         case OFTInteger:
         case OFTInteger64:
-            poFeature->SetField( iField, 
-                sqlite3_column_int64( hStmt, iRawField ) );
+        {
+            /* Possible since SQLite3 has no strong typing */
+            if( nSQLite3Type == SQLITE_TEXT )
+                poFeature->SetField( iField, 
+                        (const char *)sqlite3_column_text( hStmt, iRawField ) );
+            else
+                poFeature->SetField( iField, 
+                    sqlite3_column_int64( hStmt, iRawField ) );
             break;
+        }
 
         case OFTReal:
-            poFeature->SetField( iField, 
-                sqlite3_column_double( hStmt, iRawField ) );
+        {
+            /* Possible since SQLite3 has no strong typing */
+            if( nSQLite3Type == SQLITE_TEXT )
+                poFeature->SetField( iField, 
+                        (const char *)sqlite3_column_text( hStmt, iRawField ) );
+            else
+                poFeature->SetField( iField, 
+                    sqlite3_column_double( hStmt, iRawField ) );
             break;
+        }
 
         case OFTBinary:
             {
