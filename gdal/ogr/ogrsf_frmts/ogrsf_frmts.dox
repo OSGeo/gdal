@@ -580,14 +580,14 @@ by the OGRSFDriverManager.
 
  \brief Return the layer name.
 
- This returns the same content as GetLayerDefn()->GetName(), but for a
+ This returns the same content as GetLayerDefn()->OGRFeatureDefn::GetName(), but for a
  few drivers, calling GetName() directly can avoid lengthy layer
  definition initialization.
 
  This method is the same as the C function OGR_L_GetName().
 
  If this method is derived in a driver, it must be done such that it
- returns the same content as GetLayerDefn()->GetName().
+ returns the same content as GetLayerDefn()->OGRFeatureDefn::GetName().
 
  @return the layer name (must not been freed)
  @since OGR 1.8.0
@@ -616,14 +616,19 @@ by the OGRSFDriverManager.
 
  \brief Return the layer geometry type.
 
- This returns the same result as GetLayerDefn()->GetGeomType(), but for a
+ This returns the same result as GetLayerDefn()->OGRFeatureDefn::GetGeomType(), but for a
  few drivers, calling GetGeomType() directly can avoid lengthy layer
  definition initialization.
+
+ For layers with multiple geometry fields, this method only returns the geometry
+ type of the first geometry column. For other columns, use
+ GetLayerDefn()->OGRFeatureDefn::GetGeomFieldDefn(i)->GetType().
+ For layers without any geometry field, this method returns wkbNone.
 
  This method is the same as the C function OGR_L_GetGeomType().
 
  If this method is derived in a driver, it must be done such that it
- returns the same content as GetLayerDefn()->GetGeomType().
+ returns the same content as GetLayerDefn()->OGRFeatureDefn::GetGeomType().
 
  @return the geometry type
  @since OGR 1.8.0
@@ -638,6 +643,11 @@ by the OGRSFDriverManager.
  This returns the same result as OGR_FD_GetGeomType(OGR_L_GetLayerDefn(hLayer)),
  but for a few drivers, calling OGR_L_GetGeomType() directly can avoid lengthy
  layer definition initialization.
+
+ For layers with multiple geometry fields, this method only returns the geometry
+ type of the first geometry column. For other columns, use
+ OGR_GFld_GetType(OGR_FD_GetGeomFieldDefn(OGR_L_GetLayerDefn(hLayer), i)).
+ For layers without any geometry field, this method returns wkbNone.
 
  This function is the same as the C++ method OGRLayer::GetGeomType().
 
@@ -1056,7 +1066,7 @@ by the OGRSFDriverManager.
 
  For the time being the passed filter geometry should be in the same
  SRS as the geometry field definition it corresponds to (as returned by
- GetLayerDefn()->GetGeomFieldDefn(iGeomField)->GetSpatialRef()).  In the
+ GetLayerDefn()->OGRFeatureDefn::GetGeomFieldDefn(iGeomField)->GetSpatialRef()).  In the
  future this may be generalized.
 
  Note that only the last spatial filter set is applied, even if several
@@ -1100,7 +1110,7 @@ by the OGRSFDriverManager.
 
  For the time being the passed filter geometry should be in the same
  SRS as the geometry field definition it corresponds to (as returned by
- GetLayerDefn()->GetGeomFieldDefn(iGeomField)->GetSpatialRef()).  In the
+ GetLayerDefn()->OGRFeatureDefn::GetGeomFieldDefn(iGeomField)->GetSpatialRef()).  In the
  future this may be generalized.
 
  Note that only the last spatial filter set is applied, even if several
@@ -1132,7 +1142,7 @@ by the OGRSFDriverManager.
 
  The x/y values should be in the same coordinate system as as the geometry
  field definition it corresponds to (as returned by
- GetLayerDefn()->GetGeomFieldDefn(iGeomField)->GetSpatialRef()). Internally this 
+ GetLayerDefn()->OGRFeatureDefn::GetGeomFieldDefn(iGeomField)->GetSpatialRef()). Internally this 
  method is normally implemented as creating a 5 vertex closed rectangular
  polygon and passing it to OGRLayer::SetSpatialFilter().  It exists as
  a convenience. 
@@ -1166,7 +1176,7 @@ by the OGRSFDriverManager.
 
  The x/y values should be in the same coordinate system as as the geometry
  field definition it corresponds to (as returned by
- GetLayerDefn()->GetGeomFieldDefn(iGeomField)->GetSpatialRef()). Internally this 
+ GetLayerDefn()->OGRFeatureDefn::GetGeomFieldDefn(iGeomField)->GetSpatialRef()). Internally this 
  method is normally implemented as creating a 5 vertex closed rectangular
  polygon and passing it to OGRLayer::SetSpatialFilter().  It exists as
  a convenience. 
@@ -1362,7 +1372,7 @@ by the OGRSFDriverManager.
  feature definition. Each geometry field can have its own spatial reference
  system, which is returned by OGRGeomFieldDefn::GetSpatialRef().
  OGRLayer::GetSpatialRef() is equivalent to
- GetLayerDefn()->GetGeomFieldDefn(0)->GetSpatialRef()
+ GetLayerDefn()->OGRFeatureDefn::GetGeomFieldDefn(0)->GetSpatialRef()
 
  This method is the same as the C function OGR_L_GetSpatialRef().
 
@@ -1468,12 +1478,35 @@ by the OGRSFDriverManager.
  Use OGRLayer::TestCapability(OLCRandomWrite) to establish if this layer
  supports random access writing via SetFeature().
 
+ Starting with GDAL 2.0, drivers should specialize the ISetFeature() method,
+ since SetFeature() is no longer virtual.
+
  This method is the same as the C function OGR_L_SetFeature().
 
  @param poFeature the feature to write.
 
  @return OGRERR_NONE if the operation works, otherwise an appropriate error
  code.
+
+*/
+
+/**
+ 
+ \fn OGRErr OGRLayer::ISetFeature( OGRFeature * poFeature );
+
+ \brief Rewrite an existing feature.
+
+ This method is implemented by drivers and not called directly. User code should
+ use SetFeature() instead.
+
+ This method will write a feature to the layer, based on the feature id
+ within the OGRFeature.   
+
+ @param poFeature the feature to write.
+
+ @return OGRERR_NONE if the operation works, otherwise an appropriate error
+ code.
+ @since GDAL 2.0
 
 */
 
@@ -1511,11 +1544,36 @@ by the OGRSFDriverManager.
  of the new feature, but not necessarily.  Upon successful return the 
  passed feature will have been updated with the new feature id. 
 
+ Starting with GDAL 2.0, drivers should specialize the ICreateFeature() method,
+ since CreateFeature() is no longer virtual.
+
  This method is the same as the C function OGR_L_CreateFeature().
 
  @param poFeature the feature to write to disk. 
 
  @return OGRERR_NONE on success.
+
+*/
+
+/**
+
+ \fn OGRErr OGRLayer::ICreateFeature( OGRFeature * poFeature );
+
+ \brief Create and write a new feature within a layer.
+
+ This method is implemented by drivers  and not called directly. User code should
+ use CreateFeature() instead.
+
+ The passed feature is written to the layer as a new feature, rather than
+ overwriting an existing one.  If the feature has a feature id other than
+ OGRNullFID, then the native implementation may use that as the feature id
+ of the new feature, but not necessarily.  Upon successful return the 
+ passed feature will have been updated with the new feature id. 
+
+ @param poFeature the feature to write to disk. 
+
+ @return OGRERR_NONE on success.
+ @since GDAL 2.0
 
 */
 
@@ -2046,8 +2104,8 @@ backing file/database should be updated accordingly.
 
 This function is the same as the C function OGR_L_ReorderFields().
 
-@param panMap an array of GetLayerDefn()->GetFieldCount() elements which
-is a permutation of [0, GetLayerDefn()->GetFieldCount()-1].
+@param panMap an array of GetLayerDefn()->OGRFeatureDefn::GetFieldCount() elements which
+is a permutation of [0, GetLayerDefn()->OGRFeatureDefn::GetFieldCount()-1].
 
 @return OGRERR_NONE on success.
 
@@ -2082,8 +2140,8 @@ backing file/database should be updated accordingly.
 This function is the same as the C++ method OGRLayer::ReorderFields().
 
 @param hLayer handle to the layer.
-@param panMap an array of GetLayerDefn()->GetFieldCount() elements which
-is a permutation of [0, GetLayerDefn()->GetFieldCount()-1].
+@param panMap an array of GetLayerDefn()->OGRFeatureDefn::GetFieldCount() elements which
+is a permutation of [0, GetLayerDefn()->OGRFeatureDefn::GetFieldCount()-1].
 
 @return OGRERR_NONE on success.
 
@@ -2413,6 +2471,10 @@ form depending on the limitations of the format driver.
 
  \brief This method returns the name of the underlying database column being used as the geometry column, or "" if not supported.
 
+ For layers with multiple geometry fields, this method only returns the name
+ of the first geometry column. For other columns, use
+ GetLayerDefn()->OGRFeatureDefn::GetGeomFieldDefn(i)->GetNameRef().
+
  This method is the same as the C function OGR_L_GetGeometryColumn().
 
  @return geometry column name.
@@ -2423,6 +2485,10 @@ form depending on the limitations of the format driver.
  \fn const char* OGR_L_GetGeometryColumn(OGRLayerH hLayer);
 
  \brief This method returns the name of the underlying database column being used as the geometry column, or "" if not supported.
+
+ For layers with multiple geometry fields, this method only returns the geometry
+ type of the first geometry column. For other columns, use
+ OGR_GFld_GetNameRef(OGR_FD_GetGeomFieldDefn(OGR_L_GetLayerDefn(hLayer), i)).
 
  This method is the same as the C++ method OGRLayer::GetGeometryColumn()
 
