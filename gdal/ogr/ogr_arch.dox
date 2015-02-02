@@ -142,10 +142,9 @@ manner by the feature of that type (or feature class).<p>
 The feature id (FID) of a feature is intended to be a unique identifier for
 the feature within the layer it is a member of.  Freestanding features, or
 features not yet written to a layer may have a null (OGRNullFID) feature id. 
-The feature ids are modelled in OGR as a long integer; however, this is
-not sufficiently expressive to model the natural feature ids in some
-formats.  For instance, the GML feature id is a string, and the row id in
-Oracle is larger than 4 bytes.<p>
+The feature ids are modelled in OGR as a 64-bit integer (GDAL 2.0 or later);
+however, this is not sufficiently expressive to model the natural feature ids in some
+formats.  For instance, the GML feature id is a string.<p>
 
 The feature class
 also contains an indicator of the types of geometry allowed for that feature
