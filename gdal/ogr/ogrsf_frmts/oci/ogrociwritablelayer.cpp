@@ -295,10 +295,13 @@ OGRErr OGROCIWritableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK 
         else
             sprintf( szFieldType, "VARCHAR2(%d)", oField.GetWidth() );
     }
-    else if ( oField.GetType() == OFTDate ||
-              oField.GetType() == OFTDateTime )
+    else if ( oField.GetType() == OFTDate )
     {
         sprintf( szFieldType, "DATE" );
+    }
+    else if ( oField.GetType() == OFTDateTime )
+    {
+        sprintf( szFieldType, "TIMESTAMP" );
     }
     else if( bApproxOK )
     {
