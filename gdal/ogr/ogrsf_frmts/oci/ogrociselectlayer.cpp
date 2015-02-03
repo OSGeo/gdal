@@ -115,6 +115,8 @@ OGROCISelectLayer::ReadTableDefinition( OGROCIStatement *poCommand )
     OGRFeatureDefn *poDefn;
 
     poDefn = poCommand->GetResultDefn();
+    if( iGeomColumn >= 0 )
+        poDefn->SetGeomType(wkbUnknown);
     poDefn->Reference();
 
 /* -------------------------------------------------------------------- */

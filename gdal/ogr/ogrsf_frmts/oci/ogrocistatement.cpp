@@ -286,6 +286,7 @@ CPLErr OGROCIStatement::Execute( const char *pszSQLStatement,
 /*      defines.                                                        */
 /* ==================================================================== */
     poDefn = new OGRFeatureDefn( pszCommandText );
+    poDefn->SetGeomType(wkbNone);
     poDefn->Reference();
 
     for( int iParm = 0; iParm < nRawColumnCount; iParm++ )
