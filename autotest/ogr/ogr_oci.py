@@ -217,6 +217,9 @@ def ogr_oci_5():
     expect = [ None, 179, 173, 172, 171, 170, 169, 168, 166, 165, 158 ]
     
     sql_lyr = gdaltest.oci_ds.ExecuteSQL( 'select distinct eas_id from tpoly order by eas_id desc' )
+    if sql_lyr.GetLayerDefn().GetGeomFieldCount() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
 
     tr = ogrtest.check_features_against_list( sql_lyr, 'eas_id', expect )
 
@@ -236,6 +239,9 @@ def ogr_oci_6():
         return 'skip'
 
     sql_lyr = gdaltest.oci_ds.ExecuteSQL( "select * from tpoly where prfedea = '2'" )
+    if sql_lyr.GetLayerDefn().GetGeomFieldCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
 
     tr = ogrtest.check_features_against_list( sql_lyr, 'prfedea', [ '2' ] )
     if tr:
