@@ -311,8 +311,17 @@ CPLErr OGROCIStatement::Execute( const char *pszSQLStatement,
 
         if( oField.GetType() == OFTBinary )
         {
-            panFieldMap[iParm] = -1;
-            continue;                   
+            /* We could probably generalize that, but at least it works in that */
+            /* use case */
+            if( EQUAL(oField.GetNameRef(), "DATA_DEFAULT") && nOCIType == SQLT_LNG )
+            {
+                oField.SetType(OFTString);
+            }
+            else
+            {
+                panFieldMap[iParm] = -1;
+                continue;
+            }
         }
 
         poDefn->AddFieldDefn( &oField );
