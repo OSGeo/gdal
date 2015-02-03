@@ -800,6 +800,39 @@ def ogr_oci_18():
     return 'success'
 
 ###############################################################################
+# Test date / datetime
+
+def ogr_oci_19():
+
+    if gdaltest.oci_ds is None:
+        return 'skip'
+
+    lyr = gdaltest.oci_ds.CreateLayer('testdate', geom_type = ogr.wkbNone )
+    lyr.CreateField(ogr.FieldDefn('MYDATE', ogr.OFTDate))
+    lyr.CreateField(ogr.FieldDefn('MYDATETIME', ogr.OFTDateTime))
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField('MYDATE', '2015/02/03')
+    feat.SetField('MYDATETIME', '2015/02/03 11:33:44')
+    lyr.CreateFeature(feat)
+    lyr.SyncToDisk()
+    
+    sql_lyr = gdaltest.oci_ds.ExecuteSQL('SELECT MYDATE, MYDATETIME FROM testdate')
+    if sql_lyr.GetLayerDefn().GetFieldDefn(0).GetType() != ogr.OFTDate:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if sql_lyr.GetLayerDefn().GetFieldDefn(1).GetType() != ogr.OFTDateTime:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = sql_lyr.GetNextFeature()
+    if f.GetField(0) != '2015/02/03' or f.GetField(1) != '2015/02/03 11:33:44':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    gdaltest.oci_ds.ReleaseResultSet(sql_lyr)
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_oci_cleanup():
@@ -823,6 +856,7 @@ def ogr_oci_cleanup():
     gdaltest.oci_ds.ExecuteSQL( 'DELLAYER:test_MULTIPOLYGON' )
     gdaltest.oci_ds.ExecuteSQL( 'DELLAYER:test_GEOMETRYCOLLECTION' )
     gdaltest.oci_ds.ExecuteSQL( 'DELLAYER:test_NONE' )
+    gdaltest.oci_ds.ExecuteSQL( 'DELLAYER:testdate' )
 
     gdaltest.oci_ds.Destroy()
     gdaltest.oci_ds = None
@@ -849,6 +883,7 @@ gdaltest_list = [
     ogr_oci_16,
     ogr_oci_17,
     ogr_oci_18,
+    ogr_oci_19,
     ogr_oci_cleanup ]
 
 if __name__ == '__main__':
