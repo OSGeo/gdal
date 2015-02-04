@@ -203,31 +203,6 @@ swq_field_type swq_expr_node::Check( swq_field_list *poFieldList,
 
 {
 /* -------------------------------------------------------------------- */
-/*      If something is a string constant, we must check if it is       */
-/*      actually a reference to a field in which case we will           */
-/*      convert it into a column type.                                  */
-/* -------------------------------------------------------------------- */
-    if( eNodeType == SNT_CONSTANT && field_type == SWQ_STRING )
-    {
-        int wrk_field_index, wrk_table_index;
-        swq_field_type wrk_field_type;
-
-        if( is_null )
-            wrk_field_index = -1;
-        else
-            wrk_field_index = 
-                swq_identify_field( string_value, poFieldList,
-                                    &wrk_field_type, &wrk_table_index );
-        
-        if( wrk_field_index >= 0 )
-        {
-            eNodeType = SNT_COLUMN;
-            field_index = -1;
-            table_index = -1;
-        }
-    }
-
-/* -------------------------------------------------------------------- */
 /*      Otherwise we take constants literally.                          */
 /* -------------------------------------------------------------------- */
     if( eNodeType == SNT_CONSTANT )

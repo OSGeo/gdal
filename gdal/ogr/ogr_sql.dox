@@ -94,7 +94,7 @@ property values:
 
 \code
 SELECT MIN(prop_value), MAX(prop_value), AVG(prop_value), SUM(prop_value), 
-       COUNT(prop_value) FROM polylayer WHERE prov_name = "Ontario"
+       COUNT(prop_value) FROM polylayer WHERE prov_name = 'Ontario'
 \endcode
 
 It is also possible to apply the COUNT() operator to a DISTINCT SELECT to get
@@ -156,7 +156,7 @@ SELECT SUBSTR('abcdef',-2)  FROM xxx   --> 'ef'
 \endcode
 
 Starting with OGR 2.0, the <i>hstore_get_value()</i> function can be used to extract
-a value associate to a key from a HSTORE string, formatted like "key=>value,other_key=>other_value,..."
+a value associate to a key from a HSTORE string, formatted like 'key=>value,other_key=>other_value,...'
 
 \code
 SELECT hstore_get_value('a => b, "key with space"=> "value with space"', 'key with space') FROM xxx --> 'value with space'
@@ -176,7 +176,7 @@ Therefore we cannot rename the fields inside an operator, but we can
 rename whole column expression, like these two:
 
 \code
-SELECT COUNT(areacode) AS 'count' FROM polylayer
+SELECT COUNT(areacode) AS "count" FROM polylayer
 SELECT dollars/100.0 AS cents FROM polylayer
 \endcode
 
@@ -220,6 +220,19 @@ convert between numeric, string and date data types.
 Starting with OGR 1.11, casting a WKT string to a geometry is allowed.
 geometry_type can be POINT[Z], LINESTRING[Z], POLYGON[Z], MULTIPOINT[Z],
 MULTILINESTRING[Z], MULTIPOLYGON[Z], GEOMETRYCOLLECTION[Z] or GEOMETRY[Z].
+
+\subsubsection ogr_sql_quot String literals and identifiers quoting
+
+Starting with GDAL 2.0 (see <a href="http://trac.osgeo.org/gdal/wiki/rfc52_strict_sql_quoting">RFC 52 - Strict OGR SQL quoting</a>),
+strict SQL92 rules are applied regarding string literals
+and identifiers quoting.
+
+String literals (constants) must be surrounded with single-quote characters. e.g.
+WHERE a_field = 'a_value'
+
+Identifiers (column names and tables names) can be used unquoted if they don't
+contain special characters or are not a SQL reserved keyword. Otherwise they must
+be surroundered with double-quote characters. e.g. WHERE "from" = 5
 
 \subsection ogr_sql_where WHERE
 
@@ -276,8 +289,8 @@ value for membership in the provided set.
     Value              Value Set            Matches?
     ------             -------              --------
     321                IN (456,123)         No
-    "Ontario"          IN ("Ontario","BC")  Yes
-    "Ont"              IN ("Ontario","BC")  No
+    'Ontario'          IN ('Ontario','BC')  Yes
+    'Ont'              IN ('Ontario','BC')  No
     1                  IN (0,2,4,6)         No
 \endcode
 
@@ -295,7 +308,7 @@ clear.  Some more complicated predicates are:
 
 \code
 SELECT * FROM poly WHERE (prop_value >= 100000) AND (prop_value < 200000)
-SELECT * FROM poly WHERE NOT (area_code LIKE "N0N%")
+SELECT * FROM poly WHERE NOT (area_code LIKE 'N0N%')
 SELECT * FROM poly WHERE (prop_value IS NOT NULL) AND (prop_value < 100000)
 \endcode
 
@@ -525,7 +538,7 @@ areas of its members. For non-surface geometries the returned area is 0.0.
 For example, to select only polygon features larger than a given area:
 
 \code
-SELECT * FROM nation WHERE OGR_GEOM_AREA > 10000000'
+SELECT * FROM nation WHERE OGR_GEOM_AREA > 10000000
 \endcode 
 
 \subsection ogr_sql_style OGR_STYLE

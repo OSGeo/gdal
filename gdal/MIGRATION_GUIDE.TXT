@@ -97,6 +97,21 @@ Out-of-tree drivers :
   * Virtual method signature change: OGRLayer::GetFeatureCount() now returns a GIntBig
   * OGRFeature::GetFID() returns a GIntBig
 
+E) RFC 52: Strict OGR SQL quoting
+
+Link: http://trac.osgeo.org/gdal/wiki/rfc52_strict_sql_quoting
+
+No API changes
+
+Behaviour changes:
+  * Identifiers, i.e column names or table names, can no longer be quoted with
+    single quote characters, but must use double quote characters if quoting is
+    needed, conforming with SQL 92 syntax. Failure to do the change will not
+    necessarily need to verbose errors at runtime since an expression like
+    WHERE 'a_column_name' = 'a_value' will now always evaluate to FALSE whereas
+    it would have been interpreted as WHERE "a_column_name" = 'a_value" if
+    a_column_name was indeed a column name.
+
 MIGRATION GUIDE FROM GDAL 1.10 to GDAL 1.11
 -------------------------------------------
 
