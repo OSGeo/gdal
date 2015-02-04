@@ -1836,15 +1836,14 @@ PNGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     {
         png_bytep       row = pabyScanline;
 
-        for( int iBand = 0; iBand < nBands; iBand++ )
-        {
-            GDALRasterBand * poBand = poSrcDS->GetRasterBand( iBand+1 );
-            eErr = poBand->RasterIO( GF_Read, 0, iLine, nXSize, 1, 
-                                     pabyScanline + iBand*nWordSize, 
-                                     nXSize, 1, eType,
-                                     nBands * nWordSize, 
-                                     nBands * nXSize * nWordSize, NULL );
-        }
+        eErr = poSrcDS->RasterIO( GF_Read, 0, iLine, nXSize, 1, 
+                                  pabyScanline, 
+                                  nXSize, 1, eType,
+                                  nBands, NULL,
+                                  nBands * nWordSize, 
+                                  nBands * nXSize * nWordSize,
+                                  nWordSize,
+                                  NULL );
 
 #ifdef CPL_LSB
         if( nBitDepth == 16 )
