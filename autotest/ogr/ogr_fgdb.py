@@ -844,7 +844,42 @@ def ogr_fgdb_15():
     ds = None
 
     return 'success'
+
+###############################################################################
+# Test fix for #5674
+
+def ogr_fgdb_16():
+    if ogrtest.fgdb_drv is None or ogrtest.openfilegdb_drv is None:
+        return 'skip'
+
+    try:
+        gdaltest.unzip( 'tmp/cache', 'data/ESSENCE_NAIPF_ORI_PROV_sub93.gdb.zip')
+    except:
+        pass
+    try:
+        os.stat('tmp/cache/ESSENCE_NAIPF_ORI_PROV_sub93.gdb')
+    except:
+        return 'skip'
+
+    ogrtest.fgdb_drv.Deregister()
+
+    # Force FileGDB first
+    ogrtest.fgdb_drv.Register()
+    ogrtest.openfilegdb_drv.Register()
+
+    ds = ogr.Open('tmp/cache/ESSENCE_NAIPF_ORI_PROV_sub93.gdb')
+    if ds is None:
+        ret = 'fail'
+    else:
+        ret = 'success'
+
+    # Deregister OpenFileGDB again
+    ogrtest.openfilegdb_drv.Deregister()
     
+    shutil.rmtree('tmp/cache/ESSENCE_NAIPF_ORI_PROV_sub93.gdb')
+
+    return ret
+
 ###############################################################################
 # Cleanup
 
@@ -868,6 +903,7 @@ def ogr_fgdb_cleanup():
 
     if ogrtest.openfilegdb_drv is not None:
         ogrtest.fgdb_drv.Deregister()
+        # Force OpenFileGDB first
         ogrtest.openfilegdb_drv.Register()
         ogrtest.fgdb_drv.Register()
 
@@ -892,6 +928,7 @@ gdaltest_list = [
     ogr_fgdb_13,
     ogr_fgdb_14,
     ogr_fgdb_15,
+    ogr_fgdb_16,
     ogr_fgdb_cleanup,
     ]
 
