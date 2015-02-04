@@ -105,7 +105,7 @@
 /* Any grammar rule that does $$ =  must be listed afterwards */
 /* as well as SWQT_INTEGER_NUMBER SWQT_FLOAT_NUMBER SWQT_STRING SWQT_IDENTIFIER that are allocated by swqlex() */
 %destructor { delete $$; } SWQT_INTEGER_NUMBER SWQT_FLOAT_NUMBER SWQT_STRING SWQT_IDENTIFIER
-%destructor { delete $$; } value_expr_list field_value value_expr type_def string_or_identifier table_def
+%destructor { delete $$; } value_expr_list field_value value_expr type_def table_def
 
 %%
 
@@ -574,15 +574,6 @@ column_spec:
             }
         }
 
-    | SWQT_DISTINCT SWQT_STRING
-        {
-            if( !context->poCurSelect->PushField( $2, NULL, TRUE ) )
-            {
-                delete $2;
-                YYERROR;
-            }
-        }
-
     | value_expr
         {
             if( !context->poCurSelect->PushField( $1 ) )
@@ -768,13 +759,13 @@ column_spec:
         }
 
 as_clause:
-    SWQT_AS string_or_identifier
+    SWQT_AS SWQT_IDENTIFIER
         {
             delete $1;
             $$ = $2;
         }
 
-    | string_or_identifier
+    | SWQT_IDENTIFIER
 
 
 opt_where:  
@@ -830,18 +821,8 @@ sort_spec:
             $1 = NULL;
         }
 
-string_or_identifier:
-    SWQT_IDENTIFIER
-        {
-            $$ = $1;
-        }
-    | SWQT_STRING
-        {
-            $$ = $1;
-        }
-
 table_def:
-    string_or_identifier
+    SWQT_IDENTIFIER
     {
         int iTable;
         iTable =context->poCurSelect->PushTableDef( NULL, $1->string_value,
@@ -851,7 +832,7 @@ table_def:
         $$ = new swq_expr_node( iTable );
     }
 
-    | string_or_identifier SWQT_IDENTIFIER
+    | SWQT_IDENTIFIER SWQT_IDENTIFIER
     {
         int iTable;
         iTable = context->poCurSelect->PushTableDef( NULL, $1->string_value,
@@ -862,7 +843,7 @@ table_def:
         $$ = new swq_expr_node( iTable );
     }
 
-    | SWQT_STRING '.' string_or_identifier
+    | SWQT_STRING '.' SWQT_IDENTIFIER
     {
         int iTable;
         iTable = context->poCurSelect->PushTableDef( $1->string_value,
@@ -873,7 +854,31 @@ table_def:
         $$ = new swq_expr_node( iTable );
     }
 
-    | SWQT_STRING '.' string_or_identifier SWQT_IDENTIFIER
+    | SWQT_STRING '.' SWQT_IDENTIFIER SWQT_IDENTIFIER
+    {
+        int iTable;
+        iTable = context->poCurSelect->PushTableDef( $1->string_value,
+                                                     $3->string_value, 
+                                                     $4->string_value );
+        delete $1;
+        delete $3;
+        delete $4;
+
+        $$ = new swq_expr_node( iTable );
+    }
+
+    | SWQT_IDENTIFIER '.' SWQT_IDENTIFIER
+    {
+        int iTable;
+        iTable = context->poCurSelect->PushTableDef( $1->string_value,
+                                                     $3->string_value, NULL );
+        delete $1;
+        delete $3;
+
+        $$ = new swq_expr_node( iTable );
+    }
+
+    | SWQT_IDENTIFIER '.' SWQT_IDENTIFIER SWQT_IDENTIFIER
     {
         int iTable;
         iTable = context->poCurSelect->PushTableDef( $1->string_value,

@@ -99,6 +99,8 @@ int swqlex( YYSTYPE *ppNode, swq_parse_context *context )
         char chQuote = *pszInput;
         int bFoundEndQuote = FALSE;
 
+        int nRet = *pszInput == '"' ? SWQT_IDENTIFIER : SWQT_STRING;
+
         pszInput++;
 
         token = (char *) CPLMalloc(strlen(pszInput)+1);
@@ -136,7 +138,7 @@ int swqlex( YYSTYPE *ppNode, swq_parse_context *context )
 
         context->pszNext = pszInput;
 
-        return SWQT_STRING;
+        return nRet;
     }
 
 /* -------------------------------------------------------------------- */

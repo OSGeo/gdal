@@ -5228,11 +5228,7 @@ OGRLayer* GDALDataset::BuildLayerFromSelectInfo(void* psSelectInfoIn,
 /* -------------------------------------------------------------------- */
     if( psSelectInfo->where_expr != NULL )
     {
-        if (EQUAL(GetDriverName(), "PostgreSQL") ||
-                EQUAL(GetDriverName(), "FileGDB" ) )
-            pszWHERE = psSelectInfo->where_expr->Unparse( &sFieldList, '"' );
-        else
-            pszWHERE = psSelectInfo->where_expr->Unparse( &sFieldList, '\'' );
+        pszWHERE = psSelectInfo->where_expr->Unparse( &sFieldList, '"' );
         //CPLDebug( "OGR", "Unparse() -> %s", pszWHERE );
     }
 

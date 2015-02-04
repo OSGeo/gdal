@@ -948,24 +948,9 @@ int OGR2SQLITE_Filter(sqlite3_vtab_cursor* pCursor,
 
             if( bNeedsQuoting )
             {
-                /* FIXME: we would need some virtual method */
-                const char* pszDriverName = pMyCursor->pVTab->poDS->GetDriverName();
-                char chQuote;
-
-                if (pszDriverName != NULL && (
-                    EQUAL(pszDriverName, "PostgreSQL") ||
-                    EQUAL(pszDriverName, "SQLite") ||
-                    EQUAL(pszDriverName, "FileGDB" )) )
-                    chQuote = '"';
-                else
-                    chQuote = '\'';
-
-                osAttributeFilter += chQuote;
-                if( chQuote == '"' )
-                    osAttributeFilter += OGRSQLiteEscapeName(pszFieldName);
-                else
-                    osAttributeFilter += OGRSQLiteEscape(pszFieldName);
-                osAttributeFilter += chQuote;
+                osAttributeFilter += '"';
+                osAttributeFilter += OGRSQLiteEscapeName(pszFieldName);
+                osAttributeFilter += '"';
             }
             else
             {
