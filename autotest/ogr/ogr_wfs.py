@@ -777,7 +777,7 @@ def ogr_wfs_ionic_sql():
     if ds is None:
         return 'fail'
 
-    lyr = ds.ExecuteSQL("SELECT name FROM 'wfs:BUSINESS' WHERE total_employees = 105")
+    lyr = ds.ExecuteSQL("SELECT name FROM \"wfs:BUSINESS\" WHERE total_employees = 105")
     count = lyr.GetFeatureCount()
 
     ds.ReleaseResultSet(lyr)

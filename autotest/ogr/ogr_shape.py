@@ -199,7 +199,7 @@ def ogr_shape_6():
         return 'skip'
 
     sql_lyr = gdaltest.shape_ds.ExecuteSQL( \
-        'select * from tpoly where prfedea = "35043413"' )
+        "select * from tpoly where prfedea = '35043413'" )
 
     tr = ogrtest.check_features_against_list( sql_lyr, 'prfedea', [ '35043413' ] )
     if tr:

@@ -207,7 +207,7 @@ def ogr_mem_6():
         return 'skip'
 
     sql_lyr = gdaltest.mem_ds.ExecuteSQL( \
-        'select * from tpoly where prfedea = "2"' )
+        "select * from tpoly where prfedea = '2'" )
 
     tr = ogrtest.check_features_against_list( sql_lyr, 'prfedea', [ '2' ] )
     if tr:

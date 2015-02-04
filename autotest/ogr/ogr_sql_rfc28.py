@@ -115,7 +115,7 @@ def ogr_rfc28_5():
 # Test support for a quoted field name.
 
 def ogr_rfc28_6():
-    gdaltest.lyr.SetAttributeFilter( "'EAS_ID' = 166" )
+    gdaltest.lyr.SetAttributeFilter( "\"EAS_ID\" = 166" )
 
     count = gdaltest.lyr.GetFeatureCount()
     if count != 1:
@@ -129,7 +129,7 @@ def ogr_rfc28_6():
 # test with distinguished name for field in where clause.
 
 def ogr_rfc28_7():
-    ql = gdaltest.ds.ExecuteSQL( "select eas_id from idlink where 'idlink.eas_id' = 166" )
+    ql = gdaltest.ds.ExecuteSQL( "select eas_id from idlink where \"idlink.eas_id\" = 166" )
     
     count = ql.GetFeatureCount()
     if count != 1:
@@ -143,7 +143,7 @@ def ogr_rfc28_7():
 # test with distinguished name for field in target columns.
 
 def ogr_rfc28_8():
-    ql = gdaltest.ds.ExecuteSQL( "select 'idlink.eas_id' from idlink where 'idlink.eas_id' = 166" )
+    ql = gdaltest.ds.ExecuteSQL( "select \"idlink.eas_id\" from idlink where \"idlink.eas_id\" = 166" )
     
     count = ql.GetFeatureCount()
     if count != 1:
@@ -166,7 +166,7 @@ def ogr_rfc28_8():
 def ogr_rfc28_9():
     ds = ogr.Open( 'data/oddname.csv')
     lyr = ds.GetLayer(0)
-    lyr.SetAttributeFilter( "'Funky @Name' = '32'" )
+    lyr.SetAttributeFilter( "\"Funky @Name\" = '32'" )
 
     count = lyr.GetFeatureCount()
     if count != 1:
@@ -185,7 +185,7 @@ def ogr_rfc28_9():
 
 def ogr_rfc28_10():
     ds = ogr.Open( 'data/oddname.csv')
-    lyr = ds.ExecuteSQL( "SELECT * from oddname where 'Funky @Name' = '32'" )
+    lyr = ds.ExecuteSQL( "SELECT * from oddname where \"Funky @Name\" = '32'" )
 
     count = lyr.GetFeatureCount()
     if count != 1:
@@ -206,7 +206,7 @@ def ogr_rfc28_10():
 
 def ogr_rfc28_11():
     ds = ogr.Open( 'data/oddname.csv')
-    lyr = ds.ExecuteSQL( "SELECT 'Funky @Name' from oddname where prime_meridian_code = '8902'" )
+    lyr = ds.ExecuteSQL( "SELECT \"Funky @Name\" from oddname where prime_meridian_code = '8902'" )
 
     count = lyr.GetFeatureCount()
     if count != 1:
@@ -364,7 +364,7 @@ def ogr_rfc28_17():
 # Test some special distinct cases.
 
 def ogr_rfc28_18():
-    lyr = gdaltest.ds.ExecuteSQL( "SELECT COUNT(distinct id), COUNT(distinct id) as 'xx' from departs" )
+    lyr = gdaltest.ds.ExecuteSQL( "SELECT COUNT(distinct id), COUNT(distinct id) as \"xx\" from departs" )
 
     expect = [ 1 ]
     tr = ogrtest.check_features_against_list( lyr, 'COUNT_id', expect )
