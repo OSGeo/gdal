@@ -168,7 +168,7 @@ def ogr_index_6():
     gdaltest.s_ds = ogr.OpenShared( 'join_t.dbf', update = 1 )
     gdaltest.s_lyr = gdaltest.s_ds.GetLayerByName( 'join_t' )
                                   
-    gdaltest.s_lyr.SetAttributeFilter( 'VALUE="Value 5"' )
+    gdaltest.s_lyr.SetAttributeFilter( "VALUE='Value 5'" )
     
     expect = [ 5 ]
     

@@ -234,6 +234,7 @@ def ogr_sql_sqlite_1():
             feat = sql_lyr.GetNextFeature()
             if feat is None:
                 gdaltest.post_reason('failure')
+                print(cond)
                 return 'fail'
             feat = None
             ds.ReleaseResultSet( sql_lyr )

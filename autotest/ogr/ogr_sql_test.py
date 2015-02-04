@@ -1399,6 +1399,78 @@ def ogr_sql_45():
 
     return 'success'
 
+###############################################################################
+# Test strict SQL quoting
+
+def ogr_sql_46():
+
+    ds = ogr.GetDriverByName('Memory').CreateDataSource('test')
+    lyr = ds.CreateLayer('test')
+    lyr.CreateField(ogr.FieldDefn('id', ogr.OFTInteger))
+    lyr.CreateField(ogr.FieldDefn('from', ogr.OFTString))
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField(0, 1)
+    feat.SetField(1, "not_from")
+    lyr.CreateFeature(feat)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField(0, 3)
+    feat.SetField(1, "from")
+    lyr.CreateFeature(feat)
+    feat = None
+
+    sql_lyr = ds.ExecuteSQL( "select id, 'id', \"id\" as id2, id as \"id3\", \"from\" from test where \"from\" = 'from'" )
+    feat = sql_lyr.GetNextFeature()
+    if feat.GetField(0) != 3 or feat.GetField(1) != 'id' or feat.GetField(2) != 3 or feat.GetField(3) != 3 or feat.GetField(4) != 'from':
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+    feat = sql_lyr.GetNextFeature()
+    if feat is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+
+    sql_lyr = ds.ExecuteSQL( "select max(\"id\"), max(id), count(\"id\"), count(id) from \"test\"" )
+    feat = sql_lyr.GetNextFeature()
+    if feat.GetField(0) != 3 or feat.GetField(1) != 3 or feat.GetField(2) != 2 or feat.GetField(3) != 2:
+        gdaltest.post_reason('fail')
+        feat.DumpReable()
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+
+    # Not accepted
+    gdal.PushErrorHandler()
+    sql_lyr = ds.ExecuteSQL( "select * from 'test'" )
+    gdal.PopErrorHandler()
+    if sql_lyr is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Not accepted
+    gdal.PushErrorHandler()
+    sql_lyr = ds.ExecuteSQL( "select distinct 'id' from 'test'" )
+    gdal.PopErrorHandler()
+    if sql_lyr is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Not accepted
+    gdal.PushErrorHandler()
+    sql_lyr = ds.ExecuteSQL( "select max('id') from 'test'" )
+    gdal.PopErrorHandler()
+    if sql_lyr is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Not accepted
+    gdal.PushErrorHandler()
+    sql_lyr = ds.ExecuteSQL( "select id as 'id2' from 'test'" )
+    gdal.PopErrorHandler()
+    if sql_lyr is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+        
+    return 'success'
 
 def ogr_sql_cleanup():
     gdaltest.lyr = None
@@ -1455,6 +1527,7 @@ gdaltest_list = [
     ogr_sql_43,
     ogr_sql_44,
     ogr_sql_45,
+    ogr_sql_46,
     ogr_sql_cleanup ]
 
 if __name__ == '__main__':

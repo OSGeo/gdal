@@ -163,7 +163,7 @@ def ogr_mitab_4():
         return 'skip'
 
     sql_lyr = gdaltest.mapinfo_ds.ExecuteSQL( \
-        'select * from tpoly where prfedea = "35043413"' )
+        "select * from tpoly where prfedea = '35043413'" )
 
     tr = ogrtest.check_features_against_list( sql_lyr, 'prfedea', [ '35043413' ] )
     if tr:

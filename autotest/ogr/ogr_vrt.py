@@ -326,7 +326,7 @@ def ogr_vrt_9():
         return 'skip'
 
     lyr = gdaltest.vrt_ds.GetLayerByName( 'test3' )
-    lyr.SetAttributeFilter( 'other = "Second"' )
+    lyr.SetAttributeFilter( "other = 'Second'" )
     lyr.ResetReading()
 
     feat = lyr.GetNextFeature()
