@@ -35,6 +35,7 @@
 #include "FGdbUtils.h"
 #include "cpl_multiproc.h"
 #include "ogrmutexeddatasource.h"
+#include "ogr_api.h"
 
 CPL_CVSID("$Id$");
 
@@ -114,7 +115,24 @@ OGRDataSource *FGdbDriver::Open( const char* pszFilename, int bUpdate )
         {
             delete pGeoDatabase;
 
-            GDBErr(hr, "Failed to open Geodatabase");
+            if( OGRGetDriverByName("OpenFileGDB") != NULL && bUpdate == FALSE )
+            {
+                std::wstring fgdb_error_desc_w;
+                std::string fgdb_error_desc("Unknown error");
+                fgdbError er;
+                er = FileGDBAPI::ErrorInfo::GetErrorDescription(hr, fgdb_error_desc_w);
+                if ( er == S_OK )
+                {
+                    fgdb_error_desc = WStringToString(fgdb_error_desc_w);
+                }
+                CPLDebug("FileGDB", "Cannot open %s with FileGDB driver: %s. Failing silently so OpenFileGDB can be tried",
+                         pszFilename,
+                         fgdb_error_desc.c_str());
+            }
+            else
+            {
+                GDBErr(hr, "Failed to open Geodatabase");
+            }
             return NULL;
         }
 
