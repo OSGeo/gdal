@@ -430,6 +430,10 @@ bool GDBFieldTypeToWidthPrecision(std::string &gdbType, int *width, int *precisi
     {
         *width = 0;
     }
+    else if(gdbType == "esriFieldTypeGlobalID" )
+    {
+        *width = 38;
+    }
     else
     {
         CPLError( CE_Warning, CPLE_AppDefined,

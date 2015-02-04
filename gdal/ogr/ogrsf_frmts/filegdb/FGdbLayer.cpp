@@ -435,10 +435,14 @@ OGRErr FGdbLayer::PopulateRowWithFeature( Row& fgdb_row, OGRFeature *poFeature )
     {
         std::string field_name = poFeatureDefn->GetFieldDefn(i)->GetNameRef();
         std::wstring wfield_name = StringToWString(field_name);
+        const std::string & strFieldType = m_vOGRFieldToESRIFieldType[i];
 
         /* Set empty fields to NULL */
         if( !poFeature->IsFieldSet( i ) )
         {
+            if( strFieldType == "esriFieldTypeGlobalID" )
+                continue;
+
             if (FAILED(hr = fgdb_row.SetNull(wfield_name)))
             {
                 GDBErr(hr, "Failed setting field to NULL.");
@@ -449,7 +453,6 @@ OGRErr FGdbLayer::PopulateRowWithFeature( Row& fgdb_row, OGRFeature *poFeature )
 
         /* Set the information using the appropriate FGDB function */
         int nOGRFieldType = poFeatureDefn->GetFieldDefn(i)->GetType();
-        const std::string & strFieldType = m_vOGRFieldToESRIFieldType[i];
 
         if ( nOGRFieldType == OFTInteger )
         {
