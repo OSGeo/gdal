@@ -1,4 +1,4 @@
-/* $Id: tif_zip.c,v 1.32 2012-10-18 17:34:59 fwarmerdam Exp $ */
+/* $Id: tif_zip.c,v 1.33 2014-12-25 18:29:11 erouault Exp $ */
 
 /*
  * Copyright (c) 1995-1997 Sam Leffler
@@ -36,7 +36,7 @@
  * of the library: this code assumes the 1.0 API and also depends on
  * the ability to write the zlib header multiple times (one per strip)
  * which was not possible with versions prior to 0.95.  Note also that
- * older versions of this codec avoided this bug by supressing the header
+ * older versions of this codec avoided this bug by suppressing the header
  * entirely.  This means that files written with the old library cannot
  * be read; they should be converted to a different compression scheme
  * and then reconverted.
