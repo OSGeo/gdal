@@ -1,4 +1,4 @@
-/* $Id: tif_lzw.c,v 1.45 2011-04-02 20:54:09 bfriesen Exp $ */
+/* $Id: tif_lzw.c,v 1.46 2014-11-20 16:47:21 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -268,6 +268,8 @@ LZWPreDecode(TIFF* tif, uint16 s)
 	if( sp->dec_codetab == NULL )
         {
             tif->tif_setupdecode( tif );
+	    if( sp->dec_codetab == NULL )
+		return (0);
         }
 
 	/*
