@@ -1099,6 +1099,14 @@ CPLErr GTiffRasterBand::DirectIO( GDALRWFlag eRWFlag,
         return CE_Failure;
     }
 
+    /* we only know how to deal with nearest neighbour in this optimized routine */
+    if( (nXSize != nBufXSize || nYSize != nBufYSize) &&
+        psExtraArg != NULL &&
+        psExtraArg->eResampleAlg != GRIORA_NearestNeighbour )
+    {
+        return CE_Failure;
+    }
+
     /*CPLDebug("GTiff", "DirectIO(%d,%d,%d,%d -> %dx%d)",
              nXOff, nYOff, nXSize, nYSize,
              nBufXSize, nBufYSize);*/
@@ -1237,14 +1245,24 @@ CPLErr GTiffRasterBand::DirectIO( GDALRWFlag eRWFlag,
                 GByte* pabySrcData = ((GByte*)ppData[iSrcY]) +
                             ((nContigBands > 1) ? (nBand-1) : 0) * eDTSize;
                 GByte* pabyDstData = ((GByte*)pData) + iY * nLineSpace;
-                for(int iX=0;iX<nBufXSize;iX++)
+                if( nBufXSize == nXSize && eDTSize == 1 && eBufType == GDT_Byte )
                 {
-                    int iSrcX = (nBufXSize == nXSize) ? iX :
-                                    (int)((iX+0.5) * nXSize / nBufXSize);
-                    GDALCopyWords( pabySrcData + iSrcX * ePixelSize,
-                                   eDataType, 0,
-                                   pabyDstData + iX * nPixelSpace,
-                                   eBufType, 0, 1);
+                    for(int iX=0;iX<nBufXSize;iX++)
+                    {
+                        pabyDstData[iX * nPixelSpace] = pabySrcData[iX * ePixelSize];
+                    }
+                }
+                else
+                {
+                    for(int iX=0;iX<nBufXSize;iX++)
+                    {
+                        int iSrcX = (nBufXSize == nXSize) ? iX :
+                                        (int)((iX+0.5) * nXSize / nBufXSize);
+                        GDALCopyWords( pabySrcData + iSrcX * ePixelSize,
+                                    eDataType, 0,
+                                    pabyDstData + iX * nPixelSpace,
+                                    eBufType, 0, 1);
+                    }
                 }
             }
         }

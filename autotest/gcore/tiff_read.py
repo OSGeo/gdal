@@ -1264,6 +1264,37 @@ def tiff_read_irregular_tile_size_jpeg_in_tiff():
 
     return 'success'
 
+###############################################################################
+# Test GTIFF_DIRECT_IO optimization
+
+def tiff_direct_io():
+
+    ds = gdal.Open('data/stefan_full_rgba.tif')
+    xoff = int(ds.RasterXSize/4)
+    yoff = int(ds.RasterYSize/4)
+    xsize = int(ds.RasterXSize/2)
+    ysize = int(ds.RasterXSize/2)
+    ref_data_byte = ds.GetRasterBand(1).ReadRaster(xoff, yoff, xsize, ysize)
+    ref_data_float32 = ds.GetRasterBand(1).ReadRaster(xoff, yoff, xsize, ysize, buf_type = gdal.GDT_Float32)
+    ds = None
+
+    gdal.SetConfigOption('GTIFF_DIRECT_IO', 'YES')
+    ds = gdal.Open('data/stefan_full_rgba.tif')
+    got_data_byte = ds.GetRasterBand(1).ReadRaster(xoff, yoff, xsize, ysize)
+    got_data_float32 = ds.GetRasterBand(1).ReadRaster(xoff, yoff, xsize, ysize, buf_type = gdal.GDT_Float32)
+    ds = None
+    gdal.SetConfigOption('GTIFF_DIRECT_IO', None)
+
+    if ref_data_byte != got_data_byte:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    if ref_data_float32 != got_data_float32:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
 ###############################################################################################
 
 for item in init_list:
@@ -1318,6 +1349,7 @@ gdaltest_list.append( (tiff_read_huge4GB) )
 gdaltest_list.append( (tiff_read_bigtiff) )
 gdaltest_list.append( (tiff_read_tiff_metadata) )
 gdaltest_list.append( (tiff_read_irregular_tile_size_jpeg_in_tiff) )
+gdaltest_list.append( (tiff_direct_io) )
 
 if __name__ == '__main__':
 
