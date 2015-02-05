@@ -1,4 +1,4 @@
-/* $Id: tif_dir.c,v 1.116 2013-11-30 20:24:36 fwarmerdam Exp $ */
+/* $Id: tif_dir.c,v 1.119 2014-12-27 15:20:42 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -160,10 +160,12 @@ _TIFFVSetField(TIFF* tif, uint32 tag, va_list ap)
 	TIFFDirectory* td = &tif->tif_dir;
 	int status = 1;
 	uint32 v32, i, v;
+    double dblval;
 	char* s;
 	const TIFFField *fip = TIFFFindField(tif, tag, TIFF_ANY);
 	uint32 standard_tag = tag;
-
+	if( fip == NULL ) /* cannot happen since OkToChangeTag() already checks it */
+	    return 0;
 	/*
 	 * We want to force the custom code to be used for custom
 	 * fields even if the tag happens to match a well known 
@@ -283,10 +285,16 @@ _TIFFVSetField(TIFF* tif, uint32 tag, va_list ap)
 			setDoubleArrayOneValue(&td->td_smaxsamplevalue, va_arg(ap, double), td->td_samplesperpixel);
 		break;
 	case TIFFTAG_XRESOLUTION:
-		td->td_xresolution = (float) va_arg(ap, double);
+        dblval = va_arg(ap, double);
+        if( dblval < 0 )
+            goto badvaluedouble;
+		td->td_xresolution = (float) dblval;
 		break;
 	case TIFFTAG_YRESOLUTION:
-		td->td_yresolution = (float) va_arg(ap, double);
+        dblval = va_arg(ap, double);
+        if( dblval < 0 )
+            goto badvaluedouble;
+		td->td_yresolution = (float) dblval;
 		break;
 	case TIFFTAG_PLANARCONFIG:
 		v = (uint16) va_arg(ap, uint16_vap);
@@ -449,11 +457,11 @@ _TIFFVSetField(TIFF* tif, uint32 tag, va_list ap)
 		 * happens, for example, when tiffcp is used to convert between
 		 * compression schemes and codec-specific tags are blindly copied.
 		 */
-		if(fip == NULL || fip->field_bit != FIELD_CUSTOM) {
+		if(fip->field_bit != FIELD_CUSTOM) {
 			TIFFErrorExt(tif->tif_clientdata, module,
 			    "%s: Invalid %stag \"%s\" (not supported by codec)",
 			    tif->tif_name, isPseudoTag(tag) ? "pseudo-" : "",
-			    fip ? fip->field_name : "Unknown");
+			    fip->field_name);
 			status = 0;
 			break;
 		}
@@ -693,6 +701,16 @@ badvalue32:
 		va_end(ap);
         }
 	return (0);
+badvaluedouble:
+        {
+        const TIFFField* fip=TIFFFieldWithTag(tif,tag);
+        TIFFErrorExt(tif->tif_clientdata, module,
+             "%s: Bad value %f for \"%s\" tag",
+             tif->tif_name, dblval,
+             fip ? fip->field_name : "Unknown");
+        va_end(ap);
+        }
+    return (0);
 }
 
 /*
@@ -809,6 +827,8 @@ _TIFFVGetField(TIFF* tif, uint32 tag, va_list ap)
 	int ret_val = 1;
 	uint32 standard_tag = tag;
 	const TIFFField* fip = TIFFFindField(tif, tag, TIFF_ANY);
+	if( fip == NULL ) /* cannot happen since TIFFGetField() already checks it */
+	    return 0;
 	
 	/*
 	 * We want to force the custom code to be used for custom
@@ -1006,14 +1026,14 @@ _TIFFVGetField(TIFF* tif, uint32 tag, va_list ap)
 				 * get a tag that is not valid for the image's
 				 * codec then we'll arrive here.
 				 */
-				if( fip == NULL || fip->field_bit != FIELD_CUSTOM )
+				if( fip->field_bit != FIELD_CUSTOM )
 				{
 					TIFFErrorExt(tif->tif_clientdata, "_TIFFVGetField",
 					    "%s: Invalid %stag \"%s\" "
 					    "(not supported by codec)",
 					    tif->tif_name,
 					    isPseudoTag(tag) ? "pseudo-" : "",
-					    fip ? fip->field_name : "Unknown");
+					    fip->field_name);
 					ret_val = 0;
 					break;
 				}
@@ -1302,8 +1322,20 @@ TIFFDefaultDirectory(TIFF* tif)
 	tif->tif_tagmethods.printdir = NULL;
 	/*
 	 *  Give client code a chance to install their own
-	 *  tag extensions & methods, prior to compression overloads.
+	 *  tag extensions & methods, prior to compression overloads,
+	 *  but do some prior cleanup first. (http://trac.osgeo.org/gdal/ticket/5054)
 	 */
+	if (tif->tif_nfieldscompat > 0) {
+		uint32 i;
+
+		for (i = 0; i < tif->tif_nfieldscompat; i++) {
+				if (tif->tif_fieldscompat[i].allocated_size)
+						_TIFFfree(tif->tif_fieldscompat[i].fields);
+		}
+		_TIFFfree(tif->tif_fieldscompat);
+		tif->tif_nfieldscompat = 0;
+		tif->tif_fieldscompat = NULL;
+	}
 	if (_TIFFextender)
 		(*_TIFFextender)(tif);
 	(void) TIFFSetField(tif, TIFFTAG_COMPRESSION, COMPRESSION_NONE);
