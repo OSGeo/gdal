@@ -4665,12 +4665,10 @@ OGRGeometry *OGRGeometryFromEWKB( GByte *pabyWKB, int nLength, int* pnSRID,
 /*      understood by OGR, so if the SRID flag is set, we remove the    */
 /*      SRID (bytes at offset 5 to 8).                                  */
 /* -------------------------------------------------------------------- */
-    int bHasSRID = FALSE;
     if( nLength > 9 &&
         ((pabyWKB[0] == 0 /* big endian */ && (pabyWKB[1] & 0x20) )
         || (pabyWKB[0] != 0 /* little endian */ && (pabyWKB[4] & 0x20))) )
     {
-        bHasSRID = TRUE;
         if( pnSRID )
         {
             memcpy(pnSRID, pabyWKB+5, 4);
