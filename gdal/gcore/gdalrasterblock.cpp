@@ -587,7 +587,6 @@ void GDALRasterBlock::Touch()
 CPLErr GDALRasterBlock::Internalize()
 
 {
-    CPLMutexHolderD( &hRBMutex );
     void        *pNewData;
     int         nSizeInBytes;
     GIntBig     nCurCacheMax = GDALGetCacheMax64();
@@ -612,7 +611,9 @@ CPLErr GDALRasterBlock::Internalize()
 /* -------------------------------------------------------------------- */
 /*      Flush old blocks if we are nearing our memory limit.            */
 /* -------------------------------------------------------------------- */
-    AddLock(); /* don't flush this block! */
+    CPLMutexHolderD( &hRBMutex );
+
+    AddLock(); /* don't flush this block! FIXME: is this really needed as the block isn't yet inserted in the list. In which case the later DropLock() should be removed */
 
     nCacheUsed += nSizeInBytes;
     while( nCacheUsed > nCurCacheMax )
