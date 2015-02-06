@@ -1,3 +1,141 @@
+= GDAL/OGR 1.11.2 Release Notes = 
+
+The 1.11.2 release is a bug fix release.
+
+== Build ==
+
+  * configure: fix detection of OCI by changing linking order to please modern GCC (#5550)
+  * configure: fix test to accept MariaDB 10.X as valid MySQL (#5722)
+  * More compiler warnings addressed (#5414)
+  * Windows build of PDF: fix compilation issue with Visual Studio 2012 (#5744)
+  * Windows build: Add support for MrSID 9.1 SDK (#5814)
+  * Windows build: when building netCDF, HDF4, HDF5 as plugins, call registration of 'sub-drivers' GMT, HDF4Image and HDF5Image (#5802)
+
+== Port ==
+
+ * CSV finder: Stop probing for csv/horiz_cs.csv. (#5698)
+ * /vsicurl/: avoid reading after end-of-file and fix failure when reading more than 16MB in a single time (#5786)
+ * CPLHexToBinary(): faster implementation (#5812)
+
+== GDAL Core and algorithms ==
+
+  * Make GetMaskBand() work with GDT_UInt16 alpha bands (#5692)
+  * Fix 32bit overflow in GDALRasterBand::IRasterIO() (#5713)
+  * RPC transformer: take into account nodata in RPC DEM (#5680)
+  * RPC transformer: add RPC_DEM_MISSING_VALUE transformer option to avoid failure when there's no DEM at the transformed point (#5730)
+  * Fix GDALSuggestedWarpOutput() wrong extent in some circumstances (e.g. dataset of big dimension with world coordinates) (#5693)
+  * Fix crash when calling GetTiledVirtualMem() on non-Linux platform (#5728)
+  * warp: fix integer overflow when reprojecting into an area with (part of) bounds completely outside of the source projection (#5789)
+  * OpenCL warper: fix OpenCL code compilation with NVIDIA OpenCL (#5772)
+
+== Utilities ==
+
+  * gdalwarp: initialize destination dataset to no_data value when automatically propagating source nodata (#5675)
+  * gdalwarp: only apply INIT_DEST when processing the first input dataset (#5387)
+  * gdaldem: avoid too large files to be produced when using -co COMPRESS=xxxx -co TILED=YES (#5678)
+
+== GDAL drivers ==
+
+GRASS driver:
+ * fix compilation issues against GRASS 7 (#2953)
+
+GIF driver:
+ * fix crash on images without color table (#5792)
+ * validate the size of the graphic control extension block (#5793)
+
+GTiff driver:
+ * Internal overviews: for near, average, gauss, and pixel interleaving, make sure to use the same code path for compressed vs uncompressed overviews (#5701)
+ * allow lossless copying of CMYK JPEG into JPEG-in-TIFF (#5712)
+ * when overriding metadata in update mode, make sure to clear it from PAM file (#5807)
+ * fix GTiffRasterBand::DirectIO() to work with TIFF files with multiple directories (overviews, masks) (#5831)
+ * Internal libtiff: partial (mostly security related fixes) upgrade to 4.0.4beta (#5830)
+
+ISIS3 driver:
+ * fix to recognize IsisCube.Mapping.LatitudeType = Planetocentric (#5717)
+
+JP2OpenJPEG driver:
+ * add compatibility with OpenJPEG 2.1 (#5579)
+
+JPEG driver:
+ * Report non-fatal libjpeg errors as CE_Warning (or CE_Failure if GDAL_ERROR_ON_LIBJPEG_WARNING = TRUE) (#5667)
+
+KMLSuperOverlay driver:
+ * remove useless and unreliable computations on floating point numbers that caused issues (truncated raster) on 32bit (#5683)
+
+USGSDEM driver:
+ * take into account horizontal unit = ft in the UTM case (#5819)
+
+VRT driver:
+ * fix RasterIO() to be able to fill buffers larger than 2GB (#5700, #5734)
+
+== OGR core ==
+
+  * ogr_core.h: only ignore -Wfloat-equal for IsInit() and not for the rest of the file and files that inc it (#5299)
+  * OGR layer algebra: properly initialize field maps to avoid Valgrind warnings in OGRLayer::Update() (#5778)
+
+== OGR drivers ==
+
+CSV driver:
+ * fix segfault when reading allCountries.txt of geonames.org (#5668)
+
+FileGDB:
+ * avoid emitting error when opening a FileGDB v9, so that OpenFileGDB can be tried to open it, in the case FileGDB is a plugin (#5674)
+
+GeoJSON driver:
+ * ESRIJson: parse correctly rings of esriGeometryPolygon objects to build correct Polygon or MultiPolygon (#5538)
+
+GML driver:
+ * Fix incorrect geometry cast when reading GML topogeometries (#5715)
+ * Update GFS files for RUIAN (UVOH & OB) (#5770)
+
+LIBKML driver:
+ * when skipped, fix segfault on second OGRRegisterAll() call (#5775)
+ * do not delete the libkml singleton factory (linked to #5775)
+
+MapInfo File driver:
+ * Add GDA94 datum entries to the lookup table (#5671)
+ * fix segfault in CreateFeature() if passing an invalid OGR feature style string (#1209)
+
+MSSQL driver:
+ * Fix recognizing image columns as geometry columns for the select layers. (#5498)
+ * Fix issue when creating non-spatial table (#5696)
+ * Fix to read metadata if the tables are specified in the connection string (#5796)
+ * Fix invalid use of CSLAddString() in OGR MSSQL (#5810)
+ * Fix crash if the tablename is specified in the connection string (#5826)
+
+MySQL driver:
+ * don't be dependant on locale when building spatial filter (#5720)
+
+NAS driver:
+ * make chevrons configurable by NAS_INDICATOR (#5708)
+
+OCI driver:
+ * Initialize member variable to avoid UpdateLayerExtents() to be called randomly on non spatial tables (#5376)
+ * fix FID (multi_load=off, OGRNullFID) - start with 1 (not -1) (#5454)
+
+OpenFileGDB driver:
+ * fix ResetReading() on SQL layer with ORDER BY on indexed column (#5669)
+ * add support for non spatial GDB v9 tables (#5673)
+
+SQLite/Spatialite driver:
+ * remove 'T' suffix when formatting the content of a Date field (#5672)
+ * fix segmentation fault when executing OGR2SQLITE_Register() when compiling against sqlite 3.8.7 (#5725)
+ * make GetFIDColumn() work when run as first method call (#5781)
+
+VRT driver:
+ * do not propagate ignoring of x and y cols of a PointFromColumns to the source layer (#5777)
+
+XLSX driver:
+ * fix column numbering when there are more than 26 columns (#5774)
+
+== SWIG Language Bindings ==
+
+Python bindings:
+  * Fix hang of Python in case of repeated call to gdal/ogr.UseExceptions() and CE_Warning emitted (#5704)
+  * fix processing error of ogr_python.i with SWIG 3 (#5795)
+  * NUMPY driver: avoid returning CE_None in GetGeoTransform() when there's no geotransform set (#5801)
+
+
 = GDAL/OGR 1.11.1 Release Notes = 
 
 The 1.11.1 release is a bug fix release.
