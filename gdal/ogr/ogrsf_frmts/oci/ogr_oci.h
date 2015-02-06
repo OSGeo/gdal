@@ -193,7 +193,7 @@ public:
 
     void MakeRoomFor( int );
     void Append( const char * );
-    void Appendf( int nMax, const char *pszFormat, ... );
+    void Appendf( int nMax, const char *pszFormat, ... ) CPL_PRINT_FUNC_FORMAT (3, 4);
     char *StealString();
 
     char GetLast();

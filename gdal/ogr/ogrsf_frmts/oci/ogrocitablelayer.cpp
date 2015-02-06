@@ -810,7 +810,7 @@ OGRErr OGROCITableLayer::ISetFeature( OGRFeature *poFeature )
     OGROCIStatement     oCmdStatement( poDS->GetSession() );
 
     oCmdText.Appendf( strlen(poFeatureDefn->GetName())+strlen(pszFIDName)+100,
-                      "DELETE FROM %s WHERE \"%s\" = %d",
+                      "DELETE FROM %s WHERE \"%s\" = " CPL_FRMT_GIB,
                       poFeatureDefn->GetName(), 
                       pszFIDName, 
                       poFeature->GetFID() );
@@ -859,7 +859,7 @@ OGRErr OGROCITableLayer::DeleteFeature( GIntBig nFID )
     OGROCIStatement     oCmdStatement( poDS->GetSession() );
 
     oCmdText.Appendf( strlen(poFeatureDefn->GetName())+strlen(pszFIDName)+100,
-                      "DELETE FROM %s WHERE \"%s\" = %d",
+                      "DELETE FROM %s WHERE \"%s\" = " CPL_FRMT_GIB,
                       poFeatureDefn->GetName(), 
                       pszFIDName, 
                       nFID );

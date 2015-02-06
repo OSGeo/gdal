@@ -400,7 +400,7 @@ OGRErr OGROCILoaderLayer::WriteFeatureVariableMode( OGRFeature *poFeature )
 /*      Write the FID.                                                  */
 /* -------------------------------------------------------------------- */
     oLine.Append( "00000000" );
-    oLine.Appendf( 32, " %d|", poFeature->GetFID() );
+    oLine.Appendf( 32, " " CPL_FRMT_GIB "|", poFeature->GetFID() );
 
 /* -------------------------------------------------------------------- */
 /*      Set the geometry                                                */
