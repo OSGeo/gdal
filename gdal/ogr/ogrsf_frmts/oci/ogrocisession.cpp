@@ -286,7 +286,8 @@ int OGROCISession::EstablishSession( const char *pszUserid,
     if( oSetNLSTimeFormat.Execute( "ALTER SESSION SET NLS_DATE_FORMAT='YYYY/MM/DD' \
         NLS_TIME_FORMAT='HH24:MI:SS' NLS_TIME_TZ_FORMAT='HH24:MI:SS TZHTZM' \
         NLS_TIMESTAMP_FORMAT='YYYY/MM/DD HH24:MI:SS' \
-        NLS_TIMESTAMP_TZ_FORMAT='YYYY/MM/DD HH24:MI:SS TZHTZM'" ) != CE_None )
+        NLS_TIMESTAMP_TZ_FORMAT='YYYY/MM/DD HH24:MI:SS TZHTZM' \
+        NLS_NUMERIC_CHARACTERS = '. '" ) != CE_None )
         return OGRERR_FAILURE;
 
     return TRUE;
