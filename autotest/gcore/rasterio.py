@@ -369,6 +369,10 @@ def rasterio_8_progress_callback_2(pct, message, user_data):
 def rasterio_8():
 
     ds = gdal.Open('data/byte.tif')
+
+    # Progress not implemented yet
+    if gdal.GetConfigOption('GTIFF_DIRECT_IO') == 'YES':
+        return 'skip'
     
     # Test RasterBand.ReadRaster
     tab = [ 0, True ]
@@ -379,7 +383,7 @@ def rasterio_8():
     if l != 400:
         gdaltest.post_reason('did not read expected band data via ReadRaster()')
         return 'fail'
-    if abs(tab[0] - 1) > 1e-5 or not tab[1]:
+    if test_progress and abs(tab[0] - 1) > 1e-5 or not tab[1]:
         gdaltest.post_reason('failure')
         return 'fail'
 
