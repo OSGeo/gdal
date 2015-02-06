@@ -1271,7 +1271,14 @@ def tiff_read_irregular_tile_size_jpeg_in_tiff():
 def tiff_direct_io():
 
     # Test with pixel-interleaved and band-interleaved datasets
-    for filename in [ 'data/stefan_full_rgba.tif', 'data/stefan_full_rgba_jpeg_separate.tif']:
+    for i in range(2):
+
+        if i == 0:
+            filename = 'data/stefan_full_rgba.tif'
+        else:
+            src_ds = gdal.Open('data/stefan_full_rgba.tif')
+            filename = '/vsimem/tiff_direct_io_separate.tif'
+            gdal.GetDriverByName('GTiff').CreateCopy(filename, src_ds, options = ['INTERLEAVE=BAND'])
 
         ds = gdal.Open(filename)
         xoff = int(ds.RasterXSize/4)
@@ -1315,6 +1322,9 @@ def tiff_direct_io():
         got_4bands_data_float32_pixel_interleaved = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_type = gdal.GDT_Float32, buf_pixel_space = 4*4, buf_line_space = 4*4 * xsize, buf_band_space = 1*4)
         ds = None
         gdal.SetConfigOption('GTIFF_DIRECT_IO', old_val)
+
+        if i == 1:
+            gdal.Unlink(filename)
 
         if ref_data_byte != got_data_byte:
             gdaltest.post_reason('fail')
