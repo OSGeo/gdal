@@ -246,7 +246,7 @@ static void FindChangePattern( char *cdata,char **substs, char **keys, CPLString
                         break;
                     }
                     // Execute the substitution on the "ret" string
-                    URLSearchAndReplace(&ret,key,found_value);
+                    URLSearchAndReplace(&ret,key,"%s",found_value);
                 }
                 if (found_key!=NULL) CPLFree(found_key);
             }
