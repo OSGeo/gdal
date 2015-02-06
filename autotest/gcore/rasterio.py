@@ -383,7 +383,7 @@ def rasterio_8():
     if l != 400:
         gdaltest.post_reason('did not read expected band data via ReadRaster()')
         return 'fail'
-    if test_progress and abs(tab[0] - 1) > 1e-5 or not tab[1]:
+    if abs(tab[0] - 1) > 1e-5 or not tab[1]:
         gdaltest.post_reason('failure')
         return 'fail'
 
