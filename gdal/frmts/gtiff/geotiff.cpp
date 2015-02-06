@@ -793,6 +793,7 @@ CPLErr GTiffRasterBand::DirectIO( GDALRWFlag eRWFlag,
           (poGDS->nBitsPerSample == 8 || (poGDS->nBitsPerSample == 16) ||
            poGDS->nBitsPerSample == 32 || poGDS->nBitsPerSample == 64) &&
           poGDS->nBitsPerSample == GDALGetDataTypeSize(eDataType) &&
+          poGDS->SetDirectory() && /* very important to make hTIFF uptodate! */
           !TIFFIsTiled( poGDS->hTIFF )) )
     {
         return CE_Failure;
