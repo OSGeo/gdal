@@ -346,7 +346,7 @@ int TABFeature::WriteRecordToMIDFile(MIDDATAFile *fp)
     for(iField=0; iField<numFields; iField++)
     {
         if (iField != 0)
-          fp->WriteLine(delimiter);
+          fp->WriteLine("%s", delimiter);
         poFDefn = GetFieldDefnRef( iField );
 
         switch(poFDefn->GetType())

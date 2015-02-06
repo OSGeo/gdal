@@ -1903,7 +1903,7 @@ class MIDDATAFile
      int Rewind();
      void SaveLine(const char *pszLine);
      const char *GetSavedLine();
-     void WriteLine(const char*, ...);
+     void WriteLine(const char*, ...) CPL_PRINT_FUNC_FORMAT (2, 3);
      GBool IsValidFeature(const char *pszString);
 
 //  Translation information
