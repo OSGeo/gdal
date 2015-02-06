@@ -1118,11 +1118,12 @@ def tiff_read_online_2():
         print('cannot open URL')
         return 'skip'
 
+    old_val = gdal.GetConfigOption('GTIFF_DIRECT_IO')
     gdal.SetConfigOption('GTIFF_DIRECT_IO', 'YES')
     gdal.SetConfigOption('CPL_VSIL_CURL_ALLOWED_EXTENSIONS', '.tif')
     gdal.SetConfigOption('GDAL_DISABLE_READDIR_ON_OPEN', 'EMPTY_DIR')
     ds = gdal.Open('/vsicurl/http://download.osgeo.org/gdal/data/gtiff/utm.tif')
-    gdal.SetConfigOption('GTIFF_DIRECT_IO', None)
+    gdal.SetConfigOption('GTIFF_DIRECT_IO', old_val)
     gdal.SetConfigOption('CPL_VSIL_CURL_ALLOWED_EXTENSIONS', None)
     gdal.SetConfigOption('GDAL_DISABLE_READDIR_ON_OPEN', None)
 
@@ -1269,29 +1270,113 @@ def tiff_read_irregular_tile_size_jpeg_in_tiff():
 
 def tiff_direct_io():
 
-    ds = gdal.Open('data/stefan_full_rgba.tif')
-    xoff = int(ds.RasterXSize/4)
-    yoff = int(ds.RasterYSize/4)
-    xsize = int(ds.RasterXSize/2)
-    ysize = int(ds.RasterXSize/2)
-    ref_data_byte = ds.GetRasterBand(1).ReadRaster(xoff, yoff, xsize, ysize)
-    ref_data_float32 = ds.GetRasterBand(1).ReadRaster(xoff, yoff, xsize, ysize, buf_type = gdal.GDT_Float32)
-    ds = None
+    # Test with pixel-interleaved and band-interleaved datasets
+    for filename in [ 'data/stefan_full_rgba.tif', 'data/stefan_full_rgba_jpeg_separate.tif']:
 
-    gdal.SetConfigOption('GTIFF_DIRECT_IO', 'YES')
-    ds = gdal.Open('data/stefan_full_rgba.tif')
-    got_data_byte = ds.GetRasterBand(1).ReadRaster(xoff, yoff, xsize, ysize)
-    got_data_float32 = ds.GetRasterBand(1).ReadRaster(xoff, yoff, xsize, ysize, buf_type = gdal.GDT_Float32)
-    ds = None
-    gdal.SetConfigOption('GTIFF_DIRECT_IO', None)
+        ds = gdal.Open(filename)
+        xoff = int(ds.RasterXSize/4)
+        yoff = int(ds.RasterYSize/4)
+        xsize = int(ds.RasterXSize/2)
+        ysize = int(ds.RasterXSize/2)
+        ref_data_byte = ds.GetRasterBand(1).ReadRaster(xoff, yoff, xsize, ysize)
+        ref_data_byte_downsampled = ds.GetRasterBand(1).ReadRaster(xoff, yoff, xsize, ysize, buf_xsize = int(xsize/2), buf_ysize = int(ysize/2))
+        ref_data_byte_downsampled_not_nearest = ds.GetRasterBand(1).ReadRaster(xoff, yoff, xsize, ysize, buf_xsize = int(xsize/2), buf_ysize = int(ysize/2), resample_alg = gdal.GRIORA_Bilinear)
+        ref_data_byte_upsampled = ds.GetRasterBand(1).ReadRaster(xoff, yoff, xsize, ysize, buf_xsize = 4 * xsize, buf_ysize = 4 * ysize)
+        ref_data_byte_custom_spacings = ds.GetRasterBand(1).ReadRaster(xoff, yoff, xsize, ysize, buf_pixel_space = 4, buf_line_space = 4 * xsize)
+        ref_data_float32 = ds.GetRasterBand(1).ReadRaster(xoff, yoff, xsize, ysize, buf_type = gdal.GDT_Float32)
+        ref_4bands_data_byte = ds.ReadRaster(xoff, yoff, xsize, ysize)
+        ref_4bands_data_byte_downsampled = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_xsize = int(xsize/2), buf_ysize = int(ysize/2))
+        ref_4bands_data_byte_downsampled_not_nearest = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_xsize = int(xsize/2), buf_ysize = int(ysize/2), resample_alg = gdal.GRIORA_Bilinear)
+        ref_4bands_data_byte_upsampled = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_xsize = 4 * xsize, buf_ysize = 4 * ysize)
+        ref_4bands_data_byte_unordered_list = ds.ReadRaster(xoff, yoff, xsize, ysize, band_list = [4,3,2,1])
+        ref_4bands_data_byte_pixel_interleaved = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_pixel_space = 4, buf_line_space = 4 * xsize, buf_band_space = 1)
+        ref_3bands_data_byte_pixel_interleaved_with_extra_space = ds.ReadRaster(xoff, yoff, xsize, ysize, band_list = [1, 2, 3], buf_pixel_space = 4, buf_line_space = 4 * xsize, buf_band_space = 1)
+        ref_4bands_data_float32 = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_type = gdal.GDT_Float32)
+        ref_4bands_data_float32_pixel_interleaved = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_type = gdal.GDT_Float32, buf_pixel_space = 4*4, buf_line_space = 4*4 * xsize, buf_band_space = 1*4)
+        ds = None
 
-    if ref_data_byte != got_data_byte:
-        gdaltest.post_reason('fail')
-        return 'fail'
+        old_val = gdal.GetConfigOption('GTIFF_DIRECT_IO')
+        gdal.SetConfigOption('GTIFF_DIRECT_IO', 'YES')
+        ds = gdal.Open(filename)
+        got_data_byte = ds.GetRasterBand(1).ReadRaster(xoff, yoff, xsize, ysize)
+        got_data_byte_downsampled = ds.GetRasterBand(1).ReadRaster(xoff, yoff, xsize, ysize, buf_xsize = int(xsize/2), buf_ysize = int(ysize/2))
+        got_data_byte_downsampled_not_nearest = ds.GetRasterBand(1).ReadRaster(xoff, yoff, xsize, ysize, buf_xsize = int(xsize/2), buf_ysize = int(ysize/2), resample_alg = gdal.GRIORA_Bilinear)
+        got_data_byte_upsampled = ds.GetRasterBand(1).ReadRaster(xoff, yoff, xsize, ysize, buf_xsize = 4 * xsize, buf_ysize = 4 * ysize)
+        got_data_byte_custom_spacings = ds.GetRasterBand(1).ReadRaster(xoff, yoff, xsize, ysize, buf_pixel_space = 4, buf_line_space = 4 * xsize)
+        got_data_float32 = ds.GetRasterBand(1).ReadRaster(xoff, yoff, xsize, ysize, buf_type = gdal.GDT_Float32)
+        got_4bands_data_byte = ds.ReadRaster(xoff, yoff, xsize, ysize)
+        got_4bands_data_byte_downsampled = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_xsize = int(xsize/2), buf_ysize = int(ysize/2))
+        got_4bands_data_byte_downsampled_not_nearest = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_xsize = int(xsize/2), buf_ysize = int(ysize/2), resample_alg = gdal.GRIORA_Bilinear)
+        got_4bands_data_byte_upsampled = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_xsize = 4 * xsize, buf_ysize = 4 * ysize)
+        got_4bands_data_byte_unordered_list = ds.ReadRaster(xoff, yoff, xsize, ysize, band_list = [4,3,2,1])
+        got_4bands_data_byte_pixel_interleaved = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_pixel_space = 4, buf_line_space = 4 * xsize, buf_band_space = 1)
+        got_3bands_data_byte_pixel_interleaved_with_extra_space = ds.ReadRaster(xoff, yoff, xsize, ysize, band_list = [1, 2, 3], buf_pixel_space = 4, buf_line_space = 4 * xsize, buf_band_space = 1)
+        got_4bands_data_float32 = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_type = gdal.GDT_Float32)
+        got_4bands_data_float32_pixel_interleaved = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_type = gdal.GDT_Float32, buf_pixel_space = 4*4, buf_line_space = 4*4 * xsize, buf_band_space = 1*4)
+        ds = None
+        gdal.SetConfigOption('GTIFF_DIRECT_IO', old_val)
 
-    if ref_data_float32 != got_data_float32:
-        gdaltest.post_reason('fail')
-        return 'fail'
+        if ref_data_byte != got_data_byte:
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+        if ref_data_byte_downsampled != got_data_byte_downsampled:
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+        if ref_data_byte_downsampled_not_nearest != got_data_byte_downsampled_not_nearest:
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+        if ref_data_byte_upsampled != got_data_byte_upsampled:
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+        for y in range(ysize):
+            for x in range(xsize):
+                if ref_data_byte_custom_spacings[(y*xsize+x)*4] != got_data_byte_custom_spacings[(y*xsize+x)*4]:
+                    gdaltest.post_reason('fail')
+                    return 'fail'
+
+        if ref_data_float32 != got_data_float32:
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+        if ref_4bands_data_byte != got_4bands_data_byte:
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+        if ref_4bands_data_byte_downsampled != got_4bands_data_byte_downsampled:
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+        if ref_4bands_data_byte_downsampled_not_nearest != got_4bands_data_byte_downsampled_not_nearest:
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+        if ref_4bands_data_byte_upsampled != got_4bands_data_byte_upsampled:
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+        if ref_4bands_data_byte_unordered_list != got_4bands_data_byte_unordered_list:
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+        if ref_4bands_data_byte_pixel_interleaved != got_4bands_data_byte_pixel_interleaved:
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+        if ref_3bands_data_byte_pixel_interleaved_with_extra_space != ref_3bands_data_byte_pixel_interleaved_with_extra_space:
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+        if ref_4bands_data_float32 != got_4bands_data_float32:
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+        if ref_4bands_data_float32_pixel_interleaved != got_4bands_data_float32_pixel_interleaved:
+            gdaltest.post_reason('fail')
+            return 'fail'
 
     return 'success'
 
@@ -1343,13 +1428,14 @@ gdaltest_list.append( (tiff_dos_strip_chop) )
 gdaltest_list.append( (tiff_read_exif_and_gps) )
 gdaltest_list.append( (tiff_jpeg_rgba_pixel_interleaved) )
 gdaltest_list.append( (tiff_jpeg_rgba_band_interleaved) )
-gdaltest_list.append( (tiff_read_online_1) )
-gdaltest_list.append( (tiff_read_online_2) )
 gdaltest_list.append( (tiff_read_huge4GB) )
 gdaltest_list.append( (tiff_read_bigtiff) )
 gdaltest_list.append( (tiff_read_tiff_metadata) )
 gdaltest_list.append( (tiff_read_irregular_tile_size_jpeg_in_tiff) )
 gdaltest_list.append( (tiff_direct_io) )
+
+gdaltest_list.append( (tiff_read_online_1) )
+gdaltest_list.append( (tiff_read_online_2) )
 
 if __name__ == '__main__':
 

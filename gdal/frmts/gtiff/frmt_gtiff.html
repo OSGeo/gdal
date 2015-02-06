@@ -322,6 +322,8 @@ RFC 33: GTiff - Fixing PixelIsPoint Interpretation</a> for more details. Default
 have false easting/northing improperly set in meters when it ought to be in
 coordinate system linear units.  (<a href="http://trac.osgeo.org/gdal/ticket/3901">Ticket #3901</a>). 
 <li>TAB_APPROX_GEOTRANSFORM=YES/NO: (GDAL &gt;= 2.0) To decide if an approximate geotransform is acceptable when reading a .tab file. Default value: NO
+<li>GTIFF_DIRECT_IO=YES/NO: (GDAL &gt;= 2.0) Can be set to YES to use specialized RasterIO() implementations when operating on un-tiled un-compressed TIFF files to
+avoid using the block cache. Setting it to YES even when the optimized cases do not apply should be safe (generic implementation will be used). Default value:NO
 </ul>
 </p>
 
