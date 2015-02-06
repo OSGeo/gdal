@@ -473,6 +473,10 @@ def numpy_rw_14():
     if gdaltest.numpy_drv is None:
         return 'skip'
 
+    # Progress not implemented yet
+    if gdal.GetConfigOption('GTIFF_DIRECT_IO') == 'YES':
+        return 'skip'
+
     import numpy
 
     ds = gdal.Open('data/byte.tif')
