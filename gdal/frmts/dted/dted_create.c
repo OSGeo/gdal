@@ -87,6 +87,8 @@ static void DTEDFormatDMS( unsigned char *achField, double dfAngle,
 /*                             DTEDFormat()                             */
 /************************************************************************/
 
+static void DTEDFormat( unsigned char *pszTarget, const char *pszFormat, ... ) CPL_PRINT_FUNC_FORMAT (2, 3);
+
 static void DTEDFormat( unsigned char *pszTarget, const char *pszFormat, ... )
 
 {
