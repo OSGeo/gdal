@@ -102,7 +102,7 @@ void OGROCIStringBuf::Appendf( int nMax, const char *pszFormat, ... )
         pszBuffer = szSimpleBuf;
 
     va_start(args, pszFormat);
-    vsprintf(pszBuffer, pszFormat, args);
+    CPLvsnprintf(pszBuffer, nMax, pszFormat, args);
     va_end(args);
 
     Append( pszBuffer );
