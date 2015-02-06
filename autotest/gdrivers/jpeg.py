@@ -629,11 +629,13 @@ def jpeg_17():
     ds = gdal.Open('data/byte_corrupted.jpg')
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     # ERROR 1: libjpeg: Huffman table 0x00 was not defined
-    ds.GetRasterBand(1).Checksum()
+    cs = ds.GetRasterBand(1).Checksum()
     gdal.PopErrorHandler()
     if gdal.GetLastErrorType() != gdal.CE_Failure or gdal.GetLastErrorMsg() == '':
-        gdaltest.post_reason('fail')
-        return 'fail'
+        # libjpeg-turbo 1.4.0 doesn't emit errors...
+        if cs != 4925:
+            gdaltest.post_reason('fail')
+            return 'fail'
 
     gdal.ErrorReset()
     ds = gdal.Open('data/byte_corrupted2.jpg')
