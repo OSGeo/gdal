@@ -7,7 +7,7 @@
  *
  ******************************************************************************
  * Copyright (c) 1998, 2002, Frank Warmerdam <warmerdam@pobox.com>
- * Copyright (c) 2007-2014, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2007-2015, Even Rouault <even dot rouault at spatialys dot com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -348,6 +348,14 @@ class GTiffDataset : public GDALPamDataset
 
     int            GuessJPEGQuality();
 
+    CPLErr         DirectIO( GDALRWFlag eRWFlag,
+                               int nXOff, int nYOff, int nXSize, int nYSize,
+                               void * pData, int nBufXSize, int nBufYSize,
+                               GDALDataType eBufType, 
+                               int nBandCount, int *panBandMap,
+                               GSpacing nPixelSpace, GSpacing nLineSpace,
+                               GSpacing nBandSpace,
+                               GDALRasterIOExtraArg* psExtraArg );
   protected:
     virtual int         CloseDependentDatasets();
 
@@ -1605,6 +1613,16 @@ CPLErr GTiffDataset::IRasterIO( GDALRWFlag eRWFlag,
         }
     }
 
+    if (bDirectIO)
+    {
+        eErr = DirectIO(
+                eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                pData, nBufXSize, nBufYSize, eBufType,
+                nBandCount, panBandMap, nPixelSpace, nLineSpace, nBandSpace, psExtraArg);
+        if (eErr == CE_None)
+            return eErr;
+    }
+    
     nJPEGOverviewVisibilityFlag ++;
     eErr =  GDALPamDataset::IRasterIO(
                 eRWFlag, nXOff, nYOff, nXSize, nYSize,
@@ -1613,6 +1631,237 @@ CPLErr GTiffDataset::IRasterIO( GDALRWFlag eRWFlag,
     nJPEGOverviewVisibilityFlag --;
     return eErr;
 }
+
+/************************************************************************/
+/*                           DirectIO()                                 */
+/************************************************************************/
+
+/* Reads directly bytes from the file using ReadMultiRange(), and by-pass */
+/* block reading. Restricted to simple TIFF configurations (un-tiled, */
+/* uncompressed data, standard data types). Particularly useful to extract */
+/* sub-windows of data on a large /vsicurl dataset). */
+
+CPLErr GTiffDataset::DirectIO( GDALRWFlag eRWFlag,
+                               int nXOff, int nYOff, int nXSize, int nYSize,
+                               void * pData, int nBufXSize, int nBufYSize,
+                               GDALDataType eBufType, 
+                               int nBandCount, int *panBandMap,
+                               GSpacing nPixelSpace, GSpacing nLineSpace,
+                               GSpacing nBandSpace,
+                               GDALRasterIOExtraArg* psExtraArg )
+{
+    GDALDataType eDataType = GetRasterBand(1)->GetRasterDataType();
+    if( !(eRWFlag == GF_Read &&
+          nCompression == COMPRESSION_NONE &&
+          (nPhotometric == PHOTOMETRIC_MINISBLACK ||
+           nPhotometric == PHOTOMETRIC_RGB ||
+           nPhotometric == PHOTOMETRIC_PALETTE) &&
+          (nBitsPerSample == 8 || (nBitsPerSample == 16) ||
+           nBitsPerSample == 32 || nBitsPerSample == 64) &&
+          nBitsPerSample == GDALGetDataTypeSize(eDataType) &&
+          SetDirectory() && /* very important to make hTIFF uptodate! */
+          !TIFFIsTiled( hTIFF )) )
+    {
+        return CE_Failure;
+    }
+
+    /* we only know how to deal with nearest neighbour in this optimized routine */
+    if( (nXSize != nBufXSize || nYSize != nBufYSize) &&
+        psExtraArg != NULL &&
+        psExtraArg->eResampleAlg != GRIORA_NearestNeighbour )
+    {
+        return CE_Failure;
+    }
+
+    /* if the file is band interleave or only one band is requested, then */
+    /* fallback to band DirectIO */
+    int bUseBandRasterIO = FALSE;
+    if( nPlanarConfig == PLANARCONFIG_SEPARATE || nBandCount == 1 )
+    {
+        bUseBandRasterIO = TRUE;
+    }
+    else
+    {
+        /* For the sake of simplicity, only deals with "naturally ordered" bands */
+        for(int iBand = 0; iBand < nBandCount; iBand ++ )
+        {
+            if( panBandMap[iBand] != iBand + 1)
+            {
+                bUseBandRasterIO = TRUE;
+                break;
+            }
+        }
+    }
+    if( bUseBandRasterIO )
+    {
+        CPLErr eErr = CE_None;
+        for(int iBand = 0; eErr == CE_None && iBand < nBandCount; iBand ++ )
+        {
+            eErr = GetRasterBand(panBandMap[iBand])->RasterIO(
+                                       eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                                       (GByte*)pData + iBand * nBandSpace,
+                                       nBufXSize, nBufYSize,
+                                       eBufType,
+                                       nPixelSpace, nLineSpace,
+                                       psExtraArg);
+        }
+        return eErr;
+    }
+
+    /*CPLDebug("GTiff", "DirectIO(%d,%d,%d,%d -> %dx%d)",
+             nXOff, nYOff, nXSize, nYSize,
+             nBufXSize, nBufYSize);*/
+
+    /* No need to look if overviews can satisfy the request as it has already */
+    /* been done in GTiffDataset::IRasterIO() */
+
+    /* Make sure that TIFFTAG_STRIPOFFSETS is up-to-date */
+    if (GetAccess() == GA_Update)
+        FlushCache();
+
+    /* Get strip offsets */
+    toff_t *panTIFFOffsets = NULL;
+    if ( !TIFFGetField( hTIFF, TIFFTAG_STRIPOFFSETS, &panTIFFOffsets ) ||
+         panTIFFOffsets == NULL )
+    {
+        return CE_Failure;
+    }
+
+    int iLine;
+    int nReqXSize = nXSize; /* sub-sampling or over-sampling can only be done at last stage */
+    int nReqYSize = MIN(nBufYSize, nYSize); /* we can do sub-sampling at the extraction stage */
+    void** ppData = (void**) VSIMalloc(nReqYSize * sizeof(void*));
+    vsi_l_offset* panOffsets = (vsi_l_offset*)
+                            VSIMalloc(nReqYSize * sizeof(vsi_l_offset));
+    size_t* panSizes = (size_t*) VSIMalloc(nReqYSize * sizeof(size_t));
+    int eDTSize = GDALGetDataTypeSize(eDataType) / 8;
+    void* pTmpBuffer = NULL;
+    CPLErr eErr = CE_None;
+    int nContigBands = nBands;
+    int ePixelSize = eDTSize * nContigBands;
+
+    if (ppData == NULL || panOffsets == NULL || panSizes == NULL)
+        eErr = CE_Failure;
+    /* For now we always allocate a temp buffer as it's easier */
+    else /*if (nXSize != nBufXSize || nYSize != nBufYSize ||
+             eBufType != eDataType ||
+             nPixelSpace != GDALGetDataTypeSize(eBufType) / 8 ||
+             check if the user buffer is large enough)*/
+    {
+        /* We need a temporary buffer for over-sampling/sub-sampling */
+        /* and/or data type conversion */
+        pTmpBuffer = VSIMalloc(nReqXSize * nReqYSize * ePixelSize);
+        if (pTmpBuffer == NULL)
+            eErr = CE_Failure;
+    }
+
+    /* Prepare data extraction */
+    for(iLine=0;eErr == CE_None && iLine<nReqYSize;iLine++)
+    {
+        /*if (pTmpBuffer == NULL)
+            ppData[iLine] = ((GByte*)pData) + iLine * nLineSpace;
+        else*/
+            ppData[iLine] = ((GByte*)pTmpBuffer) + iLine * nReqXSize * ePixelSize;
+        int nSrcLine;
+        if (nBufYSize < nYSize) /* Sub-sampling in y */
+            nSrcLine = nYOff + (int)((iLine + 0.5) * nYSize / nBufYSize);
+        else
+            nSrcLine = nYOff + iLine;
+
+        int nBlockXOff = 0;
+        int nBlockYOff = nSrcLine / nBlockYSize;
+        int nYOffsetInBlock = nSrcLine % nBlockYSize;
+        int nBlocksPerRow = DIV_ROUND_UP(nRasterXSize, nBlockXSize);
+        int nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow;
+
+        panOffsets[iLine] = panTIFFOffsets[nBlockId];
+        if (panOffsets[iLine] == 0) /* We don't support sparse files */
+            eErr = CE_Failure;
+
+        panOffsets[iLine] += (nXOff + nYOffsetInBlock * nBlockXSize) * ePixelSize;
+        panSizes[iLine] = nReqXSize * ePixelSize;
+    }
+
+    /* Extract data from the file */
+    if (eErr == CE_None)
+    {
+        VSILFILE* fp = (VSILFILE*) TIFFClientdata( hTIFF );
+        int nRet = VSIFReadMultiRangeL(nReqYSize, ppData, panOffsets, panSizes, fp);
+        if (nRet != 0)
+            eErr = CE_Failure;
+    }
+
+    /* Byte-swap if necessary */
+    if (eErr == CE_None && TIFFIsByteSwapped(hTIFF))
+    {
+        for(iLine=0;iLine<nReqYSize;iLine++)
+        {
+            GDALSwapWords( ppData[iLine], eDTSize, nReqXSize * nContigBands, eDTSize);
+        }
+    }
+
+    /* Over-sampling/sub-sampling and/or data type conversion */
+    if (eErr == CE_None && pTmpBuffer != NULL)
+    {
+        for(int iY=0;iY<nBufYSize;iY++)
+        {
+            int iSrcY = (nBufYSize <= nYSize) ? iY :
+                            (int)((iY + 0.5) * nYSize / nBufYSize);
+            /* Optimization: no resampling, no data type change, number of bands requested == number of bands */
+            /* and buffer is packed pixel-interleaved */
+            if (nBufXSize == nXSize && nContigBands == nBandCount &&
+                eDataType == eBufType &&
+                nBandSpace == eDTSize && nPixelSpace == nBandCount * nBandSpace )
+            {
+                memcpy( ((GByte*)pData) + iY * nLineSpace, ppData[iSrcY],
+                        nReqXSize * nPixelSpace );
+            }
+            /* Other optimization: no resampling, no data type change, */
+            /* data type is Byte and buffer is pixel-interleaved (with some stridding between pixels) */
+            else if (nBufXSize == nXSize &&
+                     eDataType == eBufType && eDataType == GDT_Byte &&
+                     nBandSpace == 1 && nPixelSpace > nBandCount )
+            {
+                GByte* pabySrcData = ((GByte*)ppData[iSrcY]);
+                GByte* pabyDstData = ((GByte*)pData) + iY * nLineSpace;
+                for(int iX=0;iX<nBufXSize;iX++)
+                {
+                    for(int iBand = 0; iBand < nBandCount; iBand ++ )
+                    {
+                        pabyDstData[iX * nPixelSpace + iBand] = pabySrcData[iX * ePixelSize + iBand];
+                    }
+                }
+            }
+            /* General case */
+            else
+            {
+                for(int iBand = 0; iBand < nBandCount; iBand ++ )
+                {
+                    GByte* pabySrcData = ((GByte*)ppData[iSrcY]) + iBand * eDTSize;
+                    GByte* pabyDstData = ((GByte*)pData) + iBand * nBandSpace + iY * nLineSpace;
+                    for(int iX=0;iX<nBufXSize;iX++)
+                    {
+                        int iSrcX = (nBufXSize == nXSize) ? iX :
+                                        (int)((iX+0.5) * nXSize / nBufXSize);
+                        GDALCopyWords( pabySrcData + iSrcX * ePixelSize,
+                                    eDataType, 0,
+                                    pabyDstData + iX * nPixelSpace,
+                                    eBufType, 0, 1);
+                    }
+                }
+            }
+        }
+    }
+
+    /* Cleanup */
+    CPLFree(pTmpBuffer);
+    CPLFree(ppData);
+    CPLFree(panOffsets);
+    CPLFree(panSizes);
+
+    return eErr;
+}
+
 
 /************************************************************************/
 /*                            IRasterIO()                               */
