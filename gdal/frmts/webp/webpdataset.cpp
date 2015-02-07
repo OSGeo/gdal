@@ -500,12 +500,14 @@ int WEBPDatasetWriter(const uint8_t* data, size_t data_size,
 /*                        WEBPDatasetProgressHook()                     */
 /************************************************************************/
 
+#if WEBP_ENCODER_ABI_VERSION >= 0x0100
 static
 int WEBPDatasetProgressHook(int percent, const WebPPicture* const picture)
 {
     WebPUserData* pUserData = (WebPUserData*)picture->custom_ptr;
     return pUserData->pfnProgress( percent / 100.0, NULL, pUserData->pProgressData );
 }
+#endif
 
 /************************************************************************/
 /*                              CreateCopy()                            */

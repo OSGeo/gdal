@@ -73,7 +73,7 @@
 
 #if ECWSDK_VERSION < 40
 
-#if !defined(NO_COMPRESS)
+#if !defined(NO_COMPRESS) && !defined(HAVE_COMPRESS)
 #  define HAVE_COMPRESS
 #endif
 

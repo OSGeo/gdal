@@ -263,7 +263,7 @@ OGRErr FGdbDataSource::DeleteLayer( int iLayer )
 
     // Fetch FGDBAPI Table before deleting OGR layer object
 
-    Table* pTable = poBaseLayer->GetTable();
+    //Table* pTable = poBaseLayer->GetTable();
 
     std::string name = poBaseLayer->GetLayerDefn()->GetName();
     std::wstring strPath = poBaseLayer->GetTablePath();
@@ -272,7 +272,7 @@ OGRErr FGdbDataSource::DeleteLayer( int iLayer )
     // delete OGR layer
     delete m_layers[iLayer];
 
-    pTable = NULL; // OGR Layer had ownership of FGDB Table
+    //pTable = NULL; // OGR Layer had ownership of FGDB Table
 
     m_layers.erase(m_layers.begin() + iLayer);
 
