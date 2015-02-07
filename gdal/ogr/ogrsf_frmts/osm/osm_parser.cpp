@@ -338,14 +338,11 @@ int ReadOSMHeader(GByte* pabyData, GByte* pabyDataLimit,
         }
         else if (nKey == MAKE_KEY(OSMHEADER_IDX_OSMOSIS_REPLICATION_TIMESTAMP, WT_VARINT))
         {
-            /* TODO: Do something with nVal or change this to a seek forward. */
-            GIntBig nVal;
-            READ_VARINT64(pabyData, pabyDataLimit, nVal);
+            SKIP_VARINT(pabyData, pabyDataLimit);
         }
         else if (nKey == MAKE_KEY(OSMHEADER_IDX_OSMOSIS_REPLICATION_SEQ_NUMBER, WT_VARINT))
         {
-            GIntBig nVal;
-            READ_VARINT64(pabyData, pabyDataLimit, nVal);
+            SKIP_VARINT(pabyData, pabyDataLimit);
         }
         else if (nKey == MAKE_KEY(OSMHEADER_IDX_OSMOSIS_REPLICATION_BASE_URL, WT_DATA))
         {
@@ -769,8 +766,9 @@ int ReadOSMInfo(GByte* pabyData, GByte* pabyDataLimit,
         }
         else if (nKey == MAKE_KEY(INFO_IDX_VISIBLE, WT_VARINT))
         {
-            int nVisible;
-            READ_VARINT32(pabyData, pabyDataLimit, /*psInfo->*/nVisible);
+            SKIP_VARINT(pabyData, pabyDataLimit);
+            //int nVisible;
+            //READ_VARINT32(pabyData, pabyDataLimit, /*psInfo->*/nVisible);
         }
         else
         {
@@ -874,11 +872,12 @@ int ReadNode(GByte* pabyData, GByte* pabyDataLimit,
         }
         else if (nKey == MAKE_KEY(NODE_IDX_VALS, WT_DATA))
         {
-            unsigned int nSize;
+            //unsigned int nSize;
             unsigned int nIter = 0;
             if (sNode.nTags == 0)
                 GOTO_END_ERROR;
-            READ_VARUINT32(pabyData, pabyDataLimit, nSize);
+            //READ_VARUINT32(pabyData, pabyDataLimit, nSize);
+            SKIP_VARINT(pabyData, pabyDataLimit);
 
             for(; nIter < sNode.nTags; nIter ++)
             {
@@ -999,11 +998,12 @@ int ReadWay(GByte* pabyData, GByte* pabyDataLimit,
         }
         else if (nKey == MAKE_KEY(WAY_IDX_VALS, WT_DATA))
         {
-            unsigned int nSize;
+            //unsigned int nSize;
             unsigned int nIter = 0;
             if (sWay.nTags == 0)
                 GOTO_END_ERROR;
-            READ_VARUINT32(pabyData, pabyDataLimit, nSize);
+            //READ_VARUINT32(pabyData, pabyDataLimit, nSize);
+            SKIP_VARINT(pabyData, pabyDataLimit);
 
             for(; nIter < sWay.nTags; nIter ++)
             {
@@ -1162,11 +1162,12 @@ int ReadRelation(GByte* pabyData, GByte* pabyDataLimit,
         }
         else if (nKey == MAKE_KEY(RELATION_IDX_VALS, WT_DATA))
         {
-            unsigned int nSize;
+            //unsigned int nSize;
             unsigned int nIter = 0;
             if (sRelation.nTags == 0)
                 GOTO_END_ERROR;
-            READ_VARUINT32(pabyData, pabyDataLimit, nSize);
+            //READ_VARUINT32(pabyData, pabyDataLimit, nSize);
+            SKIP_VARINT(pabyData, pabyDataLimit);
 
             for(; nIter < sRelation.nTags; nIter ++)
             {
@@ -1233,10 +1234,11 @@ int ReadRelation(GByte* pabyData, GByte* pabyDataLimit,
         {
             unsigned int nIter = 0;
             GIntBig nMemID = 0;
-            unsigned int nSize;
+            //unsigned int nSize;
             if (sRelation.nMembers == 0)
                 GOTO_END_ERROR;
-            READ_VARUINT32(pabyData, pabyDataLimit, nSize);
+            //READ_VARUINT32(pabyData, pabyDataLimit, nSize);
+            SKIP_VARINT(pabyData, pabyDataLimit);
 
             for(; nIter < sRelation.nMembers; nIter++)
             {

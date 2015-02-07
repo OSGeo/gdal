@@ -2414,8 +2414,7 @@ int DGNAddRawAttrLink( DGNHandle hDGN, DGNElemCore *psElement,
 /* -------------------------------------------------------------------- */
 /*      Grow the raw data, if we have rawdata.                          */
 /* -------------------------------------------------------------------- */
-    /* TODO: operation on raw_bytes may be undefined. */
-    psElement->raw_bytes = psElement->raw_bytes += nLinkSize;
+    psElement->raw_bytes += nLinkSize;
     psElement->raw_data = (unsigned char *)
         CPLRealloc( psElement->raw_data, psElement->raw_bytes );
 

@@ -232,8 +232,7 @@ static int ReadKey(GTIF* gt, TempKeyData* tempData,
     {
         case GTIFF_LOCAL:
             /* store value into data value */
-            /* TODO: Fix strict-aliasing issue. */
-            *(pinfo_t *)(&keyptr->gk_data) = entptr->ent_val_offset;
+            memcpy(&keyptr->gk_data, &(entptr->ent_val_offset), sizeof(pinfo_t));
             break;
         case GTIFF_GEOKEYDIRECTORY:
             keyptr->gk_data = (char *)(gt->gt_short+offset);

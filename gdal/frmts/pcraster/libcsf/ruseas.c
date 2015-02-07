@@ -438,9 +438,9 @@ int RuseAs(
   CSF_VS inFileVS = RgetValueScale(m);
   int hasInFileCellReprType2 =  HasInFileCellReprType2(inFileCR);
 
-  switch(useType)
+  switch((int)useType) /* FIXME ? */
   {
-    case VS_BOOLEAN:
+    case VS_BOOLEAN: /* FIXME ? doesn't belong to CSF_CR */
   	switch(inFileVS) {
 	   case VS_LDD: case VS_DIRECTION:
    			M_ERROR(CANT_USE_AS_BOOLEAN);
@@ -464,7 +464,7 @@ int RuseAs(
    	} /* case useType == VS_BOOLEAN */
    	break;
 
-   case VS_LDD:
+   case VS_LDD: /* FIXME ? doesn't belong to CSF_CR */
         switch(inFileVS) {
          case VS_LDD:
    	   		POSTCOND(inFileCR == CR_UINT1);

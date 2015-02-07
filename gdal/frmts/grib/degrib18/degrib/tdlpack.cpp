@@ -3869,7 +3869,7 @@ static int GroupPack (double *Src, sInt4 **Dst, sInt4 numData,
                            * requested. */
    sInt4 *Data;         /* The scaled data. */
    char f_min;          /* Flag saying overallMin is valid. */
-   sInt4 overallMin;    /* The overall min of the scaled data. */
+   sInt4 overallMin = 0;    /* The overall min of the scaled data. */
    sInt4 secMin;        /* The overall min of the 2nd order differences */
    sInt4 li_primMiss = 0; /* The scaled primary missing value */
    sInt4 li_secMiss = 0; /* The scaled secondary missing value */

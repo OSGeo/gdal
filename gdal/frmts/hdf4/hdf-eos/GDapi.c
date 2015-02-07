@@ -7620,10 +7620,10 @@ GDdefboxregion(int32 gridID, float64 cornerlon[], float64 cornerlat[])
     int32           spherecode;	    /* Sphere code */
     int32           row[32];	    /* Row array */
     int32           col[32];	    /* Column array */
-    int32           minCol;	    /* Minimun column value */
-    int32           minRow;	    /* Minimun row value */
-    int32           maxCol;	    /* Maximun column value */
-    int32           maxRow;	    /* Maximun row value */
+    int32           minCol = 0;	    /* Minimun column value */
+    int32           minRow = 0;	    /* Minimun row value */
+    int32           maxCol = 0;	    /* Maximun column value */
+    int32           maxRow = 0;	    /* Maximun row value */
     int32           npnts;	    /* Number of boundary
                                        (edge & tangent) pnts */
 
