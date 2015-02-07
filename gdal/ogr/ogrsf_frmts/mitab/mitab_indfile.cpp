@@ -2122,11 +2122,17 @@ void TABINDNode::Dump(FILE *fpOut /*=NULL*/)
               }
               else if (m_nKeyLength != 4)
               {
+                GInt32 nInt32;
+                GInt16 nInt16;
+                GUInt32 nUInt32;
+                memcpy(&nInt32, aKeyValBuf, 4);
+                memcpy(&nInt16, aKeyValBuf + 2, 2);
+                memcpy(&nUInt32, aKeyValBuf, 4);
                 nRecordPtr = ReadIndexEntry(i, aKeyValBuf);
                 fprintf(fpOut, "   nRecordPtr = %d\n", nRecordPtr);
-                fprintf(fpOut, "   Int Value = %d\n", *(GInt32*)aKeyValBuf);
-                fprintf(fpOut, "   Int16 Val= %d\n",*(GInt16*)(aKeyValBuf+2));
-                fprintf(fpOut, "   Hex Val= 0x%8.8x\n",*(GUInt32*)aKeyValBuf);
+                fprintf(fpOut, "   Int Value = %d\n", nInt32);
+                fprintf(fpOut, "   Int16 Val= %d\n",nInt16);
+                fprintf(fpOut, "   Hex Val= 0x%8.8x\n",nUInt32);
               }
               else
               {

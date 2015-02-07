@@ -366,11 +366,7 @@ static void GRIB1_Table3LookUp (pdsG1Type *pdsMeta, char **shortLevelName,
  */
 static double fval_360 (uInt4 aval)
 {
-   double pow16;
-/*   short int *ptr = (short int *) (&pow16);*/
-   void *voidPtr = &pow16;
-   short int *ptr = (short int *) voidPtr;
-
+   short int ptr[4];
 #ifdef LITTLE_ENDIAN
    ptr[3] = ((((aval >> 24) & 0x7f) << 2) + (0x3ff - 0x100)) << 4;
    ptr[2] = 0;
@@ -382,6 +378,8 @@ static double fval_360 (uInt4 aval)
    ptr[2] = 0;
    ptr[3] = 0;
 #endif
+   double pow16;
+   memcpy(&pow16, ptr, 8);
    return ((aval & 0x80000000) ? -pow16 : pow16) *
          (aval & 0xffffff) / ((double) 0x1000000);
 }

@@ -2698,7 +2698,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Try opening the dataset.                                        */
 /* -------------------------------------------------------------------- */
     int32       iAttribute, nValues, iAttrNumType;
-    double      dfNoData, dfScale = 1, dfOffset = 0;
+    double      dfNoData = 0, dfScale = 1, dfOffset = 0;
     int         bNoDataSet = FALSE, bHaveScale = FALSE, bHaveOffset = FALSE;
     const char  *pszUnits = NULL, *pszDescription = NULL;
 

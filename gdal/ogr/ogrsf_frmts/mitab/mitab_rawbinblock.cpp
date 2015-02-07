@@ -1027,18 +1027,16 @@ void TABRawBinBlock::DumpBytes(GInt32 nValue, int nOffset /*=0*/,
                                FILE *fpOut /*=NULL*/)
 {
     GInt32      anVal[2];
-    GInt16      *pn16Val1, *pn16Val2;
-    float       *pfValue;
+    GInt16      n16Val1, n16Val2;
+    float       fValue;
     char        *pcValue;
-    double      *pdValue;
+    double      dValue;
 
+    pcValue = (char*)&nValue;
+    memcpy(&fValue, &nValue, 4);
 
-    pfValue = (float*)(&nValue);
-    pcValue = (char*)(&nValue);
-    pdValue = (double*)anVal;
-
-    pn16Val1 = (GInt16*)(pcValue+2);
-    pn16Val2 = (GInt16*)(pcValue);
+    memcpy(&n16Val1, pcValue + 2, sizeof(GInt16));
+    memcpy(&n16Val2, pcValue, sizeof(GInt16));
 
     anVal[0] = anVal[1] = 0;
 
@@ -1052,13 +1050,14 @@ void TABRawBinBlock::DumpBytes(GInt32 nValue, int nOffset /*=0*/,
 #else
     anVal[1] = nValue;
 #endif
+    memcpy(&dValue, anVal, 8);
 
     if (fpOut == NULL)
         fpOut = stdout;
 
     fprintf(fpOut, "%d\t0x%8.8x  %-5d\t%-6d %-6d %5.3e  d=%5.3e",
                     nOffset, nValue, nValue,
-                    *pn16Val1, *pn16Val2, *pfValue, *pdValue);
+                    n16Val1, n16Val2, fValue, dValue);
 
     printf("\t[%c%c%c%c]\n", isprint(pcValue[0])?pcValue[0]:'.',
                              isprint(pcValue[1])?pcValue[1]:'.',

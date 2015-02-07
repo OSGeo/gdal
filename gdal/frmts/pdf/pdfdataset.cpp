@@ -2849,7 +2849,10 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
                 if (EQUAL(pszUserPwd, "ASK_INTERACTIVE"))
                 {
                     printf( "Enter password (will be echo'ed in the console): " );
-                    fgets( szPassword, sizeof(szPassword), stdin );
+                    if (0 == fgets( szPassword, sizeof(szPassword), stdin ))
+                    {
+                      fprintf(stderr, "WARNING: Error getting password.\n");
+                    }
                     szPassword[sizeof(szPassword)-1] = 0;
                     char* sz10 = strchr(szPassword, '\n');
                     if (sz10)
