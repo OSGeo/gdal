@@ -129,14 +129,14 @@ static void KEACopyRAT(GDALRasterBand *pBand, kealib::KEAImageIO *pImageIO, int 
 
         kealib::KEAAttributeTable *keaAtt = pImageIO->getAttributeTable(kealib::kea_att_file, nBand);
 
-        bool redDef = false;
+        /*bool redDef = false;
         int redIdx = -1;
         bool greenDef = false;
         int greenIdx = -1;
         bool blueDef = false;
         int blueIdx = -1;
         bool alphaDef = false;
-        int alphaIdx = -1;
+        int alphaIdx = -1;*/
         
         int numCols = gdalAtt->GetColumnCount();
         std::vector<kealib::KEAATTField*> *fields = new std::vector<kealib::KEAATTField*>();
@@ -173,8 +173,8 @@ static void KEACopyRAT(GDALRasterBand *pBand, kealib::KEAImageIO *pImageIO, int 
                 field->name = "Alpha";
                 field->usage = "Alpha";
                 field->dataType = kealib::kea_att_int;
-                alphaDef = true;
-                alphaIdx = ni;
+                /*alphaDef = true;
+                alphaIdx = ni;*/
             }
             else
             {
@@ -192,8 +192,8 @@ static void KEACopyRAT(GDALRasterBand *pBand, kealib::KEAImageIO *pImageIO, int 
                         if( bInputHFA )
                         {
                             field->dataType = kealib::kea_att_int;
-                            redDef = true;
-                            redIdx = ni;
+                            /*redDef = true;
+                            redIdx = ni;*/
                         }
                         break;
                     case GFU_Green:
@@ -201,8 +201,8 @@ static void KEACopyRAT(GDALRasterBand *pBand, kealib::KEAImageIO *pImageIO, int 
                         if( bInputHFA )
                         {
                             field->dataType = kealib::kea_att_int;
-                            greenDef = true;
-                            greenIdx = ni;
+                            /*greenDef = true;
+                            greenIdx = ni;*/
                         }
                         break;
                     case GFU_Blue:
@@ -210,8 +210,8 @@ static void KEACopyRAT(GDALRasterBand *pBand, kealib::KEAImageIO *pImageIO, int 
                         if( bInputHFA )
                         {
                             field->dataType = kealib::kea_att_int;
-                            blueDef = true;
-                            blueIdx = ni;
+                            /*blueDef = true;
+                            blueIdx = ni;*/
                         }
                         break;
                     case GFU_Alpha:

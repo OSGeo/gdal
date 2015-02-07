@@ -1002,7 +1002,10 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
 
     opj_image_t * psImage = NULL;
     OPJ_INT32  nX0,nY0;
-    OPJ_UINT32 nTileW,nTileH,nTilesX,nTilesY;
+    OPJ_UINT32 nTileW,nTileH;
+#ifdef DEBUG
+    OPJ_UINT32 nTilesX,nTilesY;
+#endif
     if(!opj_read_header(pStream,pCodec,&psImage))
     {
         CPLError(CE_Failure, CPLE_AppDefined, "opj_read_header() failed");
@@ -1018,8 +1021,10 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
     nY0 = pCodeStreamInfo->ty0;
     nTileW = pCodeStreamInfo->tdx;
     nTileH = pCodeStreamInfo->tdy;
+#ifdef DEBUG
     nTilesX = pCodeStreamInfo->tw;
     nTilesY = pCodeStreamInfo->th;
+#endif
     int mct = pCodeStreamInfo->m_default_tile_info.mct;
     int numResolutions = pCodeStreamInfo->m_default_tile_info.tccp_info[0].numresolutions;
     opj_destroy_cstr_info(&pCodeStreamInfo);
@@ -1039,6 +1044,8 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
     CPLDebug("OPENJPEG", "nY0 = %d", nY0);
     CPLDebug("OPENJPEG", "nTileW = %d", nTileW);
     CPLDebug("OPENJPEG", "nTileH = %d", nTileH);
+    CPLDebug("OPENJPEG", "nTilesX = %d", nTilesX);
+    CPLDebug("OPENJPEG", "nTilesY = %d", nTilesY);
     CPLDebug("OPENJPEG", "mct = %d", mct);
     CPLDebug("OPENJPEG", "psImage->x0 = %d", psImage->x0);
     CPLDebug("OPENJPEG", "psImage->y0 = %d", psImage->y0);
