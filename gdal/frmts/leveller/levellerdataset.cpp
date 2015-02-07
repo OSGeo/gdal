@@ -1347,9 +1347,10 @@ bool LevellerDataset::load_from_file(VSILFILE* file, const char* pszFilename)
 			{
 				UNITLABEL unitcode;
 				//char szLocalUnits[8];
-                                // TODO: Fix strict aliasing issue.
-				if(!this->get((int&)unitcode, file, "coordsys_units"))
-					unitcode = UNITLABEL_M;
+                                int unitcode_int;
+				if(!this->get(unitcode_int, file, "coordsys_units"))
+					unitcode_int = UNITLABEL_M;
+                                unitcode = (UNITLABEL) unitcode_int;
 
 				if(!this->make_local_coordsys("Leveller", unitcode))
 				{
@@ -1398,8 +1399,10 @@ bool LevellerDataset::load_from_file(VSILFILE* file, const char* pszFilename)
 			this->get(m_dElevScale, file, "coordsys_em_scale");
 			this->get(m_dElevBase, file, "coordsys_em_base");
 			UNITLABEL unitcode;
-			if(this->get((int&)unitcode, file, "coordsys_em_units"))
+                        int unitcode_int;
+			if(this->get(unitcode_int, file, "coordsys_em_units"))
 			{
+                                unitcode = (UNITLABEL) unitcode_int;
 				const char* pszUnitID = this->code_to_id(unitcode);
 				if(pszUnitID != NULL)
 					strcpy(m_szElevUnits, pszUnitID);

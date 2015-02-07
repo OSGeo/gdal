@@ -75,18 +75,17 @@ void to_native(IMAGE_DESCRIPTION_RECORD& r) {
     r.referencegrid_visir.numberOfLines = CPL_MSBWORD32(r.referencegrid_visir.numberOfLines);
     r.referencegrid_visir.numberOfColumns = CPL_MSBWORD32(r.referencegrid_visir.numberOfColumns);
     // should floats be swapped too?
-    unsigned int t;
+    float f;
 
-    // convert float using CPL_MSBWORD32
-    // TODO: Fix strict aliasing issue
-    t = *(unsigned int *)&r.referencegrid_visir.lineDirGridStep;
-    t = CPL_MSBWORD32(t);
-    r.referencegrid_visir.lineDirGridStep = *(float *)&t;
+    // convert float using CPL_MSBPTR32
+    memcpy(&f, &r.referencegrid_visir.lineDirGridStep, sizeof(f));
+    CPL_MSBPTR32(&f);
+    r.referencegrid_visir.lineDirGridStep = f;
 
-    // convert float using CPL_MSBWORD32
-    t = *(unsigned int *)&r.referencegrid_visir.columnDirGridStep;
-    t = CPL_MSBWORD32(t);
-    r.referencegrid_visir.columnDirGridStep = *(float *)&t;
+    // convert float using CPL_MSBPTR32
+    memcpy(&f, &r.referencegrid_visir.columnDirGridStep, sizeof(f));
+    CPL_MSBPTR32(&f);
+    r.referencegrid_visir.columnDirGridStep = f;
 }
 
 void to_string(PH_DATA& d) {

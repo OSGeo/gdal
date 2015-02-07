@@ -112,12 +112,12 @@ void CPCIDSK_ARRAY::Load()
 
     for( unsigned int i = 0; i < nElements; i++ )
     {
-        /* TODO: Deal with strict-aliasing issue. */
         const double* pdValue = (const double*)seg_data.Get(i*8,8);
         char uValue[8];
         std::memcpy(uValue,pdValue,8);
         SwapData(uValue,8,1);
-        double dValue = *((double*)uValue);
+        double dValue;
+        memcpy(&dValue, uValue, 8);
         moArray.push_back(dValue);
     }
 

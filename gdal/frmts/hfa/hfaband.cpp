@@ -704,7 +704,9 @@ static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
 /*      Note, floating point values are handled as if they were signed  */
 /*      32-bit integers (bug #1000).                                    */
 /* -------------------------------------------------------------------- */
-                ((float *) pabyDest)[nPixelsOutput] = *((float*)( &nDataValue ));
+                memcpy(&(((float *) pabyDest)[nPixelsOutput]),
+                       &nDataValue,
+                       sizeof(float));
             }
             else
             {
@@ -1018,7 +1020,7 @@ void HFABand::NullBlock( void *pData )
     }
     else
     {
-        double adfND[2];
+        GByte abyTmp[16];
         int i;
 
         switch( nDataType )
@@ -1027,9 +1029,9 @@ void HFABand::NullBlock( void *pData )
           {
               nWords = (nWords + 7)/8;
               if( dfNoData != 0.0 )
-                  ((unsigned char *) &adfND)[0] = 0xff;
+                  ((unsigned char *) abyTmp)[0] = 0xff;
               else
-                  ((unsigned char *) &adfND)[0] = 0x00;
+                  ((unsigned char *) abyTmp)[0] = 0x00;
           }
           break;
 
@@ -1037,13 +1039,13 @@ void HFABand::NullBlock( void *pData )
           {
               nWords = (nWords + 3)/4;
               if( dfNoData == 0.0 )
-                  ((unsigned char *) &adfND)[0] = 0x00;
+                  ((unsigned char *) abyTmp)[0] = 0x00;
               else if( dfNoData == 1.0 )
-                  ((unsigned char *) &adfND)[0] = 0x55;
+                  ((unsigned char *) abyTmp)[0] = 0x55;
               else if( dfNoData == 2.0 )
-                  ((unsigned char *) &adfND)[0] = 0xaa;
+                  ((unsigned char *) abyTmp)[0] = 0xaa;
               else
-                  ((unsigned char *) &adfND)[0] = 0xff;
+                  ((unsigned char *) abyTmp)[0] = 0xff;
           }
           break;
 
@@ -1054,58 +1056,80 @@ void HFABand::NullBlock( void *pData )
 
               nWords = (nWords + 1)/2;
                   
-              ((unsigned char *) &adfND)[0] = byVal + (byVal << 4);
+              ((unsigned char *) abyTmp)[0] = byVal + (byVal << 4);
           }
           break;
 
           case EPT_u8:
-            ((unsigned char *) &adfND)[0] = 
+            ((unsigned char *) abyTmp)[0] = 
                 (unsigned char) MAX(0,MIN(255,(int)dfNoData));
             break;
 
           case EPT_s8:
-            ((signed char *) &adfND)[0] = 
+            ((signed char *) abyTmp)[0] = 
                 (signed char) MAX(-128,MIN(127,(int)dfNoData));
             break;
 
           case EPT_u16:
-            ((GUInt16 *) &adfND)[0] = (GUInt16) dfNoData;
+          {
+            GUInt16 nTmp = (GUInt16) dfNoData;
+            memcpy(abyTmp, &nTmp, sizeof(nTmp));
             break;
+          }
 
           case EPT_s16:
-            ((GInt16 *) &adfND)[0] = (GInt16) dfNoData;
+          {
+            GInt16 nTmp = (GInt16) dfNoData;
+            memcpy(abyTmp, &nTmp, sizeof(nTmp));
             break;
+          }
 
           case EPT_u32:
-            ((GUInt32 *) &adfND)[0] = (GUInt32) dfNoData;
+          {
+            GUInt32 nTmp = (GUInt32) dfNoData;
+            memcpy(abyTmp, &nTmp, sizeof(nTmp));
             break;
+          }
 
           case EPT_s32:
-            ((GInt32 *) &adfND)[0] = (GInt32) dfNoData;
+          {
+            GInt32 nTmp = (GInt32) dfNoData;
+            memcpy(abyTmp, &nTmp, sizeof(nTmp));
             break;
+          }
 
           case EPT_f32:
-            ((float *) &adfND)[0] = (float) dfNoData;
+          {
+            float fTmp = (float) dfNoData;
+            memcpy(abyTmp, &fTmp, sizeof(fTmp));
             break;
+          }
 
           case EPT_f64:
-            ((double *) &adfND)[0] = dfNoData;
+          {
+            memcpy(abyTmp, &dfNoData, sizeof(dfNoData));
             break;
+          }
 
           case EPT_c64:
-            ((float *) &adfND)[0] = (float) dfNoData;
-            ((float *) &adfND)[1] = 0;
+          {
+            float fTmp = (float) dfNoData;
+            memcpy(abyTmp, &fTmp, sizeof(fTmp));
+            memset(abyTmp+4, 0, sizeof(float));
             break;
+          }
 
           case EPT_c128:
-            ((double *) &adfND)[0] = dfNoData;
-            ((double *) &adfND)[1] = 0;
+          {
+            memcpy(abyTmp, &dfNoData, sizeof(dfNoData));
+            memset(abyTmp+8, 0, sizeof(double));
             break;
+          }
         }
             
         for( i = 0; i < nWords; i++ )
             memcpy( ((GByte *) pData) + nChunkSize * i, 
-                    &adfND[0], nChunkSize );
+                    abyTmp, nChunkSize );
     }
 
 }

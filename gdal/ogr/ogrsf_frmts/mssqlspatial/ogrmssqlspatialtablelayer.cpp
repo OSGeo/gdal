@@ -1397,7 +1397,7 @@ void OGRMSSQLSpatialTableLayer::AppendFieldValue(CPLODBCStatement *poStatement,
             wchar_t* buffer = CPLRecodeToWChar( pszStrValue, CPL_ENC_UTF8, CPL_ENC_UCS2);
             int nRetCode = SQLBindParameter(poStatement->GetStatement(), (SQLUSMALLINT)((*bind_num) + 1), 
                 SQL_PARAM_INPUT, SQL_C_WCHAR, SQL_WVARCHAR, 
-                wcslen(buffer) + 1, NULL, (SQLPOINTER)buffer, 0, NULL);
+                wcslen(buffer) + 1, 0, (SQLPOINTER)buffer, 0, NULL);
             if ( nRetCode == SQL_SUCCESS || nRetCode == SQL_SUCCESS_WITH_INFO )
             {
                 poStatement->Append( "?" );
