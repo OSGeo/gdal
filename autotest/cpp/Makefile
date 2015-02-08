@@ -2,7 +2,7 @@ CXX = g++
 CXXFLAGS =`gdal-config --cflags` -Wall -I. -Itut $(CPPFLAGS)
 LDFLAGS = `gdal-config --libs`
 
-PROGS = gdal_unit_test testperfcopywords testcopywords testclosedondestroydm testthreadcond test_virtualmem
+PROGS = gdal_unit_test testperfcopywords testcopywords testclosedondestroydm testthreadcond test_virtualmem testblockcache
 
 all: $(PROGS)
 
@@ -16,6 +16,8 @@ quick_test:
 	./testclosedondestroydm
 	./testthreadcond
 	./test_virtualmem
+	./testblockcache -check -co TILED=YES --debug TEST
+	./testblockcache -check -memdriver
 
 OBJ = \
     gdal_unit_test.o \
@@ -48,6 +50,9 @@ testthreadcond: testthreadcond.c
 
 test_virtualmem: test_virtualmem.cpp
 	$(CXX) -g $(CXXFLAGS) $< $(LDFLAGS) -o $@
+
+testblockcache: testblockcache.cpp
+	$(CXX) -g -O2 $(CXXFLAGS) $< $(LDFLAGS) -o $@
 
 vsipreload.so: ../../gdal/port/vsipreload.cpp
 	$(CXX) -fPIC -g $(CXXFLAGS) $< $(LDFLAGS) -shared -o $@
