@@ -1376,9 +1376,12 @@ def tiff_direct_io():
             gdaltest.post_reason('fail')
             return 'fail'
 
-        if ref_3bands_data_byte_pixel_interleaved_with_extra_space != ref_3bands_data_byte_pixel_interleaved_with_extra_space:
-            gdaltest.post_reason('fail')
-            return 'fail'
+        for y in range(ysize):
+            for x in range(xsize):
+                for i in range(3):
+                    if ref_3bands_data_byte_pixel_interleaved_with_extra_space[(y*xsize+x)*4+i] != got_3bands_data_byte_pixel_interleaved_with_extra_space[(y*xsize+x)*4+i]:
+                        gdaltest.post_reason('fail')
+                        return 'fail'
 
         if ref_4bands_data_float32 != got_4bands_data_float32:
             gdaltest.post_reason('fail')
