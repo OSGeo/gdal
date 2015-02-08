@@ -442,6 +442,93 @@ def basic_test_13():
 
     return 'success'
 
+###############################################################################
+# Test SetMetadata()
+
+def basic_test_14():
+
+    ds = gdal.GetDriverByName('MEM').Create('',1,1)
+
+    ds.SetMetadata('foo')
+    if ds.GetMetadata_List() != ['foo']:
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    try:
+        ds.SetMetadata(5)
+        gdaltest.post_reason('failure')
+        return 'fail'
+    except:
+        pass
+
+    ds.SetMetadata(['foo=bar'])
+    if ds.GetMetadata_List() != ['foo=bar']:
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    try:
+        ds.SetMetadata([5])
+        gdaltest.post_reason('failure')
+        return 'fail'
+    except:
+        pass
+
+    ds.SetMetadata({'foo' : 'baz' })
+    if ds.GetMetadata_List() != ['foo=baz']:
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    try:
+        ds.SetMetadata({'foo' : 5 })
+        gdaltest.post_reason('failure')
+        return 'fail'
+    except:
+        pass
+
+    try:
+        ds.SetMetadata({ 5 : 'baz' })
+        gdaltest.post_reason('failure')
+        return 'fail'
+    except:
+        pass
+
+    try:
+        ds.SetMetadata({ 5 : 6 })
+        gdaltest.post_reason('failure')
+        return 'fail'
+    except:
+        pass
+
+    if sys.version_info >= (3,0,0):
+        val = '\u00e9ven'
+    else:
+        exec("val = u'\\u00e9ven'")
+
+    ds.SetMetadata({'bar' : val })
+    if ds.GetMetadata()['bar'] != val:
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    ds.SetMetadata({val : 'baz' })
+    if ds.GetMetadata()[val] != 'baz':
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    try:
+        ds.SetMetadata({val : 5 })
+        gdaltest.post_reason('failure')
+        return 'fail'
+    except:
+        pass
+
+    try:
+        ds.SetMetadata({ 5 : val })
+        gdaltest.post_reason('failure')
+        return 'fail'
+    except:
+        pass
+
+    return 'success'
 
 gdaltest_list = [ basic_test_1,
                   basic_test_2,
@@ -455,7 +542,8 @@ gdaltest_list = [ basic_test_1,
                   basic_test_10,
                   basic_test_11,
                   basic_test_12,
-                  basic_test_13 ]
+                  basic_test_13,
+                  basic_test_14 ]
 
 
 if __name__ == '__main__':

@@ -823,14 +823,16 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
   if ( PySequence_Check( $input ) ) {
     int size = PySequence_Size($input);
     for (int i = 0; i < size; i++) {
-      char *pszItem = NULL;
       PyObject* pyObj = PySequence_GetItem($input,i);
-      if ( ! PyArg_Parse( pyObj, "s", &pszItem ) ) {
+      int bFreeStr;
+      char* pszStr = GDALPythonObjectToCStr(pyObj, &bFreeStr);
+      if ( pszStr == NULL ) {
           Py_DECREF(pyObj);
           PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
           SWIG_fail;
       }
-      $1 = CSLAddString( $1, pszItem );
+      $1 = CSLAddString( $1, pszStr );
+      GDALPythonFreeCStr(pszStr, bFreeStr);
       Py_DECREF(pyObj);
     }
   }
@@ -841,14 +843,29 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
       PyObject *item_list = PyMapping_Items( $input );
       for( int i=0; i<size; i++ ) {
         PyObject *it = PySequence_GetItem( item_list, i );
-        char *nm;
-        char *val;
-        if ( ! PyArg_ParseTuple( it, "ss", &nm, &val ) ) {
+
+        PyObject *k, *v;
+        if ( ! PyArg_ParseTuple( it, "OO", &k, &v ) ) {
           Py_DECREF(it);
           PyErr_SetString(PyExc_TypeError,"dictionnaire must contain tuples of strings");
           SWIG_fail;
         }
-        $1 = CSLAddNameValue( $1, nm, val );
+
+        int bFreeK, bFreeV;
+        char* pszK = GDALPythonObjectToCStr(k, &bFreeK);
+        char* pszV = GDALPythonObjectToCStr(v, &bFreeV);
+        if( pszK == NULL || pszV == NULL )
+        {
+            GDALPythonFreeCStr(pszK, bFreeK);
+            GDALPythonFreeCStr(pszV, bFreeV);
+            Py_DECREF(it);
+            PyErr_SetString(PyExc_TypeError,"dictionnaire must contain tuples of strings");
+            SWIG_fail;
+        }
+         $1 = CSLAddNameValue( $1, pszK, pszV );
+
+        GDALPythonFreeCStr(pszK, bFreeK);
+        GDALPythonFreeCStr(pszV, bFreeV);
         Py_DECREF(it);
       }
       Py_DECREF(item_list);
