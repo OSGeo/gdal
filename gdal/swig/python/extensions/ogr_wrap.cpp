@@ -5079,14 +5079,16 @@ SWIGINTERN PyObject *_wrap_MajorObject_SetMetadata__SWIG_0(PyObject *SWIGUNUSEDP
     if ( PySequence_Check( obj1 ) ) {
       int size = PySequence_Size(obj1);
       for (int i = 0; i < size; i++) {
-        char *pszItem = NULL;
         PyObject* pyObj = PySequence_GetItem(obj1,i);
-        if ( ! PyArg_Parse( pyObj, "s", &pszItem ) ) {
+        int bFreeStr;
+        char* pszStr = GDALPythonObjectToCStr(pyObj, &bFreeStr);
+        if ( pszStr == NULL ) {
           Py_DECREF(pyObj);
           PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
           SWIG_fail;
         }
-        arg2 = CSLAddString( arg2, pszItem );
+        arg2 = CSLAddString( arg2, pszStr );
+        GDALPythonFreeCStr(pszStr, bFreeStr);
         Py_DECREF(pyObj);
       }
     }
@@ -5097,14 +5099,29 @@ SWIGINTERN PyObject *_wrap_MajorObject_SetMetadata__SWIG_0(PyObject *SWIGUNUSEDP
         PyObject *item_list = PyMapping_Items( obj1 );
         for( int i=0; i<size; i++ ) {
           PyObject *it = PySequence_GetItem( item_list, i );
-          char *nm;
-          char *val;
-          if ( ! PyArg_ParseTuple( it, "ss", &nm, &val ) ) {
+          
+          PyObject *k, *v;
+          if ( ! PyArg_ParseTuple( it, "OO", &k, &v ) ) {
             Py_DECREF(it);
             PyErr_SetString(PyExc_TypeError,"dictionnaire must contain tuples of strings");
             SWIG_fail;
           }
-          arg2 = CSLAddNameValue( arg2, nm, val );
+          
+          int bFreeK, bFreeV;
+          char* pszK = GDALPythonObjectToCStr(k, &bFreeK);
+          char* pszV = GDALPythonObjectToCStr(v, &bFreeV);
+          if( pszK == NULL || pszV == NULL )
+          {
+            GDALPythonFreeCStr(pszK, bFreeK);
+            GDALPythonFreeCStr(pszV, bFreeV);
+            Py_DECREF(it);
+            PyErr_SetString(PyExc_TypeError,"dictionnaire must contain tuples of strings");
+            SWIG_fail;
+          }
+          arg2 = CSLAddNameValue( arg2, pszK, pszV );
+          
+          GDALPythonFreeCStr(pszK, bFreeK);
+          GDALPythonFreeCStr(pszV, bFreeV);
           Py_DECREF(it);
         }
         Py_DECREF(item_list);
