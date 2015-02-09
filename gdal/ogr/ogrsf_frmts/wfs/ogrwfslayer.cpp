@@ -321,9 +321,12 @@ OGRFeatureDefn* OGRWFSLayer::BuildLayerDefnFromFeatureClass(GMLFeatureClass* poC
     this->poGMLFeatureClass = poClass;
 
     OGRFeatureDefn* poFDefn = new OGRFeatureDefn( pszName );
-    poFDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
+    poFDefn->SetGeomType(wkbNone);
     if( poGMLFeatureClass->GetGeometryPropertyCount() > 0 )
+    {
         poFDefn->SetGeomType( (OGRwkbGeometryType)poGMLFeatureClass->GetGeometryProperty(0)->GetType() );
+        poFDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Added attributes (properties).                                  */
