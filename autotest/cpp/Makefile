@@ -17,6 +17,7 @@ quick_test:
 	./testthreadcond
 	./test_virtualmem
 	./testblockcache -check -co TILED=YES --debug TEST
+	./testblockcache -check -co TILED=YES -migrate
 	./testblockcache -check -memdriver
 
 OBJ = \
