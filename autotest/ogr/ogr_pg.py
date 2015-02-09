@@ -1461,9 +1461,32 @@ def ogr_pg_31():
     if gdaltest.pg_ds is None:
         return 'skip'
 
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    lyr = gdaltest.pg_ds.CreateLayer('test_for_tables_equal_param', geom_type = ogr.wkbPoint, srs = srs, options = ['OVERWRITE=YES'])
+    lyr.StartTransaction()
+    for i in range(501):
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometry(ogr.CreateGeometryFromWkt('POINT(0 0)'))
+        lyr.CreateFeature(f)
+    lyr.CommitTransaction()
+
     ds = ogr.Open( 'PG:' + gdaltest.pg_connection_string + ' tables=tpoly,tpolycopy', update = 1 )
 
     if ds is None or ds.GetLayerCount() != 2:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    sql_lyr = ds.ExecuteSQL('SELECT * FROM test_for_tables_equal_param')
+    i = 0
+    while True:
+        f = sql_lyr.GetNextFeature()
+        if f is None:
+            break
+        i = i + 1
+    ds.ReleaseResultSet(sql_lyr)
+    if i != 501:
+        gdaltest.post_reason('fail')
         return 'fail'
 
     ds.Destroy()
@@ -3748,6 +3771,7 @@ def ogr_pg_table_cleanup():
     gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:tpoly' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:tpolycopy' )
+    gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:test_for_tables_equal_param' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:datetest' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:testgeom' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:datatypetest' )

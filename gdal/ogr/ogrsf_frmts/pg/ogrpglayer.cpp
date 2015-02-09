@@ -1446,6 +1446,14 @@ void OGRPGLayer::SetInitialQueryCursor()
     CPLAssert( pszQueryStatement != NULL );
 
     poDS->FlushSoftTransaction();
+
+    // Workaround a bug in tables= mode where the spatial ref
+    // hasn't yet been resolved. Doing so later during the FETCH transaction
+    // will fail due to the BEGIN / COMMIT involved in SRS resolution
+    // Ultimately we should reconsider all this transaction logic
+    for(int i=0;i<poFeatureDefn->GetGeomFieldCount();i++)
+        poFeatureDefn->GetGeomFieldDefn(i)->GetSpatialRef();
+
     poDS->SoftStartTransaction();
 
     if ( poDS->bUseBinaryCursor && bCanUseBinaryCursor )
