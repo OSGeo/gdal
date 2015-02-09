@@ -37,7 +37,9 @@
 // Not sure if all pthread implementations have spin lock but that's good
 // enough for now
 #ifdef CPL_MULTIPROC_PTHREAD
+#if !defined(__APPLE__)
 #define HAVE_SPINLOCK
+#endif
 #endif
 
 #ifdef HAVE_SPINLOCK
