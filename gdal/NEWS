@@ -117,6 +117,9 @@ OpenFileGDB driver:
  * fix ResetReading() on SQL layer with ORDER BY on indexed column (#5669)
  * add support for non spatial GDB v9 tables (#5673)
 
+PG driver:
+  * fix GDAL 1.11.0 regression that prevented to retrieve more than 500 features from a connection with tables= parameter and on a SQL result layer (#5837)
+
 SQLite/Spatialite driver:
  * remove 'T' suffix when formatting the content of a Date field (#5672)
  * fix segmentation fault when executing OGR2SQLITE_Register() when compiling against sqlite 3.8.7 (#5725)
