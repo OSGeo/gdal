@@ -99,7 +99,9 @@ Y += geomatrix[5] / 2.0
 # Build Spatial Reference object based on coordinate system, fetched from the
 # opened dataset
 srs = osr.SpatialReference()
-srs.ImportFromWkt(indataset.GetProjection())
+if srs.ImportFromWkt(indataset.GetProjection()) != 0:
+    print("ERROR: Cannot import projection '%s'" % indataset.GetProjection())
+    sys.exit(1)
 
 srsLatLong = srs.CloneGeogCS()
 ct = osr.CoordinateTransformation(srs, srsLatLong)
