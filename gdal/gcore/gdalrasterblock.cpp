@@ -394,7 +394,19 @@ GDALRasterBlock::~GDALRasterBlock()
 {
     Detach();
 
-    VSIFree( pData );
+    if( pData != NULL )
+    {
+        int nSizeInBytes;
+
+        VSIFree( pData );
+
+        nSizeInBytes = nXSize * nYSize * (GDALGetDataTypeSize(eType) / 8);
+
+        {
+            CPLMutexHolderD( &hRBMutex );
+            nCacheUsed -= nSizeInBytes;
+        }
+    }
 
     CPLAssert( nLockCount == 0 );
 
@@ -420,11 +432,7 @@ void GDALRasterBlock::Detach()
 
 {
     CPLMutexHolderD( &hRBMutex );
-    Detach_unlocked();
-}
 
-void GDALRasterBlock::Detach_unlocked()
-{
     if( poOldest == this )
         poOldest = poPrevious;
 
@@ -441,15 +449,6 @@ void GDALRasterBlock::Detach_unlocked()
 
     poPrevious = NULL;
     poNext = NULL;
-
-    if( pData != NULL )
-    {
-        int nSizeInBytes;
-
-        nSizeInBytes = nXSize * nYSize * (GDALGetDataTypeSize(eType) / 8);
-
-        nCacheUsed -= nSizeInBytes;
-    }
 }
 
 /************************************************************************/
@@ -537,13 +536,7 @@ void GDALRasterBlock::Touch()
 
 {
     CPLMutexHolderD( &hRBMutex );
-    Touch_unlocked();
-}
 
-
-void GDALRasterBlock::Touch_unlocked()
-
-{
     if( poNewest == this )
         return;
 
@@ -618,49 +611,26 @@ CPLErr GDALRasterBlock::Internalize()
 /* -------------------------------------------------------------------- */
 /*      Flush old blocks if we are nearing our memory limit.            */
 /* -------------------------------------------------------------------- */
-    GDALRasterBlock* apoBlocksToFree[64];
-    int nBlocksToFree = 0;
+    CPLMutexHolderD( &hRBMutex );
+
+    AddLock(); /* don't flush this block! FIXME: is this really needed as the block isn't yet inserted in the list. In which case the later DropLock() should be removed */
+
+    nCacheUsed += nSizeInBytes;
+    while( nCacheUsed > nCurCacheMax )
     {
-        CPLMutexHolderD( &hRBMutex );
+        GIntBig nOldCacheUsed = nCacheUsed;
 
-        GDALRasterBlock *poTarget = (GDALRasterBlock *) poOldest;
-        nCacheUsed += nSizeInBytes;
-        while( nCacheUsed > nCurCacheMax )
-        {
-            while( poTarget != NULL && poTarget->GetLockCount() > 0 ) 
-                poTarget = poTarget->poPrevious;
+        GDALFlushCacheBlock();
 
-            if( poTarget != NULL )
-            {
-                apoBlocksToFree[nBlocksToFree++] = poTarget;
-                poTarget->Detach_unlocked();
-                if( nBlocksToFree == 64 )
-                {
-                    /* This shouldn't hopefully happen in practice */
-                    CPLDebug("GDAL", "More than 64 blocks to free. Not trying to free more...");
-                    break;
-                }
-            }
-            else
-                break;
-        }
-
-    /* -------------------------------------------------------------------- */
-    /*      Add this block to the list.                                     */
-    /* -------------------------------------------------------------------- */
-        Touch_unlocked();
+        if( nCacheUsed == nOldCacheUsed )
+            break;
     }
 
-    for(int i = 0; i < nBlocksToFree; i++)
-    {
-        GDALRasterBlock *poTarget = apoBlocksToFree[i];
-        CPLErr eErr = poBand->FlushBlock( poTarget->GetXOff(), poTarget->GetYOff() );
-        if (eErr != CE_None)
-        {
-            /* Save the error for later reporting */
-            poTarget->GetBand()->SetFlushBlockErr(eErr);
-        }
-    }
+/* -------------------------------------------------------------------- */
+/*      Add this block to the list.                                     */
+/* -------------------------------------------------------------------- */
+    Touch();
+    DropLock();
 
     return( CE_None );
 }
@@ -726,7 +696,7 @@ int GDALRasterBlock::SafeLockBlock( GDALRasterBlock ** ppBlock )
     if( *ppBlock != NULL )
     {
         (*ppBlock)->AddLock();
-        (*ppBlock)->Touch_unlocked();
+        (*ppBlock)->Touch();
         
         return TRUE;
     }
