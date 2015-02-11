@@ -349,10 +349,7 @@ GDALDriver * GDALDriverManager::GetDriver( int iDriver )
 {
     CPLMutexHolderD( &hDMMutex );
 
-    if( iDriver < 0 || iDriver >= nDrivers )
-        return NULL;
-    else
-        return papoDrivers[iDriver];
+    return GetDriver_unlocked(iDriver);
 }
 
 /************************************************************************/
@@ -403,7 +400,7 @@ int GDALDriverManager::RegisterDriver( GDALDriver * poDriver )
 /*      If it is already registered, just return the existing           */
 /*      index.                                                          */
 /* -------------------------------------------------------------------- */
-    if( GetDriverByName( poDriver->GetDescription() ) != NULL )
+    if( GetDriverByName_unlocked( poDriver->GetDescription() ) != NULL )
     {
         int             i;
 

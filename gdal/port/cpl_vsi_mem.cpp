@@ -148,6 +148,8 @@ public:
     virtual int      Rename( const char *oldpath, const char *newpath );
 
     static  void     NormalizePath( CPLString & );
+
+    int              Unlink_unlocked( const char *pszFilename );
 };
 
 /************************************************************************/
@@ -562,7 +564,16 @@ int VSIMemFilesystemHandler::Unlink( const char * pszFilename )
 
 {
     CPLMutexHolder oHolder( &hMutex );
+    return Unlink_unlocked(pszFilename);
+}
 
+/************************************************************************/
+/*                           Unlink_unlocked()                          */
+/************************************************************************/
+
+int VSIMemFilesystemHandler::Unlink_unlocked( const char * pszFilename )
+
+{
     CPLString osFilename = pszFilename;
     NormalizePath( osFilename );
 
@@ -625,8 +636,6 @@ int VSIMemFilesystemHandler::Mkdir( const char * pszPathname,
 int VSIMemFilesystemHandler::Rmdir( const char * pszPathname )
 
 {
-    CPLMutexHolder oHolder( &hMutex );
-
     return Unlink( pszPathname );
 }
 
@@ -714,7 +723,7 @@ int VSIMemFilesystemHandler::Rename( const char *pszOldPath,
 
         oFileList.erase( oFileList.find(osOldPath) );
 
-        Unlink(osNewPath);
+        Unlink_unlocked(osNewPath);
 
         oFileList[osNewPath] = poFile;
         poFile->osFilename = osNewPath;
@@ -856,7 +865,7 @@ VSILFILE *VSIFileFromMemBuffer( const char *pszFilename,
 
     {
         CPLMutexHolder oHolder( &poHandler->hMutex );
-        poHandler->Unlink(osFilename);
+        poHandler->Unlink_unlocked(osFilename);
         poHandler->oFileList[poFile->osFilename] = poFile;
         poFile->nRefCount++;
     }

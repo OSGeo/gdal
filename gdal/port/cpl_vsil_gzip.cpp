@@ -130,6 +130,7 @@ class VSIGZipHandle : public VSIVirtualHandle
     vsi_l_offset      offsetEndCompressedData;
     unsigned int      expected_crc;
     char             *pszBaseFileName; /* optional */
+    int               bCanSaveInfo;
 
     /* Fields from gz_stream structure */
     z_stream stream;
@@ -180,6 +181,8 @@ class VSIGZipHandle : public VSIVirtualHandle
 
     void              SetUncompressedSize(vsi_l_offset nUncompressedSize) { uncompressed_size = nUncompressedSize; }
     vsi_l_offset      GetUncompressedSize() { return uncompressed_size; }
+    
+    void              SaveInfo_unlocked();
 };
 
 
@@ -187,8 +190,7 @@ class VSIGZipFilesystemHandler : public VSIFilesystemHandler
 {
     void* hMutex;
     VSIGZipHandle* poHandleLastGZipFile;
-    int            bInSaveInfo;
-
+    
 public:
     VSIGZipFilesystemHandler();
     ~VSIGZipFilesystemHandler();
@@ -205,6 +207,7 @@ public:
     virtual char   **ReadDir( const char *pszDirname );
 
     void  SaveInfo( VSIGZipHandle* poHandle );
+    void  SaveInfo_unlocked( VSIGZipHandle* poHandle );
 };
 
 
@@ -280,6 +283,7 @@ VSIGZipHandle::VSIGZipHandle(VSIVirtualHandle* poBaseHandle,
     this->poBaseHandle = poBaseHandle;
     this->expected_crc = expected_crc;
     this->pszBaseFileName = (pszBaseFileName) ? CPLStrdup(pszBaseFileName) : NULL;
+    bCanSaveInfo = TRUE;
     this->offset = offset;
     if (compressed_size || transparent)
     {
@@ -339,13 +343,28 @@ VSIGZipHandle::VSIGZipHandle(VSIVirtualHandle* poBaseHandle,
 }
 
 /************************************************************************/
+/*                      SaveInfo_unlocked()                             */
+/************************************************************************/
+
+void VSIGZipHandle::SaveInfo_unlocked()
+{
+    if (pszBaseFileName && bCanSaveInfo)
+    {
+        VSIFilesystemHandler *poFSHandler = 
+            VSIFileManager::GetHandler( "/vsigzip/" );
+        ((VSIGZipFilesystemHandler*)poFSHandler)->SaveInfo_unlocked(this);
+        bCanSaveInfo = FALSE;
+    }
+}
+
+/************************************************************************/
 /*                      ~VSIGZipHandle()                                */
 /************************************************************************/
 
 VSIGZipHandle::~VSIGZipHandle()
 {
     
-    if (pszBaseFileName)
+    if (pszBaseFileName && bCanSaveInfo)
     {
         VSIFilesystemHandler *poFSHandler = 
             VSIFileManager::GetHandler( "/vsigzip/" );
@@ -1252,7 +1271,6 @@ VSIGZipFilesystemHandler::VSIGZipFilesystemHandler()
     hMutex = NULL;
 
     poHandleLastGZipFile = NULL;
-    bInSaveInfo = FALSE;
 }
 
 /************************************************************************/
@@ -1276,11 +1294,11 @@ VSIGZipFilesystemHandler::~VSIGZipFilesystemHandler()
 void VSIGZipFilesystemHandler::SaveInfo(  VSIGZipHandle* poHandle )
 {
     CPLMutexHolder oHolder(&hMutex);
+    SaveInfo_unlocked(poHandle);
+}
 
-    if (bInSaveInfo)
-        return;
-    bInSaveInfo = TRUE;
-    
+void VSIGZipFilesystemHandler::SaveInfo_unlocked(  VSIGZipHandle* poHandle )
+{
     CPLAssert(poHandle->GetBaseFileName() != NULL);
 
     if (poHandleLastGZipFile &&
@@ -1290,6 +1308,7 @@ void VSIGZipFilesystemHandler::SaveInfo(  VSIGZipHandle* poHandle )
         {
             VSIGZipHandle* poTmp = poHandleLastGZipFile;
             poHandleLastGZipFile = NULL;
+            poTmp->SaveInfo_unlocked();
             delete poTmp;
             poHandleLastGZipFile = poHandle->Duplicate();
             poHandleLastGZipFile->CloseBaseHandle();
@@ -1299,12 +1318,14 @@ void VSIGZipFilesystemHandler::SaveInfo(  VSIGZipHandle* poHandle )
     {
         VSIGZipHandle* poTmp = poHandleLastGZipFile;
         poHandleLastGZipFile = NULL;
-        delete poTmp;
+        if( poTmp )
+        {
+            poTmp->SaveInfo_unlocked();
+            delete poTmp;
+        }
         poHandleLastGZipFile = poHandle->Duplicate();
         poHandleLastGZipFile->CloseBaseHandle();
     }
-
-    bInSaveInfo = FALSE;
 }
 
 /************************************************************************/
@@ -1392,8 +1413,11 @@ VSIGZipHandle* VSIGZipFilesystemHandler::OpenGZipReadOnly( const char *pszFilena
     }
 
     if (poHandleLastGZipFile)
+    {
+        poHandleLastGZipFile->SaveInfo_unlocked();
         delete poHandleLastGZipFile;
-    poHandleLastGZipFile = NULL;
+        poHandleLastGZipFile = NULL;
+    }
 
     return new VSIGZipHandle(poVirtualHandle, pszFilename + strlen("/vsigzip/"));
 }
@@ -1464,7 +1488,7 @@ int VSIGZipFilesystemHandler::Stat( const char *pszFilename,
                 if (poHandle)
                 {
                     poHandle->SetUncompressedSize(nUncompressedSize);
-                    SaveInfo(poHandle);
+                    SaveInfo_unlocked(poHandle);
                     delete poHandle;
                 }
 
@@ -1722,6 +1746,8 @@ class VSIZipWriteHandle;
 class VSIZipFilesystemHandler : public VSIArchiveFilesystemHandler 
 {
     std::map<CPLString, VSIZipWriteHandle*> oMapZipWriteHandles;
+    VSIVirtualHandle *OpenForWrite_unlocked( const char *pszFilename,
+                                            const char *pszAccess );
 
 public:
     virtual ~VSIZipFilesystemHandler();
@@ -2048,11 +2074,17 @@ void VSIZipFilesystemHandler::RemoveFromMap(VSIZipWriteHandle* poHandle)
 VSIVirtualHandle* VSIZipFilesystemHandler::OpenForWrite( const char *pszFilename,
                                                          const char *pszAccess)
 {
+    CPLMutexHolder oHolder( &hMutex );
+    return OpenForWrite_unlocked(pszFilename, pszAccess);
+}
+
+
+VSIVirtualHandle* VSIZipFilesystemHandler::OpenForWrite_unlocked( const char *pszFilename,
+                                                         const char *pszAccess)
+{
     char* zipFilename;
     CPLString osZipInFileName;
-
-    CPLMutexHolder oHolder( &hMutex );
-
+    
     zipFilename = SplitFilename(pszFilename, osZipInFileName, FALSE);
     if (zipFilename == NULL)
         return NULL;
@@ -2139,7 +2171,7 @@ VSIVirtualHandle* VSIZipFilesystemHandler::OpenForWrite( const char *pszFilename
         if (osZipInFileName.size() != 0)
         {
             VSIZipWriteHandle* poRes =
-                (VSIZipWriteHandle*)OpenForWrite(pszFilename, pszAccess);
+                (VSIZipWriteHandle*)OpenForWrite_unlocked(pszFilename, pszAccess);
             if (poRes == NULL)
             {
                 delete oMapZipWriteHandles[osZipFilename];

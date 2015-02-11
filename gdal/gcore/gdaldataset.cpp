@@ -2736,19 +2736,6 @@ void CPL_STDCALL GDALClose( GDALDatasetH hDS )
         return;
 
     GDALDataset *poDS = (GDALDataset *) hDS;
-    if( poDS->bIsInternal )
-    {
-        if (poDS->GetShared())
-        {
-            if( poDS->Dereference() > 0 )
-                return;
-        }
-        delete poDS;
-        return;
-    }
-        
-    CPLMutexHolderD( &hDLMutex );
-    //CPLLocaleC  oLocaleForcer;
 
     if (poDS->GetShared())
     {

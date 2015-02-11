@@ -184,10 +184,9 @@ static const char* GetProjLibraryName()
 /*                          LoadProjLibrary()                           */
 /************************************************************************/
 
-static int LoadProjLibrary()
+static int LoadProjLibrary_unlocked()
 
 {
-    CPLMutexHolderD( &hPROJMutex );
     static int  bTriedToLoad = FALSE;
     const char *pszLibName;
     
@@ -286,6 +285,13 @@ static int LoadProjLibrary()
     return( TRUE );
 }
 
+static int LoadProjLibrary()
+
+{
+    CPLMutexHolderD( &hPROJMutex );
+    return LoadProjLibrary_unlocked();
+}
+
 /************************************************************************/
 /*                         OCTProj4Normalize()                          */
 /*                                                                      */
@@ -303,7 +309,7 @@ char *OCTProj4Normalize( const char *pszProj4Src )
 
     CPLMutexHolderD( &hPROJMutex );
 
-    if( !LoadProjLibrary() || pfn_pj_dalloc == NULL || pfn_pj_get_def == NULL )
+    if( !LoadProjLibrary_unlocked() || pfn_pj_dalloc == NULL || pfn_pj_get_def == NULL )
         return CPLStrdup( pszProj4Src );
 
     CPLLocaleC  oLocaleEnforcer;

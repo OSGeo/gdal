@@ -2601,8 +2601,6 @@ char** VSICurlFilesystemHandler::ReadDir( const char *pszDirname, int* pbGotFile
         }
     }
 
-    CPLMutexHolder oHolder( &hMutex );
-
     /* If we know the file exists and is not a directory, then don't try to list its content */
     CachedFileProp* cachedFileProp = GetCachedFileProp(osDirname.c_str() + strlen("/vsicurl/"));
     if (cachedFileProp->eExists == EXIST_YES && !cachedFileProp->bIsDirectory)
@@ -2612,13 +2610,23 @@ char** VSICurlFilesystemHandler::ReadDir( const char *pszDirname, int* pbGotFile
         return NULL;
     }
 
+    int bGotFileList;
+    // Would be better done under the global mutex, but we should fix
+    // recursive mutex issues
+    char** papszFileList = GetFileList(osDirname, &bGotFileList);
+
+    CPLMutexHolder oHolder( &hMutex );
+
     CachedDirList* psCachedDirList = cacheDirList[osDirname];
     if (psCachedDirList == NULL)
     {
         psCachedDirList = (CachedDirList*) CPLMalloc(sizeof(CachedDirList));
-        psCachedDirList->papszFileList = GetFileList(osDirname, &psCachedDirList->bGotFileList);
+        psCachedDirList->bGotFileList = bGotFileList;
+        psCachedDirList->papszFileList = papszFileList;
         cacheDirList[osDirname] = psCachedDirList;
     }
+    else
+        CSLDestroy(papszFileList);
 
     if (pbGotFileList)
         *pbGotFileList = psCachedDirList->bGotFileList;
