@@ -501,8 +501,8 @@ class CPL_DLL GDALRasterBlock
     GDALRasterBlock     *poNext;
     GDALRasterBlock     *poPrevious;
     
-    void        Touch_unlocked( void );
-    void        Detach_unlocked( void );
+    /*void        Touch_unlocked( void );
+    void        Detach_unlocked( void );*/
 
   public:
                 GDALRasterBlock( GDALRasterBand *, int, int );
