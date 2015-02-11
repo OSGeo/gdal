@@ -525,6 +525,7 @@ int main(int argc, char* argv[])
         psLock = (pthread_spinlock_t*)CPLMalloc(sizeof(pthread_spinlock_t));
         pthread_spin_init(psLock, PTHREAD_PROCESS_PRIVATE);
 #else
+        //hMutex = CPLCreateMutexEx(CPL_MUTEX_ADAPTIVE);
         hMutex = CPLCreateMutex();
         CPLReleaseMutex(hMutex);
 #endif
@@ -549,6 +550,8 @@ int main(int argc, char* argv[])
     while( psGlobalResourceList != NULL )
     {
         CPLFree( psGlobalResourceList->pBuffer);
+        if( poMEMDS == NULL )
+            GDALClose(psGlobalResourceList->poDS);
         Resource* psNext = psGlobalResourceList->psNext;
         CPLFree( psGlobalResourceList );
         psGlobalResourceList = psNext;
@@ -571,6 +574,8 @@ int main(int argc, char* argv[])
     }
     if( poMEMDS )
         GDALClose(poMEMDS);
+
+    assert( GDALGetCacheUsed64() == 0 );
 
     GDALDestroyDriverManager();
     CSLDestroy( argv );
