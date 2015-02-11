@@ -994,6 +994,80 @@ CPLErr CPL_STDCALL GDALFlushRasterCache( GDALRasterBandH hBand )
     return ((GDALRasterBand *) hBand)->FlushCache();
 }
 
+
+/************************************************************************/
+/*                        UnreferenceBlock()                            */
+/*                                                                      */
+/*      Unreference the block from our array of blocks                  */
+/*      This method should only be called by                            */
+/*      GDALRasterBlock::Internalize(), and under the block cache mutex */
+/************************************************************************/
+
+CPLErr GDALRasterBand::UnreferenceBlock( int nXBlockOff, int nYBlockOff )
+{
+
+    if( !papoBlocks )
+        return CE_None;
+    
+/* -------------------------------------------------------------------- */
+/*      Validate the request                                            */
+/* -------------------------------------------------------------------- */
+    if( nXBlockOff < 0 || nXBlockOff >= nBlocksPerRow )
+    {
+        ReportError( CE_Failure, CPLE_IllegalArg,
+                  "Illegal nBlockXOff value (%d) in "
+                        "GDALRasterBand::FlushBlock()\n",
+                  nXBlockOff );
+
+        return( CE_Failure );
+    }
+
+    if( nYBlockOff < 0 || nYBlockOff >= nBlocksPerColumn )
+    {
+        ReportError( CE_Failure, CPLE_IllegalArg,
+                  "Illegal nBlockYOff value (%d) in "
+                        "GDALRasterBand::FlushBlock()\n",
+                  nYBlockOff );
+
+        return( CE_Failure );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Simple case for single level caches.                            */
+/* -------------------------------------------------------------------- */
+    if( !bSubBlockingActive )
+    {
+        int nBlockIndex = nXBlockOff + nYBlockOff * nBlocksPerRow;
+
+        papoBlocks[nBlockIndex] = NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Identify our subblock.                                          */
+/* -------------------------------------------------------------------- */
+    else
+    {
+        int nSubBlock = TO_SUBBLOCK(nXBlockOff) 
+            + TO_SUBBLOCK(nYBlockOff) * nSubBlocksPerRow;
+
+        if( papoBlocks[nSubBlock] == NULL )
+            return CE_None;
+
+/* -------------------------------------------------------------------- */
+/*      Check within subblock.                                          */
+/* -------------------------------------------------------------------- */
+        GDALRasterBlock **papoSubBlockGrid = 
+            (GDALRasterBlock **) papoBlocks[nSubBlock];
+
+        int nBlockInSubBlock = WITHIN_SUBBLOCK(nXBlockOff)
+            + WITHIN_SUBBLOCK(nYBlockOff) * SUBBLOCK_SIZE;
+
+        papoSubBlockGrid[nBlockInSubBlock] = NULL;
+    }
+
+    return CE_None;
+}
+
 /************************************************************************/
 /*                             FlushBlock()                             */
 /*                                                                      */
@@ -1004,7 +1078,8 @@ CPLErr CPL_STDCALL GDALFlushRasterCache( GDALRasterBandH hBand )
 /*      Protected method.                                               */
 /************************************************************************/
 
-CPLErr GDALRasterBand::FlushBlock( int nXBlockOff, int nYBlockOff, int bWriteDirtyBlock )
+CPLErr GDALRasterBand::FlushBlock( int nXBlockOff, int nYBlockOff,
+                                   int bWriteDirtyBlock )
 
 {
     int             nBlockIndex;
@@ -1068,7 +1143,7 @@ CPLErr GDALRasterBand::FlushBlock( int nXBlockOff, int nYBlockOff, int bWriteDir
         
         int nBlockInSubBlock = WITHIN_SUBBLOCK(nXBlockOff)
             + WITHIN_SUBBLOCK(nYBlockOff) * SUBBLOCK_SIZE;
-        
+
         GDALRasterBlock::SafeLockBlock( papoSubBlockGrid + nBlockInSubBlock );
 
         poBlock = papoSubBlockGrid[nBlockInSubBlock];
