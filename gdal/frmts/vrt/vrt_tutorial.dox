@@ -866,4 +866,20 @@ underlying datasets. So, if you open twice the same VRT dataset by the same
 thread, both VRT datasets will share the same handles to the underlying
 datasets.
 
+\section gdal_vrttut_perf Performance considerations
+
+A VRT can reference many (hundreds, thousands, or more) datasets. Due to
+operating system limitations, and for performance at opening time, it is
+not reasonable/possible to open them all at the same time. GDAL has a "pool"
+of datasets opened by VRT files whose maximum limit is 100 by default. When it
+needs to access a dataset referenced by a VRT, it checks if it is already in
+the pool of open datasets. If not, when the pool has reached its limit, it closes
+the least recently used dataset to be able to open the new one. This maximum
+limit of the pool can be increased by setting the GDAL_MAX_DATASET_POOL_SIZE
+ configuration option to a bigger value. Note that a typical user process on
+Linux is limited to 1024 simultaneously opened files, and you should let some
+margin for shared libraries, etc...
+As of GDAL 2.0, gdal_translate and gdalwarp, by default, increase the pool size
+to 450.
+
 */

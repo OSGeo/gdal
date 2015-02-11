@@ -348,6 +348,19 @@ static int ProxyMain( int argc, char ** argv )
         exit( -argc );
 
 /* -------------------------------------------------------------------- */
+/*      Set optimal setting for best performance with huge input VRT.   */
+/*      The rationale for 450 is that typical Linux process allow       */
+/*      only 1024 file descriptors per process and we need to keep some */
+/*      spare for shared libraries, etc. so let's go down to 900.       */
+/*      And some datasets may need 2 file descriptors, so divide by 2   */
+/*      for security.                                                   */
+/* -------------------------------------------------------------------- */
+    if( CPLGetConfigOption("GDAL_MAX_DATASET_POOL_SIZE", NULL) == NULL )
+    {
+        CPLSetConfigOption("GDAL_MAX_DATASET_POOL_SIZE", "450");
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Handle command line arguments.                                  */
 /* -------------------------------------------------------------------- */
     for( i = 1; i < argc; i++ )
