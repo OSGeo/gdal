@@ -501,8 +501,10 @@ class CPL_DLL GDALRasterBlock
     GDALRasterBlock     *poNext;
     GDALRasterBlock     *poPrevious;
     
-    /*void        Touch_unlocked( void );
-    void        Detach_unlocked( void );*/
+    int                  bMustDetach;
+    
+    void        Touch_unlocked( void );
+    void        Detach_unlocked( void );
 
   public:
                 GDALRasterBlock( GDALRasterBand *, int, int );
@@ -527,6 +529,7 @@ class CPL_DLL GDALRasterBlock
     int         GetLockCount() { return nLockCount; }
 
     void        *GetDataRef( void ) { return pData; }
+    int          GetBlockSize() { return nXSize * nYSize * (GDALGetDataTypeSize(eType) / 8); }
 
     /// @brief Accessor to source GDALRasterBand object.
     /// @return source raster band of the raster block.
@@ -584,6 +587,7 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     void           SetFlushBlockErr( CPLErr eErr );
 
     friend class GDALRasterBlock;
+    CPLErr         UnreferenceBlock( int nXBlockOff, int nYBlockOff );
 
   protected:
     GDALDataset *poDS;
