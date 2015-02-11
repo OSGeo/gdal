@@ -942,6 +942,12 @@ class CPL_DLL GDALDriverManager : public GDALMajorObject
     GDALDriver  **papoDrivers;
     std::map<CPLString, GDALDriver*> oMapNameToDrivers;
     
+    GDALDriver  *GetDriver_unlocked( int iDriver )
+            { return (iDriver >= 0 && iDriver < nDrivers) ? papoDrivers[iDriver] : NULL; }
+    
+    GDALDriver  *GetDriverByName_unlocked( const char * pszName )
+            { return oMapNameToDrivers[CPLString(pszName).toupper()]; }
+    
  public:
                 GDALDriverManager();
                 ~GDALDriverManager();
