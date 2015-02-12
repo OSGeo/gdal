@@ -1894,7 +1894,8 @@ int   CPLCreateOrAcquireLock( CPLLock** ppsLock, CPLLockType eType )
         case LOCK_ADAPTIVE_MUTEX:
         {
             CPLMutex* hMutex = NULL;
-            ret = CPLCreateOrAcquireMutexEx( &hMutex, 1000,
+            CPLMutex** phMutex = *ppsLock ? &((*ppsLock)->u.hMutex) : &hMutex;
+            ret = CPLCreateOrAcquireMutexEx( phMutex, 1000,
                 (eType == LOCK_RECURSIVE_MUTEX) ? CPL_MUTEX_RECURSIVE : CPL_MUTEX_ADAPTIVE);
             if( !ret || !hMutex )
                 return FALSE;
@@ -1909,7 +1910,8 @@ int   CPLCreateOrAcquireLock( CPLLock** ppsLock, CPLLockType eType )
         case LOCK_SPIN:
         {
             CPLSpinLock* hSpinLock = NULL;
-            ret = CPLCreateOrAcquireSpinLock( &hSpinLock );
+            CPLSpinLock** phSpinLock = *ppsLock ? &((*ppsLock)->u.hSpinLock) : &hSpinLock;
+            ret = CPLCreateOrAcquireSpinLock( phSpinLock );
             if( !ret || !hSpinLock )
                 return FALSE;
             if( *ppsLock == NULL )
