@@ -41,7 +41,7 @@ static volatile GIntBig nCacheUsed = 0;
 static GDALRasterBlock *poOldest = NULL;    /* tail */
 static GDALRasterBlock *poNewest = NULL;    /* head */
 
-#if 1
+#if 0
 static CPLMutex *hRBLock = NULL;
 #define INITIALIZE_LOCK         CPLMutexHolderD( &hRBLock )
 #define TAKE_LOCK               CPLMutexHolderOptionalLockD( hRBLock )
