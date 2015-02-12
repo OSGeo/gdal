@@ -17832,8 +17832,8 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 
 
 
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for HAVE_PTHREAD_MUTEX_ADAPTIVE_NP" >&5
-$as_echo_n "checking for HAVE_PTHREAD_MUTEX_ADAPTIVE_NP... " >&6; }
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for PTHREAD_MUTEX_ADAPTIVE_NP" >&5
+$as_echo_n "checking for PTHREAD_MUTEX_ADAPTIVE_NP... " >&6; }
 
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
