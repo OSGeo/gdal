@@ -49,7 +49,7 @@ static CPLMutex *hRBLock = NULL;
 #else
 
 static CPLLock* hRBLock = NULL;
-
+static int bDebugContention = FALSE;
 static CPLLockType GetLockType()
 {
     static int nLockType = -1;
@@ -69,11 +69,13 @@ static CPLLockType GetLockType()
                      pszLockType);
             nLockType = LOCK_ADAPTIVE_MUTEX;
         }
+        bDebugContention = CSLTestBoolean(CPLGetConfigOption("GDAL_RB_LOCK_DEBUG_CONTENTION", "NO"));
     }
     return (CPLLockType) nLockType;
 }
 
-#define INITIALIZE_LOCK         CPLLockHolderD( &hRBLock, GetLockType() )
+#define INITIALIZE_LOCK         CPLLockHolderD( &hRBLock, GetLockType() ); \
+                                CPLLockSetDebugPerf(hRBLock, bDebugContention)
 #define TAKE_LOCK               CPLLockHolderOptionalLockD( hRBLock )
 #define DESTROY_LOCK            CPLDestroyLock( hRBLock )
 

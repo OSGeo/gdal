@@ -48,6 +48,12 @@ CPL_CVSID("$Id$");
 #  define MUTEX_NONE
 #endif
 
+//#define DEBUG_MUTEX
+
+#if defined(DEBUG) && (defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__)))
+#define DEBUG_CONTENTION
+#endif
+
 typedef struct _CPLSpinLock CPLSpinLock;
 
 struct _CPLLock
@@ -58,7 +64,33 @@ struct _CPLLock
         CPLMutex        *hMutex;
         CPLSpinLock     *hSpinLock;
     } u;
+
+#ifdef DEBUG_CONTENTION
+    int      bDebugPerf;
+    GUIntBig nStartTime;
+    GUIntBig nMaxDiff;
+    double   dfAvgDiff;
+    GUIntBig nIters;
+#endif
 };
+
+#ifdef DEBUG_CONTENTION
+static GUIntBig CPLrdtsc(void)
+{
+   unsigned int a, d, x, y;
+   __asm__ volatile ("cpuid" : "=a" (x), "=d" (y) : "a"(0) : "cx", "bx" );
+   __asm__ volatile ("rdtsc" : "=a" (a), "=d" (d) );
+   return ((GUIntBig )a) | (((GUIntBig )d) << 32);
+}
+
+static GUIntBig CPLrdtscp(void)
+{
+   unsigned int a, d, x, y;
+   __asm__ volatile ("rdtscp" : "=a" (a), "=d" (d) );
+   __asm__ volatile ("cpuid"  : "=a" (x), "=d" (y) : "a"(0) : "cx", "bx" );
+   return ((GUIntBig )a) | (((GUIntBig )d) << 32);
+}
+#endif
 
 static CPLSpinLock   *CPLCreateSpinLock( void ); /* returned NON acquired */
 static int     CPLCreateOrAcquireSpinLockInternal( CPLLock** );
@@ -248,7 +280,7 @@ int CPLCreateOrAcquireMutexInternal( CPLLock **phLock, double dfWaitInSeconds,
 
     if( *phLock == NULL )
     {
-        *phLock = (CPLLock*) malloc(sizeof(CPLLock));
+        *phLock = (CPLLock*) calloc(1, sizeof(CPLLock));
         if( *phLock )
         {
             (*phLock)->eType = eType;
@@ -1254,7 +1286,7 @@ int CPLCreateOrAcquireMutexInternal( CPLLock **phLock, double dfWaitInSeconds,
     pthread_mutex_lock(&global_mutex);
     if( *phLock == NULL )
     {
-        *phLock = (CPLLock*) malloc(sizeof(CPLLock));
+        *phLock = (CPLLock*) calloc(1, sizeof(CPLLock));
         if( *phLock )
         {
             (*phLock)->eType = eType;
@@ -1816,7 +1848,7 @@ int  CPLCreateOrAcquireSpinLockInternal( CPLLock** ppsLock )
     pthread_mutex_lock(&global_mutex);
     if( *ppsLock == NULL )
     {
-        *ppsLock = (CPLLock*) malloc(sizeof(CPLLock));
+        *ppsLock = (CPLLock*) calloc(1, sizeof(CPLLock));
         if( *ppsLock != NULL )
         {
             (*ppsLock)->eType = LOCK_SPIN;
@@ -1993,21 +2025,36 @@ CPLLock *CPLCreateLock( CPLLockType eType )
 
 int   CPLCreateOrAcquireLock( CPLLock** ppsLock, CPLLockType eType )
 {
+    int ret;
+#ifdef DEBUG_CONTENTION
+    GUIntBig nStartTime = 0;
+    if( (*ppsLock) && (*ppsLock)->bDebugPerf )
+        nStartTime = CPLrdtsc();
+#endif
     switch( eType )
     {
         case LOCK_RECURSIVE_MUTEX:
         case LOCK_ADAPTIVE_MUTEX:
         {
-            return CPLCreateOrAcquireMutexInternal( ppsLock, 1000, eType);
+            ret = CPLCreateOrAcquireMutexInternal( ppsLock, 1000, eType);
+            break;
         }
         case LOCK_SPIN:
         {
-            return CPLCreateOrAcquireSpinLockInternal( ppsLock );
+            ret = CPLCreateOrAcquireSpinLockInternal( ppsLock );
+            break;
         }
         default:
             CPLAssert(0);
             return FALSE;
     }
+#ifdef DEBUG_CONTENTION
+    if( ret && (*ppsLock)->bDebugPerf )
+    {
+        (*ppsLock)->nStartTime = nStartTime;
+    }
+#endif
+    return ret;
 }
 
 /************************************************************************/
@@ -2016,6 +2063,10 @@ int   CPLCreateOrAcquireLock( CPLLock** ppsLock, CPLLockType eType )
 
 int  CPLAcquireLock( CPLLock* psLock )
 {
+#ifdef DEBUG_CONTENTION
+    if( psLock->bDebugPerf )
+        psLock->nStartTime = CPLrdtsc();
+#endif
     if( psLock->eType == LOCK_SPIN )
         return CPLAcquireSpinLock( psLock->u.hSpinLock );
     else
@@ -2028,10 +2079,39 @@ int  CPLAcquireLock( CPLLock* psLock )
 
 void  CPLReleaseLock( CPLLock* psLock )
 {
+#ifdef DEBUG_CONTENTION
+    int bHitMaxDiff = 0;
+    GUIntBig nMaxDiff = 0;
+    double dfAvgDiff = 0;
+    GUIntBig nIters = 0;
+    if( psLock->bDebugPerf && psLock->nStartTime )
+    {
+        bHitMaxDiff = FALSE;
+        GUIntBig nStopTime = CPLrdtscp();
+        GUIntBig nDiffTime = nStopTime - psLock->nStartTime;
+        if( nDiffTime > psLock->nMaxDiff )
+        {
+            bHitMaxDiff = TRUE;
+            psLock->nMaxDiff = nDiffTime;
+        }
+        nMaxDiff = psLock->nMaxDiff;
+        psLock->nIters ++;
+        nIters = psLock->nIters;
+        psLock->dfAvgDiff += (nDiffTime - psLock->dfAvgDiff) / nIters;
+        dfAvgDiff = psLock->dfAvgDiff;
+    }
+#endif
     if( psLock->eType == LOCK_SPIN )
-        return CPLReleaseSpinLock( psLock->u.hSpinLock );
+        CPLReleaseSpinLock( psLock->u.hSpinLock );
     else
-        return CPLReleaseMutex( psLock->u.hMutex );
+        CPLReleaseMutex( psLock->u.hMutex );
+#ifdef DEBUG_CONTENTION
+    if( psLock->bDebugPerf && (bHitMaxDiff || (psLock->nIters % 1000000) == 0 ))
+    {
+        CPLDebug("LOCK", "Lock contention : max = " CPL_FRMT_GIB ", avg = %.0f",
+                 nMaxDiff, dfAvgDiff);
+    }
+#endif
 }
 
 /************************************************************************/
@@ -2045,6 +2125,27 @@ void  CPLDestroyLock( CPLLock* psLock )
     else
         CPLDestroyMutex( psLock->u.hMutex );
     free( psLock );
+}
+
+/************************************************************************/
+/*                       CPLLockSetDebugPerf()                          */
+/************************************************************************/
+
+void CPLLockSetDebugPerf( CPLLock* psLock, int bEnableIn )
+{
+#ifdef DEBUG_CONTENTION
+    psLock->bDebugPerf = bEnableIn;
+#else
+    if( bEnableIn )
+    {
+        static int bOnce = FALSE;
+        if( !bOnce )
+        {
+            bOnce = TRUE;
+            CPLDebug("LOCK", "DEBUG_CONTENTION not available");
+        }
+    }
+#endif
 }
 
 /************************************************************************/
@@ -2104,11 +2205,13 @@ CPLLockHolder::CPLLockHolder( CPLLock *hLockIn,
     nLine = nLineIn;
     hLock = hLockIn;
 
-    if( hLock != NULL &&
-        !CPLAcquireLock( hLock ) )
+    if( hLock != NULL )
     {
-        fprintf( stderr, "CPLLockHolder: Failed to acquire lock!\n" );
-        hLock = NULL;
+        if( !CPLAcquireLock( hLock ) )
+        {
+            fprintf( stderr, "CPLLockHolder: Failed to acquire lock!\n" );
+            hLock = NULL;
+        }
     }
 #endif /* ndef MUTEX_NONE */
 }

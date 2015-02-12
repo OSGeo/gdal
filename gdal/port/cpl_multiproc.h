@@ -100,6 +100,10 @@ int CPL_DLL CPLGetNumCPUs( void );
 
 
 typedef struct _CPLLock CPLLock;
+
+/* Currently LOCK_ADAPTIVE_MUTEX is Linux-only and LOCK_SPIN only available */
+/* on systems with pthread_spinlock API (so not MacOsX). If a requested type */
+/* isn't available, it fallbacks to LOCK_RECURSIVE_MUTEX */
 typedef enum
 {
     LOCK_RECURSIVE_MUTEX,
@@ -112,6 +116,7 @@ int   CPL_DLL  CPLCreateOrAcquireLock( CPLLock**, CPLLockType eType );
 int   CPL_DLL  CPLAcquireLock( CPLLock* );
 void  CPL_DLL  CPLReleaseLock( CPLLock* );
 void  CPL_DLL  CPLDestroyLock( CPLLock* );
+void  CPL_DLL  CPLLockSetDebugPerf( CPLLock*, int bEnableIn ); /* only available on x86/x86_64 with GCC for now */
 
 
 CPL_C_END
