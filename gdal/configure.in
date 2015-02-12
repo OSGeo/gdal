@@ -508,7 +508,7 @@ if test "$with_threads" = "yes" -o "$with_threads" = "" ; then
 
 
 
-  AC_MSG_CHECKING([for HAVE_PTHREAD_MUTEX_ADAPTIVE_NP])
+  AC_MSG_CHECKING([for PTHREAD_MUTEX_ADAPTIVE_NP])
 
   AC_TRY_COMPILE(
   [
