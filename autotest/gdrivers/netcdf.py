@@ -1424,7 +1424,16 @@ def netcdf_39():
         return 'fail'
         
     return 'success'
-    
+
+###############################################################################
+# check support of reading of chuncked bottom-up files
+def netcdf_40():
+
+    if gdaltest.netcdf_drv is None or not gdaltest.netcdf_drv_has_nc4:
+        return 'skip'
+
+    return netcdf_test_copy( 'data/bug5291.nc', 0, None, 'tmp/netcdf_40.nc' )
+
 ###############################################################################
 
 ###############################################################################
@@ -1469,7 +1478,8 @@ gdaltest_list = [
     netcdf_36,
     netcdf_37,
     netcdf_38,
-    netcdf_39
+    netcdf_39,
+    netcdf_40
  ]
 
 ###############################################################################
