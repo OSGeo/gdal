@@ -34,6 +34,7 @@
 #include "gmlreader.h"
 #include "ogr_api.h"
 #include "cpl_vsi.h"
+#include "cpl_multiproc.h"
 
 #include <string>
 #include <vector>
@@ -547,7 +548,7 @@ public:
     
     int         ReportAllAttributes() const { return m_bReportAllAttributes; }
 
-    static void* hMutex;
+    static CPLMutex* hMutex;
 };
 
 #endif /* _CPL_GMLREADERP_H_INCLUDED */

@@ -45,7 +45,7 @@
 
 CPL_CVSID("$Id$");
 
-static void *hErrorMutex = NULL;
+static CPLMutex *hErrorMutex = NULL;
 static void *pErrorHandlerUserData = NULL; 
 static CPLErrorHandler pfnErrorHandler = CPLDefaultErrorHandler;
 

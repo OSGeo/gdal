@@ -156,7 +156,7 @@ typedef struct
     double dfComplete;
     char  *pszProgressMsg;
     int    bRet;
-    void  *hMutex;
+    CPLMutex  *hMutex;
 } GDALServerAsyncProgress;
 
 typedef enum

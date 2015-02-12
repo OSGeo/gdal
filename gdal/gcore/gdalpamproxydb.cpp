@@ -62,7 +62,7 @@ class GDALPamProxyDB
 
 static int bProxyDBInitialized = FALSE;
 static GDALPamProxyDB *poProxyDB = NULL;
-static void *hProxyDBLock = NULL;
+static CPLMutex *hProxyDBLock = NULL;
 
 /************************************************************************/
 /*                            CheckLoadDB()                             */

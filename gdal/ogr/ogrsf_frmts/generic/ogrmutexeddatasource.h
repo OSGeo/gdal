@@ -31,6 +31,7 @@
 #define _OGRMUTEXEDDATASOURCELAYER_H_INCLUDED
 
 #include "ogrsf_frmts.h"
+#include "cpl_multiproc.h"
 
 /** OGRMutexedDataSource class protects all virtual methods of OGRDataSource
  *  with a mutex.
@@ -44,14 +45,14 @@ class CPL_DLL OGRMutexedDataSource : public OGRDataSource
   protected:
     OGRDataSource *m_poBaseDataSource;
     int            m_bHasOwnership;
-    void          *m_hGlobalMutex;
+    CPLMutex      *m_hGlobalMutex;
 
   public:
 
     /* The construction of the object isn't protected by the mutex */
                  OGRMutexedDataSource(OGRDataSource* poBaseDataSource,
                                       int bTakeOwnership,
-                                      void* hMutexIn);
+                                      CPLMutex* hMutexIn);
 
     /* The destruction of the object isn't protected by the mutex */
     virtual     ~OGRMutexedDataSource();

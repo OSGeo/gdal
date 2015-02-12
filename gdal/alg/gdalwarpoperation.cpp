@@ -741,15 +741,15 @@ typedef struct
 {
     GDALWarpOperation *poOperation;
     GDALWarpChunk     *pasChunkInfo;
-    void              *hThreadHandle;
+    CPLJoinableThread *hThreadHandle;
     CPLErr             eErr;
     double             dfProgressBase;
     double             dfProgressScale;
-    void              *hIOMutex;
+    CPLMutex          *hIOMutex;
 
-    void              *hCondMutex;
+    CPLMutex          *hCondMutex;
     int                bIOMutexTaken;
-    void              *hCond;
+    CPLCond           *hCond;
 } ChunkThreadData;
 
 
@@ -829,8 +829,8 @@ CPLErr GDALWarpOperation::ChunkAndWarpMulti(
     CPLReleaseMutex( hIOMutex );
     CPLReleaseMutex( hWarpMutex );
 
-    void* hCond = CPLCreateCond();
-    void* hCondMutex = CPLCreateMutex();
+    CPLCond* hCond = CPLCreateCond();
+    CPLMutex* hCondMutex = CPLCreateMutex();
     CPLReleaseMutex(hCondMutex);
 
 /* -------------------------------------------------------------------- */

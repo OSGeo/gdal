@@ -414,7 +414,7 @@ class ECWAsyncReader : public GDALAsyncReader
 {
 private:
     CNCSJP2FileView *poFileView;
-    void            *hMutex;
+    CPLMutex        *hMutex;
     int              bUsingCustomStream;
 
     int              bUpdateReady;

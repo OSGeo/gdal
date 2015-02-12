@@ -154,7 +154,7 @@ typedef struct
 
 class VSICurlStreamingFSHandler : public VSIFilesystemHandler
 {
-    void           *hMutex;
+    CPLMutex           *hMutex;
 
     std::map<CPLString, CachedFileProp*>   cacheFileSize;
 
@@ -207,10 +207,10 @@ class VSICurlStreamingHandle : public VSIVirtualHandle
     volatile int    bDownloadStopped;
     volatile int    bAskDownloadEnd;
     vsi_l_offset    nRingBufferFileOffset;
-    void           *hThread;
-    void           *hRingBufferMutex;
-    void           *hCondProducer;
-    void           *hCondConsumer;
+    CPLJoinableThread *hThread;
+    CPLMutex       *hRingBufferMutex;
+    CPLCond        *hCondProducer;
+    CPLCond        *hCondConsumer;
     RingBuffer      oRingBuffer;
     void            StartDownload();
     void            StopDownload();

@@ -741,7 +741,7 @@ OGRLayer * OGRSQLiteExecuteSQL( GDALDataset* poDS,
     static vsi_l_offset nEmptyDBSize = 0;
     static GByte* pabyEmptyDB = NULL;
     {
-        static void* hMutex = NULL;
+        static CPLMutex* hMutex = NULL;
         CPLMutexHolder oMutexHolder(&hMutex);
         static int bTried = FALSE;
         if( !bTried &&

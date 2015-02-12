@@ -96,7 +96,7 @@ struct _OGRGeocodingSessionHS
     OGRDataSource* poDS;
 };
 
-static void* hMutex = NULL;
+static CPLMutex* hMutex = NULL;
 static double dfLastQueryTimeStampOSMNominatim = 0.0;
 static double dfLastQueryTimeStampMapQuestNominatim = 0.0;
 

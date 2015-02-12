@@ -108,7 +108,7 @@ class VSIUnixStdioFilesystemHandler : public VSIFilesystemHandler
 {
 #ifdef VSI_COUNT_BYTES_READ
     vsi_l_offset  nTotalBytesRead;
-    void         *hMutex;
+    CPLMutex     *hMutex;
 #endif
 
 public:

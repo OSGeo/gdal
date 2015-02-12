@@ -31,6 +31,7 @@
 #define _OGRMUTEXEDLAYER_H_INCLUDED
 
 #include "ogrlayerdecorator.h"
+#include "cpl_multiproc.h"
 
 /** OGRMutexedLayer class protects all virtual methods of OGRLayer with a mutex.
  *
@@ -42,14 +43,14 @@
 class CPL_DLL OGRMutexedLayer : public OGRLayerDecorator
 {
   protected:
-        void          *m_hMutex;
+        CPLMutex          *m_hMutex;
 
   public:
 
     /* The construction of the object isn't protected by the mutex */
                        OGRMutexedLayer(OGRLayer* poDecoratedLayer,
                                        int bTakeOwnership,
-                                       void* hMutex);
+                                       CPLMutex* hMutex);
 
     /* The destruction of the object isn't protected by the mutex */
     virtual           ~OGRMutexedLayer();

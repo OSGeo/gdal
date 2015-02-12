@@ -59,62 +59,131 @@ typedef void (*CPLThreadFunc)(void *);
 void CPL_DLL *CPLLockFile( const char *pszPath, double dfWaitInSeconds );
 void  CPL_DLL CPLUnlockFile( void *hLock );
 
-void CPL_DLL *CPLCreateMutex( void );
-int   CPL_DLL CPLCreateOrAcquireMutex( void **, double dfWaitInSeconds );
-int   CPL_DLL CPLAcquireMutex( void *hMutex, double dfWaitInSeconds );
-void  CPL_DLL CPLReleaseMutex( void *hMutex );
-void  CPL_DLL CPLDestroyMutex( void *hMutex );
+#ifdef DEBUG
+typedef struct _CPLMutex  CPLMutex;
+typedef struct _CPLCond   CPLCond;
+typedef struct _CPLJoinableThread CPLJoinableThread;
+#else
+#define CPLMutex void
+#define CPLCond void
+#define CPLJoinableThread void
+#endif
+
+/* Options for CPLCreateMutexEx() and CPLCreateOrAcquireMutexEx() */
+#define CPL_MUTEX_RECURSIVE         0
+#define CPL_MUTEX_ADAPTIVE          1
+
+CPLMutex CPL_DLL *CPLCreateMutex( void ); /* returned acquired */
+CPLMutex CPL_DLL *CPLCreateMutexEx( int nOptions ); /* returned acquired */
+int   CPL_DLL CPLCreateOrAcquireMutex( CPLMutex **, double dfWaitInSeconds );
+int   CPL_DLL CPLCreateOrAcquireMutexEx( CPLMutex **, double dfWaitInSeconds, int nOptions  );
+int   CPL_DLL CPLAcquireMutex( CPLMutex *hMutex, double dfWaitInSeconds );
+void  CPL_DLL CPLReleaseMutex( CPLMutex *hMutex );
+void  CPL_DLL CPLDestroyMutex( CPLMutex *hMutex );
 void  CPL_DLL CPLCleanupMasterMutex( void );
 
-void  CPL_DLL *CPLCreateCond( void );
-void  CPL_DLL  CPLCondWait( void *hCond, void* hMutex );
-void  CPL_DLL  CPLCondSignal( void *hCond );
-void  CPL_DLL  CPLCondBroadcast( void *hCond );
-void  CPL_DLL  CPLDestroyCond( void *hCond );
+CPLCond  CPL_DLL *CPLCreateCond( void );
+void  CPL_DLL  CPLCondWait( CPLCond *hCond, CPLMutex* hMutex );
+void  CPL_DLL  CPLCondSignal( CPLCond *hCond );
+void  CPL_DLL  CPLCondBroadcast( CPLCond *hCond );
+void  CPL_DLL  CPLDestroyCond( CPLCond *hCond );
 
 GIntBig CPL_DLL CPLGetPID( void );
 int   CPL_DLL CPLCreateThread( CPLThreadFunc pfnMain, void *pArg );
-void  CPL_DLL* CPLCreateJoinableThread( CPLThreadFunc pfnMain, void *pArg );
-void  CPL_DLL CPLJoinThread(void* hJoinableThread); 
+CPLJoinableThread  CPL_DLL* CPLCreateJoinableThread( CPLThreadFunc pfnMain, void *pArg );
+void  CPL_DLL CPLJoinThread(CPLJoinableThread* hJoinableThread); 
 void  CPL_DLL CPLSleep( double dfWaitInSeconds );
 
 const char CPL_DLL *CPLGetThreadingModel( void );
 
 int CPL_DLL CPLGetNumCPUs( void );
 
+
+typedef struct _CPLLock CPLLock;
+typedef enum
+{
+    LOCK_RECURSIVE_MUTEX,
+    LOCK_ADAPTIVE_MUTEX,
+    LOCK_SPIN
+} CPLLockType;
+
+CPLLock  CPL_DLL *CPLCreateLock( CPLLockType eType ); /* returned NON acquired */
+int   CPL_DLL  CPLCreateOrAcquireLock( CPLLock**, CPLLockType eType );
+int   CPL_DLL  CPLAcquireLock( CPLLock* );
+void  CPL_DLL  CPLReleaseLock( CPLLock* );
+void  CPL_DLL  CPLDestroyLock( CPLLock* );
+
+
 CPL_C_END
 
 #ifdef __cplusplus
 
-/* Instanciates the mutex if not already done */
+/* Instanciates the mutex if not already done. The parameter x should be a (void**)  */
 #define CPLMutexHolderD(x)  CPLMutexHolder oHolder(x,1000.0,__FILE__,__LINE__);
 
+/* Instanciates the mutex with options if not already done. */
+/* The parameter x should be a (void**)  */
+#define CPLMutexHolderExD(x, nOptions)  CPLMutexHolder oHolder(x,1000.0,__FILE__,__LINE__,nOptions);
+
 /* This variant assumes the the mutex has already been created. If not, it will */
-/* be a no-op */
+/* be a no-op. The parameter x should be a (void*) */
 #define CPLMutexHolderOptionalLockD(x)  CPLMutexHolder oHolder(x,1000.0,__FILE__,__LINE__);
 
 class CPL_DLL CPLMutexHolder
 {
   private:
-    void       *hMutex;
+    CPLMutex   *hMutex;
     const char *pszFile;
     int         nLine;
 
   public:
 
     /* Instanciates the mutex if not already done */
-    CPLMutexHolder( void **phMutex, double dfWaitInSeconds = 1000.0,
+    CPLMutexHolder( CPLMutex **phMutex, double dfWaitInSeconds = 1000.0,
                     const char *pszFile = __FILE__,
-                    int nLine = __LINE__ );
+                    int nLine = __LINE__,
+                    int nOptions = CPL_MUTEX_RECURSIVE);
 
     /* This variant assumes the the mutex has already been created. If not, it will */
     /* be a no-op */
-    CPLMutexHolder( void* hMutex, double dfWaitInSeconds = 1000.0,
+    CPLMutexHolder( CPLMutex* hMutex, double dfWaitInSeconds = 1000.0,
                     const char *pszFile = __FILE__,
                     int nLine = __LINE__ );
 
     ~CPLMutexHolder();
 };
+
+/* Instanciates the lock if not already done. The parameter x should be a (CPLLock**) */
+#define CPLLockHolderD(x, eType)  CPLLockHolder oHolder(x,eType,__FILE__,__LINE__);
+
+/* This variant assumes the the lock has already been created. If not, it will */
+/* be a no-op. The parameter should be (CPLLock*) */
+#define CPLLockHolderOptionalLockD(x)  CPLLockHolder oHolder(x,__FILE__,__LINE__);
+
+class CPL_DLL CPLLockHolder
+{
+  private:
+    CPLLock    *hLock;
+    const char *pszFile;
+    int         nLine;
+
+  public:
+
+    /* Instanciates the lock if not already done */
+    CPLLockHolder( CPLLock **phSpin, CPLLockType eType,
+                    const char *pszFile = __FILE__,
+                    int nLine = __LINE__);
+
+    /* This variant assumes the the lock has already been created. If not, it will */
+    /* be a no-op */
+    CPLLockHolder( CPLLock* hSpin,
+                    const char *pszFile = __FILE__,
+                    int nLine = __LINE__ );
+
+    ~CPLLockHolder();
+};
+
+
 #endif /* def __cplusplus */
 
 /* -------------------------------------------------------------------- */

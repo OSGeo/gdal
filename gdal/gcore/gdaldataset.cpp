@@ -82,7 +82,7 @@ static CPLHashSet* phSharedDatasetSet = NULL;
 /* if GDALClose is called from a different thread */
 static std::map<GDALDataset*, GIntBig>* poAllDatasetMap = NULL;
 
-static void *hDLMutex = NULL;
+static CPLMutex *hDLMutex = NULL;
 
 /* Static array of all datasets. Used by GDALGetOpenDatasets */
 /* Not thread-safe. See GDALGetOpenDatasets */
@@ -115,7 +115,7 @@ static void GDALSharedDatasetFreeFunc(void* elt)
 /************************************************************************/
 
 /* The open-shared mutex must be used by the ProxyPool too */
-void** GDALGetphDLMutex()
+CPLMutex** GDALGetphDLMutex()
 {
     return &hDLMutex;
 }
@@ -3686,7 +3686,7 @@ In GDAL 1.X, this method used to be in the OGRDataSource class.
 int GDALDataset::GetSummaryRefCount() const
 
 {
-    CPLMutexHolderD( (void **) &m_hMutex );
+    CPLMutexHolderD( (CPLMutex**) &m_hMutex );
     int nSummaryCount = nRefCount;
     int iLayer;
     GDALDataset *poUseThis = (GDALDataset *) this;

@@ -35,7 +35,7 @@
 CPL_CVSID("$Id$");
 
 S57ClassRegistrar *OGRS57Driver::poRegistrar = NULL;
-static void* hS57RegistrarMutex = NULL;
+static CPLMutex* hS57RegistrarMutex = NULL;
 
 /************************************************************************/
 /*                            OGRS57Driver()                            */

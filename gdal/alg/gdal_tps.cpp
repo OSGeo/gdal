@@ -209,7 +209,7 @@ void *GDALCreateTPSTransformerInt( int nGCPCount, const GDAL_GCP *pasGCPList,
     if( nThreads > 1 )
     {
         /* Compute direct and reverse transforms in parallel */
-        void* hThread = CPLCreateJoinableThread(GDALTPSComputeForwardInThread, psInfo);
+        CPLJoinableThread* hThread = CPLCreateJoinableThread(GDALTPSComputeForwardInThread, psInfo);
         psInfo->bReverseSolved = psInfo->poReverse->solve() != 0;
         if( hThread != NULL )
             CPLJoinThread(hThread);

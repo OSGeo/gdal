@@ -104,7 +104,7 @@ static const char *apszLambertConformalConicMapping[] = {
     NULL, NULL };
 
 static char **papszDatumMapping = NULL;
-static void* hDatumMappingMutex = NULL;
+static CPLMutex* hDatumMappingMutex = NULL;
  
 static const char *apszDefaultDatumMapping[] = {
     "6267", "North_American_1927", SRS_DN_NAD27,

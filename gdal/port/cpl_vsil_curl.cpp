@@ -197,7 +197,7 @@ typedef struct
 
 class VSICurlFilesystemHandler : public VSIFilesystemHandler 
 {
-    void           *hMutex;
+    CPLMutex       *hMutex;
 
     CachedRegion  **papsRegions;
     int             nRegions;

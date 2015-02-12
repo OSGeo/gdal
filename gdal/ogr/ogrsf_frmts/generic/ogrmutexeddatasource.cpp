@@ -34,7 +34,7 @@ CPL_CVSID("$Id$");
 
 OGRMutexedDataSource::OGRMutexedDataSource(OGRDataSource* poBaseDataSource,
                                            int bTakeOwnership,
-                                           void* hMutexIn) :
+                                           CPLMutex* hMutexIn) :
             m_poBaseDataSource(poBaseDataSource),
             m_bHasOwnership(bTakeOwnership),
             m_hGlobalMutex(hMutexIn)

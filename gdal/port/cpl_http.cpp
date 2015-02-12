@@ -50,7 +50,7 @@ CPL_CVSID("$Id$");
 
 #ifdef HAVE_CURL
 static std::map<CPLString,CURL*> oSessionMap;
-static void *hSessionMapMutex = NULL;
+static CPLMutex *hSessionMapMutex = NULL;
 #endif
 
 /************************************************************************/

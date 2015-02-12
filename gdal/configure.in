@@ -506,6 +506,43 @@ if test "$with_threads" = "yes" -o "$with_threads" = "" ; then
     AC_MSG_RESULT([no])
   ])
 
+
+
+  AC_MSG_CHECKING([for HAVE_PTHREAD_MUTEX_ADAPTIVE_NP])
+
+  AC_TRY_COMPILE(
+  [
+#define _GNU_SOURCE
+#include <pthread.h>
+  ], [
+    return PTHREAD_MUTEX_ADAPTIVE_NP;
+  ],
+  [
+    AC_MSG_RESULT([yes])
+    AC_DEFINE_UNQUOTED(HAVE_PTHREAD_MUTEX_ADAPTIVE_NP, 1,
+          [Define to 1 if you have the `PTHREAD_MUTEX_ADAPTIVE_NP' constant.])
+  ], [
+    AC_MSG_RESULT([no])
+  ])
+
+  AC_MSG_CHECKING([for pthread_spinlock_t])
+
+  AC_TRY_COMPILE(
+  [
+#define _GNU_SOURCE
+#include <pthread.h>
+  ], [
+    pthread_spinlock_t spin;
+    return 1;
+  ],
+  [
+    AC_MSG_RESULT([yes])
+    AC_DEFINE_UNQUOTED(HAVE_PTHREAD_SPINLOCK, 1,
+          [Define to 1 if you have the `pthread_spinlock_t' type.])
+  ], [
+    AC_MSG_RESULT([no])
+  ])
+
 elif test "$with_threads" != "no" ; then
 
   THREAD_FLAG=CPL_MULTIPROC_PTHREAD

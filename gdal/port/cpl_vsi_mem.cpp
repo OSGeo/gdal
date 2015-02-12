@@ -133,7 +133,7 @@ class VSIMemFilesystemHandler : public VSIFilesystemHandler
 {
 public:
     std::map<CPLString,VSIMemFile*>   oFileList;
-    void             *hMutex;
+    CPLMutex        *hMutex;
 
                      VSIMemFilesystemHandler();
     virtual          ~VSIMemFilesystemHandler();

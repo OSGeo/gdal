@@ -35,7 +35,7 @@
 
 using kmldom::KmlFactory;
 
-static void *hMutex = NULL;
+static CPLMutex *hMutex = NULL;
 static KmlFactory* m_poKmlFactory = NULL;
 
 /******************************************************************************

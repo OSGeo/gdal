@@ -47,7 +47,7 @@ CPL_C_START
 void	GDALRegister_GRIB(void);
 CPL_C_END
 
-static void *hGRIBMutex = NULL;
+static CPLMutex *hGRIBMutex = NULL;
 
 /************************************************************************/
 /* ==================================================================== */

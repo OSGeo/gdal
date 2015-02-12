@@ -83,7 +83,7 @@ void CopyMetadata( void  *poDS, int fpImage, int CDFVarID,
 // uncomment this for more debug ouput
 // #define NCDF_DEBUG 1
 
-void *hNCMutex = NULL;
+CPLMutex *hNCMutex = NULL;
 
 /************************************************************************/
 /* ==================================================================== */

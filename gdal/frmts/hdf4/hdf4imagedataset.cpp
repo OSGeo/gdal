@@ -59,7 +59,7 @@ CPL_C_END
 const char      *pszGDALSignature =
         "Created with GDAL (http://www.remotesensing.org/gdal/)";
 
-extern void *hHDF4Mutex;
+extern CPLMutex *hHDF4Mutex;
 
 /************************************************************************/
 /* ==================================================================== */

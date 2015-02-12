@@ -99,7 +99,7 @@ int CPLAtomicAdd(volatile int* ptr, int increment)
 
 #include "cpl_multiproc.h"
 
-static void *hAtomicOpMutex = NULL;
+static CPLMutex *hAtomicOpMutex = NULL;
 
 /* Slow, but safe, implemenation using a mutex */
 int CPLAtomicAdd(volatile int* ptr, int increment)

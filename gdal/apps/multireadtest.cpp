@@ -40,7 +40,7 @@ static volatile int nPendingThreads = 0;
 static const char *pszFilename = NULL;
 static int nChecksum = 0;
 
-static void *pGlobalMutex = NULL;
+static CPLMutex *pGlobalMutex = NULL;
 
 static void WorkerFunc( void * );
 
