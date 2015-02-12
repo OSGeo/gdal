@@ -151,9 +151,10 @@ int OGROpenFileGDBDataSource::Open( const char* pszFilename )
             OGROpenFileGDBLayer* poLayer = new OGROpenFileGDBLayer(
                                 m_pszName, pszLyrName, "", "");
             const char* pszTablX = CPLResetExtension(m_pszName, "gdbtablx");
-            if( !FileExists(pszTablX) &&
-                poLayer->GetLayerDefn()->GetFieldCount() == 0 &&
-                poLayer->GetFeatureCount() == 0 )
+            if( (!FileExists(pszTablX) &&
+                 poLayer->GetLayerDefn()->GetFieldCount() == 0 &&
+                 poLayer->GetFeatureCount() == 0) ||
+                !poLayer->IsValidLayerDefn() )
             {
                 delete poLayer;
                 return FALSE;

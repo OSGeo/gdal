@@ -591,7 +591,12 @@ int FileGDBTable::Open(const char* pszFilename)
     osFilename = pszFilename;
 
     fpTable = VSIFOpenL( pszFilename, "rb" );
-    returnErrorIf(fpTable == NULL );
+    if( fpTable == NULL )
+    {
+        CPLError(CE_Failure, CPLE_OpenFailed,
+                 "Cannot open %s: %s", pszFilename, VSIStrerror(errno));
+        return FALSE;
+    }
 
     // Read .gdtable file header
     GByte abyHeader[40];
