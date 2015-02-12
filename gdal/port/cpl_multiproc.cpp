@@ -254,8 +254,13 @@ int CPLCreateOrAcquireMutexInternal( CPLLock **phLock, double dfWaitInSeconds,
             (*phLock)->eType = eType;
             (*phLock)->u.hMutex = CPLCreateMutexEx(
                 (eType == LOCK_RECURSIVE_MUTEX) ? CPL_MUTEX_RECURSIVE : CPL_MUTEX_ADAPTIVE );
+            if( (*phLock)->u.hMutex == NULL )
+            {
+                free(*phLock);
+                *phLock = NULL;
+            }
         }
-        bSuccess = *phLock != NULL && (*phLock)->u.hMutex != NULL;
+        bSuccess = *phLock != NULL;
         CPLReleaseMutex( hCOAMutex );
     }
     else
@@ -1255,8 +1260,13 @@ int CPLCreateOrAcquireMutexInternal( CPLLock **phLock, double dfWaitInSeconds,
             (*phLock)->eType = eType;
             (*phLock)->u.hMutex = CPLCreateMutexInternal(TRUE,
                 (eType == LOCK_RECURSIVE_MUTEX) ? CPL_MUTEX_RECURSIVE : CPL_MUTEX_ADAPTIVE );
+            if( (*phLock)->u.hMutex == NULL )
+            {
+                free(*phLock);
+                *phLock = NULL;
+            }
         }
-        bSuccess = *phLock != NULL && (*phLock)->u.hMutex != NULL;
+        bSuccess = *phLock != NULL;
         pthread_mutex_unlock(&global_mutex);
     }
     else
@@ -1811,11 +1821,15 @@ int  CPLCreateOrAcquireSpinLockInternal( CPLLock** ppsLock )
         {
             (*ppsLock)->eType = LOCK_SPIN;
             (*ppsLock)->u.hSpinLock = CPLCreateSpinLock();
+            if( (*ppsLock)->u.hSpinLock == NULL )
+            {
+                free(*ppsLock);
+                *ppsLock = NULL;
+            }
         }
     }
     pthread_mutex_unlock(&global_mutex);
-    return( *ppsLock != NULL && (*ppsLock)->u.hSpinLock != NULL &&
-            CPLAcquireSpinLock( (*ppsLock)->u.hSpinLock ) );
+    return( *ppsLock != NULL && CPLAcquireSpinLock( (*ppsLock)->u.hSpinLock ) );
 }
 
 /************************************************************************/
