@@ -1786,10 +1786,10 @@ void CPLSetTLSWithFreeFunc( int nIndex, void *pData, CPLTLSFreeFunc pfnFree )
 
 CPLSpinLock *CPLCreateSpinLock( void )
 {
-    CPLSpinLock* psLock = (CPLSpinLock *)CPLCreateMutex();
-    if( psLock )
-        CPLReleaseMutex(psLock);
-    return psLock;
+    CPLSpinLock* psSpin = (CPLSpinLock *)CPLCreateMutex();
+    if( psSpin )
+        CPLReleaseSpinLock(psSpin);
+    return psSpin;
 }
 
 /************************************************************************/
@@ -1798,7 +1798,7 @@ CPLSpinLock *CPLCreateSpinLock( void )
 
 int   CPLCreateOrAcquireSpinLock( CPLSpinLock** ppsSpin )
 {
-    void* hMutex = NULL;
+    CPLMutex* hMutex = NULL;
     int ret = CPLCreateOrAcquireMutexEx( &hMutex, 1000, CPL_MUTEX_ADAPTIVE );
     *ppsSpin = (CPLSpinLock*) hMutex;
     return ret;
@@ -1810,7 +1810,7 @@ int   CPLCreateOrAcquireSpinLock( CPLSpinLock** ppsSpin )
 
 int  CPLAcquireSpinLock( CPLSpinLock* psSpin )
 {
-    return CPLAcquireMutex( psSpin, 1000 );
+    return CPLAcquireMutex( (CPLMutex*)psSpin, 1000 );
 }
 
 /************************************************************************/
@@ -1819,7 +1819,7 @@ int  CPLAcquireSpinLock( CPLSpinLock* psSpin )
 
 void  CPLReleaseSpinLock( CPLSpinLock* psSpin )
 {
-    CPLReleaseMutex( psSpin );
+    CPLReleaseMutex( (CPLMutex*)psSpin );
 }
 
 /************************************************************************/
@@ -1828,7 +1828,7 @@ void  CPLReleaseSpinLock( CPLSpinLock* psSpin )
 
 void  CPLDestroySpinLock( CPLSpinLock* psSpin )
 {
-    CPLDestroyMutex( psSpin );
+    CPLDestroyMutex( (CPLMutex*)psSpin );
 }
 
 #endif /* HAVE_SPINLOCK_IMPL */
