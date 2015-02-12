@@ -49,7 +49,7 @@
 #include "nasreaderp.h"
 #include "cpl_conv.h"
 
-void *NASReader::hMutex = NULL;
+CPLMutex *NASReader::hMutex = NULL;
 
 /************************************************************************/
 /*                          CreateGMLReader()                           */

@@ -225,7 +225,7 @@ class CPLThreadMutex : public PCIDSK::Mutex
 
 {
 private:
-    void    *hMutex;
+    CPLMutex    *hMutex;
 
 public:
     CPLThreadMutex();

@@ -133,14 +133,14 @@ typedef struct _GWKJobStruct GWKJobStruct;
 
 struct _GWKJobStruct
 {
-    void           *hThread;
+    CPLJoinableThread *hThread;
     GDALWarpKernel *poWK;
     int             iYMin;
     int             iYMax;
     volatile int   *pnCounter;
     volatile int   *pbStop;
-    void           *hCond;
-    void           *hCondMutex;
+    CPLCond        *hCond;
+    CPLMutex       *hCondMutex;
     int           (*pfnProgress)(GWKJobStruct* psJob);
     void           *pTransformerArg;
 } ;
@@ -286,7 +286,7 @@ static CPLErr GWKRun( GDALWarpKernel *poWK,
             return GWKGenericMonoThread(poWK, pfnFunc);
         }
 
-        void* hCond = CPLCreateCond();
+        CPLCond* hCond = CPLCreateCond();
         if (hCond == NULL)
         {
             for(i=0;i<nThreads;i++)
@@ -303,7 +303,7 @@ static CPLErr GWKRun( GDALWarpKernel *poWK,
 
         CPLDebug("WARP", "Using %d threads", nThreads);
 
-        void* hCondMutex = CPLCreateMutex(); /* and take implicitely the mutex */
+        CPLMutex* hCondMutex = CPLCreateMutex(); /* and take implicitely the mutex */
 
         volatile int bStop = FALSE;
         volatile int nCounter = 0;

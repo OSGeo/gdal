@@ -131,7 +131,7 @@ class DSToBeOpened
         CPLString               osInterestLayers;
 };
 
-static void                      *hMutex = NULL;
+static CPLMutex                  *hMutex = NULL;
 static std::vector<DSToBeOpened>  oListDSToBeOpened;
 
 /************************************************************************/

@@ -41,6 +41,7 @@
 
 #include "gdal_alg.h"
 #include "cpl_minixml.h"
+#include "cpl_multiproc.h"
 
 CPL_C_START
 
@@ -346,8 +347,8 @@ private:
     CPLErr          CreateKernelMask( GDALWarpKernel *, int iBand, 
                                       const char *pszType );
 
-    void            *hIOMutex;
-    void            *hWarpMutex;
+    CPLMutex        *hIOMutex;
+    CPLMutex        *hWarpMutex;
 
     int             nChunkListCount;
     int             nChunkListMax;

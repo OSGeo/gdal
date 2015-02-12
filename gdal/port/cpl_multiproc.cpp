@@ -47,6 +47,15 @@ CPL_CVSID("$Id$");
 #  define MUTEX_NONE
 #endif
 
+
+typedef struct _CPLSpinLock CPLSpinLock;
+static CPLSpinLock   *CPLCreateSpinLock( void ); /* returned NON acquired */
+static int     CPLCreateOrAcquireSpinLock( CPLSpinLock** );
+static int     CPLAcquireSpinLock( CPLSpinLock* );
+static void    CPLReleaseSpinLock( CPLSpinLock* );
+static void    CPLDestroySpinLock( CPLSpinLock* );
+
+
 /* We don't want it to be publicly used since it solves rather tricky issues */
 /* that are better to remain hidden... */
 void CPLFinalizeTLS();
@@ -55,9 +64,10 @@ void CPLFinalizeTLS();
 /*                           CPLMutexHolder()                           */
 /************************************************************************/
 
-CPLMutexHolder::CPLMutexHolder( void **phMutex, double dfWaitInSeconds,
+CPLMutexHolder::CPLMutexHolder( CPLMutex **phMutex, double dfWaitInSeconds,
                                 const char *pszFileIn, 
-                                int nLineIn )
+                                int nLineIn,
+                                int nOptions )
 
 {
 #ifndef MUTEX_NONE
@@ -75,7 +85,7 @@ CPLMutexHolder::CPLMutexHolder( void **phMutex, double dfWaitInSeconds,
              *phMutex, (long) CPLGetPID(), nLine, pszFile );
 #endif
 
-    if( !CPLCreateOrAcquireMutex( phMutex, dfWaitInSeconds ) )
+    if( !CPLCreateOrAcquireMutexEx( phMutex, dfWaitInSeconds, nOptions ) )
     {
         fprintf( stderr, "CPLMutexHolder: Failed to acquire mutex!\n" );
         hMutex = NULL;
@@ -97,7 +107,7 @@ CPLMutexHolder::CPLMutexHolder( void **phMutex, double dfWaitInSeconds,
 /*                           CPLMutexHolder()                           */
 /************************************************************************/
 
-CPLMutexHolder::CPLMutexHolder( void *hMutexIn, double dfWaitInSeconds,
+CPLMutexHolder::CPLMutexHolder( CPLMutex *hMutexIn, double dfWaitInSeconds,
                                 const char *pszFileIn, 
                                 int nLineIn )
 
@@ -136,6 +146,10 @@ CPLMutexHolder::~CPLMutexHolder()
 #endif /* ndef MUTEX_NONE */
 }
 
+int CPLCreateOrAcquireMutex( CPLMutex **phMutex, double dfWaitInSeconds )
+{
+    return CPLCreateOrAcquireMutexEx(phMutex, dfWaitInSeconds, CPL_MUTEX_RECURSIVE);
+}
 
 /************************************************************************/
 /*                      CPLCreateOrAcquireMutex()                       */
@@ -144,10 +158,10 @@ CPLMutexHolder::~CPLMutexHolder()
 #ifndef CPL_MULTIPROC_PTHREAD
 
 #ifndef MUTEX_NONE
-static void *hCOAMutex = NULL;
+static CPLMutex *hCOAMutex = NULL;
 #endif
 
-int CPLCreateOrAcquireMutex( void **phMutex, double dfWaitInSeconds )
+int CPLCreateOrAcquireMutexEx( CPLMutex **phMutex, double dfWaitInSeconds, int nOptions )
 
 {
     int bSuccess = FALSE;
@@ -175,7 +189,7 @@ int CPLCreateOrAcquireMutex( void **phMutex, double dfWaitInSeconds )
 
     if( *phMutex == NULL )
     {
-        *phMutex = CPLCreateMutex();
+        *phMutex = CPLCreateMutexEx( nOptions );
         bSuccess = *phMutex != NULL;
         CPLReleaseMutex( hCOAMutex );
     }
@@ -272,7 +286,7 @@ const char *CPLGetThreadingModel()
 /*                           CPLCreateMutex()                           */
 /************************************************************************/
 
-void *CPLCreateMutex()
+CPLMutex *CPLCreateMutex()
 
 {
 #ifndef MUTEX_NONE
@@ -283,17 +297,23 @@ void *CPLCreateMutex()
     pabyMutex[2] = 'e';
     pabyMutex[3] = 'd';
 
-    return (void *) pabyMutex;
+    return (CPLMutex *) pabyMutex;
 #else
-    return (void *) 0xdeadbeef;
+    return (CPLMutex *) 0xdeadbeef;
 #endif 
+}
+
+CPLMutex *CPLCreateMutexEx(CPL_UNUSED int nOptions)
+
+{
+    return CPLCreateMutex();
 }
 
 /************************************************************************/
 /*                          CPLAcquireMutex()                           */
 /************************************************************************/
 
-int CPLAcquireMutex( void *hMutex,
+int CPLAcquireMutex( CPLMutex *hMutex,
                      CPL_UNUSED double dfWaitInSeconds )
 {
 #ifndef MUTEX_NONE
@@ -314,7 +334,7 @@ int CPLAcquireMutex( void *hMutex,
 /*                          CPLReleaseMutex()                           */
 /************************************************************************/
 
-void CPLReleaseMutex( void *hMutex )
+void CPLReleaseMutex( CPLMutex *hMutex )
 
 {
 #ifndef MUTEX_NONE
@@ -336,7 +356,7 @@ void CPLReleaseMutex( void *hMutex )
 /*                          CPLDestroyMutex()                           */
 /************************************************************************/
 
-void CPLDestroyMutex( void *hMutex )
+void CPLDestroyMutex( CPLMutex *hMutex )
 
 {
 #ifndef MUTEX_NONE
@@ -353,7 +373,7 @@ void CPLDestroyMutex( void *hMutex )
 /*                            CPLCreateCond()                           */
 /************************************************************************/
 
-void  *CPLCreateCond()
+CPLCond  *CPLCreateCond()
 {
     return NULL;
 }
@@ -362,7 +382,7 @@ void  *CPLCreateCond()
 /*                            CPLCondWait()                             */
 /************************************************************************/
 
-void  CPLCondWait( CPL_UNUSED void *hCond, CPL_UNUSED void* hMutex )
+void  CPLCondWait( CPL_UNUSED CPLCond *hCond, CPL_UNUSED CPLMutex* hMutex )
 {
 }
 
@@ -370,7 +390,7 @@ void  CPLCondWait( CPL_UNUSED void *hCond, CPL_UNUSED void* hMutex )
 /*                            CPLCondSignal()                           */
 /************************************************************************/
 
-void  CPLCondSignal( CPL_UNUSED void *hCond )
+void  CPLCondSignal( CPL_UNUSED CPLCond *hCond )
 {
 }
 
@@ -378,7 +398,7 @@ void  CPLCondSignal( CPL_UNUSED void *hCond )
 /*                           CPLCondBroadcast()                         */
 /************************************************************************/
 
-void  CPLCondBroadcast( CPL_UNUSED void *hCond )
+void  CPLCondBroadcast( CPL_UNUSED CPLCond *hCond )
 {
 }
 
@@ -386,7 +406,7 @@ void  CPLCondBroadcast( CPL_UNUSED void *hCond )
 /*                            CPLDestroyCond()                          */
 /************************************************************************/
 
-void  CPLDestroyCond( CPL_UNUSED void *hCond )
+void  CPLDestroyCond( CPL_UNUSED CPLCond *hCond )
 {
 }
 
@@ -492,7 +512,7 @@ int CPLCreateThread( CPL_UNUSED CPLThreadFunc pfnMain, CPL_UNUSED void *pArg )
 /*                      CPLCreateJoinableThread()                       */
 /************************************************************************/
 
-void* CPLCreateJoinableThread( CPL_UNUSED CPLThreadFunc pfnMain, CPL_UNUSED void *pThreadArg )
+CPLJoinableThread* CPLCreateJoinableThread( CPL_UNUSED CPLThreadFunc pfnMain, CPL_UNUSED void *pThreadArg )
 {
     CPLDebug( "CPLCreateJoinableThread", "Fails to dummy implementation" );
 
@@ -503,7 +523,7 @@ void* CPLCreateJoinableThread( CPL_UNUSED CPLThreadFunc pfnMain, CPL_UNUSED void
 /*                          CPLJoinThread()                             */
 /************************************************************************/
 
-void CPLJoinThread(CPL_UNUSED void* hJoinableThread)
+void CPLJoinThread(CPL_UNUSED CPLJoinableThread* hJoinableThread)
 {
 }
 
@@ -617,7 +637,7 @@ const char *CPLGetThreadingModel()
 /*                           CPLCreateMutex()                           */
 /************************************************************************/
 
-void *CPLCreateMutex()
+CPLMutex *CPLCreateMutex()
 
 {
 #ifdef USE_WIN32_MUTEX
@@ -625,7 +645,7 @@ void *CPLCreateMutex()
 
     hMutex = CreateMutex( NULL, TRUE, NULL );
 
-    return (void *) hMutex;
+    return (CPLMutex *) hMutex;
 #else
     CRITICAL_SECTION *pcs;
 
@@ -638,15 +658,21 @@ void *CPLCreateMutex()
       EnterCriticalSection(pcs);
     }
 
-    return (void *) pcs;
+    return (CPLMutex *) pcs;
 #endif
+}
+
+CPLMutex *CPLCreateMutexEx(CPL_UNUSED int nOptions)
+
+{
+    return CPLCreateMutex();
 }
 
 /************************************************************************/
 /*                          CPLAcquireMutex()                           */
 /************************************************************************/
 
-int CPLAcquireMutex( void *hMutexIn, double dfWaitInSeconds )
+int CPLAcquireMutex( CPLMutex *hMutexIn, double dfWaitInSeconds )
 
 {
 #ifdef USE_WIN32_MUTEX
@@ -674,7 +700,7 @@ int CPLAcquireMutex( void *hMutexIn, double dfWaitInSeconds )
 /*                          CPLReleaseMutex()                           */
 /************************************************************************/
 
-void CPLReleaseMutex( void *hMutexIn )
+void CPLReleaseMutex( CPLMutex *hMutexIn )
 
 {
 #ifdef USE_WIN32_MUTEX
@@ -692,7 +718,7 @@ void CPLReleaseMutex( void *hMutexIn )
 /*                          CPLDestroyMutex()                           */
 /************************************************************************/
 
-void CPLDestroyMutex( void *hMutexIn )
+void CPLDestroyMutex( CPLMutex *hMutexIn )
 
 {
 #ifdef USE_WIN32_MUTEX
@@ -720,11 +746,11 @@ typedef struct _WaiterItem WaiterItem;
 
 typedef struct
 {
-    void        *hInternalMutex;
+    CPLMutex    *hInternalMutex;
     WaiterItem  *psWaiterList;
 } Win32Cond;
 
-void  *CPLCreateCond()
+CPLCond  *CPLCreateCond()
 {
     Win32Cond* psCond = (Win32Cond*) malloc(sizeof(Win32Cond));
     if (psCond == NULL)
@@ -737,7 +763,7 @@ void  *CPLCreateCond()
     }
     CPLReleaseMutex(psCond->hInternalMutex);
     psCond->psWaiterList = NULL;
-    return psCond;
+    return (CPLCond*) psCond;
 }
 
 /************************************************************************/
@@ -749,7 +775,7 @@ static void CPLTLSFreeEvent(void* pData)
     CloseHandle((HANDLE)pData);
 }
 
-void  CPLCondWait( void *hCond, void* hClientMutex )
+void  CPLCondWait( CPLCond *hCond, CPLMutex* hClientMutex )
 {
     Win32Cond* psCond = (Win32Cond*) hCond;
 
@@ -793,7 +819,7 @@ void  CPLCondWait( void *hCond, void* hClientMutex )
 /*                            CPLCondSignal()                           */
 /************************************************************************/
 
-void  CPLCondSignal( void *hCond )
+void  CPLCondSignal( CPLCond *hCond )
 {
     Win32Cond* psCond = (Win32Cond*) hCond;
 
@@ -815,7 +841,7 @@ void  CPLCondSignal( void *hCond )
 /*                           CPLCondBroadcast()                         */
 /************************************************************************/
 
-void  CPLCondBroadcast( void *hCond )
+void  CPLCondBroadcast( CPLCond *hCond )
 {
     Win32Cond* psCond = (Win32Cond*) hCond;
 
@@ -839,7 +865,7 @@ void  CPLCondBroadcast( void *hCond )
 /*                            CPLDestroyCond()                          */
 /************************************************************************/
 
-void  CPLDestroyCond( void *hCond )
+void  CPLDestroyCond( CPLCond *hCond )
 {
     Win32Cond* psCond = (Win32Cond*) hCond;
     CPLDestroyMutex(psCond->hInternalMutex);
@@ -974,7 +1000,7 @@ int CPLCreateThread( CPLThreadFunc pfnMain, void *pThreadArg )
 /*                      CPLCreateJoinableThread()                       */
 /************************************************************************/
 
-void* CPLCreateJoinableThread( CPLThreadFunc pfnMain, void *pThreadArg )
+CPLJoinableThread* CPLCreateJoinableThread( CPLThreadFunc pfnMain, void *pThreadArg )
 
 {
     HANDLE hThread;
@@ -992,14 +1018,14 @@ void* CPLCreateJoinableThread( CPLThreadFunc pfnMain, void *pThreadArg )
         return NULL;
         
     psInfo->hThread = hThread;
-    return psInfo;
+    return (CPLJoinableThread*) psInfo;
 }
 
 /************************************************************************/
 /*                          CPLJoinThread()                             */
 /************************************************************************/
 
-void CPLJoinThread(void* hJoinableThread)
+void CPLJoinThread(CPLJoinableThread* hJoinableThread)
 {
     CPLStdCallThreadInfo *psInfo = (CPLStdCallThreadInfo *) hJoinableThread;
     
@@ -1119,9 +1145,10 @@ int CPLGetNumCPUs()
 /************************************************************************/
 
 static pthread_mutex_t global_mutex = PTHREAD_MUTEX_INITIALIZER;
-static void *CPLCreateMutexInternal(int bAlreadyInGlobalLock);
+static CPLMutex *CPLCreateMutexInternal(int bAlreadyInGlobalLock, int nOptions);
 
-int CPLCreateOrAcquireMutex( void **phMutex, double dfWaitInSeconds )
+int CPLCreateOrAcquireMutexEx( CPLMutex **phMutex, double dfWaitInSeconds,
+                               int nOptions )
 
 {
     int bSuccess = FALSE;
@@ -1129,7 +1156,7 @@ int CPLCreateOrAcquireMutex( void **phMutex, double dfWaitInSeconds )
     pthread_mutex_lock(&global_mutex);
     if( *phMutex == NULL )
     {
-        *phMutex = CPLCreateMutexInternal(TRUE);
+        *phMutex = CPLCreateMutexInternal(TRUE, nOptions);
         bSuccess = *phMutex != NULL;
         pthread_mutex_unlock(&global_mutex);
     }
@@ -1161,6 +1188,7 @@ typedef struct _MutexLinkedElt MutexLinkedElt;
 struct _MutexLinkedElt
 {
     pthread_mutex_t   sMutex;
+    int               nOptions;
     _MutexLinkedElt  *psPrev;
     _MutexLinkedElt  *psNext;
 };
@@ -1168,6 +1196,18 @@ static MutexLinkedElt* psMutexList = NULL;
 
 static void CPLInitMutex(MutexLinkedElt* psItem)
 {
+    /* When an adaptive mutex is required, we can safely fallback to recursive */
+    /* mutex if we don't have HAVE_PTHREAD_MUTEX_ADAPTIVE_NP */
+#if defined(HAVE_PTHREAD_MUTEX_ADAPTIVE_NP)
+    if( psItem->nOptions == CPL_MUTEX_ADAPTIVE )
+    {
+        pthread_mutexattr_t  attr;
+        pthread_mutexattr_init( &attr );
+        pthread_mutexattr_settype( &attr, PTHREAD_MUTEX_ADAPTIVE_NP );
+        pthread_mutex_init( &(psItem->sMutex), &attr );
+    }
+#endif
+
 #if defined(PTHREAD_MUTEX_RECURSIVE) || defined(HAVE_PTHREAD_MUTEX_RECURSIVE)
     {
         pthread_mutexattr_t  attr;
@@ -1192,7 +1232,7 @@ static void CPLInitMutex(MutexLinkedElt* psItem)
 #endif
 }
 
-static void *CPLCreateMutexInternal(int bAlreadyInGlobalLock)
+static CPLMutex *CPLCreateMutexInternal(int bAlreadyInGlobalLock, int nOptions)
 {
     MutexLinkedElt* psItem = (MutexLinkedElt *) malloc(sizeof(MutexLinkedElt));
     if (psItem == NULL)
@@ -1208,24 +1248,30 @@ static void *CPLCreateMutexInternal(int bAlreadyInGlobalLock)
     if( !bAlreadyInGlobalLock )
         pthread_mutex_unlock(&global_mutex);
 
+    psItem->nOptions = nOptions;
     CPLInitMutex(psItem);
 
     // mutexes are implicitly acquired when created.
-    CPLAcquireMutex( &(psItem->sMutex), 0.0 );
+    CPLAcquireMutex( (CPLMutex*)psItem, 0.0 );
 
-    return psItem;
+    return (CPLMutex*)psItem;
 }
 
-void *CPLCreateMutex()
+CPLMutex *CPLCreateMutex()
 {
-    return CPLCreateMutexInternal(FALSE);
+    return CPLCreateMutexInternal(FALSE, CPL_MUTEX_RECURSIVE);
+}
+
+CPLMutex *CPLCreateMutexEx(int nOptions)
+{
+    return CPLCreateMutexInternal(FALSE, nOptions);
 }
 
 /************************************************************************/
 /*                          CPLAcquireMutex()                           */
 /************************************************************************/
 
-int CPLAcquireMutex( void *hMutexIn, CPL_UNUSED double dfWaitInSeconds )
+int CPLAcquireMutex( CPLMutex *hMutexIn, CPL_UNUSED double dfWaitInSeconds )
 {
     int err;
 
@@ -1250,7 +1296,7 @@ int CPLAcquireMutex( void *hMutexIn, CPL_UNUSED double dfWaitInSeconds )
 /*                          CPLReleaseMutex()                           */
 /************************************************************************/
 
-void CPLReleaseMutex( void *hMutexIn )
+void CPLReleaseMutex( CPLMutex *hMutexIn )
 
 {
     MutexLinkedElt* psItem = (MutexLinkedElt *) hMutexIn;
@@ -1261,7 +1307,7 @@ void CPLReleaseMutex( void *hMutexIn )
 /*                          CPLDestroyMutex()                           */
 /************************************************************************/
 
-void CPLDestroyMutex( void *hMutexIn )
+void CPLDestroyMutex( CPLMutex *hMutexIn )
 
 {
     MutexLinkedElt* psItem = (MutexLinkedElt *) hMutexIn;
@@ -1300,22 +1346,23 @@ void CPLReinitAllMutex()
 /*                            CPLCreateCond()                           */
 /************************************************************************/
 
-void  *CPLCreateCond()
+CPLCond  *CPLCreateCond()
 {
     pthread_cond_t* pCond = (pthread_cond_t* )malloc(sizeof(pthread_cond_t));
     if (pCond)
         pthread_cond_init(pCond, NULL);
-    return pCond;
+    return (CPLCond*) pCond;
 }
 
 /************************************************************************/
 /*                            CPLCondWait()                             */
 /************************************************************************/
 
-void  CPLCondWait( void *hCond, void* hMutex )
+void  CPLCondWait( CPLCond *hCond, CPLMutex* hMutex )
 {
     pthread_cond_t* pCond = (pthread_cond_t* )hCond;
-    pthread_mutex_t * pMutex = (pthread_mutex_t *)hMutex;
+    MutexLinkedElt* psItem = (MutexLinkedElt *) hMutex;
+    pthread_mutex_t * pMutex = &(psItem->sMutex);
     pthread_cond_wait(pCond,  pMutex);
 }
 
@@ -1323,7 +1370,7 @@ void  CPLCondWait( void *hCond, void* hMutex )
 /*                            CPLCondSignal()                           */
 /************************************************************************/
 
-void  CPLCondSignal( void *hCond )
+void  CPLCondSignal( CPLCond *hCond )
 {
     pthread_cond_t* pCond = (pthread_cond_t* )hCond;
     pthread_cond_signal(pCond);
@@ -1333,7 +1380,7 @@ void  CPLCondSignal( void *hCond )
 /*                           CPLCondBroadcast()                         */
 /************************************************************************/
 
-void  CPLCondBroadcast( void *hCond )
+void  CPLCondBroadcast( CPLCond *hCond )
 {
     pthread_cond_t* pCond = (pthread_cond_t* )hCond;
     pthread_cond_broadcast(pCond);
@@ -1343,7 +1390,7 @@ void  CPLCondBroadcast( void *hCond )
 /*                            CPLDestroyCond()                          */
 /************************************************************************/
 
-void  CPLDestroyCond( void *hCond )
+void  CPLDestroyCond( CPLCond *hCond )
 {
     pthread_cond_t* pCond = (pthread_cond_t* )hCond;
     pthread_cond_destroy(pCond);
@@ -1490,7 +1537,7 @@ int CPLCreateThread( CPLThreadFunc pfnMain, void *pThreadArg )
 /*                      CPLCreateJoinableThread()                       */
 /************************************************************************/
 
-void* CPLCreateJoinableThread( CPLThreadFunc pfnMain, void *pThreadArg )
+CPLJoinableThread* CPLCreateJoinableThread( CPLThreadFunc pfnMain, void *pThreadArg )
 
 {
     CPLStdCallThreadInfo *psInfo;
@@ -1510,14 +1557,14 @@ void* CPLCreateJoinableThread( CPLThreadFunc pfnMain, void *pThreadArg )
         return NULL;
     }
 
-    return psInfo;
+    return (CPLJoinableThread*) psInfo;
 }
 
 /************************************************************************/
 /*                          CPLJoinThread()                             */
 /************************************************************************/
 
-void CPLJoinThread(void* hJoinableThread)
+void CPLJoinThread(CPLJoinableThread* hJoinableThread)
 {
     CPLStdCallThreadInfo *psInfo = (CPLStdCallThreadInfo*) hJoinableThread;
 
@@ -1616,6 +1663,76 @@ static void **CPLGetTLSList()
     return papTLSList;
 }
 
+/************************************************************************/
+/*                          CPLCreateSpinLock()                         */
+/************************************************************************/
+
+#if defined(HAVE_PTHREAD_SPINLOCK)
+#define HAVE_SPINLOCK_IMPL
+
+struct _CPLSpinLock
+{
+    pthread_spinlock_t spin;
+};
+
+CPLSpinLock  *CPLCreateSpinLock( void )
+{
+    CPLSpinLock* psSpin = (CPLSpinLock*)malloc(sizeof(CPLSpinLock));
+    if( pthread_spin_init(&(psSpin->spin), PTHREAD_PROCESS_PRIVATE) == 0 )
+    {
+        return psSpin;
+    }
+    else
+    {
+        free(psSpin);
+        return NULL;
+    }
+}
+
+/************************************************************************/
+/*                        CPLAcquireSpinLock()                          */
+/************************************************************************/
+
+int   CPLAcquireSpinLock( CPLSpinLock* psSpin )
+{
+    return pthread_spin_lock( &(psSpin->spin) ) == 0;
+}
+
+/************************************************************************/
+/*                     CPLCreateOrAcquireSpinLock()                     */
+/************************************************************************/
+
+int  CPLCreateOrAcquireSpinLock( CPLSpinLock** ppsSpin )
+{
+    pthread_mutex_lock(&global_mutex);
+    if( *ppsSpin == NULL )
+    {
+        *ppsSpin = CPLCreateSpinLock();
+    }
+    pthread_mutex_unlock(&global_mutex);
+    return( *ppsSpin != NULL && CPLAcquireSpinLock( *ppsSpin ) );
+}
+
+/************************************************************************/
+/*                       CPLReleaseSpinLock()                           */
+/************************************************************************/
+
+void  CPLReleaseSpinLock( CPLSpinLock* psSpin )
+{
+    pthread_spin_unlock( &(psSpin->spin) );
+}
+
+/************************************************************************/
+/*                        CPLDestroySpinLock()                          */
+/************************************************************************/
+
+void  CPLDestroySpinLock( CPLSpinLock* psSpin )
+{
+    pthread_spin_destroy( &(psSpin->spin) );
+    free( psSpin );
+}
+#endif /* HAVE_PTHREAD_SPINLOCK */
+
 #endif /* def CPL_MULTIPROC_PTHREAD */
 
 /************************************************************************/
@@ -1657,4 +1774,277 @@ void CPLSetTLSWithFreeFunc( int nIndex, void *pData, CPLTLSFreeFunc pfnFree )
 
     papTLSList[nIndex] = pData;
     papTLSList[CTLS_MAX + nIndex] = (void*) pfnFree;
+}
+
+#ifndef HAVE_SPINLOCK_IMPL
+
+/* No spinlock specific API ? Fallback to mutex */
+
+/************************************************************************/
+/*                          CPLCreateSpinLock()                         */
+/************************************************************************/
+
+CPLSpinLock *CPLCreateSpinLock( void )
+{
+    CPLSpinLock* psLock = (CPLSpinLock *)CPLCreateMutex();
+    if( psLock )
+        CPLReleaseMutex(psLock);
+    return psLock;
+}
+
+/************************************************************************/
+/*                     CPLCreateOrAcquireSpinLock()                     */
+/************************************************************************/
+
+int   CPLCreateOrAcquireSpinLock( CPLSpinLock** ppsSpin )
+{
+    void* hMutex = NULL;
+    int ret = CPLCreateOrAcquireMutexEx( &hMutex, 1000, CPL_MUTEX_ADAPTIVE );
+    *ppsSpin = (CPLSpinLock*) hMutex;
+    return ret;
+}
+
+/************************************************************************/
+/*                        CPLAcquireSpinLock()                          */
+/************************************************************************/
+
+int  CPLAcquireSpinLock( CPLSpinLock* psSpin )
+{
+    return CPLAcquireMutex( psSpin, 1000 );
+}
+
+/************************************************************************/
+/*                       CPLReleaseSpinLock()                           */
+/************************************************************************/
+
+void  CPLReleaseSpinLock( CPLSpinLock* psSpin )
+{
+    CPLReleaseMutex( psSpin );
+}
+
+/************************************************************************/
+/*                        CPLDestroySpinLock()                          */
+/************************************************************************/
+
+void  CPLDestroySpinLock( CPLSpinLock* psSpin )
+{
+    CPLDestroyMutex( psSpin );
+}
+
+#endif /* HAVE_SPINLOCK_IMPL */
+
+
+/************************************************************************/
+/*                            CPLCreateLock()                           */
+/************************************************************************/
+
+struct _CPLLock
+{
+    CPLLockType eType;
+    union 
+    {
+        CPLMutex        *hMutex;
+        CPLSpinLock     *hSpinLock;
+    } u;
+};
+
+CPLLock *CPLCreateLock( CPLLockType eType )
+{
+    switch( eType )
+    {
+        case LOCK_RECURSIVE_MUTEX:
+        case LOCK_ADAPTIVE_MUTEX:
+        {
+            CPLMutex* hMutex = CPLCreateMutexEx(
+                (eType == LOCK_RECURSIVE_MUTEX) ? CPL_MUTEX_RECURSIVE : CPL_MUTEX_ADAPTIVE);
+            if(!hMutex)
+                return NULL;
+            CPLReleaseMutex(hMutex);
+            CPLLock* psLock = (CPLLock*)malloc(sizeof(CPLLock));
+            psLock->eType = eType;
+            psLock->u.hMutex = hMutex;
+            return psLock;
+        }
+        case LOCK_SPIN:
+        {
+            CPLSpinLock* hSpinLock = CPLCreateSpinLock();
+            if( !hSpinLock )
+                return NULL;
+            CPLLock* psLock = (CPLLock*)malloc(sizeof(CPLLock));
+            psLock->eType = eType;
+            psLock->u.hSpinLock = hSpinLock;
+            return psLock;
+        }
+        default:
+            CPLAssert(0);
+            return NULL;
+    }
+}
+
+/************************************************************************/
+/*                       CPLCreateOrAcquireLock()                       */
+/************************************************************************/
+
+int   CPLCreateOrAcquireLock( CPLLock** ppsLock, CPLLockType eType )
+{
+    int ret;
+    switch( eType )
+    {
+        case LOCK_RECURSIVE_MUTEX:
+        case LOCK_ADAPTIVE_MUTEX:
+        {
+            CPLMutex* hMutex = NULL;
+            ret = CPLCreateOrAcquireMutexEx( &hMutex, 1000,
+                (eType == LOCK_RECURSIVE_MUTEX) ? CPL_MUTEX_RECURSIVE : CPL_MUTEX_ADAPTIVE);
+            if( !ret || !hMutex )
+                return FALSE;
+            if( *ppsLock == NULL )
+            {
+                *ppsLock = (CPLLock*)malloc(sizeof(CPLLock));
+                (*ppsLock)->eType = eType;
+                (*ppsLock)->u.hMutex = hMutex;
+            }
+            return TRUE;
+        }
+        case LOCK_SPIN:
+        {
+            CPLSpinLock* hSpinLock = NULL;
+            ret = CPLCreateOrAcquireSpinLock( &hSpinLock );
+            if( !ret || !hSpinLock )
+                return FALSE;
+            if( *ppsLock == NULL )
+            {
+                *ppsLock = (CPLLock*)malloc(sizeof(CPLLock));
+                (*ppsLock)->eType = eType;
+                (*ppsLock)->u.hSpinLock = hSpinLock;
+            }
+            return TRUE;
+        }
+        default:
+            CPLAssert(0);
+            return FALSE;
+    }
+}
+
+/************************************************************************/
+/*                          CPLAcquireLock()                            */
+/************************************************************************/
+
+int  CPLAcquireLock( CPLLock* psLock )
+{
+    if( psLock->eType == LOCK_SPIN )
+        return CPLAcquireSpinLock( psLock->u.hSpinLock );
+    else
+        return CPLAcquireMutex( psLock->u.hMutex, 1000 );
+}
+
+/************************************************************************/
+/*                         CPLReleaseLock()                             */
+/************************************************************************/
+
+void  CPLReleaseLock( CPLLock* psLock )
+{
+    if( psLock->eType == LOCK_SPIN )
+        return CPLReleaseSpinLock( psLock->u.hSpinLock );
+    else
+        return CPLReleaseMutex( psLock->u.hMutex );
+}
+
+/************************************************************************/
+/*                          CPLDestroyLock()                            */
+/************************************************************************/
+
+void  CPLDestroyLock( CPLLock* psLock )
+{
+    if( psLock->eType == LOCK_SPIN )
+        CPLDestroySpinLock( psLock->u.hSpinLock );
+    else
+        CPLDestroyMutex( psLock->u.hMutex );
+    free( psLock );
+}
+
+/************************************************************************/
+/*                           CPLLockHolder()                            */
+/************************************************************************/
+
+CPLLockHolder::CPLLockHolder( CPLLock **phLock,
+                              CPLLockType eType,
+                              const char *pszFileIn, 
+                              int nLineIn )
+
+{
+#ifndef MUTEX_NONE
+    pszFile = pszFileIn;
+    nLine = nLineIn;
+
+#ifdef DEBUG_MUTEX
+    /*
+     * XXX: There is no way to use CPLDebug() here because it works with
+     * mutexes itself so we will fall in infinite recursion. Good old
+     * fprintf() will do the job right.
+     */
+    fprintf( stderr,
+             "CPLLockHolder: Request %p for pid %ld at %d/%s.\n", 
+             *phLock, (long) CPLGetPID(), nLine, pszFile );
+#endif
+
+    if( !CPLCreateOrAcquireLock( phLock, eType ) )
+    {
+        fprintf( stderr, "CPLLockHolder: Failed to acquire lock!\n" );
+        hLock = NULL;
+    }
+    else
+    {
+#ifdef DEBUG_MUTEX
+        fprintf( stderr,
+                 "CPLLockHolder: Acquired %p for pid %ld at %d/%s.\n", 
+                 *phLock, (long) CPLGetPID(), nLine, pszFile );
+#endif
+
+        hLock = *phLock;
+    }
+#endif /* ndef MUTEX_NONE */
+}
+
+/************************************************************************/
+/*                           CPLLockHolder()                            */
+/************************************************************************/
+
+CPLLockHolder::CPLLockHolder( CPLLock *hLockIn,
+                              const char *pszFileIn, 
+                              int nLineIn )
+
+{
+#ifndef MUTEX_NONE
+    pszFile = pszFileIn;
+    nLine = nLineIn;
+    hLock = hLockIn;
+
+    if( hLock != NULL &&
+        !CPLAcquireLock( hLock ) )
+    {
+        fprintf( stderr, "CPLLockHolder: Failed to acquire lock!\n" );
+        hLock = NULL;
+    }
+#endif /* ndef MUTEX_NONE */
+}
+
+/************************************************************************/
+/*                          ~CPLLockHolder()                            */
+/************************************************************************/
+
+CPLLockHolder::~CPLLockHolder()
+
+{
+#ifndef MUTEX_NONE
+    if( hLock != NULL )
+    {
+#ifdef DEBUG_MUTEX
+        fprintf( stderr,
+                 "~CPLLockHolder: Release %p for pid %ld at %d/%s.\n", 
+                 hLock, (long) CPLGetPID(), nLine, pszFile );
+#endif
+        CPLReleaseLock( hLock );
+    }
+#endif /* ndef MUTEX_NONE */
 }

@@ -238,7 +238,7 @@ static CPLXMLNode *addAuthorityIDBlock( CPLXMLNode *psTarget,
 
 static void addGMLId( CPLXMLNode *psParent )
 {
-    static void *hGMLIdMutex = NULL;
+    static CPLMutex *hGMLIdMutex = NULL;
     CPLMutexHolderD( &hGMLIdMutex );
 
     /* CPLXMLNode *psId; */

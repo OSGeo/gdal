@@ -133,7 +133,7 @@ struct CPLVirtualMem
     void                   *pCbkUserData;
     CPLVirtualMemFreeUserData     pfnFreeUserData;
 #ifndef HAVE_5ARGS_MREMAP
-    void                   *hMutexThreadArray;
+    CPLMutex               *hMutexThreadArray;
     int                     nThreads;
     pthread_t              *pahThreads;
 #endif
@@ -148,7 +148,7 @@ typedef struct
     int              pipefd_to_thread[2];
     int              pipefd_from_thread[2];
     int              pipefd_wait_thread[2];
-    void            *hHelperThread;
+    CPLJoinableThread *hHelperThread;
 
     struct sigaction oldact;
 } CPLVirtualMemManager;
@@ -161,7 +161,7 @@ typedef struct
 } CPLVirtualMemMsgToWorkerThread;
 
 static CPLVirtualMemManager* pVirtualMemManager = NULL;
-static void* hVirtualMemManagerMutex = NULL;
+static CPLMutex* hVirtualMemManagerMutex = NULL;
 
 static void CPLVirtualMemManagerInit();
 

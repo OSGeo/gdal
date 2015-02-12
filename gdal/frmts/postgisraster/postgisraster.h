@@ -180,7 +180,7 @@ class PostGISRasterTileDataset;
 class PostGISRasterDriver : public GDALDriver {
 
 private:
-    void* hMutex;
+    CPLMutex* hMutex;
     std::map<CPLString, PGconn*> oMapConnection;
 public:
     PostGISRasterDriver();

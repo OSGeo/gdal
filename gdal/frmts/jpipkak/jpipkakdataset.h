@@ -140,7 +140,7 @@ private:
     void Deinitialize();
     int KakaduClassId(int nClassId);
 
-    void *pGlobalMutex;
+    CPLMutex *pGlobalMutex;
  
     // support two communication threads to the server, a main and an overview thread
     volatile int bHighThreadRunning;

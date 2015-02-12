@@ -27,6 +27,10 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#ifndef DEBUG
+#define DEBUG
+#endif
+
 #include <stdlib.h>
 #include <assert.h>
 #include <vector>
@@ -34,18 +38,7 @@
 #include "cpl_multiproc.h"
 #include "gdal_priv.h"
 
-// Not sure if all pthread implementations have spin lock but that's good
-// enough for now
-#ifdef CPL_MULTIPROC_PTHREAD
-#if !defined(__APPLE__)
-#define HAVE_SPINLOCK
-#endif
-#endif
-
-#ifdef HAVE_SPINLOCK
-#include <pthread.h>
-pthread_spinlock_t* psLock = NULL;
-#endif
+CPLLock* psLock = NULL;
 
 void Usage()
 {
@@ -91,7 +84,6 @@ typedef struct
     int nBufferSize;
 } ThreadDescription;
 
-static void* hMutex = NULL;
 static Request* psGlobalRequestList = NULL;
 static Resource* psGlobalResourceList = NULL;
 static Resource* psGlobalResourceLast = NULL;
@@ -155,29 +147,20 @@ static void AddRequest(Request*& psRequestList, Request*& psRequestLast,
 
 static Request* GetNextRequest(Request*& psRequestList)
 {
-    if( hMutex ) CPLAcquireMutex(hMutex, 1000.0);
-#ifdef HAVE_SPINLOCK
-    if( psLock ) pthread_spin_lock(psLock);
-#endif
+    if( psLock ) CPLAcquireLock(psLock);
     Request* psRet = psRequestList;
     if( psRequestList )
     {
         psRequestList = psRequestList->psNext;
         psRet->psNext = NULL;
     }
-    if( hMutex ) CPLReleaseMutex(hMutex);
-#ifdef HAVE_SPINLOCK
-    if( psLock ) pthread_spin_unlock(psLock);
-#endif
+    if( psLock ) CPLReleaseLock(psLock);
     return psRet;
 }
 
 static Resource* AcquireFirstResource()
 {
-    if( hMutex ) CPLAcquireMutex(hMutex, 1000.0);
-#ifdef HAVE_SPINLOCK
-    if( psLock ) pthread_spin_lock(psLock);
-#endif
+    if( psLock ) CPLAcquireLock(psLock);
     Resource* psRet = psGlobalResourceList;
     psGlobalResourceList = psGlobalResourceList->psNext;
     if( psGlobalResourceList )
@@ -186,19 +169,13 @@ static Resource* AcquireFirstResource()
         psGlobalResourceLast = NULL;
     psRet->psNext = NULL;
     assert(psRet->psPrev == NULL);
-    if( hMutex ) CPLReleaseMutex(hMutex);
-#ifdef HAVE_SPINLOCK
-    if( psLock ) pthread_spin_unlock(psLock);
-#endif
+    if( psLock ) CPLReleaseLock(psLock);
     return psRet;
 }
 
 static void PutResourceAtEnd(Resource* psResource)
 {
-    if( hMutex ) CPLAcquireMutex(hMutex, 1000.0);
-#ifdef HAVE_SPINLOCK
-    if( psLock ) pthread_spin_lock(psLock);
-#endif
+    if( psLock ) CPLAcquireLock(psLock);
     psResource->psPrev = psGlobalResourceLast;
     psResource->psNext = NULL;
     if( psGlobalResourceList == NULL )
@@ -206,10 +183,7 @@ static void PutResourceAtEnd(Resource* psResource)
     else
         psGlobalResourceLast->psNext = psResource;
     psGlobalResourceLast = psResource;
-    if( hMutex ) CPLReleaseMutex(hMutex);
-#ifdef HAVE_SPINLOCK
-    if( psLock ) pthread_spin_unlock(psLock);
-#endif
+    if( psLock ) CPLReleaseLock(psLock);
 }
 
 static void ThreadFuncDedicatedDataset(void* _psThreadDescription)
@@ -318,7 +292,7 @@ int main(int argc, char* argv[])
 {
     int i;
     int nThreads = CPLGetNumCPUs();
-    std::vector<void*> apsThreads;
+    std::vector<CPLJoinableThread*> apsThreads;
     Strategy eStrategy = STRATEGY_RANDOM;
     int bNewDatasetOption = FALSE;
     int nXSize = 5000;
@@ -521,19 +495,12 @@ int main(int argc, char* argv[])
     
     if( bMigrate )
     {
-#ifdef HAVE_SPINLOCK
-        psLock = (pthread_spinlock_t*)CPLMalloc(sizeof(pthread_spinlock_t));
-        pthread_spin_init(psLock, PTHREAD_PROCESS_PRIVATE);
-#else
-        //hMutex = CPLCreateMutexEx(CPL_MUTEX_ADAPTIVE);
-        hMutex = CPLCreateMutex();
-        CPLReleaseMutex(hMutex);
-#endif
+        psLock = CPLCreateLock(LOCK_SPIN);
     }
 
     for(i = 0; i < nThreads; i++ )
     {
-        void* pThread;
+        CPLJoinableThread* pThread;
         if( bMigrate )
             pThread = CPLCreateJoinableThread(ThreadFuncWithMigration, NULL);
         else
@@ -556,15 +523,11 @@ int main(int argc, char* argv[])
         CPLFree( psGlobalResourceList );
         psGlobalResourceList = psNext;
     }
-    if( hMutex )
-        CPLDestroyMutex(hMutex);
-#ifdef HAVE_SPINLOCK
+
     if( psLock )
     {
-        pthread_spin_destroy(psLock);
-        CPLFree((void*)psLock);
+        CPLDestroyLock( psLock );
     }
-#endif
 
     if( bCreatedDataset && poMEMDS == NULL  )
     {

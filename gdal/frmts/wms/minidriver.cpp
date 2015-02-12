@@ -30,7 +30,7 @@
 #include "wmsdriver.h"
 
 static volatile GDALWMSMiniDriverManager *g_mini_driver_manager = NULL;
-static void *g_mini_driver_manager_mutex = NULL;
+static CPLMutex *g_mini_driver_manager_mutex = NULL;
 
 GDALWMSMiniDriver::GDALWMSMiniDriver() {
     m_parent_dataset = 0;

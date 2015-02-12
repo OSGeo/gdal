@@ -60,7 +60,7 @@ typedef struct { double u, v; } projUV;
 
 #endif
 
-static void *hPROJMutex = NULL;
+static CPLMutex *hPROJMutex = NULL;
 
 static projPJ       (*pfn_pj_init_plus)(const char *) = NULL;
 static projPJ       (*pfn_pj_init)(int, char**) = NULL;

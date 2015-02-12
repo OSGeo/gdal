@@ -34,7 +34,7 @@ CPL_CVSID("$Id$");
 
 OGRMutexedLayer::OGRMutexedLayer(OGRLayer* poDecoratedLayer,
                                  int bTakeOwnership,
-                                 void* hMutex) :
+                                 CPLMutex* hMutex) :
         OGRLayerDecorator(poDecoratedLayer, bTakeOwnership), m_hMutex(hMutex)
 {
     SetDescription( poDecoratedLayer->GetDescription() );

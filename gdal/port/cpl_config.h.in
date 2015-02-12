@@ -6,6 +6,12 @@
 /* Define to 1 if you have the `PTHREAD_MUTEX_RECURSIVE' constant. */
 #undef HAVE_PTHREAD_MUTEX_RECURSIVE
 
+/* Define to 1 if you have the `PTHREAD_MUTEX_ADAPTIVE_NP' constant. */
+#undef HAVE_PTHREAD_MUTEX_ADAPTIVE_NP
+
+/* Define to 1 if you have the `pthread_spinlock_t' type. */
+#undef HAVE_PTHREAD_SPINLOCK
+
 /* Define to 1 if you have the 5 args `mremap' function. */
 #undef HAVE_5ARGS_MREMAP
 

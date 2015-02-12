@@ -52,7 +52,7 @@ const char* pszLogFilename = NULL;
 
 typedef struct
 {
-    void* hThread;
+    CPLJoinableThread* hThread;
     int bRet;
 } ThreadContext;
 

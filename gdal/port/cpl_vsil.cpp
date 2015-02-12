@@ -1087,7 +1087,7 @@ VSIFileManager::~VSIFileManager()
 /************************************************************************/
 
 static VSIFileManager *poManager = NULL;
-static void* hVSIFileManagerMutex = NULL;
+static CPLMutex* hVSIFileManagerMutex = NULL;
 
 VSIFileManager *VSIFileManager::Get()
 

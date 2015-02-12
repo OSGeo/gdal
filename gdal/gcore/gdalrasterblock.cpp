@@ -41,10 +41,43 @@ static volatile GIntBig nCacheUsed = 0;
 static GDALRasterBlock *poOldest = NULL;    /* tail */
 static GDALRasterBlock *poNewest = NULL;    /* head */
 
-static void *hRBMutex = NULL;
+#if 1
+static CPLMutex *hRBLock = NULL;
+#define INITIALIZE_LOCK         CPLMutexHolderD( &hRBLock )
+#define TAKE_LOCK               CPLMutexHolderOptionalLockD( hRBLock )
+#define DESTROY_LOCK            CPLDestroyMutex( hRBLock )
+#else
 
-#define INITIALIZE_LOCK         CPLMutexHolderD( &hRBMutex )
-//CPLMutexHolderExD( &hRBMutex, CPL_MUTEX_ADAPTIVE );
+static CPLLock* hRBLock = NULL;
+
+static CPLLockType GetLockType()
+{
+    static int nLockType = -1;
+    if( nLockType < 0 )
+    {
+        const char* pszLockType = CPLGetConfigOption("GDAL_RB_LOCK_TYPE", "ADAPTIVE");
+        if( EQUAL(pszLockType, "ADAPTIVE") )
+            nLockType = LOCK_ADAPTIVE_MUTEX;
+        else if( EQUAL(pszLockType, "RECURSIVE") )
+            nLockType = LOCK_RECURSIVE_MUTEX;
+        else if( EQUAL(pszLockType, "SPIN") )
+            nLockType = LOCK_SPIN;
+        else
+        {
+            CPLError(CE_Warning, CPLE_NotSupported,
+                     "GDAL_RB_LOCK_TYPE=%s not supported. Falling back to ADAPTIVE",
+                     pszLockType);
+            nLockType = LOCK_ADAPTIVE_MUTEX;
+        }
+    }
+    return (CPLLockType) nLockType;
+}
+
+#define INITIALIZE_LOCK         CPLLockHolderD( &hRBLock, GetLockType() )
+#define TAKE_LOCK               CPLLockHolderOptionalLockD( hRBLock )
+#define DESTROY_LOCK            CPLDestroyLock( hRBLock )
+
+#endif
 
 //#define ENABLE_DEBUG
 
@@ -438,7 +471,7 @@ void GDALRasterBlock::Detach()
 {
     if( bMustDetach )
     {
-        CPLMutexHolderOptionalLockD( hRBMutex );
+        TAKE_LOCK;
         Detach_unlocked();
     }
 }
@@ -483,7 +516,7 @@ void GDALRasterBlock::Detach_unlocked()
 void GDALRasterBlock::Verify()
 
 {
-    CPLMutexHolderOptionalLockD( hRBMutex );
+    TAKE_LOCK;
 
     CPLAssert( (poNewest == NULL && poOldest == NULL)
                || (poNewest != NULL && poOldest != NULL) );
@@ -552,7 +585,7 @@ CPLErr GDALRasterBlock::Write()
 void GDALRasterBlock::Touch()
 
 {
-    CPLMutexHolderOptionalLockD( hRBMutex );
+    TAKE_LOCK;
     Touch_unlocked();
 }
 
@@ -625,7 +658,7 @@ CPLErr GDALRasterBlock::Internalize()
 
     CPLAssert( pData == NULL );
 
-    // This call will initialize the hRBMutex mutex. Other call places can
+    // This call will initialize the hRBLock mutex. Other call places can
     // only be called if we have go through there.
     GIntBig     nCurCacheMax = GDALGetCacheMax64();
 
@@ -638,7 +671,7 @@ CPLErr GDALRasterBlock::Internalize()
     GDALRasterBlock* apoBlocksToFree[64];
     int nBlocksToFree = 0;
     {
-        CPLMutexHolderOptionalLockD( hRBMutex );
+        TAKE_LOCK;
 
         nCacheUsed += nSizeInBytes;
         GDALRasterBlock *poTarget = poOldest;
@@ -779,7 +812,7 @@ int GDALRasterBlock::SafeLockBlock( GDALRasterBlock ** ppBlock )
 {
     CPLAssert( NULL != ppBlock );
 
-    CPLMutexHolderOptionalLockD( hRBMutex );
+    TAKE_LOCK;
 
     if( *ppBlock != NULL )
     {
@@ -798,7 +831,7 @@ int GDALRasterBlock::SafeLockBlock( GDALRasterBlock ** ppBlock )
 
 void GDALRasterBlock::DestroyRBMutex()
 {
-    if( hRBMutex != NULL )
-        CPLDestroyMutex(hRBMutex);
-    hRBMutex = NULL;
+    if( hRBLock != NULL )
+        DESTROY_LOCK;
+    hRBLock = NULL;
 }

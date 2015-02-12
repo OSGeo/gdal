@@ -101,7 +101,7 @@ IGMLReader *CreateGMLReader(int bUseExpatParserPreferably,
 
 OGRGMLXercesState GMLReader::m_eXercesInitState = OGRGML_XERCES_UNINITIALIZED;
 int GMLReader::m_nInstanceCount = 0;
-void *GMLReader::hMutex = NULL;
+CPLMutex *GMLReader::hMutex = NULL;
 
 /************************************************************************/
 /*                             GMLReader()                              */

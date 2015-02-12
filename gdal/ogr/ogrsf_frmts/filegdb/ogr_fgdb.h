@@ -296,7 +296,7 @@ public:
 class FGdbDriver : public OGRSFDriver
 {
   std::map<CPLString, FGdbDatabaseConnection*> oMapConnections;
-  void* hMutex;
+  CPLMutex* hMutex;
 
 public:
   FGdbDriver();
@@ -309,7 +309,7 @@ public:
   virtual OGRErr DeleteDataSource( const char *pszDataSource );
 
   void Release(const char* pszName);
-  void* GetMutex() { return hMutex; }
+  CPLMutex* GetMutex() { return hMutex; }
 
 private:
 

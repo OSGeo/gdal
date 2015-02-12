@@ -1293,11 +1293,11 @@ struct _GDALGridJob
     int               (*pfnProgress)(GDALGridJob* psJob);
     GDALDataType        eType;
 
-    void           *hThread;
+    CPLJoinableThread  *hThread;
     volatile int   *pnCounter;
     volatile int   *pbStop;
-    void           *hCond;
-    void           *hCondMutex;
+    CPLCond        *hCond;
+    CPLMutex       *hCondMutex;
 
     GDALProgressFunc pfnRealProgress;
     void *pRealProgressArg;

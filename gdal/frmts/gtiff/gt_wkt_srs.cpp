@@ -93,7 +93,7 @@ static const char *papszDatumEquiv[] =
 /*                       LibgeotiffOneTimeInit()                        */
 /************************************************************************/
 
-static void* hMutex = NULL;
+static CPLMutex* hMutex = NULL;
 
 void LibgeotiffOneTimeInit() 
 {

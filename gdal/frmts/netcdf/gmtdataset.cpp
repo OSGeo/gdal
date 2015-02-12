@@ -35,7 +35,7 @@
 
 CPL_CVSID("$Id$");
 
-extern void *hNCMutex; /* shared with netcdf. See netcdfdataset.cpp */
+extern CPLMutex *hNCMutex; /* shared with netcdf. See netcdfdataset.cpp */
 
 /************************************************************************/
 /* ==================================================================== */

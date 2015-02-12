@@ -2956,7 +2956,7 @@ CPLXMLNode *GDALSerializeTransformer( CPL_UNUSED GDALTransformerFunc pfnFunc,
 /************************************************************************/
 
 static CPLList* psListDeserializer = NULL;
-static void* hDeserializerMutex = NULL;
+static CPLMutex* hDeserializerMutex = NULL;
 
 typedef struct
 {

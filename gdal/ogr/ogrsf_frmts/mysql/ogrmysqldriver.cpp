@@ -33,7 +33,7 @@
 
 CPL_CVSID("$Id$");
 
-static void* hMutex = NULL;
+static CPLMutex* hMutex = NULL;
 static int   bInitialized = FALSE;
 
 /************************************************************************/

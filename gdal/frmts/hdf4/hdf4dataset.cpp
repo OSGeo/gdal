@@ -50,7 +50,7 @@ CPL_C_END
 
 extern const char *pszGDALSignature;
 
-void *hHDF4Mutex = NULL;
+CPLMutex *hHDF4Mutex = NULL;
 
 /************************************************************************/
 /* ==================================================================== */

@@ -12209,7 +12209,7 @@ static void GTiffTagExtender(TIFF *tif)
 #include <dlfcn.h>
 #endif
 
-static void* hGTiffOneTimeInitMutex = NULL;
+static CPLMutex* hGTiffOneTimeInitMutex = NULL;
 
 int GTiffOneTimeInit()
 

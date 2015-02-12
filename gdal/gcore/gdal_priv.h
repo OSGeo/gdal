@@ -57,6 +57,7 @@ class GDALAsyncReader;
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include "cpl_minixml.h"
+#include "cpl_multiproc.h"
 #include <vector>
 #include <map>
 #include "ogr_core.h"
@@ -417,7 +418,7 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     void ReportError(CPLErr eErrClass, int err_no, const char *fmt, ...)  CPL_PRINT_FUNC_FORMAT (4, 5);
 
 private:
-    void        *m_hMutex;
+    CPLMutex        *m_hMutex;
 
     OGRLayer*       BuildLayerFromSelectInfo(void* psSelectInfo,
                                              OGRGeometry *poSpatialFilter,
@@ -1147,8 +1148,8 @@ void CPL_DLL GDALCopyRasterIOExtraArg(GDALRasterIOExtraArg* psDestArg,
 CPL_C_END
 
 void GDALNullifyOpenDatasetsList();
-void** GDALGetphDMMutex();
-void** GDALGetphDLMutex();
+CPLMutex** GDALGetphDMMutex();
+CPLMutex** GDALGetphDLMutex();
 void GDALNullifyProxyPoolSingleton();
 GDALDriver* GDALGetAPIPROXYDriver();
 void GDALSetResponsiblePIDForCurrentThread(GIntBig responsiblePID);

@@ -232,7 +232,7 @@ public:
     int         SetFilteredClassName(const char* pszClassName);
     const char* GetFilteredClassName() { return m_pszFilteredClassName; }
 
-    static void* hMutex;
+    static CPLMutex* hMutex;
     
     static      OGRGeometry* ConvertGeometry(OGRGeometry*);
 };

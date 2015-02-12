@@ -87,7 +87,7 @@ static double Get(GDALPDFObject* poObj, int nIndice = -1);
 
 #ifdef HAVE_POPPLER
 
-static void* hGlobalParamsMutex = NULL;
+static CPLMutex* hGlobalParamsMutex = NULL;
 
 /************************************************************************/
 /*                          ObjectAutoFree                              */

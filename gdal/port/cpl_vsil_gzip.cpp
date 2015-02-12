@@ -188,7 +188,7 @@ class VSIGZipHandle : public VSIVirtualHandle
 
 class VSIGZipFilesystemHandler : public VSIFilesystemHandler 
 {
-    void* hMutex;
+    CPLMutex* hMutex;
     VSIGZipHandle* poHandleLastGZipFile;
     
 public:

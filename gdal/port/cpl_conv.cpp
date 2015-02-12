@@ -42,16 +42,16 @@ CPL_CVSID("$Id$");
 #  include "cpl_wince.h"
 #endif
 
-static void *hConfigMutex = NULL;
+static CPLMutex *hConfigMutex = NULL;
 static volatile char **papszConfigOptions = NULL;
 
 /* Used by CPLOpenShared() and friends */
-static void *hSharedFileMutex = NULL;
+static CPLMutex *hSharedFileMutex = NULL;
 static volatile int nSharedFileCount = 0;
 static volatile CPLSharedFileInfo *pasSharedFileList = NULL;
 
 /* Used by CPLsetlocale() */
-static void *hSetLocaleMutex = NULL;
+static CPLMutex *hSetLocaleMutex = NULL;
 
 /* Note: ideally this should be added in CPLSharedFileInfo* */
 /* but CPLSharedFileInfo is exposed in the API, hence that trick */
