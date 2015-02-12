@@ -33,6 +33,7 @@
 #endif
 
 #include "cpl_multiproc.h"
+
 #include "cpl_conv.h"
 
 #if !defined(WIN32CE)
@@ -47,14 +48,23 @@ CPL_CVSID("$Id$");
 #  define MUTEX_NONE
 #endif
 
-
 typedef struct _CPLSpinLock CPLSpinLock;
+
+struct _CPLLock
+{
+    CPLLockType eType;
+    union 
+    {
+        CPLMutex        *hMutex;
+        CPLSpinLock     *hSpinLock;
+    } u;
+};
+
 static CPLSpinLock   *CPLCreateSpinLock( void ); /* returned NON acquired */
-static int     CPLCreateOrAcquireSpinLock( CPLSpinLock** );
+static int     CPLCreateOrAcquireSpinLockInternal( CPLLock** );
 static int     CPLAcquireSpinLock( CPLSpinLock* );
 static void    CPLReleaseSpinLock( CPLSpinLock* );
 static void    CPLDestroySpinLock( CPLSpinLock* );
-
 
 /* We don't want it to be publicly used since it solves rather tricky issues */
 /* that are better to remain hidden... */
@@ -203,7 +213,63 @@ int CPLCreateOrAcquireMutexEx( CPLMutex **phMutex, double dfWaitInSeconds, int n
 
     return bSuccess;
 }
-#endif
+
+/************************************************************************/
+/*                   CPLCreateOrAcquireMutexInternal()                  */
+/************************************************************************/
+
+static
+int CPLCreateOrAcquireMutexInternal( CPLLock **phLock, double dfWaitInSeconds,
+                                     CPLLockType eType )
+
+{
+    int bSuccess = FALSE;
+
+#ifndef MUTEX_NONE
+
+    /*
+    ** ironically, creation of this initial mutex is not threadsafe
+    ** even though we use it to ensure that creation of other mutexes
+    ** is threadsafe. 
+    */
+    if( hCOAMutex == NULL )
+    {
+        hCOAMutex = CPLCreateMutex();
+        if (hCOAMutex == NULL)
+        {
+            *phLock = NULL;
+            return FALSE;
+        }
+    }
+    else
+    {
+        CPLAcquireMutex( hCOAMutex, dfWaitInSeconds );
+    }
+
+    if( *phLock == NULL )
+    {
+        *phLock = (CPLLock*) malloc(sizeof(CPLLock));
+        if( *phLock )
+        {
+            (*phLock)->eType = eType;
+            (*phLock)->u.hMutex = CPLCreateMutexEx(
+                (eType == LOCK_RECURSIVE_MUTEX) ? CPL_MUTEX_RECURSIVE : CPL_MUTEX_ADAPTIVE );
+        }
+        bSuccess = *phLock != NULL && (*phLock)->u.hMutex != NULL;
+        CPLReleaseMutex( hCOAMutex );
+    }
+    else
+    {
+        CPLReleaseMutex( hCOAMutex );
+
+        bSuccess = CPLAcquireMutex( (*phLock)->u.hMutex, dfWaitInSeconds );
+    }
+#endif /* ndef MUTEX_NONE */
+
+    return bSuccess;
+}
+
+#endif /* CPL_MULTIPROC_PTHREAD */
 
 /************************************************************************/ 
 /*                      CPLCleanupMasterMutex()                         */ 
@@ -1171,6 +1237,39 @@ int CPLCreateOrAcquireMutexEx( CPLMutex **phMutex, double dfWaitInSeconds,
 }
 
 /************************************************************************/
+/*                   CPLCreateOrAcquireMutexInternal()                  */
+/************************************************************************/
+
+static
+int CPLCreateOrAcquireMutexInternal( CPLLock **phLock, double dfWaitInSeconds,
+                                     CPLLockType eType )
+{
+    int bSuccess = FALSE;
+
+    pthread_mutex_lock(&global_mutex);
+    if( *phLock == NULL )
+    {
+        *phLock = (CPLLock*) malloc(sizeof(CPLLock));
+        if( *phLock )
+        {
+            (*phLock)->eType = eType;
+            (*phLock)->u.hMutex = CPLCreateMutexInternal(TRUE,
+                (eType == LOCK_RECURSIVE_MUTEX) ? CPL_MUTEX_RECURSIVE : CPL_MUTEX_ADAPTIVE );
+        }
+        bSuccess = *phLock != NULL && (*phLock)->u.hMutex != NULL;
+        pthread_mutex_unlock(&global_mutex);
+    }
+    else
+    {
+        pthread_mutex_unlock(&global_mutex);
+
+        bSuccess = CPLAcquireMutex( (*phLock)->u.hMutex, dfWaitInSeconds );
+    }
+
+    return bSuccess;
+}
+
+/************************************************************************/
 /*                        CPLGetThreadingModel()                        */
 /************************************************************************/
 
@@ -1699,18 +1798,24 @@ int   CPLAcquireSpinLock( CPLSpinLock* psSpin )
 }
 
 /************************************************************************/
-/*                     CPLCreateOrAcquireSpinLock()                     */
+/*                   CPLCreateOrAcquireSpinLockInternal()               */
 /************************************************************************/
 
-int  CPLCreateOrAcquireSpinLock( CPLSpinLock** ppsSpin )
+int  CPLCreateOrAcquireSpinLockInternal( CPLLock** ppsLock )
 {
     pthread_mutex_lock(&global_mutex);
-    if( *ppsSpin == NULL )
+    if( *ppsLock == NULL )
     {
-        *ppsSpin = CPLCreateSpinLock();
+        *ppsLock = (CPLLock*) malloc(sizeof(CPLLock));
+        if( *ppsLock != NULL )
+        {
+            (*ppsLock)->eType = LOCK_SPIN;
+            (*ppsLock)->u.hSpinLock = CPLCreateSpinLock();
+        }
     }
     pthread_mutex_unlock(&global_mutex);
-    return( *ppsSpin != NULL && CPLAcquireSpinLock( *ppsSpin ) );
+    return( *ppsLock != NULL && (*ppsLock)->u.hSpinLock != NULL &&
+            CPLAcquireSpinLock( (*ppsLock)->u.hSpinLock ) );
 }
 
 /************************************************************************/
@@ -1796,12 +1901,9 @@ CPLSpinLock *CPLCreateSpinLock( void )
 /*                     CPLCreateOrAcquireSpinLock()                     */
 /************************************************************************/
 
-int   CPLCreateOrAcquireSpinLock( CPLSpinLock** ppsSpin )
+int   CPLCreateOrAcquireSpinLockInternal( CPLLock** ppsLock )
 {
-    CPLMutex* hMutex = NULL;
-    int ret = CPLCreateOrAcquireMutexEx( &hMutex, 1000, CPL_MUTEX_ADAPTIVE );
-    *ppsSpin = (CPLSpinLock*) hMutex;
-    return ret;
+    return CPLCreateOrAcquireMutexInternal( ppsLock, 1000, LOCK_ADAPTIVE_MUTEX );
 }
 
 /************************************************************************/
@@ -1837,16 +1939,6 @@ void  CPLDestroySpinLock( CPLSpinLock* psSpin )
 /************************************************************************/
 /*                            CPLCreateLock()                           */
 /************************************************************************/
-
-struct _CPLLock
-{
-    CPLLockType eType;
-    union 
-    {
-        CPLMutex        *hMutex;
-        CPLSpinLock     *hSpinLock;
-    } u;
-};
 
 CPLLock *CPLCreateLock( CPLLockType eType )
 {
@@ -1887,40 +1979,16 @@ CPLLock *CPLCreateLock( CPLLockType eType )
 
 int   CPLCreateOrAcquireLock( CPLLock** ppsLock, CPLLockType eType )
 {
-    int ret;
     switch( eType )
     {
         case LOCK_RECURSIVE_MUTEX:
         case LOCK_ADAPTIVE_MUTEX:
         {
-            CPLMutex* hMutex = NULL;
-            CPLMutex** phMutex = *ppsLock ? &((*ppsLock)->u.hMutex) : &hMutex;
-            ret = CPLCreateOrAcquireMutexEx( phMutex, 1000,
-                (eType == LOCK_RECURSIVE_MUTEX) ? CPL_MUTEX_RECURSIVE : CPL_MUTEX_ADAPTIVE);
-            if( !ret || !hMutex )
-                return FALSE;
-            if( *ppsLock == NULL )
-            {
-                *ppsLock = (CPLLock*)malloc(sizeof(CPLLock));
-                (*ppsLock)->eType = eType;
-                (*ppsLock)->u.hMutex = hMutex;
-            }
-            return TRUE;
+            return CPLCreateOrAcquireMutexInternal( ppsLock, 1000, eType);
         }
         case LOCK_SPIN:
         {
-            CPLSpinLock* hSpinLock = NULL;
-            CPLSpinLock** phSpinLock = *ppsLock ? &((*ppsLock)->u.hSpinLock) : &hSpinLock;
-            ret = CPLCreateOrAcquireSpinLock( phSpinLock );
-            if( !ret || !hSpinLock )
-                return FALSE;
-            if( *ppsLock == NULL )
-            {
-                *ppsLock = (CPLLock*)malloc(sizeof(CPLLock));
-                (*ppsLock)->eType = eType;
-                (*ppsLock)->u.hSpinLock = hSpinLock;
-            }
-            return TRUE;
+            return CPLCreateOrAcquireSpinLockInternal( ppsLock );
         }
         default:
             CPLAssert(0);
