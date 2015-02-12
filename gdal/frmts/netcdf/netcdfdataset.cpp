@@ -447,6 +447,15 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
         }
 	} 		
 #endif
+
+/* -------------------------------------------------------------------- */
+/*      Force block size to 1 scanline for bottom-up datasets if        */
+/*      nBlockYSize != 1                                                */
+/* -------------------------------------------------------------------- */
+    if( poNCDFDS->bBottomUp && nBlockYSize != 1 ) {
+        nBlockXSize = nRasterXSize;
+        nBlockYSize = 1;
+    }
 }
 
 /* constructor in create mode */
