@@ -44,7 +44,7 @@ static const unsigned char jpc_header[] = {0xff,0x4f};
 static const unsigned char jp2_header[] = 
     {0x00,0x00,0x00,0x0c,0x6a,0x50,0x20,0x20,0x0d,0x0a,0x87,0x0a};
 
-static void *hECWDatasetMutex = NULL;
+static CPLMutex *hECWDatasetMutex = NULL;
 static int    bNCSInitialized = FALSE;
 
 void ECWInitialize( void );

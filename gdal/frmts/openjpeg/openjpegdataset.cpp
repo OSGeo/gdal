@@ -498,7 +498,7 @@ int JP2OpenJPEGDataset::PreloadBlocks(JP2OpenJPEGRasterBand* poBand,
         if( nBlocksToLoad > 1 )
         {
             int nThreads = MIN(nBlocksToLoad, nMaxThreads);
-            void** pahThreads = (void**) CPLMalloc( sizeof(void*) * nThreads );
+            CPLJoinableThread** pahThreads = (CPLJoinableThread**) CPLMalloc( sizeof(CPLJoinableThread*) * nThreads );
             int i;
 
             CPLDebug("OPENJPEG", "%d blocks to load", nBlocksToLoad);
