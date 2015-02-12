@@ -27,11 +27,15 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#ifndef DEBUG
+#define DEBUG
+#endif
+
 #include "cpl_multiproc.h"
 
-void* hCond = NULL;
-void* hCondJobFinished = NULL;
-void* hClientMutex = NULL;
+CPLCond* hCond = NULL;
+CPLCond* hCondJobFinished = NULL;
+CPLMutex* hClientMutex = NULL;
 
 struct _JobItem
 {
@@ -125,7 +129,7 @@ void ConsumerThread(void* pIndex)
 int main(int argc, char* argv[])
 {
     int i;
-    void* apThreads[10];
+    CPLJoinableThread* apThreads[10];
 
     for(i = 0; i < argc; i++)
     {
