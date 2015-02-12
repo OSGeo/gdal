@@ -16,7 +16,8 @@ quick_test:
 	./testclosedondestroydm
 	./testthreadcond
 	./test_virtualmem
-	./testblockcache -check -co TILED=YES --debug TEST
+	./testblockcache -check -co TILED=YES --debug TEST,LOCK -loops 3 --config GDAL_RB_LOCK_DEBUG_CONTENTION YES
+	./testblockcache -check -co TILED=YES --debug TEST,LOCK -loops 3 --config GDAL_RB_LOCK_DEBUG_CONTENTION YES --config GDAL_RB_LOCK_TYPE SPIN
 	./testblockcache -check -co TILED=YES -migrate
 	./testblockcache -check -memdriver
 
