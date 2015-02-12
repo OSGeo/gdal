@@ -132,7 +132,7 @@ DECLARE_SYMBOL(closedir, int, (DIR *dirp));
 DECLARE_SYMBOL(dirfd, int, (DIR *dirp));
 DECLARE_SYMBOL(fchdir, int, (int fd));
 
-static void* hMutex = NULL;
+static CPLLock* hLock = NULL;
 
 typedef struct
 {
@@ -163,7 +163,7 @@ std::string osCurDir;
 
 static void myinit(void)
 {
-    CPLMutexHolderD(&hMutex);
+    CPLLockHolderD(&hLock, LOCK_RECURSIVE_MUTEX);
 
     if( pfnfopen64 != NULL ) return;
     DEBUG_VSIPRELOAD = getenv("DEBUG_VSIPRELOAD") != NULL;
@@ -224,7 +224,7 @@ static void myinit(void)
 static VSILFILE* getVSILFILE(FILE* stream)
 {
     VSILFILE* ret;
-    CPLMutexHolderD(&hMutex);
+    CPLLockHolderD(&hLock, LOCK_RECURSIVE_MUTEX);
     std::set<VSILFILE*>::iterator oIter = oSetFiles.find((VSILFILE*)stream);
     if( oIter != oSetFiles.end() )
         ret = *oIter;
@@ -240,7 +240,7 @@ static VSILFILE* getVSILFILE(FILE* stream)
 static VSILFILE* getVSILFILE(int fd)
 {
     VSILFILE* ret;
-    CPLMutexHolderD(&hMutex);
+    CPLLockHolderD(&hLock, LOCK_RECURSIVE_MUTEX);
     std::map<int, VSILFILE*>::iterator oIter = oMapfdToVSI.find(fd);
     if( oIter != oMapfdToVSI.end() )
         ret = oIter->second;
@@ -277,7 +277,7 @@ static VSILFILE* VSIFfopenHelper(const char *path, const char *mode)
     VSILFILE* fpVSIL = VSIFOpenL(path, mode);
     if( fpVSIL != NULL )
     {
-        CPLMutexHolderD(&hMutex);
+        CPLLockHolderD(&hLock, LOCK_RECURSIVE_MUTEX);
         oSetFiles.insert(fpVSIL);
         oMapVSIToString[fpVSIL] = path;
     }
@@ -290,7 +290,7 @@ static VSILFILE* VSIFfopenHelper(const char *path, const char *mode)
 
 static int getfdFromVSILFILE(VSILFILE* fpVSIL)
 {
-    CPLMutexHolderD(&hMutex);
+    CPLLockHolderD(&hLock, LOCK_RECURSIVE_MUTEX);
 
     int fd;
     std::map<VSILFILE*, int>::iterator oIter = oMapVSITofd.find(fpVSIL);
@@ -496,7 +496,7 @@ int fclose(FILE *stream)
     if (DEBUG_VSIPRELOAD_COND) fprintf(stderr, "fclose(stream=%p)\n", stream);
     if( fpVSIL != NULL )
     {
-        CPLMutexHolderD(&hMutex);
+        CPLLockHolderD(&hLock, LOCK_RECURSIVE_MUTEX);
 
         int ret = VSIFCloseL(fpVSIL);
         oMapVSIToString.erase(fpVSIL);
@@ -954,7 +954,7 @@ int open(const char *path, int flags, ...)
             S_ISDIR(sStatBufL.st_mode) )
         {
             fd = open("/dev/zero", O_RDONLY);
-            CPLMutexHolderD(&hMutex)
+            CPLLockHolderD(&hLock, LOCK_RECURSIVE_MUTEX)
             oMapDirFdToName[fd] = newname;
         }
         else
@@ -1010,7 +1010,7 @@ int open64(const char *path, int flags, ...)
             S_ISDIR(sStatBufL.st_mode) )
         {
             fd = open("/dev/zero", O_RDONLY);
-            CPLMutexHolderD(&hMutex)
+            CPLLockHolderD(&hLock, LOCK_RECURSIVE_MUTEX)
             oMapDirFdToName[fd] = newname;
         }
         else
@@ -1044,7 +1044,7 @@ int close(int fd)
     VSILFILE* fpVSIL = getVSILFILE(fd);
     int DEBUG_VSIPRELOAD_COND = GET_DEBUG_VSIPRELOAD_COND(fpVSIL);
     {
-        CPLMutexHolderD(&hMutex);
+        CPLLockHolderD(&hLock, LOCK_RECURSIVE_MUTEX);
         assert( oMapfdToVSIDIR.find(fd) == oMapfdToVSIDIR.end() );
 
         if( oMapDirFdToName.find(fd) != oMapDirFdToName.end())
@@ -1058,7 +1058,7 @@ int close(int fd)
     if( fpVSIL != NULL )
     {
         VSIFCloseL(fpVSIL);
-        CPLMutexHolderD(&hMutex);
+        CPLLockHolderD(&hLock, LOCK_RECURSIVE_MUTEX);
         oSetFiles.erase(fpVSIL);
         pfnclose(oMapVSITofd[fpVSIL]);
         oMapVSITofd.erase(fpVSIL);
@@ -1160,7 +1160,7 @@ int __fxstat (int ver, int fd, struct stat *buf)
     std::string name;
     int DEBUG_VSIPRELOAD_COND = GET_DEBUG_VSIPRELOAD_COND(fpVSIL);
     {
-        CPLMutexHolderD(&hMutex)
+        CPLLockHolderD(&hLock, LOCK_RECURSIVE_MUTEX)
         if( oMapDirFdToName.find(fd) != oMapDirFdToName.end())
         {
             name = oMapDirFdToName[fd];
@@ -1188,7 +1188,7 @@ int __fxstat (int ver, int fd, struct stat *buf)
     {
         VSIStatBufL sStatBufL;
         {
-            CPLMutexHolderD(&hMutex);
+            CPLLockHolderD(&hLock, LOCK_RECURSIVE_MUTEX);
             name = oMapVSIToString[fpVSIL];
         }
         int ret = VSIStatL(name.c_str(), &sStatBufL);
@@ -1221,7 +1221,7 @@ int __fxstat64 (int ver, int fd, struct stat64 *buf)
         VSIStatBufL sStatBufL;
         std::string name;
         {
-            CPLMutexHolderD(&hMutex);
+            CPLLockHolderD(&hLock, LOCK_RECURSIVE_MUTEX);
             name = oMapVSIToString[fpVSIL];
         }
         int ret = VSIStatL(name.c_str(), &sStatBufL);
@@ -1407,7 +1407,7 @@ DIR *opendir(const char *name)
             mydir->nIter = 0;
             mydir->fd = -1;
             ret = (DIR*)mydir;
-            CPLMutexHolderD(&hMutex);
+            CPLLockHolderD(&hLock, LOCK_RECURSIVE_MUTEX);
             oSetVSIDIR.insert(mydir);
         }
     }
@@ -1506,7 +1506,7 @@ int closedir(DIR *dirp)
         VSIDIR* mydir = (VSIDIR*)dirp;
         CPLFree(mydir->pszDirname);
         CSLDestroy(mydir->papszDir);
-        CPLMutexHolderD(&hMutex);
+        CPLLockHolderD(&hLock, LOCK_RECURSIVE_MUTEX);
         if( mydir->fd >= 0 )
         {
             oMapfdToVSIDIR.erase(mydir->fd);
@@ -1536,7 +1536,7 @@ int dirfd(DIR *dirp)
         if( mydir->fd < 0 )
         {
             mydir->fd = open("/dev/zero", O_RDONLY);
-            CPLMutexHolderD(&hMutex);
+            CPLLockHolderD(&hLock, LOCK_RECURSIVE_MUTEX);
             oMapfdToVSIDIR[mydir->fd] = mydir;
         }
         ret = mydir->fd;
@@ -1555,14 +1555,14 @@ int fchdir(int fd)
 {
     VSIDIR* mydir = NULL;
     {
-        CPLMutexHolderD(&hMutex);
+        CPLLockHolderD(&hLock, LOCK_RECURSIVE_MUTEX);
         if( oMapfdToVSIDIR.find(fd) != oMapfdToVSIDIR.end() )
             mydir = oMapfdToVSIDIR[fd];
     }
     int DEBUG_VSIPRELOAD_COND = GET_DEBUG_VSIPRELOAD_COND(mydir);
     std::string name;
     {
-        CPLMutexHolderD(&hMutex)
+        CPLLockHolderD(&hLock, LOCK_RECURSIVE_MUTEX)
         if( oMapDirFdToName.find(fd) != oMapDirFdToName.end())
         {
             name = oMapDirFdToName[fd];
