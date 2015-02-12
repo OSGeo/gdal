@@ -68,7 +68,7 @@ struct _CPLLock
 #ifdef DEBUG_CONTENTION
     int      bDebugPerf;
     GUIntBig nStartTime;
-    GUIntBig nMaxDiff;
+    GIntBig  nMaxDiff;
     double   dfAvgDiff;
     GUIntBig nIters;
 #endif
@@ -2080,15 +2080,14 @@ int  CPLAcquireLock( CPLLock* psLock )
 void  CPLReleaseLock( CPLLock* psLock )
 {
 #ifdef DEBUG_CONTENTION
-    int bHitMaxDiff = 0;
-    GUIntBig nMaxDiff = 0;
+    int bHitMaxDiff = FALSE;
+    GIntBig nMaxDiff = 0;
     double dfAvgDiff = 0;
     GUIntBig nIters = 0;
     if( psLock->bDebugPerf && psLock->nStartTime )
     {
-        bHitMaxDiff = FALSE;
         GUIntBig nStopTime = CPLrdtscp();
-        GUIntBig nDiffTime = nStopTime - psLock->nStartTime;
+        GIntBig nDiffTime = (GIntBig)(nStopTime - psLock->nStartTime);
         if( nDiffTime > psLock->nMaxDiff )
         {
             bHitMaxDiff = TRUE;
@@ -2106,7 +2105,7 @@ void  CPLReleaseLock( CPLLock* psLock )
     else
         CPLReleaseMutex( psLock->u.hMutex );
 #ifdef DEBUG_CONTENTION
-    if( psLock->bDebugPerf && (bHitMaxDiff || (psLock->nIters % 1000000) == 0 ))
+    if( psLock->bDebugPerf && (bHitMaxDiff || (psLock->nIters % 1000000) == (1000000-1) ))
     {
         CPLDebug("LOCK", "Lock contention : max = " CPL_FRMT_GIB ", avg = %.0f",
                  nMaxDiff, dfAvgDiff);
