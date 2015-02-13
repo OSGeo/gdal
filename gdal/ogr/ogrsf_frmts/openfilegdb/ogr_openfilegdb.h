@@ -119,7 +119,7 @@ public:
                                    swq_op op,
                                    swq_expr_node* poValue);
   SPIState              GetSpatialIndexState() const { return m_eSpatialIndexState; }
-  int                   IsValidLayerDefn() { BuildLayerDefinition(); return m_bValidLayerDefn; }
+  int                   IsValidLayerDefn() { return BuildLayerDefinition(); }
 
   virtual const char* GetName() { return m_osName.c_str(); }
   virtual OGRwkbGeometryType GetGeomType();
