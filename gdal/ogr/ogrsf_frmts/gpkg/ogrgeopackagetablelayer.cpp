@@ -187,8 +187,6 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters( OGRFeature *poFeature,
         }
         if ( err != SQLITE_OK )
         {
-            if ( pabyWkb )
-                CPLFree(pabyWkb);
             CPLError( CE_Failure, CPLE_AppDefined,
                       "failed to bind geometry to statement");        
             return OGRERR_FAILURE;            
@@ -1107,7 +1105,13 @@ OGRErr OGRGeoPackageTableLayer::ICreateFeature( OGRFeature *poFeature )
     OGRErr errOgr = FeatureBindInsertParameters(poFeature, m_poInsertStatement,
                                                 m_bInsertStatementWithFID, !bHasDefaultValue);
     if ( errOgr != OGRERR_NONE )
+    {
+        sqlite3_reset(m_poInsertStatement);
+        sqlite3_clear_bindings(m_poInsertStatement);
+        sqlite3_finalize(m_poInsertStatement);
+        m_poInsertStatement = NULL;
         return errOgr;
+    }
 
     /* From here execute the statement and check errors */
     int err = sqlite3_step(m_poInsertStatement);
@@ -1116,6 +1120,10 @@ OGRErr OGRGeoPackageTableLayer::ICreateFeature( OGRFeature *poFeature )
         CPLError( CE_Failure, CPLE_AppDefined,
                   "failed to execute insert : %s",
                   sqlite3_errmsg(m_poDS->GetDB()) ? sqlite3_errmsg(m_poDS->GetDB()) : "");
+        sqlite3_reset(m_poInsertStatement);
+        sqlite3_clear_bindings(m_poInsertStatement);
+        sqlite3_finalize(m_poInsertStatement);
+        m_poInsertStatement = NULL;
         return OGRERR_FAILURE; 
     }
 
@@ -1230,7 +1238,11 @@ OGRErr OGRGeoPackageTableLayer::ISetFeature( OGRFeature *poFeature )
         /* Bind values onto the statement now */
         OGRErr errOgr = FeatureBindUpdateParameters(poFeature, m_poUpdateStatement);
         if ( errOgr != OGRERR_NONE )
+        {
+            sqlite3_reset(m_poUpdateStatement);
+            sqlite3_clear_bindings(m_poUpdateStatement);
             return errOgr;
+        }
     }
 
     /* From here execute the statement and check errors */
@@ -1240,6 +1252,8 @@ OGRErr OGRGeoPackageTableLayer::ISetFeature( OGRFeature *poFeature )
         CPLError( CE_Failure, CPLE_AppDefined,
                   "failed to execute update : %s",
                   sqlite3_errmsg( m_poDS->GetDB() ) );
+        sqlite3_reset(m_poUpdateStatement);
+        sqlite3_clear_bindings(m_poUpdateStatement);
         return OGRERR_FAILURE;       
     }
 
