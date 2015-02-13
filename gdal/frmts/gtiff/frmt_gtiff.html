@@ -334,8 +334,9 @@ and is currently only supported on Linux (64-bit build strongly recommended).
 Setting it to YES even when the optimized cases do not apply should be safe
 (generic implementation will be used), but if the file exceeds RAM, disk swapping
 might occur if the whole file is read. Setting it to IF_ENOUGH_RAM will first
-check if the uncompressed file size is no bigger than the physical memory. Default value:NO
-
+check if the uncompressed file size is no bigger than the physical memory. Default value:NO.
+If both GTIFF_VIRTUAL_MEM_IO and GTIFF_DIRECT_IO are enabled, the former is used
+in priority, and if not possible, the later is tried.
 </ul>
 </p>
 
