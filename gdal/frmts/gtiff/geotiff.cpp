@@ -1412,6 +1412,8 @@ CPLVirtualMem* GTiffRasterBand::GetVirtualMemAutoInternal( GDALRWFlag eRWFlag,
         }
     }
 
+    if( !poGDS->SetDirectory() ) /* very important to make hTIFF up-to-date */
+        return NULL;
     VSILFILE* fp = (VSILFILE*) TIFFClientdata( poGDS->hTIFF );
 
     vsi_l_offset nLength = (vsi_l_offset)nRasterYSize * nLineSize;
@@ -1430,9 +1432,6 @@ CPLVirtualMem* GTiffRasterBand::GetVirtualMemAutoInternal( GDALRWFlag eRWFlag,
     {
         return NULL;
     }
-
-    if (!poGDS->SetDirectory())
-        return NULL;
 
     /* Make sure that TIFFTAG_STRIPOFFSETS is up-to-date */
     if (poGDS->GetAccess() == GA_Update)
