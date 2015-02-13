@@ -13,22 +13,22 @@
 ## @ignore STORE
 ## @ignore this
 
-## @fn $GetWellKnownGeogCSAsWKT($name)
+## @method $GetWellKnownGeogCSAsWKT($name)
 # @param name a well known name
 # @return a WKT string
 
-## @fn $GetUserInputAsWKT($name)
+## @method $GetUserInputAsWKT($name)
 # @param name the user input
 # @return a WKT string
 
-## @fn \@GetProjectionMethods()
+## @method \@GetProjectionMethods()
 # @return reference to an array of possible projection methods
 
-## @fn @GetProjectionMethodParameterList($method)
+## @method @GetProjectionMethodParameterList($method)
 # @param method projection method name
 # @return (arrayref parameters, $projection_name)
 
-## @fn @GetProjectionMethodParamInfo($method, $parameter)
+## @method @GetProjectionMethodParamInfo($method, $parameter)
 # @return ($user_friendly_name, $type, $defaultval)
 
 

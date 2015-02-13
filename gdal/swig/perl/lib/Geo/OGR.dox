@@ -23,7 +23,7 @@
 ## @ignore UseExceptions()
 ## @ignore DontUseExceptions()
 
-## @fn @GeometryTypes()
+## @method @GeometryTypes()
 # @return a list of all geometry types.
 
 ## @ignore CreateGeometryFromWkb
@@ -32,40 +32,40 @@
 ## @ignore CreateGeometryFromJson
 ## @ignore ApproximateArcAngles
 
-## @fn @Drivers()
+## @method @Drivers()
 # @return a list of Geo::OGR::Driver objects, one for each OGR format.
 
-## @fn $GetDriverCount()
+## @method $GetDriverCount()
 # @return the number of all available drivers.
 
-## @fn $GetOpenDSCount()
+## @method $GetOpenDSCount()
 # @return the number of all open data sources.
 
-## @fn SetGenerate_DB2_V72_BYTE_ORDER($Generate_DB2_V72_BYTE_ORDER)
+## @method SetGenerate_DB2_V72_BYTE_ORDER($Generate_DB2_V72_BYTE_ORDER)
 # Needed only on IBM DB2.
 
 ## @ignore RegisterAll()
 # Called in initialization.
 
-## @fn Geo::OGR::DataSource GetOpenDS($number)
+## @method Geo::OGR::DataSource GetOpenDS($number)
 # @param number The number of the requested data source.
 # @return a new Geo::OGR::DataSource object.
 
-## @fn Geo::OGR::DataSource Open($name, $update = 0)
+## @method Geo::OGR::DataSource Open($name, $update = 0)
 # @param name The data source string (directory, filename, etc.).
 # @param update Whether to open the data source in update mode.
 # @return a new Geo::OGR::DataSource object.
 
-## @fn Geo::OGR::DataSource OpenShared($name, $update = 0)
+## @method Geo::OGR::DataSource OpenShared($name, $update = 0)
 # @param name The data source string (directory, filename, etc.).
 # @param update Whether to open the data source in update mode.
 # @return a new Geo::OGR::DataSource object.
 
-## @fn Geo::OGR::Driver GetDriverByName($name)
+## @method Geo::OGR::Driver GetDriverByName($name)
 # @param name
 # @return a new Geo::OGR::Driver object.
 
-## @fn Geo::OGR::Driver Driver($driver) 
+## @method Geo::OGR::Driver Driver($driver) 
 # Create a driver object for the internal OGR driver.
 # @note a.k.a. GetDriver
 # @param driver the index or the name of the driver

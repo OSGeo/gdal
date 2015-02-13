@@ -53,5 +53,7 @@ veryclean: clean
 	-rm -f ${WRAPPERS} 
 	-rm -f gdal.pm gdalconst.pm osr.pm ogr.pm
 
-doc:
-	doxygen
+doc: all.pm
+
+all.pm:
+	perl parse-for-doxygen.pl > all.pm; doxygen; rm -f all.pm
