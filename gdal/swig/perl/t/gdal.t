@@ -210,13 +210,13 @@ if (0) {
     for (@t) {
 	if (/Integer/) {
 	    my $v = $r->Value($i, $c, 12);
-	    ok($v == 12, "rat int");
+	    ok($v == 12, "rat int ($i,$c): $v vs 12");
 	} elsif (/Real/) {
 	    my $v = $r->Value($i, $c, 1.23);
-	    ok($v == 1.23, "rat int");
+	    ok($v == 1.23, "rat real ($i,$c): $v vs 1.23");
 	} elsif (/String/) {
 	    my $v = $r->Value($i, $c, "abc");
-	    ok($v eq 'abc', "rat str");
+	    ok($v eq 'abc', "rat str ($i,$c): $v vs 'abc'");
 	}
 	$i++;
 	$c++;

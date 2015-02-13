@@ -68,7 +68,7 @@ $return = $object->method(); # method called in scalar context
 \endcode
 
 Many of the methods may throw an error, which can be caught by putting
-the call into eval{}; and then examining the contents of $@.
+the call into eval{}; and then examining the contents of $\@.
 
 \section class_methods_vs_object_methods Class methods vs object methods
 
