@@ -246,26 +246,78 @@ typedef GIntBig GSpacing;
 /*      Registration/driver related.                                    */
 /* ==================================================================== */
 
+/** Long name of the driver */
 #define GDAL_DMD_LONGNAME "DMD_LONGNAME"
+
+/** URL (relative to http://gdal.org/) to the help page of the driver */
 #define GDAL_DMD_HELPTOPIC "DMD_HELPTOPIC"
+
+/** MIME type handled by the driver. */
 #define GDAL_DMD_MIMETYPE "DMD_MIMETYPE"
+
+/** Extension handled by the driver. */
 #define GDAL_DMD_EXTENSION "DMD_EXTENSION"
+
+/** List of (space separated) extensions handled by the driver.
+ * @since GDAL 2.0
+ */
 #define GDAL_DMD_EXTENSIONS "DMD_EXTENSIONS"
-#define GDAL_DMD_CREATIONOPTIONLIST "DMD_CREATIONOPTIONLIST" 
+
+/** XML snippet with creation options. */
+#define GDAL_DMD_CREATIONOPTIONLIST "DMD_CREATIONOPTIONLIST"
+
+/** XML snippet with open options.
+ * @since GDAL 2.0
+ */
 #define GDAL_DMD_OPENOPTIONLIST "DMD_OPENOPTIONLIST" 
-#define GDAL_DMD_CREATIONDATATYPES "DMD_CREATIONDATATYPES"  /* Raster types */
-#define GDAL_DMD_CREATIONFIELDDATATYPES "DMD_CREATIONFIELDDATATYPES"  /* Vector types */
+
+/** List of (space separated) raster data types support by the Create()/CreateCopy() API. */
+#define GDAL_DMD_CREATIONDATATYPES "DMD_CREATIONDATATYPES"
+
+/** List of (space separated) vector field types support by the CreateField() API.
+ * @since GDAL 2.0
+ * */
+#define GDAL_DMD_CREATIONFIELDDATATYPES "DMD_CREATIONFIELDDATATYPES"
+
+/** Capability set by a driver that exposes Subdatasets. */
 #define GDAL_DMD_SUBDATASETS "DMD_SUBDATASETS" 
 
+/** Capability set by a driver that implements the Open() API. */
 #define GDAL_DCAP_OPEN       "DCAP_OPEN"
+
+/** Capability set by a driver that implements the Create() API. */
 #define GDAL_DCAP_CREATE     "DCAP_CREATE"
+
+/** Capability set by a driver that implements the CreateCopy() API. */
 #define GDAL_DCAP_CREATECOPY "DCAP_CREATECOPY"
+
+/** Capability set by a driver that can read/create datasets through the VSI*L API. */
 #define GDAL_DCAP_VIRTUALIO  "DCAP_VIRTUALIO"
 
-/** Capability set by a driver having raster capability. */
+/** Capability set by a driver having raster capability.
+ * @since GDAL 2.0
+ */
 #define GDAL_DCAP_RASTER     "DCAP_RASTER"
-/** Capability set by a driver having vector capability. */
+
+/** Capability set by a driver having vector capability.
+ * @since GDAL 2.0
+ */
 #define GDAL_DCAP_VECTOR     "DCAP_VECTOR"
+
+/** Capability set by a driver that can create fields with NOT NULL constraint. 
+ * @since GDAL 2.0
+ */
+#define GDAL_DCAP_NOTNULL_FIELDS "DCAP_NOTNULL_FIELDS" 
+
+/** Capability set by a driver that can create fields with DEFAULT values. 
+ * @since GDAL 2.0
+ */
+#define GDAL_DCAP_DEFAULT_FIELDS "DCAP_DEFAULT_FIELDS" 
+
+/** Capability set by a driver that can create geometry fields with NOT NULL constraint.
+ * @since GDAL 2.0
+ */
+#define GDAL_DCAP_NOTNULL_GEOMFIELDS "DCAP_NOTNULL_GEOMFIELDS" 
 
 void CPL_DLL CPL_STDCALL GDALAllRegister( void );
 
@@ -286,17 +338,34 @@ GDALDatasetH CPL_DLL CPL_STDCALL GDALOpenShared( const char *, GDALAccess ) CPL_
 /* Note: we define GDAL_OF_READONLY and GDAL_OF_UPDATE to be on purpose */
 /* equals to GA_ReadOnly and GA_Update */
 
-/** Open in read-only mode. */
+/** Open in read-only mode.
+ * Used by GDALOpenEx().
+ * @since GDAL 2.0
+ */
 #define     GDAL_OF_READONLY        0x00
-/** Open in update mode. */
+
+/** Open in update mode.
+ * Used by GDALOpenEx().
+ * @since GDAL 2.0
+ */
 #define     GDAL_OF_UPDATE          0x01
 
-/** Allow raster and vector drivers. */
+/** Allow raster and vector drivers to be used.
+ * Used by GDALOpenEx().
+ * @since GDAL 2.0
+ */
 #define     GDAL_OF_ALL             0x00
 
-/** Allow raster drivers. */
+/** Allow raster drivers to be used.
+ * Used by GDALOpenEx().
+ * @since GDAL 2.0
+ */
 #define     GDAL_OF_RASTER          0x02
-/** Allow vector drivers. */
+
+/** Allow vector drivers to be used.
+ * Used by GDALOpenEx().
+ * @since GDAL 2.0
+ */
 #define     GDAL_OF_VECTOR          0x04
 /* Some space for GDAL 3.0 new types ;-) */
 /*#define     GDAL_OF_OTHER_KIND1   0x08 */
@@ -305,14 +374,24 @@ GDALDatasetH CPL_DLL CPL_STDCALL GDALOpenShared( const char *, GDALAccess ) CPL_
 #define     GDAL_OF_KIND_MASK       0x1E
 #endif
 
-/** Open in shared mode. */
+/** Open in shared mode.
+ * Used by GDALOpenEx().
+ * @since GDAL 2.0
+ */
 #define     GDAL_OF_SHARED          0x20
 
-/** Emit error message in case of failed open. */
+/** Emit error message in case of failed open.
+ * Used by GDALOpenEx().
+ * @since GDAL 2.0
+ */
 #define     GDAL_OF_VERBOSE_ERROR   0x40
 
 /** Open as internal dataset. Such dataset isn't registered in the global list
- *  of opened dataset. Cannot be used with GDAL_OF_SHARED */
+ * of opened dataset. Cannot be used with GDAL_OF_SHARED.
+ *
+ * Used by GDALOpenEx().
+ * @since GDAL 2.0
+ */
 #define     GDAL_OF_INTERNAL        0x80
 
 GDALDatasetH CPL_DLL CPL_STDCALL GDALOpenEx( const char* pszFilename,

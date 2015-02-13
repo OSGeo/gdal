@@ -305,6 +305,7 @@ OGRErr OGROCIWritableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK 
     }
     else if( bApproxOK )
     {
+        oField.SetDefault(NULL);
         CPLError( CE_Warning, CPLE_NotSupported,
                   "Can't create field %s with type %s on Oracle layers.  Creating as VARCHAR.",
                   oField.GetNameRef(),
@@ -327,9 +328,10 @@ OGRErr OGROCIWritableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK 
     OGROCIStringBuf     oCommand;
     OGROCIStatement     oAddField( poSession );
 
-    oCommand.MakeRoomFor( 40 + strlen(poFeatureDefn->GetName())
+    oCommand.MakeRoomFor( 70 + strlen(poFeatureDefn->GetName())
                           + strlen(oField.GetNameRef())
-                          + strlen(szFieldType) );
+                          + strlen(szFieldType)
+                          + (oField.GetDefault() ? strlen(oField.GetDefault()) : 0) );
 
     snprintf( szFieldName, sizeof( szFieldName ), "%s", oField.GetNameRef());
     szFieldName[sizeof( szFieldName )-1] = '\0';
@@ -342,7 +344,15 @@ OGRErr OGROCIWritableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK 
         oField.SetName(szFieldName);
     }
     sprintf( oCommand.GetString(), "ALTER TABLE %s ADD \"%s\" %s", 
-             poFeatureDefn->GetName(), szFieldName, szFieldType );
+             poFeatureDefn->GetName(), szFieldName, szFieldType);
+    if( oField.GetDefault() != NULL && !oField.IsDefaultDriverSpecific() )
+    {
+        sprintf( oCommand.GetString() + strlen(oCommand.GetString()),
+                 " DEFAULT %s", oField.GetDefault() );
+    }
+    if( !oField.IsNullable() )
+        strcat( oCommand.GetString(), " NOT NULL");
+    
     if( oAddField.Execute( oCommand.GetString() ) != CE_None )
         return OGRERR_FAILURE;
 

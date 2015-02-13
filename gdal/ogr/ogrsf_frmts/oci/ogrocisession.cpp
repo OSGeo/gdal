@@ -359,6 +359,7 @@ OGROCISession::GetParmInfo( OCIParam *hParmDesc, OGRFieldDefn *poOGRDefn,
 {
     ub2 nOCIType, nOCILen;
     ub4 nColLen;
+    ub1 bOCINull;
     char *pszColName;
     char szTermColName[128];
     
@@ -382,7 +383,13 @@ OGROCISession::GetParmInfo( OCIParam *hParmDesc, OGRFieldDefn *poOGRDefn,
                     &nColLen, OCI_ATTR_NAME, hError ), 
         "OCIAttrGet(Name)") )
         return CE_Failure;
-    
+
+    if( Failed(
+        OCIAttrGet( hParmDesc, OCI_DTYPE_PARAM, (dvoid **)&bOCINull,
+                    0, OCI_ATTR_IS_NULL, hError ), 
+        "OCIAttrGet(Null)") )
+        return CE_Failure;
+
     if( nColLen >= sizeof(szTermColName) )                              
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
@@ -396,6 +403,7 @@ OGROCISession::GetParmInfo( OCIParam *hParmDesc, OGRFieldDefn *poOGRDefn,
     szTermColName[nColLen] = '\0';
     
     poOGRDefn->SetName( szTermColName );
+    poOGRDefn->SetNullable( bOCINull );
 
 /* -------------------------------------------------------------------- */
 /*      Attempt to classify as an OGRType.                              */

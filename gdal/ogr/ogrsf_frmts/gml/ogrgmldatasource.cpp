@@ -1196,11 +1196,13 @@ OGRGMLLayer *OGRGMLDataSource::TranslateGMLSchema( GMLFeatureClass *poClass )
     if (bExposeGMLId)
     {
         OGRFieldDefn oField( "gml_id", OFTString );
+        oField.SetNullable(FALSE);
         poLayer->GetLayerDefn()->AddFieldDefn( &oField );
     }
     else if (bExposeFid)
     {
         OGRFieldDefn oField( "fid", OFTString );
+        oField.SetNullable(FALSE);
         poLayer->GetLayerDefn()->AddFieldDefn( &oField );
     }
 
@@ -1214,6 +1216,7 @@ OGRGMLLayer *OGRGMLDataSource::TranslateGMLSchema( GMLFeatureClass *poClass )
             oField.SetType(wkbUnknown);
         }
         oField.SetSpatialRef(poSRS);
+        oField.SetNullable(poProperty->IsNullable() );
         poLayer->GetLayerDefn()->AddGeomFieldDefn( &oField );
     }
 
@@ -1263,6 +1266,7 @@ OGRGMLLayer *OGRGMLDataSource::TranslateGMLSchema( GMLFeatureClass *poClass )
             oField.SetSubType(OFSTInt16);
         else if( poProperty->GetType() == GMLPT_Float) 
             oField.SetSubType(OFSTFloat32);
+        oField.SetNullable(poProperty->IsNullable() );
 
         poLayer->GetLayerDefn()->AddFieldDefn( &oField );
     }
@@ -1951,9 +1955,10 @@ void OGRGMLDataSource::InsertHeader()
                     break;
             }
 
+            int nMinOccurs = poFieldDefn->IsNullable() ? 0 : 1;
             PrintLine( fpSchema,
-                "        <xs:element name=\"%s\" type=\"gml:%s\" nillable=\"true\" minOccurs=\"0\" maxOccurs=\"1\"/>%s",
-                       poFieldDefn->GetNameRef(), pszGeometryTypeName, pszComment );
+                "        <xs:element name=\"%s\" type=\"gml:%s\" nillable=\"true\" minOccurs=\"%d\" maxOccurs=\"1\"/>%s",
+                       poFieldDefn->GetNameRef(), pszGeometryTypeName, nMinOccurs, pszComment );
         }
 
 /* -------------------------------------------------------------------- */
@@ -1968,6 +1973,7 @@ void OGRGMLDataSource::InsertHeader()
             else if( !IsGML3Output() && strcmp(poFieldDefn->GetNameRef(), "fid") == 0 )
                 continue;
 
+            int nMinOccurs = poFieldDefn->IsNullable() ? 0 : 1;
             if( poFieldDefn->GetType() == OFTInteger ||
                 poFieldDefn->GetType() == OFTIntegerList  )
             {
@@ -1978,8 +1984,10 @@ void OGRGMLDataSource::InsertHeader()
                 else
                     nWidth = 16;
 
-                PrintLine( fpSchema, "        <xs:element name=\"%s\" nillable=\"true\" minOccurs=\"0\" maxOccurs=\"%s\">",
-                           poFieldDefn->GetNameRef(), poFieldDefn->GetType() == OFTIntegerList ? "unbounded": "1" );
+                PrintLine( fpSchema, "        <xs:element name=\"%s\" nillable=\"true\" minOccurs=\"%d\" maxOccurs=\"%s\">",
+                           poFieldDefn->GetNameRef(),
+                           nMinOccurs,
+                           poFieldDefn->GetType() == OFTIntegerList ? "unbounded": "1" );
                 PrintLine( fpSchema, "          <xs:simpleType>");
                 if( poFieldDefn->GetSubType() == OFSTBoolean )
                 {
@@ -2008,8 +2016,10 @@ void OGRGMLDataSource::InsertHeader()
                 else
                     nWidth = 16;
 
-                PrintLine( fpSchema, "        <xs:element name=\"%s\" nillable=\"true\" minOccurs=\"0\" maxOccurs=\"%s\">",
-                           poFieldDefn->GetNameRef(), poFieldDefn->GetType() == OFTInteger64List ? "unbounded": "1" );
+                PrintLine( fpSchema, "        <xs:element name=\"%s\" nillable=\"true\" minOccurs=\"%d\" maxOccurs=\"%s\">",
+                           poFieldDefn->GetNameRef(),
+                           nMinOccurs,
+                           poFieldDefn->GetType() == OFTInteger64List ? "unbounded": "1" );
                 PrintLine( fpSchema, "          <xs:simpleType>");
                 if( poFieldDefn->GetSubType() == OFSTBoolean )
                 {
@@ -2036,8 +2046,10 @@ void OGRGMLDataSource::InsertHeader()
                 nWidth = poFieldDefn->GetWidth();
                 nDecimals = poFieldDefn->GetPrecision();
 
-                PrintLine( fpSchema, "        <xs:element name=\"%s\" nillable=\"true\" minOccurs=\"0\" maxOccurs=\"%s\">",
-                           poFieldDefn->GetNameRef(), poFieldDefn->GetType() == OFTRealList ? "unbounded": "1" );
+                PrintLine( fpSchema, "        <xs:element name=\"%s\" nillable=\"true\" minOccurs=\"%d\" maxOccurs=\"%s\">",
+                           poFieldDefn->GetNameRef(),
+                           nMinOccurs,
+                           poFieldDefn->GetType() == OFTRealList ? "unbounded": "1" );
                 PrintLine( fpSchema, "          <xs:simpleType>");
                 if( poFieldDefn->GetSubType() == OFSTFloat32 )
                     PrintLine( fpSchema, "            <xs:restriction base=\"xs:float\">");
@@ -2055,8 +2067,10 @@ void OGRGMLDataSource::InsertHeader()
             else if( poFieldDefn->GetType() == OFTString ||
                      poFieldDefn->GetType() == OFTStringList )
             {
-                PrintLine( fpSchema, "        <xs:element name=\"%s\" nillable=\"true\" minOccurs=\"0\" maxOccurs=\"%s\">", 
-                           poFieldDefn->GetNameRef(), poFieldDefn->GetType() == OFTStringList ? "unbounded": "1" );
+                PrintLine( fpSchema, "        <xs:element name=\"%s\" nillable=\"true\" minOccurs=\"%d\" maxOccurs=\"%s\">", 
+                           poFieldDefn->GetNameRef(),
+                           nMinOccurs,
+                           poFieldDefn->GetType() == OFTStringList ? "unbounded": "1" );
                 PrintLine( fpSchema, "          <xs:simpleType>");
                 PrintLine( fpSchema, "            <xs:restriction base=\"xs:string\">");
                 if( poFieldDefn->GetWidth() != 0 )
@@ -2069,7 +2083,9 @@ void OGRGMLDataSource::InsertHeader()
             }
             else if( poFieldDefn->GetType() == OFTDate || poFieldDefn->GetType() == OFTDateTime )
             {
-                PrintLine( fpSchema, "        <xs:element name=\"%s\" nillable=\"true\" minOccurs=\"0\" maxOccurs=\"1\">",  poFieldDefn->GetNameRef());
+                PrintLine( fpSchema, "        <xs:element name=\"%s\" nillable=\"true\" minOccurs=\"%d\" maxOccurs=\"1\">", 
+                           poFieldDefn->GetNameRef(),
+                           nMinOccurs );
                 PrintLine( fpSchema, "          <xs:simpleType>");
                 PrintLine( fpSchema, "            <xs:restriction base=\"xs:string\">");
                 PrintLine( fpSchema, "            </xs:restriction>");

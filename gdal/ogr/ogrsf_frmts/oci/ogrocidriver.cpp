@@ -137,6 +137,7 @@ void RegisterOGROCI()
     "  <Option name='LOADER_FILE' type='string' description='If this option is set, all feature information will be written to a file suitable for use with SQL*Loader'/>"
     "  <Option name='DIM' type='integer' description='Set to 2 to force the geometries to be 2D, or 3 to be 2.5D' default='3'/>"
     "  <Option name='GEOMETRY_NAME' type='string' description='Name of geometry column.' default='ORA_GEOMETRY'/>"
+    "  <Option name='GEOMETRY_NULLABLE' type='boolean' description='Whether the values of the geometry column can be NULL' default='YES'/>"
     "  <Option name='DIMINFO_X' type='string' description='xmin,xmax,xres values to control the X dimension info written into the USER_SDO_GEOM_METADATA table'/>"
     "  <Option name='DIMINFO_Y' type='string' description='ymin,ymax,yres values to control the Y dimension info written into the USER_SDO_GEOM_METADATA table'/>"
     "  <Option name='DIMINFO_Z' type='string' description='zmin,zmax,zres values to control the Z dimension info written into the USER_SDO_GEOM_METADATA table'/>"
@@ -144,6 +145,9 @@ void RegisterOGROCI()
     "</LayerCreationOptionList>");
         
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES, "Integer Integer64 Real String Date DateTime" );
+    poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_FIELDS, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_DEFAULT_FIELDS, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_GEOMFIELDS, "YES" );
 
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver(poDriver);
 }

@@ -257,6 +257,7 @@ OGRFeatureDefn *OGROCITableLayer::ReadTableDefinition( const char * pszTable )
 /* -------------------------------------------------------------------- */
     const char *pszExpectedFIDName = 
         CPLGetConfigOption( "OCI_FID", "OGR_FID" );
+    int bGeomFieldNullable = FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      Parse the returned table information.                           */
@@ -286,6 +287,7 @@ OGRFeatureDefn *OGROCITableLayer::ReadTableDefinition( const char * pszTable )
                 CPLFree( pszGeomName );
                 pszGeomName = CPLStrdup( oField.GetNameRef() );
                 iGeomColumn = iRawFld;
+                bGeomFieldNullable = oField.IsNullable();
             }
             continue;                   
         }
@@ -299,6 +301,25 @@ OGRFeatureDefn *OGROCITableLayer::ReadTableDefinition( const char * pszTable )
         }
 
         poDefn->AddFieldDefn( &oField );
+    }
+
+    CPLString osSQL;
+    osSQL.Printf("SELECT COLUMN_NAME, DATA_DEFAULT FROM user_tab_columns WHERE DATA_DEFAULT IS NOT NULL AND TABLE_NAME = '%s'",
+                 CPLString(pszTable).toupper().c_str());
+    OGRLayer* poSQLLyr = poDS->ExecuteSQL(osSQL, NULL, NULL);
+    if( poSQLLyr != NULL )
+    {
+        OGRFeature* poFeature;
+        while( (poFeature = poSQLLyr->GetNextFeature()) != NULL )
+        {
+            const char* pszColName = poFeature->GetFieldAsString(0);
+            const char* pszDefault = poFeature->GetFieldAsString(1);
+            int nIdx = poDefn->GetFieldIndex(pszColName);
+            if( nIdx >= 0 )
+                poDefn->GetFieldDefn(nIdx)->SetDefault(pszDefault);
+            delete poFeature;
+        }
+        poDS->ReleaseResultSet(poSQLLyr);
     }
 
     if( EQUAL(pszExpectedFIDName, "OGR_FID") && pszFIDName )
@@ -421,6 +442,7 @@ OGRFeatureDefn *OGROCITableLayer::ReadTableDefinition( const char * pszTable )
                 if( iDim == 3 )
                     eGeomType = wkbSetZ(eGeomType);
                 poDefn->GetGeomFieldDefn(0)->SetType( eGeomType );
+                poDefn->GetGeomFieldDefn(0)->SetNullable( bGeomFieldNullable );
             }
             else
             {
@@ -1602,15 +1624,10 @@ void OGROCITableLayer::UpdateLayerExtents()
 }
 
 /************************************************************************/
-/*                   AllocAndBindForWrite(int eType)                    */
+/*                   AllocAndBindForWrite()                             */
 /************************************************************************/
 
-/* -------------------------------------------------------------------- */
-/*      PJH: modified with geometry type parameter so as not to         */
-/*      attempt to write geometry if there is none to write as          */
-/*      Oracle will default the value of the column to Null.            */
-/* -------------------------------------------------------------------- */
-int OGROCITableLayer::AllocAndBindForWrite(int eType)
+int OGROCITableLayer::AllocAndBindForWrite()
 
 {
     OGROCISession      *poSession = poDS->GetSession();
@@ -1634,7 +1651,7 @@ int OGROCITableLayer::AllocAndBindForWrite(int eType)
     oCmdBuf.Append( "\"(\"" );
     oCmdBuf.Append( pszFIDName );
 
-    if (eType != wkbNone)
+    if (GetGeomType() != wkbNone)
     {
        oCmdBuf.Append( "\",\"" );
        oCmdBuf.Append( pszGeomName );
@@ -1648,7 +1665,7 @@ int OGROCITableLayer::AllocAndBindForWrite(int eType)
 
     oCmdBuf.Append( "\") VALUES ( :fid " );
 
-    if (eType != wkbNone)
+    if (GetGeomType() != wkbNone)
         oCmdBuf.Append( ", :geometry" );
 
     for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
@@ -1668,7 +1685,7 @@ int OGROCITableLayer::AllocAndBindForWrite(int eType)
 /* -------------------------------------------------------------------- */
 /*      Setup geometry indicator information.                           */
 /* -------------------------------------------------------------------- */
-    if (eType != wkbNone)
+    if (GetGeomType() != wkbNone)
     {
         pasWriteGeomInd = (SDO_GEOMETRY_ind *)
             CPLCalloc(sizeof(SDO_GEOMETRY_ind),nWriteCacheMax);
@@ -1817,26 +1834,29 @@ OGRErr OGROCITableLayer::BoundCreateFeature( OGRFeature *poFeature )
     OGRErr             eErr;
     OCINumber          oci_number; 
 
+    /* If an unset field has a default value, the current implementation */
+    /* of BoundCreateFeature() doesn't work. */
+    for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
+    { 
+        if( !poFeature->IsFieldSet( i ) &&
+            poFeature->GetFieldDefnRef(i)->GetDefault() != NULL )
+        {
+            FlushPendingFeatures();
+            return UnboundCreateFeature(poFeature);
+        }
+    }
+
+    if( !poFeature->Validate( OGR_F_VAL_NULL | OGR_F_VAL_ALLOW_NULL_WHEN_DEFAULT, TRUE ) )
+        return OGRERR_FAILURE;
+
     iCache = nWriteCacheUsed;
 
 /* -------------------------------------------------------------------- */
-/*  PJH: Initiate the Insert, passing the geometry type as there is no  */
-/*  need to give null geometry to Oracle                                */
+/*  Initiate the Insert                                                 */
 /* -------------------------------------------------------------------- */
     if( nWriteCacheMax == 0 )
     {
-        int eType;
-        if( poFeature->GetGeometryRef() == NULL )
-        {
-            eType = wkbNone;
-        }
-        else
-        {
-            eType = 1; /* PJH: properly, this should be the gType from the geometry */
-                       /* but the actual value does not matter, so long as it is    */
-                       /* not wkbNone                                               */
-        }
-        if( !AllocAndBindForWrite(eType) )
+        if( !AllocAndBindForWrite() )
             return OGRERR_FAILURE;
     }
 
@@ -1952,6 +1972,16 @@ OGRErr OGROCITableLayer::BoundCreateFeature( OGRFeature *poFeature )
         OCINumberFromInt( poSession->hError, &nGType,
                           (uword)sizeof(int), OCI_NUMBER_SIGNED,
                           &(psGeom->sdo_gtype) );
+    }
+    else if( pasWriteGeomInd != NULL )
+    {
+        SDO_GEOMETRY_ind  *psInd  = pasWriteGeomInd + iCache;
+        psInd->_atomic = OCI_IND_NULL;
+        psInd->sdo_srid = OCI_IND_NULL;
+        psInd->sdo_point._atomic = OCI_IND_NULL;
+        psInd->sdo_elem_info = OCI_IND_NULL;
+        psInd->sdo_ordinates = OCI_IND_NULL;
+        psInd->sdo_gtype = OCI_IND_NULL;
     }
 
 /* -------------------------------------------------------------------- */

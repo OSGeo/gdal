@@ -209,6 +209,7 @@ COMPRESSION_OPTIONS
         poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
 "<LayerCreationOptionList>"
 "  <Option name='GEOMETRY_COLUMN' type='string' description='Name of geometry column.' default='geom'/>"
+"  <Option name='GEOMETRY_NULLABLE' type='boolean' description='Whether the values of the geometry column can be NULL' default='YES'/>"
 "  <Option name='FID' type='string' description='Name of the FID column to create' default='fid'/>"
 "  <Option name='OVERWRITE' type='boolean' description='Whether to overwrite an existing table with the layer name to be created' default='NO'/>"
 "  <Option name='PRECISION' type='boolean' description='Whether text fields created should keep the width' default='YES'/>"
@@ -217,6 +218,9 @@ COMPRESSION_OPTIONS
 "</LayerCreationOptionList>");
         
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES, "Integer Integer64 Real String Date DateTime Binary" );
+        poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_FIELDS, "YES" );
+        poDriver->SetMetadataItem( GDAL_DCAP_DEFAULT_FIELDS, "YES" );
+        poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_GEOMFIELDS, "YES" );
 
         poDriver->pfnOpen = OGRGeoPackageDriverOpen;
         poDriver->pfnIdentify = OGRGeoPackageDriverIdentify;

@@ -165,7 +165,8 @@ for name in layer_list:
     # Historic format for mono-geometry layers
     if layerdef.GetGeomFieldCount() == 0:
         vrt += '    <GeometryType>wkbNone</GeometryType>\n'
-    elif layerdef.GetGeomFieldCount() == 1:
+    elif layerdef.GetGeomFieldCount() == 1 and \
+         layerdef.GetGeomFieldDefn(0).IsNullable():
         vrt += '    <GeometryType>%s</GeometryType>\n' \
             % GeomType2Name(layerdef.GetGeomType())
         srs = layer.GetSpatialRef()
@@ -183,7 +184,10 @@ for name in layer_list:
     else:
         for fld_index in range(layerdef.GetGeomFieldCount()):
             src_fd = layerdef.GetGeomFieldDefn( fld_index )
-            vrt += '    <GeometryField name="%s">\n' % src_fd.GetName()
+            vrt += '    <GeometryField name="%s"' % src_fd.GetName()
+            if src_fd.IsNullable() == 0:
+                vrt += ' nullable="false"'
+            vrt += '>\n'
             vrt += '      <GeometryType>%s</GeometryType>\n' \
                     % GeomType2Name(src_fd.GetType())
             srs = src_fd.GetSpatialRef()
@@ -238,6 +242,8 @@ for name in layer_list:
             vrt += ' width="%d"' % src_fd.GetWidth()
         if src_fd.GetPrecision() > 0:
             vrt += ' precision="%d"' % src_fd.GetPrecision()
+        if src_fd.IsNullable() == 0:
+            vrt += ' nullable="false"'
         vrt += '/>\n'
 
     if feature_count:

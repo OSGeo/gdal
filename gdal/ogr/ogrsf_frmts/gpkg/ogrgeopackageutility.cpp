@@ -324,7 +324,7 @@ const char* GPkgFieldFromOGR(OGRFieldType nType, OGRFieldSubType eSubType,
         case OFTDateTime:
             return "DATETIME";
         default:
-            return NULL;
+            return "TEXT";
     }
 }
 

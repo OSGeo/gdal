@@ -60,19 +60,60 @@ OGRPGResultLayer::OGRPGResultLayer( OGRPGDataSource *poDSIn,
     pszGeomTableSchemaName = NULL;
 
     /* Find at which index the geometry column is */
+    /* and prepare a request to identify not-nullable fields */
     int iGeomCol = -1;
-    if (poFeatureDefn->GetGeomFieldCount() == 1)
+    CPLString osRequest;
+    std::map< std::pair<int,int>, int> oMapAttributeToFieldIndex;
+
+    int iRawField;
+    for( iRawField = 0; iRawField < PQnfields(hInitialResultIn); iRawField++ )
     {
-        int iRawField;
-        for( iRawField = 0; iRawField < PQnfields(hInitialResultIn); iRawField++ )
+        if( poFeatureDefn->GetGeomFieldCount() == 1 &&
+            strcmp(PQfname(hInitialResultIn,iRawField),
+                poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef()) == 0 )
         {
-            if( strcmp(PQfname(hInitialResultIn,iRawField),
-                    poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef()) == 0 )
+            iGeomCol = iRawField;
+        }
+
+        Oid tableOID = PQftable(hInitialResultIn, iRawField);
+        int tableCol = PQftablecol(hInitialResultIn, iRawField);
+        if( tableOID != InvalidOid && tableCol > 0 )
+        {
+            if( osRequest.size() )
+                osRequest += " OR ";
+            osRequest += "(attrelid = ";
+            osRequest += CPLSPrintf("%d", tableOID); 
+            osRequest += " AND attnum = ";
+            osRequest += CPLSPrintf("%d)", tableCol); 
+            oMapAttributeToFieldIndex[std::pair<int,int>(tableOID,tableCol)] = iRawField;
+        }
+    }
+
+    if( osRequest.size() )
+    {
+        osRequest = "SELECT attnum, attrelid FROM pg_attribute WHERE attnotnull = 't' AND (" + osRequest + ")";
+        PGresult* hResult = OGRPG_PQexec(poDS->GetPGConn(), osRequest );
+        if( hResult && PQresultStatus(hResult) == PGRES_TUPLES_OK)
+        {
+            int iCol;
+            for( iCol = 0; iCol < PQntuples(hResult); iCol++ )
             {
-                iGeomCol = iRawField;
-                break;
+                const char* pszAttNum = PQgetvalue(hResult,iCol,0);
+                const char* pszAttRelid = PQgetvalue(hResult,iCol,1);
+                int iRawField = oMapAttributeToFieldIndex[std::pair<int,int>(atoi(pszAttRelid),atoi(pszAttNum))];
+                const char* pszFieldname = PQfname(hInitialResultIn,iRawField);
+                int iFieldIdx = poFeatureDefn->GetFieldIndex(pszFieldname);
+                if( iFieldIdx >= 0 )
+                    poFeatureDefn->GetFieldDefn(iFieldIdx)->SetNullable(FALSE);
+                else
+                {
+                    iFieldIdx = poFeatureDefn->GetGeomFieldIndex(pszFieldname);
+                    if( iFieldIdx >= 0 )
+                        poFeatureDefn->GetGeomFieldDefn(iFieldIdx)->SetNullable(FALSE);
+                }
             }
         }
+        OGRPGClearResult( hResult );
     }
 
 #ifndef PG_PRE74

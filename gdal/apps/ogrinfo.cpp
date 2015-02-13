@@ -537,20 +537,21 @@ static void ReportOnLayer( OGRLayer * poLayer, const char *pszWHERE,
         if( strlen(poLayer->GetFIDColumn()) > 0 )
             printf( "FID Column = %s\n", 
                     poLayer->GetFIDColumn() );
-    
-        if( nGeomFieldCount > 1 )
+
+        for(int iGeom = 0;iGeom < nGeomFieldCount; iGeom ++ )
         {
-            for(int iGeom = 0;iGeom < nGeomFieldCount; iGeom ++ )
-            {
-                OGRGeomFieldDefn* poGFldDefn =
-                    poLayer->GetLayerDefn()->GetGeomFieldDefn(iGeom);
-                printf( "Geometry Column %d = %s\n", iGeom + 1,
-                        poGFldDefn->GetNameRef() );
-            }
+            OGRGeomFieldDefn* poGFldDefn =
+                poLayer->GetLayerDefn()->GetGeomFieldDefn(iGeom);
+            if( nGeomFieldCount == 1 &&
+                EQUAL(poGFldDefn->GetNameRef(), "")  && poGFldDefn->IsNullable() )
+                break;
+            printf( "Geometry Column ");
+            if( nGeomFieldCount > 1 )
+                printf("%d ", iGeom + 1);
+            if( !poGFldDefn->IsNullable() )
+                printf("NOT NULL ");
+            printf("= %s\n", poGFldDefn->GetNameRef() );
         }
-        else if( strlen(poLayer->GetGeometryColumn()) > 0 )
-            printf( "Geometry Column = %s\n", 
-                    poLayer->GetGeometryColumn() );
 
         for( int iAttr = 0; iAttr < poDefn->GetFieldCount(); iAttr++ )
         {
@@ -560,11 +561,16 @@ static void ReportOnLayer( OGRLayer * poLayer, const char *pszWHERE,
                            poField->GetFieldTypeName( poField->GetType() ),
                            poField->GetFieldSubTypeName(poField->GetSubType())) :
                 poField->GetFieldTypeName( poField->GetType() );
-            printf( "%s: %s (%d.%d)\n",
+            printf( "%s: %s (%d.%d)",
                     poField->GetNameRef(),
                     pszType,
                     poField->GetWidth(),
                     poField->GetPrecision() );
+            if( !poField->IsNullable() )
+                printf(" NOT NULL");
+            if( poField->GetDefault() != NULL )
+                printf(" DEFAULT %s", poField->GetDefault() );
+            printf( "\n" );
         }
     }
 

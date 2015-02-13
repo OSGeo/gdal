@@ -758,11 +758,47 @@ int FileGDBTable::Open(const char* pszFilename)
                     break;
             }
 
+            OGRField sDefault;
+            sDefault.Set.nMarker1 = OGRUnsetMarker;
+            sDefault.Set.nMarker2 = OGRUnsetMarker;
             if( (flags & 4) != 0 )
             {
                 /* Default value */
                 /* Found on PreNIS.gdb/a0000000d.gdbtable */
                 returnErrorIf(nRemaining < defaultValueLength );
+                if( defaultValueLength )
+                {
+                    if( eType == FGFT_STRING )
+                    {
+                        sDefault.String = (char*)CPLMalloc(defaultValueLength+1);
+                        memcpy(sDefault.String, pabyIter, defaultValueLength);
+                        sDefault.String[defaultValueLength] = 0;
+                    }
+                    else if( eType == FGFT_INT16 && defaultValueLength == 2 )
+                    {
+                        sDefault.Integer = GetInt16(pabyIter, 0);
+                        sDefault.Set.nMarker2 = 0;
+                    }
+                    else if( eType == FGFT_INT32 && defaultValueLength == 4 )
+                    {
+                        sDefault.Integer = GetInt32(pabyIter, 0);
+                        sDefault.Set.nMarker2 = 0;
+                    }
+                    else if( eType == FGFT_FLOAT32 && defaultValueLength == 4 )
+                    {
+                        sDefault.Real = GetFloat32(pabyIter, 0);
+                    }
+                    else if( eType == FGFT_FLOAT64 && defaultValueLength == 8 )
+                    {
+                        sDefault.Real = GetFloat64(pabyIter, 0);
+                    }
+                    else if( eType == FGFT_DATETIME && defaultValueLength == 8 )
+                    {
+                        double dfVal = GetFloat64(pabyIter, 0);
+                        FileGDBDoubleDateToOGRDate(dfVal, &sDefault);
+                    }
+                }
+
                 pabyIter += defaultValueLength;
                 nRemaining -= defaultValueLength;
             }
@@ -780,6 +816,7 @@ int FileGDBTable::Open(const char* pszFilename)
             poField->eType = eType;
             poField->bNullable = (flags & 1);
             poField->nMaxWidth = nMaxWidth;
+            poField->sDefault = sDefault;
             apoFields.push_back(poField);
         }
         else
@@ -1818,6 +1855,8 @@ FileGDBField::FileGDBField(FileGDBTable* poParent) :
     poParent(poParent), eType(FGFT_UNDEFINED), bNullable(FALSE),
     nMaxWidth(0), poIndex(NULL)
 {
+    sDefault.Set.nMarker1 = OGRUnsetMarker;
+    sDefault.Set.nMarker2 = OGRUnsetMarker;
 }
 
 /************************************************************************/
@@ -1826,6 +1865,10 @@ FileGDBField::FileGDBField(FileGDBTable* poParent) :
 
 FileGDBField::~FileGDBField()
 {
+    if( eType == FGFT_STRING &&
+        !(sDefault.Set.nMarker1 == OGRUnsetMarker &&
+          sDefault.Set.nMarker2 == OGRUnsetMarker) )
+        CPLFree(sDefault.String);
 }
 
 

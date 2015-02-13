@@ -3364,6 +3364,85 @@ def ogr_vrt_34():
     return 'success'
 
 ###############################################################################
+# Test nullable fields
+
+def ogr_vrt_35():
+    if gdaltest.vrt_ds is None:
+        return 'skip'
+
+    f = open('tmp/test.csv', 'wb')
+    f.write('c1,c2,WKT,WKT2\n'.encode('ascii'))
+    f.write('1,,"POINT(2 49),"\n'.encode('ascii'))
+    f.close()
+
+    try:
+        os.remove('tmp/test.csvt')
+    except:
+        pass
+
+    # Explicit nullable
+    f = open('tmp/test.vrt', 'wb')
+    f.write("""<OGRVRTDataSource>
+    <OGRVRTLayer name="test">
+        <SrcDataSource relativeToVRT="1">test.csv</SrcDataSource>
+        <SrcLayer>test</SrcLayer>
+        <GeometryField encoding="WKT" field="WKT" name="g1" nullable="false"/>
+        <GeometryField encoding="WKT" field="WKT2" name="g2"/>
+        <Field name="c1" type="Integer" nullable="false"/>
+        <Field name="c2" type="Integer"/>
+    </OGRVRTLayer>
+</OGRVRTDataSource>""".encode('ascii'))
+    f.close()
+
+    ds = ogr.Open( 'tmp/test.vrt' )
+    lyr = ds.GetLayerByName( 'test' )
+    if lyr.GetLayerDefn().GetFieldDefn(0).IsNullable() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetLayerDefn().GetFieldDefn(1).IsNullable() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetLayerDefn().GetGeomFieldDefn(0).IsNullable() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetLayerDefn().GetGeomFieldDefn(1).IsNullable() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    # Implicit nullable
+    f = open('tmp/test2.vrt', 'wb')
+    f.write("""<OGRVRTDataSource>
+    <OGRVRTLayer name="test">
+        <SrcDataSource relativeToVRT="1">test.vrt</SrcDataSource>
+        <SrcLayer>test</SrcLayer>
+    </OGRVRTLayer>
+</OGRVRTDataSource>""".encode('ascii'))
+    f.close()
+
+    ds = ogr.Open( 'tmp/test2.vrt' )
+    lyr = ds.GetLayerByName( 'test' )
+    if lyr.GetLayerDefn().GetFieldDefn(0).IsNullable() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetLayerDefn().GetFieldDefn(1).IsNullable() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetLayerDefn().GetGeomFieldDefn(0).IsNullable() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetLayerDefn().GetGeomFieldDefn(1).IsNullable() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    os.unlink('tmp/test.csv')
+    os.unlink('tmp/test.vrt')
+    os.unlink('tmp/test2.vrt')
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_vrt_cleanup():
@@ -3426,6 +3505,7 @@ gdaltest_list = [
     ogr_vrt_32,
     ogr_vrt_33,
     ogr_vrt_34,
+    ogr_vrt_35,
     ogr_vrt_cleanup ]
 
 if __name__ == '__main__':

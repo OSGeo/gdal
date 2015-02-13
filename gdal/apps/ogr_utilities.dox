@@ -195,6 +195,7 @@ Advanced options :
                [-wrapdateline] [-datelineoffset val]
                [[-simplify tolerance] | [-segmentize max_dist]]
                [-addfields]
+               [-relaxedFieldNameMatch] [-forceNullable] [-unsetDefault]
                [-fieldTypeToString All|(type1[,type2]*)] [-unsetFieldWidth]
                [-mapFieldType type1|All=type2[,type3=type4]*]
                [-fieldmap identity | index1[,index2]*]
@@ -341,6 +342,13 @@ This setting should be used along with the -append setting.</dd>
 the new fields found in source layers. This option is useful when merging files that have non-strictly
 identical structures.
 This might not work for output formats that don't support adding fields to existing non-empty layers.</dd>
+<dt> <b>-relaxedFieldNameMatch</b>:</dt><dd>(starting with GDAL 1.11) Do field name matching between
+source and existing target layer in a more relaxed way if the target driver has an implementation for it.</dd>
+[-relaxedFieldNameMatch] [-forceNullable]
+<dt> <b>-forceNullable</b>:</dt><dd>(starting with GDAL 2.0) Do not propagate not-nullable constraints
+to target layer if they exist in source layer..</dd>
+<dt> <b>-unsetDefault</b>:</dt><dd>(starting with GDAL 2.0) Do not propagate default field values
+to target layer if they exist in source layer..</dd>
 </dl>
 
 \section ogr2ogr_performance PERFORMANCE HINTS

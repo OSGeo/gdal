@@ -72,6 +72,7 @@ OGRGeomFieldDefn::OGRGeomFieldDefn( OGRGeomFieldDefn *poPrototype )
 {
     Initialize( poPrototype->GetNameRef(), poPrototype->GetType() );
     SetSpatialRef( poPrototype->GetSpatialRef() );
+    SetNullable( poPrototype->IsNullable() );
 }
 
 /************************************************************************/
@@ -108,6 +109,7 @@ void OGRGeomFieldDefn::Initialize( const char * pszNameIn,
     eGeomType = eTypeIn;
     poSRS = NULL;
     bIgnore = FALSE;
+    bNullable = TRUE;
 }
 
 /************************************************************************/
@@ -490,11 +492,110 @@ void OGR_GFld_SetSpatialRef( OGRGeomFieldDefnH hDefn, OGRSpatialReferenceH hSRS 
 int OGRGeomFieldDefn::IsSame( OGRGeomFieldDefn * poOtherFieldDefn )
 {
     if( !(strcmp(GetNameRef(), poOtherFieldDefn->GetNameRef()) == 0 &&
-                 GetType() == poOtherFieldDefn->GetType()) )
+                 GetType() == poOtherFieldDefn->GetType() &&
+                 IsNullable() == poOtherFieldDefn->IsNullable()) )
         return FALSE;
     OGRSpatialReference* poMySRS = GetSpatialRef();
     OGRSpatialReference* poOtherSRS = poOtherFieldDefn->GetSpatialRef();
     return ((poMySRS == poOtherSRS) ||
             (poMySRS != NULL && poOtherSRS != NULL &&
              poMySRS->IsSame(poOtherSRS)));
+}
+
+/************************************************************************/
+/*                             IsNullable()                             */
+/************************************************************************/
+
+/**
+ * \fn int OGRGeomFieldDefn::IsNullable() const
+ *
+ * \brief Return whether this geometry field can receive null values.
+ *
+ * By default, fields are nullable.
+ *
+ * Even if this method returns FALSE (i.e not-nullable field), it doesn't mean
+ * that OGRFeature::IsFieldSet() will necessary return TRUE, as fields can be
+ * temporary unset and null/not-null validation is usually done when
+ * OGRLayer::CreateFeature()/SetFeature() is called.
+ *
+ * Note that not-nullable geometry fields might also contain 'empty' geometries.
+ *
+ * This method is the same as the C function OGR_GFld_IsNullable().
+ *
+ * @return TRUE if the field is authorized to be null.
+ * @since GDAL 2.0
+ */
+
+/************************************************************************/
+/*                         OGR_GFld_IsNullable()                        */
+/************************************************************************/
+
+/**
+ * \brief Return whether this geometry field can receive null values.
+ *
+ * By default, fields are nullable.
+ *
+ * Even if this method returns FALSE (i.e not-nullable field), it doesn't mean
+ * that OGRFeature::IsFieldSet() will necessary return TRUE, as fields can be
+ * temporary unset and null/not-null validation is usually done when
+ * OGRLayer::CreateFeature()/SetFeature() is called.
+ *
+ * Note that not-nullable geometry fields might also contain 'empty' geometries.
+ *
+ * This method is the same as the C++ method OGRGeomFieldDefn::IsNullable().
+ *
+ * @param hDefn handle to the field definition
+ * @return TRUE if the field is authorized to be null.
+ * @since GDAL 2.0
+ */
+
+int OGR_GFld_IsNullable( OGRGeomFieldDefnH hDefn )
+{
+    return ((OGRGeomFieldDefn *) hDefn)->IsNullable();
+}
+
+/************************************************************************/
+/*                            SetNullable()                             */
+/************************************************************************/
+
+/**
+ * \fn void OGRGeomFieldDefn::SetNullable( int bNullableIn );
+ *
+ * \brief Set whether this geometry field can receive null values.
+ *
+ * By default, fields are nullable, so this method is generally called with FALSE
+ * to set a not-null constraint.
+ *
+ * Drivers that support writing not-null constraint will advertize the
+ * GDAL_DCAP_NOTNULL_GEOMFIELDS driver metadata item.
+ *
+ * This method is the same as the C function OGR_GFld_SetNullable().
+ *
+ * @param bNullableIn FALSE if the field must have a not-null constraint.
+ * @since GDAL 2.0
+ */
+
+/************************************************************************/
+/*                        OGR_GFld_SetNullable()                        */
+/************************************************************************/
+
+/**
+ * \brief Set whether this geometry field can receive null values.
+ *
+ * By default, fields are nullable, so this method is generally called with FALSE
+ * to set a not-null constraint.
+ *
+ * Drivers that support writing not-null constraint will advertize the
+ * GDAL_DCAP_NOTNULL_GEOMFIELDS driver metadata item.
+ *
+ * This method is the same as the C++ method OGRGeomFieldDefn::SetNullable().
+ *
+ * @param hDefn handle to the field definition
+ * @param bNullableIn FALSE if the field must have a not-null constraint.
+ * @since GDAL 2.0
+ */
+
+void OGR_GFld_SetNullable( OGRGeomFieldDefnH hDefn, int bNullableIn )
+{
+    ((OGRGeomFieldDefn *) hDefn)->SetNullable( bNullableIn );
 }

@@ -447,6 +447,7 @@ int GMLFeatureClass::InitializeFromXML( CPLXMLNode *psRoot )
             const char *pszName = CPLGetXMLValue( psThis, "Name", "" );
             const char *pszElementPath = CPLGetXMLValue( psThis, "ElementPath", "" );
             const char *pszType = CPLGetXMLValue( psThis, "Type", NULL );
+            int bNullable = CSLTestBoolean(CPLGetXMLValue( psThis, "Nullable", "true") );
             nGeomType = wkbUnknown;
             if( pszType != NULL && !EQUAL(pszType, "0") )
             {
@@ -462,7 +463,7 @@ int GMLFeatureClass::InitializeFromXML( CPLXMLNode *psRoot )
                     nGeomType = OGRFromOGCGeomType(pszType);
             }
             bHasFoundGeomElements = TRUE;
-            AddGeometryProperty( new GMLGeometryPropertyDefn( pszName, pszElementPath, nGeomType ) );
+            AddGeometryProperty( new GMLGeometryPropertyDefn( pszName, pszElementPath, nGeomType, -1, bNullable ) );
             bHasValidGeometryName = FALSE;
             bHasValidGeometryElementPath = FALSE;
             bHasFoundGeomType = FALSE;
@@ -474,7 +475,7 @@ int GMLFeatureClass::InitializeFromXML( CPLXMLNode *psRoot )
 
             if( bHasValidGeometryName )
             {
-                AddGeometryProperty( new GMLGeometryPropertyDefn( pszGName, pszGPath, nGeomType ) );
+                AddGeometryProperty( new GMLGeometryPropertyDefn( pszGName, pszGPath, nGeomType, -1, TRUE ) );
                 bHasValidGeometryName = FALSE;
                 bHasValidGeometryElementPath = FALSE;
                 bHasFoundGeomType = FALSE;
@@ -492,7 +493,7 @@ int GMLFeatureClass::InitializeFromXML( CPLXMLNode *psRoot )
 
             if( bHasValidGeometryElementPath )
             {
-                AddGeometryProperty( new GMLGeometryPropertyDefn( pszGName, pszGPath, nGeomType ) );
+                AddGeometryProperty( new GMLGeometryPropertyDefn( pszGName, pszGPath, nGeomType, -1, TRUE ) );
                 bHasValidGeometryName = FALSE;
                 bHasValidGeometryElementPath = FALSE;
                 bHasFoundGeomType = FALSE;
@@ -510,7 +511,7 @@ int GMLFeatureClass::InitializeFromXML( CPLXMLNode *psRoot )
 
             if( bHasFoundGeomType )
             {
-                AddGeometryProperty( new GMLGeometryPropertyDefn( pszGName, pszGPath, nGeomType ) );
+                AddGeometryProperty( new GMLGeometryPropertyDefn( pszGName, pszGPath, nGeomType, -1, TRUE ) );
                 bHasValidGeometryName = FALSE;
                 bHasValidGeometryElementPath = FALSE;
                 bHasFoundGeomType = FALSE;
@@ -548,7 +549,7 @@ int GMLFeatureClass::InitializeFromXML( CPLXMLNode *psRoot )
     /* a geometry field */
     if( bHasValidGeometryElementPath || bHasFoundGeomType || !bHasFoundGeomElements )
     {
-        AddGeometryProperty( new GMLGeometryPropertyDefn( pszGName, pszGPath, nGeomType ) );
+        AddGeometryProperty( new GMLGeometryPropertyDefn( pszGName, pszGPath, nGeomType, -1, TRUE ) );
     }
 
     SetSRSName( CPLGetXMLValue( psRoot, "SRSName", NULL ) );
@@ -594,6 +595,7 @@ int GMLFeatureClass::InitializeFromXML( CPLXMLNode *psRoot )
             const char *pszType = CPLGetXMLValue( psThis, "Type", "Untyped" );
             const char *pszSubType = CPLGetXMLValue( psThis, "Subtype", "" );
             const char *pszCondition = CPLGetXMLValue( psThis, "Condition", NULL );
+            int bNullable = CSLTestBoolean(CPLGetXMLValue( psThis, "Nullable", "true") );
             GMLPropertyDefn *poPDefn;
 
             if( pszName == NULL )
@@ -607,6 +609,7 @@ int GMLFeatureClass::InitializeFromXML( CPLXMLNode *psRoot )
             poPDefn = new GMLPropertyDefn( 
                 pszName, CPLGetXMLValue( psThis, "ElementPath", NULL ) );
             
+            poPDefn->SetNullable(bNullable);
             if( EQUAL(pszType,"Untyped") )
                 poPDefn->SetType( GMLPT_Untyped );
             else if( EQUAL(pszType,"String") ) 

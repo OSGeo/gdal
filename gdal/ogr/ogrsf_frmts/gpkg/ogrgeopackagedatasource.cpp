@@ -3192,24 +3192,6 @@ int GDALGeoPackageDataset::RegisterZoomOtherExtension()
 }
 
 /************************************************************************/
-/*                              AddColumn()                             */
-/************************************************************************/
-
-OGRErr GDALGeoPackageDataset::AddColumn(const char *pszTableName, const char *pszColumnName, const char *pszColumnType)
-{
-    char *pszSQL;
-    
-    pszSQL = sqlite3_mprintf("ALTER TABLE \"%s\" ADD COLUMN \"%s\" %s", 
-                             pszTableName, pszColumnName, pszColumnType);
-
-    OGRErr err = SQLCommand(hDB, pszSQL);
-    sqlite3_free(pszSQL);
-    
-    return err;
-}
-
-
-/************************************************************************/
 /*                              GetLayer()                              */
 /************************************************************************/
 
@@ -3254,6 +3236,7 @@ OGRLayer* GDALGeoPackageDataset::ICreateLayer( const char * pszLayerName,
     const char* pszGeomColumnName = CSLFetchNameValue(papszOptions, "GEOMETRY_COLUMN");
     if (pszGeomColumnName == NULL)
         pszGeomColumnName = "geom";
+    int bGeomNullable = CSLFetchBoolean(papszOptions, "GEOMETRY_NULLABLE", TRUE);
     
     /* Read FID option */
     const char* pszFIDColumnName = CSLFetchNameValue(papszOptions, "FID");
@@ -3311,6 +3294,7 @@ OGRLayer* GDALGeoPackageDataset::ICreateLayer( const char * pszLayerName,
     OGRGeoPackageTableLayer *poLayer = new OGRGeoPackageTableLayer(this, pszLayerName);
 
     poLayer->SetCreationParameters( eGType, pszGeomColumnName,
+                                    bGeomNullable,
                                     poSpatialRef,
                                     pszFIDColumnName );
 

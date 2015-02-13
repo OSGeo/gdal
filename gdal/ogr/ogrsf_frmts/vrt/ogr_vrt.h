@@ -75,6 +75,8 @@ class OGRVRTGeomFieldProps
         int                 bUseSpatialSubquery;
 
         OGREnvelope         sStaticEnvelope;
+        
+        int                 bNullable;
 
                         OGRVRTGeomFieldProps();
                        ~OGRVRTGeomFieldProps();

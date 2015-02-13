@@ -228,7 +228,8 @@ static void OGRPGTableEntryAddGeomColumn(PGTableEntry* psTableEntry,
                                          const char* pszGeomType = NULL,
                                          int nCoordDimension = 0,
                                          int nSRID = UNDETERMINED_SRID,
-                                         PostgisType ePostgisType = GEOM_TYPE_UNKNOWN)
+                                         PostgisType ePostgisType = GEOM_TYPE_UNKNOWN,
+                                         int bNullable = TRUE)
 {
     psTableEntry->pasGeomColumns = (PGGeomColumnDesc*)
         CPLRealloc(psTableEntry->pasGeomColumns,
@@ -240,6 +241,7 @@ static void OGRPGTableEntryAddGeomColumn(PGTableEntry* psTableEntry,
     /* the SRID is truly set to 0, but also when there's no constraint */
     psTableEntry->pasGeomColumns[psTableEntry->nGeomColumnCount].nSRID = nSRID > 0 ? nSRID : UNDETERMINED_SRID;
     psTableEntry->pasGeomColumns[psTableEntry->nGeomColumnCount].ePostgisType = ePostgisType;
+    psTableEntry->pasGeomColumns[psTableEntry->nGeomColumnCount].bNullable = bNullable;
     psTableEntry->nGeomColumnCount ++;
 }
 
@@ -251,7 +253,8 @@ static void OGRPGTableEntryAddGeomColumn(PGTableEntry* psTableEntry,
                                  psGeomColumnDesc->pszGeomType,
                                  psGeomColumnDesc->nCoordDimension,
                                  psGeomColumnDesc->nSRID,
-                                 psGeomColumnDesc->ePostgisType);
+                                 psGeomColumnDesc->ePostgisType,
+                                 psGeomColumnDesc->bNullable);
 }
 
 static void OGRPGFreeTableEntry(void * _psTableEntry)
@@ -829,19 +832,19 @@ void OGRPGDataSource::LoadTables()
         {
             OGRPGClearResult( hResult );
 
-            /* Caution : in PostGIS case, the result has 3 columns, whereas in the */
-            /* non-PostGIS case it has only 2 columns */
+            /* Caution : in PostGIS case, the result has 11 columns, whereas in the */
+            /* non-PostGIS case it has only 3 columns */
             if ( bHavePostGIS && !bListAllTables )
             {
                 osCommand.Printf("DECLARE mycursor CURSOR for "
-                                 "SELECT c.relname, n.nspname, c.relkind, g.f_geometry_column, g.type, g.coord_dimension, g.srid, %d, c.oid as oid, a.attnum as attnum FROM pg_class c, pg_namespace n, geometry_columns g, pg_attribute a "
+                                 "SELECT c.relname, n.nspname, c.relkind, g.f_geometry_column, g.type, g.coord_dimension, g.srid, %d, a.attnotnull, c.oid as oid, a.attnum as attnum FROM pg_class c, pg_namespace n, geometry_columns g, pg_attribute a "
                                  "WHERE (c.relkind in (%s) AND c.relname !~ '^pg_' AND c.relnamespace=n.oid "
                                  "AND c.relname::TEXT = g.f_table_name::TEXT AND n.nspname = g.f_table_schema AND a.attname = g.f_geometry_column AND a.attrelid = c.oid) ",
                                  GEOM_TYPE_GEOMETRY, pszAllowedRelations);
 
                 if (bHaveGeography)
                     osCommand += CPLString().Printf(
-                                     "UNION SELECT c.relname, n.nspname, c.relkind, g.f_geography_column, g.type, g.coord_dimension, g.srid, %d, c.oid as oid, a.attnum as attnum FROM pg_class c, pg_namespace n, geography_columns g, pg_attribute a "
+                                     "UNION SELECT c.relname, n.nspname, c.relkind, g.f_geography_column, g.type, g.coord_dimension, g.srid, %d, a.attnotnull, c.oid as oid, a.attnum as attnum FROM pg_class c, pg_namespace n, geography_columns g, pg_attribute a "
                                      "WHERE (c.relkind in (%s) AND c.relname !~ '^pg_' AND c.relnamespace=n.oid "
                                      "AND c.relname::TEXT = g.f_table_name::TEXT AND n.nspname = g.f_table_schema AND a.attname = g.f_geography_column AND a.attrelid = c.oid)",
                                      GEOM_TYPE_GEOGRAPHY, pszAllowedRelations);
@@ -883,6 +886,7 @@ void OGRPGDataSource::LoadTables()
             const char *pszGeomType = NULL;
             int nGeomCoordDimension = 0;
             int nSRID = 0;
+            int bNullable = TRUE;
             PostgisType ePostgisType = GEOM_TYPE_UNKNOWN;
             if (bHavePostGIS && !bListAllTables)
             {
@@ -891,6 +895,7 @@ void OGRPGDataSource::LoadTables()
                 nGeomCoordDimension = atoi(PQgetvalue(hResult, iRecord, 5));
                 nSRID = atoi(PQgetvalue(hResult, iRecord, 6));
                 ePostgisType = (PostgisType) atoi(PQgetvalue(hResult, iRecord, 7));
+                bNullable = EQUAL(PQgetvalue(hResult, iRecord, 8), "f");
 
                 /* We cannot reliably find geometry columns of a view that is */
                 /* based on a table that inherits from another one, wit that */
@@ -916,7 +921,7 @@ void OGRPGDataSource::LoadTables()
                 OGRPGTableEntryAddGeomColumn(papsTables[nTableCount],
                                              pszGeomColumnName,
                                              pszGeomType, nGeomCoordDimension,
-                                             nSRID, ePostgisType);
+                                             nSRID, ePostgisType, bNullable);
             nTableCount ++;
 
             PGTableEntry* psEntry = OGRPGFindTableEntry(hSetTables, pszTable, pszSchemaName);
@@ -927,7 +932,7 @@ void OGRPGDataSource::LoadTables()
                                              pszGeomColumnName,
                                              pszGeomType,
                                              nGeomCoordDimension,
-                                             nSRID, ePostgisType);
+                                             nSRID, ePostgisType, bNullable);
         }
 
     /* -------------------------------------------------------------------- */

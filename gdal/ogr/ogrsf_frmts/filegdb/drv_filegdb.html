@@ -49,6 +49,7 @@ respectively the definition and metadata of a FileGDB table as XML content.
 <ul>
 	<li><b>FEATURE_DATASET</b>: When this option is set, the new layer will be created inside the named FeatureDataset folder. If the folder does not already exist, it will be created.</li>
 	<li><b>GEOMETRY_NAME</b>: Set name of geometry column in new layer. Defaults to "SHAPE".</li>
+        <li><b>GEOMETRY_NULLABLE</b>: (GDAL &gt;=2.0)  Whether the values of the geometry column can be NULL. Can be set to NO so that geometry is required. Default to "YES"</li>
 	<li><b>OID_NAME</b>: Name of the OID column to create. Defaults to "OBJECTID".</li>
 	<li><b>XYTOLERANCE, ZTOLERANCE</b>: These parameters control the snapping tolerance used for advanced ArcGIS features like network and topology rules. They won't effect any 	OGR operations, but they will by used by ArcGIS. The units of the parameters are the units of the coordinate reference system.
 		<p>ArcMap 10.0 and OGR defaults for XYTOLERANCE are 0.001m (or equivalent) for projected coordinate systems, and 0.000000008983153&deg; for geographic coordinate systems.</p></li>

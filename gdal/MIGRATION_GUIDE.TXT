@@ -112,6 +112,15 @@ Behaviour changes:
     it would have been interpreted as WHERE "a_column_name" = 'a_value" if
     a_column_name was indeed a column name.
 
+F) RFC 53: 
+
+http://trac.osgeo.org/gdal/wiki/rfc53_ogr_notnull_default
+
+API changes:
+    * OGRFieldDefn::SetDefault() now takes a const char* as argument.
+      OGRFieldDefn::GetDefaultRef() removed and replaced by GetDefault() that
+      returns a const char*
+
 MIGRATION GUIDE FROM GDAL 1.10 to GDAL 1.11
 -------------------------------------------
 

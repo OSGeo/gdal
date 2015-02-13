@@ -55,6 +55,7 @@ GMLPropertyDefn::GMLPropertyDefn( const char *pszName,
     m_nWidth = 0; 
     m_nPrecision = 0;
     m_pszCondition = NULL;
+    m_bNullable = TRUE;
 }
 
 /************************************************************************/
@@ -214,13 +215,15 @@ void GMLPropertyDefn::AnalysePropertyValue( const GMLProperty* psGMLProperty,
 GMLGeometryPropertyDefn::GMLGeometryPropertyDefn( const char *pszName,
                                                   const char *pszSrcElement,
                                                   int nType,
-                                                  int nAttributeIndex )
+                                                  int nAttributeIndex,
+                                                  int bNullable )
 {
     m_pszName = (pszName == NULL || pszName[0] == '\0') ?
                         CPLStrdup(pszSrcElement) : CPLStrdup(pszName);
     m_pszSrcElement = CPLStrdup(pszSrcElement);
     m_nGeometryType = nType;
     m_nAttributeIndex = nAttributeIndex;
+    m_bNullable = bNullable;
 }
 
 /************************************************************************/

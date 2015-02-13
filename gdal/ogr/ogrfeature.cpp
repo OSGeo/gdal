@@ -31,6 +31,7 @@
 #include "ogr_feature.h"
 #include "ogr_api.h"
 #include "ogr_p.h"
+#include "cpl_time.h"
 #include <vector>
 #include <errno.h>
 
@@ -4784,4 +4785,245 @@ void OGR_F_SetStyleTable( OGRFeatureH hFeat,
     VALIDATE_POINTER0( hStyleTable, "OGR_F_SetStyleTable" );
     
     ((OGRFeature *) hFeat)->SetStyleTable( (OGRStyleTable *) hStyleTable);
+}
+
+/************************************************************************/
+/*                          FillUnsetWithDefault()                      */
+/************************************************************************/
+
+/**
+ * \brief Fill unset fields with default values that might be defined.
+ *
+ * This method is the same as the C function OGR_F_FillUnsetWithDefault().
+ *
+ * @param bNotNullableOnly if we should fill only unset fields with a not-null
+ *                     constraint.
+ * @param papszOptions unused currently. Must be set to NULL.
+ * @since GDAL 2.0
+ */
+
+void OGRFeature::FillUnsetWithDefault(int bNotNullableOnly,
+                                      char** papszOptions)
+{
+    int nFieldCount = poDefn->GetFieldCount();
+    for(int i = 0; i < nFieldCount; i ++ )
+    {
+        if( IsFieldSet(i) )
+            continue;
+        if( bNotNullableOnly && poDefn->GetFieldDefn(i)->IsNullable() )
+            continue;
+        const char* pszDefault = poDefn->GetFieldDefn(i)->GetDefault();
+        OGRFieldType eType = poDefn->GetFieldDefn(i)->GetType();
+        if( pszDefault != NULL )
+        {
+            if( eType == OFTDate || eType == OFTTime || eType == OFTDateTime )
+            {
+                if( EQUALN(pszDefault, "CURRENT", strlen("CURRENT")) )
+                {
+                    time_t t = time(NULL);
+                    struct tm brokendown;
+                    CPLUnixTimeToYMDHMS(t, &brokendown);
+                    SetField(i, brokendown.tm_year + 1900,
+                                brokendown.tm_mon + 1,
+                                brokendown.tm_mday,
+                                brokendown.tm_hour,
+                                brokendown.tm_min,
+                                brokendown.tm_sec,
+                                100 );
+                }
+                else
+                {
+                    int nYear, nMonth, nDay, nHour, nMinute;
+                    float fSecond;
+                    if( sscanf(pszDefault, "'%d/%d/%d %d:%d:%f'",
+                               &nYear, &nMonth, &nDay,
+                               &nHour, &nMinute, &fSecond) == 6 )
+                    {
+                        SetField(i, nYear, nMonth, nDay, nHour, nMinute,
+                                 (int)(fSecond + 0.5), 100);
+                    }
+                }
+            }
+            else if( eType == OFTString &&
+                     pszDefault[0] == '\'' &&
+                     pszDefault[strlen(pszDefault)-1] == '\'' )
+            {
+                CPLString osDefault(pszDefault + 1);
+                osDefault.resize(osDefault.size()-1);
+                char* pszTmp = CPLUnescapeString(osDefault, NULL, CPLES_SQL);
+                SetField(i, pszTmp);
+                CPLFree(pszTmp);
+            }
+            else
+                SetField(i, pszDefault);
+        }
+    }
+}
+
+/************************************************************************/
+/*                     OGR_F_FillUnsetWithDefault()                     */
+/************************************************************************/
+
+/**
+ * \brief Fill unset fields with default values that might be defined.
+ *
+ * This function is the same as the C++ method OGRFeature::FillUnsetWithDefault().
+ *
+ * @param hFeat handle to the feature.
+ * @param bNotNullableOnly if we should fill only unset fields with a not-null
+ *                     constraint.
+ * @param papszOptions unused currently. Must be set to NULL.
+ * @since GDAL 2.0
+ */
+
+void OGR_F_FillUnsetWithDefault( OGRFeatureH hFeat,
+                                 int bNotNullableOnly,
+                                 char** papszOptions)
+
+{
+    VALIDATE_POINTER0( hFeat, "OGR_F_FillUnsetWithDefault" );
+
+    ((OGRFeature *) hFeat)->FillUnsetWithDefault( bNotNullableOnly, papszOptions );
+}
+
+/************************************************************************/
+/*                              Validate()                              */
+/************************************************************************/
+
+/**
+ * \brief Validate that a feature meets constraints of its schema.
+ *
+ * The scope of test is specified with the nValidateFlags parameter.
+ *
+ * Regarding OGR_F_VAL_WIDTH, the test is done assuming the string width must
+ * be interpreted as the number of UTF-8 characters. Some drivers might interpret
+ * the width as the number of bytes instead. So this test is rather conservative
+ * (if it fails, then it will fail for all interpretations).
+ *
+ * This method is the same as the C function OGR_F_Validate().
+ *
+ * @param nValidateFlags OGR_F_VAL_ALL or combination of OGR_F_VAL_NULL,
+ *                       OGR_F_VAL_GEOM_TYPE, OGR_F_VAL_WIDTH and OGR_F_VAL_ALLOW_NULL_WHEN_DEFAULT
+ *                       with '|' operator
+ * @param bEmitError TRUE if a CPLError() must be emitted when a check fails
+ * @return TRUE if all enabled validation tests pass.
+ * @since GDAL 2.0
+ */
+
+int OGRFeature::Validate( int nValidateFlags, int bEmitError )
+
+{
+    int bRet = TRUE;
+
+    int i;
+    int nGeomFieldCount = poDefn->GetGeomFieldCount();
+    for(i = 0; i < nGeomFieldCount; i ++ )
+    {
+        if( (nValidateFlags & OGR_F_VAL_NULL) &&
+            !poDefn->GetGeomFieldDefn(i)->IsNullable() &&
+            GetGeomFieldRef(i) == NULL )
+        {
+            bRet = FALSE;
+            if( bEmitError )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                            "Geometry field %s has a NULL content which is not allowed",
+                            poDefn->GetGeomFieldDefn(i)->GetNameRef());
+            }
+        }
+        if( (nValidateFlags & OGR_F_VAL_GEOM_TYPE) &&
+            poDefn->GetGeomFieldDefn(i)->GetType() != wkbUnknown )
+        {
+            OGRGeometry* poGeom = GetGeomFieldRef(i);
+            if( poGeom != NULL )
+            {
+                OGRwkbGeometryType eType = poDefn->GetGeomFieldDefn(i)->GetType();
+                OGRwkbGeometryType eFType = poGeom->getGeometryType();
+                if( (eType == wkbSetZ(wkbUnknown) && !wkbHasZ(eFType)) ||
+                    (eType != wkbSetZ(wkbUnknown) && eFType != eType) )
+                {
+                    bRet = FALSE;
+                    if( bEmitError )
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "Geometry field %s has a %s geometry whereas %s is expected",
+                                 poDefn->GetGeomFieldDefn(i)->GetNameRef(),
+                                 OGRGeometryTypeToName(eFType),
+                                 OGRGeometryTypeToName(eType));
+                    }
+                }
+            }
+        }
+    }
+    int nFieldCount = poDefn->GetFieldCount();
+    for(i = 0; i < nFieldCount; i ++ )
+    {
+        if( (nValidateFlags & OGR_F_VAL_NULL) &&
+            !poDefn->GetFieldDefn(i)->IsNullable() &&
+            !IsFieldSet(i) &&
+            (!(nValidateFlags & OGR_F_VAL_ALLOW_NULL_WHEN_DEFAULT) ||
+               poDefn->GetFieldDefn(i)->GetDefault() == NULL))
+        {
+            bRet = FALSE;
+            if( bEmitError )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Field %s has a NULL content which is not allowed",
+                         poDefn->GetFieldDefn(i)->GetNameRef());
+            }
+        }
+        if( (nValidateFlags & OGR_F_VAL_WIDTH) &&
+            poDefn->GetFieldDefn(i)->GetWidth() > 0 &&
+            poDefn->GetFieldDefn(i)->GetType() == OFTString &&
+            IsFieldSet(i) &&
+            CPLIsUTF8(GetFieldAsString(i), -1) &&
+            CPLStrlenUTF8(GetFieldAsString(i)) > poDefn->GetFieldDefn(i)->GetWidth())
+        {
+            bRet = FALSE;
+            if( bEmitError )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Field %s has a %d UTF-8 characters whereas a maximum of %d is allowed",
+                         poDefn->GetFieldDefn(i)->GetNameRef(),
+                         CPLStrlenUTF8(GetFieldAsString(i)),
+                         poDefn->GetFieldDefn(i)->GetWidth());
+            }
+        }
+    }
+
+    return bRet;
+}
+
+/************************************************************************/
+/*                           OGR_F_Validate()                           */
+/************************************************************************/
+
+/**
+ * \brief Validate that a feature meets constraints of its schema.
+ *
+ * The scope of test is specified with the nValidateFlags parameter.
+ *
+ * Regarding OGR_F_VAL_WIDTH, the test is done assuming the string width must
+ * be interpreted as the number of UTF-8 characters. Some drivers might interpret
+ * the width as the number of bytes instead. So this test is rather conservative
+ * (if it fails, then it will fail for all interpretations).
+ *
+ * This function is the same as the C++ method
+ * OGRFeature::Validate().
+ *
+ * @param hFeat handle to the feature to validate.
+ * @param nValidateFlags OGR_F_VAL_ALL or combination of OGR_F_VAL_NULL,
+ *                       OGR_F_VAL_GEOM_TYPE, OGR_F_VAL_WIDTH and OGR_F_VAL_ALLOW_NULL_WHEN_DEFAULT
+ *                       with '|' operator
+ * @param bEmitError TRUE if a CPLError() must be emitted when a check fails
+ * @return TRUE if all enabled validation tests pass.
+ * @since GDAL 2.0
+ */
+
+int OGR_F_Validate( OGRFeatureH hFeat, int nValidateFlags, int bEmitError )
+
+{
+    VALIDATE_POINTER1( hFeat, "OGR_F_Validate", FALSE );
+
+    return ((OGRFeature *) hFeat)->Validate( nValidateFlags, bEmitError );
 }

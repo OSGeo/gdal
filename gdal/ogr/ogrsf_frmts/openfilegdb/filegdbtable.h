@@ -98,6 +98,8 @@ class FileGDBField
         int               bNullable;
         int               nMaxWidth; /* for string */
 
+        OGRField          sDefault;
+
         FileGDBIndex*     poIndex;
 
     public:
@@ -110,6 +112,7 @@ class FileGDBField
         FileGDBFieldType    GetType() const { return eType; }
         int                 IsNullable() const { return bNullable; }
         int                 GetMaxWidth() const { return nMaxWidth; }
+        const OGRField     *GetDefault() const { return &sDefault; }
 
         int                 HasIndex();
         FileGDBIndex       *GetIndex();

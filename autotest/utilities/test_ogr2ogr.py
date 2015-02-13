@@ -2131,6 +2131,135 @@ def test_ogr2ogr_53():
     
     return 'success'
 
+###############################################################################
+# Test behaviour with nullable fields
+
+def test_ogr2ogr_54():
+    if test_cli_utilities.get_ogr2ogr_path() is None:
+        return 'skip'
+
+    f = open('tmp/test_ogr2ogr_54.csv', 'wt')
+    f.write('fld1,fld2,WKT\n')
+    f.write('1,2,"POINT(0 0)"\n')
+    f.close()
+    
+    f = open('tmp/test_ogr2ogr_54.vrt', 'wt')
+    f.write("""<OGRVRTDataSource>
+  <OGRVRTLayer name="test_ogr2ogr_54">
+    <SrcDataSource relativeToVRT="1" shared="1">test_ogr2ogr_54.csv</SrcDataSource>
+    <SrcLayer>test_ogr2ogr_54</SrcLayer>
+    <GeometryType>wkbUnknown</GeometryType>
+    <GeometryField name="WKT" nullable="false"/>
+    <Field name="fld1" type="String" src="fld1" nullable="no"/>
+    <Field name="fld2" type="String" src="fld2"/>
+  </OGRVRTLayer>
+</OGRVRTDataSource>
+""")
+    f.close()
+
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f GML tmp/test_ogr2ogr_54.gml tmp/test_ogr2ogr_54.vrt')
+
+    f = open('tmp/test_ogr2ogr_54.xsd', 'rt')
+    content = f.read()
+    f.close()
+
+    if content.find('<xs:element name="WKT" type="gml:GeometryPropertyType" nillable="true" minOccurs="1" maxOccurs="1"/>') < 0 or \
+       content.find('<xs:element name="fld1" nillable="true" minOccurs="1" maxOccurs="1">') < 0 or \
+       content.find('<xs:element name="fld2" nillable="true" minOccurs="0" maxOccurs="1">') < 0:
+        gdaltest.post_reason('fail')
+        print(content)
+        return 'fail'
+
+    os.unlink('tmp/test_ogr2ogr_54.gml')
+    os.unlink('tmp/test_ogr2ogr_54.xsd')
+
+    # Test -forceNullable
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -forceNullable -f GML tmp/test_ogr2ogr_54.gml tmp/test_ogr2ogr_54.vrt')
+
+    f = open('tmp/test_ogr2ogr_54.xsd', 'rt')
+    content = f.read()
+    f.close()
+
+    if content.find('<xs:element name="geometryProperty" type="gml:GeometryPropertyType" nillable="true" minOccurs="0" maxOccurs="1"/>') < 0 or \
+       content.find('<xs:element name="fld1" nillable="true" minOccurs="0" maxOccurs="1">') < 0 or \
+       content.find('<xs:element name="fld2" nillable="true" minOccurs="0" maxOccurs="1">') < 0:
+        gdaltest.post_reason('fail')
+        print(content)
+        return 'fail'
+
+    os.unlink('tmp/test_ogr2ogr_54.gml')
+    os.unlink('tmp/test_ogr2ogr_54.xsd')
+
+    os.unlink('tmp/test_ogr2ogr_54.csv')
+    os.unlink('tmp/test_ogr2ogr_54.vrt')
+
+    return 'success'
+
+###############################################################################
+# Test behaviour with default values
+
+def test_ogr2ogr_55():
+    if test_cli_utilities.get_ogr2ogr_path() is None:
+        return 'skip'
+
+    f = open('tmp/test_ogr2ogr_55.csv', 'wt')
+    f.write('fld1,fld2,WKT\n')
+    f.write('1,,"POINT(0 0)"\n')
+    f.close()
+    
+    f = open('tmp/test_ogr2ogr_55.csvt', 'wt')
+    f.write('Integer,Integer,String\n')
+    f.close()
+    
+    f = open('tmp/test_ogr2ogr_55.vrt', 'wt')
+    f.write("""<OGRVRTDataSource>
+  <OGRVRTLayer name="test_ogr2ogr_55">
+    <SrcDataSource relativeToVRT="1" shared="1">test_ogr2ogr_55.csv</SrcDataSource>
+    <SrcLayer>test_ogr2ogr_55</SrcLayer>
+    <GeometryType>wkbUnknown</GeometryType>
+    <GeometryField name="WKT"/>
+    <Field name="fld1" type="Integer" src="fld1"/>
+    <Field name="fld2" type="Integer" src="fld2" nullable="false" default="2"/>
+  </OGRVRTLayer>
+</OGRVRTDataSource>
+""")
+    f.close()
+
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f GML tmp/test_ogr2ogr_55.gml tmp/test_ogr2ogr_55.vrt')
+
+    f = open('tmp/test_ogr2ogr_55.gml', 'rt')
+    content = f.read()
+    f.close()
+
+    if content.find('<ogr:fld2>2</ogr:fld2>') < 0:
+        gdaltest.post_reason('fail')
+        print(content)
+        return 'fail'
+
+    os.unlink('tmp/test_ogr2ogr_55.gml')
+    os.unlink('tmp/test_ogr2ogr_55.xsd')
+
+    # Test -unsetDefault
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -forceNullable -unsetDefault -f GML tmp/test_ogr2ogr_55.gml tmp/test_ogr2ogr_55.vrt')
+
+    f = open('tmp/test_ogr2ogr_55.gml', 'rt')
+    content = f.read()
+    f.close()
+
+    if content.find('<ogr:fld2>') >= 0:
+        gdaltest.post_reason('fail')
+        print(content)
+        return 'fail'
+
+    os.unlink('tmp/test_ogr2ogr_55.gml')
+    os.unlink('tmp/test_ogr2ogr_55.xsd')
+
+    os.unlink('tmp/test_ogr2ogr_55.csv')
+    os.unlink('tmp/test_ogr2ogr_55.csvt')
+    os.unlink('tmp/test_ogr2ogr_55.vrt')
+
+    return 'success'
+
 gdaltest_list = [
     test_ogr2ogr_1,
     test_ogr2ogr_2,
@@ -2186,6 +2315,8 @@ gdaltest_list = [
     test_ogr2ogr_51,
     test_ogr2ogr_52,
     test_ogr2ogr_53,
+    test_ogr2ogr_54,
+    test_ogr2ogr_55,
     ]
 
 if __name__ == '__main__':

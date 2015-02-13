@@ -127,6 +127,10 @@ are specified, it is assumed that the name of source geometry field is the value
 of the <b>name</b> attribute.
 </p>
 <p>
+Starting with GDAL 2.0, the optional <b>nullable</b> attribute can be used to specify
+whether the geometry field is nullable. It defaults to "true".</li>
+</p>
+<p>
 When several geometry fields are used, the following child elements of <b>GeometryField</b>
 can be defined to explicitely set the geometry type, SRS, source region, or extent.
 <ul>
@@ -169,6 +173,8 @@ or "DateTime". Defaults to "String".
 <li> <b>precision</b>: the field width. Defaults to zero.
 <li> <b>src</b>: the name of the source field to be copied to this one.
 Defaults to the value of "name".
+<li> <b>nullable</b> (GDAL &gt;= 2.0) can be used to specify
+whether the field is nullable. It defaults to "true".</li>
 </ul>
 </li>
 
