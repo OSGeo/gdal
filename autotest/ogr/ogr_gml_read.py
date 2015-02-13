@@ -3520,7 +3520,7 @@ def ogr_gml_69():
     if not gdaltest.have_gml_reader:
         return 'skip'
 
-    ds = ogr.GetDriverByName('SQLite').CreateDataSource('/vsimem/ogr_gml_69.gml')
+    ds = ogr.GetDriverByName('GML').CreateDataSource('/vsimem/ogr_gml_69.gml')
     lyr = ds.CreateLayer('test', geom_type = ogr.wkbNone)
     field_defn = ogr.FieldDefn('field_not_nullable', ogr.OFTString)
     field_defn.SetNullable(0)
@@ -3592,7 +3592,7 @@ def ogr_gml_70():
     if not gdaltest.have_gml_reader:
         return 'skip'
 
-    ds = ogr.GetDriverByName('SQLite').CreateDataSource('/vsimem/ogr_gml_70.gml')
+    ds = ogr.GetDriverByName('GML').CreateDataSource('/vsimem/ogr_gml_70.gml')
     lyr = ds.CreateLayer('test', geom_type = ogr.wkbNone)
     
     field_defn = ogr.FieldDefn( 'field_string', ogr.OFTString )
@@ -3609,8 +3609,9 @@ def ogr_gml_70():
     ds = ogr.Open('/vsimem/ogr_gml_70.gml')
     lyr = ds.GetLayerByName('test')
     f = lyr.GetNextFeature()
-    if f.GetField(0) != 'a':
+    if f.GetField('field_string') != 'a':
         gdaltest.post_reason('fail')
+        f.DumpReadable()
         return 'fail'
     ds = None
     
