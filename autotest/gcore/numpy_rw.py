@@ -474,7 +474,8 @@ def numpy_rw_14():
         return 'skip'
 
     # Progress not implemented yet
-    if gdal.GetConfigOption('GTIFF_DIRECT_IO') == 'YES':
+    if gdal.GetConfigOption('GTIFF_DIRECT_IO') == 'YES' or \
+       gdal.GetConfigOption('GTIFF_VIRTUAL_MEM_IO') == 'YES':
         return 'skip'
 
     import numpy
