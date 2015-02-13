@@ -371,7 +371,8 @@ def rasterio_8():
     ds = gdal.Open('data/byte.tif')
 
     # Progress not implemented yet
-    if gdal.GetConfigOption('GTIFF_DIRECT_IO') == 'YES':
+    if gdal.GetConfigOption('GTIFF_DIRECT_IO') == 'YES' or \
+       gdal.GetConfigOption('GTIFF_VIRTUAL_MEM_IO') == 'YES':
         return 'skip'
     
     # Test RasterBand.ReadRaster

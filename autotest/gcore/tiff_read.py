@@ -1268,10 +1268,11 @@ def tiff_read_irregular_tile_size_jpeg_in_tiff():
 ###############################################################################
 # Test GTIFF_DIRECT_IO optimization
 
-def tiff_direct_io():
+def tiff_direct_and_virtual_mem_io():
 
     # Test with pixel-interleaved and band-interleaved datasets
-    for i in range(2):
+    for option in ['GTIFF_DIRECT_IO', 'GTIFF_VIRTUAL_MEM_IO']:
+      for i in range(2):
 
         if i == 0:
             filename = 'data/stefan_full_rgba.tif'
@@ -1302,8 +1303,8 @@ def tiff_direct_io():
         ref_4bands_data_float32_pixel_interleaved = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_type = gdal.GDT_Float32, buf_pixel_space = 4*4, buf_line_space = 4*4 * xsize, buf_band_space = 1*4)
         ds = None
 
-        old_val = gdal.GetConfigOption('GTIFF_DIRECT_IO')
-        gdal.SetConfigOption('GTIFF_DIRECT_IO', 'YES')
+        old_val = gdal.GetConfigOption(option)
+        gdal.SetConfigOption(option, 'YES')
         ds = gdal.Open(filename)
         got_data_byte = ds.GetRasterBand(1).ReadRaster(xoff, yoff, xsize, ysize)
         got_data_byte_downsampled = ds.GetRasterBand(1).ReadRaster(xoff, yoff, xsize, ysize, buf_xsize = int(xsize/2), buf_ysize = int(ysize/2))
@@ -1321,74 +1322,107 @@ def tiff_direct_io():
         got_4bands_data_float32 = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_type = gdal.GDT_Float32)
         got_4bands_data_float32_pixel_interleaved = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_type = gdal.GDT_Float32, buf_pixel_space = 4*4, buf_line_space = 4*4 * xsize, buf_band_space = 1*4)
         ds = None
-        gdal.SetConfigOption('GTIFF_DIRECT_IO', old_val)
+        gdal.SetConfigOption(option, old_val)
 
         if i == 1:
             gdal.Unlink(filename)
 
         if ref_data_byte != got_data_byte:
             gdaltest.post_reason('fail')
+            print(option)
+            print(i)
             return 'fail'
 
         if ref_data_byte_downsampled != got_data_byte_downsampled:
             gdaltest.post_reason('fail')
+            print(option)
+            print(i)
             return 'fail'
 
         if ref_data_byte_downsampled_not_nearest != got_data_byte_downsampled_not_nearest:
             gdaltest.post_reason('fail')
+            print(option)
+            print(i)
             return 'fail'
 
         if ref_data_byte_upsampled != got_data_byte_upsampled:
             gdaltest.post_reason('fail')
+            print(option)
+            print(i)
             return 'fail'
 
         for y in range(ysize):
             for x in range(xsize):
                 if ref_data_byte_custom_spacings[(y*xsize+x)*4] != got_data_byte_custom_spacings[(y*xsize+x)*4]:
                     gdaltest.post_reason('fail')
+                    print(option)
+                    print(i)
                     return 'fail'
 
         if ref_data_float32 != got_data_float32:
             gdaltest.post_reason('fail')
+            print(option)
+            print(i)
             return 'fail'
 
         if ref_4bands_data_byte != got_4bands_data_byte:
             gdaltest.post_reason('fail')
+            print(option)
+            print(i)
             return 'fail'
 
         if ref_4bands_data_byte_downsampled != got_4bands_data_byte_downsampled:
             gdaltest.post_reason('fail')
+            print(option)
+            print(i)
             return 'fail'
 
         if ref_4bands_data_byte_downsampled_not_nearest != got_4bands_data_byte_downsampled_not_nearest:
             gdaltest.post_reason('fail')
+            print(option)
+            print(i)
             return 'fail'
 
         if ref_4bands_data_byte_upsampled != got_4bands_data_byte_upsampled:
             gdaltest.post_reason('fail')
+            print(option)
+            print(i)
             return 'fail'
 
         if ref_4bands_data_byte_unordered_list != got_4bands_data_byte_unordered_list:
             gdaltest.post_reason('fail')
+            print(option)
+            print(i)
             return 'fail'
 
         if ref_4bands_data_byte_pixel_interleaved != got_4bands_data_byte_pixel_interleaved:
             gdaltest.post_reason('fail')
+            print(option)
+            print(i)
             return 'fail'
 
         for y in range(ysize):
             for x in range(xsize):
-                for i in range(3):
-                    if ref_3bands_data_byte_pixel_interleaved_with_extra_space[(y*xsize+x)*4+i] != got_3bands_data_byte_pixel_interleaved_with_extra_space[(y*xsize+x)*4+i]:
+                for b in range(3):
+                    if ref_3bands_data_byte_pixel_interleaved_with_extra_space[(y*xsize+x)*4+b] != got_3bands_data_byte_pixel_interleaved_with_extra_space[(y*xsize+x)*4+b]:
                         gdaltest.post_reason('fail')
+                        print(option)
+                        print(i)
+                        print(y)
+                        print(x)
+                        print(b)
                         return 'fail'
 
         if ref_4bands_data_float32 != got_4bands_data_float32:
             gdaltest.post_reason('fail')
+            print(option)
+            print(i)
             return 'fail'
 
         if ref_4bands_data_float32_pixel_interleaved != got_4bands_data_float32_pixel_interleaved:
             gdaltest.post_reason('fail')
+            print(option)
+            print(i)
             return 'fail'
 
     return 'success'
@@ -1445,7 +1479,7 @@ gdaltest_list.append( (tiff_read_huge4GB) )
 gdaltest_list.append( (tiff_read_bigtiff) )
 gdaltest_list.append( (tiff_read_tiff_metadata) )
 gdaltest_list.append( (tiff_read_irregular_tile_size_jpeg_in_tiff) )
-gdaltest_list.append( (tiff_direct_io) )
+gdaltest_list.append( (tiff_direct_and_virtual_mem_io) )
 
 gdaltest_list.append( (tiff_read_online_1) )
 gdaltest_list.append( (tiff_read_online_2) )
