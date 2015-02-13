@@ -132,6 +132,7 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition( const char *pszTable )
     OGRFeatureDefn *poDefn = new OGRFeatureDefn( pszTable );
     char           **papszRow;
     OGRwkbGeometryType eForcedGeomType = wkbUnknown;
+    int bGeomColumnNotNullable = FALSE;
 
     poDefn->Reference();
 
@@ -297,6 +298,7 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition( const char *pszTable )
             {
                 pszGeomColumn = CPLStrdup(papszRow[0]);
                 eForcedGeomType = OGRFromOGCGeomType(pszType);
+                bGeomColumnNotNullable = ( papszRow[2] != NULL && EQUAL(papszRow[2], "NO") );
             }
             else
             {
@@ -316,7 +318,46 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition( const char *pszTable )
                 SetMetadataItem(OLMD_FID64, "YES");
             continue;
         }
-
+        
+        // Is not nullable ?
+        if( papszRow[2] != NULL && EQUAL(papszRow[2], "NO") )
+            oField.SetNullable(FALSE);
+        
+        // Has default ?
+        const char* pszDefault = papszRow[4];
+        if( pszDefault != NULL )
+        {
+            if( !EQUAL(pszDefault, "NULL") &&
+                !EQUALN(pszDefault, "CURRENT_", strlen("CURRENT_")) &&
+                pszDefault[0] != '(' &&
+                pszDefault[0] != '\'' &&
+                CPLGetValueType(pszDefault) == CPL_VALUE_STRING )
+            {
+                int nYear, nMonth, nDay, nHour, nMinute;
+                float fSecond;
+                if( oField.GetType() == OFTDateTime &&
+                    sscanf(pszDefault, "%d-%d-%d %d:%d:%f", &nYear, &nMonth, &nDay,
+                                &nHour, &nMinute, &fSecond) == 6 )
+                {
+                    oField.SetDefault(CPLSPrintf("'%04d/%02d/%02d %02d:%02d:%02d'",
+                                            nYear, nMonth, nDay, nHour, nMinute, (int)(fSecond+0.5)));
+                }
+                else
+                {
+                    CPLString osDefault("'");
+                    char* pszTmp = CPLEscapeString(pszDefault, -1, CPLES_SQL);
+                    osDefault += pszTmp;
+                    CPLFree(pszTmp);
+                    osDefault += "'";
+                    oField.SetDefault(osDefault);
+                }
+            }
+            else
+            {
+                oField.SetDefault(pszDefault);
+            }
+        }
+        
         poDefn->AddFieldDefn( &oField );
     }
 
@@ -372,6 +413,9 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition( const char *pszTable )
         else if (eForcedGeomType != wkbUnknown)
             poDefn->SetGeomType(eForcedGeomType);
 
+        if( bGeomColumnNotNullable )
+            poDefn->GetGeomFieldDefn(0)->SetNullable(FALSE);
+        
         if( hResult != NULL )
             mysql_free_result( hResult );   //Free our query results for finding type.
 			hResult = NULL;
@@ -954,16 +998,21 @@ OGRErr OGRMySQLTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
 
     else if( oField.GetType() == OFTDate )
     {
+        oField.SetDefault(NULL);
         sprintf( szFieldType, "DATE" );
     }
 
     else if( oField.GetType() == OFTDateTime )
     {
-        sprintf( szFieldType, "DATETIME" );
+        if( oField.GetDefault() != NULL && EQUAL(oField.GetDefault(), "CURRENT_TIMESTAMP") )
+            sprintf( szFieldType, "TIMESTAMP" );
+        else
+            sprintf( szFieldType, "DATETIME" );
     }
 
     else if( oField.GetType() == OFTTime )
     {
+        oField.SetDefault(NULL);
         sprintf( szFieldType, "TIME" );
     }
 
@@ -975,7 +1024,12 @@ OGRErr OGRMySQLTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
     else if( oField.GetType() == OFTString )
     {
         if( oField.GetWidth() == 0 || !bPreservePrecision )
-            strcpy( szFieldType, "TEXT" );
+        {
+            if( oField.GetDefault() != NULL )
+                strcpy( szFieldType, "VARCHAR(256)" );
+            else
+                strcpy( szFieldType, "TEXT" );
+        }
         else
             sprintf( szFieldType, "VARCHAR(%d)", oField.GetWidth() );
     }
@@ -1000,8 +1054,14 @@ OGRErr OGRMySQLTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
     }
 
     osCommand.Printf(
-             "ALTER TABLE `%s` ADD COLUMN `%s` %s",
-             poFeatureDefn->GetName(), oField.GetNameRef(), szFieldType );
+             "ALTER TABLE `%s` ADD COLUMN `%s` %s%s",
+             poFeatureDefn->GetName(), oField.GetNameRef(), szFieldType,
+             (!oField.IsNullable()) ? " NOT NULL" : "");
+    if( oField.GetDefault() != NULL && !oField.IsDefaultDriverSpecific() )
+    {
+        osCommand += " DEFAULT ";
+        osCommand += oField.GetDefault();
+    }
 
     if( mysql_query(poDS->GetConn(), osCommand ) )
     {

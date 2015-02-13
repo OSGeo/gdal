@@ -53,6 +53,7 @@ OGRVRTGeomFieldProps::OGRVRTGeomFieldProps()
     bSrcClip = FALSE;
     poSrcRegion = NULL;
     bReportSrcColumn = TRUE;
+    bNullable = TRUE;
 }
 
 /************************************************************************/
@@ -496,6 +497,8 @@ int OGRVRTLayer::ParseGeometryField(CPLXMLNode* psNode,
          poProps->sStaticEnvelope.MaxY = CPLAtof(pszExtentYMax);
      }
 
+    poProps->bNullable = CSLTestBoolean(CPLGetXMLValue( psNode, "nullable", "TRUE" ));
+
     return TRUE;
 }
 
@@ -723,16 +726,16 @@ try_again:
         /* GeometryField elements */
         for( psChild = psLTree->psChild; psChild != NULL; psChild=psChild->psNext )
         {
-        if( psChild->eType == CXT_Element &&
-            EQUAL(psChild->pszValue,"GeometryField") )
-        {
-            if( !bFoundGeometryField )
+            if( psChild->eType == CXT_Element &&
+                EQUAL(psChild->pszValue,"GeometryField") )
             {
-                bFoundGeometryField = TRUE;
+                if( !bFoundGeometryField )
+                {
+                    bFoundGeometryField = TRUE;
+                }
+                else
+                    apoGeomFieldProps.push_back(new OGRVRTGeomFieldProps());
             }
-            else
-                apoGeomFieldProps.push_back(new OGRVRTGeomFieldProps());
-        }
         }
 
         if( !bFoundGeometryField )
@@ -757,6 +760,7 @@ try_again:
                     if( poFDefn->GetSpatialRef() != NULL )
                     poProps->poSRS = poFDefn->GetSpatialRef()->Clone();
                     poProps->iGeomField = iGeomField;
+                    poProps->bNullable = poFDefn->IsNullable();
                 }
             }
 
@@ -792,6 +796,7 @@ try_again:
             OGRGeomFieldDefn oFieldDefn( apoGeomFieldProps[i]->osName,
                                         apoGeomFieldProps[i]->eGeomType );
             oFieldDefn.SetSpatialRef( apoGeomFieldProps[i]->poSRS );
+            oFieldDefn.SetNullable( apoGeomFieldProps[i]->bNullable );
             poFeatureDefn->AddGeomFieldDefn(&oFieldDefn);
         }
 
@@ -947,6 +952,17 @@ try_again:
                 goto error;
              }
              oFieldDefn.SetPrecision(nPrecision);
+
+/* -------------------------------------------------------------------- */
+/*      Nullable attribute.                                             */
+/* -------------------------------------------------------------------- */
+             int bNullable = CSLTestBoolean(CPLGetXMLValue( psChild, "nullable", "true" ));
+             oFieldDefn.SetNullable(bNullable);
+
+/* -------------------------------------------------------------------- */
+/*      Default attribute.                                              */
+/* -------------------------------------------------------------------- */
+             oFieldDefn.SetDefault(CPLGetXMLValue( psChild, "default",NULL));
 
 /* -------------------------------------------------------------------- */
 /*      Create the field.                                               */

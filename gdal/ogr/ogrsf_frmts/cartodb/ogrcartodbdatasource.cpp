@@ -346,7 +346,8 @@ OGRLayer   *OGRCARTODBDataSource::ICreateLayer( const char *pszName,
     }
 
     OGRCARTODBTableLayer* poLayer = new OGRCARTODBTableLayer(this, pszName);
-    poLayer->SetDifferedCreation(eGType, poSpatialRef);
+    int bGeomNullable = CSLFetchBoolean(papszOptions, "GEOMETRY_NULLABLE", TRUE);
+    poLayer->SetDifferedCreation(eGType, poSpatialRef, bGeomNullable);
     papoLayers = (OGRCARTODBTableLayer**) CPLRealloc(
                     papoLayers, (nLayers + 1) * sizeof(OGRCARTODBTableLayer*));
     papoLayers[nLayers ++] = poLayer;

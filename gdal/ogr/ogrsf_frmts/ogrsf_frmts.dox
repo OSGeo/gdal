@@ -1982,6 +1982,9 @@ with the OLCCreateField capability. Some drivers may only support this method wh
 there are still no features in the layer. When it is supported, the existings features of the
 backing file/database should be updated accordingly.
 
+Drivers may or may not support not-null constraints. If they support creating
+fields with not-null constraints, this is generally before creating any feature to the layer.
+
 This function is the same as the C function OGR_L_CreateField().
 
 @param poField field definition to write to disk. 
@@ -2010,6 +2013,9 @@ Not all drivers support this function. You can query a layer to check if it supp
 with the OLCCreateField capability. Some drivers may only support this method while
 there are still no features in the layer. When it is supported, the existings features of the
 backing file/database should be updated accordingly.
+
+Drivers may or may not support not-null constraints. If they support creating
+fields with not-null constraints, this is generally before creating any feature to the layer.
 
  This function is the same as the C++ method OGRLayer::CreateField().
 
@@ -2246,8 +2252,9 @@ This function is the same as the C function OGR_L_AlterFieldDefn().
 
 @param iField index of the field whose definition must be altered.
 @param poNewFieldDefn new field definition
-@param nFlags combination of ALTER_NAME_FLAG, ALTER_TYPE_FLAG and ALTER_WIDTH_PRECISION_FLAG
-to indicate which of the name and/or type and/or width and precision fields from the new field
+@param nFlags combination of ALTER_NAME_FLAG, ALTER_TYPE_FLAG, ALTER_WIDTH_PRECISION_FLAG,
+ALTER_NULLABLE_FLAG and ALTER_DEFAULT_FLAG
+to indicate which of the name and/or type and/or width and precision fields and/or nullability from the new field
 definition must be taken into account.
 
 @return OGRERR_NONE on success.
@@ -2279,8 +2286,9 @@ This function is the same as the C++ method OGRLayer::AlterFieldDefn().
 @param hLayer handle to the layer.
 @param iField index of the field whose definition must be altered.
 @param hNewFieldDefn new field definition
-@param nFlags combination of ALTER_NAME_FLAG, ALTER_TYPE_FLAG and ALTER_WIDTH_PRECISION_FLAG
-to indicate which of the name and/or type and/or width and precision fields from the new field
+@param nFlags combination of ALTER_NAME_FLAG, ALTER_TYPE_FLAG, ALTER_WIDTH_PRECISION_FLAG,
+ALTER_NULLABLE_FLAG and ALTER_DEFAULT_FLAG
+to indicate which of the name and/or type and/or width and precision fields and/or nullability from the new field
 definition must be taken into account.
 
 @return OGRERR_NONE on success.
@@ -2307,6 +2315,9 @@ Not all drivers support this method. You can query a layer to check if it suppor
 with the OLCCreateGeomField capability. Some drivers may only support this method while
 there are still no features in the layer. When it is supported, the existings features of the
 backing file/database should be updated accordingly.
+
+Drivers may or may not support not-null constraints. If they support creating
+fields with not-null constraints, this is generally before creating any feature to the layer.
 
 This function is the same as the C function OGR_L_CreateGeomField().
 
@@ -2338,6 +2349,9 @@ Not all drivers support this function. You can query a layer to check if it supp
 with the OLCCreateField capability. Some drivers may only support this method while
 there are still no features in the layer. When it is supported, the existings features of the
 backing file/database should be updated accordingly.
+
+Drivers may or may not support not-null constraints. If they support creating
+fields with not-null constraints, this is generally before creating any feature to the layer.
 
  This function is the same as the C++ method OGRLayer::CreateField().
 

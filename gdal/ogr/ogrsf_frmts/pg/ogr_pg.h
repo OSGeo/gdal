@@ -100,6 +100,7 @@ typedef struct
     int   nCoordDimension;
     int   nSRID;
     PostgisType   ePostgisType;
+    int   bNullable;
 } PGGeomColumnDesc;
 
 /************************************************************************/

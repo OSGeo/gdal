@@ -155,7 +155,8 @@ class OGRCARTODBTableLayer : public OGRCARTODBLayer
     virtual OGRErr      RollbackTransaction();
     
     void                SetDifferedCreation(OGRwkbGeometryType eGType,
-                                            OGRSpatialReference* poSRS);
+                                            OGRSpatialReference* poSRS,
+                                            int bGeomNullable);
     OGRErr              RunDifferedCreationIfNecessary();
     int                 GetDifferedCreation() const { return bDifferedCreation; }
     void                CancelDifferedCreation() { bDifferedCreation = FALSE; }

@@ -523,6 +523,7 @@ OGROCIDataSource::ICreateLayer( const char * pszLayerName,
         CSLFetchNameValue( papszOptions, "GEOMETRY_NAME" );
     if( pszGeometryName == NULL )
         pszGeometryName = "ORA_GEOMETRY";
+    int bGeomNullable = CSLFetchBoolean(papszOptions, "GEOMETRY_NULLABLE", TRUE);
 
 /* -------------------------------------------------------------------- */
 /*      Create a basic table with the FID.  Also include the            */
@@ -543,16 +544,18 @@ OGROCIDataSource::ICreateLayer( const char * pszLayerName,
         {
             sprintf( szCommand,
                      "CREATE TABLE \"%s\" ( "
-                     "%s INTEGER)",
+                     "%s INTEGER PRIMARY KEY)",
                      pszSafeLayerName, pszExpectedFIDName);
         }
         else
         {
             sprintf( szCommand,
                      "CREATE TABLE \"%s\" ( "
-                     "%s INTEGER, "
-                     "%s %s )",
-                     pszSafeLayerName, pszExpectedFIDName, pszGeometryName, SDO_GEOMETRY );
+                     "%s INTEGER PRIMARY KEY, "
+                     "%s %s%s )",
+                     pszSafeLayerName, pszExpectedFIDName,
+                     pszGeometryName, SDO_GEOMETRY,
+                     (!bGeomNullable) ? " NOT NULL":"");
         }
 
         if( oStatement.Execute( szCommand ) != CE_None )
@@ -589,6 +592,8 @@ OGROCIDataSource::ICreateLayer( const char * pszLayerName,
         poLayer->SetDimension( atoi(CSLFetchNameValue(papszOptions,"DIM")) );
 
     poLayer->SetOptions( papszOptions );
+    if( eType != wkbNone && !bGeomNullable )
+        poLayer->GetLayerDefn()->GetGeomFieldDefn(0)->SetNullable(FALSE);
 
 /* -------------------------------------------------------------------- */
 /*      Add layer to data source layer list.                            */

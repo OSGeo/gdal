@@ -274,6 +274,11 @@ void   CPL_DLL OGR_Fld_Set( OGRFieldDefnH, const char *, OGRFieldType,
                             int, int, OGRJustification );
 int    CPL_DLL OGR_Fld_IsIgnored( OGRFieldDefnH hDefn );
 void   CPL_DLL OGR_Fld_SetIgnored( OGRFieldDefnH hDefn, int );
+int    CPL_DLL OGR_Fld_IsNullable( OGRFieldDefnH hDefn );
+void   CPL_DLL OGR_Fld_SetNullable( OGRFieldDefnH hDefn, int );
+const char CPL_DLL *OGR_Fld_GetDefault( OGRFieldDefnH hDefn );
+void   CPL_DLL OGR_Fld_SetDefault( OGRFieldDefnH hDefn, const char* );
+int    CPL_DLL OGR_Fld_IsDefaultDriverSpecific( OGRFieldDefnH hDefn );
 
 const char CPL_DLL *OGR_GetFieldTypeName( OGRFieldType );
 const char CPL_DLL *OGR_GetFieldSubTypeName( OGRFieldSubType );
@@ -294,6 +299,9 @@ void                 CPL_DLL OGR_GFld_SetType( OGRGeomFieldDefnH, OGRwkbGeometry
 OGRSpatialReferenceH CPL_DLL OGR_GFld_GetSpatialRef( OGRGeomFieldDefnH );
 void                 CPL_DLL OGR_GFld_SetSpatialRef( OGRGeomFieldDefnH,
                                                      OGRSpatialReferenceH hSRS );
+
+int                  CPL_DLL OGR_GFld_IsNullable( OGRGeomFieldDefnH hDefn );
+void                 CPL_DLL OGR_GFld_SetNullable( OGRGeomFieldDefnH hDefn, int );
 
 int                  CPL_DLL OGR_GFld_IsIgnored( OGRGeomFieldDefnH hDefn );
 void                 CPL_DLL OGR_GFld_SetIgnored( OGRGeomFieldDefnH hDefn, int );
@@ -404,6 +412,11 @@ void   CPL_DLL OGR_F_SetStyleStringDirectly( OGRFeatureH, char * );
 OGRStyleTableH CPL_DLL OGR_F_GetStyleTable( OGRFeatureH );
 void   CPL_DLL OGR_F_SetStyleTableDirectly( OGRFeatureH, OGRStyleTableH );
 void   CPL_DLL OGR_F_SetStyleTable( OGRFeatureH, OGRStyleTableH );
+
+void   CPL_DLL OGR_F_FillUnsetWithDefault( OGRFeatureH hFeat,
+                                           int bNotNullableOnly,
+                                           char** papszOptions );
+int    CPL_DLL OGR_F_Validate( OGRFeatureH, int nValidateFlags, int bEmitError );
 
 /* -------------------------------------------------------------------- */
 /*      ogrsf_frmts.h                                                   */

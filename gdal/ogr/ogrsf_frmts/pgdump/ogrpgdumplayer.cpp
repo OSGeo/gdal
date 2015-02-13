@@ -138,6 +138,9 @@ OGRErr OGRPGDumpLayer::ICreateFeature( OGRFeature *poFeature )
         return OGRERR_FAILURE;
     }
 
+    if( !poFeature->Validate( OGR_F_VAL_ALL, TRUE ) )
+        return OGRERR_FAILURE;
+
     nFeatures ++;
 
     // We avoid testing the config option too often. 
@@ -150,6 +153,26 @@ OGRErr OGRPGDumpLayer::ICreateFeature( OGRFeature *poFeature )
     }
     else
     {
+        /* If there's a unset field with a default value, then we must use */
+        /* a specific INSERT statement to avoid unset fields to be bound to NULL */
+        int bHasDefaultValue = FALSE;
+        int iField;
+        int nFieldCount = poFeatureDefn->GetFieldCount();
+        for( iField = 0; iField < nFieldCount; iField++ )
+        {
+            if( !poFeature->IsFieldSet( iField ) &&
+                poFeature->GetFieldDefnRef(iField)->GetDefault() != NULL )
+            {
+                bHasDefaultValue = TRUE;
+                break;
+            }
+        }
+        if( bHasDefaultValue )
+        {
+            EndCopy();
+            return CreateFeatureViaInsert( poFeature );
+        }
+
         if ( !bCopyActive )
         {
             /* This is a heuristics. If the first feature to be copied has a */ 
@@ -1145,6 +1168,214 @@ CPLString OGRPGCommonLayerGetType(OGRFieldDefn& oField,
 }
 
 /************************************************************************/
+/*                         OGRPGCommonLayerSetType()                    */
+/************************************************************************/
+
+int OGRPGCommonLayerSetType(OGRFieldDefn& oField,
+                            const char* pszType,
+                            const char* pszFormatType,
+                            int nWidth)
+{
+    if( EQUAL(pszType,"text") )
+    {
+        oField.SetType( OFTString );
+    }
+    else if( EQUAL(pszType,"_bpchar") ||
+            EQUAL(pszType,"_varchar") ||
+            EQUAL(pszType,"_text"))
+    {
+        oField.SetType( OFTStringList );
+    }
+    else if( EQUAL(pszType,"bpchar") || EQUAL(pszType,"varchar") )
+    {
+        if( nWidth == -1 )
+        {
+            if( EQUALN(pszFormatType,"character(",10) )
+                nWidth = atoi(pszFormatType+10);
+            else if( EQUALN(pszFormatType,"character varying(",18) )
+                nWidth = atoi(pszFormatType+18);
+            else
+                nWidth = 0;
+        }
+        oField.SetType( OFTString );
+        oField.SetWidth( nWidth );
+    }
+    else if( EQUAL(pszType,"bool") )
+    {
+        oField.SetType( OFTInteger );
+        oField.SetSubType( OFSTBoolean );
+        oField.SetWidth( 1 );
+    }
+    else if( EQUAL(pszType,"numeric") )
+    {
+        if( EQUAL(pszFormatType, "numeric") )
+            oField.SetType( OFTReal );
+        else
+        {
+            const char *pszPrecision = strstr(pszFormatType,",");
+            int    nWidth, nPrecision = 0;
+
+            nWidth = atoi(pszFormatType + 8);
+            if( pszPrecision != NULL )
+                nPrecision = atoi(pszPrecision+1);
+
+            if( nPrecision == 0 )
+            {
+                if( nWidth >= 10 )
+                    oField.SetType( OFTInteger64 );
+                else
+                    oField.SetType( OFTInteger );
+            }
+            else
+                oField.SetType( OFTReal );
+
+            oField.SetWidth( nWidth );
+            oField.SetPrecision( nPrecision );
+        }
+    }
+    else if( EQUAL(pszFormatType,"integer[]") )
+    {
+        oField.SetType( OFTIntegerList );
+    }
+    else if( EQUAL(pszFormatType,"boolean[]") )
+    {
+        oField.SetType( OFTIntegerList );
+        oField.SetSubType( OFSTBoolean );
+    }
+    else if( EQUAL(pszFormatType, "float[]") ||
+            EQUAL(pszFormatType, "real[]") )
+    {
+        oField.SetType( OFTRealList );
+        oField.SetSubType( OFSTFloat32 );
+    }
+    else if( EQUAL(pszFormatType, "double precision[]") )
+    {
+        oField.SetType( OFTRealList );
+    }
+    else if( EQUAL(pszType,"int2") )
+    {
+        oField.SetType( OFTInteger );
+        oField.SetSubType( OFSTInt16 );
+        oField.SetWidth( 5 );
+    }
+    else if( EQUAL(pszType,"int8") )
+    {
+        oField.SetType( OFTInteger64 );
+    }
+    else if( EQUAL(pszFormatType,"bigint[]") )
+    {
+        oField.SetType( OFTInteger64List );
+    }
+    else if( EQUALN(pszType,"int",3) )
+    {
+        oField.SetType( OFTInteger );
+    }
+    else if( EQUAL(pszType,"float4")  )
+    {
+        oField.SetType( OFTReal );
+        oField.SetSubType( OFSTFloat32 );
+    }
+    else if( EQUALN(pszType,"float",5) ||
+            EQUALN(pszType,"double",6) ||
+            EQUAL(pszType,"real") )
+    {
+        oField.SetType( OFTReal );
+    }
+    else if( EQUALN(pszType, "timestamp",9) )
+    {
+        oField.SetType( OFTDateTime );
+    }
+    else if( EQUALN(pszType, "date",4) )
+    {
+        oField.SetType( OFTDate );
+    }
+    else if( EQUALN(pszType, "time",4) )
+    {
+        oField.SetType( OFTTime );
+    }
+    else if( EQUAL(pszType,"bytea") )
+    {
+        oField.SetType( OFTBinary );
+    }
+    else
+    {
+        CPLDebug( "PGCommon", "Field %s is of unknown format type %s (type=%s).", 
+                oField.GetNameRef(), pszFormatType, pszType );
+        return FALSE;
+    }
+    return TRUE;
+}
+
+/************************************************************************/
+/*                  OGRPGCommonLayerNormalizeDefault()                  */
+/************************************************************************/
+
+void OGRPGCommonLayerNormalizeDefault(OGRFieldDefn* poFieldDefn,
+                                      const char* pszDefault)
+{
+    if(pszDefault==NULL)
+        return;
+    CPLString osDefault(pszDefault);
+    size_t nPos = osDefault.find("::character varying");
+    if( nPos != std::string::npos )
+        osDefault.resize(nPos);
+    else if( strcmp(osDefault, "now()") == 0 )
+        osDefault = "CURRENT_TIMESTAMP";
+    else if( strcmp(osDefault, "('now'::text)::date") == 0 )
+        osDefault = "CURRENT_DATE";
+    else if( strcmp(osDefault, "('now'::text)::time with time zone") == 0 )
+        osDefault = "CURRENT_TIME";
+    else
+    {
+        nPos = osDefault.find("::timestamp with time zone");
+        if( poFieldDefn->GetType() == OFTDateTime && nPos != std::string::npos )
+        {
+            osDefault.resize(nPos);
+            nPos = osDefault.find("'+");
+            if( nPos != std::string::npos )
+            {
+                osDefault.resize(nPos);
+                osDefault += "'";
+            }
+            int nYear, nMonth, nDay, nHour, nMinute;
+            float fSecond;
+            if( sscanf(osDefault, "'%d-%d-%d %d:%d:%f'", &nYear, &nMonth, &nDay,
+                                &nHour, &nMinute, &fSecond) == 6 ||
+                sscanf(osDefault, "'%d-%d-%d %d:%d:%f+00'", &nYear, &nMonth, &nDay,
+                                &nHour, &nMinute, &fSecond) == 6)
+            {
+                if( fabs(fSecond - (int)(fSecond+0.5)) < 1e-3 )
+                    osDefault = CPLSPrintf("'%04d/%02d/%02d %02d:%02d:%02d'",
+                                            nYear, nMonth, nDay, nHour, nMinute, (int)(fSecond+0.5));
+                else
+                    osDefault = CPLSPrintf("'%04d/%02d/%02d %02d:%02d:%02.3f'",
+                                                    nYear, nMonth, nDay, nHour, nMinute, fSecond);
+            }
+        }
+    }
+    poFieldDefn->SetDefault(osDefault);
+}
+
+/************************************************************************/
+/*                     OGRPGCommonLayerGetPGDefault()                   */
+/************************************************************************/
+
+CPLString OGRPGCommonLayerGetPGDefault(OGRFieldDefn* poFieldDefn)
+{
+    CPLString osRet = poFieldDefn->GetDefault();
+    int nYear, nMonth, nDay, nHour, nMinute;
+    float fSecond;
+    if( sscanf(osRet, "'%d/%d/%d %d:%d:%f'",
+                &nYear, &nMonth, &nDay,
+                &nHour, &nMinute, &fSecond) == 6 )
+    {
+        osRet.resize(osRet.size()-1);
+        osRet += "+00'::timestamp with time zone";
+    }
+    return osRet;
+}
+
+/************************************************************************/
 /*                           GetNextFeature()                           */
 /************************************************************************/
 
@@ -1190,6 +1421,13 @@ OGRErr OGRPGDumpLayer::CreateField( OGRFieldDefn *poFieldIn,
     osCommand.Printf( "ALTER TABLE %s ADD COLUMN %s %s",
                       pszSqlTableName, OGRPGDumpEscapeColumnName(oField.GetNameRef()).c_str(),
                       osFieldType.c_str() );
+    if( !oField.IsNullable() )
+        osCommand += " NOT NULL";
+    if( oField.GetDefault() != NULL && !oField.IsDefaultDriverSpecific() )
+    {
+        osCommand += " DEFAULT ";
+        osCommand += OGRPGCommonLayerGetPGDefault(&oField);
+    }
     if (bCreateTable)
         poDS->Log(osCommand);
 
@@ -1269,6 +1507,15 @@ OGRErr OGRPGDumpLayer::CreateGeomField( OGRGeomFieldDefn *poGeomFieldIn,
                 nSRSId, pszGeometryType, nDimension );
         
         poDS->Log(osCommand);
+
+        if( !poGeomField->IsNullable() )
+        {
+            osCommand.Printf( "ALTER TABLE %s ALTER COLUMN %s SET NOT NULL",
+                              OGRPGDumpEscapeColumnName(poFeatureDefn->GetName()).c_str(),
+                              OGRPGDumpEscapeColumnName(poGeomField->GetNameRef()).c_str() );
+
+            poDS->Log(osCommand);
+        }
 
         if( bCreateSpatialIndexFlag )
         {

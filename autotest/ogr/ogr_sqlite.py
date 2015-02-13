@@ -2707,9 +2707,32 @@ def ogr_sqlite_37():
     f.SetGeomFieldDirectly('geomfield_not_nullable', ogr.CreateGeometryFromWkt('POINT(0 0)'))
     lyr.CreateFeature(f)
     f = None
+    
+    # Error case: missing geometry
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField('field_not_nullable', 'not_null')
+    gdal.PushErrorHandler()
+    ret = lyr.CreateFeature(f)
+    gdal.PopErrorHandler()
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = None
+    
+    # Error case: missing non-nullable field
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT(0 0)'))
+    gdal.PushErrorHandler()
+    ret = lyr.CreateFeature(f)
+    gdal.PopErrorHandler()
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = None
+
     ds = None
 
-    ds = ogr.Open('tmp/ogr_sqlite_37.sqlite')
+    ds = ogr.Open('tmp/ogr_sqlite_37.sqlite', update = 1)
     lyr = ds.GetLayerByName('test')
     if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_not_nullable')).IsNullable() != 0:
         gdaltest.post_reason('fail')
@@ -2723,6 +2746,175 @@ def ogr_sqlite_37():
     if lyr.GetLayerDefn().GetGeomFieldDefn(lyr.GetLayerDefn().GetGeomFieldIndex('geomfield_nullable')).IsNullable() != 1:
         gdaltest.post_reason('fail')
         return 'fail'
+
+    # Turn not null into nullable
+    src_fd = lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_not_nullable'))
+    fd = ogr.FieldDefn('now_nullable', src_fd.GetType())
+    fd.SetNullable(1)
+    lyr.AlterFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_not_nullable'), fd, ogr.ALTER_ALL_FLAG)
+    if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('now_nullable')).IsNullable() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Turn nullable into not null, but remove NULL values first
+    ds.ExecuteSQL("UPDATE test SET field_nullable = '' WHERE field_nullable IS NULL")
+    src_fd = lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_nullable'))
+    fd = ogr.FieldDefn('now_nullable', src_fd.GetType())
+    fd.SetName('now_not_nullable')
+    fd.SetNullable(0)
+    lyr.AlterFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_nullable'), fd, ogr.ALTER_ALL_FLAG)
+    if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('now_not_nullable')).IsNullable() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+        
+    ds = None
+
+    ds = ogr.Open('tmp/ogr_sqlite_37.sqlite')
+    lyr = ds.GetLayerByName('test')
+    if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('now_not_nullable')).IsNullable() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('now_nullable')).IsNullable() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetLayerDefn().GetGeomFieldDefn(lyr.GetLayerDefn().GetGeomFieldIndex('geomfield_not_nullable')).IsNullable() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetLayerDefn().GetGeomFieldDefn(lyr.GetLayerDefn().GetGeomFieldIndex('geomfield_nullable')).IsNullable() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Test  default values
+
+def ogr_sqlite_38():
+
+    if gdaltest.sl_ds is None:
+        return 'skip'
+    
+    try:
+        os.remove('tmp/ogr_sqlite_38.sqlite')
+    except:
+        pass
+
+    ds = ogr.GetDriverByName('SQLite').CreateDataSource('tmp/ogr_sqlite_38.sqlite')
+    lyr = ds.CreateLayer('test', geom_type = ogr.wkbNone)
+
+    field_defn = ogr.FieldDefn( 'field_string', ogr.OFTString )
+    field_defn.SetDefault("'a''b'")
+    lyr.CreateField(field_defn)
+
+    field_defn = ogr.FieldDefn( 'field_int', ogr.OFTInteger )
+    field_defn.SetDefault('123')
+    lyr.CreateField(field_defn)
+
+    field_defn = ogr.FieldDefn( 'field_real', ogr.OFTReal )
+    field_defn.SetDefault('1.23')
+    lyr.CreateField(field_defn)
+
+    field_defn = ogr.FieldDefn( 'field_nodefault', ogr.OFTInteger )
+    lyr.CreateField(field_defn)
+
+    field_defn = ogr.FieldDefn( 'field_datetime', ogr.OFTDateTime )
+    field_defn.SetDefault("CURRENT_TIMESTAMP")
+    lyr.CreateField(field_defn)
+
+    field_defn = ogr.FieldDefn( 'field_datetime2', ogr.OFTDateTime )
+    field_defn.SetDefault("'2015/06/30 12:34:56'")
+    lyr.CreateField(field_defn)
+
+    field_defn = ogr.FieldDefn( 'field_datetime3', ogr.OFTDateTime )
+    field_defn.SetDefault("(strftime('%Y-%m-%dT%H:%M:%fZ','now'))")
+    lyr.CreateField(field_defn)
+
+    field_defn = ogr.FieldDefn( 'field_date', ogr.OFTDate )
+    field_defn.SetDefault("CURRENT_DATE")
+    lyr.CreateField(field_defn)
+
+    field_defn = ogr.FieldDefn( 'field_time', ogr.OFTTime )
+    field_defn.SetDefault("CURRENT_TIME")
+    lyr.CreateField(field_defn)
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    lyr.CreateFeature(f)
+    f = None
+    
+    ds = ogr.Open('tmp/ogr_sqlite_38.sqlite', update = 1)
+    lyr = ds.GetLayerByName('test')
+    if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_string')).GetDefault() != "'a''b'":
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_int')).GetDefault() != '123':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_real')).GetDefault() != '1.23':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_nodefault')).GetDefault() is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_datetime')).GetDefault() != 'CURRENT_TIMESTAMP':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_datetime2')).GetDefault() != "'2015/06/30 12:34:56'":
+        gdaltest.post_reason('fail')
+        print(lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_datetime2')).GetDefault())
+        return 'fail'
+    if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_datetime3')).GetDefault() != "(strftime('%Y-%m-%dT%H:%M:%fZ','now'))":
+        gdaltest.post_reason('fail')
+        print(lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_datetime3')).GetDefault())
+        return 'fail'
+    if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_date')).GetDefault() != "CURRENT_DATE":
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_time')).GetDefault() != "CURRENT_TIME":
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f.GetField('field_string') != 'a\'b' or f.GetField('field_int') != 123 or \
+       f.GetField('field_real') != 1.23 or \
+       f.IsFieldSet('field_nodefault') or not f.IsFieldSet('field_datetime')  or \
+       f.GetField('field_datetime2') != '2015/06/30 12:34:56' or \
+       not f.IsFieldSet('field_datetime3') or \
+       not f.IsFieldSet('field_date') or not f.IsFieldSet('field_time'):
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    # Change DEFAULT value
+    src_fd = lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_string'))
+    fd = ogr.FieldDefn('field_string', src_fd.GetType())
+    fd.SetDefault("'c'")
+    lyr.AlterFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_string'), fd, ogr.ALTER_DEFAULT_FLAG)
+    if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_string')).GetDefault() != "'c'":
+        gdaltest.post_reason('fail')
+        print(lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_string')).GetDefault())
+        return 'fail'
+
+    # Drop DEFAULT value
+    src_fd = lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_int'))
+    fd = ogr.FieldDefn('field_int', src_fd.GetType())
+    fd.SetDefault(None)
+    lyr.AlterFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_int'), fd, ogr.ALTER_DEFAULT_FLAG)
+    if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_int')).GetDefault() is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ds = None
+
+    ds = ogr.Open('tmp/ogr_sqlite_38.sqlite', update = 1)
+    lyr = ds.GetLayerByName('test')
+    if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_string')).GetDefault() != "'c'":
+        gdaltest.post_reason('fail')
+        print(lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_string')).GetDefault())
+        return 'fail'
+    if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_int')).GetDefault() is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
     ds = None
 
     return 'success'
@@ -2903,6 +3095,10 @@ def ogr_sqlite_cleanup():
         pass
 
     try:
+        os.remove( 'tmp/ogr_sqlite_38.sqlite' )
+    except:
+        pass
+    try:
         os.remove( 'tmp/ogr_spatialite_10.sqlite' )
     except:
         pass
@@ -2971,9 +3167,10 @@ gdaltest_list = [
     ogr_sqlite_34,
     ogr_sqlite_35,
     ogr_sqlite_36,
-    #ogr_sqlite_37,
+    ogr_sqlite_37,
+    ogr_sqlite_38,
     ogr_spatialite_9,
-    #ogr_spatialite_10,
+    ogr_spatialite_10,
     ogr_sqlite_cleanup,
     ogr_sqlite_without_spatialite,
 ]

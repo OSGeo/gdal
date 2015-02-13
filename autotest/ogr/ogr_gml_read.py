@@ -3513,6 +3513,113 @@ def ogr_gml_68():
     return 'success'
 
 ###############################################################################
+# Test not nullable fields
+
+def ogr_gml_69():
+
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    ds = ogr.GetDriverByName('SQLite').CreateDataSource('/vsimem/ogr_gml_69.gml')
+    lyr = ds.CreateLayer('test', geom_type = ogr.wkbNone)
+    field_defn = ogr.FieldDefn('field_not_nullable', ogr.OFTString)
+    field_defn.SetNullable(0)
+    lyr.CreateField(field_defn)
+    field_defn = ogr.FieldDefn('field_nullable', ogr.OFTString)
+    lyr.CreateField(field_defn)
+    field_defn = ogr.GeomFieldDefn('geomfield_not_nullable', ogr.wkbPoint)
+    field_defn.SetNullable(0)
+    lyr.CreateGeomField(field_defn)
+    field_defn = ogr.GeomFieldDefn('geomfield_nullable', ogr.wkbPoint)
+    lyr.CreateGeomField(field_defn)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField('field_not_nullable', 'not_null')
+    f.SetGeomFieldDirectly('geomfield_not_nullable', ogr.CreateGeometryFromWkt('POINT(0 0)'))
+    lyr.CreateFeature(f)
+    f = None
+    
+    # Error case: missing geometry
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField('field_not_nullable', 'not_null')
+    gdal.PushErrorHandler()
+    ret = lyr.CreateFeature(f)
+    gdal.PopErrorHandler()
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = None
+    
+    # Error case: missing non-nullable field
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT(0 0)'))
+    gdal.PushErrorHandler()
+    ret = lyr.CreateFeature(f)
+    gdal.PopErrorHandler()
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = None
+
+    ds = None
+
+    ds = ogr.Open('/vsimem/ogr_gml_69.gml')
+    lyr = ds.GetLayerByName('test')
+    if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_not_nullable')).IsNullable() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_nullable')).IsNullable() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetLayerDefn().GetGeomFieldDefn(lyr.GetLayerDefn().GetGeomFieldIndex('geomfield_not_nullable')).IsNullable() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetLayerDefn().GetGeomFieldDefn(lyr.GetLayerDefn().GetGeomFieldIndex('geomfield_nullable')).IsNullable() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    gdal.Unlink("/vsimem/ogr_gml_69.gml")
+    gdal.Unlink("/vsimem/ogr_gml_69.xsd")
+
+    return 'success'
+
+###############################################################################
+# Test default fields (not really supported, but we must do something as we
+# support not nullable fields)
+
+def ogr_gml_70():
+
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    ds = ogr.GetDriverByName('SQLite').CreateDataSource('/vsimem/ogr_gml_70.gml')
+    lyr = ds.CreateLayer('test', geom_type = ogr.wkbNone)
+    
+    field_defn = ogr.FieldDefn( 'field_string', ogr.OFTString )
+    field_defn.SetDefault("'a'")
+    field_defn.SetNullable(0)
+    lyr.CreateField(field_defn)
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    lyr.CreateFeature(f)
+    f = None
+
+    ds = None
+
+    ds = ogr.Open('/vsimem/ogr_gml_70.gml')
+    lyr = ds.GetLayerByName('test')
+    f = lyr.GetNextFeature()
+    if f.GetField(0) != 'a':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+    
+    gdal.Unlink("/vsimem/ogr_gml_70.gml")
+    gdal.Unlink("/vsimem/ogr_gml_70.xsd")
+
+    return 'success'
+
+###############################################################################
 #  Cleanup
 
 def ogr_gml_cleanup():
@@ -3712,6 +3819,8 @@ gdaltest_list = [
     ogr_gml_66,
     ogr_gml_67,
     ogr_gml_68,
+    ogr_gml_69,
+    ogr_gml_70,
     ogr_gml_cleanup ]
 
 #gdaltest_list = [ 

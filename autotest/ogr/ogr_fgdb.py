@@ -906,6 +906,173 @@ def ogr_fgdb_16():
     return ret
 
 ###############################################################################
+# Test not nullable fields
+
+def ogr_fgdb_17():
+
+    if ogrtest.fgdb_drv is None:
+        return 'skip'
+
+
+    try:
+        shutil.rmtree("tmp/test.gdb")
+    except:
+        pass
+
+    ds = ogrtest.fgdb_drv.CreateDataSource('tmp/test.gdb')
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(4326)
+    lyr = ds.CreateLayer('test', geom_type = ogr.wkbPoint, srs = sr, options = ['GEOMETRY_NULLABLE=NO'])
+    if lyr.GetLayerDefn().GetGeomFieldDefn(0).IsNullable() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    field_defn = ogr.FieldDefn('field_not_nullable', ogr.OFTString)
+    field_defn.SetNullable(0)
+    lyr.CreateField(field_defn)
+    field_defn = ogr.FieldDefn('field_nullable', ogr.OFTString)
+    lyr.CreateField(field_defn)
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField('field_not_nullable', 'not_null')
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT(0 0)'))
+    ret = lyr.CreateFeature(f)
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = None
+    
+    # Error case: missing geometry
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField('field_not_nullable', 'not_null')
+    gdal.PushErrorHandler()
+    ret = lyr.CreateFeature(f)
+    gdal.PopErrorHandler()
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = None
+    
+    # Error case: missing non-nullable field
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT(0 0)'))
+    gdal.PushErrorHandler()
+    ret = lyr.CreateFeature(f)
+    gdal.PopErrorHandler()
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = None
+
+    ds = None
+
+    ds = ogr.Open('tmp/test.gdb', update=1)
+    lyr = ds.GetLayerByName('test')
+    if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_not_nullable')).IsNullable() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_nullable')).IsNullable() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetLayerDefn().GetGeomFieldDefn(0).IsNullable() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Test default values
+
+def ogr_fgdb_18():
+
+    if ogrtest.fgdb_drv is None:
+        return 'skip'
+
+    try:
+        shutil.rmtree("tmp/test.gdb")
+    except:
+        pass
+
+    ds = ogrtest.fgdb_drv.CreateDataSource('tmp/test.gdb')
+    lyr = ds.CreateLayer('test', geom_type = ogr.wkbNone)
+
+    field_defn = ogr.FieldDefn( 'field_string', ogr.OFTString )
+    field_defn.SetDefault("'a''b'")
+    lyr.CreateField(field_defn)
+
+    field_defn = ogr.FieldDefn( 'field_int', ogr.OFTInteger )
+    field_defn.SetDefault('123')
+    lyr.CreateField(field_defn)
+
+    field_defn = ogr.FieldDefn( 'field_real', ogr.OFTReal )
+    field_defn.SetDefault('1.23')
+    lyr.CreateField(field_defn)
+
+    field_defn = ogr.FieldDefn( 'field_nodefault', ogr.OFTInteger )
+    lyr.CreateField(field_defn)
+
+    field_defn = ogr.FieldDefn( 'field_datetime', ogr.OFTDateTime )
+    field_defn.SetDefault("CURRENT_TIMESTAMP")
+    lyr.CreateField(field_defn)
+
+    field_defn = ogr.FieldDefn( 'field_datetime2', ogr.OFTDateTime )
+    field_defn.SetDefault("'2015/06/30 12:34:56'")
+    lyr.CreateField(field_defn)
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    lyr.CreateFeature(f)
+    f = None
+
+    ds = None
+
+    if ogrtest.openfilegdb_drv is not None:
+        ogrtest.openfilegdb_drv.Register()
+    ret = ogr_fgdb_18_test_results()
+    if ogrtest.openfilegdb_drv is not None:
+        ogrtest.openfilegdb_drv.Deregister()
+
+    return ret
+
+
+def ogr_fgdb_18_test_results():
+
+    ds = ogr.Open('tmp/test.gdb', update=1)
+    lyr = ds.GetLayerByName('test')
+    if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_string')).GetDefault() != "'a''b'":
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ogrtest.openfilegdb_drv is not None:
+        if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_int')).GetDefault() != '123':
+            gdaltest.post_reason('fail')
+            return 'fail'
+        if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_real')).GetDefault() != '1.23':
+            print(lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_real')).GetDefault())
+            gdaltest.post_reason('fail')
+            return 'fail'
+    if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_nodefault')).GetDefault() is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    #if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_datetime')).GetDefault() != 'CURRENT_TIMESTAMP':
+    #    gdaltest.post_reason('fail')
+    #    return 'fail'
+    #if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_datetime2')).GetDefault() != "'2015/06/30 12:34:56'":
+    #    gdaltest.post_reason('fail')
+    #    print(lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_datetime2')).GetDefault())
+    #    return 'fail'
+    f = lyr.GetNextFeature()
+    if f.GetField('field_string') != 'a\'b' or f.GetField('field_int') != 123 or \
+       f.GetField('field_real') != 1.23 or \
+       f.IsFieldSet('field_nodefault') or not f.IsFieldSet('field_datetime')  or \
+       f.GetField('field_datetime2') != '2015/06/30 12:34:56':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    ds = None
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def ogr_fgdb_cleanup():
@@ -954,6 +1121,8 @@ gdaltest_list = [
     ogr_fgdb_14,
     ogr_fgdb_15,
     ogr_fgdb_16,
+    ogr_fgdb_17,
+    ogr_fgdb_18,
     ogr_fgdb_cleanup,
     ]
 

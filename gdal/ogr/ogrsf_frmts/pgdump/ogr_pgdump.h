@@ -39,6 +39,14 @@ CPLString OGRPGDumpEscapeString(   const char* pszStrValue, int nMaxLength = -1,
 CPLString CPL_DLL OGRPGCommonLayerGetType(OGRFieldDefn& oField,
                                           int bPreservePrecision,
                                           int bApproxOK);
+int CPL_DLL OGRPGCommonLayerSetType(OGRFieldDefn& oField,
+                                    const char* pszType,
+                                    const char* pszFormatType,
+                                    int nWidth);
+void CPL_DLL OGRPGCommonLayerNormalizeDefault(OGRFieldDefn* poFieldDefn,
+                                              const char* pszDefault);
+CPLString CPL_DLL OGRPGCommonLayerGetPGDefault(OGRFieldDefn* poFieldDefn);
+
 typedef CPLString (*OGRPGCommonEscapeStringCbk)(void* userdata,
                                                 const char* pszValue, 
                                                 int nWidth,

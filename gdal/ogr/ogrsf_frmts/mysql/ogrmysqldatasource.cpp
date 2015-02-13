@@ -1040,6 +1040,8 @@ OGRMySQLDataSource::ICreateLayer( const char * pszLayerNameIn,
     eErr = poLayer->Initialize(pszLayerName);
     if (eErr == OGRERR_FAILURE)
         return NULL;
+    if( eType != wkbNone )
+        poLayer->GetLayerDefn()->GetGeomFieldDefn(0)->SetNullable(FALSE);
 
     poLayer->SetLaunderFlag( CSLFetchBoolean(papszOptions,"LAUNDER",TRUE) );
     poLayer->SetPrecisionFlag( CSLFetchBoolean(papszOptions,"PRECISION",TRUE));

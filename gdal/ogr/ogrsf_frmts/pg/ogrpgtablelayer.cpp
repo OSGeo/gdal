@@ -234,6 +234,7 @@ void  OGRPGTableLayer::SetGeometryInformation(PGGeomColumnDesc* pasDesc,
     {
         OGRPGGeomFieldDefn* poGeomFieldDefn =
             new OGRPGGeomFieldDefn(this, pasDesc[i].pszName);
+        poGeomFieldDefn->SetNullable(pasDesc[i].bNullable);
         poGeomFieldDefn->nSRSId = pasDesc[i].nSRID;
         poGeomFieldDefn->nCoordDimension = pasDesc[i].nCoordDimension;
         poGeomFieldDefn->ePostgisType = pasDesc[i].ePostgisType;
@@ -342,7 +343,7 @@ int OGRPGTableLayer::ReadTableDefinition()
         osCommand.Printf(
                  "DECLARE mycursor CURSOR for "
                  "SELECT DISTINCT a.attname, t.typname, a.attlen,"
-                 "       format_type(a.atttypid,a.atttypmod), a.attnum "
+                 "       format_type(a.atttypid,a.atttypmod), a.attnum, a.attnotnull, a.atthasdef "
                  "FROM pg_class c, pg_attribute a, pg_type t, pg_namespace n "
                  "WHERE c.relname = %s "
                  "AND a.attnum > 0 AND a.attrelid = c.oid "
@@ -390,15 +391,25 @@ int OGRPGTableLayer::ReadTableDefinition()
 /*      Parse the returned table information.                           */
 /* -------------------------------------------------------------------- */
     int            iRecord;
-
+    int            bHasDefault = FALSE;
     for( iRecord = 0; iRecord < PQntuples(hResult); iRecord++ )
     {
         const char      *pszType = NULL;
         const char      *pszFormatType = NULL;
+        const char      *pszNotNull = NULL;
+        const char      *pszHasDef = NULL;
         OGRFieldDefn    oField( PQgetvalue( hResult, iRecord, 0 ), OFTString);
 
         pszType = PQgetvalue(hResult, iRecord, 1 );
+        int nWidth = atoi(PQgetvalue(hResult,iRecord,2));
         pszFormatType = PQgetvalue(hResult,iRecord,3);
+        pszNotNull = PQgetvalue(hResult,iRecord,5);
+        pszHasDef = PQgetvalue(hResult,iRecord,6);
+
+        if( pszNotNull && EQUAL(pszNotNull, "t") )
+            oField.SetNullable(FALSE);
+        if( pszHasDef && EQUAL(pszHasDef, "t") )
+            bHasDefault = TRUE;
 
         if( EQUAL(oField.GetNameRef(),osPrimaryKey) )
         {
@@ -438,145 +449,16 @@ int OGRPGTableLayer::ReadTableDefinition()
                     if( EQUAL(pszType,"OID") )
                         bWkbAsOid = TRUE;
                 }
+                poGeomFieldDefn->SetNullable(oField.IsNullable());
                 if( !bGeometryInformationSet )
                     poFeatureDefn->AddGeomFieldDefn(poGeomFieldDefn, FALSE);
             }
             continue;
         }
 
+        OGRPGCommonLayerSetType(oField, pszType, pszFormatType, nWidth);
+
         //CPLDebug("PG", "name=%s, type=%s", oField.GetNameRef(), pszType);
-        if( EQUAL(pszType,"text") )
-        {
-            oField.SetType( OFTString );
-        }
-        else if( EQUAL(pszType,"_bpchar") ||
-                 EQUAL(pszType,"_varchar") ||
-                 EQUAL(pszType,"_text"))
-        {
-            oField.SetType( OFTStringList );
-        }
-        else if( EQUAL(pszType,"bpchar") || EQUAL(pszType,"varchar") )
-        {
-            int nWidth;
-
-            nWidth = atoi(PQgetvalue(hResult,iRecord,2));
-            if( nWidth == -1 )
-            {
-                if( EQUALN(pszFormatType,"character(",10) )
-                    nWidth = atoi(pszFormatType+10);
-                else if( EQUALN(pszFormatType,"character varying(",18) )
-                    nWidth = atoi(pszFormatType+18);
-                else
-                    nWidth = 0;
-            }
-            oField.SetType( OFTString );
-            oField.SetWidth( nWidth );
-        }
-        else if( EQUAL(pszType,"bool") )
-        {
-            oField.SetType( OFTInteger );
-            oField.SetSubType( OFSTBoolean );
-            oField.SetWidth( 1 );
-        }
-        else if( EQUAL(pszType,"numeric") )
-        {
-            const char *pszFormatName = PQgetvalue(hResult,iRecord,3);
-            if( EQUAL(pszFormatName, "numeric") )
-                oField.SetType( OFTReal );
-            else
-            {
-                const char *pszPrecision = strstr(pszFormatName,",");
-                int    nWidth, nPrecision = 0;
-
-                nWidth = atoi(pszFormatName + 8);
-                if( pszPrecision != NULL )
-                    nPrecision = atoi(pszPrecision+1);
-
-                if( nPrecision == 0 )
-                {
-                    if( nWidth >= 10 )
-                        oField.SetType( OFTInteger64 );
-                    else
-                        oField.SetType( OFTInteger );
-                }
-                else
-                    oField.SetType( OFTReal );
-
-                oField.SetWidth( nWidth );
-                oField.SetPrecision( nPrecision );
-            }
-        }
-        else if( EQUAL(pszFormatType,"integer[]") )
-        {
-            oField.SetType( OFTIntegerList );
-        }
-        else if( EQUAL(pszFormatType,"boolean[]") )
-        {
-            oField.SetType( OFTIntegerList );
-            oField.SetSubType( OFSTBoolean );
-        }
-        else if( EQUAL(pszFormatType, "float[]") ||
-                 EQUAL(pszFormatType, "real[]") )
-        {
-            oField.SetType( OFTRealList );
-            oField.SetSubType( OFSTFloat32 );
-        }
-        else if( EQUAL(pszFormatType, "double precision[]") )
-        {
-            oField.SetType( OFTRealList );
-        }
-        else if( EQUAL(pszType,"int2") )
-        {
-            oField.SetType( OFTInteger );
-            oField.SetSubType( OFSTInt16 );
-            oField.SetWidth( 5 );
-        }
-        else if( EQUAL(pszType,"int8") )
-        {
-            oField.SetType( OFTInteger64 );
-        }
-        else if( EQUAL(pszFormatType,"bigint[]") )
-        {
-            oField.SetType( OFTInteger64List );
-        }
-        else if( EQUALN(pszType,"int",3) )
-        {
-            oField.SetType( OFTInteger );
-        }
-        else if( EQUAL(pszType,"float4")  )
-        {
-            oField.SetType( OFTReal );
-            oField.SetSubType( OFSTFloat32 );
-        }
-        else if( EQUALN(pszType,"float",5) ||
-                 EQUALN(pszType,"double",6) ||
-                 EQUAL(pszType,"real") )
-        {
-            oField.SetType( OFTReal );
-        }
-        else if( EQUALN(pszType, "timestamp",9) )
-        {
-            oField.SetType( OFTDateTime );
-        }
-        else if( EQUALN(pszType, "date",4) )
-        {
-            oField.SetType( OFTDate );
-        }
-        else if( EQUALN(pszType, "time",4) )
-        {
-            oField.SetType( OFTTime );
-        }
-        else if( EQUAL(pszType,"bytea") )
-        {
-            oField.SetType( OFTBinary );
-        }
-
-        else
-        {
-            CPLDebug( "PG", "Field %s is of unknown format type %s (type=%s).", 
-                      oField.GetNameRef(), pszFormatType, pszType );
-        }
-
         poFeatureDefn->AddFieldDefn( &oField );
     }
 
@@ -584,6 +466,43 @@ int OGRPGTableLayer::ReadTableDefinition()
 
     hResult = OGRPG_PQexec(hPGConn, "CLOSE mycursor");
     OGRPGClearResult( hResult );
+
+    if( bHasDefault )
+    {
+        osCommand.Printf(
+                 "SELECT a.attname, pg_get_expr(def.adbin, c.oid) "
+                 "FROM pg_attrdef def, pg_class c, pg_attribute a, pg_type t, pg_namespace n "
+                 "WHERE c.relname = %s AND a.attnum > 0 AND a.attrelid = c.oid "
+                 "AND a.atttypid = t.oid AND c.relnamespace=n.oid AND "
+                 "def.adrelid = c.oid AND def.adnum = a.attnum "
+                 "%s "
+                 "ORDER BY a.attnum",
+                 pszEscapedTableNameSingleQuote, osSchemaClause.c_str());
+
+        hResult = OGRPG_PQexec(hPGConn, osCommand.c_str() );
+        if( !hResult || PQresultStatus(hResult) != PGRES_TUPLES_OK )
+        {
+            OGRPGClearResult( hResult );
+
+            CPLError( CE_Failure, CPLE_AppDefined,
+                    "%s", PQerrorMessage(hPGConn) );
+            return bTableDefinitionValid;
+        }
+
+        for( iRecord = 0; iRecord < PQntuples(hResult); iRecord++ )
+        {
+            const char      *pszName = PQgetvalue( hResult, iRecord, 0 );
+            const char      *pszDefault = PQgetvalue( hResult, iRecord, 1 );
+            int nIdx = poFeatureDefn->GetFieldIndex(pszName);
+            if( nIdx >= 0 )
+            {
+                OGRFieldDefn* poFieldDefn = poFeatureDefn->GetFieldDefn(nIdx);
+                OGRPGCommonLayerNormalizeDefault(poFieldDefn, pszDefault);
+            }
+        }
+
+        OGRPGClearResult( hResult );
+    }
 
     hResult = OGRPG_PQexec(hPGConn, "COMMIT");
     OGRPGClearResult( hResult );
@@ -1434,6 +1353,26 @@ OGRErr OGRPGTableLayer::ICreateFeature( OGRFeature *poFeature )
     }
     else
     {
+        /* If there's a unset field with a default value, then we must use */
+        /* a specific INSERT statement to avoid unset fields to be bound to NULL */
+        int bHasDefaultValue = FALSE;
+        int iField;
+        int nFieldCount = poFeatureDefn->GetFieldCount();
+        for( iField = 0; iField < nFieldCount; iField++ )
+        {
+            if( !poFeature->IsFieldSet( iField ) &&
+                poFeature->GetFieldDefnRef(iField)->GetDefault() != NULL )
+            {
+                bHasDefaultValue = TRUE;
+                break;
+            }
+        }
+        if( bHasDefaultValue )
+        {
+            EndCopy();
+            return CreateFeatureViaInsert( poFeature );
+        }
+
         if ( !bCopyActive )
         {
             /* This is a heuristics. If the first feature to be copied has a */
@@ -2001,6 +1940,15 @@ OGRErr OGRPGTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
             return OGRERR_FAILURE;
     }
 
+    CPLString osNotNullDefault;
+    if( !oField.IsNullable() )
+        osNotNullDefault += " NOT NULL";
+    if( oField.GetDefault() != NULL && !oField.IsDefaultDriverSpecific() )
+    {
+        osNotNullDefault += " DEFAULT ";
+        osNotNullDefault += OGRPGCommonLayerGetPGDefault(&oField);
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Create the new field.                                           */
 /* -------------------------------------------------------------------- */
@@ -2010,6 +1958,7 @@ OGRErr OGRPGTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
         osCreateTable += OGRPGEscapeColumnName(oField.GetNameRef());
         osCreateTable += " ";
         osCreateTable += osFieldType;
+        osCreateTable += osNotNullDefault;
     }
     else
     {
@@ -2020,6 +1969,8 @@ OGRErr OGRPGTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
         osCommand.Printf( "ALTER TABLE %s ADD COLUMN %s %s",
                         pszSqlTableName, OGRPGEscapeColumnName(oField.GetNameRef()).c_str(),
                         osFieldType.c_str() );
+        osCommand += osNotNullDefault;
+        
         hResult = OGRPG_PQexec(hPGConn, osCommand);
         if( PQresultStatus(hResult) != PGRES_COMMAND_OK )
         {
@@ -2080,6 +2031,16 @@ OGRErr OGRPGTableLayer::RunAddGeometryColumn( OGRPGGeomFieldDefn *poGeomField )
     }
 
     OGRPGClearResult( hResult );
+    
+    if( !poGeomField->IsNullable() )
+    {
+        osCommand.Printf( "ALTER TABLE %s ALTER COLUMN %s SET NOT NULL",
+                          pszSqlTableName,
+                          OGRPGEscapeColumnName(poGeomField->GetNameRef()).c_str() );
+
+        hResult = OGRPG_PQexec(hPGConn, osCommand.c_str());
+        OGRPGClearResult( hResult );
+    }
 
     return OGRERR_NONE;
 }
@@ -2135,6 +2096,14 @@ OGRErr OGRPGTableLayer::CreateGeomField( OGRGeomFieldDefn *poGeomFieldIn,
     
     OGRPGGeomFieldDefn *poGeomField =
         new OGRPGGeomFieldDefn( this, poGeomFieldIn->GetNameRef() );
+    if( EQUAL(poGeomField->GetNameRef(), "") )
+    {
+        if( poFeatureDefn->GetGeomFieldCount() == 0 )
+            poGeomField->SetName( "wkb_geometry" );
+        else
+            poGeomField->SetName(
+                CPLSPrintf("wkb_geometry%d", poFeatureDefn->GetGeomFieldCount()+1) );
+    }
     poGeomField->SetSpatialRef(poGeomFieldIn->GetSpatialRef());
 
 /* -------------------------------------------------------------------- */
@@ -2165,6 +2134,7 @@ OGRErr OGRPGTableLayer::CreateGeomField( OGRGeomFieldDefn *poGeomFieldIn,
         eType = OGR_GT_SetModifier(eType, nDimension == 3, FALSE);
     }
     poGeomField->SetType(eType);
+    poGeomField->SetNullable( poGeomFieldIn->IsNullable() );
     poGeomField->nSRSId = nSRSId;
     poGeomField->nCoordDimension = nDimension;
     poGeomField->ePostgisType = GEOM_TYPE_GEOMETRY;
@@ -2326,6 +2296,7 @@ OGRErr OGRPGTableLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn
                         pszSqlTableName,
                         OGRPGEscapeColumnName(poFieldDefn->GetNameRef()).c_str(),
                         osFieldType.c_str() );
+
         hResult = OGRPG_PQexec(hPGConn, osCommand);
         if( PQresultStatus(hResult) != PGRES_COMMAND_OK )
         {
@@ -2344,6 +2315,73 @@ OGRErr OGRPGTableLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn
         OGRPGClearResult( hResult );
     }
 
+    if( (nFlags & ALTER_NULLABLE_FLAG) &&
+        poFieldDefn->IsNullable() != poNewFieldDefn->IsNullable() )
+    {
+        oField.SetNullable(poNewFieldDefn->IsNullable());
+
+        if( poNewFieldDefn->IsNullable() )
+            osCommand.Printf( "ALTER TABLE %s ALTER COLUMN %s DROP NOT NULL",
+                    pszSqlTableName,
+                    OGRPGEscapeColumnName(poFieldDefn->GetNameRef()).c_str() );
+        else
+            osCommand.Printf( "ALTER TABLE %s ALTER COLUMN %s SET NOT NULL",
+                    pszSqlTableName,
+                    OGRPGEscapeColumnName(poFieldDefn->GetNameRef()).c_str() );
+
+        hResult = OGRPG_PQexec(hPGConn, osCommand);
+        if( PQresultStatus(hResult) != PGRES_COMMAND_OK )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                    "%s\n%s",
+                    osCommand.c_str(),
+                    PQerrorMessage(hPGConn) );
+
+            OGRPGClearResult( hResult );
+
+            hResult = OGRPG_PQexec( hPGConn, "ROLLBACK" );
+            OGRPGClearResult( hResult );
+
+            return OGRERR_FAILURE;
+        }
+        OGRPGClearResult( hResult );
+    }
+    
+    if( (nFlags & ALTER_DEFAULT_FLAG) &&
+        ((poFieldDefn->GetDefault() == NULL && poNewFieldDefn->GetDefault() != NULL) ||
+         (poFieldDefn->GetDefault() != NULL && poNewFieldDefn->GetDefault() == NULL) ||
+         (poFieldDefn->GetDefault() != NULL && poNewFieldDefn->GetDefault() != NULL &&
+          strcmp(poFieldDefn->GetDefault(), poNewFieldDefn->GetDefault()) != 0)) )
+    {
+        oField.SetDefault(poNewFieldDefn->GetDefault());
+
+        if( poNewFieldDefn->GetDefault() == NULL )
+            osCommand.Printf( "ALTER TABLE %s ALTER COLUMN %s DROP DEFAULT",
+                    pszSqlTableName,
+                    OGRPGEscapeColumnName(poFieldDefn->GetNameRef()).c_str() );
+        else
+            osCommand.Printf( "ALTER TABLE %s ALTER COLUMN %s SET DEFAULT %s",
+                    pszSqlTableName,
+                    OGRPGEscapeColumnName(poFieldDefn->GetNameRef()).c_str(),
+                    OGRPGCommonLayerGetPGDefault(poNewFieldDefn).c_str());
+
+        hResult = OGRPG_PQexec(hPGConn, osCommand);
+        if( PQresultStatus(hResult) != PGRES_COMMAND_OK )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                    "%s\n%s",
+                    osCommand.c_str(),
+                    PQerrorMessage(hPGConn) );
+
+            OGRPGClearResult( hResult );
+
+            hResult = OGRPG_PQexec( hPGConn, "ROLLBACK" );
+            OGRPGClearResult( hResult );
+
+            return OGRERR_FAILURE;
+        }
+        OGRPGClearResult( hResult );
+    }
 
     if( (nFlags & ALTER_NAME_FLAG) )
     {
@@ -2398,6 +2436,10 @@ OGRErr OGRPGTableLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn
         poFieldDefn->SetWidth(oField.GetWidth());
         poFieldDefn->SetPrecision(oField.GetPrecision());
     }
+    if (nFlags & ALTER_NULLABLE_FLAG)
+        poFieldDefn->SetNullable(oField.IsNullable());
+    if (nFlags & ALTER_DEFAULT_FLAG)
+        poFieldDefn->SetDefault(oField.GetDefault());
 
     return OGRERR_NONE;
 
@@ -2931,6 +2973,8 @@ OGRErr OGRPGTableLayer::RunDifferedCreationIfNecessary()
             if( poGeomField->nSRSId > 0 )
                 osCreateTable += CPLSPrintf(",%d", poGeomField->nSRSId);
             osCreateTable += ")";
+            if( !poGeomField->IsNullable() )
+                osCreateTable += " NOT NULL";
         }
     }
 

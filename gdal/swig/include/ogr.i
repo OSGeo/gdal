@@ -273,7 +273,15 @@ typedef void retGetPoints;
 %constant ALTER_NAME_FLAG = 1;
 %constant ALTER_TYPE_FLAG = 2;
 %constant ALTER_WIDTH_PRECISION_FLAG = 4;
-%constant ALTER_ALL_FLAG = 1 + 2 + 4;
+%constant ALTER_NULLABLE_FLAG = 8;
+%constant ALTER_DEFAULT_FLAG = 16;
+%constant ALTER_ALL_FLAG = 1 + 2 + 4 + 8 + 16;
+
+%constant F_VAL_NULL= 0x00000001; /**< Validate that fields respect not-null constraints */
+%constant F_VAL_GEOM_TYPE = 0x00000002; /**< Validate that geometries respect geometry column type */
+%constant F_VAL_WIDTH = 0x00000004; /**< Validate that (string) fields respect field width */
+%constant F_VAL_ALLOW_NULL_WHEN_DEFAULT = 0x00000008; /***<Allow fields that are null when there's an associated default value. */
+%constant F_VAL_ALL = 0xFFFFFFFF; /**< Enable all validation tests */
 
 %constant char *OLCRandomRead          = "RandomRead";
 %constant char *OLCSequentialWrite     = "SequentialWrite";
@@ -1599,6 +1607,14 @@ public:
   }
   /* ------------------------------------------- */  
   
+  int Validate( int flags = OGR_F_VAL_ALL, int bEmitError = TRUE ) {
+    return OGR_F_Validate(self, flags, bEmitError);
+  }
+
+  void FillUnsetWithDefault( int bNotNullableOnly = FALSE, char** options = NULL ) {
+    OGR_F_FillUnsetWithDefault(self, bNotNullableOnly, options );
+  }
+
 } /* %extend */
 
 
@@ -1895,9 +1911,28 @@ public:
   }
 
   void SetIgnored(int bIgnored ) {
-    return OGR_Fld_SetIgnored( self, bIgnored );
+    OGR_Fld_SetIgnored( self, bIgnored );
   }
 
+  int IsNullable() {
+    return OGR_Fld_IsNullable( self );
+  }
+
+  void SetNullable(int bNullable ) {
+    OGR_Fld_SetNullable( self, bNullable );
+  }
+
+  const char* GetDefault() {
+    return OGR_Fld_GetDefault( self );
+  }
+
+  void SetDefault(const char* pszValue ) {
+    OGR_Fld_SetDefault( self, pszValue );
+  }
+
+  int IsDefaultDriverSpecific() {
+    return OGR_Fld_IsDefaultDriverSpecific( self );
+  }
 } /* %extend */
 
 
@@ -1971,6 +2006,13 @@ public:
     OGR_GFld_SetIgnored( self, bIgnored );
   }
 
+  int IsNullable() {
+    return OGR_GFld_IsNullable( self );
+  }
+
+  void SetNullable(int bNullable ) {
+    return OGR_GFld_SetNullable( self, bNullable );
+  }
 } /* %extend */
 
 

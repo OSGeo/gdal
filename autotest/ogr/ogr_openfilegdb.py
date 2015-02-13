@@ -212,6 +212,19 @@ def ogr_openfilegdb_make_test_data():
                 lyr.CreateFeature(feat)
                 feat = None
 
+    if True:
+        lyr = ds.CreateLayer('testnotnullable', geom_type = ogr.wkbPoint, srs = None, options = ['GEOMETRY_NULLABLE=NO'])
+        field_defn = ogr.FieldDefn('field_not_nullable', ogr.OFTString)
+        field_defn.SetNullable(0)
+        lyr.CreateField(field_defn)
+        field_defn = ogr.FieldDefn('field_nullable', ogr.OFTString)
+        lyr.CreateField(field_defn)
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetField('field_not_nullable', 'not_null')
+        f.SetGeomFieldDirectly('geomfield_not_nullable', ogr.CreateGeometryFromWkt('POINT(0 0)'))
+        lyr.CreateFeature(f)
+        f = None
+
     for fld_name in [ 'id', 'str', 'smallint', 'int', 'float', 'real', 'adate', 'guid', 'nullint' ]:
         ds.ExecuteSQL('CREATE INDEX idx_%s ON point(%s)' % (fld_name, fld_name))
     ds.ExecuteSQL('CREATE INDEX idx_id ON none(id)')
@@ -252,6 +265,9 @@ def ogr_openfilegdb_1():
         if lyr.GetGeomType() != expected_geom_type:
             print(lyr.GetName())
             print(lyr.GetGeomType())
+            return 'fail'
+        if expected_geom_type is not ogr.wkbNone and lyr.GetLayerDefn().GetGeomFieldDefn(0).IsNullable() != 1:
+            gdaltest.post_reason('fail')
             return 'fail'
         if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('smallint')).GetSubType() != ogr.OFSTInt16:
             gdaltest.post_reason('fail')
@@ -1190,7 +1206,54 @@ def ogr_openfilegdb_13():
     ds = None
 
     return 'success'
-    
+
+###############################################################################
+# Test not nullable fields
+
+def ogr_openfilegdb_14():
+
+    ds = ogr.Open('data/testopenfilegdb.gdb.zip')
+    lyr = ds.GetLayerByName('testnotnullable')
+    if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_not_nullable')).IsNullable() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_nullable')).IsNullable() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetLayerDefn().GetGeomFieldDefn(0).IsNullable() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Test default values
+
+def ogr_openfilegdb_15():
+
+    ds = ogr.Open('data/test_default_val.gdb.zip')
+    lyr = ds.GetLayer(0)
+    if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('STR')).GetDefault() != "'default_val'":
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('INT32')).GetDefault() != "123456788":
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('INT16')).GetDefault() != "12345":
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('FLOAT32')).GetDefault().find('1.23') != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('FLOAT64')).GetDefault().find('1.23456') != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('DATETIME')).GetDefault() != "'2015/06/30 12:34:56'":
+        gdaltest.post_reason('fail')
+        return 'fail'
+    return 'success'
+
 ###############################################################################
 # Cleanup
 
@@ -1231,6 +1294,8 @@ gdaltest_list = [
     ogr_openfilegdb_11,
     ogr_openfilegdb_12,
     ogr_openfilegdb_13,
+    ogr_openfilegdb_14,
+    ogr_openfilegdb_15,
     ogr_openfilegdb_cleanup,
     ]
 
