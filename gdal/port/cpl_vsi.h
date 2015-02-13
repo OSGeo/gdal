@@ -202,6 +202,8 @@ void CPL_DLL *VSIMalloc2( size_t nSize1, size_t nSize2 ) CPL_WARN_UNUSED_RESULT;
 */
 void CPL_DLL *VSIMalloc3( size_t nSize1, size_t nSize2, size_t nSize3 ) CPL_WARN_UNUSED_RESULT;
 
+GIntBig CPL_DLL CPLGetPhysicalRAM(void);
+GIntBig CPL_DLL CPLGetUsablePhysicalRAM(void);
 
 /* ==================================================================== */
 /*      Other...                                                        */

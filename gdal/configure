@@ -17974,6 +17974,43 @@ fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for _SC_PHYS_PAGES" >&5
+$as_echo_n "checking for _SC_PHYS_PAGES... " >&6; }
+
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#include <unistd.h>
+
+int
+main ()
+{
+
+return (sysconf(_SC_PHYS_PAGES));
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_SC_PHYS_PAGES 1
+_ACEOF
+
+
+else
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+
+
 
 # Check whether --with-libz was given.
 if test "${with_libz+set}" = set; then :
