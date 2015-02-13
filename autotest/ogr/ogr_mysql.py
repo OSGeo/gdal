@@ -791,7 +791,7 @@ def ogr_mysql_25():
     if gdaltest.mysql_ds is None:
         return 'skip'
 
-    lyr = gdaltest.mysql_ds.CreateLayer('ogr_mysql_25', geom_type = ogr.wkbPoint)
+    lyr = gdaltest.mysql_ds.CreateLayer('ogr_mysql_25', geom_type = ogr.wkbPoint, options = [ 'ENGINE=MyISAM' ] )
     field_defn = ogr.FieldDefn('field_not_nullable', ogr.OFTString)
     field_defn.SetNullable(0)
     lyr.CreateField(field_defn)
@@ -851,7 +851,7 @@ def ogr_mysql_26():
     if gdaltest.mysql_ds is None:
         return 'skip'
 
-    lyr = gdaltest.mysql_ds.CreateLayer('ogr_mysql_26', geom_type = ogr.wkbPoint)
+    lyr = gdaltest.mysql_ds.CreateLayer('ogr_mysql_26', geom_type = ogr.wkbPoint, options = [ 'ENGINE=MyISAM' ])
 
     field_defn = ogr.FieldDefn( 'field_string', ogr.OFTString )
     field_defn.SetDefault("'a''b'")
