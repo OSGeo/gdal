@@ -1106,9 +1106,12 @@ static const char* CPLvsnprintf_get_end_of_formatting(const char* fmt)
     for( ; (ch = *fmt) != '\0'; fmt ++ )
     {
         if( ch == 'h' || ch == 'l' || ch == 'j' || ch == 'z' ||
-            ch == 't' || ch == 'L' || ch == 'I' ) /* for I64 */
+            ch == 't' || ch == 'L' )
             continue;
-        return fmt;
+        else if( ch == 'I' && fmt[1] == '6' && fmt[2] == '4' )
+            fmt += 2;
+        else
+            return fmt;
     }
 
     return NULL;
