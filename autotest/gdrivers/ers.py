@@ -213,10 +213,46 @@ def ers_10():
     drv = gdal.GetDriverByName( 'ERS' )
     ds = drv.Create('/vsimem/ers_10.ers', 1, 1, options = ['DATUM=GDA94', 'PROJ=MGA55', 'UNITS=METERS'])
 
+    proj = ds.GetMetadataItem("PROJ", "ERS")
+    datum = ds.GetMetadataItem("DATUM", "ERS")
+    units = ds.GetMetadataItem("UNITS", "ERS")
+    if proj != 'MGA55':
+        gdaltest.post_reason('did not get expected PROJ')
+        print(proj)
+        return 'fail'
+
+    if datum != 'GDA94':
+        gdaltest.post_reason('did not get expected DATUM')
+        print(datum)
+        return 'fail'
+
+    if units != 'METERS':
+        gdaltest.post_reason('did not get expected UNITS')
+        print(units)
+        return 'fail'
+
     # This should be overriden by the above values
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(4326)
     ds.SetProjection(sr.ExportToWkt())
+
+    proj = ds.GetMetadataItem("PROJ", "ERS")
+    datum = ds.GetMetadataItem("DATUM", "ERS")
+    units = ds.GetMetadataItem("UNITS", "ERS")
+    if proj != 'MGA55':
+        gdaltest.post_reason('did not get expected PROJ')
+        print(proj)
+        return 'fail'
+
+    if datum != 'GDA94':
+        gdaltest.post_reason('did not get expected DATUM')
+        print(datum)
+        return 'fail'
+
+    if units != 'METERS':
+        gdaltest.post_reason('did not get expected UNITS')
+        print(units)
+        return 'fail'
 
     ds = None
 
@@ -260,6 +296,57 @@ def ers_10():
     if wkt.find("""PROJCS["MGA55""") != 0:
         gdaltest.post_reason('did not get expected projection')
         print(wkt)
+        return 'fail'
+
+
+    ds = drv.Create('/vsimem/ers_10.ers', 1, 1, options = ['DATUM=GDA94', 'PROJ=MGA55', 'UNITS=FEET'])
+    ds = None
+    
+    # Check that we can update those values with SetProjection()
+    ds = gdal.Open('/vsimem/ers_10.ers', gdal.GA_Update)
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(4326)
+    ds.SetProjection(sr.ExportToWkt())
+    proj = ds.GetMetadataItem("PROJ", "ERS")
+    datum = ds.GetMetadataItem("DATUM", "ERS")
+    units = ds.GetMetadataItem("UNITS", "ERS")
+    if proj != 'GEODETIC':
+        gdaltest.post_reason('did not get expected PROJ')
+        print(proj)
+        return 'fail'
+
+    if datum != 'WGS84':
+        gdaltest.post_reason('did not get expected DATUM')
+        print(datum)
+        return 'fail'
+
+    if units != 'METERS':
+        gdaltest.post_reason('did not get expected UNITS')
+        print(units)
+        return 'fail'
+    ds = None
+
+    ds = gdal.Open('/vsimem/ers_10.ers')
+    proj = ds.GetMetadataItem("PROJ", "ERS")
+    datum = ds.GetMetadataItem("DATUM", "ERS")
+    units = ds.GetMetadataItem("UNITS", "ERS")
+    ds = None
+
+    drv.Delete('/vsimem/ers_10.ers')
+
+    if proj != 'GEODETIC':
+        gdaltest.post_reason('did not get expected PROJ')
+        print(proj)
+        return 'fail'
+
+    if datum != 'WGS84':
+        gdaltest.post_reason('did not get expected DATUM')
+        print(datum)
+        return 'fail'
+
+    if units != 'METERS':
+        gdaltest.post_reason('did not get expected UNITS')
+        print(units)
         return 'fail'
 
     return 'success'
