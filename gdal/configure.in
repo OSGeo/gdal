@@ -585,6 +585,26 @@ AC_MSG_RESULT([no])
 ])
 
 dnl ---------------------------------------------------------------------------
+dnl Check if _SC_PHYS_PAGES is available
+dnl ---------------------------------------------------------------------------
+
+AC_MSG_CHECKING([for _SC_PHYS_PAGES])
+
+AC_TRY_COMPILE(
+[
+#include <unistd.h>
+], [
+return (sysconf(_SC_PHYS_PAGES));
+],
+[
+AC_MSG_RESULT([yes])
+AC_DEFINE_UNQUOTED(HAVE_SC_PHYS_PAGES, 1,
+        [Define to 1 if you have the _SC_PHYS_PAGES' constant.])
+], [
+AC_MSG_RESULT([no])
+])
+
+dnl ---------------------------------------------------------------------------
 dnl Check if libz is available.
 dnl ---------------------------------------------------------------------------
 
