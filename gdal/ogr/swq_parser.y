@@ -105,7 +105,7 @@
 /* Any grammar rule that does $$ =  must be listed afterwards */
 /* as well as SWQT_INTEGER_NUMBER SWQT_FLOAT_NUMBER SWQT_STRING SWQT_IDENTIFIER that are allocated by swqlex() */
 %destructor { delete $$; } SWQT_INTEGER_NUMBER SWQT_FLOAT_NUMBER SWQT_STRING SWQT_IDENTIFIER
-%destructor { delete $$; } value_expr_list field_value value_expr type_def table_def
+%destructor { delete $$; } value_expr_list field_value value_expr value_expr_non_logical type_def table_def
 
 %%
 
