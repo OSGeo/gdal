@@ -183,6 +183,8 @@ int main(int argc, char* argv[])
 {
     /*printf("test_huge_mapping\n");
     test_huge_mapping();*/
+    
+    printf("Physical memory : " CPL_FRMT_GIB " bytes\n", CPLGetPhysicalRAM());
 
     if( !test_two_pages() )
         return 0;
