@@ -168,7 +168,7 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
         return _GetDataTypeSize($t);
     }
     sub DataTypeValueRange {
-            my $t = shift;
+        my $t = shift;
         # these values are from gdalrasterband.cpp
         return (0,255) if $t =~ /^Byte$/;
         return (0,65535) if $t =~ /^UInt16$/;
@@ -221,19 +221,19 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
         return _OpenShared(@p);
     }
     sub ComputeMedianCutPCT {
-            $_[6] = 1 if $_[5] and not defined $_[6];
+        $_[6] = 1 if $_[5] and not defined $_[6];
         _ComputeMedianCutPCT(@_);
     }
     sub DitherRGB2PCT {
-            $_[6] = 1 if $_[5] and not defined $_[6];
+        $_[6] = 1 if $_[5] and not defined $_[6];
         _DitherRGB2PCT(@_);
     }
     sub ComputeProximity {
-            $_[4] = 1 if $_[3] and not defined $_[4];
+        $_[4] = 1 if $_[3] and not defined $_[4];
         _ComputeProximity(@_);
     }
     sub RasterizeLayer {
-            $_[8] = 1 if $_[7] and not defined $_[8];
+        $_[8] = 1 if $_[7] and not defined $_[8];
         _RasterizeLayer(@_);
     }
     sub Polygonize {
@@ -243,19 +243,19 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
         _Polygonize(@params);
     }
     sub SieveFilter {
-            $_[7] = 1 if $_[6] and not defined $_[7];
+        $_[7] = 1 if $_[6] and not defined $_[7];
         _SieveFilter(@_);
     }
     sub RegenerateOverviews {
-            $_[4] = 1 if $_[3] and not defined $_[4];
+        $_[4] = 1 if $_[3] and not defined $_[4];
         _RegenerateOverviews(@_);
     }
     sub RegenerateOverview {
-            $_[4] = 1 if $_[3] and not defined $_[4];
+        $_[4] = 1 if $_[3] and not defined $_[4];
         _RegenerateOverview(@_);
     }
     sub ReprojectImage {
-            $_[8] = 1 if $_[7] and not defined $_[8];
+        $_[8] = 1 if $_[7] and not defined $_[8];
         $_[4] = $RESAMPLING_STRING2INT{$_[4]} if $_[4] and exists $RESAMPLING_STRING2INT{$_[4]};
         return _ReprojectImage(@_);
     }

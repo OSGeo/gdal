@@ -8,7 +8,10 @@ for my $pm (@pm) {
     open(my $fh, "<", $pm) or die "cannot open < $pm: $!";
     while (<$fh>) {
         chomp;
+        my $code = $_;
         s/^\s+//;
+        next if $_ eq '';
+        next if $_ =~ /^#####/; # skip swig comments
         my($w) = /^(\S+)\s/;
         if ($w eq 'package') {
             $package = $_;
@@ -61,11 +64,11 @@ for my $pm (@pm) {
         }
         #print "sub=$sub, $_\n";
         if ($sub) {
-            push @{$package{$package}{code}{$sub}}, $_;
+            push @{$package{$package}{code}{$sub}}, $code;
             next;
         }
         if ($attr) {
-            push @{$package{$package}{code}{$attr}}, $_;
+            push @{$package{$package}{code}{$attr}}, $code;
             $attr = '' if /;/;
             next;
         }
@@ -180,10 +183,30 @@ for my $package (sort keys %package) {
         print "#*\n";
         print "sub $sub {\n";
         my $code = $package{$package}{code}{$sub};
-        pop @{$code} if $code->[$#$code] eq '}';
-        for my $l (@{$package{$package}{code}{$sub}}) {
-            print "    $l\n";
+        fix_indentation($code);
+        pop @$code if $code->[$#$code] =~ /^\s*}\s*$/; # remove duplicate ending } of the sub
+        for my $l (@$code) {
+            print "$l\n";
         }
         print "}\n\n";
     }
+}
+
+sub fix_indentation {
+    my $code = shift;
+    my($space) = $code->[0] =~ /^(\s*)/;
+    my $l = length($space);
+    if ($l < 4) {
+        for (@$code) {
+            for my $i ($l..4) {
+                $_ = ' '.$_;
+            }
+        }
+    } elsif ($l > 4) {
+        for (@$code) {
+            for my $i (4..$l) {
+                $_ =~ s/^ //;
+            }
+        }
+    } 
 }
