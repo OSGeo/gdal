@@ -1204,16 +1204,22 @@ yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep, swq_parse_context 
 #line 1205 "swq_parser.cpp" /* yacc.c:1257  */
         break;
 
-    case 54: /* type_def  */
+    case 53: /* value_expr_non_logical  */
 #line 108 "swq_parser.y" /* yacc.c:1257  */
       { delete ((*yyvaluep)); }
 #line 1211 "swq_parser.cpp" /* yacc.c:1257  */
         break;
 
-    case 67: /* table_def  */
+    case 54: /* type_def  */
 #line 108 "swq_parser.y" /* yacc.c:1257  */
       { delete ((*yyvaluep)); }
 #line 1217 "swq_parser.cpp" /* yacc.c:1257  */
+        break;
+
+    case 67: /* table_def  */
+#line 108 "swq_parser.y" /* yacc.c:1257  */
+      { delete ((*yyvaluep)); }
+#line 1223 "swq_parser.cpp" /* yacc.c:1257  */
         break;
 
 
@@ -1483,7 +1489,7 @@ yyreduce:
     {
             context->poRoot = (yyvsp[0]);
         }
-#line 1487 "swq_parser.cpp" /* yacc.c:1646  */
+#line 1493 "swq_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 4:
@@ -1491,7 +1497,7 @@ yyreduce:
     {
             context->poRoot = (yyvsp[0]);
         }
-#line 1495 "swq_parser.cpp" /* yacc.c:1646  */
+#line 1501 "swq_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 5:
@@ -1499,7 +1505,7 @@ yyreduce:
     {
             (yyval) = (yyvsp[0]);
         }
-#line 1503 "swq_parser.cpp" /* yacc.c:1646  */
+#line 1509 "swq_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 6:
@@ -1510,7 +1516,7 @@ yyreduce:
             (yyval)->PushSubExpression( (yyvsp[-2]) );
             (yyval)->PushSubExpression( (yyvsp[0]) );
         }
-#line 1514 "swq_parser.cpp" /* yacc.c:1646  */
+#line 1520 "swq_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 7:
@@ -1521,7 +1527,7 @@ yyreduce:
             (yyval)->PushSubExpression( (yyvsp[-2]) );
             (yyval)->PushSubExpression( (yyvsp[0]) );
         }
-#line 1525 "swq_parser.cpp" /* yacc.c:1646  */
+#line 1531 "swq_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 8:
@@ -1531,7 +1537,7 @@ yyreduce:
             (yyval)->field_type = SWQ_BOOLEAN;
             (yyval)->PushSubExpression( (yyvsp[0]) );
         }
-#line 1535 "swq_parser.cpp" /* yacc.c:1646  */
+#line 1541 "swq_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 9:
@@ -1542,7 +1548,7 @@ yyreduce:
             (yyval)->PushSubExpression( (yyvsp[-2]) );
             (yyval)->PushSubExpression( (yyvsp[0]) );
         }
-#line 1546 "swq_parser.cpp" /* yacc.c:1646  */
+#line 1552 "swq_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 10:
@@ -1553,7 +1559,7 @@ yyreduce:
             (yyval)->PushSubExpression( (yyvsp[-3]) );
             (yyval)->PushSubExpression( (yyvsp[0]) );
         }
-#line 1557 "swq_parser.cpp" /* yacc.c:1646  */
+#line 1563 "swq_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 11:
@@ -1564,7 +1570,7 @@ yyreduce:
             (yyval)->PushSubExpression( (yyvsp[-3]) );
             (yyval)->PushSubExpression( (yyvsp[0]) );
         }
-#line 1568 "swq_parser.cpp" /* yacc.c:1646  */
+#line 1574 "swq_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 12:
@@ -1575,7 +1581,7 @@ yyreduce:
             (yyval)->PushSubExpression( (yyvsp[-2]) );
             (yyval)->PushSubExpression( (yyvsp[0]) );
         }
-#line 1579 "swq_parser.cpp" /* yacc.c:1646  */
+#line 1585 "swq_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 13:
@@ -1586,7 +1592,7 @@ yyreduce:
             (yyval)->PushSubExpression( (yyvsp[-2]) );
             (yyval)->PushSubExpression( (yyvsp[0]) );
         }
-#line 1590 "swq_parser.cpp" /* yacc.c:1646  */
+#line 1596 "swq_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 14:
@@ -1597,7 +1603,7 @@ yyreduce:
             (yyval)->PushSubExpression( (yyvsp[-3]) );
             (yyval)->PushSubExpression( (yyvsp[0]) );
         }
-#line 1601 "swq_parser.cpp" /* yacc.c:1646  */
+#line 1607 "swq_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 15:
@@ -1608,7 +1614,7 @@ yyreduce:
             (yyval)->PushSubExpression( (yyvsp[-3]) );
             (yyval)->PushSubExpression( (yyvsp[0]) );
         }
-#line 1612 "swq_parser.cpp" /* yacc.c:1646  */
+#line 1618 "swq_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 16:
@@ -1619,7 +1625,7 @@ yyreduce:
             (yyval)->PushSubExpression( (yyvsp[-3]) );
             (yyval)->PushSubExpression( (yyvsp[0]) );
         }
-#line 1623 "swq_parser.cpp" /* yacc.c:1646  */
+#line 1629 "swq_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 17:
@@ -1630,7 +1636,7 @@ yyreduce:
             (yyval)->PushSubExpression( (yyvsp[-3]) );
             (yyval)->PushSubExpression( (yyvsp[0]) );
         }
-#line 1634 "swq_parser.cpp" /* yacc.c:1646  */
+#line 1640 "swq_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 18:
@@ -1641,7 +1647,7 @@ yyreduce:
             (yyval)->PushSubExpression( (yyvsp[-2]) );
             (yyval)->PushSubExpression( (yyvsp[0]) );
         }
-#line 1645 "swq_parser.cpp" /* yacc.c:1646  */
+#line 1651 "swq_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 19:
@@ -1657,7 +1663,7 @@ yyreduce:
             (yyval)->field_type = SWQ_BOOLEAN;
             (yyval)->PushSubExpression( like );
         }
-#line 1661 "swq_parser.cpp" /* yacc.c:1646  */
+#line 1667 "swq_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 20:
@@ -1669,7 +1675,7 @@ yyreduce:
             (yyval)->PushSubExpression( (yyvsp[-2]) );
             (yyval)->PushSubExpression( (yyvsp[0]) );
         }
-#line 1673 "swq_parser.cpp" /* yacc.c:1646  */
+#line 1679 "swq_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 21:
@@ -1686,7 +1692,7 @@ yyreduce:
             (yyval)->field_type = SWQ_BOOLEAN;
             (yyval)->PushSubExpression( like );
         }
-#line 1690 "swq_parser.cpp" /* yacc.c:1646  */
+#line 1696 "swq_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 22:
@@ -1698,7 +1704,7 @@ yyreduce:
             (yyval)->PushSubExpression( (yyvsp[-4]) );
             (yyval)->ReverseSubExpressions();
         }
-#line 1702 "swq_parser.cpp" /* yacc.c:1646  */
+#line 1708 "swq_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 23:
@@ -1716,7 +1722,7 @@ yyreduce:
             (yyval)->field_type = SWQ_BOOLEAN;
             (yyval)->PushSubExpression( in );
         }
-#line 1720 "swq_parser.cpp" /* yacc.c:1646  */
+#line 1726 "swq_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 24:
@@ -1728,7 +1734,7 @@ yyreduce:
             (yyval)->PushSubExpression( (yyvsp[-2]) );
             (yyval)->PushSubExpression( (yyvsp[0]) );
         }
-#line 1732 "swq_parser.cpp" /* yacc.c:1646  */
+#line 1738 "swq_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 25:
@@ -1745,7 +1751,7 @@ yyreduce:
             (yyval)->field_type = SWQ_BOOLEAN;
             (yyval)->PushSubExpression( between );
         }
-#line 1749 "swq_parser.cpp" /* yacc.c:1646  */
+#line 1755 "swq_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 26:
@@ -1755,7 +1761,7 @@ yyreduce:
             (yyval)->field_type = SWQ_BOOLEAN;
             (yyval)->PushSubExpression( (yyvsp[-2]) );
         }
-#line 1759 "swq_parser.cpp" /* yacc.c:1646  */
+#line 1765 "swq_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 27:
@@ -1771,7 +1777,7 @@ yyreduce:
             (yyval)->field_type = SWQ_BOOLEAN;
             (yyval)->PushSubExpression( isnull );
         }
-#line 1775 "swq_parser.cpp" /* yacc.c:1646  */
+#line 1781 "swq_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 28:
@@ -1780,7 +1786,7 @@ yyreduce:
             (yyval) = (yyvsp[0]);
             (yyvsp[0])->PushSubExpression( (yyvsp[-2]) );
         }
-#line 1784 "swq_parser.cpp" /* yacc.c:1646  */
+#line 1790 "swq_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 29:
@@ -1789,7 +1795,7 @@ yyreduce:
             (yyval) = new swq_expr_node( SWQ_UNKNOWN ); /* list */
             (yyval)->PushSubExpression( (yyvsp[0]) );
         }
-#line 1793 "swq_parser.cpp" /* yacc.c:1646  */
+#line 1799 "swq_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 30:
@@ -1799,7 +1805,7 @@ yyreduce:
             (yyval)->eNodeType = SNT_COLUMN;
             (yyval)->field_index = (yyval)->table_index = -1;
         }
-#line 1803 "swq_parser.cpp" /* yacc.c:1646  */
+#line 1809 "swq_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 31:
@@ -1817,7 +1823,7 @@ yyreduce:
             delete (yyvsp[0]);
             (yyvsp[0]) = NULL;
         }
-#line 1821 "swq_parser.cpp" /* yacc.c:1646  */
+#line 1827 "swq_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 32:
@@ -1825,7 +1831,7 @@ yyreduce:
     {
             (yyval) = (yyvsp[0]);
         }
-#line 1829 "swq_parser.cpp" /* yacc.c:1646  */
+#line 1835 "swq_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 33:
@@ -1833,7 +1839,7 @@ yyreduce:
     {
             (yyval) = (yyvsp[0]);
         }
-#line 1837 "swq_parser.cpp" /* yacc.c:1646  */
+#line 1843 "swq_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 34:
@@ -1841,7 +1847,7 @@ yyreduce:
     {
             (yyval) = (yyvsp[0]);
         }
-#line 1845 "swq_parser.cpp" /* yacc.c:1646  */
+#line 1851 "swq_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 35:
@@ -1849,7 +1855,7 @@ yyreduce:
     {
             (yyval) = (yyvsp[0]);
         }
-#line 1853 "swq_parser.cpp" /* yacc.c:1646  */
+#line 1859 "swq_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 36:
@@ -1857,7 +1863,7 @@ yyreduce:
     {
             (yyval) = (yyvsp[-1]);
         }
-#line 1861 "swq_parser.cpp" /* yacc.c:1646  */
+#line 1867 "swq_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 37:
@@ -1865,7 +1871,7 @@ yyreduce:
     {
             (yyval) = new swq_expr_node((const char*)NULL);
         }
-#line 1869 "swq_parser.cpp" /* yacc.c:1646  */
+#line 1875 "swq_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 38:
@@ -1884,7 +1890,7 @@ yyreduce:
                 (yyval)->PushSubExpression( (yyvsp[0]) );
             }
         }
-#line 1888 "swq_parser.cpp" /* yacc.c:1646  */
+#line 1894 "swq_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 39:
@@ -1894,7 +1900,7 @@ yyreduce:
             (yyval)->PushSubExpression( (yyvsp[-2]) );
             (yyval)->PushSubExpression( (yyvsp[0]) );
         }
-#line 1898 "swq_parser.cpp" /* yacc.c:1646  */
+#line 1904 "swq_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 40:
@@ -1904,7 +1910,7 @@ yyreduce:
             (yyval)->PushSubExpression( (yyvsp[-2]) );
             (yyval)->PushSubExpression( (yyvsp[0]) );
         }
-#line 1908 "swq_parser.cpp" /* yacc.c:1646  */
+#line 1914 "swq_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 41:
@@ -1914,7 +1920,7 @@ yyreduce:
             (yyval)->PushSubExpression( (yyvsp[-2]) );
             (yyval)->PushSubExpression( (yyvsp[0]) );
         }
-#line 1918 "swq_parser.cpp" /* yacc.c:1646  */
+#line 1924 "swq_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 42:
@@ -1924,7 +1930,7 @@ yyreduce:
             (yyval)->PushSubExpression( (yyvsp[-2]) );
             (yyval)->PushSubExpression( (yyvsp[0]) );
         }
-#line 1928 "swq_parser.cpp" /* yacc.c:1646  */
+#line 1934 "swq_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 43:
@@ -1934,7 +1940,7 @@ yyreduce:
             (yyval)->PushSubExpression( (yyvsp[-2]) );
             (yyval)->PushSubExpression( (yyvsp[0]) );
         }
-#line 1938 "swq_parser.cpp" /* yacc.c:1646  */
+#line 1944 "swq_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 44:
@@ -1961,7 +1967,7 @@ yyreduce:
                 delete (yyvsp[-3]);
             }
         }
-#line 1965 "swq_parser.cpp" /* yacc.c:1646  */
+#line 1971 "swq_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 45:
@@ -1971,7 +1977,7 @@ yyreduce:
             (yyval)->PushSubExpression( (yyvsp[-3]) );
             (yyval)->ReverseSubExpressions();
         }
-#line 1975 "swq_parser.cpp" /* yacc.c:1646  */
+#line 1981 "swq_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 46:
@@ -1980,7 +1986,7 @@ yyreduce:
         (yyval) = new swq_expr_node( SWQ_CAST );
         (yyval)->PushSubExpression( (yyvsp[0]) );
     }
-#line 1984 "swq_parser.cpp" /* yacc.c:1646  */
+#line 1990 "swq_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 47:
@@ -1990,7 +1996,7 @@ yyreduce:
         (yyval)->PushSubExpression( (yyvsp[-1]) );
         (yyval)->PushSubExpression( (yyvsp[-3]) );
     }
-#line 1994 "swq_parser.cpp" /* yacc.c:1646  */
+#line 2000 "swq_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 48:
@@ -2001,7 +2007,7 @@ yyreduce:
         (yyval)->PushSubExpression( (yyvsp[-3]) );
         (yyval)->PushSubExpression( (yyvsp[-5]) );
     }
-#line 2005 "swq_parser.cpp" /* yacc.c:1646  */
+#line 2011 "swq_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 49:
@@ -2021,7 +2027,7 @@ yyreduce:
         (yyval)->PushSubExpression( (yyvsp[-1]) );
         (yyval)->PushSubExpression( (yyvsp[-3]) );
     }
-#line 2025 "swq_parser.cpp" /* yacc.c:1646  */
+#line 2031 "swq_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 50:
@@ -2043,7 +2049,7 @@ yyreduce:
         (yyval)->PushSubExpression( (yyvsp[-3]) );
         (yyval)->PushSubExpression( (yyvsp[-5]) );
     }
-#line 2047 "swq_parser.cpp" /* yacc.c:1646  */
+#line 2053 "swq_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 53:
@@ -2051,7 +2057,7 @@ yyreduce:
     {
         delete (yyvsp[-3]);
     }
-#line 2055 "swq_parser.cpp" /* yacc.c:1646  */
+#line 2061 "swq_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 56:
@@ -2061,7 +2067,7 @@ yyreduce:
         context->poCurSelect->PushUnionAll(poNewSelect);
         context->poCurSelect = poNewSelect;
     }
-#line 2065 "swq_parser.cpp" /* yacc.c:1646  */
+#line 2071 "swq_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 59:
@@ -2073,7 +2079,7 @@ yyreduce:
                 YYERROR;
             }
         }
-#line 2077 "swq_parser.cpp" /* yacc.c:1646  */
+#line 2083 "swq_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 60:
@@ -2085,7 +2091,7 @@ yyreduce:
                 YYERROR;
             }
         }
-#line 2089 "swq_parser.cpp" /* yacc.c:1646  */
+#line 2095 "swq_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 61:
@@ -2100,7 +2106,7 @@ yyreduce:
 
             delete (yyvsp[0]);
         }
-#line 2104 "swq_parser.cpp" /* yacc.c:1646  */
+#line 2110 "swq_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 62:
@@ -2114,7 +2120,7 @@ yyreduce:
             }
             delete (yyvsp[0]);
         }
-#line 2118 "swq_parser.cpp" /* yacc.c:1646  */
+#line 2124 "swq_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 63:
@@ -2131,7 +2137,7 @@ yyreduce:
                 YYERROR;
             }
         }
-#line 2135 "swq_parser.cpp" /* yacc.c:1646  */
+#line 2141 "swq_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 64:
@@ -2156,7 +2162,7 @@ yyreduce:
                 YYERROR;
             }
         }
-#line 2160 "swq_parser.cpp" /* yacc.c:1646  */
+#line 2166 "swq_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 65:
@@ -2189,7 +2195,7 @@ yyreduce:
                 YYERROR;
             }
         }
-#line 2193 "swq_parser.cpp" /* yacc.c:1646  */
+#line 2199 "swq_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 66:
@@ -2226,7 +2232,7 @@ yyreduce:
 
             delete (yyvsp[0]);
         }
-#line 2230 "swq_parser.cpp" /* yacc.c:1646  */
+#line 2236 "swq_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 67:
@@ -2253,7 +2259,7 @@ yyreduce:
                 YYERROR;
             }
         }
-#line 2257 "swq_parser.cpp" /* yacc.c:1646  */
+#line 2263 "swq_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 68:
@@ -2284,7 +2290,7 @@ yyreduce:
             delete (yyvsp[-5]);
             delete (yyvsp[0]);
         }
-#line 2288 "swq_parser.cpp" /* yacc.c:1646  */
+#line 2294 "swq_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 69:
@@ -2293,7 +2299,7 @@ yyreduce:
             delete (yyvsp[-1]);
             (yyval) = (yyvsp[0]);
         }
-#line 2297 "swq_parser.cpp" /* yacc.c:1646  */
+#line 2303 "swq_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 72:
@@ -2301,7 +2307,7 @@ yyreduce:
     {
             context->poCurSelect->where_expr = (yyvsp[0]);
         }
-#line 2305 "swq_parser.cpp" /* yacc.c:1646  */
+#line 2311 "swq_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 74:
@@ -2314,7 +2320,7 @@ yyreduce:
             delete (yyvsp[-3]);
             delete (yyvsp[-1]);
         }
-#line 2318 "swq_parser.cpp" /* yacc.c:1646  */
+#line 2324 "swq_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 75:
@@ -2327,7 +2333,7 @@ yyreduce:
             delete (yyvsp[-3]);
             delete (yyvsp[-1]);
 	    }
-#line 2331 "swq_parser.cpp" /* yacc.c:1646  */
+#line 2337 "swq_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 80:
@@ -2337,7 +2343,7 @@ yyreduce:
             delete (yyvsp[0]);
             (yyvsp[0]) = NULL;
         }
-#line 2341 "swq_parser.cpp" /* yacc.c:1646  */
+#line 2347 "swq_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 81:
@@ -2347,7 +2353,7 @@ yyreduce:
             delete (yyvsp[-1]);
             (yyvsp[-1]) = NULL;
         }
-#line 2351 "swq_parser.cpp" /* yacc.c:1646  */
+#line 2357 "swq_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 82:
@@ -2357,7 +2363,7 @@ yyreduce:
             delete (yyvsp[-1]);
             (yyvsp[-1]) = NULL;
         }
-#line 2361 "swq_parser.cpp" /* yacc.c:1646  */
+#line 2367 "swq_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 83:
@@ -2370,7 +2376,7 @@ yyreduce:
 
         (yyval) = new swq_expr_node( iTable );
     }
-#line 2374 "swq_parser.cpp" /* yacc.c:1646  */
+#line 2380 "swq_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 84:
@@ -2384,7 +2390,7 @@ yyreduce:
 
         (yyval) = new swq_expr_node( iTable );
     }
-#line 2388 "swq_parser.cpp" /* yacc.c:1646  */
+#line 2394 "swq_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 85:
@@ -2398,7 +2404,7 @@ yyreduce:
 
         (yyval) = new swq_expr_node( iTable );
     }
-#line 2402 "swq_parser.cpp" /* yacc.c:1646  */
+#line 2408 "swq_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 86:
@@ -2414,7 +2420,7 @@ yyreduce:
 
         (yyval) = new swq_expr_node( iTable );
     }
-#line 2418 "swq_parser.cpp" /* yacc.c:1646  */
+#line 2424 "swq_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 87:
@@ -2428,7 +2434,7 @@ yyreduce:
 
         (yyval) = new swq_expr_node( iTable );
     }
-#line 2432 "swq_parser.cpp" /* yacc.c:1646  */
+#line 2438 "swq_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 88:
@@ -2444,11 +2450,11 @@ yyreduce:
 
         (yyval) = new swq_expr_node( iTable );
     }
-#line 2448 "swq_parser.cpp" /* yacc.c:1646  */
+#line 2454 "swq_parser.cpp" /* yacc.c:1646  */
     break;
 
 
-#line 2452 "swq_parser.cpp" /* yacc.c:1646  */
+#line 2458 "swq_parser.cpp" /* yacc.c:1646  */
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
