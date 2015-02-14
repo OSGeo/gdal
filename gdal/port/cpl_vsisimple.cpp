@@ -963,6 +963,24 @@ GIntBig CPLGetPhysicalRAM(void)
     return ((GIntBig)sysconf(_SC_PHYS_PAGES)) * sysconf(_SC_PAGESIZE);
 }
 
+#elif defined(__MACH__) && defined(__APPLE__)
+
+#include <sys/types.h>
+#include <sys/sysctl.h>
+
+GIntBig CPLGetPhysicalRAM(void)
+{
+    int mib[2];
+    GIntBig nPhysMem = 0;
+
+    mib[0] = CTL_HW;
+    mib[1] = HW_MEMSIZE;
+    size_t nLengthRes = sizeof(nPhysMem);
+    sysctl(mib, 2, &nPhysMem, &nLengthRes, NULL, 0);
+
+    return nPhysMem;
+}
+
 #elif defined(WIN32)
 
 /* GlobalMemoryStatusEx requires _WIN32_WINNT >= 0x0500 */
