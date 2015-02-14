@@ -62,7 +62,7 @@ In some cases a method may examine the context in which it is called,
 and behave differently:
 
 \code
-$object->method();
+$object->method(); # method called in void context
 $return = $object->method(); # method called in scalar context
 @return = $object->method(); # method called in list context
 \endcode
@@ -122,20 +122,20 @@ Error: RuntimeError OGR Error: Unsupported geometry type
 \code
 use Geo::GDAL;
 BEGIN { $SIG{'__WARN__'} = sub {  print STDERR "Warning: @_"; } }
-Geo::GDAL::Driver('GTiff')->Create('x',10,10,1,'Byte',{a=>'b'});
+Geo::GDAL::Driver('GTiff')->Create('x', 10, 10, 1, 'Byte', { my_unknown_option => 'b' });
 \endcode
 
 Prints: 
 \code
-Warning: Driver GTiff does not support a creation option at site/lib/Geo/GDAL.pm line 771.
+Warning: Driver GTiff does not support my_unknown_option creation option at site/lib/Geo/GDAL.pm line 771.
 \endcode
 
 \section index_footer Note
 
 This documentation is generated from files within the GDAL
-distribution (directory swig/perl) with a tweaked version of <a
-href="http://www.bigsister.ch/doxygenfilter/">Perl Doxygen Filter</a>
-with Doxygen. The modified version is available <a
-href="https://ajolma.net/svn/doxygenfilter/trunk/">here</a>.
+distribution (directory swig/perl) with Doxygen using a Perl module
+Doxygen::Filter::Perl and a tailor made preprocessor. Many methods are
+just interfaces to non-Perl code in the bindings or GDAL and thus
+their code show as blank on these pages.
 
 */
