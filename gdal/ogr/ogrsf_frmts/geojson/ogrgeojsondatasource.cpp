@@ -217,7 +217,7 @@ OGRLayer* OGRGeoJSONDataSource::CreateLayer( const char* pszName_,
         const char* pszAuthority = poSRS->GetAuthorityName(NULL);
         const char* pszAuthorityCode = poSRS->GetAuthorityCode(NULL);
         if (pszAuthority != NULL && pszAuthorityCode != NULL &&
-            strcmp(pszAuthority, "EPSG") == 0)
+            EQUAL(pszAuthority, "EPSG"))
         {
             json_object* poObjCRS = json_object_new_object();
             json_object_object_add(poObjCRS, "type",
