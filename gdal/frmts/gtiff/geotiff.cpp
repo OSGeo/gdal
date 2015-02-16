@@ -10972,7 +10972,6 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
     poDS->nZLevel = GTiffGetZLevel(papszParmList);
     poDS->nLZMAPreset = GTiffGetLZMAPreset(papszParmList);
     poDS->nJpegQuality = GTiffGetJpegQuality(papszParmList);
-    poDS->GetDiscardLsbOption(papszParmList);
 
 #if !defined(BIGTIFF_SUPPORT)
 /* -------------------------------------------------------------------- */
@@ -11025,6 +11024,8 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
                                  "IMAGE_STRUCTURE" );
         }
     }
+
+    poDS->GetDiscardLsbOption(papszParmList);
 
     if( poDS->nPlanarConfig == PLANARCONFIG_CONTIG && nBands != 1 )
         poDS->SetMetadataItem( "INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE" );

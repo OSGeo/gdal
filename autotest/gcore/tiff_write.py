@@ -5579,6 +5579,69 @@ def tiff_write_133():
     return 'success'
 
 ###############################################################################
+# Test DISCARD_LSB
+
+def tiff_write_134():
+
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_134.tif', 1, 1, 3, options = [ 'DISCARD_LSB=0,1,3' ])
+    ds.GetRasterBand(1).Fill(127)
+    ds.GetRasterBand(2).Fill(127)
+    ds.GetRasterBand(3).Fill(127)
+    ds = None
+    ds = gdal.Open('/vsimem/tiff_write_134.tif')
+    cs1 = ds.GetRasterBand(1).Checksum()
+    cs2 = ds.GetRasterBand(2).Checksum()
+    cs3 = ds.GetRasterBand(3).Checksum()
+    if cs1 != 1 or cs2 != 0 or cs3 != 5:
+        gdaltest.post_reason('fail')
+        print(cs1)
+        print(cs2)
+        print(cs3)
+        return 'fail'
+    ds = None
+    gdaltest.tiff_drv.Delete('/vsimem/tiff_write_134.tif')
+    
+    src_ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_134_src.tif', 1, 1, 3)
+    src_ds.GetRasterBand(1).Fill(127)
+    src_ds.GetRasterBand(2).Fill(127)
+    src_ds.GetRasterBand(3).Fill(127)
+    ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_134.tif', src_ds, options = [ 'DISCARD_LSB=0,1,3' ])
+    ds = None
+    ds = gdal.Open('/vsimem/tiff_write_134.tif')
+    cs1 = ds.GetRasterBand(1).Checksum()
+    cs2 = ds.GetRasterBand(2).Checksum()
+    cs3 = ds.GetRasterBand(3).Checksum()
+    if cs1 != 1 or cs2 != 0 or cs3 != 5:
+        gdaltest.post_reason('fail')
+        print(cs1)
+        print(cs2)
+        print(cs3)
+        return 'fail'
+    ds = None
+    gdaltest.tiff_drv.Delete('/vsimem/tiff_write_134_src.tif')
+    gdaltest.tiff_drv.Delete('/vsimem/tiff_write_134.tif')
+
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_134.tif', 1, 1, 3, options = [ 'DISCARD_LSB=3' ])
+    ds.GetRasterBand(1).Fill(127)
+    ds.GetRasterBand(2).Fill(127)
+    ds.GetRasterBand(3).Fill(127)
+    ds = None
+    ds = gdal.Open('/vsimem/tiff_write_134.tif')
+    cs1 = ds.GetRasterBand(1).Checksum()
+    cs2 = ds.GetRasterBand(2).Checksum()
+    cs3 = ds.GetRasterBand(3).Checksum()
+    if cs1 != 5 or cs2 != 5 or cs3 != 5:
+        gdaltest.post_reason('fail')
+        print(cs1)
+        print(cs2)
+        print(cs3)
+        return 'fail'
+    ds = None
+    gdaltest.tiff_drv.Delete('/vsimem/tiff_write_134.tif')
+
+    return 'success'
+    
+###############################################################################
 # Ask to run again tests with GDAL_API_PROXY=YES
 
 def tiff_write_api_proxy():
@@ -5742,12 +5805,13 @@ gdaltest_list = [
     tiff_write_131,
     tiff_write_132,
     tiff_write_133,
+    tiff_write_134,
     #tiff_write_api_proxy,
     tiff_write_cleanup ]
 
 #gdaltest_list = [
 #    tiff_write_1,
-#    tiff_write_133 ]
+#    tiff_write_134 ]
 
 if __name__ == '__main__':
 
