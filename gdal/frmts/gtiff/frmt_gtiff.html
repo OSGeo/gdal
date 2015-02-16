@@ -293,6 +293,64 @@ otherwise libtiff will fail to compress the data.</p>
 <p>
 Note also that the dimensions of the tiles or strips must be a multiple of 8 for PHOTOMETRIC=RGB or 16 for PHOTOMETRIC=YCBCR</p>
 
+<h3>Streaming operations</h3>
+
+Starting with GDAL 2.0, the GeoTIFF driver can support reading or writing TIFF
+files (with some restrictions detailed below) in a streaming compatible way.<p>
+
+When reading a file from /vsistdin/, a named pipe (on Unix), or if forcing streamed
+reading by setting the TIFF_READ_STREAMING configuration option to YES, the GeoTIFF driver
+will assume that the TIFF Image File Directory (IFD) is at the beginning of the file,
+i.e. at offset 8 for a classical TIFF file or at offset 16 for a BigTIFF file.
+The values of the tags of array type must be contained at the beginning of file, after the
+end of the IFD and before the first image strip/tile. The reader must read the
+strips/tiles in the order they are written in the file. For a pixel interleaved file,
+the recommended order for a writer, and thus for a reader, is from top to bottom
+for a strip-organized file or from top to bottom, which a chunk of a block height,
+and left to right for a tile-organized file. For a band interleaved
+file, the above order is recommended with the content of the first band, then the
+content of the second band, etc... Technically this order corresponds to increasing
+offsets in the TileOffsets/StripOffsets tag. This is the order that the GDAL raster
+copy routine will assume.
+<p>
+If the order is not the one described above, the UNORDERED_BLOCKS=YES dataset metadata item
+will be set in the TIFF metadata domain. Each block offset can be determined
+by querying the "BLOCK_OFFSET_[xblock]_[yblock]" band metadata items in the TIFF metadata
+domain (where xblock, yblock is the coordinate of the block), and a reader could use
+that information to determine the appropriate reading order for image blocks.
+<p>
+The files that are streamed into the GeoTIFF driver may be compressed, even if the
+GeoTIFF driver cannot produce such files in streamable output mode (regular creation
+of TIFF files will produce such compatible files for streamed reading).
+<p>
+When writing a file to /vsistdout/, a named file (on Unix), or when definiting
+the STREAMABLE_OUTPUT=YES creation option, the CreateCopy() method of the GeoTIFF driver
+will generate a file with the above defined constraints (related to position of IFD and
+block order), and this
+is only supported for a uncompressed file. The Create() method also supports creating streamable
+compatible files, but the writer must be careful to set the projection, geotransform
+or metadata before writting image blocks (so that the IFD is written at the beginning
+of the file). And when writing image blocks, the order
+of blocks must be the one of the above paragraph, otherwise errors will be reported.
+
+<p>
+Some examples :
+<pre>
+gdal_translate in.tif /vsistdout/ -co TILED=YES | gzip | gunzip | gdal_translate /vsistdin/ out.tif -co TILED=YES -co COMPRESS=DEFLATE
+</pre>
+or
+<pre>
+mkfifo my_fifo
+gdalwarp in.tif my_fifo -t_srs EPSG:3857
+gdal_translate my_fifo out.png -of PNG
+</pre>
+
+<p>
+Note: not all utilities are compatible with such input or output streaming operations,
+and even those which may deal with such files may not manage to deal with them in
+all circumstances, for example if the reading driver drived by the output file is
+not compatible with the block order of the streamed input.
+
 <h3>Configuration options</h3>
 
 <p>

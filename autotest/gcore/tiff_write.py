@@ -5278,6 +5278,299 @@ def tiff_write_132():
     return 'success'
 
 ###############################################################################
+# Test streaming capabilities
+
+def tiff_write_133():
+    
+    src_ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_133.tif', 1024, 1000, 3, options = [ 'STREAMABLE_OUTPUT=YES' ])
+    src_ds.SetGeoTransform([1,2,0,3,0,-2])
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput('EPSG:32601')
+    src_ds.SetProjection(srs.ExportToWkt())
+    src_ds.SetMetadataItem('FOO', 'BAR')
+    src_ds.GetRasterBand(1).SetNoDataValue(127)
+    src_ds.GetRasterBand(1).Fill(64)
+    src_ds.GetRasterBand(2).Fill(127)
+    src_ds.GetRasterBand(3).Fill(184)
+
+    src_ds.FlushCache()
+    gdal.PushErrorHandler()
+    ret = src_ds.SetProjection(srs.ExportToWkt())
+    gdal.PopErrorHandler()
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.PushErrorHandler()
+    ret = src_ds.SetGeoTransform([1,2,0,3,0,-4])
+    gdal.PopErrorHandler()
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.PushErrorHandler()
+    ret = src_ds.SetMetadataItem('FOO', 'BAZ')
+    gdal.PopErrorHandler()
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.PushErrorHandler()
+    ret = src_ds.SetMetadata({})
+    gdal.PopErrorHandler()
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.PushErrorHandler()
+    ret = src_ds.GetRasterBand(1).SetMetadataItem('FOO', 'BAZ')
+    gdal.PopErrorHandler()
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.PushErrorHandler()
+    ret = src_ds.GetRasterBand(1).SetMetadata({})
+    gdal.PopErrorHandler()
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.PushErrorHandler()
+    ret = src_ds.GetRasterBand(1).SetNoDataValue(0)
+    gdal.PopErrorHandler()
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Pixel interleaved
+    out_ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_133_dst.tif', src_ds, options = [ 'STREAMABLE_OUTPUT=YES', 'BLOCKYSIZE=32' ])
+    out_ds = None
+    
+    gdal.SetConfigOption('TIFF_READ_STREAMING', 'YES')
+    ds = gdal.Open('/vsimem/tiff_write_133_dst.tif')
+    gdal.SetConfigOption('TIFF_READ_STREAMING', None)
+    if ds.GetProjectionRef().find('32601') < 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetGeoTransform() != (1.0, 2.0, 0.0, 3.0, 0.0, -2.0):
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetMetadataItem('FOO') != 'BAR':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetMetadataItem('UNORDERED_BLOCKS', 'TIFF') is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    old_val = gdal.GetCacheMax()
+    gdal.SetCacheMax(0)
+    for y in range(1000):
+        got_data = ds.ReadRaster(0, y, 1024, 1)
+        if got_data is None:
+            gdal.SetCacheMax(old_val)
+            gdaltest.post_reason('fail')
+            return 'fail'
+    gdal.SetCacheMax(old_val)
+    ds.FlushCache()
+    for y in range(1000):
+        gdal.PushErrorHandler()
+        got_data = ds.ReadRaster(0, y, 1024, 1)
+        gdal.PopErrorHandler()
+        if got_data is not None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+    ds = None
+    gdaltest.tiff_drv.Delete('/vsimem/tiff_write_133_dst.tif')
+
+    # Tiled
+    out_ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_133_dst.tif', src_ds, options = [ 'STREAMABLE_OUTPUT=YES', 'TILED=YES' ])
+    out_ds = None
+    
+    gdal.SetConfigOption('TIFF_READ_STREAMING', 'YES')
+    ds = gdal.Open('/vsimem/tiff_write_133_dst.tif')
+    gdal.SetConfigOption('TIFF_READ_STREAMING', None)
+    if ds.GetProjectionRef().find('32601') < 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetGeoTransform() != (1.0, 2.0, 0.0, 3.0, 0.0, -2.0):
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetMetadataItem('FOO') != 'BAR':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetMetadataItem('UNORDERED_BLOCKS', 'TIFF') is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    old_val = gdal.GetCacheMax()
+    gdal.SetCacheMax(0)
+    for yblock in range(int((1000 + 256-1) / 256)):
+        y = 256 * yblock
+        ysize = 256
+        if y + ysize > ds.RasterYSize:
+            ysize = ds.RasterYSize - y
+        for xblock in range(int((1024 + 256-1) / 256)):
+            x = 256 * xblock
+            xsize = 256
+            if x + xsize > ds.RasterXSize:
+                xsize = ds.RasterXSize - x
+            got_data = ds.ReadRaster(x, y, xsize, ysize)
+            if got_data is None:
+                gdal.SetCacheMax(old_val)
+                gdaltest.post_reason('fail')
+                return 'fail'
+    gdal.SetCacheMax(old_val)
+
+    ds = None
+    gdaltest.tiff_drv.Delete('/vsimem/tiff_write_133_dst.tif')
+
+    # Band interleaved
+    out_ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_133_dst.tif', src_ds, options = [ 'STREAMABLE_OUTPUT=YES', 'INTERLEAVE=BAND' ])
+    out_ds = None
+    
+    gdal.SetConfigOption('TIFF_READ_STREAMING', 'YES')
+    ds = gdal.Open('/vsimem/tiff_write_133_dst.tif')
+    gdal.SetConfigOption('TIFF_READ_STREAMING', None)
+    if ds.GetMetadataItem('UNORDERED_BLOCKS', 'TIFF') is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    old_val = gdal.GetCacheMax()
+    gdal.SetCacheMax(0)
+    for band in range(3):
+        for y in range(1000):
+            got_data = ds.GetRasterBand(band+1).ReadRaster(0, y, 1024, 1)
+            if got_data is None:
+                gdal.SetCacheMax(old_val)
+                gdaltest.post_reason('fail')
+                return 'fail'
+    gdal.SetCacheMax(old_val)
+    ds = None
+    gdaltest.tiff_drv.Delete('/vsimem/tiff_write_133_dst.tif')
+
+    # BIGTIFF
+    md = gdaltest.tiff_drv.GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') >= 0:
+        out_ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_133_dst.tif', src_ds, options = [ 'STREAMABLE_OUTPUT=YES', 'BIGTIFF=YES' ])
+        out_ds = None
+        
+        gdal.SetConfigOption('TIFF_READ_STREAMING', 'YES')
+        ds = gdal.Open('/vsimem/tiff_write_133_dst.tif')
+        gdal.SetConfigOption('TIFF_READ_STREAMING', None)
+        if ds.GetMetadataItem('UNORDERED_BLOCKS', 'TIFF') is not None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        old_val = gdal.GetCacheMax()
+        gdal.SetCacheMax(0)
+        for y in range(1000):
+            got_data = ds.ReadRaster(0, y, 1024, 1)
+            if got_data is None:
+                gdal.SetCacheMax(old_val)
+                gdaltest.post_reason('fail')
+                return 'fail'
+        gdal.SetCacheMax(old_val)
+        ds = None
+        gdaltest.tiff_drv.Delete('/vsimem/tiff_write_133_dst.tif')
+    
+    # Compression not supported
+    gdal.PushErrorHandler()
+    out_ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_133_dst.tif', src_ds, options = [ 'STREAMABLE_OUTPUT=YES', 'COMPRESS=DEFLATE' ])
+    gdal.PopErrorHandler()
+    if out_ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Test writing into a non authorized file
+    ds = gdaltest.tiff_drv.Create('/foo/bar', 1024, 1000, 3, options = [ 'STREAMABLE_OUTPUT=YES', 'BLOCKYSIZE=1' ])
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.PushErrorHandler()
+    out_ds = gdaltest.tiff_drv.CreateCopy('/foo/bar', src_ds, options = [ 'STREAMABLE_OUTPUT=YES'] )
+    gdal.PopErrorHandler()
+    if out_ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    src_ds = None
+    
+    # Classical TIFF with IFD not at offset 8
+    gdal.SetConfigOption('TIFF_READ_STREAMING', 'YES')
+    gdal.PushErrorHandler()
+    ds = gdal.Open('data/byte.tif')
+    gdal.PopErrorHandler()
+    gdal.SetConfigOption('TIFF_READ_STREAMING', None)
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # BigTIFF with IFD not at offset 16
+    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') >= 0:
+        ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_133.tif', 1024, 1000, 3, options = [ 'BIGTIFF=YES' ])
+        ds.GetRasterBand(1).Fill(0)
+        ds.FlushCache()
+        ds.SetGeoTransform([1,2,0,3,0,-2])
+        ds = None
+        
+        gdal.SetConfigOption('TIFF_READ_STREAMING', 'YES')
+        gdal.PushErrorHandler()
+        ds = gdal.Open('/vsimem/tiff_write_133.tif')
+        gdal.PopErrorHandler()
+        gdal.SetConfigOption('TIFF_READ_STREAMING', None)
+        if ds is not None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+    # Test reading strips in not increasing order
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_133.tif', 1024, 1000, 3, options = [ 'BLOCKYSIZE=1' ])
+    for y in range(1000):
+        ds.WriteRaster(0, 1000-y-1, 1024, 1, ''.join('a' for i in range(3*1024)))
+        ds.FlushCache()
+    ds = None
+    
+    gdal.SetConfigOption('TIFF_READ_STREAMING', 'YES')
+    gdal.PushErrorHandler()
+    ds = gdal.Open('/vsimem/tiff_write_133.tif')
+    gdal.PopErrorHandler()
+    gdal.SetConfigOption('TIFF_READ_STREAMING', None)
+    if ds.GetMetadataItem('UNORDERED_BLOCKS', 'TIFF') != 'YES':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    old_val = gdal.GetCacheMax()
+    gdal.SetCacheMax(0)
+    for y in range(1000):
+        got_data = ds.ReadRaster(0, 1000-y-1, 1024, 1)
+        if got_data is None:
+            gdal.SetCacheMax(old_val)
+            gdaltest.post_reason('fail')
+            return 'fail'
+    gdal.SetCacheMax(old_val)
+
+    # Test writing strips in not increasing order in a streamable output
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_133.tif', 1024, 1000, 3, options = [ 'STREAMABLE_OUTPUT=YES', 'BLOCKYSIZE=1' ])
+    gdal.ErrorReset()
+    gdal.PushErrorHandler()
+    ret = ds.WriteRaster(0, 999, 1024, 1, ''.join('a' for i in range(3*1024)))
+    ds.FlushCache()
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    # Test writing tiles in not increasing order in a streamable output
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_133.tif', 1024, 1000, 3, options = [ 'STREAMABLE_OUTPUT=YES', 'TILED=YES' ])
+    gdal.ErrorReset()
+    gdal.PushErrorHandler()
+    ret = ds.WriteRaster(256, 256, 256, 256, ''.join('a' for i in range(3*256*256)))
+    ds.FlushCache()
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    gdaltest.tiff_drv.Delete('/vsimem/tiff_write_133.tif')
+
+    
+    return 'success'
+
+###############################################################################
 # Ask to run again tests with GDAL_API_PROXY=YES
 
 def tiff_write_api_proxy():
@@ -5440,8 +5733,13 @@ gdaltest_list = [
     tiff_write_130,
     tiff_write_131,
     tiff_write_132,
+    tiff_write_133,
     #tiff_write_api_proxy,
     tiff_write_cleanup ]
+
+#gdaltest_list = [
+#    tiff_write_1,
+#    tiff_write_133 ]
 
 if __name__ == '__main__':
 
