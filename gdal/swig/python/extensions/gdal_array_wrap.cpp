@@ -2724,18 +2724,19 @@ SWIG_Python_MustGetPtr(PyObject *obj, swig_type_info *ty, int argnum, int flags)
 
 #define SWIGTYPE_p_CPLVirtualMemShadow swig_types[0]
 #define SWIGTYPE_p_GDALDataType swig_types[1]
-#define SWIGTYPE_p_GDALProgressFunc swig_types[2]
-#define SWIGTYPE_p_GDALRasterAttributeTableShadow swig_types[3]
-#define SWIGTYPE_p_GDALRasterBandShadow swig_types[4]
-#define SWIGTYPE_p_PyArrayObject swig_types[5]
-#define SWIGTYPE_p_char swig_types[6]
-#define SWIGTYPE_p_f_double_p_q_const__char_p_void__int swig_types[7]
-#define SWIGTYPE_p_int swig_types[8]
-#define SWIGTYPE_p_p_CPLVirtualMemShadow swig_types[9]
-#define SWIGTYPE_p_p_void swig_types[10]
-#define SWIGTYPE_p_size_t swig_types[11]
-static swig_type_info *swig_types[13];
-static swig_module_info swig_module = {swig_types, 12, 0, 0, 0, 0};
+#define SWIGTYPE_p_GDALDatasetShadow swig_types[2]
+#define SWIGTYPE_p_GDALProgressFunc swig_types[3]
+#define SWIGTYPE_p_GDALRasterAttributeTableShadow swig_types[4]
+#define SWIGTYPE_p_GDALRasterBandShadow swig_types[5]
+#define SWIGTYPE_p_PyArrayObject swig_types[6]
+#define SWIGTYPE_p_char swig_types[7]
+#define SWIGTYPE_p_f_double_p_q_const__char_p_void__int swig_types[8]
+#define SWIGTYPE_p_int swig_types[9]
+#define SWIGTYPE_p_p_CPLVirtualMemShadow swig_types[10]
+#define SWIGTYPE_p_p_void swig_types[11]
+#define SWIGTYPE_p_size_t swig_types[12]
+static swig_type_info *swig_types[14];
+static swig_module_info swig_module = {swig_types, 13, 0, 0, 0, 0};
 #define SWIG_TypeQuery(name) SWIG_TypeQueryModule(&swig_module, &swig_module, name)
 #define SWIG_MangledTypeQuery(name) SWIG_MangledTypeQueryModule(&swig_module, &swig_module, name)
 
@@ -3147,9 +3148,11 @@ static void GDALPythonFreeCStr(void* ptr, int bToFree)
 
 #ifdef DEBUG 
 typedef struct GDALRasterBandHS GDALRasterBandShadow;
+typedef struct GDALDatasetHS GDALDatasetShadow;
 typedef struct RasterAttributeTableHS GDALRasterAttributeTableShadow;
 #else
 typedef void GDALRasterBandShadow;
+typedef void GDALDatasetShadow;
 typedef void GDALRasterAttributeTableShadow;
 #endif
 
@@ -3745,6 +3748,55 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
     return  GDALRasterIOEx( band, (bWrite) ? GF_Write : GF_Read, xoff, yoff, xsize, ysize,
                           psArray->data, nxsize, nysize,
                           ntype, pixel_space, line_space, &sExtraArg );
+  }
+
+
+  CPLErr DatasetIONumPy( GDALDatasetShadow* ds, int bWrite, int xoff, int yoff, int xsize, int ysize,
+                         PyArrayObject *psArray,
+                         int buf_type,
+                         GDALRIOResampleAlg resample_alg,
+                         GDALProgressFunc callback = NULL,
+                         void* callback_data = NULL )
+{
+    GDALDataType ntype  = (GDALDataType)buf_type;
+    if( psArray->nd != 3 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Illegal numpy array rank %d.", 
+                  psArray->nd );
+        return CE_Failure;
+    }
+
+    int xdim = 2;
+    int ydim = 1;
+
+    int bandsize, nxsize, nysize;
+    GIntBig pixel_space, line_space, band_space;
+    nxsize = psArray->dimensions[xdim];
+    nysize = psArray->dimensions[ydim];
+    bandsize = psArray->dimensions[0];
+    if( bandsize != GDALGetRasterCount(ds) )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Illegal numpy array band dimension %d. Expected value: %d", 
+                  bandsize, GDALGetRasterCount(ds) );
+        return CE_Failure;
+    }
+    pixel_space = psArray->strides[xdim];
+    line_space = psArray->strides[ydim];
+    band_space = psArray->strides[0];
+
+    GDALRasterIOExtraArg sExtraArg;
+    INIT_RASTERIO_EXTRA_ARG(sExtraArg);
+    sExtraArg.eResampleAlg = resample_alg;
+    sExtraArg.pfnProgress = callback;
+    sExtraArg.pProgressData = callback_data;
+
+    return  GDALDatasetRasterIOEx( ds, (bWrite) ? GF_Write : GF_Read, xoff, yoff, xsize, ysize,
+                                   psArray->data, nxsize, nysize,
+                                   ntype,
+                                   bandsize, NULL,
+                                   pixel_space, line_space, band_space, &sExtraArg );
   }
 
 
@@ -4513,6 +4565,164 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_DatasetIONumPy(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
+  PyObject *resultobj = 0;
+  GDALDatasetShadow *arg1 = (GDALDatasetShadow *) 0 ;
+  int arg2 ;
+  int arg3 ;
+  int arg4 ;
+  int arg5 ;
+  int arg6 ;
+  PyArrayObject *arg7 = (PyArrayObject *) 0 ;
+  int arg8 ;
+  GDALRIOResampleAlg arg9 ;
+  GDALProgressFunc arg10 = (GDALProgressFunc) NULL ;
+  void *arg11 = (void *) NULL ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int val2 ;
+  int ecode2 = 0 ;
+  int val3 ;
+  int ecode3 = 0 ;
+  int val4 ;
+  int ecode4 = 0 ;
+  int val5 ;
+  int ecode5 = 0 ;
+  int val6 ;
+  int ecode6 = 0 ;
+  int val8 ;
+  int ecode8 = 0 ;
+  int val9 ;
+  int ecode9 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
+  PyObject * obj4 = 0 ;
+  PyObject * obj5 = 0 ;
+  PyObject * obj6 = 0 ;
+  PyObject * obj7 = 0 ;
+  PyObject * obj8 = 0 ;
+  PyObject * obj9 = 0 ;
+  PyObject * obj10 = 0 ;
+  char *  kwnames[] = {
+    (char *) "ds",(char *) "bWrite",(char *) "xoff",(char *) "yoff",(char *) "xsize",(char *) "ysize",(char *) "psArray",(char *) "buf_type",(char *) "resample_alg",(char *) "callback",(char *) "callback_data", NULL 
+  };
+  CPLErr result;
+  
+  /* %typemap(arginit) ( const char* callback_data=NULL)  */
+  PyProgressData *psProgressInfo;
+  psProgressInfo = (PyProgressData *) CPLCalloc(1,sizeof(PyProgressData));
+  psProgressInfo->nLastReported = -1;
+  psProgressInfo->psPyCallback = NULL;
+  psProgressInfo->psPyCallbackData = NULL;
+  arg11 = psProgressInfo;
+  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OOOOOOOOO|OO:DatasetIONumPy",kwnames,&obj0,&obj1,&obj2,&obj3,&obj4,&obj5,&obj6,&obj7,&obj8,&obj9,&obj10)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "DatasetIONumPy" "', argument " "1"" of type '" "GDALDatasetShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALDatasetShadow * >(argp1);
+  ecode2 = SWIG_AsVal_int(obj1, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "DatasetIONumPy" "', argument " "2"" of type '" "int""'");
+  } 
+  arg2 = static_cast< int >(val2);
+  ecode3 = SWIG_AsVal_int(obj2, &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "DatasetIONumPy" "', argument " "3"" of type '" "int""'");
+  } 
+  arg3 = static_cast< int >(val3);
+  ecode4 = SWIG_AsVal_int(obj3, &val4);
+  if (!SWIG_IsOK(ecode4)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "DatasetIONumPy" "', argument " "4"" of type '" "int""'");
+  } 
+  arg4 = static_cast< int >(val4);
+  ecode5 = SWIG_AsVal_int(obj4, &val5);
+  if (!SWIG_IsOK(ecode5)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode5), "in method '" "DatasetIONumPy" "', argument " "5"" of type '" "int""'");
+  } 
+  arg5 = static_cast< int >(val5);
+  ecode6 = SWIG_AsVal_int(obj5, &val6);
+  if (!SWIG_IsOK(ecode6)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode6), "in method '" "DatasetIONumPy" "', argument " "6"" of type '" "int""'");
+  } 
+  arg6 = static_cast< int >(val6);
+  {
+    /* %typemap(in,numinputs=1) (PyArrayObject  *psArray) */
+    if (obj6 != NULL && PyArray_Check(obj6))
+    {
+      arg7 = (PyArrayObject*)(obj6);
+    }
+    else
+    {
+      PyErr_SetString(PyExc_TypeError, "not a numpy array");
+      SWIG_fail;
+    }
+  }
+  ecode8 = SWIG_AsVal_int(obj7, &val8);
+  if (!SWIG_IsOK(ecode8)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode8), "in method '" "DatasetIONumPy" "', argument " "8"" of type '" "int""'");
+  } 
+  arg8 = static_cast< int >(val8);
+  ecode9 = SWIG_AsVal_int(obj8, &val9);
+  if (!SWIG_IsOK(ecode9)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode9), "in method '" "DatasetIONumPy" "', argument " "9"" of type '" "GDALRIOResampleAlg""'");
+  } 
+  arg9 = static_cast< GDALRIOResampleAlg >(val9);
+  if (obj9) {
+    {
+      /* %typemap(in) (GDALProgressFunc callback = NULL) */
+      /* callback_func typemap */
+      if (obj9 && obj9 != Py_None ) {
+        void* cbfunction = NULL;
+        SWIG_ConvertPtr( obj9, 
+          (void**)&cbfunction,
+          SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
+          SWIG_POINTER_EXCEPTION | 0 );
+        
+        if ( cbfunction == GDALTermProgress ) {
+          arg10 = GDALTermProgress;
+        } else {
+          if (!PyCallable_Check(obj9)) {
+            PyErr_SetString( PyExc_RuntimeError, 
+              "Object given is not a Python function" );
+            SWIG_fail;
+          }
+          psProgressInfo->psPyCallback = obj9;
+          arg10 = PyProgressProxy;
+        }
+        
+      }
+      
+    }
+  }
+  if (obj10) {
+    {
+      /* %typemap(in) ( void* callback_data=NULL)  */
+      psProgressInfo->psPyCallbackData = obj10 ;
+    }
+  }
+  result = (CPLErr)DatasetIONumPy(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9,arg10,arg11);
+  resultobj = SWIG_From_int(static_cast< int >(result));
+  {
+    /* %typemap(freearg) ( void* callback_data=NULL)  */
+    
+    CPLFree(psProgressInfo);
+    
+  }
+  return resultobj;
+fail:
+  {
+    /* %typemap(freearg) ( void* callback_data=NULL)  */
+    
+    CPLFree(psProgressInfo);
+    
+  }
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_VirtualMemGetArray(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   CPLVirtualMemShadow *arg1 = (CPLVirtualMemShadow *) 0 ;
@@ -4841,6 +5051,12 @@ static PyMethodDef SwigMethods[] = {
 		"    GDALRIOResampleAlg resample_alg, GDALProgressFunc callback = None, \n"
 		"    void callback_data = None) -> CPLErr\n"
 		""},
+	 { (char *)"DatasetIONumPy", (PyCFunction) _wrap_DatasetIONumPy, METH_VARARGS | METH_KEYWORDS, (char *)"\n"
+		"DatasetIONumPy(Dataset ds, int bWrite, int xoff, int yoff, int xsize, \n"
+		"    int ysize, PyArrayObject psArray, int buf_type, \n"
+		"    GDALRIOResampleAlg resample_alg, GDALProgressFunc callback = None, \n"
+		"    void callback_data = None) -> CPLErr\n"
+		""},
 	 { (char *)"VirtualMemGetArray", _wrap_VirtualMemGetArray, METH_VARARGS, (char *)"VirtualMemGetArray(VirtualMem virtualmem)"},
 	 { (char *)"RATValuesIONumPyWrite", (PyCFunction) _wrap_RATValuesIONumPyWrite, METH_VARARGS | METH_KEYWORDS, (char *)"\n"
 		"RATValuesIONumPyWrite(RasterAttributeTable poRAT, int nField, int nStart, \n"
@@ -4858,6 +5074,7 @@ static PyMethodDef SwigMethods[] = {
 
 static swig_type_info _swigt__p_CPLVirtualMemShadow = {"_p_CPLVirtualMemShadow", "CPLVirtualMemShadow *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_GDALDataType = {"_p_GDALDataType", "GDALDataType *", 0, 0, (void*)0, 0};
+static swig_type_info _swigt__p_GDALDatasetShadow = {"_p_GDALDatasetShadow", "GDALDatasetShadow *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_GDALProgressFunc = {"_p_GDALProgressFunc", "GDALProgressFunc *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_GDALRasterAttributeTableShadow = {"_p_GDALRasterAttributeTableShadow", "GDALRasterAttributeTableShadow *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_GDALRasterBandShadow = {"_p_GDALRasterBandShadow", "GDALRasterBandShadow *", 0, 0, (void*)0, 0};
@@ -4872,6 +5089,7 @@ static swig_type_info _swigt__p_size_t = {"_p_size_t", "size_t *", 0, 0, (void*)
 static swig_type_info *swig_type_initial[] = {
   &_swigt__p_CPLVirtualMemShadow,
   &_swigt__p_GDALDataType,
+  &_swigt__p_GDALDatasetShadow,
   &_swigt__p_GDALProgressFunc,
   &_swigt__p_GDALRasterAttributeTableShadow,
   &_swigt__p_GDALRasterBandShadow,
@@ -4886,6 +5104,7 @@ static swig_type_info *swig_type_initial[] = {
 
 static swig_cast_info _swigc__p_CPLVirtualMemShadow[] = {  {&_swigt__p_CPLVirtualMemShadow, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GDALDataType[] = {  {&_swigt__p_GDALDataType, 0, 0, 0},{0, 0, 0, 0}};
+static swig_cast_info _swigc__p_GDALDatasetShadow[] = {  {&_swigt__p_GDALDatasetShadow, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GDALProgressFunc[] = {  {&_swigt__p_GDALProgressFunc, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GDALRasterAttributeTableShadow[] = {  {&_swigt__p_GDALRasterAttributeTableShadow, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GDALRasterBandShadow[] = {  {&_swigt__p_GDALRasterBandShadow, 0, 0, 0},{0, 0, 0, 0}};
@@ -4900,6 +5119,7 @@ static swig_cast_info _swigc__p_size_t[] = {  {&_swigt__p_size_t, 0, 0, 0},{0, 0
 static swig_cast_info *swig_cast_initial[] = {
   _swigc__p_CPLVirtualMemShadow,
   _swigc__p_GDALDataType,
+  _swigc__p_GDALDatasetShadow,
   _swigc__p_GDALProgressFunc,
   _swigc__p_GDALRasterAttributeTableShadow,
   _swigc__p_GDALRasterBandShadow,

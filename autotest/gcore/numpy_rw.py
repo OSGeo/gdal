@@ -153,6 +153,25 @@ def numpy_rw_5():
         gdaltest.post_reason( 'value read improperly.' )
         return 'fail'
 
+    array = gdalnumeric.LoadFile('data/rgbsmall.tif', buf_xsize=1, buf_ysize=1, resample_alg = gdal.GRIORA_Bilinear)
+    if array.shape[0] != 3 or array.shape[1] != 1 or array.shape[2] != 1:
+        print(array.shape)
+        gdaltest.post_reason( 'wrong array shape.' )
+        return 'fail'
+    if array[0][0][0] != 70 or array[1][0][0] != 97 or array[2][0][0] != 29:
+        print(array)
+        gdaltest.post_reason( 'value read improperly.' )
+        return 'fail'
+
+    import numpy
+    array = numpy.zeros([3, 1, 1], dtype = numpy.uint8)
+    ds = gdal.Open('data/rgbsmall.tif')
+    ds.ReadAsArray( buf_obj = array, resample_alg = gdal.GRIORA_Bilinear )
+    if array[0][0][0] != 70 or array[1][0][0] != 97 or array[2][0][0] != 29:
+        print(array)
+        gdaltest.post_reason( 'value read improperly.' )
+        return 'fail'
+
     return 'success'
 
 ###############################################################################
@@ -211,7 +230,19 @@ def numpy_rw_7():
     ds2 = gdalnumeric.OpenArray( array )
     if ds2.GetRasterBand(1).Checksum() != ds.GetRasterBand(1).Checksum():
         return 'fail'
-        
+
+    # With a multi band file
+    ds = gdal.Open( 'data/rgbsmall.tif' )
+    array = numpy.zeros( [ds.RasterCount, ds.RasterYSize, ds.RasterXSize], numpy.uint8 )
+    array_res = ds.ReadAsArray(buf_obj = array)
+    
+    if array is not array_res:
+        return 'fail'
+
+    ds2 = gdalnumeric.OpenArray( array )
+    if ds2.GetRasterBand(1).Checksum() != ds.GetRasterBand(1).Checksum():
+        return 'fail'
+
     return 'success'
     
 ###############################################################################
@@ -424,6 +455,15 @@ def numpy_rw_13():
     except:
         pass
 
+    # Same with 3 dimensions
+    ar = numpy.empty([1, 1, 2], dtype = numpy.uint8)
+    try:
+        ds.GetRasterBand(1).ReadAsArray( buf_obj = ar, buf_xsize = 2, buf_ysize = 2 )
+        gdaltest.post_reason('expected "Specified buf_ysize not consistant with buffer shape"')
+        return 'fail'
+    except:
+        pass
+
     # Try call with inconsistant parameters
     ar = numpy.empty([1, 2], dtype = numpy.uint8)
     try:
@@ -432,11 +472,134 @@ def numpy_rw_13():
         return 'fail'
     except:
         pass
+    
+    # Inconsistent data type
+    ar = numpy.empty([1, 2], dtype = numpy.uint8)
+    try:
+        ds.GetRasterBand(1).ReadAsArray( buf_obj = ar, buf_type = gdal.GDT_Int16 )
+        gdaltest.post_reason('expected "Specified buf_type not consistant with array type"')
+        return 'fail'
+    except:
+        pass
 
     # This one should be OK !
     ar = numpy.zeros([1, 2], dtype = numpy.uint8)
     ds.GetRasterBand(1).ReadAsArray( buf_obj = ar, buf_xsize = 2, buf_ysize = 1 )
     if ar[0][0] != 100 or ar[0][1] != 200:
+        gdaltest.post_reason('did not get expected values')
+        print(ar)
+        return 'fail'
+
+    # This one too
+    ar = numpy.zeros([1, 1, 2], dtype = numpy.uint8)
+    ds.GetRasterBand(1).ReadAsArray( buf_obj = ar )
+    if ar[0][0][0] != 100 or ar[0][0][1] != 200:
+        gdaltest.post_reason('did not get expected values')
+        print(ar)
+        return 'fail'
+
+    # This one too
+    ar = numpy.zeros([1, 1, 2], dtype = numpy.uint8)
+    ds.ReadAsArray( buf_obj = ar )
+    if ar[0][0][0] != 100 or ar[0][0][1] != 200:
+        gdaltest.post_reason('did not get expected values')
+        print(ar)
+        return 'fail'
+
+    # This one too
+    ar = ds.ReadAsArray()
+    if ar[0][0] != 100 or ar[0][1] != 200:
+        gdaltest.post_reason('did not get expected values')
+        print(ar)
+        return 'fail'
+
+    ds = None
+
+    # With a multiband file
+    drv = gdal.GetDriverByName( 'MEM' )
+    ds = drv.Create( '', 2, 1, 3, gdal.GDT_Byte )
+    ar = numpy.empty([3, 1, 2], dtype = numpy.uint8)
+    ar[0][0][0] = 100
+    ar[0][0][1] = 200
+    ar[1][0][0] = 101
+    ar[1][0][1] = 201
+    ar[2][0][0] = 102
+    ar[2][0][1] = 202
+    for i in range(3):
+        ds.GetRasterBand(i+1).WriteArray( ar[i] )
+
+    ar = numpy.empty([3, 1, 2], dtype = numpy.int64)
+    try:
+        ds.ReadAsArray( buf_obj = ar )
+        gdaltest.post_reason('expected "ValueError: array does not have corresponding GDAL data type"')
+        return 'fail'
+    except:
+        pass
+
+    # Try call with inconsistant parameters
+    ar = numpy.empty([3, 1, 2], dtype = numpy.uint8)
+    try:
+        ds.ReadAsArray( buf_obj = ar, buf_xsize = 2, buf_ysize = 2 )
+        gdaltest.post_reason('expected "Specified buf_ysize not consistant with buffer shape"')
+        return 'fail'
+    except:
+        pass
+
+    # With 2 dimensions
+    ar = numpy.empty([1, 2], dtype = numpy.uint8)
+    try:
+        ds.ReadAsArray( buf_obj = ar )
+        gdaltest.post_reason('expected "ValueError: Array should have 3 dimensions"')
+        return 'fail'
+    except:
+        pass
+
+    # Try call with inconsistant parameters
+    ar = numpy.empty([3, 1, 2], dtype = numpy.uint8)
+    try:
+        ds.ReadAsArray( buf_obj = ar, buf_xsize = 1, buf_ysize = 1 )
+        gdaltest.post_reason('expected "Specified buf_xsize not consistant with buffer shape"')
+        return 'fail'
+    except:
+        pass
+    
+    # Inconsistent data type
+    ar = numpy.empty([3, 1, 2], dtype = numpy.uint8)
+    try:
+        ds.ReadAsArray( buf_obj = ar, buf_type = gdal.GDT_Int16 )
+        gdaltest.post_reason('expected "Specified buf_type not consistant with array type"')
+        return 'fail'
+    except:
+        pass
+
+    # Not enough space in first dimension
+    ar = numpy.empty([2, 1, 2], dtype = numpy.uint8)
+    try:
+        ds.ReadAsArray( buf_obj = ar )
+        gdaltest.post_reason('expected "Array should have space for 3 bands"')
+        return 'fail'
+    except:
+        pass
+    
+    # This one should be OK !
+    ar = numpy.zeros([3, 1, 2], dtype = numpy.uint8)
+    ds.ReadAsArray( buf_obj = ar, buf_xsize = 2, buf_ysize = 1, buf_type = gdal.GDT_Byte )
+    if ar[0][0][0] != 100 or ar[0][0][1] != 200 or ar[1][0][0] != 101 or ar[1][0][1] != 201 or ar[2][0][0] != 102 or ar[2][0][1] != 202:
+        gdaltest.post_reason('did not get expected values')
+        print(ar)
+        return 'fail'
+
+    # This one too
+    ar = numpy.zeros([3, 1, 2], dtype = numpy.uint8)
+    ds.ReadAsArray( buf_obj = ar )
+    if ar[0][0][0] != 100 or ar[0][0][1] != 200 or ar[1][0][0] != 101 or ar[1][0][1] != 201 or ar[2][0][0] != 102 or ar[2][0][1] != 202:
+        gdaltest.post_reason('did not get expected values')
+        print(ar)
+        return 'fail'
+
+    # This one too
+    ar = ds.ReadAsArray()
+    if ar[0][0][0] != 100 or ar[0][0][1] != 200 or ar[1][0][0] != 101 or ar[1][0][1] != 201 or ar[2][0][0] != 102 or ar[2][0][1] != 202:
         gdaltest.post_reason('did not get expected values')
         print(ar)
         return 'fail'

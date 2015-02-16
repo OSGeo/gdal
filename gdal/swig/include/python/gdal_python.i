@@ -311,15 +311,18 @@ int wrapper_VSIFReadL( void **buf, int nMembSize, int nMembCount, VSILFILE *fp)
                                     resample_alg, callback, callback_data)
 
   def ReadAsArray(self, xoff=0, yoff=0, win_xsize=None, win_ysize=None,
-                  buf_xsize=None, buf_ysize=None, buf_obj=None,
+                  buf_xsize=None, buf_ysize=None, buf_type=None, buf_obj=None,
                   resample_alg = GRIORA_NearestNeighbour,
                   callback = None,
                   callback_data = None):
+      """ Reading a chunk of a GDAL band into a numpy array. The optional (buf_xsize,buf_ysize,buf_type)
+      parameters should generally not be specified if buf_obj is specified. The array is returned"""
+
       import gdalnumeric
 
       return gdalnumeric.BandReadAsArray( self, xoff, yoff,
                                           win_xsize, win_ysize,
-                                          buf_xsize, buf_ysize, buf_obj,
+                                          buf_xsize, buf_ysize, buf_type, buf_obj,
                                           resample_alg = resample_alg,
                                           callback = callback,
                                           callback_data = callback_data)
@@ -510,11 +513,16 @@ CPLErr ReadRaster1(  int xoff, int yoff, int xsize, int ysize,
 %pythoncode %{
 
     def ReadAsArray(self, xoff=0, yoff=0, xsize=None, ysize=None, buf_obj=None,
+                    buf_xsize = None, buf_ysize = None, buf_type = None,
                     resample_alg = GRIORA_NearestNeighbour,
                     callback = None,
                     callback_data = None):
+        """ Reading a chunk of a GDAL band into a numpy array. The optional (buf_xsize,buf_ysize,buf_type)
+        parameters should generally not be specified if buf_obj is specified. The array is returned"""
+
         import gdalnumeric
         return gdalnumeric.DatasetReadAsArray( self, xoff, yoff, xsize, ysize, buf_obj,
+                                               buf_xsize, buf_ysize, buf_type,
                                                resample_alg = resample_alg,
                                                callback = callback,
                                                callback_data = callback_data )

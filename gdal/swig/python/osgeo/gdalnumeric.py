@@ -1,2 +1,2 @@
-from gdal_array import *
+from osgeo.gdal_array import *
 from numpy import *
