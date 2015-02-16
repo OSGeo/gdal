@@ -304,11 +304,11 @@ will assume that the TIFF Image File Directory (IFD) is at the beginning of the 
 i.e. at offset 8 for a classical TIFF file or at offset 16 for a BigTIFF file.
 The values of the tags of array type must be contained at the beginning of file, after the
 end of the IFD and before the first image strip/tile. The reader must read the
-strips/tiles in the order they are written in the file. For a pixel interleaved file,
+strips/tiles in the order they are written in the file. For a pixel interleaved file (PlanarConfiguration=Contig),
 the recommended order for a writer, and thus for a reader, is from top to bottom
 for a strip-organized file or from top to bottom, which a chunk of a block height,
-and left to right for a tile-organized file. For a band interleaved
-file, the above order is recommended with the content of the first band, then the
+and left to right for a tile-organized file. For a band organized file (PlanarConfiguration=Separate),
+the above order is recommended with the content of the first band, then the
 content of the second band, etc... Technically this order corresponds to increasing
 offsets in the TileOffsets/StripOffsets tag. This is the order that the GDAL raster
 copy routine will assume.
@@ -323,7 +323,7 @@ The files that are streamed into the GeoTIFF driver may be compressed, even if t
 GeoTIFF driver cannot produce such files in streamable output mode (regular creation
 of TIFF files will produce such compatible files for streamed reading).
 <p>
-When writing a file to /vsistdout/, a named file (on Unix), or when definiting
+When writing a file to /vsistdout/, a named pipe (on Unix), or when definiting
 the STREAMABLE_OUTPUT=YES creation option, the CreateCopy() method of the GeoTIFF driver
 will generate a file with the above defined constraints (related to position of IFD and
 block order), and this
