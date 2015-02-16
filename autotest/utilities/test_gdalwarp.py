@@ -779,7 +779,7 @@ def test_gdalwarp_29():
     return 'success'
 
 ###############################################################################
-# Test the effect of the -wo OPTIMIZE_SIZE=TRUE option (#3459, #1866)
+# Test the effect of the -wo OPTIMIZE_SIZE=TRUE and -wo STREAMABLE_OUTPUT=TRUE options (#3459, #1866)
 
 def test_gdalwarp_30():
     if test_cli_utilities.get_gdalwarp_path() is None:
@@ -791,8 +791,12 @@ def test_gdalwarp_30():
     # Second run : with  -wo OPTIMIZE_SIZE=TRUE
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + " data/w_jpeg.tiff tmp/testgdalwarp30_2.tif  -t_srs EPSG:3785 -co COMPRESS=LZW -wm 500000 -wo OPTIMIZE_SIZE=TRUE  --config GDAL_CACHEMAX 1 -ts 1000 500 -co TILED=YES")
 
+    # Third run : with  -wo STREAMABLE_OUTPUT=TRUE
+    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + " data/w_jpeg.tiff tmp/testgdalwarp30_3.tif  -t_srs EPSG:3785 -co COMPRESS=LZW -wm 500000 -wo STREAMABLE_OUTPUT=TRUE  --config GDAL_CACHEMAX 1 -ts 1000 500 -co TILED=YES")
+
     file_size1 = os.stat('tmp/testgdalwarp30_1.tif')[stat.ST_SIZE]
     file_size2 = os.stat('tmp/testgdalwarp30_2.tif')[stat.ST_SIZE]
+    file_size3 = os.stat('tmp/testgdalwarp30_3.tif')[stat.ST_SIZE]
 
     ds = gdal.Open('tmp/testgdalwarp30_1.tif')
     if ds is None:
@@ -818,10 +822,28 @@ def test_gdalwarp_30():
 
     ds = None
 
+    ds = gdal.Open('tmp/testgdalwarp30_3.tif')
+    if ds is None:
+        return 'fail'
+
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 64629 and cs != 1302:
+        print(cs)
+        gdaltest.post_reason('Bad checksum on testgdalwarp30_3')
+        return 'fail'
+
+    ds = None
+
     if file_size1 <= file_size2:
         print(file_size1)
         print(file_size2)
         gdaltest.post_reason('Size with -wo OPTIMIZE_SIZE=TRUE larger than without !')
+        return 'fail'
+
+    if file_size1 <= file_size3:
+        print(file_size1)
+        print(file_size3)
+        gdaltest.post_reason('Size with -wo STREAMABLE_OUTPUT=TRUE larger than without !')
         return 'fail'
 
     return 'success'
@@ -1339,6 +1361,10 @@ def test_gdalwarp_cleanup():
     except:
         pass
     try:
+        os.remove('tmp/testgdalwarp30_3.tif')
+    except:
+        pass
+    try:
         os.remove('tmp/testgdalwarp33_mask.tif')
     except:
         pass
@@ -1351,7 +1377,7 @@ def test_gdalwarp_cleanup():
     except:
         pass
     try:
-        os.remove('tmp/testgdalwarp39.tif')
+        os.remove('tmp/test_gdalwarp_39.tif')
     except:
         pass
     try:

@@ -806,10 +806,36 @@ int main( int argc, char ** argv )
         fprintf(stderr, "Source and destination datasets must be different.\n");
         GDALExit( 1 );
     }
+    
+    int bOutStreaming = FALSE;
+    if( strcmp(pszDstFilename, "/vsistdout/") == 0 )
+    {
+        bQuiet = TRUE;
+        bOutStreaming = TRUE;
+    }
+#ifdef S_ISFIFO
+    else
+    {
+        VSIStatBufL sStat;
+        if( VSIStatExL(pszDstFilename, &sStat, VSI_STAT_EXISTS_FLAG | VSI_STAT_NATURE_FLAG) == 0 &&
+            S_ISFIFO(sStat.st_mode) )
+        {
+            bOutStreaming = TRUE;
+        }
+    }
+#endif
 
-    CPLPushErrorHandler( CPLQuietErrorHandler );
-    hDstDS = GDALOpen( pszDstFilename, GA_Update );
-    CPLPopErrorHandler();
+    if( bOutStreaming )
+    {
+        papszWarpOptions = CSLSetNameValue(papszWarpOptions, "STREAMABLE_OUTPUT", "YES");
+        hDstDS = NULL;
+    }
+    else
+    {
+        CPLPushErrorHandler( CPLQuietErrorHandler );
+        hDstDS = GDALOpen( pszDstFilename, GA_Update );
+        CPLPopErrorHandler();
+    }
 
     if( hDstDS != NULL && bOverwrite )
     {
@@ -829,7 +855,7 @@ int main( int argc, char ** argv )
 
     /* Avoid overwriting an existing destination file that cannot be opened in */
     /* update mode with a new GTiff file */
-    if ( hDstDS == NULL && !bOverwrite )
+    if ( !bOutStreaming && hDstDS == NULL && !bOverwrite )
     {
         CPLPushErrorHandler( CPLQuietErrorHandler );
         hDstDS = GDALOpen( pszDstFilename, GA_ReadOnly );

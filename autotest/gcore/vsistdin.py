@@ -44,11 +44,26 @@ def vsistdin_1():
     if test_cli_utilities.get_gdal_translate_path() is None:
         return 'skip'
 
+    src_ds = gdal.Open('data/byte.tif')
+    ds = gdal.GetDriverByName('GTiff').CreateCopy('tmp/vsistdin_1_src.tif', src_ds)
+    ds = None
+    cs = src_ds.GetRasterBand(1).Checksum()
+    src_ds = None
+
     # Should work on both Unix and Windows
-    os.system(test_cli_utilities.get_gdal_translate_path() + " /vsistdin/ tmp/vsistdin_1_out.tif -q < data/byte.tif")
+    os.system(test_cli_utilities.get_gdal_translate_path() + " /vsistdin/ tmp/vsistdin_1_out.tif -q < tmp/vsistdin_1_src.tif")
+
+    try:
+        os.unlink("tmp/vsistdin_1_src.tif")
+    except:
+        pass
 
     ds = gdal.Open("tmp/vsistdin_1_out.tif")
     if ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(1).Checksum() != cs:
+        gdaltest.post_reason('fail')
         return 'fail'
 
     try:
