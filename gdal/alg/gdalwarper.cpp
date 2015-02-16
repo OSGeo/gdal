@@ -872,6 +872,13 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount,
  * - NUM_THREADS: (GDAL >= 1.10) Can be set to a numeric value or ALL_CPUS to
  * set the number of threads to use to parallelize the computation part of the
  * warping. If not set, computation will be done in a single thread.
+ *
+ * - STREAMABLE_OUTPUT: (GDAL >= 2.0) This defaults to FALSE, but may be set to TRUE when
+ * outputing typically to a streamed file. The gdalwarp utility automatically
+ * sets this option when outputing to /vsistdout/ or a named pipe (on Unix).
+ * This option has performance impacts for some reprojections.
+ * Note: band interleaved output is not currently supported by the warping algorithm in
+ * a streamable compabible way.
  */
 
 /************************************************************************/

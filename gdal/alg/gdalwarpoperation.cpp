@@ -1097,23 +1097,28 @@ CPLErr GDALWarpOperation::CollectChunkList(
         (dfSrcFillRatio > 0 && dfSrcFillRatio < 0.5 && (nDstXSize > 100 || nDstYSize > 100) &&
          CSLFetchBoolean( psOptions->papszWarpOptions, "SRC_FILL_RATIO_HEURISTICS", TRUE )) )
     {
-        CPLErr eErr2;
-
-        int bOptimizeSize =
+        CPLErr eErr2 = CE_None;
+        
+        int bStreamableOutput =
+                CSLFetchBoolean( psOptions->papszWarpOptions, "STREAMABLE_OUTPUT", FALSE );
+        int bOptimizeSize = !bStreamableOutput &&
                 CSLFetchBoolean( psOptions->papszWarpOptions, "OPTIMIZE_SIZE", FALSE );
 
         /* If the region width is greater than the region height, */
         /* cut in half in the width. When we want to optimize the size */
         /* of a compressed output dataset, do this only if each half part */
         /* is at least as wide as the block width */
+        int bHasDivided = FALSE;
         if( nDstXSize > nDstYSize &&
-            (!bOptimizeSize ||
-             (bOptimizeSize && (nDstXSize / 2 >= nBlockXSize || nDstYSize == 1))) )
+            ((!bOptimizeSize && !bStreamableOutput) ||
+             (bOptimizeSize && (nDstXSize / 2 >= nBlockXSize || nDstYSize == 1)) ||
+             (bStreamableOutput && nDstXSize / 2 >= nBlockXSize && nDstYSize == nBlockYSize)) )
         {
+            bHasDivided = TRUE;
             int nChunk1 = nDstXSize / 2;
             
             /* In the optimize size case, try to stick on target block boundaries */
-            if (bOptimizeSize && nChunk1 > nBlockXSize)
+            if ((bOptimizeSize || bStreamableOutput) && nChunk1 > nBlockXSize)
                 nChunk1 = (nChunk1 / nBlockXSize) * nBlockXSize;
             
             int nChunk2 = nDstXSize - nChunk1;
@@ -1124,12 +1129,13 @@ CPLErr GDALWarpOperation::CollectChunkList(
             eErr2 = CollectChunkList( nDstXOff+nChunk1, nDstYOff, 
                                       nChunk2, nDstYSize );
         }
-        else
+        else if( !(bStreamableOutput && nDstYSize / 2 < nBlockYSize) )
         {
+            bHasDivided = TRUE;
             int nChunk1 = nDstYSize / 2;
 
             /* In the optimize size case, try to stick on target block boundaries */
-            if (bOptimizeSize && nChunk1 > nBlockYSize)
+            if ((bOptimizeSize || bStreamableOutput) && nChunk1 > nBlockYSize)
                 nChunk1 = (nChunk1 / nBlockYSize) * nBlockYSize;
 
             int nChunk2 = nDstYSize - nChunk1;
@@ -1141,10 +1147,13 @@ CPLErr GDALWarpOperation::CollectChunkList(
                                       nDstXSize, nChunk2 );
         }
 
-        if( eErr == CE_None )
-            return eErr2;
-        else
-            return eErr;
+        if( bHasDivided )
+        {
+            if( eErr == CE_None )
+                return eErr2;
+            else
+                return eErr;
+        }
     }
 
 /* -------------------------------------------------------------------- */
