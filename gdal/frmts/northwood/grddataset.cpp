@@ -91,13 +91,6 @@ class NWT_GRDRasterBand:public GDALPamRasterBand
     virtual CPLErr IReadBlock( int, int, void * );
     virtual double GetNoDataValue( int *pbSuccess );
 
-    /* FIXME. I don't believe it is correct to advertize offset and */
-    /* scale because IReadBlock() already apply them. */
-    virtual double GetOffset( int *pbSuccess = NULL );
-    virtual CPLErr SetOffset( double dfNewValue );
-    virtual double GetScale( int *pbSuccess = NULL );
-    virtual CPLErr SetScale( double dfNewValue );
-
     virtual GDALColorInterp GetColorInterpretation();
 };
 
@@ -242,48 +235,6 @@ CPLErr NWT_GRDRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff, int nBlockYOff,
     {
         CPLFree( pszRecord );
     }
-    return CE_None;
-}
-
-/************************************************************************/
-/*                             GetOffset()                              */
-/************************************************************************/
-double NWT_GRDRasterBand::GetOffset( int *pbSuccess )
-{
-    if( pbSuccess )
-        *pbSuccess = bHaveOffsetScale;
-    return dfOffset;
-}
-
-/************************************************************************/
-/*                             SetOffset()                              */
-/************************************************************************/
-CPLErr NWT_GRDRasterBand::SetOffset( double dfNewValue )
-{
-    //poGDS->bMetadataChanged = TRUE;
-
-    bHaveOffsetScale = TRUE;
-    dfOffset = dfNewValue;
-    return CE_None;
-}
-
-/************************************************************************/
-/*                              GetScale()                              */
-/************************************************************************/
-double NWT_GRDRasterBand::GetScale( int *pbSuccess )
-{
-    if( pbSuccess )
-        *pbSuccess = bHaveOffsetScale;
-    return dfScale;
-}
-
-/************************************************************************/
-/*                              SetScale()                              */
-/************************************************************************/
-CPLErr NWT_GRDRasterBand::SetScale( double dfNewValue )
-{
-    bHaveOffsetScale = TRUE;
-    dfScale = dfNewValue;
     return CE_None;
 }
 
