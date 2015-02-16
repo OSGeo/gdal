@@ -267,6 +267,8 @@ class GTiffDataset : public GDALPamDataset
     int         bGeoTIFFInfoChanged;
     int         bForceUnsetGT;
     int         bForceUnsetProjection;
+
+    int         bNoDataChanged;
     int         bNoDataSet;
     double      dfNoDataValue;
 
@@ -3203,14 +3205,10 @@ CPLErr GTiffRasterBand::SetNoDataValue( double dfNoData )
         return CE_Failure;
     }
 
-    if (!poGDS->SetDirectory())  // needed to call TIFFSetField().
-        return CE_Failure;
-
     poGDS->bNoDataSet = TRUE;
     poGDS->dfNoDataValue = dfNoData;
 
-    poGDS->WriteNoDataValue( poGDS->hTIFF, dfNoData );
-    poGDS->bNeedsRewrite = TRUE;
+    poGDS->bNoDataChanged = TRUE;
 
     bNoDataSet = TRUE;
     dfNoDataValue = dfNoData;
@@ -4507,6 +4505,7 @@ GTiffDataset::GTiffDataset()
     bForceUnsetProjection = FALSE;
     bCrystalized = TRUE;
     poColorTable = NULL;
+    bNoDataChanged = FALSE;
     bNoDataSet = FALSE;
     dfNoDataValue = -9999.0;
     pszProjection = CPLStrdup("");
@@ -5441,12 +5440,17 @@ void GTiffDataset::Crystalize()
 {
     if( !bCrystalized )
     {
+        // FIXME? libtiff writes extended tags in the order they are specified
+        // and not in increasing order
         WriteMetadata( this, hTIFF, TRUE, osProfile, osFilename,
                        papszCreationOptions );
         WriteGeoTIFFInfo();
+        if( bNoDataSet )
+            WriteNoDataValue( hTIFF, dfNoDataValue );
 
         bMetadataChanged = FALSE;
         bGeoTIFFInfoChanged = FALSE;
+        bNoDataChanged = FALSE;
         bNeedsRewrite = FALSE;
 
         bCrystalized = TRUE;
@@ -5743,6 +5747,18 @@ void GTiffDataset::FlushDirectory()
             if (!SetDirectory())
                 return;
             WriteGeoTIFFInfo();
+        }
+        
+        if( bNoDataChanged )
+        {
+            if (!SetDirectory())
+                return;
+            if( bNoDataSet )
+            {
+                WriteNoDataValue( hTIFF, dfNoDataValue );
+                bNeedsRewrite = TRUE;
+                bNoDataChanged = FALSE;
+            }
         }
 
         if( bNeedsRewrite )
@@ -8084,6 +8100,7 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->bColorProfileMetadataChanged = FALSE;
     poDS->bMetadataChanged = FALSE;
     poDS->bGeoTIFFInfoChanged = FALSE;
+    poDS->bNoDataChanged = FALSE;
     poDS->bForceUnsetGT = FALSE;
     poDS->bForceUnsetProjection = FALSE;
 
@@ -11443,6 +11460,9 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         TIFFSetField(hTIFF, TIFFTAG_EXTRASAMPLES, 1, v );
     }
 
+    // FIXME? libtiff writes extended tags in the order they are specified
+    // and not in increasing order
+
 /* -------------------------------------------------------------------- */
 /*      Transfer some TIFF specific metadata, if available.             */
 /*      The return value will tell us if we need to try again later with*/
@@ -11823,6 +11843,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     /* To avoid unnecessary directory rewriting */
     poDS->bMetadataChanged = FALSE;
     poDS->bGeoTIFFInfoChanged = FALSE;
+    poDS->bNoDataChanged = FALSE;
     poDS->bForceUnsetGT = FALSE;
     poDS->bForceUnsetProjection = FALSE;
     poDS->bStreamingOut = bStreaming;
