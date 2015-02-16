@@ -25,7 +25,7 @@
  * RFC 50: Add support for OGR field subtypes (http://trac.osgeo.org/gdal/wiki/rfc50_ogr_field_subtype)
    In OGR core, OGR SQL, swig bindings, CSV, FileGDB, GeoJSON, GML, GPKG, OpenFileGDB, PG, PGDump, SQLite, VRT
  * RFC 51: RasterIO() improvements : resampling and progress callback (http://trac.osgeo.org/gdal/wiki/rfc51_rasterio_resampling_progress)
- * RFC 52: Stricter SQL quoting (trac.osgeo.org/gdal/wiki/rfc52_strict_sql_quoting)
+ * RFC 52: Stricter SQL quoting (http://trac.osgeo.org/gdal/wiki/rfc52_strict_sql_quoting)
  * RFC 53: OGR not-null constraints and default values (http://trac.osgeo.org/gdal/wiki/rfc53_ogr_notnull_default)
    In OGR core, OGR SQL, PG, PGDump, CartoDB, GPKG, SQLite, MySQL, OCI, VRT, GML, WFS, FileGDB, OpenFileGDB
  * Upgrade to EPSG v8.5 database
