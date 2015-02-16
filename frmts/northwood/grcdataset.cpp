@@ -83,9 +83,6 @@ class NWT_GRCDataset : public GDALPamDataset
 class NWT_GRCRasterBand : public GDALPamRasterBand
 {
   friend class NWT_GRCDataset;
-    int bHaveOffsetScale;
-    double dfOffset;
-    double dfScale;
 
   public:
 
@@ -94,11 +91,6 @@ class NWT_GRCRasterBand : public GDALPamRasterBand
 
     virtual CPLErr IReadBlock( int, int, void * );
     virtual double GetNoDataValue( int *pbSuccess );
-
-    virtual double GetOffset( int *pbSuccess = NULL );
-    virtual CPLErr SetOffset( double dfNewValue );
-    virtual double GetScale( int *pbSuccess = NULL );
-    virtual CPLErr SetScale( double dfNewValue );
 
     virtual GDALColorInterp GetColorInterpretation();
     virtual char **GetCategoryNames();
@@ -116,9 +108,6 @@ NWT_GRCRasterBand::NWT_GRCRasterBand( NWT_GRCDataset * poDS, int nBand )
     this->nBand = nBand;
     NWT_GRCDataset *poGDS =( NWT_GRCDataset * ) poDS;
 
-    bHaveOffsetScale = FALSE;
-    dfOffset = 0;
-    dfScale = 1.0;
     if( poGDS->pGrd->nBitsPerPixel == 8 )
         eDataType = GDT_Byte;
     else if( poGDS->pGrd->nBitsPerPixel == 16 )
@@ -246,49 +235,6 @@ CPLErr NWT_GRCRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff, int nBlockYOff,
                   nBand );
         return CE_Failure;
     }
-    return CE_None;
-}
-
-
-/************************************************************************/
-/*                             GetOffset()                              */
-/************************************************************************/
-double NWT_GRCRasterBand::GetOffset( int *pbSuccess )
-{
-    if( pbSuccess )
-        *pbSuccess = bHaveOffsetScale;
-    return dfOffset;
-}
-
-/************************************************************************/
-/*                             SetOffset()                              */
-/************************************************************************/
-CPLErr NWT_GRCRasterBand::SetOffset( double dfNewValue )
-{
-    //poGDS->bMetadataChanged = TRUE;
-
-    bHaveOffsetScale = TRUE;
-    dfOffset = dfNewValue;
-    return CE_None;
-}
-
-/************************************************************************/
-/*                              GetScale()                              */
-/************************************************************************/
-double NWT_GRCRasterBand::GetScale( int *pbSuccess )
-{
-    if( pbSuccess )
-        *pbSuccess = bHaveOffsetScale;
-    return dfScale;
-}
-
-/************************************************************************/
-/*                              SetScale()                              */
-/************************************************************************/
-CPLErr NWT_GRCRasterBand::SetScale( double dfNewValue )
-{
-    bHaveOffsetScale = TRUE;
-    dfScale = dfNewValue;
     return CE_None;
 }
 
