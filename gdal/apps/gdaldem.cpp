@@ -82,6 +82,7 @@
  *  on the continental slope Marine Geodesy, 2007, 30, 3-35
  ****************************************************************************/
 
+#include "cpl_vsi.h"
 #include <stdlib.h>
 #include <math.h>
 
