@@ -2377,8 +2377,9 @@ def tiff_write_70():
 
     ds = gdaltest.tiff_drv.Create('tmp/tiff_write_70.tif', 32, 32, 1, gdal.GDT_Int16, options = ['SPARSE_OK=YES'] )
     ds.GetRasterBand(1).SetNoDataValue(0)
-    if os.stat('tmp/tiff_write_70.tif').st_size != 0:
+    if os.stat('tmp/tiff_write_70.tif').st_size > 8:
         gdaltest.post_reason('directory should not be cryztalized')
+        print(os.stat('tmp/tiff_write_70.tif').st_size)
         return 'fail'
     ds = None
 
