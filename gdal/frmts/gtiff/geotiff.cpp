@@ -5464,8 +5464,15 @@ void GTiffDataset::Crystalize()
         TIFFWriteDirectory( hTIFF );
         if( bStreamingOut )
         {
+            /* We need to write twice the directory to be sure that custom */
+            /* TIFF tags are correctly sorted and that padding bytes have been */
+            /* added */
+            TIFFSetDirectory( hTIFF, 0 );
+            TIFFWriteDirectory( hTIFF );
+
             VSIFSeekL( fpL, 0, SEEK_END );
             int nSize = (int) VSIFTellL(fpL);
+
             TIFFSetDirectory( hTIFF, 0 );
             GTiffFillStreamableOffsetAndCount( hTIFF, nSize );
             TIFFWriteDirectory( hTIFF );
@@ -11668,8 +11675,17 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     TIFFWriteDirectory( hTIFF );
     if( bStreaming )
     {
+        /* We need to write twice the directory to be sure that custom */
+        /* TIFF tags are correctly sorted and that padding bytes have been */
+        /* added */
+        TIFFSetDirectory( hTIFF, 0 );
+        TIFFWriteDirectory( hTIFF );
+
         VSIFSeekL( fpL, 0, SEEK_END );
         int nSize = (int) VSIFTellL(fpL);
+
+        vsi_l_offset nDataLength;
+        VSIGetMemFileBuffer( osTmpFilename, &nDataLength, FALSE);
         TIFFSetDirectory( hTIFF, 0 );
         GTiffFillStreamableOffsetAndCount( hTIFF, nSize );
         TIFFWriteDirectory( hTIFF );
