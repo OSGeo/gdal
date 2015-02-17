@@ -228,7 +228,8 @@ def ogr_pcidsk_3():
         print("ERROR: The feature was not deleted")
         ret = ret.replace("ERROR: The feature was not deleted", "ARGHH: The feature was not deleted")
         ret_str = 'expected_fail'
-
+    if ret.find('ERROR') == ret.find('ERROR ret code = 1'):
+        ret = ret.replace("ERROR ret code = 1", "")
     if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
         print(ret)
         ret_str = 'fail'
