@@ -389,6 +389,7 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
                                     int bDeferredCreation);
     void                SetCreationParameters( OGRwkbGeometryType eGeomType,
                                                const char *pszGeomFormat,
+                                               const char *pszGeometryName,
                                                OGRSpatialReference *poSRS,
                                                int nSRSId );
     virtual const char* GetName();

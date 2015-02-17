@@ -106,7 +106,7 @@ def ogr_gpkg_3():
     #gdal.PushErrorHandler('CPLQuietErrorHandler')
     srs4326 = osr.SpatialReference()
     srs4326.ImportFromEPSG( 4326 )
-    lyr = gdaltest.gpkg_ds.CreateLayer( 'first_layer', geom_type = ogr.wkbPoint, srs = srs4326, options = ['SPATIAL_INDEX=NO'])
+    lyr = gdaltest.gpkg_ds.CreateLayer( 'first_layer', geom_type = ogr.wkbPoint, srs = srs4326, options = ['GEOMETRY_NAME=gpkg_geometry', 'SPATIAL_INDEX=NO'])
     #gdal.PopErrorHandler()
     if lyr is None:
         return 'fail'
@@ -148,6 +148,9 @@ def ogr_gpkg_4():
 
     if lyr0.GetName() != 'first_layer':
         gdaltest.post_reason( 'unexpected layer name for layer 0' )
+        return 'fail'
+    if lyr0.GetLayerDefn().GetGeomFieldDefn(0).GetName() != 'gpkg_geometry':
+        gdaltest.post_reason( 'unexpected geometry field name for layer 0' )
         return 'fail'
 
     if lyr1.GetName() != 'a_layer':

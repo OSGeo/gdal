@@ -319,7 +319,9 @@ OGRLayer * OGRMSSQLSpatialDataSource::ICreateLayer( const char * pszLayerName,
         }
 
         /* determine the geometry column name */
-        pszGeomColumn =  CSLFetchNameValue( papszOptions, "GEOM_NAME");
+        pszGeomColumn =  CSLFetchNameValue( papszOptions, "GEOMETRY_NAME");
+        if (!pszGeomColumn)
+            pszGeomColumn =  CSLFetchNameValue( papszOptions, "GEOM_NAME");
         if (!pszGeomColumn)
             pszGeomColumn = "ogr_geometry";
     }

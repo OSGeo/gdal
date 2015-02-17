@@ -151,7 +151,7 @@ void RegisterOGRMySQL()
     "  <Option name='PRECISION' type='boolean' description='Whether fields created should keep the width and precision' default='YES'/>"
     "  <Option name='GEOMETRY_NAME' type='string' description='Name of geometry column.' default='SHAPE'/>"
     "  <Option name='SPATIAL_INDEX' type='boolean' description='Whether to create a spatial index' default='YES'/>"
-    "  <Option name='MYSQL_FID' type='string' description='Name of the FID column to create' default='OGR_FID'/>"
+    "  <Option name='FID' type='string' description='Name of the FID column to create' default='OGR_FID' deprecated_alias='MYSQL_FID'/>"
     "  <Option name='FID64' type='boolean' description='Whether to create the FID column with BIGINT type to handle 64bit wide ids' default='NO'/>"
     "  <Option name='ENGINE' type='string' description='Database engine to use.'/>"
     "</LayerCreationOptionList>");

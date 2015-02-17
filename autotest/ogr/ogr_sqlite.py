@@ -109,7 +109,7 @@ def ogr_sqlite_2():
         return 'fail'
 
     # Test OVERWRITE=YES
-    lyr = gdaltest.sl_ds.CreateLayer( 'a_layer', options = ['OVERWRITE=YES'] )
+    lyr = gdaltest.sl_ds.CreateLayer( 'a_layer', options = ['GEOMETRY_NAME=mygeom', 'OVERWRITE=YES'] )
     if lyr is None:
         gdaltest.post_reason('layer creation should have succeeded')
         return 'fail'
@@ -140,7 +140,10 @@ def ogr_sqlite_2():
     gdaltest.sl_ds.Destroy()
     gdaltest.sl_ds = ogr.Open( 'tmp/sqlite_test.db', update = 1  )
     gdaltest.sl_lyr = gdaltest.sl_ds.GetLayerByName( 'tpoly')
-    
+    if gdaltest.sl_lyr.GetGeometryColumn() != 'GEOMETRY':
+        gdaltest.post_reason('failure')
+        return 'fail'
+
     for field_desc in fields:
         feature_def = gdaltest.sl_lyr.GetLayerDefn()
         field_defn = feature_def.GetFieldDefn(feature_def.GetFieldIndex(field_desc[0]))
@@ -156,7 +159,11 @@ def ogr_sqlite_2():
     if field_defn.GetType() != ogr.OFTInteger64:
         gdaltest.post_reason('failure')
         return 'fail'
-    
+        
+    if gdaltest.sl_ds.GetLayerByName('a_layer').GetGeometryColumn() != 'mygeom':
+        gdaltest.post_reason('failure')
+        return 'fail'
+
     ######################################################
     # Copy in poly.shp
 

@@ -230,6 +230,7 @@ static OGRSQLiteGeomFormat GetGeomFormat( const char* pszGeomFormat )
 
 void OGRSQLiteTableLayer::SetCreationParameters( OGRwkbGeometryType eGeomType,
                                                  const char *pszGeomFormat,
+                                                 const char *pszGeometryName,
                                                  OGRSpatialReference *poSRS,
                                                  int nSRSId )
 
@@ -244,9 +245,8 @@ void OGRSQLiteTableLayer::SetCreationParameters( OGRwkbGeometryType eGeomType,
         if( nSRSId == UNINITIALIZED_SRID )
             nSRSId = poDS->GetUndefinedSRID();
         OGRSQLiteGeomFormat eGeomFormat = GetGeomFormat(pszGeomFormat);
-        const char* pszGeomCol = ( eGeomFormat == OSGF_WKT ) ? "WKT_GEOMETRY" : "GEOMETRY";
         OGRSQLiteGeomFieldDefn* poGeomFieldDefn =
-            new OGRSQLiteGeomFieldDefn(pszGeomCol, -1);
+            new OGRSQLiteGeomFieldDefn(pszGeometryName, -1);
         poGeomFieldDefn->SetType(eGeomType);
         poGeomFieldDefn->nSRSId = nSRSId;
         poGeomFieldDefn->eGeomFormat = eGeomFormat;

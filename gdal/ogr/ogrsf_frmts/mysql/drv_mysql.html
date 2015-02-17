@@ -134,11 +134,11 @@ The MySQL driver is not transactional at this time.<p>
         geometry column.  The default value is "SHAPE".
     </li>
     <li>
-        <b>MYSQL_FID</b>: This option specifies the name of the FID column.
-        The default value is "OGR_FID"
+        <b>FID</b>: This option specifies the name of the FID column.
+        The default value is "OGR_FID". Note: option was called MYSQL_FID in releases before GDAL 2
     </li>
     <li>
-        <b>FID64</b>: This may be "TRUE" to create a FID column that can support
+        <b>FID64</b>: (GDAL &gt;= 2.0) This may be "TRUE" to create a FID column that can support
         64 bit identifiers. The default value is "FALSE".
     </li>
     <li>
