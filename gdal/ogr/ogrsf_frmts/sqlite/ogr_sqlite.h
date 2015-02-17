@@ -379,6 +379,7 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
                                               int bAddColumnsForNonSpatialite );
 
     char               *pszCreationGeomFormat;
+    int                 iFIDAsRegularColumnIndex;
 
   public:
                         OGRSQLiteTableLayer( OGRSQLiteDataSource * );
