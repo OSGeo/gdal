@@ -139,7 +139,53 @@ def spawn_async(cmd):
 def wait_process(process):
     process.wait()
 
+# Compatible with Python 2.6 or above
+def _runexternal_subprocess(cmd, strin = None, check_memleak = True, display_live_on_parent_stdout = False):
+    import subprocess
+    import shlex
+    command = shlex.split(cmd)
+    if strin is None:
+        p = subprocess.Popen(command, stdout=subprocess.PIPE)
+    else:
+        p = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+        p.stdin.write(bytes(strin, 'ascii'))
+        p.stdin.close()
+
+    if p.stdout is not None:
+        if display_live_on_parent_stdout:
+            ret = ''
+            ret_stdout = p.stdout
+            while True:
+                c = ret_stdout.read(1)
+                if c == '':
+                    break
+                ret = ret + c
+                sys.stdout.write(c)
+        else:
+            ret = p.stdout.read()
+        p.stdout.close()
+    else:
+        ret = ''
+
+    waitcode = p.wait()
+    if waitcode != 0:
+        ret = ret + '\nERROR ret code = %d' % waitcode
+
+    return ret
+
 def runexternal(cmd, strin = None, check_memleak = True, display_live_on_parent_stdout = False):
+    has_subprocess = False
+    try:
+        import subprocess
+        import shlex
+        subprocess.Popen
+        shlex.split
+        has_subprocess = True
+    except:
+        pass
+    if has_subprocess:
+        return _runexternal_subprocess(cmd, strin=strin, check_memleak=check_memleak, display_live_on_parent_stdout=display_live_on_parent_stdout)
+
     if strin is None:
         ret_stdout = os.popen(cmd)
     else:
@@ -168,8 +214,54 @@ def runexternal(cmd, strin = None, check_memleak = True, display_live_on_parent_
 def read_in_thread(f, q):
     q.put(f.read())
     f.close()
+
+# Compatible with Python 2.6 or above
+def _runexternal_out_and_err_subprocess(cmd, check_memleak = True):
+    import subprocess
+    import shlex
+    command = shlex.split(cmd)
+    p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+    if p.stdout is not None:
+        q_stdout = Queue()
+        t_stdout = Thread(target=read_in_thread, args=(p.stdout, q_stdout))
+        t_stdout.start()
+    else:
+        q_stdout = None
+        ret_stdout = ''
+
+    if p.stderr is not None:
+        q_stderr = Queue()
+        t_stderr = Thread(target=read_in_thread, args=(p.stderr, q_stderr))
+        t_stderr.start()
+    else:
+        q_stderr = None
+        ret_stderr = ''
+        
+    if q_stdout is not None:
+        ret_stdout = q_stdout.get()
+    if q_stderr is not None:
+        ret_stderr = q_stderr.get()
+
+    waitcode = p.wait()
+    if waitcode != 0:
+        ret_stderr = ret_stderr + '\nERROR ret code = %d' % waitcode
+
+    return (ret_stdout, ret_stderr)
     
 def runexternal_out_and_err(cmd, check_memleak = True):
+    has_subprocess = False
+    try:
+        import subprocess
+        import shlex
+        subprocess.Popen
+        shlex.split
+        has_subprocess = True
+    except:
+        pass
+    if has_subprocess:
+        return _runexternal_out_and_err_subprocess(cmd, check_memleak=check_memleak)
+
     (ret_stdin, ret_stdout, ret_stderr) = os.popen3(cmd)
     ret_stdin.close()
     

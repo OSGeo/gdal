@@ -115,7 +115,7 @@ class FGdbLayer : public FGdbBaseLayer
 
   std::vector<ByteArray*> m_apoByteArrays;
   OGRErr              PopulateRowWithFeature( Row& row, OGRFeature *poFeature );
-  OGRErr              GetRow( EnumRows& enumRows, Row& row, long nFID );
+  OGRErr              GetRow( EnumRows& enumRows, Row& row, GIntBig nFID );
 
   char              **m_papszOptions;
   
