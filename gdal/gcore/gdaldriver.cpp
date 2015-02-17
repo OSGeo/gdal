@@ -1472,9 +1472,16 @@ int GDALValidateOptions( const char* pszOptionList,
                     break;
                 }
 
-                if (EQUAL(pszOptionName, pszKey) ||
-                    EQUAL(CPLGetXMLValue(psChildNode, "alias", ""), pszKey))
+                if (EQUAL(pszOptionName, pszKey) )
                 {
+                    break;
+                }
+                const char* pszAlias = CPLGetXMLValue(psChildNode, "alias",
+                            CPLGetXMLValue(psChildNode, "deprecated_alias", ""));
+                if (EQUAL(pszAlias, pszKey) )
+                {
+                    CPLDebug("GDAL", "Using deprecated alias '%s'. New name is '%s'",
+                             pszAlias, pszOptionName);
                     break;
                 }
             }
@@ -1493,6 +1500,35 @@ int GDALValidateOptions( const char* pszOptionList,
             papszOptionsToValidate ++;
             continue;
         }
+
+#ifdef DEBUG
+        CPLXMLNode* psChildSubNode = psChildNode->psChild;
+        while(psChildSubNode)
+        {
+            if( psChildSubNode->eType == CXT_Attribute )
+            {
+                if( !(EQUAL(psChildSubNode->pszValue, "name") ||
+                      EQUAL(psChildSubNode->pszValue, "alias") ||
+                      EQUAL(psChildSubNode->pszValue, "deprecated_alias") ||
+                      EQUAL(psChildSubNode->pszValue, "description") ||
+                      EQUAL(psChildSubNode->pszValue, "type") ||
+                      EQUAL(psChildSubNode->pszValue, "min") ||
+                      EQUAL(psChildSubNode->pszValue, "max") ||
+                      EQUAL(psChildSubNode->pszValue, "default")) )
+                {
+                    /* Driver error */
+                    CPLError(CE_Warning, CPLE_NotSupported,
+                             "%s : unhandled attribute '%s' for %s %s.",
+                             pszErrorMessageContainerName,
+                             psChildSubNode->pszValue,
+                             pszKey,
+                             pszErrorMessageOptionType);
+                }
+            }
+            psChildSubNode = psChildSubNode->psNext;
+        }
+#endif
+
         const char* pszType = CPLGetXMLValue(psChildNode, "type", NULL);
         const char* pszMin = CPLGetXMLValue(psChildNode, "min", NULL);
         const char* pszMax = CPLGetXMLValue(psChildNode, "max", NULL);

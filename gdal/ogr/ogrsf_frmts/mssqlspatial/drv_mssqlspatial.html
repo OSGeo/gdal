@@ -89,8 +89,8 @@ layer to try and represent the width and precision information, if available
 using numeric(width,precision) or char(width) types.  If "NO" then the types
 float, int and varchar will be used instead.  The default is "YES".</li>
 <li> <b>DIM={2,3}</b>: Control the dimension of the layer.  Defaults to 3.</li>
-<li> <b>GEOM_NAME</b>: Set the name of geometry column in the new table.  If 
-omitted it defaults to <i>ogr_geometry</i>.</li>
+<li> <b>GEOMETRY_NAME</b>: Set the name of geometry column in the new table.  If 
+omitted it defaults to <i>ogr_geometry</i>.. Note: option was called GEOM_NAME in releases before GDAL 2</li>
 <li> <b>SCHEMA</b>: Set name of schema for new table.
 If this parameter is not supported the default schema "<i>dbo"</i> is used.</li>
 <li> <b>SRID</b>: Set the spatial reference id of the new table explicitly.

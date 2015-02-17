@@ -249,6 +249,7 @@ void RegisterOGRSQLite()
 "    <Value>SPATIALITE</Value>"
 #endif
 "  </Option>"
+"  <Option name='GEOMETRY_NAME' type='string' description='Name of geometry column. Defaults to WKT_GEOMETRY for FORMAT=WKT or GEOMETRY otherwise'/>"
 "  <Option name='LAUNDER' type='boolean' description='Whether layer and field names will be laundered' default='YES'/>"
 #ifdef HAVE_SPATIALITE
 "  <Option name='SPATIAL_INDEX' type='boolean' description='Whether to create a spatial index for Spatialite databases' default='YES'/>"

@@ -206,13 +206,13 @@ created over an existing file.</p>
 
 <ul>
 
-<li><p><b>METADATA=yes/no</b>: This can be used to avoid creating the 
+<li><p><b>METADATA=YES/NO</b>: This can be used to avoid creating the 
 geometry_columns and spatial_ref_sys tables in a new database.  By default
 these metadata tables are created when a new database is created.</p></li>
 
-<li><p><b>SPATIALITE=yes/no</b>: (Starting with GDAL 1.7.0) Create the SpatiaLite flavour of the metadata
+<li><p><b>SPATIALITE=YES/NO</b>: (Starting with GDAL 1.7.0) Create the SpatiaLite flavour of the metadata
 tables, which are a bit differ from the metadata used by this OGR driver and
-from OGC specifications. Implies <b>METADATA=yes</b>.<br>
+from OGC specifications. Implies <b>METADATA=YES</b>.<br>
 Please note: (Starting with GDAL 1.9.0) OGR must be linked against <i>libspatialite</i> in order to support
 insert/write on SpatiaLite; if not, <i>read-only</i> mode is enforced.<br>
 Attempting to perform any insert/write on SpatiaLite skipping the appropriate library support simply produces broken (corrupted) DB-files.<br>
@@ -220,9 +220,9 @@ Important notice: when the underlaying <i>libspatialite</i> is v.2.3.1 (or any p
 version) any Geometry will be casted to 2D [XY], because earlier versions of this library
 are simply able to support 2D [XY] dimensions. Version 2.4.0 (or any subsequent) is required in order to support 2.5D [XYZ].</p></li>
 
-<li><p><b>INIT_WITH_EPSG=yes/no</b>: (Starting with GDAL 1.8.0) Insert the content of the EPSG CSV files
+<li><p><b>INIT_WITH_EPSG=YES/NO</b>: (Starting with GDAL 1.8.0) Insert the content of the EPSG CSV files
 into the spatial_ref_sys table. Defaults to NO for regular SQLite databases</b>.<br>
-Please note: if <b>SPATIALITE=yes</b> and the underlaying <i>libspatialite</i> is v2.4 or v3.X,
+Please note: if <b>SPATIALITE=YES</b> and the underlaying <i>libspatialite</i> is v2.4 or v3.X,
 <b>INIT_WITH_EPSG</b> is ignored; those library versions will unconditionally load the EPSG 
 dataset into the spatial_ref_sys table when creating a new DB (<i>self-initialization</i>). Starting
 with libspatialite 4.0, INIT_WITH_EPSG defaults to YES, but can be set to NO.</p></li>
@@ -239,21 +239,25 @@ generally more space and processing efficient, but harder to inspect or use in
 simple applications than WKT (Well Known Text). SpatiaLite extension uses its
 own binary format to store geometries and you can choose it as well. It will
 be selected automatically when SpatiaLite database is opened or created with
-<b>SPATIALITE=yes</b> option. SPATIALITE value is available starting with GDAL 1.7.0.</p></li>
+<b>SPATIALITE=YES</b> option. SPATIALITE value is available starting with GDAL 1.7.0.</p></li>
 
-<li><p><b>LAUNDER=yes/no</b>: Controls whether layer and field names will be 
+<li><p><b>GEOMETRY_NAME</b>: (Starting with GDAL 2.0) By default OGR creates new tables with the 
+geometry column named GEOMETRY (or WKT_GEOMETRY if FORMAT=WKT). If you wish to use a different name, 
+it can be supplied with the GEOMETRY_NAME layer creation option.</p></li>
+
+<li><p><b>LAUNDER=YES/NO</b>: Controls whether layer and field names will be 
 laundered for easier use in SQLite.  Laundered names will be convered to lower 
 case and some special characters(' - #) will be changed to underscores. Default
-to yes.</p></li>
+to YES.</p></li>
 
-<li><p><b>SPATIAL_INDEX=yes/no</b>: (Starting with GDAL 1.7.0) If the database is
+<li><p><b>SPATIAL_INDEX=YES/NO</b>: (Starting with GDAL 1.7.0) If the database is
 of the SpatiaLite flavour, and if OGR is linked against libspatialite, this option
-can be used to control if a spatial index must be created. Default to yes.</p></li>
+can be used to control if a spatial index must be created. Default to YES.</p></li>
 
-<li><p><b>COMPRESS_GEOM=yes/no</b>: (Starting with GDAL 1.9.0) If the format of the
+<li><p><b>COMPRESS_GEOM=YES/NO</b>: (Starting with GDAL 1.9.0) If the format of the
 geometry BLOB is of the SpatiaLite flavour, this option can be used to control
 if the compressed format for geometries (LINESTRINGs, POLYGONs) must be used. This
-format is understood by Spatialite v2.4 (or any subsequent version). Default to no.
+format is understood by Spatialite v2.4 (or any subsequent version). Default to NO.
 Note: when updating an existing Spatialite DB, the COMPRESS_GEOM configuration option
 can be set to produce similar results for appended/overwritten features.</p></li>
 

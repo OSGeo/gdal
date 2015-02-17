@@ -3232,8 +3232,10 @@ OGRLayer* GDALGeoPackageDataset::ICreateLayer( const char * pszLayerName,
         return NULL;
     }
 
-    /* Read GEOMETRY_COLUMN option */
-    const char* pszGeomColumnName = CSLFetchNameValue(papszOptions, "GEOMETRY_COLUMN");
+    /* Read GEOMETRY_NAME option */
+    const char* pszGeomColumnName = CSLFetchNameValue(papszOptions, "GEOMETRY_NAME");
+    if (pszGeomColumnName == NULL) /* deprecated name */
+        pszGeomColumnName = CSLFetchNameValue(papszOptions, "GEOMETRY_COLUMN");
     if (pszGeomColumnName == NULL)
         pszGeomColumnName = "geom";
     int bGeomNullable = CSLFetchBoolean(papszOptions, "GEOMETRY_NULLABLE", TRUE);

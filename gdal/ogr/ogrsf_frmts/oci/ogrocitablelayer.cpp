@@ -2129,7 +2129,8 @@ void OGROCITableLayer::CreateSpatialIndex()
 /*      If the user has disabled INDEX support then don't create the    */
 /*      index.                                                          */
 /* -------------------------------------------------------------------- */
-        if( !CSLFetchBoolean( papszOptions, "INDEX", TRUE ) )
+        if( !CSLFetchBoolean( papszOptions, "SPATIAL_INDEX", TRUE ) ||
+            !CSLFetchBoolean( papszOptions, "INDEX", TRUE ) )
             return;
 
 /* -------------------------------------------------------------------- */

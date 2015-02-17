@@ -130,7 +130,7 @@ void RegisterOGROCI()
     "  <Option name='PRECISION' type='boolean' description='Whether fields created should keep the width and precision' default='YES'/>"
     "  <Option name='OVERWRITE' type='boolean' description='Whether to overwrite an existing table with the layer name to be created' default='NO'/>"
     "  <Option name='TRUNCATE' type='boolean' description='Whether to truncate an existing table' default='NO'/>"
-    "  <Option name='INDEX' type='boolean' description='Whether to create a spatial index' default='YES'/>"
+    "  <Option name='SPATIAL_INDEX' type='boolean' description='Whether to create a spatial index' default='YES' deprecated_alias='INDEX'/>"
     "  <Option name='INDEX_PARAMETERS' type='string' description='Creation parameters when the spatial index is created'/>"
     "  <Option name='ADD_LAYER_GTYPE' type='boolean' description='May be set to NO to disable the constraints on the geometry type in the spatial index' default='YES'/>"
     "  <Option name='MULTI_LOAD' type='boolean' description='If enabled new features will be created in groups of 100 per SQL INSERT command' default='YES'/>"

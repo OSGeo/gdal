@@ -120,9 +120,10 @@ NUMBER, INTEGER and VARCHAR2 will be used instead.  The default is "YES".<p>
 <li> <b>DIM</b>: This may be set to 2 or 3 to force the dimension of the
 created layer.  If not set 3 is used by default.<p>
 
-<li> <b>INDEX</b>: This may be set to OFF to disable creation of a spatial
+<li> <b>SPATIAL_INDEX</b>: This may be set to FALSE to disable creation of a spatial
 index when a layer load is complete.  By default an index is created if 
-any of the layer features have valid geometries.<p>
+any of the layer features have valid geometries. The default is "YES".
+Note: option was called INDEX in releases before GDAL 2<p>
 
 <li> <b>INDEX_PARAMETERS</b>: This may be set to pass creation parameters
 when the spatial index is created.  For instance setting INDEX_PARAMETERS to 

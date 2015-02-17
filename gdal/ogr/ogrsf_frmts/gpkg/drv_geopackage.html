@@ -92,7 +92,7 @@ ogrinfo poly.gpkg -sql "SELECT AsGPB(ST_Buffer(CastAutomagic(geom),5)) FROM poly
 <h3>Layer Creation Options</h3>
 
 <ul>
-<li><b>GEOMETRY_COLUMN</b>: Column to use for the geometry column. Default to "geom"</li>
+<li><b>GEOMETRY_NAME</b>: Column to use for the geometry column. Default to "geom". Note: option was called GEOMETRY_COLUMN in releases before GDAL 2</li>
 <li><b>GEOMETRY_NULLABLE</b>: (GDAL &gt;=2.0)  Whether the values of the geometry column can be NULL. Can be set to NO so that geometry is required. Default to "YES"</li>
 <li><b>FID</b>: Column name to use for the OGR FID (primary key in the SQLite database). Default to "fid"</li>
 <li><b>OVERWRITE</b>: If set to "YES" will delete any existing layers that have the same name as the layer being created. Default to NO</li>

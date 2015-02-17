@@ -859,7 +859,9 @@ OGRMySQLDataSource::ICreateLayer( const char * pszLayerNameIn,
     if (!pszGeomColumnName)
         pszGeomColumnName="SHAPE";
 
-    pszExpectedFIDName = CSLFetchNameValue( papszOptions, "MYSQL_FID" );
+    pszExpectedFIDName = CSLFetchNameValue( papszOptions, "FID" );
+    if (!pszExpectedFIDName)
+        pszExpectedFIDName = CSLFetchNameValue( papszOptions, "MYSQL_FID" );
     if (!pszExpectedFIDName)
         pszExpectedFIDName="OGR_FID";
 

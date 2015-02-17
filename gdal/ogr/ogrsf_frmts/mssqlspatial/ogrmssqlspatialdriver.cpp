@@ -126,6 +126,28 @@ void RegisterOGRMSSQLSpatial()
                                    "Microsoft SQL Server Spatial Database" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
                                 "drv_mssqlspatial.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, "<CreationOptionList/>");
+
+    poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
+"<LayerCreationOptionList>"
+"  <Option name='GEOM_TYPE' type='string-select' description='Format of geometry columns' default='geometry'>"
+"    <Value>geometry</Value>"
+"    <Value>geography</Value>"
+"  </Option>"
+"  <Option name='OVERWRITE' type='boolean' description='Whether to overwrite an existing table with the layer name to be created' default='NO'/>"
+"  <Option name='LAUNDER' type='boolean' description='Whether layer and field names will be laundered' default='YES'/>"
+"  <Option name='PRECISION' type='boolean' description='Whether fields created should keep the width and precision' default='YES'/>"
+"  <Option name='DIM' type='integer' description='Set to 2 to force the geometries to be 2D, or 3 to be 2.5D'/>"
+"  <Option name='GEOMETRY_NAME' type='string' description='Name of geometry column.' default='ogr_geometry' deprecated_alias='GEOM_NAME'/>"
+"  <Option name='SCHEMA' type='string' description='Name of schema into which to create the new table' default='dbo'/>"
+"  <Option name='SRID' type='int' description='Forced SRID of the layer'/>"
+"  <Option name='SPATIAL_INDEX' type='boolean' description='Whether to create a spatial index' default='YES'/>"
+"  <Option name='UPLOAD_GEOM_FORMAT' type='string-select' description='Geometry format when creating or modifying features' default='wkb'>"
+"    <Value>wkb</Value>"
+"    <Value>wkt</Value>"
+"  </Option>"
+"</LayerCreationOptionList>");
+
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES, "Integer Real String Date Time DateTime Binary" );
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver(poDriver);
 }

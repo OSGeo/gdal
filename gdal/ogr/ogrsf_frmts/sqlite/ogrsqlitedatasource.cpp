@@ -1945,6 +1945,13 @@ OGRSQLiteDataSource::ICreateLayer( const char * pszLayerNameIn,
         CPLFree( pszLayerName );
         return NULL;
     }
+    
+    const char* pszGeometryName;
+    pszGeometryName = CSLFetchNameValue( papszOptions, "GEOMETRY_NAME" );
+    if( pszGeometryName == NULL )
+    {
+        pszGeometryName = ( EQUAL(pszGeomFormat,"WKT") ) ? "WKT_GEOMETRY" : "GEOMETRY";
+    }
 
     if (bIsSpatiaLiteDB && !EQUAL(pszGeomFormat, "SpatiaLite") )
     {
@@ -2061,7 +2068,7 @@ OGRSQLiteDataSource::ICreateLayer( const char * pszLayerNameIn,
     poLayer = new OGRSQLiteTableLayer( this );
 
     poLayer->Initialize( pszLayerName, FALSE, TRUE ) ;
-    poLayer->SetCreationParameters( eType, pszGeomFormat, poSRS, nSRSId );
+    poLayer->SetCreationParameters( eType, pszGeomFormat, pszGeometryName, poSRS, nSRSId );
 
 /* -------------------------------------------------------------------- */
 /*      Add layer to data source layer list.                            */
