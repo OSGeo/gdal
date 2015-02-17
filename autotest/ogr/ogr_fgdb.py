@@ -244,10 +244,18 @@ def ogr_fgdb_DeleteField():
         gdaltest.post_reason('fail')
         return 'fail'
 
+    if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('smallint')).GetWidth() != 0:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('str')).GetWidth() != 0:
+        gdaltest.post_reason('failure')
+        return 'fail'
     if lyr.DeleteField(lyr.GetLayerDefn().GetFieldIndex('str')) != 0:
         gdaltest.post_reason('failure')
         return 'fail'
-    lyr.CreateField(ogr.FieldDefn("str2", ogr.OFTString))
+    fld_defn = ogr.FieldDefn("str2", ogr.OFTString)
+    fld_defn.SetWidth(80)
+    lyr.CreateField(fld_defn)
     feat = lyr.GetNextFeature()
     feat.SetField("str2", "foo2_\xc3\xa9")
     lyr.SetFeature(feat)
@@ -256,6 +264,9 @@ def ogr_fgdb_DeleteField():
 
     ds = ogr.Open("tmp/test.gdb")
     lyr = ds.GetLayerByIndex(0)
+    if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('str2')).GetWidth() != 80:
+        gdaltest.post_reason('failure')
+        return 'fail'
     if lyr.GetLayerDefn().GetFieldIndex('str') != -1:
         gdaltest.post_reason('failure')
         return 'fail'

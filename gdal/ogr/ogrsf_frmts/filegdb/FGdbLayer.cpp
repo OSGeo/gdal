@@ -2088,7 +2088,11 @@ bool FGdbLayer::GDBToOGRFields(CPLXMLNode* psRoot)
 
             OGRFieldDefn fieldTemplate( fieldName.c_str(), ogrType);
             fieldTemplate.SetSubType(eSubType);
-            //fieldTemplate.SetWidth(nLength);
+            /* On creation (GDBFieldTypeToWidthPrecision) if string width is 0, we pick up */
+            /* 65535 by default to mean unlimited string length, but we don't want */
+            /* to advertize such a big number */
+            if( ogrType == OFTString && nLength < 65535 )
+                fieldTemplate.SetWidth(nLength);
             //fieldTemplate.SetPrecision(nPrecision);
             fieldTemplate.SetNullable(bNullable);
             if( osDefault.size() )

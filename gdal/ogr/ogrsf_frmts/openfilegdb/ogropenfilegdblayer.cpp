@@ -404,7 +404,7 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
         const FileGDBField* poGDBField = m_poLyrTable->GetField(i);
         OGRFieldType eType = OFTString;
         OGRFieldSubType eSubType = OFSTNone;
-        /* int nWidth = 0; */
+        int nWidth = poGDBField->GetMaxWidth();
         switch( poGDBField->GetType() )
         {
             case FGFT_INT16:
@@ -456,7 +456,11 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
         }
         OGRFieldDefn oFieldDefn(poGDBField->GetName().c_str(), eType);
         oFieldDefn.SetSubType(eSubType);
-        /* oFieldDefn.SetWidth(nWidth); */
+        /* On creation in the FileGDB driver (GDBFieldTypeToWidthPrecision) if string width is 0, we pick up */
+        /* 65535 by default to mean unlimited string length, but we don't want */
+        /* to advertize such a big number */
+        if( eType == OFTString && nWidth < 65535 )
+            oFieldDefn.SetWidth(nWidth);
         oFieldDefn.SetNullable(poGDBField->IsNullable());
         const OGRField* psDefault = poGDBField->GetDefault();
         if( !(psDefault->Set.nMarker1 == OGRUnsetMarker &&
