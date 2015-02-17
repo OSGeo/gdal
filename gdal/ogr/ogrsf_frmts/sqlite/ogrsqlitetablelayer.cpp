@@ -76,6 +76,7 @@ OGRSQLiteTableLayer::OGRSQLiteTableLayer( OGRSQLiteDataSource *poDSIn )
     bHasCheckedTriggers = !bDisableInsertTriggers;
     bDeferredCreation = FALSE;
     pszCreationGeomFormat = NULL;
+    iFIDAsRegularColumnIndex = -1;
 }
 
 /************************************************************************/
@@ -643,6 +644,16 @@ OGRErr OGRSQLiteTableLayer::RecomputeOrdinals()
         CPLString osName =
             OGRSQLiteParamsUnquote(sqlite3_column_name( hColStmt, iCol ));
         int nIdx = poFeatureDefn->GetFieldIndex(osName);
+        if( pszFIDColumn != NULL && strcmp(osName, pszFIDColumn) == 0 )
+        {
+            if( iFIDCol < 0 )
+            {
+                iFIDCol = iCol;
+                if( nIdx >= 0 ) /* in case it has also been created as a regular field */
+                    nCountFieldOrdinals ++;
+            }
+            continue;
+        }
         if( nIdx >= 0 )
         {
             panFieldOrdinals[nIdx] = iCol;
@@ -658,13 +669,11 @@ OGRErr OGRSQLiteTableLayer::RecomputeOrdinals()
                 poGeomFieldDefn->iCol = iCol;
                 nCountGeomFieldOrdinals ++;
             }
-            else if( pszFIDColumn != NULL && strcmp(osName, pszFIDColumn) == 0 )
-                iFIDCol = iCol;
         }
     }
     CPLAssert(nCountFieldOrdinals == poFeatureDefn->GetFieldCount() );
     CPLAssert(nCountGeomFieldOrdinals == poFeatureDefn->GetGeomFieldCount() );
-    CPLAssert(pszFIDColumn == NULL || iFIDCol > 0 );
+    CPLAssert(pszFIDColumn == NULL || iFIDCol >= 0 );
 
     sqlite3_finalize( hColStmt );
 
@@ -751,7 +760,12 @@ OGRFeature *OGRSQLiteTableLayer::GetNextFeature()
     if (HasLayerDefnError())
         return NULL;
 
-    return OGRSQLiteLayer::GetNextFeature();
+    OGRFeature* poFeature = OGRSQLiteLayer::GetNextFeature();
+    if( poFeature && iFIDAsRegularColumnIndex >= 0 )
+    {
+        poFeature->SetField(iFIDAsRegularColumnIndex, poFeature->GetFID());
+    }
+    return poFeature;
 }
 
 /************************************************************************/
@@ -1315,6 +1329,16 @@ OGRErr OGRSQLiteTableLayer::CreateField( OGRFieldDefn *poFieldIn,
                   "CreateField");
         return OGRERR_FAILURE;
     }
+    
+    if( pszFIDColumn != NULL &&
+        EQUAL( oField.GetNameRef(), pszFIDColumn ) &&
+        oField.GetType() != OFTInteger &&
+        oField.GetType() != OFTInteger64 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Wrong field type for %s",
+                 oField.GetNameRef());
+        return CE_Failure;
+    }
 
     ClearInsertStmt();
     
@@ -1408,6 +1432,12 @@ OGRErr OGRSQLiteTableLayer::CreateField( OGRFieldDefn *poFieldIn,
 /*      Add the field to the OGRFeatureDefn.                            */
 /* -------------------------------------------------------------------- */
     poFeatureDefn->AddFieldDefn( &oField );
+
+    if( pszFIDColumn != NULL &&
+        EQUAL( oField.GetNameRef(), pszFIDColumn ) )
+    {
+        iFIDAsRegularColumnIndex = poFeatureDefn->GetFieldCount() - 1;
+    }
 
     if( !bDeferredCreation )
         RecomputeOrdinals();
@@ -2371,6 +2401,8 @@ OGRErr OGRSQLiteTableLayer::BindValues( OGRFeature *poFeature,
     for( iField = 0; iField < nFieldCount; iField++ )
     {
         const char *pszRawValue;
+        if( iField == iFIDAsRegularColumnIndex )
+            continue;
 
         if( !poFeature->IsFieldSet( iField ) )
         {
@@ -2381,7 +2413,8 @@ OGRErr OGRSQLiteTableLayer::BindValues( OGRFeature *poFeature,
         }
         else
         {
-            switch( poFeatureDefn->GetFieldDefn(iField)->GetType() )
+            OGRFieldDefn* poFieldDefn = poFeatureDefn->GetFieldDefn(iField);
+            switch( poFieldDefn->GetType() )
             {
                 case OFTInteger:
                 {
@@ -2544,6 +2577,18 @@ OGRErr OGRSQLiteTableLayer::ISetFeature( OGRFeature *poFeature )
         return OGRERR_FAILURE;
     }
 
+    /* In case the FID column has also been created as a regular field */
+    if( iFIDAsRegularColumnIndex >= 0 )
+    {
+        if( !poFeature->IsFieldSet( iFIDAsRegularColumnIndex ) ||
+            poFeature->GetFieldAsInteger64(iFIDAsRegularColumnIndex) != poFeature->GetFID() )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                        "Inconsistant values of FID and field of same name");
+            return CE_Failure;
+        }
+    }
+
     if( bDeferredCreation && RunDeferredCreationIfNecessary() != OGRERR_NONE )
         return OGRERR_FAILURE;
 
@@ -2583,6 +2628,8 @@ OGRErr OGRSQLiteTableLayer::ISetFeature( OGRFeature *poFeature )
     nFieldCount = poFeatureDefn->GetFieldCount();
     for( iField = 0; iField < nFieldCount; iField++ )
     {
+        if( iField == iFIDAsRegularColumnIndex )
+            continue;
         if( bNeedComma )
             osCommand += ",";
 
@@ -2876,8 +2923,32 @@ OGRErr OGRSQLiteTableLayer::ICreateFeature( OGRFeature *poFeature )
             break;
         }
     }
-    
-    if( hInsertStmt == NULL || poFeature->GetFID() != OGRNullFID || bHasDefaultValue )
+
+    /* In case the FID column has also been created as a regular field */
+    if( iFIDAsRegularColumnIndex >= 0 )
+    {
+        if( poFeature->GetFID() == OGRNullFID )
+        {
+            if( poFeature->IsFieldSet( iFIDAsRegularColumnIndex ) )
+            {
+                poFeature->SetFID(
+                    poFeature->GetFieldAsInteger64(iFIDAsRegularColumnIndex));
+            }
+        }
+        else
+        {
+            if( !poFeature->IsFieldSet( iFIDAsRegularColumnIndex ) ||
+                poFeature->GetFieldAsInteger64(iFIDAsRegularColumnIndex) != poFeature->GetFID() )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                            "Inconsistant values of FID and field of same name");
+                return CE_Failure;
+            }
+        }
+    }
+
+    int bTemporaryStatement = (poFeature->GetFID() != OGRNullFID || bHasDefaultValue);
+    if( hInsertStmt == NULL || bTemporaryStatement )
     {
         CPLString      osValues;
 
@@ -2889,7 +2960,7 @@ OGRErr OGRSQLiteTableLayer::ICreateFeature( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
 /*      Add FID if we have a cleartext FID column.                      */
 /* -------------------------------------------------------------------- */
-        if( pszFIDColumn != NULL // && !EQUAL(pszFIDColumn,"OGC_FID") 
+        if( pszFIDColumn != NULL
             && poFeature->GetFID() != OGRNullFID )
         {
             osCommand += "\"";
@@ -2933,6 +3004,8 @@ OGRErr OGRSQLiteTableLayer::ICreateFeature( OGRFeature *poFeature )
         nFieldCount = poFeatureDefn->GetFieldCount();
         for( iField = 0; iField < nFieldCount; iField++ )
         {
+            if( iField == iFIDAsRegularColumnIndex )
+                continue;
             if( bHasDefaultValue && !poFeature->IsFieldSet( iField ) )
                 continue;
 
@@ -3016,6 +3089,7 @@ OGRErr OGRSQLiteTableLayer::ICreateFeature( OGRFeature *poFeature )
                   "sqlite3_step() failed:\n  %s (%d)", 
                   sqlite3_errmsg(hDB), rc );
         sqlite3_reset( hInsertStmt );
+        ClearInsertStmt();
         return OGRERR_FAILURE;
     }
 
@@ -3026,11 +3100,13 @@ OGRErr OGRSQLiteTableLayer::ICreateFeature( OGRFeature *poFeature )
     if(nFID > 0)
     {
         poFeature->SetFID( nFID );
+        if( iFIDAsRegularColumnIndex >= 0 )
+            poFeature->SetField( iFIDAsRegularColumnIndex, nFID );
     }
 
     sqlite3_reset( hInsertStmt );
     
-    if( bHasDefaultValue )
+    if( bTemporaryStatement )
         ClearInsertStmt();
 
     nFieldCount = poFeatureDefn->GetGeomFieldCount();
@@ -3212,6 +3288,8 @@ OGRErr OGRSQLiteTableLayer::RunDeferredCreationIfNecessary()
     for(i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
     {
         OGRFieldDefn* poFieldDefn = poFeatureDefn->GetFieldDefn(i);
+        if( i == iFIDAsRegularColumnIndex )
+            continue;
         CPLString osFieldType(FieldDefnToSQliteFieldDefn(poFieldDefn));
         osCommand += CPLSPrintf(", '%s' %s",
                         OGRSQLiteEscape(poFieldDefn->GetNameRef()).c_str(),
