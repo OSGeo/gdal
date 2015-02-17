@@ -635,12 +635,18 @@ OGRErr FGdbLayer::PopulateRowWithFeature( Row& fgdb_row, OGRFeature *poFeature )
 /*                             GetRow()                                 */
 /************************************************************************/
 
-OGRErr FGdbLayer::GetRow( EnumRows& enumRows, Row& row, long nFID )
+OGRErr FGdbLayer::GetRow( EnumRows& enumRows, Row& row, GIntBig nFID )
 {
     long           hr;
     CPLString      osQuery;
+    
+    /* Querying a 64bit FID causes a runtime exception in FileGDB... */
+    if( (GIntBig)(int)nFID != nFID )
+    {
+        return OGRERR_FAILURE;
+    }
 
-    osQuery.Printf("%s = %ld", m_strOIDFieldName.c_str(), nFID);
+    osQuery.Printf("%s = " CPL_FRMT_GIB, m_strOIDFieldName.c_str(), nFID);
 
     if (FAILED(hr = m_pTable->Search(m_wstrSubfields, StringToWString(osQuery.c_str()), true, enumRows)))
     {

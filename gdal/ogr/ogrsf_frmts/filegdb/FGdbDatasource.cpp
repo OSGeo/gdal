@@ -490,8 +490,20 @@ OGRLayer * FGdbDataSource::ExecuteSQL( const char *pszSQLCommand,
 /* -------------------------------------------------------------------- */
     EnumRows* pEnumRows = new EnumRows;
     long hr;
-    if (FAILED(hr = m_pGeodatabase->ExecuteSQL(
-                                StringToWString(pszSQLCommand), true, *pEnumRows)))
+    try
+    {
+        hr = m_pGeodatabase->ExecuteSQL(
+                                StringToWString(pszSQLCommand), true, *pEnumRows);
+    }
+    catch(...)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Exception occured at executing '%s'. Application may become unstable", pszSQLCommand);
+        delete pEnumRows;
+        return NULL;
+    }
+
+    if (FAILED(hr))
     {
         GDBErr(hr, CPLSPrintf("Failed at executing '%s'", pszSQLCommand));
         delete pEnumRows;
