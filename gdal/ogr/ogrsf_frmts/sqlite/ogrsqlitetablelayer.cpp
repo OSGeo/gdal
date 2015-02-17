@@ -228,14 +228,15 @@ static OGRSQLiteGeomFormat GetGeomFormat( const char* pszGeomFormat )
 /*                         SetCreationParameters()                      */
 /************************************************************************/
 
-void OGRSQLiteTableLayer::SetCreationParameters( OGRwkbGeometryType eGeomType,
+void OGRSQLiteTableLayer::SetCreationParameters( const char *pszFIDColumnName,
+                                                 OGRwkbGeometryType eGeomType,
                                                  const char *pszGeomFormat,
                                                  const char *pszGeometryName,
                                                  OGRSpatialReference *poSRS,
                                                  int nSRSId )
 
 {
-    pszFIDColumn = CPLStrdup("OGC_FID");
+    pszFIDColumn = CPLStrdup(pszFIDColumnName);
     poFeatureDefn = new OGRSQLiteFeatureDefn(pszTableName);
     poFeatureDefn->SetGeomType(wkbNone);
     poFeatureDefn->Reference();

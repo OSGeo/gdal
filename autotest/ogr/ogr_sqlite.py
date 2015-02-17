@@ -109,7 +109,7 @@ def ogr_sqlite_2():
         return 'fail'
 
     # Test OVERWRITE=YES
-    lyr = gdaltest.sl_ds.CreateLayer( 'a_layer', options = ['GEOMETRY_NAME=mygeom', 'OVERWRITE=YES'] )
+    lyr = gdaltest.sl_ds.CreateLayer( 'a_layer', options = ['FID=my_fid','GEOMETRY_NAME=mygeom', 'OVERWRITE=YES'] )
     if lyr is None:
         gdaltest.post_reason('layer creation should have succeeded')
         return 'fail'
@@ -161,6 +161,9 @@ def ogr_sqlite_2():
         return 'fail'
         
     if gdaltest.sl_ds.GetLayerByName('a_layer').GetGeometryColumn() != 'mygeom':
+        gdaltest.post_reason('failure')
+        return 'fail'
+    if gdaltest.sl_ds.GetLayerByName('a_layer').GetFIDColumn() != 'my_fid':
         gdaltest.post_reason('failure')
         return 'fail'
 
