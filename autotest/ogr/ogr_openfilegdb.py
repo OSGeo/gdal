@@ -269,6 +269,9 @@ def ogr_openfilegdb_1():
         if expected_geom_type is not ogr.wkbNone and lyr.GetLayerDefn().GetGeomFieldDefn(0).IsNullable() != 1:
             gdaltest.post_reason('fail')
             return 'fail'
+        if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('str')).GetWidth() != 0:
+            gdaltest.post_reason('fail')
+            return 'fail'
         if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('smallint')).GetSubType() != ogr.OFSTInt16:
             gdaltest.post_reason('fail')
             return 'fail'
@@ -1235,6 +1238,9 @@ def ogr_openfilegdb_15():
     ds = ogr.Open('data/test_default_val.gdb.zip')
     lyr = ds.GetLayer(0)
     if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('STR')).GetDefault() != "'default_val'":
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('STR')).GetWidth() != 50:
         gdaltest.post_reason('fail')
         return 'fail'
     if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('INT32')).GetDefault() != "123456788":
