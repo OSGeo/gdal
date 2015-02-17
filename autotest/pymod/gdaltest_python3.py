@@ -140,7 +140,7 @@ def runexternal(cmd, strin = None, check_memleak = True, display_live_on_parent_
         ret = ''
 
     waitcode = p.wait()
-    if waitcode != 0:
+    if waitcode < 0:
         ret = ret + '\nERROR ret code = %d' % waitcode
 
     return ret
@@ -175,7 +175,7 @@ def runexternal_out_and_err(cmd, check_memleak = True):
         ret_stderr = q_stderr.get().decode('ascii')
 
     waitcode = p.wait()
-    if waitcode != 0:
+    if waitcode < 0:
         ret_stderr = ret_stderr + '\nERROR ret code = %d' % waitcode
 
     return (ret_stdout, ret_stderr)
