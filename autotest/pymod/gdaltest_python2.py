@@ -174,17 +174,22 @@ def _runexternal_subprocess(cmd, strin = None, check_memleak = True, display_liv
     return ret
 
 def runexternal(cmd, strin = None, check_memleak = True, display_live_on_parent_stdout = False):
-    has_subprocess = False
-    try:
-        import subprocess
-        import shlex
-        subprocess.Popen
-        shlex.split
-        has_subprocess = True
-    except:
-        pass
-    if has_subprocess:
-        return _runexternal_subprocess(cmd, strin=strin, check_memleak=check_memleak, display_live_on_parent_stdout=display_live_on_parent_stdout)
+    if 'TRAVIS_BRANCH' in os.environ:
+        val = os.environ['TRAVIS_BRANCH']
+    else:
+        val = ''
+    if val.find('trunk_mingw') < 0:
+        has_subprocess = False
+        try:
+            import subprocess
+            import shlex
+            subprocess.Popen
+            shlex.split
+            has_subprocess = True
+        except:
+            pass
+        if has_subprocess:
+            return _runexternal_subprocess(cmd, strin=strin, check_memleak=check_memleak, display_live_on_parent_stdout=display_live_on_parent_stdout)
 
     if strin is None:
         ret_stdout = os.popen(cmd)
@@ -250,17 +255,22 @@ def _runexternal_out_and_err_subprocess(cmd, check_memleak = True):
     return (ret_stdout, ret_stderr)
     
 def runexternal_out_and_err(cmd, check_memleak = True):
-    has_subprocess = False
-    try:
-        import subprocess
-        import shlex
-        subprocess.Popen
-        shlex.split
-        has_subprocess = True
-    except:
-        pass
-    if has_subprocess:
-        return _runexternal_out_and_err_subprocess(cmd, check_memleak=check_memleak)
+    if 'TRAVIS_BRANCH' in os.environ:
+        val = os.environ['TRAVIS_BRANCH']
+    else:
+        val = ''
+    if val.find('trunk_mingw') < 0:
+        has_subprocess = False
+        try:
+            import subprocess
+            import shlex
+            subprocess.Popen
+            shlex.split
+            has_subprocess = True
+        except:
+            pass
+        if has_subprocess:
+            return _runexternal_out_and_err_subprocess(cmd, check_memleak=check_memleak)
 
     (ret_stdin, ret_stdout, ret_stderr) = os.popen3(cmd)
     ret_stdin.close()
