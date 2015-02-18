@@ -93,7 +93,6 @@ class OGRPGDumpLayer : public OGRLayer
     char                *pszFIDColumn;
     OGRFeatureDefn      *poFeatureDefn;
     OGRPGDumpDataSource *poDS;
-    GIntBig             nFeatures;
     int                 bLaunderColumnNames;
     int                 bPreservePrecision;
     int                 bUseCopy;
@@ -105,6 +104,11 @@ class OGRPGDumpLayer : public OGRLayer
     int                 nForcedSRSId;
     int                 bCreateSpatialIndexFlag;
     int                 bPostGIS2;
+
+    int                 iNextShapeId;
+    int                 iFIDAsRegularColumnIndex;
+    int                 bAutoFIDOnCreateViaCopy;
+    int                 bCopyStatementWithFID;
 
     char              **papszOverrideColumnTypes;
 
@@ -121,6 +125,7 @@ class OGRPGDumpLayer : public OGRLayer
     virtual             ~OGRPGDumpLayer();
 
     virtual OGRFeatureDefn *GetLayerDefn() {return poFeatureDefn;}
+    virtual const char* GetFIDColumn() { return pszFIDColumn; }
     
     virtual void        ResetReading()  { }
     virtual int         TestCapability( const char * );

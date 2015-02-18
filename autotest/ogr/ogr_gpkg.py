@@ -1492,6 +1492,108 @@ def ogr_gpkg_24():
     return 'success'
 
 ###############################################################################
+# Test creating a field with the fid name
+
+def ogr_gpkg_25():
+
+    if gdaltest.gpkg_dr is None:
+        return 'skip'
+
+    ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_25.gpkg')
+    lyr = ds.CreateLayer('test', geom_type = ogr.wkbNone, options = ['FID=myfid'])
+
+    lyr.CreateField(ogr.FieldDefn('str', ogr.OFTString))
+    gdal.PushErrorHandler()
+    ret = lyr.CreateField(ogr.FieldDefn('myfid', ogr.OFTString))
+    gdal.PopErrorHandler()
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ret = lyr.CreateField(ogr.FieldDefn('myfid', ogr.OFTInteger))
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    lyr.CreateField(ogr.FieldDefn('str2', ogr.OFTString))
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField('str', 'first string')
+    feat.SetField('myfid', 10)
+    feat.SetField('str2', 'second string')
+    ret = lyr.CreateFeature(feat)
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if feat.GetFID() != 10:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField('str2', 'second string')
+    ret = lyr.CreateFeature(feat)
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if feat.GetFID() < 0:
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+    if feat.GetField('myfid') != feat.GetFID():
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+
+    feat.SetField('str', 'foo')
+    ret = lyr.SetFeature(feat)
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetFID(1)
+    feat.SetField('myfid', 10)
+    gdal.PushErrorHandler()
+    ret = lyr.CreateFeature(feat)
+    gdal.PopErrorHandler()
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.PushErrorHandler()
+    ret = lyr.SetFeature(feat)
+    gdal.PopErrorHandler()
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    feat.UnsetField('myfid')
+    gdal.PushErrorHandler()
+    ret = lyr.SetFeature(feat)
+    gdal.PopErrorHandler()
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr.ResetReading()
+    f = lyr.GetNextFeature()
+    if f.GetFID() != 10 or f.GetField('str') != 'first string' or f.GetField('str2') != 'second string' or f.GetField('myfid') != 10:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    f = lyr.GetFeature(f.GetFID())
+    if f.GetFID() != 10 or f.GetField('str') != 'first string' or f.GetField('str2') != 'second string' or f.GetField('myfid') != 10:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    f = None
+
+    ds = None
+
+    gdaltest.gpkg_dr.DeleteDataSource('/vsimem/ogr_gpkg_25.sqlite')
+
+    return 'success'
+
+###############################################################################
 # Run test_ogrsf
 
 def ogr_gpkg_test_ogrsf():
@@ -1573,6 +1675,7 @@ gdaltest_list = [
     ogr_gpkg_22,
     ogr_gpkg_23,
     ogr_gpkg_24,
+    ogr_gpkg_25,
     ogr_gpkg_test_ogrsf,
     ogr_gpkg_cleanup,
 ]

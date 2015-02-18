@@ -283,10 +283,13 @@ class OGRPGTableLayer : public OGRPGLayer
     int                 bInResetReading;
     
     int                 bAutoFIDOnCreateViaCopy;
+    int                 bCopyStatementWithFID;
     int                 bUseCopyByDefault;
     
     int                 bDifferedCreation;
     CPLString           osCreateTable;
+    
+    int                 iFIDAsRegularColumnIndex;
 
     virtual CPLString   GetFromClauseForGetExtent() { return pszSqlTableName; }
     

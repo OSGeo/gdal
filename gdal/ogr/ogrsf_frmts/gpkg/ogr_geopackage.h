@@ -363,6 +363,7 @@ class OGRGeoPackageTableLayer : public OGRGeoPackageLayer
     int                         m_bPreservePrecision;
     int                         m_bTruncateFields;
     int                         m_bDeferredCreation;
+    int                         m_iFIDAsRegularColumnIndex;
 
     virtual OGRErr      ResetStatement();
     

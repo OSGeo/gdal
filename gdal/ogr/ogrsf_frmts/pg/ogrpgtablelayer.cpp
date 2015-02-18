@@ -199,8 +199,10 @@ OGRPGTableLayer::OGRPGTableLayer( OGRPGDataSource *poDSIn,
     poFeatureDefn->Reference();
     
     bAutoFIDOnCreateViaCopy = FALSE;
+    bCopyStatementWithFID = FALSE;
     
     bDifferedCreation = FALSE;
+    iFIDAsRegularColumnIndex = -1;
 }
 
 //************************************************************************/
@@ -809,7 +811,13 @@ OGRFeature *OGRPGTableLayer::GetNextFeature()
             || poGeomFieldDefn->ePostgisType == GEOM_TYPE_GEOMETRY
             || poGeomFieldDefn->ePostgisType == GEOM_TYPE_GEOGRAPHY
             || FilterGeometry( poFeature->GetGeomFieldRef(m_iGeomFieldFilter) )  )
+        {
+            if( poFeature && iFIDAsRegularColumnIndex >= 0 )
+            {
+                poFeature->SetField(iFIDAsRegularColumnIndex, poFeature->GetFID());
+            }
             return poFeature;
+        }
 
         delete poFeature;
     }
@@ -1108,6 +1116,18 @@ OGRErr OGRPGTableLayer::ISetFeature( OGRFeature *poFeature )
 
     }
 
+    /* In case the FID column has also been created as a regular field */
+    if( iFIDAsRegularColumnIndex >= 0 )
+    {
+        if( !poFeature->IsFieldSet( iFIDAsRegularColumnIndex ) ||
+            poFeature->GetFieldAsInteger64(iFIDAsRegularColumnIndex) != poFeature->GetFID() )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                        "Inconsistant values of FID and field of same name");
+            return CE_Failure;
+        }
+    }
+
     eErr = poDS->SoftStartTransaction();
     if( eErr != OGRERR_NONE )
     {
@@ -1229,6 +1249,8 @@ OGRErr OGRPGTableLayer::ISetFeature( OGRFeature *poFeature )
 
     for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
     {
+        if( iFIDAsRegularColumnIndex == i )
+            continue;
         if( bNeedComma )
             osCommand += ", ";
         else
@@ -1301,6 +1323,29 @@ OGRErr OGRPGTableLayer::ICreateFeature( OGRFeature *poFeature )
     if( bDifferedCreation && RunDifferedCreationIfNecessary() != OGRERR_NONE )
         return OGRERR_FAILURE;
 
+    /* In case the FID column has also been created as a regular field */
+    if( iFIDAsRegularColumnIndex >= 0 )
+    {
+        if( poFeature->GetFID() == OGRNullFID )
+        {
+            if( poFeature->IsFieldSet( iFIDAsRegularColumnIndex ) )
+            {
+                poFeature->SetFID(
+                    poFeature->GetFieldAsInteger64(iFIDAsRegularColumnIndex));
+            }
+        }
+        else
+        {
+            if( !poFeature->IsFieldSet( iFIDAsRegularColumnIndex ) ||
+                poFeature->GetFieldAsInteger64(iFIDAsRegularColumnIndex) != poFeature->GetFID() )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                            "Inconsistant values of FID and field of same name");
+                return CE_Failure;
+            }
+        }
+    }
+
     /* Auto-promote FID column to 64bit if necessary */
     if( pszFIDColumn != NULL &&
         (GIntBig)(int)poFeature->GetFID() != poFeature->GetFID() &&
@@ -1345,11 +1390,12 @@ OGRErr OGRPGTableLayer::ICreateFeature( OGRFeature *poFeature )
 
     // We avoid testing the config option too often. 
     if( bUseCopy == USE_COPY_UNSET )
-        bUseCopy = CSLTestBoolean( CPLGetConfigOption( "PG_USE_COPY", "NO") );
+        bUseCopy = CSLTestBoolean( CPLGetConfigOption( "PG_USE_COPY", "YES") );
 
+    OGRErr eErr;
     if( !bUseCopy )
     {
-        return CreateFeatureViaInsert( poFeature );
+        eErr = CreateFeatureViaInsert( poFeature );
     }
     else
     {
@@ -1370,27 +1416,45 @@ OGRErr OGRPGTableLayer::ICreateFeature( OGRFeature *poFeature )
         if( bHasDefaultValue )
         {
             EndCopy();
-            return CreateFeatureViaInsert( poFeature );
+            eErr = CreateFeatureViaInsert( poFeature );
         }
-
-        if ( !bCopyActive )
+        else
         {
-            /* This is a heuristics. If the first feature to be copied has a */
-            /* FID set (and that a FID column has been identified), then we will */
-            /* try to copy FID values from features. Otherwise, we will not */
-            /* do and assume that the FID column is an autoincremented column. */
-            StartCopy(poFeature->GetFID() != OGRNullFID);
-        }
+            int bFIDSet = (poFeature->GetFID() != OGRNullFID);
+            if( bCopyActive && bFIDSet != bCopyStatementWithFID )
+            {
+                EndCopy();
+                eErr = CreateFeatureViaInsert( poFeature );
+            }
+            else
+            {
+                if ( !bCopyActive )
+                {
+                    /* This is a heuristics. If the first feature to be copied has a */
+                    /* FID set (and that a FID column has been identified), then we will */
+                    /* try to copy FID values from features. Otherwise, we will not */
+                    /* do and assume that the FID column is an autoincremented column. */
+                    StartCopy(bFIDSet);
+                    bCopyStatementWithFID = bFIDSet;
+                }
 
-        OGRErr eErr = CreateFeatureViaCopy( poFeature );
-        if( poFeature->GetFID() != OGRNullFID )
-            bAutoFIDOnCreateViaCopy = FALSE;
-        if( eErr == CE_None && bAutoFIDOnCreateViaCopy )
-        {
-            poFeature->SetFID( ++iNextShapeId );
+                eErr = CreateFeatureViaCopy( poFeature );
+                if( bFIDSet )
+                    bAutoFIDOnCreateViaCopy = FALSE;
+                if( eErr == CE_None && bAutoFIDOnCreateViaCopy )
+                {
+                    poFeature->SetFID( ++iNextShapeId );
+                }
+            }
         }
-        return eErr;
     }
+
+    if( eErr == CE_None && iFIDAsRegularColumnIndex >= 0 )
+    {
+        poFeature->SetField(iFIDAsRegularColumnIndex, poFeature->GetFID());
+    }
+
+    return eErr;
 }
 
 /************************************************************************/
@@ -1534,6 +1598,8 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
     int nFieldCount = poFeatureDefn->GetFieldCount();
     for( i = 0; i < nFieldCount; i++ )
     {
+        if( iFIDAsRegularColumnIndex == i )
+            continue;
         if( !poFeature->IsFieldSet( i ) )
             continue;
 
@@ -1650,6 +1716,8 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
 
     for( i = 0; i < nFieldCount; i++ )
     {
+        if( iFIDAsRegularColumnIndex == i )
+            continue;
         if( !poFeature->IsFieldSet( i ) )
             continue;
 
@@ -1909,7 +1977,17 @@ OGRErr OGRPGTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
                   "CreateField");
         return OGRERR_FAILURE;
     }
-
+    
+    if( pszFIDColumn != NULL &&
+        EQUAL( oField.GetNameRef(), pszFIDColumn ) &&
+        oField.GetType() != OFTInteger &&
+        oField.GetType() != OFTInteger64 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Wrong field type for %s",
+                 oField.GetNameRef());
+        return CE_Failure;
+    }
+    
 /* -------------------------------------------------------------------- */
 /*      Do we want to "launder" the column names into Postgres          */
 /*      friendly format?                                                */
@@ -1954,11 +2032,14 @@ OGRErr OGRPGTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
 /* -------------------------------------------------------------------- */
     if( bDifferedCreation )
     {
-        osCreateTable += ", ";
-        osCreateTable += OGRPGEscapeColumnName(oField.GetNameRef());
-        osCreateTable += " ";
-        osCreateTable += osFieldType;
-        osCreateTable += osNotNullDefault;
+        if( !(pszFIDColumn != NULL && EQUAL(pszFIDColumn,oField.GetNameRef())) )
+        {
+            osCreateTable += ", ";
+            osCreateTable += OGRPGEscapeColumnName(oField.GetNameRef());
+            osCreateTable += " ";
+            osCreateTable += osFieldType;
+            osCreateTable += osNotNullDefault;
+        }
     }
     else
     {
@@ -1994,6 +2075,12 @@ OGRErr OGRPGTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
     }
 
     poFeatureDefn->AddFieldDefn( &oField );
+
+    if( pszFIDColumn != NULL &&
+        EQUAL( oField.GetNameRef(), pszFIDColumn ) )
+    {
+        iFIDAsRegularColumnIndex = poFeatureDefn->GetFieldCount() - 1;
+    }
 
     return OGRERR_NONE;
 }
@@ -2497,6 +2584,10 @@ OGRFeature *OGRPGTableLayer::GetFeature( GIntBig nFeatureId )
                 hCursorResult = hResult;
                 CreateMapFromFieldNameToIndex();
                 poFeature = RecordToFeature( 0 );
+                if( poFeature && iFIDAsRegularColumnIndex >= 0 )
+                {
+                    poFeature->SetField(iFIDAsRegularColumnIndex, poFeature->GetFID());
+                }
                 hCursorResult = NULL;
 
                 if (nRows > 1)
