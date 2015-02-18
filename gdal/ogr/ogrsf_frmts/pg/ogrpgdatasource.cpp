@@ -1673,10 +1673,9 @@ OGRPGDataSource::ICreateLayer( const char * pszLayerName,
     poLayer->SetOverrideColumnTypes(pszOverrideColumnTypes);
 
     poLayer->AllowAutoFIDOnCreateViaCopy();
-    if( CPLGetConfigOption("PG_USE_COPY", NULL) == NULL )
-    {
+    if( CSLTestBoolean(CPLGetConfigOption("PG_USE_COPY", "YES")) )
         poLayer->SetUseCopy();
-    }
+
     if( bFID64 )
         poLayer->SetMetadataItem(OLMD_FID64, "YES");
 

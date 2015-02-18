@@ -196,6 +196,8 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters( OGRFeature *poFeature,
     /* Bind the attributes using appropriate SQLite data types */
     for( int i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
     {
+        if( i == m_iFIDAsRegularColumnIndex )
+            continue;
         OGRFieldDefn *poFieldDefn = poFeatureDefn->GetFieldDefn(i); 
         
         if( poFeature->IsFieldSet(i) )
@@ -366,7 +368,7 @@ CPLString OGRGeoPackageTableLayer::FeatureGenerateInsertSQL( OGRFeature *poFeatu
     OGRBoolean bNeedComma = FALSE;
     OGRFeatureDefn *poFeatureDefn = poFeature->GetDefnRef();
 
-    if( poFeatureDefn->GetFieldCount() == 0 &&
+    if( poFeatureDefn->GetFieldCount() == ((m_iFIDAsRegularColumnIndex >= 0) ? 1 : 0) &&
         poFeatureDefn->GetGeomFieldCount() == 0 &&
         !bAddFID )
         return CPLSPrintf("INSERT INTO \"%s\" DEFAULT VALUES", m_pszTableName);
@@ -409,6 +411,8 @@ CPLString OGRGeoPackageTableLayer::FeatureGenerateInsertSQL( OGRFeature *poFeatu
     /* Add attribute column names (except FID) to the SQL */
     for( int i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
     {
+        if( i == m_iFIDAsRegularColumnIndex )
+            continue;
         if( !bBindNullFields && !poFeature->IsFieldSet(i) )
             continue;
 
@@ -469,6 +473,8 @@ CPLString OGRGeoPackageTableLayer::FeatureGenerateUpdateSQL( OGRFeature *poFeatu
     /* Add attribute column names (except FID) to the SQL */
     for( int i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
     {
+        if( i == m_iFIDAsRegularColumnIndex )
+            continue;
         if( !bNeedComma )
             bNeedComma = TRUE;
         else 
@@ -831,6 +837,7 @@ OGRGeoPackageTableLayer::OGRGeoPackageTableLayer(
     m_bPreservePrecision = TRUE;
     m_bTruncateFields = FALSE;
     m_bDeferredCreation = FALSE;
+    m_iFIDAsRegularColumnIndex = -1;
 }
 
 
@@ -894,6 +901,16 @@ OGRErr OGRGeoPackageTableLayer::CreateField( OGRFieldDefn *poField,
     else
         oFieldDefn.SetWidth(0);
     oFieldDefn.SetPrecision(0);
+    
+    if( m_pszFidColumn != NULL &&
+        EQUAL( oFieldDefn.GetNameRef(), m_pszFidColumn ) &&
+        oFieldDefn.GetType() != OFTInteger &&
+        oFieldDefn.GetType() != OFTInteger64 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Wrong field type for %s",
+                 oFieldDefn.GetNameRef());
+        return CE_Failure;
+    }
 
     if( !m_bDeferredCreation )
     {
@@ -941,6 +958,12 @@ OGRErr OGRGeoPackageTableLayer::CreateField( OGRFieldDefn *poField,
     }
 
     m_poFeatureDefn->AddFieldDefn( &oFieldDefn );
+
+    if( m_pszFidColumn != NULL &&
+        EQUAL( oFieldDefn.GetNameRef(), m_pszFidColumn ) )
+    {
+        m_iFIDAsRegularColumnIndex = m_poFeatureDefn->GetFieldCount() - 1;
+    }
 
     if( !m_bDeferredCreation )
     {
@@ -1073,6 +1096,29 @@ OGRErr OGRGeoPackageTableLayer::ICreateFeature( OGRFeature *poFeature )
         }
     }
 
+    /* In case the FID column has also been created as a regular field */
+    if( m_iFIDAsRegularColumnIndex >= 0 )
+    {
+        if( poFeature->GetFID() == OGRNullFID )
+        {
+            if( poFeature->IsFieldSet( m_iFIDAsRegularColumnIndex ) )
+            {
+                poFeature->SetFID(
+                    poFeature->GetFieldAsInteger64(m_iFIDAsRegularColumnIndex));
+            }
+        }
+        else
+        {
+            if( !poFeature->IsFieldSet( m_iFIDAsRegularColumnIndex ) ||
+                poFeature->GetFieldAsInteger64(m_iFIDAsRegularColumnIndex) != poFeature->GetFID() )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                            "Inconsistant values of FID and field of same name");
+                return CE_Failure;
+            }
+        }
+    }
+
     /* If there's a unset field with a default value, then we must create */
     /* a specific INSERT statement to avoid unset fields to be bound to NULL */
     if( m_poInsertStatement && (bHasDefaultValue || m_bInsertStatementWithFID != (poFeature->GetFID() != OGRNullFID)) )
@@ -1145,10 +1191,12 @@ OGRErr OGRGeoPackageTableLayer::ICreateFeature( OGRFeature *poFeature )
     }
 
     /* Read the latest FID value */
-    GIntBig iFid;
-    if ( (iFid = sqlite3_last_insert_rowid(m_poDS->GetDB())) )
+    GIntBig nFID;
+    if ( (nFID = sqlite3_last_insert_rowid(m_poDS->GetDB())) )
     {
-        poFeature->SetFID(iFid);
+        poFeature->SetFID(nFID);
+        if( m_iFIDAsRegularColumnIndex >= 0 )
+            poFeature->SetField( m_iFIDAsRegularColumnIndex, nFID );
     }
     else
     {
@@ -1177,6 +1225,18 @@ OGRErr OGRGeoPackageTableLayer::ISetFeature( OGRFeature *poFeature )
         CPLError( CE_Failure, CPLE_AppDefined,
                   "FID required on features given to SetFeature()." );
         return OGRERR_FAILURE;
+    }
+
+    /* In case the FID column has also been created as a regular field */
+    if( m_iFIDAsRegularColumnIndex >= 0 )
+    {
+        if( !poFeature->IsFieldSet( m_iFIDAsRegularColumnIndex ) ||
+            poFeature->GetFieldAsInteger64(m_iFIDAsRegularColumnIndex) != poFeature->GetFID() )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                        "Inconsistant values of FID and field of same name");
+            return CE_Failure;
+        }
     }
 
     if( m_bDeferredCreation && RunDeferredCreationIfNecessary() != OGRERR_NONE )
@@ -1368,7 +1428,13 @@ OGRFeature* OGRGeoPackageTableLayer::GetNextFeature()
         return NULL;
 
     CreateSpatialIndexIfNecessary();
-    return OGRGeoPackageLayer::GetNextFeature();
+
+    OGRFeature* poFeature = OGRGeoPackageLayer::GetNextFeature();
+    if( poFeature && m_iFIDAsRegularColumnIndex >= 0 )
+    {
+        poFeature->SetField(m_iFIDAsRegularColumnIndex, poFeature->GetFID());
+    }
+    return poFeature;
 }
 
 /************************************************************************/
@@ -1413,7 +1479,12 @@ OGRFeature* OGRGeoPackageTableLayer::GetFeature(GIntBig nFID)
     /* Aha, got one */
     if ( err == SQLITE_ROW )
     {
-        return TranslateFeature(m_poQueryStatement);
+        OGRFeature* poFeature = TranslateFeature(m_poQueryStatement);
+        if( poFeature && m_iFIDAsRegularColumnIndex >= 0 )
+        {
+            poFeature->SetField(m_iFIDAsRegularColumnIndex, poFeature->GetFID());
+        }
+        return poFeature;
     }
     
     /* Error out on all other return codes */
@@ -2312,6 +2383,8 @@ OGRErr OGRGeoPackageTableLayer::RunDeferredCreationIfNecessary()
 
     for(int i = 0; i < m_poFeatureDefn->GetFieldCount(); i++ )
     {
+        if( i == m_iFIDAsRegularColumnIndex )
+            continue;
         OGRFieldDefn* poFieldDefn = m_poFeatureDefn->GetFieldDefn(i);
         pszSQL = sqlite3_mprintf(", '%q' %s",
                                  poFieldDefn->GetNameRef(),
