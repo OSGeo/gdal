@@ -60,6 +60,7 @@ typedef enum
 
 typedef struct
 {
+    OGRLayer *   poSrcLayer;
     GIntBig      nFeaturesRead;
     int          bPerFeatureCT;
     OGRLayer    *poDstLayer;
@@ -84,59 +85,70 @@ typedef struct
     int bConvertToCurve;
 } GeometryConversion;
 
+class SetupTargetLayer
+{
+public:
+    GDALDataset *poDstDS;
+    char ** papszLCO;
+    OGRSpatialReference *poOutputSRSIn;
+    int bNullifyOutputSRS;
+    char **papszSelFields;
+    int bAppend;
+    int bAddMissingFields;
+    int eGTypeIn;
+    GeometryConversion sGeomConversion;
+    int nCoordDim;
+    int bOverwrite;
+    char** papszFieldTypesToString;
+    char** papszMapFieldType;
+    int bUnsetFieldWidth;
+    int bExplodeCollections;
+    const char* pszZField;
+    char **papszFieldMap;
+    const char* pszWHERE;
+    int bExactFieldNameMatch;
+    int bQuiet;
+    int bForceNullable;
+    int bUnsetDefault;
+
+    TargetLayerInfo*            Setup(OGRLayer * poSrcLayer,
+                                      const char *pszNewLayerName);
+};
+
+class LayerTranslator
+{
+public:
+    GDALDataset *poSrcDS;
+    int bTransform;
+    int bWrapDateline;
+    const char* pszDateLineOffset;
+    OGRSpatialReference *poOutputSRSIn;
+    int bNullifyOutputSRS;
+    OGRSpatialReference *poUserSourceSRS;
+    OGRCoordinateTransformation *poGCPCoordTrans;
+    int eGTypeIn;
+    GeometryConversion sGeomConversion;
+    int nCoordDim;
+    GeomOperation eGeomOp;
+    double dfGeomOpParam;
+    OGRGeometry* poClipSrc;
+    OGRGeometry *poClipDst;
+    int bExplodeCollectionsIn;
+    vsi_l_offset nSrcFileSize;
+
+    int                 Translate(TargetLayerInfo* psInfo,
+                                  GIntBig nCountLayerFeatures,
+                                  GIntBig* pnReadFeatureCount,
+                                  GDALProgressFunc pfnProgress,
+                                  void *pProgressArg);
+};
+
 static OGRLayer* GetLayerAndOverwriteIfNecessary(GDALDataset *poDstDS,
                                                  const char* pszNewLayerName,
                                                  int bOverwrite,
                                                  int* pbErrorOccured);
-static TargetLayerInfo* SetupTargetLayer( GDALDataset *poSrcDS,
-                                                OGRLayer * poSrcLayer,
-                                                GDALDataset *poDstDS,
-                                                char ** papszLCO,
-                                                const char *pszNewLayerName,
-                                                OGRSpatialReference *poOutputSRS,
-                                                int bNullifyOutputSRS,
-                                                char **papszSelFields,
-                                                int bAppend, int bAddMissingFields, int eGType,
-                                                GeometryConversion sGeomConversion,
-                                                int nCoordDim, int bOverwrite,
-                                                char** papszFieldTypesToString,
-                                                char** papszMapFieldType,
-                                                int bUnsetFieldWidth,
-                                                int bExplodeCollections,
-                                                const char* pszZField,
-                                                char **papszFieldMap,
-                                                const char* pszWHERE,
-                                                int bExactFieldNameMatch,
-                                                int bQuiet,
-                                                int bForceNullable,
-                                                int bUnsetDefault);
 
 static void FreeTargetLayerInfo(TargetLayerInfo* psInfo);
-
-static int TranslateLayer( TargetLayerInfo* psInfo,
-                           GDALDataset *poSrcDS,
-                           OGRLayer * poSrcLayer,
-                           GDALDataset *poDstDS,
-                           int bTransform,
-                           int bWrapDateline,
-                           const char* pszDateLineOffset,
-                           OGRSpatialReference *poOutputSRS,
-                           int bNullifyOutputSRS,
-                           OGRSpatialReference *poUserSourceSRS,
-                           OGRCoordinateTransformation *poGCPCoordTrans,
-                           int eGType,
-                           GeometryConversion sGeomConversion,
-                           int nCoordDim,
-                           GeomOperation eGeomOp,
-                           double dfGeomOpParam,
-                           GIntBig nCountLayerFeatures,
-                           OGRGeometry* poClipSrc,
-                           OGRGeometry *poClipDst,
-                           int bExplodeCollections,
-                           vsi_l_offset nSrcFileSize,
-                           GIntBig* pnReadFeatureCount,
-                           GDALProgressFunc pfnProgress,
-                           void *pProgressArg);
 
 /* -------------------------------------------------------------------- */
 /*                  CheckDestDataSourceNameConsistency()                */
@@ -1800,6 +1812,52 @@ int main( int nArgc, char ** papszArgv )
     }
 
 /* -------------------------------------------------------------------- */
+/*      Create layer setup and transformer objects.                     */
+/* -------------------------------------------------------------------- */
+    SetupTargetLayer oSetup;
+    oSetup.poDstDS = poODS;
+    oSetup.papszLCO = papszLCO;
+    oSetup.poOutputSRSIn = poOutputSRS;
+    oSetup.bNullifyOutputSRS = bNullifyOutputSRS;
+    oSetup.papszSelFields = papszSelFields;
+    oSetup.bAppend = bAppend;
+    oSetup.bAddMissingFields = bAddMissingFields;
+    oSetup.eGTypeIn = eGType;
+    oSetup.sGeomConversion = sGeomConversion;
+    oSetup.nCoordDim = nCoordDim;
+    oSetup.bOverwrite = bOverwrite;
+    oSetup.papszFieldTypesToString = papszFieldTypesToString;
+    oSetup.papszMapFieldType = papszMapFieldType;
+    oSetup.bUnsetFieldWidth = bUnsetFieldWidth;
+    oSetup.bExplodeCollections = bExplodeCollections;
+    oSetup.pszZField = pszZField;
+    oSetup.papszFieldMap = papszFieldMap;
+    oSetup.pszWHERE = pszWHERE;
+    oSetup.bExactFieldNameMatch = bExactFieldNameMatch;
+    oSetup.bQuiet = bQuiet;
+    oSetup.bForceNullable = bForceNullable;
+    oSetup.bUnsetDefault = bUnsetDefault;
+
+    LayerTranslator oTranslator;
+    oTranslator.poSrcDS = poDS;
+    oTranslator.bTransform = bTransform;
+    oTranslator.bWrapDateline = bWrapDateline;
+    oTranslator.pszDateLineOffset = pszDateLineOffset;
+    oTranslator.poOutputSRSIn = poOutputSRS;
+    oTranslator.bNullifyOutputSRS = bNullifyOutputSRS;
+    oTranslator.poUserSourceSRS = poSourceSRS;
+    oTranslator.poGCPCoordTrans = poGCPCoordTrans;
+    oTranslator.eGTypeIn = eGType;
+    oTranslator.sGeomConversion = sGeomConversion;
+    oTranslator.nCoordDim = nCoordDim;
+    oTranslator.eGeomOp = eGeomOp;
+    oTranslator.dfGeomOpParam = dfGeomOpParam;
+    oTranslator.poClipSrc = poClipSrc;
+    oTranslator.poClipDst = poClipDst;
+    oTranslator.bExplodeCollectionsIn = bExplodeCollections;
+    oTranslator.nSrcFileSize = nSrcFileSize;
+
+/* -------------------------------------------------------------------- */
 /*      Special case for -sql clause.  No source layers required.       */
 /* -------------------------------------------------------------------- */
     if( pszSQLStatement != NULL )
@@ -1876,44 +1934,15 @@ int main( int nArgc, char ** papszArgv )
                 pszNewLayerName = CPLStrdup(CPLGetBasename(pszDestDataSource));
             }
 
-            TargetLayerInfo* psInfo = SetupTargetLayer( poDS,
-                                                poPassedLayer,
-                                                poODS,
-                                                papszLCO,
-                                                pszNewLayerName,
-                                                poOutputSRS,
-                                                bNullifyOutputSRS,
-                                                papszSelFields,
-                                                bAppend, bAddMissingFields, eGType,
-                                                sGeomConversion,
-                                                nCoordDim, bOverwrite,
-                                                papszFieldTypesToString,
-                                                papszMapFieldType,
-                                                bUnsetFieldWidth,
-                                                bExplodeCollections,
-                                                pszZField,
-                                                papszFieldMap,
-                                                pszWHERE,
-                                                bExactFieldNameMatch,
-                                                bQuiet,
-                                                bForceNullable,
-                                                bUnsetDefault);
+            TargetLayerInfo* psInfo = oSetup.Setup(poPassedLayer,
+                                                   pszNewLayerName);
 
             poPassedLayer->ResetReading();
 
             if( psInfo == NULL ||
-                !TranslateLayer( psInfo, poDS, poPassedLayer, poODS,
-                                 bTransform, bWrapDateline, pszDateLineOffset,
-                                 poOutputSRS, bNullifyOutputSRS,
-                                 poSourceSRS,
-                                 poGCPCoordTrans,
-                                 eGType, sGeomConversion, nCoordDim,
-                                 eGeomOp, dfGeomOpParam,
-                                 nCountLayerFeatures,
-                                 poClipSrc, poClipDst,
-                                 bExplodeCollections,
-                                 nSrcFileSize, NULL,
-                                 pfnProgress, pProgressArg ))
+                !oTranslator.Translate( psInfo,
+                                        nCountLayerFeatures, NULL,
+                                        pfnProgress, pProgressArg ))
             {
                 CPLError( CE_Failure, CPLE_AppDefined, 
                           "Terminating translation prematurely after failed\n"
@@ -2036,28 +2065,8 @@ int main( int nArgc, char ** papszArgv )
 
                 ApplySpatialFilter(poLayer, poSpatialFilter, pszGeomField);
 
-                TargetLayerInfo* psInfo = SetupTargetLayer( poDS,
-                                                    poLayer,
-                                                    poODS,
-                                                    papszLCO,
-                                                    pszNewLayerName,
-                                                    poOutputSRS,
-                                                    bNullifyOutputSRS,
-                                                    papszSelFields,
-                                                    bAppend, bAddMissingFields, eGType,
-                                                    sGeomConversion,
-                                                    nCoordDim, bOverwrite,
-                                                    papszFieldTypesToString,
-                                                    papszMapFieldType,
-                                                    bUnsetFieldWidth,
-                                                    bExplodeCollections,
-                                                    pszZField,
-                                                    papszFieldMap,
-                                                    pszWHERE,
-						    bExactFieldNameMatch,
-						    bQuiet,
-                                                    bForceNullable,
-                                                    bUnsetDefault);
+                TargetLayerInfo* psInfo = oSetup.Setup(poLayer,
+                                                       pszNewLayerName);
 
                 if( psInfo == NULL && !bSkipFailures )
                     exit(1);
@@ -2086,19 +2095,9 @@ int main( int nArgc, char ** papszArgv )
 
                 if( psInfo )
                 {
-                    if( !TranslateLayer(psInfo, poDS, poLayer, poODS,
-                                        bTransform, bWrapDateline, pszDateLineOffset,
-                                        poOutputSRS, bNullifyOutputSRS,
-                                        poSourceSRS,
-                                        poGCPCoordTrans,
-                                        eGType, sGeomConversion, nCoordDim,
-                                        eGeomOp, dfGeomOpParam,
-                                        0,
-                                        poClipSrc, poClipDst,
-                                        bExplodeCollections,
-                                        nSrcFileSize,
-                                        &nReadFeatureCount,
-                                        pfnProgress, pProgressArg )
+                    if( !oTranslator.Translate( psInfo,
+                                                0, &nReadFeatureCount,
+                                                pfnProgress, pProgressArg )
                         && !bSkipFailures )
                     {
                         CPLError( CE_Failure, CPLE_AppDefined,
@@ -2316,44 +2315,15 @@ int main( int nArgc, char ** papszArgv )
 
             nAccCountFeatures += panLayerCountFeatures[iLayer];
 
-            TargetLayerInfo* psInfo = SetupTargetLayer( poDS,
-                                                poPassedLayer,
-                                                poODS,
-                                                papszLCO,
-                                                pszNewLayerName,
-                                                poOutputSRS,
-                                                bNullifyOutputSRS,
-                                                papszSelFields,
-                                                bAppend, bAddMissingFields, eGType,
-                                                sGeomConversion,
-                                                nCoordDim, bOverwrite,
-                                                papszFieldTypesToString,
-                                                papszMapFieldType,
-                                                bUnsetFieldWidth,
-                                                bExplodeCollections,
-                                                pszZField,
-                                                papszFieldMap,
-                                                pszWHERE,
-						bExactFieldNameMatch,
-						bQuiet,
-                                                bForceNullable,
-                                                bUnsetDefault);
+            TargetLayerInfo* psInfo = oSetup.Setup(poPassedLayer,
+                                                   pszNewLayerName);
 
             poPassedLayer->ResetReading();
 
             if( (psInfo == NULL ||
-                !TranslateLayer( psInfo, poDS, poPassedLayer, poODS,
-                                  bTransform, bWrapDateline, pszDateLineOffset,
-                                  poOutputSRS, bNullifyOutputSRS,
-                                  poSourceSRS,
-                                  poGCPCoordTrans,
-                                  eGType, sGeomConversion, nCoordDim,
-                                  eGeomOp, dfGeomOpParam,
-                                  panLayerCountFeatures[iLayer],
-                                  poClipSrc, poClipDst,
-                                  bExplodeCollections,
-                                  nSrcFileSize, NULL,
-                                  pfnProgress, pProgressArg ))
+                !oTranslator.Translate( psInfo,
+                                        panLayerCountFeatures[iLayer], NULL,
+                                        pfnProgress, pProgressArg ))
                 && !bSkipFailures )
             {
                 CPLError( CE_Failure, CPLE_AppDefined, 
@@ -2785,35 +2755,16 @@ void DoFieldTypeConversion(GDALDataset* poDstDS, OGRFieldDefn& oFieldDefn,
 }
 
 /************************************************************************/
-/*                         SetupTargetLayer()                           */
+/*                   SetupTargetLayer::Setup()                          */
 /************************************************************************/
 
-static TargetLayerInfo* SetupTargetLayer( CPL_UNUSED GDALDataset *poSrcDS,
-                                          OGRLayer * poSrcLayer,
-                                          GDALDataset *poDstDS,
-                                          char ** papszLCO,
-                                          const char *pszNewLayerName,
-                                          OGRSpatialReference *poOutputSRSIn,
-                                          int bNullifyOutputSRS,
-                                          char **papszSelFields,
-                                          int bAppend, int bAddMissingFields, int eGType,
-                                          GeometryConversion sGeomConversion,
-                                          int nCoordDim, int bOverwrite,
-                                          char** papszFieldTypesToString,
-                                          char** papszMapFieldType,
-                                          int bUnsetFieldWidth,
-                                          int bExplodeCollections,
-                                          const char* pszZField,
-                                          char **papszFieldMap,
-                                          const char* pszWHERE,
-                                          int bExactFieldNameMatch,
-                                          int bQuiet,
-                                          int bForceNullable,
-                                          int bUnsetDefault)
+TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
+                                         const char* pszNewLayerName)
 {
     OGRLayer    *poDstLayer;
     OGRFeatureDefn *poSrcFDefn;
     OGRFeatureDefn *poDstFDefn = NULL;
+    int eGType = eGTypeIn;
 
     if( pszNewLayerName == NULL )
         pszNewLayerName = poSrcLayer->GetName();
@@ -3365,6 +3316,7 @@ static TargetLayerInfo* SetupTargetLayer( CPL_UNUSED GDALDataset *poSrcDS,
                                             CPLMalloc(sizeof(TargetLayerInfo));
     psInfo->nFeaturesRead = 0;
     psInfo->bPerFeatureCT = FALSE;
+    psInfo->poSrcLayer = poSrcLayer;
     psInfo->poDstLayer = poDstLayer;
     psInfo->papoCT = (OGRCoordinateTransformation**)
         CPLCalloc(poDstLayer->GetLayerDefn()->GetGeomFieldCount(),
@@ -3560,38 +3512,24 @@ static int SetupCT( TargetLayerInfo* psInfo,
     return TRUE;
 }
 /************************************************************************/
-/*                           TranslateLayer()                           */
+/*                     LayerTranslator::Translate()                     */
 /************************************************************************/
 
-static int TranslateLayer( TargetLayerInfo* psInfo,
-                           GDALDataset *poSrcDS,
-                           OGRLayer * poSrcLayer,
-                           CPL_UNUSED GDALDataset *poDstDS,
-                           int bTransform,
-                           int bWrapDateline,
-                           const char* pszDateLineOffset,
-                           OGRSpatialReference *poOutputSRS,
-                           int bNullifyOutputSRS,
-                           OGRSpatialReference *poUserSourceSRS,
-                           OGRCoordinateTransformation *poGCPCoordTrans,
-                           int eGType,
-                           GeometryConversion sGeomConversion,
-                           int nCoordDim,
-                           GeomOperation eGeomOp,
-                           double dfGeomOpParam,
-                           GIntBig nCountLayerFeatures,
-                           OGRGeometry* poClipSrc,
-                           OGRGeometry *poClipDst,
-                           int bExplodeCollections,
-                           vsi_l_offset nSrcFileSize,
-                           GIntBig* pnReadFeatureCount,
-                           GDALProgressFunc pfnProgress,
-                           void *pProgressArg )
+int LayerTranslator::Translate( TargetLayerInfo* psInfo,
+                                GIntBig nCountLayerFeatures,
+                                GIntBig* pnReadFeatureCount,
+                                GDALProgressFunc pfnProgress,
+                                void *pProgressArg )
 {
+    OGRLayer    *poSrcLayer;
     OGRLayer    *poDstLayer;
     int         *panMap = NULL;
     int         iSrcZField;
+    int         eGType = eGTypeIn;
+    OGRSpatialReference* poOutputSRS = poOutputSRSIn;
+    int         bExplodeCollections = bExplodeCollectionsIn;
 
+    poSrcLayer = psInfo->poSrcLayer;
     poDstLayer = psInfo->poDstLayer;
     panMap = psInfo->panMap;
     iSrcZField = psInfo->iSrcZField;
