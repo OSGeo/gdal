@@ -43,7 +43,6 @@ CPL_CVSID("$Id$");
 
 static int bSkipFailures = FALSE;
 static int nGroupTransactions = 20000;
-static int bPreserveFID = FALSE;
 static GIntBig nFIDToFetch = OGRNullFID;
 
 #define COORD_DIM_LAYER_DIM -2
@@ -70,6 +69,7 @@ typedef struct
     int          iSrcZField;
     int          iSrcFIDField;
     int          iRequestedSrcGeomField;
+    int          bPreserveFID;
 } TargetLayerInfo;
 
 typedef struct
@@ -110,6 +110,8 @@ public:
     int bQuiet;
     int bForceNullable;
     int bUnsetDefault;
+    int bUnsetFid;
+    int bPreserveFID;
 
     TargetLayerInfo*            Setup(OGRLayer * poSrcLayer,
                                       const char *pszNewLayerName);
@@ -949,7 +951,9 @@ int main( int nArgc, char ** papszArgv )
     char       **papszDestOpenOptions = NULL;
     int          bForceNullable = FALSE;
     int          bUnsetDefault = FALSE;
- 
+    int          bUnsetFid = FALSE;
+    int          bPreserveFID = FALSE;
+
     int          nGCPCount = 0;
     GDAL_GCP    *pasGCPs = NULL;
     int          nTransformOrder = 0;  /* Default to 0 for now... let the lib decide */
@@ -1490,6 +1494,10 @@ int main( int nArgc, char ** papszArgv )
         {
             bUnsetDefault = TRUE;
         }
+        else if( EQUAL(papszArgv[iArg],"-unsetFid") )
+        {
+            bUnsetFid = TRUE;
+        }
         else if( papszArgv[iArg][0] == '-' )
         {
             Usage(CPLSPrintf("Unknown option name '%s'", papszArgv[iArg]));
@@ -1837,6 +1845,8 @@ int main( int nArgc, char ** papszArgv )
     oSetup.bQuiet = bQuiet;
     oSetup.bForceNullable = bForceNullable;
     oSetup.bUnsetDefault = bUnsetDefault;
+    oSetup.bUnsetFid = bUnsetFid;
+    oSetup.bPreserveFID = bPreserveFID;
 
     LayerTranslator oTranslator;
     oTranslator.poSrcDS = poDS;
@@ -1856,6 +1866,7 @@ int main( int nArgc, char ** papszArgv )
     oTranslator.poClipDst = poClipDst;
     oTranslator.bExplodeCollectionsIn = bExplodeCollections;
     oTranslator.nSrcFileSize = nSrcFileSize;
+
 
 /* -------------------------------------------------------------------- */
 /*      Special case for -sql clause.  No source layers required.       */
@@ -2432,7 +2443,7 @@ static void Usage(const char* pszAdditionalMsg, int bShort)
             "               [-clipdstwhere expression]\n"
             "               [-wrapdateline][-datelineoffset val]\n"
             "               [[-simplify tolerance] | [-segmentize max_dist]]\n"
-            "               [-addfields]\n"
+            "               [-addfields] [-unsetFid]\n"
             "               [-relaxedFieldNameMatch] [-forceNullable] [-unsetDefault]\n"
             "               [-fieldTypeToString All|(type1[,type2]*)] [-unsetFieldWidth]\n"
             "               [-mapFieldType srctype|All=dsttype[,srctype2=dsttype2]*]\n"
@@ -2765,6 +2776,7 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
     OGRFeatureDefn *poSrcFDefn;
     OGRFeatureDefn *poDstFDefn = NULL;
     int eGType = eGTypeIn;
+    int bPreserveFID = this->bPreserveFID;
 
     if( pszNewLayerName == NULL )
         pszNewLayerName = poSrcLayer->GetName();
@@ -2943,6 +2955,7 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
                  !bForceNullable )
         {
             papszLCOTemp = CSLSetNameValue(papszLCOTemp, "GEOMETRY_NULLABLE", "NO");
+            CPLDebug("OGR2OGR", "Using GEOMETRY_NULLABLE=NO");
         }
 
         // Force FID column as 64 bit if the source feature has a 64 bit FID,
@@ -2955,6 +2968,21 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
             CSLFetchNameValue(papszLCO, "FID64") == NULL )
         {
             papszLCOTemp = CSLSetNameValue(papszLCOTemp, "FID64", "YES");
+            CPLDebug("OGR2OGR", "Using FID64=YES");
+        }
+
+        // If output driver supports FID layer creation option, set it with
+        // the FID column name of the source layer
+        if( !bUnsetFid && !bAppend &&
+            poSrcLayer->GetFIDColumn() != NULL &&
+            !EQUAL(poSrcLayer->GetFIDColumn(), "") &&
+            poDstDS->GetDriver()->GetMetadataItem(GDAL_DS_LAYER_CREATIONOPTIONLIST) != NULL &&
+            strstr(poDstDS->GetDriver()->GetMetadataItem(GDAL_DS_LAYER_CREATIONOPTIONLIST), "='FID'") != NULL &&
+            CSLFetchNameValue(papszLCO, "FID") == NULL )
+        {
+            papszLCOTemp = CSLSetNameValue(papszLCOTemp, "FID", poSrcLayer->GetFIDColumn());
+            CPLDebug("OGR2OGR", "Using FID=%s and -preserve_fid", poSrcLayer->GetFIDColumn());
+            bPreserveFID = TRUE;
         }
 
         poDstLayer = poDstDS->CreateLayer( pszNewLayerName, poOutputSRS,
@@ -3331,6 +3359,7 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
         psInfo->iRequestedSrcGeomField = anRequestedGeomFields[0];
     else
         psInfo->iRequestedSrcGeomField = -1;
+    psInfo->bPreserveFID = bPreserveFID;
 
     return psInfo;
 }
@@ -3528,11 +3557,13 @@ int LayerTranslator::Translate( TargetLayerInfo* psInfo,
     int         eGType = eGTypeIn;
     OGRSpatialReference* poOutputSRS = poOutputSRSIn;
     int         bExplodeCollections = bExplodeCollectionsIn;
+    int         bPreserveFID;
 
     poSrcLayer = psInfo->poSrcLayer;
     poDstLayer = psInfo->poDstLayer;
     panMap = psInfo->panMap;
     iSrcZField = psInfo->iSrcZField;
+    bPreserveFID = psInfo->bPreserveFID;
     int nSrcGeomFieldCount = poSrcLayer->GetLayerDefn()->GetGeomFieldCount();
     int nDstGeomFieldCount = poDstLayer->GetLayerDefn()->GetGeomFieldCount();
 

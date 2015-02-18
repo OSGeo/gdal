@@ -2294,6 +2294,71 @@ def test_ogr2ogr_56():
 
     return 'success'
 
+###############################################################################
+# Test default propagation of FID column name and values, and -unsetFid
+
+def test_ogr2ogr_57():
+    if test_cli_utilities.get_ogr2ogr_path() is None:
+        return 'skip'
+
+    f = open('tmp/test_ogr2ogr_57.csv', 'wt')
+    f.write('id,str,WKT\n')
+    f.write('10,a,"POINT(0 0)"\n')
+    f.close()
+    
+    f = open('tmp/test_ogr2ogr_57.csvt', 'wt')
+    f.write('Integer,String,String\n')
+    f.close()
+    
+    f = open('tmp/test_ogr2ogr_57.vrt', 'wt')
+    f.write("""<OGRVRTDataSource>
+  <OGRVRTLayer name="test_ogr2ogr_57">
+    <SrcDataSource relativeToVRT="1" shared="1">test_ogr2ogr_57.csv</SrcDataSource>
+    <SrcLayer>test_ogr2ogr_57</SrcLayer>
+    <GeometryType>wkbUnknown</GeometryType>
+    <GeometryField name="WKT"/>
+    <FID name="id">id</FID>
+    <Field name="str"/>
+  </OGRVRTLayer>
+</OGRVRTDataSource>
+""")
+    f.close()
+
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f PGDump tmp/test_ogr2ogr_57.sql tmp/test_ogr2ogr_57.vrt')
+
+    f = open('tmp/test_ogr2ogr_57.sql', 'rt')
+    content = f.read()
+    f.close()
+
+    if content.find("""CREATE TABLE "public"."test_ogr2ogr_57" ( "id" SERIAL, CONSTRAINT "test_ogr2ogr_57_pk" PRIMARY KEY ("id") )""") < 0 or \
+       content.find("""INSERT INTO "public"."test_ogr2ogr_57" ("wkb_geometry" , "id" , "str") VALUES ('010100000000000000000000000000000000000000', 10, 'a')""") < 0:
+        gdaltest.post_reason('fail')
+        print(content)
+        return 'fail'
+
+    os.unlink('tmp/test_ogr2ogr_57.sql')
+
+    # Test -unsetFid
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f PGDump tmp/test_ogr2ogr_57.sql tmp/test_ogr2ogr_57.vrt -unsetFid')
+
+    f = open('tmp/test_ogr2ogr_57.sql', 'rt')
+    content = f.read()
+    f.close()
+
+    if content.find("""CREATE TABLE "public"."test_ogr2ogr_57" ( OGC_FID SERIAL, CONSTRAINT "test_ogr2ogr_57_pk" PRIMARY KEY (OGC_FID) )""") < 0 or \
+       content.find("""INSERT INTO "public"."test_ogr2ogr_57" ("wkb_geometry" , "str") VALUES ('010100000000000000000000000000000000000000', 'a')""") < 0:
+        gdaltest.post_reason('fail')
+        print(content)
+        return 'fail'
+
+    os.unlink('tmp/test_ogr2ogr_57.sql')
+
+    os.unlink('tmp/test_ogr2ogr_57.csv')
+    os.unlink('tmp/test_ogr2ogr_57.csvt')
+    os.unlink('tmp/test_ogr2ogr_57.vrt')
+
+    return 'success'
+
 gdaltest_list = [
     test_ogr2ogr_1,
     test_ogr2ogr_2,
@@ -2352,6 +2417,7 @@ gdaltest_list = [
     test_ogr2ogr_54,
     test_ogr2ogr_55,
     test_ogr2ogr_56,
+    test_ogr2ogr_57,
     ]
 
 if __name__ == '__main__':
