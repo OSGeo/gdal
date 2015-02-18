@@ -67,6 +67,7 @@ typedef struct
     char       ***papapszTransformOptions; // size: poDstLayer->GetLayerDefn()->GetFieldCount();
     int         *panMap;
     int          iSrcZField;
+    int          iSrcFIDField;
     int          iRequestedSrcGeomField;
 } TargetLayerInfo;
 
@@ -3084,6 +3085,7 @@ static TargetLayerInfo* SetupTargetLayer( CPL_UNUSED GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
     int         nSrcFieldCount = poSrcFDefn->GetFieldCount();
     int         iField, *panMap;
+    int         iSrcFIDField = -1;
 
     // Initialize the index-to-index map to -1's
     panMap = (int *) VSIMalloc( sizeof(int) * nSrcFieldCount );
@@ -3243,10 +3245,20 @@ static TargetLayerInfo* SetupTargetLayer( CPL_UNUSED GDALDataset *poSrcDS,
                          "adding the fields of the source layer", pszFieldName); */
         }
 
+        const char* pszFIDColumn = poDstLayer->GetFIDColumn();
+
         for( iField = 0; iField < nSrcFieldCount; iField++ )
         {
             OGRFieldDefn* poSrcFieldDefn = poSrcFDefn->GetFieldDefn(iField);
             OGRFieldDefn oFieldDefn( poSrcFieldDefn );
+
+            // Avoid creating a field with the same name as the FID column
+            if( pszFIDColumn != NULL && EQUAL(pszFIDColumn, oFieldDefn.GetNameRef()) &&
+                (oFieldDefn.GetType() == OFTInteger || oFieldDefn.GetType() == OFTInteger64) )
+            {
+                iSrcFIDField = iField;
+                continue;
+            }
 
             DoFieldTypeConversion(poDstDS, oFieldDefn,
                                   papszFieldTypesToString,
@@ -3362,6 +3374,7 @@ static TargetLayerInfo* SetupTargetLayer( CPL_UNUSED GDALDataset *poSrcDS,
                   sizeof(char**));
     psInfo->panMap = panMap;
     psInfo->iSrcZField = iSrcZField;
+    psInfo->iSrcFIDField = iSrcFIDField;
     if( anRequestedGeomFields.size() == 1 )
         psInfo->iRequestedSrcGeomField = anRequestedGeomFields[0];
     else
@@ -3724,6 +3737,9 @@ static int TranslateLayer( TargetLayerInfo* psInfo,
 
             if( bPreserveFID )
                 poDstFeature->SetFID( poFeature->GetFID() );
+            else if( psInfo->iSrcFIDField >= 0 &&
+                     poFeature->IsFieldSet(psInfo->iSrcFIDField))
+                poDstFeature->SetFID( poFeature->GetFieldAsInteger64(psInfo->iSrcFIDField) );
             
             for( int iGeom = 0; iGeom < nDstGeomFieldCount; iGeom ++ )
             {
@@ -3855,6 +3871,13 @@ static int TranslateLayer( TargetLayerInfo* psInfo,
             if( poDstLayer->CreateFeature( poDstFeature ) == OGRERR_NONE )
             {
                 nFeaturesWritten ++;
+                if( (bPreserveFID && poDstFeature->GetFID() != poFeature->GetFID()) ||
+                    (!bPreserveFID && psInfo->iSrcFIDField >= 0 && poFeature->IsFieldSet(psInfo->iSrcFIDField) &&
+                     poDstFeature->GetFID() != poFeature->GetFieldAsInteger64(psInfo->iSrcFIDField)) )
+                {
+                    CPLError( CE_Warning, CPLE_AppDefined,
+                              "Feature id not preserved");
+                }
             }
             else if( !bSkipFailures )
             {
