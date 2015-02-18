@@ -2260,6 +2260,40 @@ def test_ogr2ogr_55():
 
     return 'success'
 
+###############################################################################
+# Test behaviour when creatin a field with same name as FID column
+
+def test_ogr2ogr_56():
+    if test_cli_utilities.get_ogr2ogr_path() is None:
+        return 'skip'
+
+    f = open('tmp/test_ogr2ogr_56.csv', 'wt')
+    f.write('str,myid,WKT\n')
+    f.write('aaa,10,"POINT(0 0)"\n')
+    f.close()
+    
+    f = open('tmp/test_ogr2ogr_56.csvt', 'wt')
+    f.write('String,Integer,String\n')
+    f.close()
+
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f PGDump tmp/test_ogr2ogr_56.sql tmp/test_ogr2ogr_56.csv -lco FID=myid --config PGDUMP_DEBUG_ALLOW_CREATION_FIELD_WITH_FID_NAME NO')
+
+    f = open('tmp/test_ogr2ogr_56.sql', 'rt')
+    content = f.read()
+    f.close()
+
+    if content.find("""ALTER TABLE "public"."test_ogr2ogr_56" ADD COLUMN "myid"" """) >= 0 or \
+       content.find("""INSERT INTO "public"."test_ogr2ogr_56" ("wkb_geometry" , "myid" , "str", "wkt") VALUES ('010100000000000000000000000000000000000000', 10, 'aaa', 'POINT(0 0)');""") < 0:
+        gdaltest.post_reason('fail')
+        print(content)
+        return 'fail'
+
+    os.unlink('tmp/test_ogr2ogr_56.sql')
+    os.unlink('tmp/test_ogr2ogr_56.csv')
+    os.unlink('tmp/test_ogr2ogr_56.csvt')
+
+    return 'success'
+
 gdaltest_list = [
     test_ogr2ogr_1,
     test_ogr2ogr_2,
@@ -2317,6 +2351,7 @@ gdaltest_list = [
     test_ogr2ogr_53,
     test_ogr2ogr_54,
     test_ogr2ogr_55,
+    test_ogr2ogr_56,
     ]
 
 if __name__ == '__main__':
