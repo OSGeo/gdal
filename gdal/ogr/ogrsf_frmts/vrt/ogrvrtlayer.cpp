@@ -511,7 +511,7 @@ int OGRVRTLayer::FullInitialize()
 {
     const char *pszSharedSetting = NULL;
     const char *pszSQL = NULL;
-    const char *pszFIDFieldName = NULL;
+    const char *pszSrcFIDFieldName = NULL;
     const char *pszStyleFieldName = NULL;
     CPLXMLNode *psChild = NULL;
     int bFoundGeometryField = FALSE;
@@ -810,19 +810,23 @@ try_again:
 /* -------------------------------------------------------------------- */
 /*      Figure out what should be used as an FID.                       */
 /* -------------------------------------------------------------------- */
-     pszFIDFieldName = CPLGetXMLValue( psLTree, "FID", NULL );
+     pszSrcFIDFieldName = CPLGetXMLValue( psLTree, "FID", NULL );
 
-     if( pszFIDFieldName != NULL )
+     if( pszSrcFIDFieldName != NULL )
      {
          iFIDField =
-             GetSrcLayerDefn()->GetFieldIndex( pszFIDFieldName );
+             GetSrcLayerDefn()->GetFieldIndex( pszSrcFIDFieldName );
          if( iFIDField == -1 )
          {
              CPLError( CE_Failure, CPLE_AppDefined, 
                        "Unable to identify FID field '%s'.",
-                       pszFIDFieldName );
+                       pszSrcFIDFieldName );
              goto error;
          }
+
+         // User facing FID column name. If not defined we will report the
+         // source FID column name only if it is exposed as a field too (#4637)
+         osFIDFieldName = CPLGetXMLValue( psLTree, "FID.name", "" );
      }
 
 /* -------------------------------------------------------------------- */
@@ -2221,6 +2225,9 @@ const char * OGRVRTLayer::GetFIDColumn()
 {
     if (!bHasFullInitialized) FullInitialize();
     if (!poSrcLayer || poDS->GetRecursionDetected()) return "";
+
+    if( osFIDFieldName.size() )
+        return osFIDFieldName;
 
     const char* pszFIDColumn;
     if (iFIDField == -1)

@@ -64,7 +64,7 @@
                         </xs:simpleContent>
                     </xs:complexType>
                 </xs:element>
-                <xs:element name="FID" type="nonEmptyStringType"/>
+                <xs:element name="FID" type="FIDType"/>
                 <xs:element name="Style" type="nonEmptyStringType"/>
                 <xs:element name="GeometryType" type="GeometryTypeType">
                     <xs:annotation>
@@ -105,6 +105,18 @@
             </xs:choice>
         </xs:sequence>
         <xs:attribute name="name" type="nonEmptyStringType" use="required"/>
+    </xs:complexType>
+
+    <xs:complexType name="FIDType">
+        <xs:simpleContent>
+            <xs:extension base="nonEmptyStringType">
+                <xs:attribute name="name" type="xs:string">
+                    <xs:annotation>
+                        <xs:documentation>A user-facing name can be specified here so that a FID column name is reported even if it is not reported as a regular field.</xs:documentation>
+                    </xs:annotation>
+                </xs:attribute>
+            </xs:extension>
+        </xs:simpleContent>
     </xs:complexType>
 
     <xs:group name="ExtentType">

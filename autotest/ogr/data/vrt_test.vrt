@@ -41,4 +41,11 @@
         <Field name="x"/>
     </OGRVRTLayer>
 
+    <OGRVRTLayer name="test7">
+        <SrcDataSource shared="TRUE">data/flat.dbf</SrcDataSource>
+        <SrcLayer>flat</SrcLayer>
+        <FID name="bar">fid</FID>
+        <Field name="x"/>
+    </OGRVRTLayer>
+
 </OGRVRTDataSource>
