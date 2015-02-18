@@ -74,7 +74,10 @@ the default dialect of the datasource will be used.</li>
 
 <li> <b>FID</b> (optional): Name of the attribute column from which the 
 FID of features should be derived.  If not provided, the FID of the source
-features will be used directly.</li>
+features will be used directly. The layer will report the FID column name only
+if it is also reported as a regular field. Starting with GDAL 2.0, a "name"
+attribute can be specified on the FID element so that the FID column name is
+always reported.</li>
 
 <br>
 

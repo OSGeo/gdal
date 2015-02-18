@@ -112,6 +112,7 @@ class OGRVRTLayer : public OGRLayer
     char                *pszAttrFilter;
 
     int                 iFIDField; // -1 means pass through. 
+    CPLString           osFIDFieldName;
     int                 iStyleField; // -1 means pass through.
 
     // Attribute Mapping

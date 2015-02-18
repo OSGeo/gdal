@@ -1448,10 +1448,15 @@ def ogr_vrt_25():
     if lyr.GetFIDColumn() != 'fid':
         return 'fail'
 
-    # test3 layer just declares fid, and explicit fields without the fid
+    # test6 layer just declares fid, and explicit fields without the fid
     # column, so we can *not* report it
     lyr = ds.GetLayerByName('test6')
     if lyr.GetFIDColumn() != '':
+        return 'fail'
+
+    # test7 layer just declares fid with an external visible name
+    lyr = ds.GetLayerByName('test7')
+    if lyr.GetFIDColumn() != 'bar':
         return 'fail'
 
     # test2 layer does not declare fid, and source layer has no fid column
