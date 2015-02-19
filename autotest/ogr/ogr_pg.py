@@ -2033,6 +2033,7 @@ def ogr_pg_41():
 
     layer = ds.GetLayerByName('tpoly')
     if layer.GetFeatureCount() != 3:
+        gdaltest.post_reason( 'wrong feature count' )
         print(layer.GetFeatureCount())
         return 'fail'
 
@@ -2043,6 +2044,7 @@ def ogr_pg_41():
 
     layer = ds.GetLayerByName('AutoTest-schema.tpoly')
     if layer.GetFeatureCount() != 3:
+        gdaltest.post_reason( 'wrong feature count' )
         print(layer.GetFeatureCount())
         return 'fail'
 
@@ -2053,6 +2055,7 @@ def ogr_pg_41():
 
     layer = ds.GetLayerByName('public.tpoly')
     if layer.GetFeatureCount() != 19:
+        gdaltest.post_reason( 'wrong feature count' )
         print(layer.GetFeatureCount())
         return 'fail'
 
@@ -2069,11 +2072,13 @@ def ogr_pg_41():
 
     layer = ds.GetLayerByName('test41')
     if layer.GetFeatureCount() != 0:
+        gdaltest.post_reason( 'wrong feature count' )
         print(layer.GetFeatureCount())
         return 'fail'
 
     layer = ds.GetLayerByName('AutoTest-schema.test41')
     if layer.GetFeatureCount() != 0:
+        gdaltest.post_reason( 'wrong feature count' )
         print(layer.GetFeatureCount())
         return 'fail'
 
@@ -2098,6 +2103,7 @@ def ogr_pg_42():
 
     layer = ds.GetLayerByName('tpoly')
     if layer.GetFeatureCount() != 3:
+        gdaltest.post_reason( 'wrong feature count' )
         print(layer.GetFeatureCount())
         return 'fail'
 
@@ -2108,6 +2114,7 @@ def ogr_pg_42():
 
     layer = ds.GetLayerByName('AutoTest-schema.tpoly')
     if layer.GetFeatureCount() != 3:
+        gdaltest.post_reason( 'wrong feature count' )
         print(layer.GetFeatureCount())
         return 'fail'
 
@@ -2118,6 +2125,7 @@ def ogr_pg_42():
 
     layer = ds.GetLayerByName('public.tpoly')
     if layer.GetFeatureCount() != 19:
+        gdaltest.post_reason( 'wrong feature count' )
         print(layer.GetFeatureCount())
         return 'fail'
 
@@ -2128,11 +2136,13 @@ def ogr_pg_42():
 
     layer = ds.GetLayerByName('test41')
     if layer.GetFeatureCount() != 0:
+        gdaltest.post_reason( 'wrong feature count' )
         print(layer.GetFeatureCount())
         return 'fail'
 
     layer = ds.GetLayerByName('AutoTest-schema.test41')
     if layer.GetFeatureCount() != 0:
+        gdaltest.post_reason( 'wrong feature count' )
         print(layer.GetFeatureCount())
         return 'fail'
 
@@ -2158,6 +2168,7 @@ def ogr_pg_43():
 
     layer = ds.GetLayerByName('tpoly')
     if layer.GetFeatureCount() != 19:
+        gdaltest.post_reason( 'wrong feature count' )
         print(layer.GetFeatureCount())
         return 'fail'
 
@@ -2168,6 +2179,7 @@ def ogr_pg_43():
 
     layer = ds.GetLayerByName('AutoTest-schema.tpoly')
     if layer.GetFeatureCount() != 3:
+        gdaltest.post_reason( 'wrong feature count' )
         print(layer.GetFeatureCount())
         return 'fail'
 
