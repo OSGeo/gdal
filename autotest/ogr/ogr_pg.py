@@ -63,6 +63,7 @@ def ogr_pg_check_layer_in_list(ds, layer_name):
 def ogr_pg_1():
 
     gdaltest.pg_ds = None
+    gdaltest.pg_use_copy = gdal.GetConfigOption('PG_USE_COPY', None)
     val = gdal.GetConfigOption('OGR_PG_CONNECTION_STRING', None)
     if val is not None:
         gdaltest.pg_connection_string=val
@@ -604,7 +605,7 @@ def ogr_pg_11():
 
     dst_feat.Destroy()
         
-    gdal.SetConfigOption( 'PG_USE_COPY', None )
+    gdal.SetConfigOption( 'PG_USE_COPY', gdaltest.pg_use_copy )
     
     return 'success'
 
@@ -1329,12 +1330,14 @@ def ogr_pg_27():
     return 'success'
 
 ###############################################################################
-# Duplicate all data types
+# Duplicate all data types in INSERT mode
 
 def ogr_pg_28():
 
     if gdaltest.pg_ds is None:
         return 'skip'
+
+    gdal.SetConfigOption( 'PG_USE_COPY', "NO" )
 
     ds = ogr.Open( 'PG:' + gdaltest.pg_connection_string, update = 1 )
 
@@ -1371,6 +1374,8 @@ def ogr_pg_28():
     dst_lyr = None
 
     ds.Destroy()
+
+    gdal.SetConfigOption( 'PG_USE_COPY', gdaltest.pg_use_copy )
 
     return 'success'
 
@@ -1448,7 +1453,7 @@ def ogr_pg_30():
 
     ds.Destroy()
 
-    gdal.SetConfigOption( 'PG_USE_COPY', 'NO' )
+    gdal.SetConfigOption( 'PG_USE_COPY', gdaltest.pg_use_copy )
 
     return 'success'
 
@@ -1561,6 +1566,7 @@ def ogr_pg_32():
     feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(0 0)'))
     gdaltest.pg_lyr.CreateFeature(feat)
     feat = None
+    gdaltest.pg_lyr.ResetReading() # force feature to be committed to avoid a COPY error. Shouldn't be necessary
     sr = gdaltest.pg_lyr.GetSpatialRef()
     if sr.ExportToWkt().find('26632') == -1:
         gdaltest.post_reason('did not get expected SRS')
@@ -1701,18 +1707,26 @@ def ogr_pg_35():
     if gdaltest.pg_ds is None:
         return 'skip'
 
+    gdal.PushErrorHandler()
     try:
         gdaltest.pg_lyr = gdaltest.pg_ds.CreateLayer( 'testoverflows' )
         ogrtest.quick_create_layer_def( gdaltest.pg_lyr, [ ('0123456789' * 1000, ogr.OFTReal)] )
+        # To trigger actual layer creation
+        gdaltest.pg_lyr.ResetReading()
     except:
         pass
+    finally:
+        gdal.PopErrorHandler()
 
+    gdal.PushErrorHandler()
     try:
         gdaltest.pg_lyr = gdaltest.pg_ds.CreateLayer( 'testoverflows', options = [ 'OVERWRITE=YES', 'GEOMETRY_NAME=' + ('0123456789' * 1000) ] )
         # To trigger actual layer creation
         gdaltest.pg_lyr.ResetReading()
     except:
         pass
+    finally:
+        gdal.PopErrorHandler()
 
     return 'success'
 
@@ -2582,7 +2596,7 @@ def ogr_pg_50():
             dst_feat.SetFID(-1)
             gdaltest.pg_lyr.CreateFeature( dst_feat )
 
-    gdal.SetConfigOption( 'PG_USE_COPY', 'NO' )
+    gdal.SetConfigOption( 'PG_USE_COPY', gdaltest.pg_use_copy )
     dst_feat.Destroy()
 
     for option in [ 'NO', 'YES' ]:
@@ -2665,6 +2679,8 @@ def ogr_pg_53():
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetField(0, 'bar')
     lyr.CreateFeature(feat)
+
+    lyr.ResetReading() # force above feature to be committed
 
     ds = ogr.Open('PG:' + gdaltest.pg_connection_string)
 
@@ -2772,6 +2788,8 @@ def ogr_pg_55():
     feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT (1 2 3)'))
     layer.CreateFeature(feat)
     feat = None
+    
+    layer.ResetReading() # force above feature to be committed
 
     old_val = gdal.GetConfigOption('PG_USE_BASE64')
     gdal.SetConfigOption('PG_USE_BASE64', 'YES')
@@ -2827,7 +2845,7 @@ def ogr_pg_56():
     feat.SetField(1, 'baz')
     lyr.CreateFeature(feat)
 
-    gdal.SetConfigOption( 'PG_USE_COPY', None )
+    gdal.SetConfigOption( 'PG_USE_COPY', gdaltest.pg_use_copy )
 
     ds = None
 
@@ -3036,7 +3054,7 @@ def ogr_pg_61():
     feat.SetField(0, 'baz')
     lyr.CreateFeature(feat)
 
-    gdal.SetConfigOption( 'PG_USE_COPY', None )
+    gdal.SetConfigOption( 'PG_USE_COPY', gdaltest.pg_use_copy )
 
     ds = None
 
@@ -3306,7 +3324,7 @@ def ogr_pg_65():
     if lyr.CreateFeature(feat) != 0:
         gdaltest.post_reason('fail')
         return 'fail'
-    gdal.SetConfigOption('PG_USE_COPY', 'NO')
+    gdal.SetConfigOption('PG_USE_COPY', gdaltest.pg_use_copy)
 
     ds = ogr.Open('PG:' + gdaltest.pg_connection_string)
     lyr = ds.GetLayerByName('ogr_pg_65')
@@ -3469,6 +3487,13 @@ def ogr_pg_68():
 ###############################################################################
 # Test differed loading of tables (#5450)
 
+def has_run_load_tables(ds):
+    sql_lyr = ds.ExecuteSQL('has_run_load_tables')
+    if sql_lyr is None:
+        return False
+    ds.ReleaseResultSet(sql_lyr)
+    return True
+
 def ogr_pg_69():
 
     if gdaltest.pg_ds is None:
@@ -3476,30 +3501,28 @@ def ogr_pg_69():
 
     gdaltest.pg_ds = None
     gdaltest.pg_ds = ogr.Open('PG:' + gdaltest.pg_connection_string)
-    if gdaltest.pg_ds.ExecuteSQL('has_run_load_tables') is not None:
+    if has_run_load_tables(gdaltest.pg_ds):
         gdaltest.post_reason('fail')
         return 'fail'
     gdaltest.pg_ds.GetLayerByName('tpoly')
-    if gdaltest.pg_ds.ExecuteSQL('has_run_load_tables') is not None:
+    if has_run_load_tables(gdaltest.pg_ds):
         gdaltest.post_reason('fail')
         return 'fail'
     sql_lyr = gdaltest.pg_ds.ExecuteSQL('SELECT * FROM tpoly')
-    if gdaltest.pg_ds.ExecuteSQL('has_run_load_tables') is not None:
+    if has_run_load_tables(gdaltest.pg_ds):
         gdaltest.post_reason('fail')
         return 'fail'
     feat = sql_lyr.GetNextFeature()
-    if gdaltest.pg_ds.ExecuteSQL('has_run_load_tables') is not None:
+    if has_run_load_tables(gdaltest.pg_ds):
         gdaltest.post_reason('fail')
         return 'fail'
     del feat
     gdaltest.pg_ds.ReleaseResultSet(sql_lyr)
 
     gdaltest.pg_ds.GetLayer(0)
-    tmp_lyr = gdaltest.pg_ds.ExecuteSQL('has_run_load_tables')
-    if tmp_lyr is None:
+    if not has_run_load_tables(gdaltest.pg_ds):
         gdaltest.post_reason('fail')
         return 'fail'
-    gdaltest.pg_ds.ReleaseResultSet(tmp_lyr)
 
     # Test that we can find a layer with non lowercase
     gdaltest.pg_ds = None
@@ -3783,6 +3806,8 @@ def ogr_pg_73():
     if not gdaltest.pg_has_postgis:
         return 'skip'
 
+    gdal.SetConfigOption('PG_USE_COPY', 'NO')
+
     lyr = gdaltest.pg_ds.CreateLayer('ogr_pg_73', geom_type = ogr.wkbNone)
     field_defn = ogr.FieldDefn('field_not_nullable', ogr.OFTString)
     field_defn.SetNullable(0)
@@ -3821,6 +3846,10 @@ def ogr_pg_73():
         gdaltest.post_reason('fail')
         return 'fail'
     f = None
+    
+    gdal.SetConfigOption('PG_USE_COPY', gdaltest.pg_use_copy)
+
+    lyr.ResetReading() # force above feature to be committed
     
     ds = ogr.Open('PG:' + gdaltest.pg_connection_string, update = 1)
     lyr = ds.GetLayerByName('ogr_pg_73')
@@ -3945,6 +3974,8 @@ def ogr_pg_74():
     f.SetField('field_time', '12:34:56')
     lyr.CreateFeature(f)
     f = None
+    
+    lyr.ResetReading() # force above feature to be committed
 
     ds = ogr.Open('PG:' + gdaltest.pg_connection_string, update = 1)
     ds.ExecuteSQL( 'set timezone to "UTC"' )
