@@ -836,24 +836,13 @@ CPLErr GDALDriver::QuietDelete( const char *pszName )
 
 {
     VSIStatBufL sStat;
-    int bExists = FALSE;
-    int bRunStat = FALSE;
+    int bExists = VSIStatExL(pszName, &sStat, VSI_STAT_EXISTS_FLAG | VSI_STAT_NATURE_FLAG) == 0;
+
 #ifdef S_ISFIFO
-    bExists = VSIStatExL(pszName, &sStat, VSI_STAT_EXISTS_FLAG | VSI_STAT_NATURE_FLAG) == 0;
-    bRunStat = TRUE;
     if( bExists && S_ISFIFO(sStat.st_mode) )
         return CE_None;
 #endif
 
-    CPLPushErrorHandler(CPLQuietErrorHandler);
-    GDALDriver *poDriver = (GDALDriver*) GDALIdentifyDriver( pszName, NULL );
-    CPLPopErrorHandler();
-
-    if( poDriver == NULL )
-        return CE_None;
-
-    if( !bRunStat )
-        bExists = VSIStatExL(pszName, &sStat, VSI_STAT_EXISTS_FLAG | VSI_STAT_NATURE_FLAG) == 0;
     if( bExists &&
         VSI_ISDIR(sStat.st_mode) )
     {
@@ -861,6 +850,13 @@ CPLErr GDALDriver::QuietDelete( const char *pszName )
         /* Necessary to avoid ogr_mitab_12 to destroy file created at ogr_mitab_7 */
         return CE_None;
     }
+
+    CPLPushErrorHandler(CPLQuietErrorHandler);
+    GDALDriver *poDriver = (GDALDriver*) GDALIdentifyDriver( pszName, NULL );
+    CPLPopErrorHandler();
+
+    if( poDriver == NULL )
+        return CE_None;
 
     CPLDebug( "GDAL", "QuietDelete(%s) invoking Delete()", pszName );
 
