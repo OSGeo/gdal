@@ -636,7 +636,6 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                     pabySrcBlock = (GByte *) poBlock->GetDataRef();
                     if( pabySrcBlock == NULL )
                     {
-                        poBlock->DropLock();
                         eErr = CE_Failure;
                         break;
                     }
@@ -667,6 +666,8 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 
                 iBufOffset += (int)nPixelSpace;
             }
+            if( eErr == CE_Failure )
+                break;
 
             if( psExtraArg->pfnProgress != NULL &&
                 !psExtraArg->pfnProgress(1.0 * (iBufYOff + 1) / nBufYSize, "",

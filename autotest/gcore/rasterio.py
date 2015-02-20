@@ -731,6 +731,38 @@ def rasterio_9():
 
     return 'success'
 
+###############################################################################
+# Test error when getting a block
+
+def rasterio_10():
+    ds = gdal.Open('data/byte_truncated.tif')
+
+    gdal.PushErrorHandler()
+    data = ds.GetRasterBand(1).ReadRaster()
+    gdal.PopErrorHandler()
+    if data is not None:
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    # Change buffer type
+    gdal.PushErrorHandler()
+    data = ds.GetRasterBand(1).ReadRaster(buf_type = gdal.GDT_Int16)
+    gdal.PopErrorHandler()
+    if data is not None:
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    # Resampling case
+    gdal.PushErrorHandler()
+    data = ds.GetRasterBand(1).ReadRaster(buf_xsize = 10,
+                                          buf_ysize = 10)
+    gdal.PopErrorHandler()
+    if data is not None:
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     rasterio_1,
     rasterio_2,
@@ -741,6 +773,7 @@ gdaltest_list = [
     rasterio_7,
     rasterio_8,
     rasterio_9,
+    rasterio_10,
     ]
 
 if __name__ == '__main__':
