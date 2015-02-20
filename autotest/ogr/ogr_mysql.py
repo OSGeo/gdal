@@ -926,7 +926,6 @@ def ogr_mysql_26():
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
-    ds = None
 
     gdal.Unlink('/vsimem/ogr_gpkg_24.gpkg')
 
