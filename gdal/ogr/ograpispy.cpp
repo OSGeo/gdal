@@ -668,6 +668,11 @@ static void OGRAPISpyDumpFieldDefn( OGRFieldDefn* poFieldDefn )
         fprintf(fpSpyFile, "fd.SetWidth(%d)\n", poFieldDefn->GetWidth() );
     if( poFieldDefn->GetPrecision() > 0 )
         fprintf(fpSpyFile, "fd.SetPrecision(%d)\n", poFieldDefn->GetPrecision() );
+    if( !poFieldDefn->IsNullable() )
+        fprintf(fpSpyFile, "fd.SetNullable(0)\n");
+    if( poFieldDefn->GetDefault() != NULL )
+        fprintf(fpSpyFile, "fd.SetDefault(%s)\n",
+                OGRAPISpyGetString(poFieldDefn->GetDefault()).c_str());
 }
 
 void OGRAPISpy_L_CreateField( OGRLayerH hLayer, OGRFieldDefnH hField, 
@@ -735,6 +740,8 @@ void OGRAPISpy_L_CreateGeomField( OGRLayerH hLayer, OGRGeomFieldDefnH hField,
     if( poGeomFieldDefn->GetSpatialRef() != NULL )
         fprintf(fpSpyFile, "geom_fd.SetSpatialRef(%s)\n", OGRAPISpyGetSRS(
             (OGRSpatialReferenceH)poGeomFieldDefn->GetSpatialRef()).c_str() );
+    if( !poGeomFieldDefn->IsNullable() )
+        fprintf(fpSpyFile, "geom_fd.SetNullable(0)\n");
     fprintf(fpSpyFile, "%s.CreateGeomField(geom_fd, approx_ok = %d)\n",
             OGRAPISpyGetLayerVar(hLayer).c_str(), bApproxOK);
     OGRAPISpyFileClose();
