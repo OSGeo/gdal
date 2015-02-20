@@ -268,7 +268,7 @@ class OGRPGTableLayer : public OGRPGLayer
 
     OGRErr		CreateFeatureViaCopy( OGRFeature *poFeature );
     OGRErr		CreateFeatureViaInsert( OGRFeature *poFeature );
-    CPLString           BuildCopyFields(int bSetFID);
+    CPLString           BuildCopyFields();
 
     int                 bHasWarnedIncompatibleGeom;
     void                CheckGeomTypeCompatibility(int iGeomField, OGRGeometry* poGeom);
@@ -283,7 +283,6 @@ class OGRPGTableLayer : public OGRPGLayer
     int                 bInResetReading;
     
     int                 bAutoFIDOnCreateViaCopy;
-    int                 bCopyStatementWithFID;
     int                 bUseCopyByDefault;
     
     int                 bDifferedCreation;
@@ -347,7 +346,7 @@ public:
 
     void                SetOverrideColumnTypes( const char* pszOverrideColumnTypes );
 
-    virtual OGRErr      StartCopy(int bSetFID);
+    virtual OGRErr      StartCopy();
     virtual OGRErr      EndCopy();
 
     int                 ReadTableDefinition();
