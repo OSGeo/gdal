@@ -199,7 +199,6 @@ OGRPGTableLayer::OGRPGTableLayer( OGRPGDataSource *poDSIn,
     poFeatureDefn->Reference();
     
     bAutoFIDOnCreateViaCopy = FALSE;
-    bCopyStatementWithFID = FALSE;
     
     bDifferedCreation = FALSE;
     iFIDAsRegularColumnIndex = -1;
@@ -788,6 +787,9 @@ OGRFeature *OGRPGTableLayer::GetNextFeature()
     if( bDifferedCreation && RunDifferedCreationIfNecessary() != OGRERR_NONE )
         return NULL;
     if( bCopyActive ) EndCopy();
+
+    if( pszQueryStatement == NULL )
+        ResetReading();
 
     OGRPGGeomFieldDefn* poGeomFieldDefn = NULL;
     if( poFeatureDefn->GetGeomFieldCount() != 0 )
@@ -1420,8 +1422,8 @@ OGRErr OGRPGTableLayer::ICreateFeature( OGRFeature *poFeature )
         }
         else
         {
-            int bFIDSet = (poFeature->GetFID() != OGRNullFID);
-            if( bCopyActive && bFIDSet != bCopyStatementWithFID )
+            int bFIDSet = (pszFIDColumn != NULL && poFeature->GetFID() != OGRNullFID);
+            if( bCopyActive && bFIDSet != bFIDColumnInCopyFields )
             {
                 EndCopy();
                 eErr = CreateFeatureViaInsert( poFeature );
@@ -1434,8 +1436,8 @@ OGRErr OGRPGTableLayer::ICreateFeature( OGRFeature *poFeature )
                     /* FID set (and that a FID column has been identified), then we will */
                     /* try to copy FID values from features. Otherwise, we will not */
                     /* do and assume that the FID column is an autoincremented column. */
-                    StartCopy(bFIDSet);
-                    bCopyStatementWithFID = bFIDSet;
+                    bFIDColumnInCopyFields = bFIDSet;
+                    StartCopy();
                 }
 
                 eErr = CreateFeatureViaCopy( poFeature );
@@ -2735,13 +2737,13 @@ void OGRPGTableLayer::ResolveSRID(OGRPGGeomFieldDefn* poGFldDefn)
 /*                             StartCopy()                              */
 /************************************************************************/
 
-OGRErr OGRPGTableLayer::StartCopy(int bSetFID)
+OGRErr OGRPGTableLayer::StartCopy()
 
 {
     /* Tell the datasource we are now planning to copy data */
     poDS->StartCopy( this ); 
 
-    CPLString osFields = BuildCopyFields(bSetFID);
+    CPLString osFields = BuildCopyFields();
 
     int size = strlen(osFields) +  strlen(pszSqlTableName) + 100;
     char *pszCommand = (char *) CPLMalloc(size);
@@ -2837,7 +2839,7 @@ OGRErr OGRPGTableLayer::EndCopy()
 /*                          BuildCopyFields()                           */
 /************************************************************************/
 
-CPLString OGRPGTableLayer::BuildCopyFields(int bSetFID)
+CPLString OGRPGTableLayer::BuildCopyFields()
 {
     int     i = 0;
     int     nFIDIndex = -1;
@@ -2852,7 +2854,6 @@ CPLString OGRPGTableLayer::BuildCopyFields(int bSetFID)
         osFieldList += OGRPGEscapeColumnName(poGeomFieldDefn->GetNameRef());
     }
 
-    bFIDColumnInCopyFields = (pszFIDColumn != NULL && bSetFID);
     if( bFIDColumnInCopyFields )
     {
         if( osFieldList.size() > 0 )
