@@ -32,8 +32,9 @@
 #include "ogr_spatialref.h"
 #include "ogr_p.h"
 #include "cpl_conv.h"
+#include <vector>
 
-extern int EPSGGetWGS84Transform( int nGeogCS, double *padfTransform );
+extern int EPSGGetWGS84Transform( int nGeogCS, std::vector<CPLString>& asTransform );
 
 CPL_CVSID("$Id$");
 
@@ -2522,17 +2523,17 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
         // based on the EPSG GCS code.
         else if( nEPSGGeogCS != -1 && pszPROJ4Datum == NULL )
         {
-            double padfTransform[7];
-            if( EPSGGetWGS84Transform( nEPSGGeogCS, padfTransform ) )
+            std::vector<CPLString> asBursaTransform;
+            if( EPSGGetWGS84Transform( nEPSGGeogCS, asBursaTransform ) )
             {
-                CPLsprintf( szTOWGS84, "+towgs84=%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g",
-                         padfTransform[0],
-                         padfTransform[1],
-                         padfTransform[2],
-                         padfTransform[3],
-                         padfTransform[4],
-                         padfTransform[5],
-                         padfTransform[6] );
+                CPLsprintf( szTOWGS84, "+towgs84=%s,%s,%s,%s,%s,%s,%s",
+                         asBursaTransform[0].c_str(),
+                         asBursaTransform[1].c_str(),
+                         asBursaTransform[2].c_str(),
+                         asBursaTransform[3].c_str(),
+                         asBursaTransform[4].c_str(),
+                         asBursaTransform[5].c_str(),
+                         asBursaTransform[6].c_str() );
                 SAFE_PROJ4_STRCAT( szEllipseDef );
                 szEllipseDef[0] = '\0';
 

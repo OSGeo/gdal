@@ -32,6 +32,7 @@
 #include "ogr_spatialref.h"
 #include "ogr_p.h"
 #include "cpl_csv.h"
+#include <vector>
 
 CPL_CVSID("$Id$");
 
@@ -402,6 +403,27 @@ EPSGGetUOMLengthInfo( int nUOMLengthCode,
 }
 
 /************************************************************************/
+/*                         EPSGNegateString()                           */
+/************************************************************************/
+
+static void EPSGNegateString(CPLString& osValue)
+{
+    if( osValue.compare("0") == 0 )
+        return;
+    if( osValue[0] == '-' )
+    {
+        osValue = osValue.substr(1);
+        return;
+    }
+    if( osValue[0] == '+' )
+    {
+        osValue[0] = '-';
+        return;
+    }
+    osValue = "-" + osValue;
+}
+
+/************************************************************************/
 /*                       EPSGGetWGS84Transform()                        */
 /*                                                                      */
 /*      The following code attempts to find a bursa-wolf                */
@@ -414,7 +436,7 @@ EPSGGetUOMLengthInfo( int nUOMLengthCode,
 /*         to limitations in the CSV API.                               */
 /************************************************************************/
 
-int EPSGGetWGS84Transform( int nGeogCS, double *padfTransform )
+int EPSGGetWGS84Transform( int nGeogCS, std::vector<CPLString>& asTransform )
 
 {
     int         nMethodCode, iDXField, iField;
@@ -459,8 +481,15 @@ int EPSGGetWGS84Transform( int nGeogCS, double *padfTransform )
     if (iDXField < 0 || CSLCount(papszLine) < iDXField + 7)
         return FALSE;
 
+    asTransform.resize(0);
     for( iField = 0; iField < 7; iField++ )
-        padfTransform[iField] = CPLAtof(papszLine[iDXField+iField]);
+    {
+        const char* pszValue = papszLine[iDXField+iField];
+        if( pszValue[0] )
+            asTransform.push_back(pszValue);
+        else
+            asTransform.push_back("0");
+    }
 
 /* -------------------------------------------------------------------- */
 /*      9607 - coordinate frame rotation has reverse signs on the       */
@@ -469,9 +498,9 @@ int EPSGGetWGS84Transform( int nGeogCS, double *padfTransform )
 /* -------------------------------------------------------------------- */
     if( nMethodCode == 9607 )
     {
-        padfTransform[3] *= -1;
-        padfTransform[4] *= -1;
-        padfTransform[5] *= -1;
+        EPSGNegateString(asTransform[3]);
+        EPSGNegateString(asTransform[4]);
+        EPSGNegateString(asTransform[5]);
     }
         
     return TRUE;
@@ -1232,7 +1261,7 @@ static OGRErr SetEPSGGeogCS( OGRSpatialReference * poSRS, int nGeogCS )
     int  nDatumCode, nPMCode, nUOMAngle, nEllipsoidCode, nCSC;
     char *pszGeogCSName = NULL, *pszDatumName = NULL, *pszEllipsoidName = NULL;
     char *pszPMName = NULL, *pszAngleName = NULL;
-    double dfPMOffset, dfSemiMajor, dfInvFlattening, adfBursaTransform[7];
+    double dfPMOffset, dfSemiMajor, dfInvFlattening;
     double dfAngleInDegrees, dfAngleInRadians;
 
     if( !EPSGGetGCSInfo( nGeogCS, &pszGeogCSName,
@@ -1275,17 +1304,16 @@ static OGRErr SetEPSGGeogCS( OGRSpatialReference * poSRS, int nGeogCS )
                       pszPMName, dfPMOffset,
                       pszAngleName, dfAngleInRadians );
 
-    if( EPSGGetWGS84Transform( nGeogCS, adfBursaTransform ) )
+    std::vector<CPLString> asBursaTransform;
+    if( EPSGGetWGS84Transform( nGeogCS, asBursaTransform ) )
     {
         OGR_SRSNode     *poWGS84;
-        char            szValue[100];
 
         poWGS84 = new OGR_SRSNode( "TOWGS84" );
 
         for( int iCoeff = 0; iCoeff < 7; iCoeff++ )
         {
-            CPLsprintf( szValue, "%g", adfBursaTransform[iCoeff] );
-            poWGS84->AddChild( new OGR_SRSNode( szValue ) );
+            poWGS84->AddChild( new OGR_SRSNode( asBursaTransform[iCoeff].c_str() ) );
         }
 
         poSRS->GetAttrNode( "DATUM" )->AddChild( poWGS84 );
