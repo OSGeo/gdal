@@ -160,7 +160,7 @@ int OGRGRASSDataSource::Open( const char * pszNewName, int bUpdate,
         static char* gisbaseEnv = NULL;
         const char *gisbase = GRASS_GISBASE;
         CPLError( CE_Warning, CPLE_AppDefined, "GRASS warning: GISBASE "
-                "enviroment variable was not set, using:\n%s", gisbase );
+                "environment variable was not set, using:\n%s", gisbase );
         char buf[2000];
         snprintf ( buf, sizeof(buf), "GISBASE=%s", gisbase );
         buf[sizeof(buf)-1] = '\0';

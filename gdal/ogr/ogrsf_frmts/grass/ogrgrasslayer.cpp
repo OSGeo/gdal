@@ -278,7 +278,7 @@ bool OGRGRASSLayer::StartDbDriver()
     if ( poDriver == NULL) 
     {
 	CPLError( CE_Failure, CPLE_AppDefined, "Cannot open database %s by driver %s, "
-		  "check if GISBASE enviroment variable is set, the driver is available "
+		  "check if GISBASE environment variable is set, the driver is available "
 		  " and the database is accessible.", poLink->driver, poLink->database );
 	return false;
     } 
