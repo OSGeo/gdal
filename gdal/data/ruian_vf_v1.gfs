@@ -1567,6 +1567,12 @@
       <ElementPath>Geometrie|OriginalniHranice</ElementPath> 
       <Type>Polygon</Type>
     </GeomPropertyDefn>
+    <!-- Originální geometrie hranice parcely (Ompv) -->
+    <GeomPropertyDefn>
+      <Name>OriginalniHraniceOmpv</Name>
+      <ElementPath>Geometrie|OriginalniHraniceOmpv</ElementPath>
+      <Type>MultiPolygon</Type>
+    </GeomPropertyDefn>
     <!-- Jednoznační identifikátor parcely -->
     <PropertyDefn>
       <Name>Id</Name>
@@ -1740,6 +1746,12 @@
     <GeomPropertyDefn>
       <Name>OriginalniHranice</Name> 
       <ElementPath>Geometrie|OriginalniHranice</ElementPath> 
+      <Type>MultiPolygon</Type>
+    </GeomPropertyDefn>
+    <!-- Originální geometrie hranice stavebního objektu (Ompv) -->
+    <GeomPropertyDefn>
+      <Name>OriginalniHraniceOmpv</Name>
+      <ElementPath>Geometrie|OriginalniHraniceOmpv</ElementPath>
       <Type>MultiPolygon</Type>
     </GeomPropertyDefn>
     <!-- Kód stavebního objektu -->
