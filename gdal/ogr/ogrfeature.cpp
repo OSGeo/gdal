@@ -2783,6 +2783,7 @@ void OGRFeature::SetField( int iField, const char * pszValue )
     }
     else if( eType == OFTInteger )
     {
+        errno = 0; /* As allowed by C standard, some systems like MSVC doesn't reset errno */
         long nVal = strtol(pszValue, &pszLast, 10);
         nVal = OGRFeatureGetIntegerValue(poFDefn, nVal);
         pauFields[iField].Integer = (nVal > INT_MAX) ? INT_MAX : (nVal < INT_MIN) ? INT_MIN : (int) nVal;
@@ -2838,6 +2839,7 @@ void OGRFeature::SetField( int iField, const char * pszValue )
             {
                 for( i=0; i < nCount; i++ )
                 {
+                    errno = 0; /* As allowed by C standard, some systems like MSVC doesn't reset errno */
                     int nVal = atoi(papszValueList[i+1]);
                     if( errno == ERANGE )
                     {
