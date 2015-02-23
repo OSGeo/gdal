@@ -631,14 +631,16 @@ void OGRPGCommonAppendCopyFieldsExceptGeom(CPLString& osCommand,
 
             for( iChar = 0; pszStrValue[iChar] != '\0'; iChar++ )
             {
-                if( poFeatureDefn->GetFieldDefn(i)->GetWidth() > 0
+                /* This is wrong as it should take into account the number */
+                /* of UTF-8 characters */
+                /*if( poFeatureDefn->GetFieldDefn(i)->GetWidth() > 0
                     && iChar == poFeatureDefn->GetFieldDefn(i)->GetWidth() )
                 {
                     CPLDebug( "PG",
                               "Truncated %s field value, it was too long.",
                               poFeatureDefn->GetFieldDefn(i)->GetNameRef() );
                     break;
-                }
+                }*/
 
                 /* Escape embedded \, \t, \n, \r since they will cause COPY
                    to misinterpret a line of text and thus abort */
