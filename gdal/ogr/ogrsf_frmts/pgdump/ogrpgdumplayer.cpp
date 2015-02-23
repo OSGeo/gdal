@@ -164,7 +164,7 @@ OGRErr OGRPGDumpLayer::ICreateFeature( OGRFeature *poFeature )
         }
     }
 
-    if( !poFeature->Validate( OGR_F_VAL_ALL, TRUE ) )
+    if( !poFeature->Validate(OGR_F_VAL_ALL & ~OGR_F_VAL_WIDTH, TRUE ) )
         return OGRERR_FAILURE;
 
     // We avoid testing the config option too often. 
@@ -628,19 +628,23 @@ void OGRPGCommonAppendCopyFieldsExceptGeom(CPLString& osCommand,
             nOGRFieldType != OFTBinary )
         {
             int         iChar;
+            int         iUTFChar = 0;
+            int         nMaxWidth = poFeatureDefn->GetFieldDefn(i)->GetWidth();
 
             for( iChar = 0; pszStrValue[iChar] != '\0'; iChar++ )
             {
-                /* This is wrong as it should take into account the number */
-                /* of UTF-8 characters */
-                /*if( poFeatureDefn->GetFieldDefn(i)->GetWidth() > 0
-                    && iChar == poFeatureDefn->GetFieldDefn(i)->GetWidth() )
+                //count of utf chars
+                if ((pszStrValue[iChar] & 0xc0) != 0x80) 
                 {
-                    CPLDebug( "PG",
-                              "Truncated %s field value, it was too long.",
-                              poFeatureDefn->GetFieldDefn(i)->GetNameRef() );
-                    break;
-                }*/
+                    if( nMaxWidth > 0 && iUTFChar == nMaxWidth )
+                    {
+                        CPLDebug( "PG",
+                                "Truncated %s field value, it was too long.",
+                                poFeatureDefn->GetFieldDefn(i)->GetNameRef() );
+                        break;
+                    }
+                    iUTFChar++;
+                }
 
                 /* Escape embedded \, \t, \n, \r since they will cause COPY
                    to misinterpret a line of text and thus abort */
@@ -796,17 +800,26 @@ CPLString OGRPGDumpEscapeString(
     osCommand += "'";
 
     int nSrcLen = strlen(pszStrValue);
-    if (nMaxLength > 0 && nSrcLen > nMaxLength)
+    int nSrcLenUTF = CPLStrlenUTF8(pszStrValue);
+
+    if (nMaxLength > 0 && nSrcLenUTF > nMaxLength)
     {
         CPLDebug( "PG",
                   "Truncated %s field value, it was too long.",
                   pszFieldName );
-        nSrcLen = nMaxLength;
-        
-        while( nSrcLen > 0 && ((unsigned char *) pszStrValue)[nSrcLen-1] > 127 )
+
+        int iUTF8Char = 0;
+        for(int iChar = 0; iChar < nSrcLen; iChar++ )
         {
-            CPLDebug( "PG", "Backup to start of multi-byte character." );
-            nSrcLen--;
+            if( (((unsigned char *) pszStrValue)[iChar] & 0xc0) != 0x80 )
+            {
+                if( iUTF8Char == nMaxLength )
+                {
+                    nSrcLen = iChar;
+                    break;
+                }
+                iUTF8Char ++;
+            }
         }
     }
 

@@ -701,6 +701,73 @@ def ogr_pgdump_8():
     return 'success'
 
 ###############################################################################
+# Test creating a field with the fid name (PG_USE_COPY=NO)
+
+def ogr_pgdump_9(pg_use_copy = 'YES'):
+
+    gdal.SetConfigOption( 'PG_USE_COPY', pg_use_copy )
+
+    ds = ogr.GetDriverByName('PGDump').CreateDataSource('/vsimem/ogr_pgdump_9.sql', options = [ 'LINEFORMAT=LF' ] )
+    lyr = ds.CreateLayer('test', geom_type = ogr.wkbNone)
+
+    fld = ogr.FieldDefn('str', ogr.OFTString)
+    fld.SetWidth(5)
+    lyr.CreateField(fld)
+    fld = ogr.FieldDefn('str2', ogr.OFTString)
+    lyr.CreateField(fld)
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField('str', '01234')
+    lyr.CreateFeature(feat)
+    
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField('str', 'ABCDEF')
+    lyr.CreateFeature(feat)
+    
+    if sys.version_info >= (3,0,0):
+        val4 = '\u00e9\u00e9\u00e9\u00e9'
+        val5 = val4 + '\u00e9'
+        val6 = val5 + '\u00e9'
+    else:
+        exec("val4 = u'\\u00e9\\u00e9\\u00e9\\u00e9'")
+        exec("val5 = val4 + u'\\u00e9'")
+        exec("val6 = val5 + u'\\u00e9'")
+    
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField('str', val6)
+    lyr.CreateFeature(feat)
+    
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField('str', 'a' + val5)
+    lyr.CreateFeature(feat)
+    
+    gdal.SetConfigOption( 'PG_USE_COPY', None )
+    
+    ds = None
+    
+    f = gdal.VSIFOpenL('/vsimem/ogr_pgdump_9.sql', 'rb')
+    sql = gdal.VSIFReadL(1, 10000, f).decode('utf8')
+    gdal.VSIFCloseL(f)
+
+    gdal.Unlink('/vsimem/ogr_pgdump_9.sql')
+
+    if pg_use_copy == 'YES':
+        eofield = '\t'
+    else:
+        eofield = "'"
+    if sql.find("""01234%s""" % eofield) < 0 or \
+       sql.find("""ABCDE%s""" % eofield) < 0 or \
+       sql.find("""%s%s""" % (val5, eofield)) < 0 or \
+       sql.find("""%s%s""" % ('a'+val4, eofield)) < 0:
+        print(sql)
+        return 'fail'
+
+    return 'success'
+
+def ogr_pgdump_10():
+    return ogr_pgdump_9('NO')
+
+###############################################################################
 # Cleanup
 
 def ogr_pgdump_cleanup():
@@ -724,6 +791,8 @@ gdaltest_list = [
     ogr_pgdump_6,
     ogr_pgdump_7,
     ogr_pgdump_8,
+    ogr_pgdump_9,
+    ogr_pgdump_10,
     ogr_pgdump_cleanup ]
 
 

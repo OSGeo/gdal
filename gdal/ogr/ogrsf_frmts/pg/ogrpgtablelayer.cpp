@@ -1505,13 +1505,19 @@ CPLString OGRPGEscapeString(PGconn *hPGConn,
         CPLDebug( "PG",
                   "Truncated %s.%s field value '%s' to %d characters.",
                   pszTableName, pszFieldName, pszStrValue, nMaxLength );
-        nSrcLen = nSrcLen * nMaxLength / nSrcLenUTF;
 
-        
-        while( nSrcLen > 0 && ((unsigned char *) pszStrValue)[nSrcLen-1] > 127 )
+        int iUTF8Char = 0;
+        for(int iChar = 0; iChar < nSrcLen; iChar++ )
         {
-            CPLDebug( "PG", "Backup to start of multi-byte character." );
-            nSrcLen--;
+            if( (((unsigned char *) pszStrValue)[iChar] & 0xc0) != 0x80 )
+            {
+                if( iUTF8Char == nMaxLength )
+                {
+                    nSrcLen = iChar;
+                    break;
+                }
+                iUTF8Char ++;
+            }
         }
     }
 
