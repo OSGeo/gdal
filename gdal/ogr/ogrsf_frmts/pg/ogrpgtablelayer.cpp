@@ -1535,13 +1535,19 @@ CPLString OGRPGEscapeString(PGconn *hPGConn,
         CPLDebug( "PG",
                   "Truncated %s.%s field value '%s' to %d characters.",
                   pszTableName, pszFieldName, pszStrValue, nMaxLength );
-        nSrcLen = nSrcLen * nMaxLength / nSrcLenUTF;
 
-        
-        while( nSrcLen > 0 && ((unsigned char *) pszStrValue)[nSrcLen-1] > 127 )
+        int iUTF8Char = 0;
+        for(int iChar = 0; iChar < nSrcLen; iChar++ )
         {
-            CPLDebug( "PG", "Backup to start of multi-byte character." );
-            nSrcLen--;
+            if( (((unsigned char *) pszStrValue)[iChar] & 0xc0) != 0x80 )
+            {
+                if( iUTF8Char == nMaxLength )
+                {
+                    nSrcLen = iChar;
+                    break;
+                }
+                iUTF8Char ++;
+            }
         }
     }
 
@@ -2056,25 +2062,25 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
         {
             int         iChar;
             int         iUTFChar = 0;
+            int         nMaxWidth = poFeatureDefn->GetFieldDefn(i)->GetWidth();
 
             for( iChar = 0; pszStrValue[iChar] != '\0'; iChar++ )
             {
-
-                if( poFeatureDefn->GetFieldDefn(i)->GetWidth() > 0
-                    && iUTFChar == poFeatureDefn->GetFieldDefn(i)->GetWidth() )
-                {
-                    CPLDebug( "PG",
-                              "Truncated %s.%s field value '%s' to %d characters.",
-                              poFeatureDefn->GetName(),
-                              poFeatureDefn->GetFieldDefn(i)->GetNameRef(),
-                              pszStrValue,
-                              poFeatureDefn->GetFieldDefn(i)->GetWidth() );
-                    break;
-                }
-
                 //count of utf chars
                 if ((pszStrValue[iChar] & 0xc0) != 0x80) 
+                {
+                    if( nMaxWidth > 0 && iUTFChar == nMaxWidth )
+                    {
+                        CPLDebug( "PG",
+                                "Truncated %s.%s field value '%s' to %d characters.",
+                                poFeatureDefn->GetName(),
+                                poFeatureDefn->GetFieldDefn(i)->GetNameRef(),
+                                pszStrValue,
+                                poFeatureDefn->GetFieldDefn(i)->GetWidth() );
+                        break;
+                    }
                     iUTFChar++;
+                }
 
                 /* Escape embedded \, \t, \n, \r since they will cause COPY
                    to misinterpret a line of text and thus abort */
