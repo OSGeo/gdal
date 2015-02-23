@@ -4583,7 +4583,7 @@ GTiffDataset::GTiffDataset()
     else if( CSLTestBoolean(pszVirtualMemIO) )
         eVirtualMemIOUsage = VIRTUAL_MEM_IO_YES;
     else
-        eVirtualMemIOUsage = VIRTUAL_MEM_IO_NO,
+        eVirtualMemIOUsage = VIRTUAL_MEM_IO_NO;
     nSetPhotometricFromBandColorInterp = 0;
 
     pBaseMapping = NULL;
