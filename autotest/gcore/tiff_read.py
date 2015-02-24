@@ -1273,6 +1273,12 @@ def tiff_direct_and_virtual_mem_io():
     # Test with pixel-interleaved and band-interleaved datasets
     for truncated in [False, True]:
      if truncated:
+
+         # Suble difference of behaviour with VirtualMemIO wrt standard impl
+         # so ensure it is available
+         if not sys.platform.startswith('linux'):
+             break
+
          nitermax = 4
          options = ['GTIFF_VIRTUAL_MEM_IO']
      else:

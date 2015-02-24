@@ -1652,7 +1652,7 @@ CPLErr GTiffDataset::IRasterIO( GDALRWFlag eRWFlag,
 
 //#define DEBUG_REACHED_VIRTUAL_MEM_IO
 #ifdef DEBUG_REACHED_VIRTUAL_MEM_IO
-static int anReachedVirtualMemIO[30] = { 0 };
+static int anReachedVirtualMemIO[32] = { 0 };
 #define REACHED(x)  anReachedVirtualMemIO[x] = 1
 #else
 #define REACHED(x)
@@ -1760,8 +1760,8 @@ int GTiffDataset::VirtualMemIO( GDALRWFlag eRWFlag,
     const int nBandsPerBlock = ( nPlanarConfig == PLANARCONFIG_SEPARATE ) ? 1 : nBands;
     const int nBandsPerBlockDTSize = nBandsPerBlock * nDTSize;
     const int nBlocksPerRow = DIV_ROUND_UP(nRasterXSize, nBlockXSize);
-    const int bByteNoXResampling = ( nXSize == nBufXSize && eDataType == eBufType &&
-                                     nDTSize == 1 );
+    const int bByteOnly = (eDataType == eBufType && nDTSize == 1 );
+    const int bByteNoXResampling = ( bByteOnly && nXSize == nBufXSize );
     const int nBlockSize = nBlockXSize * nBlockYSize * nBandsPerBlockDTSize;
 
     int bNoDataSet;
@@ -1908,9 +1908,10 @@ int GTiffDataset::VirtualMemIO( GDALRWFlag eRWFlag,
                                     "Missing data for block %d", nBlockId);
                         return CE_Failure;
                     }
+                    int nBaseByteOffsetInBlock = nYOffsetInBlock * nBlockXSize * nBandsPerBlockDTSize;
                     if( bByteNoXResampling )
                     {
-                        int nByteOffsetInBlock = (nYOffsetInBlock * nBlockXSize + nXOff) * nBandsPerBlockDTSize;
+                        int nByteOffsetInBlock = nBaseByteOffsetInBlock + nXOff * nBandsPerBlockDTSize;
                         GByte* pabyLocalData = pabyData + y * nLineSpace;
                         GByte* pabyLocalSrcData = pabySrcData + nCurOffset + nByteOffsetInBlock;
                         if( nPixelSpace == nBandCount && nBandsPerBlockDTSize == nBandCount )
@@ -1930,16 +1931,29 @@ int GTiffDataset::VirtualMemIO( GDALRWFlag eRWFlag,
                             }
                         }
                     }
+                    else if( bByteOnly )
+                    {
+                        REACHED(31);
+                        GByte* pabyLocalData = pabyData + y * nLineSpace;
+                        GByte* pabyLocalSrcData = pabySrcData + nCurOffset + nBaseByteOffsetInBlock;
+                        for(int x=0;x<nBufXSize;x++)
+                        {
+                            int nSrcPixelMinusXOff = (int)((x + 0.5) * nXSize / nBufXSize);
+                            for(int iBand=0;iBand<nBandCount;iBand++)
+                                pabyLocalData[x * nPixelSpace + iBand /* * nBandSpace*/] = pabyLocalSrcData[nSrcPixelMinusXOff * nBandsPerBlockDTSize + iBand];
+                        }
+                    }
                     else
                     {
                         REACHED(8);
+                        GByte* pabyLocalData = pabyData + y * nLineSpace;
+                        GByte* pabyLocalSrcData = pabySrcData + nCurOffset + nBaseByteOffsetInBlock;
                         for(int x=0;x<nBufXSize;x++)
                         {
-                            int nSrcPixel = nXOff + (int)((x + 0.5) * nXSize / nBufXSize);
-                            int nByteOffsetInBlock = (nYOffsetInBlock * nBlockXSize + nSrcPixel) * nBandsPerBlockDTSize;
-                            GDALCopyWords(pabySrcData + nCurOffset + nByteOffsetInBlock,
+                            int nSrcPixelMinusXOff = (int)((x + 0.5) * nXSize / nBufXSize);
+                            GDALCopyWords(pabyLocalSrcData + nSrcPixelMinusXOff * nBandsPerBlockDTSize,
                                           eDataType, nDTSize,
-                                          pabyData + y * nLineSpace + x * nPixelSpace,
+                                          pabyLocalData + x * nPixelSpace,
                                           eBufType, nBandSpace,
                                           nBandCount);
                         }
@@ -2125,6 +2139,17 @@ int GTiffDataset::VirtualMemIO( GDALRWFlag eRWFlag,
                                     pabyLocalData += nPixelSpace;
                                     pabyLocalSrcData += nBandsPerBlockDTSize;
                                 }
+                            }
+                        }
+                        else if( bByteOnly )
+                        {
+                            REACHED(30);
+                            GByte* pabyLocalData = pabyData + y * nLineSpace;
+                            GByte* pabyLocalSrcData = pabySrcData + nCurOffset + nBaseByteOffsetInBlock;
+                            for(int x=0;x<nBufXSize;x++)
+                            {
+                                int nSrcPixelMinusXOff = (int)((x + 0.5) * nXSize / nBufXSize);
+                                pabyLocalData[x * nPixelSpace] = pabyLocalSrcData[nSrcPixelMinusXOff * nBandsPerBlockDTSize];
                             }
                         }
                         else
