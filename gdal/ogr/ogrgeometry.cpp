@@ -5164,11 +5164,11 @@ int OGR_GT_IsSubClassOf( OGRwkbGeometryType eType,
 /**
  * \brief Returns the collection type that can contain the passed geometry type
  *
- * Handled conversions are : wkbPoint -> wkbMultiPoint,
+ * Handled conversions are : wkbNone->wkbNone, wkbPoint -> wkbMultiPoint,
  * wkbLineString->wkbMultiLineString, wkbPolygon->wkbMultiPolygon,
  * wkbCircularString->wkbMultiCurve, wkbCompoundCurve->wkbMultiCurve,
  * wkbCurvePolygon->wkbMultiSurface.
- * In other cases, wkbUnknown is returned.
+ * In other cases, wkbUnknown is returned
  *
  * Passed Z flag is preserved.
  *
@@ -5181,6 +5181,8 @@ int OGR_GT_IsSubClassOf( OGRwkbGeometryType eType,
 
 OGRwkbGeometryType OGR_GT_GetCollection( OGRwkbGeometryType eType )
 {
+    if( eType == wkbNone )
+        return wkbNone;
     OGRwkbGeometryType eFGType = wkbFlatten(eType);
     if( eFGType == wkbPoint )
         eType = wkbMultiPoint;
