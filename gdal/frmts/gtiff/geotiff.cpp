@@ -160,13 +160,6 @@ class GTiffBitmapBand;
 class GTiffJPEGOverviewDS;
 class GTiffJPEGOverviewBand;
 
-typedef struct
-{
-    CPLVirtualMem* psVirtualMem;
-    int            nPixelSpace;
-    GIntBig        nLineSpace;
-} GTiffVirtualMem;
-
 typedef enum
 {
     VIRTUAL_MEM_IO_NO,
@@ -361,8 +354,8 @@ class GTiffDataset : public GDALPamDataset
     int           bDirectIO;
 
     VirtualMemIOEnum eVirtualMemIOUsage;
-    std::vector<GTiffVirtualMem> apsVirtualMem;
-    
+    CPLVirtualMem* psVirtualMemIOMapping;
+
     int           nSetPhotometricFromBandColorInterp;
 
     CPLVirtualMem *pBaseMapping;
@@ -384,7 +377,7 @@ class GTiffDataset : public GDALPamDataset
                                GSpacing nBandSpace,
                                GDALRasterIOExtraArg* psExtraArg );
 
-    CPLErr         VirtualMemIO( GDALRWFlag eRWFlag,
+    int            VirtualMemIO( GDALRWFlag eRWFlag,
                                int nXOff, int nYOff, int nXSize, int nYSize,
                                void * pData, int nBufXSize, int nBufYSize,
                                GDALDataType eBufType, 
@@ -1157,33 +1150,6 @@ CPLErr GTiffRasterBand::DirectIO( GDALRWFlag eRWFlag,
              nXOff, nYOff, nXSize, nYSize,
              nBufXSize, nBufYSize);*/
 
-/* ==================================================================== */
-/*      Do we have overviews that would be appropriate to satisfy       */
-/*      this request?                                                   */
-/* ==================================================================== */
-    if( (nBufXSize < nXSize || nBufYSize < nYSize)
-        && GetOverviewCount() > 0 && eRWFlag == GF_Read )
-    {
-        int         nOverview;
-        GDALRasterIOExtraArg sExtraArg;
-    
-        GDALCopyRasterIOExtraArg(&sExtraArg, psExtraArg);
-
-        nOverview =
-            GDALBandGetBestOverviewLevel2(this, nXOff, nYOff, nXSize, nYSize,
-                                        nBufXSize, nBufYSize, &sExtraArg);
-        if (nOverview >= 0)
-        {
-            GDALRasterBand* poOverviewBand = GetOverview(nOverview);
-            if (poOverviewBand == NULL)
-                return CE_Failure;
-
-            return poOverviewBand->RasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
-                                            pData, nBufXSize, nBufYSize, eBufType,
-                                            nPixelSpace, nLineSpace, &sExtraArg );
-        }
-    }
-
     /* Make sure that TIFFTAG_STRIPOFFSETS is up-to-date */
     if (poGDS->GetAccess() == GA_Update)
         poGDS->FlushCache();
@@ -1654,12 +1620,12 @@ CPLErr GTiffDataset::IRasterIO( GDALRWFlag eRWFlag,
 
     if( eVirtualMemIOUsage != VIRTUAL_MEM_IO_NO )
     {
-        eErr = VirtualMemIO(
+        int nErr = VirtualMemIO(
                 eRWFlag, nXOff, nYOff, nXSize, nYSize,
                 pData, nBufXSize, nBufYSize, eBufType,
                 nBandCount, panBandMap, nPixelSpace, nLineSpace, nBandSpace, psExtraArg);
-        if (eErr == CE_None)
-            return eErr;
+        if (nErr >= 0)
+            return (CPLErr)nErr;
     }
     if (bDirectIO)
     {
@@ -1684,7 +1650,15 @@ CPLErr GTiffDataset::IRasterIO( GDALRWFlag eRWFlag,
 /*                         VirtualMemIO()                               */
 /************************************************************************/
 
-CPLErr GTiffDataset::VirtualMemIO( GDALRWFlag eRWFlag,
+//#define DEBUG_REACHED_VIRTUAL_MEM_IO
+#ifdef DEBUG_REACHED_VIRTUAL_MEM_IO
+static int anReachedVirtualMemIO[30] = { 0 };
+#define REACHED(x)  anReachedVirtualMemIO[x] = 1
+#else
+#define REACHED(x)
+#endif
+
+int GTiffDataset::VirtualMemIO( GDALRWFlag eRWFlag,
                                int nXOff, int nYOff, int nXSize, int nYSize,
                                void * pData, int nBufXSize, int nBufYSize,
                                GDALDataType eBufType, 
@@ -1694,40 +1668,79 @@ CPLErr GTiffDataset::VirtualMemIO( GDALRWFlag eRWFlag,
                                GDALRasterIOExtraArg* psExtraArg )
 {
     GDALDataType eDataType = GetRasterBand(1)->GetRasterDataType();
+    if( eAccess == GA_Update || eRWFlag == GF_Write || bStreamingIn )
+        return -1;
 
-    if( eRWFlag == GF_Write )
-        return CE_Failure;
-    if( nXSize != nBufXSize || nYSize != nBufYSize )
+    /* we only know how to deal with nearest neighbour in this optimized routine */
+    if( (nXSize != nBufXSize || nYSize != nBufYSize) &&
+        psExtraArg != NULL &&
+        psExtraArg->eResampleAlg != GRIORA_NearestNeighbour )
     {
+        return -1;
+    }
+
+    if( !SetDirectory() )
+        return CE_Failure;
+
+    if( psVirtualMemIOMapping == NULL )
+    {
+        if( !(nCompression == COMPRESSION_NONE &&
+              (nPhotometric == PHOTOMETRIC_MINISBLACK ||
+              nPhotometric == PHOTOMETRIC_RGB ||
+              nPhotometric == PHOTOMETRIC_PALETTE) &&
+              (nBitsPerSample == 8 || (nBitsPerSample == 16) ||
+              nBitsPerSample == 32 || nBitsPerSample == 64) &&
+              nBitsPerSample == GDALGetDataTypeSize(eDataType) &&
+              !TIFFIsByteSwapped(hTIFF) ) )
+        {
+            eVirtualMemIOUsage = VIRTUAL_MEM_IO_NO;
+            return -1;
+        }
+        VSILFILE* fp = (VSILFILE*) TIFFClientdata( hTIFF );
+        if( !CPLIsVirtualMemFileMapAvailable() ||
+            VSIFGetNativeFileDescriptorL(fp) == NULL )
+        {
+            eVirtualMemIOUsage = VIRTUAL_MEM_IO_NO;
+            return -1;
+        }
+        VSIFSeekL(fp, 0, SEEK_END);
+        vsi_l_offset nLength = VSIFTellL(fp);
+        if( (size_t)nLength != nLength )
+        {
+            eVirtualMemIOUsage = VIRTUAL_MEM_IO_NO;
+            return -1;
+        }
+        if( eVirtualMemIOUsage == VIRTUAL_MEM_IO_IF_ENOUGH_RAM )
+        {
+            GIntBig nRAM = CPLGetUsablePhysicalRAM();
+            if( (GIntBig)nLength > nRAM )
+            {
+                CPLDebug("GTiff", "Not enough RAM to map whole file into memory.");
+                eVirtualMemIOUsage = VIRTUAL_MEM_IO_NO;
+                return -1;
+            }
+        }
+        psVirtualMemIOMapping = CPLVirtualMemFileMapNew(
+            fp, 0, nLength, VIRTUALMEM_READONLY, NULL, NULL);
+        if( psVirtualMemIOMapping == NULL )
+        {
+            eVirtualMemIOUsage = VIRTUAL_MEM_IO_NO;
+            return -1;
+        }
+        eVirtualMemIOUsage = VIRTUAL_MEM_IO_YES;
+    }
+
+    /* Get strip offsets */
+    toff_t *panOffsets = NULL;
+    if ( !TIFFGetField( hTIFF, (TIFFIsTiled( hTIFF )) ? TIFFTAG_TILEOFFSETS : TIFFTAG_STRIPOFFSETS, &panOffsets ) ||
+         panOffsets == NULL )
+    {
+        eVirtualMemIOUsage = VIRTUAL_MEM_IO_NO;
         return CE_Failure;
     }
+
     int nDTSize = GDALGetDataTypeSize(eDataType) / 8;
     int nBufDTSize = GDALGetDataTypeSize(eBufType) / 8;
-
-    if( eVirtualMemIOUsage == VIRTUAL_MEM_IO_IF_ENOUGH_RAM )
-    {
-        GIntBig nRAM = CPLGetUsablePhysicalRAM();
-        GIntBig nNeeded = (GIntBig)nRasterXSize * nRasterYSize * nBands * nDTSize;
-        if( nNeeded > nRAM )
-        {
-            CPLDebug("GTiff", "Not enough RAM to map whole file into memory.");
-            eVirtualMemIOUsage = VIRTUAL_MEM_IO_NO;
-        }
-        else
-        {
-            eVirtualMemIOUsage = VIRTUAL_MEM_IO_YES;
-        }
-    }
-
-    if( apsVirtualMem.size() == 0 )
-    {
-        apsVirtualMem.resize(nBands);
-        memset(&apsVirtualMem[0], 0, sizeof(GTiffVirtualMem) * nBands);
-    }
-
-    /* Make sure that TIFFTAG_STRIPOFFSETS is up-to-date */
-    if (GetAccess() == GA_Update)
-        FlushCache();
 
     int iBand;
     int bUseContigImplementation =
@@ -1741,84 +1754,393 @@ CPLErr GTiffDataset::VirtualMemIO( GDALRWFlag eRWFlag,
             break;
         }
     }
-    
-    for(iBand = 0; iBand < nBandCount; iBand ++ )
-    {
-        int nBand = panBandMap[iBand];
-        GTiffVirtualMem* psVMem = &(apsVirtualMem[nBand-1]);
-        if( psVMem->psVirtualMem == NULL )
-        {
-            psVMem->psVirtualMem =
-                ((GTiffRasterBand*)GetRasterBand(nBand))->GetVirtualMemAutoInternal(
-                    eRWFlag, &(psVMem->nPixelSpace),
-                    &(psVMem->nLineSpace), NULL );
-            /*GByte* pabySrcData= (GByte*)CPLVirtualMemGetAddr(psVMem->psVirtualMem);
-            GByte* pabyEnd = pabySrcData + CPLVirtualMemGetSize(psVMem->psVirtualMem);
-            CPLDebug("GTiff", "For band %d, mapping at address [%p,%p[ pixelspace=%d linespace=" CPL_FRMT_GIB,
-                     nBand, pabySrcData, pabyEnd,
-                     psVMem->nPixelSpace, psVMem->nLineSpace);*/
-        }
-        if( psVMem->psVirtualMem == NULL )
-        {
-            CPLDebug("GTiff", "GetVirtualMemAutoInternal failed");
-            eVirtualMemIOUsage = VIRTUAL_MEM_IO_NO;
-            return CE_Failure;
-        }
-        if( !bUseContigImplementation )
-        {
-            GByte* pabySrcData = (GByte*)CPLVirtualMemGetAddr(psVMem->psVirtualMem);
-            int nVMemPixelSpace = psVMem->nPixelSpace;
-            GIntBig nVMemLineSpace = psVMem->nLineSpace;
-            pabySrcData += nYOff*nVMemLineSpace+nXOff*nVMemPixelSpace;
-            GByte* pabyData = (GByte*)pData + iBand * nBandSpace;
-            for(int y=0;y<nYSize;y++)
-            {
-                GDALCopyWords(pabySrcData + y*nVMemLineSpace,
-                                eDataType, nVMemPixelSpace,
-                                pabyData + y*nLineSpace,
-                                eBufType, nPixelSpace,
-                                nXSize);
-            }
-        }
-    }
+
+    size_t nMappingSize = CPLVirtualMemGetSize(psVirtualMemIOMapping);
+    GByte* pabySrcData = (GByte*)CPLVirtualMemGetAddr(psVirtualMemIOMapping);
+    const int nBandsPerBlock = ( nPlanarConfig == PLANARCONFIG_SEPARATE ) ? 1 : nBands;
+    const int nBandsPerBlockDTSize = nBandsPerBlock * nDTSize;
+    const int nBlocksPerRow = DIV_ROUND_UP(nRasterXSize, nBlockXSize);
+    const int bByteNoXResampling = ( nXSize == nBufXSize && eDataType == eBufType &&
+                                     nDTSize == 1 );
+    const int nBlockSize = nBlockXSize * nBlockYSize * nBandsPerBlockDTSize;
+
+    int bNoDataSet;
+    double dfNoData = GetRasterBand(1)->GetNoDataValue( &bNoDataSet );
+    GByte abyNoData = 0;
+    if( !bNoDataSet )
+        dfNoData = 0;
+    else if( dfNoData >= 0 && dfNoData <= 255 )
+        abyNoData = (GByte) (dfNoData + 0.5);
 
     if( bUseContigImplementation )
     {
-        GTiffVirtualMem* psVMem = &(apsVirtualMem[0]);
-        GByte* pabySrcData = (GByte*)CPLVirtualMemGetAddr(psVMem->psVirtualMem);
-        int nVMemPixelSpace = psVMem->nPixelSpace;
-        GIntBig nVMemLineSpace = psVMem->nLineSpace;
-        pabySrcData += nYOff*nVMemLineSpace+nXOff*nVMemPixelSpace;
-        GByte* pabyData = (GByte*)pData;
-        for(int y=0;y<nYSize;y++)
+        if( TIFFIsTiled( hTIFF ) )
         {
-            if( eDataType == eBufType &&
-                nPixelSpace == nVMemPixelSpace && nPixelSpace == nBandCount * nDTSize )
+            GByte* pabyData = (GByte*)pData;
+            for(int y=0;y<nBufYSize;y++)
             {
-                memcpy(pabyData + y*nLineSpace,
-                       pabySrcData + y*nVMemLineSpace,
-                       nXSize * nPixelSpace);
-            }
-            else if( eDataType == eBufType && eDataType == GDT_Byte )
-            {
-                for(int x=0;x<nXSize;x++)
+                int nSrcLine = nYOff + (int)((y + 0.5) * nYSize / nBufYSize);
+                int nBlockYOff = nSrcLine / nBlockYSize;
+                int nYOffsetInBlock = nSrcLine % nBlockYSize;
+                int nBaseByteOffsetInBlock = nYOffsetInBlock * nBlockXSize * nBandsPerBlockDTSize;
+
+                if( bByteNoXResampling )
                 {
-                    for(iBand = 0; iBand < nBandCount; iBand ++ )
+                    GByte* pabyLocalSrcData = NULL;
+                    GByte* pabyLocalData = pabyData + y * nLineSpace;
+                    int nLastPixelBlock = 0;
+                    int nBlockXOff = nXOff / nBlockXSize;
+                    int nXOffsetInBlock = nXOff % nBlockXSize;
+                    int nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow;
+                    int nByteOffsetInBlock = nBaseByteOffsetInBlock + nXOffsetInBlock * nBandsPerBlockDTSize;
+
+                    for(int x=0;x<nBufXSize;x++)
                     {
-                        pabyData[y*nLineSpace+x*nPixelSpace+iBand] =
-                            pabySrcData[y*nVMemLineSpace+x*nVMemPixelSpace+iBand];
+                        int nSrcPixel = nXOff + x;
+                        if( nSrcPixel >= nLastPixelBlock )
+                        {
+                            REACHED(0);
+                            nLastPixelBlock = (nBlockXOff + 1) * nBlockXSize;
+                            toff_t nCurOffset = panOffsets[nBlockId];
+                            if( nCurOffset )
+                            {
+                                if( nCurOffset + nBlockSize > nMappingSize )
+                                {
+                                    REACHED(24);
+                                    CPLError(CE_Failure, CPLE_FileIO,
+                                            "Missing data for block %d", nBlockId);
+                                    return CE_Failure;
+                                }
+                                pabyLocalSrcData = pabySrcData + nCurOffset + nByteOffsetInBlock;
+                            }
+                            else
+                                pabyLocalSrcData = NULL;
+                            nByteOffsetInBlock = nBaseByteOffsetInBlock;
+                            nBlockXOff ++;
+                            nBlockId ++; 
+                        }
+                        else
+                        {
+                            REACHED(1);
+                        }
+
+                        if( pabyLocalSrcData == NULL )
+                        {
+                            REACHED(2);
+                            for(int iBand=0;iBand<nBandCount;iBand++)
+                                pabyLocalData[iBand] = abyNoData;
+                        }
+                        else
+                        {
+                            REACHED(3);
+                            for(int iBand=0;iBand<nBandCount;iBand++)
+                                pabyLocalData[iBand] = pabyLocalSrcData[iBand];
+                            pabyLocalSrcData += nBandsPerBlockDTSize;
+                        }
+                        pabyLocalData += nPixelSpace;
+                    }
+                }
+                else
+                {
+                    for(int x=0;x<nBufXSize;x++)
+                    {
+                        int nSrcPixel = nXOff + (int)((x + 0.5) * nXSize / nBufXSize);
+                        int nBlockXOff = nSrcPixel / nBlockXSize;
+                        int nXOffsetInBlock = nSrcPixel % nBlockXSize;
+                        int nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow;
+                        int nByteOffsetInBlock = nBaseByteOffsetInBlock + nXOffsetInBlock * nBandsPerBlockDTSize;
+                        toff_t nCurOffset = panOffsets[nBlockId];
+                        if( nCurOffset == 0 )
+                        {
+                            REACHED(4);
+                            GDALCopyWords(&dfNoData, GDT_Float64, 0,
+                                          pabyData + y * nLineSpace + x * nPixelSpace,
+                                          eBufType, nBandSpace,
+                                          nBandCount);
+                        }
+                        else
+                        {
+                            if( nCurOffset + nBlockSize > nMappingSize )
+                            {
+                                REACHED(25);
+                                CPLError(CE_Failure, CPLE_FileIO,
+                                            "Missing data for block %d", nBlockId);
+                                return CE_Failure;
+                            }
+                            REACHED(5);
+                            GDALCopyWords(pabySrcData + nCurOffset + nByteOffsetInBlock,
+                                            eDataType, nDTSize,
+                                            pabyData + y * nLineSpace + x * nPixelSpace,
+                                            eBufType, nBandSpace,
+                                            nBandCount);
+                        }
                     }
                 }
             }
-            else
+        }
+        else
+        {
+            GByte* pabyData = (GByte*)pData;
+            for(int y=0;y<nBufYSize;y++)
             {
-                for(int x=0;x<nXSize;x++)
+                int nSrcLine = nYOff + (int)((y + 0.5) * nYSize / nBufYSize);
+                int nBlockYOff = nSrcLine / nBlockYSize;
+                int nYOffsetInBlock = nSrcLine % nBlockYSize;
+                int nBlockId = nBlockYOff;
+                toff_t nCurOffset = panOffsets[nBlockId];
+                if( nCurOffset == 0 )
                 {
-                    GDALCopyWords(pabySrcData + y*nVMemLineSpace+x*nVMemPixelSpace,
-                                  eDataType, nDTSize,
-                                  pabyData + y*nLineSpace+x*nPixelSpace,
-                                  eBufType, nBufDTSize,
-                                  nBandCount);
+                    REACHED(6);
+                    for(int x=0;x<nBufXSize;x++)
+                    {
+                        GDALCopyWords(&dfNoData, GDT_Float64, 0,
+                                      pabyData + y * nLineSpace + x * nPixelSpace,
+                                      eBufType, nBandSpace,
+                                      nBandCount);
+                    }
+                }
+                else
+                {
+                    if( nCurOffset + (nYOffsetInBlock + 1) * nBlockXSize * nBandsPerBlockDTSize > nMappingSize )
+                    {
+                        REACHED(26);
+                        CPLError(CE_Failure, CPLE_FileIO,
+                                    "Missing data for block %d", nBlockId);
+                        return CE_Failure;
+                    }
+                    if( bByteNoXResampling )
+                    {
+                        int nByteOffsetInBlock = (nYOffsetInBlock * nBlockXSize + nXOff) * nBandsPerBlockDTSize;
+                        GByte* pabyLocalData = pabyData + y * nLineSpace;
+                        GByte* pabyLocalSrcData = pabySrcData + nCurOffset + nByteOffsetInBlock;
+                        if( nPixelSpace == nBandCount && nBandsPerBlockDTSize == nBandCount )
+                        {
+                            REACHED(7);
+                            memcpy(pabyLocalData, pabyLocalSrcData, nBufXSize * nBandCount);
+                        }
+                        else
+                        {
+                            REACHED(23);
+                            for(int x=0;x<nBufXSize;x++)
+                            {
+                                for(int iBand=0;iBand<nBandCount;iBand++)
+                                    pabyLocalData[iBand] = pabyLocalSrcData[iBand];
+                                pabyLocalSrcData += nBandsPerBlockDTSize;
+                                pabyLocalData += nPixelSpace;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        REACHED(8);
+                        for(int x=0;x<nBufXSize;x++)
+                        {
+                            int nSrcPixel = nXOff + (int)((x + 0.5) * nXSize / nBufXSize);
+                            int nByteOffsetInBlock = (nYOffsetInBlock * nBlockXSize + nSrcPixel) * nBandsPerBlockDTSize;
+                            GDALCopyWords(pabySrcData + nCurOffset + nByteOffsetInBlock,
+                                          eDataType, nDTSize,
+                                          pabyData + y * nLineSpace + x * nPixelSpace,
+                                          eBufType, nBandSpace,
+                                          nBandCount);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    else
+    {
+        if( TIFFIsTiled( hTIFF ) )
+        {
+            for(iBand = 0; iBand < nBandCount; iBand ++ )
+            {
+                int nBand = panBandMap[iBand];
+                GByte* pabyData = (GByte*)pData + iBand * nBandSpace;
+                for(int y=0;y<nBufYSize;y++)
+                {
+                    int nSrcLine = nYOff + (int)((y + 0.5) * nYSize / nBufYSize);
+                    int nBlockYOff = nSrcLine / nBlockYSize;
+                    int nYOffsetInBlock = nSrcLine % nBlockYSize;
+
+                    int nBaseByteOffsetInBlock = nYOffsetInBlock * nBlockXSize * nBandsPerBlockDTSize;
+                    if ( nPlanarConfig == PLANARCONFIG_CONTIG )
+                    {
+                        REACHED(9);
+                        nBaseByteOffsetInBlock += (nBand-1) * nDTSize;
+                    }
+                    else
+                    {
+                        REACHED(10);
+                    }
+
+                    if( bByteNoXResampling )
+                    {
+                        GByte* pabyLocalData = pabyData + y * nLineSpace;
+                        int nLastPixelBlock = 0;
+                        int nByteOffsetInBlock = 0;
+                        toff_t nCurOffset = 0;
+                        int nBlockXOff = nXOff / nBlockXSize;
+                        int nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow;
+                        if ( nPlanarConfig == PLANARCONFIG_SEPARATE )
+                            nBlockId += nBlocksPerBand * (nBand - 1);
+                        int nXOffsetInBlock = nXOff % nBlockXSize;
+                        for(int x=0;x<nBufXSize;x++)
+                        {
+                            int nSrcPixel = nXOff + x;
+                            if( nSrcPixel >= nLastPixelBlock )
+                            {
+                                REACHED(11);
+                                nLastPixelBlock = (nBlockXOff + 1) * nBlockXSize;
+                                nByteOffsetInBlock = nBaseByteOffsetInBlock + nXOffsetInBlock * nBandsPerBlockDTSize;
+                                nCurOffset = panOffsets[nBlockId];
+                                if( nCurOffset != 0 &&
+                                    nCurOffset + nBlockSize > nMappingSize )
+                                {
+                                    REACHED(27);
+                                    CPLError(CE_Failure, CPLE_FileIO,
+                                                "Missing data for block %d", nBlockId);
+                                    return CE_Failure;
+                                }
+                                nXOffsetInBlock = 0;
+                                nBlockXOff ++;
+                                nBlockId ++; 
+                            }
+                            else
+                            {
+                                REACHED(12);
+                                nByteOffsetInBlock += nBandsPerBlockDTSize;
+                            }
+
+                            if( nCurOffset == 0 )
+                            {
+                                REACHED(13);
+                                *pabyLocalData = abyNoData;
+                            }
+                            else
+                            {
+                                REACHED(14);
+                                *pabyLocalData = pabySrcData[nCurOffset + nByteOffsetInBlock];
+                            }
+                            pabyLocalData += nPixelSpace;
+                        }
+                    }
+                    else
+                    {
+                        for(int x=0;x<nBufXSize;x++)
+                        {
+                            int nSrcPixel = nXOff + (int)((x + 0.5) * nXSize / nBufXSize);
+                            int nBlockXOff = nSrcPixel / nBlockXSize;
+                            int nXOffsetInBlock = nSrcPixel % nBlockXSize;
+                            int nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow;
+                            if ( nPlanarConfig == PLANARCONFIG_SEPARATE )
+                                nBlockId += nBlocksPerBand * (nBand - 1);
+                            int nByteOffsetInBlock = nBaseByteOffsetInBlock + nXOffsetInBlock * nBandsPerBlockDTSize;
+                            toff_t nCurOffset = panOffsets[nBlockId];
+                            if( nCurOffset == 0 )
+                            {
+                                REACHED(15);
+                                GDALCopyWords(&dfNoData, GDT_Float64, 0,
+                                              pabyData + y * nLineSpace + x * nPixelSpace,
+                                              eBufType, nPixelSpace,
+                                              1);
+                            }
+                            else
+                            {
+                                if( nCurOffset + nBlockSize > nMappingSize)
+                                {
+                                    REACHED(28);
+                                    CPLError(CE_Failure, CPLE_FileIO,
+                                                "Missing data for block %d", nBlockId);
+                                    return CE_Failure;
+                                }
+                                REACHED(16);
+                                GDALCopyWords(pabySrcData + nCurOffset + nByteOffsetInBlock,
+                                            eDataType, nDTSize,
+                                            pabyData + y * nLineSpace + x * nPixelSpace,
+                                            eBufType, nPixelSpace,
+                                            1);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        else
+        {
+            for(iBand = 0; iBand < nBandCount; iBand ++ )
+            {
+                int nBand = panBandMap[iBand];
+                GByte* pabyData = (GByte*)pData + iBand * nBandSpace;
+                for(int y=0;y<nBufYSize;y++)
+                {
+                    int nSrcLine = nYOff + (int)((y + 0.5) * nYSize / nBufYSize);
+                    int nBlockYOff = nSrcLine / nBlockYSize;
+                    int nYOffsetInBlock = nSrcLine % nBlockYSize;
+                    int nBlockId = nBlockYOff;
+                    if ( nPlanarConfig == PLANARCONFIG_SEPARATE )
+                    {
+                        REACHED(17);
+                        nBlockId += nBlocksPerBand * (nBand - 1);
+                    }
+                    else
+                    {
+                        REACHED(18);
+                    }
+                    toff_t nCurOffset = panOffsets[nBlockId];
+                    if( nCurOffset == 0 )
+                    {
+                        REACHED(19);
+                        GDALCopyWords(&dfNoData, GDT_Float64, 0,
+                                      pabyData + y * nLineSpace, eBufType, nPixelSpace,
+                                      nBufXSize);
+                    }
+                    else
+                    {
+                        if( nCurOffset + (nYOffsetInBlock + 1) * nBlockXSize * nBandsPerBlockDTSize > nMappingSize )
+                        {
+                            REACHED(29);
+                            CPLError(CE_Failure, CPLE_FileIO,
+                                     "Missing data for block %d", nBlockId);
+                            return CE_Failure;
+                        }
+                        int nBaseByteOffsetInBlock = (nYOffsetInBlock * nBlockXSize + nXOff) * nBandsPerBlockDTSize;
+                        if ( nPlanarConfig == PLANARCONFIG_CONTIG )
+                            nBaseByteOffsetInBlock += (nBand-1) * nDTSize;
+
+                        if( bByteNoXResampling )
+                        {
+                            GByte* pabyLocalData = pabyData + y * nLineSpace;
+                            GByte* pabyLocalSrcData = pabySrcData + nCurOffset + nBaseByteOffsetInBlock;
+                            if( nPixelSpace == 1 && nBandsPerBlockDTSize == 1 )
+                            {
+                                REACHED(20);
+                                memcpy(pabyLocalData, pabyLocalSrcData, nBufXSize);
+                            }
+                            else
+                            {
+                                REACHED(21);
+                                for(int x=0;x<nBufXSize;x++)
+                                {
+                                    *pabyLocalData = *pabyLocalSrcData,
+                                    pabyLocalData += nPixelSpace;
+                                    pabyLocalSrcData += nBandsPerBlockDTSize;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            REACHED(22);
+                            for(int x=0;x<nBufXSize;x++)
+                            {
+                                int nSrcPixelMinusXOff = (int)((x + 0.5) * nXSize / nBufXSize);
+                                int nByteOffsetInBlock = nBaseByteOffsetInBlock + nSrcPixelMinusXOff * nBandsPerBlockDTSize;
+                                GDALCopyWords(pabySrcData + nCurOffset + nByteOffsetInBlock,
+                                            eDataType, nDTSize,
+                                            pabyData + y * nLineSpace + x * nPixelSpace, eBufType, nPixelSpace,
+                                            1);
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -2074,22 +2396,50 @@ CPLErr GTiffRasterBand::IRasterIO( GDALRWFlag eRWFlag,
     //CPLDebug("GTiff", "RasterIO(%d, %d, %d, %d, %d, %d)",
     //         nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize);
 
+    /* Try to pass the request to the most appropriate overview dataset */
+    if( nBufXSize < nXSize && nBufYSize < nYSize )
+    {
+        int nXOffMod = nXOff, nYOffMod = nYOff, nXSizeMod = nXSize, nYSizeMod = nYSize;
+        GDALRasterIOExtraArg sExtraArg;
+    
+        GDALCopyRasterIOExtraArg(&sExtraArg, psExtraArg);
+        
+        poGDS->nJPEGOverviewVisibilityFlag ++;
+        int iOvrLevel = GDALBandGetBestOverviewLevel2(this,
+                                                     nXOffMod, nYOffMod,
+                                                     nXSizeMod, nYSizeMod,
+                                                     nBufXSize, nBufYSize,
+                                                     &sExtraArg);
+        poGDS->nJPEGOverviewVisibilityFlag --;
+
+        if( iOvrLevel >= 0 && GetOverview(iOvrLevel) != NULL &&
+            GetOverview(iOvrLevel)->GetDataset() != NULL )
+        {
+            poGDS->nJPEGOverviewVisibilityFlag ++;
+            eErr = GetOverview(iOvrLevel)->RasterIO(
+                eRWFlag, nXOffMod, nYOffMod, nXSizeMod, nYSizeMod,
+                pData, nBufXSize, nBufYSize, eBufType,
+                nPixelSpace, nLineSpace, &sExtraArg);
+            poGDS->nJPEGOverviewVisibilityFlag --;
+            return eErr;
+        }
+    }
+
+
     if( poGDS->eVirtualMemIOUsage != VIRTUAL_MEM_IO_NO )
     {
-        eErr = poGDS->VirtualMemIO(
+        int nErr = poGDS->VirtualMemIO(
                 eRWFlag, nXOff, nYOff, nXSize, nYSize,
                 pData, nBufXSize, nBufYSize, eBufType,
                 1, &nBand, nPixelSpace, nLineSpace, 0, psExtraArg);
-        if (eErr == CE_None)
-            return eErr;
+        if (nErr >= 0)
+            return (CPLErr)nErr;
     }
     if (poGDS->bDirectIO)
     {
-        poGDS->nJPEGOverviewVisibilityFlag ++;
         eErr = DirectIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
                         pData, nBufXSize, nBufYSize, eBufType,
                         nPixelSpace, nLineSpace, psExtraArg);
-        poGDS->nJPEGOverviewVisibilityFlag --;
         if (eErr == CE_None)
             return eErr;
     }
@@ -4584,6 +4934,8 @@ GTiffDataset::GTiffDataset()
         eVirtualMemIOUsage = VIRTUAL_MEM_IO_YES;
     else
         eVirtualMemIOUsage = VIRTUAL_MEM_IO_NO;
+    psVirtualMemIOMapping = NULL;
+    
     nSetPhotometricFromBandColorInterp = 0;
 
     pBaseMapping = NULL;
@@ -4633,13 +4985,9 @@ int GTiffDataset::Finalize()
         }
     }
 
-    {
-        for(size_t i=0; i<apsVirtualMem.size();i++)
-        {
-            if( apsVirtualMem[i].psVirtualMem )
-                CPLVirtualMemFree( apsVirtualMem[i].psVirtualMem );
-        }
-    }
+    if( psVirtualMemIOMapping )
+        CPLVirtualMemFree( psVirtualMemIOMapping );
+    psVirtualMemIOMapping = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Ensure any blocks write cached by GDAL gets pushed through libtiff.*/
@@ -12452,6 +12800,23 @@ const char *GTiffDataset::GetMetadataItem( const char * pszName,
     {
         LoadMDAreaOrPoint(); /* to set GDALMD_AREA_OR_POINT */
     }
+
+#ifdef DEBUG_REACHED_VIRTUAL_MEM_IO
+    else if( pszDomain != NULL && EQUAL(pszDomain, "_DEBUG_") &&
+             pszName != NULL && EQUAL(pszName, "UNREACHED_VIRTUALMEMIO_CODE_PATH") )
+    {
+        CPLString osMissing;
+        for(int i=0;i<(int)(sizeof(anReachedVirtualMemIO)/sizeof(anReachedVirtualMemIO[0]));i++)
+        {
+            if( !anReachedVirtualMemIO[i] )
+            {
+                if( osMissing.size() ) osMissing += ",";
+                osMissing += CPLSPrintf("%d", i);
+            }
+        }
+        return (osMissing.size()) ? CPLSPrintf("%s", osMissing.c_str()) : NULL;
+    }
+#endif
 
     return oGTiffMDMD.GetMetadataItem( pszName, pszDomain );
 }
