@@ -2389,7 +2389,9 @@ def tiff_write_70():
 
     ds = gdal.Open('tmp/tiff_write_70.tif')
     if ds.GetRasterBand(1).Checksum() != expected_cs:
+        gdaltest.post_reason('wrong checksum')
         print((ds.GetRasterBand(1).Checksum()))
+        print(exected_cs)
         return 'fail'
     ds = None
 
