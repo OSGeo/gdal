@@ -1908,12 +1908,11 @@ int GTiffDataset::VirtualMemIO( GDALRWFlag eRWFlag,
                                     "Missing data for block %d", nBlockId);
                         return CE_Failure;
                     }
-                    int nBaseByteOffsetInBlock = nYOffsetInBlock * nBlockXSize * nBandsPerBlockDTSize;
+                    int nBaseByteOffsetInBlock = (nYOffsetInBlock * nBlockXSize + nXOff) * nBandsPerBlockDTSize;
+                    GByte* pabyLocalData = pabyData + y * nLineSpace;
+                    GByte* pabyLocalSrcData = pabySrcData + nCurOffset + nBaseByteOffsetInBlock;
                     if( bByteNoXResampling )
                     {
-                        int nByteOffsetInBlock = nBaseByteOffsetInBlock + nXOff * nBandsPerBlockDTSize;
-                        GByte* pabyLocalData = pabyData + y * nLineSpace;
-                        GByte* pabyLocalSrcData = pabySrcData + nCurOffset + nByteOffsetInBlock;
                         if( nPixelSpace == nBandCount && nBandsPerBlockDTSize == nBandCount )
                         {
                             REACHED(7);
@@ -1934,8 +1933,6 @@ int GTiffDataset::VirtualMemIO( GDALRWFlag eRWFlag,
                     else if( bByteOnly )
                     {
                         REACHED(31);
-                        GByte* pabyLocalData = pabyData + y * nLineSpace;
-                        GByte* pabyLocalSrcData = pabySrcData + nCurOffset + nBaseByteOffsetInBlock;
                         for(int x=0;x<nBufXSize;x++)
                         {
                             int nSrcPixelMinusXOff = (int)((x + 0.5) * nXSize / nBufXSize);
@@ -1946,8 +1943,6 @@ int GTiffDataset::VirtualMemIO( GDALRWFlag eRWFlag,
                     else
                     {
                         REACHED(8);
-                        GByte* pabyLocalData = pabyData + y * nLineSpace;
-                        GByte* pabyLocalSrcData = pabySrcData + nCurOffset + nBaseByteOffsetInBlock;
                         for(int x=0;x<nBufXSize;x++)
                         {
                             int nSrcPixelMinusXOff = (int)((x + 0.5) * nXSize / nBufXSize);
