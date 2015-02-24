@@ -1362,6 +1362,7 @@ def tiff_direct_and_virtual_mem_io():
         ref_4bands_data_byte = ds.ReadRaster(xoff, yoff, xsize, ysize)
         ref_4bands_data_byte_whole = ds.ReadRaster()
         ref_4bands_data_byte_downsampled = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_xsize = int(xsize/2), buf_ysize = int(ysize/2))
+        ref_4bands_data_byte_downsampled_interleaved = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_xsize = int(xsize/2), buf_ysize = int(ysize/2), buf_pixel_space = 4, buf_band_space = 1)
         ref_4bands_data_byte_downsampled_not_nearest = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_xsize = int(xsize/2), buf_ysize = int(ysize/2), resample_alg = gdal.GRIORA_Bilinear)
         ref_4bands_data_byte_upsampled = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_xsize = 4 * xsize, buf_ysize = 4 * ysize)
         ref_4bands_data_byte_unordered_list = ds.ReadRaster(xoff, yoff, xsize, ysize, band_list = [4,3,2,1])
@@ -1391,6 +1392,7 @@ def tiff_direct_and_virtual_mem_io():
         got_4bands_data_byte_whole = ds.ReadRaster()
         got_4bands_data_byte_bottom_right_downsampled = ds.ReadRaster(ds.RasterXSize-2, ds.RasterYSize - 1, 2, 1, buf_xsize = 1, buf_ysize = 1, buf_pixel_space = 4, buf_band_space = 1)
         got_4bands_data_byte_downsampled = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_xsize = int(xsize/2), buf_ysize = int(ysize/2))
+        got_4bands_data_byte_downsampled_interleaved = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_xsize = int(xsize/2), buf_ysize = int(ysize/2), buf_pixel_space = 4, buf_band_space = 1)
         got_4bands_data_byte_downsampled_not_nearest = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_xsize = int(xsize/2), buf_ysize = int(ysize/2), resample_alg = gdal.GRIORA_Bilinear)
         got_4bands_data_byte_upsampled = ds.ReadRaster(xoff, yoff, xsize, ysize, buf_xsize = 4 * xsize, buf_ysize = 4 * ysize)
         got_4bands_data_byte_unordered_list = ds.ReadRaster(xoff, yoff, xsize, ysize, band_list = [4,3,2,1])
@@ -1502,6 +1504,12 @@ def tiff_direct_and_virtual_mem_io():
             continue
 
         if ref_4bands_data_byte_downsampled != got_4bands_data_byte_downsampled:
+            gdaltest.post_reason('fail')
+            print(option)
+            print(i)
+            return 'fail'
+
+        if ref_4bands_data_byte_downsampled_interleaved != got_4bands_data_byte_downsampled_interleaved:
             gdaltest.post_reason('fail')
             print(option)
             print(i)
