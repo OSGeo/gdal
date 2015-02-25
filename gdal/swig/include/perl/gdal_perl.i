@@ -288,7 +288,7 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
     package Geo::GDAL::Driver;
     use vars qw/@CAPABILITIES @DOMAINS/;
     use strict;
-    @CAPABILITIES = qw/Create CreateCopy VirtualIO/;
+    @CAPABILITIES = qw/Open Create CreateCopy VirtualIO Raster Vector/;
     sub Domains {
         return @DOMAINS;
     }
@@ -433,7 +433,8 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
         %COLOR_INTERPRETATION_STRING2INT %COLOR_INTERPRETATION_INT2STRING @DOMAINS
         /;
     @COLOR_INTERPRETATIONS = qw/Undefined GrayIndex PaletteIndex RedBand GreenBand BlueBand AlphaBand 
-                    HueBand SaturationBand LightnessBand CyanBand MagentaBand YellowBand BlackBand/;
+      HueBand SaturationBand LightnessBand CyanBand MagentaBand YellowBand BlackBand
+      YCbCr_YBand YCbCr_CbBand YCbCr_CrBand/;
     for my $string (@COLOR_INTERPRETATIONS) {
         my $int = eval "\$Geo::GDAL::Constc::GCI_$string";
         $COLOR_INTERPRETATION_STRING2INT{$string} = $int;
@@ -693,6 +694,7 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
 
     package Geo::GDAL::RasterAttributeTable;
     use strict;
+    use Carp;
     use vars qw/ %BANDS
         %FIELD_TYPE_STRING2INT %FIELD_TYPE_INT2STRING
         %FIELD_USAGE_STRING2INT %FIELD_USAGE_INT2STRING
@@ -703,9 +705,8 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
         $FIELD_TYPE_INT2STRING{$int} = $string;
     }
     for my $string (qw/Generic PixelCount Name Min Max MinMax 
-                    Red Green Blue Alpha RedMin 
-                    GreenMin BlueMin AlphaMin RedMax GreenMax BlueMax AlphaMax 
-                    MaxCount/) {
+                    Red Green Blue Alpha 
+                    RedMin GreenMin BlueMin AlphaMin RedMax GreenMax BlueMax AlphaMax/) {
         my $int = eval "\$Geo::GDAL::Constc::GFU_$string";
         $FIELD_USAGE_STRING2INT{$string} = $int;
         $FIELD_USAGE_INT2STRING{$int} = $string;
@@ -751,7 +752,14 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
     }
     sub CreateColumn {
         my($self, $name, $type, $usage) = @_;
-        _CreateColumn($self, $name, $FIELD_TYPE_STRING2INT{$type}, $FIELD_USAGE_STRING2INT{$usage});
+        croak "Unknown RAT column type: '$type'." unless exists $FIELD_TYPE_STRING2INT{$type};
+        croak "Unknown RAT column usage: '$usage'." unless exists $FIELD_USAGE_STRING2INT{$usage};
+        for my $color (qw/Red Green Blue Alpha/) {
+            carp "RAT column type will be 'Integer' for usage '$color'." if $usage eq $color and $type ne 'Integer';
+        }
+        $type = $FIELD_TYPE_STRING2INT{$type};
+        $usage = $FIELD_USAGE_STRING2INT{$usage};
+        _CreateColumn($self, $name, $type, $usage);
     }
     sub Value {
         my($self, $row, $column) = @_;
