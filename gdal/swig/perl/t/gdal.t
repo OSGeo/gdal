@@ -193,33 +193,46 @@ if (0) {
 }
 
 {
+    BEGIN { $SIG{'__WARN__'} = sub { warn $_[0] if $DOWARN } }
     my $r = Geo::GDAL::RasterAttributeTable->new;
     my @t = $r->FieldTypes;
     my @u = $r->FieldUsages;
+    my %colors = (Red=>1, Green=>1, Blue=>1, Alpha=>1);
+    my @types;
+    my @usages;
     for my $u (@u) {
 	for my $t (@t) {
 	    $r->CreateColumn("$t $u", $t, $u);
+            push @types, $t;
+            push @usages, $u;
 	}
     }
     my $n = $r->GetColumnCount;
     my $n2 = @t * @u;
     ok($n == $n2, "create rat column");
-    $r->SetRowCount(scalar(@t));
+    $r->SetRowCount(1);
     my $i = 0;
-    my $c = 0;
-    for (@t) {
-	if (/Integer/) {
-	    my $v = $r->Value($i, $c, 12);
-	    ok($v == 12, "rat int ($i,$c): $v vs 12");
-	} elsif (/Real/) {
-	    my $v = $r->Value($i, $c, 1.23);
-	    ok($v == 1.23, "rat real ($i,$c): $v vs 1.23");
-	} elsif (/String/) {
-	    my $v = $r->Value($i, $c, "abc");
-	    ok($v eq 'abc', "rat str ($i,$c): $v vs 'abc'");
-	}
-	$i++;
-	$c++;
+    for my $c (0..$n-1) {
+        my $usage = $r->GetUsageOfCol($c);
+        ok($usage eq $usages[$c], "usage $usage eq $usages[$c]");
+        my $type = $r->GetTypeOfCol($c);
+        if ($colors{$usage}) {
+            ok($type eq 'Integer', "type $type eq 'Integer'");
+        } else {
+            ok($type eq $types[$c], "type $type eq $types[$c]");
+        }
+        for ($type) {
+            if (/Integer/) {
+                my $v = $r->Value($i, $c, 12);
+                ok($v == 12, "rat int ($i,$c): $v vs 12");
+            } elsif (/Real/) {
+                my $v = $r->Value($i, $c, 1.23);
+                ok($v == 1.23, "rat real ($i,$c): $v vs 1.23");
+            } elsif (/String/) {
+                my $v = $r->Value($i, $c, "abc");
+                ok($v eq 'abc', "rat str ($i,$c): $v vs 'abc'");
+            }
+        }
     }
 }
 
