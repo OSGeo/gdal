@@ -24,11 +24,12 @@ $height = 100;        # number of pixels in y direction
 $minx = 384600;       # x of the left border of leftmost pixel
 $dx = 100;            # width of pixels
 $maxy = 6672700;      # y of the top border of topmost pixel
-$dy = 100;            # height of pixels, negative means miny < maxy
+$dy = 100;            # height of pixels
 $nodata = -1;         # nodata value
 @data = ();           # pixel values, stored in this example in an array
 
 $dataset = Geo::GDAL::Driver($driver)->Create($name.$ext, $width, $height, $bands, $datatype);
+# Set the transformation matrix from pixels to projection, note minus in front of $dy
 $dataset->GeoTransform($minx, $dx, 0, $maxy, 0, -$dy);
 $dataset->Projection(Geo::OSR::SpatialReference->create(EPSG=>$epsg)->As('WKT'));
 $band = $dataset->Band(1);
