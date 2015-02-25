@@ -1197,6 +1197,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2( int nXSize, int nYSize )
 "          </gml:rectifiedGridDomain>\n"
 "          <gml:rangeSet>\n"
 "            <gml:File>\n"
+"              <gml:rangeParameters/>\n"
 "              <gml:fileName>gmljp2://codestream/0</gml:fileName>\n"
 "              <gml:fileStructure>Record Interleaved</gml:fileStructure>\n"
 "            </gml:File>\n"
