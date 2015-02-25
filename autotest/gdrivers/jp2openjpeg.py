@@ -617,6 +617,72 @@ def jp2openjpeg_19():
     return 'success'
 
 ###############################################################################
+# Validate GMLJP2 content against schema
+
+def jp2openjpeg_20():
+
+    if gdaltest.jp2openjpeg_drv is None:
+        return 'skip'
+
+    try:
+        import xmlvalidate
+    except:
+        return 'skip'
+
+    try:
+        os.stat('tmp/cache/SCHEMAS_OPENGIS_NET.zip')
+    except:
+        try:
+            os.stat('../ogr/tmp/cache/SCHEMAS_OPENGIS_NET.zip')
+            shutil.copy('../ogr/tmp/cache/SCHEMAS_OPENGIS_NET.zip', 'tmp/cache')
+        except:
+            url = 'http://schemas.opengis.net/SCHEMAS_OPENGIS_NET.zip'
+            if not gdaltest.download_file(url, 'SCHEMAS_OPENGIS_NET.zip', force_download = True, max_download_duration = 10):
+                return 'skip'
+
+    try:
+        os.mkdir('tmp/cache/SCHEMAS_OPENGIS_NET')
+    except:
+        pass
+    
+    try:
+        os.stat('tmp/cache/SCHEMAS_OPENGIS_NET/gml/3.1.1/profiles/gmlJP2Profile/1.0.0/gmlJP2Profile.xsd')
+    except:
+        gdaltest.unzip( 'tmp/cache/SCHEMAS_OPENGIS_NET', 'tmp/cache/SCHEMAS_OPENGIS_NET.zip')
+
+
+    try:
+        os.stat('tmp/cache/SCHEMAS_OPENGIS_NET/xlink.xsd')
+    except:
+        xlink_xsd_url = 'http://www.w3.org/1999/xlink.xsd'
+        if not gdaltest.download_file(xlink_xsd_url, 'SCHEMAS_OPENGIS_NET/xlink.xsd', force_download = True, max_download_duration = 10):
+            xlink_xsd_url = 'http://even.rouault.free.fr/xlink.xsd'
+            if not gdaltest.download_file(xlink_xsd_url, 'SCHEMAS_OPENGIS_NET/xlink.xsd', force_download = True, max_download_duration = 10):
+                return 'skip'
+
+    try:
+        os.stat('tmp/cache/SCHEMAS_OPENGIS_NET/xml.xsd')
+    except:
+        xlink_xsd_url = 'http://www.w3.org/1999/xml.xsd'
+        if not gdaltest.download_file(xlink_xsd_url, 'SCHEMAS_OPENGIS_NET/xml.xsd', force_download = True, max_download_duration = 10):
+            xlink_xsd_url = 'http://even.rouault.free.fr/xml.xsd'
+            if not gdaltest.download_file(xlink_xsd_url, 'SCHEMAS_OPENGIS_NET/xml.xsd', force_download = True, max_download_duration = 10):
+                return 'skip'
+
+    xmlvalidate.transform_abs_links_to_ref_links('tmp/cache/SCHEMAS_OPENGIS_NET')
+
+    src_ds = gdal.Open('data/byte.tif')
+    ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_20.jp2', src_ds, options = ['RESOLUTIONS=1'])
+    gmljp2 = ds.GetMetadata_List("xml:gml.root-instance")[0]
+    ds = None
+    gdal.Unlink( '/vsimem/jp2openjpeg_20.jp2' )
+
+    if not xmlvalidate.validate(gmljp2, ogc_schemas_location = 'tmp/cache/SCHEMAS_OPENGIS_NET'):
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 def jp2openjpeg_online_1():
 
     if gdaltest.jp2openjpeg_drv is None:
@@ -807,6 +873,7 @@ gdaltest_list = [
     jp2openjpeg_17,
     jp2openjpeg_18,
     jp2openjpeg_19,
+    jp2openjpeg_20,
     jp2openjpeg_online_1,
     jp2openjpeg_online_2,
     jp2openjpeg_online_3,
