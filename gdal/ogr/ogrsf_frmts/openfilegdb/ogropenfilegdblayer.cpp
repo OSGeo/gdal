@@ -300,7 +300,7 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
         return m_bValidLayerDefn;
 
     m_poLyrTable = new FileGDBTable();
-    if( !(m_poLyrTable->Open(m_osGDBFilename)) )
+    if( !(m_poLyrTable->Open(m_osGDBFilename, GetDescription())) )
     {
         delete m_poLyrTable;
         m_poLyrTable = NULL;

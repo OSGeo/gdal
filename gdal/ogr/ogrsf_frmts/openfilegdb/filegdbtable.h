@@ -272,7 +272,8 @@ class FileGDBTable
                                 FileGDBTable();
                                ~FileGDBTable();
 
-       int                      Open(const char* pszFilename);
+       int                      Open(const char* pszFilename,
+                                     const char* pszLayerName = NULL);
        void                     Close();
 
        const std::string&       GetFilename() const { return osFilename; }

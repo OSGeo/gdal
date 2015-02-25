@@ -583,18 +583,23 @@ int FileGDBTable::ReadTableXHeader()
 /*                                 Open()                               */
 /************************************************************************/
 
-int FileGDBTable::Open(const char* pszFilename)
+int FileGDBTable::Open(const char* pszFilename,
+                       const char* pszLayerName)
 {
     const int errorRetValue = FALSE;
     CPLAssert(fpTable == NULL);
 
     osFilename = pszFilename;
+    CPLString osFilenameWithLayerName(osFilename);
+    if( pszLayerName )
+        osFilenameWithLayerName += CPLSPrintf(" (layer %s)", pszLayerName);
 
     fpTable = VSIFOpenL( pszFilename, "rb" );
     if( fpTable == NULL )
     {
         CPLError(CE_Failure, CPLE_OpenFailed,
-                 "Cannot open %s: %s", pszFilename, VSIStrerror(errno));
+                 "Cannot open %s: %s", osFilenameWithLayerName.c_str(),
+                 VSIStrerror(errno));
         return FALSE;
     }
 
@@ -604,12 +609,13 @@ int FileGDBTable::Open(const char* pszFilename)
     nValidRecordCount = GetInt32(abyHeader + 4, 0);
     returnErrorIf(nValidRecordCount < 0 );
 
+    CPLString osTableXName;
     if( nValidRecordCount > 0 &&
         !CSLTestBoolean(CPLGetConfigOption("OPENFILEGDB_IGNORE_GDBTABLX", "FALSE")) )
     {
-        const char* pszTableXName = CPLFormFilename(CPLGetPath(pszFilename),
+        osTableXName = CPLFormFilename(CPLGetPath(pszFilename),
                                         CPLGetBasename(pszFilename), "gdbtablx");
-        fpTableX = VSIFOpenL( pszTableXName, "rb" );
+        fpTableX = VSIFOpenL( osTableXName, "rb" );
         if( fpTableX == NULL )
         {
             const char* pszIgnoreGDBTablXAbsence =
@@ -618,7 +624,7 @@ int FileGDBTable::Open(const char* pszFilename)
             {
                 CPLError(CE_Warning, CPLE_AppDefined, "%s could not be found. "
                         "Trying to guess feature locations, but this might fail or "
-                        "return incorrect results", pszTableXName);
+                        "return incorrect results", osTableXName.c_str());
             }
             else if( !CSLTestBoolean(pszIgnoreGDBTablXAbsence) )
             {
@@ -631,10 +637,35 @@ int FileGDBTable::Open(const char* pszFilename)
 
     if( fpTableX != NULL )
     {
-        returnErrorIf(nValidRecordCount > nTotalRecordCount );
+        if(nValidRecordCount > nTotalRecordCount )
+        {
+            if( CSLTestBoolean(CPLGetConfigOption("OPENFILEGDB_USE_GDBTABLE_RECORD_COUNT", "FALSE")) )
+            {
+                /* Potentially unsafe. See #5842 */
+                CPLDebug("OpenFileGDB", "%s: nTotalRecordCount (was %d) forced to nValidRecordCount=%d",
+                        osFilenameWithLayerName.c_str(),
+                        nTotalRecordCount, nValidRecordCount);
+                nTotalRecordCount = nValidRecordCount;
+            }
+            else
+            {
+                /* By default err on the safe side */
+                CPLError(CE_Warning, CPLE_AppDefined,
+                        "File %s declares %d valid records, but %s declares "
+                        "only %d total records. Using that later value for safety "
+                        "(this possibly ignoring features). "
+                        "You can also try setting OPENFILEGDB_IGNORE_GDBTABLX=YES to "
+                        "completely ignore the .gdbtablx file (but possibly retrieving "
+                        "deleted features), or set OPENFILEGDB_USE_GDBTABLE_RECORD_COUNT=YES "
+                        "(but that setting can potentially cause crashes)",
+                        osFilenameWithLayerName.c_str(), nValidRecordCount,
+                        osTableXName.c_str(), nTotalRecordCount);
+                nValidRecordCount = nTotalRecordCount;
+            }
+        }
 
 #ifdef DEBUG_VERBOSE
-        if( nTotalRecordCount != nValidRecordCount )
+        else if( nTotalRecordCount != nValidRecordCount )
         {
             CPLDebug("OpenFileGDB", "%s: nTotalRecordCount=%d nValidRecordCount=%d",
                     pszFilename,
