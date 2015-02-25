@@ -176,6 +176,12 @@ for my $package (sort keys %package) {
     for my $sub (sort keys %{$package{$package}{subs}}) {
         my $d = $package{$package}{dox}{$sub}{d};
         $d = $sub unless $d;
+        $d =~ s/^\$/scalar /;
+        $d =~ s/^\\\$/scalar_ref /;
+        $d =~ s/^\@/list /;
+        $d =~ s/^\\\@/list_ref /;
+        $d =~ s/^\%/hash /;
+        $d =~ s/^\\\%/hash_ref /;
         print "#** \@method $d\n";
         for my $c (@{$package{$package}{dox}{$sub}{c}}) {
             print "# $c\n";
