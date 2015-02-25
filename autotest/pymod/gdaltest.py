@@ -1020,29 +1020,67 @@ def geotransform_equals(gt1, gt2, gt_epsilon):
 # If GDAL_DOWNLOAD_TEST_DATA is not defined, the function fails
 # If GDAL_DOWNLOAD_TEST_DATA is defined, 'url' is downloaded  as 'filename' in 'tmp/cache/'
 
-def download_file(url, filename, download_size = -1):
+def download_file(url, filename, download_size = -1, force_download = False, max_download_duration = None):
+    
+    if filename.startswith('tmp/cache/'):
+        filename = filename[len('tmp/cache/'):]
+
     global count_skipped_tests_download
     try:
         os.stat( 'tmp/cache/' + filename )
         return True
     except:
-        if 'GDAL_DOWNLOAD_TEST_DATA' in os.environ:
+        if 'GDAL_DOWNLOAD_TEST_DATA' in os.environ or force_download:
             val = None
+            import time
+            start_time = time.time()
             try:
                 handle = gdalurlopen(url)
+                if handle is None:
+                    return False
                 if download_size == -1:
                     try:
                         handle_info = handle.info()
-                        content_length = handle_info['content-length']
-                        print('Downloading %s (length = %s bytes)...' % (url, content_length))
+                        download_size = int(handle_info['content-length'])
+                        print('Downloading %s (length = %d bytes)...' % (url, download_size))
                     except:
                         print('Downloading %s...' % (url))
-                    val = handle.read()
                 else:
                     print('Downloading %d bytes from %s...' % (download_size, url))
-                    val = handle.read(download_size)
             except:
                 return False
+
+            if download_size >= 0:
+                sys.stdout.write('Progress: ')
+            nLastTick = -1
+            val = ''.encode('ascii')
+            while len(val) < download_size or download_size < 0:
+                chunk_size = 1024
+                if download_size >= 0 and len(val) + chunk_size > download_size:
+                    chunk_size = download_size - len(val)
+                chunk = handle.read(chunk_size)
+                if len(chunk) < chunk_size:
+                    if download_size < 0:
+                        break
+                    print('Did not get expected data length.')
+                    return False
+                val = val + chunk
+                if download_size >= 0:
+                    nThisTick = int(40 * len(val) / download_size)
+                    while nThisTick > nLastTick:
+                        nLastTick = nLastTick + 1
+                        if nLastTick % 4 == 0:
+                            sys.stdout.write( "%d" % int((nLastTick / 4) * 10) )
+                        else:
+                            sys.stdout.write(".")
+                    nLastTick = nThisTick
+                    if nThisTick == 40:
+                        sys.stdout.write(" - done.\n" )
+
+                current_time = time.time()
+                if max_download_duration is not None and current_time - start_time > max_download_duration:
+                    print('Download aborted due to timeout.')
+                    return False
 
             try:
                 os.stat( 'tmp/cache' )
