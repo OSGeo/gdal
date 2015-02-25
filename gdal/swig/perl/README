@@ -82,18 +82,17 @@ This module requires the GDAL library.
 
 DOCUMENTATION
 
-The documentation is maintained in Doxygen files. Doxygen is available
-at www.doxygen.org. You will also need Perl Doxygen Filter from
-http://www.bigsister.ch/doxygenfilter/ and an extension to it from
-http://geoinformatics.aalto.fi/files/doxygenfilter/. To generate the
-documentation type
+The documentation is maintained in Doxygen files. You will also need
+Doxygen-Filter-Perl. To generate the documentation type
 
-    doxygen
+make doc
 
-You can find the documentation also at
-http://geoinformatics.aalto.fi/doc/Geo-GDAL/html/. However, the
-comprehensive documentation of GDAL and OGR are at
-http://www.gdal.org/.
+You can find the documentation also at ajolma.net.
+
+GDAL: http://www.gdal.org/
+Doxygen : http://www.doxygen.org
+Doxygen-Filter-Perl: http://search.cpan.org/~jordan/Doxygen-Filter-Perl/
+Geo::GDAL documentation: http://ajolma.net/Geo-GDAL/snapshot/
 
 COPYRIGHT AND LICENCE
 
