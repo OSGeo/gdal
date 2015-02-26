@@ -427,10 +427,10 @@ sub gdal_tests {
 		my $c = $dataset->GetGCPCount();
 		my $p = $dataset->GetGCPProjection();
 		my $gcps = $dataset->GetGCPs();
-		my $y1 = $gcps->[0]->{GCPY};
-		my $y2 = $gcps->[1]->{GCPY};
-		my $y1o = $gcps[0]->{GCPY};
-		my $y2o = $gcps[1]->{GCPY};
+		my $y1 = $gcps->[0]->{Y};
+		my $y2 = $gcps->[1]->{Y};
+		my $y1o = $gcps[0]->{Y};
+		my $y2o = $gcps[1]->{Y};
 		mytest(($c == 2 and $p eq $po and $y1 == $y1o and $y2 == $y2o),
 		       "$c != 2 or $p ne $po or $y1 != $y1o or $y2 != $y2o",$name,$type,'Set/GetGCPs');
 	    }

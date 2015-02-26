@@ -50,13 +50,15 @@ system "rm -rf tmp_ds_*" unless $^O eq 'MSWin32';
 }
 
 {
+    our $warning;
+    BEGIN { $SIG{'__WARN__'} = sub { $warning = $_[0] } }
     my $l = Geo::OGR::Driver('Memory')->Create()->CreateLayer();
     $l->CreateField(Name => 'value', Type => 'Integer');
     $l->InsertFeature([0,{wkt=>'POINT(1 1)'},12.2,3]);
     my $f = $l->GetFeature(0);
     my $r = $f->Row;
     ok($r->{Geometry}->AsText eq 'POINT (1 1)', 'The geometry of the inserted feature is ok');
-    ok($r->{value} == 12, "The float is changed to integer because that's the type in the layer");
+    ok($r->{value} == 12, "The float is changed to integer because that's the type in the layer ($warning)");
     my $n = $f->Tuple;
     ok($n == 3, 'The extra field is scrapped because layer does not have a field for it');
 }
@@ -207,11 +209,11 @@ system "rm -rf tmp_ds_*" unless $^O eq 'MSWin32';
 }
 {
     my $driver = Geo::OGR::Driver('Memory');
-    my @cap = $driver->Capabilities;
-    ok(is_deeply(\@cap, ['CreateDataSource']), "driver capabilities");
+    my %cap = map {$_=>1} $driver->Capabilities;
+    ok($cap{CreateDataSource}, "driver capabilities");
     my $datasource = $driver->CreateDataSource('test');
-    @cap = $datasource->Capabilities;
-    ok(is_deeply(\@cap, ['CreateLayer','DeleteLayer']), "data source capabilities");
+    %cap = map {$_=>1} $datasource->Capabilities;
+    ok($cap{CreateLayer} and $cap{DeleteLayer}, "data source capabilities");
     
     my $layer = $datasource->CreateLayer('a', undef, 'Point');
     my %cap = map { $_ => 1 } $layer->Capabilities;
@@ -265,8 +267,6 @@ my $osr = new Geo::OSR::SpatialReference;
 $osr->SetWellKnownGeogCS('WGS84');
 
 @types = Geo::OGR::GeometryType();
-
-ok(@types == 17, "number of geometry types is 17");
 
 my @tmp = @types;
 @types = ();
@@ -392,7 +392,9 @@ sub ogr_tests {
 		next;
 	    }
 
-	    if ($name eq 'MapInfo File' and $type eq 'MultiLineString') {
+	    if ($name eq 'MapInfo File' and 
+                ($type eq 'MultiLineString' or $type =~ /Surface/ or $type =~ /Curve/ or $type =~ /Circular/)
+                ) {
 		mytest("skipped, no test",undef,$name,$type,'layer create');
 		next;
 	    }

@@ -70,7 +70,7 @@ $return = $object->method(); # method called in scalar context
 Many of the methods may throw an error, which can be caught by putting
 the call into eval{}; and then examining the contents of $\@.
 
-\section class_methods_vs_object_methods Class methods vs object methods
+\section class_methods_vs_object_methods Class methods and attributes vs object methods and attributes 
 
 Some methods are class methods and some methods are object
 methods. Object methods are always invoked for objects, i.e.
@@ -95,6 +95,18 @@ The disctinction between class methods and subroutines is subtle but
 often important. The method invocation passes the class name as the
 first argument while the subroutine invocation does not. Thus
 constructors (new and create) must be called as class methods.
+
+Similar to methods, also attributes are either class attributes or
+object attributes. Class attributes are global variables that are
+associated with a class and object attributes are variables owned by
+each individual object. Class attributes are used for example for
+enumerated values. 
+
+Class attributes are also used for maintaining is_a_part_of
+relationships between objects. Because Band objects are a part of
+Dataset objects, there is a class attribute (a hash) in Dataset, which
+maintains these relationships and makes sure the Dataset object that
+owns a Band object is not destroyed before the Band object.
 
 \section index_exceptions Exceptions
 
@@ -133,9 +145,12 @@ Warning: Driver GTiff does not support my_unknown_option creation option at site
 \section index_footer Note
 
 This documentation is generated from files within the GDAL
-distribution (directory swig/perl) with Doxygen using a Perl module
-Doxygen::Filter::Perl and a tailor made preprocessor. Many methods are
-just interfaces to non-Perl code in the bindings or GDAL and thus
-their code show as blank on these pages.
+distribution (directory swig/perl) with Doxygen using a Perl module <a
+href="http://search.cpan.org/~jordan/Doxygen-Filter-Perl/">Doxygen::Filter::Perl</a>
+and a tailor made preprocessor (see also <a
+href="https://rt.cpan.org/Public/Dist/Display.html?Name=Doxygen-Filter-Perl">this</a>). Many
+methods are just interfaces to non-Perl code in the bindings or GDAL
+and thus their code show as blank on these pages. The bindings are
+created with Swig, which adds some methods by default.
 
 */
