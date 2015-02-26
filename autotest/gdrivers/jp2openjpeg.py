@@ -627,6 +627,9 @@ def jp2openjpeg_20():
     try:
         import xmlvalidate
     except:
+        print('Cannot import xmlvalidate')
+        import traceback
+        traceback.print_exc(file=sys.stdout)
         return 'skip'
 
     try:
@@ -637,7 +640,8 @@ def jp2openjpeg_20():
             shutil.copy('../ogr/tmp/cache/SCHEMAS_OPENGIS_NET.zip', 'tmp/cache')
         except:
             url = 'http://schemas.opengis.net/SCHEMAS_OPENGIS_NET.zip'
-            if not gdaltest.download_file(url, 'SCHEMAS_OPENGIS_NET.zip', force_download = True, max_download_duration = 10):
+            if not gdaltest.download_file(url, 'SCHEMAS_OPENGIS_NET.zip', force_download = True, max_download_duration = 20):
+                print('Cannot get SCHEMAS_OPENGIS_NET.zip')
                 return 'skip'
 
     try:
@@ -658,6 +662,7 @@ def jp2openjpeg_20():
         if not gdaltest.download_file(xlink_xsd_url, 'SCHEMAS_OPENGIS_NET/xlink.xsd', force_download = True, max_download_duration = 10):
             xlink_xsd_url = 'http://even.rouault.free.fr/xlink.xsd'
             if not gdaltest.download_file(xlink_xsd_url, 'SCHEMAS_OPENGIS_NET/xlink.xsd', force_download = True, max_download_duration = 10):
+                print('Cannot get xlink.xsd')
                 return 'skip'
 
     try:
@@ -667,6 +672,7 @@ def jp2openjpeg_20():
         if not gdaltest.download_file(xlink_xsd_url, 'SCHEMAS_OPENGIS_NET/xml.xsd', force_download = True, max_download_duration = 10):
             xlink_xsd_url = 'http://even.rouault.free.fr/xml.xsd'
             if not gdaltest.download_file(xlink_xsd_url, 'SCHEMAS_OPENGIS_NET/xml.xsd', force_download = True, max_download_duration = 10):
+                print('Cannot get xml.xsd')
                 return 'skip'
 
     xmlvalidate.transform_abs_links_to_ref_links('tmp/cache/SCHEMAS_OPENGIS_NET')
