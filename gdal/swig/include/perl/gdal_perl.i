@@ -53,6 +53,15 @@ ALTERED_DESTROY(GDAL_GCP, GDALc, delete_GCP)
 ALTERED_DESTROY(GDALMajorObjectShadow, GDALc, delete_MajorObject)
 ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTable)
 
+/* remove unwanted name duplication */
+%rename (X) GCPX;
+%rename (Y) GCPY;
+%rename (Z) GCPZ;
+%rename (Column) GCPPixel;
+%rename (Row) GCPLine;
+
+/* Make room for Perl interface */
+
 %rename (_GetDataTypeSize) GetDataTypeSize;
 %rename (_DataTypeIsComplex) DataTypeIsComplex;
 
@@ -109,41 +118,68 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
     # version number of the GDAL that this module is a part of. It is
     # used in build time to check the version of GDAL against which we
     # build.
-    # For GDAL 2.0 or above, GDAL X.Y.Z should then 
+    # For GDAL 2.0 or above, GDAL X.Y.Z should then
     # VERSION = X + Y / 100.0 + Z / 10000.0
 
     our $VERSION = '2.0000';
     our $GDAL_VERSION = '2.0.0';
     use vars qw/
+        @DATA_TYPES @ACCESS_TYPES @RESAMPLING_TYPES @RIO_RESAMPLING_TYPES @NODE_TYPES
         %TYPE_STRING2INT %TYPE_INT2STRING
         %ACCESS_STRING2INT %ACCESS_INT2STRING
         %RESAMPLING_STRING2INT %RESAMPLING_INT2STRING
+        %RIO_RESAMPLING_STRING2INT %RIO_RESAMPLING_INT2STRING
         %NODE_TYPE_STRING2INT %NODE_TYPE_INT2STRING
         /;
-    for my $string (qw/Unknown Byte UInt16 Int16 UInt32 Int32 Float32 Float64 CInt16 CInt32 CFloat32 CFloat64/) {
-        my $int = eval "\$Geo::GDAL::Constc::GDT_$string";
+    for (keys %Geo::GDAL::Const::) {
+        next if /TypeCount/;
+        push(@DATA_TYPES, $1), next if /^GDT_(\w+)/;
+        push(@ACCESS_TYPES, $1), next if /^GA_(\w+)/;
+        push(@RESAMPLING_TYPES, $1), next if /^GRA_(\w+)/;
+        push(@RIO_RESAMPLING_TYPES, $1), next if /^GRIORA_(\w+)/;
+        push(@NODE_TYPES, $1), next if /^CXT_(\w+)/;
+    }
+    for my $string (@DATA_TYPES) {
+        my $int = eval "\$Geo::GDAL::Const::GDT_$string";
         $TYPE_STRING2INT{$string} = $int;
         $TYPE_INT2STRING{$int} = $string;
     }
-    for my $string (qw/ReadOnly Update/) {
-        my $int = eval "\$Geo::GDAL::Constc::GA_$string";
+    for my $string (@ACCESS_TYPES) {
+        my $int = eval "\$Geo::GDAL::Const::GA_$string";
         $ACCESS_STRING2INT{$string} = $int;
         $ACCESS_INT2STRING{$int} = $string;
     }
-    for my $string (qw/NearestNeighbour Bilinear Cubic CubicSpline/) {
-        my $int = eval "\$Geo::GDAL::Constc::GRA_$string";
+    for my $string (@RESAMPLING_TYPES) {
+        my $int = eval "\$Geo::GDAL::Const::GRA_$string";
         $RESAMPLING_STRING2INT{$string} = $int;
         $RESAMPLING_INT2STRING{$int} = $string;
     }
-    {
-        my $int = 0;
-        for my $string (qw/Element Text Attribute Comment Literal/) {
-            $NODE_TYPE_STRING2INT{$string} = $int;
-            $NODE_TYPE_INT2STRING{$int} = $string;
-            $int++;
-        }
+    for my $string (@RIO_RESAMPLING_TYPES) {
+        my $int = eval "\$Geo::GDAL::Const::GRIORA_$string";
+        $RIO_RESAMPLING_STRING2INT{$string} = $int;
+        $RIO_RESAMPLING_INT2STRING{$int} = $string;
+    }
+    for my $string (@NODE_TYPES) {
+        my $int = eval "\$Geo::GDAL::Const::CXT_$string";
+        $NODE_TYPE_STRING2INT{$string} = $int;
+        $NODE_TYPE_INT2STRING{$int} = $string;
     }
     sub RELEASE_PARENTS {
+    }
+    sub DataTypes {
+        return @DATA_TYPES;
+    }
+    sub AccessTypes {
+        return @ACCESS_TYPES;
+    }
+    sub ResamplingTypes {
+        return @RESAMPLING_TYPES;
+    }
+    sub RIOResamplingTypes {
+        return @RIO_RESAMPLING_TYPES;
+    }
+    sub NodeTypes {
+        return @NODE_TYPES;
     }
     sub NodeType {
         my $type = shift;
@@ -164,29 +200,34 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
     }
     sub GetDataTypeSize {
         my $t = shift;
-        $t = $TYPE_INT2STRING{$t} if exists $TYPE_INT2STRING{$t};
-        return _GetDataTypeSize($t);
+        my $t2 = $t;
+        $t2 = $TYPE_STRING2INT{$t} if exists $TYPE_STRING2INT{$t};
+        croak "Unknown data type: '$t'." unless exists $TYPE_INT2STRING{$t2};
+        return _GetDataTypeSize($t2);
     }
     sub DataTypeValueRange {
         my $t = shift;
+        croak "Unknown data type: '$t'." unless exists $TYPE_STRING2INT{$t};
         # these values are from gdalrasterband.cpp
-        return (0,255) if $t =~ /^Byte$/;
-        return (0,65535) if $t =~ /^UInt16$/;
-        return (-32768,32767) if $t =~ /Int16$/; # also CInt
-        return (0,4294967295) if $t =~ /^UInt32$/;
-        return (-2147483648,2147483647) if $t =~ /Int32$/; # also CInt
-        return (-4294967295.0,4294967295.0) if $t =~ /Float32$/; # also CFloat
-        return (-4294967295.0,4294967295.0) if $t =~ /Float64$/; # also CFloat
-        croak "GDAL does not support data type '$t'";
+        return (0,255) if $t =~ /Byte/;
+        return (0,65535) if $t =~/UInt16/;
+        return (-32768,32767) if $t =~/Int16/;
+        return (0,4294967295) if $t =~/UInt32/;
+        return (-2147483648,2147483647) if $t =~/Int32/;
+        return (-4294967295.0,4294967295.0) if $t =~/Float32/;
+        return (-4294967295.0,4294967295.0) if $t =~/Float64/;
     }
     sub DataTypeIsComplex {
         my $t = shift;
-        $t = $TYPE_INT2STRING{$t} if exists $TYPE_INT2STRING{$t};
-        return _DataTypeIsComplex($t);
+        my $t2 = $t;
+        $t2 = $TYPE_STRING2INT{$t} if exists $TYPE_STRING2INT{$t};
+        croak "Unknown data type: '$t'." unless exists $TYPE_INT2STRING{$t2};
+        return _DataTypeIsComplex($t2);
     }
     sub PackCharacter {
         my $t = shift;
         $t = $TYPE_INT2STRING{$t} if exists $TYPE_INT2STRING{$t};
+        croak "Unknown data type: '$t'." unless exists $TYPE_STRING2INT{$t};
         my $is_big_endian = unpack("h*", pack("s", 1)) =~ /01/; # from Programming Perl
         return 'C' if $t =~ /^Byte$/;
         return ($is_big_endian ? 'n': 'v') if $t =~ /^UInt16$/;
@@ -195,7 +236,6 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
         return 'l' if $t =~ /^Int32$/;
         return 'f' if $t =~ /^Float32$/;
         return 'd' if $t =~ /^Float64$/;
-        croak "data type '$t' is not known in Geo::GDAL::PackCharacter";
     }
     sub Drivers {
         my @drivers;
@@ -212,29 +252,39 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
     *Driver = *GetDriver;
     sub Open {
         my @p = @_;
-        $p[1] = $ACCESS_STRING2INT{$p[1]} if $p[1] and exists $ACCESS_STRING2INT{$p[1]};
+        if (defined $p[1]) {
+            croak "Unknown access type: '$p[1]'." unless exists $Geo::GDAL::ACCESS_STRING2INT{$p[1]};
+            $p[1] = $Geo::GDAL::ACCESS_STRING2INT{$p[1]};
+        }
         return _Open(@p);
     }
     sub OpenShared {
         my @p = @_;
-        $p[1] = $ACCESS_STRING2INT{$p[1]} if $p[1] and exists $ACCESS_STRING2INT{$p[1]};
+        if (defined $p[1]) {
+            croak "Unknown access type: '$p[1]'." unless exists $Geo::GDAL::ACCESS_STRING2INT{$p[1]};
+            $p[1] = $Geo::GDAL::ACCESS_STRING2INT{$p[1]};
+        }
         return _OpenShared(@p);
     }
     sub ComputeMedianCutPCT {
-        $_[6] = 1 if $_[5] and not defined $_[6];
-        _ComputeMedianCutPCT(@_);
+        my @p = @_;
+        $p[6] = 1 if $p[5] and not defined $p[6];
+        _ComputeMedianCutPCT(@p);
     }
     sub DitherRGB2PCT {
-        $_[6] = 1 if $_[5] and not defined $_[6];
-        _DitherRGB2PCT(@_);
+        my @p = @_;
+        $p[6] = 1 if $p[5] and not defined $p[6];
+        _DitherRGB2PCT(@p);
     }
     sub ComputeProximity {
-        $_[4] = 1 if $_[3] and not defined $_[4];
-        _ComputeProximity(@_);
+        my @p = @_;
+        $p[4] = 1 if $p[3] and not defined $p[4];
+        _ComputeProximity(@p);
     }
     sub RasterizeLayer {
-        $_[8] = 1 if $_[7] and not defined $_[8];
-        _RasterizeLayer(@_);
+        my @p = @_;
+        $p[8] = 1 if $p[7] and not defined $p[8];
+        _RasterizeLayer(@p);
     }
     sub Polygonize {
         my @params = @_;
@@ -243,25 +293,36 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
         _Polygonize(@params);
     }
     sub SieveFilter {
-        $_[7] = 1 if $_[6] and not defined $_[7];
-        _SieveFilter(@_);
+        my @p = @_;
+        $p[7] = 1 if $p[6] and not defined $p[7];
+        _SieveFilter(@p);
     }
     sub RegenerateOverviews {
-        $_[4] = 1 if $_[3] and not defined $_[4];
-        _RegenerateOverviews(@_);
+        my @p = @_;
+        $p[4] = 1 if $p[3] and not defined $p[4];
+        _RegenerateOverviews(@p);
     }
     sub RegenerateOverview {
-        $_[4] = 1 if $_[3] and not defined $_[4];
-        _RegenerateOverview(@_);
+        my @p = @_;
+        $p[4] = 1 if $p[3] and not defined $p[4];
+        _RegenerateOverview(@p);
     }
     sub ReprojectImage {
-        $_[8] = 1 if $_[7] and not defined $_[8];
-        $_[4] = $RESAMPLING_STRING2INT{$_[4]} if $_[4] and exists $RESAMPLING_STRING2INT{$_[4]};
-        return _ReprojectImage(@_);
+        my @p = @_;
+        $p[8] = 1 if $p[7] and not defined $p[8];
+        if (defined $p[4]) {
+            croak "Unknown data type: '$p[4]'." unless exists $Geo::GDAL::RESAMPLING_STRING2INT{$p[4]};
+            $p[4] = $Geo::GDAL::RESAMPLING_STRING2INT{$p[4]};
+        }
+        return _ReprojectImage(@p);
     }
     sub AutoCreateWarpedVRT {
-        $_[3] = $RESAMPLING_STRING2INT{$_[3]} if $_[3] and exists $RESAMPLING_STRING2INT{$_[3]};
-        return _AutoCreateWarpedVRT(@_);
+        my @p = @_;
+        if (defined $p[3]) {
+            croak "Unknown data type: '$p[3]'." unless exists $Geo::GDAL::RESAMPLING_STRING2INT{$p[3]};
+            $p[3] = $Geo::GDAL::RESAMPLING_STRING2INT{$p[3]};
+        }
+        return _AutoCreateWarpedVRT(@p);
     }
 
     package Geo::GDAL::MajorObject;
@@ -288,7 +349,12 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
     package Geo::GDAL::Driver;
     use vars qw/@CAPABILITIES @DOMAINS/;
     use strict;
-    @CAPABILITIES = qw/Open Create CreateCopy VirtualIO Raster Vector/;
+    use Carp;
+    for (keys %Geo::GDAL::Const::) {
+        next if /TypeCount/;
+        push(@CAPABILITIES, $1), next if /^DCAP_(\w+)/;
+    }
+
     sub Domains {
         return @DOMAINS;
     }
@@ -354,7 +420,10 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
     }
     sub CreateDataset {
         my @p = @_;
-        $p[5] = $Geo::GDAL::TYPE_STRING2INT{$p[5]} if $p[5] and exists $Geo::GDAL::TYPE_STRING2INT{$p[5]};
+        if (defined $p[5]) {
+            croak "Unknown data type: '$p[5]'." unless exists $Geo::GDAL::TYPE_STRING2INT{$p[5]};
+            $p[5] = $Geo::GDAL::TYPE_STRING2INT{$p[5]};
+        }
         return _Create(@p);
     }
     *Create = *CreateDataset;
@@ -363,10 +432,11 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
     package Geo::GDAL::Dataset;
     use strict;
     use vars qw/%BANDS @DOMAINS/;
+    use Carp;
     @DOMAINS = qw/IMAGE_STRUCTURE SUBDATASETS GEOLOCATION/;
     sub Domains {
         return @DOMAINS;
-    }   
+    }
     *GetDriver = *_GetDriver;
     sub Open {
         return Geo::GDAL::Open(@_);
@@ -396,7 +466,10 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
     *Band = *GetRasterBand;
     sub AddBand {
         my @p = @_;
-        $p[1] = $Geo::GDAL::TYPE_STRING2INT{$p[1]} if $p[1] and exists $Geo::GDAL::TYPE_STRING2INT{$p[1]};
+        if (defined $p[1]) {
+            croak "Unknown data type: '$p[1]'." unless exists $Geo::GDAL::TYPE_STRING2INT{$p[1]};
+            $p[1] = $Geo::GDAL::TYPE_STRING2INT{$p[1]};
+        }
         return _AddBand(@p);
     }
     sub Projection {
@@ -432,9 +505,10 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
         @COLOR_INTERPRETATIONS
         %COLOR_INTERPRETATION_STRING2INT %COLOR_INTERPRETATION_INT2STRING @DOMAINS
         /;
-    @COLOR_INTERPRETATIONS = qw/Undefined GrayIndex PaletteIndex RedBand GreenBand BlueBand AlphaBand 
-      HueBand SaturationBand LightnessBand CyanBand MagentaBand YellowBand BlackBand
-      YCbCr_YBand YCbCr_CbBand YCbCr_CrBand/;
+    for (keys %Geo::GDAL::Const::) {
+        next if /TypeCount/;
+        push(@COLOR_INTERPRETATIONS, $1), next if /^GCI_(\w+)/;
+    }
     for my $string (@COLOR_INTERPRETATIONS) {
         my $int = eval "\$Geo::GDAL::Constc::GCI_$string";
         $COLOR_INTERPRETATION_STRING2INT{$string} = $int;
@@ -533,9 +607,11 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
     }
     sub ColorInterpretation {
         my($self, $ci) = @_;
-        if ($ci) {
-            $ci = $COLOR_INTERPRETATION_STRING2INT{$ci} if exists $COLOR_INTERPRETATION_STRING2INT{$ci};
-            SetRasterColorInterpretation($self, $ci);
+        if (defined $ci) {
+            my $ci2 = $ci;
+            $ci2 = $COLOR_INTERPRETATION_STRING2INT{$ci} if exists $COLOR_INTERPRETATION_STRING2INT{$ci};
+            croak "Unknown color interpretation: '$ci'." unless exists $COLOR_INTERPRETATION_INT2STRING{$ci2};
+            SetRasterColorInterpretation($self, $ci2);
             return $ci;
         } else {
             return $COLOR_INTERPRETATION_INT2STRING{GetRasterColorInterpretation($self)};
@@ -566,7 +642,7 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
         my $self = shift;
         my %defaults = (Min => -0.5,
                         Max => 255.5,
-                        Buckets => 256, 
+                        Buckets => 256,
                         IncludeOutOfRange => 0,
                         ApproxOK => 0,
                         Progress => undef,
@@ -587,11 +663,11 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
         my $self = shift;
         my %defaults = (DataSource => undef,
                         LayerConstructor => {Name => 'contours'},
-                        ContourInterval => 100, 
+                        ContourInterval => 100,
                         ContourBase => 0,
-                        FixedLevels => [], 
-                        NoDataValue => undef, 
-                        IDField => -1, 
+                        FixedLevels => [],
+                        NoDataValue => undef,
+                        IDField => -1,
                         ElevField => -1,
                         callback => undef,
                         callback_data => undef);
@@ -599,7 +675,7 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
         if (!defined($_[0]) or (blessed($_[0]) and $_[0]->isa('Geo::OGR::DataSource'))) {
             ($params{DataSource}, $params{LayerConstructor},
              $params{ContourInterval}, $params{ContourBase},
-             $params{FixedLevels}, $params{NoDataValue}, 
+             $params{FixedLevels}, $params{NoDataValue},
              $params{IDField}, $params{ElevField},
              $params{callback}, $params{callback_data}) = @_;
         } else {
@@ -611,7 +687,7 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
         for (keys %defaults) {
             $params{$_} = $defaults{$_} unless defined $params{$_};
         }
-        $params{DataSource} = Geo::OGR::GetDriver('Memory')->CreateDataSource('ds') 
+        $params{DataSource} = Geo::OGR::GetDriver('Memory')->CreateDataSource('ds')
             unless defined $params{DataSource};
         $params{LayerConstructor}->{Schema} = {} unless $params{LayerConstructor}->{Schema};
         $params{LayerConstructor}->{Schema}{Fields} = [] unless $params{LayerConstructor}->{Schema}{Fields};
@@ -635,13 +711,14 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
         return $layer;
     }
     sub FillNodata {
-      croak 'usage: Geo::GDAL::Band->FillNodata($mask)' unless blessed($_[1]) and $_[1]->isa('Geo::GDAL::Band');
-      $_[2] = 10 unless defined $_[2];
-      $_[3] = 0 unless defined $_[3];
-      $_[4] = undef unless defined $_[4];
-      $_[5] = undef unless defined $_[5];
-      $_[6] = undef unless defined $_[6];
-      Geo::GDAL::FillNodata(@_);
+        my @p = @_;
+        croak 'usage: Geo::GDAL::Band->FillNodata($mask)' unless blessed($p[1]) and $p[1]->isa('Geo::GDAL::Band');
+        $p[2] = 10 unless defined $p[2];
+        $p[3] = 0 unless defined $p[3];
+        $p[4] = undef unless defined $p[4];
+        $p[5] = undef unless defined $p[5];
+        $p[6] = undef unless defined $p[6];
+        Geo::GDAL::FillNodata(@p);
     }
     *GetBandNumber = *GetBand;
 
@@ -696,26 +773,30 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
     use strict;
     use Carp;
     use vars qw/ %BANDS
+        @FIELD_TYPES @FIELD_USAGES
         %FIELD_TYPE_STRING2INT %FIELD_TYPE_INT2STRING
         %FIELD_USAGE_STRING2INT %FIELD_USAGE_INT2STRING
         /;
-    for my $string (qw/Integer Real String/) {
+    for (keys %Geo::GDAL::Const::) {
+        next if /TypeCount/;
+        push(@FIELD_TYPES, $1), next if /^GFT_(\w+)/;
+        push(@FIELD_USAGES, $1), next if /^GFU_(\w+)/;
+    }
+    for my $string (@FIELD_TYPES) {
         my $int = eval "\$Geo::GDAL::Constc::GFT_$string";
         $FIELD_TYPE_STRING2INT{$string} = $int;
         $FIELD_TYPE_INT2STRING{$int} = $string;
     }
-    for my $string (qw/Generic PixelCount Name Min Max MinMax 
-                    Red Green Blue Alpha 
-                    RedMin GreenMin BlueMin AlphaMin RedMax GreenMax BlueMax AlphaMax/) {
+    for my $string (@FIELD_USAGES) {
         my $int = eval "\$Geo::GDAL::Constc::GFU_$string";
         $FIELD_USAGE_STRING2INT{$string} = $int;
         $FIELD_USAGE_INT2STRING{$int} = $string;
     }
     sub FieldTypes {
-        return keys %FIELD_TYPE_STRING2INT;
+        return @FIELD_TYPES;
     }
     sub FieldUsages {
-        return keys %FIELD_USAGE_STRING2INT;
+        return @FIELD_USAGES;
     }
     sub RELEASE_PARENTS {
         my $self = shift;
@@ -785,13 +866,13 @@ typedef void OGRLayerShadow;
     %apply (int defined, double value) {(int bUseNoData, double dfNoDataValue)};
     CPLErr ContourGenerate(double dfContourInterval, double dfContourBase,
                            int nFixedLevelCount, double *padfFixedLevels,
-                           int bUseNoData, double dfNoDataValue, 
+                           int bUseNoData, double dfNoDataValue,
                            OGRLayerShadow *hLayer, int iIDField, int iElevField,
                            GDALProgressFunc callback = NULL,
                            void* callback_data = NULL) {
         return GDALContourGenerate( self, dfContourInterval, dfContourBase,
                                     nFixedLevelCount, padfFixedLevels,
-                                    bUseNoData, dfNoDataValue, 
+                                    bUseNoData, dfNoDataValue,
                                     hLayer, iIDField, iElevField,
                                     callback,
                                     callback_data );

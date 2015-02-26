@@ -1,14 +1,8 @@
-## @ignore Geo::OGRc
-
 ## @class Geo::OGR
-
-## @ignore TIEHASH
-## @ignore CLEAR
-## @ignore FIRSTKEY
-## @ignore NEXTKEY
-## @ignore FETCH
-## @ignore STORE
-## @ignore this
+# @brief OGR utility functions.
+#
+# A wrapper for many OGR utility functions and a root class for all
+# OGR classes.
 
 ## @ignore BuildPolygonFromEdges
 ## @ignore ForceToMultiLineString
@@ -20,11 +14,19 @@
 ## @ignore GeometryTypeToName
 ## @ignore GetFieldTypeName
 
-## @ignore UseExceptions()
-## @ignore DontUseExceptions()
-
 ## @method @GeometryTypes()
 # @return a list of all geometry types.
+
+## @method $GeometryTypeModify($type, $modifier)
+# @param type a geometry type (one of Geo::OGR::GeometryTypes).
+# @param modifier one of qw/flatten set_Z make_collection make_curve make_linear/.
+# @return modified geometry type.
+
+## @method $GeometryTypeTest($type, $test, $type2)
+# @param type a geometry type (one of Geo::OGR::GeometryTypes).
+# @param test one of qw/has_z is_subclass_of is_curve is_surface is_non_linear/.
+# @param type2 [optional] a geometry type (one of Geo::OGR::GeometryTypes).
+# @return result of the test.
 
 ## @ignore CreateGeometryFromWkb
 ## @ignore CreateGeometryFromWkt
@@ -43,9 +45,6 @@
 
 ## @method SetGenerate_DB2_V72_BYTE_ORDER($Generate_DB2_V72_BYTE_ORDER)
 # Needed only on IBM DB2.
-
-## @ignore RegisterAll()
-# Called in initialization.
 
 ## @method Geo::OGR::DataSource GetOpenDS($number)
 # @param number The number of the requested data source.
@@ -156,7 +155,7 @@
 
 ## @ignore CreateDataSource
 
-## @method Geo::OGR::DataSource Create($name, \%options = undef )
+## @method Geo::OGR::DataSource Create($name, hashref options = undef )
 # Create an OGR data source object.
 # @note a.k.a. CreateDataSource
 # @param name The data source name.
@@ -170,7 +169,7 @@
 
 ## @ignore CopyDataSource
 
-## @method Geo::OGR::DataSource Copy($ds, $name, \@options = undef)
+## @method Geo::OGR::DataSource Copy($ds, $name, arrayref options = undef)
 # Copy an OGR data source object.
 # @note a.k.a. CopyDataSource
 # @param ds The Geo::OGR::DataSource object to be copied.
@@ -249,7 +248,7 @@
 ## @method $GetName()
 # @return the name of this data source.
 
-## @method Geo::OGR::Layer CreateLayer($Name, $SRS = undef, $GeometryType = 'Unknown', \%Options = undef, \%Schema = undef)
+## @method Geo::OGR::Layer CreateLayer($Name, $SRS = undef, $GeometryType = 'Unknown', hashref Options = undef, hashref Schema = undef)
 # @note This method can also be used with named parameters: $ds->CreateLayer({parameter=>value, ...}).
 #
 # Example:
@@ -268,7 +267,7 @@
 # @param Fields the fields for the schema of the layer [can be used only as a named parameter].
 # @return a new Geo::OGR::Layer object
 
-## @method Geo::OGR::Layer CopyLayer($layer, $name, \%options = undef)
+## @method Geo::OGR::Layer CopyLayer($layer, $name, hashref options = undef)
 # @param layer A Geo::OGR::Layer object to be copied.
 # @param name A name for the new layer.
 # @param options A ref to a hash of format specific options.
@@ -352,7 +351,8 @@
 
 ## @method AlterField($field_name, %new_definition)
 # @param field_name the name (or index) of the field to be altered
-# @param new_definition one or more of Name, Type, and Width
+# @param new_definition as in Geo::OGR::FieldDefn::create. Width and
+# Precision should be both or neither.
 
 ## @method AlterFieldDefn($field, $definition, $flags)
 # @deprecated use AlterField(scalar name, hash parameters)
@@ -569,6 +569,12 @@
 # @param schema as in Schema
 # @return a new Geo::OGR::Feature object
 
+## @method $Validate(list flags)
+# @param flags one of more of qw/null, geom_type, width,
+# allow_null_when_default, all/
+# @exception croaks with an error message if the feature is not valid.
+# @return integer denoting the validity of the feature object.
+
 ## @method \%Schema(%schema)
 # Get or set the schema. The schema is a hash (Name => name,
 # GeometryType => geometry_type, Fields => [list of
@@ -693,7 +699,7 @@
 
 ## @ignore SetFromWithMap
 
-## @method SetFrom($other, $forgiving = 1, \%map)
+## @method SetFrom($other, $forgiving = 1, hashref map)
 # @param other a Geo::OGR::Feature object
 # @param forgiving [optional] set to false if the operation should not
 # continue if output fields do not match some of the source fields
@@ -787,7 +793,7 @@
 ## @ignore SetGeomType
 
 ## @method $GeometryType($geometry_type)
-# Get or set the geometry type.
+# Get or set the geometry type of this feature definition.
 # @note a.k.a. GeomType, GetGeomType (deprecated, returns an integer),
 # SetGeomType (deprecated, requires an integer)
 # @param geometry_type [optional] one of \@Geo::OGR::Geometry::GEOMETRY_TYPES
@@ -819,13 +825,13 @@
 ## @class Geo::OGR::FieldDefn
 # @isa (Geo::OGR)
 
-## @attr list FIELD_TYPES
-# Field types supported by GDAL, one of: Integer IntegerList Real
-# RealList String StringList WideString WideStringList Binary Date
-# Time DateTime
+## @cmethod list Types
+# Field types supported by GDAL. Current list is
+# +list Geo::OGR OFT
 
-## @attr list JUSTIFY_TYPES
-# Justify types supported by GDAL, one of: Undefined Left Right
+## @cmethod list JustifyValues
+# Justify values supported by GDAL. Current list is
+# +list Geo::OGR OJ
 
 ## @cmethod Geo::OGR::FieldDefn new($name = "unnamed", $field_type = $Geo::OGR::OFTString)
 # @deprecated use Geo::OGR::FieldDefn::create, which accepts type as a string
@@ -833,32 +839,31 @@
 # @param field_type as integer
 # @return a new Geo::OGR::FieldDefn object
 
-## @cmethod Geo::OGR::FieldDefn create($name = "unnamed", $field_type = 'String')
-# @param name
-# @param field_type one of field types. Optional. Default is String.
+## @cmethod Geo::OGR::FieldDefn create()
+# @brief Create a new field definition.
 #
-# Usage:
-# \code
-# $fd = Geo::OGR::FieldDefn->create(...arguments...);
-# \endcode
-# @return a new Geo::OGR::FieldDefn object
-
-## @cmethod Geo::OGR::FieldDefn create(%parameters)
-# @param parameters named parameters: Name, Type, Justify, Width,
-# Precision
+# This method supports both an argument list and named arguments.
 #
-# Usage:
-# \code
-# $fd = Geo::OGR::FieldDefn->create( Name => "name", Type => "FieldType", ...);
-# \endcode
+# @param name Field name.
+# @param field_type One of supported field types
+# (Geo::OGR::FieldDefn::Types()). Optional. Default is String.
+#
+# Named parameters:
+# @param Name Field name.
+# @param Type Field type, one of Geo::OGR::FieldDefn::Types.
+# @param Type Field sub type, one of Geo::OGR::FieldDefn::SubTypes.
+# @param Justify Justify value, one of Geo::OGR::FieldDefn::JustifyValues
+# @param Width
+# @param Precision
+# @param Nullable
+# @param Default
+# @param Ignored
 # @return a new Geo::OGR::FieldDefn object
 
 ## @method \%Schema(%parameters)
 # Get the schema or set parts of the schema
-# @param parameters [optional] named parameters: Name, Type, Justify,
-# Width, Precision
-# @return a reference to a hash whose keys are Name, Type, Justify,
-# Width, and Precision
+# @param parameters [optional] named parameters as those in Geo::OGR::FieldDefn::create
+# @return a reference to a hash whose keys are as those in Geo::OGR::FieldDefn::create
 
 ## @ignore GetName
 ## @ignore GetNameRef
@@ -877,9 +882,7 @@
 
 ## @method $Type($type)
 # @note a.k.a. GetFieldTypeName, GetTypeName, GetType, SetType
-# @param type [optional] one of field types: Integer, IntegerList, Real,
-# RealList, String, StringList, WideString, WideStringList, Binary, Date,
-# Time, or DateTime (wide strings are not really supported yet?)
+# @param type [optional] One of field types (Geo::OGR::FieldDefn::Types).
 # @return one of field types in non-void context
 
 ## @ignore GetJustify
@@ -888,7 +891,7 @@
 ## @method $Justify($justify)
 # Get and/or set the justification of this field.
 # @note a.k.a. GetJustify, SetJustify
-# @param justify [optional] as string: Undefined, Left, or Right
+# @param justify [optional] One of field justify types (Geo::OGR::FieldDefn::JustifyValues).
 # @return one of Undefined Left Right in non-void context
 
 ## @ignore GetWidth
@@ -920,16 +923,15 @@
 # @return the ignore status in non-void context
 # @since 1.9.0
 
+
 ## @class Geo::OGR::Geometry
 # @isa (Geo::OGR)
 # @note Most spatial analysis methods require <a
 # href="http://geos.osgeo.org/doxygen/">GEOS</a> to work rigorously.
 
-## @attr list GEOMETRY_TYPES
-# Geometry types supported by GDAL, one of: Unknown Point LineString
-# Polygon MultiPoint MultiLineString MultiPolygon GeometryCollection
-# None LinearRingPoint25D LineString25D Polygon25D MultiPoint25D
-# MultiLineString25D MultiPolygon25D GeometryCollection25D
+## @cmethod list GeometryTypes
+# Geometry types supported by GDAL, one of:
+# +list Geo::OGR wkb 25Bit,25DBit,NDR,XDR
 
 ## @attr list BYTE_ORDER_TYPES
 # Byte order strings, one of: XDR NDR
@@ -1099,7 +1101,7 @@
 # @param z [optional]
 # @return
 
-## @method \@Points(\@points)
+## @method \@Points(arrayref points)
 # Get or set the points of the geometry. The points (vertices) are
 # stored in obvious lists of lists. When setting, the geometry is
 # first emptied. The method uses internally either AddPoint_2D or
@@ -1152,7 +1154,10 @@
 # @return a new Geo::OGR::Geometry object
 
 ## @method $GeometryType()
-# @return the geometry type
+# @return the geometry type of this geometry.
+
+## @cmethod $GeometryType()
+# @return the geometry type of this geometry.
 
 ## @method $Length()
 # @return the length of the linestring

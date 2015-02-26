@@ -32,7 +32,7 @@
   if ( OGRGetDriverCount() == 0 ) {
     OGRRegisterAll();
   }
-  
+
 %}
 
 %include callback.i
@@ -106,7 +106,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
             }
         }
     }
-    
+
 }
 
 %rename (_ReleaseResultSet) ReleaseResultSet;
@@ -117,22 +117,20 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 %rename (_CreateField) CreateField;
 %rename (_DeleteField) DeleteField;
 %rename (_GetFieldType) GetFieldType;
+%rename (_Validate) Validate;
 %rename (_SetGeometryDirectly) SetGeometryDirectly;
 %rename (_ExportToWkb) ExportToWkb;
 %rename (_GetDriver) GetDriver;
 %rename (_TestCapability) TestCapability;
 
 %perlcode %{
-    use strict;
-    use Carp;
-    {
-        package Geo::OGR;
-    }
     {
         package Geo::OGR::Driver;
         use strict;
         use vars qw /@CAPABILITIES %CAPABILITIES/;
-        @CAPABILITIES = qw/CreateDataSource DeleteDataSource/; 
+        for (keys %Geo::OGR::) {
+            push(@CAPABILITIES, $1), next if /^ODrC(\w+)/;
+        }
         for my $s (@CAPABILITIES) {
             my $cap = eval "\$Geo::OGR::ODrC$s";
             $CAPABILITIES{$s} = $cap;
@@ -160,7 +158,9 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
         use Carp;
         use strict;
         use vars qw /@CAPABILITIES %CAPABILITIES %LAYERS %RESULT_SET/;
-        @CAPABILITIES = qw/CreateLayer DeleteLayer/;
+        for (keys %Geo::OGR::) {
+            push(@CAPABILITIES, $1), next if /^ODsC(\w+)/;
+        }
         for my $s (@CAPABILITIES) {
             my $cap = eval "\$Geo::OGR::ODsC$s";
             $CAPABILITIES{$s} = $cap;
@@ -240,9 +240,9 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
         sub CreateLayer {
             my $self = shift;
             my %defaults = (Name => 'unnamed',
-                            SRS => undef, 
-                            GeometryType => 'Unknown', 
-                            Options => [], 
+                            SRS => undef,
+                            GeometryType => 'Unknown',
+                            Options => [],
                             Schema => undef,
                             Fields => undef);
             my %params;
@@ -257,11 +257,12 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
             for (keys %defaults) {
                 $params{$_} = $defaults{$_} unless defined $params{$_};
             }
-            $params{GeometryType} = $params{Schema}->{GeometryType} if 
-                ($params{Schema} and exists $params{Schema}->{GeometryType});
-            $params{GeometryType} = $Geo::OGR::Geometry::TYPE_STRING2INT{$params{GeometryType}} if 
-                exists $Geo::OGR::Geometry::TYPE_STRING2INT{$params{GeometryType}};
-            my $layer = _CreateLayer($self, $params{Name}, $params{SRS}, $params{GeometryType}, $params{Options});
+            my $gt = $params{GeometryType};
+            $gt = $params{Schema}->{GeometryType} if ($params{Schema} and exists $params{Schema}->{GeometryType});
+            my $gt2 = $gt;
+            $gt2 = $Geo::OGR::Geometry::TYPE_STRING2INT{$gt} if exists $Geo::OGR::Geometry::TYPE_STRING2INT{$gt};
+            croak "Unknown data type: '$gt'." unless exists $Geo::OGR::Geometry::TYPE_INT2STRING{$gt2};
+            my $layer = _CreateLayer($self, $params{Name}, $params{SRS}, $gt2, $params{Options});
             $LAYERS{tied(%$layer)} = $self;
             if ($params{Fields}) {
                 $params{Schema} = {} unless $params{Schema};
@@ -294,11 +295,9 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
         use Carp;
         use Scalar::Util 'blessed';
         use vars qw /@CAPABILITIES %CAPABILITIES/;
-        @CAPABILITIES = qw/RandomRead SequentialWrite RandomWrite 
-                   FastSpatialFilter FastFeatureCount FastGetExtent 
-                   CreateField DeleteField ReorderFields AlterFieldDefn
-                   Transactions DeleteFeature FastSetNextByIndex
-                   StringsAsUTF8 IgnoreFields/;
+        for (keys %Geo::OGR::) {
+            push(@CAPABILITIES, $1), next if /^OLC(\w+)/;
+        }
         for my $s (@CAPABILITIES) {
             my $cap = eval "\$Geo::OGR::OLC$s";
             $CAPABILITIES{$s} = $cap;
@@ -374,7 +373,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
         sub AlterField {
             my $self = shift;
             my $fn = shift;
-            my $index = $fn;            
+            my $index = $fn;
             $index = $self->GetLayerDefn->GetFieldIndex($fn) unless $fn =~ /^\d+$/;
             my $field = $self->GetLayerDefn->GetFieldDefn($index);
             my $definition = Geo::OGR::FieldDefn->create(@_);
@@ -382,7 +381,9 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
             my %params = @_;
             $flags |= 1 if $params{Name};
             $flags |= 2 if $params{Type};
-            $flags |= 4 if $params{Width};
+            $flags |= 4 if $params{Width} or $params{Precision};
+            $flags |= 8 if $params{Nullable};
+            $flags |= 16 if $params{Default};
             AlterFieldDefn($self, $index, $definition, $flags);
         }
         sub DeleteField {
@@ -503,6 +504,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
         package Geo::OGR::FeatureDefn;
         use strict;
         use Encode;
+        use Carp;
         sub create {
             my $pkg = shift;
             my %schema;
@@ -553,9 +555,9 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
         }
         sub GeomType {
             my($self, $type) = @_;
-            if ($type) {
-                $type = $Geo::OGR::Geometry::TYPE_STRING2INT{$type} if 
-                    $type and exists $Geo::OGR::Geometry::TYPE_STRING2INT{$type};
+            if (defined $type) {
+                croak "Unknown geometry data type: '$type'." unless exists $Geo::OGR::Geometry::TYPE_STRING2INT{$type};
+                $type = $Geo::OGR::Geometry::TYPE_STRING2INT{$type};
                 SetGeomType($self, $type);
             }
             return $Geo::OGR::Geometry::TYPE_INT2STRING{GetGeomType($self)} if defined wantarray;
@@ -600,6 +602,15 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
             $self->SetStyleString($_[0]) if @_;
             return unless defined wantarray;
             $self->GetStyleString;
+        }
+        sub Validate {
+            my $self = shift;
+            my $flags = 0;
+            for my $flag (@_) {
+                my $f = eval '$Geo::OGR::'.uc($flag);
+                $flags |= $f;
+            }
+            _Validate($self, $flags);
         }
         sub Schema {
             my $self = shift;
@@ -721,7 +732,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
             if ($type == $Geo::OGR::OFTIntegerList) {
                 my $ret = GetFieldAsIntegerList($self, $field);
                 return wantarray ? @$ret : $ret;
-            } 
+            }
             if ($type == $Geo::OGR::OFTRealList) {
                 my $ret = GetFieldAsDoubleList($self, $field);
                 return wantarray ? @$ret : $ret;
@@ -769,31 +780,31 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
                 $type == $Geo::OGR::OFTBinary)
             {
                 _SetField($self, $field, $_[0]);
-            } 
+            }
             elsif ($type == $Geo::OGR::OFTIntegerList) {
                 SetFieldIntegerList($self, $field, $list);
-            } 
+            }
             elsif ($type == $Geo::OGR::OFTRealList) {
                 SetFieldDoubleList($self, $field, $list);
-            } 
+            }
             elsif ($type == $Geo::OGR::OFTStringList) {
                 SetFieldStringList($self, $field, $list);
-            } 
+            }
             elsif ($type == $Geo::OGR::OFTDate) {
                 # year, month, day, hour, minute, second, timezone
                 for my $i (0..6) {
                     $list->[$i] = 0 unless defined $list->[$i];
                 }
                 _SetField($self, $field, @$list[0..6]);
-            } 
+            }
             elsif ($type == $Geo::OGR::OFTTime) {
                 $list->[3] = 0 unless defined $list->[3];
                 _SetField($self, $field, 0, 0, 0, @$list[0..3]);
-            } 
+            }
             elsif ($type == $Geo::OGR::OFTDateTime) {
                 $list->[6] = 0 unless defined $list->[6];
                 _SetField($self, $field, @$list[0..6]);
-            } 
+            }
             else {
                 croak "GDAL does not have a field type of number '$type'";
             }
@@ -857,7 +868,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
             my($self, $other) = @_;
             _SetFrom($self, $other), return if @_ <= 2;
             my $forgiving = $_[2];
-            _SetFrom($self, $other, $forgiving), return if @_ <= 3;            
+            _SetFrom($self, $other, $forgiving), return if @_ <= 3;
             my $map = $_[3];
             my @list;
             for my $i (1..GetFieldCount($self)) {
@@ -869,56 +880,88 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
         package Geo::OGR::FieldDefn;
         use strict;
         use vars qw /
-            @FIELD_TYPES @JUSTIFY_TYPES
+            %SCHEMA_KEYS
+            @TYPES @SUB_TYPES @JUSTIFY_VALUES
             %TYPE_STRING2INT %TYPE_INT2STRING
+            %SUB_TYPE_STRING2INT %SUB_TYPE_INT2STRING
             %JUSTIFY_STRING2INT %JUSTIFY_INT2STRING
             /;
         use Carp;
         use Encode;
-        @FIELD_TYPES = qw/Integer IntegerList Real RealList String StringList 
-                        WideString WideStringList Binary Date Time DateTime/;
-        @JUSTIFY_TYPES = qw/Undefined Left Right/;
-        for my $string (@FIELD_TYPES) {
+        %SCHEMA_KEYS = map {$_ => 1} qw/Name Type SubType Justify Width Precision Nullable Default Ignored/;
+        for (keys %Geo::OGR::) {
+            push(@TYPES, $1), next if /^OFT(\w+)/;
+            push(@SUB_TYPES, $1), next if /^OFST(\w+)/;
+            push(@JUSTIFY_VALUES, $1), next if /^OJ(\w+)/;
+        }
+        for my $string (@TYPES) {
             my $int = eval "\$Geo::OGR::OFT$string";
             $TYPE_STRING2INT{$string} = $int;
             $TYPE_INT2STRING{$int} = $string;
         }
-        for my $string (@JUSTIFY_TYPES) {
+        for my $string (@SUB_TYPES) {
+            my $int = eval "\$Geo::OGR::OFST$string";
+            $SUB_TYPE_STRING2INT{$string} = $int;
+            $SUB_TYPE_INT2STRING{$int} = $string;
+        }
+        for my $string (@JUSTIFY_VALUES) {
             my $int = eval "\$Geo::OGR::OJ$string";
             $JUSTIFY_STRING2INT{$string} = $int;
             $JUSTIFY_INT2STRING{$int} = $string;
         }
+        sub Types {
+            return @TYPES;
+        }
+        sub SubTypes {
+            return @SUB_TYPES;
+        }
+        sub JustifyValues {
+            return @JUSTIFY_VALUES;
+        }
         sub create {
             my $pkg = shift;
-            my %param = ( Name => 'unnamed', Type => 'String' );
+            my %args = ( Name => 'unnamed', Type => 'String' );
             if (@_ == 0) {
             } elsif (@_ == 1) {
-                $param{Name} = shift;
+                $args{Name} = shift;
+            } elsif (@_ == 2 and not $SCHEMA_KEYS{$_[0]}) {
+                $args{Name} = shift;
+                $args{Type} = shift;
             } else {
-                my %known = map {$_ => 1} qw/Index Name Type Justify Width Precision/;
-                unless ($known{$_[0]}) {
-                    $param{Name} = shift;
-                    $param{Type} = shift;
-                } else {
-                    my %p = @_;
-                    for my $k (keys %known) {
-                        $param{$k} = $p{$k} if exists $p{$k};
+                my %named = @_;
+                for my $key (keys %named) {
+                    if ($SCHEMA_KEYS{$key}) {
+                        $args{$key} = $named{$key};
+                    } else {
+                        carp "Unknown Field definition create argument: '$key'.";
                     }
                 }
             }
-            croak "usage: Geo::OGR::FieldDefn->create(%params)" if ref($param{Name});
-            $param{Type} = $TYPE_STRING2INT{$param{Type}} 
-            if defined $param{Type} and exists $TYPE_STRING2INT{$param{Type}};
-            $param{Justify} = $JUSTIFY_STRING2INT{$param{Justify}} 
-            if defined $param{Justify} and exists $JUSTIFY_STRING2INT{$param{Justify}};
-            my $self = Geo::OGRc::new_FieldDefn($param{Name}, $param{Type});
+            croak "Unknown field type: '$args{Type}'." unless exists $TYPE_STRING2INT{$args{Type}};
+            $args{Type} = $TYPE_STRING2INT{$args{Type}};
+            $args{SubType} = $SUB_TYPE_STRING2INT{$args{SubType}} if exists $SUB_TYPE_STRING2INT{$args{SubType}};
+            $args{Justify} = $JUSTIFY_STRING2INT{$args{Justify}} if exists $JUSTIFY_STRING2INT{$args{Justify}};
+            my $self = Geo::OGRc::new_FieldDefn($args{Name}, $args{Type});
             if (defined($self)) {
                 bless $self, $pkg;
-                $self->Justify($param{Justify}) if exists $param{Justify};
-                $self->Width($param{Width}) if exists $param{Width};
-                $self->Precision($param{Precision}) if exists $param{Precision};
+                $self->Schema(%args);
             }
             return $self;
+        }
+        sub Schema {
+            my $self = shift;
+            if (@_) {
+                my %args = @_;
+                for my $key (keys %SCHEMA_KEYS) {
+                    eval '$self->'.$key.'($args{'.$key.'}) if exists $args{'.$key.'}';
+                }
+            }
+            return unless defined wantarray;
+            my %schema = ();
+            for my $key (keys %SCHEMA_KEYS) {
+                $schema{$key} = eval '$self->'.$key;
+            }
+            return wantarray ? %schema : \%schema;
         }
         sub Name {
             my $self = shift;
@@ -928,15 +971,25 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
         sub Type {
             my($self, $type) = @_;
             if (defined $type) {
-                $type = $TYPE_STRING2INT{$type} if $type and exists $TYPE_STRING2INT{$type};
+                croak "Unknown field type: '$type'." unless exists $TYPE_STRING2INT{$type};
+                $type = $TYPE_STRING2INT{$type};
                 SetType($self, $type);
             }
             return $TYPE_INT2STRING{GetType($self)} if defined wantarray;
         }
+        sub SubType {
+            my($self, $sub_type) = @_;
+            if (defined $sub_type) {
+                croak "Unknown field sub type: '$sub_type'." unless exists $SUB_TYPE_STRING2INT{$sub_type};
+                $sub_type = $SUB_TYPE_STRING2INT{$sub_type};
+                SetSubType($self, $sub_type);
+            }
+            return $SUB_TYPE_INT2STRING{GetSubType($self)} if defined wantarray;
+        }
         sub Justify {
             my($self, $justify) = @_;
             if (defined $justify) {
-                $justify = $JUSTIFY_STRING2INT{$justify} if $justify and exists $JUSTIFY_STRING2INT{$justify};
+                $justify = $JUSTIFY_STRING2INT{$justify} if exists $JUSTIFY_STRING2INT{$justify};
                 SetJustify($self, $justify);
             }
             return $JUSTIFY_INT2STRING{GetJustify($self)} if defined wantarray;
@@ -951,54 +1004,45 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
             SetPrecision($self, $_[0]) if @_;
             GetPrecision($self) if defined wantarray;
         }
+        sub Nullable {
+            my $self = shift;
+            SetNullable($self, $_[0]) if @_;
+            IsNullable($self) if defined wantarray;
+        }
+        sub Default {
+            my $self = shift;
+            SetDefault($self, $_[0]) if @_;
+            GetDefault($self) if defined wantarray;
+        }
         sub Ignored {
             my $self = shift;
             SetIgnored($self, $_[0]) if @_;
             IsIgnored($self) if defined wantarray;
-        }
-        sub Schema {
-            my $self = shift;
-            if (@_) {
-                my %param = @_;
-                 $self->Name($param{Name}) if exists $param{Name};
-                $self->Type($param{Type}) if exists $param{Type};
-                $self->Justify($param{Justify}) if exists $param{Justify};
-                $self->Width($param{Width}) if exists $param{Width};
-                $self->Precision($param{Precision}) if exists $param{Precision};
-            }
-            return unless defined wantarray;
-            my %schema = ( Name => $self->Name, 
-                           Type  => $self->Type,
-                           Justify  => $self->Justify,
-                           Width  => $self->Width,
-                           Precision => $self->Precision );
-            return wantarray ? %schema : \%schema;
         }
 
         package Geo::OGR::Geometry;
         use strict;
         use Carp;
         use vars qw /
-            @GEOMETRY_TYPES @BYTE_ORDER_TYPES
-            %TYPE_STRING2INT %TYPE_INT2STRING
+            @BYTE_ORDER_TYPES @GEOMETRY_TYPES
             %BYTE_ORDER_STRING2INT %BYTE_ORDER_INT2STRING
+            %TYPE_STRING2INT %TYPE_INT2STRING            
             /;
-        @GEOMETRY_TYPES = qw/Unknown 
-                        Point LineString Polygon 
-                        MultiPoint MultiLineString MultiPolygon GeometryCollection 
-                        None LinearRing
-                        Point25D LineString25D Polygon25D 
-                        MultiPoint25D MultiLineString25D MultiPolygon25D GeometryCollection25D/;
-        for my $string (@GEOMETRY_TYPES) {
-            my $int = eval "\$Geo::OGR::wkb$string";
-            $TYPE_STRING2INT{$string} = $int;
-            $TYPE_INT2STRING{$int} = $string;
-        }
         @BYTE_ORDER_TYPES = qw/XDR NDR/;
         for my $string (@BYTE_ORDER_TYPES) {
             my $int = eval "\$Geo::OGR::wkb$string";
             $BYTE_ORDER_STRING2INT{$string} = $int;
             $BYTE_ORDER_INT2STRING{$int} = $string;
+        }
+        for (keys %Geo::OGR::) {
+            next if /^wkb25/;
+            next if /^wkb.DR/;
+            push(@GEOMETRY_TYPES, $1), next if /^wkb(\w+)/;
+        }
+        for my $string (@GEOMETRY_TYPES) {
+            my $int = eval "\$Geo::OGR::wkb$string";
+            $TYPE_STRING2INT{$string} = $int;
+            $TYPE_INT2STRING{$int} = $string;
         }
         sub RELEASE_PARENTS {
             my $self = shift;
@@ -1029,7 +1073,6 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
                 $points = $param{Points};
                 $arc = ($param{arc} or $param{Arc});
             }
-            $type = $TYPE_STRING2INT{$type} if defined $type and exists $TYPE_STRING2INT{$type};
             my $self;
             if (defined $wkt) {
                 $self = Geo::OGRc::CreateGeometryFromWkt($wkt, $srs);
@@ -1040,13 +1083,13 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
             } elsif (defined $json) {
                 $self = Geo::OGRc::CreateGeometryFromJson($json);
             } elsif (defined $type) {
-                croak "unknown GeometryType '$type' when creating a Geo::OGR::Geometry object" unless 
-                    exists($TYPE_STRING2INT{$type}) or exists($TYPE_INT2STRING{$type});
+                croak "Unknown geometry type: '$type'." unless exists $TYPE_STRING2INT{$type};
+                $type = $TYPE_STRING2INT{$type};
                 $self = Geo::OGRc::new_Geometry($type);
             } elsif (defined $arc) {
                 $self = Geo::OGRc::ApproximateArcAngles(@$arc);
             } else {
-                croak "missing a parameter when creating a Geo::OGR::Geometry object";
+                croak "Missing a parameter when creating a Geo::OGR::Geometry object.";
             }
             bless $self, $pkg if defined $self;
             $self->Points($points) if $points;
@@ -1142,12 +1185,12 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
                 } elsif ($t eq 'Point') {
                     # support both "Point" as a list of one point and one point
                     if (ref($points->[0])) {
-                        $flat ? 
-                            AddPoint_2D($self, @{$points->[0]}[0..1]) : 
+                        $flat ?
+                            AddPoint_2D($self, @{$points->[0]}[0..1]) :
                             AddPoint_3D($self, @{$points->[0]}[0..2]);
                     } else {
-                        $flat ? 
-                            AddPoint_2D($self, @$points[0..1]) : 
+                        $flat ?
+                            AddPoint_2D($self, @$points[0..1]) :
                             AddPoint_3D($self, @$points[0..2]);
                     }
                 } elsif ($t eq 'LineString' or $t eq 'LinearRing') {
@@ -1219,7 +1262,10 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
         }
         sub ExportToWkb {
             my($self, $bo) = @_;
-            $bo = $BYTE_ORDER_STRING2INT{$bo} if defined $bo and exists $BYTE_ORDER_STRING2INT{$bo};
+            if (defined $bo) {
+                croak "Unknown byte order: '$bo'." unless exists $BYTE_ORDER_STRING2INT{$bo};
+                $bo = $BYTE_ORDER_STRING2INT{$bo};
+            }
             return _ExportToWkb($self, $bo);
         }
         sub ForceToMultiPoint {
@@ -1274,24 +1320,54 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
         *AsJSON = *ExportToJson;
         *BuildPolygonFromEdges = *Geo::OGR::BuildPolygonFromEdges;
         *ForceToPolygon = *Geo::OGR::ForceToPolygon;
-        
+
     }
+{
+    package Geo::OGR;
+    use strict;
+    use Carp;
     sub GeometryType {
         my($type_or_name) = @_;
         if (defined $type_or_name) {
-            return $Geo::OGR::Geometry::TYPE_STRING2INT{$type_or_name} if 
+            return $Geo::OGR::Geometry::TYPE_STRING2INT{$type_or_name} if
                 exists $Geo::OGR::Geometry::TYPE_STRING2INT{$type_or_name};
-            return $Geo::OGR::Geometry::TYPE_INT2STRING{$type_or_name} if 
+            return $Geo::OGR::Geometry::TYPE_INT2STRING{$type_or_name} if
                 exists $Geo::OGR::Geometry::TYPE_INT2STRING{$type_or_name};
-            croak "unknown geometry type constant value or name '$type_or_name'";
+            croak "Unknown geometry type: '$type_or_name'.";
         } else {
-            return keys %Geo::OGR::Geometry::TYPE_STRING2INT;
+            return @Geo::OGR::Geometry::GEOMETRY_TYPES;
         }
+    }
+    sub GeometryTypeModify {
+        my($type, $modifier) = @_;
+        croak "Unknown geometry type: '$type'." unless exists $Geo::OGR::Geometry::TYPE_STRING2INT{$type};
+        $type = $Geo::OGR::Geometry::TYPE_STRING2INT{$type};
+        return $Geo::OGR::Geometry::TYPE_INT2STRING{GT_Flatten($type)} if $modifier =~ /flat/i;
+        return $Geo::OGR::Geometry::TYPE_INT2STRING{GT_SetZ($type)} if $modifier =~ /z/i;
+        return $Geo::OGR::Geometry::TYPE_INT2STRING{GT_GetCollection($type)} if $modifier =~ /collection/i;
+        return $Geo::OGR::Geometry::TYPE_INT2STRING{GT_GetCurve($type)} if $modifier =~ /curve/i;
+        return $Geo::OGR::Geometry::TYPE_INT2STRING{GT_GetLinear($type)} if $modifier =~ /linear/i;
+        croak "Unknown geometry type modifier: '$modifier'.";
+    }
+    sub GeometryTypeTest {
+        my($type, $test, $type2) = @_;
+        croak "Unknown geometry type: '$type'." unless exists $Geo::OGR::Geometry::TYPE_STRING2INT{$type};
+        $type = $Geo::OGR::Geometry::TYPE_STRING2INT{$type};
+        if (defined $type2) {
+            croak "Unknown geometry type: '$type2'." unless exists $Geo::OGR::Geometry::TYPE_STRING2INT{$type2};
+            $type2 = $Geo::OGR::Geometry::TYPE_STRING2INT{$type2};
+        }
+        return $Geo::OGR::Geometry::TYPE_INT2STRING{GT_HasZ($type)} if $type =~ /z/i;
+        return $Geo::OGR::Geometry::TYPE_INT2STRING{GT_IsSubClassOf($type, $type2)} if $type =~ /subclass/i;
+        return $Geo::OGR::Geometry::TYPE_INT2STRING{GT_IsCurve($type)} if $type =~ /curve/i;
+        return $Geo::OGR::Geometry::TYPE_INT2STRING{GT_IsSurface($type)} if $type =~ /surface/i;
+        return $Geo::OGR::Geometry::TYPE_INT2STRING{GT_IsNonLinear($type)} if $type =~ /linear/i;
+        croak "Unknown geometry type test: '$test'.";
     }
     sub RELEASE_PARENTS {
     }
     sub GeometryTypes {
-        return keys %Geo::OGR::Geometry::TYPE_STRING2INT;
+        return @Geo::OGR::Geometry::GEOMETRY_TYPES;
     }
     sub Drivers {
         my @drivers;
@@ -1309,4 +1385,5 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
         return $driver;
     }
     *Driver = *GetDriver;
+}
 %}

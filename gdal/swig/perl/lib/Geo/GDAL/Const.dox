@@ -1,14 +1,4 @@
-## @ignore Geo::GDAL::Constc
-
 ## @class Geo::GDAL::Const
-
-## @ignore TIEHASH
-## @ignore CLEAR
-## @ignore FIRSTKEY
-## @ignore NEXTKEY
-## @ignore FETCH
-## @ignore STORE
-## @ignore this
 
 ## @attr GDT_Unknown
 # @deprecated use string 'Unknown' instead for data type

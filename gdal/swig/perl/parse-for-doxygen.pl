@@ -1,5 +1,13 @@
 my @pm = qw(lib/Geo/GDAL.pm lib/Geo/OGR.pm lib/Geo/OSR.pm lib/Geo/GDAL/Const.pm);
 
+my %internal_methods = map {$_=>1} qw/TIEHASH CLEAR FIRSTKEY NEXTKEY FETCH STORE 
+                                      DESTROY DISOWN ACQUIRE RELEASE_PARENTS
+                                      UseExceptions DontUseExceptions this AllRegister RegisterAll
+                                      callback_d_cp_vp/;
+my %private_methods = map {$_=>1} qw/PushErrorHandler PopErrorHandler Error ErrorReset 
+                                     GetLastErrorNo GetLastErrorType GetLastErrorMsg/;
+my %constant_prefixes = map {$_=>1} qw/DCAP_/;
+
 my %package;
 my $package;
 my $sub;
@@ -85,8 +93,9 @@ for my $dox (@dox) {
     open(my $fh, "<", $dox) or die "cannot open < $dox: $!";
     while (<$fh>) {
         chomp;
-        s/^[\s#]+//;
         next if $_ eq '';
+        s/^[\s#]+//;
+        #next if $_ eq '';
         ($w) = /^(\S+)\s/;
         if ($w eq '@class') {
             $package = $_;
@@ -101,7 +110,9 @@ for my $dox (@dox) {
         if ($w eq '@ignore') {
             $sub = $_;
             $sub =~ s/^(\S+)\s+//;
-            delete $package{$package}{subs}{$sub};
+            #delete $package{$package}{subs}{$sub};
+            $package{$package}{dox}{$sub}{d} = $sub;
+            $package{$package}{dox}{$sub}{at} = $w;
             next;
         }
         if ($w eq '@cmethod' or $w eq '@method') {
@@ -116,6 +127,7 @@ for my $dox (@dox) {
                 print STDERR "sub?: $_\n";
             }
             $package{$package}{dox}{$sub}{d} = $d;
+            $package{$package}{dox}{$sub}{at} = $w;
             $attr = '';
             next;
         }
@@ -174,7 +186,38 @@ for my $package (sort keys %package) {
     }
 
     for my $sub (sort keys %{$package{$package}{subs}}) {
+        next if $sub =~ /swig_/; # skip attribute setters and getters
+        next if $sub =~ /GDAL_GCP_/; # skip GDAL::GCP class methods from class GDAL
+
+        next if $sub =~ /GT_/; # done in test and modify
+
+        # processed constants
+        next if $sub =~ /^GDT_/;
+        next if $sub =~ /^GA_/;
+        next if $sub =~ /^GRA_/;
+        next if $sub =~ /^GRIORA_/;
+        next if $sub =~ /^GXT_/;
+        next if $sub =~ /^DCAP_/;
+        next if $sub =~ /^GCI_/;
+        next if $sub =~ /^GFT_/;
+        next if $sub =~ /^GFU_/;
+        next if $sub =~ /^ODrC/;
+        next if $sub =~ /^ODsC/;
+        next if $sub =~ /^OLC/;
+        next if $sub =~ /^OFT/;
+        next if $sub =~ /^OFST/;
+        next if $sub =~ /^OJ/;
+        next if $sub =~ /^wkb/;
+        next if $sub =~ /^ALTER_/;
+        next if $sub =~ /^F_/;
+
+        next if $internal_methods{$sub}; # skip internal methods
         my $d = $package{$package}{dox}{$sub}{d};
+        my $nxt = 0;
+        for my $prefix (keys %constant_prefixes) {
+            $nxt = 1 if $sub =~ /^$prefix/;
+        }
+        next if $nxt;
         $d = $sub unless $d;
         $d =~ s/^\$/scalar /;
         $d =~ s/^\\\$/scalar_ref /;
@@ -182,9 +225,32 @@ for my $package (sort keys %package) {
         $d =~ s/^\\\@/list_ref /;
         $d =~ s/^\%/hash /;
         $d =~ s/^\\\%/hash_ref /;
-        print "#** \@method $d\n";
+        $dp = $d;
+        $dp .= '()' unless $dp =~ /\(/;
+        print "#** \@method $dp\n";
+        if ($private_methods{$d} or $package{$package}{dox}{$sub}{at} eq '@ignore') {
+            print "# Undocumented method, do not call unless you know what you're doing.\n";
+            print "# \@todo Test and document this method.\n";
+        }
+        if ($package{$package}{dox}{$sub}{at} eq '@cmethod') {
+            print "# Class method.\n";
+        }
         for my $c (@{$package{$package}{dox}{$sub}{c}}) {
-            print "# $c\n";
+            if ($c =~ /^\+list/) {
+                $c =~ s/\+list //;
+                my($p, $s, $ex) = split / /, $c;
+                my %ex = map {$_=>1} split /,/, $ex;
+                print "# ";
+                for my $l (sort keys %{$package{$p}{subs}}) {
+                    next unless $l =~ /^$s/;
+                    $l =~ s/^$s//;
+                    next if $ex{$l};
+                    print "$l ";
+                }
+                print "\n";
+            } else {
+                print "# $c\n";
+            }
         }
         print "#*\n";
         print "sub $sub {\n";

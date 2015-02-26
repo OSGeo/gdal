@@ -1,17 +1,4 @@
-## @ignore Geo::OSRc
-
 ## @class Geo::OSR
-
-## @ignore UseExceptions
-## @ignore DontUseExceptions
-
-## @ignore TIEHASH
-## @ignore CLEAR
-## @ignore FIRSTKEY
-## @ignore NEXTKEY
-## @ignore FETCH
-## @ignore STORE
-## @ignore this
 
 ## @method $GetWellKnownGeogCSAsWKT($name)
 # @param name a well known name
@@ -329,7 +316,7 @@
 # @param z [optional]
 # @return arrayref = [$x, $y, $z]
 
-## @method TransformPoints(\@points)
+## @method TransformPoints(arrayref points)
 # @param points [in/out] a reference to a list of points (line string
 # or ring) that is modified in-place. A list of points is: ([x, y, z],
 # [x, y, z], ...), where z is optional. Supports also lists of line
