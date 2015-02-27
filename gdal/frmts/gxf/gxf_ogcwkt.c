@@ -29,6 +29,7 @@
  ****************************************************************************/
 
 #include "gxfopen.h"
+#include "ogr_srs_api.h"
 
 CPL_CVSID("$Id$");
 
@@ -583,7 +584,7 @@ char *GXFGetMapProjectionAsOGCWKT( GXFHandle hGXF )
             else
             {
                 dfMinor = dfMajor * pow(1.0-dfEccentricity*dfEccentricity,0.5);
-                dfInvFlattening = 1.0 / (1 - dfMinor/dfMajor);
+                dfInvFlattening = OSRCalcInvFlattening(dfMajor, dfMinor);
             }
 
             pszOGCDatum = CPLStrdup(papszTokens[0]);
