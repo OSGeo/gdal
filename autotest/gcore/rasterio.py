@@ -539,6 +539,26 @@ def rasterio_9():
         gdaltest.post_reason('failure')
         return 'fail'
 
+    # Test RasterBand.ReadRaster, with Lanczos
+    tab = [ 0, None ]
+    data = ds.GetRasterBand(1).ReadRaster(buf_xsize = 10,
+                                          buf_ysize = 10,
+                                          resample_alg = gdal.GRIORA_Lanczos,
+                                          callback = rasterio_9_progress_callback,
+                                          callback_data = tab)
+    if data is None:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    cs = rasterio_9_checksum(data, 10, 10)
+    if cs != 1154: # checksum of gdal_translate data/byte.tif out.tif -outsize 10 10 -r LANCZOS
+        gdaltest.post_reason('failure')
+        print(cs)
+        return 'fail'
+
+    if abs(tab[0] - 1.0) > 1e-5:
+        gdaltest.post_reason('failure')
+        return 'fail'
+
     # Test RasterBand.ReadRaster, with Bilinear and UInt16 data type
     src_ds_uint16 = gdal.Open('data/uint16.tif')
     tab = [ 0, None ]
