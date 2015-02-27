@@ -1999,8 +1999,8 @@ void netCDFDataset::SetProjectionFromVar( int nVarId )
                         if( dfSemiMajorAxis < 0.0 )
                             dfSemiMajorAxis = dfEarthRadius;
                         //set inv_flat using semi_minor/major
-                        dfInverseFlattening = 
-                            1.0 / ( dfSemiMajorAxis - dfSemiMinorAxis ) / dfSemiMajorAxis;
+                        dfInverseFlattening = OSRCalcInvFlattening(dfSemiMajorAxis, dfSemiMinorAxis);
+
                         oSRS.SetGeogCS( "unknown", 
                                         NULL, 
                                         "Spheroid", 
