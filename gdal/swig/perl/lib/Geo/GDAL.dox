@@ -4,21 +4,11 @@
 # A wrapper for many GDAL utility functions and a root class for all
 # GDAL classes.
 
-## @ignore Debug
-## @ignore ApplyGeoTransform
-## @ignore ContourGenerate
-## @ignore EscapeString
 ## @ignore FileFromMemBuffer
-## @ignore FillNodata
 ## @ignore GDALDestroyDriverManager
 ## @ignore HasThreadSupport
-## @ignore InvGeoTransform
-## @ignore Mkdir
-## @ignore Rename
-## @ignore Rmdir
 ## @ignore TermProgress
 ## @ignore TermProgress_nocb
-## @ignore Unlink
 
 ## @cmethod @ReadDir($dir)
 # @return Contents of the directory.
@@ -107,10 +97,6 @@
 # @return the value of the GDAL config option or the value of the
 # default parameter.
 
-## @ignore CPLBinaryToHex()
-
-## @ignore CPLHexToBinary()
-
 ## @cmethod \@GCPsToGeoTransform(arrayref GCPs, $ApproxOK = 1)
 # Compute transformation coefficients from a set of Geo::GDAL::GCP
 # objects
@@ -136,7 +122,8 @@
 # @return the amount of memory currently used for caching within GDAL.
 
 ## @cmethod @DataTypes()
-# @return a list of GDAL pixel data types.
+# @return a list of GDAL pixel data types. These are currently:
+# +list Geo::GDAL::Const GDT_ TypeCount
 
 ## @cmethod $GetDataTypeSize($DataType)
 # @param DataType A GDAL pixel data type (one of those listed by Geo::GDAL::DataTypes).
@@ -151,7 +138,8 @@
 # @return true if the data type is a complex number.
 
 ## @cmethod @AccessTypes()
-# @return a list of GDAL data set open modes.
+# @return a list of GDAL data set open modes. These are currently:
+# +list Geo::GDAL::Const GA_
 
 ## @cmethod @ResamplingTypes()
 # @return a list of GDAL resampling methods.
@@ -176,7 +164,8 @@
 # @return packed DMS, i.e., a number DDDMMMSSS.SS
 
 ## @cmethod @NodeTypes()
-# @return a list of GDAL XML parser node types.
+# @return a list of GDAL XML parser node types. These are currently:
+# +list Geo::GDAL::Const CXT_
 
 ## @cmethod $NodeType($type)
 # Convert between integer and string expressions of CPLXMLNodeTypes
@@ -435,10 +424,6 @@
 #
 # This class is not yet documented nor tested in the GDAL Perl wrappers
 
-## @ignore GetNextUpdatedRegion
-## @ignore LockBuffer
-## @ignore UnlockBuffer
-
 
 ## @class Geo::GDAL::MajorObject
 # @isa (Geo::GDAL)
@@ -461,7 +446,6 @@
 # @param NewDesc
 
 ## @ignore SetMetadataItem
-
 ## @ignore GetMetadataItem
 
 ## @method \%Metadata(hashref metadata = undef, $domain = '')
@@ -485,10 +469,7 @@
 # @brief Raster format drivers.
 
 ## @ignore Register
-
 ## @ignore Deregister
-
-## @ignore CopyFiles
 
 ## @attr ShortName
 # $driver->{ShortName}
@@ -773,7 +754,7 @@
 # @return the number of this band.
 
 ## @method $DataType()
-# @return the data type of this band (as string).
+# @return the data type of this band (as string, one of Geo::GDAL::DataTypes).
 
 ## @method @Size()
 # @return the size of the band as a list (width, height).
@@ -984,12 +965,11 @@
 # @return a new Geo::GDAL::ColorTable object in a non-void context.
 
 ## @ignore GetRasterColorTable
+## @ignore SetRasterColorTable
 
 ## @method Geo::GDAL::ColorTable GetColorTable()
 # @note a.k.a. GetRasterColorTable, see also ColorTable
 # @return a color table object.
-
-## @ignore SetRasterColorTable
 
 ## @method SetColorTable($ColorTable)
 # @note a.k.a. SetRasterColorTable, see also ColorTable
@@ -1006,12 +986,11 @@
 # @return
 
 ## @ignore GetCategoryNames
+## @ignore SetCategoryNames
 
 ## @method $GetRasterCategoryNames()
 # @note a.k.a. GetCategoryNames, see also CategoryNames
 # @return names
-
-## @ignore SetCategoryNames
 
 ## @method SetRasterCategoryNames($names)
 # @note a.k.a. SetCategoryNames, see also CategoryNames

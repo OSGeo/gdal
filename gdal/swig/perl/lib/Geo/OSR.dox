@@ -1,33 +1,48 @@
 ## @class Geo::OSR
 
-## @method $GetWellKnownGeogCSAsWKT($name)
+## @cmethod @Projections()
+# @return list of known projections.
+
+## @cmethod @Parameters()
+# @return list of known projection parameters.
+
+## @cmethod @LinearUnits()
+# @return list of known linear units.
+
+## @cmethod @AngularUnits()
+# @return list of known angular units.
+
+## @cmethod @Datums()
+# @return list of known datums.
+
+## @cmethod $GetWellKnownGeogCSAsWKT($name)
+# @brief Get well known geographic coordinate system as WKT
 # @param name a well known name
 # @return a WKT string
 
-## @method $GetUserInputAsWKT($name)
+## @cmethod $GetUserInputAsWKT($name)
 # @param name the user input
 # @return a WKT string
 
-## @method \@GetProjectionMethods()
+## @cmethod \@GetProjectionMethods()
+# @deprecated Use Geo::OSR::Projections.
 # @return reference to an array of possible projection methods
 
-## @method @GetProjectionMethodParameterList($method)
-# @param method projection method name
+## @cmethod @GetProjectionMethodParameterList($projection)
+# @param projection one of Geo::OSR::Projections
 # @return (arrayref parameters, $projection_name)
 
-## @method @GetProjectionMethodParamInfo($method, $parameter)
-# @return ($user_friendly_name, $type, $defaultval)
+## @cmethod @GetProjectionMethodParamInfo($projection, $parameter)
+# @param projection one of Geo::OSR::Projections
+# @param parameter one of Geo::OSR::Parameters
+# @return ($user_friendly_name, $type, $default_value)
 
 
 ## @class Geo::OSR::SpatialReference
-# @brief <a href="http://www.gdal.org/ogr/classOGRSpatialReference.html">Documentation
+# @brief A spatial reference system
+#
+# <a href="http://www.gdal.org/ogr/classOGRSpatialReference.html">Documentation
 # of the underlying C++ class at www.gdal.org</a>
-
-## @attr list PROJECTIONS
-# Projections known to GDAL
-
-## @attr list PARAMETERS
-# Some projection parameters known to GDAL
 
 ## @cmethod Geo::OSR::SpatialReference new($wkt = undef)
 # @param wkt well known text
@@ -176,30 +191,31 @@
 # Set a parameter or parameters in the spatial reference object.
 # @param params Named parameters. Recognized keys and respective
 # values are the following.
-# - Authority: authority name
-# - Node: partial or complete path to the target node
-# - AngularUnits: angular units for the geographic coordinate system
-# - LinearUnits: linear units for the target node or the object
-# - CoordinateSystem: 'UTM', 'State Plane', 'WGS' or a user visible name 
-# - Zone: zone for setting up UTM or State Plane coordinate systems (State Plane zone in USGS numbering scheme)
-# - Projection: one from \@Geo::OSR::PROJECTIONS
-# - Parameter: one from \@Geo::OSR::PARAMETERS
+# - Authority: authority name (give also TargetKey, Node and Code)
+# - TargetKey:
+# - Node: partial or complete path to the target node (Node and Value together sets an attribute value)
 # - Code: code for value with an authority
-# - Value: value to be assigned to a node, the projection or the object
+# - Value: value to be assigned to a node, a projection parameter or an object
+# - AngularUnits: angular units for the geographic coordinate system (give also Value) (one of Geo::OSR::LinearUnits)
+# - LinearUnits: linear units for the target node or the object (give also Value and optionally Node) (one of Geo::OSR::LinearUnits)
+# - Parameter: projection parameter to set (give also Value and Normalized) (one of Geo::OSR::Parameters)
 # - Normalized: set to true to indicate that the Value argument is in "normalized" form
-# - Parameters: a reference to a list containing the projection parameters
-# - Name: Transverse Mercator variant name or a well known name (e.g. WGS84)
-# - GuessFrom: tries to guess from given text
+# - Name: a well known name of a geographic coordinate system (e.g. WGS84)
+# - GuessFrom: arbitrary text that specifies a projection ("user input")
+# - LOCAL_CS: name of a local coordinate system
+# - GeocentricCS: name of a geocentric coordinate system
+# - VerticalCS: name of a vertical coordinate system (give also Datum and optionally VertDatumType [default is 2005])
+# - Datum: a known (OGC or EPSG) name (or(?) one of Geo::OSR::Datums)
+# - CoordinateSystem: 'WGS', 'UTM', 'State Plane', or a user visible name (give optionally also Parameters, Zone, North, NAD83, UnitName, UnitConversionFactor, Datum, Spheroid, HorizontalCS, and/or VerticalCS
+# - Parameters: a reference to a list containing the coordinate system or projection parameters
+# - Zone: zone for setting up UTM or State Plane coordinate systems (State Plane zone in USGS numbering scheme)
 # - North: set false for southern hemisphere
 # - NAD83: set false if the NAD27 zone definition should be used instead of NAD83
 # - UnitName: to override the legal definition for a zone
 # - UnitConversionFactor: to override the legal definition for a zone
-# - LOCAL_CS: local cs name
-# - Datum: a known (OGC or EPSG) name
 # - Spheroid: user visible name
-# - GeocentricCS: Geocentric coorinate system name
 # - HorizontalCS: Horizontal coordinate system name
-# - VerticalCS: Vertical coordinate system name (setting requires Datum)
+# - Projection: name of a projection, one of Geo::OSR::Projections (give also optionally Parameters and Variant)
 #
 # @note Numerous Set* methods also exist but are not documented here.
 

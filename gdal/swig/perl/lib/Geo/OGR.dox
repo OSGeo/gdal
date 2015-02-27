@@ -15,7 +15,8 @@
 ## @ignore GetFieldTypeName
 
 ## @method @GeometryTypes()
-# @return a list of all geometry types.
+# @return a list of all geometry types, currently:
+# +list Geo::OGR wkb 25DBit,25Bit,NDR,XDR
 
 ## @method $GeometryTypeModify($type, $modifier)
 # @param type a geometry type (one of Geo::OGR::GeometryTypes).
@@ -32,7 +33,6 @@
 ## @ignore CreateGeometryFromWkt
 ## @ignore CreateGeometryFromGML
 ## @ignore CreateGeometryFromJson
-## @ignore ApproximateArcAngles
 
 ## @method @Drivers()
 # @return a list of Geo::OGR::Driver objects, one for each OGR format.
@@ -71,67 +71,9 @@
 # @return a new Geo::OGR::Driver object
 
 ## @ignore NullFID
-## @ignore wkb25Bit
-## @ignore wkb25DBit
-## @ignore wkbUnknown
-## @ignore wkbPoint
-## @ignore wkbLineString
-## @ignore wkbPolygon
-## @ignore wkbMultiPoint
-## @ignore wkbMultiLineString
-## @ignore wkbMultiPolygon
-## @ignore wkbGeometryCollection
-## @ignore wkbNone
-## @ignore wkbLinearRing
-## @ignore wkbPoint25D
-## @ignore wkbLineString25D
-## @ignore wkbPolygon25D
-## @ignore wkbMultiPoint25D
-## @ignore wkbMultiLineString25D
-## @ignore wkbMultiPolygon25D
-## @ignore wkbGeometryCollection25D
-## @ignore OFTInteger
-## @ignore OFTIntegerList
-## @ignore OFTReal
-## @ignore OFTRealList
-## @ignore OFTString
-## @ignore OFTStringList
-## @ignore OFTWideString
-## @ignore OFTWideStringList
-## @ignore OFTBinary
-## @ignore OFTDate
-## @ignore OFTTime
-## @ignore OFTDateTime
-## @ignore OJUndefined
-## @ignore OJLeft
-## @ignore OJRight
-## @ignore wkbXDR
-## @ignore wkbNDR
-## @ignore OLCRandomRead
-## @ignore OLCSequentialWrite
-## @ignore OLCRandomWrite
-## @ignore OLCFastSpatialFilter
-## @ignore OLCFastFeatureCount
-## @ignore OLCFastGetExtent
-## @ignore OLCCreateField
-## @ignore OLCTransactions
-## @ignore OLCDeleteFeature
-## @ignore OLCFastSetNextByIndex
-## @ignore OLCAlterFieldDefn
-## @ignore OLCDeleteField
-## @ignore OLCIgnoreFields
-## @ignore OLCReorderFields
-## @ignore OLCStringsAsUTF8
-## @ignore ODsCCreateLayer
-## @ignore ODsCDeleteLayer
-## @ignore ODrCCreateDataSource
-## @ignore ODrCDeleteDataSource
 
 ## @class Geo::OGR::Driver
 # @isa (Geo::OGR)
-
-## @attr list CAPABILITIES
-# Driver capabilities known to GDAL
 
 ## @ignore Register
 ## @ignore Deregister
@@ -140,14 +82,15 @@
 # scalar (access as $driver->{name})
 
 ## @cmethod @Capabilities()
-# @return a list of capabilities. The class method returns a list of
-# all potential capabilities a driver may have; the object method
-# returns a list of all capabilities the driver has.
 # Examples.
 # \code
 # @all_capabilities = Geo::OGR::Driver::Capabilities;
 # @capabilities_of_a_driver = Geo::OGR::Driver('KML')->Capabilities;
 # \endcode
+# @return a list of capabilities. The object method returns a list of
+# all capabilities the driver has. The class method returns a list of
+# all potential capabilities a driver may have. These are currently:
+# +list Geo::OGR ODrC
 
 ## @method $TestCapability($cap)
 # @param cap A capability string.
@@ -198,18 +141,17 @@
 ## @class Geo::OGR::DataSource
 # @isa (Geo::OGR)
 
-## @attr list CAPABILITIES
-# Data source capabilities known to GDAL
-
 ## @ignore SyncToDisk
 
 ## @attr name
 # string (access as $datasource->{name})
 
 ## @cmethod @Capabilities()
-# @return a list of capabilities. The class method returns a list of
-# all potential capabilities a data source may have; the object method
-# returns a list of all capabilities the data source has.
+# @return a list of capabilities. The object method returns a list of
+# all capabilities the data source has. The class method returns a
+# list of all potential capabilities a data source may have. These are
+# currently:
+# +list Geo::OGR ODsC
 
 ## @method $TestCapability($cap)
 # @param cap A capability string.
@@ -306,15 +248,11 @@
 # @return a new Geo::OGR::Layer object.
 
 ## @ignore GetRefCount
-
 ## @ignore GetSummaryRefCount
 
 
 ## @class Geo::OGR::Layer
 # @isa (Geo::OGR)
-
-## @attr list CAPABILITIES
-# Layer capabilities known to GDAL
 
 ## @cmethod @Capabilities()
 # Examples:
@@ -322,9 +260,10 @@
 # @cap = Geo::OGR::Layer::Capabilities(); # the class method
 # @cap = $layer->Capabilities(); # the object method
 # \endcode
-# @return a list of capabilities. The class method returns a list of
-# all potential capabilities a layer may have. The object method
-# returns a list of all capabilities the layer has.
+# @return a list of capabilities. The object method returns a list of
+# all capabilities the layer has. The class method returns a list of
+# all potential capabilities a layer may have. These are currently:
+# +list Geo::OGR OLC
 
 ## @method $TestCapability($cap)
 # @param cap A capability string.
@@ -474,11 +413,11 @@
 # layer
 
 ## @method $GetName()
-# @return
+# @return the name of the layer.
 
 ## @method Geo::OGR::Feature GetFeature($fid)
 # @param fid feature id
-# @return a new Geo::OGR::Feature object
+# @return a new Geo::OGR::Feature object that represents the feature in the layer.
 
 ## @method SetFeature($feature)
 # @note The feature should have the same schema as the layer.
@@ -550,9 +489,6 @@
 
 ## @method $GeometryType()
 # @return the geometry type of the layer, one of \@Geo::OGR::Geometry::GEOMETRY_TYPES
-
-## @ignore ReorderField
-## @ignore ReorderFields
 
 ## @method SetIgnoredFields(@fields)
 # @param fields a list of field names
@@ -1154,10 +1090,7 @@
 # @return a new Geo::OGR::Geometry object
 
 ## @method $GeometryType()
-# @return the geometry type of this geometry.
-
-## @cmethod $GeometryType()
-# @return the geometry type of this geometry.
+# @return the geometry type of this geometry (one of Geo::OGR::GeometryTypes).
 
 ## @method $Length()
 # @return the length of the linestring
@@ -1172,7 +1105,7 @@
 # @return an integer
 
 ## @method $GetGeometryRef($index)
-# @param index
+# @param index index to the geometry, which is a part of this geometry
 # @return a new Geo::OGR::Geometry object whose data is a part of the
 # parent geometry
 
@@ -1197,7 +1130,7 @@
 # @return a list of new Geo::OGR::Geometry objects cloned from the collection.
 
 ## @method Geo::OGR::Geometry ForceToPolygon()
-# Attempt to create a polygon from the geometry.
+# Attempt to create a polygon from this geometry.
 # @exception None reported. If this method fails, just a copy is returned.
 # @return a new Geo::OGR::Geometry object
 
@@ -1349,5 +1282,5 @@
 # @return type as an integer
 
 ## @method $GetGeometryName()
-# @deprecated use string names
+# @deprecated use Geo::OGR::Geometry::GeometryType
 # @return a string
