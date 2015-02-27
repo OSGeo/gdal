@@ -106,7 +106,10 @@ bool FGdbDataSource::OpenFGDBTables(const std::wstring &type,
         if (FAILED(hr = m_pGeodatabase->OpenTable(layers[i], *pTable)))
         {
             delete pTable;
-            GDBDebug(hr, "Error opening " + WStringToString(layers[i]) + ". Skipping it");
+            GDBErr(hr, "Error opening " + WStringToString(layers[i]),
+                   CE_Warning,
+                   ". Skipping it. "
+                   "Might be due to unsupported spatial reference system. Using OpenFileGDB driver should solve it");
             continue;
         }
         FGdbLayer* pLayer = new FGdbLayer();

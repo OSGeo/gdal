@@ -89,6 +89,10 @@ respectively the definition and metadata of a FileGDB table as XML content.
 <h2>Known Issues</h2>
 
 <ul>
+        <li>The SDK is known to be unable to open layers with particular spatialy reference systems.
+            This might be the case if messages "FGDB: Error opening XXXXXXX. Skipping it (Invalid function arguments.)"
+            when running "ogrinfo --debug on the.gdb" (reported as warning in GDAL 2.0).
+            Using the OpenFileGDB driver will generally solve that issue.</li>
 	<li>Blob fields have not been implemented.</li>
 	<li>FGDB coordinate snapping will cause geometries to be altered during writing. Use the origin and scale layer creation options to control the snapping behavior.</li>
 	<li>Driver can't read data from compressed feature classes (SDC, Smart Data Compression) because operation is not supported by the ESRI SDK.</li>

@@ -71,7 +71,7 @@ bool GDBFieldTypeToWidthPrecision(std::string &gdbType, int *width, int *precisi
 //
 // GDBAPI error to OGR
 //
-bool GDBErr(long hr, std::string desc);
+bool GDBErr(long hr, std::string desc, CPLErr errType = CE_Failure, const char* pszAddMsg = "");
 bool GDBDebug(long hr, std::string desc);
 
 //

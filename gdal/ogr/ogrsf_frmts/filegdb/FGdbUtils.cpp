@@ -68,7 +68,7 @@ std::string WStringToString(const std::wstring& utf16string)
 /*                                GDBErr()                               */
 /*************************************************************************/
 
-bool GDBErr(long int hr, std::string desc)
+bool GDBErr(long int hr, std::string desc, CPLErr errType, const char* pszAddMsg)
 {
     std::wstring fgdb_error_desc_w;
     fgdbError er;
@@ -76,13 +76,13 @@ bool GDBErr(long int hr, std::string desc)
     if ( er == S_OK )
     {
         std::string fgdb_error_desc = WStringToString(fgdb_error_desc_w);
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Error: %s (%s)", desc.c_str(), fgdb_error_desc.c_str());
+        CPLError( errType, CPLE_AppDefined,
+                  "%s (%s)%s", desc.c_str(), fgdb_error_desc.c_str(), pszAddMsg);
     }
     else
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Error (%ld): %s", hr, desc.c_str());
+        CPLError( errType, CPLE_AppDefined,
+                  "Error (%ld): %s%s", hr, desc.c_str(), pszAddMsg);
     }
     // FIXME? EvenR: not sure if ClearErrors() is really necessary, but as it, it causes crashes in case of
     // repeated errors
