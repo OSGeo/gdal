@@ -2213,7 +2213,7 @@ static double GWKLanczosSinc4Values( double* padfValues )
             padfValues[i] = 1.0;
         else
         {
-            const double dfPIX = GWK_PI * padfValues[0];
+            const double dfPIX = GWK_PI * padfValues[i];
             const double dfPIXoverR = dfPIX / 3;
             const double dfPIX2overR = dfPIX * dfPIXoverR;
             padfValues[i] = sin(dfPIX) * sin(dfPIXoverR) / dfPIX2overR;
