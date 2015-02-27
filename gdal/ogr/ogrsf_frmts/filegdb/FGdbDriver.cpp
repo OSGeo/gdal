@@ -303,7 +303,7 @@ void RegisterOGRFileGDB()
 "  <Option name='FEATURE_DATASET' type='string' description='FeatureDataset folder into to put the new layer'/>"
 "  <Option name='GEOMETRY_NAME' type='string' description='Name of geometry column' default='SHAPE'/>"
 "  <Option name='GEOMETRY_NULLABLE' type='boolean' description='Whether the values of the geometry column can be NULL' default='YES'/>"
-"  <Option name='OID_NAME' type='string' description='Name of OID column' default='OBJECTID'/>"
+"  <Option name='FID' type='string' description='Name of OID column' default='OBJECTID' deprecated_alias='OID_NAME'/>"
 "  <Option name='XYTOLERANCE' type='float' description='Snapping tolerance, used for advanced ArcGIS features like network and topology rules, on 2D coordinates, in the units of the CRS'/>"
 "  <Option name='ZTOLERANCE' type='float' description='Snapping tolerance, used for advanced ArcGIS features like network and topology rules, on Z coordinates, in the units of the CRS'/>"
 "  <Option name='XORIGIN' type='float' description='X origin of the coordinate precision grid'/>"

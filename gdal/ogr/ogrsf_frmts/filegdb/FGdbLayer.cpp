@@ -1387,7 +1387,7 @@ bool FGdbLayer::CreateFeatureDataset(FGdbDataSource* pParentDataSource,
 /* Layer creation options:                                              */
 /*   FEATURE_DATASET, nest layer inside a FeatureDataset folder         */
 /*   GEOMETRY_NAME, user-selected name for the geometry column          */
-/*   OID_NAME, user-selected name for the FID column                    */
+/*   FID/OID_NAME, user-selected name for the FID column                */
 /*   XORIGIN, YORIGIN, ZORIGIN, origin of the snapping grid             */
 /*   XYSCALE, ZSCALE, inverse resolution of the snapping grid           */
 /*   XYTOLERANCE, ZTOLERANCE, snapping tolerance for topology/networks  */
@@ -1483,7 +1483,9 @@ bool FGdbLayer::Create(FGdbDataSource* pParentDataSource,
         geometry_name = CSLFetchNameValue( papszOptions, "GEOMETRY_NAME");
 
     /* Over-ride the OID name if necessary */
-    if ( CSLFetchNameValue( papszOptions, "OID_NAME") != NULL )
+    if ( CSLFetchNameValue( papszOptions, "FID") != NULL )
+        fid_name = CSLFetchNameValue( papszOptions, "FID");
+    else if ( CSLFetchNameValue( papszOptions, "OID_NAME") != NULL )
         fid_name = CSLFetchNameValue( papszOptions, "OID_NAME");
 
     /* Figure out our geometry type */
