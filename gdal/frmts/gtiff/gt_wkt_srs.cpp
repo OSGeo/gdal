@@ -640,7 +640,7 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
     else if( dfInvFlattening == 0.0 && ((psDefn->SemiMinor / psDefn->SemiMajor) < 0.99999999999999999
                                         || (psDefn->SemiMinor / psDefn->SemiMajor) > 1.00000000000000001 ) )
     {
-        dfInvFlattening = -1.0 / (psDefn->SemiMinor/psDefn->SemiMajor - 1.0);
+        dfInvFlattening = OSRCalcInvFlattening(psDefn->SemiMajor,psDefn->SemiMinor);
 
         /* Take official inverse flattening definition in the WGS84 case */
         if (fabs(dfSemiMajor-SRS_WGS84_SEMIMAJOR) < 1e-10 &&

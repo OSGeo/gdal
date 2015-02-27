@@ -675,13 +675,7 @@ OGRErr OGRSpatialReference::importFromUSGS( long iProjSys, long iZone,
             {
                 if ( padfPrjParams[1] > 1.0 )
                 {
-                    if( ABS(padfPrjParams[0] - padfPrjParams[1]) < 0.01 )
-                        dfInvFlattening = 0.0;
-                    else
-                    {
-                        dfInvFlattening = padfPrjParams[0]
-                            / ( padfPrjParams[0] - padfPrjParams[1] );
-                    }
+                    dfInvFlattening = OSRCalcInvFlattening(padfPrjParams[0], padfPrjParams[1] );
                 }
                 else if ( padfPrjParams[1] > 0.0 )
                 {

@@ -621,12 +621,7 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
                         {
                             dfSemiMajor = CPLAtof( papszLineItems[2] );
                             double dfSemiMinor = CPLAtof( papszLineItems[3] );
-
-                            if( ABS(dfSemiMajor - dfSemiMinor) < 0.01 )
-                                dfInvFlattening = 0.0;
-                            else
-                                dfInvFlattening = 
-                                    dfSemiMajor / (dfSemiMajor - dfSemiMinor);
+                            dfInvFlattening = OSRCalcInvFlattening(dfSemiMajor, dfSemiMinor);
                             break;
                         }
                         CSLDestroy( papszLineItems );
@@ -644,16 +639,8 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
                 && padfPrjParams[0] != 0.0 )
             {
                 dfSemiMajor = padfPrjParams[0];
-
-                if( ABS(padfPrjParams[0] - padfPrjParams[1]) < 0.01 )
-                {
-                    dfInvFlattening = 0.0;
-                }
-                else
-                {
-                    dfInvFlattening =
-                        padfPrjParams[0]/(padfPrjParams[0]-padfPrjParams[1]);
-                }
+                double dfSemiMinor = padfPrjParams[1];
+                dfInvFlattening = OSRCalcInvFlattening(dfSemiMajor, dfSemiMinor);
             }
 
 /* -------------------------------------------------------------------- */
@@ -1190,13 +1177,7 @@ OGRErr OGRSpatialReference::exportToPCI( char **ppszProj, char **ppszUnits,
         {
             const char *pszCSV = CSVFilename( "pci_ellips.txt" );
             FILE *fp = NULL;
-            double dfSemiMinor;
-
-            if( dfInvFlattening == 0.0 )
-                dfSemiMinor = dfSemiMajor;
-            else
-                dfSemiMinor = dfSemiMajor * (1.0 - 1.0/dfInvFlattening);
-
+            double dfSemiMinor = OSRCalcSemiMinorFromInvFlattening(dfSemiMajor, dfInvFlattening);
 
             if( pszCSV )
                 fp = VSIFOpen( pszCSV, "r" );
@@ -1228,15 +1209,7 @@ OGRErr OGRSpatialReference::exportToPCI( char **ppszProj, char **ppszUnits,
         {                                   
             CPLPrintStringFill( szEarthModel, "E999", 4 );
             (*ppadfPrjParams)[0] = dfSemiMajor;
-            if ( ABS( dfInvFlattening ) < 0.000000000001 )
-            {
-                (*ppadfPrjParams)[1] = dfSemiMajor;
-            }
-            else
-            {
-                (*ppadfPrjParams)[1] =
-                    dfSemiMajor * (1.0 - 1.0/dfInvFlattening);
-            }
+            (*ppadfPrjParams)[1] = OSRCalcSemiMinorFromInvFlattening(dfSemiMajor, dfInvFlattening);
         }
     }
 

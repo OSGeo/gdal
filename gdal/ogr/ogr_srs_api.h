@@ -716,6 +716,8 @@ OGRErr CPL_DLL OSRSetWagner( OGRSpatialReferenceH hSRS, int nVariation,
 OGRErr CPL_DLL OSRSetQSC( OGRSpatialReferenceH hSRS,
                               double dfCenterLat, double dfCenterLong );
 
+double CPL_DLL OSRCalcInvFlattening( double dfSemiMajor, double dfSemiMinor );
+double CPL_DLL OSRCalcSemiMinorFromInvFlattening( double dfSemiMajor, double dfInvFlattening );
 
 void CPL_DLL OSRCleanup( void );
 

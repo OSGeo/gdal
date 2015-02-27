@@ -771,11 +771,10 @@ OSRGetEllipsoidInfo( int nCode, char ** ppszName,
                                   "ELLIPSOID_CODE", szSearchKey, CC_Integer,
                                   "SEMI_MINOR_AXIS" )) * dfToMeters;
 
-            if( dfSemiMajor != 0.0 && dfSemiMajor != dfSemiMinor )
-                *pdfInvFlattening = 
-                    -1.0 / (dfSemiMinor/dfSemiMajor - 1.0);
-            else
+            if( dfSemiMajor == 0.0 )
                 *pdfInvFlattening = 0.0;
+            else
+                *pdfInvFlattening = OSRCalcInvFlattening(dfSemiMajor, dfSemiMinor);
         }
     }
 

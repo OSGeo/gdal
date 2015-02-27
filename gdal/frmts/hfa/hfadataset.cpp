@@ -33,6 +33,7 @@
 #include "gdal_rat.h"
 #include "hfa_p.h"
 #include "ogr_spatialref.h"
+#include "ogr_srs_api.h"
 
 CPL_CVSID("$Id$");
 
@@ -4403,10 +4404,7 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
     if( psPro->proSpheroid.b == 0.0 )
         ((Eprj_ProParameters *) psPro)->proSpheroid.b = 6356752.3;
 
-    if( fabs(psPro->proSpheroid.b - psPro->proSpheroid.a) < 0.001 )
-        dfInvFlattening = 0.0; /* special value for sphere. */
-    else
-        dfInvFlattening = 1.0/(1.0-psPro->proSpheroid.b/psPro->proSpheroid.a);
+    dfInvFlattening = OSRCalcInvFlattening(psPro->proSpheroid.a, psPro->proSpheroid.b);
 
 /* -------------------------------------------------------------------- */
 /*      Handle different projection methods.                            */

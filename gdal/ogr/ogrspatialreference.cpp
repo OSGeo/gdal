@@ -2889,10 +2889,7 @@ double OGRSpatialReference::GetSemiMinor( OGRErr * pnErr ) const
     dfSemiMajor = GetSemiMajor( pnErr );
     dfInvFlattening = GetInvFlattening( pnErr );
 
-    if( ABS(dfInvFlattening) < 0.000000000001 )
-        return dfSemiMajor;
-    else
-        return dfSemiMajor * (1.0 - 1.0/dfInvFlattening);
+    return OSRCalcSemiMinorFromInvFlattening(dfSemiMajor, dfInvFlattening);
 }
 
 /************************************************************************/
@@ -7505,4 +7502,60 @@ OGRErr OGRSpatialReference::importFromMICoordSys( const char *pszCoordSys )
 
     return OGRERR_UNSUPPORTED_OPERATION;
 #endif    
+}
+
+/************************************************************************/
+/*                        OSRCalcInvFlattening()                        */
+/************************************************************************/
+
+/**
+ * \brief Compute inverse flattening from semi-major and semi-minor axis
+ *
+ * @param dfSemiMajor Semi-major axis length.
+ * @param dfSemiMinor Semi-minor axis length.
+ *
+ * @return inverse flattening, or 0 if both axis are equal.
+ * @since GDAL 2.0
+ */
+
+double OSRCalcInvFlattening( double dfSemiMajor, double dfSemiMinor )
+{
+    if( fabs(dfSemiMajor-dfSemiMinor) < 1e-1 )
+        return 0;
+    else if( dfSemiMajor <= 0 || dfSemiMinor <= 0 || dfSemiMinor > dfSemiMajor )
+    {
+        CPLError(CE_Failure, CPLE_IllegalArg,
+                 "OSRCalcInvFlattening(): Wrong input values");
+        return 0;
+    }
+    else
+        return dfSemiMajor / (dfSemiMajor - dfSemiMinor);
+}
+
+/************************************************************************/
+/*                        OSRCalcInvFlattening()                        */
+/************************************************************************/
+
+/**
+ * \brief Compute semi-minor axis from semi-major axis and inverse flattening.
+ *
+ * @param dfSemiMajor Semi-major axis length.
+ * @param dfInvFlattening Inverse flattening or 0 for sphere.
+ *
+ * @return semi-minor axis
+ * @since GDAL 2.0
+ */
+
+double OSRCalcSemiMinorFromInvFlattening( double dfSemiMajor, double dfInvFlattening )
+{
+    if( fabs(dfInvFlattening) < 0.000000000001 )
+        return dfSemiMajor;
+    else if( dfSemiMajor <= 0.0 || dfInvFlattening <= 1.0 )
+    {
+        CPLError(CE_Failure, CPLE_IllegalArg,
+                 "OSRCalcSemiMinorFromInvFlattening(): Wrong input values");
+        return dfSemiMajor;
+    }
+    else
+        return dfSemiMajor * (1.0 - 1.0/dfInvFlattening);
 }

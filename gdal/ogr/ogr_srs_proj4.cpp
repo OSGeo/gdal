@@ -1024,11 +1024,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
             {
                 CPLAssert( EQUALN(ogr_pj_ellps[i+2],"b=",2) );
                 dfSemiMinor = CPLAtof(ogr_pj_ellps[i+2]+2);
-                
-                if( ABS(dfSemiMajor/dfSemiMinor) - 1.0 < 0.0000000000001 )
-                    dfInvFlattening = 0.0;
-                else
-                    dfInvFlattening = -1.0 / (dfSemiMinor/dfSemiMajor - 1.0);
+                dfInvFlattening = OSRCalcInvFlattening(dfSemiMajor, dfSemiMinor);
             }
             
             SetGeogCS( ogr_pj_ellps[i+3], "unknown", ogr_pj_ellps[i], 
@@ -1085,10 +1081,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
 
         if( dfInvFlattening == -1.0 )
         {
-            if( ABS(dfSemiMajor/dfSemiMinor) - 1.0 < 0.0000000000001 )
-                dfInvFlattening = 0.0;
-            else
-                dfInvFlattening = -1.0 / (dfSemiMinor/dfSemiMajor - 1.0);
+            dfInvFlattening = OSRCalcInvFlattening(dfSemiMajor, dfSemiMinor);
         }
         
         SetGeogCS( "unnamed ellipse", "unknown", "unnamed",

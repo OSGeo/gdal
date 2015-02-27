@@ -3960,10 +3960,7 @@ int PDFDataset::ParseProjDict(GDALPDFDictionary* poProjDict)
                 {
                     double dfSemiMinor = Get(poEllipsoidDict, "SemiMinorAxis");
                     CPLDebug("PDF", "Datum.Ellipsoid.SemiMinorAxis = %.16g", dfSemiMinor);
-                    if( ABS(dfSemiMajor/dfSemiMinor) - 1.0 < 0.0000000000001 )
-                        dfInvFlattening = 0.0;
-                    else
-                        dfInvFlattening = -1.0 / (dfSemiMinor/dfSemiMajor - 1.0);
+                    dfInvFlattening = OSRCalcInvFlattening(dfSemiMajor, dfSemiMinor);
                 }
                 
                 if( dfSemiMajor != 0.0 && dfInvFlattening != -1.0 )
