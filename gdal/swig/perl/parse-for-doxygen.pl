@@ -84,7 +84,7 @@ for my $pm (@pm) {
     close $fh;
 }
 
-my @dox = qw(lib/Geo/GDAL.dox lib/Geo/OGR.dox lib/Geo/OSR.dox lib/Geo/GDAL/Const.dox);
+my @dox = qw(lib/Geo/GDAL.dox lib/Geo/OGR.dox lib/Geo/OSR.dox);
 
 my $package;
 my $sub;
@@ -113,6 +113,7 @@ for my $dox (@dox) {
             #delete $package{$package}{subs}{$sub};
             $package{$package}{dox}{$sub}{d} = $sub;
             $package{$package}{dox}{$sub}{at} = $w;
+            $package{$package}{dox}{$sub}{ignore} = 1;
             next;
         }
         if ($w eq '@cmethod' or $w eq '@method') {
@@ -162,6 +163,7 @@ for my $dox (@dox) {
 
 for my $package (sort keys %package) {
     next if $package eq '';
+    next if $package eq 'Geo::GDAL::Const';
     print "#** \@class $package\n";
     for my $l (@{$package{$package}{package_dox}}) {
         print "# $l\n";
@@ -172,6 +174,7 @@ for my $package (sort keys %package) {
     print "use base qw(",join(' ', @{$package{$package}{isas}}),")\n\n";
 
     for my $attr (sort keys %{$package{$package}{attrs}}) {
+        next if $package{$package}{dox}{$attr}{ignore};
         my $d = $package{$package}{dox}{$attr}{d};
         $d = $attr unless $d;
         print "#** \@attr $d \n";
@@ -186,31 +189,32 @@ for my $package (sort keys %package) {
     }
 
     for my $sub (sort keys %{$package{$package}{subs}}) {
+        next if $package{$package}{dox}{$sub}{ignore};
+        next if $sub =~ /^_/; # no use showing these
         next if $sub =~ /swig_/; # skip attribute setters and getters
         next if $sub =~ /GDAL_GCP_/; # skip GDAL::GCP class methods from class GDAL
 
-        next if $sub =~ /GT_/; # done in test and modify
+        next if $sub =~ /GT_/; # done in methods geometry type test and modify
 
-        # processed constants
-        next if $sub =~ /^GDT_/;
-        next if $sub =~ /^GA_/;
-        next if $sub =~ /^GRA_/;
-        next if $sub =~ /^GRIORA_/;
-        next if $sub =~ /^GXT_/;
-        next if $sub =~ /^DCAP_/;
-        next if $sub =~ /^GCI_/;
-        next if $sub =~ /^GFT_/;
-        next if $sub =~ /^GFU_/;
-        next if $sub =~ /^ODrC/;
-        next if $sub =~ /^ODsC/;
-        next if $sub =~ /^OLC/;
+        # processed constants (Const.pm is not given to Doxygen at all)
+        # to do: GF_, GRIORA_, GPI_, OF_, DMD_, CPLES_, GMF_, GARIO_, GTO_
+        # OLMD_
+        # SRS_PM_, SRS_WGS84_
+        next if $sub =~ /^wkb/;
         next if $sub =~ /^OFT/;
         next if $sub =~ /^OFST/;
         next if $sub =~ /^OJ/;
-        next if $sub =~ /^wkb/;
         next if $sub =~ /^ALTER_/;
         next if $sub =~ /^F_/;
-
+        next if $sub =~ /^OLC/;
+        next if $sub =~ /^ODsC/;
+        next if $sub =~ /^ODrC/;
+        next if $sub =~ /^SRS_PT_/;
+        next if $sub =~ /^SRS_PP_/;
+        next if $sub =~ /^SRS_UL_/;
+        next if $sub =~ /^SRS_UA_/;
+        next if $sub =~ /^SRS_DN_/;
+        
         next if $internal_methods{$sub}; # skip internal methods
         my $d = $package{$package}{dox}{$sub}{d};
         my $nxt = 0;
@@ -238,16 +242,20 @@ for my $package (sort keys %package) {
         for my $c (@{$package{$package}{dox}{$sub}{c}}) {
             if ($c =~ /^\+list/) {
                 $c =~ s/\+list //;
-                my($p, $s, $ex) = split / /, $c;
-                my %ex = map {$_=>1} split /,/, $ex;
+                my($pkg, $prefix, $exclude) = split / /, $c;
+                #print STDERR "$pkg, $prefix, $exclude\n";
+                my %exclude = map {$_=>1} split /,/, $exclude;
                 print "# ";
-                for my $l (sort keys %{$package{$p}{subs}}) {
-                    next unless $l =~ /^$s/;
-                    $l =~ s/^$s//;
-                    next if $ex{$l};
-                    print "$l ";
+                my @list;
+                for my $l (sort keys %{$package{$pkg}{subs}}) {
+                    next unless $l =~ /^$prefix/;
+                    $l =~ s/^$prefix//;
+                    next if $exclude{$l};
+                    #print STDERR "  $l\n";
+                    push @list, $l;
                 }
-                print "\n";
+                my $last = pop @list;
+                print join(', ', @list),", and $last.\n";
             } else {
                 print "# $c\n";
             }
