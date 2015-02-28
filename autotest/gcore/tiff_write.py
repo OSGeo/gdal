@@ -2391,7 +2391,7 @@ def tiff_write_70():
     if ds.GetRasterBand(1).Checksum() != expected_cs:
         gdaltest.post_reason('wrong checksum')
         print((ds.GetRasterBand(1).Checksum()))
-        print(exected_cs)
+        print(expected_cs)
         return 'fail'
     ds = None
 
