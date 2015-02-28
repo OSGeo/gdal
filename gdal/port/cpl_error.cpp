@@ -255,7 +255,7 @@ void    CPLErrorV(CPLErr eErrClass, int err_no, const char *fmt, va_list args )
     }
 
 /* -------------------------------------------------------------------- */
-/*      If the user provided his own error handling function, then      */
+/*      If the user provided an handling function, then                 */
 /*      call it, otherwise print the error to stderr and return.        */
 /* -------------------------------------------------------------------- */
     psCtx->nLastErrNo = err_no;
@@ -836,7 +836,7 @@ CPLSetErrorHandlerEx( CPLErrorHandler pfnErrorHandlerNew,
 /**
  * Install custom error handler.
  *
- * Allow the library's user to specify his own error handler function.
+ * Allow the library's user to specify an error handler function.
  * A valid error handler is a C function with the following prototype:
  *
  * <pre>

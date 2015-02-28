@@ -10959,7 +10959,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
     }
 
     /* Would perhaps works with libtiff 3.X but didn't bother trying */
-    /* This tricks create a temporary in-memory file and fetch his JPEG tables */
+    /* This trick creates a temporary in-memory file and fetches its JPEG tables */
     /* so that we can directly set them, before tif_jpeg.c compute them at */
     /* the first strip/tile writing, which is too late, since we have already */
     /* crystalized the directory. This way we avoid a directory rewriting */

@@ -149,7 +149,7 @@ target resolution. Specify an integer value (0-based, i.e. 0=1st overview level)
 to select a particular level. Specify AUTO-n where n is an integer greater or
 equal to 1, to select an overview level below the AUTO one. Or specify NONE to
 force the base resolution to be used.</dd>
-<dt> <b>-wo</b> <em>"NAME=VALUE"</em>:</dt><dd> Set a warp options.  The 
+<dt> <b>-wo</b> <em>"NAME=VALUE"</em>:</dt><dd> Set a warp option.  The 
 GDALWarpOptions::papszWarpOptions docs show all options.  Multiple
  <b>-wo</b> options may be listed.</dd>
 <dt> <b>-ot</b> <em>type</em>:</dt><dd> For the output bands to be of the

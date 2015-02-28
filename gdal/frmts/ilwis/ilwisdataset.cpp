@@ -1369,7 +1369,7 @@ CPLErr ILWISRasterBand::GetILWISInfo(string pszFileName)
     psInfo.stDomain = "";
 
     // ILWIS has several (currently 22) predefined "system-domains", that influence the data-type
-    // The user can also create his own domains. The possible types for these are "class", "identifier", "bool" and "value"
+    // The user can also create domains. The possible types for these are "class", "identifier", "bool" and "value"
     // The last one has Type=DomainValue
     // Here we make an effort to determine the most-compact gdal-type (eDataType) that is suitable
     // for the data in the current ILWIS band.

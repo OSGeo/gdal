@@ -499,8 +499,8 @@ char *TABUnEscapeString(char *pszString, GBool bSrcIsConst)
      * We try to work on the original buffer unless we have bSrcIsConst=TRUE
      *
      * Note that we do not worry about freeing the source buffer when we
-     * return a copy... it is up to the caller to decide if he needs to 
-     * free the source based on context and by comparing pszString with 
+     * return a copy... it is up to the caller to decide if the source needs
+     * to be freed based on context and by comparing pszString with
      * the returned pointer (pszWorkString) to see if they are identical.
      *----------------------------------------------------------------*/
     char *pszWorkString = NULL;
@@ -554,8 +554,8 @@ char *TABUnEscapeString(char *pszString, GBool bSrcIsConst)
  * be modified, or a copy that has to be freed by the caller if the
  * string had to be modified.
  *
- * It is up to the caller to decide if he needs to free the returned 
- * string by comparing the source (pszString) pointer with the returned
+ * It is up to the caller to decide if the returned string needs to be
+ * freed by comparing the source (pszString) pointer with the returned
  * pointer (pszWorkString) to see if they are identical.
  **********************************************************************/
 char *TABEscapeString(char *pszString)
