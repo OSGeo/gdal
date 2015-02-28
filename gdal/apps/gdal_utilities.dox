@@ -939,15 +939,15 @@ Usage: gdal_rasterize [-b band]* [-i] [-at]
 
 \section gdal_rasterize_description DESCRIPTION
 
-This program burns vector geometries (points, lines and polygons) into the 
+This program burns vector geometries (points, lines, and polygons) into the
 raster band(s) of a raster image.  Vectors are read from OGR supported vector 
 formats. 
 
-Note that the vector data must in the same coordinate system as the 
+Note that the vector data must be in the same coordinate system as the
 raster data; on the fly reprojection is not provided.
 
-Since GDAL 1.8.0, the target GDAL file can be created by gdal_rasterize. One of -tr or -ts option
-must be used in that case.
+Since GDAL 1.8.0, the target GDAL file can be created by gdal_rasterize. Either
+the -tr or -ts option must be used in that case.
 
 <dl>
 <dt> <b>-b</b> <em>band</em>: </dt><dd> 
@@ -961,7 +961,7 @@ provided a polygon.</dd>
 
 <dt> <b>-at</b>: </dt><dd>
 Enables the ALL_TOUCHED rasterization option so that all pixels touched
-by lines or polygons will be updated not just those one the line render path,
+by lines or polygons will be updated, not just those on the line render path,
 or whose center point is within the polygon.  Defaults to disabled for normal
 rendering rules.</dd>
 
@@ -970,7 +970,7 @@ A fixed value to burn into a band for all objects.  A list of -burn options
 can be supplied, one per band being written to.</dd>
 
 <dt> <b>-a</b> <em>attribute_name</em>: </dt><dd> 
-Identifies an attribute field on the features to be used for a burn in value.
+Identifies an attribute field on the features to be used for a burn-in value.
 The value will be burned into all output bands.</dd>
 
 <dt> <b>-3d</b>: </dt><dd> 
@@ -981,7 +981,8 @@ feature. These values are adjusted by the burn value given by "-burn value" or
 
 <dt> <b>-l</b> <em>layername</em>: </dt><dd> 
 Indicates the layer(s) from the datasource that will be used for input 
-features.  May be specified multiple times, but at least one layer name or a -sql option must be specified.</dd>
+features.  May be specified multiple times, but at least one layer name or a
+-sql option must be specified.</dd>
 
 <dt> <b>-where</b> <em>expression</em>: </dt><dd> 
 An optional SQL WHERE style query expression to be applied to select features 
@@ -991,8 +992,9 @@ to burn in from the input layer(s). </dd>
 An SQL statement to be evaluated against the datasource to produce a
 virtual layer of features to be burned in.</dd>
 
-<dt> <b>-of</b> <i>format</i>:</dt><dd> (GDAL >= 1.8.0) Select the output format.  The default
-is GeoTIFF (GTiff).  Use the short format name.</dd>
+<dt> <b>-of</b> <i>format</i>:</dt><dd> (GDAL >= 1.8.0)
+Select the output format.  The default is GeoTIFF (GTiff).  Use the short format
+name.</dd>
 
 <dt> <b>-a_nodata</b> <i>value</i>:</dt><dd> (GDAL >= 1.8.0)
 Assign a specified nodata value to output bands.</dd>
@@ -1002,38 +1004,41 @@ Pre-initialize the output image bands with these values.  However, it is not
 marked as the nodata value in the output file.  If only one value is given, the
 same value is used in all the bands.</dd>
 
-<dt> <b>-a_srs</b> <i>srs_def</i>:</dt><dd> (GDAL >= 1.8.0) Override the projection for the
-output file. If not specified, the projection of the input vector file will be used if available.
-If incompatible projections between input and output files, no attempt will be made to reproject features.
-The <i>srs_def</i> may be any of the usual GDAL/OGR forms,
-complete WKT, PROJ.4, EPSG:n or a file containing the WKT. </dd>
+<dt> <b>-a_srs</b> <i>srs_def</i>:</dt><dd> (GDAL >= 1.8.0)
+Override the projection for the output file. If not specified, the projection of
+the input vector file will be used if available. If incompatible projections
+between input and output files, no attempt will be made to reproject features.
+The <i>srs_def</i> may be any of the usual GDAL/OGR forms, complete WKT, PROJ.4,
+EPSG:n or a file containing the WKT. </dd>
 
-<dt> <b>-co</b> <i>"NAME=VALUE"</i>:</dt><dd> (GDAL >= 1.8.0) Passes a creation option to the
-output format driver.  Multiple <b>-co</b> options may be listed.  See format 
-specific documentation for legal creation options for each format.</dd>
+<dt> <b>-co</b> <i>"NAME=VALUE"</i>:</dt><dd> (GDAL >= 1.8.0)
+Passes a creation option to the output format driver.  Multiple <b>-co</b>
+options may be listed.  See format specific documentation for legal creation
+options for each format.</dd>
 
 <dt> <b>-te</b> <em>xmin ymin xmax ymax</em> :</dt><dd> (GDAL >= 1.8.0) 
-set georeferenced extents. The values must be expressed in georeferenced units.
-If not specified, the extent of the output file will be the extent of the vector layers.
-</dd>
+Set georeferenced extents. The values must be expressed in georeferenced units.
+If not specified, the extent of the output file will be the extent of the vector
+layers. </dd>
 
 <dt> <b>-tr</b> <em>xres yres</em> :</dt><dd> (GDAL >= 1.8.0) 
-set target resolution. The values must be expressed in georeferenced units.
+Set target resolution. The values must be expressed in georeferenced units.
 Both must be positive values.
 </dd>
 
-<dt> <b>-tap</b>:</dt><dd> (GDAL >= 1.8.0) (target aligned pixels) align
+<dt> <b>-tap</b>:</dt><dd> (GDAL >= 1.8.0) (target aligned pixels) Align
 the coordinates of the extent of the output file to the values of the -tr,
 such that the aligned extent includes the minimum extent.</dd>
 
-<dt> <b>-ts</b> <em>width height</em>:</dt><dd>  (GDAL >= 1.8.0) set output file size in
-pixels and lines. Note that -ts cannot be used with -tr</dd>
+<dt> <b>-ts</b> <em>width height</em>:</dt><dd>  (GDAL >= 1.8.0)
+Set output file size in pixels and lines. Note that -ts cannot be used with
+-tr</dd>
 
-<dt> <b>-ot</b> <i>type</i>:</dt><dd> (GDAL >= 1.8.0) For the output bands to be of the
-indicated data type. Defaults to Float64</dd>
+<dt> <b>-ot</b> <i>type</i>:</dt><dd> (GDAL >= 1.8.0)
+For the output bands to be of the indicated data type. Defaults to Float64</dd>
 
-<dt> <b>-q</b>:</dt><dd> (GDAL >= 1.8.0) Suppress progress monitor and other non-error
-output.</dd>
+<dt> <b>-q</b>:</dt><dd> (GDAL >= 1.8.0) Suppress progress monitor and other
+non-error output.</dd>
 
 <dt> <em>src_datasource</em>: </dt><dd> 
 Any OGR supported readable datasource.</dd>

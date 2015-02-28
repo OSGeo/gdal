@@ -148,8 +148,8 @@ int DTEDReadPoint( DTEDInfo * psDInfo, int nXOff, int nYOff, GInt16* panVal);
 int DTEDReadProfile( DTEDInfo * psDInfo, int nColumnOffset,
                      GInt16 * panData );
 
-/* Extented version of DTEDReadProfile that enable the user to specify */
-/* whether he wants the checksums to be verified */
+/* Extended version of DTEDReadProfile that enables the user to specify */
+/* whether the checksums should be verified */
 int DTEDReadProfileEx( DTEDInfo * psDInfo, int nColumnOffset,
                        GInt16 * panData, int bVerifyChecksum );
 

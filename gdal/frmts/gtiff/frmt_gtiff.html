@@ -263,7 +263,7 @@ size of the resulting file. If that computed file size is over 4GiB, GDAL will a
 decide to create a BigTIFF file. However, when compression is used, it is not possible in
 advance to known the final size of the file, so classical TIFF will be chosen. In
 that case, the user must explicitly require the creation of a BigTIFF with BIGTIFF=YES
-if he anticipates the final file to be too big for classical TIFF format.
+if the final file is anticipated to be too big for classical TIFF format.
 If BigTIFF creation is not explicitly asked or guessed and the resulting file is too big for classical TIFF,
 libtiff will fail with an error message like "TIFFAppendToStrip:Maximum TIFF file size exceeded".</p></li>
 
