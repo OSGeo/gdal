@@ -1296,18 +1296,12 @@ def tiff_direct_and_virtual_mem_io():
 
     for truncated in [False, True]:
      if truncated:
-
-         # Suble difference of behaviour with VirtualMemIO wrt standard impl
-         # so ensure it is available
-         if not sys.platform.startswith('linux'):
-             break
-
          nitermax = 4
-         options = ['GTIFF_VIRTUAL_MEM_IO']
+         options = [('GTIFF_VIRTUAL_MEM_IO', '/vsimem')]
      else:
          nitermax = 8
-         options = ['GTIFF_DIRECT_IO', 'GTIFF_VIRTUAL_MEM_IO']
-     for option in options:
+         options = [('GTIFF_DIRECT_IO', '/vsimem'), ('GTIFF_VIRTUAL_MEM_IO', 'tmp'), ('GTIFF_VIRTUAL_MEM_IO', '/vsimem')]
+     for (option, prefix) in options:
       if option == 'GTIFF_DIRECT_IO':
           niter = 2
       else:
@@ -1315,53 +1309,53 @@ def tiff_direct_and_virtual_mem_io():
       for i in range(niter):
 
         if i == 0:
-            filename = 'tmp/tiff_direct_io_contig.tif'
+            filename = '%s/tiff_direct_io_contig.tif' % prefix
             out_ds = gdal.GetDriverByName('GTiff').CreateCopy(filename, src_ds)
             out_ds.FlushCache()
             out_ds = None
         elif i == 1:
-            filename = 'tmp/tiff_direct_io_separate.tif'
+            filename = '%s/tiff_direct_io_separate.tif' % prefix
             out_ds = gdal.GetDriverByName('GTiff').CreateCopy(filename, src_ds, options = ['INTERLEAVE=BAND'])
             out_ds.FlushCache()
             out_ds = None
         elif i == 2:
-            filename = 'tmp/tiff_direct_io_tiled_contig.tif'
+            filename = '%s/tiff_direct_io_tiled_contig.tif' % prefix
             out_ds = gdal.GetDriverByName('GTiff').CreateCopy(filename, src_ds, options = ['TILED=YES', 'BLOCKXSIZE=32', 'BLOCKYSIZE=16'])
             out_ds.FlushCache()
             out_ds = None
         elif i == 3:
-            filename = 'tmp/tiff_direct_io_tiled_separate.tif'
+            filename = '%s/tiff_direct_io_tiled_separate.tif' % prefix
             out_ds = gdal.GetDriverByName('GTiff').CreateCopy(filename, src_ds, options = ['TILED=YES', 'BLOCKXSIZE=32', 'BLOCKYSIZE=16', 'INTERLEAVE=BAND'])
             out_ds.FlushCache()
             out_ds = None
         elif i == 4:
-            filename = 'tmp/tiff_direct_io_sparse.tif'
+            filename = '%s/tiff_direct_io_sparse.tif' % prefix
             out_ds = gdal.GetDriverByName('GTiff').Create(filename, 165, 150, 4, dt, options = ['SPARSE_OK=YES'])
             out_ds.FlushCache()
             out_ds = None
         elif i == 5:
-            filename = 'tmp/tiff_direct_io_sparse_separate.tif'
+            filename = '%s/tiff_direct_io_sparse_separate.tif' % prefix
             out_ds = gdal.GetDriverByName('GTiff').Create(filename, 165, 150, 4, dt, options = ['SPARSE_OK=YES', 'INTERLEAVE=BAND'])
             out_ds.FlushCache()
             out_ds = None
         elif i == 6:
-            filename = 'tmp/tiff_direct_io_sparse_tiled.tif'
+            filename = '%s/tiff_direct_io_sparse_tiled.tif' % prefix
             out_ds = gdal.GetDriverByName('GTiff').Create(filename, 165, 150, 4, dt, options = ['SPARSE_OK=YES', 'TILED=YES', 'BLOCKXSIZE=32', 'BLOCKYSIZE=16'])
             out_ds.FlushCache()
             out_ds = None
         else:
-            filename = 'tmp/tiff_direct_io_sparse_tiled_separate.tif'
+            filename = '%s/tiff_direct_io_sparse_tiled_separate.tif' % prefix
             out_ds = gdal.GetDriverByName('GTiff').Create(filename, 165, 150, 4, dt, options = ['SPARSE_OK=YES', 'TILED=YES', 'BLOCKXSIZE=32', 'BLOCKYSIZE=16', 'INTERLEAVE=BAND'])
             out_ds.FlushCache()
             out_ds = None
 
         if truncated:
-            f = open(filename, 'rb')
-            data = f.read()
-            f.close()
-            f = open(filename, 'wb')
-            f.write(data[0:-1])
-            f.close()
+            f = gdal.VSIFOpenL(filename, 'rb')
+            data = gdal.VSIFReadL(1, 1000000, f)
+            gdal.VSIFCloseL(f)
+            f = gdal.VSIFOpenL(filename, 'wb')
+            gdal.VSIFWriteL(data, 1, len(data)-1, f)
+            gdal.VSIFCloseL(f)
 
         ds = gdal.Open(filename)
         xoff = int(ds.RasterXSize/4)

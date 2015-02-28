@@ -1682,7 +1682,17 @@ int GTiffDataset::VirtualMemIO( GDALRWFlag eRWFlag,
     if( !SetDirectory() )
         return CE_Failure;
 
-    if( psVirtualMemIOMapping == NULL )
+    size_t nMappingSize = 0;
+    GByte* pabySrcData = NULL;
+    if( strncmp(GetDescription(), "/vsimem/", strlen("/vsimem/")) == 0 )
+    {
+        vsi_l_offset nDataLength = 0;
+        pabySrcData = VSIGetMemFileBuffer(GetDescription(), &nDataLength, FALSE);
+        nMappingSize = (size_t)nDataLength;
+        if( pabySrcData == NULL )
+            return -1;
+    }
+    else if( psVirtualMemIOMapping == NULL )
     {
         if( !(nCompression == COMPRESSION_NONE &&
               (nPhotometric == PHOTOMETRIC_MINISBLACK ||
@@ -1755,8 +1765,11 @@ int GTiffDataset::VirtualMemIO( GDALRWFlag eRWFlag,
         }
     }
 
-    size_t nMappingSize = CPLVirtualMemGetSize(psVirtualMemIOMapping);
-    GByte* pabySrcData = (GByte*)CPLVirtualMemGetAddr(psVirtualMemIOMapping);
+    if( psVirtualMemIOMapping )
+    {
+        nMappingSize = CPLVirtualMemGetSize(psVirtualMemIOMapping);
+        pabySrcData = (GByte*)CPLVirtualMemGetAddr(psVirtualMemIOMapping);
+    }
     const int nBandsPerBlock = ( nPlanarConfig == PLANARCONFIG_SEPARATE ) ? 1 : nBands;
     const int nBandsPerBlockDTSize = nBandsPerBlock * nDTSize;
     const int nBlocksPerRow = DIV_ROUND_UP(nRasterXSize, nBlockXSize);

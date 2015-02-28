@@ -486,7 +486,7 @@ int main(int argc, char* argv[])
         }
     }
 
-    if( bCreatedDataset && poMEMDS == NULL )
+    if( bCreatedDataset && poMEMDS == NULL && bOnDisk )
     {
         CPLPushErrorHandler(CPLQuietErrorHandler);
         VSIUnlink(pszDataset);
