@@ -134,6 +134,8 @@ int VSITarReader::GotoNextFile()
     {
         return FALSE;
     }
+    if( abyHeader[124] < '0' || abyHeader[124] > '7' )
+        return FALSE;
 
     osNextFileName = abyHeader;
     nNextFileSize = 0;
