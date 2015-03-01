@@ -439,7 +439,7 @@ CPLErr OGRSQLiteTableLayer::EstablishFeatureDefn(const char* pszGeomCol)
                     if( nGeomType >= 0 && nGeomType <= 7 ) /* XY */
                         eGeomType = (OGRwkbGeometryType) nGeomType;
                     else if( nGeomType >= 1000 && nGeomType <= 1007 ) /* XYZ */
-                        eGeomType = wkbSetZ(eGeomType);
+                        eGeomType = wkbSetZ(wkbFlatten(nGeomType));
                     else if( nGeomType >= 2000 && nGeomType <= 2007 ) /* XYM */
                     {
                         eGeomType = wkbFlatten(nGeomType);
@@ -447,7 +447,7 @@ CPLErr OGRSQLiteTableLayer::EstablishFeatureDefn(const char* pszGeomCol)
                     }
                     else if( nGeomType >= 3000 && nGeomType <= 3007 ) /* XYZM */
                     {
-                        eGeomType = wkbSetZ(eGeomType);
+                        eGeomType = wkbSetZ(wkbFlatten(nGeomType));
                         bHasM = TRUE;
                     }
                 }
