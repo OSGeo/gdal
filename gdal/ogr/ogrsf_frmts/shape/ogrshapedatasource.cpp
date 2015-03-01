@@ -111,8 +111,6 @@ int OGRShapeDataSource::Open( GDALOpenInfo* poOpenInfo,
                               int bTestOpen, int bForceSingleFileDataSource )
 
 {
-    VSIStatBufL  stat;
-    
     CPLAssert( nLayers == 0 );
     
     const char * pszNewName = poOpenInfo->pszFilename;
@@ -138,8 +136,7 @@ int OGRShapeDataSource::Open( GDALOpenInfo* poOpenInfo,
 /* -------------------------------------------------------------------- */
 /*      Is the given path a directory or a regular file?                */
 /* -------------------------------------------------------------------- */
-    if( VSIStatExL( pszNewName, &stat, VSI_STAT_EXISTS_FLAG | VSI_STAT_NATURE_FLAG ) != 0 
-        || (!VSI_ISDIR(stat.st_mode) && !VSI_ISREG(stat.st_mode)) )
+    if( !poOpenInfo->bStatOK )
     {
         if( !bTestOpen )
             CPLError( CE_Failure, CPLE_AppDefined,
@@ -152,7 +149,7 @@ int OGRShapeDataSource::Open( GDALOpenInfo* poOpenInfo,
 /* -------------------------------------------------------------------- */
 /*      Build a list of filenames we figure are Shape files.            */
 /* -------------------------------------------------------------------- */
-    if( VSI_ISREG(stat.st_mode) )
+    if( !poOpenInfo->bIsDirectory )
     {
         if( !OpenFile( pszNewName, bUpdate, bTestOpen ) )
         {
