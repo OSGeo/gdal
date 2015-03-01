@@ -1405,6 +1405,13 @@ def ogr_sqlite_28():
         print(ret)
         return 'fail'
 
+    # Generic test
+    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -driver SQLite -dsco SPATIALITE=YES')
+
+    if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
+        print(ret)
+        return 'fail'
+
     return 'success'
 
 ###############################################################################

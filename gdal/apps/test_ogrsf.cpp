@@ -49,6 +49,8 @@ char  **papszOpenOptions = NULL;
 const char* pszDriver = NULL;
 int bAllDrivers = FALSE;
 const char* pszLogFilename = NULL;
+char** papszDSCO = NULL;
+char** papszLCO = NULL;
 
 typedef struct
 {
@@ -143,6 +145,16 @@ int main( int nArgc, char ** papszArgv )
             papszOpenOptions = CSLAddString( papszOpenOptions,
                                                 papszArgv[++iArg] );
         }
+        else if( EQUAL(papszArgv[iArg], "-dsco") && iArg + 1 < nArgc)
+        {
+            papszDSCO = CSLAddString( papszDSCO,
+                                                papszArgv[++iArg] );
+        }
+        else if( EQUAL(papszArgv[iArg], "-lco") && iArg + 1 < nArgc)
+        {
+            papszLCO = CSLAddString( papszLCO,
+                                                papszArgv[++iArg] );
+        }
         else if( EQUAL(papszArgv[iArg], "-log") && iArg + 1 < nArgc)
         {
             pszLogFilename = papszArgv[++iArg];
@@ -199,6 +211,8 @@ int main( int nArgc, char ** papszArgv )
     CSLDestroy(papszLayers);
     CSLDestroy(papszArgv);
     CSLDestroy(papszOpenOptions);
+    CSLDestroy(papszDSCO);
+    CSLDestroy(papszLCO);
     
 #ifdef DBMALLOC
     malloc_dump(1);
@@ -492,7 +506,7 @@ static int TestCreateLayer( GDALDriver* poDriver, OGRwkbGeometryType eGeomType )
 
     static int nCounter = 0;
     CPLString osFilename = CPLFormFilename("/vsimem", CPLSPrintf("test%d", ++nCounter), pszExt);
-    GDALDataset* poDS = LOG_ACTION(poDriver->Create(osFilename, 0, 0, 0, GDT_Unknown, NULL));
+    GDALDataset* poDS = LOG_ACTION(poDriver->Create(osFilename, 0, 0, 0, GDT_Unknown, papszDSCO));
     if( poDS == NULL )
     {
         if( bVerbose )
@@ -502,8 +516,10 @@ static int TestCreateLayer( GDALDriver* poDriver, OGRwkbGeometryType eGeomType )
     }
     CPLPushErrorHandler(CPLQuietErrorHandler);
     int bCreateLayerCap = LOG_ACTION(poDS->TestCapability(ODsCCreateLayer));
-    OGRLayer* poLayer = LOG_ACTION(poDS->CreateLayer(CPLGetFilename(osFilename), NULL, eGeomType));
+    OGRLayer* poLayer = LOG_ACTION(poDS->CreateLayer(CPLGetFilename(osFilename), NULL, eGeomType, papszLCO));
     CPLPopErrorHandler();
+    CPLString osLayerNameToTest;
+    OGRwkbGeometryType eExpectedGeomType = wkbUnknown;
     if( poLayer != NULL )
     {
         if( bCreateLayerCap == FALSE )
@@ -714,6 +730,9 @@ static int TestCreateLayer( GDALDriver* poDriver, OGRwkbGeometryType eGeomType )
         LOG_ACTION(poLayer->ResetReading());
         delete LOG_ACTION(poLayer->GetNextFeature());
         CPLPopErrorHandler();
+        
+        osLayerNameToTest = poLayer->GetName();
+        eExpectedGeomType = poLayer->GetGeomType();
 
         /* Some drivers don't like more than one layer per dataset */
         CPLPushErrorHandler(CPLQuietErrorHandler);
@@ -724,6 +743,33 @@ static int TestCreateLayer( GDALDriver* poDriver, OGRwkbGeometryType eGeomType )
         {
             printf("INFO: %s: Creation of second layer failed but TestCapability(ODsCCreateLayer) succeeded.\n",
                    poDriver->GetDescription());
+        }
+        else if( !EQUAL(poDriver->GetDescription(), "CSV") && poLayer2 != NULL )
+        {
+            OGRFieldDefn oFieldStr("str", OFTString);
+            CPLPushErrorHandler(CPLQuietErrorHandler);
+            LOG_ACTION(poLayer2->CreateField(&oFieldStr));
+            CPLPopErrorHandler();
+
+            poFeature = new OGRFeature( poLayer2->GetLayerDefn() );
+            const char* pszWKT = GetWKT(eGeomType);
+            if( pszWKT != NULL )
+            {
+                OGRGeometry* poGeom = NULL;
+                OGRGeometryFactory::createFromWkt( (char**) &pszWKT, NULL, &poGeom);
+                poFeature->SetGeometryDirectly(poGeom);
+            }
+            CPLErrorReset();
+            CPLPushErrorHandler(CPLQuietErrorHandler);
+            eErr = LOG_ACTION(poLayer2->CreateFeature(poFeature));
+            CPLPopErrorHandler();
+            delete poFeature;
+
+            if( eErr == OGRERR_NONE )
+            {
+                osLayerNameToTest = poLayer2->GetName();
+                eExpectedGeomType = poLayer2->GetGeomType();
+            }
         }
 
         /* Test deleting first layer */
@@ -764,6 +810,32 @@ static int TestCreateLayer( GDALDriver* poDriver, OGRwkbGeometryType eGeomType )
                    poDriver->GetDescription(), OGRGeometryTypeToName(eGeomType));
     }*/
     LOG_ACTION(GDALClose(poDS));
+
+    if( eExpectedGeomType != wkbUnknown &&
+        /* Those drivers are expected not to store a layer geometry type */
+        !EQUAL(poDriver->GetDescription(), "KML") &&
+        !EQUAL(poDriver->GetDescription(), "LIBKML") &&
+        !EQUAL(poDriver->GetDescription(), "PDF") )
+    {
+        /* Reopen dataset */
+        poDS = LOG_ACTION((GDALDataset*)GDALOpenEx( osFilename,
+                                                    GDAL_OF_VECTOR,
+                                                    NULL, NULL, NULL ));
+        if( poDS != NULL )
+        {
+            poLayer = LOG_ACTION(poDS->GetLayerByName(osLayerNameToTest));
+            if( poLayer != NULL )
+            {
+                if( poLayer->GetGeomType() != eExpectedGeomType )
+                {
+                    printf("ERROR: %s: GetGeomType() returns %d but %d was expected (and %d originaly set).\n",
+                    poDriver->GetDescription(), poLayer->GetGeomType(), eExpectedGeomType, eGeomType);
+                    bRet = FALSE;
+                }
+            }
+            LOG_ACTION(GDALClose(poDS));
+        }
+    }
     
     CPLPushErrorHandler(CPLQuietErrorHandler);
     LOG_ACTION(poDriver->Delete(osFilename));
@@ -861,7 +933,7 @@ static void Usage()
 
 {
     printf( "Usage: test_ogrsf [-ro] [-q] [-threads N] [-loops M] [-fsf]\n"
-            "                  (datasource_name | [-driver driver_name] | -all_drivers) \n"
+            "                  (datasource_name | [-driver driver_name] [[-dsco NAME=VALUE] ...] [[-lco NAME=VALUE] ...] | -all_drivers) \n"
             "                  [[layer1_name, layer2_name, ...] | [-sql statement] [-dialect dialect]]\n"
             "                   [[-oo NAME=VALUE] ...]\n");
     printf( "\n");
