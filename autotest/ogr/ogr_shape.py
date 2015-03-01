@@ -4110,6 +4110,22 @@ def ogr_shape_85():
     return 'success'
 
 ###############################################################################
+# Robustness: test reading a non-conformant shapefile that mixes different shape type
+# OGR can not produce such a file (unless patched)
+
+def ogr_shape_86():
+
+    ds = ogr.Open('data/mixed_shape_type_non_conformant.shp')
+    sql_lyr = ds.ExecuteSQL("select count(distinct ogr_geometry) from mixed_shape_type_non_conformant")
+    f = sql_lyr.GetNextFeature()
+    val = f.GetField(0)
+    ds.ReleaseResultSet(sql_lyr)
+    if val != 6:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_shape_cleanup():
@@ -4236,6 +4252,7 @@ gdaltest_list = [
     ogr_shape_83,
     ogr_shape_84,
     ogr_shape_85,
+    ogr_shape_86,
     ogr_shape_cleanup ]
 
 if __name__ == '__main__':
