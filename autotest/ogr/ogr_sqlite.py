@@ -1843,6 +1843,9 @@ def ogr_spatialite_5(bUseComprGeom = False):
     for wkt in geometries:
         geom = ogr.CreateGeometryFromWkt(wkt)
         lyr = ds.GetLayer(num_layer)
+        if lyr.GetGeomType() != geom.GetGeometryType():
+            gdaltest.post_reason('got %d, expected %d' % (lyr.GetGeomType(), geom.GetGeometryType()))
+            return 'fail'
         feat = lyr.GetNextFeature()
         got_wkt = feat.GetGeometryRef().ExportToWkt()
         # Spatialite < 2.4 only supports 2D geometries
