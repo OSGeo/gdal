@@ -2234,8 +2234,7 @@ else
     AC_MSG_RESULT([found Intergraph 5.x+ SDK in ${ECW_LIBDIR}.])
  # ECWJP2 SDK 5.1 style
   elif test -d $with_ecw; then
-    ecw_license_types=( "Desktop_Read-Write" "Server_Read-Only_EndUser" "Server_Read-Only" "Server_Read-Write" "Desktop_Read-Only"   )
-    for ecw_license_type in ${ecw_license_types@<:@@@:>@};
+    for ecw_license_type in "Desktop_Read-Write" "Server_Read-Only_EndUser" "Server_Read-Only" "Server_Read-Write" "Desktop_Read-Only"
       do
         ECW_LIBDIR=$with_ecw/$ecw_license_type/lib/$ECW_ARCH/$ECW_CONF
         if test -r $ECW_LIBDIR/libNCSEcw.a; then
