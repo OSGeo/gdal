@@ -119,6 +119,8 @@ class JP2KAKDataset : public GDALJP2AbstractDataset
     int            bResilient;
     int            bFussy;
     bool           bUseYCC;
+    
+    bool           bPromoteTo8Bit;
 
     int         TestUseBlockIO( int, int, int, int, int, int,
                                 GDALDataType, int, int * );
@@ -311,9 +313,8 @@ JP2KAKRasterBand::JP2KAKRasterBand( int nBand, int nDiscardLevels,
 /* -------------------------------------------------------------------- */
 /*      Capture some useful metadata.                                   */
 /* -------------------------------------------------------------------- */
-    if( oCodeStream.get_bit_depth(nBand-1) % 8 != 0 )
+    if( oCodeStream.get_bit_depth(nBand-1) % 8 != 0 && !poBaseDSIn->bPromoteTo8Bit )
     {
-        
         SetMetadataItem( "NBITS", 
                          CPLString().Printf("%d",oCodeStream.get_bit_depth(nBand-1)), 
                          "IMAGE_STRUCTURE" );
@@ -804,6 +805,7 @@ JP2KAKDataset::JP2KAKDataset()
 
     bCached = 0;
     bPreferNPReads = false;
+    bPromoteTo8Bit = false;
 
     poDriver = (GDALDriver*) GDALGetDriverByName( "JP2KAK" );
 }
@@ -1353,6 +1355,19 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
 
         CPLDebug( "JP2KAK", "nResCount=%d", poDS->nResCount );
 
+
+/* -------------------------------------------------------------------- */
+/*      Should we promote alpha channel to 8 bits ?                     */
+/* -------------------------------------------------------------------- */
+        poDS->bPromoteTo8Bit = (poDS->nBands == 4 &&
+                                poDS->oCodeStream.get_bit_depth(0) == 8 &&
+                                poDS->oCodeStream.get_bit_depth(1) == 8 &&
+                                poDS->oCodeStream.get_bit_depth(2) == 8 &&
+                                poDS->oCodeStream.get_bit_depth(3) == 1 &&
+                                CSLFetchBoolean(poOpenInfo->papszOpenOptions, "1BIT_ALPHA_PROMOTION", TRUE));
+        if( poDS->bPromoteTo8Bit )
+            CPLDebug( "JP2KAK",  "Fourth (alpha) band is promoted from 1 bit to 8 bit");
+
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
@@ -1709,6 +1724,19 @@ JP2KAKDataset::DirectRasterIO( CPL_UNUSED GDALRWFlag eRWFlag,
         eErr = CE_Failure;
     }
 
+/* -------------------------------------------------------------------- */
+/*      1-bit alpha promotion.                                          */
+/* -------------------------------------------------------------------- */
+    if( nBandCount == 4 && bPromoteTo8Bit )
+    {
+        for(int j=0;j<nBufYSize;j++)
+        {
+            for(i=0;i<nBufXSize;i++)
+            {
+                ((GByte*)pData)[j*nLineSpace+i*nPixelSpace+3*nBandSpace] *= 255;
+            }
+        }
+    }
 /* -------------------------------------------------------------------- */
 /*      Cleanup                                                         */
 /* -------------------------------------------------------------------- */
@@ -2745,6 +2773,11 @@ void GDALRegister_JP2KAK()
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "jp2" );
 
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+        
+        poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST, 
+"<OpenOptionList>"
+"   <Option name='1BIT_ALPHA_PROMOTION' type='boolean' description='Whether a 1-bit alpha channel should be promoted to 8-bit' default='YES'/>"
+"</OpenOptionList>" );
 
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, 
 "<CreationOptionList>"
