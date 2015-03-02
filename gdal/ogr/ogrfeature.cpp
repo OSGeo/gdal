@@ -902,6 +902,12 @@ OGRFieldDefnH OGR_F_GetFieldDefnRef( OGRFeatureH hFeat, int i )
 {
     VALIDATE_POINTER1( hFeat, "OGR_F_GetFieldDefnRef", NULL );
 
+    if( i < 0 || i >= ((OGRFeature *) hFeat)->GetFieldCount() )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid index : %d", i);
+        return NULL;
+    }
+
     return (OGRFieldDefnH) ((OGRFeature *) hFeat)->GetFieldDefnRef(i);
 }
 
