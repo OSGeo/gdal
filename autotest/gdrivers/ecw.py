@@ -1777,6 +1777,7 @@ def ecw_42():
 
 ###############################################################################
 # Test auto-promotion of 1bit alpha band to 8bit
+# Note: only works on reversible files like this one
 
 def ecw_43():
 
@@ -1814,6 +1815,12 @@ def ecw_43():
         return 'fail'
 
     if jp2_fourth_band_data != gtiff_fourth_band_data:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ds = gdal.OpenEx('data/stefan_full_rgba_alpha_1bit.jp2', open_options = ['1BIT_ALPHA_PROMOTION=NO'])
+    fourth_band = ds.GetRasterBand(4)
+    if fourth_band.GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') != '1':
         gdaltest.post_reason('fail')
         return 'fail'
 
