@@ -349,6 +349,12 @@ def jp2openjpeg_11():
         gdaltest.post_reason('fail')
         return 'fail'
 
+    ds = gdal.OpenEx('data/stefan_full_rgba_alpha_1bit.jp2', open_options = ['1BIT_ALPHA_PROMOTION=NO'])
+    fourth_band = ds.GetRasterBand(4)
+    if fourth_band.GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') != '1':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
     return 'success'
 
 ###############################################################################

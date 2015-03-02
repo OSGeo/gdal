@@ -1170,7 +1170,10 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
             psImage->comps[1].prec == 8 &&
             psImage->comps[2].prec == 8 &&
             psImage->comps[3].prec == 1 && 
-            CSLTestBoolean(CPLGetConfigOption("JP2OPENJPEG_PROMOTE_1BIT_ALPHA_AS_8BIT", "YES")) );
+            CSLFetchBoolean(poOpenInfo->papszOpenOptions, "1BIT_ALPHA_PROMOTION",
+                    CSLTestBoolean(CPLGetConfigOption("JP2OPENJPEG_PROMOTE_1BIT_ALPHA_AS_8BIT", "YES"))) );
+        if( bPromoteTo8Bit )
+            CPLDebug("JP2OpenJPEG", "Fourth (alpha) band is promoted from 1 bit to 8 bit");
 
         JP2OpenJPEGRasterBand* poBand =
             new JP2OpenJPEGRasterBand( poDS, iBand, eDataType,
@@ -2024,6 +2027,11 @@ void GDALRegister_JP2OpenJPEG()
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "jp2" );
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
                                    "Byte Int16 UInt16 Int32 UInt32" );
+
+        poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST, 
+"<OpenOptionList>"
+"   <Option name='1BIT_ALPHA_PROMOTION' type='boolean' description='Whether a 1-bit alpha channel should be promoted to 8-bit' default='YES'/>"
+"</OpenOptionList>" );
 
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"
