@@ -76,7 +76,8 @@ void ECWReportError(CNCSError& oErr, const char* pszMsg)
 /*                           ECWRasterBand()                            */
 /************************************************************************/
 
-ECWRasterBand::ECWRasterBand( ECWDataset *poDS, int nBand, int iOverview )
+ECWRasterBand::ECWRasterBand( ECWDataset *poDS, int nBand, int iOverview,
+                              char** papszOpenOptions )
 
 {
     this->poDS = poDS;
@@ -165,7 +166,7 @@ ECWRasterBand::ECWRasterBand( ECWDataset *poDS, int nBand, int iOverview )
                  && nRasterYSize / (1 << (i+1)) > 128;
              i++ )
         {
-            apoOverviews.push_back( new ECWRasterBand( poDS, nBand, i ) );
+            apoOverviews.push_back( new ECWRasterBand( poDS, nBand, i, papszOpenOptions ) );
         }
     }
 
@@ -176,7 +177,8 @@ ECWRasterBand::ECWRasterBand( ECWDataset *poDS, int nBand, int iOverview )
         poDS->psFileInfo->pBands[2].nBits == 8 &&
         poDS->psFileInfo->pBands[3].nBits == 1 &&
         eBandInterp == GCI_AlphaBand && 
-        CSLTestBoolean(CPLGetConfigOption("GDAL_ECW_PROMOTE_1BIT_ALPHA_AS_8BIT", "YES"));
+        CSLFetchBoolean(papszOpenOptions, "1BIT_ALPHA_PROMOTION",
+            CSLTestBoolean(CPLGetConfigOption("GDAL_ECW_PROMOTE_1BIT_ALPHA_AS_8BIT", "YES")));
     if( bPromoteTo8Bit )
         CPLDebug("ECW", "Fourth (alpha) band is promoted from 1 bit to 8 bit");
 
@@ -2122,7 +2124,7 @@ CPLErr ECWDataset::ReadBandsDirectly(void * pData, int nBufXSize, int nBufYSize,
     {
         NCSFree(pBIL);
     }
-    return CE_None;
+    return eErr;
 }
 
 /************************************************************************/
@@ -2545,7 +2547,7 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJPEG2000 )
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
     for( i=0; i < poDS->psFileInfo->nBands; i++ )
-        poDS->SetBand( i+1, new ECWRasterBand( poDS, i+1 ) );
+        poDS->SetBand( i+1, new ECWRasterBand( poDS, i+1, -1, poOpenInfo->papszOpenOptions ) );
 
 /* -------------------------------------------------------------------- */
 /*      Look for supporting coordinate system information.              */
@@ -2583,7 +2585,7 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJPEG2000 )
     if( bIsJPEG2000 && poDS->poFileView ) {
         // comments
         char *csComments = NULL;
-        poDS->poFileView->GetParameter("JPC:DECOMPRESS:COMMENTS", &csComments);
+        poDS->poFileView->GetParameter((char*)"JPC:DECOMPRESS:COMMENTS", &csComments);
         if (csComments) {
             poDS->SetMetadataItem("ALL_COMMENTS", CPLString().Printf("%s", csComments));
             NCSFree(csComments);
@@ -2592,7 +2594,7 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJPEG2000 )
         // Profile
         UINT32 nProfile = 2;
         UINT32 nRsiz = 0;
-        poDS->poFileView->GetParameter("JP2:COMPLIANCE:PROFILE:TYPE", &nRsiz);
+        poDS->poFileView->GetParameter((char*)"JP2:COMPLIANCE:PROFILE:TYPE", &nRsiz);
         if (nRsiz == 0)
             nProfile = 2; // Profile 2 (no restrictions)
         else if (nRsiz == 1)
@@ -2603,27 +2605,27 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJPEG2000 )
 
         // number of tiles on X axis
         UINT32 nTileNrX = 1;
-        poDS->poFileView->GetParameter("JPC:DECOMPRESS:TILENR:X", &nTileNrX);
+        poDS->poFileView->GetParameter((char*)"JPC:DECOMPRESS:TILENR:X", &nTileNrX);
         poDS->SetMetadataItem("TILES_X", CPLString().Printf("%d", nTileNrX), JPEG2000_DOMAIN_NAME);
 
         // number of tiles on X axis
         UINT32 nTileNrY = 1;
-        poDS->poFileView->GetParameter("JPC:DECOMPRESS:TILENR:Y", &nTileNrY);
+        poDS->poFileView->GetParameter((char*)"JPC:DECOMPRESS:TILENR:Y", &nTileNrY);
         poDS->SetMetadataItem("TILES_Y", CPLString().Printf("%d", nTileNrY), JPEG2000_DOMAIN_NAME);
 
         // Tile Width
         UINT32 nTileSizeX = 0;
-        poDS->poFileView->GetParameter("JPC:DECOMPRESS:TILESIZE:X", &nTileSizeX);
+        poDS->poFileView->GetParameter((char*)"JPC:DECOMPRESS:TILESIZE:X", &nTileSizeX);
         poDS->SetMetadataItem("TILE_WIDTH", CPLString().Printf("%d", nTileSizeX), JPEG2000_DOMAIN_NAME);
 
         // Tile Height
         UINT32 nTileSizeY = 0;
-        poDS->poFileView->GetParameter("JPC:DECOMPRESS:TILESIZE:Y", &nTileSizeY);
+        poDS->poFileView->GetParameter((char*)"JPC:DECOMPRESS:TILESIZE:Y", &nTileSizeY);
         poDS->SetMetadataItem("TILE_HEIGHT", CPLString().Printf("%d", nTileSizeY), JPEG2000_DOMAIN_NAME);
 
         // Precinct Sizes on X axis
         char *csPreSizeX = NULL;
-        poDS->poFileView->GetParameter("JPC:DECOMPRESS:PRECINCTSIZE:X", &csPreSizeX);
+        poDS->poFileView->GetParameter((char*)"JPC:DECOMPRESS:PRECINCTSIZE:X", &csPreSizeX);
         if (csPreSizeX) {
                 poDS->SetMetadataItem("PRECINCT_SIZE_X", csPreSizeX, JPEG2000_DOMAIN_NAME);
             NCSFree(csPreSizeX);
@@ -2631,7 +2633,7 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJPEG2000 )
 
         // Precinct Sizes on Y axis
         char *csPreSizeY = NULL;
-        poDS->poFileView->GetParameter("JPC:DECOMPRESS:PRECINCTSIZE:Y", &csPreSizeY);
+        poDS->poFileView->GetParameter((char*)"JPC:DECOMPRESS:PRECINCTSIZE:Y", &csPreSizeY);
         if (csPreSizeY) {
             poDS->SetMetadataItem("PRECINCT_SIZE_Y", csPreSizeY, JPEG2000_DOMAIN_NAME);
             NCSFree(csPreSizeY);
@@ -2639,17 +2641,17 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJPEG2000 )
 
         // Code Block Size on X axis
         UINT32 nCodeBlockSizeX = 0;
-        poDS->poFileView->GetParameter("JPC:DECOMPRESS:CODEBLOCK:X", &nCodeBlockSizeX);
+        poDS->poFileView->GetParameter((char*)"JPC:DECOMPRESS:CODEBLOCK:X", &nCodeBlockSizeX);
         poDS->SetMetadataItem("CODE_BLOCK_SIZE_X", CPLString().Printf("%d", nCodeBlockSizeX), JPEG2000_DOMAIN_NAME);
 
         // Code Block Size on Y axis
         UINT32 nCodeBlockSizeY = 0;
-        poDS->poFileView->GetParameter("JPC:DECOMPRESS:CODEBLOCK:Y", &nCodeBlockSizeY);
+        poDS->poFileView->GetParameter((char*)"JPC:DECOMPRESS:CODEBLOCK:Y", &nCodeBlockSizeY);
         poDS->SetMetadataItem("CODE_BLOCK_SIZE_Y", CPLString().Printf("%d", nCodeBlockSizeY), JPEG2000_DOMAIN_NAME);
 
         // Bitdepth
         char *csBitdepth = NULL;
-        poDS->poFileView->GetParameter("JPC:DECOMPRESS:BITDEPTH", &csBitdepth);
+        poDS->poFileView->GetParameter((char*)"JPC:DECOMPRESS:BITDEPTH", &csBitdepth);
         if (csBitdepth) {
             poDS->SetMetadataItem("PRECISION", csBitdepth, JPEG2000_DOMAIN_NAME);
             NCSFree(csBitdepth);
@@ -2657,17 +2659,17 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJPEG2000 )
 
         // Resolution Levels
         UINT32 nLevels = 0;
-        poDS->poFileView->GetParameter("JPC:DECOMPRESS:RESOLUTION:LEVELS", &nLevels);
+        poDS->poFileView->GetParameter((char*)"JPC:DECOMPRESS:RESOLUTION:LEVELS", &nLevels);
         poDS->SetMetadataItem("RESOLUTION_LEVELS", CPLString().Printf("%d", nLevels), JPEG2000_DOMAIN_NAME);
 
         // Qualaity Layers
         UINT32 nLayers = 0;
-        poDS->poFileView->GetParameter("JP2:DECOMPRESS:LAYERS", &nLayers);
+        poDS->poFileView->GetParameter((char*)"JP2:DECOMPRESS:LAYERS", &nLayers);
         poDS->SetMetadataItem("QUALITY_LAYERS", CPLString().Printf("%d", nLayers), JPEG2000_DOMAIN_NAME);
 
         // Progression Order
         char *csOrder = NULL;
-        poDS->poFileView->GetParameter("JPC:DECOMPRESS:PROGRESSION:ORDER", &csOrder);	
+        poDS->poFileView->GetParameter((char*)"JPC:DECOMPRESS:PROGRESSION:ORDER", &csOrder);	
         if (csOrder) {
             poDS->SetMetadataItem("PROGRESSION_ORDER", csOrder, JPEG2000_DOMAIN_NAME);
             NCSFree(csOrder);
@@ -2676,7 +2678,7 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJPEG2000 )
         // DWT Filter
         const char *csFilter = NULL;
         UINT32 nFilter;
-        poDS->poFileView->GetParameter("JP2:TRANSFORMATION:TYPE", &nFilter);
+        poDS->poFileView->GetParameter((char*)"JP2:TRANSFORMATION:TYPE", &nFilter);
         if (nFilter)
             csFilter = "5x3";
         else
@@ -2685,17 +2687,17 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJPEG2000 )
 
         // SOP used?
         bool bSOP = 0;
-        poDS->poFileView->GetParameter("JP2:DECOMPRESS:SOP:EXISTS", &bSOP);
+        poDS->poFileView->GetParameter((char*)"JP2:DECOMPRESS:SOP:EXISTS", &bSOP);
         poDS->SetMetadataItem("USE_SOP", (bSOP) ? "TRUE" : "FALSE", JPEG2000_DOMAIN_NAME);
 
         // EPH used?
         bool bEPH = 0;
-        poDS->poFileView->GetParameter("JP2:DECOMPRESS:EPH:EXISTS", &bEPH);
+        poDS->poFileView->GetParameter((char*)"JP2:DECOMPRESS:EPH:EXISTS", &bEPH);
         poDS->SetMetadataItem("USE_EPH", (bEPH) ? "TRUE" : "FALSE", JPEG2000_DOMAIN_NAME);
 
         // GML JP2 data contained?
         bool bGML = 0;
-        poDS->poFileView->GetParameter("JP2:GML:JP2:BOX:EXISTS", &bGML);
+        poDS->poFileView->GetParameter((char*)"JP2:GML:JP2:BOX:EXISTS", &bGML);
         poDS->SetMetadataItem("GML_JP2_DATA", (bGML) ? "TRUE" : "FALSE", JPEG2000_DOMAIN_NAME);
     }
     #endif //ECWSDK_VERSION>=51
@@ -3425,6 +3427,12 @@ void GDALRegister_JP2ECW()
         
         poDriver->pfnIdentify = ECWDataset::IdentifyJPEG2000;
         poDriver->pfnOpen = ECWDataset::OpenJPEG2000;
+
+        poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST, 
+"<OpenOptionList>"
+"   <Option name='1BIT_ALPHA_PROMOTION' type='boolean' description='Whether a 1-bit alpha channel should be promoted to 8-bit' default='YES'/>"
+"</OpenOptionList>" );
+
 #ifdef HAVE_COMPRESS
         poDriver->pfnCreate = ECWCreateJPEG2000;
         poDriver->pfnCreateCopy = ECWCreateCopyJPEG2000;

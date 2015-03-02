@@ -647,7 +647,7 @@ class ECWRasterBand : public GDALPamRasterBand
 
   public:
 
-                   ECWRasterBand( ECWDataset *, int, int = -1 );
+                   ECWRasterBand( ECWDataset *, int, int iOverview, char** papszOpenOptions );
                    ~ECWRasterBand();
 
     virtual CPLErr IReadBlock( int, int, void * );
