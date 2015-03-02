@@ -175,6 +175,7 @@ class JPEG2000Dataset : public GDALJP2AbstractDataset
     jas_stream_t *psStream;
     jas_image_t *psImage;
     int         iFormat;
+    int         bPromoteTo8Bit;
 
     int         bAlreadyDecoded;
     int         DecodeImage();
@@ -258,6 +259,14 @@ JPEG2000RasterBand::JPEG2000RasterBand( JPEG2000Dataset *poDS, int nBand,
     nBlockXSize = MIN(256, poDS->nRasterXSize);
     nBlockYSize = MIN(256, poDS->nRasterYSize);
     psMatrix = jas_matrix_create(nBlockYSize, nBlockXSize);
+
+    if( iDepth % 8 != 0 && !poDS->bPromoteTo8Bit )
+    {
+        SetMetadataItem( "NBITS", 
+                         CPLString().Printf("%d",iDepth), 
+                         "IMAGE_STRUCTURE" );
+    }
+    SetMetadataItem( "COMPRESSION", "JP2000", "IMAGE_STRUCTURE" );
 }
 
 /************************************************************************/
@@ -345,6 +354,18 @@ CPLErr JPEG2000RasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         }
     }
 
+    if( poGDS->bPromoteTo8Bit && nBand == 4 )
+    {
+        ptr = (GByte*)pImage;
+        for( i = 0; i < nHeightToRead; i++, ptr += nLineSize )
+        {
+            for( j = 0; j < nWidthToRead; j++ )
+            {
+                ((GByte*)ptr)[j] *= 255;
+            }
+        }
+    }
+
     return CE_None;
 }
 
@@ -400,6 +421,7 @@ JPEG2000Dataset::JPEG2000Dataset()
     psImage = NULL;
     nBands = 0;
     bAlreadyDecoded = FALSE;
+    bPromoteTo8Bit = FALSE;
     
     poDriver = (GDALDriver *)GDALGetDriverByName("JPEG2000");
 }
@@ -728,9 +750,23 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
 /* -------------------------------------------------------------------- */
+/*      Should we promote alpha channel to 8 bits ?                     */
+/* -------------------------------------------------------------------- */
+    poDS->bPromoteTo8Bit = (poDS->nBands == 4 &&
+                            paiDepth[0] == 8 &&
+                            paiDepth[1] == 8 &&
+                            paiDepth[2] == 8 &&
+                            paiDepth[3] == 1 &&
+                            CSLFetchBoolean(poOpenInfo->papszOpenOptions, "1BIT_ALPHA_PROMOTION", TRUE));
+    if( poDS->bPromoteTo8Bit )
+        CPLDebug( "JPEG2000",  "Fourth (alpha) band is promoted from 1 bit to 8 bit");
+
+/* -------------------------------------------------------------------- */
 
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
+
+
     for( iBand = 1; iBand <= poDS->nBands; iBand++ )
     {
         poDS->SetBand( iBand, new JPEG2000RasterBand( poDS, iBand,
@@ -1193,6 +1229,11 @@ void GDALRegister_JPEG2000()
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "jp2" );
         
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+
+        poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST, 
+"<OpenOptionList>"
+"   <Option name='1BIT_ALPHA_PROMOTION' type='boolean' description='Whether a 1-bit alpha channel should be promoted to 8-bit' default='YES'/>"
+"</OpenOptionList>" );
 
         poDriver->pfnIdentify = JPEG2000Dataset::Identify;
         poDriver->pfnOpen = JPEG2000Dataset::Open;
