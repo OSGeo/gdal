@@ -10,8 +10,12 @@ Link: http://trac.osgeo.org/gdal/wiki/rfc46_gdal_ogr_unification
 
 C++ API:
 
+  * OGRSFDriverRegistrar and OGRSFDriver are now deprecated. Use GDALDriverManager
+    and GDALDriver instead.
+
   * The following methods from OGRSFDriverRegistrar are removed : Open(),
     OpenShared(), ReleaseDataSource(), DeregisterDriver(), AutoLoadDrivers()
+    GetDriver() and GetDriverByName() now return a GDALDriver* instance.
 
   * OGRDataSource::CreateLayer() specialized implementations should be renamed
     as ICreateLayer() to benefit from layer creation options validation.
