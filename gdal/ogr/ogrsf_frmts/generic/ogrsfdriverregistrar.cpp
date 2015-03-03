@@ -76,6 +76,7 @@ OGRSFDriverRegistrar *OGRSFDriverRegistrar::GetRegistrar()
 /************************************************************************/
 
 #if defined(WIN32) && defined(_MSC_VER)
+#include "ogremulatedtransaction.h"
 void OGRRegisterMutexedDataSource();
 void OGRRegisterMutexedLayer();
 int OGRwillNeverBeTrue = FALSE;
@@ -91,12 +92,13 @@ void OGRCleanupAll()
 {
     GDALDestroyDriverManager();
 #if defined(WIN32) && defined(_MSC_VER)
-// Horrible hack: for some reason MSVC doesn't export those classes
+// Horrible hack: for some reason MSVC doesn't export those classes&symbols
 // if they are not referenced from the DLL itself
     if(OGRwillNeverBeTrue)
     {
         OGRRegisterMutexedDataSource();
         OGRRegisterMutexedLayer();
+        OGRCreateEmulatedTransactionDataSourceWrapper(NULL,NULL,FALSE,FALSE);
     }
 #endif
 }
