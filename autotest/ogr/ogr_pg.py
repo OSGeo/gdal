@@ -4269,7 +4269,7 @@ def ogr_pg_76_scenario1(lyr1, lyr2):
     (_, level, savepoint, usertransac) = ogr_pg_76_get_transaction_state(gdaltest.pg_ds)
     if (level, savepoint, usertransac) != (0, 0, 0):
         gdaltest.post_reason('fail')
-        print(lastcmd, level, savepoint, usertransac)
+        print(level, savepoint, usertransac)
         return 'fail'
         
     f = lyr1.GetNextFeature()

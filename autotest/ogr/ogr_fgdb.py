@@ -1153,7 +1153,7 @@ def ogr_fgdb_19():
     # Error case: try StartTransaction() with another active connection
     ds2 = ogr.Open('tmp/test.gdb')
     gdal.PushErrorHandler()
-    ret = ds.StartTransaction(force = True)
+    ret = ds2.StartTransaction(force = True)
     gdal.PopErrorHandler()
     if ret == 0:
         gdaltest.post_reason('fail')
