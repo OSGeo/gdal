@@ -84,9 +84,15 @@ public:
     // write support
     void        SetType( const char * );
     void        SetWritableData( int nLength, const GByte *pabyData );
+    void        AppendWritableData( int nLength, const void *pabyDataIn );
+    void        AppendUInt32( GUInt32 nVal );
+    void        AppendUInt16( GUInt16 nVal );
+    void        AppendUInt8( GByte nVal );
     const GByte*GetWritableData() { return pabyData; }
 
     // factory methods.
+    static GDALJP2Box *CreateSuperBox( const char* pszType,
+                                       int nCount, GDALJP2Box **papoBoxes );
     static GDALJP2Box *CreateAsocBox( int nCount, GDALJP2Box **papoBoxes );
     static GDALJP2Box *CreateLblBox( const char *pszLabel );
     static GDALJP2Box *CreateLabelledXMLAssoc( const char *pszLabel,

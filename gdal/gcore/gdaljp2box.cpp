@@ -329,6 +329,54 @@ void GDALJP2Box::SetWritableData( int nLength, const GByte *pabyDataIn )
 }
 
 /************************************************************************/
+/*                          AppendWritableData()                        */
+/************************************************************************/
+
+void GDALJP2Box::AppendWritableData( int nLength, const void *pabyDataIn )
+
+{
+    if( pabyData == NULL )
+    {
+        nBoxOffset = -9; // virtual offsets for data length computation.
+        nDataOffset = -1;
+        nBoxLength = 8;
+    }
+
+    pabyData = (GByte *) CPLRealloc(pabyData, GetDataLength() + nLength);
+    memcpy( pabyData + GetDataLength(), pabyDataIn, nLength );
+
+    nBoxLength += nLength;
+}
+
+/************************************************************************/
+/*                              AppendUInt32()                          */
+/************************************************************************/
+
+void GDALJP2Box::AppendUInt32( GUInt32 nVal )
+{
+    CPL_MSBPTR32(&nVal);
+    AppendWritableData(4, &nVal);
+}
+
+/************************************************************************/
+/*                              AppendUInt16()                          */
+/************************************************************************/
+
+void GDALJP2Box::AppendUInt16( GUInt16 nVal )
+{
+    CPL_MSBPTR16(&nVal);
+    AppendWritableData(2, &nVal);
+}
+/************************************************************************/
+/*                              AppendUInt8()                           */
+/************************************************************************/
+
+void GDALJP2Box::AppendUInt8( GByte nVal )
+{
+    AppendWritableData(1, &nVal);
+}
+
+/************************************************************************/
 /*                           CreateUUIDBox()                            */
 /************************************************************************/
 
@@ -358,8 +406,17 @@ GDALJP2Box *GDALJP2Box::CreateUUIDBox(
 /************************************************************************/
 
 GDALJP2Box *GDALJP2Box::CreateAsocBox( int nCount, GDALJP2Box **papoBoxes )
+{
+    return CreateSuperBox("asoc", nCount, papoBoxes);
+}
 
 
+/************************************************************************/
+/*                           CreateAsocBox()                            */
+/************************************************************************/
+
+GDALJP2Box *GDALJP2Box::CreateSuperBox( const char* pszType,
+                                        int nCount, GDALJP2Box **papoBoxes )
 {
     int nDataSize=0, iBox;
     GByte *pabyCompositeData, *pabyNext;
@@ -396,7 +453,7 @@ GDALJP2Box *GDALJP2Box::CreateAsocBox( int nCount, GDALJP2Box **papoBoxes )
 /* -------------------------------------------------------------------- */
     GDALJP2Box *poAsoc = new GDALJP2Box();
 
-    poAsoc->SetType( "asoc" );
+    poAsoc->SetType( pszType );
     poAsoc->SetWritableData( nDataSize, pabyCompositeData );
     
     CPLFree( pabyCompositeData );
