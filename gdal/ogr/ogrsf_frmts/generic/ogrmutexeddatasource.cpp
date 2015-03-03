@@ -237,6 +237,6 @@ CPLErr      OGRMutexedDataSource::SetMetadataItem( const char * pszName,
 void OGRRegisterMutexedDataSource();
 void OGRRegisterMutexedDataSource()
 {
-    delete new OGRMutexedDataSource(NULL, FALSE, NULL);
+    delete new OGRMutexedDataSource(NULL, FALSE, NULL, FALSE);
 }
 #endif

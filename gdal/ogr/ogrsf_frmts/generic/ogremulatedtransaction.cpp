@@ -213,12 +213,16 @@ void OGRDataSourceWithTransaction::RemapLayers()
             {
                 if( poWrappedLayer->m_poDecoratedLayer != NULL )
                 {
+#ifdef DEBUG
                     int nRefCount = poOldFeatureDefn->GetReferenceCount();
+#endif
                     m_poTransactionBehaviour->ReadoptOldFeatureDefn(m_poBaseDataSource,
                                                                     poWrappedLayer->m_poDecoratedLayer,
                                                                     poOldFeatureDefn);
+#ifdef DEBUG
                     CPLAssert(poWrappedLayer->m_poDecoratedLayer->GetLayerDefn() == poOldFeatureDefn);
                     CPLAssert(poOldFeatureDefn->GetReferenceCount() == nRefCount + 1 );
+#endif
                 }
             }
         }
