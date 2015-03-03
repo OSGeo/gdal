@@ -926,6 +926,24 @@ CPLErr ReadRaster(  int xoff, int yoff, int xsize, int ysize,
 
 #endif /* defined(SWIGPYTHON) || defined(SWIGJAVA) */
 
+#ifndef SWIGJAVA
+  %feature( "kwargs" ) StartTransaction;
+#endif
+  OGRErr StartTransaction(int force = FALSE)
+  {
+    return GDALDatasetStartTransaction(self, force);
+  }
+
+  OGRErr CommitTransaction()
+  {
+    return GDALDatasetCommitTransaction(self);
+  }
+
+  OGRErr RollbackTransaction()
+  {
+    return GDALDatasetRollbackTransaction(self);
+  }
+
 } /* extend */
 }; /* GDALDatasetShadow */
 

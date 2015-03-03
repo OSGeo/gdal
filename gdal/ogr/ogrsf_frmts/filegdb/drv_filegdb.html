@@ -40,6 +40,19 @@ SELECT statements will be run by default by the OGR SQL engine. This can be chan
 "GetLayerDefinition a_layer_name" and "GetLayerMetadata a_layer_name" can be used as special SQL requests to get
 respectively the definition and metadata of a FileGDB table as XML content.
 
+<h2>Transaction support (OGR &gt;= 2.0)</h2>
+
+The FileGDB driver implements transactions at the database level, through an
+emulation (as per <a href="http://trac.osgeo.org/gdal/wiki/rfc54_dataset_transactions">RFC 54</a>),
+since the FileGDB SDK itself does not offer it. This works by backing up the
+current state of a geodatabase when StartTransaction(force=TRUE) is called.
+If the transaction is committed, the backup copy is destroyed. If the transaction
+is rolled back, the backup copy is restored. So this might be costly when operating
+on huge geodatabases.<p>
+
+Note that this emulation has an unspecified behaviour in case of concurrent updates
+(with different connections in the same or another process).<p>
+
 <h2>Dataset Creation Options</h2>
 
 <p>None.</p>

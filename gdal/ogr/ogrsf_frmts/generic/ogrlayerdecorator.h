@@ -96,6 +96,15 @@ class CPL_DLL OGRLayerDecorator : public OGRLayer
 
     virtual OGRErr      SetIgnoredFields( const char **papszFields );
 
+    virtual char      **GetMetadata( const char * pszDomain = "" );
+    virtual CPLErr      SetMetadata( char ** papszMetadata,
+                                     const char * pszDomain = "" );
+    virtual const char *GetMetadataItem( const char * pszName,
+                                         const char * pszDomain = "" );
+    virtual CPLErr      SetMetadataItem( const char * pszName,
+                                         const char * pszValue,
+                                         const char * pszDomain = "" );
+
     OGRLayer* GetBaseLayer()    { return m_poDecoratedLayer; }
 };
 

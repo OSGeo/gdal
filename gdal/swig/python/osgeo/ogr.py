@@ -151,6 +151,8 @@ ODsCCreateLayer = _ogr.ODsCCreateLayer
 ODsCDeleteLayer = _ogr.ODsCDeleteLayer
 ODsCCreateGeomFieldAfterCreateLayer = _ogr.ODsCCreateGeomFieldAfterCreateLayer
 ODsCCurveGeometries = _ogr.ODsCCurveGeometries
+ODsCTransactions = _ogr.ODsCTransactions
+ODsCEmulatedTransactions = _ogr.ODsCEmulatedTransactions
 ODrCCreateDataSource = _ogr.ODrCCreateDataSource
 ODrCDeleteDataSource = _ogr.ODrCDeleteDataSource
 OLMD_FID64 = _ogr.OLMD_FID64
@@ -716,6 +718,10 @@ class DataSource(MajorObject):
         """
         return _ogr.DataSource_SyncToDisk(self, *args)
 
+    def FlushCache(self, *args):
+        """FlushCache(self)"""
+        return _ogr.DataSource_FlushCache(self, *args)
+
     def CreateLayer(self, *args, **kwargs):
         """
         CreateLayer(self, char name, SpatialReference srs = None, OGRwkbGeometryType geom_type = wkbUnknown, 
@@ -946,6 +952,18 @@ class DataSource(MajorObject):
 
         """
         return _ogr.DataSource_SetStyleTable(self, *args)
+
+    def StartTransaction(self, *args, **kwargs):
+        """StartTransaction(self, int force = True) -> OGRErr"""
+        return _ogr.DataSource_StartTransaction(self, *args, **kwargs)
+
+    def CommitTransaction(self, *args):
+        """CommitTransaction(self) -> OGRErr"""
+        return _ogr.DataSource_CommitTransaction(self, *args)
+
+    def RollbackTransaction(self, *args):
+        """RollbackTransaction(self) -> OGRErr"""
+        return _ogr.DataSource_RollbackTransaction(self, *args)
 
     def Destroy(self):
       "Once called, self has effectively been destroyed.  Do not access. For backwards compatiblity only"

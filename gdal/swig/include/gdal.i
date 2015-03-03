@@ -89,6 +89,10 @@ typedef struct OGRStyleTableHS OGRStyleTableShadow;
 %}
 #endif /* #if defined(SWIGPYTHON) || defined(SWIGJAVA) */
 
+#if defined(SWIGCSHARP)
+typedef int OGRErr;
+#endif
+
 %{
 /* use this to not return the int returned by GDAL */
 typedef int RETURN_NONE;

@@ -697,6 +697,15 @@ by the OGRSFDriverManager.
  This method implements sequential access to the features of a layer.  The
  ResetReading() method can be used to start at the beginning again.  
 
+ Features returned by GetNextFeature() may or may not be affected by concurrent
+ modifications depending on drivers. A guaranteed way of seing modifications in
+ effect is to call ResetReading() on layers where GetNextFeature() has been called,
+ before reading again.
+ Structural changes in layers (field addition, deletion, ...) when a read is in
+ progress may or may not be possible depending on drivers.
+ If a transaction is committed/aborted, the current sequential reading may or may not be
+ valid after that operation and a call to ResetReading() might be needed.
+
  This method is the same as the C function OGR_L_GetNextFeature().
 
  @return a feature, or NULL if no more features are available. 
@@ -720,6 +729,15 @@ by the OGRSFDriverManager.
  This function implements sequential access to the features of a layer.
  The OGR_L_ResetReading() function can be used to start at the beginning 
  again.
+
+ Features returned by OGR_GetNextFeature() may or may not be affected by concurrent
+ modifications depending on drivers. A guaranteed way of seing modifications in
+ effect is to call OGR_L_ResetReading() on layers where OGR_GetNextFeature() has been called,
+ before reading again.
+ Structural changes in layers (field addition, deletion, ...) when a read is in
+ progress may or may not be possible depending on drivers.
+ If a transaction is committed/aborted, the current sequential reading may or may not be
+ valid after that operation and a call to OGR_L_ResetReading() might be needed.
 
  This function is the same as the C++ method OGRLayer::GetNextFeature().
 
@@ -2413,6 +2431,11 @@ form depending on the limitations of the format driver.
  If starting the transaction fails, will return 
  OGRERR_FAILURE. Datasources which do not support transactions will 
  always return OGRERR_NONE. 
+
+ Note: as of GDAL 2.0, use of this API is discouraged when the dataset offers
+ dataset level transaction with GDALDataset::StartTransaction(). The reason is
+ that most drivers can only offer transactions at dataset level, and not layer level.
+ Very few drivers really support transactions at layer scope.
  
  This function is the same as the C++ method OGRLayer::StartTransaction().
 

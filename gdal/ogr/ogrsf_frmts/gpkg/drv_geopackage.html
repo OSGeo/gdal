@@ -78,6 +78,13 @@ encoding to/from Spatialite geometry binary encoding must be done.
 ogrinfo poly.gpkg -sql "SELECT AsGPB(ST_Buffer(CastAutomagic(geom),5)) FROM poly"
 </pre>
 
+<h2>Transaction support (GDAL &gt;= 2.0)</h2>
+
+<p>
+The driver implements transactions at the database level, per
+<a href="http://trac.osgeo.org/gdal/wiki/rfc54_dataset_transactions">RFC 54</a>
+</p>
+
 <h2>Creation Issues</h2>
 
 <p>When creating a new GeoPackage file, the driver will attempt to

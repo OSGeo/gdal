@@ -1321,7 +1321,7 @@ CPLErr GDALGeoPackageDataset::FinalizeRasterRegistration()
     double dfGDALMaxX = m_adfGeoTransform[0] + nRasterXSize * m_adfGeoTransform[1];
     double dfGDALMaxY = m_adfGeoTransform[3];
 
-    SQLCommand(hDB, "BEGIN");
+    SoftStartTransaction();
 
     pszSQL = sqlite3_mprintf("INSERT INTO gpkg_contents "
         "(table_name,data_type,identifier,description,min_x,min_y,max_x,max_y,srs_id) VALUES "
@@ -1395,7 +1395,7 @@ CPLErr GDALGeoPackageDataset::FinalizeRasterRegistration()
         }
     }
     
-    SQLCommand(hDB, "COMMIT");
+    SoftCommitTransaction();
 
     m_nOverviewCount = m_nZoomLevel;
     m_bRecordInsertedInGPKGContent = TRUE;
@@ -1443,7 +1443,7 @@ CPLErr GDALGeoPackageDataset::FlushCacheWithErrCode()
     GDALGeoPackageDataset* poMainDS = m_poParentDS ? m_poParentDS : this;
     if( poMainDS->m_nTileInsertionCount )
     {
-        SQLCommand(GetDB(), "COMMIT");
+        poMainDS->SoftCommitTransaction();
         poMainDS->m_nTileInsertionCount = 0;
     }
 
@@ -1616,7 +1616,7 @@ CPLErr GDALGeoPackageDataset::IBuildOverviews(
                     m_bZoomOther = TRUE;
                 }
 
-                SQLCommand(hDB, "BEGIN");
+                SoftStartTransaction();
 
                 CPLAssert(jCandidate > 0);
                 int nNewZoomLevel = m_papoOverviewDS[jCandidate-1]->m_nZoomLevel;
@@ -1633,7 +1633,10 @@ CPLErr GDALGeoPackageDataset::IBuildOverviews(
                     eErr = SQLCommand(hDB, pszSQL);
                     sqlite3_free(pszSQL);
                     if ( eErr != OGRERR_NONE )
+                    {
+                        SoftRollbackTransaction();
                         return CE_Failure;
+                    }
 
                     pszSQL = sqlite3_mprintf("UPDATE '%q' SET zoom_level = %d "
                         "WHERE zoom_level = %d",
@@ -1643,7 +1646,10 @@ CPLErr GDALGeoPackageDataset::IBuildOverviews(
                     eErr = SQLCommand(hDB, pszSQL);
                     sqlite3_free(pszSQL);
                     if ( eErr != OGRERR_NONE )
+                    {
+                        SoftRollbackTransaction();
                         return CE_Failure;
+                    }
                 }
 
                 double dfGDALMinX = m_adfGeoTransform[0];
@@ -1664,9 +1670,12 @@ CPLErr GDALGeoPackageDataset::IBuildOverviews(
                 eErr = SQLCommand(hDB, pszSQL);
                 sqlite3_free(pszSQL);
                 if ( eErr != OGRERR_NONE )
+                {
+                    SoftRollbackTransaction();
                     return CE_Failure;
-                
-                SQLCommand(hDB, "COMMIT");
+                }
+
+                SoftCommitTransaction();
 
                 m_nZoomLevel ++; /* this change our zoom level as well as previous overviews */
                 for(int k=0;k<jCandidate;k++)
@@ -2401,7 +2410,7 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
     /* will be written into the main file and supported henceforth */
     SQLCommand(hDB, "PRAGMA encoding = \"UTF-8\"");
 
-    SQLCommand(hDB, "BEGIN");
+    SoftStartTransaction();
 
     int bCreateTriggers = CSLTestBoolean(CPLGetConfigOption("CREATE_TRIGGERS", "YES"));
     int bCreateGeometryColumns = CSLTestBoolean(CPLGetConfigOption("CREATE_GEOMETRY_COLUMNS", "YES"));
@@ -2803,7 +2812,7 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
         }
     }
 
-    SQLCommand(hDB, "COMMIT");
+    SoftCommitTransaction();
 
     /* Requirement 2: A GeoPackage SHALL contain 0x47503130 ("GP10" in ASCII) */
     /* in the application id field of the SQLite database header */
@@ -3383,7 +3392,7 @@ int GDALGeoPackageDataset::TestCapability( const char * pszCap )
     }
     else if( EQUAL(pszCap,ODsCCurveGeometries) )
         return TRUE;
-    return FALSE;
+    return OGRSQLiteBaseDataSource::TestCapability(pszCap);
 }
 
 /************************************************************************/
@@ -4211,4 +4220,45 @@ std::pair<OGRLayer*, IOGRSQLiteGetSpatialWhere*>
 {
     OGRGeoPackageLayer* poRet = (OGRGeoPackageLayer*) GetLayerByName(pszName);
     return std::pair<OGRLayer*, IOGRSQLiteGetSpatialWhere*>(poRet, poRet);
+}
+
+/************************************************************************/
+/*                       CommitTransaction()                        */
+/************************************************************************/
+
+OGRErr GDALGeoPackageDataset::CommitTransaction()
+
+{
+    if( nSoftTransactionLevel == 1 )
+    {
+        FlushMetadata();
+        for( int i = 0; i < m_nLayers; i++ )
+        {
+            m_papoLayers[i]->RunDeferredCreationIfNecessary();
+            m_papoLayers[i]->CreateSpatialIndexIfNecessary();
+        }
+    }
+
+    return OGRSQLiteBaseDataSource::CommitTransaction();
+}
+
+/************************************************************************/
+/*                     RollbackTransaction()                            */
+/************************************************************************/
+
+OGRErr GDALGeoPackageDataset::RollbackTransaction()
+
+{
+    if( nSoftTransactionLevel == 1 )
+    {
+        FlushMetadata();
+        for( int i = 0; i < m_nLayers; i++ )
+        {
+            m_papoLayers[i]->RunDeferredCreationIfNecessary();
+            m_papoLayers[i]->CreateSpatialIndexIfNecessary();
+            m_papoLayers[i]->ResetReading();
+        }
+    }
+
+    return OGRSQLiteBaseDataSource::RollbackTransaction();
 }

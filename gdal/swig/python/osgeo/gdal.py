@@ -861,6 +861,18 @@ class Dataset(MajorObject):
         """SetStyleTable(self, StyleTable table)"""
         return _gdal.Dataset_SetStyleTable(self, *args)
 
+    def StartTransaction(self, *args, **kwargs):
+        """StartTransaction(self, int force = True) -> OGRErr"""
+        return _gdal.Dataset_StartTransaction(self, *args, **kwargs)
+
+    def CommitTransaction(self, *args):
+        """CommitTransaction(self) -> OGRErr"""
+        return _gdal.Dataset_CommitTransaction(self, *args)
+
+    def RollbackTransaction(self, *args):
+        """RollbackTransaction(self) -> OGRErr"""
+        return _gdal.Dataset_RollbackTransaction(self, *args)
+
     def ReadRaster1(self, *args, **kwargs):
         """
         ReadRaster1(self, int xoff, int yoff, int xsize, int ysize, int buf_xsize = None, 

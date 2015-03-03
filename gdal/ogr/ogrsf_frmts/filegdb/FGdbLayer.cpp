@@ -2855,3 +2855,15 @@ int FGdbLayer::TestCapability( const char* pszCap )
     else 
         return FALSE;
 }
+
+/************************************************************************/
+/*                       ReadoptOldFeatureDefn()                        */
+/************************************************************************/
+
+void FGdbLayer::ReadoptOldFeatureDefn(OGRFeatureDefn* poFeatureDefn)
+{
+    CPLAssert(m_pFeatureDefn->IsSame(poFeatureDefn));
+    m_pFeatureDefn->Release();
+    m_pFeatureDefn = poFeatureDefn;
+    m_pFeatureDefn->Reference();
+}

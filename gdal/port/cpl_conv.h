@@ -212,6 +212,7 @@ void CPL_DLL CPLStringToComplex( const char *pszString,
 /* -------------------------------------------------------------------- */
 int CPL_DLL CPLUnlinkTree( const char * );
 int CPL_DLL CPLCopyFile( const char *pszNewPath, const char *pszOldPath );
+int CPL_DLL CPLCopyTree( const char *pszNewPath, const char *pszOldPath );
 int CPL_DLL CPLMoveFile( const char *pszNewPath, const char *pszOldPath );
 
 /* -------------------------------------------------------------------- */

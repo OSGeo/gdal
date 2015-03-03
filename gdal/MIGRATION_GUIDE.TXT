@@ -116,14 +116,31 @@ Behaviour changes:
     it would have been interpreted as WHERE "a_column_name" = 'a_value" if
     a_column_name was indeed a column name.
 
-F) RFC 53: 
+F) RFC 53: OGR not-null constraints and default values 
 
-http://trac.osgeo.org/gdal/wiki/rfc53_ogr_notnull_default
+Link: http://trac.osgeo.org/gdal/wiki/rfc53_ogr_notnull_default
 
 API changes:
     * OGRFieldDefn::SetDefault() now takes a const char* as argument.
       OGRFieldDefn::GetDefaultRef() removed and replaced by GetDefault() that
       returns a const char*
+
+G) RFC 54: Dataset transactions
+
+Link: http://trac.osgeo.org/gdal/wiki/rfc54_dataset_transactions
+
+Only API additions.
+
+Behaviour changes:
+  * As described in the RFC, subtle behaviour changes can be observed with the PG driver,
+    related to implicit transactions that were flushed before and are no longer now,
+    but this should hopefully be restricted to non-typical use cases. So some cases that "worked" before might
+    no longer work, but the new behaviour should hopefully be more understandable.
+
+  * The PG and SQLite drivers could accept apparently nested calls to StartTransaction()
+    (at the layer level). This is no longer possible since they are now redirected
+    to dataset transactions, that explicitely do not support it.
+
 
 MIGRATION GUIDE FROM GDAL 1.10 to GDAL 1.11
 -------------------------------------------

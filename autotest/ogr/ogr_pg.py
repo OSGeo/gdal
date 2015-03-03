@@ -116,6 +116,7 @@ def ogr_pg_1():
     gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
     sql_lyr = gdaltest.pg_ds.ExecuteSQL('SELECT postgis_version()')
     gdaltest.pg_has_postgis = sql_lyr is not None
+    gdaltest.pg_has_postgis_2 = False
     if gdaltest.pg_has_postgis:
         feat = sql_lyr.GetNextFeature()
         version_str = feat.GetFieldAsString('postgis_version')
@@ -128,6 +129,7 @@ def ogr_pg_1():
             print('PostGIS available !')
         else:
             gdaltest.pg_has_postgis = False
+            gdaltest.pg_has_postgis_2 = False
             print('PostGIS available but will NOT be used because of PG_USE_POSTGIS=NO !')
     else:
         gdaltest.pg_has_postgis = False
@@ -316,6 +318,7 @@ def ogr_pg_4():
         feat_read.Destroy()
 
     dst_feat.Destroy()
+    gdaltest.pg_lyr.ResetReading() # to close implicit transaction
     
     return 'success'
     
@@ -636,6 +639,7 @@ def ogr_pg_12():
         orig_feat.Destroy()
 
     gdaltest.poly_feat = None
+    gdaltest.pgc_lyr.ResetReading() # to close implicit transaction
 
     return 'success'
 
@@ -1566,7 +1570,6 @@ def ogr_pg_32():
     feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(0 0)'))
     gdaltest.pg_lyr.CreateFeature(feat)
     feat = None
-    gdaltest.pg_lyr.ResetReading() # force feature to be committed to avoid a COPY error. Shouldn't be necessary
     sr = gdaltest.pg_lyr.GetSpatialRef()
     if sr.ExportToWkt().find('26632') == -1:
         gdaltest.post_reason('did not get expected SRS')
@@ -2548,6 +2551,7 @@ def ogr_pg_49():
     gdal.SetConfigOption('PGSQL_OGR_FID', None)
 
     feat = lyr.GetNextFeature()
+    lyr.ResetReading() # to close implicit transaction
 
     if lyr.GetFIDColumn() != 'other_id':
         print(lyr.GetFIDColumn())
@@ -2621,6 +2625,8 @@ def ogr_pg_50():
                 elif got_val[0] != float(value) or got_val[1] != float(value):
                     print(feat.GetFieldAsString( 'REALLIST' )+' returned for REALLIST instead of '+value)
                     return 'fail'
+
+    gdaltest.pg_lyr.ResetReading() # to close implicit transaction
 
     return 'success'
 
@@ -2954,6 +2960,7 @@ def ogr_pg_58():
         gdaltest.post_reason('failed (2)')
         return 'fail'
     feat = None
+    lyr.ResetReading() # to close implicit transaction
 
     if lyr.DeleteField(lyr.GetLayerDefn().GetFieldIndex('anotherstrcolumn')) != 0:
         gdaltest.post_reason('failed (3)')
@@ -3488,11 +3495,7 @@ def ogr_pg_68():
 # Test differed loading of tables (#5450)
 
 def has_run_load_tables(ds):
-    sql_lyr = ds.ExecuteSQL('has_run_load_tables')
-    if sql_lyr is None:
-        return False
-    ds.ReleaseResultSet(sql_lyr)
-    return True
+    return int(ds.GetMetadataItem("bHasLoadTables", "_DEBUG_"))
 
 def ogr_pg_69():
 
@@ -3793,6 +3796,8 @@ def ogr_pg_72():
         f.DumpReadable()
         return 'fail'
 
+    lyr.ResetReading() # to close implicit transaction
+
     return 'success'
 
 ###############################################################################
@@ -4028,6 +4033,8 @@ def ogr_pg_74():
         f.DumpReadable()
         return 'fail'
 
+    lyr.ResetReading() # to close implicit transaction
+
     # Change DEFAULT value
     src_fd = lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_string'))
     fd = ogr.FieldDefn('field_string', src_fd.GetType())
@@ -4170,6 +4177,483 @@ def ogr_pg_75():
         f.DumpReadable()
         return 'fail'
     f = None
+    lyr.ResetReading() # to close implicit transaction
+
+    return 'success'
+
+###############################################################################
+# Test transactions RFC 54
+
+def ogr_pg_76_get_transaction_state(ds):
+    return ( ds.GetMetadataItem("osDebugLastTransactionCommand", "_DEBUG_"),
+             int(ds.GetMetadataItem("nSoftTransactionLevel", "_DEBUG_")),
+             int(ds.GetMetadataItem("bSavePointActive", "_DEBUG_")),
+             int(ds.GetMetadataItem("bUserTransactionActive", "_DEBUG_")) )
+
+def ogr_pg_76():
+
+    if gdaltest.pg_ds is None:
+        return 'skip'
+
+    if gdaltest.pg_ds.TestCapability(ogr.ODsCTransactions) != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    level = int(gdaltest.pg_ds.GetMetadataItem("nSoftTransactionLevel", "_DEBUG_"))
+    if level != 0:
+        gdaltest.post_reason('fail')
+        print(level)
+        return 'fail'
+
+    if gdaltest.pg_has_postgis_2:
+        gdaltest.pg_ds.StartTransaction()
+        lyr = gdaltest.pg_ds.CreateLayer('will_not_be_created', options = ['OVERWRITE=YES'])
+        lyr.CreateField(ogr.FieldDefn('foo', ogr.OFTString))
+
+        sql_lyr = gdaltest.pg_ds.ExecuteSQL("SELECT COUNT(*) FROM geometry_columns WHERE f_table_name = 'will_not_be_created'")
+        f = sql_lyr.GetNextFeature()
+        res = f.GetField(0)
+        gdaltest.pg_ds.ReleaseResultSet(sql_lyr)
+        if res != 1:
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+        gdaltest.pg_ds.RollbackTransaction()
+
+        # Rollback doesn't rollback the insertion in geometry_columns if done through the AddGeometryColumn()
+        sql_lyr = gdaltest.pg_ds.ExecuteSQL("SELECT COUNT(*) FROM geometry_columns WHERE f_table_name = 'will_not_be_created'")
+        f = sql_lyr.GetNextFeature()
+        res = f.GetField(0)
+        gdaltest.pg_ds.ReleaseResultSet(sql_lyr)
+        if res != 0:
+            gdaltest.post_reason('fail')
+            print(res)
+            return 'fail'
+
+    gdal.SetConfigOption('OGR_PG_CURSOR_PAGE', '1')
+    lyr1 = gdaltest.pg_ds.CreateLayer('ogr_pg_76_lyr1', geom_type = ogr.wkbNone, options = ['OVERWRITE=YES'])
+    lyr2 = gdaltest.pg_ds.CreateLayer('ogr_pg_76_lyr2', geom_type = ogr.wkbNone, options = ['OVERWRITE=YES'])
+    gdal.SetConfigOption('OGR_PG_CURSOR_PAGE', None)
+    lyr1.CreateField(ogr.FieldDefn('foo', ogr.OFTString))
+    #lyr2.CreateField(ogr.FieldDefn('foo', ogr.OFTString))
+    lyr1.CreateFeature(ogr.Feature(lyr1.GetLayerDefn()))
+    lyr2.CreateFeature(ogr.Feature(lyr2.GetLayerDefn()))
+    lyr1.CreateFeature(ogr.Feature(lyr1.GetLayerDefn()))
+    lyr1.CreateFeature(ogr.Feature(lyr1.GetLayerDefn()))
+    lyr2.CreateFeature(ogr.Feature(lyr2.GetLayerDefn()))
+
+    level = int(gdaltest.pg_ds.GetMetadataItem("nSoftTransactionLevel", "_DEBUG_"))
+    if level != 0:
+        gdaltest.post_reason('fail')
+        print(level)
+        return 'fail'
+
+    ret = ogr_pg_76_scenario1(lyr1, lyr2)
+    if ret != 'success':
+        return ret
+    ret = ogr_pg_76_scenario2(lyr1, lyr2)
+    if ret != 'success':
+        return ret
+    ret = ogr_pg_76_scenario3(lyr1, lyr2)
+    if ret != 'success':
+        return ret
+    ret = ogr_pg_76_scenario4(lyr1, lyr2)
+    if ret != 'success':
+        return ret
+
+    return ret
+
+# Scenario 1 : a CreateFeature done in the middle of GetNextFeature()
+def ogr_pg_76_scenario1(lyr1, lyr2):
+ 
+    (_, level, savepoint, usertransac) = ogr_pg_76_get_transaction_state(gdaltest.pg_ds)
+    if (level, savepoint, usertransac) != (0, 0, 0):
+        gdaltest.post_reason('fail')
+        print(lastcmd, level, savepoint, usertransac)
+        return 'fail'
+        
+    f = lyr1.GetNextFeature()
+    if f is None or f.GetFID() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    (lastcmd, level, savepoint, usertransac) = ogr_pg_76_get_transaction_state(gdaltest.pg_ds)
+    if (lastcmd, level, savepoint, usertransac) != ('BEGIN', 1, 0, 0):
+        gdaltest.post_reason('fail')
+        print(lastcmd, level, savepoint, usertransac)
+        return 'fail'
+
+    lyr1.SetAttributeFilter("foo is NULL")
+    (lastcmd, level, savepoint, usertransac) = ogr_pg_76_get_transaction_state(gdaltest.pg_ds)
+    if (lastcmd, level, savepoint, usertransac) != ('COMMIT', 0, 0, 0):
+        gdaltest.post_reason('fail')
+        print(lastcmd, level, savepoint, usertransac)
+        return 'fail'
+
+    f = lyr1.GetNextFeature()
+    if f is None or f.GetFID() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    (lastcmd, level, savepoint, usertransac) = ogr_pg_76_get_transaction_state(gdaltest.pg_ds)
+    if (lastcmd, level, savepoint, usertransac) != ('BEGIN', 1, 0, 0):
+        gdaltest.post_reason('fail')
+        print(lastcmd, level, savepoint, usertransac)
+        return 'fail'
+
+    f = lyr2.GetNextFeature()
+    if f is None or f.GetFID() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    (lastcmd, level, savepoint, usertransac) = ogr_pg_76_get_transaction_state(gdaltest.pg_ds)
+    if (lastcmd, level, savepoint, usertransac) != ('', 2, 0, 0):
+        gdaltest.post_reason('fail')
+        print(lastcmd, level, savepoint, usertransac)
+        return 'fail'
+
+    f = lyr1.GetNextFeature()
+    if f is None or f.GetFID() != 2:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Check that GetFeature() doesn't reset the cursor
+    f = lyr1.GetFeature(f.GetFID())
+    if f is None or f.GetFID() != 2:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    f = lyr1.GetNextFeature()
+    if f is None or f.GetFID() != 3:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = lyr2.GetNextFeature()
+    if f is None or f.GetFID() != 2:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    (lastcmd, level, savepoint, usertransac) = ogr_pg_76_get_transaction_state(gdaltest.pg_ds)
+    if (lastcmd, level, savepoint, usertransac) != ('', 2, 0, 0):
+        gdaltest.post_reason('fail')
+        print(lastcmd, level, savepoint, usertransac)
+        return 'fail'
+
+    lyr1.CreateFeature(ogr.Feature(lyr1.GetLayerDefn()))
+
+    lyr1.ResetReading()
+    (lastcmd, level, savepoint, usertransac) = ogr_pg_76_get_transaction_state(gdaltest.pg_ds)
+    if (lastcmd, level, savepoint, usertransac) != ('', 1, 0, 0):
+        gdaltest.post_reason('fail')
+        print(lastcmd, level, savepoint, usertransac)
+        return 'fail'
+    lyr2.ResetReading()
+    (lastcmd, level, savepoint, usertransac) = ogr_pg_76_get_transaction_state(gdaltest.pg_ds)
+    if (lastcmd, level, savepoint, usertransac) != ('COMMIT', 0, 0, 0):
+        gdaltest.post_reason('fail')
+        print(lastcmd, level, savepoint, usertransac)
+        return 'fail'
+    if lyr1.GetFeatureCount() != 4:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+
+# Scenario 2 : a CreateFeature done in the middle of GetNextFeature(), themselves between a user transaction
+def ogr_pg_76_scenario2(lyr1, lyr2):
+ 
+    if gdaltest.pg_ds.StartTransaction() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    (lastcmd, level, savepoint, usertransac) = ogr_pg_76_get_transaction_state(gdaltest.pg_ds)
+    if (lastcmd, level, savepoint, usertransac) != ('BEGIN', 1, 0, 1):
+        gdaltest.post_reason('fail')
+        print(lastcmd, level, savepoint, usertransac)
+        return 'fail'
+
+    # Try to re-enter a transaction
+    gdal.ErrorReset()
+    gdal.PushErrorHandler()
+    ret = gdaltest.pg_ds.StartTransaction()
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorMsg() == '' or ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    (lastcmd, level, savepoint, usertransac) = ogr_pg_76_get_transaction_state(gdaltest.pg_ds)
+    if (lastcmd, level, savepoint, usertransac) != ('', 1, 0, 1):
+        gdaltest.post_reason('fail')
+        print(lastcmd, level, savepoint, usertransac)
+        return 'fail'
+
+    f = lyr1.GetNextFeature()
+    if f is None or f.GetFID() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    (lastcmd, level, savepoint, usertransac) = ogr_pg_76_get_transaction_state(gdaltest.pg_ds)
+    if (lastcmd, level, savepoint, usertransac) != ('', 2, 0, 1):
+        gdaltest.post_reason('fail')
+        print(lastcmd, level, savepoint, usertransac)
+        return 'fail'
+        
+    f = lyr2.GetNextFeature()
+    if f is None or f.GetFID() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    (lastcmd, level, savepoint, usertransac) = ogr_pg_76_get_transaction_state(gdaltest.pg_ds)
+    if (lastcmd, level, savepoint, usertransac) != ('', 3, 0, 1):
+        gdaltest.post_reason('fail')
+        print(lastcmd, level, savepoint, usertransac)
+        return 'fail'
+
+    f = lyr1.GetNextFeature()
+    if f is None or f.GetFID() != 2:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = lyr1.GetNextFeature()
+    if f is None or f.GetFID() != 3:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = lyr2.GetNextFeature()
+    if f is None or f.GetFID() != 2:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    (lastcmd, level, savepoint, usertransac) = ogr_pg_76_get_transaction_state(gdaltest.pg_ds)
+    if (lastcmd, level, savepoint, usertransac) != ('', 3, 0, 1):
+        gdaltest.post_reason('fail')
+        print(lastcmd, level, savepoint, usertransac)
+        return 'fail'
+
+    lyr1.CreateFeature(ogr.Feature(lyr1.GetLayerDefn()))
+
+    lyr1.ResetReading()
+    (lastcmd, level, savepoint, usertransac) = ogr_pg_76_get_transaction_state(gdaltest.pg_ds)
+    if (lastcmd, level, savepoint, usertransac) != ('', 2, 0, 1):
+        gdaltest.post_reason('fail')
+        print(lastcmd, level, savepoint, usertransac)
+        return 'fail'
+
+    lyr2.ResetReading()
+    (lastcmd, level, savepoint, usertransac) = ogr_pg_76_get_transaction_state(gdaltest.pg_ds)
+    if (lastcmd, level, savepoint, usertransac) != ('', 1, 0, 1):
+        gdaltest.post_reason('fail')
+        print(lastcmd, level, savepoint, usertransac)
+        return 'fail'
+
+
+    if gdaltest.pg_ds.CommitTransaction() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    (lastcmd, level, savepoint, usertransac) = ogr_pg_76_get_transaction_state(gdaltest.pg_ds)
+    if (lastcmd, level, savepoint, usertransac) != ('COMMIT', 0, 0, 0):
+        gdaltest.post_reason('fail')
+        print(lastcmd, level, savepoint, usertransac)
+        return 'fail'
+
+    if gdaltest.pg_ds.StartTransaction() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    if gdaltest.pg_ds.RollbackTransaction() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    (lastcmd, level, savepoint, usertransac) = ogr_pg_76_get_transaction_state(gdaltest.pg_ds)
+    if (lastcmd, level, savepoint, usertransac) != ('ROLLBACK', 0, 0, 0):
+        gdaltest.post_reason('fail')
+        print(lastcmd, level, savepoint, usertransac)
+        return 'fail'
+
+    # Try to re-commit a transaction
+    gdal.ErrorReset()
+    gdal.PushErrorHandler()
+    ret = gdaltest.pg_ds.CommitTransaction()
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorMsg() == '' or ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    (lastcmd, level, savepoint, usertransac) = ogr_pg_76_get_transaction_state(gdaltest.pg_ds)
+    if (lastcmd, level, savepoint, usertransac) != ('', 0, 0, 0):
+        gdaltest.post_reason('fail')
+        print(lastcmd, level, savepoint, usertransac)
+        return 'fail'
+
+    # Try to rollback a non-transaction
+    gdal.ErrorReset()
+    gdal.PushErrorHandler()
+    ret = gdaltest.pg_ds.RollbackTransaction()
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorMsg() == '' or ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    (lastcmd, level, savepoint, usertransac) = ogr_pg_76_get_transaction_state(gdaltest.pg_ds)
+    if (lastcmd, level, savepoint, usertransac) != ('', 0, 0, 0):
+        gdaltest.post_reason('fail')
+        print(lastcmd, level, savepoint, usertransac)
+        return 'fail'
+
+    return 'success'
+
+# Scenario 3 : StartTransaction(), GetNextFeature(), CommitTransaction(), GetNextFeature()
+def ogr_pg_76_scenario3(lyr1, lyr2):
+ 
+    if gdaltest.pg_ds.StartTransaction() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    (lastcmd, level, savepoint, usertransac) = ogr_pg_76_get_transaction_state(gdaltest.pg_ds)
+    if (lastcmd, level, savepoint, usertransac) != ('BEGIN', 1, 0, 1):
+        gdaltest.post_reason('fail')
+        print(lastcmd, level, savepoint, usertransac)
+        return 'fail'
+
+    f = lyr1.GetNextFeature()
+    if f is None or f.GetFID() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    (lastcmd, level, savepoint, usertransac) = ogr_pg_76_get_transaction_state(gdaltest.pg_ds)
+    if (lastcmd, level, savepoint, usertransac) != ('', 2, 0, 1):
+        gdaltest.post_reason('fail')
+        print(lastcmd, level, savepoint, usertransac)
+        return 'fail'
+
+    if gdaltest.pg_ds.CommitTransaction() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    (lastcmd, level, savepoint, usertransac) = ogr_pg_76_get_transaction_state(gdaltest.pg_ds)
+    if (lastcmd, level, savepoint, usertransac) != ('COMMIT', 0, 0, 0):
+        gdaltest.post_reason('fail')
+        print(lastcmd, level, savepoint, usertransac)
+        return 'fail'
+
+    gdal.ErrorReset()
+    gdal.PushErrorHandler()
+    f = lyr1.GetNextFeature()
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorMsg() == '' or f is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Must re-issue an explicit ResetReading()
+    lyr1.ResetReading()
+
+    f = lyr1.GetNextFeature()
+    if f is None or f.GetFID() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    (lastcmd, level, savepoint, usertransac) = ogr_pg_76_get_transaction_state(gdaltest.pg_ds)
+    if (lastcmd, level, savepoint, usertransac) != ('BEGIN', 1, 0, 0):
+        gdaltest.post_reason('fail')
+        print(lastcmd, level, savepoint, usertransac)
+        return 'fail'
+
+
+    lyr1.ResetReading()
+    (lastcmd, level, savepoint, usertransac) = ogr_pg_76_get_transaction_state(gdaltest.pg_ds)
+    if (lastcmd, level, savepoint, usertransac) != ('COMMIT', 0, 0, 0):
+        gdaltest.post_reason('fail')
+        print(lastcmd, level, savepoint, usertransac)
+        return 'fail'
+
+    lyr2.ResetReading()
+
+    return 'success'
+
+# Scenario 4 : GetNextFeature(), StartTransaction(), CreateFeature(), CommitTransaction(), GetNextFeature(), ResetReading()
+def ogr_pg_76_scenario4(lyr1, lyr2):
+
+    (lastcmd, level, savepoint, usertransac) = ogr_pg_76_get_transaction_state(gdaltest.pg_ds)
+    if (lastcmd, level, savepoint, usertransac) != ('', 0, 0, 0):
+        gdaltest.post_reason('fail')
+        print(lastcmd, level, savepoint, usertransac)
+        return 'fail'
+
+    f = lyr1.GetNextFeature()
+    if f is None or f.GetFID() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    (lastcmd, level, savepoint, usertransac) = ogr_pg_76_get_transaction_state(gdaltest.pg_ds)
+    if (lastcmd, level, savepoint, usertransac) != ('BEGIN', 1, 0, 0):
+        gdaltest.post_reason('fail')
+        print(lastcmd, level, savepoint, usertransac)
+        return 'fail'
+
+    if gdaltest.pg_ds.StartTransaction() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    (lastcmd, level, savepoint, usertransac) = ogr_pg_76_get_transaction_state(gdaltest.pg_ds)
+    if (lastcmd, level, savepoint, usertransac) != ('SAVEPOINT ogr_savepoint', 2, 1, 1):
+        gdaltest.post_reason('fail')
+        print(lastcmd, level, savepoint, usertransac)
+        return 'fail'
+
+    lyr1.CreateFeature(ogr.Feature(lyr1.GetLayerDefn()))
+
+    f = lyr1.GetNextFeature()
+    if f is None or f.GetFID() != 2:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = lyr2.GetNextFeature()
+    if f is None or f.GetFID() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    (lastcmd, level, savepoint, usertransac) = ogr_pg_76_get_transaction_state(gdaltest.pg_ds)
+    if (lastcmd, level, savepoint, usertransac) != ('', 3, 1, 1):
+        gdaltest.post_reason('fail')
+        print(lastcmd, level, savepoint, usertransac)
+        return 'fail'
+
+    # Check that it doesn't commit the transaction
+    lyr1.SetAttributeFilter("foo is NULL")
+    (lastcmd, level, savepoint, usertransac) = ogr_pg_76_get_transaction_state(gdaltest.pg_ds)
+    if (lastcmd, level, savepoint, usertransac) != ('', 2, 1, 1):
+        gdaltest.post_reason('fail')
+        print(lastcmd, level, savepoint, usertransac)
+        return 'fail'
+
+    f = lyr1.GetNextFeature()
+    if f is None or f.GetFID() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    (lastcmd, level, savepoint, usertransac) = ogr_pg_76_get_transaction_state(gdaltest.pg_ds)
+    if (lastcmd, level, savepoint, usertransac) != ('', 3, 1, 1):
+        gdaltest.post_reason('fail')
+        print(lastcmd, level, savepoint, usertransac)
+        return 'fail'
+
+    f = lyr2.GetNextFeature()
+    if f is None or f.GetFID() != 2:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    if gdaltest.pg_ds.CommitTransaction() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    (lastcmd, level, savepoint, usertransac) = ogr_pg_76_get_transaction_state(gdaltest.pg_ds)
+    if (lastcmd, level, savepoint, usertransac) != ('RELEASE SAVEPOINT ogr_savepoint', 2, 0, 0):
+        gdaltest.post_reason('fail')
+        print(lastcmd, level, savepoint, usertransac)
+        return 'fail'
+
+    lyr2.ResetReading()
+
+    if gdaltest.pg_ds.StartTransaction() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    if gdaltest.pg_ds.RollbackTransaction() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    (lastcmd, level, savepoint, usertransac) = ogr_pg_76_get_transaction_state(gdaltest.pg_ds)
+    if (lastcmd, level, savepoint, usertransac) != ('ROLLBACK TO SAVEPOINT ogr_savepoint', 1, 0, 0):
+        gdaltest.post_reason('fail')
+        print(lastcmd, level, savepoint, usertransac)
+        return 'fail'
+
+    f = lyr1.GetNextFeature()
+    if f is None or f.GetFID() != 2:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr1.ResetReading()
+    (lastcmd, level, savepoint, usertransac) = ogr_pg_76_get_transaction_state(gdaltest.pg_ds)
+    if (lastcmd, level, savepoint, usertransac) != ('COMMIT', 0, 0, 0):
+        gdaltest.post_reason('fail')
+        print(lastcmd, level, savepoint, usertransac)
+        return 'fail'
 
     return 'success'
 
@@ -4223,6 +4707,8 @@ def ogr_pg_table_cleanup():
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_73' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_74' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_75' )
+    gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_76_lyr1' )
+    gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_76_lyr2' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:test_curve' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:test_curve_3d' )
     
@@ -4332,12 +4818,13 @@ gdaltest_list_internal = [
     ogr_pg_73,
     ogr_pg_74,
     ogr_pg_75,
+    ogr_pg_76,
     ogr_pg_cleanup ]
 
-#gdaltest_list_internal = [ 
-#    ogr_pg_table_cleanup,
-#    ogr_pg_75,
-#    ogr_pg_cleanup ]
+DISABLED_gdaltest_list_internal = [ 
+    ogr_pg_table_cleanup,
+    ogr_pg_76,
+    ogr_pg_cleanup ]
 
 ###############################################################################
 # Run gdaltest_list_internal with PostGIS enabled and then with PostGIS disabled

@@ -455,6 +455,9 @@ private:
     int                 GetSummaryRefCount() const;
     OGRErr              Release();
 
+    virtual OGRErr      StartTransaction(int bForce=FALSE);
+    virtual OGRErr      CommitTransaction();
+    virtual OGRErr      RollbackTransaction();
     
     static int          IsGenericSQLDialect(const char* pszDialect);
 

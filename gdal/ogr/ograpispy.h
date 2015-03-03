@@ -99,6 +99,10 @@ void OGRAPISpy_DS_CreateLayer( OGRDataSourceH hDS,
                                OGRLayerH hLayer);
 void OGRAPISpy_DS_DeleteLayer( OGRDataSourceH hDS, int iLayer, OGRErr eErr );
 
+void OGRAPISpy_Dataset_StartTransaction( GDALDatasetH hDS, int bForce );
+void OGRAPISpy_Dataset_CommitTransaction( GDALDatasetH hDS );
+void OGRAPISpy_Dataset_RollbackTransaction( GDALDatasetH hDS );
+
 void OGRAPISpy_L_GetFeatureCount( OGRLayerH hLayer, int bForce );
 void OGRAPISpy_L_GetExtent( OGRLayerH hLayer, int bForce );
 void OGRAPISpy_L_GetExtentEx( OGRLayerH hLayer, int iGeomField, int bForce );

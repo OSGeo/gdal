@@ -258,6 +258,34 @@ OGRErr      OGRMutexedLayer::SetIgnoredFields( const char **papszFields )
     return OGRLayerDecorator::SetIgnoredFields(papszFields);
 }
 
+char      **OGRMutexedLayer::GetMetadata( const char * pszDomain )
+{
+    CPLMutexHolderOptionalLockD(m_hMutex);
+    return OGRLayerDecorator::GetMetadata(pszDomain);
+}
+
+CPLErr      OGRMutexedLayer::SetMetadata( char ** papszMetadata,
+                                          const char * pszDomain )
+{
+    CPLMutexHolderOptionalLockD(m_hMutex);
+    return OGRLayerDecorator::SetMetadata(papszMetadata, pszDomain);
+}
+
+const char *OGRMutexedLayer::GetMetadataItem( const char * pszName,
+                                              const char * pszDomain )
+{
+    CPLMutexHolderOptionalLockD(m_hMutex);
+    return OGRLayerDecorator::GetMetadataItem(pszName, pszDomain);
+}
+
+CPLErr      OGRMutexedLayer::SetMetadataItem( const char * pszName,
+                                              const char * pszValue,
+                                              const char * pszDomain )
+{
+    CPLMutexHolderOptionalLockD(m_hMutex);
+    return OGRLayerDecorator::SetMetadataItem(pszName, pszValue, pszDomain);
+}
+
 #if defined(WIN32) && defined(_MSC_VER)
 // Horrible hack: for some reason MSVC doesn't export the class
 // if it is not referenced from the DLL itself

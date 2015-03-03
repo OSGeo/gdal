@@ -242,6 +242,9 @@ class GDALGeoPackageDataset : public OGRSQLiteBaseDataSource
                                         const char *pszDialect );
         virtual void        ReleaseResultSet( OGRLayer * poLayer );
 
+        virtual OGRErr      CommitTransaction();
+        virtual OGRErr      RollbackTransaction();
+
         int                 GetSrsId( const OGRSpatialReference * poSRS );
         const char*         GetSrsName( const OGRSpatialReference * poSRS );
         OGRSpatialReference* GetSpatialRef( int iSrsId );

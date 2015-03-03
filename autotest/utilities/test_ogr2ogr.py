@@ -2359,6 +2359,29 @@ def test_ogr2ogr_57():
 
     return 'success'
 
+###############################################################################
+# Test datasource transactions
+
+def test_ogr2ogr_58():
+    if test_cli_utilities.get_ogr2ogr_path() is None:
+        return 'skip'
+    if ogr.GetDriverByName('SQLite') is None:
+        return 'skip'
+
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -gt 3 -f SQLite tmp/test_ogr2ogr_58.sqlite ../ogr/data/poly.shp')
+
+    ds = ogr.Open('tmp/test_ogr2ogr_58.sqlite')
+    lyr = ds.GetLayer(0)
+    if lyr.GetFeatureCount() != 10:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    ogr.GetDriverByName('SQLite').DeleteDataSource('tmp/test_ogr2ogr_58.sqlite')
+
+    return 'success'
+
+
 gdaltest_list = [
     test_ogr2ogr_1,
     test_ogr2ogr_2,
@@ -2418,6 +2441,7 @@ gdaltest_list = [
     test_ogr2ogr_55,
     test_ogr2ogr_56,
     test_ogr2ogr_57,
+    test_ogr2ogr_58,
     ]
 
 if __name__ == '__main__':

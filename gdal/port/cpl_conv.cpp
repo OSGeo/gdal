@@ -2306,7 +2306,7 @@ int CPLUnlinkTree( const char *pszPath )
 
 {
 /* -------------------------------------------------------------------- */
-/*      First, ensure there isn't any such file yet.                    */
+/*      First, ensure there is such a file.                             */
 /* -------------------------------------------------------------------- */
     VSIStatBufL sStatBuf;
 
@@ -2444,6 +2444,88 @@ int CPLCopyFile( const char *pszNewPath, const char *pszOldPath )
     CPLFree( pabyBuffer );
 
     return nRet;
+}
+
+/************************************************************************/
+/*                            CPLCopyTree()                             */
+/************************************************************************/
+
+int CPLCopyTree( const char *pszNewPath, const char *pszOldPath )
+
+{
+    VSIStatBufL sStatBuf;
+
+    if( VSIStatL( pszOldPath, &sStatBuf ) != 0 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "It seems no file system object called '%s' exists.",
+                  pszOldPath );
+
+        return -1;
+    }
+    if( VSIStatL( pszNewPath, &sStatBuf ) == 0 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "It seems that a file system object called '%s' already exists.",
+                  pszNewPath );
+
+        return -1;
+    }
+
+    if( VSI_ISDIR( sStatBuf.st_mode ) )
+    {
+        if( VSIMkdir( pszNewPath, 0755 ) != 0 )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                    "Cannot create directory '%s'.",
+                    pszNewPath );
+
+            return -1;
+        }
+
+        char **papszItems = CPLReadDir( pszOldPath );
+        int  i;
+
+        for( i = 0; papszItems != NULL && papszItems[i] != NULL; i++ )
+        {
+            char *pszNewSubPath;
+            char *pszOldSubPath;
+            int nErr;
+
+            if( EQUAL(papszItems[i],".") || EQUAL(papszItems[i],"..") )
+                continue;
+
+            pszNewSubPath = CPLStrdup(
+                CPLFormFilename( pszNewPath, papszItems[i], NULL ) );
+            pszOldSubPath = CPLStrdup(
+                CPLFormFilename( pszOldPath, papszItems[i], NULL ) );
+
+            nErr = CPLCopyTree( pszNewSubPath, pszOldSubPath );
+
+            CPLFree( pszNewSubPath );
+            CPLFree( pszOldSubPath );
+
+            if( nErr != 0 )
+            {
+                CSLDestroy( papszItems );
+                return nErr;
+            }
+        }
+        CSLDestroy( papszItems );
+
+        return 0;
+    }
+    else if( VSI_ISREG( sStatBuf.st_mode ) )
+    {
+        return CPLCopyFile( pszNewPath, pszOldPath );
+    }
+    else
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Unrecognised filesystem object : '%s'.",
+                  pszOldPath );
+        return -1;
+    }
 }
 
 /************************************************************************/

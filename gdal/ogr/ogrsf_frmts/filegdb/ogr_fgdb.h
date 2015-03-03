@@ -33,7 +33,7 @@
 
 #include <vector>
 #include "ogrsf_frmts.h"
-#include "ogrmutexedlayer.h"
+#include "ogremulatedtransaction.h"
 
 /* GDAL string utilities */
 #include "cpl_string.h"
@@ -177,6 +177,8 @@ public:
   OGRErr              GetLayerXML ( char **poXml );
   OGRErr              GetLayerMetadataXML ( char **poXmlMeta );
   
+  void                ReadoptOldFeatureDefn(OGRFeatureDefn* poFeatureDefn);
+  
 protected:
 
   bool GDBToOGRFields(CPLXMLNode* psFields);  
@@ -232,14 +234,16 @@ protected:
 /*                           FGdbDataSource                            */
 /************************************************************************/
 
+class FGdbDatabaseConnection;
+
 class FGdbDataSource : public OGRDataSource
 {
 
 public:
-  FGdbDataSource(FGdbDriver* poDriver);
+  FGdbDataSource(FGdbDriver* poDriver, FGdbDatabaseConnection* pConnection);
   virtual ~FGdbDataSource();
 
-  int         Open(Geodatabase* pGeodatabase, const char *, int );
+  int         Open(const char *, int );
 
   const char* GetName() { return m_pszName; }
   int         GetLayerCount() { return static_cast<int>(m_layers.size()); }
@@ -259,6 +263,7 @@ public:
 
   Geodatabase* GetGDB() { return m_pGeodatabase; }
   bool         GetUpdate() { return m_bUpdate; }
+  FGdbDatabaseConnection* GetConnection() { return m_pConnection; }
 
   /*
   protected:
@@ -272,11 +277,11 @@ protected:
                       const std::vector<std::wstring> &layers);
 
   FGdbDriver* m_poDriver;
+  FGdbDatabaseConnection* m_pConnection;
   char* m_pszName;
-  std::vector <OGRMutexedLayer*> m_layers;
+  std::vector <FGdbLayer*> m_layers;
   Geodatabase* m_pGeodatabase;
   bool m_bUpdate;
-
 };
 
 /************************************************************************/
@@ -287,13 +292,19 @@ class FGdbDatabaseConnection
 {
 public:
     FGdbDatabaseConnection(Geodatabase* pGeodatabase) :
-        m_pGeodatabase(pGeodatabase), m_nRefCount(1) {}
+        m_pGeodatabase(pGeodatabase), m_nRefCount(1), m_bLocked(FALSE) {}
 
     Geodatabase* m_pGeodatabase;
     int          m_nRefCount;
+    int          m_bLocked;
+    
+    Geodatabase* GetGDB() { return m_pGeodatabase; }
+    void         SetLocked(int bLockedIn) { m_bLocked = bLockedIn; }
+    int          GetRefCount() const { return m_nRefCount; }
+    int          IsLocked() const { return m_bLocked; }
 };
 
-class FGdbDriver : public OGRSFDriver
+class FGdbDriver : public OGRSFDriver, public IOGRTransactionBehaviour
 {
   std::map<CPLString, FGdbDatabaseConnection*> oMapConnections;
   CPLMutex* hMutex;
@@ -307,6 +318,12 @@ public:
   virtual int TestCapability( const char * );
   virtual OGRDataSource *CreateDataSource( const char *pszName, char ** = NULL);
   virtual OGRErr DeleteDataSource( const char *pszDataSource );
+
+  /* From IOGRTransactionBehaviour */
+  virtual OGRErr StartTransaction(OGRDataSource*& poDSInOut, int& bOutHasReopenedDS);
+  virtual OGRErr CommitTransaction(OGRDataSource*& poDSInOut, int& bOutHasReopenedDS);
+  virtual OGRErr RollbackTransaction(OGRDataSource*& poDSInOut, int& bOutHasReopenedDS);
+  virtual void   ReadoptOldFeatureDefn(OGRDataSource* poDS, OGRLayer* poLayer, OGRFeatureDefn* poFeatureDefn);
 
   void Release(const char* pszName);
   CPLMutex* GetMutex() { return hMutex; }

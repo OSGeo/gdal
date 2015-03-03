@@ -535,6 +535,30 @@ void OGRAPISpy_DS_DeleteLayer( OGRDataSourceH hDS, int iLayer, CPL_UNUSED OGRErr
     OGRAPISpyFileClose();
 }
 
+void OGRAPISpy_Dataset_StartTransaction( GDALDatasetH hDS, int bForce )
+{
+    OGRAPISpyFlushDiffered();
+    fprintf(fpSpyFile, "%s.StartTransaction(%d)\n",
+            OGRAPISpyGetDSVar((OGRDataSourceH)hDS).c_str(), bForce);
+    OGRAPISpyFileClose();
+}
+
+void OGRAPISpy_Dataset_CommitTransaction( GDALDatasetH hDS )
+{
+    OGRAPISpyFlushDiffered();
+    fprintf(fpSpyFile, "%s.CommitTransaction()\n",
+            OGRAPISpyGetDSVar((OGRDataSourceH)hDS).c_str());
+    OGRAPISpyFileClose();
+}
+
+void OGRAPISpy_Dataset_RollbackTransaction( GDALDatasetH hDS )
+{
+    OGRAPISpyFlushDiffered();
+    fprintf(fpSpyFile, "%s.RollbackTransaction()\n",
+            OGRAPISpyGetDSVar((OGRDataSourceH)hDS).c_str());
+    OGRAPISpyFileClose();
+}
+
 void OGRAPISpy_L_GetFeatureCount( OGRLayerH hLayer, int bForce )
 {
     OGRAPISpyFlushDiffered();

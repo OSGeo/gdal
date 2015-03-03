@@ -1543,7 +1543,7 @@ OGRErr OGRGeoPackageTableLayer::SyncToDisk()
 
 OGRErr OGRGeoPackageTableLayer::StartTransaction()
 {
-    return SQLCommand(m_poDS->GetDB(), "BEGIN");
+    return m_poDS->StartTransaction();
 }
 
 
@@ -1553,7 +1553,7 @@ OGRErr OGRGeoPackageTableLayer::StartTransaction()
 
 OGRErr OGRGeoPackageTableLayer::CommitTransaction()
 {
-    return SQLCommand(m_poDS->GetDB(), "COMMIT");
+    return m_poDS->CommitTransaction();
 }
 
 
@@ -1563,7 +1563,7 @@ OGRErr OGRGeoPackageTableLayer::CommitTransaction()
 
 OGRErr OGRGeoPackageTableLayer::RollbackTransaction()
 {
-    return SQLCommand(m_poDS->GetDB(), "ROLLBACK");
+    return m_poDS->RollbackTransaction();
 }
 
 
@@ -1722,7 +1722,7 @@ int OGRGeoPackageTableLayer::CreateSpatialIndex()
     const char* pszC = m_poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef();
     const char* pszI = GetFIDColumn();
 
-    StartTransaction();
+    m_poDS->SoftStartTransaction();
 
     /* Register the table in gpkg_extensions */
     pszSQL = sqlite3_mprintf(
@@ -1734,7 +1734,7 @@ int OGRGeoPackageTableLayer::CreateSpatialIndex()
     sqlite3_free(pszSQL);
     if( err != OGRERR_NONE )
     {
-        RollbackTransaction();
+        m_poDS->SoftRollbackTransaction();
         return FALSE;
     }
 
@@ -1748,7 +1748,7 @@ int OGRGeoPackageTableLayer::CreateSpatialIndex()
         sqlite3_free(pszSQL);
         if( err != OGRERR_NONE )
         {
-            RollbackTransaction();
+            m_poDS->SoftRollbackTransaction();
             return FALSE;
         }
     }
@@ -1763,7 +1763,7 @@ int OGRGeoPackageTableLayer::CreateSpatialIndex()
     sqlite3_free(pszSQL);
     if( err != OGRERR_NONE )
     {
-        RollbackTransaction();
+        m_poDS->SoftRollbackTransaction();
         return FALSE;
     }
 
@@ -1791,7 +1791,7 @@ int OGRGeoPackageTableLayer::CreateSpatialIndex()
     sqlite3_free(pszSQL);
     if( err != OGRERR_NONE )
     {
-        RollbackTransaction();
+        m_poDS->SoftRollbackTransaction();
         return FALSE;
     }
 
@@ -1820,7 +1820,7 @@ int OGRGeoPackageTableLayer::CreateSpatialIndex()
     sqlite3_free(pszSQL);
     if( err != OGRERR_NONE )
     {
-        RollbackTransaction();
+        m_poDS->SoftRollbackTransaction();
         return FALSE;
     }
 
@@ -1842,7 +1842,7 @@ int OGRGeoPackageTableLayer::CreateSpatialIndex()
     sqlite3_free(pszSQL);
     if( err != OGRERR_NONE )
     {
-        RollbackTransaction();
+        m_poDS->SoftRollbackTransaction();
         return FALSE;
     }
 
@@ -1875,7 +1875,7 @@ int OGRGeoPackageTableLayer::CreateSpatialIndex()
     sqlite3_free(pszSQL);
     if( err != OGRERR_NONE )
     {
-        RollbackTransaction();
+        m_poDS->SoftRollbackTransaction();
         return FALSE;
     }
 
@@ -1898,7 +1898,7 @@ int OGRGeoPackageTableLayer::CreateSpatialIndex()
     sqlite3_free(pszSQL);
     if( err != OGRERR_NONE )
     {
-        RollbackTransaction();
+        m_poDS->SoftRollbackTransaction();
         return FALSE;
     }
 
@@ -1917,11 +1917,11 @@ int OGRGeoPackageTableLayer::CreateSpatialIndex()
     sqlite3_free(pszSQL);
     if( err != OGRERR_NONE )
     {
-        RollbackTransaction();
+        m_poDS->SoftRollbackTransaction();
         return FALSE;
     }
 
-    CommitTransaction();
+    m_poDS->SoftCommitTransaction();
 
     m_bHasSpatialIndex = TRUE;
 
