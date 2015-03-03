@@ -1,10 +1,9 @@
-                                                                                                                                                                                                                                                               
 CC	=	@CC@
 CXX	=	@CXX@
 LD	=	@CXX@
 
 CPPFLAGS = -DUSE_CPL -DGRASS_GISBASE=\"@GRASS_GISBASE@\" \
-	  @GDAL_INC@ @GRASS_INCLUDE@ @CPPFLAGS@ 
+	  @GDAL_INC@ @GRASS_INCLUDE@ @PQ_INCLUDE@ @CPPFLAGS@ 
 CXXFLAGS = @CXX_WFLAGS@ @CXX_PIC@ 
 
 RANLIB		=	@RANLIB@
