@@ -584,6 +584,7 @@ PACKAGE_URL=
 ac_unique_file="Makefile.in"
 ac_subst_vars='LTLIBOBJS
 LIBOBJS
+PQ_INCLUDE
 GRASS_GISBASE
 GRASS_INCLUDE
 AUTOLOAD_DIR
@@ -651,6 +652,7 @@ with_ld_shared
 with_gdal
 with_autoload
 with_grass
+with_postgres_includes
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1271,8 +1273,9 @@ Optional Packages:
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
   --with-ld-shared=cmd    provide shared library link
   --with-gdal=PATH        GDAL (PATH is path to gdal-config)
-  --with-autoload=DIR      Directory for autoload drivers
+  --with-autoload=DIR     Directory for autoload drivers
   --with-grass=ARG        Include GRASS support (ARG=GRASS install tree dir)
+  --with-postgres-includes=DIR     use PostgreSQL includes in DIR
 
 Some influential environment variables:
   CC          C compiler command
@@ -3384,6 +3387,25 @@ fi
 GRASS_INCLUDE=$GRASS_INCLUDE
 
 GRASS_GISBASE=$GRASS_GISBASE
+
+
+
+
+
+# Check whether --with-postgres_includes was given.
+if test "${with_postgres_includes+set}" = set; then :
+  withval=$with_postgres_includes; postgres_includes="$withval"
+else
+  postgres_includes=no
+fi
+
+
+PQ_INCLUDE=
+if test "x$postgres_includes" != "xno"; then
+# With PostgreSQL includes directory
+PQ_INCLUDE="-I$postgres_includes"
+fi
+
 
 
 
