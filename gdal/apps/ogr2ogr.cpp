@@ -42,6 +42,7 @@
 CPL_CVSID("$Id$");
 
 static int bSkipFailures = FALSE;
+static int bLayerTransaction = -1;
 static int nGroupTransactions = 20000;
 static GIntBig nFIDToFetch = OGRNullFID;
 
@@ -121,6 +122,7 @@ class LayerTranslator
 {
 public:
     GDALDataset *poSrcDS;
+    GDALDataset *poODS;
     int bTransform;
     int bWrapDateline;
     const char* pszDateLineOffset;
@@ -1138,7 +1140,21 @@ int main( int nArgc, char ** papszArgv )
                  EQUAL(papszArgv[iArg],"-gt") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            nGroupTransactions = atoi(papszArgv[++iArg]);
+            ++iArg;
+            if( EQUAL(papszArgv[iArg], "unlimited") )
+                nGroupTransactions = -1;
+            else
+                nGroupTransactions = atoi(papszArgv[iArg]);
+        }
+        /* Undocumented. Just a provision. Default behaviour should be OK */
+        else if ( EQUAL(papszArgv[iArg],"-ds_transaction") )
+        {
+            bLayerTransaction = FALSE;
+        }
+        /* Undocumented. Just a provision. Default behaviour should be OK */
+        else if ( EQUAL(papszArgv[iArg],"-lyr_transaction") )
+        {
+            bLayerTransaction = TRUE;
         }
         else if( EQUAL(papszArgv[iArg],"-s_srs") )
         {
@@ -1762,6 +1778,9 @@ int main( int nArgc, char ** papszArgv )
         }
     }
 
+    if( bLayerTransaction < 0 )
+        bLayerTransaction = !poODS->TestCapability(ODsCTransactions);
+
 /* -------------------------------------------------------------------- */
 /*      Parse the output SRS definition if possible.                    */
 /* -------------------------------------------------------------------- */
@@ -1850,6 +1869,7 @@ int main( int nArgc, char ** papszArgv )
 
     LayerTranslator oTranslator;
     oTranslator.poSrcDS = poDS;
+    oTranslator.poODS = poODS;
     oTranslator.bTransform = bTransform;
     oTranslator.bWrapDateline = bWrapDateline;
     oTranslator.pszDateLineOffset = pszDateLineOffset;
@@ -1867,6 +1887,11 @@ int main( int nArgc, char ** papszArgv )
     oTranslator.bExplodeCollectionsIn = bExplodeCollections;
     oTranslator.nSrcFileSize = nSrcFileSize;
 
+    if( nGroupTransactions )
+    {
+        if( !bLayerTransaction )
+            poODS->StartTransaction();
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Special case for -sql clause.  No source layers required.       */
@@ -2362,7 +2387,18 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
 
     poODS->SetStyleTable( poDS->GetStyleTable () );
-    
+
+    if( nGroupTransactions )
+    {
+        if( !bLayerTransaction )
+        {
+            if( nRetCode != 0 && !bSkipFailures )
+                poODS->RollbackTransaction();
+            else
+                poODS->CommitTransaction();
+        }
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Close down.                                                     */
 /* -------------------------------------------------------------------- */
@@ -3595,7 +3631,10 @@ int LayerTranslator::Translate( TargetLayerInfo* psInfo,
     GIntBig      nFeaturesWritten = 0;
 
     if( nGroupTransactions )
-        poDstLayer->StartTransaction();
+    {
+        if( bLayerTransaction )
+            poDstLayer->StartTransaction();
+    }
 
     while( TRUE )
     {
@@ -3660,8 +3699,16 @@ int LayerTranslator::Translate( TargetLayerInfo* psInfo,
         {
             if( ++nFeaturesInTransaction == nGroupTransactions )
             {
-                poDstLayer->CommitTransaction();
-                poDstLayer->StartTransaction();
+                if( bLayerTransaction )
+                {
+                    poDstLayer->CommitTransaction();
+                    poDstLayer->StartTransaction();
+                }
+                else
+                {
+                    poODS->CommitTransaction();
+                    poODS->StartTransaction();
+                }
                 nFeaturesInTransaction = 0;
             }
 
@@ -3686,7 +3733,12 @@ int LayerTranslator::Translate( TargetLayerInfo* psInfo,
             if( poDstFeature->SetFrom( poFeature, panMap, TRUE ) != OGRERR_NONE )
             {
                 if( nGroupTransactions )
-                    poDstLayer->CommitTransaction();
+                {
+                    if( bLayerTransaction )
+                    {
+                        poDstLayer->CommitTransaction();
+                    }
+                }
 
                 CPLError( CE_Failure, CPLE_AppDefined,
                         "Unable to translate feature " CPL_FRMT_GIB " from layer %s.\n",
@@ -3782,7 +3834,12 @@ int LayerTranslator::Translate( TargetLayerInfo* psInfo,
                     if( poReprojectedGeom == NULL )
                     {
                         if( nGroupTransactions )
-                            poDstLayer->CommitTransaction();
+                        {
+                            if( bLayerTransaction )
+                            {
+                                poDstLayer->CommitTransaction();
+                            }
+                        }
 
                         fprintf( stderr, "Failed to reproject feature %d (geometry probably out of source or destination SRS).\n",
                                 (int) poFeature->GetFID() );
@@ -3851,7 +3908,10 @@ int LayerTranslator::Translate( TargetLayerInfo* psInfo,
             else if( !bSkipFailures )
             {
                 if( nGroupTransactions )
-                    poDstLayer->RollbackTransaction();
+                {
+                    if( bLayerTransaction )
+                        poDstLayer->RollbackTransaction();
+                }
 
                 CPLError( CE_Failure, CPLE_AppDefined,
                         "Unable to write feature " CPL_FRMT_GIB " from layer %s.\n",
@@ -3907,7 +3967,12 @@ end_loop:
     }
 
     if( nGroupTransactions )
-        poDstLayer->CommitTransaction();
+    {
+        if( bLayerTransaction )
+        {
+            poDstLayer->CommitTransaction();
+        }
+    }
 
     CPLDebug("OGR2OGR", CPL_FRMT_GIB " features written in layer '%s'",
              nFeaturesWritten, poDstLayer->GetName());

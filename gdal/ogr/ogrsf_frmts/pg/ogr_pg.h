@@ -179,6 +179,7 @@ class OGRPGLayer : public OGRLayer
 
     char               *pszCursorName;
     PGresult           *hCursorResult;
+    int                 bInvalidated;
 
     int                 nResultOffset;
 
@@ -187,8 +188,8 @@ class OGRPGLayer : public OGRLayer
     char                *pszFIDColumn;
 
     int                 bCanUseBinaryCursor;
-    int                *panMapFieldNameToIndex;
-    int                *panMapFieldNameToGeomIndex;
+    int                *m_panMapFieldNameToIndex;
+    int                *m_panMapFieldNameToGeomIndex;
 
     int                 ParsePGDate( const char *, OGRField * );
 
@@ -198,11 +199,17 @@ class OGRPGLayer : public OGRLayer
     virtual CPLString   GetFromClauseForGetExtent() = 0;
     OGRErr              RunGetExtentRequest( OGREnvelope *psExtent, int bForce,
                                              CPLString osCommand, int bErrorAsDebug );
-    void                CreateMapFromFieldNameToIndex();
+    static void         CreateMapFromFieldNameToIndex(PGresult* hResult,
+                                                      OGRFeatureDefn* poFeatureDefn,
+                                                      int*& panMapFieldNameToIndex,
+                                                      int*& panMapFieldNameToGeomIndex);
 
     int                 ReadResultDefinition(PGresult *hInitialResultIn);
 
-    OGRFeature         *RecordToFeature( int iRecord );
+    OGRFeature         *RecordToFeature( PGresult* hResult,
+                                         const int* panMapFieldNameToIndex,
+                                         const int* panMapFieldNameToGeomIndex,
+                                         int iRecord );
     OGRFeature         *GetNextRawFeature();
 
   public:
@@ -220,6 +227,8 @@ class OGRPGLayer : public OGRLayer
     virtual OGRErr      StartTransaction();
     virtual OGRErr      CommitTransaction();
     virtual OGRErr      RollbackTransaction();
+
+    void                InvalidateCursor();
 
     virtual const char *GetFIDColumn();
 
@@ -346,8 +355,8 @@ public:
 
     void                SetOverrideColumnTypes( const char* pszOverrideColumnTypes );
 
-    virtual OGRErr      StartCopy();
-    virtual OGRErr      EndCopy();
+    OGRErr              StartCopy();
+    OGRErr              EndCopy();
 
     int                 ReadTableDefinition();
     int                 HasGeometryInformation() { return bGeometryInformationSet; }
@@ -433,6 +442,8 @@ class OGRPGDataSource : public OGRDataSource
     int                 bHavePostGIS;
     int                 bHaveGeography;
 
+    int                 bUserTransactionActive;
+    int                 bSavePointActive;
     int                 nSoftTransactionLevel;
 
     PGconn              *hPGConn;
@@ -463,6 +474,11 @@ class OGRPGDataSource : public OGRDataSource
     CPLString           osActiveSchema;
     int                 bListAllTables;
     void                LoadTables();
+
+    CPLString           osDebugLastTransactionCommand;
+    OGRErr              DoTransactionCommand(const char* pszCommand);
+
+    OGRErr              FlushSoftTransaction();
 
   public:
     PGver               sPostgreSQLVersion;
@@ -495,6 +511,8 @@ class OGRPGDataSource : public OGRDataSource
     int                 GetLayerCount();
     OGRLayer            *GetLayer( int );
     OGRLayer            *GetLayerByName(const char * pszName);
+    
+    virtual void        FlushCache(void);
 
     virtual OGRLayer    *ICreateLayer( const char *,
                                       OGRSpatialReference * = NULL,
@@ -503,11 +521,13 @@ class OGRPGDataSource : public OGRDataSource
 
     int                 TestCapability( const char * );
 
-    OGRErr              SoftStartTransaction();
-    OGRErr              SoftCommit();
-    OGRErr              SoftRollback();
+    virtual OGRErr      StartTransaction(int bForce = FALSE);
+    virtual OGRErr      CommitTransaction();
+    virtual OGRErr      RollbackTransaction();
 
-    OGRErr              FlushSoftTransaction();
+    OGRErr              SoftStartTransaction();
+    OGRErr              SoftCommitTransaction();
+    OGRErr              SoftRollbackTransaction();
 
     Oid                 GetGeometryOID() { return nGeometryOID; }
     Oid                 GetGeographyOID() { return nGeographyOID; }
@@ -517,12 +537,14 @@ class OGRPGDataSource : public OGRDataSource
                                     const char *pszDialect );
     virtual void        ReleaseResultSet( OGRLayer * poLayer );
 
+    virtual const char* GetMetadataItem(const char* pszKey,
+                                             const char* pszDomain);
+
     char               *LaunderName( const char * );
 
     int                 UseCopy();
     void                StartCopy( OGRPGTableLayer *poPGLayer );
     OGRErr              EndCopy( );
-    int                 CopyInProgress( );
 };
 
 /************************************************************************/

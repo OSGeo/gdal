@@ -97,5 +97,8 @@ ds1.ReleaseResultSet(ds1_lyr2)
 ds1.ReleaseResultSet(None)
 ds1_lyr2 = ds1.CreateLayer('foo', srs = None, geom_type = ogr.wkbUnknown, options = [])
 ds1.DeleteLayer(1)
+ds1.StartTransaction(0)
+ds1.CommitTransaction()
+ds1.RollbackTransaction()
 ds1 = None
 ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/test')

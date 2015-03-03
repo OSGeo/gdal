@@ -157,6 +157,7 @@ typedef enum
 #include <iostream>
 using namespace std;
 
+#include "gdal.h"
 #include "ogr_api.h"
 #include "ogr_p.h"
 #include "ogr_core.h"
@@ -305,6 +306,8 @@ typedef void retGetPoints;
 %constant char *ODsCDeleteLayer        = "DeleteLayer";
 %constant char *ODsCCreateGeomFieldAfterCreateLayer  = "CreateGeomFieldAfterCreateLayer";
 %constant char *ODsCCurveGeometries    = "CurveGeometries";
+%constant char *ODsCTransactions       = "Transactions";
+%constant char *ODsCEmulatedTransactions = "EmulatedTransactions";
 
 %constant char *ODrCCreateDataSource   = "CreateDataSource";
 %constant char *ODrCDeleteDataSource   = "DeleteDataSource";
@@ -341,6 +344,8 @@ typedef int OGRErr;
 #define ODsCDeleteLayer        "DeleteLayer"
 #define ODsCCreateGeomFieldAfterCreateLayer   "CreateGeomFieldAfterCreateLayer"
 #define ODsCCurveGeometries    "CurveGeometries"
+#define ODsCTransactions       "Transactions"
+#define ODsCEmulatedTransactions "EmulatedTransactions"
 
 #define ODrCCreateDataSource   "CreateDataSource"
 #define ODrCDeleteDataSource   "DeleteDataSource"
@@ -637,6 +642,10 @@ public:
     return OGR_DS_SyncToDisk(self);
   }
   
+  void FlushCache() {
+    GDALFlushCache( self );
+  }
+
   /* Note that datasources own their layers */
 #ifndef SWIGJAVA
   %feature( "kwargs" ) CreateLayer;
@@ -714,6 +723,23 @@ public:
         OGR_DS_SetStyleTable(self, (OGRStyleTableH) table);
   }
 
+#ifndef SWIGJAVA
+  %feature( "kwargs" ) StartTransaction;
+#endif
+  OGRErr StartTransaction(int force = FALSE)
+  {
+    return GDALDatasetStartTransaction(self, force);
+  }
+
+  OGRErr CommitTransaction()
+  {
+    return GDALDatasetCommitTransaction(self);
+  }
+
+  OGRErr RollbackTransaction()
+  {
+    return GDALDatasetRollbackTransaction(self);
+  }
 } /* %extend */
 
 

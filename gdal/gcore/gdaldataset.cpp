@@ -38,6 +38,7 @@
 #include "ogr_attrind.h"
 #include "ogr_p.h"
 #include "ogrunionlayer.h"
+#include "ograpispy.h"
 
 #ifdef SQLITE_ENABLED
 #include "../sqlite/ogrsqliteexecutesql.h"
@@ -3139,6 +3140,9 @@ void GDALDatasetReleaseResultSet( GDALDatasetH hDS, OGRLayerH hLayer )
   <li> <b>ODsCDeleteLayer</b>: True if this datasource can delete existing layers.<p>
   <li> <b>ODsCCreateGeomFieldAfterCreateLayer</b>: True if the layers of this
         datasource support CreateGeomField() just after layer creation.<p>
+  <li> <b>ODsCCurveGeometries</b>: True if this datasource supports curve geometries.<p>
+  <li> <b>ODsCTransactions</b>: True if this datasource supports (efficient) transactions.<p>
+  <li> <b>ODsCEmulatedTransactions</b>: True if this datasource supports transactions through emulation.<p>
  </ul>
 
  The \#define macro forms of the capability names should be used in preference
@@ -5407,7 +5411,6 @@ OGRLayer* GDALDataset::GetLayer(CPL_UNUSED int iLayer)
 /*                            TestCapability()                          */
 /************************************************************************/
 
-
 /**
  \brief Test if capability is available.
 
@@ -5420,6 +5423,9 @@ OGRLayer* GDALDataset::GetLayer(CPL_UNUSED int iLayer)
   <li> <b>ODsCDeleteLayer</b>: True if this datasource can delete existing layers.<p>
   <li> <b>ODsCCreateGeomFieldAfterCreateLayer</b>: True if the layers of this
         datasource support CreateGeomField() just after layer creation.<p>
+  <li> <b>ODsCCurveGeometries</b>: True if this datasource supports curve geometries.<p>
+  <li> <b>ODsCTransactions</b>: True if this datasource supports (efficient) transactions.<p>
+  <li> <b>ODsCEmulatedTransactions</b>: True if this datasource supports transactions through emulation.<p>
  </ul>
 
  The \#define macro forms of the capability names should be used in preference
@@ -5439,4 +5445,214 @@ OGRLayer* GDALDataset::GetLayer(CPL_UNUSED int iLayer)
 int GDALDataset::TestCapability( CPL_UNUSED const char * pszCap )
 {
     return FALSE;
+}
+
+/************************************************************************/
+/*                           StartTransaction()                         */
+/************************************************************************/
+
+/**
+ \brief For datasources which support transactions, StartTransaction creates a transaction.
+
+ If starting the transaction fails, will return 
+ OGRERR_FAILURE. Datasources which do not support transactions will 
+ always return OGRERR_UNSUPPORTED_OPERATION.
+
+ Nested transactions are not supported.
+ 
+ All changes done after the start of the transaction are definitely applied in the
+ datasource if CommitTransaction() is called. They may be cancelled by calling
+ RollbackTransaction() instead.
+ 
+ At the time of writing, transactions only apply on vector layers.
+ 
+ Datasets that support transactions will advertize the ODsCTransactions capability.
+ Use of transactions at dataset level is generally prefered to transactions at
+ layer level, whose scope is rarely limited to the layer from which it was started.
+ 
+ In case StartTransaction() fails, neither CommitTransaction() or RollbackTransaction()
+ should be called.
+ 
+ If an error occurs after a successfull StartTransaction(), the whole
+ transaction may or may not be implicitely cancelled, depending on drivers. (e.g.
+ the PG driver will cancel it, SQLite/GPKG not). In any case, in the event of an
+ error, an explicit call to RollbackTransaction() should be done to keep things balanced.
+ 
+ By default, when bForce is set to FALSE, only "efficient" transactions will be
+ attempted. Some drivers may offer an emulation of transactions, but sometimes
+ with significant overhead, in which case the user must explicitely allow for such
+ an emulation by setting bForce to TRUE. Drivers that offer emulated transactions
+ should advertize the ODsCEmulatedTransactions capability (and not ODsCTransactions).
+ 
+ This function is the same as the C function GDALDatasetStartTransaction().
+
+ @param bForce can be set to TRUE if an emulation, possibly slow, of a transaction
+               mechanism is acceptable.
+
+ @return OGRERR_NONE on success.
+ @since GDAL 2.0
+*/
+OGRErr GDALDataset::StartTransaction(CPL_UNUSED int bForce)
+{
+    return OGRERR_UNSUPPORTED_OPERATION;
+}
+
+/************************************************************************/
+/*                      GDALDatasetStartTransaction()                   */
+/************************************************************************/
+
+/**
+ \brief For datasources which support transactions, StartTransaction creates a transaction.
+
+ If starting the transaction fails, will return 
+ OGRERR_FAILURE. Datasources which do not support transactions will 
+ always return OGRERR_UNSUPPORTED_OPERATION.
+
+ Nested transactions are not supported.
+ 
+ All changes done after the start of the transaction are definitely applied in the
+ datasource if CommitTransaction() is called. They may be cancelled by calling
+ RollbackTransaction() instead.
+ 
+ At the time of writing, transactions only apply on vector layers.
+ 
+ Datasets that support transactions will advertize the ODsCTransactions capability.
+ Use of transactions at dataset level is generally prefered to transactions at
+ layer level, whose scope is rarely limited to the layer from which it was started.
+ 
+ In case StartTransaction() fails, neither CommitTransaction() or RollbackTransaction()
+ should be called.
+  
+ If an error occurs after a successfull StartTransaction(), the whole
+ transaction may or may not be implicitely cancelled, depending on drivers. (e.g.
+ the PG driver will cancel it, SQLite/GPKG not). In any case, in the event of an
+ error, an explicit call to RollbackTransaction() should be done to keep things balanced.
+
+ By default, when bForce is set to FALSE, only "efficient" transactions will be
+ attempted. Some drivers may offer an emulation of transactions, but sometimes
+ with significant overhead, in which case the user must explicitely allow for such
+ an emulation by setting bForce to TRUE. Drivers that offer emulated transactions
+ should advertize the ODsCEmulatedTransactions capability (and not ODsCTransactions).
+
+ This function is the same as the C++ method GDALDataset::StartTransaction()
+
+ @param hDS the dataset handle.
+ @param bForce can be set to TRUE if an emulation, possibly slow, of a transaction
+               mechanism is acceptable.
+
+ @return OGRERR_NONE on success.
+ @since GDAL 2.0
+*/
+OGRErr GDALDatasetStartTransaction(GDALDatasetH hDS, int bForce)
+{
+    VALIDATE_POINTER1( hDS, "GDALDatasetStartTransaction", OGRERR_INVALID_HANDLE );
+
+#ifdef OGRAPISPY_ENABLED
+    if( bOGRAPISpyEnabled )
+        OGRAPISpy_Dataset_StartTransaction(hDS, bForce);
+#endif
+
+    return ((GDALDataset*) hDS)->StartTransaction(bForce);
+}
+
+/************************************************************************/
+/*                           CommitTransaction()                        */
+/************************************************************************/
+
+/**
+ \brief For datasources which support transactions, CommitTransaction commits a transaction.
+
+ If no transaction is active, or the commit fails, will return 
+ OGRERR_FAILURE. Datasources which do not support transactions will 
+ always return OGRERR_UNSUPPORTED_OPERATION. 
+ 
+ Depending on drivers, this may or may not abort layer sequential readings that
+ are active.
+
+ This function is the same as the C function GDALDatasetCommitTransaction().
+
+ @return OGRERR_NONE on success.
+ @since GDAL 2.0
+*/
+OGRErr GDALDataset::CommitTransaction()
+{
+    return OGRERR_UNSUPPORTED_OPERATION;
+}
+
+/************************************************************************/
+/*                        GDALDatasetCommitTransaction()                */
+/************************************************************************/
+
+/**
+ \brief For datasources which support transactions, CommitTransaction commits a transaction.
+
+ If no transaction is active, or the commit fails, will return 
+ OGRERR_FAILURE. Datasources which do not support transactions will 
+ always return OGRERR_UNSUPPORTED_OPERATION. 
+ 
+ Depending on drivers, this may or may not abort layer sequential readings that
+ are active.
+
+ This function is the same as the C++ method GDALDataset::CommitTransaction()
+
+ @return OGRERR_NONE on success.
+ @since GDAL 2.0
+*/
+OGRErr GDALDatasetCommitTransaction(GDALDatasetH hDS)
+{
+    VALIDATE_POINTER1( hDS, "GDALDatasetCommitTransaction", OGRERR_INVALID_HANDLE );
+
+#ifdef OGRAPISPY_ENABLED
+    if( bOGRAPISpyEnabled )
+        OGRAPISpy_Dataset_CommitTransaction(hDS);
+#endif
+
+    return ((GDALDataset*) hDS)->CommitTransaction();
+}
+
+/************************************************************************/
+/*                           RollbackTransaction()                      */
+/************************************************************************/
+
+/**
+ \brief For datasources which support transactions, RollbackTransaction will roll back a datasource to its state before the start of the current transaction. 
+ If no transaction is active, or the rollback fails, will return  
+ OGRERR_FAILURE. Datasources which do not support transactions will
+ always return OGRERR_UNSUPPORTED_OPERATION. 
+
+ This function is the same as the C function GDALDatasetRollbackTransaction().
+
+ @return OGRERR_NONE on success.
+ @since GDAL 2.0
+*/
+OGRErr GDALDataset::RollbackTransaction()
+{
+    return OGRERR_UNSUPPORTED_OPERATION;
+}
+
+/************************************************************************/
+/*                     GDALDatasetRollbackTransaction()                 */
+/************************************************************************/
+
+/**
+ \brief For datasources which support transactions, RollbackTransaction will roll back a datasource to its state before the start of the current transaction. 
+ If no transaction is active, or the rollback fails, will return  
+ OGRERR_FAILURE. Datasources which do not support transactions will
+ always return OGRERR_UNSUPPORTED_OPERATION. 
+
+ This function is the same as the C++ method GDALDataset::RollbackTransaction().
+
+ @return OGRERR_NONE on success.
+ @since GDAL 2.0
+*/
+OGRErr GDALDatasetRollbackTransaction(GDALDatasetH hDS)
+{
+    VALIDATE_POINTER1( hDS, "GDALDatasetRollbackTransaction", OGRERR_INVALID_HANDLE );
+
+#ifdef OGRAPISPY_ENABLED
+    if( bOGRAPISpyEnabled )
+        OGRAPISpy_Dataset_RollbackTransaction(hDS);
+#endif
+
+    return ((GDALDataset*) hDS)->RollbackTransaction();
 }

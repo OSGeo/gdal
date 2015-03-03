@@ -1594,6 +1594,119 @@ def ogr_gpkg_25():
     return 'success'
 
 ###############################################################################
+# Test dataset transactions
+
+def ogr_gpkg_26():
+
+    if gdaltest.gpkg_dr is None:
+        return 'skip'
+
+    ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_26.gpkg')
+
+    if ds.TestCapability(ogr.ODsCTransactions) != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ret = ds.StartTransaction()
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.PushErrorHandler()
+    ret = ds.StartTransaction()
+    gdal.PopErrorHandler()
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr = ds.CreateLayer('test')
+    lyr.CreateField(ogr.FieldDefn('foo', ogr.OFTString))
+    ret = ds.RollbackTransaction()
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.PushErrorHandler()
+    ret = ds.RollbackTransaction()
+    gdal.PopErrorHandler()
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    ds = ogr.Open('/vsimem/ogr_gpkg_26.gpkg', update = 1)
+    if ds.GetLayerCount() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ret = ds.StartTransaction()
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.PushErrorHandler()
+    ret = ds.StartTransaction()
+    gdal.PopErrorHandler()
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr = ds.CreateLayer('test')
+    lyr.CreateField(ogr.FieldDefn('foo', ogr.OFTString))
+    ret = ds.CommitTransaction()
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.PushErrorHandler()
+    ret = ds.CommitTransaction()
+    gdal.PopErrorHandler()
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+    
+    ds = ogr.Open('/vsimem/ogr_gpkg_26.gpkg', update = 1)
+    if ds.GetLayerCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    lyr = ds.GetLayerByName('test')
+
+    ds.StartTransaction()
+    lyr.CreateFeature(ogr.Feature(lyr.GetLayerDefn()))
+    lyr.ResetReading()
+    f = lyr.GetNextFeature()
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds.RollbackTransaction()
+    if lyr.GetFeatureCount() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ds.StartTransaction()
+    lyr.CreateFeature(ogr.Feature(lyr.GetLayerDefn()))
+    lyr.CreateFeature(ogr.Feature(lyr.GetLayerDefn()))
+    lyr.ResetReading()
+    f = lyr.GetNextFeature()
+    if f is None or f.GetFID() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds.CommitTransaction()
+    # the cursor is still valid after CommitTransaction(), which isn't the case for other backends such as PG !
+    f = lyr.GetNextFeature()
+    if f is None or f.GetFID() != 2:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetFeatureCount() != 2:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ds = None
+    
+    gdaltest.gpkg_dr.DeleteDataSource('/vsimem/ogr_gpkg_26.gpkg')
+
+    return 'success'
+
+###############################################################################
 # Run test_ogrsf
 
 def ogr_gpkg_test_ogrsf():
@@ -1676,6 +1789,7 @@ gdaltest_list = [
     ogr_gpkg_23,
     ogr_gpkg_24,
     ogr_gpkg_25,
+    ogr_gpkg_26,
     ogr_gpkg_test_ogrsf,
     ogr_gpkg_cleanup,
 ]

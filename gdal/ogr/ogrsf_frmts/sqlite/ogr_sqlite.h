@@ -691,6 +691,11 @@ class OGRSQLiteBaseDataSource : public GDALPamDataset
     void                FinishNewSpatialite();
 #endif
 
+    int                 bUserTransactionActive;
+    int                 nSoftTransactionLevel;
+    
+    OGRErr              DoTransactionCommand(const char* pszCommand);
+
   public:
                         OGRSQLiteBaseDataSource();
                         ~OGRSQLiteBaseDataSource();
@@ -705,6 +710,16 @@ class OGRSQLiteBaseDataSource : public GDALPamDataset
     void                SetEnvelopeForSQL(const CPLString& osSQL, const OGREnvelope& oEnvelope);
 
     virtual std::pair<OGRLayer*, IOGRSQLiteGetSpatialWhere*> GetLayerWithGetSpatialWhereByName( const char* pszName ) = 0;
+
+    virtual OGRErr      StartTransaction(int bForce = FALSE);
+    virtual OGRErr      CommitTransaction();
+    virtual OGRErr      RollbackTransaction();
+    
+    virtual int         TestCapability( const char * );
+
+    OGRErr              SoftStartTransaction();
+    OGRErr              SoftCommitTransaction();
+    OGRErr              SoftRollbackTransaction();
 };
 
 /************************************************************************/
@@ -715,8 +730,6 @@ class OGRSQLiteDataSource : public OGRSQLiteBaseDataSource
 {
     OGRSQLiteLayer    **papoLayers;
     int                 nLayers;
-
-    int                 nSoftTransactionLevel;
 
     // We maintain a list of known SRID to reduce the number of trips to
     // the database to get SRSes. 
@@ -780,12 +793,9 @@ class OGRSQLiteDataSource : public OGRSQLiteBaseDataSource
     virtual void        ReleaseResultSet( OGRLayer * poLayer );
 
     virtual void        FlushCache();
-
-    OGRErr              SoftStartTransaction();
-    OGRErr              SoftCommit();
-    OGRErr              SoftRollback();
     
-    OGRErr              FlushSoftTransaction();
+    virtual OGRErr      CommitTransaction();
+    virtual OGRErr      RollbackTransaction();
 
     char               *LaunderName( const char * );
     int                 FetchSRSId( OGRSpatialReference * poSRS );

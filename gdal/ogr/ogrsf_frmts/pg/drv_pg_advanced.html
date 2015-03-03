@@ -139,29 +139,133 @@ or :
 OGR &lt; 1.8.0 behaviour can be obtained by setting the configuration option OGR_PG_RETRIEVE_FID to FALSE.<p>
 
 
-<h2>Caveats</h2>
+<h2>Issues with transactions</h2>
 
-<ul>
+<p>Note: this section mostly applies to GDAL 2.0, that implements
+<a href="http://trac.osgeo.org/gdal/wiki/rfc54_dataset_transactions">RFC 54 - Dataset transactions</a>
+Previous versions had different behaviour which made it impractical to handle
+both reading and writing with the same OGR datasource. Reading several layers
+in a interleaved way was also not working properly. The new below behaviour should
+enable more powerful uses, but might cause subtle problems for existing code
+that relied on implicit transactions being regularly flushed by the PG driver in GDAL 1.X</p>
 
-<li> The type recognition logic is currently somewhat impoverished.
-The types "INT*" and "NUMERIC(width,0)" are mapped to integer, the types
-"FLOAT*" and "NUMERIC(width,precision>0)" are mapped to real, date, time,
-timestamp and datetime are handled as date types and all other
-types are just treated as strings. <p>
+<p>Efficient sequential reading in PostgreSQL requires to be done within a transaction
+(technically this is a CURSOR WITHOUT HOLD).
+So the PG driver will implicitely open such a transaction if none is currently
+opened as soon as a feature is retrieved. This transaction will be released if
+ResetReading() is called (provided that no other layer is still being read).</p>
 
-<li> A sequence object called &lt;tablename&gt;_ogc_fid_seq is created for new
-tables (layer)<p>
+<p>If within such an implicit transaction, an explicit dataset level StartTransaction()
+is issued, the PG driver will use a SAVEPOINT to emulate properly the transaction
+behaviour while making the active cursor on the read layer still opened.</p>
 
-<li> Sequential reading is done within a single transaction.  Any attempts
-to write to a layer within a sequential read will likely result in a "BEGIN"
-while already within a transaction type of error message.<p>
+<p>If an explicit transaction is opened with dataset level StartTransaction()
+before reading a layer, this transaction will be used for the cursor that iterates
+over the layer. When explicitly committing or rolling back the transaction, the
+cursor will become invalid, and ResetReading() should be issued again to restart
+reading from the beginning.</p>
 
-<li> The PG driver has currently issues with transactions that prevent
-it being used at the same time as a reader and a writer with the same OGR
-datasource. The workaround is to instantiate two datasource objects,
-one for reading and one for writing.<p>
+<p>As calling SetAttributeFilter() or SetSpatialFilter() implies an implicit
+ResetReading(), they have the same effect as ResetReading(). That is to say,
+while an implict transaction is in progress, the transaction will be committed
+(if no other layer is being read), and a new one will be started again at the next
+GetNextFeature() call. On the contrary, if they are called within an explicit
+transaction, the transaction is maintained.</p>
 
-</ul>
+<p>With the above rules, the below examples show the SQL instructions that are
+run when using the OGR API in different scenarios.</p>
+<pre>
+
+lyr1->GetNextFeature()             BEGIN (implict)
+                                   DECLARE cur1 CURSOR FOR SELECT * FROM lyr1
+                                   FETCH 1 IN cur1
+
+lyr1->SetAttributeFilter('xxx')
+     --> lyr1->ResetReading()      CLOSE cur1
+                                   COMMIT (implicit)
+
+lyr1->GetNextFeature()             BEGIN (implict)
+                                   DECLARE cur1 CURSOR  FOR SELECT * FROM lyr1 WHERE xxx
+                                   FETCH 1 IN cur1
+
+lyr2->GetNextFeature()             DECLARE cur2 CURSOR  FOR SELECT * FROM lyr2
+                                   FETCH 1 IN cur2
+
+lyr1->GetNextFeature()             FETCH 1 IN cur1
+
+lyr2->GetNextFeature()             FETCH 1 IN cur2
+
+lyr1->CreateFeature(f)             INSERT INTO cur1 ...
+
+lyr1->SetAttributeFilter('xxx')
+     --> lyr1->ResetReading()      CLOSE cur1
+                                   COMMIT (implicit)
+
+lyr1->GetNextFeature()             DECLARE cur1 CURSOR  FOR SELECT * FROM lyr1 WHERE xxx
+                                   FETCH 1 IN cur1
+
+lyr1->ResetReading()               CLOSE cur1
+
+lyr2->ResetReading()               CLOSE cur2
+                                   COMMIT (implicit)
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+ds->StartTransaction()             BEGIN
+
+lyr1->GetNextFeature()             DECLARE cur1 CURSOR FOR SELECT * FROM lyr1
+                                   FETCH 1 IN cur1
+
+lyr2->GetNextFeature()             DECLARE cur2 CURSOR FOR SELECT * FROM lyr2
+                                   FETCH 1 IN cur2
+
+lyr1->CreateFeature(f)             INSERT INTO cur1 ...
+
+lyr1->SetAttributeFilter('xxx')
+     --> lyr1->ResetReading()      CLOSE cur1
+                                   COMMIT (implicit)
+
+lyr1->GetNextFeature()             DECLARE cur1 CURSOR  FOR SELECT * FROM lyr1 WHERE xxx
+                                   FETCH 1 IN cur1
+
+lyr1->ResetReading()               CLOSE cur1
+
+lyr2->ResetReading()               CLOSE cur2
+
+ds->CommitTransaction()            COMMIT
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+ds->StartTransaction()             BEGIN
+
+lyr1->GetNextFeature()             DECLARE cur1 CURSOR FOR SELECT * FROM lyr1
+                                   FETCH 1 IN cur1
+
+lyr1->CreateFeature(f)             INSERT INTO cur1 ...
+
+ds->CommitTransaction()            CLOSE cur1 (implicit)
+                                   COMMIT
+
+lyr1->GetNextFeature()             FETCH 1 IN cur1      ==> Error since the cursor was closed with the commit. Explicit ResetReading() required before
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+lyr1->GetNextFeature()             BEGIN (implicit)
+                                   DECLARE cur1 CURSOR FOR SELECT * FROM lyr1
+                                   FETCH 1 IN cur1
+
+ds->StartTransaction()             SAVEPOINT savepoint
+
+lyr1->CreateFeature(f)             INSERT INTO cur1 ...
+
+ds->CommitTransaction()            RELEASE SAVEPOINT savepoint
+
+lyr1->ResetReading()               CLOSE cur1
+                                   COMMIT (implicit)
+</pre>
+
+<p>Note: in reality, the PG drivers fetches 500 features at once. The FETCH 1
+is for clarity of the explanation.</p>
 
 
 <h3>Advanced Examples</h3>

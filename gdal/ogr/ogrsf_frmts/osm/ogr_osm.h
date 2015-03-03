@@ -419,8 +419,8 @@ class OGROSMDataSource : public OGRDataSource
                                  LonLat* pasLonLatPairs, int nPairs,
                                  OSMInfo* psInfo);
 
-    int                 StartTransaction();
-    int                 CommitTransaction();
+    int                 StartTransactionCacheDB();
+    int                 CommitTransactionCacheDB();
 
     int                 FindNode(GIntBig nID);
     void                ProcessWaysBatch();

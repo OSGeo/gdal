@@ -589,6 +589,9 @@ void   CPL_DLL GDALDatasetReleaseResultSet( GDALDatasetH, OGRLayerH );
 OGRStyleTableH CPL_DLL GDALDatasetGetStyleTable( GDALDatasetH );
 void   CPL_DLL GDALDatasetSetStyleTableDirectly( GDALDatasetH, OGRStyleTableH );
 void   CPL_DLL GDALDatasetSetStyleTable( GDALDatasetH, OGRStyleTableH );
+OGRErr CPL_DLL GDALDatasetStartTransaction(GDALDatasetH hDS, int bForce);
+OGRErr CPL_DLL GDALDatasetCommitTransaction(GDALDatasetH hDS);
+OGRErr CPL_DLL GDALDatasetRollbackTransaction(GDALDatasetH hDS);
 
 
 /* ==================================================================== */

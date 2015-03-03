@@ -1197,12 +1197,12 @@ CPLErr GDALGeoPackageDataset::WriteTileInternal()
             GDALGeoPackageDataset* poMainDS = m_poParentDS ? m_poParentDS : this;
             if( poMainDS->m_nTileInsertionCount == 0 )
             {
-                SQLCommand(GetDB(), "BEGIN");
+                poMainDS->SoftStartTransaction();
             }
             else if( poMainDS->m_nTileInsertionCount == 1000 )
             {
-                SQLCommand(GetDB(), "COMMIT");
-                SQLCommand(GetDB(), "BEGIN");
+                poMainDS->SoftCommitTransaction();
+                poMainDS->SoftStartTransaction();
                 poMainDS->m_nTileInsertionCount = 0;
             }
             poMainDS->m_nTileInsertionCount ++;

@@ -6,7 +6,8 @@ OBJ	=	ogrsfdriverregistrar.o ogrlayer.o ogrdatasource.o \
 		ogrsfdriver.o ogrregisterall.o ogr_gensql.o \
 		ogr_attrind.o ogr_miattrind.o ogrlayerdecorator.o \
 		ogrwarpedlayer.o ogrunionlayer.o ogrlayerpool.o \
-		ogrmutexedlayer.o ogrmutexeddatasource.o
+		ogrmutexedlayer.o ogrmutexeddatasource.o \
+		ogremulatedtransaction.o
 
 CXXFLAGS :=     $(CXXFLAGS) -DINST_DATA=\"$(INST_DATA)\"
 

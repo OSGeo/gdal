@@ -32,6 +32,8 @@
 
 #include "ogrsf_frmts.h"
 #include "cpl_multiproc.h"
+#include "ogrmutexedlayer.h"
+#include <map>
 
 /** OGRMutexedDataSource class protects all virtual methods of OGRDataSource
  *  with a mutex.
@@ -46,16 +48,24 @@ class CPL_DLL OGRMutexedDataSource : public OGRDataSource
     OGRDataSource *m_poBaseDataSource;
     int            m_bHasOwnership;
     CPLMutex      *m_hGlobalMutex;
+    int            m_bWrapLayersInMutexedLayer;
+    std::map<OGRLayer*, OGRMutexedLayer* > m_oMapLayers;
+    std::map<OGRMutexedLayer*, OGRLayer* > m_oReverseMapLayers;
+    
+    OGRLayer*           WrapLayerIfNecessary(OGRLayer* poLayer);
 
   public:
 
     /* The construction of the object isn't protected by the mutex */
                  OGRMutexedDataSource(OGRDataSource* poBaseDataSource,
                                       int bTakeOwnership,
-                                      CPLMutex* hMutexIn);
+                                      CPLMutex* hMutexIn,
+                                      int bWrapLayersInMutexedLayer);
 
     /* The destruction of the object isn't protected by the mutex */
     virtual     ~OGRMutexedDataSource();
+    
+    OGRDataSource*      GetBaseDataSource() { return m_poBaseDataSource; }
 
     virtual const char  *GetName();
 
@@ -85,6 +95,19 @@ class CPL_DLL OGRMutexedDataSource : public OGRDataSource
     virtual void        ReleaseResultSet( OGRLayer * poResultsSet );
     
     virtual void        FlushCache();
+
+    virtual OGRErr      StartTransaction(int bForce=FALSE);
+    virtual OGRErr      CommitTransaction();
+    virtual OGRErr      RollbackTransaction();
+
+    virtual char      **GetMetadata( const char * pszDomain = "" );
+    virtual CPLErr      SetMetadata( char ** papszMetadata,
+                                     const char * pszDomain = "" );
+    virtual const char *GetMetadataItem( const char * pszName,
+                                         const char * pszDomain = "" );
+    virtual CPLErr      SetMetadataItem( const char * pszName,
+                                         const char * pszValue,
+                                         const char * pszDomain = "" );
 };
 
 #endif // _OGRMUTEXEDDATASOURCELAYER_H_INCLUDED

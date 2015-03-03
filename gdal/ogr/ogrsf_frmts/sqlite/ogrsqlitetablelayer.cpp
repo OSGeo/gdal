@@ -1889,7 +1889,7 @@ OGRErr OGRSQLiteTableLayer::AddColumnAncientMethod( OGRFieldDefn& oField)
 
     if( rc == SQLITE_OK )
     {
-        poDS->SoftCommit();
+        poDS->SoftCommitTransaction();
     }
     else
     {
@@ -1899,7 +1899,7 @@ OGRErr OGRSQLiteTableLayer::AddColumnAncientMethod( OGRFieldDefn& oField)
                   pszErrMsg );
         sqlite3_free( pszErrMsg );
 
-        poDS->SoftRollback();
+        poDS->SoftRollbackTransaction();
 
         return OGRERR_FAILURE;
     }
@@ -2000,7 +2000,7 @@ OGRErr OGRSQLiteTableLayer::RecreateTable(const char* pszFieldListForSelect,
 
     if( rc == SQLITE_OK )
     {
-        poDS->SoftCommit();
+        poDS->SoftCommitTransaction();
 
         return OGRERR_NONE;
     }
@@ -2012,7 +2012,7 @@ OGRErr OGRSQLiteTableLayer::RecreateTable(const char* pszFieldListForSelect,
                   pszErrMsg );
         sqlite3_free( pszErrMsg );
 
-        poDS->SoftRollback();
+        poDS->SoftRollbackTransaction();
 
         return OGRERR_FAILURE;
     }

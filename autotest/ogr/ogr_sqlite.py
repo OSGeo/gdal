@@ -3110,6 +3110,119 @@ def ogr_sqlite_39():
     return 'success'
 
 ###############################################################################
+# Test dataset transactions
+
+def ogr_sqlite_40():
+
+    if gdaltest.sl_ds is None:
+        return 'skip'
+
+    ds = ogr.GetDriverByName('SQLite').CreateDataSource('/vsimem/ogr_sqlite_40.sqlite')
+
+    if ds.TestCapability(ogr.ODsCTransactions) != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ret = ds.StartTransaction()
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.PushErrorHandler()
+    ret = ds.StartTransaction()
+    gdal.PopErrorHandler()
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr = ds.CreateLayer('test')
+    lyr.CreateField(ogr.FieldDefn('foo', ogr.OFTString))
+    ret = ds.RollbackTransaction()
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.PushErrorHandler()
+    ret = ds.RollbackTransaction()
+    gdal.PopErrorHandler()
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    ds = ogr.Open('/vsimem/ogr_sqlite_40.sqlite', update = 1)
+    if ds.GetLayerCount() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ret = ds.StartTransaction()
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.PushErrorHandler()
+    ret = ds.StartTransaction()
+    gdal.PopErrorHandler()
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr = ds.CreateLayer('test')
+    lyr.CreateField(ogr.FieldDefn('foo', ogr.OFTString))
+    ret = ds.CommitTransaction()
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.PushErrorHandler()
+    ret = ds.CommitTransaction()
+    gdal.PopErrorHandler()
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+    
+    ds = ogr.Open('/vsimem/ogr_sqlite_40.sqlite', update = 1)
+    if ds.GetLayerCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    lyr = ds.GetLayerByName('test')
+
+    ds.StartTransaction()
+    lyr.CreateFeature(ogr.Feature(lyr.GetLayerDefn()))
+    lyr.ResetReading()
+    f = lyr.GetNextFeature()
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds.RollbackTransaction()
+    if lyr.GetFeatureCount() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ds.StartTransaction()
+    lyr.CreateFeature(ogr.Feature(lyr.GetLayerDefn()))
+    lyr.CreateFeature(ogr.Feature(lyr.GetLayerDefn()))
+    lyr.ResetReading()
+    f = lyr.GetNextFeature()
+    if f is None or f.GetFID() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds.CommitTransaction()
+    # the cursor is still valid after CommitTransaction(), which isn't the case for other backends such as PG !
+    f = lyr.GetNextFeature()
+    if f is None or f.GetFID() != 2:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetFeatureCount() != 2:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ds = None
+    
+    ogr.GetDriverByName('SQLite').DeleteDataSource('/vsimem/ogr_sqlite_40.sqlite')
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_sqlite_cleanup():
@@ -3290,8 +3403,15 @@ gdaltest_list = [
     ogr_spatialite_9,
     ogr_spatialite_10,
     ogr_sqlite_39,
+    ogr_sqlite_40,
     ogr_sqlite_cleanup,
     ogr_sqlite_without_spatialite,
+]
+
+disabled_gdaltest_list = [ 
+    ogr_sqlite_1,
+    ogr_sqlite_40,
+    ogr_sqlite_cleanup,
 ]
 
 if __name__ == '__main__':

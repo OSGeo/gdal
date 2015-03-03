@@ -432,7 +432,7 @@ void OGROSMDataSource::CloseDB()
     }
 
     if( bInTransaction )
-        CommitTransaction();
+        CommitTransactionCacheDB();
 
     sqlite3_close(hDB);
     hDB = NULL;
@@ -3005,7 +3005,7 @@ int OGROSMDataSource::SetDBOptions()
     if( !SetCacheSize() )
         return FALSE;
 
-    if( !StartTransaction() )
+    if( !StartTransactionCacheDB() )
         return FALSE;
 
     return TRUE;
@@ -3178,10 +3178,10 @@ int OGROSMDataSource::CreatePreparedStatements()
 }
 
 /************************************************************************/
-/*                           StartTransaction()                         */
+/*                      StartTransactionCacheDB()                       */
 /************************************************************************/
 
-int OGROSMDataSource::StartTransaction()
+int OGROSMDataSource::StartTransactionCacheDB()
 {
     if( bInTransaction )
         return FALSE;
@@ -3202,10 +3202,10 @@ int OGROSMDataSource::StartTransaction()
 }
 
 /************************************************************************/
-/*                           CommitTransaction()                        */
+/*                        CommitTransactionCacheDB()                    */
 /************************************************************************/
 
-int OGROSMDataSource::CommitTransaction()
+int OGROSMDataSource::CommitTransactionCacheDB()
 {
     if( !bInTransaction )
         return FALSE;
