@@ -2798,7 +2798,7 @@ void GDALRegister_JP2KAK()
 "   <Option name='ORGgen_plt' type='string'/>"
 "   <Option name='ORGgen_tlm' type='string'/>"
 "   <Option name='Qguard' type='integer'/>"
-"   <Option name='Sprofile' type='integer'/>"
+"   <Option name='Sprofile' type='string'/>"
 "   <Option name='Rshift' type='string'/>"
 "   <Option name='Rlevels' type='string'/>"
 "   <Option name='Rweight' type='string'/>"
