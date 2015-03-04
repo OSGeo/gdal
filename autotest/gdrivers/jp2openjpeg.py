@@ -967,7 +967,7 @@ def jp2openjpeg_25():
     src_ds.GetRasterBand(3).Fill(245)
     src_ds.GetRasterBand(4).Fill(240)
     src_ds.GetRasterBand(5).Fill(235)
-    cs_tab = [ src_ds.GetRasterBand(i+1).Checksum() for i in range(5) ]
+
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_25.jp2', src_ds, options = ['QUALITY=100', 'REVERSIBLE=YES'])
     maxdiff = gdaltest.compare_ds(src_ds, out_ds)
     del out_ds
