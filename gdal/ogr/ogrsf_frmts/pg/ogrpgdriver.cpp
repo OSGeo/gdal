@@ -108,7 +108,7 @@ void RegisterOGRPG()
     if (! GDAL_CHECK_VERSION("PG driver"))
         return;
     
-    if( GDALGetDriverByName( "PG" ) == NULL )
+    if( GDALGetDriverByName( "PostgreSQL" ) == NULL )
     {
         GDALDriver* poDriver = new GDALDriver();
 
