@@ -111,7 +111,9 @@ static OPJ_SIZE_T JP2OpenJPEGDataset_Read(void* pBuffer, OPJ_SIZE_T nBytes,
         for(OPJ_SIZE_T i=0;i<nBytes-4;i++)
         {
             if( memcmp((GByte*)pBuffer + i, "pclr", 4)==0 ||
-                memcmp((GByte*)pBuffer + i, "cmap", 4)==0 )
+                memcmp((GByte*)pBuffer + i, "cmap", 4)==0 ||
+                /* We also ignore cdef as openjpeg 2.0 and 2.1 can crash if they are unusual association values */
+                memcmp((GByte*)pBuffer + i, "cdef", 4)==0 )
             {
                 memcpy((GByte*)pBuffer +i, "XXXX", 4);
             }
@@ -178,6 +180,7 @@ class JP2OpenJPEGDataset : public GDALJP2AbstractDataset
 
     OPJ_CODEC_FORMAT eCodecFormat;
     OPJ_COLOR_SPACE eColorSpace;
+    int         bLastChannelIsAlpha;
 
     int         bIs420;
 
@@ -740,10 +743,16 @@ CPLErr JP2OpenJPEGDataset::ReadBlock( int nBand, VSILFILE* fp,
             CPLAssert(psImage->comps[1].h == (psImage->comps[0].h + 1) / 2);
             CPLAssert(psImage->comps[2].w == (psImage->comps[0].w + 1) / 2);
             CPLAssert(psImage->comps[2].h == (psImage->comps[0].h + 1) / 2);
+            if( nBands == 4 )
+            {
+                CPLAssert((int)psImage->comps[3].w >= nWidthToRead);
+                CPLAssert((int)psImage->comps[3].h >= nHeightToRead);
+            }
 
             OPJ_INT32* pSrcY = psImage->comps[0].data;
             OPJ_INT32* pSrcCb = psImage->comps[1].data;
             OPJ_INT32* pSrcCr = psImage->comps[2].data;
+            OPJ_INT32* pSrcA = (nBands == 4) ? psImage->comps[3].data : NULL;
             GByte* pDst = (GByte*)pDstBuffer;
             for(int j=0;j<nHeightToRead;j++)
             {
@@ -756,8 +765,21 @@ CPLErr JP2OpenJPEGDataset::ReadBlock( int nBand, VSILFILE* fp,
                         pDst[j * nBlockXSize + i] = CLAMP_0_255((int)(Y + 1.402 * (Cr - 128)));
                     else if (iBand == 2)
                         pDst[j * nBlockXSize + i] = CLAMP_0_255((int)(Y - 0.34414 * (Cb - 128) - 0.71414 * (Cr - 128)));
-                    else
+                    else if (iBand == 3)
                         pDst[j * nBlockXSize + i] = CLAMP_0_255((int)(Y + 1.772 * (Cb - 128)));
+                    else if (iBand == 4)
+                        pDst[j * nBlockXSize + i] = pSrcA[j * psImage->comps[0].w + i];
+                }
+            }
+            
+            if( bPromoteTo8Bit )
+            {
+                for(int j=0;j<nHeightToRead;j++)
+                {
+                    for(int i=0;i<nWidthToRead;i++)
+                    {
+                        pDst[j * nBlockXSize + i] *= 255;
+                    }
                 }
             }
         }
@@ -842,9 +864,13 @@ GDALColorInterp JP2OpenJPEGRasterBand::GetColorInterpretation()
     if( poCT )
         return GCI_PaletteIndex;
 
-    if (poGDS->eColorSpace == OPJ_CLRSPC_GRAY)
+    if( poGDS->bLastChannelIsAlpha && nBand == poGDS->nBands )
+        return GCI_AlphaBand;
+
+    if (poGDS->nBands <= 2 && poGDS->eColorSpace == OPJ_CLRSPC_GRAY)
         return GCI_GrayIndex;
-    else if (poGDS->nBands == 3 || poGDS->nBands == 4)
+    else if (poGDS->eColorSpace == OPJ_CLRSPC_SRGB ||
+             poGDS->eColorSpace == OPJ_CLRSPC_SYCC)
     {
         switch(nBand)
         {
@@ -854,8 +880,6 @@ GDALColorInterp JP2OpenJPEGRasterBand::GetColorInterpretation()
                 return GCI_GreenBand;
             case 3:
                 return GCI_BlueBand;
-            case 4:
-                return GCI_AlphaBand;
             default:
                 return GCI_Undefined;
         }
@@ -880,6 +904,7 @@ JP2OpenJPEGDataset::JP2OpenJPEGDataset()
     nBands = 0;
     eCodecFormat = OPJ_CODEC_UNKNOWN;
     eColorSpace = OPJ_CLRSPC_UNKNOWN;
+    bLastChannelIsAlpha = FALSE;
     bIs420 = FALSE;
     iLevel = 0;
     nOverviewCount = 0;
@@ -1053,7 +1078,7 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
     CPLDebug("OPENJPEG", "psImage->x1 = %d", psImage->x1);
     CPLDebug("OPENJPEG", "psImage->y1 = %d", psImage->y1);
     CPLDebug("OPENJPEG", "psImage->numcomps = %d", psImage->numcomps);
-    CPLDebug("OPENJPEG", "psImage->color_space = %d", psImage->color_space);
+    //CPLDebug("OPENJPEG", "psImage->color_space = %d", psImage->color_space);
     CPLDebug("OPENJPEG", "numResolutions = %d", numResolutions);
     for(i=0;i<(int)psImage->numcomps;i++)
     {
@@ -1102,11 +1127,15 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
 
     int bIs420  =  (psImage->color_space != OPJ_CLRSPC_SRGB &&
                     eDataType == GDT_Byte &&
-                    psImage->numcomps == 3 &&
+                    (psImage->numcomps == 3 || psImage->numcomps == 4) &&
                     psImage->comps[1].w == psImage->comps[0].w / 2 &&
                     psImage->comps[1].h == psImage->comps[0].h / 2 &&
                     psImage->comps[2].w == psImage->comps[0].w / 2 &&
-                    psImage->comps[2].h == psImage->comps[0].h / 2);
+                    psImage->comps[2].h == psImage->comps[0].h / 2) &&
+                    (psImage->numcomps == 3 || 
+                     (psImage->numcomps == 4 &&
+                      psImage->comps[3].w == psImage->comps[0].w &&
+                      psImage->comps[3].h == psImage->comps[0].h));
 
     if (bIs420)
     {
@@ -1158,38 +1187,10 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
         if (nTileH > 1024) nTileH = 1024;
     }
 
+    GDALColorTable* poCT = NULL;
 /* -------------------------------------------------------------------- */
-/*      Create band information objects.                                */
+/*      Look for color table or cdef box                                */
 /* -------------------------------------------------------------------- */
-    JP2OpenJPEGRasterBand* poFirstBand = NULL;
-
-    for( iBand = 1; iBand <= poDS->nBands; iBand++ )
-    {
-        int bPromoteTo8Bit = (
-            iBand == 4 && poDS->nBands == 4 &&
-            psImage->comps[0].prec == 8 &&
-            psImage->comps[1].prec == 8 &&
-            psImage->comps[2].prec == 8 &&
-            psImage->comps[3].prec == 1 && 
-            CSLFetchBoolean(poOpenInfo->papszOpenOptions, "1BIT_ALPHA_PROMOTION",
-                    CSLTestBoolean(CPLGetConfigOption("JP2OPENJPEG_PROMOTE_1BIT_ALPHA_AS_8BIT", "YES"))) );
-        if( bPromoteTo8Bit )
-            CPLDebug("JP2OpenJPEG", "Fourth (alpha) band is promoted from 1 bit to 8 bit");
-
-        JP2OpenJPEGRasterBand* poBand =
-            new JP2OpenJPEGRasterBand( poDS, iBand, eDataType,
-                                        bPromoteTo8Bit ? 8: psImage->comps[iBand-1].prec,
-                                        bPromoteTo8Bit,
-                                        nTileW, nTileH);
-        if( iBand == 1 )
-            poFirstBand = poBand;
-        poDS->SetBand( iBand, poBand );
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Look for color table.                                           */
-/* -------------------------------------------------------------------- */
-    if( eDataType == GDT_Byte && poDS->nBands == 1 )
     {
         GDALJP2Box oBox( fp );
         if( oBox.ReadFirst() )
@@ -1205,7 +1206,8 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
                          oSubBox.ReadNextChild( &oBox ) )
                     {
                         GIntBig nDataLength = oSubBox.GetDataLength();
-                        if( EQUAL(oSubBox.GetType(),"pclr") &&
+                        if( poCT == NULL &&
+                            EQUAL(oSubBox.GetType(),"pclr") &&
                             nDataLength >= 3 &&
                             nDataLength <= 2 + 1 + 3 + 3 * 256 )
                         {
@@ -1223,7 +1225,7 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
                                     if( pabyCT[3] == 7 && pabyCT[4] == 7 && pabyCT[5] == 7 &&
                                         nDataLength == 2 + 1 + 3 + 3 * nEntries )
                                     {
-                                        GDALColorTable* poCT = new GDALColorTable();
+                                        poCT = new GDALColorTable();
                                         for(int i=0;i<nEntries;i++)
                                         {
                                             GDALColorEntry sEntry;
@@ -1233,12 +1235,90 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
                                             sEntry.c4 = 255;
                                             poCT->SetColorEntry(i, &sEntry);
                                         }
-                                        poFirstBand->poCT = poCT;
                                     }
                                 }
                                 CPLFree(pabyCT);
                             }
-                            break;
+                        }
+                        /* There's a bug/misfeature in openjpeg: the color_space
+                           only gets set at read tile time */
+                        else if( EQUAL(oSubBox.GetType(),"colr") &&
+                                 nDataLength == 7 )
+                        {
+                            GByte* pabyContent = oSubBox.ReadBoxData();
+                            if( pabyContent != NULL )
+                            {
+                                if( pabyContent[0] == 1 /* enumerated colourspace */ )
+                                {
+                                    GUInt32 enumcs = (pabyContent[3] << 24) |
+                                                     (pabyContent[4] << 16) |
+                                                     (pabyContent[5] << 8) |
+                                                     (pabyContent[6]);
+                                    if( enumcs == 16 )
+                                    {
+                                        poDS->eColorSpace = OPJ_CLRSPC_SRGB;
+                                        CPLDebug("OPENJPEG", "SRGB color space");
+                                    }
+                                    else if( enumcs == 17 )
+                                    {
+                                        poDS->eColorSpace = OPJ_CLRSPC_GRAY;
+                                        CPLDebug("OPENJPEG", "Grayscale color space");
+                                    }
+                                    else if( enumcs == 18 )
+                                    {
+                                        poDS->eColorSpace = OPJ_CLRSPC_SYCC;
+                                        CPLDebug("OPENJPEG", "SYCC color space");
+                                    }
+                                    else
+                                    {
+                                        poDS->eColorSpace = OPJ_CLRSPC_UNKNOWN;
+                                        CPLDebug("OPENJPEG", "Unknown color space");
+                                    }
+                                }
+                            }
+                        }
+                        /* Check if there's an alpha channel */
+                        else if( EQUAL(oSubBox.GetType(),"cdef") &&
+                                 nDataLength == 2 + poDS->nBands * 6 )
+                        {
+                            GByte* pabyContent = oSubBox.ReadBoxData();
+                            if( pabyContent != NULL )
+                            {
+                                int nEntries = (pabyContent[0] << 8) | pabyContent[1];
+                                if( nEntries == poDS->nBands )
+                                {
+                                    int i;
+                                    for(i=0;i<poDS->nBands-1;i++)
+                                    {
+                                        int CNi = (pabyContent[2+6*i] << 8) | pabyContent[2+6*i+1];
+                                        int Typi = (pabyContent[2+6*i+2] << 8) | pabyContent[2+6*i+3];
+                                        int Asoci = (pabyContent[2+6*i+4] << 8) | pabyContent[2+6*i+5];
+                                        if( !(CNi == i && Typi == 0 && (Asoci == i + 1 || Asoci == 65535)) )
+                                        {
+                                            CPLDebug("OPENJPEG", "Unsupported cdef content");
+                                            break;
+                                        }
+                                    }
+                                    if( i == poDS->nBands-1 )
+                                    {
+                                        int CNi = (pabyContent[2+6*i] << 8) | pabyContent[2+6*i+1];
+                                        int Typi = (pabyContent[2+6*i+2] << 8) | pabyContent[2+6*i+3];
+                                        int Asoci = (pabyContent[2+6*i+4] << 8) | pabyContent[2+6*i+5];
+                                        if( !(CNi == i && Typi == 1 && Asoci == 0) )
+                                        {
+                                            CPLDebug("OPENJPEG", "Unsupported cdef content");
+                                        }
+                                        else
+                                        {
+                                            poDS->bLastChannelIsAlpha = TRUE;
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    CPLDebug("OPENJPEG", "Unsupported cdef content");
+                                }
+                            }
                         }
                     }
                 }
@@ -1247,6 +1327,31 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
                     break;
             }
         }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Create band information objects.                                */
+/* -------------------------------------------------------------------- */
+    for( iBand = 1; iBand <= poDS->nBands; iBand++ )
+    {
+        int bPromoteTo8Bit = (
+            iBand == poDS->nBands &&
+            poDS->bLastChannelIsAlpha &&
+            psImage->comps[0].prec == 8 &&
+            psImage->comps[poDS->nBands-1].prec == 1 && 
+            CSLFetchBoolean(poOpenInfo->papszOpenOptions, "1BIT_ALPHA_PROMOTION",
+                    CSLTestBoolean(CPLGetConfigOption("JP2OPENJPEG_PROMOTE_1BIT_ALPHA_AS_8BIT", "YES"))) );
+        if( bPromoteTo8Bit )
+            CPLDebug("JP2OpenJPEG", "Last (alpha) band is promoted from 1 bit to 8 bit");
+
+        JP2OpenJPEGRasterBand* poBand =
+            new JP2OpenJPEGRasterBand( poDS, iBand, eDataType,
+                                        bPromoteTo8Bit ? 8: psImage->comps[iBand-1].prec,
+                                        bPromoteTo8Bit,
+                                        nTileW, nTileH);
+        if( iBand == 1 && poCT != NULL )
+            poBand->poCT = poCT;
+        poDS->SetBand( iBand, poBand );
     }
 
 /* -------------------------------------------------------------------- */
@@ -1272,6 +1377,7 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
         poODS->SetDescription( poOpenInfo->pszFilename );
         poODS->iLevel = poDS->nOverviewCount + 1;
         poODS->bUseSetDecodeArea = poDS->bUseSetDecodeArea;
+        poODS->bLastChannelIsAlpha = poDS->bLastChannelIsAlpha;
         if (!poDS->bUseSetDecodeArea)
         {
             nTileW /= 2;
@@ -1297,12 +1403,12 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
         for( iBand = 1; iBand <= poDS->nBands; iBand++ )
         {
             int bPromoteTo8Bit = (
-                iBand == 4 && poDS->nBands == 4 &&
+                iBand == poDS->nBands &&
+                poDS->bLastChannelIsAlpha &&
                 psImage->comps[0].prec == 8 &&
-                psImage->comps[1].prec == 8 &&
-                psImage->comps[2].prec == 8 &&
-                psImage->comps[3].prec == 1 && 
-                CSLTestBoolean(CPLGetConfigOption("JP2OPENJPEG_PROMOTE_1BIT_ALPHA_AS_8BIT", "YES")) );
+                psImage->comps[poDS->nBands-1].prec == 1 && 
+                CSLFetchBoolean(poOpenInfo->papszOpenOptions, "1BIT_ALPHA_PROMOTION",
+                        CSLTestBoolean(CPLGetConfigOption("JP2OPENJPEG_PROMOTE_1BIT_ALPHA_AS_8BIT", "YES"))) );
 
             poODS->SetBand( iBand, new JP2OpenJPEGRasterBand( poODS, iBand, eDataType,
                                                               bPromoteTo8Bit ? 8: psImage->comps[iBand-1].prec,
@@ -1382,7 +1488,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
     int  nXSize = poSrcDS->GetRasterXSize();
     int  nYSize = poSrcDS->GetRasterYSize();
 
-    if( nBands != 1 && nBands != 3 /* && nBands != 4 */ )
+    if( nBands == 0 )
     {
         CPLError( CE_Failure, CPLE_NotSupported,
                   "Unable to export files with %d bands.", nBands );
@@ -1508,19 +1614,33 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
     int bSOP = CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "SOP", "FALSE"));
     int bEPH = CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "EPH", "FALSE"));
 
-    int bResample = (nBands == 3 && eDataType == GDT_Byte &&
-            CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "YCBCR420", "FALSE")));
-    if (bResample && !((nXSize % 2) == 0 && (nYSize % 2) == 0 && (nBlockXSize % 2) == 0 && (nBlockYSize % 2) == 0))
+    const char* pszYCBCR420 = CSLFetchNameValue(papszOptions, "YCBCR420");
+    int bYCBCR420 = FALSE;
+    if( pszYCBCR420 && CSLTestBoolean(pszYCBCR420) )
     {
-        CPLError(CE_Warning, CPLE_NotSupported,
-                 "YCBCR420 unsupported when image size and/or tile size are not multiple of 2");
-        bResample = FALSE;
+        if ((nBands == 3 || nBands == 4) && eDataType == GDT_Byte)
+        {
+            if( ((nXSize % 2) == 0 && (nYSize % 2) == 0 && (nBlockXSize % 2) == 0 && (nBlockYSize % 2) == 0) )
+            {
+                bYCBCR420 = TRUE;
+            }
+            else
+            {
+                CPLError(CE_Warning, CPLE_NotSupported,
+                    "YCBCR420 unsupported when image size and/or tile size are not multiple of 2");
+            }
+        }
+        else
+        {
+            CPLError(CE_Warning, CPLE_NotSupported,
+                    "YCBCR420 unsupported with this image band count and/or data byte");
+        }
     }
 
     const char* pszYCC = CSLFetchNameValue(papszOptions, "YCC");
-    int bYCC = (nBands == 3 && eDataType == GDT_Byte &&
+    int bYCC = ((nBands == 3 || nBands == 4) && eDataType == GDT_Byte &&
             CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "YCC", "TRUE")));
-    if( bResample && bYCC )
+    if( bYCBCR420 && bYCC )
     {
         if( pszYCC != NULL )
         {
@@ -1528,6 +1648,28 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
                     "YCC unsupported when YCbCr requesting");
         }
         bYCC = FALSE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Work out the precision.                                         */
+/* -------------------------------------------------------------------- */
+    int nBits;
+    if( CSLFetchNameValue( papszOptions, "NBITS" ) != NULL )
+        nBits = atoi(CSLFetchNameValue(papszOptions,"NBITS"));
+    else if( poSrcDS->GetRasterBand(1)->GetMetadataItem( "NBITS", "IMAGE_STRUCTURE" ) 
+             != NULL )
+        nBits = atoi(poSrcDS->GetRasterBand(1)->GetMetadataItem( "NBITS", 
+                                                       "IMAGE_STRUCTURE" ));
+    else
+        nBits = GDALGetDataTypeSize(eDataType);
+
+    if( (GDALGetDataTypeSize(eDataType) == 8 && nBits > 8) ||
+        (GDALGetDataTypeSize(eDataType) == 16 && (nBits <= 8 || nBits > 16)) ||
+        (GDALGetDataTypeSize(eDataType) == 32 && (nBits <= 16 || nBits > 32)) )
+    {
+        CPLError(CE_Warning, CPLE_NotSupported,
+                 "Inconsistant NBITS value with data type. Using %d",
+                 GDALGetDataTypeSize(eDataType));
     }
 
 /* -------------------------------------------------------------------- */
@@ -1556,11 +1698,13 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
     opj_image_cmptparm_t* pasBandParams =
             (opj_image_cmptparm_t*)CPLMalloc(nBands * sizeof(opj_image_cmptparm_t));
     int iBand;
+    int bSamePrecision = TRUE;
+    int b1BitAlpha = FALSE;
     for(iBand=0;iBand<nBands;iBand++)
     {
         pasBandParams[iBand].x0 = 0;
         pasBandParams[iBand].y0 = 0;
-        if (bResample && iBand > 0)
+        if (bYCBCR420 && (iBand == 1 || iBand == 2))
         {
             pasBandParams[iBand].dx = 2;
             pasBandParams[iBand].dy = 2;
@@ -1574,10 +1718,25 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
             pasBandParams[iBand].w = nXSize;
             pasBandParams[iBand].h = nYSize;
         }
-        pasBandParams[iBand].sgnd = (eDataType == GDT_Int16 || eDataType == GDT_Int32);
-        pasBandParams[iBand].prec = 8 * nDataTypeSize;
+
+        const char* pszNBits = poSrcDS->GetRasterBand(iBand+1)->GetMetadataItem(
+            "NBITS", "IMAGE_STRUCTURE");
+        if( iBand == nBands - 1 &&
+            poSrcDS->GetRasterBand(iBand+1)->GetColorInterpretation() == GCI_AlphaBand &&
+            ((pszNBits != NULL && EQUAL(pszNBits, "1")) ||
+              CSLFetchBoolean(papszOptions, "1BIT_ALPHA", FALSE)) )
+        {
+            pasBandParams[iBand].sgnd = 0;
+            pasBandParams[iBand].prec = 1;
+            bSamePrecision = FALSE;
+            b1BitAlpha = TRUE;
+        }
+        else
+        {
+            pasBandParams[iBand].sgnd = (eDataType == GDT_Int16 || eDataType == GDT_Int32);
+            pasBandParams[iBand].prec = nBits;
+        }
     }
-    int bSamePrecision = TRUE; // FIXME
 
     /* Always ask OpenJPEG to do codestream only. We will take care */
     /* of JP2 boxes */
@@ -1594,7 +1753,15 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
     opj_set_warning_handler(pCodec, JP2OpenJPEGDataset_WarningCallback,NULL);
     opj_set_error_handler(pCodec, JP2OpenJPEGDataset_ErrorCallback,NULL);
 
-    OPJ_COLOR_SPACE eColorSpace = (bResample) ? OPJ_CLRSPC_SYCC : (nBands == 3 || nBands == 4) ? OPJ_CLRSPC_SRGB : OPJ_CLRSPC_GRAY;
+    const char* pszAlpha = CSLFetchNameValue(papszOptions, "ALPHA");
+    OPJ_COLOR_SPACE eColorSpace = OPJ_CLRSPC_GRAY;
+    if( bYCBCR420 )
+        eColorSpace = OPJ_CLRSPC_SYCC;
+    else if( (nBands == 3 || nBands == 4) &&
+             poSrcDS->GetRasterBand(1)->GetColorInterpretation() == GCI_RedBand &&
+             poSrcDS->GetRasterBand(2)->GetColorInterpretation() == GCI_GreenBand &&
+             poSrcDS->GetRasterBand(3)->GetColorInterpretation() == GCI_BlueBand )
+        eColorSpace = OPJ_CLRSPC_SRGB;
 
     opj_image_t* psImage = opj_image_tile_create(nBands,pasBandParams,
                                                  eColorSpace);
@@ -1750,6 +1917,28 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
         else if(  eColorSpace == OPJ_CLRSPC_SYCC )
             enumcs = 18;
         colrBox.AppendUInt32(enumcs); /* EnumCS: Enumerated colourspace */
+        
+        GDALJP2Box cdefBox(fp);
+        if( poSrcDS->GetRasterBand(nBands)->GetColorInterpretation() == GCI_AlphaBand ||
+            (pszAlpha != NULL && CSLTestBoolean(pszAlpha)) )
+        {
+            cdefBox.SetType("cdef");
+            cdefBox.AppendUInt16(nBands);
+            for(int i=0;i<nBands-1;i++)
+            {
+                cdefBox.AppendUInt16(i);   /* Component number */
+                cdefBox.AppendUInt16(0);   /* Signification: This channel is the colour image data for the associated colour */
+                if( (eColorSpace == OPJ_CLRSPC_GRAY && nBands == 2) ||
+                    ((eColorSpace == OPJ_CLRSPC_SRGB ||
+                      eColorSpace == OPJ_CLRSPC_SYCC) && nBands == 4) )
+                    cdefBox.AppendUInt16(i+1); /* Colour of the component: associated with a particular colour */
+                else
+                    cdefBox.AppendUInt16(65535); /* Colour of the component: not associated with any particular colour */
+            }
+            cdefBox.AppendUInt16(nBands-1); /* Component number */
+            cdefBox.AppendUInt16(1);        /* Signification: Non pre-multiplied alpha */
+            cdefBox.AppendUInt16(0);        /* Colour of the component: This channel is associated as the image as a whole */
+        }
 
         // Add res box if needed
         double dfXRes = 0, dfYRes = 0;
@@ -1810,12 +1999,14 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
         }
 
         /* Build and write jp2h super box now */
-        GDALJP2Box* apoBoxes[4];
+        GDALJP2Box* apoBoxes[5];
         int nBoxes = 1;
         apoBoxes[0] = &ihdrBox;
         if( !bSamePrecision )
             apoBoxes[nBoxes++] = &bpccBox;
         apoBoxes[nBoxes++] = &colrBox;
+        if( cdefBox.GetDataLength() )
+            apoBoxes[nBoxes++] = &cdefBox;
         if( poRes )
             apoBoxes[nBoxes++] = poRes;
         GDALJP2Box* psJP2HBox = GDALJP2Box::CreateSuperBox( "jp2h",
@@ -1896,9 +2087,10 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
     }
 
     GByte* pYUV420Buffer = NULL;
-    if (bResample)
+    if (bYCBCR420)
     {
-        pYUV420Buffer =(GByte*)VSIMalloc(3 * nBlockXSize * nBlockYSize / 2);
+        pYUV420Buffer =(GByte*)VSIMalloc(3 * nBlockXSize * nBlockYSize / 2 +
+                                         ((nBands == 4) ? nBlockXSize * nBlockYSize : 0));
         if (pYUV420Buffer == NULL)
         {
             opj_stream_destroy(pStream);
@@ -1932,9 +2124,19 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
                                      eDataType,
                                      nBands, NULL,
                                      0,0,0,NULL);
+            if( b1BitAlpha )
+            {
+                for(int i=0;i<nWidthToRead*nHeightToRead;i++)
+                {
+                    if( pTempBuffer[(nBands-1)*nWidthToRead*nHeightToRead+i] )
+                        pTempBuffer[(nBands-1)*nWidthToRead*nHeightToRead+i] = 1;
+                    else
+                        pTempBuffer[(nBands-1)*nWidthToRead*nHeightToRead+i] = 0;
+                }
+            }
             if (eErr == CE_None)
             {
-                if (bResample)
+                if (bYCBCR420)
                 {
                     int j, i;
                     for(j=0;j<nHeightToRead;j++)
@@ -1950,13 +2152,22 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
                             pYUV420Buffer[j*nWidthToRead+i] = (GByte) Y;
                             pYUV420Buffer[nHeightToRead * nWidthToRead + ((j/2) * ((nWidthToRead)/2) + i/2) ] = (GByte) Cb;
                             pYUV420Buffer[5 * nHeightToRead * nWidthToRead / 4 + ((j/2) * ((nWidthToRead)/2) + i/2) ] = (GByte) Cr;
+                            if( nBands == 4 )
+                            {
+                                pYUV420Buffer[3 * nHeightToRead * nWidthToRead / 2 + j*nWidthToRead+i ] =
+                                    (GByte) pTempBuffer[3*nHeightToRead*nWidthToRead + j*nWidthToRead+i];
+                            }
                         }
                     }
+
+                    int nBytesToWrite = 3 * nWidthToRead * nHeightToRead / 2;
+                    if (nBands == 4)
+                        nBytesToWrite += nBlockXSize * nBlockYSize;
 
                     if (!opj_write_tile(pCodec,
                                         iTile,
                                         pYUV420Buffer,
-                                        3 * nWidthToRead * nHeightToRead / 2,
+                                        nBytesToWrite,
                                         pStream))
                     {
                         CPLError(CE_Failure, CPLE_AppDefined,
@@ -2120,8 +2331,8 @@ void GDALRegister_JP2OpenJPEG()
 "       <Value>JP2</Value>"
 "       <Value>J2K</Value>"
 "   </Option>"
-"   <Option name='GeoJP2' type='boolean' description='defaults to ON'/>"
-"   <Option name='GMLJP2' type='boolean' description='defaults to ON'/>"
+"   <Option name='GeoJP2' type='boolean' description='Whether to emit a GeoJP2 box' default='YES'/>"
+"   <Option name='GMLJP2' type='boolean' description='Whether to emit a GMLJP2 box' default='YES'/>"
 "   <Option name='QUALITY' type='float' description='Quality. 0-100' default='25'/>"
 "   <Option name='REVERSIBLE' type='boolean' description='True if the compression is reversible' default='false'/>"
 "   <Option name='RESOLUTIONS' type='int' description='Number of resolutions. 1-7' default='6'/>"
@@ -2137,7 +2348,10 @@ void GDALRegister_JP2OpenJPEG()
 "   <Option name='SOP' type='boolean' description='True to insert SOP markers' default='false'/>"
 "   <Option name='EPH' type='boolean' description='True to insert EPH markers' default='false'/>"
 "   <Option name='YCBCR420' type='boolean' description='if RGB must be resampled to YCbCr 4:2:0' default='false'/>"
-"   <Option name='YCC' type='boolean' description='if RGB must be transformed to YCC color space' default='true'/>"
+"   <Option name='YCC' type='boolean' description='if RGB must be transformed to YCC color space (lossless MCT transform)' default='YES'/>"
+"   <Option name='NBITS' type='int' description='Bits (precision) for sub-byte files (1-7), sub-uint16 (9-15), sub-uint32 (17-31)'/>"
+"   <Option name='1BIT_ALPHA' type='boolean' description='Whether to encode the alpha channel as a 1-bit channel' default='NO'/>"
+"   <Option name='ALPHA' type='boolean' description='Whether to force encoding last channel as alpha channel' default='NO'/>"
 "</CreationOptionList>"  );
 
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );

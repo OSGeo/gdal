@@ -693,6 +693,298 @@ def jp2openjpeg_20():
         return 'fail'
 
     return 'success'
+    
+###############################################################################
+# Test YCC=NO creation option
+
+def jp2openjpeg_21():
+
+    if gdaltest.jp2openjpeg_drv is None:
+        return 'skip'
+
+    src_ds = gdal.Open('data/rgbsmall.tif')
+    out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_21.jp2', src_ds, options = ['QUALITY=100', 'REVERSIBLE=YES', 'YCC=NO', 'RESOLUTIONS=3'])
+    maxdiff = gdaltest.compare_ds(src_ds, out_ds)
+    del out_ds
+    src_ds = None
+    gdal.Unlink('/vsimem/jp2openjpeg_21.jp2')
+
+    # Quite a bit of difference...
+    if maxdiff > 1:
+        gdaltest.post_reason('Image too different from reference')
+        return 'fail'
+
+    return 'success'
+    
+###############################################################################
+# Test RGBA support
+
+def jp2openjpeg_22():
+
+    if gdaltest.jp2openjpeg_drv is None:
+        return 'skip'
+
+    # RGBA
+    src_ds = gdal.Open('../gcore/data/stefan_full_rgba.tif')
+    out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_22.jp2', src_ds, options = ['QUALITY=100', 'REVERSIBLE=YES'])
+    maxdiff = gdaltest.compare_ds(src_ds, out_ds)
+    del out_ds
+    src_ds = None
+    gdal.Unlink('/vsimem/jp2openjpeg_22.jp2.aux.xml')
+    ds = gdal.Open('/vsimem/jp2openjpeg_22.jp2')
+    if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_RedBand:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(2).GetColorInterpretation() != gdal.GCI_GreenBand:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(3).GetColorInterpretation() != gdal.GCI_BlueBand:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(4).GetColorInterpretation() != gdal.GCI_AlphaBand:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+    gdal.Unlink('/vsimem/jp2openjpeg_22.jp2')
+
+    if maxdiff > 0:
+        gdaltest.post_reason('Image too different from reference')
+        return 'fail'
+
+    # RGBA with 1BIT_ALPHA=YES
+    src_ds = gdal.Open('../gcore/data/stefan_full_rgba.tif')
+    out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_22.jp2', src_ds, options = ['1BIT_ALPHA=YES'])
+    del out_ds
+    src_ds = None
+    gdal.Unlink('/vsimem/jp2openjpeg_22.jp2.aux.xml')
+    ds = gdal.OpenEx('/vsimem/jp2openjpeg_22.jp2', open_options = ['1BIT_ALPHA_PROMOTION=NO'])
+    fourth_band = ds.GetRasterBand(4)
+    if fourth_band.GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') != '1':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+    ds = gdal.Open('/vsimem/jp2openjpeg_22.jp2')
+    if ds.GetRasterBand(4).Checksum() != 22933:
+        gdaltest.post_reason('fail')
+        print(ds.GetRasterBand(4).Checksum())
+        return 'fail'
+    ds = None
+    gdal.Unlink('/vsimem/jp2openjpeg_22.jp2')
+
+    # RGBA with YCBCR420=YES
+    src_ds = gdal.Open('../gcore/data/stefan_full_rgba.tif')
+    out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_22.jp2', src_ds, options = ['YCBCR420=YES'])
+    del out_ds
+    src_ds = None
+    gdal.Unlink('/vsimem/jp2openjpeg_22.jp2.aux.xml')
+    ds = gdal.Open('/vsimem/jp2openjpeg_22.jp2')
+    if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_RedBand:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(2).GetColorInterpretation() != gdal.GCI_GreenBand:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(3).GetColorInterpretation() != gdal.GCI_BlueBand:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(4).GetColorInterpretation() != gdal.GCI_AlphaBand:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(1).Checksum() != 11446:
+        gdaltest.post_reason('fail')
+        print(ds.GetRasterBand(1).Checksum())
+        return 'fail'
+    ds = None
+    gdal.Unlink('/vsimem/jp2openjpeg_22.jp2')
+
+    # RGBA with YCC=YES
+    src_ds = gdal.Open('../gcore/data/stefan_full_rgba.tif')
+    out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_22.jp2', src_ds, options = ['YCC=YES', 'QUALITY=100', 'REVERSIBLE=YES'])
+    maxdiff = gdaltest.compare_ds(src_ds, out_ds)
+    del out_ds
+    src_ds = None
+    gdal.Unlink('/vsimem/jp2openjpeg_22.jp2.aux.xml')
+    gdal.Unlink('/vsimem/jp2openjpeg_22.jp2')
+
+    if maxdiff > 0:
+        gdaltest.post_reason('Image too different from reference')
+        return 'fail'
+
+    # RGB,undefined
+    src_ds = gdal.Open('../gcore/data/stefan_full_rgba_photometric_rgb.tif')
+    out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_22.jp2', src_ds, options = ['QUALITY=100', 'REVERSIBLE=YES'])
+    maxdiff = gdaltest.compare_ds(src_ds, out_ds)
+    del out_ds
+    src_ds = None
+    gdal.Unlink('/vsimem/jp2openjpeg_22.jp2.aux.xml')
+    ds = gdal.Open('/vsimem/jp2openjpeg_22.jp2')
+    if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_RedBand:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(2).GetColorInterpretation() != gdal.GCI_GreenBand:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(3).GetColorInterpretation() != gdal.GCI_BlueBand:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(4).GetColorInterpretation() != gdal.GCI_Undefined:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+    gdal.Unlink('/vsimem/jp2openjpeg_22.jp2')
+
+    if maxdiff > 0:
+        gdaltest.post_reason('Image too different from reference')
+        return 'fail'
+
+    # RGB,undefined with ALPHA=YES
+    src_ds = gdal.Open('../gcore/data/stefan_full_rgba_photometric_rgb.tif')
+    out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_22.jp2', src_ds, options = ['QUALITY=100', 'REVERSIBLE=YES', 'ALPHA=YES'])
+    maxdiff = gdaltest.compare_ds(src_ds, out_ds)
+    del out_ds
+    src_ds = None
+    gdal.Unlink('/vsimem/jp2openjpeg_22.jp2.aux.xml')
+    ds = gdal.Open('/vsimem/jp2openjpeg_22.jp2')
+    if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_RedBand:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(2).GetColorInterpretation() != gdal.GCI_GreenBand:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(3).GetColorInterpretation() != gdal.GCI_BlueBand:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(4).GetColorInterpretation() != gdal.GCI_AlphaBand:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+    gdal.Unlink('/vsimem/jp2openjpeg_22.jp2')
+
+    if maxdiff > 0:
+        gdaltest.post_reason('Image too different from reference')
+        return 'fail'
+
+
+    return 'success'
+
+###############################################################################
+# Test NBITS support
+
+def jp2openjpeg_23():
+
+    if gdaltest.jp2openjpeg_drv is None:
+        return 'skip'
+
+    src_ds = gdal.Open('../gcore/data/uint16.tif')
+    out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_23.jp2', src_ds, options = ['RESOLUTIONS=3', 'NBITS=9', 'QUALITY=100', 'REVERSIBLE=YES'])
+    maxdiff = gdaltest.compare_ds(src_ds, out_ds)
+    del out_ds
+    src_ds = None
+    ds = gdal.Open('/vsimem/jp2openjpeg_23.jp2')
+    if ds.GetRasterBand(1).GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') != '9':
+        gdaltest.post_reason('failure')
+        return 'fail'
+    ds = None
+    gdal.Unlink('/vsimem/jp2openjpeg_23.jp2.aux.xml')
+    gdal.Unlink('/vsimem/jp2openjpeg_23.jp2')
+
+    if maxdiff > 1:
+        gdaltest.post_reason('Image too different from reference')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test Grey+alpha support
+
+def jp2openjpeg_24():
+
+    if gdaltest.jp2openjpeg_drv is None:
+        return 'skip'
+
+    #  Grey+alpha
+    src_ds = gdal.Open('../gcore/data/stefan_full_greyalpha.tif')
+    out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_24.jp2', src_ds, options = ['QUALITY=100', 'REVERSIBLE=YES'])
+    maxdiff = gdaltest.compare_ds(src_ds, out_ds)
+    del out_ds
+    src_ds = None
+    gdal.Unlink('/vsimem/jp2openjpeg_24.jp2.aux.xml')
+    ds = gdal.Open('/vsimem/jp2openjpeg_24.jp2')
+    if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_GrayIndex:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(2).GetColorInterpretation() != gdal.GCI_AlphaBand:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+    gdal.Unlink('/vsimem/jp2openjpeg_24.jp2')
+
+    if maxdiff > 0:
+        gdaltest.post_reason('Image too different from reference')
+        return 'fail'
+
+    #  Grey+alpha with 1BIT_ALPHA=YES
+    src_ds = gdal.Open('../gcore/data/stefan_full_greyalpha.tif')
+    out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_24.jp2', src_ds, options = ['1BIT_ALPHA=YES'])
+    del out_ds
+    src_ds = None
+    gdal.Unlink('/vsimem/jp2openjpeg_24.jp2.aux.xml')
+    ds = gdal.OpenEx('/vsimem/jp2openjpeg_24.jp2', open_options = ['1BIT_ALPHA_PROMOTION=NO'])
+    if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_GrayIndex:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(2).GetColorInterpretation() != gdal.GCI_AlphaBand:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(2).GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') != '1':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+    ds = gdal.Open('/vsimem/jp2openjpeg_24.jp2')
+    if ds.GetRasterBand(2).GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(2).Checksum() != 22933:
+        gdaltest.post_reason('fail')
+        print(ds.GetRasterBand(2).Checksum())
+        return 'fail'
+    ds = None
+    gdal.Unlink('/vsimem/jp2openjpeg_24.jp2')
+
+    return 'success'
+
+###############################################################################
+# Test multiband support
+
+def jp2openjpeg_25():
+
+    if gdaltest.jp2openjpeg_drv is None:
+        return 'skip'
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 100, 100, 5)
+    src_ds.GetRasterBand(1).Fill(255)
+    src_ds.GetRasterBand(2).Fill(250)
+    src_ds.GetRasterBand(3).Fill(245)
+    src_ds.GetRasterBand(4).Fill(240)
+    src_ds.GetRasterBand(5).Fill(235)
+    cs_tab = [ src_ds.GetRasterBand(i+1).Checksum() for i in range(5) ]
+    out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_25.jp2', src_ds, options = ['QUALITY=100', 'REVERSIBLE=YES'])
+    maxdiff = gdaltest.compare_ds(src_ds, out_ds)
+    del out_ds
+    src_ds = None
+    ds = gdal.Open('/vsimem/jp2openjpeg_25.jp2')
+    if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_Undefined:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+    gdal.Unlink('/vsimem/jp2openjpeg_25.jp2.aux.xml')
+    gdal.Unlink('/vsimem/jp2openjpeg_25.jp2')
+
+    if maxdiff > 0:
+        gdaltest.post_reason('Image too different from reference')
+        return 'fail'
+
+    return 'success'
 
 ###############################################################################
 def jp2openjpeg_online_1():
@@ -886,6 +1178,11 @@ gdaltest_list = [
     jp2openjpeg_18,
     jp2openjpeg_19,
     jp2openjpeg_20,
+    jp2openjpeg_21,
+    jp2openjpeg_22,
+    jp2openjpeg_23,
+    jp2openjpeg_24,
+    jp2openjpeg_25,
     jp2openjpeg_online_1,
     jp2openjpeg_online_2,
     jp2openjpeg_online_3,
