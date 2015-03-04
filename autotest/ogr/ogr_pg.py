@@ -29,6 +29,7 @@
 
 import os
 import sys
+import shutil
 
 sys.path.append( '../pymod' )
 
@@ -4658,6 +4659,50 @@ def ogr_pg_76_scenario4(lyr1, lyr2):
     return 'success'
 
 ###############################################################################
+# Test ogr2ogr can insert multiple layers at once
+
+def ogr_pg_77():
+    import test_cli_utilities
+    if test_cli_utilities.get_ogr2ogr_path() is None:
+        return 'skip'
+
+    gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_77_1' )
+    gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_77_2' )
+    
+    try:
+        shutil.rmtree('tmp/ogr_pg_77')
+    except:
+        pass
+    os.mkdir('tmp/ogr_pg_77')
+
+    f = open('tmp/ogr_pg_77/ogr_pg_77_1.csv', 'wt')
+    f.write('id,WKT\n')
+    f.write('1,POINT(1 2)\n')
+    f.close()
+    f = open('tmp/ogr_pg_77/ogr_pg_77_2.csv', 'wt')
+    f.write('id,WKT\n')
+    f.write('2,POINT(1 2)\n')
+    f.close()
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f PostgreSQL "' + 'PG:' + gdaltest.pg_connection_string + '" tmp/ogr_pg_77')
+
+    try:
+        shutil.rmtree('tmp/ogr_pg_77')
+    except:
+        pass
+
+    ds = ogr.Open('PG:' + gdaltest.pg_connection_string)
+    lyr = ds.GetLayerByName('ogr_pg_77_1')
+    feat = lyr.GetNextFeature()
+    if feat.GetField(0) != '1':
+        return 'fail'
+    lyr = ds.GetLayerByName('ogr_pg_77_2')
+    feat = lyr.GetNextFeature()
+    if feat.GetField(0) != '2':
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_pg_table_cleanup():
@@ -4711,6 +4756,8 @@ def ogr_pg_table_cleanup():
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_76_lyr2' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:test_curve' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:test_curve_3d' )
+    gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_77_1' )
+    gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_77_2' )
     
     # Drop second 'tpoly' from schema 'AutoTest-schema' (do NOT quote names here)
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:AutoTest-schema.tpoly' )
@@ -4819,6 +4866,7 @@ gdaltest_list_internal = [
     ogr_pg_74,
     ogr_pg_75,
     ogr_pg_76,
+    ogr_pg_77,
     ogr_pg_cleanup ]
 
 DISABLED_gdaltest_list_internal = [ 
