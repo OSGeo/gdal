@@ -663,7 +663,8 @@ void OGRPGTableLayer::BuildWhere()
     if( poFeatureDefn->GetGeomFieldCount() != 0 )
         poGeomFieldDefn = poFeatureDefn->myGetGeomFieldDefn(m_iGeomFieldFilter);
 
-    if( m_poFilterGeom != NULL && poGeomFieldDefn != NULL && (
+    if( m_poFilterGeom != NULL && poGeomFieldDefn != NULL &&
+        poDS->sPostGISVersion.nMajor >= 0 && (
             poGeomFieldDefn->ePostgisType == GEOM_TYPE_GEOMETRY ||
             poGeomFieldDefn->ePostgisType == GEOM_TYPE_GEOGRAPHY) )
     {
@@ -832,7 +833,7 @@ CPLString OGRPGTableLayer::BuildFields()
 
         if( poGeomFieldDefn->ePostgisType == GEOM_TYPE_GEOMETRY )
         {
-            if ( poDS->bUseBinaryCursor )
+            if ( poDS->sPostGISVersion.nMajor < 0 || poDS->bUseBinaryCursor )
             {
                 osFieldList += osEscapedGeom;
             }
@@ -1891,8 +1892,9 @@ int OGRPGTableLayer::TestCapability( const char * pszCap )
         if( poFeatureDefn->GetGeomFieldCount() > 0 )
             poGeomFieldDefn = poFeatureDefn->myGetGeomFieldDefn(m_iGeomFieldFilter);
         return poGeomFieldDefn == NULL ||
-               poGeomFieldDefn->ePostgisType == GEOM_TYPE_GEOMETRY ||
-               poGeomFieldDefn->ePostgisType == GEOM_TYPE_GEOGRAPHY;
+               (poDS->sPostGISVersion.nMajor >= 0 &&
+                (poGeomFieldDefn->ePostgisType == GEOM_TYPE_GEOMETRY ||
+                 poGeomFieldDefn->ePostgisType == GEOM_TYPE_GEOGRAPHY));
     }
 
     else if( EQUAL(pszCap,OLCFastSpatialFilter) )
@@ -1901,8 +1903,9 @@ int OGRPGTableLayer::TestCapability( const char * pszCap )
         if( poFeatureDefn->GetGeomFieldCount() > 0 )
             poGeomFieldDefn = poFeatureDefn->myGetGeomFieldDefn(m_iGeomFieldFilter);
         return poGeomFieldDefn == NULL ||
-               poGeomFieldDefn->ePostgisType == GEOM_TYPE_GEOMETRY ||
-               poGeomFieldDefn->ePostgisType == GEOM_TYPE_GEOGRAPHY;
+               (poDS->sPostGISVersion.nMajor >= 0 &&
+               (poGeomFieldDefn->ePostgisType == GEOM_TYPE_GEOMETRY ||
+                poGeomFieldDefn->ePostgisType == GEOM_TYPE_GEOGRAPHY));
     }
 
     else if( EQUAL(pszCap,OLCTransactions) )
@@ -1914,6 +1917,7 @@ int OGRPGTableLayer::TestCapability( const char * pszCap )
         if( poFeatureDefn->GetGeomFieldCount() > 0 )
             poGeomFieldDefn = poFeatureDefn->myGetGeomFieldDefn(0);
         return poGeomFieldDefn != NULL &&
+               poDS->sPostGISVersion.nMajor >= 0 &&
                poGeomFieldDefn->ePostgisType == GEOM_TYPE_GEOMETRY;
     }
 
@@ -2648,7 +2652,8 @@ void OGRPGTableLayer::ResolveSRID(OGRPGGeomFieldDefn* poGFldDefn)
     /* With PostGIS 2.0, SRID = 0 can also mean that there's no constraint */
     /* so we need to fetch from values */
     /* We assume that all geometry of this column have identical SRID */
-    if( nSRSId <= 0 && poGFldDefn->ePostgisType == GEOM_TYPE_GEOMETRY )
+    if( nSRSId <= 0 && poGFldDefn->ePostgisType == GEOM_TYPE_GEOMETRY &&
+        poDS->sPostGISVersion.nMajor >= 0 )
     {
         CPLString osGetSRID;
 
