@@ -1780,6 +1780,8 @@ OGRLayer *OGRPGDataSource::GetLayerByName( const char *pszName )
     }
     else
     {
+        EndCopy();
+
         CPLString osTableName(pszTableName);
         CPLString osTableNameLower(pszTableName);
         osTableNameLower.tolower();

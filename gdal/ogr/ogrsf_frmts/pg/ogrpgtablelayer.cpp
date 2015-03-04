@@ -1823,7 +1823,7 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
     /* This is for postgresql  7.4 and higher */
 #if !defined(PG_PRE74)
     int copyResult = PQputCopyData(hPGConn, osCommand.c_str(), strlen(osCommand.c_str()));
-#ifdef DEBUG
+#ifdef DEBUG_VERBOSE
     CPLDebug("PG", "PQputCopyData(%s)", osCommand.c_str());
 #endif
 
