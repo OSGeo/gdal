@@ -202,12 +202,25 @@ Refer to the <a href="ogr_sql_sqlite.html">SQLite SQL</a> dialect for an overvie
 tables to existing ones.  Note that a new database file cannot be
 created over an existing file.</p>
 
-<h2>Transaction support (GDAL &gt;= 2.0)</h2>
+<h3>Transaction support (GDAL &gt;= 2.0)</h3>
 
 <p>
 The driver implements transactions at the database level, per
 <a href="http://trac.osgeo.org/gdal/wiki/rfc54_dataset_transactions">RFC 54</a>
 </p>
+
+<h3>Dataset open options</h3>
+
+(GDAL &gt;= 2.0)
+
+<ul>
+<li> <b>LIST_ALL_TABLES</b>=YES/NO: This may be "YES" to force all tables,
+including non-spatial ones, to be listed.<p>
+
+<li> <b>LIST_VIRTUAL_OGR</b>=YES/NO: This may be "YES" to force VirtualOGR virtual
+tables to be listed. This should only be enabled on trusted datasources to avoid
+potential safety issues.<p>
+</ul>
 
 <h3>Database Creation Options</h3>
 

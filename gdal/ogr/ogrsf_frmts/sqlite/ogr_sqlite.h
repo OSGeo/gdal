@@ -736,6 +736,9 @@ class OGRSQLiteDataSource : public OGRSQLiteBaseDataSource
     int                 nKnownSRID;
     int                *panSRID;
     OGRSpatialReference **papoSRS;
+
+    char              **papszOpenOptions;
+
     void                AddSRIDToCache(int nId, OGRSpatialReference * poSRS );
 
     int                 bHaveGeometryColumns;
@@ -763,7 +766,7 @@ class OGRSQLiteDataSource : public OGRSQLiteBaseDataSource
                         OGRSQLiteDataSource();
                         ~OGRSQLiteDataSource();
 
-    int                 Open( const char *, int bUpdateIn );
+    int                 Open( const char *, int bUpdateIn, char** papszOpenOptions );
     int                 Create( const char *, char **papszOptions );
 
     int                 OpenTable( const char *pszTableName, 
