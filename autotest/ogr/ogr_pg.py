@@ -2496,6 +2496,15 @@ def ogr_pg_48():
         gdal.SetConfigOption('PG_LIST_ALL_TABLES', None)
         found = ogr_pg_check_layer_in_list(gdaltest.pg_ds, 'no_pk_table')
 
+        if found is False:
+            gdaltest.post_reason( 'layer no_pk_table not listed' )
+            return 'fail'
+
+        # Test LIST_ALL_TABLES=YES open option
+        gdaltest.pg_ds.Destroy()
+        gdaltest.pg_ds = gdal.OpenEx( 'PG:' + gdaltest.pg_connection_string, gdal.OF_VECTOR | gdal.OF_UPDATE, open_options = ['LIST_ALL_TABLES=YES'] )
+        found = ogr_pg_check_layer_in_list(gdaltest.pg_ds, 'no_pk_table')
+
     if found is False:
         gdaltest.post_reason( 'layer no_pk_table not listed' )
         return 'fail'
@@ -2546,7 +2555,7 @@ def ogr_pg_49():
         return 'skip'
 
     gdal.SetConfigOption('PGSQL_OGR_FID', 'other_id')
-    gdaltest.pg_ds.Destroy()
+    gdaltest.pg_ds = None
     gdaltest.pg_ds = ogr.Open( 'PG:' + gdaltest.pg_connection_string, update = 1 )
     lyr = gdaltest.pg_ds.GetLayer('no_pk_table')
     gdal.SetConfigOption('PGSQL_OGR_FID', None)

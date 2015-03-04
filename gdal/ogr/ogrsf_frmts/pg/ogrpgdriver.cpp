@@ -32,42 +32,36 @@
 
 CPL_CVSID("$Id$");
 
+
 /************************************************************************/
-/*                            ~OGRPGDriver()                            */
+/*                              Identify()                              */
 /************************************************************************/
 
-OGRPGDriver::~OGRPGDriver()
-
+static int OGRPGDriverIdentify( GDALOpenInfo* poOpenInfo )
 {
-}
-
-/************************************************************************/
-/*                              GetName()                               */
-/************************************************************************/
-
-const char *OGRPGDriver::GetName()
-
-{
-    return "PostgreSQL";
+    if( !EQUALN(poOpenInfo->pszFilename,"PGB:",4) &&
+        !EQUALN(poOpenInfo->pszFilename,"PG:",3) )
+        return FALSE;
+    return TRUE;
 }
 
 /************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
-OGRDataSource *OGRPGDriver::Open( const char * pszFilename,
-                                     int bUpdate )
+static GDALDataset *OGRPGDriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
     OGRPGDataSource     *poDS;
 
-    if( !EQUALN(pszFilename,"PGB:",4) &&
-        !EQUALN(pszFilename,"PG:",3) )
+    if( !OGRPGDriverIdentify(poOpenInfo) )
         return NULL;
 
     poDS = new OGRPGDataSource();
 
-    if( !poDS->Open( pszFilename, bUpdate, TRUE ) )
+    if( !poDS->Open( poOpenInfo->pszFilename,
+                     poOpenInfo->eAccess == GA_Update, TRUE,
+                     poOpenInfo->papszOpenOptions ) )
     {
         delete poDS;
         return NULL;
@@ -80,16 +74,19 @@ OGRDataSource *OGRPGDriver::Open( const char * pszFilename,
 /*                          CreateDataSource()                          */
 /************************************************************************/
 
-OGRDataSource *OGRPGDriver::CreateDataSource( const char * pszName,
-                                              char ** /* papszOptions */ )
+static GDALDataset *OGRPGDriverCreate( const char * pszName,
+                                          CPL_UNUSED int nBands,
+                                          CPL_UNUSED int nXSize,
+                                          CPL_UNUSED int nYSize,
+                                          CPL_UNUSED GDALDataType eDT,
+                                          CPL_UNUSED char **papszOptions )
 
 {
     OGRPGDataSource     *poDS;
 
     poDS = new OGRPGDataSource();
 
-
-    if( !poDS->Open( pszName, TRUE, TRUE ) )
+    if( !poDS->Open( pszName, TRUE, TRUE, NULL ) )
     {
         delete poDS;
         CPLError( CE_Failure, CPLE_AppDefined, 
@@ -102,19 +99,6 @@ OGRDataSource *OGRPGDriver::CreateDataSource( const char * pszName,
 }
 
 /************************************************************************/
-/*                           TestCapability()                           */
-/************************************************************************/
-
-int OGRPGDriver::TestCapability( const char * pszCap )
-
-{
-    if( EQUAL(pszCap,ODrCCreateDataSource) )
-        return TRUE;
-    else
-        return FALSE;
-}
-
-/************************************************************************/
 /*                           RegisterOGRPG()                            */
 /************************************************************************/
 
@@ -123,15 +107,27 @@ void RegisterOGRPG()
 {
     if (! GDAL_CHECK_VERSION("PG driver"))
         return;
-    OGRSFDriver* poDriver = new OGRPGDriver;
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                "PostgreSQL/PostGIS" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                "drv_pg.html" );
+    
+    if( GDALGetDriverByName( "PG" ) == NULL )
+    {
+        GDALDriver* poDriver = new GDALDriver();
 
-    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, "<CreationOptionList/>");
+        poDriver->SetDescription( "PostgreSQL" );
+        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                                  "PostgreSQL/PostGIS" );
+        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
 
-    poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
+        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
+                                    "drv_pg.html" );
+
+        poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
+"<OpenOptionList>"
+"  <Option name='LIST_ALL_TABLES' type='boolean' description='Whether all tables, including non-spatial ones, should be listed' default='NO'/>"
+"</OpenOptionList>");
+
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, "<CreationOptionList/>");
+
+        poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
 "<LayerCreationOptionList>"
 "  <Option name='GEOM_TYPE' type='string-select' description='Format of geometry columns' default='geometry'>"
 "    <Value>geometry</Value>"
@@ -153,12 +149,17 @@ void RegisterOGRPG()
 "  <Option name='EXTRACT_SCHEMA_FROM_LAYER_NAME' type='boolean' description='Whether a dot in a layer name should be considered as the separator for the schema and table name' default='YES'/>"
 "  <Option name='COLUMN_TYPES' type='string' description='A list of strings of format field_name=pg_field_type (separated by comma) to force the PG column type of fields to be created'/>"
 "</LayerCreationOptionList>");
-    
-    poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES, "Integer Integer64 Real String Date DateTime Time IntegerList Integer64List RealList StringList Binary" );
-    poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_FIELDS, "YES" );
-    poDriver->SetMetadataItem( GDAL_DCAP_DEFAULT_FIELDS, "YES" );
-    poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_GEOMFIELDS, "YES" );
+        
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES, "Integer Integer64 Real String Date DateTime Time IntegerList Integer64List RealList StringList Binary" );
+        poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_FIELDS, "YES" );
+        poDriver->SetMetadataItem( GDAL_DCAP_DEFAULT_FIELDS, "YES" );
+        poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_GEOMFIELDS, "YES" );
 
-    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver(poDriver);
+        poDriver->pfnOpen = OGRPGDriverOpen;
+        poDriver->pfnIdentify = OGRPGDriverIdentify;
+        poDriver->pfnCreate = OGRPGDriverCreate;
+
+        GetGDALDriverManager()->RegisterDriver( poDriver );
+    }
 }
 

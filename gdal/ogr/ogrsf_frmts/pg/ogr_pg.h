@@ -500,7 +500,8 @@ class OGRPGDataSource : public OGRDataSource
     OGRSpatialReference *FetchSRS( int nSRSId );
     OGRErr              InitializeMetadataTables();
 
-    int                 Open( const char *, int bUpdate, int bTestOpen );
+    int                 Open( const char *, int bUpdate, int bTestOpen,
+                              char** papszOpenOptions );
     OGRPGTableLayer*    OpenTable( CPLString& osCurrentSchema,
                                    const char * pszTableName,
                                    const char * pszSchemaName,
@@ -545,24 +546,6 @@ class OGRPGDataSource : public OGRDataSource
     int                 UseCopy();
     void                StartCopy( OGRPGTableLayer *poPGLayer );
     OGRErr              EndCopy( );
-};
-
-/************************************************************************/
-/*                             OGRPGDriver                              */
-/************************************************************************/
-
-class OGRPGDriver : public OGRSFDriver
-{
-  public:
-                ~OGRPGDriver();
-
-    const char *GetName();
-    OGRDataSource *Open( const char *, int );
-
-    virtual OGRDataSource *CreateDataSource( const char *pszName,
-                                             char ** = NULL );
-
-    int                 TestCapability( const char * );
 };
 
 #endif /* ndef _OGR_PG_H_INCLUDED */

@@ -315,7 +315,7 @@ static PGTableEntry* OGRPGAddTableEntry(CPLHashSet* hSetTables,
 /************************************************************************/
 
 int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
-                              int bTestOpen )
+                           int bTestOpen, char** papszOpenOptions )
 
 {
     CPLAssert( nLayers == 0 );
@@ -745,7 +745,10 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
         nUndefinedSRID = -1;
 
     osCurrentSchema = GetCurrentSchema();
-    bListAllTables = CSLTestBoolean(CPLGetConfigOption("PG_LIST_ALL_TABLES", "NO"));
+
+    bListAllTables = CSLTestBoolean(CSLFetchNameValueDef(
+        papszOpenOptions, "LIST_ALL_TABLES",
+        CPLGetConfigOption("PG_LIST_ALL_TABLES", "NO")));
 
     return TRUE;
 }

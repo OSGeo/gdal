@@ -83,6 +83,15 @@ An alternate way of setting the client encoding is to issue the following SQL co
 with ExecuteSQL() : "SET client_encoding TO encoding_name" where encoding_name is LATIN1, etc.
 Errors can be catched by enclosing this command with a CPLPushErrorHandler()/CPLPopErrorHandler() pair.<p>
 
+<h3>Dataset open options</h3>
+
+(GDAL &gt;= 2.0)
+
+<ul>
+<li> <b>LIST_ALL_TABLES</b>=YES/NO: This may be "YES" to force all tables,
+including non-spatial ones, to be listed.<p>
+</ul>
+
 <h3>Dataset Creation Options</h3>
 
 None<p>
