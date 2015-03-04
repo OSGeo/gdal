@@ -223,6 +223,7 @@ OGRSQLiteDataSource::OGRSQLiteDataSource()
 
     nFileTimestamp = 0;
     bLastSQLCommandIsUpdateLayerStatistics = FALSE;
+    papszOpenOptions = NULL;
 }
 
 /************************************************************************/
@@ -258,6 +259,7 @@ OGRSQLiteDataSource::~OGRSQLiteDataSource()
     }
     CPLFree( panSRID );
     CPLFree( papoSRS );
+    CSLDestroy( papszOpenOptions );
 }
 
 /************************************************************************/
@@ -819,7 +821,7 @@ int OGRSQLiteDataSource::Create( const char * pszNameIn, char **papszOptions )
             return FALSE;
     }
 
-    return Open(m_pszFilename, TRUE);
+    return Open(m_pszFilename, TRUE, NULL);
 }
 
 /************************************************************************/
@@ -1047,14 +1049,15 @@ void OGRSQLiteDataSource::ReloadLayers()
     papoLayers = NULL;
     nLayers = 0;
 
-    Open(m_pszFilename, bUpdate);
+    Open(m_pszFilename, bUpdate, NULL);
 }
 
 /************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
-int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn )
+int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn,
+                               char** papszOpenOptionsIn)
 
 {
     CPLAssert( nLayers == 0 );
@@ -1069,13 +1072,23 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn )
     {
         nFileTimestamp = sStat.st_mtime;
     }
-
-    int bListAllTables = CSLTestBoolean(CPLGetConfigOption("SQLITE_LIST_ALL_TABLES", "NO"));
+    
+    if( papszOpenOptionsIn )
+    {
+        CSLDestroy(papszOpenOptions);
+        papszOpenOptions = CSLDuplicate(papszOpenOptionsIn);
+    }
+    
+    int bListAllTables = CSLTestBoolean(CSLFetchNameValueDef(
+        papszOpenOptions, "LIST_ALL_TABLES",
+        CPLGetConfigOption("SQLITE_LIST_ALL_TABLES", "NO")));
 
     // Don't list by default: there might be some security implications
     // if a user is provided with a file and doesn't know that there are
     // virtual OGR tables in it.
-    int bListVirtualOGRLayers = CSLTestBoolean(CPLGetConfigOption("OGR_SQLITE_LIST_VIRTUAL_OGR", "NO"));
+    int bListVirtualOGRLayers = CSLTestBoolean(CSLFetchNameValueDef(
+        papszOpenOptions, "LIST_VIRTUAL_OGR",
+        CPLGetConfigOption("OGR_SQLITE_LIST_VIRTUAL_OGR", "NO")));
 
 /* -------------------------------------------------------------------- */
 /*      Try to open the sqlite database properly now.                   */

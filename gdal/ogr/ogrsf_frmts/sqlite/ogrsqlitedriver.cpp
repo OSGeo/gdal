@@ -146,7 +146,8 @@ static GDALDataset *OGRSQLiteDriverOpen( GDALOpenInfo* poOpenInfo )
 
     poDS = new OGRSQLiteDataSource();
 
-    if( !poDS->Open( poOpenInfo->pszFilename, poOpenInfo->eAccess == GA_Update ) )
+    if( !poDS->Open( poOpenInfo->pszFilename, poOpenInfo->eAccess == GA_Update,
+                     poOpenInfo->papszOpenOptions ) )
     {
         delete poDS;
         return NULL;
@@ -230,6 +231,12 @@ void RegisterOGRSQLite()
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
                                    "drv_sqlite.html" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "sqlite db" );
+
+        poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
+"<OpenOptionList>"
+"  <Option name='LIST_ALL_TABLES' type='boolean' description='Whether all tables, including non-spatial ones, should be listed' default='NO'/>"
+"  <Option name='LIST_VIRTUAL_OGR' type='boolean' description='Whether VirtualOGR virtual tables should be listed. Should only be enabled on trusted datasources to avoid potential safety issues' default='NO'/>"
+"</OpenOptionList>");
 
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"
