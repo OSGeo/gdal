@@ -40,7 +40,10 @@ automatically from the file extension. If it's neither JP2 nor J2K, J2K codec is
 <li><p><b>SOP=YES/NO</b> : YES means generate SOP marker segments. Defaults to NO.</p></li>
 <li><p><b>EPH=YES/NO</b> : YES means generate EPH marker segments. Defaults to NO.</p></li>
 <li><p><b>YCBCR420=YES/NO</b> : (GDAL &gt;= 1.11) YES if RGB must be resampled to YCbCr 4:2:0. Defaults to NO.</p></li>
-<li><p><b>YCC=YES/NO</b> : (GDAL &gt;= 2.0) YES if RGB must be transformed to YCC color space (internal transform, without visual degration). Defaults to YES.</p></li>
+<li><p><b>YCC=YES/NO</b> : (GDAL &gt;= 2.0) YES if RGB must be transformed to YCC color space ("MCT transform", i.e. internal transform, without visual degration). Defaults to YES.</p></li>
+<li><p><b>NBITS=value</b> : (GDAL &gt;= 2.0) Bits (precision) for sub-byte files (1-7), sub-uint16 (9-15), sub-uint32 (17-31).</p></li>
+<li><p><b>1BIT_ALPHA=YES/NO</b>: (GDAL &gt;= 2.0) Whether to encode the alpha channel as a 1-bit channel'. Defaults to NO.</p></li>
+<li><p><b>ALPHA=YES/NO</b>: (GDAL &gt;= 2.0) Whether to force encoding last channel as alpha channel. Defaults to NO.</p></li>
 </ul>
 
 <h3>Lossless compression</h3>
