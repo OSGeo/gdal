@@ -1510,7 +1510,8 @@ int GDALValidateOptions( const char* pszOptionList,
                       EQUAL(psChildSubNode->pszValue, "type") ||
                       EQUAL(psChildSubNode->pszValue, "min") ||
                       EQUAL(psChildSubNode->pszValue, "max") ||
-                      EQUAL(psChildSubNode->pszValue, "default")) )
+                      EQUAL(psChildSubNode->pszValue, "default") ||
+                      EQUAL(psChildSubNode->pszValue, "maxsize")) )
                 {
                     /* Driver error */
                     CPLError(CE_Warning, CPLE_NotSupported,
