@@ -42,7 +42,7 @@ CPLLock* psLock = NULL;
 
 void Usage()
 {
-    printf("Usage: testblockcache [-threads X] [-loops X] [-strategy random|line|block]\n");
+    printf("Usage: testblockcache [-threads X] [-loops X] [-max_requests X] [-strategy random|line|block]\n");
     printf("                      [-migrate] [ filename |\n");
     printf("                       [[-xsize val] [-ysize val] [-bands val] [-co key=value]*\n");
     printf("                       [[-memdriver] | [-ondisk]] [-check]] ]\n");
@@ -220,6 +220,7 @@ static void ThreadFuncWithMigration(void* _unused)
 }
 
 static int CreateRandomStrategyRequests(GDALDataset* poDS,
+                                        int nMaxRequests,
                                         Request*& psRequestList,
                                         Request*& psRequestLast)
 {
@@ -234,6 +235,8 @@ static int CreateRandomStrategyRequests(GDALDataset* poDS,
     int nLocalLoops = nLoops * nAverageIterationsToReadWholeFile;
     for(int iLoop=0;iLoop<nLocalLoops;iLoop++)
     {
+        if( nMaxRequests > 0 && iLoop == nMaxRequests )
+            break;
         int nXOff = (int)((GIntBig)myrand_r(&seed) * (nXSize-1) / MYRAND_MAX);
         int nYOff = (int)((GIntBig)myrand_r(&seed) * (nYSize-1) / MYRAND_MAX);
         int nXWin = 1+(int)((GIntBig)myrand_r(&seed) * nMaxXWin / MYRAND_MAX);
@@ -248,23 +251,33 @@ static int CreateRandomStrategyRequests(GDALDataset* poDS,
 }
 
 static int CreateLineStrategyRequests(GDALDataset* poDS,
+                                      int nMaxRequests,
                                       Request*& psRequestList,
                                       Request*& psRequestLast)
 {
     int nXSize = poDS->GetRasterXSize();
     int nYSize = poDS->GetRasterYSize();
     int nQueriedBands = MIN(4, poDS->GetRasterCount());
-    for(int iLoop=0;iLoop<nLoops;iLoop++)
+    int bStop = FALSE;
+    int nRequests = 0;
+    for(int iLoop=0;!bStop && iLoop<nLoops;iLoop++)
     {
         for(int nYOff=0;nYOff<nYSize;nYOff++)
         {
+            if( nMaxRequests > 0 && nRequests == nMaxRequests )
+            {
+                bStop = TRUE;
+                break;
+            }
             AddRequest(psRequestList, psRequestLast, 0, nYOff, nXSize, 1, nQueriedBands);
+            nRequests ++;
         }
     }
     return nQueriedBands * nXSize;
 }
 
 static int CreateBlockStrategyRequests(GDALDataset* poDS,
+                                       int nMaxRequests,
                                        Request*& psRequestList,
                                        Request*& psRequestLast)
 {
@@ -273,15 +286,23 @@ static int CreateBlockStrategyRequests(GDALDataset* poDS,
     int nMaxXWin = MIN(1000, nXSize/10+1);
     int nMaxYWin = MIN(1000, nYSize/10+1);
     int nQueriedBands = MIN(4, poDS->GetRasterCount());
-    for(int iLoop=0;iLoop<nLoops;iLoop++)
+    int bStop = FALSE;
+    int nRequests = 0;
+    for(int iLoop=0;!bStop && iLoop<nLoops;iLoop++)
     {
-        for(int nYOff=0;nYOff<nYSize;nYOff+=nMaxYWin)
+        for(int nYOff=0;!bStop && nYOff<nYSize;nYOff+=nMaxYWin)
         {
             int nReqYSize = (nYOff + nMaxYWin > nYSize) ? nYSize - nYOff : nMaxYWin;
             for(int nXOff=0;nXOff<nXSize;nXOff+=nMaxXWin)
             {
+                if( nMaxRequests > 0 && nRequests == nMaxRequests )
+                {
+                    bStop = TRUE;
+                    break;
+                }
                 int nReqXSize = (nXOff + nMaxXWin > nXSize) ? nXSize - nXOff : nMaxXWin;
                 AddRequest(psRequestList, psRequestLast, nXOff, nYOff, nReqXSize, nReqYSize, nQueriedBands);
+                nRequests ++;
             }
         }
     }
@@ -304,6 +325,7 @@ int main(int argc, char* argv[])
     int bMemDriver = FALSE;
     GDALDataset* poMEMDS = NULL;
     int bMigrate = FALSE;
+    int nMaxRequests = -1;
 
     argc = GDALGeneralCmdLineProcessor( argc, &argv, 0 );
 
@@ -322,6 +344,11 @@ int main(int argc, char* argv[])
             nLoops = atoi(argv[i]);
             if( nLoops <= 0 )
                 nLoops = INT_MAX;
+        }
+        else if( EQUAL(argv[i], "-max_requests") && i + 1 < argc)
+        {
+            i ++;
+            nMaxRequests = atoi(argv[i]);
         }
         else if( EQUAL(argv[i], "-strategy") && i + 1 < argc)
         {
@@ -457,13 +484,13 @@ int main(int argc, char* argv[])
             int nBufferSize;
             if( eStrategy == STRATEGY_RANDOM )
                 nBufferSize = CreateRandomStrategyRequests(
-                        poDS, psGlobalRequestList, psGlobalRequestLast);
+                        poDS, nMaxRequests, psGlobalRequestList, psGlobalRequestLast);
             else if( eStrategy == STRATEGY_LINE )
                 nBufferSize = CreateLineStrategyRequests(
-                        poDS, psGlobalRequestList, psGlobalRequestLast);
+                        poDS, nMaxRequests, psGlobalRequestList, psGlobalRequestLast);
             else
                 nBufferSize = CreateBlockStrategyRequests(
-                        poDS, psGlobalRequestList, psGlobalRequestLast);
+                        poDS, nMaxRequests, psGlobalRequestList, psGlobalRequestLast);
             psResource->pBuffer = CPLMalloc(nBufferSize);
             PutResourceAtEnd(psResource);
         }
@@ -475,13 +502,13 @@ int main(int argc, char* argv[])
             Request* psRequestLast = NULL;
             if( eStrategy == STRATEGY_RANDOM )
                 sThreadDescription.nBufferSize = CreateRandomStrategyRequests(
-                        poDS, sThreadDescription.psRequestList, psRequestLast);
+                        poDS, nMaxRequests, sThreadDescription.psRequestList, psRequestLast);
             else if( eStrategy == STRATEGY_LINE )
                 sThreadDescription.nBufferSize = CreateLineStrategyRequests(
-                        poDS, sThreadDescription.psRequestList, psRequestLast);
+                        poDS, nMaxRequests, sThreadDescription.psRequestList, psRequestLast);
             else
                 sThreadDescription.nBufferSize = CreateBlockStrategyRequests(
-                        poDS, sThreadDescription.psRequestList, psRequestLast);
+                        poDS, nMaxRequests, sThreadDescription.psRequestList, psRequestLast);
             asThreadDescription.push_back(sThreadDescription);
         }
     }
