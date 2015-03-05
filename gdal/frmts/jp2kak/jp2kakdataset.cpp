@@ -1973,9 +1973,10 @@ JP2KAKCreateCopy_WriteTile( GDALDataset *poSrcDS, kdu_tile &oTile,
 
     CPLAssert( !oTile.get_ycc() );
 
-    for( iLine = 0; iLine < nYSize; iLine += TILE_CHUNK_SIZE )
+    int bRet = TRUE;
+    for( iLine = 0; iLine < nYSize && bRet; iLine += TILE_CHUNK_SIZE )
     {
-        for (c=0; c < num_components; c++)
+        for (c=0; c < num_components && bRet; c++)
         {
             GDALRasterBand *poBand = poSrcDS->GetRasterBand( c+1 );
             int iSubline = 0;
@@ -1988,7 +1989,10 @@ JP2KAKCreateCopy_WriteTile( GDALDataset *poSrcDS, kdu_tile &oTile,
                                       nXOff, nYOff+iSubline, nXSize, 1, 
                                       (void *) pabyBuffer, nXSize, 1, eType,
                                       0, 0, NULL ) == CE_Failure )
-                    return FALSE;
+                {
+                    bRet = FALSE;
+                    break;
+                }
 
                 if( bReversible && eType == GDT_Byte )
                 {
@@ -2068,19 +2072,28 @@ JP2KAKCreateCopy_WriteTile( GDALDataset *poSrcDS, kdu_tile &oTile,
                                   / (double) (num_components * nYSize),
                                   NULL, pProgressData ) )
                 {
-                    return FALSE;
+                    bRet = FALSE;
+                    break;
                 }
             }
         }
+        if( !bRet )
+            break;
 
         if( oCodeStream.ready_for_flush() && bFlushEnabled )
         {
             CPLDebug( "JP2KAK", 
                       "Calling oCodeStream.flush() at line %d",
                       MIN(nYSize,iLine+TILE_CHUNK_SIZE) );
-            
-            oCodeStream.flush( layer_bytes, layer_count, NULL,
-                               true, bComseg );
+            try
+            {
+                oCodeStream.flush( layer_bytes, layer_count, NULL,
+                                   true, bComseg );
+            }
+            catch(...)
+            {
+                bRet = FALSE;
+            }
         }
         else if( bFlushEnabled )
             CPLDebug( "JP2KAK", 
@@ -2102,7 +2115,7 @@ JP2KAKCreateCopy_WriteTile( GDALDataset *poSrcDS, kdu_tile &oTile,
     if( poROIImage != NULL )
         delete poROIImage;
 
-    return TRUE;
+    return bRet;
 }
 
 /************************************************************************/
