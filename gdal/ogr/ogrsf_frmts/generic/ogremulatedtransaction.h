@@ -40,6 +40,7 @@
 class CPL_DLL IOGRTransactionBehaviour
 {
     public:
+        virtual ~IOGRTransactionBehaviour();
 
         /** Start a transaction.
         *
