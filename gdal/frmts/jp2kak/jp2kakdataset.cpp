@@ -257,7 +257,7 @@ public: // Member classes
 
         if( end_of_message && m_eErrClass == CE_Failure )
         {
-            throw new JP2KAKException();
+            throw JP2KAKException();
         }
     }
 
@@ -2220,6 +2220,7 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         CPLError( CE_Failure, CPLE_IllegalArg,
                   "QUALITY=%s is not a legal value in the range 0.01-100.",
                   CSLFetchNameValue(papszOptions,"QUALITY") );
+        CPLFree(layer_bytes);
         return NULL;
     }
 
@@ -2422,6 +2423,7 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
         poROIImage = new kdu_roi_rect(oCodeStream,region);
     }
+    CSLDestroy(papszROIDefs);
 
 /* -------------------------------------------------------------------- */
 /*      Set some particular parameters.                                 */
@@ -2469,7 +2471,24 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             CPLString osOpt;
 
             osOpt.Printf( "%s=%s", apszParms[iParm], pszValue );
-            oCodeStream.access_siz()->parse_string( osOpt );
+            try
+            {
+                oCodeStream.access_siz()->parse_string( osOpt );
+            }
+            catch( ... )
+            {
+                CPLFree(layer_bytes);
+                if( bIsJP2 )
+                {
+                    jp2_out.close();
+                    family.close();
+                }
+                else
+                {
+                    poOutputFile->close();
+                }
+                return NULL;
+            }
 
             CPLDebug( "JP2KAK", "parse_string(%s)", osOpt.c_str() );
         }
