@@ -206,12 +206,16 @@ public:
 /* FIXME : all bindings should avoid using the #else case */
 /* as the deallocator for the char* is delete[] where as */
 /* OSRExportToPrettyWkt uses CPL/VSIMalloc() */
-#if defined(SWIGCSHARP)||defined(SWIGPYTHON)||defined(SWIGJAVA)||defined(SWIGPERL)
+#if defined(SWIGCSHARP)||defined(SWIGPYTHON)||defined(SWIGJAVA)
   retStringAndCPLFree *__str__() {
     char *buf = 0;
     OSRExportToPrettyWkt( self, &buf, 0 );
     return buf;
   }
+/* Adding __str__ to Perl bindings makes Swig to use overloading,
+   which is undesirable since it is not used elsewhere in these
+   bindings, and causes side effects. */
+#elif defined(SWIGPERL)
 #else
 %newobject __str__;
   char *__str__() {
