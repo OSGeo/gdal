@@ -52,8 +52,8 @@ coordinates (default PIXEL).
 
 <dt> <b>-maxdist</b> <i>n</i>:</dt><dd>
 The maximum distance to be generated. The nodata value will be used for pixels
-beyond this distance. If a nodata value is not provided, the input band will be
-queried for its nodata value. If the input band does not have a nodata value,
+beyond this distance. If a nodata value is not provided, the output band will be
+queried for its nodata value. If the output band does not have a nodata value,
 then the value 65535 will be used. Distance is interpreted in pixels unless
 -distunits GEO is specified.
 </dd>
