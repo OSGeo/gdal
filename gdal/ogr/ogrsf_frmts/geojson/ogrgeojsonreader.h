@@ -31,6 +31,7 @@
 #define OGR_GEOJSONREADER_H_INCLUDED
 
 #include <ogr_core.h>
+#include "ogrsf_frmts.h"
 #include <json.h> // JSON-C
 
 /************************************************************************/
@@ -128,6 +129,16 @@ private:
     OGRFeature* ReadFeature( OGRGeoJSONLayer* poLayer, json_object* poObj );
     void ReadFeatureCollection( OGRGeoJSONLayer* poLayer, json_object* poObj );
 };
+
+void OGRGeoJSONReaderSetField(OGRLayer* poLayer,
+                              OGRFeature* poFeature,
+                              int nField,
+                              json_object* poVal);
+void OGRGeoJSONReaderAddNewField(OGRFeatureDefn* poDefn,
+                                 const char* pszKey,
+                                 json_object* poVal);
+void OGRGeoJSONReaderUpdateField(OGRFieldDefn* poFDefn,
+                                 json_object* poVal);
 
 /************************************************************************/
 /*                 GeoJSON Parsing Utilities                            */

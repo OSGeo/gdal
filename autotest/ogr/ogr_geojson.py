@@ -1134,7 +1134,7 @@ def ogr_geojson_25():
         ( None, None, 'LINESTRING EMPTY'),
         ( None, None, 'LINESTRING EMPTY'),
         ( None, None, 'LINESTRING EMPTY'),
-        ( None, None, 'LINESTRING EMPTY'),
+        ( None, '0', 'LINESTRING EMPTY'),
         ( None, 'foo', 'LINESTRING EMPTY'),
         ( '1', None, 'LINESTRING (100 1000,110 1000,110 1100)'),
         ( '2', None, 'LINESTRING (110 1100,110 1000,100 1000)'),
