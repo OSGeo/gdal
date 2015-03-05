@@ -452,6 +452,93 @@ bool OGRGeoJSONReader::GenerateLayerDefn( OGRGeoJSONLayer* poLayer, json_object*
 }
 
 /************************************************************************/
+/*                     OGRGeoJSONReaderAddNewField()                    */
+/************************************************************************/
+
+void OGRGeoJSONReaderAddNewField(OGRFeatureDefn* poDefn,
+                                 const char* pszKey,
+                                 json_object* poVal)
+{
+    OGRFieldSubType eSubType;
+    OGRFieldDefn fldDefn( pszKey,
+                            GeoJSONPropertyToFieldType( poVal, eSubType ) );
+    fldDefn.SetSubType(eSubType);
+    if( eSubType == OFSTBoolean )
+        fldDefn.SetWidth(1);
+    if( fldDefn.GetType() == OFTString )
+    {
+        fldDefn.SetType(GeoJSONStringPropertyToFieldType( poVal ));
+    }
+    poDefn->AddFieldDefn( &fldDefn );
+}
+
+/************************************************************************/
+/*                     OGRGeoJSONReaderUpdateField()                    */
+/************************************************************************/
+void OGRGeoJSONReaderUpdateField(OGRFieldDefn* poFDefn,
+                                 json_object* poVal)
+{
+    OGRFieldType eType = poFDefn->GetType();
+    if( eType == OFTInteger )
+    {
+        OGRFieldSubType eSubType;
+        OGRFieldType eNewType = GeoJSONPropertyToFieldType( poVal, eSubType );
+        if( eNewType == OFTInteger &&
+            poFDefn->GetSubType() == OFSTBoolean && eSubType != OFSTBoolean )
+        {
+            poFDefn->SetSubType(OFSTNone);
+        }
+        else if( eNewType == OFTInteger64 || eNewType == OFTReal || eNewType == OFTString )
+        {
+            poFDefn->SetType(eNewType);
+            poFDefn->SetSubType(OFSTNone);
+        }
+    }
+    else if( eType == OFTInteger64 )
+    {
+        OGRFieldSubType eSubType;
+        OGRFieldType eNewType = GeoJSONPropertyToFieldType( poVal, eSubType );
+        if( eNewType == OFTReal || eNewType == OFTString )
+        {
+            poFDefn->SetType(eNewType);
+            poFDefn->SetSubType(OFSTNone);
+        }
+    }
+    else if( eType == OFTIntegerList || eType == OFTInteger64List )
+    {
+        OGRFieldSubType eSubType;
+        OGRFieldType eNewType = GeoJSONPropertyToFieldType( poVal, eSubType );
+        if( eNewType == OFTInteger64List || eNewType == OFTRealList || eNewType == OFTStringList )
+            poFDefn->SetType(eNewType);
+    }
+    else if( eType == OFTRealList )
+    {
+        OGRFieldSubType eSubType;
+        OGRFieldType eNewType = GeoJSONPropertyToFieldType( poVal, eSubType );
+        if( eNewType == OFTStringList )
+            poFDefn->SetType(eNewType);
+    }
+    else if( eType == OFTDate || eType == OFTTime || eType == OFTDateTime )
+    {
+        OGRFieldSubType eSubType;
+        OGRFieldType eNewType = GeoJSONPropertyToFieldType( poVal, eSubType );
+        if( eNewType == OFTString )
+            eNewType = GeoJSONStringPropertyToFieldType( poVal );
+        if( eType != eNewType )
+        {
+            if( eType == OFTDate && eNewType == OFTDateTime )
+            {
+                poFDefn->SetType(OFTDateTime);
+            }
+            else if( !(eType == OFTDateTime && eNewType == OFTDate) )
+            {
+                poFDefn->SetType(OFTString);
+            }
+        }
+    }
+}
+
+/************************************************************************/
 /*                        GenerateFeatureDefn()                         */
 /************************************************************************/
 bool OGRGeoJSONReader::GenerateFeatureDefn( OGRGeoJSONLayer* poLayer, json_object* poObj )
@@ -512,79 +599,12 @@ bool OGRGeoJSONReader::GenerateFeatureDefn( OGRGeoJSONLayer* poLayer, json_objec
                     }
                 }
 
-                OGRFieldSubType eSubType;
-                OGRFieldDefn fldDefn( it.key,
-                                      GeoJSONPropertyToFieldType( it.val, eSubType ) );
-                fldDefn.SetSubType(eSubType);
-                if( eSubType == OFSTBoolean )
-                    fldDefn.SetWidth(1);
-                if( fldDefn.GetType() == OFTString )
-                {
-                    fldDefn.SetType(GeoJSONStringPropertyToFieldType( it.val ));
-                }
-                poDefn->AddFieldDefn( &fldDefn );
+                OGRGeoJSONReaderAddNewField(poDefn, it.key, it.val);
             }
             else
             {
                 OGRFieldDefn* poFDefn = poDefn->GetFieldDefn(nFldIndex);
-                OGRFieldType eType = poFDefn->GetType();
-                if( eType == OFTInteger )
-                {
-                    OGRFieldSubType eSubType;
-                    OGRFieldType eNewType = GeoJSONPropertyToFieldType( it.val, eSubType );
-                    if( eNewType == OFTInteger &&
-                        poFDefn->GetSubType() == OFSTBoolean && eSubType != OFSTBoolean )
-                    {
-                        poFDefn->SetSubType(OFSTNone);
-                    }
-                    else if( eNewType == OFTInteger64 || eNewType == OFTReal || eNewType == OFTString )
-                    {
-                        poFDefn->SetType(eNewType);
-                        poFDefn->SetSubType(OFSTNone);
-                    }
-                }
-                else if( eType == OFTInteger64 )
-                {
-                    OGRFieldSubType eSubType;
-                    OGRFieldType eNewType = GeoJSONPropertyToFieldType( it.val, eSubType );
-                    if( eNewType == OFTReal || eNewType == OFTString )
-                    {
-                        poFDefn->SetType(eNewType);
-                        poFDefn->SetSubType(OFSTNone);
-                    }
-                }
-                else if( eType == OFTIntegerList || eType == OFTInteger64List )
-                {
-                    OGRFieldSubType eSubType;
-                    OGRFieldType eNewType = GeoJSONPropertyToFieldType( it.val, eSubType );
-                    if( eNewType == OFTInteger64List || eNewType == OFTRealList || eNewType == OFTStringList )
-                        poFDefn->SetType(eNewType);
-                }
-                else if( eType == OFTRealList )
-                {
-                    OGRFieldSubType eSubType;
-                    OGRFieldType eNewType = GeoJSONPropertyToFieldType( it.val, eSubType );
-                    if( eNewType == OFTStringList )
-                        poFDefn->SetType(eNewType);
-                }
-                else if( eType == OFTDate || eType == OFTTime || eType == OFTDateTime )
-                {
-                    OGRFieldSubType eSubType;
-                    OGRFieldType eNewType = GeoJSONPropertyToFieldType( it.val, eSubType );
-                    if( eNewType == OFTString )
-                        eNewType = GeoJSONStringPropertyToFieldType( it.val );
-                    if( eType != eNewType )
-                    {
-                        if( eType == OFTDate && eNewType == OFTDateTime )
-                        {
-                            poFDefn->SetType(OFTDateTime);
-                        }
-                        else if( !(eType == OFTDateTime && eNewType == OFTDate) )
-                        {
-                            poFDefn->SetType(OFTString);
-                        }
-                    }
-                }
+                OGRGeoJSONReaderUpdateField(poFDefn, it.val);
             }
         }
 
@@ -696,6 +716,114 @@ OGRGeometry* OGRGeoJSONReader::ReadGeometry( json_object* poObj )
 }
 
 /************************************************************************/
+/*                   OGRGeoJSONReaderSetField()                         */
+/************************************************************************/
+
+void OGRGeoJSONReaderSetField(OGRLayer* poLayer,
+                              OGRFeature* poFeature,
+                              int nField,
+                              json_object* poVal)
+{
+    OGRFieldDefn* poFieldDefn = poFeature->GetFieldDefnRef(nField);
+    CPLAssert( NULL != poFieldDefn );
+    OGRFieldType eType = poFieldDefn->GetType();
+
+    if( poVal == NULL)
+    {
+        /* nothing to do */
+    }
+    else if( OFTInteger == eType )
+    {
+        poFeature->SetField( nField, json_object_get_int(poVal) );
+                        
+        /* Check if FID available and set correct value. */
+        if( EQUAL( poFieldDefn->GetNameRef(), poLayer->GetFIDColumn() ) )
+            poFeature->SetFID( json_object_get_int(poVal) );
+    }
+    else if( OFTInteger64 == eType )
+    {
+        poFeature->SetField( nField, (GIntBig)json_object_get_int64(poVal) );
+        
+        /* Check if FID available and set correct value. */
+        if( EQUAL( poFieldDefn->GetNameRef(), poLayer->GetFIDColumn() ) )
+            poFeature->SetFID( (GIntBig)json_object_get_int64(poVal) );
+    }
+    else if( OFTReal == eType )
+    {
+        poFeature->SetField( nField, CPLAtof(json_object_get_string(poVal)) );
+    }
+    else if( OFTIntegerList == eType )
+    {
+        if ( json_object_get_type(poVal) == json_type_array )
+        {
+            int nLength = json_object_array_length(poVal);
+            int* panVal = (int*)CPLMalloc(sizeof(int) * nLength);
+            for(int i=0;i<nLength;i++)
+            {
+                json_object* poRow = json_object_array_get_idx(poVal, i);
+                panVal[i] = json_object_get_int(poRow);
+            }
+            poFeature->SetField( nField, nLength, panVal );
+            CPLFree(panVal);
+        }
+    }
+    else if( OFTInteger64List == eType )
+    {
+        if ( json_object_get_type(poVal) == json_type_array )
+        {
+            int nLength = json_object_array_length(poVal);
+            GIntBig* panVal = (GIntBig*)CPLMalloc(sizeof(GIntBig) * nLength);
+            for(int i=0;i<nLength;i++)
+            {
+                json_object* poRow = json_object_array_get_idx(poVal, i);
+                panVal[i] = (GIntBig)json_object_get_int64(poRow);
+            }
+            poFeature->SetField( nField, nLength, panVal );
+            CPLFree(panVal);
+        }
+    }
+    else if( OFTRealList == eType )
+    {
+        if ( json_object_get_type(poVal) == json_type_array )
+        {
+            int nLength = json_object_array_length(poVal);
+            double* padfVal = (double*)CPLMalloc(sizeof(double) * nLength);
+            for(int i=0;i<nLength;i++)
+            {
+                json_object* poRow = json_object_array_get_idx(poVal, i);
+                padfVal[i] = CPLAtof(json_object_get_string(poRow));
+            }
+            poFeature->SetField( nField, nLength, padfVal );
+            CPLFree(padfVal);
+        }
+    }
+    else if( OFTStringList == eType )
+    {
+        if ( json_object_get_type(poVal) == json_type_array )
+        {
+            int nLength = json_object_array_length(poVal);
+            char** papszVal = (char**)CPLMalloc(sizeof(char*) * (nLength+1));
+            int i;
+            for(i=0;i<nLength;i++)
+            {
+                json_object* poRow = json_object_array_get_idx(poVal, i);
+                const char* pszVal = json_object_get_string(poRow);
+                if (pszVal == NULL)
+                    break;
+                papszVal[i] = CPLStrdup(pszVal);
+            }
+            papszVal[i] = NULL;
+            poFeature->SetField( nField, papszVal );
+            CSLDestroy(papszVal);
+        }
+    }
+    else
+    {
+        poFeature->SetField( nField, json_object_get_string(poVal) );
+    }
+}
+
+/************************************************************************/
 /*                           ReadFeature()                              */
 /************************************************************************/
 
@@ -735,7 +863,6 @@ OGRFeature* OGRGeoJSONReader::ReadFeature( OGRGeoJSONLayer* poLayer, json_object
         }
 
         int nField = -1;
-        OGRFieldDefn* poFieldDefn = NULL;
         json_object_iter it;
         it.key = NULL;
         it.val = NULL;
@@ -743,103 +870,7 @@ OGRFeature* OGRGeoJSONReader::ReadFeature( OGRGeoJSONLayer* poLayer, json_object
         json_object_object_foreachC( poObjProps, it )
         {
             nField = poFeature->GetFieldIndex(it.key);
-            poFieldDefn = poFeature->GetFieldDefnRef(nField);
-            CPLAssert( NULL != poFieldDefn );
-            OGRFieldType eType = poFieldDefn->GetType();
-
-            if( it.val == NULL)
-            {
-                /* nothing to do */
-            }
-            else if( OFTInteger == eType )
-            {
-                poFeature->SetField( nField, json_object_get_int(it.val) );
-				
-                /* Check if FID available and set correct value. */
-                if( EQUAL( it.key, poLayer->GetFIDColumn() ) )
-                    poFeature->SetFID( json_object_get_int(it.val) );
-            }
-            else if( OFTInteger64 == eType )
-            {
-                poFeature->SetField( nField, (GIntBig)json_object_get_int64(it.val) );
-                
-                /* Check if FID available and set correct value. */
-                if( EQUAL( it.key, poLayer->GetFIDColumn() ) )
-                    poFeature->SetFID( (GIntBig)json_object_get_int64(it.val) );
-            }
-            else if( OFTReal == eType )
-            {
-                poFeature->SetField( nField, CPLAtof(json_object_get_string(it.val)) );
-            }
-            else if( OFTIntegerList == eType )
-            {
-                if ( json_object_get_type(it.val) == json_type_array )
-                {
-                    int nLength = json_object_array_length(it.val);
-                    int* panVal = (int*)CPLMalloc(sizeof(int) * nLength);
-                    for(int i=0;i<nLength;i++)
-                    {
-                        json_object* poRow = json_object_array_get_idx(it.val, i);
-                        panVal[i] = json_object_get_int(poRow);
-                    }
-                    poFeature->SetField( nField, nLength, panVal );
-                    CPLFree(panVal);
-                }
-            }
-            else if( OFTInteger64List == eType )
-            {
-                if ( json_object_get_type(it.val) == json_type_array )
-                {
-                    int nLength = json_object_array_length(it.val);
-                    GIntBig* panVal = (GIntBig*)CPLMalloc(sizeof(GIntBig) * nLength);
-                    for(int i=0;i<nLength;i++)
-                    {
-                        json_object* poRow = json_object_array_get_idx(it.val, i);
-                        panVal[i] = (GIntBig)json_object_get_int64(poRow);
-                    }
-                    poFeature->SetField( nField, nLength, panVal );
-                    CPLFree(panVal);
-                }
-            }
-            else if( OFTRealList == eType )
-            {
-                if ( json_object_get_type(it.val) == json_type_array )
-                {
-                    int nLength = json_object_array_length(it.val);
-                    double* padfVal = (double*)CPLMalloc(sizeof(double) * nLength);
-                    for(int i=0;i<nLength;i++)
-                    {
-                        json_object* poRow = json_object_array_get_idx(it.val, i);
-                        padfVal[i] = CPLAtof(json_object_get_string(poRow));
-                    }
-                    poFeature->SetField( nField, nLength, padfVal );
-                    CPLFree(padfVal);
-                }
-            }
-            else if( OFTStringList == eType )
-            {
-                if ( json_object_get_type(it.val) == json_type_array )
-                {
-                    int nLength = json_object_array_length(it.val);
-                    char** papszVal = (char**)CPLMalloc(sizeof(char*) * (nLength+1));
-                    int i;
-                    for(i=0;i<nLength;i++)
-                    {
-                        json_object* poRow = json_object_array_get_idx(it.val, i);
-                        const char* pszVal = json_object_get_string(poRow);
-                        if (pszVal == NULL)
-                            break;
-                        papszVal[i] = CPLStrdup(pszVal);
-                    }
-                    papszVal[i] = NULL;
-                    poFeature->SetField( nField, papszVal );
-                    CSLDestroy(papszVal);
-                }
-            }
-            else
-            {
-                poFeature->SetField( nField, json_object_get_string(it.val) );
-            }
+            OGRGeoJSONReaderSetField(poLayer, poFeature, nField, it.val);
         }
     }
 

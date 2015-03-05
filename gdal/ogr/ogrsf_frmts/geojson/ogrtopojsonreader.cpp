@@ -307,11 +307,15 @@ static void ParseObject(const char* pszId,
     json_object* poProperties = OGRGeoJSONFindMemberByName(poObj, "properties");
     if( poProperties != NULL && json_type_object == json_object_get_type(poProperties) )
     {
-        json_object* poName = OGRGeoJSONFindMemberByName(poProperties, "name");
-        if( poName != NULL && json_type_string == json_object_get_type(poName) )
+        int nField = -1;
+        json_object_iter it;
+        it.key = NULL;
+        it.val = NULL;
+        it.entry = NULL;
+        json_object_object_foreachC( poProperties, it )
         {
-            const char* pszName = json_object_get_string(poName);
-            poFeature->SetField("name", pszName);
+            nField = poFeature->GetFieldIndex(it.key);
+            OGRGeoJSONReaderSetField(poLayer, poFeature, nField, it.val);
         }
     }
 
@@ -376,23 +380,58 @@ static void ParseObject(const char* pszId,
     delete poFeature;
 }
 
+
+/************************************************************************/
+/*                        EstablishLayerDefn()                          */
+/************************************************************************/
+
+static void EstablishLayerDefn(OGRFeatureDefn* poDefn,
+                               json_object* poObj)
+{
+    json_object* poObjProps = OGRGeoJSONFindMemberByName( poObj, "properties" );
+    if( NULL != poObjProps &&
+        json_object_get_type(poObjProps) == json_type_object )
+    {
+        json_object_iter it;
+        it.key = NULL;
+        it.val = NULL;
+        it.entry = NULL;
+        json_object_object_foreachC( poObjProps, it )
+        {
+            int nFldIndex = poDefn->GetFieldIndex( it.key );
+            if( -1 == nFldIndex )
+            {
+                OGRGeoJSONReaderAddNewField(poDefn, it.key, it.val);
+            }
+            else
+            {
+                OGRFieldDefn* poFDefn = poDefn->GetFieldDefn(nFldIndex);
+                OGRGeoJSONReaderUpdateField(poFDefn, it.val);
+            }
+        }
+    }
+}
+
 /************************************************************************/
 /*                        ParseObjectMain()                             */
 /************************************************************************/
 
-static void ParseObjectMain(const char* pszId, json_object* poObj,
+static int  ParseObjectMain(const char* pszId, json_object* poObj,
                             OGRGeoJSONDataSource* poDS,
                             OGRGeoJSONLayer **ppoMainLayer,
                             json_object* poArcs,
-                            ScalingParams* psParams)
+                            ScalingParams* psParams,
+                            int nPassNumber)
 {
+    int bNeedSecondPass = FALSE;
+
     if( poObj != NULL && json_type_object == json_object_get_type( poObj ) )
     {
         json_object* poType = OGRGeoJSONFindMemberByName(poObj, "type");
         if( poType != NULL && json_type_string == json_object_get_type( poType ) )
         {
             const char* pszType = json_object_get_string(poType);
-            if( strcmp(pszType, "GeometryCollection") == 0 )
+            if( nPassNumber == 1 && strcmp(pszType, "GeometryCollection") == 0 )
             {
                 json_object* poGeometries = OGRGeoJSONFindMemberByName(poObj, "geometries");
                 if( poGeometries != NULL &&
@@ -412,16 +451,26 @@ static void ParseObjectMain(const char* pszId, json_object* poObj,
                     OGRGeoJSONLayer* poLayer = new OGRGeoJSONLayer(
                             pszId ? pszId : "TopoJSON", NULL,
                             wkbUnknown, poDS );
+                    OGRFeatureDefn* poDefn = poLayer->GetLayerDefn();
                     {
                         OGRFieldDefn fldDefn( "id", OFTString );
-                        poLayer->GetLayerDefn()->AddFieldDefn( &fldDefn );
-                    }
-                    {
-                        OGRFieldDefn fldDefn( "name", OFTString );
-                        poLayer->GetLayerDefn()->AddFieldDefn( &fldDefn );
+                        poDefn->AddFieldDefn( &fldDefn );
                     }
 
                     int nGeometries = json_object_array_length(poGeometries);
+                    /* First pass to establish schema */
+                    for(int i=0; i<nGeometries; i++)
+                    {
+                        json_object* poGeom =
+                            json_object_array_get_idx(poGeometries, i);
+                        if( poGeom != NULL &&
+                            json_type_object == json_object_get_type( poGeom ) )
+                        {
+                            EstablishLayerDefn(poDefn, poGeom);
+                        }
+                    }
+
+                    /* Second pass to build objects */
                     for(int i=0; i<nGeometries; i++)
                     {
                         json_object* poGeom =
@@ -443,23 +492,27 @@ static void ParseObjectMain(const char* pszId, json_object* poObj,
                      strcmp(pszType, "Polygon") == 0 ||
                      strcmp(pszType, "MultiPolygon") == 0 )
             {
-                if( *ppoMainLayer == NULL )
+                if( nPassNumber == 1 )
                 {
-                    *ppoMainLayer = new OGRGeoJSONLayer(
-                        "TopoJSON", NULL, wkbUnknown, poDS );
+                    if( *ppoMainLayer == NULL )
                     {
-                        OGRFieldDefn fldDefn( "id", OFTString );
-                        (*ppoMainLayer)->GetLayerDefn()->AddFieldDefn( &fldDefn );
+                        *ppoMainLayer = new OGRGeoJSONLayer(
+                            "TopoJSON", NULL, wkbUnknown, poDS );
+                        {
+                            OGRFieldDefn fldDefn( "id", OFTString );
+                            (*ppoMainLayer)->GetLayerDefn()->AddFieldDefn( &fldDefn );
+                        }
                     }
-                    {
-                        OGRFieldDefn fldDefn( "name", OFTString );
-                        (*ppoMainLayer)->GetLayerDefn()->AddFieldDefn( &fldDefn );
-                    }
+                    OGRFeatureDefn* poDefn = (*ppoMainLayer)->GetLayerDefn();
+                    EstablishLayerDefn(poDefn, poObj);
+                    bNeedSecondPass = TRUE;
                 }
-                ParseObject(pszId, poObj, *ppoMainLayer, poArcs, psParams);
+                else
+                    ParseObject(pszId, poObj, *ppoMainLayer, poArcs, psParams);
             }
         }
     }
+    return bNeedSecondPass;
 }
 
 /************************************************************************/
@@ -536,19 +589,40 @@ void OGRTopoJSONReader::ReadLayers( OGRGeoJSONDataSource* poDS )
         it.key = NULL;
         it.val = NULL;
         it.entry = NULL;
+        int bNeedSecondPass = FALSE;
         json_object_object_foreachC( poObjects, it )
         {
             json_object* poObj = it.val;
-            ParseObjectMain(it.key, poObj, poDS, &poMainLayer, poArcs, &sParams);
+            bNeedSecondPass |= ParseObjectMain(it.key, poObj, poDS, &poMainLayer, poArcs, &sParams, 1);
+        }
+        if( bNeedSecondPass )
+        {
+            it.key = NULL;
+            it.val = NULL;
+            it.entry = NULL;
+            json_object_object_foreachC( poObjects, it )
+            {
+                json_object* poObj = it.val;
+                ParseObjectMain(it.key, poObj, poDS, &poMainLayer, poArcs, &sParams, 2);
+            }
         }
     }
     else if( json_type_array == json_object_get_type( poObjects ) )
     {
         int nObjects = json_object_array_length(poObjects);
+        int bNeedSecondPass = FALSE;
         for(int i=0; i<nObjects; i++)
         {
             json_object* poObj = json_object_array_get_idx(poObjects, i);
-            ParseObjectMain(NULL, poObj, poDS, &poMainLayer, poArcs, &sParams);
+            bNeedSecondPass |= ParseObjectMain(NULL, poObj, poDS, &poMainLayer, poArcs, &sParams, 1);
+        }
+        if( bNeedSecondPass )
+        {
+            for(int i=0; i<nObjects; i++)
+            {
+                json_object* poObj = json_object_array_get_idx(poObjects, i);
+                ParseObjectMain(NULL, poObj, poDS, &poMainLayer, poArcs, &sParams, 2);
+            }
         }
     }
 
