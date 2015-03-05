@@ -457,9 +457,10 @@ void GDAL_GCP_Id_set( GDAL_GCP *gcp, const char * pszId ) {
     CPLFree( gcp->pszId );
   gcp->pszId = CPLStrdup(pszId);
 }
+%} //%inline 
 
-
-
+#if defined(SWIGCSHARP)
+%inline %{
 /* Duplicate, but transposed names for C# because 
 *  the C# module outputs backwards names
 */
@@ -509,8 +510,9 @@ void GDAL_GCP_set_Id( GDAL_GCP *gcp, const char * pszId ) {
     CPLFree( gcp->pszId );
   gcp->pszId = CPLStrdup(pszId);
 }
-
 %} //%inline 
+#endif //if defined(SWIGCSHARP)
+
 %clear GDAL_GCP *gcp;
 
 #ifdef SWIGJAVA
