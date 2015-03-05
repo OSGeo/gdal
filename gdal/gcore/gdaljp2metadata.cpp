@@ -956,7 +956,12 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
         int swapWith1Index = 4;
         int swapWith2Index = 5;
 
-        if( CSLTestBoolean( CPLGetConfigOption( "GDAL_JP2K_ALT_OFFSETVECTOR_ORDER",
+        /* Look if we have GDAL_JP2K_ALT_OFFSETVECTOR_ORDER=TRUE as a XML comment */
+        int bHasAltOffsetVectorOrderComment =
+            strstr(pszCoverage, "GDAL_JP2K_ALT_OFFSETVECTOR_ORDER=TRUE") != NULL;
+
+        if( bHasAltOffsetVectorOrderComment ||
+            CSLTestBoolean( CPLGetConfigOption( "GDAL_JP2K_ALT_OFFSETVECTOR_ORDER",
                                                 "FALSE" ) ) )
         {
             swapWith1Index = 5;
@@ -1170,6 +1175,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2( int nXSize, int nYSize )
         CPLDebug( "GMLJP2", "Suppressed axis flipping on write based on GDAL_IGNORE_AXIS_ORIENTATION." );
     }
 
+    const char* pszComment = "";
     if( bNeedAxisFlip )
     {
         double dfTemp;
@@ -1194,6 +1200,11 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2( int nXSize, int nYSize )
             dfTemp = adfYVector[0];
             adfYVector[0] = adfXVector[1];
             adfXVector[1] = dfTemp;
+
+            /* We add this as an XML comment so that we know we must do OffsetVector flipping on reading */
+            pszComment = "              <!-- GDAL_JP2K_ALT_OFFSETVECTOR_ORDER=TRUE: First "
+                         "value of offset is latitude/northing component of the "
+                         "latitude/northing axis. -->\n";
         }
         else
         {
@@ -1239,6 +1250,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2( int nXSize, int nYSize )
 "                  <gml:pos>%.15g %.15g</gml:pos>\n"
 "                </gml:Point>\n"
 "              </gml:origin>\n"
+"%s"
 "              <gml:offsetVector srsName=\"%s\">%.15g %.15g</gml:offsetVector>\n"
 "              <gml:offsetVector srsName=\"%s\">%.15g %.15g</gml:offsetVector>\n"
 "            </gml:RectifiedGrid>\n"
@@ -1256,6 +1268,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2( int nXSize, int nYSize )
 "  </gml:featureMember>\n"
 "</gml:FeatureCollection>\n",
              nXSize-1, nYSize-1, szSRSName, adfOrigin[0], adfOrigin[1],
+             pszComment,
              szSRSName, adfXVector[0], adfXVector[1], 
              szSRSName, adfYVector[0], adfYVector[1] );
 
