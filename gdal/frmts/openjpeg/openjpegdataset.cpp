@@ -1795,6 +1795,24 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
     parameters.prog_order = eProgOrder;
     parameters.tcp_mct = bYCC;
 
+    /* Add precincts */
+    const char* pszPrecincts = CSLFetchNameValueDef(papszOptions, "PRECINCTS",
+        "{512,512},{256,512},{128,512},{64,512},{32,512},{16,512},{8,512},{4,512},{2,512}");
+    char **papszTokens = CSLTokenizeStringComplex( pszPrecincts, "{},", FALSE, FALSE );
+    int nPrecincts = CSLCount(papszTokens) / 2;
+    for(int i=0;i<nPrecincts && i < OPJ_J2K_MAXRLVLS;i++)
+    {
+        int nPCRW = atoi(papszTokens[2*i]);
+        int nPCRH = atoi(papszTokens[2*i+1]);
+        if( nPCRW < 1 || nPCRH < 1 )
+            break;
+        parameters.csty |= 0x01;
+        parameters.res_spec ++;
+        parameters.prcw_init[i] = nPCRW;
+        parameters.prch_init[i] = nPCRH;
+    }
+    CSLDestroy(papszTokens);
+
     if( bProfile1 )
     {
 #if defined(OPENJPEG_VERSION) && OPENJPEG_VERSION >= 20100
@@ -2519,6 +2537,7 @@ void GDALRegister_JP2OpenJPEG()
 "   <Option name='INSPIRE_TG' type='boolean' description='Whether to use features that comply with Inspire Orthoimagery Technical Guidelines' default='NO'/>"
 "   <Option name='JPX' type='boolean' description='Whether to advertize JPX features when a GMLJP2 box is written' default='YES'/>"
 "   <Option name='GEOBOXES_AFTER_JP2C' type='boolean' description='Whether to place GeoJP2/GMLJP2 boxes after the code-stream' default='NO'/>"
+"   <Option name='PRECINCTS' type='string' description='Precincts size as a string of the form {w,h},{w,h},... with power-of-two values'/>"
 "</CreationOptionList>"  );
 
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
