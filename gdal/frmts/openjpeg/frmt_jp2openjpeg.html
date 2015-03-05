@@ -11,7 +11,7 @@
 
 <p>This driver is an implementation of a JPEG2000 reader/writer based on OpenJPEG library <b>v2</b>.</p>
 
-<p>For GDAL 1.10 or later, use openjpeg 2.0.</p>
+<p>For GDAL 1.10 or later, use openjpeg 2.X.</p>
 <p>For GDAL 1.9.x or before, use the v2 branch from its Subversion repository : http://openjpeg.googlecode.com/svn/branches/v2 (before r2230 when it was deleted).</p>
 
 <p>The driver uses the VSI Virtual File API, so it can read JPEG2000 compressed NITF files.</p>
@@ -24,26 +24,88 @@ stored as XML raw content in the xml:XMP metadata domain.</p>
 <h2>Creation Options</h2>
 
 <ul>
-<li><p><b>CODEC=JP2/J2K</b> : JP2 will add JP2 boxes around the codestream data. The value is determined
-automatically from the file extension. If it's neither JP2 nor J2K, J2K codec is used.</p></li>
+<li><p><b>CODEC=JP2/J2K</b> : JP2 will add JP2 boxes around the codestream data.
+The value is determined automatically from the file extension. If it's neither
+JP2 nor J2K, J2K codec is used.</p></li>
 
-<li> <b>GMLJP2=YES/NO</b>: (Starting with GDAL 1.10) Indicates whether a GML box conforming to the OGC GML in JPEG2000 specification should be included in the file.  Defaults to YES.<p>
+<li> <b>GMLJP2=YES/NO</b>: (Starting with GDAL 1.10) Indicates whether a GML box
+ conforming to the OGC GML in JPEG2000 specification should be included in the
+file.  Defaults to YES.<p>
 
-<li> <b>GeoJP2=YES/NO</b>: (Starting with GDAL 1.10) Indicates whether a UUID/GeoTIFF box conforming to the GeoJP2 (GeoTIFF in JPEG2000) specification should be included in the file.  Defaults to YES.<p>
+<li> <b>GeoJP2=YES/NO</b>: (Starting with GDAL 1.10) Indicates whether a
+UUID/GeoTIFF box conforming to the GeoJP2 (GeoTIFF in JPEG2000) specification
+should be included in the file.  Defaults to YES.<p>
 
-<li><p><b>QUALITY</b> : Percentage between 0 and 100. A value of 50 means the file will be half-size in comparison to uncompressed data, 33 means 1/3, etc.. Defaults to 25</li>
-<li><p><b>REVERSIBLE=YES/NO</b> : YES means use of 5x3 integer-only filter, NO use of the irreversible DWT 9-7. Defaults to NO.</p></li>
-<li><p><b>RESOLUTIONS</b> : Number of resolution levels. Between 1 and 7. Defaults to 6.</p></li>
-<li><p><b>BLOCKXSIZE</b> : Tile width. Defaults to 1024.</p></li>
-<li><p><b>BLOCKYSIZE</b> : Tile height. Defaults to 1024.</p></li>
-<li><p><b>PROGRESSION</b> : Progession order : LRCP, RLCP, RPCL, PCRL or CPRL. Defaults to LRCP.</p></li>
-<li><p><b>SOP=YES/NO</b> : YES means generate SOP marker segments. Defaults to NO.</p></li>
-<li><p><b>EPH=YES/NO</b> : YES means generate EPH marker segments. Defaults to NO.</p></li>
-<li><p><b>YCBCR420=YES/NO</b> : (GDAL &gt;= 1.11) YES if RGB must be resampled to YCbCr 4:2:0. Defaults to NO.</p></li>
-<li><p><b>YCC=YES/NO</b> : (GDAL &gt;= 2.0) YES if RGB must be transformed to YCC color space ("MCT transform", i.e. internal transform, without visual degration). Defaults to YES.</p></li>
-<li><p><b>NBITS=value</b> : (GDAL &gt;= 2.0) Bits (precision) for sub-byte files (1-7), sub-uint16 (9-15), sub-uint32 (17-31).</p></li>
-<li><p><b>1BIT_ALPHA=YES/NO</b>: (GDAL &gt;= 2.0) Whether to encode the alpha channel as a 1-bit channel'. Defaults to NO.</p></li>
-<li><p><b>ALPHA=YES/NO</b>: (GDAL &gt;= 2.0) Whether to force encoding last channel as alpha channel. Defaults to NO.</p></li>
+<li><p><b>QUALITY=float_value</b> : Percentage between 0 and 100. A value of 50
+means the file will be half-size in comparison to uncompressed data, 33 means
+1/3, etc.. Defaults to 25</li>
+
+<li><p><b>REVERSIBLE=YES/NO</b> : YES means use of reversible 5x3 integer-only
+filter, NO use of the irreversible DWT 9-7. Defaults to NO.</p></li>
+
+<li><p><b>RESOLUTIONS=int_value</b> : Number of resolution levels. Default value
+is selected such the smallest overview of a tile is no bigger than 128x128.</p></li>
+
+<li><p><b>BLOCKXSIZE=int_value</b> : Tile width. Defaults to 1024.</p></li>
+
+<li><p><b>BLOCKYSIZE=int_value</b> : Tile height. Defaults to 1024.</p></li>
+
+<li><p><b>PROGRESSION=LRCP/RLCP/RPCL/PCRL/CPRL</b> : Progession order. Defaults
+to LRCP.</p></li>
+
+<li><p><b>SOP=YES/NO</b> : YES means generate SOP (Start Of Packet) marker
+segments. Defaults to NO.</p></li>
+
+<li><p><b>EPH=YES/NO</b> : YES means generate EPH (End of Packet Header) marker
+segments. Defaults to NO.</p></li>
+
+<li><p><b>YCBCR420=YES/NO</b> : (GDAL &gt;= 1.11) YES if RGB must be resampled
+to YCbCr 4:2:0. Defaults to NO.</p></li>
+
+<li><p><b>YCC=YES/NO</b> : (GDAL &gt;= 2.0) YES if RGB must be transformed to
+YCC color space ("MCT transform", i.e. internal transform, without visual
+degration). Defaults to YES.</p></li>
+
+<li><p><b>NBITS=int_value</b> : (GDAL &gt;= 2.0) Bits (precision) for sub-byte
+files (1-7), sub-uint16 (9-15), sub-uint32 (17-31).</p></li>
+
+<li><p><b>1BIT_ALPHA=YES/NO</b>: (GDAL &gt;= 2.0) Whether to encode the alpha
+channel as a 1-bit channel (when there's an alpha channel). Defaults to NO,
+unless INSPIRE_TG=YES.
+</p></li>
+
+<li><p><b>ALPHA=YES/NO</b>: (GDAL &gt;= 2.0) Whether to force encoding last
+channel as alpha channel. Only usefull if the color interpretation of that channel
+is not already Alpha. Defaults to NO.</p></li>
+
+<li><p><b>PROFILE=AUTO/UNRESTRICTED/PROFILE_1</b>: (GDAL &gt;= 2.0) Determine
+which codestream profile to use. UNRESTRICTED corresponds to the
+"Unrestricted JPEG 2000 Part 1 codestream" (RSIZ=0). PROFILE_1 corresponds
+to the "JPEG 2000 Part 1 Profile 1 codestream" (RSIZ=2), which add constraints
+on tile dimensions and number of resolutions. In AUTO mode, the driver
+will determine if the BLOCKXSIZE, BLOCKYSIZE and RESOLUTIONS values are compatible
+with PROFILE_1 and advertize it in the relevant case. Note that the default
+values of those options are compatible with PROFILE_1. Otherwise UNRESTRICTED is
+advertized. Defaults to AUTO.</p></li>
+
+<li><p><b>INSPIRE_TG=YES/NO</b>: (GDAL &gt;= 2.0) Whether to use JPEG2000 features that
+comply with <a href="http://inspire.ec.europa.eu/documents/Data_Specifications/INSPIRE_DataSpecification_OI_v3.0.pdf">
+Inspire Orthoimagery Technical Guidelines</a>. Defaults to NO.
+When set to YES, implies PROFILE=PROFILE_1, 1BIT_ALPHA=YES, GEOBOXES_AFTER_JP2C=YES.
+The CODEC, BLOCKXSIZE, BLOCKYSIZE, RESOLUTIONS, NBITS and PROFILE
+options will be checked against the requirements and recommendations of the
+Technical Guidelines.
+</p></li>
+
+<li><p><b>JPX=YES/NO</b>: (GDAL &gt;= 2.0) Whether to advertize JPX features, and
+add a Reader requirement box, when a GMLJP2 box is written. Defaults to YES.
+This option should not be used unless compatibility problems with a reader
+occur.</p></li>
+
+<li><p><b>GEOBOXES_AFTER_JP2C=YES/NO</b>: (GDAL &gt;= 2.0) Whether to place
+GeoJP2/GMLJP2 boxes after the code-stream. Defaults to NO, unless INSPIRE_TG=YES.
+This option should not be used unless compatibility problems with a reader occur.
+</p></li>
 </ul>
 
 <h3>Lossless compression</h3>
@@ -61,6 +123,8 @@ Lossless compression can be achieved if ALL the following creation options are d
 <li><p> Implemented as <tt>gdal/frmts/openjpeg/openjpegdataset.cpp</tt>.</p></li>
 <li><p> <a href="http://www.jpeg.org/JPEG2000.html">Official JPEG-2000 page<a></p></li>
 <li><p> <a href="http://code.google.com/p/openjpeg/">The OpenJPEG library home page</a></p></li>
+<li><p> <a href="http://inspire.ec.europa.eu/documents/Data_Specifications/INSPIRE_DataSpecification_OI_v3.0.pdf">
+Inspire Data Specification on Orthoimagery - Technical Guidelines</a></p></li>
 </ul>
 
 Other JPEG2000 GDAL drivers :
