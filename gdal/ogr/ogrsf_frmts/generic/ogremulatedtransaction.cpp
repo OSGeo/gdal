@@ -132,6 +132,14 @@ class OGRDataSourceWithTransaction : public OGRDataSource
 };
 
 /************************************************************************/
+/*                         ~IOGRTransactionBehaviour                    */
+/************************************************************************/
+
+IOGRTransactionBehaviour::~IOGRTransactionBehaviour()
+{
+}
+
+/************************************************************************/
 /*              OGRCreateEmulatedTransactionDataSourceWrapper()         */
 /************************************************************************/
 
