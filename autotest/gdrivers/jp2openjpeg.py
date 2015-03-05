@@ -1157,6 +1157,30 @@ def jp2openjpeg_26():
     return 'success'
 
 ###############################################################################
+# Test CreateCopy() from a JPEG2000 with a 2048x2048 tiling
+
+def jp2openjpeg_27():
+
+    if gdaltest.jp2openjpeg_drv is None:
+        return 'skip'
+
+    # Test optimization in GDALCopyWholeRasterGetSwathSize()
+    # Not sure how we can check that except looking at logs with CPL_DEBUG=GDAL
+    # for "GDAL: GDALDatasetCopyWholeRaster(): 2048*2048 swaths, bInterleave=1"
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 2049, 2049, 4)
+    out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_27.jp2', src_ds, options = ['RESOLUTIONS=1','BLOCKXSIZE=2048', 'BLOCKYSIZE=2048'])
+    src_ds = None
+    #print('End of JP2 decoding')
+    out2_ds = gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/jp2openjpeg_27.tif', out_ds, options=['TILED=YES'])
+    out_ds = None
+    out2_ds = None
+    gdal.Unlink('/vsimem/jp2openjpeg_27.jp2')
+    gdal.Unlink('/vsimem/jp2openjpeg_27.tif')
+
+    return 'success'
+
+###############################################################################
 def jp2openjpeg_online_1():
 
     if gdaltest.jp2openjpeg_drv is None:
@@ -1354,6 +1378,7 @@ gdaltest_list = [
     jp2openjpeg_24,
     jp2openjpeg_25,
     jp2openjpeg_26,
+    jp2openjpeg_27,
     jp2openjpeg_online_1,
     jp2openjpeg_online_2,
     jp2openjpeg_online_3,
