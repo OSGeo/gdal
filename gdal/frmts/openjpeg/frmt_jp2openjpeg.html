@@ -106,6 +106,19 @@ occur.</p></li>
 GeoJP2/GMLJP2 boxes after the code-stream. Defaults to NO, unless INSPIRE_TG=YES.
 This option should not be used unless compatibility problems with a reader occur.
 </p></li>
+
+<li><p><b>PRECINCTS={prec_w,prec_h},{prec_w,prec_h},...</b>: (GDAL &gt;= 2.0) A
+a list of {precincts width,precincts height} tuples to specify precincts size.
+Each value should be a multiple of 2. The maximum number of tuples used will be
+the number of resolutions. The first tuple corresponds to the higher resolution
+level, and the following ones to the lower resolution levels.
+If less tuples are specified, the last one is used by
+dividing its values by 2 for each extra lower resolution level.
+The default value used is {512,512},{256,512},{128,512},{64,512},{32,512},{16,512},{8,512},{4,512},{2,512}.
+An empty string may be used to disable precincts (
+i.e. the default {32767,32767},{32767,32767}, ... will then be used).
+</p></li>
+
 </ul>
 
 <h3>Lossless compression</h3>
