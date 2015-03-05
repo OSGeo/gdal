@@ -286,7 +286,8 @@ JP2OpenJPEGRasterBand::JP2OpenJPEGRasterBand( JP2OpenJPEGDataset *poDS, int nBan
         SetMetadataItem("NBITS",
                         CPLString().Printf("%d",nBits),
                         "IMAGE_STRUCTURE" );
-
+    SetMetadataItem("COMPRESSION", "JPEG2000",
+                    "IMAGE_STRUCTURE" );
     this->poDS = poDS;
     this->nBand = nBand;
 }

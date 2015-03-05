@@ -3322,6 +3322,9 @@ static void GDALCopyWholeRasterGetSwathSize(GDALRasterBand *poSrcPrototypeBand,
     int nSwathCols  = nXSize;
     int nSwathLines = nBlockYSize;
 
+    const char* pszSrcCompression =
+        poSrcPrototypeBand->GetMetadataItem("COMPRESSION", "IMAGE_STRUCTURE");
+
 /* -------------------------------------------------------------------- */
 /*      What will our swath size be?                                    */
 /* -------------------------------------------------------------------- */
@@ -3340,6 +3343,12 @@ static void GDALCopyWholeRasterGetSwathSize(GDALRasterBand *poSrcPrototypeBand,
         /* but if the minimum idal swath buf size is less, then go for it to */
         /* avoid unnecessarily abusing RAM usage */
         GIntBig nIdealSwathBufSize = (GIntBig)nSwathCols * nSwathLines * nPixelSize;
+        if( pszSrcCompression != NULL && EQUAL(pszSrcCompression, "JPEG2000") &&
+            (!bDstIsCompressed || ((nSrcBlockXSize % nBlockXSize) == 0 && (nSrcBlockYSize % nBlockYSize) == 0)) )
+        {
+            nIdealSwathBufSize = MAX(nIdealSwathBufSize,
+                                     (GIntBig)nSwathCols * nSrcBlockYSize * nPixelSize);
+        }
         if( nTargetSwathSize > nIdealSwathBufSize )
             nTargetSwathSize = (int)nIdealSwathBufSize;
     }
@@ -3355,17 +3364,17 @@ static void GDALCopyWholeRasterGetSwathSize(GDALRasterBand *poSrcPrototypeBand,
                  "should be at least the size of the swath (%d) (GDAL_SWATH_SIZE config. option)", GDALGetCacheMax64(), nTargetSwathSize);
     }
 
-#define IS_MULTIPLE_OF(x,y) ((y)%(x) == 0)
+#define IS_DIVIDER_OF(x,y) ((y)%(x) == 0)
 #define ROUND_TO(x,y) (((x)/(y))*(y))
 
     /* if both input and output datasets are tiled, that the tile dimensions */
     /* are "compatible", try to stick  to a swath dimension that is a multiple */
     /* of input and output block dimensions */
     if (nBlockXSize != nXSize && nSrcBlockXSize != nXSize &&
-        IS_MULTIPLE_OF(nBlockXSize, nMaxBlockXSize) &&
-        IS_MULTIPLE_OF(nSrcBlockXSize, nMaxBlockXSize) &&
-        IS_MULTIPLE_OF(nBlockYSize, nMaxBlockYSize) &&
-        IS_MULTIPLE_OF(nSrcBlockYSize, nMaxBlockYSize))
+        IS_DIVIDER_OF(nBlockXSize, nMaxBlockXSize) &&
+        IS_DIVIDER_OF(nSrcBlockXSize, nMaxBlockXSize) &&
+        IS_DIVIDER_OF(nBlockYSize, nMaxBlockYSize) &&
+        IS_DIVIDER_OF(nSrcBlockYSize, nMaxBlockYSize))
     {
         if (((GIntBig)nMaxBlockXSize) * nMaxBlockYSize * nPixelSize <=
                                                     (GIntBig)nTargetSwathSize)
@@ -3400,8 +3409,8 @@ static void GDALCopyWholeRasterGetSwathSize(GDALRasterBand *poSrcPrototypeBand,
 
         CPLDebug( "GDAL",
               "GDALCopyWholeRasterGetSwathSize(): adjusting to %d line swath "
-              "since requirement (%d * %d bytes) exceed target swath size (%d bytes) (GDAL_SWATH_SIZE config. option)",
-              nSwathLines, nBlockYSize, nMemoryPerCol, nTargetSwathSize);
+              "since requirement (" CPL_FRMT_GIB " bytes) exceed target swath size (%d bytes) (GDAL_SWATH_SIZE config. option)",
+              nSwathLines, (GIntBig)nBlockYSize * nMemoryPerCol, nTargetSwathSize);
     }
     // If we are processing single scans, try to handle several at once.
     // If we are handling swaths already, only grow the swath if a row
@@ -3413,13 +3422,43 @@ static void GDALCopyWholeRasterGetSwathSize(GDALRasterBand *poSrcPrototypeBand,
 
         /* If possible try to align to source and target block height */
         if ((nSwathLines % nMaxBlockYSize) != 0 && nSwathLines > nMaxBlockYSize &&
-            IS_MULTIPLE_OF(nBlockYSize, nMaxBlockYSize) &&
-            IS_MULTIPLE_OF(nSrcBlockYSize, nMaxBlockYSize))
+            IS_DIVIDER_OF(nBlockYSize, nMaxBlockYSize) &&
+            IS_DIVIDER_OF(nSrcBlockYSize, nMaxBlockYSize))
             nSwathLines = ROUND_TO(nSwathLines, nMaxBlockYSize);
     }
 
+    if( pszSrcCompression != NULL && EQUAL(pszSrcCompression, "JPEG2000") &&
+        (!bDstIsCompressed ||
+            (IS_DIVIDER_OF(nBlockXSize, nSrcBlockXSize) &&
+             IS_DIVIDER_OF(nBlockYSize, nSrcBlockYSize))) )
+    {
+        /* Typical use case: converting from Pleaiades that is 2048x2048 tiled */
+        if (nSwathLines < nSrcBlockYSize)
+        {
+            nSwathLines = nSrcBlockYSize;
 
-    if (bDstIsCompressed)
+            /* Number of pixels that can be read/write simultaneously */
+            nSwathCols = nTargetSwathSize / (nSrcBlockXSize * nPixelSize);
+            nSwathCols = ROUND_TO(nSwathCols, nSrcBlockXSize);
+            if (nSwathCols == 0)
+                nSwathCols = nSrcBlockXSize;
+            if (nSwathCols > nXSize)
+                nSwathCols = nXSize;
+
+            CPLDebug( "GDAL",
+              "GDALCopyWholeRasterGetSwathSize(): because of compression and too high block,\n"
+              "use partial width at one time");
+        }
+        else if ((nSwathLines % nSrcBlockYSize) != 0)
+        {
+            /* Round on a multiple of nSrcBlockYSize */
+            nSwathLines = ROUND_TO(nSwathLines, nSrcBlockYSize);
+            CPLDebug( "GDAL",
+              "GDALCopyWholeRasterGetSwathSize(): because of compression, \n"
+              "round nSwathLines to block height : %d", nSwathLines);
+        }
+    }
+    else if (bDstIsCompressed)
     {
         if (nSwathLines < nBlockYSize)
         {
