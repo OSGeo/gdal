@@ -109,22 +109,26 @@ ECWRasterBand::ECWRasterBand( ECWDataset *poDS, int nBand, int iOverview,
     }else if (poDS->psFileInfo->eColorSpace == NCSCS_MULTIBAND ){
         eBandInterp = ECWGetColorInterpretationByName(poDS->psFileInfo->pBands[nBand-1].szDesc);
     }else if (poDS->psFileInfo->eColorSpace == NCSCS_sRGB){
-        if( nBand == 1 )
-            eBandInterp = GCI_RedBand;
-        else if( nBand == 2 )
-            eBandInterp = GCI_GreenBand;
-        else if( nBand == 3 )
-            eBandInterp = GCI_BlueBand;
-        else if (nBand == 4 )
+        eBandInterp = ECWGetColorInterpretationByName(poDS->psFileInfo->pBands[nBand-1].szDesc);
+        if( eBandInterp == GCI_Undefined )
         {
-            if (strcmp(poDS->psFileInfo->pBands[nBand-1].szDesc, NCS_BANDDESC_AllOpacity) == 0)
-                eBandInterp = GCI_AlphaBand;
+            if( nBand == 1 )
+                eBandInterp = GCI_RedBand;
+            else if( nBand == 2 )
+                eBandInterp = GCI_GreenBand;
+            else if( nBand == 3 )
+                eBandInterp = GCI_BlueBand;
+            else if (nBand == 4 )
+            {
+                if (strcmp(poDS->psFileInfo->pBands[nBand-1].szDesc, NCS_BANDDESC_AllOpacity) == 0)
+                    eBandInterp = GCI_AlphaBand;
+                else
+                    eBandInterp = GCI_Undefined;
+            }
             else
+            {
                 eBandInterp = GCI_Undefined;
-        }
-        else
-        {
-            eBandInterp = GCI_Undefined;
+            }
         }
     }
     else if( poDS->psFileInfo->eColorSpace == NCSCS_YCbCr )
