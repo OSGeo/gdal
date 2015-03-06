@@ -44,7 +44,7 @@ system "rm -rf tmp_ds_*" unless $^O eq 'MSWin32';
     my $l = Geo::OGR::Driver('Memory')->Create()->CreateLayer({GeometryType=>'Polygon'});
     eval {
 	# this is an error because the layer is polygon and this is a point
-	$l->InsertFeature([0,{wkt=>'POINT(1 1)'},12.2,3]);
+	$l->InsertFeature([0,12.2,{wkt=>'POINT(1 1)'}]);
     };
     ok($@, 'an error because geometry type mismatch');
 }
@@ -52,12 +52,13 @@ system "rm -rf tmp_ds_*" unless $^O eq 'MSWin32';
 {
     our $warning;
     BEGIN { $SIG{'__WARN__'} = sub { $warning = $_[0] } }
-    my $l = Geo::OGR::Driver('Memory')->Create()->CreateLayer();
+    my $l = Geo::OGR::Driver('Memory')->Create()->CreateLayer(GeometryType => 'None');
     $l->CreateField(Name => 'value', Type => 'Integer');
-    $l->InsertFeature([0,{wkt=>'POINT(1 1)'},12.2,3]);
+    $l->CreateField(Name => 'geom', GeometryType => 'Point');
+    $l->InsertFeature([0,12.2,{wkt=>'POINT(1 1)'}]);
     my $f = $l->GetFeature(0);
     my $r = $f->Row;
-    ok($r->{Geometry}->AsText eq 'POINT (1 1)', 'The geometry of the inserted feature is ok');
+    ok($r->{geom}->AsText eq 'POINT (1 1)', 'The geometry of the inserted feature is ok');
     ok($r->{value} == 12, "The float is changed to integer because that's the type in the layer ($warning)");
     my $n = $f->Tuple;
     ok($n == 3, 'The extra field is scrapped because layer does not have a field for it');
@@ -137,30 +138,32 @@ system "rm -rf tmp_ds_*" unless $^O eq 'MSWin32';
 
 {
     # test list valued fields
-    my $d = Geo::OGR::FeatureDefn->new;
-    $d->Schema(Fields=>[
-			{ Name => 'ilist',
-			  Type => 'IntegerList',
-		      },
-			{ Name => 'rlist',
-			  Type => 'RealList',
-		      },
-			{ Name => 'slist',
-			  Type => 'StringList',
-		      },
-			{ Name => 'date',
-			  Type => 'Date',
-		      },
-			{ Name => 'time',
-			  Type => 'Time',
-		      },
-			{ Name => 'datetime',
-			  Type => 'DateTime',
-		      },
-			]
-	       );
+    my $d = Geo::OGR::FeatureDefn->create(
+        Fields=>[
+            { Name => 'ilist',
+              Type => 'IntegerList',
+            },
+            { Name => 'rlist',
+              Type => 'RealList',
+            },
+            { Name => 'slist',
+              Type => 'StringList',
+            },
+            { Name => 'date',
+              Type => 'Date',
+            },
+            { Name => 'time',
+              Type => 'Time',
+            },
+            { Name => 'datetime',
+              Type => 'DateTime',
+            },
+        ]
+        );
     my $f = Geo::OGR::Feature->new($d);
-    ok($f->Schema->{Fields}->[1]->{Index} == 1, "Index in field in schema");
+    #use Data::Dumper;
+    #print Dumper {$f->Schema};
+    ok($f->Schema->{Fields}->[5]->{Name} eq 'datetime', "Name in field in schema");
     $f->Row( ilist => [1,2,3],
 	     rlist => [1.1,2.2,3.3],
 	     slist => ['a','b','c'],
@@ -186,15 +189,15 @@ system "rm -rf tmp_ds_*" unless $^O eq 'MSWin32';
 {
     my $g2;
     {
-	my $d = Geo::OGR::FeatureDefn->new;
-	$d->Schema(Fields=>[Geo::OGR::FieldDefn->create(Name=>'Foo')]);
+	my $d = Geo::OGR::FeatureDefn->create(Fields=>[Geo::OGR::FieldDefn->create(Name=>'Foo')]);
+        $d->AddField(Type => 'Point');
 	my $f = Geo::OGR::Feature->new($d);
 	my $g = Geo::OGR::Geometry->create('Point');
 	$f->SetGeometry($g);
 	my $fd = $f->GetDefnRef;
 	my $s = $fd->Schema;
 	my $s2 = $s->{Fields}[0];
-	ok($s->{GeometryType} eq 'Unknown', 'Feature defn schema 0');
+	ok($s->{Fields}[1]{Type} eq 'Point', 'Feature defn schema 0');
 	ok($s2->{Name} eq 'Foo', 'Feature defn schema 1');
 	ok($s2->{Type} eq 'String', 'Feature defn schema 2');
 	$g2 = $f->GetGeometry;
@@ -231,12 +234,13 @@ system "rm -rf tmp_ds_*" unless $^O eq 'MSWin32';
 	ok(is_deeply(\@layers, ['a','c'], "delete layer"));
     }
     
-    $layer = $datasource->CreateLayer('test', undef, 'Point');
-    $layer->Schema(Fields => 
-		   [{Name => 'test1', Type => 'Integer'},
-		    {Name => 'test2', Type => 'String'},
-		    {Name => 'test3', Type => 'Real'}
-		    ], ApproxOK => 1);
+    $layer = $datasource->CreateLayer
+        ( Name => 'test', 
+          GeometryType => 'Point',
+          Fields => [ {Name => 'test1', Type => 'Integer'},
+                      {Name => 'test2', Type => 'String'},
+                      {Name => 'test3', Type => 'Real'} ], 
+          ApproxOK => 1 );
     $layer->InsertFeature({ test1 => 13, 
 			    Geometry => { Points => [1,2,3] } });
     $layer->InsertFeature({ test2 => '31a', 
@@ -245,11 +249,11 @@ system "rm -rf tmp_ds_*" unless $^O eq 'MSWin32';
     my $i = 0;
     while (my $f = $layer->GetNextFeature) {
 	my @a = $f->Tuple;
-	$a[1] = $a[1]->AsText;
+	$a[4] = $a[4]->AsText;
 	my $h = $f->Row;
 	$h->{Geometry} = $h->{Geometry}->AsText;
 	if ($i == 0) {
-	    my @t = (0,'POINT (1 2)',13,undef,undef);
+	    my @t = (0,13,undef,undef,'POINT (1 2)');
 	    ok(is_deeply(\@a, \@t), "layer create test 1");
 	} else {
 	    my %t = (FID => 1, Geometry => 'POINT (3 2)', test1 => undef, test2 => '31a', test3 => undef);
@@ -259,8 +263,8 @@ system "rm -rf tmp_ds_*" unless $^O eq 'MSWin32';
     }
     $layer->Row(FID=>0, Geometry=>{ Points => [5,6] }, test3 => 6.5);
     my @t = $layer->Tuple(0);
-    ok($t[4] == 6.5, "layer row and tuple");
-    ok($t[1]->ExportToWkt eq 'POINT (5 6)', "layer row and tuple");
+    ok($t[3] == 6.5, "layer row and tuple");
+    ok($t[4]->ExportToWkt eq 'POINT (5 6)', "layer row and tuple");
 }
 
 my $osr = new Geo::OSR::SpatialReference;
@@ -301,11 +305,11 @@ for my $method (@$methods) {
 
 if (@fails) {
     print STDERR "\nUnexpected failures:\n",@fails;
-    print STDERR "\nAvailable drivers were ",join(', ',@tmp),"\n";
-    print STDERR "Drivers used in tests were: ",join(', ',@tested_drivers),"\n";
+    #print STDERR "\nAvailable drivers were ",join(', ',@tmp),"\n";
+    #print STDERR "Drivers used in tests were: ",join(', ',@tested_drivers),"\n";
 } else {
-    print STDERR "\nAvailable drivers were ",join(', ',@tmp),"\n";
-    print STDERR "Drivers used in tests were: ",join(', ',@tested_drivers),"\n";
+    #print STDERR "\nAvailable drivers were ",join(', ',@tmp),"\n";
+    #print STDERR "Drivers used in tests were: ",join(', ',@tested_drivers),"\n";
 }
 
 system "rm -rf tmp_ds_*" unless $^O eq 'MSWin32';
@@ -355,6 +359,10 @@ sub ogr_tests {
 	    mytest("skipped: can't create layers afterwards.",undef,$name,'datasource create');
 	    next;
 	}
+        if ($name eq 'ESRI Shapefile' or $name eq 'MapInfo File') {
+	    mytest("skipped",undef,$name,'datasource create');
+	    next;
+	}
 
 	push @tested_drivers,$name;
 
@@ -382,20 +390,9 @@ sub ogr_tests {
 	
 	for my $type (@types) {
 	    
-	    if ($name eq 'ESRI Shapefile' and $type eq 'GeometryCollection') {
-		mytest("skipped, will fail",undef,$name,$type,'layer create');
-		next;
-	    }
-	    
-	    if ($type eq 'MultiPolygon') {
+            print "$type\n";
+	    if ($type eq 'MultiPolygon' or $type =~ /Z/) {
 		mytest("skipped, no test yet",undef,$name,$type,'layer create');
-		next;
-	    }
-
-	    if ($name eq 'MapInfo File' and 
-                ($type eq 'MultiLineString' or $type =~ /Surface/ or $type =~ /Curve/ or $type =~ /Circular/)
-                ) {
-		mytest("skipped, no test",undef,$name,$type,'layer create');
 		next;
 	    }
 	    
@@ -431,7 +428,8 @@ sub ogr_tests {
 		
 		my $feature = new Geo::OGR::Feature($schema);
 		
-		my $t = $type eq 'Unknown' ? 'Polygon' : $type;
+		my $t = $schema->GeometryType;
+                $t = 'Polygon' if $t eq 'Unknown';
 
 		my $geom = Geo::OGR::Geometry->create($t);
 		
@@ -517,11 +515,13 @@ sub ogr_tests {
 			
 			my $geom = $feature->GetGeometryRef();
 			
-			if ($type eq 'Pointxx') {
+                        if (!$geom) {
+                        } elsif ($type eq 'Pointxx') {
 			    mytest('skipped',undef,$name,$type,'geom open');
 			} else {
 			    my $t = $type eq 'Unknown' ? 'Polygon' : $type;
 			    my $t2 = $geom->GeometryType;
+                       
 			    mytest($t eq $t2,"$t ne $t2",$name,$type,'geom open');
 
 			    if ($type eq 'MultiPoint') {
@@ -636,15 +636,15 @@ sub test_geom {
 	    }
 	    $pc = $r->GetPointCount;
 	    mytest($pc == $n,"$pc != $n",$name,$type,'point count pre');
-	    $geom->AddGeometry($r);
-	    $geom->CloseRings; # this adds the point we popped out
-	    $n++;
-	    $r = $geom->GetGeometryRef(0);
-	    $pc = $r->GetPointCount;
-	    for (0..$pc-1) {
-		my @p = $r->GetPoint($_);
-	    }
-	    mytest($pc == $n,"$pc != $n",$name,$type,'point count post 1');
+            $geom->AddGeometry($r);
+            $geom->CloseRings; # this adds the point we popped out
+            $n++;
+            $r = $geom->GetGeometryRef(0);
+            $pc = $r->GetPointCount;
+            for (0..$pc-1) {
+                my @p = $r->GetPoint($_);
+            }
+            mytest($pc == $n,"$pc != $n",$name,$type,'point count post 1');
 	} else {	       
 	    mytest($gn == 1,"$gn != 1",$name,$type,'geom count');
 	    my $r = $geom->GetGeometryRef(0);
