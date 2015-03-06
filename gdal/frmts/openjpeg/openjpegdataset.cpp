@@ -1028,11 +1028,7 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
     opj_stream_t * pStream = JP2OpenJPEGCreateReadStream(fp);
 
     opj_image_t * psImage = NULL;
-    OPJ_INT32  nX0,nY0;
-    OPJ_UINT32 nTileW,nTileH;
-#ifdef DEBUG
-    OPJ_UINT32 nTilesX,nTilesY;
-#endif
+
     if(!opj_read_header(pStream,pCodec,&psImage))
     {
         CPLError(CE_Failure, CPLE_AppDefined, "opj_read_header() failed");
@@ -1044,11 +1040,14 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
     opj_codestream_info_v2_t* pCodeStreamInfo = opj_get_cstr_info(pCodec);
-    nX0 = pCodeStreamInfo->tx0;
-    nY0 = pCodeStreamInfo->ty0;
+    OPJ_UINT32 nTileW,nTileH;
     nTileW = pCodeStreamInfo->tdx;
     nTileH = pCodeStreamInfo->tdy;
 #ifdef DEBUG
+    OPJ_UINT32  nX0,nY0;
+    OPJ_UINT32 nTilesX,nTilesY;
+    nX0 = pCodeStreamInfo->tx0;
+    nY0 = pCodeStreamInfo->ty0;
     nTilesX = pCodeStreamInfo->tw;
     nTilesY = pCodeStreamInfo->th;
 #endif
@@ -1067,28 +1066,28 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
 
 #ifdef DEBUG
     int i;
-    CPLDebug("OPENJPEG", "nX0 = %d", nX0);
-    CPLDebug("OPENJPEG", "nY0 = %d", nY0);
-    CPLDebug("OPENJPEG", "nTileW = %d", nTileW);
-    CPLDebug("OPENJPEG", "nTileH = %d", nTileH);
-    CPLDebug("OPENJPEG", "nTilesX = %d", nTilesX);
-    CPLDebug("OPENJPEG", "nTilesY = %d", nTilesY);
+    CPLDebug("OPENJPEG", "nX0 = %u", nX0);
+    CPLDebug("OPENJPEG", "nY0 = %u", nY0);
+    CPLDebug("OPENJPEG", "nTileW = %u", nTileW);
+    CPLDebug("OPENJPEG", "nTileH = %u", nTileH);
+    CPLDebug("OPENJPEG", "nTilesX = %u", nTilesX);
+    CPLDebug("OPENJPEG", "nTilesY = %u", nTilesY);
     CPLDebug("OPENJPEG", "mct = %d", mct);
-    CPLDebug("OPENJPEG", "psImage->x0 = %d", psImage->x0);
-    CPLDebug("OPENJPEG", "psImage->y0 = %d", psImage->y0);
-    CPLDebug("OPENJPEG", "psImage->x1 = %d", psImage->x1);
-    CPLDebug("OPENJPEG", "psImage->y1 = %d", psImage->y1);
+    CPLDebug("OPENJPEG", "psImage->x0 = %u", psImage->x0);
+    CPLDebug("OPENJPEG", "psImage->y0 = %u", psImage->y0);
+    CPLDebug("OPENJPEG", "psImage->x1 = %u", psImage->x1);
+    CPLDebug("OPENJPEG", "psImage->y1 = %u", psImage->y1);
     CPLDebug("OPENJPEG", "psImage->numcomps = %d", psImage->numcomps);
     //CPLDebug("OPENJPEG", "psImage->color_space = %d", psImage->color_space);
     CPLDebug("OPENJPEG", "numResolutions = %d", numResolutions);
     for(i=0;i<(int)psImage->numcomps;i++)
     {
-        CPLDebug("OPENJPEG", "psImage->comps[%d].dx = %d", i, psImage->comps[i].dx);
-        CPLDebug("OPENJPEG", "psImage->comps[%d].dy = %d", i, psImage->comps[i].dy);
-        CPLDebug("OPENJPEG", "psImage->comps[%d].x0 = %d", i, psImage->comps[i].x0);
-        CPLDebug("OPENJPEG", "psImage->comps[%d].y0 = %d", i, psImage->comps[i].y0);
-        CPLDebug("OPENJPEG", "psImage->comps[%d].w = %d", i, psImage->comps[i].w);
-        CPLDebug("OPENJPEG", "psImage->comps[%d].h = %d", i, psImage->comps[i].h);
+        CPLDebug("OPENJPEG", "psImage->comps[%d].dx = %u", i, psImage->comps[i].dx);
+        CPLDebug("OPENJPEG", "psImage->comps[%d].dy = %u", i, psImage->comps[i].dy);
+        CPLDebug("OPENJPEG", "psImage->comps[%d].x0 = %u", i, psImage->comps[i].x0);
+        CPLDebug("OPENJPEG", "psImage->comps[%d].y0 = %u", i, psImage->comps[i].y0);
+        CPLDebug("OPENJPEG", "psImage->comps[%d].w = %u", i, psImage->comps[i].w);
+        CPLDebug("OPENJPEG", "psImage->comps[%d].h = %u", i, psImage->comps[i].h);
         CPLDebug("OPENJPEG", "psImage->comps[%d].resno_decoded = %d", i, psImage->comps[i].resno_decoded);
         CPLDebug("OPENJPEG", "psImage->comps[%d].factor = %d", i, psImage->comps[i].factor);
         CPLDebug("OPENJPEG", "psImage->comps[%d].prec = %d", i, psImage->comps[i].prec);
@@ -1099,6 +1098,10 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
     if (psImage->x1 <= psImage->x0 ||
         psImage->y1 <= psImage->y0 ||
         psImage->numcomps == 0 ||
+        (psImage->comps[0].w >> 31) != 0 ||
+        (psImage->comps[0].h >> 31) != 0 ||
+        (nTileW >> 31) != 0 ||
+        (nTileH >> 31) != 0 ||
         psImage->comps[0].w != psImage->x1 - psImage->x0 ||
         psImage->comps[0].h != psImage->y1 - psImage->y0)
     {
