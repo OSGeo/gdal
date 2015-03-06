@@ -2505,8 +2505,17 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
     int nTilesX = (nXSize + nBlockXSize - 1) / nBlockXSize;
     int nTilesY = (nYSize + nBlockYSize - 1) / nBlockYSize;
 
-    GByte* pTempBuffer =(GByte*)VSIMalloc(nBlockXSize * nBlockYSize *
-                                          nBands * nDataTypeSize);
+    GUIntBig nTileSize = (GUIntBig)nBlockXSize * nBlockYSize * nBands * nDataTypeSize;
+    GByte* pTempBuffer;
+    if( nTileSize != (GUIntBig)(GUInt32)nTileSize )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, "Tile size exceeds 4GB");
+        pTempBuffer = NULL;
+    }
+    else
+    {
+        pTempBuffer = (GByte*)VSIMalloc((size_t)nTileSize);
+    }
     if (pTempBuffer == NULL)
     {
         opj_stream_destroy(pStream);
