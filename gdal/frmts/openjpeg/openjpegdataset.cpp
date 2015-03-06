@@ -103,19 +103,21 @@ static OPJ_SIZE_T JP2OpenJPEGDataset_Read(void* pBuffer, OPJ_SIZE_T nBytes,
 #endif
     if (nRet == 0)
         nRet = -1;
-    else if( nOffsetBefore == 0 && nBytes >= 4 )
+    else if( (nOffsetBefore == 0 || nOffsetBefore == 1024) && nBytes >= 4 )
     {
         /* Nasty hack : opj_get_decoded_tile() currently ignores
           OPJ_DPARAMETERS_IGNORE_PCLR_CMAP_CDEF_FLAG, so we "hide" the jp2 boxes
           that advertize a color table... */
-        for(OPJ_SIZE_T i=0;i<nBytes-4;i++)
+        for(OPJ_SIZE_T i=0;i<nBytes-8;i++)
         {
-            if( memcmp((GByte*)pBuffer + i, "pclr", 4)==0 ||
-                memcmp((GByte*)pBuffer + i, "cmap", 4)==0 ||
+            if( ((GByte*)pBuffer)[i+0] == 0 && ((GByte*)pBuffer)[i+1] == 0 &&
+                (!(((GByte*)pBuffer)[i+2] == 0 && ((GByte*)pBuffer)[i+3] == 0)) &&
+                (memcmp((GByte*)pBuffer + i + 4, "pclr", 4)==0 ||
+                memcmp((GByte*)pBuffer + i + 4, "cmap", 4)==0 ||
                 /* We also ignore cdef as openjpeg 2.0 and 2.1 can crash if they are unusual association values */
-                memcmp((GByte*)pBuffer + i, "cdef", 4)==0 )
+                memcmp((GByte*)pBuffer + i + 4, "cdef", 4)==0) )
             {
-                memcpy((GByte*)pBuffer +i, "XXXX", 4);
+                memcpy((GByte*)pBuffer +i + 4, "XXXX", 4);
             }
         }
     }
@@ -607,6 +609,31 @@ CPLErr  JP2OpenJPEGDataset::IRasterIO( GDALRWFlag eRWFlag,
 }
 
 /************************************************************************/
+/*                    JP2OpenJPEGCreateReadStream()                     */
+/************************************************************************/
+
+static opj_stream_t* JP2OpenJPEGCreateReadStream(VSILFILE* fp)
+{
+    opj_stream_t *pStream = opj_stream_create(1024, TRUE); // Default 1MB is way too big for some datasets
+
+    VSIFSeekL(fp, 0, SEEK_END);
+    opj_stream_set_user_data_length(pStream, VSIFTellL(fp));
+    /* Reseek to file beginning */
+    VSIFSeekL(fp, 0, SEEK_SET);
+
+    opj_stream_set_read_function(pStream, JP2OpenJPEGDataset_Read);
+    opj_stream_set_seek_function(pStream, JP2OpenJPEGDataset_Seek);
+    opj_stream_set_skip_function(pStream, JP2OpenJPEGDataset_Skip);
+#if defined(OPENJPEG_VERSION) && OPENJPEG_VERSION >= 20100
+    opj_stream_set_user_data(pStream, fp, NULL);
+#else
+    opj_stream_set_user_data(pStream, fp);
+#endif
+
+    return pStream;
+}
+
+/************************************************************************/
 /*                             ReadBlock()                              */
 /************************************************************************/
 
@@ -645,21 +672,7 @@ CPLErr JP2OpenJPEGDataset::ReadBlock( int nBand, VSILFILE* fp,
         return CE_Failure;
     }
 
-    pStream = opj_stream_create(1024, TRUE); // Default 1MB is way too big for some datasets
-
-    VSIFSeekL(fp, 0, SEEK_END);
-    opj_stream_set_user_data_length(pStream, VSIFTellL(fp));
-    /* Reseek to file beginning */
-    VSIFSeekL(fp, 0, SEEK_SET);
-
-    opj_stream_set_read_function(pStream, JP2OpenJPEGDataset_Read);
-    opj_stream_set_seek_function(pStream, JP2OpenJPEGDataset_Seek);
-    opj_stream_set_skip_function(pStream, JP2OpenJPEGDataset_Skip);
-#if defined(OPENJPEG_VERSION) && OPENJPEG_VERSION >= 20100
-    opj_stream_set_user_data(pStream, fp, NULL);
-#else
-    opj_stream_set_user_data(pStream, fp);
-#endif
+    pStream = JP2OpenJPEGCreateReadStream(fp);
 
     if(!opj_read_header(pStream,pCodec,&psImage))
     {
@@ -1011,22 +1024,7 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
-    opj_stream_t * pStream;
-    pStream = opj_stream_create(1024, TRUE); // Default 1MB is way too big for some datasets
-
-    VSIFSeekL(fp, 0, SEEK_END);
-    opj_stream_set_user_data_length(pStream, VSIFTellL(fp));
-    /* Reseek to file beginning */
-    VSIFSeekL(fp, 0, SEEK_SET);
-
-    opj_stream_set_read_function(pStream, JP2OpenJPEGDataset_Read);
-    opj_stream_set_seek_function(pStream, JP2OpenJPEGDataset_Seek);
-    opj_stream_set_skip_function(pStream, JP2OpenJPEGDataset_Skip);
-#if defined(OPENJPEG_VERSION) && OPENJPEG_VERSION >= 20100
-    opj_stream_set_user_data(pStream, fp, NULL);
-#else
-    opj_stream_set_user_data(pStream, fp);
-#endif
+    opj_stream_t * pStream = JP2OpenJPEGCreateReadStream(fp);
 
     opj_image_t * psImage = NULL;
     OPJ_INT32  nX0,nY0;
@@ -1211,7 +1209,7 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
                         if( poCT == NULL &&
                             EQUAL(oSubBox.GetType(),"pclr") &&
                             nDataLength >= 3 &&
-                            nDataLength <= 2 + 1 + 3 + 3 * 256 )
+                            nDataLength <= 2 + 1 + 4 + 4 * 256 )
                         {
                             GByte* pabyCT = oSubBox.ReadBoxData();
                             if( pabyCT != NULL )
@@ -1235,6 +1233,24 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
                                             sEntry.c2 = pabyCT[6 + 3 * i + 1];
                                             sEntry.c3 = pabyCT[6 + 3 * i + 2];
                                             sEntry.c4 = 255;
+                                            poCT->SetColorEntry(i, &sEntry);
+                                        }
+                                    }
+                                }
+                                else if ( nEntries <= 256 && nComponents == 4 )
+                                {
+                                    if( pabyCT[3] == 7 && pabyCT[4] == 7 &&
+                                        pabyCT[5] == 7 && pabyCT[6] == 7 &&
+                                        nDataLength == 2 + 1 + 4 + 4 * nEntries )
+                                    {
+                                        poCT = new GDALColorTable();
+                                        for(int i=0;i<nEntries;i++)
+                                        {
+                                            GDALColorEntry sEntry;
+                                            sEntry.c1 = pabyCT[7 + 4 * i];
+                                            sEntry.c2 = pabyCT[7 + 4 * i + 1];
+                                            sEntry.c3 = pabyCT[7 + 4 * i + 2];
+                                            sEntry.c4 = pabyCT[7 + 4 * i + 3];
                                             poCT->SetColorEntry(i, &sEntry);
                                         }
                                     }
@@ -2219,25 +2235,47 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
 
         GDALJP2Box pclrBox(fp);
         GDALJP2Box cmapBox(fp);
+        int nCTComponentCount = 0;
         if (poCT != NULL)
         {
             pclrBox.SetType("pclr");
             int nEntries = MIN(256, poCT->GetColorEntryCount());
+            nCTComponentCount = atoi(CSLFetchNameValueDef(papszOptions, "CT_COMPONENTS", "0"));
+            if( nCTComponentCount != 3 && nCTComponentCount != 4 )
+            {
+                nCTComponentCount = 3;
+                for(int i=0;i<nEntries;i++)
+                {
+                    const GDALColorEntry* psEntry = poCT->GetColorEntry(i);
+                    if( psEntry->c4 != 255 )
+                    {
+                        CPLDebug("OPENJPEG", "Color table has at least one non-opaque value. "
+                                "This may cause compatibility problems with some readers. "
+                                "In which case use CT_COMPONENTS=3 creation option");
+                        nCTComponentCount = 4;
+                        break;
+                    }
+                }
+            }
+
             pclrBox.AppendUInt16(nEntries);
-            pclrBox.AppendUInt8(3); /* NPC: Number of components */
-            pclrBox.AppendUInt8(7); /* B0: unsigned 8 bits */
-            pclrBox.AppendUInt8(7); /* B1: unsigned 8 bits */
-            pclrBox.AppendUInt8(7); /* B2: unsigned 8 bits */
+            pclrBox.AppendUInt8(nCTComponentCount); /* NPC: Number of components */
+            for(int i=0;i<nCTComponentCount;i++)
+            {
+                pclrBox.AppendUInt8(7); /* Bi: unsigned 8 bits */
+            }
             for(int i=0;i<nEntries;i++)
             {
                 const GDALColorEntry* psEntry = poCT->GetColorEntry(i);
                 pclrBox.AppendUInt8((GByte)psEntry->c1);
                 pclrBox.AppendUInt8((GByte)psEntry->c2);
                 pclrBox.AppendUInt8((GByte)psEntry->c3);
+                if( nCTComponentCount == 4 )
+                    pclrBox.AppendUInt8((GByte)psEntry->c4);
             }
             
             cmapBox.SetType("cmap");
-            for(int i=0;i<3;i++)
+            for(int i=0;i<nCTComponentCount;i++)
             {
                 cmapBox.AppendUInt16(0); /* CMPi: code stream component index */
                 cmapBox.AppendUInt8(1); /* MYTPi: 1=palette mapping */
@@ -2247,22 +2285,24 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
 
         GDALJP2Box cdefBox(fp);
         if( poSrcDS->GetRasterBand(nBands)->GetColorInterpretation() == GCI_AlphaBand ||
-            bForceAlpha )
+            bForceAlpha ||
+            nCTComponentCount == 4)
         {
             cdefBox.SetType("cdef");
-            cdefBox.AppendUInt16(nBands);
-            for(int i=0;i<nBands-1;i++)
+            int nComponents = (nCTComponentCount == 4) ? 4 : nBands;
+            cdefBox.AppendUInt16(nComponents);
+            for(int i=0;i<nComponents-1;i++)
             {
                 cdefBox.AppendUInt16(i);   /* Component number */
                 cdefBox.AppendUInt16(0);   /* Signification: This channel is the colour image data for the associated colour */
-                if( (eColorSpace == OPJ_CLRSPC_GRAY && nBands == 2) ||
+                if( (eColorSpace == OPJ_CLRSPC_GRAY && nComponents == 2) ||
                     ((eColorSpace == OPJ_CLRSPC_SRGB ||
-                      eColorSpace == OPJ_CLRSPC_SYCC) && nBands == 4) )
+                      eColorSpace == OPJ_CLRSPC_SYCC) && nComponents == 4) )
                     cdefBox.AppendUInt16(i+1); /* Colour of the component: associated with a particular colour */
                 else
                     cdefBox.AppendUInt16(65535); /* Colour of the component: not associated with any particular colour */
             }
-            cdefBox.AppendUInt16(nBands-1); /* Component number */
+            cdefBox.AppendUInt16(nComponents-1); /* Component number */
             cdefBox.AppendUInt16(1);        /* Signification: Non pre-multiplied alpha */
             cdefBox.AppendUInt16(0);        /* Colour of the component: This channel is associated as the image as a whole */
         }
@@ -2697,6 +2737,7 @@ void GDALRegister_JP2OpenJPEG()
 "   </Option>"
 "   <Option name='CODEBLOCK_WIDTH' type='int' description='Codeblock width' default='64' min='4' max='1024'/>"
 "   <Option name='CODEBLOCK_HEIGHT' type='int' description='Codeblock height' default='64' min='4' max='1024'/>"
+"   <Option name='CT_COMPONENTS' type='int' min='3' max='4' description='If there is one color table, number of color table components to write. Autodetected if not specified.'/>"
 "</CreationOptionList>"  );
 
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );

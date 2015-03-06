@@ -1311,8 +1311,48 @@ def jp2openjpeg_30():
             return 'fail'
         del out_ds
 
-    gdal.Unlink('/vsimem/jp2openjpeg_29.jp2')
+    gdal.Unlink('/vsimem/jp2openjpeg_30.jp2')
 
+    # Test with c4 != 255
+    src_ds = gdal.GetDriverByName('MEM').Create('', 10, 10, 1)
+    ct = gdal.ColorTable()
+    ct.SetColorEntry( 0, (0,0,0,0) )
+    ct.SetColorEntry( 1, (255,255,0,255) )
+    ct.SetColorEntry( 2, (255,0,255,255) )
+    ct.SetColorEntry( 3, (0,255,255,255) )
+    src_ds.GetRasterBand( 1 ).SetRasterColorTable( ct )
+    out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_30.jp2', src_ds)
+    ct = out_ds.GetRasterBand( 1 ).GetRasterColorTable()
+    if ct.GetCount() != 4 or \
+        ct.GetColorEntry(0) != (0,0,0,0) or \
+        ct.GetColorEntry(1) != (255,255,0,255) or \
+        ct.GetColorEntry(2) != (255,0,255,255) or \
+        ct.GetColorEntry(3) != (0,255,255,255):
+        gdaltest.post_reason( 'Wrong color table entry.' )
+        return 'fail'
+    del out_ds
+    gdal.Unlink('/vsimem/jp2openjpeg_30.jp2')
+
+    # Same but with CT_COMPONENTS=3
+    src_ds = gdal.GetDriverByName('MEM').Create('', 10, 10, 1)
+    ct = gdal.ColorTable()
+    ct.SetColorEntry( 0, (0,0,0,0) )
+    ct.SetColorEntry( 1, (255,255,0,255) )
+    ct.SetColorEntry( 2, (255,0,255,255) )
+    ct.SetColorEntry( 3, (0,255,255,255) )
+    src_ds.GetRasterBand( 1 ).SetRasterColorTable( ct )
+    out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_30.jp2', src_ds, options = ['CT_COMPONENTS=3'])
+    ct = out_ds.GetRasterBand( 1 ).GetRasterColorTable()
+    if ct.GetCount() != 4 or \
+        ct.GetColorEntry(0) != (0,0,0,255) or \
+        ct.GetColorEntry(1) != (255,255,0,255) or \
+        ct.GetColorEntry(2) != (255,0,255,255) or \
+        ct.GetColorEntry(3) != (0,255,255,255):
+        gdaltest.post_reason( 'Wrong color table entry.' )
+        return 'fail'
+    del out_ds
+    gdal.Unlink('/vsimem/jp2openjpeg_30.jp2')
+    
     # Not supported: color table on first band, and other bands
     src_ds = gdal.GetDriverByName('MEM').Create('', 10, 10, 2)
     ct = gdal.ColorTable()
