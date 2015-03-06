@@ -122,6 +122,13 @@ def ogr_georss_1():
     return ogr_georss_test_atom('data/atom_rfc_sample.xml')
 
 ###############################################################################
+# Test reading an ATOM document with atom: prefiw
+
+def ogr_georss_1_atom_ns():
+
+    return ogr_georss_test_atom('data/atom_rfc_sample_atom_ns.xml')
+
+###############################################################################
 # Test writing a Atom 1.0 document (doesn't need read support)
 
 def ogr_georss_1bis():
@@ -680,6 +687,7 @@ def ogr_georss_cleanup():
 gdaltest_list = [ 
     ogr_georss_init,
     ogr_georss_1,
+    ogr_georss_1_atom_ns,
     ogr_georss_1bis,
     ogr_georss_1ter,
     ogr_georss_2,

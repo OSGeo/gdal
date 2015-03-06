@@ -157,7 +157,8 @@ void OGRGeoRSSDataSource::startElementValidateCbk(const char *pszName, const cha
             validity = GEORSS_VALIDITY_VALID;
             eFormat = GEORSS_RSS;
         }
-        else if (strcmp(pszName, "feed") == 0)
+        else if (strcmp(pszName, "feed") == 0 ||
+                 strcmp(pszName, "atom:feed") == 0)
         {
             validity = GEORSS_VALIDITY_VALID;
             eFormat = GEORSS_ATOM;
@@ -263,7 +264,7 @@ int OGRGeoRSSDataSource::Open( const char * pszFilename, int bUpdateIn)
                 aBuf[nLen] = 0;
             else
                 aBuf[BUFSIZ-1] = 0;
-            if (strstr(aBuf, "<?xml") && (strstr(aBuf, "<rss") || strstr(aBuf, "<feed")))
+            if (strstr(aBuf, "<?xml") && (strstr(aBuf, "<rss") || strstr(aBuf, "<feed") || strstr(aBuf, "<atom:feed")))
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                         "XML parsing of GeoRSS file failed : %s at line %d, column %d",
@@ -313,7 +314,7 @@ int OGRGeoRSSDataSource::Open( const char * pszFilename, int bUpdateIn)
     {
         unsigned int nLen = (unsigned int)VSIFReadL( aBuf, 1, 255, fp );
         aBuf[nLen] = 0;
-        if (strstr(aBuf, "<?xml") && (strstr(aBuf, "<rss") || strstr(aBuf, "<feed")))
+        if (strstr(aBuf, "<?xml") && (strstr(aBuf, "<rss") || strstr(aBuf, "<atom:feed") || strstr(aBuf, "<feed")))
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                     "OGR/GeoRSS driver has not been built with read support. Expat library required");

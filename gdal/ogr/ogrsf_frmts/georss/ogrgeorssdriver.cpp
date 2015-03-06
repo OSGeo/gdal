@@ -43,7 +43,8 @@ static GDALDataset *OGRGeoRSSDriverOpen( GDALOpenInfo* poOpenInfo )
         return NULL;
 
     if( strstr((const char*)poOpenInfo->pabyHeader, "<rss") == NULL &&
-        strstr((const char*)poOpenInfo->pabyHeader, "<feed") == NULL )
+        strstr((const char*)poOpenInfo->pabyHeader, "<feed") == NULL &&
+        strstr((const char*)poOpenInfo->pabyHeader, "<atom:feed") == NULL )
         return NULL;
 
     OGRGeoRSSDataSource   *poDS = new OGRGeoRSSDataSource();
