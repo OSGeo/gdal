@@ -1476,6 +1476,21 @@ void JP2OpenJPEGDataset::WriteBox(VSILFILE* fp, GDALJP2Box* poBox)
 }
 
 /************************************************************************/
+/*                         FloorPowerOfTwo()                            */
+/************************************************************************/
+
+static int FloorPowerOfTwo(int nVal)
+{
+    int nBits = 0;
+    while( nVal > 1 )
+    {
+        nBits ++;
+        nVal >>= 1;
+    }
+    return 1 << nBits;
+}
+
+/************************************************************************/
 /*                          CreateCopy()                                */
 /************************************************************************/
 
@@ -1590,22 +1605,37 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
     int bIsIrreversible =
             ! (CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "REVERSIBLE", "NO")));
 
-    double dfRate = 100. / 25;
+    std::vector<double> adfRates;
     const char* pszQuality = CSLFetchNameValueDef(papszOptions, "QUALITY", NULL);
     if (pszQuality)
     {
-        double dfQuality = CPLAtof(pszQuality);
-        if (dfQuality > 0 && dfQuality <= 100)
+        char **papszTokens = CSLTokenizeStringComplex( pszQuality, ",", FALSE, FALSE );
+        for(int i=0; papszTokens[i] != NULL; i++ )
         {
-            dfRate = 100 / dfQuality;
+             double dfQuality = CPLAtof(papszTokens[i]);
+            if (dfQuality > 0 && dfQuality <= 100)
+            {
+                double dfRate = 100 / dfQuality;
+                adfRates.push_back(dfRate);
+            }
+            else
+            {
+                CPLError(CE_Warning, CPLE_NotSupported,
+                         "Unsupported value for QUALITY: %s. Defaulting to single-layer, with quality=25",
+                         papszTokens[i]);
+                adfRates.resize(0);
+                break;
+            }
         }
-        else
+        if( papszTokens[0] == NULL )
         {
             CPLError(CE_Warning, CPLE_NotSupported,
-                 "Unsupported value for QUALITY : %s. Defaulting to 25",
-                 pszQuality);
+                     "Unsupported value for QUALITY: %s. Defaulting to single-layer, with quality=25",
+                     pszQuality);
         }
     }
+    if( adfRates.size() == 0 )
+        adfRates.push_back(100. / 25);
 
     int nMaxTileDim = MAX(nBlockXSize, nBlockYSize);
     int nNumResolutions = 1;
@@ -1665,6 +1695,40 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
         }
         bYCC = FALSE;
     }
+    
+/* -------------------------------------------------------------------- */
+/*      Deal with codeblocks size                                       */
+/* -------------------------------------------------------------------- */
+
+    int nCblockW = atoi(CSLFetchNameValueDef( papszOptions, "CODEBLOCK_WIDTH", "64" ));
+    int nCblockH = atoi(CSLFetchNameValueDef( papszOptions, "CODEBLOCK_HEIGHT", "64" ));
+    if( nCblockW < 4 || nCblockW > 1024 || nCblockH < 4 || nCblockH > 1024 )
+    {
+        CPLError(CE_Warning, CPLE_NotSupported,
+                 "Invalid values for codeblock size. Defaulting to 64x64");
+        nCblockW = 64;
+        nCblockH = 64;
+    }
+    else if( nCblockW * nCblockH > 4096 )
+    {
+        CPLError(CE_Warning, CPLE_NotSupported,
+                 "Invalid values for codeblock size. "
+                 "CODEBLOCK_WIDTH * CODEBLOCK_HEIGHT should be <= 4096. "
+                 "Defaulting to 64x64");
+        nCblockW = 64;
+        nCblockH = 64;
+    }
+    int nCblockW_po2 = FloorPowerOfTwo(nCblockW);
+    int nCblockH_po2 = FloorPowerOfTwo(nCblockH);
+    if( nCblockW_po2 != nCblockW || nCblockH_po2 != nCblockH )
+    {
+        CPLError(CE_Warning, CPLE_NotSupported,
+                 "Non power of two values used for codeblock size. "
+                 "Using to %dx%d",
+                 nCblockW_po2, nCblockH_po2);
+    }
+    nCblockW = nCblockW_po2;
+    nCblockH = nCblockH_po2;
 
 /* -------------------------------------------------------------------- */
 /*      Deal with codestream PROFILE                                    */
@@ -1709,7 +1773,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
             {
                 CPLError(CE_Failure, CPLE_NotSupported,
                          "Tile dimensions incompatible with PROFILE_1%s. "
-                         "Should be whole image or square with dimension <= 1024",
+                         "Should be whole image or square with dimension <= 1024.",
                          pszReq21OrEmpty);
                 return NULL;
             }
@@ -1721,9 +1785,21 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
             {
                 CPLError(CE_Failure, CPLE_NotSupported,
                          "Number of resolutions incompatible with PROFILE_1%s. "
-                         "Should be at least %d",
+                         "Should be at least %d.",
                          pszReq21OrEmpty,
                          nMinProfile1Resolutions);
+                return NULL;
+            }
+        }
+        if( nCblockW > 64 || nCblockH > 64 )
+        {
+            bProfile1 = FALSE;
+            if( bInspireTG || EQUAL(pszProfile, "PROFILE_1") )
+            {
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "Codeblock width incompatible with PROFILE_1%s. "
+                         "Codeblock width or height should be <= 64.",
+                         pszReq21OrEmpty);
                 return NULL;
             }
         }
@@ -1783,8 +1859,9 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
     if (bEPH)
         parameters.csty |= 0x04;
     parameters.cp_disto_alloc = 1;
-    parameters.tcp_numlayers = 1;
-    parameters.tcp_rates[0] = (float) dfRate;
+    parameters.tcp_numlayers = (int)adfRates.size();
+    for(int i=0;i<(int)adfRates.size();i++)
+        parameters.tcp_rates[i] = (float) adfRates[i];
     parameters.cp_tx0 = 0;
     parameters.cp_ty0 = 0;
     parameters.tile_size_on = TRUE;
@@ -1794,6 +1871,8 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
     parameters.numresolution = nNumResolutions;
     parameters.prog_order = eProgOrder;
     parameters.tcp_mct = bYCC;
+    parameters.cblockw_init = nCblockW;
+    parameters.cblockh_init = nCblockH;
 
     /* Add precincts */
     const char* pszPrecincts = CSLFetchNameValueDef(papszOptions, "PRECINCTS",
@@ -1812,6 +1891,34 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
         parameters.prch_init[i] = nPCRH;
     }
     CSLDestroy(papszTokens);
+
+    /* Add tileparts setting */
+    const char* pszTileParts = CSLFetchNameValueDef(papszOptions, "TILEPARTS", "DISABLED");
+    if( EQUAL(pszTileParts, "RESOLUTIONS") )
+    {
+        parameters.tp_on = 1;
+        parameters.tp_flag = 'R';
+    }
+    else if( EQUAL(pszTileParts, "LAYERS") )
+    {
+        if( parameters.tcp_numlayers == 1 )
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "TILEPARTS=LAYERS has no real interest with single-layer codestream");
+        }
+        parameters.tp_on = 1;
+        parameters.tp_flag = 'L';
+    }
+    else if( EQUAL(pszTileParts, "COMPONENTS") )
+    {
+        parameters.tp_on = 1;
+        parameters.tp_flag = 'C';
+    }
+    else if( !EQUAL(pszTileParts, "DISABLED") )
+    {
+        CPLError(CE_Warning, CPLE_NotSupported,
+                 "Invalid value for TILEPARTS");
+    }
 
     if( bProfile1 )
     {
@@ -2215,7 +2322,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
         // Start codestream box
         nStartJP2C = VSIFTellL(fp);
         bUseXLBoxes = CSLFetchBoolean(papszOptions, "JP2C_XLBOX", FALSE) || /* For debugging */
-            (GIntBig)nXSize * nYSize * nBands * nDataTypeSize / dfRate > 4e9;
+            (GIntBig)nXSize * nYSize * nBands * nDataTypeSize / adfRates[adfRates.size()-1] > 4e9;
         GUInt32 nLBox = (bUseXLBoxes) ? 1 : 0;
         CPL_MSBPTR32(&nLBox);
         VSIFWriteL(&nLBox, 1, 4, fp);
@@ -2510,7 +2617,7 @@ void GDALRegister_JP2OpenJPEG()
 "   </Option>"
 "   <Option name='GeoJP2' type='boolean' description='Whether to emit a GeoJP2 box' default='YES'/>"
 "   <Option name='GMLJP2' type='boolean' description='Whether to emit a GMLJP2 box' default='YES'/>"
-"   <Option name='QUALITY' type='float' description='Quality. 0-100' default='25'/>"
+"   <Option name='QUALITY' type='string' description='Single quality value or comma separated list of increasing quality values for several layers, each in the 0-100 range' default='25'/>"
 "   <Option name='REVERSIBLE' type='boolean' description='True if the compression is reversible' default='false'/>"
 "   <Option name='RESOLUTIONS' type='int' description='Number of resolutions.' min='1' max='30'/>"
 "   <Option name='BLOCKXSIZE' type='int' description='Tile Width' default='1024'/>"
@@ -2538,6 +2645,14 @@ void GDALRegister_JP2OpenJPEG()
 "   <Option name='JPX' type='boolean' description='Whether to advertize JPX features when a GMLJP2 box is written' default='YES'/>"
 "   <Option name='GEOBOXES_AFTER_JP2C' type='boolean' description='Whether to place GeoJP2/GMLJP2 boxes after the code-stream' default='NO'/>"
 "   <Option name='PRECINCTS' type='string' description='Precincts size as a string of the form {w,h},{w,h},... with power-of-two values'/>"
+"   <Option name='TILEPARTS' type='string-select' description='Whether to generate tile-parts and according to which criterion' default='DISABLED'>"
+"       <Value>DISABLED</Value>"
+"       <Value>RESOLUTIONS</Value>"
+"       <Value>LAYERS</Value>"
+"       <Value>COMPONENTS</Value>"
+"   </Option>"
+"   <Option name='CODEBLOCK_WIDTH' type='int' description='Codeblock width' default='64' min='4' max='1024'/>"
+"   <Option name='CODEBLOCK_HEIGHT' type='int' description='Codeblock height' default='64' min='4' max='1024'/>"
 "</CreationOptionList>"  );
 
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
