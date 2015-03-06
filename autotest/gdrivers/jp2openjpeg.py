@@ -1154,6 +1154,20 @@ def jp2openjpeg_26():
         gdaltest.post_reason('fail')
         return 'fail'
 
+    # Error case: invalid CODEBLOCK_WIDTH/HEIGHT
+    gdal.PushErrorHandler()
+    out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_26.j2k', src_ds, options = ['INSPIRE_TG=YES', 'CODEBLOCK_WIDTH=128', 'CODEBLOCK_HEIGHT=32'])
+    gdal.PopErrorHandler()
+    if out_ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.PushErrorHandler()
+    out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_26.j2k', src_ds, options = ['INSPIRE_TG=YES', 'CODEBLOCK_WIDTH=32', 'CODEBLOCK_HEIGHT=128'])
+    gdal.PopErrorHandler()
+    if out_ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
     return 'success'
 
 ###############################################################################
@@ -1177,6 +1191,82 @@ def jp2openjpeg_27():
     del out2_ds
     gdal.Unlink('/vsimem/jp2openjpeg_27.jp2')
     gdal.Unlink('/vsimem/jp2openjpeg_27.tif')
+
+    return 'success'
+
+###############################################################################
+# Test CODEBLOCK_WIDTH/_HEIGHT
+
+def jp2openjpeg_test_codeblock(ds, codeblock_width, codeblock_height):
+    # TODO...
+    return True
+
+def jp2openjpeg_28():
+
+    if gdaltest.jp2openjpeg_drv is None:
+        return 'skip'
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 10, 10, 1)
+    
+    tests = [ ( ['CODEBLOCK_WIDTH=2'], 64, 64, True ),
+              ( ['CODEBLOCK_WIDTH=2048'], 64, 64, True ),
+              ( ['CODEBLOCK_HEIGHT=2'], 64, 64, True ),
+              ( ['CODEBLOCK_HEIGHT=2048'], 64, 64, True ),
+              ( ['CODEBLOCK_WIDTH=128', 'CODEBLOCK_HEIGHT=128'], 64, 64, True ),
+              ( ['CODEBLOCK_WIDTH=63'], 32, 64, True ),
+              ( ['CODEBLOCK_WIDTH=32', 'CODEBLOCK_HEIGHT=32'], 32, 32, False ),
+            ]
+
+    for (options, expected_cbkw, expected_cbkh, warning_expected) in tests:
+        gdal.ErrorReset()
+        gdal.PushErrorHandler()
+        out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_28.jp2', src_ds, options = options)
+        gdal.PopErrorHandler()
+        if warning_expected and gdal.GetLastErrorMsg() == '':
+            gdaltest.post_reason('warning expected')
+            print(options)
+            return 'fail'
+        if not jp2openjpeg_test_codeblock(out_ds, expected_cbkw, expected_cbkh):
+            gdaltest.post_reason('unexpected codeblock size')
+            print(options)
+            return 'fail'
+        del out_ds
+
+    gdal.Unlink('/vsimem/jp2openjpeg_28.jp2')
+
+    return 'success'
+
+###############################################################################
+# Test TILEPARTS option
+
+def jp2openjpeg_29():
+
+    if gdaltest.jp2openjpeg_drv is None:
+        return 'skip'
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 10, 10, 1)
+    
+    tests = [ ( ['TILEPARTS=DISABLED'], False ),
+              ( ['TILEPARTS=RESOLUTIONS'], False ),
+              ( ['TILEPARTS=LAYERS'], True ), # warning since there's only one quality layer
+              ( ['TILEPARTS=LAYERS', 'QUALITY=1,2'], False ),
+              ( ['TILEPARTS=COMPONENTS'], False ),
+              ( ['TILEPARTS=ILLEGAL'], True ),
+            ]
+
+    for (options, warning_expected) in tests:
+        gdal.ErrorReset()
+        gdal.PushErrorHandler()
+        out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_29.jp2', src_ds, options = options)
+        gdal.PopErrorHandler()
+        if warning_expected and gdal.GetLastErrorMsg() == '':
+            gdaltest.post_reason('warning expected')
+            print(options)
+            return 'fail'
+        # Not sure if that could be easily checked
+        del out_ds
+
+    gdal.Unlink('/vsimem/jp2openjpeg_29.jp2')
 
     return 'success'
 
@@ -1379,6 +1469,8 @@ gdaltest_list = [
     jp2openjpeg_25,
     jp2openjpeg_26,
     jp2openjpeg_27,
+    jp2openjpeg_28,
+    jp2openjpeg_29,
     jp2openjpeg_online_1,
     jp2openjpeg_online_2,
     jp2openjpeg_online_3,
