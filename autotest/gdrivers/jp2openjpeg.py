@@ -1494,6 +1494,7 @@ def jp2openjpeg_34():
 
     return 'success'
 
+
 ###############################################################################
 # Test opening a truncated file
 
@@ -1506,6 +1507,24 @@ def jp2openjpeg_35():
     ds = gdal.Open('data/truncated.jp2')
     gdal.PopErrorHandler()
     if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test we cannot create files with more than 16384 bands
+
+def jp2openjpeg_36():
+
+    if gdaltest.jp2openjpeg_drv is None:
+        return 'skip'
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 2, 2, 16385)
+    gdal.PushErrorHandler()
+    out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_36.jp2', src_ds)
+    gdal.PopErrorHandler()
+    if out_ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
 
@@ -1718,6 +1737,7 @@ gdaltest_list = [
     jp2openjpeg_33,
     jp2openjpeg_34,
     jp2openjpeg_35,
+    jp2openjpeg_36,
     jp2openjpeg_online_1,
     jp2openjpeg_online_2,
     jp2openjpeg_online_3,
