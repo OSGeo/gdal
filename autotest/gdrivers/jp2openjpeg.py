@@ -1455,6 +1455,29 @@ def jp2openjpeg_32():
     return 'success'
 
 ###############################################################################
+# Test crazy tile size
+
+def jp2openjpeg_33():
+
+    if gdaltest.jp2openjpeg_drv is None:
+        return 'skip'
+
+    src_ds = gdal.Open("""<VRTDataset rasterXSize="100000" rasterYSize="100000">
+  <VRTRasterBand dataType="Byte" band="1">
+  </VRTRasterBand>
+</VRTDataset>""")
+    gdal.PushErrorHandler()
+    out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_33.jp2', src_ds, options = ['BLOCKXSIZE=100000', 'BLOCKYSIZE=100000'])
+    gdal.PopErrorHandler()
+    if out_ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    out_ds = None
+    gdal.Unlink('/vsimem/jp2openjpeg_33.jp2')
+
+    return 'success'
+
+###############################################################################
 def jp2openjpeg_online_1():
 
     if gdaltest.jp2openjpeg_drv is None:
@@ -1658,6 +1681,7 @@ gdaltest_list = [
     jp2openjpeg_30,
     jp2openjpeg_31,
     jp2openjpeg_32,
+    jp2openjpeg_33,
     jp2openjpeg_online_1,
     jp2openjpeg_online_2,
     jp2openjpeg_online_3,
