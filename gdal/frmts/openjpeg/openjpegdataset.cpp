@@ -1512,14 +1512,12 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
         return NULL;
     }
 
-    if (poSrcDS->GetRasterBand(1)->GetColorTable() != NULL)
+    GDALColorTable* poCT = poSrcDS->GetRasterBand(1)->GetColorTable();
+    if (poCT != NULL && nBands != 1)
     {
-        CPLError( (bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported, 
-                  "JP2OpenJPEG driver ignores color table. "
-                  "The source raster band will be considered as grey level.\n"
-                  "Consider using color table expansion (-expand option in gdal_translate)\n");
-        if (bStrict)
-            return NULL;
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "JP2OpenJPEG driver only supports a color table for a single-band dataset");
+        return NULL;
     }
 
     GDALDataType eDataType = poSrcDS->GetRasterBand(1)->GetRasterDataType();
@@ -1603,16 +1601,17 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
     }
 
     int bIsIrreversible =
-            ! (CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "REVERSIBLE", "NO")));
+            ! (CSLFetchBoolean(papszOptions, "REVERSIBLE", poCT != NULL));
 
     std::vector<double> adfRates;
     const char* pszQuality = CSLFetchNameValueDef(papszOptions, "QUALITY", NULL);
+    double dfDefaultQuality = ( poCT != NULL ) ? 100.0 : 25.0;
     if (pszQuality)
     {
         char **papszTokens = CSLTokenizeStringComplex( pszQuality, ",", FALSE, FALSE );
         for(int i=0; papszTokens[i] != NULL; i++ )
         {
-             double dfQuality = CPLAtof(papszTokens[i]);
+            double dfQuality = CPLAtof(papszTokens[i]);
             if (dfQuality > 0 && dfQuality <= 100)
             {
                 double dfRate = 100 / dfQuality;
@@ -1621,8 +1620,8 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
             else
             {
                 CPLError(CE_Warning, CPLE_NotSupported,
-                         "Unsupported value for QUALITY: %s. Defaulting to single-layer, with quality=25",
-                         papszTokens[i]);
+                         "Unsupported value for QUALITY: %s. Defaulting to single-layer, with quality=%.0f",
+                         papszTokens[i], dfDefaultQuality);
                 adfRates.resize(0);
                 break;
             }
@@ -1630,12 +1629,21 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
         if( papszTokens[0] == NULL )
         {
             CPLError(CE_Warning, CPLE_NotSupported,
-                     "Unsupported value for QUALITY: %s. Defaulting to single-layer, with quality=25",
-                     pszQuality);
+                     "Unsupported value for QUALITY: %s. Defaulting to single-layer, with quality=%.0f",
+                     pszQuality, dfDefaultQuality);
         }
     }
     if( adfRates.size() == 0 )
-        adfRates.push_back(100. / 25);
+    {
+        adfRates.push_back(100. / dfDefaultQuality);
+    }
+
+    if( poCT != NULL && (bIsIrreversible || adfRates[adfRates.size()-1] != 100.0 / 100.0) )
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "Encoding a dataset with a color table with REVERSIBLE != YES "
+                 "or QUALITY != 100 will likely lead to bad visual results");
+    }
 
     int nMaxTileDim = MAX(nBlockXSize, nBlockYSize);
     int nNumResolutions = 1;
@@ -1936,7 +1944,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
     int bSamePrecision = TRUE;
     int b1BitAlpha = FALSE;
     const char* pszAlpha = CSLFetchNameValue(papszOptions, "ALPHA");
-    int bForceAlpha = (pszAlpha != NULL && CSLTestBoolean(pszAlpha));
+    int bForceAlpha = (nBands > 1 && pszAlpha != NULL && CSLTestBoolean(pszAlpha));
     for(iBand=0;iBand<nBands;iBand++)
     {
         pasBandParams[iBand].x0 = 0;
@@ -2009,6 +2017,10 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
              poSrcDS->GetRasterBand(1)->GetColorInterpretation() == GCI_RedBand &&
              poSrcDS->GetRasterBand(2)->GetColorInterpretation() == GCI_GreenBand &&
              poSrcDS->GetRasterBand(3)->GetColorInterpretation() == GCI_BlueBand )
+    {
+        eColorSpace = OPJ_CLRSPC_SRGB;
+    }
+    else if (poCT != NULL)
     {
         eColorSpace = OPJ_CLRSPC_SRGB;
     }
@@ -2204,7 +2216,35 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
         else if(  eColorSpace == OPJ_CLRSPC_SYCC )
             enumcs = 18;
         colrBox.AppendUInt32(enumcs); /* EnumCS: Enumerated colourspace */
-        
+
+        GDALJP2Box pclrBox(fp);
+        GDALJP2Box cmapBox(fp);
+        if (poCT != NULL)
+        {
+            pclrBox.SetType("pclr");
+            int nEntries = MIN(256, poCT->GetColorEntryCount());
+            pclrBox.AppendUInt16(nEntries);
+            pclrBox.AppendUInt8(3); /* NPC: Number of components */
+            pclrBox.AppendUInt8(7); /* B0: unsigned 8 bits */
+            pclrBox.AppendUInt8(7); /* B1: unsigned 8 bits */
+            pclrBox.AppendUInt8(7); /* B2: unsigned 8 bits */
+            for(int i=0;i<nEntries;i++)
+            {
+                const GDALColorEntry* psEntry = poCT->GetColorEntry(i);
+                pclrBox.AppendUInt8((GByte)psEntry->c1);
+                pclrBox.AppendUInt8((GByte)psEntry->c2);
+                pclrBox.AppendUInt8((GByte)psEntry->c3);
+            }
+            
+            cmapBox.SetType("cmap");
+            for(int i=0;i<3;i++)
+            {
+                cmapBox.AppendUInt16(0); /* CMPi: code stream component index */
+                cmapBox.AppendUInt8(1); /* MYTPi: 1=palette mapping */
+                cmapBox.AppendUInt8(i); /* PCOLi: index component from the map */
+            }
+        }
+
         GDALJP2Box cdefBox(fp);
         if( poSrcDS->GetRasterBand(nBands)->GetColorInterpretation() == GCI_AlphaBand ||
             bForceAlpha )
@@ -2286,12 +2326,16 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
         }
 
         /* Build and write jp2h super box now */
-        GDALJP2Box* apoBoxes[5];
+        GDALJP2Box* apoBoxes[7];
         int nBoxes = 1;
         apoBoxes[0] = &ihdrBox;
         if( !bSamePrecision )
             apoBoxes[nBoxes++] = &bpccBox;
         apoBoxes[nBoxes++] = &colrBox;
+        if( pclrBox.GetDataLength() )
+            apoBoxes[nBoxes++] = &pclrBox;
+        if( cmapBox.GetDataLength() )
+            apoBoxes[nBoxes++] = &cmapBox;
         if( cdefBox.GetDataLength() )
             apoBoxes[nBoxes++] = &cdefBox;
         if( poRes )
