@@ -110,6 +110,7 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
 
 package Geo::GDAL;
 use strict;
+use warnings;
 use Carp;
 use Encode;
 use Geo::GDAL::Const;
@@ -357,8 +358,9 @@ sub AutoCreateWarpedVRT {
 
 
 package Geo::GDAL::MajorObject;
-use vars qw/@DOMAINS/;
 use strict;
+use warnings;
+use vars qw/@DOMAINS/;
 
 sub Domains {
     return @DOMAINS;
@@ -382,9 +384,10 @@ sub Metadata {
 
 
 package Geo::GDAL::Driver;
-use vars qw/@CAPABILITIES @DOMAINS/;
 use strict;
+use warnings;
 use Carp;
+use vars qw/@CAPABILITIES @DOMAINS/;
 for (keys %Geo::GDAL::Const::) {
     next if /TypeCount/;
     push(@CAPABILITIES, $1), next if /^DCAP_(\w+)/;
@@ -475,8 +478,9 @@ sub CreateDataset {
 
 package Geo::GDAL::Dataset;
 use strict;
-use vars qw/%BANDS @DOMAINS/;
+use warnings;
 use Carp;
+use vars qw/%BANDS @DOMAINS/;
 @DOMAINS = qw/IMAGE_STRUCTURE SUBDATASETS GEOLOCATION/;
 
 sub Domains {
@@ -530,6 +534,12 @@ sub Projection {
     GetProjection($self) if defined wantarray;
 }
 
+sub SpatialReference {
+    my($self, $sr) = @_;
+    SetProjection($self, $sr->As('WKT')) if defined $sr;
+    return Geo::OSR::SpatialReference->new(GetProjection($self)) if defined wantarray;
+}
+
 sub GeoTransform {
     my $self = shift;
     SetGeoTransform($self, \@_) if @_ > 0;
@@ -553,6 +563,7 @@ sub GCPs {
 
 package Geo::GDAL::Band;
 use strict;
+use warnings;
 use POSIX;
 use Carp;
 use Scalar::Util 'blessed';
@@ -796,6 +807,7 @@ sub FillNodata {
 
 package Geo::GDAL::ColorTable;
 use strict;
+use warnings;
 use vars qw/
     %PALETTE_INTERPRETATION_STRING2INT %PALETTE_INTERPRETATION_INT2STRING
     /;
@@ -849,6 +861,7 @@ sub ColorTable {
 
 package Geo::GDAL::RasterAttributeTable;
 use strict;
+use warnings;
 use Carp;
 use vars qw/ %BANDS
     @FIELD_TYPES @FIELD_USAGES

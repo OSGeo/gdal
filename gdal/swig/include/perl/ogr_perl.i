@@ -109,24 +109,30 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 
 }
 
+# wrapped data source methods:
+%rename (_GetDriver) GetDriver;
+%rename (_TestCapability) TestCapability;
+
+# wrapped layer methods:
 %rename (_ReleaseResultSet) ReleaseResultSet;
-%rename (_GetLayerByIndex) GetLayerByIndex;
-%rename (_GetLayerByName) GetLayerByName;
 %rename (_CreateLayer) CreateLayer;
 %rename (_DeleteLayer) DeleteLayer;
 %rename (_CreateField) CreateField;
 %rename (_DeleteField) DeleteField;
-%rename (_GetFieldType) GetFieldType;
 %rename (_Validate) Validate;
-%rename (_SetGeometryDirectly) SetGeometryDirectly;
+
+# wrapped feature methods:
+%rename (_AlterFieldDefn) AlterFieldDefn;
+%rename (_SetGeometry) SetGeometry;
+
+# wrapped geometry methods:
 %rename (_ExportToWkb) ExportToWkb;
-%rename (_GetDriver) GetDriver;
-%rename (_TestCapability) TestCapability;
 
 %perlcode %{
 
 package Geo::OGR::Driver;
 use strict;
+use warnings;
 use vars qw /@CAPABILITIES %CAPABILITIES/;
 for (keys %Geo::OGR::) {
     push(@CAPABILITIES, $1), next if /^ODrC(\w+)/;
@@ -157,9 +163,12 @@ sub TestCapability {
 *Name = *GetName;
 
 
+
+
 package Geo::OGR::DataSource;
-use Carp;
 use strict;
+use warnings;
+use Carp;
 use vars qw /@CAPABILITIES %CAPABILITIES %LAYERS %RESULT_SET/;
 for (keys %Geo::OGR::) {
     push(@CAPABILITIES, $1), next if /^ODsC(\w+)/;
@@ -210,108 +219,93 @@ sub ReleaseResultSet {
     # a no-op, _ReleaseResultSet is called from Layer::DESTROY
 }
 
-sub Layer {
+sub GetLayer {
     my($self, $name) = @_;
-    my $layer;
-    if (defined $name) {
-        $layer = _GetLayerByName($self, "$name");
-        croak "$name is not a layer in this datasource" if (not $layer and not $name =~ /^\d+$/);
-        $layer = _GetLayerByIndex($self, $name+0) unless $layer;
-    } else {
-        $layer = _GetLayerByIndex($self, 0);
-    }
-    croak "the data source does not appear to have a layer with name '$name'" unless $layer;
+    my $layer = defined $name ? GetLayerByName($self, "$name") : GetLayerByIndex($self, 0);
+    $name = '' unless defined $name;
+    confess "No such layer: '$name'." unless $layer;
     $LAYERS{tied(%$layer)} = $self;
     return $layer;
 }
+*Layer = *GetLayer;
 
-sub Layers {
+sub GetLayerNames {
     my $self = shift;
     my @names;
     for my $i (0..$self->GetLayerCount-1) {
-        my $layer = _GetLayerByIndex($self, $i);
+        my $layer = GetLayerByIndex($self, $i);
         push @names, $layer->GetName;
     }
     return @names;
 }
-
-sub GetLayerByIndex {
-    my($self, $index) = @_;
-    $index = 0 unless defined $index;
-    my $layer = _GetLayerByIndex($self, $index+0);
-    croak "the data source does not appear to have a layer with index '$index'" unless $layer;
-    $LAYERS{tied(%$layer)} = $self;
-    return $layer;
-}
-
-sub GetLayerByName {
-    my($self, $name) = @_;
-    my $layer = _GetLayerByName($self, "$name");
-    croak "the data source does not appear to have a layer with name $name" unless $layer;
-    $LAYERS{tied(%$layer)} = $self;
-    return $layer;
-}
+*Layers = *GetLayerNames;
 
 sub CreateLayer {
     my $self = shift;
-    my %defaults = (Name => 'unnamed',
-                    SRS => undef,
-                    GeometryType => 'Unknown',
-                    Options => [],
-                    Schema => undef,
-                    Fields => undef);
+    my %defaults = ( Name => 'unnamed',
+                     SRS => undef,
+                     Options => {},
+                     GeometryType => 'Unknown',
+                     Schema => undef,
+                     Fields => undef,
+                     ApproxOK => 1);
     my %params;
-    if (ref($_[0]) eq 'HASH') {
+    if (@_ == 0) {
+    } elsif (ref($_[0]) eq 'HASH') {
         %params = %{$_[0]};
+    } elsif (exists $defaults{$_[0]} and @_ % 2 == 0) {
+        %params = @_;
     } else {
         ($params{Name}, $params{SRS}, $params{GeometryType}, $params{Options}, $params{Schema}) = @_;
     }
     for (keys %params) {
-        carp "unknown parameter $_ in Geo::OGR::DataSource->CreateLayer" unless exists $defaults{$_};
+        carp "CreateLayer: unknown named parameter '$_'." unless exists $defaults{$_};
     }
+    if (exists $params{Schema}) {
+        my $s = $params{Schema};
+        $params{GeometryType} = $s->{GeometryType} if exists $s->{GeometryType};
+        $params{Fields} = $s->{Fields} if exists $s->{Fields};
+        $params{Name} = $s->{Name} if exists $s->{Name};
+    }
+    $defaults{GeometryType} = 'None' if $params{Fields};
     for (keys %defaults) {
         $params{$_} = $defaults{$_} unless defined $params{$_};
     }
-    my $gt = $params{GeometryType};
-    $gt = $params{Schema}->{GeometryType} if ($params{Schema} and exists $params{Schema}->{GeometryType});
-    my $gt2 = $gt;
-    $gt2 = $Geo::OGR::Geometry::TYPE_STRING2INT{$gt} if exists $Geo::OGR::Geometry::TYPE_STRING2INT{$gt};
-    croak "Unknown data type: '$gt'." unless exists $Geo::OGR::Geometry::TYPE_INT2STRING{$gt2};
-    my $layer = _CreateLayer($self, $params{Name}, $params{SRS}, $gt2, $params{Options});
+    confess "Unknown geometry type: '$params{GeometryType}'." 
+        unless exists $Geo::OGR::Geometry::TYPE_STRING2INT{$params{GeometryType}};
+    my $gt = $Geo::OGR::Geometry::TYPE_STRING2INT{$params{GeometryType}};
+    my $layer = _CreateLayer($self, $params{Name}, $params{SRS}, $gt, $params{Options});
     $LAYERS{tied(%$layer)} = $self;
-    if ($params{Fields}) {
-        $params{Schema} = {} unless $params{Schema};
-        $params{Schema}{Fields} = $params{Fields};
+    my $f = $params{Fields};
+    if ($f) {
+        confess "Named parameter 'Fields' must be a reference to an array." unless ref($f) eq 'ARRAY';
+        for my $field (@$f) {
+            $layer->CreateField($field);
+        }
     }
-    $layer->Schema(%{$params{Schema}}) if $params{Schema};
     return $layer;
 }
 
 sub DeleteLayer {
-    my $self = shift;
-    my $name;
-    if (@_ == 2) {
-        my %param = @_;
-        _DeleteLayer($self, $param{index}), return if exists $param{index};
-        $name = $param{name};
-    } else {
-        $name = shift;
-    }
+    my ($self, $name) = @_;
     my $index;
     for my $i (0..$self->GetLayerCount-1) {
-        my $layer = _GetLayerByIndex($self, $i);
+        my $layer = GetLayerByIndex($self, $i);
         $index = $i, last if $layer->GetName eq $name;
     }
-    $index = $name unless defined $index;
-    _DeleteLayer($self, $index) if defined $index;
+    confess "No such layer: '$name'." unless defined $index;
+    _DeleteLayer($self, $index);
 }
+
+
 
 
 package Geo::OGR::Layer;
 use strict;
+use warnings;
 use Carp;
 use Scalar::Util 'blessed';
-use vars qw /@CAPABILITIES %CAPABILITIES/;
+use vars qw /@CAPABILITIES %CAPABILITIES  %DEFNS/;
 for (keys %Geo::OGR::) {
     push(@CAPABILITIES, $1), next if /^OLC(\w+)/;
 }
@@ -360,93 +354,103 @@ sub TestCapability {
     return _TestCapability($self, $CAPABILITIES{$cap});
 }
 
-sub DataSource {
+sub GetDataSource {
     my $self = shift;
     return $Geo::OGR::DataSource::LAYERS{$self};
 }
+*DataSource = *GetDataSource;
 
-sub HasField {
-    my($self, $fn) = @_;
-    eval {
-        $fn = $self->GetLayerDefn->GetFieldIndex($fn) unless $fn =~ /^\d+$/;
-        $self->GetLayerDefn->GetFieldDefn($fn);
-    };
-    return $@ eq '';
-}
-
-sub GetField {
-    my($self, $fn) = @_;
-    $fn = $self->GetLayerDefn->GetFieldIndex($fn) unless $fn =~ /^\d+$/;
-    return $self->GetLayerDefn->GetFieldDefn($fn)->Schema;
+sub GetDefn {
+    my $self = shift;
+    my $defn = $self->GetLayerDefn;
+    $DEFNS{$defn} = $self;
+    return $defn;
 }
 
 sub CreateField {
     my $self = shift;
-    my $fd = shift;
-    if (blessed($fd) and $fd->isa('Geo::OGR::FieldDefn')) {
-        my $n = $fd->Schema->{Name};
-        croak "the layer already has a field with name '$n'" if $self->HasField($n);
-        my $a = shift || 1;
-        _CreateField($self, $fd, $a);
+    my %defaults = ( ApproxOK => 1,
+                     Type => '' );
+    my %params;
+    if (@_ == 0) {
+    } elsif (ref($_[0]) eq 'HASH') {
+        %params = %{$_[0]};
+    } elsif (@_ % 2 == 0) {
+        %params = @_;
     } else {
-        $fd = Geo::OGR::FieldDefn->create($fd, @_);
-        my $n = $fd->Schema->{Name};
-        croak "the layer already has a field with name '$n'" if $self->HasField($n);
-        _CreateField($self, $fd); # approximation flag cannot be set using this method
+        ($params{Defn}) = @_;
+    }
+    for (keys %defaults) {
+        $params{$_} = $defaults{$_} unless defined $params{$_};
+    }
+    if (blessed($params{Defn}) and $params{Defn}->isa('Geo::OGR::FieldDefn')) {
+        $self->_CreateField($params{Defn}, $params{ApproxOK});
+    } elsif (blessed($_[0]) and $params{Defn}->isa('Geo::OGR::GeomFieldDefn')) {
+        $self->CreateGeomField($params{Defn}, $params{ApproxOK});
+    } else {
+        my $a = $params{ApproxOK};
+        delete $params{ApproxOK};
+        if (exists $params{GeometryType}) {
+            $params{Type} = $params{GeometryType};
+            delete $params{GeometryType};
+        }
+        if (exists $Geo::OGR::FieldDefn::TYPE_STRING2INT{$params{Type}}) {
+            my $fd = Geo::OGR::FieldDefn->create(%params);
+            _CreateField($self, $fd, $a);
+        } else {
+            my $fd = Geo::OGR::GeomFieldDefn->create(%params);
+            CreateGeomField($self, $fd, $a);
+        }
     }
 }
 
-sub AlterField {
+sub AlterFieldDefn {
     my $self = shift;
-    my $fn = shift;
-    my $index = $fn;
-    $index = $self->GetLayerDefn->GetFieldIndex($fn) unless $fn =~ /^\d+$/;
-    my $field = $self->GetLayerDefn->GetFieldDefn($index);
-    my $definition = Geo::OGR::FieldDefn->create(@_);
-    my $flags = 0;
-    my %params = @_;
-    $flags |= 1 if $params{Name};
-    $flags |= 2 if $params{Type};
-    $flags |= 4 if $params{Width} or $params{Precision};
-    $flags |= 8 if $params{Nullable};
-    $flags |= 16 if $params{Default};
-    AlterFieldDefn($self, $index, $definition, $flags);
+    my $field = shift;
+    my $index;
+    eval {
+        $index = $self->GetFieldIndex($field);
+    };
+    confess "Only non-spatial fields can be altered.\n$@" if $@;
+    if (blessed($_[0]) and $_[0]->isa('Geo::OGR::FieldDefn')) {
+        _AlterFieldDefn($self, $index, @_);
+    } elsif (@_ % 2 == 0) {
+        my %params = @_;
+        my $definition = Geo::OGR::FieldDefn->create(%params);
+        my $flags = 0;    
+        $flags |= 1 if exists $params{Name};
+        $flags |= 2 if exists $params{Type};
+        $flags |= 4 if exists $params{Width} or exists $params{Precision};
+        $flags |= 8 if exists $params{Nullable};
+        $flags |= 16 if exists $params{Default};
+        _AlterFieldDefn($self, $index, $definition, $flags);
+    } else {
+        croak "Usage: AlterFieldDefn(\$Name, \%NamedParameters)";
+    }
 }
 
 sub DeleteField {
     my($self, $fn) = @_;
-    $fn = $self->GetLayerDefn->GetFieldIndex($fn) unless $fn =~ /\d+/;
-    _DeleteField($self, $fn);
+    my $d = $self->GetDefn;
+    my $index = $d->GetFieldIndex($fn);
+    $index = $fn if $index < 0;
+    eval {
+        _DeleteField($self, $index);
+    };
+    confess "Field not found: '$fn'. Only non-spatial fields can be deleted." if $@;
 }
 
-sub Schema {
+sub GetSchema {
     my $self = shift;
-    if (@_) {
-        my %schema = @_;
-        # the Name and GeometryType cannot be set
-        for my $fd (@{$schema{Fields}}) {
-            if (ref($fd) eq 'HASH') {
-                $fd = Geo::OGR::FieldDefn->create(%$fd);
-            }
-            $schema{ApproxOK} = 1 unless defined $schema{ApproxOK};
-            _CreateField($self, $fd, $schema{ApproxOK});
-        }
-    }
-    return unless defined wantarray;
-    return $self->GetLayerDefn->Schema;
+    confess "Schema of a layer cannot be set directly." if @_;
+    return $self->GetDefn->Schema;
 }
+*Schema = *GetSchema;
 
 sub Row {
     my $self = shift;
-    my %row;
-    my $update;
-    if (@_ > 0 and ref($_[0])) { # undocumented hack: the first argument may be the schema
-        $update = @_ > 1;
-        %row = @_[1..$#$_];
-    } else {
-        $update = @_ > 0;
-        %row = @_;
-    }
+    my $update = @_ > 0;
+    my %row = @_;
     my $feature = defined $row{FID} ? $self->GetFeature($row{FID}) : $self->GetNextFeature;
     return unless $feature;
     my $ret;
@@ -462,8 +466,6 @@ sub Row {
 
 sub Tuple {
     my $self = shift;
-    # undocumented hack: the first argument may be the schema
-    my $schema = ref($_[0]) ? shift : $self->Schema;
     my $FID = shift;
     my $feature = defined $FID ? $self->GetFeature($FID) : $self->GetNextFeature;
     return unless $feature;
@@ -471,9 +473,9 @@ sub Tuple {
     unshift @_, $feature->GetFID if $set;
     my @ret;
     if (defined wantarray) {
-        @ret = $feature->Tuple($schema, @_);
+        @ret = $feature->Tuple(@_);
     } else {
-        $feature->Tuple($schema, @_);
+        $feature->Tuple(@_);
     }
     $self->SetFeature($feature) if $set;
     return unless defined wantarray;
@@ -491,16 +493,14 @@ sub SpatialFilter {
 sub InsertFeature {
     my $self = shift;
     my $feature = shift;
-    croak "InsertFeature requires the feature data in an object or in a referenced hash or array" unless ref($feature);
-    my $schema = shift;
-    $schema = $self->Schema unless $schema;
-    my $new = Geo::OGR::Feature->create($schema);
+    confess "Usage: \$feature->InsertFeature(reference to a hash or array)." unless ref($feature);
+    my $new = Geo::OGR::Feature->create($self->GetDefn);
     if (ref($feature) eq 'HASH') {
-        $new->Row($schema, %$feature);
+        $new->Row(%$feature);
     } elsif (ref($feature) eq 'ARRAY') {
-        $new->Tuple($schema, @$feature);
+        $new->Tuple(@$feature);
     } elsif (blessed($feature) and $feature->isa('Geo::OGR::Feature')) {
-        $new->Row($schema, $feature->Row);
+        $new->Row($feature->Row);
     }
     $self->CreateFeature($new);
 }
@@ -531,70 +531,185 @@ sub ForGeometries {
     }
 }
 
-sub GeometryType {
+sub GetFieldNames {
     my $self = shift;
-    return $Geo::OGR::Geometry::TYPE_INT2STRING{GetGeomType($self)};
+    my $d = $self->GetDefn;
+    my @ret;
+    for (my $i = 0; $i < $d->GetFieldCount; $i++) {
+        push @ret, $d->GetFieldDefn($i)->Name();
+    }
+    for (my $i = 0; $i < $d->GetGeomFieldCount; $i++) {
+        push @ret, $d->GetGeomFieldDefn($i)->Name();
+    }
+    return @ret;
 }
+
+sub GetFieldDefn {
+    my ($self, $name) = @_;
+    my $d = $self->GetDefn;
+    for (my $i = 0; $i < $d->GetFieldCount; $i++) {
+        my $fd = $d->GetFieldDefn($i);
+        return $fd if $fd->Name eq $name;
+    }
+    for (my $i = 0; $i < $d->GetGeomFieldCount; $i++) {
+        my $fd = $d->GetGeomFieldDefn($i);
+        return $fd if $fd->Name eq $name;
+    }
+    confess "No such field: '$name'";
+}
+
+sub SpatialReference {
+    my($self, $field, $sr) = @_;
+    my $d = $self->GetDefn;
+    my $i;
+    if (not defined $field or (blessed($field) and $field->isa('Geo::OSR::SpatialReference'))) {
+        $i = 0;
+    } else {
+        $i = $d->GetGeomFieldIndex($field);
+    }
+    my $d2 = $d->GetGeomFieldDefn($i);
+    $d2->SpatialReference($sr) if defined $sr;
+    return $d2->SpatialReference() if defined wantarray;
+}
+
+
+
 
 package Geo::OGR::FeatureDefn;
 use strict;
+use warnings;
 use Encode;
 use Carp;
+use Scalar::Util 'blessed';
+
+sub RELEASE_PARENTS {
+    my $self = shift;
+    delete $Geo::OGR::Feature::DEFNS{$self};
+    delete $Geo::OGR::Layer::DEFNS{$self};
+}
 
 sub create {
     my $pkg = shift;
     my %schema;
-    if (@_ == 1) {
+    if (@_ == 1 and ref($_[0]) eq 'HASH') {
         %schema = %{$_[0]};
-    } else {
+    } elsif (@_ and @_ % 2 == 0) {
         %schema = @_;
     }
+    my $fields = $schema{Fields};
+    confess "The Fields argument is not a reference to an array." if $fields and ref($fields) ne 'ARRAY';
+    $schema{Name} = '' unless exists $schema{Name};
     my $self = Geo::OGRc::new_FeatureDefn($schema{Name});
     bless $self, $pkg;
-    $self->GeometryType($schema{GeometryType});
-    for my $fd (@{$schema{Fields}}) {
-        my $d;
+    my $gt = $schema{GeometryType};
+    if ($fields) {
+        $self->DeleteGeomFieldDefn(0); # either default behavior or argument specified
+    } else {
+        $self->GeometryType($schema{GeometryType}) if exists $schema{GeometryType};
+    }
+    $self->StyleIgnored($schema{StyleIgnored}) if exists $schema{StyleIgnored};
+    for my $fd (@{$fields}) {
+        my $d = $fd;
         if (ref($fd) eq 'HASH') {
-            $d = Geo::OGR::FieldDefn->create(%$fd);
-        } else {
-            $d = Geo::OGR::FieldDefn->create($fd->Schema);
+            if ($fd->{GeometryType} or exists $Geo::OGR::Geometry::TYPE_STRING2INT{$fd->{Type}}) {
+                $d = Geo::OGR::GeomFieldDefn->create(%$fd);
+            } else {
+                $d = Geo::OGR::FieldDefn->create(%$fd);
+            }
         }
-        AddFieldDefn($self, $d);
+        if (blessed($d) and $d->isa('Geo::OGR::FieldDefn')) {
+            AddFieldDefn($self, $d);
+        } elsif (blessed($d) and $d->isa('Geo::OGR::GeomFieldDefn')) {
+            AddGeomFieldDefn($self, $d);
+        } else {
+            confess "Item in field list does not define a field.";
+        }
     }
     return $self;
 }
 *Name = *GetName;
 
-sub Schema {
+sub GetSchema {
     my $self = shift;
+    confess "Schema of a feature definition cannot be set directly." if @_;
     my %schema;
-    if (@_) {
-        %schema = @_;
-        # the Name cannot be set
-        $self->GeomType($schema{GeometryType}) if exists $schema{GeometryType};
-        for my $fd (@{$schema{Fields}}) {
-            if (ref($fd) eq 'HASH') {
-                $fd = Geo::OGR::FieldDefn->create(%$fd);
-            }
-            AddFieldDefn($self, $fd);
-        }
-    }
-    return unless defined wantarray;
-    $schema{Name} = $self->GetName();
-    $schema{GeometryType} = $self->GeomType();
+    $schema{Name} = $self->Name();
+    $schema{StyleIgnored} = $self->StyleIgnored();
     $schema{Fields} = [];
     for my $i (0..$self->GetFieldCount-1) {
         my $s = $self->GetFieldDefn($i)->Schema;
-        $s->{Index} = $i;
+        push @{$schema{Fields}}, $s;
+    }
+    for my $i (0..$self->GetGeomFieldCount-1) {
+        my $s = $self->GetGeomFieldDefn($i)->Schema;
         push @{$schema{Fields}}, $s;
     }
     return wantarray ? %schema : \%schema;
 }
+*Schema = *GetSchema;
+
+sub AddField {
+    my $self = shift;
+    confess "Read-only definition." if $Geo::OGR::Feature::DEFNS{$self} or $Geo::OGR::Layer::DEFNS{$self};
+    my %params;
+    if (@_ == 0) {
+    } elsif (ref($_[0]) eq 'HASH') {
+        %params = %{$_[0]};
+    } elsif (@_ % 2 == 0) {
+        %params = @_;
+    }
+    $params{Type} = '' unless defined $params{Type};
+    if (exists $Geo::OGR::FieldDefn::TYPE_STRING2INT{$params{Type}}) {
+        my $fd = Geo::OGR::FieldDefn->create(%params);
+        $self->AddFieldDefn($fd);
+    } else {
+        my $fd = Geo::OGR::GeomFieldDefn->create(%params);
+        $self->AddGeomFieldDefn($fd);
+    }
+}
+
+sub DeleteField {
+    my ($self, $name) = @_;
+    confess "Read-only definition." if $Geo::OGR::Feature::DEFNS{$self} or $Geo::OGR::Layer::DEFNS{$self};
+    for my $i (0..$self->GetFieldCount-1) {
+        confess "Non-geometry fields cannot be deleted." if $self->GetFieldDefn($i)->Name eq $name;
+    }
+    for my $i (0..$self->GetGeomFieldCount-1) {
+        $self->DeleteGeomFieldDefn($i) if $self->GetGeomFieldDefn($i)->Name eq $name;
+    }
+    confess "No such field: '$name'.";
+}
+
+sub GetFieldNames {
+    my $self = shift;
+    my @names = ();
+    for my $i (0..$self->GetFieldCount-1) {
+        push @names, $self->GetFieldDefn($i)->Name;
+    }
+    for my $i (0..$self->GetGeomFieldCount-1) {
+        push @names, $self->GetGeomFieldDefn($i)->Name;
+    }
+    return @names;
+}
+
+sub GetFieldDefn {
+    my ($self, $name) = @_;
+    for my $i (0..$self->GetFieldCount-1) {
+        my $fd = $self->GetFieldDefn($i);
+        return $fd if $fd->Name eq $name;
+    }
+    for my $i (0..$self->GetGeomFieldCount-1) {
+        my $fd = $self->GetGeomFieldDefn($i);
+        return $fd if $fd->Name eq $name;
+    }
+    confess "No such field: '$name'.";
+}
 
 sub GeomType {
-    my($self, $type) = @_;
+    my ($self, $type) = @_;
+    confess "Read-only definition." if $Geo::OGR::Feature::DEFNS{$self} or $Geo::OGR::Layer::DEFNS{$self};
     if (defined $type) {
-        croak "Unknown geometry data type: '$type'." unless exists $Geo::OGR::Geometry::TYPE_STRING2INT{$type};
+        confess "Unknown geometry data type: '$type'." unless exists $Geo::OGR::Geometry::TYPE_STRING2INT{$type};
         $type = $Geo::OGR::Geometry::TYPE_STRING2INT{$type};
         SetGeomType($self, $type);
     }
@@ -615,25 +730,42 @@ sub StyleIgnored {
 }
 
 
+
+
 package Geo::OGR::Feature;
 use strict;
-use vars qw /%GEOMETRIES/;
+use warnings;
+use vars qw /%GEOMETRIES %DEFNS/;
 use Carp;
 use Encode;
+use Scalar::Util 'blessed';
 
 sub create {
     my $pkg = shift;
-    $pkg->new(Geo::OGR::FeatureDefn->create(@_));
+    if (blessed($_[0]) and $_[0]->isa('Geo::OGR::FeatureDefn')) {
+        return $pkg->new($_[0]);
+    } else {
+        return $pkg->new(Geo::OGR::FeatureDefn->create(@_));
+    }
 }
 
 sub FETCH {
     my($self, $index) = @_;
-    $self->GetField($index);
+    my $i;
+    eval {$i = $self->_GetFieldIndex($index)};
+    $self->GetField($i) unless $@;
+    $i = $self->_GetGeomFieldIndex($index);
+    $self->GetGeometry($i);
 }
 
 sub STORE {
     my $self = shift;
-    $self->SetField(@_);
+    my $index = shift;
+    my $i;
+    eval {$i = $self->_GetFieldIndex($index)};
+    $self->SetField($i, @_) unless $@;
+    $i = $self->_GetGeomFieldIndex($index);
+    $self->SetGeometry($i, @_);
 }
 
 sub FID {
@@ -660,120 +792,131 @@ sub Validate {
     _Validate($self, $flags);
 }
 
-sub Schema {
+sub GetSchema {
     my $self = shift;
-    if (@_) {
-        my %schema = @_;
-        # the Name and GeometryType cannot be set
-        for my $fd (@{$schema{Fields}}) {
-            if (ref($fd) eq 'HASH') {
-                $fd = Geo::OGR::FieldDefn->create(%$fd);
-            }
-            $schema{ApproxOK} = 1 unless defined $schema{ApproxOK};
-            CreateField($self, $fd, $schema{ApproxOK});
-        }
-    }
-    return unless defined wantarray;
+    confess "Schema of a feature cannot be set directly." if @_;
     return $self->GetDefnRef->Schema;
 }
+*Schema = *GetSchema;
 
 sub Row {
     my $self = shift;
-    # undocumented hack: the first argument may be the schema
-    my $schema = ref($_[0]) ? shift : $self->Schema;
+    my $nf = $self->GetFieldCount;
+    my $ngf = $self->GetGeomFieldCount;
     if (@_) { # update
-        my %row = ref($_[0]) ? %{$_[0]} : @_;
+        my %row;
+        if (@_ == 1 and ref($_[0]) eq 'HASH') {
+            %row = %{$_[0]};
+        } elsif (@_ and @_ % 2 == 0) {
+            %row = @_;    
+        } else {
+            confess 'Usage: $feature->Row(%FeatureData)';
+        }
         $self->SetFID($row{FID}) if defined $row{FID};
-        $self->Geometry($schema, $row{Geometry}) if $row{Geometry};
-        for my $fn (keys %row) {
-            next if $fn eq 'FID';
-            next if $fn eq 'Geometry';
-            my $index = GetFieldIndex($self, $fn);
-            next if $index < 0;
-            $self->SetField($index, $row{$fn});
+        #$self->Geometry($schema, $row{Geometry}) if $row{Geometry};
+        for my $name (keys %row) {
+            next if $name eq 'FID';
+            if ($name eq 'Geometry') {
+                $self->SetGeometry(0, $row{$name});
+                next;
+            }
+            my $f = 0;
+            for my $i (0..$nf-1) {
+                if ($self->GetFieldDefnRef($i)->Name eq $name) {
+                    $self->SetField($i, $row{$name});
+                    $f = 1;
+                    last;
+                }
+            }
+            next if $f;
+            for my $i (0..$ngf-1) {
+                if ($self->GetGeomFieldDefnRef($i)->Name eq $name) {
+                    $self->SetGeometry($i, $row{$name});
+                    $f = 1;
+                    last;
+                }
+            }
+            next if $f;
+            carp "Feature->Row: Unknown field: '$name'.";
         }
     }
     return unless defined wantarray;
     my %row = ();
-    for my $field (@{$schema->{Fields}}) {
-        my $n = $field->{Name};
-        if (FieldIsList($self, $n)) {
-            $row{$n} = [$self->GetField($n)];
-        } else {
-            $row{$n} = $self->GetField($n);
-        }
+    for my $i (0..$nf-1) {
+        my $name = $self->GetFieldDefnRef($i)->Name;
+        $row{$name} = $self->GetField($i);
+    }
+    for my $i (0..$ngf-1) {
+        my $name = $self->GetGeomFieldDefnRef($i)->Name;
+        $name = 'Geometry' if $name eq '';
+        $row{$name} = $self->GetGeometry($i);
     }
     $row{FID} = $self->GetFID;
-    $row{Geometry} = $self->Geometry;
+    #$row{Geometry} = $self->Geometry;
     return \%row;
 }
 
 sub Tuple {
     my $self = shift;
-    # undocumented hack: the first argument may be the schema
-    my $schema = ref($_[0]) ? shift : $self->Schema;
-    my $FID = shift;
-    if (defined $FID) {
-        $self->SetFID($FID);
-        my $geometry = shift;
-        $self->Geometry($schema, $geometry) if $geometry;
-        if (@_) {
-            for my $field (@{$schema->{Fields}}) {
-                my $v = shift;
-                my $n = $field->{Name};
-                $self->SetField($n, $v);
-            }
+    my $nf = $self->GetFieldCount;
+    my $ngf = $self->GetGeomFieldCount;
+    if (@_) {
+        my $FID;
+        $FID = shift if @_ == $nf + $ngf + 1;
+        $self->SetFID($FID) if defined $FID;
+        my $values = \@_;
+        if (@$values != $nf + $ngf) {
+            my $n = $nf + $ngf;
+            confess "Too many or too few attribute values for a feature (need $n).";
+        }
+        my $index = 0; # index to non-geometry and geometry fields
+        for my $i (0..$nf-1) {
+            $self->SetField($i, $values->[$i]);
+        }
+        for my $i (0..$ngf-1) {
+            $self->SetGeometry($i, $values->[$nf+$i]);
         }
     }
     return unless defined wantarray;
-    my @ret = ($self->GetFID, $self->Geometry);
-    my $i = 0;
-    for my $field (@{$schema->{Fields}}) {
-        if (FieldIsList($self, $i)) {
-            push @ret, [$self->GetField($i++)];
-        } else {
-            push @ret, $self->GetField($i++);
-        }
+    my @ret = ($self->GetFID);
+    for my $i (0..$nf-1) {
+        my $v = $self->GetField($i);
+        push @ret, $v;
+    }
+    for my $i (0..$ngf-1) {
+        my $v = $self->GetGeometry($i);
+        push @ret, $v;
     }
     return @ret;
 }
 
-sub Index {
+sub GetDefn {
+    my $self = shift;
+    my $defn = $self->GetDefnRef;
+    $DEFNS{$defn} = $self;
+    return $defn;
+}
+
+*GetFieldNames = *Geo::OGR::Layer::GetFieldNames;
+*GetFieldDefn = *Geo::OGR::Layer::GetFieldDefn;
+
+sub _GetFieldIndex {
     my($self, $field) = @_;
-    my $index;
     if ($field =~ /^\d+$/) {
-        $index = $field;
+        return $field if $field >= 0 and $field < $self->GetFieldCount;
     } else {
-        $index = GetFieldIndex($self, "$field");
+        for my $i (0..$self->GetFieldCount-1) {
+            return $i if $self->GetFieldDefnRef($i)->Name eq $field;
+        }
     }
-    croak "the feature does not have a field with name '$field'" if $index < 0 or $index >= GetFieldCount($self);
-    return $index;
-}
-
-sub GetFieldType {
-    my($self, $field) = @_;
-    $field = Index($self, $field);
-    return $Geo::OGR::FieldDefn::TYPE_INT2STRING{_GetFieldType($self, $field)};
-}
-
-sub FieldIsList {
-    my($self, $field) = @_;
-    $field = Index($self, $field);
-    my $type = _GetFieldType($self, $field);
-    return 1 if ($type == $Geo::OGR::OFTIntegerList or
-                 $type == $Geo::OGR::OFTRealList or
-                 $type == $Geo::OGR::OFTStringList or
-                 $type == $Geo::OGR::OFTDate or
-                 $type == $Geo::OGR::OFTTime or
-                 $type == $Geo::OGR::OFTDateTime);
-    return 0;
+    confess "No such field: '$field'.";
 }
 
 sub GetField {
     my($self, $field) = @_;
-    $field = Index($self, $field);
-    return undef unless IsFieldSet($self, $field);
-    my $type = _GetFieldType($self, $field);
+    $field = $self->_GetFieldIndex($field);
+    return unless IsFieldSet($self, $field);
+    my $type = GetFieldType($self, $field);
     if ($type == $Geo::OGR::OFTInteger) {
         return GetFieldAsInteger($self, $field);
     }
@@ -810,26 +953,25 @@ sub GetField {
     if ($type == $Geo::OGR::OFTDateTime) {
         return GetFieldAsDateTime($self, $field);
     }
-    croak "GDAL does not have a field type whose constant is '$type'";
+    confess "Perl bindings do not support field type '$Geo::OGR::FieldDefn::TYPE_INT2STRING{$type}'.";
 }
 
 sub UnsetField {
     my($self, $field) = @_;
-    $field = Index($self, $field);
+    $field = $self->_GetFieldIndex($field);
     _UnsetField($self, $field);
 }
 
 sub SetField {
     my $self = shift;
-    my $field = $_[0];
-    $field = Index($self, $field);
-    shift;
+    my $field = shift;
+    $field = $self->_GetFieldIndex($field);
     if (@_ == 0 or !defined($_[0])) {
         _UnsetField($self, $field);
         return;
     }
     my $list = ref($_[0]) ? $_[0] : [@_];
-    my $type = _GetFieldType($self, $field);
+    my $type = GetFieldType($self, $field);
     if ($type == $Geo::OGR::OFTInteger or
         $type == $Geo::OGR::OFTReal or
         $type == $Geo::OGR::OFTString or
@@ -862,7 +1004,7 @@ sub SetField {
         _SetField($self, $field, @$list[0..6]);
     }
     else {
-        croak "GDAL does not have a field type of number '$type'";
+        confess "Perl bindings do not support field type '$Geo::OGR::FieldDefn::TYPE_INT2STRING{$type}'.";
     }
 }
 
@@ -873,58 +1015,64 @@ sub Field {
     $self->GetField($field);
 }
 
+sub _GetGeomFieldIndex {
+    my($self, $field) = @_;
+    if (not defined $field) {
+        return 0 if $self->GetGeomFieldCount > 0;
+    } if ($field =~ /^\d+$/) {
+        return $field if $field >= 0 and $field < $self->GetGeomFieldCount;
+    } else {
+        for my $i (0..$self->GetGeomFieldCount-1) {
+            return $i if $self->GetGeomFieldDefn($i)->Name eq $field;
+        }
+        return 0 if $self->GetGeomFieldCount > 0 and $field eq 'Geometry';
+    }
+    confess "No such field: '$field'.";
+}
+
 sub Geometry {
     my $self = shift;
+    my $field = (ref($_[0]) eq '' or (@_ > 2 and @_ % 2 == 1)) ? shift : undef;
+    $field = $self->_GetGeomFieldIndex($field);
     if (@_) {
-        # undocumented hack: the first argument may be the schema
-        my $schema = @_ == 2 ? shift : $self->Schema;
-        my $geometry = shift;
-        my $type = $schema->{GeometryType};
-        if (ref($geometry) eq 'HASH') {
-            my $geom;
+        my $type = $self->GetDefn->GetGeomFieldDefn($field)->Type;
+        my $geometry;
+        if (@_ == 1) {
+            $geometry = $_[0];
+        } elsif (@_ and @_ % 2 == 0) {
+            %$geometry = @_;    
+        }
+        if (blessed($geometry) and $geometry->isa('Geo::OGR::Geometry')) {
+            confess "The type of the inserted geometry ('".$geometry->GeometryType."') is not the field type ('$type')." 
+                if $type ne 'Unknown' and $type ne $geometry->GeometryType;
             eval {
-                $geom = Geo::OGR::Geometry->create(%$geometry);
+                $self->SetGeomFieldDirectly($field, $geometry);
             };
-            if ($@) {
-                $geometry->{GeometryType} = $type;
-                $geom = Geo::OGR::Geometry->create(%$geometry);
-            }
-            unless ($type eq 'Unknown' or !$geom->GeometryType) {
-                croak "an attempt to insert a geometry with type '",$geom->GeometryType,"' into a feature with geometry type '$type'" unless $type eq $geom->GeometryType;
-            }
-            $self->SetGeometryDirectly($geom);
+            confess "$@" if $@;
+            $GEOMETRIES{tied(%{$geometry})} = $self;
+        } elsif (ref($geometry) eq 'HASH') {
+            $geometry->{GeometryType} = $type unless exists $geometry->{GeometryType};
+            eval {
+                $geometry = Geo::OGR::Geometry->create($geometry);
+            };
+            confess "The type of the inserted geometry ('".$geometry->GeometryType."') is not the field type ('$type')." 
+                if $type ne 'Unknown' and $type ne $geometry->GeometryType;
+            eval {
+                $self->SetGeomFieldDirectly($field, $geometry);
+            };
+            confess "$@" if $@;
         } else {
-            unless ($type eq 'Unknown') {
-                croak "an attempt to insert a geometry with type '",$geometry->GeometryType,"' into a feature with geometry type '$type'" unless $type eq $geometry->GeometryType;
-            }
-            $self->SetGeometry($geometry);
+            confess "'@_' does not define a geometry.";
         }
     }
     return unless defined wantarray;
-    my $geometry = $self->GetGeometryRef();
-    $geometry->Clone() if $geometry;
+    my $geometry = $self->GetGeomFieldRef($field);
+    return unless $geometry;
+    $GEOMETRIES{tied(%{$geometry})} = $self;
+    return $geometry;
 }
-
-sub SetGeometryDirectly {
-    _SetGeometryDirectly(@_);
-    $GEOMETRIES{tied(%{$_[1]})} = $_[0];
-}
-
-sub GetGeometry {
-    my $self = shift;
-    my $geom = GetGeometryRef($self);
-    $GEOMETRIES{tied(%$geom)} = $self if $geom;
-    return $geom;
-}
-
-sub ReferenceGeometry {
-    my $self = shift;
-    SetGeometryDirectly($self, $_[0]) if @_;
-    if (defined wantarray) {
-        my $geometry = GetGeometry($self);
-        return $geometry->Clone() if $geometry;
-    }
-}
+*GetGeometry = *Geometry;
+*SetGeometry = *Geometry;
 
 sub SetFrom {
     my($self, $other) = @_;
@@ -940,8 +1088,11 @@ sub SetFrom {
 }
 
 
+
+
 package Geo::OGR::FieldDefn;
 use strict;
+use warnings;
 use vars qw /
     %SCHEMA_KEYS
     @TYPES @SUB_TYPES @JUSTIFY_VALUES
@@ -987,28 +1138,31 @@ sub JustifyValues {
 
 sub create {
     my $pkg = shift;
-    my %args = ( Name => 'unnamed', Type => 'String' );
+    my ($name, $type) = ('unnamed', 'String');
+    my %args;
     if (@_ == 0) {
     } elsif (@_ == 1) {
-        $args{Name} = shift;
+        $name = shift;
     } elsif (@_ == 2 and not $SCHEMA_KEYS{$_[0]}) {
-        $args{Name} = shift;
-        $args{Type} = shift;
+        $name = shift;
+        $type = shift;
     } else {
         my %named = @_;
         for my $key (keys %named) {
             if ($SCHEMA_KEYS{$key}) {
                 $args{$key} = $named{$key};
             } else {
-                carp "Unknown Field definition create argument: '$key'.";
+                carp "Unknown field definition create argument: '$key'." if $key ne 'Index';
             }
         }
+        $name = $args{Name} if exists $args{Name};
+        delete $args{Name};
+        $type = $args{Type} if exists $args{Type};
+        delete $args{Type};
     }
-    croak "Unknown field type: '$args{Type}'." unless exists $TYPE_STRING2INT{$args{Type}};
-    $args{Type} = $TYPE_STRING2INT{$args{Type}};
-    $args{SubType} = $SUB_TYPE_STRING2INT{$args{SubType}} if exists $SUB_TYPE_STRING2INT{$args{SubType}};
-    $args{Justify} = $JUSTIFY_STRING2INT{$args{Justify}} if exists $JUSTIFY_STRING2INT{$args{Justify}};
-    my $self = Geo::OGRc::new_FieldDefn($args{Name}, $args{Type});
+    confess "Unknown field type: '$type'." unless exists $TYPE_STRING2INT{$type};
+    $type = $TYPE_STRING2INT{$type};
+    my $self = Geo::OGRc::new_FieldDefn($name, $type);
     if (defined($self)) {
         bless $self, $pkg;
         $self->Schema(%args);
@@ -1022,6 +1176,7 @@ sub Schema {
         my %args = @_;
         for my $key (keys %SCHEMA_KEYS) {
             eval '$self->'.$key.'($args{'.$key.'}) if exists $args{'.$key.'}';
+            croak $@ if $@;
         }
     }
     return unless defined wantarray;
@@ -1031,6 +1186,8 @@ sub Schema {
     }
     return wantarray ? %schema : \%schema;
 }
+*GetSchema = *Schema;
+*SetSchema = *Schema;
 
 sub Name {
     my $self = shift;
@@ -1041,7 +1198,7 @@ sub Name {
 sub Type {
     my($self, $type) = @_;
     if (defined $type) {
-        croak "Unknown field type: '$type'." unless exists $TYPE_STRING2INT{$type};
+        confess "Unknown field type: '$type'." unless exists $TYPE_STRING2INT{$type};
         $type = $TYPE_STRING2INT{$type};
         SetType($self, $type);
     }
@@ -1051,7 +1208,7 @@ sub Type {
 sub SubType {
     my($self, $sub_type) = @_;
     if (defined $sub_type) {
-        croak "Unknown field sub type: '$sub_type'." unless exists $SUB_TYPE_STRING2INT{$sub_type};
+        confess "Unknown field sub type: '$sub_type'." unless exists $SUB_TYPE_STRING2INT{$sub_type};
         $sub_type = $SUB_TYPE_STRING2INT{$sub_type};
         SetSubType($self, $sub_type);
     }
@@ -1061,6 +1218,7 @@ sub SubType {
 sub Justify {
     my($self, $justify) = @_;
     if (defined $justify) {
+        confess "Unknown justify value: '$justify'." unless exists $JUSTIFY_STRING2INT{$justify};
         $justify = $JUSTIFY_STRING2INT{$justify} if exists $JUSTIFY_STRING2INT{$justify};
         SetJustify($self, $justify);
     }
@@ -1098,8 +1256,115 @@ sub Ignored {
 }
 
 
+
+
+package Geo::OGR::GeomFieldDefn;
+use strict;
+use warnings;
+use vars qw / %SCHEMA_KEYS /;
+use Carp;
+use Scalar::Util 'blessed';
+%SCHEMA_KEYS = map {$_ => 1} qw/Name Type SpatialReference Nullable Ignored/;
+
+sub create {
+    my $pkg = shift;
+    my ($name, $type) = ('geom', 'Unknown');
+    my %args;
+    if (@_ == 0) {
+    } elsif (@_ == 1) {
+        $name = shift;
+    } elsif (@_ == 2 and not $SCHEMA_KEYS{$_[0]}) {
+        $name = shift;
+        $type = shift;
+    } else {
+        my %named = @_;
+        for my $key (keys %named) {
+            if ($SCHEMA_KEYS{$key}) {
+                $args{$key} = $named{$key};
+            } else {
+                carp "Unknown geometry field definition create argument: '$key'." if $key ne 'Index';
+            }
+        }
+        $name = $args{Name} if exists $args{Name};
+        delete $args{Name};
+        $type = $args{Type} if $args{Type};
+        delete $args{Type};
+        $type = $args{GeometryType} if $args{GeometryType};
+        delete $args{GeometryType};
+    }
+    confess "Unknown geometry type: '$type'." unless exists $Geo::OGR::Geometry::TYPE_STRING2INT{$type};
+    $type = $Geo::OGR::Geometry::TYPE_STRING2INT{$type};
+    my $self = Geo::OGRc::new_GeomFieldDefn($name, $type);    
+    if (defined($self)) {
+        bless $self, $pkg;
+        $self->Schema(%args);
+    }
+    return $self;
+}
+
+sub Schema {
+    my $self = shift;
+    if (@_) {
+        my %args = @_;
+        for my $key (keys %SCHEMA_KEYS) {
+            eval '$self->'.$key.'($args{'.$key.'}) if exists $args{'.$key.'}';
+            croak $@ if $@;
+        }
+    }
+    return unless defined wantarray;
+    my %schema = ();
+    for my $key (keys %SCHEMA_KEYS) {
+        $schema{$key} = eval '$self->'.$key;
+    }
+    return wantarray ? %schema : \%schema;
+}
+*GetSchema = *Schema;
+*SetSchema = *Schema;
+
+sub Name {
+    my $self = shift;
+    SetName($self, $_[0]) if @_;
+    GetName($self) if defined wantarray;
+}
+
+sub Type {
+    my($self, $type) = @_;
+    if (defined $type) {
+        confess "Unknown geometry type: '$type'." unless exists $Geo::OGR::Geometry::TYPE_STRING2INT{$type};
+        $type = $Geo::OGR::Geometry::TYPE_STRING2INT{$type};
+        SetType($self, $type);
+    }
+    $Geo::OGR::Geometry::TYPE_INT2STRING{GetType($self)} if defined wantarray;
+}
+
+sub Types {
+  return @Geo::OGR::Geometry::GEOMETRY_TYPES;
+}
+
+sub SpatialReference {
+    my $self = shift;
+    SetSpatialRef($self, $_[0]) if @_;
+    GetSpatialRef($self) if defined wantarray;
+}
+
+sub Nullable {
+    my $self = shift;
+    SetNullable($self, $_[0]) if @_;
+    IsNullable($self) if defined wantarray;
+}
+
+sub Ignored {
+    my $self = shift;
+    SetIgnored($self, $_[0]) if @_;
+    IsIgnored($self) if defined wantarray;
+}
+
+
+
+
 package Geo::OGR::Geometry;
 use strict;
+use warnings;
 use Carp;
 use vars qw /
     @BYTE_ORDER_TYPES @GEOMETRY_TYPES
@@ -1123,36 +1388,53 @@ for my $string (@GEOMETRY_TYPES) {
     $TYPE_INT2STRING{$int} = $string;
 }
 
+sub ByteOrders {
+    return @BYTE_ORDER_TYPES;
+}
+
+sub GeometryTypes {
+    return @GEOMETRY_TYPES;
+}
+
 sub RELEASE_PARENTS {
     my $self = shift;
     delete $Geo::OGR::Feature::GEOMETRIES{$self};
 }
 
-sub create { # alternative constructor since swig created new cannot be overridden(?)
+sub create {
     my $pkg = shift;
-    my($type, $wkt, $wkb, $gml, $json, $srs, $points, $arc);
-    if (@_ == 1) {
-        $type = shift;
+    my ($type, $wkt, $wkb, $gml, $json, $srs, $points, $arc);
+    my %param;
+    if (@_ == 1 and ref($_[0]) eq 'HASH') {
+        %param = %{$_[0]};
+    } elsif (@_ % 2 == 0) {
+        %param = @_;
     } else {
-        my %param = @_;
-        $type = ($param{type} or $param{Type} or $param{GeometryType});
-        $srs = ($param{srs} or $param{SRS});
-        $wkt = ($param{wkt} or $param{WKT});
-        $wkb = ($param{wkb} or $param{WKB});
-        my $hex = ($param{hexewkb} or $param{HEXEWKB}); # PostGIS HEX EWKB
-        substr($hex, 10, 8) = '' if $hex; # remove SRID
-        $hex = ($param{hexwkb} or $param{HEXWKB}) unless $hex;
-        if ($hex) {
-            $wkb = '';
-            for (my $i = 0; $i < length($hex); $i+=2) {
-                $wkb .= chr(hex(substr($hex,$i,2)));
-            }
-        }
-        $gml = ($param{gml} or $param{GML});
-        $json = ($param{geojson} or $param{GeoJSON});
-        $points = $param{Points};
-        $arc = ($param{arc} or $param{Arc});
+        ($param{GeometryType}) = @_;
     }
+    $type = ($param{type} or $param{Type} or $param{GeometryType});
+    $srs = ($param{srs} or $param{SRS});
+    $wkt = ($param{wkt} or $param{WKT});
+    $wkb = ($param{wkb} or $param{WKB});
+    my $hex = ($param{hexewkb} or $param{HEXEWKB}); # PostGIS HEX EWKB
+    my $srid;
+    if ($hex) {
+        # get and remove SRID
+        $srid = substr($hex, 10, 8);
+        substr($hex, 10, 8) = '';
+    } else {
+        $hex = ($param{hexwkb} or $param{HEXWKB});
+    }
+    if ($hex) {
+        $wkb = '';
+        for (my $i = 0; $i < length($hex); $i+=2) {
+            $wkb .= chr(hex(substr($hex,$i,2)));
+        }
+    }
+    $gml = ($param{gml} or $param{GML});
+    $json = ($param{geojson} or $param{GeoJSON});
+    $points = $param{Points};
+    $arc = ($param{arc} or $param{Arc});
     my $self;
     if (defined $wkt) {
         $self = Geo::OGRc::CreateGeometryFromWkt($wkt, $srs);
@@ -1163,21 +1445,60 @@ sub create { # alternative constructor since swig created new cannot be overridd
     } elsif (defined $json) {
         $self = Geo::OGRc::CreateGeometryFromJson($json);
     } elsif (defined $type) {
-        croak "Unknown geometry type: '$type'." unless exists $TYPE_STRING2INT{$type};
+        confess "Unknown geometry type: '$type'." unless exists $TYPE_STRING2INT{$type};
         $type = $TYPE_STRING2INT{$type};
         $self = Geo::OGRc::new_Geometry($type);
     } elsif (defined $arc) {
         $self = Geo::OGRc::ApproximateArcAngles(@$arc);
     } else {
-        croak "Missing a parameter when creating a Geo::OGR::Geometry object.";
+        confess "Missing a parameter when creating a Geo::OGR::Geometry object.";
     }
     bless $self, $pkg if defined $self;
     $self->Points($points) if $points;
     return $self;
 }
 
+sub As {
+    my $self = shift;
+    my %param;
+    if (@_ == 1 and ref($_[0]) eq 'HASH') {
+        %param = %{$_[0]};
+    } elsif (@_ % 2 == 0) {
+        %param = @_;
+    } else {
+        ($param{Format}, $param{x}) = @_;
+    }
+    my $f = $param{Format};
+    my $x = $param{x};
+    if ($f eq 'Text' or $f eq 'Wkt' or $f eq 'WKT') {
+        return $self->AsText;
+    } elsif ($f =~ /iso/i and $f =~ /wkt/i) {
+        return $self->ExportToIsoWkt;
+    } elsif ($f eq 'Binary' or $f eq 'Wkb' or $f eq 'WKB') {
+        $param{ByteOrder} = 'XDR' unless $param{ByteOrder};
+        $x = $param{ByteOrder} unless defined $x;        
+        return $self->AsBinary($x);
+    } elsif ($f =~ /iso/i and $f =~ /wkb/i) {
+        return $self->ExportToIsoWkb;
+    } elsif ($f eq 'GML') {
+        return $self->AsGML;
+    } elsif ($f eq 'KML') {
+        return $self->AsKML;
+    } elsif ($f eq 'GeoJSON' or $f eq 'JSON') {
+        return $self->AsJSON;
+    } elsif ($f eq 'HEXWKB') {
+        return $self->AsHEXWKB;
+    } elsif ($f eq 'HEXEWKB') {
+        $param{srid} = 'XDR' unless $param{srid};
+        $x = $param{srid} unless defined $x;
+        return $self->AsHEXEWKB($x);
+    } else {
+        confess "Unsupported format: $f.";
+    }
+}
+
 sub AsHEXWKB {
-    my($self) = @_;
+    my ($self) = @_;
     my $wkb = _ExportToWkb($self, 1);
     my $hex = '';
     for (my $i = 0; $i < length($wkb); $i++) {
@@ -1189,7 +1510,7 @@ sub AsHEXWKB {
 }
 
 sub AsHEXEWKB {
-    my($self, $srid) = @_;
+    my ($self, $srid) = @_;
     my $hex = AsHEXWKB($self);
     if ($srid) {
         my $s = sprintf("%x", $srid);
@@ -1270,7 +1591,7 @@ sub Points {
     if ($points) {
         Empty($self);
         if ($t eq 'Unknown' or $t eq 'None' or $t eq 'GeometryCollection') {
-            croak("can't set points of a geometry of type '$t'");
+            confess("can't set points of a geometry of type '$t'");
         } elsif ($t eq 'Point') {
             # support both "Point" as a list of one point and one point
             if (ref($points->[0])) {
@@ -1354,7 +1675,7 @@ sub _GetPoints {
 sub ExportToWkb {
     my($self, $bo) = @_;
     if (defined $bo) {
-        croak "Unknown byte order: '$bo'." unless exists $BYTE_ORDER_STRING2INT{$bo};
+        confess "Unknown byte order: '$bo'." unless exists $BYTE_ORDER_STRING2INT{$bo};
         $bo = $BYTE_ORDER_STRING2INT{$bo};
     }
     return _ExportToWkb($self, $bo);
@@ -1420,6 +1741,7 @@ sub Dissolve {
 
 package Geo::OGR;
 use strict;
+use warnings;
 use Carp;
 
 sub GeometryType {
@@ -1429,7 +1751,7 @@ sub GeometryType {
             exists $Geo::OGR::Geometry::TYPE_STRING2INT{$type_or_name};
         return $Geo::OGR::Geometry::TYPE_INT2STRING{$type_or_name} if
             exists $Geo::OGR::Geometry::TYPE_INT2STRING{$type_or_name};
-        croak "Unknown geometry type: '$type_or_name'.";
+        confess "Unknown geometry type: '$type_or_name'.";
     } else {
         return @Geo::OGR::Geometry::GEOMETRY_TYPES;
     }
@@ -1437,22 +1759,22 @@ sub GeometryType {
 
 sub GeometryTypeModify {
     my($type, $modifier) = @_;
-    croak "Unknown geometry type: '$type'." unless exists $Geo::OGR::Geometry::TYPE_STRING2INT{$type};
+    confess "Unknown geometry type: '$type'." unless exists $Geo::OGR::Geometry::TYPE_STRING2INT{$type};
     $type = $Geo::OGR::Geometry::TYPE_STRING2INT{$type};
     return $Geo::OGR::Geometry::TYPE_INT2STRING{GT_Flatten($type)} if $modifier =~ /flat/i;
     return $Geo::OGR::Geometry::TYPE_INT2STRING{GT_SetZ($type)} if $modifier =~ /z/i;
     return $Geo::OGR::Geometry::TYPE_INT2STRING{GT_GetCollection($type)} if $modifier =~ /collection/i;
     return $Geo::OGR::Geometry::TYPE_INT2STRING{GT_GetCurve($type)} if $modifier =~ /curve/i;
     return $Geo::OGR::Geometry::TYPE_INT2STRING{GT_GetLinear($type)} if $modifier =~ /linear/i;
-    croak "Unknown geometry type modifier: '$modifier'.";
+    confess "Unknown geometry type modifier: '$modifier'.";
 }
 
 sub GeometryTypeTest {
     my($type, $test, $type2) = @_;
-    croak "Unknown geometry type: '$type'." unless exists $Geo::OGR::Geometry::TYPE_STRING2INT{$type};
+    confess "Unknown geometry type: '$type'." unless exists $Geo::OGR::Geometry::TYPE_STRING2INT{$type};
     $type = $Geo::OGR::Geometry::TYPE_STRING2INT{$type};
     if (defined $type2) {
-        croak "Unknown geometry type: '$type2'." unless exists $Geo::OGR::Geometry::TYPE_STRING2INT{$type2};
+        confess "Unknown geometry type: '$type2'." unless exists $Geo::OGR::Geometry::TYPE_STRING2INT{$type2};
         $type2 = $Geo::OGR::Geometry::TYPE_STRING2INT{$type2};
     }
     return $Geo::OGR::Geometry::TYPE_INT2STRING{GT_HasZ($type)} if $type =~ /z/i;
@@ -1460,14 +1782,21 @@ sub GeometryTypeTest {
     return $Geo::OGR::Geometry::TYPE_INT2STRING{GT_IsCurve($type)} if $type =~ /curve/i;
     return $Geo::OGR::Geometry::TYPE_INT2STRING{GT_IsSurface($type)} if $type =~ /surface/i;
     return $Geo::OGR::Geometry::TYPE_INT2STRING{GT_IsNonLinear($type)} if $type =~ /linear/i;
-    croak "Unknown geometry type test: '$test'.";
+    confess "Unknown geometry type test: '$test'.";
 }
 
 sub RELEASE_PARENTS {
 }
 
-sub GeometryTypes {
-    return @Geo::OGR::Geometry::GEOMETRY_TYPES;
+*ByteOrders = *Geo::OGR::Geometry::ByteOrders;
+*GeometryTypes = *Geo::OGR::Geometry::GeometryTypes;
+
+sub GetDriverNames {
+    my @names;
+    for my $i (0..GetDriverCount()-1) {
+        push @names, _GetDriver($i)->Name;
+    }
+    return @names;
 }
 
 sub Drivers {
@@ -1483,7 +1812,7 @@ sub GetDriver {
     my $driver;
     $driver = _GetDriver($name) if $name =~ /^\d+$/; # is the name an index to driver list?
     $driver = GetDriverByName("$name") unless $driver;
-    croak "OGR driver with name '$name' not found (maybe support for it was not built in?)" unless $driver;
+    confess "Driver not found: '$name'. Maybe support for it was not built in?" unless $driver;
     return $driver;
 }
 *Driver = *GetDriver;

@@ -251,8 +251,8 @@ my @tmp = sort keys %available_driver;
 
 print STDERR "\nGDAL version: ",Geo::GDAL::VersionInfo,"\n";
 print STDERR "Unexpected failures:\n",@fails,"\n" if @fails;
-print STDERR "Available drivers were ",join(', ',@tmp),"\n";
-print STDERR "Drivers used in tests were: ",join(', ',@tested_drivers),"\n";
+#print STDERR "Available drivers were ",join(', ',@tmp),"\n";
+#print STDERR "Drivers used in tests were: ",join(', ',@tested_drivers),"\n";
 
 system "rm -rf tmp_ds_*" unless $^O eq 'MSWin32';
 
@@ -303,6 +303,8 @@ sub gdal_tests {
 	    mytest('skipped: does not work?',undef,$name,'dataset create');
 	    next;
 	}
+
+        next unless $driver->{ShortName} eq 'MEM';
 
 	push @tested_drivers,$name;
 	

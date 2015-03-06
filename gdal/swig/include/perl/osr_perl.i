@@ -7,50 +7,52 @@
 %perlcode %{
 
 package Geo::OSR;
+use strict;
+use warnings;
 
 use vars qw /%PROJECTIONS %PARAMETERS %LINEAR_UNITS %ANGULAR_UNITS %DATUMS/;
 
 for (keys %Geo::OSR::) {
     if (/^SRS_PT_(\w+)/) {
-        $p = eval '$Geo::OSR::'.$_;
+        my $p = eval '$Geo::OSR::'.$_;
         $PROJECTIONS{$p} = 1;
     }
     elsif (/^SRS_PP_(\w+)/) {
-        $p = eval '$Geo::OSR::'.$_;
+        my $p = eval '$Geo::OSR::'.$_;
         $PARAMETERS{$p} = 1;
     }
     elsif (/^SRS_UL_(\w+)/) {
-        $p = eval '$Geo::OSR::'.$_;
+        my $p = eval '$Geo::OSR::'.$_;
         $LINEAR_UNITS{$p} = 1;
     }
     elsif (/^SRS_UA_(\w+)/) {
-        $p = eval '$Geo::OSR::'.$_;
+        my $p = eval '$Geo::OSR::'.$_;
         $ANGULAR_UNITS{$p} = 1;
     }
     elsif (/^SRS_DN_(\w+)/) {
-        $p = eval '$Geo::OSR::'.$_;
+        my $p = eval '$Geo::OSR::'.$_;
         $DATUMS{$p} = 1;
     }
 }
 
 sub Projections {
-    return sort keys %PROJECTIONS;
+    return keys %PROJECTIONS;
 }
 
 sub Parameters {
-    return sort keys %PARAMETERS;
+    return keys %PARAMETERS;
 }
 
 sub LinearUnits {
-    return sort keys %LINEAR_UNITS;
+    return keys %LINEAR_UNITS;
 }
 
 sub AngularUnits {
-    return sort keys %ANGULAR_UNITS;
+    return keys %ANGULAR_UNITS;
 }
 
 sub Datums {
-    return sort keys %DATUMS;
+    return keys %DATUMS;
 }
 
 sub RELEASE_PARENTS {
@@ -59,6 +61,7 @@ sub RELEASE_PARENTS {
 
 package Geo::OSR::SpatialReference;
 use strict;
+use warnings;
 use Carp;
 
 sub create {
@@ -302,6 +305,7 @@ sub GetUTMZone {
 
 package Geo::OSR::CoordinateTransformation;
 use strict;
+use warnings;
 
 sub TransformPoints {
     my($self, $points) = @_;
