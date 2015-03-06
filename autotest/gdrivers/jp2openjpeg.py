@@ -1435,6 +1435,26 @@ def jp2openjpeg_31():
     return 'success'
 
 ###############################################################################
+# Test creation of "XLBoxes" for JP2C
+
+def jp2openjpeg_32():
+
+    if gdaltest.jp2openjpeg_drv is None:
+        return 'skip'
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 10, 10, 1)
+    gdal.PushErrorHandler()
+    out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_32.jp2', src_ds, options = ['JP2C_XLBOX=YES'])
+    gdal.PopErrorHandler()
+    if out_ds.GetRasterBand(1).Checksum() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    out_ds = None
+    gdal.Unlink('/vsimem/jp2openjpeg_32.jp2')
+
+    return 'success'
+
+###############################################################################
 def jp2openjpeg_online_1():
 
     if gdaltest.jp2openjpeg_drv is None:
@@ -1637,6 +1657,7 @@ gdaltest_list = [
     jp2openjpeg_29,
     jp2openjpeg_30,
     jp2openjpeg_31,
+    jp2openjpeg_32,
     jp2openjpeg_online_1,
     jp2openjpeg_online_2,
     jp2openjpeg_online_3,
