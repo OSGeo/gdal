@@ -1271,6 +1271,63 @@ def jp2openjpeg_29():
     return 'success'
 
 ###############################################################################
+# Test color table support
+
+def jp2openjpeg_30():
+
+    if gdaltest.jp2openjpeg_drv is None:
+        return 'skip'
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 10, 10, 1)
+    ct = gdal.ColorTable()
+    ct.SetColorEntry( 0, (255,255,255,255) )
+    ct.SetColorEntry( 1, (255,255,0,255) )
+    ct.SetColorEntry( 2, (255,0,255,255) )
+    ct.SetColorEntry( 3, (0,255,255,255) )
+    src_ds.GetRasterBand( 1 ).SetRasterColorTable( ct )
+    
+    tests = [ ( [], False ),
+              ( ['QUALITY=100', 'REVERSIBLE=YES'], False ),
+              ( ['QUALITY=50'], True ),
+              ( ['REVERSIBLE=NO'], True ),
+            ]
+
+    for (options, warning_expected) in tests:
+        gdal.ErrorReset()
+        gdal.PushErrorHandler()
+        out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_30.jp2', src_ds, options = options)
+        gdal.PopErrorHandler()
+        if warning_expected and gdal.GetLastErrorMsg() == '':
+            gdaltest.post_reason('warning expected')
+            print(options)
+            return 'fail'
+        ct = out_ds.GetRasterBand( 1 ).GetRasterColorTable()
+        if ct.GetCount() != 4 or \
+           ct.GetColorEntry(0) != (255,255,255,255) or \
+           ct.GetColorEntry(1) != (255,255,0,255) or \
+           ct.GetColorEntry(2) != (255,0,255,255) or \
+           ct.GetColorEntry(3) != (0,255,255,255):
+            gdaltest.post_reason( 'Wrong color table entry.' )
+            return 'fail'
+        del out_ds
+
+    gdal.Unlink('/vsimem/jp2openjpeg_29.jp2')
+
+    # Not supported: color table on first band, and other bands
+    src_ds = gdal.GetDriverByName('MEM').Create('', 10, 10, 2)
+    ct = gdal.ColorTable()
+    src_ds.GetRasterBand( 1 ).SetRasterColorTable( ct )
+    gdal.ErrorReset()
+    gdal.PushErrorHandler()
+    out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_30.jp2', src_ds)
+    gdal.PopErrorHandler()
+    if out_ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 def jp2openjpeg_online_1():
 
     if gdaltest.jp2openjpeg_drv is None:
@@ -1471,6 +1528,7 @@ gdaltest_list = [
     jp2openjpeg_27,
     jp2openjpeg_28,
     jp2openjpeg_29,
+    jp2openjpeg_30,
     jp2openjpeg_online_1,
     jp2openjpeg_online_2,
     jp2openjpeg_online_3,
