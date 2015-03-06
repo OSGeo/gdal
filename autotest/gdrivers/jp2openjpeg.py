@@ -296,6 +296,15 @@ def jp2openjpeg_10():
     src_ds = gdal.Open('data/rgbsmall.tif')
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_10.jp2', src_ds, options = ['YCBCR420=YES', 'RESOLUTIONS=3'])
     maxdiff = gdaltest.compare_ds(src_ds, out_ds)
+    if out_ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_RedBand:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if out_ds.GetRasterBand(2).GetColorInterpretation() != gdal.GCI_GreenBand:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if out_ds.GetRasterBand(3).GetColorInterpretation() != gdal.GCI_BlueBand:
+        gdaltest.post_reason('fail')
+        return 'fail'
     del out_ds
     src_ds = None
     gdal.Unlink('/vsimem/jp2openjpeg_10.jp2')
@@ -1368,6 +1377,64 @@ def jp2openjpeg_30():
     return 'success'
 
 ###############################################################################
+# Test unusual band color interpretation order
+
+def jp2openjpeg_31():
+
+    if gdaltest.jp2openjpeg_drv is None:
+        return 'skip'
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 10, 10, 3)
+    src_ds.GetRasterBand(1).SetColorInterpretation(gdal.GCI_GreenBand)
+    src_ds.GetRasterBand(2).SetColorInterpretation(gdal.GCI_BlueBand)
+    src_ds.GetRasterBand(3).SetColorInterpretation(gdal.GCI_RedBand)
+    out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_31.jp2', src_ds)
+    del out_ds
+    gdal.Unlink('/vsimem/jp2openjpeg_31.jp2.aux.xml')
+    ds = gdal.Open('/vsimem/jp2openjpeg_31.jp2')
+    if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_GreenBand:
+        gdaltest.post_reason('fail')
+        print(ds.GetRasterBand(1).GetColorInterpretation())
+        return 'fail'
+    if ds.GetRasterBand(2).GetColorInterpretation() != gdal.GCI_BlueBand:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(3).GetColorInterpretation() != gdal.GCI_RedBand:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+    gdal.Unlink('/vsimem/jp2openjpeg_31.jp2')
+
+
+    # With alpha now
+    src_ds = gdal.GetDriverByName('MEM').Create('', 10, 10, 4)
+    src_ds.GetRasterBand(1).SetColorInterpretation(gdal.GCI_AlphaBand)
+    src_ds.GetRasterBand(2).SetColorInterpretation(gdal.GCI_GreenBand)
+    src_ds.GetRasterBand(3).SetColorInterpretation(gdal.GCI_BlueBand)
+    src_ds.GetRasterBand(4).SetColorInterpretation(gdal.GCI_RedBand)
+    out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_31.jp2', src_ds)
+    del out_ds
+    gdal.Unlink('/vsimem/jp2openjpeg_31.jp2.aux.xml')
+    ds = gdal.Open('/vsimem/jp2openjpeg_31.jp2')
+    if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_AlphaBand:
+        gdaltest.post_reason('fail')
+        print(ds.GetRasterBand(1).GetColorInterpretation())
+        return 'fail'
+    if ds.GetRasterBand(2).GetColorInterpretation() != gdal.GCI_GreenBand:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(3).GetColorInterpretation() != gdal.GCI_BlueBand:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(4).GetColorInterpretation() != gdal.GCI_RedBand:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+    gdal.Unlink('/vsimem/jp2openjpeg_31.jp2')
+
+    return 'success'
+
+###############################################################################
 def jp2openjpeg_online_1():
 
     if gdaltest.jp2openjpeg_drv is None:
@@ -1569,6 +1636,7 @@ gdaltest_list = [
     jp2openjpeg_28,
     jp2openjpeg_29,
     jp2openjpeg_30,
+    jp2openjpeg_31,
     jp2openjpeg_online_1,
     jp2openjpeg_online_2,
     jp2openjpeg_online_3,

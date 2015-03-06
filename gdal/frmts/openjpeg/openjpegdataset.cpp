@@ -103,12 +103,12 @@ static OPJ_SIZE_T JP2OpenJPEGDataset_Read(void* pBuffer, OPJ_SIZE_T nBytes,
 #endif
     if (nRet == 0)
         nRet = -1;
-    else if( (nOffsetBefore == 0 || nOffsetBefore == 1024) && nBytes >= 4 )
+    else if( (nOffsetBefore == 0 || nOffsetBefore == 1024) && nRet >= 8 )
     {
         /* Nasty hack : opj_get_decoded_tile() currently ignores
           OPJ_DPARAMETERS_IGNORE_PCLR_CMAP_CDEF_FLAG, so we "hide" the jp2 boxes
           that advertize a color table... */
-        for(OPJ_SIZE_T i=0;i<nBytes-8;i++)
+        for(OPJ_SIZE_T i=0;i<(OPJ_SIZE_T)nRet-8;i++)
         {
             if( ((GByte*)pBuffer)[i+0] == 0 && ((GByte*)pBuffer)[i+1] == 0 &&
                 (!(((GByte*)pBuffer)[i+2] == 0 && ((GByte*)pBuffer)[i+3] == 0)) &&
@@ -182,7 +182,10 @@ class JP2OpenJPEGDataset : public GDALJP2AbstractDataset
 
     OPJ_CODEC_FORMAT eCodecFormat;
     OPJ_COLOR_SPACE eColorSpace;
-    int         bLastChannelIsAlpha;
+    int         nRedIndex;
+    int         nGreenIndex;
+    int         nBlueIndex;
+    int         nAlphaIndex;
 
     int         bIs420;
 
@@ -879,7 +882,7 @@ GDALColorInterp JP2OpenJPEGRasterBand::GetColorInterpretation()
     if( poCT )
         return GCI_PaletteIndex;
 
-    if( poGDS->bLastChannelIsAlpha && nBand == poGDS->nBands )
+    if( nBand == poGDS->nAlphaIndex + 1 )
         return GCI_AlphaBand;
 
     if (poGDS->nBands <= 2 && poGDS->eColorSpace == OPJ_CLRSPC_GRAY)
@@ -887,17 +890,12 @@ GDALColorInterp JP2OpenJPEGRasterBand::GetColorInterpretation()
     else if (poGDS->eColorSpace == OPJ_CLRSPC_SRGB ||
              poGDS->eColorSpace == OPJ_CLRSPC_SYCC)
     {
-        switch(nBand)
-        {
-            case 1:
-                return GCI_RedBand;
-            case 2:
-                return GCI_GreenBand;
-            case 3:
-                return GCI_BlueBand;
-            default:
-                return GCI_Undefined;
-        }
+        if( nBand == poGDS->nRedIndex + 1 )
+            return GCI_RedBand;
+        if( nBand == poGDS->nGreenIndex + 1 )
+            return GCI_GreenBand;
+        if( nBand == poGDS->nBlueIndex + 1 )
+            return GCI_BlueBand;
     }
 
     return GCI_Undefined;
@@ -919,7 +917,10 @@ JP2OpenJPEGDataset::JP2OpenJPEGDataset()
     nBands = 0;
     eCodecFormat = OPJ_CODEC_UNKNOWN;
     eColorSpace = OPJ_CLRSPC_UNKNOWN;
-    bLastChannelIsAlpha = FALSE;
+    nRedIndex = 0;
+    nGreenIndex = 1;
+    nBlueIndex = 2;
+    nAlphaIndex = -1;
     bIs420 = FALSE;
     iLevel = 0;
     nOverviewCount = 0;
@@ -1188,6 +1189,7 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
     GDALColorTable* poCT = NULL;
+
 /* -------------------------------------------------------------------- */
 /*      Look for color table or cdef box                                */
 /* -------------------------------------------------------------------- */
@@ -1295,7 +1297,7 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
                                 }
                             }
                         }
-                        /* Check if there's an alpha channel */
+                        /* Check if there's an alpha channel or odd channel attribution */
                         else if( EQUAL(oSubBox.GetType(),"cdef") &&
                                  nDataLength == 2 + poDS->nBands * 6 )
                         {
@@ -1305,30 +1307,38 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
                                 int nEntries = (pabyContent[0] << 8) | pabyContent[1];
                                 if( nEntries == poDS->nBands )
                                 {
-                                    int i;
-                                    for(i=0;i<poDS->nBands-1;i++)
+                                    poDS->nRedIndex = -1;
+                                    poDS->nGreenIndex = -1;
+                                    poDS->nBlueIndex = -1;
+                                    for(int i=0;i<poDS->nBands;i++)
                                     {
                                         int CNi = (pabyContent[2+6*i] << 8) | pabyContent[2+6*i+1];
                                         int Typi = (pabyContent[2+6*i+2] << 8) | pabyContent[2+6*i+3];
                                         int Asoci = (pabyContent[2+6*i+4] << 8) | pabyContent[2+6*i+5];
-                                        if( !(CNi == i && Typi == 0 && (Asoci == i + 1 || Asoci == 65535)) )
+                                        if( CNi < 0 || CNi >= poDS->nBands )
                                         {
-                                            CPLDebug("OPENJPEG", "Unsupported cdef content");
+                                            CPLError(CE_Failure, CPLE_AppDefined,
+                                                     "Wrong value of CN%d=%d", i, CNi);
                                             break;
                                         }
-                                    }
-                                    if( i == poDS->nBands-1 )
-                                    {
-                                        int CNi = (pabyContent[2+6*i] << 8) | pabyContent[2+6*i+1];
-                                        int Typi = (pabyContent[2+6*i+2] << 8) | pabyContent[2+6*i+3];
-                                        int Asoci = (pabyContent[2+6*i+4] << 8) | pabyContent[2+6*i+5];
-                                        if( !(CNi == i && Typi == 1 && Asoci == 0) )
+                                        if( Typi == 0 )
                                         {
-                                            CPLDebug("OPENJPEG", "Unsupported cdef content");
+                                            if( Asoci == 1 )
+                                                poDS->nRedIndex = CNi;
+                                            else if( Asoci == 2 )
+                                                poDS->nGreenIndex = CNi;
+                                            else if( Asoci == 3 )
+                                                poDS->nBlueIndex = CNi;
+                                            else if( Asoci < 0 || (Asoci > poDS->nBands && Asoci != 65535) )
+                                            {
+                                                CPLError(CE_Failure, CPLE_AppDefined,
+                                                     "Wrong value of Asoc%d=%d", i, Asoci);
+                                                break;
+                                            }
                                         }
-                                        else
+                                        else if( Typi == 1 )
                                         {
-                                            poDS->bLastChannelIsAlpha = TRUE;
+                                            poDS->nAlphaIndex = CNi;
                                         }
                                     }
                                 }
@@ -1353,14 +1363,13 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
     for( iBand = 1; iBand <= poDS->nBands; iBand++ )
     {
         int bPromoteTo8Bit = (
-            iBand == poDS->nBands &&
-            poDS->bLastChannelIsAlpha &&
-            psImage->comps[0].prec == 8 &&
-            psImage->comps[poDS->nBands-1].prec == 1 && 
+            iBand == poDS->nAlphaIndex + 1 &&
+            psImage->comps[(poDS->nAlphaIndex==0 && poDS->nBands > 1) ? 1 : 0].prec == 8 &&
+            psImage->comps[poDS->nAlphaIndex ].prec == 1 && 
             CSLFetchBoolean(poOpenInfo->papszOpenOptions, "1BIT_ALPHA_PROMOTION",
                     CSLTestBoolean(CPLGetConfigOption("JP2OPENJPEG_PROMOTE_1BIT_ALPHA_AS_8BIT", "YES"))) );
         if( bPromoteTo8Bit )
-            CPLDebug("JP2OpenJPEG", "Last (alpha) band is promoted from 1 bit to 8 bit");
+            CPLDebug("JP2OpenJPEG", "Alpha band is promoted from 1 bit to 8 bit");
 
         JP2OpenJPEGRasterBand* poBand =
             new JP2OpenJPEGRasterBand( poDS, iBand, eDataType,
@@ -1395,7 +1404,10 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
         poODS->SetDescription( poOpenInfo->pszFilename );
         poODS->iLevel = poDS->nOverviewCount + 1;
         poODS->bUseSetDecodeArea = poDS->bUseSetDecodeArea;
-        poODS->bLastChannelIsAlpha = poDS->bLastChannelIsAlpha;
+        poODS->nRedIndex = poDS->nRedIndex;
+        poODS->nGreenIndex = poDS->nGreenIndex;
+        poODS->nBlueIndex = poDS->nBlueIndex;
+        poODS->nAlphaIndex = poDS->nAlphaIndex;
         if (!poDS->bUseSetDecodeArea)
         {
             nTileW /= 2;
@@ -1421,10 +1433,9 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
         for( iBand = 1; iBand <= poDS->nBands; iBand++ )
         {
             int bPromoteTo8Bit = (
-                iBand == poDS->nBands &&
-                poDS->bLastChannelIsAlpha &&
-                psImage->comps[0].prec == 8 &&
-                psImage->comps[poDS->nBands-1].prec == 1 && 
+                iBand == poDS->nAlphaIndex + 1 &&
+                psImage->comps[(poDS->nAlphaIndex==0 && poDS->nBands > 1) ? 1 : 0].prec == 8 &&
+                psImage->comps[poDS->nAlphaIndex].prec == 1 && 
                 CSLFetchBoolean(poOpenInfo->papszOpenOptions, "1BIT_ALPHA_PROMOTION",
                         CSLTestBoolean(CPLGetConfigOption("JP2OPENJPEG_PROMOTE_1BIT_ALPHA_AS_8BIT", "YES"))) );
 
@@ -1684,11 +1695,32 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
     int bSOP = CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "SOP", "FALSE"));
     int bEPH = CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "EPH", "FALSE"));
 
+    int nRedBandIndex = -1, nGreenBandIndex = -1, nBlueBandIndex = -1;
+    int nAlphaBandIndex = -1;
+    for(int i=0;i<nBands;i++)
+    {
+        GDALColorInterp eInterp = poSrcDS->GetRasterBand(i+1)->GetColorInterpretation();
+        if( eInterp == GCI_RedBand )
+            nRedBandIndex = i;
+        else if( eInterp == GCI_GreenBand )
+            nGreenBandIndex = i;
+        else if( eInterp == GCI_BlueBand )
+            nBlueBandIndex = i;
+        else if( eInterp == GCI_AlphaBand )
+            nAlphaBandIndex = i;
+    }
+    const char* pszAlpha = CSLFetchNameValue(papszOptions, "ALPHA");
+    if( nAlphaBandIndex < 0 && nBands > 1 && pszAlpha != NULL && CSLTestBoolean(pszAlpha) )
+    {
+        nAlphaBandIndex = nBands - 1;
+    }
+
     const char* pszYCBCR420 = CSLFetchNameValue(papszOptions, "YCBCR420");
     int bYCBCR420 = FALSE;
     if( pszYCBCR420 && CSLTestBoolean(pszYCBCR420) )
     {
-        if ((nBands == 3 || nBands == 4) && eDataType == GDT_Byte)
+        if ((nBands == 3 || nBands == 4) && eDataType == GDT_Byte &&
+            nRedBandIndex == 0 && nGreenBandIndex == 1 && nBlueBandIndex == 2)
         {
             if( ((nXSize % 2) == 0 && (nYSize % 2) == 0 && (nBlockXSize % 2) == 0 && (nBlockYSize % 2) == 0) )
             {
@@ -1959,8 +1991,6 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
     int iBand;
     int bSamePrecision = TRUE;
     int b1BitAlpha = FALSE;
-    const char* pszAlpha = CSLFetchNameValue(papszOptions, "ALPHA");
-    int bForceAlpha = (nBands > 1 && pszAlpha != NULL && CSLTestBoolean(pszAlpha));
     for(iBand=0;iBand<nBands;iBand++)
     {
         pasBandParams[iBand].x0 = 0;
@@ -1980,30 +2010,35 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
             pasBandParams[iBand].h = nYSize;
         }
 
+        pasBandParams[iBand].sgnd = (eDataType == GDT_Int16 || eDataType == GDT_Int32);
+        pasBandParams[iBand].prec = nBits;
+
         const char* pszNBits = poSrcDS->GetRasterBand(iBand+1)->GetMetadataItem(
             "NBITS", "IMAGE_STRUCTURE");
         /* Recommendation 38 In the case of an opacity channel, the bit depth should be 1-bit. */
-        if( iBand == nBands - 1 &&
-            (poSrcDS->GetRasterBand(iBand+1)->GetColorInterpretation() == GCI_AlphaBand ||
-             bForceAlpha) &&
+        if( iBand == nAlphaBandIndex &&
             ((pszNBits != NULL && EQUAL(pszNBits, "1")) ||
               CSLFetchBoolean(papszOptions, "1BIT_ALPHA", bInspireTG)) )
         {
-            CPLDebug("OPENJPEG", "Using 1-bit alpha channel");
-            pasBandParams[iBand].sgnd = 0;
-            pasBandParams[iBand].prec = 1;
-            bSamePrecision = FALSE;
-            b1BitAlpha = TRUE;
-        }
-        else
-        {
-            pasBandParams[iBand].sgnd = (eDataType == GDT_Int16 || eDataType == GDT_Int32);
-            pasBandParams[iBand].prec = nBits;
+            if( iBand != nBands - 1 && nBits != 1 )
+            {
+                /* Might be a bug in openjpeg, but it seems that if the alpha */
+                /* band is the first one, it would select 1-bit for all channels... */
+                CPLError(CE_Warning, CPLE_NotSupported,
+                         "Cannot output 1-bit alpha channel if it is not the last one");
+            }
+            else
+            {
+                CPLDebug("OPENJPEG", "Using 1-bit alpha channel");
+                pasBandParams[iBand].sgnd = 0;
+                pasBandParams[iBand].prec = 1;
+                bSamePrecision = FALSE;
+                b1BitAlpha = TRUE;
+            }
         }
     }
 
-    if( bInspireTG && poSrcDS->GetRasterBand(nBands)->GetColorInterpretation() == GCI_AlphaBand &&
-        !b1BitAlpha )
+    if( bInspireTG && nAlphaBandIndex >= 0 && !b1BitAlpha )
     {
         CPLError(CE_Warning, CPLE_NotSupported,
                   "INSPIRE_TG=YES recommends 1BIT_ALPHA=YES (Recommendation 38)");
@@ -2025,14 +2060,13 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
     opj_set_error_handler(pCodec, JP2OpenJPEGDataset_ErrorCallback,NULL);
 
     OPJ_COLOR_SPACE eColorSpace = OPJ_CLRSPC_GRAY;
+
     if( bYCBCR420 )
     {
         eColorSpace = OPJ_CLRSPC_SYCC;
     }
     else if( (nBands == 3 || nBands == 4) &&
-             poSrcDS->GetRasterBand(1)->GetColorInterpretation() == GCI_RedBand &&
-             poSrcDS->GetRasterBand(2)->GetColorInterpretation() == GCI_GreenBand &&
-             poSrcDS->GetRasterBand(3)->GetColorInterpretation() == GCI_BlueBand )
+             nRedBandIndex >= 0 && nGreenBandIndex >= 0 && nBlueBandIndex >= 0 )
     {
         eColorSpace = OPJ_CLRSPC_SRGB;
     }
@@ -2257,6 +2291,10 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
                     }
                 }
             }
+            nRedBandIndex = 0;
+            nGreenBandIndex = 1;
+            nBlueBandIndex = 2;
+            nAlphaBandIndex = (nCTComponentCount == 4) ? 3 : -1;
 
             pclrBox.AppendUInt16(nEntries);
             pclrBox.AppendUInt8(nCTComponentCount); /* NPC: Number of components */
@@ -2284,27 +2322,49 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
         }
 
         GDALJP2Box cdefBox(fp);
-        if( poSrcDS->GetRasterBand(nBands)->GetColorInterpretation() == GCI_AlphaBand ||
-            bForceAlpha ||
-            nCTComponentCount == 4)
+        if( ((nBands == 3 || nBands == 4) &&
+             (eColorSpace == OPJ_CLRSPC_SRGB || eColorSpace == OPJ_CLRSPC_SYCC) &&
+             (nRedBandIndex != 0 || nGreenBandIndex != 1 || nBlueBandIndex != 2)) ||
+            nAlphaBandIndex >= 0)
         {
             cdefBox.SetType("cdef");
             int nComponents = (nCTComponentCount == 4) ? 4 : nBands;
             cdefBox.AppendUInt16(nComponents);
-            for(int i=0;i<nComponents-1;i++)
+            for(int i=0;i<nComponents;i++)
             {
                 cdefBox.AppendUInt16(i);   /* Component number */
-                cdefBox.AppendUInt16(0);   /* Signification: This channel is the colour image data for the associated colour */
-                if( (eColorSpace == OPJ_CLRSPC_GRAY && nComponents == 2) ||
-                    ((eColorSpace == OPJ_CLRSPC_SRGB ||
-                      eColorSpace == OPJ_CLRSPC_SYCC) && nComponents == 4) )
-                    cdefBox.AppendUInt16(i+1); /* Colour of the component: associated with a particular colour */
+                if( i != nAlphaBandIndex )
+                {
+                    cdefBox.AppendUInt16(0);   /* Signification: This channel is the colour image data for the associated colour */
+                    if( eColorSpace == OPJ_CLRSPC_GRAY && nComponents == 2)
+                        cdefBox.AppendUInt16(1); /* Colour of the component: associated with a particular colour */
+                    else if ((eColorSpace == OPJ_CLRSPC_SRGB ||
+                            eColorSpace == OPJ_CLRSPC_SYCC) &&
+                            (nComponents == 3 || nComponents == 4) )
+                    {
+                        if( i == nRedBandIndex )
+                            cdefBox.AppendUInt16(1);
+                        else if( i == nGreenBandIndex )
+                            cdefBox.AppendUInt16(2);
+                        else if( i == nBlueBandIndex )
+                            cdefBox.AppendUInt16(3);
+                        else
+                        {
+                            CPLError(CE_Warning, CPLE_AppDefined,
+                                    "Could not associate band %d with a red/green/blue channel",
+                                    i+1);
+                            cdefBox.AppendUInt16(65535);
+                        }
+                    }
+                    else
+                        cdefBox.AppendUInt16(65535); /* Colour of the component: not associated with any particular colour */
+                }
                 else
-                    cdefBox.AppendUInt16(65535); /* Colour of the component: not associated with any particular colour */
+                {
+                    cdefBox.AppendUInt16(1);        /* Signification: Non pre-multiplied alpha */
+                    cdefBox.AppendUInt16(0);        /* Colour of the component: This channel is associated as the image as a whole */
+                }
             }
-            cdefBox.AppendUInt16(nComponents-1); /* Component number */
-            cdefBox.AppendUInt16(1);        /* Signification: Non pre-multiplied alpha */
-            cdefBox.AppendUInt16(0);        /* Colour of the component: This channel is associated as the image as a whole */
         }
 
         // Add res box if needed
@@ -2369,7 +2429,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
         GDALJP2Box* apoBoxes[7];
         int nBoxes = 1;
         apoBoxes[0] = &ihdrBox;
-        if( !bSamePrecision )
+        if( bpccBox.GetDataLength() )
             apoBoxes[nBoxes++] = &bpccBox;
         apoBoxes[nBoxes++] = &colrBox;
         if( pclrBox.GetDataLength() )
@@ -2498,10 +2558,10 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
             {
                 for(int i=0;i<nWidthToRead*nHeightToRead;i++)
                 {
-                    if( pTempBuffer[(nBands-1)*nWidthToRead*nHeightToRead+i] )
-                        pTempBuffer[(nBands-1)*nWidthToRead*nHeightToRead+i] = 1;
+                    if( pTempBuffer[nAlphaBandIndex*nWidthToRead*nHeightToRead+i] )
+                        pTempBuffer[nAlphaBandIndex*nWidthToRead*nHeightToRead+i] = 1;
                     else
-                        pTempBuffer[(nBands-1)*nWidthToRead*nHeightToRead+i] = 0;
+                        pTempBuffer[nAlphaBandIndex*nWidthToRead*nHeightToRead+i] = 0;
                 }
             }
             if (eErr == CE_None)
