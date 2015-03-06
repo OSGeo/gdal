@@ -1495,6 +1495,23 @@ def jp2openjpeg_34():
     return 'success'
 
 ###############################################################################
+# Test opening a truncated file
+
+def jp2openjpeg_35():
+
+    if gdaltest.jp2openjpeg_drv is None:
+        return 'skip'
+
+    gdal.PushErrorHandler()
+    ds = gdal.Open('data/truncated.jp2')
+    gdal.PopErrorHandler()
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 def jp2openjpeg_online_1():
 
     if gdaltest.jp2openjpeg_drv is None:
@@ -1700,6 +1717,7 @@ gdaltest_list = [
     jp2openjpeg_32,
     jp2openjpeg_33,
     jp2openjpeg_34,
+    jp2openjpeg_35,
     jp2openjpeg_online_1,
     jp2openjpeg_online_2,
     jp2openjpeg_online_3,
