@@ -731,7 +731,7 @@ void JP2KAKRasterBand::ApplyPalette( jp2_palette oJP2Palette )
 
     if( oJP2Palette.get_num_luts() == 4 )
     {
-        oJP2Palette.get_lut( 2, pafLUT + nCount*3 );
+        oJP2Palette.get_lut( 3, pafLUT + nCount*3 );
     }
     else
     {
