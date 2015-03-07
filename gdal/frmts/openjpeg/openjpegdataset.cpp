@@ -217,6 +217,12 @@ class JP2OpenJPEGDataset : public GDALJP2AbstractDataset
                                GDALRasterIOExtraArg* psExtraArg);
 
     static void         WriteBox(VSILFILE* fp, GDALJP2Box* poBox);
+    static void         WriteGDALMetadataBox( VSILFILE* fp, GDALDataset* poSrcDS,
+                                       char** papszOptions );
+    static void         WriteXMLBoxes( VSILFILE* fp, GDALDataset* poSrcDS,
+                                       char** papszOptions );
+    static void         WriteXMPBox( VSILFILE* fp, GDALDataset* poSrcDS,
+                                     char** papszOptions );
 
     CPLErr      ReadBlock( int nBand, VSILFILE* fp,
                            int nBlockXOff, int nBlockYOff, void * pImage,
@@ -1553,6 +1559,51 @@ void JP2OpenJPEGDataset::WriteBox(VSILFILE* fp, GDALJP2Box* poBox)
 }
 
 /************************************************************************/
+/*                         WriteGDALMetadataBox()                       */
+/************************************************************************/
+
+void JP2OpenJPEGDataset::WriteGDALMetadataBox( VSILFILE* fp,
+                                               GDALDataset* poSrcDS,
+                                               char** papszOptions )
+{
+    GDALJP2Box* poBox = GDALJP2Metadata::CreateGDALMultiDomainMetadataXMLBox(
+        poSrcDS, !CSLFetchBoolean(papszOptions, "MAIN_MD_DOMAIN_ONLY", FALSE));
+    if( poBox )
+        WriteBox(fp, poBox);
+    delete poBox;
+}
+
+/************************************************************************/
+/*                         WriteXMLBoxes()                              */
+/************************************************************************/
+
+void JP2OpenJPEGDataset::WriteXMLBoxes( VSILFILE* fp, GDALDataset* poSrcDS,
+                                         CPL_UNUSED char** papszOptions )
+{
+    int nBoxes = 0;
+    GDALJP2Box** papoBoxes = GDALJP2Metadata::CreateXMLBoxes(poSrcDS, &nBoxes);
+    for(int i=0;i<nBoxes;i++)
+    {
+        WriteBox(fp, papoBoxes[i]);
+        delete papoBoxes[i];
+    }
+    CPLFree(papoBoxes);
+}
+
+/************************************************************************/
+/*                           WriteXMPBox()                              */
+/************************************************************************/
+
+void JP2OpenJPEGDataset::WriteXMPBox ( VSILFILE* fp, GDALDataset* poSrcDS,
+                                       CPL_UNUSED char** papszOptions )
+{
+    GDALJP2Box* poBox = GDALJP2Metadata::CreateXMPBox(poSrcDS);
+    if( poBox )
+        WriteBox(fp, poBox);
+    delete poBox;
+}
+
+/************************************************************************/
 /*                         FloorPowerOfTwo()                            */
 /************************************************************************/
 
@@ -2497,15 +2548,29 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
         delete psJP2HBox;
         delete poRes;
 
-        if( bHasGeoreferencing && !bGeoBoxesAfter )
+        if( !bGeoBoxesAfter )
         {
-            if( bGeoJP2Option )
+            if( bHasGeoreferencing && bGeoJP2Option )
             {
                 GDALJP2Box* poBox = oJP2MD.CreateJP2GeoTIFF();
                 WriteBox(fp, poBox);
                 delete poBox;
             }
-            if( bGMLJP2Option && bGeoreferencingCompatOfGMLJP2 )
+
+            if( CSLFetchBoolean(papszOptions, "WRITE_METADATA", FALSE) &&
+                !CSLFetchBoolean(papszOptions, "MAIN_MD_DOMAIN_ONLY", FALSE) )
+            {
+                WriteXMPBox(fp, poSrcDS, papszOptions);
+            }
+
+            if( CSLFetchBoolean(papszOptions, "WRITE_METADATA", FALSE) )
+            {
+                if( !CSLFetchBoolean(papszOptions, "MAIN_MD_DOMAIN_ONLY", FALSE) )
+                    WriteXMLBoxes(fp, poSrcDS, papszOptions);
+                WriteGDALMetadataBox(fp, poSrcDS, papszOptions);
+            }
+
+            if( bHasGeoreferencing && bGMLJP2Option && bGeoreferencingCompatOfGMLJP2 )
             {
                 GDALJP2Box* poBox = oJP2MD.CreateGMLJP2(nXSize,nYSize);
                 WriteBox(fp, poBox);
@@ -2751,19 +2816,34 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
         }
         VSIFSeekL(fp, 0, SEEK_END);
 
-        if( bHasGeoreferencing && bGeoBoxesAfter )
+
+        if( bGeoBoxesAfter )
         {
-            if( bGMLJP2Option && bGeoreferencingCompatOfGMLJP2 )
+            if( bHasGeoreferencing && bGMLJP2Option && bGeoreferencingCompatOfGMLJP2 )
             {
                 GDALJP2Box* poBox = oJP2MD.CreateGMLJP2(nXSize,nYSize);
                 WriteBox(fp, poBox);
                 delete poBox;
             }
-            if( bGeoJP2Option )
+
+            if( CSLFetchBoolean(papszOptions, "WRITE_METADATA", FALSE) )
+            {
+                if( !CSLFetchBoolean(papszOptions, "MAIN_MD_DOMAIN_ONLY", FALSE) )
+                    WriteXMLBoxes(fp, poSrcDS, papszOptions);
+                WriteGDALMetadataBox(fp, poSrcDS, papszOptions);
+            }
+
+            if( bHasGeoreferencing && bGeoJP2Option )
             {
                 GDALJP2Box* poBox = oJP2MD.CreateJP2GeoTIFF();
                 WriteBox(fp, poBox);
                 delete poBox;
+            }
+
+            if( CSLFetchBoolean(papszOptions, "WRITE_METADATA", FALSE) &&
+                !CSLFetchBoolean(papszOptions, "MAIN_MD_DOMAIN_ONLY", FALSE) )
+            {
+                WriteXMPBox(fp, poSrcDS, papszOptions);
             }
         }
     }
@@ -2780,31 +2860,36 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
     if( poDS )
     {
         poDS->CloneInfo( poSrcDS, GCIF_PAM_DEFAULT & (~GCIF_METADATA) );
-        char** papszSrcMD = CSLDuplicate(poSrcDS->GetMetadata());
-        papszSrcMD = CSLSetNameValue(papszSrcMD, GDALMD_AREA_OR_POINT, NULL);
-        for(char** papszSrcMDIter = papszSrcMD;
-                   papszSrcMDIter && *papszSrcMDIter; )
+
+        /* Only write relevant metadata to PAM, and if needed */
+        if( !CSLFetchBoolean(papszOptions, "WRITE_METADATA", FALSE) )
         {
-            /* Remove entries like KEY= (without value) */
-            if( (*papszSrcMDIter)[0] &&
-                (*papszSrcMDIter)[strlen((*papszSrcMDIter))-1] == '=' )
+            char** papszSrcMD = CSLDuplicate(poSrcDS->GetMetadata());
+            papszSrcMD = CSLSetNameValue(papszSrcMD, GDALMD_AREA_OR_POINT, NULL);
+            for(char** papszSrcMDIter = papszSrcMD;
+                    papszSrcMDIter && *papszSrcMDIter; )
             {
-                CPLFree(*papszSrcMDIter);
-                memmove(papszSrcMDIter, papszSrcMDIter + 1,
-                        sizeof(char*) * (CSLCount(papszSrcMDIter + 1) + 1));
+                /* Remove entries like KEY= (without value) */
+                if( (*papszSrcMDIter)[0] &&
+                    (*papszSrcMDIter)[strlen((*papszSrcMDIter))-1] == '=' )
+                {
+                    CPLFree(*papszSrcMDIter);
+                    memmove(papszSrcMDIter, papszSrcMDIter + 1,
+                            sizeof(char*) * (CSLCount(papszSrcMDIter + 1) + 1));
+                }
+                else
+                    ++papszSrcMDIter;
             }
-            else
-                ++papszSrcMDIter;
+            char** papszMD = CSLDuplicate(poDS->GetMetadata());
+            papszMD = CSLSetNameValue(papszMD, GDALMD_AREA_OR_POINT, NULL);
+            if( papszSrcMD && papszSrcMD[0] != NULL &&
+                CSLCount(papszSrcMD) != CSLCount(papszMD) )
+            {
+                poDS->SetMetadata(papszSrcMD);
+            }
+            CSLDestroy(papszSrcMD);
+            CSLDestroy(papszMD);
         }
-        char** papszMD = CSLDuplicate(poDS->GetMetadata());
-        papszMD = CSLSetNameValue(papszMD, GDALMD_AREA_OR_POINT, NULL);
-        if( papszSrcMD && papszSrcMD[0] != NULL &&
-            CSLCount(papszSrcMD) != CSLCount(papszMD) )
-        {
-            poDS->SetMetadata(papszSrcMD);
-        }
-        CSLDestroy(papszSrcMD);
-        CSLDestroy(papszMD);
     }
 
     return poDS;
@@ -2887,6 +2972,8 @@ void GDALRegister_JP2OpenJPEG()
 "   <Option name='CODEBLOCK_WIDTH' type='int' description='Codeblock width' default='64' min='4' max='1024'/>"
 "   <Option name='CODEBLOCK_HEIGHT' type='int' description='Codeblock height' default='64' min='4' max='1024'/>"
 "   <Option name='CT_COMPONENTS' type='int' min='3' max='4' description='If there is one color table, number of color table components to write. Autodetected if not specified.'/>"
+"   <Option name='WRITE_METADATA' type='boolean' description='Whether metadata should be written, in a dedicated JP2 XML box' default='NO'/>"
+"   <Option name='MAIN_MD_DOMAIN_ONLY' type='boolean' description='(Only if WRITE_METADATA=YES) Whether only metadata from the main domain should be written' default='NO'/>"
 "</CreationOptionList>"  );
 
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
