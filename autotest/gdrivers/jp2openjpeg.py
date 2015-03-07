@@ -1700,36 +1700,41 @@ def jp2openjpeg_39():
     src_ds = gdal.GetDriverByName('MEM').Create('', 20, 20)
     src_ds.SetGeoTransform([0,60,0,0,0,-60])
     gdal.SetConfigOption('GMLJP2OVERRIDE', '/vsimem/override.gml')
-    gdal.FileFromMemBuffer('/vsimem/override.gml', """<gml:FeatureCollection
-   xmlns:gml="http://www.opengis.net/gml"
-   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-   xsi:schemaLocation="http://www.opengis.net/gml http://schemas.opengis.net/gml/3.1.1/profiles/gmlJP2Profile/1.0.0/gmlJP2Profile.xsd">
-  <gml:boundedBy>
-    <gml:Null>withheld</gml:Null>
-  </gml:boundedBy>
+    # This GML has srsName only on RectifiedGrid (taken from D.2.2.2 from DGIWG_Profile_of_JPEG2000_for_Georeferenced_Imagery.pdf)
+    gdal.FileFromMemBuffer('/vsimem/override.gml', """<?xml version="1.0" encoding="UTF-8"?>
+<gml:FeatureCollection xmlns:gml="http://www.opengis.net/gml"
+                       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+                       xmlns:gmd="http://www.isotc211.org/2005/gmd"
+                       xmlns:gco="http://www.isotc211.org/2005/gco"
+                       xsi:schemaLocation="http://www.opengis.net/gml file:///D:/dgiwg/jp2/GML-3.1.1/profiles/DGIWGgmlJP2Profile/1.1.0/DGIWGgmlJP2Profile.xsd">
   <gml:featureMember>
     <gml:FeatureCollection>
+      <!-- feature collection for a specific codestream -->
       <gml:featureMember>
-        <gml:RectifiedGridCoverage dimension="2" gml:id="RGC0001">
+        <gml:RectifiedGridCoverage>
           <gml:rectifiedGridDomain>
-            <gml:RectifiedGrid dimension="2">
+            <gml:RectifiedGrid dimension="2" srsName="urn:ogc:def:crs:EPSG::4326">
               <gml:limits>
                 <gml:GridEnvelope>
+                  <!-- Image coordinates -->
                   <gml:low>0 0</gml:low>
-                  <gml:high>19 19</gml:high>
+                  <gml:high>4999 9999</gml:high>
                 </gml:GridEnvelope>
               </gml:limits>
-              <gml:axisName>x</gml:axisName>
-              <gml:axisName>y</gml:axisName>
+              <gml:axisName>X</gml:axisName>
+              <gml:axisName>Y</gml:axisName>
+              <!-- The origin location in geo coordinates -->
               <gml:origin>
-                <gml:Point gml:id="P0001" srsName="urn:ogc:def:crs:EPSG::32631">
-                  <gml:pos>440750 3751290</gml:pos>
+                <gml:Point>
+                  <gml:pos>19.1234567 37.1234567</gml:pos>
                 </gml:Point>
               </gml:origin>
-              <gml:offsetVector srsName="urn:ogc:def:crs:EPSG::32631">60 0</gml:offsetVector>
-              <gml:offsetVector srsName="urn:ogc:def:crs:EPSG::32631">0 -60</gml:offsetVector>
+              <!--offsetVectors says how much offset each pixel will contribute to, in practice, that is the cell size -->
+              <gml:offsetVector>0.0 0.00001234</gml:offsetVector>
+              <gml:offsetVector> -0.00001234 0.0</gml:offsetVector>
             </gml:RectifiedGrid>
           </gml:rectifiedGridDomain>
+          <!--A RectifiedGridCoverage uses the rangeSet to describe the data below is a description of the range of values described by the grid coverage -->
           <gml:rangeSet>
             <gml:File>
               <gml:rangeParameters/>
@@ -1747,7 +1752,7 @@ def jp2openjpeg_39():
     gdal.Unlink('/vsimem/override.gml')
     del out_ds
     ds = gdal.Open('/vsimem/jp2openjpeg_39.jp2')
-    if ds.GetProjectionRef().find('32631') < 0:
+    if ds.GetProjectionRef().find('4326') < 0:
         gdaltest.post_reason('fail')
         print(ds.GetProjectionRef())
         return 'fail'

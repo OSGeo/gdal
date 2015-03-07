@@ -911,6 +911,14 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
                             "=FeatureCollection.boundedBy.Envelope.srsName",
                             NULL );
     }
+/* -------------------------------------------------------------------- */
+/*      Examples of DGIWG_Profile_of_JPEG2000_for_Georeference_Imagery.pdf */
+/*      have srsName only on RectifiedGrid element.                     */
+/* -------------------------------------------------------------------- */
+    if( psRG != NULL && pszSRSName == NULL )
+    {
+        pszSRSName = CPLGetXMLValue( psRG,  "srsName", NULL );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      If we have gotten a geotransform, then try to interprete the    */
