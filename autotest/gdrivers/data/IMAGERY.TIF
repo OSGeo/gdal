@@ -1,18 +1,12 @@
 <VRTDataset rasterXSize="6000" rasterYSize="6000">
+  <!-- This is just a dummy for the IMAGERY.TIF that should go with 
+       METADATA.DIM - a dimap dataset -->
   <VRTRasterBand dataType="Byte" band="1">
-    <Metadata>
-      <MDI key="BAND_DESCRIPTION">PAN</MDI>
-      <MDI key="PHYSICAL_BIAS">0.000000</MDI>
-      <MDI key="PHYSICAL_CALIBRATION_DATE">2001-10-01T00:00:00.000000</MDI>
-      <MDI key="PHYSICAL_GAIN">4.357726</MDI>
-      <MDI key="PHYSICAL_UNIT">equivalent radiance (W.m-2.Sr-1.um-1)</MDI>
-    </Metadata>
     <SimpleSource>
-      <SourceFilename relativeToVRT="0">/home/even/gdal/svn/trunk/autotest/cpp/../gdrivers/data/rgbsmall.tif</SourceFilename>
+      <SourceFilename relativeToVRT="1">rgbsmall.tif</SourceFilename>
       <SourceBand>1</SourceBand>
-      <SourceProperties RasterXSize="50" RasterYSize="50" DataType="Byte" BlockXSize="50" BlockYSize="50" />
-      <SrcRect xOff="0" yOff="0" xSize="50" ySize="50" />
-      <DstRect xOff="0" yOff="0" xSize="50" ySize="50" />
+      <SrcRect xOff="0" yOff="0" xSize="50" ySize="50"/>
+      <DstRect xOff="0" yOff="0" xSize="50" ySize="50"/>
     </SimpleSource>
   </VRTRasterBand>
 </VRTDataset>
