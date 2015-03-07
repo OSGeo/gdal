@@ -1017,6 +1017,16 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
         dfTemp = adfGeoTransform[2];
         adfGeoTransform[2] = adfGeoTransform[swapWith2Index];
         adfGeoTransform[swapWith2Index] = dfTemp;
+
+        /* Found in autotest/gdrivers/data/ll.jp2 */
+        if( adfGeoTransform[1] == 0.0 && adfGeoTransform[2] < 0.0 &&
+            adfGeoTransform[4] > 0.0 && adfGeoTransform[5] == 0.0 )
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "It is likely that the axis order of the GMLJP2 box is not "
+                     "consistant with the EPSG order and that the resulting georeferencing "
+                     "will be incorrect. Try setting GDAL_IGNORE_AXIS_ORIENTATION=TRUE if it is the case");
+        }
     }
 
     return pszProjection != NULL && bSuccess;
