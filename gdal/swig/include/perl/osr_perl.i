@@ -91,15 +91,20 @@ sub create {
     } elsif ($param{URL}) {
         ImportFromUrl($self, $param{URL});
     } elsif ($param{ERMapper}) {
-        ImportFromERM($self, @{$param{ERMapper}} );
+        ImportFromERM($self, @{$param{ERMapper}});
     } elsif ($param{ERM}) {
-        ImportFromERM($self, @{$param{ERM}} );
+        ImportFromERM($self, @{$param{ERM}});
     } elsif ($param{MICoordSys}) {
-        ImportFromMICoordSys($self, $param{MICoordSys} );
+        ImportFromMICoordSys($self, $param{MICoordSys});
     } elsif ($param{MapInfoCS}) {
-        ImportFromMICoordSys($self, $param{MapInfoCS} );
+        ImportFromMICoordSys($self, $param{MapInfoCS});
+    } elsif ($param{WGS}) {
+        eval {
+            SetWellKnownGeogCS($self, 'WGS'.$param{WGS});
+        };
+        confess "$@" if $@;
     } else {
-        croak "unrecognized import format '@_' for Geo::OSR::SpatialReference";
+        confess "Unrecognized create parameters.";
     }
     bless $self, $pkg if defined $self;
 }
@@ -129,7 +134,7 @@ sub Export {
     } elsif ($format eq 'MICoordSys' or $format eq 'MapInfoCS') {
         return ExportToMICoordSys();
     } else {
-        croak "unrecognized export format '$format/@_' for Geo::OSR::SpatialReference.";
+        confess "Unrecognized export format.";
     }
 }
 *AsText = *ExportToWkt;
@@ -184,7 +189,7 @@ sub Set {
             SetProjCS($self, $params{CoordinateSystem});
         }
     } elsif ($params{Projection}) {
-        croak "Unknown projection '$params{Projection}'." unless exists $Geo::OSR::PROJECTIONS{$params{Projection}};
+        confess "Unknown projection." unless exists $Geo::OSR::PROJECTIONS{$params{Projection}};
         my @parameters = ();
         @parameters = @{$params{Parameters}} if ref($params{Parameters});
         if ($params{Projection} eq 'Albers_Conic_Equal_Area') {
@@ -283,7 +288,7 @@ sub Set {
             SetProjection($self, $params{Projection});
         }
     } else {
-        croak "Not enough information for a spatial reference object.";
+        confess "Not enough information for a spatial reference object.";
     }
 }
 
