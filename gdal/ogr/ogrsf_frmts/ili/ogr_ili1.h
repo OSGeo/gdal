@@ -78,6 +78,7 @@ private:
     int                 GeometryAppend( OGRGeometry *poGeometry );
 
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
+    GeomFieldInfos      GetGeomFieldInfos() { return oGeomFieldInfos; }
 
     OGRErr              CreateField( OGRFieldDefn *poField, int bApproxOK = TRUE );
 
