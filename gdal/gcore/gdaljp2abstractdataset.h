@@ -35,12 +35,16 @@
 
 class CPL_DLL GDALJP2AbstractDataset: public GDALGeorefPamDataset
 {
+    char*               pszWldFilename;
+
   public:
         GDALJP2AbstractDataset();
         ~GDALJP2AbstractDataset();
 
         void LoadJP2Metadata(GDALOpenInfo* poOpenInfo,
                              const char* pszOverideFilename = NULL);
+
+        virtual char      **GetFileList(void);
 };
 
 #endif /* GDAL_JP2_ABSTRACT_DATASET_H_INCLUDED */

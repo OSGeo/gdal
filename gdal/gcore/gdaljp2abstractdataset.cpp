@@ -38,6 +38,7 @@
 
 GDALJP2AbstractDataset::GDALJP2AbstractDataset()
 {
+    pszWldFilename = NULL;
 }
 
 /************************************************************************/
@@ -46,6 +47,7 @@ GDALJP2AbstractDataset::GDALJP2AbstractDataset()
 
 GDALJP2AbstractDataset::~GDALJP2AbstractDataset()
 {
+    CPLFree(pszWldFilename);
 }
 
 /************************************************************************/
@@ -63,7 +65,7 @@ void GDALJP2AbstractDataset::LoadJP2Metadata(GDALOpenInfo* poOpenInfo,
 /* -------------------------------------------------------------------- */
     GDALJP2Metadata oJP2Geo;
 
-    if( oJP2Geo.ReadAndParse( pszOverideFilename ) )
+    if( oJP2Geo.ReadAndParse( pszOverideFilename, FALSE ) )
     {
         CPLFree(pszProjection);
         pszProjection = CPLStrdup(oJP2Geo.pszProjection);
@@ -134,9 +136,26 @@ void GDALJP2AbstractDataset::LoadJP2Metadata(GDALOpenInfo* poOpenInfo,
         bGeoTransformValid |=
             GDALReadWorldFile2( pszOverideFilename, NULL,
                                 adfGeoTransform,
-                                poOpenInfo->GetSiblingFiles(), NULL )
+                                poOpenInfo->GetSiblingFiles(), &pszWldFilename )
             || GDALReadWorldFile2( pszOverideFilename, ".wld",
                                    adfGeoTransform,
-                                   poOpenInfo->GetSiblingFiles(), NULL );
+                                   poOpenInfo->GetSiblingFiles(), &pszWldFilename );
     }
+}
+
+/************************************************************************/
+/*                            GetFileList()                             */
+/************************************************************************/
+
+char **GDALJP2AbstractDataset::GetFileList()
+
+{
+    char **papszFileList = GDALGeorefPamDataset::GetFileList();
+
+    if( pszWldFilename != NULL &&
+        CSLFindString( papszFileList, pszWldFilename ) == -1 )
+    {
+        papszFileList = CSLAddString( papszFileList, pszWldFilename );
+    }
+    return papszFileList;
 }
