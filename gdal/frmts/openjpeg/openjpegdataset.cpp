@@ -89,6 +89,12 @@ static void JP2OpenJPEGDataset_InfoCallback(const char *pszMsg, CPL_UNUSED void 
     CPLFree(pszMsgTmp);
 }
 
+typedef struct
+{
+    VSILFILE*    fp;
+    vsi_l_offset nBaseOffset;
+} JP2OpenJPEGFile;
+
 /************************************************************************/
 /*                      JP2OpenJPEGDataset_Read()                       */
 /************************************************************************/
@@ -96,31 +102,14 @@ static void JP2OpenJPEGDataset_InfoCallback(const char *pszMsg, CPL_UNUSED void 
 static OPJ_SIZE_T JP2OpenJPEGDataset_Read(void* pBuffer, OPJ_SIZE_T nBytes,
                                        void *pUserData)
 {
-    vsi_l_offset nOffsetBefore =  VSIFTellL((VSILFILE*)pUserData);
-    int nRet = VSIFReadL(pBuffer, 1, nBytes, (VSILFILE*)pUserData);
+    JP2OpenJPEGFile* psJP2OpenJPEGFile = (JP2OpenJPEGFile* )pUserData;
+    int nRet = VSIFReadL(pBuffer, 1, nBytes, psJP2OpenJPEGFile->fp);
 #ifdef DEBUG_IO
     CPLDebug("OPENJPEG", "JP2OpenJPEGDataset_Read(%d) = %d", (int)nBytes, nRet);
 #endif
     if (nRet == 0)
         nRet = -1;
-    else if( (nOffsetBefore == 0 || nOffsetBefore == 1024) && nRet >= 8 )
-    {
-        /* Nasty hack : opj_get_decoded_tile() currently ignores
-          OPJ_DPARAMETERS_IGNORE_PCLR_CMAP_CDEF_FLAG, so we "hide" the jp2 boxes
-          that advertize a color table... */
-        for(OPJ_SIZE_T i=0;i<(OPJ_SIZE_T)nRet-8;i++)
-        {
-            if( ((GByte*)pBuffer)[i+0] == 0 && ((GByte*)pBuffer)[i+1] == 0 &&
-                (!(((GByte*)pBuffer)[i+2] == 0 && ((GByte*)pBuffer)[i+3] == 0)) &&
-                (memcmp((GByte*)pBuffer + i + 4, "pclr", 4)==0 ||
-                memcmp((GByte*)pBuffer + i + 4, "cmap", 4)==0 ||
-                /* We also ignore cdef as openjpeg 2.0 and 2.1 can crash if they are unusual association values */
-                memcmp((GByte*)pBuffer + i + 4, "cdef", 4)==0) )
-            {
-                memcpy((GByte*)pBuffer +i + 4, "XXXX", 4);
-            }
-        }
-    }
+
     return nRet;
 }
 
@@ -131,7 +120,8 @@ static OPJ_SIZE_T JP2OpenJPEGDataset_Read(void* pBuffer, OPJ_SIZE_T nBytes,
 static OPJ_SIZE_T JP2OpenJPEGDataset_Write(void* pBuffer, OPJ_SIZE_T nBytes,
                                        void *pUserData)
 {
-    int nRet = VSIFWriteL(pBuffer, 1, nBytes, (VSILFILE*)pUserData);
+    JP2OpenJPEGFile* psJP2OpenJPEGFile = (JP2OpenJPEGFile* )pUserData;
+    int nRet = VSIFWriteL(pBuffer, 1, nBytes, psJP2OpenJPEGFile->fp);
 #ifdef DEBUG_IO
     CPLDebug("OPENJPEG", "JP2OpenJPEGDataset_Write(%d) = %d", (int)nBytes, nRet);
 #endif
@@ -144,10 +134,12 @@ static OPJ_SIZE_T JP2OpenJPEGDataset_Write(void* pBuffer, OPJ_SIZE_T nBytes,
 
 static OPJ_BOOL JP2OpenJPEGDataset_Seek(OPJ_OFF_T nBytes, void * pUserData)
 {
+    JP2OpenJPEGFile* psJP2OpenJPEGFile = (JP2OpenJPEGFile* )pUserData;
 #ifdef DEBUG_IO
     CPLDebug("OPENJPEG", "JP2OpenJPEGDataset_Seek(%d)", (int)nBytes);
 #endif
-    return VSIFSeekL((VSILFILE*)pUserData, nBytes, SEEK_SET) == 0;
+    return VSIFSeekL(psJP2OpenJPEGFile->fp, psJP2OpenJPEGFile->nBaseOffset +nBytes,
+                     SEEK_SET) == 0;
 }
 
 /************************************************************************/
@@ -156,13 +148,14 @@ static OPJ_BOOL JP2OpenJPEGDataset_Seek(OPJ_OFF_T nBytes, void * pUserData)
 
 static OPJ_OFF_T JP2OpenJPEGDataset_Skip(OPJ_OFF_T nBytes, void * pUserData)
 {
-    vsi_l_offset nOffset = VSIFTellL((VSILFILE*)pUserData);
+    JP2OpenJPEGFile* psJP2OpenJPEGFile = (JP2OpenJPEGFile* )pUserData;
+    vsi_l_offset nOffset = VSIFTellL(psJP2OpenJPEGFile->fp);
     nOffset += nBytes;
 #ifdef DEBUG_IO
     CPLDebug("OPENJPEG", "JP2OpenJPEGDataset_Skip(%d -> " CPL_FRMT_GUIB ")",
              (int)nBytes, (GUIntBig)nOffset);
 #endif
-    VSIFSeekL((VSILFILE*)pUserData, nOffset, SEEK_SET);
+    VSIFSeekL(psJP2OpenJPEGFile->fp, nOffset, SEEK_SET);
     return nBytes;
 }
 
@@ -179,8 +172,9 @@ class JP2OpenJPEGDataset : public GDALJP2AbstractDataset
     friend class JP2OpenJPEGRasterBand;
 
     VSILFILE   *fp; /* Large FILE API */
+    vsi_l_offset nCodeStreamStart;
+    vsi_l_offset nCodeStreamLength;
 
-    OPJ_CODEC_FORMAT eCodecFormat;
     OPJ_COLOR_SPACE eColorSpace;
     int         nRedIndex;
     int         nGreenIndex;
@@ -615,22 +609,21 @@ CPLErr  JP2OpenJPEGDataset::IRasterIO( GDALRWFlag eRWFlag,
 /*                    JP2OpenJPEGCreateReadStream()                     */
 /************************************************************************/
 
-static opj_stream_t* JP2OpenJPEGCreateReadStream(VSILFILE* fp)
+static opj_stream_t* JP2OpenJPEGCreateReadStream(JP2OpenJPEGFile* psJP2OpenJPEGFile,
+                                                 vsi_l_offset nSize)
 {
     opj_stream_t *pStream = opj_stream_create(1024, TRUE); // Default 1MB is way too big for some datasets
 
-    VSIFSeekL(fp, 0, SEEK_END);
-    opj_stream_set_user_data_length(pStream, VSIFTellL(fp));
-    /* Reseek to file beginning */
-    VSIFSeekL(fp, 0, SEEK_SET);
+    VSIFSeekL(psJP2OpenJPEGFile->fp, psJP2OpenJPEGFile->nBaseOffset, SEEK_SET);
+    opj_stream_set_user_data_length(pStream, nSize);
 
     opj_stream_set_read_function(pStream, JP2OpenJPEGDataset_Read);
     opj_stream_set_seek_function(pStream, JP2OpenJPEGDataset_Seek);
     opj_stream_set_skip_function(pStream, JP2OpenJPEGDataset_Skip);
 #if defined(OPENJPEG_VERSION) && OPENJPEG_VERSION >= 20100
-    opj_stream_set_user_data(pStream, fp, NULL);
+    opj_stream_set_user_data(pStream, psJP2OpenJPEGFile, NULL);
 #else
-    opj_stream_set_user_data(pStream, fp);
+    opj_stream_set_user_data(pStream, psJP2OpenJPEGFile);
 #endif
 
     return pStream;
@@ -660,7 +653,7 @@ CPLErr JP2OpenJPEGDataset::ReadBlock( int nBand, VSILFILE* fp,
     int nWidthToRead = MIN(nBlockXSize, nRasterXSize - nBlockXOff * nBlockXSize);
     int nHeightToRead = MIN(nBlockYSize, nRasterYSize - nBlockYOff * nBlockYSize);
 
-    pCodec = opj_create_decompress(eCodecFormat);
+    pCodec = opj_create_decompress(OPJ_CODEC_J2K);
 
     opj_set_info_handler(pCodec, JP2OpenJPEGDataset_InfoCallback,NULL);
     opj_set_warning_handler(pCodec, JP2OpenJPEGDataset_WarningCallback, NULL);
@@ -675,7 +668,10 @@ CPLErr JP2OpenJPEGDataset::ReadBlock( int nBand, VSILFILE* fp,
         return CE_Failure;
     }
 
-    pStream = JP2OpenJPEGCreateReadStream(fp);
+    JP2OpenJPEGFile sJP2OpenJPEGFile;
+    sJP2OpenJPEGFile.fp = fp;
+    sJP2OpenJPEGFile.nBaseOffset = nCodeStreamStart;
+    pStream = JP2OpenJPEGCreateReadStream(&sJP2OpenJPEGFile, nCodeStreamLength);
 
     if(!opj_read_header(pStream,pCodec,&psImage))
     {
@@ -914,8 +910,9 @@ GDALColorInterp JP2OpenJPEGRasterBand::GetColorInterpretation()
 JP2OpenJPEGDataset::JP2OpenJPEGDataset()
 {
     fp = NULL;
+    nCodeStreamStart = 0;
+    nCodeStreamLength = 0;
     nBands = 0;
-    eCodecFormat = OPJ_CODEC_UNKNOWN;
     eColorSpace = OPJ_CLRSPC_UNKNOWN;
     nRedIndex = 0;
     nGreenIndex = 1;
@@ -1002,15 +999,50 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
 
     /* Detect which codec to use : J2K or JP2 ? */
     static const unsigned char jpc_header[] = {0xff,0x4f};
+    vsi_l_offset nCodeStreamStart = 0;
+    vsi_l_offset nCodeStreamLength = 0;
     if (memcmp( poOpenInfo->pabyHeader, jpc_header, 
                     sizeof(jpc_header) ) == 0)
+    {
         eCodecFormat = OPJ_CODEC_J2K;
+
+        VSIFSeekL(fp, 0, SEEK_END);
+        nCodeStreamLength =  VSIFTellL(fp);
+    }
     else
+    {
         eCodecFormat = OPJ_CODEC_JP2;
+
+        /* Find offset of first jp2c box */
+        GDALJP2Box oBox( fp );
+        if( oBox.ReadFirst() )
+        {
+            while( strlen(oBox.GetType()) > 0 )
+            {
+                if( EQUAL(oBox.GetType(),"jp2c") )
+                {
+                    nCodeStreamStart = VSIFTellL(fp);
+                    nCodeStreamLength = oBox.GetDataLength();
+                    break;
+                }
+
+                if (!oBox.ReadNext())
+                    break;
+            }
+        }
+
+        if( nCodeStreamStart == 0 )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "No code-stream in JP2 file");
+            VSIFCloseL(fp);
+            return NULL;
+        }
+    }
+
 
     opj_codec_t* pCodec;
 
-    pCodec = opj_create_decompress(eCodecFormat);
+    pCodec = opj_create_decompress(OPJ_CODEC_J2K);
 
     opj_set_info_handler(pCodec, JP2OpenJPEGDataset_InfoCallback,NULL);
     opj_set_warning_handler(pCodec, JP2OpenJPEGDataset_WarningCallback, NULL);
@@ -1025,7 +1057,11 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
-    opj_stream_t * pStream = JP2OpenJPEGCreateReadStream(fp);
+    JP2OpenJPEGFile sJP2OpenJPEGFile;
+    sJP2OpenJPEGFile.fp = fp;
+    sJP2OpenJPEGFile.nBaseOffset = nCodeStreamStart;
+    opj_stream_t * pStream = JP2OpenJPEGCreateReadStream(&sJP2OpenJPEGFile,
+                                                         nCodeStreamLength);
 
     opj_image_t * psImage = NULL;
 
@@ -1171,12 +1207,13 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
     int                 iBand;
 
     poDS = new JP2OpenJPEGDataset();
-    poDS->eCodecFormat = eCodecFormat;
     poDS->eColorSpace = psImage->color_space;
     poDS->nRasterXSize = psImage->x1 - psImage->x0;
     poDS->nRasterYSize = psImage->y1 - psImage->y0;
     poDS->nBands = psImage->numcomps;
     poDS->fp = fp;
+    poDS->nCodeStreamStart = nCodeStreamStart;
+    poDS->nCodeStreamLength = nCodeStreamLength;
     poDS->bIs420 = bIs420;
 
     poDS->bUseSetDecodeArea = 
@@ -1196,6 +1233,7 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Look for color table or cdef box                                */
 /* -------------------------------------------------------------------- */
+    if( eCodecFormat == OPJ_CODEC_JP2 )
     {
         GDALJP2Box oBox( fp );
         if( oBox.ReadFirst() )
@@ -1291,6 +1329,18 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
                                     {
                                         poDS->eColorSpace = OPJ_CLRSPC_SYCC;
                                         CPLDebug("OPENJPEG", "SYCC color space");
+                                    }
+                                    else if( enumcs == 20 )
+                                    {
+                                        /* Used by J2KP4files/testfiles_jp2/file7.jp2 */
+                                        poDS->eColorSpace = OPJ_CLRSPC_SRGB;
+                                        CPLDebug("OPENJPEG", "e-sRGB color space");
+                                    }
+                                    else if( enumcs == 21 )
+                                    {
+                                        /* Used by J2KP4files/testfiles_jp2/file5.jp2 */
+                                        poDS->eColorSpace = OPJ_CLRSPC_SRGB;
+                                        CPLDebug("OPENJPEG", "ROMM-RGB color space");
                                     }
                                     else
                                     {
@@ -1428,12 +1478,13 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
             }
         }
 
-        poODS->eCodecFormat = poDS->eCodecFormat;
         poODS->eColorSpace = poDS->eColorSpace;
         poODS->nRasterXSize = nW;
         poODS->nRasterYSize = nH;
         poODS->nBands = poDS->nBands;
         poODS->fp = fpOvr;
+        poODS->nCodeStreamStart = nCodeStreamStart;
+        poODS->nCodeStreamLength = nCodeStreamLength;
         poODS->bIs420 = bIs420;
         for( iBand = 1; iBand <= poDS->nBands; iBand++ )
         {
@@ -2486,14 +2537,17 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
     pasBandParams = NULL;
 
     opj_stream_t * pStream;
+    JP2OpenJPEGFile sJP2OpenJPEGFile;
+    sJP2OpenJPEGFile.fp = fp;
+    sJP2OpenJPEGFile.nBaseOffset = VSIFTellL(fp);
     pStream = opj_stream_create(1024*1024, FALSE);
     opj_stream_set_write_function(pStream, JP2OpenJPEGDataset_Write);
     opj_stream_set_seek_function(pStream, JP2OpenJPEGDataset_Seek);
     opj_stream_set_skip_function(pStream, JP2OpenJPEGDataset_Skip);
 #if defined(OPENJPEG_VERSION) && OPENJPEG_VERSION >= 20100
-    opj_stream_set_user_data(pStream, fp, NULL);
+    opj_stream_set_user_data(pStream, &sJP2OpenJPEGFile, NULL);
 #else
-    opj_stream_set_user_data(pStream, fp);
+    opj_stream_set_user_data(pStream, &sJP2OpenJPEGFile);
 #endif
 
     if (!opj_start_compress(pCodec,psImage,pStream))
