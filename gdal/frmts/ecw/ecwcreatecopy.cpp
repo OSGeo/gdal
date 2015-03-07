@@ -97,6 +97,7 @@ public:
 
     CPLErr  PrepareCoverageBox( const char *pszWKT, double *padfGeoTransform );
     CPLErr  WriteJP2Box( GDALJP2Box * );
+    void    WriteXMLBoxes();
     CPLErr  WriteLineBIL(UINT16 nBands, void **ppOutputLine, UINT32 *pLineSteps = NULL);
     virtual NCSEcwCellType WriteReadLineGetCellType() {
         return sFileInfo.eCellType;
@@ -493,6 +494,21 @@ CPLErr GDALECWCompressor::WriteJP2Box( GDALJP2Box * poBox )
     nJP2UserBox ++;
 
     return CE_None;
+}
+
+/************************************************************************/
+/*                         WriteXMLBoxes()                              */
+/************************************************************************/
+
+void GDALECWCompressor::WriteXMLBoxes()
+{
+    int nBoxes = 0;
+    GDALJP2Box** papoBoxes = GDALJP2Metadata::CreateXMLBoxes(m_poSrcDS, &nBoxes);
+    for(int i=0;i<nBoxes;i++)
+    {
+        WriteJP2Box(papoBoxes[i]);
+    }
+    CPLFree(papoBoxes);
 }
 
 /************************************************************************/
@@ -938,12 +954,24 @@ CPLErr GDALECWCompressor::Initialize(
         oJP2MD.bPixelIsPoint = bPixelIsPoint;
 
         if (bIsJPEG2000) {
-
+            if( CSLFetchBoolean(papszOptions, "WRITE_METADATA", FALSE) )
+            {
+                if( !CSLFetchBoolean(papszOptions, "MAIN_MD_DOMAIN_ONLY", FALSE) )
+                {
+                    WriteXMLBoxes();
+                }
+                WriteJP2Box(GDALJP2Metadata::CreateGDALMultiDomainMetadataXMLBox(
+                        m_poSrcDS, CSLFetchBoolean(papszOptions, "MAIN_MD_DOMAIN_ONLY", FALSE)));
+            }
             if( CSLFetchBoolean( papszOptions, "GMLJP2", TRUE ) )
                 WriteJP2Box( oJP2MD.CreateGMLJP2(nXSize,nYSize) );
             if( CSLFetchBoolean( papszOptions, "GeoJP2", TRUE ) )
                 WriteJP2Box( oJP2MD.CreateJP2GeoTIFF() );
-
+            if( CSLFetchBoolean(papszOptions, "WRITE_METADATA", FALSE) &&
+                !CSLFetchBoolean(papszOptions, "MAIN_MD_DOMAIN_ONLY", FALSE) )
+            {
+                WriteJP2Box(GDALJP2Metadata::CreateXMPBox(m_poSrcDS));
+            }
         }
     }
 /* -------------------------------------------------------------------- */
@@ -1275,7 +1303,11 @@ ECWCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 #endif
 
         ((ECWDataset *)poDS)->SetPreventCopyingSomeMetadata(TRUE);
-        poDS->CloneInfo( poSrcDS, GCIF_PAM_DEFAULT );
+        int nFlags = GCIF_PAM_DEFAULT;
+        if( bIsJPEG2000 &&
+            !CSLFetchBoolean(papszOptions, "WRITE_METADATA", FALSE) )
+            nFlags &= ~GCIF_METADATA;
+        poDS->CloneInfo( poSrcDS, nFlags );
         ((ECWDataset *)poDS)->SetPreventCopyingSomeMetadata(FALSE);
     }
 

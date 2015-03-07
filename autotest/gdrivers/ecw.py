@@ -1870,6 +1870,117 @@ def ecw_44():
             return 'fail'
 
     return 'success'
+
+###############################################################################
+# Test metadata reading & writing
+
+def RemoveDriverMetadata(md):
+    if 'COMPRESSION_RATE_TARGET' in md:
+        del md['COMPRESSION_RATE_TARGET']
+    if 'COLORSPACE' in md:
+        del md['COLORSPACE']
+    if 'VERSION' in md:
+        del md['VERSION']
+    return md
+
+def ecw_45():
+    if gdaltest.jp2ecw_drv is None or gdaltest.ecw_write == 0:
+        return 'skip'
+
+    # No metadata
+    src_ds = gdal.GetDriverByName('MEM').Create('', 2, 2)
+    out_ds = gdaltest.jp2ecw_drv.CreateCopy('/vsimem/ecw_45.jp2', src_ds, options = ['WRITE_METADATA=YES'])
+    del out_ds
+    if gdal.VSIStatL('/vsimem/ecw_45.jp2.aux.xml') is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = gdal.Open('/vsimem/ecw_45.jp2')
+    md = RemoveDriverMetadata(ds.GetMetadata())
+    if md != {}:
+        gdaltest.post_reason('fail')
+        print(md)
+        return 'fail'
+    gdal.Unlink('/vsimem/ecw_45.jp2')
+
+    # Simple metadata in main domain
+    for options in [ ['WRITE_METADATA=YES'] ]:
+        src_ds = gdal.GetDriverByName('MEM').Create('', 2, 2)
+        src_ds.SetMetadataItem('FOO', 'BAR')
+        out_ds = gdaltest.jp2ecw_drv.CreateCopy('/vsimem/ecw_45.jp2', src_ds, options = options)
+        del out_ds
+        if gdal.VSIStatL('/vsimem/ecw_45.jp2.aux.xml') is not None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        ds = gdal.Open('/vsimem/ecw_45.jp2')
+        md = RemoveDriverMetadata(ds.GetMetadata())
+        if md != {'FOO': 'BAR'}:
+            gdaltest.post_reason('fail')
+            print(md)
+            return 'fail'
+        gdal.Unlink('/vsimem/ecw_45.jp2')
+
+    # Simple metadata in auxiliary domain
+    src_ds = gdal.GetDriverByName('MEM').Create('', 2, 2)
+    src_ds.SetMetadataItem('FOO', 'BAR', 'SOME_DOMAIN')
+    out_ds = gdaltest.jp2ecw_drv.CreateCopy('/vsimem/ecw_45.jp2', src_ds, options = ['WRITE_METADATA=YES'])
+    del out_ds
+    if gdal.VSIStatL('/vsimem/ecw_45.jp2.aux.xml') is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = gdal.Open('/vsimem/ecw_45.jp2')
+    md = RemoveDriverMetadata(ds.GetMetadata('SOME_DOMAIN'))
+    if md != {'FOO': 'BAR'}:
+        gdaltest.post_reason('fail')
+        print(md)
+        return 'fail'
+    gdal.Unlink('/vsimem/ecw_45.jp2')
+
+    # Simple metadata in auxiliary XML domain
+    src_ds = gdal.GetDriverByName('MEM').Create('', 2, 2)
+    src_ds.SetMetadata( [ '<some_arbitrary_xml_box/>' ], 'xml:SOME_DOMAIN')
+    out_ds = gdaltest.jp2ecw_drv.CreateCopy('/vsimem/ecw_45.jp2', src_ds, options = ['WRITE_METADATA=YES'])
+    del out_ds
+    if gdal.VSIStatL('/vsimem/ecw_45.jp2.aux.xml') is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = gdal.Open('/vsimem/ecw_45.jp2')
+    if ds.GetMetadata('xml:SOME_DOMAIN')[0] != '<some_arbitrary_xml_box />\n':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.Unlink('/vsimem/ecw_45.jp2')
+
+    # Special xml:BOX_ metadata domain
+    for options in [ ['WRITE_METADATA=YES'] ]:
+        src_ds = gdal.GetDriverByName('MEM').Create('', 2, 2)
+        src_ds.SetMetadata( [ '<some_arbitrary_xml_box/>' ], 'xml:BOX_1')
+        out_ds = gdaltest.jp2ecw_drv.CreateCopy('/vsimem/ecw_45.jp2', src_ds, options = options)
+        del out_ds
+        if gdal.VSIStatL('/vsimem/ecw_45.jp2.aux.xml') is not None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        ds = gdal.Open('/vsimem/ecw_45.jp2')
+        if ds.GetMetadata('xml:BOX_0')[0] != '<some_arbitrary_xml_box/>':
+            gdaltest.post_reason('fail')
+            return 'fail'
+        gdal.Unlink('/vsimem/ecw_45.jp2')
+
+    # Special xml:XMP metadata domain
+    for options in [ ['WRITE_METADATA=YES'] ]:
+        src_ds = gdal.GetDriverByName('MEM').Create('', 2, 2)
+        src_ds.SetMetadata( [ '<fake_xmp_box/>' ], 'xml:XMP')
+        out_ds = gdaltest.jp2ecw_drv.CreateCopy('/vsimem/ecw_45.jp2', src_ds, options = options)
+        del out_ds
+        if gdal.VSIStatL('/vsimem/ecw_45.jp2.aux.xml') is not None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        ds = gdal.Open('/vsimem/ecw_45.jp2')
+        if ds.GetMetadata('xml:XMP')[0] != '<fake_xmp_box/>':
+            gdaltest.post_reason('fail')
+            return 'fail'
+        gdal.Unlink('/vsimem/ecw_45.jp2')
+
+    return 'success'
+
 ###############################################################################
 def ecw_online_1():
     if gdaltest.jp2ecw_drv is None:
@@ -2195,6 +2306,7 @@ gdaltest_list = [
     ecw_42,
     ecw_43,
     ecw_44,
+    ecw_45,
     ecw_online_1,
     ecw_online_2,
     #JTO this test does not make sense. It tests difference between two files pixel by pixel but compression is lossy# ecw_online_3, 

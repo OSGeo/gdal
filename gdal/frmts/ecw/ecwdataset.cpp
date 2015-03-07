@@ -3484,6 +3484,8 @@ void GDALRegister_JP2ECW()
 "   <Option name='INCLUDE_EPH' type='boolean'/>"
 "   <Option name='DECOMPRESS_LAYERS' type='int'/>"
 "   <Option name='DECOMPRESS_RECONSTRUCTION_PARAMETER' type='float'/>"
+"   <Option name='WRITE_METADATA' type='boolean' description='Whether metadata should be written, in a dedicated JP2 XML box' default='NO'/>"
+"   <Option name='MAIN_MD_DOMAIN_ONLY' type='boolean' description='(Only if WRITE_METADATA=YES) Whether only metadata from the main domain should be written' default='NO'/>"
 "</CreationOptionList>" );
 #endif
 
