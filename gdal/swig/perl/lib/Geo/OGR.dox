@@ -277,7 +277,7 @@
 # A layer object is typically obtained with a data source object. A
 # layer has a data model (a schema), which is maintained in a
 # definition object, and a set of features, which contain data
-# according to the data model. The schema is typicall set when the
+# according to the data model. The schema is typically set when the
 # layer is created or opened, but it may be altered somewhat with
 # methods Geo::OGR::Layer::CreateField,
 # Geo::OGR::Layer::AlterFieldDefn, and
@@ -1254,7 +1254,7 @@
 # ISO WKT and WKB, HEXWKB, HEXEWKB (srid can also be given), GML,
 # GeoJSON, Binary.
 
-# @note Uses As<format>/ExportTo<format> methods.
+# @note Uses As\<format\>/ExportTo\<format\> methods.
 # @return the geometry in a given format.
 
 ## @method AddPoint($x, $y, $z)

@@ -27,6 +27,7 @@
 
 ## @cmethod \@GetProjectionMethods()
 # @deprecated Use Geo::OSR::Projections.
+#
 # @return reference to an array of possible projection methods
 
 ## @cmethod @GetProjectionMethodParameterList($projection)
@@ -109,6 +110,7 @@
 ## @method Export($format)
 # Export the spatial reference to a selected format.
 # @note a.k.a. As
+#
 # @param format One of the following. The return value is explained
 # after the format. Other arguments are explained in parenthesis.
 # - WKT (Text): Well Known Text string

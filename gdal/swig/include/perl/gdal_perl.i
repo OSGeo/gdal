@@ -357,6 +357,8 @@ sub AutoCreateWarpedVRT {
 }
 
 
+
+
 package Geo::GDAL::MajorObject;
 use strict;
 use warnings;
@@ -476,6 +478,8 @@ sub CreateDataset {
 *Copy = *CreateCopy;
 
 
+
+
 package Geo::GDAL::Dataset;
 use strict;
 use warnings;
@@ -559,6 +563,8 @@ sub GCPs {
     my $GCPs = GetGCPs($self);
     return (@$GCPs, $proj);
 }
+
+
 
 
 package Geo::GDAL::Band;
@@ -805,6 +811,9 @@ sub FillNodata {
 }
 *GetBandNumber = *GetBand;
 
+
+
+
 package Geo::GDAL::ColorTable;
 use strict;
 use warnings;
@@ -857,6 +866,8 @@ sub ColorTable {
     return @table;
 }
 *ColorEntries = *ColorTable;
+
+
 
 
 package Geo::GDAL::RasterAttributeTable;
@@ -956,6 +967,16 @@ sub LinearBinning {
     my @a = GetLinearBinning($self);
     return $a[0] ? ($a[1], $a[2]) : ();
 }
+
+
+
+
+package Geo::GDAL::GCP;
+
+*swig_Pixel_get = *Geo::GDALc::GCP_Column_get;
+*swig_Pixel_set = *Geo::GDALc::GCP_Column_set;
+*swig_Line_get = *Geo::GDALc::GCP_Row_get;
+*swig_Line_set = *Geo::GDALc::GCP_Row_set;
 
 %}
 
