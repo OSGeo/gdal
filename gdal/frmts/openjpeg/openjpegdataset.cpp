@@ -1535,10 +1535,10 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
     int  nXSize = poSrcDS->GetRasterXSize();
     int  nYSize = poSrcDS->GetRasterYSize();
 
-    if( nBands == 0 )
+    if( nBands == 0 || nBands > 16384 )
     {
         CPLError( CE_Failure, CPLE_NotSupported,
-                  "Unable to export files with %d bands.", nBands );
+                  "Unable to export files with %d bands. Must be >= 1 and <= 16384", nBands );
         return NULL;
     }
 
@@ -2728,7 +2728,34 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
     JP2OpenJPEGDataset *poDS = (JP2OpenJPEGDataset*) JP2OpenJPEGDataset::Open(&oOpenInfo);
 
     if( poDS )
-        poDS->CloneInfo( poSrcDS, GCIF_PAM_DEFAULT );
+    {
+        poDS->CloneInfo( poSrcDS, GCIF_PAM_DEFAULT & (~GCIF_METADATA) );
+        char** papszSrcMD = CSLDuplicate(poSrcDS->GetMetadata());
+        papszSrcMD = CSLSetNameValue(papszSrcMD, GDALMD_AREA_OR_POINT, NULL);
+        for(char** papszSrcMDIter = papszSrcMD;
+                   papszSrcMDIter && *papszSrcMDIter; )
+        {
+            /* Remove entries like KEY= (without value) */
+            if( (*papszSrcMDIter)[0] &&
+                (*papszSrcMDIter)[strlen((*papszSrcMDIter))-1] == '=' )
+            {
+                CPLFree(*papszSrcMDIter);
+                memmove(papszSrcMDIter, papszSrcMDIter + 1,
+                        sizeof(char*) * (CSLCount(papszSrcMDIter + 1) + 1));
+            }
+            else
+                ++papszSrcMDIter;
+        }
+        char** papszMD = CSLDuplicate(poDS->GetMetadata());
+        papszMD = CSLSetNameValue(papszMD, GDALMD_AREA_OR_POINT, NULL);
+        if( papszSrcMD && papszSrcMD[0] != NULL &&
+            CSLCount(papszSrcMD) != CSLCount(papszMD) )
+        {
+            poDS->SetMetadata(papszSrcMD);
+        }
+        CSLDestroy(papszSrcMD);
+        CSLDestroy(papszMD);
+    }
 
     return poDS;
 }
