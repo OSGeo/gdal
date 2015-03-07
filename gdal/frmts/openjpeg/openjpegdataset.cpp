@@ -1567,7 +1567,7 @@ void JP2OpenJPEGDataset::WriteGDALMetadataBox( VSILFILE* fp,
                                                char** papszOptions )
 {
     GDALJP2Box* poBox = GDALJP2Metadata::CreateGDALMultiDomainMetadataXMLBox(
-        poSrcDS, !CSLFetchBoolean(papszOptions, "MAIN_MD_DOMAIN_ONLY", FALSE));
+        poSrcDS, CSLFetchBoolean(papszOptions, "MAIN_MD_DOMAIN_ONLY", FALSE));
     if( poBox )
         WriteBox(fp, poBox);
     delete poBox;
