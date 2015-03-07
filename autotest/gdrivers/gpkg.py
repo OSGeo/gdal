@@ -79,7 +79,8 @@ def gpkg_init():
     # This is to speed-up the runtime of tests on EXT4 filesystems
     # Do not use this for production environment if you care about data safety
     # w.r.t system/OS crashes, unless you know what you are doing.
-    gdal.SetConfigOption('OGR_SQLITE_SYNCHRONOUS', 'OFF')
+    if gdal.GetConfigOption('OGR_SQLITE_SYNCHRONOUS') is None:
+        gdal.SetConfigOption('OGR_SQLITE_SYNCHRONOUS', 'OFF')
     
     gdal.SetConfigOption('GPKG_DEBUG', 'ON')
 
