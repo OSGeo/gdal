@@ -21,6 +21,9 @@ stored as XML raw content in the xml:XMP metadata domain.</p>
 
 <p>Starting with GDAL 1.10, the driver supports writing georeferencing information as GeoJP2 and GMLJP2 boxes.</p>
 
+<p>Starting with GDAL 2.0, the driver supports creating files with transparency,
+arbitrary band count.</p>
+
 <h2>Creation Options</h2>
 
 <ul>
@@ -141,6 +144,34 @@ For PROFILE_1 compatibility, CODEBLOCK_WIDTH must not be greater than 64.
 Codeblock height: power of two value between 4 and 1024. Defaults to 64.
 Note that CODEBLOCK_WIDTH * CODEBLOCK_HEIGHT must not be greater than 4096.
 For PROFILE_1 compatibility, CODEBLOCK_HEIGHT must not be greater than 64.
+</p></li>
+
+<li><p><b>WRITE_METADATA=YES/NO</b>: (GDAL &gt;= 2.0) Whether metadata should be
+written, in a dedicated JP2 XML box. Defaults to NO.
+The content of the XML box will be like:
+<pre>
+&lt;GDALMultiDomainMetadata&gt;
+  &lt;Metadata&gt;
+    &lt;MDI key="foo"&gt;bar&lt;/MDI&gt;
+  &lt;/Metadata&gt;
+  &lt;Metadata domain='aux_domain'&gt;
+    &lt;MDI key="foo"&gt;bar&lt;/MDI&gt;
+  &lt;/Metadata&gt;
+  &lt;Metadata domain='a_xml_domain' format='xml'&gt;
+    &lt;arbitrary_xml_content&gt;
+    &lt;/arbitrary_xml_content&gt;
+  &lt;/Metadata&gt;
+&lt;/GDALMultiDomainMetadata&gt;
+</pre>
+If there are metadata domain whose name starts with "xml:BOX_", they will be
+written each as separate JP2 XML box.<p>
+If there is a metadata domain whose name is "xml:XMP", its content will be
+written as a JP2 UUID XMP box.
+</p></li>
+
+<li><p><b>MAIN_MD_DOMAIN_ONLY=YES/NO</b>: (GDAL &gt;= 2.0)
+(Only if WRITE_METADATA=YES) Whether only metadata from the main domain should
+be written. Defaults to NO.
 </p></li>
 
 </ul>

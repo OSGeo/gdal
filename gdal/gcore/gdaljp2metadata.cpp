@@ -80,6 +80,7 @@ GDALJP2Metadata::GDALJP2Metadata()
     pabyMSIGData = NULL;
 
     pszXMPMetadata = NULL;
+    pszGDALMultiDomainMetadata = NULL;
 
     bHaveGeoTransform = FALSE;
     adfGeoTransform[0] = 0.0;
@@ -114,6 +115,7 @@ GDALJP2Metadata::~GDALJP2Metadata()
     CSLDestroy( papszGMLMetadata );
     CSLDestroy( papszMetadata );
     CPLFree( pszXMPMetadata );
+    CPLFree( pszGDALMultiDomainMetadata );
 }
 
 /************************************************************************/
@@ -346,8 +348,7 @@ int GDALJP2Metadata::ReadBoxes( VSILFILE *fpVSIL )
 /*      Collect XMP box.                                                */
 /* -------------------------------------------------------------------- */
         if( EQUAL(oBox.GetType(),"uuid")
-            && memcmp( oBox.GetUUID(), xmp_uuid, 16 ) == 0 &&
-            pszXMPMetadata == NULL )
+            && memcmp( oBox.GetUUID(), xmp_uuid, 16 ) == 0 )
         {
             if( pszXMPMetadata == NULL )
             {
@@ -384,12 +385,28 @@ int GDALJP2Metadata::ReadBoxes( VSILFILE *fpVSIL )
         if( EQUAL(oBox.GetType(),"xml ") )
         {
             CPLString osBoxName;
-            char *pszXML = (char *) oBox.ReadBoxData();
 
-            osBoxName.Printf( "BOX_%d", iBox++ );
-            
-            papszGMLMetadata = CSLSetNameValue( papszGMLMetadata, 
-                                                osBoxName, pszXML );
+            char *pszXML = (char *) oBox.ReadBoxData();
+            if( strncmp(pszXML, "<GDALMultiDomainMetadata>",
+                        strlen("<GDALMultiDomainMetadata>")) == 0 )
+            {
+                if( pszGDALMultiDomainMetadata == NULL )
+                {
+                    pszGDALMultiDomainMetadata = pszXML;
+                    pszXML = NULL;
+                }
+                else
+                {
+                    CPLDebug("GDALJP2", "Too many GDAL metadata boxes. Ignoring this one");
+                }
+            }
+            else
+            {
+                osBoxName.Printf( "BOX_%d", iBox++ );
+
+                papszGMLMetadata = CSLSetNameValue( papszGMLMetadata, 
+                                                    osBoxName, pszXML );
+            }
             CPLFree( pszXML );
         }
 
@@ -1344,4 +1361,127 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2( int nXSize, int nYSize )
     return poGMLData;
 }
 
+/************************************************************************/
+/*                CreateGDALMultiDomainMetadataXMLBox()                 */
+/************************************************************************/
+
+GDALJP2Box *GDALJP2Metadata::CreateGDALMultiDomainMetadataXMLBox(
+                                       GDALDataset* poSrcDS,
+                                       int bMainMDDomainOnly )
+{
+    GDALMultiDomainMetadata oLocalMDMD;
+    char** papszSrcMD = CSLDuplicate(poSrcDS->GetMetadata());
+    /* Remove useless metadata */
+    papszSrcMD = CSLSetNameValue(papszSrcMD, GDALMD_AREA_OR_POINT, NULL);
+    papszSrcMD = CSLSetNameValue(papszSrcMD, "TIFFTAG_RESOLUTIONUNIT", NULL);
+    papszSrcMD = CSLSetNameValue(papszSrcMD, "TIFFTAG_XRESOLUTION", NULL);
+    papszSrcMD = CSLSetNameValue(papszSrcMD, "TIFFTAG_YRESOLUTION", NULL);
+    papszSrcMD = CSLSetNameValue(papszSrcMD, "Corder", NULL); /* from JP2KAK */
+    if( poSrcDS->GetDriver() != NULL && EQUAL(poSrcDS->GetDriver()->GetDescription(), "JP2ECW") )
+    {
+        papszSrcMD = CSLSetNameValue(papszSrcMD, "COMPRESSION_RATE_TARGET", NULL);
+        papszSrcMD = CSLSetNameValue(papszSrcMD, "COLORSPACE", NULL);
+        papszSrcMD = CSLSetNameValue(papszSrcMD, "VERSION", NULL);
+    }
+
+    int bHasMD = FALSE;
+    if( papszSrcMD && *papszSrcMD )
+    {
+        bHasMD = TRUE;
+        oLocalMDMD.SetMetadata(papszSrcMD);
+    }
+    CSLDestroy(papszSrcMD);
+
+    if( !bMainMDDomainOnly )
+    {
+        char** papszMDList = poSrcDS->GetMetadataDomainList();
+        for( char** papszMDListIter = papszMDList; 
+            papszMDListIter && *papszMDListIter; ++papszMDListIter )
+        {
+            if( !EQUAL(*papszMDListIter, "") &&
+                !EQUAL(*papszMDListIter, "IMAGE_STRUCTURE") &&
+                !EQUAL(*papszMDListIter, "JPEG2000") &&
+                !EQUALN(*papszMDListIter, "xml:BOX_", strlen("xml:BOX_")) &&
+                !EQUAL(*papszMDListIter, "xml:gml.root-instance") &&
+                !EQUAL(*papszMDListIter, "xml:XMP") )
+            {
+                papszSrcMD = poSrcDS->GetMetadata(*papszMDListIter);
+                if( papszSrcMD && *papszSrcMD )
+                {
+                    bHasMD = TRUE;
+                    oLocalMDMD.SetMetadata(papszSrcMD, *papszMDListIter);
+                }
+            }
+        }
+        CSLDestroy(papszMDList);
+    }
+
+    GDALJP2Box* poBox = NULL;
+    if( bHasMD )
+    {
+        CPLXMLNode* psXMLNode = oLocalMDMD.Serialize();
+        CPLXMLNode* psMasterXMLNode = CPLCreateXMLNode( NULL, CXT_Element,
+                                                        "GDALMultiDomainMetadata" );
+        psMasterXMLNode->psChild = psXMLNode;
+        char* pszXML = CPLSerializeXMLTree(psMasterXMLNode);
+        CPLDestroyXMLNode(psMasterXMLNode);
+
+        poBox = new GDALJP2Box();
+        poBox->SetType("xml ");
+        poBox->SetWritableData(strlen(pszXML), (const GByte*)pszXML);
+        CPLFree(pszXML);
+    }
+    return poBox;
+}
+
+/************************************************************************/
+/*                         WriteXMLBoxes()                              */
+/************************************************************************/
+
+GDALJP2Box** GDALJP2Metadata::CreateXMLBoxes( GDALDataset* poSrcDS,
+                                              int* pnBoxes )
+{
+    GDALJP2Box** papoBoxes = NULL;
+    *pnBoxes = 0;
+    char** papszMDList = poSrcDS->GetMetadataDomainList();
+    for( char** papszMDListIter = papszMDList; 
+        papszMDListIter && *papszMDListIter; ++papszMDListIter )
+    {
+        /* Write metadata that look like originating from JP2 XML boxes */
+        /* as a standalone JP2 XML box */
+        if( EQUALN(*papszMDListIter, "xml:BOX_", strlen("xml:BOX_")) )
+        {
+            char** papszSrcMD = poSrcDS->GetMetadata(*papszMDListIter);
+            if( papszSrcMD && *papszSrcMD )
+            {
+                GDALJP2Box* poBox = new GDALJP2Box();
+                poBox->SetType("xml ");
+                poBox->SetWritableData(strlen(*papszSrcMD), (const GByte*)*papszSrcMD);
+                papoBoxes = (GDALJP2Box**)CPLRealloc(papoBoxes, sizeof(GDALJP2Box*) * (*pnBoxes + 1));
+                papoBoxes[(*pnBoxes) ++] = poBox;
+            }
+        }
+    }
+    CSLDestroy(papszMDList);
+    return papoBoxes;
+}
+
+/************************************************************************/
+/*                          CreateXMPBox()                              */
+/************************************************************************/
+
+GDALJP2Box *GDALJP2Metadata::CreateXMPBox ( GDALDataset* poSrcDS )
+{
+    static const unsigned char xmp_uuid[16] =
+        { 0xBE,0x7A,0xCF,0xCB,0x97,0xA9,0x42,0xE8,
+        0x9C,0x71,0x99,0x94,0x91,0xE3,0xAF,0xAC};
+
+    char** papszSrcMD = poSrcDS->GetMetadata("xml:XMP");
+    GDALJP2Box* poBox = NULL;
+    if( papszSrcMD && * papszSrcMD )
+    {
+        poBox = GDALJP2Box::CreateUUIDBox(xmp_uuid, strlen(*papszSrcMD), (const GByte*)*papszSrcMD);
+    }
+    return poBox;
+}
 

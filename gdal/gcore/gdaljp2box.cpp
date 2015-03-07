@@ -290,6 +290,8 @@ int GDALJP2Box::DumpReadable( FILE *fpOut, int nIndentLevel )
             fprintf( fpOut, " (GeoTIFF)" );
         if( EQUAL(pszHex,"96A9F1F1DC98402DA7AED68E34451809") )
             fprintf( fpOut, " (MSI Worldfile)" );
+        if( EQUAL(pszHex,"BE7ACFCB97A942E89C71999491E3AFAC") )
+            fprintf( fpOut, " (XMP)" );
         CPLFree( pszHex );
 
         fprintf( fpOut, "\n" );
@@ -382,22 +384,16 @@ void GDALJP2Box::AppendUInt8( GByte nVal )
 /************************************************************************/
 
 GDALJP2Box *GDALJP2Box::CreateUUIDBox( 
-    const GByte *pabyUUID, int nDataSize, GByte *pabyData )
+    const GByte *pabyUUID, int nDataSize, const GByte *pabyData )
 
 {
     GDALJP2Box *poBox;
 
     poBox = new GDALJP2Box();
     poBox->SetType( "uuid" );
-    memcpy( poBox->abyUUID, pabyUUID, 16 );
 
-    GByte *pabyMergedData = (GByte *) CPLMalloc(16+nDataSize);
-    memcpy( pabyMergedData, pabyUUID, 16 );
-    memcpy( pabyMergedData+16, pabyData, nDataSize );
-    
-    poBox->SetWritableData( 16 + nDataSize, pabyMergedData );
-    
-    CPLFree( pabyMergedData );
+    poBox->AppendWritableData( 16, pabyUUID );
+    poBox->AppendWritableData( nDataSize, pabyData );
 
     return poBox;
 }
@@ -500,4 +496,3 @@ GDALJP2Box *GDALJP2Box::CreateLabelledXMLAssoc( const char *pszLabel,
     
     return CreateAsocBox( 2, aoList );
 }
-

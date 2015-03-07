@@ -1568,6 +1568,102 @@ def jp2openjpeg_36():
     return 'success'
 
 ###############################################################################
+# Test metadata reading & writing
+
+def jp2openjpeg_37():
+
+    if gdaltest.jp2openjpeg_drv is None:
+        return 'skip'
+
+    # No metadata
+    src_ds = gdal.GetDriverByName('MEM').Create('', 2, 2)
+    out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_37.jp2', src_ds, options = ['WRITE_METADATA=YES'])
+    del out_ds
+    if gdal.VSIStatL('/vsimem/jp2openjpeg_37.jp2.aux.xml') is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = gdal.Open('/vsimem/jp2openjpeg_37.jp2')
+    if ds.GetMetadata() != {}:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.Unlink('/vsimem/jp2openjpeg_37.jp2')
+
+    # Simple metadata in main domain
+    for options in [ ['WRITE_METADATA=YES'], ['WRITE_METADATA=YES', 'INSPIRE_TG=YES'] ]:
+        src_ds = gdal.GetDriverByName('MEM').Create('', 2, 2)
+        src_ds.SetMetadataItem('FOO', 'BAR')
+        out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_37.jp2', src_ds, options = options)
+        del out_ds
+        if gdal.VSIStatL('/vsimem/jp2openjpeg_37.jp2.aux.xml') is not None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        ds = gdal.Open('/vsimem/jp2openjpeg_37.jp2')
+        if ds.GetMetadata() != {'FOO': 'BAR'}:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        gdal.Unlink('/vsimem/jp2openjpeg_37.jp2')
+
+    # Simple metadata in auxiliary domain
+    src_ds = gdal.GetDriverByName('MEM').Create('', 2, 2)
+    src_ds.SetMetadataItem('FOO', 'BAR', 'SOME_DOMAIN')
+    out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_37.jp2', src_ds, options = ['WRITE_METADATA=YES'])
+    del out_ds
+    if gdal.VSIStatL('/vsimem/jp2openjpeg_37.jp2.aux.xml') is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = gdal.Open('/vsimem/jp2openjpeg_37.jp2')
+    if ds.GetMetadata('SOME_DOMAIN') != {'FOO': 'BAR'}:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.Unlink('/vsimem/jp2openjpeg_37.jp2')
+
+    # Simple metadata in auxiliary XML domain
+    src_ds = gdal.GetDriverByName('MEM').Create('', 2, 2)
+    src_ds.SetMetadata( [ '<some_arbitrary_xml_box/>' ], 'xml:SOME_DOMAIN')
+    out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_37.jp2', src_ds, options = ['WRITE_METADATA=YES'])
+    del out_ds
+    if gdal.VSIStatL('/vsimem/jp2openjpeg_37.jp2.aux.xml') is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = gdal.Open('/vsimem/jp2openjpeg_37.jp2')
+    if ds.GetMetadata('xml:SOME_DOMAIN')[0] != '<some_arbitrary_xml_box />\n':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.Unlink('/vsimem/jp2openjpeg_37.jp2')
+
+    # Special xml:BOX_ metadata domain
+    for options in [ ['WRITE_METADATA=YES'], ['WRITE_METADATA=YES', 'INSPIRE_TG=YES'] ]:
+        src_ds = gdal.GetDriverByName('MEM').Create('', 2, 2)
+        src_ds.SetMetadata( [ '<some_arbitrary_xml_box/>' ], 'xml:BOX_1')
+        out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_37.jp2', src_ds, options = options)
+        del out_ds
+        if gdal.VSIStatL('/vsimem/jp2openjpeg_37.jp2.aux.xml') is not None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        ds = gdal.Open('/vsimem/jp2openjpeg_37.jp2')
+        if ds.GetMetadata('xml:BOX_0')[0] != '<some_arbitrary_xml_box/>':
+            gdaltest.post_reason('fail')
+            return 'fail'
+        gdal.Unlink('/vsimem/jp2openjpeg_37.jp2')
+
+    # Special xml:XMP metadata domain
+    for options in [ ['WRITE_METADATA=YES'], ['WRITE_METADATA=YES', 'INSPIRE_TG=YES'] ]:
+        src_ds = gdal.GetDriverByName('MEM').Create('', 2, 2)
+        src_ds.SetMetadata( [ '<fake_xmp_box/>' ], 'xml:XMP')
+        out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_37.jp2', src_ds, options = options)
+        del out_ds
+        if gdal.VSIStatL('/vsimem/jp2openjpeg_37.jp2.aux.xml') is not None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        ds = gdal.Open('/vsimem/jp2openjpeg_37.jp2')
+        if ds.GetMetadata('xml:XMP')[0] != '<fake_xmp_box/>':
+            gdaltest.post_reason('fail')
+            return 'fail'
+        gdal.Unlink('/vsimem/jp2openjpeg_37.jp2')
+
+    return 'success'
+
+###############################################################################
 def jp2openjpeg_online_1():
 
     if gdaltest.jp2openjpeg_drv is None:
@@ -1775,6 +1871,7 @@ gdaltest_list = [
     jp2openjpeg_34,
     jp2openjpeg_35,
     jp2openjpeg_36,
+    jp2openjpeg_37,
     jp2openjpeg_online_1,
     jp2openjpeg_online_2,
     jp2openjpeg_online_3,

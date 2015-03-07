@@ -34,6 +34,7 @@
 #include "cpl_conv.h"
 #include "cpl_vsi.h"
 #include "gdal.h"
+#include "gdal_priv.h"
 
 /************************************************************************/
 /*                              GDALJP2Box                              */
@@ -98,7 +99,7 @@ public:
     static GDALJP2Box *CreateLabelledXMLAssoc( const char *pszLabel,
                                                const char *pszXML );
     static GDALJP2Box *CreateUUIDBox( const GByte *pabyUUID, 
-                                      int nDataSize, GByte *pabyData );
+                                      int nDataSize, const GByte *pabyData );
 };
 
 /************************************************************************/
@@ -132,8 +133,9 @@ public:
     int         nGCPCount;
     GDAL_GCP    *pasGCPList;
 
-    char  **papszMetadata;
+    char  **papszMetadata; /* TIFFTAG_?RESOLUTION* for now from resd box */
     char   *pszXMPMetadata;
+    char   *pszGDALMultiDomainMetadata; /* as serialized XML */
 
 public:
             GDALJP2Metadata();
@@ -155,6 +157,13 @@ public:
     
     GDALJP2Box *CreateJP2GeoTIFF();
     GDALJP2Box *CreateGMLJP2( int nXSize, int nYSize );
+
+    static GDALJP2Box* CreateGDALMultiDomainMetadataXMLBox(
+                                       GDALDataset* poSrcDS,
+                                       int bMainMDDomainOnly );
+    static GDALJP2Box** CreateXMLBoxes( GDALDataset* poSrcDS,
+                                        int* pnBoxes );
+    static GDALJP2Box *CreateXMPBox ( GDALDataset* poSrcDS );
 };
 
 #endif /* ndef GDAL_JP2READER_H_INCLUDED */

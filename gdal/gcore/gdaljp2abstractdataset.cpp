@@ -84,6 +84,9 @@ void GDALJP2AbstractDataset::LoadJP2Metadata(GDALOpenInfo* poOpenInfo,
             GDALPamDataset::SetMetadataItem(GDALMD_AREA_OR_POINT, GDALMD_AOP_POINT);
     }
 
+/* -------------------------------------------------------------------- */
+/*      Report XML UUID box in a dedicated metadata domain              */
+/* -------------------------------------------------------------------- */
     if (oJP2Geo.pszXMPMetadata)
     {
         char *apszMDList[2];
@@ -94,7 +97,8 @@ void GDALJP2AbstractDataset::LoadJP2Metadata(GDALOpenInfo* poOpenInfo,
 
 /* -------------------------------------------------------------------- */
 /*      Do we have any XML boxes we would like to treat as special      */
-/*      domain metadata?                                                */
+/*      domain metadata? (Note: the GDAL multidomain metadata XML box   */
+/*      has been excluded and is dealt a few lines below.               */
 /* -------------------------------------------------------------------- */
     int iBox;
 
@@ -120,7 +124,40 @@ void GDALJP2AbstractDataset::LoadJP2Metadata(GDALOpenInfo* poOpenInfo,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Do we have other misc metadata?                                 */
+/*      Do we have GDAL metadata?                                       */
+/* -------------------------------------------------------------------- */
+    if( oJP2Geo.pszGDALMultiDomainMetadata != NULL )
+    {
+        CPLXMLNode* psXMLNode = CPLParseXMLString(oJP2Geo.pszGDALMultiDomainMetadata);
+        if( psXMLNode )
+        {
+            GDALMultiDomainMetadata oLocalMDMD;
+            oLocalMDMD.XMLInit(psXMLNode, FALSE);
+            char** papszDomainList = oLocalMDMD.GetDomainList();
+            char** papszIter = papszDomainList;
+            GDALPamDataset::SetMetadata(oLocalMDMD.GetMetadata());
+            while( papszIter && *papszIter )
+            {
+                if( !EQUAL(*papszIter, "") && !EQUAL(*papszIter, "IMAGE_STRUCTURE") )
+                {
+                    if( GDALPamDataset::GetMetadata(*papszIter) != NULL )
+                    {
+                        CPLDebug("GDALJP2",
+                                 "GDAL metadata overrides metadata in %s domain over metadata read from other boxes",
+                                 *papszIter);
+                    }
+                    GDALPamDataset::SetMetadata(oLocalMDMD.GetMetadata(*papszIter), *papszIter);
+                }
+                papszIter ++;
+            }
+            CPLDestroyXMLNode(psXMLNode);
+        }
+        else
+            CPLErrorReset();
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Do we have other misc metadata (from resd box for now) ?        */
 /* -------------------------------------------------------------------- */
     if( oJP2Geo.papszMetadata != NULL )
     {
