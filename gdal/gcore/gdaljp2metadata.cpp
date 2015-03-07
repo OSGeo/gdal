@@ -124,7 +124,7 @@ GDALJP2Metadata::~GDALJP2Metadata()
 /*      if anything useful is found.                                    */
 /************************************************************************/
 
-int GDALJP2Metadata::ReadAndParse( const char *pszFilename )
+int GDALJP2Metadata::ReadAndParse( const char *pszFilename, int bLookForWorldFile )
 
 {
     VSILFILE *fpLL;
@@ -152,7 +152,7 @@ int GDALJP2Metadata::ReadAndParse( const char *pszFilename )
 /*      If we still don't have a geotransform, look for a world         */
 /*      file.                                                           */
 /* -------------------------------------------------------------------- */
-    if( !bHaveGeoTransform )
+    if( bLookForWorldFile && !bHaveGeoTransform )
     {
         bHaveGeoTransform = 
             GDALReadWorldFile( pszFilename, NULL, adfGeoTransform )
