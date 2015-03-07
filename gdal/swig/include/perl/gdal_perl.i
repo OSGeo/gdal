@@ -216,13 +216,13 @@ sub GetDataTypeSize {
     my $t = shift;
     my $t2 = $t;
     $t2 = $TYPE_STRING2INT{$t} if exists $TYPE_STRING2INT{$t};
-    croak "Unknown data type: '$t'." unless exists $TYPE_INT2STRING{$t2};
+    confess "Unknown data type: '$t'." unless exists $TYPE_INT2STRING{$t2};
     return _GetDataTypeSize($t2);
 }
 
 sub DataTypeValueRange {
     my $t = shift;
-    croak "Unknown data type: '$t'." unless exists $TYPE_STRING2INT{$t};
+    confess "Unknown data type: '$t'." unless exists $TYPE_STRING2INT{$t};
     # these values are from gdalrasterband.cpp
     return (0,255) if $t =~ /Byte/;
     return (0,65535) if $t =~/UInt16/;
@@ -237,14 +237,14 @@ sub DataTypeIsComplex {
     my $t = shift;
     my $t2 = $t;
     $t2 = $TYPE_STRING2INT{$t} if exists $TYPE_STRING2INT{$t};
-    croak "Unknown data type: '$t'." unless exists $TYPE_INT2STRING{$t2};
+    confess "Unknown data type: '$t'." unless exists $TYPE_INT2STRING{$t2};
     return _DataTypeIsComplex($t2);
 }
 
 sub PackCharacter {
     my $t = shift;
     $t = $TYPE_INT2STRING{$t} if exists $TYPE_INT2STRING{$t};
-    croak "Unknown data type: '$t'." unless exists $TYPE_STRING2INT{$t};
+    confess "Unknown data type: '$t'." unless exists $TYPE_STRING2INT{$t};
     my $is_big_endian = unpack("h*", pack("s", 1)) =~ /01/; # from Programming Perl
     return 'C' if $t =~ /^Byte$/;
     return ($is_big_endian ? 'n': 'v') if $t =~ /^UInt16$/;
@@ -255,25 +255,48 @@ sub PackCharacter {
     return 'd' if $t =~ /^Float64$/;
 }
 
+sub GetDriverNames {
+    my @names;
+    for my $i (0..GetDriverCount()-1) {
+        my $driver = _GetDriver($i);
+        my $md = $driver->GetMetadata;
+        next unless $md->{DCAP_RASTER} and $md->{DCAP_RASTER} eq 'YES';
+        push @names, _GetDriver($i)->Name;
+    }
+    return @names;
+}
+
 sub Drivers {
     my @drivers;
     for my $i (0..GetDriverCount()-1) {
+        my $driver = _GetDriver($i);
+        my $md = $driver->GetMetadata;
+        next unless $md->{DCAP_RASTER} and $md->{DCAP_RASTER} eq 'YES';
         push @drivers, _GetDriver($i);
     }
     return @drivers;
 }
 
 sub GetDriver {
-    my $driver = shift;
-    return _GetDriver($driver) if $driver =~ /^\d/;
-    return GetDriverByName($driver);
+    my($name) = @_;
+    $name = 0 unless defined $name;
+    my $driver;
+    $driver = _GetDriver($name) if $name =~ /^\d+$/; # is the name an index to driver list?
+    $driver = GetDriverByName("$name") unless $driver;
+    if ($driver) {
+        my $md = $driver->GetMetadata;
+        confess "Driver exists but does not have raster capabilities." 
+            unless $md->{DCAP_RASTER} and $md->{DCAP_RASTER} eq 'YES';
+        return $driver;
+    }
+    confess "Driver not found: '$name'. Maybe support for it was not built in?";
 }
 *Driver = *GetDriver;
 
 sub Open {
     my @p = @_;
     if (defined $p[1]) {
-        croak "Unknown access type: '$p[1]'." unless exists $Geo::GDAL::ACCESS_STRING2INT{$p[1]};
+        confess "Unknown access type: '$p[1]'." unless exists $Geo::GDAL::ACCESS_STRING2INT{$p[1]};
         $p[1] = $Geo::GDAL::ACCESS_STRING2INT{$p[1]};
     }
     return _Open(@p);
@@ -282,7 +305,7 @@ sub Open {
 sub OpenShared {
     my @p = @_;
     if (defined $p[1]) {
-        croak "Unknown access type: '$p[1]'." unless exists $Geo::GDAL::ACCESS_STRING2INT{$p[1]};
+        confess "Unknown access type: '$p[1]'." unless exists $Geo::GDAL::ACCESS_STRING2INT{$p[1]};
         $p[1] = $Geo::GDAL::ACCESS_STRING2INT{$p[1]};
     }
     return _OpenShared(@p);
@@ -341,7 +364,7 @@ sub ReprojectImage {
     my @p = @_;
     $p[8] = 1 if $p[7] and not defined $p[8];
     if (defined $p[4]) {
-        croak "Unknown data type: '$p[4]'." unless exists $Geo::GDAL::RESAMPLING_STRING2INT{$p[4]};
+        confess "Unknown data type: '$p[4]'." unless exists $Geo::GDAL::RESAMPLING_STRING2INT{$p[4]};
         $p[4] = $Geo::GDAL::RESAMPLING_STRING2INT{$p[4]};
     }
     return _ReprojectImage(@p);
@@ -350,7 +373,7 @@ sub ReprojectImage {
 sub AutoCreateWarpedVRT {
     my @p = @_;
     if (defined $p[3]) {
-        croak "Unknown data type: '$p[3]'." unless exists $Geo::GDAL::RESAMPLING_STRING2INT{$p[3]};
+        confess "Unknown data type: '$p[3]'." unless exists $Geo::GDAL::RESAMPLING_STRING2INT{$p[3]};
         $p[3] = $Geo::GDAL::RESAMPLING_STRING2INT{$p[3]};
     }
     return _AutoCreateWarpedVRT(@p);
@@ -463,18 +486,38 @@ sub CreationOptionList {
 sub CreationDataTypes {
     my $self = shift;
     my $h = $self->GetMetadata;
-    return split /\s+/, $h->{DMD_CREATIONDATATYPES};
+    return split /\s+/, $h->{DMD_CREATIONDATATYPES} if $h->{DMD_CREATIONDATATYPES};
 }
 
-sub CreateDataset {
-    my @p = @_;
-    if (defined $p[5]) {
-        croak "Unknown data type: '$p[5]'." unless exists $Geo::GDAL::TYPE_STRING2INT{$p[5]};
-        $p[5] = $Geo::GDAL::TYPE_STRING2INT{$p[5]};
+sub Create {
+    my $self = shift;
+    my %defaults = ( Name => 'unnamed',
+                     Width => 256,
+                     Height => 256,
+                     Bands => 1,
+                     Type => 'Byte',
+                     Options => {} );
+    my %params;
+    if (@_ == 0) {
+    } elsif (ref($_[0]) eq 'HASH') {
+        %params = %{$_[0]};
+    } elsif (exists $defaults{$_[0]} and @_ % 2 == 0) {
+        %params = @_;
+    } else {
+        ($params{Name}, $params{Width}, $params{Height}, $params{Bands}, $params{Type}, $params{Options}) = @_;
     }
-    return _Create(@p);
+    for my $k (keys %params) {
+        carp "Create: unrecognized named parameter '$k'." unless exists $defaults{$k};
+    }
+    for my $k (keys %defaults) {
+        $params{$k} = $defaults{$k} unless defined $params{$k};
+    }
+    my $type;
+    confess "Unknown data type: '$params{Type}'." unless exists $Geo::GDAL::TYPE_STRING2INT{$params{Type}};
+    $type = $Geo::GDAL::TYPE_STRING2INT{$params{Type}};
+    return $self->_Create($params{Name}, $params{Width}, $params{Height}, $params{Bands}, $type, $params{Options});
 }
-*Create = *CreateDataset;
+*CreateDataset = *Create;
 *Copy = *CreateCopy;
 
 
@@ -526,7 +569,7 @@ sub GetRasterBand {
 sub AddBand {
     my @p = @_;
     if (defined $p[1]) {
-        croak "Unknown data type: '$p[1]'." unless exists $Geo::GDAL::TYPE_STRING2INT{$p[1]};
+        confess "Unknown data type: '$p[1]'." unless exists $Geo::GDAL::TYPE_STRING2INT{$p[1]};
         $p[1] = $Geo::GDAL::TYPE_STRING2INT{$p[1]};
     }
     return _AddBand(@p);
@@ -556,10 +599,11 @@ sub GCPs {
     my $self = shift;
     if (@_ > 0) {
         my $proj = pop @_;
+        $proj = $proj->Export('WKT') if $proj and ref($proj);
         SetGCPs($self, \@_, $proj);
     }
     return unless defined wantarray;
-    my $proj = GetGCPProjection($self);
+    my $proj = Geo::OSR::SpatialReference->new(GetGCPProjection($self));
     my $GCPs = GetGCPs($self);
     return (@$GCPs, $proj);
 }
@@ -590,6 +634,10 @@ for my $string (@COLOR_INTERPRETATIONS) {
 
 sub Domains {
     return @DOMAINS;
+}
+
+sub ColorInterpretations {
+    return @COLOR_INTERPRETATIONS;
 }
 
 sub DESTROY {
@@ -693,7 +741,7 @@ sub ColorInterpretation {
     if (defined $ci) {
         my $ci2 = $ci;
         $ci2 = $COLOR_INTERPRETATION_STRING2INT{$ci} if exists $COLOR_INTERPRETATION_STRING2INT{$ci};
-        croak "Unknown color interpretation: '$ci'." unless exists $COLOR_INTERPRETATION_INT2STRING{$ci2};
+        confess "Unknown color interpretation: '$ci'." unless exists $COLOR_INTERPRETATION_INT2STRING{$ci2};
         SetRasterColorInterpretation($self, $ci2);
         return $ci;
     } else {
@@ -801,7 +849,7 @@ sub Contours {
 
 sub FillNodata {
     my @p = @_;
-    croak 'usage: Geo::GDAL::Band->FillNodata($mask)' unless blessed($p[1]) and $p[1]->isa('Geo::GDAL::Band');
+    confess 'Usage: Geo::GDAL::Band->FillNodata($mask).' unless blessed($p[1]) and $p[1]->isa('Geo::GDAL::Band');
     $p[2] = 10 unless defined $p[2];
     $p[3] = 0 unless defined $p[3];
     $p[4] = undef unless defined $p[4];
@@ -943,8 +991,8 @@ sub Columns {
 
 sub CreateColumn {
     my($self, $name, $type, $usage) = @_;
-    croak "Unknown RAT column type: '$type'." unless exists $FIELD_TYPE_STRING2INT{$type};
-    croak "Unknown RAT column usage: '$usage'." unless exists $FIELD_USAGE_STRING2INT{$usage};
+    confess "Unknown RAT column type: '$type'." unless exists $FIELD_TYPE_STRING2INT{$type};
+    confess "Unknown RAT column usage: '$usage'." unless exists $FIELD_USAGE_STRING2INT{$usage};
     for my $color (qw/Red Green Blue Alpha/) {
         carp "RAT column type will be 'Integer' for usage '$color'." if $usage eq $color and $type ne 'Integer';
     }
@@ -977,6 +1025,86 @@ package Geo::GDAL::GCP;
 *swig_Pixel_set = *Geo::GDALc::GCP_Column_set;
 *swig_Line_get = *Geo::GDALc::GCP_Row_get;
 *swig_Line_set = *Geo::GDALc::GCP_Row_set;
+
+
+
+package Geo::GDAL::VSIF;
+use strict;
+use warnings;
+use Carp;
+
+sub Open {
+    my ($path, $mode) = @_;
+    my $self = Geo::GDAL::VSIFOpenL($path, $mode);
+    bless $self, 'Geo::GDAL::VSIF';
+}
+
+sub Write {
+    my ($self, $data) = @_;
+    Geo::GDAL::VSIFWriteL($data, $self);
+}
+
+sub Close {
+    my ($self, $data) = @_;
+    Geo::GDAL::VSIFCloseL($self);
+}
+
+sub Read {
+    my ($self, $count) = @_;
+    Geo::GDAL::VSIFReadL($count, $self);
+}
+
+sub Seek {
+    my ($self, $offset, $whence) = @_;
+    Geo::GDAL::VSIFSeekL($self, $offset, $whence);
+}
+
+sub Tell {
+    my ($self) = @_;
+    Geo::GDAL::VSIFTellL($self);
+}
+
+sub Truncate {
+    my ($self, $new_size) = @_;
+    Geo::GDAL::VSIFTruncateL($self, $new_size);
+}
+
+sub Mkdir {
+    my ($path, $mode) = @_;
+    Geo::GDAL::Mkdir($path, $mode);
+}
+*MkDir = *Mkdir;
+
+sub ReadDir {
+    my ($path) = @_;
+    Geo::GDAL::ReadDir($path);
+}
+
+sub ReadDirRecursive {
+    my ($path) = @_;
+    Geo::GDAL::ReadDirRecursive($path);
+}
+
+sub Rename {
+    my ($old, $new) = @_;
+    Geo::GDAL::Rename($old, $new);
+}
+
+sub RmDir {
+    my ($dirname) = @_;
+    Geo::GDAL::RmDir($dirname);
+}
+
+sub Stat {
+    my ($path, $buf) = @_;
+    Geo::GDAL::Stat($path, $buf);
+}
+
+sub Unlink {
+    my ($filename) = @_;
+    Geo::GDAL::Unlink($filename);
+}
+
 
 %}
 
