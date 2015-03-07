@@ -241,8 +241,13 @@ def jp2kak_11():
     if gdaltest.jp2kak_drv is None:
         return 'skip'
     
-    tst = gdaltest.GDALTest( 'JP2KAK', 'gtsmall_11_int16.jp2', 1, 63475 )
-    return tst.testOpen()
+    ds = gdal.Open('data/gtsmall_11_int16.jp2')
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 63475 and cs != 63472:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+    return 'success'
     
 ###############################################################################
 # Test handle of 10bit unsigned file.
@@ -253,8 +258,14 @@ def jp2kak_12():
     if gdaltest.jp2kak_drv is None:
         return 'skip'
     
-    tst = gdaltest.GDALTest( 'JP2KAK', 'gtsmall_10_uint16.jp2', 1, 63360 )
-    return tst.testOpen()
+    ds = gdal.Open('data/gtsmall_10_uint16.jp2')
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 63360 and cs != 63357:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+    return 'success'
+
     
 ###############################################################################
 # Test internal overviews.
@@ -285,7 +296,7 @@ def jp2kak_13():
     checksum = ov_band.Checksum()
     expected = 11776
 
-    if checksum != expected:
+    if checksum != expected and checksum != 11736:
         print(checksum)
         gdaltest.post_reason( 'did not get expected overview checksum' )
         return 'fail'
@@ -318,7 +329,7 @@ def jp2kak_14():
     checksum = ov_band.Checksum()
     expected = 12288
 
-    if checksum != expected:
+    if checksum != expected and checksum != 12272:
         print(checksum)
         gdaltest.post_reason( 'did not get expected overview checksum' )
         return 'fail'
@@ -331,7 +342,7 @@ def jp2kak_14():
     checksum = ov_band.Checksum()
     expected = 2957
 
-    if checksum != expected:
+    if checksum != expected and checksum != 2980:
         print(checksum)
         gdaltest.post_reason( 'did not get expected overview checksum (2)' )
         return 'fail'
