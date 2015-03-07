@@ -4,6 +4,8 @@ MIGRATION GUIDE FROM GDAL 1.11 to GDAL 2.0
 This file documents backwards incompatible changes. You are strongly encouraged
 to read the relevant RFCs for details and rationale for those changes.
 
+Changes to the Perl bindings API are listed in swig/perl/Changes-in-the-API-in-2.0.
+
 A) RFC 46: Unification of GDAL and OGR driver models
 
 Link: http://trac.osgeo.org/gdal/wiki/rfc46_gdal_ogr_unification
