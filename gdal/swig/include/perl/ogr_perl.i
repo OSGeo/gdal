@@ -555,7 +555,7 @@ sub GetFieldDefn {
         my $fd = $d->GetGeomFieldDefn($i);
         return $fd if $fd->Name eq $name;
     }
-    confess "No such field: '$name'";
+    confess "No such field: '$name'.";
 }
 
 sub SpatialReference {
@@ -810,7 +810,7 @@ sub Row {
         } elsif (@_ and @_ % 2 == 0) {
             %row = @_;    
         } else {
-            confess 'Usage: $feature->Row(%FeatureData)';
+            confess 'Usage: $feature->Row(%FeatureData).';
         }
         $self->SetFID($row{FID}) if defined $row{FID};
         #$self->Geometry($schema, $row{Geometry}) if $row{Geometry};
@@ -1591,7 +1591,7 @@ sub Points {
     if ($points) {
         Empty($self);
         if ($t eq 'Unknown' or $t eq 'None' or $t eq 'GeometryCollection') {
-            confess("can't set points of a geometry of type '$t'");
+            confess "Can't set points of a geometry of type '$t'.";
         } elsif ($t eq 'Point') {
             # support both "Point" as a list of one point and one point
             if (ref($points->[0])) {
@@ -1809,11 +1809,12 @@ sub Drivers {
 
 sub GetDriver {
     my($name) = @_;
+    $name = 0 unless defined $name;
     my $driver;
     $driver = _GetDriver($name) if $name =~ /^\d+$/; # is the name an index to driver list?
     $driver = GetDriverByName("$name") unless $driver;
-    confess "Driver not found: '$name'. Maybe support for it was not built in?" unless $driver;
-    return $driver;
+    return $driver if $driver;
+    confess "Driver not found: '$name'. Maybe support for it was not built in?";
 }
 *Driver = *GetDriver;
 %}

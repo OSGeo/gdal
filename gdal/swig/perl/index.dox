@@ -149,7 +149,11 @@ and
 BEGIN { 
     $SIG{__WARN__} = sub {  print STDERR "Warning: @_"; } 
 }
-Geo::GDAL::GetDriver('GTiff')->Create('x', 10, 10, 1, 'Byte', { my_unknown_option => 'b' });
+Geo::GDAL::GetDriver('GTiff')->Create( Name => 'my.tiff', 
+                                       Width => 100, 
+                                       Height => 100, 
+                                       Type => 'Byte', 
+                                       Options => { my_unknown_option => 'b' } );
 \endcode
 
 Prints: 
@@ -171,5 +175,8 @@ documentation into a single file (all.pm) for Doxygen.
 Many methods are just interfaces to non-Perl code in the bindings or
 GDAL and thus their code show as blank on these pages. The bindings
 are created with Swig, which adds some methods by default.
+
+Code examples in method pages contain dots ('.') to enforce
+indentation. This is due to a doxygen bug.
 
 */

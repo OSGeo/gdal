@@ -4,6 +4,9 @@
 # A wrapper for many OGR utility functions and a root class for all
 # OGR classes.
 
+## @ignore TermProgress
+## @ignore TermProgress_nocb
+
 ## @ignore BuildPolygonFromEdges
 ## @ignore ForceToMultiLineString
 ## @ignore ForceToMultiPoint
