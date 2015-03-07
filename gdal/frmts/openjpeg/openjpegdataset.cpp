@@ -1760,6 +1760,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
                      "Unsupported value for QUALITY: %s. Defaulting to single-layer, with quality=%.0f",
                      pszQuality, dfDefaultQuality);
         }
+        CSLDestroy(papszTokens);
     }
     if( adfRates.size() == 0 )
     {
