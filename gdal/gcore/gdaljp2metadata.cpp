@@ -1377,7 +1377,8 @@ GDALJP2Box *GDALJP2Metadata::CreateGDALMultiDomainMetadataXMLBox(
     papszSrcMD = CSLSetNameValue(papszSrcMD, "TIFFTAG_XRESOLUTION", NULL);
     papszSrcMD = CSLSetNameValue(papszSrcMD, "TIFFTAG_YRESOLUTION", NULL);
     papszSrcMD = CSLSetNameValue(papszSrcMD, "Corder", NULL); /* from JP2KAK */
-    if( poSrcDS->GetDriver() != NULL && EQUAL(poSrcDS->GetDriver()->GetDescription(), "JP2ECW") )
+    if( poSrcDS->GetDriver() != NULL &&
+        EQUAL(poSrcDS->GetDriver()->GetDescription(), "JP2ECW") )
     {
         papszSrcMD = CSLSetNameValue(papszSrcMD, "COMPRESSION_RATE_TARGET", NULL);
         papszSrcMD = CSLSetNameValue(papszSrcMD, "COLORSPACE", NULL);
@@ -1421,14 +1422,14 @@ GDALJP2Box *GDALJP2Metadata::CreateGDALMultiDomainMetadataXMLBox(
     {
         CPLXMLNode* psXMLNode = oLocalMDMD.Serialize();
         CPLXMLNode* psMasterXMLNode = CPLCreateXMLNode( NULL, CXT_Element,
-                                                        "GDALMultiDomainMetadata" );
+                                                    "GDALMultiDomainMetadata" );
         psMasterXMLNode->psChild = psXMLNode;
         char* pszXML = CPLSerializeXMLTree(psMasterXMLNode);
         CPLDestroyXMLNode(psMasterXMLNode);
 
         poBox = new GDALJP2Box();
         poBox->SetType("xml ");
-        poBox->SetWritableData(strlen(pszXML), (const GByte*)pszXML);
+        poBox->SetWritableData(strlen(pszXML) + 1, (const GByte*)pszXML);
         CPLFree(pszXML);
     }
     return poBox;
@@ -1456,8 +1457,10 @@ GDALJP2Box** GDALJP2Metadata::CreateXMLBoxes( GDALDataset* poSrcDS,
             {
                 GDALJP2Box* poBox = new GDALJP2Box();
                 poBox->SetType("xml ");
-                poBox->SetWritableData(strlen(*papszSrcMD), (const GByte*)*papszSrcMD);
-                papoBoxes = (GDALJP2Box**)CPLRealloc(papoBoxes, sizeof(GDALJP2Box*) * (*pnBoxes + 1));
+                poBox->SetWritableData(strlen(*papszSrcMD) + 1,
+                                       (const GByte*)*papszSrcMD);
+                papoBoxes = (GDALJP2Box**)CPLRealloc(papoBoxes,
+                                        sizeof(GDALJP2Box*) * (*pnBoxes + 1));
                 papoBoxes[(*pnBoxes) ++] = poBox;
             }
         }
@@ -1480,8 +1483,9 @@ GDALJP2Box *GDALJP2Metadata::CreateXMPBox ( GDALDataset* poSrcDS )
     GDALJP2Box* poBox = NULL;
     if( papszSrcMD && * papszSrcMD )
     {
-        poBox = GDALJP2Box::CreateUUIDBox(xmp_uuid, strlen(*papszSrcMD), (const GByte*)*papszSrcMD);
+        poBox = GDALJP2Box::CreateUUIDBox(xmp_uuid,
+                                          strlen(*papszSrcMD) + 1,
+                                          (const GByte*)*papszSrcMD);
     }
     return poBox;
 }
-
