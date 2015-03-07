@@ -145,7 +145,8 @@ public:
     int     ParseMSIG();
     int     ParseGMLCoverageDesc();
 
-    int     ReadAndParse( const char *pszFilename, int bLookForWorldFile );
+    int     ReadAndParse( VSILFILE * fpVSIL );
+    int     ReadAndParse( const char *pszFilename );
 
     // Write oriented. 
     void    SetProjection( const char *pszWKT );

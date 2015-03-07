@@ -55,8 +55,9 @@ GDALJP2AbstractDataset::~GDALJP2AbstractDataset()
 /************************************************************************/
 
 void GDALJP2AbstractDataset::LoadJP2Metadata(GDALOpenInfo* poOpenInfo,
-                                             const char* pszOverideFilename)
+                                             const char* pszOverideFilenameIn)
 {
+    const char* pszOverideFilename = pszOverideFilenameIn;
     if( pszOverideFilename == NULL )
         pszOverideFilename = poOpenInfo->pszFilename;
 
@@ -65,7 +66,10 @@ void GDALJP2AbstractDataset::LoadJP2Metadata(GDALOpenInfo* poOpenInfo,
 /* -------------------------------------------------------------------- */
     GDALJP2Metadata oJP2Geo;
 
-    if( oJP2Geo.ReadAndParse( pszOverideFilename, FALSE ) )
+    if( (poOpenInfo->fpL != NULL && pszOverideFilenameIn == NULL &&
+         oJP2Geo.ReadAndParse(poOpenInfo->fpL) ) ||
+        (!(poOpenInfo->fpL != NULL && pszOverideFilenameIn == NULL) &&
+         oJP2Geo.ReadAndParse( pszOverideFilename )) )
     {
         CPLFree(pszProjection);
         pszProjection = CPLStrdup(oJP2Geo.pszProjection);
