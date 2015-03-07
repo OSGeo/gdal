@@ -124,7 +124,7 @@ GDALJP2Metadata::~GDALJP2Metadata()
 /*      if anything useful is found.                                    */
 /************************************************************************/
 
-int GDALJP2Metadata::ReadAndParse( const char *pszFilename, int bLookForWorldFile )
+int GDALJP2Metadata::ReadAndParse( const char *pszFilename )
 
 {
     VSILFILE *fpLL;
@@ -139,25 +139,35 @@ int GDALJP2Metadata::ReadAndParse( const char *pszFilename, int bLookForWorldFil
         return FALSE;
     }
 
-    ReadBoxes( fpLL );
+    int bRet = ReadAndParse( fpLL );
     VSIFCloseL( fpLL );
-            
-/* -------------------------------------------------------------------- */
-/*      Try JP2GeoTIFF, GML and finally MSIG to get something.          */
-/* -------------------------------------------------------------------- */
-    if( !ParseJP2GeoTIFF() && !ParseGMLCoverageDesc() )
-        ParseMSIG();
 
 /* -------------------------------------------------------------------- */
 /*      If we still don't have a geotransform, look for a world         */
 /*      file.                                                           */
 /* -------------------------------------------------------------------- */
-    if( bLookForWorldFile && !bHaveGeoTransform )
+    if( !bHaveGeoTransform )
     {
         bHaveGeoTransform = 
             GDALReadWorldFile( pszFilename, NULL, adfGeoTransform )
             || GDALReadWorldFile( pszFilename, ".wld", adfGeoTransform );
+        bRet |= bHaveGeoTransform;
     }
+
+    return bRet;
+}
+
+
+int GDALJP2Metadata::ReadAndParse( VSILFILE *fpLL )
+
+{
+    ReadBoxes( fpLL );
+
+/* -------------------------------------------------------------------- */
+/*      Try JP2GeoTIFF, GML and finally MSIG to get something.          */
+/* -------------------------------------------------------------------- */
+    if( !ParseJP2GeoTIFF() && !ParseGMLCoverageDesc() )
+        ParseMSIG();
 
 /* -------------------------------------------------------------------- */
 /*      Return success either either of projection or geotransform      */

@@ -936,7 +936,7 @@ JP2OpenJPEGDataset::~JP2OpenJPEGDataset()
 {
     FlushCache();
 
-    if( fp != NULL )
+    if( iLevel == 0 && fp != NULL )
         VSIFCloseL( fp );
 
     CloseDependentDatasets();
@@ -988,11 +988,7 @@ int JP2OpenJPEGDataset::Identify( GDALOpenInfo * poOpenInfo )
 GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-    if (!Identify(poOpenInfo))
-        return NULL;
-
-    VSILFILE* fp = VSIFOpenL(poOpenInfo->pszFilename, "rb");
-    if (!fp)
+    if (!Identify(poOpenInfo) || poOpenInfo->fpL == NULL)
         return NULL;
 
     OPJ_CODEC_FORMAT eCodecFormat;
@@ -1006,22 +1002,22 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         eCodecFormat = OPJ_CODEC_J2K;
 
-        VSIFSeekL(fp, 0, SEEK_END);
-        nCodeStreamLength =  VSIFTellL(fp);
+        VSIFSeekL(poOpenInfo->fpL, 0, SEEK_END);
+        nCodeStreamLength =  VSIFTellL(poOpenInfo->fpL);
     }
     else
     {
         eCodecFormat = OPJ_CODEC_JP2;
 
         /* Find offset of first jp2c box */
-        GDALJP2Box oBox( fp );
+        GDALJP2Box oBox( poOpenInfo->fpL );
         if( oBox.ReadFirst() )
         {
             while( strlen(oBox.GetType()) > 0 )
             {
                 if( EQUAL(oBox.GetType(),"jp2c") )
                 {
-                    nCodeStreamStart = VSIFTellL(fp);
+                    nCodeStreamStart = VSIFTellL(poOpenInfo->fpL);
                     nCodeStreamLength = oBox.GetDataLength();
                     break;
                 }
@@ -1034,7 +1030,6 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
         if( nCodeStreamStart == 0 )
         {
             CPLError(CE_Failure, CPLE_AppDefined, "No code-stream in JP2 file");
-            VSIFCloseL(fp);
             return NULL;
         }
     }
@@ -1053,12 +1048,11 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if (! opj_setup_decoder(pCodec,&parameters))
     {
-        VSIFCloseL(fp);
         return NULL;
     }
 
     JP2OpenJPEGFile sJP2OpenJPEGFile;
-    sJP2OpenJPEGFile.fp = fp;
+    sJP2OpenJPEGFile.fp = poOpenInfo->fpL;
     sJP2OpenJPEGFile.nBaseOffset = nCodeStreamStart;
     opj_stream_t * pStream = JP2OpenJPEGCreateReadStream(&sJP2OpenJPEGFile,
                                                          nCodeStreamLength);
@@ -1071,7 +1065,6 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
         opj_destroy_codec(pCodec);
         opj_stream_destroy(pStream);
         opj_image_destroy(psImage);
-        VSIFCloseL(fp);
         return NULL;
     }
 
@@ -1096,7 +1089,6 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
         opj_destroy_codec(pCodec);
         opj_stream_destroy(pStream);
         opj_image_destroy(psImage);
-        VSIFCloseL(fp);
         return NULL;
     }
 
@@ -1145,7 +1137,6 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
         opj_destroy_codec(pCodec);
         opj_stream_destroy(pStream);
         opj_image_destroy(psImage);
-        VSIFCloseL(fp);
         return NULL;
     }
 
@@ -1193,7 +1184,6 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
                 opj_destroy_codec(pCodec);
                 opj_stream_destroy(pStream);
                 opj_image_destroy(psImage);
-                VSIFCloseL(fp);
                 return NULL;
             }
         }
@@ -1211,7 +1201,8 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->nRasterXSize = psImage->x1 - psImage->x0;
     poDS->nRasterYSize = psImage->y1 - psImage->y0;
     poDS->nBands = psImage->numcomps;
-    poDS->fp = fp;
+    poDS->fp = poOpenInfo->fpL;
+    poOpenInfo->fpL = NULL;
     poDS->nCodeStreamStart = nCodeStreamStart;
     poDS->nCodeStreamLength = nCodeStreamLength;
     poDS->bIs420 = bIs420;
@@ -1235,14 +1226,14 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     if( eCodecFormat == OPJ_CODEC_JP2 )
     {
-        GDALJP2Box oBox( fp );
+        GDALJP2Box oBox( poDS->fp );
         if( oBox.ReadFirst() )
         {
             while( strlen(oBox.GetType()) > 0 )
             {
                 if( EQUAL(oBox.GetType(),"jp2h") )
                 {
-                    GDALJP2Box oSubBox( fp );
+                    GDALJP2Box oSubBox( poDS->fp );
 
                     for( oSubBox.ReadFirstChild( &oBox );
                          strlen(oSubBox.GetType()) > 0;
@@ -1448,10 +1439,6 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
         nW /= 2;
         nH /= 2;
 
-        VSILFILE* fpOvr = VSIFOpenL(poOpenInfo->pszFilename, "rb");
-        if (!fpOvr)
-            break;
-
         poDS->papoOverviewDS = (JP2OpenJPEGDataset**) CPLRealloc(
                     poDS->papoOverviewDS,
                     (poDS->nOverviewCount + 1) * sizeof(JP2OpenJPEGDataset*));
@@ -1482,7 +1469,7 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
         poODS->nRasterXSize = nW;
         poODS->nRasterYSize = nH;
         poODS->nBands = poDS->nBands;
-        poODS->fp = fpOvr;
+        poODS->fp = poDS->fp;
         poODS->nCodeStreamStart = nCodeStreamStart;
         poODS->nCodeStreamLength = nCodeStreamLength;
         poODS->bIs420 = bIs420;
@@ -1520,7 +1507,9 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->SetMetadataItem( "INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE" );
     }
 
+    poOpenInfo->fpL = poDS->fp;
     poDS->LoadJP2Metadata(poOpenInfo);
+    poOpenInfo->fpL = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
