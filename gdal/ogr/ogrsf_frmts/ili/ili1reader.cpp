@@ -413,7 +413,7 @@ int ILI1Reader::ReadTable(CPL_UNUSED const char *layername) {
       }
       else if (EQUAL(firsttok, "ETAB"))
       {
-        CPLDebug( "OGR_ILI", "Total features: %d", curLayer->GetFeatureCount() );
+        CPLDebug( "OGR_ILI", "Total features: " CPL_FRMT_GIB, curLayer->GetFeatureCount() );
         CSLDestroy(tokens);
         return TRUE;
       }
