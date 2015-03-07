@@ -116,9 +116,13 @@ int ILI1Reader::ReadModel(ImdReader *poImdReader, const char *pszModelFilename, 
     {
       if (it2->second.geomTable)
       {
+        OGRFeatureDefn* poGeomTableDefn = it2->second.geomTable;
+        OGRGeomFieldDefn* poOGRGeomFieldDefn = poGeomTableDefn->GetGeomFieldDefn(0);
         GeomFieldInfos oGeomFieldInfos;
+        // We add iliGeomType to recognize Ili1 geom tables
+        oGeomFieldInfos[poOGRGeomFieldDefn->GetNameRef()].iliGeomType = it2->second.iliGeomType;
         //CPLDebug( "OGR_ILI", "Adding OGRILI1Layer with geometry table '%s'", it2->second.geomTable->GetName() );
-        OGRILI1Layer* geomlayer = new OGRILI1Layer(it2->second.geomTable, oGeomFieldInfos, poDS);
+        OGRILI1Layer* geomlayer = new OGRILI1Layer(poGeomTableDefn, oGeomFieldInfos, poDS);
         AddLayer(geomlayer);
       }
     }
@@ -264,15 +268,26 @@ int ILI1Reader::ReadTable(CPL_UNUSED const char *layername) {
       firsttok = CSLGetField(tokens, 0);
       if (EQUAL(firsttok, "OBJE"))
       {
-        //Check for features spread over multiple objects
-        if (featureDef->GetGeomType() == wkbPolygon) //FIXME: Multi-geom support
+        // Handle Interlis geometry helper tables
+        if (curLayer->GetGeomFieldInfos().size() == 1 &&
+            curLayer->GetGeomFieldInfos().begin()->second.geomTable == 0)
         {
-          //Multiple polygon rings
-          feature = curLayer->GetFeatureRef(atol(CSLGetField(tokens, 2)));
-        }
-        else if (featureDef->GetGeomType() == wkbGeometryCollection)
-        {
-          //AREA lines spread over mutltiple objects
+          //Check for features spread over multiple objects
+          if (featureDef->GetGeomType() == wkbPolygon)
+          {
+            //Multiple polygon rings
+            feature = curLayer->GetFeatureRef(atol(CSLGetField(tokens, 2)));
+          }
+          else if (featureDef->GetGeomType() == wkbGeometryCollection)
+          {
+            //AREA lines spread over mutltiple objects
+            //Append to current feature
+          }
+          else
+          {
+            //wkbMultiLineString
+            feature = NULL;
+          }
         }
         else
         {
