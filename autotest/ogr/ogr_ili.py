@@ -91,9 +91,9 @@ def ogr_interlis1_2():
     feat = lyr.GetNextFeature()
     feat = lyr.GetNextFeature()
 
-    field_values = [20, 1, 168.27, 170.85, 'POINT (168.27 170.85)']
+    field_values = [20, 1, 168.27, 170.85]
 
-    if feat.GetFieldCount() != len(field_values)-1:
+    if feat.GetFieldCount() != len(field_values):
         gdaltest.post_reason( 'field count wrong.' )
         return 'fail'
 
@@ -104,12 +104,17 @@ def ogr_interlis1_2():
           gdaltest.post_reason( 'field value wrong.' )
           return 'fail'
 
-    geom = feat.GetGeometryRef()
+    geom = feat.GetGeomFieldRef(0)
+    if geom.GetCoordinateDimension() != 3:
+        gdaltest.post_reason( 'dimension wrong.' )
+        return 'fail'
+    geom = feat.GetGeomFieldRef(1)
     if geom.GetCoordinateDimension() != 2:
         gdaltest.post_reason( 'dimension wrong.' )
         return 'fail'
 
-    if geom.GetGeometryName() != 'POINT':
+    geom = feat.GetGeometryRef()
+    if geom.GetGeometryName() != 'POLYGON':
         gdaltest.post_reason( 'Geometry of wrong type.' )
         return 'fail'
 
@@ -440,7 +445,7 @@ def ogr_interlis1_10():
         return 'fail'
 
     feat = lyr.GetNextFeature()
-    geom_field_values = ['POINT (148.2 183.48)', 'POLYGON ((146.92 174.98,138.68 187.51,147.04 193.0,149.79 188.82,158.15 194.31,163.64 185.96,146.92 174.98))']
+    geom_field_values = ['POLYGON ((146.92 174.98,138.68 187.51,147.04 193.0,149.79 188.82,158.15 194.31,163.64 185.96,146.92 174.98))', 'POINT (148.2 183.48)']
 
     if feat.GetGeomFieldCount() != len(geom_field_values):
         gdaltest.post_reason( 'geom field count wrong.' )
