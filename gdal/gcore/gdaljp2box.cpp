@@ -176,6 +176,7 @@ int GDALJP2Box::ReadBox()
     {
         VSIFSeekL( fpVSIL, 0, SEEK_END );
         nBoxLength = VSIFTellL( fpVSIL ) - nBoxOffset;
+        VSIFSeekL( fpVSIL, nDataOffset, SEEK_SET );
     }
 
     if( EQUAL(szBoxType,"uuid") )
