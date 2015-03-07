@@ -2677,6 +2677,8 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
             {
                 VSIFCloseL(fp);
                 VSIFCloseL(fpSrc);
+                opj_image_destroy(psImage);
+                opj_destroy_codec(pCodec);
                 return NULL;
             }
             if( nRead == 0 && (pszProfile || bInspireTG) &&
@@ -2700,6 +2702,8 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
             {
                 VSIFCloseL(fp);
                 VSIFCloseL(fpSrc);
+                opj_image_destroy(psImage);
+                opj_destroy_codec(pCodec);
                 return NULL;
             }
             nRead += nToRead;
@@ -2890,11 +2894,11 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
             VSIFCloseL(fp);
             return NULL;
         }
-
         opj_stream_destroy(pStream);
-        opj_image_destroy(psImage);
-        opj_destroy_codec(pCodec);
     }
+
+    opj_image_destroy(psImage);
+    opj_destroy_codec(pCodec);
 
 /* -------------------------------------------------------------------- */
 /*      Patch JP2C box length and add trailing JP2 boxes                */
