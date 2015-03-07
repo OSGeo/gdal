@@ -20,10 +20,12 @@ library. The modules allow you to use Perl to access and manipulate
 all geospatial data that the installed GDAL library is configured to
 access and manipulate.
 
-This documentation covers mainly the syntax of the bindings. For more
-in-depth documentation see the main documentation of <a
-href="http://www.gdal.org/">GDAL</a> and <a
-href="http://www.gdal.org/ogr/">OGR</a>.
+This documentation covers the Perl bindings. For more in-depth
+documentation see the main documentation of <a
+href="http://www.gdal.org/">GDAL</a>. This documentation also
+emphasizes the recommended Perl API. Some methods and aliases to
+method names are left out since they may skip some built-in usability
+or other additions.
 
 Some arguments are optional and have a default value. This is
 illustrated like this:
@@ -54,8 +56,8 @@ In some cases a method may behave differently depending on the
 parameters that it gets:
 
 \code
-$object->method($hashref); # a method called with a reference to a hash
-$object->method($arrayref); # a method called with a reference to an array
+$object->method($hashref); # method called with a reference to a hash
+$object->method($arrayref); # method called with a reference to an array
 \endcode
 
 In some cases a method may examine the context in which it is called,
@@ -93,20 +95,31 @@ Geo::GDAL::Class::subroutine();
 
 The disctinction between class methods and subroutines is subtle but
 often important. The method invocation passes the class name as the
-first argument while the subroutine invocation does not. Thus
+first argument while the subroutine invocation does not. Especially
 constructors (new and create) must be called as class methods.
 
 Similar to methods, also attributes are either class attributes or
 object attributes. Class attributes are global variables that are
 associated with a class and object attributes are variables owned by
 each individual object. Class attributes are used for example for
-enumerated values. 
+enumerated values. In some cases object attributes can be accessed
+as hash values
 
-Class attributes are also used for maintaining is_a_part_of
+\code
+$value = $object->{attribute};
+$object->{attribute} = $new_value;
+\endcode
+
+but this is mostly deprecated and class and object attributes should
+be accessed through methods.
+
+Class attributes are also used for maintaining, e.g., is_a_part_of
 relationships between objects. Because Band objects are a part of
 Dataset objects, there is a class attribute (a hash) in Dataset, which
 maintains these relationships and makes sure the Dataset object that
-owns a Band object is not destroyed before the Band object.
+owns a Band object is not destroyed before the Band object. Also,
+definition objects that are linked to feature and layer objects are
+read-only, and this constraint is enforced using class attributes.
 
 \section index_exceptions Exceptions
 
@@ -115,11 +128,10 @@ exceptions that GDAL classifies as failures or fatal errors trigger a
 Perl exception, and an exception that is classified as a warning
 triggers a Perl warning.
 
-Perl exceptions can be caught by \a eval() and Perl warnings can be
-caught by signal '__WARN__'. Examples:
+Perl exceptions can be caught by eval() and Perl warnings can be
+caught by signal \_\_WARN\_\_. Examples:
 
 \code
-use Geo::GDAL;
 eval {
     $point = Geo::OGR::Geometry->create(WKT=>"POINTXX(1 1)");
 };
@@ -131,10 +143,13 @@ Prints:
 Error: RuntimeError OGR Error: Unsupported geometry type
 \endcode
 
+and
+
 \code
-use Geo::GDAL;
-BEGIN { $SIG{'__WARN__'} = sub {  print STDERR "Warning: @_"; } }
-Geo::GDAL::Driver('GTiff')->Create('x', 10, 10, 1, 'Byte', { my_unknown_option => 'b' });
+BEGIN { 
+    $SIG{__WARN__} = sub {  print STDERR "Warning: @_"; } 
+}
+Geo::GDAL::GetDriver('GTiff')->Create('x', 10, 10, 1, 'Byte', { my_unknown_option => 'b' });
 \endcode
 
 Prints: 
@@ -147,10 +162,14 @@ Warning: Driver GTiff does not support my_unknown_option creation option at site
 This documentation is generated from files within the GDAL
 distribution (directory swig/perl) with Doxygen using a Perl module <a
 href="http://search.cpan.org/~jordan/Doxygen-Filter-Perl/">Doxygen::Filter::Perl</a>
-and a tailor made preprocessor (see also <a
-href="https://rt.cpan.org/Public/Dist/Display.html?Name=Doxygen-Filter-Perl">this</a>). Many
-methods are just interfaces to non-Perl code in the bindings or GDAL
-and thus their code show as blank on these pages. The bindings are
-created with Swig, which adds some methods by default.
+(see also <a
+href="https://rt.cpan.org/Public/Dist/Display.html?Name=Doxygen-Filter-Perl">the
+Doxygen::Filter::Perl bug reports</a>). A tailor made preprocessor in
+the GDAL distribution is used to process and put all Perl code and
+documentation into a single file (all.pm) for Doxygen.
+
+Many methods are just interfaces to non-Perl code in the bindings or
+GDAL and thus their code show as blank on these pages. The bindings
+are created with Swig, which adds some methods by default.
 
 */

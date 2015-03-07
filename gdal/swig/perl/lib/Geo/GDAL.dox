@@ -420,12 +420,16 @@
 # @return
 
 
+
+
 ## @class Geo::GDAL::AsyncReader
 # @brief Enable asynchronous requests.
 # @isa (Geo::GDAL)
 # @todo Test and document.
 #
 # This class is not yet documented nor tested in the GDAL Perl wrappers
+
+
 
 
 ## @class Geo::GDAL::MajorObject
@@ -462,6 +466,8 @@
 # @note see Metadata
 # @param metadata
 # @param domain
+
+
 
 
 ## @class Geo::GDAL::Driver
@@ -555,6 +561,8 @@
 # @param name
 
 
+
+
 ## @class Geo::GDAL::GCP
 # @brief A ground control point for georeferencing images.
 # @isa (Geo::GDAL)
@@ -563,8 +571,8 @@
 # @param x projection coordinate
 # @param y projection coordinate
 # @param z projection coordinate
-# @param column pixel coordinate
-# @param row pixel coordinate
+# @param column pixel x coordinate
+# @param row pixel y coordinate
 # @param info informational message
 # @param id unique identifier (string)
 # @return a new Geo::GDAL::GCP object
@@ -579,16 +587,20 @@
 # projection coordinate (access as $gcp->{Z})
 
 ## @attr Column
-# pixel coordinate (access as $gcp->{Column})
+# @note Pixel is deprecated.
+# pixel x coordinate (access as $gcp->{Column})
 
 ## @attr Row
-# pixel coordinate (access as $gcp->{Row})
+# @note Line is deprecated.
+# pixel y coordinate (access as $gcp->{Row})
 
 ## @attr Info
 # informational message (access as $gcp->{Info})
 
 ## @attr Id
 # unique identifier (string) (access as $gcp->{Id})
+
+
 
 
 ## @class Geo::GDAL::Dataset
@@ -738,6 +750,8 @@
 # @return a buffer, open the buffer with unpack.
 
 ## @method CreateMaskBand()
+
+
 
 
 ## @class Geo::GDAL::Band
@@ -1061,6 +1075,8 @@
 # <a href="http://www.gdal.org/gdal__alg_8h.html">Documentation for GDAL algorithms</a>
 
 
+
+
 ## @class Geo::GDAL::ColorTable
 # @brief A color table in a raster band.
 # @isa ( Geo::GDAL::MajorObject Geo::GDAL )
@@ -1120,6 +1136,8 @@
 # @param start_color
 # @param end_index
 # @param end_color
+
+
 
 
 ## @class Geo::GDAL::RasterAttributeTable
@@ -1220,6 +1238,8 @@
 # @param Row0MinIn [optional] the lower bound (pixel value) of the first category.
 # @param BinSizeIn [optional] the width of each category (in pixel value units).
 # @return ($Row0MinIn, $BinSizeIn) or an empty list if LinearBinning is not set.
+
+
 
 
 ## @class Geo::GDAL::Transformer
