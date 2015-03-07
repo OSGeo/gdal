@@ -1749,7 +1749,7 @@ def jp2openjpeg_39():
     ds = gdal.Open('/vsimem/jp2openjpeg_39.jp2')
     if ds.GetProjectionRef().find('32631') < 0:
         gdaltest.post_reason('fail')
-        print(out_ds.GetProjectionRef())
+        print(ds.GetProjectionRef())
         return 'fail'
     ds = None
     gdal.Unlink('/vsimem/jp2openjpeg_39.jp2')
