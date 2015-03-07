@@ -1845,6 +1845,55 @@ def jp2openjpeg_40():
     return 'success'
 
 ###############################################################################
+# Test USE_SRC_CODESTREAM=YES
+
+def jp2openjpeg_41():
+
+    if gdaltest.jp2openjpeg_drv is None:
+        return 'skip'
+
+    src_ds = gdal.Open('data/byte.jp2')
+    out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_41.jp2', src_ds, \
+        options = ['USE_SRC_CODESTREAM=YES', 'PROFILE=PROFILE_1', 'GEOJP2=NO', 'GMLJP2=NO'])
+    if src_ds.GetRasterBand(1).Checksum() != out_ds.GetRasterBand(1).Checksum():
+        gdaltest.post_reason('fail')
+        return 'fail'
+    del out_ds
+    if gdal.VSIStatL('/vsimem/jp2openjpeg_41.jp2').size != 9923:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.Unlink('/vsimem/jp2openjpeg_41.jp2')
+    gdal.Unlink('/vsimem/jp2openjpeg_41.jp2.aux.xml')
+
+    # Warning if ignored option
+    gdal.ErrorReset()
+    gdal.PushErrorHandler()
+    out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_41.jp2', src_ds, \
+        options = ['USE_SRC_CODESTREAM=YES', 'QUALITY=1'])
+    gdal.PopErrorHandler()
+    del out_ds
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.Unlink('/vsimem/jp2openjpeg_41.jp2')
+    gdal.Unlink('/vsimem/jp2openjpeg_41.jp2.aux.xml')
+
+    # Warning if source is not JPEG2000
+    src_ds = gdal.Open('byte.tif')
+    gdal.ErrorReset()
+    gdal.PushErrorHandler()
+    out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_41.jp2', src_ds, \
+        options = ['USE_SRC_CODESTREAM=YES'])
+    gdal.PopErrorHandler()
+    del out_ds
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.Unlink('/vsimem/jp2openjpeg_41.jp2')
+
+    return 'success'
+
+###############################################################################
 def jp2openjpeg_online_1():
 
     if gdaltest.jp2openjpeg_drv is None:
@@ -2056,6 +2105,7 @@ gdaltest_list = [
     jp2openjpeg_38,
     jp2openjpeg_39,
     jp2openjpeg_40,
+    jp2openjpeg_41,
     jp2openjpeg_online_1,
     jp2openjpeg_online_2,
     jp2openjpeg_online_3,

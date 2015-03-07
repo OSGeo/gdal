@@ -43,6 +43,7 @@
 #include "gdaljp2metadata.h"
 #include "cpl_multiproc.h"
 #include "cpl_atomic_ops.h"
+#include "vrt/vrtdataset.h"
 
 CPL_CVSID("$Id$");
 
@@ -969,13 +970,12 @@ int JP2OpenJPEGDataset::CloseDependentDatasets()
 /************************************************************************/
 /*                            Identify()                                */
 /************************************************************************/
+static const unsigned char jpc_header[] = {0xff,0x4f};
+static const unsigned char jp2_box_jp[] = {0x6a,0x50,0x20,0x20}; /* 'jP  ' */
 
 int JP2OpenJPEGDataset::Identify( GDALOpenInfo * poOpenInfo )
 
 {
-    static const unsigned char jpc_header[] = {0xff,0x4f};
-    static const unsigned char jp2_box_jp[] = {0x6a,0x50,0x20,0x20}; /* 'jP  ' */
-        
     if( poOpenInfo->nHeaderBytes >= 16 
         && (memcmp( poOpenInfo->pabyHeader, jpc_header, 
                     sizeof(jpc_header) ) == 0
@@ -987,6 +987,50 @@ int JP2OpenJPEGDataset::Identify( GDALOpenInfo * poOpenInfo )
     else
         return FALSE;
 }
+
+/************************************************************************/
+/*                        JP2OpenJPEGFindCodeStream()                   */
+/************************************************************************/
+
+static vsi_l_offset JP2OpenJPEGFindCodeStream( VSILFILE* fp,
+                                               vsi_l_offset* pnLength )
+{
+    vsi_l_offset nCodeStreamStart = 0;
+    vsi_l_offset nCodeStreamLength = 0;
+
+    VSIFSeekL(fp, 0, SEEK_SET);
+    GByte abyHeader[16];
+    VSIFReadL(abyHeader, 1, 16, fp);
+
+    if (memcmp( abyHeader, jpc_header, sizeof(jpc_header) ) == 0)
+    {
+        VSIFSeekL(fp, 0, SEEK_END);
+        nCodeStreamLength = VSIFTellL(fp);
+    }
+    else if (memcmp( abyHeader + 4, jp2_box_jp, sizeof(jp2_box_jp) ) == 0)
+    {
+        /* Find offset of first jp2c box */
+        GDALJP2Box oBox( fp );
+        if( oBox.ReadFirst() )
+        {
+            while( strlen(oBox.GetType()) > 0 )
+            {
+                if( EQUAL(oBox.GetType(),"jp2c") )
+                {
+                    nCodeStreamStart = VSIFTellL(fp);
+                    nCodeStreamLength = oBox.GetDataLength();
+                    break;
+                }
+
+                if (!oBox.ReadNext())
+                    break;
+            }
+        }
+    }
+    *pnLength = nCodeStreamLength;
+    return nCodeStreamStart;
+}
+
 /************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
@@ -997,48 +1041,18 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
     if (!Identify(poOpenInfo) || poOpenInfo->fpL == NULL)
         return NULL;
 
-    OPJ_CODEC_FORMAT eCodecFormat;
-
     /* Detect which codec to use : J2K or JP2 ? */
-    static const unsigned char jpc_header[] = {0xff,0x4f};
-    vsi_l_offset nCodeStreamStart = 0;
     vsi_l_offset nCodeStreamLength = 0;
-    if (memcmp( poOpenInfo->pabyHeader, jpc_header, 
-                    sizeof(jpc_header) ) == 0)
+    vsi_l_offset nCodeStreamStart = JP2OpenJPEGFindCodeStream(poOpenInfo->fpL,
+                                                              &nCodeStreamLength);
+
+    if( nCodeStreamStart == 0 && nCodeStreamLength == 0 )
     {
-        eCodecFormat = OPJ_CODEC_J2K;
-
-        VSIFSeekL(poOpenInfo->fpL, 0, SEEK_END);
-        nCodeStreamLength =  VSIFTellL(poOpenInfo->fpL);
+        CPLError(CE_Failure, CPLE_AppDefined, "No code-stream in JP2 file");
+        return NULL;
     }
-    else
-    {
-        eCodecFormat = OPJ_CODEC_JP2;
 
-        /* Find offset of first jp2c box */
-        GDALJP2Box oBox( poOpenInfo->fpL );
-        if( oBox.ReadFirst() )
-        {
-            while( strlen(oBox.GetType()) > 0 )
-            {
-                if( EQUAL(oBox.GetType(),"jp2c") )
-                {
-                    nCodeStreamStart = VSIFTellL(poOpenInfo->fpL);
-                    nCodeStreamLength = oBox.GetDataLength();
-                    break;
-                }
-
-                if (!oBox.ReadNext())
-                    break;
-            }
-        }
-
-        if( nCodeStreamStart == 0 )
-        {
-            CPLError(CE_Failure, CPLE_AppDefined, "No code-stream in JP2 file");
-            return NULL;
-        }
-    }
+    OPJ_CODEC_FORMAT eCodecFormat = (nCodeStreamStart == 0) ? OPJ_CODEC_J2K : OPJ_CODEC_JP2;
 
 
     opj_codec_t* pCodec;
@@ -2578,11 +2592,50 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
                 delete poBox;
             }
         }
+    }
+    CPLFree(pasBandParams);
+    pasBandParams = NULL;
 
+/* -------------------------------------------------------------------- */
+/*      Try lossless reuse of an existing JPEG2000 codestream           */
+/* -------------------------------------------------------------------- */
+    vsi_l_offset nCodeStreamLength = 0;
+    vsi_l_offset nCodeStreamStart = 0;
+    VSILFILE* fpSrc = NULL;
+    if( CSLFetchBoolean(papszOptions, "USE_SRC_CODESTREAM", FALSE) )
+    {
+        CPLString osSrcFilename( poSrcDS->GetDescription() );
+        if( poSrcDS->GetDriver() != NULL &&
+            poSrcDS->GetDriver() == GDALGetDriverByName("VRT") )
+        {
+            VRTDataset* poVRTDS = (VRTDataset* )poSrcDS;
+            GDALDataset* poSimpleSourceDS = poVRTDS->GetSingleSimpleSource();
+            if( poSimpleSourceDS )
+                osSrcFilename = poSimpleSourceDS->GetDescription();
+        }
+
+        fpSrc = VSIFOpenL( osSrcFilename, "rb" );
+        if( fpSrc )
+        {
+            nCodeStreamStart = JP2OpenJPEGFindCodeStream(fpSrc,
+                                                         &nCodeStreamLength);
+        }
+        if( nCodeStreamLength == 0 )
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "USE_SRC_CODESTREAM=YES specified, but no codestream found");
+        }
+    }
+
+    if( eCodecFormat == OPJ_CODEC_JP2  )
+    {
         // Start codestream box
         nStartJP2C = VSIFTellL(fp);
-        bUseXLBoxes = CSLFetchBoolean(papszOptions, "JP2C_XLBOX", FALSE) || /* For debugging */
-            (GIntBig)nXSize * nYSize * nBands * nDataTypeSize / adfRates[adfRates.size()-1] > 4e9;
+        if( nCodeStreamLength )
+            bUseXLBoxes = ((vsi_l_offset)(GUInt32)nCodeStreamLength != nCodeStreamLength);
+        else
+            bUseXLBoxes = CSLFetchBoolean(papszOptions, "JP2C_XLBOX", FALSE) || /* For debugging */
+                (GIntBig)nXSize * nYSize * nBands * nDataTypeSize / adfRates[adfRates.size()-1] > 4e9;
         GUInt32 nLBox = (bUseXLBoxes) ? 1 : 0;
         CPL_MSBPTR32(&nLBox);
         VSIFWriteL(&nLBox, 1, 4, fp);
@@ -2593,194 +2646,255 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
             VSIFWriteL(&nXLBox, 1, 8, fp);
         }
     }
-    CPLFree(pasBandParams);
-    pasBandParams = NULL;
 
-    opj_stream_t * pStream;
-    JP2OpenJPEGFile sJP2OpenJPEGFile;
-    sJP2OpenJPEGFile.fp = fp;
-    sJP2OpenJPEGFile.nBaseOffset = VSIFTellL(fp);
-    pStream = opj_stream_create(1024*1024, FALSE);
-    opj_stream_set_write_function(pStream, JP2OpenJPEGDataset_Write);
-    opj_stream_set_seek_function(pStream, JP2OpenJPEGDataset_Seek);
-    opj_stream_set_skip_function(pStream, JP2OpenJPEGDataset_Skip);
-#if defined(OPENJPEG_VERSION) && OPENJPEG_VERSION >= 20100
-    opj_stream_set_user_data(pStream, &sJP2OpenJPEGFile, NULL);
-#else
-    opj_stream_set_user_data(pStream, &sJP2OpenJPEGFile);
-#endif
-
-    if (!opj_start_compress(pCodec,psImage,pStream))
+/* -------------------------------------------------------------------- */
+/*      Do lossless reuse of an existing JPEG2000 codestream            */
+/* -------------------------------------------------------------------- */
+    if( fpSrc )
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "opj_start_compress() failed");
-        opj_stream_destroy(pStream);
-        opj_image_destroy(psImage);
-        opj_destroy_codec(pCodec);
-        VSIFCloseL(fp);
-        return NULL;
-    }
+        const char* apszIgnoredOptions[] = {
+            "BLOCKXSIZE", "BLOCKYSIZE", "QUALITY", "REVERSIBLE",
+            "RESOLUTIONS", "PROGRESSION", "SOP", "EPH",
+            "YCBCR420", "YCC", "NBITS", "1BIT_ALPHA", "PRECINCTS",
+            "TILEPARTS", "CODEBLOCK_WIDTH", "CODEBLOCK_HEIGHT", NULL };
+        for( int i = 0; apszIgnoredOptions[i]; i ++)
+        {
+            if( CSLFetchNameValue(papszOptions, apszIgnoredOptions[i]) )
+            {
+                CPLError(CE_Warning, CPLE_NotSupported,
+                            "Option %s ignored when USE_SRC_CODESTREAM=YES",
+                            apszIgnoredOptions[i]);
+            }
+        }
+        GByte abyBuffer[4096];
+        VSIFSeekL( fpSrc, nCodeStreamStart, SEEK_SET );
+        vsi_l_offset nRead = 0;
+        while( nRead < nCodeStreamLength )
+        {
+            int nToRead = ( nCodeStreamLength-nRead > 4096 ) ? 4049 :
+                                        (int)(nCodeStreamLength-nRead);
+            if( (int)VSIFReadL(abyBuffer, 1, nToRead, fpSrc) != nToRead )
+            {
+                VSIFCloseL(fp);
+                VSIFCloseL(fpSrc);
+                return NULL;
+            }
+            if( nRead == 0 && (pszProfile || bInspireTG) &&
+                abyBuffer[2] == 0xFF && abyBuffer[3] == 0x51 )
+            {
+                if( EQUAL(pszProfile, "UNRESTRICTED") )
+                {
+                    abyBuffer[6] = 0;
+                    abyBuffer[7] = 0;
+                }
+                else if( EQUAL(pszProfile, "PROFILE_1") || bInspireTG )
+                {
+                    // TODO: ultimately we should check that we can really set Profile 1
+                    abyBuffer[6] = 0;
+                    abyBuffer[7] = 2;
+                }
+            }
+            if( (int)VSIFWriteL(abyBuffer, 1, nToRead, fp) != nToRead ||
+                !pfnProgress( (nRead + nToRead) * 1.0 / nCodeStreamLength,
+                                NULL, pProgressData ) )
+            {
+                VSIFCloseL(fp);
+                VSIFCloseL(fpSrc);
+                return NULL;
+            }
+            nRead += nToRead;
+        }
 
-    int nTilesX = (nXSize + nBlockXSize - 1) / nBlockXSize;
-    int nTilesY = (nYSize + nBlockYSize - 1) / nBlockYSize;
-
-    GUIntBig nTileSize = (GUIntBig)nBlockXSize * nBlockYSize * nBands * nDataTypeSize;
-    GByte* pTempBuffer;
-    if( nTileSize != (GUIntBig)(GUInt32)nTileSize )
-    {
-        CPLError(CE_Failure, CPLE_NotSupported, "Tile size exceeds 4GB");
-        pTempBuffer = NULL;
+        VSIFCloseL(fpSrc);
     }
     else
     {
-        pTempBuffer = (GByte*)VSIMalloc((size_t)nTileSize);
-    }
-    if (pTempBuffer == NULL)
-    {
-        opj_stream_destroy(pStream);
-        opj_image_destroy(psImage);
-        opj_destroy_codec(pCodec);
-        VSIFCloseL(fp);
-        return NULL;
-    }
+        opj_stream_t * pStream;
+        JP2OpenJPEGFile sJP2OpenJPEGFile;
+        sJP2OpenJPEGFile.fp = fp;
+        sJP2OpenJPEGFile.nBaseOffset = VSIFTellL(fp);
+        pStream = opj_stream_create(1024*1024, FALSE);
+        opj_stream_set_write_function(pStream, JP2OpenJPEGDataset_Write);
+        opj_stream_set_seek_function(pStream, JP2OpenJPEGDataset_Seek);
+        opj_stream_set_skip_function(pStream, JP2OpenJPEGDataset_Skip);
+#if defined(OPENJPEG_VERSION) && OPENJPEG_VERSION >= 20100
+        opj_stream_set_user_data(pStream, &sJP2OpenJPEGFile, NULL);
+#else
+        opj_stream_set_user_data(pStream, &sJP2OpenJPEGFile);
+#endif
 
-    GByte* pYUV420Buffer = NULL;
-    if (bYCBCR420)
-    {
-        pYUV420Buffer =(GByte*)VSIMalloc(3 * nBlockXSize * nBlockYSize / 2 +
-                                         ((nBands == 4) ? nBlockXSize * nBlockYSize : 0));
-        if (pYUV420Buffer == NULL)
+        if (!opj_start_compress(pCodec,psImage,pStream))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                    "opj_start_compress() failed");
+            opj_stream_destroy(pStream);
+            opj_image_destroy(psImage);
+            opj_destroy_codec(pCodec);
+            VSIFCloseL(fp);
+            return NULL;
+        }
+
+        int nTilesX = (nXSize + nBlockXSize - 1) / nBlockXSize;
+        int nTilesY = (nYSize + nBlockYSize - 1) / nBlockYSize;
+
+        GUIntBig nTileSize = (GUIntBig)nBlockXSize * nBlockYSize * nBands * nDataTypeSize;
+        GByte* pTempBuffer;
+        if( nTileSize != (GUIntBig)(GUInt32)nTileSize )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported, "Tile size exceeds 4GB");
+            pTempBuffer = NULL;
+        }
+        else
+        {
+            pTempBuffer = (GByte*)VSIMalloc((size_t)nTileSize);
+        }
+        if (pTempBuffer == NULL)
         {
             opj_stream_destroy(pStream);
             opj_image_destroy(psImage);
             opj_destroy_codec(pCodec);
-            CPLFree(pTempBuffer);
             VSIFCloseL(fp);
             return NULL;
         }
-    }
+
+        GByte* pYUV420Buffer = NULL;
+        if (bYCBCR420)
+        {
+            pYUV420Buffer =(GByte*)VSIMalloc(3 * nBlockXSize * nBlockYSize / 2 +
+                                            ((nBands == 4) ? nBlockXSize * nBlockYSize : 0));
+            if (pYUV420Buffer == NULL)
+            {
+                opj_stream_destroy(pStream);
+                opj_image_destroy(psImage);
+                opj_destroy_codec(pCodec);
+                CPLFree(pTempBuffer);
+                VSIFCloseL(fp);
+                return NULL;
+            }
+        }
 
 /* -------------------------------------------------------------------- */
 /*      Iterate over the tiles                                          */
 /* -------------------------------------------------------------------- */
-    pfnProgress( 0.0, NULL, pProgressData );
+        pfnProgress( 0.0, NULL, pProgressData );
 
-    CPLErr eErr = CE_None;
-    int nBlockXOff, nBlockYOff;
-    int iTile = 0;
-    for(nBlockYOff=0;eErr == CE_None && nBlockYOff<nTilesY;nBlockYOff++)
-    {
-        for(nBlockXOff=0;eErr == CE_None && nBlockXOff<nTilesX;nBlockXOff++)
+        CPLErr eErr = CE_None;
+        int nBlockXOff, nBlockYOff;
+        int iTile = 0;
+        for(nBlockYOff=0;eErr == CE_None && nBlockYOff<nTilesY;nBlockYOff++)
         {
-            int nWidthToRead = MIN(nBlockXSize, nXSize - nBlockXOff * nBlockXSize);
-            int nHeightToRead = MIN(nBlockYSize, nYSize - nBlockYOff * nBlockYSize);
-            eErr = poSrcDS->RasterIO(GF_Read,
-                                     nBlockXOff * nBlockXSize,
-                                     nBlockYOff * nBlockYSize,
-                                     nWidthToRead, nHeightToRead,
-                                     pTempBuffer, nWidthToRead, nHeightToRead,
-                                     eDataType,
-                                     nBands, NULL,
-                                     0,0,0,NULL);
-            if( b1BitAlpha )
+            for(nBlockXOff=0;eErr == CE_None && nBlockXOff<nTilesX;nBlockXOff++)
             {
-                for(int i=0;i<nWidthToRead*nHeightToRead;i++)
+                int nWidthToRead = MIN(nBlockXSize, nXSize - nBlockXOff * nBlockXSize);
+                int nHeightToRead = MIN(nBlockYSize, nYSize - nBlockYOff * nBlockYSize);
+                eErr = poSrcDS->RasterIO(GF_Read,
+                                        nBlockXOff * nBlockXSize,
+                                        nBlockYOff * nBlockYSize,
+                                        nWidthToRead, nHeightToRead,
+                                        pTempBuffer, nWidthToRead, nHeightToRead,
+                                        eDataType,
+                                        nBands, NULL,
+                                        0,0,0,NULL);
+                if( b1BitAlpha )
                 {
-                    if( pTempBuffer[nAlphaBandIndex*nWidthToRead*nHeightToRead+i] )
-                        pTempBuffer[nAlphaBandIndex*nWidthToRead*nHeightToRead+i] = 1;
-                    else
-                        pTempBuffer[nAlphaBandIndex*nWidthToRead*nHeightToRead+i] = 0;
-                }
-            }
-            if (eErr == CE_None)
-            {
-                if (bYCBCR420)
-                {
-                    int j, i;
-                    for(j=0;j<nHeightToRead;j++)
+                    for(int i=0;i<nWidthToRead*nHeightToRead;i++)
                     {
-                        for(i=0;i<nWidthToRead;i++)
+                        if( pTempBuffer[nAlphaBandIndex*nWidthToRead*nHeightToRead+i] )
+                            pTempBuffer[nAlphaBandIndex*nWidthToRead*nHeightToRead+i] = 1;
+                        else
+                            pTempBuffer[nAlphaBandIndex*nWidthToRead*nHeightToRead+i] = 0;
+                    }
+                }
+                if (eErr == CE_None)
+                {
+                    if (bYCBCR420)
+                    {
+                        int j, i;
+                        for(j=0;j<nHeightToRead;j++)
                         {
-                            int R = pTempBuffer[j*nWidthToRead+i];
-                            int G = pTempBuffer[nHeightToRead*nWidthToRead + j*nWidthToRead+i];
-                            int B = pTempBuffer[2*nHeightToRead*nWidthToRead + j*nWidthToRead+i];
-                            int Y = (int) (0.299 * R + 0.587 * G + 0.114 * B);
-                            int Cb = CLAMP_0_255((int) (-0.1687 * R - 0.3313 * G + 0.5 * B  + 128));
-                            int Cr = CLAMP_0_255((int) (0.5 * R - 0.4187 * G - 0.0813 * B  + 128));
-                            pYUV420Buffer[j*nWidthToRead+i] = (GByte) Y;
-                            pYUV420Buffer[nHeightToRead * nWidthToRead + ((j/2) * ((nWidthToRead)/2) + i/2) ] = (GByte) Cb;
-                            pYUV420Buffer[5 * nHeightToRead * nWidthToRead / 4 + ((j/2) * ((nWidthToRead)/2) + i/2) ] = (GByte) Cr;
-                            if( nBands == 4 )
+                            for(i=0;i<nWidthToRead;i++)
                             {
-                                pYUV420Buffer[3 * nHeightToRead * nWidthToRead / 2 + j*nWidthToRead+i ] =
-                                    (GByte) pTempBuffer[3*nHeightToRead*nWidthToRead + j*nWidthToRead+i];
+                                int R = pTempBuffer[j*nWidthToRead+i];
+                                int G = pTempBuffer[nHeightToRead*nWidthToRead + j*nWidthToRead+i];
+                                int B = pTempBuffer[2*nHeightToRead*nWidthToRead + j*nWidthToRead+i];
+                                int Y = (int) (0.299 * R + 0.587 * G + 0.114 * B);
+                                int Cb = CLAMP_0_255((int) (-0.1687 * R - 0.3313 * G + 0.5 * B  + 128));
+                                int Cr = CLAMP_0_255((int) (0.5 * R - 0.4187 * G - 0.0813 * B  + 128));
+                                pYUV420Buffer[j*nWidthToRead+i] = (GByte) Y;
+                                pYUV420Buffer[nHeightToRead * nWidthToRead + ((j/2) * ((nWidthToRead)/2) + i/2) ] = (GByte) Cb;
+                                pYUV420Buffer[5 * nHeightToRead * nWidthToRead / 4 + ((j/2) * ((nWidthToRead)/2) + i/2) ] = (GByte) Cr;
+                                if( nBands == 4 )
+                                {
+                                    pYUV420Buffer[3 * nHeightToRead * nWidthToRead / 2 + j*nWidthToRead+i ] =
+                                        (GByte) pTempBuffer[3*nHeightToRead*nWidthToRead + j*nWidthToRead+i];
+                                }
                             }
                         }
+
+                        int nBytesToWrite = 3 * nWidthToRead * nHeightToRead / 2;
+                        if (nBands == 4)
+                            nBytesToWrite += nBlockXSize * nBlockYSize;
+
+                        if (!opj_write_tile(pCodec,
+                                            iTile,
+                                            pYUV420Buffer,
+                                            nBytesToWrite,
+                                            pStream))
+                        {
+                            CPLError(CE_Failure, CPLE_AppDefined,
+                                    "opj_write_tile() failed");
+                            eErr = CE_Failure;
+                        }
                     }
-
-                    int nBytesToWrite = 3 * nWidthToRead * nHeightToRead / 2;
-                    if (nBands == 4)
-                        nBytesToWrite += nBlockXSize * nBlockYSize;
-
-                    if (!opj_write_tile(pCodec,
-                                        iTile,
-                                        pYUV420Buffer,
-                                        nBytesToWrite,
-                                        pStream))
+                    else
                     {
-                        CPLError(CE_Failure, CPLE_AppDefined,
-                                "opj_write_tile() failed");
-                        eErr = CE_Failure;
+                        if (!opj_write_tile(pCodec,
+                                            iTile,
+                                            pTempBuffer,
+                                            nWidthToRead * nHeightToRead * nBands * nDataTypeSize,
+                                            pStream))
+                        {
+                            CPLError(CE_Failure, CPLE_AppDefined,
+                                    "opj_write_tile() failed");
+                            eErr = CE_Failure;
+                        }
                     }
                 }
-                else
-                {
-                    if (!opj_write_tile(pCodec,
-                                        iTile,
-                                        pTempBuffer,
-                                        nWidthToRead * nHeightToRead * nBands * nDataTypeSize,
-                                        pStream))
-                    {
-                        CPLError(CE_Failure, CPLE_AppDefined,
-                                "opj_write_tile() failed");
-                        eErr = CE_Failure;
-                    }
-                }
+
+                if( !pfnProgress( (iTile + 1) * 1.0 / (nTilesX * nTilesY), NULL, pProgressData ) )
+                    eErr = CE_Failure;
+
+                iTile ++;
             }
-
-            if( !pfnProgress( (iTile + 1) * 1.0 / (nTilesX * nTilesY), NULL, pProgressData ) )
-                eErr = CE_Failure;
-
-            iTile ++;
         }
-    }
 
-    VSIFree(pTempBuffer);
-    VSIFree(pYUV420Buffer);
+        VSIFree(pTempBuffer);
+        VSIFree(pYUV420Buffer);
 
-    if (eErr != CE_None)
-    {
+        if (eErr != CE_None)
+        {
+            opj_stream_destroy(pStream);
+            opj_image_destroy(psImage);
+            opj_destroy_codec(pCodec);
+            VSIFCloseL(fp);
+            return NULL;
+        }
+
+        if (!opj_end_compress(pCodec,pStream))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                    "opj_end_compress() failed");
+            opj_stream_destroy(pStream);
+            opj_image_destroy(psImage);
+            opj_destroy_codec(pCodec);
+            VSIFCloseL(fp);
+            return NULL;
+        }
+
         opj_stream_destroy(pStream);
         opj_image_destroy(psImage);
         opj_destroy_codec(pCodec);
-        VSIFCloseL(fp);
-        return NULL;
     }
-
-    if (!opj_end_compress(pCodec,pStream))
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "opj_end_compress() failed");
-        opj_stream_destroy(pStream);
-        opj_image_destroy(psImage);
-        opj_destroy_codec(pCodec);
-        VSIFCloseL(fp);
-        return NULL;
-    }
-
-    opj_stream_destroy(pStream);
-    opj_image_destroy(psImage);
-    opj_destroy_codec(pCodec);
 
 /* -------------------------------------------------------------------- */
 /*      Patch JP2C box length and add trailing JP2 boxes                */
@@ -2867,6 +2981,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
         {
             char** papszSrcMD = CSLDuplicate(poSrcDS->GetMetadata());
             papszSrcMD = CSLSetNameValue(papszSrcMD, GDALMD_AREA_OR_POINT, NULL);
+            papszSrcMD = CSLSetNameValue(papszSrcMD, "Corder", NULL);
             for(char** papszSrcMDIter = papszSrcMD;
                     papszSrcMDIter && *papszSrcMDIter; )
             {
@@ -2975,6 +3090,7 @@ void GDALRegister_JP2OpenJPEG()
 "   <Option name='CT_COMPONENTS' type='int' min='3' max='4' description='If there is one color table, number of color table components to write. Autodetected if not specified.'/>"
 "   <Option name='WRITE_METADATA' type='boolean' description='Whether metadata should be written, in a dedicated JP2 XML box' default='NO'/>"
 "   <Option name='MAIN_MD_DOMAIN_ONLY' type='boolean' description='(Only if WRITE_METADATA=YES) Whether only metadata from the main domain should be written' default='NO'/>"
+"   <Option name='USE_SRC_CODESTREAM' type='boolean' description='When source dataset is JPEG2000, whether to reuse the codestream of the source dataset unmodified' default='NO'/>"
 "</CreationOptionList>"  );
 
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
