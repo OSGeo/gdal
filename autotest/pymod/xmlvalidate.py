@@ -203,7 +203,7 @@ def transform_abs_links_to_ref_links(path, level = 0):
         elif filename.endswith('.xsd'):
             #print(level)
             #print(filename)
-            f = open(filename, 'rb')
+            f = open(filename, 'rt')
             lines = f.readlines()
             f.close()
             rewrite = False
@@ -257,7 +257,7 @@ def transform_inspire_abs_links_to_ref_links(path, level = 0):
         elif filename.endswith('.xsd'):
             #print(level)
             #print(filename)
-            f = open(filename, 'rb')
+            f = open(filename, 'rt')
             lines = f.readlines()
             f.close()
             rewrite = False
