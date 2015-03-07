@@ -1879,7 +1879,7 @@ def jp2openjpeg_41():
     gdal.Unlink('/vsimem/jp2openjpeg_41.jp2.aux.xml')
 
     # Warning if source is not JPEG2000
-    src_ds = gdal.Open('byte.tif')
+    src_ds = gdal.Open('data/byte.tif')
     gdal.ErrorReset()
     gdal.PushErrorHandler()
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_41.jp2', src_ds, \
