@@ -1298,6 +1298,7 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
                                         CPLDebug("OPENJPEG", "Unknown color space");
                                     }
                                 }
+                                CPLFree(pabyContent);
                             }
                         }
                         /* Check if there's an alpha channel or odd channel attribution */
@@ -1349,6 +1350,7 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
                                 {
                                     CPLDebug("OPENJPEG", "Unsupported cdef content");
                                 }
+                                CPLFree(pabyContent);
                             }
                         }
                     }
