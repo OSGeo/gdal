@@ -514,6 +514,7 @@ void OGRILI1Layer::PolygonizeAreaLayer( OGRILI1Layer* poAreaLineLayer, int nArea
         CPLDebug( "OGR_ILI", "Polygonizing again with crossing line fix");
         delete polys;
         polys = Polygonize( gc, true ); //try again with crossing line fix
+        CPLDebug( "OGR_ILI", "Resulting polygons: %d", polys->getNumGeometries());
     }
     delete gc;
 

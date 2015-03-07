@@ -258,14 +258,16 @@ public:
                     {
                         if (EQUAL(psKind, "Area"))
                         {
-                            CPLString areaPointGeomName = psName + CPLString("__Point");
-                            AddCoord(areaPointGeomName, psElementNode);
-
                             CPLString lineLayerName = GetName() + CPLString("_") + psName;
                             AddGeomTable(lineLayerName, psName, wkbMultiLineString);
 
                             //Add geometry field for polygonized areas
                             AddGeomField(psName, wkbPolygon);
+
+                            //We add the area helper point geometry after polygon
+                            //for better behaviour of clients with limited multi geometry support
+                            CPLString areaPointGeomName = psName + CPLString("__Point");
+                            AddCoord(areaPointGeomName, psElementNode);
                         } else if (EQUAL(psKind, "Surface"))
                         {
                             CPLString geomLayerName = GetName() + CPLString("_") + psName;
