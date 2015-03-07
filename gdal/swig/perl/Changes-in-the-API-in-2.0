@@ -1,0 +1,42 @@
+This file lists the backwards incompatible changes in the Perl
+bindings API in version 2.0.
+
+There are numerous other changes but they are meant to be
+non-breaking.
+
+To be on the safe side, new code should be written according to
+what is presented in the documentation.
+
+class Geo::GDAL::GCP:
+
+    attributes GCP* are renamed as * (the prefix GCP is removed)
+
+many classes:
+
+    Class attributes (arrays or hashes with upcase names) may have
+    been (re)moved, accessor functions which return lists, like
+    GeometryTypes(), are the replacement.
+
+Geo::OSR::SpatialReference:
+
+    Overloading to "", and = have been removed. Use explicit 
+    method call As('PrettyWKT') instead.
+
+Geo::OGR::Layer
+
+    Schema method is now read-only. Use explicit call to CreateField.
+
+    Tuple requires now the geometry fields as last.
+
+Geo::OGR::Feature
+
+    Tuple requires now the geometry fields as last.
+
+Geo::OGR::FeatureDefn
+
+    Schema method is now read-only. Use explicit calls to AddField.
+
+Geo::OSR
+
+    Projection and other constants (strings) are now mixed case, as
+    the values in GDAL.
