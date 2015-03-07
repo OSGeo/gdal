@@ -261,7 +261,7 @@ class JP2OpenJPEGRasterBand : public GDALPamRasterBand
     virtual int             GetOverviewCount();
     virtual GDALRasterBand* GetOverview(int iOvrLevel);
     
-    virtual int HasArbitraryOverviews() { return TRUE; }
+    virtual int HasArbitraryOverviews() { return poCT == NULL; }
 };
 
 
@@ -1432,6 +1432,11 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     int nW = poDS->nRasterXSize;
     int nH = poDS->nRasterYSize;
+
+    /* Lower resolutions are not compatible with a color-table */
+    if( poCT != NULL )
+        numResolutions = 0;
+
     while (poDS->nOverviewCount+1 < numResolutions &&
            (nW > 128 || nH > 128) &&
            (poDS->bUseSetDecodeArea || ((nTileW % 2) == 0 && (nTileH % 2) == 0)))
