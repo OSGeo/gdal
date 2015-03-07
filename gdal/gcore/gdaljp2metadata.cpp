@@ -936,9 +936,14 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
             if( oSRS.SetFromUserInput( pszSRSName ) == OGRERR_NONE )
                 oSRS.exportToWkt( &pszProjection );
         }
-        else if( EQUALN(pszSRSName,"urn:",4) 
+        else if( (EQUALN(pszSRSName,"urn:",4) 
                  && strstr(pszSRSName,":def:") != NULL
-                 && oSRS.importFromURN(pszSRSName) == OGRERR_NONE )
+                 && oSRS.importFromURN(pszSRSName) == OGRERR_NONE) ||
+                 /* GMLJP2 v2.0 uses CRS URL instead of URN */
+                 /* See e.g. http://schemas.opengis.net/gmljp2/2.0/examples/minimalInstance.xml */
+                 (EQUALN(pszSRSName,"http://www.opengis.net/def/crs/",
+                         strlen("http://www.opengis.net/def/crs/")) 
+                 && oSRS.importFromCRSURL(pszSRSName) == OGRERR_NONE) )
         {
             oSRS.exportToWkt( &pszProjection );
 
