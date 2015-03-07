@@ -91,7 +91,10 @@ def ecw_1():
             gdaltest.ecw_drv.major_version = int(float(longname[sdk_off+4]))
             sdk_minor_off = longname.find('.', sdk_off)
             if sdk_minor_off >= 0:
-                gdaltest.ecw_drv.minor_version = int(longname[sdk_minor_off+1])
+                if longname[sdk_minor_off+1] == 'x':
+                    gdaltest.ecw_drv.minor_version = 3
+                else:
+                    gdaltest.ecw_drv.minor_version = int(longname[sdk_minor_off+1])
             else:
                 gdaltest.ecw_drv.minor_version = 0
         else:
