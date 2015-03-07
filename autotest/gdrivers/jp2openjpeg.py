@@ -1612,8 +1612,10 @@ def jp2openjpeg_37():
         gdaltest.post_reason('fail')
         return 'fail'
     ds = gdal.Open('/vsimem/jp2openjpeg_37.jp2')
-    if ds.GetMetadata('SOME_DOMAIN') != {'FOO': 'BAR'}:
+    md = ds.GetMetadata('SOME_DOMAIN')
+    if md != {'FOO': 'BAR'}:
         gdaltest.post_reason('fail')
+        print(md)
         return 'fail'
     gdal.Unlink('/vsimem/jp2openjpeg_37.jp2')
 
@@ -1660,6 +1662,97 @@ def jp2openjpeg_37():
             gdaltest.post_reason('fail')
             return 'fail'
         gdal.Unlink('/vsimem/jp2openjpeg_37.jp2')
+
+    return 'success'
+
+###############################################################################
+# Test non-EPSG SRS (so written with a GML dictionary)
+
+def jp2openjpeg_38():
+
+    if gdaltest.jp2openjpeg_drv is None:
+        return 'skip'
+
+    # No metadata
+    src_ds = gdal.GetDriverByName('MEM').Create('', 2, 2)
+    wkt = """PROJCS["UTM Zone 31, Northern Hemisphere",GEOGCS["unnamed ellipse",DATUM["unknown",SPHEROID["unnamed",100,1]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",3],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["Meter",1]]"""
+    src_ds.SetProjection(wkt)
+    src_ds.SetGeoTransform([0,60,0,0,0,-60])
+    out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_38.jp2', src_ds, options = ['GeoJP2=NO'])
+    if out_ds.GetProjectionRef() != wkt:
+        gdaltest.post_reason('fail')
+        print(out_ds.GetProjectionRef())
+        return 'fail'
+    out_ds = None
+    gdal.Unlink('/vsimem/jp2openjpeg_38.jp2')
+
+    return 'success'
+
+###############################################################################
+# Test GMLJP2OVERRIDE configuration option
+
+def jp2openjpeg_39():
+
+    if gdaltest.jp2openjpeg_drv is None:
+        return 'skip'
+
+    # No metadata
+    src_ds = gdal.GetDriverByName('MEM').Create('', 20, 20)
+    src_ds.SetGeoTransform([0,60,0,0,0,-60])
+    gdal.SetConfigOption('GMLJP2OVERRIDE', '/vsimem/override.gml')
+    gdal.FileFromMemBuffer('/vsimem/override.gml', """<gml:FeatureCollection
+   xmlns:gml="http://www.opengis.net/gml"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.opengis.net/gml http://schemas.opengis.net/gml/3.1.1/profiles/gmlJP2Profile/1.0.0/gmlJP2Profile.xsd">
+  <gml:boundedBy>
+    <gml:Null>withheld</gml:Null>
+  </gml:boundedBy>
+  <gml:featureMember>
+    <gml:FeatureCollection>
+      <gml:featureMember>
+        <gml:RectifiedGridCoverage dimension="2" gml:id="RGC0001">
+          <gml:rectifiedGridDomain>
+            <gml:RectifiedGrid dimension="2">
+              <gml:limits>
+                <gml:GridEnvelope>
+                  <gml:low>0 0</gml:low>
+                  <gml:high>19 19</gml:high>
+                </gml:GridEnvelope>
+              </gml:limits>
+              <gml:axisName>x</gml:axisName>
+              <gml:axisName>y</gml:axisName>
+              <gml:origin>
+                <gml:Point gml:id="P0001" srsName="urn:ogc:def:crs:EPSG::32631">
+                  <gml:pos>440750 3751290</gml:pos>
+                </gml:Point>
+              </gml:origin>
+              <gml:offsetVector srsName="urn:ogc:def:crs:EPSG::32631">60 0</gml:offsetVector>
+              <gml:offsetVector srsName="urn:ogc:def:crs:EPSG::32631">0 -60</gml:offsetVector>
+            </gml:RectifiedGrid>
+          </gml:rectifiedGridDomain>
+          <gml:rangeSet>
+            <gml:File>
+              <gml:rangeParameters/>
+              <gml:fileName>gmljp2://codestream/0</gml:fileName>
+              <gml:fileStructure>Record Interleaved</gml:fileStructure>
+            </gml:File>
+          </gml:rangeSet>
+        </gml:RectifiedGridCoverage>
+      </gml:featureMember>
+    </gml:FeatureCollection>
+  </gml:featureMember>
+</gml:FeatureCollection>""")
+    out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_39.jp2', src_ds, options = ['GeoJP2=NO'])
+    gdal.SetConfigOption('GMLJP2OVERRIDE', None)
+    gdal.Unlink('/vsimem/override.gml')
+    del out_ds
+    ds = gdal.Open('/vsimem/jp2openjpeg_39.jp2')
+    if ds.GetProjectionRef().find('32631') < 0:
+        gdaltest.post_reason('fail')
+        print(out_ds.GetProjectionRef())
+        return 'fail'
+    ds = None
+    gdal.Unlink('/vsimem/jp2openjpeg_39.jp2')
 
     return 'success'
 
@@ -1872,6 +1965,8 @@ gdaltest_list = [
     jp2openjpeg_35,
     jp2openjpeg_36,
     jp2openjpeg_37,
+    jp2openjpeg_38,
+    jp2openjpeg_39,
     jp2openjpeg_online_1,
     jp2openjpeg_online_2,
     jp2openjpeg_online_3,
