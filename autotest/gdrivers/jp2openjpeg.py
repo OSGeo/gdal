@@ -1689,7 +1689,7 @@ def jp2openjpeg_38():
     return 'success'
 
 ###############################################################################
-# Test GMLJP2OVERRIDE configuration option
+# Test GMLJP2OVERRIDE configuration option and DGIWG GMLJP2
 
 def jp2openjpeg_39():
 
@@ -1758,6 +1758,89 @@ def jp2openjpeg_39():
         return 'fail'
     ds = None
     gdal.Unlink('/vsimem/jp2openjpeg_39.jp2')
+
+    return 'success'
+
+###############################################################################
+# Test we can parse GMLJP2 v2.0
+
+def jp2openjpeg_40():
+
+    if gdaltest.jp2openjpeg_drv is None:
+        return 'skip'
+
+    # No metadata
+    src_ds = gdal.GetDriverByName('MEM').Create('', 20, 20)
+    src_ds.SetGeoTransform([0,60,0,0,0,-60])
+    gdal.SetConfigOption('GMLJP2OVERRIDE', '/vsimem/override.gml')
+
+    gdal.FileFromMemBuffer('/vsimem/override.gml', """<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
+<gmljp2:GMLJP2CoverageCollection gml:id="JPEG2000_0"
+    xmlns:gml="http://www.opengis.net/gml/3.2" 
+    xmlns:gmlcov="http://www.opengis.net/gmlcov/1.0" 
+    xmlns:gmljp2="http://www.opengis.net/gmljp2/2.0" 
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+    xsi:schemaLocation="http://www.opengis.net/gmljp2/2.0 http://schemas.opengis.net/gmljp2/2.0/gmljp2.xsd">
+    <gml:gridDomain/>
+    <gml:rangeSet>
+        <gml:File>
+            <gml:rangeParameters/>
+            <gml:fileName>gmljp2://codestream</gml:fileName>
+            <gml:fileStructure>inapplicable</gml:fileStructure>
+        </gml:File>
+    </gml:rangeSet>
+    <gmlcov:rangeType/>
+    <gmljp2:featureMember>
+        <gmljp2:GMLJP2RectifiedGridCoverage gml:id="CodeStream">
+            <gml:domainSet>
+                <gml:RectifiedGrid gml:id="rg0001" dimension="2" 
+                            srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                    <gml:limits>
+                        <gml:GridEnvelope>
+                            <gml:low>0 0</gml:low>
+                            <gml:high>19 19</gml:high>
+                        </gml:GridEnvelope>
+                    </gml:limits>
+                    <gml:axisLabels>Lat Long</gml:axisLabels>
+                    <gml:origin>
+                        <gml:Point gml:id="P0001" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                            <gml:pos>48.95 2.05</gml:pos>
+                        </gml:Point>
+                    </gml:origin>
+                    <gml:offsetVector srsName="http://www.opengis.net/def/crs/EPSG/0/4326">0 0.1</gml:offsetVector>
+                    <gml:offsetVector srsName="http://www.opengis.net/def/crs/EPSG/0/4326">-0.1 0</gml:offsetVector>
+                </gml:RectifiedGrid>
+            </gml:domainSet>
+            <gml:rangeSet>
+                <gml:File>
+                    <gml:rangeParameters/>
+                    <gml:fileName>gmljp2://codestream</gml:fileName>
+                    <gml:fileStructure>inapplicable</gml:fileStructure>
+                </gml:File>
+            </gml:rangeSet>
+            <gmlcov:rangeType/>
+        </gmljp2:GMLJP2RectifiedGridCoverage>
+    </gmljp2:featureMember>
+</gmljp2:GMLJP2CoverageCollection>""")
+    out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_40.jp2', src_ds, options = ['GeoJP2=NO'])
+    gdal.SetConfigOption('GMLJP2OVERRIDE', None)
+    gdal.Unlink('/vsimem/override.gml')
+    del out_ds
+    ds = gdal.Open('/vsimem/jp2openjpeg_40.jp2')
+    if ds.GetProjectionRef().find('4326') < 0:
+        gdaltest.post_reason('fail')
+        print(ds.GetProjectionRef())
+        return 'fail'
+    got_gt = ds.GetGeoTransform()
+    expected_gt = (2, 0.1, 0, 49, 0, -0.1)
+    for i in range(6):
+        if abs(got_gt[i] - expected_gt[i]) > 1e-5:
+            gdaltest.post_reason('fail')
+            print(got_gt)
+            return 'fail'
+    ds = None
+    gdal.Unlink('/vsimem/jp2openjpeg_40.jp2')
 
     return 'success'
 
@@ -1972,6 +2055,7 @@ gdaltest_list = [
     jp2openjpeg_37,
     jp2openjpeg_38,
     jp2openjpeg_39,
+    jp2openjpeg_40,
     jp2openjpeg_online_1,
     jp2openjpeg_online_2,
     jp2openjpeg_online_3,
