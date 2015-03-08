@@ -38,7 +38,7 @@ def Usage():
     print('                 [-tr xres yres] [-unsetgt] [-a_nodata value]')
     print('                 [-unsetstats] [-stats] [-approx_stats]')
     print('                 [-gcp pixel line easting northing [elevation]]*')
-    print('                 [-unsetmd] [-mo "META-TAG=VALUE"]*  datasetname')
+    print('                 [-unsetmd] [-oo NAME=VALUE]* [-mo "META-TAG=VALUE"]*  datasetname')
     print('')
     print('Edit in place various information of an existing GDAL dataset.')
     return -1
@@ -77,6 +77,7 @@ def gdal_edit(argv):
     ro = False
     molist = []
     gcp_list = []
+    open_options = []
 
     i = 1
     argc = len(argv)
@@ -133,6 +134,9 @@ def gdal_edit(argv):
             stats = True
         elif argv[i] == '-unsetmd':
             unsetmd = True
+        elif argv[i] == '-oo' and i < len(argv)-1:
+            open_options.append(argv[i+1])
+            i = i + 1
         elif argv[i][0] == '-':
             sys.stderr.write('Unrecognized option : %s\n' % argv[i])
             return Usage()
@@ -171,7 +175,13 @@ def gdal_edit(argv):
         print('')
         return Usage()
 
-    if ro:
+    if open_options is not None:
+        if ro:
+            ds = gdal.OpenEx(datasetname, gdal.OF_RASTER, open_options = open_options)
+        else:
+            ds = gdal.OpenEx(datasetname, gdal.OF_RASTER | gdal.OF_UPDATE, open_options = open_options)
+    # GDAL 1.X compat
+    elif ro:
         ds = gdal.Open(datasetname)
     else:
         ds = gdal.Open(datasetname, gdal.GA_Update)
