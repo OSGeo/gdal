@@ -140,6 +140,9 @@ void       CPL_DLL  CPLAddXMLSibling( CPLXMLNode *psOlderSibling,
 CPLXMLNode CPL_DLL *CPLCreateXMLElementAndValue( CPLXMLNode *psParent,
                                                  const char *pszName,
                                                  const char *pszValue );
+void       CPL_DLL CPLAddXMLAttributeAndValue( CPLXMLNode *psParent,
+                                                 const char *pszName,
+                                                 const char *pszValue );
 CPLXMLNode CPL_DLL *CPLCloneXMLTree( CPLXMLNode *psTree );
 int        CPL_DLL CPLSetXMLValue( CPLXMLNode *psRoot,  const char *pszPath,
                                    const char *pszValue );
