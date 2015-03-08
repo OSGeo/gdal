@@ -2023,6 +2023,22 @@ char *CPLEscapeString( const char *pszInput, int nLength,
                 pszOutput[iOut++] = 't';
                 pszOutput[iOut++] = ';';
             }
+            /* Python 2 doesn't like displaying the UTF-8 character corresponding */
+            /* to BOM, so escape it */
+            else if( ((GByte*)pszInput)[iIn] == 0xEF &&
+                     ((GByte*)pszInput)[iIn+1] == 0xBB &&
+                     ((GByte*)pszInput)[iIn+2] == 0xBF )
+            {
+                pszOutput[iOut++] = '&';
+                pszOutput[iOut++] = '#';
+                pszOutput[iOut++] = 'x';
+                pszOutput[iOut++] = 'F';
+                pszOutput[iOut++] = 'E';
+                pszOutput[iOut++] = 'F';
+                pszOutput[iOut++] = 'F';
+                pszOutput[iOut++] = ';';
+                iIn += 2;
+            }
             else if( ((GByte*)pszInput)[iIn] < 0x20 
                      && pszInput[iIn] != 0x9
                      && pszInput[iIn] != 0xA 
