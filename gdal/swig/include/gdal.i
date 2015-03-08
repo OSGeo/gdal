@@ -582,7 +582,9 @@ void GDALApplyGeoTransform( double padfGeoTransform[6],
 
 %apply (double argin[ANY]) {double gt_in[6]};
 %apply (double argout[ANY]) {double gt_out[6]};
-int GDALInvGeoTransform( double gt_in[6], double gt_out[6] );
+%apply (IF_FALSE_RETURN_NONE) { (RETURN_NONE) };
+RETURN_NONE GDALInvGeoTransform( double gt_in[6], double gt_out[6] );
+%clear (RETURN_NONE);
 %clear (double *gt_in);
 %clear (double *gt_out);
 
