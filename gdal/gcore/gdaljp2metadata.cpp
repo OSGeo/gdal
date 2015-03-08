@@ -1593,6 +1593,19 @@ static void AddField(CPLXMLNode* psParent, const char* pszFieldName,
         CPLAddXMLAttributeAndValue(psField, "description", pszDescription );
 }
 
+static void AddHexField(CPLXMLNode* psParent, const char* pszFieldName,
+                        int nFieldSize, const char* pszValue,
+                        const char* pszDescription = NULL)
+{
+    CPLXMLNode* psField = CPLCreateXMLElementAndValue(
+                                    psParent, "Field", pszValue );
+    CPLAddXMLAttributeAndValue(psField, "name", pszFieldName );
+    CPLAddXMLAttributeAndValue(psField, "type", "hexint" );
+    CPLAddXMLAttributeAndValue(psField, "size", CPLSPrintf("%d", nFieldSize )  );
+    if( pszDescription )
+        CPLAddXMLAttributeAndValue(psField, "description", pszDescription );
+}
+
 static void AddField(CPLXMLNode* psParent, const char* pszFieldName, GByte nVal,
                      const char* pszDescription = NULL)
 {
@@ -1634,6 +1647,21 @@ static const char* GetInterpretationOfBPC(GByte bpc)
         return CPLSPrintf("Signed %d bits", 1 + (bpc & 0x7F));
     else
         return CPLSPrintf("Unsigned %d bits", 1 + bpc);
+}
+
+static const char* GetStandardFieldString(GUInt16 nVal)
+{
+    switch(nVal)
+    {
+        case 1: return "Codestream contains no extensions";
+        case 2: return "Contains multiple composition layers";
+        case 3: return "Codestream is compressed using JPEG 2000 and requires at least a Profile 0 decoder";
+        case 4: return "Codestream is compressed using JPEG 2000 and requires at least a Profile 1 decoder";
+        case 5: return "Codestream is compressed using JPEG 2000 unrestricted";
+        case 35: return "Contains IPR metadata";
+        case 67: return "Contains GMLJP2 metadata";
+        default: return NULL;
+    }
 }
 
 static
@@ -2251,6 +2279,130 @@ void GDALGetJPEG2000StructureInternal(CPLXMLNode* psParent,
                     CPLFree(pabyBoxData);
                 }
 
+                if( strcmp(oBox.GetType(), "rreq") == 0 )
+                {
+                    GByte* pabyBoxData = oBox.ReadBoxData();
+                    if( pabyBoxData )
+                    {
+                        CPLXMLNode* psDecodedContent = 
+                            CPLCreateXMLNode( psBox, CXT_Element, "DecodedContent" );
+                        GIntBig nRemainingLength = nBoxDataLength;
+                        GByte* pabyIter = pabyBoxData;
+                        GByte ML = 0;
+                        if( nRemainingLength >= 1 )
+                        {
+                            ML = *pabyIter;
+                            AddField(psDecodedContent, "ML", *pabyIter);
+                            pabyIter += 1;
+                            nRemainingLength -= 1;
+                        }
+                        if( nRemainingLength >= ML )
+                        {
+                            CPLString osHex("0x");
+                            for(int i=0;i<ML;i++)
+                            {
+                                osHex += CPLSPrintf("%02X", *pabyIter);
+                                pabyIter += 1;
+                                nRemainingLength -= 1;
+                            }
+                            AddHexField(psDecodedContent, "FUAM", (int)ML, osHex.c_str());
+                        }
+                        if( nRemainingLength >= ML )
+                        {
+                            CPLString osHex("0x");
+                            for(int i=0;i<ML;i++)
+                            {
+                                osHex += CPLSPrintf("%02X", *pabyIter);
+                                pabyIter += 1;
+                                nRemainingLength -= 1;
+                            }
+                            AddHexField(psDecodedContent, "DCM", (int)ML, osHex.c_str());
+                        }
+                        GUInt16 NSF = 0;
+                        if( nRemainingLength >= 2 )
+                        {
+                            GUInt16 nVal;
+                            memcpy(&nVal, pabyIter, 2);
+                            CPL_MSBPTR16(&nVal);
+                            NSF = nVal;
+                            AddField(psDecodedContent, "NSF", nVal);
+                            pabyIter += 2;
+                            nRemainingLength -= 2;
+                        }
+                        for(int iNSF=0;iNSF<NSF;iNSF++)
+                        {
+                            if( nRemainingLength >= 2 )
+                            {
+                                GUInt16 nVal;
+                                memcpy(&nVal, pabyIter, 2);
+                                CPL_MSBPTR16(&nVal);
+                                AddField(psDecodedContent,
+                                         CPLSPrintf("SF%d", iNSF), nVal,
+                                         GetStandardFieldString(nVal));
+                                pabyIter += 2;
+                                nRemainingLength -= 2;
+                            }
+                            if( nRemainingLength >= ML )
+                            {
+                                CPLString osHex("0x");
+                                for(int i=0;i<ML;i++)
+                                {
+                                    osHex += CPLSPrintf("%02X", *pabyIter);
+                                    pabyIter += 1;
+                                    nRemainingLength -= 1;
+                                }
+                                AddHexField(psDecodedContent,
+                                            CPLSPrintf("SM%d", iNSF),
+                                            (int)ML, osHex.c_str());
+                            }
+                        }
+                        GUInt16 NVF = 0;
+                        if( nRemainingLength >= 2 )
+                        {
+                            GUInt16 nVal;
+                            memcpy(&nVal, pabyIter, 2);
+                            CPL_MSBPTR16(&nVal);
+                            NVF = nVal;
+                            AddField(psDecodedContent, "NVF", nVal);
+                            pabyIter += 2;
+                            nRemainingLength -= 2;
+                        }
+                        for(int iNVF=0;iNVF<NVF;iNVF++)
+                        {
+                            if( nRemainingLength >= 16 )
+                            {
+                                CPLString osHex("0x");
+                                for(int i=0;i<16;i++)
+                                {
+                                    osHex += CPLSPrintf("%02X", *pabyIter);
+                                    pabyIter += 1;
+                                    nRemainingLength -= 1;
+                                }
+                                AddHexField(psDecodedContent,
+                                            CPLSPrintf("VF%d", iNVF),
+                                            (int)ML, osHex.c_str());
+                            }
+                            if( nRemainingLength >= ML )
+                            {
+                                CPLString osHex("0x");
+                                for(int i=0;i<ML;i++)
+                                {
+                                    osHex += CPLSPrintf("%02X", *pabyIter);
+                                    pabyIter += 1;
+                                    nRemainingLength -= 1;
+                                }
+                                AddHexField(psDecodedContent,
+                                            CPLSPrintf("VM%d", iNVF),
+                                            (int)ML, osHex.c_str());
+                            }
+                        }
+                        if( nRemainingLength > 0 )
+                            CPLCreateXMLElementAndValue(
+                                    psDecodedContent, "RemainingBytes",
+                                    CPLSPrintf("%d", (int)nRemainingLength ));
+                    }
+                    CPLFree(pabyBoxData);
+                }
             }
 
             if (!oBox.ReadNextChild(poParentBox))
