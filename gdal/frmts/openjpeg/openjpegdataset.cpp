@@ -2720,8 +2720,8 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
 
         GDALJP2Box ihdrBox(fp);
         ihdrBox.SetType("ihdr");
-        ihdrBox.AppendUInt32(nXSize);
         ihdrBox.AppendUInt32(nYSize);
+        ihdrBox.AppendUInt32(nXSize);
         ihdrBox.AppendUInt16(nBands);
         GByte BPC;
         if( bSamePrecision )
