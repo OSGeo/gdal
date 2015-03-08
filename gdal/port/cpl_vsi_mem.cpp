@@ -116,7 +116,7 @@ class VSIMemHandle : public VSIVirtualHandle
     int           bExtendFileAtNextWrite;
     
                       VSIMemHandle() : poFile(NULL), nOffset(0), bUpdate(0),
-                                       bEOF(NULL), bExtendFileAtNextWrite(0) {}
+                                       bEOF(0), bExtendFileAtNextWrite(0) {}
 
     virtual int       Seek( vsi_l_offset nOffset, int nWhence );
     virtual vsi_l_offset Tell();
