@@ -256,9 +256,9 @@ int GDALJP2Box::DumpReadable( FILE *fpOut, int nIndentLevel )
     for(i=0;i<nIndentLevel;i++)
         fprintf( fpOut, "  " );
 
-    fprintf( fpOut, "  Type=%s, Offset=%d/%d, Data Size=%d",
-             szBoxType, (int) nBoxOffset, (int) nDataOffset, 
-             (int)(nBoxLength - (nDataOffset - nBoxOffset)) );
+    fprintf( fpOut, "  Type=%s, Offset=" CPL_FRMT_GIB "/" CPL_FRMT_GIB", Data Size=" CPL_FRMT_GIB,
+             szBoxType, nBoxOffset, nDataOffset, 
+             GetDataLength() );
 
     if( IsSuperBox() )
     {
