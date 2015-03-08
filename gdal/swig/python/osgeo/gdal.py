@@ -1782,6 +1782,16 @@ def SerializeXMLTree(*args):
   return _gdal.SerializeXMLTree(*args)
 SerializeXMLTree = _gdal.SerializeXMLTree
 
+def GetJPEG2000Structure(*args):
+  """GetJPEG2000Structure(char pszFilename, char options = None) -> CPLXMLNode"""
+  return _gdal.GetJPEG2000Structure(*args)
+GetJPEG2000Structure = _gdal.GetJPEG2000Structure
+
+def GetJPEG2000StructureAsString(*args):
+  """GetJPEG2000StructureAsString(char pszFilename, char options = None) -> retStringAndCPLFree"""
+  return _gdal.GetJPEG2000StructureAsString(*args)
+GetJPEG2000StructureAsString = _gdal.GetJPEG2000StructureAsString
+
 def GetDriverCount(*args):
   """GetDriverCount() -> int"""
   return _gdal.GetDriverCount(*args)

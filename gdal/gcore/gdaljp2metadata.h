@@ -69,7 +69,12 @@ public:
     int         ReadFirstChild( GDALJP2Box *poSuperBox );
     int         ReadNextChild( GDALJP2Box *poSuperBox );
 
+    GIntBig     GetBoxOffset() const { return nBoxOffset; }
+    GIntBig     GetBoxLength() const { return nBoxLength; }
+
+    GIntBig     GetDataOffset() const { return nDataOffset; }
     GIntBig     GetDataLength();
+
     const char *GetType() { return szBoxType; }
     
     GByte      *ReadBoxData();

@@ -336,6 +336,7 @@ $1;
 %rename (DecToPackedDMS) GDALDecToPackedDMS;
 %rename (ParseXMLString) CPLParseXMLString;
 %rename (SerializeXMLTree) CPLSerializeXMLTree;
+%rename (GetJPEG2000Structure) GDALGetJPEG2000Structure;
 #endif
 
 //************************************************************************
@@ -690,6 +691,24 @@ retStringAndCPLFree *CPLSerializeXMLTree( CPLXMLNode *xmlnode );
 #else
 char *CPLSerializeXMLTree( CPLXMLNode *xmlnode );
 #endif
+
+#if defined(SWIGPYTHON)
+%newobject GDALGetJPEG2000Structure;
+CPLXMLNode *GDALGetJPEG2000Structure( const char* pszFilename, char** options = NULL );
+#endif
+
+%inline {
+retStringAndCPLFree *GetJPEG2000StructureAsString( const char* pszFilename, char** options = NULL )
+{
+    CPLXMLNode* psNode = GDALGetJPEG2000Structure(pszFilename, options);
+    if( psNode == NULL )
+        return NULL;
+    char* pszXML = CPLSerializeXMLTree(psNode);
+    CPLDestroyXMLNode(psNode);
+    return pszXML;
+}
+}
+
 
 //************************************************************************
 //
