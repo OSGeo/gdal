@@ -1632,7 +1632,7 @@ static void AddField(CPLXMLNode* psParent, const char* pszFieldName, GUInt32 nVa
                      const char* pszDescription = NULL)
 {
     CPLXMLNode* psField = CPLCreateXMLElementAndValue(
-                                psParent, "Field", CPLSPrintf("%d", nVal) );
+                                psParent, "Field", CPLSPrintf("%u", nVal) );
     CPLAddXMLAttributeAndValue(psField, "name", pszFieldName );
     CPLAddXMLAttributeAndValue(psField, "type", "uint32" );
     if( pszDescription )
