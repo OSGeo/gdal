@@ -23,7 +23,8 @@ stored as XML raw content in the xml:XMP metadata domain.</p>
 
 <p>Starting with GDAL 2.0, the driver supports creating files with transparency,
 arbitrary band count, and adding/reading metadata. Update of georeferencing or
-metadata of existing file is also supported.</p>
+metadata of existing file is also supported. Optional intellectual property
+metdata can be read/written in the xml:IPR box.</p>
 
 <h2>Creation Options</h2>
 
@@ -148,8 +149,8 @@ For PROFILE_1 compatibility, CODEBLOCK_HEIGHT must not be greater than 64.
 </p></li>
 
 <li><p><b>WRITE_METADATA=YES/NO</b>: (GDAL &gt;= 2.0) Whether metadata should be
-written, in a dedicated JP2 XML box. Defaults to NO.
-The content of the XML box will be like:
+written, in a dedicated JP2 'xml ' box. Defaults to NO.
+The content of the 'xml ' box will be like:
 <pre>
 &lt;GDALMultiDomainMetadata&gt;
   &lt;Metadata&gt;
@@ -165,9 +166,11 @@ The content of the XML box will be like:
 &lt;/GDALMultiDomainMetadata&gt;
 </pre>
 If there are metadata domain whose name starts with "xml:BOX_", they will be
-written each as separate JP2 XML box.<p>
+written each as separate JP2 'xml ' box.<p>
 If there is a metadata domain whose name is "xml:XMP", its content will be
-written as a JP2 UUID XMP box.
+written as a JP2 'uuid' XMP box.<p>
+If there is a metadata domain whose name is "xml:IPR", its content will be
+written as a JP2 'jp2i' box.
 </p></li>
 
 <li><p><b>MAIN_MD_DOMAIN_ONLY=YES/NO</b>: (GDAL &gt;= 2.0)

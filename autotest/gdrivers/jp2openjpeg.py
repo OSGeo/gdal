@@ -1663,6 +1663,21 @@ def jp2openjpeg_37():
             return 'fail'
         gdal.Unlink('/vsimem/jp2openjpeg_37.jp2')
 
+    # Special xml:IPR metadata domain
+    for options in [ ['WRITE_METADATA=YES'] ]:
+        src_ds = gdal.GetDriverByName('MEM').Create('', 2, 2)
+        src_ds.SetMetadata( [ '<fake_ipr_box/>' ], 'xml:IPR')
+        out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_37.jp2', src_ds, options = options)
+        del out_ds
+        if gdal.VSIStatL('/vsimem/jp2openjpeg_37.jp2.aux.xml') is not None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        ds = gdal.Open('/vsimem/jp2openjpeg_37.jp2')
+        if ds.GetMetadata('xml:IPR')[0] != '<fake_ipr_box/>':
+            gdaltest.post_reason('fail')
+            return 'fail'
+        gdal.Unlink('/vsimem/jp2openjpeg_37.jp2')
+
     return 'success'
 
 ###############################################################################
@@ -2084,6 +2099,19 @@ def jp2openjpeg_42():
     if ds.GetMetadataDomainList() is not None:
         gdaltest.post_reason('fail')
         print(ds.GetMetadataDomainList())
+        return 'fail'
+    # Add IPR box
+    ds.SetMetadata( [ '<fake_ipr_box/>' ], 'xml:IPR')
+    ds = None
+    if gdal.VSIStatL('/vsimem/jp2openjpeg_42.jp2.aux.xml') is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Check it
+    ds = gdal.Open('/vsimem/jp2openjpeg_42.jp2', gdal.GA_Update)
+    if ds.GetMetadata( 'xml:IPR' )[0] != '<fake_ipr_box/>':
+        gdaltest.post_reason('fail')
+        print(ds.GetMetadata( 'xml:IPR' ))
         return 'fail'
     ds = None
 
