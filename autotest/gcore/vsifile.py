@@ -45,14 +45,21 @@ def vsifile_generic(filename):
     start_time = time.time()
 
     fp = gdal.VSIFOpenL(filename, 'wb+')
-    gdal.VSIFWriteL('0123456789', 1, 10, fp)
-    gdal.VSIFTruncateL(fp, 5)
+    if gdal.VSIFWriteL('0123456789', 1, 10, fp) != 10:
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    if gdal.VSIFTruncateL(fp, 5) != 0:
+        gdaltest.post_reason('failure')
+        return 'fail'
 
     if gdal.VSIFTellL(fp) != 10:
         gdaltest.post_reason('failure')
         return 'fail'
 
-    gdal.VSIFSeekL(fp, 0, 2)
+    if gdal.VSIFSeekL(fp, 0, 2) != 0:
+        gdaltest.post_reason('failure')
+        return 'fail'
 
     if gdal.VSIFTellL(fp) != 5:
         gdaltest.post_reason('failure')
@@ -73,13 +80,21 @@ def vsifile_generic(filename):
 
     fp = gdal.VSIFOpenL(filename, 'rb')
     buf = gdal.VSIFReadL(1, 7, fp)
+    if gdal.VSIFWriteL('a', 1, 1, fp) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if gdal.VSIFTruncateL(fp, 0) == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
     gdal.VSIFCloseL(fp)
 
     if buf.decode('ascii') != '01234XX':
         gdaltest.post_reason('failure')
         return 'fail'
 
-    gdal.Unlink(filename)
+    if gdal.Unlink(filename) != 0:
+        gdaltest.post_reason('failure')
+        return 'fail'
 
     statBuf = gdal.VSIStatL(filename, gdal.VSI_STAT_EXISTS_FLAG)
     if statBuf is not None:
@@ -282,14 +297,49 @@ def vsifile_6():
     return 'success'
 
 ###############################################################################
-# Test vsicache above 2 GB
+# Test limit cases on /vsimem
+
+def vsifile_7():
+    
+    # Test extending file beyond reasonable limits in write mode
+    fp = gdal.VSIFOpenL('/vsimem/vsifile_7.bin', 'wb')
+    if gdal.VSIFSeekL(fp, 0x7FFFFFFFFFFFFFFF, 0) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if gdal.VSIStatL('/vsimem/vsifile_7.bin').size != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.PushErrorHandler()
+    ret = gdal.VSIFWriteL('a', 1, 1, fp)
+    gdal.PopErrorHandler()
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if gdal.VSIStatL('/vsimem/vsifile_7.bin').size != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.VSIFCloseL(fp)
+
+    # Test seeking  beyond file size in read-only mode
+    fp = gdal.VSIFOpenL('/vsimem/vsifile_7.bin', 'rb')
+    if gdal.VSIFSeekL(fp, 0x7FFFFFFFFFFFFFFF, 0) == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if gdal.VSIFTellL(fp) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.VSIFCloseL(fp)
+    gdal.Unlink('tmp/vsifile_7.bin')
+
+    return 'success'
 
 gdaltest_list = [ vsifile_1,
                   vsifile_2,
                   vsifile_3,
                   vsifile_4,
                   vsifile_5,
-                  vsifile_6 ]
+                  vsifile_6,
+                  vsifile_7 ]
 
 if __name__ == '__main__':
 
