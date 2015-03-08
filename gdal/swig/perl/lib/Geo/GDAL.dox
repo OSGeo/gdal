@@ -102,20 +102,9 @@
 # @return the value of the GDAL config option or the value of the
 # default parameter.
 
-## @cmethod \@GCPsToGeoTransform(arrayref GCPs, $ApproxOK = 1)
-# Compute transformation coefficients from a set of Geo::GDAL::GCP
-# objects
-# The geo transformation has the form
-# \code
-# x = a + column * b + row * c
-# y = d + column * e + row * f
-# \endcode
-# where<br/>
-# (column,row) is the location in pixel coordinates<br/>
-# (x,y) is the location in projection coordinates<br/>
-# @param GCPs A set of Geo::GDAL::GCP objects.
-# @param ApproxOK Minimize the error in the coefficient.
-# @return [$a, $b, $c, $d, $e, $f]
+## @ignore ApplyGeoTransform
+## @ignore InvGeoTransform
+## @ignore GCPsToGeoTransform
 
 ## @cmethod $GetCacheMax()
 # @return maximum amount of memory (as bytes) for caching within GDAL.
@@ -662,7 +651,10 @@ sub traverse {
 # projection of this dataset.
 # @note Methods GetProjection, SetProjection, and Projection return WKT strings.
 
-## @method @GeoTransform(@geo_transform)
+## @ignore GetGeoTransform
+## @ignore SetGeoTransform
+
+## @method Geo::GDAL::GeoTransform GeoTransform(Geo::GDAL::GeoTransform $geo_transform)
 # Transformation from pixel coordinates (column,row) to projection
 # coordinates (x,y)
 # \code
@@ -671,12 +663,6 @@ sub traverse {
 # \endcode
 # @param geo_transform [optional]
 # @return the geo transform in a non-void context.
-
-## @method \@GetGeoTransform()
-# @return a reference to an array of six parameters.
-
-## @method SetGeoTransform(arrayref GeoTransform)
-# @param GeoTransform
 
 ## @method BuildOverviews($resampling, arrayref overviews, subref callback, $callback_data)
 # @param resampling Either 'NEAREST', 'AVERAGE', or 'AVERAGE_MAGPHASE'.
@@ -1307,3 +1293,38 @@ sub traverse {
 # @note The name of this method is VSIRename in GDAL.
 #
 
+
+
+
+## @class Geo::GDAL::GeoTransform
+# @brief An array of affine transformation coefficients.
+#
+# The geo transformation has the form
+# \code
+# x = a + column * b + row * c
+# y = d + column * e + row * f
+# \endcode
+# where<br/>
+# (column,row) is the location in pixel coordinates<br/>
+# (x,y) is the location in projection coordinates<br/>
+# or vice versa.
+# A Geo::GDAL::GeoTransform object is a reference to an anonymous array.
+# @isa = ( Geo::GDAL )
+
+## @cmethod new(@coeffs)
+# @return a new Geo::GDAL::GeoTransform object.
+
+## @method FromGCPs(@GCPs, $ApproxOK)
+# Compute transformation coefficients from a list of Geo::GDAL::GCP
+# objects
+# @param GCPs A list of Geo::GDAL::GCP objects.
+# @param ApproxOK [optional] Minimize the error in the coefficient (integer, default is true).
+# @return a new Geo::GDAL::GeoTransform object.
+
+## @method Apply(array reference x, array reference y)
+# @return a list (x, y), where x and y are references to arrays of
+# transformed coordinates.
+
+## @method Inv
+# @return a new Geo::GDAL::GeoTransform object, which is the inverse
+# of this one (in void context changes this object).
