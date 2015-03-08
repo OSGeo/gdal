@@ -5369,6 +5369,9 @@ static PyObject *XMLTreeToPyList( CPLXMLNode *psTree )
     int      nChildCount = 0, iChild;
     CPLXMLNode *psChild;
 
+    if( psTree == NULL )
+        return Py_None;
+
     for( psChild = psTree->psChild; 
          psChild != NULL; 
          psChild = psChild->psNext )
@@ -5441,6 +5444,17 @@ static CPLXMLNode *PyListToXMLTree( PyObject *pyList )
     }
 
     return psThisNode;
+}
+
+
+retStringAndCPLFree *GetJPEG2000StructureAsString( const char* pszFilename, char** options = NULL )
+{
+    CPLXMLNode* psNode = GDALGetJPEG2000Structure(pszFilename, options);
+    if( psNode == NULL )
+        return NULL;
+    char* pszXML = CPLSerializeXMLTree(psNode);
+    CPLDestroyXMLNode(psNode);
+    return pszXML;
 }
 
 
@@ -23136,6 +23150,234 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_GetJPEG2000Structure(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  char *arg1 = (char *) 0 ;
+  char **arg2 = (char **) NULL ;
+  int res1 ;
+  char *buf1 = 0 ;
+  int alloc1 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  CPLXMLNode *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O|O:GetJPEG2000Structure",&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_AsCharPtrAndSize(obj0, &buf1, NULL, &alloc1);
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "GetJPEG2000Structure" "', argument " "1"" of type '" "char const *""'");
+  }
+  arg1 = reinterpret_cast< char * >(buf1);
+  if (obj1) {
+    {
+      /* %typemap(in) char **options */
+      /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
+      if ( ! PySequence_Check(obj1) || PyUnicode_Check(obj1)
+  #if PY_VERSION_HEX < 0x03000000
+        || PyString_Check(obj1)
+  #endif
+        ) {
+        PyErr_SetString(PyExc_TypeError,"not a sequence");
+        SWIG_fail;
+      }
+      
+      int size = PySequence_Size(obj1);
+      for (int i = 0; i < size; i++) {
+        PyObject* pyObj = PySequence_GetItem(obj1,i);
+        if (PyUnicode_Check(pyObj))
+        {
+          char *pszStr;
+          Py_ssize_t nLen;
+          PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
+#if PY_VERSION_HEX >= 0x03000000
+          PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
+#else
+          PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
+#endif
+          arg2 = CSLAddString( arg2, pszStr );
+          Py_XDECREF(pyUTF8Str);
+        }
+#if PY_VERSION_HEX >= 0x03000000
+        else if (PyBytes_Check(pyObj))
+        arg2 = CSLAddString( arg2, PyBytes_AsString(pyObj) );
+#else
+        else if (PyString_Check(pyObj))
+        arg2 = CSLAddString( arg2, PyString_AsString(pyObj) );
+#endif
+        else
+        {
+          Py_DECREF(pyObj);
+          PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
+          SWIG_fail;
+        }
+        Py_DECREF(pyObj);
+      }
+    }
+  }
+  {
+    if (!arg1) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      CPLErrorReset();
+    }
+    result = (CPLXMLNode *)GDALGetJPEG2000Structure((char const *)arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  {
+    /* %typemap(out) (CPLXMLNode*) */
+    
+    CPLXMLNode *psXMLTree = result;
+    int         bFakeRoot = FALSE;
+    
+    if( psXMLTree != NULL && psXMLTree->psNext != NULL )
+    {
+      CPLXMLNode *psFirst = psXMLTree;
+      
+      /* create a "pseudo" root if we have multiple elements */
+      psXMLTree = CPLCreateXMLNode( NULL, CXT_Element, "" );
+      psXMLTree->psChild = psFirst;
+      bFakeRoot = TRUE;
+    }
+    
+    resultobj = XMLTreeToPyList( psXMLTree );
+    
+    if( bFakeRoot )
+    {
+      psXMLTree->psChild = NULL;
+      CPLDestroyXMLNode( psXMLTree );
+    }
+  }
+  if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg2 );
+  }
+  {
+    /* %typemap(ret) (CPLXMLNode*) */
+    if ( result ) CPLDestroyXMLNode( result );
+  }
+  return resultobj;
+fail:
+  if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg2 );
+  }
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_GetJPEG2000StructureAsString(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  char *arg1 = (char *) 0 ;
+  char **arg2 = (char **) NULL ;
+  int res1 ;
+  char *buf1 = 0 ;
+  int alloc1 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  retStringAndCPLFree *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O|O:GetJPEG2000StructureAsString",&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_AsCharPtrAndSize(obj0, &buf1, NULL, &alloc1);
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "GetJPEG2000StructureAsString" "', argument " "1"" of type '" "char const *""'");
+  }
+  arg1 = reinterpret_cast< char * >(buf1);
+  if (obj1) {
+    {
+      /* %typemap(in) char **options */
+      /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
+      if ( ! PySequence_Check(obj1) || PyUnicode_Check(obj1)
+  #if PY_VERSION_HEX < 0x03000000
+        || PyString_Check(obj1)
+  #endif
+        ) {
+        PyErr_SetString(PyExc_TypeError,"not a sequence");
+        SWIG_fail;
+      }
+      
+      int size = PySequence_Size(obj1);
+      for (int i = 0; i < size; i++) {
+        PyObject* pyObj = PySequence_GetItem(obj1,i);
+        if (PyUnicode_Check(pyObj))
+        {
+          char *pszStr;
+          Py_ssize_t nLen;
+          PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
+#if PY_VERSION_HEX >= 0x03000000
+          PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
+#else
+          PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
+#endif
+          arg2 = CSLAddString( arg2, pszStr );
+          Py_XDECREF(pyUTF8Str);
+        }
+#if PY_VERSION_HEX >= 0x03000000
+        else if (PyBytes_Check(pyObj))
+        arg2 = CSLAddString( arg2, PyBytes_AsString(pyObj) );
+#else
+        else if (PyString_Check(pyObj))
+        arg2 = CSLAddString( arg2, PyString_AsString(pyObj) );
+#endif
+        else
+        {
+          Py_DECREF(pyObj);
+          PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
+          SWIG_fail;
+        }
+        Py_DECREF(pyObj);
+      }
+    }
+  }
+  {
+    if (!arg1) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      CPLErrorReset();
+    }
+    result = (retStringAndCPLFree *)GetJPEG2000StructureAsString((char const *)arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  {
+    /* %typemap(out) (retStringAndCPLFree*) */
+    if(result)
+    {
+      resultobj = GDALPythonObjectFromCStr( (const char *)result);
+      CPLFree(result);
+    }
+  }
+  if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg2 );
+  }
+  return resultobj;
+fail:
+  if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg2 );
+  }
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_GetDriverCount(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   int result;
@@ -24248,6 +24490,8 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"DecToPackedDMS", _wrap_DecToPackedDMS, METH_VARARGS, (char *)"DecToPackedDMS(double dfDec) -> double"},
 	 { (char *)"ParseXMLString", _wrap_ParseXMLString, METH_VARARGS, (char *)"ParseXMLString(char pszXMLString) -> CPLXMLNode"},
 	 { (char *)"SerializeXMLTree", _wrap_SerializeXMLTree, METH_VARARGS, (char *)"SerializeXMLTree(CPLXMLNode xmlnode) -> retStringAndCPLFree"},
+	 { (char *)"GetJPEG2000Structure", _wrap_GetJPEG2000Structure, METH_VARARGS, (char *)"GetJPEG2000Structure(char pszFilename, char options = None) -> CPLXMLNode"},
+	 { (char *)"GetJPEG2000StructureAsString", _wrap_GetJPEG2000StructureAsString, METH_VARARGS, (char *)"GetJPEG2000StructureAsString(char pszFilename, char options = None) -> retStringAndCPLFree"},
 	 { (char *)"GetDriverCount", _wrap_GetDriverCount, METH_VARARGS, (char *)"GetDriverCount() -> int"},
 	 { (char *)"GetDriverByName", _wrap_GetDriverByName, METH_VARARGS, (char *)"GetDriverByName(char name) -> Driver"},
 	 { (char *)"GetDriver", _wrap_GetDriver, METH_VARARGS, (char *)"GetDriver(int i) -> Driver"},

@@ -1574,3 +1574,84 @@ int GDALJP2Metadata::IsUUID_XMP(const GByte *abyUUID)
 {
     return memcmp(abyUUID, xmp_uuid, 16) == 0;
 }
+
+
+/************************************************************************/
+/*                      GDALGetJPEG2000StructureInternal()              */
+/************************************************************************/
+
+static
+void GDALGetJPEG2000StructureInternal(CPLXMLNode* psParent,
+                                      VSILFILE* fp,
+                                      GDALJP2Box* poParentBox,
+                                      char** papszOptions)
+{
+    GDALJP2Box oSubBox( fp );
+    if( oSubBox.ReadFirstChild(poParentBox) )
+    {
+        while( strlen(oSubBox.GetType()) > 0 )
+        {
+            CPLXMLNode* psBox = CPLCreateXMLNode( psParent, CXT_Element, "JP2Box" );
+            CPLCreateXMLNode( CPLCreateXMLNode( psBox, CXT_Attribute, "name" ), CXT_Text, oSubBox.GetType() );
+            CPLCreateXMLNode( CPLCreateXMLNode( psBox, CXT_Attribute, "box_offset" ), CXT_Text,
+                              CPLSPrintf(CPL_FRMT_GIB, oSubBox.GetBoxOffset() ) );
+            CPLCreateXMLNode( CPLCreateXMLNode( psBox, CXT_Attribute, "box_length" ), CXT_Text,
+                              CPLSPrintf(CPL_FRMT_GIB, oSubBox.GetBoxLength() ) );
+            CPLCreateXMLNode( CPLCreateXMLNode( psBox, CXT_Attribute, "data_offset" ), CXT_Text,
+                              CPLSPrintf(CPL_FRMT_GIB, oSubBox.GetDataOffset() ) );
+            CPLCreateXMLNode( CPLCreateXMLNode( psBox, CXT_Attribute, "data_length" ), CXT_Text,
+                              CPLSPrintf(CPL_FRMT_GIB, oSubBox.GetDataLength() ) );
+            if( oSubBox.IsSuperBox() )
+            {
+                GDALGetJPEG2000StructureInternal(psBox, fp, &oSubBox, papszOptions);
+            }
+
+            if (!oSubBox.ReadNextChild(poParentBox))
+                break;
+        }
+    }
+}
+
+/************************************************************************/
+/*                        GDALGetJPEG2000Structure()                    */
+/************************************************************************/
+
+static const unsigned char jpc_header[] = {0xff,0x4f};
+static const unsigned char jp2_box_jp[] = {0x6a,0x50,0x20,0x20}; /* 'jP  ' */
+
+/** Dump the structure of a JPEG2000 file as a XML tree.
+ *
+ * @param pszFilename filename.
+ * @param papszOptions NULL terminated list of opertions. Should be set
+ *                     to NULL for now.
+ * @return XML tree (to be freed with CPLDestroyXMLNode()) or NULL in case
+ *         of error
+ * @since GDAL 2.0
+ */
+
+CPLXMLNode* GDALGetJPEG2000Structure(const char* pszFilename,
+                                     char** papszOptions)
+{
+    VSILFILE* fp = VSIFOpenL(pszFilename, "rb");
+    if( fp == NULL )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot open %s", pszFilename);
+        VSIFCloseL(fp);
+        return NULL;
+    }
+    GByte abyHeader[16];
+    if( VSIFReadL(abyHeader, 16, 1, fp) != 1 ||
+        (/*memcmp(abyHeader, jpc_header, sizeof(jpc_header)) != 0 &&*/
+         memcmp(abyHeader + 4, jp2_box_jp, sizeof(jp2_box_jp)) != 0) )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "%s is not a JPEG2000 file", pszFilename);
+        VSIFCloseL(fp);
+        return NULL;
+    }
+
+    CPLXMLNode* psParent = CPLCreateXMLNode( NULL, CXT_Element, "JP2File" );
+    GDALGetJPEG2000StructureInternal(psParent, fp, NULL, papszOptions );
+
+    VSIFCloseL(fp);
+    return psParent;
+}

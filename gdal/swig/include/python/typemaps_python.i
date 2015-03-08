@@ -1184,6 +1184,9 @@ static PyObject *XMLTreeToPyList( CPLXMLNode *psTree )
     int      nChildCount = 0, iChild;
     CPLXMLNode *psChild;
 
+    if( psTree == NULL )
+        return Py_None;
+
     for( psChild = psTree->psChild; 
          psChild != NULL; 
          psChild = psChild->psNext )

@@ -2120,6 +2120,17 @@ def jp2openjpeg_42():
     return 'success'
 
 ###############################################################################
+# Get structure of a JPEG2000 file
+
+def jp2openjpeg_43():
+
+    ret = gdal.GetJPEG2000StructureAsString('data/byte.jp2')
+    if ret is None:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 def jp2openjpeg_online_1():
 
     if gdaltest.jp2openjpeg_drv is None:
@@ -2333,6 +2344,7 @@ gdaltest_list = [
     jp2openjpeg_40,
     jp2openjpeg_41,
     jp2openjpeg_42,
+    jp2openjpeg_43,
     jp2openjpeg_online_1,
     jp2openjpeg_online_2,
     jp2openjpeg_online_3,

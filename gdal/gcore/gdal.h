@@ -43,6 +43,7 @@
 #include "cpl_error.h"
 #include "cpl_progress.h"
 #include "cpl_virtualmem.h"
+#include "cpl_minixml.h"
 #include "ogr_api.h"
 #endif
 
@@ -1060,6 +1061,12 @@ CPLVirtualMem CPL_DLL* GDALRasterBandGetTiledVirtualMem( GDALRasterBandH hBand,
                                                          int bSingleThreadUsage,
                                                          char **papszOptions );
 
+/* =================================================================== */
+/*      Misc API                                                        */
+/* ==================================================================== */
+
+CPLXMLNode CPL_DLL* GDALGetJPEG2000Structure(const char* pszFilename,
+                                             char** papszOptions);
 
 CPL_C_END
 

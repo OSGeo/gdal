@@ -97,6 +97,9 @@ int GDALJP2Box::ReadNext()
 int GDALJP2Box::ReadFirstChild( GDALJP2Box *poSuperBox )
 
 {
+    if( poSuperBox == NULL )
+        return ReadFirst();
+
     szBoxType[0] = '\0';
     if( !poSuperBox->IsSuperBox() )
         return FALSE;
@@ -111,6 +114,9 @@ int GDALJP2Box::ReadFirstChild( GDALJP2Box *poSuperBox )
 int GDALJP2Box::ReadNextChild( GDALJP2Box *poSuperBox )
 
 {
+    if( poSuperBox == NULL )
+        return ReadNext();
+
     if( !ReadNext() )
         return FALSE;
 
