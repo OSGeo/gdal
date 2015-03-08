@@ -2171,7 +2171,7 @@ char *CPLUnescapeString( const char *pszInput, int *pnLength, int nScheme )
                     ch = pszInput[iIn ++];
                     if (ch >= 'a' && ch <= 'f')
                         anVal[0] = anVal[0] * 16 + ch - 'a' + 10;
-                    else if (ch >= 'A' && ch <= 'A')
+                    else if (ch >= 'A' && ch <= 'F')
                         anVal[0] = anVal[0] * 16 + ch - 'A' + 10;
                     else if (ch >= '0' && ch <= '9')
                         anVal[0] = anVal[0] * 16 + ch - '0';
