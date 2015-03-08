@@ -10,7 +10,7 @@ gdal_edit [--help-general] [-ro] [-a_srs srs_def] [-a_ullr ulx uly lrx lry]
           [-tr xres yres] [-unsetgt] [-a_nodata value]
           [-unsetstats] [-stats] [-approx_stats]
           [-gcp pixel line easting northing [elevation]]*
-          [-unsetmd] [-mo "META-TAG=VALUE"]*  datasetname
+          [-unsetmd] [-oo NAME=VALUE]* [-mo "META-TAG=VALUE"]*  datasetname
 \endverbatim
 
 \section gdal_edit_description DESCRIPTION
@@ -71,6 +71,9 @@ with -mo.</dd>
 <dt> <b>-mo</b> <i>"META-TAG=VALUE"</i>:</dt><dd> Passes a metadata key and
 value to set on the output dataset if possible. This metadata is added to
 the existing metadata items, unless -unsetmd is also specified.</dd>
+
+<dt> <b>-oo</b> <i>"NAME=VALUE"</i>:</dt><dd> 
+(GDAL >= 2.0) Open option (format specific).</dd>
 
 </dl>
 
