@@ -576,62 +576,6 @@ def GDAL_GCP_Id_set(*args):
   """GDAL_GCP_Id_set(GCP gcp, char pszId)"""
   return _gdal.GDAL_GCP_Id_set(*args)
 
-def GDAL_GCP_get_GCPX(*args):
-  """GDAL_GCP_get_GCPX(GCP gcp) -> double"""
-  return _gdal.GDAL_GCP_get_GCPX(*args)
-
-def GDAL_GCP_set_GCPX(*args):
-  """GDAL_GCP_set_GCPX(GCP gcp, double dfGCPX)"""
-  return _gdal.GDAL_GCP_set_GCPX(*args)
-
-def GDAL_GCP_get_GCPY(*args):
-  """GDAL_GCP_get_GCPY(GCP gcp) -> double"""
-  return _gdal.GDAL_GCP_get_GCPY(*args)
-
-def GDAL_GCP_set_GCPY(*args):
-  """GDAL_GCP_set_GCPY(GCP gcp, double dfGCPY)"""
-  return _gdal.GDAL_GCP_set_GCPY(*args)
-
-def GDAL_GCP_get_GCPZ(*args):
-  """GDAL_GCP_get_GCPZ(GCP gcp) -> double"""
-  return _gdal.GDAL_GCP_get_GCPZ(*args)
-
-def GDAL_GCP_set_GCPZ(*args):
-  """GDAL_GCP_set_GCPZ(GCP gcp, double dfGCPZ)"""
-  return _gdal.GDAL_GCP_set_GCPZ(*args)
-
-def GDAL_GCP_get_GCPPixel(*args):
-  """GDAL_GCP_get_GCPPixel(GCP gcp) -> double"""
-  return _gdal.GDAL_GCP_get_GCPPixel(*args)
-
-def GDAL_GCP_set_GCPPixel(*args):
-  """GDAL_GCP_set_GCPPixel(GCP gcp, double dfGCPPixel)"""
-  return _gdal.GDAL_GCP_set_GCPPixel(*args)
-
-def GDAL_GCP_get_GCPLine(*args):
-  """GDAL_GCP_get_GCPLine(GCP gcp) -> double"""
-  return _gdal.GDAL_GCP_get_GCPLine(*args)
-
-def GDAL_GCP_set_GCPLine(*args):
-  """GDAL_GCP_set_GCPLine(GCP gcp, double dfGCPLine)"""
-  return _gdal.GDAL_GCP_set_GCPLine(*args)
-
-def GDAL_GCP_get_Info(*args):
-  """GDAL_GCP_get_Info(GCP gcp) -> char"""
-  return _gdal.GDAL_GCP_get_Info(*args)
-
-def GDAL_GCP_set_Info(*args):
-  """GDAL_GCP_set_Info(GCP gcp, char pszInfo)"""
-  return _gdal.GDAL_GCP_set_Info(*args)
-
-def GDAL_GCP_get_Id(*args):
-  """GDAL_GCP_get_Id(GCP gcp) -> char"""
-  return _gdal.GDAL_GCP_get_Id(*args)
-
-def GDAL_GCP_set_Id(*args):
-  """GDAL_GCP_set_Id(GCP gcp, char pszId)"""
-  return _gdal.GDAL_GCP_set_Id(*args)
-
 def GCPsToGeoTransform(*args):
   """GCPsToGeoTransform(int nGCPs, int bApproxOK = 1) -> RETURN_NONE"""
   return _gdal.GCPsToGeoTransform(*args)
