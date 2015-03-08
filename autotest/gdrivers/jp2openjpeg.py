@@ -1894,6 +1894,204 @@ def jp2openjpeg_41():
     return 'success'
 
 ###############################################################################
+# Test update of existing file
+
+def jp2openjpeg_42():
+
+    if gdaltest.jp2openjpeg_drv is None:
+        return 'skip'
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 20, 20)
+    gdal.PushErrorHandler()
+    out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_42.jp2', src_ds, options = ['JP2C_LENGTH_ZERO=YES'])
+    gdal.PopErrorHandler()
+    del out_ds
+
+    # Nothing to rewrite
+    ds = gdal.Open('/vsimem/jp2openjpeg_42.jp2', gdal.GA_Update)
+    del ds
+
+    # Add metadata: will be written after codestream since there's no other georef or metadata box before codestream
+    ds = gdal.Open('/vsimem/jp2openjpeg_42.jp2', gdal.GA_Update)
+    ds.SetMetadataItem('FOO', 'BAR')
+    ds = None
+    if gdal.VSIStatL('/vsimem/jp2openjpeg_42.jp2.aux.xml') is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Add metadata and GCP
+    ds = gdal.Open('/vsimem/jp2openjpeg_42.jp2', gdal.GA_Update)
+    if ds.GetMetadata() != { 'FOO': 'BAR' }:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(32631)
+    gcps = [ gdal.GCP(0,1,2,3,4) ]
+    ds.SetGCPs(gcps, sr.ExportToWkt())
+    ds = None
+    if gdal.VSIStatL('/vsimem/jp2openjpeg_42.jp2.aux.xml') is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Check we got metadata and GCP, and there's no GMLJP2 box
+    ds = gdal.Open('/vsimem/jp2openjpeg_42.jp2', gdal.GA_Update)
+    if ds.GetMetadata() != { 'FOO': 'BAR' }:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetGCPCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if len(ds.GetMetadataDomainList()) != 1 :
+        gdaltest.post_reason('fail')
+        print(ds.GetMetadataDomainList())
+        return 'fail'
+    # Unset metadata and GCP
+    ds.SetMetadata(None)
+    ds.SetGCPs([], '')
+    ds = None
+    if gdal.VSIStatL('/vsimem/jp2openjpeg_42.jp2.aux.xml') is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Check we have no longer metadata or GCP
+    ds = gdal.Open('/vsimem/jp2openjpeg_42.jp2', gdal.GA_Update)
+    if ds.GetMetadata() != {}:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetGCPCount() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetMetadataDomainList() is not None :
+        gdaltest.post_reason('fail')
+        print(ds.GetMetadataDomainList())
+        return 'fail'
+    # Add projection and geotransform
+    ds.SetProjection(sr.ExportToWkt())
+    ds.SetGeoTransform([0,1,2,3,4,5])
+    ds = None
+    if gdal.VSIStatL('/vsimem/jp2openjpeg_42.jp2.aux.xml') is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Check them
+    ds = gdal.Open('/vsimem/jp2openjpeg_42.jp2', gdal.GA_Update)
+    if ds.GetProjectionRef().find('32631') < 0:
+        gdaltest.post_reason('fail')
+        print(ds.GetProjectionRef())
+        return 'fail'
+    if ds.GetGeoTransform() != (0,1,2,3,4,5):
+        gdaltest.post_reason('fail')
+        print(ds.GetGeoTransform())
+        return 'fail'
+    # Check that we have a GMLJP2 box
+    if ds.GetMetadataDomainList() != ['xml:gml.root-instance'] :
+        gdaltest.post_reason('fail')
+        print(ds.GetMetadataDomainList())
+        return 'fail'
+    # Remove projection and geotransform
+    ds.SetProjection('')
+    ds.SetGeoTransform([0,1,0,0,0,1])
+    ds = None
+    if gdal.VSIStatL('/vsimem/jp2openjpeg_42.jp2.aux.xml') is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Check we have no longer anything
+    ds = gdal.Open('/vsimem/jp2openjpeg_42.jp2', gdal.GA_Update)
+    if ds.GetProjectionRef() != '':
+        gdaltest.post_reason('fail')
+        print(ds.GetProjectionRef())
+        return 'fail'
+    if ds.GetGeoTransform() != (0,1,0,0,0,1):
+        gdaltest.post_reason('fail')
+        print(ds.GetGeoTransform())
+        return 'fail'
+    if ds.GetMetadataDomainList() is not None:
+        gdaltest.post_reason('fail')
+        print(ds.GetMetadataDomainList())
+        return 'fail'
+    ds = None
+
+    # Create file with georef boxes before codestream, and disable GMLJP2
+    src_ds = gdal.GetDriverByName('MEM').Create('', 20, 20)
+    src_ds.SetProjection(sr.ExportToWkt())
+    src_ds.SetGeoTransform([0,1,2,3,4,5])
+    out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_42.jp2', src_ds, options = ['GMLJP2=NO'])
+    del out_ds
+
+    # Modify geotransform
+    ds = gdal.Open('/vsimem/jp2openjpeg_42.jp2', gdal.GA_Update)
+    ds.SetGeoTransform([1,2,3,4,5,6])
+    ds = None
+    if gdal.VSIStatL('/vsimem/jp2openjpeg_42.jp2.aux.xml') is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Check it and that we don't have GMLJP2
+    ds = gdal.Open('/vsimem/jp2openjpeg_42.jp2', gdal.GA_Update)
+    if ds.GetGeoTransform() != (1,2,3,4,5,6):
+        gdaltest.post_reason('fail')
+        print(ds.GetGeoTransform())
+        return 'fail'
+    if ds.GetMetadataDomainList() is not None:
+        gdaltest.post_reason('fail')
+        print(ds.GetMetadataDomainList())
+        return 'fail'
+    ds = None
+
+    # Create file with georef boxes before codestream, and disable GeoJP2
+    src_ds = gdal.GetDriverByName('MEM').Create('', 20, 20)
+    src_ds.SetProjection(sr.ExportToWkt())
+    src_ds.SetGeoTransform([2,3,0,4,0,-5])
+    out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_42.jp2', src_ds, options = ['GeoJP2=NO'])
+    del out_ds
+
+    # Modify geotransform
+    ds = gdal.Open('/vsimem/jp2openjpeg_42.jp2', gdal.GA_Update)
+    if ds.GetGeoTransform() != (2,3,0,4,0,-5):
+        gdaltest.post_reason('fail')
+        print(ds.GetGeoTransform())
+        return 'fail'
+    ds.SetGeoTransform([1,2,0,3,0,-4])
+    ds = None
+    if gdal.VSIStatL('/vsimem/jp2openjpeg_42.jp2.aux.xml') is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Check it
+    ds = gdal.Open('/vsimem/jp2openjpeg_42.jp2', gdal.GA_Update)
+    if ds.GetGeoTransform() != (1,2,0,3,0,-4):
+        gdaltest.post_reason('fail')
+        print(ds.GetGeoTransform())
+        return 'fail'
+    if ds.GetMetadataDomainList() is None:
+        gdaltest.post_reason('fail')
+        print(ds.GetMetadataDomainList())
+        return 'fail'
+    # Add GCPs
+    gcps = [ gdal.GCP(0,1,2,3,4) ]
+    ds.SetGCPs(gcps, sr.ExportToWkt())
+    ds = None
+    if gdal.VSIStatL('/vsimem/jp2openjpeg_42.jp2.aux.xml') is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Check it (a GeoJP2 box has been added and GMLJP2 removed)
+    ds = gdal.Open('/vsimem/jp2openjpeg_42.jp2', gdal.GA_Update)
+    if len(ds.GetGCPs()) == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetMetadataDomainList() is not None:
+        gdaltest.post_reason('fail')
+        print(ds.GetMetadataDomainList())
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/jp2openjpeg_41.jp2')
+
+    return 'success'
+
+###############################################################################
 def jp2openjpeg_online_1():
 
     if gdaltest.jp2openjpeg_drv is None:
@@ -2106,6 +2304,7 @@ gdaltest_list = [
     jp2openjpeg_39,
     jp2openjpeg_40,
     jp2openjpeg_41,
+    jp2openjpeg_42,
     jp2openjpeg_online_1,
     jp2openjpeg_online_2,
     jp2openjpeg_online_3,
@@ -2113,6 +2312,10 @@ gdaltest_list = [
     jp2openjpeg_online_5,
     jp2openjpeg_online_6,
     jp2openjpeg_cleanup ]
+
+disabled_gdaltest_list = [
+    jp2openjpeg_1,
+    jp2openjpeg_42 ]
 
 if __name__ == '__main__':
 

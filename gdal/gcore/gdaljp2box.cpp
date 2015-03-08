@@ -181,7 +181,8 @@ int GDALJP2Box::ReadBox()
 
     if( EQUAL(szBoxType,"uuid") )
     {
-        VSIFReadL( abyUUID, 16, 1, fpVSIL );
+        if( VSIFReadL( abyUUID, 16, 1, fpVSIL ) != 1 )
+            return FALSE;
         nDataOffset += 16;
     }
 

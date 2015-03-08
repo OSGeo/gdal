@@ -81,7 +81,7 @@ void GDALJP2AbstractDataset::LoadJP2Metadata(GDALOpenInfo* poOpenInfo,
             GDALDuplicateGCPs( oJP2Geo.nGCPCount, oJP2Geo.pasGCPList );
 
         if( oJP2Geo.bPixelIsPoint )
-            GDALPamDataset::SetMetadataItem(GDALMD_AREA_OR_POINT, GDALMD_AOP_POINT);
+            GDALDataset::SetMetadataItem(GDALMD_AREA_OR_POINT, GDALMD_AOP_POINT);
     }
 
 /* -------------------------------------------------------------------- */
@@ -92,7 +92,7 @@ void GDALJP2AbstractDataset::LoadJP2Metadata(GDALOpenInfo* poOpenInfo,
         char *apszMDList[2];
         apszMDList[0] = (char *) oJP2Geo.pszXMPMetadata;
         apszMDList[1] = NULL;
-        GDALPamDataset::SetMetadata(apszMDList, "xml:XMP");
+        GDALDataset::SetMetadata(apszMDList, "xml:XMP");
     }
 
 /* -------------------------------------------------------------------- */
@@ -118,7 +118,7 @@ void GDALJP2AbstractDataset::LoadJP2Metadata(GDALOpenInfo* poOpenInfo,
         apszMDList[0] = (char *) pszXML;
         apszMDList[1] = NULL;
 
-        GDALPamDataset::SetMetadata( apszMDList, osDomain );
+        GDALDataset::SetMetadata( apszMDList, osDomain );
 
         CPLFree( pszName );
     }
@@ -135,18 +135,18 @@ void GDALJP2AbstractDataset::LoadJP2Metadata(GDALOpenInfo* poOpenInfo,
             oLocalMDMD.XMLInit(psXMLNode, FALSE);
             char** papszDomainList = oLocalMDMD.GetDomainList();
             char** papszIter = papszDomainList;
-            GDALPamDataset::SetMetadata(oLocalMDMD.GetMetadata());
+            GDALDataset::SetMetadata(oLocalMDMD.GetMetadata());
             while( papszIter && *papszIter )
             {
                 if( !EQUAL(*papszIter, "") && !EQUAL(*papszIter, "IMAGE_STRUCTURE") )
                 {
-                    if( GDALPamDataset::GetMetadata(*papszIter) != NULL )
+                    if( GDALDataset::GetMetadata(*papszIter) != NULL )
                     {
                         CPLDebug("GDALJP2",
                                  "GDAL metadata overrides metadata in %s domain over metadata read from other boxes",
                                  *papszIter);
                     }
-                    GDALPamDataset::SetMetadata(oLocalMDMD.GetMetadata(*papszIter), *papszIter);
+                    GDALDataset::SetMetadata(oLocalMDMD.GetMetadata(*papszIter), *papszIter);
                 }
                 papszIter ++;
             }
@@ -161,10 +161,10 @@ void GDALJP2AbstractDataset::LoadJP2Metadata(GDALOpenInfo* poOpenInfo,
 /* -------------------------------------------------------------------- */
     if( oJP2Geo.papszMetadata != NULL )
     {
-        char **papszMD = CSLDuplicate(GDALPamDataset::GetMetadata());
+        char **papszMD = CSLDuplicate(GDALDataset::GetMetadata());
 
         papszMD = CSLMerge( papszMD, oJP2Geo.papszMetadata );
-        GDALPamDataset::SetMetadata( papszMD );
+        GDALDataset::SetMetadata( papszMD );
 
         CSLDestroy( papszMD );
     }

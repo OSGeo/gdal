@@ -192,7 +192,8 @@ void GDALJP2Metadata::CollectGMLData( GDALJP2Box *poGMLData )
 {
     GDALJP2Box oChildBox( poGMLData->GetFILE() );
 
-    oChildBox.ReadFirstChild( poGMLData );
+    if( !oChildBox.ReadFirstChild( poGMLData ) )
+        return;
 
     while( strlen(oChildBox.GetType()) > 0 )
     {
@@ -203,7 +204,8 @@ void GDALJP2Metadata::CollectGMLData( GDALJP2Box *poGMLData )
             char *pszLabel = NULL;
             char *pszXML = NULL;
 
-            oSubChildBox.ReadFirstChild( &oChildBox );
+            if( !oSubChildBox.ReadFirstChild( &oChildBox ) )
+                break;
             
             while( strlen(oSubChildBox.GetType()) > 0 )
             {
@@ -251,7 +253,8 @@ void GDALJP2Metadata::CollectGMLData( GDALJP2Box *poGMLData )
                     }
                 }
 
-                oSubChildBox.ReadNextChild( &oChildBox );
+                if( !oSubChildBox.ReadNextChild( &oChildBox ) )
+                    break;
             }
             
             if( pszLabel != NULL && pszXML != NULL )
@@ -261,7 +264,8 @@ void GDALJP2Metadata::CollectGMLData( GDALJP2Box *poGMLData )
             CPLFree( pszXML );
         }
         
-        oChildBox.ReadNextChild( poGMLData );
+        if( !oChildBox.ReadNextChild( poGMLData ) )
+            break;
     }
 }
 
@@ -367,8 +371,8 @@ int GDALJP2Metadata::ReadBoxes( VSILFILE *fpVSIL )
         {
             GDALJP2Box oSubBox( fpVSIL );
 
-            oSubBox.ReadFirstChild( &oBox );
-            if( EQUAL(oSubBox.GetType(),"lbl ") )
+            if( oSubBox.ReadFirstChild( &oBox ) && 
+                EQUAL(oSubBox.GetType(),"lbl ") )
             {
                 char *pszLabel = (char *) oSubBox.ReadBoxData();
                 if( pszLabel != NULL && EQUAL(pszLabel,"gml.data") )
@@ -1498,10 +1502,6 @@ GDALJP2Box** GDALJP2Metadata::CreateXMLBoxes( GDALDataset* poSrcDS,
 
 GDALJP2Box *GDALJP2Metadata::CreateXMPBox ( GDALDataset* poSrcDS )
 {
-    static const unsigned char xmp_uuid[16] =
-        { 0xBE,0x7A,0xCF,0xCB,0x97,0xA9,0x42,0xE8,
-        0x9C,0x71,0x99,0x94,0x91,0xE3,0xAF,0xAC};
-
     char** papszSrcMD = poSrcDS->GetMetadata("xml:XMP");
     GDALJP2Box* poBox = NULL;
     if( papszSrcMD && * papszSrcMD )
@@ -1511,4 +1511,22 @@ GDALJP2Box *GDALJP2Metadata::CreateXMPBox ( GDALDataset* poSrcDS )
                                           (const GByte*)*papszSrcMD);
     }
     return poBox;
+}
+
+/************************************************************************/
+/*                           IsUUID_MSI()                              */
+/************************************************************************/
+
+int GDALJP2Metadata::IsUUID_MSI(const GByte *abyUUID)
+{
+    return memcmp(abyUUID, msi_uuid2, 16) == 0;
+}
+
+/************************************************************************/
+/*                           IsUUID_XMP()                               */
+/************************************************************************/
+
+int GDALJP2Metadata::IsUUID_XMP(const GByte *abyUUID)
+{
+    return memcmp(abyUUID, xmp_uuid, 16) == 0;
 }

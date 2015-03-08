@@ -164,6 +164,8 @@ public:
     static GDALJP2Box** CreateXMLBoxes( GDALDataset* poSrcDS,
                                         int* pnBoxes );
     static GDALJP2Box *CreateXMPBox ( GDALDataset* poSrcDS );
+    static int   IsUUID_MSI(const GByte *abyUUID);
+    static int   IsUUID_XMP(const GByte *abyUUID);
 };
 
 #endif /* ndef GDAL_JP2READER_H_INCLUDED */

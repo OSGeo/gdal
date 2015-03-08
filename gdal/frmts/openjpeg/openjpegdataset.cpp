@@ -192,6 +192,8 @@ class JP2OpenJPEGDataset : public GDALJP2AbstractDataset
     int         nThreads;
     int         GetNumThreads();
     int         bEnoughMemoryToLoadOtherBands;
+    int         bRewrite;
+    int         bHasGeoreferencingAtOpening;
 
   protected:
     virtual int         CloseDependentDatasets();
@@ -207,6 +209,16 @@ class JP2OpenJPEGDataset : public GDALJP2AbstractDataset
                                            int bStrict, char ** papszOptions, 
                                            GDALProgressFunc pfnProgress,
                                            void * pProgressData );
+
+    virtual CPLErr SetProjection( const char * );
+    virtual CPLErr SetGeoTransform( double* );
+    virtual CPLErr SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
+                            const char *pszGCPProjection );
+    virtual CPLErr      SetMetadata( char ** papszMetadata,
+                             const char * pszDomain = "" );
+    virtual CPLErr      SetMetadataItem( const char * pszName,
+                                 const char * pszValue,
+                                 const char * pszDomain = "" );
 
     virtual CPLErr  IRasterIO( GDALRWFlag eRWFlag,
                                int nXOff, int nYOff, int nXSize, int nYSize,
@@ -289,10 +301,10 @@ JP2OpenJPEGRasterBand::JP2OpenJPEGRasterBand( JP2OpenJPEGDataset *poDS, int nBan
     poCT = NULL;
 
     if( (nBits % 8) != 0 )
-        SetMetadataItem("NBITS",
+        GDALRasterBand::SetMetadataItem("NBITS",
                         CPLString().Printf("%d",nBits),
                         "IMAGE_STRUCTURE" );
-    SetMetadataItem("COMPRESSION", "JPEG2000",
+    GDALRasterBand::SetMetadataItem("COMPRESSION", "JPEG2000",
                     "IMAGE_STRUCTURE" );
     this->poDS = poDS;
     this->nBand = nBand;
@@ -932,6 +944,8 @@ JP2OpenJPEGDataset::JP2OpenJPEGDataset()
     bUseSetDecodeArea = FALSE;
     nThreads = -1;
     bEnoughMemoryToLoadOtherBands = TRUE;
+    bRewrite = FALSE;
+    bHasGeoreferencingAtOpening = FALSE;
 }
 
 /************************************************************************/
@@ -944,7 +958,210 @@ JP2OpenJPEGDataset::~JP2OpenJPEGDataset()
     FlushCache();
 
     if( iLevel == 0 && fp != NULL )
-        VSIFCloseL( fp );
+    {
+        if( bRewrite )
+        {
+            GDALJP2Box oBox( fp );
+            vsi_l_offset nOffsetJP2C = 0, nLengthJP2C = 0,
+                         nOffsetXML = 0, nOffsetASOC = 0, nOffsetUUID = 0;
+            int bMSIBox = FALSE, bGMLData = FALSE;
+            int bUnsupportedConfiguration = FALSE;
+            if( oBox.ReadFirst() )
+            {
+                while( strlen(oBox.GetType()) > 0 )
+                {
+                    if( EQUAL(oBox.GetType(),"jp2c") )
+                    {
+                        if( nOffsetJP2C == 0 )
+                        {
+                            nOffsetJP2C = VSIFTellL(fp);
+                            nLengthJP2C = oBox.GetDataLength();
+                        }
+                        else
+                            bUnsupportedConfiguration = TRUE;
+                    }
+                    else if( EQUAL(oBox.GetType(),"xml ") )
+                    {
+                        if( nOffsetXML == 0 )
+                            nOffsetXML = VSIFTellL(fp);
+                    }
+                    else if( EQUAL(oBox.GetType(),"asoc") )
+                    {
+                        if( nOffsetASOC == 0 )
+                            nOffsetASOC = VSIFTellL(fp);
+
+                        GDALJP2Box oSubBox( fp );
+                        if( oSubBox.ReadFirstChild( &oBox ) &&
+                            EQUAL(oSubBox.GetType(),"lbl ") )
+                        {
+                            char *pszLabel = (char *) oSubBox.ReadBoxData();
+                            if( pszLabel != NULL && EQUAL(pszLabel,"gml.data") )
+                            {
+                                bGMLData = TRUE;
+                            }
+                            else
+                                bUnsupportedConfiguration = TRUE;
+                            CPLFree( pszLabel );
+                        }
+                        else
+                            bUnsupportedConfiguration = TRUE;
+                    }
+                    else if( EQUAL(oBox.GetType(),"uuid") )
+                    {
+                        if( nOffsetUUID == 0 )
+                            nOffsetUUID = VSIFTellL(fp);
+                        if( GDALJP2Metadata::IsUUID_MSI(oBox.GetUUID()) )
+                            bMSIBox = TRUE;
+                        else if( !GDALJP2Metadata::IsUUID_XMP(oBox.GetUUID()) )
+                            bUnsupportedConfiguration = TRUE;
+                    }
+                    else if( !EQUAL(oBox.GetType(),"jP  ") &&
+                             !EQUAL(oBox.GetType(),"ftyp") &&
+                             !EQUAL(oBox.GetType(),"rreq") &&
+                             !EQUAL(oBox.GetType(),"jp2h") )
+                    {
+                        bUnsupportedConfiguration = TRUE;
+                    }
+
+                    if (bUnsupportedConfiguration || !oBox.ReadNext())
+                        break;
+                }
+            }
+
+            const char* pszGMLJP2;
+            int bGeoreferencingCompatOfGMLJP2 =
+                       ((pszProjection != NULL && pszProjection[0] != '\0' ) &&
+                        bGeoTransformValid && nGCPCount == 0);
+            if( bGeoreferencingCompatOfGMLJP2 &&
+                ((bHasGeoreferencingAtOpening && bGMLData) ||
+                 (!bHasGeoreferencingAtOpening)) )
+                pszGMLJP2 = "GMLJP2=YES";
+            else
+                pszGMLJP2 = "GMLJP2=NO";
+
+            const char* pszGeoJP2;
+            int bGeoreferencingCompatOfGeoJP2 = 
+                    ((pszProjection != NULL && pszProjection[0] != '\0' ) ||
+                    nGCPCount != 0 || bGeoTransformValid);
+            if( bGeoreferencingCompatOfGeoJP2 &&
+                ((bHasGeoreferencingAtOpening && bMSIBox) ||
+                 (!bHasGeoreferencingAtOpening) || nGCPCount > 0) )
+                pszGeoJP2 = "GeoJP2=YES";
+            else
+                pszGeoJP2 = "GeoJP2=NO";
+
+            /* Test that the length of the JP2C box is not 0 */
+            int bJP2CBoxOKForRewriteInPlace = TRUE;
+            if( nOffsetJP2C > 16 && !bUnsupportedConfiguration )
+            {
+                VSIFSeekL(fp, nOffsetJP2C - 8, SEEK_SET);
+                GByte abyBuffer[8];
+                VSIFReadL(abyBuffer, 1, 8, fp);
+                if( EQUALN((const char*)abyBuffer + 4, "jp2c", 4) &&
+                    abyBuffer[0] == 0 && abyBuffer[1] == 0 &&
+                    abyBuffer[2] == 0 && abyBuffer[3] == 0 )
+                {
+                    if( (vsi_l_offset)(GUInt32)(nLengthJP2C + 8) == (nLengthJP2C + 8) )
+                    {
+                        CPLDebug("OPENJPEG", "Patching length of JP2C box with real length");
+                        VSIFSeekL(fp, nOffsetJP2C - 8, SEEK_SET);
+                        GUInt32 nLength = (GUInt32)nLengthJP2C + 8;
+                        CPL_MSBPTR32(&nLength);
+                        VSIFWriteL(&nLength, 1, 4, fp);
+                    }
+                    else
+                        bJP2CBoxOKForRewriteInPlace = FALSE;
+                }
+            }
+
+            if( nOffsetJP2C == 0 || bUnsupportedConfiguration )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Cannot rewrite file due to unsupported JP2 box configuration");
+                VSIFCloseL( fp );
+            }
+            else if( bJP2CBoxOKForRewriteInPlace &&
+                     (nOffsetXML == 0 || nOffsetXML > nOffsetJP2C) &&
+                     (nOffsetASOC == 0 || nOffsetASOC > nOffsetJP2C) &&
+                     (nOffsetUUID == 0 || nOffsetUUID > nOffsetJP2C) )
+            {
+                CPLDebug("OPENJPEG", "Rewriting boxes after codestream");
+
+                VSIFSeekL( fp, nOffsetJP2C + nLengthJP2C, SEEK_SET );
+
+                GDALJP2Metadata oJP2MD;
+                if( GetGCPCount() > 0 )
+                {
+                    oJP2MD.SetGCPs( GetGCPCount(),
+                                    GetGCPs() );
+                    oJP2MD.SetProjection( GetGCPProjection() );
+                }
+                else
+                {
+                    const char* pszWKT = GetProjectionRef();
+                    if( pszWKT != NULL && pszWKT[0] != '\0' )
+                    {
+                        oJP2MD.SetProjection( pszWKT );
+                    }
+                    if( bGeoTransformValid )
+                    {
+                        oJP2MD.SetGeoTransform( adfGeoTransform );
+                    }
+                }
+
+                const char* pszAreaOrPoint = GetMetadataItem(GDALMD_AREA_OR_POINT);
+                oJP2MD.bPixelIsPoint = pszAreaOrPoint != NULL && EQUAL(pszAreaOrPoint, GDALMD_AOP_POINT);
+
+                if( bGeoreferencingCompatOfGMLJP2 && EQUAL(pszGMLJP2, "GMLJP2=YES") )
+                {
+                    GDALJP2Box* poBox = oJP2MD.CreateGMLJP2(nRasterXSize,nRasterYSize);
+                    WriteBox(fp, poBox);
+                    delete poBox;
+                }
+
+                WriteXMLBoxes(fp, this, NULL);
+                WriteGDALMetadataBox(fp, this, NULL);
+
+                if( bGeoreferencingCompatOfGeoJP2 && EQUAL(pszGeoJP2, "GeoJP2=YES") )
+                {
+                    GDALJP2Box* poBox = oJP2MD.CreateJP2GeoTIFF();
+                    WriteBox(fp, poBox);
+                    delete poBox;
+                }
+
+                WriteXMPBox(fp, this, NULL);
+                
+                VSIFTruncateL( fp, VSIFTellL(fp) );
+
+                VSIFCloseL( fp );
+            }
+            else
+            {
+                VSIFCloseL( fp );
+                
+                CPLDebug("OPENJPEG", "Rewriting whole file");
+
+                const char* apszOptions[] = {
+                    "USE_SRC_CODESTREAM=YES", "CODEC=JP2", "WRITE_METADATA=YES",
+                    NULL, NULL, NULL };
+                apszOptions[3] = pszGMLJP2;
+                apszOptions[4] = pszGeoJP2;
+                CPLString osTmpFilename(CPLSPrintf("%s.tmp", GetDescription()));
+                GDALDataset* poOutDS = CreateCopy( osTmpFilename, this, FALSE,
+                                                (char**)apszOptions, GDALDummyProgress, NULL );
+                if( poOutDS )
+                {
+                    GDALClose(poOutDS);
+                    VSIRename(osTmpFilename, GetDescription());
+                }
+                else
+                    VSIUnlink(osTmpFilename);
+                VSIUnlink(CPLSPrintf("%s.tmp.aux.xml", GetDescription()));
+            }
+        }
+        else
+            VSIFCloseL( fp );
+    }
 
     CloseDependentDatasets();
 }
@@ -968,8 +1185,105 @@ int JP2OpenJPEGDataset::CloseDependentDatasets()
 }
 
 /************************************************************************/
+/*                           SetProjection()                            */
+/************************************************************************/
+
+CPLErr JP2OpenJPEGDataset::SetProjection( const char * pszProjectionIn )
+{
+    if( eAccess == GA_Update )
+    {
+        bRewrite = TRUE;
+        CPLFree(pszProjection);
+        pszProjection = (pszProjectionIn) ? CPLStrdup(pszProjectionIn) : CPLStrdup("");
+        return CE_None;
+    }
+    else
+        return GDALJP2AbstractDataset::SetProjection(pszProjectionIn);
+}
+
+/************************************************************************/
+/*                           SetGeoTransform()                          */
+/************************************************************************/
+
+CPLErr JP2OpenJPEGDataset::SetGeoTransform( double *padfGeoTransform )
+{
+    if( eAccess == GA_Update )
+    {
+        bRewrite = TRUE;
+        memcpy(adfGeoTransform, padfGeoTransform, 6* sizeof(double));
+        bGeoTransformValid = !(
+            adfGeoTransform[0] == 0.0 && adfGeoTransform[1] == 1.0 &&
+            adfGeoTransform[2] == 0.0 && adfGeoTransform[3] == 0.0 &&
+            adfGeoTransform[4] == 0.0 && adfGeoTransform[5] == 1.0);
+        return CE_None;
+    }
+    else
+        return GDALJP2AbstractDataset::SetGeoTransform(padfGeoTransform);
+}
+
+/************************************************************************/
+/*                           SetGCPs()                                  */
+/************************************************************************/
+
+CPLErr JP2OpenJPEGDataset::SetGCPs( int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
+                                    const char *pszGCPProjectionIn )
+{
+    if( eAccess == GA_Update )
+    {
+        bRewrite = TRUE;
+        CPLFree( pszProjection );
+        if( nGCPCount > 0 )
+        {
+            GDALDeinitGCPs( nGCPCount, pasGCPList );
+            CPLFree( pasGCPList );
+        }
+
+        pszProjection = (pszGCPProjectionIn) ? CPLStrdup(pszGCPProjectionIn) : CPLStrdup("");
+        nGCPCount = nGCPCountIn;
+        pasGCPList = GDALDuplicateGCPs( nGCPCount, pasGCPListIn );
+
+        return CE_None;
+    }
+    else
+        return GDALJP2AbstractDataset::SetGCPs(nGCPCountIn, pasGCPListIn,
+                                               pszGCPProjectionIn);
+}
+
+/************************************************************************/
+/*                            SetMetadata()                             */
+/************************************************************************/
+
+CPLErr JP2OpenJPEGDataset::SetMetadata( char ** papszMetadata,
+                                        const char * pszDomain )
+{
+    if( eAccess == GA_Update )
+    {
+        bRewrite = TRUE;
+        return GDALDataset::SetMetadata(papszMetadata, pszDomain);
+    }
+    return GDALJP2AbstractDataset::SetMetadata(papszMetadata, pszDomain);
+}
+
+/************************************************************************/
+/*                            SetMetadata()                             */
+/************************************************************************/
+
+CPLErr JP2OpenJPEGDataset::SetMetadataItem( const char * pszName,
+                                            const char * pszValue,
+                                            const char * pszDomain )
+{
+    if( eAccess == GA_Update )
+    {
+        bRewrite = TRUE;
+        return GDALDataset::SetMetadataItem(pszName, pszValue, pszDomain);
+    }
+    return GDALJP2AbstractDataset::SetMetadataItem(pszName, pszValue, pszDomain);
+}
+
+/************************************************************************/
 /*                            Identify()                                */
 /************************************************************************/
+
 static const unsigned char jpc_header[] = {0xff,0x4f};
 static const unsigned char jp2_box_jp[] = {0x6a,0x50,0x20,0x20}; /* 'jP  ' */
 
@@ -1217,6 +1531,8 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
     int                 iBand;
 
     poDS = new JP2OpenJPEGDataset();
+    if( eCodecFormat == OPJ_CODEC_JP2 )
+        poDS->eAccess = poOpenInfo->eAccess;
     poDS->eColorSpace = psImage->color_space;
     poDS->nRasterXSize = psImage->x1 - psImage->x0;
     poDS->nRasterYSize = psImage->y1 - psImage->y0;
@@ -1529,12 +1845,16 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     if( poDS->nBands > 1 )
     {
-        poDS->SetMetadataItem( "INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE" );
+        poDS->GDALDataset::SetMetadataItem( "INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE" );
     }
 
     poOpenInfo->fpL = poDS->fp;
     poDS->LoadJP2Metadata(poOpenInfo);
     poOpenInfo->fpL = NULL;
+
+    poDS->bHasGeoreferencingAtOpening = 
+        ((poDS->pszProjection != NULL && poDS->pszProjection[0] != '\0' )||
+         poDS->nGCPCount != 0 || poDS->bGeoTransformValid);
 
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
@@ -2227,7 +2547,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
 /* -------------------------------------------------------------------- */
     GDALJP2Metadata oJP2MD;
 
-    int bHasGeoreferencing = FALSE;
+    int bGeoreferencingCompatOfGeoJP2 = FALSE;
     int bGeoreferencingCompatOfGMLJP2 = FALSE;
     int bGMLJP2Option = CSLFetchBoolean( papszOptions, "GMLJP2", TRUE );
     int bGeoJP2Option = CSLFetchBoolean( papszOptions, "GeoJP2", TRUE );
@@ -2235,7 +2555,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
     {
         if( poSrcDS->GetGCPCount() > 0 )
         {
-            bHasGeoreferencing = TRUE;
+            bGeoreferencingCompatOfGeoJP2 = TRUE;
             oJP2MD.SetGCPs( poSrcDS->GetGCPCount(),
                             poSrcDS->GetGCPs() );
             oJP2MD.SetProjection( poSrcDS->GetGCPProjection() );
@@ -2245,21 +2565,25 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
             const char* pszWKT = poSrcDS->GetProjectionRef();
             if( pszWKT != NULL && pszWKT[0] != '\0' )
             {
-                bGeoreferencingCompatOfGMLJP2 = TRUE;
-                bHasGeoreferencing = TRUE;
+                bGeoreferencingCompatOfGeoJP2 = TRUE;
                 oJP2MD.SetProjection( pszWKT );
             }
             double adfGeoTransform[6];
             if( poSrcDS->GetGeoTransform( adfGeoTransform ) == CE_None )
             {
-                bGeoreferencingCompatOfGMLJP2 = TRUE;
-                bHasGeoreferencing = TRUE;
+                bGeoreferencingCompatOfGeoJP2 = TRUE;
                 oJP2MD.SetGeoTransform( adfGeoTransform );
             }
+            bGeoreferencingCompatOfGMLJP2 =
+                        ( pszWKT != NULL && pszWKT[0] != '\0' ) && 
+                          poSrcDS->GetGeoTransform( adfGeoTransform ) == CE_None;
         }
 
         const char* pszAreaOrPoint = poSrcDS->GetMetadataItem(GDALMD_AREA_OR_POINT);
         oJP2MD.bPixelIsPoint = pszAreaOrPoint != NULL && EQUAL(pszAreaOrPoint, GDALMD_AOP_POINT);
+
+        if( bGMLJP2Option && CPLGetConfigOption("GMLJP2OVERRIDE", NULL) != NULL )
+            bGeoreferencingCompatOfGMLJP2 = TRUE;
     }
 
     if( CSLFetchNameValue( papszOptions, "GMLJP2" ) != NULL && bGMLJP2Option &&
@@ -2271,7 +2595,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
     }
 
     if( CSLFetchNameValue( papszOptions, "GeoJP2" ) != NULL && bGeoJP2Option &&
-        !bHasGeoreferencing )
+        !bGeoreferencingCompatOfGeoJP2 )
     {
         CPLError(CE_Warning, CPLE_AppDefined,
                  "GeoJP2 box was explicitely required but cannot be written due "
@@ -2565,7 +2889,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
 
         if( !bGeoBoxesAfter )
         {
-            if( bHasGeoreferencing && bGeoJP2Option )
+            if( bGeoJP2Option && bGeoreferencingCompatOfGeoJP2 )
             {
                 GDALJP2Box* poBox = oJP2MD.CreateJP2GeoTIFF();
                 WriteBox(fp, poBox);
@@ -2585,7 +2909,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
                 WriteGDALMetadataBox(fp, poSrcDS, papszOptions);
             }
 
-            if( bHasGeoreferencing && bGMLJP2Option && bGeoreferencingCompatOfGMLJP2 )
+            if( bGMLJP2Option && bGeoreferencingCompatOfGMLJP2 )
             {
                 GDALJP2Box* poBox = oJP2MD.CreateGMLJP2(nXSize,nYSize);
                 WriteBox(fp, poBox);
@@ -2903,7 +3227,8 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Patch JP2C box length and add trailing JP2 boxes                */
 /* -------------------------------------------------------------------- */
-    if( eCodecFormat == OPJ_CODEC_JP2  )
+    if( eCodecFormat == OPJ_CODEC_JP2 &&
+        !CSLFetchBoolean(papszOptions, "JP2C_LENGTH_ZERO", FALSE) /* debug option */ )
     {
         vsi_l_offset nEndJP2C = VSIFTellL(fp);
         GUIntBig nBoxSize = nEndJP2C -nStartJP2C;
@@ -2919,11 +3244,12 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
             if( (vsi_l_offset)nBoxSize32 != nBoxSize )
             {
                 /*  Shouldn't happen hopefully */
-                if( bHasGeoreferencing && bGeoBoxesAfter )
+                if( (bGeoreferencingCompatOfGeoJP2 || bGeoreferencingCompatOfGMLJP2) && bGeoBoxesAfter )
                 {
                     CPLError(CE_Warning, CPLE_AppDefined,
                              "Cannot write GMLJP2/GeoJP2 boxes as codestream is unexpectedly > 4GB");
-                    bHasGeoreferencing = FALSE;
+                    bGeoreferencingCompatOfGeoJP2 = FALSE;
+                    bGeoreferencingCompatOfGMLJP2 = FALSE;
                 }
             }
             else
@@ -2938,7 +3264,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
 
         if( bGeoBoxesAfter )
         {
-            if( bHasGeoreferencing && bGMLJP2Option && bGeoreferencingCompatOfGMLJP2 )
+            if( bGMLJP2Option && bGeoreferencingCompatOfGMLJP2 )
             {
                 GDALJP2Box* poBox = oJP2MD.CreateGMLJP2(nXSize,nYSize);
                 WriteBox(fp, poBox);
@@ -2952,7 +3278,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
                 WriteGDALMetadataBox(fp, poSrcDS, papszOptions);
             }
 
-            if( bHasGeoreferencing && bGeoJP2Option )
+            if( bGeoJP2Option && bGeoreferencingCompatOfGeoJP2 )
             {
                 GDALJP2Box* poBox = oJP2MD.CreateJP2GeoTIFF();
                 WriteBox(fp, poBox);
