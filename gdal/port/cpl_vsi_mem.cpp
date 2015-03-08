@@ -113,6 +113,10 @@ class VSIMemHandle : public VSIVirtualHandle
     vsi_l_offset  nOffset;
     int           bUpdate;
     int           bEOF;
+    int           bExtendFileAtNextWrite;
+    
+                      VSIMemHandle() : poFile(NULL), nOffset(0), bUpdate(0),
+                                       bEOF(NULL), bExtendFileAtNextWrite(0) {}
 
     virtual int       Seek( vsi_l_offset nOffset, int nWhence );
     virtual vsi_l_offset Tell();
@@ -214,8 +218,10 @@ bool VSIMemFile::SetLength( vsi_l_offset nNewLength )
         
         GByte *pabyNewData;
         vsi_l_offset nNewAlloc = (nNewLength + nNewLength / 10) + 5000;
-
-        pabyNewData = (GByte *) VSIRealloc(pabyData, (size_t)nNewAlloc);
+        if( (vsi_l_offset)(size_t)nNewAlloc != nNewAlloc )
+            pabyNewData = NULL;
+        else
+            pabyNewData = (GByte *) VSIRealloc(pabyData, (size_t)nNewAlloc);
         if( pabyNewData == NULL )
         {
             CPLError(CE_Failure, CPLE_OutOfMemory,
@@ -267,6 +273,7 @@ int VSIMemHandle::Close()
 int VSIMemHandle::Seek( vsi_l_offset nOffset, int nWhence )
 
 {
+    bExtendFileAtNextWrite = FALSE;
     if( nWhence == SEEK_CUR )
         this->nOffset += nOffset;
     else if( nWhence == SEEK_SET )
@@ -296,8 +303,7 @@ int VSIMemHandle::Seek( vsi_l_offset nOffset, int nWhence )
         }
         else // Writeable files are zero-extended by seek past end.
         {
-            if( !poFile->SetLength( this->nOffset ) )
-                return -1;
+            bExtendFileAtNextWrite = TRUE;
         }
     }
 
@@ -355,9 +361,17 @@ size_t VSIMemHandle::Write( const void * pBuffer, size_t nSize, size_t nCount )
         errno = EACCES;
         return 0;
     }
+    if( bExtendFileAtNextWrite )
+    {
+        bExtendFileAtNextWrite = FALSE;
+        if( !poFile->SetLength( nOffset ) )
+            return 0;
+    }
 
     // FIXME: Integer overflow check should be placed here:
     size_t nBytesToWrite = nSize * nCount; 
+    //if( CSLTestBoolean(CPLGetConfigOption("VERBOSE_IO", "FALSE")) )
+    //    CPLDebug("MEM", "Write(%d bytes in [%d,%d[)", (int)nBytesToWrite, (int)nOffset, (int)(nOffset+nBytesToWrite));
 
     if( nBytesToWrite + nOffset > poFile->nLength )
     {
@@ -395,6 +409,7 @@ int VSIMemHandle::Truncate( vsi_l_offset nNewSize )
         return -1;
     }
 
+    bExtendFileAtNextWrite = FALSE;
     if (poFile->SetLength( nNewSize ))
         return 0;
     else
