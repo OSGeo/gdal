@@ -161,6 +161,10 @@ for my $dox (@dox) {
     close $fh;
 }
 
+#use Data::Dumper;
+#print Dumper(%package);
+#exit;
+
 for my $package (sort keys %package) {
     next if $package eq '';
     next if $package eq 'Geo::GDAL::Const';
@@ -216,6 +220,7 @@ for my $package (sort keys %package) {
         next if $sub =~ /^SRS_DN_/;
         
         next if $internal_methods{$sub}; # skip internal methods
+
         my $d = $package{$package}{dox}{$sub}{d};
         my $nxt = 0;
         for my $prefix (keys %constant_prefixes) {
@@ -224,11 +229,11 @@ for my $package (sort keys %package) {
         next if $nxt;
         $d = $sub unless $d;
         $d =~ s/^\$/scalar /;
-        $d =~ s/^\\\$/scalar_ref /;
+        $d =~ s/^\\\$/scalar reference /;
         $d =~ s/^\@/list /;
-        $d =~ s/^\\\@/list_ref /;
+        $d =~ s/^\\\@/array reference /;
         $d =~ s/^\%/hash /;
-        $d =~ s/^\\\%/hash_ref /;
+        $d =~ s/^\\\%/hash reference /;
         $dp = $d;
         $dp .= '()' unless $dp =~ /\(/;
         print "#** \@method $dp\n";

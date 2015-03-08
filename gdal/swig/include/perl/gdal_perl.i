@@ -589,10 +589,18 @@ sub SpatialReference {
 
 sub GeoTransform {
     my $self = shift;
-    SetGeoTransform($self, \@_) if @_ > 0;
+    if (@_ == 1) {
+        SetGeoTransform($self, $_[0]);
+    } elsif (@_ > 1) {
+        SetGeoTransform($self, \@_);
+    }
     return unless defined wantarray;
     my $t = GetGeoTransform($self);
-    return @$t;
+    if (wantarray) {
+        return @$t;
+    } else {
+        return Geo::GDAL::GeoTransform->new($t);
+    }
 }
 
 sub GCPs {
@@ -1105,6 +1113,63 @@ sub Unlink {
     Geo::GDAL::Unlink($filename);
 }
 
+
+
+
+package Geo::GDAL::GeoTransform;
+use strict;
+use warnings;
+use Carp;
+
+sub new {
+    my $class = shift;
+    my $self;
+    if (@_ == 0) {
+        $self = [0,1,0,0,0,1];
+    } elsif (@_ == 1) {
+        $self = $_[0];
+    } else {
+        my @a = @_;
+        $self = \@a;
+    }
+    bless $self, $class;
+    return $self;
+}
+
+sub FromGCPs {
+    my @GCPs;
+    my $ApproxOK = 1;
+    if (ref($_[0]) eq 'ARRAY') {
+        @GCPs = @{$_[0]};
+        $ApproxOK = $_[1] if defined $_[1];
+    } else {
+        @GCPs = @_;
+        $ApproxOK = pop @GCPs if !ref($GCPs[$#GCPs]);
+    }
+    my $self = Geo::GDAL::GCPsToGeoTransform(\@GCPs, $ApproxOK);
+    bless $self, 'Geo::GDAL::GetTransform';
+    return $self;
+}
+
+sub Apply {
+    my ($self, $columns, $rows) = @_;
+    my (@x, @y);
+    for my $i (0..$#$columns) {
+        ($x[$i], $y[$i]) = 
+            Geo::GDAL::ApplyGeoTransform($self, $columns->[$i], $rows->[$i]);
+    }
+    return (\@x, \@y);
+}
+
+sub Inv {
+    my $self = shift;
+    my @inv = Geo::GDAL::InvGeoTransform($self);
+    unless (defined wantarray) {
+        @$self = @inv;
+    } else {
+        return new(@inv);
+    }
+}
 
 %}
 
