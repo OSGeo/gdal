@@ -2435,7 +2435,6 @@ CPLXMLNode* GDALGetJPEG2000Structure(const char* pszFilename,
     if( fp == NULL )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot open %s", pszFilename);
-        VSIFCloseL(fp);
         return NULL;
     }
     GByte abyHeader[16];
