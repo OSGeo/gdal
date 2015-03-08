@@ -3488,9 +3488,15 @@ SWIG_init(void) {
   SWIG_Python_SetConstant(d, "DMD_CREATIONDATATYPES",SWIG_FromCharPtr(GDAL_DMD_CREATIONDATATYPES));
   SWIG_Python_SetConstant(d, "DMD_CREATIONFIELDDATATYPES",SWIG_FromCharPtr(GDAL_DMD_CREATIONFIELDDATATYPES));
   SWIG_Python_SetConstant(d, "DMD_SUBDATASETS",SWIG_FromCharPtr(GDAL_DMD_SUBDATASETS));
+  SWIG_Python_SetConstant(d, "DCAP_OPEN",SWIG_FromCharPtr(GDAL_DCAP_OPEN));
   SWIG_Python_SetConstant(d, "DCAP_CREATE",SWIG_FromCharPtr(GDAL_DCAP_CREATE));
   SWIG_Python_SetConstant(d, "DCAP_CREATECOPY",SWIG_FromCharPtr(GDAL_DCAP_CREATECOPY));
   SWIG_Python_SetConstant(d, "DCAP_VIRTUALIO",SWIG_FromCharPtr(GDAL_DCAP_VIRTUALIO));
+  SWIG_Python_SetConstant(d, "DCAP_RASTER",SWIG_FromCharPtr(GDAL_DCAP_RASTER));
+  SWIG_Python_SetConstant(d, "DCAP_VECTOR",SWIG_FromCharPtr(GDAL_DCAP_VECTOR));
+  SWIG_Python_SetConstant(d, "DCAP_NOTNULL_FIELDS",SWIG_FromCharPtr(GDAL_DCAP_NOTNULL_FIELDS));
+  SWIG_Python_SetConstant(d, "DCAP_DEFAULT_FIELDS",SWIG_FromCharPtr(GDAL_DCAP_DEFAULT_FIELDS));
+  SWIG_Python_SetConstant(d, "DCAP_NOTNULL_GEOMFIELDS",SWIG_FromCharPtr(GDAL_DCAP_NOTNULL_GEOMFIELDS));
   SWIG_Python_SetConstant(d, "CPLES_BackslashQuotable",SWIG_From_int((int)(CPLES_BackslashQuotable)));
   SWIG_Python_SetConstant(d, "CPLES_XML",SWIG_From_int((int)(CPLES_XML)));
   SWIG_Python_SetConstant(d, "CPLES_URL",SWIG_From_int((int)(CPLES_URL)));
