@@ -582,9 +582,14 @@ void GDALApplyGeoTransform( double padfGeoTransform[6],
 
 %apply (double argin[ANY]) {double gt_in[6]};
 %apply (double argout[ANY]) {double gt_out[6]};
+#ifdef SWIGJAVA
+// FIXME: we should implement correctly the IF_FALSE_RETURN_NONE typemap
+int GDALInvGeoTransform( double gt_in[6], double gt_out[6] );
+#else
 %apply (IF_FALSE_RETURN_NONE) { (RETURN_NONE) };
 RETURN_NONE GDALInvGeoTransform( double gt_in[6], double gt_out[6] );
 %clear (RETURN_NONE);
+#endif
 %clear (double *gt_in);
 %clear (double *gt_out);
 
