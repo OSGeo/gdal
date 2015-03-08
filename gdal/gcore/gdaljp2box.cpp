@@ -225,6 +225,8 @@ GByte *GDALJP2Box::ReadBoxData()
     if( GetDataLength() > 100 * 1024 * 1024 )
         return FALSE;
 
+    VSIFSeekL( fpVSIL, nDataOffset, SEEK_SET );
+    
     char *pszData = (char *) CPLMalloc((int)GetDataLength() + 1);
 
     if( (GIntBig) VSIFReadL( pszData, 1, (int)GetDataLength(), fpVSIL ) 

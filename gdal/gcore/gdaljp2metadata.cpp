@@ -1580,33 +1580,317 @@ int GDALJP2Metadata::IsUUID_XMP(const GByte *abyUUID)
 /*                      GDALGetJPEG2000StructureInternal()              */
 /************************************************************************/
 
+static void AddField(CPLXMLNode* psParent, const char* pszFieldName,
+                     int nFieldSize, const char* pszValue)
+{
+    CPLXMLNode* psField = CPLCreateXMLElementAndValue(
+                                    psParent, "Field", pszValue );
+    CPLAddXMLAttributeAndValue(psField, "name", pszFieldName );
+    CPLAddXMLAttributeAndValue(psField, "type", "string" );
+    CPLAddXMLAttributeAndValue(psField, "size", CPLSPrintf("%d", nFieldSize )  );
+}
+
+static void AddField(CPLXMLNode* psParent, const char* pszFieldName, GByte nVal)
+{
+    CPLXMLNode* psField = CPLCreateXMLElementAndValue(
+                                psParent, "Field", CPLSPrintf("%d", nVal) );
+    CPLAddXMLAttributeAndValue(psField, "name", pszFieldName );
+    CPLAddXMLAttributeAndValue(psField, "type", "uint8" );
+}
+
+static void AddField(CPLXMLNode* psParent, const char* pszFieldName, GUInt16 nVal)
+{
+    CPLXMLNode* psField = CPLCreateXMLElementAndValue(
+                                psParent, "Field", CPLSPrintf("%d", nVal) );
+    CPLAddXMLAttributeAndValue(psField, "name", pszFieldName );
+    CPLAddXMLAttributeAndValue(psField, "type", "uint16" );
+}
+
+static void AddField(CPLXMLNode* psParent, const char* pszFieldName, GUInt32 nVal)
+{
+    CPLXMLNode* psField = CPLCreateXMLElementAndValue(
+                                psParent, "Field", CPLSPrintf("%d", nVal) );
+    CPLAddXMLAttributeAndValue(psField, "name", pszFieldName );
+    CPLAddXMLAttributeAndValue(psField, "type", "uint32" );
+}
+
 static
 void GDALGetJPEG2000StructureInternal(CPLXMLNode* psParent,
                                       VSILFILE* fp,
                                       GDALJP2Box* poParentBox,
                                       char** papszOptions)
 {
-    GDALJP2Box oSubBox( fp );
-    if( oSubBox.ReadFirstChild(poParentBox) )
+    static const char* szHex = "01234567890ABCDEF";
+
+    GDALJP2Box oBox( fp );
+    if( oBox.ReadFirstChild(poParentBox) )
     {
-        while( strlen(oSubBox.GetType()) > 0 )
+        while( strlen(oBox.GetType()) > 0 )
         {
+            GIntBig nBoxDataLength = oBox.GetDataLength();
+
             CPLXMLNode* psBox = CPLCreateXMLNode( psParent, CXT_Element, "JP2Box" );
-            CPLCreateXMLNode( CPLCreateXMLNode( psBox, CXT_Attribute, "name" ), CXT_Text, oSubBox.GetType() );
-            CPLCreateXMLNode( CPLCreateXMLNode( psBox, CXT_Attribute, "box_offset" ), CXT_Text,
-                              CPLSPrintf(CPL_FRMT_GIB, oSubBox.GetBoxOffset() ) );
-            CPLCreateXMLNode( CPLCreateXMLNode( psBox, CXT_Attribute, "box_length" ), CXT_Text,
-                              CPLSPrintf(CPL_FRMT_GIB, oSubBox.GetBoxLength() ) );
-            CPLCreateXMLNode( CPLCreateXMLNode( psBox, CXT_Attribute, "data_offset" ), CXT_Text,
-                              CPLSPrintf(CPL_FRMT_GIB, oSubBox.GetDataOffset() ) );
-            CPLCreateXMLNode( CPLCreateXMLNode( psBox, CXT_Attribute, "data_length" ), CXT_Text,
-                              CPLSPrintf(CPL_FRMT_GIB, oSubBox.GetDataLength() ) );
-            if( oSubBox.IsSuperBox() )
+            CPLAddXMLAttributeAndValue(psBox, "name", oBox.GetType() );
+            CPLAddXMLAttributeAndValue(psBox, "box_offset",
+                                       CPLSPrintf(CPL_FRMT_GIB, oBox.GetBoxOffset() )  );
+            CPLAddXMLAttributeAndValue(psBox, "box_length",
+                                       CPLSPrintf(CPL_FRMT_GIB, oBox.GetBoxLength() ) );
+            CPLAddXMLAttributeAndValue(psBox, "data_offset",
+                                       CPLSPrintf(CPL_FRMT_GIB, oBox.GetDataOffset() ) );
+            CPLAddXMLAttributeAndValue(psBox, "data_length",
+                                       CPLSPrintf(CPL_FRMT_GIB, nBoxDataLength ) );
+
+            if( oBox.IsSuperBox() )
             {
-                GDALGetJPEG2000StructureInternal(psBox, fp, &oSubBox, papszOptions);
+                GDALGetJPEG2000StructureInternal(psBox, fp, &oBox, papszOptions);
+            }
+            else
+            {
+                if( strcmp(oBox.GetType(), "uuid") == 0 )
+                {
+                    char* pszBinaryContent = (char*)VSIMalloc( 2 * 16 + 1 );
+                    const GByte* pabyUUID = oBox.GetUUID();
+                    for(int i=0;i<16;i++)
+                    {
+                        pszBinaryContent[2*i] = szHex[pabyUUID[i] >> 4];
+                        pszBinaryContent[2*i+1] = szHex[pabyUUID[i] & 0xf];
+                    }
+                    pszBinaryContent[2*16] = '\0';
+                    CPLXMLNode* psUUIDNode =
+                                CPLCreateXMLNode( psBox, CXT_Element, "UUID" );
+                    if( GDALJP2Metadata::IsUUID_MSI(pabyUUID) )
+                        CPLAddXMLAttributeAndValue(psUUIDNode, "description", "GeoTIFF" );
+                    else if( GDALJP2Metadata::IsUUID_XMP(pabyUUID) )
+                        CPLAddXMLAttributeAndValue(psUUIDNode, "description", "XMP" );
+                    CPLCreateXMLNode( psUUIDNode, CXT_Text, pszBinaryContent);
+                    VSIFree(pszBinaryContent);
+                }
+
+                if( CSLFetchBoolean(papszOptions, "BINARY_CONTENT", FALSE) &&
+                    strcmp(oBox.GetType(), "jp2c") != 0 &&
+                    nBoxDataLength < 100 * 1024 )
+                {
+                    CPLXMLNode* psBinaryContent = CPLCreateXMLNode( psBox, CXT_Element, "BinaryContent" );
+                    GByte* pabyBoxData = oBox.ReadBoxData();
+                    int nBoxLength = (int)nBoxDataLength;
+                    char* pszBinaryContent = (char*)VSIMalloc( 2 * nBoxLength + 1 );
+                    if( pabyBoxData && pszBinaryContent )
+                    {
+                        for(int i=0;i<nBoxLength;i++)
+                        {
+                            pszBinaryContent[2*i] = szHex[pabyBoxData[i] >> 4];
+                            pszBinaryContent[2*i+1] = szHex[pabyBoxData[i] & 0xf];
+                        }
+                        pszBinaryContent[2*nBoxLength] = '\0';
+                        CPLCreateXMLNode( psBinaryContent, CXT_Text, pszBinaryContent );
+                    }
+                    CPLFree(pabyBoxData);
+                    VSIFree(pszBinaryContent);
+                }
+
+                if( CSLFetchBoolean(papszOptions, "TEXT_CONTENT", FALSE) &&
+                    strcmp(oBox.GetType(), "jp2c") != 0 &&
+                    nBoxDataLength < 100 * 1024 )
+                {
+                    GByte* pabyBoxData = oBox.ReadBoxData();
+                    if( pabyBoxData )
+                    {
+                        if( CPLIsUTF8((const char*)pabyBoxData, -1) &&
+                            (int)strlen((const char*)pabyBoxData) + 2 >= nBoxDataLength  )
+                        {
+                            CPLXMLNode* psXMLContentBox = NULL;
+                            if( ((const char*)pabyBoxData)[0] ==  '<' )
+                            {
+                                CPLPushErrorHandler(CPLQuietErrorHandler);
+                                psXMLContentBox = CPLParseXMLString((const char*)pabyBoxData);
+                                CPLPopErrorHandler();
+                            }
+                            if( psXMLContentBox )
+                            {
+                                CPLXMLNode* psXMLContentNode = 
+                                    CPLCreateXMLNode( psBox, CXT_Element, "XMLContent" );
+                                psXMLContentNode->psChild = psXMLContentBox;
+                            }
+                            else
+                            {
+                                CPLCreateXMLNode( 
+                                    CPLCreateXMLNode( psBox, CXT_Element, "TextContent" ),
+                                        CXT_Text, (const char*)pabyBoxData);
+                            }
+                        }
+                    }
+                    CPLFree(pabyBoxData);
+                }
+
+                if( strcmp(oBox.GetType(), "uuid") == 0 &&
+                    GDALJP2Metadata::IsUUID_MSI(oBox.GetUUID()) )
+                {
+                    GByte* pabyBoxData = oBox.ReadBoxData();
+                    GDALDriver* poVRTDriver = (GDALDriver*) GDALGetDriverByName("VRT");
+                    if( pabyBoxData && poVRTDriver)
+                    {
+                        CPLString osTmpFilename(CPLSPrintf("/vsimem/tmp_%p.tif", fp));
+                        VSIFCloseL(VSIFileFromMemBuffer(
+                            osTmpFilename, pabyBoxData, nBoxDataLength, TRUE) );
+                        CPLPushErrorHandler(CPLQuietErrorHandler);
+                        GDALDataset* poDS = (GDALDataset*) GDALOpen(osTmpFilename, GA_ReadOnly);
+                        CPLPopErrorHandler();
+                        if( poDS )
+                        {
+                            CPLString osTmpVRTFilename(CPLSPrintf("/vsimem/tmp_%p.vrt", fp));
+                            GDALDataset* poVRTDS = poVRTDriver->CreateCopy(osTmpVRTFilename, poDS, FALSE, NULL, NULL, NULL);
+                            GDALClose(poVRTDS);
+                            GByte* pabyXML = VSIGetMemFileBuffer( osTmpVRTFilename, NULL, FALSE );
+                            CPLXMLNode* psXMLVRT = CPLParseXMLString((const char*)pabyXML);
+                            if( psXMLVRT )
+                            {
+                                CPLXMLNode* psXMLContentNode = 
+                                    CPLCreateXMLNode( psBox, CXT_Element, "DecodedGeoTIFF" );
+                                psXMLContentNode->psChild = psXMLVRT;
+                                CPLXMLNode* psPrev = NULL;
+                                for(CPLXMLNode* psIter = psXMLVRT->psChild; psIter; psIter = psIter->psNext)
+                                {
+                                    if( psIter->eType == CXT_Element &&
+                                        strcmp(psIter->pszValue, "VRTRasterBand") == 0 )
+                                    {
+                                        CPLXMLNode* psNext = psIter->psNext;
+                                        psIter->psNext = NULL;
+                                        CPLDestroyXMLNode(psIter);
+                                        if( psPrev )
+                                            psPrev->psNext = psNext;
+                                        else
+                                            break;
+                                        psIter = psPrev;
+                                    }
+                                    psPrev = psIter;
+                                }
+                            }
+
+                            VSIUnlink(osTmpVRTFilename);
+                            GDALClose(poDS);
+                        }
+                        VSIUnlink(osTmpFilename);
+                    }
+                }
+
+                if( strcmp(oBox.GetType(), "ftyp") == 0 )
+                {
+                    GByte* pabyBoxData = oBox.ReadBoxData();
+                    if( pabyBoxData )
+                    {
+                        CPLXMLNode* psDecodedContent = 
+                            CPLCreateXMLNode( psBox, CXT_Element, "DecodedContent" );
+                        GIntBig nRemainingLength = nBoxDataLength;
+                        GByte* pabyIter = pabyBoxData;
+                        if( nRemainingLength >= 4 )
+                        {
+                            char szBranding[5];
+                            memcpy(szBranding, pabyIter, 4);
+                            szBranding[4] = 0;
+                            AddField(psDecodedContent, "BR", 4, szBranding);
+                            pabyIter += 4;
+                            nRemainingLength -= 4;
+                        }
+                        if( nRemainingLength >= 4 )
+                        {
+                            GUInt32 nVal;
+                            memcpy(&nVal, pabyIter, 4);
+                            CPL_MSBPTR32(&nVal);
+                            AddField(psDecodedContent, "MinV", nVal);
+                            pabyIter += 4;
+                            nRemainingLength -= 4;
+                        }
+                        int nCLIndex = 0;
+                        while( nRemainingLength >= 4 )
+                        {
+                            char szBranding[5];
+                            memcpy(szBranding, pabyIter, 4);
+                            szBranding[4] = 0;
+                            AddField(psDecodedContent,
+                                     CPLSPrintf("CL%d", nCLIndex),
+                                     4, szBranding);
+                            pabyIter += 4;
+                            nRemainingLength -= 4;
+                            nCLIndex ++;
+                        }
+                        if( nRemainingLength > 0 )
+                            CPLCreateXMLElementAndValue(
+                                    psDecodedContent, "RemainingBytes",
+                                    CPLSPrintf("%d", (int)nRemainingLength ));
+                    }
+                    CPLFree(pabyBoxData);
+                }
+
+                if( strcmp(oBox.GetType(), "ihdr") == 0 )
+                {
+                    GByte* pabyBoxData = oBox.ReadBoxData();
+                    if( pabyBoxData )
+                    {
+                        CPLXMLNode* psDecodedContent = 
+                            CPLCreateXMLNode( psBox, CXT_Element, "DecodedContent" );
+                        GIntBig nRemainingLength = nBoxDataLength;
+                        GByte* pabyIter = pabyBoxData;
+                        if( nRemainingLength >= 4 )
+                        {
+                            GUInt32 nVal;
+                            memcpy(&nVal, pabyIter, 4);
+                            CPL_MSBPTR32(&nVal);
+                            AddField(psDecodedContent, "HEIGHT", nVal);
+                            pabyIter += 4;
+                            nRemainingLength -= 4;
+                        }
+                        if( nRemainingLength >= 4 )
+                        {
+                            GUInt32 nVal;
+                            memcpy(&nVal, pabyIter, 4);
+                            CPL_MSBPTR32(&nVal);
+                            AddField(psDecodedContent, "WIDTH", nVal);
+                            pabyIter += 4;
+                            nRemainingLength -= 4;
+                        }
+                        if( nRemainingLength >= 2 )
+                        {
+                            GUInt16 nVal;
+                            memcpy(&nVal, pabyIter, 2);
+                            CPL_MSBPTR16(&nVal);
+                            AddField(psDecodedContent, "NC", nVal);
+                            pabyIter += 2;
+                            nRemainingLength -= 2;
+                        }
+                        if( nRemainingLength >= 1 )
+                        {
+                            AddField(psDecodedContent, "BPC", *pabyIter);
+                            pabyIter += 1;
+                            nRemainingLength -= 1;
+                        }
+                        if( nRemainingLength >= 1 )
+                        {
+                            AddField(psDecodedContent, "C", *pabyIter);
+                            pabyIter += 1;
+                            nRemainingLength -= 1;
+                        }
+                        if( nRemainingLength >= 1 )
+                        {
+                            AddField(psDecodedContent, "UnkC", *pabyIter);
+                            pabyIter += 1;
+                            nRemainingLength -= 1;
+                        }
+                        if( nRemainingLength >= 1 )
+                        {
+                            AddField(psDecodedContent, "IPR", *pabyIter);
+                            pabyIter += 1;
+                            nRemainingLength -= 1;
+                        }
+                        if( nRemainingLength > 0 )
+                            CPLCreateXMLElementAndValue(
+                                    psDecodedContent, "RemainingBytes",
+                                    CPLSPrintf("%d", (int)nRemainingLength ));
+                    }
+                    CPLFree(pabyBoxData);
+                }
             }
 
-            if (!oSubBox.ReadNextChild(poParentBox))
+            if (!oBox.ReadNextChild(poParentBox))
                 break;
         }
     }
@@ -1622,8 +1906,8 @@ static const unsigned char jp2_box_jp[] = {0x6a,0x50,0x20,0x20}; /* 'jP  ' */
 /** Dump the structure of a JPEG2000 file as a XML tree.
  *
  * @param pszFilename filename.
- * @param papszOptions NULL terminated list of opertions. Should be set
- *                     to NULL for now.
+ * @param papszOptions NULL terminated list of options, or NULL.
+ *                     Allowed options are BINARY_CONTENT=YES, TEXT_CONTENT=YES.
  * @return XML tree (to be freed with CPLDestroyXMLNode()) or NULL in case
  *         of error
  * @since GDAL 2.0
