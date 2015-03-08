@@ -170,6 +170,16 @@ void GDALJP2AbstractDataset::LoadJP2Metadata(GDALOpenInfo* poOpenInfo,
     }
 
 /* -------------------------------------------------------------------- */
+/*      Do we have XML IPR ?                                            */
+/* -------------------------------------------------------------------- */
+    if( oJP2Geo.pszXMLIPR != NULL )
+    {
+        char* apszMD[2] = { NULL, NULL };
+        apszMD[0] = oJP2Geo.pszXMLIPR;
+        GDALDataset::SetMetadata( apszMD, "xml:IPR" );
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Check for world file.                                           */
 /* -------------------------------------------------------------------- */
     if( !bGeoTransformValid )

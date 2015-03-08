@@ -236,6 +236,8 @@ class JP2OpenJPEGDataset : public GDALJP2AbstractDataset
                                        char** papszOptions );
     static void         WriteXMPBox( VSILFILE* fp, GDALDataset* poSrcDS,
                                      char** papszOptions );
+    static void         WriteIPRBox( VSILFILE* fp, GDALDataset* poSrcDS,
+                                     char** papszOptions );
 
     CPLErr      ReadBlock( int nBand, VSILFILE* fp,
                            int nBlockXOff, int nBlockYOff, void * pImage,
@@ -963,7 +965,8 @@ JP2OpenJPEGDataset::~JP2OpenJPEGDataset()
         {
             GDALJP2Box oBox( fp );
             vsi_l_offset nOffsetJP2C = 0, nLengthJP2C = 0,
-                         nOffsetXML = 0, nOffsetASOC = 0, nOffsetUUID = 0;
+                         nOffsetXML = 0, nOffsetASOC = 0, nOffsetUUID = 0,
+                         nOffsetIHDR = 0, nLengthIHDR = 0;
             int bMSIBox = FALSE, bGMLData = FALSE;
             int bUnsupportedConfiguration = FALSE;
             if( oBox.ReadFirst() )
@@ -979,6 +982,16 @@ JP2OpenJPEGDataset::~JP2OpenJPEGDataset()
                         }
                         else
                             bUnsupportedConfiguration = TRUE;
+                    }
+                    else if( EQUAL(oBox.GetType(),"jp2h") )
+                    {
+                        GDALJP2Box oSubBox( fp );
+                        if( oSubBox.ReadFirstChild( &oBox ) &&
+                            EQUAL(oSubBox.GetType(),"ihdr") )
+                        {
+                            nOffsetIHDR = VSIFTellL(fp);
+                            nLengthIHDR = oSubBox.GetDataLength();
+                        }
                     }
                     else if( EQUAL(oBox.GetType(),"xml ") )
                     {
@@ -1018,7 +1031,8 @@ JP2OpenJPEGDataset::~JP2OpenJPEGDataset()
                     else if( !EQUAL(oBox.GetType(),"jP  ") &&
                              !EQUAL(oBox.GetType(),"ftyp") &&
                              !EQUAL(oBox.GetType(),"rreq") &&
-                             !EQUAL(oBox.GetType(),"jp2h") )
+                             !EQUAL(oBox.GetType(),"jp2h") &&
+                             !EQUAL(oBox.GetType(),"jp2i") )
                     {
                         bUnsupportedConfiguration = TRUE;
                     }
@@ -1087,6 +1101,14 @@ JP2OpenJPEGDataset::~JP2OpenJPEGDataset()
             {
                 CPLDebug("OPENJPEG", "Rewriting boxes after codestream");
 
+                /* Update IPR flag */
+                if( nLengthIHDR == 14 )
+                {
+                    VSIFSeekL( fp, nOffsetIHDR + nLengthIHDR - 1, SEEK_SET );
+                    GByte bIPR = GetMetadata("xml:IPR") != NULL;
+                    VSIFWriteL( &bIPR, 1, 1, fp );
+                }
+
                 VSIFSeekL( fp, nOffsetJP2C + nLengthJP2C, SEEK_SET );
 
                 GDALJP2Metadata oJP2MD;
@@ -1111,6 +1133,8 @@ JP2OpenJPEGDataset::~JP2OpenJPEGDataset()
 
                 const char* pszAreaOrPoint = GetMetadataItem(GDALMD_AREA_OR_POINT);
                 oJP2MD.bPixelIsPoint = pszAreaOrPoint != NULL && EQUAL(pszAreaOrPoint, GDALMD_AOP_POINT);
+
+                WriteIPRBox(fp, this, NULL);
 
                 if( bGeoreferencingCompatOfGMLJP2 && EQUAL(pszGMLJP2, "GMLJP2=YES") )
                 {
@@ -1938,6 +1962,18 @@ void JP2OpenJPEGDataset::WriteXMPBox ( VSILFILE* fp, GDALDataset* poSrcDS,
 }
 
 /************************************************************************/
+/*                           WriteIPRBox()                              */
+/************************************************************************/
+
+void JP2OpenJPEGDataset::WriteIPRBox ( VSILFILE* fp, GDALDataset* poSrcDS,
+                                       CPL_UNUSED char** papszOptions )
+{
+    GDALJP2Box* poBox = GDALJP2Metadata::CreateIPRBox(poSrcDS);
+    if( poBox )
+        WriteBox(fp, poBox);
+    delete poBox;
+}
+/************************************************************************/
 /*                         FloorPowerOfTwo()                            */
 /************************************************************************/
 
@@ -2652,19 +2688,32 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
         }
         WriteBox(fp, &ftypBox);
 
+        int bIPR = poSrcDS->GetMetadata("xml:IPR") != NULL &&
+                   CSLFetchBoolean(papszOptions, "WRITE_METADATA", FALSE);
+
         /* Reader requirement box */
         if( bGeoreferencingCompatOfGMLJP2 && bGMLJP2Option && bJPXOption )
         {
             GDALJP2Box rreqBox(fp);
             rreqBox.SetType("rreq");
             rreqBox.AppendUInt8(1); /* ML = 1 byte for mask length */
-            rreqBox.AppendUInt8(0x80 | 0x40); /* FUAM */
-            rreqBox.AppendUInt8(0x40); /* DCM */
-            rreqBox.AppendUInt16(2); /* NSF: Number of standard features */
+
+            rreqBox.AppendUInt8(0x80 | 0x40 | (bIPR ? 0x20 : 0)); /* FUAM */
+            rreqBox.AppendUInt8(0x80); /* DCM */
+
+            rreqBox.AppendUInt16(2 + bIPR); /* NSF: Number of standard features */
+
             rreqBox.AppendUInt16((bProfile1) ? 4 : 5); /* SF0 : PROFILE 1 or PROFILE 2 */
             rreqBox.AppendUInt8(0x80); /* SM0 */
+
             rreqBox.AppendUInt16(67); /* SF1 : GMLJP2 box */
             rreqBox.AppendUInt8(0x40); /* SM1 */
+
+            if( bIPR )
+            {
+                rreqBox.AppendUInt16(35); /* SF2 : IPR metadata */
+                rreqBox.AppendUInt8(0x20); /* SM2 */
+            }
             rreqBox.AppendUInt16(0); /* NVF */
             WriteBox(fp, &rreqBox);
         }
@@ -2683,7 +2732,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
         ihdrBox.AppendUInt8(7); /* C=Compression type: fixed value */
         ihdrBox.AppendUInt8(0); /* UnkC: 0= colourspace of the image is known */
                                 /*and correctly specified in the Colourspace Specification boxes within the file */
-        ihdrBox.AppendUInt8(0); /* IPR: 0=no intellectual property */
+        ihdrBox.AppendUInt8(bIPR); /* IPR: 0=no intellectual property, 1=IPR box */
 
         GDALJP2Box bpccBox(fp);
         if( !bSamePrecision )
@@ -3261,6 +3310,10 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
         }
         VSIFSeekL(fp, 0, SEEK_END);
 
+        if( CSLFetchBoolean(papszOptions, "WRITE_METADATA", FALSE) )
+        {
+            WriteIPRBox(fp, poSrcDS, papszOptions);
+        }
 
         if( bGeoBoxesAfter )
         {

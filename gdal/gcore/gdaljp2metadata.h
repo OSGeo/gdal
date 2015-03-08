@@ -136,6 +136,7 @@ public:
     char  **papszMetadata; /* TIFFTAG_?RESOLUTION* for now from resd box */
     char   *pszXMPMetadata;
     char   *pszGDALMultiDomainMetadata; /* as serialized XML */
+    char   *pszXMLIPR; /* if an IPR box with XML content has been found */
 
 public:
             GDALJP2Metadata();
@@ -164,6 +165,7 @@ public:
     static GDALJP2Box** CreateXMLBoxes( GDALDataset* poSrcDS,
                                         int* pnBoxes );
     static GDALJP2Box *CreateXMPBox ( GDALDataset* poSrcDS );
+    static GDALJP2Box *CreateIPRBox ( GDALDataset* poSrcDS );
     static int   IsUUID_MSI(const GByte *abyUUID);
     static int   IsUUID_XMP(const GByte *abyUUID);
 };

@@ -81,6 +81,7 @@ GDALJP2Metadata::GDALJP2Metadata()
 
     pszXMPMetadata = NULL;
     pszGDALMultiDomainMetadata = NULL;
+    pszXMLIPR = NULL;
 
     bHaveGeoTransform = FALSE;
     adfGeoTransform[0] = 0.0;
@@ -116,6 +117,7 @@ GDALJP2Metadata::~GDALJP2Metadata()
     CSLDestroy( papszMetadata );
     CPLFree( pszXMPMetadata );
     CPLFree( pszGDALMultiDomainMetadata );
+    CPLFree( pszXMLIPR );
 }
 
 /************************************************************************/
@@ -471,6 +473,29 @@ int GDALJP2Metadata::ReadBoxes( VSILFILE *fpVSIL )
                         CPLFree( pabyResData );
                     }
                 }
+            }
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Collect IPR box.                                                */
+/* -------------------------------------------------------------------- */
+        if( EQUAL(oBox.GetType(),"jp2i") )
+        {
+            if( pszXMLIPR == NULL )
+            {
+                pszXMLIPR = (char*) oBox.ReadBoxData();
+                CPLXMLNode* psNode = CPLParseXMLString(pszXMLIPR);
+                if( psNode == NULL )
+                {
+                    CPLFree(pszXMLIPR);
+                    pszXMLIPR = NULL;
+                }
+                else
+                    CPLDestroyXMLNode(psNode);
+            }
+            else
+            {
+                CPLDebug("GDALJP2", "Too many IPR boxes. Ignoring this one");
             }
         }
 
@@ -1431,7 +1456,8 @@ GDALJP2Box *GDALJP2Metadata::CreateGDALMultiDomainMetadataXMLBox(
                 !EQUAL(*papszMDListIter, "JPEG2000") &&
                 !EQUALN(*papszMDListIter, "xml:BOX_", strlen("xml:BOX_")) &&
                 !EQUAL(*papszMDListIter, "xml:gml.root-instance") &&
-                !EQUAL(*papszMDListIter, "xml:XMP") )
+                !EQUAL(*papszMDListIter, "xml:XMP") &&
+                !EQUAL(*papszMDListIter, "xml:IPR") )
             {
                 papszSrcMD = poSrcDS->GetMetadata(*papszMDListIter);
                 if( papszSrcMD && *papszSrcMD )
@@ -1509,6 +1535,24 @@ GDALJP2Box *GDALJP2Metadata::CreateXMPBox ( GDALDataset* poSrcDS )
         poBox = GDALJP2Box::CreateUUIDBox(xmp_uuid,
                                           strlen(*papszSrcMD) + 1,
                                           (const GByte*)*papszSrcMD);
+    }
+    return poBox;
+}
+
+/************************************************************************/
+/*                          CreateIPRBox()                              */
+/************************************************************************/
+
+GDALJP2Box *GDALJP2Metadata::CreateIPRBox ( GDALDataset* poSrcDS )
+{
+    char** papszSrcMD = poSrcDS->GetMetadata("xml:IPR");
+    GDALJP2Box* poBox = NULL;
+    if( papszSrcMD && * papszSrcMD )
+    {
+        poBox = new GDALJP2Box();
+        poBox->SetType("jp2i");
+        poBox->SetWritableData(strlen(*papszSrcMD) + 1,
+                                        (const GByte*)*papszSrcMD);
     }
     return poBox;
 }
