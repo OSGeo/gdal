@@ -1658,6 +1658,44 @@ CPLXMLNode *CPLCreateXMLElementAndValue( CPLXMLNode *psParent,
 }
 
 /************************************************************************/
+/*                    CPLCreateXMLElementAndValue()                     */
+/************************************************************************/
+
+/**
+ * \brief Create an attribute and text value.
+ *
+ * This is function is a convenient short form for:
+ *
+ * \code
+ *   CPLXMLNode *psAttributeNode;
+ *
+ *   psAttributeNode = CPLCreateXMLNode( psParent, CXT_Attribute, pszName );
+ *   CPLCreateXMLNode( psAttributeNode, CXT_Text, pszValue );
+ * \endcode
+ *
+ * It creates a CXT_Attribute node, with a CXT_Text child, and
+ * attaches the element to the passed parent.
+ *
+ * @param psParent the parent node to which the resulting node should
+ * be attached.  May be NULL to keep as freestanding. 
+ *
+ * @param pszName the attribute name to create.
+ * @param pszValue the text to attach to the attribute. Must not be NULL. 
+ *
+ * @since GDAL 2.0
+ */
+
+void CPLAddXMLAttributeAndValue( CPLXMLNode *psParent,
+                                 const char *pszName,
+                                 const char *pszValue )
+{
+    CPLXMLNode *psAttributeNode;
+
+    psAttributeNode = CPLCreateXMLNode( psParent, CXT_Attribute, pszName );
+    CPLCreateXMLNode( psAttributeNode, CXT_Text, pszValue );
+}
+
+/************************************************************************/
 /*                          CPLCloneXMLTree()                           */
 /************************************************************************/
 
