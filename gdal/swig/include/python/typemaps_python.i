@@ -147,9 +147,9 @@
 }
 
 
-%typemap(out) IF_ERROR_RETURN_NONE
+%typemap(out) CPLErr
 {
-  /* %typemap(out) IF_ERROR_RETURN_NONE */
+  /* %typemap(out) CPLErr */
 }
 
 

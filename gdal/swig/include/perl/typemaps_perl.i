@@ -146,9 +146,9 @@
   }
 }
 /* drop GDAL return value */
-%typemap(out) IF_ERROR_RETURN_NONE
+%typemap(out) CPLErr
 {
-  /* %typemap(out) IF_ERROR_RETURN_NONE */
+  /* %typemap(out) CPLErr */
 }
 /* return value is really void or prepared by typemaps, avoids unnecessary sv_newmortal */
 %typemap(out) void

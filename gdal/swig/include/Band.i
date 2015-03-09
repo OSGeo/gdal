@@ -288,7 +288,6 @@ public:
   }
   
 %apply (double *OUTPUT){double *min, double *max, double *mean, double *stddev};
-%apply (IF_ERROR_RETURN_NONE) { (CPLErr) }; 
   CPLErr GetStatistics( int approx_ok, int force, 
                       double *min, double *max, double *mean, double *stddev ){
     if (min) *min = 0;
@@ -298,16 +297,13 @@ public:
     return GDALGetRasterStatistics( self, approx_ok, force, 
 				    min, max, mean, stddev );
   }
-%clear (CPLErr);
 
   /* Interface method added for GDAL 1.7.0 */
 %apply (double *OUTPUT){double *min, double *max, double *mean, double *stddev};
-%apply (IF_ERROR_RETURN_NONE) { (CPLErr) }; 
   CPLErr ComputeStatistics( bool approx_ok, double *min = NULL, double *max = NULL, double *mean = NULL, double *stddev = NULL,
                             GDALProgressFunc callback = NULL, void* callback_data=NULL){
     return GDALComputeRasterStatistics( self, approx_ok, min, max, mean, stddev, callback, callback_data );
   }
-%clear (CPLErr);
 
   CPLErr SetStatistics( double min, double max, double mean, double stddev ) {
     return GDALSetRasterStatistics( self, min, max, mean, stddev );
@@ -479,7 +475,6 @@ public:
 %apply (int inout[ANY]) {int *panHistogram};
 #elif defined(SWIGPERL)
 %apply (int len, int *output) {(int buckets, int *panHistogram)};
-%apply (IF_ERROR_RETURN_NONE) { (CPLErr) }; 
 #endif
 %feature( "kwargs" ) GetHistogram;
   CPLErr GetHistogram( double min=-0.5,
@@ -500,7 +495,6 @@ public:
 %clear int *panHistogram;
 #elif defined(SWIGPERL)
 %clear (int buckets, int *panHistogram);
-%clear (CPLErr);
 #endif
 #endif
 
@@ -508,7 +502,6 @@ public:
 #if defined(SWIGPERL)
 %apply (double *OUTPUT){double *min_ret, double *max_ret}
 %apply (int *nLen, const int **pList) {(int *buckets_ret, int **ppanHistogram)};
-%apply (IF_ERROR_RETURN_NONE) { (CPLErr) }; 
 #endif
 %feature ("kwargs") GetDefaultHistogram;
 CPLErr GetDefaultHistogram( double *min_ret=NULL, double *max_ret=NULL, int *buckets_ret = NULL, 
@@ -522,7 +515,6 @@ CPLErr GetDefaultHistogram( double *min_ret=NULL, double *max_ret=NULL, int *buc
 #if defined(SWIGPERL)
 %clear (double *min_ret, double *max_ret);
 %clear (int *buckets_ret, int **ppanHistogram);
-%clear (CPLErr);
 #endif
 #endif
 

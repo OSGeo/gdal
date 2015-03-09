@@ -85,7 +85,7 @@ OGRErrMessages( int rc ) {
     return res;
 }
 
-%typemap(out) IF_ERROR_RETURN_NONE %{ $result = $1; %}
+%typemap(out) CPLErr %{ $result = $1; %}
 
 %define OPTIONAL_POD(CTYPE, CSTYPE)
 %typemap(imtype) (CTYPE *optional_##CTYPE) "IntPtr"
