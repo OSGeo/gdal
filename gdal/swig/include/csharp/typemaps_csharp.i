@@ -76,11 +76,11 @@ OGRErrMessages( int rc ) {
 
 /* GDAL Typemaps */
 
-%typemap(out) IF_FALSE_RETURN_NONE %{ $result = $1; %}
-%typemap(ctype) IF_FALSE_RETURN_NONE "int"
-%typemap(imtype) IF_FALSE_RETURN_NONE "int"
-%typemap(cstype) IF_FALSE_RETURN_NONE "int"
-%typemap(csout, excode=SWIGEXCODE) IF_FALSE_RETURN_NONE {
+%typemap(out) TRUE_IS_SUCCESS_FALSE_IS_ERROR %{ $result = $1; %}
+%typemap(ctype) TRUE_IS_SUCCESS_FALSE_IS_ERROR "int"
+%typemap(imtype) TRUE_IS_SUCCESS_FALSE_IS_ERROR "int"
+%typemap(cstype) TRUE_IS_SUCCESS_FALSE_IS_ERROR "int"
+%typemap(csout, excode=SWIGEXCODE) TRUE_IS_SUCCESS_FALSE_IS_ERROR {
     int res = $imcall;$excode
     return res;
 }

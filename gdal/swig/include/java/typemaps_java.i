@@ -545,15 +545,15 @@
 {
  /* %typemap(ret) IF_ERR_RETURN_NONE */
 }
-%typemap(out) IF_FALSE_RETURN_NONE
+/* FIXME: these are incorrect?
+%typemap(out) TRUE_IS_SUCCESS_FALSE_IS_ERROR
 {
-  /* %typemap(out) IF_FALSE_RETURN_NONE */
   $result = 0;
 }
-%typemap(ret) IF_FALSE_RETURN_NONE
+%typemap(ret) TRUE_IS_SUCCESS_FALSE_IS_ERROR
 {
- /* %typemap(ret) IF_FALSE_RETURN_NONE */
 }
+*/
 
 /***************************************************
  *

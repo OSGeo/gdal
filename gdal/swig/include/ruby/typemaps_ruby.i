@@ -114,9 +114,9 @@
   /* result = Qnil; */
 }
 
-%typemap(out) IF_FALSE_RETURN_NONE
+%typemap(out) TRUE_IS_SUCCESS_FALSE_IS_ERROR
 {
-  /* %typemap(out) IF_FALSE_RETURN_NONE */
+  /* %typemap(out) TRUE_IS_SUCCESS_FALSE_IS_ERROR */
   if ($1 == 0 ) {
     $result = Qnil;
   }
