@@ -2124,7 +2124,7 @@ def jp2openjpeg_42():
 
 def jp2openjpeg_43():
 
-    ret = gdal.GetJPEG2000StructureAsString('data/byte.jp2', ['TEXT_CONTENT=YES', 'BINARY_CONTENT=YES'])
+    ret = gdal.GetJPEG2000StructureAsString('data/byte.jp2', ['ALL=YES'])
     if ret is None:
         return 'fail'
 
