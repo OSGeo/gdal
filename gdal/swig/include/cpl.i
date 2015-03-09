@@ -390,9 +390,12 @@ typedef void VSILFILE;
 #endif
 
 #if !defined(SWIGPYTHON)
-typedef int ZERO_IS_SUCCESS_MINUS_ONE_IS_ERROR
 
-ZERO_IS_SUCCESS_MINUS_ONE_ISERROR VSIStatL( const char * utf8_path, VSIStatBufL *psStatBuf );
+%inline %{
+  typedef int ZERO_IS_SUCCESS_MINUS_ONE_IS_ERROR;
+%}
+
+ZERO_IS_SUCCESS_MINUS_ONE_IS_ERROR VSIStatL( const char * utf8_path, VSIStatBufL *psStatBuf );
 
 #else
 

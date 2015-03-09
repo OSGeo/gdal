@@ -510,7 +510,9 @@ void GDAL_GCP_set_Id( GDAL_GCP *gcp, const char * pszId ) {
 
 %clear GDAL_GCP *gcp;
 
-typedef int TRUE_IS_SUCCESS_FALSE_IS_ERROR
+%inline %{
+  typedef int TRUE_IS_SUCCESS_FALSE_IS_ERROR;
+%}
 
 #ifdef SWIGJAVA
 %rename (GCPsToGeoTransform) wrapper_GDALGCPsToGeoTransform;
@@ -577,7 +579,6 @@ void GDALApplyGeoTransform( double padfGeoTransform[6],
 %apply (double argin[ANY]) {double gt_in[6]};
 %apply (double argout[ANY]) {double gt_out[6]};
 TRUE_IS_SUCCESS_FALSE_IS_ERROR GDALInvGeoTransform( double gt_in[6], double gt_out[6] );
-#endif
 %clear (double *gt_in);
 %clear (double *gt_out);
 
