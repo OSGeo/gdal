@@ -815,12 +815,26 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
         if( abyMarker[1] == 0x93 )
         {
             GIntBig nMarkerSize = 0;
+            int bBreak = FALSE;
             if( nNextTileOffset == 0 )
+            {
                 nMarkerSize = (nBoxDataOffset + nBoxDataLength - 2) - nOffset - 2;
+                VSIFSeekL(fp, nBoxDataOffset + nBoxDataLength - 2, SEEK_SET);
+                if( VSIFReadL(abyMarker, 2, 1, fp) != 1 ||
+                    abyMarker[0] != 0xFF || abyMarker[1] != 0xD9 )
+                {
+                    /* autotest/gdrivers/data/rgb16_ecwsdk.jp2 does not end */
+                    /* with a EOC... */
+                    nMarkerSize += 2;
+                    bBreak = TRUE;
+                }
+            }
             else if( nNextTileOffset >= nOffset + 2 )
                 nMarkerSize = nNextTileOffset - nOffset - 2;
 
             CreateMarker( psCSBox, "SOD", nOffset, nMarkerSize );
+            if( bBreak )
+                break;
 
             if( nNextTileOffset && nNextTileOffset == nOffset )
             {
@@ -834,8 +848,8 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
             }
             else
             {
-                /* Skip to (hopefully) EOC */
-                VSIFSeekL(fp, nBoxDataOffset + nBoxDataLength - 2, SEEK_SET);
+                /* We have seek and check before we hit a EOC */
+                CreateMarker( psCSBox, "EOC", nOffset, 0 );
             }
             continue;
         }
