@@ -995,7 +995,7 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
                     osInterp += "EPH marker segments may be used";
                 else
                     osInterp += "No EPH marker segments";
-                AddField(psMarker, "Scod", nLastVal, osInterp.c_str());
+                AddField(psMarker, "Scod", (GByte)nLastVal, osInterp.c_str());
                 pabyMarkerDataIter += 1;
                 nRemainingMarkerSize -= 1;
             }
@@ -1012,8 +1012,8 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
             READ_MARKER_FIELD_UINT16("SGcod_NumLayers");
             READ_MARKER_FIELD_UINT8("SGcod_MCT");
             READ_MARKER_FIELD_UINT8("SPcod_NumDecompositions");
-            READ_MARKER_FIELD_UINT8_COMMENT("SPcod_xcb", CPLSPrintf("%d", 1 << nLastVal));
-            READ_MARKER_FIELD_UINT8_COMMENT("SPcod_ycb", CPLSPrintf("%d", 1 << nLastVal));
+            READ_MARKER_FIELD_UINT8_COMMENT("SPcod_xcb_minus_2", CPLSPrintf("%d", 1 << (2+nLastVal)));
+            READ_MARKER_FIELD_UINT8_COMMENT("SPcod_ycb_minus_2", CPLSPrintf("%d", 1 << (2+nLastVal)));
             if( nRemainingMarkerSize >= 1 ) {
                 nLastVal = *pabyMarkerDataIter;
                 CPLString osInterp;
@@ -1046,7 +1046,7 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
                     osInterp += "Segmentation symbols are used";
                 else
                     osInterp += "No segmentation symbols are used";
-                AddField(psMarker, "SPcod_cbstyle", nLastVal, osInterp.c_str());
+                AddField(psMarker, "SPcod_cbstyle", (GByte)nLastVal, osInterp.c_str());
                 pabyMarkerDataIter += 1;
                 nRemainingMarkerSize -= 1;
             }
