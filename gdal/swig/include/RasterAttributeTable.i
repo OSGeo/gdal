@@ -164,7 +164,7 @@ public:
         return GDALRATSetLinearBinning(self, dfRow0Min, dfBinSize);
     }
 
-    /* TODO: omit color table translation,and dump readable */
+    /* TODO: omit color table translation */
 
     int GetRowOfValue( double dfValue ) {
         return GDALRATGetRowOfValue( self, dfValue );
@@ -172,6 +172,10 @@ public:
 
     int ChangesAreWrittenToFile() {
         return GDALRATChangesAreWrittenToFile( self );
+    }
+
+    void DumpReadable() {
+        GDALRATDumpReadable( self, NULL );
     }
 }
 
