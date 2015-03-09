@@ -133,14 +133,14 @@
   }
 }
 /* drop GDAL return value */
-%typemap(out) RETURN_NONE_TRUE_IS_ERROR
+%typemap(out) ZERO_IS_SUCCESS_MINUS_ONE_IS_ERROR
 {
-  /* %typemap(out) RETURN_NONE_TRUE_IS_ERROR */
+  /* %typemap(out) ZERO_IS_SUCCESS_MINUS_ONE_IS_ERROR */
 }
 /* croak if GDAL return TRUE */
-%typemap(ret) RETURN_NONE_TRUE_IS_ERROR
+%typemap(ret) ZERO_IS_SUCCESS_MINUS_ONE_IS_ERROR
 {
- /* %typemap(ret) RETURN_NONE_TRUE_IS_ERROR */
+ /* %typemap(ret) ZERO_IS_SUCCESS_MINUS_ONE_IS_ERROR */
   if ($1 != 0 ) {
     SWIG_croak("unexpected error in '$symname'");
   }

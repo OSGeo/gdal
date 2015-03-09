@@ -74,8 +74,11 @@ converted into a native dictionary or hash structure.  Use CPLParseNameValue() t
 access the char ** type.
 
 out (CPLErr) - CPLErr is an enum defined in port/cpl_error.h.  This code is returned
-by many functions in GDAL core.  Suggested useage is to test the return code an convert
+by many functions in GDAL core.  Suggested typemap is to test the return code and convert
 to an exception.
+
+out (ZERO_IS_SUCCESS_MINUS_ONE_IS_ERROR) - typedef int, suggested
+typemap is to test the return code and convert to an exception.
 
 out GDALColorEntry* - Return a GDALColorEntry from a function.
 
