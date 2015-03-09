@@ -536,15 +536,6 @@
 
 /* GDAL Typemaps */
 
-%typemap(out) IF_ERR_RETURN_NONE
-{
-  /* %typemap(out) IF_ERR_RETURN_NONE */
-  $result = 0;
-}
-%typemap(ret) IF_ERR_RETURN_NONE
-{
- /* %typemap(ret) IF_ERR_RETURN_NONE */
-}
 /* FIXME: these are incorrect?
 %typemap(out) TRUE_IS_SUCCESS_FALSE_IS_ERROR
 {

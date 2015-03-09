@@ -93,12 +93,6 @@ typedef struct OGRStyleTableHS OGRStyleTableShadow;
 typedef int OGRErr;
 #endif
 
-%{
-/* use this to not return the int returned by GDAL */
-typedef int RETURN_NONE;
-
-%}
-
 //************************************************************************
 //
 // Enums.
