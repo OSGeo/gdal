@@ -371,7 +371,7 @@ static void DumpPCLRBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
             CPLCreateXMLNode( psBox, CXT_Element, "DecodedContent" );
         GIntBig nRemainingLength = nBoxDataLength;
         GByte* pabyIter = pabyBoxData;
-        GUInt16 NE;
+        GUInt16 NE = 0;
         if( nRemainingLength >= 2 )
         {
             GUInt16 nVal;
@@ -382,7 +382,7 @@ static void DumpPCLRBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
             pabyIter += 2;
             nRemainingLength -= 2;
         }
-        GByte NPC;
+        GByte NPC = 0;
         if( nRemainingLength >= 1 )
         {
             NPC = *pabyIter;
@@ -485,7 +485,7 @@ static void DumpCDEFBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
             CPLCreateXMLNode( psBox, CXT_Element, "DecodedContent" );
         GIntBig nRemainingLength = nBoxDataLength;
         GByte* pabyIter = pabyBoxData;
-        GUInt16 nChannels;
+        GUInt16 nChannels = 0;
         if( nRemainingLength >= 2 )
         {
             GUInt16 nVal;
@@ -1083,7 +1083,7 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
         {
             CPLXMLNode* psMarker = CreateMarker( psCSBox, "TLM", nOffset, nMarkerSize );
             READ_MARKER_FIELD_UINT8("Ztlm");
-            int ST, SP;
+            int ST = 0, SP = 0;
             READ_MARKER_FIELD_UINT8_COMMENT("Stlm",
                     CPLSPrintf("ST=%d SP=%d",
                                (ST = (nLastVal >> 4) & 3),
@@ -1375,7 +1375,7 @@ CPLXMLNode* GDALGetJPEG2000Structure(const char* pszFilename,
         return NULL;
     }
     
-    CPLXMLNode* psParent;
+    CPLXMLNode* psParent = NULL;
     if( memcmp(abyHeader, jpc_header, sizeof(jpc_header)) == 0 )
     {
         if( CSLFetchBoolean(papszOptions, "CODESTREAM", FALSE) ||
