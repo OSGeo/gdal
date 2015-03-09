@@ -792,7 +792,6 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
     CPLXMLNode* psCSBox = CPLCreateXMLNode( psBox, CXT_Element, "JP2KCodeStream" );
     GByte* pabyMarkerData = (GByte*)CPLMalloc(65535+1);
     GIntBig nNextTileOffset = 0;
-    GIntBig nStartCurrentTile = 0;
     while( TRUE )
     {
         GIntBig nOffset = (GIntBig)VSIFTellL(fp);
@@ -929,7 +928,6 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
 
         if( abyMarker[1] == 0x90 )
         {
-            nStartCurrentTile = nOffset;
             CPLXMLNode* psMarker = CreateMarker( psCSBox, "SOT", nOffset, nMarkerSize );
             READ_MARKER_FIELD_UINT16("Isot");
             READ_MARKER_FIELD_UINT32("Psot");
