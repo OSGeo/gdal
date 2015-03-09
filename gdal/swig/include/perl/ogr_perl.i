@@ -253,7 +253,7 @@ sub CreateLayer {
     if (@_ == 0) {
     } elsif (ref($_[0]) eq 'HASH') {
         %params = %{$_[0]};
-    } elsif (exists $defaults{$_[0]} and @_ % 2 == 0) {
+    } elsif (@_ % 2 == 0 and (defined $_[0] and exists $defaults{$_[0]})) {
         %params = @_;
     } else {
         ($params{Name}, $params{SRS}, $params{GeometryType}, $params{Options}, $params{Schema}) = @_;
@@ -442,7 +442,15 @@ sub DeleteField {
 
 sub GetSchema {
     my $self = shift;
-    confess "Schema of a layer cannot be set directly." if @_;
+    carp "Schema of a layer should not be set directly." if @_;    
+    if (@_ and @_ % 2 == 0) {
+        my %schema = @_;
+        if ($schema{Fields}) {
+            for my $field (@{$schema{Fields}}) {
+                $self->CreateField($field);
+            }
+        }
+    }
     return $self->GetDefn->Schema;
 }
 *Schema = *GetSchema;
@@ -558,6 +566,13 @@ sub GetFieldDefn {
     confess "No such field: '$name'.";
 }
 
+sub GeometryType {
+    my $self = shift;
+    my $d = $self->GetDefn;
+    my $fd = $d->GetGeomFieldDefn(0);
+    return $fd->Type if $fd;
+}
+
 sub SpatialReference {
     my($self, $field, $sr) = @_;
     my $d = $self->GetDefn;
@@ -631,7 +646,15 @@ sub create {
 
 sub GetSchema {
     my $self = shift;
-    confess "Schema of a feature definition cannot be set directly." if @_;
+    carp "Schema of a feature definition should not be set directly." if @_;    
+    if (@_ and @_ % 2 == 0) {
+        my %schema = @_;
+        if ($schema{Fields}) {
+            for my $field (@{$schema{Fields}}) {
+                $self->AddField($field);
+            }
+        }
+    }
     my %schema;
     $schema{Name} = $self->Name();
     $schema{StyleIgnored} = $self->StyleIgnored();
@@ -920,6 +943,9 @@ sub GetField {
     if ($type == $Geo::OGR::OFTInteger) {
         return GetFieldAsInteger($self, $field);
     }
+    if ($type == $Geo::OGR::OFTInteger64) {
+        return GetFieldAsInteger64($self, $field);
+    }
     if ($type == $Geo::OGR::OFTReal) {
         return GetFieldAsDouble($self, $field);
     }
@@ -928,6 +954,10 @@ sub GetField {
     }
     if ($type == $Geo::OGR::OFTIntegerList) {
         my $ret = GetFieldAsIntegerList($self, $field);
+        return wantarray ? @$ret : $ret;
+    }
+    if ($type == $Geo::OGR::OFTInteger64List) {
+        my $ret = GetFieldAsInteger64List($self, $field);
         return wantarray ? @$ret : $ret;
     }
     if ($type == $Geo::OGR::OFTRealList) {
@@ -973,6 +1003,7 @@ sub SetField {
     my $list = ref($_[0]) ? $_[0] : [@_];
     my $type = GetFieldType($self, $field);
     if ($type == $Geo::OGR::OFTInteger or
+        $type == $Geo::OGR::OFTInteger64 or
         $type == $Geo::OGR::OFTReal or
         $type == $Geo::OGR::OFTString or
         $type == $Geo::OGR::OFTBinary)
@@ -981,6 +1012,9 @@ sub SetField {
     }
     elsif ($type == $Geo::OGR::OFTIntegerList) {
         SetFieldIntegerList($self, $field, $list);
+    }
+    elsif ($type == $Geo::OGR::OFTInteger64List) {
+        SetFieldInteger64List($self, $field, $list);
     }
     elsif ($type == $Geo::OGR::OFTRealList) {
         SetFieldDoubleList($self, $field, $list);
