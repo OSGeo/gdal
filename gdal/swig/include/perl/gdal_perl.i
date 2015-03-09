@@ -1104,8 +1104,8 @@ sub RmDir {
 }
 
 sub Stat {
-    my ($path, $buf) = @_;
-    Geo::GDAL::Stat($path, $buf);
+    my ($path) = @_;
+    Geo::GDAL::Stat($path);
 }
 
 sub Unlink {
