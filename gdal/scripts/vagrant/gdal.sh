@@ -1,3 +1,9 @@
+#!/bin/sh
+
+# abort install if any errors occur and enable tracing
+set -o errexit
+set -o xtrace
+
 NUMTHREADS=2
 if [[ -f /sys/devices/system/cpu/online ]]; then
 	# Calculates 1.5 times physical threads
@@ -15,10 +21,18 @@ cd /vagrant
             --with-mysql --with-liblzma --with-webp --with-libkml \
             --with-openjpeg=/usr/local --with-armadillo
 
+make clean >/dev/null
 make -j $NUMTHREADS
 cd apps
 make test_ogrsf
 cd ..
+
+# A previous version of GDAL has been installed by PostGIS
+sudo rm -f /usr/lib/libgdal.so*
+sudo make install
+sudo ldconfig
+# not sure why we need to do that
+sudo cp -r /usr/lib/python2.7/site-packages/*  /usr/lib/python2.7/dist-packages/
 
 cd swig/perl
 make veryclean
@@ -27,7 +41,7 @@ make test
 cd ../..
 
 cd swig/java
-make
+JAVA_HOME=/usr/lib/jvm/java-7-openjdk-amd64 make
 make test
 cd ../..
 
@@ -38,10 +52,3 @@ make
 # For some reason, this fails on Vagrant ubuntu 12.04
 # make test
 cd ../..
-
-# A previous version of GDAL has been installed by PostGIS
-sudo rm -f /usr/lib/libgdal.so*
-sudo make install
-sudo ldconfig
-# not sure why we need to do that
-sudo cp -r /usr/lib/python2.7/site-packages/*  /usr/lib/python2.7/dist-packages/

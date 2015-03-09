@@ -1,3 +1,9 @@
+#!/bin/sh
+
+# abort install if any errors occur and enable tracing
+set -o errexit
+set -o xtrace
+
 NUMTHREADS=2
 if [[ -f /sys/devices/system/cpu/online ]]; then
 	# Calculates 1.5 times physical threads
