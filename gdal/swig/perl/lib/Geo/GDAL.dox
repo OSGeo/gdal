@@ -1264,7 +1264,10 @@ sub traverse {
 ## @method Truncate($new_size)
 
 ## @cmethod @ReadDir($dir)
-# @return Contents of the directory.
+# @return Contents of a directory in an anonymous array or as a list.
+
+## @cmethod $ReadDirRecursive($dir)
+# @return Contents of a directory tree in an anonymous array.
 
 ## @cmethod @Stat($filename)
 # @return ($filemode, $filesize). filemode is f for a plain file, d
