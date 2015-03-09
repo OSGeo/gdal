@@ -78,8 +78,17 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     "bison",
     "flex",
     "doxygen",
-    "vim"
+    "vim",
+    "ant",
+    "mono-mcs"
   ];
+
+  unless File.exists?(".no_apt_cache")
+    cache_dir = "apt-cache/#{config.vm.box}"
+    FileUtils.mkdir_p(cache_dir) unless Dir.exists?(cache_dir)
+    puts "Using local apt cache, #{cache_dir}"
+    config.vm.synced_folder cache_dir, "/var/cache/apt/archives"
+  end
 
   if Dir.glob("#{File.dirname(__FILE__)}/.vagrant/machines/default/*/id").empty?
 	  pkg_cmd = "sed -i 's#deb http://us.archive.ubuntu.com/ubuntu/#deb mirror://mirrors.ubuntu.com/mirrors.txt#' /etc/apt/sources.list; "
@@ -95,6 +104,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 	  pkg_cmd << "apt-get install -q -y " + packageList.join(" ") << " ; "
 	  config.vm.provision :shell, :inline => pkg_cmd
     scripts = [
+      "swig-1.3.40.sh",
       "libkml.sh",
       "openjpeg.sh",
       "gdal.sh",
