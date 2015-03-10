@@ -1,10 +1,9 @@
-                                                                                                                                                                                                                                                               
 CC	=	@CC@
 CXX	=	@CXX@
 LD	=	@CXX@
 
 CPPFLAGS = -DUSE_CPL -DGRASS_GISBASE=\"@GRASS_GISBASE@\" \
-	  @GDAL_INC@ @GRASS_INCLUDE@ @CPPFLAGS@ 
+	  @GDAL_INC@ @GRASS_INCLUDE@ @PQ_INCLUDE@ @CPPFLAGS@ 
 CXXFLAGS = @CXX_WFLAGS@ @CXX_PIC@ 
 
 RANLIB		=	@RANLIB@
@@ -28,8 +27,12 @@ install:	default
 	cp $(OLIBNAME) $(AUTOLOAD_DIR)
 	test -d ${GRASSTABLES_DIR} || mkdir ${GRASSTABLES_DIR}
 	test -d ${GRASSTABLES_DIR}/etc || mkdir ${GRASSTABLES_DIR}/etc
-	cp @GRASS_GISBASE@/etc/ellipse.table ${GRASSTABLES_DIR}/etc
-	cp @GRASS_GISBASE@/etc/datum.table @GRASS_GISBASE@/etc/datumtransform.table ${GRASSTABLES_DIR}/etc
+	test ! -e @GRASS_GISBASE@/etc/ellipse.table || cp @GRASS_GISBASE@/etc/ellipse.table ${GRASSTABLES_DIR}/etc
+	test ! -e @GRASS_GISBASE@/etc/datum.table || cp @GRASS_GISBASE@/etc/datum.table ${GRASSTABLES_DIR}/etc
+	test ! -e @GRASS_GISBASE@/etc/datumtransform.table || cp @GRASS_GISBASE@/etc/datumtransform.table ${GRASSTABLES_DIR}/etc
+	test ! -e @GRASS_GISBASE@/etc/proj/ellipse.table || cp @GRASS_GISBASE@/etc/proj/ellipse.table ${GRASSTABLES_DIR}/etc
+	test ! -e @GRASS_GISBASE@/etc/proj/datum.table || cp @GRASS_GISBASE@/etc/proj/datum.table ${GRASSTABLES_DIR}/etc
+	test ! -e @GRASS_GISBASE@/etc/proj/datumtransform.table || cp @GRASS_GISBASE@/etc/proj/datumtransform.table ${GRASSTABLES_DIR}/etc
 	test -d ${GRASSTABLES_DIR}/driver || mkdir ${GRASSTABLES_DIR}/driver
 	test -d ${GRASSTABLES_DIR}/driver/db || mkdir ${GRASSTABLES_DIR}/driver/db
 	cp -r @GRASS_GISBASE@/driver/db/* ${GRASSTABLES_DIR}/driver/db/
