@@ -91,7 +91,7 @@ AC_SUBST(GDAL_INC,    $GDAL_INC)
 dnl ---------------------------------------------------------------------------
 dnl Where to put driver?
 dnl ---------------------------------------------------------------------------
-AC_ARG_WITH(autoload,[  --with-autoload[=DIR]      Directory for autoload drivers],,)
+AC_ARG_WITH(autoload,[  --with-autoload[=DIR]     Directory for autoload drivers],,)
 
 if test "$with_autoload" != "" ; then
   AUTOLOAD_DIR=$with_autoload
@@ -123,28 +123,47 @@ fi
 
 if test "$with_grass" != "yes" ; then
 
-  AC_CHECK_LIB(grass_gis,G_asprintf,GRASS_SETTING=grass57+,GRASS_SETTING=no,-L$with_grass/lib -lgrass_I -lgrass_vask -lgrass_gmath -lgrass_gis -lgrass_datetime -lgrass_gproj -lgrass_vect -lgrass_dbmibase -lgrass_dbmiclient -lgrass_dgl -lgrass_dig2 -lgrass_rtree -lgrass_linkm)
+  AC_CHECK_LIB(grass_gis,G_is_initialized,GRASS_SETTING=grass70+,GRASS_SETTING=no,-L$with_grass/lib -lgrass_datetime)
+  if test "$GRASS_SETTING" = "no" ; then
+    AC_CHECK_LIB(grass_gis,G_asprintf,GRASS_SETTING=grass57+,GRASS_SETTING=no,-L$with_grass/lib -lgrass_datetime)
+  fi
    
-  if test "$GRASS_SETTING" = "grass57+" ; then   
-    LIBS="-L$with_grass/lib -lgrass_I -lgrass_vask -lgrass_gmath -lgrass_gis -lgrass_datetime -lgrass_gproj -lgrass_vect -lgrass_dbmibase -lgrass_dbmiclient -lgrass_dgl -lgrass_dig2 -lgrass_rtree -lgrass_linkm $LIBS"
+  if test "$GRASS_SETTING" != "no" ; then   
+    if test "$GRASS_SETTING" = "grass70+" ; then   
+      G_RASTLIBS="-lgrass_raster -lgrass_imagery"
+      G_VECTLIBS="-lgrass_vector -lgrass_dig2 -lgrass_dgl -lgrass_rtree -lgrass_linkm -lgrass_dbmiclient -lgrass_dbmibase"
+      LIBS="-L$with_grass/lib $G_VECTLIBS $G_RASTLIBS -lgrass_gproj -lgrass_gmath -lgrass_gis -lgrass_datetime $LIBS"
+    else
+      G_RASTLIBS="-lgrass_I"
+      G_VECTLIBS="-lgrass_vect -lgrass_dig2 -lgrass_dgl -lgrass_rtree -lgrass_linkm -lgrass_dbmiclient -lgrass_dbmibase"
+      LIBS="-L$with_grass/lib $G_VECTLIBS $G_RASTLIBS -lgrass_gproj -lgrass_vask -lgrass_gmath -lgrass_gis -lgrass_datetime $LIBS"
+    fi
     GRASS_INCLUDE="-I$with_grass/include"
     GRASS_GISBASE="$with_grass"
+    HAVE_GRASS=yes
   else
-
-    # Check for GRASS >= 7.0
-    AC_CHECK_LIB(grass_gis.7.0.svn,G_putenv,GRASS_SETTING=grass7+,GRASS_SETTING=no,-L$with_grass/lib -lgrass_raster.7.0.svn -lgrass_gmath.7.0.svn -lgrass_gis.7.0.svn -lgrass_datetime.7.0.svn -lgrass_gproj.7.0.svn -lgrass_vector.7.0.svn -lgrass_dbmibase.7.0.svn -lgrass_dbmiclient.7.0.svn -lgrass_dgl.7.0.svn -lgrass_dig2.7.0.svn -lgrass_rtree.7.0.svn -lgrass_linkm.7.0.svn -lgrass_btree2.7.0.svn -lgrass_ccmath.7.0.svn)
-    if test "$GRASS_SETTING" = "grass7+" ; then
-        LIBS="-L$with_grass/lib -lgrass_raster.7.0.svn -lgrass_gmath.7.0.svn -lgrass_gis.7.0.svn -lgrass_datetime.7.0.svn -lgrass_gproj.7.0.svn -lgrass_vector.7.0.svn -lgrass_dbmibase.7.0.svn -lgrass_dbmiclient.7.0.svn -lgrass_dgl.7.0.svn -lgrass_dig2.7.0.svn -lgrass_rtree.7.0.svn -lgrass_linkm.7.0.svn -lgrass_btree2.7.0.svn -lgrass_ccmath.7.0.svn $LIBS"
-        GRASS_INCLUDE="-I$with_grass/include"
-        GRASS_GISBASE="$with_grass"
-    else
-        AC_MSG_ERROR([--with-grass=$with_grass requested, but libraries not found!  Perhaps you need to set LD_LIBRARY_PATH to include $with_grass/lib?])
-    fi
+    AC_MSG_ERROR([--with-grass=$with_grass requested, but libraries not found!])
   fi
 fi
 
 AC_SUBST(GRASS_INCLUDE,$GRASS_INCLUDE)
 AC_SUBST(GRASS_GISBASE,$GRASS_GISBASE)
+
+dnl ---------------------------------------------------------------------------
+
+dnl ---------------------------------------------------------------------------
+dnl Find PostgreSQL (GRASS optional dependency)
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(postgres_includes,[  --with-postgres-includes=DIR     use PostgreSQL includes in DIR], postgres_includes="$withval", postgres_includes=no)
+
+PQ_INCLUDE=
+if test "x$postgres_includes" != "xno"; then
+# With PostgreSQL includes directory
+PQ_INCLUDE="-I$postgres_includes"
+fi
+
+AC_SUBST(PQ_INCLUDE)
 
 dnl ---------------------------------------------------------------------------
 
