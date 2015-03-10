@@ -338,6 +338,10 @@ $1;
 %rename (SerializeXMLTree) CPLSerializeXMLTree;
 %rename (GetJPEG2000Structure) GDALGetJPEG2000Structure;
 #endif
+#ifdef SWIGPERL
+%include "gdal_perl_rename.i"
+#endif
+
 
 //************************************************************************
 //
