@@ -370,6 +370,11 @@ sub ReprojectImage {
 
 sub AutoCreateWarpedVRT {
     my @p = @_;
+    for my $i (1..2) {
+        if (defined $p[$i] and ref($p[$i])) {
+            $p[$i] = $p[$i]->ExportToWkt;
+        }
+    }
     if (defined $p[3]) {
         confess "Unknown data type: '$p[3]'." unless exists $Geo::GDAL::RESAMPLING_STRING2INT{$p[3]};
         $p[3] = $Geo::GDAL::RESAMPLING_STRING2INT{$p[3]};

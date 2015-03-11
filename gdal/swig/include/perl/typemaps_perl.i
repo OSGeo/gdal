@@ -150,6 +150,10 @@
 {
   /* %typemap(out) IF_ERROR_RETURN_NONE */
 }
+%typemap(out) CPLErr
+{
+  /* %typemap(out) CPLErr */
+}
 /* return value is really void or prepared by typemaps, avoids unnecessary sv_newmortal */
 %typemap(out) void
 {
@@ -1170,4 +1174,17 @@ IF_UNDEF_NULL(const char *, target_key)
   /* %typemap(in,numinputs=1) (const char* name) */
   sv_utf8_upgrade($input);
   $1 = SvPV_nolen($input);
+}
+%typemap(in,numinputs=0) (int *pnBytes) (int bytes)
+{
+  /* %typemap(in,numinputs=0) (int *pnBytes) (int bytes) */
+  $1 = &bytes;
+}
+%typemap(out) GByte *
+{
+  /* %typemap(out) GByte * */
+  $result = sv_newmortal();
+  sv_setpvn($result, (const char*)$1, *arg2);
+  CPLFree($1);
+  argvi++;
 }
