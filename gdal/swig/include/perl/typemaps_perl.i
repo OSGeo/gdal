@@ -841,16 +841,18 @@ CreateArrayFromStringArray( char **first ) {
 /************************************************************************/
 /*                          AVToXMLTree()                               */
 /************************************************************************/
-static CPLXMLNode *AVToXMLTree( AV *av )
+  static CPLXMLNode *AVToXMLTree( AV *av, int *err )
 {
     int      nChildCount = 0, iChild, nType;
     CPLXMLNode *psThisNode;
     char       *pszText = NULL;
     
     nChildCount = av_len(av) - 1; /* there are two non-childs in the array */
-    if (nChildCount < 0)
+    if (nChildCount < 0) {
         /* the input XML is empty */
+        *err = 1;
         return NULL;
+    }
 
     nType = SvIV(*(av_fetch(av,0,0)));
     SV *sv = *(av_fetch(av,1,0));
@@ -862,11 +864,12 @@ static CPLXMLNode *AVToXMLTree( AV *av )
     {
         SV **s = av_fetch(av, iChild+2, 0);
         CPLXMLNode *psChild;
-        if (!(SvROK(*s) && (SvTYPE(SvRV(*s))==SVt_PVAV)))
+        if (!(SvROK(*s) && (SvTYPE(SvRV(*s))==SVt_PVAV))) {
             /* expected a reference to an array */
+            *err = 2;
             psChild = NULL;
-        else
-            psChild = AVToXMLTree((AV*)SvRV(*s));
+        } else
+            psChild = AVToXMLTree((AV*)SvRV(*s), err);
         if (psChild)
             CPLAddXMLChild( psThisNode, psChild );
         else {
@@ -885,8 +888,16 @@ static CPLXMLNode *AVToXMLTree( AV *av )
     if (!(SvROK($input) && (SvTYPE(SvRV($input))==SVt_PVAV)))
         SWIG_croak("expected a reference to an array as an argument to a Geo::GDAL method");
     AV *av = (AV*)(SvRV($input));
-    $1 = AVToXMLTree( av );
-    if ( !$1 ) SWIG_croak("conversion of a Perl array to XMLTree failed entering a Geo::GDAL method");
+    int err;
+    $1 = AVToXMLTree( av, &err );
+    if ( !$1 ) {
+        switch (err) {
+        case 1:
+            SWIG_croak("Conversion of a Perl array to XMLTree failed: the input XML is empty.");
+        case 2:
+            SWIG_croak("Conversion of a Perl array to XMLTree failed, child should be a reference to an array.");
+        }
+    }
 }
 %typemap(freearg) (CPLXMLNode *xmlnode)
 {
