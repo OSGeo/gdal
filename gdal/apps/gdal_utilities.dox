@@ -300,7 +300,7 @@ gdal_translate [--help-general]
              CInt16/CInt32/CFloat32/CFloat64}] [-strict]
        [-of format] [-b band] [-mask band] [-expand {gray|rgb|rgba}]
        [-outsize xsize[%] ysize[%]] [-tr xres yres]
-       [-r {nearest,bilinear,cubic,cubicspline,lanczos,average,mode}]
+       [-r {nearest,bilinear,cubic,cubicspline,lanczos,average,mode,max,min,med,q1,q3}]
        [-unscale] [-scale[_bn] [src_min src_max [dst_min dst_max]]]* [-exponent[_bn] exp_val]*
        [-srcwin xoff yoff xsize ysize] [-projwin ulx uly lrx lry] [-epo] [-eco]
        [-a_srs srs_def] [-a_ullr ulx uly lrx lry] [-a_nodata value]
@@ -350,7 +350,7 @@ set target resolution. The values must be expressed in georeferenced units.
 Both must be positive values. This is exclusive with -outsize and -a_ullr.
 </dd>
 <dt> <b>-r</b>
-<i>{nearest (default),bilinear,cubic,cubicspline,lanczos,average,mode}</i>:</dt><dd>
+<i>{nearest (default),bilinear,cubic,cubicspline,lanczos,average,mode,max,min,med,q1,q3}</i>:</dt><dd>
 (GDAL &gt;= 2.0) Select a resampling algorithm.</dd>
 <dt> <b>-scale</b> <i>[src_min src_max [dst_min dst_max]]</i>:</dt><dd> Rescale the
 input pixels values from the range <i>src_min</i> to <i>src_max</i> to

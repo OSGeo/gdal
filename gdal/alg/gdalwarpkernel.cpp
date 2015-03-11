@@ -30,6 +30,10 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include <vector>
+#include <algorithm>
+#include <cmath>
+#include <cfloat>
 #include "gdalwarper.h"
 #include "gdal_alg_priv.h"
 #include "cpl_string.h"
@@ -51,6 +55,12 @@ static const int anGWKFilterRadius[] =
     3,      // Lanczos windowed sinc
     0,      // Average
     0,      // Mode
+    0,      // Reserved GRA_Gauss=7
+    0,      // Max
+    0,      // Min
+    0,      // Med
+    0,      // Q1
+    0,      // Q3
 };
 
 static double GWKBilinear(double dfX);
@@ -67,6 +77,12 @@ static const FilterFuncType apfGWKFilter[] =
     GWKLanczosSinc,  // Lanczos windowed sinc
     NULL,            // Average
     NULL,            // Mode
+    NULL,      // Reserved GRA_Gauss=7
+    NULL,      // Max
+    NULL,      // Min
+    NULL,      // Med
+    NULL,      // Q1
+    NULL,      // Q3
 };
 
 static double GWKBilinear4Values(double* padfVals);
@@ -83,6 +99,12 @@ static const FilterFunc4ValuesType apfGWKFilter4Values[] =
     GWKLanczosSinc4Values,  // Lanczos windowed sinc
     NULL,            // Average
     NULL,            // Mode
+    NULL,      // Reserved GRA_Gauss=7
+    NULL,      // Max
+    NULL,      // Min
+    NULL,      // Med
+    NULL,      // Q1
+    NULL,      // Q3
 };
 
 int GWKGetFilterRadius(GDALResampleAlg eResampleAlg)
@@ -1026,6 +1048,21 @@ CPLErr GDALWarpKernel::PerformWarp()
         return GWKAverageOrMode( this );
 
     if( eResample == GRA_Mode )
+        return GWKAverageOrMode( this );
+
+    if( eResample == GRA_Max )
+        return GWKAverageOrMode( this );
+
+    if( eResample == GRA_Min )
+        return GWKAverageOrMode( this );
+
+    if( eResample == GRA_Med )
+        return GWKAverageOrMode( this );
+
+    if( eResample == GRA_Q1 )
+        return GWKAverageOrMode( this );
+
+    if( eResample == GRA_Q3 )
         return GWKAverageOrMode( this );
 
     return GWKGeneralCase( this );
@@ -4394,9 +4431,12 @@ static void GWKAverageOrModeThread( void* pData)
     float*   pafVals = NULL;
     int*     panSums = NULL;
 
+    // only used with nAlgo = 6
+    float quant = 0.5;
+    
     if ( poWK->eResample == GRA_Average ) 
     {
-        nAlgo = 1;
+        nAlgo = GWKAOM_Average;
     }
     else if( poWK->eResample == GRA_Mode )
     {
@@ -4405,7 +4445,7 @@ static void GWKAverageOrModeThread( void* pData)
              poWK->eWorkingDataType == GDT_UInt16 ||
              poWK->eWorkingDataType == GDT_Int16 )
         {
-            nAlgo = 3;
+            nAlgo = GWKAOM_Imode;
 
             /* In the case of a paletted or non-paletted byte band, */
             /* input values are between 0 and 255 */
@@ -4430,7 +4470,7 @@ static void GWKAverageOrModeThread( void* pData)
         }
         else
         {
-            nAlgo = 2;
+            nAlgo = GWKAOM_Fmode;
 
             if ( nSrcXSize > 0 && nSrcYSize > 0 )
             {
@@ -4444,6 +4484,29 @@ static void GWKAverageOrModeThread( void* pData)
                 }
             }
         }
+    }
+    else if( poWK->eResample == GRA_Max )
+    {
+        nAlgo = GWKAOM_Max;
+    }
+    else if( poWK->eResample == GRA_Min )
+    {
+        nAlgo = GWKAOM_Min;
+    }
+    else if( poWK->eResample == GRA_Med )
+    {
+        nAlgo = GWKAOM_Quant;
+        quant = 0.5;
+    }
+    else if( poWK->eResample == GRA_Q1 )
+    {
+        nAlgo = GWKAOM_Quant;
+        quant = 0.25;
+    }
+    else if( poWK->eResample == GRA_Q3 )
+    {
+        nAlgo = GWKAOM_Quant;
+        quant = 0.75;
     }
     else
     {
@@ -4561,7 +4624,7 @@ static void GWKAverageOrModeThread( void* pData)
 
                 // loop over source lines and pixels - 3 possible algorithms
                 
-                if ( nAlgo == 1 ) // poWK->eResample == GRA_Average
+                if ( nAlgo == GWKAOM_Average ) // poWK->eResample == GRA_Average
                 {
                     // this code adapted from GDALDownsampleChunk32R_AverageT() in gcore/overview.cpp
                     for( iSrcY = iSrcYMin; iSrcY < iSrcYMax; iSrcY++ )
@@ -4596,11 +4659,11 @@ static void GWKAverageOrModeThread( void* pData)
                                        
                 } // GRA_Average
                 
-                else if ( nAlgo == 2 || nAlgo == 3 ) // poWK->eResample == GRA_Mode
+                else if ( nAlgo == GWKAOM_Imode || nAlgo == GWKAOM_Fmode ) // poWK->eResample == GRA_Mode
                 {
                     // this code adapted from GDALDownsampleChunk32R_Mode() in gcore/overview.cpp
 
-                    if ( nAlgo == 2 ) // int32 or float
+                    if ( nAlgo == GWKAOM_Fmode ) // int32 or float
                     {
                         /* I'm not sure how much sense it makes to run a majority
                            filter on floating point data, but here it is for the sake
@@ -4703,6 +4766,122 @@ static void GWKAverageOrModeThread( void* pData)
                     }
                     
                 } // GRA_Mode
+                else if ( nAlgo == GWKAOM_Max ) // poWK->eResample == GRA_Max
+                {
+                    dfTotal = -DBL_MAX;
+                    // this code adapted from nAlgo 1 method, GRA_Average
+                    for( iSrcY = iSrcYMin; iSrcY < iSrcYMax; iSrcY++ )
+                    {
+                        for( iSrcX = iSrcXMin; iSrcX < iSrcXMax; iSrcX++ )
+                        {
+                            iSrcOffset = iSrcX + iSrcY * nSrcXSize;
+
+                            if( poWK->panUnifiedSrcValid != NULL
+                                && !(poWK->panUnifiedSrcValid[iSrcOffset>>5]
+                                     & (0x01 << (iSrcOffset & 0x1f))) )
+                            {
+                                continue;
+                            }
+
+                            // Returns pixel value if it is not no data
+                            if ( GWKGetPixelValue( poWK, iBand, iSrcOffset,
+                                                   &dfBandDensity, &dfValueRealTmp, &dfValueImagTmp ) && dfBandDensity > 0.0000000001 )
+                            {
+                                nCount++;
+                                if (dfTotal < dfValueRealTmp)
+                                {
+                                    dfTotal = dfValueRealTmp;
+                                }
+                            }
+                        }
+                    }
+
+                    if ( nCount > 0 )
+                    {
+                        dfValueReal = dfTotal;
+                        dfBandDensity = 1;
+                        bHasFoundDensity = TRUE;
+                    }
+
+                } // GRA_Max
+                else if ( nAlgo == GWKAOM_Min ) // poWK->eResample == GRA_Min
+                {
+                    dfTotal = DBL_MAX;
+                    // this code adapted from nAlgo 1 method, GRA_Average
+                    for( iSrcY = iSrcYMin; iSrcY < iSrcYMax; iSrcY++ )
+                    {
+                        for( iSrcX = iSrcXMin; iSrcX < iSrcXMax; iSrcX++ )
+                        {
+                            iSrcOffset = iSrcX + iSrcY * nSrcXSize;
+
+                            if( poWK->panUnifiedSrcValid != NULL
+                                && !(poWK->panUnifiedSrcValid[iSrcOffset>>5]
+                                     & (0x01 << (iSrcOffset & 0x1f))) )
+                            {
+                                continue;
+                            }
+
+                            // Returns pixel value if it is not no data
+                            if ( GWKGetPixelValue( poWK, iBand, iSrcOffset,
+                                                   &dfBandDensity, &dfValueRealTmp, &dfValueImagTmp ) && dfBandDensity > 0.0000000001 )
+                            {
+                                nCount++;
+                                if (dfTotal > dfValueRealTmp)
+                                {
+                                    dfTotal = dfValueRealTmp;
+                                }
+                            }
+                        }
+                    }
+
+                    if ( nCount > 0 )
+                    {
+                        dfValueReal = dfTotal;
+                        dfBandDensity = 1;
+                        bHasFoundDensity = TRUE;
+                    }
+
+                } // GRA_Min
+                else if ( nAlgo == GWKAOM_Quant ) // poWK->eResample == GRA_Med | GRA_Q1 | GRA_Q3
+                {
+                    std::vector<double> dfValuesTmp;
+                    
+                    // this code adapted from nAlgo 1 method, GRA_Average
+                    for( iSrcY = iSrcYMin; iSrcY < iSrcYMax; iSrcY++ )
+                    {
+                        for( iSrcX = iSrcXMin; iSrcX < iSrcXMax; iSrcX++ )
+                        {
+                            iSrcOffset = iSrcX + iSrcY * nSrcXSize;
+
+                            if( poWK->panUnifiedSrcValid != NULL
+                                && !(poWK->panUnifiedSrcValid[iSrcOffset>>5]
+                                     & (0x01 << (iSrcOffset & 0x1f))) )
+                            {
+                                continue;
+                            }
+
+                            // Returns pixel value if it is not no data
+                            if ( GWKGetPixelValue( poWK, iBand, iSrcOffset,
+                                                   &dfBandDensity, &dfValueRealTmp, &dfValueImagTmp ) && dfBandDensity > 0.0000000001 )
+                            {
+                                nCount++;
+                                dfValuesTmp.push_back(dfValueRealTmp);
+                            }
+                        }
+                    }
+
+                    if ( nCount > 0 )
+                    {
+                        std::sort(dfValuesTmp.begin(), dfValuesTmp.end());
+                        int quantIdx = std::ceil(quant * dfValuesTmp.size() - 1);
+                        dfValueReal = dfValuesTmp[quantIdx];
+
+                        dfBandDensity = 1;
+                        bHasFoundDensity = TRUE;
+                        dfValuesTmp.clear();
+                    }
+
+                } // Quantile
 
 /* -------------------------------------------------------------------- */
 /*      We have a computed value from the source.  Now apply it to      */

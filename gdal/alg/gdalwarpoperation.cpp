@@ -207,7 +207,12 @@ int GDALWarpOperation::ValidateOptions()
         && psOptions->eResampleAlg != GRA_CubicSpline
         && psOptions->eResampleAlg != GRA_Lanczos
         && psOptions->eResampleAlg != GRA_Average
-        && psOptions->eResampleAlg != GRA_Mode )
+        && psOptions->eResampleAlg != GRA_Mode
+        && psOptions->eResampleAlg != GRA_Max 
+        && psOptions->eResampleAlg != GRA_Min
+        && psOptions->eResampleAlg != GRA_Med
+        && psOptions->eResampleAlg != GRA_Q1
+        && psOptions->eResampleAlg != GRA_Q3)
     {
         CPLError( CE_Failure, CPLE_IllegalArg, 
                   "GDALWarpOptions.Validate()\n"

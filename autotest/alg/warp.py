@@ -1428,6 +1428,196 @@ def warp_41():
 
 ###############################################################################
 
+# Maximum
+def warp_42():
+
+    gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
+    if gdaltest.tiff_drv is None:
+        return 'skip'
+    
+    ds = gdal.Open( 'data/utmsmall_max.vrt' )
+    ref_ds = gdal.Open( 'data/utmsmall_max.tif' )
+    maxdiff = gdaltest.compare_ds(ds, ref_ds)
+    ds = None
+    ref_ds = None
+ 
+    if maxdiff > 1:
+        gdaltest.post_reason('Image too different from reference')
+        return 'fail'
+
+    return 'success'
+
+# Minimum
+def warp_43():
+
+    gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
+    if gdaltest.tiff_drv is None:
+        return 'skip'
+    
+    ds = gdal.Open( 'data/utmsmall_min.vrt' )
+    ref_ds = gdal.Open( 'data/utmsmall_min.tif' )
+    maxdiff = gdaltest.compare_ds(ds, ref_ds)
+    ds = None
+    ref_ds = None
+ 
+    if maxdiff > 1:
+        gdaltest.post_reason('Image too different from reference')
+        return 'fail'
+
+    return 'success'
+
+# Median
+def warp_44():
+
+    gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
+    if gdaltest.tiff_drv is None:
+        return 'skip'
+    
+    ds = gdal.Open( 'data/utmsmall_med.vrt' )
+    ref_ds = gdal.Open( 'data/utmsmall_med.tif' )
+    maxdiff = gdaltest.compare_ds(ds, ref_ds)
+    ds = None
+    ref_ds = None
+ 
+    if maxdiff > 1:
+        gdaltest.post_reason('Image too different from reference')
+        return 'fail'
+
+    return 'success'
+
+# Quartile 1
+def warp_45():
+
+    gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
+    if gdaltest.tiff_drv is None:
+        return 'skip'
+    
+    ds = gdal.Open( 'data/utmsmall_Q1.vrt' )
+    ref_ds = gdal.Open( 'data/utmsmall_Q1.tif' )
+    maxdiff = gdaltest.compare_ds(ds, ref_ds)
+    ds = None
+    ref_ds = None
+ 
+    if maxdiff > 1:
+        gdaltest.post_reason('Image too different from reference')
+        return 'fail'
+
+    return 'success'
+
+# Quartile 3
+def warp_46():
+
+    gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
+    if gdaltest.tiff_drv is None:
+        return 'skip'
+    
+    ds = gdal.Open( 'data/utmsmall_Q3.vrt' )
+    ref_ds = gdal.Open( 'data/utmsmall_Q3.tif' )
+    maxdiff = gdaltest.compare_ds(ds, ref_ds)
+    ds = None
+    ref_ds = None
+ 
+    if maxdiff > 1:
+        gdaltest.post_reason('Image too different from reference')
+        return 'fail'
+
+    return 'success'
+
+# Maximum (Int16 - signed with negative values)
+def warp_47():
+
+    gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
+    if gdaltest.tiff_drv is None:
+        return 'skip'
+    
+    ds = gdal.Open( 'data/utmsmall-int16-neg_max.vrt' )
+    ref_ds = gdal.Open( 'data/utmsmall-int16-neg_max.tif' )
+    maxdiff = gdaltest.compare_ds(ds, ref_ds)
+    ds = None
+    ref_ds = None
+ 
+    if maxdiff > 1:
+        gdaltest.post_reason('Image too different from reference')
+        return 'fail'
+
+    return 'success'
+
+# Minimum (Int16 - signed with negative values)
+def warp_48():
+
+    gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
+    if gdaltest.tiff_drv is None:
+        return 'skip'
+    
+    ds = gdal.Open( 'data/utmsmall-int16-neg_min.vrt' )
+    ref_ds = gdal.Open( 'data/utmsmall-int16-neg_min.tif' )
+    maxdiff = gdaltest.compare_ds(ds, ref_ds)
+    ds = None
+    ref_ds = None
+ 
+    if maxdiff > 1:
+        gdaltest.post_reason('Image too different from reference')
+        return 'fail'
+
+    return 'success'
+
+# Median (Int16 - signed with negative values)
+def warp_49():
+
+    gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
+    if gdaltest.tiff_drv is None:
+        return 'skip'
+    
+    ds = gdal.Open( 'data/utmsmall-int16-neg_med.vrt' )
+    ref_ds = gdal.Open( 'data/utmsmall-int16-neg_med.tif' )
+    maxdiff = gdaltest.compare_ds(ds, ref_ds)
+    ds = None
+    ref_ds = None
+ 
+    if maxdiff > 1:
+        gdaltest.post_reason('Image too different from reference')
+        return 'fail'
+
+    return 'success'
+
+# Quartile 1 (Int16 - signed with negative values)
+def warp_50():
+
+    gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
+    if gdaltest.tiff_drv is None:
+        return 'skip'
+    
+    ds = gdal.Open( 'data/utmsmall-int16-neg_Q1.vrt' )
+    ref_ds = gdal.Open( 'data/utmsmall-int16-neg_Q1.tif' )
+    maxdiff = gdaltest.compare_ds(ds, ref_ds)
+    ds = None
+    ref_ds = None
+ 
+    if maxdiff > 1:
+        gdaltest.post_reason('Image too different from reference')
+        return 'fail'
+
+    return 'success'
+
+# Quartile 3 (Int16 - signed with negative values)
+def warp_51():
+
+    gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
+    if gdaltest.tiff_drv is None:
+        return 'skip'
+    
+    ds = gdal.Open( 'data/utmsmall-int16-neg_Q3.vrt' )
+    ref_ds = gdal.Open( 'data/utmsmall-int16-neg_Q3.tif' )
+    maxdiff = gdaltest.compare_ds(ds, ref_ds)
+    ds = None
+    ref_ds = None
+ 
+    if maxdiff > 1:
+        gdaltest.post_reason('Image too different from reference')
+        return 'fail'
+
+    return 'success'
+    
 gdaltest_list = [
     warp_1,
     warp_1_short,
@@ -1482,7 +1672,17 @@ gdaltest_list = [
     warp_39,
     warp_39,
     warp_40,
-    warp_41
+    warp_41,
+    warp_42,
+    warp_43,
+    warp_44,
+    warp_45,
+    warp_46,
+    warp_47,
+    warp_48,
+    warp_49,
+    warp_50,
+    warp_51
     ]
 
 

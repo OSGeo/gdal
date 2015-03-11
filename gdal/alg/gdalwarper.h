@@ -54,9 +54,24 @@ typedef enum {
   /*! Cubic B-Spline Approximation (4x4 kernel) */     GRA_CubicSpline=3,
   /*! Lanczos windowed sinc interpolation (6x6 kernel) */ GRA_Lanczos=4,
   /*! Average (computes the average of all non-NODATA contributing pixels) */ GRA_Average=5, 
-  /*! Mode (selects the value which appears most often of all the sampled points) */ GRA_Mode=6
+  /*! Mode (selects the value which appears most often of all the sampled points) */ GRA_Mode=6,
   // GRA_Gauss=7 reserved.
+  /*! Max (selects maximum of all non-NODATA contributing pixels) */ GRA_Max=8,
+  /*! Min (selects minimum of all non-NODATA contributing pixels) */ GRA_Min=9,
+  /*! Med (selects median of all non-NODATA contributing pixels) */ GRA_Med=10,
+  /*! Q1 (selects first quartile of all non-NODATA contributing pixels) */ GRA_Q1=11,
+  /*! Q3 (selects third quartile of all non-NODATA contributing pixels) */ GRA_Q3=12
 } GDALResampleAlg;
+
+/*! GWKAverageOrMode Algorithm */
+typedef enum {
+    /*! Average */ GWKAOM_Average=1,
+    /*! Mode */ GWKAOM_Fmode=2,
+    /*! Mode of GDT_Byte, GDT_UInt16, or GDT_Int16 */ GWKAOM_Imode=3,
+    /*! Maximum */ GWKAOM_Max=4,
+    /*! Minimum */ GWKAOM_Min=5,
+    /*! Quantile */ GWKAOM_Quant=6
+} GWKAverageOrModeAlg;
 
 typedef int 
 (*GDALMaskFunc)( void *pMaskFuncArg,
