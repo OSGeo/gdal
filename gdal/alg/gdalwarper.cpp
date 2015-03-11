@@ -1011,6 +1011,16 @@ GDALSerializeWarpOptions( const GDALWarpOptions *psWO )
         pszAlgName = "Average";
     else if( psWO->eResampleAlg == GRA_Mode )
         pszAlgName = "Mode";
+    else if( psWO->eResampleAlg == GRA_Max )
+        pszAlgName = "Maximum";
+    else if( psWO->eResampleAlg == GRA_Min )
+        pszAlgName = "Minimum";
+    else if( psWO->eResampleAlg == GRA_Med )
+        pszAlgName = "Median";
+    else if( psWO->eResampleAlg == GRA_Q1 )
+        pszAlgName = "Quartile1";
+    else if( psWO->eResampleAlg == GRA_Q3 )
+        pszAlgName = "Quartile3";
     else
         pszAlgName = "Unknown";
 
@@ -1242,6 +1252,16 @@ GDALWarpOptions * CPL_STDCALL GDALDeserializeWarpOptions( CPLXMLNode *psTree )
         psWO->eResampleAlg = GRA_Average;
     else if( EQUAL(pszValue,"Mode") )
         psWO->eResampleAlg = GRA_Mode;
+    else if( EQUAL(pszValue,"Maximum") )
+        psWO->eResampleAlg = GRA_Max;
+    else if( EQUAL(pszValue,"Minimum") )
+        psWO->eResampleAlg = GRA_Min;
+    else if( EQUAL(pszValue,"Median") )
+        psWO->eResampleAlg = GRA_Med;
+    else if( EQUAL(pszValue,"Quartile1") )
+        psWO->eResampleAlg = GRA_Q1;
+    else if( EQUAL(pszValue,"Quartile3") )
+        psWO->eResampleAlg = GRA_Q3;
     else if( EQUAL(pszValue,"Default") )
         /* leave as is */;
     else

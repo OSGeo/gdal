@@ -166,6 +166,11 @@ algorithm, worst interpolation quality).</dd>
 <dt><b>lanczos</b></dt>: <dd>Lanczos windowed sinc resampling.</dd>
 <dt><b>average</b></dt>: <dd>average resampling, computes the average of all non-NODATA contributing pixels. (GDAL >= 1.10.0)</dd>
 <dt><b>mode</b></dt>: <dd>mode resampling, selects the value which appears most often of all the sampled points. (GDAL >= 1.10.0)</dd>
+<dt><b>max</b></dt>: <dd>maximum resampling, selects the maximum value from all non-NODATA contributing pixels. (GDAL >= 2.0.0)</dd>
+<dt><b>min</b></dt>: <dd>minimum resampling, selects the minimum value from all non-NODATA contributing pixels. (GDAL >= 2.0.0)</dd>
+<dt><b>med</b></dt>: <dd>median resampling, selects the median value of all non-NODATA contributing pixels. (GDAL >= 2.0.0)</dd>
+<dt><b>q1</b></dt>: <dd>first quartile resampling, selects the first quartile value of all non-NODATA contributing pixels. (GDAL >= 2.0.0)</dd>
+<dt><b>q3</b></dt>: <dd>third quartile resampling, selects the third quartile value of all non-NODATA contributing pixels. (GDAL >= 2.0.0)</dd>
 </dl>
 <dt> <b>-srcnodata</b> <em>value [value...]</em>:</dt><dd> Set nodata masking
 values for input bands (different values can be supplied for each band).  If 
@@ -312,7 +317,7 @@ static void Usage(const char* pszErrorMsg = NULL)
         "    srcfile* dstfile\n"
         "\n"
         "Available resampling methods:\n"
-        "    near (default), bilinear, cubic, cubicspline, lanczos, average, mode.\n" );
+        "    near (default), bilinear, cubic, cubicspline, lanczos, average, mode,  max, min, med, Q1, Q3.\n" );
 
     if( pszErrorMsg != NULL )
         fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
@@ -677,6 +682,16 @@ int main( int argc, char ** argv )
                 eResampleAlg = GRA_Average;
             else if ( EQUAL(argv[i], "mode") )
                 eResampleAlg = GRA_Mode;
+            else if ( EQUAL(argv[i], "max") )
+                eResampleAlg = GRA_Max;
+            else if ( EQUAL(argv[i], "min") )
+                eResampleAlg = GRA_Min;
+            else if ( EQUAL(argv[i], "med") )
+                eResampleAlg = GRA_Med;
+            else if ( EQUAL(argv[i], "q1") )
+                eResampleAlg = GRA_Q1;
+            else if ( EQUAL(argv[i], "q3") )
+                eResampleAlg = GRA_Q3;
             else
             {
                 Usage(CPLSPrintf( "Unknown resampling method: \"%s\".", argv[i] ));
