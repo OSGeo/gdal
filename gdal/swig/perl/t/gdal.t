@@ -249,8 +249,8 @@ ok(is_deeply($a, $b), "xml parsing");
 
 my @tmp = sort keys %available_driver;
 
-print STDERR "\nGDAL version: ",Geo::GDAL::VersionInfo,"\n";
-print STDERR "Unexpected failures:\n",@fails,"\n" if @fails;
+#print STDERR "\nGDAL version: ",Geo::GDAL::VersionInfo,"\n";
+#print STDERR "Unexpected failures:\n",@fails,"\n" if @fails;
 #print STDERR "Available drivers were ",join(', ',@tmp),"\n";
 #print STDERR "Drivers used in tests were: ",join(', ',@tested_drivers),"\n";
 
