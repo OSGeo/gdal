@@ -97,15 +97,15 @@ public:
     return ds;
   }
 
-  int Delete( const char *utf8_path ) {
+  CPLErr Delete( const char *utf8_path ) {
     return GDALDeleteDataset( self, utf8_path );
   }
 
-  int Rename( const char *newName, const char *oldName ) {
+  CPLErr Rename( const char *newName, const char *oldName ) {
     return GDALRenameDataset( self, newName, oldName );
   }
 
-  int CopyFiles( const char *newName, const char *oldName ) {
+  CPLErr CopyFiles( const char *newName, const char *oldName ) {
     return GDALCopyDatasetFiles( self, newName, oldName );
   }
 
