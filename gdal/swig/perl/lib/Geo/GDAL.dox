@@ -45,6 +45,7 @@
 ## @ignore Unlink
 
 ## @ignore FillNodata
+## @ignore ContourGenerate
 
 ## @cmethod $VersionInfo($request = 'VERSION_NUM')
 # @param request A string specifying the request. Currently either
@@ -278,11 +279,11 @@ sub traverse {
 #
 # <a href="http://www.gdal.org/gdalwarper_8h.html">Documentation for GDAL warper</a>
 
-## @cmethod Geo::GDAL::Dataset AutoCreateWarpedVRT(Geo::GDAL::Dataset src, $src_wkt=undef, $dst_wkt=undef, $ResampleAlg='NearestNeighbour', $maxerror=0.0)
+## @cmethod Geo::GDAL::Dataset AutoCreateWarpedVRT(Geo::GDAL::Dataset src, Geo::OSR::SpatialReference src_srs=undef, Geo::OSR::SpatialReference dst_srs=undef, $ResampleAlg='NearestNeighbour', $maxerror=0.0)
 # @param src
-# @param src_wkt A WKT string.
-# @param dst_wkt A WKT string.
-# @param ResampleAlg one of 'NearestNeighbour', 'Bilinear', 'Cubic', or 'CubicSpline'.
+# @param src_srs source projection.
+# @param dst_srs destination projection.
+# @param ResampleAlg one of Geo::GDAL::ResamplingTypes().
 # @param maxerror
 # @return a new Geo::GDAL::Dataset object
 #
@@ -390,7 +391,7 @@ sub traverse {
 # @param DataType A GDAL pixel data type (typically from $band->{DataType}).
 # @return a character which can be used in Perl's pack and unpack.
 
-## @cmethod Geo::GDAL::Dataset Open($name, $access='ReadOnly')
+## @cmethod Geo::GDAL::Dataset Open($name, $access = 'ReadOnly')
 # An example
 # \code
 # use Geo::GDAL;
@@ -398,12 +399,15 @@ sub traverse {
 # \endcode
 # @param name
 # @param access Access type (one of those listed by Geo::GDAL::AccessTypes).
-# @return a new Geo::GDAL::Dataset object
+# @return a new Geo::GDAL::Dataset object.
 
-## @cmethod Geo::GDAL::Dataset OpenShared($name, $access='ReadOnly')
+## @cmethod Geo::GDAL::Dataset OpenShared($name, $access = 'ReadOnly')
 # @param name
 # @param access Access type (one of those listed by Geo::GDAL::AccessTypes).
-# @return a new Geo::GDAL::Dataset object
+# @return a new Geo::GDAL::Dataset object.
+
+## @cmethod Geo::GDAL::Dataset OpenEx($name, $open_flags = 0, array reference allowed_drivers = undef, array reference open_options = undef, array reference sibling_files = undef);
+# @return a new Geo::GDAL::Dataset object.
 
 
 
@@ -476,6 +480,11 @@ sub traverse {
 
 ## @method Rename($NewName, $OldName)
 # Rename (move) a GDAL dataset.
+# @param NewName String.
+# @param OldName String.
+
+## @method Copy($NewName, $OldName)
+# Copy the files of a dataset.
 # @param NewName String.
 # @param OldName String.
 
@@ -596,6 +605,8 @@ sub traverse {
 # @brief A set of associated raster bands.
 # @isa (Geo::GDAL::MajorObject Geo::GDAL)
 
+## @ignore FlushCache
+
 ## @attr RasterXSize
 # scalar (access as $dataset->{RasterXSize})
 
@@ -628,6 +639,8 @@ sub traverse {
 
 ## @method Geo::GDAL::Driver GetDriver()
 # @return a new Geo::GDAL::Driver object
+
+## @ignore GetRasterBand
 
 ## @method Geo::GDAL::Band Band($index)
 # Create a band object for the band within the dataset.
@@ -694,30 +707,48 @@ sub traverse {
 # @param datatype GDAL pixel data type (one of those listed by Geo::GDAL::DataTypes).
 # @param options reference to a hash of format specific key=>value options.
 
-## @method WriteRaster($xoff, $yoff, $xsize, $ysize, $buf, $buf_xsize = undef, $buf_ysize = undef, $buf_type = undef, arrayref band_list = undef)
-# Write a buffer into the raster. Create the buffer with \a pack function of Perl.
+## @method WriteRaster(%params)
+# Write data into the dataset. 
+#
+# @param params named parameters. These are
+# - \a XOff x offset (pixel coordinates) (default is 0)
+# - \a YOff y offset (pixel coordinates) (default is 0)
+# - \a XSize width of the area to write (default is the width of the dataset)
+# - \a YSize height of the area to write (default is the height of the dataset)
+# - \a Buf a buffer containing the data. Create the buffer with \a pack function of Perl. See Geo::GDAL::Band::PackCharacter.
+# - \a BufXSize (default is undef, i.e., the same as XSize)
+# - \a BufYSize (default is undef, i.e., the same as YSize)
+# - \a BufType data type of the buffer (default is the data type of the first band)
+# - \a BandList a reference to an array of band indeces (default is [1])
+# - \a BufPixelSpace (default is 0)
+# - \a BufLineSpace (default is 0)
+# - \a BufBandSpace (default is 0)
+#
+# If the parameters are given as a list the order is as above.
 # <a href="http://www.gdal.org/classGDALDataset.html">Entry in GDAL docs (method RasterIO)</a>
-# @param xoff
-# @param yoff
-# @param xsize
-# @param ysize
-# @param buf
-# @param buf_xsize
-# @param buf_ysize
-# @param buf_type
-# @param band_list
 
-## @method $ReadRaster($xoff, $yoff, $xsize, $ysize, $buf_xsize = undef, $buf_ysize = undef, $buf_type = undef, arrayref band_list = undef)
-# Read a buffer from the raster.
-# @param xoff
-# @param yoff
-# @param xsize
-# @param ysize
-# @param buf_xsize
-# @param buf_ysize
-# @param buf_type
-# @param band_list
-# @return a buffer, open the buffer with unpack.
+## @method $ReadRaster(%params)
+# Read data from the dataset.
+#
+# @param params named parameters. These are
+# - \a XOff x offset (pixel coordinates) (default is 0)
+# - \a YOff y offset (pixel coordinates) (default is 0)
+# - \a XSize width of the area to read (default is the width of the dataset)
+# - \a YSize height of the area to read (default is the height of the dataset)
+# - \a BufXSize (default is undef, i.e., the same as XSize)
+# - \a BufYSize (default is undef, i.e., the same as YSize)
+# - \a BufType data type of the buffer (default is the data type of the first band)
+# - \a BandList a reference to an array of band indeces (default is [1])
+# - \a BufPixelSpace (default is 0)
+# - \a BufLineSpace (default is 0)
+# - \a BufBandSpace (default is 0)
+# - \a ResampleAlg one of Geo::GDAL::RIOResamplingTypes (default is 'NearestNeighbour'),
+# - \a Callback reference to a callback function (default is undef)
+# - \a CallbackData (default is undef)
+#
+# If the parameters are given as a list the order is as above.
+# <a href="http://www.gdal.org/classGDALDataset.html">Entry in GDAL docs (method RasterIO)</a>
+# @return a buffer, open the buffer with \a unpack function of Perl. See Geo::GDAL::Band::PackCharacter.
 
 ## @method CreateMaskBand()
 
@@ -750,6 +781,9 @@ sub traverse {
 
 ## @method $DataType()
 # @return the data type of this band (as string, one of Geo::GDAL::DataTypes).
+
+## @method $PackCharacter()
+# @return the character to use in Perl pack and unpack for the DataType of this band.
 
 ## @method @Size()
 # @return the size of the band as a list (width, height).
@@ -903,28 +937,44 @@ sub traverse {
 # @return a two-dimensional Perl array, organizes as data->[y][x], y =
 # 0..height-1, x = 0..width-1.
 
-## @method WriteRaster($xoff, $yoff, $xsize, $ysize, $buf, $buf_xsize = undef, $buf_ysize = undef, $buf_type = undef)
-# @param xoff
-# @param yoff
-# @param xsize
-# @param ysize
-# @param buf The data to be written in a binary buffer. Use the \a
-# pack function of Perl to prepare a buffer.
-# @param buf_xsize
-# @param buf_ysize
-# @param buf_type
+## @method WriteRaster(%params)
+# Write data into the band.
 #
+# @param params named parameters. These are
+# - \a XOff x offset (pixel coordinates) (default is 0)
+# - \a YOff y offset (pixel coordinates) (default is 0)
+# - \a XSize width of the area to write (default is the width of the band)
+# - \a YSize height of the area to write (default is the height of the band)
+# - \a Buf a buffer containing the data. Create the buffer with \a pack function of Perl. See Geo::GDAL::Band::PackCharacter.
+# - \a BufXSize (default is undef, i.e., the same as XSize)
+# - \a BufYSize (default is undef, i.e., the same as YSize)
+# - \a BufType data type of the buffer (default is the data type of the band)
+# - \a BufPixelSpace (default is 0)
+# - \a BufLineSpace (default is 0)
+#
+# If the parameters are given as a list the order is as above.
+# <a href="http://www.gdal.org/classGDALDataset.html">Entry in GDAL docs (method RasterIO)</a>
 
-## @method $ReadRaster($xoff, $yoff, $xsize, $ysize, $buf_xsize = undef, $buf_ysize = undef, $buf_type = undef)
-# @param xoff
-# @param yoff
-# @param xsize
-# @param ysize
-# @param buf_xsize
-# @param buf_ysize
-# @param buf_type
-# @return the data in a binary buffer. Use the \a unpack function of
-# Perl to get the data from the buffer.
+## @method $ReadRaster(%params)
+# Read data from the band.
+#
+# @param params named parameters. These are
+# - \a XOff x offset (pixel coordinates) (default is 0)
+# - \a YOff y offset (pixel coordinates) (default is 0)
+# - \a XSize width of the area to read (default is the width of the band)
+# - \a YSize height of the area to read (default is the height of the band)
+# - \a BufXSize (default is undef, i.e., the same as XSize)
+# - \a BufYSize (default is undef, i.e., the same as YSize)
+# - \a BufType data type of the buffer (default is the data type of the band)
+# - \a BufPixelSpace (default is 0)
+# - \a BufLineSpace (default is 0)
+# - \a ResampleAlg one of Geo::GDAL::RIOResamplingTypes (default is 'NearestNeighbour'),
+# - \a Callback reference to a callback function (default is undef)
+# - \a CallbackData (default is undef)
+#
+# If the parameters are given as a list the order is as above.
+# <a href="http://www.gdal.org/classGDALDataset.html">Entry in GDAL docs (method RasterIO)</a>
+# @return a buffer, open the buffer with \a unpack function of Perl. See Geo::GDAL::Band::PackCharacter.
 
 ## @method @GetHistogram(%parameters)
 # Compute histogram from the raster.

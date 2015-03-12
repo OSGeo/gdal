@@ -71,6 +71,9 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
 %rename (_OpenShared) OpenShared;
 %newobject _OpenShared;
 
+%rename (_ReadRaster) ReadRaster;
+%rename (_WriteRaster) WriteRaster;
+
 /* those that need callback_data check: */
 
 %rename (_ComputeMedianCutPCT) ComputeMedianCutPCT;
@@ -619,6 +622,109 @@ sub GCPs {
     return (@$GCPs, $proj);
 }
 
+sub ReadRaster {
+    my $self = shift;
+    my ($width, $height) = $self->Size;
+    my ($type) = $self->Band->DataType;
+    my %d = (
+        XOFF => 0,
+        YOFF => 0,
+        XSIZE => $width,
+        YSIZE => $height,
+        BUFXSIZE => undef,
+        BUFYSIZE => undef,
+        BUFTYPE => $type,
+        BANDLIST => [1],
+        BUFPIXELSPACE => 0,
+        BUFLINESPACE => 0,
+        BUFBANDSPACE => 0,
+        RESAMPLEALG => 'NearestNeighbour',
+        CALLBACK => undef,
+        CALLBACKDATA => undef
+        );
+    my %p;
+    my $t;
+    if (defined $_[0]) {
+        $t = uc($_[0]); 
+        $t =~ s/_//g;
+    }
+    if (@_ == 0) {
+    } elsif (ref($_[0]) eq 'HASH') {
+        %p = %{$_[0]};
+    } elsif (@_ % 2 == 0 and (defined $t and exists $d{$t})) {
+        %p = @_;
+    } else {
+        ($p{xoff},$p{yoff},$p{xsize},$p{ysize},$p{buf_xsize},$p{buf_ysize},$p{buf_type},$p{band_list},$p{buf_pixel_space},$p{buf_line_space},$p{buf_band_space},$p{resample_alg},$p{callback},$p{callback_data}) = @_;
+    }
+    for (keys %p) {
+        my $u = uc($_);
+        $u =~ s/_//g;
+        carp "Unknown named parameter '$_'." unless exists $d{$u};
+        $p{$u} = $p{$_};
+    }
+    for (keys %d) {
+        $p{$_} = $d{$_} unless defined $p{$_};
+    }
+    confess "Unknown resampling algorithm: '$p{RESAMPLEALG}'." 
+        unless exists $Geo::GDAL::RIO_RESAMPLING_STRING2INT{$p{RESAMPLEALG}};
+    $p{RESAMPLEALG} = $Geo::GDAL::RIO_RESAMPLING_STRING2INT{$p{RESAMPLEALG}};
+    unless ($Geo::GDAL::TYPE_INT2STRING{$p{BUFTYPE}}) {
+        confess "Unknown data type: '$p{BUFTYPE}'." 
+            unless exists $Geo::GDAL::TYPE_STRING2INT{$p{BUFTYPE}};
+        $p{BUFTYPE} = $Geo::GDAL::TYPE_STRING2INT{$p{BUFTYPE}};
+    }
+    $self->_ReadRaster($p{XOFF},$p{YOFF},$p{XSIZE},$p{YSIZE},$p{BUFXSIZE},$p{BUFYSIZE},$p{BUFTYPE},$p{BANDLIST},$p{BUFPIXELSPACE},$p{BUFLINESPACE},$p{BUFBANDSPACE},$p{RESAMPLEALG},$p{CALLBACK},$p{CALLBACKDATA});
+}
+
+sub WriteRaster {
+    my $self = shift;
+    my ($width, $height) = $self->Size;
+    my ($type) = $self->Band->DataType;
+    my %d = (
+        XOFF => 0,
+        YOFF => 0,
+        XSIZE => $width,
+        YSIZE => $height,
+        BUF => undef,
+        BUFXSIZE => undef,
+        BUFYSIZE => undef,
+        BUFTYPE => $type,
+        BANDLIST => [1],
+        BUFPIXELSPACE => 0,
+        BUFLINESPACE => 0,
+        BUFBANDSPACE => 0
+        );
+    my %p;
+    my $t;
+    if (defined $_[0]) {
+        $t = uc($_[0]); 
+        $t =~ s/_//g;
+    }
+    if (@_ == 0) {
+    } elsif (ref($_[0]) eq 'HASH') {
+        %p = %{$_[0]};
+    } elsif (@_ % 2 == 0 and (defined $t and exists $d{$t})) {
+        %p = @_;
+    } else {
+        ($p{xoff},$p{yoff},$p{xsize},$p{ysize},$p{buf},$p{buf_xsize},$p{buf_ysize},$p{buf_type},$p{band_list},$p{buf_pixel_space},$p{buf_line_space},$p{buf_band_space}) = @_;
+    }
+    for (keys %p) {
+        my $u = uc($_);
+        $u =~ s/_//g;
+        carp "Unknown named parameter '$_'." unless exists $d{$u};
+        $p{$u} = $p{$_};
+    }
+    for (keys %d) {
+        $p{$_} = $d{$_} unless defined $p{$_};
+    }
+    unless ($Geo::GDAL::TYPE_INT2STRING{$p{BUFTYPE}}) {
+        confess "Unknown data type: '$p{BUFTYPE}'." 
+            unless exists $Geo::GDAL::TYPE_STRING2INT{$p{BUFTYPE}};
+        $p{BUFTYPE} = $Geo::GDAL::TYPE_STRING2INT{$p{BUFTYPE}};
+    }
+    $self->_WriteRaster($p{XOFF},$p{YOFF},$p{XSIZE},$p{YSIZE},$p{BUF},$p{BUFXSIZE},$p{BUFYSIZE},$p{BUFTYPE},$p{BANDLIST},$p{BUFPIXELSPACE},$p{BUFLINESPACE},$p{BUFBANDSPACE});
+}
+
 
 
 
@@ -682,6 +788,11 @@ sub DataType {
     return $Geo::GDAL::TYPE_INT2STRING{$self->{DataType}};
 }
 
+sub PackCharacter {
+    my $self = shift;
+    return Geo::GDAL::PackCharacter($self->DataType);
+}
+
 sub NoDataValue {
     my $self = shift;
     if (@_ > 0) {
@@ -740,7 +851,6 @@ sub WriteTile {
     my $ysize = @{$data};
     $ysize = $self->{YSize} - $yoff if $ysize > $self->{YSize} - $yoff;
     my $pc = Geo::GDAL::PackCharacter($self->{DataType});
-    my $w = $xsize * Geo::GDAL::GetDataTypeSize($self->{DataType})/8;
     for my $i (0..$ysize-1) {
         my $scanline = pack($pc."[$xsize]", @{$data->[$i]});
         $self->WriteRaster( $xoff, $yoff+$i, $xsize, 1, $scanline );
@@ -869,6 +979,105 @@ sub FillNodata {
     Geo::GDAL::FillNodata(@p);
 }
 *GetBandNumber = *GetBand;
+
+sub ReadRaster {
+    my $self = shift;
+    my ($width, $height) = $self->Size;
+    my ($type) = $self->DataType;
+    my %d = (
+        XOFF => 0,
+        YOFF => 0,
+        XSIZE => $width,
+        YSIZE => $height,
+        BUFXSIZE => undef,
+        BUFYSIZE => undef,
+        BUFTYPE => $type,
+        BUFPIXELSPACE => 0,
+        BUFLINESPACE => 0,
+        RESAMPLEALG => 'NearestNeighbour',
+        CALLBACK => undef,
+        CALLBACKDATA => undef
+        );
+    my %p;
+    my $t;
+    if (defined $_[0]) {
+        $t = uc($_[0]); 
+        $t =~ s/_//g;
+    }
+    if (@_ == 0) {
+    } elsif (ref($_[0]) eq 'HASH') {
+        %p = %{$_[0]};
+    } elsif (@_ % 2 == 0 and (defined $t and exists $d{$t})) {
+        %p = @_;
+    } else {
+        ($p{xoff},$p{yoff},$p{xsize},$p{ysize},$p{buf_xsize},$p{buf_ysize},$p{buf_type},$p{buf_pixel_space},$p{buf_line_space},$p{resample_alg},$p{callback},$p{callback_data}) = @_;
+    }
+    for (keys %p) {
+        my $u = uc($_);
+        $u =~ s/_//g;
+        carp "Unknown named parameter '$_'." unless exists $d{$u};
+        $p{$u} = $p{$_};
+    }
+    for (keys %d) {
+        $p{$_} = $d{$_} unless defined $p{$_};
+    }
+    confess "Unknown resampling algorithm: '$p{RESAMPLEALG}'." 
+        unless exists $Geo::GDAL::RIO_RESAMPLING_STRING2INT{$p{RESAMPLEALG}};
+    $p{RESAMPLEALG} = $Geo::GDAL::RIO_RESAMPLING_STRING2INT{$p{RESAMPLEALG}};
+    unless ($Geo::GDAL::TYPE_INT2STRING{$p{BUFTYPE}}) {
+        confess "Unknown data type: '$p{BUFTYPE}'." 
+            unless exists $Geo::GDAL::TYPE_STRING2INT{$p{BUFTYPE}};
+        $p{BUFTYPE} = $Geo::GDAL::TYPE_STRING2INT{$p{BUFTYPE}};
+    }
+    $self->_ReadRaster($p{XOFF},$p{YOFF},$p{XSIZE},$p{YSIZE},$p{BUFXSIZE},$p{BUFYSIZE},$p{BUFTYPE},$p{BUFPIXELSPACE},$p{BUFLINESPACE},$p{RESAMPLEALG},$p{CALLBACK},$p{CALLBACKDATA});
+}
+
+sub WriteRaster {
+    my $self = shift;
+    my ($width, $height) = $self->Size;
+    my ($type) = $self->DataType;
+    my %d = (
+        XOFF => 0,
+        YOFF => 0,
+        XSIZE => $width,
+        YSIZE => $height,
+        BUF => undef,
+        BUFXSIZE => undef,
+        BUFYSIZE => undef,
+        BUFTYPE => $type,
+        BUFPIXELSPACE => 0,
+        BUFLINESPACE => 0
+        );
+    my %p;
+    my $t;
+    if (defined $_[0]) {
+        $t = uc($_[0]); 
+        $t =~ s/_//g;
+    }
+    if (@_ == 0) {
+    } elsif (ref($_[0]) eq 'HASH') {
+        %p = %{$_[0]};
+    } elsif (@_ % 2 == 0 and (defined $t and exists $d{$t})) {
+        %p = @_;
+    } else {
+        ($p{xoff},$p{yoff},$p{xsize},$p{ysize},$p{buf},$p{buf_xsize},$p{buf_ysize},$p{buf_type},$p{buf_pixel_space},$p{buf_line_space}) = @_;
+    }
+    for (keys %p) {
+        my $u = uc($_);
+        $u =~ s/_//g;
+        carp "Unknown named parameter '$_'." unless exists $d{$u};
+        $p{$u} = $p{$_};
+    }
+    for (keys %d) {
+        $p{$_} = $d{$_} unless defined $p{$_};
+    }
+    unless ($Geo::GDAL::TYPE_INT2STRING{$p{BUFTYPE}}) {
+        confess "Unknown data type: '$p{BUFTYPE}'." 
+            unless exists $Geo::GDAL::TYPE_STRING2INT{$p{BUFTYPE}};
+        $p{BUFTYPE} = $Geo::GDAL::TYPE_STRING2INT{$p{BUFTYPE}};
+    }
+    $self->_WriteRaster($p{XOFF},$p{YOFF},$p{XSIZE},$p{YSIZE},$p{BUF},$p{BUFXSIZE},$p{BUFYSIZE},$p{BUFTYPE},$p{BUFPIXELSPACE},$p{BUFLINESPACE});
+}
 
 
 
