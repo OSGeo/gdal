@@ -412,13 +412,9 @@ def misc_7():
 
     gt = (10, 0.1, 0, 20, 0, -1.0)
     res = gdal.InvGeoTransform(gt)
-    if res[0] != 1:
-        print(res)
-        return 'fail'
-
     expected_inv_gt = (-100.0, 10.0, 0.0, 20.0, 0.0, -1.0)
     for i in range(6):
-        if abs(res[1][i] - expected_inv_gt[i]) > 1e-6:
+        if abs(res[i] - expected_inv_gt[i]) > 1e-6:
             print(res)
             return 'fail'
 
