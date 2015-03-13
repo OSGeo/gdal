@@ -2214,6 +2214,22 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
     const char* pszYCC = CSLFetchNameValue(papszOptions, "YCC");
     int bYCC = ((nBands == 3 || nBands == 4) && eDataType == GDT_Byte &&
             CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "YCC", "TRUE")));
+    
+    /* TODO: when OpenJPEG 2.2 is released, make this conditional */
+    /* Depending on the way OpenJPEG <= r2950 is built, YCC with 4 bands might work on
+     * Debug mode, but this relies on unreliable stack buffer overflows, so
+     * better err on the safe side */
+    if( bYCC && nBands > 3 )
+    {
+        if( pszYCC != NULL )
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "OpenJPEG r2950 and below can generate invalid output with "
+                     "MCT YCC transform and more than 3 bands. Disabling YCC");
+        }
+        bYCC = FALSE;
+    }
+    
     if( bYCBCR420 && bYCC )
     {
         if( pszYCC != NULL )
