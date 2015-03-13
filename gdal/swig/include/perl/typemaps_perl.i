@@ -16,22 +16,36 @@
 
 /*
  * double *val, int*hasval, is a special contrived typemap used for
- * the RasterBand GetNoDataValue, GetMinimum, GetMaximum, GetOffset, GetScale methods.
- * the variable hasval is tested.  If it is false (is, the value
- * is not set in the raster band) then undef is returned.  If is is != 0, then
- * the value is coerced into a long and returned.
+ * the RasterBand GetNoDataValue, GetMinimum, GetMaximum, GetOffset,
+ * GetScale methods. The variable hasval is tested and if it is false
+ * (meaning, the value is not set in the raster band) then undef is
+ * returned in scalar context.  If is is != 0, then the value is
+ * coerced into a long and returned in scalar context. In list context
+ * the value and hasval are returned. If hasval is zero, the value is
+ * "generally the minimum supported value for the data type".
  */
+
 %typemap(in,numinputs=0) (double *val, int *hasval) ( double tmpval, int tmphasval ) {
   /* %typemap(in,numinputs=0) (double *val, int *hasval) */
   $1 = &tmpval;
   $2 = &tmphasval;
 }
 %typemap(argout) (double *val, int *hasval) {
-  /* %typemap(argout) (double *val, int *hasval) */
-  $result = sv_newmortal();
-  if ( *$2 )
-    sv_setnv($result, *$1);
-  argvi++;
+    /* %typemap(argout) (double *val, int *hasval) */
+    if (GIMME_V == G_ARRAY) {
+        $result = sv_newmortal();
+        sv_setnv($result, *$1);
+        argvi++;
+        $result = sv_newmortal();
+        sv_setiv($result, *$2);
+        argvi++;
+    } else {
+        if ( *$2 ) {
+            $result = sv_newmortal();
+            sv_setnv($result, *$1);
+            argvi++;
+        }
+    }
 }
 
 %typemap(in) GIntBig
@@ -615,17 +629,23 @@ CreateArrayFromStringArray( char **first ) {
 {
     /* %typemap(in,numinputs=1) const GDALColorEntry*(GDALColorEntry e) */
     $1 = &e3;
-    if (!(SvROK($input) && (SvTYPE(SvRV($input))==SVt_PVAV)))
-        SWIG_croak("expected a reference to an array as an argument to a Geo::GDAL method");
-    AV *av = (AV*)(SvRV($input));
-    SV **sv = av_fetch(av, 0, 0);
-    $1->c1 =  SvIV(*sv);
-    sv = av_fetch(av, 1, 0);
-    $1->c2 =  SvIV(*sv);
-    sv = av_fetch(av, 2, 0);
-    $1->c3 =  SvIV(*sv);
-    sv = av_fetch(av, 3, 0);
-    $1->c4 =  SvIV(*sv);
+    int ok = SvROK($input) && SvTYPE(SvRV($input))==SVt_PVAV;
+    AV *av;
+    if (ok) {
+      av = (AV*)(SvRV($input));
+      ok = av_top_index(av) == 3;
+    }
+    if (ok) {
+      SV **sv = av_fetch(av, 0, 0);
+      $1->c1 =  SvIV(*sv);
+      sv = av_fetch(av, 1, 0);
+      $1->c2 =  SvIV(*sv);
+      sv = av_fetch(av, 2, 0);
+      $1->c3 =  SvIV(*sv);
+      sv = av_fetch(av, 3, 0);
+      $1->c4 =  SvIV(*sv);
+    } else 
+      SWIG_croak("Color entry is an array of four values: red, green, blue, alpha.");
 }
 
 /*

@@ -639,8 +639,8 @@ sub ReadRaster {
         BUFLINESPACE => 0,
         BUFBANDSPACE => 0,
         RESAMPLEALG => 'NearestNeighbour',
-        CALLBACK => undef,
-        CALLBACKDATA => undef
+        PROGRESS => undef,
+        PROGRESSDATA => undef
         );
     my %p;
     my $t;
@@ -654,7 +654,7 @@ sub ReadRaster {
     } elsif (@_ % 2 == 0 and (defined $t and exists $d{$t})) {
         %p = @_;
     } else {
-        ($p{xoff},$p{yoff},$p{xsize},$p{ysize},$p{buf_xsize},$p{buf_ysize},$p{buf_type},$p{band_list},$p{buf_pixel_space},$p{buf_line_space},$p{buf_band_space},$p{resample_alg},$p{callback},$p{callback_data}) = @_;
+        ($p{xoff},$p{yoff},$p{xsize},$p{ysize},$p{buf_xsize},$p{buf_ysize},$p{buf_type},$p{band_list},$p{buf_pixel_space},$p{buf_line_space},$p{buf_band_space},$p{resample_alg},$p{progress},$p{progress_data}) = @_;
     }
     for (keys %p) {
         my $u = uc($_);
@@ -673,7 +673,7 @@ sub ReadRaster {
             unless exists $Geo::GDAL::TYPE_STRING2INT{$p{BUFTYPE}};
         $p{BUFTYPE} = $Geo::GDAL::TYPE_STRING2INT{$p{BUFTYPE}};
     }
-    $self->_ReadRaster($p{XOFF},$p{YOFF},$p{XSIZE},$p{YSIZE},$p{BUFXSIZE},$p{BUFYSIZE},$p{BUFTYPE},$p{BANDLIST},$p{BUFPIXELSPACE},$p{BUFLINESPACE},$p{BUFBANDSPACE},$p{RESAMPLEALG},$p{CALLBACK},$p{CALLBACKDATA});
+    $self->_ReadRaster($p{XOFF},$p{YOFF},$p{XSIZE},$p{YSIZE},$p{BUFXSIZE},$p{BUFYSIZE},$p{BUFTYPE},$p{BANDLIST},$p{BUFPIXELSPACE},$p{BUFLINESPACE},$p{BUFBANDSPACE},$p{RESAMPLEALG},$p{PROGRESS},$p{PROGRESSDATA});
 }
 
 sub WriteRaster {
@@ -812,6 +812,7 @@ sub Unit {
         $unit = '' unless defined $unit;
         SetUnitType($self, $unit);
     }
+    return unless defined wantarray;
     GetUnitType($self);
 }
 
@@ -819,7 +820,10 @@ sub ScaleAndOffset {
     my $self = shift;
     SetScale($self, $_[0]) if @_ > 0 and defined $_[0];
     SetOffset($self, $_[1]) if @_ > 1 and defined $_[1];
-    (GetScale($self), GetOffset($self));
+    return unless defined wantarray;
+    my $scale = GetScale($self);
+    my $offset = GetOffset($self);
+    return ($scale, $offset);
 }
 
 sub ReadTile {
@@ -890,7 +894,7 @@ sub AttributeTable {
     SetDefaultRAT($self, $_[0]) if @_ and defined $_[0];
     return unless defined wantarray;
     my $r = GetDefaultRAT($self);
-    $Geo::GDAL::RasterAttributeTable::BANDS{$r} = $self;
+    $Geo::GDAL::RasterAttributeTable::BANDS{$r} = $self if $r;
     return $r;
 }
 
@@ -926,17 +930,25 @@ sub Contours {
                     NoDataValue => undef,
                     IDField => -1,
                     ElevField => -1,
-                    callback => undef,
-                    callback_data => undef);
+                    Progress => undef,
+                    ProgressData => undef);
     my %params;
     if (!defined($_[0]) or (blessed($_[0]) and $_[0]->isa('Geo::OGR::DataSource'))) {
         ($params{DataSource}, $params{LayerConstructor},
          $params{ContourInterval}, $params{ContourBase},
          $params{FixedLevels}, $params{NoDataValue},
          $params{IDField}, $params{ElevField},
-         $params{callback}, $params{callback_data}) = @_;
+         $params{Progress}, $params{ProgressData}) = @_;
     } else {
         %params = @_;
+        if (exists $params{progress}) {
+            $params{Progress} = $params{progress};
+            delete $params{progress};
+        }
+        if (exists $params{progress_data}) {
+            $params{ProgressData} = $params{progress_data};
+            delete $params{progress_data};
+        }
     }
     for (keys %params) {
         carp "unknown parameter $_ in Geo::GDAL::Band::Contours" unless exists $defaults{$_};
@@ -961,10 +973,10 @@ sub Contours {
     for ('IDField', 'ElevField') {
         $params{$_} = $schema->GetFieldIndex($params{$_}) unless $params{$_} =~ /^[+-]?\d+$/;
     }
-    $params{callback_data} = 1 if $params{callback} and not defined $params{callback_data};
+    $params{ProgressData} = 1 if $params{Progress} and not defined $params{ProgressData};
     ContourGenerate($self, $params{ContourInterval}, $params{ContourBase}, $params{FixedLevels},
                     $params{NoDataValue}, $layer, $params{IDField}, $params{ElevField},
-                    $params{callback}, $params{callback_data});
+                    $params{Progress}, $params{ProgressData});
     return $layer;
 }
 
@@ -995,8 +1007,8 @@ sub ReadRaster {
         BUFPIXELSPACE => 0,
         BUFLINESPACE => 0,
         RESAMPLEALG => 'NearestNeighbour',
-        CALLBACK => undef,
-        CALLBACKDATA => undef
+        PROGRESS => undef,
+        PROGRESSDATA => undef
         );
     my %p;
     my $t;
@@ -1010,7 +1022,7 @@ sub ReadRaster {
     } elsif (@_ % 2 == 0 and (defined $t and exists $d{$t})) {
         %p = @_;
     } else {
-        ($p{xoff},$p{yoff},$p{xsize},$p{ysize},$p{buf_xsize},$p{buf_ysize},$p{buf_type},$p{buf_pixel_space},$p{buf_line_space},$p{resample_alg},$p{callback},$p{callback_data}) = @_;
+        ($p{xoff},$p{yoff},$p{xsize},$p{ysize},$p{buf_xsize},$p{buf_ysize},$p{buf_type},$p{buf_pixel_space},$p{buf_line_space},$p{resample_alg},$p{progress},$p{progress_data}) = @_;
     }
     for (keys %p) {
         my $u = uc($_);
@@ -1029,7 +1041,7 @@ sub ReadRaster {
             unless exists $Geo::GDAL::TYPE_STRING2INT{$p{BUFTYPE}};
         $p{BUFTYPE} = $Geo::GDAL::TYPE_STRING2INT{$p{BUFTYPE}};
     }
-    $self->_ReadRaster($p{XOFF},$p{YOFF},$p{XSIZE},$p{YSIZE},$p{BUFXSIZE},$p{BUFYSIZE},$p{BUFTYPE},$p{BUFPIXELSPACE},$p{BUFLINESPACE},$p{RESAMPLEALG},$p{CALLBACK},$p{CALLBACKDATA});
+    $self->_ReadRaster($p{XOFF},$p{YOFF},$p{XSIZE},$p{YSIZE},$p{BUFXSIZE},$p{BUFYSIZE},$p{BUFTYPE},$p{BUFPIXELSPACE},$p{BUFLINESPACE},$p{RESAMPLEALG},$p{PROGRESS},$p{PROGRESSDATA});
 }
 
 sub WriteRaster {
@@ -1085,6 +1097,7 @@ sub WriteRaster {
 package Geo::GDAL::ColorTable;
 use strict;
 use warnings;
+use Carp;
 use vars qw/
     %PALETTE_INTERPRETATION_STRING2INT %PALETTE_INTERPRETATION_INT2STRING
     /;
@@ -1107,7 +1120,18 @@ sub GetPaletteInterpretation {
 }
 
 sub SetColorEntry {
-    @_ == 3 ? _SetColorEntry(@_) : _SetColorEntry(@_[0..1], [@_[2..5]]);
+    my $self = shift;
+    my $index = shift;
+    my $color;
+    if (ref($_[0]) eq 'ARRAY') {
+        $color = shift;
+    } else {
+        $color = [@_];
+    }
+    eval {
+        $self->_SetColorEntry($index, $color);
+    };
+    confess $@ if $@;
 }
 
 sub ColorEntry {
@@ -1395,14 +1419,14 @@ typedef void OGRLayerShadow;
                            int nFixedLevelCount, double *padfFixedLevels,
                            int bUseNoData, double dfNoDataValue,
                            OGRLayerShadow *hLayer, int iIDField, int iElevField,
-                           GDALProgressFunc callback = NULL,
-                           void* callback_data = NULL) {
+                           GDALProgressFunc progress = NULL,
+                           void* progress_data = NULL) {
         return GDALContourGenerate( self, dfContourInterval, dfContourBase,
                                     nFixedLevelCount, padfFixedLevels,
                                     bUseNoData, dfNoDataValue,
                                     hLayer, iIDField, iElevField,
-                                    callback,
-                                    callback_data );
+                                    progress,
+                                    progress_data );
     }
     %clear (int nFixedLevelCount, double *padfFixedLevels);
     %clear (int bUseNoData, double dfNoDataValue);

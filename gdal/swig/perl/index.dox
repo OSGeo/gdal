@@ -161,6 +161,22 @@ Prints:
 Warning: Driver GTiff does not support my_unknown_option creation option at site/lib/Geo/GDAL.pm line 771.
 \endcode
 
+\section index_progress Progress callback
+
+Some methods accept a callback function for reporting the
+progress. The progress subroutine is called with three arguments: a
+number, a string, and user defined data. The user defined data 
+is an argument to the method.
+
+\code
+sub progress {
+    my($progress, $message, $data) = @_;
+    my $terminate = 0;
+    ...
+    return $terminate ? 0 : 1;
+}
+\endcode
+
 \section index_footer Note
 
 This documentation is generated from files within the GDAL
