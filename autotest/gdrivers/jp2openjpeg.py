@@ -815,7 +815,8 @@ def jp2openjpeg_22():
     ds = None
     gdal.Unlink('/vsimem/jp2openjpeg_22.jp2')
 
-    # RGBA with YCC=YES
+    # RGBA with YCC=YES. Will emit a warning for now because of OpenJPEG
+    # bug (only fixed in trunk, not released versions at that time)
     src_ds = gdal.Open('../gcore/data/stefan_full_rgba.tif')
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_22.jp2', src_ds, options = ['YCC=YES', 'QUALITY=100', 'REVERSIBLE=YES'])
     maxdiff = gdaltest.compare_ds(src_ds, out_ds)
