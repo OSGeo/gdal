@@ -236,33 +236,33 @@ sub traverse {
 # specified by the path.
 # @return a Geo::GDAL::Driver object, which represents an internal driver.
 
-## @cmethod ComputeMedianCutPCT(Geo::GDAL::Band red, Geo::GDAL::Band green, Geo::GDAL::Band blue, $num_colors, $colors, subref callback, $callback_data)
+## @cmethod ComputeMedianCutPCT(Geo::GDAL::Band red, Geo::GDAL::Band green, Geo::GDAL::Band blue, $num_colors, $colors, subref progress, $progress_data)
 # Compute an "optimal" color table for a three band image.
 # @param red a Geo::GDAL::Band object
 # @param green a Geo::GDAL::Band object
 # @param blue a Geo::GDAL::Band object
 # @param num_colors the desired number of colors 
 # @param colors an empty Geo::GDAL::ColorTable object
-# @param callback [optional] a reference to a subroutine, which will
-# be called with parameters (number progress, string msg, callback_data)
-# @param callback_data [optional]
+# @param progress [optional] a reference to a subroutine, which will
+# be called with parameters (number progress, string msg, progress_data)
+# @param progress_data [optional]
 #
 # <a href="http://www.gdal.org/gdal__alg_8h.html">Documentation for GDAL algorithms</a>
 
-## @cmethod DitherRGB2PCT($red, $green, $blue, $target, $colors, subref callback, $callback_data)
+## @cmethod DitherRGB2PCT($red, $green, $blue, $target, $colors, subref progress, $progress_data)
 # Dither a three band image into one band using a color table.
 # @param red a Geo::GDAL::Band object
 # @param green a Geo::GDAL::Band object
 # @param blue a Geo::GDAL::Band object
 # @param target a Geo::GDAL::Band object
 # @param colors a Geo::GDAL::ColorTable object
-# @param callback [optional] a reference to a subroutine, which will
-# be called with parameters (number progress, string msg, callback_data)
-# @param callback_data [optional]
+# @param progress [optional] a reference to a subroutine, which will
+# be called with parameters (number progress, string msg, progress_data)
+# @param progress_data [optional]
 #
 # <a href="http://www.gdal.org/gdal__alg_8h.html">Documentation for GDAL algorithms</a>
 
-## @cmethod ReprojectImage($src_ds, $dst_ds, $src_wkt=undef, $dst_wkt=undef, $ResampleAlg='NearestNeighbour', $WarpMemoryLimit=0, $maxerror=0.0, subref callback, $callback_data)
+## @cmethod ReprojectImage($src_ds, $dst_ds, $src_wkt=undef, $dst_wkt=undef, $ResampleAlg='NearestNeighbour', $WarpMemoryLimit=0, $maxerror=0.0, subref progress, $progress_data)
 # @param src_ds Source dataset.
 # @param dst_ds Destination dataset.
 # @param src_wkt Source projection as a WKT.
@@ -272,10 +272,10 @@ sub traverse {
 # @param maxerror Maximum error measured in input pixels that is
 # allowed in approximating the transformation. Default is 0.0, i.e.,
 # exact calculations.
-# @param callback [optional] a reference to a subroutine, which will
-# be called with parameters (number progress, string msg, callback_data).
+# @param progress [optional] a reference to a subroutine, which will
+# be called with parameters (number progress, string msg, progress_data).
 # Reprojection is terminated if the progress function returns 0.
-# @param callback_data [optional]
+# @param progress_data [optional]
 #
 # <a href="http://www.gdal.org/gdalwarper_8h.html">Documentation for GDAL warper</a>
 
@@ -289,7 +289,7 @@ sub traverse {
 #
 # <a href="http://www.gdal.org/gdalwarper_8h.html">Documentation for GDAL warper</a>
 
-## @cmethod ComputeProximity(Geo::GDAL::Band src, Geo::GDAL::Band proximity, hashref options, subref callback, $callback_data)
+## @cmethod ComputeProximity(Geo::GDAL::Band src, Geo::GDAL::Band proximity, hashref options, subref progress, $progress_data)
 # @param src The raster from which the proximities are computed from.
 # @param proximity The raster to which the proximities are computed to.
 # @param options Options. Supported key, value pairs are 
@@ -310,13 +310,13 @@ sub traverse {
 # - FIXED_BUF_VAL => n If this option is set, all pixels within the
 # MAXDIST threadhold are set to this fixed value instead of to a
 # proximity distance.
-# @param callback [optional] a reference to a subroutine, which will
-# be called with parameters (number progress, string msg, callback_data)
-# @param callback_data [optional]
+# @param progress [optional] a reference to a subroutine, which will
+# be called with parameters (number progress, string msg, progress_data)
+# @param progress_data [optional]
 #
 # <a href="http://www.gdal.org/gdal__alg_8h.html">Documentation for GDAL algorithms</a>
 
-## @cmethod RasterizeLayer(Geo::GDAL::Dataset ds, arrayref bands, Geo::OGR::Layer layer, $transformer, $arg, arrayref burn_values, hashref options, subref callback, $callback_data)
+## @cmethod RasterizeLayer(Geo::GDAL::Dataset ds, arrayref bands, Geo::OGR::Layer layer, $transformer, $arg, arrayref burn_values, hashref options, subref progress, $progress_data)
 # @param ds
 # @param bands A reference to a list of bands to be updated.
 # @param layer
@@ -324,13 +324,13 @@ sub traverse {
 # @param arg Transformer argument, must be undef.
 # @param burn_values Values to be used for burning the geometries. One for each layer.
 # @param options Not used.
-# @param callback [optional] a reference to a subroutine, which will
-# be called with parameters (number progress, string msg, callback_data)
-# @param callback_data [optional]
+# @param progress [optional] a reference to a subroutine, which will
+# be called with parameters (number progress, string msg, progress_data)
+# @param progress_data [optional]
 #
 # <a href="http://www.gdal.org/gdal__alg_8h.html">Documentation for GDAL algorithms</a>
 
-## @cmethod Polygonize(Geo::GDAL::Band src, Geo::GDAL::Band mask, Geo::OGR::Layer out, $PixValField, hashref options, subref callback, $callback_data)
+## @cmethod Polygonize(Geo::GDAL::Band src, Geo::GDAL::Band mask, Geo::OGR::Layer out, $PixValField, hashref options, subref progress, $progress_data)
 # @param src
 # @param mask All pixels in the mask band with a value other than zero
 # will be considered suitable for collection as polygons. Must be
@@ -339,13 +339,13 @@ sub traverse {
 # @param PixValField The index (or name) of the field in output layer
 # into which the pixel value of the polygon should be written.
 # @param options Not used.
-# @param callback [optional] a reference to a subroutine, which will
-# be called with parameters (number progress, string msg, callback_data)
-# @param callback_data [optional]
+# @param progress [optional] a reference to a subroutine, which will
+# be called with parameters (number progress, string msg, progress_data)
+# @param progress_data [optional]
 #
 # <a href="http://www.gdal.org/gdal__alg_8h.html">Documentation for GDAL algorithms</a>
 
-## @cmethod SieveFilter(Geo::GDAL::Band src, Geo::GDAL::Band mask, Geo::GDAL::Band dst, $threshold, $connectedness, hashref options, subref callback, $callback_data)
+## @cmethod SieveFilter(Geo::GDAL::Band src, Geo::GDAL::Band mask, Geo::GDAL::Band dst, $threshold, $connectedness, hashref options, subref progress, $progress_data)
 # Removes small raster polygons.
 # @param src
 # @param mask
@@ -353,29 +353,29 @@ sub traverse {
 # @param threshold An integer.
 # @param connectedness 4 or 8
 # @param options Not used.
-# @param callback [optional] a reference to a subroutine, which will
-# be called with parameters (number progress, string msg, callback_data)
-# @param callback_data [optional]
+# @param progress [optional] a reference to a subroutine, which will
+# be called with parameters (number progress, string msg, progress_data)
+# @param progress_data [optional]
 #
 # <a href="http://www.gdal.org/gdal__alg_8h.html">Documentation for GDAL algorithms</a>
 
-## @cmethod RegenerateOverviews(Geo::GDAL::Band src, arrayref overviews, $resampling, subref callback, $callback_data)
+## @cmethod RegenerateOverviews(Geo::GDAL::Band src, arrayref overviews, $resampling, subref progress, $progress_data)
 # @todo This is not yet available
 #
 # @param src
 # @param overviews A list of Geo::GDAL::Band's for the overviews.
 # @param resampling GDAL resampling method (one of Geo::GDAL::ResamplingTypes).
-# @param callback [optional] a reference to a subroutine, which will
-# be called with parameters (number progress, string msg, callback_data)
-# @param callback_data [optional]
+# @param progress [optional] a reference to a subroutine, which will
+# be called with parameters (number progress, string msg, progress_data)
+# @param progress_data [optional]
 
-## @cmethod RegenerateOverview(Geo::GDAL::Band src, Geo::GDAL::Band overview, $resampling, subref callback, $callback_data)
+## @cmethod RegenerateOverview(Geo::GDAL::Band src, Geo::GDAL::Band overview, $resampling, subref progress, $progress_data)
 # @param src
 # @param overview
 # @param resampling GDAL resampling method (one of Geo::GDAL::ResamplingTypes).
-# @param callback [optional] a reference to a subroutine, which will
-# be called with parameters (number progress, string msg, callback_data)
-# @param callback_data [optional]
+# @param progress [optional] a reference to a subroutine, which will
+# be called with parameters (number progress, string msg, progress_data)
+# @param progress_data [optional]
 
 ## @cmethod \@GeneralCmdLineProcessor(arrayref argv, $options = 0)
 # @param argv
@@ -677,13 +677,13 @@ sub traverse {
 # @param geo_transform [optional]
 # @return the geo transform in a non-void context.
 
-## @method BuildOverviews($resampling, arrayref overviews, subref callback, $callback_data)
+## @method BuildOverviews($resampling, arrayref overviews, subref progress, $progress_data)
 # @param resampling Either 'NEAREST', 'AVERAGE', or 'AVERAGE_MAGPHASE'.
 # @param overviews The list of overview decimation factors to
 # build. For example [2,4,8].
-# @param callback [optional] a reference to a subroutine, which will
-# be called with parameters (number progress, string msg, callback_data)
-# @param callback_data [optional]
+# @param progress [optional] a reference to a subroutine, which will
+# be called with parameters (number progress, string msg, progress_data)
+# @param progress_data [optional]
 
 ## @ignore GetGCPCount
 ## @ignore GetGCPs
@@ -743,8 +743,8 @@ sub traverse {
 # - \a BufLineSpace (default is 0)
 # - \a BufBandSpace (default is 0)
 # - \a ResampleAlg one of Geo::GDAL::RIOResamplingTypes (default is 'NearestNeighbour'),
-# - \a Callback reference to a callback function (default is undef)
-# - \a CallbackData (default is undef)
+# - \a Progress reference to a progress function (default is undef)
+# - \a ProgressData (default is undef)
 #
 # If the parameters are given as a list the order is as above.
 # <a href="http://www.gdal.org/classGDALDataset.html">Entry in GDAL docs (method RasterIO)</a>
@@ -802,8 +802,8 @@ sub traverse {
 # (get only and returns an integer), SetRasterColorInterpretation and
 # SetColorInterpretation (set only and requires an integer)
 # @param color_interpretation [optional] new color interpretation, one
-# of \@Geo::GDAL::Band::COLOR_INTERPRETATIONS
-# @return color interpretation, one of \@Geo::GDAL::Band::COLOR_INTERPRETATIONS
+# of Geo::GDAL::Band::ColorInterpretations.
+# @return color interpretation, one of Geo::GDAL::Band::ColorInterpretations.
 
 ## @ignore GetNoDataValue
 ## @ignore SetNoDataValue
@@ -814,7 +814,10 @@ sub traverse {
 # Get or set the "no data" value.
 # @note $band->NoDataValue(undef) sets the "no data" value to the Posix
 # floating point maximum.
-# @return the "no data" value.
+# @return the "no data" value in scalar context. In list context
+# returns the no data value or an out of range value and a boolean
+# value, which indicates which is the case (true is first, false is
+# second).
 
 ## @ignore GetUnitType
 ## @ignore SetUnitType
@@ -836,26 +839,54 @@ sub traverse {
 # \code
 # Units value = (raw value * scale) + offset
 # \endcode
-# @return ($scale, $offset)
+# @return a list ($scale, $offset), the values are undefined if they
+# are not set.
 # @since version 1.9 of the bindings.
 
+## @method ComputeRasterMinMax($approx_ok = 0)
+# @return arrayref MinMax = [min, max]
+
+## @method ComputeBandStats($samplestep = 1)
+# @param samplestep the row increment in computing the statistics.
+# @note Returns uncorrected sample standard deviation.
+#
+# See also Geo::GDAL::Band::ComputeStatistics.
+# @return a list (mean, stddev).
+
 ## @method $GetMinimum()
+# @note Call Geo::GDAL::Band::ComputeStatistics before calling
+# GetMinimum to make sure the value is computed.
+#
 # @return statistical minimum of the band or undef if statistics are
-# not kept or computed.
+# not kept or computed in scalar context. In list context returns the
+# minimum value or a (kind of) minimum value supported by the data
+# type and a boolean value, which indicates which is the case (true is
+# first, false is second).
 
 ## @method $GetMaximum()
+# @note Call Geo::GDAL::Band::ComputeStatistics before calling
+# GetMaximum to make sure the value is computed.
+#
 # @return statistical minimum of the band or undef if statistics are
-# not kept or computed.
+# not kept or computed in scalar context. In list context returns the
+# maximum value or a (kind of) maximum value supported by the data
+# type and a boolean value, which indicates which is the case (true is
+# first, false is second).
 
-## @method @ComputeStatistics($approx_ok)
+## @method @ComputeStatistics($approx_ok, $progress = undef, $progress_data = undef)
 # @param approx_ok Whether it is allowed to compute the statistics
 # based on overviews or similar.
+# @note Returns uncorrected sample standard deviation.
+#
+# See also Geo::GDAL::Band::ComputeBandStats.
 # @return a list ($min, $max, $mean, $stddev).
 
 ## @method @GetStatistics($approx_ok, $force)
 # @param approx_ok Whether it is allowed to compute the statistics
 # based on overviews or similar.
 # @param force Whether to force scanning of the whole raster.
+# @note Uses Geo::GDAL::Band::ComputeStatistics internally.
+#
 # @return a list ($min, $max, $mean, $stddev).
 
 ## @method SetStatistics($min, $max, $mean, $stddev)
@@ -883,13 +914,6 @@ sub traverse {
 # @param xsize
 # @param ysize
 # @return the checksum.
-
-## @method ComputeRasterMinMax($approx_ok = 0)
-# @return arrayref MinMax = [min, max]
-
-## @method ComputeBandStats($samplestep = 1)
-# @param samplestep
-# @return arrayref Stats [mean, stddev]
 
 ## @method Fill($real_part, $imag_part = 0.0)
 # Fill the band with a constant value.
@@ -969,8 +993,8 @@ sub traverse {
 # - \a BufPixelSpace (default is 0)
 # - \a BufLineSpace (default is 0)
 # - \a ResampleAlg one of Geo::GDAL::RIOResamplingTypes (default is 'NearestNeighbour'),
-# - \a Callback reference to a callback function (default is undef)
-# - \a CallbackData (default is undef)
+# - \a Progress reference to a progress function (default is undef)
+# - \a ProgressData (default is undef)
 #
 # If the parameters are given as a list the order is as above.
 # <a href="http://www.gdal.org/classGDALDataset.html">Entry in GDAL docs (method RasterIO)</a>
@@ -991,11 +1015,11 @@ sub traverse {
 # - \a ProgressData data for the progress function, the default is undef
 # @return a list which contains the count of values in each bucket
 
-## @method @GetDefaultHistogram($force = 1, subref callback = undef, $callback_data = undef)
+## @method @GetDefaultHistogram($force = 1, subref progress = undef, $progress_data = undef)
 # @param force true to force the computation
-# @param callback [optional] a reference to a subroutine, which will
-# be called with parameters (number progress, string msg, callback_data)
-# @param callback_data [optional]
+# @param progress [optional] a reference to a subroutine, which will
+# be called with parameters (number progress, string msg, progress_data)
+# @param progress_data [optional]
 # @return a list: ($min, $max, arrayref histogram).
 
 ## @method @SetDefaultHistogram($min, $max, $histogram)
@@ -1031,41 +1055,26 @@ sub traverse {
 
 ## @method $GetMaskFlags()
 
+## @ignore GetRasterCategoryNames
+## @ignore SetRasterCategoryNames
+## @ignore GetCategoryNames
+## @ignore SetCategoryNames
+
 ## @method @CategoryNames(@names)
 # @param names [optional]
 # @return
 
-## @ignore GetCategoryNames
-## @ignore SetCategoryNames
-
-## @method $GetRasterCategoryNames()
-# @note a.k.a. GetCategoryNames, see also CategoryNames
-# @return names
-
-## @method SetRasterCategoryNames($names)
-# @note a.k.a. SetCategoryNames, see also CategoryNames
-# @param names
-#
+## @ignore SetDefaultRAT
+## @ignore GetDefaultRAT
 
 ## @method Geo::GDAL::RasterAttributeTable AttributeTable($AttributeTable)
 # @param AttributeTable [optional] A Geo::GDAL::RasterAttributeTable object.
 # @return a new Geo::GDAL::RasterAttributeTable object, whose data is
 # contained within the band.
 
-## @method Geo::GDAL::RasterAttributeTable GetDefaultRAT()
-# @deprecated use Geo::GDAL::Band::AttributeTable, which makes sure
-# the band is not destroyed before the attribute table.
-#
-# @return a new Geo::GDAL::RasterAttributeTable object, whose data is
-# contained within the band.
-
-## @method SetDefaultRAT($AttributeTable)
-# @param AttributeTable a Geo::GDAL::RasterAttributeTable object
-#
-
 ## @ignore ContourGenerate
 
-## @method Geo::OGR::Layer Contours($DataSource, hashref LayerConstructor, $ContourInterval, $ContourBase, arrayref FixedLevels, $NoDataValue, $IDField, $ElevField, subref callback, $callback_data)
+## @method Geo::OGR::Layer Contours($DataSource, hashref LayerConstructor, $ContourInterval, $ContourBase, arrayref FixedLevels, $NoDataValue, $IDField, $ElevField, subref Progress, $ProgressData)
 # Generate contours for this raster band. This method can also be used with named parameters.
 # @note This method is a wrapper for ContourGenerate.
 #
@@ -1085,21 +1094,21 @@ sub traverse {
 # @param NoDataValue default is undef
 # @param IDField default is '', i.e., no field (the field is created if this is given)
 # @param ElevField default is '', i.e., no field (the field is created if this is given)
-# @param callback [optional] a reference to a subroutine, which will
-# be called with parameters (number progress, string msg, callback_data)
-# @param callback_data [optional]
+# @param progress [optional] a reference to a subroutine, which will
+# be called with parameters (number progress, string msg, progress_data)
+# @param progress_data [optional]
 # @return
 
-## @method FillNodata($mask, $max_search_dist = 10, $smoothing_iterations = 0, $options = {}, subref callback, $callback_data)
+## @method FillNodata($mask, $max_search_dist = 10, $smoothing_iterations = 0, $options = {}, subref progress, $progress_data)
 # @note This is a wrapper for Geo::GDAL::FillNodata.
 # @param mask a mask band indicating pixels to be interpolated (zero valued)
 # @param max_search_dist [optional] the maximum number of pixels to
 # search in all directions to find values to interpolate from.
 # @param smoothing_iterations [optional] the number of 3x3 smoothing filter passes to run (0 or more).
 # @param options [optional] A reference to a hash. No options have been defined so far for this algorithm.
-# @param callback [optional] a reference to a subroutine, which will
-# be called with parameters (number progress, string msg, callback_data)
-# @param callback_data [optional]
+# @param progress [optional] a reference to a subroutine, which will
+# be called with parameters (number progress, string msg, progress_data)
+# @param progress_data [optional]
 #
 # <a href="http://www.gdal.org/gdal__alg_8h.html">Documentation for GDAL algorithms</a>
 
