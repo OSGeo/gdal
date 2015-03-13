@@ -633,7 +633,7 @@ CreateArrayFromStringArray( char **first ) {
     AV *av;
     if (ok) {
       av = (AV*)(SvRV($input));
-      ok = av_top_index(av) == 3;
+      ok = av_len(av) == 3;
     }
     if (ok) {
       SV **sv = av_fetch(av, 0, 0);
