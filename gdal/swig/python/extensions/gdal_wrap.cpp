@@ -3581,13 +3581,13 @@ SWIGINTERN GDALDatasetShadow *GDALDriverShadow_CreateCopy(GDALDriverShadow *self
                                                                     callback_data );
     return ds;
   }
-SWIGINTERN int GDALDriverShadow_Delete(GDALDriverShadow *self,char const *utf8_path){
+SWIGINTERN CPLErr GDALDriverShadow_Delete(GDALDriverShadow *self,char const *utf8_path){
     return GDALDeleteDataset( self, utf8_path );
   }
-SWIGINTERN int GDALDriverShadow_Rename(GDALDriverShadow *self,char const *newName,char const *oldName){
+SWIGINTERN CPLErr GDALDriverShadow_Rename(GDALDriverShadow *self,char const *newName,char const *oldName){
     return GDALRenameDataset( self, newName, oldName );
   }
-SWIGINTERN int GDALDriverShadow_CopyFiles(GDALDriverShadow *self,char const *newName,char const *oldName){
+SWIGINTERN CPLErr GDALDriverShadow_CopyFiles(GDALDriverShadow *self,char const *newName,char const *oldName){
     return GDALCopyDatasetFiles( self, newName, oldName );
   }
 SWIGINTERN int GDALDriverShadow_Register(GDALDriverShadow *self){
@@ -4952,6 +4952,9 @@ SWIGINTERN int GDALRasterAttributeTableShadow_GetRowOfValue(GDALRasterAttributeT
     }
 SWIGINTERN int GDALRasterAttributeTableShadow_ChangesAreWrittenToFile(GDALRasterAttributeTableShadow *self){
         return GDALRATChangesAreWrittenToFile( self );
+    }
+SWIGINTERN void GDALRasterAttributeTableShadow_DumpReadable(GDALRasterAttributeTableShadow *self){
+        GDALRATDumpReadable( self, NULL );
     }
 
 #include "gdalgrid.h"
@@ -8813,7 +8816,7 @@ SWIGINTERN PyObject *_wrap_Driver_Delete(PyObject *SWIGUNUSEDPARM(self), PyObjec
   int bToFree2 = 0 ;
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
-  int result;
+  CPLErr result;
   
   if (!PyArg_ParseTuple(args,(char *)"OO:Driver_Delete",&obj0,&obj1)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALDriverShadow, 0 |  0 );
@@ -8839,7 +8842,7 @@ SWIGINTERN PyObject *_wrap_Driver_Delete(PyObject *SWIGUNUSEDPARM(self), PyObjec
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (int)GDALDriverShadow_Delete(arg1,(char const *)arg2);
+    result = (CPLErr)GDALDriverShadow_Delete(arg1,(char const *)arg2);
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
@@ -8851,6 +8854,16 @@ SWIGINTERN PyObject *_wrap_Driver_Delete(PyObject *SWIGUNUSEDPARM(self), PyObjec
   {
     /* %typemap(freearg) (const char *utf8_path) */
     GDALPythonFreeCStr(arg2, bToFree2);
+  }
+  {
+    /* %typemap(ret) CPLErr */
+    if ( bUseExceptions == 0 ) {
+      /* We're not using exceptions.  And no error has occurred */
+      if ( resultobj == 0 ) {
+        /* No other return values set so return ErrorCode */
+        resultobj = PyInt_FromLong(result);
+      }
+    }
   }
   return resultobj;
 fail:
@@ -8878,7 +8891,7 @@ SWIGINTERN PyObject *_wrap_Driver_Rename(PyObject *SWIGUNUSEDPARM(self), PyObjec
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
   PyObject * obj2 = 0 ;
-  int result;
+  CPLErr result;
   
   if (!PyArg_ParseTuple(args,(char *)"OOO:Driver_Rename",&obj0,&obj1,&obj2)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALDriverShadow, 0 |  0 );
@@ -8910,7 +8923,7 @@ SWIGINTERN PyObject *_wrap_Driver_Rename(PyObject *SWIGUNUSEDPARM(self), PyObjec
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (int)GDALDriverShadow_Rename(arg1,(char const *)arg2,(char const *)arg3);
+    result = (CPLErr)GDALDriverShadow_Rename(arg1,(char const *)arg2,(char const *)arg3);
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
@@ -8921,6 +8934,16 @@ SWIGINTERN PyObject *_wrap_Driver_Rename(PyObject *SWIGUNUSEDPARM(self), PyObjec
   resultobj = SWIG_From_int(static_cast< int >(result));
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   if (alloc3 == SWIG_NEWOBJ) delete[] buf3;
+  {
+    /* %typemap(ret) CPLErr */
+    if ( bUseExceptions == 0 ) {
+      /* We're not using exceptions.  And no error has occurred */
+      if ( resultobj == 0 ) {
+        /* No other return values set so return ErrorCode */
+        resultobj = PyInt_FromLong(result);
+      }
+    }
+  }
   return resultobj;
 fail:
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
@@ -8945,7 +8968,7 @@ SWIGINTERN PyObject *_wrap_Driver_CopyFiles(PyObject *SWIGUNUSEDPARM(self), PyOb
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
   PyObject * obj2 = 0 ;
-  int result;
+  CPLErr result;
   
   if (!PyArg_ParseTuple(args,(char *)"OOO:Driver_CopyFiles",&obj0,&obj1,&obj2)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALDriverShadow, 0 |  0 );
@@ -8977,7 +9000,7 @@ SWIGINTERN PyObject *_wrap_Driver_CopyFiles(PyObject *SWIGUNUSEDPARM(self), PyOb
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (int)GDALDriverShadow_CopyFiles(arg1,(char const *)arg2,(char const *)arg3);
+    result = (CPLErr)GDALDriverShadow_CopyFiles(arg1,(char const *)arg2,(char const *)arg3);
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
@@ -8988,6 +9011,16 @@ SWIGINTERN PyObject *_wrap_Driver_CopyFiles(PyObject *SWIGUNUSEDPARM(self), PyOb
   resultobj = SWIG_From_int(static_cast< int >(result));
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   if (alloc3 == SWIG_NEWOBJ) delete[] buf3;
+  {
+    /* %typemap(ret) CPLErr */
+    if ( bUseExceptions == 0 ) {
+      /* We're not using exceptions.  And no error has occurred */
+      if ( resultobj == 0 ) {
+        /* No other return values set so return ErrorCode */
+        resultobj = PyInt_FromLong(result);
+      }
+    }
+  }
   return resultobj;
 fail:
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
@@ -19648,6 +19681,38 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_RasterAttributeTable_DumpReadable(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  GDALRasterAttributeTableShadow *arg1 = (GDALRasterAttributeTableShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:RasterAttributeTable_DumpReadable",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALRasterAttributeTableShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "RasterAttributeTable_DumpReadable" "', argument " "1"" of type '" "GDALRasterAttributeTableShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALRasterAttributeTableShadow * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      CPLErrorReset();
+    }
+    GDALRasterAttributeTableShadow_DumpReadable(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_Py_Void();
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *RasterAttributeTable_swigregister(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *obj;
   if (!PyArg_ParseTuple(args,(char*)"O:swigregister", &obj)) return NULL;
@@ -22482,7 +22547,7 @@ SWIGINTERN PyObject *_wrap_InvGeoTransform(PyObject *SWIGUNUSEDPARM(self), PyObj
   double argin1[6] ;
   double argout2[6] ;
   PyObject * obj0 = 0 ;
-  int result;
+  RETURN_NONE result;
   
   {
     /* %typemap(in,numinputs=0) (double argout2[ANY]) */
@@ -22517,7 +22582,7 @@ SWIGINTERN PyObject *_wrap_InvGeoTransform(PyObject *SWIGUNUSEDPARM(self), PyObj
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (int)GDALInvGeoTransform(arg1,arg2);
+    result = GDALInvGeoTransform(arg1,arg2);
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
@@ -22525,11 +22590,23 @@ SWIGINTERN PyObject *_wrap_InvGeoTransform(PyObject *SWIGUNUSEDPARM(self), PyObj
       }
     }
   }
-  resultobj = SWIG_From_int(static_cast< int >(result));
+  /*%typemap(out) IF_FALSE_RETURN_NONE */
   {
     /* %typemap(argout) (double argout[ANY]) */
     PyObject *out = CreateTupleFromDoubleArray( arg2, 6 );
     resultobj = t_output_helper(resultobj,out);
+  }
+  {
+    /* %typemap(ret) IF_FALSE_RETURN_NONE */
+    if (result == 0 ) {
+      Py_XDECREF( resultobj );
+      resultobj = Py_None;
+      Py_INCREF(resultobj);
+    }
+    if (resultobj == 0) {
+      resultobj = Py_None;
+      Py_INCREF(resultobj);
+    }
   }
   return resultobj;
 fail:
@@ -24111,9 +24188,9 @@ static PyMethodDef SwigMethods[] = {
 		"    char options = None, GDALProgressFunc callback = None, \n"
 		"    void callback_data = None) -> Dataset\n"
 		""},
-	 { (char *)"Driver_Delete", _wrap_Driver_Delete, METH_VARARGS, (char *)"Driver_Delete(Driver self, char utf8_path) -> int"},
-	 { (char *)"Driver_Rename", _wrap_Driver_Rename, METH_VARARGS, (char *)"Driver_Rename(Driver self, char newName, char oldName) -> int"},
-	 { (char *)"Driver_CopyFiles", _wrap_Driver_CopyFiles, METH_VARARGS, (char *)"Driver_CopyFiles(Driver self, char newName, char oldName) -> int"},
+	 { (char *)"Driver_Delete", _wrap_Driver_Delete, METH_VARARGS, (char *)"Driver_Delete(Driver self, char utf8_path) -> CPLErr"},
+	 { (char *)"Driver_Rename", _wrap_Driver_Rename, METH_VARARGS, (char *)"Driver_Rename(Driver self, char newName, char oldName) -> CPLErr"},
+	 { (char *)"Driver_CopyFiles", _wrap_Driver_CopyFiles, METH_VARARGS, (char *)"Driver_CopyFiles(Driver self, char newName, char oldName) -> CPLErr"},
 	 { (char *)"Driver_Register", _wrap_Driver_Register, METH_VARARGS, (char *)"Driver_Register(Driver self) -> int"},
 	 { (char *)"Driver_Deregister", _wrap_Driver_Deregister, METH_VARARGS, (char *)"Driver_Deregister(Driver self)"},
 	 { (char *)"Driver_swigregister", Driver_swigregister, METH_VARARGS, NULL},
@@ -24391,6 +24468,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"RasterAttributeTable_SetLinearBinning", _wrap_RasterAttributeTable_SetLinearBinning, METH_VARARGS, (char *)"RasterAttributeTable_SetLinearBinning(RasterAttributeTable self, double dfRow0Min, double dfBinSize) -> int"},
 	 { (char *)"RasterAttributeTable_GetRowOfValue", _wrap_RasterAttributeTable_GetRowOfValue, METH_VARARGS, (char *)"RasterAttributeTable_GetRowOfValue(RasterAttributeTable self, double dfValue) -> int"},
 	 { (char *)"RasterAttributeTable_ChangesAreWrittenToFile", _wrap_RasterAttributeTable_ChangesAreWrittenToFile, METH_VARARGS, (char *)"RasterAttributeTable_ChangesAreWrittenToFile(RasterAttributeTable self) -> int"},
+	 { (char *)"RasterAttributeTable_DumpReadable", _wrap_RasterAttributeTable_DumpReadable, METH_VARARGS, (char *)"RasterAttributeTable_DumpReadable(RasterAttributeTable self)"},
 	 { (char *)"RasterAttributeTable_swigregister", RasterAttributeTable_swigregister, METH_VARARGS, NULL},
 	 { (char *)"TermProgress_nocb", (PyCFunction) _wrap_TermProgress_nocb, METH_VARARGS | METH_KEYWORDS, (char *)"TermProgress_nocb(double dfProgress, char pszMessage = None, void pData = None) -> int"},
 	 { (char *)"ComputeMedianCutPCT", (PyCFunction) _wrap_ComputeMedianCutPCT, METH_VARARGS | METH_KEYWORDS, (char *)"\n"
@@ -24472,7 +24550,7 @@ static PyMethodDef SwigMethods[] = {
 		""},
 	 { (char *)"Transformer_swigregister", Transformer_swigregister, METH_VARARGS, NULL},
 	 { (char *)"ApplyGeoTransform", _wrap_ApplyGeoTransform, METH_VARARGS, (char *)"ApplyGeoTransform(double padfGeoTransform, double dfPixel, double dfLine)"},
-	 { (char *)"InvGeoTransform", _wrap_InvGeoTransform, METH_VARARGS, (char *)"InvGeoTransform(double gt_in) -> int"},
+	 { (char *)"InvGeoTransform", _wrap_InvGeoTransform, METH_VARARGS, (char *)"InvGeoTransform(double gt_in) -> RETURN_NONE"},
 	 { (char *)"VersionInfo", _wrap_VersionInfo, METH_VARARGS, (char *)"VersionInfo(char request = \"VERSION_NUM\") -> char"},
 	 { (char *)"AllRegister", _wrap_AllRegister, METH_VARARGS, (char *)"AllRegister()"},
 	 { (char *)"GDALDestroyDriverManager", _wrap_GDALDestroyDriverManager, METH_VARARGS, (char *)"GDALDestroyDriverManager()"},

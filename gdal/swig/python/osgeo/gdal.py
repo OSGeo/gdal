@@ -402,15 +402,15 @@ class Driver(MajorObject):
         return _gdal.Driver_CreateCopy(self, *args, **kwargs)
 
     def Delete(self, *args):
-        """Delete(self, char utf8_path) -> int"""
+        """Delete(self, char utf8_path) -> CPLErr"""
         return _gdal.Driver_Delete(self, *args)
 
     def Rename(self, *args):
-        """Rename(self, char newName, char oldName) -> int"""
+        """Rename(self, char newName, char oldName) -> CPLErr"""
         return _gdal.Driver_Rename(self, *args)
 
     def CopyFiles(self, *args):
-        """CopyFiles(self, char newName, char oldName) -> int"""
+        """CopyFiles(self, char newName, char oldName) -> CPLErr"""
         return _gdal.Driver_CopyFiles(self, *args)
 
     def Register(self, *args):
@@ -1520,6 +1520,10 @@ class RasterAttributeTable(_object):
         """ChangesAreWrittenToFile(self) -> int"""
         return _gdal.RasterAttributeTable_ChangesAreWrittenToFile(self, *args)
 
+    def DumpReadable(self, *args):
+        """DumpReadable(self)"""
+        return _gdal.RasterAttributeTable_DumpReadable(self, *args)
+
     def WriteArray(self, array, field, start=0):
         import gdalnumeric
 
@@ -1693,7 +1697,7 @@ def ApplyGeoTransform(*args):
 ApplyGeoTransform = _gdal.ApplyGeoTransform
 
 def InvGeoTransform(*args):
-  """InvGeoTransform(double gt_in) -> int"""
+  """InvGeoTransform(double gt_in) -> RETURN_NONE"""
   return _gdal.InvGeoTransform(*args)
 InvGeoTransform = _gdal.InvGeoTransform
 
