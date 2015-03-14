@@ -352,16 +352,15 @@ int  SieveFilter( GDALRasterBandShadow *srcBand,
 /*                        RegenerateOverviews()                         */
 /************************************************************************/
 
-#ifndef SWIGPERL
 #ifndef SWIGJAVA
 %feature( "kwargs" ) RegenerateOverviews;
-#endif
+#endif /* SWIGJAVA */
 #ifndef SWIGCSHARP
 %apply (int object_list_count, GDALRasterBandShadow **poObjects) {(int overviewBandCount, GDALRasterBandShadow **overviewBands)};
-#endif
+#endif /* SWIGCSHARP */
 #ifdef SWIGJAVA
 %apply (const char* stringWithDefaultValue) {const char *resampling};
-#endif
+#endif /* SWIGJAVA */
 %apply Pointer NONNULL { GDALRasterBandShadow* srcBand };
 %inline %{
 int  RegenerateOverviews( GDALRasterBandShadow *srcBand,
@@ -379,9 +378,8 @@ int  RegenerateOverviews( GDALRasterBandShadow *srcBand,
 %}
 #ifdef SWIGJAVA
 %clear (const char* resampling);
-#endif
+#endif /* SWIGJAVA */
 %clear GDALRasterBandShadow* srcBand;
-#endif
 
 /************************************************************************/
 /*                         RegenerateOverview()                         */
