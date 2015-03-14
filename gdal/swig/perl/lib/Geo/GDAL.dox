@@ -46,6 +46,8 @@
 
 ## @ignore FillNodata
 ## @ignore ContourGenerate
+## @ignore RegenerateOverviews
+## @ignore RegenerateOverview
 
 ## @cmethod $VersionInfo($request = 'VERSION_NUM')
 # @param request A string specifying the request. Currently either
@@ -359,24 +361,6 @@ sub traverse {
 #
 # <a href="http://www.gdal.org/gdal__alg_8h.html">Documentation for GDAL algorithms</a>
 
-## @cmethod RegenerateOverviews(Geo::GDAL::Band src, arrayref overviews, $resampling, subref progress, $progress_data)
-# @todo This is not yet available
-#
-# @param src
-# @param overviews A list of Geo::GDAL::Band's for the overviews.
-# @param resampling GDAL resampling method (one of Geo::GDAL::ResamplingTypes).
-# @param progress [optional] a reference to a subroutine, which will
-# be called with parameters (number progress, string msg, progress_data)
-# @param progress_data [optional]
-
-## @cmethod RegenerateOverview(Geo::GDAL::Band src, Geo::GDAL::Band overview, $resampling, subref progress, $progress_data)
-# @param src
-# @param overview
-# @param resampling GDAL resampling method (one of Geo::GDAL::ResamplingTypes).
-# @param progress [optional] a reference to a subroutine, which will
-# be called with parameters (number progress, string msg, progress_data)
-# @param progress_data [optional]
-
 ## @cmethod \@GeneralCmdLineProcessor(arrayref argv, $options = 0)
 # @param argv
 # @param options integer
@@ -678,7 +662,7 @@ sub traverse {
 # @return the geo transform in a non-void context.
 
 ## @method BuildOverviews($resampling, arrayref overviews, subref progress, $progress_data)
-# @param resampling Either 'NEAREST', 'AVERAGE', or 'AVERAGE_MAGPHASE'.
+# @param resampling the resampling method, one of Geo::GDAL::RIOResamplingTypes.
 # @param overviews The list of overview decimation factors to
 # build. For example [2,4,8].
 # @param progress [optional] a reference to a subroutine, which will
@@ -751,6 +735,7 @@ sub traverse {
 # @return a buffer, open the buffer with \a unpack function of Perl. See Geo::GDAL::Band::PackCharacter.
 
 ## @method CreateMaskBand()
+# Add a mask band to the dataset.
 
 
 
@@ -900,9 +885,10 @@ sub traverse {
 ## @method $GetOverviewCount()
 # @return the number of overviews available of the band.
 
-## @method Geo::GDAL::Band GetOverview($band)
-# @param band 0..GetOverviewCount-1
-# @return a new Geo::GDAL::Band object.
+## @method Geo::GDAL::Band GetOverview($index)
+# @param index 0..GetOverviewCount-1
+# @return a Geo::GDAL::Band object, which represents the internal
+# overview band, or undef.  if the index is out of bounds.
 
 ## @method HasArbitraryOverviews()
 # @return true or false.
@@ -1049,11 +1035,28 @@ sub traverse {
 # @param ColorTable A color table object.
 #
 
-## @method CreateMaskBand()
+## @cmethod @MaskFlags
+# @return the list of mask flags. These are
+# - \a AllValid: There are no invalid pixels, all mask values will be 255.
+# When used this will normally be the only flag set.
+# - \a PerDataset: The mask band is shared between all bands on the dataset.
+# - \a Alpha: The mask band is actually an alpha band and may have values
+# other than 0 and 255.
+# - \a NoData: Indicates the mask is actually being generated from nodata values.
+# (mutually exclusive of Alpha).
+
+## @method CreateMaskBand(@flags)
+# @note May invalidate any previous mask band obtained with Geo::GDAL::Band::GetMaskBand.
+#
+# @param flags one or more mask flags. The flags are Geo::GDAL::Band::MaskFlags.
 
 ## @method Geo::GDAL::Band GetMaskBand()
+# @return the mask band associated with this
+# band.
 
-## @method $GetMaskFlags()
+## @method @GetMaskFlags()
+# @return th mask flags of the mask band associated with this
+# band. The flags are Geo::GDAL::Band::MaskFlags.
 
 ## @ignore GetRasterCategoryNames
 ## @ignore SetRasterCategoryNames
@@ -1099,18 +1102,37 @@ sub traverse {
 # @param progress_data [optional]
 # @return
 
-## @method FillNodata($mask, $max_search_dist = 10, $smoothing_iterations = 0, $options = {}, subref progress, $progress_data)
+## @method FillNodata($mask, $max_search_dist, $smoothing_iterations, $options, subref progress, $progress_data)
+# Interpolate values for pixels in this raster. The pixels to fill
+# should be marked in the mask band with zero.
 # @note This is a wrapper for Geo::GDAL::FillNodata.
-# @param mask a mask band indicating pixels to be interpolated (zero valued)
+#
+# @param mask [optional] a mask band indicating pixels to be interpolated (zero valued) (default is to get it with Geo::GDAL::Band::GetMaskBand).
 # @param max_search_dist [optional] the maximum number of pixels to
-# search in all directions to find values to interpolate from.
-# @param smoothing_iterations [optional] the number of 3x3 smoothing filter passes to run (0 or more).
-# @param options [optional] A reference to a hash. No options have been defined so far for this algorithm.
+# search in all directions to find values to interpolate from (default is 10).
+# @param smoothing_iterations [optional] the number of 3x3 smoothing filter passes to run (0 or more) (default is 0).
+# @param options [optional] A reference to a hash. No options have been defined so far for this algorithm (default is {}).
+# @param progress [optional] a reference to a subroutine, which will
+# be called with parameters (number progress, string msg, progress_data) (default is undef).
+# @param progress_data [optional] (default is undef).
+#
+# <a href="http://www.gdal.org/gdal__alg_8h.html">Documentation for GDAL algorithms</a>
+
+## @method RegenerateOverviews(arrayref overviews, $resampling, subref progress, $progress_data)
+# @todo This is not yet available
+#
+# @param overviews a list of Geo::GDAL::Band objects for the overviews.
+# @param resampling [optional] the resampling method (one of Geo::GDAL::RIOResamplingTypes) (default is Average).
 # @param progress [optional] a reference to a subroutine, which will
 # be called with parameters (number progress, string msg, progress_data)
 # @param progress_data [optional]
-#
-# <a href="http://www.gdal.org/gdal__alg_8h.html">Documentation for GDAL algorithms</a>
+
+## @method RegenerateOverview(Geo::GDAL::Band overview, $resampling, subref progress, $progress_data)
+# @param overview a Geo::GDAL::Band object for the overview.
+# @param resampling [optional] the resampling method (one of Geo::GDAL::RIOResamplingTypes) (default is Average).
+# @param progress [optional] a reference to a subroutine, which will
+# be called with parameters (number progress, string msg, progress_data)
+# @param progress_data [optional]
 
 
 

@@ -137,29 +137,70 @@ my $n = 0;
 ok(@list == 4, "ComputeStatistics");
 ok(($n > 0 and $foo eq 'foo'), "ComputeStatistics callback");
 
+Geo::GDAL::VSIF::Unlink('/vsimem/test.gtiff');
+$dataset = Geo::GDAL::Driver('GTiff')->Create(Name => '/vsimem/test.gtiff', Width => 4, Height => 6);
+$band = $dataset->Band;
+$c = $band->Checksum;
+ok($c == 0, "Checksum");
+
+$c = $band->NoDataValue;
+ok(!defined($c), "Get NoDataValue");
+$band->NoDataValue(10);
+$c = $band->NoDataValue;
+ok($c == 10, "Set NoDataValue");
+
+# set one pixel no data
+$data = $band->ReadTile;
+$data->[2][2] = 10;
+$band->WriteTile($data);
+
+my @f = $band->MaskFlags;
+ok(@f > 0, "MaskFlags");
+
+@f = $band->GetMaskFlags;
+ok($f[0] eq 'NoData', "GetMaskFlags");
+
+# fill the one pixel
+$band->FillNodata();
+$data = $band->ReadTile;
+ok($data->[2][2] == 0, "FillNodata, got $data->[2][2]");
+
+$band->CreateMaskBand('PerDataset');
+@f = $band->GetMaskFlags;
+ok($f[0] eq 'PerDataset', "CreateMaskBand");
+
+#@list = Geo::GDAL::VSIF::ReadDir('/vsimem/');
+#print "files @list\n"; # includes .msk
+
+# $m is not valid here any more, how to test?
+
+Geo::GDAL::VSIF::Unlink('/vsimem/test.gtiff');
+$dataset = Geo::GDAL::Driver('GTiff')->Create(Name => '/vsimem/test.gtiff', Bands => 2);
+$dataset->BuildOverviews('average', [2,4]);
+
+my $band1 = $dataset->Band(1);
+my $band2 = $dataset->Band(2);
+
+$band1->RegenerateOverviews([$band2]); #scalar resampling, subref callback, scalar callback_data
+$band1->RegenerateOverview($band2); #scalar resampling, subref callback, scalar callback_data
+
+my $c = $band1->GetOverviewCount;
+ok($c == 2, "GetOverviewCount, got $c");
+my $o = $band1->GetOverview(1);
+ok(defined($o), "GetOverview");
+my $b = $band1->HasArbitraryOverviews;
+ok(!$b, "HasArbitraryOverviews");
+
 
 
 __END__
 
  
-public scalar 	Checksum (scalar xoff=0, scalar yoff=0, scalar xsize=undef, scalar ysize=undef)
- 
 public Geo::OGR::Layer 	Contours (scalar DataSource, hashref LayerConstructor, scalar ContourInterval, scalar ContourBase, arrayref FixedLevels, scalar NoDataValue, scalar IDField, scalar ElevField, subref callback, scalar callback_data)
- 
-public scalar 	NoDataValue (scalar NoDataValue) 
-public method 	FillNodata (scalar mask, scalar max_search_dist=10, scalar smoothing_iterations=0, scalar options={}, subref callback, scalar callback_data)
  
 public list 	SetDefaultHistogram (scalar min, scalar max, scalar histogram) 
 public list 	GetDefaultHistogram (scalar force=1, subref callback=undef, scalar callback_data=undef)
 public list 	GetHistogram (hash parameters)
-
-public method 	CreateMaskBand () 
-public Geo::GDAL::Band 	GetMaskBand ()
-public scalar 	GetMaskFlags ()
- 
-public Geo::GDAL::Band 	GetOverview (scalar band)
-public scalar 	GetOverviewCount ()
-public method 	HasArbitraryOverviews () 
 
 public scalar 	ReadRaster (hash params)
 public method 	WriteRaster (hash params)
