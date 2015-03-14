@@ -360,7 +360,7 @@ CreateArrayFromStringArray( char **first ) {
 {
     /* %typemap(in) (double argin[ANY]) */
     if (!(SvROK($input) && (SvTYPE(SvRV($input))==SVt_PVAV)))
-        SWIG_croak("expected a reference to an array as an argument to a Geo::GDAL method");
+        SWIG_croak("Expected a reference to an array.");
     $1 = argin;
     AV *av = (AV*)(SvRV($input));
     for (unsigned int i=0; i<$dim0; i++) {
@@ -376,47 +376,51 @@ CreateArrayFromStringArray( char **first ) {
 {
     /* %typemap(in,numinputs=1) (int nList, int* pList) */
     if (!(SvROK($input) && (SvTYPE(SvRV($input))==SVt_PVAV)))
-        SWIG_croak("expected a reference to an array as an argument to a Geo::GDAL method");
+        SWIG_croak("Expected a reference to an array.");
     AV *av = (AV*)(SvRV($input));
     $1 = av_len(av)+1;
-    $2 = (int*) malloc($1*sizeof(int));
-    for( int i = 0; i<$1; i++ ) {
-        SV **sv = av_fetch(av, i, 0);
-        $2[i] =  SvIV(*sv);
-    }
+    $2 = (int*)CPLMalloc($1*sizeof(int));
+    if ($2) {
+        for( int i = 0; i<$1; i++ ) {
+            SV **sv = av_fetch(av, i, 0);
+            $2[i] =  SvIV(*sv);
+        }
+    } else
+        SWIG_fail;
 }
 %typemap(freearg) (int nList, int* pList)
 {
     /* %typemap(freearg) (int nList, int* pList) */
-    if ($2)
-        free((void*) $2);
+    CPLFree((void*) $2);
 }
 
 %typemap(in,numinputs=1) (int nList, double* pList)
 {
     /* %typemap(in,numinputs=1) (int nList, double* pList) */
     if (!(SvROK($input) && (SvTYPE(SvRV($input))==SVt_PVAV)))
-        SWIG_croak("expected a reference to an array as an argument to a Geo::GDAL method");
+        SWIG_croak("Expected a reference to an array.");
     AV *av = (AV*)(SvRV($input));
     $1 = av_len(av)+1;
-    $2 = (double*) malloc($1*sizeof(double));
-    for( int i = 0; i<$1; i++ ) {
-        SV **sv = av_fetch(av, i, 0);
-        $2[i] =  SvNV(*sv);
-    }
+    $2 = (double*)CPLMalloc($1*sizeof(double));
+    if ($2) {
+        for( int i = 0; i<$1; i++ ) {
+            SV **sv = av_fetch(av, i, 0);
+            $2[i] =  SvNV(*sv);
+        }
+    } else
+        SWIG_fail;
 }
 %typemap(freearg) (int nList, double* pList)
 {
     /* %typemap(freearg) (int nList, double* pList) */
-    if ($2)
-        free((void*) $2);
+    CPLFree((void*) $2);
 }
 
 %typemap(in) (char **pList)
 {
     /* %typemap(in) (char **pList) */
     if (!(SvROK($input) && (SvTYPE(SvRV($input))==SVt_PVAV)))
-        SWIG_croak("expected a reference to an array as an argument to a Geo::GDAL method");
+        SWIG_croak("Expected a reference to an array.");
     AV *av = (AV*)(SvRV($input));
     for (int i = 0; i < av_len(av)+1; i++) {
         SV *sv = *(av_fetch(av, i, 0));
@@ -470,7 +474,7 @@ CreateArrayFromStringArray( char **first ) {
     /* %typemap(in,numinputs=1) (int nLen, char *pBuf ) */
     if (SvOK($input)) {
         if (!SvPOK($input))
-            SWIG_croak("expected binary data as input");
+            SWIG_croak("Expected binary data.");
         STRLEN len = SvCUR($input);
         $2 = SvPV_nolen($input);
         $1 = len;
@@ -484,7 +488,7 @@ CreateArrayFromStringArray( char **first ) {
     /* %typemap(in,numinputs=1) (int nLen, unsigned char *pBuf ) */
     if (SvOK($input)) {
         if (!SvPOK($input))
-            SWIG_croak("expected binary data as input to a Geo::GDAL method");
+            SWIG_croak("Expected binary data.");
         STRLEN len = SvCUR($input);
         $2 = (unsigned char *)SvPV_nolen($input);
         $1 = len;
@@ -557,30 +561,28 @@ CreateArrayFromStringArray( char **first ) {
   $result = sv_2mortal(newRV((SV*)dict));
   argvi++;
 }
-%typemap(in,numinputs=1) (int nGCPs, GDAL_GCP const *pGCPs ) ( GDAL_GCP *tmpGCPList )
+%typemap(in,numinputs=1) (int nGCPs, GDAL_GCP const *pGCPs )
 {
     /* %typemap(in,numinputs=1) (int nGCPs, GDAL_GCP const *pGCPs ) */
     if (!(SvROK($input) && (SvTYPE(SvRV($input))==SVt_PVAV)))
-        SWIG_croak("expected a reference to an array as an argument to a Geo::GDAL method");
+        SWIG_croak("Expected a reference to an array.");
     AV *av = (AV*)(SvRV($input));
     $1 = av_len(av)+1;
-    tmpGCPList = (GDAL_GCP*) malloc($1*sizeof(GDAL_GCP));
-    $2 = tmpGCPList;
-    for( int i = 0; i<$1; i++ ) {
-        SV **sv = av_fetch(av, i, 0);
-        GDAL_GCP *item = 0;
-        SWIG_ConvertPtr( *sv, (void**)&item, SWIGTYPE_p_GDAL_GCP, 0 );
-        if (!item )
-            SWIG_fail;
-        memcpy( (void*) tmpGCPList, (void*) item, sizeof( GDAL_GCP ) );
-        ++tmpGCPList;
-    }
+    $2 = (GDAL_GCP *)CPLMalloc($1*sizeof(GDAL_GCP));
+    if ($2) {
+        for (int i = 0; i < $1; i++ ) {
+            SV **sv = av_fetch(av, i, 0);
+            int ret = SWIG_ConvertPtr(*sv, (void**)&($2[i]), SWIGTYPE_p_GDAL_GCP, 0);
+            if (!SWIG_IsOK(ret))
+                SWIG_croak("An item in the argument array is not a GCP object.");
+        }
+    } else
+        SWIG_croak("Out of memory.");
 }
 %typemap(freearg) (int nGCPs, GDAL_GCP const *pGCPs )
 {
     /* %typemap(freearg) (int nGCPs, GDAL_GCP const *pGCPs ) */
-    if ($2)
-        free($2);
+    CPLFree($2);
 }
 
 /*
@@ -591,7 +593,7 @@ CreateArrayFromStringArray( char **first ) {
 {
     /* %typemap(out) GDALColorEntry* */
     if (!result)
-        SWIG_croak("GetColorEntry failed");
+        SWIG_croak("GetColorEntry failed.");
     $result = sv_newmortal();
     sv_setiv(ST(argvi++), (IV) result->c1);
     $result = sv_newmortal();
@@ -610,7 +612,7 @@ CreateArrayFromStringArray( char **first ) {
 {
     /* %typemap(argout) GDALColorEntry* */
     if (!result)
-        SWIG_croak("GetColorEntryAsRGB failed");
+        SWIG_croak("GetColorEntryAsRGB failed.");
     argvi--;
     $result = sv_newmortal();
     sv_setiv(ST(argvi++), (IV) e3.c1);
@@ -906,7 +908,7 @@ CreateArrayFromStringArray( char **first ) {
 {
     /* %typemap(in) (CPLXMLNode* xmlnode ) */
     if (!(SvROK($input) && (SvTYPE(SvRV($input))==SVt_PVAV)))
-        SWIG_croak("expected a reference to an array as an argument to a Geo::GDAL method");
+        SWIG_croak("Expected a reference to an array.");
     AV *av = (AV*)(SvRV($input));
     int err;
     $1 = AVToXMLTree( av, &err );
@@ -1021,18 +1023,20 @@ IF_UNDEF_NULL(const char *, target_key)
     /* %typemap(in) (int nCount, double *x, double *y, double *z) */
     /* $input is a ref to a list of refs to point lists */
     if (! (SvROK($input) && (SvTYPE(SvRV($input))==SVt_PVAV)))
-        SWIG_croak("expected a reference to an array as an argument to a Geo::GDAL method");
+        SWIG_croak("Expected a reference to an array.");
     AV *av = (AV*)(SvRV($input));
     $1 = av_len(av)+1;
-    $2 = (double*) malloc($1*sizeof(double));
-    $3 = (double*) malloc($1*sizeof(double));
-    $4 = (double*) malloc($1*sizeof(double));
+    $2 = (double*)CPLMalloc($1*sizeof(double));
+    if ($2)
+        $3 = (double*)CPLMalloc($1*sizeof(double));
+    if ($2 && $3)
+        $4 = (double*)CPLMalloc($1*sizeof(double));
     if (!$2 or !$3 or !$4)
-        SWIG_croak("out of memory in Geo::GDAL");
+        SWIG_fail;
     for (int i = 0; i < $1; i++) {
         SV **sv = av_fetch(av, i, 0); /* ref to one point list */
         if (!(SvROK(*sv) && (SvTYPE(SvRV(*sv))==SVt_PVAV)))
-            SWIG_croak("expected a reference to a list of coordinates as an argument to a Geo::GDAL method");
+            SWIG_croak("An item in the list is not a reference to an array.");
         AV *ac = (AV*)(SvRV(*sv));
         int n = av_len(ac)+1;
         SV **c = av_fetch(ac, 0, 0);
@@ -1071,9 +1075,9 @@ IF_UNDEF_NULL(const char *, target_key)
 %typemap(freearg) (int nCount, double *x, double *y, double *z)
 {
     /* %typemap(freearg) (int nCount, double *x, double *y, double *z) */
-    if ($2) free($2);
-    if ($3) free($3);
-    if ($4) free($4);
+    CPLFree($2);
+    CPLFree($3);
+    CPLFree($4);
 }
 
 %typemap(arginit, noblock=1) ( void* callback_data = NULL)
@@ -1146,7 +1150,9 @@ IF_UNDEF_NULL(const char *, target_key)
 {
   /* %typemap(in,numinputs=1) (void *pBuffer, size_t nSize, size_t nCount) */
   size_t len = SvIV($input);
-  $1 = malloc(len);
+  $1 = CPLMalloc(len);
+  if (!$1)
+      SWIG_fail;
   $2 = 1;
   $3 = len;
 }
@@ -1158,6 +1164,7 @@ IF_UNDEF_NULL(const char *, target_key)
   } else {
     $result = &PL_sv_undef;
   }
+  CPLFree($1);
   argvi++;
 }
 %typemap(out) (size_t VSIFReadL)
@@ -1218,4 +1225,30 @@ IF_UNDEF_NULL(const char *, target_key)
   sv_setpvn($result, (const char*)$1, *arg2);
   CPLFree($1);
   argvi++;
+}
+
+%typemap(in,numinputs=1) (int object_list_count, GDALRasterBandShadow **poObjects)
+{
+    /* %typemap(in,numinputs=1) (int object_list_count, GDALRasterBandShadow **poObjects) */
+    if (!(SvROK($input) && (SvTYPE(SvRV($input))==SVt_PVAV)))
+        SWIG_croak("Expected a reference to an array of Band objects.");
+    AV *av = (AV*)(SvRV($input));
+    $1 = av_len(av)+1;
+    /* get the pointers from the array into bands */
+    $2 = (GDALRasterBandShadow **)CPLMalloc($1*sizeof(GDALRasterBandShadow *));
+    if ($2) {
+        for (int i = 0; i < $1; i++) {
+            SV **sv = av_fetch(av, i, 0);
+            int ret = SWIG_ConvertPtr(*sv, &($2[i]), SWIGTYPE_p_GDALRasterBandShadow, 0);
+            if (!SWIG_IsOK(ret))
+                SWIG_croak("An item in the argument array is not a Band object.");
+        }
+    } else
+        SWIG_croak("Out of memory.");
+        
+}
+%typemap(freearg) (int object_list_count, GDALRasterBandShadow **poObjects)
+{
+    /* %typemap(freearg) (int object_list_count, GDALRasterBandShadow **poObjects) */
+    CPLFree($2);
 }

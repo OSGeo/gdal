@@ -71,8 +71,13 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
 %rename (_OpenShared) OpenShared;
 %newobject _OpenShared;
 
+%rename (_BuildOverviews) BuildOverviews;
+
 %rename (_ReadRaster) ReadRaster;
 %rename (_WriteRaster) WriteRaster;
+
+%rename (_GetMaskFlags) GetMaskFlags;
+%rename (_CreateMaskBand) CreateMaskBand;
 
 /* those that need callback_data check: */
 
@@ -351,12 +356,14 @@ sub SieveFilter {
 
 sub RegenerateOverviews {
     my @p = @_;
+    $p[2] = uc($p[2]) if $p[2]; # see overview.cpp:2030
     $p[4] = 1 if $p[3] and not defined $p[4];
     _RegenerateOverviews(@p);
 }
 
 sub RegenerateOverview {
     my @p = @_;
+    $p[2] = uc($p[2]) if $p[2]; # see overview.cpp:2030
     $p[4] = 1 if $p[3] and not defined $p[4];
     _RegenerateOverview(@p);
 }
@@ -595,11 +602,14 @@ sub SpatialReference {
 
 sub GeoTransform {
     my $self = shift;
-    if (@_ == 1) {
-        SetGeoTransform($self, $_[0]);
-    } elsif (@_ > 1) {
-        SetGeoTransform($self, \@_);
-    }
+    eval {
+        if (@_ == 1) {
+            SetGeoTransform($self, $_[0]);
+        } elsif (@_ > 1) {
+            SetGeoTransform($self, \@_);
+        }
+    };
+    confess $@ if $@;
     return unless defined wantarray;
     my $t = GetGeoTransform($self);
     if (wantarray) {
@@ -725,6 +735,16 @@ sub WriteRaster {
     $self->_WriteRaster($p{XOFF},$p{YOFF},$p{XSIZE},$p{YSIZE},$p{BUF},$p{BUFXSIZE},$p{BUFYSIZE},$p{BUFTYPE},$p{BANDLIST},$p{BUFPIXELSPACE},$p{BUFLINESPACE},$p{BUFBANDSPACE});
 }
 
+sub BuildOverviews {
+    my $self = shift;
+    my @p = @_;
+    $p[0] = uc($p[0]) if $p[0];
+    eval {
+        $self->_BuildOverviews(@p);
+    };
+    confess $@ if $@;
+}
+
 
 
 
@@ -737,6 +757,7 @@ use Scalar::Util 'blessed';
 use vars qw/
     @COLOR_INTERPRETATIONS
     %COLOR_INTERPRETATION_STRING2INT %COLOR_INTERPRETATION_INT2STRING @DOMAINS
+    %MASK_FLAGS
     /;
 for (keys %Geo::GDAL::Const::) {
     next if /TypeCount/;
@@ -748,6 +769,7 @@ for my $string (@COLOR_INTERPRETATIONS) {
     $COLOR_INTERPRETATION_INT2STRING{$int} = $string;
 }
 @DOMAINS = qw/IMAGE_STRUCTURE RESAMPLING/;
+%MASK_FLAGS = (AllValid => 1, PerDataset => 2, Alpha => 4, NoData => 8);
 
 sub Domains {
     return @DOMAINS;
@@ -755,6 +777,11 @@ sub Domains {
 
 sub ColorInterpretations {
     return @COLOR_INTERPRETATIONS;
+}
+
+sub MaskFlags {
+    my @f = sort {$MASK_FLAGS{$a} <=> $MASK_FLAGS{$b}} keys %MASK_FLAGS;
+    return @f;
 }
 
 sub DESTROY {
@@ -981,14 +1008,16 @@ sub Contours {
 }
 
 sub FillNodata {
+    my $self = shift;
+    my $mask = shift;
+    $mask = $self->GetMaskBand unless $mask;
     my @p = @_;
-    confess 'Usage: Geo::GDAL::Band->FillNodata($mask).' unless blessed($p[1]) and $p[1]->isa('Geo::GDAL::Band');
-    $p[2] = 10 unless defined $p[2];
-    $p[3] = 0 unless defined $p[3];
-    $p[4] = undef unless defined $p[4];
-    $p[5] = undef unless defined $p[5];
-    $p[6] = undef unless defined $p[6];
-    Geo::GDAL::FillNodata(@p);
+    $p[0] = 10 unless defined $p[0];
+    $p[1] = 0 unless defined $p[1];
+    $p[2] = undef unless defined $p[2];
+    $p[3] = undef unless defined $p[3];
+    $p[4] = undef unless defined $p[1];
+    Geo::GDAL::FillNodata($self, $mask, @p);
 }
 *GetBandNumber = *GetBand;
 
@@ -1089,6 +1118,50 @@ sub WriteRaster {
         $p{BUFTYPE} = $Geo::GDAL::TYPE_STRING2INT{$p{BUFTYPE}};
     }
     $self->_WriteRaster($p{XOFF},$p{YOFF},$p{XSIZE},$p{YSIZE},$p{BUF},$p{BUFXSIZE},$p{BUFYSIZE},$p{BUFTYPE},$p{BUFPIXELSPACE},$p{BUFLINESPACE});
+}
+
+sub GetMaskFlags {
+    my $self = shift;
+    my $f = $self->_GetMaskFlags;
+    my @f;
+    for my $flag (keys %MASK_FLAGS) {
+        push @f, $flag if $f & $MASK_FLAGS{$flag};
+    }
+    return wantarray ? @f : $f;
+}
+
+sub CreateMaskBand {
+    my $self = shift;
+    my $f = 0;
+    if (@_ and $_[0] =~ /^\d$/) {
+        $f = shift;
+    } else {
+        for my $flag (@_) {
+            carp "Unknown mask flag: '$flag'." unless $MASK_FLAGS{$flag};
+            $f |= $MASK_FLAGS{$flag};
+        }
+    }
+    $self->_CreateMaskBand($f);
+}
+
+# GetMaskBand should be redefined and the result should be put into 
+# %Geo::GDAL::Dataset::BANDS
+
+# GetOverview should be redefined and the result should be put into 
+# %Geo::GDAL::Dataset::BANDS
+
+sub RegenerateOverview {
+    my $self = shift;
+    #Geo::GDAL::Band overview, scalar resampling, subref callback, scalar callback_data
+    my @p = @_;
+    Geo::GDAL::RegenerateOverview($self, @p);
+}
+ 
+sub RegenerateOverviews {
+    my $self = shift;
+    #arrayref overviews, scalar resampling, subref callback, scalar callback_data
+    my @p = @_;
+    Geo::GDAL::RegenerateOverviews($self, @p);
 }
 
 

@@ -455,7 +455,15 @@ int wrapper_VSIStatL( const char * utf8_path, StatBuf *psStatBufOut, int nFlags 
 
 #endif
 
-VSILFILE   *VSIFOpenL( const char *utf8_path, const char *pszMode );
+%rename (VSIFOpenL) wrapper_VSIFOpenL;
+%inline %{
+VSILFILE   *wrapper_VSIFOpenL( const char *utf8_path, const char *pszMode )
+{
+    if (!pszMode) /* would lead to segfault */
+        pszMode = "r";
+    return VSIFOpenL( utf8_path, pszMode );
+}
+%}
 void    VSIFCloseL( VSILFILE * );
 
 #if defined(SWIGPYTHON)
