@@ -839,7 +839,7 @@ VRTSimpleSource::GetSrcDstWindow( int nXOff, int nYOff, int nXSize, int nYSize,
         dfScaleWinToBufX = nBufXSize / (double) nXSize;
 
         *pnOutXOff = (int) ((dfDstULX - nXOff) * dfScaleWinToBufX+0.001);
-        *pnOutXSize = (int) ((dfDstLRX - nXOff) * dfScaleWinToBufX+0.001) 
+        *pnOutXSize = (int) ((dfDstLRX - nXOff) * dfScaleWinToBufX+0.5) 
             - *pnOutXOff;
 
         *pnOutXOff = MAX(0,*pnOutXOff);
@@ -852,7 +852,7 @@ VRTSimpleSource::GetSrcDstWindow( int nXOff, int nYOff, int nXSize, int nYSize,
         dfScaleWinToBufY = nBufYSize / (double) nYSize;
 
         *pnOutYOff = (int) ((dfDstULY - nYOff) * dfScaleWinToBufY+0.001);
-        *pnOutYSize = (int) ((dfDstLRY - nYOff) * dfScaleWinToBufY+0.001) 
+        *pnOutYSize = (int) ((dfDstLRY - nYOff) * dfScaleWinToBufY+0.5) 
             - *pnOutYOff;
 
         *pnOutYOff = MAX(0,*pnOutYOff);
