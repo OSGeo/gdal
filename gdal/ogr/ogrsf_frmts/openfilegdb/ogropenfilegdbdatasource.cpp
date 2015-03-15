@@ -427,6 +427,7 @@ int OGROpenFileGDBDataSource::OpenFileGDBv9(int iGDBFeatureClasses,
                 /* Is it a non-spatial table ? */
                 if( strcmp(psField->String, "{7A566981-C114-11D2-8A28-006097AFF44E}") == 0 )
                 {
+                    aosName.push_back( "" );
                     AddLayer( osName, nInterestTable, nCandidateLayers, nLayersSDC,
                               "", "", NULL, wkbNone );
                 }
