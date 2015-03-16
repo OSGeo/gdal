@@ -2983,6 +2983,8 @@ class Feature(_object):
         """Returns the values of fields by the given name / field_index"""
         if isinstance(key, str):
             fld_index = self.GetFieldIndex(key)
+        else:
+            fld_index = key
         if fld_index < 0:
             if isinstance(key, str):
                 fld_index = self.GetGeomFieldIndex(key)
@@ -2998,6 +3000,8 @@ class Feature(_object):
         """Returns the value of a field by field name / index"""
         if isinstance(key, str):
             fld_index = self.GetFieldIndex(key)
+        else:
+            fld_index = key
         if fld_index < 0:
             if isinstance(key, str):
                 fld_index = self.GetGeomFieldIndex(key)
