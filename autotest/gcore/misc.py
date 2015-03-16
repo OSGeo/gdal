@@ -564,6 +564,10 @@ def misc_12():
             gdal.PushErrorHandler('CPLQuietErrorHandler')
             ds = drv.CreateCopy('/nonexistingpath/nonexistingfile' + ext, src_ds)
             gdal.PopErrorHandler()
+            if ds is None and gdal.GetLastErrorMsg() == '':
+                gdaltest.post_reason('failure')
+                print('CreateCopy() into non existing dir fails without error message for driver %s' % drv.ShortName)
+                return 'fail'
             ds = None
 
             if gdal_translate_path is not None:
