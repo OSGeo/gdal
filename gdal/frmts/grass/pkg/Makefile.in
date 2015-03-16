@@ -3,8 +3,10 @@ CXX	=	@CXX@
 LD	=	@CXX@
 
 CPPFLAGS = -DUSE_CPL -DGRASS_GISBASE=\"@GRASS_GISBASE@\" \
-	  @GDAL_INC@ @GRASS_INCLUDE@ @PQ_INCLUDE@ @CPPFLAGS@ 
+	  @GDAL_INC@ @GRASS_INCLUDE@ @PQ_INCLUDE@ @CPPFLAGS@
 CXXFLAGS = @CXX_WFLAGS@ @CXX_PIC@ 
+CFLAGS   = @CFLAGS@ 
+LDFLAGS  = @LDFLAGS@ 
 
 RANLIB		=	@RANLIB@
 SO_EXT		=	@SO_EXT@
@@ -45,11 +47,11 @@ distclean: clean
 
 
 $(GLIBNAME):	grass57dataset.o
-	$(LD_SHARED) grass57dataset.o $(LIBS) -o $(GLIBNAME)
+	$(LD_SHARED) $(LDFLAGS) grass57dataset.o $(LIBS) -o $(GLIBNAME)
 
 $(OLIBNAME):	ogrgrassdriver.o ogrgrassdatasource.o ogrgrasslayer.o 
-	$(LD_SHARED) ogrgrassdriver.o ogrgrassdatasource.o ogrgrasslayer.o $(LIBS) -o $(OLIBNAME)
+	$(LD_SHARED) $(LDFLAGS) ogrgrassdriver.o ogrgrassdatasource.o ogrgrasslayer.o $(LIBS) -o $(OLIBNAME)
 
 %.o:	%.cpp
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c -o $@ $<
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(CFLAGS) -c -o $@ $<
 
