@@ -10608,7 +10608,12 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
 
     VSILFILE* fpL = VSIFOpenL( pszFilename, "w+b" );
     if( fpL == NULL )
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "Attempt to create new tiff file `%s' failed: %s",
+                  pszFilename, VSIStrerror(errno) );
         return NULL;
+    }
     hTIFF = VSI_TIFFOpen( pszFilename, szOpeningFlag, fpL );
     if( hTIFF == NULL )
     {
