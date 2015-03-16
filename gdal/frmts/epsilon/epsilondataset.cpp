@@ -789,7 +789,10 @@ EpsilonDatasetCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     VSILFILE* fp = VSIFOpenL(pszFilename, "wb");
     if (fp == NULL)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot create %s", pszFilename);
         return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Compute number of blocks, block size, etc...                    */
