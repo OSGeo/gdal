@@ -226,6 +226,7 @@ char **CPL_STDCALL GDALLoadRPCFile( const char *pszFilename,
         }
         else
         {
+            while( *pszRPBVal == ' ' ) pszRPBVal ++;
             papszMD = CSLSetNameValue( papszMD, apszRPBMap[i], pszRPBVal );
         }
     }
@@ -251,6 +252,7 @@ char **CPL_STDCALL GDALLoadRPCFile( const char *pszFilename,
             }
             else
             {
+                while( *pszRPBVal == ' ' ) pszRPBVal ++;
                 soVal += pszRPBVal;
                 soVal += " ";
             }
@@ -260,6 +262,122 @@ char **CPL_STDCALL GDALLoadRPCFile( const char *pszFilename,
 
     CSLDestroy( papszLines );
     return papszMD;
+}
+
+/************************************************************************/
+/*                         GDALWriteRPCTXTFile()                        */
+/************************************************************************/
+
+static const char *apszRPCTXTSingleValItems[] =
+{
+    "LINE_OFF",
+    "SAMP_OFF",
+    "LAT_OFF",
+    "LONG_OFF",
+    "HEIGHT_OFF",
+    "LINE_SCALE",
+    "SAMP_SCALE",
+    "LAT_SCALE",
+    "LONG_SCALE",
+    "HEIGHT_SCALE",
+    NULL
+};
+
+static const char *apszRPCTXT20ValItems[] =
+{
+    "LINE_NUM_COEFF",
+    "LINE_DEN_COEFF",
+    "SAMP_NUM_COEFF",
+    "SAMP_DEN_COEFF",
+    NULL
+};
+
+CPLErr CPL_STDCALL GDALWriteRPCTXTFile( const char *pszFilename, char **papszMD )
+
+{
+    CPLString osRPCFilename = pszFilename;
+    CPLString soPt(".");
+    size_t found = osRPCFilename.rfind(soPt);
+    if (found == CPLString::npos)
+        return CE_Failure;
+    osRPCFilename.replace (found, osRPCFilename.size() - found, "_RPC.TXT");
+
+/* -------------------------------------------------------------------- */
+/*      Read file and parse.                                            */
+/* -------------------------------------------------------------------- */
+    VSILFILE *fp = VSIFOpenL( osRPCFilename, "w" );
+
+    if( fp == NULL )
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "Unable to create %s for writing.\n%s", 
+                  osRPCFilename.c_str(), CPLGetLastErrorMsg() );
+        return CE_Failure;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Write RPC values from our RPC metadata.                         */
+/* -------------------------------------------------------------------- */
+    int i;
+
+    for( i = 0; apszRPCTXTSingleValItems[i] != NULL; i ++ )
+    {
+        const char *pszRPCVal = CSLFetchNameValue( papszMD, apszRPCTXTSingleValItems[i] );
+        if( pszRPCVal == NULL )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "%s field missing in metadata, %s file not written.",
+                      apszRPCTXTSingleValItems[i], osRPCFilename.c_str() );
+            VSIFCloseL( fp );
+            VSIUnlink( osRPCFilename );
+            return CE_Failure;
+        }
+
+        VSIFPrintfL( fp, "%s: %s\n", apszRPCTXTSingleValItems[i], pszRPCVal );
+    }
+    
+
+    for( i = 0; apszRPCTXT20ValItems[i] != NULL; i ++ )
+    {
+        const char *pszRPCVal = CSLFetchNameValue( papszMD, apszRPCTXT20ValItems[i] );
+        if( pszRPCVal == NULL )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "%s field missing in metadata, %s file not written.",
+                      apszRPCTXTSingleValItems[i], osRPCFilename.c_str() );
+            VSIFCloseL( fp );
+            VSIUnlink( osRPCFilename );
+            return CE_Failure;
+        }
+
+        char **papszItems = CSLTokenizeStringComplex( pszRPCVal, " ,", 
+                                                          FALSE, FALSE );
+
+        if( CSLCount(papszItems) != 20 )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "%s field is corrupt (not 20 values), %s file not written.\n%s = %s",
+                      apszRPCTXT20ValItems[i], osRPCFilename.c_str(),
+                      apszRPCTXT20ValItems[i], pszRPCVal );
+            VSIFCloseL( fp );
+            VSIUnlink( osRPCFilename );
+            return CE_Failure;
+        }
+
+        int j;
+
+        for( j = 0; j < 20; j++ )
+        {
+            VSIFPrintfL( fp, "%s_%d: %s\n", apszRPCTXT20ValItems[i], j+1,
+                         papszItems[j] );
+        }
+        CSLDestroy( papszItems );
+    }
+    
+
+    VSIFCloseL( fp );
+    
+    return CE_None;
 }
 
 /************************************************************************/

@@ -7480,10 +7480,18 @@ int  GTiffDataset::WriteMetadata( GDALDataset *poSrcDS, TIFF *hTIFF,
         if( EQUAL(pszProfile,"GDALGeoTIFF") )
             WriteRPCTag( hTIFF, papszRPCMD );
 
-        if( !EQUAL(pszProfile,"GDALGeoTIFF") 
+        /* Write RPB file if explicitely asked, or if a non GDAL specific */
+        /* profile is selected and RPCTXT is not asked */
+        if( (!EQUAL(pszProfile,"GDALGeoTIFF") && 
+             !CSLFetchBoolean( papszCreationOptions, "RPCTXT", FALSE ))
             || CSLFetchBoolean( papszCreationOptions, "RPB", FALSE ) )
         {
             GDALWriteRPBFile( pszTIFFFilename, papszRPCMD );
+        }
+
+        if( CSLFetchBoolean( papszCreationOptions, "RPCTXT", FALSE ) )
+        {
+            GDALWriteRPCTXTFile( pszTIFFFilename, papszRPCMD );
         }
     }
 
@@ -13547,7 +13555,7 @@ void GDALRegister_GTiff()
     if( GDALGetDriverByName( "GTiff" ) == NULL )
     {
         GDALDriver	*poDriver;
-        char szCreateOptions[4556];
+        char szCreateOptions[5000];
         char szOptionalCompressItems[500];
         int bHasJPEG = FALSE, bHasLZW = FALSE, bHasDEFLATE = FALSE, bHasLZMA = FALSE;
 
@@ -13651,6 +13659,7 @@ void GDALRegister_GTiff()
 "   <Option name='TILED' type='boolean' description='Switch to tiled format'/>"
 "   <Option name='TFW' type='boolean' description='Write out world file'/>"
 "   <Option name='RPB' type='boolean' description='Write out .RPB (RPC) file'/>"
+"   <Option name='RPCTXT' type='boolean' description='Write out _RPC.TXT file'/>"
 "   <Option name='BLOCKXSIZE' type='int' description='Tile Width'/>"
 "   <Option name='BLOCKYSIZE' type='int' description='Tile/Strip Height'/>"
 "   <Option name='PHOTOMETRIC' type='string-select'>"

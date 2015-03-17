@@ -794,6 +794,8 @@ char CPL_DLL ** CPL_STDCALL GDALLoadRPCFile( const char *pszFilename,
                                              char **papszSiblingFiles );
 CPLErr CPL_DLL CPL_STDCALL GDALWriteRPBFile( const char *pszFilename, 
                                              char **papszMD );
+CPLErr CPL_DLL CPL_STDCALL GDALWriteRPCTXTFile( const char *pszFilename, 
+                                                char **papszMD );
 char CPL_DLL ** CPL_STDCALL GDALLoadIMDFile( const char *pszFilename, 
                                              char **papszSiblingFiles );
 CPLErr CPL_DLL CPL_STDCALL GDALWriteIMDFile( const char *pszFilename, 
