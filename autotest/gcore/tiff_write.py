@@ -620,6 +620,14 @@ def tiff_write_17():
     except:
         pass
 
+    # confirm there is no _rpc.txt file created by default.
+    try:
+        open('tmp/tm_17_RPC.TXT').read()
+        gdaltest.post_reason( 'unexpectedly found _RPC.TXT file' )
+        return 'fail'
+    except:
+        pass
+    
     # Open the dataset, and confirm the RPC data is still intact.
     ds = gdal.Open( 'tmp/tw_17.tif' )
     if not gdaltest.rpcs_equal(ds.GetMetadata('RPC'),rpc_md):
@@ -672,6 +680,14 @@ def tiff_write_18():
         gdaltest.post_reason( 'missing .RPB or .IMD file.' )
         return 'fail'
 
+    # confirm there is no _rpc.txt file created by default.
+    try:
+        open('tmp/tw_18_RPC.TXT').read()
+        gdaltest.post_reason( 'unexpectedly found _RPC.TXT file' )
+        return 'fail'
+    except:
+        pass
+    
     # Open the dataset, and confirm the RPC/IMD data is still intact.
     ds = gdal.Open( 'tmp/tw_18.tif' )
 
@@ -728,6 +744,63 @@ def tiff_write_18_disable_readdir():
     ret = tiff_write_18()
     gdal.SetConfigOption('GDAL_DISABLE_READDIR_ON_OPEN', oldval)
     return ret
+
+###############################################################################
+# Test writing a TIFF with an _RPC.TXT
+
+def tiff_write_rpc_txt():
+
+    # Translate RPC controlled data to GeoTIFF.
+
+    ds_in = gdal.Open('data/rpc.vrt')
+    rpc_md = ds_in.GetMetadata('RPC')
+
+    ds = gdaltest.tiff_drv.CreateCopy( 'tmp/tiff_write_rpc_txt.tif', ds_in,
+                         options = [ 'PROFILE=BASELINE', 'RPCTXT=YES' ] )
+
+    ds_in = None
+    ds = None
+
+    # Ensure there is no .aux.xml file which might hold the RPC.
+    try:
+        os.remove( 'tmp/tiff_write_rpc_txt.tif.aux.xml' )
+    except:
+        pass
+
+    # confirm there is no .RPB file created by default.
+    try:
+        open('tmp/tiff_write_rpc_txt.RPB').read()
+        gdaltest.post_reason( 'unexpectedly found .RPB file' )
+        return 'fail'
+    except:
+        pass
+    
+    try:
+        open('tmp/tiff_write_rpc_txt_RPC.TXT').read()
+    except:
+        gdaltest.post_reason( 'missing _RPC.TXT file.' )
+        return 'fail'
+
+    # Open the dataset, and confirm the RPC data is still intact.
+    ds = gdal.Open( 'tmp/tiff_write_rpc_txt.tif' )
+
+    if not gdaltest.rpcs_equal(ds.GetMetadata('RPC'),rpc_md):
+        return 'fail'
+
+    ds = None
+
+    gdaltest.tiff_drv.Delete( 'tmp/tiff_write_rpc_txt.tif' )
+
+    # Confirm _RPC.TXT file is cleaned up.  If not likely the
+    # file list functionality is not working properly.
+    try:
+        open('tmp/tiff_write_rpc_txt_RPC.TXT').read()
+        gdaltest.post_reason( '_RPC.TXT did not get cleaned up.' )
+        return 'fail'
+    except:
+        pass
+
+    return 'success'
 
 ###############################################################################
 # Test the write of a pixel-interleaved image with NBITS = 7
@@ -5689,6 +5762,7 @@ gdaltest_list = [
     tiff_write_17_disable_readdir,
     tiff_write_18,
     tiff_write_18_disable_readdir,
+    tiff_write_rpc_txt,
     tiff_write_19,
     tiff_write_20,
     tiff_write_21,
