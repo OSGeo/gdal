@@ -919,12 +919,12 @@ def tiff_read_rpc_txt():
     os.remove('tmp/test.tif')
     os.remove('tmp/test_rpc.txt')
 
-    if rpc_md['HEIGHT_OFF'] != ' +0300.000 meters':
+    if rpc_md['HEIGHT_OFF'] != '+0300.000 meters':
         gdaltest.post_reason('HEIGHT_OFF wrong:"'+rpc_md['HEIGHT_OFF']+'"')
         return 'fail'
 
     if rpc_md['LINE_DEN_COEFF'].find(
-        ' +1.000000000000000E+00  -5.207696939454288E-03') != 0:
+        '+1.000000000000000E+00 -5.207696939454288E-03') != 0:
         print(rpc_md['LINE_DEN_COEFF'])
         gdaltest.post_reason('LINE_DEN_COEFF wrong')
         return 'fail'
