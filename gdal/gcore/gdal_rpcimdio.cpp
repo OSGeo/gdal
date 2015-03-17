@@ -361,6 +361,7 @@ CPLErr CPL_STDCALL GDALWriteRPCTXTFile( const char *pszFilename, char **papszMD 
                       apszRPCTXT20ValItems[i], pszRPCVal );
             VSIFCloseL( fp );
             VSIUnlink( osRPCFilename );
+            CSLDestroy( papszItems );
             return CE_Failure;
         }
 
@@ -458,6 +459,7 @@ CPLErr CPL_STDCALL GDALWriteRPBFile( const char *pszFilename, char **papszMD )
                           apszRPBMap[i], pszRPBVal );
                 VSIFCloseL( fp );
                 VSIUnlink( osRPBFilename );
+                CSLDestroy( papszItems );
                 return CE_Failure;
             }
 
