@@ -2074,22 +2074,26 @@ def test_ogr2ogr_53():
         return 'skip'
 
     f = open('tmp/test_ogr2ogr_53.csv', 'wt')
-    f.write('id,i64,WKT\n')
-    f.write('1,123456789012,"POINT(0 0)"\n')
+    f.write('id,i64,b,WKT\n')
+    f.write('1,123456789012,true,"POINT(0 0)"\n')
     f.close()
     f = open('tmp/test_ogr2ogr_53.csvt', 'wt')
-    f.write('Integer,Integer64,String\n')
+    f.write('Integer,Integer64,Integer(Boolean),String\n')
     f.close()
 
     # Default behaviour with a driver that declares GDAL_DMD_CREATIONFIELDDATATYPES
-    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f KML tmp/test_ogr2ogr_53.kml tmp/test_ogr2ogr_53.csv')
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f KML tmp/test_ogr2ogr_53.kml tmp/test_ogr2ogr_53.csv -mapFieldType "Integer(Boolean)=String"')
     
     f = open('tmp/test_ogr2ogr_53.kml', 'rt')
     content = f.read()
     f.close()
 
-    if content.find('<SimpleField name="i64" type="float"></SimpleField>') < 0 or \
-       content.find('<SimpleData name="i64">123456789012</SimpleData>') < 0:
+    if content.find('<SimpleField name="id" type="int"></SimpleField>') < 0 or \
+       content.find('<SimpleData name="id">1</SimpleData>') < 0 or \
+       content.find('<SimpleField name="i64" type="float"></SimpleField>') < 0 or \
+       content.find('<SimpleData name="i64">123456789012</SimpleData>') < 0 or \
+       content.find('<SimpleField name="b" type="string"></SimpleField>') < 0 or \
+       content.find('<SimpleData name="b">1</SimpleData>') < 0:
         gdaltest.post_reason('fail')
         print(content)
         return 'fail'

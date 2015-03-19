@@ -317,7 +317,8 @@ This is an alternate way to using the CAST operator of OGR SQL, that may avoid t
 Note that this does not influence the field types used by the source driver, and is only an afterwards conversion.</dd>
 <dt> <b>-mapFieldType</b><em> srctype|All=dsttype, ...</em>:</dt><dd> (starting with GDAL 2.0) converts any field of the
 specified type to another type. Valid types are : Integer, Integer64, Real, String, Date, Time,
-DateTime, Binary, IntegerList, Integer64List, RealList, StringList.
+DateTime, Binary, IntegerList, Integer64List, RealList, StringList. Types can also include subtype
+between parenthesis, such as Integer(Boolean), Real(Float32), ...
 Special value <b>All</b> can be used to convert all fields to another type.
 This is an alternate way to using the CAST operator of OGR SQL, that may avoid typing a long SQL query. This is
 a generalization of -fieldTypeToString.
