@@ -1570,6 +1570,69 @@ def gml_ArcByCenterPoint():
 
     return 'success'
 
+
+###############################################################################
+# Test compound curve of ArcByCenterPoint whose ends don't exactly match
+# with ends of neighbouring curves, as found in some AIXM files
+
+def gml_CompoundCurve_of_ArcByCenterPoint():
+
+    gml = """
+<Surface gml:id="Surface1" srsDimension="2" srsName="URN:OGC:DEF:CRS:OGC:1.3:CRS84">
+  <patches>
+    <PolygonPatch>
+      <exterior>
+        <Ring>
+          <curveMember>
+            <Curve ns:id="Curve1">
+              <segments>
+                <LineStringSegment>
+                  <pos>-80.40 33.86</pos>
+                  <pos>-80.27 33.63</pos>
+                </LineStringSegment>
+              </segments>
+            </Curve>
+          </curveMember>
+          <curveMember>
+            <Curve ns:id="Curve2">
+              <segments>
+                <ArcByCenterPoint numArc="1">
+                  <pointProperty>
+                    <Point ns:id="Point1">
+                      <pos>-80.47 33.98</pos>
+                    </Point>
+                  </pointProperty>
+                  <radius uom="NM">23</radius>
+                  <startAngle uom="deg">295</startAngle>
+                  <endAngle uom="deg">249</endAngle>
+                </ArcByCenterPoint>
+              </segments>
+            </Curve>
+          </curveMember>
+          <curveMember>
+            <Curve ns:id="Curve3">
+              <segments>
+                <LineStringSegment>
+                  <pos>-80.63 33.62</pos>
+                  <pos>-80.39 33.85</pos>
+                </LineStringSegment>
+              </segments>
+            </Curve>
+          </curveMember>
+        </Ring>
+      </exterior>
+    </PolygonPatch>
+  </patches>
+</Surface>"""
+    geom = ogr.CreateGeometryFromGML( gml )
+
+    if ogrtest.check_feature_geometry(geom, ogr.CreateGeometryFromWkt('POLYGON ((-80.4 33.86,-80.27 33.63,-80.305028054229538 33.622017309598967,-80.335422529369936 33.613343178471617,-80.366464292754429 33.606448070493634,-80.398003921948742 33.601365147653873,-80.429889693662162 33.598118851265042,-80.461968286017793 33.596724788982847,-80.494085487001527 33.597189662699385,-80.52608690656875 33.599511237590342,-80.557818688893789 33.603678352435914,-80.589128223167393 33.609670971175497,-80.619864849221443 33.617460275496377,-80.63 33.62,-80.39 33.85))')) != 0:
+        gdaltest.post_reason('fail')
+        print(geom)
+        return 'fail'
+
+    return 'success'
+
 ###############################################################################
 # Test GML CircleByCenterPoint
 
@@ -2043,6 +2106,7 @@ gdaltest_list.append( gml_srsDimension_topgeometry )
 gdaltest_list.append( gml_Arc )
 gdaltest_list.append( gml_ArcByBulge )
 gdaltest_list.append( gml_ArcByCenterPoint )
+gdaltest_list.append( gml_CompoundCurve_of_ArcByCenterPoint )
 gdaltest_list.append( gml_CircleByCenterPoint )
 gdaltest_list.append( gml_Circle )
 gdaltest_list.append( gml_ArcString )
