@@ -1513,41 +1513,59 @@ CPLErr GeoRasterDataset::SetProjection( const char *pszProjString )
 
     OWConnection* poConnection  = poGeoRaster->poConnection;
     OWStatement* poStmt = NULL;
-    int nMaxSRID = 0;
+    
+    int nCounter = 0;
+    int nNewSRID = 0;
+
+    poStmt = poConnection->CreateStatement( CPLSPrintf(
+        "SELECT COUNT(*) FROM MDSYS.CS_SRS WHERE WKTEXT = '%s'", pszCloneWKT ) );
+    
+    poStmt->Define( &nCounter );
+            
+    if( poStmt->Execute() && nCounter > 0 )
+    {    
+        poStmt = poConnection->CreateStatement( CPLSPrintf(
+            "SELECT SRID FROM MDSYS.CS_SRS WHERE WKTEXT = '%s'", pszCloneWKT ) );
+
+        poStmt->Define( &nNewSRID );
+
+        if( poStmt->Execute() )
+        {
+            poGeoRaster->SetGeoReference( nNewSRID );
+            CPLFree( pszCloneWKT );
+            return CE_None;
+        }
+    }
 
     poStmt = poConnection->CreateStatement( CPLSPrintf(
         "DECLARE\n"
         "  MAX_SRID NUMBER := 0;\n"
         "BEGIN\n"
-        "  SELECT SRID INTO MAX_SRID FROM MDSYS.CS_SRS WHERE WKTEXT = '%s';\n"
-        "  EXCEPTION\n"
-        "    WHEN no_data_found THEN\n"
-        "      SELECT MAX(SRID) INTO MAX_SRID FROM MDSYS.CS_SRS;\n"
-        "      MAX_SRID := MAX_SRID + 1;\n"
-        "      INSERT INTO MDSYS.CS_SRS (SRID, WKTEXT, CS_NAME)\n"
+        "  SELECT MAX(SRID) INTO MAX_SRID FROM MDSYS.CS_SRS;\n"
+        "  MAX_SRID := MAX_SRID + 1;\n"
+        "  INSERT INTO MDSYS.CS_SRS (SRID, WKTEXT, CS_NAME)\n"
         "        VALUES (MAX_SRID, '%s', '%s');\n"
+        "  SELECT MAX_SRID INTO :out FROM DUAL;\n"
         "END;",
-            pszCloneWKT,
             pszCloneWKT,
             oSRS.GetRoot()->GetChild(0)->GetValue() ) );
 
-    poStmt->Define( &nMaxSRID );
+    poStmt->BindName( ":out", &nNewSRID );
 
     CPLErr eError = CE_None;
 
     if( poStmt->Execute() )
     {
-        poGeoRaster->SetGeoReference( nMaxSRID ); //TODO change that method
-        poGeoRaster->sWKText = pszCloneWKT;
+        poGeoRaster->SetGeoReference( nNewSRID );
     }
     else
     {
         poGeoRaster->SetGeoReference( UNKNOWN_CRS );
-        poGeoRaster->sWKText = "";
 
         CPLError( CE_Warning, CPLE_UserInterrupt,
             "Insufficient privileges to insert reference system to "
-            "MDSYS.CS_SRS table." );
+            "table MDSYS.CS_SRS." );
+        
         eError = CE_Warning;
     }
 
