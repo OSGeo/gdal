@@ -858,13 +858,37 @@ void ApplySpatialFilter(OGRLayer* poLayer, OGRGeometry* poSpatialFilter,
 /*                          GetFieldType()                              */
 /************************************************************************/
 
-int GetFieldType(const char* pszArg)
+int GetFieldType(const char* pszArg, int* pnSubFieldType)
 {
+    *pnSubFieldType = OFSTNone;
+    int nLengthBeforeParenthesis = strlen(pszArg);
+    const char* pszOpenParenthesis = strchr(pszArg, '(');
+    if( pszOpenParenthesis )
+        nLengthBeforeParenthesis = pszOpenParenthesis - pszArg;
     for( int iType = 0; iType <= (int) OFTMaxType; iType++ )
-     {
-         if( EQUAL(pszArg,OGRFieldDefn::GetFieldTypeName(
-                       (OGRFieldType)iType)) )
+    {
+         const char* pszFieldTypeName = OGRFieldDefn::GetFieldTypeName(
+                                                       (OGRFieldType)iType);
+         if( EQUALN(pszArg,pszFieldTypeName,nLengthBeforeParenthesis) &&
+             pszFieldTypeName[nLengthBeforeParenthesis] == '\0' )
          {
+             if( pszOpenParenthesis != NULL )
+             {
+                 *pnSubFieldType = -1;
+                 CPLString osArgSubType = pszOpenParenthesis + 1;
+                 if( osArgSubType.size() && osArgSubType[osArgSubType.size()-1] == ')' )
+                     osArgSubType.resize(osArgSubType.size()-1);
+                 for( int iSubType = 0; iSubType <= (int) OFSTMaxSubType; iSubType++ )
+                 {
+                     const char* pszFieldSubTypeName = OGRFieldDefn::GetFieldSubTypeName(
+                                                       (OGRFieldSubType)iSubType);
+                     if( EQUAL( pszFieldSubTypeName, osArgSubType ) )
+                     {
+                         *pnSubFieldType = iSubType;
+                         break;
+                     }
+                 }
+             }
              return iType;
          }
      }
@@ -877,7 +901,8 @@ int GetFieldType(const char* pszArg)
 
 static int IsFieldType(const char* pszArg)
 {
-    return GetFieldType(pszArg) >= 0;
+    int iSubType;
+    return GetFieldType(pszArg, &iSubType) >= 0 && iSubType >= 0;
 }
 
 /************************************************************************/
@@ -1244,31 +1269,9 @@ int main( int nArgc, char ** papszArgv )
                 }
                 else
                 {
-                    Usage(CPLSPrintf("Unhandled type for fieldtypeasstring option : %s",
+                    Usage(CPLSPrintf("Unhandled type for fieldTypeToString option : %s",
                             *iter));
                 }
-                iter ++;
-            }
-        }
-        else if( EQUAL(papszArgv[iArg],"-mapFieldType") )
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            papszMapFieldType =
-                    CSLTokenizeStringComplex(papszArgv[++iArg], " ,", 
-                                             FALSE, FALSE );
-            char** iter = papszMapFieldType;
-            while(*iter)
-            {
-                char* pszKey = NULL;
-                const char* pszValue = CPLParseNameValue(*iter, &pszKey);
-                if( pszKey && pszValue)
-                {
-                    if( !((IsFieldType(pszKey) || EQUAL(pszKey, "All")) && IsFieldType(pszValue)) )
-                    {
-                        Usage("Invalid value for -mapFieldType");
-                    }
-                }
-                CPLFree(pszKey);
                 iter ++;
             }
         }
@@ -2717,27 +2720,47 @@ void DoFieldTypeConversion(GDALDataset* poDstDS, OGRFieldDefn& oFieldDefn,
                            int bForceNullable,
                            int bUnsetDefault)
 {
-    if (papszFieldTypesToString != NULL &&
-        (CSLFindString(papszFieldTypesToString, "All") != -1 ||
-            CSLFindString(papszFieldTypesToString,
-                        OGRFieldDefn::GetFieldTypeName(oFieldDefn.GetType())) != -1))
+    if (papszFieldTypesToString != NULL )
     {
-        oFieldDefn.SetSubType(OFSTNone);
-        oFieldDefn.SetType(OFTString);
+        CPLString osLookupString;
+        osLookupString.Printf("%s(%s)",
+                        OGRFieldDefn::GetFieldTypeName(oFieldDefn.GetType()),
+                        OGRFieldDefn::GetFieldSubTypeName(oFieldDefn.GetSubType()));
+                                  
+        int iIdx = CSLFindString(papszFieldTypesToString, osLookupString);
+        if( iIdx < 0 )
+            iIdx = CSLFindString(papszFieldTypesToString,
+                                        OGRFieldDefn::GetFieldTypeName(oFieldDefn.GetType()));
+        if( iIdx < 0 )
+            iIdx = CSLFindString(papszFieldTypesToString, "All");
+        if( iIdx >= 0 )
+        {
+            oFieldDefn.SetSubType(OFSTNone);
+            oFieldDefn.SetType(OFTString);
+        }
     }
     else if (papszMapFieldType != NULL)
     {
-        const char* pszType = CSLFetchNameValue(papszMapFieldType,
-            OGRFieldDefn::GetFieldTypeName(oFieldDefn.GetType()));
+        CPLString osLookupString;
+        osLookupString.Printf("%s(%s)",
+                        OGRFieldDefn::GetFieldTypeName(oFieldDefn.GetType()),
+                        OGRFieldDefn::GetFieldSubTypeName(oFieldDefn.GetSubType()));
+                                  
+        const char* pszType = CSLFetchNameValue(papszMapFieldType, osLookupString);
+        if( pszType == NULL )
+            pszType = CSLFetchNameValue(papszMapFieldType,
+                                        OGRFieldDefn::GetFieldTypeName(oFieldDefn.GetType()));
         if( pszType == NULL )
             pszType = CSLFetchNameValue(papszMapFieldType, "All");
         if( pszType != NULL )
         {
-            int iType = GetFieldType(pszType);
-            if( iType >= 0 )
+            int iSubType;
+            int iType = GetFieldType(pszType, &iSubType);
+            if( iType >= 0 && iSubType >= 0 )
             {
                 oFieldDefn.SetSubType(OFSTNone);
                 oFieldDefn.SetType((OGRFieldType)iType);
+                oFieldDefn.SetSubType((OGRFieldSubType)iSubType);
                 if( iType == OFTInteger )
                     oFieldDefn.SetWidth(0);
             }
