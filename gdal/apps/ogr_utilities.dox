@@ -442,6 +442,10 @@ to layers using the OGR connection type.
 <dt><b>-write_absolute_path</b>:</dt><dd> Filenames are written with absolute paths</dd>
 <dt><b>-skip_different_projection</b>:</dt><dd> Only layers with same projection ref
         as layers already inserted in the tileindex will be inserted.</dd>
+<dt><b> -accept_different_schemas: by default ogrtindex checks that all layers inserted
+        into the index have the same attribute schemas. If you
+        specify this option, this test will be disabled. Be aware that
+        resulting index may be incompatible with MapServer!</dd>
 </dl>
 
 If no -lnum or -lname arguments are given it is assumed that
