@@ -702,7 +702,7 @@ OGRFeature* OGRGeoJSONReader::ReadFeature( OGRGeoJSONLayer* poLayer, json_object
             }
             else if( OFTReal == eType )
             {
-                poFeature->SetField( nField, CPLAtof(json_object_get_string(it.val)) );
+                poFeature->SetField( nField, json_object_get_double(it.val) );
             }
             else if( OFTIntegerList == eType )
             {
@@ -728,7 +728,7 @@ OGRFeature* OGRGeoJSONReader::ReadFeature( OGRGeoJSONLayer* poLayer, json_object
                     for(int i=0;i<nLength;i++)
                     {
                         json_object* poRow = json_object_array_get_idx(it.val, i);
-                        padfVal[i] = CPLAtof(json_object_get_string(poRow));
+                        padfVal[i] = json_object_get_double(poRow);
                     }
                     poFeature->SetField( nField, nLength, padfVal );
                     CPLFree(padfVal);
