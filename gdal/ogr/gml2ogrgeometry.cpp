@@ -416,7 +416,8 @@ static int ParseGMLCoordinates( const CPLXMLNode *psGeomNode, OGRGeometry *poGeo
                 if( psPointPropertyIter->eType != CXT_Element  )
                     continue;
 
-                if (EQUAL(BareGMLElement(psPointPropertyIter->pszValue),"Point") )
+                const char* pszBareElement = BareGMLElement(psPointPropertyIter->pszValue);
+                if (EQUAL(pszBareElement,"Point") || EQUAL(pszBareElement,"ElevatedPoint") )
                 {
                     OGRPoint oPoint;
                     if( ParseGMLCoordinates( psPointPropertyIter, &oPoint, nSRSDimension ) )
@@ -431,6 +432,16 @@ static int ParseGMLCoordinates( const CPLXMLNode *psGeomNode, OGRGeometry *poGeo
                     }
                 }
             }
+
+            if( psPos->psChild && psPos->psChild->eType == CXT_Attribute &&
+                psPos->psChild->psNext == NULL &&
+                strcmp(psPos->psChild->pszValue, "xlink:href") == 0 )
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Cannot resolve xlink:href='%s'. Try setting GML_SKIP_RESOLVE_ELEMS=NONE",
+                         psPos->psChild->psChild->pszValue);
+            }
+
             continue;
         }
 
@@ -1038,7 +1049,18 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
                                                           nSRSDimension,
                                                           pszSRSName );
                 else
+                {
+                    if( psChild->psChild && psChild->psChild->eType == CXT_Attribute &&
+                        psChild->psChild->psNext == NULL &&
+                        strcmp(psChild->psChild->pszValue, "xlink:href") == 0 )
+                    {
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                "Cannot resolve xlink:href='%s'. Try setting GML_SKIP_RESOLVE_ELEMS=NONE",
+                                psChild->psChild->psChild->pszValue);
+                    }
+
                     poGeom = NULL;
+                }
 
                 // try to join multiline string to one linestring
                 if( poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbMultiLineString )
@@ -1058,6 +1080,52 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
                 if( wkbFlatten(poGeom->getGeometryType()) != wkbLineString )
                     bChildrenAreAllLineString = FALSE;
 
+                /* Ad-hoc logic to handle nicely connecting ArcByCenterPoint */
+                /* with consecutive curves, as found in some AIXM files */
+                int bIsApproximateArc = FALSE;
+                const CPLXMLNode* psChild2, *psChild3;
+                if( strcmp(psCurveChild->pszValue, "Curve") == 0 &&
+                    (psChild2 = GetChildElement(psCurveChild)) != NULL &&
+                    strcmp(psChild2->pszValue, "segments") == 0 &&
+                    (psChild3 = GetChildElement(psChild2)) != NULL &&
+                    strcmp(psChild3->pszValue, "ArcByCenterPoint") == 0 )
+                {
+                    const CPLXMLNode* psRadius = FindBareXMLChild( psChild3, "radius");
+                    if( psRadius && psRadius->eType == CXT_Element )
+                    {
+                        double dfRadius = CPLAtof(CPLGetXMLValue((CPLXMLNode*)psRadius, NULL, "0"));
+                        const char* pszUnits = CPLGetXMLValue((CPLXMLNode*)psRadius, "uom", NULL);
+                        int bSRSUnitIsDeegree = FALSE;
+                        int bInvertedAxisOrder = FALSE;
+                        if( pszSRSName != NULL )
+                        {
+                            OGRSpatialReference oSRS;
+                            if( oSRS.SetFromUserInput(pszSRSName) == OGRERR_NONE )
+                            {
+                                if( oSRS.IsGeographic() )
+                                {
+                                    bInvertedAxisOrder = oSRS.EPSGTreatsAsLatLong();
+                                    bSRSUnitIsDeegree = fabs(oSRS.GetAngularUnits(NULL) - CPLAtof(SRS_UA_DEGREE_CONV)) < 1e-8;
+                                }
+                            }
+                        }
+                        if( bSRSUnitIsDeegree && pszUnits != NULL &&
+                            (EQUAL(pszUnits, "m") || EQUAL(pszUnits, "nm") ||
+                             EQUAL(pszUnits, "mi") || EQUAL(pszUnits, "ft")) )
+                        {
+                            bIsApproximateArc = TRUE;
+                            if( EQUAL(pszUnits, "nm") )
+                                dfRadius *= CPLAtof(SRS_UL_INTL_NAUT_MILE_CONV);
+                            else if( EQUAL(pszUnits, "mi") )
+                                dfRadius *= CPLAtof(SRS_UL_INTL_STAT_MILE_CONV);
+                            else if( EQUAL(pszUnits, "ft") )
+                                dfRadius *= CPLAtof(SRS_UL_INTL_FOOT_CONV);
+                            dfLastCurveApproximateArcRadius = dfRadius;
+                            bLastCurveWasApproximateArcInvertedAxisOrder = bInvertedAxisOrder;
+                        }
+                    }
+                }
+
                 if( poCC == NULL && poRing == NULL )
                     poRing = (OGRCurve*)poGeom;
                 else
@@ -1075,64 +1143,27 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
                         poRing = NULL;
                     }
 
-                    /* Ad-hoc logic to handle nicely connecting ArcByCenterPoint */
-                    /* with consecutive curves, as found in some AIXM files */
-                    int bIsApproximateArc = FALSE;
-                    const CPLXMLNode* psChild2, *psChild3;
-                    if( strcmp(psCurveChild->pszValue, "Curve") == 0 &&
-                        (psChild2 = GetChildElement(psCurveChild)) != NULL &&
-                        strcmp(psChild2->pszValue, "segments") == 0 &&
-                        (psChild3 = GetChildElement(psChild2)) != NULL &&
-                        strcmp(psChild3->pszValue, "ArcByCenterPoint") == 0 )
+                    if( bIsApproximateArc )
                     {
-                        const CPLXMLNode* psRadius = FindBareXMLChild( psChild3, "radius");
-                        if( psRadius && psRadius->eType == CXT_Element )
+                        if( poGeom->getGeometryType() == wkbLineString )
                         {
-                            double dfRadius = CPLAtof(CPLGetXMLValue((CPLXMLNode*)psRadius, NULL, "0"));
-                            const char* pszUnits = CPLGetXMLValue((CPLXMLNode*)psRadius, "uom", NULL);
-                            int bSRSUnitIsDeegree = FALSE;
-                            int bInvertedAxisOrder = FALSE;
-                            if( pszSRSName != NULL )
+                            OGRCurve* poPreviousCurve = poCC->getCurve(poCC->getNumCurves()-1);
+                            OGRLineString* poLS = (OGRLineString*)poGeom;
+                            if( poPreviousCurve->getNumPoints() >= 2 && poLS->getNumPoints() >= 2 )
                             {
-                                OGRSpatialReference oSRS;
-                                if( oSRS.SetFromUserInput(pszSRSName) == OGRERR_NONE )
+                                OGRPoint p, p2;
+                                poPreviousCurve->EndPoint(&p);
+                                poLS->StartPoint(&p2);
+                                double dfDistance;
+                                if( bLastCurveWasApproximateArcInvertedAxisOrder )
+                                    dfDistance = OGRXPlane_Distance(p.getX(), p.getY(), p2.getX(), p2.getY());
+                                else
+                                    dfDistance = OGRXPlane_Distance(p.getY(), p.getX(), p2.getY(), p2.getX());
+                                //CPLDebug("OGR", "%f %f\n", dfDistance, dfLastCurveApproximateArcRadius / 10 );
+                                if( dfDistance < dfLastCurveApproximateArcRadius / 5 )
                                 {
-                                    if( oSRS.IsGeographic() )
-                                    {
-                                        bInvertedAxisOrder = oSRS.EPSGTreatsAsLatLong();
-                                        bSRSUnitIsDeegree = fabs(oSRS.GetAngularUnits(NULL) - CPLAtof(SRS_UA_DEGREE_CONV)) < 1e-8;
-                                    }
-                                }
-                            }
-                            if( bSRSUnitIsDeegree && pszUnits != NULL &&
-                                (EQUAL(pszUnits, "m") || EQUAL(pszUnits, "nm")) )
-                            {
-                                bIsApproximateArc = TRUE;
-                                if( EQUAL(pszUnits, "nm") )
-                                    dfRadius *= CPLAtof(SRS_UL_INTL_NAUT_MILE_CONV);
-                                dfLastCurveApproximateArcRadius = dfRadius;
-                                bLastCurveWasApproximateArcInvertedAxisOrder = bInvertedAxisOrder;
-                                
-                                if( poGeom->getGeometryType() == wkbLineString )
-                                {
-                                    OGRCurve* poPreviousCurve = poCC->getCurve(poCC->getNumCurves()-1);
-                                    OGRLineString* poLS = (OGRLineString*)poGeom;
-                                    if( poPreviousCurve->getNumPoints() >= 2 && poLS->getNumPoints() >= 2 )
-                                    {
-                                        OGRPoint p, p2;
-                                        poPreviousCurve->EndPoint(&p);
-                                        poLS->StartPoint(&p2);
-                                        double dfDistance;
-                                        if( bInvertedAxisOrder )
-                                            dfDistance = OGRXPlane_Distance(p.getX(), p.getY(), p2.getX(), p2.getY());
-                                        else
-                                            dfDistance = OGRXPlane_Distance(p.getY(), p.getX(), p2.getY(), p2.getX());
-                                        if( dfDistance < dfRadius / 10 )
-                                        {
-                                            CPLDebug("OGR", "Moving approximate start of ArcByCenterPoint to end of previous curve");
-                                            poLS->setPoint(0, &p);
-                                        }
-                                    }
+                                    CPLDebug("OGR", "Moving approximate start of ArcByCenterPoint to end of previous curve");
+                                    poLS->setPoint(0, &p);
                                 }
                             }
                         }
@@ -1153,7 +1184,9 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
                                     dfDistance = OGRXPlane_Distance(p.getX(), p.getY(), p2.getX(), p2.getY());
                                 else
                                     dfDistance = OGRXPlane_Distance(p.getY(), p.getX(), p2.getY(), p2.getX());
-                                if( dfDistance < dfLastCurveApproximateArcRadius / 10 )
+                                //CPLDebug("OGR", "%f %f\n", dfDistance, dfLastCurveApproximateArcRadius / 10 );
+                                // "A-311 WHEELER AFB OAHU, HI.xml" needs more than 10%
+                                if( dfDistance < dfLastCurveApproximateArcRadius / 5 )
                                 {
                                     CPLDebug("OGR", "Moving approximate end of last ArcByCenterPoint to start of current curve");
                                     poLS->setPoint(poLS->getNumPoints()-1, &p);
@@ -1161,8 +1194,6 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
                             }
                         }
                     }
-                    
-                    bLastCurveWasApproximateArc = bIsApproximateArc;
 
                     if( poCC->addCurveDirectly((OGRCurve*)poGeom) != OGRERR_NONE )
                     {
@@ -1171,6 +1202,8 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
                         return NULL;
                     }
                 }
+
+                bLastCurveWasApproximateArc = bIsApproximateArc;
             }
         }
 
@@ -1581,13 +1614,18 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
         double dfCenterY = p.getY();
         
         if( bSRSUnitIsDeegree && pszUnits != NULL &&
-            (EQUAL(pszUnits, "m") || EQUAL(pszUnits, "nm")) )
+            (EQUAL(pszUnits, "m") || EQUAL(pszUnits, "nm") ||
+             EQUAL(pszUnits, "mi") || EQUAL(pszUnits, "ft")) )
         {
             OGRLineString* poLS = new OGRLineString();
             double dfStep = CPLAtof(CPLGetConfigOption("OGR_ARC_STEPSIZE","4"));
             double dfDistance = dfRadius;
             if( EQUAL(pszUnits, "nm") )
                 dfDistance *= CPLAtof(SRS_UL_INTL_NAUT_MILE_CONV);
+            else if( EQUAL(pszUnits, "mi") )
+                dfDistance *= CPLAtof(SRS_UL_INTL_STAT_MILE_CONV);
+            else if( EQUAL(pszUnits, "ft") )
+                dfDistance *= CPLAtof(SRS_UL_INTL_FOOT_CONV);
             double dfSign = (dfStartAngle < dfEndAngle) ? 1 : -1;
             for(double dfAngle = dfStartAngle; (dfAngle - dfEndAngle) * dfSign < 0; dfAngle += dfSign * dfStep)
             {
@@ -1688,13 +1726,18 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
         double dfCenterY = p.getY();
         
         if( bSRSUnitIsDeegree && pszUnits != NULL &&
-            (EQUAL(pszUnits, "m") || EQUAL(pszUnits, "nm")) )
+            (EQUAL(pszUnits, "m") || EQUAL(pszUnits, "nm") ||
+             EQUAL(pszUnits, "mi") || EQUAL(pszUnits, "ft")) )
         {
             OGRLineString* poLS = new OGRLineString();
             double dfStep = CPLAtof(CPLGetConfigOption("OGR_ARC_STEPSIZE","4"));
             double dfDistance = dfRadius;
             if( EQUAL(pszUnits, "nm") )
                 dfDistance *= CPLAtof(SRS_UL_INTL_NAUT_MILE_CONV);
+            else if( EQUAL(pszUnits, "mi") )
+                dfDistance *= CPLAtof(SRS_UL_INTL_STAT_MILE_CONV);
+            else if( EQUAL(pszUnits, "ft") )
+                dfDistance *= CPLAtof(SRS_UL_INTL_FOOT_CONV);
             for(double dfAngle = 0; dfAngle < 360; dfAngle += dfStep)
             {
                 double dfLong, dfLat;
