@@ -488,9 +488,11 @@ def ogr_wfs_deegree():
     lyr.SetAttributeFilter('OBJECTID = 9 or OBJECTID = 100 or (OBJECTID >= 20 and OBJECTID <= 30 and OBJECTID != 27)')
     feat_count = lyr.GetFeatureCount()
     if feat_count != 12:
-        gdaltest.post_reason('did not get expected feature count after SetAttributeFilter')
-        print(feat_count)
-        return 'fail'
+        if gdal.GetLastErrorMsg().find('XML parsing of GML file failed') < 0 and \
+           gdal.GetLastErrorMsg().find('No suitable driver found') < 0:
+            gdaltest.post_reason('did not get expected feature count after SetAttributeFilter')
+            print(feat_count)
+            return 'fail'
 
     # Test attribute filter with gml_id
     #lyr.SetAttributeFilter("gml_id = 'SGID024_Springs30' or gml_id = 'SGID024_Springs100'")
@@ -964,15 +966,16 @@ def ogr_wfs_deegree_wfs200():
     lyr.SetAttributeFilter('OBJECTID = 5')
     count = lyr.GetFeatureCount()
     if count != 1:
-        gdaltest.post_reason("OBJECTID = 5 filter failed")
-        print(count)
-        return 'fail'
-
-    feat = lyr.GetNextFeature()
-    if feat.GetFieldAsInteger('OBJECTID') != 5:
-        gdaltest.post_reason("OBJECTID = 5 filter failed")
-        feat.DumpReadable()
-        return 'fail'
+        if gdal.GetLastErrorMsg().find('HTTP error code : 500') < 0:
+            gdaltest.post_reason("OBJECTID = 5 filter failed")
+            print(count)
+            return 'fail'
+    else:
+        feat = lyr.GetNextFeature()
+        if feat.GetFieldAsInteger('OBJECTID') != 5:
+            gdaltest.post_reason("OBJECTID = 5 filter failed")
+            feat.DumpReadable()
+            return 'fail'
 
     lyr.SetAttributeFilter("gml_id = 'SGID024_MUNICIPALITIES2004_EDITED_5'")
     count = lyr.GetFeatureCount()
