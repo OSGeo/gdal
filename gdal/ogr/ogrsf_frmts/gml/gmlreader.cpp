@@ -621,6 +621,13 @@ GMLFeature *GMLReader::NextFeatureExpat()
         unsigned int nLen =
                 (unsigned int)VSIFReadL( pabyBuf, 1, PARSER_BUF_SIZE, fpGML );
         nDone = VSIFEofL(fpGML);
+
+        /* Some files, such as APT_AIXM.xml from https://nfdc.faa.gov/webContent/56DaySub/2015-03-05/aixm5.1.zip */
+        /* end with trailing nul characters. This test is not fully bullet-proof in case */
+        /* the nul characters would occur at a buffer boundary */
+        while( nDone && nLen > 0 && pabyBuf[nLen-1] == '\0' )
+            nLen --;
+
         if (XML_Parse(oParser, pabyBuf, nLen, nDone) == XML_STATUS_ERROR)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
