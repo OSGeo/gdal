@@ -334,6 +334,7 @@ class GTiffDataset : public GDALPamDataset
     int           nZLevel;
     int           nLZMAPreset;
     int           nJpegQuality;
+    int           nJpegTablesMode;
     
     int           bPromoteTo8Bits;
 
@@ -366,7 +367,8 @@ class GTiffDataset : public GDALPamDataset
     void           DiscardLsb(GByte* pabyBuffer, int nBytes, int iBand);
     void           GetDiscardLsbOption(char** papszOptions);
 
-    int            GuessJPEGQuality();
+    int            GuessJPEGQuality(int& bOutHasQuantizationTable,
+                                    int& bOutHasHuffmanTable);
 
     CPLErr         DirectIO( GDALRWFlag eRWFlag,
                                int nXOff, int nYOff, int nXSize, int nYSize,
@@ -4943,6 +4945,7 @@ GTiffDataset::GTiffDataset()
     nZLevel = -1;
     nLZMAPreset = -1;
     nJpegQuality = -1;
+    nJpegTablesMode = -1;
     
     bPromoteTo8Bits = FALSE;
 
@@ -7899,10 +7902,12 @@ int GTiffDataset::SetDirectory( toff_t nNewOffset )
         // Now, reset zip and jpeg quality.
         if(nJpegQuality > 0 && nCompression == COMPRESSION_JPEG)
         {
-            CPLDebug( "GTiff", "Propgate JPEG_QUALITY(%d) in SetDirectory()",
+            CPLDebug( "GTiff", "Propagate JPEG_QUALITY(%d) in SetDirectory()",
                       nJpegQuality );
             TIFFSetField(hTIFF, TIFFTAG_JPEGQUALITY, nJpegQuality); 
         }
+        if(nJpegTablesMode >= 0 && nCompression == COMPRESSION_JPEG)
+            TIFFSetField(hTIFF, TIFFTAG_JPEGTABLESMODE, nJpegTablesMode); 
         if(nZLevel > 0 && nCompression == COMPRESSION_ADOBE_DEFLATE)
             TIFFSetField(hTIFF, TIFFTAG_ZIPQUALITY, nZLevel);
         if(nLZMAPreset > 0 && nCompression == COMPRESSION_LZMA)
@@ -8396,7 +8401,9 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( nCompression == COMPRESSION_JPEG && poOpenInfo->eAccess == GA_Update )
     {
-        int nQuality = poDS->GuessJPEGQuality();
+        int bHasQuantizationTable = FALSE, bHasHuffmanTable = FALSE;
+        int nQuality = poDS->GuessJPEGQuality(bHasQuantizationTable,
+                                              bHasHuffmanTable);
         if( nQuality > 0 )
         {
             CPLDebug("GTiff", "Guessed JPEG quality to be %d", nQuality);
@@ -8404,8 +8411,8 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
             TIFFSetField( hTIFF, TIFFTAG_JPEGQUALITY, nQuality );
 
             /* This means we will use the quantization tables from the JpegTables */
-            /* tag, and for Huffman we will use optimized coding for each strile */
-            TIFFSetField( hTIFF, TIFFTAG_JPEGTABLESMODE, JPEGTABLESMODE_QUANT);
+            /* tag */
+            poDS->nJpegTablesMode = JPEGTABLESMODE_QUANT;
         }
         else
         {
@@ -8439,22 +8446,44 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
                 {
                     CPLDebug("GTiff", "Could not guess JPEG quality. "
                              "JPEG tables are missing, so going in "
-                             "TIFFTAG_JPEGTABLESMODE = 2 mode");
-                    /* Write quantization tables in each strile and use
-                       optimized Huffman coding */
-                    TIFFSetField(hTIFF, TIFFTAG_JPEGTABLESMODE, 0);
+                             "TIFFTAG_JPEGTABLESMODE = 0/2 mode");
+                    /* Write quantization tables in each strile */
+                    poDS->nJpegTablesMode = 0;
                 }
             }
             else
             {
-                CPLDebug("GTiff", "Could not guess JPEG quality although JPEG "
-                         "tables are present, so going in "
-                         "TIFFTAG_JPEGTABLESMODE = 0 mode");
-                /* Write quantization tables in each strile and use
-                   optimized Huffman coding */
-                TIFFSetField(hTIFF, TIFFTAG_JPEGTABLESMODE, 0);
+                if( bHasQuantizationTable )
+                {
+                    // FIXME in libtiff: this is likely going to cause issues since
+                    // libtiff will reuse in each strile the number of the global
+                    // quantization table, which is invalid.
+
+                    CPLDebug("GTiff", "Could not guess JPEG quality although JPEG "
+                            "quantization tables are present, so going in "
+                            "TIFFTAG_JPEGTABLESMODE = 0/2 mode");
+                }
+                else
+                {
+                    CPLDebug("GTiff", "Could not guess JPEG quality since JPEG "
+                            "quantization tables are not present, so going in "
+                            "TIFFTAG_JPEGTABLESMODE = 0/2 mode");
+                }
+
+                /* Write quantization tables in each strile */
+                poDS->nJpegTablesMode = 0;
             }
         }
+        if( bHasHuffmanTable )
+        {
+            /* If there are Huffman tables in header use them, otherwise */
+            /* if we use optimized tables, libtiff will currently reuse */
+            /* the number of the Huffman tables of the header for the */
+            /* optimized version of each strile, which is illegal */
+            poDS->nJpegTablesMode |= JPEGTABLESMODE_HUFF;
+        }
+        if( poDS->nJpegTablesMode >= 0 )
+            TIFFSetField( hTIFF, TIFFTAG_JPEGTABLESMODE, poDS->nJpegTablesMode);
     }
 
 /* -------------------------------------------------------------------- */
@@ -10295,6 +10324,12 @@ static int GTiffGetJpegQuality(char** papszOptions)
     return nJpegQuality;
 }
 
+static int GTiffGetJpegTablesMode(char** papszOptions)
+{
+    return atoi(CSLFetchNameValueDef( papszOptions, "JPEGTABLESMODE",
+                                   "1" /* JPEGTABLESMODE_QUANT */));
+}
+
 /************************************************************************/
 /*                        GetDiscardLsbOption()                         */
 /************************************************************************/
@@ -10375,7 +10410,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
     int                 bTiled = FALSE;
     int                 nCompression = COMPRESSION_NONE;
     int                 nPredictor = PREDICTOR_NONE, nJpegQuality = -1, nZLevel = -1,
-                        nLZMAPreset = -1;
+                        nLZMAPreset = -1, nJpegTablesMode = -1;
     uint16              nSampleFormat;
     int			nPlanar;
     const char          *pszValue;
@@ -10461,7 +10496,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
     nZLevel = GTiffGetZLevel(papszParmList);
     nLZMAPreset = GTiffGetLZMAPreset(papszParmList);
     nJpegQuality = GTiffGetJpegQuality(papszParmList);
-
+    nJpegTablesMode = GTiffGetJpegTablesMode(papszParmList);
 
 /* -------------------------------------------------------------------- */
 /*      Streaming related code                                          */
@@ -10936,10 +10971,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
         TIFFSetField( hTIFF, TIFFTAG_LZMAPRESET, nLZMAPreset );
 
     if( nCompression == COMPRESSION_JPEG )
-    {
-        TIFFSetField( hTIFF, TIFFTAG_JPEGTABLESMODE,
-            atoi(CSLFetchNameValueDef(papszParmList, "JPEGTABLESMODE", "1")) );
-    }
+        TIFFSetField( hTIFF, TIFFTAG_JPEGTABLESMODE, nJpegTablesMode );
 
 /* -------------------------------------------------------------------- */
 /*      If we forced production of a file with photometric=palette,     */
@@ -11070,8 +11102,8 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
 /*      Guess JPEG quality from JPEGTABLES tag.                         */
 /************************************************************************/
 
-static const GByte* GTIFFFindNextQuantTable(const GByte* paby, int nLen,
-                                            int* pnLenTable)
+static const GByte* GTIFFFindNextTable(const GByte* paby, GByte byMarker,
+                                       int nLen, int* pnLenTable)
 {
     for(int i = 0; i+1 < nLen; )
     {
@@ -11088,9 +11120,9 @@ static const GByte* GTIFFFindNextQuantTable(const GByte* paby, int nLen,
         int nMarkerLen = paby[i+1] * 256 + paby[i+2];
         if( i+1+nMarkerLen >= nLen )
             return NULL;
-        if( paby[i] == 0xDB )
+        if( paby[i] == byMarker )
         {
-            *pnLenTable = nMarkerLen;
+            if( pnLenTable ) *pnLenTable = nMarkerLen;
             return paby + i + 1;
         }
         i += 1 + nMarkerLen;
@@ -11109,8 +11141,8 @@ static int GTIFFQuantizationTablesEqual(const GByte* paby1, int nLen1,
     {
         int nLenTable1 = 0;
         int nLenTable2 = 0;
-        const GByte* paby1New = GTIFFFindNextQuantTable(paby1, nLen1, &nLenTable1);
-        const GByte* paby2New = GTIFFFindNextQuantTable(paby2, nLen2, &nLenTable2);
+        const GByte* paby1New = GTIFFFindNextTable(paby1, 0xDB, nLen1, &nLenTable1);
+        const GByte* paby2New = GTIFFFindNextTable(paby2, 0xDB, nLen2, &nLenTable2);
         if( paby1New == NULL && paby2New == NULL )
             return bFound;
         if( paby1New == NULL && paby2New != NULL )
@@ -11131,12 +11163,20 @@ static int GTIFFQuantizationTablesEqual(const GByte* paby1, int nLen1,
     }
 }
 
-int GTiffDataset::GuessJPEGQuality()
+int GTiffDataset::GuessJPEGQuality(int& bOutHasQuantizationTable,
+                                   int& bOutHasHuffmanTable)
 {
     CPLAssert( nCompression == COMPRESSION_JPEG );
     uint32 nJPEGTableSize = 0;
     void* pJPEGTable = NULL;
+    bOutHasQuantizationTable = FALSE;
+    bOutHasHuffmanTable = FALSE;
     if( !TIFFGetField(hTIFF, TIFFTAG_JPEGTABLES, &nJPEGTableSize, &pJPEGTable) )
+        return -1;
+
+    bOutHasQuantizationTable = GTIFFFindNextTable((const GByte*)pJPEGTable, 0xDB, nJPEGTableSize, NULL) != NULL;
+    bOutHasHuffmanTable = GTIFFFindNextTable((const GByte*)pJPEGTable, 0xC4, nJPEGTableSize, NULL) != NULL;
+    if( !bOutHasQuantizationTable )
         return -1;
 
     char** papszLocalParameters = NULL;
@@ -11366,6 +11406,7 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
     poDS->nZLevel = GTiffGetZLevel(papszParmList);
     poDS->nLZMAPreset = GTiffGetLZMAPreset(papszParmList);
     poDS->nJpegQuality = GTiffGetJpegQuality(papszParmList);
+    poDS->nJpegTablesMode = GTiffGetJpegTablesMode(papszParmList);
 
 #if !defined(BIGTIFF_SUPPORT)
 /* -------------------------------------------------------------------- */
@@ -12251,6 +12292,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     poDS->nZLevel = GTiffGetZLevel(papszOptions);
     poDS->nLZMAPreset = GTiffGetLZMAPreset(papszOptions);
     poDS->nJpegQuality = GTiffGetJpegQuality(papszOptions);
+    poDS->nJpegTablesMode = GTiffGetJpegTablesMode(papszOptions);
     poDS->GetDiscardLsbOption(papszOptions);
 
     if (nCompression == COMPRESSION_ADOBE_DEFLATE)
@@ -12266,8 +12308,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         {
             TIFFSetField( hTIFF, TIFFTAG_JPEGQUALITY, poDS->nJpegQuality );
         }
-        TIFFSetField( hTIFF, TIFFTAG_JPEGTABLESMODE, 
-            atoi(CSLFetchNameValueDef(papszOptions, "JPEGTABLESMODE", "1")));
+        TIFFSetField( hTIFF, TIFFTAG_JPEGTABLESMODE, poDS->nJpegTablesMode );
     }
     else if( nCompression == COMPRESSION_LZMA)
     {
