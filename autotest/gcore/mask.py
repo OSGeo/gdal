@@ -625,6 +625,24 @@ def mask_14():
         gdaltest.post_reason( 'Got wrong checksum for the the mask (3)' )
         return 'fail'
 
+    # Test fix for #5884
+    gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', 'YES')
+    old_val = gdal.GetCacheMax()
+    gdal.SetCacheMax(0)
+    out_ds = drv.CreateCopy('/vsimem/byte_with_mask.tif', ds, options = ['COMPRESS=JPEG'])
+    gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', None)
+    gdal.SetCacheMax(old_val)
+    if out_ds.GetRasterBand(1).Checksum() == 0:
+        gdaltest.post_reason( 'failure' )
+        return 'fail'
+    cs = ds.GetRasterBand(1).GetMaskBand().Checksum()
+    if cs != 400:
+        print(cs)
+        gdaltest.post_reason( 'Got wrong checksum for the the mask (4)' )
+        return 'fail'
+    out_ds = None
+    drv.Delete( '/vsimem/byte_with_mask.tif' )
+
     ds = None
 
     drv.Delete( 'tmp/byte_with_mask.tif' )

@@ -5243,7 +5243,10 @@ def tiff_write_129():
                 ds = None
 
                 ds = gdal.Open('/vsimem/tiff_write_129.tif')
+                old_val = gdal.GetCacheMax()
+                gdal.SetCacheMax(0)
                 cs = ds.GetRasterBand(1).Checksum()
+                gdal.SetCacheMax(old_val)
                 ds = None
                 gdaltest.tiff_drv.Delete('/vsimem/tiff_write_129.tif')
                 
