@@ -2870,53 +2870,48 @@ def ogr_gml_62():
         os.unlink('tmp/gmlattributes.gfs')
     except:
         pass
-    gdal.SetConfigOption('GML_ATTRIBUTES_TO_OGR_FIELDS', 'YES')
-    ds = ogr.Open('tmp/gmlattributes.gml')
-    gdal.SetConfigOption('GML_ATTRIBUTES_TO_OGR_FIELDS', None)
-    lyr = ds.GetLayer(0)
-    if lyr.GetLayerDefn().GetFieldCount() != 4:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    feat = lyr.GetNextFeature()
-    if feat.GetField('element_attr1') != '1' or \
-       feat.GetField('element2_attr1') != 'a' or \
-       feat.GetField('element2') != 'foo' or \
-       feat.IsFieldSet('element3_attr1') :
-        gdaltest.post_reason('fail')
-        feat.DumpReadable()
-        return 'fail'
-    feat = lyr.GetNextFeature()
-    if feat.IsFieldSet('element_attr1') or \
-       feat.IsFieldSet('element2_attr1') or \
-       feat.IsFieldSet('element2') or \
-       feat.GetField('element3_attr1') != 1:
-        gdaltest.post_reason('fail')
-        feat.DumpReadable()
-        return 'fail'
-    feat = lyr.GetNextFeature()
-    if feat.GetField('element_attr1') != 'a' or \
-       feat.IsFieldSet('element2_attr1') or \
-       feat.IsFieldSet('element2') or \
-       feat.IsFieldSet('element3_attr1') :
-        gdaltest.post_reason('fail')
-        feat.DumpReadable()
-        return 'fail'
-    feat = None
-    ds = None
 
-    # Retry now that the .gfs exists
-    ds = ogr.Open('tmp/gmlattributes.gml')
-    lyr = ds.GetLayer(0)
-    feat = lyr.GetNextFeature()
-    if feat.GetField('element_attr1') != '1' or \
-       feat.GetField('element2_attr1') != 'a' or \
-       feat.GetField('element2') != 'foo' or \
-       feat.IsFieldSet('element3_attr1') :
-        gdaltest.post_reason('fail')
-        feat.DumpReadable()
-        return 'fail'
-    feat = None
-    ds = None
+    # Without and then with .gfs
+    for i in range(2):
+        if i == 0:
+            gdal.SetConfigOption('GML_ATTRIBUTES_TO_OGR_FIELDS', 'YES')
+        ds = ogr.Open('tmp/gmlattributes.gml')
+        if i == 0:
+            gdal.SetConfigOption('GML_ATTRIBUTES_TO_OGR_FIELDS', None)
+        lyr = ds.GetLayer(0)
+        if lyr.GetLayerDefn().GetFieldCount() != 4:
+            gdaltest.post_reason('fail')
+            print(i)
+            return 'fail'
+        feat = lyr.GetNextFeature()
+        if feat.GetField('element_attr1') != '1' or \
+        feat.GetField('element2_attr1') != 'a' or \
+        feat.GetField('element2') != 'foo' or \
+        feat.IsFieldSet('element3_attr1') :
+            gdaltest.post_reason('fail')
+            feat.DumpReadable()
+            print(i)
+            return 'fail'
+        feat = lyr.GetNextFeature()
+        if feat.IsFieldSet('element_attr1') or \
+        feat.IsFieldSet('element2_attr1') or \
+        feat.IsFieldSet('element2') or \
+        feat.GetField('element3_attr1') != 1:
+            gdaltest.post_reason('fail')
+            feat.DumpReadable()
+            print(i)
+            return 'fail'
+        feat = lyr.GetNextFeature()
+        if feat.GetField('element_attr1') != 'a' or \
+        feat.IsFieldSet('element2_attr1') or \
+        feat.IsFieldSet('element2') or \
+        feat.IsFieldSet('element3_attr1') :
+            gdaltest.post_reason('fail')
+            feat.DumpReadable()
+            print(i)
+            return 'fail'
+        feat = None
+        ds = None
 
     return 'success'
 
