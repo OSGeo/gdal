@@ -1668,6 +1668,7 @@ OGRLayer * OGRSQLiteDataSource::ExecuteSQL( const char *pszSQLCommand,
         {
             OGRSQLiteTableLayer* poLayer = (OGRSQLiteTableLayer*) papoLayers[iLayer];
             poLayer->RunDeferredCreationIfNecessary();
+            poLayer->CreateSpatialIndexIfNecessary();
         }
     }
 
@@ -2404,7 +2405,7 @@ OGRErr OGRSQLiteDataSource::CommitTransaction()
             {
                 OGRSQLiteTableLayer* poLayer = (OGRSQLiteTableLayer*) papoLayers[iLayer];
                 poLayer->RunDeferredCreationIfNecessary();
-                poLayer->CreateSpatialIndexIfNecessary();
+                //poLayer->CreateSpatialIndexIfNecessary();
             }
         }
     }
