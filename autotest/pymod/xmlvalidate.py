@@ -266,6 +266,25 @@ def transform_inspire_abs_links_to_ref_links(path, level = 0):
                 if l[-1] == '\n':
                     l = l[0:-1]
 
+                pos = l.find('schemaLocation="http://inspire.ec.europa.eu/schemas/')
+                if pos >= 0:
+                    pos += len('schemaLocation="')
+                    rewrite = True
+                    s = l[0:pos]
+                    for j in range(level):
+                        s = s + "../"
+                    s = s + l[pos + len('http://inspire.ec.europa.eu/schemas/'):]
+                    l = s
+                    lines[i] = l
+
+                pos = l.find('http://portele.de/')
+                if pos >= 0:
+                    rewrite = True
+                    s = l[0:pos]
+                    s = s + l[pos + len('http://portele.de/'):]
+                    l = s
+                    lines[i] = l
+
                 pos = l.find('http://schemas.opengis.net/')
                 if pos >= 0:
                     rewrite = True
@@ -306,7 +325,7 @@ def download_ogc_schemas(ogc_schemas_url = 'http://schemas.opengis.net/SCHEMAS_O
         except:
             pass
 
-        gdaltest.unzip(target_dir + '/' + 'SCHEMAS_OPENGIS_NET.zip', target_dir + '/' + target_subdir)
+        gdaltest.unzip(target_dir + '/' + target_subdir, target_dir + '/' + 'SCHEMAS_OPENGIS_NET.zip')
         try:
             os.stat(target_dir + '/' + target_subdir + '/wfs')
         except:
@@ -335,7 +354,7 @@ def download_ogc_schemas(ogc_schemas_url = 'http://schemas.opengis.net/SCHEMAS_O
 def download_inspire_schemas(target_dir = '.', \
                              target_subdir = 'inspire_schemas'):
 
-    if not download_ogc_schemas():
+    if not download_ogc_schemas(target_dir = target_dir):
         return False
 
     try:
@@ -357,7 +376,7 @@ def download_inspire_schemas(target_dir = '.', \
     try:
         os.stat(target_dir + '/' + target_subdir + '/common/1.0')
     except:
-        gdaltest.unzip(target_dir + '/' + 'inspire_common_1.0.1.zip', target_dir + '/' + target_subdir + '/common')
+        gdaltest.unzip(target_dir + '/' + target_subdir + '/common', target_dir + '/' + 'inspire_common_1.0.1.zip')
         try:
             os.stat(target_dir + '/' + target_subdir + '/common/1.0')
         except:
@@ -367,7 +386,7 @@ def download_inspire_schemas(target_dir = '.', \
     try:
         os.stat(target_dir + '/' + target_subdir + '/inspire_vs/1.0')
     except:
-        gdaltest.unzip(target_dir + '/' + 'inspire_vs_1.0.1.zip', target_dir + '/' + target_subdir + '/inspire_vs')
+        gdaltest.unzip(target_dir + '/' + target_subdir + '/inspire_vs', target_dir + '/' + 'inspire_vs_1.0.1.zip')
         try:
             os.stat(target_dir + '/' + target_subdir + '/inspire_vs/1.0')
         except:
@@ -378,6 +397,25 @@ def download_inspire_schemas(target_dir = '.', \
         os.stat(target_dir + '/' + target_subdir + '/inspire_dls/1.0/inspire_dls.xsd')
     except:
         gdaltest.download_file('http://inspire.ec.europa.eu/schemas/inspire_dls/1.0/inspire_dls.xsd', target_dir + '/' + target_subdir + '/inspire_dls/1.0/inspire_dls.xsd')
+
+    try:
+        os.stat(target_dir + '/' + target_subdir + '/oi/3.0/Orthoimagery.xsd')
+    except:
+        try:
+            os.makedirs(target_dir + '/' + target_subdir + '/oi/3.0')
+        except:
+            pass
+        gdaltest.download_file('http://inspire.ec.europa.eu/schemas/oi/3.0/Orthoimagery.xsd', target_dir + '/' + target_subdir + '/oi/3.0/Orthoimagery.xsd')
+        gdaltest.download_file('http://portele.de/ShapeChangeAppinfo.xsd', target_dir + '/' + target_subdir + '/oi/3.0/ShapeChangeAppinfo.xsd')
+
+    try:
+        os.stat(target_dir + '/' + target_subdir + '/base/3.3/BaseTypes.xsd')
+    except:
+        try:
+            os.makedirs(target_dir + '/' + target_subdir + '/base/3.3')
+        except:
+            pass
+        gdaltest.download_file('http://inspire.ec.europa.eu/schemas/base/3.3/BaseTypes.xsd', target_dir + '/' + target_subdir + '/base/3.3/BaseTypes.xsd')
 
     transform_inspire_abs_links_to_ref_links(target_dir + '/' + target_subdir)
     
@@ -426,6 +464,8 @@ def has_local_inspire_schemas(path):
         os.stat(path + '/common/1.0/common.xsd')
         os.stat(path + '/inspire_vs/1.0/inspire_vs.xsd')
         os.stat(path + '/inspire_dls/1.0/inspire_dls.xsd')
+        os.stat(path + '/oi/3.0/Orthoimagery.xsd')
+        os.stat(path + '/base/3.3/BaseTypes.xsd')
 
         return True
     except:
@@ -435,9 +475,9 @@ def has_local_inspire_schemas(path):
 # Usage function
 
 def Usage():
-    print('Usage: validate.py [-download_ogc_schemas]] [-ogc_schemas_location path]')
+    print('Usage: validate.py [-target_dir dir] [-download_ogc_schemas] [-ogc_schemas_location path]')
     print('                   [-download_inspire_schemas] [-inspire_schemas_location path]')
-    print('                   [-app_schema_ns ns] [-schema some.xsd')
+    print('                   [-app_schema_ns ns] [-schema some.xsd]')
     print('                   some.xml')
     sys.exit(255)
 
@@ -460,16 +500,21 @@ if __name__ == '__main__':
         inspire_schemas_location = 'inspire_schemas'
         #transform_inspire_abs_links_to_ref_links('inspire_schemas')
 
+    target_dir = '.'
+
     while i < len(argv):
-        if argv[i] == "-download_ogc_schemas":
-            ret = download_ogc_schemas()
+        if argv[i] == "-target_dir":
+            i = i + 1
+            target_dir = argv[i]
+        elif argv[i] == "-download_ogc_schemas":
+            ret = download_ogc_schemas(target_dir = target_dir)
             if i == len(argv)-1:
                 if ret:
                     sys.exit(0)
                 else:
                     sys.exit(1)
         elif argv[i] == "-download_inspire_schemas":
-            ret = download_inspire_schemas()
+            ret = download_inspire_schemas(target_dir = target_dir)
             if i == len(argv)-1:
                 if ret:
                     sys.exit(0)
