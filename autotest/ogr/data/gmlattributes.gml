@@ -8,7 +8,9 @@
   </gml:featureMember>
   <gml:featureMember>
     <ogr:test>
-      <ogr:element3 attr1="1"/>
+      <ogr:nested>
+        <ogr:element3 attr1="1"/>
+      </ogr:nested>
     </ogr:test>
   </gml:featureMember>
   <gml:featureMember>

@@ -836,8 +836,12 @@ void GMLHandler::DealWithAttributes(const char *pszName, int nLenName, void* att
         /* Should we report all attributes ? */
         else if( m_poReader->ReportAllAttributes() && !poClass->IsSchemaLocked() )
         {
+            poState->PushPath( pszName, nLenName );
+            CPLString osPropName = poState->osPath;
+            poState->PopPath();
+
             m_poReader->SetFeaturePropertyDirectly(
-                CPLSPrintf("%s@%s", pszName, pszAttrKeyNoNS ? pszAttrKeyNoNS : pszAttrKey),
+                CPLSPrintf("%s@%s", osPropName.c_str(), pszAttrKeyNoNS ? pszAttrKeyNoNS : pszAttrKey),
                 pszAttrVal, -1 );
             pszAttrVal = NULL;
         }
