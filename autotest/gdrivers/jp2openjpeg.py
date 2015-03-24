@@ -1046,7 +1046,7 @@ def validate(filename, expected_gmljp2 = True, return_error_count = False):
         os.stat('tmp/cache/SCHEMAS_OPENGIS_NET')
         ogc_schemas_location = 'tmp/cache/SCHEMAS_OPENGIS_NET'
     except:
-        ogc_schemas_location = None
+        ogc_schemas_location = 'disabled'
     res = validate_jp2.validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location)
     if return_error_count:
         return (res.error_count, res.warning_count)
