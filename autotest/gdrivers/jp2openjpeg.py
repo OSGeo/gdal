@@ -1031,6 +1031,31 @@ def jp2openjpeg_25():
     return 'success'
 
 ###############################################################################
+def validate(filename, expected_gmljp2 = True, return_error_count = False):
+
+    sys.path.append('../../gdal/swig/python/samples')
+    try:
+        import validate_jp2
+    except:
+        print('Cannot run validate_jp2')
+        return 'skip'
+
+    oidoc = None
+    inspire_tg = True
+    try:
+        os.stat('tmp/cache/SCHEMAS_OPENGIS_NET')
+        ogc_schemas_location = 'tmp/cache/SCHEMAS_OPENGIS_NET'
+    except:
+        ogc_schemas_location = None
+    res = validate_jp2.validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location)
+    if return_error_count:
+        return (res.error_count, res.warning_count)
+    elif res.error_count == 0 and res.warning_count == 0:
+        return 'success'
+    else:
+        return 'fail'
+
+###############################################################################
 # Test INSPIRE_TG support
 
 def jp2openjpeg_26():
@@ -1046,7 +1071,6 @@ def jp2openjpeg_26():
 
     # Nominal case: tiled
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_26.jp2', src_ds, options = ['INSPIRE_TG=YES'])
-    # TODO: add stricter inspire validation
     overview_count = out_ds.GetRasterBand(1).GetOverviewCount()
     # We have 2x2 1024x1024 tiles. Each of them can be reconstructed down to 128x128. 
     # So for full raster the smallest overview is 2*128
@@ -1060,11 +1084,13 @@ def jp2openjpeg_26():
     if gdal.VSIStatL('/vsimem/jp2openjpeg_26.jp2.aux.xml') is not None:
         gdaltest.post_reason('fail')
         return 'fail'
+    if validate('/vsimem/jp2openjpeg_26.jp2') == 'fail':
+        gdaltest.post_reason('fail')
+        return 'fail'
     gdal.Unlink('/vsimem/jp2openjpeg_26.jp2')
 
     # Nominal case: untiled
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_26.jp2', src_ds, options = ['INSPIRE_TG=YES', 'BLOCKXSIZE=2048', 'BLOCKYSIZE=2048'])
-    # TODO: add stricter inspire validation
     overview_count = out_ds.GetRasterBand(1).GetOverviewCount()
     if out_ds.GetRasterBand(1).GetOverview(overview_count-1).XSize != 128 or \
        out_ds.GetRasterBand(1).GetOverview(overview_count-1).YSize != 128:
@@ -1074,6 +1100,9 @@ def jp2openjpeg_26():
         return 'fail'
     out_ds = None
     if gdal.VSIStatL('/vsimem/jp2openjpeg_26.jp2.aux.xml') is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if validate('/vsimem/jp2openjpeg_26.jp2') == 'fail':
         gdaltest.post_reason('fail')
         return 'fail'
     gdal.Unlink('/vsimem/jp2openjpeg_26.jp2')
@@ -1095,18 +1124,24 @@ def jp2openjpeg_26():
     if gdal.VSIStatL('/vsimem/jp2openjpeg_26.jp2.aux.xml') is not None:
         gdaltest.post_reason('fail')
         return 'fail'
+    if validate('/vsimem/jp2openjpeg_26.jp2') == 'fail':
+        gdaltest.post_reason('fail')
+        return 'fail'
     gdal.Unlink('/vsimem/jp2openjpeg_26.jp2')
 
     # Warning case: disabling JPX
     gdal.ErrorReset()
     gdal.PushErrorHandler()
-    out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_26.j2k', src_ds, options = ['INSPIRE_TG=YES', 'JPX=NO'])
+    out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_26.jp2', src_ds, options = ['INSPIRE_TG=YES', 'JPX=NO'])
     gdal.PopErrorHandler()
-    if out_ds is not None or gdal.GetLastErrorMsg() == '':
+    if gdal.GetLastErrorMsg() == '':
         gdaltest.post_reason('fail')
         return 'fail'
     out_ds = None
     if gdal.VSIStatL('/vsimem/jp2openjpeg_26.jp2.aux.xml') is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if validate('/vsimem/jp2openjpeg_26.jp2', return_error_count = True) != (2, 0):
         gdaltest.post_reason('fail')
         return 'fail'
     gdal.Unlink('/vsimem/jp2openjpeg_26.jp2')
@@ -1122,6 +1157,9 @@ def jp2openjpeg_26():
     if gdal.VSIStatL('/vsimem/jp2openjpeg_26.jp2.aux.xml') is not None:
         gdaltest.post_reason('fail')
         return 'fail'
+    if validate('/vsimem/jp2openjpeg_26.jp2', expected_gmljp2 = False) == 'fail':
+        gdaltest.post_reason('fail')
+        return 'fail'
     gdal.Unlink('/vsimem/jp2openjpeg_26.jp2')
 
     # Auto-promotion 12->16 bits
@@ -1133,6 +1171,9 @@ def jp2openjpeg_26():
         return 'fail'
     ds = None
     if gdal.VSIStatL('/vsimem/jp2openjpeg_26.jp2.aux.xml') is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if validate('/vsimem/jp2openjpeg_26.jp2', expected_gmljp2 = False) == 'fail':
         gdaltest.post_reason('fail')
         return 'fail'
     gdal.Unlink('/vsimem/jp2openjpeg_26.jp2')

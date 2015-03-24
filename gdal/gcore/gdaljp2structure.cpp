@@ -530,7 +530,7 @@ static void DumpCDEFBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
                 memcpy(&nVal, pabyIter, 2);
                 CPL_MSBPTR16(&nVal);
                 AddField(psDecodedContent,
-                            CPLSPrintf("Assoc%d", i),
+                            CPLSPrintf("Asoc%d", i),
                             nVal,
                             (nVal == 0) ? "Associated to the whole image":
                             (nVal == 65535) ? "Not associated with a particular colour":
@@ -778,6 +778,29 @@ static void AddError(CPLXMLNode* psParent, const char* pszErrorMsg,
     }
 }
 
+static const char* GetMarkerName(GByte byVal)
+{
+    switch(byVal)
+    {
+        case 0x90: return "SOT";
+        case 0x51: return "SIZ";
+        case 0x52: return "COD";
+        case 0x53: return "COC";
+        case 0x55: return "TLM";
+        case 0x57: return "PLM";
+        case 0x58: return "PLT";
+        case 0x5C: return "QCD";
+        case 0x5D: return "QCC";
+        case 0x5E: return "RGN";
+        case 0x5F: return "POC";
+        case 0x60: return "PPM";
+        case 0x61: return "PPT";
+        case 0x63: return "CRG";
+        case 0x64: return "COM";
+        default: return CPLSPrintf("Unknown 0xFF%02X", byVal);
+    }
+}
+
 /************************************************************************/
 /*                       DumpJPK2CodeStream()                           */
 /************************************************************************/
@@ -864,21 +887,24 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
             CreateMarker( psCSBox, CPLSPrintf("Unknown 0xFF%02X", abyMarker[1]), nOffset, 0 );
             continue;
         }
+
         GUInt16 nMarkerSize;
         if( VSIFReadL(&nMarkerSize, 2, 1, fp) != 1 )
         {
-            AddError(psCSBox, "Cannot read marker size", nOffset);
+            AddError(psCSBox, CPLSPrintf("Cannot read marker size of %s", GetMarkerName(abyMarker[1])), nOffset);
             break;
         }
         CPL_MSBPTR16(&nMarkerSize);
         if( nMarkerSize < 2 )
         {
-            AddError(psCSBox, "Invalid marker size", nOffset);
+            AddError(psCSBox, CPLSPrintf("Invalid marker size of %s", GetMarkerName(abyMarker[1])), nOffset);
             break;
         }
+
+        CPLXMLNode* psMarker = CreateMarker( psCSBox, GetMarkerName(abyMarker[1]), nOffset, nMarkerSize );
         if( VSIFReadL(pabyMarkerData, nMarkerSize - 2, 1, fp) != 1 )
         {
-            AddError(psCSBox, "Cannot read marker data", nOffset);
+            AddError(psMarker, "Cannot read marker data", nOffset);
             break;
         }
         GByte* pabyMarkerDataIter = pabyMarkerData;
@@ -940,9 +966,8 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
 #define READ_MARKER_FIELD_UINT32(name) \
         READ_MARKER_FIELD_UINT32_COMMENT(name, NULL)
 
-        if( abyMarker[1] == 0x90 )
+        if( abyMarker[1] == 0x90 ) /* SOT */
         {
-            CPLXMLNode* psMarker = CreateMarker( psCSBox, "SOT", nOffset, nMarkerSize );
             READ_MARKER_FIELD_UINT16("Isot");
             READ_MARKER_FIELD_UINT32("Psot");
             GUInt32 PSOT = nLastVal;
@@ -956,9 +981,8 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
             if( PSOT )
                 nNextTileOffset = nOffset + PSOT;
         }
-        else if( abyMarker[1] == 0x51 )
+        else if( abyMarker[1] == 0x51 ) /* SIZ */
         {
-            CPLXMLNode* psMarker = CreateMarker( psCSBox, "SIZ", nOffset, nMarkerSize );
             READ_MARKER_FIELD_UINT16_COMMENT("Rsiz",
                                             (nLastVal == 0) ? "Unrestricted profile":
                                             (nLastVal == 1) ? "Profile 0":
@@ -969,8 +993,8 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
             READ_MARKER_FIELD_UINT32("YOsiz");
             READ_MARKER_FIELD_UINT32("XTsiz");
             READ_MARKER_FIELD_UINT32("YTsiz");
-            READ_MARKER_FIELD_UINT32("XTOsiz");
-            READ_MARKER_FIELD_UINT32("YTOsiz");
+            READ_MARKER_FIELD_UINT32("XTOSiz");
+            READ_MARKER_FIELD_UINT32("YTOSiz");
             READ_MARKER_FIELD_UINT16("Csiz");
             int CSiz = nLastVal;
             for(int i=0;i<CSiz;i++)
@@ -985,9 +1009,8 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
                         psMarker, "RemainingBytes",
                         CPLSPrintf("%d", (int)nRemainingMarkerSize ));
         }
-        else if( abyMarker[1] == 0x52 )
+        else if( abyMarker[1] == 0x52 ) /* COD */
         {
-            CPLXMLNode* psMarker = CreateMarker( psCSBox, "COD", nOffset, nMarkerSize );
             int bHasPrecincts = TRUE;
             if( nRemainingMarkerSize >= 1 ) {
                 nLastVal = *pabyMarkerDataIter;
@@ -1089,11 +1112,10 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
                         psMarker, "RemainingBytes",
                         CPLSPrintf("%d", (int)nRemainingMarkerSize ));
         }
-        else if( abyMarker[1] == 0x53 )
+        else if( abyMarker[1] == 0x53 ) /* COC */
         {
-            CreateMarker( psCSBox, "COC", nOffset, nMarkerSize );
         }
-        else if( abyMarker[1] == 0x55 )
+        else if( abyMarker[1] == 0x55 ) /* TLM */
         {
             CPLXMLNode* psMarker = CreateMarker( psCSBox, "TLM", nOffset, nMarkerSize );
             READ_MARKER_FIELD_UINT8("Ztlm");
@@ -1121,45 +1143,35 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
                         psMarker, "RemainingBytes",
                         CPLSPrintf("%d", (int)nRemainingMarkerSize ));
         }
-        else if( abyMarker[1] == 0x57 )
+        else if( abyMarker[1] == 0x57 ) /* PLM */
         {
-            CreateMarker( psCSBox, "PLM", nOffset, nMarkerSize );
         }
-        else if( abyMarker[1] == 0x58 )
+        else if( abyMarker[1] == 0x58 ) /* PLT */
         {
-            CreateMarker( psCSBox, "PLT", nOffset, nMarkerSize );
         }
-        else if( abyMarker[1] == 0x5C )
+        else if( abyMarker[1] == 0x5C ) /* QCD */
         {
-            CreateMarker( psCSBox, "QCD", nOffset, nMarkerSize );
         }
-        else if( abyMarker[1] == 0x5D )
+        else if( abyMarker[1] == 0x5D ) /* QCC */
         {
-            CreateMarker( psCSBox, "QCC", nOffset, nMarkerSize );
         }
-        else if( abyMarker[1] == 0x5E )
+        else if( abyMarker[1] == 0x5E ) /* RGN */
         {
-            CreateMarker( psCSBox, "RGN", nOffset, nMarkerSize );
         }
-        else if( abyMarker[1] == 0x5F )
+        else if( abyMarker[1] == 0x5F ) /* POC */
         {
-            CreateMarker( psCSBox, "POC", nOffset, nMarkerSize );
         }
-        else if( abyMarker[1] == 0x60 )
+        else if( abyMarker[1] == 0x60 ) /* PPM */
         {
-            CreateMarker( psCSBox, "PPM", nOffset, nMarkerSize );
         }
-        else if( abyMarker[1] == 0x61 )
+        else if( abyMarker[1] == 0x61 ) /* PPT */
         {
-            CreateMarker( psCSBox, "PPT", nOffset, nMarkerSize );
         }
-        else if( abyMarker[1] == 0x63 )
+        else if( abyMarker[1] == 0x63 ) /* CRG */
         {
-            CreateMarker( psCSBox, "CRG", nOffset, nMarkerSize );
         }
-        else if( abyMarker[1] == 0x64 )
+        else if( abyMarker[1] == 0x64 ) /* COM */
         {
-            CPLXMLNode* psMarker = CreateMarker( psCSBox, "COM", nOffset, nMarkerSize );
             READ_MARKER_FIELD_UINT16_COMMENT("Rcom", (nLastVal == 0 ) ? "Binary" : (nLastVal == 1) ? "LATIN1" : NULL);
             if( nLastVal == 1 )
             {
@@ -1169,10 +1181,7 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
                 pabyMarkerDataIter[nRemainingMarkerSize] = abyBackup;
             }
         }
-        else
-        {
-            CreateMarker( psCSBox, CPLSPrintf("Unknown 0xFF%02X", abyMarker[1]), nOffset, nMarkerSize );
-        }
+
         VSIFSeekL(fp, nOffset + 2 + nMarkerSize, SEEK_SET);
     }
     CPLFree(pabyMarkerData);
@@ -1398,11 +1407,13 @@ CPLXMLNode* GDALGetJPEG2000Structure(const char* pszFilename,
             VSIFSeekL(fp, 0, SEEK_END);
             GIntBig nBoxDataLength = (GIntBig)VSIFTellL(fp);
             psParent = DumpJPK2CodeStream(NULL, fp, 0, nBoxDataLength);
+            CPLAddXMLAttributeAndValue(psParent, "filename", pszFilename );
         }
     }
     else
     {
         psParent = CPLCreateXMLNode( NULL, CXT_Element, "JP2File" );
+        CPLAddXMLAttributeAndValue(psParent, "filename", pszFilename );
         GDALGetJPEG2000StructureInternal(psParent, fp, NULL, papszOptions );
     }
 

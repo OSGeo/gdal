@@ -1212,6 +1212,11 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2( int nXSize, int nYSize )
         }
     }
 
+    // Save error state as importFromEPSGA() will call CPLReset()
+    int errNo = CPLGetLastErrorNo();
+    CPLErr eErr = CPLGetLastErrorType();
+    CPLString osLastErrorMsg = CPLGetLastErrorMsg();
+
     // Determinte if we need to flix axis. Reimport from EPSG and make
     // sure not to strip axis definitions to determine the axis order.
     if( nEPSGCode != 0 && oSRS.importFromEPSGA(nEPSGCode) == OGRERR_NONE )
@@ -1221,6 +1226,9 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2( int nXSize, int nYSize )
             bNeedAxisFlip = TRUE;
         }
     }
+
+    // Restore error state
+    CPLErrorSetState( eErr, errNo, osLastErrorMsg);
 
     if( nEPSGCode != 0 )
         sprintf( szSRSName, "urn:ogc:def:crs:EPSG::%d", nEPSGCode );
