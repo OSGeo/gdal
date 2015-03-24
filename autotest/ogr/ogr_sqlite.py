@@ -3134,7 +3134,7 @@ def ogr_sqlite_40():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    lyr = ds.CreateLayer('test')
+    lyr = ds.CreateLayer('test', geom_type = ogr.wkbPoint)
     lyr.CreateField(ogr.FieldDefn('foo', ogr.OFTString))
     ret = ds.RollbackTransaction()
     if ret != 0:
@@ -3163,7 +3163,7 @@ def ogr_sqlite_40():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    lyr = ds.CreateLayer('test')
+    lyr = ds.CreateLayer('test', geom_type = ogr.wkbPoint)
     lyr.CreateField(ogr.FieldDefn('foo', ogr.OFTString))
     ret = ds.CommitTransaction()
     if ret != 0:

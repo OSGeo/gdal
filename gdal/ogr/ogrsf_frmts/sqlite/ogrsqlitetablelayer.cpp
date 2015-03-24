@@ -138,6 +138,7 @@ void OGRSQLiteTableLayer::CreateSpatialIndexIfNecessary()
     {
         for(int iGeomCol = 0; iGeomCol < poFeatureDefn->GetGeomFieldCount(); iGeomCol ++)
             CreateSpatialIndex(iGeomCol);
+        bDeferredSpatialIndexCreation = FALSE;
     }
 }
 
@@ -3381,11 +3382,8 @@ int OGRSQLiteTableLayer::HasSpatialIndex(int iGeomCol)
     if( iGeomCol < 0 || iGeomCol >= poFeatureDefn->GetGeomFieldCount() )
         return FALSE;
     OGRSQLiteGeomFieldDefn* poGeomFieldDefn = poFeatureDefn->myGetGeomFieldDefn(iGeomCol);    
-    if( bDeferredSpatialIndexCreation )
-    {
-        bDeferredSpatialIndexCreation = FALSE;
-        poGeomFieldDefn->bHasSpatialIndex = CreateSpatialIndex(iGeomCol);
-    }
+    
+    CreateSpatialIndexIfNecessary();
 
     return poGeomFieldDefn->bHasSpatialIndex;
 }
