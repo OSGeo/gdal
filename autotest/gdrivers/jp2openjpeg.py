@@ -36,6 +36,7 @@ from osgeo import gdal
 from osgeo import osr
 
 sys.path.append( '../pymod' )
+sys.path.append('../../gdal/swig/python/samples')
 
 import gdaltest
 
@@ -1033,7 +1034,6 @@ def jp2openjpeg_25():
 ###############################################################################
 def validate(filename, expected_gmljp2 = True, return_error_count = False):
 
-    sys.path.append('../../gdal/swig/python/samples')
     try:
         import validate_jp2
     except:
@@ -1281,8 +1281,60 @@ def jp2openjpeg_27():
 ###############################################################################
 # Test CODEBLOCK_WIDTH/_HEIGHT
 
-def jp2openjpeg_test_codeblock(ds, codeblock_width, codeblock_height):
-    # TODO...
+XML_TYPE_IDX = 0
+XML_VALUE_IDX = 1
+XML_FIRST_CHILD_IDX = 2
+
+def find_xml_node(ar, element_name, only_attributes = False):
+    #type = ar[XML_TYPE_IDX]
+    value = ar[XML_VALUE_IDX]
+    if value == element_name:
+        return ar
+    for child_idx in range(XML_FIRST_CHILD_IDX, len(ar)):
+        child = ar[child_idx]
+        if only_attributes and child[XML_TYPE_IDX] != gdal.CXT_Attribute:
+            continue
+        found = find_xml_node(child, element_name)
+        if found is not None:
+            return found
+    return None
+
+def get_attribute_val(ar, attr_name):
+    node = find_xml_node(ar, attr_name, True)
+    if node is None or node[XML_TYPE_IDX] != gdal.CXT_Attribute:
+        return None
+    if len(ar) > XML_FIRST_CHILD_IDX and \
+        node[XML_FIRST_CHILD_IDX][XML_TYPE_IDX] == gdal.CXT_Text:
+        return node[XML_FIRST_CHILD_IDX][XML_VALUE_IDX]
+    return None
+
+def find_element_with_name(ar, element_name, name):
+    type = ar[XML_TYPE_IDX]
+    value = ar[XML_VALUE_IDX]
+    if type == gdal.CXT_Element and value == element_name and get_attribute_val(ar, 'name') == name:
+        return ar
+    for child_idx in range(XML_FIRST_CHILD_IDX, len(ar)):
+        child = ar[child_idx]
+        found = find_element_with_name(child, element_name, name)
+        if found:
+            return found
+    return None
+
+def get_element_val(node):
+    if node is None:
+        return None
+    for child_idx in range(XML_FIRST_CHILD_IDX, len(node)):
+        child = node[child_idx]
+        if child[XML_TYPE_IDX] == gdal.CXT_Text:
+            return child[XML_VALUE_IDX]
+    return None
+
+def jp2openjpeg_test_codeblock(filename, codeblock_width, codeblock_height):
+    node = gdal.GetJPEG2000Structure(filename, ['ALL=YES'])
+    xcb = 2**(2+int(get_element_val(find_element_with_name(node, "Field", "SPcod_xcb_minus_2"))))
+    ycb = 2**(2+int(get_element_val(find_element_with_name(node, "Field", "SPcod_ycb_minus_2"))))
+    if xcb != codeblock_width or ycb != codeblock_height:
+        return False
     return True
 
 def jp2openjpeg_28():
@@ -1310,11 +1362,11 @@ def jp2openjpeg_28():
             gdaltest.post_reason('warning expected')
             print(options)
             return 'fail'
-        if not jp2openjpeg_test_codeblock(out_ds, expected_cbkw, expected_cbkh):
+        del out_ds
+        if not jp2openjpeg_test_codeblock('/vsimem/jp2openjpeg_28.jp2', expected_cbkw, expected_cbkh):
             gdaltest.post_reason('unexpected codeblock size')
             print(options)
             return 'fail'
-        del out_ds
 
     gdal.Unlink('/vsimem/jp2openjpeg_28.jp2')
 
@@ -1328,7 +1380,7 @@ def jp2openjpeg_29():
     if gdaltest.jp2openjpeg_drv is None:
         return 'skip'
 
-    src_ds = gdal.GetDriverByName('MEM').Create('', 10, 10, 1)
+    src_ds = gdal.GetDriverByName('MEM').Create('', 128, 128, 1)
     
     tests = [ ( ['TILEPARTS=DISABLED'], False ),
               ( ['TILEPARTS=RESOLUTIONS'], False ),
@@ -1341,6 +1393,8 @@ def jp2openjpeg_29():
     for (options, warning_expected) in tests:
         gdal.ErrorReset()
         gdal.PushErrorHandler()
+        options.append('BLOCKXSIZE=64')
+        options.append('BLOCKYSIZE=64')
         out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_29.jp2', src_ds, options = options)
         gdal.PopErrorHandler()
         if warning_expected and gdal.GetLastErrorMsg() == '':
@@ -1349,6 +1403,7 @@ def jp2openjpeg_29():
             return 'fail'
         # Not sure if that could be easily checked
         del out_ds
+        #print gdal.GetJPEG2000StructureAsString('/vsimem/jp2openjpeg_29.jp2', ['ALL=YES'])
 
     gdal.Unlink('/vsimem/jp2openjpeg_29.jp2')
 
@@ -2397,7 +2452,7 @@ gdaltest_list = [
 
 disabled_gdaltest_list = [
     jp2openjpeg_1,
-    jp2openjpeg_42 ]
+    jp2openjpeg_29 ]
 
 if __name__ == '__main__':
 

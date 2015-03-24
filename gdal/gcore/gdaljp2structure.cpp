@@ -396,7 +396,7 @@ static void DumpPCLRBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
         {
             if( nRemainingLength >= 1 )
             {
-                b8BitOnly &= (*pabyIter == 7);
+                b8BitOnly &= (*pabyIter <= 7);
                 AddField(psDecodedContent,
                             CPLSPrintf("B%d", i),
                             *pabyIter,
@@ -1097,15 +1097,17 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
                                             (nLastVal == 1) ? "5-3 reversible": NULL);
             if( bHasPrecincts )
             {
+                int i = 0;
                 while( nRemainingMarkerSize >= 1 )
                 {
                     nLastVal = *pabyMarkerDataIter;
-                    AddField(psMarker, "SPcod_Precincts", *pabyMarkerDataIter,
+                    AddField(psMarker, CPLSPrintf("SPcod_Precincts%d", i), *pabyMarkerDataIter,
                              CPLSPrintf("PPx=%d PPy=%d: %dx%d",
                                         nLastVal & 0xf, nLastVal >> 4,
                                         1 << (nLastVal & 0xf), 1 << (nLastVal >> 4)));
                     pabyMarkerDataIter += 1;
                     nRemainingMarkerSize -= 1;
+                    i ++;
                 }
             }
             if( nRemainingMarkerSize > 0 )
