@@ -156,6 +156,7 @@ static void DumpGeoTIFFBox(CPLXMLNode* psBox,
                     }
                     psPrev = psIter;
                 }
+                CPLCreateXMLNode(psXMLVRT, CXT_Element, "VRTRasterBand");
             }
 
             VSIUnlink(osTmpVRTFilename);
