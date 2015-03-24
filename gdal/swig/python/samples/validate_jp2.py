@@ -93,19 +93,17 @@ def find_jp2box(ar, jp2box_name):
 def find_marker(ar, marker_name):
     return find_element_with_name(ar, 'Marker', marker_name)
 
-def count_jp2boxes(ar, rec = 0, the_dic = {}):
-    type = ar[XML_TYPE_IDX]
-    value = ar[XML_VALUE_IDX]
-    if rec == 1 and type == gdal.CXT_Element and value == 'JP2Box':
-        jp2box_name = get_attribute_val(ar, 'name')
-        if jp2box_name in the_dic:
-            the_dic[jp2box_name] += 1
-        else:
-            the_dic[jp2box_name] = 1
-    if rec == 0:
-        for child_idx in range(XML_FIRST_CHILD_IDX, len(ar)):
-            child = ar[child_idx]
-            the_dic = count_jp2boxes(child, rec + 1, the_dic)
+def count_jp2boxes(ar):
+    the_dic = {}
+    for child_idx in range(XML_FIRST_CHILD_IDX, len(ar)):
+        child = ar[child_idx]
+        if child[XML_TYPE_IDX] == gdal.CXT_Element and child[XML_VALUE_IDX] == 'JP2Box':
+            jp2box_name = get_attribute_val(child, 'name')
+            if jp2box_name in the_dic:
+                the_dic[jp2box_name] = (the_dic[jp2box_name][0]+1, the_dic[jp2box_name][1])
+            else:
+                the_dic[jp2box_name] = (1, child_idx)
+
     return the_dic
 
 def find_field(ar, field_name):
@@ -158,18 +156,17 @@ class ErrorReport:
             print('WARNING[%s]: %s' % (category, msg))
 
 # Report JP2 boxes errors
-def find_remaining_bytes(error_report, ar, parent_node = None, parent_parent_node = None):
+def find_remaining_bytes(error_report, ar, parent_node_name = None):
     type = ar[XML_TYPE_IDX]
     value = ar[XML_VALUE_IDX]
+    if type == gdal.CXT_Element and value == 'JP2Box':
+        parent_node_name = get_attribute_val(ar, 'name')
     if type == gdal.CXT_Element and value == 'RemainingBytes':
-        parent_node_name = ''
-        if parent_parent_node is not None:
-            parent_node_name = get_attribute_val(parent_parent_node, 'name')
-        error_report.EmitError('GENERAL', 'JP2 box error found on element %s: %s' % (parent_node_name, find_message(ar)))
+        error_report.EmitError('GENERAL', 'Remaining bytes in JP2 box %s: %s' % (parent_node_name, get_element_val(ar)))
 
     for child_idx in range(XML_FIRST_CHILD_IDX, len(ar)):
         child = ar[child_idx]
-        find_remaining_bytes(error_report, child, ar, parent_node)
+        find_remaining_bytes(error_report, child, parent_node_name)
 
 
 # Report codestream errors
@@ -190,15 +187,21 @@ def find_errors(error_report, ar, parent_node = None):
 
 def validate_bitsize(error_report, inspire_tg, val_ori, field_name):
     val = val_ori
-    if val >= 128:
-        val -= 128
-    val += 1
+    if val is not None:
+        if val >= 128:
+            val -= 128
+        val += 1
     if inspire_tg and val != 1 and val != 8 and val != 16 and val != 32:
-        error_report.EmitError('INSPIRE_TG', '%s=%d, which is not allowed' % (field_name, val_ori), requirement = 24, conformance_class = 'A.8.9')
+        error_report.EmitError('INSPIRE_TG', '%s=%s, which is not allowed' % (field_name, str(val_ori)), requirement = 24, conformance_class = 'A.8.9')
     elif inspire_tg and ((val != 1 and val != 8 and val != 16) or val_ori >= 128):
-        error_report.EmitError('INSPIRE_TG', '%s=%d, which is not allowed' % (field_name, val_ori), requirement = 27, conformance_class = 'A.8.9')
-    elif val > 37:
-        error_report.EmitError('GENERAL', '%s=%d, which is not allowed' % (field_name, val_ori))
+        error_report.EmitError('INSPIRE_TG', '%s=%s, which is not allowed for Orthoimagery (but OK for other data)' % (field_name, str(val_ori)), requirement = 27, conformance_class = 'A.8.9')
+    elif val is None or val > 37:
+        error_report.EmitError('GENERAL', '%s=%s, which is not allowed' % (field_name, str(val_ori)))
+
+def int_or_none(val):
+    if val is None:
+        return None
+    return int(val)
 
 def validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location):
 
@@ -212,11 +215,11 @@ def validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location)
     find_errors(error_report, ar)
 
     if inspire_tg and ar[XML_VALUE_IDX] != 'JP2File':
-        error_report.EmitError('INSPIRE_TG', 'The file contains only a JPEG2000 codestream-only, instead of being a JP2 file')
+        error_report.EmitError('INSPIRE_TG', 'The file contains only a JPEG2000 codestream, instead of being a JP2 file')
         return error_report
 
     ihdr = None
-    bpc_vals = None
+    bpc_vals = []
 
     if ar[XML_VALUE_IDX] == 'JP2File':
 
@@ -279,18 +282,49 @@ def validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location)
         if inspire_tg and gmljp2_found and not rreq:
             error_report.EmitError('INSPIRE_TG', '"rreq" box not found, but GMLJP2 box present')
         elif rreq:
+            NSF = get_field_val(rreq, 'NSF')
+            if NSF is None:
+                error_report.EmitError('GENERAL', 'rreq.NSF not found')
+                NSF = 0
+            NSF = int(NSF)
             SF67Found = False
+            NSF_found = 0
             for i in range(1000):
                 val = get_field_val(rreq, 'SF%d' % i)
                 if val is None:
                     break
                 if val == '67':
                     SF67Found = True
+                val = get_field_val(rreq, 'SM%d' % i)
+                if val is None:
+                    error_report.EmitError('GENERAL', 'rreq.SM[%d] not found' % i)
+                    break
+                NSF_found += 1
+            if NSF != NSF_found:
+                error_report.EmitError('GENERAL', 'rreq.NSF (=%d) != NSF_found (=%d)' % (NSF, NSF_found))
             if gmljp2_found and not SF67Found:
                 if inspire_tg:
                     error_report.EmitError('INSPIRE_TG', '"rreq" box does not advertize standard flag 67 whereas GMLJP2 box is present')
                 else:
                     error_report.EmitWarning('GENERAL', '"rreq" box does not advertize standard flag 67 whereas GMLJP2 box is present')
+
+            NVF = get_field_val(rreq, 'NVF')
+            if NVF is None:
+                error_report.EmitError('GENERAL', 'rreq.NVF not found')
+                NVF = 0
+            NVF = int(NVF)
+            NVF_found = 0
+            for i in range(1000):
+                val = get_field_val(rreq, 'VF%d' % i)
+                if val is None:
+                    break
+                val = get_field_val(rreq, 'VM%d' % i)
+                if val is None:
+                    error_report.EmitError('GENERAL', 'rreq.VM[%d] not found' % i)
+                    break
+                NVF_found += 1
+            if NVF != NVF_found:
+                error_report.EmitError('GENERAL', 'rreq.NVF (=%d) != NVF_found (=%d)' % (NVF, NVF_found))
 
         # Check "jp2h" box
         jp2h = find_jp2box(ar, 'jp2h')
@@ -302,25 +336,40 @@ def validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location)
             if not ihdr:
                 error_report.EmitError('GENERAL', '"ihdr" box not found')
             else:
-                ihdr_height = int(get_field_val(ihdr, 'HEIGHT'))
-                if inspire_tg and ihdr_height > 2**31:
+                ihdr_height = int_or_none(get_field_val(ihdr, 'HEIGHT'))
+                if ihdr_height is None:
+                    error_report.EmitError('GENERAL', 'invalid value ihdr.HEIGHT = %s' % str(ihdr_height))
+                    ihdr_height = 0
+                elif inspire_tg and ihdr_height > 2**31:
                     error_report.EmitError('INSPIRE_TG', 'ihdr.height = %d, whereas only 31 bits are allowed for Profile 1' % ihdr_height)
-                ihdr_width = int(get_field_val(ihdr, 'WIDTH'))
-                if inspire_tg and ihdr_width > 2**31:
+
+                ihdr_width = int_or_none(get_field_val(ihdr, 'WIDTH'))
+                if ihdr_width is None:
+                    error_report.EmitError('GENERAL', 'invalid value ihdr.WIDTH = %s' % str(ihdr_width))
+                    ihdr_width = 0
+                elif inspire_tg and ihdr_width > 2**31:
                     error_report.EmitError('INSPIRE_TG', 'ihdr.width = %d, whereas only 31 bits are allowed for Profile 1' % ihdr_width)
-                ihdr_nc = int(get_field_val(ihdr, 'NC'))
-                ihdr_bpcc = int(get_field_val(ihdr, 'BPC'))
+
+                ihdr_nc = int_or_none(get_field_val(ihdr, 'NC'))
+                if ihdr_nc is None or ihdr_nc > 16384:
+                    error_report.EmitError('GENERAL', 'invalid value ihdr.NC = %s' % str(ihdr_nc))
+                    ihdr_nc = 0
+
+                ihdr_bpcc = int_or_none(get_field_val(ihdr, 'BPC'))
                 if ihdr_bpcc != 255:
                     validate_bitsize(error_report, inspire_tg, ihdr_bpcc, 'ihdr.bpcc')
-                ihdr_c = int(get_field_val(ihdr, 'C'))
+
+                ihdr_c = int_or_none(get_field_val(ihdr, 'C'))
                 if ihdr_c != 7:
-                    error_report.EmitError('GENERAL', 'ihdr.C = %d instead of 7' % ihdr_c)
-                ihdr_unkc = int(get_field_val(ihdr, 'UnkC'))
-                if ihdr_unkc > 1:
-                    error_report.EmitError('GENERAL', 'ihdr.UnkC = %d instead of 0 or 1' % ihdr_unkc)
-                ihdr_ipr = int(get_field_val(ihdr, 'IPR'))
-                if ihdr_ipr > 1:
-                    error_report.EmitError('GENERAL', 'ihdr.IPR = %d instead of 0 or 1' % ihdr_ipr)
+                    error_report.EmitError('GENERAL', 'ihdr.C = %s instead of 7' % str(ihdr_c))
+
+                ihdr_unkc = int_or_none(get_field_val(ihdr, 'UnkC'))
+                if ihdr_unkc is None or ihdr_unkc > 1:
+                    error_report.EmitError('GENERAL', 'ihdr.UnkC = %s instead of 0 or 1' % str(ihdr_unkc))
+
+                ihdr_ipr = int_or_none(get_field_val(ihdr, 'IPR'))
+                if ihdr_ipr is None or ihdr_ipr > 1:
+                    error_report.EmitError('GENERAL', 'ihdr.IPR = %s instead of 0 or 1' % str(ihdr_ipr))
 
             # Check optional "bpcc" subbox
             bpcc = find_jp2box(jp2h, 'bpcc')
@@ -330,7 +379,6 @@ def validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location)
             elif ihdr and bpcc and ihdr_bpcc != 255:
                 error_report.EmitWarning('GENERAL', '"bpcc" box found whereas ihdr.bpcc does not require it')
             if ihdr and bpcc:
-                bpc_vals = []
                 for i in range(16384):
                     val = get_field_val(bpcc, 'BPC%d' % i)
                     if val is None:
@@ -351,19 +399,22 @@ def validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location)
             if not colr:
                 error_report.EmitError('GENERAL', '"colr" box not found')
             else:
-                meth = int(get_field_val(colr, 'METH'))
+                meth = int_or_none(get_field_val(colr, 'METH'))
                 if meth != 1 and meth != 2:
-                    error_report.EmitWarning('GENERAL', 'Unknown value %d for colr.METH' % meth)
-                prec = int(get_field_val(colr, 'PREC'))
-                if inspire_tg and prec != 0:
-                    error_report.EmitWarning('GENERAL', 'Unknown value %d for colr.PREC' % prec)
-                approx = int(get_field_val(colr, 'APPROX'))
-                if inspire_tg and approx != 0:
-                    error_report.EmitWarning('GENERAL', 'Unknown value %d for colr.APPROX' % approx)
+                    error_report.EmitWarning('GENERAL', 'Unknown value %s for colr.METH' % str(meth))
+
+                prec = int_or_none(get_field_val(colr, 'PREC'))
+                if prec is None or (inspire_tg and prec != 0):
+                    error_report.EmitWarning('GENERAL', 'Unknown value %s for colr.PREC' % str(prec))
+
+                approx = int_or_none(get_field_val(colr, 'APPROX'))
+                if approx or (inspire_tg and approx != 0):
+                    error_report.EmitWarning('GENERAL', 'Unknown value %s for colr.APPROX' % str(approx))
+
                 if meth == 1:
-                    enum_cs = int(get_field_val(colr, 'EnumCS'))
-                    if inspire_tg and enum_cs != 16 and enum_cs != 17 and enum_cs != 18:
-                        error_report.EmitWarning('GENERAL', 'Unknown value %d for colr.EnumCS' % enum_cs)
+                    enum_cs = int_or_none(get_field_val(colr, 'EnumCS'))
+                    if enum_cs is None or (inspire_tg and enum_cs != 16 and enum_cs != 17 and enum_cs != 18):
+                        error_report.EmitWarning('GENERAL', 'Unknown value %s for colr.EnumCS' % str(enum_cs))
                 else:
                     enum_cs = None
 
@@ -372,8 +423,14 @@ def validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location)
             if ihdr and pclr:
                 if inspire_tg and ihdr_nc != 1:
                     error_report.EmitError('INSPIRE_TG', 'pclr box found but ihdr.nc = %d' % (ihdr_nc))
-                pclr_NE = int(get_field_val(pclr, 'NE'))
-                pclr_NPC = int(get_field_val(pclr, 'NPC'))
+                pclr_NE = int_or_none(get_field_val(pclr, 'NE'))
+                if pclr_NE is None:
+                    error_report.EmitWarning('GENERAL', 'Invalid value %s for pclr.NE' % str(pclr_NE))
+                    pclr_NE = 0
+                pclr_NPC = int_or_none(get_field_val(pclr, 'NPC'))
+                if pclr_NPC is None:
+                    error_report.EmitWarning('GENERAL', 'Invalid value %s for pclr.NPC' % str(pclr_NPC))
+                    pclr_NPC = 0
                 if ihdr_bpcc == 7 and pclr_NE > 256:
                     error_report.EmitError('GENERAL', '%d entries in pclr box, but 8 bit depth' % (pclr_NE))
                 for i in range(pclr_NPC):
@@ -383,10 +440,10 @@ def validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location)
                         break
                     val = int(val)
                     validate_bitsize(error_report, inspire_tg, val, 'pclr.B[%d]' % i)
-
-                val = get_field_val(pclr, 'C_%d_%d' % (pclr_NE-1, pclr_NPC-1))
-                if val is None:
-                    error_report.EmitError('GENERAL', 'pclr.C_%d_%d not found' % (pclr_NE-1, pclr_NPC-1))
+                if pclr_NE > 0 and pclr_NPC > 0:
+                    val = get_field_val(pclr, 'C_%d_%d' % (pclr_NE-1, pclr_NPC-1))
+                    if val is None:
+                        error_report.EmitError('GENERAL', 'pclr.C_%d_%d not found' % (pclr_NE-1, pclr_NPC-1))
 
             # Check optional "cmap" subbox
             cmap = find_jp2box(jp2h, 'cmap')
@@ -436,7 +493,9 @@ def validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location)
             # Check optional "cdef" subbox
             cdef = find_jp2box(jp2h, 'cdef')
             transparent_index = -1
-            if ihdr and cdef:
+            if cdef and pclr:
+                error_report.EmitWarning('GENERAL', 'cdef found and pclr also. Ignoring cdef as it is unusual')
+            elif ihdr and cdef:
                 cdef_N = int(get_field_val(cdef, 'N'))
                 if cdef_N != ihdr_nc:
                     error_report.EmitError('GENERAL', 'cdef.N = %d whereas ihdr.nc = %d' % (cdef_N, ihdr_nc))
@@ -506,18 +565,27 @@ def validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location)
             # Check optional "res " subbox
             res = find_jp2box(jp2h, 'res ')
             if res:
-                count_boxes = count_jp2boxes(res, the_dic = {})
+                count_boxes = count_jp2boxes(res)
                 for key in count_boxes:
-                    val = count_boxes[key]
+                    (val, _) = count_boxes[key]
                     if key not in ('resd', 'resc'):
                         error_report.EmitWarning('GENERAL', '"%s" box not expected' % key)
 
             # Check number of sub-boxes
-            count_boxes = count_jp2boxes(jp2h, the_dic = {})
+            count_boxes = count_jp2boxes(jp2h)
             for key in count_boxes:
-                val = count_boxes[key]
+                (val, _) = count_boxes[key]
                 if key not in ('ihdr', 'bpcc', 'colr', 'pclr', 'cmap', 'cdef', 'res '):
                     error_report.EmitWarning('GENERAL', '"%s" box not expected' % key)
+
+            # Check order of boxes
+            last_idx = -1
+            for box_name in ['ihdr', 'bpcc', 'colr', 'pclr', 'cmap', 'cdef', 'res ']:
+                if box_name in count_boxes:
+                    (_, idx) = count_boxes[box_name]
+                    if idx < last_idx:
+                        error_report.EmitWarning('GENERAL', '"%s" box not at expected index' % key)
+                    last_idx = idx
 
         # Check "jp2c" box
         jp2c = find_jp2box(ar, 'jp2c')
@@ -530,9 +598,9 @@ def validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location)
             error_report.EmitWarning('GENERAL', 'ihdr.ipr = 0 but jp2i box found')
 
         # Check number of boxes
-        count_boxes = count_jp2boxes(ar, the_dic = {})
+        count_boxes = count_jp2boxes(ar)
         for key in count_boxes:
-            val = count_boxes[key]
+            (val, _) = count_boxes[key]
             if key in ( 'jP  ', 'ftyp', 'rreq', 'jp2h', 'jp2c' ):
                 if key == 'jp2c':
                     if inspire_tg and val > 1:
@@ -541,6 +609,22 @@ def validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location)
                     error_report.EmitError('GENERAL', '"%s" box expected to be found zero or one time, but present %d times' % (key, val))
             elif key not in ('jp2i', 'xml ', 'asoc', 'uuid', 'uinf'):
                 error_report.EmitWarning('GENERAL', '"%s" box not expected' % key)
+
+        # Check order of boxes
+        last_idx = -1
+        for box_name in [ 'jP  ', 'ftyp', 'rreq', 'jp2h', 'jp2c', 'jp2i']:
+            if box_name in count_boxes:
+                (_, idx) = count_boxes[box_name]
+                if idx < last_idx:
+                    error_report.EmitWarning('GENERAL', '"%s" box not at expected index' % key)
+                last_idx = idx
+        if inspire_tg:
+            for box_name in ['asoc', 'xml ', 'uuid', 'uinf']:
+                if box_name in count_boxes:
+                    (_, idx) = count_boxes[box_name]
+                    if idx < last_idx:
+                        error_report.EmitWarning('INSPIRE_TG', '"%s" box not at expected index' % key)
+                    last_idx = idx
 
     cs = find_xml_node(ar, 'JP2KCodeStream')
     if cs is None:
@@ -589,9 +673,9 @@ def validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location)
             if (inspire_tg or Rsiz == 2) and YTOSiz >= 2**31:
                 error_report.EmitError('PROFILE_1', 'YTOSiz = %d, whereas only 31 bits are allowed for Profile 1' % YTOSiz)
             if ihdr and ihdr_width != Xsiz - XOsiz:
-                error_report.EmitError('GENERAL', 'ihdr_width(=%d) != Xsiz (=%d)- XOsiz(=%d)', (ihdr_width, Xsiz, XOsiz))
+                error_report.EmitError('GENERAL', 'ihdr_width(=%d) != Xsiz (=%d)- XOsiz(=%d)' % (ihdr_width, Xsiz, XOsiz))
             if ihdr and ihdr_height != Ysiz - YOsiz:
-                error_report.EmitError('GENERAL', 'ihdr_height(=%d) != Ysiz(=%d) - YOsiz(=%d)', (ihdr_height, Ysiz, YOsiz))
+                error_report.EmitError('GENERAL', 'ihdr_height(=%d) != Ysiz(=%d) - YOsiz(=%d)'% (ihdr_height, Ysiz, YOsiz))
             if ihdr and ihdr_nc != Csiz:
                 error_report.EmitError('GENERAL', 'ihdr_nc(=%d) != Csiz (=%d)' % (ihdr_nc, Csiz))
 
@@ -605,7 +689,7 @@ def validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location)
                 validate_bitsize(error_report, inspire_tg, Ssiz, 'SIZ.Ssiz[%d]' % i)
 
                 if bpc_vals and i < len(bpc_vals) and bpc_vals[i] != Ssiz:
-                    error_report.EmitError('GENERAL', 'SIZ.Ssiz[%d]=%d, whereas bpcc[%d]=%d' % (i, Ssiz, i, bpc_vals[i]))
+                    error_report.EmitError('GENERAL', 'SIZ.Ssiz[%d]=%s, whereas bpcc[%d]=%s' % (i, str(Ssiz), i, str(bpc_vals[i])))
 
                 XRsiz = get_field_val(siz, 'XRsiz%d' % i)
                 if XRsiz is None:
@@ -643,8 +727,10 @@ def validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location)
         while True:
             SPcod_transformation = get_field_val(cod, 'SPcod_transformation')
             if SPcod_transformation is None:
-                error_report.EmitError('GENERAL', 'cod.SPcod_transformation not found')
+                error_report.EmitError('GENERAL', 'cod.SPcod_transformation not found (and perhaps other fields)')
                 break
+
+            Scod = int_or_none(get_field_val(cod, 'Scod'))
 
             SPcod_NumDecompositions = int(get_field_val(cod, 'SPcod_NumDecompositions'))
             if (inspire_tg or Rsiz == 2) and siz:
@@ -664,16 +750,36 @@ def validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location)
             if SPcod_xcb_minus_2 + SPcod_ycb_minus_2 > 8:
                 error_report.EmitError('GENERAL', 'SPcod_xcb_minus_2 + SPcod_ycb_minus_2 = %d, whereas max allowed is 8' % (SPcod_xcb_minus_2 + SPcod_ycb_minus_2))
 
-            SPcod_Precincts = get_field_val(cod, 'SPcod_Precincts')
-            if SPcod_Precincts is None and inspire_tg:
-                error_report.EmitWarning('INSPIRE_TG', 'No user-defined precincts defined', recommendation = 39)
+            for i in range(SPcod_NumDecompositions+1):
+                SPcod_Precincts = get_field_val(cod, 'SPcod_Precincts%d' % i)
+                if SPcod_Precincts is not None and (Scod & 1) == 0:
+                    error_report.EmitWarning('GENERAL', 'User-defined precincts %d found but SPcod_transformation dit not advertize it' % i)
+                elif SPcod_Precincts is None and (Scod & 1) != 0:
+                    error_report.EmitWarning('GENERAL', 'No user-defined precincts %d defined but SPcod_transformation advertized it' % i)
+                elif SPcod_Precincts is None and inspire_tg:
+                    error_report.EmitWarning('INSPIRE_TG', 'No user-defined precincts %d defined' % i, recommendation = 39)
 
             break
+
+    # Check QCD marker
+    qcd = find_marker(cs, 'QCD')
+    if not qcd:
+        error_report.EmitError('GENERAL', 'No QCD marker found')
+
+    # Check SOT marker
+    sot = find_marker(cs, 'SOT')
+    if not sot:
+        error_report.EmitError('GENERAL', 'No SOT marker found')
 
     # Check RGN marker presence
     rgn = find_marker(cs, 'RGN')
     if inspire_tg and rgn:
         error_report.EmitError('INSPIRE_TG', 'RGN marker found, which is not allowed', requirement = 26, conformance_class = 'A.8.16')
+
+    # Check EOC marker
+    eoc = find_marker(cs, 'EOC')
+    if not eoc:
+        error_report.EmitError('GENERAL', 'No EOC marker found')
 
     return error_report
 
