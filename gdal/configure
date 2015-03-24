@@ -993,7 +993,6 @@ with_gdal_ver
 with_
 with_perl
 with_php
-with_ruby
 with_python
 with_java
 with_mdb
@@ -1743,7 +1742,6 @@ Optional Packages:
   --with-macosx-framework         Build and install GDAL as a Mac OS X Framework
   --with-perl           Enable perl bindings
   --with-php            Enable php bindings
-  --with-ruby           Enable Ruby bindings
   --with-python=ARG   Enable python bindings (ARG=yes, no, or path to python binary)
   --with-java       Include Java support (ARG=yes, no or JDK home path)  [default=no]
   --with-mdb       Include MDB driver
@@ -3844,7 +3842,7 @@ ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
  ac_save_CFLAGS="$CFLAGS"
-for ac_arg in "-pedantic -Wdeclaration-after-statement %        -Wall -Wdeclaration-after-statement"    "-pedantic  % -Wall"          "-xstrconst % -v"             "-std1      % -verbose -w0 -warnprotos"    "-qlanglvl=ansi % -qsrcmsg -qinfo=all:noppt:noppc:noobs:nocnd"    "-ansi -ansiE % -fullwarn"    "+ESlit     % +w1"            "-Xc        % -pvctl,fullmsg"    "-h conform % -h msglevel 2"    #
+for ac_arg in "-pedantic -Wdeclaration-after-statement -Wunused-parameter %        -Wall -Wdeclaration-after-statement -Wunused-parameter"    "-pedantic -Wdeclaration-after-statement %        -Wall -Wdeclaration-after-statement"    "-pedantic  % -Wall"          "-xstrconst % -v"             "-std1      % -verbose -w0 -warnprotos"    "-qlanglvl=ansi % -qsrcmsg -qinfo=all:noppt:noppc:noobs:nocnd"    "-ansi -ansiE % -fullwarn"    "+ESlit     % +w1"            "-Xc        % -pvctl,fullmsg"    "-h conform % -h msglevel 2"    #
 do CFLAGS="$ac_save_CFLAGS "`echo $ac_arg | sed -e 's,%%.*,,' -e 's,%,,'`
    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -4166,7 +4164,7 @@ ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ex
 ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
 
  ac_save_CXXFLAGS="$CXXFLAGS"
-for ac_arg in "-pedantic  % -Wall"          "-xstrconst % -v"             "-std1      % -verbose -w0 -warnprotos"    "-qlanglvl=ansi % -qsrcmsg -qinfo=all:noppt:noppc:noobs:nocnd"    "-ansi -ansiE % -fullwarn"    "+ESlit     % +w1"            "-Xc        % -pvctl,fullmsg"    "-h conform % -h msglevel 2"    #
+for ac_arg in "-pedantic  % -Wall -Wunused-parameter"          "-pedantic  % -Wall"          "-xstrconst % -v"             "-std1      % -verbose -w0 -warnprotos"    "-qlanglvl=ansi % -qsrcmsg -qinfo=all:noppt:noppc:noobs:nocnd"    "-ansi -ansiE % -fullwarn"    "+ESlit     % +w1"            "-Xc        % -pvctl,fullmsg"    "-h conform % -h msglevel 2"    #
 do CXXFLAGS="$ac_save_CXXFLAGS "`echo $ac_arg | sed -e 's,%%.*,,' -e 's,%,,'`
    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -28742,22 +28740,6 @@ fi
 
 
 
-# Check whether --with-ruby was given.
-if test "${with_ruby+set}" = set; then :
-  withval=$with_ruby;
-fi
-
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for ruby bindings" >&5
-$as_echo_n "checking for ruby bindings... " >&6; }
-if test "$with_ruby" = "yes" ; then
-  BINDINGS="ruby $BINDINGS"
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: enabled" >&5
-$as_echo "enabled" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: disabled" >&5
-$as_echo "disabled" >&6; }
-fi
 
 
 
