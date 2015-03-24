@@ -515,6 +515,92 @@ def vrt_read_14():
 
     return 'success'
 
+###############################################################################
+# Test RasterIO() with resampling on SimpleSource
+
+def vrt_read_15():
+
+    vrt_ds = gdal.Open("""<VRTDataset rasterXSize="9" rasterYSize="9">
+  <VRTRasterBand dataType="Byte" band="1">
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">data/byte.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="20" RasterYSize="20" DataType="Byte" BlockXSize="20" BlockYSize="20" />
+      <SrcRect xOff="0" yOff="0" xSize="20" ySize="20" />
+      <DstRect xOff="0" yOff="0" xSize="9" ySize="9" />
+    </SimpleSource>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">data/byte.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="20" RasterYSize="20" DataType="Byte" BlockXSize="20" BlockYSize="20" />
+      <SrcRect xOff="0" yOff="0" xSize="20" ySize="20" />
+      <DstRect xOff="0" yOff="0" xSize="9" ySize="9" />
+    </SimpleSource>
+  </VRTRasterBand>
+</VRTDataset>""")
+
+    cs = vrt_ds.GetRasterBand(1).Checksum()
+    if cs != 1044:
+        print(cs)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test RasterIO() with resampling on ComplexSource
+
+def vrt_read_16():
+
+    vrt_ds = gdal.Open("""<VRTDataset rasterXSize="9" rasterYSize="9">
+  <VRTRasterBand dataType="Byte" band="1">
+    <ComplexSource>
+      <SourceFilename relativeToVRT="0">data/byte.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="20" RasterYSize="20" DataType="Byte" BlockXSize="20" BlockYSize="20" />
+      <SrcRect xOff="0" yOff="0" xSize="20" ySize="20" />
+      <DstRect xOff="0" yOff="0" xSize="9" ySize="9" />
+    </ComplexSource>
+    <ComplexSource>
+      <SourceFilename relativeToVRT="0">data/byte.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="20" RasterYSize="20" DataType="Byte" BlockXSize="20" BlockYSize="20" />
+      <SrcRect xOff="0" yOff="0" xSize="20" ySize="20" />
+      <DstRect xOff="0" yOff="0" xSize="9" ySize="9" />
+    </ComplexSource>
+  </VRTRasterBand>
+</VRTDataset>""")
+
+    cs = vrt_ds.GetRasterBand(1).Checksum()
+    if cs != 1044:
+        print(cs)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test RasterIO() with resampling on AveragedSource
+
+def vrt_read_17():
+
+    vrt_ds = gdal.Open("""<VRTDataset rasterXSize="9" rasterYSize="9">
+  <VRTRasterBand dataType="Byte" band="1">
+    <AveragedSource>
+      <SourceFilename relativeToVRT="0">data/byte.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="20" RasterYSize="20" DataType="Byte" BlockXSize="20" BlockYSize="20" />
+      <SrcRect xOff="0" yOff="0" xSize="20" ySize="20" />
+      <DstRect xOff="0" yOff="0" xSize="9" ySize="9" />
+    </AveragedSource>
+  </VRTRasterBand>
+</VRTDataset>""")
+
+    cs = vrt_ds.GetRasterBand(1).Checksum()
+    if cs != 753:
+        print(cs)
+        return 'fail'
+
+    return 'success'
+    
 for item in init_list:
     ut = gdaltest.GDALTest( 'VRT', item[0], item[1], item[2] )
     if ut is None:
@@ -536,6 +622,9 @@ gdaltest_list.append( vrt_read_11 )
 gdaltest_list.append( vrt_read_12 )
 gdaltest_list.append( vrt_read_13 )
 gdaltest_list.append( vrt_read_14 )
+gdaltest_list.append( vrt_read_15 )
+gdaltest_list.append( vrt_read_16 )
+gdaltest_list.append( vrt_read_17 )
 
 if __name__ == '__main__':
 

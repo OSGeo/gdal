@@ -1284,11 +1284,26 @@ VRTAveragedSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
 /*      Load it.                                                        */
 /* -------------------------------------------------------------------- */
     CPLErr eErr;
-    
+
+    GDALRIOResampleAlg     eResampleAlgBack = psExtraArg->eResampleAlg;
+    if( osResampling.size() )
+    {
+        psExtraArg->eResampleAlg = GDALRasterIOGetResampleAlg(osResampling);
+    }
+    psExtraArg->bFloatingPointWindowValidity = TRUE;
+    psExtraArg->dfXOff = dfReqXOff;
+    psExtraArg->dfYOff = dfReqYOff;
+    psExtraArg->dfXSize = dfReqXSize;
+    psExtraArg->dfYSize = dfReqYSize;
+
     eErr = poRasterBand->RasterIO( GF_Read, 
                                    nReqXOff, nReqYOff, nReqXSize, nReqYSize,
                                    pafSrc, nReqXSize, nReqYSize, GDT_Float32, 
                                    0, 0, psExtraArg );
+
+    if( osResampling.size() )
+        psExtraArg->eResampleAlg = eResampleAlgBack;
+    psExtraArg->bFloatingPointWindowValidity = FALSE;
 
     if( eErr != CE_None )
     {
@@ -1805,13 +1820,30 @@ VRTComplexSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
                           &nOutXOff, &nOutYOff, &nOutXSize, &nOutYSize ) )
         return CE_None;
 
-    return RasterIOInternal(nReqXOff, nReqYOff, nReqXSize, nReqYSize,
+    GDALRIOResampleAlg     eResampleAlgBack = psExtraArg->eResampleAlg;
+    if( osResampling.size() )
+    {
+        psExtraArg->eResampleAlg = GDALRasterIOGetResampleAlg(osResampling);
+    }
+    psExtraArg->bFloatingPointWindowValidity = TRUE;
+    psExtraArg->dfXOff = dfReqXOff;
+    psExtraArg->dfYOff = dfReqYOff;
+    psExtraArg->dfXSize = dfReqXSize;
+    psExtraArg->dfYSize = dfReqYSize;
+
+    CPLErr eErr = RasterIOInternal(nReqXOff, nReqYOff, nReqXSize, nReqYSize,
                        ((GByte *)pData)
                             + nPixelSpace * nOutXOff
                             + (GPtrDiff_t)nLineSpace * nOutYOff,
                        nOutXSize, nOutYSize,
                        eBufType,
                        nPixelSpace, nLineSpace, psExtraArg );
+
+    if( osResampling.size() )
+        psExtraArg->eResampleAlg = eResampleAlgBack;
+    psExtraArg->bFloatingPointWindowValidity = FALSE;
+
+    return eErr;
 }
 
 /************************************************************************/
