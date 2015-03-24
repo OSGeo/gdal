@@ -52,14 +52,14 @@ java: gdalvars
         cd ..
         $(MAKE) /f makefile.vc
 
-ruby: gdalvars
-        cd ruby
-        $(SWIG) -ruby -I../include/ruby -o gdalconst_wrap.c -autorename -prefix "gdal::" ../include/gdalconst.i
-        $(SWIG) -c++ -ruby -I../include/ruby -o gdal_wrap.cpp -autorename -prefix "gdal::" ../include/gdal.i
-        $(SWIG) -c++ -ruby -I../include/ruby -o osr_wrap.cpp -autorename -prefix "gdal::" ../include/osr.i
-        $(SWIG) -c++ -ruby -I../include/ruby -o ogr_wrap.cpp -autorename -prefix "gdal::" ../include/ogr.i
-        $(MAKE) /f makefile.vc build
-        $(MAKE) /f makefile.vc install 
+#ruby: gdalvars
+#        cd ruby
+#        $(SWIG) -ruby -I../include/ruby -o gdalconst_wrap.c -autorename -prefix "gdal::" ../include/gdalconst.i
+#        $(SWIG) -c++ -ruby -I../include/ruby -o gdal_wrap.cpp -autorename -prefix "gdal::" ../include/gdal.i
+#        $(SWIG) -c++ -ruby -I../include/ruby -o osr_wrap.cpp -autorename -prefix "gdal::" ../include/osr.i
+#        $(SWIG) -c++ -ruby -I../include/ruby -o ogr_wrap.cpp -autorename -prefix "gdal::" ../include/ogr.i
+#        $(MAKE) /f makefile.vc build
+#        $(MAKE) /f makefile.vc install 
         
 test: gdalvars
 				cd $(GDAL_HOME)\..\gdalautotest
