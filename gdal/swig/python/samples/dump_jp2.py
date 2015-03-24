@@ -32,6 +32,61 @@
 import sys
 from osgeo import gdal
 
-filename = sys.argv[1]
-s = gdal.GetJPEG2000StructureAsString(filename, ['ALL=YES'])
-print(s)
+def Usage():
+    print('Usage:  dump_jp2 [-dump_gmljp2 out.txt|-] test.jp2')
+    print('')
+    print('Options:')
+    print('-dump_gmljp2: Writes the content of the GMLJP2 box in the specified')
+    print('              file, or on the console if "-" syntax is used.')
+    return 1
+
+def dump_gmljp2(filename, out_gmljp2):
+    ds = gdal.Open(filename)
+    if ds is None:
+        print('Cannot open %s' % filename)
+        return 1
+    mdd = ds.GetMetadata('xml:gml.root-instance')
+    if mdd is None:
+        print('No GMLJP2 content found in %s' % filename)
+        return 1
+    if out_gmljp2 == '-':
+        print(mdd[0])
+    else:
+        f = open(out_gmljp2, 'wt')
+        f.write(mdd[0])
+        f.close()
+        print('INFO: %s written with content of GMLJP2 box' % filename)
+    return 0
+
+def main():
+    i = 1
+    out_gmljp2 = None
+    filename = None
+    while i < len(sys.argv):
+        if sys.argv[i] == "-dump_gmljp2":
+            if i >= len(sys.argv) - 1:
+                return Usage()
+            out_gmljp2 = sys.argv[i+1]
+            i = i + 1
+        elif sys.argv[i][0] == '-':
+            return Usage()
+        elif filename is None:
+            filename = sys.argv[i]
+        else:
+            return Usage()
+
+        i = i + 1
+
+    if filename is None:
+        return Usage()
+
+    if out_gmljp2:
+        return(dump_gmljp2(filename, out_gmljp2))
+    else:
+        s = gdal.GetJPEG2000StructureAsString(filename, ['ALL=YES'])
+        print(s)
+
+    return 0
+
+if __name__ == '__main__':
+    sys.exit(main())
