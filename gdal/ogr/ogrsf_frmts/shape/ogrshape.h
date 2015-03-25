@@ -58,7 +58,8 @@ OGRFeatureDefn *SHPReadOGRFeatureDefn( const char * pszName,
 OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
                            OGRFeatureDefn *poFeatureDefn,
                            OGRFeature *poFeature, const char *pszSHPEncoding,
-                           int* pbTruncationWarningEmitted );
+                           int* pbTruncationWarningEmitted,
+                           int bRewind );
 
 /************************************************************************/
 /*                         OGRShapeGeomFieldDefn                        */
@@ -151,6 +152,7 @@ class OGRShapeLayer : public OGRAbstractProxiedLayer
     void                TruncateDBF();
     
     int                 bCreateSpatialIndexAtClose;
+    int                 bRewindOnWrite;
 
   protected:
 
