@@ -1047,6 +1047,14 @@ def validate(filename, expected_gmljp2 = True, return_error_count = False):
         ogc_schemas_location = 'tmp/cache/SCHEMAS_OPENGIS_NET'
     except:
         ogc_schemas_location = 'disabled'
+
+    if ogc_schemas_location != 'disabled':
+        try:
+            import xmlvalidate
+            xmlvalidate.validate # to make pyflakes happy
+        except:
+            ogc_schemas_location = 'disabled'
+
     res = validate_jp2.validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location)
     if return_error_count:
         return (res.error_count, res.warning_count)
@@ -1807,8 +1815,14 @@ def jp2openjpeg_38():
         print('Cannot import xmlvalidate')
         pass
 
+    try:
+        os.stat('tmp/cache/SCHEMAS_OPENGIS_NET')
+    except:
+        do_validate = False
+
     if do_validate:
         if not xmlvalidate.validate(crsdictionary, ogc_schemas_location = 'tmp/cache/SCHEMAS_OPENGIS_NET'):
+            print(crsdictionary)
             return 'fail'
 
     return 'success'
