@@ -2780,7 +2780,14 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
             pclrBox.SetType("pclr");
             int nEntries = MIN(256, poCT->GetColorEntryCount());
             nCTComponentCount = atoi(CSLFetchNameValueDef(papszOptions, "CT_COMPONENTS", "0"));
-            if( nCTComponentCount != 3 && nCTComponentCount != 4 )
+            if( bInspireTG )
+            {
+                if( nCTComponentCount != 0 && nCTComponentCount != 3 )
+                    CPLError(CE_Warning, CPLE_AppDefined, "Inspire TG mandates 3 components for color table");
+                else
+                    nCTComponentCount = 3;
+            }
+            else if( nCTComponentCount != 3 && nCTComponentCount != 4 )
             {
                 nCTComponentCount = 3;
                 for(int i=0;i<nEntries;i++)
