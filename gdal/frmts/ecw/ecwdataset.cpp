@@ -2311,7 +2311,16 @@ CNCSJP2FileView *ECWDataset::OpenFileView( const char *pszDatasetName,
     bUsingCustomStream = FALSE;
     poFileView = new CNCSFile();
     //we always open in read only mode. This should be improved in the future.
-    oErr = poFileView->Open( (char *) pszDatasetName, bProgressive, false );
+    try
+    {
+        oErr = poFileView->Open( (char *) pszDatasetName, bProgressive, false );
+    }
+    catch(...)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Unexpected exception occured in ECW SDK");
+        delete poFileView;
+        return NULL;
+    }
     eErr = oErr.GetErrorNumber();
 
 /* -------------------------------------------------------------------- */
