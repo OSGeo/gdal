@@ -43,38 +43,38 @@ import re
 
 def osr_xml_1():
 
-    gdaltest.srs_xml = """<gml:ProjectedCRS gml:id="ogrcrs1">
+    gdaltest.srs_xml = """<gml:ProjectedCRS>
   <gml:srsName>WGS 84 / UTM zone 31N</gml:srsName>
   <gml:srsID>
-    <gml:name gml:codeSpace="urn:ogc:def:crs:EPSG::">32631</gml:name>
+    <gml:name codeSpace="urn:ogc:def:crs:EPSG::">32631</gml:name>
   </gml:srsID>
   <gml:baseCRS>
-    <gml:GeographicCRS gml:id="ogrcrs2">
+    <gml:GeographicCRS>
       <gml:srsName>WGS 84</gml:srsName>
       <gml:srsID>
-        <gml:name gml:codeSpace="urn:ogc:def:crs:EPSG::">4326</gml:name>
+        <gml:name codeSpace="urn:ogc:def:crs:EPSG::">4326</gml:name>
       </gml:srsID>
       <gml:usesEllipsoidalCS>
-        <gml:EllipsoidalCS gml:id="ogrcrs3">
+        <gml:EllipsoidalCS>
           <gml:csName>ellipsoidal</gml:csName>
           <gml:csID>
-            <gml:name gml:codeSpace="urn:ogc:def:cs:EPSG::">6402</gml:name>
+            <gml:name codeSpace="urn:ogc:def:cs:EPSG::">6402</gml:name>
           </gml:csID>
           <gml:usesAxis>
-            <gml:CoordinateSystemAxis gml:id="ogrcrs4" gml:uom="urn:ogc:def:uom:EPSG::9102">
+            <gml:CoordinateSystemAxis gml:uom="urn:ogc:def:uom:EPSG::9102">
               <gml:name>Geodetic latitude</gml:name>
               <gml:axisID>
-                <gml:name gml:codeSpace="urn:ogc:def:axis:EPSG::">9901</gml:name>
+                <gml:name codeSpace="urn:ogc:def:axis:EPSG::">9901</gml:name>
               </gml:axisID>
               <gml:axisAbbrev>Lat</gml:axisAbbrev>
               <gml:axisDirection>north</gml:axisDirection>
             </gml:CoordinateSystemAxis>
           </gml:usesAxis>
           <gml:usesAxis>
-            <gml:CoordinateSystemAxis gml:id="ogrcrs5" gml:uom="urn:ogc:def:uom:EPSG::9102">
+            <gml:CoordinateSystemAxis gml:uom="urn:ogc:def:uom:EPSG::9102">
               <gml:name>Geodetic longitude</gml:name>
               <gml:axisID>
-                <gml:name gml:codeSpace="urn:ogc:def:axis:EPSG::">9902</gml:name>
+                <gml:name codeSpace="urn:ogc:def:axis:EPSG::">9902</gml:name>
               </gml:axisID>
               <gml:axisAbbrev>Lon</gml:axisAbbrev>
               <gml:axisDirection>east</gml:axisDirection>
@@ -83,31 +83,31 @@ def osr_xml_1():
         </gml:EllipsoidalCS>
       </gml:usesEllipsoidalCS>
       <gml:usesGeodeticDatum>
-        <gml:GeodeticDatum gml:id="ogrcrs6">
+        <gml:GeodeticDatum>
           <gml:datumName>WGS_1984</gml:datumName>
           <gml:datumID>
-            <gml:name gml:codeSpace="urn:ogc:def:datum:EPSG::">6326</gml:name>
+            <gml:name codeSpace="urn:ogc:def:datum:EPSG::">6326</gml:name>
           </gml:datumID>
           <gml:usesPrimeMeridian>
-            <gml:PrimeMeridian gml:id="ogrcrs7">
+            <gml:PrimeMeridian>
               <gml:meridianName>Greenwich</gml:meridianName>
               <gml:meridianID>
-                <gml:name gml:codeSpace="urn:ogc:def:meridian:EPSG::">8901</gml:name>
+                <gml:name codeSpace="urn:ogc:def:meridian:EPSG::">8901</gml:name>
               </gml:meridianID>
               <gml:greenwichLongitude>
-                <gml:angle gml:uom="urn:ogc:def:uom:EPSG::9102">0</gml:angle>
+                <gml:angle uom="urn:ogc:def:uom:EPSG::9102">0</gml:angle>
               </gml:greenwichLongitude>
             </gml:PrimeMeridian>
           </gml:usesPrimeMeridian>
           <gml:usesEllipsoid>
-            <gml:Ellipsoid gml:id="ogrcrs8">
+            <gml:Ellipsoid>
               <gml:ellipsoidName>WGS 84</gml:ellipsoidName>
               <gml:ellipsoidID>
-                <gml:name gml:codeSpace="urn:ogc:def:ellipsoid:EPSG::">7030</gml:name>
+                <gml:name codeSpace="urn:ogc:def:ellipsoid:EPSG::">7030</gml:name>
               </gml:ellipsoidID>
-              <gml:semiMajorAxis gml:uom="urn:ogc:def:uom:EPSG::9001">6378137</gml:semiMajorAxis>
+              <gml:semiMajorAxis uom="urn:ogc:def:uom:EPSG::9001">6378137</gml:semiMajorAxis>
               <gml:secondDefiningParameter>
-                <gml:inverseFlattening gml:uom="urn:ogc:def:uom:EPSG::9201">298.257223563</gml:inverseFlattening>
+                <gml:inverseFlattening uom="urn:ogc:def:uom:EPSG::9201">298.257223563</gml:inverseFlattening>
               </gml:secondDefiningParameter>
             </gml:Ellipsoid>
           </gml:usesEllipsoid>
@@ -116,51 +116,52 @@ def osr_xml_1():
     </gml:GeographicCRS>
   </gml:baseCRS>
   <gml:definedByConversion>
-    <gml:Conversion gml:id="ogrcrs9">
+    <gml:Conversion>
+      <gml:coordinateOperationName>Transverse_Mercator</gml:coordinateOperationName>
       <gml:usesMethod xlink:href="urn:ogc:def:method:EPSG::9807" />
-      <gml:usesParameterValue>
-        <gml:value gml:uom="urn:ogc:def:uom:EPSG::9102">0</gml:value>
+      <gml:usesValue>
+        <gml:value uom="urn:ogc:def:uom:EPSG::9102">0</gml:value>
         <gml:valueOfParameter xlink:href="urn:ogc:def:parameter:EPSG::8801" />
-      </gml:usesParameterValue>
-      <gml:usesParameterValue>
-        <gml:value gml:uom="urn:ogc:def:uom:EPSG::9102">3</gml:value>
+      </gml:usesValue>
+      <gml:usesValue>
+        <gml:value uom="urn:ogc:def:uom:EPSG::9102">3</gml:value>
         <gml:valueOfParameter xlink:href="urn:ogc:def:parameter:EPSG::8802" />
-      </gml:usesParameterValue>
-      <gml:usesParameterValue>
-        <gml:value gml:uom="urn:ogc:def:uom:EPSG::9001">0.9996</gml:value>
+      </gml:usesValue>
+      <gml:usesValue>
+        <gml:value uom="urn:ogc:def:uom:EPSG::9001">0.9996</gml:value>
         <gml:valueOfParameter xlink:href="urn:ogc:def:parameter:EPSG::8805" />
-      </gml:usesParameterValue>
-      <gml:usesParameterValue>
-        <gml:value gml:uom="urn:ogc:def:uom:EPSG::9001">500000</gml:value>
+      </gml:usesValue>
+      <gml:usesValue>
+        <gml:value uom="urn:ogc:def:uom:EPSG::9001">500000</gml:value>
         <gml:valueOfParameter xlink:href="urn:ogc:def:parameter:EPSG::8806" />
-      </gml:usesParameterValue>
-      <gml:usesParameterValue>
-        <gml:value gml:uom="urn:ogc:def:uom:EPSG::9001">0</gml:value>
+      </gml:usesValue>
+      <gml:usesValue>
+        <gml:value uom="urn:ogc:def:uom:EPSG::9001">0</gml:value>
         <gml:valueOfParameter xlink:href="urn:ogc:def:parameter:EPSG::8807" />
-      </gml:usesParameterValue>
+      </gml:usesValue>
     </gml:Conversion>
   </gml:definedByConversion>
   <gml:usesCartesianCS>
-    <gml:CartesianCS gml:id="ogrcrs10">
+    <gml:CartesianCS>
       <gml:csName>Cartesian</gml:csName>
       <gml:csID>
-        <gml:name gml:codeSpace="urn:ogc:def:cs:EPSG::">4400</gml:name>
+        <gml:name codeSpace="urn:ogc:def:cs:EPSG::">4400</gml:name>
       </gml:csID>
       <gml:usesAxis>
-        <gml:CoordinateSystemAxis gml:id="ogrcrs11" gml:uom="urn:ogc:def:uom:EPSG::9001">
+        <gml:CoordinateSystemAxis gml:uom="urn:ogc:def:uom:EPSG::9001">
           <gml:name>Easting</gml:name>
           <gml:axisID>
-            <gml:name gml:codeSpace="urn:ogc:def:axis:EPSG::">9906</gml:name>
+            <gml:name codeSpace="urn:ogc:def:axis:EPSG::">9906</gml:name>
           </gml:axisID>
           <gml:axisAbbrev>E</gml:axisAbbrev>
           <gml:axisDirection>east</gml:axisDirection>
         </gml:CoordinateSystemAxis>
       </gml:usesAxis>
       <gml:usesAxis>
-        <gml:CoordinateSystemAxis gml:id="ogrcrs12" gml:uom="urn:ogc:def:uom:EPSG::9001">
+        <gml:CoordinateSystemAxis gml:uom="urn:ogc:def:uom:EPSG::9001">
           <gml:name>Northing</gml:name>
           <gml:axisID>
-            <gml:name gml:codeSpace="urn:ogc:def:axis:EPSG::">9907</gml:name>
+            <gml:name codeSpace="urn:ogc:def:axis:EPSG::">9907</gml:name>
           </gml:axisID>
           <gml:axisAbbrev>N</gml:axisAbbrev>
           <gml:axisDirection>north</gml:axisDirection>

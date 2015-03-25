@@ -513,6 +513,9 @@ int GDALJP2Metadata::ReadBoxes( VSILFILE *fpVSIL )
 int GDALJP2Metadata::ParseJP2GeoTIFF()
 
 {
+    if(! CSLTestBoolean(CPLGetConfigOption("GDAL_USE_GEOJP2", "TRUE")) )
+        return FALSE;
+
     int abValidProjInfo[MAX_JP2GEOTIFF_BOXES] = { FALSE };
     char* apszProjection[MAX_JP2GEOTIFF_BOXES] = { NULL };
     double aadfGeoTransform[MAX_JP2GEOTIFF_BOXES][6];
@@ -813,6 +816,9 @@ int GDALJP2Metadata::GMLSRSLookup( const char *pszURN )
 int GDALJP2Metadata::ParseGMLCoverageDesc() 
 
 {
+    if(! CSLTestBoolean(CPLGetConfigOption("GDAL_USE_GMLJP2", "TRUE")) )
+        return FALSE;
+
 /* -------------------------------------------------------------------- */
 /*      Do we have an XML doc that is apparently a coverage             */
 /*      description?                                                    */
@@ -1371,16 +1377,24 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2( int nXSize, int nYSize )
 
         if( oSRS.exportToXML( &pszGMLDef, NULL ) == OGRERR_NONE )
         {
+            char* pszWKT = NULL;
+            oSRS.exportToWkt(&pszWKT);
+            char* pszXMLEscapedWKT = CPLEscapeString(pszWKT, -1, CPLES_XML);
+            CPLFree(pszWKT);
             osDictBox.Printf(  
 "<gml:Dictionary gml:id=\"CRSU1\" \n"
 "        xmlns:gml=\"http://www.opengis.net/gml\"\n"
 "        xmlns:xlink=\"http://www.w3.org/1999/xlink\"\n"
-"        xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">\n"
+"        xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
+"        xsi:schemaLocation=\"http://www.opengis.net/gml http://schemas.opengis.net/gml/3.1.1/base/gml.xsd\">\n"
+"  <gml:description>Dictionnary for cursom SRS %s</gml:description>\n"
+"  <gml:name>Dictionnary for custom SRS</gml:name>\n"
 "  <gml:dictionaryEntry>\n"
 "%s\n"
 "  </gml:dictionaryEntry>\n"
 "</gml:Dictionary>\n",
-                     pszGMLDef );
+                     pszXMLEscapedWKT, pszGMLDef );
+            CPLFree(pszXMLEscapedWKT);
         }
         CPLFree( pszGMLDef );
     }

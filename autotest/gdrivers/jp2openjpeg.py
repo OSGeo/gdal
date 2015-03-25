@@ -1795,8 +1795,21 @@ def jp2openjpeg_38():
         gdaltest.post_reason('fail')
         print(out_ds.GetProjectionRef())
         return 'fail'
+    crsdictionary = out_ds.GetMetadata_List("xml:CRSDictionary.gml")[0]
     out_ds = None
     gdal.Unlink('/vsimem/jp2openjpeg_38.jp2')
+
+    do_validate = False
+    try:
+        import xmlvalidate
+        do_validate = True
+    except:
+        print('Cannot import xmlvalidate')
+        pass
+
+    if do_validate:
+        if not xmlvalidate.validate(crsdictionary, ogc_schemas_location = 'tmp/cache/SCHEMAS_OPENGIS_NET'):
+            return 'fail'
 
     return 'success'
 
