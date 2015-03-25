@@ -1031,17 +1031,17 @@ def validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location)
                                 count_fields += 1
 
                                 interval = None
-                                constraint = find_xml_node(rangetype, 'swe:constraint')
+                                constraint = find_xml_node(child, 'swe:constraint')
                                 if constraint is None:
-                                    constraint = find_xml_node(rangetype, 'constraint')
+                                    constraint = find_xml_node(child, 'constraint')
                                 if constraint is not None:
-                                    AllowedValues = find_xml_node(rangetype, 'swe:AllowedValues')
+                                    AllowedValues = find_xml_node(constraint, 'swe:AllowedValues')
                                     if AllowedValues is None:
-                                        AllowedValues = find_xml_node(rangetype, 'AllowedValues')
+                                        AllowedValues = find_xml_node(constraint, 'AllowedValues')
                                     if AllowedValues is not None:
-                                        interval = find_xml_node(rangetype, 'swe:interval')
+                                        interval = find_xml_node(AllowedValues, 'swe:interval')
                                         if interval is None:
-                                            interval = find_xml_node(rangetype, 'interval')
+                                            interval = find_xml_node(AllowedValues, 'interval')
                                         if interval is not None:
                                             interval = get_element_val(interval)
                                 if interval is None:
