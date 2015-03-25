@@ -288,6 +288,18 @@ find existing layers and append the features being copied.</p>
 
 </ul>
 
+<h3>Advanced topics</h3>
+
+<p>
+(GDAL &gt;= 2.0) The SHAPE_REWIND_ON_WRITE configuration option/environment
+variable can be set to NO to prevent the shapefile writer to correct the
+winding order of exterior/interior rings to be conformant with the one mandated
+by the Shapefile specification. This can be useful in some situations where
+a MultiPolygon passed to the shapefile writer is not really a compliant Single
+Feature polygon, but originates from example from a MultiPatch object (from
+a Shapefile/FileGDB/PGeo datasource).
+</p>
+
 <h3>See Also</h3>
 
 <ul>

@@ -460,7 +460,8 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape, SHPObject *psShape )
 /*                         SHPWriteOGRObject()                          */
 /************************************************************************/
 
-OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom )
+OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom,
+                          int bRewind)
 
 {
     int nReturnedShapeID;
@@ -846,7 +847,8 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom )
         psShape = SHPCreateObject( hSHP->nShapeType, iShape, nRings,
                                    panRingStart, NULL,
                                    nVertex, padfX, padfY, padfZ, NULL );
-        SHPRewindObject( hSHP, psShape );
+        if( bRewind )
+            SHPRewindObject( hSHP, psShape );
         nReturnedShapeID = SHPWriteObject( hSHP, iShape, psShape );
         SHPDestroyObject( psShape );
         
@@ -1240,7 +1242,8 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
                            OGRFeatureDefn * poDefn, 
                            OGRFeature * poFeature,
                            const char *pszSHPEncoding,
-                           int* pbTruncationWarningEmitted )
+                           int* pbTruncationWarningEmitted,
+                           int bRewind )
 
 {
 #ifdef notdef
@@ -1265,7 +1268,7 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
     if( hSHP != NULL )
     {
         eErr = SHPWriteOGRObject( hSHP, (int)poFeature->GetFID(),
-                                  poFeature->GetGeometryRef() );
+                                  poFeature->GetGeometryRef(), bRewind );
         if( eErr != OGRERR_NONE )
             return eErr;
     }

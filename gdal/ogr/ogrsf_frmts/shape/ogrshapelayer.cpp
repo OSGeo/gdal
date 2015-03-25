@@ -172,6 +172,7 @@ OGRShapeLayer::OGRShapeLayer( OGRShapeDataSource* poDSIn,
     else if( bSRSSetIn && poSRSIn != NULL )
         poSRSIn->Release();
     SetDescription( poFeatureDefn->GetName() );
+    bRewindOnWrite = CSLTestBoolean(CPLGetConfigOption( "SHAPE_REWIND_ON_WRITE", "YES" ));
 }
 
 /************************************************************************/
@@ -883,7 +884,8 @@ OGRErr OGRShapeLayer::ISetFeature( OGRFeature *poFeature )
     }
 
     OGRErr eErr = SHPWriteOGRFeature( hSHP, hDBF, poFeatureDefn, poFeature,
-                               osEncoding, &bTruncationWarningEmitted );
+                                      osEncoding, &bTruncationWarningEmitted,
+                                      bRewindOnWrite );
 
     if( hSHP != NULL )
     {
@@ -1049,7 +1051,8 @@ OGRErr OGRShapeLayer::ICreateFeature( OGRFeature *poFeature )
     }
     
     eErr = SHPWriteOGRFeature( hSHP, hDBF, poFeatureDefn, poFeature, 
-                               osEncoding, &bTruncationWarningEmitted );
+                               osEncoding, &bTruncationWarningEmitted,
+                               bRewindOnWrite );
 
     if( hSHP != NULL )
         nTotalShapeCount = hSHP->nRecords;
