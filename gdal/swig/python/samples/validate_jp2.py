@@ -137,8 +137,31 @@ def get_element_val(node):
 def get_field_val(ar, field_name):
     return get_element_val(find_field(ar, field_name))
 
-def get_gmljp2(filename):
+def gdalOpenWithOpenJPEGDriverPreferably(filename):
+    drivers = []
+    jp2openjpeg_drv = gdal.GetDriverByName('JP2OpenJPEG')
+    if jp2openjpeg_drv:
+        # Deregister all drivers except JP2OpenJPEG if it exists
+        for drvname in ['JP2KAK', 'JP2ECW', 'JP2OpenJPEG', 'JP2MrSID', 'JPEG2000']:
+            drv = gdal.GetDriverByName(drvname)
+            if drvname != 'JP2OpenJPEG' and drv is not None:
+                drv.Deregister()
+            drivers.append(drv)
+
     ds = gdal.Open(filename)
+
+    # Re-register drivers
+    if jp2openjpeg_drv:
+        jp2openjpeg_drv.Deregister()
+        for i in range(len(drivers)):
+            drv = drivers[i]
+            if drv is not None:
+                drv.Register()
+
+    return ds
+
+def get_gmljp2(filename):
+    ds = gdalOpenWithOpenJPEGDriverPreferably(filename)
     if ds is None:
         return None
     mdd = ds.GetMetadata('xml:gml.root-instance')
@@ -228,8 +251,9 @@ def int_or_none(val):
 def check_geojp2_gmljp2_consistency(filename, error_report):
     gdal.SetConfigOption('GDAL_USE_GEOJP2', 'YES')
     gdal.SetConfigOption('GDAL_USE_GMLJP2', 'NO')
-    ds = gdal.Open(filename)
+    ds = gdalOpenWithOpenJPEGDriverPreferably(filename)
     if ds is None:
+        error_report.EmitError('GENERAL', 'Cannot open %s with a JPEG2000 compatible driver' % filename)
         return
     geojp2_gt = ds.GetGeoTransform()
     geojp2_wkt = ds.GetProjectionRef()
@@ -238,7 +262,7 @@ def check_geojp2_gmljp2_consistency(filename, error_report):
 
     gdal.SetConfigOption('GDAL_USE_GEOJP2', 'NO')
     gdal.SetConfigOption('GDAL_USE_GMLJP2', 'YES')
-    ds = gdal.Open(filename)
+    ds = gdalOpenWithOpenJPEGDriverPreferably(filename)
     gmljp2_gt = ds.GetGeoTransform()
     gmljp2_wkt = ds.GetProjectionRef()
     ds = None
@@ -272,6 +296,15 @@ def check_oi_rg_consistency(filename, serialized_oi_rg, error_report):
     if gdal.GetDriverByName('JP2OpenJPEG') is None:
         return
 
+    ds = gdalOpenWithOpenJPEGDriverPreferably(filename)
+    if ds is None:
+        error_report.EmitError('GENERAL', 'Cannot open %s with a JPEG2000 compatible driver' % filename)
+        return 'fail'
+    gt = ds.GetGeoTransform()
+    wkt = ds.GetProjectionRef()
+    gcps = ds.GetGCPCount()
+    ds = None
+
     gmljp2_from_oi = """<gml:FeatureCollection xmlns:gml="http://www.opengis.net/gml" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opengis.net/gml http://schemas.opengis.net/gml/3.1.1/profiles/gmlJP2Profile/1.0.0/gmlJP2Profile.xsd">
         <gml:boundedBy>
         <gml:Null>withheld</gml:Null>
@@ -303,17 +336,11 @@ def check_oi_rg_consistency(filename, serialized_oi_rg, error_report):
     gdal.SetConfigOption('GMLJP2OVERRIDE', None)
     gdal.Unlink('/vsimem/override.gml')
 
-    ds = gdal.Open('/vsimem/temp.jp2')
+    ds = gdalOpenWithOpenJPEGDriverPreferably('/vsimem/temp.jp2')
     oi_gt = ds.GetGeoTransform()
     oi_wkt = ds.GetProjectionRef()
     ds = None
     gdal.Unlink('/vsimem/temp.jp2')
-
-    ds = gdal.Open(filename)
-    gt = ds.GetGeoTransform()
-    wkt = ds.GetProjectionRef()
-    gcps = ds.GetGCPCount()
-    ds = None
 
     if gcps == 0:
         diff = False
@@ -392,8 +419,17 @@ def validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location)
         # Check the content of a GeoTIFF UUID box
         geotiff_found = find_element_with_name(ar, "UUID", "GeoTIFF", attribute_name = "description") is not None
         decoded_geotiff = find_xml_node(ar, "DecodedGeoTIFF")
-        if geotiff_found and not decoded_geotiff:
-            error_report.EmitError('GeoJP2', 'GeoTIFF UUID box found, but content is not valid GeoTIFF')
+        if geotiff_found:
+            if not decoded_geotiff:
+                error_report.EmitError('GeoJP2', 'GeoTIFF UUID box found, but content is not valid GeoTIFF')
+            else:
+                vrtdataset = find_xml_node(ar, "VRTDataset")
+                w = get_attribute_val(vrtdataset, "rasterXSize")
+                if w != '1':
+                    error_report.EmitError('GeoJP2', 'GeoTIFF should have width of 1 pixel, not %s' % str(w))
+                h = get_attribute_val(vrtdataset, "rasterXSize")
+                if h != '1':
+                    error_report.EmitError('GeoJP2', 'GeoTIFF should have height of 1 pixel, not %s' % str(h))
 
         # Check that information of GeoJP2 and GMLJP2 are consistant
         if geotiff_found and gmljp2_found:
