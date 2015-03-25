@@ -218,7 +218,7 @@ static CPLXMLNode *addAuthorityIDBlock( CPLXMLNode *psTarget,
 /*      Prepare the codespace attribute.                                */
 /* -------------------------------------------------------------------- */
     CPLCreateXMLNode(
-        CPLCreateXMLNode( psName, CXT_Attribute, "gml:codeSpace" ),
+        CPLCreateXMLNode( psName, CXT_Attribute, "codeSpace" ),
         CXT_Text, szURN );
 
 /* -------------------------------------------------------------------- */
@@ -304,7 +304,7 @@ static void addProjArg( const OGRSpatialReference *poSRS, CPLXMLNode *psBase,
 {
     CPLXMLNode *psNode, *psValue;
 
-    psNode = CPLCreateXMLNode( psBase, CXT_Element, "gml:usesParameterValue" );
+    psNode = CPLCreateXMLNode( psBase, CXT_Element, "gml:usesValue" );
 
 /* -------------------------------------------------------------------- */
 /*      Handle the UOM.                                                 */
@@ -319,7 +319,7 @@ static void addProjArg( const OGRSpatialReference *poSRS, CPLXMLNode *psBase,
     psValue = CPLCreateXMLNode( psNode, CXT_Element, "gml:value" );
 
     CPLCreateXMLNode( 
-        CPLCreateXMLNode( psValue, CXT_Attribute, "gml:uom" ),
+        CPLCreateXMLNode( psValue, CXT_Attribute, "uom" ),
         CXT_Text, pszUOMValue );
     
 /* -------------------------------------------------------------------- */
@@ -517,7 +517,7 @@ static CPLXMLNode *exportGeogCSToXML( const OGRSpatialReference *poSRS )
             CPLCreateXMLNode( psPM, CXT_Element, "gml:greenwichLongitude" ),
             CXT_Element, "gml:angle" );
     
-    CPLCreateXMLNode( CPLCreateXMLNode( psAngle, CXT_Attribute, "gml:uom" ),
+    CPLCreateXMLNode( CPLCreateXMLNode( psAngle, CXT_Attribute, "uom" ),
                       CXT_Text, "urn:ogc:def:uom:EPSG::9102" );
 
     CPLCreateXMLNode( psAngle, CXT_Text, 
@@ -550,7 +550,7 @@ static CPLXMLNode *exportGeogCSToXML( const OGRSpatialReference *poSRS )
         psParmXML = CPLCreateXMLNode( psEllipseXML, CXT_Element, 
                                       "gml:semiMajorAxis" );
 
-        CPLCreateXMLNode( CPLCreateXMLNode(psParmXML,CXT_Attribute,"gml:uom"),
+        CPLCreateXMLNode( CPLCreateXMLNode(psParmXML,CXT_Attribute,"uom"),
                           CXT_Text, "urn:ogc:def:uom:EPSG::9001" );
 
         CPLCreateXMLNode( psParmXML, CXT_Text, 
@@ -562,7 +562,7 @@ static CPLXMLNode *exportGeogCSToXML( const OGRSpatialReference *poSRS )
                                   "gml:secondDefiningParameter" ),
                 CXT_Element, "gml:inverseFlattening" );
         
-        CPLCreateXMLNode( CPLCreateXMLNode(psParmXML,CXT_Attribute,"gml:uom"),
+        CPLCreateXMLNode( CPLCreateXMLNode(psParmXML,CXT_Attribute,"uom"),
                           CXT_Text, "urn:ogc:def:uom:EPSG::9201" );
 
         CPLCreateXMLNode( psParmXML, CXT_Text, 
@@ -628,6 +628,9 @@ static CPLXMLNode *exportProjCSToXML( const OGRSpatialReference *poSRS )
     psConv = CPLCreateXMLNode( psDefinedBy, CXT_Element, "gml:Conversion");
     addGMLId( psConv );
 
+    CPLCreateXMLNode(CPLCreateXMLNode(psConv, CXT_Element, "gml:coordinateOperationName"),
+                     CXT_Text, pszProjection);
+    
 /* -------------------------------------------------------------------- */
 /*      Transverse Mercator                                             */
 /* -------------------------------------------------------------------- */
@@ -666,6 +669,12 @@ static CPLXMLNode *exportProjCSToXML( const OGRSpatialReference *poSRS )
                     8806, SRS_PP_FALSE_EASTING );
         addProjArg( poSRS, psConv, "Linear", 0.0,
                     8807, SRS_PP_FALSE_NORTHING );
+    }
+    
+    else
+    {
+        CPLError(CE_Warning, CPLE_NotSupported,
+                 "Unhandled projection method %s", pszProjection);
     }
 
 /* -------------------------------------------------------------------- */
