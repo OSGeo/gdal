@@ -127,25 +127,28 @@ static CPLErr GWKOpenCLCase( GDALWarpKernel * );
 #endif
 
 static CPLErr GWKGeneralCase( GDALWarpKernel * );
-static CPLErr GWKNearestNoMasksByte( GDALWarpKernel *poWK );
-static CPLErr GWKBilinearNoMasksByte( GDALWarpKernel *poWK );
-static CPLErr GWKCubicNoMasksByte( GDALWarpKernel *poWK );
+static CPLErr GWKNearestNoMasksOrDstDensityOnlyByte( GDALWarpKernel *poWK );
+static CPLErr GWKBilinearNoMasksOrDstDensityOnlyByte( GDALWarpKernel *poWK );
+static CPLErr GWKCubicNoMasksOrDstDensityOnlyByte( GDALWarpKernel *poWK );
 #ifdef INSTANCIATE_FLOAT64_SSE2_IMPL
-static CPLErr GWKCubicNoMasksDouble( GDALWarpKernel *poWK );
+static CPLErr GWKCubicNoMasksOrDstDensityOnlyDouble( GDALWarpKernel *poWK );
 #endif
-static CPLErr GWKCubicSplineNoMasksByte( GDALWarpKernel *poWK );
+static CPLErr GWKCubicSplineNoMasksOrDstDensityOnlyByte( GDALWarpKernel *poWK );
 static CPLErr GWKNearestByte( GDALWarpKernel *poWK );
-static CPLErr GWKNearestNoMasksShort( GDALWarpKernel *poWK );
-static CPLErr GWKBilinearNoMasksShort( GDALWarpKernel *poWK );
+static CPLErr GWKNearestNoMasksOrDstDensityOnlyShort( GDALWarpKernel *poWK );
+static CPLErr GWKBilinearNoMasksOrDstDensityOnlyShort( GDALWarpKernel *poWK );
 #ifdef INSTANCIATE_FLOAT64_SSE2_IMPL
-static CPLErr GWKBilinearNoMasksDouble( GDALWarpKernel *poWK );
+static CPLErr GWKBilinearNoMasksOrDstDensityOnlyDouble( GDALWarpKernel *poWK );
 #endif
-static CPLErr GWKCubicNoMasksShort( GDALWarpKernel *poWK );
-static CPLErr GWKCubicSplineNoMasksShort( GDALWarpKernel *poWK );
+static CPLErr GWKCubicNoMasksOrDstDensityOnlyShort( GDALWarpKernel *poWK );
+static CPLErr GWKCubicSplineNoMasksOrDstDensityOnlyShort( GDALWarpKernel *poWK );
 static CPLErr GWKNearestShort( GDALWarpKernel *poWK );
-static CPLErr GWKNearestNoMasksFloat( GDALWarpKernel *poWK );
+static CPLErr GWKNearestNoMasksOrDstDensityOnlyFloat( GDALWarpKernel *poWK );
 static CPLErr GWKNearestFloat( GDALWarpKernel *poWK );
 static CPLErr GWKAverageOrMode( GDALWarpKernel * );
+static CPLErr GWKCubicNoMasksOrDstDensityOnlyUShort( GDALWarpKernel * );
+static CPLErr GWKCubicSplineNoMasksOrDstDensityOnlyUShort( GDALWarpKernel * );
+static CPLErr GWKBilinearNoMasksOrDstDensityOnlyUShort( GDALWarpKernel * );
 
 /************************************************************************/
 /*                           GWKJobStruct                               */
@@ -969,31 +972,30 @@ CPLErr GDALWarpKernel::PerformWarp()
     }
 #endif /* defined HAVE_OPENCL */
 
-    int bNoMasks = (papanBandSrcValid == NULL
+    int bNoMasksOrDstDensityOnly = (papanBandSrcValid == NULL
         && panUnifiedSrcValid == NULL
         && pafUnifiedSrcDensity == NULL
-        && panDstValid == NULL
-        && pafDstDensity == NULL );
+        && panDstValid == NULL );
 
     if( eWorkingDataType == GDT_Byte
         && eResample == GRA_NearestNeighbour
-        && bNoMasks )
-        return GWKNearestNoMasksByte( this );
+        && bNoMasksOrDstDensityOnly )
+        return GWKNearestNoMasksOrDstDensityOnlyByte( this );
 
     if( eWorkingDataType == GDT_Byte
         && eResample == GRA_Bilinear
-        && bNoMasks )
-        return GWKBilinearNoMasksByte( this );
+        && bNoMasksOrDstDensityOnly )
+        return GWKBilinearNoMasksOrDstDensityOnlyByte( this );
 
     if( eWorkingDataType == GDT_Byte
         && eResample == GRA_Cubic
-        && bNoMasks )
-        return GWKCubicNoMasksByte( this );
+        && bNoMasksOrDstDensityOnly )
+        return GWKCubicNoMasksOrDstDensityOnlyByte( this );
 
     if( eWorkingDataType == GDT_Byte
         && eResample == GRA_CubicSpline
-        && bNoMasks )
-        return GWKCubicSplineNoMasksByte( this );
+        && bNoMasksOrDstDensityOnly )
+        return GWKCubicSplineNoMasksOrDstDensityOnlyByte( this );
 
     if( eWorkingDataType == GDT_Byte
         && eResample == GRA_NearestNeighbour )
@@ -1001,23 +1003,38 @@ CPLErr GDALWarpKernel::PerformWarp()
 
     if( (eWorkingDataType == GDT_Int16 || eWorkingDataType == GDT_UInt16)
         && eResample == GRA_NearestNeighbour
-        && bNoMasks )
-        return GWKNearestNoMasksShort( this );
+        && bNoMasksOrDstDensityOnly )
+        return GWKNearestNoMasksOrDstDensityOnlyShort( this );
 
     if( (eWorkingDataType == GDT_Int16 )
         && eResample == GRA_Cubic
-        && bNoMasks )
-        return GWKCubicNoMasksShort( this );
+        && bNoMasksOrDstDensityOnly )
+        return GWKCubicNoMasksOrDstDensityOnlyShort( this );
 
     if( (eWorkingDataType == GDT_Int16 )
         && eResample == GRA_CubicSpline
-        && bNoMasks )
-        return GWKCubicSplineNoMasksShort( this );
+        && bNoMasksOrDstDensityOnly )
+        return GWKCubicSplineNoMasksOrDstDensityOnlyShort( this );
 
     if( (eWorkingDataType == GDT_Int16 )
         && eResample == GRA_Bilinear
-        && bNoMasks )
-        return GWKBilinearNoMasksShort( this );
+        && bNoMasksOrDstDensityOnly )
+        return GWKBilinearNoMasksOrDstDensityOnlyShort( this );
+
+    if( (eWorkingDataType == GDT_UInt16 )
+        && eResample == GRA_Cubic
+        && bNoMasksOrDstDensityOnly )
+        return GWKCubicNoMasksOrDstDensityOnlyUShort( this );
+
+    if( (eWorkingDataType == GDT_UInt16 )
+        && eResample == GRA_CubicSpline
+        && bNoMasksOrDstDensityOnly )
+        return GWKCubicSplineNoMasksOrDstDensityOnlyUShort( this );
+
+    if( (eWorkingDataType == GDT_UInt16 )
+        && eResample == GRA_Bilinear
+        && bNoMasksOrDstDensityOnly )
+        return GWKBilinearNoMasksOrDstDensityOnlyUShort( this );
 
     if( (eWorkingDataType == GDT_Int16 || eWorkingDataType == GDT_UInt16)
         && eResample == GRA_NearestNeighbour )
@@ -1025,8 +1042,8 @@ CPLErr GDALWarpKernel::PerformWarp()
 
     if( eWorkingDataType == GDT_Float32
         && eResample == GRA_NearestNeighbour
-        && bNoMasks )
-        return GWKNearestNoMasksFloat( this );
+        && bNoMasksOrDstDensityOnly )
+        return GWKNearestNoMasksOrDstDensityOnlyFloat( this );
 
     if( eWorkingDataType == GDT_Float32
         && eResample == GRA_NearestNeighbour )
@@ -1035,13 +1052,13 @@ CPLErr GDALWarpKernel::PerformWarp()
 #ifdef INSTANCIATE_FLOAT64_SSE2_IMPL
     if( eWorkingDataType == GDT_Float64
         && eResample == GRA_Bilinear
-        && bNoMasks )
-        return GWKBilinearNoMasksDouble( this );
+        && bNoMasksOrDstDensityOnly )
+        return GWKBilinearNoMasksOrDstDensityOnlyDouble( this );
 
     if( eWorkingDataType == GDT_Float64
         && eResample == GRA_Cubic
-        && bNoMasks )
-        return GWKCubicNoMasksDouble( this );
+        && bNoMasksOrDstDensityOnly )
+        return GWKCubicNoMasksOrDstDensityOnlyDouble( this );
 #endif
 
     if( eResample == GRA_Average )
@@ -3346,6 +3363,18 @@ int GWKResampleNoMasksT<GInt16>( GDALWarpKernel *poWK, int iBand,
     return GWKResampleNoMasks_SSE2_T(poWK, iBand, dfSrcX, dfSrcY, pValue, padfWeight);
 }
 
+/************************************************************************/
+/*                     GWKResampleNoMasksT<GUInt16>()                   */
+/************************************************************************/
+
+template<>
+int GWKResampleNoMasksT<GUInt16>( GDALWarpKernel *poWK, int iBand,
+                                  double dfSrcX, double dfSrcY,
+                                  GUInt16 *pValue, double *padfWeight )
+{
+    return GWKResampleNoMasks_SSE2_T(poWK, iBand, dfSrcX, dfSrcY, pValue, padfWeight);
+}
+
 #ifdef INSTANCIATE_FLOAT64_SSE2_IMPL
 
 /************************************************************************/
@@ -3926,15 +3955,11 @@ static void GWKGeneralCaseThread( void* pData)
 }
 
 /************************************************************************/
-/*                       GWKNearestNoMasksByte()                        */
-/*                                                                      */
-/*      Case for 8bit input data with nearest neighbour resampling      */
-/*      without concerning about masking. Should be as fast as          */
-/*      possible for this particular transformation type.               */
+/*                GWKResampleNoMasksOrDstDensityOnlyThreadInternal()           */
 /************************************************************************/
 
 template<class T,GDALResampleAlg eResample, int bUse4SamplesFormula>
-static void GWKResampleNoMasksThreadInternal( void* pData )
+static void GWKResampleNoMasksOrDstDensityOnlyThreadInternal( void* pData )
 
 {
     GWKJobStruct* psJob = (GWKJobStruct*) pData;
@@ -4031,6 +4056,9 @@ static void GWKResampleNoMasksThreadInternal( void* pData )
                                     padfWeight);
                 ((T *)poWK->papabyDstImage[iBand])[iDstOffset] = value;
             }
+
+            if( poWK->pafDstDensity )
+                poWK->pafDstDensity[iDstOffset] = 1.0f;
         }
 
 /* -------------------------------------------------------------------- */
@@ -4051,80 +4079,55 @@ static void GWKResampleNoMasksThreadInternal( void* pData )
 }
 
 template<class T,GDALResampleAlg eResample>
-static void GWKResampleNoMasksThread( void* pData )
+static void GWKResampleNoMasksOrDstDensityOnlyThread( void* pData )
 {
-    GWKResampleNoMasksThreadInternal<T,eResample,FALSE>(pData);
+    GWKResampleNoMasksOrDstDensityOnlyThreadInternal<T,eResample,FALSE>(pData);
 }
 
-template<class T,GDALResampleAlg eResample> void GWKResampleNoMasksHas4SampleThread( void* pData )
+template<class T,GDALResampleAlg eResample> void GWKResampleNoMasksOrDstDensityOnlyHas4SampleThread( void* pData )
 
 {
     GWKJobStruct* psJob = (GWKJobStruct*) pData;
     GDALWarpKernel *poWK = psJob->poWK;
+    CPLAssert(eResample == GRA_Bilinear || eResample == GRA_Cubic);
     int bUse4SamplesFormula = (poWK->dfXScale >= 0.95 && poWK->dfYScale >= 0.95);
     if( bUse4SamplesFormula )
-        GWKResampleNoMasksThreadInternal<T,eResample,TRUE>(pData);
+        GWKResampleNoMasksOrDstDensityOnlyThreadInternal<T,eResample,TRUE>(pData);
     else
-        GWKResampleNoMasksThreadInternal<T,eResample,FALSE>(pData);
+        GWKResampleNoMasksOrDstDensityOnlyThreadInternal<T,eResample,FALSE>(pData);
 }
 
-static CPLErr GWKNearestNoMasksByte( GDALWarpKernel *poWK )
+static CPLErr GWKNearestNoMasksOrDstDensityOnlyByte( GDALWarpKernel *poWK )
 {
-    return GWKRun( poWK, "GWKNearestNoMasksByte", GWKResampleNoMasksThread<GByte,GRA_NearestNeighbour> );
+    return GWKRun( poWK, "GWKNearestNoMasksOrDstDensityOnlyByte",
+                   GWKResampleNoMasksOrDstDensityOnlyThread<GByte,GRA_NearestNeighbour> );
 }
 
-/************************************************************************/
-/*                       GWKBilinearNoMasksByte()                       */
-/*                                                                      */
-/*      Case for 8bit input data with bilinear resampling without       */
-/*      concerning about masking. Should be as fast as possible         */
-/*      for this particular transformation type.                        */
-/************************************************************************/
-
-static CPLErr GWKBilinearNoMasksByte( GDALWarpKernel *poWK )
+static CPLErr GWKBilinearNoMasksOrDstDensityOnlyByte( GDALWarpKernel *poWK )
 {
-    return GWKRun( poWK, "GWKBilinearNoMasksByte", GWKResampleNoMasksHas4SampleThread<GByte,GRA_Bilinear> );
+    return GWKRun( poWK, "GWKBilinearNoMasksOrDstDensityOnlyByte",
+                   GWKResampleNoMasksOrDstDensityOnlyHas4SampleThread<GByte,GRA_Bilinear> );
 }
 
-/************************************************************************/
-/*                       GWKCubicNoMasksByte()                          */
-/*                                                                      */
-/*      Case for 8bit input data with cubic resampling without          */
-/*      concerning about masking. Should be as fast as possible         */
-/*      for this particular transformation type.                        */
-/************************************************************************/
-
-static CPLErr GWKCubicNoMasksByte( GDALWarpKernel *poWK )
+static CPLErr GWKCubicNoMasksOrDstDensityOnlyByte( GDALWarpKernel *poWK )
 {
-    return GWKRun( poWK, "GWKCubicNoMasksByte", GWKResampleNoMasksHas4SampleThread<GByte,GRA_Cubic> );
+    return GWKRun( poWK, "GWKCubicNoMasksOrDstDensityOnlyByte",
+                   GWKResampleNoMasksOrDstDensityOnlyHas4SampleThread<GByte,GRA_Cubic> );
 }
 
 #ifdef INSTANCIATE_FLOAT64_SSE2_IMPL
-/************************************************************************/
-/*                       GWKCubicNoMasksDouble()                        */
-/*                                                                      */
-/*      Case for 64bit input data with cubic resampling without         */
-/*      concerning about masking. Should be as fast as possible         */
-/*      for this particular transformation type.                        */
-/************************************************************************/
 
-static CPLErr GWKCubicNoMasksDouble( GDALWarpKernel *poWK )
+static CPLErr GWKCubicNoMasksOrDstDensityOnlyDouble( GDALWarpKernel *poWK )
 {
-    return GWKRun( poWK, "GWKCubicNoMasksDouble", GWKResampleNoMasksHas4SampleThread<double,GRA_Cubic> );
+    return GWKRun( poWK, "GWKCubicNoMasksOrDstDensityOnlyDouble",
+                   GWKResampleNoMasksOrDstDensityOnlyHas4SampleThread<double,GRA_Cubic> );
 }
 #endif
 
-/************************************************************************/
-/*                   GWKCubicSplineNoMasksByte()                        */
-/*                                                                      */
-/*      Case for 8bit input data with cubic spline resampling without   */
-/*      concerning about masking. Should be as fast as possible         */
-/*      for this particular transformation type.                        */
-/************************************************************************/
-
-static CPLErr GWKCubicSplineNoMasksByte( GDALWarpKernel *poWK )
+static CPLErr GWKCubicSplineNoMasksOrDstDensityOnlyByte( GDALWarpKernel *poWK )
 {
-    return GWKRun( poWK, "GWKCubicSplineNoMasksByte", GWKResampleNoMasksThread<GByte,GRA_CubicSpline> );
+    return GWKRun( poWK, "GWKCubicSplineNoMasksOrDstDensityOnlyByte",
+                   GWKResampleNoMasksOrDstDensityOnlyThread<GByte,GRA_CubicSpline> );
 }
 
 /************************************************************************/
@@ -4284,109 +4287,67 @@ static CPLErr GWKNearestByte( GDALWarpKernel *poWK )
     return GWKRun( poWK, "GWKNearestByte", GWKNearestThread<GByte> );
 }
 
-/************************************************************************/
-/*                    GWKNearestNoMasksShort()                          */
-/*                                                                      */
-/*      Case for 16bit signed and unsigned integer input data with      */
-/*      nearest neighbour resampling without concerning about masking.  */
-/*      Should be as fast as possible for this particular               */
-/*      transformation type.                                            */
-/************************************************************************/
-
-static CPLErr GWKNearestNoMasksShort( GDALWarpKernel *poWK )
+static CPLErr GWKNearestNoMasksOrDstDensityOnlyShort( GDALWarpKernel *poWK )
 {
-    return GWKRun( poWK, "GWKNearestNoMasksShort", GWKResampleNoMasksThread<GInt16,GRA_NearestNeighbour> );
+    return GWKRun( poWK, "GWKNearestNoMasksOrDstDensityOnlyShort",
+                   GWKResampleNoMasksOrDstDensityOnlyThread<GInt16,GRA_NearestNeighbour> );
 }
 
-/************************************************************************/
-/*                       GWKBilinearNoMasksShort()                      */
-/*                                                                      */
-/*      Case for 16bit input data with bomo,ear resampling without      */
-/*      concerning about masking. Should be as fast as possible         */
-/*      for this particular transformation type.                        */
-/************************************************************************/
-
-static CPLErr GWKBilinearNoMasksShort( GDALWarpKernel *poWK )
+static CPLErr GWKBilinearNoMasksOrDstDensityOnlyShort( GDALWarpKernel *poWK )
 {
-    return GWKRun( poWK, "GWKBilinearNoMasksShort", GWKResampleNoMasksHas4SampleThread<GInt16,GRA_Bilinear> );
+    return GWKRun( poWK, "GWKBilinearNoMasksOrDstDensityOnlyShort",
+                   GWKResampleNoMasksOrDstDensityOnlyHas4SampleThread<GInt16,GRA_Bilinear> );
+}
+
+static CPLErr GWKBilinearNoMasksOrDstDensityOnlyUShort( GDALWarpKernel *poWK )
+{
+    return GWKRun( poWK, "GWKBilinearNoMasksOrDstDensityOnlyUShort",
+                   GWKResampleNoMasksOrDstDensityOnlyHas4SampleThread<GUInt16,GRA_Bilinear> );
 }
 
 #ifdef INSTANCIATE_FLOAT64_SSE2_IMPL
-/************************************************************************/
-/*                       GWKBilinearNoMasksDouble()                     */
-/*                                                                      */
-/*      Case for 64bit input data with bilinear resampling without      */
-/*      concerning about masking. Should be as fast as possible         */
-/*      for this particular transformation type.                        */
-/************************************************************************/
 
-static CPLErr GWKBilinearNoMasksDouble( GDALWarpKernel *poWK )
+static CPLErr GWKBilinearNoMasksOrDstDensityOnlyDouble( GDALWarpKernel *poWK )
 {
-    return GWKRun( poWK, "GWKBilinearNoMasksDouble", GWKResampleNoMasksHas4SampleThread<double,GRA_Bilinear> );
+    return GWKRun( poWK, "GWKBilinearNoMasksOrDstDensityOnlyDouble",
+                   GWKResampleNoMasksOrDstDensityOnlyHas4SampleThread<double,GRA_Bilinear> );
 }
 #endif
 
-/************************************************************************/
-/*                       GWKCubicNoMasksShort()                         */
-/*                                                                      */
-/*      Case for 16bit input data with cubic resampling without         */
-/*      concerning about masking. Should be as fast as possible         */
-/*      for this particular transformation type.                        */
-/************************************************************************/
-
-static CPLErr GWKCubicNoMasksShort( GDALWarpKernel *poWK )
+static CPLErr GWKCubicNoMasksOrDstDensityOnlyShort( GDALWarpKernel *poWK )
 {
-    return GWKRun( poWK, "GWKCubicNoMasksShort", GWKResampleNoMasksHas4SampleThread<GInt16,GRA_Cubic> );
+    return GWKRun( poWK, "GWKCubicNoMasksOrDstDensityOnlyShort",
+                   GWKResampleNoMasksOrDstDensityOnlyHas4SampleThread<GInt16,GRA_Cubic> );
 }
 
-/************************************************************************/
-/*                    GWKCubicSplineNoMasksShort()                      */
-/*                                                                      */
-/*      Case for 16bit input data with cubic resampling without         */
-/*      concerning about masking. Should be as fast as possible         */
-/*      for this particular transformation type.                        */
-/************************************************************************/
-
-static CPLErr GWKCubicSplineNoMasksShort( GDALWarpKernel *poWK )
+static CPLErr GWKCubicNoMasksOrDstDensityOnlyUShort( GDALWarpKernel *poWK )
 {
-    return GWKRun( poWK, "GWKCubicSplineNoMasksShort", GWKResampleNoMasksThread<GInt16,GRA_CubicSpline> );
+    return GWKRun( poWK, "GWKCubicNoMasksOrDstDensityOnlyUShort",
+                   GWKResampleNoMasksOrDstDensityOnlyHas4SampleThread<GUInt16,GRA_Cubic> );
 }
 
-/************************************************************************/
-/*                          GWKNearestShort()                           */
-/*                                                                      */
-/*      Case for 16bit input data data with nearest neighbour           */
-/*      resampling using valid flags. Should be as fast as possible     */
-/*      for this particular transformation type.                        */
-/************************************************************************/
+static CPLErr GWKCubicSplineNoMasksOrDstDensityOnlyShort( GDALWarpKernel *poWK )
+{
+    return GWKRun( poWK, "GWKCubicSplineNoMasksOrDstDensityOnlyShort",
+                   GWKResampleNoMasksOrDstDensityOnlyThread<GInt16,GRA_CubicSpline> );
+}
+
+static CPLErr GWKCubicSplineNoMasksOrDstDensityOnlyUShort( GDALWarpKernel *poWK )
+{
+    return GWKRun( poWK, "GWKCubicSplineNoMasksOrDstDensityOnlyUShort",
+                   GWKResampleNoMasksOrDstDensityOnlyThread<GUInt16,GRA_CubicSpline> );
+}
 
 static CPLErr GWKNearestShort( GDALWarpKernel *poWK )
 {
     return GWKRun( poWK, "GWKNearestShort", GWKNearestThread<GInt16> );
 }
 
-
-/************************************************************************/
-/*                    GWKNearestNoMasksFloat()                          */
-/*                                                                      */
-/*      Case for 32bit float input data with nearest neighbour          */
-/*      resampling without concerning about masking. Should be as fast  */
-/*      as possible for this particular transformation type.            */
-/************************************************************************/
-
-static CPLErr GWKNearestNoMasksFloat( GDALWarpKernel *poWK )
+static CPLErr GWKNearestNoMasksOrDstDensityOnlyFloat( GDALWarpKernel *poWK )
 {
-    return GWKRun( poWK, "GWKNearestNoMasksFloat", GWKResampleNoMasksThread<float,GRA_NearestNeighbour> );
+    return GWKRun( poWK, "GWKNearestNoMasksOrDstDensityOnlyFloat",
+                   GWKResampleNoMasksOrDstDensityOnlyThread<float,GRA_NearestNeighbour> );
 }
-
-
-/************************************************************************/
-/*                          GWKNearestFloat()                           */
-/*                                                                      */
-/*      Case for 32bit float input data with nearest neighbour          */
-/*      resampling using valid flags. Should be as fast as possible     */
-/*      for this particular transformation type.                        */
-/************************************************************************/
 
 static CPLErr GWKNearestFloat( GDALWarpKernel *poWK )
 {
