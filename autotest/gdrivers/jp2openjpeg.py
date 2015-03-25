@@ -1032,7 +1032,7 @@ def jp2openjpeg_25():
     return 'success'
 
 ###############################################################################
-def validate(filename, expected_gmljp2 = True, return_error_count = False):
+def validate(filename, expected_gmljp2 = True, return_error_count = False, oidoc = None):
 
     try:
         import validate_jp2
@@ -2255,6 +2255,22 @@ def jp2openjpeg_43():
     return 'success'
 
 ###############################################################################
+# Check a file against a OrthoimageryCoverage document
+
+def jp2openjpeg_44():
+
+    if gdaltest.jp2openjpeg_drv is None:
+        return 'skip'
+
+    src_ds = gdal.Open('data/utm.tif')
+    out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_44.jp2', src_ds, options = ['INSPIRE_TG=YES'])
+    del out_ds
+    ret = validate('/vsimem/jp2openjpeg_44.jp2', oidoc = 'data/utm_inspire_tg_oi.xml')
+    gdal.Unlink('/vsimem/jp2openjpeg_44.jp2')
+
+    return ret
+
+###############################################################################
 def jp2openjpeg_online_1():
 
     if gdaltest.jp2openjpeg_drv is None:
@@ -2469,6 +2485,7 @@ gdaltest_list = [
     jp2openjpeg_41,
     jp2openjpeg_42,
     jp2openjpeg_43,
+    jp2openjpeg_44,
     jp2openjpeg_online_1,
     jp2openjpeg_online_2,
     jp2openjpeg_online_3,

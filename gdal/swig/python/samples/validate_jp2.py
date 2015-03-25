@@ -31,6 +31,7 @@
 
 import sys
 from osgeo import gdal
+from osgeo import osr
 
 def Usage():
     print('Usage: validate_jp2 [-expected_gmljp2] [-inspire_tg] [-oidoc in.xml] [-ogc_schemas_location path|disabled] test.jp2')
@@ -75,14 +76,14 @@ def find_message(ar):
         return 'unknown'
     return msg
 
-def find_element_with_name(ar, element_name, name):
+def find_element_with_name(ar, element_name, name, attribute_name = 'name'):
     type = ar[XML_TYPE_IDX]
     value = ar[XML_VALUE_IDX]
-    if type == gdal.CXT_Element and value == element_name and get_attribute_val(ar, 'name') == name:
+    if type == gdal.CXT_Element and value == element_name and get_attribute_val(ar, attribute_name) == name:
         return ar
     for child_idx in range(XML_FIRST_CHILD_IDX, len(ar)):
         child = ar[child_idx]
-        found = find_element_with_name(child, element_name, name)
+        found = find_element_with_name(child, element_name, name, attribute_name)
         if found:
             return found
     return None
@@ -93,7 +94,7 @@ def find_jp2box(ar, jp2box_name):
 def find_marker(ar, marker_name):
     return find_element_with_name(ar, 'Marker', marker_name)
 
-def count_jp2boxes(ar):
+def get_count_and_indices_of_jp2boxes(ar):
     the_dic = {}
     for child_idx in range(XML_FIRST_CHILD_IDX, len(ar)):
         child = ar[child_idx]
@@ -103,6 +104,21 @@ def count_jp2boxes(ar):
                 the_dic[jp2box_name] = (the_dic[jp2box_name][0]+1, the_dic[jp2box_name][1])
             else:
                 the_dic[jp2box_name] = (1, child_idx)
+
+    return the_dic
+
+def get_count_of_uuidboxes(ar):
+    the_dic = {}
+    for child_idx in range(XML_FIRST_CHILD_IDX, len(ar)):
+        child = ar[child_idx]
+        if child[XML_TYPE_IDX] == gdal.CXT_Element and child[XML_VALUE_IDX] == 'JP2Box':
+            jp2box_name = get_attribute_val(child, 'name')
+            if jp2box_name == 'uuid':
+                uuid = get_element_val(find_xml_node(child, 'UUID'))
+                if uuid in the_dic:
+                    the_dic[uuid] += 1
+                else:
+                    the_dic[uuid] = 1
 
     return the_dic
 
@@ -145,6 +161,8 @@ class ErrorReport:
             print('ERROR[%s, Requirement %d, Conformance class %s]: %s' % (category, requirement, conformance_class, msg))
         elif requirement is not None:
             print('ERROR[%s, Requirement %d]: %s' % (category, requirement, msg))
+        elif conformance_class is not None:
+            print('ERROR[%s, Conformance class %s]: %s' % (category, conformance_class, msg))
         else:
             print('ERROR[%s]: %s' % (category, msg))
 
@@ -187,21 +205,135 @@ def find_errors(error_report, ar, parent_node = None):
 
 def validate_bitsize(error_report, inspire_tg, val_ori, field_name):
     val = val_ori
+    signedness = "unsigned"
+    nbits = 0
     if val is not None:
         if val >= 128:
+            signedness = "signed"
             val -= 128
         val += 1
+        nbits = val
     if inspire_tg and val != 1 and val != 8 and val != 16 and val != 32:
-        error_report.EmitError('INSPIRE_TG', '%s=%s, which is not allowed' % (field_name, str(val_ori)), requirement = 24, conformance_class = 'A.8.9')
+        error_report.EmitError('INSPIRE_TG', '%s=%s (%s %d bits), which is not allowed' % (field_name, str(val_ori), signedness, nbits), requirement = 24, conformance_class = 'A.8.9')
     elif inspire_tg and ((val != 1 and val != 8 and val != 16) or val_ori >= 128):
-        error_report.EmitError('INSPIRE_TG', '%s=%s, which is not allowed for Orthoimagery (but OK for other data)' % (field_name, str(val_ori)), requirement = 27, conformance_class = 'A.8.9')
+        error_report.EmitError('INSPIRE_TG', '%s=%s (%s %d bits), which is not allowed for Orthoimagery (but OK for other data)' % (field_name, str(val_ori), signedness, nbits), requirement = 27, conformance_class = 'A.8.9')
     elif val is None or val > 37:
-        error_report.EmitError('GENERAL', '%s=%s, which is not allowed' % (field_name, str(val_ori)))
+        error_report.EmitError('GENERAL', '%s=%s (%s %d bits), which is not allowed' % (field_name, str(val_ori), signedness, nbits))
 
 def int_or_none(val):
     if val is None:
         return None
     return int(val)
+
+def check_geojp2_gmljp2_consistency(filename, error_report):
+    gdal.SetConfigOption('GDAL_USE_GEOJP2', 'YES')
+    gdal.SetConfigOption('GDAL_USE_GMLJP2', 'NO')
+    ds = gdal.Open(filename)
+    if ds is None:
+        return
+    geojp2_gt = ds.GetGeoTransform()
+    geojp2_wkt = ds.GetProjectionRef()
+    geojp2_gcps = ds.GetGCPCount()
+    ds = None
+
+    gdal.SetConfigOption('GDAL_USE_GEOJP2', 'NO')
+    gdal.SetConfigOption('GDAL_USE_GMLJP2', 'YES')
+    ds = gdal.Open(filename)
+    gmljp2_gt = ds.GetGeoTransform()
+    gmljp2_wkt = ds.GetProjectionRef()
+    ds = None
+
+    gdal.SetConfigOption('GDAL_USE_GEOJP2', None)
+    gdal.SetConfigOption('GDAL_USE_GMLJP2', None)
+
+    if geojp2_gcps == 0:
+        diff = False
+        for i in range(6):
+            if abs(geojp2_gt[i] - gmljp2_gt[i] > 1e-8):
+                diff = True
+        if diff:
+            error_report.EmitError('GENERAL', 'Inconsistant geotransform between GeoJP2 (%s) and GMLJP2 (%s)' % (str(geojp2_gt), str(gmljp2_gt)))
+
+    geojp2_sr = osr.SpatialReference()
+    geojp2_sr.ImportFromWkt(geojp2_wkt)
+    geojp2_epsg_code = geojp2_sr.GetAuthorityCode(None)
+    gmljp2_sr = osr.SpatialReference()
+    gmljp2_sr.ImportFromWkt(gmljp2_wkt)
+    gmljp2_epsg_code = gmljp2_sr.GetAuthorityCode(None)
+    if geojp2_sr.IsSame(gmljp2_sr) == 0 and geojp2_epsg_code != gmljp2_epsg_code:
+        geojp2_proj4 = geojp2_sr.ExportToProj4()
+        gmljp2_proj4 = gmljp2_sr.ExportToProj4()
+        if geojp2_proj4 != gmljp2_proj4:
+            error_report.EmitError('GENERAL', 'Inconsistant SRS between GeoJP2 (wkt=%s, proj4=%s) and GMLJP2 (wkt=%s, proj4=%s)' % (geojp2_wkt, geojp2_proj4, gmljp2_wkt, gmljp2_proj4))
+
+
+# Check consistency of georeferencing of OrthoimageCoverage with the one embedded in the JPEG2000 file
+def check_oi_rg_consistency(filename, serialized_oi_rg, error_report):
+    if gdal.GetDriverByName('JP2OpenJPEG') is None:
+        return
+
+    gmljp2_from_oi = """<gml:FeatureCollection xmlns:gml="http://www.opengis.net/gml" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opengis.net/gml http://schemas.opengis.net/gml/3.1.1/profiles/gmlJP2Profile/1.0.0/gmlJP2Profile.xsd">
+        <gml:boundedBy>
+        <gml:Null>withheld</gml:Null>
+        </gml:boundedBy>
+        <gml:featureMember>
+        <gml:FeatureCollection>
+            <gml:featureMember>
+            <gml:RectifiedGridCoverage dimension="2" gml:id="RGC0001">
+                <gml:rectifiedGridDomain>
+                    %s
+                </gml:rectifiedGridDomain>
+                <gml:rangeSet>
+                <gml:File>
+                    <gml:rangeParameters />
+                    <gml:fileName>gmljp2://codestream/0</gml:fileName>
+                    <gml:fileStructure>Record Interleaved</gml:fileStructure>
+                </gml:File>
+                </gml:rangeSet>
+            </gml:RectifiedGridCoverage>
+            </gml:featureMember>
+        </gml:FeatureCollection>
+        </gml:featureMember>
+    </gml:FeatureCollection>""" % serialized_oi_rg
+    gdal.SetConfigOption('GMLJP2OVERRIDE', '/vsimem/override.gml')
+    gdal.FileFromMemBuffer('/vsimem/override.gml', gmljp2_from_oi)
+    fake_in_ds = gdal.GetDriverByName('MEM').Create('', 10, 10, 1)
+    fake_in_ds.SetGeoTransform([0,60,0,0,0,-60])
+    gdal.GetDriverByName('JP2OpenJPEG').CreateCopy('/vsimem/temp.jp2', fake_in_ds, options = ['GeoJP2=NO'])
+    gdal.SetConfigOption('GMLJP2OVERRIDE', None)
+    gdal.Unlink('/vsimem/override.gml')
+
+    ds = gdal.Open('/vsimem/temp.jp2')
+    oi_gt = ds.GetGeoTransform()
+    oi_wkt = ds.GetProjectionRef()
+    ds = None
+    gdal.Unlink('/vsimem/temp.jp2')
+
+    ds = gdal.Open(filename)
+    gt = ds.GetGeoTransform()
+    wkt = ds.GetProjectionRef()
+    gcps = ds.GetGCPCount()
+    ds = None
+
+    if gcps == 0:
+        diff = False
+        for i in range(6):
+            if abs(oi_gt[i] - gt[i] > 1e-8):
+                diff = True
+        if diff:
+            error_report.EmitError('INSPIRE_TG', 'Inconsistant geotransform between OrthoImagery (%s) and GMLJP2/GeoJP2 (%s)' % (str(oi_gt), str(gt)), conformance_class = 'A.8.8')
+
+    sr = osr.SpatialReference()
+    sr.ImportFromWkt(wkt)
+    epsg_code = sr.GetAuthorityCode(None)
+    oi_sr = osr.SpatialReference()
+    oi_sr.ImportFromWkt(oi_wkt)
+    oi_epsg_code = oi_sr.GetAuthorityCode(None)
+    if sr.IsSame(oi_sr) == 0 and epsg_code != oi_epsg_code:
+        proj4 = sr.ExportToProj4()
+        oi_proj4 = oi_sr.ExportToProj4()
+        if proj4 != oi_proj4:
+            error_report.EmitError('INSPIRE_TG', 'Inconsistant SRS between OrthoImagery (wkt=%s, proj4=%s) and GMLJP2/GeoJP2 (wkt=%s, proj4=%s)' % (wkt, proj4, oi_wkt, oi_proj4), conformance_class = 'A.8.8')
 
 def validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location):
 
@@ -219,6 +351,8 @@ def validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location)
         return error_report
 
     ihdr = None
+    ihdr_nc = 0
+    pclr = None
     bpc_vals = []
 
     if ar[XML_VALUE_IDX] == 'JP2File':
@@ -248,6 +382,23 @@ def validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location)
             else:
                 error_report.EmitWarning('GMLJP2', '-ogc_schemas_location not specified')
 
+        # Check that there's only one GeoTIFF box
+        count_uuidboxes = get_count_of_uuidboxes(ar)
+        if 'B14BF8BD083D4B43A5AE8CD7D5A6CE03' in count_uuidboxes:
+            count_geotiff_boxes = count_uuidboxes['B14BF8BD083D4B43A5AE8CD7D5A6CE03']
+            if count_geotiff_boxes > 1:
+                error_report.EmitError('GeoJP2', '%d GeoTIFF UUID box found' % count_geotiff_boxes)
+
+        # Check the content of a GeoTIFF UUID box
+        geotiff_found = find_element_with_name(ar, "UUID", "GeoTIFF", attribute_name = "description") is not None
+        decoded_geotiff = find_xml_node(ar, "DecodedGeoTIFF")
+        if geotiff_found and not decoded_geotiff:
+            error_report.EmitError('GeoJP2', 'GeoTIFF UUID box found, but content is not valid GeoTIFF')
+
+        # Check that information of GeoJP2 and GMLJP2 are consistant
+        if geotiff_found and gmljp2_found:
+            check_geojp2_gmljp2_consistency(filename, error_report)
+
         # Check "ftyp" box
         ftyp = find_jp2box(ar, 'ftyp')
         if ftyp:
@@ -273,7 +424,7 @@ def validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location)
                 if inspire_tg:
                     error_report.EmitError('INSPIRE_TG', '"jpx " not found in compatibility list of ftyp, but GMLJP2 box present')
                 else:
-                    error_report.EmitWarning('GENERAL' '"jpx ", not found in compatibility list of ftyp, but GMLJP2 box present')
+                    error_report.EmitWarning('GENERAL', '"jpx " not found in compatibility list of ftyp, but GMLJP2 box present')
         else:
             error_report.EmitError('GENERAL', '"ftyp" box not found')
 
@@ -427,10 +578,14 @@ def validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location)
                 if pclr_NE is None:
                     error_report.EmitWarning('GENERAL', 'Invalid value %s for pclr.NE' % str(pclr_NE))
                     pclr_NE = 0
+
                 pclr_NPC = int_or_none(get_field_val(pclr, 'NPC'))
                 if pclr_NPC is None:
                     error_report.EmitWarning('GENERAL', 'Invalid value %s for pclr.NPC' % str(pclr_NPC))
                     pclr_NPC = 0
+                if inspire_tg and pclr_NPC != 3:
+                    error_report.EmitError('INSPIRE_TG', 'pclr.NPC(=%d) != 3 (for color table)' % (pclr_NPC), conformance_class = 'A.8.6')
+
                 if ihdr_bpcc == 7 and pclr_NE > 256:
                     error_report.EmitError('GENERAL', '%d entries in pclr box, but 8 bit depth' % (pclr_NE))
                 for i in range(pclr_NPC):
@@ -565,16 +720,20 @@ def validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location)
             # Check optional "res " subbox
             res = find_jp2box(jp2h, 'res ')
             if res:
-                count_boxes = count_jp2boxes(res)
+                count_boxes = get_count_and_indices_of_jp2boxes(res)
                 for key in count_boxes:
                     (val, _) = count_boxes[key]
+                    if val > 1:
+                        error_report.EmitError('GENERAL', '"%s" box expected to be found zero or one time, but present %d times' % (key, val))
                     if key not in ('resd', 'resc'):
                         error_report.EmitWarning('GENERAL', '"%s" box not expected' % key)
 
             # Check number of sub-boxes
-            count_boxes = count_jp2boxes(jp2h)
+            count_boxes = get_count_and_indices_of_jp2boxes(jp2h)
             for key in count_boxes:
                 (val, _) = count_boxes[key]
+                if val > 1:
+                    error_report.EmitError('GENERAL', '"%s" box expected to be found zero or one time, but present %d times' % (key, val))
                 if key not in ('ihdr', 'bpcc', 'colr', 'pclr', 'cmap', 'cdef', 'res '):
                     error_report.EmitWarning('GENERAL', '"%s" box not expected' % key)
 
@@ -584,7 +743,7 @@ def validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location)
                 if box_name in count_boxes:
                     (_, idx) = count_boxes[box_name]
                     if idx < last_idx:
-                        error_report.EmitWarning('GENERAL', '"%s" box not at expected index' % key)
+                        error_report.EmitWarning('GENERAL', '"%s" box not at expected index' % box_name)
                     last_idx = idx
 
         # Check "jp2c" box
@@ -598,7 +757,7 @@ def validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location)
             error_report.EmitWarning('GENERAL', 'ihdr.ipr = 0 but jp2i box found')
 
         # Check number of boxes
-        count_boxes = count_jp2boxes(ar)
+        count_boxes = get_count_and_indices_of_jp2boxes(ar)
         for key in count_boxes:
             (val, _) = count_boxes[key]
             if key in ( 'jP  ', 'ftyp', 'rreq', 'jp2h', 'jp2c' ):
@@ -616,14 +775,14 @@ def validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location)
             if box_name in count_boxes:
                 (_, idx) = count_boxes[box_name]
                 if idx < last_idx:
-                    error_report.EmitWarning('GENERAL', '"%s" box not at expected index' % key)
+                    error_report.EmitWarning('GENERAL', '"%s" box not at expected index' % box_name)
                 last_idx = idx
         if inspire_tg:
             for box_name in ['asoc', 'xml ', 'uuid', 'uinf']:
                 if box_name in count_boxes:
                     (_, idx) = count_boxes[box_name]
                     if idx < last_idx:
-                        error_report.EmitWarning('INSPIRE_TG', '"%s" box not at expected index' % key)
+                        error_report.EmitWarning('INSPIRE_TG', '"%s" box not at expected index' % box_name)
                     last_idx = idx
 
     cs = find_xml_node(ar, 'JP2KCodeStream')
@@ -636,7 +795,13 @@ def validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location)
 
     # Validate content of SIZ marker
     siz = find_marker(cs, 'SIZ')
+    Csiz = 0
+    Xsiz = 0
+    Ysiz = 0
+    XOsiz = 0
+    YOsiz = 0
     Rsiz = 0
+    tab_Ssiz = []
     if not siz:
         error_report.EmitError('GENERAL', 'No SIZ marker found')
     else:
@@ -687,6 +852,7 @@ def validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location)
                     break
                 Ssiz = int(Ssiz)
                 validate_bitsize(error_report, inspire_tg, Ssiz, 'SIZ.Ssiz[%d]' % i)
+                tab_Ssiz.append(Ssiz)
 
                 if bpc_vals and i < len(bpc_vals) and bpc_vals[i] != Ssiz:
                     error_report.EmitError('GENERAL', 'SIZ.Ssiz[%d]=%s, whereas bpcc[%d]=%s' % (i, str(Ssiz), i, str(bpc_vals[i])))
@@ -718,6 +884,164 @@ def validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location)
                 error_report.EmitError('PROFILE_1', 'XTsiz (=%d) != YTsiz (=%d)' % (XTsiz, YTsiz))
 
             break
+
+    # Check GMLJP2 RectifiedGrid envelope against codestream dimensions
+    if gmljp2_found:
+        gmljp2_node = gdal.ParseXMLString(gmljp2)
+        rg = find_xml_node(gmljp2_node, 'gml:RectifiedGrid')
+        if rg is None:
+            rg = find_xml_node(gmljp2_node, 'RectifiedGrid')
+        if rg is None:
+            error_report.EmitError('GMLJP2', 'Cannot find RectifiedGrid in GMLJP2')
+        else:
+            low = find_xml_node(rg, 'low')
+            if low is None:
+                low = find_xml_node(rg, 'gml:low')
+            high = find_xml_node(rg, 'high')
+            if high is None:
+                high = find_xml_node(rg, 'gml:high')
+            if low and high:
+                low = get_element_val(low)
+                (low_x, low_y) = low.split(' ')[0:2]
+                low_x = int(low_x)
+                low_y = int(low_y)
+
+                if low_x != XOsiz:
+                    error_report.EmitError('GMLJP2', 'RectifiedGrid.limits.GridEnvelope.low[x] != XOsiz')
+                if low_y != YOsiz:
+                    error_report.EmitError('GMLJP2', 'RectifiedGrid.limits.GridEnvelope.low[y] != YOsiz')
+
+                high = get_element_val(high)
+                (high_x, high_y) = high.split(' ')[0:2]
+                high_x = int(high_x)
+                high_y = int(high_y)
+
+                if high_x != Xsiz - 1:
+                    error_report.EmitError('GMLJP2', 'RectifiedGrid.limits.GridEnvelope.high[x] != Xsiz - 1')
+                if high_y != Ysiz - 1:
+                    error_report.EmitError('GMLJP2', 'RectifiedGrid.limits.GridEnvelope.high[y] != Ysiz - 1')
+            else:
+                error_report.EmitError('GMLJP2', 'Cannot find low/high node in RectifiedGrid')
+
+    # Check against Orthoimagery document
+    if oidoc:
+        oidoc_content = open(oidoc).read()
+        oidoc_node = gdal.ParseXMLString(oidoc_content)
+        if oidoc_node is None:
+            error_report.EmitError('GENERAL', 'Cannot parse %s' % oidoc)
+        else:
+            oic = find_xml_node(oidoc_node, 'OrthoimageCoverage')
+            if oic is None:
+                oic = find_xml_node(oidoc_node, 'oi:OrthoimageCoverage')
+            if oic is None:
+                error_report.EmitError('GENERAL', 'Cannot find OrthoimageCoverage in %s' % oidoc)
+            else:
+                # Check RectifiedGrid envelope against codestream dimensions
+                rg = find_xml_node(oic, 'gml:RectifiedGrid')
+                if rg is None:
+                    rg = find_xml_node(oic, 'RectifiedGrid')
+                if rg is None:
+                    error_report.EmitError('INSPIRE_TG', 'Cannot find RectifiedGrid in OrthoImageryCoverage')
+                else:
+                    low = find_xml_node(rg, 'low')
+                    if low is None:
+                        low = find_xml_node(rg, 'gml:low')
+                    high = find_xml_node(rg, 'high')
+                    if high is None:
+                        high = find_xml_node(rg, 'gml:high')
+                    if low and high:
+                        low = get_element_val(low)
+                        (low_x, low_y) = low.split(' ')[0:2]
+                        low_x = int(low_x)
+                        low_y = int(low_y)
+
+                        if low_x != XOsiz:
+                            error_report.EmitError('INSPIRE_TG', 'RectifiedGrid.limits.GridEnvelope.low[x](=%d) != XOsiz(=%d)' % (low_x, XOsiz), conformance_class = 'A.8.6')
+                        if low_y != YOsiz:
+                            error_report.EmitError('INSPIRE_TG', 'RectifiedGrid.limits.GridEnvelope.low[y](=%d) != YOsiz(=%d)' % (low_y, YOsiz), conformance_class = 'A.8.6')
+
+                        high = get_element_val(high)
+                        (high_x, high_y) = high.split(' ')[0:2]
+                        high_x = int(high_x)
+                        high_y = int(high_y)
+
+                        if high_x != Xsiz - 1:
+                            error_report.EmitError('INSPIRE_TG', 'RectifiedGrid.limits.GridEnvelope.high[x](=%d) != Xsiz(=%d) - 1' % (high_x, Xsiz), conformance_class = 'A.8.6')
+                        if high_y != Ysiz - 1:
+                            error_report.EmitError('INSPIRE_TG', 'RectifiedGrid.limits.GridEnvelope.high[y](=%d) != Ysiz(=%d) - 1' % (high_y, Ysiz), conformance_class = 'A.8.6')
+                    else:
+                        error_report.EmitError('INSPIRE_TG', 'Cannot find low/high node in RectifiedGrid')
+
+                    check_oi_rg_consistency(filename, gdal.SerializeXMLTree(rg), error_report)
+
+                rangetype = find_xml_node(oic, 'gmlcov:rangeType')
+                if rangetype is None:
+                    rangetype = find_xml_node(oic, 'rangeType')
+                if rangetype is None:
+                    error_report.EmitError('INSPIRE_TG', 'Cannot find gmlcov:rangeType in OrthoImageryCoverage')
+                else:
+                    datarecord = find_xml_node(rangetype, 'swe:DataRecord')
+                    if datarecord is None:
+                        datarecord = find_xml_node(rangetype, 'DataRecord')
+                    if datarecord is None:
+                        error_report.EmitError('INSPIRE_TG', 'Cannot find swe:DataRecord in OrthoImageryCoverage.rangeType')
+                    else:
+                        count_fields = 0
+                        min_vals = []
+                        max_vals = []
+                        for child_idx in range(XML_FIRST_CHILD_IDX, len(datarecord)):
+                            child = datarecord[child_idx]
+                            if child[XML_TYPE_IDX] == gdal.CXT_Element and (child[XML_VALUE_IDX] == 'swe:field' or child[XML_VALUE_IDX] == 'field'):
+                                count_fields += 1
+
+                                interval = None
+                                constraint = find_xml_node(rangetype, 'swe:constraint')
+                                if constraint is None:
+                                    constraint = find_xml_node(rangetype, 'constraint')
+                                if constraint is not None:
+                                    AllowedValues = find_xml_node(rangetype, 'swe:AllowedValues')
+                                    if AllowedValues is None:
+                                        AllowedValues = find_xml_node(rangetype, 'AllowedValues')
+                                    if AllowedValues is not None:
+                                        interval = find_xml_node(rangetype, 'swe:interval')
+                                        if interval is None:
+                                            interval = find_xml_node(rangetype, 'interval')
+                                        if interval is not None:
+                                            interval = get_element_val(interval)
+                                if interval is None:
+                                    error_report.EmitError('INSPIRE_TG', 'Cannot find constraint.AllowedValues.interval for field %d' % count_fields)
+                                    min_vals.append(None)
+                                    max_vals.append(None)
+                                else:
+                                    (min_val, max_val) = interval.split(' ')
+                                    min_val = int(min_val)
+                                    max_val = int(max_val)
+                                    min_vals.append(min_val)
+                                    max_vals.append(max_val)
+
+                        # Check number of fields regarding number of components
+                        if pclr is None:
+                            if count_fields != Csiz:
+                                error_report.EmitError('INSPIRE_TG', 'count(OrthoImageryCoverage.rangeType.field)(=%d) != Csiz(=%d) ' % (count_fields, Csiz), conformance_class = 'A.8.6')
+                            else:
+                                # Check consistency of each channel bit-deph with the corresponding rangeType.field
+                                for i in range(Csiz):
+                                    if tab_Ssiz[i] >= 128:
+                                        tab_Ssiz[i] -= 128
+                                        minSsiz = - 2** tab_Ssiz[i]
+                                        maxSsiz = 2** tab_Ssiz[i] - 1
+                                    else:
+                                        minSsiz = 0
+                                        maxSsiz = 2** (tab_Ssiz[i]+1) - 1
+                                    if min_vals[i] is not None and max_vals[i] is not None:
+                                        if min_vals[i] != minSsiz:
+                                            error_report.EmitError('INSPIRE_TG', 'rangeType.field[%d].min(=%d) != min(Ssiz[%d])(=%d)' % (i, min_vals[i], i, minSsiz), conformance_class = 'A.8.6')
+                                        if max_vals[i] != maxSsiz:
+                                            error_report.EmitError('INSPIRE_TG', 'rangeType.field[%d].max(=%d) != max(Ssiz[%d])(=%d)' % (i, max_vals[i], i, maxSsiz), conformance_class = 'A.8.6')
+                        else:
+                            if count_fields != 3:
+                                error_report.EmitError('INSPIRE_TG', 'count(OrthoImageryCoverage.rangeType.field)(=%d) != 3 (for color table)' % (count_fields), conformance_class = 'A.8.6')
+
 
     # Validate content of COD marker
     cod = find_marker(cs, 'COD')
