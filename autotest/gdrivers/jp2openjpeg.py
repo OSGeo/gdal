@@ -1458,6 +1458,10 @@ def jp2openjpeg_30():
             return 'fail'
         del out_ds
 
+        if validate('/vsimem/jp2openjpeg_30.jp2', expected_gmljp2 = False) == 'fail':
+            gdaltest.post_reason('fail')
+            return 'fail'
+
     gdal.Unlink('/vsimem/jp2openjpeg_30.jp2')
 
     # Test with c4 != 255
@@ -1706,6 +1710,12 @@ def jp2openjpeg_37():
         if ds.GetMetadata() != {'FOO': 'BAR'}:
             gdaltest.post_reason('fail')
             return 'fail'
+        ds = None
+
+        if 'INSPIRE_TG=YES' in options and validate('/vsimem/jp2openjpeg_37.jp2', expected_gmljp2 = False) == 'fail':
+            gdaltest.post_reason('fail')
+            return 'fail'
+
         gdal.Unlink('/vsimem/jp2openjpeg_37.jp2')
 
     # Simple metadata in auxiliary domain
@@ -1766,6 +1776,12 @@ def jp2openjpeg_37():
         if ds.GetMetadata('xml:XMP')[0] != '<fake_xmp_box/>':
             gdaltest.post_reason('fail')
             return 'fail'
+        ds = None
+
+        if 'INSPIRE_TG=YES' in options and validate('/vsimem/jp2openjpeg_37.jp2', expected_gmljp2 = False) == 'fail':
+            gdaltest.post_reason('fail')
+            return 'fail'
+
         gdal.Unlink('/vsimem/jp2openjpeg_37.jp2')
 
     # Special xml:IPR metadata domain
@@ -1779,6 +1795,11 @@ def jp2openjpeg_37():
             return 'fail'
         ds = gdal.Open('/vsimem/jp2openjpeg_37.jp2')
         if ds.GetMetadata('xml:IPR')[0] != '<fake_ipr_box/>':
+            gdaltest.post_reason('fail')
+            return 'fail'
+        ds = None
+
+        if validate('/vsimem/jp2openjpeg_37.jp2', expected_gmljp2 = False) == 'fail':
             gdaltest.post_reason('fail')
             return 'fail'
         gdal.Unlink('/vsimem/jp2openjpeg_37.jp2')

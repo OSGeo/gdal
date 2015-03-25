@@ -802,7 +802,7 @@ def validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location)
                         error_report.EmitError('INSPIRE_TG', '"%s" box expected to be found one time, but present %d times' % (key, val), requirement = 23, conformance_class = 'A.8.15')
                 elif val > 1:
                     error_report.EmitError('GENERAL', '"%s" box expected to be found zero or one time, but present %d times' % (key, val))
-            elif key not in ('jp2i', 'xml ', 'asoc', 'uuid', 'uinf'):
+            elif key not in ('jp2i', 'asoc', 'xml ', 'uuid', 'uinf'):
                 error_report.EmitWarning('GENERAL', '"%s" box not expected' % key)
 
         # Check order of boxes
