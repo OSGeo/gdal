@@ -657,8 +657,8 @@ def validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location)
                             error_report.EmitError('GENERAL', 'cmap.MTYP[%d] missing' % i)
                             break
                         MTYP = int(MTYP)
-                        if ihdr_c == 1 and MTYP != 1:
-                            error_report.EmitError('GENERAL', 'cmap.MTYP[%d] = %d is invalid' % (i, MTYP))
+                        if inspire_tg and MTYP != 1:
+                            error_report.EmitError('INSPIRE_TG', 'cmap.MTYP[%d] = %d is invalid' % (i, MTYP))
 
                         PCOL = get_field_val(cmap, 'PCOL%d' % i)
                         if PCOL is None:
