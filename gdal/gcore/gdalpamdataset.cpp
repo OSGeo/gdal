@@ -2,8 +2,8 @@
  * $Id$
  *
  * Project:  GDAL Core
- * Purpose:  Implementation of GDALPamDataset, a dataset base class that 
- *           knows how to persist auxilary metadata into a support XML file.
+ * Purpose:  Implementation of GDALPamDataset, a dataset base class that
+ *           knows how to persist auxiliary metadata into a support XML file.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
@@ -43,8 +43,8 @@ CPL_CVSID("$Id$");
  * \class GDALPamDataset "gdal_pam.h"
  * 
  * A subclass of GDALDataset which introduces the ability to save and
- * restore auxilary information (coordinate system, gcps, metadata, 
- * etc) not supported by a file format via an "auxilary metadata" file
+ * restore auxiliary information (coordinate system, gcps, metadata, 
+ * etc) not supported by a file format via an "auxiliary metadata" file
  * with the .aux.xml extension.  
  * 
  * <h3>Enabling PAM</h3>
@@ -55,8 +55,8 @@ CPL_CVSID("$Id$");
  * to YES in Windows and Unix builds.
  *
  * <h3>PAM Proxy Files</h3>
- * 
- * In order to be able to record auxilary information about files on 
+ *
+ * In order to be able to record auxiliary information about files on
  * read-only media such as CDROMs or in directories where the user does not
  * have write permissions, it is possible to enable the "PAM Proxy Database".
  * When enabled the .aux.xml files are kept in a different directory, writable
@@ -69,8 +69,8 @@ CPL_CVSID("$Id$");
  *
  * <h3>Adding PAM to Drivers</h3>
  *
- * Drivers for physical file formats that wish to support persistent auxilary 
- * metadata in addition to that for the format itself should derive their 
+ * Drivers for physical file formats that wish to support persistent auxiliary
+ * metadata in addition to that for the format itself should derive their
  * dataset class from GDALPamDataset instead of directly from GDALDataset.
  * The raster band classes should also be derived from GDALPamRasterBand.
  *
@@ -737,7 +737,7 @@ CPLErr GDALPamDataset::TrySaveXML()
         return CE_None;
 
 /* -------------------------------------------------------------------- */
-/*      Build the XML representation of the auxilary metadata.          */
+/*      Build the XML representation of the auxiliary metadata.          */
 /* -------------------------------------------------------------------- */
     psTree = SerializeToXML( NULL );
 
@@ -803,7 +803,7 @@ CPLErr GDALPamDataset::TrySaveXML()
     }
 
 /* -------------------------------------------------------------------- */
-/*      Try saving the auxilary metadata.                               */
+/*      Try saving the auxiliary metadata.                               */
 /* -------------------------------------------------------------------- */
     int bSaved;
     
@@ -812,7 +812,7 @@ CPLErr GDALPamDataset::TrySaveXML()
     CPLPopErrorHandler();
 
 /* -------------------------------------------------------------------- */
-/*      If it fails, check if we have a proxy directory for auxilary    */
+/*      If it fails, check if we have a proxy directory for auxiliary    */
 /*      metadata to be stored in, and try to save there.                */
 /* -------------------------------------------------------------------- */
     if( bSaved )
@@ -836,7 +836,7 @@ CPLErr GDALPamDataset::TrySaveXML()
         else
         {
             CPLError( CE_Warning, CPLE_AppDefined, 
-                      "Unable to save auxilary information in %s.",
+                      "Unable to save auxiliary information in %s.",
                       psPam->pszPamFilename );
             eErr = CE_Warning;
         }

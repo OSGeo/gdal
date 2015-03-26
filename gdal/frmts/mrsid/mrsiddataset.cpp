@@ -3396,9 +3396,9 @@ MrSIDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     delete poImageWriter;
 /* -------------------------------------------------------------------- */
-/*      Re-open dataset, and copy any auxilary pam information.         */
+/*      Re-open dataset, and copy any auxiliary pam information.         */
 /* -------------------------------------------------------------------- */
-    GDALPamDataset *poDS = (GDALPamDataset *) 
+    GDALPamDataset *poDS = (GDALPamDataset *)
         GDALOpen( pszFilename, GA_ReadOnly );
 
     if( poDS )
@@ -3525,9 +3525,9 @@ JP2CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                   getLastStatusString( eStat ) );
         return NULL;
     }
-  
+
 /* -------------------------------------------------------------------- */
-/*      Re-open dataset, and copy any auxilary pam information.         */
+/*      Re-open dataset, and copy any auxiliary pam information.         */
 /* -------------------------------------------------------------------- */
     GDALOpenInfo oOpenInfo(pszFilename, GA_ReadOnly);
     GDALPamDataset *poDS = (GDALPamDataset*) JP2Open(&oOpenInfo);

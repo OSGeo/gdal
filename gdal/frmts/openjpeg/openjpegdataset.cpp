@@ -3372,7 +3372,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
     VSIFCloseL(fp);
 
 /* -------------------------------------------------------------------- */
-/*      Re-open dataset, and copy any auxilary pam information.         */
+/*      Re-open dataset, and copy any auxiliary pam information.         */
 /* -------------------------------------------------------------------- */
 
     GDALOpenInfo oOpenInfo(pszFilename, GA_ReadOnly);

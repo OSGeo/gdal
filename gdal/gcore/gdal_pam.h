@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  GDAL Core
- * Purpose:  Declaration for Peristable Auxilary Metadata classes.
+ * Purpose:  Declaration for Peristable Auxiliary Metadata classes.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************

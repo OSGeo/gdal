@@ -245,9 +245,9 @@ RCreateCopy( const char * pszFilename,
         return NULL;
 
 /* -------------------------------------------------------------------- */
-/*      Re-open dataset, and copy any auxilary pam information.         */
+/*      Re-open dataset, and copy any auxiliary pam information.         */
 /* -------------------------------------------------------------------- */
-    GDALPamDataset *poDS = 
+    GDALPamDataset *poDS =
         (GDALPamDataset *) GDALOpen( pszFilename, GA_ReadOnly );
 
     if( poDS )

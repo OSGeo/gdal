@@ -959,7 +959,7 @@ GDALDataset *PAuxDataset::Create( const char * pszFilename,
     
 // -------------------------------------------------------------------- 
 //      We need to write out the original filename but without any      
-//      path components in the AuxilaryTarget line.  Do so now.         
+//      path components in the AuxiliaryTarget line.  Do so now.         
 // -------------------------------------------------------------------- 
     int		iStart;
 

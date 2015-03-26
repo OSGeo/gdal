@@ -1274,7 +1274,7 @@ ECWCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     pfnProgress( 1.001, NULL, pProgressData );
 
 /* -------------------------------------------------------------------- */
-/*      Re-open dataset, and copy any auxilary pam information.         */
+/*      Re-open dataset, and copy any auxiliary pam information.         */
 /* -------------------------------------------------------------------- */
     GDALOpenInfo oOpenInfo(pszFilename, GA_ReadOnly);
     GDALPamDataset *poDS;

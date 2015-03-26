@@ -1190,7 +1190,7 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Re-open dataset, and copy any auxilary pam information.         */
+/*      Re-open dataset, and copy any auxiliary pam information.         */
 /* -------------------------------------------------------------------- */
     GDALOpenInfo oOpenInfo(pszFilename, GA_ReadOnly);
     GDALPamDataset *poDS = (GDALPamDataset*) JPEG2000Dataset::Open(&oOpenInfo);
