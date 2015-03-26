@@ -146,7 +146,7 @@ def ogr_cartodb_rw_1():
     lyr.CreateField(fd)
 
     f = ogr.Feature(lyr.GetLayerDefn())
-    lyr.StartTransaction()
+
     lyr.CreateFeature(f)
     f.SetField('strfield', "fo'o")
     f.SetField('intfield', 123)
@@ -156,7 +156,7 @@ def ogr_cartodb_rw_1():
     f.SetField('bool', 0)
     f.SetGeometry(ogr.CreateGeometryFromWkt('POINT (1 2)'))
     lyr.CreateFeature(f)
-    lyr.CommitTransaction()
+
     f.SetField('intfield', 456)
     f.SetField('bool', 1)
     f.SetGeometry(ogr.CreateGeometryFromWkt('POINT (3 4)'))
