@@ -234,7 +234,7 @@ class OGRCARTODBDataSource : public OGRDataSource
 
     const char*                 GetAPIURL() const;
     int                         IsReadWrite() const { return bReadWrite; }
-    char**                      AddHTTPOptions(char** papszOptions = NULL);
+    char**                      AddHTTPOptions();
     json_object*                RunSQL(const char* pszUnescapedSQL);
     const CPLString&            GetCurrentSchema() { return osCurrentSchema; }
     int                         FetchSRSId( OGRSpatialReference * poSRS );
