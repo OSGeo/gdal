@@ -285,9 +285,9 @@ GDALDataset* PCRasterDataset::createCopy(
       return NULL;
 
 /* -------------------------------------------------------------------- */
-/*      Re-open dataset, and copy any auxilary pam information.         */
+/*      Re-open dataset, and copy any auxiliary pam information.         */
 /* -------------------------------------------------------------------- */
-  GDALPamDataset *poDS = (GDALPamDataset *) 
+  GDALPamDataset *poDS = (GDALPamDataset *)
         GDALOpen( filename, GA_Update );
 
   if( poDS )

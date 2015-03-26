@@ -2374,11 +2374,11 @@ HFAHandle HFACreate( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Check whether we should create external large file with         */
 /*      image.  We create a spill file if the amount of imagery is      */
-/*      close to 2GB.  We don't check the amount of auxilary            */
+/*      close to 2GB.  We don't check the amount of auxiliary            */
 /*      information, so in theory if there were an awful lot of         */
 /*      non-imagery data our approximate size could be smaller than     */
 /*      the file will actually we be.  We leave room for 10MB of        */
-/*      auxilary data.                                                  */
+/*      auxiliary data.                                                  */
 /*      We can also force spill file creation using option              */
 /*      SPILL_FILE=YES.                                                 */
 /* -------------------------------------------------------------------- */

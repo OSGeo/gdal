@@ -2765,7 +2765,7 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         return NULL;
 
 /* -------------------------------------------------------------------- */
-/*      Re-open dataset, and copy any auxilary pam information.         */
+/*      Re-open dataset, and copy any auxiliary pam information.         */
 /* -------------------------------------------------------------------- */
     GDALOpenInfo oOpenInfo(pszFilename, GA_ReadOnly);
     GDALPamDataset *poDS = (GDALPamDataset*) JP2KAKDataset::Open(&oOpenInfo);

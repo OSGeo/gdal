@@ -1671,7 +1671,7 @@ GTACreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     oGTAIO.close();
 
 /* -------------------------------------------------------------------- */
-/*      Re-open dataset, and copy any auxilary pam information.         */
+/*      Re-open dataset, and copy any auxiliary pam information.         */
 /* -------------------------------------------------------------------- */
 
     GTADataset *poDS = (GTADataset *) GDALOpen( pszFilename,
