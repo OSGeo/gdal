@@ -90,11 +90,17 @@ int VICARKeywordHandler::Ingest( VSILFILE *fp, GByte *pabyHeader )
     strncpy(keyval,pch1,MAX(pch2-pch1, 99));
     keyval[MAX(pch2-pch1, 99)] = 0;
     LabelSize=atoi(keyval);    
+    if( LabelSize > 10 * 1024 * 124 )
+        return FALSE;
 
-    char szChunk[LabelSize+1];
-    int nBytesRead = VSIFReadL( szChunk, 1, LabelSize, fp );
+    char* pszChunk = (char*) VSIMalloc(LabelSize+1);
+    if( pszChunk == NULL )
+        return FALSE;
+    int nBytesRead = VSIFReadL( pszChunk, 1, LabelSize, fp );
+    pszChunk[LabelSize] = 0;
 
-    osHeaderText += szChunk ;
+    osHeaderText += pszChunk ;
+    VSIFree(pszChunk);
     pszHeaderNext = osHeaderText.c_str();
     
 /* -------------------------------------------------------------------- */
@@ -143,6 +149,7 @@ int VICARKeywordHandler::Ingest( VSILFILE *fp, GByte *pabyHeader )
         printf("Error seeking to EOL!\n");
         return FALSE;
         }
+    char szChunk[100];
     nBytesRead = VSIFReadL( szChunk, 1, 30, fp );
     szChunk[nBytesRead] = '\0';
     pszLBLSIZE=strstr(szChunk,"LBLSIZE");
@@ -154,6 +161,8 @@ int VICARKeywordHandler::Ingest( VSILFILE *fp, GByte *pabyHeader )
     pch2=strstr((char*)szChunk+nOffset," ");
     strncpy(keyval,pch1,pch2-pch1);
     int EOLabelSize=atoi(keyval);
+    if( EOLabelSize > 99 )
+        EOLabelSize = 99;
     if( VSIFSeekL( fp, starteol, SEEK_SET ) != 0 ) {
         printf("Error seeking again to EOL!\n");
         return FALSE;
