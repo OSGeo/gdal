@@ -420,8 +420,8 @@ void OGRCSVLayer::BuildFeatureDefn( const char* pszNfdcGeomField,
 /* -------------------------------------------------------------------- */
     char** papszFieldTypes = NULL;
     if (!bNew) {
-        char* dname = strdup(CPLGetDirname(pszFilename));
-        char* fname = strdup(CPLGetBasename(pszFilename));
+        char* dname = CPLStrdup(CPLGetDirname(pszFilename));
+        char* fname = CPLStrdup(CPLGetBasename(pszFilename));
         VSILFILE* fpCSVT = VSIFOpenL(CPLFormFilename(dname, fname, ".csvt"), "r");
         free(dname);
         free(fname);
