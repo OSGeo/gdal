@@ -1,6 +1,6 @@
 
 OBJ	=	pdsdataset.obj isis2dataset.obj isis3dataset.obj \
-		nasakeywordhandler.obj
+		vicardataset.obj nasakeywordhandler.obj vicarkeywordhandler.obj
 
 GDAL_ROOT	=	..\..
 
