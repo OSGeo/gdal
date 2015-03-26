@@ -88,7 +88,8 @@ OGRCARTODBTableLayer::OGRCARTODBTableLayer(OGRCARTODBDataSource* poDS,
     SetDescription( osName );
     bInTransaction = FALSE;
     nNextFID = -1;
-    bDifferedCreation = FALSE;
+    bDeferedCreation = FALSE;
+    bCartoDBify = FALSE;
 }
 
 /************************************************************************/
@@ -98,7 +99,7 @@ OGRCARTODBTableLayer::OGRCARTODBTableLayer(OGRCARTODBDataSource* poDS,
 OGRCARTODBTableLayer::~OGRCARTODBTableLayer()
 
 {
-    if( bDifferedCreation ) RunDifferedCreationIfNecessary();
+    if( bDeferedCreation ) RunDeferedCreationIfNecessary();
 }
 
 /************************************************************************/
@@ -247,7 +248,7 @@ OGRFeatureDefn * OGRCARTODBTableLayer::GetLayerDefnInternal(CPL_UNUSED json_obje
 
 OGRFeature  *OGRCARTODBTableLayer::GetNextRawFeature()
 {
-    if( bDifferedCreation && RunDifferedCreationIfNecessary() != OGRERR_NONE )
+    if( bDeferedCreation && RunDeferedCreationIfNecessary() != OGRERR_NONE )
         return NULL;
     return OGRCARTODBLayer::GetNextRawFeature();
 }
@@ -375,7 +376,7 @@ OGRErr OGRCARTODBTableLayer::CreateField( OGRFieldDefn *poFieldIn,
 /*      Create the new field.                                           */
 /* -------------------------------------------------------------------- */
 
-    if( !bDifferedCreation )
+    if( !bDeferedCreation )
     {
         CPLString osSQL;
         osSQL.Printf( "ALTER TABLE %s ADD COLUMN %s %s",
@@ -410,9 +411,9 @@ OGRErr OGRCARTODBTableLayer::ICreateFeature( OGRFeature *poFeature )
 {
     int i;
 
-    if( bDifferedCreation )
+    if( bDeferedCreation )
     {
-        if( RunDifferedCreationIfNecessary() != OGRERR_NONE )
+        if( RunDeferedCreationIfNecessary() != OGRERR_NONE )
             return OGRERR_FAILURE;
         if( bInTransaction )
             nNextFID = 1;
@@ -666,7 +667,7 @@ OGRErr OGRCARTODBTableLayer::ISetFeature( OGRFeature *poFeature )
 {
     int i;
 
-    if( bDifferedCreation && RunDifferedCreationIfNecessary() != OGRERR_NONE )
+    if( bDeferedCreation && RunDeferedCreationIfNecessary() != OGRERR_NONE )
         return OGRERR_FAILURE;
 
     GetLayerDefn();
@@ -789,7 +790,7 @@ OGRErr OGRCARTODBTableLayer::DeleteFeature( GIntBig nFID )
 
 {
 
-    if( bDifferedCreation && RunDifferedCreationIfNecessary() != OGRERR_NONE )
+    if( bDeferedCreation && RunDeferedCreationIfNecessary() != OGRERR_NONE )
         return OGRERR_FAILURE;
 
     GetLayerDefn();
@@ -935,7 +936,7 @@ void OGRCARTODBTableLayer::BuildWhere()
 OGRFeature* OGRCARTODBTableLayer::GetFeature( GIntBig nFeatureId )
 {
 
-    if( bDifferedCreation && RunDifferedCreationIfNecessary() != OGRERR_NONE )
+    if( bDeferedCreation && RunDeferedCreationIfNecessary() != OGRERR_NONE )
         return NULL;
 
     GetLayerDefn();
@@ -970,7 +971,7 @@ OGRFeature* OGRCARTODBTableLayer::GetFeature( GIntBig nFeatureId )
 GIntBig OGRCARTODBTableLayer::GetFeatureCount(int bForce)
 {
 
-    if( bDifferedCreation && RunDifferedCreationIfNecessary() != OGRERR_NONE )
+    if( bDeferedCreation && RunDeferedCreationIfNecessary() != OGRERR_NONE )
         return 0;
 
     GetLayerDefn();
@@ -1017,7 +1018,7 @@ OGRErr OGRCARTODBTableLayer::GetExtent( int iGeomField, OGREnvelope *psExtent, i
 {
     CPLString   osSQL;
 
-    if( bDifferedCreation && RunDifferedCreationIfNecessary() != OGRERR_NONE )
+    if( bDeferedCreation && RunDeferedCreationIfNecessary() != OGRERR_NONE )
         return OGRERR_FAILURE;
 
     if( iGeomField < 0 || iGeomField >= GetLayerDefn()->GetGeomFieldCount() ||
@@ -1139,15 +1140,17 @@ int OGRCARTODBTableLayer::TestCapability( const char * pszCap )
 }
 
 /************************************************************************/
-/*                        SetDifferedCreation()                         */
+/*                        SetDeferedCreation()                          */
 /************************************************************************/
 
-void OGRCARTODBTableLayer::SetDifferedCreation(OGRwkbGeometryType eGType,
+void OGRCARTODBTableLayer::SetDeferedCreation (OGRwkbGeometryType eGType,
                                                OGRSpatialReference* poSRS,
-                                               int bGeomNullable)
+                                               int bGeomNullable,
+                                               int bCartoDBify)
 {
-    bDifferedCreation = TRUE;
+    bDeferedCreation = TRUE;
     CPLAssert(poFeatureDefn == NULL);
+    this->bCartoDBify = bCartoDBify;
     poFeatureDefn = new OGRFeatureDefn(osName);
     poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType(wkbNone);
@@ -1175,14 +1178,14 @@ void OGRCARTODBTableLayer::SetDifferedCreation(OGRwkbGeometryType eGType,
 }
 
 /************************************************************************/
-/*                      RunDifferedCreationIfNecessary()                */
+/*                      RunDeferedCreationIfNecessary()                 */
 /************************************************************************/
 
-OGRErr OGRCARTODBTableLayer::RunDifferedCreationIfNecessary()
+OGRErr OGRCARTODBTableLayer::RunDeferedCreationIfNecessary()
 {
-    if( !bDifferedCreation )
+    if( !bDeferedCreation )
         return OGRERR_NONE;
-    bDifferedCreation = FALSE;
+    bDeferedCreation = FALSE;
 
     CPLString osSQL;
     osSQL.Printf("CREATE TABLE %s ( %s SERIAL,",
@@ -1249,29 +1252,32 @@ OGRErr OGRCARTODBTableLayer::RunDifferedCreationIfNecessary()
         return OGRERR_FAILURE;
     json_object_put(poObj);
 
-    if( nSRID != 4326 )
+    if( bCartoDBify )
     {
-        if( eGType != wkbNone )
+        if( nSRID != 4326 )
         {
-            CPLError(CE_Warning, CPLE_AppDefined,
-                    "Cannot register table in dashboard with "
-                    "cdb_cartodbfytable() since its SRS is not EPSG:4326");
+            if( eGType != wkbNone )
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                        "Cannot register table in dashboard with "
+                        "cdb_cartodbfytable() since its SRS is not EPSG:4326");
+            }
         }
-    }
-    else
-    {
-        if( poDS->GetCurrentSchema() == "public" )
-            osSQL.Printf("SELECT cdb_cartodbfytable('%s')",
-                                OGRCARTODBEscapeLiteral(osName).c_str());
         else
-            osSQL.Printf("SELECT cdb_cartodbfytable('%s', '%s')",
-                                OGRCARTODBEscapeLiteral(poDS->GetCurrentSchema()).c_str(),
-                                OGRCARTODBEscapeLiteral(osName).c_str());
+        {
+            if( poDS->GetCurrentSchema() == "public" )
+                osSQL.Printf("SELECT cdb_cartodbfytable('%s')",
+                                    OGRCARTODBEscapeLiteral(osName).c_str());
+            else
+                osSQL.Printf("SELECT cdb_cartodbfytable('%s', '%s')",
+                                    OGRCARTODBEscapeLiteral(poDS->GetCurrentSchema()).c_str(),
+                                    OGRCARTODBEscapeLiteral(osName).c_str());
 
-        poObj = poDS->RunSQL(osSQL);
-        if( poObj == NULL )
-            return OGRERR_FAILURE;
-        json_object_put(poObj);
+            poObj = poDS->RunSQL(osSQL);
+            if( poObj == NULL )
+                return OGRERR_FAILURE;
+            json_object_put(poObj);
+        }
     }
 
     return OGRERR_NONE;

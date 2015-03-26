@@ -126,6 +126,7 @@ void RegisterOGRCartoDB()
 "<LayerCreationOptionList>"
 "  <Option name='OVERWRITE' type='boolean' description='Whether to overwrite an existing table with the layer name to be created' default='NO'/>"
 "  <Option name='GEOMETRY_NULLABLE' type='boolean' description='Whether the values of the geometry column can be NULL' default='YES'/>"
+"  <Option name='CARTODBIFY' type='boolean' description='Whether the created layer should be \"CartoDBifi&apos;ed\" (i.e. registered in dashboard)' default='YES'/>"
 "</LayerCreationOptionList>");
     
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES, "Integer Integer64 Real String Date DateTime Time" );

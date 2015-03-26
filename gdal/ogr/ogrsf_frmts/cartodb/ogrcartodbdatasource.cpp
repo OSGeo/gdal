@@ -347,7 +347,8 @@ OGRLayer   *OGRCARTODBDataSource::ICreateLayer( const char *pszName,
 
     OGRCARTODBTableLayer* poLayer = new OGRCARTODBTableLayer(this, pszName);
     int bGeomNullable = CSLFetchBoolean(papszOptions, "GEOMETRY_NULLABLE", TRUE);
-    poLayer->SetDifferedCreation(eGType, poSpatialRef, bGeomNullable);
+    int bCartoDBify = CSLFetchBoolean(papszOptions, "CARTODBIFY", TRUE);
+    poLayer->SetDeferedCreation(eGType, poSpatialRef, bGeomNullable, bCartoDBify);
     papoLayers = (OGRCARTODBTableLayer**) CPLRealloc(
                     papoLayers, (nLayers + 1) * sizeof(OGRCARTODBTableLayer*));
     papoLayers[nLayers ++] = poLayer;
@@ -384,8 +385,8 @@ OGRErr OGRCARTODBDataSource::DeleteLayer(int iLayer)
 
     CPLDebug( "CARTODB", "DeleteLayer(%s)", osLayerName.c_str() );
 
-    int bDifferedCreation = papoLayers[iLayer]->GetDifferedCreation();
-    papoLayers[iLayer]->CancelDifferedCreation();
+    int bDeferedCreation = papoLayers[iLayer]->GetDeferedCreation();
+    papoLayers[iLayer]->CancelDeferedCreation();
     delete papoLayers[iLayer];
     memmove( papoLayers + iLayer, papoLayers + iLayer + 1,
              sizeof(void *) * (nLayers - iLayer - 1) );
@@ -394,7 +395,7 @@ OGRErr OGRCARTODBDataSource::DeleteLayer(int iLayer)
     if (osLayerName.size() == 0)
         return OGRERR_NONE;
 
-    if( !bDifferedCreation )
+    if( !bDeferedCreation )
     {
         CPLString osSQL;
         osSQL.Printf("DROP TABLE %s",
@@ -569,7 +570,7 @@ OGRLayer * OGRCARTODBDataSource::ExecuteSQL( const char *pszSQLCommand,
 {
     for( int iLayer = 0; iLayer < nLayers; iLayer++ )
     {
-        papoLayers[iLayer]->RunDifferedCreationIfNecessary();
+        papoLayers[iLayer]->RunDeferedCreationIfNecessary();
     }
 
     /* Skip leading spaces */
