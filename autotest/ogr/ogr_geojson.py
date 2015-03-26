@@ -1876,6 +1876,59 @@ def ogr_geojson_38():
 
     return 'success'
 
+###############################################################################
+# Test id top-object level
+
+def ogr_geojson_39():
+
+    if gdaltest.geojson_drv is None:
+        return 'skip'
+
+    ds = ogr.Open("""{"type": "FeatureCollection", "features": [
+{ "type": "Feature", "id" : "foo", "properties": { "bar" : "baz" }, "geometry": null },
+] }""")
+    lyr = ds.GetLayer(0)
+    feat_defn = lyr.GetLayerDefn()
+    if feat_defn.GetFieldDefn(0).GetName() != 'id' or feat_defn.GetFieldDefn(0).GetType() != ogr.OFTString:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    feat = lyr.GetNextFeature()
+    if feat.GetField('id') != 'foo' or feat.GetField('bar') != 'baz':
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+
+    # Crazy case: properties.id has the precedence because we arbitrarily decided that...
+    ds = ogr.Open("""{"type": "FeatureCollection", "features": [
+{ "type": "Feature", "id" : "foo", "properties": { "id" : 6 }, "geometry": null },
+] }""")
+    lyr = ds.GetLayer(0)
+    feat_defn = lyr.GetLayerDefn()
+    if feat_defn.GetFieldDefn(0).GetName() != 'id' or feat_defn.GetFieldDefn(0).GetType() != ogr.OFTInteger:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    feat = lyr.GetNextFeature()
+    if feat.GetField('id') != 6:
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+
+    # Crazy case: properties.id has the precedence because we arbitrarily decided that...
+    ds = ogr.Open("""{"type": "FeatureCollection", "features": [
+{ "type": "Feature", "id" : "foo", "properties": { "id" : "baz" }, "geometry": null },
+] }""")
+    lyr = ds.GetLayer(0)
+    feat_defn = lyr.GetLayerDefn()
+    if feat_defn.GetFieldDefn(0).GetName() != 'id' or feat_defn.GetFieldDefn(0).GetType() != ogr.OFTString:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    feat = lyr.GetNextFeature()
+    if feat.GetField('id') != 'baz':
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+    return 'success'
+
 gdaltest_list = [ 
     ogr_geojson_1,
     ogr_geojson_2,
@@ -1915,6 +1968,7 @@ gdaltest_list = [
     ogr_geojson_36,
     ogr_geojson_37,
     ogr_geojson_38,
+    ogr_geojson_39,
     ogr_geojson_cleanup ]
 
 if __name__ == '__main__':

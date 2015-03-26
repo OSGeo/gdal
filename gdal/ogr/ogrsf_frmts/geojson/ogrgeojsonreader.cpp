@@ -553,6 +553,28 @@ bool OGRGeoJSONReader::GenerateFeatureDefn( OGRGeoJSONLayer* poLayer, json_objec
 /* -------------------------------------------------------------------- */
     json_object* poObjProps = NULL;
     poObjProps = OGRGeoJSONFindMemberByName( poObj, "properties" );
+
+    // If there's a top-level id of type string, and no properties.id, then
+    // declare a id field
+    if( poDefn->GetFieldIndex( "id" ) < 0 )
+    {
+        json_object* poObjId = OGRGeoJSONFindMemberByName( poObj, "id" );
+        if( poObjId && json_object_get_type(poObjId) == json_type_string )
+        {
+            int bHasRegularIdProp = FALSE;
+            if( NULL != poObjProps &&
+                json_object_get_type(poObjProps) == json_type_object )
+            {
+                bHasRegularIdProp = (json_object_object_get(poObjProps, "id") != NULL);
+            }
+            if( !bHasRegularIdProp )
+            {
+                OGRFieldDefn fldDefn( "id", OFTString );
+                poDefn->AddFieldDefn(&fldDefn);
+            }
+        }
+    }
+
     if( NULL != poObjProps &&
         json_object_get_type(poObjProps) == json_type_object )
     {
@@ -917,6 +939,9 @@ OGRFeature* OGRGeoJSONReader::ReadFeature( OGRGeoJSONLayer* poLayer, json_object
         json_object* poObjId = OGRGeoJSONFindMemberByName( poObj, "id" );
         if (poObjId != NULL && json_object_get_type(poObjId) == json_type_int)
             poFeature->SetFID( (GIntBig)json_object_get_int64( poObjId ) );
+        else if (poObjId != NULL && json_object_get_type(poObjId) == json_type_string &&
+                 !poFeature->IsFieldSet(poFeature->GetFieldIndex("id")))
+            poFeature->SetField( "id", json_object_get_string(poObjId) );
     }
 
 /* -------------------------------------------------------------------- */
