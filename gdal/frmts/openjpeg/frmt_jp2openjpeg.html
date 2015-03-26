@@ -83,7 +83,11 @@ files (1-7), sub-uint16 (9-15), sub-uint32 (17-31).</p></li>
 
 <li><p><b>1BIT_ALPHA=YES/NO</b>: (GDAL &gt;= 2.0) Whether to encode the alpha
 channel as a 1-bit channel (when there's an alpha channel). Defaults to NO,
-unless INSPIRE_TG=YES.
+unless INSPIRE_TG=YES. Enabling this option might cause compatibility problems
+with some readers. At the time of writing, those based on the MrSID JPEG2000 SDK
+are unable to open such files. And regarding the ECW JPEG2000 SDK, decoding of
+1-bit alpha channel with lossy/irreversible compression gives visual artifacts
+(OK with lossless encoding).
 </p></li>
 
 <li><p><b>ALPHA=YES/NO</b>: (GDAL &gt;= 2.0) Whether to force encoding last
