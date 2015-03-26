@@ -34,11 +34,14 @@ from osgeo import gdal
 from osgeo import osr
 
 def Usage():
-    print('Usage: validate_jp2 [-expected_gmljp2] [-inspire_tg] [-oidoc in.xml] [-ogc_schemas_location path|disabled] test.jp2')
+    print('Usage: validate_jp2 [-expected_gmljp2] [-inspire_tg] [-datatype imagery|non_imagery]')
+    print('                    [-oidoc in.xml] [-ogc_schemas_location path|disabled] test.jp2')
     print('')
     print('Options:')
     print('-expected_gmljp2: hint to indicate that a GMLJP2 box should be present.')
     print('-inspire_tg: Validate using Inspire Orthoimagery technical guidelines.')
+    print('-datatype imagery|non_imagery: To specify the nature of the data. Defaults is imagery.')
+    print('                               Only used by -inspire_tg')
     print('-oidoc: XML document conforming with Inspire Orthoimagery GML application schema.')
     print('-ogc_schemas_location: Path to directory with OGC schemas. Needed for GMLJP2 validation.')
     return 1
@@ -226,7 +229,7 @@ def find_errors(error_report, ar, parent_node = None):
         child = ar[child_idx]
         find_errors(error_report, child, ar)
 
-def validate_bitsize(error_report, inspire_tg, val_ori, field_name):
+def validate_bitsize(error_report, inspire_tg, val_ori, field_name, datatype):
     val = val_ori
     signedness = "unsigned"
     nbits = 0
@@ -238,7 +241,7 @@ def validate_bitsize(error_report, inspire_tg, val_ori, field_name):
         nbits = val
     if inspire_tg and val != 1 and val != 8 and val != 16 and val != 32:
         error_report.EmitError('INSPIRE_TG', '%s=%s (%s %d bits), which is not allowed' % (field_name, str(val_ori), signedness, nbits), requirement = 24, conformance_class = 'A.8.9')
-    elif inspire_tg and ((val != 1 and val != 8 and val != 16) or val_ori >= 128):
+    elif inspire_tg and datatype == 'imagery' and ((val != 1 and val != 8 and val != 16) or val_ori >= 128):
         error_report.EmitError('INSPIRE_TG', '%s=%s (%s %d bits), which is not allowed for Orthoimagery (but OK for other data)' % (field_name, str(val_ori), signedness, nbits), requirement = 27, conformance_class = 'A.8.9')
     elif val is None or val > 37:
         error_report.EmitError('GENERAL', '%s=%s (%s %d bits), which is not allowed' % (field_name, str(val_ori), signedness, nbits))
@@ -362,7 +365,7 @@ def check_oi_rg_consistency(filename, serialized_oi_rg, error_report):
         if proj4 != oi_proj4:
             error_report.EmitError('INSPIRE_TG', 'Inconsistant SRS between OrthoImagery (wkt=%s, proj4=%s) and GMLJP2/GeoJP2 (wkt=%s, proj4=%s)' % (wkt, proj4, oi_wkt, oi_proj4), conformance_class = 'A.8.8')
 
-def validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location):
+def validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location, datatype = 'imagery'):
 
     error_report = ErrorReport()
     ar = gdal.GetJPEG2000Structure(filename, ['ALL=YES'])
@@ -544,7 +547,7 @@ def validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location)
 
                 ihdr_bpcc = int_or_none(get_field_val(ihdr, 'BPC'))
                 if ihdr_bpcc != 255:
-                    validate_bitsize(error_report, inspire_tg, ihdr_bpcc, 'ihdr.bpcc')
+                    validate_bitsize(error_report, inspire_tg, ihdr_bpcc, 'ihdr.bpcc', datatype)
 
                 ihdr_c = int_or_none(get_field_val(ihdr, 'C'))
                 if ihdr_c != 7:
@@ -573,7 +576,7 @@ def validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location)
                     val = int(val)
                     bpc_vals.append(val)
 
-                    validate_bitsize(error_report, inspire_tg, val, 'bpcc.BPC[%d]' % i)
+                    validate_bitsize(error_report, inspire_tg, val, 'bpcc.BPC[%d]' % i, datatype)
 
                 if len(bpc_vals) != ihdr_nc:
                     error_report.EmitWarning('GENERAL', '"bpcc" box has %d elements whereas ihdr.nc = %d' % (len(bpc_vals), ihdr_nc))
@@ -630,7 +633,7 @@ def validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location)
                         error_report.EmitError('GENERAL', 'pclr.B%d not found' % (i))
                         break
                     val = int(val)
-                    validate_bitsize(error_report, inspire_tg, val, 'pclr.B[%d]' % i)
+                    validate_bitsize(error_report, inspire_tg, val, 'pclr.B[%d]' % i, datatype)
                 if pclr_NE > 0 and pclr_NPC > 0:
                     val = get_field_val(pclr, 'C_%d_%d' % (pclr_NE-1, pclr_NPC-1))
                     if val is None:
@@ -887,7 +890,7 @@ def validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location)
                     error_report.EmitError('GENERAL', 'SIZ.Ssiz[%d] not found' % i)
                     break
                 Ssiz = int(Ssiz)
-                validate_bitsize(error_report, inspire_tg, Ssiz, 'SIZ.Ssiz[%d]' % i)
+                validate_bitsize(error_report, inspire_tg, Ssiz, 'SIZ.Ssiz[%d]' % i, datatype)
                 tab_Ssiz.append(Ssiz)
 
                 if bpc_vals and i < len(bpc_vals) and bpc_vals[i] != Ssiz:
@@ -1151,6 +1154,7 @@ def main():
     ogc_schemas_location = None
     inspire_tg = False
     expected_gmljp2 = False
+    datatype = 'imagery'
     while i < len(sys.argv):
         if sys.argv[i] == "-oidoc":
             if i >= len(sys.argv) - 1:
@@ -1161,6 +1165,11 @@ def main():
             if i >= len(sys.argv) - 1:
                 return Usage()
             ogc_schemas_location = sys.argv[i+1]
+            i = i + 1
+        elif sys.argv[i] == "-datatype":
+            if i >= len(sys.argv) - 1:
+                return Usage()
+            datatype = sys.argv[i+1]
             i = i + 1
         elif sys.argv[i] == "-inspire_tg":
             inspire_tg = True
@@ -1178,7 +1187,7 @@ def main():
     if filename is None:
         return Usage()
 
-    return validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location).error_count
+    return validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location, datatype).error_count
 
 if __name__ == '__main__':
     sys.exit(main())
