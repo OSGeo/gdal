@@ -88,13 +88,15 @@ The mapping between the operations of the CartoDB service and the OGR concepts i
 When inserting a new feature with CreateFeature(), and if the command is successfull, OGR will fetch the
 returned rowid and use it as the OGR FID.<p>
 
-<h2>Write support and OGR transactions</h2>
+<h2>Write support</h2>
 
 The above operations are by default issued to the server synchronously with the OGR API call. This however
 can cause performance penalties when issuing a lot of commands due to many client/server exchanges.<p>
 
-It is possible to surround the CreateFeature() operation between OGRLayer::StartTransaction() and OGRLayer::CommitTransaction().
-The operations will be stored into memory and only executed at the time CommitTransaction() is called.<p>
+So, on a newly created layer, the INSERT of CreateFeature() operations are grouped together
+in chunks until they reach 15 MB (can be changed with the CARTODB_MAX_CHUNK_SIZE
+configuration option, with a value in MB), at which point they are transfered
+to the server. By setting CARTODB_MAX_CHUNK_SIZE to 0, immediate transfer occurs.<p>
 
 <h2>SQL</h2>
 

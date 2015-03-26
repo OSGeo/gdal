@@ -571,6 +571,7 @@ OGRLayer * OGRCARTODBDataSource::ExecuteSQL( const char *pszSQLCommand,
     for( int iLayer = 0; iLayer < nLayers; iLayer++ )
     {
         papoLayers[iLayer]->RunDeferedCreationIfNecessary();
+        papoLayers[iLayer]->FlushDeferedInsert();
     }
 
     /* Skip leading spaces */

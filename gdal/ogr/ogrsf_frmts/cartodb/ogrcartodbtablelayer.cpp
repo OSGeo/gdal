@@ -86,10 +86,11 @@ OGRCARTODBTableLayer::OGRCARTODBTableLayer(OGRCARTODBDataSource* poDS,
 {
     osName = pszName;
     SetDescription( osName );
-    bInTransaction = FALSE;
+    bInDeferedInsert = FALSE;
     nNextFID = -1;
     bDeferedCreation = FALSE;
     bCartoDBify = FALSE;
+    nMaxChunkSize = atoi(CPLGetConfigOption("CARTODB_MAX_CHUNK_SIZE", "15")) * 1024 * 1024;
 }
 
 /************************************************************************/
@@ -100,6 +101,7 @@ OGRCARTODBTableLayer::~OGRCARTODBTableLayer()
 
 {
     if( bDeferedCreation ) RunDeferedCreationIfNecessary();
+    FlushDeferedInsert();
 }
 
 /************************************************************************/
@@ -250,6 +252,7 @@ OGRFeature  *OGRCARTODBTableLayer::GetNextRawFeature()
 {
     if( bDeferedCreation && RunDeferedCreationIfNecessary() != OGRERR_NONE )
         return NULL;
+    FlushDeferedInsert();
     return OGRCARTODBLayer::GetNextRawFeature();
 }
 
@@ -304,56 +307,25 @@ void OGRCARTODBTableLayer::SetSpatialFilter( int iGeomField, OGRGeometry * poGeo
 }
 
 /************************************************************************/
-/*                          StartTransaction()                          */
+/*                         FlushDeferedInsert()                          */
 /************************************************************************/
 
-OGRErr OGRCARTODBTableLayer::StartTransaction()
+void OGRCARTODBTableLayer::FlushDeferedInsert()
 
 {
-    bInTransaction = TRUE;
-    osTransactionSQL = "";
-    nNextFID = -1;
-    return OGRERR_NONE;
-}
-
-/************************************************************************/
-/*                         CommitTransaction()                          */
-/************************************************************************/
-
-OGRErr OGRCARTODBTableLayer::CommitTransaction()
-
-{
-    OGRErr eRet = OGRERR_NONE;
-
-    if( bInTransaction && osTransactionSQL.size() > 0 )
+    if( bInDeferedInsert && osDeferedInsertSQL.size() > 0 )
     {
-        eRet = OGRERR_FAILURE;
-        osTransactionSQL = "BEGIN;" + osTransactionSQL + "COMMIT;";
-        json_object* poObj = poDS->RunSQL(osTransactionSQL);
+        osDeferedInsertSQL = "BEGIN;" + osDeferedInsertSQL + "COMMIT;";
+        json_object* poObj = poDS->RunSQL(osDeferedInsertSQL);
         if( poObj != NULL )
         {
-            eRet = OGRERR_NONE;
             json_object_put(poObj);
         }
     }
 
-    bInTransaction = FALSE;
-    osTransactionSQL = "";
+    bInDeferedInsert = FALSE;
+    osDeferedInsertSQL = "";
     nNextFID = -1;
-    return eRet;
-}
-
-/************************************************************************/
-/*                        RollbackTransaction()                         */
-/************************************************************************/
-
-OGRErr OGRCARTODBTableLayer::RollbackTransaction()
-
-{
-    bInTransaction = FALSE;
-    osTransactionSQL = "";
-    nNextFID = -1;
-    return OGRERR_NONE;
 }
 
 /************************************************************************/
@@ -415,8 +387,6 @@ OGRErr OGRCARTODBTableLayer::ICreateFeature( OGRFeature *poFeature )
     {
         if( RunDeferedCreationIfNecessary() != OGRERR_NONE )
             return OGRERR_FAILURE;
-        if( bInTransaction )
-            nNextFID = 1;
     }
 
     GetLayerDefn();
@@ -434,7 +404,7 @@ OGRErr OGRCARTODBTableLayer::ICreateFeature( OGRFeature *poFeature )
     CPLString osSQL;
 
     int bHasJustGotNextFID = FALSE;
-    if( !bHasUserFieldMatchingFID && bInTransaction && nNextFID < 0 && osFIDColName.size() )
+    if( !bHasUserFieldMatchingFID && bInDeferedInsert && nNextFID < 0 && osFIDColName.size() )
     {
         osSQL.Printf("SELECT nextval('%s') AS nextid",
                      OGRCARTODBEscapeLiteral(CPLSPrintf("%s_%s_seq", osName.c_str(), osFIDColName.c_str())).c_str());
@@ -604,11 +574,36 @@ OGRErr OGRCARTODBTableLayer::ICreateFeature( OGRFeature *poFeature )
         osSQL += ")";
     }
 
-    if( bInTransaction )
+    if( bInDeferedInsert )
     {
-        osTransactionSQL += osSQL;
-        osTransactionSQL += ";";
-        return OGRERR_NONE;
+        OGRErr eRet = OGRERR_NONE;
+        if( osDeferedInsertSQL.size() != 0 &&
+            (int)osDeferedInsertSQL.size() + (int)osSQL.size() > nMaxChunkSize )
+        {
+            osDeferedInsertSQL = "BEGIN;" + osDeferedInsertSQL + "COMMIT;";
+            json_object* poObj = poDS->RunSQL(osDeferedInsertSQL);
+            if( poObj != NULL )
+                json_object_put(poObj);
+            else
+                eRet = OGRERR_FAILURE;
+            osDeferedInsertSQL = "";
+        }
+
+        osDeferedInsertSQL += osSQL;
+        osDeferedInsertSQL += ";";
+
+        if( (int)osDeferedInsertSQL.size() > nMaxChunkSize )
+        {
+            osDeferedInsertSQL = "BEGIN;" + osDeferedInsertSQL + "COMMIT;";
+            json_object* poObj = poDS->RunSQL(osDeferedInsertSQL);
+            if( poObj != NULL )
+                json_object_put(poObj);
+            else
+                eRet = OGRERR_FAILURE;
+            osDeferedInsertSQL = "";
+        }
+
+        return eRet;
     }
     
     if( osFIDColName.size() )
@@ -669,6 +664,7 @@ OGRErr OGRCARTODBTableLayer::ISetFeature( OGRFeature *poFeature )
 
     if( bDeferedCreation && RunDeferedCreationIfNecessary() != OGRERR_NONE )
         return OGRERR_FAILURE;
+    FlushDeferedInsert();
 
     GetLayerDefn();
 
@@ -756,10 +752,10 @@ OGRErr OGRCARTODBTableLayer::ISetFeature( OGRFeature *poFeature )
                     OGRCARTODBEscapeIdentifier(osFIDColName).c_str(),
                     poFeature->GetFID());
     
-    if( bInTransaction )
+    if( bInDeferedInsert )
     {
-        osTransactionSQL += osSQL;
-        osTransactionSQL += ";";
+        osDeferedInsertSQL += osSQL;
+        osDeferedInsertSQL += ";";
         return OGRERR_NONE;
     }
 
@@ -792,6 +788,7 @@ OGRErr OGRCARTODBTableLayer::DeleteFeature( GIntBig nFID )
 
     if( bDeferedCreation && RunDeferedCreationIfNecessary() != OGRERR_NONE )
         return OGRERR_FAILURE;
+    FlushDeferedInsert();
 
     GetLayerDefn();
 
@@ -811,10 +808,10 @@ OGRErr OGRCARTODBTableLayer::DeleteFeature( GIntBig nFID )
                     OGRCARTODBEscapeIdentifier(osFIDColName).c_str(),
                     nFID);
     
-    if( bInTransaction )
+    if( bInDeferedInsert )
     {
-        osTransactionSQL += osSQL;
-        osTransactionSQL += ";";
+        osDeferedInsertSQL += osSQL;
+        osDeferedInsertSQL += ";";
         return OGRERR_NONE;
     }
     
@@ -938,6 +935,7 @@ OGRFeature* OGRCARTODBTableLayer::GetFeature( GIntBig nFeatureId )
 
     if( bDeferedCreation && RunDeferedCreationIfNecessary() != OGRERR_NONE )
         return NULL;
+    FlushDeferedInsert();
 
     GetLayerDefn();
     
@@ -973,6 +971,7 @@ GIntBig OGRCARTODBTableLayer::GetFeatureCount(int bForce)
 
     if( bDeferedCreation && RunDeferedCreationIfNecessary() != OGRERR_NONE )
         return 0;
+    FlushDeferedInsert();
 
     GetLayerDefn();
 
@@ -1020,6 +1019,7 @@ OGRErr OGRCARTODBTableLayer::GetExtent( int iGeomField, OGREnvelope *psExtent, i
 
     if( bDeferedCreation && RunDeferedCreationIfNecessary() != OGRERR_NONE )
         return OGRERR_FAILURE;
+    FlushDeferedInsert();
 
     if( iGeomField < 0 || iGeomField >= GetLayerDefn()->GetGeomFieldCount() ||
         GetLayerDefn()->GetGeomFieldDefn(iGeomField)->GetType() == wkbNone )
@@ -1133,9 +1133,6 @@ int OGRCARTODBTableLayer::TestCapability( const char * pszCap )
         return poDS->IsReadWrite();
     }
 
-    if( EQUAL(pszCap,OLCTransactions) )
-        return TRUE;
-
     return OGRCARTODBLayer::TestCapability(pszCap);
 }
 
@@ -1149,6 +1146,8 @@ void OGRCARTODBTableLayer::SetDeferedCreation (OGRwkbGeometryType eGType,
                                                int bCartoDBify)
 {
     bDeferedCreation = TRUE;
+    bInDeferedInsert = TRUE;
+    nNextFID = 1;
     CPLAssert(poFeatureDefn == NULL);
     this->bCartoDBify = bCartoDBify;
     poFeatureDefn = new OGRFeatureDefn(osName);

@@ -112,12 +112,13 @@ class OGRCARTODBTableLayer : public OGRCARTODBLayer
     CPLString           osQuery;
     CPLString           osWHERE;
 
-    int                 bInTransaction;
-    CPLString           osTransactionSQL;
+    int                 bInDeferedInsert;
+    CPLString           osDeferedInsertSQL;
     GIntBig             nNextFID;
     
     int                 bDeferedCreation;
     int                 bCartoDBify;
+    int                 nMaxChunkSize;
 
     void                BuildWhere();
 
@@ -150,11 +151,7 @@ class OGRCARTODBTableLayer : public OGRCARTODBLayer
 
     virtual OGRErr      GetExtent( OGREnvelope *psExtent, int bForce ) { return GetExtent(0, psExtent, bForce); }
     virtual OGRErr      GetExtent( int iGeomField, OGREnvelope *psExtent, int bForce );
-    
-    virtual OGRErr      StartTransaction();
-    virtual OGRErr      CommitTransaction();
-    virtual OGRErr      RollbackTransaction();
-    
+
     void                SetDeferedCreation( OGRwkbGeometryType eGType,
                                             OGRSpatialReference* poSRS,
                                             int bGeomNullable,
@@ -162,6 +159,8 @@ class OGRCARTODBTableLayer : public OGRCARTODBLayer
     OGRErr              RunDeferedCreationIfNecessary();
     int                 GetDeferedCreation() const { return bDeferedCreation; }
     void                CancelDeferedCreation() { bDeferedCreation = FALSE; }
+
+    void                FlushDeferedInsert();
 };
 
 /************************************************************************/
