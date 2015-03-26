@@ -398,7 +398,7 @@ def pam_11():
     gdal.ErrorReset()
     ds = None
     error_msg = gdal.GetLastErrorMsg()
-    if error_msg.find('Unable to save auxilary information') != 0:
+    if error_msg.find('Unable to save auxiliary information') != 0:
         gdaltest.post_reason('warning was expected at that point')
         return 'fail'
 
