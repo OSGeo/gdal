@@ -3847,6 +3847,7 @@ int PDFDataset::ParseProjDict(GDALPDFDictionary* poProjDict)
     {
         if (poDatum->GetType() == PDFObjectType_String)
         {
+            /* Using Annex A of http://portal.opengeospatial.org/files/?artifact_id=40537 */
             const char* pszDatum = poDatum->GetString().c_str();
             CPLDebug("PDF", "Datum = %s", pszDatum);
             if (EQUAL(pszDatum, "WE") || EQUAL(pszDatum, "WGE"))
@@ -3879,6 +3880,28 @@ int PDFDataset::ParseProjDict(GDALPDFDictionary* poProjDict)
             else if (EQUAL(pszDatum, "GDS")) /* Geocentric Datum of Australia */
             {
                 oSRS.importFromEPSG(4283);
+            }
+            else if (EQUALN(pszDatum, "OHA-", 4)) /* Old Hawaiian */
+            {
+                oSRS.importFromEPSG(4135); /* matches OHA-M (Mean) */
+                if( !EQUAL(pszDatum, "OHA-M") )
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "Using OHA-M (Old Hawaiian Mean) definition for %s. Potential issue with datum shift parameters",
+                             pszDatum);
+                    OGR_SRSNode *poNode = oSRS.GetRoot();
+                    int iChild = poNode->FindChild( "AUTHORITY" );
+                    if( iChild != -1 )
+                        poNode->DestroyChild( iChild );
+                    iChild = poNode->FindChild( "DATUM" );
+                    if( iChild != -1 )
+                    {
+                        poNode = poNode->GetChild(iChild);
+                        iChild = poNode->FindChild( "AUTHORITY" );
+                        if( iChild != -1 )
+                            poNode->DestroyChild( iChild );
+                    }
+                }
             }
             else
             {

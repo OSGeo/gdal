@@ -839,6 +839,8 @@ static GDALPDFObject* GDALPDFBuildOGC_BP_Datum(const OGRSpatialReference* poSRS)
             poPDFDatum = GDALPDFObjectRW::CreateString("NAS");
         else if( EQUAL(pszDatumDescription, SRS_DN_NAD83) || nEPSGDatum == 6269 )
             poPDFDatum = GDALPDFObjectRW::CreateString("NAR");
+        else if( nEPSGDatum == 6135 )
+            poPDFDatum = GDALPDFObjectRW::CreateString("OHA-M");
         else
         {
             CPLDebug("PDF",
