@@ -116,7 +116,8 @@ class OGRCARTODBTableLayer : public OGRCARTODBLayer
     CPLString           osTransactionSQL;
     GIntBig             nNextFID;
     
-    int                 bDifferedCreation;
+    int                 bDeferedCreation;
+    int                 bCartoDBify;
 
     void                BuildWhere();
 
@@ -154,12 +155,13 @@ class OGRCARTODBTableLayer : public OGRCARTODBLayer
     virtual OGRErr      CommitTransaction();
     virtual OGRErr      RollbackTransaction();
     
-    void                SetDifferedCreation(OGRwkbGeometryType eGType,
+    void                SetDeferedCreation( OGRwkbGeometryType eGType,
                                             OGRSpatialReference* poSRS,
-                                            int bGeomNullable);
-    OGRErr              RunDifferedCreationIfNecessary();
-    int                 GetDifferedCreation() const { return bDifferedCreation; }
-    void                CancelDifferedCreation() { bDifferedCreation = FALSE; }
+                                            int bGeomNullable,
+                                            int bCartoDBify);
+    OGRErr              RunDeferedCreationIfNecessary();
+    int                 GetDeferedCreation() const { return bDeferedCreation; }
+    void                CancelDeferedCreation() { bDeferedCreation = FALSE; }
 };
 
 /************************************************************************/

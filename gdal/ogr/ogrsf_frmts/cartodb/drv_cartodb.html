@@ -102,6 +102,22 @@ SQL commands provided to the OGRDataSource::ExecuteSQL() call are executed on th
 dialect is specified. You can use the full power of PostgreSQL + PostGIS SQL
 capabilities.<p>
 
+<h2>Layer creation options</h2>
+
+<p>The following layer creation options are available:</p>
+<ul>
+<li><b>OVERWRITE</b>=YES/NO: Whether to overwrite an existing table with the
+layer name to be created. Defaults to NO.</li>
+
+<li><b>GEOMETRY_NULLABLE</b>=YES/NO: Whether the values of the geometry column
+can be NULL. Defaults to YES.</li>
+
+<li><b>CARTODBIFY</b>=YES/NO: Whether the created layer should be "CartoDBifi'ed"
+ (i.e. registered in dashboard). Defaults to YES.</li>
+
+</ul>
+
+
 <h2>Examples</h2>
 
 <li>
