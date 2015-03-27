@@ -833,7 +833,8 @@ CPLErr GDALPamDataset::TrySaveXML()
             psPam->pszPamFilename = CPLStrdup(pszNewPam);
             eErr = TrySaveXML();
         }
-        else
+        /* No way we can save into a /vsicurl resource */
+        else if( strncmp(psPam->pszPamFilename, "/vsicurl", strlen("/vsicurl")) != 0 )
         {
             CPLError( CE_Warning, CPLE_AppDefined, 
                       "Unable to save auxiliary information in %s.",
