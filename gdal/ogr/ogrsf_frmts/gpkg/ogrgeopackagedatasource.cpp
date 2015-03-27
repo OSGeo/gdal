@@ -4235,7 +4235,6 @@ OGRErr GDALGeoPackageDataset::CommitTransaction()
         for( int i = 0; i < m_nLayers; i++ )
         {
             m_papoLayers[i]->RunDeferredCreationIfNecessary();
-            m_papoLayers[i]->CreateSpatialIndexIfNecessary();
         }
     }
 
