@@ -572,10 +572,45 @@ swq_expr_node *SWQGeneralEvaluator( swq_expr_node *node,
         switch( (swq_op) node->nOperation )
         {
           case SWQ_EQ:
-            poRet->int_value = 
-                strcasecmp(sub_node_values[0]->string_value,
-                           sub_node_values[1]->string_value) == 0;
+          {
+            /* When comparing timestamps, the +00 at the end might be discarded */
+            /* if the other member has no explicit timezone */
+            if( (sub_node_values[0]->field_type == SWQ_TIMESTAMP ||
+                 sub_node_values[0]->field_type == SWQ_STRING) &&
+                (sub_node_values[1]->field_type == SWQ_TIMESTAMP ||
+                 sub_node_values[1]->field_type == SWQ_STRING) &&
+                strlen(sub_node_values[0]->string_value) > 3 &&
+                strlen(sub_node_values[1]->string_value) > 3 &&
+                (strcmp(sub_node_values[0]->string_value + strlen(sub_node_values[0]->string_value)-3, "+00") == 0 &&
+                 sub_node_values[1]->string_value[strlen(sub_node_values[1]->string_value)-3] == ':') )
+            {
+                poRet->int_value = 
+                    EQUALN(sub_node_values[0]->string_value,
+                           sub_node_values[1]->string_value,
+                           strlen(sub_node_values[1]->string_value));
+            }
+            else if( (sub_node_values[0]->field_type == SWQ_TIMESTAMP ||
+                      sub_node_values[0]->field_type == SWQ_STRING) &&
+                     (sub_node_values[1]->field_type == SWQ_TIMESTAMP ||
+                      sub_node_values[1]->field_type == SWQ_STRING) &&
+                     strlen(sub_node_values[0]->string_value) > 3 &&
+                     strlen(sub_node_values[1]->string_value) > 3 &&
+                     (sub_node_values[0]->string_value[strlen(sub_node_values[0]->string_value)-3] == ':')  &&
+                      strcmp(sub_node_values[1]->string_value + strlen(sub_node_values[1]->string_value)-3, "+00") == 0)
+            {
+                poRet->int_value = 
+                    EQUALN(sub_node_values[0]->string_value,
+                           sub_node_values[1]->string_value,
+                           strlen(sub_node_values[0]->string_value));
+            }
+            else
+            {
+                poRet->int_value = 
+                    strcasecmp(sub_node_values[0]->string_value,
+                            sub_node_values[1]->string_value) == 0;
+            }
             break;
+          }
 
           case SWQ_NE:
             poRet->int_value = 
