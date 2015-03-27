@@ -1248,9 +1248,9 @@ static int TestOGRLayerFeatureCount( GDALDataset* poDS, OGRLayer *poLayer, int b
     else if( nFC != LOG_ACTION(poLayer->GetFeatureCount()) )
     {
         bRet = FALSE;
-        printf( "ERROR: Feature count at end of layer " CPL_FRMT_GIB " differs "
+        printf( "ERROR: Feature count at end of layer, " CPL_FRMT_GIB ", differs "
                 "from at start, " CPL_FRMT_GIB ".\n",
-                nFC, poLayer->GetFeatureCount() );
+                poLayer->GetFeatureCount(), nFC );
     }
     else if( bVerbose )
         printf( "INFO: Feature count verified.\n" );
