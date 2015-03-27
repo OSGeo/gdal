@@ -27,4 +27,4 @@ clean: $(foreach d,$(SUBDIRS-yes),$(d)-clean)
 	rm -f *.o $(O_OBJ)
 	rm -f *~
 
-$(O_OBJ):       ogr_geojson.h
+$(O_OBJ):       ogr_geojson.h ogrgeojsonreader.h

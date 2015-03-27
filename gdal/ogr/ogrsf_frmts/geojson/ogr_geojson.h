@@ -205,7 +205,7 @@ private:
     void Clear();
     int ReadFromFile( GDALOpenInfo* poOpenInfo );
     int ReadFromService( const char* pszSource );
-    void LoadLayers();
+    void LoadLayers(char** papszOpenOptions);
 };
 
 

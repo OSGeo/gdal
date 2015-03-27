@@ -1929,6 +1929,59 @@ def ogr_geojson_39():
         return 'fail'
     return 'success'
 
+###############################################################################
+# Test nested attributes
+
+def ogr_geojson_40():
+
+    if gdaltest.geojson_drv is None:
+        return 'skip'
+
+    ds = gdal.OpenEx("""{
+  "type": "FeatureCollection",
+  "features" :
+  [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [ 2, 49 ]
+      }, 
+      "properties": {
+        "a_property": 1, 
+        "some_object": {
+          "a_property": 1, 
+          "another_property": 2 
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [ 2, 49 ]
+      }, 
+      "properties": {
+        "a_property": "foo", 
+        "some_object": {
+          "a_property": 1, 
+          "another_property": 2.34 
+        }
+      }
+    }
+  ]
+}""", gdal.OF_VECTOR, open_options = ['FLATTEN_NESTED_ATTRIBUTES=YES', 'NESTED_ATTRIBUTE_SEPARATOR=.'])
+    lyr = ds.GetLayer(0)
+    feat = lyr.GetNextFeature()
+    feat = lyr.GetNextFeature()
+    if feat.GetField('a_property') != 'foo' or feat.GetField('some_object.a_property') != 1 or \
+       feat.GetField('some_object.another_property') != 2.34:
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [ 
     ogr_geojson_1,
     ogr_geojson_2,
@@ -1969,6 +2022,7 @@ gdaltest_list = [
     ogr_geojson_37,
     ogr_geojson_38,
     ogr_geojson_39,
+    ogr_geojson_40,
     ogr_geojson_cleanup ]
 
 if __name__ == '__main__':

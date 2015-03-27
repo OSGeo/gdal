@@ -94,6 +94,7 @@ public:
 
     void SetPreserveGeometryType( bool bPreserve );
     void SetSkipAttributes( bool bSkip );
+    void SetFlattenNestedAttributes( bool bFlatten, char chSeparator );
 
     OGRErr Parse( const char* pszText );
     void ReadLayers( OGRGeoJSONDataSource* poDS );
@@ -107,6 +108,8 @@ private:
 
     bool bGeometryPreserve_;
     bool bAttributesSkip_;
+    bool bFlattenNestedAttributes_;
+    char chNestedAttributeSeparator_;
 
     int bFlattenGeocouchSpatiallistFormat;
     bool bFoundId, bFoundRev, bFoundTypeFeature, bIsGeocouchSpatiallistFormat;
@@ -133,12 +136,15 @@ private:
 void OGRGeoJSONReaderSetField(OGRLayer* poLayer,
                               OGRFeature* poFeature,
                               int nField,
-                              json_object* poVal);
-void OGRGeoJSONReaderAddNewField(OGRFeatureDefn* poDefn,
-                                 const char* pszKey,
-                                 json_object* poVal);
-void OGRGeoJSONReaderUpdateField(OGRFieldDefn* poFDefn,
-                                 json_object* poVal);
+                              const char* pszAttrPrefix,
+                              json_object* poVal,
+                              bool bFlattenNestedAttributes,
+                              char chNestedAttributeSeparator);
+void OGRGeoJSONReaderAddOrUpdateField(OGRFeatureDefn* poDefn,
+                                      const char* pszKey,
+                                      json_object* poVal,
+                                      bool bFlattenNestedAttributes,
+                                      char chNestedAttributeSeparator);
 
 /************************************************************************/
 /*                 GeoJSON Parsing Utilities                            */
