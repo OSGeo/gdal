@@ -177,6 +177,12 @@ void RegisterOGRGeoJSON()
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
                                    "drv_geojson.html" );
 
+        poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
+"<OpenOptionList>"
+"  <Option name='FLATTEN_NESTED_ATTRIBUTES' type='boolean' description='Whether to recursively explore nested objects and produce flatten OGR attributes' default='NO'/>"
+"  <Option name='NESTED_ATTRIBUTE_SEPARATOR' type='string' description='Separator between components of nested attributes' default='_'/>"
+"</OpenOptionList>");
+
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, "<CreationOptionList/>");
 
         poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,

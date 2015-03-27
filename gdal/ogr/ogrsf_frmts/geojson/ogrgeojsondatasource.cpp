@@ -107,7 +107,7 @@ int OGRGeoJSONDataSource::Open( GDALOpenInfo* poOpenInfo,
         return FALSE;
     }
 
-    LoadLayers();
+    LoadLayers(poOpenInfo->papszOpenOptions);
     if( nLayers_ == 0 )
     {
         Clear();
@@ -443,7 +443,7 @@ int OGRGeoJSONDataSource::ReadFromService( const char* pszSource )
 /*                           LoadLayers()                               */
 /************************************************************************/
 
-void OGRGeoJSONDataSource::LoadLayers()
+void OGRGeoJSONDataSource::LoadLayers(char** papszOpenOptions)
 {
     if( NULL == pszGeoData_ )
     {
@@ -526,6 +526,10 @@ void OGRGeoJSONDataSource::LoadLayers()
         CPLDebug( "GeoJSON", "Skip all attributes." );
     }
     
+    reader.SetFlattenNestedAttributes(
+        (bool)CSLFetchBoolean(papszOpenOptions, "FLATTEN_NESTED_ATTRIBUTES", FALSE),
+        CSLFetchNameValueDef(papszOpenOptions, "NESTED_ATTRIBUTE_SEPARATOR", "_")[0]);
+
 /* -------------------------------------------------------------------- */
 /*      Parse GeoJSON and build valid OGRLayer instance.                */
 /* -------------------------------------------------------------------- */

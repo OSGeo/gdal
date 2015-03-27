@@ -90,6 +90,52 @@ This behavior may be controlled by setting environment variable <strong>GEOMETRY
 <li><b>ATTRIBUTES_SKIP</b> - controls translation of attributes: YES - skip all attributes</li>
 </ul>
 
+<h2>Open options</h2>
+
+<p>(GDAL &gt;= 2.0)</p>
+
+<ul>
+<li><b>FLATTEN_NESTED_ATTRIBUTES</b> = YES/NO : Whether to
+recursively explore nested objects and produce flatten OGR attributes. Defaults to NO.</li>
+<li><b>NESTED_ATTRIBUTE_SEPARATOR</b> = character : Separator between components
+of nested attributes. Defaults to '_'</li>
+</ul>
+
+<p>Consider the following GeoJSON fragment :</p>
+
+<pre>
+{
+  "type": "FeatureCollection",
+  "features" :
+  [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [ 2, 49 ]
+      }, 
+      "properties": {
+        "a_property": "foo", 
+        "some_object": {
+          "a_property": 1, 
+          "another_property": 2 
+        }
+      }
+    }
+  ]
+}
+</pre>
+
+<p> "ogrinfo test.json -al -oo FLATTEN_NESTED_ATTRIBUTES=yes" reports :</p>
+
+<pre>
+OGRFeature(OGRGeoJSON):0
+  a_property (String) = foo
+  some_object_a_property (Integer) = 1
+  some_object_another_property (Integer) = 2
+  POINT (2 49)
+</pre>
+
 <h2>Layer creation option</h2>
 
 <ul>
