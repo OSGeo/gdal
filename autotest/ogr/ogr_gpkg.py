@@ -1700,6 +1700,50 @@ def ogr_gpkg_26():
         gdaltest.post_reason('fail')
         return 'fail'
 
+    ds.StartTransaction()
+    lyr = ds.CreateLayer('test2', geom_type = ogr.wkbPoint)
+    lyr.CreateField(ogr.FieldDefn('foo', ogr.OFTString))
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT(0 0)'))
+    ret = lyr.CreateFeature(f)
+    ds.CommitTransaction()
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ds.StartTransaction()
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT(0 0)'))
+    ret = lyr.CreateFeature(f)
+    ds.CommitTransaction()
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ds.StartTransaction()
+    lyr = ds.CreateLayer('test3', geom_type = ogr.wkbPoint)
+    lyr.CreateField(ogr.FieldDefn('foo', ogr.OFTString))
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT(0 0)'))
+    ret = lyr.CreateFeature(f)
+    
+    #ds.CommitTransaction()
+    ds.ReleaseResultSet(ds.ExecuteSQL('SELECT 1'))
+    #ds = None
+    #ds = ogr.Open('/vsimem/ogr_gpkg_26.gpkg', update = 1)
+    #lyr = ds.GetLayerByName('test3')
+    #ds.StartTransaction()
+    
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT(0 0)'))
+    ret = lyr.CreateFeature(f)
+    ds.CommitTransaction()
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+        
     ds = None
     
     gdaltest.gpkg_dr.DeleteDataSource('/vsimem/ogr_gpkg_26.gpkg')
