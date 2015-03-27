@@ -4712,6 +4712,90 @@ def ogr_pg_77():
     return 'success'
 
 ###############################################################################
+# Test manually added geometry constraints
+
+def ogr_pg_78():
+
+    if gdaltest.pg_ds is None or not gdaltest.pg_has_postgis_2:
+        return 'skip'
+
+    gdaltest.pg_ds.CreateLayer('ogr_pg_78', options = ['GEOMETRY_NAME=my_geom'])
+    gdaltest.pg_ds.ExecuteSQL("ALTER TABLE ogr_pg_78 ADD CONSTRAINT ogr_pg_78_my_geom_type CHECK (geometrytype(my_geom)='POINT')")
+    gdaltest.pg_ds.ExecuteSQL("ALTER TABLE ogr_pg_78 ADD CONSTRAINT ogr_pg_78_my_geom_dim CHECK (st_ndims(my_geom)=3)")
+    gdaltest.pg_ds.ExecuteSQL("ALTER TABLE ogr_pg_78 ADD CONSTRAINT ogr_pg_78_my_geom_srid CHECK (st_srid(my_geom)=4326)")
+
+    gdaltest.pg_ds.CreateLayer('ogr_pg_78_2', options = ['GEOMETRY_NAME=my_geog', 'GEOM_TYPE=geography'])
+    gdaltest.pg_ds.ExecuteSQL("ALTER TABLE ogr_pg_78_2 ADD CONSTRAINT ogr_pg_78_2_my_geog_type CHECK (geometrytype(my_geog::geometry)='POINT')")
+    gdaltest.pg_ds.ExecuteSQL("ALTER TABLE ogr_pg_78_2 ADD CONSTRAINT ogr_pg_78_2_my_geog_dim CHECK (st_ndims(my_geog::geometry)=3)")
+    gdaltest.pg_ds.ExecuteSQL("ALTER TABLE ogr_pg_78_2 ADD CONSTRAINT ogr_pg_78_2_my_geog_srid CHECK (st_srid(my_geog::geometry)=4326)")
+
+    gdaltest.pg_ds = None
+    gdaltest.pg_ds = ogr.Open( 'PG:' + gdaltest.pg_connection_string, update = 1 )
+    lc = gdaltest.pg_ds.GetLayerCount() # force discovery of all tables
+    ogr_pg_78_found = False
+    ogr_pg_78_2_found = False
+    for i in range(lc):
+        lyr = gdaltest.pg_ds.GetLayer(i)
+        if lyr.GetName() == 'ogr_pg_78':
+            ogr_pg_78_found = True
+            if lyr.GetGeomType() != ogr.wkbPoint25D:
+                gdaltest.post_reason('fail')
+                return 'fail'
+            if lyr.GetSpatialRef().ExportToWkt().find('4326') < 0:
+                gdaltest.post_reason('fail')
+                return 'fail'
+        if lyr.GetName() == 'ogr_pg_78_2':
+            ogr_pg_78_2_found = True
+            if lyr.GetGeomType() != ogr.wkbPoint25D:
+                gdaltest.post_reason('fail')
+                return 'fail'
+            if lyr.GetSpatialRef().ExportToWkt().find('4326') < 0:
+                gdaltest.post_reason('fail')
+                return 'fail'
+    if not ogr_pg_78_found:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if not ogr_pg_78_2_found:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdaltest.pg_ds = None
+    # Test with slow method
+    gdal.SetConfigOption('PG_USE_POSTGIS2_OPTIM', 'NO')
+    gdaltest.pg_ds = ogr.Open( 'PG:' + gdaltest.pg_connection_string, update = 1 )
+    lc = gdaltest.pg_ds.GetLayerCount() # force discovery of all tables
+    ogr_pg_78_found = False
+    ogr_pg_78_2_found = False
+    for i in range(lc):
+        lyr = gdaltest.pg_ds.GetLayer(i)
+        if lyr.GetName() == 'ogr_pg_78':
+            ogr_pg_78_found = True
+            if lyr.GetGeomType() != ogr.wkbPoint25D:
+                gdaltest.post_reason('fail')
+                return 'fail'
+            if lyr.GetSpatialRef().ExportToWkt().find('4326') < 0:
+                gdaltest.post_reason('fail')
+                return 'fail'
+        if lyr.GetName() == 'ogr_pg_78_2':
+            ogr_pg_78_2_found = True
+            # No logic in geography_columns to get type/coordim/srid from constraints
+            #if lyr.GetGeomType() != ogr.wkbPoint25D:
+            #    gdaltest.post_reason('fail')
+            #    return 'fail'
+            #if lyr.GetSpatialRef().ExportToWkt().find('4326') < 0:
+            #    gdaltest.post_reason('fail')
+            #    return 'fail'
+    if not ogr_pg_78_found:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if not ogr_pg_78_2_found:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_pg_table_cleanup():
@@ -4767,6 +4851,8 @@ def ogr_pg_table_cleanup():
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:test_curve_3d' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_77_1' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_77_2' )
+    gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_78' )
+    gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_78_2' )
     
     # Drop second 'tpoly' from schema 'AutoTest-schema' (do NOT quote names here)
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:AutoTest-schema.tpoly' )
@@ -4785,7 +4871,7 @@ def ogr_pg_cleanup():
         return 'skip'
 
     gdaltest.pg_ds = ogr.Open( 'PG:' + gdaltest.pg_connection_string, update = 1 )
-    ogr_pg_table_cleanup();
+    ogr_pg_table_cleanup()
 
     gdaltest.pg_ds.Destroy()
     gdaltest.pg_ds = None
@@ -4876,6 +4962,7 @@ gdaltest_list_internal = [
     ogr_pg_75,
     ogr_pg_76,
     ogr_pg_77,
+    ogr_pg_78,
     ogr_pg_cleanup ]
 
 DISABLED_gdaltest_list_internal = [ 

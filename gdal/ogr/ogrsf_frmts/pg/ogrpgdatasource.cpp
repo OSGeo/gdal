@@ -832,17 +832,154 @@ void OGRPGDataSource::LoadTables()
 /*      Get a list of available tables if they have not been            */
 /*      specified through the TABLES connection string param           */
 /* -------------------------------------------------------------------- */
+    const char* pszAllowedRelations;
+    if( CSLTestBoolean(CPLGetConfigOption("PG_SKIP_VIEWS", "NO")) )
+        pszAllowedRelations = "'r'";
+    else
+        pszAllowedRelations = "'r','v','m','f'";
 
     hSetTables = CPLHashSetNew(OGRPGHashTableEntry, OGRPGEqualTableEntry, OGRPGFreeTableEntry);
 
-    if (nTableCount == 0)
+    if( nTableCount == 0 && bHavePostGIS && sPostGISVersion.nMajor >= 2 &&
+        !bListAllTables &&
+        /* Config option mostly for comparison/debugging/etc... */
+        CSLTestBoolean(CPLGetConfigOption("PG_USE_POSTGIS2_OPTIM", "YES")) )
+    {
+/* -------------------------------------------------------------------- */
+/*      With PostGIS 2.0, the geometry_columns and geography_columns    */
+/*      are views, based on the catalog system, that can be slow to     */
+/*      query, so query directly the catalog system.                    */
+/*      See http://trac.osgeo.org/postgis/ticket/3092                   */
+/* -------------------------------------------------------------------- */
+        CPLString osCommand;
+        osCommand.Printf(
+              "SELECT c.relname, n.nspname, c.relkind, a.attname, t.typname, "
+              "postgis_typmod_dims(a.atttypmod) dim, "
+              "postgis_typmod_srid(a.atttypmod) srid, "
+              "postgis_typmod_type(a.atttypmod)::text geomtyp, "
+              "array_agg(s.consrc)::text att_constraints, a.attnotnull "
+              "FROM pg_class c JOIN pg_attribute a ON a.attrelid=c.oid "
+              "JOIN pg_namespace n ON c.relnamespace = n.oid "
+              "AND c.relkind in (%s) AND NOT ( n.nspname = 'public' AND c.relname = 'raster_columns' ) "
+              "JOIN pg_type t ON a.atttypid = t.oid AND (t.typname = 'geometry'::name OR t.typname = 'geography'::name) "
+              "LEFT JOIN pg_constraint s ON s.connamespace = n.oid AND s.conrelid = c.oid "
+              "AND a.attnum = ANY (s.conkey) "
+              "AND (s.consrc LIKE '%%geometrytype(%% = %%' OR s.consrc LIKE '%%ndims(%% = %%' OR s.consrc LIKE '%%srid(%% = %%') "
+              "GROUP BY c.relname, n.nspname, c.relkind, a.attname, t.typname, dim, srid, geomtyp, a.attnotnull, c.oid, a.attnum "
+              "ORDER BY c.oid, a.attnum",
+              pszAllowedRelations);
+        hResult = OGRPG_PQexec(hPGConn, osCommand.c_str());
+
+        if( !hResult || PQresultStatus(hResult) != PGRES_TUPLES_OK )
+        {
+            OGRPGClearResult( hResult );
+
+            CPLError( CE_Failure, CPLE_AppDefined,
+                    "%s", PQerrorMessage(hPGConn) );
+            goto end;
+        }
+    /* -------------------------------------------------------------------- */
+    /*      Parse the returned table list                                   */
+    /* -------------------------------------------------------------------- */
+        for( int iRecord = 0; iRecord < PQntuples(hResult); iRecord++ )
+        {
+            const char *pszTable = PQgetvalue(hResult, iRecord, 0);
+            const char *pszSchemaName = PQgetvalue(hResult, iRecord, 1);
+            const char *pszGeomColumnName = PQgetvalue(hResult, iRecord, 3);
+            const char *pszGeomOrGeography = PQgetvalue(hResult, iRecord, 4);
+            const char *pszDim = PQgetvalue(hResult, iRecord, 5);
+            const char *pszSRID = PQgetvalue(hResult, iRecord, 6);
+            const char *pszGeomType = PQgetvalue(hResult, iRecord, 7);
+            const char *pszConstraint = PQgetvalue(hResult, iRecord, 8);
+            const char *pszNotNull = PQgetvalue(hResult, iRecord, 9);
+            /*const char *pszRelkind = PQgetvalue(hResult, iRecord, 2);
+            CPLDebug("PG", "%s %s %s %s %s %s %s %s %s %s",
+                     pszTable, pszSchemaName, pszRelkind,
+                     pszGeomColumnName, pszGeomOrGeography, pszDim,
+                     pszSRID, pszGeomType, pszConstraint, pszNotNull);*/
+
+            int bNullable = EQUAL(pszNotNull, "f");
+
+            PostgisType ePostgisType = GEOM_TYPE_UNKNOWN;
+            if( EQUAL(pszGeomOrGeography, "geometry") )
+                ePostgisType = GEOM_TYPE_GEOMETRY;
+            else if( EQUAL(pszGeomOrGeography, "geography") )
+                ePostgisType = GEOM_TYPE_GEOGRAPHY;
+
+            int nGeomCoordDimension = atoi(pszDim);
+            int nSRID = atoi(pszSRID);
+
+            /* Analyze constraints that might override geometrytype, */
+            /* coordinate dimension and SRID */
+            CPLString osConstraint(pszConstraint);
+            osConstraint = osConstraint.tolower();
+            pszConstraint = osConstraint.c_str();
+            const char* pszNeedle = strstr(pszConstraint, "geometrytype(");
+            CPLString osGeometryType;
+            if( pszNeedle )
+            {
+                pszNeedle = strchr(pszNeedle, '\'');
+                if( pszNeedle )
+                {
+                    pszNeedle ++;
+                    const char* pszEnd = strchr(pszNeedle, '\'');
+                    if( pszEnd )
+                    {
+                        osGeometryType = pszNeedle;
+                        osGeometryType.resize(pszEnd - pszNeedle);
+                        pszGeomType = osGeometryType.c_str();
+                    }
+                }
+            }
+
+            pszNeedle = strstr(pszConstraint, "srid(");
+            if( pszNeedle )
+            {
+                pszNeedle = strchr(pszNeedle, '=');
+                if( pszNeedle )
+                {
+                    pszNeedle ++;
+                    nSRID = atoi(pszNeedle);
+                }
+            }
+
+            pszNeedle = strstr(pszConstraint, "ndims(");
+            if( pszNeedle )
+            {
+                pszNeedle = strchr(pszNeedle, '=');
+                if( pszNeedle )
+                {
+                    pszNeedle ++;
+                    nGeomCoordDimension = atoi(pszNeedle);
+                }
+            }
+
+            papsTables = (PGTableEntry**)CPLRealloc(papsTables, sizeof(PGTableEntry*) * (nTableCount + 1));
+            papsTables[nTableCount] = (PGTableEntry*) CPLCalloc(1, sizeof(PGTableEntry));
+            papsTables[nTableCount]->pszTableName = CPLStrdup( pszTable );
+            papsTables[nTableCount]->pszSchemaName = CPLStrdup( pszSchemaName );
+
+            OGRPGTableEntryAddGeomColumn(papsTables[nTableCount],
+                                            pszGeomColumnName,
+                                            pszGeomType, nGeomCoordDimension,
+                                            nSRID, ePostgisType, bNullable);
+            nTableCount ++;
+
+            PGTableEntry* psEntry = OGRPGFindTableEntry(hSetTables, pszTable, pszSchemaName);
+            if (psEntry == NULL)
+                psEntry = OGRPGAddTableEntry(hSetTables, pszTable, pszSchemaName);
+            OGRPGTableEntryAddGeomColumn(psEntry,
+                                            pszGeomColumnName,
+                                            pszGeomType,
+                                            nGeomCoordDimension,
+                                            nSRID, ePostgisType, bNullable);
+        }
+
+        OGRPGClearResult( hResult );
+    }
+    else if (nTableCount == 0)
     {
         CPLString osCommand;
-        const char* pszAllowedRelations;
-        if( CSLTestBoolean(CPLGetConfigOption("PG_SKIP_VIEWS", "NO")) )
-            pszAllowedRelations = "'r'";
-        else
-            pszAllowedRelations = "'r','v'";
 
         /* Caution : in PostGIS case, the result has 11 columns, whereas in the */
         /* non-PostGIS case it has only 3 columns */
