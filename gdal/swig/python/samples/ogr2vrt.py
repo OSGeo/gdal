@@ -84,6 +84,7 @@ relative = "0"
 schema=0
 feature_count=0
 extent=0
+openoptions = []
 
 argv = gdal.GeneralCmdLineProcessor( sys.argv )
 if argv is None:
@@ -104,6 +105,10 @@ while i < len(argv):
 
     elif arg == '-extent':
         extent = 1
+
+    elif arg == '-oo':
+        i += 1
+        openoptions.append(argv[i])
 
     elif arg[0] == '-':
         Usage()
@@ -133,14 +138,14 @@ if schema and extent:
 #############################################################################
 # Open the datasource to read.
 
-src_ds = ogr.Open( infile, update = 0 )
+src_ds = gdal.OpenEx( infile, gdal.OF_VECTOR, open_options = openoptions )
 
 if schema:
     infile = '@dummy@'
 
 if len(layer_list) == 0:
-    for layer in src_ds:
-        layer_list.append( layer.GetLayerDefn().GetName() )
+    for lyr_idx in range(src_ds.GetLayerCount()):
+        layer_list.append( src_ds.GetLayer(lyr_idx).GetLayerDefn().GetName() )
 
 #############################################################################
 # Start the VRT file.
@@ -157,6 +162,14 @@ for name in layer_list:
     vrt += '  <OGRVRTLayer name="%s">\n' % Esc(name)
     vrt += '    <SrcDataSource relativeToVRT="%s" shared="%d">%s</SrcDataSource>\n' \
            % (relative,not schema,Esc(infile))
+
+    if len(openoptions) > 0:
+        vrt += '    <OpenOptions>\n' 
+        for option in openoptions:
+            (key, value) = option.split('=')
+            vrt += '        <OOI key="%s">%s</OOI>\n'  % (Esc(key), Esc(value))
+        vrt += '    </OpenOptions>\n' 
+
     if schema:
         vrt += '    <SrcLayer>@dummy@</SrcLayer>\n' 
     else:

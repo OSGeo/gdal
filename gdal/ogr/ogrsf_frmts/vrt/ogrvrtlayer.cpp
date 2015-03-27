@@ -620,7 +620,12 @@ try_again:
         }
         else
         {
-            poSrcDS = (GDALDataset*) OGROpenShared( pszSrcDSName, bUpdate, NULL );
+            char** papszOpenOptions = GDALDeserializeOpenOptionsFromXML(psLTree);
+            int nFlags = GDAL_OF_VECTOR | GDAL_OF_SHARED;
+            if( bUpdate ) nFlags |= GDAL_OF_UPDATE;
+            poSrcDS = (GDALDataset*) GDALOpenEx( pszSrcDSName, nFlags, NULL,
+                                (const char* const* )papszOpenOptions, NULL );
+            CSLDestroy(papszOpenOptions);
             /* Is it a VRT datasource ? */
             if (poSrcDS != NULL && poSrcDS->GetDriver() == poDS->GetDriver())
             {
@@ -633,7 +638,12 @@ try_again:
     {
         if (poDS->GetCallLevel() < 32)
         {
-            poSrcDS = (GDALDataset*) OGROpen( pszSrcDSName, bUpdate, NULL );
+            char** papszOpenOptions = GDALDeserializeOpenOptionsFromXML(psLTree);
+            int nFlags = GDAL_OF_VECTOR;
+            if( bUpdate ) nFlags |= GDAL_OF_UPDATE;
+            poSrcDS = (GDALDataset*) GDALOpenEx( pszSrcDSName, nFlags, NULL,
+                                (const char* const* )papszOpenOptions, NULL );
+            CSLDestroy(papszOpenOptions);
             /* Is it a VRT datasource ? */
             if (poSrcDS != NULL && poSrcDS->GetDriver() == poDS->GetDriver())
             {

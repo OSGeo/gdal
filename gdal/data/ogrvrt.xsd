@@ -50,6 +50,11 @@
                         <xs:documentation>Required element</xs:documentation>
                     </xs:annotation>
                 </xs:element>
+                <xs:element name="OpenOptions" type="OpenOptionsType">
+                    <xs:annotation>
+                        <xs:documentation>Optional element</xs:documentation>
+                    </xs:annotation>
+                </xs:element>
                 <xs:element name="SrcLayer" type="nonEmptyStringType">
                     <xs:annotation>
                         <xs:documentation>SrcLayer or(eclusive) SrcSQL are required elements</xs:documentation>
@@ -105,6 +110,20 @@
             </xs:choice>
         </xs:sequence>
         <xs:attribute name="name" type="nonEmptyStringType" use="required"/>
+    </xs:complexType>
+
+    <xs:complexType name="OpenOptionsType">
+        <xs:sequence>
+            <xs:element name="OOI" type="OOIType" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="OOIType">
+        <xs:simpleContent>
+            <xs:extension base="nonEmptyStringType">
+                <xs:attribute name="key" type="xs:string"/>
+            </xs:extension>
+        </xs:simpleContent>
     </xs:complexType>
 
     <xs:complexType name="FIDType">
