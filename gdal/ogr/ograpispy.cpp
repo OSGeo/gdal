@@ -478,7 +478,7 @@ void OGRAPISpyPreClose(OGRDataSourceH hDS)
     OGRAPISpyFileClose();
 }
 
-void OGRAPISpyPostClose(OGRDataSourceH hDS)
+void OGRAPISpyPostClose(CPL_UNUSED OGRDataSourceH hDS)
 {
     if( !GDALIsInGlobalDestructor() )
     {

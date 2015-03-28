@@ -180,7 +180,7 @@ int VICARKeywordHandler::Ingest( VSILFILE *fp, GByte *pabyHeader )
 /*                             ReadGroup()                              */
 /************************************************************************/
 
-int VICARKeywordHandler::ReadGroup( const char *pszPathPrefix ) {
+int VICARKeywordHandler::ReadGroup( CPL_UNUSED const char *pszPathPrefix ) {
     CPLString osName, osValue, osProperty;
 
     for( ; TRUE; ) {

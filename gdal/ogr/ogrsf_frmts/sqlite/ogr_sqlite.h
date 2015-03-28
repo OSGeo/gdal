@@ -301,7 +301,7 @@ class OGRSQLiteLayer : public OGRLayer, public IOGRSQLiteGetSpatialWhere
 
     virtual int          IsTableLayer() { return FALSE; }
 
-    virtual int          HasSpatialIndex(int iGeomField) { return FALSE; }
+    virtual int          HasSpatialIndex(CPL_UNUSED int iGeomField) { return FALSE; }
 
     virtual int           HasFastSpatialFilter(CPL_UNUSED int iGeomCol) { return FALSE; }
     virtual CPLString     GetSpatialWhere(CPL_UNUSED int iGeomCol,
@@ -516,7 +516,7 @@ class OGRSQLiteViewLayer : public OGRSQLiteLayer
 
     virtual int         TestCapability( const char * );
 
-    virtual int          HasSpatialIndex(int iGeomField) { return bHasSpatialIndex; }
+    virtual int          HasSpatialIndex(CPL_UNUSED int iGeomField) { return bHasSpatialIndex; }
     virtual CPLString    GetSpatialWhere(int iGeomCol,
                                          OGRGeometry* poFilterGeom);
 };

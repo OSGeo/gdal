@@ -8026,8 +8026,7 @@ static int GTIFFExtendMemoryFile(const CPLString& osTmpFilename,
 /*                         GTIFFMakeBufferedStream()                    */
 /************************************************************************/
 
-static int GTIFFMakeBufferedStream(const char* pszFilename,
-                                   GDALOpenInfo* poOpenInfo)
+static int GTIFFMakeBufferedStream(GDALOpenInfo* poOpenInfo)
 {
     CPLString osTmpFilename;
     static int nCounter = 0;
@@ -8265,7 +8264,7 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
               (pszReadStreaming && CSLTestBoolean(pszReadStreaming))) )
     {
         bStreaming = TRUE;
-        if( !GTIFFMakeBufferedStream(pszFilename, poOpenInfo) )
+        if( !GTIFFMakeBufferedStream(poOpenInfo) )
             return NULL;
     }
 
