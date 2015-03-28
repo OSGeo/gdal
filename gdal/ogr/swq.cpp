@@ -602,17 +602,29 @@ void swq_select_free( swq_select *select_info )
 /************************************************************************/
 /*                         swq_identify_field()                         */
 /************************************************************************/
-static 
-int swq_identify_field_internal( const char *field_token, const char* table_name,
+int swq_identify_field_internal( const char* table_name, const char *field_token, 
                                  swq_field_list *field_list,
-                                 swq_field_type *this_type, int *table_id, int tables_enabled );
+                                 swq_field_type *this_type, int *table_id,
+                                 int bOneMoreTimeOK );
 
-int swq_identify_field( const char *token, swq_field_list *field_list,
-                        swq_field_type *this_type, int *table_id )
+int swq_identify_field( const char* table_name, const char *field_token, 
+                                 swq_field_list *field_list,
+                                 swq_field_type *this_type, int *table_id )
 
 {
-    CPLString osTableName;
-    const char *field_token = token;
+    return swq_identify_field_internal(table_name, field_token, field_list,
+                                       this_type, table_id, TRUE);
+}
+
+int swq_identify_field_internal( const char* table_name, const char *field_token, 
+                                 swq_field_list *field_list,
+                                 swq_field_type *this_type, int *table_id,
+                                 int bOneMoreTimeOK )
+
+{
+    int i;
+    if( table_name == NULL ) table_name = "";
+
     int   tables_enabled;
 
     if( field_list->table_count > 0 && field_list->table_ids != NULL )
@@ -620,75 +632,6 @@ int swq_identify_field( const char *token, swq_field_list *field_list,
     else
         tables_enabled = FALSE;
 
-/* -------------------------------------------------------------------- */
-/*      Parse out table name if present, and table support enabled.     */
-/* -------------------------------------------------------------------- */
-    if( tables_enabled && strchr(token, '.') != NULL )
-    {
-        int dot_offset = (int)(strchr(token,'.') - token);
-
-        osTableName = token;
-        osTableName.resize(dot_offset);
-        field_token = token + dot_offset + 1;
-
-#ifdef notdef
-        /* We try to detect if a.b is the a.b field */
-        /* of the main table, or the b field of the a table */
-        /* If both exists, report an error. */
-        /* This works, but I'm not sure this is a good idea to */
-        /* enable that. It is a sign that our SQL grammar is somewhat */
-        /* ambiguous */
-
-        swq_field_type eTypeWithTablesEnabled;
-        int            nTableIdWithTablesEnabled;
-        int nRetWithTablesEnabled = swq_identify_field_internal(
-            field_token, osTableName.c_str(), field_list,
-            &eTypeWithTablesEnabled, &nTableIdWithTablesEnabled, TRUE);
-
-        swq_field_type eTypeWithTablesDisabled;
-        int            nTableIdWithTablesDisabled;
-        int nRetWithTablesDisabled = swq_identify_field_internal(
-            token, "", field_list,
-            &eTypeWithTablesDisabled, &nTableIdWithTablesDisabled, FALSE);
-
-        if( nRetWithTablesEnabled >= 0 && nRetWithTablesDisabled >= 0 )
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                        "Ambiguous situation. Both %s exists as a field in "
-                        "main table and %s exists as a field in %s table",
-                        token, osTableName.c_str(), field_token);
-            return -1;
-        }
-        else if( nRetWithTablesEnabled >= 0 )
-        {
-            if( this_type != NULL ) *this_type = eTypeWithTablesEnabled;
-            if( table_id != NULL ) *table_id = nTableIdWithTablesEnabled;
-            return nRetWithTablesEnabled;
-        }
-        else if( nRetWithTablesDisabled >= 0 )
-        {
-            if( this_type != NULL ) *this_type = eTypeWithTablesDisabled;
-            if( table_id != NULL ) *table_id = nTableIdWithTablesDisabled;
-            return nRetWithTablesDisabled;
-        }
-        else
-        {
-            return -1;
-        }
-#endif
-    }
-
-    return swq_identify_field_internal(field_token, osTableName.c_str(), field_list,
-                                       this_type, table_id, tables_enabled);
-}
-
-
-int swq_identify_field_internal( const char *field_token, const char* table_name,
-                                 swq_field_list *field_list,
-                                 swq_field_type *this_type, int *table_id, int tables_enabled )
-
-{
-    int i;
 /* -------------------------------------------------------------------- */
 /*      Search for matching field.                                      */
 /* -------------------------------------------------------------------- */
@@ -710,6 +653,8 @@ int swq_identify_field_internal( const char *field_token, const char* table_name
 //            if( t_id != 0 && table_name[0] == '\0' )
 //                continue;
         }
+        else if( table_name[0] != '\0' )
+            break;
 
         /* We have a match, return various information */
         if( this_type != NULL )
@@ -727,6 +672,70 @@ int swq_identify_field_internal( const char *field_token, const char* table_name
             return i;
         else
             return field_list->ids[i];
+    }
+
+/* -------------------------------------------------------------------- */
+/*      When there is no ambiguity, try to accept quoting errors...     */
+/* -------------------------------------------------------------------- */
+    if( bOneMoreTimeOK && !CSLTestBoolean(CPLGetConfigOption("OGR_SQL_STRICT", "FALSE")) )
+    {
+        if( table_name[0] )
+        {
+            CPLString osAggregatedName(CPLSPrintf("%s.%s", table_name, field_token));
+
+            // Check there's no table called table_name, or a field called with
+            // the aggregated name
+            for( i = 0; i < field_list->count; i++ )
+            {
+                if( tables_enabled )
+                {
+                    int t_id = field_list->table_ids[i];
+                    if( EQUAL(table_name,field_list->table_defs[t_id].table_alias) )
+                        break;
+                }
+            }
+            if( i == field_list->count )
+            {
+                int ret = swq_identify_field_internal( NULL,
+                                            osAggregatedName, 
+                                            field_list,
+                                            this_type, table_id, FALSE );
+                if( ret >= 0 )
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                            "Passed field name %s.%s should have been surrounded by double quotes. "
+                            "Accepted since there is no ambiguity...",
+                            table_name, field_token);
+                }
+                return ret;
+            }
+        }
+        else
+        {
+            // If the fieldname is a.b (and there's no . in b), then 
+            // it might be an error in providing it as being quoted where it should
+            // not have been quoted.
+            const char* pszDot = strchr(field_token, '.');
+            if( pszDot && strchr(pszDot+1, '.') == NULL )
+            {
+                CPLString osTableName(field_token);
+                osTableName.resize(pszDot - field_token);
+                CPLString osFieldName(pszDot + 1);
+
+                int ret = swq_identify_field_internal( osTableName,
+                                            osFieldName, 
+                                            field_list,
+                                            this_type, table_id, FALSE );
+                if( ret >= 0 )
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                            "Passed field name %s should NOT have been surrounded by double quotes. "
+                            "Accepted since there is no ambiguity...",
+                            field_token);
+                }
+                return ret;
+            }
+        }
     }
 
 /* -------------------------------------------------------------------- */

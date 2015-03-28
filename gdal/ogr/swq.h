@@ -99,7 +99,8 @@ typedef swq_expr_node *(*swq_op_evaluator)(swq_expr_node *op,
 typedef swq_field_type (*swq_op_checker)( swq_expr_node *op );
 
 class swq_expr_node {
-    static void   Quote( CPLString &, char chQuote = '\'' );
+    static CPLString   QuoteIfNecessary( const CPLString &, char chQuote = '\'' );
+    static CPLString   Quote( const CPLString &, char chQuote = '\'' );
 public:
     swq_expr_node();
 
@@ -135,7 +136,8 @@ public:
 
     /* only for SNT_CONSTANT */
     int         is_null;
-    char        *string_value;
+    char        *table_name;
+    char        *string_value; /* column name */
     GIntBig     int_value;
     double      float_value;
     OGRGeometry *geometry_value;
@@ -194,7 +196,8 @@ int swqparse( swq_parse_context *context );
 int swqlex( swq_expr_node **ppNode, swq_parse_context *context );
 void swqerror( swq_parse_context *context, const char *msg );
 
-int swq_identify_field( const char *token, swq_field_list *field_list,
+int swq_identify_field( const char* table_name,
+                        const char *token, swq_field_list *field_list,
                         swq_field_type *this_type, int *table_id );
 
 CPLErr swq_expr_compile( const char *where_clause, 
@@ -238,6 +241,7 @@ typedef enum {
 
 typedef struct {
     swq_col_func col_func;
+    char         *table_name;
     char         *field_name;
     char         *field_alias;
     int          table_index;
@@ -265,6 +269,7 @@ typedef struct {
 } swq_summary;
 
 typedef struct {
+    char *table_name;
     char *field_name;
     int   table_index;
     int   field_index;
@@ -274,11 +279,13 @@ typedef struct {
 typedef struct {
     int        secondary_table;
 
+    char      *primary_table_name;
     char      *primary_field_name;
     int        primary_field;
 
     swq_op     op;
 
+    char      *secondary_table_name;
     char      *secondary_field_name;
     int        secondary_field;
 } swq_join_def;
@@ -306,14 +313,16 @@ public:
     swq_table_def *table_defs;
 
     void        PushJoin( int iSecondaryTable,
+                          const char *pszPrimaryTable,
                           const char *pszPrimaryField,
+                          const char *pszSecondaryTable,
                           const char *pszSecondaryField );
     int         join_count;
     swq_join_def *join_defs;
 
     swq_expr_node *where_expr;
 
-    void        PushOrderBy( const char *pszFieldName, int bAscending );
+    void        PushOrderBy( const char* pszTableName, const char *pszFieldName, int bAscending );
     int         order_specs;
     swq_order_def *order_defs;
 

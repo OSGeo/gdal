@@ -249,10 +249,18 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( GDALDataset *poSrcDS,
         }
         else
         {
+            CPLString osName;
+            if( psColDef->table_name[0] )
+            {
+                osName = psColDef->table_name;
+                osName += ".";
+            }
+            osName += psColDef->field_name;
+
             if( bIsGeometry )
-                oGFDefn.SetName(psColDef->field_name);
+                oGFDefn.SetName(osName);
             else
-                oFDefn.SetName( psColDef->field_name );
+                oFDefn.SetName(osName);
         }
 
         if( psColDef->col_func == SWQCF_COUNT )
