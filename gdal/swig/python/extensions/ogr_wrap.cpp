@@ -3490,6 +3490,8 @@ OGRErrMessages( int rc ) {
     return "OGR Error: Unsupported SRS";
   case OGRERR_INVALID_HANDLE:
     return "OGR Error: Invalid handle";
+  case OGRERR_NON_EXISTING_FEATURE:
+    return "OGR Error: Non existing feature";
   default:
     return "OGR Error: Unknown";
   }
@@ -3620,7 +3622,7 @@ SWIGINTERN GIntBig OGRLayerShadow_GetFeatureCount(OGRLayerShadow *self,int force
 SWIGINTERN void OGRLayerShadow_GetExtent(OGRLayerShadow *self,double argout[4],int *isvalid=NULL,int force=1,int can_return_null=0,int geom_field=0){
     OGRErr eErr = OGR_L_GetExtentEx(self, geom_field, (OGREnvelope*)argout, force);
     if (can_return_null)
-        *isvalid = (eErr == OGRERR_NONE);
+        *isvalid = (eErr == 0);
     else
         *isvalid = TRUE;
     return;
@@ -3643,7 +3645,7 @@ SWIGINTERN OGRErr OGRLayerShadow_ReorderFields(OGRLayerShadow *self,int nList,in
       CPLError(CE_Failure, CPLE_IllegalArg,
                "List should have %d elements",
                OGR_FD_GetFieldCount(OGR_L_GetLayerDefn(self)));
-      return OGRERR_FAILURE;
+      return 6;
     }
     return OGR_L_ReorderFields(self, pList);
   }
@@ -3731,7 +3733,7 @@ SWIGINTERN OGRErr OGRFeatureShadow_SetGeomField__SWIG_1(OGRFeatureShadow *self,c
       if (iField == -1)
       {
         CPLError(CE_Failure, 1, "No such field: '%s'", name);
-        return OGRERR_FAILURE;
+        return 6;
       }
       else
         return OGR_F_SetGeomField(self, iField, geom);
@@ -3744,7 +3746,7 @@ SWIGINTERN OGRErr OGRFeatureShadow_SetGeomFieldDirectly__SWIG_1(OGRFeatureShadow
       if (iField == -1)
       {
         CPLError(CE_Failure, 1, "No such field: '%s'", name);
-        return OGRERR_FAILURE;
+        return 6;
       }
       else
         return OGR_F_SetGeomFieldDirectly(self, iField, geom);
@@ -3864,21 +3866,21 @@ SWIGINTERN OGRErr OGRFeatureShadow_GetFieldAsBinary__SWIG_0(OGRFeatureShadow *se
     GByte* pabyBlob = OGR_F_GetFieldAsBinary(self, id, nLen);
     *pBuf = (char*)malloc(*nLen);
     memcpy(*pBuf, pabyBlob, *nLen);
-    return OGRERR_NONE;
+    return 0;
   }
 SWIGINTERN OGRErr OGRFeatureShadow_GetFieldAsBinary__SWIG_1(OGRFeatureShadow *self,char const *name,int *nLen,char **pBuf){
       int id = OGR_F_GetFieldIndex(self, name);
       if (id == -1)
       {
         CPLError(CE_Failure, 1, "No such field: '%s'", name);
-        return OGRERR_FAILURE;
+        return 6;
       }
       else
       {
         GByte* pabyBlob = OGR_F_GetFieldAsBinary(self, id, nLen);
         *pBuf = (char*)malloc(*nLen);
         memcpy(*pBuf, pabyBlob, *nLen);
-        return OGRERR_NONE;
+        return 0;
       }
   }
 SWIGINTERN bool OGRFeatureShadow_IsFieldSet__SWIG_0(OGRFeatureShadow *self,int id){
@@ -3992,7 +3994,7 @@ SWIGINTERN OGRErr OGRFeatureShadow_SetFromWithMap(OGRFeatureShadow *self,OGRFeat
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "The size of map doesn't match with the field count of the source feature");
-        return OGRERR_FAILURE;
+        return 6;
     }
     return OGR_F_SetFromWithMap(self, other, forgiving, pList);
   }
@@ -28294,6 +28296,16 @@ SWIG_init(void) {
   SWIG_Python_SetConstant(d, "ODrCCreateDataSource",SWIG_FromCharPtr("CreateDataSource"));
   SWIG_Python_SetConstant(d, "ODrCDeleteDataSource",SWIG_FromCharPtr("DeleteDataSource"));
   SWIG_Python_SetConstant(d, "OLMD_FID64",SWIG_FromCharPtr("OLMD_FID64"));
+  SWIG_Python_SetConstant(d, "OGRERR_NONE",SWIG_From_int(static_cast< int >(0)));
+  SWIG_Python_SetConstant(d, "OGRERR_NOT_ENOUGH_DATA",SWIG_From_int(static_cast< int >(1)));
+  SWIG_Python_SetConstant(d, "OGRERR_NOT_ENOUGH_MEMORY",SWIG_From_int(static_cast< int >(2)));
+  SWIG_Python_SetConstant(d, "OGRERR_UNSUPPORTED_GEOMETRY_TYPE",SWIG_From_int(static_cast< int >(3)));
+  SWIG_Python_SetConstant(d, "OGRERR_UNSUPPORTED_OPERATION",SWIG_From_int(static_cast< int >(4)));
+  SWIG_Python_SetConstant(d, "OGRERR_CORRUPT_DATA",SWIG_From_int(static_cast< int >(5)));
+  SWIG_Python_SetConstant(d, "OGRERR_FAILURE",SWIG_From_int(static_cast< int >(6)));
+  SWIG_Python_SetConstant(d, "OGRERR_UNSUPPORTED_SRS",SWIG_From_int(static_cast< int >(7)));
+  SWIG_Python_SetConstant(d, "OGRERR_INVALID_HANDLE",SWIG_From_int(static_cast< int >(8)));
+  SWIG_Python_SetConstant(d, "OGRERR_NON_EXISTING_FEATURE",SWIG_From_int(static_cast< int >(9)));
   
   
   if ( OGRGetDriverCount() == 0 ) {

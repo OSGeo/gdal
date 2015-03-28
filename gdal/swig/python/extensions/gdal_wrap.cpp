@@ -3519,6 +3519,14 @@ int wrapper_VSIStatL( const char * utf8_path, StatBuf *psStatBufOut, int nFlags 
 }
 
 
+VSILFILE   *wrapper_VSIFOpenL( const char *utf8_path, const char *pszMode )
+{
+    if (!pszMode) /* would lead to segfault */
+        pszMode = "r";
+    return VSIFOpenL( utf8_path, pszMode );
+}
+
+
 int wrapper_VSIFWriteL( int nLen, char *pBuf, int size, int memb, VSILFILE * f)
 {
     if (nLen < size * memb)
@@ -4292,6 +4300,8 @@ OGRErrMessages( int rc ) {
     return "OGR Error: Unsupported SRS";
   case OGRERR_INVALID_HANDLE:
     return "OGR Error: Invalid handle";
+  case OGRERR_NON_EXISTING_FEATURE:
+    return "OGR Error: Non existing feature";
   default:
     return "OGR Error: Unknown";
   }
@@ -7384,7 +7394,7 @@ SWIGINTERN PyObject *_wrap_VSIFOpenL(PyObject *SWIGUNUSEDPARM(self), PyObject *a
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (VSILFILE *)VSIFOpenL((char const *)arg1,(char const *)arg2);
+    result = (VSILFILE *)wrapper_VSIFOpenL((char const *)arg1,(char const *)arg2);
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {

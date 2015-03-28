@@ -300,7 +300,20 @@ def ogr_gpkg_7():
     if lyr.GetFeatureCount() != 1:
         gdaltest.post_reason('delete feature did not delete')
         return 'fail'
-        
+
+    # Test updating non-existing feature
+    feat.SetFID(-10)
+    if lyr.SetFeature( feat ) != ogr.OGRERR_NON_EXISTING_FEATURE:
+        feat.Destroy()
+        gdaltest.post_reason( 'Expected failure of SetFeature().' )
+        return 'fail'
+
+    # Test deleting non-existing feature
+    if lyr.DeleteFeature( -10 ) != ogr.OGRERR_NON_EXISTING_FEATURE:
+        feat.Destroy()
+        gdaltest.post_reason( 'Expected failure of DeleteFeature().' )
+        return 'fail'
+
     # Delete the layer
     if gdaltest.gpkg_ds.DeleteLayer('field_test_layer') != 0:
         gdaltest.post_reason( 'got error code from DeleteLayer(field_test_layer)' )

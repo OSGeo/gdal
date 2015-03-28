@@ -354,7 +354,7 @@ typedef int OGRErr;
 
 #endif
 
-#if defined(SWIGCSHARP) || defined(SWIGJAVA)
+#if defined(SWIGCSHARP) || defined(SWIGJAVA) || defined(SWIGPYTHON)
 
 #define OGRERR_NONE                0
 #define OGRERR_NOT_ENOUGH_DATA     1    /* not enough data to deserialize */
@@ -364,6 +364,8 @@ typedef int OGRErr;
 #define OGRERR_CORRUPT_DATA        5
 #define OGRERR_FAILURE             6
 #define OGRERR_UNSUPPORTED_SRS     7
+#define OGRERR_INVALID_HANDLE      8
+#define OGRERR_NON_EXISTING_FEATURE 9
 
 #endif
 

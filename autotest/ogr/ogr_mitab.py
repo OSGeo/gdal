@@ -1071,11 +1071,8 @@ def ogr_mitab_26():
 
             if j == 1:
                 # Expected failure : already deleted feature
-                gdal.ErrorReset()
-                gdal.PushErrorHandler('CPLQuietErrorHandler')
                 ret = lyr.DeleteFeature(int(nb_features/2))
-                gdal.PopErrorHandler()
-                if ret == 0 or gdal.GetLastErrorMsg() == '':
+                if ret != ogr.OGRERR_NON_EXISTING_FEATURE:
                     print(j)
                     print(nb_features)
                     gdaltest.post_reason('fail')
@@ -1089,10 +1086,8 @@ def ogr_mitab_26():
                     return 'fail'
 
                 # Expected failure : illegal feature id
-                gdal.PushErrorHandler('CPLQuietErrorHandler')
                 ret = lyr.DeleteFeature(nb_features+1)
-                gdal.PopErrorHandler()
-                if ret == 0 or gdal.GetLastErrorMsg() == '':
+                if ret != ogr.OGRERR_NON_EXISTING_FEATURE:
                     print(j)
                     print(nb_features)
                     gdaltest.post_reason('fail')

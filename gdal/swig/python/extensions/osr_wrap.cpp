@@ -3197,6 +3197,8 @@ OGRErrMessages( int rc ) {
     return "OGR Error: Unsupported SRS";
   case OGRERR_INVALID_HANDLE:
     return "OGR Error: Invalid handle";
+  case OGRERR_NON_EXISTING_FEATURE:
+    return "OGR Error: Non existing feature";
   default:
     return "OGR Error: Unknown";
   }

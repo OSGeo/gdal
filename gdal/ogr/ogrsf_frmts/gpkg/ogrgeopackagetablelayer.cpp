@@ -1266,12 +1266,14 @@ OGRErr OGRGeoPackageTableLayer::ISetFeature( OGRFeature *poFeature )
         sqlite3_stmt* hBackupStmt = m_poUpdateStatement;
         m_poUpdateStatement = NULL;
 
-        DeleteFeature( poFeature->GetFID() );
+        OGRErr errOgr = DeleteFeature( poFeature->GetFID() );
+        if ( errOgr != OGRERR_NONE )
+            return errOgr;
 
         m_poUpdateStatement = hBackupStmt;
 
         /* Bind values onto the statement now */
-        OGRErr errOgr = FeatureBindInsertParameters(poFeature, m_poUpdateStatement, TRUE, TRUE);
+        errOgr = FeatureBindInsertParameters(poFeature, m_poUpdateStatement, TRUE, TRUE);
         if ( errOgr != OGRERR_NONE )
             return errOgr;
     }
@@ -1321,7 +1323,8 @@ OGRErr OGRGeoPackageTableLayer::ISetFeature( OGRFeature *poFeature )
     sqlite3_clear_bindings(m_poUpdateStatement);
 
     /* Only update the envelope if we changed something */
-    if (sqlite3_changes(m_poDS->GetDB()) )
+    OGRErr eErr = (sqlite3_changes(m_poDS->GetDB()) > 0) ? OGRERR_NONE : OGRERR_NON_EXISTING_FEATURE;
+    if (eErr == OGRERR_NONE)
     {
         /* Update the layer extents with this new object */
         if ( IsGeomFieldSet(poFeature) )
@@ -1333,7 +1336,7 @@ OGRErr OGRGeoPackageTableLayer::ISetFeature( OGRFeature *poFeature )
     }
 
     /* All done! */
-    return OGRERR_NONE;
+    return eErr;
 }
 
 
@@ -1520,8 +1523,10 @@ OGRErr OGRGeoPackageTableLayer::DeleteFeature(GIntBig nFID)
     soSQL.Printf("DELETE FROM \"%s\" WHERE \"%s\" = " CPL_FRMT_GIB,
                  m_pszTableName, m_pszFidColumn, nFID);
 
-    
-    return SQLCommand(m_poDS->GetDB(), soSQL.c_str());
+    OGRErr eErr = SQLCommand(m_poDS->GetDB(), soSQL.c_str());
+    if( eErr == OGRERR_NONE )
+        eErr = (sqlite3_changes(m_poDS->GetDB()) > 0) ? OGRERR_NONE : OGRERR_NON_EXISTING_FEATURE;
+    return eErr;
 }
 
 /************************************************************************/

@@ -484,6 +484,17 @@ def ogr_sqlite_9():
         gdaltest.post_reason( 'PRFEDEA apparently not reset as expected.' )
         return 'fail'
 
+    # Test updating non-existing feature
+    feat_read.SetFID(-10)
+    if gdaltest.sl_lyr.SetFeature( feat_read ) != ogr.OGRERR_NON_EXISTING_FEATURE:
+        gdaltest.post_reason( 'Expected failure of SetFeature().' )
+        return 'fail'
+
+    # Test deleting non-existing feature
+    if gdaltest.sl_lyr.DeleteFeature( -10 ) != ogr.OGRERR_NON_EXISTING_FEATURE:
+        gdaltest.post_reason( 'Expected failure of DeleteFeature().' )
+        return 'fail'
+
     feat_read.Destroy()
     feat_read_2.Destroy()
 
