@@ -51,6 +51,7 @@ OGROCIStatement::OGROCIStatement( OGROCISession *poSessionIn )
     panFieldMap = NULL;
 
     pszCommandText = NULL;
+    nAffectedRows = 0;
 }
 
 /************************************************************************/
@@ -261,7 +262,17 @@ CPLErr OGROCIStatement::Execute( const char *pszSQLStatement,
         return CE_Failure;
 
     if( !bSelect )
+    {
+        ub4 row_count;
+        if( poSession->Failed( 
+            OCIAttrGet( hStatement, OCI_HTYPE_STMT,
+                        &row_count, 0, OCI_ATTR_ROW_COUNT, poSession->hError ),
+                        "OCIAttrGet(OCI_ATTR_ROW_COUNT)") )
+            return CE_Failure;
+        nAffectedRows = row_count;
+
         return CE_None;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Count the columns.                                              */

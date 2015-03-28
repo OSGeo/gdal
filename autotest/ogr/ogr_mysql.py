@@ -421,6 +421,19 @@ def ogr_mysql_9():
         gdaltest.post_reason( 'Geometry update failed' )
         return 'fail'
 
+    # Test updating non-existing feature
+    feat.SetFID(-10)
+    if gdaltest.mysql_lyr.SetFeature( feat ) != ogr.OGRERR_NON_EXISTING_FEATURE:
+        feat.Destroy()
+        gdaltest.post_reason( 'Expected failure of SetFeature().' )
+        return 'fail'
+
+    # Test deleting non-existing feature
+    if gdaltest.mysql_lyr.DeleteFeature( -10 ) != ogr.OGRERR_NON_EXISTING_FEATURE:
+        feat.Destroy()
+        gdaltest.post_reason( 'Expected failure of DeleteFeature().' )
+        return 'fail'
+
     feat.Destroy()
 
     return 'success'

@@ -143,6 +143,13 @@ Behaviour changes:
     (at the layer level). This is no longer possible since they are now redirected
     to dataset transactions, that explicitely do not support it.
 
+H) RFC 55: Refined SetFeature() and DeleteFeature() semantics
+
+Link: http://trac.osgeo.org/gdal/wiki/rfc55_refined_setfeature_deletefeature_semantics
+
+Behaviour changes:
+    * Drivers will now return OGRERR_NON_EXISTING_FEATURE when calling SetFeature()
+      or DeleteFeature() with a feature id that does not exist.
 
 MIGRATION GUIDE FROM GDAL 1.10 to GDAL 1.11
 -------------------------------------------

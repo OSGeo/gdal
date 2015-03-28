@@ -160,6 +160,8 @@ class CPL_DLL OGROCIStatement {
     OGRFeatureDefn *GetResultDefn() { return poDefn; }
 
     char       **SimpleFetchRow();
+    
+    int          GetAffectedRows() const { return nAffectedRows; }
 
   private:    
     OGROCISession *poSession;
@@ -173,6 +175,7 @@ class CPL_DLL OGROCIStatement {
 
     int           nRawColumnCount;
     int           *panFieldMap;
+    int           nAffectedRows;
 };
 
 /************************************************************************/

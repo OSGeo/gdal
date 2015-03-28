@@ -2335,7 +2335,7 @@ def ogr_shape_53():
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ret = lyr.DeleteFeature(-1)
     gdal.PopErrorHandler()
-    if ret == 0 or gdal.GetLastErrorMsg() == '':
+    if ret == 0:
         gdaltest.post_reason('failed')
         return 'fail'
 
@@ -2353,7 +2353,7 @@ def ogr_shape_53():
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ret = lyr.DeleteFeature(0)
     gdal.PopErrorHandler()
-    if ret == 0 or gdal.GetLastErrorMsg() == '':
+    if ret == 0:
         gdaltest.post_reason('failed')
         return 'fail'
 

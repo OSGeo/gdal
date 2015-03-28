@@ -720,7 +720,7 @@ OGRErr OGRMySQLTableLayer::DeleteFeature( GIntBig nFID )
         mysql_free_result( hResult );
     hResult = NULL;
     
-    return OGRERR_NONE;
+    return mysql_affected_rows( poDS->GetConn() ) > 0 ? OGRERR_NONE : OGRERR_NON_EXISTING_FEATURE;
 }
 
 

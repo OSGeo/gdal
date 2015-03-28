@@ -259,6 +259,18 @@ def ogr_fgdb_DeleteField():
     feat = lyr.GetNextFeature()
     feat.SetField("str2", "foo2_\xc3\xa9")
     lyr.SetFeature(feat)
+    
+    # Test updating non-existing feature
+    feat.SetFID(-10)
+    if lyr.SetFeature( feat ) != ogr.OGRERR_NON_EXISTING_FEATURE:
+        gdaltest.post_reason( 'Expected failure of SetFeature().' )
+        return 'fail'
+
+    # Test deleting non-existing feature
+    if lyr.DeleteFeature( -10 ) != ogr.OGRERR_NON_EXISTING_FEATURE:
+        gdaltest.post_reason( 'Expected failure of DeleteFeature().' )
+        return 'fail'
+
     feat = None
     ds = None
 

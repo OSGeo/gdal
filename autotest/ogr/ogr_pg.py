@@ -525,6 +525,13 @@ def ogr_pg_9():
         gdaltest.post_reason( 'Geometry update failed. null geometry expected' )
         return 'fail'
 
+    # Test updating non-existing feature
+    feat.SetFID(-10)
+    if gdaltest.pg_lyr.SetFeature( feat ) != ogr.OGRERR_NON_EXISTING_FEATURE:
+        feat.Destroy()
+        gdaltest.post_reason( 'Expected failure of SetFeature().' )
+        return 'fail'
+
     feat.Destroy()
 
     return 'success'
@@ -552,13 +559,17 @@ def ogr_pg_10():
     feat = gdaltest.pg_lyr.GetNextFeature()
     gdaltest.pg_lyr.SetAttributeFilter( None )
 
-    if feat is None:
-        return 'success'
+    if feat is not None:
+        feat.Destroy()
+        gdaltest.post_reason( 'DeleteFeature() seems to have had no effect.' )
+        return 'fail'
 
-    feat.Destroy()
-    gdaltest.post_reason( 'DeleteFeature() seems to have had no effect.' )
+    # Test deleting non-existing feature
+    if gdaltest.pg_lyr.DeleteFeature( -10 ) != ogr.OGRERR_NON_EXISTING_FEATURE:
+        gdaltest.post_reason( 'Expected failure of DeleteFeature().' )
+        return 'fail'
 
-    return 'fail'
+    return 'success'
 
 ###############################################################################
 # Create table from data/poly.shp in INSERT mode.
