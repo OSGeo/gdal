@@ -1095,6 +1095,18 @@ def ogr_rfc28_43():
         return 'fail'
     gdaltest.ds.ReleaseResultSet( lyr )
 
+    lyr = ds.ExecuteSQL( "SELECT DISTINCT myint64 FROM test ORDER BY myint64" )
+    f = lyr.GetNextFeature()
+    if f.GetField('myint64') != -1000000000000:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f.GetField('myint64') != 100000000000:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    gdaltest.ds.ReleaseResultSet( lyr )
     return 'success'
 
 ###############################################################################
