@@ -75,7 +75,8 @@ extern int bOGRAPISpyEnabled;
 int OGRAPISpyOpenTakeSnapshot(const char* pszName, int bUpdate);
 void OGRAPISpyOpen(const char* pszName, int bUpdate, int iSnapshot,
                    GDALDatasetH* phDS);
-void OGRAPISpyClose(OGRDataSourceH hDS);
+void OGRAPISpyPreClose(OGRDataSourceH hDS);
+void OGRAPISpyPostClose(OGRDataSourceH hDS);
 void OGRAPISpyCreateDataSource(OGRSFDriverH hDriver, const char* pszName,
                                char** papszOptions, OGRDataSourceH hDS);
 void OGRAPISpyDeleteDataSource(OGRSFDriverH hDriver, const char* pszName);
@@ -97,7 +98,7 @@ void OGRAPISpy_DS_CreateLayer( OGRDataSourceH hDS,
                                OGRwkbGeometryType eType,
                                char ** papszOptions,
                                OGRLayerH hLayer);
-void OGRAPISpy_DS_DeleteLayer( OGRDataSourceH hDS, int iLayer, OGRErr eErr );
+void OGRAPISpy_DS_DeleteLayer( OGRDataSourceH hDS, int iLayer );
 
 void OGRAPISpy_Dataset_StartTransaction( GDALDatasetH hDS, int bForce );
 void OGRAPISpy_Dataset_CommitTransaction( GDALDatasetH hDS );
@@ -150,6 +151,19 @@ void OGRAPISpy_L_GetName( OGRLayerH hLayer );
 void OGRAPISpy_L_GetGeomType( OGRLayerH hLayer );
 void OGRAPISpy_L_SetIgnoredFields( OGRLayerH hLayer,
                                    const char** papszIgnoredFields );
+
+void OGRAPISpy_FD_GetFieldCount(OGRFeatureDefnH hDefn);
+void OGRAPISpy_FD_GetFieldDefn(OGRFeatureDefnH hDefn, int iField,
+                               OGRFieldDefnH hGeomField);
+void OGRAPISpy_FD_GetFieldIndex(OGRFeatureDefnH hDefn, const char* pszFieldName);
+
+void OGRAPISpy_Fld_GetXXXX(OGRFieldDefnH hField, const char* pszOp);
+
+void OGRAPISpy_FD_GetGeomFieldCount(OGRFeatureDefnH hDefn);
+void OGRAPISpy_FD_GetGeomFieldDefn(OGRFeatureDefnH hDefn, int iGeomField,
+                                   OGRGeomFieldDefnH hGeomField);
+void OGRAPISpy_FD_GetGeomFieldIndex(OGRFeatureDefnH hDefn, const char* pszFieldName);
+void OGRAPISpy_GFld_GetXXXX(OGRGeomFieldDefnH hGeomField, const char* pszOp);
 
 CPL_C_END
 

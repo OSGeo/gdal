@@ -47,28 +47,69 @@
 int bOGRAPISpyEnabled = FALSE;
 static CPLString osSnapshotPath, osSpyFile;
 static FILE* fpSpyFile = NULL;
+extern "C" int CPL_DLL GDALIsInGlobalDestructor(void);
+
+class LayerDescription
+{
+    public:
+        int iLayer;
+
+        LayerDescription(): iLayer(-1) {}
+        LayerDescription(int iLayer): iLayer(iLayer) {}
+};
 
 class DatasetDescription
 {
     public:
         int iDS;
-        std::map<OGRLayerH, int> oMapLayer;
+        std::map<OGRLayerH, LayerDescription> oMapLayer;
 
         DatasetDescription() : iDS(-1) {}
         DatasetDescription(int iDS) : iDS(iDS) {}
         ~DatasetDescription();
 };
 
+class FeatureDefnDescription
+{
+    public:
+        OGRFeatureDefnH hFDefn;
+        int iUniqueNumber;
+        std::map<OGRFieldDefnH, int> oMapFieldDefn;
+        std::map<OGRGeomFieldDefnH, int> oMapGeomFieldDefn;
+
+        FeatureDefnDescription(): hFDefn(NULL), iUniqueNumber(-1) {}
+        FeatureDefnDescription(OGRFeatureDefnH hFDefn, int iUniqueNumber): hFDefn(hFDefn), iUniqueNumber(iUniqueNumber) {}
+        void Free();
+};
+
 static std::map<OGRDataSourceH, DatasetDescription> oMapDS;
 static std::map<OGRLayerH, CPLString> oGlobalMapLayer;
 static OGRLayerH hLayerGetNextFeature = NULL;
 static OGRLayerH hLayerGetLayerDefn = NULL;
+static int bDeferGetFieldCount = FALSE;
 static int nGetNextFeatureCalls = 0;
 static std::set<CPLString> aoSetCreatedDS;
+static std::map<OGRFeatureDefnH, FeatureDefnDescription> oMapFDefn;
+static std::map<OGRGeomFieldDefnH, CPLString> oGlobalMapGeomFieldDefn;
+static std::map<OGRFieldDefnH, CPLString> oGlobalMapFieldDefn;
+
+void FeatureDefnDescription::Free()
+{
+    {
+        std::map<OGRGeomFieldDefnH, int>::iterator oIter = oMapGeomFieldDefn.begin();
+        for(; oIter != oMapGeomFieldDefn.end(); ++oIter)
+            oGlobalMapGeomFieldDefn.erase(oIter->first);
+    }
+    {
+        std::map<OGRFieldDefnH, int>::iterator oIter = oMapFieldDefn.begin();
+        for(; oIter != oMapFieldDefn.end(); ++oIter)
+            oGlobalMapFieldDefn.erase(oIter->first);
+    }
+}
 
 DatasetDescription::~DatasetDescription()
 {
-    std::map<OGRLayerH, int>::iterator oIter = oMapLayer.begin();
+    std::map<OGRLayerH, LayerDescription>::iterator oIter = oMapLayer.begin();
     for(; oIter != oMapLayer.end(); ++oIter)
         oGlobalMapLayer.erase(oIter->first);
 }
@@ -203,7 +244,7 @@ static CPLString OGRAPISpyGetAndRegisterLayerVar(OGRDataSourceH hDS,
         oGlobalMapLayer[hLayer] = OGRAPISpyGetDSVar(hDS) + "_" + CPLSPrintf("lyr%d", i);
     }
     return OGRAPISpyGetDSVar(hDS) + "_" +
-           CPLSPrintf("lyr%d", (hLayer) ? dd.oMapLayer[hLayer] : 0);
+           CPLSPrintf("lyr%d", (hLayer) ? dd.oMapLayer[hLayer].iLayer : 0);
 }
 
 static CPLString OGRAPISpyGetSRS(OGRSpatialReferenceH hSpatialRef)
@@ -289,14 +330,38 @@ static CPLString OGRAPISpyGetFieldType(OGRFieldType eType)
     return "error";
 }
 
-static void OGRAPISpyFlushDiffered()
+static CPLString OGRAPISpyGetFeatureDefnVar(OGRFeatureDefnH hFDefn)
+{
+    std::map<OGRFeatureDefnH, FeatureDefnDescription>::iterator oIter = oMapFDefn.find(hFDefn);
+    int i;
+    if( oIter == oMapFDefn.end() )
+    {
+        i = (int)oMapFDefn.size() + 1;
+        oMapFDefn[hFDefn] = FeatureDefnDescription(hFDefn, i);
+        ((OGRFeatureDefn*)hFDefn)->Reference(); // so that we can check when they are no longer used
+    }
+    else
+        i = oIter->second.iUniqueNumber;
+    return CPLSPrintf("fdefn%d", i);
+}
+
+static void OGRAPISpyFlushDefered()
 {
     OGRAPISpyFileReopen();
     if( hLayerGetLayerDefn != NULL )
     {
-        fprintf(fpSpyFile, "%s_defn = %s.GetLayerDefn()\n",
-            OGRAPISpyGetLayerVar(hLayerGetLayerDefn).c_str(),
+        OGRFeatureDefnH hDefn = (OGRFeatureDefnH)(((OGRLayer*)hLayerGetLayerDefn)->GetLayerDefn());
+        fprintf(fpSpyFile, "%s = %s.GetLayerDefn()\n",
+            OGRAPISpyGetFeatureDefnVar(hDefn).c_str(),
             OGRAPISpyGetLayerVar(hLayerGetLayerDefn).c_str());
+
+        if( bDeferGetFieldCount )
+        {
+            fprintf(fpSpyFile, "%s.GetFieldCount()\n",
+                    OGRAPISpyGetFeatureDefnVar(hDefn).c_str());
+            bDeferGetFieldCount = FALSE;
+        }
+
         hLayerGetLayerDefn = NULL;
     }
 
@@ -322,7 +387,7 @@ int OGRAPISpyOpenTakeSnapshot(const char* pszName, int bUpdate)
     if( !OGRAPISpyEnabled() || !bUpdate || osSnapshotPath.size() == 0 ||
         aoSetCreatedDS.find(pszName) != aoSetCreatedDS.end() )
         return -1;
-    OGRAPISpyFlushDiffered();
+    OGRAPISpyFlushDefered();
 
     VSIStatBufL sStat;
     if( VSIStatL( pszName, &sStat ) == 0 )
@@ -380,7 +445,7 @@ int OGRAPISpyOpenTakeSnapshot(const char* pszName, int bUpdate)
 void OGRAPISpyOpen(const char* pszName, int bUpdate, int iSnapshot, GDALDatasetH* phDS)
 {
     if( !OGRAPISpyEnabled() ) return;
-    OGRAPISpyFlushDiffered();
+    OGRAPISpyFlushDefered();
 
     CPLString osName;
     if( iSnapshot > 0 )
@@ -405,19 +470,44 @@ void OGRAPISpyOpen(const char* pszName, int bUpdate, int iSnapshot, GDALDatasetH
     OGRAPISpyFileClose();
 }
 
-void OGRAPISpyClose(OGRDataSourceH hDS)
+void OGRAPISpyPreClose(OGRDataSourceH hDS)
 {
-    OGRAPISpyFlushDiffered();
+    OGRAPISpyFlushDefered();
     fprintf(fpSpyFile, "ds%d = None\n", oMapDS[hDS].iDS);
     oMapDS.erase(hDS);
     OGRAPISpyFileClose();
+}
+
+void OGRAPISpyPostClose(OGRDataSourceH hDS)
+{
+    if( !GDALIsInGlobalDestructor() )
+    {
+        std::map<OGRFeatureDefnH, FeatureDefnDescription>::iterator oIter =
+                                                                oMapFDefn.begin();
+        std::vector<OGRFeatureDefnH> oArray;
+        for(; oIter != oMapFDefn.end(); ++oIter)
+        {
+            FeatureDefnDescription& featureDefnDescription = oIter->second;
+            if( ((OGRFeatureDefn*)featureDefnDescription.hFDefn)->GetReferenceCount() == 1 )
+            {
+                oArray.push_back(featureDefnDescription.hFDefn);
+            }
+        }
+        for(size_t i = 0; i < oArray.size(); i++)
+        {
+            FeatureDefnDescription& featureDefnDescription = oMapFDefn[oArray[i]];
+            ((OGRFeatureDefn*)featureDefnDescription.hFDefn)->Release();
+            featureDefnDescription.Free();
+            oMapFDefn.erase(oArray[i]);
+        }
+    }
 }
 
 void OGRAPISpyCreateDataSource(OGRSFDriverH hDriver, const char* pszName,
                                char** papszOptions, OGRDataSourceH hDS)
 {
     if( !OGRAPISpyEnabled() ) return;
-    OGRAPISpyFlushDiffered();
+    OGRAPISpyFlushDefered();
     if( hDS != NULL )
         fprintf(fpSpyFile, "%s = ", OGRAPISpyGetDSVar(hDS).c_str());
     fprintf(fpSpyFile, "ogr.GetDriverByName('%s').CreateDataSource(%s, options = %s)\n",
@@ -434,7 +524,7 @@ void OGRAPISpyCreateDataSource(OGRSFDriverH hDriver, const char* pszName,
 void OGRAPISpyDeleteDataSource(OGRSFDriverH hDriver, const char* pszName)
 {
     if( !OGRAPISpyEnabled() ) return;
-    OGRAPISpyFlushDiffered();
+    OGRAPISpyFlushDefered();
     fprintf(fpSpyFile, "ogr.GetDriverByName('%s').DeleteDataSource(%s)\n",
             GDALGetDriverShortName((GDALDriverH)hDriver),
             OGRAPISpyGetString(pszName).c_str());
@@ -444,7 +534,7 @@ void OGRAPISpyDeleteDataSource(OGRSFDriverH hDriver, const char* pszName)
 
 void OGRAPISpy_DS_GetLayer( OGRDataSourceH hDS, int iLayer, OGRLayerH hLayer )
 {
-    OGRAPISpyFlushDiffered();
+    OGRAPISpyFlushDefered();
     if( hLayer != NULL )
         fprintf(fpSpyFile, "%s = ",
             OGRAPISpyGetAndRegisterLayerVar(hDS, hLayer).c_str());
@@ -456,7 +546,7 @@ void OGRAPISpy_DS_GetLayer( OGRDataSourceH hDS, int iLayer, OGRLayerH hLayer )
 
 void OGRAPISpy_DS_GetLayerCount( OGRDataSourceH hDS )
 {
-    OGRAPISpyFlushDiffered();
+    OGRAPISpyFlushDefered();
     fprintf(fpSpyFile, "%s.GetLayerCount()\n", OGRAPISpyGetDSVar(hDS).c_str());
     OGRAPISpyFileClose();
 }
@@ -464,7 +554,7 @@ void OGRAPISpy_DS_GetLayerCount( OGRDataSourceH hDS )
 void OGRAPISpy_DS_GetLayerByName( OGRDataSourceH hDS, const char* pszLayerName,
                                   OGRLayerH hLayer )
 {
-    OGRAPISpyFlushDiffered();
+    OGRAPISpyFlushDefered();
     if( hLayer != NULL )
         fprintf(fpSpyFile, "%s = ",
             OGRAPISpyGetAndRegisterLayerVar(hDS, hLayer).c_str());
@@ -480,7 +570,7 @@ void OGRAPISpy_DS_ExecuteSQL( OGRDataSourceH hDS,
                               const char *pszDialect,
                               OGRLayerH hLayer)
 {
-    OGRAPISpyFlushDiffered();
+    OGRAPISpyFlushDefered();
     if( hLayer != NULL )
         fprintf(fpSpyFile, "%s = ",
             OGRAPISpyGetAndRegisterLayerVar(hDS, hLayer).c_str());
@@ -494,7 +584,7 @@ void OGRAPISpy_DS_ExecuteSQL( OGRDataSourceH hDS,
 
 void OGRAPISpy_DS_ReleaseResultSet( OGRDataSourceH hDS, OGRLayerH hLayer)
 {
-    OGRAPISpyFlushDiffered();
+    OGRAPISpyFlushDefered();
     fprintf(fpSpyFile, "%s.ReleaseResultSet(%s)\n",
             OGRAPISpyGetDSVar(hDS).c_str(),
             (hLayer) ? OGRAPISpyGetLayerVar(hLayer).c_str() : "None");
@@ -513,7 +603,7 @@ void OGRAPISpy_DS_CreateLayer( OGRDataSourceH hDS,
                                char ** papszOptions,
                                OGRLayerH hLayer)
 {
-    OGRAPISpyFlushDiffered();
+    OGRAPISpyFlushDefered();
     if( hLayer != NULL )
         fprintf(fpSpyFile, "%s = ",
             OGRAPISpyGetAndRegisterLayerVar(hDS, hLayer).c_str());
@@ -526,9 +616,9 @@ void OGRAPISpy_DS_CreateLayer( OGRDataSourceH hDS,
     OGRAPISpyFileClose();
 }
 
-void OGRAPISpy_DS_DeleteLayer( OGRDataSourceH hDS, int iLayer, CPL_UNUSED OGRErr eErr )
+void OGRAPISpy_DS_DeleteLayer( OGRDataSourceH hDS, int iLayer )
 {
-    OGRAPISpyFlushDiffered();
+    OGRAPISpyFlushDefered();
     fprintf(fpSpyFile, "%s.DeleteLayer(%d)\n",
             OGRAPISpyGetDSVar(hDS).c_str(), iLayer);
     // Should perhaps remove from the maps
@@ -537,7 +627,7 @@ void OGRAPISpy_DS_DeleteLayer( OGRDataSourceH hDS, int iLayer, CPL_UNUSED OGRErr
 
 void OGRAPISpy_Dataset_StartTransaction( GDALDatasetH hDS, int bForce )
 {
-    OGRAPISpyFlushDiffered();
+    OGRAPISpyFlushDefered();
     fprintf(fpSpyFile, "%s.StartTransaction(%d)\n",
             OGRAPISpyGetDSVar((OGRDataSourceH)hDS).c_str(), bForce);
     OGRAPISpyFileClose();
@@ -545,7 +635,7 @@ void OGRAPISpy_Dataset_StartTransaction( GDALDatasetH hDS, int bForce )
 
 void OGRAPISpy_Dataset_CommitTransaction( GDALDatasetH hDS )
 {
-    OGRAPISpyFlushDiffered();
+    OGRAPISpyFlushDefered();
     fprintf(fpSpyFile, "%s.CommitTransaction()\n",
             OGRAPISpyGetDSVar((OGRDataSourceH)hDS).c_str());
     OGRAPISpyFileClose();
@@ -553,7 +643,7 @@ void OGRAPISpy_Dataset_CommitTransaction( GDALDatasetH hDS )
 
 void OGRAPISpy_Dataset_RollbackTransaction( GDALDatasetH hDS )
 {
-    OGRAPISpyFlushDiffered();
+    OGRAPISpyFlushDefered();
     fprintf(fpSpyFile, "%s.RollbackTransaction()\n",
             OGRAPISpyGetDSVar((OGRDataSourceH)hDS).c_str());
     OGRAPISpyFileClose();
@@ -561,7 +651,7 @@ void OGRAPISpy_Dataset_RollbackTransaction( GDALDatasetH hDS )
 
 void OGRAPISpy_L_GetFeatureCount( OGRLayerH hLayer, int bForce )
 {
-    OGRAPISpyFlushDiffered();
+    OGRAPISpyFlushDefered();
     fprintf(fpSpyFile, "%s.GetFeatureCount(force = %d)\n",
             OGRAPISpyGetLayerVar(hLayer).c_str(), bForce);
     OGRAPISpyFileClose();
@@ -569,7 +659,7 @@ void OGRAPISpy_L_GetFeatureCount( OGRLayerH hLayer, int bForce )
 
 void OGRAPISpy_L_GetExtent( OGRLayerH hLayer, int bForce )
 {
-    OGRAPISpyFlushDiffered();
+    OGRAPISpyFlushDefered();
     fprintf(fpSpyFile, "%s.GetExtent(force = %d)\n",
             OGRAPISpyGetLayerVar(hLayer).c_str(), bForce);
     OGRAPISpyFileClose();
@@ -577,7 +667,7 @@ void OGRAPISpy_L_GetExtent( OGRLayerH hLayer, int bForce )
 
 void OGRAPISpy_L_GetExtentEx( OGRLayerH hLayer, int iGeomField, int bForce )
 {
-    OGRAPISpyFlushDiffered();
+    OGRAPISpyFlushDefered();
     fprintf(fpSpyFile, "%s.GetExtent(geom_field = %d, force = %d)\n",
             OGRAPISpyGetLayerVar(hLayer).c_str(), iGeomField, bForce);
     OGRAPISpyFileClose();
@@ -585,7 +675,7 @@ void OGRAPISpy_L_GetExtentEx( OGRLayerH hLayer, int iGeomField, int bForce )
 
 void OGRAPISpy_L_SetAttributeFilter( OGRLayerH hLayer, const char* pszFilter )
 {
-    OGRAPISpyFlushDiffered();
+    OGRAPISpyFlushDefered();
     fprintf(fpSpyFile, "%s.SetAttributeFilter(%s)\n",
             OGRAPISpyGetLayerVar(hLayer).c_str(),
             OGRAPISpyGetString(pszFilter).c_str());
@@ -594,7 +684,7 @@ void OGRAPISpy_L_SetAttributeFilter( OGRLayerH hLayer, const char* pszFilter )
 
 void OGRAPISpy_L_GetFeature( OGRLayerH hLayer, GIntBig nFeatureId )
 {
-    OGRAPISpyFlushDiffered();
+    OGRAPISpyFlushDefered();
     fprintf(fpSpyFile, "%s.GetFeature(" CPL_FRMT_GIB ")\n",
             OGRAPISpyGetLayerVar(hLayer).c_str(), nFeatureId);
     OGRAPISpyFileClose();
@@ -602,7 +692,7 @@ void OGRAPISpy_L_GetFeature( OGRLayerH hLayer, GIntBig nFeatureId )
 
 void OGRAPISpy_L_SetNextByIndex( OGRLayerH hLayer, GIntBig nIndex )
 {
-    OGRAPISpyFlushDiffered();
+    OGRAPISpyFlushDefered();
     fprintf(fpSpyFile, "%s.SetNextByIndex(" CPL_FRMT_GIB ")\n",
             OGRAPISpyGetLayerVar(hLayer).c_str(), nIndex);
     OGRAPISpyFileClose();
@@ -612,22 +702,19 @@ void OGRAPISpy_L_GetNextFeature( OGRLayerH hLayer )
 {
     if( hLayerGetNextFeature != hLayer )
     {
-        OGRAPISpyFlushDiffered();
+        OGRAPISpyFlushDefered();
         OGRAPISpyFileClose();
     }
     hLayerGetNextFeature = hLayer;
     nGetNextFeatureCalls++;
 }
 
-static void OGRAPISpyDumpFeature( OGRLayerH hLayer, OGRFeatureH hFeat )
+static void OGRAPISpyDumpFeature( OGRFeatureH hFeat )
 {
-    OGRLayer* poLayer = (OGRLayer*) hLayer;
     OGRFeature* poFeature = (OGRFeature*) hFeat;
-    /* Do not check pointer equality, since the Perl bindings can */
-    /* build features with a OGRFeatureDefn that is a copy of the layer defn */
-    CPLAssert(poFeature->GetDefnRef()->IsSame(poLayer->GetLayerDefn()));
-    fprintf(fpSpyFile, "f = ogr.Feature(%s_defn)\n",
-            OGRAPISpyGetLayerVar(hLayer).c_str());
+
+    fprintf(fpSpyFile, "f = ogr.Feature(%s)\n",
+            OGRAPISpyGetFeatureDefnVar((OGRFeatureDefnH)(poFeature->GetDefnRef())).c_str());
     if( poFeature->GetFID() != -1 )
         fprintf(fpSpyFile, "f.SetFID(" CPL_FRMT_GIB ")\n", poFeature->GetFID());
     int i;
@@ -665,8 +752,8 @@ static void OGRAPISpyDumpFeature( OGRLayerH hLayer, OGRFeatureH hFeat )
 
 void OGRAPISpy_L_SetFeature( OGRLayerH hLayer, OGRFeatureH hFeat )
 {
-    OGRAPISpyFlushDiffered();
-    OGRAPISpyDumpFeature(hLayer, hFeat);
+    OGRAPISpyFlushDefered();
+    OGRAPISpyDumpFeature(hFeat);
     fprintf(fpSpyFile, "%s.SetFeature(f)\n",
             OGRAPISpyGetLayerVar(hLayer).c_str());
     fprintf(fpSpyFile, "f = None\n"); /* in case layer defn is changed afterwards */
@@ -675,8 +762,8 @@ void OGRAPISpy_L_SetFeature( OGRLayerH hLayer, OGRFeatureH hFeat )
 
 void OGRAPISpy_L_CreateFeature( OGRLayerH hLayer, OGRFeatureH hFeat )
 {
-    OGRAPISpyFlushDiffered();
-    OGRAPISpyDumpFeature(hLayer, hFeat);
+    OGRAPISpyFlushDefered();
+    OGRAPISpyDumpFeature(hFeat);
     fprintf(fpSpyFile, "%s.CreateFeature(f)\n",
             OGRAPISpyGetLayerVar(hLayer).c_str());
     fprintf(fpSpyFile, "f = None\n"); /* in case layer defn is changed afterwards */
@@ -702,7 +789,7 @@ static void OGRAPISpyDumpFieldDefn( OGRFieldDefn* poFieldDefn )
 void OGRAPISpy_L_CreateField( OGRLayerH hLayer, OGRFieldDefnH hField, 
                               int bApproxOK )
 {
-    OGRAPISpyFlushDiffered();
+    OGRAPISpyFlushDefered();
     OGRFieldDefn* poFieldDefn = (OGRFieldDefn*) hField;
     OGRAPISpyDumpFieldDefn(poFieldDefn);
     fprintf(fpSpyFile, "%s.CreateField(fd, approx_ok = %d)\n",
@@ -712,7 +799,7 @@ void OGRAPISpy_L_CreateField( OGRLayerH hLayer, OGRFieldDefnH hField,
 
 void OGRAPISpy_L_DeleteField( OGRLayerH hLayer, int iField )
 {
-    OGRAPISpyFlushDiffered();
+    OGRAPISpyFlushDefered();
     fprintf(fpSpyFile, "%s.DeleteField(%d)\n",
             OGRAPISpyGetLayerVar(hLayer).c_str(), iField);
     OGRAPISpyFileClose();
@@ -720,7 +807,7 @@ void OGRAPISpy_L_DeleteField( OGRLayerH hLayer, int iField )
 
 void OGRAPISpy_L_ReorderFields( OGRLayerH hLayer, int* panMap )
 {
-    OGRAPISpyFlushDiffered();
+    OGRAPISpyFlushDefered();
     OGRLayer* poLayer = (OGRLayer*) hLayer;
     fprintf(fpSpyFile, "%s.ReorderFields([",
             OGRAPISpyGetLayerVar(hLayer).c_str());
@@ -736,7 +823,7 @@ void OGRAPISpy_L_ReorderFields( OGRLayerH hLayer, int* panMap )
 void OGRAPISpy_L_ReorderField( OGRLayerH hLayer, int iOldFieldPos,
                                int iNewFieldPos )
 {
-    OGRAPISpyFlushDiffered();
+    OGRAPISpyFlushDefered();
     fprintf(fpSpyFile, "%s.ReorderField(%d, %d)\n",
             OGRAPISpyGetLayerVar(hLayer).c_str(), iOldFieldPos, iNewFieldPos);
     OGRAPISpyFileClose();
@@ -745,7 +832,7 @@ void OGRAPISpy_L_ReorderField( OGRLayerH hLayer, int iOldFieldPos,
 void OGRAPISpy_L_AlterFieldDefn( OGRLayerH hLayer, int iField,
                                  OGRFieldDefnH hNewFieldDefn, int nFlags )
 {
-    OGRAPISpyFlushDiffered();
+    OGRAPISpyFlushDefered();
     OGRFieldDefn* poFieldDefn = (OGRFieldDefn*) hNewFieldDefn;
     OGRAPISpyDumpFieldDefn(poFieldDefn);
     fprintf(fpSpyFile, "%s.AlterFieldDefn(%d, fd, %d)\n",
@@ -756,7 +843,7 @@ void OGRAPISpy_L_AlterFieldDefn( OGRLayerH hLayer, int iField,
 void OGRAPISpy_L_CreateGeomField( OGRLayerH hLayer, OGRGeomFieldDefnH hField, 
                                   int bApproxOK )
 {
-    OGRAPISpyFlushDiffered();
+    OGRAPISpyFlushDefered();
     OGRGeomFieldDefn* poGeomFieldDefn = (OGRGeomFieldDefn*) hField;
     fprintf(fpSpyFile, "geom_fd = ogr.GeomFieldDefn(%s, %s)\n",
             OGRAPISpyGetString(poGeomFieldDefn->GetNameRef()).c_str(),
@@ -773,7 +860,7 @@ void OGRAPISpy_L_CreateGeomField( OGRLayerH hLayer, OGRGeomFieldDefnH hField,
 
 static void OGRAPISpy_L_Op( OGRLayerH hLayer, const char* pszMethod )
 {
-    OGRAPISpyFlushDiffered();
+    OGRAPISpyFlushDefered();
     fprintf(fpSpyFile, "%s.%s()\n", OGRAPISpyGetLayerVar(hLayer).c_str(), pszMethod);
     OGRAPISpyFileClose();
 }
@@ -786,7 +873,7 @@ void OGRAPISpy_L_GetLayerDefn( OGRLayerH hLayer )
 {
     if( hLayer != hLayerGetLayerDefn )
     {
-        OGRAPISpyFlushDiffered();
+        OGRAPISpyFlushDefered();
         hLayerGetLayerDefn = hLayer;
         OGRAPISpyFileClose();
     }
@@ -804,7 +891,7 @@ void OGRAPISpy_L_GetGeomType( OGRLayerH hLayer ) { OGRAPISpy_L_Op(hLayer, "GetGe
 void OGRAPISpy_L_FindFieldIndex( OGRLayerH hLayer, const char *pszFieldName,
                                  int bExactMatch )
 {
-    OGRAPISpyFlushDiffered();
+    OGRAPISpyFlushDefered();
     fprintf(fpSpyFile, "%s.FindFieldIndex(%s, %d)\n",
             OGRAPISpyGetLayerVar(hLayer).c_str(),
             OGRAPISpyGetString(pszFieldName).c_str(), bExactMatch);
@@ -813,7 +900,7 @@ void OGRAPISpy_L_FindFieldIndex( OGRLayerH hLayer, const char *pszFieldName,
 
 void OGRAPISpy_L_TestCapability( OGRLayerH hLayer, const char* pszCap )
 {
-    OGRAPISpyFlushDiffered();
+    OGRAPISpyFlushDefered();
     fprintf(fpSpyFile, "%s.TestCapability(%s)\n",
             OGRAPISpyGetLayerVar(hLayer).c_str(),
             OGRAPISpyGetString(pszCap).c_str());
@@ -822,7 +909,7 @@ void OGRAPISpy_L_TestCapability( OGRLayerH hLayer, const char* pszCap )
 
 void OGRAPISpy_L_SetSpatialFilter( OGRLayerH hLayer, OGRGeometryH hGeom )
 {
-    OGRAPISpyFlushDiffered();
+    OGRAPISpyFlushDefered();
     fprintf(fpSpyFile, "%s.SetSpatialFilter(%s)\n",
             OGRAPISpyGetLayerVar(hLayer).c_str(),
             OGRAPISpyGetGeom(hGeom).c_str());
@@ -832,7 +919,7 @@ void OGRAPISpy_L_SetSpatialFilter( OGRLayerH hLayer, OGRGeometryH hGeom )
 void OGRAPISpy_L_SetSpatialFilterEx( OGRLayerH hLayer, int iGeomField,
                                      OGRGeometryH hGeom )
 {
-    OGRAPISpyFlushDiffered();
+    OGRAPISpyFlushDefered();
     fprintf(fpSpyFile, "%s.SetSpatialFilter(%d, %s)\n",
             OGRAPISpyGetLayerVar(hLayer).c_str(),
             iGeomField,
@@ -844,7 +931,7 @@ void OGRAPISpy_L_SetSpatialFilterRect( OGRLayerH hLayer,
                                        double dfMinX, double dfMinY, 
                                        double dfMaxX, double dfMaxY)
 {
-    OGRAPISpyFlushDiffered();
+    OGRAPISpyFlushDefered();
     fprintf(fpSpyFile, "%s", CPLSPrintf("%s.SetSpatialFilterRect(%.16g, %.16g, %.16g, %.16g)\n",
             OGRAPISpyGetLayerVar(hLayer).c_str(),
             dfMinX, dfMinY, dfMaxX, dfMaxY));
@@ -856,7 +943,7 @@ void OGRAPISpy_L_SetSpatialFilterRectEx( OGRLayerH hLayer, int iGeomField,
                                          double dfMaxX, double dfMaxY)
 {
 
-    OGRAPISpyFlushDiffered();
+    OGRAPISpyFlushDefered();
     fprintf(fpSpyFile, "%s", CPLSPrintf("%s.SetSpatialFilterRect(%d, "
             "%.16g, %.16g, %.16g, %.16g)\n",
             OGRAPISpyGetLayerVar(hLayer).c_str(),
@@ -867,7 +954,7 @@ void OGRAPISpy_L_SetSpatialFilterRectEx( OGRLayerH hLayer, int iGeomField,
 
 void OGRAPISpy_L_DeleteFeature( OGRLayerH hLayer, GIntBig nFID )
 {
-    OGRAPISpyFlushDiffered();
+    OGRAPISpyFlushDefered();
     fprintf(fpSpyFile, "%s.DeleteFeature(" CPL_FRMT_GIB ")\n",
             OGRAPISpyGetLayerVar(hLayer).c_str(), nFID);
     OGRAPISpyFileClose();
@@ -876,10 +963,115 @@ void OGRAPISpy_L_DeleteFeature( OGRLayerH hLayer, GIntBig nFID )
 void OGRAPISpy_L_SetIgnoredFields( OGRLayerH hLayer,
                                    const char** papszIgnoredFields )
 {
-    OGRAPISpyFlushDiffered();
+    OGRAPISpyFlushDefered();
     fprintf(fpSpyFile, "%s.SetIgnoredFields(%s)\n",
             OGRAPISpyGetLayerVar(hLayer).c_str(),
             OGRAPISpyGetOptions((char**)papszIgnoredFields).c_str());
+    OGRAPISpyFileClose();
+}
+
+
+void OGRAPISpy_FD_GetFieldCount(OGRFeatureDefnH hDefn)
+{
+    if( hLayerGetLayerDefn != NULL &&
+        (OGRFeatureDefnH)(((OGRLayer*)hLayerGetLayerDefn)->GetLayerDefn()) == hDefn )
+    {
+        bDeferGetFieldCount = TRUE;
+    }
+    else
+    {
+        OGRAPISpyFlushDefered();
+        fprintf(fpSpyFile, "%s.GetFieldCount()\n",
+                OGRAPISpyGetFeatureDefnVar(hDefn).c_str());
+        OGRAPISpyFileClose();
+    }
+}
+
+void OGRAPISpy_FD_GetFieldDefn(OGRFeatureDefnH hDefn, int iField,
+                               OGRFieldDefnH hField)
+{
+    OGRAPISpyFlushDefered();
+    fprintf(fpSpyFile, "%s_fielddefn%d = %s.GetFieldDefn(%d)\n",
+            OGRAPISpyGetFeatureDefnVar(hDefn).c_str(),
+            iField,
+            OGRAPISpyGetFeatureDefnVar(hDefn).c_str(),
+            iField);
+
+    std::map<OGRFieldDefnH, CPLString>::iterator oIter =
+                            oGlobalMapFieldDefn.find(hField);
+    if( oIter == oGlobalMapFieldDefn.end() )
+    {
+        oMapFDefn[hDefn].oMapFieldDefn[hField] = iField;
+        oGlobalMapFieldDefn[hField] = CPLSPrintf("%s_fielddefn%d",
+                                                     OGRAPISpyGetFeatureDefnVar(hDefn).c_str(),
+                                                     iField);
+    }
+
+    OGRAPISpyFileClose();
+}
+
+void OGRAPISpy_FD_GetFieldIndex(OGRFeatureDefnH hDefn, const char* pszFieldName)
+{
+    OGRAPISpyFlushDefered();
+    fprintf(fpSpyFile, "%s.GetFieldIndex(%s)\n",
+            OGRAPISpyGetFeatureDefnVar(hDefn).c_str(),
+            OGRAPISpyGetString(pszFieldName).c_str());
+    OGRAPISpyFileClose();
+}
+
+void OGRAPISpy_Fld_GetXXXX(OGRFieldDefnH hField, const char* pszOp)
+{
+    OGRAPISpyFlushDefered();
+    fprintf(fpSpyFile, "%s.%s()\n",
+            oGlobalMapFieldDefn[hField].c_str(), pszOp);
+    OGRAPISpyFileClose();
+}
+
+void OGRAPISpy_FD_GetGeomFieldCount(OGRFeatureDefnH hDefn)
+{
+    OGRAPISpyFlushDefered();
+    fprintf(fpSpyFile, "%s.GetGeomFieldCount()\n",
+            OGRAPISpyGetFeatureDefnVar(hDefn).c_str());
+    OGRAPISpyFileClose();
+}
+
+void OGRAPISpy_FD_GetGeomFieldDefn(OGRFeatureDefnH hDefn, int iGeomField,
+                                   OGRGeomFieldDefnH hGeomField)
+{
+    OGRAPISpyFlushDefered();
+    fprintf(fpSpyFile, "%s_geomfielddefn%d = %s.GetGeomFieldDefn(%d)\n",
+            OGRAPISpyGetFeatureDefnVar(hDefn).c_str(),
+            iGeomField,
+            OGRAPISpyGetFeatureDefnVar(hDefn).c_str(),
+            iGeomField);
+
+    std::map<OGRGeomFieldDefnH, CPLString>::iterator oIter =
+                            oGlobalMapGeomFieldDefn.find(hGeomField);
+    if( oIter == oGlobalMapGeomFieldDefn.end() )
+    {
+        oMapFDefn[hDefn].oMapGeomFieldDefn[hGeomField] = iGeomField;
+        oGlobalMapGeomFieldDefn[hGeomField] = CPLSPrintf("%s_geomfielddefn%d",
+                                                     OGRAPISpyGetFeatureDefnVar(hDefn).c_str(),
+                                                     iGeomField);
+    }
+
+    OGRAPISpyFileClose();
+}
+
+void OGRAPISpy_FD_GetGeomFieldIndex(OGRFeatureDefnH hDefn, const char* pszFieldName)
+{
+    OGRAPISpyFlushDefered();
+    fprintf(fpSpyFile, "%s.GetGeomFieldIndex(%s)\n",
+            OGRAPISpyGetFeatureDefnVar(hDefn).c_str(),
+            OGRAPISpyGetString(pszFieldName).c_str());
+    OGRAPISpyFileClose();
+}
+
+void OGRAPISpy_GFld_GetXXXX(OGRGeomFieldDefnH hGeomField, const char* pszOp)
+{
+    OGRAPISpyFlushDefered();
+    fprintf(fpSpyFile, "%s.%s()\n",
+            oGlobalMapGeomFieldDefn[hGeomField].c_str(), pszOp);
     OGRAPISpyFileClose();
 }
 
