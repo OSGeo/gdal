@@ -476,7 +476,7 @@ swq_select_summarize( swq_select *select_info,
 
 static int FORCE_CDECL swq_compare_int( const void *item1, const void *item2 )
 {
-    int  v1, v2;
+    GIntBig  v1, v2;
 
     const char* pszStr1 = *((const char **) item1);
     const char* pszStr2 = *((const char **) item2);
@@ -485,8 +485,8 @@ static int FORCE_CDECL swq_compare_int( const void *item1, const void *item2 )
     else if (pszStr2 == NULL)
         return 1;
 
-    v1 = atoi(pszStr1);
-    v2 = atoi(pszStr2);
+    v1 = CPLAtoGIntBig(pszStr1);
+    v2 = CPLAtoGIntBig(pszStr2);
 
     if( v1 < v2 )
         return -1;
@@ -558,7 +558,8 @@ const char *swq_select_finish_summarize( swq_select *select_info )
     if( select_info->column_summary == NULL )
         return NULL;
 
-    if( select_info->column_defs[0].field_type == SWQ_INTEGER )
+    if( select_info->column_defs[0].field_type == SWQ_INTEGER ||
+        select_info->column_defs[0].field_type == SWQ_INTEGER64 )
         compare_func = swq_compare_int;
     else if( select_info->column_defs[0].field_type == SWQ_FLOAT )
         compare_func = swq_compare_real;
