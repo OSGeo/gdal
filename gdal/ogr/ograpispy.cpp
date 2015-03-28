@@ -970,6 +970,13 @@ void OGRAPISpy_L_SetIgnoredFields( OGRLayerH hLayer,
     OGRAPISpyFileClose();
 }
 
+void OGRAPISpy_FD_GetGeomType(OGRFeatureDefnH hDefn)
+{
+    OGRAPISpyFlushDefered();
+    fprintf(fpSpyFile, "%s.GetGeomType()\n",
+            OGRAPISpyGetFeatureDefnVar(hDefn).c_str());
+    OGRAPISpyFileClose();
+}
 
 void OGRAPISpy_FD_GetFieldCount(OGRFeatureDefnH hDefn)
 {

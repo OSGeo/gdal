@@ -152,6 +152,7 @@ void OGRAPISpy_L_GetGeomType( OGRLayerH hLayer );
 void OGRAPISpy_L_SetIgnoredFields( OGRLayerH hLayer,
                                    const char** papszIgnoredFields );
 
+void OGRAPISpy_FD_GetGeomType(OGRFeatureDefnH hDefn);
 void OGRAPISpy_FD_GetFieldCount(OGRFeatureDefnH hDefn);
 void OGRAPISpy_FD_GetFieldDefn(OGRFeatureDefnH hDefn, int iField,
                                OGRFieldDefnH hGeomField);
