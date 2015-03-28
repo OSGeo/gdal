@@ -138,6 +138,7 @@ void swq_expr_node::Initialize()
     int_value = 0;
 
     is_null = FALSE;
+    table_name = NULL;
     string_value = NULL;
     geometry_value = NULL;
     papoSubExpr = NULL;
@@ -151,6 +152,7 @@ void swq_expr_node::Initialize()
 swq_expr_node::~swq_expr_node()
 
 {
+    CPLFree( table_name );
     CPLFree( string_value );
 
     int i;
@@ -215,13 +217,18 @@ swq_field_type swq_expr_node::Check( swq_field_list *poFieldList,
     if( eNodeType == SNT_COLUMN && field_index == -1 )
     {
         field_index = 
-            swq_identify_field( string_value, poFieldList,
+            swq_identify_field( table_name, string_value, poFieldList,
                                 &field_type, &table_index );
         
         if( field_index < 0 )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                      "'%s' not recognised as an available field.",
+            if( table_name )
+                CPLError( CE_Failure, CPLE_AppDefined, 
+                      "\"%s\".\"%s\" not recognised as an available field.",
+                      table_name, string_value );
+            else
+                CPLError( CE_Failure, CPLE_AppDefined, 
+                      "\"%s\" not recognised as an available field.",
                       string_value );
 
             return SWQ_ERROR;
@@ -327,13 +334,40 @@ void swq_expr_node::Dump( FILE * fp, int depth )
         papoSubExpr[i]->Dump( fp, depth+1 );
 }
 
+        
+/************************************************************************/
+/*                       QuoteIfNecessary()                             */
+/*                                                                      */
+/*      Add quoting if necessary to unparse a string.                   */
+/************************************************************************/
+
+CPLString swq_expr_node::QuoteIfNecessary( const CPLString &osExpr, char chQuote )
+
+{
+    for( int i = 0; i < (int) osExpr.size(); i++ )
+    {
+        char ch = osExpr[i];
+        if (!(isalnum((int)ch) || ch == '_'))
+        {
+            return Quote(osExpr, chQuote);
+        }
+    }
+
+    if (swq_is_reserved_keyword(osExpr))
+    {
+        return Quote(osExpr, chQuote);
+    }
+    
+    return osExpr;
+}
+
 /************************************************************************/
 /*                               Quote()                                */
 /*                                                                      */
 /*      Add quoting necessary to unparse a string.                      */
 /************************************************************************/
 
-void swq_expr_node::Quote( CPLString &osTarget, char chQuote )
+CPLString swq_expr_node::Quote( const CPLString &osTarget, char chQuote )
 
 {
     CPLString osNew;
@@ -353,7 +387,7 @@ void swq_expr_node::Quote( CPLString &osTarget, char chQuote )
     }
     osNew += chQuote;
 
-    osTarget = osNew;
+    return osNew;
 }
 
 /************************************************************************/
@@ -387,8 +421,7 @@ char *swq_expr_node::Unparse( swq_field_list *field_list, char chColumnQuote )
         }
         else 
         {
-            osExpr = string_value;
-            Quote( osExpr );
+            osExpr = Quote( string_value );
         }
         
         return CPLStrdup(osExpr);
@@ -399,7 +432,17 @@ char *swq_expr_node::Unparse( swq_field_list *field_list, char chColumnQuote )
 /* -------------------------------------------------------------------- */
     if( eNodeType == SNT_COLUMN )
     {
-        if( field_index != -1 
+        if( field_list == NULL )
+        {
+            if( table_name )
+                osExpr.Printf( "%s.%s",
+                               QuoteIfNecessary(table_name, chColumnQuote).c_str(),
+                               QuoteIfNecessary(string_value, chColumnQuote).c_str() );
+            else
+                osExpr.Printf( "%s",
+                               QuoteIfNecessary(string_value, chColumnQuote).c_str() );
+        }
+        else if( field_index != -1 
             && table_index < field_list->table_count 
             && table_index > 0 )
         {
@@ -409,8 +452,8 @@ char *swq_expr_node::Unparse( swq_field_list *field_list, char chColumnQuote )
                     field_list->ids[i] == field_index )
                 {
                     osExpr.Printf( "%s.%s",
-                                   field_list->table_defs[table_index].table_name,
-                                   field_list->names[i] );
+                                   QuoteIfNecessary(field_list->table_defs[table_index].table_name, chColumnQuote).c_str(),
+                                   QuoteIfNecessary(field_list->names[i], chColumnQuote).c_str() );
                     break;
                 }
             }
@@ -422,7 +465,7 @@ char *swq_expr_node::Unparse( swq_field_list *field_list, char chColumnQuote )
                 if( field_list->table_ids[i] == table_index &&
                     field_list->ids[i] == field_index )
                 {
-                    osExpr.Printf( "%s", field_list->names[i] );
+                    osExpr.Printf( "%s", QuoteIfNecessary(field_list->names[i], chColumnQuote).c_str() );
                     break;
                 }
             }
@@ -431,22 +474,6 @@ char *swq_expr_node::Unparse( swq_field_list *field_list, char chColumnQuote )
         if( osExpr.size() == 0 )
         {
             return CPLStrdup(CPLSPrintf("%c%c", chColumnQuote, chColumnQuote));
-        }
-
-        for( int i = 0; i < (int) osExpr.size(); i++ )
-        {
-            char ch = osExpr[i];
-            if (!(isalnum((int)ch) || ch == '_'))
-            {
-                Quote( osExpr, chColumnQuote );
-                return CPLStrdup(osExpr.c_str());
-            }
-        }
-
-        if (swq_is_reserved_keyword(osExpr))
-        {
-            Quote( osExpr, chColumnQuote );
-            return CPLStrdup(osExpr.c_str());
         }
 
         /* The string is just alphanum and not a reserved SQL keyword, no needs to quote and escape */

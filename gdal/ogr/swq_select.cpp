@@ -84,6 +84,7 @@ swq_select::~swq_select()
 
     for( i = 0; i < result_columns; i++ )
     {
+        CPLFree( column_defs[i].table_name );
         CPLFree( column_defs[i].field_name );
         CPLFree( column_defs[i].field_alias );
 
@@ -107,6 +108,7 @@ swq_select::~swq_select()
 
     for( i = 0; i < order_specs; i++ )
     {
+        CPLFree( order_defs[i].table_name );
         CPLFree( order_defs[i].field_name );
     }
     
@@ -114,7 +116,9 @@ swq_select::~swq_select()
 
     for( i = 0; i < join_count; i++ )
     {
+        CPLFree( join_defs[i].primary_table_name );
         CPLFree( join_defs[i].primary_field_name );
+        CPLFree( join_defs[i].secondary_table_name );
         CPLFree( join_defs[i].secondary_field_name );
     }
     CPLFree( join_defs );
@@ -216,7 +220,7 @@ void swq_select::Dump( FILE *fp )
     {
         swq_col_def *def = column_defs + i;
 
-        
+        fprintf( fp, "  Table name: %s\n", def->table_name );
         fprintf( fp, "  Name: %s\n", def->field_name );
 
         if( def->field_alias )
@@ -279,14 +283,16 @@ void swq_select::Dump( FILE *fp )
     for( i = 0; i < join_count; i++ )
     {
         fprintf( fp, "  %d:\n", i );
-        fprintf( fp, "    Primary Field: %s/%d\n", 
+        fprintf( fp, "    Primary Field: %s.%s/%d\n", 
+                 join_defs[i].primary_table_name ? join_defs[i].primary_table_name : "",
                  join_defs[i].primary_field_name,
                  join_defs[i].primary_field );
 
         fprintf( fp, "    Operation: %d\n", 
                  join_defs[i].op );
 
-        fprintf( fp, "    Secondary Field: %s/%d\n", 
+        fprintf( fp, "    Secondary Field: %s.%s/%d\n", 
+                 join_defs[i].secondary_table_name ? join_defs[i].secondary_table_name : "",
                  join_defs[i].secondary_field_name,
                  join_defs[i].secondary_field );
         fprintf( fp, "    Secondary Table: %d\n", 
@@ -345,18 +351,30 @@ int swq_select::PushField( swq_expr_node *poExpr, const char *pszAlias,
 /*      Try to capture a field name.                                    */
 /* -------------------------------------------------------------------- */
     if( poExpr->eNodeType == SNT_COLUMN )
+    {
+        col_def->table_name = 
+            CPLStrdup(poExpr->table_name ? poExpr->table_name : "");
         col_def->field_name = 
             CPLStrdup(poExpr->string_value);
+    }
     else if( poExpr->eNodeType == SNT_OPERATION
              && (poExpr->nOperation == SWQ_CAST ||
                  (poExpr->nOperation >= SWQ_AVG &&
                   poExpr->nOperation <= SWQ_SUM))
              && poExpr->nSubExprCount >= 1
              && poExpr->papoSubExpr[0]->eNodeType == SNT_COLUMN )
+    {
+        col_def->table_name = 
+            CPLStrdup(poExpr->papoSubExpr[0]->table_name ?
+                        poExpr->papoSubExpr[0]->table_name : "");
         col_def->field_name = 
             CPLStrdup(poExpr->papoSubExpr[0]->string_value);
+    }
     else
+    {
+        col_def->table_name = CPLStrdup("");
         col_def->field_name = CPLStrdup("");
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Initialize fields.                                              */
@@ -446,6 +464,8 @@ int swq_select::PushField( swq_expr_node *poExpr, const char *pszAlias,
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Unrecognized typename %s in CAST operator.", 
                       pszTypeName );
+            CPLFree(col_def->table_name);
+            col_def->table_name = NULL;
             CPLFree(col_def->field_name);
             col_def->field_name = NULL;
             CPLFree(col_def->field_alias);
@@ -462,6 +482,8 @@ int swq_select::PushField( swq_expr_node *poExpr, const char *pszAlias,
                 {
                     CPLError( CE_Failure, CPLE_AppDefined,
                       "First argument of CAST operator should be an geometry type identifier." );
+                    CPLFree(col_def->table_name);
+                    col_def->table_name = NULL;
                     CPLFree(col_def->field_name);
                     col_def->field_name = NULL;
                     CPLFree(col_def->field_alias);
@@ -489,6 +511,8 @@ int swq_select::PushField( swq_expr_node *poExpr, const char *pszAlias,
                 {
                     CPLError( CE_Failure, CPLE_AppDefined,
                       "First argument of CAST operator should be of integer type." );
+                    CPLFree(col_def->table_name);
+                    col_def->table_name = NULL;
                     CPLFree(col_def->field_name);
                     col_def->field_name = NULL;
                     CPLFree(col_def->field_alias);
@@ -528,6 +552,8 @@ int swq_select::PushField( swq_expr_node *poExpr, const char *pszAlias,
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Column Summary Function '%s' has wrong number of arguments.", 
                       poOp->pszName );
+            CPLFree(col_def->table_name);
+            col_def->table_name = NULL;
             CPLFree(col_def->field_name);
             col_def->field_name = NULL;
             CPLFree(col_def->field_alias);
@@ -542,6 +568,8 @@ int swq_select::PushField( swq_expr_node *poExpr, const char *pszAlias,
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Argument of column Summary Function '%s' should be a column.", 
                       poOp->pszName );
+            CPLFree(col_def->table_name);
+            col_def->table_name = NULL;
             CPLFree(col_def->field_name);
             col_def->field_name = NULL;
             CPLFree(col_def->field_alias);
@@ -602,13 +630,14 @@ int swq_select::PushTableDef( const char *pszDataSource,
 /*                            PushOrderBy()                             */
 /************************************************************************/
 
-void swq_select::PushOrderBy( const char *pszFieldName, int bAscending )
+void swq_select::PushOrderBy( const char* pszTableName, const char *pszFieldName, int bAscending )
 
 {
     order_specs++;
     order_defs = (swq_order_def *) 
         CPLRealloc( order_defs, sizeof(swq_order_def) * order_specs );
 
+    order_defs[order_specs-1].table_name = CPLStrdup(pszTableName ? pszTableName : "");
     order_defs[order_specs-1].field_name = CPLStrdup(pszFieldName);
     order_defs[order_specs-1].table_index = -1;
     order_defs[order_specs-1].field_index = -1;
@@ -620,7 +649,9 @@ void swq_select::PushOrderBy( const char *pszFieldName, int bAscending )
 /************************************************************************/
 
 void swq_select::PushJoin( int iSecondaryTable,
+                           const char *pszPrimaryTable,
                            const char *pszPrimaryField,
+                           const char *pszSecondaryTable,
                            const char *pszSecondaryField )
 
 {
@@ -629,9 +660,11 @@ void swq_select::PushJoin( int iSecondaryTable,
         CPLRealloc( join_defs, sizeof(swq_join_def) * join_count );
 
     join_defs[join_count-1].secondary_table = iSecondaryTable;
+    join_defs[join_count-1].primary_table_name = CPLStrdup(pszPrimaryTable ? pszPrimaryTable : "");
     join_defs[join_count-1].primary_field_name = CPLStrdup(pszPrimaryField);
     join_defs[join_count-1].primary_field = -1;
     join_defs[join_count-1].op = SWQ_EQ;
+    join_defs[join_count-1].secondary_table_name = CPLStrdup(pszSecondaryTable ? pszSecondaryTable : "");
     join_defs[join_count-1].secondary_field_name = CPLStrdup(pszSecondaryField);
     join_defs[join_count-1].secondary_field = -1;
 }
@@ -666,6 +699,7 @@ CPLErr swq_select::expand_wildcard( swq_field_list *field_list )
 /* ==================================================================== */
     for( isrc = 0; isrc < result_columns; isrc++ )
     {
+        const char *src_tablename = column_defs[isrc].table_name;
         const char *src_fieldname = column_defs[isrc].field_name;
         int itable, new_fields, i, iout;
 
@@ -681,27 +715,16 @@ CPLErr swq_select::expand_wildcard( swq_field_list *field_list )
 /*      Parse out the table name, verify it, and establish the          */
 /*      number of fields to insert from it.                             */
 /* -------------------------------------------------------------------- */
-        if( strcmp(src_fieldname,"*") == 0 )
+        if( src_tablename[0] == 0 && strcmp(src_fieldname,"*") == 0 )
         {
             itable = -1;
             new_fields = field_list->count;
         }
-        else if( strlen(src_fieldname) < 3 
-                 || src_fieldname[strlen(src_fieldname)-2] != '.' )
-        {
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                      "Ill formatted field definition '%s'.",
-                     src_fieldname );
-            return CE_Failure;
-        }
         else
         {
-            char *table_name = CPLStrdup( src_fieldname );
-            table_name[strlen(src_fieldname)-2] = '\0';
-
             for( itable = 0; itable < field_list->table_count; itable++ )
             {
-                if( strcasecmp(table_name,
+                if( strcasecmp(src_tablename,
                         field_list->table_defs[itable].table_alias ) == 0 )
                     break;
             }
@@ -709,13 +732,11 @@ CPLErr swq_select::expand_wildcard( swq_field_list *field_list )
             if( itable == field_list->table_count )
             {
                 CPLError( CE_Failure, CPLE_AppDefined,
-                         "Table %s not recognised from %s definition.", 
-                         table_name, src_fieldname );
-                CPLFree( table_name );
+                         "Table %s not recognised from %s.%s definition.", 
+                         src_tablename, src_tablename, src_fieldname );
                 return CE_Failure;
             }
-            CPLFree( table_name );
-            
+
             /* count the number of fields in this table. */
             new_fields = 0;
             for( i = 0; i < field_list->count; i++ )
@@ -730,6 +751,7 @@ CPLErr swq_select::expand_wildcard( swq_field_list *field_list )
 /* -------------------------------------------------------------------- */
 /*      Reallocate the column list larger.                              */
 /* -------------------------------------------------------------------- */
+            CPLFree( column_defs[isrc].table_name );
             CPLFree( column_defs[isrc].field_name );
             delete column_defs[isrc].expr;
 
@@ -765,6 +787,7 @@ CPLErr swq_select::expand_wildcard( swq_field_list *field_list )
 /* -------------------------------------------------------------------- */
 /*      The wildcard expands to nothing                                 */
 /* -------------------------------------------------------------------- */
+            CPLFree( column_defs[isrc].table_name );
             CPLFree( column_defs[isrc].field_name );
             delete column_defs[isrc].expr;
 
@@ -813,17 +836,12 @@ CPLErr swq_select::expand_wildcard( swq_field_list *field_list )
             }
 
             int itable = field_list->table_ids[i];
-            char *composed_name;
             const char *field_name = field_list->names[i];
             const char *table_alias = 
                 field_list->table_defs[itable].table_alias;
 
-            composed_name = (char *) 
-                CPLMalloc(strlen(field_name)+strlen(table_alias)+2);
-
-            sprintf( composed_name, "%s.%s", table_alias, field_name );
-
-            def->field_name = composed_name;
+            def->table_name = CPLStrdup(table_alias);
+            def->field_name = CPLStrdup(field_name);
             if( !compose )
                 def->field_alias = CPLStrdup( field_list->names[i] );
 
@@ -884,6 +902,8 @@ CPLErr swq_select::parse( swq_field_list *field_list,
                 def->field_index = def->expr->field_index;
                 def->table_index = def->expr->table_index;
 
+                CPLFree( def->table_name );
+                def->table_name = CPLStrdup(def->expr->table_name ? def->expr->table_name : "");
                 CPLFree( def->field_name );
                 def->field_name = CPLStrdup(def->expr->string_value);
             }
@@ -893,7 +913,8 @@ CPLErr swq_select::parse( swq_field_list *field_list,
             swq_field_type  this_type;
 
             /* identify field */
-            def->field_index = swq_identify_field( def->field_name, field_list,
+            def->field_index = swq_identify_field( def->table_name,
+                                                   def->field_name, field_list,
                                                    &this_type, 
                                                    &(def->table_index) );
             
@@ -904,7 +925,7 @@ CPLErr swq_select::parse( swq_field_list *field_list,
             {
                 CPLError( CE_Failure, CPLE_AppDefined, 
                           "Unrecognised field name %s.", 
-                          def->field_name );
+                          def->table_name[0] ? CPLSPrintf("%s.%s", def->table_name, def->field_name) : def->field_name );
                 return CE_Failure;
             }
         }
@@ -1006,43 +1027,49 @@ CPLErr swq_select::parse( swq_field_list *field_list,
         int          table_id;
 
         /* identify primary field */
-        def->primary_field = swq_identify_field( def->primary_field_name,
+        def->primary_field = swq_identify_field( def->primary_table_name,
+                                                 def->primary_field_name,
                                                  field_list, NULL, &table_id );
         if( def->primary_field == -1 )
         {
             CPLError( CE_Failure, CPLE_AppDefined, 
-                     "Unrecognised primary field %s in JOIN clause..", 
-                     def->primary_field_name );
+                      "Unrecognised primary field %s.%s in JOIN clause.", 
+                      def->primary_table_name,
+                      def->primary_field_name );
             return CE_Failure;
         }
         
         if( table_id != 0 )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
-                     "Currently the primary key must come from the primary table in\n"
-                     "JOIN, %s is not from the primary table.",
-                     def->primary_field_name );
+                      "Currently the primary key must come from the primary table in\n"
+                      "JOIN, %s.%s is not from the primary table.",
+                      def->primary_table_name,
+                      def->primary_field_name );
             return CE_Failure;
         }
         
         /* identify secondary field */
-        def->secondary_field = swq_identify_field( def->secondary_field_name,
+        def->secondary_field = swq_identify_field( def->secondary_table_name,
+                                                   def->secondary_field_name,
                                                    field_list, NULL,&table_id);
         if( def->secondary_field == -1 )
         {
             CPLError( CE_Failure, CPLE_AppDefined, 
-                     "Unrecognised secondary field %s in JOIN clause..", 
-                     def->secondary_field_name );
+                      "Unrecognised secondary field %s.%s in JOIN clause.", 
+                      def->secondary_table_name,
+                      def->secondary_field_name );
             return CE_Failure;
         }
         
         if( table_id != def->secondary_table )
         {
             CPLError( CE_Failure, CPLE_AppDefined, 
-                     "Currently the secondary key must come from the secondary table\n"
-                     "listed in the JOIN.  %s is not from table %s..",
-                     def->secondary_field_name,
-                     table_defs[def->secondary_table].table_name);
+                      "Currently the secondary key must come from the secondary table\n"
+                      "listed in the JOIN.  %s.%s is not from table %s.",
+                      def->secondary_table_name,
+                      def->secondary_field_name,
+                      table_defs[def->secondary_table].table_name);
             return CE_Failure;
         }
     }
@@ -1056,13 +1083,14 @@ CPLErr swq_select::parse( swq_field_list *field_list,
 
         /* identify field */
         swq_field_type field_type;
-        def->field_index = swq_identify_field( def->field_name, field_list,
+        def->field_index = swq_identify_field( def->table_name,
+                                               def->field_name, field_list,
                                                &field_type, &(def->table_index) );
         if( def->field_index == -1 )
         {
             CPLError( CE_Failure, CPLE_AppDefined, 
                       "Unrecognised field name %s in ORDER BY.", 
-                     def->field_name );
+                      def->table_name[0] ? CPLSPrintf("%s.%s", def->table_name, def->field_name) : def->field_name );
             return CE_Failure;
         }
 

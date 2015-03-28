@@ -128,8 +128,19 @@ def ogr_rfc28_6():
 ###############################################################################
 # test with distinguished name for field in where clause.
 
-def ogr_rfc28_7():
+def ogr_rfc28_7_wrong_quoting():
     ql = gdaltest.ds.ExecuteSQL( "select eas_id from idlink where \"idlink.eas_id\" = 166" )
+    
+    count = ql.GetFeatureCount()
+    if count != 1:
+        gdaltest.post_reason( 'Got wrong count with GetFeatureCount() - %d, expecting 1' % count )
+        return 'fail'
+
+    gdaltest.ds.ReleaseResultSet( ql )
+    return 'success'
+
+def ogr_rfc28_7_good_quoting():
+    ql = gdaltest.ds.ExecuteSQL( "select eas_id from idlink where idlink.eas_id = 166" )
     
     count = ql.GetFeatureCount()
     if count != 1:
@@ -142,8 +153,26 @@ def ogr_rfc28_7():
 ###############################################################################
 # test with distinguished name for field in target columns.
 
-def ogr_rfc28_8():
+def ogr_rfc28_8_wrong_quoting():
     ql = gdaltest.ds.ExecuteSQL( "select \"idlink.eas_id\" from idlink where \"idlink.eas_id\" = 166" )
+    
+    count = ql.GetFeatureCount()
+    if count != 1:
+        gdaltest.post_reason( 'Got wrong count with GetFeatureCount() - %d, expecting 1' % count )
+        return 'fail'
+
+    expect = [ 166 ]
+    tr = ogrtest.check_features_against_list( ql, 'idlink.eas_id', expect )
+    
+    gdaltest.ds.ReleaseResultSet( ql )
+
+    if tr:
+        return 'success'
+    else:
+        return 'fail'
+
+def ogr_rfc28_8_good_quoting():
+    ql = gdaltest.ds.ExecuteSQL( "select idlink.eas_id from idlink where idlink.eas_id = 166" )
     
     count = ql.GetFeatureCount()
     if count != 1:
@@ -1069,6 +1098,93 @@ def ogr_rfc28_43():
     return 'success'
 
 ###############################################################################
+# Test crazy quoting of table and fields
+
+def ogr_rfc28_44():
+
+    ds = ogr.GetDriverByName('Memory').CreateDataSource('')
+    lyr = ds.CreateLayer('lyr.withpoint')
+    fld_defn = ogr.FieldDefn('field.withpoint', ogr.OFTInteger)
+    lyr.CreateField(fld_defn)
+    fld_defn = ogr.FieldDefn('foo', ogr.OFTInteger)
+    lyr.CreateField(fld_defn)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField(0, -1)
+    lyr.CreateFeature(feat)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField(0, 1)
+    feat.SetField(1, 2)
+    lyr.CreateFeature(feat)
+
+    gdal.ErrorReset()
+    lyr = ds.ExecuteSQL( "SELECT * FROM \"lyr.withpoint\" WHERE \"field.withpoint\" = 1" )
+    if gdal.GetLastErrorMsg() != '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdaltest.ds.ReleaseResultSet( lyr )
+
+    gdal.ErrorReset()
+    lyr = ds.ExecuteSQL( "SELECT \"lyr.withpoint\".\"field.withpoint\", \"field.withpoint\" FROM \"lyr.withpoint\" WHERE \"lyr.withpoint\".\"field.withpoint\" = 1" )
+    if gdal.GetLastErrorMsg() != '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdaltest.ds.ReleaseResultSet( lyr )
+
+    # Test our tolerance against lack of necessary quoting
+    gdal.ErrorReset()
+    gdal.PushErrorHandler()
+    lyr = ds.ExecuteSQL( "SELECT * FROM \"lyr.withpoint\" WHERE field.withpoint = 1" )
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorMsg() != 'Passed field name field.withpoint should have been surrounded by double quotes. Accepted since there is no ambiguity...':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdaltest.ds.ReleaseResultSet( lyr )
+
+    # Againg, but in a situation where there IS ambiguity
+    lyr = ds.CreateLayer('field')
+    fld_defn = ogr.FieldDefn('id', ogr.OFTInteger)
+    lyr.CreateField(fld_defn)
+    
+    gdal.ErrorReset()
+    gdal.PushErrorHandler()
+    lyr = ds.ExecuteSQL( "SELECT * FROM \"lyr.withpoint\" JOIN field ON \"lyr.withpoint\".foo = field.id WHERE field.withpoint = 1" )
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorMsg() != '"field"."withpoint" not recognised as an available field.':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Test our tolerance against unnecessary quoting
+    gdal.ErrorReset()
+    gdal.PushErrorHandler()
+    lyr = ds.ExecuteSQL( "SELECT * FROM \"lyr.withpoint\" f WHERE \"f.foo\" = 2" )
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorMsg() != 'Passed field name f.foo should NOT have been surrounded by double quotes. Accepted since there is no ambiguity...':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdaltest.ds.ReleaseResultSet( lyr )
+
+    return 'success'
+
+###############################################################################
 def ogr_rfc28_cleanup():
     gdaltest.lyr = None
     gdaltest.ds.Destroy()
@@ -1084,8 +1200,10 @@ gdaltest_list = [
     ogr_rfc28_4,
     ogr_rfc28_5,
     ogr_rfc28_6,
-    ogr_rfc28_7,
-    ogr_rfc28_8,
+    ogr_rfc28_7_wrong_quoting,
+    ogr_rfc28_7_good_quoting,
+    ogr_rfc28_8_wrong_quoting,
+    ogr_rfc28_8_good_quoting,
     ogr_rfc28_9,
     ogr_rfc28_10,
     ogr_rfc28_11,
@@ -1121,6 +1239,7 @@ gdaltest_list = [
     ogr_rfc28_41,
     ogr_rfc28_42,
     ogr_rfc28_43,
+    ogr_rfc28_44,
     ogr_rfc28_cleanup ]
 
 if __name__ == '__main__':
