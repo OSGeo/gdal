@@ -90,7 +90,7 @@ OGRPGDumpDataSource::~OGRPGDumpDataSource()
 
     if (fp)
     {
-        Commit();
+        LogCommit();
         VSIFCloseL(fp);
         fp = NULL;
     }
@@ -102,10 +102,10 @@ OGRPGDumpDataSource::~OGRPGDumpDataSource()
 }
 
 /************************************************************************/
-/*                         StartTransaction()                           */
+/*                         LogStartTransaction()                        */
 /************************************************************************/
 
-void OGRPGDumpDataSource::StartTransaction()
+void OGRPGDumpDataSource::LogStartTransaction()
 {
     if (bInTransaction)
         return;
@@ -114,10 +114,10 @@ void OGRPGDumpDataSource::StartTransaction()
 }
 
 /************************************************************************/
-/*                              Commit()                                */
+/*                             LogCommit()                              */
 /************************************************************************/
 
-void OGRPGDumpDataSource::Commit()
+void OGRPGDumpDataSource::LogCommit()
 {
     EndCopy();
 
@@ -245,7 +245,7 @@ OGRPGDumpDataSource::ICreateLayer( const char * pszLayerName,
           pszTableName = CPLStrdup( pszLayerName ); //skip "."
     }
 
-    Commit();
+    LogCommit();
 
 /* -------------------------------------------------------------------- */
 /*      Set the default schema for the layers.                          */
@@ -385,7 +385,7 @@ OGRPGDumpDataSource::ICreateLayer( const char * pszLayerName,
     }
 
 
-    StartTransaction();
+    LogStartTransaction();
 
 /* -------------------------------------------------------------------- */
 /*      Create a basic table with the FID.  Also include the            */

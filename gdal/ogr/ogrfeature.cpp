@@ -4811,7 +4811,7 @@ void OGR_F_SetStyleTable( OGRFeatureH hFeat,
  */
 
 void OGRFeature::FillUnsetWithDefault(int bNotNullableOnly,
-                                      char** papszOptions)
+                                      CPL_UNUSED char** papszOptions)
 {
     int nFieldCount = poDefn->GetFieldCount();
     for(int i = 0; i < nFieldCount; i ++ )
