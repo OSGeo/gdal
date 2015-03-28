@@ -917,6 +917,11 @@ OGRwkbGeometryType OGR_FD_GetGeomType( OGRFeatureDefnH hDefn )
     {
         eType = OGR_GT_GetLinear(eType);
     }
+#ifdef OGRAPISPY_ENABLED
+    if( bOGRAPISpyEnabled )
+        OGRAPISpy_FD_GetGeomType(hDefn);
+#endif
+
     return eType;
 }
 
