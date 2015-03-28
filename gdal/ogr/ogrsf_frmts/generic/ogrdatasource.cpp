@@ -62,12 +62,16 @@ void OGR_DS_Destroy( OGRDataSourceH hDS )
 {
     if( hDS == NULL )
         return;
+#ifdef OGRAPISPY_ENABLED
+    if( bOGRAPISpyEnabled )
+        OGRAPISpyPreClose(hDS);
+#endif
+    delete (GDALDataset *) hDS;
     //VALIDATE_POINTER0( hDS, "OGR_DS_Destroy" );
 #ifdef OGRAPISPY_ENABLED
     if( bOGRAPISpyEnabled )
-        OGRAPISpyClose(hDS);
+        OGRAPISpyPostClose(hDS);
 #endif
-    delete (GDALDataset *) hDS;
 }
 
 /************************************************************************/
@@ -174,12 +178,12 @@ OGRErr OGR_DS_DeleteLayer( OGRDataSourceH hDS, int iLayer )
 {
     VALIDATE_POINTER1( hDS, "OGR_DS_DeleteLayer", OGRERR_INVALID_HANDLE );
 
-    OGRErr eErr = ((GDALDataset *) hDS)->DeleteLayer( iLayer );
-
 #ifdef OGRAPISPY_ENABLED
     if( bOGRAPISpyEnabled )
-        OGRAPISpy_DS_DeleteLayer(hDS, iLayer, eErr);
+        OGRAPISpy_DS_DeleteLayer(hDS, iLayer);
 #endif
+
+    OGRErr eErr = ((GDALDataset *) hDS)->DeleteLayer( iLayer );
 
     return eErr;
 }

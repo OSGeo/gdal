@@ -30,6 +30,7 @@
 #include "ogr_feature.h"
 #include "ogr_api.h"
 #include "ogr_p.h"
+#include "ograpispy.h"
 
 CPL_CVSID("$Id$");
 
@@ -220,6 +221,12 @@ const char *OGR_GFld_GetNameRef( OGRGeomFieldDefnH hDefn )
 
 {
     VALIDATE_POINTER1( hDefn, "OGR_GFld_GetNameRef", "" );
+
+#ifdef OGRAPISPY_ENABLED
+    if( bOGRAPISpyEnabled )
+        OGRAPISpy_GFld_GetXXXX(hDefn, "GetNameRef");
+#endif
+
     return ((OGRGeomFieldDefn *) hDefn)->GetNameRef();
 }
 
@@ -257,6 +264,11 @@ OGRwkbGeometryType OGR_GFld_GetType( OGRGeomFieldDefnH hDefn )
 
 {
     VALIDATE_POINTER1( hDefn, "OGR_GFld_GetType", wkbUnknown );
+
+#ifdef OGRAPISPY_ENABLED
+    if( bOGRAPISpyEnabled )
+        OGRAPISpy_GFld_GetXXXX(hDefn, "GetType");
+#endif
 
     OGRwkbGeometryType eType = ((OGRGeomFieldDefn *) hDefn)->GetType();
     if( OGR_GT_IsNonLinear(eType) && !OGRGetNonLinearGeometriesEnabledFlag() )
@@ -424,6 +436,12 @@ OGRSpatialReference* OGRGeomFieldDefn::GetSpatialRef()
 OGRSpatialReferenceH OGR_GFld_GetSpatialRef( OGRGeomFieldDefnH hDefn )
 {
     VALIDATE_POINTER1( hDefn, "OGR_GFld_GetSpatialRef", NULL );
+
+#ifdef OGRAPISPY_ENABLED
+    if( bOGRAPISpyEnabled )
+        OGRAPISpy_GFld_GetXXXX(hDefn, "GetSpatialRef");
+#endif
+
     return (OGRSpatialReferenceH) ((OGRGeomFieldDefn *) hDefn)->GetSpatialRef();
 }
 
