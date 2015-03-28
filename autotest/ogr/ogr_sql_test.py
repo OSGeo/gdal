@@ -733,6 +733,7 @@ def ogr_sql_28():
     "SELECT 'strfield' +",
     "SELECT 'strfield' 'strfield'",
     "SELECT CONCAT('strfield')",
+    'SELECT foo(strfield) FROM my_layer', # Undefined function 'foo' used.
     'SELECT strfield, FROM my_layer',
     'SELECT strfield, foo FROM my_layer',
     'SELECT strfield AS FROM my_layer',
