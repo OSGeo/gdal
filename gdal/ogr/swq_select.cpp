@@ -894,19 +894,6 @@ CPLErr swq_select::parse( swq_field_list *field_list,
                 return CE_Failure;
                 
             def->field_type = def->expr->field_type;
-
-            // If the field was changed from string constant to 
-            // column field then adopt the name. 
-            if( def->expr->eNodeType == SNT_COLUMN )
-            {
-                def->field_index = def->expr->field_index;
-                def->table_index = def->expr->table_index;
-
-                CPLFree( def->table_name );
-                def->table_name = CPLStrdup(def->expr->table_name ? def->expr->table_name : "");
-                CPLFree( def->field_name );
-                def->field_name = CPLStrdup(def->expr->string_value);
-            }
         }
         else
         {
