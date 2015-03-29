@@ -148,12 +148,8 @@ def test_gdallocationinfo_6():
     ret = gdaltest.runexternal(test_cli_utilities.get_gdallocationinfo_path() + ' tmp/test_gdallocationinfo_6.tif 10 10 -overview 1')
 
     gdal.GetDriverByName('GTiff').Delete('tmp/test_gdallocationinfo_6.tif')
-
-    expected_ret = """Report:
-  Location: (10P,10L)
-  Band 1:
-    Value: 130"""
-    if ret.find(expected_ret) != 0:
+    expected_ret = """Value: 130"""
+    if ret.find(expected_ret) < 0:
         print(ret)
         return 'fail'
 
