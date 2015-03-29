@@ -632,6 +632,45 @@ char *swq_expr_node::Unparse( swq_field_list *field_list, char chColumnQuote )
 }
 
 /************************************************************************/
+/*                               Clone()                                */
+/************************************************************************/
+
+swq_expr_node *swq_expr_node::Clone()
+{
+    swq_expr_node* poRetNode = new swq_expr_node();
+
+    poRetNode->eNodeType = eNodeType;
+    poRetNode->field_type = field_type;
+    if( eNodeType == SNT_OPERATION )
+    {
+        poRetNode->nOperation = nOperation;
+        poRetNode->nSubExprCount = nSubExprCount;
+        poRetNode->papoSubExpr = (swq_expr_node **) 
+                CPLMalloc( sizeof(void*) * nSubExprCount );
+        for(int i=0;i<nSubExprCount;i++)
+            poRetNode->papoSubExpr[i] = papoSubExpr[i]->Clone();
+    }
+    else if( eNodeType == SNT_COLUMN )
+    {
+        poRetNode->field_index = field_index;
+        poRetNode->table_index = table_index;
+    }
+    else if( eNodeType == SNT_CONSTANT )
+    {
+        poRetNode->is_null = is_null;
+        poRetNode->table_name = table_name ? CPLStrdup(table_name) : NULL;
+        poRetNode->string_value = string_value ? CPLStrdup(string_value) : NULL;
+        poRetNode->int_value = int_value;
+        poRetNode->float_value = float_value;
+        if( geometry_value )
+            poRetNode->geometry_value = geometry_value->clone();
+        else
+            poRetNode->geometry_value = NULL;
+    }
+    return poRetNode;
+}
+
+/************************************************************************/
 /*                              Evaluate()                              */
 /************************************************************************/
 
@@ -646,26 +685,7 @@ swq_expr_node *swq_expr_node::Evaluate( swq_field_fetcher pfnFetcher,
 /* -------------------------------------------------------------------- */
     if( eNodeType == SNT_CONSTANT )
     {
-        poRetNode = new swq_expr_node();
-
-        poRetNode->eNodeType = SNT_CONSTANT;
-        poRetNode->field_type = field_type;
-        poRetNode->int_value = int_value;
-        poRetNode->float_value = float_value;
-
-        if( string_value )
-            poRetNode->string_value = CPLStrdup(string_value);
-        else
-            poRetNode->string_value = NULL;
-
-        if( geometry_value )
-            poRetNode->geometry_value = geometry_value->clone();
-        else
-            poRetNode->geometry_value = NULL;
-
-        poRetNode->is_null = is_null;
-
-        return poRetNode;
+        return Clone();
     }
 
 /* -------------------------------------------------------------------- */
@@ -720,4 +740,37 @@ swq_expr_node *swq_expr_node::Evaluate( swq_field_fetcher pfnFetcher,
     }
 
     return poRetNode;
+}
+
+/************************************************************************/
+/*                      ReplaceBetweenByGEAndLERecurse()                */
+/************************************************************************/
+
+void swq_expr_node::ReplaceBetweenByGEAndLERecurse()
+{
+    if( eNodeType != SNT_OPERATION )
+        return;
+
+    if( nOperation != SWQ_BETWEEN )
+    {
+        for(int i=0;i<nSubExprCount;i++)
+            papoSubExpr[i]->ReplaceBetweenByGEAndLERecurse();
+        return;
+    }
+
+    if( nSubExprCount != 3 )
+        return;
+
+    swq_expr_node* poExpr0 = papoSubExpr[0];
+    swq_expr_node* poExpr1 = papoSubExpr[1];
+    swq_expr_node* poExpr2 = papoSubExpr[2];
+    
+    nSubExprCount = 2;
+    nOperation = SWQ_AND;
+    papoSubExpr[0] = new swq_expr_node(SWQ_GE);
+    papoSubExpr[0]->PushSubExpression(poExpr0);
+    papoSubExpr[0]->PushSubExpression(poExpr1);
+    papoSubExpr[1] = new swq_expr_node(SWQ_LE);
+    papoSubExpr[1]->PushSubExpression(poExpr0->Clone());
+    papoSubExpr[1]->PushSubExpression(poExpr2);
 }

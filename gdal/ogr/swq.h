@@ -119,6 +119,9 @@ public:
     swq_field_type Check( swq_field_list *, int bAllowFieldsInSecondaryTables );
     swq_expr_node* Evaluate( swq_field_fetcher pfnFetcher, 
                              void *record );
+    swq_expr_node* Clone();
+
+    void           ReplaceBetweenByGEAndLERecurse();
 
     swq_node_type eNodeType;
     swq_field_type field_type;
