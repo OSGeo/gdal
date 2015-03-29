@@ -1,0 +1,15 @@
+
+OBJ	=	ogrplscenesdataset.obj ogrplsceneslayer.obj
+EXTRAFLAGS =	-I.. -I..\..  -I..\geojson -I..\geojson\libjson
+
+GDAL_ROOT	=	..\..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+default:	$(OBJ)
+
+clean:
+	-del *.obj *.pdb
+
+
+

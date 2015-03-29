@@ -210,6 +210,10 @@ ifeq ($(CURL_SETTING),yes)
 CXXFLAGS :=	$(CXXFLAGS) -DCARTODB_ENABLED
 endif
 
+ifeq ($(CURL_SETTING),yes)
+CXXFLAGS :=	$(CXXFLAGS) -DPLSCENES_ENABLED
+endif
+
 endif
 
 CPPFLAGS	:=	-I.. -I../..  $(CPPFLAGS)

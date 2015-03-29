@@ -41,6 +41,7 @@ SUBDIRS-$(HAVE_SQLITE)	+= gpkg
 SUBDIRS-$(HAVE_SQLITE)	+= osm
 SUBDIRS-$(HAVE_SOSI)	+= sosi
 SUBDIRS-$(CURL_SETTING) += cartodb
+SUBDIRS-$(CURL_SETTING) += plscenes
 
 default:	$(foreach d,$(SUBDIRS-yes),$(d)-target)
 
