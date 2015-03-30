@@ -4255,7 +4255,29 @@ CPL_UNUSED
     if ( poOpenInfo->nHeaderBytes < 4 )
         return NCDF_FORMAT_NONE;
     if ( EQUALN((char*)poOpenInfo->pabyHeader,"CDF\001",4) )
+    {
+        /* In case the netCDF driver is registered before the GMT driver, */
+        /* avoid opening GMT files */
+        if( GDALGetDriverByName("GMT") != NULL )
+        {
+            int bFoundZ = FALSE, bFoundDimension = FALSE;
+            for(int i=0;i<poOpenInfo->nHeaderBytes - 11;i++)
+            {
+                if( poOpenInfo->pabyHeader[i] == 1 &&
+                    poOpenInfo->pabyHeader[i+1] == 'z' &&
+                    poOpenInfo->pabyHeader[i+2] == 0  )
+                    bFoundZ = TRUE;
+                else if( poOpenInfo->pabyHeader[i] == 9 &&
+                        memcmp((const char*)poOpenInfo->pabyHeader + i + 1, "dimension", 9) == 0 &&
+                        poOpenInfo->pabyHeader[i+10] == 0 )
+                    bFoundDimension = TRUE;
+            }
+            if( bFoundZ && bFoundDimension )
+                return NCDF_FORMAT_UNKNOWN;
+        }
+
         return NCDF_FORMAT_NC;
+    }
     else if ( EQUALN((char*)poOpenInfo->pabyHeader,"CDF\002",4) )
         return NCDF_FORMAT_NC2;
     else if ( EQUALN((char*)poOpenInfo->pabyHeader,"\211HDF\r\n\032\n",8) ) {
