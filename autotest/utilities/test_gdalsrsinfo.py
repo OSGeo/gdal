@@ -132,6 +132,7 @@ def test_gdalsrsinfo_6():
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() + \
                                    ' -o wkt_simple ../gcore/data/byte.tif')
+    ret = ret.replace('\r\n', '\n')
 
     first_val =  """PROJCS["NAD27 / UTM zone 11N",
     GEOGCS["NAD27",
@@ -192,6 +193,7 @@ def test_gdalsrsinfo_8():
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() + \
                                    ' -o wkt -p EPSG:4326')
+    ret = ret.replace('\r\n', '\n')
 
     if ret.strip() != """GEOGCS["WGS 84",
     DATUM["WGS_1984",
