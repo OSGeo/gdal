@@ -34,8 +34,6 @@
 
 CPL_CVSID("$Id$");
 
-#define GP_NODATA_MARKER -51502112
-
 #ifdef OGR_ENABLED
 
 /************************************************************************/
@@ -697,13 +695,10 @@ GDALPolygonize( GDALRasterBandH hSrcBand,
             {
                 if( papoPoly[iX] && papoPoly[iX]->nLastLineUpdated < iY-1 )
                 {
-                    if( hMaskBand == NULL
-                        || papoPoly[iX]->nPolyValue != GP_NODATA_MARKER )
-                    {
-                        eErr = 
-                            EmitPolygonToLayer( hOutLayer, iPixValField, 
-                                                papoPoly[iX], adfGeoTransform );
-                    }
+                    eErr = 
+                        EmitPolygonToLayer( hOutLayer, iPixValField, 
+                                            papoPoly[iX], adfGeoTransform );
+
                     delete papoPoly[iX];
                     papoPoly[iX] = NULL;
                 }
@@ -741,13 +736,10 @@ GDALPolygonize( GDALRasterBandH hSrcBand,
     {
         if( papoPoly[iX] )
         {
-            if( hMaskBand == NULL
-                || papoPoly[iX]->nPolyValue != GP_NODATA_MARKER )
-            {
-                eErr = 
-                    EmitPolygonToLayer( hOutLayer, iPixValField, 
-                                        papoPoly[iX], adfGeoTransform );
-            }
+            eErr = 
+                EmitPolygonToLayer( hOutLayer, iPixValField, 
+                                    papoPoly[iX], adfGeoTransform );
+
             delete papoPoly[iX];
             papoPoly[iX] = NULL;
         }

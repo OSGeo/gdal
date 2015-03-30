@@ -94,6 +94,8 @@ CPL_C_END
 /*                          Polygon Enumerator                          */
 /************************************************************************/
 
+#define GP_NODATA_MARKER -51502112
+
 class GDALRasterPolygonEnumerator
 
 {
