@@ -2632,9 +2632,11 @@ def ogr_pg_50():
             if value == 'NaN':
                 if not gdaltest.isnan(got_val):
                     print(feat.GetFieldAsString( 'AREA' )+' returned for AREA instead of '+value)
+                    gdaltest.pg_lyr.ResetReading() # to close implicit transaction
                     return 'fail'
             elif got_val != float(value):
                 print(feat.GetFieldAsString( 'AREA' )+' returned for AREA instead of '+value)
+                gdaltest.pg_lyr.ResetReading() # to close implicit transaction
                 return 'fail'
 
             if bHasSetFieldDoubleList:
@@ -2642,9 +2644,11 @@ def ogr_pg_50():
                 if value == 'NaN':
                     if not gdaltest.isnan(got_val[0]) or not gdaltest.isnan(got_val[1]):
                         print(feat.GetFieldAsString( 'REALLIST' )+' returned for REALLIST instead of '+value)
+                        gdaltest.pg_lyr.ResetReading() # to close implicit transaction
                         return 'fail'
                 elif got_val[0] != float(value) or got_val[1] != float(value):
                     print(feat.GetFieldAsString( 'REALLIST' )+' returned for REALLIST instead of '+value)
+                    gdaltest.pg_lyr.ResetReading() # to close implicit transaction
                     return 'fail'
 
     gdaltest.pg_lyr.ResetReading() # to close implicit transaction
