@@ -1149,7 +1149,8 @@ def jp2openjpeg_26():
     if gdal.VSIStatL('/vsimem/jp2openjpeg_26.jp2.aux.xml') is not None:
         gdaltest.post_reason('fail')
         return 'fail'
-    if validate('/vsimem/jp2openjpeg_26.jp2', return_error_count = True) != (2, 0):
+    res = validate('/vsimem/jp2openjpeg_26.jp2', return_error_count = True)
+    if res != 'skip' and res != (2, 0):
         gdaltest.post_reason('fail')
         return 'fail'
     gdal.Unlink('/vsimem/jp2openjpeg_26.jp2')
