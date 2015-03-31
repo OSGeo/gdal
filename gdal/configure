@@ -21818,7 +21818,7 @@ $as_echo "no" >&6; }
   fi
 
   HAVE_KEA=yes
-  KEA_LIB="`$KEA_CONFIG --libs`"
+  KEA_LIB="`$KEA_CONFIG --libs --hdflibs`"
   KEA_INC="`$KEA_CONFIG --cflags --hdfcflags`"
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
