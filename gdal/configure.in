@@ -1810,7 +1810,7 @@ else
 
   HAVE_KEA=yes
   KEA_LIB="`$KEA_CONFIG --libs`"
-  KEA_INC="`$KEA_CONFIG --cflags`"
+  KEA_INC="`$KEA_CONFIG --cflags --hdfcflags`"
   AC_MSG_RESULT([yes]) 
 fi
 
