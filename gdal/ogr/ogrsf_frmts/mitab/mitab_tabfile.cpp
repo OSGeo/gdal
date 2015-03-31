@@ -1444,17 +1444,17 @@ OGRErr TABFile::DeleteFeature(GIntBig nFeatureId)
         m_poMAPFile->MoveToObjId((int)nFeatureId) != 0 ||
         m_poDATFile->GetRecordBlock((int)nFeatureId) == NULL )
     {
-        CPLError(CE_Failure, CPLE_IllegalArg,
+        /*CPLError(CE_Failure, CPLE_IllegalArg,
                  "DeleteFeature() failed: invalid feature id " CPL_FRMT_GIB, 
-                 nFeatureId);
-        return OGRERR_FAILURE;
+                 nFeatureId);*/
+        return OGRERR_NON_EXISTING_FEATURE;
     }
     
     if( m_poDATFile->IsCurrentRecordDeleted() )
     {
-        CPLError(CE_Failure, CPLE_IllegalArg,
-                 "DeleteFeature() failed: record is already deleted!");
-        return OGRERR_FAILURE;
+        /*CPLError(CE_Failure, CPLE_IllegalArg,
+                 "DeleteFeature() failed: record is already deleted!");*/
+        return OGRERR_NON_EXISTING_FEATURE;
     }
 
     if (m_poCurFeature)
@@ -1693,10 +1693,10 @@ OGRErr TABFile::ISetFeature( OGRFeature *poFeature )
     }
     if (nFeatureId <= 0 || nFeatureId > m_nLastFeatureId )
     {
-        CPLError(CE_Failure, CPLE_IllegalArg,
+        /*CPLError(CE_Failure, CPLE_IllegalArg,
                     "SetFeature() failed: invalid feature id " CPL_FRMT_GIB, 
-                    nFeatureId);
-        return OGRERR_FAILURE;
+                    nFeatureId);*/
+        return OGRERR_NON_EXISTING_FEATURE;
     }
 
     OGRGeometry* poGeom = poFeature->GetGeometryRef();
@@ -1718,11 +1718,11 @@ OGRErr TABFile::ISetFeature( OGRFeature *poFeature )
 
     if (m_poDATFile->GetRecordBlock((int)nFeatureId) == NULL )
     {
-        CPLError(CE_Failure, CPLE_IllegalArg,
+        /*CPLError(CE_Failure, CPLE_IllegalArg,
                  "SetFeature() failed: invalid feature id " CPL_FRMT_GIB, 
-                 nFeatureId);
+                 nFeatureId);*/
         delete poTABFeature;
-        return OGRERR_FAILURE;
+        return OGRERR_NON_EXISTING_FEATURE;
     }
 
     /* If the object is not already deleted, delete it */

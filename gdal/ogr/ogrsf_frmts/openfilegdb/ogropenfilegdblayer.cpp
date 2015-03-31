@@ -1103,47 +1103,6 @@ FileGDBIterator* OGROpenFileGDBLayer::BuildIteratorFromExprNode(swq_expr_node* p
         }
     }
     else if( poNode->eNodeType == SNT_OPERATION &&
-        poNode->nOperation == SWQ_BETWEEN && poNode->nSubExprCount == 3 )
-    {
-        swq_expr_node *poColumn = poNode->papoSubExpr[0];
-        swq_expr_node *poValue1 = poNode->papoSubExpr[1];
-        swq_expr_node *poValue2 = poNode->papoSubExpr[2];
-        if( poColumn->eNodeType == SNT_COLUMN &&
-            poColumn->field_index < GetLayerDefn()->GetFieldCount() &&
-            poValue1->eNodeType == SNT_CONSTANT &&
-            poValue2->eNodeType == SNT_CONSTANT )
-        {
-            OGRFieldDefn *poFieldDefn;
-            poFieldDefn = GetLayerDefn()->GetFieldDefn(poColumn->field_index);
-
-            int nTableColIdx = m_poLyrTable->GetFieldIdx(poFieldDefn->GetNameRef());
-            if( nTableColIdx >= 0 && m_poLyrTable->GetField(nTableColIdx)->HasIndex() )
-            {
-                OGRField sValue1, sValue2;
-
-                if( FillTargetValueFromSrcExpr(poFieldDefn, &sValue1, poValue1) &&
-                    FillTargetValueFromSrcExpr(poFieldDefn, &sValue2, poValue2) )
-                {
-                    FileGDBIterator* poIter1 = FileGDBIterator::Build(
-                                            m_poLyrTable, nTableColIdx, TRUE,
-                                            FGSO_GE,
-                                            poFieldDefn->GetType(), &sValue1);
-                    FileGDBIterator* poIter2 = FileGDBIterator::Build(
-                                            m_poLyrTable, nTableColIdx, TRUE,
-                                            FGSO_LE,
-                                            poFieldDefn->GetType(), &sValue2);
-                    if( poIter1 != NULL && poIter2 != NULL )
-                    {
-                        m_bIteratorSufficientToEvaluateFilter = TRUE;
-                        return FileGDBIterator::BuildAnd(poIter1, poIter2);
-                    }
-                    delete poIter1;
-                    delete poIter2;
-                }
-            }
-        }
-    }
-    else if( poNode->eNodeType == SNT_OPERATION &&
              poNode->nOperation == SWQ_IN && poNode->nSubExprCount >= 2 )
     {
         swq_expr_node *poColumn = poNode->papoSubExpr[0];
@@ -1243,6 +1202,7 @@ OGRErr OGROpenFileGDBLayer::SetAttributeFilter( const char* pszFilter )
     if( m_poAttrQuery != NULL && m_nFilteredFeatureCount < 0 )
     {
         swq_expr_node* poNode = (swq_expr_node*) m_poAttrQuery->GetSWGExpr();
+        poNode->ReplaceBetweenByGEAndLERecurse();
         m_bIteratorSufficientToEvaluateFilter = -1;
         m_poIterator = BuildIteratorFromExprNode(poNode);
         if( m_poIterator != NULL && m_eSpatialIndexState == SPI_IN_BUILDING )

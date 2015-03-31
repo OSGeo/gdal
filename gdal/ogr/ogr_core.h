@@ -293,6 +293,7 @@ typedef int OGRErr;
 #define OGRERR_FAILURE             6
 #define OGRERR_UNSUPPORTED_SRS     7
 #define OGRERR_INVALID_HANDLE      8
+#define OGRERR_NON_EXISTING_FEATURE 9   /* added in GDAL 2.0 */
 
 typedef int     OGRBoolean;
 

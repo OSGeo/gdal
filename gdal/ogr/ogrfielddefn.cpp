@@ -31,6 +31,7 @@
 #include "ogr_feature.h"
 #include "ogr_api.h"
 #include "ogr_p.h"
+#include "ograpispy.h"
 
 CPL_CVSID("$Id$");
 
@@ -213,6 +214,12 @@ void OGR_Fld_SetName( OGRFieldDefnH hDefn, const char *pszName )
 const char *OGR_Fld_GetNameRef( OGRFieldDefnH hDefn )
 
 {
+
+#ifdef OGRAPISPY_ENABLED
+    if( bOGRAPISpyEnabled )
+        OGRAPISpy_Fld_GetXXXX(hDefn, "GetNameRef");
+#endif
+
     return ((OGRFieldDefn *) hDefn)->GetNameRef();
 }
 
@@ -245,6 +252,12 @@ const char *OGR_Fld_GetNameRef( OGRFieldDefnH hDefn )
 OGRFieldType OGR_Fld_GetType( OGRFieldDefnH hDefn )
 
 {
+
+#ifdef OGRAPISPY_ENABLED
+    if( bOGRAPISpyEnabled )
+        OGRAPISpy_Fld_GetXXXX(hDefn, "GetType");
+#endif
+
     return ((OGRFieldDefn *) hDefn)->GetType();
 }
 
@@ -325,6 +338,12 @@ void OGR_Fld_SetType( OGRFieldDefnH hDefn, OGRFieldType eType )
 OGRFieldSubType OGR_Fld_GetSubType( OGRFieldDefnH hDefn )
 
 {
+
+#ifdef OGRAPISPY_ENABLED
+    if( bOGRAPISpyEnabled )
+        OGRAPISpy_Fld_GetXXXX(hDefn, "GetSubType");
+#endif
+
     return ((OGRFieldDefn *) hDefn)->GetSubType();
 }
 

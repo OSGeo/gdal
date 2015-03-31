@@ -64,7 +64,7 @@ def ogr_elasticsearch_unexisting_server():
         return 'skip'
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    ds = ogrtest.elasticsearch_drv.CreateDataSource("http://127.0.0.1:6969")
+    ds = ogrtest.elasticsearch_drv.CreateDataSource("http://not_existing_host:6969")
     gdal.PopErrorHandler()
     if ds is not None:
         gdaltest.post_reason('managed to open inexisting ElasticSearch datastore !')

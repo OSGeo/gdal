@@ -157,10 +157,15 @@ OGRErr OGRReleaseDataSource( OGRDataSourceH hDS )
 
 #ifdef OGRAPISPY_ENABLED
     if( bOGRAPISpyEnabled )
-        OGRAPISpyClose(hDS);
+        OGRAPISpyPreClose(hDS);
+#endif
+    GDALClose( (GDALDatasetH) hDS );
+
+#ifdef OGRAPISPY_ENABLED
+    if( bOGRAPISpyEnabled )
+        OGRAPISpyPostClose(hDS);
 #endif
 
-    GDALClose( (GDALDatasetH) hDS );
     return OGRERR_NONE;
 }
 

@@ -3448,7 +3448,7 @@ GDALRasterAdviseRead( GDALRasterBandH hBand,
  * but no warning will have been issued.   This is a non-standard use of
  * the CE_Warning return value to indicate "nothing done". 
  *
- * Note that file formats using PAM (Persistent Auxilary Metadata) services
+ * Note that file formats using PAM (Persistent Auxiliary Metadata) services
  * will generally cache statistics in the .pam file allowing fast fetch
  * after the first request. 
  *

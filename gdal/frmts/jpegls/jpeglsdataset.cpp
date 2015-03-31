@@ -637,7 +637,7 @@ JPEGLSDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     VSIFCloseL(fp);
 
 /* -------------------------------------------------------------------- */
-/*      Re-open dataset, and copy any auxilary pam information.         */
+/*      Re-open dataset, and copy any auxiliary pam information.         */
 /* -------------------------------------------------------------------- */
     JPEGLSDataset *poDS = (JPEGLSDataset *) GDALOpen( pszFilename, GA_ReadOnly );
 

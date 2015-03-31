@@ -16,7 +16,7 @@ DIRLIST		=	generic geojson shape ntf sdts tiger s57 dgn mitab gml \
 			$(LIBKMLDIR) $(WFSDIR) $(SOSIDIR) $(GFTDIR) \
 			$(COUCHDBDIR) $(CLOUDANTDIR) $(FGDB_DIR) $(XLSDIR) $(ODSDIR) $(XLSXDIR) \
 			$(INGRESDIR) $(ELASTICDIR) $(OSMDIR) $(VFKDIR) $(CARTODBDIR) \
-			$(GMEDIR)
+			$(GMEDIR) $(PLSCENESDIR)
 
 PLUGINDIRLIST	=	$(PLUGIN_ARCOBJECTS_DIR) \
 			$(PLUGIN_DWG_DIR) \
@@ -210,6 +210,11 @@ GMEDIR = gme
 GME_OBJ = gme\*.obj
 !ENDIF
 
+!IFDEF CURL_LIB
+PLSCENESDIR = plscenes
+PLSCENES_OBJ = plscenes\*.obj
+!ENDIF
+
 !ELSE
 
 DIRLIST		=	generic mitab
@@ -240,7 +245,7 @@ default:
 				$(ILI_OBJ) $(DWG_OBJ) $(SDE_OBJ) $(FGDB_OBJ) $(ARCDRIVER_OBJ) $(IDB_OBJ) \
 				$(DODS_OBJ) $(NAS_OBJ) $(LIBKMLOBJ) $(WFS_OBJ) \
 				$(SOSI_OBJ) $(GFT_OBJ) $(COUCHDB_OBJ) $(CLOUDANT_OBJ) $(XLS_OBJ) $(ODS_OBJ) $(XLSX_OBJ)  \
-				$(INGRESOBJ) $(ELASTIC_OBJ) $(OSM_OBJ) $(VFK_OBJ) $(CARTODB_OBJ) $(GME_OBJ)
+				$(INGRESOBJ) $(ELASTIC_OBJ) $(OSM_OBJ) $(VFK_OBJ) $(CARTODB_OBJ) $(GME_OBJ) $(PLSCENES_OBJ)
 	lib /out:ogrsf_frmts_sup.lib \
 				 ..\..\frmts\iso8211\*.obj \
 				 ..\..\frmts\sdts\sdtsattrreader.obj \

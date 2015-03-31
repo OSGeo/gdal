@@ -823,21 +823,9 @@ OGRErr OGROCITableLayer::ISetFeature( OGRFeature *poFeature )
         return OGRERR_FAILURE;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Prepare the delete command, and execute.  We don't check the    */
-/*      error result of the execute, since attempting to Set a          */
-/*      non-existing feature may be OK.                                 */
-/* -------------------------------------------------------------------- */
-    OGROCIStringBuf     oCmdText;
-    OGROCIStatement     oCmdStatement( poDS->GetSession() );
-
-    oCmdText.Appendf( strlen(poFeatureDefn->GetName())+strlen(pszFIDName)+100,
-                      "DELETE FROM %s WHERE \"%s\" = " CPL_FRMT_GIB,
-                      poFeatureDefn->GetName(), 
-                      pszFIDName, 
-                      poFeature->GetFID() );
-
-    oCmdStatement.Execute( oCmdText.GetString() );
+    OGRErr eErr = DeleteFeature(poFeature->GetFID());
+    if( eErr != OGRERR_NONE )
+        return eErr;
 
     return CreateFeature( poFeature );
 }
@@ -887,7 +875,7 @@ OGRErr OGROCITableLayer::DeleteFeature( GIntBig nFID )
                       nFID );
 
     if( oCmdStatement.Execute( oCmdText.GetString() ) == CE_None )
-        return OGRERR_NONE;
+        return (oCmdStatement.GetAffectedRows() > 0) ? OGRERR_NONE : OGRERR_NON_EXISTING_FEATURE;
     else
         return OGRERR_FAILURE;
 }

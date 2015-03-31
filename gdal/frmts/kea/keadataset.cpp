@@ -236,11 +236,20 @@ H5::H5File *KEADataset::CreateLL( const char * pszFilename,
     if( pszValue != NULL )
         ndeflate = (unsigned int) atol( pszValue );
 
+    kealib::KEADataType keaDataType = GDAL_to_KEA_Type( eType );
+    if( nBands > 0 && keaDataType == kealib::kea_undefined )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "Data type %s not supported in KEA",
+                  GDALGetDataTypeName(eType) );
+        return NULL;
+    }
+    
     try
     {
         // now create it
         H5::H5File *keaImgH5File = kealib::KEAImageIO::createKEAImage( pszFilename,
-                                                    GDAL_to_KEA_Type( eType ),
+                                                    keaDataType,
                                                     nXSize, nYSize, nBands,
                                                     NULL, NULL, nimageblockSize, 
                                                     nattblockSize, nmdcElmts, nrdccNElmts,
@@ -703,9 +712,18 @@ CPLErr KEADataset::AddBand(GDALDataType eType, char **papszOptions)
             ndeflate = atol(pszValue);
         }
     }
-
+    
+    kealib::KEADataType keaDataType = GDAL_to_KEA_Type( eType );
+    if( keaDataType == kealib::kea_undefined )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "Data type %s not supported in KEA",
+                  GDALGetDataTypeName(eType) );
+        return CE_Failure;
+    }
+    
     try {
-        m_pImageIO->addImageBand(GDAL_to_KEA_Type(eType), "", nimageBlockSize,
+        m_pImageIO->addImageBand(keaDataType, "", nimageBlockSize,
                 nattBlockSize, ndeflate);
     } catch (kealib::KEAIOException &e) {
         CPLError( CE_Failure, CPLE_AppDefined,

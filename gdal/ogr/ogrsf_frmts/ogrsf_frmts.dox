@@ -1504,7 +1504,7 @@ by the OGRSFDriverManager.
  @param poFeature the feature to write.
 
  @return OGRERR_NONE if the operation works, otherwise an appropriate error
- code.
+ code (e.g OGRERR_NON_EXISTING_FEATURE if the feature does not exist).
 
 */
 
@@ -1523,7 +1523,7 @@ by the OGRSFDriverManager.
  @param poFeature the feature to write.
 
  @return OGRERR_NONE if the operation works, otherwise an appropriate error
- code.
+ code (e.g OGRERR_NON_EXISTING_FEATURE if the feature does not exist).
  @since GDAL 2.0
 
 */
@@ -1546,7 +1546,7 @@ by the OGRSFDriverManager.
  @param hFeat the feature to write.
 
  @return OGRERR_NONE if the operation works, otherwise an appropriate error
- code.
+ code (e.g OGRERR_NON_EXISTING_FEATURE if the feature does not exist).
 
 */
 
@@ -1632,7 +1632,8 @@ by the OGRSFDriverManager.
 
  @param nFID the feature id to be deleted from the layer 
 
- @return OGRERR_NONE on success.
+ @return OGRERR_NONE if the operation works, otherwise an appropriate error
+ code (e.g OGRERR_NON_EXISTING_FEATURE if the feature does not exist).
 
 */
 
@@ -1653,8 +1654,8 @@ by the OGRSFDriverManager.
  @param hLayer handle to the layer
  @param nFID the feature id to be deleted from the layer 
 
- @return OGRERR_NONE on success.
-
+ @return OGRERR_NONE if the operation works, otherwise an appropriate error
+ code (e.g OGRERR_NON_EXISTING_FEATURE if the feature does not exist).
 
 */
 

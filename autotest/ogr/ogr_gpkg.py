@@ -300,7 +300,20 @@ def ogr_gpkg_7():
     if lyr.GetFeatureCount() != 1:
         gdaltest.post_reason('delete feature did not delete')
         return 'fail'
-        
+
+    # Test updating non-existing feature
+    feat.SetFID(-10)
+    if lyr.SetFeature( feat ) != ogr.OGRERR_NON_EXISTING_FEATURE:
+        feat.Destroy()
+        gdaltest.post_reason( 'Expected failure of SetFeature().' )
+        return 'fail'
+
+    # Test deleting non-existing feature
+    if lyr.DeleteFeature( -10 ) != ogr.OGRERR_NON_EXISTING_FEATURE:
+        feat.Destroy()
+        gdaltest.post_reason( 'Expected failure of DeleteFeature().' )
+        return 'fail'
+
     # Delete the layer
     if gdaltest.gpkg_ds.DeleteLayer('field_test_layer') != 0:
         gdaltest.post_reason( 'got error code from DeleteLayer(field_test_layer)' )
@@ -1700,6 +1713,53 @@ def ogr_gpkg_26():
         gdaltest.post_reason('fail')
         return 'fail'
 
+    ds.StartTransaction()
+    lyr = ds.CreateLayer('test2', geom_type = ogr.wkbPoint)
+    lyr.CreateField(ogr.FieldDefn('foo', ogr.OFTString))
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT(0 0)'))
+    ret = lyr.CreateFeature(f)
+    ds.CommitTransaction()
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ds.StartTransaction()
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT(0 0)'))
+    ret = lyr.CreateFeature(f)
+    ds.CommitTransaction()
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    if False:
+        ds.StartTransaction()
+        lyr = ds.CreateLayer('test3', geom_type = ogr.wkbPoint)
+        lyr.CreateField(ogr.FieldDefn('foo', ogr.OFTString))
+
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT(0 0)'))
+        ret = lyr.CreateFeature(f)
+        
+        #ds.CommitTransaction()
+        ds.ReleaseResultSet(ds.ExecuteSQL('SELECT 1'))
+        #ds = None
+        #ds = ogr.Open('/vsimem/ogr_gpkg_26.gpkg', update = 1)
+        #lyr = ds.GetLayerByName('test3')
+        #ds.StartTransaction()
+        
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT(0 0)'))
+        ret = lyr.CreateFeature(f)
+        ds.CommitTransaction()
+        # For some reason fails with SQLite 3.6.X with 'failed to execute insert : callback requested query abort'
+        # but not with later versions...
+        if ret != 0:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        
     ds = None
     
     gdaltest.gpkg_dr.DeleteDataSource('/vsimem/ogr_gpkg_26.gpkg')

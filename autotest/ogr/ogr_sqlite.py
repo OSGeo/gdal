@@ -484,6 +484,17 @@ def ogr_sqlite_9():
         gdaltest.post_reason( 'PRFEDEA apparently not reset as expected.' )
         return 'fail'
 
+    # Test updating non-existing feature
+    feat_read.SetFID(-10)
+    if gdaltest.sl_lyr.SetFeature( feat_read ) != ogr.OGRERR_NON_EXISTING_FEATURE:
+        gdaltest.post_reason( 'Expected failure of SetFeature().' )
+        return 'fail'
+
+    # Test deleting non-existing feature
+    if gdaltest.sl_lyr.DeleteFeature( -10 ) != ogr.OGRERR_NON_EXISTING_FEATURE:
+        gdaltest.post_reason( 'Expected failure of DeleteFeature().' )
+        return 'fail'
+
     feat_read.Destroy()
     feat_read_2.Destroy()
 
@@ -3117,7 +3128,11 @@ def ogr_sqlite_40():
     if gdaltest.sl_ds is None:
         return 'skip'
 
-    ds = ogr.GetDriverByName('SQLite').CreateDataSource('/vsimem/ogr_sqlite_40.sqlite')
+    if gdaltest.has_spatialite:
+        options = ['SPATIALITE=YES']
+    else:
+        options = []
+    ds = ogr.GetDriverByName('SQLite').CreateDataSource('/vsimem/ogr_sqlite_40.sqlite', options = options)
 
     if ds.TestCapability(ogr.ODsCTransactions) != 1:
         gdaltest.post_reason('fail')
@@ -3216,6 +3231,50 @@ def ogr_sqlite_40():
         gdaltest.post_reason('fail')
         return 'fail'
 
+    ds.StartTransaction()
+    lyr = ds.CreateLayer('test2', geom_type = ogr.wkbPoint)
+    lyr.CreateField(ogr.FieldDefn('foo', ogr.OFTString))
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT(0 0)'))
+    ret = lyr.CreateFeature(f)
+    ds.CommitTransaction()
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ds.StartTransaction()
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT(0 0)'))
+    ret = lyr.CreateFeature(f)
+    ds.CommitTransaction()
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ds.StartTransaction()
+    lyr = ds.CreateLayer('test3', geom_type = ogr.wkbPoint)
+    lyr.CreateField(ogr.FieldDefn('foo', ogr.OFTString))
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT(0 0)'))
+    ret = lyr.CreateFeature(f)
+    
+    #ds.CommitTransaction()
+    ds.ReleaseResultSet(ds.ExecuteSQL('SELECT 1'))
+    #ds = None
+    #ds = ogr.Open('/vsimem/ogr_gpkg_26.gpkg', update = 1)
+    #lyr = ds.GetLayerByName('test3')
+    #ds.StartTransaction()
+    
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT(0 0)'))
+    ret = lyr.CreateFeature(f)
+    ds.CommitTransaction()
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+        
     ds = None
     
     ogr.GetDriverByName('SQLite').DeleteDataSource('/vsimem/ogr_sqlite_40.sqlite')

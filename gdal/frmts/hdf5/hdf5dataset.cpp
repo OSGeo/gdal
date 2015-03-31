@@ -223,12 +223,25 @@ int HDF5Dataset::Identify( GDALOpenInfo * poOpenInfo )
     {
         if( memcmp(poOpenInfo->pabyHeader,achSignature,8) == 0 )
         {
+            /* The tests to avoid opening KEA and BAG drivers are not */
+            /* necessary when drivers are built in the core lib, as they */
+            /* are registered after HDF5, but in the case of plugins, we */
+            /* cannot do assumptions about the registration order */
+
             /* Avoid opening kea files if the kea driver is available */
             if( EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "KEA") &&
                 GDALGetDriverByName("KEA") != NULL )
             {
                 return FALSE;
             }
+
+            /* Avoid opening kea files if the bag driver is available */
+            if( EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "BAG") &&
+                GDALGetDriverByName("BAG") != NULL )
+            {
+                return FALSE;
+            }
+
             return TRUE;
         }
 

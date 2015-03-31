@@ -661,7 +661,7 @@ OGRErr FGdbLayer::GetRow( EnumRows& enumRows, Row& row, GIntBig nFID )
     }
 
     if (hr != S_OK)
-        return OGRERR_FAILURE; //none found - but no failure
+        return OGRERR_NON_EXISTING_FEATURE; //none found - but no failure
 
     return OGRERR_NONE;
 }
@@ -682,8 +682,9 @@ OGRErr FGdbLayer::DeleteFeature( GIntBig nFID )
 
     EndBulkLoad();
 
-    if (GetRow(enumRows, row, nFID) != OGRERR_NONE)
-        return OGRERR_FAILURE;
+    OGRErr eErr = GetRow(enumRows, row, nFID);
+    if( eErr != OGRERR_NONE)
+        return eErr;
 
     if (FAILED(hr = m_pTable->Delete(row)))
     {
@@ -717,8 +718,9 @@ OGRErr FGdbLayer::ISetFeature( OGRFeature* poFeature )
 
     EndBulkLoad();
 
-    if (GetRow(enumRows, row, poFeature->GetFID()) != OGRERR_NONE)
-        return OGRERR_FAILURE;
+    OGRErr eErr = GetRow(enumRows, row, poFeature->GetFID());
+    if( eErr != OGRERR_NONE)
+        return eErr;
 
     /* Populate the row with the feature content */
     if (PopulateRowWithFeature(row, poFeature) != OGRERR_NONE)

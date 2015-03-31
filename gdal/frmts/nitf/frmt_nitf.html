@@ -20,7 +20,7 @@ may be identified.<p>
 
 Lat/Long extents are read from the IGEOLO information in 
 the image header if available.  If high precision lat/long georeferencing 
-information is available in RPF auxilary data it will be used in preference 
+information is available in RPF auxiliary data it will be used in preference 
 to the low precision IGEOLO information.  In case a BLOCKA instance is found, 
 the higher precision coordinates of BLOCKA are used if the block data covers 
 the complete image - that is the L_LINES field with the row count for that 
@@ -35,7 +35,7 @@ metadata.<p>
 <h2>Creation Issues</h2>
 
 On export NITF files are always written as NITF 2.1 with one image
-and no other auxilary layers. Images are uncompressed by default, but JPEG
+and no other auxiliary layers. Images are uncompressed by default, but JPEG
 and JPEG2000 compression are also available. Georeferencing can only be written for 
 images using a geographic coordinate system or a UTM WGS84 projection.  Coordinates are implicitly 
 treated as WGS84 even if they are actually in a different geographic coordinate

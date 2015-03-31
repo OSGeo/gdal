@@ -586,6 +586,7 @@ vsi_l_offset VSICurlHandle::GetFileSize()
     /* listed in CPL_VSIL_CURL_ALLOWED_EXTENSIONS exist on the server */
     /* This can speeds up dramatically open experience, in case the server */
     /* cannot return a file list */
+    /* {noext} can be used as a special token to mean file with no extension */
     /* For example : */
     /* gdalinfo --config CPL_VSIL_CURL_ALLOWED_EXTENSIONS ".tif" /vsicurl/http://igskmncngs506.cr.usgs.gov/gmted/Global_tiles_GMTED/075darcsec/bln/W030/30N030W_20101117_gmted_bln075.tif */
     const char* pszAllowedExtensions =
@@ -598,7 +599,15 @@ vsi_l_offset VSICurlHandle::GetFileSize()
         for(int i=0;papszExtensions[i] != NULL;i++)
         {
             int nExtensionLen = strlen(papszExtensions[i]);
-            if (nURLLen > nExtensionLen &&
+            if( EQUAL(papszExtensions[i], "{noext}") )
+            {
+                if( nURLLen > 4 && strchr(pszURL + nURLLen - 4, '.') == NULL )
+                {
+                    bFound = TRUE;
+                    break;
+                }
+            }
+            else if (nURLLen > nExtensionLen &&
                 EQUAL(pszURL + nURLLen - nExtensionLen, papszExtensions[i]))
             {
                 bFound = TRUE;

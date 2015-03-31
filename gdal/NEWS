@@ -410,7 +410,7 @@ OGRSpatialReference:
  * Upgrade to EPSG v8.5 database
  * Proj.4 import: for HOM, make sure +no_off/no_uoff is preserved, and change default value of gamma parameter to be the same as alpha (#5511)
  * Proj.4 export: export Aitoff, Winkel I, Winkel II, Winkel-Tripel, Craster, Loximuthal, Quartic Authalic
- * Adding support for Mercator_Auxilary_Sphere without AUTHORITY SECTIONS (#3962)
+ * Adding support for Mercator_Auxiliary_Sphere without AUTHORITY SECTIONS (#3962)
  * Add QSC (Quadrilateralized_Spherical_Cube) projection, compatible with PROJ 4.9
  * Various fixes to put EXTENSION node before AUTHORITY and make it pass Validate() (#5724)
 
@@ -5694,7 +5694,7 @@ Other:
 == GDAL 1.5.0 - Overview of Changes ==
 
 Core: 
- * Enable Persistent Auxilary Metadata (.aux.xml) by default.
+ * Enable Persistent Auxiliary Metadata (.aux.xml) by default.
  * Support for "pam proxies" for files in read-only locations. 
  * Create and !CreateCopy pre-Delete output existing dataset.
  * Added Identify() method on drivers (per RFC 11: Fast Format Identify)
@@ -6268,7 +6268,7 @@ Multithreading:
  - Lots of work done to implement support for multiple threads reading
    from distinct GDALDataset objects at the same time. 
 
-GDALRasterBand / Persistant Auxilary Metadata (PAM):
+GDALRasterBand / Persistant Auxiliary Metadata (PAM):
  - Support for preserving a variety of metadata in a supporting XML file. 
  - GDALRasterBand now supports "remembering" histograms, and has a concept
    of the default histogram. 

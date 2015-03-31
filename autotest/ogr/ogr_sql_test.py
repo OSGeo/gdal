@@ -690,6 +690,7 @@ def ogr_sql_28():
 
     ds = ogr.GetDriverByName("Memory").CreateDataSource( "my_ds")
     lyr = ds.CreateLayer( "my_layer")
+    lyr.GetLayerDefn().GetGeomFieldDefn(0).SetName('geom') # a bit border line but OK for Memory driver...
     field_defn = ogr.FieldDefn( "strfield", ogr.OFTString )
     lyr.CreateField(field_defn)
     field_defn = ogr.FieldDefn( "intfield", ogr.OFTInteger )
@@ -732,6 +733,7 @@ def ogr_sql_28():
     "SELECT 'strfield' +",
     "SELECT 'strfield' 'strfield'",
     "SELECT CONCAT('strfield')",
+    'SELECT foo(strfield) FROM my_layer', # Undefined function 'foo' used.
     'SELECT strfield, FROM my_layer',
     'SELECT strfield, foo FROM my_layer',
     'SELECT strfield AS FROM my_layer',
@@ -767,6 +769,7 @@ def ogr_sql_28():
     "SELECT * FROM my_layer WHERE strfield = 'a' ORDER BY",
     "SELECT * FROM my_layer WHERE strfield = 'a' ORDER BY foo",
     "SELECT * FROM my_layer WHERE strfield = 'a' ORDER BY strfield UNK",
+    "SELECT * FROM my_layer ORDER BY geom", # Cannot use geometry field 'geom' in a ORDER BY clause
     "SELECT FOO(*) FROM my_layer",
     "SELECT FOO(*) AS bar FROM my_layer",
     "SELECT COUNT",

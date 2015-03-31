@@ -2671,7 +2671,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Add JP2 boxes.                                                  */
 /* -------------------------------------------------------------------- */
-    vsi_l_offset nStartJP2C;
+    vsi_l_offset nStartJP2C = 0;
     int bUseXLBoxes = FALSE;
     int bGeoBoxesAfter = CSLFetchBoolean(papszOptions, "GEOBOXES_AFTER_JP2C",
                                          bInspireTG);
@@ -3372,7 +3372,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
     VSIFCloseL(fp);
 
 /* -------------------------------------------------------------------- */
-/*      Re-open dataset, and copy any auxilary pam information.         */
+/*      Re-open dataset, and copy any auxiliary pam information.         */
 /* -------------------------------------------------------------------- */
 
     GDALOpenInfo oOpenInfo(pszFilename, GA_ReadOnly);

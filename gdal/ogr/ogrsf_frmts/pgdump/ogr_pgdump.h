@@ -194,8 +194,8 @@ class OGRPGDumpDataSource : public OGRDataSource
 
     virtual int         TestCapability( const char * );
 
-    void                StartTransaction();
-    void                Commit();
+    void                LogStartTransaction();
+    void                LogCommit();
 
     void                StartCopy( OGRPGDumpLayer *poPGLayer );
     OGRErr              EndCopy( );

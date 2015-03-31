@@ -767,10 +767,12 @@ OGRErr OGRCARTODBTableLayer::ISetFeature( OGRFeature *poFeature )
         if( poTotalRows != NULL && json_object_get_type(poTotalRows) == json_type_int )
         {
             int nTotalRows = json_object_get_int(poTotalRows);
-            if( nTotalRows == 1 )
+            if( nTotalRows > 0 )
             {
                 eRet = OGRERR_NONE;
             }
+            else
+                eRet = OGRERR_NON_EXISTING_FEATURE;
         }
         json_object_put(poObj);
     }
@@ -823,10 +825,12 @@ OGRErr OGRCARTODBTableLayer::DeleteFeature( GIntBig nFID )
         if( poTotalRows != NULL && json_object_get_type(poTotalRows) == json_type_int )
         {
             int nTotalRows = json_object_get_int(poTotalRows);
-            if( nTotalRows == 1 )
+            if( nTotalRows > 0 )
             {
                 eRet = OGRERR_NONE;
             }
+            else
+                eRet = OGRERR_NON_EXISTING_FEATURE;
         }
         json_object_put(poObj);
     }

@@ -414,11 +414,11 @@ OGRErr OGRCARTODBDataSource::DeleteLayer(int iLayer)
 /*                          AddHTTPOptions()                            */
 /************************************************************************/
 
-char** OGRCARTODBDataSource::AddHTTPOptions(char** papszOptions)
+char** OGRCARTODBDataSource::AddHTTPOptions()
 {
     bMustCleanPersistant = TRUE;
 
-    return CSLAddString(papszOptions, CPLSPrintf("PERSISTENT=CARTODB:%p", this));
+    return CSLAddString(NULL, CPLSPrintf("PERSISTENT=CARTODB:%p", this));
 }
 
 /************************************************************************/

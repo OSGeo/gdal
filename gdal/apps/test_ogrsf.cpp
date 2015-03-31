@@ -1040,6 +1040,7 @@ static int TestBasic( OGRLayer *poLayer )
 static int TestLayerErrorConditions( OGRLayer* poLyr )
 {
     int bRet = TRUE;
+    OGRFeature* poFeat = NULL;
 
     CPLPushErrorHandler(CPLQuietErrorHandler);
 
@@ -1072,9 +1073,20 @@ static int TestLayerErrorConditions( OGRLayer* poLyr )
         goto bye;
     }
 
-#if 0
-    /* PG driver doesn't issue errors when the feature doesn't exist */
-    /* So, not sure if emitting error is expected or not */
+    poLyr->ResetReading();
+    poFeat = poLyr->GetNextFeature();
+    if( poFeat )
+    {
+        poFeat->SetFID(-10);
+        if (poLyr->SetFeature(poFeat) == OGRERR_NONE)
+        {
+            printf( "ERROR: SetFeature(-10) should have returned an error\n" );
+            delete poFeat;
+            bRet = FALSE;
+            goto bye;
+        }
+        delete poFeat;
+    }
 
     if (poLyr->DeleteFeature(-10) == OGRERR_NONE)
     {
@@ -1089,7 +1101,6 @@ static int TestLayerErrorConditions( OGRLayer* poLyr )
         bRet = FALSE;
         goto bye;
     }
-#endif
 
     if (LOG_ACTION(poLyr->SetNextByIndex(-10)) != OGRERR_FAILURE)
     {
@@ -1248,9 +1259,9 @@ static int TestOGRLayerFeatureCount( GDALDataset* poDS, OGRLayer *poLayer, int b
     else if( nFC != LOG_ACTION(poLayer->GetFeatureCount()) )
     {
         bRet = FALSE;
-        printf( "ERROR: Feature count at end of layer " CPL_FRMT_GIB " differs "
+        printf( "ERROR: Feature count at end of layer, " CPL_FRMT_GIB ", differs "
                 "from at start, " CPL_FRMT_GIB ".\n",
-                nFC, poLayer->GetFeatureCount() );
+                poLayer->GetFeatureCount(), nFC );
     }
     else if( bVerbose )
         printf( "INFO: Feature count verified.\n" );

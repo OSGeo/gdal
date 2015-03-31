@@ -104,7 +104,20 @@ def ogr_oci_2():
         feat = shp_lyr.GetNextFeature()
 
     dst_feat.Destroy()
-        
+
+    # Test updating non-existing feature
+    shp_lyr.ResetReading()
+    feat = shp_lyr.GetNextFeature()
+    feat.SetFID(-10)
+    if gdaltest.oci_lyr.SetFeature( feat ) != ogr.OGRERR_NON_EXISTING_FEATURE:
+        gdaltest.post_reason( 'Expected failure of SetFeature().' )
+        return 'fail'
+
+    # Test deleting non-existing feature
+    if gdaltest.oci_lyr.DeleteFeature( -10 ) != ogr.OGRERR_NON_EXISTING_FEATURE:
+        gdaltest.post_reason( 'Expected failure of DeleteFeature().' )
+        return 'fail'
+
     return 'success'
 
 ###############################################################################

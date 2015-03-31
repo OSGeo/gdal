@@ -3,7 +3,7 @@
  *
  * Project:  GDAL Core
  * Purpose:  Implementation of GDALPamRasterBand, a raster band base class
- *           that knows how to persistently store auxilary metadata in an
+ *           that knows how to persistently store auxiliary metadata in an
  *           external xml file. 
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *

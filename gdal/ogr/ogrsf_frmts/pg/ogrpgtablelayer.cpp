@@ -1022,16 +1022,17 @@ OGRErr OGRPGTableLayer::DeleteFeature( GIntBig nFID )
                   "DeleteFeature() DELETE statement failed.\n%s",
                   PQerrorMessage(hPGConn) );
 
-        OGRPGClearResult( hResult );
-
         eErr = OGRERR_FAILURE;
     }
     else
     {
-        OGRPGClearResult( hResult );
-
-        eErr = OGRERR_NONE;
+        if( EQUAL(PQcmdStatus(hResult), "DELETE 0") )
+            eErr = OGRERR_NON_EXISTING_FEATURE;
+        else
+            eErr = OGRERR_NONE;
     }
+
+    OGRPGClearResult( hResult );
 
     return eErr;
 }
@@ -1257,9 +1258,14 @@ OGRErr OGRPGTableLayer::ISetFeature( OGRFeature *poFeature )
         return OGRERR_FAILURE;
     }
 
+    if( EQUAL(PQcmdStatus(hResult), "UPDATE 0") )
+        eErr = OGRERR_NON_EXISTING_FEATURE;
+    else
+        eErr = OGRERR_NONE;
+
     OGRPGClearResult( hResult );
 
-    return OGRERR_NONE;
+    return eErr;
 }
 
 /************************************************************************/

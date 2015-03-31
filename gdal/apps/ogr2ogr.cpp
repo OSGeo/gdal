@@ -3664,13 +3664,7 @@ int LayerTranslator::Translate( TargetLayerInfo* psInfo,
         OGRFeature      *poDstFeature = NULL;
 
         if( nFIDToFetch != OGRNullFID )
-        {
-            // Only fetch feature on first pass.
-            if( nFeaturesInTransaction == 0 )
-                poFeature = poSrcLayer->GetFeature(nFIDToFetch);
-            else
-                poFeature = NULL;
-        }
+            poFeature = poSrcLayer->GetFeature(nFIDToFetch);
         else
             poFeature = poSrcLayer->GetNextFeature();
 
@@ -3987,6 +3981,9 @@ end_loop:
 
         if (pnReadFeatureCount)
             *pnReadFeatureCount = nCount;
+        
+        if( nFIDToFetch != OGRNullFID )
+            break;
     }
 
     if( nGroupTransactions )

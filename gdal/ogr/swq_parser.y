@@ -358,12 +358,8 @@ field_value:
             $$ = $1;  // validation deferred.
             $$->eNodeType = SNT_COLUMN;
             $$->field_index = $$->table_index = -1;
-            $$->string_value = (char *) 
-                            CPLRealloc( $$->string_value, 
-                                        strlen($$->string_value) 
-                                        + strlen($3->string_value) + 2 );
-            strcat( $$->string_value, "." );
-            strcat( $$->string_value, $3->string_value );
+            $$->table_name = $$->string_value;
+            $$->string_value = CPLStrdup($3->string_value);
             delete $3;
             $3 = NULL;
         }
@@ -622,17 +618,17 @@ column_spec:
 
     | SWQT_IDENTIFIER '.' '*'
         {
-            CPLString osQualifiedField;
+            CPLString osTableName;
 
-            osQualifiedField = $1->string_value;
-            osQualifiedField += ".*";
+            osTableName = $1->string_value;
 
             delete $1;
             $1 = NULL;
 
             swq_expr_node *poNode = new swq_expr_node();
             poNode->eNodeType = SNT_COLUMN;
-            poNode->string_value = CPLStrdup( osQualifiedField );
+            poNode->table_name = CPLStrdup(osTableName );
+            poNode->string_value = CPLStrdup( "*" );
             poNode->table_index = poNode->field_index = -1;
 
             if( !context->poCurSelect->PushField( poNode ) )
@@ -778,7 +774,9 @@ opt_joins:
     | SWQT_JOIN table_def SWQT_ON field_value '=' field_value opt_joins
         {
             context->poCurSelect->PushJoin( $2->int_value,
+                                            $4->table_name,
                                             $4->string_value, 
+                                            $6->table_name,
                                             $6->string_value );
             delete $2;
             delete $4;
@@ -787,7 +785,9 @@ opt_joins:
     | SWQT_LEFT SWQT_JOIN table_def SWQT_ON field_value '=' field_value opt_joins
         {
             context->poCurSelect->PushJoin( $3->int_value,
+                                            $5->table_name,
                                             $5->string_value, 
+                                            $7->table_name,
                                             $7->string_value );
             delete $3;
             delete $5;
@@ -804,19 +804,19 @@ sort_spec_list:
 sort_spec:
     field_value
         {
-            context->poCurSelect->PushOrderBy( $1->string_value, TRUE );
+            context->poCurSelect->PushOrderBy( $1->table_name, $1->string_value, TRUE );
             delete $1;
             $1 = NULL;
         }
     | field_value SWQT_ASC
         {
-            context->poCurSelect->PushOrderBy( $1->string_value, TRUE );
+            context->poCurSelect->PushOrderBy( $1->table_name, $1->string_value, TRUE );
             delete $1;
             $1 = NULL;
         }
     | field_value SWQT_DESC
         {
-            context->poCurSelect->PushOrderBy( $1->string_value, FALSE );
+            context->poCurSelect->PushOrderBy( $1->table_name, $1->string_value, FALSE );
             delete $1;
             $1 = NULL;
         }

@@ -865,10 +865,7 @@ OGRErr OGRShapeLayer::ISetFeature( OGRFeature *poFeature )
         || (hSHP != NULL && nFID >= hSHP->nRecords)
         || (hDBF != NULL && nFID >= hDBF->nRecords) )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Attempt to set shape with feature id (" CPL_FRMT_GIB ") which does "
-                  "not exist.", nFID );
-        return OGRERR_FAILURE;
+        return OGRERR_NON_EXISTING_FEATURE;
     }
 
     bHeaderDirty = TRUE;
@@ -921,10 +918,7 @@ OGRErr OGRShapeLayer::DeleteFeature( GIntBig nFID )
         || (hSHP != NULL && nFID >= hSHP->nRecords)
         || (hDBF != NULL && nFID >= hDBF->nRecords) )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Attempt to delete shape with feature id (" CPL_FRMT_GIB ") which does "
-                  "not exist.", nFID );
-        return OGRERR_FAILURE;
+        return OGRERR_NON_EXISTING_FEATURE;
     }
 
     if( !hDBF )
@@ -938,10 +932,7 @@ OGRErr OGRShapeLayer::DeleteFeature( GIntBig nFID )
 
     if( DBFIsRecordDeleted( hDBF, (int)nFID ) )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Attempt to delete shape with feature id (" CPL_FRMT_GIB "), but it is marked deleted already.",
-                  nFID );
-        return OGRERR_FAILURE;
+        return OGRERR_NON_EXISTING_FEATURE;
     }
 
     if( !DBFMarkRecordDeleted( hDBF, (int)nFID, TRUE ) )
