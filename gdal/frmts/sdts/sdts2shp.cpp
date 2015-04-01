@@ -111,7 +111,7 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
 /*      Massage shapefile name to have no extension.                    */
 /* -------------------------------------------------------------------- */
-    pszShapefile = strdup( pszShapefile );
+    pszShapefile = CPLStrdup(pszShapefile);
     for( i = strlen(pszShapefile)-1; i >= 0; i-- )
     {
         if( pszShapefile[i] == '.' )

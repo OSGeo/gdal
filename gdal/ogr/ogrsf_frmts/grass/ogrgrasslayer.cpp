@@ -390,7 +390,7 @@ OGRErr OGRGRASSLayer::SetAttributeFilter( const char *query )
 
     paQueryMatch = (char *) CPLMalloc ( nTotalCount );
     memset ( paQueryMatch, 0x0, nTotalCount );
-    pszQuery = strdup ( query );
+    pszQuery = CPLStrdup(query);
 
     OGRLayer::SetAttributeFilter(query); // Otherwise crash on delete
 

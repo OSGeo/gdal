@@ -57,7 +57,7 @@ static char **OSRProj4Tokenize( const char *pszFull )
 
     papszTokens = (char **) calloc(sizeof(char*),nMaxTokens);
 
-    pszFullWrk = strdup( pszFull );
+    pszFullWrk = CPLStrdup(pszFull);
 
     for( i=0; pszFullWrk[i] != '\0' && nTokens != nMaxTokens-1; i++ )
     {
@@ -70,7 +70,7 @@ static char **OSRProj4Tokenize( const char *pszFull )
                 {
                     if( strstr(pszStart,"=") != NULL )
                     {
-                        papszTokens[nTokens++] = strdup(pszStart);
+                        papszTokens[nTokens++] = CPLStrdup(pszStart);
                     }
                     else
                     {
@@ -78,7 +78,7 @@ static char **OSRProj4Tokenize( const char *pszFull )
                         strncpy( szAsBoolean,pszStart, sizeof(szAsBoolean)-1-4);
                         szAsBoolean[sizeof(szAsBoolean)-1-4] = '\0';
                         strcat( szAsBoolean,"=yes" );
-                        papszTokens[nTokens++] = strdup(szAsBoolean);
+                        papszTokens[nTokens++] = CPLStrdup(szAsBoolean);
                     }
                 }
                 pszStart = pszFullWrk + i + 1;
@@ -99,10 +99,10 @@ static char **OSRProj4Tokenize( const char *pszFull )
     if( pszStart != NULL && strlen(pszStart) > 0 )
     {
         if (nTokens != 199)
-            papszTokens[nTokens++] = strdup( pszStart );
+            papszTokens[nTokens++] = CPLStrdup(pszStart);
     }
 
-    free( pszFullWrk );
+    CPLFree( pszFullWrk );
 
     return papszTokens;
 }
@@ -848,7 +848,7 @@ char * GTIFGetProj4Defn( GTIFDefn * psDefn )
     double      dfFalseEasting, dfFalseNorthing;
 
     if( psDefn == NULL || !psDefn->DefnSet )
-        return strdup("");
+        return CPLStrdup("");
 
     szProjection[0] = '\0';
     
@@ -1302,9 +1302,9 @@ char * GTIFGetProj4Defn( GTIFDefn * psDefn )
     strcat( szProjection, szUnits );
     
     /* If we don't have anything, reset */
-    if (strstr(szProjection,"+proj=") == NULL) { return strdup(""); }
+    if (strstr(szProjection, "+proj=") == NULL) { return CPLStrdup(""); }
 
-    return( strdup( szProjection ) );
+    return( CPLStrdup( szProjection ) );
 }
 
 #if !defined(HAVE_LIBPROJ)

@@ -281,9 +281,9 @@ FITSDataset::~FITSDataset() {
 	    // if you want finer control, use the underlying FITS
 	    // handle. Note: to avoid a compiler warning we copy the
 	    // const value string to a non const one...
-	    char* valueCpy = strdup(value);
+            char* valueCpy = CPLStrdup(value);
 	    fits_update_key_longstr(hFITS, key, valueCpy, 0, &status);
-	    free(valueCpy);
+	    CPLFree(valueCpy);
 
 	    // Check for errors
 	    if (status) {
