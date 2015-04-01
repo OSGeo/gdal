@@ -173,9 +173,12 @@ def get_gmljp2(filename):
     return mdd[0]
 
 class ErrorReport:
-    def __init__(self):
+    def __init__(self, collect_internally = False):
         self.error_count = 0
         self.warning_count = 0
+        self.collect_internally = collect_internally
+        self.error_array = []
+        self.warning_array = []
 
     def EmitError(self, category, msg, requirement = None, conformance_class = None):
         self.error_count += 1
@@ -184,20 +187,28 @@ class ErrorReport:
             conformance_class = 'A.8.14'
 
         if requirement is not None and conformance_class is not None:
-            print('ERROR[%s, Requirement %d, Conformance class %s]: %s' % (category, requirement, conformance_class, msg))
+            full_msg = 'ERROR[%s, Requirement %d, Conformance class %s]: %s' % (category, requirement, conformance_class, msg)
         elif requirement is not None:
-            print('ERROR[%s, Requirement %d]: %s' % (category, requirement, msg))
+            full_msg = 'ERROR[%s, Requirement %d]: %s' % (category, requirement, msg)
         elif conformance_class is not None:
-            print('ERROR[%s, Conformance class %s]: %s' % (category, conformance_class, msg))
+            full_msg = 'ERROR[%s, Conformance class %s]: %s' % (category, conformance_class, msg)
         else:
-            print('ERROR[%s]: %s' % (category, msg))
+            full_msg = 'ERROR[%s]: %s' % (category, msg)
+        if self.collect_internally:
+            self.error_array.append(full_msg)
+        else:
+            print(full_msg)
 
     def EmitWarning(self, category, msg, recommendation = None):
         self.warning_count += 1
         if recommendation is not None:
-            print('WARNING[%s, Recommendation %d]: %s' % (category, recommendation, msg))
+            full_msg = 'WARNING[%s, Recommendation %d]: %s' % (category, recommendation, msg)
         else:
-            print('WARNING[%s]: %s' % (category, msg))
+            full_msg = 'WARNING[%s]: %s' % (category, msg)
+        if self.collect_internally:
+            self.warning_array.append(full_msg)
+        else:
+            print(full_msg)
 
 # Report JP2 boxes errors
 def find_remaining_bytes(error_report, ar, parent_node_name = None):
@@ -365,9 +376,11 @@ def check_oi_rg_consistency(filename, serialized_oi_rg, error_report):
         if proj4 != oi_proj4:
             error_report.EmitError('INSPIRE_TG', 'Inconsistant SRS between OrthoImagery (wkt=%s, proj4=%s) and GMLJP2/GeoJP2 (wkt=%s, proj4=%s)' % (wkt, proj4, oi_wkt, oi_proj4), conformance_class = 'A.8.8')
 
-def validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location, datatype = 'imagery'):
+def validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location, datatype = 'imagery', error_report = None):
 
-    error_report = ErrorReport()
+    if error_report is None:
+        error_report = ErrorReport()
+
     ar = gdal.GetJPEG2000Structure(filename, ['ALL=YES'])
     if ar is None:
         error_report.error_count = 1
@@ -980,7 +993,8 @@ def validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location,
                 if rg is None:
                     rg = find_xml_node(oic, 'RectifiedGrid')
                 if rg is None:
-                    error_report.EmitError('INSPIRE_TG', 'Cannot find RectifiedGrid in OrthoImageryCoverage')
+                    if expected_gmljp2:
+                        error_report.EmitError('INSPIRE_TG', 'Cannot find RectifiedGrid in OrthoImageryCoverage')
                 else:
                     low = find_xml_node(rg, 'low')
                     if low is None:

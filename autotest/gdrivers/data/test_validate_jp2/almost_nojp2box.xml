@@ -1,0 +1,11 @@
+<JP2File filename="byte.jp2">
+  <JP2Box name="jP  ">
+    <BinaryContent>0D0A870A</BinaryContent>
+  </JP2Box>
+  <JP2Box name="jp2c">
+    <JP2KCodeStream>
+      <Marker name="SOC" offset="110" length="2" />
+    </JP2KCodeStream>
+  </JP2Box>
+</JP2File>
+

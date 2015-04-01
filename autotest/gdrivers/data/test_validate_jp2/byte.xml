@@ -1,0 +1,163 @@
+<JP2File filename="/home/even/spatialys/eea/validation/byte.jp2">
+  <JP2Box name="jP  " box_offset="0" box_length="12" data_offset="8" data_length="4">
+    <BinaryContent>0D0A870A</BinaryContent>
+  </JP2Box>
+  <JP2Box name="ftyp" box_offset="12" box_length="24" data_offset="20" data_length="16">
+    <BinaryContent>6A703220000000006A7032206A707820</BinaryContent>
+    <DecodedContent>
+      <Field name="BR" type="string" size="4">jp2 </Field>
+      <Field name="MinV" type="uint32">0</Field>
+      <Field name="CL0" type="string" size="4">jp2 </Field>
+      <Field name="CL1" type="string" size="4">jpx </Field>
+    </DecodedContent>
+  </JP2Box>
+  <JP2Box name="rreq" box_offset="36" box_length="21" data_offset="44" data_length="13">
+    <BinaryContent>01C08000020004800043400000</BinaryContent>
+    <DecodedContent>
+      <Field name="ML" type="uint8">1</Field>
+      <Field name="FUAM" type="hexint" size="1">0xC0</Field>
+      <Field name="DCM" type="hexint" size="1">0x80</Field>
+      <Field name="NSF" type="uint16">2</Field>
+      <Field name="SF0" type="uint16" description="Codestream is compressed using JPEG 2000 and requires at least a Profile 1 decoder">4</Field>
+      <Field name="SM0" type="hexint" size="1">0x80</Field>
+      <Field name="SF1" type="uint16" description="Contains GMLJP2 metadata">67</Field>
+      <Field name="SM1" type="hexint" size="1">0x40</Field>
+      <Field name="NVF" type="uint16">0</Field>
+    </DecodedContent>
+  </JP2Box>
+  <JP2Box name="jp2h" box_offset="57" box_length="45" data_offset="65" data_length="37">
+    <JP2Box name="ihdr" box_offset="65" box_length="22" data_offset="73" data_length="14">
+      <BinaryContent>0000001400000014000107070000</BinaryContent>
+      <DecodedContent>
+        <Field name="HEIGHT" type="uint32">20</Field>
+        <Field name="WIDTH" type="uint32">20</Field>
+        <Field name="NC" type="uint16">1</Field>
+        <Field name="BPC" type="uint8" description="Unsigned 8 bits">7</Field>
+        <Field name="C" type="uint8">7</Field>
+        <Field name="UnkC" type="uint8">0</Field>
+        <Field name="IPR" type="uint8">0</Field>
+      </DecodedContent>
+    </JP2Box>
+    <JP2Box name="colr" box_offset="87" box_length="15" data_offset="95" data_length="7">
+      <BinaryContent>01000000000011</BinaryContent>
+      <DecodedContent>
+        <Field name="METH" type="uint8">1</Field>
+        <Field name="PREC" type="uint8">0</Field>
+        <Field name="APPROX" type="uint8">0</Field>
+        <Field name="EnumCS" type="uint32" description="greyscale">17</Field>
+      </DecodedContent>
+    </JP2Box>
+  </JP2Box>
+  <JP2Box name="jp2c" box_offset="102" box_length="106" data_offset="110" data_length="98">
+    <JP2KCodeStream>
+      <Marker name="SOC" offset="110" length="2" />
+      <Marker name="SIZ" offset="112" length="43">
+        <Field name="Rsiz" type="uint16" description="Profile 1">2</Field>
+        <Field name="Xsiz" type="uint32">20</Field>
+        <Field name="Ysiz" type="uint32">20</Field>
+        <Field name="XOsiz" type="uint32">0</Field>
+        <Field name="YOsiz" type="uint32">0</Field>
+        <Field name="XTsiz" type="uint32">20</Field>
+        <Field name="YTsiz" type="uint32">20</Field>
+        <Field name="XTOSiz" type="uint32">0</Field>
+        <Field name="YTOSiz" type="uint32">0</Field>
+        <Field name="Csiz" type="uint16">1</Field>
+        <Field name="Ssiz0" type="uint8" description="Unsigned 8 bits">7</Field>
+        <Field name="XRsiz0" type="uint8">1</Field>
+        <Field name="YRsiz0" type="uint8">1</Field>
+      </Marker>
+      <Marker name="COD" offset="155" length="15">
+        <Field name="Scod" type="uint8" description="User defined precincts, No SOP marker segments, No EPH marker segments">1</Field>
+        <Field name="SGcod_Progress" type="uint8" description="LRCP">0</Field>
+        <Field name="SGcod_NumLayers" type="uint16">1</Field>
+        <Field name="SGcod_MCT" type="uint8">0</Field>
+        <Field name="SPcod_NumDecompositions" type="uint8">0</Field>
+        <Field name="SPcod_xcb_minus_2" type="uint8" description="64">4</Field>
+        <Field name="SPcod_ycb_minus_2" type="uint8" description="64">4</Field>
+        <Field name="SPcod_cbstyle" type="uint8" description="No selective arithmetic coding bypass, No reset of context probabilities on coding pass boundaries, No termination on each coding pass, No vertically causal context, No predictable termination, No segmentation symbols are used">0</Field>
+        <Field name="SPcod_transformation" type="uint8" description="9-7 irreversible">0</Field>
+        <Field name="SPcod_Precincts0" type="uint8" description="PPx=9 PPy=9: 512x512">153</Field>
+      </Marker>
+      <Marker name="QCD" offset="170" length="7" />
+      <Marker name="SOT" offset="177" length="12">
+        <Field name="Isot" type="uint16">0</Field>
+        <Field name="Psot" type="uint32">29</Field>
+        <Field name="TPsot" type="uint8">0</Field>
+        <Field name="TNsot" type="uint8">1</Field>
+      </Marker>
+      <Marker name="SOD" offset="189" length="17" />
+      <Marker name="EOC" offset="206" length="2" />
+    </JP2KCodeStream>
+  </JP2Box>
+  <JP2Box name="asoc" box_offset="208" box_length="1813" data_offset="216" data_length="1805">
+    <JP2Box name="lbl " box_offset="216" box_length="17" data_offset="224" data_length="9">
+      <BinaryContent>676D6C2E6461746100</BinaryContent>
+      <TextContent>gml.data</TextContent>
+    </JP2Box>
+    <JP2Box name="asoc" box_offset="233" box_length="1788" data_offset="241" data_length="1780">
+      <JP2Box name="lbl " box_offset="241" box_length="26" data_offset="249" data_length="18">
+        <BinaryContent>676D6C2E726F6F742D696E7374616E636500</BinaryContent>
+        <TextContent>gml.root-instance</TextContent>
+      </JP2Box>
+      <JP2Box name="xml " box_offset="267" box_length="1754" data_offset="275" data_length="1746">
+        <BinaryContent>3C676D6C3A46656174757265436F6C6C656374696F6E0A202020786D6C6E733A676D6C3D22687474703A2F2F7777772E6F70656E6769732E6E65742F676D6C220A202020786D6C6E733A7873693D22687474703A2F2F7777772E77332E6F72672F323030312F584D4C536368656D612D696E7374616E6365220A2020207873693A736368656D614C6F636174696F6E3D22687474703A2F2F7777772E6F70656E6769732E6E65742F676D6C20687474703A2F2F736368656D61732E6F70656E6769732E6E65742F676D6C2F332E312E312F70726F66696C65732F676D6C4A503250726F66696C652F312E302E302F676D6C4A503250726F66696C652E787364223E0A20203C676D6C3A626F756E64656442793E0A202020203C676D6C3A4E756C6C3E7769746868656C643C2F676D6C3A4E756C6C3E0A20203C2F676D6C3A626F756E64656442793E0A20203C676D6C3A666561747572654D656D6265723E0A202020203C676D6C3A46656174757265436F6C6C656374696F6E3E0A2020202020203C676D6C3A666561747572654D656D6265723E0A20202020202020203C676D6C3A52656374696669656447726964436F7665726167652064696D656E73696F6E3D22322220676D6C3A69643D2252474330303031223E0A202020202020202020203C676D6C3A72656374696669656447726964446F6D61696E3E0A2020202020202020202020203C676D6C3A526563746966696564477269642064696D656E73696F6E3D2232223E0A20202020202020202020202020203C676D6C3A6C696D6974733E0A202020202020202020202020202020203C676D6C3A47726964456E76656C6F70653E0A2020202020202020202020202020202020203C676D6C3A6C6F773E3020303C2F676D6C3A6C6F773E0A2020202020202020202020202020202020203C676D6C3A686967683E31392031393C2F676D6C3A686967683E0A202020202020202020202020202020203C2F676D6C3A47726964456E76656C6F70653E0A20202020202020202020202020203C2F676D6C3A6C696D6974733E0A20202020202020202020202020203C676D6C3A617869734E616D653E783C2F676D6C3A617869734E616D653E0A20202020202020202020202020203C676D6C3A617869734E616D653E793C2F676D6C3A617869734E616D653E0A20202020202020202020202020203C676D6C3A6F726967696E3E0A202020202020202020202020202020203C676D6C3A506F696E7420676D6C3A69643D22503030303122207372734E616D653D2275726E3A6F67633A6465663A6372733A455053473A3A3236373131223E0A2020202020202020202020202020202020203C676D6C3A706F733E34343037353020333735313239303C2F676D6C3A706F733E0A202020202020202020202020202020203C2F676D6C3A506F696E743E0A20202020202020202020202020203C2F676D6C3A6F726967696E3E0A20202020202020202020202020203C676D6C3A6F6666736574566563746F72207372734E616D653D2275726E3A6F67633A6465663A6372733A455053473A3A3236373131223E363020303C2F676D6C3A6F6666736574566563746F723E0A20202020202020202020202020203C676D6C3A6F6666736574566563746F72207372734E616D653D2275726E3A6F67633A6465663A6372733A455053473A3A3236373131223E30202D36303C2F676D6C3A6F6666736574566563746F723E0A2020202020202020202020203C2F676D6C3A526563746966696564477269643E0A202020202020202020203C2F676D6C3A72656374696669656447726964446F6D61696E3E0A202020202020202020203C676D6C3A72616E67655365743E0A2020202020202020202020203C676D6C3A46696C653E0A20202020202020202020202020203C676D6C3A72616E6765506172616D65746572732F3E0A20202020202020202020202020203C676D6C3A66696C654E616D653E676D6C6A70323A2F2F636F646573747265616D2F303C2F676D6C3A66696C654E616D653E0A20202020202020202020202020203C676D6C3A66696C655374727563747572653E5265636F726420496E7465726C65617665643C2F676D6C3A66696C655374727563747572653E0A2020202020202020202020203C2F676D6C3A46696C653E0A202020202020202020203C2F676D6C3A72616E67655365743E0A20202020202020203C2F676D6C3A52656374696669656447726964436F7665726167653E0A2020202020203C2F676D6C3A666561747572654D656D6265723E0A202020203C2F676D6C3A46656174757265436F6C6C656374696F6E3E0A20203C2F676D6C3A666561747572654D656D6265723E0A3C2F676D6C3A46656174757265436F6C6C656374696F6E3E0A00</BinaryContent>
+        <XMLContent>
+          <gml:FeatureCollection xmlns:gml="http://www.opengis.net/gml" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opengis.net/gml http://schemas.opengis.net/gml/3.1.1/profiles/gmlJP2Profile/1.0.0/gmlJP2Profile.xsd">
+            <gml:boundedBy>
+              <gml:Null>withheld</gml:Null>
+            </gml:boundedBy>
+            <gml:featureMember>
+              <gml:FeatureCollection>
+                <gml:featureMember>
+                  <gml:RectifiedGridCoverage dimension="2" gml:id="RGC0001">
+                    <gml:rectifiedGridDomain>
+                      <gml:RectifiedGrid dimension="2">
+                        <gml:limits>
+                          <gml:GridEnvelope>
+                            <gml:low>0 0</gml:low>
+                            <gml:high>19 19</gml:high>
+                          </gml:GridEnvelope>
+                        </gml:limits>
+                        <gml:axisName>x</gml:axisName>
+                        <gml:axisName>y</gml:axisName>
+                        <gml:origin>
+                          <gml:Point gml:id="P0001" srsName="urn:ogc:def:crs:EPSG::26711">
+                            <gml:pos>440750 3751290</gml:pos>
+                          </gml:Point>
+                        </gml:origin>
+                        <gml:offsetVector srsName="urn:ogc:def:crs:EPSG::26711">60 0</gml:offsetVector>
+                        <gml:offsetVector srsName="urn:ogc:def:crs:EPSG::26711">0 -60</gml:offsetVector>
+                      </gml:RectifiedGrid>
+                    </gml:rectifiedGridDomain>
+                    <gml:rangeSet>
+                      <gml:File>
+                        <gml:rangeParameters />
+                        <gml:fileName>gmljp2://codestream/0</gml:fileName>
+                        <gml:fileStructure>Record Interleaved</gml:fileStructure>
+                      </gml:File>
+                    </gml:rangeSet>
+                  </gml:RectifiedGridCoverage>
+                </gml:featureMember>
+              </gml:FeatureCollection>
+            </gml:featureMember>
+          </gml:FeatureCollection>
+        </XMLContent>
+      </JP2Box>
+    </JP2Box>
+  </JP2Box>
+  <JP2Box name="uuid" box_offset="2021" box_length="372" data_offset="2045" data_length="348">
+    <UUID description="GeoTIFF">B14BF8BD083D4B43A5AE8CD7D5A6CE03</UUID>
+    <BinaryContent>49492A000A00000000000E000001030001000000010000000101030001000000010000000201030001000000080000000301030001000000010000000601030001000000010000001101040001000000080000001501030001000000010000001601030001000000010000001701040001000000010000001C01030001000000010000000E830C00030000001401000082840C00060000002C010000AF87030020000000B8000000B18702001C000000F8000000000000000100010000000700000400000100010001040000010001000204B187150000000108B187060015000608000001008E23000C000001005768040C0000010029234E41443237202F2055544D207A6F6E652031314E7C4E414432377C000000000000004E400000000000004E4000000000000000000000000000000000000000000000000000000000000000000000000040E61A4100000000CC9E4C410000000000000000</BinaryContent>
+    <DecodedGeoTIFF>
+      <VRTDataset rasterXSize="1" rasterYSize="1">
+        <SRS>PROJCS["NAD27 / UTM zone 11N",GEOGCS["NAD27",DATUM["North_American_Datum_1927",SPHEROID["Clarke 1866",6378206.4,294.9786982138982,AUTHORITY["EPSG","7008"]],AUTHORITY["EPSG","6267"]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433],AUTHORITY["EPSG","4267"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-117],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AUTHORITY["EPSG","26711"]]</SRS>
+        <GeoTransform>4.4072000000000000e+05,  6.0000000000000000e+01,  0.0000000000000000e+00,  3.7513200000000000e+06,  0.0000000000000000e+00, -6.0000000000000000e+01</GeoTransform>
+        <Metadata>
+          <MDI key="AREA_OR_POINT">Area</MDI>
+        </Metadata>
+        <VRTRasterBand />
+      </VRTDataset>
+    </DecodedGeoTIFF>
+  </JP2Box>
+</JP2File>
+
