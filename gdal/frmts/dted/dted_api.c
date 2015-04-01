@@ -998,9 +998,9 @@ char *DTEDGetMetadata( DTEDInfo *psDInfo, DTEDMetaDataCode eCode )
 
     DTEDGetMetadataLocation( psDInfo, eCode, &pszFieldSrc, &nFieldLen );
     if( pszFieldSrc == NULL )
-        return strdup( "" );
+        return CPLStrdup( "" );
 
-    pszResult = (char *) malloc(nFieldLen+1);
+    pszResult = (char *) CPLMalloc(nFieldLen+1);
     strncpy( pszResult, pszFieldSrc, nFieldLen );
     pszResult[nFieldLen] = '\0';
 

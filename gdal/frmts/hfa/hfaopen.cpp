@@ -2787,8 +2787,8 @@ CPLErr HFASetMetadata( HFAHandle hHFA, int nBand, char **papszMD )
         }
         else if ( EQUALN( "STATISTICS_HISTOBINVALUES", pszKey, strlen(pszKey) ) )
         {
-            pszBinValues = strdup( pszValue );
-	}
+            pszBinValues = CPLStrdup( pszValue );
+        }
         else
             papszGDALMD = CSLAddString( papszGDALMD, papszMD[iColumn] );
 
@@ -2913,7 +2913,7 @@ CPLErr HFASetMetadata( HFAHandle hHFA, int nBand, char **papszMD )
                 }
             }
         }
-        free( pszBinValues );
+        CPLFree( pszBinValues );
     }
 
 /* -------------------------------------------------------------------- */

@@ -192,7 +192,7 @@ COASPMetadataItem *COASPMetadataReader::GetNextItem()
 	}
 	else {
 		int nCount = CSLCount(papszMDTokens);
-		pszItemValue = strdup(papszMDTokens[1]); 
+		pszItemValue = CPLStrdup(papszMDTokens[1]); 
 		for (int i = 2; i < nCount; i++) {
 			int nSize = strlen(papszMDTokens[i]);
 			pszItemValue = (char *)CPLRealloc(pszItemValue, 
@@ -204,9 +204,9 @@ COASPMetadataItem *COASPMetadataReader::GetNextItem()
 		poMetadata = new COASPMetadataItem(pszItemName,
 			pszItemValue);
 
-		free(pszItemValue);
+		CPLFree(pszItemValue);
 	}
-	free(pszItemName);
+	CSLDestroy(papszMDTokens);
 	nCurrentItem++;
 	return poMetadata;
 }

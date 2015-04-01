@@ -118,19 +118,19 @@ int OGRSDELayer::Initialize( const char *pszTableName,
 /*      Determine DBMS table owner name and the table name part         */
 /*      from pszTableName which is a fully-qualified table name         */
 /* -------------------------------------------------------------------- */
-    char               *pszTableNameCopy = strdup( pszTableName );
+    char               *pszTableNameCopy = CPLStrdup( pszTableName );
     char               *pszPeriodPtr;
     
     if( (pszPeriodPtr = strstr( pszTableNameCopy,"." )) != NULL )
     {
         *pszPeriodPtr  = '\0';
-        pszOwnerName   = strdup( pszTableNameCopy );
-        pszDbTableName = strdup( pszPeriodPtr+1 );
+        pszOwnerName = CPLStrdup(pszTableNameCopy);
+        pszDbTableName = CPLStrdup(pszPeriodPtr + 1);
     }
     else
     {
         pszOwnerName   = NULL;
-        pszDbTableName = strdup( pszTableName );
+        pszDbTableName = CPLStrdup(pszTableName);
     }
     
     CPLFree( pszTableNameCopy );
