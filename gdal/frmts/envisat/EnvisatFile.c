@@ -78,7 +78,6 @@ struct EnvisatFile_tag
 
     int		ds_count;
     EnvisatDatasetInfo **ds_info;
-    
 };
 
 #ifdef GDAL_BUILD
@@ -178,9 +177,9 @@ static int EnvisatFile_SetupLevel0( EnvisatFile *self )
      */
     ds_info = (EnvisatDatasetInfo *) calloc(sizeof(EnvisatDatasetInfo),1);
     
-    ds_info->ds_name = strdup( "ASAR SOURCE PACKETS         " );
-    ds_info->ds_type = strdup( "M" );
-    ds_info->filename = strdup( "                                                              " );
+    ds_info->ds_name = CPLStrdup( "ASAR SOURCE PACKETS         " );
+	ds_info->ds_type = CPLStrdup("M");
+	ds_info->filename = CPLStrdup("                                                              ");
     ds_info->ds_offset = 3203;
     ds_info->dsr_size = -1;
     ds_info->num_dsr = 0;
@@ -267,7 +266,7 @@ int EnvisatFile_Open( EnvisatFile **self_ptr,
         return FAILURE;
 
     self->fp = fp;
-    self->filename = strdup( filename );
+	self->filename = CPLStrdup(filename);
     self->header_dirty = 0;
     self->updatable = (strcmp(mode,"rb+") == 0);
 
@@ -383,13 +382,13 @@ int EnvisatFile_Open( EnvisatFile **self_ptr,
          */
         ds_info = (EnvisatDatasetInfo *) calloc(sizeof(EnvisatDatasetInfo),1);
 
-        ds_info->ds_name = strdup( 
+		ds_info->ds_name = CPLStrdup(
             S_NameValueList_FindValue( "DS_NAME", 
                                        dsdh_count, dsdh_entries, "" ));
-        ds_info->ds_type = strdup( 
+		ds_info->ds_type = CPLStrdup(
             S_NameValueList_FindValue( "DS_TYPE", 
                                        dsdh_count, dsdh_entries, "" ));
-        ds_info->filename = strdup( 
+		ds_info->filename = CPLStrdup(
             S_NameValueList_FindValue( "FILENAME", 
                                        dsdh_count, dsdh_entries, "" ));
         ds_info->ds_offset = atoi(
@@ -706,16 +705,16 @@ void EnvisatFile_Close( EnvisatFile *self )
     {
         if( self->ds_info != NULL && self->ds_info[i] != NULL )
         {
-            free( self->ds_info[i]->ds_name );
-            free( self->ds_info[i]->ds_type );
-            free( self->ds_info[i]->filename );
-            free( self->ds_info[i] );
+            CPLFree( self->ds_info[i]->ds_name );
+			CPLFree( self->ds_info[i]->ds_type );
+			CPLFree( self->ds_info[i]->filename );
+			CPLFree( self->ds_info[i] );
         }
     }
     if( self->ds_info != NULL )
         free( self->ds_info );
     if( self->filename != NULL )
-        free( self->filename );
+		CPLFree( self->filename );
 
     free( self );
 }
@@ -1767,7 +1766,7 @@ int S_NameValueList_Parse( const char *text, int text_offset,
          * Create the name/value info structure. 
          */
         entry = (EnvisatNameValue *) calloc(sizeof(EnvisatNameValue),1);
-        entry->literal_line = strdup(line);
+        entry->literal_line = CPLStrdup(line);
 
         /*
          * Capture the key.  We take everything up to the equal sign.  There
@@ -1791,7 +1790,7 @@ int S_NameValueList_Parse( const char *text, int text_offset,
                  src_char++ ) {}
 
             line[src_char] = '\0';
-            entry->value = strdup( line + equal_index + 2 );
+			entry->value = CPLStrdup(line + equal_index + 2);
             entry->value_offset += 1;
         }
 
@@ -1815,11 +1814,11 @@ int S_NameValueList_Parse( const char *text, int text_offset,
                      dst_char++ ) {}
 
                 line[dst_char] = '\0';
-                entry->units = strdup( line + src_char + 1 );
+				entry->units = CPLStrdup( line + src_char + 1 );
             }
 
             line[src_char] = '\0';
-            entry->value = strdup( line + equal_index + 1 );
+			entry->value = CPLStrdup( line + equal_index + 1 );
         }
 
         /*
@@ -1923,11 +1922,11 @@ void S_NameValueList_Destroy( int *entry_count,
 
     for( i = 0; i < *entry_count; i++ )
     {
-        free( (*entries)[i]->key );
-        free( (*entries)[i]->value );
-        free( (*entries)[i]->units );
-        free( (*entries)[i]->literal_line );
-        free( (*entries)[i] );
+        CPLFree( (*entries)[i]->key );
+		CPLFree( (*entries)[i]->value );
+		CPLFree( (*entries)[i]->units );
+		CPLFree( (*entries)[i]->literal_line );
+		CPLFree( (*entries)[i] );
     }
 
     free( *entries );

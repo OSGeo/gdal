@@ -673,7 +673,7 @@ struct json_object* json_tokener_parse_ex(struct json_tokener *tok,
 	while(1) {
 	  if(c == tok->quote_char) {
 	    printbuf_memappend_fast(tok->pb, case_start, str-case_start);
-	    obj_field_name = strdup(tok->pb->buf);
+		obj_field_name = CPLStrdup(tok->pb->buf);
 	    saved_state = json_tokener_state_object_field_end;
 	    state = json_tokener_state_eatws;
 	    break;
@@ -713,7 +713,7 @@ struct json_object* json_tokener_parse_ex(struct json_tokener *tok,
 
     case json_tokener_state_object_value_add:
       json_object_object_add(current, obj_field_name, obj);
-      free(obj_field_name);
+      CPLFree(obj_field_name);
       obj_field_name = NULL;
       saved_state = json_tokener_state_object_sep;
       state = json_tokener_state_eatws;
