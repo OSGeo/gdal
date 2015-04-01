@@ -44,6 +44,9 @@
         <target name="maven" depends="compile_tests" description="Build maven artifacts">
 		<mkdir dir="${mvn.dir}"/>
 
+		<!-- run the javadoc generation -->
+		<exec executable="./make_doc.sh"/>
+
 		<!-- copy over pom -->
 		<copy file="pom.xml" filtering="true"
 		      tofile="${mvn.dir}/${mvn.base}.pom">
