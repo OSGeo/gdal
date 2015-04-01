@@ -159,3 +159,37 @@ c) For trial :
 d) For real :
     python setup.py register -r pypi
     python setup.py sdist upload -r pypi
+
+21) Build and bundle the java bindings.
+
+a) cd swig/java
+
+b) Make any updates to java.opt that might be required for the platform. For 
+   example osx and windows users will have to change JAVA_INCLUDE to contain
+   include/darwin and include/win32 respectively. 
+
+c) Build the javadocs:
+
+   ./make_doc.sh
+
+d) Build the bindings:
+
+     make
+
+22) Sign maven artifacts with GPG. This step is required in order to deploy the
+    jars to the central Maven repository. Before this step can proceed you must
+    set up a signing key as described here:
+
+      http://central.sonatype.org/pages/working-with-pgp-signatures.html
+
+    Once a key is set up run the "maven_sign" ant target. The target takes two
+    parameters specified as system properties: 
+
+    1. gpg.key - The identifier for the signing key
+    2. gpg.pass - The passphrase for the signing key (optional)
+
+      ant maven_sign -Dgpg.key=... -Dgpg.pass=...
+
+    Upon success you should see maven artifacts along with generated signatures
+    in the build/maven directory.
+
