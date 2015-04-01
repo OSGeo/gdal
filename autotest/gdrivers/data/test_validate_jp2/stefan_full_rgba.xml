@@ -1,0 +1,116 @@
+<JP2File filename="stefan_full_rgba.jp2">
+  <JP2Box name="jP  " box_offset="0" box_length="12" data_offset="8" data_length="4">
+    <BinaryContent>0D0A870A</BinaryContent>
+  </JP2Box>
+  <JP2Box name="ftyp" box_offset="12" box_length="20" data_offset="20" data_length="12">
+    <BinaryContent>6A703220000000006A703220</BinaryContent>
+    <DecodedContent>
+      <Field name="BR" type="string" size="4">jp2 </Field>
+      <Field name="MinV" type="uint32">0</Field>
+      <Field name="CL0" type="string" size="4">jp2 </Field>
+    </DecodedContent>
+  </JP2Box>
+  <JP2Box name="jp2h" box_offset="32" box_length="91" data_offset="40" data_length="83">
+    <JP2Box name="ihdr" box_offset="40" box_length="22" data_offset="48" data_length="14">
+      <BinaryContent>00000096000000A20004FF070000</BinaryContent>
+      <DecodedContent>
+        <Field name="HEIGHT" type="uint32">150</Field>
+        <Field name="WIDTH" type="uint32">162</Field>
+        <Field name="NC" type="uint16">4</Field>
+        <Field name="BPC" type="uint8">255</Field>
+        <Field name="C" type="uint8">7</Field>
+        <Field name="UnkC" type="uint8">0</Field>
+        <Field name="IPR" type="uint8">0</Field>
+      </DecodedContent>
+    </JP2Box>
+    <JP2Box name="bpcc" box_offset="62" box_length="12" data_offset="70" data_length="4">
+      <BinaryContent>07070700</BinaryContent>
+      <TextContent></TextContent>
+      <DecodedContent>
+        <Field name="BPC0" type="uint8" description="Unsigned 8 bits">7</Field>
+        <Field name="BPC1" type="uint8" description="Unsigned 8 bits">7</Field>
+        <Field name="BPC2" type="uint8" description="Unsigned 8 bits">7</Field>
+        <Field name="BPC3" type="uint8" description="Unsigned 1 bits">0</Field>
+      </DecodedContent>
+    </JP2Box>
+    <JP2Box name="colr" box_offset="74" box_length="15" data_offset="82" data_length="7">
+      <BinaryContent>01000000000010</BinaryContent>
+      <DecodedContent>
+        <Field name="METH" type="uint8">1</Field>
+        <Field name="PREC" type="uint8">0</Field>
+        <Field name="APPROX" type="uint8">0</Field>
+        <Field name="EnumCS" type="uint32" description="sRGB">16</Field>
+      </DecodedContent>
+    </JP2Box>
+    <JP2Box name="cdef" box_offset="89" box_length="34" data_offset="97" data_length="26">
+      <BinaryContent>0004000000000001000100000002000200000003000300010000</BinaryContent>
+      <DecodedContent>
+        <Field name="N" type="uint16">4</Field>
+        <Field name="Cn0" type="uint16">0</Field>
+        <Field name="Typ0" type="uint16" description="Colour channel">0</Field>
+        <Field name="Asoc0" type="uint16" description="Associated with a particular colour">1</Field>
+        <Field name="Cn1" type="uint16">1</Field>
+        <Field name="Typ1" type="uint16" description="Colour channel">0</Field>
+        <Field name="Asoc1" type="uint16" description="Associated with a particular colour">2</Field>
+        <Field name="Cn2" type="uint16">2</Field>
+        <Field name="Typ2" type="uint16" description="Colour channel">0</Field>
+        <Field name="Asoc2" type="uint16" description="Associated with a particular colour">3</Field>
+        <Field name="Cn3" type="uint16">3</Field>
+        <Field name="Typ3" type="uint16" description="Opacity channel">1</Field>
+        <Field name="Asoc3" type="uint16" description="Associated to the whole image">0</Field>
+      </DecodedContent>
+    </JP2Box>
+  </JP2Box>
+  <JP2Box name="jp2c" box_offset="123" box_length="18267" data_offset="131" data_length="18259">
+    <JP2KCodeStream>
+      <Marker name="SOC" offset="131" length="2" />
+      <Marker name="SIZ" offset="133" length="52">
+        <Field name="Rsiz" type="uint16" description="Profile 1">2</Field>
+        <Field name="Xsiz" type="uint32">162</Field>
+        <Field name="Ysiz" type="uint32">150</Field>
+        <Field name="XOsiz" type="uint32">0</Field>
+        <Field name="YOsiz" type="uint32">0</Field>
+        <Field name="XTsiz" type="uint32">162</Field>
+        <Field name="YTsiz" type="uint32">150</Field>
+        <Field name="XTOSiz" type="uint32">0</Field>
+        <Field name="YTOSiz" type="uint32">0</Field>
+        <Field name="Csiz" type="uint16">4</Field>
+        <Field name="Ssiz0" type="uint8" description="Unsigned 8 bits">7</Field>
+        <Field name="XRsiz0" type="uint8">1</Field>
+        <Field name="YRsiz0" type="uint8">1</Field>
+        <Field name="Ssiz1" type="uint8" description="Unsigned 8 bits">7</Field>
+        <Field name="XRsiz1" type="uint8">1</Field>
+        <Field name="YRsiz1" type="uint8">1</Field>
+        <Field name="Ssiz2" type="uint8" description="Unsigned 8 bits">7</Field>
+        <Field name="XRsiz2" type="uint8">1</Field>
+        <Field name="YRsiz2" type="uint8">1</Field>
+        <Field name="Ssiz3" type="uint8" description="Unsigned 1 bits">0</Field>
+        <Field name="XRsiz3" type="uint8">1</Field>
+        <Field name="YRsiz3" type="uint8">1</Field>
+      </Marker>
+      <Marker name="COD" offset="185" length="16">
+        <Field name="Scod" type="uint8" description="User defined precincts, No SOP marker segments, No EPH marker segments">1</Field>
+        <Field name="SGcod_Progress" type="uint8" description="LRCP">0</Field>
+        <Field name="SGcod_NumLayers" type="uint16">1</Field>
+        <Field name="SGcod_MCT" type="uint8">0</Field>
+        <Field name="SPcod_NumDecompositions" type="uint8">1</Field>
+        <Field name="SPcod_xcb_minus_2" type="uint8" description="64">4</Field>
+        <Field name="SPcod_ycb_minus_2" type="uint8" description="64">4</Field>
+        <Field name="SPcod_cbstyle" type="uint8" description="No selective arithmetic coding bypass, No reset of context probabilities on coding pass boundaries, No termination on each coding pass, No vertically causal context, No predictable termination, No segmentation symbols are used">0</Field>
+        <Field name="SPcod_transformation" type="uint8" description="9-7 irreversible">0</Field>
+        <Field name="SPcod_Precincts0" type="uint8" description="PPx=8 PPy=9: 256x512">152</Field>
+        <Field name="SPcod_Precincts1" type="uint8" description="PPx=9 PPy=9: 512x512">153</Field>
+      </Marker>
+      <Marker name="QCD" offset="201" length="13" />
+      <Marker name="SOT" offset="214" length="12">
+        <Field name="Isot" type="uint16">0</Field>
+        <Field name="Psot" type="uint32">18174</Field>
+        <Field name="TPsot" type="uint8">0</Field>
+        <Field name="TNsot" type="uint8">1</Field>
+      </Marker>
+      <Marker name="SOD" offset="226" length="18162" />
+      <Marker name="EOC" offset="18388" length="2" />
+    </JP2KCodeStream>
+  </JP2Box>
+</JP2File>
+

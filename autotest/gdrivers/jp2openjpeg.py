@@ -1040,7 +1040,6 @@ def validate(filename, expected_gmljp2 = True, return_error_count = False, oidoc
         print('Cannot run validate_jp2')
         return 'skip'
 
-    oidoc = None
     inspire_tg = True
     try:
         os.stat('tmp/cache/SCHEMAS_OPENGIS_NET')

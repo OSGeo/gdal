@@ -1,0 +1,214 @@
+<JP2File filename="byte.jp2">
+  <JP2Box name="jP  ">
+    <BinaryContent>0D0A870A</BinaryContent>
+  </JP2Box>
+  <JP2Box name="ftyp">
+    <DecodedContent>
+      <!--<Field name="BR" type="string" size="4">jp2 </Field>-->
+      <Field name="BR" type="string" size="4">XXXX</Field> <!-- ERROR[GENERAL]: ftyp.BR = "XXXX" instead of "jp2 " -->
+      <!--<Field name="MinV" type="uint32">0</Field>-->
+      <Field name="MinV" type="uint32">1</Field> <!-- ERROR[GENERAL]: ftyp.MinV = "1" instead of 0 -->
+      <Field name="CL0" type="string" size="4">jp2 </Field>
+      <!-- <Field name="CL1" type="string" size="4">jpx </Field> --> <!-- ERROR[INSPIRE_TG]: "jpx " not found in compatibility list of ftyp, but GMLJP2 box present -->
+    </DecodedContent>
+  </JP2Box>
+  <JP2Box name="ftyp"> <!-- repeation added : ERROR[GENERAL]: "ftyp" box expected to be found zero or one time, but present 2 times -->
+    <DecodedContent/>
+  </JP2Box>
+  <JP2Box name="rreq">
+    <DecodedContent>
+      <Field name="ML" type="uint8">1</Field>
+      <Field name="FUAM" type="hexint" size="1">0xC0</Field>
+      <Field name="DCM" type="hexint" size="1">0x80</Field>
+      <!--<Field name="NSF" type="uint16">2</Field>-->
+      <Field name="NSF" type="uint16">1</Field>
+      <Field name="SF0" type="uint16" description="Codestream is compressed using JPEG 2000 and requires at least a Profile 1 decoder">4</Field>
+      <Field name="SM0" type="hexint" size="1">0x80</Field>
+      <!--
+      <Field name="SF1" type="uint16" description="Contains GMLJP2 metadata">67</Field>
+      <Field name="SM1" type="hexint" size="1">0x40</Field>--> <!-- ERROR[INSPIRE_TG]: "rreq" box does not advertize standard flag 67 whereas GMLJP2 box is present -->
+      <Field name="NVF" type="uint16">0</Field>
+    </DecodedContent>
+  </JP2Box>
+  <JP2Box name="jp2h">
+    <JP2Box name="ihdr">
+      <DecodedContent>
+        <!--<Field name="HEIGHT" type="uint32">20</Field>-->
+        <Field name="HEIGHT" type="uint32">19</Field> <!-- ERROR[GENERAL]: ihdr_height(=19) != Ysiz(=20) - YOsiz(=0) -->
+        <!--<Field name="WIDTH" type="uint32">20</Field>-->
+        <Field name="WIDTH" type="uint32">21</Field> <!-- ERROR[GENERAL]: ihdr_width(=21) != Xsiz (=20)- XOsiz(=0) -->
+        <Field name="NC" type="uint16">1</Field>
+        <Field name="BPC" type="uint8" description="Unsigned 8 bits">7</Field>
+        <!--<Field name="C" type="uint8">7</Field>-->
+        <Field name="C" type="uint8">6</Field> <!-- ERROR[GENERAL]: ihdr.C = 6 instead of 7 -->
+        <!--<Field name="UnkC" type="uint8">0</Field>-->
+        <Field name="UnkC" type="uint8">2</Field> <!-- ERROR[GENERAL]: ihdr.UnkC = 2 instead of 0 or 1 -->
+        <!--<Field name="IPR" type="uint8">0</Field>-->
+        <Field name="IPR" type="uint8">1</Field> <!-- WARNING[GENERAL]: ihdr.ipr = 1 but no jp2i box found -->
+      </DecodedContent>
+    </JP2Box>
+    <JP2Box name="ihdr"> <!-- repeation added ; ERROR[GENERAL]: "ihdr" box expected to be found zero or one time, but present 2 times -->
+      <DecodedContent>
+      </DecodedContent>
+    </JP2Box>
+    <JP2Box name="colr">
+      <DecodedContent>
+        <Field name="METH" type="uint8">1</Field>
+        <!--<Field name="PREC" type="uint8">0</Field>-->
+        <Field name="PREC" type="uint8">1</Field> <!-- WARNING[GENERAL]: Unknown value 1 for colr.PREC -->
+        <!--<Field name="APPROX" type="uint8">0</Field>-->
+        <Field name="APPROX" type="uint8">1</Field> <!-- WARNING[GENERAL]: Unknown value 1 for colr.APPROX -->
+        <!--<Field name="EnumCS" type="uint32" description="greyscale">17</Field>-->
+        <Field name="EnumCS" type="uint32">1</Field> <!-- WARNING[GENERAL]: Unknown value 1 for colr.EnumCS -->
+      </DecodedContent>
+    </JP2Box>
+  </JP2Box>
+  <JP2Box name="uuid"> <!-- WARNING[INSPIRE_TG]: "uuid" box not at expected index -->
+    <UUID description="GeoTIFF">B14BF8BD083D4B43A5AE8CD7D5A6CE03</UUID>
+    <DecodedGeoTIFF>
+      <VRTDataset rasterXSize="2" rasterYSize="2">
+      <!--<VRTDataset rasterXSize="1" rasterYSize="1">-->
+        <SRS>PROJCS["NAD27 / UTM zone 11N",GEOGCS["NAD27",DATUM["North_American_Datum_1927",SPHEROID["Clarke 1866",6378206.4,294.9786982138982,AUTHORITY["EPSG","7008"]],AUTHORITY["EPSG","6267"]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433],AUTHORITY["EPSG","4267"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-117],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AUTHORITY["EPSG","26711"]]</SRS>
+        <GeoTransform>4.4072000000000000e+05,  6.0000000000000000e+01,  0.0000000000000000e+00,  3.7513200000000000e+06,  0.0000000000000000e+00, -6.0000000000000000e+01</GeoTransform>
+        <Metadata>
+          <MDI key="AREA_OR_POINT">Area</MDI>
+        </Metadata>
+        <VRTRasterBand />
+      </VRTDataset>
+    </DecodedGeoTIFF>
+  </JP2Box>
+  <JP2Box name="uuid"> <!-- repeation added : ERROR[GeoJP2]: 2 GeoTIFF UUID box found-->
+    <UUID description="GeoTIFF">B14BF8BD083D4B43A5AE8CD7D5A6CE03</UUID>
+    <DecodedGeoTIFF>
+      <VRTDataset rasterXSize="2" rasterYSize="2"> <!-- ERROR[GeoJP2]: GeoTIFF should have width of 1 pixel, not 2 and ERROR[GeoJP2]: GeoTIFF should have height of 1 pixel, not 2 -->
+      <!--<VRTDataset rasterXSize="1" rasterYSize="1">-->
+        <SRS>PROJCS["NAD27 / UTM zone 11N",GEOGCS["NAD27",DATUM["North_American_Datum_1927",SPHEROID["Clarke 1866",6378206.4,294.9786982138982,AUTHORITY["EPSG","7008"]],AUTHORITY["EPSG","6267"]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433],AUTHORITY["EPSG","4267"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-117],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AUTHORITY["EPSG","26711"]]</SRS>
+        <GeoTransform>4.4072000000000000e+05,  6.0000000000000000e+01,  0.0000000000000000e+00,  3.7513200000000000e+06,  0.0000000000000000e+00, -6.0000000000000000e+01</GeoTransform>
+        <Metadata>
+          <MDI key="AREA_OR_POINT">Area</MDI>
+        </Metadata>
+        <VRTRasterBand />
+      </VRTDataset>
+    </DecodedGeoTIFF>
+  </JP2Box>
+  
+  <JP2Box name="asoc"> <!-- WARNING[INSPIRE_TG]: "asoc" box not at expected index -->
+    <JP2Box name="lbl ">
+      <TextContent>gml.data</TextContent>
+    </JP2Box>
+    <JP2Box name="asoc">
+      <JP2Box name="lbl ">
+        <TextContent>gml.root-instance</TextContent>
+      </JP2Box>
+      <JP2Box name="xml ">
+        <XMLContent>
+          <gml:FeatureCollection xmlns:gml="http://www.opengis.net/gml" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opengis.net/gml http://schemas.opengis.net/gml/3.1.1/profiles/gmlJP2Profile/1.0.0/gmlJP2Profile.xsd">
+            <gml:boundedBy>
+              <gml:Null>withheld</gml:Null>
+            </gml:boundedBy>
+            <gml:featureMember>
+              <gml:FeatureCollection>
+                <gml:featureMember>
+                  <gml:RectifiedGridCoverage dimension="2" gml:id="RGC0001">
+                    <gml:rectifiedGridDomain>
+                      <gml:RectifiedGrid dimension="2">
+                        <gml:limits>
+                          <gml:GridEnvelope>
+                            <!--<gml:low>0 0</gml:low>-->
+                            <gml:low>1 1</gml:low> <!-- ERROR[GMLJP2]: RectifiedGrid.limits.GridEnvelope.low[x] != XOsiz and ERROR[GMLJP2]: RectifiedGrid.limits.GridEnvelope.low[y] != YOsiz -->
+                            <!--<gml:high>19 19</gml:high>-->
+                            <gml:high>119 119</gml:high> <!-- ERROR[GMLJP2]: RectifiedGrid.limits.GridEnvelope.high[x] != Xsiz - 1 and ERROR[GMLJP2]: RectifiedGrid.limits.GridEnvelope.high[y] != Ysiz - 1 -->
+                          </gml:GridEnvelope>
+                        </gml:limits>
+                        <gml:axisName>x</gml:axisName>
+                        <gml:axisName>y</gml:axisName>
+                        <gml:origin>
+                          <!--<gml:Point gml:id="P0001" srsName="urn:ogc:def:crs:EPSG::26711">-->
+                          <gml:Point gml:id="P0001" srsName="urn:ogc:def:crs:EPSG::32631"> <!-- ERROR[GENERAL]: Inconsistant SRS between  ... -->
+                            <!--<gml:pos>440750 3751290</gml:pos>-->
+                            <gml:pos>-440750 -3751290</gml:pos> <!-- ERROR[GENERAL]: Inconsistant geotransform between GeoJP2 ((440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)) and GMLJP2 ((-440780.0, 60.0, 0.0, -3751260.0, 0.0, -60.0)) -->
+                          </gml:Point>
+                        </gml:origin>
+                        <gml:offsetVector srsName="urn:ogc:def:crs:EPSG::32631">60 0</gml:offsetVector>
+                        <gml:offsetVector srsName="urn:ogc:def:crs:EPSG::32631">0 -60</gml:offsetVector>
+                      </gml:RectifiedGrid>
+                    </gml:rectifiedGridDomain>
+                    <gml:rangeSet>
+                      <gml:File>
+                        <gml:rangeParameters />
+                        <gml:fileName>gmljp2://codestream/0</gml:fileName>
+                        <gml:fileStructure>Record Interleaved</gml:fileStructure>
+                      </gml:File>
+                    </gml:rangeSet>
+                  </gml:RectifiedGridCoverage>
+                </gml:featureMember>
+              </gml:FeatureCollection>
+            </gml:featureMember>
+          </gml:FeatureCollection>
+        </XMLContent>
+      </JP2Box>
+    </JP2Box>
+  </JP2Box>
+  <JP2Box name="jp2c">
+    <JP2KCodeStream>
+      <Marker name="SOC" offset="110" length="2" />
+      <Marker name="SIZ" offset="112" length="43">
+        <!--<Field name="Rsiz" type="uint16" description="Profile 1">2</Field>-->
+        <Field name="Rsiz" type="uint16" description="Profile 2">0</Field> <!-- ERROR[INSPIRE_TG, Requirement 21]: SIZ.Rsiz=0 found but 2 (Profile 1) expected and ERROR[INSPIRE_TG, Conformance class A.8.6]: count(OrthoImageryCoverage.rangeType.field)(=1) != Csiz(=2) -->
+        <Field name="Xsiz" type="uint32">20</Field>
+        <Field name="Ysiz" type="uint32">20</Field>
+        <Field name="XOsiz" type="uint32">0</Field>
+        <Field name="YOsiz" type="uint32">0</Field>
+        <Field name="XTsiz" type="uint32">20</Field>
+        <Field name="YTsiz" type="uint32">20</Field>
+        <Field name="XTOSiz" type="uint32">0</Field>
+        <Field name="YTOSiz" type="uint32">0</Field>
+        <!--<Field name="Csiz" type="uint16">1</Field>-->
+        <Field name="Csiz" type="uint16">2</Field> <!-- ERROR[GENERAL]: ihdr_nc(=1) != Csiz (=2) -->
+        <!--<Field name="Ssiz0" type="uint8" description="Unsigned 8 bits">7</Field>-->
+        <Field name="Ssiz0" type="uint8" description="Unsigned 7 bits">6</Field>
+        <Field name="XRsiz0" type="uint8">1</Field>
+        <Field name="YRsiz0" type="uint8">1</Field>
+        
+        <Field name="Ssiz1" type="uint8" description="Unsigned 7 bits">6</Field> <!-- ERROR[INSPIRE_TG, Requirement 24, Conformance class A.8.9]: SIZ.Ssiz[0]=6 (unsigned 7 bits), which is not allowed and ERROR[GENERAL]: SIZ.Ssiz[0]=6, whereas bpcc[0]=7 -->
+        <Field name="XRsiz1" type="uint8">1</Field>
+        <Field name="YRsiz1" type="uint8">1</Field>
+      </Marker>
+      <Marker name="COD" offset="155" length="15">
+        <!--<Field name="Scod" type="uint8" description="User defined precincts, No SOP marker segments, No EPH marker segments">1</Field>-->
+        <Field name="Scod" type="uint8" description="No user defined precincts, No SOP marker segments, No EPH marker segments">0</Field> <!-- WARNING[INSPIRE_TG, Recommendation 39]: No user-defined precincts 0 defined -->
+        <Field name="SGcod_Progress" type="uint8" description="LRCP">0</Field>
+        <Field name="SGcod_NumLayers" type="uint16">1</Field>
+        <Field name="SGcod_MCT" type="uint8">0</Field>
+        <Field name="SPcod_NumDecompositions" type="uint8">0</Field>
+        <!--
+        <Field name="SPcod_xcb_minus_2" type="uint8" description="64">4</Field>
+        <Field name="SPcod_ycb_minus_2" type="uint8" description="64">4</Field>
+        -->
+        <Field name="SPcod_xcb_minus_2" type="uint8" description="128">5</Field> <!-- ERROR[PROFILE_1, Conformance class A.8.14]: SPcod_xcb_minus_2 = 5, whereas max allowed for Profile 1 is 4 -->
+        <Field name="SPcod_ycb_minus_2" type="uint8" description="32">3</Field>
+        <Field name="SPcod_cbstyle" type="uint8" description="No selective arithmetic coding bypass, No reset of context probabilities on coding pass boundaries, No termination on each coding pass, No vertically causal context, No predictable termination, No segmentation symbols are used">0</Field>
+        <Field name="SPcod_transformation" type="uint8" description="9-7 irreversible">0</Field>
+        <!--<Field name="SPcod_Precincts0" type="uint8" description="PPx=9 PPy=9: 512x512">153</Field>-->
+      </Marker>
+      <Marker name="QCD" offset="170" length="7" />
+      <Marker name="SOT" offset="177" length="12">
+        <Field name="Isot" type="uint16">0</Field>
+        <Field name="Psot" type="uint32">29</Field>
+        <Field name="TPsot" type="uint8">0</Field>
+        <Field name="TNsot" type="uint8">1</Field>
+      </Marker>
+      <Marker name="SOD" offset="189" length="17" />
+      <Marker name="EOC" offset="206" length="2" />
+    </JP2KCodeStream>
+  </JP2Box>
+
+  <JP2Box name="jp2c"> <!-- repeation added : ERROR[INSPIRE_TG, Requirement 23, Conformance class A.8.15]: "jp2c" box expected to be found one time, but present 2 times -->
+    <JP2KCodeStream>
+      <Marker name="SOC" offset="110" length="2" />
+      <Marker name="EOC" offset="206" length="2" />
+    </JP2KCodeStream>
+  </JP2Box>
+
+</JP2File>
+
