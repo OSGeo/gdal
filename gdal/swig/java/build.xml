@@ -41,6 +41,9 @@
 		<echo>compilation of tests complete</echo>
 	</target>
         
+        <target name="all" depends="compile_tests" description="Build a jar and test apps.">
+        </target>
+
         <target name="maven" depends="compile_tests" description="Build maven artifacts">
 		<mkdir dir="${mvn.dir}"/>
 
@@ -63,10 +66,8 @@
 
         </target>
 
-        <target name="all" depends="maven" description="Build a jar and test apps.">
-        </target>
 
-        <target name="maven_sign" depends="init"
+        <target name="maven_sign" depends="maven"
 		description="GPG signs maven artifacts">
 
 		<!-- sign all artifacts -->
