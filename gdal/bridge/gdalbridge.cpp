@@ -85,7 +85,7 @@ static void *GBGetSymbolCheck( const char *pszLibrary,
 
         if( i < MAX_SYMBOL-1 )
         {
-            papszErrorList[i] = strdup( pszSymbolName );
+            papszErrorList[i] = CPLStrdup( pszSymbolName );
             papszErrorList[i+1] = NULL;
         }
     }
@@ -512,7 +512,7 @@ int GDALBridgeInitialize( const char * pszTargetDir, FILE *fpReportFailure )
         for( iError = 0; apszFailed[iError] != NULL; iError++ )
         {
             fprintf( fpReportFailure, "  o %s\n", apszFailed[iError] );
-            free( apszFailed[iError] );
+            CPLFree( apszFailed[iError] );
         }
     }
 

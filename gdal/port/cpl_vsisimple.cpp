@@ -670,7 +670,7 @@ void VSIFree( void * pData )
 
 #else
     if( pData != NULL )
-        free( pData );
+		free( pData );
 #endif
 }
 
@@ -689,7 +689,7 @@ char *VSIStrdup( const char * pszString )
     memcpy(ptr, pszString, nSize);
     return ptr;
 #else
-    return( strdup( pszString ) );
+	return( strdup( pszString ) );
 #endif
 }
 

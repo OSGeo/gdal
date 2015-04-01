@@ -623,7 +623,7 @@ static int json_object_string_to_json_string(struct json_object* jso,
 
 static void json_object_string_delete(struct json_object* jso)
 {
-  free(jso->o.c_string.str);
+  CPLFree(jso->o.c_string.str);
   json_object_generic_delete(jso);
 }
 
@@ -633,7 +633,7 @@ struct json_object* json_object_new_string(const char *s)
   if(!jso) return NULL;
   jso->_delete = &json_object_string_delete;
   jso->_to_json_string = &json_object_string_to_json_string;
-  jso->o.c_string.str = strdup(s);
+  jso->o.c_string.str = CPLStrdup(s);
   jso->o.c_string.len = strlen(s);
   return jso;
 }

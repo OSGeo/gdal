@@ -738,7 +738,7 @@ void CPL_STDCALL CPLLoggingErrorHandler( CPLErr eErrClass, int nError,
                 else
                 {
                     size_t pos = 0;
-                    char *cpl_log_base = strdup(cpl_log);
+                    char *cpl_log_base = CPLStrdup(cpl_log);
                     pos = strcspn(cpl_log_base, ".");
                     if (pos > 0)
                     {
@@ -746,7 +746,7 @@ void CPL_STDCALL CPLLoggingErrorHandler( CPLErr eErrClass, int nError,
                     }
                     CPLsprintf( pszPath, "%s_%d%s", cpl_log_base,
                              i++, ".log" );
-                    free(cpl_log_base);
+                    CPLFree(cpl_log_base);
                 }
             }
 

@@ -423,8 +423,8 @@ void OGRCSVLayer::BuildFeatureDefn( const char* pszNfdcGeomField,
         char* dname = CPLStrdup(CPLGetDirname(pszFilename));
         char* fname = CPLStrdup(CPLGetBasename(pszFilename));
         VSILFILE* fpCSVT = VSIFOpenL(CPLFormFilename(dname, fname, ".csvt"), "r");
-        free(dname);
-        free(fname);
+        CPLFree(dname);
+        CPLFree(fname);
         if (fpCSVT!=NULL) {
             VSIRewindL(fpCSVT);
             papszFieldTypes = OGRCSVReadParseLineL(fpCSVT, ',', FALSE);
