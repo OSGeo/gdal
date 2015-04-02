@@ -1387,7 +1387,6 @@ const char* GeoRasterDataset::GetProjectionRef( void )
         else if ( EQUAL( pszProjName, "Lambert Conformal Conic" ) )
         {
             oSRS.SetProjection( SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP );
-            //?? One ot two parameters?
         }
         else if ( EQUAL( pszProjName, "Lambert Azimuthal Equal Area" ) )
         {
@@ -1508,23 +1507,229 @@ CPLErr GeoRasterDataset::SetProjection( const char *pszProjString )
         return CE_Failure;
     }
     
+    const char *pszProjName = poSRS2->GetAttrValue( "PROJECTION" );
+
+    if( pszProjName )
+    {
+        // ----------------------------------------------------------------
+        // Translate projection names to Oracle's standards
+        // ----------------------------------------------------------------
+
+        if ( EQUAL( pszProjName, SRS_PT_TRANSVERSE_MERCATOR ) )
+        {
+            poSRS2->SetProjection( "Transverse Mercator" );
+        }
+        else if ( EQUAL( pszProjName, SRS_PT_ALBERS_CONIC_EQUAL_AREA ) )
+        {
+            poSRS2->SetProjection( "Albers Conical Equal Area" );
+        }
+        else if ( EQUAL( pszProjName, SRS_PT_AZIMUTHAL_EQUIDISTANT ) )
+        {
+            poSRS2->SetProjection( "Azimuthal Equidistant" );
+        }
+        else if ( EQUAL( pszProjName, SRS_PT_MILLER_CYLINDRICAL ) )
+        {
+            poSRS2->SetProjection( "Miller Cylindrical" );
+        }
+        else if ( EQUAL( pszProjName, SRS_PT_HOTINE_OBLIQUE_MERCATOR ) )
+        {
+            poSRS2->SetProjection( "Hotine Oblique Mercator" );
+        }
+        else if ( EQUAL( pszProjName, SRS_PT_WAGNER_IV ) )
+        {
+            poSRS2->SetProjection( "Wagner IV" );
+        }
+        else if ( EQUAL( pszProjName, SRS_PT_WAGNER_VII ) )
+        {
+            poSRS2->SetProjection( "Wagner VII" );
+        }
+        else if ( EQUAL( pszProjName, SRS_PT_ECKERT_IV ) )
+        {
+            poSRS2->SetProjection( "Eckert IV" );
+        }
+        else if ( EQUAL( pszProjName, SRS_PT_ECKERT_VI ) )
+        {
+            poSRS2->SetProjection( "Eckert VI" );
+        }
+        else if ( EQUAL( pszProjName, SRS_PT_NEW_ZEALAND_MAP_GRID ) )
+        {
+            poSRS2->SetProjection( "New Zealand Map Grid" );
+        }
+        else if ( EQUAL( pszProjName, SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP ) )
+        {
+            poSRS2->SetProjection( "Lambert Conformal Conic" );
+        }
+        else if ( EQUAL( pszProjName, SRS_PT_LAMBERT_AZIMUTHAL_EQUAL_AREA ) )
+        {
+            poSRS2->SetProjection( "Lambert Azimuthal Equal Area" );
+        }
+        else if ( EQUAL( pszProjName, SRS_PT_VANDERGRINTEN ) )
+        {
+            poSRS2->SetProjection( "Van der Grinten" );
+        }
+        else if ( EQUAL(
+            pszProjName, SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP_BELGIUM ) )
+        {
+            poSRS2->SetProjection( "Lambert Conformal Conic (Belgium 1972)" );
+        }
+        else if ( EQUAL( pszProjName, SRS_PT_CYLINDRICAL_EQUAL_AREA ) )
+        {
+            poSRS2->SetProjection( "Cylindrical Equal Area" );
+        }
+        else if ( EQUAL( pszProjName, SRS_PT_GOODE_HOMOLOSINE ) )
+        {
+            poSRS2->SetProjection( "Interrupted Goode Homolosine" );
+        }
+        
+        // ----------------------------------------------------------------
+        // Translate projection's parameters to Oracle's standards
+        // ----------------------------------------------------------------
+
+        char* pszStart = NULL;
+
+        if( poSRS2->exportToWkt( &pszCloneWKT ) != OGRERR_NONE )
+        {
+            delete poSRS2;
+            return CE_Failure;
+        }
+        
+        if( ( pszStart = strstr(pszCloneWKT, SRS_PP_AZIMUTH) ) )
+        {
+            strncpy( pszStart, "Azimuth", strlen(SRS_PP_AZIMUTH) );
+        }
+
+        if( ( pszStart = strstr(pszCloneWKT, SRS_PP_CENTRAL_MERIDIAN) ) )
+        {
+            strncpy( pszStart, "Central_Meridian", 
+                                        strlen(SRS_PP_CENTRAL_MERIDIAN) );
+        }
+
+        if( ( pszStart = strstr(pszCloneWKT, SRS_PP_FALSE_EASTING) ) )
+        {
+            strncpy( pszStart, "False_Easting", strlen(SRS_PP_FALSE_EASTING) );
+        }
+
+        if( ( pszStart = strstr(pszCloneWKT, SRS_PP_FALSE_NORTHING) ) )
+        {
+            strncpy( pszStart, "False_Northing", 
+                                        strlen(SRS_PP_FALSE_NORTHING) );
+        }
+
+        if( ( pszStart = strstr(pszCloneWKT, SRS_PP_LATITUDE_OF_CENTER) ) )
+        {
+            strncpy( pszStart, "Latitude_Of_Center", 
+                                        strlen(SRS_PP_LATITUDE_OF_CENTER) );
+        }
+                
+        if( ( pszStart = strstr(pszCloneWKT, SRS_PP_LATITUDE_OF_ORIGIN) ) )
+        {
+            strncpy( pszStart, "Latitude_Of_Origin", 
+                                        strlen(SRS_PP_LATITUDE_OF_ORIGIN) );
+        }
+                
+        if( ( pszStart = strstr(pszCloneWKT, SRS_PP_LONGITUDE_OF_CENTER) ) )
+        {
+            strncpy( pszStart, "Longitude_Of_Center", 
+                                        strlen(SRS_PP_LONGITUDE_OF_CENTER) );
+        }
+                
+        if( ( pszStart = strstr(pszCloneWKT, SRS_PP_PSEUDO_STD_PARALLEL_1) ) )
+        {
+            strncpy( pszStart, "Pseudo_Standard_Parallel_1", 
+                                        strlen(SRS_PP_PSEUDO_STD_PARALLEL_1) );
+        }
+                
+        if( ( pszStart = strstr(pszCloneWKT, SRS_PP_SCALE_FACTOR) ) )
+        {
+            strncpy( pszStart, "Scale_Factor", strlen(SRS_PP_SCALE_FACTOR) );
+        }
+                
+        if( ( pszStart = strstr(pszCloneWKT, SRS_PP_STANDARD_PARALLEL_1) ) )
+        {
+            strncpy( pszStart, "Standard_Parallel_1", 
+                                        strlen(SRS_PP_STANDARD_PARALLEL_1) );
+        }
+                
+        if( ( pszStart = strstr(pszCloneWKT, SRS_PP_STANDARD_PARALLEL_2) ) )
+        {
+            strncpy( pszStart, "Standard_Parallel_2", 
+                                        strlen(SRS_PP_STANDARD_PARALLEL_2) );
+        }                
+                
+        if( ( pszStart = strstr(pszCloneWKT, SRS_PP_STANDARD_PARALLEL_2) ) )
+        {
+            strncpy( pszStart, "Standard_Parallel_2", 
+                                        strlen(SRS_PP_STANDARD_PARALLEL_2) );
+        }                
+        
+        // ----------------------------------------------------------------
+        // Fix Unit name
+        // ----------------------------------------------------------------
+        
+        if( ( pszStart = strstr(pszCloneWKT, "metre") ) )
+        {
+            strncpy( pszStart, SRS_UL_METER, strlen(SRS_UL_METER) );
+        }
+    }
+
     // --------------------------------------------------------------------
-    // Search by simplified WKT or insert it as a user defined
+    // Tries to find a SRID compatible with the WKT
     // --------------------------------------------------------------------
 
     OWConnection* poConnection  = poGeoRaster->poConnection;
     OWStatement* poStmt = NULL;
+    
+    int nNewSRID = 0;    
+   
+    char *pszFuncName = "FIND_GEOG_CRS";
+  
+    if( poSRS2->IsProjected() )
+    {
+        pszFuncName = "FIND_PROJ_CRS";
+    }
+    
+    poStmt = poConnection->CreateStatement( CPLSPrintf(
+        "DECLARE\n"
+        "  LIST SDO_SRID_LIST;"
+        "BEGIN\n"
+        "  SELECT SDO_CS.%s('%s', null) into LIST FROM DUAL;\n"
+        "  IF LIST.COUNT() > 0 then\n"
+        "    SELECT LIST(1) into :out from dual;\n"
+        "  ELSE\n"
+        "    SELECT -1 into :out from dual;\n"
+        "  END IF;\n"
+        "END;",
+            pszFuncName,
+            pszCloneWKT ) );
+        
+    poStmt->BindName( ":out", &nNewSRID );
 
+    CPLPushErrorHandler( CPLQuietErrorHandler );
+
+    if( poStmt->Execute() )
+    {
+        CPLPopErrorHandler();
+         
+        poGeoRaster->SetGeoReference( nNewSRID );
+        CPLFree( pszCloneWKT );       
+        return CE_None;
+    }   
+
+    // --------------------------------------------------------------------
+    // Search by simplified WKT or insert it as a user defined SRS
+    // --------------------------------------------------------------------
+    
     int nCounter = 0;
-    int nNewSRID = 0;
 
     poStmt = poConnection->CreateStatement( CPLSPrintf(
         "SELECT COUNT(*) FROM MDSYS.CS_SRS WHERE WKTEXT = '%s'", pszCloneWKT));
-
+    
     poStmt->Define( &nCounter );
+            
+    CPLPushErrorHandler( CPLQuietErrorHandler );
 
     if( poStmt->Execute() && nCounter > 0 )
-    {
+    {    
         poStmt = poConnection->CreateStatement( CPLSPrintf(
             "SELECT SRID FROM MDSYS.CS_SRS WHERE WKTEXT = '%s'", pszCloneWKT));
 
@@ -1532,11 +1737,16 @@ CPLErr GeoRasterDataset::SetProjection( const char *pszProjString )
 
         if( poStmt->Execute() )
         {
+            CPLPopErrorHandler();
+            
             poGeoRaster->SetGeoReference( nNewSRID );
             CPLFree( pszCloneWKT );
             return CE_None;
-        }
+        }    
     }
+
+    CPLPopErrorHandler();
+    
     poStmt = poConnection->CreateStatement( CPLSPrintf(
         "DECLARE\n"
         "  MAX_SRID NUMBER := 0;\n"
@@ -1554,23 +1764,29 @@ CPLErr GeoRasterDataset::SetProjection( const char *pszProjString )
 
     CPLErr eError = CE_None;
 
+    CPLPushErrorHandler( CPLQuietErrorHandler );
+
     if( poStmt->Execute() )
     {
+        CPLPopErrorHandler();
+            
         poGeoRaster->SetGeoReference( nNewSRID );
     }
     else
     {
+        CPLPopErrorHandler();
+            
         poGeoRaster->SetGeoReference( UNKNOWN_CRS );
 
         CPLError( CE_Warning, CPLE_UserInterrupt,
             "Insufficient privileges to insert reference system to "
             "table MDSYS.CS_SRS." );
-
+        
         eError = CE_Warning;
     }
 
     CPLFree( pszCloneWKT );
-
+    
     return eError;
 }
 
