@@ -1584,6 +1584,8 @@ CPLErr GeoRasterDataset::SetProjection( const char *pszProjString )
         // ----------------------------------------------------------------
 
         char* pszStart = NULL;
+        
+        CPLFree( pszCloneWKT );       
 
         if( poSRS2->exportToWkt( &pszCloneWKT ) != OGRERR_NONE )
         {
@@ -1694,7 +1696,7 @@ CPLErr GeoRasterDataset::SetProjection( const char *pszProjString )
         "  IF LIST.COUNT() > 0 then\n"
         "    SELECT LIST(1) into :out from dual;\n"
         "  ELSE\n"
-        "    SELECT -1 into :out from dual;\n"
+        "    SELECT 0 into :out from dual;\n"
         "  END IF;\n"
         "END;",
             pszFuncName,
@@ -1707,10 +1709,13 @@ CPLErr GeoRasterDataset::SetProjection( const char *pszProjString )
     if( poStmt->Execute() )
     {
         CPLPopErrorHandler();
-         
-        poGeoRaster->SetGeoReference( nNewSRID );
-        CPLFree( pszCloneWKT );       
-        return CE_None;
+
+        if ( nNewSRID > 0 )
+        {
+            poGeoRaster->SetGeoReference( nNewSRID );
+            CPLFree( pszCloneWKT );       
+            return CE_None;
+        }
     }   
 
     // --------------------------------------------------------------------
