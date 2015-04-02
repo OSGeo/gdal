@@ -9,7 +9,7 @@
  * Copyright (c) 2001, Atlantis Scientific, Inc.
  * Copyright (c) 2010-2012, Even Rouault <even dot rouault at mines-paris dot org>
  *
- * Permission is hereby granted, CPLFree of charge, to any person obtaining a
+ * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
@@ -735,7 +735,7 @@ Inputs:
 Outputs:
 
 Returns:
-    const pointer to internal copy of the filename.  Do not alter or CPLFree.
+    const pointer to internal copy of the filename.  Do not alter or free.
 
 
 -----------------------------------------------------------------------------*/
@@ -1248,7 +1248,7 @@ Purpose:
 
 Description:
     The returned strings are pointers to internal copies, and should not be
-    modified, or CPLFreed.  Note, any of the "output" parameters can safely be
+    modified, or freed.  Note, any of the "output" parameters can safely be
     NULL if it is not needed.
 
 Inputs:
