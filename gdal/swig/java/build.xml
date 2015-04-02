@@ -2,8 +2,20 @@
 <project name="gdal" default="all">
 
 	<description>Builds the Java SWIG bindings-proxy classes for GDAL/OGR</description>
+
 	
-	<target name="compile" description="Compile the source files.">
+	<target name="init" description="Initialize, reading version info">
+		<loadfile property="version" srcFile="${basedir}/../../VERSION">
+			<filterchain>
+				<striplinebreaks/>
+			</filterchain>
+		</loadfile>
+		<echo message="version = ${version}"/>
+		<property name="mvn.dir" value="build/maven"/>
+		<property name="mvn.base" value="gdal-${version}"/>
+	</target>
+
+	<target name="compile" depends="init" description="Compile the source files.">
 		<mkdir dir="build/classes"/>
 		<javac srcdir="org" destdir="build/classes" 
 		       debug="on" source="1.4" target="1.4"
@@ -32,6 +44,62 @@
         <target name="all" depends="compile_tests" description="Build a jar and test apps.">
         </target>
 
+        <target name="maven" depends="compile_tests" description="Build maven artifacts">
+		<mkdir dir="${mvn.dir}"/>
+
+		<!-- run the javadoc generation -->
+		<exec executable="./make_doc.sh"/>
+
+		<!-- copy over pom -->
+		<copy file="pom.xml" filtering="true"
+		      tofile="${mvn.dir}/${mvn.base}.pom">
+			<filterset>
+				<filter token="VERSION" value="${version}"/>
+			</filterset>
+		</copy>
+
+		<!-- copy over main jar, javadoc jar, and source jar -->
+		<copy file="gdal.jar" tofile="${mvn.dir}/${mvn.base}.jar"/>
+		<jar destfile="${mvn.dir}/${mvn.base}-javadoc.jar" basedir="java"/>
+		<jar destfile="${mvn.dir}/${mvn.base}-sources.jar" basedir="."
+		     includes="org/**/*.java"/>
+
+        </target>
+
+
+        <target name="maven_sign" depends="maven"
+		description="GPG signs maven artifacts">
+
+		<!-- sign all artifacts -->
+		<antcall target="sign_file">
+			<param name="file" value="${mvn.dir}/${mvn.base}.pom"/>
+		</antcall>
+		<antcall target="sign_file">
+			<param name="file" value="${mvn.dir}/${mvn.base}.jar"/>
+		</antcall>
+		<antcall target="sign_file">
+			<param name="file" value="${mvn.dir}/${mvn.base}-javadoc.jar"/>
+		</antcall>
+		<antcall target="sign_file">
+			<param name="file" value="${mvn.dir}/${mvn.base}-sources.jar"/>
+		</antcall>
+
+		<!-- bundle into single jar for deployment -->
+		<delete file="${mvn.dir}/bundle.jar"/>
+		<jar destfile="${mvn.dir}/bundle.jar" basedir="${mvn.dir}"
+		     includes="${mvn.base}*"/>
+        </target>
+
+	<target name="sign_file" description="Helper target to gpg sign a file">
+		<fail unless="gpg.key" message="system property gpg.key required"/>
+		<condition property="pass" value="--passphrase ${gpg.pass}"
+			else="">
+			<isset property="gpg.pass"/>
+		</condition>
+		<exec executable="gpg">
+			<arg line="-u ${gpg.key} ${pass} -ab ${file}"/>
+		</exec>
+	</target>
 	<target name="clean" description="Clean up old files.">
 		<delete dir="build"/>
 	</target>

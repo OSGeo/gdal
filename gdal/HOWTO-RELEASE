@@ -159,3 +159,109 @@ c) For trial :
 d) For real :
     python setup.py register -r pypi
     python setup.py sdist upload -r pypi
+
+21) Build and bundle the java bindings.
+
+a) cd swig/java
+
+b) Make any updates to java.opt that might be required for the platform. For 
+   example osx and windows users will have to change JAVA_INCLUDE to contain
+   include/darwin and include/win32 respectively. 
+
+c) Build the bindings:
+
+     make
+
+22) Build maven artifacts. NOTE: This step only works on Linux and OSX since it
+    requires a shell script to build javadocs. 
+
+    A quick one-liner for this step is:
+
+      ant maven_sign -Dgpg.key=... -Dgpg.pass=...
+
+    This will build and sign the artifacts with a single command. Read on for 
+    more details.
+
+a)  Build the maven aritfacts:
+
+     ant maven
+
+    Upon success maven artifacts should be located in the build/maven directory.
+
+b)  Sign maven artifacts with GPG. This step is required in order to deploy the
+    maven artifacts to the central Maven repository. Before this step can 
+    proceed you must set up a signing key as described here:
+
+      http://central.sonatype.org/pages/working-with-pgp-signatures.html
+
+    Each developer can use their own signing key although it is usually best to
+    avoid constantly using a different key for releases as users will need to 
+    import the public key in order to verify the artifacts.
+
+    Here are a quick set of steps to generate a signing key key.
+
+       gpg --gen-key
+       gpg --list-keys (and note the key id)
+       gpg --keyserver hkp://pool.sks-keyservers.net --send-keys <key id>
+
+    See the above link for more details.
+
+    Once a key is set up run the "maven_sign" ant target. The target takes two
+    parameters specified as system properties: 
+
+    1. gpg.key - The identifier for the signing key
+    2. gpg.pass - The passphrase for the signing key (optional)
+
+      ant maven_sign -Dgpg.key=... -Dgpg.pass=...
+
+    Upon success you should see maven artifacts along with generated signatures
+    in the build/maven directory. You will also find a file named "bundle.jar"
+    that contains all the maven artifacts with signatures. This file is what
+    will be uploaded to maven central. See the next step.
+
+23) Deploy maven artifacts to Maven central. 
+
+    NOTE: Before you can deploy to maven central you must set up an account
+    in Sonatype JIRA. That can be done here:
+
+        https://issues.sonatype.org/secure/Signup!default.jspa
+
+    Once you have an account set up you must be associated with the gdal 
+    project. Create a ticket here asking to be associated with the project:
+
+        https://issues.sonatype.org/browse/OSSRH
+
+    The entire deployment process is described in detail here:
+
+       http://central.sonatype.org/pages/manual-staging-bundle-creation-and-deployment.html
+       http://central.sonatype.org/pages/releasing-the-deployment.html
+
+    The following steps summarize the process.
+
+a) Log into the Sonatype repository manager at https://oss.sonatype.org. Use the
+   same credentials as your Sonatype JIRA account.
+
+b) Once log in select "Staging Upload" on the left hand side.
+
+c) Select "Artifact Bundle" under "Upload Mode" and then choose the "bundle.jar"
+   created in the previous Step 22. Finally "Upload Bundle" to start the upload.
+
+d) When the upload has been completed you will be notified that a staging 
+   repository has been created. Note the name of the repository. It should look
+   something like "orggdal-100x".
+
+e) From the left hand menu navigate to "Staging Repositories". In the search
+   box look for the staging repository name you noted from the previous section.
+   Or just search for "gdal". It should be obvious which repository is the 
+   current one.
+
+f) Select the staging repository. If all is well You should see the option to 
+   "Release" (Located as a button near the top of the page). If not it means 
+   there was an issue with the bundle. Consult the "Activity" tab at the bottom
+   of the page to find out why. 
+
+e) Click the "Release" button and that is it! The release should be available in
+   Maven Central shortly. You can verify this by going to search.maven.org and 
+   searching for "gdal". 
+
+
