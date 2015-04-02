@@ -2525,3 +2525,4 @@ RemoveConflictingMetadata( GDALMajorObjectH hObj, char **papszMetadata,
 
     CSLDestroy( papszMetadataRef );
 }
+
