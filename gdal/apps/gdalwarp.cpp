@@ -1412,7 +1412,7 @@ int main( int argc, char ** argv )
                 }
             }
 
-            if( !bInitDestSetByUser && iSrc == 0 )
+            if( bCreateOutput && !bInitDestSetByUser && iSrc == 0 )
             {
                 /* As we didn't know at the beginning if there was source nodata */
                 /* we have initialized INIT_DEST=0. Override this with NO_DATA now */
