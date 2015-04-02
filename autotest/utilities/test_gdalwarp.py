@@ -1319,6 +1319,67 @@ def test_gdalwarp_41():
     return 'success'
 
 ###############################################################################
+# Test warping multiple source images, in one step or several, with INIT_DEST/nodata (#5909, #5387)
+
+def test_gdalwarp_42():
+    if test_cli_utilities.get_gdalwarp_path() is None:
+        return 'skip'
+    if test_cli_utilities.get_gdal_translate_path() is None:
+        return 'skip'
+
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' ../gdrivers/data/small_world.tif tmp/small_world_left.tif -srcwin 0 0 200 200 -a_nodata 255')
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' ../gdrivers/data/small_world.tif tmp/small_world_right.tif -srcwin 200 0 200 200  -a_nodata 255')
+
+    # NOTE: Current behaviour of gdalwarp is to set a destnodata, but the user specified -dstalpha, so it is a bit suspicous
+    # Adding "-dstnodata none" would avoid that target nodata setting.
+    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' tmp/small_world_left.tif tmp/test_gdalwarp_42.tif -overwrite -te -180 -90 180 90 -dstalpha')
+    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' tmp/small_world_right.tif tmp/test_gdalwarp_42.tif')
+    
+    ds = gdal.Open('tmp/test_gdalwarp_42.tif')
+    got_cs = [ ds.GetRasterBand(i+1).Checksum() for i in range(4) ]
+    expected_cs = [ 30111, 32302, 40026, 64269 ]
+    if got_cs != expected_cs:
+        gdaltest.post_reason('failure')
+        print(got_cs)
+        return 'fail'
+
+    # In one step
+    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' tmp/small_world_left.tif tmp/small_world_right.tif tmp/test_gdalwarp_42.tif -overwrite -te -180 -90 180 90 -dstalpha')
+    
+    ds = gdal.Open('tmp/test_gdalwarp_42.tif')
+    got_cs = [ ds.GetRasterBand(i+1).Checksum() for i in range(4) ]
+    expected_cs = [ 30111, 32302, 40026, 64269 ]
+    if got_cs != expected_cs:
+        gdaltest.post_reason('failure')
+        print(got_cs)
+        return 'fail'
+
+    # In one step with -wo INIT_DEST=255,255,255,0
+    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' tmp/small_world_left.tif tmp/small_world_right.tif tmp/test_gdalwarp_42.tif -wo INIT_DEST=255,255,255,0 -overwrite -te -180 -90 180 90 -dstalpha')
+    
+    ds = gdal.Open('tmp/test_gdalwarp_42.tif')
+    got_cs = [ ds.GetRasterBand(i+1).Checksum() for i in range(4) ]
+    expected_cs = [ 30111, 32302, 40026, 64269 ]
+    if got_cs != expected_cs:
+        gdaltest.post_reason('failure')
+        print(got_cs)
+        return 'fail'
+
+    # In one step with -wo INIT_DEST=0,0,0,0
+    # Different checksum since there are source pixels at 255, so they get remap to 0
+    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' tmp/small_world_left.tif tmp/small_world_right.tif tmp/test_gdalwarp_42.tif -wo INIT_DEST=0,0,0,0 -overwrite -te -180 -90 180 90 -dstalpha')
+    
+    ds = gdal.Open('tmp/test_gdalwarp_42.tif')
+    got_cs = [ ds.GetRasterBand(i+1).Checksum() for i in range(4) ]
+    expected_cs = [ 19168, 26069, 34630, 64269 ]
+    if got_cs != expected_cs:
+        gdaltest.post_reason('failure')
+        print(got_cs)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def test_gdalwarp_cleanup():
@@ -1391,6 +1452,12 @@ def test_gdalwarp_cleanup():
         os.remove('tmp/test_gdalwarp_41.tif')
     except:
         pass
+    try:
+        os.remove('tmp/small_world_left.tif')
+        os.remove('tmp/small_world_right.tif')
+        os.remove('tmp/test_gdalwarp_42.tif')
+    except:
+        pass
     return 'success'
 
 gdaltest_list = [
@@ -1436,6 +1503,7 @@ gdaltest_list = [
     test_gdalwarp_39,
     test_gdalwarp_40,
     test_gdalwarp_41,
+    test_gdalwarp_42,
     test_gdalwarp_cleanup
     ]
 
