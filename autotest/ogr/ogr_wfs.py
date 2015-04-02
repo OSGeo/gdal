@@ -975,15 +975,16 @@ def ogr_wfs_deegree_wfs200():
     lyr.SetAttributeFilter('OBJECTID = 5')
     count = lyr.GetFeatureCount()
     if count != 1:
-        gdaltest.post_reason("OBJECTID = 5 filter failed")
-        print(count)
-        return 'fail'
-
-    feat = lyr.GetNextFeature()
-    if feat.GetFieldAsInteger('OBJECTID') != 5:
-        gdaltest.post_reason("OBJECTID = 5 filter failed")
-        feat.DumpReadable()
-        return 'fail'
+        if gdal.GetLastErrorMsg().find('HTTP error code : 500') < 0:
+            gdaltest.post_reason("OBJECTID = 5 filter failed")
+            print(count)
+            return 'fail'
+    else:
+        feat = lyr.GetNextFeature()
+        if feat.GetFieldAsInteger('OBJECTID') != 5:
+            gdaltest.post_reason("OBJECTID = 5 filter failed")
+            feat.DumpReadable()
+            return 'fail'
 
     lyr.SetAttributeFilter("gml_id = 'SGID024_MUNICIPALITIES2004_EDITED_5'")
     count = lyr.GetFeatureCount()
