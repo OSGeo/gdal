@@ -138,7 +138,7 @@ OGRShapeLayer::OGRShapeLayer( OGRShapeDataSource* poDSIn,
     
     const char* pszShapeEncoding = NULL;
     pszShapeEncoding = CSLFetchNameValue(poDS->GetOpenOptions(), "ENCODING");
-    if( pszShapeEncoding == NULL )
+    if( pszShapeEncoding == NULL && osEncoding == "")
         pszShapeEncoding = CSLFetchNameValue( papszCreateOptions, "ENCODING" );
     if( pszShapeEncoding == NULL )
         pszShapeEncoding = CPLGetConfigOption( "SHAPE_ENCODING", NULL );
