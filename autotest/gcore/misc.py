@@ -593,6 +593,31 @@ def misc_12():
     return 'success'
 
 ###############################################################################
+# Test CreateCopy() with incompatible driver types (#5912)
+
+def misc_13():
+
+    # Raster-only -> vector-only
+    ds = gdal.Open('data/byte.tif')
+    gdal.PushErrorHandler()
+    out_ds = gdal.GetDriverByName('ESRI Shapefile').CreateCopy('/vsimem/out.shp', ds)
+    gdal.PopErrorHandler()
+    if out_ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Raster-only -> vector-only
+    ds = gdal.OpenEx('../ogr/data/poly.shp', gdal.OF_VECTOR)
+    gdal.PushErrorHandler()
+    out_ds = gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/out.tif', ds)
+    gdal.PopErrorHandler()
+    if out_ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 def misc_cleanup():
 
     try:
@@ -614,6 +639,7 @@ gdaltest_list = [ misc_1,
                   misc_10,
                   misc_11,
                   misc_12,
+                  misc_13,
                   misc_cleanup ]
 
 if __name__ == '__main__':
