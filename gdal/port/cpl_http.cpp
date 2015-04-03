@@ -49,7 +49,7 @@ CPL_CVSID("$Id$");
 // list of named persistent http sessions 
 
 #ifdef HAVE_CURL
-static std::map<CPLString,CURL*> oSessionMap;
+static std::map<CPLString,CURL*>* poSessionMap = NULL;
 static CPLMutex *hSessionMapMutex = NULL;
 #endif
 
@@ -181,14 +181,16 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
         CPLString osSessionName = pszPersistent;
         CPLMutexHolder oHolder( &hSessionMapMutex );
 
-        if( oSessionMap.count( osSessionName ) == 0 )
+        if( poSessionMap == NULL )
+            poSessionMap = new std::map<CPLString,CURL*>;
+        if( poSessionMap->count( osSessionName ) == 0 )
         {
-            oSessionMap[osSessionName] = curl_easy_init();
+            (*poSessionMap)[osSessionName] = curl_easy_init();
             CPLDebug( "HTTP", "Establish persistent session named '%s'.",
                       osSessionName.c_str() );
         }
 
-        http_handle = oSessionMap[osSessionName];
+        http_handle = (*poSessionMap)[osSessionName];
     }
 /* -------------------------------------------------------------------- */
 /*      Are we requested to close a persistent named session?          */
@@ -198,18 +200,26 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
         CPLString osSessionName = pszClosePersistent;
         CPLMutexHolder oHolder( &hSessionMapMutex );
 
-        std::map<CPLString,CURL*>::iterator oIter = oSessionMap.find( osSessionName );
-        if( oIter != oSessionMap.end() )
+        if( poSessionMap )
         {
-            curl_easy_cleanup(oIter->second);
-            oSessionMap.erase(oIter);
-            CPLDebug( "HTTP", "Ended persistent session named '%s'.",
-                      osSessionName.c_str() );
-        }
-        else
-        {
-            CPLDebug( "HTTP", "Could not find persistent session named '%s'.",
-                      osSessionName.c_str() );
+            std::map<CPLString,CURL*>::iterator oIter = poSessionMap->find( osSessionName );
+            if( oIter != poSessionMap->end() )
+            {
+                curl_easy_cleanup(oIter->second);
+                poSessionMap->erase(oIter);
+                if( poSessionMap->size() == 0 )
+                {
+                    delete poSessionMap;
+                    poSessionMap = NULL;
+                }
+                CPLDebug( "HTTP", "Ended persistent session named '%s'.",
+                        osSessionName.c_str() );
+            }
+            else
+            {
+                CPLDebug( "HTTP", "Could not find persistent session named '%s'.",
+                        osSessionName.c_str() );
+            }
         }
 
         return NULL;
@@ -573,11 +583,13 @@ void CPLHTTPCleanup()
     {
         CPLMutexHolder oHolder( &hSessionMapMutex );
         std::map<CPLString,CURL*>::iterator oIt;
-
-        for( oIt=oSessionMap.begin(); oIt != oSessionMap.end(); oIt++ )
-            curl_easy_cleanup( oIt->second );
-
-        oSessionMap.clear();
+        if( poSessionMap )
+        {
+            for( oIt=poSessionMap->begin(); oIt != poSessionMap->end(); oIt++ )
+                curl_easy_cleanup( oIt->second );
+            delete poSessionMap;
+            poSessionMap = NULL;
+        }
     }
 
     // not quite a safe sequence. 
