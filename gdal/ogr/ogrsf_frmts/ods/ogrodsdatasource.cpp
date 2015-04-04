@@ -1459,14 +1459,14 @@ static void WriteLayer(VSILFILE* fp, OGRLayer* poLayer)
                                 nDay, nMonth, nYear, nHour, nMinute, nSecond);
                     VSIFPrintfL(fp, "</table:table-cell>\n");
                 }
-                else if (eType == OFTDateTime)
+                else if (eType == OFTDate)
                 {
                     int nYear, nMonth, nDay, nHour, nMinute, nSecond, nTZFlag;
                     poFeature->GetFieldAsDateTime(j, &nYear, &nMonth, &nDay,
                                                     &nHour, &nMinute, &nSecond, &nTZFlag);
                     VSIFPrintfL(fp, "<table:table-cell table:style-name=\"stDate\" "
                                 "office:value-type=\"date\" "
-                                "office:date-value=\"%04d-%02d-%02dT\">\n",
+                                "office:date-value=\"%04d-%02d-%02d\">\n",
                                 nYear, nMonth, nDay);
                     VSIFPrintfL(fp, "<text:p>%02d/%02d/%04d</text:p>\n",
                                 nDay, nMonth, nYear);

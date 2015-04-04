@@ -41,7 +41,7 @@ from osgeo import ogr
 ###############################################################################
 # Check
 
-def ogr_ods_check(ds, variant = False):
+def ogr_ods_check(ds):
 
     if ds.TestCapability("foo") != 0:
         gdaltest.post_reason('fail')
@@ -87,7 +87,7 @@ def ogr_ods_check(ds, variant = False):
                    ogr.OFTInteger,
                    ogr.OFTReal,
                    ogr.OFTReal,
-                   variant and ogr.OFTString or ogr.OFTDate,
+                   ogr.OFTDate,
                    ogr.OFTDateTime,
                    ogr.OFTReal,
                    ogr.OFTTime,
@@ -321,7 +321,7 @@ def ogr_ods_5():
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f ODS tmp/test.ods data/test.ods')
 
     ds = ogr.Open('tmp/test.ods')
-    ret = ogr_ods_check(ds, variant = True)
+    ret = ogr_ods_check(ds)
     ds = None
 
     os.unlink('tmp/test.ods')
