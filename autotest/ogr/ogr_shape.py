@@ -2134,19 +2134,11 @@ def ogr_shape_49():
     return 'success'
 
 ###############################################################################
-# Test that we can read encoded file names
+# Test that we can read encoded field names
 
 def ogr_shape_50():
 
-    try:
-        drv = gdal.GetDriverByName( 'HTTP' )
-    except:
-        drv = None
-
-    if drv is None:
-        return 'skip'
-
-    ds = ogr.Open( '/vsizip/vsicurl/http://jira.codehaus.org/secure/attachment/37994/test1.zip')
+    ds = ogr.Open( 'data/chinese.dbf')
     if ds is None:
         return 'skip'
     lyr = ds.GetLayer(0)
@@ -2163,12 +2155,13 @@ def ogr_shape_50():
 
     # Setup the utf-8 string.
     if sys.version_info >= (3,0,0):
-        gdaltest.fieldname = '\u540d\u79f0'
+        gdaltest.fieldname = '\u4e2d\u56fd'
     else:
-        exec("gdaltest.fieldname =  u'\u540d\u79f0'")
+        exec("gdaltest.fieldname =  u'\u4e2d\u56fd'")
         gdaltest.fieldname = gdaltest.fieldname.encode('utf-8')
 
-    if lyr.GetLayerDefn().GetFieldIndex(gdaltest.fieldname) != 1:
+    if lyr.GetLayerDefn().GetFieldIndex(gdaltest.fieldname) != 0:
+        print(lyr.GetLayerDefn().GetFieldDefn(0).GetNameRef())
         return 'fail'
 
     if not reconv_possible:
