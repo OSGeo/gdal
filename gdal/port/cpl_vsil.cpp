@@ -755,7 +755,7 @@ size_t VSIFWriteL( const void *pBuffer, size_t nSize, size_t nCount, VSILFILE *f
  * \brief Test for end of file.
  *
  * Returns TRUE (non-zero) if an end-of-file condition occured during the
- * previous read operation. The end-of-file flag is cleared by a successfull
+ * previous read operation. The end-of-file flag is cleared by a successful
  * VSIFSeekL() call.
  *
  * This method goes through the VSIFileHandler virtualization and may

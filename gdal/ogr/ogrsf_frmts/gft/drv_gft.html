@@ -115,7 +115,7 @@ The mapping between the operations of the GFT service and the OGR concepts is th
 <li>OGRDataSource::DeleteLayer() &lt;==&gt; DROP TABLE operation</li>
 </ul>
 
-When inserting a new feature with CreateFeature(), and if the command is successfull, OGR will fetch the
+When inserting a new feature with CreateFeature(), and if the command is successful, OGR will fetch the
 returned rowid and use it as the OGR FID. OGR will also automatically reproject its geometry into the
 geodetic WGS84 SRS if needed (provided that the original SRS is attached to the geometry).<p>
 

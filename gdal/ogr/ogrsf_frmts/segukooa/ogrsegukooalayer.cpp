@@ -693,7 +693,7 @@ char* OGRSEGP1Layer::ExpandTabs(const char* pszLine)
 
 /* Some SEG-P1 files have unusual offsets for latitude/longitude, so */
 /* we try our best to identify it even in case of non-standard layout */
-/* Return non-0 if detection is successfull (column number starts at 1) */
+/* Return non-0 if detection is successful (column number starts at 1) */
 
 int OGRSEGP1Layer::DetectLatitudeColumn(const char* pszLine)
 {

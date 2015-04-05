@@ -180,7 +180,7 @@ GDALDriverManager::~GDALDriverManager()
         }
     } while(bHasDroppedRef);
 
-    /* Now let's destroy the dataset pool. Nobody shoud use it afterwards */
+    /* Now let's destroy the dataset pool. Nobody should use it afterwards */
     /* if people have well released their dependent datasets above */
     GDALDatasetPoolForceDestroy();
 

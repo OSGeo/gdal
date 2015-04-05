@@ -101,7 +101,7 @@ There are a few caveouts to keep in mind. OGR feature ID (FID) is an integer bas
 gml:id attribute is a string. Thus it is not always possible to match both values. The WFS driver exposes
 then the gml:id attribute of a feature as a 'gml_id' field.<p>
 
-When inserting a new feature with CreateFeature(), and if the command is successfull, OGR will fetch the
+When inserting a new feature with CreateFeature(), and if the command is successful, OGR will fetch the
 returned gml:id and set the 'gml_id' field of the feature accordingly. It will also try to set the OGR FID
 if the gml:id is of the form layer_name.numeric_value. Otherwise the FID will be left to its unset default value.<p>
 

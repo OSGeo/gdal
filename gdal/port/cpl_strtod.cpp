@@ -124,7 +124,7 @@ double CPLAtofDelim(const char *nptr, char point)
  * custom delimiter.
  *
  * IMPORTANT NOTE.
- * Existance of this function does not mean you should always use it.
+ * Existence of this function does not mean you should always use it.
  * Sometimes you should use standard locale aware atof(3) and its family. When
  * you need to process the user's input (for example, command line parameters)
  * use atof(3), because the user works in a localized environment and the user's input will
@@ -133,7 +133,7 @@ double CPLAtofDelim(const char *nptr, char point)
  * either "." or ",".
  * But when you are parsing some ASCII file in predefined format, you most
  * likely need CPLAtof(), because such files distributed across the systems
- * with different locales and floating point representation shoudl be
+ * with different locales and floating point representation should be
  * considered as a part of file format. If the format uses "." as a delimiter
  * the same character must be used when parsing number regardless of actual
  * locale setting.
