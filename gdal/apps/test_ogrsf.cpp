@@ -524,7 +524,7 @@ static int TestCreateLayer( GDALDriver* poDriver, OGRwkbGeometryType eGeomType )
     {
         if( bCreateLayerCap == FALSE )
         {
-            printf("ERROR: %s: TestCapability(ODsCCreateLayer) returns FALSE whereas layer creation was successfull.\n",
+            printf("ERROR: %s: TestCapability(ODsCCreateLayer) returns FALSE whereas layer creation was successful.\n",
                    poDriver->GetDescription());
             bRet = FALSE;
         }
@@ -2738,7 +2738,7 @@ static int TestTransactions( OGRLayer *poLayer )
     eErr = LOG_ACTION(poLayer->RollbackTransaction());
     if (eErr != OGRERR_NONE)
     {
-        printf("ERROR: RollbackTransaction() failed after successfull StartTransaction().\n");
+        printf("ERROR: RollbackTransaction() failed after successful StartTransaction().\n");
         return FALSE;
     }
 
@@ -2754,7 +2754,7 @@ static int TestTransactions( OGRLayer *poLayer )
     eErr = LOG_ACTION(poLayer->CommitTransaction());
     if (eErr != OGRERR_NONE)
     {
-        printf("ERROR: CommitTransaction() failed after successfull StartTransaction().\n");
+        printf("ERROR: CommitTransaction() failed after successful StartTransaction().\n");
         return FALSE;
     }
 
@@ -2787,7 +2787,7 @@ static int TestTransactions( OGRLayer *poLayer )
     eErr = LOG_ACTION(poLayer->RollbackTransaction());
     if (eErr != OGRERR_NONE)
     {
-        printf("ERROR: RollbackTransaction() failed after successfull StartTransaction().\n");
+        printf("ERROR: RollbackTransaction() failed after successful StartTransaction().\n");
         return FALSE;
     }
 
@@ -2833,7 +2833,7 @@ static int TestTransactions( OGRLayer *poLayer )
         eErr = LOG_ACTION(poLayer->CommitTransaction());
         if (eErr != OGRERR_NONE)
         {
-            printf("ERROR: CommitTransaction() failed after successfull StartTransaction().\n");
+            printf("ERROR: CommitTransaction() failed after successful StartTransaction().\n");
             return FALSE;
         }
 
@@ -3396,7 +3396,7 @@ static int TestInterleavedReading( const char* pszDataSource, char** papszLayers
 
     if( bVerbose )
     {
-        printf("INFO: TestInterleavedReading() successfull.\n");
+        printf("INFO: TestInterleavedReading() successful.\n");
     }
 
 bye:
@@ -3537,7 +3537,7 @@ static int TestVirtualIO( GDALDataset * poDS )
 
         if( bVerbose && bRet )
         {
-            printf("INFO: TestVirtualIO successfull.\n");
+            printf("INFO: TestVirtualIO successful.\n");
         }
     }
     else

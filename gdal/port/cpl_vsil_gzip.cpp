@@ -526,9 +526,9 @@ int VSIGZipHandle::gzrewind ()
 
 int VSIGZipHandle::Seek( vsi_l_offset nOffset, int nWhence )
 {
-    /* The semantics of gzseek is different from ::Seek */
-    /* It returns the current offset, where as ::Seek shoud return 0 */
-    /* if successfull */
+    /* The semantics of gzseek are different from ::Seek */
+    /* It returns the current offset, where as ::Seek should return 0 */
+    /* if successful */
     int ret = gzseek(nOffset, nWhence);
     return (ret >= 0) ? 0 : ret;
 }

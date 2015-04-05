@@ -5473,7 +5473,7 @@ int GDALDataset::TestCapability( CPL_UNUSED const char * pszCap )
  In case StartTransaction() fails, neither CommitTransaction() or RollbackTransaction()
  should be called.
  
- If an error occurs after a successfull StartTransaction(), the whole
+ If an error occurs after a successful StartTransaction(), the whole
  transaction may or may not be implicitely cancelled, depending on drivers. (e.g.
  the PG driver will cancel it, SQLite/GPKG not). In any case, in the event of an
  error, an explicit call to RollbackTransaction() should be done to keep things balanced.
@@ -5522,8 +5522,8 @@ OGRErr GDALDataset::StartTransaction(CPL_UNUSED int bForce)
  
  In case StartTransaction() fails, neither CommitTransaction() or RollbackTransaction()
  should be called.
-  
- If an error occurs after a successfull StartTransaction(), the whole
+
+ If an error occurs after a successful StartTransaction(), the whole
  transaction may or may not be implicitely cancelled, depending on drivers. (e.g.
  the PG driver will cancel it, SQLite/GPKG not). In any case, in the event of an
  error, an explicit call to RollbackTransaction() should be done to keep things balanced.
