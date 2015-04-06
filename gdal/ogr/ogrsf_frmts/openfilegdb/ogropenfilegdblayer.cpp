@@ -614,9 +614,6 @@ OGRFeatureDefn* OGROpenFileGDBLayer::GetLayerDefn()
 
 const char* OGROpenFileGDBLayer::GetFIDColumn()
 {
-    if( m_osFIDName.size() )
-        return m_osFIDName.c_str();
-
     if( !BuildLayerDefinition() )
         return "";
     return m_poLyrTable->GetObjectIdColName().c_str();
