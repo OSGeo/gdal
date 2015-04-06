@@ -244,12 +244,12 @@ def ogr_openfilegdb_make_test_data():
 
 ###############################################################################
 # Basic tests
-def ogr_openfilegdb_1():
+def ogr_openfilegdb_1(filename = 'data/testopenfilegdb.gdb.zip', version10 = True):
 
     srs = osr.SpatialReference()
     srs.SetFromUserInput("WGS84")
 
-    ds = ogr.Open('data/testopenfilegdb.gdb.zip')
+    ds = ogr.Open(filename)
 
     for data in ogrtest.openfilegdb_datalist:
         lyr = ds.GetLayerByName(data[0])
@@ -263,6 +263,7 @@ def ogr_openfilegdb_1():
         elif expected_geom_type == ogr.wkbPolygon25D:
             expected_geom_type = ogr.wkbMultiPolygon25D
         if lyr.GetGeomType() != expected_geom_type:
+            gdaltest.post_reason('fail')
             print(lyr.GetName())
             print(lyr.GetGeomType())
             return 'fail'
@@ -280,6 +281,7 @@ def ogr_openfilegdb_1():
             return 'fail'
         if data[1] != ogr.wkbNone:
             if lyr.GetSpatialRef().IsSame(srs) != 1:
+                gdaltest.post_reason('fail')
                 print(lyr.GetSpatialRef())
                 return 'fail'
         feat = lyr.GetNextFeature()
@@ -291,8 +293,10 @@ def ogr_openfilegdb_1():
             geom = feat.GetGeometryRef()
             if geom:
                 geom = geom.ExportToWkt()
-            if geom != expected_wkt:
+            if geom != expected_wkt and ogrtest.check_feature_geometry(feat, expected_wkt) == 1:
+                gdaltest.post_reason('fail')
                 feat.DumpReadable()
+                print(expected_wkt)
                 return 'fail'
 
         if feat.GetField('id') != 1 or \
@@ -302,68 +306,83 @@ def ogr_openfilegdb_1():
            feat.GetField('real') != 4.56 or \
            feat.GetField('adate') != "2013/12/26 12:34:56" or \
            feat.GetField('guid') != "{12345678-9ABC-DEF0-1234-567890ABCDEF}" or \
-           feat.GetField('xml') != "<foo></foo>" or \
+           (version10 and feat.GetField('xml') != "<foo></foo>") or \
            feat.GetField('binary') != "00FF7F" or \
            feat.GetField('binary2') != "123456":
+            gdaltest.post_reason('fail')
             feat.DumpReadable()
             return 'fail'
 
-        sql_lyr = ds.ExecuteSQL("GetLayerDefinition %s" % lyr.GetName())
-        if sql_lyr is None:
-            gdaltest.post_reason('failure')
-            return 'fail'
-        feat = sql_lyr.GetNextFeature()
-        if feat is None:
-            gdaltest.post_reason('failure')
-            return 'fail'
-        feat = sql_lyr.GetNextFeature()
-        if feat is not None:
-            gdaltest.post_reason('failure')
-            return 'fail'
-        lyr.ResetReading()
-        lyr.TestCapability("foo")
-        ds.ReleaseResultSet(sql_lyr)
+        if version10:
+            sql_lyr = ds.ExecuteSQL("GetLayerDefinition %s" % lyr.GetName())
+            if sql_lyr is None:
+                gdaltest.post_reason('failure')
+                return 'fail'
+            feat = sql_lyr.GetNextFeature()
+            if feat is None:
+                gdaltest.post_reason('failure')
+                return 'fail'
+            feat = sql_lyr.GetNextFeature()
+            if feat is not None:
+                gdaltest.post_reason('failure')
+                return 'fail'
+            lyr.ResetReading()
+            lyr.TestCapability("foo")
+            ds.ReleaseResultSet(sql_lyr)
 
-        sql_lyr = ds.ExecuteSQL("GetLayerMetadata %s" % lyr.GetName())
-        if sql_lyr is None:
+            sql_lyr = ds.ExecuteSQL("GetLayerMetadata %s" % lyr.GetName())
+            if sql_lyr is None:
+                gdaltest.post_reason('failure')
+                return 'fail'
+            feat = sql_lyr.GetNextFeature()
+            if feat is None:
+                gdaltest.post_reason('failure')
+                return 'fail'
+            ds.ReleaseResultSet(sql_lyr)
+
+    if version10:
+        sql_lyr = ds.ExecuteSQL("GetLayerDefinition foo")
+        if sql_lyr is not None:
             gdaltest.post_reason('failure')
             return 'fail'
-        feat = sql_lyr.GetNextFeature()
-        if feat is None:
+
+        sql_lyr = ds.ExecuteSQL("GetLayerMetadata foo")
+        if sql_lyr is not None:
             gdaltest.post_reason('failure')
             return 'fail'
-        ds.ReleaseResultSet(sql_lyr)
-
-    sql_lyr = ds.ExecuteSQL("GetLayerDefinition foo")
-    if sql_lyr is not None:
-        gdaltest.post_reason('failure')
-        return 'fail'
-
-    sql_lyr = ds.ExecuteSQL("GetLayerMetadata foo")
-    if sql_lyr is not None:
-        gdaltest.post_reason('failure')
-        return 'fail'
 
     ds = None
 
     return 'success'
 
+def ogr_openfilegdb_1_92():
+    return ogr_openfilegdb_1(filename = 'data/testopenfilegdb92.gdb.zip', version10 = False)
+
+def ogr_openfilegdb_1_93():
+    return ogr_openfilegdb_1(filename = 'data/testopenfilegdb93.gdb.zip', version10 = False)
+
 ###############################################################################
 # Run test_ogrsf
 
-def ogr_openfilegdb_2():
+def ogr_openfilegdb_2(filename = 'data/testopenfilegdb.gdb.zip'):
 
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
         return 'skip'
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/testopenfilegdb.gdb.zip')
+    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro ' + filename)
 
     if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
         print(ret)
         return 'fail'
 
     return 'success'
+
+def ogr_openfilegdb_2_92():
+    return ogr_openfilegdb_2(filename = 'data/testopenfilegdb92.gdb.zip')
+
+def ogr_openfilegdb_2_93():
+    return ogr_openfilegdb_2(filename = 'data/testopenfilegdb93.gdb.zip')
 
 ###############################################################################
 # Open a .gdbtable directly
@@ -1288,7 +1307,11 @@ gdaltest_list = [
     ogr_openfilegdb_init,
     #ogr_openfilegdb_make_test_data,
     ogr_openfilegdb_1,
+    ogr_openfilegdb_1_92,
+    ogr_openfilegdb_1_93,
     ogr_openfilegdb_2,
+    ogr_openfilegdb_2_92,
+    ogr_openfilegdb_2_93,
     ogr_openfilegdb_3,
     ogr_openfilegdb_4,
     ogr_openfilegdb_5,
