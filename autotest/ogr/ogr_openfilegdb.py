@@ -1145,11 +1145,38 @@ def ogr_openfilegdb_11():
     if c != 1:
         gdaltest.post_reason('failure')
         return 'fail'
+    if get_spi_state(ds, lyr) != SPI_COMPLETED:
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    # This will create an array of filtered features
+    lyr.SetSpatialFilterRect(0.25,0.25,0.5,0.5)
+    if lyr.TestCapability(ogr.OLCFastSetNextByIndex) != 1:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    # Test SetNextByIndex() with filtered features
+    if lyr.SetNextByIndex(-1) == 0:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    if lyr.SetNextByIndex(1) == 0:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    if lyr.SetNextByIndex(0) != 0:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    feat = lyr.GetNextFeature()
+    if feat.GetFID() != 1:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    if get_spi_state(ds, lyr) != SPI_COMPLETED:
+        gdaltest.post_reason('failure')
+        return 'fail'
+
     feat = None
     lyr = None
     ds = None
 
-    # but SetNextByIndex() does
+    # SetNextByIndex() impacts spatial index building
     ds = ogr.Open('data/testopenfilegdb.gdb.zip')
     lyr = ds.GetLayerByName('multipolygon')
     lyr.SetNextByIndex(3)
