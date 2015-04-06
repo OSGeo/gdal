@@ -68,7 +68,6 @@ class OGROpenFileGDBLayer : public OGRLayer
     int               m_iCurFeat;
     std::string       m_osDefinition;
     std::string       m_osDocumentation;
-    std::string       m_osFIDName;
     OGRwkbGeometryType m_eGeomType;
     int               m_bValidLayerDefn;
     int               m_bEOF;
