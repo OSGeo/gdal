@@ -860,6 +860,31 @@ def test_gdal_translate_30():
     return 'success'
 
 ###############################################################################
+# Test -projwin_srs option
+
+def test_gdal_translate_31():
+    if test_cli_utilities.get_gdal_translate_path() is None:
+        return 'skip'
+
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -projwin_srs EPSG:4267 -projwin -117.641168620797 33.9023526904262 -117.628110837847 33.8915970129613 ../gcore/data/byte.tif tmp/test_gdal_translate_31.tif')
+
+    ds = gdal.Open('tmp/test_gdal_translate_31.tif')
+    if ds is None:
+        return 'fail'
+
+    if ds.GetRasterBand(1).Checksum() != 4672:
+        gdaltest.post_reason('Bad checksum')
+        return 'fail'
+
+    if not gdaltest.geotransform_equals(gdal.Open('../gcore/data/byte.tif').GetGeoTransform(), ds.GetGeoTransform(), 1e-9) :
+        gdaltest.post_reason('Bad geotransform')
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def test_gdal_translate_cleanup():
@@ -958,6 +983,10 @@ def test_gdal_translate_cleanup():
         os.remove('tmp/test_gdal_translate_30.tif')
     except:
         pass
+    try:
+        os.remove('tmp/test_gdal_translate_31.tif')
+    except:
+        pass
     return 'success'
 
 gdaltest_list = [
@@ -991,6 +1020,7 @@ gdaltest_list = [
     test_gdal_translate_28,
     test_gdal_translate_29,
     test_gdal_translate_30,
+    test_gdal_translate_31,
     test_gdal_translate_cleanup
     ]
 

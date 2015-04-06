@@ -302,7 +302,8 @@ gdal_translate [--help-general]
        [-outsize xsize[%] ysize[%]] [-tr xres yres]
        [-r {nearest,bilinear,cubic,cubicspline,lanczos,average,mode,max,min,med,q1,q3}]
        [-unscale] [-scale[_bn] [src_min src_max [dst_min dst_max]]]* [-exponent[_bn] exp_val]*
-       [-srcwin xoff yoff xsize ysize] [-projwin ulx uly lrx lry] [-epo] [-eco]
+       [-srcwin xoff yoff xsize ysize] [-epo] [-eco]
+       [-projwin ulx uly lrx lry] [-projwin_srs srs_def]
        [-a_srs srs_def] [-a_ullr ulx uly lrx lry] [-a_nodata value]
        [-gcp pixel line easting northing [elevation]]*
        [-mo "META-TAG=VALUE"]* [-q] [-sds]
@@ -381,7 +382,13 @@ reset the output datatype with the <b>-ot</b> switch.</dd>
 from the source image for copying based on pixel/line location.  </dd>
 <dt> <b>-projwin</b> <i>ulx uly lrx lry</i>:</dt><dd> Selects a subwindow from
 the source image for copying (like <b>-srcwin</b>) but with the corners given
-in georeferenced coordinates. </dd>
+in georeferenced coordinates (by default expressed in the SRS of the dataset. Can be
+changed with -projwin_srs). </dd>
+<dt> <b>-projwin_srs</b> <i>srs_def</i>:</dt><dd> (GDAL >= 2.0) Specifies the SRS in
+which to interpret the coordinates given with -projwin. The <i>srs_def</i> may
+be any of the usual GDAL/OGR forms, complete WKT, PROJ.4, EPSG:n or a file
+containing the WKT.
+Note that this does not cause reprojection of the dataset to the specified SRS. </dd>
 <dt> <b>-epo</b>: (Error when Partially Outside)</dt><dd>(GDAL >= 1.10) If this
 option is set, <b>-srcwin</b> or <b>-projwin</b> values that falls partially outside the
 source raster extent will be considered as an error. The default behaviour starting
@@ -395,11 +402,13 @@ complete WKT, PROJ.4, EPSG:n or a file containing the WKT. </dd>
 <dt> <b>-a_ullr</b> <i>ulx uly lrx lry</i>:</dt><dd>
 Assign/override the georeferenced bounds of the output file.  This assigns 
 georeferenced bounds to the output file, ignoring what would have been derived 
-from the source file.</dd>
+from the source file. So this does not cause reprojection to the specified SRS. </dd>
 <dt> <b>-a_nodata</b> <i>value</i>:</dt><dd>
 Assign a specified nodata value to output bands. Starting with GDAL 1.8.0, can
 be set to <i>none</i> to avoid setting a nodata value to the output file if
-one exists for the source file</dd>
+one exists for the source file. Note that, if the input dataset has a
+nodata value, this does not cause pixel values that are equal to that nodata
+value to be changed to the value specified with this option.</dd>
 <dt> <b>-mo</b> <i>"META-TAG=VALUE"</i>:</dt><dd> Passes a metadata key and
 value to set on the output dataset if possible.</dd>
 <dt> <b>-co</b> <i>"NAME=VALUE"</i>:</dt><dd> Passes a creation option to the

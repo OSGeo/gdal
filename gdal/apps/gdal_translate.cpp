@@ -60,7 +60,8 @@ static void Usage(const char* pszErrorMsg = NULL, int bShort = TRUE)
             "       [-outsize xsize[%%] ysize[%%]] [-tr xres yres]\n"
             "       [-r {nearest,bilinear,cubic,cubicspline,lanczos,average,mode}]\n"
             "       [-unscale] [-scale[_bn] [src_min src_max [dst_min dst_max]]]* [-exponent[_bn] exp_val]*\n"
-            "       [-srcwin xoff yoff xsize ysize] [-projwin ulx uly lrx lry] [-epo] [-eco]\n"
+            "       [-srcwin xoff yoff xsize ysize] [-epo] [-eco]\n"
+            "       [-projwin ulx uly lrx lry] [-projwin_srs srs_def]\n"
             "       [-a_srs srs_def] [-a_ullr ulx uly lrx lry] [-a_nodata value]\n"
             "       [-gcp pixel line easting northing [elevation]]*\n" 
             "       [-mo \"META-TAG=VALUE\"]* [-q] [-sds]\n"
@@ -324,6 +325,7 @@ static int ProxyMain( int argc, char ** argv )
     char              **papszOpenOptions = NULL;
     const char         *pszResampling = NULL;
     double              dfXRes = 0.0, dfYRes = 0.0;
+    CPLString           osProjSRS;
 
     anSrcWin[0] = 0;
     anSrcWin[1] = 0;
@@ -681,6 +683,26 @@ static int ProxyMain( int argc, char ** argv )
             dfLRX = CPLAtofM(argv[++i]);
             dfLRY = CPLAtofM(argv[++i]);
         }   
+        
+        else if( EQUAL(argv[i],"-projwin_srs") )
+        {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            OGRSpatialReference oSRS;
+
+            if( oSRS.SetFromUserInput( argv[i+1] ) != OGRERR_NONE )
+            {
+                fprintf( stderr, "Failed to process SRS definition: %s\n", 
+                         argv[i+1] );
+                GDALDestroyDriverManager();
+                exit( 1 );
+            }
+
+            char* pszSRS = NULL;
+            oSRS.exportToWkt( &pszSRS );
+            if( pszSRS )
+                osProjSRS = pszSRS;
+            i++;
+        }
 
         else if( EQUAL(argv[i],"-epo") )
         {
@@ -983,6 +1005,38 @@ static int ProxyMain( int argc, char ** argv )
             CPLFree( panBandList );
             GDALDestroyDriverManager();
             exit( 1 );
+        }
+
+        if( osProjSRS.size() )
+        {
+            pszProjection = GDALGetProjectionRef( hDataset );
+            if( pszProjection != NULL && strlen(pszProjection) > 0 )
+            {
+                OGRSpatialReference oSRSIn;
+                OGRSpatialReference oSRSDS;
+                oSRSIn.SetFromUserInput(osProjSRS);
+                oSRSDS.SetFromUserInput(pszProjection);
+                if( !oSRSIn.IsSame(&oSRSDS) )
+                {
+                    OGRCoordinateTransformation* poCT = OGRCreateCoordinateTransformation(&oSRSIn, &oSRSDS);
+                    if( !(poCT &&
+                        poCT->Transform(1, &dfULX, &dfULY) &&
+                        poCT->Transform(1, &dfLRX, &dfLRY)) )
+                    {
+                        OGRCoordinateTransformation::DestroyCT(poCT);
+
+                        fprintf( stderr, "-projwin_srs ignored since coordinate transformation failed.");
+                        GDALClose( hDataset );
+                        CPLFree( panBandList );
+                        GDALDestroyDriverManager();
+                        exit( 1 );
+                    }
+                }
+            }
+            else
+            {
+                fprintf( stderr, "-projwin_srs ignored since the dataset has no projection.");
+            }
         }
 
         anSrcWin[0] = (int) 
