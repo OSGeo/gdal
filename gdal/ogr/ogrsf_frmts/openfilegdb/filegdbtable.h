@@ -143,6 +143,7 @@ class FileGDBGeomField: public FileGDBField
         double            dfYMin;
         double            dfXMax;
         double            dfYMax;
+        int               bHas3D;
 
     public:
                           FileGDBGeomField(FileGDBTable* poParent);
@@ -170,6 +171,8 @@ class FileGDBGeomField: public FileGDBField
         double             GetMOrigin() const { return dfMOrigin; }
         double             GetMScale() const { return dfMScale; }
         double             GetMTolerance() const { return dfMTolerance; }
+        
+        int                Has3D() const { return bHas3D; }
 };
 
 /************************************************************************/

@@ -965,6 +965,10 @@ int FileGDBTable::Open(const char* pszFilename,
                 READ_DOUBLE(poField->dfYMax);
 
                 /* Purely empiric logic ! */
+                /* Well, it seems that in practice there are 1 or 3 doubles */
+                /* here. When there are 3, the first one is zmin and the second */
+                /* one is zmax */
+                int nCountDoubles = 0;
                 while( TRUE )
                 {
                     returnErrorIf(nRemaining < 5 );
@@ -976,6 +980,7 @@ int FileGDBTable::Open(const char* pszFilename,
                         pabyIter += 5;
                         nRemaining -= 5;
                         returnErrorIf(nRemaining < (GUInt32)(nToSkip * 8) );
+                        nCountDoubles += nToSkip;
                         pabyIter += nToSkip * 8;
                         nRemaining -= nToSkip * 8;
                         break;
@@ -985,8 +990,11 @@ int FileGDBTable::Open(const char* pszFilename,
                         returnErrorIf(nRemaining < 8 );
                         pabyIter += 8;
                         nRemaining -= 8;
+                        nCountDoubles ++;
                     }
                 }
+                if( nCountDoubles == 3 )
+                    poField->bHas3D = TRUE;
             }
         }
 
@@ -1932,7 +1940,7 @@ FileGDBGeomField::FileGDBGeomField(FileGDBTable* poParent) :
     dfXOrigin(0.0), dfYOrigin(0.0), dfXYScale(0.0), dfMOrigin(0.0),
     dfMScale(0.0), dfZOrigin(0.0), dfZScale(0.0), dfXYTolerance(0.0),
     dfMTolerance(0.0), dfZTolerance(0.0), dfXMin(0.0), dfYMin(0.0),
-    dfXMax(0.0), dfYMax(0.0)
+    dfXMax(0.0), dfYMax(0.0), bHas3D(FALSE)
 {
 }
 
