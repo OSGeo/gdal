@@ -98,6 +98,32 @@ class OGROpenFileGDBFeatureDefn: public OGRFeatureDefn
             }
             return nFieldCount;
         }
+
+        virtual int GetGeomFieldCount()
+        {
+            /* FileGDB v9 case */
+            if( !m_bHasBuildFieldDefn &&
+                m_poLayer != NULL && m_poLayer->m_eGeomType != wkbNone &&
+                m_poLayer->m_osDefinition.size() == 0 )
+            {
+                m_bHasBuildFieldDefn = TRUE;
+                (void) m_poLayer->BuildLayerDefinition();
+            }
+            return nGeomFieldCount;
+        }
+
+        virtual OGRGeomFieldDefn* GetGeomFieldDefn( int i )
+        {
+            /* FileGDB v9 case */
+            if( !m_bHasBuildFieldDefn &&
+                m_poLayer != NULL && m_poLayer->m_eGeomType != wkbNone &&
+                m_poLayer->m_osDefinition.size() == 0 )
+            {
+                m_bHasBuildFieldDefn = TRUE;
+                (void) m_poLayer->BuildLayerDefinition();
+            }
+            return OGRFeatureDefn::GetGeomFieldDefn(i);
+        }
 };
 
 /************************************************************************/
@@ -108,7 +134,7 @@ OGROpenFileGDBLayer::OGROpenFileGDBLayer(const char* pszGDBFilename,
                                          const char* pszName,
                                          const std::string& osDefinition,
                                          const std::string& osDocumentation,
-                                         const char* pszGeomName,
+                                         CPL_UNUSED const char* pszGeomName,
                                          OGRwkbGeometryType eGeomType) :
             m_osGDBFilename(pszGDBFilename),
             m_osName(pszName),
@@ -118,7 +144,7 @@ OGROpenFileGDBLayer::OGROpenFileGDBLayer(const char* pszGDBFilename,
             m_iCurFeat(0),
             m_osDefinition(osDefinition),
             m_osDocumentation(osDocumentation),
-            m_eGeomType(eGeomType),
+            m_eGeomType(wkbNone),
             m_bValidLayerDefn(-1),
             m_bEOF(FALSE),
             m_poGeomConverter(NULL),
@@ -136,14 +162,11 @@ OGROpenFileGDBLayer::OGROpenFileGDBLayer(const char* pszGDBFilename,
     m_poFeatureDefn->SetGeomType(wkbNone);
     m_poFeatureDefn->Reference();
 
-    if( m_osDefinition.size() && BuildGeometryColumnGDBv10() )
+    m_eGeomType = eGeomType;
+
+    if( m_osDefinition.size() )
     {
-        ;
-    }
-    else if( eGeomType != wkbNone )
-    {
-        m_poFeatureDefn->AddGeomFieldDefn(
-            new OGROpenFileGDBGeomFieldDefn(this, pszGeomName, eGeomType), FALSE);
+        (void) BuildGeometryColumnGDBv10();
     }
 }
 
@@ -337,6 +360,7 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
 
     if( m_osDefinition.size() == 0 && m_iGeomFieldIdx >= 0 )
     {
+        /* FileGDB v9 case */
         FileGDBGeomField* poGDBGeomField =
             (FileGDBGeomField* )m_poLyrTable->GetField(m_iGeomFieldIdx);
         const char* pszName = poGDBGeomField->GetName().c_str();
@@ -352,28 +376,24 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
             case FGTGT_POLYGON: eGeomType = wkbMultiPolygon; break;
             case FGTGT_MULTIPATCH: eGeomType = wkbMultiPolygon; break;
         }
-        if( m_eGeomType == wkbUnknown )
-            m_eGeomType = eGeomType;
-        if( eGeomType != m_eGeomType )
+
+        if( wkbFlatten(eGeomType) != wkbFlatten(m_eGeomType) )
         {
             CPLError(CE_Warning, CPLE_AppDefined,
                      "Inconsistency for layer geometry type");
         }
 
+        m_eGeomType = eGeomType;
+        if( poGDBGeomField->Has3D() )
+            m_eGeomType = wkbSetZ(m_eGeomType);
+
         OGROpenFileGDBGeomFieldDefn* poGeomFieldDefn;
-        if( m_poFeatureDefn->GetGeomFieldCount() == 0 )
-        {
-            poGeomFieldDefn =
-                    new OGROpenFileGDBGeomFieldDefn(NULL, pszName, m_eGeomType);
-            m_poFeatureDefn->AddGeomFieldDefn(poGeomFieldDefn, FALSE);
-        }
-        else
-        {
-            poGeomFieldDefn = (OGROpenFileGDBGeomFieldDefn*)
-                                        m_poFeatureDefn->GetGeomFieldDefn(0);
-            poGeomFieldDefn->SetType(m_eGeomType);
-        }
+
+        poGeomFieldDefn =
+                new OGROpenFileGDBGeomFieldDefn(NULL, pszName, m_eGeomType);
         poGeomFieldDefn->SetNullable(poGDBGeomField->IsNullable());
+
+        m_poFeatureDefn->AddGeomFieldDefn(poGeomFieldDefn, FALSE);
 
         OGRSpatialReference* poSRS = NULL;
         if( poGDBGeomField->GetWKT().size() && 
@@ -570,7 +590,8 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
 
 OGRwkbGeometryType OGROpenFileGDBLayer::GetGeomType()
 {
-    if( m_eGeomType == wkbUnknown )
+    if( m_eGeomType == wkbUnknown ||
+        m_osDefinition.size() == 0 /* FileGDB v9 case */ )
     {
         (void) BuildLayerDefinition();
     }
