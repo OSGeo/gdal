@@ -524,6 +524,26 @@ def ogr_mitab_15():
         return 'fail'
     ds = None
 
+    # Test opening .mif without .mid even if there are declared attributes
+    ds = ogr.GetDriverByName('MapInfo File').CreateDataSource('/vsimem/nomid.mif')
+    lyr = ds.CreateLayer('empty')
+    lyr.CreateField(ogr.FieldDefn('ID', ogr.OFTInteger))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField(0, 1)
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT(1 2)'))
+    lyr.CreateFeature(f)
+    ds = None
+
+    gdal.Unlink('/vsimem/nomid.mid')
+    ds = ogr.Open('/vsimem/nomid.mif')
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if f.IsFieldSet(0) or f.GetGeometryRef() is None:
+        gdaltest.post_reason('failure')
+        f.DumpReadable()
+        return 'fail'
+    gdal.Unlink('/vsimem/nomid.mif')
+
     return 'success'
 
 ###############################################################################

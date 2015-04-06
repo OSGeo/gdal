@@ -400,16 +400,27 @@ int MIFFile::Open(const char *pszFname, TABAccess eAccess,
 
         if (m_poMIDFile->Open(pszTmpFname, pszAccess) !=0)
         {
-            if (!bTestOpenNoError)
-                CPLError(CE_Failure, CPLE_NotSupported,
-                        "Unable to open %s.", pszTmpFname);
+            if (m_eAccessMode == TABWrite)
+            {
+                if (!bTestOpenNoError)
+                    CPLError(CE_Failure, CPLE_NotSupported,
+                            "Unable to open %s.", pszTmpFname);
+                else
+                    CPLErrorReset();
+
+                CPLFree(pszTmpFname);
+                Close();
+
+                return -1;
+            }
             else
-                CPLErrorReset();
-
-            CPLFree(pszTmpFname);
-            Close();
-
-            return -1;
+            {
+                CPLDebug("MITAB",
+                         "%s is not found, although %d attributes are declared",
+                         pszTmpFname, m_nAttribut);
+                delete m_poMIDFile;
+                m_poMIDFile = NULL;
+            }
         }
     }
 
