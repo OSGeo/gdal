@@ -1189,7 +1189,7 @@ transforms coordinates
 gdaltransform [--help-general]
     [-i] [-s_srs srs_def] [-t_srs srs_def] [-to "NAME=VALUE"]
     [-order n] [-tps] [-rpc] [-geoloc]
-    [-gcp pixel line easting northing [elevation]]*
+    [-gcp pixel line easting northing [elevation]]* [-output_xy]
     [srcfile [dstfile]]
 \endverbatim
 
@@ -1220,6 +1220,7 @@ available GCPs.</dd>
 <dt> <b>-geoloc</b>:</dt><dd>Force use of Geolocation Arrays.</dd>
 <dt> <b>-i</b></dt><dd>Inverse transformation: from destination to source.</dd>
 <dt> <b>-gcp</b><em>pixel line easting northing [elevation]</em>:</dt> <dd>Provide a GCP to be used for transformation (generally three or more are required)</dd>
+<dt> <b>-output_xy</b>:</dt> <dd>(GDAL >= 2.0) Restrict output to "x y" instead of "x y z"</dd>
 <dt> <em>srcfile</em>:</dt><dd> File with source projection definition or GCP's. If
     not given, source projection is read from the command-line -s_srs or -gcp parameters </dd>
 <dt> <em>dstfile</em>:</dt><dd> File with destination projection definition. </dd>

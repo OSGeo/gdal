@@ -45,7 +45,7 @@ static void Usage(const char* pszErrorMsg = NULL)
         "Usage: gdaltransform [--help-general]\n"
         "    [-i] [-s_srs srs_def] [-t_srs srs_def] [-to \"NAME=VALUE\"]\n"
         "    [-order n] [-tps] [-rpc] [-geoloc] \n"
-        "    [-gcp pixel line easting northing [elevation]]*\n" 
+        "    [-gcp pixel line easting northing [elevation]]* [-output_xy]\n" 
         "    [srcfile [dstfile]]\n" 
         "\n" );
 
@@ -103,6 +103,7 @@ int main( int argc, char ** argv )
     GDAL_GCP            *pasGCPs = NULL;
     int                 bInverse = FALSE;
     char              **papszTO = NULL;
+    int                 bOutputXY = FALSE;
 
     /* Check that we are running against at least GDAL 1.5 */
     /* Note to developers : if we use newer API, please change the requirement */
@@ -201,6 +202,11 @@ int main( int argc, char ** argv )
 
             /* should set id and info? */
         }   
+        
+        else if( EQUAL(argv[i],"-output_xy") )
+        {
+            bOutputXY = TRUE;
+        }
 
         else if( argv[i][0] == '-' )
             Usage(CPLSPrintf("Unknown option name '%s'", argv[i]));
@@ -299,7 +305,10 @@ int main( int argc, char ** argv )
                             &dfX, &dfY, &dfZ, &bSuccess )
             && bSuccess )
         {
-            CPLprintf( "%.15g %.15g %.15g\n", dfX, dfY, dfZ );
+            if( bOutputXY )
+                CPLprintf( "%.15g %.15g\n", dfX, dfY );
+            else
+                CPLprintf( "%.15g %.15g %.15g\n", dfX, dfY, dfZ );
         }
         else
         {
