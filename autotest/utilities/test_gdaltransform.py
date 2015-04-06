@@ -206,6 +206,23 @@ def test_gdaltransform_8():
 
     return 'success'
 
+###############################################################################
+# Test -output_xy
+
+def test_gdaltransform_9():
+    if test_cli_utilities.get_gdaltransform_path() is None:
+        return 'skip'
+
+    strin = '0 0 0\n'
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdaltransform_path() + ' ../gcore/data/byte.tif -output_xy', strin)
+
+    text_split = ret.split(' ')
+    if len(text_split) != 2:
+        print(ret)
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     test_gdaltransform_1,
     test_gdaltransform_2,
@@ -214,7 +231,8 @@ gdaltest_list = [
     test_gdaltransform_5,
     test_gdaltransform_6,
     test_gdaltransform_7,
-    test_gdaltransform_8
+    test_gdaltransform_8,
+    test_gdaltransform_9
     ]
 
 
