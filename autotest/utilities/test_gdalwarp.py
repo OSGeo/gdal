@@ -1380,6 +1380,29 @@ def test_gdalwarp_42():
     return 'success'
 
 ###############################################################################
+# Test that NODATA_VALUES is not preserved when adding an alpha channel.
+
+def test_gdalwarp_43():
+    if test_cli_utilities.get_gdalwarp_path() is None:
+        return 'skip'
+    if test_cli_utilities.get_gdal_translate_path() is None:
+        return 'skip'
+
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' ../gdrivers/data/small_world.tif tmp/small_world.tif -mo "FOO=BAR" -mo "NODATA_VALUES=0 0 0"')
+
+    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' tmp/small_world.tif tmp/test_gdalwarp_43.tif -overwrite -dstalpha')
+    
+    ds = gdal.Open('tmp/test_gdalwarp_43.tif')
+    if ds.GetMetadataItem('NODATA_VALUES') is not None:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    if ds.GetMetadataItem('FOO') != 'BAR':
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def test_gdalwarp_cleanup():
@@ -1458,6 +1481,11 @@ def test_gdalwarp_cleanup():
         os.remove('tmp/test_gdalwarp_42.tif')
     except:
         pass
+    try:
+        os.remove('tmp/small_world.tif')
+        os.remove('tmp/test_gdalwarp_43.tif')
+    except:
+        pass
     return 'success'
 
 gdaltest_list = [
@@ -1504,6 +1532,7 @@ gdaltest_list = [
     test_gdalwarp_40,
     test_gdalwarp_41,
     test_gdalwarp_42,
+    test_gdalwarp_43,
     test_gdalwarp_cleanup
     ]
 
