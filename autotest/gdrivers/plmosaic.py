@@ -385,6 +385,37 @@ def plmosaic_13():
     return 'success'
 
 ###############################################################################
+# Invalid mosaic definition: unsupported quad_size
+
+def plmosaic_13bis():
+
+    if gdaltest.plmosaic_drv is None:
+        return 'skip'
+    
+    gdal.FileFromMemBuffer('/vsimem/root/my_mosaic', """{
+    "name": "my_mosaic",
+    "coordinate_system": "EPSG:3857",
+    "datatype": "byte",
+    "quad_pattern": "my_{glevel:d}_{tilex:04d}_{tiley:04d}",
+    "quad_size": 1234,
+    "resolution": 4.77731426716,
+    "links" : {
+        "quads" : "/vsimem/root/my_mosaic/quads/"
+    }
+}""")
+    gdal.SetConfigOption('PL_URL', '/vsimem/root')
+    gdal.PushErrorHandler()
+    ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options = ['API_KEY=foo', 'MOSAIC=my_mosaic'])
+    gdal.PopErrorHandler()
+    gdal.SetConfigOption('PL_URL', None)
+    if ds is not None or gdal.GetLastErrorMsg().find('Unsupported quad_size') < 0:
+        gdaltest.post_reason('fail')
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Invalid mosaic definition: invalid quad_pattern
 
 def plmosaic_14():
@@ -901,6 +932,7 @@ gdaltest_list = [
     plmosaic_11,
     plmosaic_12,
     plmosaic_13,
+    plmosaic_13bis,
     plmosaic_14,
     plmosaic_15,
     plmosaic_16,
