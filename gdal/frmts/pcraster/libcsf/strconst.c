@@ -1,12 +1,3 @@
-
-/*
- * strconst.c 
- */
-/********/
-/* USES */
-/********/
-
-/* libs ext. <>, our ""  */
 #include "csf.h"
 
 /* global header (opt.) and strconst's prototypes "" */

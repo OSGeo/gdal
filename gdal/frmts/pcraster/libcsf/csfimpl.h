@@ -7,7 +7,7 @@
 /**  RUU CROSS SYSTEM MAP FORMAT                                  */
 /**                                                               */
 /******************************************************************/
-/* number of maps that can be open at one time 
+/* number of maps that can be open at one time
  * FOPEN_MAX should be there in Ansi-C in <stdio.h>
  * stdio.h is included in csf.h, check if csf.h is included first
  */
@@ -43,13 +43,13 @@
 /* INTERFACE with PCRaster software
  */
 #ifdef USE_IN_PCR
-# include "stddefx.h" 
+# include "stddefx.h"
 # include "misc.h" /* malloc, free */
 # define  CSF_MALLOC ChkMalloc
 # define  CSF_FREE   Free
 #else
 # include <stdlib.h> /* malloc, free,abs */
-# include <assert.h> 
+# include <assert.h>
 # define  CSF_MALLOC malloc
 # define  CSF_FREE   free
 # ifdef DEBUG
@@ -100,22 +100,22 @@
 #define LAST_ATTR_IN_BLOCK 	(NR_ATTR_IN_BLOCK-1)
 
 
-typedef struct ATTR_REC 
+typedef struct ATTR_REC
 {
 		UINT2 attrId;	/* attribute identifier */
-		CSF_FADDR attrOffset;   /* file-offset of attribute */
+		CSF_FADDR32 attrOffset;   /* file-offset of attribute */
 		UINT4 attrSize;	/* size of attribute in bytes */
 } ATTR_REC;
 
 typedef struct ATTR_CNTRL_BLOCK
 {
 	ATTR_REC attrs[NR_ATTR_IN_BLOCK];
-	CSF_FADDR    next; /* file-offset of next block */
+	CSF_FADDR32    next; /* file-offset of next block */
 } ATTR_CNTRL_BLOCK;
 
 #define SIZE_OF_ATTR_CNTRL_BLOCK  \
- ((NR_ATTR_IN_BLOCK * (sizeof(UINT2) + sizeof(CSF_FADDR) + sizeof(UINT4))) \
-  + sizeof(CSF_FADDR) )
+ ((NR_ATTR_IN_BLOCK * (sizeof(UINT2) + sizeof(CSF_FADDR32) + sizeof(UINT4))) \
+  + sizeof(CSF_FADDR32) )
 
 /* Note that two empty holes in the attribute area are never merged */
 
@@ -134,7 +134,7 @@ typedef struct ATTR_CNTRL_BLOCK
 	 *  good as (2^16)-1
 	 */
 
-/* does y decrements from 
+/* does y decrements from
  * top to bottom in this projection type?
  * this will also hold for the old types
  * since only PT_XY was increments from
@@ -164,7 +164,7 @@ typedef struct ATTR_CNTRL_BLOCK
 
 #define READ_AS	 0 /* note that READ_AS is also used on procedures
 			that implies write access, under the condition of
-			write access both type bytes are equal, and the 
+			write access both type bytes are equal, and the
 			READ_AS byte is 0-alligned in the record, so this
 			byte is quicker accessible */
 	/* we will call READ_AS the ONLY_AS if write access is implied */
@@ -197,11 +197,11 @@ int   CsfIsBootedCsfKernel(void);
 void  CsfBootCsfKernel(void);
 void  CsfSetVarTypeMV( CSF_VAR_TYPE *var, CSF_CR cellRepr);
 void  CsfGetVarType(void *dest, const CSF_VAR_TYPE *src, CSF_CR cellRepr);
-void  CsfReadAttrBlock( MAP *m, CSF_FADDR pos, ATTR_CNTRL_BLOCK *b);
-int   CsfWriteAttrBlock(MAP *m, CSF_FADDR pos, ATTR_CNTRL_BLOCK *b);
+void  CsfReadAttrBlock( MAP *m, CSF_FADDR32 pos, ATTR_CNTRL_BLOCK *b);
+int   CsfWriteAttrBlock(MAP *m, CSF_FADDR32 pos, ATTR_CNTRL_BLOCK *b);
 int   CsfGetAttrIndex(CSF_ATTR_ID id, const ATTR_CNTRL_BLOCK *b);
-CSF_FADDR CsfGetAttrBlock(MAP *m, CSF_ATTR_ID id, ATTR_CNTRL_BLOCK *b);
-CSF_FADDR CsfGetAttrPosSize(MAP *m, CSF_ATTR_ID id, size_t *size);
+CSF_FADDR32 CsfGetAttrBlock(MAP *m, CSF_ATTR_ID id, ATTR_CNTRL_BLOCK *b);
+CSF_FADDR32 CsfGetAttrPosSize(MAP *m, CSF_ATTR_ID id, size_t *size);
 size_t CsfWriteSwapped(void *buf, size_t size, size_t n, FILE  *f);
 size_t CsfReadSwapped(void *buf, size_t size, size_t n, FILE  *f);
 size_t CsfWritePlain(void *buf, size_t size, size_t n, FILE  *f);
@@ -209,7 +209,7 @@ size_t CsfReadPlain(void *buf, size_t size, size_t n, FILE  *f);
 void   CsfSwap(void *buf, size_t size, size_t n);
 char *CsfStringPad(char *s, size_t reqSize);
 
-CSF_FADDR CsfSeekAttrSpace(MAP *m, CSF_ATTR_ID id, size_t size);
+CSF_FADDR32 CsfSeekAttrSpace(MAP *m, CSF_ATTR_ID id, size_t size);
 CSF_ATTR_ID CsfPutAttribute( MAP *m, CSF_ATTR_ID id, size_t size, size_t nitems, void *attr);
 CSF_ATTR_ID CsfGetAttribute(MAP *m, CSF_ATTR_ID id, size_t elSize, size_t *nmemb, void *attr);
 size_t      CsfAttributeSize(MAP *m, CSF_ATTR_ID id);

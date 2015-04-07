@@ -11,6 +11,15 @@
 #define INCLUDED_STRING
 #endif
 
+/* NOTE that this file is included in the PCRaster gdal driver
+ *      it accounts for more compiler issues than we deal with
+ *      normally in PCRaster, such as the VC6 compiler.
+ *      64 bit integer typedefs are only defined for the PCRaster
+ *      source not for the Gdal driver.
+ *      The Gdal PCRaster driver defines USE_IN_GDAL, PCRaster sources
+ *      do not.
+ */
+
 // memset
 // use string.h not cstring
 // VC6 does not have memset in std
@@ -18,6 +27,36 @@
 #ifndef INCLUDED_C_STRING
 #include <string.h>
 #define INCLUDED_C_STRING
+#endif
+
+#ifndef USE_IN_GDAL
+ // exclude Gdal driver, only for PCRaster sources
+
+# ifdef _MSC_VER
+  typedef          __int64    PCR_INT8;
+  typedef unsigned __int64    PCR_UINT8;
+# else
+  // assume gcc FTTB
+  typedef          long long  PCR_INT8;
+  typedef unsigned long long  PCR_UINT8;
+# endif
+/* from gcc manual:
+  ISO C99 supports data types for integers that are at least 64 bits wide,
+  and as an extension GCC supports them in C89 mode and in C++. Simply
+  write long long int for a signed integer, or unsigned long long int for
+  an unsigned integer. To make an integer constant of type long long int,
+  add the suffix `LL' to the integer. To make an integer constant of type
+  unsigned long long int, add the suffix `ULL' to the integer.
+
+  WARNING: macros below are not typesafe, use  pcr::isMV and pcr::setMV instead
+ */
+#define MV_INT8   ((CSF_IN_GLOBAL_NS PCR_INT8)0x8000000000000000LL)
+#define MV_UINT8  ((CSF_IN_GLOBAL_NS PCR_UINT8)0xFFFFFFFFFFFFFFFFULL)
+#define IS_MV_INT8(x) ((*((const CSF_IN_GLOBAL_NS PCR_INT8 *)x)) == MV_INT8)
+#define IS_MV_UINT8(x) ((*((const CSF_IN_GLOBAL_NS PCR_UINT8 *)x)) == MV_UINT8)
+#define SET_MV_INT8(x) ( (*((PCR_INT8 *)(x))) = MV_INT8)
+#define SET_MV_UINT8(x) ( (*((PCR_UINT8 *)(x))) = MV_UINT8)
+
 #endif
 
 namespace pcr {
@@ -53,6 +92,14 @@ namespace pcr {
    PCR_DEF_ISMV(INT1)
    PCR_DEF_ISMV(INT2)
    PCR_DEF_ISMV(INT4)
+#  ifndef USE_IN_GDAL
+  template<>
+   inline bool isMV(const PCR_UINT8& v)
+   { return v == MV_UINT8; }
+  template<>
+   inline bool isMV(const PCR_INT8& v)
+   { return v == MV_INT8; }
+#  endif
 #  undef PCR_DEF_ISMV
   template<> inline bool isMV(const REAL4& v)
   { return IS_MV_REAL4(&v); }
@@ -88,6 +135,14 @@ template<> inline bool isMV(std::string const& string)
    PCR_DEF_SETMV(INT1)
    PCR_DEF_SETMV(INT2)
    PCR_DEF_SETMV(INT4)
+#  ifndef USE_IN_GDAL
+    template<>
+     inline void setMV(PCR_UINT8& v)
+     { v = MV_UINT8; }
+    template<>
+     inline void setMV(PCR_INT8& v)
+     { v = MV_INT8; }
+#  endif
 #  undef PCR_DEF_SETMV
 
   template<>
@@ -122,8 +177,9 @@ template<> inline bool isMV(std::string const& string)
 template<>
 inline void setMV(std::string& string)
 {
-//  string.clear();
-  string = "";
+  // VC6 does not have clear
+  // string.clear();
+  string="";
 }
 
 /*! \brief set array \a v of size \a n to all MV's
@@ -154,6 +210,9 @@ template<typename T>
   PCR_DEF_SETMV_MEMSET(UINT1)
   PCR_DEF_SETMV_MEMSET(UINT2)
   PCR_DEF_SETMV_MEMSET(UINT4)
+# ifndef USE_IN_GDAL
+  PCR_DEF_SETMV_MEMSET(PCR_UINT8)
+# endif
   PCR_DEF_SETMV_MEMSET(REAL4)
   PCR_DEF_SETMV_MEMSET(REAL8)
 # undef PCR_DEF_SETMV_MEMSET
@@ -166,7 +225,7 @@ template<typename T>
 /*!
  * \todo
  *   the isMV test is only needed for floats, to protect NAN evaluation
- *   what happens on bcc/win32
+ *   what once happened on bcc/win32. Should reevaluate that.
  */
 template<typename T>
   struct AlterToStdMV {
@@ -184,7 +243,7 @@ template<typename T>
 /*!
  * \todo
  *   the isMV test is only needed for floats, to protect NAN evaluation
- *   what happens on bcc/win32
+ *   what once happened on bcc/win32. Should reevaluate that.
  */
 template<typename T>
   struct ToStdMV {
@@ -207,7 +266,7 @@ template<typename T>
 /*!
  * \todo
  *   the isMV test is only needed for floats, to protect NAN evaluation
- *   what happens on bcc/win32
+ *   what once happened on bcc/win32. Should reevaluate that.
  */
 template<typename T>
   struct AlterFromStdMV {
@@ -225,7 +284,7 @@ template<typename T>
 /*!
  * \todo
  *   the isMV test is only needed for floats, to protect NAN evaluation
- *   what happens on bcc/win32
+ *   what once happened on bcc/win32. Should reevaluate that.
  */
 template<typename T>
   struct FromStdMV {
@@ -240,7 +299,7 @@ template<typename T>
     }
   };
 
-};
+}
 
 
 #endif

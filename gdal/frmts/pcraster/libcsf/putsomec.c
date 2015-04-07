@@ -1,6 +1,3 @@
-/*
- * putsomec.c
- */
 #include "csf.h"
 #include "csfimpl.h"
 

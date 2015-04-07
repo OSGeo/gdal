@@ -24,7 +24,7 @@ CSF_ATTR_ID CsfUpdateAttribute(
 	CSF_ATTR_ID id,               /* attribute identification */
 	size_t itemSize,        /* size of each attribute element.
 	                         * 1 or sizeof(char) in case of a
-	                         * string 
+	                         * string
 	                         */
 	size_t nitems,          /* number of attribute elements or
 	                         * strlen+1 in case of a variable character
@@ -45,7 +45,7 @@ CSF_ATTR_ID CsfUpdateAttribute(
 /* write an attribute to a map (LIBRARY_INTERNAL)
  * MputAttribute writes exactly the number of bytes specified
  * by the size argument starting at the address of argument
- * attr. Which means that you can't simply pass a structure or an 
+ * attr. Which means that you can't simply pass a structure or an
  * array of structures as argument attr, due to the alignment
  * of fields within a structure and internal swapping. You can
  * only pass an array of elementary types (UINT1, REAL4, etc.)
@@ -65,7 +65,7 @@ CSF_ATTR_ID CsfPutAttribute(
 	CSF_ATTR_ID id,               /* attribute identification */
 	size_t itemSize,        /* size of each attribute element.
 	                         * 1 or sizeof(char) in case of a
-	                         * string 
+	                         * string
 	                         */
 	size_t nitems,          /* number of attribute elements or
 	                         * strlen+1 in case of a variable character
@@ -75,25 +75,25 @@ CSF_ATTR_ID CsfPutAttribute(
 	void *attr)       /* buffer containing attribute */
 {
 	size_t size = nitems * itemSize;
-	
+
 	PRECOND(CsfValidSize(itemSize));
 	PRECOND(size > 0);
 
 	if (CsfSeekAttrSpace(m,id,size) == 0)
 		goto error;
 
-	if (m->write(attr, itemSize, nitems, m->fp) != nitems) 
+	if (m->write(attr, itemSize, nitems, m->fp) != nitems)
 	{
 		M_ERROR(WRITE_ERROR);
 		goto error;
 	}
 	return(id); 		/* succes */
 error:	return(0);	/* failure */
-} 
+}
 
 /* seek to space for attribute  (LIBRARY_INTERNAL)
  * CsfSeekAttrSpace seeks to the a point in the file where
- * the attribute must be stored and update the attribute control 
+ * the attribute must be stored and update the attribute control
  * blocks accordingly.
  * Writing can still fail since there is no check if that space is really
  * avalaible on the device. After this call returns the file is already
@@ -105,13 +105,13 @@ error:	return(0);	/* failure */
  * NOACCESS
  * WRITE_ERROR
  */
-CSF_FADDR CsfSeekAttrSpace( 
+CSF_FADDR32 CsfSeekAttrSpace(
 	MAP *m,       		/* map handle */
 	CSF_ATTR_ID id,               /* attribute identification only for check if avalaible */
 	size_t size)            /* size to be seeked to */
 {
 	ATTR_CNTRL_BLOCK b;
-	CSF_FADDR currBlockPos, prevBlockPos=USED_UNINIT_ZERO, newPos, endBlock, resultPos=0;
+	CSF_FADDR32 currBlockPos, prevBlockPos=USED_UNINIT_ZERO, newPos, endBlock, resultPos=0;
 	int noPosFound;
 	int i;
 
@@ -129,8 +129,8 @@ CSF_FADDR CsfSeekAttrSpace(
 
 	currBlockPos = m->main.attrTable;
         noPosFound = 1;
-	while (noPosFound) 
-	{	
+	while (noPosFound)
+	{
 		if (currBlockPos == 0)
 		{
 			if (m->main.attrTable == 0)
@@ -143,7 +143,7 @@ CSF_FADDR CsfSeekAttrSpace(
 			}
 			else
 			{ /* NEW/NEXT BLOCK */
-				newPos = b.attrs[LAST_ATTR_IN_BLOCK].attrOffset 
+				newPos = b.attrs[LAST_ATTR_IN_BLOCK].attrOffset
 					+
 					b.attrs[LAST_ATTR_IN_BLOCK].attrSize;
 				b.next = newPos;
@@ -163,7 +163,7 @@ CSF_FADDR CsfSeekAttrSpace(
 			CsfReadAttrBlock(m, currBlockPos, &b);
 		i = 0; /* this is also the right index if a new block
 			   is added ! */
-		while (noPosFound  && i < NR_ATTR_IN_BLOCK) 
+		while (noPosFound  && i < NR_ATTR_IN_BLOCK)
 			switch (b.attrs[i].attrId)
 			{
 				case END_OF_ATTRS:
@@ -179,8 +179,7 @@ CSF_FADDR CsfSeekAttrSpace(
 						endBlock = b.next;
 					else
 						endBlock = b.attrs[i+1].attrOffset;
-					if ( (size_t)( endBlock - b.attrs[i].attrOffset)
-						>= size)
+					if ( (size_t)( endBlock - b.attrs[i].attrOffset) >= size)
 						/* this position can
 							hold the attr */
 						noPosFound = 0;
@@ -190,10 +189,10 @@ CSF_FADDR CsfSeekAttrSpace(
 				 default:
                                             i++;
 			} /* switch */
-/*		if (b.next == 0) 
+/*		if (b.next == 0)
                      ? When did I change this CW
 		       remember this block position since it may be have
-		       to rewritten 
+		       to rewritten
 */
 		prevBlockPos = currBlockPos;
 		if (noPosFound)

@@ -1,6 +1,3 @@
-/*
- * _getrow.c
- */
 #include "csf.h"
 #include "csfimpl.h"
 

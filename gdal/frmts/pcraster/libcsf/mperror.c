@@ -1,6 +1,3 @@
-/*
- * mperror.c
- */
 #include "csf.h"
 #include "csfimpl.h"
 
