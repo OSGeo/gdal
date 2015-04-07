@@ -790,7 +790,7 @@ int PLMosaicDataset::OpenMosaic()
         strstr(pszQuadPattern, "{tiley:") == NULL )
     {
         CPLError(CE_Failure, CPLE_NotSupported, "Invalid quad_pattern = %s",
-                 pszDataType);
+                 pszQuadPattern);
         json_object_put(poObj);
         return FALSE;
     }
