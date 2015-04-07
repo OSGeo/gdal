@@ -3,10 +3,10 @@
  *
  * Project:  PCRaster Integration
  * Purpose:  PCRaster CSF 2.0 raster file driver declarations.
- * Author:   Kor de Jong, k.dejong at geog.uu.nl
+ * Author:   Kor de Jong, Oliver Schmitz
  *
  ******************************************************************************
- * Copyright (c) 2004, Kor de Jong
+ * Copyright (c) PCRaster owners
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -31,6 +31,10 @@
 #define INCLUDED_PCRASTERDATASET
 
 // Library headers.
+#ifndef INCLUDED_GDAL_PAM
+#include "gdal_pam.h"
+#define INCLUDED_GDAL_PAM
+#endif
 
 // PCRaster library headers.
 #ifndef INCLUDED_CSF
@@ -39,7 +43,6 @@
 #endif
 
 // Module headers.
-#include "gdal_pam.h"
 
 // namespace {
   // PCRasterDataset declarations.
@@ -74,6 +77,13 @@ public:
 
   static GDALDataset* open             (GDALOpenInfo* info);
 
+  static GDALDataset* create           (const char* filename,
+                                        int nr_cols,
+                                        int nr_rows,
+                                        int nrBands,
+                                        GDALDataType gdalType,
+                                        char** papszParmList);
+
   static GDALDataset* createCopy       (char const* filename,
                                         GDALDataset* source,
                                         int strict,
@@ -104,6 +114,8 @@ private:
   //! No data value.
   double           d_missingValue;
 
+  bool             d_location_changed;
+
   //! Assignment operator. NOT IMPLEMENTED.
   PCRasterDataset& operator=           (const PCRasterDataset&);
 
@@ -124,6 +136,8 @@ public:
   // MANIPULATORS
   //----------------------------------------------------------------------------
 
+  CPLErr           SetGeoTransform     (double* transform);
+
   //----------------------------------------------------------------------------
   // ACCESSORS
   //----------------------------------------------------------------------------
@@ -137,6 +151,8 @@ public:
   CSF_VS           valueScale          () const;
 
   double           missingValue        () const;
+
+  bool             location_changed    () const;
 
 };
 

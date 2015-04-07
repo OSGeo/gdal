@@ -3,10 +3,10 @@
  *
  * Project:  PCRaster Integration
  * Purpose:  PCRaster driver support functions.
- * Author:   Kor de Jong, k.dejong at geog.uu.nl
+ * Author:   Kor de Jong, Oliver Schmitz
  *
  ******************************************************************************
- * Copyright (c) 2004, Kor de Jong
+ * Copyright (c) PCRaster owners
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -712,3 +712,24 @@ void castValuesToBooleanRange(
   }
 }
 
+
+
+void castValuesToDirectionRange(
+         void* buffer,
+         size_t size)
+{
+  std::for_each(static_cast<REAL4*>(buffer),
+       static_cast<REAL4*>(buffer) + size,
+       CastToDirection());
+}
+
+
+
+void castValuesToLddRange(
+         void* buffer,
+         size_t size)
+{
+  std::for_each(static_cast<UINT1*>(buffer),
+       static_cast<UINT1*>(buffer) + size,
+       CastToLdd());
+}
