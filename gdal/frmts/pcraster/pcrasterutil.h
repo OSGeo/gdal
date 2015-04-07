@@ -3,10 +3,10 @@
  *
  * Project:  PCRaster Integration
  * Purpose:  PCRaster driver support declarations.
- * Author:   Kor de Jong, k.dejong at geog.uu.nl
+ * Author:   Kor de Jong, Oliver Schmitz
  *
  ******************************************************************************
- * Copyright (c) 2004, Kor de Jong
+ * Copyright (c) PCRaster owners
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -101,6 +101,13 @@ void               castValuesToBooleanRange(
                                         size_t size,
                                         CSF_CR cellRepresentation);
 
+void               castValuesToDirectionRange(
+                                        void* buffer,
+                                        size_t size);
+
+void               castValuesToLddRange(void* buffer,
+                                        size_t size);
+
 template<typename T>
 struct CastToBooleanRange
 {
@@ -148,6 +155,35 @@ struct CastToBooleanRange<UINT4>
   void operator()(UINT4& value) {
     if(!pcr::isMV(value)) {
       value = UINT4(value > UINT4(0));
+    }
+  }
+};
+
+
+struct CastToDirection
+{
+  void operator()(REAL4& value) {
+    REAL4 factor = M_PI / 180.0;
+    if(!pcr::isMV(value)) {
+      value = REAL4(value * factor);
+    }
+  }
+};
+
+
+
+struct CastToLdd
+{
+  void operator()(UINT1& value) {
+    if(!pcr::isMV(value)) {
+      if((value < 1) || (value > 9)) {
+        CPLError(CE_Warning, CPLE_IllegalArg,
+         "PCRaster driver: incorrect LDD value used, assigned MV instead");
+        pcr::setMV(value);
+      }
+      else {
+        value = UINT1(value);
+      }
     }
   }
 };

@@ -3,10 +3,10 @@
  *
  * Project:  PCRaster Integration
  * Purpose:  PCRaster raster band implementation.
- * Author:   Kor de Jong, k.dejong at geog.uu.nl
+ * Author:   Kor de Jong, Oliver Schmitz
  *
  ******************************************************************************
- * Copyright (c) 2004, Kor de Jong
+ * Copyright (c) PCRaster owners
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -36,6 +36,11 @@
 #ifndef INCLUDED_CSF
 #include "csf.h"
 #define INCLUDED_CSF
+#endif
+
+#ifndef INCLUDED_CSFIMPL
+#include "csfimpl.h"
+#define INCLUDED_CSFIMPL
 #endif
 
 // Module headers.
@@ -262,6 +267,119 @@ CPLErr PCRasterRasterBand::IReadBlock(
   // Replace in-file MV with in-app MV which may be different.
   alterFromStdMV(buffer, nrCellsRead, d_dataset->cellRepresentation(),
          d_dataset->missingValue());
+
+  return CE_None;
+}
+
+
+CPLErr PCRasterRasterBand::IRasterIO(GDALRWFlag eRWFlag,
+                                     int nXOff, int nYOff, int nXSize,
+                                     int nYSize, void * pData,
+                                     int nBufXSize, int nBufYSize,
+                                     GDALDataType eBufType,
+                                     GSpacing nPixelSpace,
+                                     GSpacing nLineSpace,
+                                     GDALRasterIOExtraArg* psExtraArg)
+{
+  if (eRWFlag == GF_Read){
+    // read should just be the default
+    return GDALRasterBand::IRasterIO(GF_Read, nXOff, nYOff, nXSize, nYSize,
+                                     pData, nBufXSize, nBufYSize, eBufType,
+                                     nPixelSpace, nLineSpace, psExtraArg);
+  }
+  else{
+    // the datatype of the incoming data can be of different type than the
+    // cell representation used in the raster
+    // 'remember' the GDAL type to distinguish it later on in iWriteBlock
+    d_create_in = eBufType;
+    return GDALRasterBand::IRasterIO(GF_Write, nXOff, nYOff, nXSize, nYSize,
+                                     pData, nBufXSize, nBufYSize, eBufType,
+                                     nPixelSpace, nLineSpace, psExtraArg);
+
+  }
+}
+
+
+
+CPLErr PCRasterRasterBand::IWriteBlock(
+    CPL_UNUSED int nBlockXoff,
+    int nBlockYoff,
+    void* source)
+{
+  CSF_VS valuescale = d_dataset->valueScale();
+
+  if(valuescale == VS_LDD) {
+    if((d_create_in == GDT_Byte) || (d_create_in == GDT_Float32) || (d_create_in == GDT_Float64)) {
+      CPLError(CE_Failure, CPLE_NotSupported,
+               "PCRaster driver: "
+               "conversion from %s to LDD not supported",
+               GDALGetDataTypeName(d_create_in));
+      return CE_Failure;
+    }
+  }
+
+  // set new location attributes to the header
+  if (d_dataset->location_changed()){
+    REAL8 west = 0.0;
+    REAL8 north = 0.0;
+    REAL8 cellSize = 1.0;
+    double transform[6];
+    if(this->poDS->GetGeoTransform(transform) == CE_None) {
+      if(transform[2] == 0.0 && transform[4] == 0.0) {
+        west = static_cast<REAL8>(transform[0]);
+        north = static_cast<REAL8>(transform[3]);
+        cellSize = static_cast<REAL8>(transform[1]);
+      }
+    }
+    (void)RputXUL(d_dataset->map(), west);
+    (void)RputYUL(d_dataset->map(), north);
+    (void)RputCellSize(d_dataset->map(), cellSize);
+  }
+
+  int nr_cols = this->poDS->GetRasterXSize();
+
+  // new maps from create() set min/max to MV
+  // in case of reopening that map the min/max
+  // value tracking is disabled (MM_WRONGVALUE)
+  // reactivate it again to ensure that the output will
+  // get the correct values when values are written to map
+  d_dataset->map()->minMaxStatus = MM_KEEPTRACK;
+
+  // allocate memory for row
+  void* buffer = Rmalloc(d_dataset->map(), nr_cols);
+  memcpy(buffer, source, nr_cols * 4);
+
+  // convert source no_data values to MV in dest
+  if((valuescale == VS_BOOLEAN) || (valuescale == VS_LDD)) {
+    alterToStdMV(buffer, nr_cols, CR_UINT1, d_missing_value);
+  }
+  if((valuescale == VS_SCALAR) || (valuescale == VS_DIRECTION)) {
+    alterToStdMV(buffer, nr_cols, CR_REAL4, d_missing_value);
+  }
+  if((valuescale == VS_NOMINAL)|| (valuescale == VS_ORDINAL)) {
+    alterToStdMV(buffer, nr_cols, CR_INT4, d_missing_value);
+  }
+
+  // conversion of values according to value scale
+  if(valuescale == VS_BOOLEAN) {
+    castValuesToBooleanRange(buffer, nr_cols, CR_UINT1);
+  }
+  if(valuescale == VS_LDD) {
+    castValuesToLddRange(buffer, nr_cols);
+  }
+  if(valuescale == VS_DIRECTION) {
+    castValuesToDirectionRange(buffer, nr_cols);
+  }
+
+  RputRow(d_dataset->map(), nBlockYoff, buffer);
+  free(buffer);
+
+  return CE_None;
+}
+
+
+CPLErr PCRasterRasterBand::SetNoDataValue(double nodata){
+  d_missing_value = nodata;
 
   return CE_None;
 }
