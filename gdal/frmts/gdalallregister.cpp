@@ -519,6 +519,10 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_IRIS();
 #endif
 
+#ifdef FRMT_plmosaic
+    GDALRegister_PLMOSAIC();
+#endif
+
     OGRRegisterAllInternal();
 
 #ifdef FRMT_wcs
