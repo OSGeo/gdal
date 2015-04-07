@@ -1,6 +1,3 @@
-/*
- * rextend.c
- */
 #include "csf.h"
 #include "csfimpl.h"
 #include <math.h>

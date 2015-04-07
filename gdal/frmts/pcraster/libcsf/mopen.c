@@ -1,10 +1,3 @@
-
-/*******************************************************/
-/*	FUNCTIE   MOPEN.C	                       */
-/*******************************************************/
-/*******************************************************/
-
-
 #include <string.h>
 
 #include "csf.h"
@@ -133,11 +126,11 @@ MAP  *Mopen(
  m->read((void *)&(m->raster.valueScale), sizeof(UINT2),(size_t)1,m->fp);
  m->read((void *)&(m->raster.cellRepr), sizeof(UINT2),(size_t)1,m->fp);
 
- if (0 != fread((void *)&(m->raster.minVal), sizeof(CSF_VAR_TYPE),(size_t)1,m->fp))
+ if (1 != fread((void *)&(m->raster.minVal), sizeof(CSF_VAR_TYPE),(size_t)1,m->fp))
  {
      fprintf(stderr, "WARNING: Unable to read min val in CSF.\n");
  }
- if (0 != fread((void *)&(m->raster.maxVal), sizeof(CSF_VAR_TYPE),(size_t)1,m->fp))
+ if (1 != fread((void *)&(m->raster.maxVal), sizeof(CSF_VAR_TYPE),(size_t)1,m->fp))
  {
      fprintf(stderr, "WARNING: Unable to read max val in CSF.\n");
  }

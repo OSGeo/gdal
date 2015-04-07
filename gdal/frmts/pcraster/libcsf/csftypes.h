@@ -61,7 +61,7 @@ typedef unsigned             char UINT1;
 #ifdef USE_IN_GDAL
 typedef GInt16   INT2;
 typedef GInt32   INT4;
-typedef GUInt16 UINT2;
+typedef GUInt16  UINT2;
 typedef GUInt32  UINT4;
 #else
 typedef CSF_SIGNED_SPECIFIER short                        int  INT2;
@@ -70,25 +70,26 @@ typedef unsigned             short                        int  UINT2;
 typedef unsigned             CSF_4BYTE_INT_SIZE_SPECIFIER int  UINT4;
 #endif
 
+#ifdef __GNUC__
+    /* Modern versions of GCC use knowledge about strict aliasing to implement
+     * certain optimizations. We have some code that fails to comply to the
+     * strict aliasing rules (see uses of UINT_ALIASING in this header).
+     * These are simple cases that should not be optimized. Using
+     * UINT_ALIASING will prevent gcc from optimizing these expressions.
+     * http://dbp-consulting.com/tutorials/StrictAliasing.html
+     * http://ohse.de/uwe/articles/gcc-attributes.html#type-may_alias
+     */
+    typedef UINT4 __attribute__((__may_alias__)) UINT4_ALIASING;
+#else
+    typedef UINT4 UINT4_ALIASING;
+#endif
+
 #undef CSF_4BYTE_INT_SIZE_SPECIFIER
 #undef CSF_SIGNED_SPECIFIER
 
 typedef float               REAL4; /* IEEE-754 32-bit */
 typedef double              REAL8; /* IEEE-754 64-bit */
 
-/* 64 bit specifier not yet used
- * but here is some code
- */
-#if defined(__GCC__) || defined(__MINGW32__)
-/* assume gcc, gcc likes it like this */
-typedef          long long  CSF_INT8;
-typedef unsigned long long  CSF_UINT8;
-#else
-#if defined(WIN32)
-typedef          __int64    CSF_INT8;
-typedef unsigned __int64    CSF_UINT8;
-#endif
-#endif
 
 /* endian mode
  * DEFINE WITH -D or find here
@@ -139,6 +140,15 @@ typedef unsigned __int64    CSF_UINT8;
 #  define CPU_LITTLE_ENDIAN
 #endif
 
+#ifdef __x86_64__
+/* linux/gcc defines this on intel 80x86_64 platform */
+#  define CPU_LITTLE_ENDIAN
+#endif
+#ifdef _M_X64
+/* Mscc defines this on intel 80x86_64 platform */
+#  define CPU_LITTLE_ENDIAN
+#endif
+
 #ifdef _M_IX86
 /* Borland C defines this */
 /* Win32/MSC defines this on intel 80x86 platform */
@@ -152,7 +162,7 @@ typedef unsigned __int64    CSF_UINT8;
 #endif
 
 /* endif probing */
-# endif 
+# endif
 
 /* endif no ENDIAN defined */
 # endif
@@ -201,8 +211,8 @@ typedef unsigned __int64    CSF_UINT8;
 typedef enum CSF_PT {
 
 	/* * these two can be returned by or passed to a csf2 function */
-	PT_YINCT2B=0,    /* Y increase from top to bottom */
-	PT_YDECT2B=1,    /* Y decrease from top to bottom */
+	PT_YINCT2B=0,    /* Y increase from top to bottom, wrong do not use */
+	PT_YDECT2B=1,    /* Y decrease from top to bottom, correct */
 
 	/* * this one CANNOT be returned by NOR passed to a csf2 function */
 	PT_UNDEFINED=100 /* just some value different from the rest */
@@ -214,7 +224,7 @@ typedef enum CSF_PT {
  */
 
 /* historical errors don't use them:
- * #define VS_NOTCLASSIFIED 2	
+ * #define VS_NOTCLASSIFIED 2
  * #define VS_CONTINUES 	 2
  *
  * NOTE new VS_* types must be different from CR_* values
@@ -358,7 +368,7 @@ typedef enum CSF_CR {
  * are NAN's
  * MV_REAL4 has the same bitpattern as a MV_UINT4
  * MV_REAL8 has the same bitpattern as two MV_UINT4's
- *          only the first 32 bits already identify a NAN, 
+ *          only the first 32 bits already identify a NAN,
  *          so that's what we test
  */
 #ifdef CPU_LITTLE_ENDIAN
@@ -369,8 +379,8 @@ typedef enum CSF_CR {
 #  define IS_MV_REAL4(x) (((const UINT2 *)(x))[1] == MV_UINT2)
 #  define IS_MV_REAL8(x) (((const UINT2 *)(x))[3] == MV_UINT2)
 # else
-#  define IS_MV_REAL4(x) ((*((const CSF_IN_GLOBAL_NS UINT4 *)(x))) == MV_UINT4)
-#  define IS_MV_REAL8(x) (((const CSF_IN_GLOBAL_NS UINT4 *)(x))[1] == MV_UINT4)
+#  define IS_MV_REAL4(x) ((*((const CSF_IN_GLOBAL_NS UINT4_ALIASING *)(x))) == MV_UINT4)
+#  define IS_MV_REAL8(x) (((const CSF_IN_GLOBAL_NS UINT4_ALIASING *)(x))[1] == MV_UINT4)
 # endif
 #else
 # ifdef CPU_BIG_ENDIAN
@@ -399,18 +409,18 @@ typedef enum CSF_CR {
 #define SET_MV_INT1(x)	( (*(( INT1 *)(x))) = MV_INT1)
 #define SET_MV_INT2(x)	( (*(( INT2 *)(x))) = MV_INT2)
 #define SET_MV_INT4(x)	( (*(( INT4 *)(x))) = MV_INT4)
-#define	SET_MV_REAL4(x)	((*(CSF_IN_GLOBAL_NS UINT4 *)(x)) = MV_UINT4)
+#define	SET_MV_REAL4(x)	((*(CSF_IN_GLOBAL_NS UINT4_ALIASING *)(x)) = MV_UINT4)
 #define	SET_MV_REAL8(x)	SET_MV_REAL4((x)),SET_MV_REAL4((((CSF_IN_GLOBAL_NS UINT4 *)(x))+1))
 
 /* copy of floats  by typecasting to
  * an integer since MV_REAL? is a NAN
  */
-#define	COPY_REAL4(dest,src) ( (*(UINT4 *)(dest)) = (*(const UINT4 *)(src)) )
+#define	COPY_REAL4(dest,src) ( (*(UINT4_ALIASING *)(dest)) = (*(const UINT4_ALIASING *)(src)) )
 #define	COPY_REAL8(dest,src) COPY_REAL4((dest),(src)),\
 		COPY_REAL4( (((UINT4 *)(dest))+1),(((const UINT4 *)(src))+1) )
 
 #ifdef __cplusplus
- };
+ }
 #endif
 
 #endif

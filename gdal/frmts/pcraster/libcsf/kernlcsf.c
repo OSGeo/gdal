@@ -1,18 +1,3 @@
-/*
- * kernlcsf.c
- *    Functions to create  and maintain the csf-kernel
- *     runtime structures
- */
-
-/**************************************************************************/
-/*  KERNLCSF.C                                                            */
-/*                                                                        */
-/*                                                                        */
-/**************************************************************************/
-
-/********/
-/* USES */
-/********/
 #include "csf.h"
 #include "csfimpl.h"
 

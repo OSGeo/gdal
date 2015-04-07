@@ -1,11 +1,11 @@
-Hi!
+This library reads and writes the native PCRaster format, formerly known as CSF.
 
-For information about how to use the library see csf.pdf which can found
-at http://pcraster.geog.uu.nl. More information about PCRaster can be
-found at: http://www.pcraster.nl and http://pcraster.geog.uu.nl.
+More information about PCRaster can be found at:
+http://www.pcraster.eu
+http://pcraster.geo.uu.nl
 
 Questions can be directed to the PCRaster mailing list:
-http://pcraster.geog.uu.nl/support.html
+http://pcraster.geo.uu.nl/support/questions-2/
 
-Have fun!
-PCRaster research and development team.
+Bug reports can be submitted to the PCRaster SourceForge page:
+http://sourceforge.net/p/pcraster/bugs-and-feature-requests/milestone/PCRaster/

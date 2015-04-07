@@ -1,7 +1,3 @@
-/*
- * moreattr.c 
- */
-
 #include "csf.h"
 #include "csfimpl.h"
 

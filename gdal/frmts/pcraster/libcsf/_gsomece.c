@@ -1,6 +1,3 @@
-/*
- * _gsomece.c
- */
 #include "csf.h"
 #include "csfimpl.h"
 

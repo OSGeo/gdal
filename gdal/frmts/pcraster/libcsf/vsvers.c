@@ -1,13 +1,3 @@
-
-/*
- * vsvers.c 
- */
-
-/********/
-/* USES */
-/********/
-
-/* libs ext. <>, our ""  */
 #include "csf.h" 
 
 /* global header (opt.) and vsvers's prototypes "" */
