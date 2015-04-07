@@ -548,13 +548,14 @@ def plmosaic_17():
             gdaltest.post_reason('fail')
             return 'fail'
     for i in range(11,-1,-1):
-        ds.GetRasterBand(1).ReadRaster(4096 * i,0,1,1)
+        # Again in the same quad, but in different block, to test cache
+        ds.GetRasterBand(1).ReadRaster(4096 * i+256,0,1,1)
         if gdal.GetLastErrorMsg() != '':
             gdaltest.post_reason('fail')
             return 'fail'
     for i in range(12):
         # Again in the same quad, but in different block, to test cache
-        ds.GetRasterBand(1).ReadRaster(4096 * i+256,256,1,1)
+        ds.GetRasterBand(1).ReadRaster(4096 * i+512,256,1,1)
         if gdal.GetLastErrorMsg() != '':
             gdaltest.post_reason('fail')
             return 'fail'
