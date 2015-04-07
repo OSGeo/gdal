@@ -1212,7 +1212,7 @@ GDALDataset* PLMosaicDataset::GetMetaTile(int tile_x, int tile_y)
         CPLHTTPDestroyResult(psResult);
         GDALDataset* poDS = OpenAndInsertNewDataset(osTmpFilename, osTilename);
 
-        if( strncmp(osTilename, "/vsimem/single_tile_plmosaic_cache/",
+        if( strncmp(osTmpFilename, "/vsimem/single_tile_plmosaic_cache/",
                     strlen("/vsimem/single_tile_plmosaic_cache/")) == 0 )
             VSIUnlink(osTilename);
 
