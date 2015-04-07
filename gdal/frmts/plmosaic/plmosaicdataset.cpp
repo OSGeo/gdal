@@ -445,12 +445,12 @@ CPLHTTPResult* PLMosaicDataset::Download(const char* pszURL,
         GByte* pabyBuf = VSIGetMemFileBuffer(osURL, &nDataLength, FALSE); 
         if( pabyBuf )
         {
-            psResult->pabyData = (GByte*) VSIMalloc(1 + nDataLength);
+            psResult->pabyData = (GByte*) VSIMalloc(1 + (size_t)nDataLength);
             if( psResult->pabyData )
             {
-                memcpy(psResult->pabyData, pabyBuf, nDataLength);
+                memcpy(psResult->pabyData, pabyBuf, (size_t)nDataLength);
                 psResult->pabyData[nDataLength] = 0;
-                psResult->nDataLen = nDataLength;
+                psResult->nDataLen = (size_t)nDataLength;
             }
         }
         else
@@ -765,7 +765,7 @@ int PLMosaicDataset::OpenMosaic()
     double dfResolution = json_object_get_double(poResolution);
     if( EQUAL(pszSRS, "EPSG:3857") )
     {
-        double dfZoomLevel = log2(GM_ZOOM_0 / dfResolution);
+        double dfZoomLevel = log(GM_ZOOM_0 / dfResolution)/log(2.0);
         nZoomLevel = (int)(dfZoomLevel + 0.1);
         if( fabs(dfZoomLevel - nZoomLevel) > 1e-5 )
         {
