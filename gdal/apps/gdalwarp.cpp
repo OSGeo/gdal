@@ -1086,11 +1086,28 @@ int main( int argc, char ** argv )
                 CPLDebug("WARP", "Copying metadata from first source to destination dataset");
                 /* copy dataset-level metadata */
                 papszMetadata = GDALGetMetadata( hSrcDS, NULL );
-                if ( CSLCount(papszMetadata) > 0 ) {
-                    if ( GDALSetMetadata( hDstDS, papszMetadata, NULL ) != CE_None )
+
+                char** papszMetadataNew = NULL;
+                for( int i = 0; papszMetadata != NULL && papszMetadata[i] != NULL; i++ )
+                {
+                    // Do not preserve NODATA_VALUES when the output includes an alpha band
+                    if( bEnableDstAlpha &&
+                        EQUALN(papszMetadata[i], "NODATA_VALUES=", strlen("NODATA_VALUES=")) )
+                    {
+                        continue;
+                    }
+
+                    papszMetadataNew = CSLAddString(papszMetadataNew, papszMetadata[i]);
+                }
+
+                if ( CSLCount(papszMetadataNew) > 0 ) {
+                    if ( GDALSetMetadata( hDstDS, papszMetadataNew, NULL ) != CE_None )
                          fprintf( stderr, 
                                   "Warning: error copying metadata to destination dataset.\n" );
                 }
+
+                CSLDestroy(papszMetadataNew);
+
                 /* copy band-level metadata and other info */
                 if ( GDALGetRasterCount( hSrcDS ) == GDALGetRasterCount( hDstDS ) )              
                 {
