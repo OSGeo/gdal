@@ -240,8 +240,30 @@ def plmosaic_9():
     ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options = ['API_KEY=foo', 'MOSAIC=does_not_exist'])
     gdal.SetConfigOption('PL_URL', None)
     gdal.PopErrorHandler()
-    if ds is not None:
+    if ds is not None or gdal.GetLastErrorMsg().find('Cannot find /vsimem/root/does_not_exist') < 0:
         gdaltest.post_reason('fail')
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Invalid mosaic definition: invalid JSON
+
+def plmosaic_9bis():
+
+    if gdaltest.plmosaic_drv is None:
+        return 'skip'
+    
+    gdal.FileFromMemBuffer('/vsimem/root/my_mosaic', """{""")
+    gdal.SetConfigOption('PL_URL', '/vsimem/root')
+    gdal.PushErrorHandler()
+    ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options = ['API_KEY=foo', 'MOSAIC=my_mosaic'])
+    gdal.PopErrorHandler()
+    gdal.SetConfigOption('PL_URL', None)
+    if ds is not None or gdal.GetLastErrorMsg().find('JSON parsing error') < 0:
+        gdaltest.post_reason('fail')
+        print(gdal.GetLastErrorMsg())
         return 'fail'
 
     return 'success'
@@ -262,8 +284,9 @@ def plmosaic_10():
     ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options = ['API_KEY=foo', 'MOSAIC=my_mosaic'])
     gdal.PopErrorHandler()
     gdal.SetConfigOption('PL_URL', None)
-    if ds is not None:
+    if ds is not None or gdal.GetLastErrorMsg().find('Missing required parameter') < 0:
         gdaltest.post_reason('fail')
+        print(gdal.GetLastErrorMsg())
         return 'fail'
 
     return 'success'
@@ -285,14 +308,16 @@ def plmosaic_11():
     "resolution": 4.77731426716,
     "links" : {
         "quads" : "/vsimem/root/my_mosaic/quads/"
+    }
 }""")
     gdal.SetConfigOption('PL_URL', '/vsimem/root')
     gdal.PushErrorHandler()
     ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options = ['API_KEY=foo', 'MOSAIC=my_mosaic'])
     gdal.PopErrorHandler()
     gdal.SetConfigOption('PL_URL', None)
-    if ds is not None:
+    if ds is not None or gdal.GetLastErrorMsg().find('Unsupported coordinate_system') < 0:
         gdaltest.post_reason('fail')
+        print(gdal.GetLastErrorMsg())
         return 'fail'
 
     return 'success'
@@ -314,14 +339,16 @@ def plmosaic_12():
     "resolution": 4.77731426716,
     "links" : {
         "quads" : "/vsimem/root/my_mosaic/quads/"
+    }
 }""")
     gdal.SetConfigOption('PL_URL', '/vsimem/root')
     gdal.PushErrorHandler()
     ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options = ['API_KEY=foo', 'MOSAIC=my_mosaic'])
     gdal.PopErrorHandler()
     gdal.SetConfigOption('PL_URL', None)
-    if ds is not None:
+    if ds is not None or gdal.GetLastErrorMsg().find('Unsupported data_type') < 0:
         gdaltest.post_reason('fail')
+        print(gdal.GetLastErrorMsg())
         return 'fail'
 
     return 'success'
@@ -337,20 +364,22 @@ def plmosaic_13():
     gdal.FileFromMemBuffer('/vsimem/root/my_mosaic', """{
     "name": "my_mosaic",
     "coordinate_system": "EPSG:3857",
-    "datatype": "blabla",
+    "datatype": "byte",
     "quad_pattern": "my_{glevel:d}_{tilex:04d}_{tiley:04d}",
     "quad_size": 4096,
     "resolution": 1.234,
     "links" : {
         "quads" : "/vsimem/root/my_mosaic/quads/"
+    }
 }""")
     gdal.SetConfigOption('PL_URL', '/vsimem/root')
     gdal.PushErrorHandler()
     ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options = ['API_KEY=foo', 'MOSAIC=my_mosaic'])
     gdal.PopErrorHandler()
     gdal.SetConfigOption('PL_URL', None)
-    if ds is not None:
+    if ds is not None or gdal.GetLastErrorMsg().find('Unsupported resolution') < 0:
         gdaltest.post_reason('fail')
+        print(gdal.GetLastErrorMsg())
         return 'fail'
 
     return 'success'
@@ -366,20 +395,22 @@ def plmosaic_14():
     gdal.FileFromMemBuffer('/vsimem/root/my_mosaic', """{
     "name": "my_mosaic",
     "coordinate_system": "EPSG:3857",
-    "datatype": "blabla",
+    "datatype": "byte",
     "quad_pattern": "my_{glevel:d}_missing_tilex_and_tiley",
     "quad_size": 4096,
     "resolution": 4.77731426716,
     "links" : {
         "quads" : "/vsimem/root/my_mosaic/quads/"
+    }
 }""")
     gdal.SetConfigOption('PL_URL', '/vsimem/root')
     gdal.PushErrorHandler()
     ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options = ['API_KEY=foo', 'MOSAIC=my_mosaic'])
     gdal.PopErrorHandler()
     gdal.SetConfigOption('PL_URL', None)
-    if ds is not None:
+    if ds is not None or gdal.GetLastErrorMsg().find('Invalid quad_pattern') < 0:
         gdaltest.post_reason('fail')
+        print(gdal.GetLastErrorMsg())
         return 'fail'
 
     return 'success'
@@ -412,6 +443,10 @@ def plmosaic_15():
     ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options = ['API_KEY=foo', 'MOSAIC=my_mosaic', 'CACHE_PATH=tmp'])
     gdal.PopErrorHandler()
     gdal.SetConfigOption('PL_URL', None)
+    if gdal.GetLastErrorMsg().find('Invalid links.tiles') < 0:
+        gdaltest.post_reason('fail')
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
     if ds.GetRasterBand(1).GetOverviewCount() != 0:
         gdaltest.post_reason('fail')
         print(ds.GetRasterBand(1).GetOverviewCount())
@@ -861,6 +896,7 @@ gdaltest_list = [
     plmosaic_7,
     plmosaic_8,
     plmosaic_9,
+    plmosaic_9bis,
     plmosaic_10,
     plmosaic_11,
     plmosaic_12,
