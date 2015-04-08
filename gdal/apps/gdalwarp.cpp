@@ -182,8 +182,8 @@ for output bands (different values can be supplied for each band).  If more
 than one value is supplied all values should be quoted to keep them together
 as a single operating system argument.  New files will be initialized to this
 value and if possible the nodata value will be recorded in the output
-file. Use a value of <tt>None</tt> to ensure that nodata is not defined (GDAL>=2.0).
-If this argument is not used then nodata values will be copied from the source dataset (GDAL>=2.0).</dd>
+file. Use a value of <tt>None</tt> to ensure that nodata is not defined (GDAL>=1.11).
+If this argument is not used then nodata values will be copied from the source dataset (GDAL>=1.11).</dd>
 <dt> <b>-dstalpha</b>:</dt><dd> Create an output alpha band to identify 
 nodata (unset/transparent) pixels. </dd>
 <dt> <b>-wm</b> <em>memory_in_mb</em>:</dt><dd> Set the amount of memory (in
@@ -1466,7 +1466,7 @@ int main( int argc, char ** argv )
 /*      If the output dataset was created, and we have a destination    */
 /*      nodata value, go through marking the bands with the information.*/
 /* -------------------------------------------------------------------- */
-        if( pszDstNodata != NULL )
+        if( pszDstNodata != NULL && !EQUAL(pszDstNodata,"none") )
         {
             char **papszTokens = CSLTokenizeString( pszDstNodata );
             int  nTokenCount = CSLCount(papszTokens);
@@ -1479,6 +1479,9 @@ int main( int argc, char ** argv )
 
             for( i = 0; i < psWO->nBandCount; i++ )
             {
+                psWO->padfDstNoDataReal[i] = -1.1e20;
+                psWO->padfDstNoDataImag[i] = 0.0;
+
                 if( i < nTokenCount )
                 {
                     if ( papszTokens[i] != NULL && EQUAL(papszTokens[i],"none") )
@@ -1573,8 +1576,9 @@ int main( int argc, char ** argv )
 
             CSLDestroy( papszTokens );
         }
+
         /* else try to fill dstNoData from source bands */
-        else if ( psWO->padfSrcNoDataReal != NULL )
+        if ( pszDstNodata == NULL && psWO->padfSrcNoDataReal != NULL )
         {
             psWO->padfDstNoDataReal = (double *) 
                 CPLMalloc(psWO->nBandCount*sizeof(double));
