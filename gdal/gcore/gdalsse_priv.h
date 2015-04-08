@@ -32,7 +32,7 @@
 
 /* We restrict to 64bit processors because they are guaranteed to have SSE2 */
 /* Could possibly be used too on 32bit, but we would need to check at runtime */
-#if defined(__x86_64) || defined(_M_X64)
+#if (defined(__x86_64) || defined(_M_X64)) && !defined(USE_SSE2_EMULATION)
 
 /* Requires SSE2 */
 #include <emmintrin.h>
@@ -55,6 +55,13 @@ class XMMReg2Double
     }
 
     static inline XMMReg2Double Load2Val(const double* ptr)
+    {
+        XMMReg2Double reg;
+        reg.nsLoad2Val(ptr);
+        return reg;
+    }
+
+    static inline XMMReg2Double Load2Val(const float* ptr)
     {
         XMMReg2Double reg;
         reg.nsLoad2Val(ptr);
@@ -97,6 +104,15 @@ class XMMReg2Double
     inline void nsLoad2ValAligned(const double* pval)
     {
         xmm = _mm_load_pd(pval);
+    }
+
+    inline void nsLoad2Val(const float* pval)
+    {
+        __m128 temp1 = _mm_load_ss(pval);
+        __m128 temp2 = _mm_load_ss(pval + 1);
+        temp1 = _mm_shuffle_ps(temp1, temp2, _MM_SHUFFLE(1,0,1,0));
+        temp1 = _mm_shuffle_ps(temp1, temp1, _MM_SHUFFLE(3,3,2,0));
+        xmm = _mm_cvtps_pd(temp1);
     }
 
     inline void nsLoad2Val(const unsigned char* ptr)
@@ -154,6 +170,14 @@ class XMMReg2Double
         high.nsLoad2Val(ptr+2);
     }
 
+    static inline void Load4Val(const float* ptr, XMMReg2Double& low, XMMReg2Double& high)
+    {
+        __m128 temp1 = _mm_loadu_ps(ptr);
+        __m128 temp2 = _mm_shuffle_ps(temp1, temp1, _MM_SHUFFLE(3,2,3,2));
+        low.xmm = _mm_cvtps_pd(temp1);
+        high.xmm = _mm_cvtps_pd(temp2);
+    }
+    
     inline void Zeroize()
     {
         xmm = _mm_setzero_pd();
@@ -257,6 +281,13 @@ class XMMReg2Double
         reg.nsLoad2ValAligned(ptr);
         return reg;
     }
+    
+    static inline XMMReg2Double Load2Val(const float* ptr)
+    {
+        XMMReg2Double reg;
+        reg.nsLoad2Val(ptr);
+        return reg;
+    }
 
     static inline XMMReg2Double Load2Val(const unsigned char* ptr)
     {
@@ -283,7 +314,13 @@ class XMMReg2Double
         low = pval[0];
         high = pval[1];
     }
-    
+
+    inline void nsLoad2Val(const float* pval)
+    {
+        low = pval[0];
+        high = pval[1];
+    }
+
     inline void nsLoad2Val(const unsigned char* ptr)
     {
         low = ptr[0];
@@ -323,6 +360,12 @@ class XMMReg2Double
     }
 
     static inline void Load4Val(const double* ptr, XMMReg2Double& low, XMMReg2Double& high)
+    {
+        low.nsLoad2Val(ptr);
+        high.nsLoad2Val(ptr+2);
+    }
+
+    static inline void Load4Val(const float* ptr, XMMReg2Double& low, XMMReg2Double& high)
     {
         low.nsLoad2Val(ptr);
         high.nsLoad2Val(ptr+2);
@@ -458,6 +501,13 @@ class XMMReg4Double
         XMMReg4Double reg;
         reg.low.nsLoad2ValAligned(ptr);
         reg.high.nsLoad2ValAligned(ptr+2);
+        return reg;
+    }
+
+    static inline XMMReg4Double Load4Val(const float* ptr)
+    {
+        XMMReg4Double reg;
+        XMMReg2Double::Load4Val(ptr, reg.low, reg.high);
         return reg;
     }
     
