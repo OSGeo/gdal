@@ -245,7 +245,7 @@ TIFF* VSI_TIFFOpen(const char* name, const char* mode,
     int           i, a_out;
     char          access[32];
     TIFF          *tif;
-    int           bWriteMode = FALSE;
+    int           bAllocBuffer = FALSE;
 
     a_out = 0;
     access[0] = '\0';
@@ -262,8 +262,12 @@ TIFF* VSI_TIFFOpen(const char* name, const char* mode,
         if( mode[i] == 'w'
             || mode[i] == '+'
             || mode[i] == 'a' )
-            bWriteMode = TRUE;
+            bAllocBuffer = TRUE;
     }
+
+    // No need to buffer on /vsimem/
+    if( strncmp(name, "/vsimem/", strlen("/vsimem/")) == 0 )
+        bAllocBuffer = FALSE;
 
     strcat( access, "b" );
 
@@ -273,7 +277,7 @@ TIFF* VSI_TIFFOpen(const char* name, const char* mode,
     psGTH->fpL = fpL;
     psGTH->nExpectedPos = 0;
     psGTH->bAtEndOfFile = FALSE;
-    psGTH->abyWriteBuffer = (bWriteMode) ? (GByte*)VSIMalloc(BUFFER_SIZE) : NULL;
+    psGTH->abyWriteBuffer = (bAllocBuffer) ? (GByte*)VSIMalloc(BUFFER_SIZE) : NULL;
     psGTH->nWriteBufferSize = 0;
 
     tif = XTIFFClientOpen(name, mode,
