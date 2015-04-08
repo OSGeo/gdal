@@ -808,22 +808,22 @@ Java bindings:
  * updates to generate maven artifacts
 
 Perl bindings:
+ * The breaking changes are described in more detail in swig/perl/Changes-in-the-API-in-2.0.
+ * More comprehensive use of strings as constants (such as capabilities); they are also taken from bindings, which added new ones, and not hard-coded.
+ * New classes (e.g., VSIF, GeoTransform, GeomFieldDefn) and new methods (e.g., constant lists, Dataset::SpatialReference).
+ * Much improved documentation and switch to Doxygen::Filter::Perl.
+ * New test codes.
+ * Errors are confessed with stack trace and often caught earlier with better messages.
+ * Use of attributes is deprecated and methods have been added to replace them.
+ * Multiple geometry fields have necessitated some changes in schema and field related methods.
+ * More support for named parameters (i.e., hashes as arguments).
  * NoDataValue: set max float if undef is given.
  * Unit: set '' if undef is given.
  * Also other changes that will also remove some "use of uninitialized value in subroutine entry" warnings.
  * Automatic handling of SQL result layers.
- * Switch to using doxygen-filter-perl from CPAN for the documentation.
  * Fix issue with index attribute for field meta data (schema) (#5662)
- * Added missing new driver capabilities.
  * Warn if attempt to create non-integer column for colors.
  * Remove prefix GCP from GCP swig made attributes.
- * Get with eval constant names and values into class attributes (also adds new ones).
- * Add several class methods for the above.
- * More coherent use of constant strings given as arguments.
- * new method Dataset class: SpatialReference
- * Changes in schema and field related methods due to support for multiple spatial fields
- * prefer methods over access to class attributes
- * naming: Defn and FieldDefn methods return objects, Schema returns a Perl data structure. Layer, Feature, and FeatureDefn prefer GetFieldNames and GetFieldDefn methods, the latter requires a field name, others are not documented. Thus, 'Field' may be a 'GeomField' too.
 
 Python bindings:
  * add optional buf_xsize, buf_ysize and buf_type parameters to Dataset.ReadAsArray() and Dataset.LoadFile(), and use dataset RasterIO for better efficiency
