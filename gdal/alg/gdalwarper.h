@@ -85,7 +85,7 @@ CPLErr CPL_DLL
 GDALWarpNoDataMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
                       int nXOff, int nYOff, int nXSize, int nYSize,
                       GByte **papabyImageData, int bMaskIsFloat,
-                      void *pValidityMask );
+                      void *pValidityMask, int* pbOutAllValid );
 
 CPLErr CPL_DLL 
 GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
@@ -96,7 +96,7 @@ CPLErr CPL_DLL
 GDALWarpSrcAlphaMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
                         int nXOff, int nYOff, int nXSize, int nYSize,
                         GByte ** /*ppImageData */,
-                        int bMaskIsFloat, void *pValidityMask );
+                        int bMaskIsFloat, void *pValidityMask, int* pbOutAllOpaque );
 
 CPLErr CPL_DLL 
 GDALWarpSrcMaskMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,

@@ -364,11 +364,13 @@ CPLErr
 GDALWarpNoDataMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType, 
                       int /* nXOff */, int /* nYOff */, int nXSize, int nYSize,
                       GByte **ppImageData, 
-                      int bMaskIsFloat, void *pValidityMask )
+                      int bMaskIsFloat, void *pValidityMask, int* pbOutAllValid )
 
 {
     double *padfNoData = (double *) pMaskFuncArg;
     GUInt32 *panValidityMask = (GUInt32 *) pValidityMask;
+
+    *pbOutAllValid = FALSE;
 
     if( nBandCount != 1 || bMaskIsFloat )
     {
@@ -388,15 +390,21 @@ GDALWarpNoDataMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
           // nothing to do if value is out of range.
           if( padfNoData[0] < 0.0 || padfNoData[0] > 255.000001 
               || padfNoData[1] != 0.0 )
+          {
+              *pbOutAllValid = TRUE;
               return CE_None;
+          }
 
+          int bAllValid = TRUE;
           for( iOffset = nXSize*nYSize-1; iOffset >= 0; iOffset-- )
           {
               if( pabyData[iOffset] == nNoData )
               {
+                  bAllValid = FALSE;
                   panValidityMask[iOffset>>5] &= ~(0x01 << (iOffset & 0x1f));
               }
           }
+          *pbOutAllValid = bAllValid;
       }
       break;
       
@@ -409,15 +417,21 @@ GDALWarpNoDataMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
           // nothing to do if value is out of range.
           if( padfNoData[0] < -32768 || padfNoData[0] > 32767
               || padfNoData[1] != 0.0 )
+          {
+              *pbOutAllValid = TRUE;
               return CE_None;
+          }
 
+          int bAllValid = TRUE;
           for( iOffset = nXSize*nYSize-1; iOffset >= 0; iOffset-- )
           {
               if( panData[iOffset] == nNoData )
               {
+                  bAllValid = FALSE;
                   panValidityMask[iOffset>>5] &= ~(0x01 << (iOffset & 0x1f));
               }
           }
+          *pbOutAllValid = bAllValid;
       }
       break;
       
@@ -430,15 +444,21 @@ GDALWarpNoDataMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
           // nothing to do if value is out of range.
           if( padfNoData[0] < 0 || padfNoData[0] > 65535
               || padfNoData[1] != 0.0 )
+          {
+              *pbOutAllValid = TRUE;
               return CE_None;
+          }
 
+          int bAllValid = TRUE;
           for( iOffset = nXSize*nYSize-1; iOffset >= 0; iOffset-- )
           {
               if( panData[iOffset] == nNoData )
               {
+                  bAllValid = FALSE;
                   panValidityMask[iOffset>>5] &= ~(0x01 << (iOffset & 0x1f));
               }
           }
+          *pbOutAllValid = bAllValid;
       }
       break;
       
@@ -451,16 +471,22 @@ GDALWarpNoDataMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
 
           // nothing to do if value is out of range.
           if( padfNoData[1] != 0.0 )
+          {
+              *pbOutAllValid = TRUE;
               return CE_None;
+          }
 
+          int bAllValid = TRUE;
           for( iOffset = nXSize*nYSize-1; iOffset >= 0; iOffset-- )
           {
               float fVal = pafData[iOffset];
               if( (bIsNoDataNan && CPLIsNan(fVal)) || (!bIsNoDataNan && ARE_REAL_EQUAL(fVal, fNoData)) )
               {
+                  bAllValid = FALSE;
                   panValidityMask[iOffset>>5] &= ~(0x01 << (iOffset & 0x1f));
               }
           }
+          *pbOutAllValid = bAllValid;
       }
       break;
       
@@ -473,16 +499,22 @@ GDALWarpNoDataMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
 
           // nothing to do if value is out of range.
           if( padfNoData[1] != 0.0 )
+          {
+              *pbOutAllValid = TRUE;
               return CE_None;
+          }
 
+          int bAllValid = TRUE;
           for( iOffset = nXSize*nYSize-1; iOffset >= 0; iOffset-- )
           {
               double dfVal = padfData[iOffset];
               if( (bIsNoDataNan && CPLIsNan(dfVal)) || (!bIsNoDataNan && ARE_REAL_EQUAL(dfVal, dfNoData)) )
               {
+                  bAllValid = FALSE;
                   panValidityMask[iOffset>>5] &= ~(0x01 << (iOffset & 0x1f));
               }
           }
+          *pbOutAllValid = bAllValid;
       }
       break;
       
@@ -496,6 +528,7 @@ GDALWarpNoDataMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
           int bIsNoDataImagNan = CPLIsNan(padfNoData[1]);
 
           padfWrk = (double *) CPLMalloc(nXSize * sizeof(double) * 2);
+          int bAllValid = TRUE;
           for( iLine = 0; iLine < nYSize; iLine++ )
           {
               GDALCopyWords( ((GByte *) *ppImageData)+nWordSize*iLine*nXSize, 
@@ -511,12 +544,14 @@ GDALWarpNoDataMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
                   {
                       int iOffset = iPixel + iLine * nXSize;
                       
+                      bAllValid = FALSE;
                       panValidityMask[iOffset>>5] &=
                           ~(0x01 << (iOffset & 0x1f));
                   }
               }
               
           }
+          *pbOutAllValid = bAllValid;
 
           CPLFree( padfWrk );
       }
@@ -540,11 +575,13 @@ GDALWarpSrcAlphaMasker( void *pMaskFuncArg,
                         CPL_UNUSED GDALDataType eType,
                         int nXOff, int nYOff, int nXSize, int nYSize,
                         GByte ** /*ppImageData */,
-                        int bMaskIsFloat, void *pValidityMask )
+                        int bMaskIsFloat, void *pValidityMask,
+                        int* pbOutAllOpaque )
 
 {
     GDALWarpOptions *psWO = (GDALWarpOptions *) pMaskFuncArg;
     float *pafMask = (float *) pValidityMask;
+    *pbOutAllOpaque = FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      Do some minimal checking.                                       */
@@ -579,11 +616,16 @@ GDALWarpSrcAlphaMasker( void *pMaskFuncArg,
 /* -------------------------------------------------------------------- */
 /*      Rescale from 0-255 to 0.0-1.0.                                  */
 /* -------------------------------------------------------------------- */
+    int bOutAllOpaque = TRUE;
     for( int iPixel = nXSize * nYSize - 1; iPixel >= 0; iPixel-- )
     {                                    //  (1/255)
         pafMask[iPixel] = (float)( pafMask[iPixel] * 0.00392157 );
-        pafMask[iPixel] = MIN( 1.0F, pafMask[iPixel] );
+        if( pafMask[iPixel] >= 1.0F )
+            pafMask[iPixel] = 1.0F;
+        else
+            bOutAllOpaque = FALSE;
     }
+    *pbOutAllOpaque = bOutAllOpaque;
 
     return CE_None;
 }
