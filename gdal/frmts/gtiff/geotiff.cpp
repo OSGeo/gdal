@@ -717,7 +717,7 @@ CPLErr GTiffJPEGOverviewBand::IReadBlock( int nBlockXOff, int nBlockYOff, void *
             VSIFWriteL(&ch, 1, 1, fp);
             GByte* pabyBuffer = VSIGetMemFileBuffer( poGDS->osTmpFilename, NULL, FALSE);
             memcpy(pabyBuffer, poGDS->pabyJPEGTable, poGDS->nJPEGTableSize);
-            VSILFILE* fpTIF = (VSILFILE*) TIFFClientdata( hTIFF );
+            VSILFILE* fpTIF = VSI_TIFFGetVSILFile(TIFFClientdata( hTIFF ));
             VSIFSeekL(fpTIF, nOffset, SEEK_SET);
             VSIFReadL(pabyBuffer + poGDS->nJPEGTableSize, 1, (size_t)nByteCount, fpTIF);
         }
@@ -1154,7 +1154,10 @@ CPLErr GTiffRasterBand::DirectIO( GDALRWFlag eRWFlag,
 
     /* Make sure that TIFFTAG_STRIPOFFSETS is up-to-date */
     if (poGDS->GetAccess() == GA_Update)
+    {
         poGDS->FlushCache();
+        VSI_TIFFFlushBufferedWrite( TIFFClientdata( poGDS->hTIFF ) );
+    }
 
     /* Get strip offsets */
     toff_t *panTIFFOffsets = NULL;
@@ -1225,7 +1228,7 @@ CPLErr GTiffRasterBand::DirectIO( GDALRWFlag eRWFlag,
     /* Extract data from the file */
     if (eErr == CE_None)
     {
-        VSILFILE* fp = (VSILFILE*) TIFFClientdata( poGDS->hTIFF );
+        VSILFILE* fp = VSI_TIFFGetVSILFile(TIFFClientdata( poGDS->hTIFF ));
         int nRet = VSIFReadMultiRangeL(nReqYSize, ppData, panOffsets, panSizes, fp);
         if (nRet != 0)
             eErr = CE_Failure;
@@ -1393,7 +1396,7 @@ CPLVirtualMem* GTiffRasterBand::GetVirtualMemAutoInternal( GDALRWFlag eRWFlag,
 
     if( !poGDS->SetDirectory() ) /* very important to make hTIFF up-to-date */
         return NULL;
-    VSILFILE* fp = (VSILFILE*) TIFFClientdata( poGDS->hTIFF );
+    VSILFILE* fp = VSI_TIFFGetVSILFile(TIFFClientdata( poGDS->hTIFF ));
 
     vsi_l_offset nLength = (vsi_l_offset)nRasterYSize * nLineSize;
 
@@ -1414,7 +1417,10 @@ CPLVirtualMem* GTiffRasterBand::GetVirtualMemAutoInternal( GDALRWFlag eRWFlag,
 
     /* Make sure that TIFFTAG_STRIPOFFSETS is up-to-date */
     if (poGDS->GetAccess() == GA_Update)
+    {
         poGDS->FlushCache();
+        VSI_TIFFFlushBufferedWrite( TIFFClientdata( poGDS->hTIFF ) );
+    }
 
     /* Get strip offsets */
     toff_t *panTIFFOffsets = NULL;
@@ -1462,6 +1468,7 @@ CPLVirtualMem* GTiffRasterBand::GetVirtualMemAutoInternal( GDALRWFlag eRWFlag,
                 return NULL;
             }
             int ret = TIFFWriteEncodedStrip(poGDS->hTIFF, 0, pabyData, nBlockSize);
+            VSI_TIFFFlushBufferedWrite( TIFFClientdata( poGDS->hTIFF ) );
             VSIFree(pabyData);
             if( ret != nBlockSize )
             {
@@ -1708,7 +1715,7 @@ int GTiffDataset::VirtualMemIO( GDALRWFlag eRWFlag,
             eVirtualMemIOUsage = VIRTUAL_MEM_IO_NO;
             return -1;
         }
-        VSILFILE* fp = (VSILFILE*) TIFFClientdata( hTIFF );
+        VSILFILE* fp = VSI_TIFFGetVSILFile(TIFFClientdata( hTIFF ));
         if( !CPLIsVirtualMemFileMapAvailable() ||
             VSIFGetNativeFileDescriptorL(fp) == NULL )
         {
@@ -2337,7 +2344,7 @@ CPLErr GTiffDataset::DirectIO( GDALRWFlag eRWFlag,
     /* Extract data from the file */
     if (eErr == CE_None)
     {
-        VSILFILE* fp = (VSILFILE*) TIFFClientdata( hTIFF );
+        VSILFILE* fp = VSI_TIFFGetVSILFile(TIFFClientdata( hTIFF ));
         int nRet = VSIFReadMultiRangeL(nReqYSize, ppData, panOffsets, panSizes, fp);
         if (nRet != 0)
             eErr = CE_Failure;
@@ -6013,7 +6020,7 @@ int GTiffDataset::IsBlockAvailable( int nBlockId )
         if( ~(hTIFF->tif_dir.td_stripoffset[nBlockId]) == 0 ||
             ~(hTIFF->tif_dir.td_stripbytecount[nBlockId]) == 0 )
         {
-            VSILFILE* fp = (VSILFILE*)hTIFF->tif_clientdata;
+            VSILFILE* fp = VSI_TIFFGetVSILFile(TIFFClientdata( hTIFF ));
             vsi_l_offset nCurOffset = VSIFTellL(fp);
             if( ~(hTIFF->tif_dir.td_stripoffset[nBlockId]) == 0 )
             {
@@ -13151,7 +13158,7 @@ void GTiffDataset::LoadEXIFMetadata()
     if (!SetDirectory())
         return;
 
-    VSILFILE* fp = (VSILFILE*) TIFFClientdata( hTIFF );
+    VSILFILE* fp = VSI_TIFFGetVSILFile(TIFFClientdata( hTIFF ));
 
     GByte          abyHeader[2];
     VSIFSeekL(fp, 0, SEEK_SET);

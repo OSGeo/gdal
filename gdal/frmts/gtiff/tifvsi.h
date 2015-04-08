@@ -36,5 +36,7 @@
 #include "tiffio.h"
 
 TIFF* VSI_TIFFOpen(const char* name, const char* mode, VSILFILE* fp);
+VSILFILE* VSI_TIFFGetVSILFile(thandle_t th);
+int VSI_TIFFFlushBufferedWrite(thandle_t th);
 
 #endif // TIFVSI_H_INCLUDED
