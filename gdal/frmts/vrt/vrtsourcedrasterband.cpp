@@ -748,7 +748,7 @@ CPLErr VRTSourcedRasterBand::XMLInit( CPLXMLNode * psTree,
 /* -------------------------------------------------------------------- */
     if( nSources == 0 )
         CPLDebug( "VRT", "No valid sources found for band in VRT file:\n%s",
-                  pszVRTPath );
+                  pszVRTPath ? pszVRTPath : "(null)" );
 
     return CE_None;
 }
