@@ -1670,6 +1670,14 @@ dnl Not found... again, with -lsz.
       LIBS="$HDF_LIB_NAME $ORIG_LIBS"
     fi
 
+    dnl HDF4 library newer than 4.2.5 has a SDreset_maxopenfiles/SDget_maxopenfiles interface
+    dnl which allows to open many HDF files simultaneously (the max number of files was previously
+    dnl hardcoded and too low, smth. like 32). Search for it and use if available.
+    AC_CHECK_LIB(mfhdfalt,SDget_maxopenfiles,HDF4_HAS_MAXOPENFILES=yes,HDF4_HAS_MAXOPENFILES=no,$HDF_LIB_NAME)
+    if test "$HDF4_HAS_MAXOPENFILES" = "no" ; then
+      AC_CHECK_LIB(mfhdf,SDget_maxopenfiles,HDF4_HAS_MAXOPENFILES=yes,HDF4_HAS_MAXOPENFILES=no,$HDF_LIB_NAME)
+    fi
+
   dnl Now search for headers
     if test "$with_hdf4" = "yes" -o "$with_hdf4" = "" -a -r /usr/include/hdf/hdf.h ; then
       HDF4_INCLUDE="-I/usr/include/hdf"
@@ -1700,6 +1708,7 @@ fi
 
 AC_SUBST(HAVE_HDF4,$HAVE_HDF4)
 AC_SUBST(HDF4_INCLUDE,$HDF4_INCLUDE)
+AC_SUBST(HDF4_HAS_MAXOPENFILES,$HDF4_HAS_MAXOPENFILES)
 
 if test "$HAVE_HDF4" != "no" ; then
   OPT_GDAL_FORMATS="hdf4 $OPT_GDAL_FORMATS"
