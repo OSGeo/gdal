@@ -220,6 +220,10 @@ def virtualmem_4():
             pass
         ds = gdal.GetDriverByName('GTiff').Create(tmpfile, 400, 301, 2, options = [option])
         ar1 = ds.GetRasterBand(1).GetVirtualMemAutoArray(gdal.GF_Write)
+        if gdal.GetLastErrorMsg().find('mmap() failed') >= 0:
+            ar1 = None
+            ds = None
+            return 'skip'
         ar1 = None
         ar1 = ds.GetRasterBand(1).GetVirtualMemAutoArray(gdal.GF_Write)
         ar1_bis = ds.GetRasterBand(1).GetVirtualMemAutoArray(gdal.GF_Write)
@@ -228,14 +232,16 @@ def virtualmem_4():
             ar1[y].fill(127)
             ar2[y].fill(255)
 
-        if ar1_bis[0][0] != 127:
-            gdaltest.post_reason('fail')
-            return 'fail'
+        val = ar1_bis[0][0]
         # We need to destroy the array before dataset destruction
         ar1 = None
         ar1_bis = None
         ar2 = None
         ds = None
+        if val != 127:
+            gdaltest.post_reason('fail')
+            print(val)
+            return 'fail'
 
         ds = gdal.Open(tmpfile)
         ar1 = ds.GetRasterBand(1).GetVirtualMemAutoArray(gdal.GF_Read)
@@ -247,9 +253,15 @@ def virtualmem_4():
         for y in range(ds.RasterYSize):
             if not gdalnumeric.array_equal(ar1[y], ar_127):
                 gdaltest.post_reason('fail')
+                ar1 = None
+                ar2 = None
+                ds = None
                 return 'fail'
             if not gdalnumeric.array_equal(ar2[y], ar_255):
                 gdaltest.post_reason('fail')
+                ar1 = None
+                ar2 = None
+                ds = None
                 return 'fail'
         # We need to destroy the array before dataset destruction
         ar1 = None
