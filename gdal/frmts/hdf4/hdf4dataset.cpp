@@ -411,16 +411,19 @@ char **HDF4Dataset::HDF4EOSTokenizeAttrs( const char * pszString )
 }
 
 /************************************************************************/
-/*     Find object name and its value in HDF-EOS attributes.            */
+/*     Find object name, class value in HDF-EOS attributes.             */
 /*     Function returns pointer to the string in list next behind       */
 /*     recognized object.                                               */
 /************************************************************************/
 
-char **HDF4Dataset::HDF4EOSGetObject( char **papszAttrList, char **ppszAttrName,
+char **HDF4Dataset::HDF4EOSGetObject( char **papszAttrList,
+                                      char **ppszAttrName,
+                                      char **ppszAttrClass,
                                       char **ppszAttrValue )
 {
     int	    iCount, i, j;
     *ppszAttrName = NULL;
+    *ppszAttrClass = NULL;
     *ppszAttrValue = NULL;
 
     iCount = CSLCount( papszAttrList );
@@ -434,12 +437,16 @@ char **HDF4Dataset::HDF4EOSGetObject( char **papszAttrList, char **ppszAttrName,
 	        if ( EQUAL( papszAttrList[i + j], "END_OBJECT" ) ||
 		     EQUAL( papszAttrList[i + j], "OBJECT" ) )
 	            return &papszAttrList[i + j];
+	        else if ( EQUAL( papszAttrList[i + j], "CLASS" ) )
+	        {
+		    *ppszAttrClass = papszAttrList[i + j + 2];
+                    continue;
+	        }
 	        else if ( EQUAL( papszAttrList[i + j], "VALUE" ) )
 	        {
 		    *ppszAttrName = papszAttrList[i];
 	            *ppszAttrValue = papszAttrList[i + j + 2];
-
-		    return &papszAttrList[i + j + 2];
+                    continue;
 	        }
 	    }
 	}
@@ -495,14 +502,25 @@ char** HDF4Dataset::TranslateHDF4EOSAttributes( int32 iHandle,
     // or
     // (<number>,<number>,...)
     //
-    // Records within objects may follows in any order, objects may contains
-    // other objects (and lacks VALUE record), groups contains other groups
+    // Records within objects could come in any order, objects could contain
+    // other objects (and lack VALUE record), groups could contain other groups
     // and objects. Names of groups and objects are not unique and may repeat.
     // Objects may contains other types of records.
     //
-    // We are interested in OBJECTS structures only.
+    // We are interested in OBJECTS structures only. To avoid multiple items
+    // with the same name, names will be suffixed with the class values, e.g.
+    //
+    //  OBJECT                 = PARAMETERNAME
+    //    CLASS                = "9"
+    //    NUM_VAL              = 1
+    //    VALUE                = "Spectral IR Surf Bidirect Reflectivity"
+    //  END_OBJECT             = PARAMETERNAME
+    //
+    //  will be translated into metadata record:
+    //
+    //  PARAMETERNAME.9 = "Spectral IR Surf Bidirect Reflectivity"
 
-    char *pszAttrName, *pszAttrValue;
+    char *pszAttrName, *pszAttrClass, *pszAttrValue;
     char *pszAddAttrName = NULL;
     char **papszAttrList, **papszAttrs;
     
@@ -510,8 +528,8 @@ char** HDF4Dataset::TranslateHDF4EOSAttributes( int32 iHandle,
     papszAttrs = papszAttrList;
     while ( papszAttrs )
     {
-	papszAttrs =
-	    HDF4EOSGetObject( papszAttrs, &pszAttrName, &pszAttrValue );
+	papszAttrs = HDF4EOSGetObject( papszAttrs, &pszAttrName,
+                                       &pszAttrClass, &pszAttrValue );
 	if ( pszAttrName && pszAttrValue )
 	{
 	    // Now we should recognize special type of HDF EOS metastructures:
@@ -527,8 +545,11 @@ char** HDF4Dataset::TranslateHDF4EOSAttributes( int32 iHandle,
 	    }
 	    else
 	    {
-		papszMetadata =
-		    CSLAddNameValue( papszMetadata, pszAttrName, pszAttrValue );
+                // Add class suffix to the key name if applicable
+		papszMetadata = CSLAddNameValue( papszMetadata,
+                    pszAttrClass ?
+                    CPLOPrintf("%s.%s", pszAttrName, pszAttrClass) : pszAttrName,
+                    pszAttrValue );
 	    }
 	}
     }
