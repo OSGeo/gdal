@@ -457,7 +457,7 @@ int FileGDBTable::GuessFeatureLocations()
     nFileSize = VSIFTellL(fpTable);
     
     int bReportDeletedFeatures =
-        CSLTestBoolean(CPLGetConfigOption("OPENFILEGDB_REPORTED_DELETED_FEATURES", "NO"));
+        CSLTestBoolean(CPLGetConfigOption("OPENFILEGDB_REPORT_DELETED_FEATURES", "NO"));
 
     vsi_l_offset nOffset = 40 + nFieldDescLength;
     
