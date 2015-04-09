@@ -10,7 +10,8 @@ gdal_proximity.py srcfile dstfile [-srcband n] [-dstband n]
                   [-of format] [-co name=value]*
                   [-ot Byte/Int16/Int32/Float32/etc]
                   [-values n,n,n] [-distunits PIXEL/GEO]
-                  [-maxdist n] [-nodata n] [-fixed-buf-val n]
+                  [-maxdist n] [-nodata n] [-use_input_nodata YES/NO]
+                  [-fixed-buf-val n] 
 \endverbatim
 
 \section gdal_proximity_description DESCRIPTION
@@ -60,6 +61,10 @@ then the value 65535 will be used. Distance is interpreted in pixels unless
 
 <dt> <b>-nodata</b> <i>n</i>:</dt><dd>
 Specify a nodata value to use for the destination proximity raster.
+</dd>
+
+<dt> <b>-use_input_nodata</b> <i>YES/NO</i>:</dt><dd> (GDAL &gt;= 2.0)
+Indicate whether nodata pixels in the input raster should be nodata in the output raster (default NO).
 </dd>
 
 <dt> <b>-fixed-buf-val</b> <i>n</i>:</dt><dd>

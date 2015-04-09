@@ -43,7 +43,8 @@ gdal_proximity.py srcfile dstfile [-srcband n] [-dstband n]
                   [-of format] [-co name=value]*
                   [-ot Byte/Int16/Int32/Float32/etc]
                   [-values n,n,n] [-distunits PIXEL/GEO]
-                  [-maxdist n] [-nodata n] [-fixed-buf-val n] [-q] """)
+                  [-maxdist n] [-nodata n] [-use_input_nodata YES/NO]
+                  [-fixed-buf-val n] [-q] """)
     sys.exit(1)
 
 # =============================================================================
@@ -97,6 +98,10 @@ while i < len(argv):
     elif arg == '-nodata':
         i = i + 1
         options.append( 'NODATA=' + argv[i] )
+
+    elif arg == '-use_input_nodata':
+        i = i + 1
+        options.append( 'USE_INPUT_NODATA=' + argv[i] )
 
     elif arg == '-fixed-buf-val':
         i = i + 1
