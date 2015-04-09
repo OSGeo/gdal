@@ -69,7 +69,7 @@ class HDF4Dataset : public GDALPamDataset
 
     static char **HDF4EOSTokenizeAttrs( const char *pszString );
     static char **HDF4EOSGetObject( char **papszAttrList, char **ppszAttrName,
-                                    char **ppszAttrValue );
+                                    char **ppszAttrClass, char **ppszAttrValue );
      
   protected:
 
