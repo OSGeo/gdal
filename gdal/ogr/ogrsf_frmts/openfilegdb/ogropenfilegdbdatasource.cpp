@@ -1162,6 +1162,16 @@ void OGROpenFileGDBDataSource::ReleaseResultSet( OGRLayer * poResultsSet )
 
 char** OGROpenFileGDBDataSource::GetFileList()
 {
+    int nInterestTable = -1;
+    const char* pszFilenameWithoutPath = CPLGetFilename(m_pszName);
+    CPLString osFilenameRadix;
+    if( strlen(pszFilenameWithoutPath) == strlen("a00000000.gdbtable") &&
+        pszFilenameWithoutPath[0] == 'a' &&
+        sscanf(pszFilenameWithoutPath, "a%08x.gdbtable", &nInterestTable) == 1 )
+    {
+        osFilenameRadix = CPLSPrintf("a%08x.", nInterestTable);
+    }
+
     char** papszFiles = VSIReadDir(m_osDirName);
     CPLStringList osStringList;
     char** papszIter = papszFiles;
@@ -1169,7 +1179,11 @@ char** OGROpenFileGDBDataSource::GetFileList()
     {
         if( strcmp(*papszIter, ".") == 0 || strcmp(*papszIter, "..") == 0 )
             continue;
-        osStringList.AddString(CPLFormFilename(m_osDirName, *papszIter, NULL));
+        if( osFilenameRadix.size() == 0 ||
+            strncmp(*papszIter, osFilenameRadix, osFilenameRadix.size()) == 0 )
+        {
+            osStringList.AddString(CPLFormFilename(m_osDirName, *papszIter, NULL));
+        }
     }
     CSLDestroy(papszFiles);
     return osStringList.StealList();

@@ -412,6 +412,10 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
             poSRS->Dereference();
         }
     }
+    else if( m_osDefinition.size() == 0 && m_iGeomFieldIdx < 0 )
+    {
+        m_eGeomType = wkbNone;
+    }
 
     CPLXMLNode* psTree = NULL;
     CPLXMLNode* psGPFieldInfoExs = NULL;
@@ -575,6 +579,12 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
                                                  psDefault->Date.Minute,
                                                  psDefault->Date.Second));
         }
+        m_poFeatureDefn->AddFieldDefn(&oFieldDefn);
+    }
+
+    if( m_poLyrTable->HasDeletedFeaturesListed() )
+    {
+        OGRFieldDefn oFieldDefn("_deleted_", OFTInteger);
         m_poFeatureDefn->AddFieldDefn(&oFieldDefn);
     }
 
@@ -1318,6 +1328,13 @@ OGRFeature* OGROpenFileGDBLayer::GetCurrentFeature()
 
     if( poFeature == NULL )
         poFeature = new OGRFeature(m_poFeatureDefn);
+    
+    if( m_poLyrTable->HasDeletedFeaturesListed() )
+    {
+        poFeature->SetField(poFeature->GetFieldCount() - 1,
+                            m_poLyrTable->IsCurRowDeleted());
+    }
+
     poFeature->SetFID(iRow + 1);
     return poFeature;
 }
