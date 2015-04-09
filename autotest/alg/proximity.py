@@ -100,11 +100,47 @@ def proximity_2():
         gdaltest.post_reason( 'got wrong checksum' )
         return 'fail'
     else:
-        return 'success' 
+        return 'success'
+
+###############################################################################
+# Try input nodata option
+
+def proximity_3():
+
+    drv = gdal.GetDriverByName( 'GTiff' )
+    src_ds = gdal.Open('data/pat.tif')
+    src_band = src_ds.GetRasterBand(1)
+    
+    dst_ds = drv.Create('tmp/proximity_3.tif', 25, 25, 1, gdal.GDT_Byte )
+    dst_band = dst_ds.GetRasterBand(1)
+    
+    gdal.ComputeProximity( src_band, dst_band,
+                          options = [ 'VALUES=65,64',
+                                      'MAXDIST=12',
+                                      'USE_INPUT_NODATA=YES',
+                                      'NODATA=0' ] )
+
+    cs_expected = 1465
+    cs = dst_band.Checksum()
+    
+    dst_band = None
+    dst_ds = None
+
+    if cs == cs_expected \
+       or gdal.GetConfigOption( 'CPL_DEBUG', 'OFF' ) != 'ON':
+        drv.Delete( 'tmp/proximity_3.tif' )
+    
+    if cs != cs_expected:
+        print('Got: ', cs)
+        gdaltest.post_reason( 'got wrong checksum' )
+        return 'fail'
+    else:
+        return 'success'
 
 gdaltest_list = [
     proximity_1,
-    proximity_2
+    proximity_2,
+    proximity_3
     ]
 
 if __name__ == '__main__':
