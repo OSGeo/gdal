@@ -117,6 +117,8 @@ void FileGDBTable::Init()
     nTablxOffsetSize = 0;
     anFeatureOffsets.resize(0);
     nOffsetHeaderEnd = 0;
+    bHasDeletedFeaturesListed = FALSE;
+    bIsDeleted = FALSE;
 }
 
 /************************************************************************/
@@ -445,10 +447,17 @@ int FileGDBTable::IsLikelyFeatureAtOffset(vsi_l_offset nOffset,
 /*                      GuessFeatureLocations()                         */
 /************************************************************************/
 
+#define MARK_DELETED(x)  ((x) | (((GIntBig)1) << 63))
+#define IS_DELETED(x)    (((x) & (((GIntBig)1) << 63)) != 0)
+#define GET_OFFSET(x)    ((x) & ~(((GIntBig)1) << 63))
+
 int FileGDBTable::GuessFeatureLocations()
 {
     VSIFSeekL(fpTable, 0, SEEK_END);
     nFileSize = VSIFTellL(fpTable);
+    
+    int bReportDeletedFeatures =
+        CSLTestBoolean(CPLGetConfigOption("OPENFILEGDB_REPORTED_DELETED_FEATURES", "NO"));
 
     vsi_l_offset nOffset = 40 + nFieldDescLength;
     
@@ -489,8 +498,16 @@ int FileGDBTable::GuessFeatureLocations()
                      nOffset, nSize);*/
             if( bDeletedRecord )
             {
-                nInvalidRecords ++;
-                anFeatureOffsets.push_back(0);
+                if( bReportDeletedFeatures )
+                {
+                    bHasDeletedFeaturesListed = TRUE;
+                    anFeatureOffsets.push_back(MARK_DELETED(nOffset));
+                }
+                else
+                {
+                    nInvalidRecords ++;
+                    anFeatureOffsets.push_back(0);
+                }
             }
             else
                 anFeatureOffsets.push_back(nOffset);
@@ -500,10 +517,13 @@ int FileGDBTable::GuessFeatureLocations()
     nTotalRecordCount = (int) anFeatureOffsets.size();
     if( nTotalRecordCount - nInvalidRecords > nValidRecordCount )
     {
-        CPLError(CE_Warning, CPLE_AppDefined,
-                 "More features found (%d) than declared number of valid features (%d). "
-                 "So deleted features will likely be reported.",
-                 nTotalRecordCount - nInvalidRecords, nValidRecordCount);
+        if( !bHasDeletedFeaturesListed )
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                    "More features found (%d) than declared number of valid features (%d). "
+                    "So deleted features will likely be reported.",
+                    nTotalRecordCount - nInvalidRecords, nValidRecordCount);
+        }
         nValidRecordCount = nTotalRecordCount - nInvalidRecords;
     }
 
@@ -1086,8 +1106,12 @@ vsi_l_offset FileGDBTable::GetOffsetInTableForRow(int iRow)
     const int errorRetValue = 0;
     returnErrorIf(iRow < 0 || iRow >= nTotalRecordCount );
 
+    bIsDeleted = FALSE;
     if( fpTableX == NULL )
-        return anFeatureOffsets[iRow];
+    {
+        bIsDeleted = IS_DELETED(anFeatureOffsets[iRow]);
+        return GET_OFFSET(anFeatureOffsets[iRow]);
+    }
 
     if( pabyTablXBlockMap != NULL )
     {
@@ -1154,6 +1178,11 @@ int FileGDBTable::SelectRow(int iRow)
                 VSIFReadL(abyBuffer, 4, 1, fpTable) != 1, nCurRow = -1 );
 
         nRowBlobLength = GetUInt32(abyBuffer, 0);
+        if( bIsDeleted )
+        {
+            nRowBlobLength = (GUInt32)(-(int)nRowBlobLength);
+        }
+
         if( !(apoFields.size() == 0 && nRowBlobLength == 0) )
         {
             /* CPLDebug("OpenFileGDB", "nRowBlobLength = %u", nRowBlobLength); */
