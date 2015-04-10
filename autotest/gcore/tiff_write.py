@@ -803,6 +803,46 @@ def tiff_write_rpc_txt():
     return 'success'
 
 ###############################################################################
+# Test writing a TIFF with an RPC in .aux.xml
+
+def tiff_write_rpc_in_pam():
+
+    ds_in = gdal.Open('data/rpc.vrt')
+    rpc_md = ds_in.GetMetadata('RPC')
+
+    ds = gdaltest.tiff_drv.CreateCopy( 'tmp/tiff_write_rpc_in_pam.tif', ds_in,
+                         options = [ 'PROFILE=BASELINE', 'RPB=NO' ] )
+
+    ds_in = None
+    ds = None
+
+    # Ensure there is a .aux.xml file which might hold the RPC.
+    try:
+        os.stat( 'tmp/tiff_write_rpc_in_pam.tif.aux.xml' )
+    except:
+        gdaltest.post_reason( 'missing .aux.xml file.' )
+        return 'fail'
+
+    # confirm there is no .RPB file created.
+    try:
+        open('tmp/tiff_write_rpc_txt.RPB').read()
+        gdaltest.post_reason( 'unexpectedly found .RPB file' )
+        return 'fail'
+    except:
+        pass
+
+    # Open the dataset, and confirm the RPC data is still intact.
+    ds = gdal.Open( 'tmp/tiff_write_rpc_in_pam.tif' )
+
+    if not gdaltest.rpcs_equal(ds.GetMetadata('RPC'),rpc_md):
+        return 'fail'
+
+    ds = None
+
+    gdaltest.tiff_drv.Delete( 'tmp/tiff_write_rpc_in_pam.tif' )
+
+    return 'success'
+###############################################################################
 # Test the write of a pixel-interleaved image with NBITS = 7
 
 def tiff_write_19():
@@ -5766,6 +5806,7 @@ gdaltest_list = [
     tiff_write_18,
     tiff_write_18_disable_readdir,
     tiff_write_rpc_txt,
+    tiff_write_rpc_in_pam,
     tiff_write_19,
     tiff_write_20,
     tiff_write_21,

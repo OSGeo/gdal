@@ -447,6 +447,8 @@ class GTiffDataset : public GDALPamDataset
     virtual CPLErr          CreateMaskBand( int nFlags );
 
     // only needed by createcopy and close code.
+    static void     WriteRPC( GDALDataset *, TIFF *, int, const char *,
+                                   const char *, char **, int bWriteOnlyInPAMIfNeeded = FALSE );
     static int	    WriteMetadata( GDALDataset *, TIFF *, int, const char *,
                                    const char *, char **, int bExcludeRPBandIMGFileWriting = FALSE );
     static void	    WriteNoDataValue( TIFF *, double );
@@ -7446,6 +7448,59 @@ static void WriteMDMetadata( GDALMultiDomainMetadata *poMDMD, TIFF *hTIFF,
 }
 
 /************************************************************************/
+/*                           WriteRPC()                                 */
+/************************************************************************/
+
+void GTiffDataset::WriteRPC( GDALDataset *poSrcDS, TIFF *hTIFF,
+                             int bSrcIsGeoTIFF,
+                             const char *pszProfile,
+                             const char *pszTIFFFilename,
+                             char **papszCreationOptions,
+                             int bWriteOnlyInPAMIfNeeded )
+{
+
+/* -------------------------------------------------------------------- */
+/*      Handle RPC data written to an RPB file.                         */
+/* -------------------------------------------------------------------- */
+    char **papszRPCMD = poSrcDS->GetMetadata("RPC");
+    if( papszRPCMD != NULL )
+    {
+        int bRPCSerializedOtherWay = FALSE;
+
+        if( EQUAL(pszProfile,"GDALGeoTIFF") )
+        {
+            if( !bWriteOnlyInPAMIfNeeded )
+                WriteRPCTag( hTIFF, papszRPCMD );
+            bRPCSerializedOtherWay = TRUE;
+        }
+
+        /* Write RPB file if explicitely asked, or if a non GDAL specific */
+        /* profile is selected and RPCTXT is not asked */
+        int bRPBExplicitelyAsked = CSLFetchBoolean( papszCreationOptions, "RPB", FALSE );
+        int bRPBExplicitelyDenied = !CSLFetchBoolean( papszCreationOptions, "RPB", TRUE );
+        if( (!EQUAL(pszProfile,"GDALGeoTIFF") && 
+             !CSLFetchBoolean( papszCreationOptions, "RPCTXT", FALSE ) &&
+             !bRPBExplicitelyDenied )
+            || bRPBExplicitelyAsked )
+        {
+            if( !bWriteOnlyInPAMIfNeeded )
+                GDALWriteRPBFile( pszTIFFFilename, papszRPCMD );
+            bRPCSerializedOtherWay = TRUE;
+        }
+
+        if( CSLFetchBoolean( papszCreationOptions, "RPCTXT", FALSE ) )
+        {
+            if( !bWriteOnlyInPAMIfNeeded )
+                GDALWriteRPCTXTFile( pszTIFFFilename, papszRPCMD );
+            bRPCSerializedOtherWay = TRUE;
+        }
+
+        if( !bRPCSerializedOtherWay && bWriteOnlyInPAMIfNeeded && bSrcIsGeoTIFF )
+            ((GTiffDataset*)poSrcDS)->GDALPamDataset::SetMetadata(papszRPCMD, "RPC");
+    }
+}
+
+/************************************************************************/
 /*                           WriteMetadata()                            */
 /************************************************************************/
 
@@ -7481,39 +7536,21 @@ int  GTiffDataset::WriteMetadata( GDALDataset *poSrcDS, TIFF *hTIFF,
         }
     }
 
-/* -------------------------------------------------------------------- */
-/*      Handle RPC data written to an RPB file.                         */
-/* -------------------------------------------------------------------- */
-    char **papszRPCMD = poSrcDS->GetMetadata("RPC");
-    if( papszRPCMD != NULL && !bExcludeRPBandIMGFileWriting )
+    if( !bExcludeRPBandIMGFileWriting )
     {
-        if( EQUAL(pszProfile,"GDALGeoTIFF") )
-            WriteRPCTag( hTIFF, papszRPCMD );
-
-        /* Write RPB file if explicitely asked, or if a non GDAL specific */
-        /* profile is selected and RPCTXT is not asked */
-        if( (!EQUAL(pszProfile,"GDALGeoTIFF") && 
-             !CSLFetchBoolean( papszCreationOptions, "RPCTXT", FALSE ))
-            || CSLFetchBoolean( papszCreationOptions, "RPB", FALSE ) )
-        {
-            GDALWriteRPBFile( pszTIFFFilename, papszRPCMD );
-        }
-
-        if( CSLFetchBoolean( papszCreationOptions, "RPCTXT", FALSE ) )
-        {
-            GDALWriteRPCTXTFile( pszTIFFFilename, papszRPCMD );
-        }
-    }
+        WriteRPC(poSrcDS, hTIFF, bSrcIsGeoTIFF,
+                 pszProfile, pszTIFFFilename,
+                 papszCreationOptions);
 
 /* -------------------------------------------------------------------- */
 /*      Handle metadata data written to an IMD file.                    */
 /* -------------------------------------------------------------------- */
-    char **papszIMDMD = poSrcDS->GetMetadata("IMD");
-    if( papszIMDMD != NULL && !bExcludeRPBandIMGFileWriting)
-    {
-        GDALWriteIMDFile( pszTIFFFilename, papszIMDMD );
+        char **papszIMDMD = poSrcDS->GetMetadata("IMD");
+        if( papszIMDMD != NULL )
+        {
+            GDALWriteIMDFile( pszTIFFFilename, papszIMDMD );
+        }
     }
-
 /* -------------------------------------------------------------------- */
 /*      We also need to address band specific metadata, and special     */
 /*      "role" metadata.                                                */
@@ -12281,6 +12318,10 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     if (!bHasWrittenMDInGeotiffTAG && !bStreaming)
         GTiffDataset::WriteMetadata( poDS, hTIFF, TRUE, pszProfile,
                                      pszFilename, papszOptions, TRUE /* don't write RPC and IMD file again */);
+
+    if( !bStreaming )
+        GTiffDataset::WriteRPC( poDS, hTIFF, TRUE, pszProfile,
+                                     pszFilename, papszOptions, TRUE /* write only in PAM AND if needed */ );
 
     /* To avoid unnecessary directory rewriting */
     poDS->bMetadataChanged = FALSE;
