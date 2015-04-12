@@ -98,7 +98,7 @@ def mbtiles_2():
         return 'fail'
 
     gt = ds.GetGeoTransform()
-    expected_gt = ( -20037508.342789199, 78271.516964020309, 0.0, 20037508.342789199, 0.0, -78271.516964020309 )
+    expected_gt = ( -20037508.34, 78271.516953124999, 0.0, 20037508.34, 0.0, -78271.516953124999 )
     for i in range(6):
         if abs(gt[i] - expected_gt[i]) > 1e-15:
             gdaltest.post_reason('bad gt')
