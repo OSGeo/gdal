@@ -1049,8 +1049,7 @@ int MBTilesDataset::CloseDependentDatasets()
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-//#define MAX_GM 20037508.3427892
-#define MAX_GM 20037500.
+#define MAX_GM 20037508.34
 
 CPLErr MBTilesDataset::GetGeoTransform(double* padfGeoTransform)
 {
