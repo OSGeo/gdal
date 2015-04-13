@@ -347,10 +347,11 @@ int CPL_STDCALL GDALFlushCacheBlock()
  *
  * C++ analog to the C function GDALFlushCacheBlock().
  * 
+ * @param bDirtyBlocksOnly Only flushes dirty blocks.
  * @return TRUE if successful or FALSE if no flushable block is found.
  */
 
-int GDALRasterBlock::FlushCacheBlock()
+int GDALRasterBlock::FlushCacheBlock(int bDirtyBlocksOnly)
 
 {
     GDALRasterBlock *poTarget;
@@ -359,7 +360,8 @@ int GDALRasterBlock::FlushCacheBlock()
         INITIALIZE_LOCK;
         poTarget = poOldest;
 
-        while( poTarget != NULL && poTarget->GetLockCount() > 0 ) 
+        while( poTarget != NULL && (poTarget->GetLockCount() > 0 ||
+               (bDirtyBlocksOnly && !poTarget->GetDirty())) )
             poTarget = poTarget->poPrevious;
         
         if( poTarget == NULL )
@@ -386,6 +388,35 @@ int GDALRasterBlock::FlushCacheBlock()
     delete poTarget;
 
     return TRUE;
+}
+
+/************************************************************************/
+/*                          FlushDirtyBlocks()                          */
+/************************************************************************/
+
+/**
+ * \brief Flush all dirty blocks from cache.
+ *
+ * This static method is normally used to recover memory and is especially
+ * usefull when doing multi-threaded code that can trigger the block cache.
+ *
+ * Due to the current design of the block cache, dirty blocks belonging to a same
+ * dataset could be pushed simultanously to the IWriteBlock() method of that
+ * dataset from different threads, causing races.
+ *
+ * Calling this method before that code can help workarounding that issue,
+ * in a multiple readers, one writer scenario.
+ *
+ * @since GDAL 2.0
+ */
+
+void GDALRasterBlock::FlushDirtyBlocks()
+
+{
+    while( FlushCacheBlock(TRUE) )
+    {
+        /* go on */
+    }
 }
 
 /************************************************************************/
