@@ -29,6 +29,7 @@
 #  DEALINGS IN THE SOFTWARE.
 #******************************************************************************
 
+import os
 import sys
 from osgeo import gdal
 from osgeo import osr
@@ -1200,6 +1201,24 @@ def main():
 
     if filename is None:
         return Usage()
+
+    if ogc_schemas_location is None:
+        try:
+            os.stat('SCHEMAS_OPENGIS_NET')
+            ogc_schemas_location = 'SCHEMAS_OPENGIS_NET'
+        except:
+            pass
+
+    if ogc_schemas_location is not None:
+        try:
+            os.stat('%s/xml.xsd' % ogc_schemas_location)
+        except:
+            try:
+                os.stat('%s/SCHEMAS_OPENGIS_NET/xml.xsd' % ogc_schemas_location)
+                ogc_schemas_location = '%s/SCHEMAS_OPENGIS_NET' % ogc_schemas_location
+            except:
+                print('Cannot find %s/xml.xsd. -ogc_schemas_location value is probably wrong' % ogc_schemas_location)
+                return 1
 
     return validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location, datatype).error_count
 
