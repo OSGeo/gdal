@@ -1982,6 +1982,36 @@ def ogr_geojson_40():
 
     return 'success'
 
+###############################################################################
+# Test ogr.CreateGeometryFromJson()
+
+def ogr_geojson_41():
+
+    if gdaltest.geojson_drv is None:
+        return 'skip'
+
+    # Check that by default we return a WGS 84 SRS
+    g = ogr.CreateGeometryFromJson("{ 'type': 'Point', 'coordinates' : [ 2, 49] }")
+    if g.ExportToWkt() != 'POINT (2 49)':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    srs = g.GetSpatialReference()
+    g = None
+    
+    if srs.ExportToWkt().find('WGS 84') < 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # But if a crs object is set (allowed originally, but not recommended!), we use it
+    g = ogr.CreateGeometryFromJson('{ "type": "Point", "coordinates" : [ 2, 49], "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::4322" } } }')
+    srs = g.GetSpatialReference()
+    if srs.ExportToWkt().find('4322') < 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+
 gdaltest_list = [ 
     ogr_geojson_1,
     ogr_geojson_2,
@@ -2023,6 +2053,7 @@ gdaltest_list = [
     ogr_geojson_38,
     ogr_geojson_39,
     ogr_geojson_40,
+    ogr_geojson_41,
     ogr_geojson_cleanup ]
 
 if __name__ == '__main__':
