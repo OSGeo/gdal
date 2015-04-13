@@ -1762,6 +1762,12 @@ OGRGeometryH OGR_G_CreateGeometryFromJson( const char* pszJson )
 
         OGRGeometry* poGeometry = NULL;
         poGeometry = OGRGeoJSONReadGeometry( poObj );
+
+        /* Assign WGS84 if no CRS defined on geometry */
+        if( poGeometry && poGeometry->getSpatialReference() == NULL )
+        {
+            poGeometry->assignSpatialReference(OGRSpatialReference::GetWGS84SRS());
+        }
         
         /* Release JSON tree. */
         json_object_put( poObj );

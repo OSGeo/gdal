@@ -33,6 +33,7 @@
 #include "cpl_csv.h"
 #include "cpl_http.h"
 #include "cpl_atomic_ops.h"
+#include "cpl_multiproc.h"
 
 CPL_CVSID("$Id$");
 
@@ -7129,6 +7130,7 @@ OGRErr OGRSpatialReference::SetExtension( const char *pszTargetKey,
 CPL_C_START 
 void CleanupESRIDatumMappingTable();
 CPL_C_END
+static void CleanupSRSWGS84Thread();
 
 /**
  * \brief Cleanup cached SRS related memory.
@@ -7142,6 +7144,7 @@ void OSRCleanup( void )
     CleanupESRIDatumMappingTable();
     CSVDeaccess( NULL );
     OCTCleanupProjMutex();
+    CleanupSRSWGS84Thread();
 }
 
 /************************************************************************/
@@ -7558,4 +7561,43 @@ double OSRCalcSemiMinorFromInvFlattening( double dfSemiMajor, double dfInvFlatte
     }
     else
         return dfSemiMajor * (1.0 - 1.0/dfInvFlattening);
+}
+
+/************************************************************************/
+/*                        GetWGS84SRS()                                 */
+/************************************************************************/
+
+static OGRSpatialReference* poSRSWGS84 = NULL;
+static CPLMutex* hMutex = NULL;
+
+/**
+ * \brief Returns an instance of a SRS object with WGS84 WKT.
+ *
+ * The reference counter of the returned object is not increased by this operation.
+ *
+ * @return instance.
+ * @since GDAL 2.0
+ */
+
+OGRSpatialReference* OGRSpatialReference::GetWGS84SRS()
+{
+    CPLMutexHolderD(&hMutex);
+    if( poSRSWGS84 == NULL )
+        poSRSWGS84 = new OGRSpatialReference(SRS_WKT_WGS84);
+    return poSRSWGS84;
+}
+
+/************************************************************************/
+/*                        CleanupSRSWGS84Thread()                       */
+/************************************************************************/
+
+static void CleanupSRSWGS84Thread()
+{
+    if( hMutex != NULL )
+    {
+        poSRSWGS84->Release();
+        poSRSWGS84 = NULL;
+        CPLDestroyMutex(hMutex);
+        hMutex = NULL;
+    }
 }

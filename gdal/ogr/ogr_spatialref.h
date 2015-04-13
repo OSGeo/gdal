@@ -551,6 +551,8 @@ class CPL_DLL OGRSpatialReference
     OGRErr      ImportFromESRIWisconsinWKT( 
         const char* pszPrjName, double dfCentralMeridian, double dfLatOfOrigin, 
         const char* pszUnitsName, const char* pszCSName = 0 );
+
+    static OGRSpatialReference* GetWGS84SRS();
 };
 
 /************************************************************************/
