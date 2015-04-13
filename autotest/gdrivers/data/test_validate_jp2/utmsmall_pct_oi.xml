@@ -14,7 +14,7 @@
                        http://www.opengis.net/swe/2.0 http://schemas.opengis.net/sweCommon/2.0/swe.xsd">
     <gml:boundedBy><gml:Null/></gml:boundedBy>
     <gml:domainSet>
-        <gml:RectifiedGrid dimension="2">
+        <gml:RectifiedGrid dimension="2" gml:id="RG">
             <gml:limits>
                 <gml:GridEnvelope>
                 <gml:low>0 0</gml:low>
