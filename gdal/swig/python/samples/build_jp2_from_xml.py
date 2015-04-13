@@ -40,7 +40,7 @@ XML_VALUE_IDX = 1
 XML_FIRST_CHILD_IDX = 2
 
 def Usage():
-    print('Usage:  parse_jp2_from_xml in.xml out.jp2')
+    print('Usage: build_jp2_from_xml in.xml out.jp2')
     return 1
 
 def find_xml_node(ar, element_name, immediate_child = False, only_attributes = False):
