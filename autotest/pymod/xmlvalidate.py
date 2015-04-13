@@ -362,7 +362,7 @@ def download_inspire_schemas(target_dir = '.', \
                              target_subdir = 'inspire_schemas',
                              force_download = False):
 
-    if not download_ogc_schemas(target_dir = target_dir):
+    if not download_ogc_schemas(target_dir = target_dir, force_download = force_download):
         return False
 
     try:
