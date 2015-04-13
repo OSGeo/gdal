@@ -13,6 +13,16 @@ This implementation based on JasPer software (see below).<p>
 Starting with GDAL 1.9.0, XMP metadata can be extracted from JPEG2000 files, and will be
 stored as XML raw content in the xml:XMP metadata domain.<p>
 
+<h2>Option Options</h2>
+
+(GDAL &gt;= 2.0 )
+
+The following open option is available:
+<ul>
+<li><p><b>1BIT_ALPHA_PROMOTION=YES/NO</b>: Whether a 1-bit alpha channel should be promoted to 8-bit.
+Defaults to YES.</li>
+</ul>
+
 <h2>Creation Options</h2>
 <ul>
 	<li> <b>WORLDFILE=ON</b>: Force the generation of an associated
