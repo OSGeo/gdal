@@ -2094,7 +2094,10 @@ LoadCutline( const char *pszCutlineDSName, const char *pszCLayer,
 
     hSrcDS = OGROpen( pszCutlineDSName, FALSE, NULL );
     if( hSrcDS == NULL )
+    {
+        fprintf( stderr, "Cannot open %s.\n", pszCutlineDSName);
         GDALExit( 1 );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Get the source layer                                            */
