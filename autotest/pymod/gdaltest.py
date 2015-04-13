@@ -1020,14 +1020,14 @@ def geotransform_equals(gt1, gt2, gt_epsilon):
 # If GDAL_DOWNLOAD_TEST_DATA is not defined, the function fails
 # If GDAL_DOWNLOAD_TEST_DATA is defined, 'url' is downloaded  as 'filename' in 'tmp/cache/'
 
-def download_file(url, filename, download_size = -1, force_download = False, max_download_duration = None):
+def download_file(url, filename, download_size = -1, force_download = False, max_download_duration = None, base_dir = 'tmp/cache'):
     
-    if filename.startswith('tmp/cache/'):
-        filename = filename[len('tmp/cache/'):]
+    if filename.startswith(base_dir + '/'):
+        filename = filename[len(base_dir + '/'):]
 
     global count_skipped_tests_download
     try:
-        os.stat( 'tmp/cache/' + filename )
+        os.stat( base_dir + '/' + filename )
         return True
     except:
         if 'GDAL_DOWNLOAD_TEST_DATA' in os.environ or force_download:
@@ -1083,12 +1083,12 @@ def download_file(url, filename, download_size = -1, force_download = False, max
                     return False
 
             try:
-                os.stat( 'tmp/cache' )
+                os.stat( base_dir )
             except:
-                os.mkdir('tmp/cache')
+                os.mkdir(base_dir)
 
             try:
-                open( 'tmp/cache/' + filename, 'wb').write(val)
+                open( base_dir + '/' + filename, 'wb').write(val)
                 return True
             except:
                 print('Cannot write %s' % (filename))
