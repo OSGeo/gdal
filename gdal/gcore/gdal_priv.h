@@ -539,7 +539,8 @@ class CPL_DLL GDALRasterBlock
     /// @return source raster band of the raster block.
     GDALRasterBand *GetBand() { return poBand; }
 
-    static int  FlushCacheBlock();
+    static void FlushDirtyBlocks();
+    static int  FlushCacheBlock(int bDirtyBlocksOnly = FALSE);
     static void Verify();
 
     static int  SafeLockBlock( GDALRasterBlock ** );
