@@ -139,14 +139,16 @@ static size_t CPLHdrWriteFct(void *buffer, size_t size, size_t nmemb, void *reqI
  * <li>NETRC=[YES/NO] to enable or disable use of $HOME/.netrc, default YES.
  * <li>CUSTOMREQUEST=val, where val is GET, PUT, POST, DELETE, etc.. (GDAL >= 1.9.0)
  * <li>COOKIE=val, where val is formatted as COOKIE1=VALUE1; COOKIE2=VALUE2; ...
+ * <li>MAX_RETRY=val, where val is the maximum number of retry attempts if a 503 or
+ *               504 HTTP error occurs. Default is 0. (GDAL >= 2.0)
+ * <li>RETRY_DELAY=val, where val is the number of seconds between retry attempts.
+ *                 Default is 30. (GDAL >= 2.0)
  * </ul>
  *
  * Alternatively, if not defined in the papszOptions arguments, the PROXY,  
- * PROXYUSERPWD, PROXYAUTH and NETRC values are searched in the configuration 
- * options named GDAL_HTTP_PROXY, GDAL_HTTP_PROXYUSERPWD, GDAL_PROXY_AUTH and 
- * GDAL_HTTP_NETRC, as proxy configuration belongs to networking setup and 
- * makes more sense at the configuration option level than at the connection 
- * level.
+ * PROXYUSERPWD, PROXYAUTH, NETRC, MAX_RETRY and RETRY_DELAY values are searched in the configuration 
+ * options named GDAL_HTTP_PROXY, GDAL_HTTP_PROXYUSERPWD, GDAL_PROXY_AUTH, 
+ * GDAL_HTTP_NETRC, GDAL_HTTP_MAX_RETRY and GDAL_HTTP_RETRY_DELAY.
  *
  * @return a CPLHTTPResult* structure that must be freed by 
  * CPLHTTPDestroyResult(), or NULL if libcurl support is disabled
@@ -304,69 +306,112 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
     }
 
 /* -------------------------------------------------------------------- */
+/*      If 503 or 504 status code retry this HTTP call until max        */
+/*      retry has been rearched                                         */
+/* -------------------------------------------------------------------- */
+    const char *pszRetryDelay = CSLFetchNameValue( papszOptions, "RETRY_DELAY" );
+    if( pszRetryDelay == NULL )
+        pszRetryDelay = CPLGetConfigOption( "GDAL_HTTP_RETRY_DELAY", "30" );
+    const char *pszMaxRetries = CSLFetchNameValue( papszOptions, "MAX_RETRY" );
+    if( pszMaxRetries == NULL )
+        pszMaxRetries = CPLGetConfigOption( "GDAL_HTTP_MAX_RETRY", "0" );
+    int nRetryDelaySecs = atoi(pszRetryDelay);
+    int nMaxRetries = atoi(pszMaxRetries);
+    int nRetryCount = 0;
+    bool bRequestRetry = FALSE;
+
+    do
+    {
+/* -------------------------------------------------------------------- */
 /*      Execute the request, waiting for results.                       */
 /* -------------------------------------------------------------------- */
-    psResult->nStatus = (int) curl_easy_perform( http_handle );
+        psResult->nStatus = (int) curl_easy_perform( http_handle );
 
 /* -------------------------------------------------------------------- */
 /*      Fetch content-type if possible.                                 */
 /* -------------------------------------------------------------------- */
-    psResult->pszContentType = NULL;
-    curl_easy_getinfo( http_handle, CURLINFO_CONTENT_TYPE, 
-                       &(psResult->pszContentType) );
-    if( psResult->pszContentType != NULL )
-        psResult->pszContentType = CPLStrdup(psResult->pszContentType);
+        psResult->pszContentType = NULL;
+        curl_easy_getinfo( http_handle, CURLINFO_CONTENT_TYPE,
+                           &(psResult->pszContentType) );
+        if( psResult->pszContentType != NULL )
+            psResult->pszContentType = CPLStrdup(psResult->pszContentType);
 
 /* -------------------------------------------------------------------- */
 /*      Have we encountered some sort of error?                         */
 /* -------------------------------------------------------------------- */
-    if( strlen(szCurlErrBuf) > 0 )
-    {
-        int bSkipError = FALSE;
-
-        /* Some servers such as http://115.113.193.14/cgi-bin/world/qgis_mapserv.fcgi?VERSION=1.1.1&SERVICE=WMS&REQUEST=GetCapabilities */
-        /* invalidly return Content-Length as the uncompressed size, with makes curl to wait for more data */
-        /* and time-out finally. If we got the expected data size, then we don't emit an error */
-        /* but turn off GZip requests */
-        if (bGZipRequested &&
-            strstr(szCurlErrBuf, "transfer closed with") &&
-            strstr(szCurlErrBuf, "bytes remaining to read"))
+        if( strlen(szCurlErrBuf) > 0 )
         {
-            const char* pszContentLength =
-                CSLFetchNameValue(psResult->papszHeaders, "Content-Length");
-            if (pszContentLength && psResult->nDataLen != 0 &&
-                atoi(pszContentLength) == psResult->nDataLen)
+            int bSkipError = FALSE;
+
+            /* Some servers such as http://115.113.193.14/cgi-bin/world/qgis_mapserv.fcgi?VERSION=1.1.1&SERVICE=WMS&REQUEST=GetCapabilities */
+            /* invalidly return Content-Length as the uncompressed size, with makes curl to wait for more data */
+            /* and time-out finally. If we got the expected data size, then we don't emit an error */
+            /* but turn off GZip requests */
+            if (bGZipRequested &&
+                strstr(szCurlErrBuf, "transfer closed with") &&
+                strstr(szCurlErrBuf, "bytes remaining to read"))
             {
-                const char* pszCurlGZIPOption = CPLGetConfigOption("CPL_CURL_GZIP", NULL);
-                if (pszCurlGZIPOption == NULL)
+                const char* pszContentLength =
+                    CSLFetchNameValue(psResult->papszHeaders, "Content-Length");
+                if (pszContentLength && psResult->nDataLen != 0 &&
+                    atoi(pszContentLength) == psResult->nDataLen)
                 {
-                    CPLSetConfigOption("CPL_CURL_GZIP", "NO");
-                    CPLDebug("HTTP", "Disabling CPL_CURL_GZIP, because %s doesn't support it properly",
-                             pszURL);
+                    const char* pszCurlGZIPOption = CPLGetConfigOption("CPL_CURL_GZIP", NULL);
+                    if (pszCurlGZIPOption == NULL)
+                    {
+                        CPLSetConfigOption("CPL_CURL_GZIP", "NO");
+                        CPLDebug("HTTP", "Disabling CPL_CURL_GZIP, because %s doesn't support it properly",
+                                 pszURL);
+                    }
+                    psResult->nStatus = 0;
+                    bSkipError = TRUE;
                 }
-                psResult->nStatus = 0;
-                bSkipError = TRUE;
+            }
+            if (!bSkipError)
+            {
+                psResult->pszErrBuf = CPLStrdup(szCurlErrBuf);
+                CPLError( CE_Failure, CPLE_AppDefined,
+                        "%s", szCurlErrBuf );
             }
         }
-        if (!bSkipError)
+        else
         {
-            psResult->pszErrBuf = CPLStrdup(szCurlErrBuf);
-            CPLError( CE_Failure, CPLE_AppDefined,
-                    "%s", szCurlErrBuf );
+            /* HTTP errors do not trigger curl errors. But we need to */
+            /* propagate them to the caller though */
+            long response_code = 0;
+            curl_easy_getinfo(http_handle, CURLINFO_RESPONSE_CODE, &response_code);
+
+            if (response_code >= 400 && response_code < 600)
+            {
+                /* If HTTP 503 or 504 gateway timeout error retry after a pause */
+                if ((response_code == 503 || response_code == 504) && nRetryCount < nMaxRetries)
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "HTTP error code: %d - %s. Retrying again in %d secs",
+                             (int)response_code, pszURL, nRetryDelaySecs);
+                    CPLSleep(nRetryDelaySecs);
+                    nRetryCount++;
+
+                    CPLFree(psResult->pszContentType);
+                    psResult->pszContentType = NULL;
+                    CSLDestroy(psResult->papszHeaders);
+                    psResult->papszHeaders = NULL;
+                    CPLFree(psResult->pabyData);
+                    psResult->pabyData = NULL;
+                    psResult->nDataLen = 0;
+                    psResult->nDataAlloc = 0;
+
+                    bRequestRetry = TRUE;
+                }
+                else
+                {
+                    psResult->pszErrBuf = CPLStrdup(CPLSPrintf("HTTP error code : %d", (int)response_code));
+                    CPLError( CE_Failure, CPLE_AppDefined, "%s", psResult->pszErrBuf );
+                }
+            }
         }
     }
-    else
-    {
-        /* HTTP errors do not trigger curl errors. But we need to */
-        /* propagate them to the caller though */
-        long response_code = 0;
-        curl_easy_getinfo(http_handle, CURLINFO_RESPONSE_CODE, &response_code);
-        if (response_code >= 400 && response_code < 600)
-        {
-            psResult->pszErrBuf = CPLStrdup(CPLSPrintf("HTTP error code : %d", (int)response_code));
-            CPLError( CE_Failure, CPLE_AppDefined, "%s", psResult->pszErrBuf );
-        }
-    }
+    while (bRequestRetry);
 
     if (!pszPersistent)
         curl_easy_cleanup( http_handle );
