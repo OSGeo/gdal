@@ -554,6 +554,12 @@ int JP2OpenJPEGDataset::PreloadBlocks(JP2OpenJPEGRasterBand* poBand,
                 }
             }
 
+            /* Flushes all dirty blocks from cache to disk to avoid them */
+            /* to be flushed randomly, and simultaneously, from our worker threads, */
+            /* which might cause races in the output driver. */
+            /* This is a workaround to a design defect of the block cache */
+            GDALRasterBlock::FlushDirtyBlocks();
+
             for(i=0;i<nThreads;i++)
                 pahThreads[i] = CPLCreateJoinableThread(JP2OpenJPEGReadBlockInThread, &oJob);
             for(i=0;i<nThreads;i++)
