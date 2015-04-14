@@ -288,7 +288,7 @@ int OGRGMLDataSource::CheckHeader(const char* pszStr)
 /*                                Open()                                */
 /************************************************************************/
 
-int OGRGMLDataSource::Open( const char * pszNameIn )
+int OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
 
 {
     VSILFILE   *fp;
@@ -301,23 +301,35 @@ int OGRGMLDataSource::Open( const char * pszNameIn )
 /* -------------------------------------------------------------------- */
 /*      Extract xsd filename from connexion string if present.          */
 /* -------------------------------------------------------------------- */
-    osFilename = pszNameIn;
-    const char *pszXSDFilenameTmp = strstr(pszNameIn, ",xsd=");
+    osFilename = poOpenInfo->pszFilename;
+    const char *pszXSDFilenameTmp = strstr(poOpenInfo->pszFilename, ",xsd=");
     if (pszXSDFilenameTmp != NULL)
     {
-        osFilename.resize(pszXSDFilenameTmp - pszNameIn);
+        osFilename.resize(pszXSDFilenameTmp - poOpenInfo->pszFilename);
         osXSDFilename = pszXSDFilenameTmp + strlen(",xsd=");
     }
+    else
+        osXSDFilename = CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "XSD", "");
+
     const char *pszFilename = osFilename.c_str();
 
-    pszName = CPLStrdup( pszNameIn );
+    pszName = CPLStrdup( poOpenInfo->pszFilename );
 
 /* -------------------------------------------------------------------- */
 /*      Open the source file.                                           */
 /* -------------------------------------------------------------------- */
-    fp = VSIFOpenL( pszFilename, "r" );
-    if( fp == NULL )
-        return FALSE;
+    VSILFILE* fpToClose = NULL;
+    if( poOpenInfo->fpL != NULL )
+    {
+        fp = poOpenInfo->fpL;
+        VSIFSeekL(fp, 0, SEEK_SET);
+    }
+    else
+    {
+        fpToClose = fp = VSIFOpenL( pszFilename, "r" );
+        if( fp == NULL )
+            return FALSE;
+    }
 
     int bExpatCompatibleEncoding = FALSE;
     int bHas3D = FALSE;
@@ -334,7 +346,8 @@ int OGRGMLDataSource::Open( const char * pszNameIn )
     size_t nRead = VSIFReadL( szHeader, 1, sizeof(szHeader)-1, fp );
     if (nRead <= 0)
     {
-        VSIFCloseL( fp );
+        if( fpToClose )
+            VSIFCloseL( fpToClose );
         return FALSE;
     }
     szHeader[nRead] = '\0';
@@ -345,20 +358,22 @@ int OGRGMLDataSource::Open( const char * pszNameIn )
             EQUAL(CPLGetExtension(pszFilename), "gz") &&
             strncmp(pszFilename, "/vsigzip/", strlen("/vsigzip/")) != 0 )
     {
-        VSIFCloseL( fp );
+        if( fpToClose )
+            VSIFCloseL( fpToClose );
+        fpToClose = NULL;
         osWithVsiGzip = "/vsigzip/";
         osWithVsiGzip += pszFilename;
 
         pszFilename = osWithVsiGzip;
 
-        fp = VSIFOpenL( pszFilename, "r" );
+        fp = fpToClose = VSIFOpenL( pszFilename, "r" );
         if( fp == NULL )
             return FALSE;
 
         nRead = VSIFReadL( szHeader, 1, sizeof(szHeader) - 1, fp );
         if (nRead <= 0)
         {
-            VSIFCloseL( fp );
+            VSIFCloseL( fpToClose );
             return FALSE;
         }
         szHeader[nRead] = '\0';
@@ -398,9 +413,14 @@ int OGRGMLDataSource::Open( const char * pszNameIn )
 /* -------------------------------------------------------------------- */
     if( szPtr[0] != '<' || !CheckHeader(szPtr) )
     {
-        VSIFCloseL( fp );
+        if( fpToClose )
+            VSIFCloseL( fpToClose );
         return FALSE;
     }
+
+    /* Now we definitely own the file descriptor */
+    if( fp == poOpenInfo->fpL )
+        poOpenInfo->fpL = NULL;
 
     /* Small optimization: if we parse a <wfs:FeatureCollection>  and */
     /* that numberOfFeatures is set, we can use it to set the FeatureCount */

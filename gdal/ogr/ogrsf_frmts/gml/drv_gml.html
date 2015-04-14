@@ -69,7 +69,8 @@ While this approach is error prone, it has the advantage of working for GML file
 even if the associated schema (.xsd) file has been lost.<p>
 
 Starting with OGR 1.10, it is possible to specify an explicit filename for the XSD
-schema to use, by using "a_filename.gml,xsd=another_filename.xsd" as a connection string.<p>
+schema to use, by using "a_filename.gml,xsd=another_filename.xsd" as a connection string.
+Staring with GDAL 2.0, the XSD can also be specified as the value of the XSD open option.<p>
 
 The first time a GML file is opened, if the associated .xsd is absent or could not been
 parsed correctly, it is completely scanned in order to
@@ -348,6 +349,13 @@ belongs to another layer. In that case, the file should be read with code simila
         }
     } while (bInterleaved &amp;&amp; bFoundFeature);
 </pre>
+
+<h2>Open options</h2>
+
+<ul>
+<li> <b>XSD=filename</b>: (GDAL &gt;=2.0) to specify an explicit filename for the XSD
+application schema to use</li>.
+</ul>
 
 <h2>Creation Issues</h2>
 
