@@ -76,6 +76,9 @@ When streaming is enabled, GZip compression is also requested. It has been obser
 compression, will cache on their side the whole content to be sent before sending the first bytes on the wire. To avoid this,
 you can set the CPL_CURL_GZIP configuration option to NO.<p>
 
+Starting with GDAL 2.0, the WFS driver will automatically detect if server supports
+paging, when requesting a WFS 2.0 server.<p>
+
 <h2>Filtering</h2>
 
 The driver will forward any spatial filter set with SetSpatialFilter() to the server. It also makes its best effort to do the same for attribute

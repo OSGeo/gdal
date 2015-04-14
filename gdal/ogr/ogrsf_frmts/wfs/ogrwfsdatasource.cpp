@@ -571,6 +571,81 @@ int OGRWFSDataSource::DetectTransactionSupport(CPLXMLNode* psRoot)
 }
 
 /************************************************************************/
+/*                    DetectSupportPagingWFS2()                         */
+/************************************************************************/
+
+int OGRWFSDataSource::DetectSupportPagingWFS2(CPLXMLNode* psRoot)
+{
+    const char* pszPagingAllowed = CPLGetConfigOption("OGR_WFS_PAGING_ALLOWED", NULL);
+    if( pszPagingAllowed != NULL && !CSLTestBoolean(pszPagingAllowed) )
+        return FALSE;
+
+    CPLXMLNode* psOperationsMetadata =
+        CPLGetXMLNode(psRoot, "OperationsMetadata");
+    if (!psOperationsMetadata)
+    {
+        return FALSE;
+    }
+
+    CPLXMLNode* psChild = psOperationsMetadata->psChild;
+    while(psChild)
+    {
+        if (psChild->eType == CXT_Element &&
+            strcmp(psChild->pszValue, "Constraint") == 0 &&
+            strcmp(CPLGetXMLValue(psChild, "name", ""), "ImplementsResultPaging") == 0)
+        {
+            if( !EQUAL(CPLGetXMLValue(psChild, "DefaultValue", ""), "TRUE") )
+            {
+                psChild = NULL;
+                break;
+            }
+            break;
+        }
+        psChild = psChild->psNext;
+    }
+    if (!psChild)
+    {
+        CPLDebug("WFS", "No paging support");
+        return FALSE;
+    }
+
+    psChild = psOperationsMetadata->psChild;
+    while(psChild)
+    {
+        if (psChild->eType == CXT_Element &&
+            strcmp(psChild->pszValue, "Operation") == 0 &&
+            strcmp(CPLGetXMLValue(psChild, "name", ""), "GetFeature") == 0)
+        {
+            break;
+        }
+        psChild = psChild->psNext;
+    }
+    if (psChild && CPLGetConfigOption("OGR_WFS_PAGE_SIZE", NULL) == NULL)
+    {
+        psChild = psChild->psChild;
+        while(psChild)
+        {
+            if (psChild->eType == CXT_Element &&
+                strcmp(psChild->pszValue, "Constraint") == 0 &&
+                strcmp(CPLGetXMLValue(psChild, "name", ""), "CountDefault") == 0)
+            {
+                int nVal = atoi(CPLGetXMLValue(psChild, "DefaultValue", "0"));
+                if( nVal > 0 )
+                    nPageSize = nVal;
+
+                break;
+            }
+            psChild = psChild->psNext;
+        }
+    }
+
+    CPLDebug("WFS", "Paging support with page size %d", nPageSize);
+    bPagingAllowed = TRUE;
+
+    return TRUE;
+}
+
+/************************************************************************/
 /*                      FindComparisonOperator()                        */
 /************************************************************************/
 
@@ -995,6 +1070,8 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
                 osBaseURL = CPLURLAddKVP(osBaseURL, "COUNT", osMaxFeatures);
             }
         }
+
+        DetectSupportPagingWFS2(psWFSCapabilities);
     }
 
     DetectTransactionSupport(psWFSCapabilities);

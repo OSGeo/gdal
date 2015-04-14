@@ -231,6 +231,7 @@ class OGRWFSDataSource : public OGRDataSource
     int                 bPagingAllowed;
     int                 nPageSize;
     int                 nBaseStartIndex;
+    int                 DetectSupportPagingWFS2(CPLXMLNode* psRoot);
 
     int                 bIsGEOSERVER;
 
