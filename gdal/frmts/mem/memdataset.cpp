@@ -549,7 +549,7 @@ CPLErr MEMRasterBand::SetCategoryNames( char ** papszNewNames )
 /************************************************************************/
 
 CPLErr MEMRasterBand::SetDefaultHistogram( double dfMin, double dfMax, 
-                                           int nBuckets, int *panHistogram)
+                                           int nBuckets, GUIntBig *panHistogram)
 
 {
     CPLXMLNode *psNode;
@@ -597,7 +597,7 @@ CPLErr MEMRasterBand::SetDefaultHistogram( double dfMin, double dfMax,
 
 CPLErr 
 MEMRasterBand::GetDefaultHistogram( double *pdfMin, double *pdfMax, 
-                                    int *pnBuckets, int **ppanHistogram, 
+                                    int *pnBuckets, GUIntBig **ppanHistogram, 
                                     int bForce,
                                     GDALProgressFunc pfnProgress, 
                                     void *pProgressData )

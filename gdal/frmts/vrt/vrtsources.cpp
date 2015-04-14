@@ -1097,7 +1097,7 @@ CPLErr VRTSimpleSource::ComputeStatistics( int nXSize, int nYSize,
 
 CPLErr VRTSimpleSource::GetHistogram( int nXSize, int nYSize,
                                   double dfMin, double dfMax,
-                                  int nBuckets, int * panHistogram,
+                                  int nBuckets, GUIntBig * panHistogram,
                                   int bIncludeOutOfRange, int bApproxOK,
                                   GDALProgressFunc pfnProgress, void *pProgressData )
 {
@@ -1479,7 +1479,7 @@ CPLErr VRTAveragedSource::GetHistogram( CPL_UNUSED int nXSize,
                                         CPL_UNUSED double dfMin,
                                         CPL_UNUSED double dfMax,
                                         CPL_UNUSED int nBuckets,
-                                        CPL_UNUSED int * panHistogram,
+                                        CPL_UNUSED GUIntBig * panHistogram,
                                         CPL_UNUSED int bIncludeOutOfRange,
                                         CPL_UNUSED int bApproxOK,
                                         CPL_UNUSED GDALProgressFunc pfnProgress,
@@ -2111,7 +2111,7 @@ CPLErr VRTComplexSource::ComputeRasterMinMax( int nXSize, int nYSize, int bAppro
 
 CPLErr VRTComplexSource::GetHistogram( int nXSize, int nYSize,
                                   double dfMin, double dfMax,
-                                  int nBuckets, int * panHistogram,
+                                  int nBuckets, GUIntBig * panHistogram,
                                   int bIncludeOutOfRange, int bApproxOK,
                                   GDALProgressFunc pfnProgress, void *pProgressData )
 {
@@ -2283,7 +2283,7 @@ CPLErr VRTFuncSource::GetHistogram( CPL_UNUSED int nXSize,
                                     CPL_UNUSED double dfMin,
                                     CPL_UNUSED double dfMax,
                                     CPL_UNUSED int nBuckets,
-                                    CPL_UNUSED int * panHistogram,
+                                    CPL_UNUSED GUIntBig * panHistogram,
                                     CPL_UNUSED int bIncludeOutOfRange,
                                     CPL_UNUSED int bApproxOK,
                                     CPL_UNUSED GDALProgressFunc pfnProgress,

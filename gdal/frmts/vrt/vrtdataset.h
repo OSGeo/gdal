@@ -95,7 +95,7 @@ public:
                                       GDALProgressFunc pfnProgress, void *pProgressData ) = 0;
     virtual CPLErr  GetHistogram( int nXSize, int nYSize,
                                   double dfMin, double dfMax,
-                                  int nBuckets, int * panHistogram,
+                                  int nBuckets, GUIntBig * panHistogram,
                                   int bIncludeOutOfRange, int bApproxOK,
                                   GDALProgressFunc pfnProgress, void *pProgressData ) = 0;
 
@@ -320,17 +320,17 @@ class CPL_DLL VRTRasterBand : public GDALRasterBand
     virtual GDALRasterBand *GetOverview(int);
     
     virtual CPLErr  GetHistogram( double dfMin, double dfMax,
-                          int nBuckets, int * panHistogram,
+                          int nBuckets, GUIntBig * panHistogram,
                           int bIncludeOutOfRange, int bApproxOK,
                           GDALProgressFunc, void *pProgressData );
 
     virtual CPLErr GetDefaultHistogram( double *pdfMin, double *pdfMax,
-                                        int *pnBuckets, int ** ppanHistogram,
+                                        int *pnBuckets, GUIntBig ** ppanHistogram,
                                         int bForce,
                                         GDALProgressFunc, void *pProgressData);
 
     virtual CPLErr SetDefaultHistogram( double dfMin, double dfMax,
-                                        int nBuckets, int *panHistogram );
+                                        int nBuckets, GUIntBig *panHistogram );
 
     CPLErr         CopyCommonInfoFrom( GDALRasterBand * );
     
@@ -411,7 +411,7 @@ class CPL_DLL VRTSourcedRasterBand : public VRTRasterBand
                                       double *pdfMean, double *pdfStdDev,
                                       GDALProgressFunc pfnProgress, void *pProgressData );
     virtual CPLErr  GetHistogram( double dfMin, double dfMax,
-                                  int nBuckets, int * panHistogram,
+                                  int nBuckets, GUIntBig * panHistogram,
                                   int bIncludeOutOfRange, int bApproxOK,
                                   GDALProgressFunc pfnProgress, void *pProgressData );
 
@@ -644,7 +644,7 @@ public:
                                       GDALProgressFunc pfnProgress, void *pProgressData );
     virtual CPLErr  GetHistogram( int nXSize, int nYSize,
                                   double dfMin, double dfMax,
-                                  int nBuckets, int * panHistogram,
+                                  int nBuckets, GUIntBig * panHistogram,
                                   int bIncludeOutOfRange, int bApproxOK,
                                   GDALProgressFunc pfnProgress, void *pProgressData );
 
@@ -695,7 +695,7 @@ public:
                                       GDALProgressFunc pfnProgress, void *pProgressData );
     virtual CPLErr  GetHistogram( int nXSize, int nYSize,
                                   double dfMin, double dfMax,
-                                  int nBuckets, int * panHistogram,
+                                  int nBuckets, GUIntBig * panHistogram,
                                   int bIncludeOutOfRange, int bApproxOK,
                                   GDALProgressFunc pfnProgress, void *pProgressData );
 
@@ -758,7 +758,7 @@ public:
                                       GDALProgressFunc pfnProgress, void *pProgressData );
     virtual CPLErr  GetHistogram( int nXSize, int nYSize,
                                   double dfMin, double dfMax,
-                                  int nBuckets, int * panHistogram,
+                                  int nBuckets, GUIntBig * panHistogram,
                                   int bIncludeOutOfRange, int bApproxOK,
                                   GDALProgressFunc pfnProgress, void *pProgressData );
 
@@ -883,7 +883,7 @@ public:
                                       GDALProgressFunc pfnProgress, void *pProgressData );
     virtual CPLErr  GetHistogram( int nXSize, int nYSize,
                                   double dfMin, double dfMax,
-                                  int nBuckets, int * panHistogram,
+                                  int nBuckets, GUIntBig * panHistogram,
                                   int bIncludeOutOfRange, int bApproxOK,
                                   GDALProgressFunc pfnProgress, void *pProgressData );
 

@@ -664,11 +664,11 @@ class ECWRasterBand : public GDALPamRasterBand
 #if ECWSDK_VERSION >= 50
     void GetBandIndexAndCountForStatistics(int &bandIndex, int &bandCount);
     virtual CPLErr GetDefaultHistogram( double *pdfMin, double *pdfMax,
-                                    int *pnBuckets, int ** ppanHistogram,
+                                    int *pnBuckets, GUIntBig ** ppanHistogram,
                                     int bForce,
                                     GDALProgressFunc, void *pProgressData);
     virtual CPLErr SetDefaultHistogram( double dfMin, double dfMax,
-                                        int nBuckets, int *panHistogram );
+                                        int nBuckets, GUIntBig *panHistogram );
     virtual double GetMinimum( int* pbSuccess );
     virtual double GetMaximum( int* pbSuccess );
     virtual CPLErr GetStatistics( int bApproxOK, int bForce,

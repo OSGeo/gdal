@@ -151,6 +151,23 @@ Behaviour changes:
     * Drivers will now return OGRERR_NON_EXISTING_FEATURE when calling SetFeature()
       or DeleteFeature() with a feature id that does not exist.
 
+J) RFC 57: 64-bit bucket count for histograms
+
+Link: https://trac.osgeo.org/gdal/wiki/rfc57_histogram_64bit_count
+
+C++ API:
+  * GDALRasterBand::GetHistogram() and GDALRasterBand::SetDefaultHistogram() take a GUIntBig* instead of a int* for bucket counts.
+  * GDALRasterBand::GetDefaultHistogram() takes a GUIntBig** instead of a int** for bucket counts.
+  * GDALRasterBand::GetRasterSampleOverview() takes a GUIntBig instead of int.
+
+C API:
+  * GDALGetRasterHistogramEx(), GDALGetDefaultHistogramEx() and GDALSetDefaultHistogramEx() are added
+    and deprecate the old interfaces.
+  * GDALGetRasterSampleOverviewEx() is added.
+
+Out-of-tree drivers :
+  * See the virtual method API changes mentionned above in the C++ API paragraph.
+
 MIGRATION GUIDE FROM GDAL 1.10 to GDAL 1.11
 -------------------------------------------
 

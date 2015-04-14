@@ -310,34 +310,34 @@ CreateTupleFromDoubleArray( double *first, unsigned int size ) {
 }
 
 /*
- *  Typemap for counted arrays of GIntBig <- PySequence
+ *  Typemap for counted arrays of GUIntBig <- PySequence
  */
-%typemap(in,numinputs=1) (int nList, GIntBig* pList)
+%typemap(in,numinputs=1) (int nList, GUIntBig* pList)
 {
-  /* %typemap(in,numinputs=1) (int nList, GIntBig* pList)*/
+  /* %typemap(in,numinputs=1) (int nList, GUIntBig* pList)*/
   /* check if is List */
   if ( !PySequence_Check($input) ) {
     PyErr_SetString(PyExc_TypeError, "not a sequence");
     SWIG_fail;
   }
   $1 = PySequence_Size($input);
-  $2 = (GIntBig*) malloc($1*sizeof(GIntBig));
+  $2 = (GUIntBig*) malloc($1*sizeof(GUIntBig));
   for( int i = 0; i<$1; i++ ) {
     PyObject *o = PySequence_GetItem($input,i);
     PY_LONG_LONG val;
-    if ( !PyArg_Parse(o,"L",&val) ) {
+    if ( !PyArg_Parse(o,"K",&val) ) {
       PyErr_SetString(PyExc_TypeError, "not an integer");
       Py_DECREF(o);
       SWIG_fail;
     }
-    $2[i] = (GIntBig)val;
+    $2[i] = (GUIntBig)val;
     Py_DECREF(o);
   }
 }
 
-%typemap(freearg) (int nList, GIntBig* pList)
+%typemap(freearg) (int nList, GUIntBig* pList)
 {
-  /* %typemap(freearg) (int nList, GIntBig* pList) */
+  /* %typemap(freearg) (int nList, GUIntBig* pList) */
   if ($2) {
     free((void*) $2);
   }
@@ -1438,26 +1438,26 @@ OBJECT_LIST_INPUT(GDALRasterBandShadow);
  * a list object. 
  */
 
-%typemap(arginit) (int buckets, int* panHistogram)
+%typemap(arginit) (int buckets, GUIntBig* panHistogram)
 {
-  /* %typemap(in) int buckets, int* panHistogram -> list */
-  $2 = (int *) VSICalloc(sizeof(int),$1);
+  /* %typemap(in) int buckets, GUIntBig* panHistogram -> list */
+  $2 = (GUIntBig *) VSICalloc(sizeof(GUIntBig),$1);
 }
 
-%typemap(in, numinputs=1) (int buckets, int* panHistogram)
+%typemap(in, numinputs=1) (int buckets, GUIntBig* panHistogram)
 {
-  /* %typemap(in) int buckets, int* panHistogram -> list */
+  /* %typemap(in) int buckets, GUIntBig* panHistogram -> list */
   int requested_buckets = 0;
   SWIG_AsVal_int($input, &requested_buckets);
   if( requested_buckets != $1 )
   {
     $1 = requested_buckets;
-    if (requested_buckets <= 0 || requested_buckets > (int)(INT_MAX / sizeof(int)))
+    if (requested_buckets <= 0 || requested_buckets > (int)(INT_MAX / sizeof(GUIntBig)))
     {
         PyErr_SetString( PyExc_RuntimeError, "Bad value for buckets" );
         SWIG_fail;
     }
-    $2 = (int *) VSIRealloc($2, sizeof(int) * requested_buckets);
+    $2 = (GUIntBig *) VSIRealloc($2, sizeof(GUIntBig) * requested_buckets);
   }
   if ($2 == NULL)
   {
@@ -1466,18 +1466,18 @@ OBJECT_LIST_INPUT(GDALRasterBandShadow);
   }
 }
 
-%typemap(freearg)  (int buckets, int* panHistogram)
+%typemap(freearg)  (int buckets, GUIntBig* panHistogram)
 {
-  /* %typemap(freearg) (int buckets, int* panHistogram)*/
+  /* %typemap(freearg) (int buckets, GUIntBig* panHistogram)*/
   if ( $2 ) {
     VSIFree( $2 );
   }
 }
 
-%typemap(argout) (int buckets, int* panHistogram)
+%typemap(argout) (int buckets, GUIntBig* panHistogram)
 {
-  /* %typemap(out) int buckets, int* panHistogram -> list */
-  int *integerarray = $2;
+  /* %typemap(out) int buckets, GUIntBig* panHistogram -> list */
+  GUIntBig *integerarray = $2;
   if ( integerarray == NULL ) {
     $result = Py_None;
     Py_INCREF( $result );
@@ -1485,7 +1485,13 @@ OBJECT_LIST_INPUT(GDALRasterBandShadow);
   else {
     $result = PyList_New( $1 );
     for ( int i = 0; i < $1; ++i ) {
-      PyObject *o =  PyInt_FromLong( integerarray[i] );
+      char szTmp[32];
+      sprintf(szTmp, CPL_FRMT_GUIB, integerarray[i]);
+%#if PY_VERSION_HEX>=0x03000000
+      PyObject *o = PyLong_FromString(szTmp, NULL, 10);
+%#else
+      PyObject *o =  PyInt_FromString(szTmp, NULL, 10);
+%#endif
       PyList_SetItem($result, i, o );
     }
   }
@@ -1495,11 +1501,11 @@ OBJECT_LIST_INPUT(GDALRasterBandShadow);
  *                       GetDefaultHistogram()
  */
 
-%typemap(arginit, noblock=1) (double *min_ret, double *max_ret, int *buckets_ret, int **ppanHistogram)
+%typemap(arginit, noblock=1) (double *min_ret, double *max_ret, int *buckets_ret, GUIntBig **ppanHistogram)
 {
    double min_val, max_val;
    int buckets_val;
-   int *panHistogram;
+   GUIntBig *panHistogram;
 
    $1 = &min_val;
    $2 = &max_val;
@@ -1507,7 +1513,7 @@ OBJECT_LIST_INPUT(GDALRasterBandShadow);
    $4 = &panHistogram;
 }
 
-%typemap(argout) (double *min_ret, double *max_ret, int *buckets_ret, int** ppanHistogram)
+%typemap(argout) (double *min_ret, double *max_ret, int *buckets_ret, GUIntBig** ppanHistogram)
 {
   int i;
   PyObject *psList = NULL;
@@ -1518,7 +1524,7 @@ OBJECT_LIST_INPUT(GDALRasterBandShadow);
   {
       psList = PyList_New(buckets_val);
       for( i = 0; i < buckets_val; i++ )
-        PyList_SetItem(psList, i, Py_BuildValue("i", panHistogram[i] ));
+        PyList_SetItem(psList, i, Py_BuildValue("K", panHistogram[i] ));
 
       CPLFree( panHistogram );
 

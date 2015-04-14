@@ -525,9 +525,10 @@ int main( int argc, char ** argv )
 
         if( bReportHistograms )
         {
-            int nBucketCount, *panHistogram = NULL;
+            int nBucketCount;
+            GUIntBig *panHistogram = NULL;
 
-            eErr = GDALGetDefaultHistogram( hBand, &dfMin, &dfMax, 
+            eErr = GDALGetDefaultHistogramEx( hBand, &dfMin, &dfMax, 
                                             &nBucketCount, &panHistogram, 
                                             TRUE, GDALTermProgress, NULL );
             if( eErr == CE_None )
@@ -537,7 +538,7 @@ int main( int argc, char ** argv )
                 printf( "  %d buckets from %g to %g:\n  ",
                         nBucketCount, dfMin, dfMax );
                 for( iBucket = 0; iBucket < nBucketCount; iBucket++ )
-                    printf( "%d ", panHistogram[iBucket] );
+                    printf( CPL_FRMT_GUIB " ", panHistogram[iBucket] );
                 printf( "\n" );
                 CPLFree( panHistogram );
             }

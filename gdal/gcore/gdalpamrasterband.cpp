@@ -976,7 +976,7 @@ void GDALPamRasterBand::SetDescription( const char *pszDescription )
 int
 PamParseHistogram( CPLXMLNode *psHistItem,
                    double *pdfMin, double *pdfMax,
-                   int *pnBuckets, int **ppanHistogram,
+                   int *pnBuckets, GUIntBig **ppanHistogram,
                    CPL_UNUSED int *pbIncludeOutOfRange,
                    CPL_UNUSED int *pbApproxOK )
 {
@@ -986,6 +986,7 @@ PamParseHistogram( CPLXMLNode *psHistItem,
     *pdfMin = CPLAtof(CPLGetXMLValue( psHistItem, "HistMin", "0"));
     *pdfMax = CPLAtof(CPLGetXMLValue( psHistItem, "HistMax", "1"));
     *pnBuckets = atoi(CPLGetXMLValue( psHistItem, "BucketCount","2"));
+    *ppanHistogram = NULL;
     if (*pnBuckets <= 0 || *pnBuckets > INT_MAX / 2)
         return FALSE;
 
@@ -1005,7 +1006,7 @@ PamParseHistogram( CPLXMLNode *psHistItem,
         return FALSE;
     }
 
-    *ppanHistogram = (int *) VSICalloc(sizeof(int),*pnBuckets);
+    *ppanHistogram = (GUIntBig *) VSICalloc(sizeof(GUIntBig),*pnBuckets);
     if (*ppanHistogram == NULL)
     {
         CPLError(CE_Failure, CPLE_OutOfMemory,
@@ -1015,7 +1016,7 @@ PamParseHistogram( CPLXMLNode *psHistItem,
 
     for( iBucket = 0; iBucket < *pnBuckets; iBucket++ )
     {
-        (*ppanHistogram)[iBucket] = atoi(pszHistCounts);
+        (*ppanHistogram)[iBucket] = CPLAtoGIntBig(pszHistCounts);
         
         // skip to next number.
         while( *pszHistCounts != '\0' && *pszHistCounts != '|' )
@@ -1073,7 +1074,7 @@ PamFindMatchingHistogram( CPLXMLNode *psSavedHistograms,
 
 CPLXMLNode *
 PamHistogramToXMLTree( double dfMin, double dfMax,
-                       int nBuckets, int * panHistogram,
+                       int nBuckets, GUIntBig * panHistogram,
                        int bIncludeOutOfRange, int bApprox )
 
 {
@@ -1106,7 +1107,7 @@ PamHistogramToXMLTree( double dfMin, double dfMax,
     pszHistCounts[0] = '\0';
     for( iBucket = 0; iBucket < nBuckets; iBucket++ )
     {
-        sprintf( pszHistCounts + iHistOffset, "%d", panHistogram[iBucket] );
+        sprintf( pszHistCounts + iHistOffset, CPL_FRMT_GUIB, panHistogram[iBucket] );
         if( iBucket < nBuckets-1 )
             strcat( pszHistCounts + iHistOffset, "|" );
         iHistOffset += strlen(pszHistCounts+iHistOffset);
@@ -1123,7 +1124,7 @@ PamHistogramToXMLTree( double dfMin, double dfMax,
 /************************************************************************/
 
 CPLErr GDALPamRasterBand::GetHistogram( double dfMin, double dfMax,
-                                        int nBuckets, int * panHistogram,
+                                        int nBuckets, GUIntBig * panHistogram,
                                         int bIncludeOutOfRange, int bApproxOK,
                                         GDALProgressFunc pfnProgress, 
                                         void *pProgressData )
@@ -1147,13 +1148,13 @@ CPLErr GDALPamRasterBand::GetHistogram( double dfMin, double dfMax,
                                            bIncludeOutOfRange, bApproxOK );
     if( psHistItem != NULL )
     {
-        int *panTempHist = NULL;
+        GUIntBig *panTempHist = NULL;
 
         if( PamParseHistogram( psHistItem, &dfMin, &dfMax, &nBuckets, 
                                &panTempHist,
                                &bIncludeOutOfRange, &bApproxOK ) )
         {
-            memcpy( panHistogram, panTempHist, sizeof(int) * nBuckets );
+            memcpy( panHistogram, panTempHist, sizeof(GUIntBig) * nBuckets );
             CPLFree( panTempHist );
             return CE_None;
         }
@@ -1200,7 +1201,7 @@ CPLErr GDALPamRasterBand::GetHistogram( double dfMin, double dfMax,
 /************************************************************************/
 
 CPLErr GDALPamRasterBand::SetDefaultHistogram( double dfMin, double dfMax, 
-                                               int nBuckets, int *panHistogram)
+                                               int nBuckets, GUIntBig *panHistogram)
 
 {
     CPLXMLNode *psNode;
@@ -1256,7 +1257,7 @@ CPLErr GDALPamRasterBand::SetDefaultHistogram( double dfMin, double dfMax,
 
 CPLErr 
 GDALPamRasterBand::GetDefaultHistogram( double *pdfMin, double *pdfMax, 
-                                        int *pnBuckets, int **ppanHistogram, 
+                                        int *pnBuckets, GUIntBig **ppanHistogram, 
                                         int bForce,
                                         GDALProgressFunc pfnProgress, 
                                         void *pProgressData )

@@ -350,6 +350,12 @@ def read_int():
     else:
         return struct.unpack('i', sys.stdin.read(4))[0]
 
+def read_bigint():
+    if sys.version_info >= (3,0,0):
+        return struct.unpack('q', sys.stdin.read(8).encode('latin1'))[0]
+    else:
+        return struct.unpack('q', sys.stdin.read(8))[0]
+
 def read_double():
     if sys.version_info >= (3,0,0):
         return struct.unpack('d', sys.stdin.read(8).encode('latin1'))[0]
@@ -379,6 +385,13 @@ def write_int(i):
         v = struct.pack('i', 0)
     else:
         v = struct.pack('i', i)
+    if sys.version_info >= (3,0,0):
+        sys.stdout.write(v.decode('latin1'))
+    else:
+        sys.stdout.write(v)
+
+def write_uint64(i):
+    v = struct.pack('Q', i)
     if sys.version_info >= (3,0,0):
         sys.stdout.write(v.decode('latin1'))
     else:
@@ -471,10 +484,10 @@ def main_loop():
                 sys.stderr.write('protovminor=%d\n' % protovminor)
                 sys.stderr.write('extra_bytes=%d\n' % extra_bytes)
 
-            write_str('1.10')
-            write_int(1) # vmajor
-            write_int(10) # vminor
-            write_int(1) # protovmajor
+            write_str('2.0')
+            write_int(2) # vmajor
+            write_int(0) # vminor
+            write_int(2) # protovmajor
             write_int(0) # protovminor
             write_int(0) # extra bytes
             continue
@@ -636,9 +649,9 @@ def main_loop():
             read_int() # size = 
             for i in range(nBandCount):
                 panBandMap.append(read_int())
-            nPixelSpace = read_int()
-            nLineSpace = read_int()
-            nBandSpace = read_int()
+            nPixelSpace = read_bigint()
+            nLineSpace = read_bigint()
+            nBandSpace = read_bigint()
             val = server_ds.IRasterIO_Read(nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize, nBufType, panBandMap, nPixelSpace, nLineSpace, nBandSpace)
             write_marker()
             if val is None:
@@ -788,9 +801,9 @@ def main_loop():
                 write_int(CE_Failure)
             else:
                 write_int(CE_None)
-                write_int(len(val) * 4)
+                write_int(len(val) * 8)
                 for i in range(len(val)):
-                    write_int(val[i])
+                    write_uint64(val[i])
         #elif instr == INSTR_Band_GetDefaultHistogram:
         #    bForce = read_int()
         #    write_marker()

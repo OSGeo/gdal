@@ -330,7 +330,7 @@ RB_PROXY_METHOD_WITH_RET(int, 0, HasArbitraryOverviews, (), ())
 RB_PROXY_METHOD_WITH_RET(int, 0,  GetOverviewCount, (), ())
 RB_PROXY_METHOD_WITH_RET(GDALRasterBand*, NULL,  GetOverview, (int arg1), (arg1))
 RB_PROXY_METHOD_WITH_RET(GDALRasterBand*, NULL,  GetRasterSampleOverview,
-                        (int arg1), (arg1))
+                        (GUIntBig arg1), (arg1))
 
 RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, BuildOverviews,
                         (const char * arg1, int arg2, int *arg3,
