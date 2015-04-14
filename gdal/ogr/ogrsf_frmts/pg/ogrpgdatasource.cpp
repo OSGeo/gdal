@@ -1020,6 +1020,14 @@ void OGRPGDataSource::LoadTables()
     /* -------------------------------------------------------------------- */
         for( int iRecord = 0; iRecord < PQntuples(hResult); iRecord++ )
         {
+            CPLString osDbgStr;
+            for( int iField = 0; iField < PQnfields(hResult); iField++ )
+            {
+                osDbgStr += PQgetvalue(hResult, iRecord, iField); 
+                osDbgStr += " ";
+            }
+            fprintf(stderr, "[%d] %s\n", iRecord, osDbgStr.c_str());
+            
             const char *pszTable = PQgetvalue(hResult, iRecord, 0);
             const char *pszSchemaName = PQgetvalue(hResult, iRecord, 1);
             const char *pszRelkind = PQgetvalue(hResult, iRecord, 2);
