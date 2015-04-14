@@ -2162,7 +2162,8 @@ char **GDALDataset::GetFileList()
 /* -------------------------------------------------------------------- */
 /*      Do we have a world file?                                        */
 /* -------------------------------------------------------------------- */
-    if( bMainFileReal )
+    if( bMainFileReal &&
+        !GDALCanFileAcceptSidecarFile(osMainFilename) )
     {
         const char* pszExtension = CPLGetExtension( osMainFilename );
         if( strlen(pszExtension) > 2 )

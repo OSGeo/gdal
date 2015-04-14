@@ -187,7 +187,11 @@ void GDALDefaultOverviews::OverviewScan()
         if( bInitNameIsOVR )
             osOvrFilename = pszInitName;
         else
+        {
+            if( !GDALCanFileAcceptSidecarFile(pszInitName) )
+                return;
             osOvrFilename.Printf( "%s.ovr", pszInitName );
+        }
 
         bExists = CPLCheckForFile( (char *) osOvrFilename.c_str(), 
                                    papszInitSiblingFiles );
@@ -1084,6 +1088,8 @@ int GDALDefaultOverviews::HaveMaskFile( char ** papszSiblingFiles,
     if( EQUAL(CPLGetExtension(pszBasename),"msk") )
         return FALSE;
 
+    if( !GDALCanFileAcceptSidecarFile(pszBasename) )
+        return FALSE;
     osMskFilename.Printf( "%s.msk", pszBasename );
 
     int bExists = CPLCheckForFile( (char *) osMskFilename.c_str(), 
