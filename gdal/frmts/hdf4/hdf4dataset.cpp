@@ -548,7 +548,7 @@ char** HDF4Dataset::TranslateHDF4EOSAttributes( int32 iHandle,
                 // Add class suffix to the key name if applicable
 		papszMetadata = CSLAddNameValue( papszMetadata,
                     pszAttrClass ?
-                    CPLOPrintf("%s.%s", pszAttrName, pszAttrClass) : pszAttrName,
+                    CPLSPrintf("%s.%s", pszAttrName, pszAttrClass) : pszAttrName,
                     pszAttrValue );
 	    }
 	}
