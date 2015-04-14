@@ -1206,4 +1206,6 @@ CPL_C_END
 void GDALSerializeOpenOptionsToXML( CPLXMLNode* psParentNode, char** papszOpenOptions);
 char** GDALDeserializeOpenOptionsFromXML( CPLXMLNode* psParentNode );
 
+int GDALCanFileAcceptSidecarFile(const char* pszFilename);
+
 #endif /* ndef GDAL_PRIV_H_INCLUDED */

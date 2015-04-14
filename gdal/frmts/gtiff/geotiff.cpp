@@ -13045,6 +13045,9 @@ int GTiffDataset::FindPVLFile()
 
 int GTiffDataset::FindRPCFile()
 {
+    if( !GDALCanFileAcceptSidecarFile(osFilename) )
+        return FALSE;
+
     CPLString osSrcPath = osFilename;
     CPLString soPt(".");
     size_t found = osSrcPath.rfind(soPt);
@@ -13103,6 +13106,9 @@ void GTiffDataset::LoadRPCRPB()
 
     bHasSearchedRPC = TRUE;
 
+    if( !GDALCanFileAcceptSidecarFile(osFilename)  )
+        return;
+
     char **papszRPCMD = NULL;
     /* Read Digital Globe .RPB file */
     if (FindRPBFile())
@@ -13127,6 +13133,9 @@ void GTiffDataset::LoadRPCRPB()
 
 void GTiffDataset::LoadIMDPVL()
 {
+    if( !GDALCanFileAcceptSidecarFile(osFilename) )
+        return;
+
     if (!bHasSearchedIMD)
     {
         bHasSearchedIMD = TRUE;

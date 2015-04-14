@@ -1317,6 +1317,9 @@ int GDALReadTabFile2( const char * pszBaseFilename,
     if (ppszTabFileNameOut)
         *ppszTabFileNameOut = NULL;
 
+    if( !GDALCanFileAcceptSidecarFile(pszBaseFilename) )
+        return FALSE;
+
     pszTAB = CPLResetExtension( pszBaseFilename, "tab" );
 
     if (papszSiblingFiles)
@@ -1514,6 +1517,9 @@ int GDALReadWorldFile2( const char *pszBaseFilename, const char *pszExtension,
 
     if (ppszWorldFileNameOut)
         *ppszWorldFileNameOut = NULL;
+
+    if( !GDALCanFileAcceptSidecarFile(pszBaseFilename) )
+        return FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      If we aren't given an extension, try both the unix and          */
@@ -3354,4 +3360,15 @@ void GDALRasterIOExtraArgSetResampleAlg(GDALRasterIOExtraArg* psExtraArg,
             psExtraArg->eResampleAlg = GDALRasterIOGetResampleAlg(pszResampling);
         }
     }
+}
+
+/************************************************************************/
+/*                     GDALCanFileAcceptSidecarFile()                   */
+/************************************************************************/
+
+int GDALCanFileAcceptSidecarFile(const char* pszFilename)
+{
+    if( strstr(pszFilename, "/vsicurl/") && strchr(pszFilename, '?') )
+        return FALSE;
+    return TRUE;
 }
