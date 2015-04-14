@@ -445,7 +445,8 @@ swq_select_summarize( swq_select *select_info,
                     brokendowntime.tm_min = nMin;
                     brokendowntime.tm_sec = (int)fSec;
                     summary->count++;
-                    summary->sum += CPLYMDHMSToUnixTime(&brokendowntime) + fmod(fSec, 1);
+                    summary->sum += CPLYMDHMSToUnixTime(&brokendowntime);
+                    summary->sum += fmod((double)fSec, 1);
                 }
             }
             else
