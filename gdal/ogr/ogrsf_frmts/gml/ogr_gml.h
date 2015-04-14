@@ -158,7 +158,7 @@ class OGRGMLDataSource : public OGRDataSource
                         OGRGMLDataSource();
                         ~OGRGMLDataSource();
 
-    int                 Open( const char * );
+    int                 Open( GDALOpenInfo* poOpenInfo );
     int                 Create( const char *pszFile, char **papszOptions );
 
     const char          *GetName() { return pszName; }

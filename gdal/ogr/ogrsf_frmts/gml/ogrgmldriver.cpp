@@ -107,7 +107,7 @@ static GDALDataset *OGRGMLDriverOpen( GDALOpenInfo* poOpenInfo )
 
     poDS = new OGRGMLDataSource();
 
-    if( !poDS->Open(  poOpenInfo->pszFilename ) )
+    if( !poDS->Open(  poOpenInfo ) )
     {
         delete poDS;
         return NULL;
@@ -159,6 +159,11 @@ void RegisterOGRGML()
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "gml xml" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
                                    "drv_gml.html" );
+
+        poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
+"<OpenOptionList>"
+"  <Option name='XSD' type='string' description='Name of the related application schema file (.xsd).'/>"
+"</OpenOptionList>" );
 
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"
