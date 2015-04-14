@@ -430,9 +430,12 @@ swq_select_summarize( swq_select *select_info,
                def->field_type == SWQ_TIME ||
                def->field_type == SWQ_TIMESTAMP)
             {
-                int nYear, nMonth, nDay, nHour, nMin, nSec;
-                if( sscanf(value, "%04d/%02d/%02d %02d:%02d:%02d",
-                           &nYear, &nMonth, &nDay, &nHour, &nMin, &nSec) == 6 )
+                int nYear, nMonth, nDay, nHour = 0, nMin = 0;
+                float fSec = 0 ;
+                if( sscanf(value, "%04d/%02d/%02d %02d:%02d:%f",
+                           &nYear, &nMonth, &nDay, &nHour, &nMin, &fSec) == 6 ||
+                    sscanf(value, "%04d/%02d/%02d",
+                           &nYear, &nMonth, &nDay) == 3 )
                 {
                     struct tm brokendowntime;
                     brokendowntime.tm_year = nYear - 1900;
@@ -440,9 +443,9 @@ swq_select_summarize( swq_select *select_info,
                     brokendowntime.tm_mday = nDay;
                     brokendowntime.tm_hour = nHour;
                     brokendowntime.tm_min = nMin;
-                    brokendowntime.tm_sec = nSec;
+                    brokendowntime.tm_sec = (int)fSec;
                     summary->count++;
-                    summary->sum += CPLYMDHMSToUnixTime(&brokendowntime);
+                    summary->sum += CPLYMDHMSToUnixTime(&brokendowntime) + fmod(fSec, 1);
                 }
             }
             else

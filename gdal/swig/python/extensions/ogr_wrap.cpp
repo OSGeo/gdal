@@ -2739,13 +2739,14 @@ SWIG_Python_MustGetPtr(PyObject *obj, swig_type_info *ty, int argnum, int flags)
 #define SWIGTYPE_p_char swig_types[14]
 #define SWIGTYPE_p_double swig_types[15]
 #define SWIGTYPE_p_f_double_p_q_const__char_p_void__int swig_types[16]
-#define SWIGTYPE_p_int swig_types[17]
-#define SWIGTYPE_p_p_GIntBig swig_types[18]
-#define SWIGTYPE_p_p_char swig_types[19]
-#define SWIGTYPE_p_p_double swig_types[20]
-#define SWIGTYPE_p_p_int swig_types[21]
-static swig_type_info *swig_types[23];
-static swig_module_info swig_module = {swig_types, 22, 0, 0, 0, 0};
+#define SWIGTYPE_p_float swig_types[17]
+#define SWIGTYPE_p_int swig_types[18]
+#define SWIGTYPE_p_p_GIntBig swig_types[19]
+#define SWIGTYPE_p_p_char swig_types[20]
+#define SWIGTYPE_p_p_double swig_types[21]
+#define SWIGTYPE_p_p_int swig_types[22]
+static swig_type_info *swig_types[24];
+static swig_module_info swig_module = {swig_types, 23, 0, 0, 0, 0};
 #define SWIG_TypeQuery(name) SWIG_TypeQueryModule(&swig_module, &swig_module, name)
 #define SWIG_MangledTypeQuery(name) SWIG_MangledTypeQueryModule(&swig_module, &swig_module, name)
 
@@ -3845,9 +3846,16 @@ SWIGINTERN double OGRFeatureShadow_GetFieldAsDouble__SWIG_1(OGRFeatureShadow *se
 	  return OGR_F_GetFieldAsDouble(self, i);
       return 0;
   }
-SWIGINTERN void OGRFeatureShadow_GetFieldAsDateTime(OGRFeatureShadow *self,int id,int *pnYear,int *pnMonth,int *pnDay,int *pnHour,int *pnMinute,int *pnSecond,int *pnTZFlag){
-      OGR_F_GetFieldAsDateTime(self, id, pnYear, pnMonth, pnDay,
-			       pnHour, pnMinute, pnSecond,
+
+SWIGINTERNINLINE PyObject *
+SWIG_From_float  (float value)
+{    
+  return SWIG_From_double  (value);
+}
+
+SWIGINTERN void OGRFeatureShadow_GetFieldAsDateTime(OGRFeatureShadow *self,int id,int *pnYear,int *pnMonth,int *pnDay,int *pnHour,int *pnMinute,float *pfSecond,int *pnTZFlag){
+      OGR_F_GetFieldAsDateTimeEx(self, id, pnYear, pnMonth, pnDay,
+			       pnHour, pnMinute, pfSecond,
 			       pnTZFlag);
   }
 SWIGINTERN void OGRFeatureShadow_GetFieldAsIntegerList(OGRFeatureShadow *self,int id,int *nLen,int const **pList){
@@ -3942,17 +3950,33 @@ SWIGINTERN void OGRFeatureShadow_SetField__SWIG_3(OGRFeatureShadow *self,char co
       else
 	  OGR_F_SetFieldDouble(self, i, value);
   }
-SWIGINTERN void OGRFeatureShadow_SetField__SWIG_4(OGRFeatureShadow *self,int id,int year,int month,int day,int hour,int minute,int second,int tzflag){
-    OGR_F_SetFieldDateTime(self, id, year, month, day,
+
+SWIGINTERN int
+SWIG_AsVal_float (PyObject * obj, float *val)
+{
+  double v;
+  int res = SWIG_AsVal_double (obj, &v);
+  if (SWIG_IsOK(res)) {
+    if ((v < -FLT_MAX || v > FLT_MAX)) {
+      return SWIG_OverflowError;
+    } else {
+      if (val) *val = static_cast< float >(v);
+    }
+  }  
+  return res;
+}
+
+SWIGINTERN void OGRFeatureShadow_SetField__SWIG_4(OGRFeatureShadow *self,int id,int year,int month,int day,int hour,int minute,float second,int tzflag){
+    OGR_F_SetFieldDateTimeEx(self, id, year, month, day,
                              hour, minute, second, 
                              tzflag);
   }
-SWIGINTERN void OGRFeatureShadow_SetField__SWIG_5(OGRFeatureShadow *self,char const *name,int year,int month,int day,int hour,int minute,int second,int tzflag){
+SWIGINTERN void OGRFeatureShadow_SetField__SWIG_5(OGRFeatureShadow *self,char const *name,int year,int month,int day,int hour,int minute,float second,int tzflag){
       int i = OGR_F_GetFieldIndex(self, name);
       if (i == -1)
 	  CPLError(CE_Failure, 1, "No such field: '%s'", name);
       else
-	  OGR_F_SetFieldDateTime(self, i, year, month, day,
+	  OGR_F_SetFieldDateTimeEx(self, i, year, month, day,
 				 hour, minute, second, 
 				 tzflag);
   }
@@ -12783,7 +12807,7 @@ SWIGINTERN PyObject *_wrap_Feature_GetFieldAsDateTime(PyObject *SWIGUNUSEDPARM(s
   int *arg5 = (int *) 0 ;
   int *arg6 = (int *) 0 ;
   int *arg7 = (int *) 0 ;
-  int *arg8 = (int *) 0 ;
+  float *arg8 = (float *) 0 ;
   int *arg9 = (int *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -12799,7 +12823,7 @@ SWIGINTERN PyObject *_wrap_Feature_GetFieldAsDateTime(PyObject *SWIGUNUSEDPARM(s
   int res6 = SWIG_TMPOBJ ;
   int temp7 ;
   int res7 = SWIG_TMPOBJ ;
-  int temp8 ;
+  float temp8 ;
   int res8 = SWIG_TMPOBJ ;
   int temp9 ;
   int res9 = SWIG_TMPOBJ ;
@@ -12868,10 +12892,10 @@ SWIGINTERN PyObject *_wrap_Feature_GetFieldAsDateTime(PyObject *SWIGUNUSEDPARM(s
     resultobj = SWIG_Python_AppendOutput(resultobj, SWIG_NewPointerObj((void*)(arg7), SWIGTYPE_p_int, new_flags));
   }
   if (SWIG_IsTmpObj(res8)) {
-    resultobj = SWIG_Python_AppendOutput(resultobj, SWIG_From_int((*arg8)));
+    resultobj = SWIG_Python_AppendOutput(resultobj, SWIG_From_float((*arg8)));
   } else {
     int new_flags = SWIG_IsNewObj(res8) ? (SWIG_POINTER_OWN |  0 ) :  0 ;
-    resultobj = SWIG_Python_AppendOutput(resultobj, SWIG_NewPointerObj((void*)(arg8), SWIGTYPE_p_int, new_flags));
+    resultobj = SWIG_Python_AppendOutput(resultobj, SWIG_NewPointerObj((void*)(arg8), SWIGTYPE_p_float, new_flags));
   }
   if (SWIG_IsTmpObj(res9)) {
     resultobj = SWIG_Python_AppendOutput(resultobj, SWIG_From_int((*arg9)));
@@ -14189,7 +14213,7 @@ SWIGINTERN PyObject *_wrap_Feature_SetField__SWIG_4(PyObject *SWIGUNUSEDPARM(sel
   int arg5 ;
   int arg6 ;
   int arg7 ;
-  int arg8 ;
+  float arg8 ;
   int arg9 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -14205,7 +14229,7 @@ SWIGINTERN PyObject *_wrap_Feature_SetField__SWIG_4(PyObject *SWIGUNUSEDPARM(sel
   int ecode6 = 0 ;
   int val7 ;
   int ecode7 = 0 ;
-  int val8 ;
+  float val8 ;
   int ecode8 = 0 ;
   int val9 ;
   int ecode9 = 0 ;
@@ -14255,11 +14279,11 @@ SWIGINTERN PyObject *_wrap_Feature_SetField__SWIG_4(PyObject *SWIGUNUSEDPARM(sel
     SWIG_exception_fail(SWIG_ArgError(ecode7), "in method '" "Feature_SetField" "', argument " "7"" of type '" "int""'");
   } 
   arg7 = static_cast< int >(val7);
-  ecode8 = SWIG_AsVal_int(obj7, &val8);
+  ecode8 = SWIG_AsVal_float(obj7, &val8);
   if (!SWIG_IsOK(ecode8)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode8), "in method '" "Feature_SetField" "', argument " "8"" of type '" "int""'");
+    SWIG_exception_fail(SWIG_ArgError(ecode8), "in method '" "Feature_SetField" "', argument " "8"" of type '" "float""'");
   } 
-  arg8 = static_cast< int >(val8);
+  arg8 = static_cast< float >(val8);
   ecode9 = SWIG_AsVal_int(obj8, &val9);
   if (!SWIG_IsOK(ecode9)) {
     SWIG_exception_fail(SWIG_ArgError(ecode9), "in method '" "Feature_SetField" "', argument " "9"" of type '" "int""'");
@@ -14293,7 +14317,7 @@ SWIGINTERN PyObject *_wrap_Feature_SetField__SWIG_5(PyObject *SWIGUNUSEDPARM(sel
   int arg5 ;
   int arg6 ;
   int arg7 ;
-  int arg8 ;
+  float arg8 ;
   int arg9 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
@@ -14310,7 +14334,7 @@ SWIGINTERN PyObject *_wrap_Feature_SetField__SWIG_5(PyObject *SWIGUNUSEDPARM(sel
   int ecode6 = 0 ;
   int val7 ;
   int ecode7 = 0 ;
-  int val8 ;
+  float val8 ;
   int ecode8 = 0 ;
   int val9 ;
   int ecode9 = 0 ;
@@ -14360,11 +14384,11 @@ SWIGINTERN PyObject *_wrap_Feature_SetField__SWIG_5(PyObject *SWIGUNUSEDPARM(sel
     SWIG_exception_fail(SWIG_ArgError(ecode7), "in method '" "Feature_SetField" "', argument " "7"" of type '" "int""'");
   } 
   arg7 = static_cast< int >(val7);
-  ecode8 = SWIG_AsVal_int(obj7, &val8);
+  ecode8 = SWIG_AsVal_float(obj7, &val8);
   if (!SWIG_IsOK(ecode8)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode8), "in method '" "Feature_SetField" "', argument " "8"" of type '" "int""'");
+    SWIG_exception_fail(SWIG_ArgError(ecode8), "in method '" "Feature_SetField" "', argument " "8"" of type '" "float""'");
   } 
-  arg8 = static_cast< int >(val8);
+  arg8 = static_cast< float >(val8);
   ecode9 = SWIG_AsVal_int(obj8, &val9);
   if (!SWIG_IsOK(ecode9)) {
     SWIG_exception_fail(SWIG_ArgError(ecode9), "in method '" "Feature_SetField" "', argument " "9"" of type '" "int""'");
@@ -14519,7 +14543,7 @@ SWIGINTERN PyObject *_wrap_Feature_SetField(PyObject *self, PyObject *args) {
                 }
                 if (_v) {
                   {
-                    int res = SWIG_AsVal_int(argv[7], NULL);
+                    int res = SWIG_AsVal_float(argv[7], NULL);
                     _v = SWIG_CheckState(res);
                   }
                   if (_v) {
@@ -14574,7 +14598,7 @@ SWIGINTERN PyObject *_wrap_Feature_SetField(PyObject *self, PyObject *args) {
                 }
                 if (_v) {
                   {
-                    int res = SWIG_AsVal_int(argv[7], NULL);
+                    int res = SWIG_AsVal_float(argv[7], NULL);
                     _v = SWIG_CheckState(res);
                   }
                   if (_v) {
@@ -14602,8 +14626,8 @@ fail:
     "    SetField(OGRFeatureShadow *,char const *,char const *)\n"
     "    SetField(OGRFeatureShadow *,int,double)\n"
     "    SetField(OGRFeatureShadow *,char const *,double)\n"
-    "    SetField(OGRFeatureShadow *,int,int,int,int,int,int,int,int)\n"
-    "    SetField(OGRFeatureShadow *,char const *,int,int,int,int,int,int,int)\n");
+    "    SetField(OGRFeatureShadow *,int,int,int,int,int,int,float,int)\n"
+    "    SetField(OGRFeatureShadow *,char const *,int,int,int,int,int,float,int)\n");
   return NULL;
 }
 
@@ -25615,9 +25639,9 @@ static PyMethodDef SwigMethods[] = {
 		"SetField(int id, double value)\n"
 		"SetField(char name, double value)\n"
 		"SetField(int id, int year, int month, int day, int hour, int minute, \n"
-		"    int second, int tzflag)\n"
+		"    float second, int tzflag)\n"
 		"Feature_SetField(Feature self, char name, int year, int month, int day, \n"
-		"    int hour, int minute, int second, int tzflag)\n"
+		"    int hour, int minute, float second, int tzflag)\n"
 		""},
 	 { (char *)"Feature_SetFieldIntegerList", _wrap_Feature_SetFieldIntegerList, METH_VARARGS, (char *)"\n"
 		"Feature_SetFieldIntegerList(Feature self, int id, int nList)\n"
@@ -27535,6 +27559,7 @@ static swig_type_info _swigt__p_OSRSpatialReferenceShadow = {"_p_OSRSpatialRefer
 static swig_type_info _swigt__p_char = {"_p_char", "char *|retStringAndCPLFree *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_double = {"_p_double", "double *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_f_double_p_q_const__char_p_void__int = {"_p_f_double_p_q_const__char_p_void__int", "int (*)(double,char const *,void *)", 0, 0, (void*)0, 0};
+static swig_type_info _swigt__p_float = {"_p_float", "float *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_int = {"_p_int", "OGRFieldSubType *|OGRFieldType *|CPLErr *|int *|OGRwkbGeometryType *|OGRJustification *|OGRwkbByteOrder *|OGRErr *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_p_GIntBig = {"_p_p_GIntBig", "GIntBig **", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_p_char = {"_p_p_char", "char **", 0, 0, (void*)0, 0};
@@ -27559,6 +27584,7 @@ static swig_type_info *swig_type_initial[] = {
   &_swigt__p_char,
   &_swigt__p_double,
   &_swigt__p_f_double_p_q_const__char_p_void__int,
+  &_swigt__p_float,
   &_swigt__p_int,
   &_swigt__p_p_GIntBig,
   &_swigt__p_p_char,
@@ -27583,6 +27609,7 @@ static swig_cast_info _swigc__p_OSRSpatialReferenceShadow[] = {  {&_swigt__p_OSR
 static swig_cast_info _swigc__p_char[] = {  {&_swigt__p_char, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_double[] = {  {&_swigt__p_double, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_f_double_p_q_const__char_p_void__int[] = {  {&_swigt__p_f_double_p_q_const__char_p_void__int, 0, 0, 0},{0, 0, 0, 0}};
+static swig_cast_info _swigc__p_float[] = {  {&_swigt__p_float, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_int[] = {  {&_swigt__p_int, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_p_GIntBig[] = {  {&_swigt__p_p_GIntBig, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_p_char[] = {  {&_swigt__p_p_char, 0, 0, 0},{0, 0, 0, 0}};
@@ -27607,6 +27634,7 @@ static swig_cast_info *swig_cast_initial[] = {
   _swigc__p_char,
   _swigc__p_double,
   _swigc__p_f_double_p_q_const__char_p_void__int,
+  _swigc__p_float,
   _swigc__p_int,
   _swigc__p_p_GIntBig,
   _swigc__p_p_char,

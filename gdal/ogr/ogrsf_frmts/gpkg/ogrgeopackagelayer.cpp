@@ -30,6 +30,7 @@
 
 #include "ogr_geopackage.h"
 #include "ogrgeopackageutility.h"
+#include "ogr_p.h"
 
 /************************************************************************/
 /*                      OGRGeoPackageLayer()                            */
@@ -249,12 +250,9 @@ OGRFeature *OGRGeoPackageLayer::TranslateFeature( sqlite3_stmt* hStmt )
             case OFTDateTime:
             {
                 const char* pszTxt = (const char*)sqlite3_column_text( hStmt, iRawField );
-                int nYear, nMonth, nDay, nHour, nMinute;
-                float fSecond;
-                if( sscanf(pszTxt, "%d-%d-%dT%d:%d:%fZ", &nYear, &nMonth, &nDay,
-                                            &nHour, &nMinute, &fSecond) == 6 )
-                    poFeature->SetField(iField, nYear, nMonth, nDay,
-                                        nHour, nMinute, (int)(fSecond + 0.5), 0);
+                OGRField sField;
+                if( OGRParseXMLDateTime(pszTxt, &sField) )
+                    poFeature->SetField(iField, &sField);
                 break;
             }
 

@@ -489,14 +489,10 @@ static void SetField(OGRFeature* poFeature,
     }
     else if (eType == OFTDate || eType == OFTDateTime)
     {
-        int nYear, nMonth, nDay, nHour, nMinute, nTZ;
-        float fCur;
-        if (OGRParseXMLDateTime( pszValue,
-                                 &nYear, &nMonth, &nDay,
-                                 &nHour, &nMinute, &fCur, &nTZ) )
+        OGRField sField;
+        if (OGRParseXMLDateTime( pszValue, &sField ))
         {
-            poFeature->SetField(i, nYear, nMonth, nDay,
-                                nHour, nMinute, (int)fCur, nTZ);
+            poFeature->SetField(i, &sField);
         }
     }
     else
@@ -1448,15 +1444,28 @@ static void WriteLayer(VSILFILE* fp, OGRLayer* poLayer)
                 }
                 else if (eType == OFTDateTime)
                 {
-                    int nYear, nMonth, nDay, nHour, nMinute, nSecond, nTZFlag;
+                    int nYear, nMonth, nDay, nHour, nMinute, nTZFlag;
+                    float fSecond;
                     poFeature->GetFieldAsDateTime(j, &nYear, &nMonth, &nDay,
-                                                    &nHour, &nMinute, &nSecond, &nTZFlag);
-                    VSIFPrintfL(fp, "<table:table-cell table:style-name=\"stDateTime\" "
-                                "office:value-type=\"date\" "
-                                "office:date-value=\"%04d-%02d-%02dT%02d:%02d:%02d\">\n",
-                                nYear, nMonth, nDay, nHour, nMinute, nSecond);
-                    VSIFPrintfL(fp, "<text:p>%02d/%02d/%04d %02d:%02d:%02d</text:p>\n",
-                                nDay, nMonth, nYear, nHour, nMinute, nSecond);
+                                                    &nHour, &nMinute, &fSecond, &nTZFlag );
+                    if( OGR_GET_MS(fSecond) )
+                    {
+                        VSIFPrintfL(fp, "<table:table-cell table:style-name=\"stDateTimeMilliseconds\" "
+                                    "office:value-type=\"date\" "
+                                    "office:date-value=\"%04d-%02d-%02dT%02d:%02d:%06.3f\">\n",
+                                    nYear, nMonth, nDay, nHour, nMinute, fSecond);
+                        VSIFPrintfL(fp, "<text:p>%02d/%02d/%04d %02d:%02d:%06.3f</text:p>\n",
+                                    nDay, nMonth, nYear, nHour, nMinute, fSecond);
+                    }
+                    else
+                    {
+                        VSIFPrintfL(fp, "<table:table-cell table:style-name=\"stDateTime\" "
+                                    "office:value-type=\"date\" "
+                                    "office:date-value=\"%04d-%02d-%02dT%02d:%02d:%02d\">\n",
+                                    nYear, nMonth, nDay, nHour, nMinute, (int)fSecond);
+                        VSIFPrintfL(fp, "<text:p>%02d/%02d/%04d %02d:%02d:%02d</text:p>\n",
+                                    nDay, nMonth, nYear, nHour, nMinute, (int)fSecond);
+                    }
                     VSIFPrintfL(fp, "</table:table-cell>\n");
                 }
                 else if (eType == OFTDate)
@@ -1707,6 +1716,19 @@ void OGRODSDataSource::FlushCache()
     VSIFPrintfL(fp, "<number:text>:</number:text>\n");
     VSIFPrintfL(fp, "<number:seconds number:style=\"long\"/>\n");
     VSIFPrintfL(fp, "</number:date-style>\n");
+    VSIFPrintfL(fp, "<number:date-style style:name=\"nDateTimeMilliseconds\">\n");
+    VSIFPrintfL(fp, "<number:day number:style=\"long\"/>\n");
+    VSIFPrintfL(fp, "<number:text>/</number:text>\n");
+    VSIFPrintfL(fp, "<number:month number:style=\"long\"/>\n");
+    VSIFPrintfL(fp, "<number:text>/</number:text>\n");
+    VSIFPrintfL(fp, "<number:year number:style=\"long\"/>\n");
+    VSIFPrintfL(fp, "<number:text> </number:text>\n");
+    VSIFPrintfL(fp, "<number:hours number:style=\"long\"/>\n");
+    VSIFPrintfL(fp, "<number:text>:</number:text>\n");
+    VSIFPrintfL(fp, "<number:minutes number:style=\"long\"/>\n");
+    VSIFPrintfL(fp, "<number:text>:</number:text>\n");
+    VSIFPrintfL(fp, "<number:seconds number:style=\"long\" number:decimal-places=\"3\"/>\n");
+    VSIFPrintfL(fp, "</number:date-style>\n");
     VSIFPrintfL(fp, "<style:style style:name=\"stDate\" "
                     "style:family=\"table-cell\" "
                     "style:parent-style-name=\"Default\" "
@@ -1719,6 +1741,10 @@ void OGRODSDataSource::FlushCache()
                     "style:family=\"table-cell\" "
                     "style:parent-style-name=\"Default\" "
                     "style:data-style-name=\"nDateTime\"/>\n");
+    VSIFPrintfL(fp, "<style:style style:name=\"stDateTimeMilliseconds\" "
+                    "style:family=\"table-cell\" "
+                    "style:parent-style-name=\"Default\" "
+                    "style:data-style-name=\"nDateTimeMilliseconds\"/>\n");
     VSIFPrintfL(fp, "</office:automatic-styles>\n");
     VSIFPrintfL(fp, "<office:body>\n");
     VSIFPrintfL(fp, "<office:spreadsheet>\n");

@@ -372,6 +372,10 @@ char  CPL_DLL **OGR_F_GetFieldAsStringList( OGRFeatureH, int );
 GByte CPL_DLL *OGR_F_GetFieldAsBinary( OGRFeatureH, int, int * );
 int   CPL_DLL  OGR_F_GetFieldAsDateTime( OGRFeatureH, int, int *, int *, int *,
                                          int *, int *, int *, int * );
+int   CPL_DLL OGR_F_GetFieldAsDateTimeEx( OGRFeatureH hFeat, int iField,
+                                int *pnYear, int *pnMonth, int *pnDay,
+                                int *pnHour, int *pnMinute, float *pfSecond,
+                                int *pnTZFlag );
 
 void   CPL_DLL OGR_F_SetFieldInteger( OGRFeatureH, int, int );
 void   CPL_DLL OGR_F_SetFieldInteger64( OGRFeatureH, int, GIntBig );
@@ -385,6 +389,8 @@ void   CPL_DLL OGR_F_SetFieldRaw( OGRFeatureH, int, OGRField * );
 void   CPL_DLL OGR_F_SetFieldBinary( OGRFeatureH, int, int, GByte * );
 void   CPL_DLL OGR_F_SetFieldDateTime( OGRFeatureH, int, 
                                        int, int, int, int, int, int, int );
+void   CPL_DLL OGR_F_SetFieldDateTimeEx( OGRFeatureH, int, 
+                                       int, int, int, int, int, float, int );
 
 int               CPL_DLL OGR_F_GetGeomFieldCount( OGRFeatureH hFeat );
 OGRGeomFieldDefnH CPL_DLL OGR_F_GetGeomFieldDefnRef( OGRFeatureH hFeat,

@@ -344,13 +344,7 @@ void field2kml (
 
         SimpleDataPtr poKmlSimpleData = NULL;
         DataPtr poKmlData = NULL;
-        int year,
-            month,
-            day,
-            hour,
-            min,
-            sec,
-            tz;
+        OGRField sFieldDT;
 
         switch ( type ) {
 
@@ -509,8 +503,7 @@ void field2kml (
         /* supported in OGR data model to have 2 fields with same name... */
         case OFTDate:          //   Date
             {
-                poOgrFeat->GetFieldAsDateTime ( i, &year, &month, &day,
-                                                &hour, &min, &sec, &tz );
+                memcpy(&sFieldDT, poOgrFeat->GetRawFieldRef(i), sizeof(OGRField));
 
                 int iTimeField;
 
@@ -528,22 +521,11 @@ void field2kml (
                            EQUAL ( name, oFC.beginfield ) ||
                            EQUAL ( name, oFC.endfield ) ) ) {
 
-                        int year2,
-                            month2,
-                            day2,
-                            hour2,
-                            min2,
-                            sec2,
-                            tz2;
-
-                        poOgrFeat->GetFieldAsDateTime ( iTimeField, &year2,
-                                                        &month2, &day2, &hour2,
-                                                        &min2, &sec2, &tz2 );
-
-                        hour = hour2;
-                        min = min2;
-                        sec = sec2;
-                        tz = tz2;
+                        const OGRField* psField2 = poOgrFeat->GetRawFieldRef(iTimeField);
+                        sFieldDT.Date.Hour = psField2->Date.Hour;
+                        sFieldDT.Date.Minute = psField2->Date.Minute;
+                        sFieldDT.Date.Second = psField2->Date.Second;
+                        sFieldDT.Date.TZFlag = psField2->Date.TZFlag;
 
                         if ( 0 > iSkip1 )
                             iSkip1 = iTimeField;
@@ -561,8 +543,7 @@ void field2kml (
         /* supported in OGR data model to have 2 fields with same name... */
         case OFTTime:          //   Time
             {
-                poOgrFeat->GetFieldAsDateTime ( i, &year, &month, &day,
-                                                &hour, &min, &sec, &tz );
+                memcpy(&sFieldDT, poOgrFeat->GetRawFieldRef(i), sizeof(OGRField));
 
                 int iTimeField;
 
@@ -580,21 +561,10 @@ void field2kml (
                            EQUAL ( name, oFC.beginfield ) ||
                            EQUAL ( name, oFC.endfield ) ) ) {
 
-                        int year2,
-                            month2,
-                            day2,
-                            hour2,
-                            min2,
-                            sec2,
-                            tz2;
-
-                        poOgrFeat->GetFieldAsDateTime ( iTimeField, &year2,
-                                                        &month2, &day2, &hour2,
-                                                        &min2, &sec2, &tz2 );
-
-                        year = year2;
-                        month = month2;
-                        day = day2;
+                        const OGRField* psField2 = poOgrFeat->GetRawFieldRef(iTimeField);
+                        sFieldDT.Date.Year = psField2->Date.Year;
+                        sFieldDT.Date.Month = psField2->Date.Month;
+                        sFieldDT.Date.Day = psField2->Date.Day;
 
                         if ( 0 > iSkip1 )
                             iSkip1 = iTimeField;
@@ -609,16 +579,14 @@ void field2kml (
 
         case OFTDateTime:      //  Date and Time
             {
-                poOgrFeat->GetFieldAsDateTime ( i, &year, &month, &day,
-                                                &hour, &min, &sec, &tz );
+              memcpy(&sFieldDT, poOgrFeat->GetRawFieldRef(i), sizeof(OGRField));
 
               Do_DateTime:
                 /***** timestamp *****/
 
                 if ( EQUAL ( name, oFC.tsfield ) ) {
 
-                    char *timebuf = OGRGetXMLDateTime ( year, month, day, hour,
-                                                        min, sec, tz );
+                    char *timebuf = OGRGetXMLDateTime ( &sFieldDT );
 
                     TimeStampPtr poKmlTimeStamp =
                         poKmlFactory->CreateTimeStamp (  );
@@ -633,8 +601,7 @@ void field2kml (
 
                 if ( EQUAL ( name, oFC.beginfield ) ) {
 
-                    char *timebuf = OGRGetXMLDateTime ( year, month, day, hour,
-                                                        min, sec, tz );
+                    char *timebuf = OGRGetXMLDateTime ( &sFieldDT );
 
                     if ( !poKmlTimeSpan ) {
                         poKmlTimeSpan = poKmlFactory->CreateTimeSpan (  );
@@ -652,8 +619,7 @@ void field2kml (
 
                 else if ( EQUAL ( name, oFC.endfield ) ) {
 
-                    char *timebuf = OGRGetXMLDateTime ( year, month, day, hour,
-                                                        min, sec, tz );
+                    char *timebuf = OGRGetXMLDateTime ( &sFieldDT );
 
 
                     if ( !poKmlTimeSpan ) {
@@ -1189,20 +1155,10 @@ static void kmldatetime2ogr( OGRFeature* poOgrFeat,
     int iField = poOgrFeat->GetFieldIndex ( pszOGRField );
 
     if ( iField > -1 ) {
-        int nYear,
-            nMonth,
-            nDay,
-            nHour,
-            nMinute,
-            nTZ;
-        float fSecond;
+        OGRField sField;
 
-        if ( OGRParseXMLDateTime
-                ( osKmlDateTime.c_str (  ), &nYear, &nMonth, &nDay, &nHour,
-                &nMinute, &fSecond, &nTZ ) )
-            poOgrFeat->SetField ( iField, nYear, nMonth, nDay,
-                                    nHour, nMinute, ( int )fSecond,
-                                    nTZ );
+        if ( OGRParseXMLDateTime( osKmlDateTime.c_str (  ), &sField ) )
+            poOgrFeat->SetField ( iField, &sField );
     }
 }
 

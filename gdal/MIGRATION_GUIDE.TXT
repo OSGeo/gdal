@@ -151,6 +151,49 @@ Behaviour changes:
     * Drivers will now return OGRERR_NON_EXISTING_FEATURE when calling SetFeature()
       or DeleteFeature() with a feature id that does not exist.
 
+I) RFC 56: 
+
+Link: https://trac.osgeo.org/gdal/wiki/rfc56_millisecond_precision
+
+API/ABI changes:
+
+  * OGRField.Date structure has now a Reserved field that must be set to 0 when
+    using the OGRFeature::SetField( int i, OGRField * puValue ) method.
+    The "GByte Second" field is now a "float Second".
+
+  * OGRFeature::SetField( int i, int nYear, int nMonth, int nDay,
+                          int nHour=0, int nMinute=0, float fSecond=0.f, 
+                          int nTZFlag = 0 )
+    and the variant that take a const char* as first argument now accept a
+    floating-point number for seconds.
+
+API additions :
+
+    * OGRFeature::GetFieldAsDateTime( int i, 
+                                     int *pnYear, int *pnMonth, int *pnDay,
+                                     int *pnHour, int *pnMinute, float *pfSecond, 
+                                     int *pnTZFlag );
+
+    * OGR_F_GetFieldAsDateTimeEx() and OGR_F_SetFieldDateTimeEx() are added.
+
+Driver related changes:
+
+    * The following functions, mainly used by driver implementations, have
+      seen their signature change :
+
+        int CPL_DLL OGRParseXMLDateTime( const char* pszXMLDateTime,
+                                        OGRField* psField );
+        int CPL_DLL OGRParseRFC822DateTime( const char* pszRFC822DateTime,
+                                            OGRField* psField );
+        char CPL_DLL * OGRGetRFC822DateTime(const OGRField* psField);
+        char CPL_DLL * OGRGetXMLDateTime(const OGRField* psField);
+
+Behaviour changes:
+
+    * OGRFeature::GetFieldAsString() will now output milliseconds if a DateTime/Time
+      field has such precision.
+    * Drivers will now output milliseconds if a DateTime/Time field has such precision.
+
 J) RFC 57: 64-bit bucket count for histograms
 
 Link: https://trac.osgeo.org/gdal/wiki/rfc57_histogram_64bit_count

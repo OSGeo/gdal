@@ -906,11 +906,10 @@ void OGRGPXLayer::endElementCbk(const char *pszName)
                 pszSubElementValue[nSubElementValueLen] = 0;
                 if (strcmp(pszSubElementName, "time") == 0)
                 {
-                    int year, month, day, hour, minute, TZ;
-                    float second;
-                    if (OGRParseXMLDateTime(pszSubElementValue, &year, &month, &day, &hour, &minute, &second, &TZ))
+                    OGRField sField;
+                    if (OGRParseXMLDateTime(pszSubElementValue, &sField))
                     {
-                        poFeature->SetField(iCurrentField, year, month, day, hour, minute, (int)(second + .5), TZ);
+                        poFeature->SetField(iCurrentField, &sField);
                     }
                     else
                     {
@@ -1188,15 +1187,10 @@ void OGRGPXLayer::WriteFeatureAttributes( OGRFeature *poFeature, int nIdentLevel
             const char* pszName = poFieldDefn->GetNameRef();
             if (strcmp(pszName, "time") == 0)
             {
-                int year, month, day, hour, minute, second, TZFlag;
-                if (poFeature->GetFieldAsDateTime(i, &year, &month, &day,
-                                                  &hour, &minute, &second, &TZFlag))
-                {
-                    char* pszDate = OGRGetXMLDateTime(year, month, day, hour, minute, second, TZFlag);
-                    AddIdent(fp, nIdentLevel);
-                    poDS->PrintLine("<time>%s</time>", pszDate);
-                    CPLFree(pszDate);
-                }
+                char* pszDate = OGRGetXMLDateTime(poFeature->GetRawFieldRef(i));
+                AddIdent(fp, nIdentLevel);
+                poDS->PrintLine("<time>%s</time>", pszDate);
+                CPLFree(pszDate);
             }
             else if (strncmp(pszName, "link", 4) == 0)
             {

@@ -918,7 +918,7 @@ def ogr_rfc28_40():
     lyr.ResetReading()
     tr2 = ogrtest.check_features_against_list( lyr, 'MAX_DATE', ['2013/12/31 23:59:59'] )
     lyr.ResetReading()
-    tr3 = ogrtest.check_features_against_list( lyr, 'AVG_DATE', ['2013/07/02 11:59:59'] )
+    tr3 = ogrtest.check_features_against_list( lyr, 'AVG_DATE', ['2013/07/02 11:59:59.500'] )
 
     gdaltest.ds.ReleaseResultSet( lyr )
 

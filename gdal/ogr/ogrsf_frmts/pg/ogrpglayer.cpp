@@ -413,11 +413,12 @@ do { \
 
 static
 int OGRPGTimeStamp2DMYHMS(GIntBig dt, int *year, int *month, int *day,
-                                      int* hour, int* min, int* sec)
+                                      int* hour, int* min, double* pdfSec)
 {
         GIntBig date;
 	GIntBig time;
-        double fsec;
+        int nSec;
+        double dfSec;
 
         time = dt;
 	TMODULO(time, date, USECS_PER_DAY);
@@ -436,7 +437,8 @@ int OGRPGTimeStamp2DMYHMS(GIntBig dt, int *year, int *month, int *day,
 		return -1;
 
 	OGRPGj2date((int) date, year, month, day);
-	OGRPGdt2timeInt8(time, hour, min, sec, &fsec);
+	OGRPGdt2timeInt8(time, hour, min, &nSec, &dfSec);
+        *pdfSec += nSec + dfSec;
 
         return 0;
 }
@@ -1201,14 +1203,15 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
                 {
                     unsigned int nVal[2];
                     GIntBig llVal;
-                    int nYear, nMonth, nDay, nHour, nMinute, nSecond;
+                    int nYear, nMonth, nDay, nHour, nMinute;
+                    double dfSecond;
                     CPLAssert(PQgetlength(hResult, iRecord, iField) == 8);
                     memcpy( nVal, PQgetvalue( hResult, iRecord, iField ), 8 );
                     CPL_MSBPTR32(&nVal[0]);
                     CPL_MSBPTR32(&nVal[1]);
                     llVal = (GIntBig) ((((GUIntBig)nVal[0]) << 32) | nVal[1]);
-                    if (OGRPGTimeStamp2DMYHMS(llVal, &nYear, &nMonth, &nDay, &nHour, &nMinute, &nSecond) == 0)
-                        poFeature->SetField( iOGRField, nYear, nMonth, nDay, nHour, nMinute, nSecond);
+                    if (OGRPGTimeStamp2DMYHMS(llVal, &nYear, &nMonth, &nDay, &nHour, &nMinute, &dfSecond) == 0)
+                        poFeature->SetField( iOGRField, nYear, nMonth, nDay, nHour, nMinute, (float)dfSecond, 100);
                 }
                 else if ( nTypeOID == TEXTOID )
                 {

@@ -731,7 +731,7 @@ static const char* FileGDBValueToStr(OGRFieldType eOGRFieldType,
                                             psValue->Date.Day,
                                             psValue->Date.Hour,
                                             psValue->Date.Minute,
-                                            psValue->Date.Second);
+                                            (int)psValue->Date.Second);
         case OFTDate: return CPLSPrintf("%04d/%02d/%02d",
                                             psValue->Date.Year,
                                             psValue->Date.Month,
@@ -739,7 +739,7 @@ static const char* FileGDBValueToStr(OGRFieldType eOGRFieldType,
         case OFTTime: return CPLSPrintf("%02d:%02d:%02d",
                                             psValue->Date.Hour,
                                             psValue->Date.Minute,
-                                            psValue->Date.Second);
+                                            (int)psValue->Date.Second);
         default:
             break;
     }

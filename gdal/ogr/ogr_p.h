@@ -91,15 +91,11 @@ void OGRFormatDouble( char *pszBuffer, int nBufferLen, double dfVal, char chDeci
 /* they are compiled as plugins  */
 int CPL_DLL OGRGetDayOfWeek(int day, int month, int year);
 int CPL_DLL OGRParseXMLDateTime( const char* pszXMLDateTime,
-                               int *pnYear, int *pnMonth, int *pnDay,
-                               int *pnHour, int *pnMinute, float* pfSecond, int *pnTZ);
+                                 OGRField* psField );
 int CPL_DLL OGRParseRFC822DateTime( const char* pszRFC822DateTime,
-                                  int *pnYear, int *pnMonth, int *pnDay,
-                                  int *pnHour, int *pnMinute, int *pnSecond, int *pnTZ);
-char CPL_DLL * OGRGetRFC822DateTime(int year, int month, int day,
-                                    int hour, int minute, int second, int TZ);
-char CPL_DLL * OGRGetXMLDateTime(int year, int month, int day,
-                                 int hour, int minute, int second, int TZFlag);
+                                    OGRField* psField );
+char CPL_DLL * OGRGetRFC822DateTime(const OGRField* psField);
+char CPL_DLL * OGRGetXMLDateTime(const OGRField* psField);
 char CPL_DLL * OGRGetXML_UTF8_EscapedString(const char* pszString);
 
 int OGRCompareDate(   OGRField *psFirstTuple,

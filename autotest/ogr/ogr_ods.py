@@ -390,7 +390,7 @@ def ogr_ods_7():
     feat = lyr.GetNextFeature()
     if feat.GetFID() != 2:
         gdaltest.post_reason('did not get expected FID')
-        feat.DumpReadabe()
+        feat.DumpReadable()
         return 'fail'
     feat.SetField(0, 'modified_value')
     lyr.SetFeature(feat)
@@ -402,11 +402,11 @@ def ogr_ods_7():
     feat = lyr.GetNextFeature()
     if feat.GetFID() != 2:
         gdaltest.post_reason('did not get expected FID')
-        feat.DumpReadabe()
+        feat.DumpReadable()
         return 'fail'
     if feat.GetField(0) != 'modified_value':
         gdaltest.post_reason('did not get expected value')
-        feat.DumpReadabe()
+        feat.DumpReadable()
         return 'fail'
     feat = None
     ds = None
@@ -455,6 +455,53 @@ def ogr_ods_8():
 
     return 'success'
 
+###############################################################################
+# Test DateTime with milliseconds
+
+def ogr_ods_9():
+
+    drv = ogr.GetDriverByName('ODS')
+    if drv is None:
+        return 'skip'
+
+    ds = drv.CreateDataSource('/vsimem/ogr_ods_9.ods')
+    lyr = ds.CreateLayer('foo')
+    lyr.CreateField(ogr.FieldDefn('Field1', ogr.OFTDateTime))
+    lyr.CreateField(ogr.FieldDefn('Field2', ogr.OFTDateTime))
+    lyr.CreateField(ogr.FieldDefn('Field3', ogr.OFTDateTime))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField(0, '2015/12/23 12:34:56.789')
+    f.SetField(1, '2015/12/23 12:34:56.000')
+    f.SetField(2, '2015/12/23 12:34:56')
+    lyr.CreateFeature(f)
+    f = None
+    ds = None
+
+    ds = ogr.Open('/vsimem/ogr_ods_9.ods')
+    lyr = ds.GetLayer(0)
+    for i in range(3):
+        if lyr.GetLayerDefn().GetFieldDefn(i).GetType() != ogr.OFTDateTime:
+            gdaltest.post_reason('failure')
+            return 'fail'
+    f = lyr.GetNextFeature()
+    if f.GetField(0) != '2015/12/23 12:34:56.789':
+        gdaltest.post_reason('failure')
+        f.DumpReadable()
+        return 'fail'
+    if f.GetField(1) != '2015/12/23 12:34:56':
+        gdaltest.post_reason('failure')
+        f.DumpReadable()
+        return 'fail'
+    if f.GetField(2) != '2015/12/23 12:34:56':
+        gdaltest.post_reason('failure')
+        f.DumpReadable()
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/ogr_ods_9.ods')
+
+    return 'success'
+
 gdaltest_list = [ 
     ogr_ods_1,
     ogr_ods_kspread_1,
@@ -464,7 +511,8 @@ gdaltest_list = [
     ogr_ods_5,
     ogr_ods_6,
     ogr_ods_7,
-    ogr_ods_8
+    ogr_ods_8,
+    ogr_ods_9
 ]
 
 if __name__ == '__main__':

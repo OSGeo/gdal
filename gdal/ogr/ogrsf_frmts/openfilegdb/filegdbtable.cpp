@@ -1248,8 +1248,9 @@ int FileGDBDoubleDateToOGRDate(double dfVal, OGRField* psField)
     psField->Date.Day = (GByte)brokendowntime.tm_mday;
     psField->Date.Hour = (GByte)brokendowntime.tm_hour;
     psField->Date.Minute = (GByte)brokendowntime.tm_min;
-    psField->Date.Second = (GByte)brokendowntime.tm_sec;
+    psField->Date.Second = (float)brokendowntime.tm_sec;
     psField->Date.TZFlag = 0;
+    psField->Date.Reserved = 0;
 
     return TRUE;
 }

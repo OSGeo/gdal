@@ -236,7 +236,7 @@ def ogr_plscenes_2():
         return 'fail'
     #lyr.ResetReading()
     f = lyr.GetNextFeature()
-    if f.id != 'my_id' or f.acquired != '2015/03/27 12:34:56+00' or \
+    if f.id != 'my_id' or f.acquired != '2015/03/27 12:34:56.123+00' or \
        f['cloud_cover.estimated'] != 0.25:
         gdaltest.post_reason('fail')
         f.DumpReadable()
