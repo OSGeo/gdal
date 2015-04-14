@@ -13,7 +13,7 @@ ifeq ($(SQLITE_HAS_COLUMN_METADATA),yes)
 CPPFLAGS +=  -DSQLITE_HAS_COLUMN_METADATA
 endif
 
-CPPFLAGS := -I..  $(SQLITE_INC) $(CPPFLAGS) -I../sqlite -I../../../frmts/mem
+CPPFLAGS := -I.. -I../sqlite -I../../../frmts/mem $(SQLITE_INC) $(CPPFLAGS)
 
 default: $(O_OBJ:.o=.$(OBJ_EXT))
 
