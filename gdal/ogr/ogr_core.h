@@ -613,11 +613,14 @@ typedef union {
         GByte   Day;
         GByte   Hour;
         GByte   Minute;
-        GByte   Second;
         GByte   TZFlag; /* 0=unknown, 1=localtime(ambiguous), 
                            100=GMT, 104=GMT+1, 80=GMT-5, etc */
+        GByte   Reserved; /* must be set to 0 */
+        float   Second; /* with millisecond accuracy. at the end of the structure, so as to keep it 12 bytes on 32 bit */
     } Date;
 } OGRField;
+
+#define OGR_GET_MS(floatingpoint_sec)   (int)(((floatingpoint_sec) - (int)(floatingpoint_sec)) * 1000 + 0.5)
 
 int CPL_DLL OGRParseDate( const char *pszInput, OGRField *psOutput, 
                           int nOptions );

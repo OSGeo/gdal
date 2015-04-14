@@ -409,7 +409,7 @@ def ogr_gpkg_8():
     feat = lyr.GetNextFeature()
     if feat.GetField(0) != 10 or feat.GetField(1) != 'test string 0 test' or \
        feat.GetField(2) != 3.14159  or feat.GetField(3) != '2014/05/17' or \
-       feat.GetField(4) != '2014/05/17 12:34:56' or feat.GetField(5) != 'FFFE' or \
+       feat.GetField(4) != '2014/05/17 12:34:56+00' or feat.GetField(5) != 'FFFE' or \
        feat.GetField(6) != 1 or feat.GetField(7) != -32768 or feat.GetField(8) != 1.23 or \
        feat.GetField(9) != 1000000000000:
         gdaltest.post_reason('fail')
@@ -1436,6 +1436,10 @@ def ogr_gpkg_24():
     field_defn.SetDefault("(strftime('%Y-%m-%dT%H:%M:%fZ','now'))")
     lyr.CreateField(field_defn)
     
+    field_defn = ogr.FieldDefn( 'field_datetime4', ogr.OFTDateTime )
+    field_defn.SetDefault("'2015/06/30 12:34:56.123'")
+    lyr.CreateField(field_defn)
+
     field_defn = ogr.FieldDefn( 'field_date', ogr.OFTDate )
     field_defn.SetDefault("CURRENT_DATE")
     lyr.CreateField(field_defn)
@@ -1481,6 +1485,10 @@ def ogr_gpkg_24():
         gdaltest.post_reason('fail')
         print(lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_datetime3')).GetDefault())
         return 'fail'
+    if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_datetime4')).GetDefault() != "'2015/06/30 12:34:56.123'":
+        gdaltest.post_reason('fail')
+        print(lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_datetime4')).GetDefault())
+        return 'fail'
     if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_date')).GetDefault() != "CURRENT_DATE":
         gdaltest.post_reason('fail')
         return 'fail'
@@ -1491,7 +1499,8 @@ def ogr_gpkg_24():
     if f.GetField('field_string') != 'a\'b' or f.GetField('field_int') != 123 or \
        f.GetField('field_real') != 1.23 or \
        f.IsFieldSet('field_nodefault') or not f.IsFieldSet('field_datetime')  or \
-       f.GetField('field_datetime2') != '2015/06/30 12:34:56' or \
+       f.GetField('field_datetime2') != '2015/06/30 12:34:56+00' or \
+       f.GetField('field_datetime4') != '2015/06/30 12:34:56.123+00' or \
        not f.IsFieldSet('field_datetime3') or \
        not f.IsFieldSet('field_date'):
         gdaltest.post_reason('fail')

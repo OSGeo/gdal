@@ -1415,11 +1415,11 @@ void OGRPGCommonLayerNormalizeDefault(OGRFieldDefn* poFieldDefn,
                 sscanf(osDefault, "'%d-%d-%d %d:%d:%f+00'", &nYear, &nMonth, &nDay,
                                 &nHour, &nMinute, &fSecond) == 6)
             {
-                if( fabs(fSecond - (int)(fSecond+0.5)) < 1e-3 )
+                if( osDefault.find('.') == std::string::npos )
                     osDefault = CPLSPrintf("'%04d/%02d/%02d %02d:%02d:%02d'",
                                             nYear, nMonth, nDay, nHour, nMinute, (int)(fSecond+0.5));
                 else
-                    osDefault = CPLSPrintf("'%04d/%02d/%02d %02d:%02d:%02.3f'",
+                    osDefault = CPLSPrintf("'%04d/%02d/%02d %02d:%02d:%06.3f'",
                                                     nYear, nMonth, nDay, nHour, nMinute, fSecond);
             }
         }

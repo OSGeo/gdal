@@ -1648,7 +1648,6 @@ def ogr_sql_sqlite_27():
     if lyr.GetLayerDefn().GetFieldDefn(1).GetType() != ogr.OFTDateTime:
         gdaltest.post_reason('fail')
         return 'fail'
-
     tr = ogrtest.check_features_against_list( lyr, 'MIN(DATE)', ['2013/01/01 00:00:00'] )
     lyr.ResetReading()
     tr2 = ogrtest.check_features_against_list( lyr, 'MAX(DATE)', ['2013/12/31 23:59:59'] )

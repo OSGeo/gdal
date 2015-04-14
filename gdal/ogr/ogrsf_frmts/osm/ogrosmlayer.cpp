@@ -574,13 +574,10 @@ void OGROSMLayer::SetFieldsFromTags(OGRFeature* poFeature,
     {
         if( psInfo->bTimeStampIsStr )
         {
-            int year, month, day, hour, minute, TZ;
-            float second;
-            if (OGRParseXMLDateTime(psInfo->ts.pszTimeStamp, &year, &month, &day,
-                                    &hour, &minute, &second, &TZ))
+            OGRField sField;
+            if (OGRParseXMLDateTime(psInfo->ts.pszTimeStamp, &sField))
             {
-                poFeature->SetField("osm_timestamp", year, month, day, hour,
-                                    minute, (int)(second + .5), TZ);
+                poFeature->SetField("osm_timestamp", &sField);
             }
         }
         else

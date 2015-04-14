@@ -1001,14 +1001,15 @@ int OGRGenSQLResultsLayer::PrepareSummary()
                         psColDef->field_type == SWQ_TIMESTAMP)
                     {
                         struct tm brokendowntime;
-                        CPLUnixTimeToYMDHMS((GIntBig)(psSummary->sum / psSummary->count), &brokendowntime);
+                        double dfAvg = psSummary->sum / psSummary->count;
+                        CPLUnixTimeToYMDHMS((GIntBig)dfAvg, &brokendowntime);
                         poSummaryFeature->SetField( iField,
                                                     brokendowntime.tm_year + 1900,
                                                     brokendowntime.tm_mon + 1,
                                                     brokendowntime.tm_mday,
                                                     brokendowntime.tm_hour,
                                                     brokendowntime.tm_min,
-                                                    brokendowntime.tm_sec, 0);
+                                                    brokendowntime.tm_sec + fmod(dfAvg, 1), 0);
                     }
                     else
                         poSummaryFeature->SetField( iField,

@@ -282,7 +282,8 @@ int TABFeature::ReadRecordFromMIDFile(MIDDATAFile *fp)
                 if (strlen(papszToken[i]) == 9)
                 {
                     sscanf(papszToken[i],"%2d%2d%2d%3d",&nHour, &nMin, &nSec, &nMS);
-                    SetField(i, nYear, nMonth, nDay, nHour, nMin, nSec, 0);
+                    SetField(i, nYear, nMonth, nDay, nHour, nMin, nSec + nMS / 1000.0f,
+                             0);
                 }
                 break;
             }
@@ -301,7 +302,8 @@ int TABFeature::ReadRecordFromMIDFile(MIDDATAFile *fp)
                 {
                     sscanf(papszToken[i], "%4d%2d%2d%2d%2d%2d%3d",
                            &nYear, &nMonth, &nDay, &nHour, &nMin, &nSec, &nMS);
-                    SetField(i, nYear, nMonth, nDay, nHour, nMin, nSec, 0);
+                    SetField(i, nYear, nMonth, nDay, nHour, nMin, nSec + nMS / 1000.0f,
+                             0);
                 }
                 break;
             }
@@ -333,8 +335,9 @@ int TABFeature::WriteRecordToMIDFile(MIDDATAFile *fp)
     OGRFieldDefn        *poFDefn = NULL;
 #ifdef MITAB_USE_OFTDATETIME
     char szBuffer[20];
-    int nYear, nMonth, nDay, nHour, nMin, nSec, nMS, nTZFlag;
-    nYear = nMonth = nDay = nHour = nMin = nSec = nMS = nTZFlag = 0;
+    int nYear, nMonth, nDay, nHour, nMin, nMS, nTZFlag;
+    nYear = nMonth = nDay = nHour = nMin = nMS = nTZFlag = 0;
+    float fSec = 0.0f;
 #endif
 
     CPLAssert(fp);
@@ -396,8 +399,9 @@ int TABFeature::WriteRecordToMIDFile(MIDDATAFile *fp)
               else
               {
                   GetFieldAsDateTime(iField, &nYear, &nMonth, &nDay,
-                                     &nHour, &nMin, &nSec, &nTZFlag);
-                  sprintf(szBuffer, "%2.2d%2.2d%2.2d%3.3d", nHour, nMin, nSec, nMS);
+                                     &nHour, &nMin, &fSec, &nTZFlag);
+                  sprintf(szBuffer, "%2.2d%2.2d%2.2d%3.3d", nHour, nMin,
+                          (int)fSec, OGR_GET_MS(fSec));
               }
               fp->WriteLine("%s",szBuffer);
               break;
@@ -411,7 +415,7 @@ int TABFeature::WriteRecordToMIDFile(MIDDATAFile *fp)
               else
               {
                   GetFieldAsDateTime(iField, &nYear, &nMonth, &nDay,
-                                     &nHour, &nMin, &nSec, &nTZFlag);
+                                     &nHour, &nMin, &fSec, &nTZFlag);
                   sprintf(szBuffer, "%4.4d%2.2d%2.2d", nYear, nMonth, nDay);
               }
               fp->WriteLine("%s",szBuffer);
@@ -426,9 +430,10 @@ int TABFeature::WriteRecordToMIDFile(MIDDATAFile *fp)
               else
               {
                   GetFieldAsDateTime(iField, &nYear, &nMonth, &nDay,
-                                     &nHour, &nMin, &nSec, &nTZFlag);
+                                     &nHour, &nMin, &fSec, &nTZFlag);
                   sprintf(szBuffer, "%4.4d%2.2d%2.2d%2.2d%2.2d%2.2d%3.3d", 
-                          nYear, nMonth, nDay, nHour, nMin, nSec, nMS);
+                          nYear, nMonth, nDay, nHour, nMin,
+                          (int)fSec, OGR_GET_MS(fSec));
               }
               fp->WriteLine("%s",szBuffer);
               break;

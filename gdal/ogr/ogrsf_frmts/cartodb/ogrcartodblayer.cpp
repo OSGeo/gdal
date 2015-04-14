@@ -127,12 +127,11 @@ OGRFeature *OGRCARTODBLayer::BuildFeature(json_object* poRowObj)
             {
                 if( poFeatureDefn->GetFieldDefn(i)->GetType() == OFTDateTime )
                 {
-                    int nYear, nMonth, nDay, nHour, nMinute, nTZ;
-                    float fSecond;
+                    OGRField sField;
                     if( OGRParseXMLDateTime( json_object_get_string(poVal),
-                                  &nYear, &nMonth, &nDay, &nHour, &nMinute, &fSecond, &nTZ) )
+                                             &sField) )
                     {
-                        poFeature->SetField(i, nYear, nMonth, nDay, nHour, nMinute, (int)fSecond, nTZ);
+                        poFeature->SetField(i, &sField);
                     }
                 }
                 else

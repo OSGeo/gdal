@@ -3174,7 +3174,7 @@ int OGRSQLITEStringToDateTimeField( OGRFeature* poFeature, int iField,
     {
         if( poFeature )
             poFeature->SetField( iField, nYear, nMonth,
-                                nDay, nHour, nMinute, (int)(fSecond + 0.5), 0 );
+                                 nDay, nHour, nMinute, fSecond, 0);
         return OFTDateTime;
     }
 
@@ -3188,7 +3188,7 @@ int OGRSQLITEStringToDateTimeField( OGRFeature* poFeature, int iField,
     {
         if( poFeature )
             poFeature->SetField( iField, nYear, nMonth,
-                                nDay, nHour, nMinute, 0, 0 );
+                                 nDay, nHour, nMinute, 0, 0);
         return OFTDateTime;
     }
 
@@ -3200,7 +3200,7 @@ int OGRSQLITEStringToDateTimeField( OGRFeature* poFeature, int iField,
     {
         if( poFeature )
             poFeature->SetField( iField, nYear, nMonth, nDay,
-                                nHour, nMinute, (int)(fSecond + 0.5), 0 );
+                                 nHour, nMinute, fSecond, 0);
         return OFTDateTime;
     }
 
@@ -3212,7 +3212,7 @@ int OGRSQLITEStringToDateTimeField( OGRFeature* poFeature, int iField,
     {
         if( poFeature )
             poFeature->SetField( iField, nYear, nMonth, nDay,
-                                nHour, nMinute, 0, 0 );
+                                 nHour, nMinute, 0, 0);
         return OFTDateTime;
     }
 
@@ -3225,7 +3225,7 @@ int OGRSQLITEStringToDateTimeField( OGRFeature* poFeature, int iField,
     {
         if( poFeature )
             poFeature->SetField( iField, nYear, nMonth, nDay,
-                                0, 0, 0, 0 );
+                                 0, 0, 0, 0 );
         return OFTDate;
     }
 
@@ -3236,7 +3236,7 @@ int OGRSQLITEStringToDateTimeField( OGRFeature* poFeature, int iField,
     {
         if( poFeature )
             poFeature->SetField( iField, 0, 0, 0,
-                                nHour, nMinute, (int)(fSecond + 0.5), 0 );
+                                 nHour, nMinute, fSecond, 0 );
         return OFTTime;
     }
 
@@ -3246,7 +3246,7 @@ int OGRSQLITEStringToDateTimeField( OGRFeature* poFeature, int iField,
     {
         if( poFeature )
             poFeature->SetField( iField, 0, 0, 0,
-                                nHour, nMinute, 0, 0 );
+                                 nHour, nMinute, 0, 0 );
         return OFTTime;
     }
 

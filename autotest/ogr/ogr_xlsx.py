@@ -381,6 +381,53 @@ def ogr_xlsx_9():
 
     return 'success'
 
+###############################################################################
+# Test DateTime with milliseconds
+
+def ogr_xlsx_10():
+
+    drv = ogr.GetDriverByName('ODS')
+    if drv is None:
+        return 'skip'
+
+    ds = drv.CreateDataSource('/vsimem/ogr_xlsx_10.ods')
+    lyr = ds.CreateLayer('foo')
+    lyr.CreateField(ogr.FieldDefn('Field1', ogr.OFTDateTime))
+    lyr.CreateField(ogr.FieldDefn('Field2', ogr.OFTDateTime))
+    lyr.CreateField(ogr.FieldDefn('Field3', ogr.OFTDateTime))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField(0, '2015/12/23 12:34:56.789')
+    f.SetField(1, '2015/12/23 12:34:56.000')
+    f.SetField(2, '2015/12/23 12:34:56')
+    lyr.CreateFeature(f)
+    f = None
+    ds = None
+
+    ds = ogr.Open('/vsimem/ogr_xlsx_10.ods')
+    lyr = ds.GetLayer(0)
+    for i in range(3):
+        if lyr.GetLayerDefn().GetFieldDefn(i).GetType() != ogr.OFTDateTime:
+            gdaltest.post_reason('failure')
+            return 'fail'
+    f = lyr.GetNextFeature()
+    if f.GetField(0) != '2015/12/23 12:34:56.789':
+        gdaltest.post_reason('failure')
+        f.DumpReadable()
+        return 'fail'
+    if f.GetField(1) != '2015/12/23 12:34:56':
+        gdaltest.post_reason('failure')
+        f.DumpReadable()
+        return 'fail'
+    if f.GetField(2) != '2015/12/23 12:34:56':
+        gdaltest.post_reason('failure')
+        f.DumpReadable()
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/ogr_xlsx_10.ods')
+
+    return 'success'
+
 gdaltest_list = [
     ogr_xlsx_1,
     ogr_xlsx_2,
@@ -390,7 +437,8 @@ gdaltest_list = [
     ogr_xlsx_6,
     ogr_xlsx_7,
     ogr_xlsx_8,
-    ogr_xlsx_9
+    ogr_xlsx_9,
+    ogr_xlsx_10
 ]
 
 if __name__ == '__main__':

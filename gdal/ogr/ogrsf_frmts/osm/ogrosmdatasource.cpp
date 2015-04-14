@@ -1929,18 +1929,16 @@ void OGROSMDataSource::NotifyWay (OSMWay* psWay)
                     psWay->sInfo.ts.nTimeStamp;
             else
             {
-                int year, month, day, hour, minute, TZ;
-                float second;
-                if (OGRParseXMLDateTime(psWay->sInfo.ts.pszTimeStamp, &year, &month, &day,
-                                        &hour, &minute, &second, &TZ))
+                OGRField sField;
+                if (OGRParseXMLDateTime(psWay->sInfo.ts.pszTimeStamp, &sField))
                 {
                     struct tm brokendown;
-                    brokendown.tm_year = year - 1900;
-                    brokendown.tm_mon = month - 1;
-                    brokendown.tm_mday = day;
-                    brokendown.tm_hour = hour;
-                    brokendown.tm_min = minute;
-                    brokendown.tm_sec = (int)(second + .5);
+                    brokendown.tm_year = sField.Date.Year - 1900;
+                    brokendown.tm_mon = sField.Date.Month - 1;
+                    brokendown.tm_mday = sField.Date.Day;
+                    brokendown.tm_hour = sField.Date.Hour;
+                    brokendown.tm_min = sField.Date.Minute;
+                    brokendown.tm_sec = (int)(sField.Date.Second + .5);
                     psWayFeaturePairs->sInfo.ts.nTimeStamp =
                         CPLYMDHMSToUnixTime(&brokendown);
                 }

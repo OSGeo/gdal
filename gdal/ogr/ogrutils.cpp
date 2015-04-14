@@ -539,11 +539,11 @@ int OGRGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
  * into the OGRField.Date format suitable for use with OGR.  Generally 
  * speaking this function is expecting values like:
  * 
- *   YYYY-MM-DD HH:MM:SS+nn
- *   or YYYY-MM-DDTHH:MM:SSZ (ISO 8601 format)
+ *   YYYY-MM-DD HH:MM:SS[.sss]+nn
+ *   or YYYY-MM-DDTHH:MM:SS[.sss]Z (ISO 8601 format)
  *
  * The seconds may also have a decimal portion (which is ignored).  And
- * just dates (YYYY-MM-DD) or just times (HH:MM:SS) are also supported. 
+ * just dates (YYYY-MM-DD) or just times (HH:MM:SS[.sss]) are also supported. 
  * The date may also be in YYYY/MM/DD format.  If the year is less than 100
  * and greater than 30 a "1900" century value will be set.  If it is less than
  * 30 and greater than -1 then a "2000" century value will be set.  In 
@@ -574,6 +574,7 @@ int OGRParseDate( const char *pszInput,
     psField->Date.Minute = 0;
     psField->Date.Second = 0;
     psField->Date.TZFlag = 0;
+    psField->Date.Reserved = 0;
 
 /* -------------------------------------------------------------------- */
 /*      Do we have a date?                                              */
@@ -653,23 +654,25 @@ int OGRParseDate( const char *pszInput,
 
         while( *pszInput >= '0' && *pszInput <= '9' ) 
             pszInput++;
-        if( *pszInput != ':' )
-            return FALSE;
-        else 
-            pszInput++;
-
-        psField->Date.Second = (GByte)atoi(pszInput);
-        if( psField->Date.Second > 59 )
-            return FALSE;
-
-        while( (*pszInput >= '0' && *pszInput <= '9')
-               || *pszInput == '.' )
-            pszInput++;
-
-        /* If ISO 8601 format */
-        if( *pszInput == 'Z' )
+        if( *pszInput == ':' )
         {
-            psField->Date.TZFlag = 100;
+            pszInput++;
+
+            psField->Date.Second = (float)CPLAtof(pszInput);
+            if( psField->Date.Second > 61 )
+                return FALSE;
+
+            while( (*pszInput >= '0' && *pszInput <= '9')
+                || *pszInput == '.' )
+            {
+                pszInput++;
+            }
+
+            /* If ISO 8601 format */
+            if( *pszInput == 'Z' )
+            {
+                psField->Date.TZFlag = 100;
+            }
         }
 
         bGotSomething = TRUE;
@@ -733,8 +736,7 @@ int OGRParseDate( const char *pszInput,
 /************************************************************************/
 
 int OGRParseXMLDateTime( const char* pszXMLDateTime,
-                               int *pnYear, int *pnMonth, int *pnDay,
-                               int *pnHour, int *pnMinute, float* pfSecond, int *pnTZ)
+                         OGRField* psField)
 {
     int year = 0, month = 0, day = 0, hour = 0, minute = 0, TZHour, TZMinute;
     float second = 0;
@@ -773,13 +775,14 @@ int OGRParseXMLDateTime( const char* pszXMLDateTime,
 
     if (bRet)
     {
-        if (pnYear) *pnYear = year;
-        if (pnMonth) *pnMonth = month;
-        if (pnDay) *pnDay = day;
-        if (pnHour) *pnHour = hour;
-        if (pnMinute) *pnMinute = minute;
-        if (pfSecond) *pfSecond = second;
-        if (pnTZ) *pnTZ = TZ;
+        psField->Date.Year = (GInt16)year;
+        psField->Date.Month = (GByte)month;
+        psField->Date.Day = (GByte)day;
+        psField->Date.Hour = (GByte)hour;
+        psField->Date.Minute = (GByte)minute;
+        psField->Date.Second = second;
+        psField->Date.TZFlag = (GByte)TZ;
+        psField->Date.Reserved = 0;
     }
 
     return bRet;
@@ -792,9 +795,7 @@ int OGRParseXMLDateTime( const char* pszXMLDateTime,
 static const char* aszMonthStr[] = { "Jan", "Feb", "Mar", "Apr", "May", "Jun",
                                      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
 
-int OGRParseRFC822DateTime( const char* pszRFC822DateTime,
-                                  int *pnYear, int *pnMonth, int *pnDay,
-                                  int *pnHour, int *pnMinute, int *pnSecond, int *pnTZ)
+int OGRParseRFC822DateTime( const char* pszRFC822DateTime, OGRField* psField )
 {
     /* Following http://asg.web.cmu.edu/rfc/rfc822.html#sec-5 : [Fri,] 28 Dec 2007 05:24[:17] GMT */
     char** papszTokens = CSLTokenizeStringComplex( pszRFC822DateTime, " ,:", TRUE, FALSE );
@@ -877,13 +878,14 @@ int OGRParseRFC822DateTime( const char* pszRFC822DateTime,
                 }
             }
 
-            if (pnYear) *pnYear = year;
-            if (pnMonth) *pnMonth = month;
-            if (pnDay) *pnDay = day;
-            if (pnHour) *pnHour = hour;
-            if (pnMinute) *pnMinute = minute;
-            if (pnSecond) *pnSecond = second;
-            if (pnTZ) *pnTZ = TZ;
+            psField->Date.Year = (GInt16)year;
+            psField->Date.Month = (GByte)month;
+            psField->Date.Day = (GByte)day;
+            psField->Date.Hour = (GByte)hour;
+            psField->Date.Minute = (GByte)minute;
+            psField->Date.Second = second;
+            psField->Date.TZFlag = (GByte)TZ;
+            psField->Date.Reserved = 0;
         }
     }
     CSLDestroy(papszTokens);
@@ -924,16 +926,19 @@ int OGRGetDayOfWeek(int day, int month, int year)
 /*                         OGRGetRFC822DateTime()                       */
 /************************************************************************/
 
-char* OGRGetRFC822DateTime(int year, int month, int day, int hour, int minute, int second, int TZFlag)
+char* OGRGetRFC822DateTime(const OGRField* psField)
 {
     char* pszTZ = NULL;
     const char* aszDayOfWeek[] = { "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" };
 
-    int dayofweek = OGRGetDayOfWeek(day, month, year);
+    int dayofweek = OGRGetDayOfWeek(psField->Date.Day, psField->Date.Month,
+                                    psField->Date.Year);
 
+    int month = psField->Date.Month;
     if (month < 1 || month > 12)
         month = 1;
 
+    int TZFlag = psField->Date.TZFlag;
     if (TZFlag == 0 || TZFlag == 100)
     {
         pszTZ = CPLStrdup("GMT");
@@ -947,7 +952,9 @@ char* OGRGetRFC822DateTime(int year, int month, int day, int hour, int minute, i
                                         TZHour, TZMinute));
     }
     char* pszRet = CPLStrdup(CPLSPrintf("%s, %02d %s %04d %02d:%02d:%02d %s",
-                     aszDayOfWeek[dayofweek], day, aszMonthStr[month - 1], year, hour, minute, second, pszTZ));
+                     aszDayOfWeek[dayofweek], psField->Date.Day, aszMonthStr[month - 1],
+                     psField->Date.Year, psField->Date.Hour,
+                     psField->Date.Minute, (int)psField->Date.Second, pszTZ));
     CPLFree(pszTZ);
     return pszRet;
 }
@@ -956,22 +963,38 @@ char* OGRGetRFC822DateTime(int year, int month, int day, int hour, int minute, i
 /*                            OGRGetXMLDateTime()                       */
 /************************************************************************/
 
-char* OGRGetXMLDateTime(int year, int month, int day, int hour, int minute, int second, int TZFlag)
+char* OGRGetXMLDateTime(const OGRField* psField)
 {
     char* pszRet;
+    int year = psField->Date.Year;
+    int month = psField->Date.Month;
+    int day = psField->Date.Day;
+    int hour = psField->Date.Hour;
+    int minute = psField->Date.Minute;
+    float second = psField->Date.Second;
+    int TZFlag = psField->Date.TZFlag;
     if (TZFlag == 0 || TZFlag == 100)
     {
-        pszRet = CPLStrdup(CPLSPrintf("%04d-%02d-%02dT%02d:%02d:%02dZ",
-                           year, month, day, hour, minute, second));
+        if( OGR_GET_MS(second) )
+            pszRet = CPLStrdup(CPLSPrintf("%04d-%02d-%02dT%02d:%02d:%06.3fZ",
+                                    year, month, day, hour, minute, second));
+        else
+            pszRet = CPLStrdup(CPLSPrintf("%04d-%02d-%02dT%02d:%02d:%02dZ",
+                                    year, month, day, hour, minute, (int)second));
     }
     else
     {
         int TZOffset = ABS(TZFlag - 100) * 15;
         int TZHour = TZOffset / 60;
         int TZMinute = TZOffset - TZHour * 60;
-        pszRet = CPLStrdup(CPLSPrintf("%04d-%02d-%02dT%02d:%02d:%02d%c%02d:%02d",
+        if( OGR_GET_MS(second) )
+            pszRet = CPLStrdup(CPLSPrintf("%04d-%02d-%02dT%02d:%02d:%06.3f%c%02d:%02d",
                            year, month, day, hour, minute, second,
                            (TZFlag > 100) ? '+' : '-', TZHour, TZMinute));
+        else
+            pszRet = CPLStrdup(CPLSPrintf("%04d-%02d-%02dT%02d:%02d:%02d%c%02d:%02d",
+                            year, month, day, hour, minute, (int)second,
+                            (TZFlag > 100) ? '+' : '-', TZHour, TZMinute));
     }
     return pszRet;
 }

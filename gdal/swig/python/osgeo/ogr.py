@@ -2929,9 +2929,9 @@ class Feature(_object):
         SetField(self, int id, double value)
         SetField(self, char name, double value)
         SetField(self, int id, int year, int month, int day, int hour, int minute, 
-            int second, int tzflag)
+            float second, int tzflag)
         SetField(self, char name, int year, int month, int day, int hour, 
-            int minute, int second, int tzflag)
+            int minute, float second, int tzflag)
         """
         return _ogr.Feature_SetField(self, *args)
 

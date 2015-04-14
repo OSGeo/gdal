@@ -2861,6 +2861,10 @@ def ogr_sqlite_38():
     field_defn.SetDefault("(strftime('%Y-%m-%dT%H:%M:%fZ','now'))")
     lyr.CreateField(field_defn)
 
+    field_defn = ogr.FieldDefn( 'field_datetime4', ogr.OFTDateTime )
+    field_defn.SetDefault("'2015/06/30 12:34:56.123'")
+    lyr.CreateField(field_defn)
+
     field_defn = ogr.FieldDefn( 'field_date', ogr.OFTDate )
     field_defn.SetDefault("CURRENT_DATE")
     lyr.CreateField(field_defn)
@@ -2898,6 +2902,10 @@ def ogr_sqlite_38():
         gdaltest.post_reason('fail')
         print(lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_datetime3')).GetDefault())
         return 'fail'
+    if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_datetime4')).GetDefault() != "'2015/06/30 12:34:56.123'":
+        gdaltest.post_reason('fail')
+        print(lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_datetime4')).GetDefault())
+        return 'fail'
     if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_date')).GetDefault() != "CURRENT_DATE":
         gdaltest.post_reason('fail')
         return 'fail'
@@ -2909,6 +2917,7 @@ def ogr_sqlite_38():
        f.GetField('field_real') != 1.23 or \
        f.IsFieldSet('field_nodefault') or not f.IsFieldSet('field_datetime')  or \
        f.GetField('field_datetime2') != '2015/06/30 12:34:56' or \
+       f.GetField('field_datetime4') != '2015/06/30 12:34:56.123' or \
        not f.IsFieldSet('field_datetime3') or \
        not f.IsFieldSet('field_date') or not f.IsFieldSet('field_time'):
         gdaltest.post_reason('fail')
