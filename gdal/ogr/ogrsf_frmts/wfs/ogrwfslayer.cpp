@@ -177,7 +177,7 @@ OGRWFSLayer::~OGRWFSLayer()
     CPLFree(pszNS);
     CPLFree(pszNSVal);
 
-    OGRDataSource::DestroyDataSource(poBaseDS);
+    GDALClose(poBaseDS);
 
     delete poFetchedFilterGeom;
 
@@ -696,7 +696,7 @@ int OGRWFSLayer::MustRetryIfNonCompliantServer(const char* pszServerAnswer)
 /*                         FetchGetFeature()                            */
 /************************************************************************/
 
-OGRDataSource* OGRWFSLayer::FetchGetFeature(int nRequestMaxFeatures)
+GDALDataset* OGRWFSLayer::FetchGetFeature(int nRequestMaxFeatures)
 {
 
     CPLString osURL = MakeGetFeatureURL(nRequestMaxFeatures, FALSE);
@@ -710,17 +710,19 @@ OGRDataSource* OGRWFSLayer::FetchGetFeature(int nRequestMaxFeatures)
     /* that we are able to understand */
     CPLString osXSDFileName = CPLSPrintf("/vsimem/tempwfs_%p/file.xsd", this);
     VSIStatBufL sBuf;
-    OGRSFDriverH hGMLDrv = OGRGetDriverByName("GML");
     if (CSLTestBoolean(CPLGetConfigOption("OGR_WFS_USE_STREAMING", "YES")) &&
         (osOutputFormat.size() == 0 || osOutputFormat.ifind("GML") != std::string::npos) &&
-        VSIStatL(osXSDFileName, &sBuf) == 0 && hGMLDrv != NULL)
+        VSIStatL(osXSDFileName, &sBuf) == 0 && GDALGetDriverByName("GML") != NULL)
     {
         const char* pszStreamingName = CPLSPrintf("/vsicurl_streaming/%s",
                                                     osURL.c_str());
-        const char* pszStreamingNameWithXSD = CPLSPrintf("%s,xsd=%s",
-                                            pszStreamingName, osXSDFileName.c_str());
-        OGRDataSource* poGML_DS = (OGRDataSource*)
-                OGR_Dr_Open(hGMLDrv, pszStreamingNameWithXSD, FALSE);
+
+        const char* const apszAllowedDrivers[] = { "GML", NULL };
+        const char* apszOpenOptions[2] = { NULL, NULL };
+        apszOpenOptions[0] = CPLSPrintf("XSD=%s", osXSDFileName.c_str());
+        GDALDataset* poGML_DS = (GDALDataset*)
+                GDALOpenEx(pszStreamingName, GDAL_OF_VECTOR, apszAllowedDrivers,
+                           apszOpenOptions, NULL);
         if (poGML_DS)
         {
             bStreamingDS = TRUE;
@@ -997,7 +999,7 @@ OGRFeatureDefn * OGRWFSLayer::BuildLayerDefn(OGRFeatureDefn* poSrcFDefn)
     poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
     poFeatureDefn->Reference();
 
-    OGRDataSource* poDS = NULL;
+    GDALDataset* poDS = NULL;
 
     if (poSrcFDefn == NULL)
         poSrcFDefn = DescribeFeatureType();
@@ -1042,7 +1044,7 @@ OGRFeatureDefn * OGRWFSLayer::BuildLayerDefn(OGRFeatureDefn* poSrcFDefn)
     }
 
     if (poDS)
-        OGRDataSource::DestroyDataSource(poDS);
+        GDALClose(poDS);
     else
         delete poSrcFDefn;
 
@@ -1064,7 +1066,7 @@ void OGRWFSLayer::ResetReading()
     nFeatureCountRequested = 0;
     if (bReloadNeeded)
     {
-        OGRDataSource::DestroyDataSource(poBaseDS);
+        GDALClose(poBaseDS);
         poBaseDS = NULL;
         poBaseLayer = NULL;
         bHasFetched = FALSE;
@@ -1089,7 +1091,7 @@ OGRFeature *OGRWFSLayer::GetNextFeature()
     }
     if (bReloadNeeded)
     {
-        OGRDataSource::DestroyDataSource(poBaseDS);
+        GDALClose(poBaseDS);
         poBaseDS = NULL;
         poBaseLayer = NULL;
         bHasFetched = FALSE;

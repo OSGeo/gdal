@@ -77,7 +77,7 @@ class OGRWFSLayer : public OGRLayer
     char*               pszNSVal;
 
     int                 bStreamingDS;
-    OGRDataSource      *poBaseDS;
+    GDALDataset        *poBaseDS;
     OGRLayer           *poBaseLayer;
     int                 bHasFetched;
     int                 bReloadNeeded;
@@ -91,7 +91,7 @@ class OGRWFSLayer : public OGRLayer
 
     CPLString           MakeGetFeatureURL(int nMaxFeatures, int bRequestHits);
     int                 MustRetryIfNonCompliantServer(const char* pszServerAnswer);
-    OGRDataSource*      FetchGetFeature(int nMaxFeatures);
+    GDALDataset*        FetchGetFeature(int nMaxFeatures);
     OGRFeatureDefn*     DescribeFeatureType();
     GIntBig             ExecuteGetFeatureResultTypeHits();
 
