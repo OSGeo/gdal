@@ -317,11 +317,11 @@ def mem_8():
     ds = drv.Create( 'MEM:::', 1, 1, 1 )
     ds.GetRasterBand(1).SetDefaultHistogram(0,255,[])
     ds.GetRasterBand(1).SetDefaultHistogram(1,2,[5,6])
-    ds.GetRasterBand(1).SetDefaultHistogram(1,2,[3,4])
+    ds.GetRasterBand(1).SetDefaultHistogram(1,2,[3000000000,4])
     hist = ds.GetRasterBand(1).GetDefaultHistogram(force=0)
     ds = None
 
-    if hist != (1.0, 2.0, 2, [3, 4]):
+    if hist != (1.0, 2.0, 2, [3000000000, 4]):
         print(hist)
         return 'fail'
 

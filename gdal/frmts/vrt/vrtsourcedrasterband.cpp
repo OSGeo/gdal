@@ -593,7 +593,7 @@ VRTSourcedRasterBand::ComputeStatistics( int bApproxOK,
 /************************************************************************/
 
 CPLErr VRTSourcedRasterBand::GetHistogram( double dfMin, double dfMax, 
-                                     int nBuckets, int *panHistogram, 
+                                     int nBuckets, GUIntBig *panHistogram, 
                                      int bIncludeOutOfRange, int bApproxOK,
                                      GDALProgressFunc pfnProgress, 
                                      void *pProgressData )

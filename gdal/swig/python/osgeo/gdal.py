@@ -1209,7 +1209,7 @@ class Band(MajorObject):
     def GetDefaultHistogram(self, *args, **kwargs):
         """
         GetDefaultHistogram(self, double min_ret = None, double max_ret = None, int buckets_ret = None, 
-            int ppanHistogram = None, 
+            GUIntBig ppanHistogram = None, 
             int force = 1, GDALProgressFunc callback = None, 
             void callback_data = None) -> CPLErr
         """

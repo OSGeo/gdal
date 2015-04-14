@@ -474,6 +474,23 @@ public:
       return GDALCreateMaskBand( self, nFlags );
   }
 
+#if defined(SWIGPYTHON)
+%feature( "kwargs" ) GetHistogram;
+  CPLErr GetHistogram( double min=-0.5,
+                     double max=255.5,
+                     int buckets=256,
+                     GUIntBig *panHistogram = NULL,
+                     int include_out_of_range = 0,
+                     int approx_ok = 1,
+                     GDALProgressFunc callback = NULL,
+                     void* callback_data=NULL ) {
+    CPLErrorReset(); 
+    CPLErr err = GDALGetRasterHistogramEx( self, min, max, buckets, panHistogram,
+                                         include_out_of_range, approx_ok,
+                                         callback, callback_data );
+    return err;
+  }
+#else
 #ifndef SWIGJAVA
 #if defined(SWIGCSHARP)
 %apply (int inout[ANY]) {int *panHistogram};
@@ -503,7 +520,19 @@ public:
 %clear (CPLErr);
 #endif
 #endif
+#endif
 
+#if defined(SWIGPYTHON)
+%feature ("kwargs") GetDefaultHistogram;
+CPLErr GetDefaultHistogram( double *min_ret=NULL, double *max_ret=NULL, int *buckets_ret = NULL, 
+                            GUIntBig **ppanHistogram = NULL, int force = 1, 
+                            GDALProgressFunc callback = NULL,
+                            void* callback_data=NULL ) {
+    return GDALGetDefaultHistogramEx( self, min_ret, max_ret, buckets_ret,
+                                    ppanHistogram, force, 
+                                    callback, callback_data );
+}
+#else
 #ifndef SWIGJAVA
 #if defined(SWIGPERL)
 %apply (double *OUTPUT){double *min_ret, double *max_ret}
@@ -525,8 +554,18 @@ CPLErr GetDefaultHistogram( double *min_ret=NULL, double *max_ret=NULL, int *buc
 %clear (CPLErr);
 #endif
 #endif
+#endif
 
-#if defined(SWIGPERL) || defined(SWIGPYTHON) || defined(SWIGJAVA)
+#if defined(SWIGPYTHON)
+%apply (int nList, GUIntBig* pList) {(int buckets_in, GUIntBig *panHistogram_in)}
+CPLErr SetDefaultHistogram( double min, double max, 
+                            int buckets_in, GUIntBig *panHistogram_in ) {
+    return GDALSetDefaultHistogramEx( self, min, max, 
+                                    buckets_in, panHistogram_in );
+}
+%clear (int buckets_in, int *panHistogram_in);
+#else
+#if defined(SWIGPERL) || defined(SWIGJAVA)
 %apply (int nList, int* pList) {(int buckets_in, int *panHistogram_in)}
 #endif
 CPLErr SetDefaultHistogram( double min, double max, 
@@ -534,8 +573,9 @@ CPLErr SetDefaultHistogram( double min, double max,
     return GDALSetDefaultHistogram( self, min, max, 
     	   			    buckets_in, panHistogram_in );
 }
-#if defined(SWIGPERL) || defined(SWIGPYTHON) || defined(SWIGJAVA)
+#if defined(SWIGPERL) || defined(SWIGJAVA)
 %clear (int buckets_in, int *panHistogram_in);
+#endif
 #endif
 
   /* Interface method added for GDAL 1.7.0 */

@@ -612,17 +612,17 @@ class GDALClientRasterBand : public GDALPamRasterBand
         virtual CPLErr ComputeRasterMinMax( int, double* );
 
         virtual CPLErr GetHistogram( double dfMin, double dfMax, 
-                                     int nBuckets, int *panHistogram, 
+                                     int nBuckets, GUIntBig *panHistogram, 
                                      int bIncludeOutOfRange, int bApproxOK,
                                      GDALProgressFunc pfnProgress, 
                                      void *pProgressData );
 
         virtual CPLErr GetDefaultHistogram( double *pdfMin, double *pdfMax,
-                                            int *pnBuckets, int ** ppanHistogram,
+                                            int *pnBuckets, GUIntBig ** ppanHistogram,
                                             int bForce,
                                             GDALProgressFunc, void *pProgressData);
         virtual CPLErr SetDefaultHistogram( double dfMin, double dfMax,
-                                            int nBuckets, int *panHistogram );
+                                            int nBuckets, GUIntBig *panHistogram );
 
         virtual int HasArbitraryOverviews();
         virtual int GetOverviewCount();
@@ -642,7 +642,7 @@ class GDALClientRasterBand : public GDALPamRasterBand
                                 int nBufXSize, int nBufYSize, 
                                 GDALDataType eDT, char **papszOptions );
         /*
-        virtual GDALRasterBand *GetRasterSampleOverview( int );
+        virtual GDALRasterBand *GetRasterSampleOverview( GUIntBig );
         */
 
 };
@@ -936,6 +936,22 @@ static int GDALPipeRead(GDALPipe* p, int nItems, int** ppanInt)
     if( nSize != nItems * (int)sizeof(int) )
         return FALSE;
     *ppanInt = (int*) VSIMalloc(nSize);
+    if( *ppanInt == NULL )
+        return FALSE;
+    if( !GDALPipeRead_nolength(p, nSize, *ppanInt) )
+        return FALSE;
+    return TRUE;
+}
+
+static int GDALPipeRead(GDALPipe* p, int nItems, GUIntBig** ppanInt)
+{
+    int nSize;
+    *ppanInt = NULL;
+    if( !GDALPipeRead(p, &nSize) )
+        return FALSE;
+    if( nSize != nItems * (int)sizeof(GUIntBig) )
+        return FALSE;
+    *ppanInt = (GUIntBig*) VSIMalloc(nSize);
     if( *ppanInt == NULL )
         return FALSE;
     if( !GDALPipeRead_nolength(p, nSize, *ppanInt) )
@@ -3033,7 +3049,7 @@ static int GDALServerLoop(GDALPipe* p,
                 !GDALPipeRead(p, &bIncludeOutOfRange) ||
                 !GDALPipeRead(p, &bApproxOK) )
                 break;
-            int* panHistogram = (int*) VSIMalloc2(sizeof(int), nBuckets);
+            GUIntBig* panHistogram = (GUIntBig*) VSIMalloc2(sizeof(GUIntBig), nBuckets);
             if( panHistogram == NULL )
                 break;
             CPLErr eErr = poBand->GetHistogram(dfMin, dfMax, 
@@ -3043,7 +3059,7 @@ static int GDALServerLoop(GDALPipe* p,
             GDALPipeWrite(p, eErr);
             if( eErr != CE_Failure )
             {
-                GDALPipeWrite(p, nBuckets * sizeof(int), panHistogram);
+                GDALPipeWrite(p, nBuckets * sizeof(GUIntBig), panHistogram);
             }
             CPLFree(panHistogram);
         }
@@ -3054,7 +3070,7 @@ static int GDALServerLoop(GDALPipe* p,
             int bForce;
             if( !GDALPipeRead(p, &bForce) )
                 break;
-            int* panHistogram = NULL;
+            GUIntBig* panHistogram = NULL;
             CPLErr eErr = poBand->GetDefaultHistogram(&dfMin, &dfMax,
                                                       &nBuckets, &panHistogram,
                                                       bForce, NULL, NULL);
@@ -3065,7 +3081,7 @@ static int GDALServerLoop(GDALPipe* p,
                 GDALPipeWrite(p, dfMin);
                 GDALPipeWrite(p, dfMax);
                 GDALPipeWrite(p, nBuckets);
-                GDALPipeWrite(p, nBuckets * sizeof(int) , panHistogram);
+                GDALPipeWrite(p, nBuckets * sizeof(GUIntBig) , panHistogram);
             }
             CPLFree(panHistogram);
         }
@@ -3073,7 +3089,7 @@ static int GDALServerLoop(GDALPipe* p,
         {
             double dfMin, dfMax;
             int nBuckets;
-            int* panHistogram = NULL;
+            GUIntBig* panHistogram = NULL;
             if( !GDALPipeRead(p, &dfMin) ||
                 !GDALPipeRead(p, &dfMax) ||
                 !GDALPipeRead(p, &nBuckets) ||
@@ -4528,7 +4544,7 @@ CPLErr GDALClientRasterBand::ComputeRasterMinMax( int bApproxOK,
 /************************************************************************/
 
 CPLErr GDALClientRasterBand::GetHistogram( double dfMin, double dfMax, 
-                                           int nBuckets, int *panHistogram, 
+                                           int nBuckets, GUIntBig *panHistogram, 
                                            int bIncludeOutOfRange,
                                            int bApproxOK,
                                            GDALProgressFunc pfnProgress, 
@@ -4544,7 +4560,7 @@ CPLErr GDALClientRasterBand::GetHistogram( double dfMin, double dfMax,
     CPLErr eDefaultRet = CE_Failure;
     if( CSLTestBoolean(CPLGetConfigOption("QGIS_HACK", "NO")) )
     {
-        memset(panHistogram, 0, sizeof(int) * nBuckets);
+        memset(panHistogram, 0, sizeof(GUIntBig) * nBuckets);
         eDefaultRet = CE_None;
     }
     if( !WriteInstr(INSTR_Band_GetHistogram) ||
@@ -4564,7 +4580,7 @@ CPLErr GDALClientRasterBand::GetHistogram( double dfMin, double dfMax,
     {
         int nSize;
         if( !GDALPipeRead(p, &nSize) ||
-            nSize != nBuckets * (int)sizeof(int) ||
+            nSize != nBuckets * (int)sizeof(GUIntBig) ||
             !GDALPipeRead_nolength(p, nSize, panHistogram) )
             return eDefaultRet;
     }
@@ -4581,7 +4597,7 @@ CPLErr GDALClientRasterBand::GetHistogram( double dfMin, double dfMax,
 CPLErr GDALClientRasterBand::GetDefaultHistogram( double *pdfMin,
                                                   double *pdfMax,
                                                   int *pnBuckets,
-                                                  int ** ppanHistogram,
+                                                  GUIntBig ** ppanHistogram,
                                                   int bForce,
                                                   GDALProgressFunc pfnProgress,
                                                   void *pProgressData )
@@ -4608,14 +4624,14 @@ CPLErr GDALClientRasterBand::GetDefaultHistogram( double *pdfMin,
             !GDALPipeRead(p, &nBuckets) ||
             !GDALPipeRead(p, &nSize) )
             return CE_Failure;
-        if( nSize != nBuckets * (int)sizeof(int) )
+        if( nSize != nBuckets * (int)sizeof(GUIntBig) )
             return CE_Failure;
         if( pdfMin ) *pdfMin = dfMin;
         if( pdfMax ) *pdfMax = dfMax;
         if( pnBuckets ) *pnBuckets = nBuckets;
         if( ppanHistogram )
         {
-            *ppanHistogram = (int*)VSIMalloc(nSize);
+            *ppanHistogram = (GUIntBig*)VSIMalloc(nSize);
             if( *ppanHistogram == NULL )
                 return CE_Failure;
             if( !GDALPipeRead_nolength(p, nSize, *ppanHistogram) )
@@ -4623,7 +4639,7 @@ CPLErr GDALClientRasterBand::GetDefaultHistogram( double *pdfMin,
         }
         else
         {
-            int *panHistogram = (int*)VSIMalloc(nSize);
+            GUIntBig *panHistogram = (GUIntBig*)VSIMalloc(nSize);
             if( panHistogram == NULL )
                 return CE_Failure;
             if( !GDALPipeRead_nolength(p, nSize, panHistogram) )
@@ -4643,7 +4659,7 @@ CPLErr GDALClientRasterBand::GetDefaultHistogram( double *pdfMin,
 /************************************************************************/
 
 CPLErr GDALClientRasterBand::SetDefaultHistogram( double dfMin, double dfMax,
-                                              int nBuckets, int *panHistogram )
+                                              int nBuckets, GUIntBig *panHistogram )
 {
     if( !SupportsInstr(INSTR_Band_SetDefaultHistogram) )
         return GDALPamRasterBand::SetDefaultHistogram(dfMin, dfMax, nBuckets, panHistogram);
@@ -4653,7 +4669,7 @@ CPLErr GDALClientRasterBand::SetDefaultHistogram( double dfMin, double dfMax,
         !GDALPipeWrite(p, dfMin) ||
         !GDALPipeWrite(p, dfMax) ||
         !GDALPipeWrite(p, nBuckets) ||
-        !GDALPipeWrite(p, nBuckets * sizeof(int), panHistogram) )
+        !GDALPipeWrite(p, nBuckets * sizeof(GUIntBig), panHistogram) )
         return CE_Failure;
     return CPLErrOnlyRet(p);
 }

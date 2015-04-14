@@ -277,7 +277,7 @@ CPLErr ECWRasterBand::AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
 /************************************************************************/
 
 CPLErr ECWRasterBand::GetDefaultHistogram( double *pdfMin, double *pdfMax,
-    int *pnBuckets, int ** ppanHistogram,
+    int *pnBuckets, GUIntBig ** ppanHistogram,
     int bForce,
     GDALProgressFunc f, void *pProgressData)
 {
@@ -305,9 +305,9 @@ CPLErr ECWRasterBand::GetDefaultHistogram( double *pdfMin, double *pdfMax,
         NCSBandStats& bandStats = poGDS->pStatistics->BandsStats[nStatsBandIndex];
         if ( bandStats.Histogram != NULL && bandStats.nHistBucketCount > 0 ){
             *pnBuckets = bandStats.nHistBucketCount;
-            *ppanHistogram = (int *)VSIMalloc(bandStats.nHistBucketCount *sizeof(int));
+            *ppanHistogram = (GUIntBig *)VSIMalloc(bandStats.nHistBucketCount *sizeof(GUIntBig));
             for (size_t i = 0; i < bandStats.nHistBucketCount; i++){
-                (*ppanHistogram)[i] = (int) bandStats.Histogram[i];
+                (*ppanHistogram)[i] = (GUIntBig) bandStats.Histogram[i];
             }
             //JTO: this is not perfect as You can't tell who wrote the histogram !!! 
             //It will offset it unnecesarilly for files with hists not modified by GDAL. 
@@ -357,7 +357,7 @@ CPLErr ECWRasterBand::GetDefaultHistogram( double *pdfMin, double *pdfMax,
 /************************************************************************/
 
 CPLErr ECWRasterBand::SetDefaultHistogram( double dfMin, double dfMax,
-                                           int nBuckets, int *panHistogram )
+                                           int nBuckets, GUIntBig *panHistogram )
 {
     //Only version 3 supports saving statistics. 
     if (poGDS->psFileInfo->nFormatVersion < 3 || eBandInterp == GCI_AlphaBand){
@@ -367,7 +367,7 @@ CPLErr ECWRasterBand::SetDefaultHistogram( double dfMin, double dfMax,
     //determine if there are statistics in PAM file. 
     double dummy;
     int dummy_i;
-    int *dummy_histogram;
+    GUIntBig *dummy_histogram;
     bool hasPAMDefaultHistogram = GDALPamRasterBand::GetDefaultHistogram(&dummy, &dummy, &dummy_i, &dummy_histogram, FALSE, NULL, NULL) == CE_None;
     if (hasPAMDefaultHistogram){
         VSIFree(dummy_histogram);
