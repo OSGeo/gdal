@@ -42,7 +42,8 @@
 		</tr>
 		<tr>
 			<td class="xml">        &lt;SRS&gt;<span class="value">EPSG:4326</span>&lt;/SRS&gt;</td>
-			<td class="desc">Image projection (optional, defaults to EPSG:4326, WMS version 1.1.1 or below only)</td>
+			<td class="desc">Image projection (optional, defaults to EPSG:4326 in WMS and 102100 in AGS, WMS version 1.1.1 or below only and ArcGIS Server).
+			For ArcGIS Server the spatial reference can be specified as either a well-known ID or as a <a href="http://resources.arcgis.com/en/help/rest/apiref/geometry.html#sr">spatial reference json object</a></td>
 		</tr>
 		<tr>
 			<td class="xml">        &lt;CRS&gt;<span class="value">CRS:83</span>&lt;/CRS&gt;</td>
@@ -137,12 +138,7 @@
 		<tr>
 			<td class="xml">    &lt;Projection&gt;<span class="value">EPSG:4326</span>&lt;/Projection&gt;</td>
 			<td class="desc">Image projection (optional, defaults to value reported by mini-driver or EPSG:4326)</td>
-		</tr>
-		<tr>
-			<td class="xml">    &lt;ImageSR&gt;<span class="value">102100</span>&lt;/ImageSR&gt;</td>
-			<td class="desc">Image projection (optional, defaults to value reported by mini-driver or 102100).
-			The spatial reference can be specified as either a well-known ID or as a <a href="http://resources.arcgis.com/en/help/rest/apiref/geometry.html#sr">spatial reference json object</a>.  This parameter specific for ArcGIS Server REST API.</td>
-		</tr>
+		</tr>		
 		<tr>
 			<td class="xml">    &lt;IdentificationTolerance&gt;<span class="value">2</span>&lt;/IdentificationTolerance&gt;</td>
 			<td class="desc">Identification tolerance (optional, defaults to 2)</td>
@@ -403,8 +399,7 @@ Access to ArcGIS REST <a href="http://resources.arcgis.com/en/help/rest/apiref/m
 </p>
 
 <p>
-     <pre>gdallocationinfo -wgs84 "<GDAL_WMS><Service name=\"AGS\"><ServerUrl>http://sampleserver1.arcgisonline.com/ArcGIS/rest/services/Specialty/ESRI_StateCityHighway_USA/MapServer</ServerUrl><BBoxOrder>xyXY</BBoxOrder><ImageSR>3857</ImageSR></Service><DataWindow><UpperLeftX>-20037508.34</UpperLeftX><UpperLeftY>20037508.34</UpperLeftY><LowerRightX>20037508.34</LowerRightX><LowerRightY>-20037508.34</LowerRightY><SizeX>512</SizeX><SizeY>512</SizeY></DataWindow></GDAL_WMS>"
-                           -75.704 39.75
+     <pre>gdallocationinfo -wgs84 "&lt;GDAL_WMS&gt;&lt;Service name=\"AGS\"&gt;&lt;ServerUrl&gt;http://sampleserver1.arcgisonline.com/ArcGIS/rest/services/Specialty/ESRI_StateCityHighway_USA/MapServer&lt;/ServerUrl&gt;&lt;BBoxOrder&gt;xyXY&lt;/BBoxOrder&gt;&lt;SRS&gt;3857&lt;/SRS&gt;&lt;/Service&gt;&lt;DataWindow&gt;&lt;UpperLeftX&gt;-20037508.34&lt;/UpperLeftX&gt;&lt;UpperLeftY&gt;20037508.34&lt;/UpperLeftY&gt;&lt;LowerRightX&gt;20037508.34&lt;/LowerRightX&gt;&lt;LowerRightY&gt;-20037508.34&lt;/LowerRightY&gt;&lt;SizeX&gt;512&lt;/SizeX&gt;&lt;SizeY&gt;512&lt;/SizeY&gt;&lt;/DataWindow&gt;&lt;/GDAL_WMS&gt;" -75.704 39.75
     </pre>
 
 
