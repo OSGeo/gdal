@@ -187,6 +187,7 @@ CPL_UNUSED
     m_bReportAllAttributes = CSLTestBoolean(
                     CPLGetConfigOption("GML_ATTRIBUTES_TO_OGR_FIELDS", "NO"));
 
+    m_bIsWFSJointLayer = FALSE;
 }
 
 /************************************************************************/
@@ -1084,7 +1085,28 @@ void GMLReader::SetFeaturePropertyDirectly( const char *pszElement,
 
             CPLString osFieldName;
 
-            if( strchr(pszElement,'|') == NULL )
+            if( IsWFSJointLayer() )
+            {
+                /* At that point the element path should be member|layer|property */
+
+                /* Strip member| prefix. Should always be true normally */
+                if( strncmp(pszElement, "member|", strlen("member|")) == 0 )
+                    osFieldName = pszElement + strlen("member|");
+
+                /* Replace layer|property by layer_property */
+                size_t iPos = osFieldName.find('|');
+                if( iPos != std::string::npos )
+                    osFieldName[iPos] = '.';
+
+                /* Special case for gml:id on layer */
+                iPos = osFieldName.find("@id");
+                if( iPos != std::string::npos )
+                {
+                    osFieldName.resize(iPos);
+                    osFieldName += ".gml_id";
+                }
+            }
+            else if( strchr(pszElement,'|') == NULL )
                 osFieldName = pszElement;
             else
             {

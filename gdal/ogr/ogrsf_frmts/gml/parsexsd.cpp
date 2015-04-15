@@ -866,9 +866,12 @@ void CPLXMLSchemaResolveInclude( const char* pszMainSchemaLocation,
 /************************************************************************/
 
 int GMLParseXSD( const char *pszFile,
-                 std::vector<GMLFeatureClass*> & aosClasses)
+                 std::vector<GMLFeatureClass*> & aosClasses,
+                 int& bFullyUnderstood)
 
 {
+    bFullyUnderstood = FALSE;
+
     if( pszFile == NULL )
         return FALSE;
 
@@ -901,6 +904,8 @@ int GMLParseXSD( const char *pszFile,
     CPLXMLSchemaResolveInclude( pszFile, psSchemaNode );
 
     //CPLSerializeXMLTreeToFile(psSchemaNode, "/vsistdout/");
+
+    bFullyUnderstood = TRUE;
 
 /* ==================================================================== */
 /*      Process each feature class definition.                          */
@@ -959,6 +964,8 @@ int GMLParseXSD( const char *pszFile,
                         GMLParseFeatureType(psSchemaNode, pszName, psComplexType);
                 if (poClass)
                     aosClasses.push_back(poClass);
+                else
+                    bFullyUnderstood = FALSE;
             }
             continue;
         }
@@ -998,6 +1005,8 @@ int GMLParseXSD( const char *pszFile,
                 GMLParseFeatureType(psSchemaNode, pszName, pszType);
         if (poClass)
             aosClasses.push_back(poClass);
+        else
+            bFullyUnderstood = FALSE;
     }
 
     CPLDestroyXMLNode( psXSDTree );

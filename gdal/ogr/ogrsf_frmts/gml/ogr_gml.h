@@ -153,6 +153,9 @@ class OGRGMLDataSource : public OGRDataSource
 
     void                FindAndParseBoundedBy(VSILFILE* fp);
     void                SetExtents(double dfMinX, double dfMinY, double dfMaxX, double dfMaxY);
+    
+    void                BuildJointClassFromXSD();
+    void                BuildJointClassFromScannedSchema();
 
   public:
                         OGRGMLDataSource();

@@ -35,6 +35,7 @@
 #include "gmlreader.h"
 
 int GMLParseXSD( const char *pszFile,
-                 std::vector<GMLFeatureClass*> & aosClasses);
+                 std::vector<GMLFeatureClass*> & aosClasses,
+                 int& bFullyUnderstood );
 
 #endif // _PARSEXSD_H_INCLUDED

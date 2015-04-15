@@ -1675,7 +1675,8 @@ void OGRWFSDataSource::LoadMultipleLayerDefn(const char* pszLayerName,
     CPLSerializeXMLTreeToFile(psSchema, osTmpFileName);
 
     std::vector<GMLFeatureClass*> aosClasses;
-    GMLParseXSD( osTmpFileName, aosClasses );
+    int bFullyUnderstood = FALSE;
+    GMLParseXSD( osTmpFileName, aosClasses, bFullyUnderstood );
 
     int nLayersFound = 0;
     if ((int)aosClasses.size() > 0)
