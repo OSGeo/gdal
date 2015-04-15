@@ -1070,6 +1070,28 @@ OGRErr GMLHandler::startElementFeatureAttribute(const char *pszName, int nLenNam
         {
             bReadGeometry = TRUE;
         }
+        else if( !poClass->IsSchemaLocked() && m_poReader->IsWFSJointLayer() )
+        {
+            m_nGeometryPropertyIndex = poClass->GetGeometryPropertyIndexBySrcElement( poState->osPath.c_str() );
+            if( m_nGeometryPropertyIndex < 0 )
+            {
+                const char* pszElement = poState->osPath.c_str();
+                CPLString osFieldName;
+                /* Strip member| prefix. Should always be true normally */
+                if( strncmp(pszElement, "member|", strlen("member|")) == 0 )
+                    osFieldName = pszElement + strlen("member|");
+
+                /* Replace layer|property by layer_property */
+                size_t iPos = osFieldName.find('|');
+                if( iPos != std::string::npos )
+                    osFieldName[iPos] = '.';
+
+                poClass->AddGeometryProperty( new GMLGeometryPropertyDefn(
+                        osFieldName, poState->osPath.c_str(), wkbUnknown, -1, TRUE ) );
+                m_nGeometryPropertyIndex = poClass->GetGeometryPropertyCount();
+            }
+            bReadGeometry = TRUE;
+        }
         else
         {
             /* AIXM special case: for RouteSegment, we only want to read Curve geometries */
@@ -1130,6 +1152,22 @@ OGRErr GMLHandler::startElementFeatureAttribute(const char *pszName, int nLenNam
         PUSH_STATE(STATE_CITYGML_ATTRIBUTE);
 
         return OGRERR_NONE;
+    }
+    
+    else if( m_poReader->IsWFSJointLayer() && m_nDepth == m_nDepthFeature + 1 )
+    {
+    }
+
+    else if( m_poReader->IsWFSJointLayer() && m_nDepth == m_nDepthFeature + 2 )
+    {
+        const char* pszFID = GetFID(attr);
+        if( pszFID )
+        {
+            poState->PushPath( pszName, nLenName );
+            CPLString osPropPath= poState->osPath + "@id";
+            poState->PopPath();
+            m_poReader->SetFeaturePropertyDirectly( osPropPath, CPLStrdup(pszFID), -1 );
+        }
     }
 
 /* -------------------------------------------------------------------- */

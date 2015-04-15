@@ -838,6 +838,79 @@ contain the following content :<p>
 <tr><td>myFeature.2</td><td>otherFeature.10</td></tr>
 </table>
 
+<h2>Reading datasets resulting from a WFS 2.0 join queries</h2>
+
+Starting with GDAL 2.0, the GML driver can read datasets resulting from a WFS 2.0 join queries.<p>
+
+Such datasets typically look like:
+<pre>
+&lt;wfs:FeatureCollection xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    xmlns:app="http://app.com"
+    xmlns:wfs="http://www.opengis.net/wfs/2.0"
+    xmlns:gml="http://www.opengis.net/gml/3.2"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    numberMatched="unknown" numberReturned="2" timeStamp="2015-01-01T00:00:00.000Z"
+    xsi:schemaLocation="http://www.opengis.net/gml/3.2 http://schemas.opengis.net/gml/3.2.1/gml.xsd 
+                        http://www.opengis.net/wfs/2.0 http://schemas.opengis.net/wfs/2.0/wfs.xsd"&gt;
+  &lt;wfs:member&gt;
+    &lt;wfs:Tuple&gt;
+      &lt;wfs:member&gt;
+        &lt;app:table1 gml:id="table1-1"&gt;
+          &lt;app:foo&gt;1&lt;/app:foo&gt;
+        &lt;/app:table1&gt;
+      &lt;/wfs:member&gt;
+      &lt;wfs:member&gt;
+        &lt;app:table2 gml:id="table2-1"&gt;
+          &lt;app:bar&gt;2&lt;/app:bar&gt;
+          &lt;app:baz&gt;foo&lt;/app:baz&gt;
+          &lt;app:geometry&gt;&lt;gml:Point gml:id="table2-2.geom.0"&gt;&lt;gml:pos&gt;2 49&lt;/gml:pos&gt;&lt;/gml:Point&gt;&lt;/app:geometry&gt;
+        &lt;/app:table2&gt;
+      &lt;/wfs:member&gt;
+    &lt;/wfs:Tuple&gt;
+  &lt;/wfs:member&gt;
+  &lt;wfs:member&gt;
+    &lt;wfs:Tuple&gt;
+      &lt;wfs:member&gt;
+        &lt;app:table1 gml:id="table1-2"&gt;
+          &lt;app:bar&gt;2&lt;/app:bar&gt;
+          &lt;app:geometry&gt;&lt;gml:Point gml:id="table1-1.geom.0"&gt;&lt;gml:pos&gt;3 50&lt;/gml:pos&gt;&lt;/gml:Point&gt;&lt;/app:geometry&gt;
+        &lt;/app:table1&gt;
+      &lt;/wfs:member&gt;
+      &lt;wfs:member&gt;
+        &lt;app:table2 gml:id="table2-2"&gt;
+          &lt;app:bar&gt;2&lt;/app:bar&gt;
+          &lt;app:baz&gt;bar&lt;/app:baz&gt;
+          &lt;app:geometry&gt;&lt;gml:Point gml:id="table2-2.geom.0"&gt;&lt;gml:pos&gt;2 50&lt;/gml:pos&gt;&lt;/gml:Point&gt;&lt;/app:geometry&gt;
+        &lt;/app:table2&gt;
+      &lt;/wfs:member&gt;
+    &lt;/wfs:Tuple&gt;
+  &lt;/wfs:member&gt;
+&lt;/wfs:FeatureCollection&gt;
+</pre>
+
+<p>OGR will group together the attributes from the layers participating to the
+join and will prefix them with the layer name. So the above example will be
+read as the following:</p>
+<pre>
+OGRFeature(join_table1_table2):0
+  table1.gml_id (String) = table1-1
+  table1.foo (Integer) = 1
+  table1.bar (Integer) = (null)
+  table2.gml_id (String) = table2-1
+  table2.bar (Integer) = 2
+  table2.baz (String) = foo
+  table2.geometry = POINT (2 49)
+
+OGRFeature(join_table1_table2):1
+  table1.gml_id (String) = table1-2
+  table1.foo (Integer) = (null)
+  table1.bar (Integer) = 2
+  table2.gml_id (String) = table2-2
+  table2.bar (Integer) = 2
+  table2.baz (String) = bar
+  table1.geometry = POINT (3 50)
+  table2.geometry = POINT (2 50)
+</pre>
 
 <h2>Examples</h2>
 

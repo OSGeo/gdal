@@ -463,6 +463,8 @@ private:
     int           m_bSetWidthFlag;
     
     int           m_bReportAllAttributes;
+    
+    int           m_bIsWFSJointLayer;
 
     int           ParseXMLHugeFile( const char *pszOutputFilename, 
                                     const int bSqliteIsTempFile,
@@ -547,6 +549,9 @@ public:
     int         IsSequentialLayers() const { return m_bSequentialLayers == TRUE; }
     
     int         ReportAllAttributes() const { return m_bReportAllAttributes; }
+    
+    void             SetIsWFSJointLayer( int bFlag ) { m_bIsWFSJointLayer = bFlag; }
+    int              IsWFSJointLayer() const { return m_bIsWFSJointLayer; }
 
     static CPLMutex* hMutex;
 };

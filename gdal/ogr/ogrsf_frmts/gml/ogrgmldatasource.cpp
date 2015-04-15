@@ -43,6 +43,7 @@
 #include "gmlutils.h"
 #include "ogr_p.h"
 #include "gmlregistry.h"
+#include "gmlreaderp.h"
 
 #include <vector>
 
@@ -505,6 +506,10 @@ int OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
     if (bIsWFS && EQUALN(pszFilename, "/vsicurl_streaming/", strlen("/vsicurl_streaming/")))
         bCheckAuxFile = FALSE;
 
+    int bIsWFSJointLayer = bIsWFS && strstr(szPtr, "<wfs:Tuple>");
+    if( bIsWFSJointLayer )
+        bExposeGMLId = FALSE;
+
 /* -------------------------------------------------------------------- */
 /*      We assume now that it is GML.  Instantiate a GMLReader on it.   */
 /* -------------------------------------------------------------------- */
@@ -570,6 +575,7 @@ int OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
     }
 
     poReader->SetSourceFile( pszFilename );
+    ((GMLReader*)poReader)->SetIsWFSJointLayer(bIsWFSJointLayer);
 
 /* -------------------------------------------------------------------- */
 /*      Find <gml:boundedBy>                                            */
@@ -930,7 +936,26 @@ int OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
         if( bHasFoundXSD )
         {
             std::vector<GMLFeatureClass*> aosClasses;
-            bHaveSchema = GMLParseXSD( osXSDFilename, aosClasses );
+            int bFullyUnderstood = FALSE;
+            bHaveSchema = GMLParseXSD( osXSDFilename, aosClasses, bFullyUnderstood );
+            
+            if( bHaveSchema && !bFullyUnderstood && bIsWFSJointLayer )
+            {
+                CPLDebug("GML", "Schema found, but only partially understood. Cannot be used in a WFS join context");
+
+                std::vector<GMLFeatureClass*>::const_iterator iter = aosClasses.begin();
+                std::vector<GMLFeatureClass*>::const_iterator eiter = aosClasses.end();
+                while (iter != eiter)
+                {
+                    GMLFeatureClass* poClass = *iter;
+
+                    delete poClass;
+                    iter ++;
+                }
+                aosClasses.resize(0);
+                bHaveSchema = FALSE;
+            }
+
             if( bHaveSchema )
             {
                 CPLDebug("GML", "Using %s", osXSDFilename.c_str());
@@ -1015,6 +1040,11 @@ int OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
 
         if (bHaveSchema && bIsWFS)
         {
+            if( bIsWFSJointLayer )
+            {
+                BuildJointClassFromXSD();
+            }
+
             /* For WFS, we can assume sequential layers */
             if (poReader->GetClassCount() > 1 && pszReadMode == NULL &&
                 !bHasFeatureProperties)
@@ -1042,6 +1072,11 @@ int OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
         {
             // we assume an errors have been reported.
             return FALSE;
+        }
+
+        if( bIsWFSJointLayer && poReader->GetClassCount() == 1 )
+        {
+            BuildJointClassFromScannedSchema();
         }
 
         if( bHasFoundXSD )
@@ -1120,6 +1155,161 @@ int OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
 
     
     return TRUE;
+}
+
+/************************************************************************/
+/*                          BuildJointClassFromXSD()                    */
+/************************************************************************/
+
+void OGRGMLDataSource::BuildJointClassFromXSD()
+{
+    CPLString osJointClassName = "join";
+    for(int i=0;i<poReader->GetClassCount();i++)
+    {
+        osJointClassName += "_";
+        osJointClassName += poReader->GetClass(i)->GetName();
+    }
+    GMLFeatureClass* poJointClass = new GMLFeatureClass(osJointClassName);
+    poJointClass->SetElementName("Tuple");
+    for(int i=0;i<poReader->GetClassCount();i++)
+    {
+        GMLFeatureClass* poClass = poReader->GetClass(i);
+
+        CPLString osPropertyName;
+        osPropertyName.Printf("%s.%s", poClass->GetName(), "gml_id");
+        GMLPropertyDefn* poNewProperty = new GMLPropertyDefn( osPropertyName );
+        CPLString osSrcElement;
+            osSrcElement.Printf("member|%s@id",
+                                poClass->GetName());
+        poNewProperty->SetSrcElement(osSrcElement);
+        poNewProperty->SetType(GMLPT_String);
+        poJointClass->AddProperty(poNewProperty);
+
+        int iField;
+        for( iField = 0; iField < poClass->GetPropertyCount(); iField++ )
+        {
+            GMLPropertyDefn *poProperty = poClass->GetProperty( iField );
+            CPLString osPropertyName;
+            osPropertyName.Printf("%s.%s", poClass->GetName(), poProperty->GetName());
+            GMLPropertyDefn* poNewProperty = new GMLPropertyDefn( osPropertyName );
+
+            poNewProperty->SetType(poProperty->GetType());
+            CPLString osSrcElement;
+            osSrcElement.Printf("member|%s|%s",
+                                poClass->GetName(),
+                                poProperty->GetSrcElement());
+            poNewProperty->SetSrcElement(osSrcElement);
+            poNewProperty->SetWidth(poProperty->GetWidth());
+            poNewProperty->SetPrecision(poProperty->GetPrecision());
+            poNewProperty->SetNullable(poProperty->IsNullable());
+
+            poJointClass->AddProperty(poNewProperty);
+        }
+        for( iField = 0; iField < poClass->GetGeometryPropertyCount(); iField++ )
+        {
+            GMLGeometryPropertyDefn *poProperty = poClass->GetGeometryProperty( iField );
+            CPLString osPropertyName;
+            osPropertyName.Printf("%s.%s", poClass->GetName(), poProperty->GetName());
+            CPLString osSrcElement;
+            osSrcElement.Printf("member|%s|%s",
+                                poClass->GetName(),
+                                poProperty->GetSrcElement());
+            GMLGeometryPropertyDefn* poNewProperty =
+                new GMLGeometryPropertyDefn( osPropertyName, osSrcElement,
+                        poProperty->GetType(), -1, poProperty->IsNullable() );
+            poJointClass->AddGeometryProperty(poNewProperty);
+        }
+    }
+    poJointClass->SetSchemaLocked(TRUE);
+
+    poReader->ClearClasses();
+    poReader->AddClass( poJointClass );
+}
+
+/************************************************************************/
+/*                   BuildJointClassFromScannedSchema()                 */
+/************************************************************************/
+
+void OGRGMLDataSource::BuildJointClassFromScannedSchema()
+{
+    /* Make sure that all properties of a same base feature type are */
+    /* consecutive. If not, reorder */
+    std::vector< std::vector<GMLPropertyDefn*> > aapoProps;
+    GMLFeatureClass *poClass = poReader->GetClass(0);
+    CPLString osJointClassName = "join";
+
+    int iField, iSubClass;
+    for( iField = 0; iField < poClass->GetPropertyCount(); iField ++ )
+    {
+        GMLPropertyDefn* poProp = poClass->GetProperty(iField);
+        CPLString osPrefix(poProp->GetName());
+        size_t iPos = osPrefix.find('.');
+        if( iPos != std::string::npos )
+            osPrefix.resize(iPos);
+        for( iSubClass = 0; iSubClass < (int)aapoProps.size(); iSubClass ++ )
+        {
+            CPLString osPrefixClass(aapoProps[iSubClass][0]->GetName());
+            size_t iPos = osPrefixClass.find('.');
+            if( iPos != std::string::npos )
+                osPrefixClass.resize(iPos);
+            if( osPrefix == osPrefixClass )
+                break;
+        }
+        if( iSubClass == (int)aapoProps.size() )
+        {
+            osJointClassName += "_";
+            osJointClassName += osPrefix;
+            aapoProps.push_back( std::vector<GMLPropertyDefn*>() );
+        }
+        aapoProps[iSubClass].push_back(poProp);
+    }
+    poClass->SetElementName(poClass->GetName());
+    poClass->SetName(osJointClassName);
+
+    poClass->StealProperties();
+    std::vector< std::pair< CPLString, std::vector<GMLGeometryPropertyDefn*> > > aapoGeomProps;
+    for( iSubClass = 0; iSubClass < (int)aapoProps.size(); iSubClass ++ )
+    {
+        CPLString osPrefixClass(aapoProps[iSubClass][0]->GetName());
+        size_t iPos = osPrefixClass.find('.');
+        if( iPos != std::string::npos )
+            osPrefixClass.resize(iPos);
+        aapoGeomProps.push_back( std::pair< CPLString, std::vector<GMLGeometryPropertyDefn*> > 
+                (osPrefixClass, std::vector<GMLGeometryPropertyDefn*>()) );
+        for( int iField = 0; iField < (int)aapoProps[iSubClass].size(); iField ++ )
+        {
+            poClass->AddProperty(aapoProps[iSubClass][iField]);
+        }
+    }
+    aapoProps.resize(0);
+
+    // Reorder geometry fields too
+    for( iField = 0; iField < poClass->GetGeometryPropertyCount(); iField ++ )
+    {
+        GMLGeometryPropertyDefn* poProp = poClass->GetGeometryProperty(iField);
+        CPLString osPrefix(poProp->GetName());
+        size_t iPos = osPrefix.find('.');
+        if( iPos != std::string::npos )
+            osPrefix.resize(iPos);
+        int iSubClass;
+        for( iSubClass = 0; iSubClass < (int)aapoGeomProps.size(); iSubClass ++ )
+        {
+            if( osPrefix == aapoGeomProps[iSubClass].first )
+                break;
+        }
+        if( iSubClass == (int)aapoProps.size() )
+            aapoGeomProps.push_back( std::pair< CPLString, std::vector<GMLGeometryPropertyDefn*> >
+                    (osPrefix, std::vector<GMLGeometryPropertyDefn*>()) );
+        aapoGeomProps[iSubClass].second.push_back(poProp);
+    }
+    poClass->StealGeometryProperties();
+    for( iSubClass = 0; iSubClass < (int)aapoGeomProps.size(); iSubClass ++ )
+    {
+        for( iField = 0; iField < (int)aapoGeomProps[iSubClass].second.size(); iField ++ )
+        {
+            poClass->AddGeometryProperty(aapoGeomProps[iSubClass].second[iField]);
+        }
+    }
 }
 
 /************************************************************************/

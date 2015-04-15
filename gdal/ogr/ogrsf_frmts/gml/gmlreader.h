@@ -183,10 +183,12 @@ public:
     GMLPropertyDefn *GetProperty( const char *pszName ) const 
         { return GetProperty( GetPropertyIndex(pszName) ); }
     int         GetPropertyIndexBySrcElement( const char *pszElement, int nLen ) const;
-    
+    void        StealProperties();
+
     int         GetGeometryPropertyCount() const { return m_nGeometryPropertyCount; }
     GMLGeometryPropertyDefn *GetGeometryProperty( int iIndex ) const;
     int         GetGeometryPropertyIndexBySrcElement( const char *pszElement ) const;
+    void        StealGeometryProperties();
 
     int         HasFeatureProperties();
 

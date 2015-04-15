@@ -289,7 +289,8 @@ OGRFeatureDefn* OGRWFSLayer::ParseSchema(CPLXMLNode* psSchema)
     CPLSerializeXMLTreeToFile(psSchema, osTmpFileName);
 
     std::vector<GMLFeatureClass*> aosClasses;
-    int bHaveSchema = GMLParseXSD( osTmpFileName, aosClasses );
+    int bFullyUnderstood = FALSE;
+    int bHaveSchema = GMLParseXSD( osTmpFileName, aosClasses, bFullyUnderstood );
 
     if (bHaveSchema && aosClasses.size() == 1)
     {
