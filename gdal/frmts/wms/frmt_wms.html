@@ -30,7 +30,7 @@
 		</tr>
 		<tr>
 			<td class="xml">    &lt;Service name="<span class="value">WMS</span>"&gt;</td>
-			<td class="desc">Define what mini-driver to use, currently supported are: WMS, WorldWind, TileService, TMS, TiledWMS or VirtualEarth. (required)</td>
+			<td class="desc">Define what mini-driver to use, currently supported are: WMS, WorldWind, TileService, TMS, TiledWMS, VirtualEarth or AGS. (required)</td>
 		</tr>
 		<tr>
 			<td class="xml">        &lt;Version&gt;<span class="value">1.1.1</span>&lt;/Version&gt;</td>
@@ -137,6 +137,15 @@
 		<tr>
 			<td class="xml">    &lt;Projection&gt;<span class="value">EPSG:4326</span>&lt;/Projection&gt;</td>
 			<td class="desc">Image projection (optional, defaults to value reported by mini-driver or EPSG:4326)</td>
+		</tr>
+		<tr>
+			<td class="xml">    &lt;ImageSR&gt;<span class="value">102100</span>&lt;/ImageSR&gt;</td>
+			<td class="desc">Image projection (optional, defaults to value reported by mini-driver or 102100).
+			The spatial reference can be specified as either a well-known ID or as a <a href="http://resources.arcgis.com/en/help/rest/apiref/geometry.html#sr">spatial reference json object</a>.  This parameter specific for ArcGIS Server REST API.</td>
+		</tr>
+		<tr>
+			<td class="xml">    &lt;IdentificationTolerance&gt;<span class="value">2</span>&lt;/IdentificationTolerance&gt;</td>
+			<td class="desc">Identification tolerance (optional, defaults to 2)</td>
 		</tr>
 		<tr>
 			<td class="xml">    &lt;BandsCount&gt;<span class="value">3</span>&lt;/BandsCount&gt;</td>
@@ -386,6 +395,19 @@ Access to web-based Virtual Earth tile services. Access is always tile based.<p>
 </ul>
 </p>
 
+<h3>ArcGIS REST API (GDAL 2.0 and later)</h3>
+<p>
+Access to ArcGIS REST <a href="http://resources.arcgis.com/en/help/rest/apiref/mapserver.html">map service resource</a> (untiled requests). 
+</p>
+<p>AGS layers can be <a href="http://resources.arcgis.com/en/help/rest/apiref/identify.html">queried</a> (through a GetFeatureInfo request) with the gdallocationinfo utility, or with a GetMetadataItem("Pixel_iCol_iLine", "LocationInfo") call on a band object.
+</p>
+
+<p>
+     <pre>gdallocationinfo -wgs84 "<GDAL_WMS><Service name=\"AGS\"><ServerUrl>http://sampleserver1.arcgisonline.com/ArcGIS/rest/services/Specialty/ESRI_StateCityHighway_USA/MapServer</ServerUrl><BBoxOrder>xyXY</BBoxOrder><ImageSR>3857</ImageSR></Service><DataWindow><UpperLeftX>-20037508.34</UpperLeftX><UpperLeftY>20037508.34</UpperLeftY><LowerRightX>20037508.34</LowerRightX><LowerRightY>-20037508.34</LowerRightY><SizeX>512</SizeX><SizeY>512</SizeY></DataWindow></GDAL_WMS>"
+                           -75.704 39.75
+    </pre>
+
+
 <h2>Examples</h2>
 
 <ul>
@@ -450,6 +472,10 @@ Access to web-based Virtual Earth tile services. Access is always tile based.<p>
     <li><p>
      <a href="frmt_wms_virtualearth.xml">VirtualEarth Aerial Layer</a> accessed with the VirtualEarth minidriver.
     </p></li>
+    
+    <li><p>
+     <a href="frmt_ags_arcgisonline.xml">ArcGIS online sample server layer</a> accessed with the ArcGIS Server REST API minidriver.
+    </p></li>
 
 </ul>
 
@@ -497,6 +523,7 @@ A list of subdatasets will be returned, resulting from the parsing of the GetTil
 <li><a href="http://www.worldwindcentral.com/wiki/TileService">WorldWind TileService</a></li>
 <li><a href="http://wiki.osgeo.org/wiki/Tile_Map_Service_Specification">TMS Specification</a></li>
 <li><a href="http://onearth.jpl.nasa.gov/tiled.html">OnEarth Tiled WMS specification</a></li>
+<li><a href="http://resources.arcgis.com/en/help/rest/apiref/">ArcGIS Server REST API</a></li>
 </ul>
 
 </body>
