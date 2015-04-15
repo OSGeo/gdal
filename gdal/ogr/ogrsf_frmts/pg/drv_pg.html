@@ -124,9 +124,11 @@ Using the same layer name in different schemas is supported, but not in the publ
 using the -overwrite option of ogr2ogr and -lco SCHEMA= option at the same time will not work, as the ogr2ogr utility
 will not understand that the existing layer must be destroyed in the specified schema. Use the -nln option of ogr2ogr instead,
 or better the active_schema connection string. See below example.<p>
-<li> <b>SPATIAL_INDEX</b>: (From GDAL 1.6.0) Set to YES by default. Creates a spatial index on the geometry column
+<li> <b>SPATIAL_INDEX</b>: (From GDAL 1.6.0) Set to YES by default. Creates a spatial index (GiST) on the geometry column
 to speed up queries. Set to FALSE to disable. (Has effect only when PostGIS is available).<p>
 <li> <b>TEMPORARY</b>: (From GDAL 1.8.0) Set to OFF by default. Creates a temporary table instead of a permanent one.<p>
+<li> <b>UNLOGGED</b>: (From GDAL 2.0) Set to OFF by default. Whether to create the table as a unlogged one.
+Unlogged tables are only supported since PostgreSQL 9.1, and GiST indexes used for spatial indexing since PostgreSQL 9.3.<p>
 <li> <b>NONE_AS_UNKNOWN</b>: (From GDAL 1.8.1) Can bet set to TRUE to force non-spatial layers (wkbNone) to be created as
 spatial tables of type GEOMETRY (wkbUnknown), which was the behaviour prior to GDAL 1.8.0. Defaults to NO, in which case
 a regular table is created and not recorded in the PostGIS geometry_columns table.<p>

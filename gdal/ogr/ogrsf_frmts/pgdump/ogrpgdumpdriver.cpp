@@ -105,6 +105,7 @@ void RegisterOGRPGDump()
     "  <Option name='CREATE_SCHEMA' type='boolean' description='Whether to explictely emit the CREATE SCHEMA statement to create the specified schema' default='YES'/>"
     "  <Option name='SPATIAL_INDEX' type='boolean' description='Whether to create a spatial index' default='YES'/>"
     "  <Option name='TEMPORARY' type='boolean' description='Whether to a temporary table instead of a permanent one' default='NO'/>"
+    "  <Option name='UNLOGGED' type='boolean' description='Whether to create the table as a unlogged one' default='NO'/>"
     "  <Option name='WRITE_EWKT_GEOM' type='boolean' description='Whether to write EWKT geometries instead of HEX geometrie' default='NO'/>"
     "  <Option name='CREATE_TABLE' type='boolean' description='Whether to explictely recreate the table if necessary' default='YES'/>"
     "  <Option name='DROP_TABLE' type='string-select' description='Whether to explictely destroy tables before recreating them' default='YES'>"

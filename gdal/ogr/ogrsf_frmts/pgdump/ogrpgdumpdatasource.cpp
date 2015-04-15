@@ -395,8 +395,7 @@ OGRPGDumpDataSource::ICreateLayer( const char * pszLayerName,
     const char* pszSerialType = bFID64 ? "BIGSERIAL": "SERIAL";
     
     CPLString osCreateTable;
-    int bTemporary = CSLFetchNameValue( papszOptions, "TEMPORARY" ) != NULL &&
-                     CSLTestBoolean(CSLFetchNameValue( papszOptions, "TEMPORARY" ));
+    int bTemporary = CSLFetchBoolean( papszOptions, "TEMPORARY", FALSE );
     if (bTemporary)
     {
         CPLFree(pszSchemaName);
@@ -404,7 +403,9 @@ OGRPGDumpDataSource::ICreateLayer( const char * pszLayerName,
         osCreateTable.Printf("CREATE TEMPORARY TABLE \"%s\"", pszTableName);
     }
     else
-        osCreateTable.Printf("CREATE TABLE \"%s\".\"%s\"", pszSchemaName, pszTableName);
+        osCreateTable.Printf("CREATE TABLE%s \"%s\".\"%s\"",
+                             CSLFetchBoolean( papszOptions, "UNLOGGED", FALSE ) ? " UNLOGGED": "",
+                             pszSchemaName, pszTableName);
 
     if( !bHavePostGIS )
     {
