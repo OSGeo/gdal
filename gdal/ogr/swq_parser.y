@@ -832,7 +832,7 @@ table_def:
         $$ = new swq_expr_node( iTable );
     }
 
-    | SWQT_IDENTIFIER SWQT_IDENTIFIER
+    | SWQT_IDENTIFIER as_clause
     {
         int iTable;
         iTable = context->poCurSelect->PushTableDef( NULL, $1->string_value,
@@ -854,7 +854,7 @@ table_def:
         $$ = new swq_expr_node( iTable );
     }
 
-    | SWQT_STRING '.' SWQT_IDENTIFIER SWQT_IDENTIFIER
+    | SWQT_STRING '.' SWQT_IDENTIFIER as_clause
     {
         int iTable;
         iTable = context->poCurSelect->PushTableDef( $1->string_value,
@@ -878,7 +878,7 @@ table_def:
         $$ = new swq_expr_node( iTable );
     }
 
-    | SWQT_IDENTIFIER '.' SWQT_IDENTIFIER SWQT_IDENTIFIER
+    | SWQT_IDENTIFIER '.' SWQT_IDENTIFIER as_clause
     {
         int iTable;
         iTable = context->poCurSelect->PushTableDef( $1->string_value,

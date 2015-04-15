@@ -1197,6 +1197,21 @@ def ogr_rfc28_44():
     return 'success'
 
 ###############################################################################
+# Test 'FROM table_name AS alias'
+
+def ogr_rfc28_45():
+
+    ql = gdaltest.ds.ExecuteSQL( "select eas_id from idlink as il where il.eas_id = 166" )
+    
+    count = ql.GetFeatureCount()
+    if count != 1:
+        gdaltest.post_reason( 'Got wrong count with GetFeatureCount() - %d, expecting 1' % count )
+        return 'fail'
+
+    gdaltest.ds.ReleaseResultSet( ql )
+    return 'success'
+
+###############################################################################
 def ogr_rfc28_cleanup():
     gdaltest.lyr = None
     gdaltest.ds.Destroy()
@@ -1252,6 +1267,7 @@ gdaltest_list = [
     ogr_rfc28_42,
     ogr_rfc28_43,
     ogr_rfc28_44,
+    ogr_rfc28_45,
     ogr_rfc28_cleanup ]
 
 if __name__ == '__main__':
