@@ -82,11 +82,21 @@ CPLErr GDALWMSMiniDriver_AGS::Initialize(CPLXMLNode *config)
     
 	if (ret == CE_None) 
 	{
-		m_irs = CPLGetXMLValue(config, "ImageSR", "102100");
+		const char* irs = CPLGetXMLValue(config, "SRS", "102100");
 		
-		if (m_irs.size())
+		if (irs != NULL)
 		{
-		    m_projection_wkt = ProjToWKT("EPSG:" + m_irs);
+	        if(EQUALN(irs, "EPSG:", 5)) //if we have EPSG code just convert it to WKT
+	        {
+	            m_projection_wkt = ProjToWKT(irs);
+	            m_irs = irs + 5;
+	        }
+	        else //if we have AGS code - try if it's EPSG
+		    {
+		        m_irs = irs;
+		        m_projection_wkt = ProjToWKT("EPSG:" + m_irs);
+		    }
+		    // TODO: if we have AGS JSON    
 		}
 		m_identification_tolerance = CPLGetXMLValue(config, "IdentificationTolerance", "2");
 	}
