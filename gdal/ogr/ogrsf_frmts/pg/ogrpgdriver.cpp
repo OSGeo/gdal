@@ -143,6 +143,7 @@ void RegisterOGRPG()
 "  <Option name='SCHEMA' type='string' description='Name of schema into which to create the new table'/>"
 "  <Option name='SPATIAL_INDEX' type='boolean' description='Whether to create a spatial index' default='YES'/>"
 "  <Option name='TEMPORARY' type='boolean' description='Whether to a temporary table instead of a permanent one' default='NO'/>"
+"  <Option name='UNLOGGED' type='boolean' description='Whether to create the table as a unlogged one' default='NO'/>"
 "  <Option name='NONE_AS_UNKNOWN' type='boolean' description='Whether to force non-spatial layers to be created as spatial tables' default='NO'/>"
 "  <Option name='FID' type='string' description='Name of the FID column to create' default='ogc_fid'/>"
 "  <Option name='FID64' type='boolean' description='Whether to create the FID column with BIGSERIAL type to handle 64bit wide ids' default='NO'/>"

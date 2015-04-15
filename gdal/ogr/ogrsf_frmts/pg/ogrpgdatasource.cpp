@@ -1568,8 +1568,7 @@ OGRPGDataSource::ICreateLayer( const char * pszLayerName,
     const char* pszSerialType = bFID64 ? "BIGSERIAL": "SERIAL";
 
     CPLString osCreateTable;
-    int bTemporary = CSLFetchNameValue( papszOptions, "TEMPORARY" ) != NULL &&
-                     CSLTestBoolean(CSLFetchNameValue( papszOptions, "TEMPORARY" ));
+    int bTemporary = CSLFetchBoolean( papszOptions, "TEMPORARY", FALSE );
     if (bTemporary)
     {
         CPLFree(pszSchemaName);
@@ -1578,7 +1577,8 @@ OGRPGDataSource::ICreateLayer( const char * pszLayerName,
                              OGRPGEscapeColumnName(pszTableName).c_str());
     }
     else
-        osCreateTable.Printf("CREATE TABLE %s.%s",
+        osCreateTable.Printf("CREATE%s TABLE %s.%s",
+                             CSLFetchBoolean( papszOptions, "UNLOGGED", FALSE ) ? " UNLOGGED": "",
                              OGRPGEscapeColumnName(pszSchemaName).c_str(), 
                              OGRPGEscapeColumnName(pszTableName).c_str());
     
@@ -1635,6 +1635,16 @@ OGRPGDataSource::ICreateLayer( const char * pszLayerName,
 
     const char *pszSI = CSLFetchNameValue( papszOptions, "SPATIAL_INDEX" );
     int bCreateSpatialIndex = ( pszSI == NULL || CSLTestBoolean(pszSI) );
+    if( eType != wkbNone &&
+        pszSI == NULL &&
+        CSLFetchBoolean( papszOptions, "UNLOGGED", FALSE ) &&
+        !(sPostgreSQLVersion.nMajor > 9 ||
+         (sPostgreSQLVersion.nMajor == 9 && sPostgreSQLVersion.nMinor >= 3)) )
+    {
+        CPLError(CE_Warning, CPLE_NotSupported,
+                 "GiST index only supported since Postgres 9.3 on unlogged table");
+        bCreateSpatialIndex = FALSE;
+    }
 
     CPLString osEscapedTableNameSingleQuote = OGRPGEscapeString(hPGConn, pszTableName);
     const char* pszEscapedTableNameSingleQuote = osEscapedTableNameSingleQuote.c_str();
