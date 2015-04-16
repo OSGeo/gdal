@@ -241,6 +241,7 @@ tiff_srs_list = [ 2758, #tmerc
                   26720, # UTM NAD27 special case
                   32630, # UTM WGS84 north special case
                   32730, # UTM WGS84 south special case
+                  22700, # unknown datum 'Deir_ez_Zor'
 ]
 
 for item in tiff_srs_list:
