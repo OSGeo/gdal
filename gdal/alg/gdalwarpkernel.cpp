@@ -3443,11 +3443,19 @@ static void GWKRoundSourceCoordinates(int nDstXSize,
                                       double* padfZ,
                                       int* pabSuccess,
                                       double dfSrcCoordPrecision,
+                                      double dfErrorThreshold,
                                       GDALTransformerFunc pfnTransformer,
                                       void* pTransformerArg,
                                       double dfDstXOff,
                                       double dfDstY)
 {
+    double dfPct = 0.8;
+    if( dfErrorThreshold > 0 && dfSrcCoordPrecision / dfErrorThreshold >= 10.0 )
+    {
+        dfPct = 1.0 - 2 * 1.0 / (dfSrcCoordPrecision / dfErrorThreshold);
+    }
+    double dfExactTransformThreshold = 0.5 * dfPct * dfSrcCoordPrecision;
+
     for( int iDstX = 0; iDstX < nDstXSize; iDstX++ )
     {
         double dfXBefore = padfX[iDstX], dfYBefore = padfY[iDstX];
@@ -3457,8 +3465,8 @@ static void GWKRoundSourceCoordinates(int nDstXSize,
         /* If we are in an uncertainty zone, go to non approximated transformation */
         /* Due to the 80% of half-precision threshold, dfSrcCoordPrecision must */
         /* be at least 10 times greater than the approximation error */
-        if( fabs(dfXBefore - padfX[iDstX]) > 0.5 * 0.8 * dfSrcCoordPrecision ||
-            fabs(dfYBefore - padfY[iDstX]) > 0.5 * 0.8 * dfSrcCoordPrecision )
+        if( fabs(dfXBefore - padfX[iDstX]) > dfExactTransformThreshold ||
+            fabs(dfYBefore - padfY[iDstX]) > dfExactTransformThreshold )
         {
             padfX[iDstX] = iDstX + dfDstXOff;
             padfY[iDstX] = dfDstY;
@@ -3622,6 +3630,8 @@ static CPLErr GWKOpenCLCase( GDALWarpKernel *poWK )
     pabSuccess = (int *) CPLMalloc(sizeof(int) * nDstXSize);
     double dfSrcCoordPrecision = CPLAtof(
         CSLFetchNameValueDef(poWK->papszWarpOptions, "SRC_COORD_PRECISION", "0"));
+    double dfErrorThreshold = CPLAtof(
+        CSLFetchNameValueDef(poWK->papszWarpOptions, "ERROR_THRESHOLD", "0"));
 
     /* ==================================================================== */
     /*      Loop over output lines.                                         */
@@ -3650,6 +3660,7 @@ static CPLErr GWKOpenCLCase( GDALWarpKernel *poWK )
         {
             GWKRoundSourceCoordinates(nDstXSize, padfX, padfY, padfZ, pabSuccess,
                                       dfSrcCoordPrecision,
+                                      dfErrorThreshold,
                                       poWK->pfnTransformer,
                                       poWK->pTransformerArg,
                                       0.5 + nDstXOff,
@@ -3890,6 +3901,8 @@ static void GWKGeneralCaseThread( void* pData)
     }
     double dfSrcCoordPrecision = CPLAtof(
         CSLFetchNameValueDef(poWK->papszWarpOptions, "SRC_COORD_PRECISION", "0"));
+    double dfErrorThreshold = CPLAtof(
+        CSLFetchNameValueDef(poWK->papszWarpOptions, "ERROR_THRESHOLD", "0"));
 
 /* ==================================================================== */
 /*      Loop over output lines.                                         */
@@ -3918,6 +3931,7 @@ static void GWKGeneralCaseThread( void* pData)
         {
             GWKRoundSourceCoordinates(nDstXSize, padfX, padfY, padfZ, pabSuccess,
                                       dfSrcCoordPrecision,
+                                      dfErrorThreshold,
                                       poWK->pfnTransformer,
                                       psJob->pTransformerArg,
                                       0.5 + poWK->nDstXOff,
@@ -4088,6 +4102,8 @@ static void GWKResampleNoMasksOrDstDensityOnlyThreadInternal( void* pData )
     double  *padfWeight = (double *)CPLCalloc( 1 + nXRadius * 2, sizeof(double) );
     double dfSrcCoordPrecision = CPLAtof(
         CSLFetchNameValueDef(poWK->papszWarpOptions, "SRC_COORD_PRECISION", "0"));
+    double dfErrorThreshold = CPLAtof(
+        CSLFetchNameValueDef(poWK->papszWarpOptions, "ERROR_THRESHOLD", "0"));
 
 /* ==================================================================== */
 /*      Loop over output lines.                                         */
@@ -4116,6 +4132,7 @@ static void GWKResampleNoMasksOrDstDensityOnlyThreadInternal( void* pData )
         {
             GWKRoundSourceCoordinates(nDstXSize, padfX, padfY, padfZ, pabSuccess,
                                       dfSrcCoordPrecision,
+                                      dfErrorThreshold,
                                       poWK->pfnTransformer,
                                       psJob->pTransformerArg,
                                       0.5 + poWK->nDstXOff,
@@ -4283,6 +4300,8 @@ static void GWKNearestThread( void* pData )
 
     double dfSrcCoordPrecision = CPLAtof(
         CSLFetchNameValueDef(poWK->papszWarpOptions, "SRC_COORD_PRECISION", "0"));
+    double dfErrorThreshold = CPLAtof(
+        CSLFetchNameValueDef(poWK->papszWarpOptions, "ERROR_THRESHOLD", "0"));
 
 /* ==================================================================== */
 /*      Loop over output lines.                                         */
@@ -4311,6 +4330,7 @@ static void GWKNearestThread( void* pData )
         {
             GWKRoundSourceCoordinates(nDstXSize, padfX, padfY, padfZ, pabSuccess,
                                       dfSrcCoordPrecision,
+                                      dfErrorThreshold,
                                       poWK->pfnTransformer,
                                       psJob->pTransformerArg,
                                       0.5 + poWK->nDstXOff,
@@ -4631,6 +4651,8 @@ static void GWKAverageOrModeThread( void* pData)
 
     double dfSrcCoordPrecision = CPLAtof(
         CSLFetchNameValueDef(poWK->papszWarpOptions, "SRC_COORD_PRECISION", "0"));
+    double dfErrorThreshold = CPLAtof(
+        CSLFetchNameValueDef(poWK->papszWarpOptions, "ERROR_THRESHOLD", "0"));
 
 /* ==================================================================== */
 /*      Loop over output lines.                                         */
@@ -4664,12 +4686,14 @@ static void GWKAverageOrModeThread( void* pData)
         {
             GWKRoundSourceCoordinates(nDstXSize, padfX, padfY, padfZ, pabSuccess,
                                       dfSrcCoordPrecision,
+                                      dfErrorThreshold,
                                       poWK->pfnTransformer,
                                       psJob->pTransformerArg,
                                       poWK->nDstXOff,
                                       iDstY + poWK->nDstYOff);
             GWKRoundSourceCoordinates(nDstXSize, padfX2, padfY2, padfZ2, pabSuccess2,
                                       dfSrcCoordPrecision,
+                                      dfErrorThreshold,
                                       poWK->pfnTransformer,
                                       psJob->pTransformerArg,
                                       1.0 + poWK->nDstXOff,
