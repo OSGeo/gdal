@@ -352,6 +352,18 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
             strstr(szPeStr, "ESRI PE String = " ) )
         {
             pszWKT = CPLStrdup( szPeStr + strlen("ESRI PE String = ") );
+
+            if( strstr(pszWKT, "PROJCS[\"WGS_1984_Web_Mercator_Auxiliary_Sphere\"") )
+            {
+                oSRS.SetFromUserInput(pszWKT);
+                oSRS.SetExtension( "PROJCS", "PROJ4",  
+                                   "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs" ); 
+                oSRS.FixupOrdering();
+                CPLFree(pszWKT);
+                pszWKT = NULL;
+                oSRS.exportToWkt(&pszWKT);
+            }
+
             return pszWKT;
         }
         else
@@ -938,6 +950,13 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
 
             GTIFFreeMemory( pszUnitsName );
         }
+    }
+    
+    if( oSRS.IsProjected())
+    {
+        // Hack to be able to read properly what we have written for EPSG:102113 (ESRI ancient WebMercator)
+        if( EQUAL(oSRS.GetAttrValue("PROJCS"), "WGS_1984_Web_Mercator") )
+            oSRS.importFromEPSG(102113);
     }
 
 /* ==================================================================== */
