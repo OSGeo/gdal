@@ -81,6 +81,9 @@ class TestTiffSRS:
             print(sr)
             print(sr2)
             return 'fail'
+        else:
+            if self.expected_fail:
+                print('Succeeded but expected fail...')
 
         return 'success'
 
@@ -215,8 +218,8 @@ tiff_srs_list = [ 2758, #tmerc
                   32661, #stere
                   3035, #laea
                   2062, #lcc 1SP
-                  [2065, True, True], #krovak
-                  [2066, False, True], #cass
+                  [2065, False, True], #krovak
+                  2066, #cass
                   2964, #aea
                   3410, #cea
                   3786, #eqc spherical, method=9823
