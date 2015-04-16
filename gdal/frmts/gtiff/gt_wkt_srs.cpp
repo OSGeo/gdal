@@ -695,9 +695,32 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
 #endif
         
 /* ==================================================================== */
+/*      Try to import PROJCS from ProjectedCSTypeGeoKey if we           */
+/*      have essentially only it. We could relax a bit the constraints  */
+/*      but that should do for now. This may mask shortcomings in the   */
+/*      libgeotiff GTIFGetDefn() function.                              */
+/* ==================================================================== */
+    short tmp;
+    int bGotFromEPSG = FALSE;
+    if( psDefn->Model == ModelTypeProjected &&
+        psDefn->PCS != KvUserDefined &&
+        GDALGTIFKeyGetSHORT(hGTIF, ProjectionGeoKey, &tmp, 0, 1  ) == 0 &&
+        GDALGTIFKeyGetSHORT(hGTIF, ProjCoordTransGeoKey, &tmp, 0, 1  ) == 0 &&
+        GDALGTIFKeyGetSHORT(hGTIF, GeographicTypeGeoKey, &tmp, 0, 1  ) == 0 &&
+        GDALGTIFKeyGetSHORT(hGTIF, GeogGeodeticDatumGeoKey, &tmp, 0, 1  ) == 0 &&
+        GDALGTIFKeyGetSHORT(hGTIF, GeogEllipsoidGeoKey, &tmp, 0, 1  ) == 0 &&
+        CSLTestBoolean(CPLGetConfigOption("GTIFF_IMPORT_FROM_EPSG", "YES")) )
+    {
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        OGRErr eErr = oSRS.importFromEPSG(psDefn->PCS);
+        CPLPopErrorHandler();
+        bGotFromEPSG = (eErr == OGRERR_NONE);
+    }
+        
+/* ==================================================================== */
 /*      Handle projection parameters.                                   */
 /* ==================================================================== */
-    if( psDefn->Model == ModelTypeProjected )
+    if( psDefn->Model == ModelTypeProjected && !bGotFromEPSG )
     {
 /* -------------------------------------------------------------------- */
 /*      Make a local copy of parms, and convert back into the           */
