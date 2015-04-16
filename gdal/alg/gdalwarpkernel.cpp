@@ -347,7 +347,10 @@ static CPLErr GWKRun( GDALWarpKernel *poWK,
             pasThreadJob[i].pbStop = &bStop;
             pasThreadJob[i].hCond = hCond;
             pasThreadJob[i].hCondMutex = hCondMutex;
-            pasThreadJob[i].pfnProgress = GWKProgressThread;
+            if( poWK->pfnProgress != GDALDummyProgress )
+                pasThreadJob[i].pfnProgress = GWKProgressThread;
+            else
+                pasThreadJob[i].pfnProgress = NULL;
             pasThreadJob[i].hThread = CPLCreateJoinableThread( pfnFunc,
                                                   (void*) &pasThreadJob[i] );
         }
@@ -355,17 +358,20 @@ static CPLErr GWKRun( GDALWarpKernel *poWK,
 /* -------------------------------------------------------------------- */
 /*      Report progress.                                                */
 /* -------------------------------------------------------------------- */
-        while(nCounter < nDstYSize)
+        if( poWK->pfnProgress != GDALDummyProgress )
         {
-            CPLCondWait(hCond, hCondMutex);
-
-            if( !poWK->pfnProgress( poWK->dfProgressBase + poWK->dfProgressScale *
-                                    (nCounter / (double) nDstYSize),
-                                    "", poWK->pProgress ) )
+            while(nCounter < nDstYSize)
             {
-                CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
-                bStop = TRUE;
-                break;
+                CPLCondWait(hCond, hCondMutex);
+
+                if( !poWK->pfnProgress( poWK->dfProgressBase + poWK->dfProgressScale *
+                                        (nCounter / (double) nDstYSize),
+                                        "", poWK->pProgress ) )
+                {
+                    CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
+                    bStop = TRUE;
+                    break;
+                }
             }
         }
 
@@ -3973,7 +3979,7 @@ static void GWKGeneralCaseThread( void* pData)
 /* -------------------------------------------------------------------- */
 /*      Report progress to the user, and optionally cancel out.         */
 /* -------------------------------------------------------------------- */
-        if (psJob->pfnProgress(psJob))
+        if (psJob->pfnProgress && psJob->pfnProgress(psJob))
             break;
     }
 
@@ -4098,7 +4104,7 @@ static void GWKResampleNoMasksOrDstDensityOnlyThreadInternal( void* pData )
 /* -------------------------------------------------------------------- */
 /*      Report progress to the user, and optionally cancel out.         */
 /* -------------------------------------------------------------------- */
-        if (psJob->pfnProgress(psJob))
+        if (psJob->pfnProgress && psJob->pfnProgress(psJob))
             break;
     }
 
@@ -4309,7 +4315,7 @@ static void GWKNearestThread( void* pData )
 /* -------------------------------------------------------------------- */
 /*      Report progress to the user, and optionally cancel out.         */
 /* -------------------------------------------------------------------- */
-        if (psJob->pfnProgress(psJob))
+        if (psJob->pfnProgress && psJob->pfnProgress(psJob))
             break;
     }
 
@@ -4926,7 +4932,7 @@ static void GWKAverageOrModeThread( void* pData)
 /* -------------------------------------------------------------------- */
 /*      Report progress to the user, and optionally cancel out.         */
 /* -------------------------------------------------------------------- */
-        if (psJob->pfnProgress(psJob))
+        if (psJob->pfnProgress && psJob->pfnProgress(psJob))
             break;
     }
 
