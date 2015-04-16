@@ -242,6 +242,7 @@ tiff_srs_list = [ 2758, #tmerc
                   32630, # UTM WGS84 north special case
                   32730, # UTM WGS84 south special case
                   22700, # unknown datum 'Deir_ez_Zor'
+                  31491, # Germany Zone projection
 ]
 
 for item in tiff_srs_list:
