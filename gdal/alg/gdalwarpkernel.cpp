@@ -3434,6 +3434,45 @@ int GWKResampleNoMasksT<double>( GDALWarpKernel *poWK, int iBand,
 #endif /* defined(__x86_64) || defined(_M_X64) */
 
 /************************************************************************/
+/*                     GWKRoundSourceCoordinates()                      */
+/************************************************************************/
+
+static void GWKRoundSourceCoordinates(int nDstXSize,
+                                      double* padfX,
+                                      double* padfY,
+                                      double* padfZ,
+                                      int* pabSuccess,
+                                      double dfSrcCoordPrecision,
+                                      GDALTransformerFunc pfnTransformer,
+                                      void* pTransformerArg,
+                                      double dfDstXOff,
+                                      double dfDstY)
+{
+    for( int iDstX = 0; iDstX < nDstXSize; iDstX++ )
+    {
+        double dfXBefore = padfX[iDstX], dfYBefore = padfY[iDstX];
+        padfX[iDstX] = floor(padfX[iDstX] / dfSrcCoordPrecision + 0.5) * dfSrcCoordPrecision;
+        padfY[iDstX] = floor(padfY[iDstX] / dfSrcCoordPrecision + 0.5) * dfSrcCoordPrecision;
+
+        /* If we are in an uncertainty zone, go to non approximated transformation */
+        /* Due to the 80% of half-precision threshold, dfSrcCoordPrecision must */
+        /* be at least 10 times greater than the approximation error */
+        if( fabs(dfXBefore - padfX[iDstX]) > 0.5 * 0.8 * dfSrcCoordPrecision ||
+            fabs(dfYBefore - padfY[iDstX]) > 0.5 * 0.8 * dfSrcCoordPrecision )
+        {
+            padfX[iDstX] = iDstX + dfDstXOff;
+            padfY[iDstX] = dfDstY;
+            padfZ[iDstX] = 0.0;
+            pfnTransformer( pTransformerArg, TRUE, 1, 
+                            padfX + iDstX, padfY + iDstX,
+                            padfZ + iDstX, pabSuccess + iDstX );
+            padfX[iDstX] = floor(padfX[iDstX] / dfSrcCoordPrecision + 0.5) * dfSrcCoordPrecision;
+            padfY[iDstX] = floor(padfY[iDstX] / dfSrcCoordPrecision + 0.5) * dfSrcCoordPrecision;
+        }
+    }
+}
+
+/************************************************************************/
 /*                           GWKOpenCLCase()                            */
 /*                                                                      */
 /*      This is identical to GWKGeneralCase(), but functions via        */
@@ -3581,7 +3620,9 @@ static CPLErr GWKOpenCLCase( GDALWarpKernel *poWK )
     padfY = (double *) CPLMalloc(sizeof(double) * nDstXSize);
     padfZ = (double *) CPLMalloc(sizeof(double) * nDstXSize);
     pabSuccess = (int *) CPLMalloc(sizeof(int) * nDstXSize);
-    
+    double dfSrcCoordPrecision = CPLAtof(
+        CSLFetchNameValueDef(poWK->papszWarpOptions, "SRC_COORD_PRECISION", "0"));
+
     /* ==================================================================== */
     /*      Loop over output lines.                                         */
     /* ==================================================================== */
@@ -3605,7 +3646,16 @@ static CPLErr GWKOpenCLCase( GDALWarpKernel *poWK )
         /* ---------------------------------------------------------------- */
         poWK->pfnTransformer( poWK->pTransformerArg, TRUE, nDstXSize, 
                               padfX, padfY, padfZ, pabSuccess );
-        
+        if( dfSrcCoordPrecision > 0.0 )
+        {
+            GWKRoundSourceCoordinates(nDstXSize, padfX, padfY, padfZ, pabSuccess,
+                                      dfSrcCoordPrecision,
+                                      poWK->pfnTransformer,
+                                      poWK->pTransformerArg,
+                                      0.5 + nDstXOff,
+                                      iDstY + 0.5 + nDstYOff);
+        }
+
         err = GDALWarpKernelOpenCL_setCoordRow(warper, padfX, padfY,
                                                nSrcXOff, nSrcYOff,
                                                pabSuccess, iDstY);
@@ -3838,6 +3888,8 @@ static void GWKGeneralCaseThread( void* pData)
     {
         psWrkStruct = GWKResampleCreateWrkStruct(poWK);
     }
+    double dfSrcCoordPrecision = CPLAtof(
+        CSLFetchNameValueDef(poWK->papszWarpOptions, "SRC_COORD_PRECISION", "0"));
 
 /* ==================================================================== */
 /*      Loop over output lines.                                         */
@@ -3862,6 +3914,15 @@ static void GWKGeneralCaseThread( void* pData)
 /* -------------------------------------------------------------------- */
         poWK->pfnTransformer( psJob->pTransformerArg, TRUE, nDstXSize,
                               padfX, padfY, padfZ, pabSuccess );
+        if( dfSrcCoordPrecision > 0.0 )
+        {
+            GWKRoundSourceCoordinates(nDstXSize, padfX, padfY, padfZ, pabSuccess,
+                                      dfSrcCoordPrecision,
+                                      poWK->pfnTransformer,
+                                      psJob->pTransformerArg,
+                                      0.5 + poWK->nDstXOff,
+                                      iDstY + 0.5 + poWK->nDstYOff);
+        }
 
 /* ==================================================================== */
 /*      Loop over pixels in output scanline.                            */
@@ -4025,6 +4086,8 @@ static void GWKResampleNoMasksOrDstDensityOnlyThreadInternal( void* pData )
 
     int     nXRadius = poWK->nXRadius;
     double  *padfWeight = (double *)CPLCalloc( 1 + nXRadius * 2, sizeof(double) );
+    double dfSrcCoordPrecision = CPLAtof(
+        CSLFetchNameValueDef(poWK->papszWarpOptions, "SRC_COORD_PRECISION", "0"));
 
 /* ==================================================================== */
 /*      Loop over output lines.                                         */
@@ -4049,6 +4112,15 @@ static void GWKResampleNoMasksOrDstDensityOnlyThreadInternal( void* pData )
 /* -------------------------------------------------------------------- */
         poWK->pfnTransformer( psJob->pTransformerArg, TRUE, nDstXSize,
                               padfX, padfY, padfZ, pabSuccess );
+        if( dfSrcCoordPrecision > 0.0 )
+        {
+            GWKRoundSourceCoordinates(nDstXSize, padfX, padfY, padfZ, pabSuccess,
+                                      dfSrcCoordPrecision,
+                                      poWK->pfnTransformer,
+                                      psJob->pTransformerArg,
+                                      0.5 + poWK->nDstXOff,
+                                      iDstY + 0.5 + poWK->nDstYOff);
+        }
 
 /* ==================================================================== */
 /*      Loop over pixels in output scanline.                            */
@@ -4209,6 +4281,9 @@ static void GWKNearestThread( void* pData )
     padfZ = (double *) CPLMalloc(sizeof(double) * nDstXSize);
     pabSuccess = (int *) CPLMalloc(sizeof(int) * nDstXSize);
 
+    double dfSrcCoordPrecision = CPLAtof(
+        CSLFetchNameValueDef(poWK->papszWarpOptions, "SRC_COORD_PRECISION", "0"));
+
 /* ==================================================================== */
 /*      Loop over output lines.                                         */
 /* ==================================================================== */
@@ -4232,7 +4307,15 @@ static void GWKNearestThread( void* pData )
 /* -------------------------------------------------------------------- */
         poWK->pfnTransformer( psJob->pTransformerArg, TRUE, nDstXSize,
                               padfX, padfY, padfZ, pabSuccess );
-
+        if( dfSrcCoordPrecision > 0.0 )
+        {
+            GWKRoundSourceCoordinates(nDstXSize, padfX, padfY, padfZ, pabSuccess,
+                                      dfSrcCoordPrecision,
+                                      poWK->pfnTransformer,
+                                      psJob->pTransformerArg,
+                                      0.5 + poWK->nDstXOff,
+                                      iDstY + 0.5 + poWK->nDstYOff);
+        }
 /* ==================================================================== */
 /*      Loop over pixels in output scanline.                            */
 /* ==================================================================== */
@@ -4546,6 +4629,9 @@ static void GWKAverageOrModeThread( void* pData)
     pabSuccess = (int *) CPLMalloc(sizeof(int) * nDstXSize);
     pabSuccess2 = (int *) CPLMalloc(sizeof(int) * nDstXSize);
 
+    double dfSrcCoordPrecision = CPLAtof(
+        CSLFetchNameValueDef(poWK->papszWarpOptions, "SRC_COORD_PRECISION", "0"));
+
 /* ==================================================================== */
 /*      Loop over output lines.                                         */
 /* ==================================================================== */
@@ -4573,6 +4659,22 @@ static void GWKAverageOrModeThread( void* pData)
                               padfX, padfY, padfZ, pabSuccess );
         poWK->pfnTransformer( psJob->pTransformerArg, TRUE, nDstXSize,
                               padfX2, padfY2, padfZ2, pabSuccess2 );
+
+        if( dfSrcCoordPrecision > 0.0 )
+        {
+            GWKRoundSourceCoordinates(nDstXSize, padfX, padfY, padfZ, pabSuccess,
+                                      dfSrcCoordPrecision,
+                                      poWK->pfnTransformer,
+                                      psJob->pTransformerArg,
+                                      poWK->nDstXOff,
+                                      iDstY + poWK->nDstYOff);
+            GWKRoundSourceCoordinates(nDstXSize, padfX2, padfY2, padfZ2, pabSuccess2,
+                                      dfSrcCoordPrecision,
+                                      poWK->pfnTransformer,
+                                      psJob->pTransformerArg,
+                                      1.0 + poWK->nDstXOff,
+                                      iDstY + 1.0 + poWK->nDstYOff);
+        }
 
 /* ==================================================================== */
 /*      Loop over pixels in output scanline.                            */

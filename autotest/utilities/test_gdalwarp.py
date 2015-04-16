@@ -1403,6 +1403,44 @@ def test_gdalwarp_43():
     return 'success'
 
 ###############################################################################
+# Test effect of -wo SRC_COORD_PRECISION
+
+def test_gdalwarp_44():
+    if test_cli_utilities.get_gdalwarp_path() is None:
+        return 'skip'
+
+    # Without  -wo SRC_COORD_PRECISION
+    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -q ../gcore/data/byte.tif tmp/test_gdalwarp_44.tif -wm 10 -overwrite -ts 500 500 -r cubic -ot float32 -t_srs EPSG:4326')
+    ds = gdal.Open('tmp/test_gdalwarp_44.tif')
+    cs1 = ds.GetRasterBand(1).Checksum()
+    ds = None
+
+    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -q ../gcore/data/byte.tif tmp/test_gdalwarp_44.tif -wm 0.1 -overwrite -ts 500 500 -r cubic -ot float32 -t_srs EPSG:4326')
+    ds = gdal.Open('tmp/test_gdalwarp_44.tif')
+    cs2 = ds.GetRasterBand(1).Checksum()
+    ds = None
+    
+    if cs1 == cs2:
+        print('Unexpected cs1 == cs2')
+
+    # With  -wo SRC_COORD_PRECISION
+    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -q ../gcore/data/byte.tif tmp/test_gdalwarp_44.tif -wm 10 -et 0.01 -wo SRC_COORD_PRECISION=0.1 -overwrite -ts 500 500 -r cubic -ot float32 -t_srs EPSG:4326')
+    ds = gdal.Open('tmp/test_gdalwarp_44.tif')
+    cs3 = ds.GetRasterBand(1).Checksum()
+    ds = None
+
+    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -q ../gcore/data/byte.tif tmp/test_gdalwarp_44.tif -wm 0.1 -et 0.01 -wo SRC_COORD_PRECISION=0.1 -overwrite -ts 500 500 -r cubic -ot float32 -t_srs EPSG:4326')
+    ds = gdal.Open('tmp/test_gdalwarp_44.tif')
+    cs4 = ds.GetRasterBand(1).Checksum()
+    ds = None
+
+    if cs3 != cs4:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def test_gdalwarp_cleanup():
@@ -1486,6 +1524,10 @@ def test_gdalwarp_cleanup():
         os.remove('tmp/test_gdalwarp_43.tif')
     except:
         pass
+    try:
+        os.remove('tmp/test_gdalwarp_44.tif')
+    except:
+        pass
     return 'success'
 
 gdaltest_list = [
@@ -1533,8 +1575,14 @@ gdaltest_list = [
     test_gdalwarp_41,
     test_gdalwarp_42,
     test_gdalwarp_43,
+    test_gdalwarp_44,
     test_gdalwarp_cleanup
     ]
+
+disabled_gdaltest_list = [
+    test_gdalwarp_cleanup,
+    test_gdalwarp_44,
+    test_gdalwarp_cleanup ]
 
 if __name__ == '__main__':
 
