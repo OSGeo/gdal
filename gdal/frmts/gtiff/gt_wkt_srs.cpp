@@ -723,10 +723,18 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
         GDALGTIFKeyGetSHORT(hGTIF, GeogEllipsoidGeoKey, &tmp, 0, 1  ) == 0 &&
         CSLTestBoolean(CPLGetConfigOption("GTIFF_IMPORT_FROM_EPSG", "YES")) )
     {
+        // Save error state as importFromEPSGA() will call CPLReset()
+        int errNo = CPLGetLastErrorNo();
+        CPLErr eErr = CPLGetLastErrorType();
+        const char* pszTmp = CPLGetLastErrorMsg();
+        char* pszLastErrorMsg = CPLStrdup(pszTmp ? pszTmp : "");
         CPLPushErrorHandler(CPLQuietErrorHandler);
-        OGRErr eErr = oSRS.importFromEPSG(psDefn->PCS);
+        OGRErr eImportErr = oSRS.importFromEPSG(psDefn->PCS);
         CPLPopErrorHandler();
-        bGotFromEPSG = (eErr == OGRERR_NONE);
+        // Restore error state
+        CPLErrorSetState( eErr, errNo, pszLastErrorMsg);
+        CPLFree(pszLastErrorMsg);
+        bGotFromEPSG = (eImportErr == OGRERR_NONE);
     }
         
 /* ==================================================================== */
