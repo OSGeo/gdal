@@ -1721,6 +1721,10 @@ void GDALDestroyGenImgProjTransformer( void *hTransformArg )
  * can be found in that topic. 
  */
 
+#ifdef DEBUG_APPROX_TRANSFORMER
+int countGDALGenImgProjTransform = 0;
+#endif
+
 int GDALGenImgProjTransform( void *pTransformArg, int bDstToSrc, 
                              int nPointCount, 
                              double *padfX, double *padfY, double *padfZ,
@@ -1734,6 +1738,11 @@ int GDALGenImgProjTransform( void *pTransformArg, int bDstToSrc,
     void *pRPCTransformArg;
     void *pTPSTransformArg;
     void *pGeoLocTransformArg;
+
+#ifdef DEBUG_APPROX_TRANSFORMER
+    CPLAssert(nPointCount > 0);
+    countGDALGenImgProjTransform += nPointCount;
+#endif
 
     for( i = 0; i < nPointCount; i++ )
     {
@@ -2673,6 +2682,249 @@ void GDALDestroyApproxTransformer( void * pCBData )
 }
 
 /************************************************************************/
+/*                      GDALApproxTransformInternal()                   */
+/************************************************************************/
+
+static int GDALApproxTransformInternal( void *pCBData, int bDstToSrc, int nPoints, 
+                                        double *x, double *y, double *z, int *panSuccess,
+                                        const double xSMETransformed[3], /* SME = Start, Middle, End */
+                                        const double ySMETransformed[3],
+                                        const double zSMETransformed[3])
+{
+    ApproxTransformInfo *psATInfo = (ApproxTransformInfo *) pCBData;
+    double dfDeltaX, dfDeltaY, dfError, dfDist, dfDeltaZ;
+    int nMiddle, i, bSuccess;
+
+    nMiddle = (nPoints-1)/2;
+
+#ifdef notdef_sanify_check
+    {
+        double x2[3], y2[3], z2[3];
+        int anSuccess2[3];
+        x2[0] = x[0];
+        y2[0] = y[0];
+        z2[0] = z[0];
+        x2[1] = x[nMiddle];
+        y2[1] = y[nMiddle];
+        z2[1] = z[nMiddle];
+        x2[2] = x[nPoints-1];
+        y2[2] = y[nPoints-1];
+        z2[2] = z[nPoints-1];
+
+        bSuccess = 
+            psATInfo->pfnBaseTransformer( psATInfo->pBaseCBData, bDstToSrc, 3, 
+                                        x2, y2, z2, anSuccess2 );
+        CPLAssert(bSuccess);
+        CPLAssert(anSuccess2[0]);
+        CPLAssert(anSuccess2[1]);
+        CPLAssert(anSuccess2[2]);
+        CPLAssert(x2[0] == xSMETransformed[0]);
+        CPLAssert(y2[0] == ySMETransformed[0]);
+        CPLAssert(z2[0] == zSMETransformed[0]);
+        CPLAssert(x2[1] == xSMETransformed[1]);
+        CPLAssert(y2[1] == ySMETransformed[1]);
+        CPLAssert(z2[1] == zSMETransformed[1]);
+        CPLAssert(x2[2] == xSMETransformed[2]);
+        CPLAssert(y2[2] == ySMETransformed[2]);
+        CPLAssert(z2[2] == zSMETransformed[2]);
+    }
+#endif
+
+#ifdef DEBUG_APPROX_TRANSFORMER
+    fprintf(stderr, "start (%.3f,%.3f) -> (%.3f,%.3f)\n",
+            x[0], y[0], xSMETransformed[0], ySMETransformed[0]);
+    fprintf(stderr, "middle (%.3f,%.3f) -> (%.3f,%.3f)\n",
+            x[nMiddle], y[nMiddle], xSMETransformed[1], ySMETransformed[1]);
+    fprintf(stderr, "end (%.3f,%.3f) -> (%.3f,%.3f)\n",
+            x[nPoints-1], y[nPoints-1], xSMETransformed[2], ySMETransformed[2]);
+#endif
+
+/* -------------------------------------------------------------------- */
+/*      Is the error at the middle acceptable relative to an            */
+/*      interpolation of the middle position?                           */
+/* -------------------------------------------------------------------- */
+    dfDeltaX = (xSMETransformed[2] - xSMETransformed[0]) / (x[nPoints-1] - x[0]);
+    dfDeltaY = (ySMETransformed[2] - ySMETransformed[0]) / (x[nPoints-1] - x[0]);
+    dfDeltaZ = (zSMETransformed[2] - zSMETransformed[0]) / (x[nPoints-1] - x[0]);
+
+    dfError = fabs((xSMETransformed[0] + dfDeltaX * (x[nMiddle] - x[0])) - xSMETransformed[1])
+            + fabs((ySMETransformed[0] + dfDeltaY * (x[nMiddle] - x[0])) - ySMETransformed[1]);
+
+    if( dfError > psATInfo->dfMaxError )
+    {
+#ifdef notdef
+        CPLDebug( "GDAL", "ApproxTransformer - "
+                  "error %g over threshold %g, subdivide %d points.",
+                  dfError, psATInfo->dfMaxError, nPoints );
+#endif
+
+        double xMiddle[3], yMiddle[3], zMiddle[3];
+        int  anSuccess2[3];
+        xMiddle[0] = x[ (nMiddle - 1) / 2 ];
+        yMiddle[0] = y[ (nMiddle - 1) / 2 ];
+        zMiddle[0] = z[ (nMiddle - 1) / 2 ];
+        xMiddle[1] = x[ nMiddle - 1 ];
+        yMiddle[1] = y[ nMiddle - 1 ];
+        zMiddle[1] = z[ nMiddle - 1 ];
+        xMiddle[2] = x[ nMiddle + (nPoints - nMiddle - 1) / 2 ];
+        yMiddle[2] = y[ nMiddle + (nPoints - nMiddle - 1) / 2 ];
+        zMiddle[2] = z[ nMiddle + (nPoints - nMiddle - 1) / 2 ];
+
+        int bUseBaseTransformForHalf1 = ( nMiddle <= 5 ||
+                                y[0] != y[nMiddle-1] ||
+                                y[0] != y[(nMiddle - 1) / 2] ||
+                                x[0] == x[nMiddle-1] ||
+                                x[0] == x[(nMiddle - 1) / 2]  );
+        int bUseBaseTransformForHalf2 = ( nPoints - nMiddle <= 5 ||
+                                 y[nMiddle] != y[nPoints-1] ||
+                                 y[nMiddle] != y[nMiddle + (nPoints - nMiddle - 1) / 2] ||
+                                 x[nMiddle] == x[nPoints-1] ||
+                                 x[nMiddle] == x[nMiddle + (nPoints - nMiddle - 1) / 2] );
+
+        if( !bUseBaseTransformForHalf1 && !bUseBaseTransformForHalf2 )
+            bSuccess = 
+                psATInfo->pfnBaseTransformer( psATInfo->pBaseCBData, bDstToSrc, 3, 
+                                             xMiddle, yMiddle, zMiddle, anSuccess2 );
+        else if( !bUseBaseTransformForHalf1 )
+        {
+            bSuccess = 
+                psATInfo->pfnBaseTransformer( psATInfo->pBaseCBData, bDstToSrc, 2, 
+                                             xMiddle, yMiddle, zMiddle, anSuccess2 );
+            anSuccess2[2] = TRUE;
+        }
+        else if( !bUseBaseTransformForHalf2 )
+        {
+            bSuccess = 
+                psATInfo->pfnBaseTransformer( psATInfo->pBaseCBData, bDstToSrc, 1, 
+                                              xMiddle + 2, yMiddle + 2, zMiddle + 2,
+                                              anSuccess2 + 2 );
+            anSuccess2[0] = TRUE;
+            anSuccess2[1] = TRUE;
+        }
+        else
+            bSuccess = FALSE;
+        if( !bSuccess || !anSuccess2[0] || !anSuccess2[1] || !anSuccess2[2] )
+        {
+            bSuccess = psATInfo->pfnBaseTransformer( psATInfo->pBaseCBData, bDstToSrc,
+                                                     nMiddle - 1,
+                                                     x + 1, y + 1, z + 1,
+                                                     panSuccess + 1 );
+            bSuccess &= psATInfo->pfnBaseTransformer( psATInfo->pBaseCBData, bDstToSrc,
+                                                      nPoints - nMiddle - 2,
+                                                      x + nMiddle + 1,
+                                                      y + nMiddle + 1,
+                                                      z + nMiddle + 1,
+                                                      panSuccess + nMiddle + 1 );
+
+            x[0] = xSMETransformed[0];
+            y[0] = ySMETransformed[0];
+            z[0] = zSMETransformed[0];
+            panSuccess[0] = TRUE;
+            x[nMiddle] = xSMETransformed[1];
+            y[nMiddle] = ySMETransformed[1];
+            z[nMiddle] = zSMETransformed[1];
+            panSuccess[nMiddle] = TRUE;
+            x[nPoints-1] = xSMETransformed[2];
+            y[nPoints-1] = ySMETransformed[2];
+            z[nPoints-1] = zSMETransformed[2];
+            panSuccess[nPoints-1] = TRUE;
+            return bSuccess;
+        }
+
+        double x2[3], y2[3], z2[3];
+        if( !bUseBaseTransformForHalf1 )
+        {
+            x2[0] = xSMETransformed[0];
+            y2[0] = ySMETransformed[0];
+            z2[0] = zSMETransformed[0];
+            x2[1] = xMiddle[0];
+            y2[1] = yMiddle[0];
+            z2[1] = zMiddle[0];
+            x2[2] = xMiddle[1];
+            y2[2] = yMiddle[1];
+            z2[2] = zMiddle[1];
+
+            bSuccess = 
+                GDALApproxTransformInternal( psATInfo, bDstToSrc, nMiddle, 
+                                            x, y, z, panSuccess,
+                                            x2, y2, z2);
+    
+        }
+        else
+        {
+            bSuccess = psATInfo->pfnBaseTransformer( psATInfo->pBaseCBData, bDstToSrc,
+                                                     nMiddle - 1, x + 1, y + 1, z + 1,
+                                                     panSuccess + 1 );
+            x[0] = xSMETransformed[0];
+            y[0] = ySMETransformed[0];
+            z[0] = zSMETransformed[0];
+            panSuccess[0] = TRUE;
+        }
+
+        if( !bSuccess )
+            return FALSE;
+
+        if( !bUseBaseTransformForHalf2 )
+        {
+            x2[0] = xSMETransformed[1];
+            y2[0] = ySMETransformed[1];
+            z2[0] = zSMETransformed[1];
+            x2[1] = xMiddle[2];
+            y2[1] = yMiddle[2];
+            z2[1] = zMiddle[2];
+            x2[2] = xSMETransformed[2];
+            y2[2] = ySMETransformed[2];
+            z2[2] = zSMETransformed[2];
+
+            bSuccess = 
+                GDALApproxTransformInternal( psATInfo, bDstToSrc, nPoints - nMiddle,
+                                            x+nMiddle, y+nMiddle, z+nMiddle,
+                                            panSuccess+nMiddle,
+                                            x2, y2, z2);
+        }
+        else
+        {
+            bSuccess = psATInfo->pfnBaseTransformer( psATInfo->pBaseCBData, bDstToSrc,
+                                                     nPoints - nMiddle - 2,
+                                                     x+nMiddle + 1, y+nMiddle+1, z+nMiddle+1,
+                                                     panSuccess+nMiddle+1 );
+
+            x[nMiddle] = xSMETransformed[1];
+            y[nMiddle] = ySMETransformed[1];
+            z[nMiddle] = zSMETransformed[1];
+            panSuccess[nMiddle] = TRUE;
+            x[nPoints-1] = xSMETransformed[2];
+            y[nPoints-1] = ySMETransformed[2];
+            z[nPoints-1] = zSMETransformed[2];
+            panSuccess[nPoints-1] = TRUE;
+        }
+
+        if( !bSuccess )
+            return FALSE;
+
+        return TRUE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Error is OK since this is just used to compute output bounds    */
+/*      of newly created file for gdalwarper.  So just use affine       */
+/*      approximation of the reverse transform.  Eventually we          */
+/*      should implement iterative searching to find a result within    */
+/*      our error threshold.                                            */
+/* -------------------------------------------------------------------- */
+    for( i = nPoints-1; i >= 0; i-- )
+    {
+        dfDist = (x[i] - x[0]);
+        x[i] = xSMETransformed[0] + dfDeltaX * dfDist;
+        y[i] = ySMETransformed[0] + dfDeltaY * dfDist;
+        z[i] = zSMETransformed[0] + dfDeltaZ * dfDist;
+        panSuccess[i] = TRUE;
+    }
+    
+    return TRUE;
+}
+
+/************************************************************************/
 /*                        GDALApproxTransform()                         */
 /************************************************************************/
 
@@ -2684,14 +2936,14 @@ void GDALDestroyApproxTransformer( void * pCBData )
  * GDALTransformerFunc() signature.  Details of the arguments are described
  * there. 
  */
- 
+
 int GDALApproxTransform( void *pCBData, int bDstToSrc, int nPoints, 
                          double *x, double *y, double *z, int *panSuccess )
 
 {
     ApproxTransformInfo *psATInfo = (ApproxTransformInfo *) pCBData;
-    double x2[3], y2[3], z2[3], dfDeltaX, dfDeltaY, dfError, dfDist, dfDeltaZ;
-    int nMiddle, anSuccess2[3], i, bSuccess;
+    double x2[3], y2[3], z2[3];
+    int nMiddle, anSuccess2[3], bSuccess;
 
     nMiddle = (nPoints-1)/2;
 
@@ -2699,12 +2951,14 @@ int GDALApproxTransform( void *pCBData, int bDstToSrc, int nPoints,
 /*      Bail if our preconditions are not met, or if error is not       */
 /*      acceptable.                                                     */
 /* -------------------------------------------------------------------- */
+    int bRet = FALSE;
     if( y[0] != y[nPoints-1] || y[0] != y[nMiddle]
         || x[0] == x[nPoints-1] || x[0] == x[nMiddle]
         || psATInfo->dfMaxError == 0.0 || nPoints <= 5 )
     {
-        return psATInfo->pfnBaseTransformer( psATInfo->pBaseCBData, bDstToSrc,
+        bRet = psATInfo->pfnBaseTransformer( psATInfo->pBaseCBData, bDstToSrc,
                                              nPoints, x, y, z, panSuccess );
+        goto end;
     }
 
 /* -------------------------------------------------------------------- */
@@ -2724,63 +2978,25 @@ int GDALApproxTransform( void *pCBData, int bDstToSrc, int nPoints,
         psATInfo->pfnBaseTransformer( psATInfo->pBaseCBData, bDstToSrc, 3, 
                                       x2, y2, z2, anSuccess2 );
     if( !bSuccess || !anSuccess2[0] || !anSuccess2[1] || !anSuccess2[2] )
-        return psATInfo->pfnBaseTransformer( psATInfo->pBaseCBData, bDstToSrc,
-                                             nPoints, x, y, z, panSuccess );
-    
-/* -------------------------------------------------------------------- */
-/*      Is the error at the middle acceptable relative to an            */
-/*      interpolation of the middle position?                           */
-/* -------------------------------------------------------------------- */
-    dfDeltaX = (x2[2] - x2[0]) / (x[nPoints-1] - x[0]);
-    dfDeltaY = (y2[2] - y2[0]) / (x[nPoints-1] - x[0]);
-    dfDeltaZ = (z2[2] - z2[0]) / (x[nPoints-1] - x[0]);
-
-    dfError = fabs((x2[0] + dfDeltaX * (x[nMiddle] - x[0])) - x2[1])
-        + fabs((y2[0] + dfDeltaY * (x[nMiddle] - x[0])) - y2[1]);
-
-    if( dfError > psATInfo->dfMaxError )
     {
-#ifdef notdef
-        CPLDebug( "GDAL", "ApproxTransformer - "
-                  "error %g over threshold %g, subdivide %d points.",
-                  dfError, psATInfo->dfMaxError, nPoints );
+        bRet = psATInfo->pfnBaseTransformer( psATInfo->pBaseCBData, bDstToSrc,
+                                             nPoints, x, y, z, panSuccess );
+        goto end;
+    }
+
+    bRet = GDALApproxTransformInternal( pCBData, bDstToSrc, nPoints, 
+                                        x, y, z, panSuccess,
+                                        x2,
+                                        y2,
+                                        z2 );
+
+end:
+#ifdef DEBUG_APPROX_TRANSFORMER
+    for(int i=0;i<nPoints;i++ )
+        fprintf(stderr, "[%d] (%.10f,%.10f) %d\n", i, x[i], y[i], panSuccess[i]);
 #endif
 
-        bSuccess = 
-            GDALApproxTransform( psATInfo, bDstToSrc, nMiddle, 
-                                 x, y, z, panSuccess );
-            
-        if( !bSuccess )
-            return FALSE;
-
-        bSuccess = 
-            GDALApproxTransform( psATInfo, bDstToSrc, nPoints - nMiddle,
-                                 x+nMiddle, y+nMiddle, z+nMiddle,
-                                 panSuccess+nMiddle );
-
-        if( !bSuccess )
-            return FALSE;
-
-        return TRUE;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Error is OK since this is just used to compute output bounds    */
-/*      of newly created file for gdalwarper.  So just use affine       */
-/*      approximation of the reverse transform.  Eventually we          */
-/*      should implement iterative searching to find a result within    */
-/*      our error threshold.                                            */
-/* -------------------------------------------------------------------- */
-    for( i = nPoints-1; i >= 0; i-- )
-    {
-        dfDist = (x[i] - x[0]);
-        y[i] = y2[0] + dfDeltaY * dfDist;
-        x[i] = x2[0] + dfDeltaX * dfDist;
-        z[i] = z2[0] + dfDeltaZ * dfDist;
-        panSuccess[i] = TRUE;
-    }
-    
-    return TRUE;
+    return bRet;
 }
 
 /************************************************************************/
