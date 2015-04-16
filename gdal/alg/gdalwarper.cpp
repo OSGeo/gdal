@@ -931,7 +931,7 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount,
  * that, SRC_COORD_PRECISION must be at least 10 times greater than the error
  * threshold. The higher the SRC_COORD_PRECISION/error_threshold ratio, the higher
  * the performance will be, since exact reprojections must statistically be
- * done with a frequency of error_threshold/SRC_COORD_PRECISION.
+ * done with a frequency of 4*error_threshold/SRC_COORD_PRECISION.
  */
 
 /************************************************************************/
