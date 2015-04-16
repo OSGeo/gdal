@@ -922,14 +922,16 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount,
  * Note: band interleaved output is not currently supported by the warping algorithm in
  * a streamable compabible way.
  *
- * - SRC_COORD_PRECISION: (GDAL >= 2.0). This defaults to 0, to indicate that
+ * - SRC_COORD_PRECISION: (GDAL >= 2.0). Advanced setting. This defaults to 0, to indicate that
  * no rounding of computing source image coordinates corresponding to the target
  * image must be done. If greater than 0 (and typically below 1), this value,
  * expressed in pixel, will be used to round computed source image coordinates. The purpose
  * of this option is to make the results of warping with the approximated transformer
  * more reproducible and not sensitive to changes in warping memory size. To achieve
  * that, SRC_COORD_PRECISION must be at least 10 times greater than the error
- * threshold.
+ * threshold. The higher the SRC_COORD_PRECISION/error_threshold ratio, the higher
+ * the performance will be, since exact reprojections must statistically be
+ * done with a frequency of error_threshold/SRC_COORD_PRECISION.
  */
 
 /************************************************************************/

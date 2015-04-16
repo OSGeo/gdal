@@ -550,6 +550,7 @@ int main( int argc, char ** argv )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             dfErrorThreshold = CPLAtofM(argv[++i]);
+            papszWarpOptions = CSLAddString( papszWarpOptions, CPLSPrintf("ERROR_THRESHOLD=%.16g", dfErrorThreshold) );
         }
         else if( EQUAL(argv[i],"-wm") )
         {
