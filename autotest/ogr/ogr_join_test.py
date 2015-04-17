@@ -369,6 +369,7 @@ def ogr_join_15():
 
 def ogr_join_16():
 
+    gdal.ErrorReset()
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     sql_lyr = gdaltest.ds.ExecuteSQL(   \
         'SELECT * FROM poly ' \
@@ -389,6 +390,7 @@ def ogr_join_16():
 
 def ogr_join_17():
 
+    gdal.ErrorReset()
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     sql_lyr = gdaltest.ds.ExecuteSQL(   \
         'SELECT * FROM poly ' \
@@ -406,35 +408,34 @@ def ogr_join_17():
         return 'fail'
 
 ###############################################################################
-# Test wrong order of fiels in ON
+# Test inverted order of fields in ON
 
 def ogr_join_18():
 
-    gdal.PushErrorHandler('CPLQuietErrorHandler')
     sql_lyr = gdaltest.ds.ExecuteSQL(   \
         'SELECT * FROM poly LEFT JOIN idlink ON idlink.eas_id = poly.eas_id'  )
-    gdal.PopErrorHandler()
 
-    if gdal.GetLastErrorMsg().find('Currently the primary key must come from the primary table in') != 0:
-        print(gdal.GetLastErrorMsg())
+    count = sql_lyr.GetFeatureCount()
+    if count != 10:
+        gdaltest.post_reason( 'Got wrong count with GetFeatureCount() - %d, expecting 10' % count )
         return 'fail'
 
-    if sql_lyr is None:
-        return 'success'
-    else:
-        return 'fail'
+    gdaltest.ds.ReleaseResultSet( sql_lyr )
+    
+    return 'success'
 
 ###############################################################################
 # Test unrecognized primary field
 
 def ogr_join_19():
 
+    gdal.ErrorReset()
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     sql_lyr = gdaltest.ds.ExecuteSQL(   \
         'SELECT * FROM poly LEFT JOIN idlink ON poly.foo = idlink.eas_id'  )
     gdal.PopErrorHandler()
 
-    if gdal.GetLastErrorMsg().find('Unrecognised primary field poly.foo in JOIN clause') != 0:
+    if gdal.GetLastErrorMsg().find('"poly"."foo" not recognised as an available field') != 0:
         print(gdal.GetLastErrorMsg())
         return 'fail'
 
@@ -448,12 +449,13 @@ def ogr_join_19():
 
 def ogr_join_20():
 
+    gdal.ErrorReset()
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     sql_lyr = gdaltest.ds.ExecuteSQL(   \
         'SELECT * FROM poly LEFT JOIN idlink ON poly.eas_id = idlink.foo'  )
     gdal.PopErrorHandler()
 
-    if gdal.GetLastErrorMsg().find('Unrecognised secondary field idlink.foo in JOIN clause') != 0:
+    if gdal.GetLastErrorMsg().find('"idlink"."foo" not recognised as an available field') != 0:
         print(gdal.GetLastErrorMsg())
         return 'fail'
 
@@ -467,6 +469,7 @@ def ogr_join_20():
 
 def ogr_join_21():
 
+    gdal.ErrorReset()
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     sql_lyr = gdaltest.ds.ExecuteSQL(   \
         'SELECT p.*, il.name, il2.eas_id FROM poly p ' \
@@ -474,7 +477,7 @@ def ogr_join_21():
         + 'LEFT JOIN idlink il2 ON p.eas_id = il2.eas_id' )
     gdal.PopErrorHandler()
 
-    if gdal.GetLastErrorMsg().find('Currently the secondary key must come from the secondary table') != 0:
+    if gdal.GetLastErrorMsg().find('Field il2.eas_id in JOIN clause does not correspond to the primary table nor the joint (secondary) table') != 0:
         print(gdal.GetLastErrorMsg())
         return 'fail'
 
@@ -482,6 +485,36 @@ def ogr_join_21():
         return 'success'
     else:
         return 'fail'
+
+###############################################################################
+# Test join with a complex expression as ON
+
+def ogr_join_22():
+
+    ds = ogr.GetDriverByName('Memory').CreateDataSource('')
+    lyr = ds.CreateLayer('first')
+    ogrtest.quick_create_layer_def(lyr, [['id.1'], ['id2']])
+    ogrtest.quick_create_feature(lyr, [ 'key1', 'key2' ], None)
+
+    lyr = ds.CreateLayer('second')
+    ogrtest.quick_create_layer_def(lyr, [['id.1'], ['id2'], ['val']])
+    ogrtest.quick_create_feature(lyr, [ 'key1', 'keyX', '1' ], None)
+    ogrtest.quick_create_feature(lyr, [ 'key1', 'key2', '2' ], None)
+    ogrtest.quick_create_feature(lyr, [ 'key1', 'keyY', '3' ], None)
+
+    sql_lyr = ds.ExecuteSQL("SELECT val FROM first JOIN second ON first.\"id.1\" = second.\"id.1\" AND first.id2 = second.id2")
+    feat = sql_lyr.GetNextFeature()
+    val = feat.GetFieldAsString(0)
+    ds.ReleaseResultSet(sql_lyr)
+
+    ds = None
+
+    if val != '2':
+        gdaltest.post_reason('fail')
+        print(val)
+        return 'fail'
+
+    return 'success'
 
 ###############################################################################
 
@@ -514,6 +547,7 @@ gdaltest_list = [
     ogr_join_19,
     ogr_join_20,
     ogr_join_21,
+    ogr_join_22,
     ogr_join_cleanup ]
 
 if __name__ == '__main__':

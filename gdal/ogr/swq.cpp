@@ -799,7 +799,7 @@ CPLErr swq_expr_compile2( const char *where_clause,
     context.nStartToken = SWQT_VALUE_START;
     
     if( swqparse( &context ) == 0 
-        && context.poRoot->Check( field_list, FALSE ) != SWQ_ERROR )
+        && context.poRoot->Check( field_list, FALSE, FALSE ) != SWQ_ERROR )
     {
         *expr_out = context.poRoot;
 

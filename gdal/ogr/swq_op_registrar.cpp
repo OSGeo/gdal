@@ -31,7 +31,8 @@
 #include "cpl_conv.h"
 #include "swq.h"
 
-static swq_field_type SWQColumnFuncChecker( swq_expr_node *poNode );
+static swq_field_type SWQColumnFuncChecker( swq_expr_node *poNode,
+                                            int bAllowMismatchTypeOnFieldComparison );
 
 static const swq_operation swq_apsOperations[] =
 {
@@ -112,7 +113,8 @@ const swq_operation *swq_op_registrar::GetOperator( swq_op eOperator )
 /*      error if they are used in any other context.                    */
 /************************************************************************/
 
-static swq_field_type SWQColumnFuncChecker( swq_expr_node *poNode )
+static swq_field_type SWQColumnFuncChecker( swq_expr_node *poNode,
+                                            CPL_UNUSED int bAllowMismatchTypeOnFieldComparison )
 {
     const swq_operation *poOp =
             swq_op_registrar::GetOperator((swq_op)poNode->nOperation);
