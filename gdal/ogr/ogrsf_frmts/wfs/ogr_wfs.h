@@ -38,9 +38,10 @@
 #include "ogrsf_frmts.h"
 #include "gmlreader.h"
 #include "cpl_http.h"
+#include "swq.h"
 
 CPLXMLNode* WFSFindNode(CPLXMLNode* psXML, const char* pszRootName);
-CPLString WFS_TurnSQLFilterToOGCFilter( const char * pszFilter,
+CPLString WFS_TurnSQLFilterToOGCFilter( const swq_expr_node* poExpr,
                                         OGRFeatureDefn* poFDefn,
                                         int nVersion,
                                         int bPropertyIsNotEqualToSupported,

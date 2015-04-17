@@ -2074,7 +2074,9 @@ OGRLayer * OGRWFSDataSource::ExecuteSQL( const char *pszSQLCommand,
         /* Now turn this into OGC Filter language if possible */
         int bNeedsNullCheck = FALSE;
         int nVersion = (strcmp(GetVersion(),"1.0.0") == 0) ? 100 : 110;
-        CPLString osOGCFilter = WFS_TurnSQLFilterToOGCFilter(pszQuery,
+        swq_expr_node* poNode = (swq_expr_node*) oQuery.GetSWQExpr();
+        poNode->ReplaceBetweenByGEAndLERecurse();
+        CPLString osOGCFilter = WFS_TurnSQLFilterToOGCFilter(poNode,
                                                              poLayer->GetLayerDefn(),
                                                              nVersion,
                                                              bPropertyIsNotEqualToSupported,

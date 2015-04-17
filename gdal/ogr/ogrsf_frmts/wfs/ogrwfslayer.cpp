@@ -1249,12 +1249,16 @@ OGRErr OGRWFSLayer::SetAttributeFilter( const char * pszFilter )
         return eErr;
 
     CPLString osOldWFSWhere(osWFSWhere);
-    if (poDS->HasMinOperators() && pszFilter != NULL)
+
+    if (poDS->HasMinOperators() && m_poAttrQuery != NULL )
     {
+        swq_expr_node* poNode = (swq_expr_node*) m_poAttrQuery->GetSWQExpr();
+        poNode->ReplaceBetweenByGEAndLERecurse();
+
         int bNeedsNullCheck = FALSE;
         int nVersion = (strcmp(poDS->GetVersion(),"1.0.0") == 0) ? 100 :
                        (atoi(poDS->GetVersion()) >= 2) ? 200 : 110;
-        osWFSWhere = WFS_TurnSQLFilterToOGCFilter(pszFilter,
+        osWFSWhere = WFS_TurnSQLFilterToOGCFilter(poNode,
                                                   GetLayerDefn(),
                                                   nVersion,
                                                   poDS->PropertyIsNotEqualToSupported(),
