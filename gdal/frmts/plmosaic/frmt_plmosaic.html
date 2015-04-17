@@ -33,6 +33,14 @@ Currently the following one is supported :<p>
 <li> <b>api_key</b>=value: To specify the Planet API key. It is mandatory, unless
 it is supplied through the open option API_KEY, or the configuration option PL_API_KEY.</li>
 <li> <b>mosaic</b>=mosaic_name: To specify the mosaic name.</li>
+<li><b>cache_path</b>=path: To specify the path to a directory where cached
+quads (and tiles) are stored. A plmosaic_cache/{mosaic_name} subdirectory will be created
+under that path. The empty string can be used to disable any disk caching.</li>
+<li><b>trust_cache</b>=YES/NO: Whether already cached quads should be reused directly,
+without prior checking if the server has a more recent version. Note:
+this only applies to quads, and not tiles. Default is NO.</li>
+<li><b>use_tiles</b>=YES/NO: Whether to use the tile API to access full
+resolution data, instead of downloading quads. Only apply for Byte mosaics. Default is NO.</li>
 </ul>
 
 If several parameters are specified, they must be separated by a space.<p>
@@ -43,16 +51,9 @@ opened.</p>
 
 <h2>Open options</h2>
 
-The following open options are available :
-<ul>
-<li><b>API_KEY</b>=value: To specify the Planet API key.</li>
-<li><b>MOSAIC</b>=mosaic_name: To specify the mosaic name.</li>
-<li><b>CACHE_PATH</b>=path: To specify the path to a directory where cached
-quads (and tiles) are stored. A plmosaic_cache/{mosaic_name} subdirectory will be created
-under that path. The empty string can be used to disable any disk caching.</li>
-<li><b>TRUST_CACHE</b>=YES/NO: Whether already cached quads should be reused directly,
-without prior checking if the server has a more recent version. Default is NO.</li>
-</ul>
+<p>The following open options are available : API_KEY, MOSAIC, CACHE_PATH,
+TRUST_CACHE and USE_TILES. They have the same semantics as the above
+describe parameters of same name.</p>
 
 <h2>Configuration options</h2>
 
