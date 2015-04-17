@@ -139,14 +139,17 @@ public:
     /* only for SNT_COLUMN */
     int         field_index;
     int         table_index;
+    char        *table_name;
 
     /* only for SNT_CONSTANT */
     int         is_null;
-    char        *table_name;
-    char        *string_value; /* column name */
     GIntBig     int_value;
     double      float_value;
     OGRGeometry *geometry_value;
+    
+    /* shared by SNT_COLUMN and SNT_CONSTANT */
+    char        *string_value; /* column name when SNT_COLUMN */
+
 };
 
 typedef struct {
