@@ -164,6 +164,37 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
               "GDAL/OGR not compiled with libcurl support, remote requests not supported." );
     return NULL;
 #else
+
+    if( strncmp(pszURL, "/vsimem/", strlen("/vsimem/")) == 0 &&
+        /* Disabled by default for potential security issues */
+        CSLTestBoolean(CPLGetConfigOption("CPL_CURL_ENABLE_VSIMEM", "FALSE")) )
+    {
+        CPLString osURL(pszURL);
+        const char* pszPost = CSLFetchNameValue( papszOptions, "POSTFIELDS" );
+        if( pszPost != NULL ) /* Hack: we append post content to filename */
+        {
+            osURL += "&POSTFIELDS=";
+            osURL += pszPost;
+        }
+        vsi_l_offset nLength = 0;
+        CPLHTTPResult* psResult = (CPLHTTPResult* )CPLCalloc(1, sizeof(CPLHTTPResult));
+        GByte* pabyData = VSIGetMemFileBuffer( osURL, &nLength, FALSE );
+        if( pabyData == NULL )
+        {
+            CPLDebug("HTTP", "Cannot find %s", osURL.c_str());
+            psResult->nStatus = 1;
+            psResult->pszErrBuf = CPLStrdup(CPLSPrintf("HTTP error code : %d", 404));
+        }
+        else
+        {
+            psResult->nDataLen = (size_t)nLength;
+            psResult->pabyData = (GByte*) CPLMalloc((size_t)nLength + 1);
+            memcpy(psResult->pabyData, pabyData, (size_t)nLength);
+            psResult->pabyData[(size_t)nLength] = 0;
+        }
+        return psResult;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Are we using a persistent named session?  If so, search for     */
 /*      or create it.                                                   */
