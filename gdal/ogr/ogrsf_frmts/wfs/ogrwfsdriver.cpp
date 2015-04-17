@@ -37,27 +37,41 @@ CPL_CVSID("$Id$");
 extern "C" void RegisterOGRWFS();
 
 /************************************************************************/
+/*                             Identify()                               */
+/************************************************************************/
+
+static int OGRWFSDriverIdentify( GDALOpenInfo* poOpenInfo )
+
+{
+    if( !EQUALN(poOpenInfo->pszFilename, "WFS:", 4) )
+    {
+        if( poOpenInfo->fpL == NULL )
+            return FALSE;
+        if( !EQUALN((const char*)poOpenInfo->pabyHeader,"<OGRWFSDataSource>",18) &&
+            strstr((const char*)poOpenInfo->pabyHeader,"<WFS_Capabilities") == NULL &&
+            strstr((const char*)poOpenInfo->pabyHeader,"<wfs:WFS_Capabilities") == NULL)
+        {
+            return FALSE;
+        }
+    }
+    return TRUE;
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
 static GDALDataset *OGRWFSDriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
-    if( !EQUALN(poOpenInfo->pszFilename, "WFS:", 4) )
-    {
-        if( poOpenInfo->fpL == NULL )
-            return NULL;
-        if( !EQUALN((const char*)poOpenInfo->pabyHeader,"<OGRWFSDataSource>",18) &&
-            strstr((const char*)poOpenInfo->pabyHeader,"<WFS_Capabilities") == NULL &&
-            strstr((const char*)poOpenInfo->pabyHeader,"<wfs:WFS_Capabilities") == NULL)
-        {
-            return NULL;
-        }
-    }
+    if( !OGRWFSDriverIdentify(poOpenInfo) )
+        return NULL;
 
     OGRWFSDataSource   *poDS = new OGRWFSDataSource();
 
-    if( !poDS->Open( poOpenInfo->pszFilename, poOpenInfo->eAccess == GA_Update ) )
+    if( !poDS->Open( poOpenInfo->pszFilename,
+                     poOpenInfo->eAccess == GA_Update,
+                     poOpenInfo->papszOpenOptions ) )
     {
         delete poDS;
         poDS = NULL;
@@ -86,8 +100,14 @@ void RegisterOGRWFS()
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
                                    "drv_wfs.html" );
 
+        poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
+"<OpenOptionList>"
+"  <Option name='TRUST_CAPABILITIES_BOUNDS' type='boolean' description='Whether to trust layer bounds declared in GetCapabilities response' default='NO'/>"
+"</OpenOptionList>" );
+
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
+        poDriver->pfnIdentify = OGRWFSDriverIdentify;
         poDriver->pfnOpen = OGRWFSDriverOpen;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );

@@ -1890,8 +1890,8 @@ def ogr_wfs_vsimem_wfs110_one_layer_getfeature():
             <Name>my_layer</Name>
             <DefaultSRS>urn:ogc:def:crs:EPSG::4326</DefaultSRS>
             <ows:WGS84BoundingBox>
-                <ows:LowerCorner>-180.0 -90.0</ows:LowerCorner>
-                <ows:UpperCorner>180.0 90.0</ows:UpperCorner>
+                <ows:LowerCorner>-170.0 -80.0</ows:LowerCorner>
+                <ows:UpperCorner>170.0 80.0</ows:UpperCorner>
             </ows:WGS84BoundingBox>
         </FeatureType>
     </FeatureTypeList>
@@ -1992,6 +1992,108 @@ def ogr_wfs_vsimem_wfs110_one_layer_getextent_without_getfeature():
         gdaltest.post_reason('fail')
         print(extent)
         return 'fail'
+
+    return 'success'
+
+###############################################################################
+def ogr_wfs_vsimem_wfs110_one_layer_getextent_optimized():
+
+    if gdaltest.wfs_drv is None:
+        return 'skip'
+
+    gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
+
+    gdal.FileFromMemBuffer('/vsimem/wfs_endpoint?SERVICE=WFS&REQUEST=GetCapabilities',
+"""<WFS_Capabilities version="1.1.0">
+    <FeatureTypeList>
+        <FeatureType>
+            <Name>my_layer</Name>
+            <DefaultSRS>urn:ogc:def:crs:EPSG::4326</DefaultSRS>
+            <ows:WGS84BoundingBox>
+                <ows:LowerCorner>-180.0 -90.0</ows:LowerCorner>
+                <ows:UpperCorner>180.0 90.0</ows:UpperCorner>
+            </ows:WGS84BoundingBox>
+        </FeatureType>
+        <FeatureType>
+            <Name>my_layer2</Name>
+            <DefaultSRS>urn:ogc:def:crs:EPSG::4326</DefaultSRS>
+            <ows:WGS84BoundingBox>
+                <ows:LowerCorner>-170.0 -80.0</ows:LowerCorner>
+                <ows:UpperCorner>170.0 80.0</ows:UpperCorner>
+            </ows:WGS84BoundingBox>
+        </FeatureType>
+        <FeatureType>
+            <Name>my_layer3</Name>
+            <DefaultSRS>urn:ogc:def:crs:EPSG::3857</DefaultSRS>
+            <ows:WGS84BoundingBox>
+                <ows:LowerCorner>-180.0 -85.0511287798065</ows:LowerCorner>
+                <ows:UpperCorner>180.0 85.0511287798065</ows:UpperCorner>
+            </ows:WGS84BoundingBox>
+        </FeatureType>
+        <FeatureType>
+            <Name>my_layer4</Name>
+            <DefaultSRS>urn:ogc:def:crs:EPSG::3857</DefaultSRS>
+            <ows:WGS84BoundingBox>
+                <ows:LowerCorner>-180.0 -90</ows:LowerCorner>
+                <ows:UpperCorner>180.0 90</ows:UpperCorner>
+            </ows:WGS84BoundingBox>
+        </FeatureType>
+    </FeatureTypeList>
+  <ogc:Filter_Capabilities>
+    <ogc:Scalar_Capabilities>
+      <ogc:ArithmeticOperators>
+        <ogc:SimpleArithmetic/>
+        <ogc:Functions>
+            <ogc:FunctionNames>
+                <ogc:FunctionName nArgs="1">abs_4</ogc:FunctionName> <!-- geoserver "signature" -->
+            </ogc:FunctionNames>
+        </ogc:Functions>
+      </ogc:ArithmeticOperators>
+    </ogc:Scalar_Capabilities>
+  </ogc:Filter_Capabilities>
+</WFS_Capabilities>
+""")
+
+    ds = ogr.Open('WFS:/vsimem/wfs_endpoint')
+    lyr = ds.GetLayer(0)
+    if lyr.GetExtent() != (-180.0, 180.0, -90.0, 90.0):
+        gdaltest.post_reason('fail')
+        print(lyr.GetExtent())
+        return 'fail'
+
+    lyr = ds.GetLayer(1)
+    gdal.PushErrorHandler()
+    got_extent = lyr.GetExtent()
+    gdal.PopErrorHandler()
+    if got_extent != (0.0, 0.0, 0.0, 0.0):
+        gdaltest.post_reason('fail')
+        print(got_extent)
+        return 'fail'
+
+    ds = gdal.OpenEx('WFS:/vsimem/wfs_endpoint', open_options = ['TRUST_CAPABILITIES_BOUNDS=YES'])
+    lyr = ds.GetLayer(1)
+    if lyr.GetExtent() != (-170.0, 170.0, -80.0, 80.0):
+        gdaltest.post_reason('fail')
+        print(lyr.GetExtent())
+        return 'fail'
+
+    sys.path.append('../osr')
+    import osr_ct
+    osr_ct.osr_ct_1()
+    if gdaltest.have_proj4 == 1:
+
+        gdal.SetConfigOption('OGR_WFS_TRUST_CAPABILITIES_BOUNDS', 'YES')
+        ds = ogr.Open('WFS:/vsimem/wfs_endpoint')
+        gdal.SetConfigOption('OGR_WFS_TRUST_CAPABILITIES_BOUNDS', None)
+
+        lyr = ds.GetLayer(2)
+        expected_extent = (-20037508.342789248, 20037508.342789248, -20037508.342789154, 20037508.342789147)
+        got_extent = lyr.GetExtent()
+        for i in range(4):
+            if abs(expected_extent[i]-got_extent[i]) > 1e-5:
+                gdaltest.post_reason('fail')
+                print(got_extent)
+                return 'fail'
 
     return 'success'
 
@@ -4031,6 +4133,7 @@ gdaltest_vsimem_list = [
     ogr_wfs_vsimem_wfs110_one_layer_getfeature,
     ogr_wfs_vsimem_wfs110_one_layer_getextent,
     ogr_wfs_vsimem_wfs110_one_layer_getextent_without_getfeature,
+    ogr_wfs_vsimem_wfs110_one_layer_getextent_optimized,
     ogr_wfs_vsimem_wfs110_one_layer_getfeature_ogr_getfeature,
     ogr_wfs_vsimem_wfs110_one_layer_filter_gml_id_failed,
     ogr_wfs_vsimem_wfs110_one_layer_filter_gml_id_success,
