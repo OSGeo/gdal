@@ -64,7 +64,8 @@ OGRCARTODBDataSource::~OGRCARTODBDataSource()
 
     if (bMustCleanPersistant)
     {
-        char** papszOptions = CSLAddString(NULL, CPLSPrintf("CLOSE_PERSISTENT=CARTODB:%p", this));
+        char** papszOptions = NULL;
+        papszOptions = CSLSetNameValue(papszOptions, "CLOSE_PERSISTENT", CPLSPrintf("CARTODB:%p", this));
         CPLHTTPFetch( GetAPIURL(), papszOptions);
         CSLDestroy(papszOptions);
     }
@@ -150,12 +151,12 @@ int OGRCARTODBDataSource::Open( const char * pszFilename, int bUpdateIn)
 
     CPLString osTables = OGRCARTODBGetOptionValue(pszFilename, "tables");
     
-    if( osTables.size() == 0 && osAPIKey.size() == 0 )
+    /*if( osTables.size() == 0 && osAPIKey.size() == 0 )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "When not specifying tables option, CARTODB_API_KEY must be defined");
         return FALSE;
-    }
+    }*/
 
     bUseHTTPS = CSLTestBoolean(CPLGetConfigOption("CARTODB_HTTPS", "YES"));
 

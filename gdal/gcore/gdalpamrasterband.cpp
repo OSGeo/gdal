@@ -986,7 +986,7 @@ PamParseHistogram( CPLXMLNode *psHistItem,
     *pdfMin = CPLAtof(CPLGetXMLValue( psHistItem, "HistMin", "0"));
     *pdfMax = CPLAtof(CPLGetXMLValue( psHistItem, "HistMax", "1"));
     *pnBuckets = atoi(CPLGetXMLValue( psHistItem, "BucketCount","2"));
-    *ppanHistogram = NULL;
+
     if (*pnBuckets <= 0 || *pnBuckets > INT_MAX / 2)
         return FALSE;
 

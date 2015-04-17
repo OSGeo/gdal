@@ -58,7 +58,8 @@ OGRPLScenesDataset::~OGRPLScenesDataset()
 
     if (bMustCleanPersistant)
     {
-        char** papszOptions = CSLAddString(NULL, CPLSPrintf("CLOSE_PERSISTENT=PLSCENES:%p", this));
+        char** papszOptions = NULL;
+        papszOptions = CSLSetNameValue(papszOptions, "CLOSE_PERSISTENT", CPLSPrintf("PLSCENES:%p", this));
         CPLHTTPFetch( osBaseURL, papszOptions);
         CSLDestroy(papszOptions);
     }

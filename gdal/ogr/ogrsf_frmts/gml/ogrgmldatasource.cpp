@@ -923,6 +923,7 @@ int OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
                                     CPLHTTPDestroyResult(psResult);
                                 }
                             }
+                            break;
                         }
                     }
                 }
