@@ -2422,7 +2422,9 @@ OGRErr OGRGeoPackageTableLayer::RunDeferredCreationIfNecessary()
             if( poFieldDefn->GetType() == OFTDateTime &&
                 OGRParseDate(pszDefault, &sField, 0) )
             {
-                osCommand += OGRGetXMLDateTime(&sField);
+                char* pszXML = OGRGetXMLDateTime(&sField);
+                osCommand += pszXML;
+                CPLFree(pszXML);
             }
             /* Make sure CURRENT_TIMESTAMP is translated into appropriate format for GeoPackage */
             else if( poFieldDefn->GetType() == OFTDateTime &&

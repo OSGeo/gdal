@@ -368,8 +368,8 @@ PLMosaicDataset::~PLMosaicDataset()
     delete poTMSDS;
     if (bMustCleanPersistant)
     {
-        char** papszOptions = CSLAddString(NULL,
-                            CPLSPrintf("CLOSE_PERSISTENT=PLMOSAIC:%p", this));
+        char** papszOptions = NULL;
+        papszOptions = CSLSetNameValue(papszOptions, "CLOSE_PERSISTENT", CPLSPrintf("PLMOSAIC:%p", this));
         CPLHTTPFetch( osBaseURL, papszOptions);
         CSLDestroy(papszOptions);
     }
