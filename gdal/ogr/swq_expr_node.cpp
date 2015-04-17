@@ -670,11 +670,12 @@ swq_expr_node *swq_expr_node::Clone()
     {
         poRetNode->field_index = field_index;
         poRetNode->table_index = table_index;
+        poRetNode->table_name = table_name ? CPLStrdup(table_name) : NULL;
+        poRetNode->string_value = string_value ? CPLStrdup(string_value) : NULL;
     }
     else if( eNodeType == SNT_CONSTANT )
     {
         poRetNode->is_null = is_null;
-        poRetNode->table_name = table_name ? CPLStrdup(table_name) : NULL;
         poRetNode->string_value = string_value ? CPLStrdup(string_value) : NULL;
         poRetNode->int_value = int_value;
         poRetNode->float_value = float_value;
