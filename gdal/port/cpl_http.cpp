@@ -192,6 +192,24 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
             memcpy(psResult->pabyData, pabyData, (size_t)nLength);
             psResult->pabyData[(size_t)nLength] = 0;
         }
+
+        if( psResult->pabyData != NULL &&
+            strncmp((const char*)psResult->pabyData, "Content-Type: ",
+                    strlen("Content-Type: ")) == 0 )
+        {
+            const char* pszContentType = (const char*)psResult->pabyData + strlen("Content-type: ");
+            const char* pszEOL = strchr(pszContentType, '\r');
+            if( pszEOL )
+                pszEOL = strchr(pszContentType, '\n');
+            if( pszEOL )
+            {
+                int nLength = pszEOL - pszContentType;
+                psResult->pszContentType = (char*)CPLMalloc(nLength + 1);
+                memcpy(psResult->pszContentType, pszContentType, nLength);
+                psResult->pszContentType[nLength] = 0;
+            }
+        }
+
         return psResult;
     }
 
