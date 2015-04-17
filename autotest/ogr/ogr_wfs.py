@@ -56,8 +56,7 @@ def ogr_wfs_init():
         
     if gdaltest.wfs_drv is None:
         return 'skip'
-    
-    gdaltest.have_gml_reader = 0
+
     gdaltest.geoserver_wfs = None
     gdaltest.deegree_wfs = None
     gdaltest.ionic_wfs = None
@@ -68,13 +67,12 @@ def ogr_wfs_init():
         gml_ds = None
 
     if gml_ds is None:
+        gdaltest.wfs_drv = None
         if gdal.GetLastErrorMsg().find('Xerces') != -1:
             return 'skip'
         else:
             gdaltest.post_reason( 'failed to open test file.' )
             return 'skip'
-
-    gdaltest.have_gml_reader = 1
 
     return 'success'
 
@@ -83,8 +81,6 @@ def ogr_wfs_init():
 
 def ogr_wfs_mapserver():
     if gdaltest.wfs_drv is None:
-        return 'skip'
-    if not gdaltest.have_gml_reader:
         return 'skip'
 
     if gdaltest.gdalurlopen('http://www2.dmsolutions.ca/cgi-bin/mswfs_gmap') is None:
@@ -137,8 +133,6 @@ def ogr_wfs_mapserver():
 
 def ogr_wfs_geoserver():
     if gdaltest.wfs_drv is None:
-        return 'skip'
-    if not gdaltest.have_gml_reader:
         return 'skip'
 
     if gdaltest.gdalurlopen('http://demo.opengeo.org/geoserver/wfs?TYPENAME=za:za_points&SERVICE=WFS&VERSION=1.1.0&REQUEST=DescribeFeatureType') is None:
@@ -262,13 +256,6 @@ def ogr_wfs_geoserver():
 def ogr_wfs_geoserver_json():
     if gdaltest.wfs_drv is None:
         return 'skip'
-    if not gdaltest.have_gml_reader:
-        if gdaltest.geoserver_wfs is None:
-            if gdaltest.gdalurlopen('http://demo.opengeo.org/geoserver/wfs') is None:
-                gdaltest.geoserver_wfs = False
-                print('cannot open URL')
-                return 'skip'
-            gdaltest.geoserver_wfs = True
 
     if gdaltest.geoserver_wfs != True:
         return 'skip'
@@ -316,13 +303,6 @@ def ogr_wfs_geoserver_json():
 def ogr_wfs_geoserver_shapezip():
     if gdaltest.wfs_drv is None:
         return 'skip'
-    if not gdaltest.have_gml_reader:
-        if gdaltest.geoserver_wfs is None:
-            if gdaltest.gdalurlopen('http://demo.opengeo.org/geoserver/wfs') is None:
-                gdaltest.geoserver_wfs = False
-                print('cannot open URL')
-                return 'skip'
-            gdaltest.geoserver_wfs = True
 
     if gdaltest.geoserver_wfs != True:
         return 'skip'
@@ -369,13 +349,6 @@ def ogr_wfs_geoserver_shapezip():
 def ogr_wfs_geoserver_paging():
     if gdaltest.wfs_drv is None:
         return 'skip'
-    if not gdaltest.have_gml_reader:
-        if gdaltest.geoserver_wfs is None:
-            if gdaltest.gdalurlopen('http://demo.opengeo.org/geoserver/wfs') is None:
-                gdaltest.geoserver_wfs = False
-                print('cannot open URL')
-                return 'skip'
-            gdaltest.geoserver_wfs = True
 
     if gdaltest.geoserver_wfs != True:
         return 'skip'
@@ -446,8 +419,6 @@ def ogr_wfs_geoserver_paging():
 def ogr_wfs_deegree():
     if gdaltest.wfs_drv is None:
         return 'skip'
-    if not gdaltest.have_gml_reader:
-        return 'skip'
 
     if gdaltest.gdalurlopen('http://demo.deegree.org:80/utah-workspace') is None:
         gdaltest.deegree_wfs = False
@@ -509,8 +480,6 @@ def ogr_wfs_deegree():
 def ogr_wfs_test_ogrsf():
     if gdaltest.wfs_drv is None:
         return 'skip'
-    if not gdaltest.have_gml_reader:
-        return 'skip'
 
     if gdaltest.deegree_wfs != True:
         return 'skip'
@@ -532,8 +501,6 @@ def ogr_wfs_test_ogrsf():
 
 def ogr_wfs_fake_wfs_server():
     if gdaltest.wfs_drv is None:
-        return 'skip'
-    if not gdaltest.have_gml_reader:
         return 'skip'
 
     (process, port) = webserver.launch()
@@ -582,8 +549,6 @@ def ogr_wfs_fake_wfs_server():
 
 def ogr_wfs_geoserver_wfst():
     if gdaltest.wfs_drv is None:
-        return 'skip'
-    if not gdaltest.have_gml_reader:
         return 'skip'
 
     if gdaltest.geoserver_wfs != True:
@@ -679,8 +644,6 @@ def ogr_wfs_deegree_wfst():
 
     if gdaltest.wfs_drv is None:
         return 'skip'
-    if not gdaltest.have_gml_reader:
-        return 'skip'
 
     if gdaltest.gdalurlopen('http://testing.deegree.org/deegree-wfs/services') is None:
         print('cannot open URL')
@@ -722,8 +685,6 @@ def ogr_wfs_deegree_wfst():
 def ogr_wfs_ionic_wfst():
 
     if gdaltest.wfs_drv is None:
-        return 'skip'
-    if not gdaltest.have_gml_reader:
         return 'skip'
 
     if gdaltest.gdalurlopen('http://webservices.ionicsoft.com/ionicweb/wfs/BOSTON_ORA') is None:
@@ -769,8 +730,6 @@ def ogr_wfs_ionic_sql():
 
     if gdaltest.wfs_drv is None:
         return 'skip'
-    if not gdaltest.have_gml_reader:
-        return 'skip'
 
     if gdaltest.ionic_wfs != True:
         return 'skip'
@@ -796,8 +755,6 @@ def ogr_wfs_ionic_sql():
 def ogr_wfs_xmldescriptionfile():
 
     if gdaltest.wfs_drv is None:
-        return 'skip'
-    if not gdaltest.have_gml_reader:
         return 'skip'
 
     ds = ogr.Open('data/testwfs.xml')
@@ -841,8 +798,6 @@ def ogr_wfs_xmldescriptionfile():
 def ogr_wfs_xmldescriptionfile_to_be_updated():
 
     if gdaltest.wfs_drv is None:
-        return 'skip'
-    if not gdaltest.have_gml_reader:
         return 'skip'
 
     if gdaltest.geoserver_wfs != True:
@@ -899,8 +854,6 @@ def ogr_wfs_getcapabilitiesfile():
 
     if gdaltest.wfs_drv is None:
         return 'skip'
-    if not gdaltest.have_gml_reader:
-        return 'skip'
 
     ds = ogr.Open('data/getcapabilities_wfs.xml')
 
@@ -917,8 +870,6 @@ def ogr_wfs_getcapabilitiesfile():
 def ogr_wfs_deegree_gml321():
 
     if gdaltest.wfs_drv is None:
-        return 'skip'
-    if not gdaltest.have_gml_reader:
         return 'skip'
 
     ds = ogr.Open('WFS:http://demo.deegree.org:80/inspire-workspace/services?ACCEPTVERSIONS=1.1.0&MAXFEATURES=10')
@@ -944,8 +895,6 @@ def ogr_wfs_deegree_gml321():
 def ogr_wfs_deegree_wfs200():
 
     if gdaltest.wfs_drv is None:
-        return 'skip'
-    if not gdaltest.have_gml_reader:
         return 'skip'
 
     ds = ogr.Open('WFS:http://demo.deegree.org:80/utah-workspace/services?ACCEPTVERSIONS=2.0.0')
@@ -1005,8 +954,6 @@ def ogr_wfs_deegree_sortby():
 
     if gdaltest.wfs_drv is None:
         return 'skip'
-    if not gdaltest.have_gml_reader:
-        return 'skip'
 
     ds = ogr.Open('WFS:http://demo.deegree.org:80/utah-workspace/services?MAXFEATURES=10&VERSION=1.1.0')
     if ds is None:
@@ -1036,8 +983,7 @@ def ogr_wfs_get_multiple_layer_defn(url):
 
     if gdaltest.wfs_drv is None:
         return 'skip'
-    if not gdaltest.have_gml_reader:
-        return 'skip'
+
     if not gdaltest.run_slow_tests():
         return 'skip'
 
@@ -1104,8 +1050,2140 @@ def ogr_wfs_turn_streaming_off():
     gdal.SetConfigOption('OGR_WFS_USE_STREAMING', 'NO')
     return 'success'
 
-gdaltest_list = [ 
-    ogr_wfs_init,
+def ogr_wfs_turn_streaming_on():
+    gdal.SetConfigOption('OGR_WFS_USE_STREAMING', None)
+    return 'success'
+
+###############################################################################
+def ogr_wfs_vsimem_fail_because_not_enabled():
+
+    if gdaltest.wfs_drv is None:
+        return 'skip'
+
+    gdal.PushErrorHandler()
+    ds = ogr.Open('WFS:/vsimem/wfs_endpoint')
+    gdal.PopErrorHandler()
+    if ds is not None:
+        return 'fail'
+
+    return 'success'
+
+
+###############################################################################
+def ogr_wfs_vsimem_fail_because_no_get_capabilities():
+
+    if gdaltest.wfs_drv is None:
+        return 'skip'
+
+    gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
+
+    gdal.PushErrorHandler()
+    ds = ogr.Open('WFS:/vsimem/wfs_endpoint')
+    gdal.PopErrorHandler()
+    if ds is not None:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+def ogr_wfs_vsimem_fail_because_no_WFS_Capabilities():
+
+    if gdaltest.wfs_drv is None:
+        return 'skip'
+
+    gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
+
+    gdal.FileFromMemBuffer('/vsimem/wfs_endpoint?SERVICE=WFS&REQUEST=GetCapabilities',
+                           '<foo/>')
+    gdal.PushErrorHandler()
+    ds = ogr.Open('WFS:/vsimem/wfs_endpoint')
+    gdal.PopErrorHandler()
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if gdal.GetLastErrorMsg().find('Cannot find <WFS_Capabilities>') < 0:
+        gdaltest.post_reason('fail')
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+def ogr_wfs_vsimem_fail_because_exception():
+
+    if gdaltest.wfs_drv is None:
+        return 'skip'
+
+    gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
+
+    gdal.FileFromMemBuffer('/vsimem/wfs_endpoint?SERVICE=WFS&REQUEST=GetCapabilities',
+                           '<ServiceExceptionReport/>')
+    gdal.PushErrorHandler()
+    ds = ogr.Open('WFS:/vsimem/wfs_endpoint')
+    gdal.PopErrorHandler()
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if gdal.GetLastErrorMsg().find('Error returned by server : <ServiceExceptionReport/>') < 0:
+        gdaltest.post_reason('fail')
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+
+    return 'success'
+    
+###############################################################################
+def ogr_wfs_vsimem_fail_because_invalid_xml_capabilities():
+
+    if gdaltest.wfs_drv is None:
+        return 'skip'
+
+    gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
+
+    gdal.FileFromMemBuffer('/vsimem/wfs_endpoint?SERVICE=WFS&REQUEST=GetCapabilities',
+                           '<invalid_xml')
+    gdal.PushErrorHandler()
+    ds = ogr.Open('WFS:/vsimem/wfs_endpoint')
+    gdal.PopErrorHandler()
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if gdal.GetLastErrorMsg().find('Invalid XML content : <invalid_xml') < 0:
+        gdaltest.post_reason('fail')
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+
+    return 'success'
+    
+###############################################################################
+def ogr_wfs_vsimem_fail_because_missing_featuretypelist():
+
+    if gdaltest.wfs_drv is None:
+        return 'skip'
+
+    gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
+
+    gdal.FileFromMemBuffer('/vsimem/wfs_endpoint?SERVICE=WFS&REQUEST=GetCapabilities',
+"""<WFS_Capabilities>
+</WFS_Capabilities>
+""")
+    gdal.PushErrorHandler()
+    ds = ogr.Open('WFS:/vsimem/wfs_endpoint')
+    gdal.PopErrorHandler()
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if gdal.GetLastErrorMsg().find('Cannot find <FeatureTypeList>') < 0:
+        gdaltest.post_reason('fail')
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+
+    return 'success'
+    
+###############################################################################
+def ogr_wfs_vsimem_wfs110_minimal_instance():
+
+    if gdaltest.wfs_drv is None:
+        return 'skip'
+
+    gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
+
+    # Invalid response, but enough for use
+    gdal.FileFromMemBuffer('/vsimem/wfs_endpoint?SERVICE=WFS&REQUEST=GetCapabilities',
+                           """
+<WFS_Capabilities version="1.1.0">
+    <FeatureTypeList/>
+</WFS_Capabilities>
+""")
+    ds = ogr.Open('WFS:/vsimem/wfs_endpoint')
+    if ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetLayerCount() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+    
+###############################################################################
+def ogr_wfs_vsimem_wfs110_one_layer_missing_describefeaturetype():
+
+    if gdaltest.wfs_drv is None:
+        return 'skip'
+
+    gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
+
+    # Invalid response, but enough for use
+    gdal.FileFromMemBuffer('/vsimem/wfs_endpoint?SERVICE=WFS&REQUEST=GetCapabilities',
+"""<WFS_Capabilities version="1.1.0">
+    <FeatureTypeList>
+        <FeatureType/>
+        <FeatureType>
+            <Name>my_layer</Name>
+        </FeatureType>
+    </FeatureTypeList>
+</WFS_Capabilities>
+""")
+    ds = ogr.Open('WFS:/vsimem/wfs_endpoint')
+    if ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetLayerCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    lyr = ds.GetLayer(0)
+    if lyr.GetName() != 'my_layer':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Missing DescribeFeatureType
+    gdal.ErrorReset()
+    gdal.PushErrorHandler()
+    lyr_defn = lyr.GetLayerDefn()
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr_defn.GetFieldCount() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+        
+    lyr_defn = lyr.GetLayerDefn()
+
+    return 'success'
+
+###############################################################################
+def ogr_wfs_vsimem_wfs110_one_layer_invalid_describefeaturetype():
+
+    if gdaltest.wfs_drv is None:
+        return 'skip'
+
+    gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
+
+    ds = ogr.Open('WFS:/vsimem/wfs_endpoint')
+    lyr = ds.GetLayer(0)
+
+    gdal.FileFromMemBuffer('/vsimem/wfs_endpoint?SERVICE=WFS&VERSION=1.1.0&REQUEST=DescribeFeatureType&TYPENAME=my_layer',
+"""invalid
+""")
+
+    gdal.ErrorReset()
+    gdal.PushErrorHandler()
+    lyr_defn = lyr.GetLayerDefn()
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr_defn.GetFieldCount() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+def ogr_wfs_vsimem_wfs110_one_layer_describefeaturetype_missing_schema():
+
+    if gdaltest.wfs_drv is None:
+        return 'skip'
+
+    gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
+
+    ds = ogr.Open('WFS:/vsimem/wfs_endpoint')
+    lyr = ds.GetLayer(0)
+
+    gdal.FileFromMemBuffer('/vsimem/wfs_endpoint?SERVICE=WFS&VERSION=1.1.0&REQUEST=DescribeFeatureType&TYPENAME=my_layer',
+"""<missing_schema/>
+""")
+
+    gdal.ErrorReset()
+    gdal.PushErrorHandler()
+    lyr_defn = lyr.GetLayerDefn()
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr_defn.GetFieldCount() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+def ogr_wfs_vsimem_wfs110_one_layer_describefeaturetype():
+
+    if gdaltest.wfs_drv is None:
+        return 'skip'
+
+    gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
+
+    ds = ogr.Open('WFS:/vsimem/wfs_endpoint')
+    lyr = ds.GetLayer(0)
+
+    gdal.FileFromMemBuffer('/vsimem/wfs_endpoint?SERVICE=WFS&VERSION=1.1.0&REQUEST=DescribeFeatureType&TYPENAME=my_layer',
+"""<xsd:schema xmlns:foo="http://foo" xmlns:gml="http://www.opengis.net/gml" xmlns:xsd="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="http://foo">
+  <xsd:import namespace="http://www.opengis.net/gml" schemaLocation="http://foo/schemas/gml/3.1.1/base/gml.xsd"/>
+  <xsd:complexType name="my_layerType">
+    <xsd:complexContent>
+      <xsd:extension base="gml:AbstractFeatureType">
+        <xsd:sequence>
+          <xsd:element maxOccurs="1" minOccurs="0" name="str" nillable="true" type="xsd:string"/>
+          <xsd:element maxOccurs="1" minOccurs="0" name="boolean" nillable="true" type="xsd:boolean"/>
+          <xsd:element maxOccurs="1" minOccurs="0" name="short" nillable="true" type="xsd:short"/>
+          <xsd:element maxOccurs="1" minOccurs="0" name="int" nillable="true" type="xsd:int"/>
+          <xsd:element maxOccurs="1" minOccurs="0" name="float" nillable="true" type="xsd:float"/>
+          <xsd:element maxOccurs="1" minOccurs="0" name="double" nillable="true" type="xsd:double"/>
+          <xsd:element maxOccurs="1" minOccurs="0" name="dt" nillable="true" type="xsd:dateTime"/>
+          <xsd:element maxOccurs="1" minOccurs="0" name="shape" nillable="true" type="gml:PointPropertyType"/>
+        </xsd:sequence>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:element name="my_layer" substitutionGroup="gml:_Feature" type="foo:my_layerType"/>
+</xsd:schema>
+""")
+
+    lyr_defn = lyr.GetLayerDefn()
+    if lyr_defn.GetFieldCount() != 8:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr_defn.GetGeomFieldCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+def ogr_wfs_vsimem_wfs110_one_layer_missing_getfeaturecount_no_hits():
+
+    if gdaltest.wfs_drv is None:
+        return 'skip'
+
+    gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
+
+    ds = ogr.Open('WFS:/vsimem/wfs_endpoint')
+    lyr = ds.GetLayer(0)
+
+    gdal.ErrorReset()
+    gdal.PushErrorHandler()
+    count = lyr.GetFeatureCount()
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if count != 0:
+        gdaltest.post_reason('fail')
+        print(count)
+        return 'fail'
+    
+    return 'success'
+
+###############################################################################
+def ogr_wfs_vsimem_wfs110_one_layer_missing_getfeaturecount_with_hits():
+
+    if gdaltest.wfs_drv is None:
+        return 'skip'
+
+    gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
+
+    gdal.FileFromMemBuffer('/vsimem/wfs_endpoint?SERVICE=WFS&REQUEST=GetCapabilities',
+"""<WFS_Capabilities version="1.1.0">
+    <OperationsMetadata>
+        <ows:Operation name="GetFeature">
+            <ows:Parameter name="resultType">
+                <ows:Value>results</ows:Value>
+                <ows:Value>hits</ows:Value>
+            </ows:Parameter>
+        </ows:Operation>
+    </OperationsMetadata>
+    <FeatureTypeList>
+        <FeatureType>
+            <Name>my_layer</Name>
+            <DefaultSRS>urn:ogc:def:crs:EPSG::4326</DefaultSRS>
+            <ows:WGS84BoundingBox>
+                <ows:LowerCorner>-180.0 -90.0</ows:LowerCorner>
+                <ows:UpperCorner>180.0 90.0</ows:UpperCorner>
+            </ows:WGS84BoundingBox>
+        </FeatureType>
+    </FeatureTypeList>
+</WFS_Capabilities>
+""")
+
+    ds = ogr.Open('WFS:/vsimem/wfs_endpoint')
+    lyr = ds.GetLayer(0)
+
+    gdal.ErrorReset()
+    gdal.PushErrorHandler()
+    count = lyr.GetFeatureCount()
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if count != 0:
+        gdaltest.post_reason('fail')
+        print(count)
+        return 'fail'
+    
+    return 'success'
+
+###############################################################################
+def ogr_wfs_vsimem_wfs110_one_layer_invalid_getfeaturecount_with_hits():
+
+    if gdaltest.wfs_drv is None:
+        return 'skip'
+
+    gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
+
+    ds = ogr.Open('WFS:/vsimem/wfs_endpoint')
+    lyr = ds.GetLayer(0)
+
+    gdal.FileFromMemBuffer('/vsimem/wfs_endpoint?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=my_layer&RESULTTYPE=hits',
+"""invalid""")
+
+    gdal.ErrorReset()
+    gdal.PushErrorHandler()
+    count = lyr.GetFeatureCount()
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if count != 0:
+        gdaltest.post_reason('fail')
+        print(count)
+        return 'fail'
+    
+    return 'success'
+
+###############################################################################
+def ogr_wfs_vsimem_wfs110_one_layer_getfeaturecount_with_hits_missing_FeatureCollection():
+
+    if gdaltest.wfs_drv is None:
+        return 'skip'
+
+    gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
+
+    ds = ogr.Open('WFS:/vsimem/wfs_endpoint')
+    lyr = ds.GetLayer(0)
+
+    gdal.FileFromMemBuffer('/vsimem/wfs_endpoint?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=my_layer&RESULTTYPE=hits',
+"""<dummy_xml/>""")
+
+    gdal.ErrorReset()
+    gdal.PushErrorHandler()
+    count = lyr.GetFeatureCount()
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if count != 0:
+        gdaltest.post_reason('fail')
+        print(count)
+        return 'fail'
+    
+    return 'success'
+
+###############################################################################
+def ogr_wfs_vsimem_wfs110_one_layer_getfeaturecount_with_hits_missing_numberOfFeatures():
+
+    if gdaltest.wfs_drv is None:
+        return 'skip'
+
+    gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
+
+    ds = ogr.Open('WFS:/vsimem/wfs_endpoint')
+    lyr = ds.GetLayer(0)
+
+    gdal.FileFromMemBuffer('/vsimem/wfs_endpoint?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=my_layer&RESULTTYPE=hits',
+"""<FeatureCollection/>""")
+
+    gdal.ErrorReset()
+    gdal.PushErrorHandler()
+    count = lyr.GetFeatureCount()
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if count != 0:
+        gdaltest.post_reason('fail')
+        print(count)
+        return 'fail'
+    
+    return 'success'
+
+###############################################################################
+def ogr_wfs_vsimem_wfs110_one_layer_getfeaturecount_with_hits():
+
+    if gdaltest.wfs_drv is None:
+        return 'skip'
+
+    gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
+
+    ds = ogr.Open('WFS:/vsimem/wfs_endpoint')
+    lyr = ds.GetLayer(0)
+
+    gdal.FileFromMemBuffer('/vsimem/wfs_endpoint?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=my_layer&RESULTTYPE=hits',
+"""<wfs:FeatureCollection xmlns:xs="http://www.w3.org/2001/XMLSchema"
+xmlns:ogc="http://www.opengis.net/ogc"
+xmlns:foo="http://foo"
+xmlns:wfs="http://www.opengis.net/wfs"
+xmlns:ows="http://www.opengis.net/ows"
+xmlns:xlink="http://www.w3.org/1999/xlink"
+xmlns:gml="http://www.opengis.net/gml"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+numberOfFeatures="1"
+timeStamp="2015-04-17T14:14:24.859Z"
+xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.0&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=my_layer
+                    http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.1.0/wfs.xsd">
+</wfs:FeatureCollection>""")
+
+    count = lyr.GetFeatureCount()
+    if count != 1:
+        gdaltest.post_reason('fail')
+        print(count)
+        return 'fail'
+    
+    return 'success'
+    
+###############################################################################
+def ogr_wfs_vsimem_wfs110_one_layer_missing_getfeature():
+
+    if gdaltest.wfs_drv is None:
+        return 'skip'
+
+    gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
+
+    ds = ogr.Open('WFS:/vsimem/wfs_endpoint')
+    lyr = ds.GetLayer(0)
+
+    gdal.ErrorReset()
+    gdal.PushErrorHandler()
+    f = lyr.GetNextFeature()
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if f is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+def ogr_wfs_vsimem_wfs110_one_layer_invalid_getfeature():
+
+    if gdaltest.wfs_drv is None:
+        return 'skip'
+
+    gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
+
+    ds = ogr.Open('WFS:/vsimem/wfs_endpoint')
+    lyr = ds.GetLayer(0)
+
+    gdal.FileFromMemBuffer('/vsimem/wfs_endpoint?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=my_layer',
+"""invalid
+""")
+
+    gdal.ErrorReset()
+    gdal.PushErrorHandler()
+    f = lyr.GetNextFeature()
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if f is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+def ogr_wfs_vsimem_wfs110_one_layer_getfeature():
+
+    if gdaltest.wfs_drv is None:
+        return 'skip'
+
+    gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
+
+    gdal.FileFromMemBuffer('/vsimem/wfs_endpoint?SERVICE=WFS&REQUEST=GetCapabilities',
+"""<WFS_Capabilities version="1.1.0">
+    <FeatureTypeList>
+        <FeatureType>
+            <Name>my_layer</Name>
+            <DefaultSRS>urn:ogc:def:crs:EPSG::4326</DefaultSRS>
+            <ows:WGS84BoundingBox>
+                <ows:LowerCorner>-180.0 -90.0</ows:LowerCorner>
+                <ows:UpperCorner>180.0 90.0</ows:UpperCorner>
+            </ows:WGS84BoundingBox>
+        </FeatureType>
+    </FeatureTypeList>
+</WFS_Capabilities>
+""")
+    ds = ogr.Open('WFS:/vsimem/wfs_endpoint')
+    lyr = ds.GetLayer(0)
+
+    gdal.FileFromMemBuffer('/vsimem/wfs_endpoint?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=my_layer',
+"""<wfs:FeatureCollection xmlns:xs="http://www.w3.org/2001/XMLSchema"
+xmlns:ogc="http://www.opengis.net/ogc"
+xmlns:foo="http://foo"
+xmlns:wfs="http://www.opengis.net/wfs"
+xmlns:ows="http://www.opengis.net/ows"
+xmlns:xlink="http://www.w3.org/1999/xlink"
+xmlns:gml="http://www.opengis.net/gml"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+numberOfFeatures="1"
+timeStamp="2015-04-17T14:14:24.859Z"
+xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.0&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=my_layer
+                    http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.1.0/wfs.xsd">
+    <gml:featureMembers>
+        <foo:my_layer gml:id="my_layer.1">
+            <foo:str>str</foo:str>
+            <foo:boolean>true</foo:boolean>
+            <foo:short>1</foo:short>
+            <foo:int>123456789</foo:int>
+            <foo:float>1.2</foo:float>
+            <foo:double>1.23</foo:double>
+            <foo:dt>2015-04-17T12:34:56Z</foo:dt>
+            <foo:shape>
+                <gml:Point srsDimension="2" srsName="urn:ogc:def:crs:EPSG::4326">
+                    <gml:pos>49 2</gml:pos>
+                </gml:Point>
+            </foo:shape>
+        </foo:my_layer>
+    </gml:featureMembers>
+</wfs:FeatureCollection>
+""")
+
+    f = lyr.GetNextFeature()
+    if f.gml_id != 'my_layer.1' or f.boolean != 1 or f.str != 'str' or f.short != 1 or \
+       f.int != 123456789 or f.float != 1.2 or f.double != 1.23 or f.dt != '2015-04-17T12:34:56Z' or \
+       f.GetGeometryRef().ExportToWkt() != 'POINT (2 49)':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+def ogr_wfs_vsimem_wfs110_one_layer_getextent():
+
+    if gdaltest.wfs_drv is None:
+        return 'skip'
+
+    gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
+
+    ds = ogr.Open('WFS:/vsimem/wfs_endpoint')
+    lyr = ds.GetLayer(0)
+    if lyr.GetExtent() != (2,2,49,49):
+        gdaltest.post_reason('fail')
+        print(lyr.GetExtent())
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+def ogr_wfs_vsimem_wfs110_one_layer_getextent_without_getfeature():
+
+    if gdaltest.wfs_drv is None:
+        return 'skip'
+
+    gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
+
+    ds = ogr.Open('WFS:/vsimem/wfs_endpoint')
+    lyr = ds.GetLayer(0)
+
+    gdal.Unlink('/vsimem/wfs_endpoint?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=my_layer')
+
+    ds = ogr.Open('WFS:/vsimem/wfs_endpoint')
+    lyr = ds.GetLayer(0)
+    gdal.PushErrorHandler()
+    extent = lyr.GetExtent()
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if extent != (0,0,0,0):
+        gdaltest.post_reason('fail')
+        print(extent)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+def ogr_wfs_vsimem_wfs110_one_layer_getfeature_ogr_getfeature():
+
+    if gdaltest.wfs_drv is None:
+        return 'skip'
+
+    gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
+
+    gdal.FileFromMemBuffer('/vsimem/wfs_endpoint?SERVICE=WFS&REQUEST=GetCapabilities',
+"""<WFS_Capabilities version="1.1.0">
+    <FeatureTypeList>
+        <FeatureType>
+            <Name>my_layer</Name>
+            <DefaultSRS>urn:ogc:def:crs:EPSG::4326</DefaultSRS>
+            <ows:WGS84BoundingBox>
+                <ows:LowerCorner>-180.0 -90.0</ows:LowerCorner>
+                <ows:UpperCorner>180.0 90.0</ows:UpperCorner>
+            </ows:WGS84BoundingBox>
+        </FeatureType>
+    </FeatureTypeList>
+  <ogc:Filter_Capabilities>
+    <ogc:Spatial_Capabilities>
+      <ogc:GeometryOperands>
+        <ogc:GeometryOperand>gml:Envelope</ogc:GeometryOperand>
+        <ogc:GeometryOperand>gml:Point</ogc:GeometryOperand>
+        <ogc:GeometryOperand>gml:LineString</ogc:GeometryOperand>
+        <ogc:GeometryOperand>gml:Polygon</ogc:GeometryOperand>
+      </ogc:GeometryOperands>
+      <ogc:SpatialOperators>
+        <ogc:SpatialOperator name="Disjoint"/>
+        <ogc:SpatialOperator name="Equals"/>
+        <ogc:SpatialOperator name="DWithin"/>
+        <ogc:SpatialOperator name="Beyond"/>
+        <ogc:SpatialOperator name="Intersects"/>
+        <ogc:SpatialOperator name="Touches"/>
+        <ogc:SpatialOperator name="Crosses"/>
+        <ogc:SpatialOperator name="Within"/>
+        <ogc:SpatialOperator name="Contains"/>
+        <ogc:SpatialOperator name="Overlaps"/>
+        <ogc:SpatialOperator name="BBOX"/>
+      </ogc:SpatialOperators>
+    </ogc:Spatial_Capabilities>
+    <ogc:Scalar_Capabilities>
+      <ogc:LogicalOperators/>
+      <ogc:ComparisonOperators>
+        <ogc:ComparisonOperator>LessThan</ogc:ComparisonOperator>
+        <ogc:ComparisonOperator>GreaterThan</ogc:ComparisonOperator>
+        <ogc:ComparisonOperator>LessThanEqualTo</ogc:ComparisonOperator>
+        <ogc:ComparisonOperator>GreaterThanEqualTo</ogc:ComparisonOperator>
+        <ogc:ComparisonOperator>EqualTo</ogc:ComparisonOperator>
+        <ogc:ComparisonOperator>NotEqualTo</ogc:ComparisonOperator>
+        <ogc:ComparisonOperator>Like</ogc:ComparisonOperator>
+        <ogc:ComparisonOperator>Between</ogc:ComparisonOperator>
+        <ogc:ComparisonOperator>NullCheck</ogc:ComparisonOperator>
+      </ogc:ComparisonOperators>
+      <ogc:ArithmeticOperators>
+        <ogc:SimpleArithmetic/>
+        <ogc:Functions/>
+      </ogc:ArithmeticOperators>
+    </ogc:Scalar_Capabilities>
+    <ogc:Id_Capabilities>
+      <ogc:FID/>
+      <ogc:EID/>
+    </ogc:Id_Capabilities>
+  </ogc:Filter_Capabilities>
+</WFS_Capabilities>
+""")
+
+    ds = ogr.Open('WFS:/vsimem/wfs_endpoint')
+    lyr = ds.GetLayer(0)
+
+    gdal.FileFromMemBuffer('/vsimem/wfs_endpoint?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=my_layer&FILTER=%3CFilter%20xmlns%3D%22http:%2F%2Fwww.opengis.net%2Fogc%22%20xmlns:gml%3D%22http:%2F%2Fwww.opengis.net%2Fgml%22%3E%3CGmlObjectId%20id%3D%22my_layer.100%22%2F%3E%3C%2FFilter%3E',
+"""<wfs:FeatureCollection xmlns:xs="http://www.w3.org/2001/XMLSchema"
+xmlns:ogc="http://www.opengis.net/ogc"
+xmlns:foo="http://foo"
+xmlns:wfs="http://www.opengis.net/wfs"
+xmlns:ows="http://www.opengis.net/ows"
+xmlns:xlink="http://www.w3.org/1999/xlink"
+xmlns:gml="http://www.opengis.net/gml"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+numberOfFeatures="1"
+timeStamp="2015-04-17T14:14:24.859Z"
+xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.0&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=my_layer
+                    http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.1.0/wfs.xsd">
+    <gml:featureMembers>
+        <foo:my_layer gml:id="my_layer.100">
+        </foo:my_layer>
+    </gml:featureMembers>
+</wfs:FeatureCollection>
+""")
+
+    f = lyr.GetFeature(100)
+    if f.gml_id != 'my_layer.100':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+def ogr_wfs_vsimem_wfs110_one_layer_filter_gml_id_failed():
+
+    if gdaltest.wfs_drv is None:
+        return 'skip'
+
+    gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
+
+    ds = ogr.Open('WFS:/vsimem/wfs_endpoint')
+    lyr = ds.GetLayer(0)
+
+    gdal.FileFromMemBuffer('/vsimem/wfs_endpoint?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=my_layer',
+"""<wfs:FeatureCollection xmlns:xs="http://www.w3.org/2001/XMLSchema"
+xmlns:ogc="http://www.opengis.net/ogc"
+xmlns:foo="http://foo"
+xmlns:wfs="http://www.opengis.net/wfs"
+xmlns:ows="http://www.opengis.net/ows"
+xmlns:xlink="http://www.w3.org/1999/xlink"
+xmlns:gml="http://www.opengis.net/gml"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+numberOfFeatures="0"
+timeStamp="2015-04-17T14:14:24.859Z"
+xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.0&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=my_layer
+                    http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.1.0/wfs.xsd">
+</wfs:FeatureCollection>
+""")
+
+    lyr.SetAttributeFilter("gml_id = 'my_layer.1'")
+
+    gdal.ErrorReset()
+    gdal.PushErrorHandler()
+    f = lyr.GetNextFeature()
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if f is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+def ogr_wfs_vsimem_wfs110_one_layer_filter_gml_id_success():
+
+    if gdaltest.wfs_drv is None:
+        return 'skip'
+
+    gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
+
+    ds = ogr.Open('WFS:/vsimem/wfs_endpoint')
+    lyr = ds.GetLayer(0)
+
+    gdal.FileFromMemBuffer('/vsimem/wfs_endpoint?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=my_layer&FILTER=%3CFilter%20xmlns%3D%22http:%2F%2Fwww.opengis.net%2Fogc%22%20xmlns:gml%3D%22http:%2F%2Fwww.opengis.net%2Fgml%22%3E%3CGmlObjectId%20id%3D%22my_layer.1%22%2F%3E%3CGmlObjectId%20id%3D%22my_layer.1%22%2F%3E%3C%2FFilter%3E',
+"""<wfs:FeatureCollection xmlns:xs="http://www.w3.org/2001/XMLSchema"
+xmlns:ogc="http://www.opengis.net/ogc"
+xmlns:foo="http://foo"
+xmlns:wfs="http://www.opengis.net/wfs"
+xmlns:ows="http://www.opengis.net/ows"
+xmlns:xlink="http://www.w3.org/1999/xlink"
+xmlns:gml="http://www.opengis.net/gml"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+numberOfFeatures="1"
+timeStamp="2015-04-17T14:14:24.859Z"
+xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.0&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=my_layer
+                    http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.1.0/wfs.xsd">
+    <gml:featureMembers>
+        <foo:my_layer gml:id="my_layer.1">
+            <foo:str>str</foo:str>
+            <foo:boolean>true</foo:boolean>
+            <foo:short>1</foo:short>
+            <foo:int>123456789</foo:int>
+            <foo:float>1.2</foo:float>
+            <foo:double>1.23</foo:double>
+            <foo:dt>2015-04-17T12:34:56Z</foo:dt>
+            <foo:shape>
+                <gml:Point srsDimension="2" srsName="urn:ogc:def:crs:EPSG::4326">
+                    <gml:pos>49 2</gml:pos>
+                </gml:Point>
+            </foo:shape>
+        </foo:my_layer>
+    </gml:featureMembers>
+</wfs:FeatureCollection>
+""")
+
+    lyr.SetAttributeFilter("gml_id = 'my_layer.1' OR gml_id = 'my_layer.1'")
+
+    f = lyr.GetNextFeature()
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+def ogr_wfs_vsimem_wfs110_one_layer_filter():
+
+    if gdaltest.wfs_drv is None:
+        return 'skip'
+
+    gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
+
+    ds = ogr.Open('WFS:/vsimem/wfs_endpoint')
+    lyr = ds.GetLayer(0)
+
+    gdal.FileFromMemBuffer('/vsimem/wfs_endpoint?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=my_layer&FILTER=%3CFilter%20xmlns%3D%22http:%2F%2Fwww.opengis.net%2Fogc%22%20xmlns:gml%3D%22http:%2F%2Fwww.opengis.net%2Fgml%22%3E%3COr%3E%3COr%3E%3COr%3E%3COr%3E%3COr%3E%3COr%3E%3COr%3E%3CAnd%3E%3CAnd%3E%3CPropertyIsEqualTo%3E%3CPropertyName%3Estr%3C%2FPropertyName%3E%3CLiteral%3Estr%3C%2FLiteral%3E%3C%2FPropertyIsEqualTo%3E%3CPropertyIsEqualTo%3E%3CPropertyName%3Eshort%3C%2FPropertyName%3E%3CLiteral%3E1%3C%2FLiteral%3E%3C%2FPropertyIsEqualTo%3E%3C%2FAnd%3E%3CPropertyIsEqualTo%3E%3CPropertyName%3Efloat%3C%2FPropertyName%3E%3CLiteral%3E1.2%3C%2FLiteral%3E%3C%2FPropertyIsEqualTo%3E%3C%2FAnd%3E%3CPropertyIsLike%20wildCard%3D%27%2A%27%20singleChar%3D%27_%27%20escapeChar%3D%27%21%27%3E%3CPropertyName%3Estr%3C%2FPropertyName%3E%3CLiteral%3Est%2A%3C%2FLiteral%3E%3C%2FPropertyIsLike%3E%3C%2FOr%3E%3CNot%3E%3CPropertyIsNull%3E%3CPropertyName%3Eboolean%3C%2FPropertyName%3E%3C%2FPropertyIsNull%3E%3C%2FNot%3E%3C%2FOr%3E%3CPropertyIsGreaterThan%3E%3CPropertyName%3Eint%3C%2FPropertyName%3E%3CLiteral%3E1%3C%2FLiteral%3E%3C%2FPropertyIsGreaterThan%3E%3C%2FOr%3E%3CPropertyIsGreaterThanOrEqualTo%3E%3CPropertyName%3Eint%3C%2FPropertyName%3E%3CLiteral%3E1%3C%2FLiteral%3E%3C%2FPropertyIsGreaterThanOrEqualTo%3E%3C%2FOr%3E%3CPropertyIsNotEqualTo%3E%3CPropertyName%3EINT%3C%2FPropertyName%3E%3CLiteral%3E2%3C%2FLiteral%3E%3C%2FPropertyIsNotEqualTo%3E%3C%2FOr%3E%3CPropertyIsLessThan%3E%3CPropertyName%3EINT%3C%2FPropertyName%3E%3CLiteral%3E2000000000%3C%2FLiteral%3E%3C%2FPropertyIsLessThan%3E%3C%2FOr%3E%3CPropertyIsLessThanOrEqualTo%3E%3CPropertyName%3EINT%3C%2FPropertyName%3E%3CLiteral%3E2000000000%3C%2FLiteral%3E%3C%2FPropertyIsLessThanOrEqualTo%3E%3C%2FOr%3E%3C%2FFilter%3E',
+"""<wfs:FeatureCollection xmlns:xs="http://www.w3.org/2001/XMLSchema"
+xmlns:ogc="http://www.opengis.net/ogc"
+xmlns:foo="http://foo"
+xmlns:wfs="http://www.opengis.net/wfs"
+xmlns:ows="http://www.opengis.net/ows"
+xmlns:xlink="http://www.w3.org/1999/xlink"
+xmlns:gml="http://www.opengis.net/gml"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+numberOfFeatures="1"
+timeStamp="2015-04-17T14:14:24.859Z"
+xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.0&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=my_layer
+                    http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.1.0/wfs.xsd">
+    <gml:featureMembers>
+        <foo:my_layer gml:id="my_layer.1">
+            <foo:str>str</foo:str>
+            <foo:boolean>true</foo:boolean>
+            <foo:short>1</foo:short>
+            <foo:int>123456789</foo:int>
+            <foo:float>1.2</foo:float>
+            <foo:double>1.23</foo:double>
+            <foo:dt>2015-04-17T12:34:56Z</foo:dt>
+            <foo:shape>
+                <gml:Point srsDimension="2" srsName="urn:ogc:def:crs:EPSG::4326">
+                    <gml:pos>49 2</gml:pos>
+                </gml:Point>
+            </foo:shape>
+        </foo:my_layer>
+    </gml:featureMembers>
+</wfs:FeatureCollection>
+""")
+
+    lyr.SetAttributeFilter("(str = 'str' AND short = 1 AND float = 1.2) OR str LIKE 'st%' OR boolean IS NOT NULL OR int > 1 OR int >= 1 or INT != 2 or INT < 2000000000 or INT <= 2000000000")
+
+    f = lyr.GetNextFeature()
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+def ogr_wfs_vsimem_wfs110_one_layer_spatial_filter():
+
+    if gdaltest.wfs_drv is None:
+        return 'skip'
+
+    gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
+
+    ds = ogr.Open('WFS:/vsimem/wfs_endpoint')
+    lyr = ds.GetLayer(0)
+
+    gdal.FileFromMemBuffer('/vsimem/wfs_endpoint?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=my_layer&FILTER=%3CFilter%20xmlns%3D%22http:%2F%2Fwww.opengis.net%2Fogc%22%20xmlns:gml%3D%22http:%2F%2Fwww.opengis.net%2Fgml%22%3E%3CBBOX%3E%3CPropertyName%3Eshape%3C%2FPropertyName%3E%3Cgml:Box%3E%3Cgml:coordinates%3E48.0000000000000000,1.0000000000000000%2050.0000000000000000,3.0000000000000000%3C%2Fgml:coordinates%3E%3C%2Fgml:Box%3E%3C%2FBBOX%3E%3C%2FFilter%3E',
+"""<wfs:FeatureCollection xmlns:xs="http://www.w3.org/2001/XMLSchema"
+xmlns:ogc="http://www.opengis.net/ogc"
+xmlns:foo="http://foo"
+xmlns:wfs="http://www.opengis.net/wfs"
+xmlns:ows="http://www.opengis.net/ows"
+xmlns:xlink="http://www.w3.org/1999/xlink"
+xmlns:gml="http://www.opengis.net/gml"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+numberOfFeatures="1"
+timeStamp="2015-04-17T14:14:24.859Z"
+xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.0&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=my_layer
+                    http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.1.0/wfs.xsd">
+    <gml:featureMembers>
+        <foo:my_layer gml:id="my_layer.1">
+            <foo:str>str</foo:str>
+            <foo:boolean>true</foo:boolean>
+            <foo:short>1</foo:short>
+            <foo:int>123456789</foo:int>
+            <foo:float>1.2</foo:float>
+            <foo:double>1.23</foo:double>
+            <foo:dt>2015-04-17T12:34:56Z</foo:dt>
+            <foo:shape>
+                <gml:Point srsDimension="2" srsName="urn:ogc:def:crs:EPSG::4326">
+                    <gml:pos>49 2</gml:pos>
+                </gml:Point>
+            </foo:shape>
+        </foo:my_layer>
+    </gml:featureMembers>
+</wfs:FeatureCollection>
+""")
+
+    lyr.SetSpatialFilterRect(1,48,3,50)
+
+    f = lyr.GetNextFeature()
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    if gdal.GetConfigOption('OGR_WFS_USE_STREAMING') == 'NO':
+        lyr.SetSpatialFilterRect(1.5,48.5,2.5,49.5)
+        f = lyr.GetNextFeature()
+        if f is None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+        lyr.SetSpatialFilter(None)
+        lyr.ResetReading()
+
+        lyr.ResetReading()
+        lyr.SetSpatialFilterRect(1,48,3,50)
+        f = lyr.GetNextFeature()
+        if f is None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
+def ogr_wfs_vsimem_wfs110_one_layer_spatial_filter_and_attribute_filter():
+
+    if gdaltest.wfs_drv is None:
+        return 'skip'
+
+    gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
+
+    ds = ogr.Open('WFS:/vsimem/wfs_endpoint')
+    lyr = ds.GetLayer(0)
+
+    gdal.FileFromMemBuffer('/vsimem/wfs_endpoint?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=my_layer&FILTER=%3CFilter%20xmlns%3D%22http:%2F%2Fwww.opengis.net%2Fogc%22%20xmlns:gml%3D%22http:%2F%2Fwww.opengis.net%2Fgml%22%3E%3CAnd%3E%3CPropertyIsEqualTo%3E%3CPropertyName%3Estr%3C%2FPropertyName%3E%3CLiteral%3Estr%3C%2FLiteral%3E%3C%2FPropertyIsEqualTo%3E%3CBBOX%3E%3CPropertyName%3Eshape%3C%2FPropertyName%3E%3Cgml:Box%3E%3Cgml:coordinates%3E48.0000000000000000,1.0000000000000000%2050.0000000000000000,3.0000000000000000%3C%2Fgml:coordinates%3E%3C%2Fgml:Box%3E%3C%2FBBOX%3E%3C%2FAnd%3E%3C%2FFilter%3E',
+"""<wfs:FeatureCollection xmlns:xs="http://www.w3.org/2001/XMLSchema"
+xmlns:ogc="http://www.opengis.net/ogc"
+xmlns:foo="http://foo"
+xmlns:wfs="http://www.opengis.net/wfs"
+xmlns:ows="http://www.opengis.net/ows"
+xmlns:xlink="http://www.w3.org/1999/xlink"
+xmlns:gml="http://www.opengis.net/gml"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+numberOfFeatures="1"
+timeStamp="2015-04-17T14:14:24.859Z"
+xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.0&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=my_layer
+                    http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.1.0/wfs.xsd">
+    <gml:featureMembers>
+        <foo:my_layer gml:id="my_layer.1">
+            <foo:str>str</foo:str>
+            <foo:boolean>true</foo:boolean>
+            <foo:short>1</foo:short>
+            <foo:int>123456789</foo:int>
+            <foo:float>1.2</foo:float>
+            <foo:double>1.23</foo:double>
+            <foo:dt>2015-04-17T12:34:56Z</foo:dt>
+            <foo:shape>
+                <gml:Point srsDimension="2" srsName="urn:ogc:def:crs:EPSG::4326">
+                    <gml:pos>49 2</gml:pos>
+                </gml:Point>
+            </foo:shape>
+        </foo:my_layer>
+    </gml:featureMembers>
+</wfs:FeatureCollection>
+""")
+
+    lyr.SetSpatialFilterRect(1,48,3,50)
+    lyr.SetAttributeFilter("str = 'str'")
+
+    f = lyr.GetNextFeature()
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+def ogr_wfs_vsimem_wfs110_insertfeature():
+
+    if gdaltest.wfs_drv is None:
+        return 'skip'
+
+    gdaltest.wfs_insert_url = None
+    
+    gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
+
+    gdal.FileFromMemBuffer('/vsimem/wfs_endpoint?SERVICE=WFS&REQUEST=GetCapabilities',
+"""<WFS_Capabilities version="1.1.0">
+    <OperationsMetadata>
+        <ows:Operation name="Transaction">
+            <ows:DCP>
+                <ows:HTTP>
+                    <ows:Get xlink:href="/vsimem/wfs_endpoint"/>
+                    <ows:Post xlink:href="/vsimem/wfs_endpoint"/>
+                </ows:HTTP>
+            </ows:DCP>
+        </ows:Operation>
+    </OperationsMetadata>
+    <FeatureTypeList>
+        <FeatureType>
+            <Name>my_layer</Name>
+            <DefaultSRS>urn:ogc:def:crs:EPSG::4326</DefaultSRS>
+            <ows:WGS84BoundingBox>
+                <ows:LowerCorner>-180.0 -90.0</ows:LowerCorner>
+                <ows:UpperCorner>180.0 90.0</ows:UpperCorner>
+            </ows:WGS84BoundingBox>
+        </FeatureType>
+    </FeatureTypeList>
+  <ogc:Filter_Capabilities>
+    <ogc:Spatial_Capabilities>
+      <ogc:GeometryOperands>
+        <ogc:GeometryOperand>gml:Envelope</ogc:GeometryOperand>
+        <ogc:GeometryOperand>gml:Point</ogc:GeometryOperand>
+        <ogc:GeometryOperand>gml:LineString</ogc:GeometryOperand>
+        <ogc:GeometryOperand>gml:Polygon</ogc:GeometryOperand>
+      </ogc:GeometryOperands>
+      <ogc:SpatialOperators>
+        <ogc:SpatialOperator name="Disjoint"/>
+        <ogc:SpatialOperator name="Equals"/>
+        <ogc:SpatialOperator name="DWithin"/>
+        <ogc:SpatialOperator name="Beyond"/>
+        <ogc:SpatialOperator name="Intersects"/>
+        <ogc:SpatialOperator name="Touches"/>
+        <ogc:SpatialOperator name="Crosses"/>
+        <ogc:SpatialOperator name="Within"/>
+        <ogc:SpatialOperator name="Contains"/>
+        <ogc:SpatialOperator name="Overlaps"/>
+        <ogc:SpatialOperator name="BBOX"/>
+      </ogc:SpatialOperators>
+    </ogc:Spatial_Capabilities>
+    <ogc:Scalar_Capabilities>
+      <ogc:LogicalOperators/>
+      <ogc:ComparisonOperators>
+        <ogc:ComparisonOperator>LessThan</ogc:ComparisonOperator>
+        <ogc:ComparisonOperator>GreaterThan</ogc:ComparisonOperator>
+        <ogc:ComparisonOperator>LessThanEqualTo</ogc:ComparisonOperator>
+        <ogc:ComparisonOperator>GreaterThanEqualTo</ogc:ComparisonOperator>
+        <ogc:ComparisonOperator>EqualTo</ogc:ComparisonOperator>
+        <ogc:ComparisonOperator>NotEqualTo</ogc:ComparisonOperator>
+        <ogc:ComparisonOperator>Like</ogc:ComparisonOperator>
+        <ogc:ComparisonOperator>Between</ogc:ComparisonOperator>
+        <ogc:ComparisonOperator>NullCheck</ogc:ComparisonOperator>
+      </ogc:ComparisonOperators>
+      <ogc:ArithmeticOperators>
+        <ogc:SimpleArithmetic/>
+        <ogc:Functions/>
+      </ogc:ArithmeticOperators>
+    </ogc:Scalar_Capabilities>
+    <ogc:Id_Capabilities>
+      <ogc:FID/>
+      <ogc:EID/>
+    </ogc:Id_Capabilities>
+  </ogc:Filter_Capabilities>
+</WFS_Capabilities>
+""")
+
+    ds = ogr.Open('WFS:/vsimem/wfs_endpoint', update = 1)
+    lyr = ds.GetLayer(0)
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    gdal.PushErrorHandler()
+    ret = lyr.CreateFeature(f)
+    gdal.PopErrorHandler()
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdaltest.wfs_insert_url = """/vsimem/wfs_endpoint&POSTFIELDS=<?xml version="1.0"?>
+<wfs:Transaction xmlns:wfs="http://www.opengis.net/wfs"
+                 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                 service="WFS" version="1.1.0"
+                 xmlns:gml="http://www.opengis.net/gml"
+                 xmlns:ogc="http://www.opengis.net/ogc"
+                 xsi:schemaLocation="http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.1.0/wfs.xsd http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.0&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=my_layer">
+  <wfs:Insert>
+    <feature:my_layer xmlns:feature="http://foo">
+    </feature:my_layer>
+  </wfs:Insert>
+</wfs:Transaction>
+"""
+    gdal.FileFromMemBuffer(gdaltest.wfs_insert_url, "")
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    gdal.PushErrorHandler()
+    ret = lyr.CreateFeature(f)
+    gdal.PopErrorHandler()
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.FileFromMemBuffer(gdaltest.wfs_insert_url, "invalid_xml")
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    gdal.PushErrorHandler()
+    ret = lyr.CreateFeature(f)
+    gdal.PopErrorHandler()
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.FileFromMemBuffer(gdaltest.wfs_insert_url, "<ServiceExceptionReport/>")
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    gdal.PushErrorHandler()
+    ret = lyr.CreateFeature(f)
+    gdal.PopErrorHandler()
+    if ret == 0 or gdal.GetLastErrorMsg().find('Error returned by server') < 0:
+        gdaltest.post_reason('fail')
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+
+
+    gdal.FileFromMemBuffer(gdaltest.wfs_insert_url, "<dummy_xml/>")
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    gdal.PushErrorHandler()
+    ret = lyr.CreateFeature(f)
+    gdal.PopErrorHandler()
+    if ret == 0 or gdal.GetLastErrorMsg().find('Cannot find <TransactionResponse>') < 0:
+        gdaltest.post_reason('fail')
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+
+
+    gdal.FileFromMemBuffer(gdaltest.wfs_insert_url,
+"""<TransactionResponse>
+</TransactionResponse>
+""")
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    gdal.PushErrorHandler()
+    ret = lyr.CreateFeature(f)
+    gdal.PopErrorHandler()
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.FileFromMemBuffer(gdaltest.wfs_insert_url,
+"""<TransactionResponse>
+    <InsertResults>
+        <Feature>
+            <FeatureId/>
+        </Feature>
+    </InsertResults>
+</TransactionResponse>
+""")
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    gdal.PushErrorHandler()
+    ret = lyr.CreateFeature(f)
+    gdal.PopErrorHandler()
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.FileFromMemBuffer(gdaltest.wfs_insert_url,
+"""<TransactionResponse>
+    <InsertResults>
+        <Feature>
+            <FeatureId fid="my_layer.100"/>
+        </Feature>
+    </InsertResults>
+</TransactionResponse>
+""")
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    ret = lyr.CreateFeature(f)
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if f.GetFID() != 100:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+
+
+    gdal.PushErrorHandler()
+    ret = lyr.CreateFeature(f)
+    gdal.PopErrorHandler()
+    if ret == 0 or gdal.GetLastErrorMsg().find('Cannot insert a feature when gml_id field is already set') < 0:
+        gdaltest.post_reason('fail')
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+
+    # Empty StartTransaction + CommitTransaction
+    ret = lyr.StartTransaction()
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ret = lyr.CommitTransaction()
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Empty StartTransaction + RollbackTransaction
+    ret = lyr.StartTransaction()
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ret = lyr.RollbackTransaction()
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Isolated CommitTransaction
+    gdal.PushErrorHandler()
+    ret = lyr.CommitTransaction()
+    gdal.PopErrorHandler()
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Isolated RollbackTransaction
+    gdal.PushErrorHandler()
+    ret = lyr.RollbackTransaction()
+    gdal.PopErrorHandler()
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # 2 StartTransaction in a row
+    ret = lyr.StartTransaction()
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.PushErrorHandler()
+    ret = lyr.StartTransaction()
+    gdal.PopErrorHandler()
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ret = lyr.RollbackTransaction()
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+
+    # Missing TransactionSummary
+    ret = lyr.StartTransaction()
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = ogr.Feature(lyr.GetLayerDefn())
+    ret = lyr.CreateFeature(f)
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.PushErrorHandler()
+    ret = lyr.CommitTransaction()
+    gdal.PopErrorHandler()
+    if ret == 0 or gdal.GetLastErrorMsg().find('Only 0 features were inserted whereas 1 where expected') < 0:
+        gdaltest.post_reason('fail')
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+
+
+
+    ret = lyr.StartTransaction()
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = ogr.Feature(lyr.GetLayerDefn())
+    ret = lyr.CreateFeature(f)
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.FileFromMemBuffer(gdaltest.wfs_insert_url,
+"""<TransactionResponse>
+    <TransactionSummary totalInserted="1"/>
+</TransactionResponse>
+""")
+    gdal.PushErrorHandler()
+    ret = lyr.CommitTransaction()
+    gdal.PopErrorHandler()
+    if ret == 0 or gdal.GetLastErrorMsg().find('Cannot find node InsertResults') < 0:
+        gdaltest.post_reason('fail')
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+
+
+
+    ret = lyr.StartTransaction()
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = ogr.Feature(lyr.GetLayerDefn())
+    ret = lyr.CreateFeature(f)
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.FileFromMemBuffer(gdaltest.wfs_insert_url,
+"""<TransactionResponse>
+    <TransactionSummary totalInserted="1"/>
+    <InsertResults/>
+</TransactionResponse>
+""")
+    gdal.PushErrorHandler()
+    ret = lyr.CommitTransaction()
+    gdal.PopErrorHandler()
+    if ret == 0 or gdal.GetLastErrorMsg().find('Inconsistent InsertResults: did not get expected FID count') < 0:
+        gdaltest.post_reason('fail')
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+
+
+
+    ret = lyr.StartTransaction()
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = ogr.Feature(lyr.GetLayerDefn())
+    ret = lyr.CreateFeature(f)
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.FileFromMemBuffer(gdaltest.wfs_insert_url,
+"""<TransactionResponse>
+    <TransactionSummary totalInserted="1"/>
+    <InsertResults>
+        <Feature>
+        </Feature>
+    </InsertResults>
+</TransactionResponse>
+""")
+    gdal.PushErrorHandler()
+    ret = lyr.CommitTransaction()
+    gdal.PopErrorHandler()
+    if ret == 0 or gdal.GetLastErrorMsg().find('Cannot find fid') < 0:
+        gdaltest.post_reason('fail')
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+
+
+    ret = lyr.StartTransaction()
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = ogr.Feature(lyr.GetLayerDefn())
+    ret = lyr.CreateFeature(f)
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.FileFromMemBuffer(gdaltest.wfs_insert_url,
+"""<TransactionResponse>
+    <TransactionSummary totalInserted="1"/>
+    <InsertResults>
+        <Feature>
+            <FeatureId fid="my_layer.100"/>
+        </Feature>
+    </InsertResults>
+</TransactionResponse>
+""")
+    ret = lyr.CommitTransaction()
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.Unlink(gdaltest.wfs_insert_url)
+    gdaltest.wfs_insert_url = None
+
+    gdaltest.wfs_insert_url = """/vsimem/wfs_endpoint&POSTFIELDS=<?xml version="1.0"?>
+<wfs:Transaction xmlns:wfs="http://www.opengis.net/wfs"
+                 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                 service="WFS" version="1.1.0"
+                 xmlns:gml="http://www.opengis.net/gml"
+                 xmlns:ogc="http://www.opengis.net/ogc"
+                 xsi:schemaLocation="http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.1.0/wfs.xsd http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.0&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=my_layer">
+  <wfs:Insert>
+    <feature:my_layer xmlns:feature="http://foo">
+      <feature:str>foo</feature:str>
+      <feature:int>123456789</feature:int>
+      <feature:double>2.34</feature:double>
+      <feature:shape><gml:Point srsName="urn:ogc:def:crs:EPSG::4326"><gml:pos>49 2</gml:pos></gml:Point></feature:shape>
+    </feature:my_layer>
+  </wfs:Insert>
+</wfs:Transaction>
+"""
+    gdal.FileFromMemBuffer(gdaltest.wfs_insert_url,
+"""<TransactionResponse>
+    <TransactionSummary totalInserted="1"/>
+    <InsertResults>
+        <Feature>
+            <FeatureId fid="my_layer.100"/>
+        </Feature>
+    </InsertResults>
+</TransactionResponse>
+""")
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField('str', 'foo')
+    f.SetField('int', 123456789)
+    f.SetField('double', 2.34)
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POINT (2 49)'))
+    ret = lyr.CreateFeature(f)
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.Unlink(gdaltest.wfs_insert_url)
+    gdaltest.wfs_insert_url = None
+
+    return 'success'
+
+###############################################################################
+def ogr_wfs_vsimem_wfs110_updatefeature():
+
+    if gdaltest.wfs_drv is None:
+        return 'skip'
+
+    gdaltest.wfs_update_url = None
+    
+    gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
+
+    ds = ogr.Open('WFS:/vsimem/wfs_endpoint', update = 1)
+    lyr = ds.GetLayer(0)
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    gdal.PushErrorHandler()
+    ret = lyr.CreateFeature(f)
+    gdal.PopErrorHandler()
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    gdal.PushErrorHandler()
+    ret = lyr.SetFeature(f)
+    gdal.PopErrorHandler()
+    if ret == 0 or gdal.GetLastErrorMsg().find('Cannot update a feature when gml_id field is not set') < 0:
+        gdaltest.post_reason('fail')
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+    
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField('gml_id', 'my_layer.1')
+    gdal.PushErrorHandler()
+    ret = lyr.SetFeature(f)
+    gdal.PopErrorHandler()
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+
+    gdaltest.wfs_update_url = """/vsimem/wfs_endpoint&POSTFIELDS=<?xml version="1.0"?>
+<wfs:Transaction xmlns:wfs="http://www.opengis.net/wfs"
+                 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                 service="WFS" version="1.1.0"
+                 xmlns:gml="http://www.opengis.net/gml"
+                 xmlns:ogc="http://www.opengis.net/ogc"
+                 xsi:schemaLocation="http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.1.0/wfs.xsd http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.0&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=my_layer">
+  <wfs:Update typeName="feature:my_layer" xmlns:feature="http://foo">
+    <wfs:Property>
+      <wfs:Name>shape</wfs:Name>
+    </wfs:Property>
+    <wfs:Property>
+      <wfs:Name>str</wfs:Name>
+    </wfs:Property>
+    <wfs:Property>
+      <wfs:Name>boolean</wfs:Name>
+    </wfs:Property>
+    <wfs:Property>
+      <wfs:Name>short</wfs:Name>
+    </wfs:Property>
+    <wfs:Property>
+      <wfs:Name>int</wfs:Name>
+    </wfs:Property>
+    <wfs:Property>
+      <wfs:Name>float</wfs:Name>
+    </wfs:Property>
+    <wfs:Property>
+      <wfs:Name>double</wfs:Name>
+    </wfs:Property>
+    <wfs:Property>
+      <wfs:Name>dt</wfs:Name>
+    </wfs:Property>
+    <ogc:Filter>
+      <ogc:GmlObjectId gml:id="my_layer.1"/>
+    </ogc:Filter>
+  </wfs:Update>
+</wfs:Transaction>
+"""
+
+    gdal.FileFromMemBuffer(gdaltest.wfs_update_url, "")
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField('gml_id', 'my_layer.1')
+    gdal.PushErrorHandler()
+    ret = lyr.SetFeature(f)
+    gdal.PopErrorHandler()
+    if ret == 0 or gdal.GetLastErrorMsg().find('Invalid XML content') < 0:
+        gdaltest.post_reason('fail')
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+
+
+
+    gdal.FileFromMemBuffer(gdaltest.wfs_update_url, "<ServiceExceptionReport/>")
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField('gml_id', 'my_layer.1')
+    gdal.PushErrorHandler()
+    ret = lyr.SetFeature(f)
+    gdal.PopErrorHandler()
+    if ret == 0 or gdal.GetLastErrorMsg().find('Error returned by server') < 0:
+        gdaltest.post_reason('fail')
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+    
+
+    gdal.FileFromMemBuffer(gdaltest.wfs_update_url, "<foo/>")
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField('gml_id', 'my_layer.1')
+    gdal.PushErrorHandler()
+    ret = lyr.SetFeature(f)
+    gdal.PopErrorHandler()
+    if ret == 0 or gdal.GetLastErrorMsg().find('Cannot find <TransactionResponse>') < 0:
+        gdaltest.post_reason('fail')
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+
+
+    gdal.FileFromMemBuffer(gdaltest.wfs_update_url, "<TransactionResponse/>")
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField('gml_id', 'my_layer.1')
+    ret = lyr.SetFeature(f)
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+
+
+    gdal.Unlink(gdaltest.wfs_update_url)
+    gdaltest.wfs_update_url = """/vsimem/wfs_endpoint&POSTFIELDS=<?xml version="1.0"?>
+<wfs:Transaction xmlns:wfs="http://www.opengis.net/wfs"
+                 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                 service="WFS" version="1.1.0"
+                 xmlns:gml="http://www.opengis.net/gml"
+                 xmlns:ogc="http://www.opengis.net/ogc"
+                 xsi:schemaLocation="http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.1.0/wfs.xsd http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.0&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=my_layer">
+  <wfs:Update typeName="feature:my_layer" xmlns:feature="http://foo">
+    <wfs:Property>
+      <wfs:Name>shape</wfs:Name>
+      <wfs:Value><gml:Point srsName="urn:ogc:def:crs:EPSG::4326"><gml:pos>49 2</gml:pos></gml:Point></wfs:Value>
+    </wfs:Property>
+    <wfs:Property>
+      <wfs:Name>str</wfs:Name>
+      <wfs:Value>foo</wfs:Value>
+    </wfs:Property>
+    <wfs:Property>
+      <wfs:Name>boolean</wfs:Name>
+    </wfs:Property>
+    <wfs:Property>
+      <wfs:Name>short</wfs:Name>
+    </wfs:Property>
+    <wfs:Property>
+      <wfs:Name>int</wfs:Name>
+      <wfs:Value>123456789</wfs:Value>
+    </wfs:Property>
+    <wfs:Property>
+      <wfs:Name>float</wfs:Name>
+    </wfs:Property>
+    <wfs:Property>
+      <wfs:Name>double</wfs:Name>
+      <wfs:Value>2.34</wfs:Value>
+    </wfs:Property>
+    <wfs:Property>
+      <wfs:Name>dt</wfs:Name>
+    </wfs:Property>
+    <ogc:Filter>
+      <ogc:GmlObjectId gml:id="my_layer.1"/>
+    </ogc:Filter>
+  </wfs:Update>
+</wfs:Transaction>
+"""
+    gdal.FileFromMemBuffer(gdaltest.wfs_update_url, "<TransactionResponse/>")
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField('gml_id', 'my_layer.1')
+    f.SetField('str', 'foo')
+    f.SetField('int', 123456789)
+    f.SetField('double', 2.34)
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POINT (2 49)'))
+    ret = lyr.SetFeature(f)
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+
+    return 'success'
+
+###############################################################################
+def ogr_wfs_vsimem_wfs110_deletefeature():
+
+    if gdaltest.wfs_drv is None:
+        return 'skip'
+
+    gdaltest.wfs_delete_url = None
+    
+    gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
+
+    ds = ogr.Open('WFS:/vsimem/wfs_endpoint', update = 1)
+    lyr = ds.GetLayer(0)
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    gdal.PushErrorHandler()
+    ret = lyr.DeleteFeature(200)
+    gdal.PopErrorHandler()
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+
+
+    gdal.FileFromMemBuffer('/vsimem/wfs_endpoint?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=my_layer&FILTER=%3CFilter%20xmlns%3D%22http:%2F%2Fwww.opengis.net%2Fogc%22%20xmlns:gml%3D%22http:%2F%2Fwww.opengis.net%2Fgml%22%3E%3CGmlObjectId%20id%3D%22my_layer.200%22%2F%3E%3C%2FFilter%3E',
+"""<wfs:FeatureCollection xmlns:xs="http://www.w3.org/2001/XMLSchema"
+xmlns:ogc="http://www.opengis.net/ogc"
+xmlns:foo="http://foo"
+xmlns:wfs="http://www.opengis.net/wfs"
+xmlns:ows="http://www.opengis.net/ows"
+xmlns:xlink="http://www.w3.org/1999/xlink"
+xmlns:gml="http://www.opengis.net/gml"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+numberOfFeatures="1"
+timeStamp="2015-04-17T14:14:24.859Z"
+xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.0&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=my_layer
+                    http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.1.0/wfs.xsd">
+    <gml:featureMembers>
+        <foo:my_layer gml:id="my_layer.200">
+        </foo:my_layer>
+    </gml:featureMembers>
+</wfs:FeatureCollection>
+""")
+
+    ds = ogr.Open('WFS:/vsimem/wfs_endpoint', update = 1)
+    lyr = ds.GetLayer(0)
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    gdal.PushErrorHandler()
+    ret = lyr.DeleteFeature(200)
+    gdal.PopErrorHandler()
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+
+
+    ds = ogr.Open('WFS:/vsimem/wfs_endpoint', update = 1)
+    lyr = ds.GetLayer(0)
+
+    gdaltest.wfs_delete_url = """/vsimem/wfs_endpoint&POSTFIELDS=<?xml version="1.0"?>
+<wfs:Transaction xmlns:wfs="http://www.opengis.net/wfs"
+                 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                 service="WFS" version="1.1.0"
+                 xmlns:gml="http://www.opengis.net/gml"
+                 xmlns:ogc="http://www.opengis.net/ogc"
+                 xsi:schemaLocation="http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.1.0/wfs.xsd http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.0&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=my_layer">
+  <wfs:Delete xmlns:feature="http://foo" typeName="feature:my_layer">
+    <ogc:Filter>
+<ogc:FeatureId fid="my_layer.200"/>
+    </ogc:Filter>
+  </wfs:Delete>
+</wfs:Transaction>
+"""
+
+    gdal.FileFromMemBuffer(gdaltest.wfs_delete_url, "")
+    f = ogr.Feature(lyr.GetLayerDefn())
+    gdal.PushErrorHandler()
+    ret = lyr.DeleteFeature(200)
+    gdal.PopErrorHandler()
+    if ret == 0 or gdal.GetLastErrorMsg().find('Invalid XML content') < 0:
+        gdaltest.post_reason('fail')
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+
+
+
+    ds = ogr.Open('WFS:/vsimem/wfs_endpoint', update = 1)
+    lyr = ds.GetLayer(0)
+    gdal.FileFromMemBuffer(gdaltest.wfs_delete_url, "<foo/>")
+    f = ogr.Feature(lyr.GetLayerDefn())
+    gdal.PushErrorHandler()
+    ret = lyr.DeleteFeature(200)
+    gdal.PopErrorHandler()
+    if ret == 0 or gdal.GetLastErrorMsg().find('Cannot find <TransactionResponse>') < 0:
+        gdaltest.post_reason('fail')
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+
+
+    ds = ogr.Open('WFS:/vsimem/wfs_endpoint', update = 1)
+    lyr = ds.GetLayer(0)
+    gdal.FileFromMemBuffer(gdaltest.wfs_delete_url, "<TransactionResponse/>")
+    f = ogr.Feature(lyr.GetLayerDefn())
+    ret = lyr.DeleteFeature(200)
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+def ogr_wfs_vsimem_wfs200_paging():
+
+    if gdaltest.wfs_drv is None:
+        return 'skip'
+
+    gdal.FileFromMemBuffer('/vsimem/wfs200_endpoint_paging?SERVICE=WFS&REQUEST=GetCapabilities',
+"""<WFS_Capabilities version="2.0.0">
+    <OperationsMetadata>
+        <ows:Operation name="GetFeature">
+            <ows:Constraint name="CountDefault">
+                <ows:NoValues/>
+                <ows:DefaultValue>2</ows:DefaultValue>
+            </ows:Constraint>
+        </ows:Operation>
+        <ows:Constraint name="ImplementsResultPaging">
+            <ows:NoValues/><ows:DefaultValue>TRUE</ows:DefaultValue>
+        </ows:Constraint>
+    </OperationsMetadata>
+    <FeatureTypeList>
+        <FeatureType>
+            <Name>my_layer</Name>
+            <DefaultSRS>urn:ogc:def:crs:EPSG::4326</DefaultSRS>
+            <ows:WGS84BoundingBox>
+                <ows:LowerCorner>-180.0 -90.0</ows:LowerCorner>
+                <ows:UpperCorner>180.0 90.0</ows:UpperCorner>
+            </ows:WGS84BoundingBox>
+        </FeatureType>
+    </FeatureTypeList>
+  <ogc:Filter_Capabilities>
+    <ogc:Spatial_Capabilities>
+      <ogc:GeometryOperands>
+        <ogc:GeometryOperand>gml:Envelope</ogc:GeometryOperand>
+        <ogc:GeometryOperand>gml:Point</ogc:GeometryOperand>
+        <ogc:GeometryOperand>gml:LineString</ogc:GeometryOperand>
+        <ogc:GeometryOperand>gml:Polygon</ogc:GeometryOperand>
+      </ogc:GeometryOperands>
+      <ogc:SpatialOperators>
+        <ogc:SpatialOperator name="Disjoint"/>
+        <ogc:SpatialOperator name="Equals"/>
+        <ogc:SpatialOperator name="DWithin"/>
+        <ogc:SpatialOperator name="Beyond"/>
+        <ogc:SpatialOperator name="Intersects"/>
+        <ogc:SpatialOperator name="Touches"/>
+        <ogc:SpatialOperator name="Crosses"/>
+        <ogc:SpatialOperator name="Within"/>
+        <ogc:SpatialOperator name="Contains"/>
+        <ogc:SpatialOperator name="Overlaps"/>
+        <ogc:SpatialOperator name="BBOX"/>
+      </ogc:SpatialOperators>
+    </ogc:Spatial_Capabilities>
+    <ogc:Scalar_Capabilities>
+      <ogc:LogicalOperators/>
+      <ogc:ComparisonOperators>
+        <ogc:ComparisonOperator>LessThan</ogc:ComparisonOperator>
+        <ogc:ComparisonOperator>GreaterThan</ogc:ComparisonOperator>
+        <ogc:ComparisonOperator>LessThanEqualTo</ogc:ComparisonOperator>
+        <ogc:ComparisonOperator>GreaterThanEqualTo</ogc:ComparisonOperator>
+        <ogc:ComparisonOperator>EqualTo</ogc:ComparisonOperator>
+        <ogc:ComparisonOperator>NotEqualTo</ogc:ComparisonOperator>
+        <ogc:ComparisonOperator>Like</ogc:ComparisonOperator>
+        <ogc:ComparisonOperator>Between</ogc:ComparisonOperator>
+        <ogc:ComparisonOperator>NullCheck</ogc:ComparisonOperator>
+      </ogc:ComparisonOperators>
+      <ogc:ArithmeticOperators>
+        <ogc:SimpleArithmetic/>
+        <ogc:Functions/>
+      </ogc:ArithmeticOperators>
+    </ogc:Scalar_Capabilities>
+    <ogc:Id_Capabilities>
+      <ogc:FID/>
+      <ogc:EID/>
+    </ogc:Id_Capabilities>
+  </ogc:Filter_Capabilities>
+</WFS_Capabilities>
+""")
+
+    gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
+
+    ds = ogr.Open('WFS:/vsimem/wfs200_endpoint_paging')
+    lyr = ds.GetLayer(0)
+
+
+    gdal.FileFromMemBuffer('/vsimem/wfs200_endpoint_paging?SERVICE=WFS&VERSION=2.0.0&REQUEST=DescribeFeatureType&TYPENAME=my_layer',
+"""<xsd:schema xmlns:foo="http://foo" xmlns:gml="http://www.opengis.net/gml" xmlns:xsd="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="http://foo">
+  <xsd:import namespace="http://www.opengis.net/gml" schemaLocation="http://foo/schemas/gml/3.2.1/base/gml.xsd"/>
+  <xsd:complexType name="my_layerType">
+    <xsd:complexContent>
+      <xsd:extension base="gml:AbstractFeatureType">
+        <xsd:sequence>
+          <xsd:element maxOccurs="1" minOccurs="0" name="str" nillable="true" type="xsd:string"/>
+          <xsd:element maxOccurs="1" minOccurs="0" name="boolean" nillable="true" type="xsd:boolean"/>
+          <xsd:element maxOccurs="1" minOccurs="0" name="short" nillable="true" type="xsd:short"/>
+          <xsd:element maxOccurs="1" minOccurs="0" name="int" nillable="true" type="xsd:int"/>
+          <xsd:element maxOccurs="1" minOccurs="0" name="float" nillable="true" type="xsd:float"/>
+          <xsd:element maxOccurs="1" minOccurs="0" name="double" nillable="true" type="xsd:double"/>
+          <xsd:element maxOccurs="1" minOccurs="0" name="dt" nillable="true" type="xsd:dateTime"/>
+          <xsd:element maxOccurs="1" minOccurs="0" name="shape" nillable="true" type="gml:PointPropertyType"/>
+        </xsd:sequence>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:element name="my_layer" substitutionGroup="gml:_Feature" type="foo:my_layerType"/>
+</xsd:schema>
+""")
+
+
+    gdal.FileFromMemBuffer('/vsimem/wfs200_endpoint_paging?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=my_layer&STARTINDEX=0&COUNT=2',
+"""<wfs:FeatureCollection xmlns:xs="http://www.w3.org/2001/XMLSchema"
+xmlns:ogc="http://www.opengis.net/ogc"
+xmlns:foo="http://foo"
+xmlns:wfs="http://www.opengis.net/wfs"
+xmlns:ows="http://www.opengis.net/ows"
+xmlns:xlink="http://www.w3.org/1999/xlink"
+xmlns:gml="http://www.opengis.net/gml"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+numberMatched="unknown" numberReturned="2"
+timeStamp="2015-04-17T14:14:24.859Z"
+xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=2.0.0&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=my_layer
+                    http://www.opengis.net/wfs/2.0 http://schemas.opengis.net/wfs/2.0/wfs.xsd">
+    <gml:featureMembers>
+        <foo:my_layer gml:id="my_layer.1">
+            <foo:str>str</foo:str>
+            <foo:boolean>true</foo:boolean>
+            <foo:short>1</foo:short>
+            <foo:int>123456789</foo:int>
+            <foo:float>1.2</foo:float>
+            <foo:double>1.23</foo:double>
+            <foo:dt>2015-04-17T12:34:56Z</foo:dt>
+            <foo:shape>
+                <gml:Point srsDimension="2" srsName="urn:ogc:def:crs:EPSG::4326">
+                    <gml:pos>49 2</gml:pos>
+                </gml:Point>
+            </foo:shape>
+        </foo:my_layer>
+    </gml:featureMembers>
+    <gml:featureMembers>
+        <foo:my_layer gml:id="my_layer.2">
+        </foo:my_layer>
+    </gml:featureMembers>
+</wfs:FeatureCollection>
+""")
+
+    gdal.FileFromMemBuffer('/vsimem/wfs200_endpoint_paging?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=my_layer&STARTINDEX=2&COUNT=2',
+"""<wfs:FeatureCollection xmlns:xs="http://www.w3.org/2001/XMLSchema"
+xmlns:ogc="http://www.opengis.net/ogc"
+xmlns:foo="http://foo"
+xmlns:wfs="http://www.opengis.net/wfs"
+xmlns:ows="http://www.opengis.net/ows"
+xmlns:xlink="http://www.w3.org/1999/xlink"
+xmlns:gml="http://www.opengis.net/gml"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+numberMatched="unknown" numberReturned="1"
+timeStamp="2015-04-17T14:14:24.859Z"
+xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.0&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=my_layer
+                    http://www.opengis.net/wfs/2.0 http://schemas.opengis.net/wfs/2.0/wfs.xsd">
+    <gml:featureMembers>
+        <foo:my_layer gml:id="my_layer.3">
+        </foo:my_layer>
+    </gml:featureMembers>
+</wfs:FeatureCollection>
+""")
+
+    f = lyr.GetNextFeature()
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if f.gml_id != 'my_layer.1':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    f = lyr.GetNextFeature()
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if f.gml_id != 'my_layer.2':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    f = lyr.GetNextFeature()
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if f.gml_id != 'my_layer.3':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    f= lyr.GetNextFeature()
+    if f is not None:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    #if lyr.GetFeatureCount() != 3:
+    #    gdaltest.post_reason('fail')
+    #    print(lyr.GetFeatureCount())
+    #    return 'fail'
+
+    return 'success'
+
+
+###############################################################################
+def ogr_wfs_vsimem_wfs200_json():
+
+    if gdaltest.wfs_drv is None:
+        return 'skip'
+
+    gdal.FileFromMemBuffer('/vsimem/wfs200_endpoint_json?SERVICE=WFS&REQUEST=GetCapabilities',
+"""<WFS_Capabilities version="2.0.0">
+    <OperationsMetadata>
+        <ows:Operation name="GetFeature">
+            <ows:Parameter name="resultType">
+                <ows:Value>results</ows:Value>
+                <ows:Value>hits</ows:Value>
+            </ows:Parameter>
+            <ows:Parameter name="outputFormat">
+                <ows:AllowedValues>
+                    <ows:Value>application/json</ows:Value>
+                </ows:AllowedValues>
+            </ows:Parameter>
+            <ows:Constraint name="CountDefault">
+                <ows:NoValues/>
+                <ows:DefaultValue>2</ows:DefaultValue>
+            </ows:Constraint>
+        </ows:Operation>
+        <ows:Constraint name="ImplementsResultPaging">
+            <ows:NoValues/><ows:DefaultValue>TRUE</ows:DefaultValue>
+        </ows:Constraint>
+    </OperationsMetadata>
+    <FeatureTypeList>
+        <FeatureType>
+            <Name>my_layer</Name>
+            <DefaultSRS>urn:ogc:def:crs:EPSG::4326</DefaultSRS>
+            <ows:WGS84BoundingBox>
+                <ows:LowerCorner>-180.0 -90.0</ows:LowerCorner>
+                <ows:UpperCorner>180.0 90.0</ows:UpperCorner>
+            </ows:WGS84BoundingBox>
+        </FeatureType>
+    </FeatureTypeList>
+  <ogc:Filter_Capabilities>
+    <ogc:Spatial_Capabilities>
+      <ogc:GeometryOperands>
+        <ogc:GeometryOperand>gml:Envelope</ogc:GeometryOperand>
+        <ogc:GeometryOperand>gml:Point</ogc:GeometryOperand>
+        <ogc:GeometryOperand>gml:LineString</ogc:GeometryOperand>
+        <ogc:GeometryOperand>gml:Polygon</ogc:GeometryOperand>
+      </ogc:GeometryOperands>
+      <ogc:SpatialOperators>
+        <ogc:SpatialOperator name="Disjoint"/>
+        <ogc:SpatialOperator name="Equals"/>
+        <ogc:SpatialOperator name="DWithin"/>
+        <ogc:SpatialOperator name="Beyond"/>
+        <ogc:SpatialOperator name="Intersects"/>
+        <ogc:SpatialOperator name="Touches"/>
+        <ogc:SpatialOperator name="Crosses"/>
+        <ogc:SpatialOperator name="Within"/>
+        <ogc:SpatialOperator name="Contains"/>
+        <ogc:SpatialOperator name="Overlaps"/>
+        <ogc:SpatialOperator name="BBOX"/>
+      </ogc:SpatialOperators>
+    </ogc:Spatial_Capabilities>
+    <ogc:Scalar_Capabilities>
+      <ogc:LogicalOperators/>
+      <ogc:ComparisonOperators>
+        <ogc:ComparisonOperator>LessThan</ogc:ComparisonOperator>
+        <ogc:ComparisonOperator>GreaterThan</ogc:ComparisonOperator>
+        <ogc:ComparisonOperator>LessThanEqualTo</ogc:ComparisonOperator>
+        <ogc:ComparisonOperator>GreaterThanEqualTo</ogc:ComparisonOperator>
+        <ogc:ComparisonOperator>EqualTo</ogc:ComparisonOperator>
+        <ogc:ComparisonOperator>NotEqualTo</ogc:ComparisonOperator>
+        <ogc:ComparisonOperator>Like</ogc:ComparisonOperator>
+        <ogc:ComparisonOperator>Between</ogc:ComparisonOperator>
+        <ogc:ComparisonOperator>NullCheck</ogc:ComparisonOperator>
+      </ogc:ComparisonOperators>
+      <ogc:ArithmeticOperators>
+        <ogc:SimpleArithmetic/>
+        <ogc:Functions/>
+      </ogc:ArithmeticOperators>
+    </ogc:Scalar_Capabilities>
+    <ogc:Id_Capabilities>
+      <ogc:FID/>
+      <ogc:EID/>
+    </ogc:Id_Capabilities>
+  </ogc:Filter_Capabilities>
+</WFS_Capabilities>
+""")
+
+    gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
+
+    ds = ogr.Open('WFS:/vsimem/wfs200_endpoint_json?OUTPUTFORMAT=application/json')
+    lyr = ds.GetLayer(0)
+
+    gdal.FileFromMemBuffer('/vsimem/wfs200_endpoint_json?SERVICE=WFS&VERSION=2.0.0&REQUEST=DescribeFeatureType&TYPENAME=my_layer',
+"""<xsd:schema xmlns:foo="http://foo" xmlns:gml="http://www.opengis.net/gml" xmlns:xsd="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="http://foo">
+  <xsd:import namespace="http://www.opengis.net/gml" schemaLocation="http://foo/schemas/gml/3.2.1/base/gml.xsd"/>
+  <xsd:complexType name="my_layerType">
+    <xsd:complexContent>
+      <xsd:extension base="gml:AbstractFeatureType">
+        <xsd:sequence>
+          <xsd:element maxOccurs="1" minOccurs="0" name="str" nillable="true" type="xsd:string"/>
+          <xsd:element maxOccurs="1" minOccurs="0" name="boolean" nillable="true" type="xsd:boolean"/>
+          <xsd:element maxOccurs="1" minOccurs="0" name="short" nillable="true" type="xsd:short"/>
+          <xsd:element maxOccurs="1" minOccurs="0" name="int" nillable="true" type="xsd:int"/>
+          <xsd:element maxOccurs="1" minOccurs="0" name="float" nillable="true" type="xsd:float"/>
+          <xsd:element maxOccurs="1" minOccurs="0" name="double" nillable="true" type="xsd:double"/>
+          <xsd:element maxOccurs="1" minOccurs="0" name="dt" nillable="true" type="xsd:dateTime"/>
+          <xsd:element maxOccurs="1" minOccurs="0" name="shape" nillable="true" type="gml:PointPropertyType"/>
+        </xsd:sequence>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:element name="my_layer" substitutionGroup="gml:_Feature" type="foo:my_layerType"/>
+</xsd:schema>
+""")
+
+    gdal.FileFromMemBuffer('/vsimem/wfs200_endpoint_json?OUTPUTFORMAT=application/json&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=my_layer&STARTINDEX=0&COUNT=2',
+"""{"type":"FeatureCollection",
+"totalFeatures":"unknown",
+"features":[{"type":"Feature","id":"my_layer.1",
+"geometry":{"type":"Point","coordinates":[2, 49]},
+"properties":{"str":"str"}}]}
+""")
+
+    f = lyr.GetNextFeature()
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    # We currently invert... A bit weird. See comment in code. Probably inappropriate
+    if f.str != 'str' or f.GetGeometryRef().ExportToWkt() != 'POINT (49 2)':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    f= lyr.GetNextFeature()
+    if f is not None:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    return 'success'
+
+
+###############################################################################
+
+def ogr_wfs_vsimem_cleanup():
+
+    if gdaltest.wfs_drv is None:
+        return 'skip'
+
+    gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', None)
+
+    gdal.Unlink('/vsimem/wfs_endpoint?SERVICE=WFS&REQUEST=GetCapabilities')
+    gdal.Unlink('/vsimem/wfs_endpoint?SERVICE=WFS&VERSION=1.1.0&REQUEST=DescribeFeatureType&TYPENAME=my_layer')
+    gdal.Unlink('/vsimem/wfs_endpoint?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=my_layer&RESULTTYPE=hits')
+    gdal.Unlink('/vsimem/wfs_endpoint?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=my_layer')
+    gdal.Unlink('/vsimem/wfs_endpoint?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=my_layer&FILTER=%3CFilter%20xmlns%3D%22http:%2F%2Fwww.opengis.net%2Fogc%22%20xmlns:gml%3D%22http:%2F%2Fwww.opengis.net%2Fgml%22%3E%3CGmlObjectId%20id%3D%22my_layer.1%22%2F%3E%3CGmlObjectId%20id%3D%22my_layer.1%22%2F%3E%3C%2FFilter%3E')
+    gdal.Unlink('/vsimem/wfs_endpoint?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=my_layer&FILTER=%3CFilter%20xmlns%3D%22http:%2F%2Fwww.opengis.net%2Fogc%22%20xmlns:gml%3D%22http:%2F%2Fwww.opengis.net%2Fgml%22%3E%3CGmlObjectId%20id%3D%22my_layer.100%22%2F%3E%3C%2FFilter%3E')
+    gdal.Unlink('/vsimem/wfs_endpoint?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=my_layer&FILTER=%3CFilter%20xmlns%3D%22http:%2F%2Fwww.opengis.net%2Fogc%22%20xmlns:gml%3D%22http:%2F%2Fwww.opengis.net%2Fgml%22%3E%3CGmlObjectId%20id%3D%22my_layer.200%22%2F%3E%3C%2FFilter%3E')
+    gdal.Unlink('/vsimem/wfs_endpoint?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=my_layer&FILTER=%3CFilter%20xmlns%3D%22http:%2F%2Fwww.opengis.net%2Fogc%22%20xmlns:gml%3D%22http:%2F%2Fwww.opengis.net%2Fgml%22%3E%3COr%3E%3COr%3E%3COr%3E%3COr%3E%3COr%3E%3COr%3E%3COr%3E%3CAnd%3E%3CAnd%3E%3CPropertyIsEqualTo%3E%3CPropertyName%3Estr%3C%2FPropertyName%3E%3CLiteral%3Estr%3C%2FLiteral%3E%3C%2FPropertyIsEqualTo%3E%3CPropertyIsEqualTo%3E%3CPropertyName%3Eshort%3C%2FPropertyName%3E%3CLiteral%3E1%3C%2FLiteral%3E%3C%2FPropertyIsEqualTo%3E%3C%2FAnd%3E%3CPropertyIsEqualTo%3E%3CPropertyName%3Efloat%3C%2FPropertyName%3E%3CLiteral%3E1.2%3C%2FLiteral%3E%3C%2FPropertyIsEqualTo%3E%3C%2FAnd%3E%3CPropertyIsLike%20wildCard%3D%27%2A%27%20singleChar%3D%27_%27%20escapeChar%3D%27%21%27%3E%3CPropertyName%3Estr%3C%2FPropertyName%3E%3CLiteral%3Est%2A%3C%2FLiteral%3E%3C%2FPropertyIsLike%3E%3C%2FOr%3E%3CNot%3E%3CPropertyIsNull%3E%3CPropertyName%3Eboolean%3C%2FPropertyName%3E%3C%2FPropertyIsNull%3E%3C%2FNot%3E%3C%2FOr%3E%3CPropertyIsGreaterThan%3E%3CPropertyName%3Eint%3C%2FPropertyName%3E%3CLiteral%3E1%3C%2FLiteral%3E%3C%2FPropertyIsGreaterThan%3E%3C%2FOr%3E%3CPropertyIsGreaterThanOrEqualTo%3E%3CPropertyName%3Eint%3C%2FPropertyName%3E%3CLiteral%3E1%3C%2FLiteral%3E%3C%2FPropertyIsGreaterThanOrEqualTo%3E%3C%2FOr%3E%3CPropertyIsNotEqualTo%3E%3CPropertyName%3EINT%3C%2FPropertyName%3E%3CLiteral%3E2%3C%2FLiteral%3E%3C%2FPropertyIsNotEqualTo%3E%3C%2FOr%3E%3CPropertyIsLessThan%3E%3CPropertyName%3EINT%3C%2FPropertyName%3E%3CLiteral%3E2000000000%3C%2FLiteral%3E%3C%2FPropertyIsLessThan%3E%3C%2FOr%3E%3CPropertyIsLessThanOrEqualTo%3E%3CPropertyName%3EINT%3C%2FPropertyName%3E%3CLiteral%3E2000000000%3C%2FLiteral%3E%3C%2FPropertyIsLessThanOrEqualTo%3E%3C%2FOr%3E%3C%2FFilter%3E')
+    gdal.Unlink('/vsimem/wfs_endpoint?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=my_layer&FILTER=%3CFilter%20xmlns%3D%22http:%2F%2Fwww.opengis.net%2Fogc%22%20xmlns:gml%3D%22http:%2F%2Fwww.opengis.net%2Fgml%22%3E%3CBBOX%3E%3CPropertyName%3Eshape%3C%2FPropertyName%3E%3Cgml:Box%3E%3Cgml:coordinates%3E48.0000000000000000,1.0000000000000000%2050.0000000000000000,3.0000000000000000%3C%2Fgml:coordinates%3E%3C%2Fgml:Box%3E%3C%2FBBOX%3E%3C%2FFilter%3E')
+    gdal.Unlink('/vsimem/wfs_endpoint?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=my_layer&FILTER=%3CFilter%20xmlns%3D%22http:%2F%2Fwww.opengis.net%2Fogc%22%20xmlns:gml%3D%22http:%2F%2Fwww.opengis.net%2Fgml%22%3E%3CAnd%3E%3CPropertyIsEqualTo%3E%3CPropertyName%3Estr%3C%2FPropertyName%3E%3CLiteral%3Estr%3C%2FLiteral%3E%3C%2FPropertyIsEqualTo%3E%3CBBOX%3E%3CPropertyName%3Eshape%3C%2FPropertyName%3E%3Cgml:Box%3E%3Cgml:coordinates%3E48.0000000000000000,1.0000000000000000%2050.0000000000000000,3.0000000000000000%3C%2Fgml:coordinates%3E%3C%2Fgml:Box%3E%3C%2FBBOX%3E%3C%2FAnd%3E%3C%2FFilter%3E')
+    gdal.Unlink('/vsimem/wfs200_endpoint_paging?SERVICE=WFS&REQUEST=GetCapabilities')
+    gdal.Unlink('/vsimem/wfs200_endpoint_paging?SERVICE=WFS&VERSION=2.0.0&REQUEST=DescribeFeatureType&TYPENAME=my_layer')
+    gdal.Unlink('/vsimem/wfs200_endpoint_paging?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=my_layer&STARTINDEX=0&COUNT=2')
+    gdal.Unlink('/vsimem/wfs200_endpoint_paging?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=my_layer&STARTINDEX=2&COUNT=2')
+    gdal.Unlink('/vsimem/wfs200_endpoint_json?SERVICE=WFS&REQUEST=GetCapabilities')
+    gdal.Unlink('/vsimem/wfs200_endpoint_json?SERVICE=WFS&VERSION=2.0.0&REQUEST=DescribeFeatureType&TYPENAME=my_layer')
+    gdal.Unlink('/vsimem/wfs200_endpoint_json?OUTPUTFORMAT=application/json&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=my_layer&STARTINDEX=0&COUNT=2')
+    if gdaltest.wfs_insert_url:
+        gdal.Unlink(gdaltest.wfs_insert_url)
+    gdaltest.wfs_insert_url = None
+    if gdaltest.wfs_update_url:
+        gdal.Unlink(gdaltest.wfs_update_url)
+    gdaltest.wfs_update_url = None
+    if gdaltest.wfs_delete_url:
+        gdal.Unlink(gdaltest.wfs_delete_url)
+    gdaltest.wfs_delete_url = None
+
+    return 'success'
+
+gdaltest_live_list = [ 
     #ogr_wfs_mapserver,
     #ogr_wfs_geoserver, #FIXME: reenable after adapting test
     #ogr_wfs_geoserver_json, #FIXME: reenable after adapting test
@@ -1135,6 +3213,50 @@ gdaltest_list = [
     ogr_wfs_deegree,
     #ogr_wfs_test_ogrsf,
     ]
+
+gdaltest_vsimem_list = [ 
+    ogr_wfs_vsimem_fail_because_not_enabled,
+    ogr_wfs_vsimem_fail_because_no_get_capabilities,
+    ogr_wfs_vsimem_fail_because_no_WFS_Capabilities,
+    ogr_wfs_vsimem_fail_because_exception,
+    ogr_wfs_vsimem_fail_because_invalid_xml_capabilities,
+    ogr_wfs_vsimem_fail_because_missing_featuretypelist,
+    ogr_wfs_vsimem_wfs110_minimal_instance,
+    ogr_wfs_vsimem_wfs110_one_layer_missing_describefeaturetype,
+    ogr_wfs_vsimem_wfs110_one_layer_invalid_describefeaturetype,
+    ogr_wfs_vsimem_wfs110_one_layer_describefeaturetype_missing_schema,
+    ogr_wfs_vsimem_wfs110_one_layer_describefeaturetype,
+    ogr_wfs_vsimem_wfs110_one_layer_missing_getfeaturecount_no_hits,
+    ogr_wfs_vsimem_wfs110_one_layer_missing_getfeaturecount_with_hits,
+    ogr_wfs_vsimem_wfs110_one_layer_invalid_getfeaturecount_with_hits,
+    ogr_wfs_vsimem_wfs110_one_layer_getfeaturecount_with_hits_missing_FeatureCollection,
+    ogr_wfs_vsimem_wfs110_one_layer_getfeaturecount_with_hits_missing_numberOfFeatures,
+    ogr_wfs_vsimem_wfs110_one_layer_getfeaturecount_with_hits,
+    ogr_wfs_vsimem_wfs110_one_layer_missing_getfeature,
+    ogr_wfs_vsimem_wfs110_one_layer_invalid_getfeature,
+    ogr_wfs_vsimem_wfs110_one_layer_getfeature,
+    ogr_wfs_vsimem_wfs110_one_layer_getextent,
+    ogr_wfs_vsimem_wfs110_one_layer_getextent_without_getfeature,
+    ogr_wfs_vsimem_wfs110_one_layer_getfeature_ogr_getfeature,
+    ogr_wfs_vsimem_wfs110_one_layer_filter_gml_id_failed,
+    ogr_wfs_vsimem_wfs110_one_layer_filter_gml_id_success,
+    ogr_wfs_vsimem_wfs110_one_layer_filter,
+    ogr_wfs_vsimem_wfs110_one_layer_spatial_filter,
+    ogr_wfs_vsimem_wfs110_one_layer_spatial_filter_and_attribute_filter,
+    ogr_wfs_vsimem_wfs110_insertfeature,
+    ogr_wfs_vsimem_wfs110_updatefeature,
+    ogr_wfs_vsimem_wfs110_deletefeature,
+    ogr_wfs_vsimem_wfs200_paging,
+    ogr_wfs_vsimem_wfs200_json,
+    ogr_wfs_vsimem_cleanup,
+]
+
+gdaltest_list = [ ogr_wfs_init ]
+gdaltest_list += gdaltest_vsimem_list
+gdaltest_list += [ogr_wfs_turn_streaming_off]
+gdaltest_list += gdaltest_vsimem_list
+gdaltest_list += [ogr_wfs_turn_streaming_on]
+gdaltest_list += gdaltest_live_list
 
 if __name__ == '__main__':
 
