@@ -356,7 +356,8 @@ OGRFeatureDefn* OGRWFSLayer::BuildLayerDefnFromFeatureClass(GMLFeatureClass* poC
             eFType = OFTReal;
         else if( poProperty->GetType() == GMLPT_StringList )
             eFType = OFTStringList;
-        else if( poProperty->GetType() == GMLPT_IntegerList )
+        else if( poProperty->GetType() == GMLPT_IntegerList ||
+                 poProperty->GetType() == GMLPT_BooleanList )
             eFType = OFTIntegerList;
         else if( poProperty->GetType() == GMLPT_Integer64List )
             eFType = OFTInteger64List;
@@ -372,6 +373,13 @@ OGRFeatureDefn* OGRWFSLayer::BuildLayerDefnFromFeatureClass(GMLFeatureClass* poC
             oField.SetWidth( poProperty->GetWidth() );
         if( poProperty->GetPrecision() > 0 )
             oField.SetPrecision( poProperty->GetPrecision() );
+        if( poProperty->GetType() == GMLPT_Boolean ||
+            poProperty->GetType() == GMLPT_BooleanList )
+            oField.SetSubType(OFSTBoolean);
+        else if( poProperty->GetType() == GMLPT_Short) 
+            oField.SetSubType(OFSTInt16);
+        else if( poProperty->GetType() == GMLPT_Float) 
+            oField.SetSubType(OFSTFloat32);
         oField.SetNullable(poProperty->IsNullable());
 
         poFDefn->AddFieldDefn( &oField );
