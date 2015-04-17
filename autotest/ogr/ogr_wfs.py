@@ -1876,6 +1876,35 @@ def ogr_wfs_vsimem_wfs110_one_layer_invalid_getfeature():
     return 'success'
 
 ###############################################################################
+def ogr_wfs_vsimem_wfs110_one_layer_exception_getfeature():
+
+    if gdaltest.wfs_drv is None:
+        return 'skip'
+
+    gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
+
+    ds = ogr.Open('WFS:/vsimem/wfs_endpoint')
+    lyr = ds.GetLayer(0)
+
+    gdal.FileFromMemBuffer('/vsimem/wfs_endpoint?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=my_layer',
+"""<ServiceExceptionReport/>
+""")
+
+    gdal.ErrorReset()
+    gdal.PushErrorHandler()
+    f = lyr.GetNextFeature()
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorMsg().find('Error returned by server') < 0:
+        gdaltest.post_reason('fail')
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+    if f is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 def ogr_wfs_vsimem_wfs110_one_layer_getfeature():
 
     if gdaltest.wfs_drv is None:
@@ -4025,6 +4054,145 @@ def ogr_wfs_vsimem_wfs200_json():
 
 
 ###############################################################################
+def ogr_wfs_vsimem_wfs200_multipart():
+
+    if gdaltest.wfs_drv is None:
+        return 'skip'
+
+    gdal.FileFromMemBuffer('/vsimem/wfs200_endpoint_multipart?SERVICE=WFS&REQUEST=GetCapabilities',
+"""<WFS_Capabilities version="2.0.0">
+    <FeatureTypeList>
+        <FeatureType>
+            <Name>my_layer</Name>
+            <DefaultSRS>urn:ogc:def:crs:EPSG::4326</DefaultSRS>
+            <ows:WGS84BoundingBox>
+                <ows:LowerCorner>-180.0 -90.0</ows:LowerCorner>
+                <ows:UpperCorner>180.0 90.0</ows:UpperCorner>
+            </ows:WGS84BoundingBox>
+        </FeatureType>
+    </FeatureTypeList>
+</WFS_Capabilities>
+""")
+
+    gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
+
+    ds = ogr.Open('WFS:/vsimem/wfs200_endpoint_multipart?OUTPUTFORMAT=jsonmultipart')
+    lyr = ds.GetLayer(0)
+
+    gdal.FileFromMemBuffer('/vsimem/wfs200_endpoint_multipart?SERVICE=WFS&VERSION=2.0.0&REQUEST=DescribeFeatureType&TYPENAME=my_layer',
+"""<xsd:schema xmlns:foo="http://foo" xmlns:gml="http://www.opengis.net/gml" xmlns:xsd="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="http://foo">
+  <xsd:import namespace="http://www.opengis.net/gml" schemaLocation="http://foo/schemas/gml/3.2.1/base/gml.xsd"/>
+  <xsd:complexType name="my_layerType">
+    <xsd:complexContent>
+      <xsd:extension base="gml:AbstractFeatureType">
+        <xsd:sequence>
+          <xsd:element maxOccurs="1" minOccurs="0" name="str" nillable="true" type="xsd:string"/>
+          <xsd:element maxOccurs="1" minOccurs="0" name="shape" nillable="true" type="gml:PointPropertyType"/>
+        </xsd:sequence>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:element name="my_layer" substitutionGroup="gml:_Feature" type="foo:my_layerType"/>
+</xsd:schema>
+""")
+
+    gdal.FileFromMemBuffer('/vsimem/wfs200_endpoint_multipart?OUTPUTFORMAT=jsonmultipart&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=my_layer',
+"""Content-Type: multipart/mixed; boundary="my_boundary"
+\r
+\r
+--my_boundary 
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: attachment; filename=my.json
+\r
+{
+"type":"FeatureCollection",
+"totalFeatures":"unknown",
+"features":[
+    {
+        "type":"Feature",
+        "id":"my_layer.1",
+        "geometry":{"type":"Point","coordinates":[2, 49]},
+        "properties":{"str":"str"}
+    }
+]
+}
+--my_boundary--
+""")
+
+    f = lyr.GetNextFeature()
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    # We currently invert... A bit weird. See comment in code. Probably inappropriate
+    if f.str != 'str' or f.GetGeometryRef().ExportToWkt() != 'POINT (49 2)':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+
+
+    ds = ogr.Open('WFS:/vsimem/wfs200_endpoint_multipart?OUTPUTFORMAT=jsonmultipart')
+    lyr = ds.GetLayer(0)
+
+    gdal.FileFromMemBuffer('/vsimem/wfs200_endpoint_multipart?OUTPUTFORMAT=jsonmultipart&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=my_layer',
+"""Content-Type: multipart/mixed; boundary="my_boundary"
+\r
+\r
+--my_boundary 
+\r
+{
+"type":"FeatureCollection",
+"totalFeatures":"unknown",
+"features":[
+    {
+        "type":"Feature",
+        "id":"my_layer.1",
+        "geometry":{"type":"Point","coordinates":[2, 49]},
+        "properties":{"str":"str"}
+    }
+]
+}
+--my_boundary--
+""")
+
+    f = lyr.GetNextFeature()
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+        
+
+    ds = ogr.Open('WFS:/vsimem/wfs200_endpoint_multipart?OUTPUTFORMAT=jsonmultipart')
+    lyr = ds.GetLayer(0)
+
+    gdal.FileFromMemBuffer('/vsimem/wfs200_endpoint_multipart?OUTPUTFORMAT=jsonmultipart&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=my_layer',
+"""Content-Type: multipart/mixed; boundary="my_boundary"
+\r
+\r
+--my_boundary
+Content-Disposition: attachment; filename=my.csvt
+\r
+String,String
+--my_boundary
+Content-Disposition: attachment; filename=my.csv
+\r
+str,WKT
+str,"POINT(2 49)"
+--my_boundary--
+""")
+    f = lyr.GetNextFeature()
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    # We currently invert... A bit weird. See comment in code. Probably inappropriate
+    if f.str != 'str' or f.GetGeometryRef().ExportToWkt() != 'POINT (49 2)':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    return 'success'
+
+
+###############################################################################
 
 def ogr_wfs_vsimem_cleanup():
 
@@ -4063,6 +4231,10 @@ def ogr_wfs_vsimem_cleanup():
     gdal.Unlink('/vsimem/wfs200_endpoint_json?SERVICE=WFS&REQUEST=GetCapabilities')
     gdal.Unlink('/vsimem/wfs200_endpoint_json?SERVICE=WFS&VERSION=2.0.0&REQUEST=DescribeFeatureType&TYPENAME=my_layer')
     gdal.Unlink('/vsimem/wfs200_endpoint_json?OUTPUTFORMAT=application/json&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=my_layer&STARTINDEX=0&COUNT=2')
+    gdal.Unlink('/vsimem/wfs200_endpoint_multipart?SERVICE=WFS&REQUEST=GetCapabilities')
+    gdal.Unlink('/vsimem/wfs200_endpoint_multipart?SERVICE=WFS&VERSION=2.0.0&REQUEST=DescribeFeatureType&TYPENAME=my_layer')
+    gdal.Unlink('/vsimem/wfs200_endpoint_multipart?OUTPUTFORMAT=jsonmultipart&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=my_layer')
+    
     if gdaltest.wfs_insert_url:
         gdal.Unlink(gdaltest.wfs_insert_url)
     gdaltest.wfs_insert_url = None
@@ -4130,6 +4302,7 @@ gdaltest_vsimem_list = [
     ogr_wfs_vsimem_wfs110_one_layer_getfeaturecount_with_hits,
     ogr_wfs_vsimem_wfs110_one_layer_missing_getfeature,
     ogr_wfs_vsimem_wfs110_one_layer_invalid_getfeature,
+    ogr_wfs_vsimem_wfs110_one_layer_exception_getfeature,
     ogr_wfs_vsimem_wfs110_one_layer_getfeature,
     ogr_wfs_vsimem_wfs110_one_layer_getextent,
     ogr_wfs_vsimem_wfs110_one_layer_getextent_without_getfeature,
@@ -4148,6 +4321,7 @@ gdaltest_vsimem_list = [
     ogr_wfs_vsimem_wfs110_multiple_layers_same_name_different_ns,
     ogr_wfs_vsimem_wfs200_paging,
     ogr_wfs_vsimem_wfs200_json,
+    ogr_wfs_vsimem_wfs200_multipart,
     ogr_wfs_vsimem_cleanup,
 ]
 
