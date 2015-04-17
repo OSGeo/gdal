@@ -825,7 +825,8 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
         osBaseURL = pszBaseURL;
 
         if (strncmp(pszBaseURL, "http://", 7) != 0 &&
-            strncmp(pszBaseURL, "https://", 8) != 0)
+            strncmp(pszBaseURL, "https://", 8) != 0 &&
+            strncmp(pszBaseURL, "/vsimem/", strlen("/vsimem/")) != 0)
             return FALSE;
 
         CPLString strOriginalTypeName = "";

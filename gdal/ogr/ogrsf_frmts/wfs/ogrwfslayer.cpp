@@ -717,6 +717,11 @@ GDALDataset* OGRWFSLayer::FetchGetFeature(int nRequestMaxFeatures)
     {
         const char* pszStreamingName = CPLSPrintf("/vsicurl_streaming/%s",
                                                     osURL.c_str());
+        if( strncmp(osURL, "/vsimem/", strlen("/vsimem/")) == 0 &&
+            CSLTestBoolean(CPLGetConfigOption("CPL_CURL_ENABLE_VSIMEM", "FALSE")) )
+        {
+            pszStreamingName = osURL.c_str();
+        }
 
         const char* const apszAllowedDrivers[] = { "GML", NULL };
         const char* apszOpenOptions[2] = { NULL, NULL };
