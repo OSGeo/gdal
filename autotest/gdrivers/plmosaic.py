@@ -894,6 +894,95 @@ def plmosaic_20():
     return 'success'
 
 ###############################################################################
+# Try use_tiles
+
+def plmosaic_21():
+
+    if gdaltest.plmosaic_drv is None:
+        return 'skip'
+
+    gdal.SetConfigOption('PL_URL', '/vsimem/root')
+    ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options = ['API_KEY=foo', 'MOSAIC=my_mosaic', 'CACHE_PATH=', 'USE_TILES=YES'])
+    gdal.SetConfigOption('PL_URL', None)
+
+    gdal.ErrorReset()
+    gdal.PushErrorHandler()
+    ds.ReadRaster(0,0,1,1)
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.ErrorReset()
+    gdal.PushErrorHandler()
+    ds.GetRasterBand(1).ReadRaster(0,0,1,1)
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.ErrorReset()
+    gdal.PushErrorHandler()
+    ds.GetRasterBand(1).ReadBlock(0,0)
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.FileFromMemBuffer('/vsimem/root/mosaic_uint16', """{
+    "name": "mosaic_uint16",
+    "coordinate_system": "EPSG:3857",
+    "datatype": "uint16",
+    "quad_pattern": "my_{glevel:d}_{tilex:04d}_{tiley:04d}",
+    "quad_size": 4096,
+    "resolution": 4.77731426716,
+    "first_acquired": "first_date",
+    "last_acquired": "last_date",
+    "links" : {
+        "quads" : "/vsimem/root/mosaic_uint16/quads/",
+        "tiles" : "/vsimem/root/mosaic_uint16/tiles{0-3}/{z}/{x}/{y}.png"
+    }
+}""")
+
+    # Should emit a warning
+    gdal.ErrorReset()
+    gdal.PushErrorHandler()
+    gdal.SetConfigOption('PL_URL', '/vsimem/root')
+    ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options = ['API_KEY=foo', 'MOSAIC=mosaic_uint16', 'CACHE_PATH=', 'USE_TILES=YES'])
+    gdal.SetConfigOption('PL_URL', None)
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorMsg().find('Cannot use tile API for full resolution data on non Byte mosaic') < 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.FileFromMemBuffer('/vsimem/root/mosaic_without_tiles', """{
+    "name": "mosaic_without_tiles",
+    "coordinate_system": "EPSG:3857",
+    "datatype": "byte",
+    "quad_pattern": "my_{glevel:d}_{tilex:04d}_{tiley:04d}",
+    "quad_size": 4096,
+    "resolution": 4.77731426716,
+    "first_acquired": "first_date",
+    "last_acquired": "last_date",
+    "links" : {
+        "quads" : "/vsimem/root/mosaic_without_tiles/quads/",
+    }
+}""")
+
+    # Should emit a warning
+    gdal.ErrorReset()
+    gdal.PushErrorHandler()
+    gdal.SetConfigOption('PL_URL', '/vsimem/root')
+    ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options = ['API_KEY=foo', 'MOSAIC=mosaic_without_tiles', 'CACHE_PATH=', 'USE_TILES=YES'])
+    gdal.SetConfigOption('PL_URL', None)
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorMsg().find('Cannot find tile definition, so use_tiles will be ignored') < 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 #
 
 def plmosaic_cleanup():
@@ -908,6 +997,8 @@ def plmosaic_cleanup():
     gdal.Unlink('/vsimem/root/my_mosaic/quads/my_15_0000_2047')
     gdal.Unlink('/vsimem/root/my_mosaic/quads/my_15_0000_2047/full')
     gdal.Unlink('/vsimem/root/my_mosaic/quads/my_15_0000_2047/scenes')
+    gdal.Unlink('/vsimem/root/mosaic_uint16')
+    gdal.Unlink('/vsimem/root/mosaic_without_tiles')
 
     try:
         shutil.rmtree('tmp/plmosaic_cache')
@@ -940,6 +1031,7 @@ gdaltest_list = [
     plmosaic_18,
     plmosaic_19,
     plmosaic_20,
+    plmosaic_21,
     plmosaic_cleanup ]
 
 if __name__ == '__main__':

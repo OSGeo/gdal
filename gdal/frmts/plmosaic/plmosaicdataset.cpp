@@ -81,6 +81,7 @@ class PLMosaicDataset : public GDALPamDataset
         int                     bHasGeoTransform;
         double                  adfGeoTransform[6];
         int                     nZoomLevel;
+        int                     bUseTMSForMain;
         GDALDataset            *poTMSDS;
 
         int                     nCacheMaxSize;
@@ -200,6 +201,10 @@ CPLErr PLMosaicRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     PLMosaicDataset* poMOSDS = (PLMosaicDataset*) poDS;
     //CPLDebug("PLMOSAIC", "IReadBlock(band=%d, x=%d, y=%d)", nBand, xBlock, yBlock);
 
+    if( poMOSDS->bUseTMSForMain && poMOSDS->poTMSDS )
+        return poMOSDS->poTMSDS->GetRasterBand(nBand)->ReadBlock(nBlockXOff, nBlockYOff,
+                                                                pImage);
+
     int bottom_yblock = (nRasterYSize - nBlockYOff * nBlockYSize) / nBlockYSize - 1;
 
     int meta_tile_x = (nBlockXOff * nBlockXSize) / poMOSDS->nQuadSize;
@@ -236,6 +241,13 @@ CPLErr PLMosaicRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                                          GSpacing nPixelSpace, GSpacing nLineSpace,
                                          GDALRasterIOExtraArg* psExtraArg )
 {
+    PLMosaicDataset* poMOSDS = (PLMosaicDataset*) poDS;
+    if( poMOSDS->bUseTMSForMain && poMOSDS->poTMSDS )
+        return poMOSDS->poTMSDS->GetRasterBand(nBand)->RasterIO(
+                                         eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                                         pData, nBufXSize, nBufYSize, eBufType,
+                                         nPixelSpace, nLineSpace, psExtraArg );
+
     return GDALRasterBand::IRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                          pData, nBufXSize, nBufYSize, eBufType,
                                          nPixelSpace, nLineSpace, psExtraArg );
@@ -340,6 +352,7 @@ PLMosaicDataset::PLMosaicDataset()
     nCacheMaxSize = 10;
     nLastMetaTileX = -1;
     nLastMetaTileY = -1;
+    bUseTMSForMain = FALSE;
     poTMSDS = NULL;
 }
 
@@ -533,6 +546,32 @@ json_object* PLMosaicDataset::RunRequest(const char* pszURL,
 }
 
 /************************************************************************/
+/*                           PLMosaicGetParameter()                     */
+/************************************************************************/
+
+static CPLString PLMosaicGetParameter( GDALOpenInfo * poOpenInfo,
+                                       const char* pszName,
+                                       const char* pszDefaultVal )
+{
+    CPLString osFilename(poOpenInfo->pszFilename);
+    size_t iPos = osFilename.ifind(CPLSPrintf("%s=", pszName));
+    CPLString osRet;
+    if( iPos != std::string::npos )
+    {
+        osRet = osFilename.substr(iPos + strlen(pszName) + 1);
+        iPos = osRet.find(',');
+        if( iPos == std::string::npos )
+            iPos = osRet.find(' ');
+        if( iPos != std::string::npos )
+            osRet.resize(iPos);
+    }
+    else
+        osRet = CSLFetchNameValueDef( poOpenInfo->papszOpenOptions, pszName,
+                                      pszDefaultVal );
+    return osRet;
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
@@ -546,19 +585,8 @@ GDALDataset *PLMosaicDataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS->osBaseURL = CPLGetConfigOption("PL_URL", "https://api.planet.com/v0/mosaics/");
     
-    poDS->osAPIKey = CPLGetConfigOption("PL_API_KEY","");
-    const char* pszApiKey = strstr(poOpenInfo->pszFilename, "api_key=");
-    if( pszApiKey )
-    {
-        poDS->osAPIKey = pszApiKey + strlen("api_key=");
-        const char* pszEnd = strchr(poDS->osAPIKey, ',');
-        if( pszEnd == NULL )
-            pszEnd = strchr(poDS->osAPIKey, ' ');
-        if( pszEnd )
-            poDS->osAPIKey.resize(pszEnd - poDS->osAPIKey.c_str());
-    }
-    else if( CSLFetchNameValue(poOpenInfo->papszOpenOptions, "API_KEY") )
-        poDS->osAPIKey = CSLFetchNameValue(poOpenInfo->papszOpenOptions, "API_KEY");
+    poDS->osAPIKey = PLMosaicGetParameter(poOpenInfo, "api_key",
+                                          CPLGetConfigOption("PL_API_KEY",""));
 
     if( poDS->osAPIKey.size() == 0 )
     {
@@ -568,25 +596,14 @@ GDALDataset *PLMosaicDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
-    if( CSLFetchNameValue(poOpenInfo->papszOpenOptions, "CACHE_PATH") )
-        poDS->osCachePathRoot = CSLFetchNameValue(poOpenInfo->papszOpenOptions, "CACHE_PATH");
-    else if( CPLGetConfigOption("PL_CACHE_PATH", NULL) )
-        poDS->osCachePathRoot = CPLGetConfigOption("PL_CACHE_PATH", NULL);
-    
-     poDS->bTrustCache = CSLFetchBoolean(poOpenInfo->papszOpenOptions, "TRUST_CACHE", FALSE);
+    poDS->osMosaic = PLMosaicGetParameter(poOpenInfo, "mosaic", "");
 
-    const char* pszMosaic = strstr(poOpenInfo->pszFilename, "mosaic=");
-    if( pszMosaic )
-    {
-        poDS->osMosaic = pszMosaic + strlen("mosaic=");
-        const char* pszEnd = strchr(poDS->osMosaic, ',');
-        if( pszEnd == NULL )
-            pszEnd = strchr(poDS->osMosaic, ' ');
-        if( pszEnd )
-            poDS->osMosaic.resize(pszEnd - poDS->osMosaic.c_str());
-    }
-    else if( CSLFetchNameValue(poOpenInfo->papszOpenOptions, "MOSAIC") )
-        poDS->osMosaic = CSLFetchNameValue(poOpenInfo->papszOpenOptions, "MOSAIC");
+    poDS->osCachePathRoot = PLMosaicGetParameter(poOpenInfo, "cache_path",
+                                          CPLGetConfigOption("PL_CACHE_PATH",""));
+
+    poDS->bTrustCache = CSLTestBoolean(PLMosaicGetParameter(poOpenInfo, "trust_cache", "FALSE"));
+
+    poDS->bUseTMSForMain = CSLTestBoolean(PLMosaicGetParameter(poOpenInfo, "use_tiles", "FALSE"));
 
     if( poDS->osMosaic.size() )
     {
@@ -752,6 +769,13 @@ int PLMosaicDataset::OpenMosaic()
         json_object_put(poObj);
         return FALSE;
     }
+    
+    if( bUseTMSForMain && eDT != GDT_Byte )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Cannot use tile API for full resolution data on non Byte mosaic");
+        bUseTMSForMain = FALSE;
+    }
 
     nQuadSize = json_object_get_int(poQuadSize);
     if( nQuadSize <= 0 || (nQuadSize % 256) != 0 )
@@ -865,6 +889,13 @@ int PLMosaicDataset::OpenMosaic()
             poTMSDS = (GDALDataset*)GDALOpenEx(osTMS, GDAL_OF_RASTER | GDAL_OF_INTERNAL,
                                                NULL, NULL, NULL);
         }
+    }
+    
+    if( bUseTMSForMain && poTMSDS == NULL )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Cannot find tile definition, so use_tiles will be ignored");
+        bUseTMSForMain = FALSE;
     }
 
     for(int i=0;i<4;i++)
@@ -1409,6 +1440,13 @@ CPLErr  PLMosaicDataset::IRasterIO( GDALRWFlag eRWFlag,
                                GSpacing nBandSpace,
                                GDALRasterIOExtraArg* psExtraArg)
 {
+    if( bUseTMSForMain && poTMSDS )
+        return poTMSDS->RasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize, 
+                                  pData, nBufXSize, nBufYSize,
+                                  eBufType, nBandCount, panBandMap,
+                                  nPixelSpace, nLineSpace, nBandSpace,
+                                  psExtraArg );
+
     return BlockBasedRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize, 
                                pData, nBufXSize, nBufYSize,
                                eBufType, nBandCount, panBandMap,
@@ -1440,8 +1478,9 @@ void GDALRegister_PLMOSAIC()
 "<OpenOptionList>"
 "  <Option name='API_KEY' type='string' description='Account API key'/>"
 "  <Option name='MOSAIC' type='string' description='Mosaic name'/>"
-"  <Option name='CACHE_PATH' type='string' description='Directory where to put cached metatiles'/>"
-"  <Option name='TRUST_CACHE' type='boolean' description='Whether already cached metatiles should be trusted as the most recent version' default='NO'/>"
+"  <Option name='CACHE_PATH' type='string' description='Directory where to put cached quads'/>"
+"  <Option name='TRUST_CACHE' type='boolean' description='Whether already cached quads should be trusted as the most recent version' default='NO'/>"
+"  <Option name='USE_TILES' type='boolean' description='Whether to use the tile API even for full resolution data (only for Byte mosaics)' default='NO'/>"
 "</OpenOptionList>" );
 
         poDriver->pfnIdentify = PLMosaicDataset::Identify;
