@@ -654,7 +654,7 @@ OGRLayer * OGRCouchDBDataSource::ExecuteSQL( const char *pszSQLCommand,
             return NULL;
         }
 
-        swq_expr_node * pNode = (swq_expr_node *) oQuery.GetSWGExpr();
+        swq_expr_node * pNode = (swq_expr_node *) oQuery.GetSWQExpr();
         if (pNode->eNodeType == SNT_OPERATION &&
             pNode->nOperation == SWQ_EQ &&
             pNode->nSubExprCount == 2 &&

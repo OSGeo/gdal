@@ -416,7 +416,7 @@ int OGRLayer::AttributeFilterEvaluationNeedsGeometry()
     if( !m_poAttrQuery )
         return FALSE;
 
-    swq_expr_node* expr = (swq_expr_node *) m_poAttrQuery->GetSWGExpr();
+    swq_expr_node* expr = (swq_expr_node *) m_poAttrQuery->GetSWQExpr();
     int nLayerFieldCount = GetLayerDefn()->GetFieldCount();
 
     return ContainGeomSpecialField(expr, nLayerFieldCount);
