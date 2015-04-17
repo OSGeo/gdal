@@ -1230,7 +1230,7 @@ OGRErr OGROpenFileGDBLayer::SetAttributeFilter( const char* pszFilter )
 
     if( m_poAttrQuery != NULL && m_nFilteredFeatureCount < 0 )
     {
-        swq_expr_node* poNode = (swq_expr_node*) m_poAttrQuery->GetSWGExpr();
+        swq_expr_node* poNode = (swq_expr_node*) m_poAttrQuery->GetSWQExpr();
         poNode->ReplaceBetweenByGEAndLERecurse();
         m_bIteratorSufficientToEvaluateFilter = -1;
         m_poIterator = BuildIteratorFromExprNode(poNode);

@@ -461,7 +461,7 @@ class CPL_DLL OGRFeatureQuery
 
     char      **GetUsedFields();
 
-    void       *GetSWGExpr() { return pSWQExpr; }
+    void       *GetSWQExpr() { return pSWQExpr; }
 };
 
 #endif /* ndef _OGR_FEATURE_H_INCLUDED */

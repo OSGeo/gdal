@@ -545,7 +545,7 @@ CPLString OGRCouchDBTableLayer::BuildAttrQueryURI(int& bOutHasStrictComparisons)
 
     int bCanHandleFilter = FALSE;
 
-    swq_expr_node * pNode = (swq_expr_node *) m_poAttrQuery->GetSWGExpr();
+    swq_expr_node * pNode = (swq_expr_node *) m_poAttrQuery->GetSWQExpr();
     if (pNode->eNodeType == SNT_OPERATION &&
         (pNode->nOperation == SWQ_EQ ||
             pNode->nOperation == SWQ_GE ||

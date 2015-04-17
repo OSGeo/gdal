@@ -238,7 +238,7 @@ OGRErr OGRSQLiteSelectLayerCommonBehaviour::SetAttributeFilter( const char *pszQ
     CPLPushErrorHandler(CPLQuietErrorHandler);
     int bHasSpecialFields = (pszQuery != NULL && pszQuery[0] != '\0' &&
         oQuery.Compile( poLayer->GetLayerDefn(), pszQuery ) == OGRERR_NONE &&
-        HasSpecialFields((swq_expr_node*)oQuery.GetSWGExpr(), poLayer->GetLayerDefn()->GetFieldCount()) );
+        HasSpecialFields((swq_expr_node*)oQuery.GetSWQExpr(), poLayer->GetLayerDefn()->GetFieldCount()) );
     CPLPopErrorHandler();
 
     if( bHasSpecialFields || !BuildSQL() )

@@ -428,7 +428,7 @@ OGRErr OGRPLScenesLayer::SetAttributeFilter( const char *pszQuery )
     bFilterMustBeClientSideEvaluated = FALSE;
     if( m_poAttrQuery != NULL )
     {
-        swq_expr_node* poNode = (swq_expr_node*) m_poAttrQuery->GetSWGExpr();
+        swq_expr_node* poNode = (swq_expr_node*) m_poAttrQuery->GetSWQExpr();
 
         poNode->ReplaceBetweenByGEAndLERecurse();
 
