@@ -1032,6 +1032,7 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                         "Cannot find base URL");
+            if (!psFileXML) CPLDestroyXMLNode( psXML );
             CPLDestroyXMLNode( psStrippedXML );
             return FALSE;
         }
@@ -1942,6 +1943,7 @@ CPLHTTPResult* OGRWFSDataSource::HTTPFetch( const char* pszURL, char** papszOpti
         {
             CPLDebug("WFS", "Probably buggy remote server. Retrying with HTTP 1.0 protocol");
             bUseHttp10 = TRUE;
+            CPLHTTPDestroyResult(psResult);
             return HTTPFetch(pszURL, papszOptions);
         }
 
