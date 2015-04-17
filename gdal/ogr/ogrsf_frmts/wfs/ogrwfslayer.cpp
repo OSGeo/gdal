@@ -1315,7 +1315,8 @@ int OGRWFSLayer::TestCapability( const char * pszCap )
             return TRUE;
 
         return poBaseLayer != NULL && m_poFilterGeom == NULL &&
-               m_poAttrQuery == NULL &&  poBaseLayer->TestCapability(pszCap);
+               m_poAttrQuery == NULL && poBaseLayer->TestCapability(pszCap) &&
+               (!poDS->IsPagingAllowed() && poBaseLayer->GetFeatureCount() < poDS->GetPageSize());
     }
 
     else if( EQUAL(pszCap,OLCFastGetExtent) )
