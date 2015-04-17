@@ -96,7 +96,8 @@ typedef swq_expr_node *(*swq_field_fetcher)( swq_expr_node *op,
                                              void *record_handle );
 typedef swq_expr_node *(*swq_op_evaluator)(swq_expr_node *op,
                                            swq_expr_node **sub_field_values );
-typedef swq_field_type (*swq_op_checker)( swq_expr_node *op );
+typedef swq_field_type (*swq_op_checker)( swq_expr_node *op,
+                                          int bAllowMismatchTypeOnFieldComparison );
 
 class swq_expr_node {
     static CPLString   QuoteIfNecessary( const CPLString &, char chQuote = '\'' );
@@ -114,9 +115,11 @@ public:
     ~swq_expr_node();
 
     void           Initialize();
+    CPLString      UnparseOperationFromUnparsedSubExpr(char** apszSubExpr);
     char          *Unparse( swq_field_list *, char chColumnQuote );
     void           Dump( FILE *fp, int depth );
-    swq_field_type Check( swq_field_list *, int bAllowFieldsInSecondaryTables );
+    swq_field_type Check( swq_field_list *, int bAllowFieldsInSecondaryTables,
+                          int bAllowMismatchTypeOnFieldComparison );
     swq_expr_node* Evaluate( swq_field_fetcher pfnFetcher, 
                              void *record );
     swq_expr_node* Clone();
@@ -219,9 +222,9 @@ CPLErr swq_expr_compile2( const char *where_clause,
 int swq_test_like( const char *input, const char *pattern );
 
 swq_expr_node *SWQGeneralEvaluator( swq_expr_node *, swq_expr_node **);
-swq_field_type SWQGeneralChecker( swq_expr_node *node );
+swq_field_type SWQGeneralChecker( swq_expr_node *node, int bAllowMismatchTypeOnFieldComparison );
 swq_expr_node *SWQCastEvaluator( swq_expr_node *, swq_expr_node **);
-swq_field_type SWQCastChecker( swq_expr_node *node );
+swq_field_type SWQCastChecker( swq_expr_node *node, int bAllowMismatchTypeOnFieldComparison );
 const char*    SWQFieldTypeToString( swq_field_type field_type );
 
 /****************************************************************************/
@@ -281,16 +284,7 @@ typedef struct {
 
 typedef struct {
     int        secondary_table;
-
-    char      *primary_table_name;
-    char      *primary_field_name;
-    int        primary_field;
-
-    swq_op     op;
-
-    char      *secondary_table_name;
-    char      *secondary_field_name;
-    int        secondary_field;
+    swq_expr_node  *poExpr;
 } swq_join_def;
 
 class swq_select
@@ -315,11 +309,7 @@ public:
     int         table_count;
     swq_table_def *table_defs;
 
-    void        PushJoin( int iSecondaryTable,
-                          const char *pszPrimaryTable,
-                          const char *pszPrimaryField,
-                          const char *pszSecondaryTable,
-                          const char *pszSecondaryField );
+    void        PushJoin( int iSecondaryTable, swq_expr_node* poExpr );
     int         join_count;
     swq_join_def *join_defs;
 

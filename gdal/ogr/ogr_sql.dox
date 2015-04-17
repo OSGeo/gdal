@@ -429,6 +429,15 @@ SELECT city.name, prov.name, nation.name FROM city
   LEFT JOIN nation ON city.nation_id = nation.id
 \endcode
 
+Before GDAL 2.0, the expression after ON should necessarily be of the form
+"{primary_table}.{field_name} = {secondary_table}.{field_name}", and in that
+order.
+Starting with GDAL 2.0, it is possible to use a more complex boolean expression,
+involving multiple comparison operators, but with the restrictions mentionned
+in the below "JOIN limitations" section. In particular, in case of multiple joins (3 tables
+or more) the fields compared in a JOIN must belong to the primary table (the one
+after FROM) and the table of the active JOIN.
+
 \subsection ogr_sql_join_limits JOIN Limitations
 
 <ol>

@@ -771,27 +771,17 @@ opt_where:
         }
 
 opt_joins:
-    | SWQT_JOIN table_def SWQT_ON field_value '=' field_value opt_joins
+    | SWQT_JOIN table_def SWQT_ON value_expr opt_joins
         {
             context->poCurSelect->PushJoin( $2->int_value,
-                                            $4->table_name,
-                                            $4->string_value, 
-                                            $6->table_name,
-                                            $6->string_value );
+                                            $4 );
             delete $2;
-            delete $4;
-            delete $6;
         }
-    | SWQT_LEFT SWQT_JOIN table_def SWQT_ON field_value '=' field_value opt_joins
+    | SWQT_LEFT SWQT_JOIN table_def SWQT_ON value_expr opt_joins
         {
             context->poCurSelect->PushJoin( $3->int_value,
-                                            $5->table_name,
-                                            $5->string_value, 
-                                            $7->table_name,
-                                            $7->string_value );
+                                            $5 );
             delete $3;
-            delete $5;
-            delete $7;
 	    }
 
 opt_order_by:

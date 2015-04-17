@@ -201,7 +201,8 @@ void swq_expr_node::ReverseSubExpressions()
 /************************************************************************/
 
 swq_field_type swq_expr_node::Check( swq_field_list *poFieldList,
-                                     int bAllowFieldsInSecondaryTables )
+                                     int bAllowFieldsInSecondaryTables,
+                                     int bAllowMismatchTypeOnFieldComparison )
 
 {
 /* -------------------------------------------------------------------- */
@@ -267,14 +268,15 @@ swq_field_type swq_expr_node::Check( swq_field_list *poFieldList,
 
     for( i = 0; i < nSubExprCount; i++ )
     {
-        if( papoSubExpr[i]->Check(poFieldList, bAllowFieldsInSecondaryTables) == SWQ_ERROR )
+        if( papoSubExpr[i]->Check(poFieldList, bAllowFieldsInSecondaryTables,
+                                  bAllowMismatchTypeOnFieldComparison) == SWQ_ERROR )
             return SWQ_ERROR;
     }
     
 /* -------------------------------------------------------------------- */
 /*      Check this node.                                                */
 /* -------------------------------------------------------------------- */
-    field_type = poOp->pfnChecker( this );
+    field_type = poOp->pfnChecker( this, bAllowMismatchTypeOnFieldComparison );
 
     return field_type;
 }
@@ -347,7 +349,7 @@ CPLString swq_expr_node::QuoteIfNecessary( const CPLString &osExpr, char chQuote
     for( int i = 0; i < (int) osExpr.size(); i++ )
     {
         char ch = osExpr[i];
-        if (!(isalnum((int)ch) || ch == '_'))
+        if ((!(isalnum((int)ch) || ch == '_')) || ch == '.')
         {
             return Quote(osExpr, chQuote);
         }
@@ -489,6 +491,26 @@ char *swq_expr_node::Unparse( swq_field_list *field_list, char chColumnQuote )
     for( i = 0; i < nSubExprCount; i++ )
         apszSubExpr.push_back( papoSubExpr[i]->Unparse(field_list, chColumnQuote) );
 
+    osExpr = UnparseOperationFromUnparsedSubExpr(&apszSubExpr[0]);
+    
+/* -------------------------------------------------------------------- */
+/*      cleanup subexpressions.                                         */
+/* -------------------------------------------------------------------- */
+    for( i = 0; i < nSubExprCount; i++ )
+        CPLFree( apszSubExpr[i] );
+
+    return CPLStrdup( osExpr.c_str() );
+}
+
+/************************************************************************/
+/*                  UnparseOperationFromUnparsedSubExpr()               */
+/************************************************************************/
+
+CPLString swq_expr_node::UnparseOperationFromUnparsedSubExpr(char** apszSubExpr)
+{
+    int i;
+    CPLString osExpr;
+
 /* -------------------------------------------------------------------- */
 /*      Put things together in a fashion depending on the operator.     */
 /* -------------------------------------------------------------------- */
@@ -498,7 +520,7 @@ char *swq_expr_node::Unparse( swq_field_list *field_list, char chColumnQuote )
     if( poOp == NULL )
     {
         CPLAssert( FALSE );
-        return CPLStrdup("");
+        return osExpr;
     }
 
     switch( nOperation )
@@ -621,14 +643,8 @@ char *swq_expr_node::Unparse( swq_field_list *field_list, char chColumnQuote )
         osExpr += ")";
         break;
     }
-
-/* -------------------------------------------------------------------- */
-/*      cleanup subexpressions.                                         */
-/* -------------------------------------------------------------------- */
-    for( i = 0; i < nSubExprCount; i++ )
-        CPLFree( apszSubExpr[i] );
-
-    return CPLStrdup( osExpr.c_str() );
+    
+    return osExpr;
 }
 
 /************************************************************************/

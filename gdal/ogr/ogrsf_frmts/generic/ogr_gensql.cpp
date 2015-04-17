@@ -1147,6 +1147,117 @@ static swq_expr_node *OGRMultiFeatureFetcher( swq_expr_node *op,
 }
 
 /************************************************************************/
+/*                          GetFilterForJoin()                          */
+/************************************************************************/
+
+static CPLString GetFilterForJoin(swq_expr_node* poExpr, OGRFeature* poSrcFeat,
+                                  OGRLayer* poJoinLayer, int secondary_table)
+{
+    if( poExpr->eNodeType == SNT_CONSTANT )
+    {
+        char* pszRes = poExpr->Unparse(NULL, '"');
+        CPLString osRes = pszRes;
+        CPLFree(pszRes);
+        return osRes;
+    }
+
+    if( poExpr->eNodeType == SNT_COLUMN )
+    {
+        CPLAssert( poExpr->field_index != -1 );
+        CPLAssert( poExpr->table_index == 0 || poExpr->table_index == secondary_table );
+
+        if( poExpr->table_index == 0 )
+        {
+            // if source key is null, we can't do join.
+            if( !poSrcFeat->IsFieldSet( poExpr->field_index ) )
+            {
+                return "";
+            }
+            OGRFieldType ePrimaryFieldType =
+                    poSrcFeat->GetFieldDefnRef(poExpr->field_index)->GetType();
+            OGRField *psSrcField = 
+                    poSrcFeat->GetRawFieldRef(poExpr->field_index);
+
+            switch( ePrimaryFieldType )
+            {
+            case OFTInteger:
+                return CPLString().Printf("%d", psSrcField->Integer );
+                break;
+
+            case OFTInteger64:
+                return CPLString().Printf(CPL_FRMT_GIB, psSrcField->Integer64 );
+                break;
+
+            case OFTReal:
+                return CPLString().Printf("%.16g", psSrcField->Real );
+                break;
+
+            case OFTString:
+            {
+                char *pszEscaped = CPLEscapeString( psSrcField->String, 
+                                                    strlen(psSrcField->String),
+                                                    CPLES_SQL );
+                CPLString osRes = "'";
+                osRes += pszEscaped;
+                osRes += "'";
+                CPLFree( pszEscaped );
+                return osRes;
+            }
+            break;
+
+            default:
+                CPLAssert( FALSE );
+                return "";
+            }
+        }
+        
+        if(  poExpr->table_index == secondary_table )
+        {
+            OGRFieldDefn* poSecondaryFieldDefn =
+                poJoinLayer->GetLayerDefn()->GetFieldDefn(poExpr->field_index);
+            return CPLSPrintf("\"%s\"", poSecondaryFieldDefn->GetNameRef());
+        }
+
+        CPLAssert(FALSE);
+        return "";
+    }
+
+    if( poExpr->eNodeType == SNT_OPERATION )
+    {
+        /* -------------------------------------------------------------------- */
+        /*      Operation - start by unparsing all the subexpressions.          */
+        /* -------------------------------------------------------------------- */
+        std::vector<char*> apszSubExpr;
+        int i;
+
+        for( i = 0; i < poExpr->nSubExprCount; i++ )
+        {
+            CPLString osSubExpr = GetFilterForJoin(poExpr->papoSubExpr[i], poSrcFeat,
+                                                   poJoinLayer, secondary_table);
+            if( osSubExpr.size() == 0 )
+            {
+                for( --i; i >=0; i-- )
+                    CPLFree( apszSubExpr[i] );
+                return "";
+            }
+            apszSubExpr.push_back( CPLStrdup(osSubExpr) );
+        }
+
+        CPLString osExpr = poExpr->UnparseOperationFromUnparsedSubExpr(&apszSubExpr[0]);
+
+        /* -------------------------------------------------------------------- */
+        /*      cleanup subexpressions.                                         */
+        /* -------------------------------------------------------------------- */
+        for( i = 0; i < poExpr->nSubExprCount; i++ )
+            CPLFree( apszSubExpr[i] );
+
+        return osExpr;
+    }
+
+    return "";
+}
+
+/************************************************************************/
 /*                          TranslateFeature()                          */
 /************************************************************************/
 
@@ -1182,65 +1293,14 @@ OGRFeature *OGRGenSQLResultsLayer::TranslateFeature( OGRFeature *poSrcFeat )
 
         OGRLayer *poJoinLayer = papoTableLayers[psJoinInfo->secondary_table];
         
+        osFilter = GetFilterForJoin(psJoinInfo->poExpr, poSrcFeat, poJoinLayer, 
+                                    psJoinInfo->secondary_table);
+        //CPLDebug("OGR", "Filter = %s\n", osFilter.c_str());
+
         // if source key is null, we can't do join.
-        if( !poSrcFeat->IsFieldSet( psJoinInfo->primary_field ) )
+        if( osFilter.size() == 0 )
         {
             apoFeatures.push_back( NULL );
-            continue;
-        }
-        
-        OGRFieldDefn* poSecondaryFieldDefn =
-            poJoinLayer->GetLayerDefn()->GetFieldDefn( 
-                     psJoinInfo->secondary_field );
-        OGRFieldType ePrimaryFieldType = poSrcLayer->GetLayerDefn()->
-                    GetFieldDefn(psJoinInfo->primary_field )->GetType();
-        OGRFieldType eSecondaryFieldType = poSecondaryFieldDefn->GetType();
-
-        // Prepare attribute query to express fetching on the joined variable
-        
-        // If joining a (primary) numeric column with a (secondary) string column
-        // then add implicit casting of the secondary column to numeric. This behaviour
-        // worked in GDAL < 1.8, and it is consistent with how sqlite behaves too. See #4321
-        // For the reverse case, joining a string column with a numeric column, the
-        // string constant will be cast to float by SWQAutoConvertStringToNumeric (#4259)
-        if( eSecondaryFieldType == OFTString &&
-            (ePrimaryFieldType == OFTInteger ||
-             ePrimaryFieldType == OFTInteger64 || ePrimaryFieldType == OFTReal) )
-            osFilter.Printf("CAST(%s AS FLOAT) = ", poSecondaryFieldDefn->GetNameRef() );
-        else
-            osFilter.Printf("%s = ", poSecondaryFieldDefn->GetNameRef() );
-
-        OGRField *psSrcField = 
-            poSrcFeat->GetRawFieldRef(psJoinInfo->primary_field);
-
-        switch( ePrimaryFieldType )
-        {
-          case OFTInteger:
-            osFilter += CPLString().Printf("%d", psSrcField->Integer );
-            break;
-
-          case OFTInteger64:
-            osFilter += CPLString().Printf(CPL_FRMT_GIB, psSrcField->Integer64 );
-            break;
-
-          case OFTReal:
-            osFilter += CPLString().Printf("%.16g", psSrcField->Real );
-            break;
-
-          case OFTString:
-          {
-              char *pszEscaped = CPLEscapeString( psSrcField->String, 
-                                                  strlen(psSrcField->String),
-                                                  CPLES_SQL );
-              osFilter += "'";
-              osFilter += pszEscaped;
-              osFilter += "'";
-              CPLFree( pszEscaped );
-          }
-          break;
-
-          default:
-            CPLAssert( FALSE );
             continue;
         }
 
@@ -2148,8 +2208,7 @@ void OGRGenSQLResultsLayer::FindAndSetIgnoredFields()
     for( int iJoin = 0; iJoin < psSelectInfo->join_count; iJoin++ )
     {
         swq_join_def *psJoinDef = psSelectInfo->join_defs + iJoin;
-        AddFieldDefnToSet(0, psJoinDef->primary_field, hSet);
-        AddFieldDefnToSet(psJoinDef->secondary_table, psJoinDef->secondary_field, hSet);
+        ExploreExprForIgnoredFields(psJoinDef->poExpr, hSet);
     }
 
     for( int iOrder = 0; iOrder < psSelectInfo->order_specs; iOrder++ )

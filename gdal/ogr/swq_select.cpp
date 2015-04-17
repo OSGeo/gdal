@@ -116,10 +116,7 @@ swq_select::~swq_select()
 
     for( i = 0; i < join_count; i++ )
     {
-        CPLFree( join_defs[i].primary_table_name );
-        CPLFree( join_defs[i].primary_field_name );
-        CPLFree( join_defs[i].secondary_table_name );
-        CPLFree( join_defs[i].secondary_field_name );
+        delete join_defs[i].poExpr;
     }
     CPLFree( join_defs );
 
@@ -283,18 +280,7 @@ void swq_select::Dump( FILE *fp )
     for( i = 0; i < join_count; i++ )
     {
         fprintf( fp, "  %d:\n", i );
-        fprintf( fp, "    Primary Field: %s.%s/%d\n", 
-                 join_defs[i].primary_table_name ? join_defs[i].primary_table_name : "",
-                 join_defs[i].primary_field_name,
-                 join_defs[i].primary_field );
-
-        fprintf( fp, "    Operation: %d\n", 
-                 join_defs[i].op );
-
-        fprintf( fp, "    Secondary Field: %s.%s/%d\n", 
-                 join_defs[i].secondary_table_name ? join_defs[i].secondary_table_name : "",
-                 join_defs[i].secondary_field_name,
-                 join_defs[i].secondary_field );
+        join_defs[i].poExpr->Dump( fp, 4 );
         fprintf( fp, "    Secondary Table: %d\n", 
                  join_defs[i].secondary_table );
     }
@@ -648,11 +634,7 @@ void swq_select::PushOrderBy( const char* pszTableName, const char *pszFieldName
 /*                              PushJoin()                              */
 /************************************************************************/
 
-void swq_select::PushJoin( int iSecondaryTable,
-                           const char *pszPrimaryTable,
-                           const char *pszPrimaryField,
-                           const char *pszSecondaryTable,
-                           const char *pszSecondaryField )
+void swq_select::PushJoin( int iSecondaryTable, swq_expr_node* poExpr )
 
 {
     join_count++;
@@ -660,13 +642,7 @@ void swq_select::PushJoin( int iSecondaryTable,
         CPLRealloc( join_defs, sizeof(swq_join_def) * join_count );
 
     join_defs[join_count-1].secondary_table = iSecondaryTable;
-    join_defs[join_count-1].primary_table_name = CPLStrdup(pszPrimaryTable ? pszPrimaryTable : "");
-    join_defs[join_count-1].primary_field_name = CPLStrdup(pszPrimaryField);
-    join_defs[join_count-1].primary_field = -1;
-    join_defs[join_count-1].op = SWQ_EQ;
-    join_defs[join_count-1].secondary_table_name = CPLStrdup(pszSecondaryTable ? pszSecondaryTable : "");
-    join_defs[join_count-1].secondary_field_name = CPLStrdup(pszSecondaryField);
-    join_defs[join_count-1].secondary_field = -1;
+    join_defs[join_count-1].poExpr = poExpr;
 }
 
 /************************************************************************/
@@ -862,6 +838,53 @@ CPLErr swq_select::expand_wildcard( swq_field_list *field_list )
 }
 
 /************************************************************************/
+/*                       CheckCompatibleJoinExpr()                      */
+/************************************************************************/
+
+static int CheckCompatibleJoinExpr( swq_expr_node* poExpr,
+                                    int secondary_table,
+                                    swq_field_list* field_list )
+{
+    if( poExpr->eNodeType == SNT_CONSTANT )
+        return TRUE;
+    
+    if( poExpr->eNodeType == SNT_COLUMN )
+    {
+        CPLAssert( poExpr->field_index != -1 );
+        CPLAssert( poExpr->table_index != -1 );
+        if( poExpr->table_index != 0 && poExpr->table_index != secondary_table )
+        {
+            if( poExpr->table_name )
+                CPLError( CE_Failure, CPLE_AppDefined, 
+                        "Field %s.%s in JOIN clause does not correspond to the primary table nor the joint (secondary) table.", 
+                        poExpr->table_name,
+                        poExpr->string_value );
+            else
+                CPLError( CE_Failure, CPLE_AppDefined, 
+                        "Field %s in JOIN clause does not correspond to the primary table nor the joint (secondary) table.", 
+                        poExpr->string_value );
+            return FALSE;
+        }
+
+        return TRUE;
+    }
+
+    if( poExpr->eNodeType == SNT_OPERATION )
+    {
+        for(int i=0;i<poExpr->nSubExprCount;i++)
+        {
+            if( !CheckCompatibleJoinExpr( poExpr->papoSubExpr[i],
+                                          secondary_table,
+                                          field_list ) )
+                return FALSE;
+        }
+        return TRUE;
+    }
+    
+    return FALSE;
+}
+
+/************************************************************************/
 /*                               parse()                                */
 /*                                                                      */
 /*      This method really does post-parse processing.                  */
@@ -890,7 +913,7 @@ CPLErr swq_select::parse( swq_field_list *field_list,
             def->field_index = -1;
             def->table_index = -1;
 
-            if( def->expr->Check( field_list, TRUE ) == SWQ_ERROR )
+            if( def->expr->Check( field_list, TRUE, FALSE ) == SWQ_ERROR )
                 return CE_Failure;
                 
             def->field_type = def->expr->field_type;
@@ -1011,54 +1034,10 @@ CPLErr swq_select::parse( swq_field_list *field_list,
     for( i = 0; i < join_count; i++ )
     {
         swq_join_def *def = join_defs + i;
-        int          table_id;
-
-        /* identify primary field */
-        def->primary_field = swq_identify_field( def->primary_table_name,
-                                                 def->primary_field_name,
-                                                 field_list, NULL, &table_id );
-        if( def->primary_field == -1 )
-        {
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                      "Unrecognised primary field %s.%s in JOIN clause.", 
-                      def->primary_table_name,
-                      def->primary_field_name );
+        if( def->poExpr->Check( field_list, TRUE, TRUE ) == SWQ_ERROR )
             return CE_Failure;
-        }
-        
-        if( table_id != 0 )
-        {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "Currently the primary key must come from the primary table in\n"
-                      "JOIN, %s.%s is not from the primary table.",
-                      def->primary_table_name,
-                      def->primary_field_name );
+        if( !CheckCompatibleJoinExpr( def->poExpr, def->secondary_table, field_list ) )
             return CE_Failure;
-        }
-        
-        /* identify secondary field */
-        def->secondary_field = swq_identify_field( def->secondary_table_name,
-                                                   def->secondary_field_name,
-                                                   field_list, NULL,&table_id);
-        if( def->secondary_field == -1 )
-        {
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                      "Unrecognised secondary field %s.%s in JOIN clause.", 
-                      def->secondary_table_name,
-                      def->secondary_field_name );
-            return CE_Failure;
-        }
-        
-        if( table_id != def->secondary_table )
-        {
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                      "Currently the secondary key must come from the secondary table\n"
-                      "listed in the JOIN.  %s.%s is not from table %s.",
-                      def->secondary_table_name,
-                      def->secondary_field_name,
-                      table_defs[def->secondary_table].table_name);
-            return CE_Failure;
-        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -1103,7 +1082,7 @@ CPLErr swq_select::parse( swq_field_list *field_list,
 /*      doing final validation.                                         */
 /* -------------------------------------------------------------------- */
     if( where_expr != NULL 
-        && where_expr->Check( field_list, FALSE ) == SWQ_ERROR )
+        && where_expr->Check( field_list, FALSE, FALSE ) == SWQ_ERROR )
     {
         return CE_Failure;
     }
