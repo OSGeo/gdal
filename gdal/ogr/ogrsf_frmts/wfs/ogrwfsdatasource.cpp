@@ -164,8 +164,6 @@ OGRWFSDataSource::OGRWFSDataSource()
             nBaseStartIndex = atoi(pszOption);
     }
 
-    bIsGEOSERVER = FALSE;
-
     bLoadMultipleLayerDefn = CSLTestBoolean(CPLGetConfigOption("OGR_WFS_LOAD_MULTIPLE_LAYER_DEFN", "TRUE"));
 
     poLayerMetadataDS = NULL;
@@ -798,7 +796,8 @@ CPLHTTPResult* OGRWFSDataSource::SendGetCapabilities(const char* pszBaseURL,
 /*                                Open()                                */
 /************************************************************************/
 
-int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
+int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn,
+                            char** papszOpenOptions )
 
 {
     bUpdate = bUpdateIn;
@@ -984,7 +983,7 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
             CPLDestroyXMLNode( psXML2 );
 
             if (bOK)
-                return Open(pszFilename, bUpdate);
+                return Open(pszFilename, bUpdate, papszOpenOptions);
             else
                 return FALSE;
         }
@@ -1077,26 +1076,6 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
     }
 
     DetectTransactionSupport(psWFSCapabilities);
-
-    /* Detect if server is GEOSERVER */
-    CPLXMLNode* psKeywords = CPLGetXMLNode(psWFSCapabilities, "ServiceIdentification.Keywords");
-    if (psKeywords)
-    {
-        CPLXMLNode* psKeyword = psKeywords->psChild;
-        for(;psKeyword != NULL;psKeyword=psKeyword->psNext)
-        {
-            if (psKeyword->eType == CXT_Element &&
-                psKeyword->pszValue != NULL &&
-                EQUAL(psKeyword->pszValue, "Keyword") &&
-                psKeyword->psChild != NULL &&
-                psKeyword->psChild->pszValue != NULL &&
-                EQUALN(psKeyword->psChild->pszValue, "GEOSERVER", 9))
-            {
-                bIsGEOSERVER = TRUE;
-                break;
-            }
-        }
-    }
 
     if (bUpdate && !bTransactionSupport)
     {
@@ -1382,22 +1361,24 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
                     if (poSRS->exportToProj4(&pszProj4) == OGRERR_NONE)
                     {
                         /* See http://trac.osgeo.org/gdal/ticket/4041 */
-                        /* For now, we restrict to GEOSERVER as apparently the order is always longitude,latitude */
-                        /* other servers might also qualify, so this should be relaxed */
-                        /* Also accept when <wfs:DefaultCRS>urn:ogc:def:crs:OGC:1.3:CRS84</wfs:DefaultCRS> */
-                        if ((bIsGEOSERVER &&
+                        int bTrustBounds =
+                            CSLFetchBoolean(papszOpenOptions, "TRUST_CAPABILITIES_BOUNDS",
+                                CSLTestBoolean(CPLGetConfigOption("OGR_WFS_TRUST_CAPABILITIES_BOUNDS", "FALSE")));
+
+                        if (((bTrustBounds || (dfMinX == -180 && dfMinY == -90 && dfMaxX == 180 && dfMaxY == 90)) &&
                             (strcmp(pszProj4, "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs ") == 0 ||
                              strcmp(pszProj4, "+proj=longlat +datum=WGS84 +no_defs ") == 0)) ||
                             strcmp(pszDefaultSRS, "urn:ogc:def:crs:OGC:1.3:CRS84") == 0)
                         {
                             poLayer->SetExtents(dfMinX, dfMinY, dfMaxX, dfMaxY);
                         }
-#if 0
-                        else
+
+                        else if( bTrustBounds )
                         {
                             OGRSpatialReference oWGS84;
                             oWGS84.SetWellKnownGeogCS("WGS84");
                             OGRCoordinateTransformation* poCT;
+                            CPLPushErrorHandler(CPLQuietErrorHandler);
                             poCT = OGRCreateCoordinateTransformation(&oWGS84, poSRS);
                             if (poCT)
                             {
@@ -1438,8 +1419,10 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
                                 }
                             }
                             delete poCT;
+                            CPLPopErrorHandler();
+                            CPLErrorReset();
                         }
-#endif
+
                     }
                     CPLFree(pszProj4);
                 }
@@ -1491,9 +1474,6 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
 void OGRWFSDataSource::LoadMultipleLayerDefn(const char* pszLayerName,
                                              char* pszNS, char* pszNSVal)
 {
-    /*if (!bIsGEOSERVER)
-        return;*/
-
     if (!bLoadMultipleLayerDefn)
         return;
 

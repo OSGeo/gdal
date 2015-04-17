@@ -7,7 +7,7 @@
 
 <h1>WFS - OGC WFS service</h1>
 
-(GDAL/OGR >= 1.8.0)<p>
+(GDAL/OGR &gt;= 1.8.0)<p>
 
 This driver can connect to a OGC WFS service. It supports WFS 1.0.0 and WFS 1.1.0 protocols. GDAL/OGR must be built with Curl support in order to the
 WFS driver to be compiled. Usually WFS requests return results in GML format, so the GML driver should generally be set-up for read support
@@ -58,7 +58,7 @@ userid and password to the remote server.
 
 Before OGR 1.10, when reading the first feature from a layer, the whole layer content will be fetched from the server.<p>
 
-Some servers (such as MapServer >= 6.0) support a vendor specific option, STARTINDEX, that allow to do the requests per "page",
+Some servers (such as MapServer &gt;= 6.0) support a vendor specific option, STARTINDEX, that allow to do the requests per "page",
 and thus to avoid downloading the whole content of the layer in a single request. The OGR WFS client will use paging when the OGR_WFS_PAGING_ALLOWED
 configuration option is set to ON. The page size (number of features fetched in a single request) is limited to 100 by default.
 It can be changed by setting the OGR_WFS_PAGE_SIZE configuration option.<br>
@@ -150,7 +150,7 @@ interfaces.<p>
 
 <h2>Special layer : WFSLayerMetadata</h2>
 
-<p>(OGR >= 1.9.0)</p>
+<p>(OGR &gt;= 1.9.0)</p>
 
 <p>A "hidden" layer called "WFSLayerMetadata" is filled with records with metadata for each WFS layer.</p>
 
@@ -160,11 +160,19 @@ interfaces.<p>
 
 <h2>Special layer : WFSGetCapabilities</h2>
 
-<p>(OGR >= 1.9.0)</p>
+<p>(OGR &gt;= 1.9.0)</p>
 
 <p>A "hidden" layer called "WFSGetCapabilities" is filled with the raw XML result of the GetCapabilities request.</p>
 
 <p>That layer is returned through GetLayerByName("WFSGetCapabilities").</p>
+
+<h2>Open options (GDAL &gt;= 2.0)</h2>
+
+The following options are available:
+<ul>
+<li><b>TRUST_CAPABILITIES_BOUNDS</b>=YES/NO: Whether to trust layer bounds
+declared in GetCapabilities response, for faster GetExtent() runtime. Defaults to NO</li>
+</ul>
 
 <h2>Examples</h2>
 
@@ -195,12 +203,13 @@ ogrinfo "WFS:http://www.tinyows.org/cgi-bin/tinyows" tows:world -ro -al -where "
 </pre>
 
 <li>
-Display layer metadata (OGR >= 1.9.0):
+Display layer metadata (OGR &gt;= 1.9.0):
 <pre>
 ogrinfo -ro -al "WFS:http://v2.suite.opengeo.org/geoserver/ows" WFSLayerMetadata
 </pre>
 
 <p>
+
 
 <h2>See Also</h2>
 

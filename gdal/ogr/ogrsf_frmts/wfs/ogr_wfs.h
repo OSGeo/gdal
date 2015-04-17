@@ -234,8 +234,6 @@ class OGRWFSDataSource : public OGRDataSource
     int                 nBaseStartIndex;
     int                 DetectSupportPagingWFS2(CPLXMLNode* psRoot);
 
-    int                 bIsGEOSERVER;
-
     int                 bLoadMultipleLayerDefn;
     std::set<CPLString> aoSetAlreadyTriedLayers;
 
@@ -260,7 +258,8 @@ class OGRWFSDataSource : public OGRDataSource
                         ~OGRWFSDataSource();
 
     int                 Open( const char * pszFilename,
-                              int bUpdate );
+                              int bUpdate,
+                              char** papszOpenOptions );
 
     virtual const char*         GetName() { return pszName; }
 
