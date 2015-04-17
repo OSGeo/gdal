@@ -345,11 +345,14 @@ OGRFeatureDefn* OGRWFSLayer::BuildLayerDefnFromFeatureClass(GMLFeatureClass* poC
             eFType = OFTString;
         else if( poProperty->GetType() == GMLPT_String )
             eFType = OFTString;
-        else if( poProperty->GetType() == GMLPT_Integer )
+        else if( poProperty->GetType() == GMLPT_Integer ||
+                 poProperty->GetType() == GMLPT_Boolean ||
+                 poProperty->GetType() == GMLPT_Short  )
             eFType = OFTInteger;
         else if( poProperty->GetType() == GMLPT_Integer64 )
             eFType = OFTInteger64;
-        else if( poProperty->GetType() == GMLPT_Real )
+        else if( poProperty->GetType() == GMLPT_Real ||
+                 poProperty->GetType() == GMLPT_Float )
             eFType = OFTReal;
         else if( poProperty->GetType() == GMLPT_StringList )
             eFType = OFTStringList;
