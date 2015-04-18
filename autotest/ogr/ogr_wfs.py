@@ -428,6 +428,9 @@ def ogr_wfs_deegree():
 
     ds = ogr.Open("WFS:http://demo.deegree.org:80/utah-workspace/services?ACCEPTVERSIONS=1.1.0&MAXFEATURES=10")
     if ds is None:
+        if gdal.GetLastErrorMsg().find('Error returned by server') < 0:
+            gdaltest.deegree_wfs = False
+            return 'skip'
         gdaltest.post_reason('did not managed to open WFS datastore')
         return 'fail'
 
