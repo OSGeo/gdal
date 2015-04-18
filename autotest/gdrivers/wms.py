@@ -319,7 +319,11 @@ def wms_8():
         gdaltest.post_reason( 'open failed.' )
         return 'fail'
 
+    gdal.ErrorReset()
     data = ds.GetRasterBand(1).GetOverview(18).ReadRaster(0, 0, 512, 256)
+    if gdal.GetLastErrorMsg() != '':
+        if gdaltest.gdalurlopen('http://tilecache.osgeo.org/wms-c/Basic.py/1.0.0/basic/0/0/0.png') is None:
+            return 'skip'
 
     ds = None
 
