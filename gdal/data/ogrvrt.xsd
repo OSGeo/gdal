@@ -34,6 +34,7 @@
         <xs:complexType>
             <xs:sequence>
                 <xs:choice minOccurs="0" maxOccurs="unbounded">
+                    <xs:element name="Metadata" type="MetadataType"/> <!-- may be repeated -->
                     <xs:element name="OGRVRTLayer" type="OGRVRTLayerType"/>
                     <xs:element name="OGRVRTWarpedLayer" type="OGRVRTWarpedLayerType"/>
                     <xs:element name="OGRVRTUnionLayer" type="OGRVRTUnionLayerType"/>
@@ -42,9 +43,21 @@
         </xs:complexType>
     </xs:element>
 
+    <xs:complexType name="MetadataType">
+        <xs:sequence>
+            <!--<xs:choice>-->
+                <!--<xs:element name="MDI" type="MDIType" minOccurs="0" maxOccurs="unbounded"/>-->
+                <xs:any processContents="skip" minOccurs="0" maxOccurs="unbounded"/>
+            <!--</xs:choice>-->
+        </xs:sequence>
+        <xs:attribute name="domain" type="xs:string"/>
+        <xs:attribute name="format" type="xs:string"/>
+    </xs:complexType>
+
     <xs:complexType name="OGRVRTLayerType">
         <xs:sequence>
             <xs:choice minOccurs="0" maxOccurs="unbounded">
+                <xs:element name="Metadata" type="MetadataType"/> <!-- may be repeated -->
                 <xs:element name="SrcDataSource" type="SrcDataSourceType">
                     <xs:annotation>
                         <xs:documentation>Required element</xs:documentation>

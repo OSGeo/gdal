@@ -847,6 +847,11 @@ int OGRVRTDataSource::Initialize( CPLXMLNode *psTree, const char *pszNewName,
         poLayerPool = new OGRLayerPool(nMaxSimultaneouslyOpened);
 
 /* -------------------------------------------------------------------- */
+/*      Apply any dataset level metadata.                               */
+/* -------------------------------------------------------------------- */
+    oMDMD.XMLInit( psVRTDSXML, TRUE );
+
+/* -------------------------------------------------------------------- */
 /*      Look for layers.                                                */
 /* -------------------------------------------------------------------- */
     CPLXMLNode *psLTree;

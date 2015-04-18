@@ -152,6 +152,26 @@ if len(layer_list) == 0:
 
 vrt = '<OGRVRTDataSource>\n'
 
+
+#############################################################################
+# Metadata
+
+for domain in src_ds.GetMetadataDomainList():
+    if domain == '':
+        vrt += '  <Metadata>\n'
+    elif len(domain) > 4 and domain[0:4] == 'xml:':
+        vrt += '  <Metadata domain="%s" format="xml">\n' % Esc(domain)
+    else:
+        vrt += '  <Metadata domain="%s">\n' % Esc(domain)
+    if len(domain) > 4 and domain[0:4] == 'xml:':
+        vrt += src_ds.GetMetadata_List(domain)[0]
+    else:
+        md = src_ds.GetMetadata(domain)
+        for key in md:
+            vrt += '    <MDI key="%s">%s</MDI>\n' % (Esc(key), Esc(md[key]))
+    vrt += '  </Metadata>\n'
+
+
 #############################################################################
 #	Process each source layer.
 
@@ -160,6 +180,23 @@ for name in layer_list:
     layerdef = layer.GetLayerDefn()
 
     vrt += '  <OGRVRTLayer name="%s">\n' % Esc(name)
+
+    for domain in src_ds.GetMetadataDomainList():
+        if domain == '':
+            vrt += '    <Metadata>\n'
+        elif len(domain) > 4 and domain[0:4] == 'xml:':
+            vrt += '    <Metadata domain="%s" format="xml">\n' % Esc(domain)
+        else:
+            vrt += '    <Metadata domain="%s">\n' % Esc(domain)
+        if len(domain) > 4 and domain[0:4] == 'xml:':
+            vrt += src_ds.GetMetadata_List(domain)[0]
+        else:
+            md = src_ds.GetMetadata(domain)
+            for key in md:
+                vrt += '      <MDI key="%s">%s</MDI>\n' % (Esc(key), Esc(md[key]))
+        vrt += '    </Metadata>\n'
+
+
     vrt += '    <SrcDataSource relativeToVRT="%s" shared="%d">%s</SrcDataSource>\n' \
            % (relative,not schema,Esc(infile))
 
