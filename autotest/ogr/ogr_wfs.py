@@ -1310,6 +1310,9 @@ def ogr_wfs_vsimem_wfs110_minimal_instance():
     gdal.FileFromMemBuffer('/vsimem/wfs_endpoint?SERVICE=WFS&REQUEST=GetCapabilities',
                            """
 <WFS_Capabilities version="1.1.0">
+    <ows:ServiceIdentification>
+      <ows:Title>LDS Testing</ows:Title>
+    </ows:ServiceIdentification>
     <FeatureTypeList/>
 </WFS_Capabilities>
 """)
@@ -1320,6 +1323,18 @@ def ogr_wfs_vsimem_wfs110_minimal_instance():
     if ds.GetLayerCount() != 0:
         gdaltest.post_reason('fail')
         return 'fail'
+
+    if ds.GetMetadataDomainList() != ['', 'xml:capabilities']:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetMetadata() != {'TITLE': 'LDS Testing'}:
+        gdaltest.post_reason('fail')
+        print(ds.GetMetadata())
+        return 'fail'
+    if len(ds.GetMetadata_List("xml:capabilities")) != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
 
     gdal.PushErrorHandler()
     ds = ogr.Open('WFS:/vsimem/wfs_endpoint', update = 1)
@@ -3816,6 +3831,11 @@ def ogr_wfs_vsimem_wfs200_paging():
     <FeatureTypeList>
         <FeatureType>
             <Name>my_layer</Name>
+            <Title>title</Title>
+            <Abstract>abstract</Abstract>
+            <Keywords>
+                <Keyword>keyword</Keyword>
+            </Keywords>
             <DefaultSRS>urn:ogc:def:crs:EPSG::4326</DefaultSRS>
             <ows:WGS84BoundingBox>
                 <ows:LowerCorner>-180.0 -90.0</ows:LowerCorner>
@@ -3875,7 +3895,10 @@ def ogr_wfs_vsimem_wfs200_paging():
 
     ds = ogr.Open('WFS:/vsimem/wfs200_endpoint_paging')
     lyr = ds.GetLayer(0)
-
+    if lyr.GetMetadata() != {'ABSTRACT': 'abstract', 'KEYWORD_1': 'keyword', 'TITLE': 'title'}:
+        gdaltest.post_reason('fail')
+        print(lyr.GetMetadata())
+        return 'fail'
 
     gdal.FileFromMemBuffer('/vsimem/wfs200_endpoint_paging?SERVICE=WFS&VERSION=2.0.0&REQUEST=DescribeFeatureType&TYPENAME=my_layer',
 """<xsd:schema xmlns:foo="http://foo" xmlns:gml="http://www.opengis.net/gml" xmlns:xsd="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="http://foo">
