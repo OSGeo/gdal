@@ -185,7 +185,7 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
             psResult->nStatus = 1;
             psResult->pszErrBuf = CPLStrdup(CPLSPrintf("HTTP error code : %d", 404));
         }
-        else
+        else if( nLength != 0 )
         {
             psResult->nDataLen = (size_t)nLength;
             psResult->pabyData = (GByte*) CPLMalloc((size_t)nLength + 1);
