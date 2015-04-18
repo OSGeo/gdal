@@ -101,7 +101,9 @@ georeferenced coordinates in the same format as the SRS element.<P>
 <li> <b>Metadata</b>: This element contains a list of metadata name/value 
 pairs associated with the VRTDataset as a whole, or a VRTRasterBand.   It has
 &lt;MDI&gt; (metadata item) subelements which have a "key" attribute and the value
-as the data of the element.  
+as the data of the element. The Metadata element can be repeated multiple times,
+in which case it must be accompanied with a "domain" attribute to indicate the
+name of the metadata domain.
 
 \code
   <Metadata>
