@@ -34,12 +34,22 @@ is to say, the <i>FID</i> element is not specified</li>
 
 The root element of the XML control file is <b>OGRVRTDataSource</b>.  It has
 an <b>OGRVRTLayer</b> (or <b>OGRVRTWarpedLayer</b> or <b>OGRVRTUnionLayer</b> starting
-with GDAL 1.10.0) child for each layer in the virtual datasource.<p>
+with GDAL 1.10.0) child for each layer in the virtual datasource, and a
+<b>Metadata</b> element.<p>
 
 A <a href="http://svn.osgeo.org/gdal/trunk/gdal/data/ogrvrt.xsd">XML schema of the OGR VRT format</a>
 is available. Starting with GDAL 1.11, when GDAL is configured with libXML2 support, that
 schema will be used to validate the VRT documents. Non-conformities will be reported only as
 warnings. That validation can be disabled by setting the GDAL_XML_VALIDATION configuration option to NO.<p>
+
+<p>
+<b>Metadata</b> (optional): (GDAL &gt;= 2.0) This element contains a list of metadata name/value 
+pairs associated with the dataset as a whole. It has
+&lt;MDI&gt; (metadata item) subelements which have a "key" attribute and the value
+as the data of the element. The Metadata element can be repeated multiple times,
+in which case it must be accompanied with a "domain" attribute to indicate the
+name of the metadata domain.
+</p>
 
 A <b>OGRVRTLayer</b> element should have a <b>name</b> attribute with the layer name, and may have the
 following subelements:
@@ -57,6 +67,16 @@ datasource should be opened in shared mode. Defaults to OFF for SrcLayer use and
 
 <li> <b>OpenOptions</b> (optional): (GDAL &gt;= 2.0) This element may list a number of open
 options as child elements of the form &lt;OOI key="key_name"&gt;value_name&lt;/OOI&gt;</li>
+
+<br>
+
+<li> <b>Metadata</b> (optional): (GDAL &gt;= 2.0) This element contains a list of metadata name/value 
+pairs associated with the layer as a whole. It has
+&lt;MDI&gt; (metadata item) subelements which have a "key" attribute and the value
+as the data of the element. The Metadata element can be repeated multiple times,
+in which case it must be accompanied with a "domain" attribute to indicate the
+name of the metadata domain.
+</li>
 
 <br>
 

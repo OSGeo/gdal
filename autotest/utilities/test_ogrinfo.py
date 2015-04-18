@@ -526,6 +526,144 @@ OGRFeature(test_ogrinfo_23):2
 
     return 'success'
 
+###############################################################################
+# Test metadata
+
+def test_ogrinfo_24():
+    if test_cli_utilities.get_ogrinfo_path() is None:
+        return 'skip'
+
+    f = open('tmp/test_ogrinfo_24.vrt', 'wt')
+    f.write( """<OGRVRTDataSource>
+    <Metadata>
+        <MDI key="foo">bar</MDI>
+    </Metadata>
+    <Metadata domain="other_domain">
+        <MDI key="baz">foo</MDI>
+    </Metadata>
+    <OGRVRTLayer name="poly">
+        <Metadata>
+            <MDI key="bar">baz</MDI>
+        </Metadata>
+        <SrcDataSource relativeToVRT="1" shared="1">../../ogr/data/poly.shp</SrcDataSource>
+        <SrcLayer>poly</SrcLayer>
+  </OGRVRTLayer>
+</OGRVRTDataSource>""" )
+    f.close()
+   
+
+    ret = gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' -ro -al tmp/test_ogrinfo_24.vrt -so', check_memleak = False )
+    expected_ret = """INFO: Open of `tmp/test_ogrinfo_24.vrt'
+      using driver `OGR_VRT' successful.
+Metadata:
+  foo=bar
+
+Layer name: poly
+Metadata:
+  bar=baz
+Geometry: Polygon
+Feature Count: 10
+Extent: (478315.531250, 4762880.500000) - (481645.312500, 4765610.500000)
+Layer SRS WKT:
+PROJCS["OSGB 1936 / British National Grid",
+    GEOGCS["OSGB 1936",
+        DATUM["OSGB_1936",
+            SPHEROID["Airy_1830",6377563.396,299.3249646]],
+        PRIMEM["Greenwich",0],
+        UNIT["Degree",0.017453292519943295]],
+    PROJECTION["Transverse_Mercator"],
+    PARAMETER["latitude_of_origin",49],
+    PARAMETER["central_meridian",-2],
+    PARAMETER["scale_factor",0.9996012717],
+    PARAMETER["false_easting",400000],
+    PARAMETER["false_northing",-100000],
+    UNIT["Meter",1]]
+AREA: Real (12.3)
+EAS_ID: Integer64 (11.0)
+PRFEDEA: String (16.0)
+"""
+    expected_lines = expected_ret.splitlines()
+    lines = ret.splitlines()
+    for i in range(len(expected_lines)):
+        if expected_lines[i] != lines[i]:
+            print(ret)
+            return 'fail'
+    ret = gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' -ro -al tmp/test_ogrinfo_24.vrt -so -mdd all', check_memleak = False )
+    expected_ret = """INFO: Open of `tmp/test_ogrinfo_24.vrt'
+      using driver `OGR_VRT' successful.
+Metadata:
+  foo=bar
+Metadata (other_domain):
+  baz=foo
+
+Layer name: poly
+Metadata:
+  bar=baz
+Geometry: Polygon
+Feature Count: 10
+Extent: (478315.531250, 4762880.500000) - (481645.312500, 4765610.500000)
+Layer SRS WKT:
+PROJCS["OSGB 1936 / British National Grid",
+    GEOGCS["OSGB 1936",
+        DATUM["OSGB_1936",
+            SPHEROID["Airy_1830",6377563.396,299.3249646]],
+        PRIMEM["Greenwich",0],
+        UNIT["Degree",0.017453292519943295]],
+    PROJECTION["Transverse_Mercator"],
+    PARAMETER["latitude_of_origin",49],
+    PARAMETER["central_meridian",-2],
+    PARAMETER["scale_factor",0.9996012717],
+    PARAMETER["false_easting",400000],
+    PARAMETER["false_northing",-100000],
+    UNIT["Meter",1]]
+AREA: Real (12.3)
+EAS_ID: Integer64 (11.0)
+PRFEDEA: String (16.0)
+"""
+    expected_lines = expected_ret.splitlines()
+    lines = ret.splitlines()
+    for i in range(len(expected_lines)):
+        if expected_lines[i] != lines[i]:
+            print(ret)
+            return 'fail'
+            
+    ret = gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' -ro -al tmp/test_ogrinfo_24.vrt -so -nomd', check_memleak = False )
+    expected_ret = """INFO: Open of `tmp/test_ogrinfo_24.vrt'
+      using driver `OGR_VRT' successful.
+
+Layer name: poly
+Geometry: Polygon
+Feature Count: 10
+Extent: (478315.531250, 4762880.500000) - (481645.312500, 4765610.500000)
+Layer SRS WKT:
+PROJCS["OSGB 1936 / British National Grid",
+    GEOGCS["OSGB 1936",
+        DATUM["OSGB_1936",
+            SPHEROID["Airy_1830",6377563.396,299.3249646]],
+        PRIMEM["Greenwich",0],
+        UNIT["Degree",0.017453292519943295]],
+    PROJECTION["Transverse_Mercator"],
+    PARAMETER["latitude_of_origin",49],
+    PARAMETER["central_meridian",-2],
+    PARAMETER["scale_factor",0.9996012717],
+    PARAMETER["false_easting",400000],
+    PARAMETER["false_northing",-100000],
+    UNIT["Meter",1]]
+AREA: Real (12.3)
+EAS_ID: Integer64 (11.0)
+PRFEDEA: String (16.0)
+"""
+    expected_lines = expected_ret.splitlines()
+    lines = ret.splitlines()
+    for i in range(len(expected_lines)):
+        if expected_lines[i] != lines[i]:
+            print(ret)
+            return 'fail'
+
+    os.unlink('tmp/test_ogrinfo_24.vrt')
+
+    return 'success'
+
 gdaltest_list = [
     test_ogrinfo_1,
     test_ogrinfo_2,
@@ -550,6 +688,7 @@ gdaltest_list = [
     test_ogrinfo_21,
     test_ogrinfo_22,
     test_ogrinfo_23,
+    test_ogrinfo_24,
     ]
 
 

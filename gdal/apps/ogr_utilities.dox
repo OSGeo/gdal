@@ -27,6 +27,7 @@ ogrinfo [--help-general] [-ro] [-q] [-where restricted_where]
         [-spat xmin ymin xmax ymax] [-geomfield field] [-fid fid]
         [-sql statement] [-dialect dialect] [-al] [-so] [-fields={YES/NO}]
         [-geom={YES/NO/SUMMARY}] [-formats] [[-oo NAME=VALUE] ...]
+        [-nomd] [-listmdd] [-mdd domain|`all`]*
         datasource_name [layer [layer ...]]
 
 \endverbatim
@@ -68,6 +69,11 @@ the feature dump will not display the geometry. If set to SUMMARY, only a
 summary of the geometry will be displayed. If set to YES, the geometry will be reported in full OGC WKT format.
 Default value is YES.</dd>
 <dt> <b>-oo</b> <em>NAME=VALUE</em>:</dt><dd>(starting with GDAL 2.0) Dataset open option (format specific)</dd>
+<dt> <b>-nomd</b></dt><dd>(starting with GDAL 2.0)  Suppress metadata printing. Some datasets may contain a lot
+of metadata strings.</dd>
+<dt> <b>-listmdd</b></dt><dd>(starting with GDAL 2.0)  List all metadata domains available for the dataset.</dd>
+<dt> <b>-mdd domain</b></dt><dd>(starting with GDAL 2.0)  Report metadata for the specified domain.
+"all" can be used to report metadata in all domains</dd>
 <dt> <b>--formats</b>:</dt><dd> List the format drivers that are
 enabled.</dd>
 <dt> <i>datasource_name</i>:</dt><dd> The data source to open.  May be a filename, 
