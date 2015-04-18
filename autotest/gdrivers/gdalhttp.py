@@ -176,12 +176,19 @@ def http_4():
         if conn is None:
             print('cannot open URL')
             return 'skip'
+        try:
+            conn.read()
+        except:
+            print('cannot read')
+            return 'skip'
         conn.close()
+        gdaltest.post_reason('fail')
         return 'fail'
 
     filelist = ds.GetFileList()
     if '/vsicurl/ftp://ftp.remotesensing.org/gdal/data/gtiff/utm.tif' not in filelist:
         print(filelist)
+        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
