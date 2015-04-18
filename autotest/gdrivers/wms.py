@@ -522,6 +522,8 @@ def wms_12():
     name = "http://tilecache.osgeo.org/wms-c/Basic.py/1.0.0/"
     ds = gdal.Open( name )
     if ds is None:
+        if gdaltest.gdalurlopen('http://tilecache.osgeo.org/wms-c/Basic.py/1.0.0/basic/0/0/0.png') is None:
+            return 'skip'
         gdaltest.post_reason( 'open of %s failed.' % name)
         return 'fail'
 
