@@ -42,6 +42,21 @@ CPL_CVSID("$Id$");
 #define DEFAULT_BASE_START_INDEX     0
 #define DEFAULT_PAGE_SIZE            100
 
+typedef struct
+{
+    const char* pszPath;
+    const char* pszMDI;
+} MetadataItem;
+
+static const MetadataItem asMetadata[] =
+{
+    {  "Service.Title", "TITLE" }, /*1.0 */
+    {  "ServiceIdentification.Title", "TITLE" }, /* 1.1 or 2.0 */
+    {  "Service.Abstract", "ABSTRACT" }, /* 1.0 */
+    {  "ServiceIdentification.Abstract", "ABSTRACT" }, /* 1.1 or 2.0 */
+    {  "ServiceProvider.ProviderName", "PROVIDER_NAME" }, /* 1.1 or 2.0 */
+};
+
 /************************************************************************/
 /*                            WFSFindNode()                             */
 /************************************************************************/
@@ -286,6 +301,32 @@ OGRLayer* OGRWFSDataSource::GetLayerByName(const char* pszName)
         return papoLayers[nIndex];
 }
 
+/************************************************************************/
+/*                        GetMetadataDomainList()                       */
+/************************************************************************/
+
+char** OGRWFSDataSource::GetMetadataDomainList()
+{
+    return BuildMetadataDomainList(GDALDataset::GetMetadataDomainList(),
+                                   TRUE,
+                                   "", "xml:capabilities", NULL);
+
+}
+
+/************************************************************************/
+/*                           GetMetadata()                              */
+/************************************************************************/
+
+char** OGRWFSDataSource::GetMetadata( const char * pszDomain )
+{
+    if( pszDomain != NULL && EQUAL(pszDomain, "xml:capabilities") )
+    {
+        apszGetCapabilities[0] = osGetCapabilities.c_str();
+        apszGetCapabilities[1] = NULL;
+        return (char**) apszGetCapabilities;
+    }
+    return GDALDataset::GetMetadata(pszDomain);
+}
 
 /************************************************************************/
 /*                          GetLayerIndex()                             */
@@ -1041,6 +1082,13 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn,
 
     pszBaseURL = NULL;
 
+    for(int i=0; i < (int)(sizeof(asMetadata) / sizeof(asMetadata[0])); i++ )
+    {
+        const char* pszVal = CPLGetXMLValue( psWFSCapabilities, asMetadata[i].pszPath, NULL );
+        if( pszVal )
+            SetMetadataItem(asMetadata[i].pszMDI, pszVal);
+    }
+
     if (osVersion.size() == 0)
         osVersion = CPLGetXMLValue(psWFSCapabilities, "version", "1.0.0");
     if (strcmp(osVersion.c_str(), "1.0.0") == 0)
@@ -1354,6 +1402,26 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn,
                             osBaseURL, pszName, pszNS, pszNSVal);
                 if (osOutputFormat.size())
                     poLayer->SetRequiredOutputFormat(osOutputFormat);
+
+                if( pszTitle )
+                    poLayer->SetMetadataItem("TITLE", pszTitle);
+                if( pszAbstract )
+                    poLayer->SetMetadataItem("ABSTRACT", pszAbstract);
+                CPLXMLNode* psKeywords = CPLGetXMLNode(psChildIter, "Keywords");
+                if( psKeywords )
+                {
+                    int nKeywordCounter = 1;
+                    for( CPLXMLNode* psKeyword = psKeywords->psChild;
+                         psKeyword != NULL; psKeyword = psKeyword->psNext )
+                    {
+                        if( psKeyword->eType == CXT_Element )
+                        {
+                            poLayer->SetMetadataItem(CPLSPrintf("KEYWORD_%d", nKeywordCounter),
+                                                     psKeyword->psChild->pszValue);
+                            nKeywordCounter ++;
+                        }
+                    }
+                }
 
                 if (poSRS)
                 {

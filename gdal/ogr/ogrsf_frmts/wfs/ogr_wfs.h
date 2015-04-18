@@ -243,6 +243,7 @@ class OGRWFSDataSource : public OGRDataSource
     OGRLayer           *poLayerMetadataLayer;
 
     CPLString           osGetCapabilities;
+    const char         *apszGetCapabilities[2];
     GDALDataset        *poLayerGetCapabilitiesDS;
     OGRLayer           *poLayerGetCapabilitiesLayer;
 
@@ -306,6 +307,9 @@ class OGRWFSDataSource : public OGRDataSource
                                                       char* pszNS, char* pszNSVal);
 
     int                         GetKeepLayerNamePrefix() { return bKeepLayerNamePrefix; }
+    
+    virtual char**              GetMetadataDomainList();
+    virtual char**              GetMetadata( const char * pszDomain = "" );
 };
 
 #endif /* ndef _OGR_WFS_H_INCLUDED */
