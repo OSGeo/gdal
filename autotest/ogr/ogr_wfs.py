@@ -1086,6 +1086,29 @@ def ogr_wfs_vsimem_fail_because_no_get_capabilities():
     return 'success'
 
 ###############################################################################
+def ogr_wfs_vsimem_fail_because_empty_response():
+
+    if gdaltest.wfs_drv is None:
+        return 'skip'
+
+    gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
+
+    gdal.FileFromMemBuffer('/vsimem/wfs_endpoint?SERVICE=WFS&REQUEST=GetCapabilities',
+                           '')
+    gdal.PushErrorHandler()
+    ds = ogr.Open('WFS:/vsimem/wfs_endpoint')
+    gdal.PopErrorHandler()
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if gdal.GetLastErrorMsg().find('Empty content returned by server') < 0:
+        gdaltest.post_reason('fail')
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 def ogr_wfs_vsimem_fail_because_no_WFS_Capabilities():
 
     if gdaltest.wfs_drv is None:
@@ -1363,7 +1386,7 @@ def ogr_wfs_vsimem_wfs110_one_layer_invalid_describefeaturetype():
     lyr = ds.GetLayer(0)
 
     gdal.FileFromMemBuffer('/vsimem/wfs_endpoint?SERVICE=WFS&VERSION=1.1.0&REQUEST=DescribeFeatureType&TYPENAME=my_layer',
-"""invalid
+"""<invalid_xml
 """)
 
     gdal.ErrorReset()
@@ -1660,7 +1683,7 @@ def ogr_wfs_vsimem_wfs110_one_layer_invalid_getfeaturecount_with_hits():
     lyr = ds.GetLayer(0)
 
     gdal.FileFromMemBuffer('/vsimem/wfs_endpoint?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=my_layer&RESULTTYPE=hits',
-"""invalid""")
+"""<invalid_xml""")
 
     gdal.ErrorReset()
     gdal.PushErrorHandler()
@@ -1716,7 +1739,7 @@ def ogr_wfs_vsimem_wfs110_one_layer_getfeaturecount_with_hits_invalid_xml():
     lyr = ds.GetLayer(0)
 
     gdal.FileFromMemBuffer('/vsimem/wfs_endpoint?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=my_layer&RESULTTYPE=hits',
-"""invalid_xml""")
+"""<invalid_xml""")
 
     gdal.ErrorReset()
     gdal.PushErrorHandler()
@@ -1859,7 +1882,7 @@ def ogr_wfs_vsimem_wfs110_one_layer_invalid_getfeature():
     lyr = ds.GetLayer(0)
 
     gdal.FileFromMemBuffer('/vsimem/wfs_endpoint?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=my_layer',
-"""invalid
+"""<invalid_xml
 """)
 
     gdal.ErrorReset()
@@ -2607,7 +2630,7 @@ def ogr_wfs_vsimem_wfs110_insertfeature():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    gdal.FileFromMemBuffer(gdaltest.wfs_insert_url, "invalid_xml")
+    gdal.FileFromMemBuffer(gdaltest.wfs_insert_url, "<invalid_xml")
 
     f = ogr.Feature(lyr.GetLayerDefn())
     gdal.PushErrorHandler()
@@ -2795,7 +2818,27 @@ def ogr_wfs_vsimem_wfs110_insertfeature():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    gdal.FileFromMemBuffer(gdaltest.wfs_insert_url, "invalid")
+    gdal.FileFromMemBuffer(gdaltest.wfs_insert_url, "<invalid_xml")
+    gdal.PushErrorHandler()
+    ret = lyr.CommitTransaction()
+    gdal.PopErrorHandler()
+    if ret == 0 or gdal.GetLastErrorMsg().find('Invalid XML content') < 0:
+        gdaltest.post_reason('fail')
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+
+
+    ret = lyr.StartTransaction()
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = ogr.Feature(lyr.GetLayerDefn())
+    ret = lyr.CreateFeature(f)
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.FileFromMemBuffer(gdaltest.wfs_insert_url, "<dummy_xml/>")
     gdal.PushErrorHandler()
     ret = lyr.CommitTransaction()
     gdal.PopErrorHandler()
@@ -2935,6 +2978,12 @@ def ogr_wfs_vsimem_wfs110_insertfeature():
     if f.gml_id != 'my_layer.100':
         gdaltest.post_reason('fail')
         return 'fail'
+    sql_lyr.ResetReading()
+    sql_lyr.SetNextByIndex(0)
+    sql_lyr.GetFeature(0)
+    sql_lyr.GetLayerDefn()
+    sql_lyr.GetFeatureCount()
+    sql_lyr.TestCapability('foo')
     ds.ReleaseResultSet(sql_lyr)
 
     gdal.Unlink(gdaltest.wfs_insert_url)
@@ -3068,11 +3117,22 @@ def ogr_wfs_vsimem_wfs110_updatefeature():
     gdal.PushErrorHandler()
     ret = lyr.SetFeature(f)
     gdal.PopErrorHandler()
-    if ret == 0 or gdal.GetLastErrorMsg().find('Invalid XML content') < 0:
+    if ret == 0 or gdal.GetLastErrorMsg().find('Empty content returned by server') < 0:
         gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
 
+
+    gdal.FileFromMemBuffer(gdaltest.wfs_update_url, "<invalid_xmm")
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField('gml_id', 'my_layer.1')
+    gdal.PushErrorHandler()
+    ret = lyr.SetFeature(f)
+    gdal.PopErrorHandler()
+    if ret == 0 or gdal.GetLastErrorMsg().find('Invalid XML content') < 0:
+        gdaltest.post_reason('fail')
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
 
 
     gdal.FileFromMemBuffer(gdaltest.wfs_update_url, "<ServiceExceptionReport/>")
@@ -3244,11 +3304,22 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
     gdal.PushErrorHandler()
     ret = lyr.DeleteFeature(200)
     gdal.PopErrorHandler()
-    if ret == 0 or gdal.GetLastErrorMsg().find('Invalid XML content') < 0:
+    if ret == 0 or gdal.GetLastErrorMsg().find('Empty content returned by server') < 0:
         gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
 
+
+    ds = ogr.Open('WFS:/vsimem/wfs_endpoint', update = 1)
+    lyr = ds.GetLayer(0)
+    gdal.FileFromMemBuffer(gdaltest.wfs_delete_url, "<invalid_xml>")
+    gdal.PushErrorHandler()
+    ret = lyr.DeleteFeature(200)
+    gdal.PopErrorHandler()
+    if ret == 0 or gdal.GetLastErrorMsg().find('Invalid XML content') < 0:
+        gdaltest.post_reason('fail')
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
 
 
     ds = ogr.Open('WFS:/vsimem/wfs_endpoint', update = 1)
@@ -3307,9 +3378,9 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
 
     gdal.ErrorReset()
     gdal.PushErrorHandler()
-    sql_lyr = ds.ExecuteSQL("DELETE FROM non_existing_layer")
+    sql_lyr = ds.ExecuteSQL("DELETE FROM non_existing_layer WHERE truc")
     gdal.PopErrorHandler()
-    if gdal.GetLastErrorMsg() == '':
+    if gdal.GetLastErrorMsg().find('Unknown layer') < 0:
         gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
@@ -3318,16 +3389,16 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
     gdal.PushErrorHandler()
     sql_lyr = ds.ExecuteSQL("DELETE FROM my_layer BLA")
     gdal.PopErrorHandler()
-    if gdal.GetLastErrorMsg() == '':
+    if gdal.GetLastErrorMsg().find('WHERE clause missing') < 0:
         gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
 
     gdal.ErrorReset()
     gdal.PushErrorHandler()
-    sql_lyr = ds.ExecuteSQL("DELETE FROM my_layer WHERE invalid")
+    sql_lyr = ds.ExecuteSQL("DELETE FROM my_layer WHERE -")
     gdal.PopErrorHandler()
-    if gdal.GetLastErrorMsg() == '':
+    if gdal.GetLastErrorMsg().find('SQL Expression Parsing Error') < 0:
         gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
@@ -3505,7 +3576,19 @@ def ogr_wfs_vsimem_wfs110_multiple_layers():
     ds = ogr.Open('WFS:/vsimem/wfs110_multiple_layers')
     lyr = ds.GetLayer(0)
     gdal.FileFromMemBuffer('/vsimem/wfs110_multiple_layers?SERVICE=WFS&VERSION=1.1.0&REQUEST=DescribeFeatureType&TYPENAME=my_layer,my_layer2',
-    "invalid_xml")
+    "<invalid_xml")
+    lyr = ds.GetLayer(0)
+    gdal.PushErrorHandler()
+    lyr_defn = lyr.GetLayerDefn()
+    gdal.PopErrorHandler()
+    if lyr_defn.GetFieldCount() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ds = ogr.Open('WFS:/vsimem/wfs110_multiple_layers')
+    lyr = ds.GetLayer(0)
+    gdal.FileFromMemBuffer('/vsimem/wfs110_multiple_layers?SERVICE=WFS&VERSION=1.1.0&REQUEST=DescribeFeatureType&TYPENAME=my_layer,my_layer2',
+    "<no_schema/>")
     lyr = ds.GetLayer(0)
     gdal.PushErrorHandler()
     lyr_defn = lyr.GetLayerDefn()
@@ -4076,7 +4159,7 @@ def ogr_wfs_vsimem_wfs200_multipart():
 
     gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
 
-    ds = ogr.Open('WFS:/vsimem/wfs200_endpoint_multipart?OUTPUTFORMAT=jsonmultipart')
+    ds = ogr.Open('WFS:/vsimem/wfs200_endpoint_multipart?OUTPUTFORMAT=multipart')
     lyr = ds.GetLayer(0)
 
     gdal.FileFromMemBuffer('/vsimem/wfs200_endpoint_multipart?SERVICE=WFS&VERSION=2.0.0&REQUEST=DescribeFeatureType&TYPENAME=my_layer',
@@ -4096,7 +4179,7 @@ def ogr_wfs_vsimem_wfs200_multipart():
 </xsd:schema>
 """)
 
-    gdal.FileFromMemBuffer('/vsimem/wfs200_endpoint_multipart?OUTPUTFORMAT=jsonmultipart&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=my_layer',
+    gdal.FileFromMemBuffer('/vsimem/wfs200_endpoint_multipart?OUTPUTFORMAT=multipart&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=my_layer',
 """Content-Type: multipart/mixed; boundary="my_boundary"
 \r
 \r
@@ -4131,10 +4214,10 @@ Content-Disposition: attachment; filename=my.json
 
 
 
-    ds = ogr.Open('WFS:/vsimem/wfs200_endpoint_multipart?OUTPUTFORMAT=jsonmultipart')
+    ds = ogr.Open('WFS:/vsimem/wfs200_endpoint_multipart?OUTPUTFORMAT=multipart')
     lyr = ds.GetLayer(0)
 
-    gdal.FileFromMemBuffer('/vsimem/wfs200_endpoint_multipart?OUTPUTFORMAT=jsonmultipart&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=my_layer',
+    gdal.FileFromMemBuffer('/vsimem/wfs200_endpoint_multipart?OUTPUTFORMAT=multipart&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=my_layer',
 """Content-Type: multipart/mixed; boundary="my_boundary"
 \r
 \r
@@ -4161,10 +4244,10 @@ Content-Disposition: attachment; filename=my.json
         return 'fail'
         
 
-    ds = ogr.Open('WFS:/vsimem/wfs200_endpoint_multipart?OUTPUTFORMAT=jsonmultipart')
+    ds = ogr.Open('WFS:/vsimem/wfs200_endpoint_multipart?OUTPUTFORMAT=multipart')
     lyr = ds.GetLayer(0)
 
-    gdal.FileFromMemBuffer('/vsimem/wfs200_endpoint_multipart?OUTPUTFORMAT=jsonmultipart&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=my_layer',
+    gdal.FileFromMemBuffer('/vsimem/wfs200_endpoint_multipart?OUTPUTFORMAT=multipart&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=my_layer',
 """Content-Type: multipart/mixed; boundary="my_boundary"
 \r
 \r
@@ -4233,7 +4316,7 @@ def ogr_wfs_vsimem_cleanup():
     gdal.Unlink('/vsimem/wfs200_endpoint_json?OUTPUTFORMAT=application/json&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=my_layer&STARTINDEX=0&COUNT=2')
     gdal.Unlink('/vsimem/wfs200_endpoint_multipart?SERVICE=WFS&REQUEST=GetCapabilities')
     gdal.Unlink('/vsimem/wfs200_endpoint_multipart?SERVICE=WFS&VERSION=2.0.0&REQUEST=DescribeFeatureType&TYPENAME=my_layer')
-    gdal.Unlink('/vsimem/wfs200_endpoint_multipart?OUTPUTFORMAT=jsonmultipart&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=my_layer')
+    gdal.Unlink('/vsimem/wfs200_endpoint_multipart?OUTPUTFORMAT=multipart&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=my_layer')
     
     if gdaltest.wfs_insert_url:
         gdal.Unlink(gdaltest.wfs_insert_url)
@@ -4281,6 +4364,7 @@ gdaltest_live_list = [
 gdaltest_vsimem_list = [ 
     ogr_wfs_vsimem_fail_because_not_enabled,
     ogr_wfs_vsimem_fail_because_no_get_capabilities,
+    ogr_wfs_vsimem_fail_because_empty_response,
     ogr_wfs_vsimem_fail_because_no_WFS_Capabilities,
     ogr_wfs_vsimem_fail_because_exception,
     ogr_wfs_vsimem_fail_because_invalid_xml_capabilities,
