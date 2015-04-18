@@ -3623,14 +3623,16 @@ static CPLErr GWKOpenCLCase( GDALWarpKernel *poWK )
     /* -------------------------------------------------------------------- */
     double *padfX, *padfY, *padfZ;
     int    *pabSuccess;
+    double dfSrcCoordPrecision;
+    double dfErrorThreshold;
     
     padfX = (double *) CPLMalloc(sizeof(double) * nDstXSize);
     padfY = (double *) CPLMalloc(sizeof(double) * nDstXSize);
     padfZ = (double *) CPLMalloc(sizeof(double) * nDstXSize);
     pabSuccess = (int *) CPLMalloc(sizeof(int) * nDstXSize);
-    double dfSrcCoordPrecision = CPLAtof(
+    dfSrcCoordPrecision = CPLAtof(
         CSLFetchNameValueDef(poWK->papszWarpOptions, "SRC_COORD_PRECISION", "0"));
-    double dfErrorThreshold = CPLAtof(
+    dfErrorThreshold = CPLAtof(
         CSLFetchNameValueDef(poWK->papszWarpOptions, "ERROR_THRESHOLD", "0"));
 
     /* ==================================================================== */
