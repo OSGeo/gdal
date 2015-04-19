@@ -126,8 +126,6 @@ OGRWFSLayer::OGRWFSLayer( OGRWFSDataSource* poDS,
     nFeatureCountRequested = 0;
 
     pszRequiredOutputFormat = NULL;
-
-    bAscFlag = TRUE;
 }
 
 /************************************************************************/
@@ -145,7 +143,6 @@ OGRWFSLayer* OGRWFSLayer::Clone()
     poDupLayer->bGotApproximateLayerDefn = bGotApproximateLayerDefn;
     poDupLayer->eGeomType = poDupLayer->poFeatureDefn->GetGeomType();
     poDupLayer->pszRequiredOutputFormat = pszRequiredOutputFormat ? CPLStrdup(pszRequiredOutputFormat) : NULL;
-    poDupLayer->bAscFlag = bAscFlag;
 
     /* Copy existing schema file if already found */
     CPLString osSrcFileName = CPLSPrintf("/vsimem/tempwfs_%p/file.xsd", this);
@@ -569,15 +566,21 @@ CPLString OGRWFSLayer::MakeGetFeatureURL(int nRequestMaxFeatures, int bRequestHi
     {
         osURL = CPLURLAddKVP(osURL, "RESULTTYPE", "hits");
     }
-    else if (osFieldToSort.size() != 0)
+    else if (aoSortColumns.size() != 0)
     {
-        CPLString osSortBy(osFieldToSort);
-        if (!bAscFlag)
+        CPLString osSortBy;
+        for( int i=0; i < (int)aoSortColumns.size(); i++)
         {
-            if (atoi(poDS->GetVersion()) >= 2)
-                osSortBy += " DESC";
-            else
-                osSortBy += " D";
+            if( i > 0 )
+                osSortBy += ",";
+            osSortBy += aoSortColumns[i].osColumn;
+            if( !aoSortColumns[i].bAsc )
+            {
+                if (atoi(poDS->GetVersion()) >= 2)
+                    osSortBy += " DESC";
+                else
+                    osSortBy += " D";
+            }
         }
         osURL = CPLURLAddKVP(osURL, "SORTBY", WFS_EscapeURL(osSortBy));
     }
@@ -2561,8 +2564,7 @@ void  OGRWFSLayer::SetRequiredOutputFormat(const char* pszRequiredOutputFormatIn
 /*                            SetOrderBy()                              */
 /************************************************************************/
 
-void OGRWFSLayer::SetOrderBy(const char* pszFieldToSort, int bAscFlag)
+void OGRWFSLayer::SetOrderBy(const std::vector<OGRWFSSortDesc>& aoSortColumnsIn)
 {
-    osFieldToSort = pszFieldToSort ? pszFieldToSort : "";
-    this->bAscFlag = bAscFlag;
+    aoSortColumns = aoSortColumnsIn;
 }

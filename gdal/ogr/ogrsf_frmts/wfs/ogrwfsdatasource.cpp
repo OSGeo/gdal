@@ -1420,6 +1420,11 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn,
                                                      psKeyword->psChild->pszValue);
                             nKeywordCounter ++;
                         }
+                        else if( psKeyword->eType == CXT_Text )
+                        {
+                            poLayer->SetMetadataItem("KEYWORDS",
+                                                     psKeyword->pszValue);
+                        }
                     }
                 }
 
@@ -2165,21 +2170,37 @@ OGRLayer * OGRWFSDataSource::ExecuteSQL( const char *pszSQLCommand,
             psSelectInfo->table_defs[0].data_source == NULL &&
             (iLayer = GetLayerIndex( psSelectInfo->table_defs[0].table_name )) >= 0 &&
             psSelectInfo->join_count == 0 &&
-            psSelectInfo->order_specs == 1 )
+            psSelectInfo->order_specs > 0 )
         {
             OGRWFSLayer* poSrcLayer = papoLayers[iLayer];
-            int nFieldIndex = poSrcLayer->GetLayerDefn()->GetFieldIndex(
-                                        psSelectInfo->order_defs[0].field_name);
-            if (!poSrcLayer->HasGotApproximateLayerDefn() && nFieldIndex >= 0)
+            std::vector<OGRWFSSortDesc> aoSortColumns;
+            int i;
+            for(i=0;i<psSelectInfo->order_specs;i++)
+            {
+                int nFieldIndex = poSrcLayer->GetLayerDefn()->GetFieldIndex(
+                                        psSelectInfo->order_defs[i].field_name);
+                if (poSrcLayer->HasGotApproximateLayerDefn() || nFieldIndex < 0)
+                    break;
+
+                /* Make sure to have the right case */
+                const char* pszFieldName = poSrcLayer->GetLayerDefn()->
+                    GetFieldDefn(nFieldIndex)->GetNameRef();
+
+                OGRWFSSortDesc oSortDesc(pszFieldName, 
+                                    psSelectInfo->order_defs[i].ascending_flag);
+                aoSortColumns.push_back(oSortDesc);
+            }
+
+            if( i == psSelectInfo->order_specs )
             {
                 OGRWFSLayer* poDupLayer = poSrcLayer->Clone(); 
 
-                /* Make sure to have the right case */
-                const char* pszFieldName = poDupLayer->GetLayerDefn()->
-                    GetFieldDefn(nFieldIndex)->GetNameRef();
-
-                poDupLayer->SetOrderBy(pszFieldName,
-                                       psSelectInfo->order_defs[0].ascending_flag);
+                poDupLayer->SetOrderBy(aoSortColumns);
+                int nBackup = psSelectInfo->order_specs;
+                psSelectInfo->order_specs = 0;
+                char* pszSQLWithoutOrderBy = psSelectInfo->Unparse();
+                CPLDebug("WFS", "SQL without ORDER BY: %s", pszSQLWithoutOrderBy);
+                psSelectInfo->order_specs = nBackup;
                 delete psSelectInfo;
                 psSelectInfo = NULL;
 
@@ -2187,10 +2208,13 @@ OGRLayer * OGRWFSDataSource::ExecuteSQL( const char *pszSQLCommand,
                 /* base ExecuteSQL(), so that the OGRGenSQLResultsLayer references */
                 /* that temporary layer */
                 papoLayers[iLayer] = poDupLayer;
-                OGRLayer* poResLayer = OGRDataSource::ExecuteSQL( pszSQLCommand,
+                
+                OGRLayer* poResLayer = OGRDataSource::ExecuteSQL( pszSQLWithoutOrderBy,
                                                                   poSpatialFilter,
                                                                   pszDialect );
                 papoLayers[iLayer] = poSrcLayer;
+                
+                CPLFree(pszSQLWithoutOrderBy);
 
                 if (poResLayer != NULL)
                     oMap[poResLayer] = poDupLayer;

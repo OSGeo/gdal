@@ -100,8 +100,6 @@ typedef swq_field_type (*swq_op_checker)( swq_expr_node *op,
                                           int bAllowMismatchTypeOnFieldComparison );
 
 class swq_expr_node {
-    static CPLString   QuoteIfNecessary( const CPLString &, char chQuote = '\'' );
-    static CPLString   Quote( const CPLString &, char chQuote = '\'' );
 public:
     swq_expr_node();
 
@@ -150,6 +148,9 @@ public:
     /* shared by SNT_COLUMN and SNT_CONSTANT */
     char        *string_value; /* column name when SNT_COLUMN */
 
+
+    static CPLString   QuoteIfNecessary( const CPLString &, char chQuote = '\'' );
+    static CPLString   Quote( const CPLString &, char chQuote = '\'' );
 };
 
 typedef struct {
@@ -330,6 +331,7 @@ public:
     CPLErr      expand_wildcard( swq_field_list *field_list );
     CPLErr      parse( swq_field_list *field_list, int parse_flags );
 
+    char       *Unparse();
     void        Dump( FILE * );
 };
 

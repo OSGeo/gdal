@@ -346,6 +346,11 @@ void swq_expr_node::Dump( FILE * fp, int depth )
 CPLString swq_expr_node::QuoteIfNecessary( const CPLString &osExpr, char chQuote )
 
 {
+    if( osExpr[0] == '_' )
+        return Quote(osExpr, chQuote);
+    if( osExpr == "*" )
+        return osExpr;
+
     for( int i = 0; i < (int) osExpr.size(); i++ )
     {
         char ch = osExpr[i];

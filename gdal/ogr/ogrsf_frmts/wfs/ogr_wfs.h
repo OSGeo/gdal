@@ -55,6 +55,16 @@ const char* FindSubStringInsensitive(const char* pszStr,
 CPLString WFS_EscapeURL(const char* pszURL);
 CPLString WFS_DecodeURL(const CPLString &osSrc);
 
+class OGRWFSSortDesc
+{
+    public:
+        CPLString osColumn;
+        int       bAsc;
+        
+        OGRWFSSortDesc(const CPLString& osColumn, int bAsc) : osColumn(osColumn), bAsc(bAsc) {}
+        OGRWFSSortDesc(const OGRWFSSortDesc& other) : osColumn(other.osColumn), bAsc(other.bAsc) {}
+};
+
 /************************************************************************/
 /*                             OGRWFSLayer                              */
 /************************************************************************/
@@ -126,8 +136,7 @@ class OGRWFSLayer : public OGRLayer
 
     char                *pszRequiredOutputFormat;
 
-    CPLString            osFieldToSort;
-    int                  bAscFlag;
+    std::vector<OGRWFSSortDesc> aoSortColumns;
 
   public:
                         OGRWFSLayer(OGRWFSDataSource* poDS,
@@ -185,7 +194,7 @@ class OGRWFSLayer : public OGRLayer
 
     const char         *GetRequiredOutputFormat() { return pszRequiredOutputFormat; };
 
-    void                SetOrderBy(const char* pszFieldToSort, int bAscFlag);
+    void                SetOrderBy(const std::vector<OGRWFSSortDesc>& aoSortColumnsIn);
     int                 HasGotApproximateLayerDefn() { GetLayerDefn(); return bGotApproximateLayerDefn; }
 };
 
