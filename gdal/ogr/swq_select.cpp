@@ -312,6 +312,121 @@ void swq_select::Dump( FILE *fp )
 }
 
 /************************************************************************/
+/*                               Unparse()                              */
+/************************************************************************/
+
+char* swq_select::Unparse()
+{
+    int i;
+    CPLString osSelect("SELECT ");
+
+    for( i = 0; i < result_columns; i++ )
+    {
+        swq_col_def *def = column_defs + i;
+
+        if( i > 0 )
+            osSelect += ", ";
+
+        if( def->expr != NULL && def->col_func == SWQCF_NONE )
+        {
+            char* pszTmp = def->expr->Unparse(NULL, '"');
+            osSelect += pszTmp;
+            CPLFree(pszTmp);
+        }
+        else
+        {
+            if( def->col_func == SWQCF_AVG )
+                osSelect += "AVG(";
+            else if( def->col_func == SWQCF_MIN )
+                osSelect += "MIN(";
+            else if( def->col_func == SWQCF_MAX )
+                osSelect += "MAX(";
+            else if( def->col_func == SWQCF_COUNT )
+                osSelect += "COUNT(";
+            else if( def->col_func == SWQCF_SUM )
+                osSelect += "SUM(";
+
+            if( def->distinct_flag )
+                osSelect += "DISTINCT ";
+
+            if( (def->field_alias == NULL || table_count > 1) &&
+                def->table_name != NULL && def->table_name[0] != '\0' )
+            {
+                osSelect += swq_expr_node::QuoteIfNecessary(def->table_name, '"');
+                osSelect += ".";
+            }
+            osSelect += swq_expr_node::QuoteIfNecessary(def->field_name, '"');
+        }
+
+        if( def->field_alias != NULL &&
+            strcmp(def->field_name, def->field_alias) != 0 )
+        {
+            osSelect += " AS ";
+            osSelect += swq_expr_node::QuoteIfNecessary(def->field_alias, '"');
+        }
+
+        if( def->col_func != SWQCF_NONE )
+            osSelect += ")";
+    }
+    
+    osSelect += " FROM ";
+    if( table_defs[0].data_source != NULL )
+    {
+        osSelect += "'";
+        osSelect += table_defs[0].data_source;
+        osSelect += "'.";
+    }
+    osSelect += swq_expr_node::QuoteIfNecessary(table_defs[0].table_name, '"');
+    if( table_defs[0].table_alias != NULL &&
+        strcmp(table_defs[0].table_name, table_defs[0].table_alias) != 0 )
+    {
+        osSelect += " AS ";
+        osSelect += swq_expr_node::QuoteIfNecessary(table_defs[0].table_alias, '"');
+    }
+
+    for( i = 0; i < join_count; i++ )
+    {
+        int iTable = join_defs[i].secondary_table;
+        osSelect += " JOIN ";
+        if( table_defs[iTable].data_source != NULL )
+        {
+            osSelect += "'";
+            osSelect += table_defs[iTable].data_source;
+            osSelect += "'.";
+        }
+        osSelect += swq_expr_node::QuoteIfNecessary(table_defs[iTable].table_name, '"');
+        if( table_defs[iTable].table_alias != NULL &&
+            strcmp(table_defs[iTable].table_name, table_defs[iTable].table_alias) != 0 )
+        {
+            osSelect += " AS ";
+            osSelect += swq_expr_node::QuoteIfNecessary(table_defs[iTable].table_alias, '"');
+        }
+        osSelect += " ON ";
+        char* pszTmp = join_defs[i].poExpr->Unparse(NULL, '"');
+        osSelect += pszTmp;
+        CPLFree(pszTmp);
+    }
+
+    if( where_expr != NULL )
+    {
+        osSelect += " WHERE ";
+        char* pszTmp = where_expr->Unparse(NULL, '"');
+        osSelect += pszTmp;
+        CPLFree(pszTmp);
+    }
+
+    for( i = 0; i < order_specs; i++ )
+    {
+        osSelect += " ORDER BY ";
+        osSelect += swq_expr_node::QuoteIfNecessary(order_defs[i].field_name, '"');
+        if( !order_defs[i].ascending_flag )
+            osSelect += " DESC";
+    }
+
+    return CPLStrdup(osSelect);
+}
+
+/************************************************************************/
 /*                             PushField()                              */
 /*                                                                      */
 /*      Create a new field definition by name and possibly alias.       */
