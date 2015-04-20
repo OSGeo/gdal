@@ -550,25 +550,13 @@ json_object* PLMosaicDataset::RunRequest(const char* pszURL,
 /************************************************************************/
 
 static CPLString PLMosaicGetParameter( GDALOpenInfo * poOpenInfo,
+                                       char** papszOptions,
                                        const char* pszName,
                                        const char* pszDefaultVal )
 {
-    CPLString osFilename(poOpenInfo->pszFilename);
-    size_t iPos = osFilename.ifind(CPLSPrintf("%s=", pszName));
-    CPLString osRet;
-    if( iPos != std::string::npos )
-    {
-        osRet = osFilename.substr(iPos + strlen(pszName) + 1);
-        iPos = osRet.find(',');
-        if( iPos == std::string::npos )
-            iPos = osRet.find(' ');
-        if( iPos != std::string::npos )
-            osRet.resize(iPos);
-    }
-    else
-        osRet = CSLFetchNameValueDef( poOpenInfo->papszOpenOptions, pszName,
-                                      pszDefaultVal );
-    return osRet;
+    return CSLFetchNameValueDef( papszOptions, pszName,
+        CSLFetchNameValueDef( poOpenInfo->papszOpenOptions, pszName,
+                              pszDefaultVal ));
 }
 
 /************************************************************************/
@@ -585,7 +573,31 @@ GDALDataset *PLMosaicDataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS->osBaseURL = CPLGetConfigOption("PL_URL", "https://api.planet.com/v0/mosaics/");
     
-    poDS->osAPIKey = PLMosaicGetParameter(poOpenInfo, "api_key",
+    char** papszOptions = CSLTokenizeStringComplex(
+            poOpenInfo->pszFilename+strlen("PLMosaic:"), ",", TRUE, FALSE );
+    for( char** papszIter = papszOptions; papszIter && *papszIter; papszIter ++ )
+    {
+        char* pszKey;
+        const char* pszValue = CPLParseNameValue(*papszIter, &pszKey);
+        if( pszValue != NULL )
+        {
+            if( !EQUAL(pszKey, "api_key") &&
+                !EQUAL(pszKey, "mosaic") &&
+                !EQUAL(pszKey, "cache_path") &&
+                !EQUAL(pszKey, "trust_cache") &&
+                !EQUAL(pszKey, "use_tiles") )
+            {
+                CPLError(CE_Failure, CPLE_NotSupported, "Unsupported option %s", pszKey);
+                CPLFree(pszKey);
+                delete poDS;
+                CSLDestroy(papszOptions);
+                return NULL;
+            }
+            CPLFree(pszKey);
+        }
+    }
+
+    poDS->osAPIKey = PLMosaicGetParameter(poOpenInfo, papszOptions, "api_key",
                                           CPLGetConfigOption("PL_API_KEY",""));
 
     if( poDS->osAPIKey.size() == 0 )
@@ -593,17 +605,23 @@ GDALDataset *PLMosaicDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Missing PL_API_KEY configuration option or API_KEY open option");
         delete poDS;
+        CSLDestroy(papszOptions);
         return NULL;
     }
 
-    poDS->osMosaic = PLMosaicGetParameter(poOpenInfo, "mosaic", "");
+    poDS->osMosaic = PLMosaicGetParameter(poOpenInfo, papszOptions, "mosaic", "");
 
-    poDS->osCachePathRoot = PLMosaicGetParameter(poOpenInfo, "cache_path",
+    poDS->osCachePathRoot = PLMosaicGetParameter(poOpenInfo, papszOptions, "cache_path",
                                           CPLGetConfigOption("PL_CACHE_PATH",""));
 
-    poDS->bTrustCache = CSLTestBoolean(PLMosaicGetParameter(poOpenInfo, "trust_cache", "FALSE"));
+    poDS->bTrustCache = CSLTestBoolean(PLMosaicGetParameter(
+                        poOpenInfo, papszOptions, "trust_cache", "FALSE"));
 
-    poDS->bUseTMSForMain = CSLTestBoolean(PLMosaicGetParameter(poOpenInfo, "use_tiles", "FALSE"));
+    poDS->bUseTMSForMain = CSLTestBoolean(PLMosaicGetParameter(
+                        poOpenInfo, papszOptions, "use_tiles", "FALSE"));
+
+    CSLDestroy(papszOptions);
+    papszOptions = NULL;
 
     if( poDS->osMosaic.size() )
     {

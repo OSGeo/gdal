@@ -531,6 +531,17 @@ def plmosaic_16():
         }
     ],
 }""")
+
+    gdal.SetConfigOption('PL_URL', '/vsimem/root')
+    gdal.PushErrorHandler()
+    ds = gdal.OpenEx('PLMosaic:api_key=foo,unsupported_option=val', gdal.OF_RASTER)
+    gdal.PopErrorHandler()
+    gdal.SetConfigOption('PL_URL', None)
+    if ds is not None or gdal.GetLastErrorMsg().find('Unsupported option unsupported_option') < 0:
+        gdaltest.post_reason('fail')
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+
     gdal.SetConfigOption('PL_URL', '/vsimem/root')
     ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options = ['API_KEY=foo'])
     gdal.SetConfigOption('PL_URL', None)
@@ -683,7 +694,7 @@ def plmosaic_17():
     # delete the full GeoTIFF before
     gdal.Unlink('/vsimem/root/my_mosaic/quads/my_15_0000_2047/full')
     gdal.SetConfigOption('PL_URL', '/vsimem/root')
-    ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options = ['API_KEY=foo', 'MOSAIC=my_mosaic', 'CACHE_PATH=tmp', 'TRUST_CACHE=YES'])
+    ds = gdal.OpenEx('PLMosaic:API_KEY=foo,MOSAIC=my_mosaic,CACHE_PATH=tmp,TRUST_CACHE=YES', gdal.OF_RASTER)
     gdal.SetConfigOption('PL_URL', None)    
 
     val = ds.GetRasterBand(1).ReadRaster(0,0,1,1)
