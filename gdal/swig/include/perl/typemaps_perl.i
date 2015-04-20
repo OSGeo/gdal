@@ -726,9 +726,9 @@ CreateArrayFromStringArray( char **first ) {
                     $1 = CSLAddNameValue( $1, key, SvPV_nolen(sv) );
                 }
             } else
-                SWIG_croak("the 'options' argument to a Geo::GDAL method is not a reference to an array or hash");
+                SWIG_croak("The 'options' argument is not a reference to an array or a hash.");
         } else
-            SWIG_croak("the 'options' argument to a Geo::GDAL method is not a reference");   
+            SWIG_croak("The 'options' argument is not a reference.");   
     }
 }
 %typemap(freearg) char **options
