@@ -3112,9 +3112,9 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
             {
                 poDS->adfGeoTransform[0] = poDS->adfCTM[4] + poDS->adfCTM[0] * dfX1 + poDS->adfCTM[2] * dfY2;
                 poDS->adfGeoTransform[1] = poDS->adfCTM[0] / dfUserUnit;
-                poDS->adfGeoTransform[2] = poDS->adfCTM[1] / dfUserUnit;
+                poDS->adfGeoTransform[2] = - poDS->adfCTM[2] / dfUserUnit;
                 poDS->adfGeoTransform[3] = poDS->adfCTM[5] + poDS->adfCTM[1] * dfX1 + poDS->adfCTM[3] * dfY2;
-                poDS->adfGeoTransform[4] = - poDS->adfCTM[2] / dfUserUnit;
+                poDS->adfGeoTransform[4] = poDS->adfCTM[1] / dfUserUnit;
                 poDS->adfGeoTransform[5] = - poDS->adfCTM[3] / dfUserUnit;
                 poDS->bGeoTransformValid = TRUE;
             }
