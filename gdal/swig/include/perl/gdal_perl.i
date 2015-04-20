@@ -1407,10 +1407,25 @@ sub Rename {
     Geo::GDAL::Rename($old, $new);
 }
 
-sub RmDir {
-    my ($dirname) = @_;
-    Geo::GDAL::RmDir($dirname);
+sub Rmdir {
+    my ($dirname, $recursive) = @_;
+    if (!$recursive) {
+        Geo::GDAL::Rmdir($dirname);
+    } else {
+        for my $f (ReadDir($dirname)) {
+            next if $f eq '..' or $f eq '.';
+            my @s = Stat($dirname.'/'.$f);
+            if ($s[0] eq 'f') {
+                Unlink($dirname.'/'.$f);
+            } elsif ($s[0] eq 'd') {
+                Rmdir($dirname.'/'.$f, 1);
+                Rmdir($dirname.'/'.$f);
+            }
+        }
+        Rmdir($dirname);
+    }
 }
+*RmDir = *Rmdir;
 
 sub Stat {
     my ($path) = @_;

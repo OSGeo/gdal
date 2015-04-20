@@ -133,6 +133,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 package Geo::OGR::Driver;
 use strict;
 use warnings;
+use Carp;
 use vars qw /@CAPABILITIES %CAPABILITIES/;
 for (keys %Geo::OGR::) {
     push(@CAPABILITIES, $1), next if /^ODrC(\w+)/;
@@ -154,8 +155,10 @@ sub Capabilities {
 
 sub TestCapability {
     my($self, $cap) = @_;
+    confess "No such capability defined for class Driver: '$cap'." unless defined $CAPABILITIES{$cap};
     return _TestCapability($self, $CAPABILITIES{$cap});
 }
+
 *Create = *CreateDataSource;
 *Copy = *CopyDataSource;
 *OpenDataSource = *Open;
@@ -190,6 +193,7 @@ sub Capabilities {
 
 sub TestCapability {
     my($self, $cap) = @_;
+    confess "No such capability defined for class DataSource: '$cap'." unless defined $CAPABILITIES{$cap};
     return _TestCapability($self, $CAPABILITIES{$cap});
 }
 *GetDriver = *_GetDriver;
@@ -271,7 +275,7 @@ sub CreateLayer {
     for (keys %defaults) {
         $params{$_} = $defaults{$_} unless defined $params{$_};
     }
-    confess "Unknown geometry type: '$params{GeometryType}'." 
+    confess "Unknown geometry type: '$params{GeometryType}'."
         unless exists $Geo::OGR::Geometry::TYPE_STRING2INT{$params{GeometryType}};
     my $gt = $Geo::OGR::Geometry::TYPE_STRING2INT{$params{GeometryType}};
     my $layer = _CreateLayer($self, $params{Name}, $params{SRS}, $gt, $params{Options});
@@ -417,7 +421,7 @@ sub AlterFieldDefn {
     } elsif (@_ % 2 == 0) {
         my %params = @_;
         my $definition = Geo::OGR::FieldDefn->create(%params);
-        my $flags = 0;    
+        my $flags = 0;
         $flags |= 1 if exists $params{Name};
         $flags |= 2 if exists $params{Type};
         $flags |= 4 if exists $params{Width} or exists $params{Precision};
@@ -442,7 +446,7 @@ sub DeleteField {
 
 sub GetSchema {
     my $self = shift;
-    carp "Schema of a layer should not be set directly." if @_;    
+    carp "Schema of a layer should not be set directly." if @_;
     if (@_ and @_ % 2 == 0) {
         my %schema = @_;
         if ($schema{Fields}) {
@@ -646,7 +650,7 @@ sub create {
 
 sub GetSchema {
     my $self = shift;
-    carp "Schema of a feature definition should not be set directly." if @_;    
+    carp "Schema of a feature definition should not be set directly." if @_;
     if (@_ and @_ % 2 == 0) {
         my %schema = @_;
         if ($schema{Fields}) {
@@ -831,7 +835,7 @@ sub Row {
         if (@_ == 1 and ref($_[0]) eq 'HASH') {
             %row = %{$_[0]};
         } elsif (@_ and @_ % 2 == 0) {
-            %row = @_;    
+            %row = @_;
         } else {
             confess 'Usage: $feature->Row(%FeatureData).';
         }
@@ -1074,10 +1078,10 @@ sub Geometry {
         if (@_ == 1) {
             $geometry = $_[0];
         } elsif (@_ and @_ % 2 == 0) {
-            %$geometry = @_;    
+            %$geometry = @_;
         }
         if (blessed($geometry) and $geometry->isa('Geo::OGR::Geometry')) {
-            confess "The type of the inserted geometry ('".$geometry->GeometryType."') is not the field type ('$type')." 
+            confess "The type of the inserted geometry ('".$geometry->GeometryType."') is not the field type ('$type')."
                 if $type ne 'Unknown' and $type ne $geometry->GeometryType;
             eval {
                 $self->SetGeomFieldDirectly($field, $geometry);
@@ -1089,7 +1093,7 @@ sub Geometry {
             eval {
                 $geometry = Geo::OGR::Geometry->create($geometry);
             };
-            confess "The type of the inserted geometry ('".$geometry->GeometryType."') is not the field type ('$type')." 
+            confess "The type of the inserted geometry ('".$geometry->GeometryType."') is not the field type ('$type')."
                 if $type ne 'Unknown' and $type ne $geometry->GeometryType;
             eval {
                 $self->SetGeomFieldDirectly($field, $geometry);
@@ -1328,7 +1332,7 @@ sub create {
     }
     confess "Unknown geometry type: '$type'." unless exists $Geo::OGR::Geometry::TYPE_STRING2INT{$type};
     $type = $Geo::OGR::Geometry::TYPE_STRING2INT{$type};
-    my $self = Geo::OGRc::new_GeomFieldDefn($name, $type);    
+    my $self = Geo::OGRc::new_GeomFieldDefn($name, $type);
     if (defined($self)) {
         bless $self, $pkg;
         $self->Schema(%args);
@@ -1403,7 +1407,7 @@ use Carp;
 use vars qw /
     @BYTE_ORDER_TYPES @GEOMETRY_TYPES
     %BYTE_ORDER_STRING2INT %BYTE_ORDER_INT2STRING
-    %TYPE_STRING2INT %TYPE_INT2STRING            
+    %TYPE_STRING2INT %TYPE_INT2STRING
     /;
 @BYTE_ORDER_TYPES = qw/XDR NDR/;
 for my $string (@BYTE_ORDER_TYPES) {
@@ -1492,6 +1496,33 @@ sub create {
     return $self;
 }
 
+sub ApproximateArcAngles {
+    my %p = @_;
+    my %default = ( Center => [0,0,0],
+                    PrimaryRadius => 1,
+                    SecondaryAxis => 1,
+                    Rotation => 0,
+                    StartAngle => 0,
+                    EndAngle => 360,
+                    MaxAngleStepSizeDegrees => 4 
+        );
+    for my $p (keys %p) {
+        if (exists $default{$p}) {
+            $p{$p} = $default{$p} unless defined $p{$p};
+        } else {
+            carp "Unknown named parameter: '$p'.";
+        }
+    }
+    for my $p (keys %default) {
+        $p{$p} = $default{$p} unless exists $p{$p};
+    }
+    confess "Usage: Center => [x,y,z]." unless ref($p{Center}) eq 'ARRAY';
+    for my $i (0..2) {
+        $p{Center}->[$i] = 0 unless defined $p{Center}->[$i];
+    }
+    return Geo::OGR::ApproximateArcAngles($p{Center}->[0], $p{Center}->[1], $p{Center}->[2], $p{PrimaryRadius}, $p{SecondaryAxis}, $p{Rotation}, $p{StartAngle}, $p{EndAngle}, $p{MaxAngleStepSizeDegrees});
+}
+
 sub As {
     my $self = shift;
     my %param;
@@ -1502,30 +1533,38 @@ sub As {
     } else {
         ($param{Format}, $param{x}) = @_;
     }
+    $param{ByteOrder} = 'XDR' unless $param{ByteOrder};
     my $f = $param{Format};
     my $x = $param{x};
-    if ($f eq 'Text' or $f eq 'Wkt' or $f eq 'WKT') {
+    $x = $param{ByteOrder} unless defined $x;
+    if ($f =~ /text/i) {
         return $self->AsText;
-    } elsif ($f =~ /iso/i and $f =~ /wkt/i) {
-        return $self->ExportToIsoWkt;
-    } elsif ($f eq 'Binary' or $f eq 'Wkb' or $f eq 'WKB') {
-        $param{ByteOrder} = 'XDR' unless $param{ByteOrder};
-        $x = $param{ByteOrder} unless defined $x;        
-        return $self->AsBinary($x);
-    } elsif ($f =~ /iso/i and $f =~ /wkb/i) {
-        return $self->ExportToIsoWkb;
-    } elsif ($f eq 'GML') {
+    } elsif ($f =~ /wkt/i) {
+        if ($f =~ /iso/i) {
+            return $self->ExportToIsoWkt;
+        } else {
+            return $self->AsText;
+        }
+    } elsif ($f =~ /binary/i) {
+        return $self->AsBinary($x);        
+    } elsif ($f =~ /wkb/i) {
+        if ($f =~ /iso/i) {
+            return $self->ExportToIsoWkb;
+        } elsif ($f =~ /hexe/i) {
+            $param{srid} = 'XDR' unless $param{srid};
+            $x = $param{srid} unless defined $x;
+            return $self->AsHEXEWKB($x);
+        } elsif ($f =~ /hex/i) {
+            return $self->AsHEXWKB;
+        } else {
+            return $self->AsBinary($x);
+        }
+    } elsif ($f =~ /gml/i) {
         return $self->AsGML;
-    } elsif ($f eq 'KML') {
+    } elsif ($f =~ /kml/i) {
         return $self->AsKML;
-    } elsif ($f eq 'GeoJSON' or $f eq 'JSON') {
+    } elsif ($f =~ /json/i) {
         return $self->AsJSON;
-    } elsif ($f eq 'HEXWKB') {
-        return $self->AsHEXWKB;
-    } elsif ($f eq 'HEXEWKB') {
-        $param{srid} = 'XDR' unless $param{srid};
-        $x = $param{srid} unless defined $x;
-        return $self->AsHEXEWKB($x);
     } else {
         confess "Unsupported format: $f.";
     }
@@ -1715,6 +1754,24 @@ sub ExportToWkb {
     return _ExportToWkb($self, $bo);
 }
 
+sub ForceTo {
+    my $self = shift;
+    my $type = shift;
+    confess "Unknown geometry type: '$type'." unless exists $TYPE_STRING2INT{$type};
+    $type = $TYPE_STRING2INT{$type};
+    eval {
+        $self = Geo::OGR::ForceTo($self, $type, @_);
+    };
+    confess $@ if $@;
+    return $self;
+}
+
+sub ForceToLineString {
+    my $self = shift;
+    $self = Geo::OGR::ForceToLineString($self);
+    return $self;
+}
+
 sub ForceToMultiPoint {
     my $self = shift;
     $self = Geo::OGR::ForceToMultiPoint($self);
@@ -1810,12 +1867,14 @@ sub GeometryTypeTest {
     if (defined $type2) {
         confess "Unknown geometry type: '$type2'." unless exists $Geo::OGR::Geometry::TYPE_STRING2INT{$type2};
         $type2 = $Geo::OGR::Geometry::TYPE_STRING2INT{$type2};
+    } else {
+        confess "Usage: GeometryTypeTest(type1, 'is_subclass_of', type2)." if $test =~ /subclass/i;
     }
-    return $Geo::OGR::Geometry::TYPE_INT2STRING{GT_HasZ($type)} if $type =~ /z/i;
-    return $Geo::OGR::Geometry::TYPE_INT2STRING{GT_IsSubClassOf($type, $type2)} if $type =~ /subclass/i;
-    return $Geo::OGR::Geometry::TYPE_INT2STRING{GT_IsCurve($type)} if $type =~ /curve/i;
-    return $Geo::OGR::Geometry::TYPE_INT2STRING{GT_IsSurface($type)} if $type =~ /surface/i;
-    return $Geo::OGR::Geometry::TYPE_INT2STRING{GT_IsNonLinear($type)} if $type =~ /linear/i;
+    return GT_HasZ($type) if $test =~ /z/i;
+    return GT_IsSubClassOf($type, $type2) if $test =~ /subclass/i;
+    return GT_IsCurve($type) if $test =~ /curve/i;
+    return GT_IsSurface($type) if $test =~ /surface/i;
+    return GT_IsNonLinear($type) if $test =~ /linear/i;
     confess "Unknown geometry type test: '$test'.";
 }
 
