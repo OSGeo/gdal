@@ -268,26 +268,34 @@ json_object* OGRPLScenesDataset::RunRequest(const char* pszURL,
 /************************************************************************/
 
 GDALDataset* OGRPLScenesDataset::OpenRasterScene(GDALOpenInfo* poOpenInfo,
-                                                 CPLString osScene)
+                                                 CPLString osScene,
+                                                 char** papszOptions)
 {
     if( !(poOpenInfo->nOpenFlags & GDAL_OF_RASTER) )
     {
         return NULL;
     }
 
-    const char* pszProductType = strstr(poOpenInfo->pszFilename, "product_type=");
-    if( pszProductType != NULL )
-        pszProductType += strlen("product_type=");
-    else if( CSLFetchNameValue(poOpenInfo->papszOpenOptions, "PRODUCT_TYPE") )
-        pszProductType = CSLFetchNameValue(poOpenInfo->papszOpenOptions, "PRODUCT_TYPE");
-    else
-        pszProductType = "visual";
-    CPLString osProductType(pszProductType);
-    const char* pszEnd = strchr(pszProductType, ',');
-    if( pszEnd == NULL )
-        pszEnd = strchr(pszProductType, ' ');
-    if( pszEnd )
-        osProductType.resize(pszEnd - pszProductType);
+    for( char** papszIter = papszOptions; papszIter && *papszIter; papszIter ++ )
+    {
+        char* pszKey;
+        const char* pszValue = CPLParseNameValue(*papszIter, &pszKey);
+        if( pszValue != NULL )
+        {
+            if( !EQUAL(pszKey, "api_key") &&
+                !EQUAL(pszKey, "scene") &&
+                !EQUAL(pszKey, "product_type") )
+            {
+                CPLError(CE_Failure, CPLE_NotSupported, "Unsupported option %s", pszKey);
+                CPLFree(pszKey);
+                return NULL;
+            }
+            CPLFree(pszKey);
+        }
+    }
+
+    const char* pszProductType = CSLFetchNameValueDef(papszOptions, "product_type",
+                CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "PRODUCT_TYPE", "visual"));
 
     CPLString osRasterURL;
     if( strncmp(osBaseURL, "/vsimem/", strlen("/vsimem/")) == 0 )
@@ -298,10 +306,10 @@ GDALDataset* OGRPLScenesDataset::OpenRasterScene(GDALOpenInfo* poOpenInfo,
     osRasterURL += "ortho/";
     osRasterURL += osScene;
     osRasterURL += "/";
-    if( EQUAL(osProductType, "thumb") )
+    if( EQUAL(pszProductType, "thumb") )
         osRasterURL += "thumb";
     else
-        osRasterURL += CPLSPrintf("full?product=%s", osProductType.c_str());
+        osRasterURL += CPLSPrintf("full?product=%s", pszProductType);
 
     CPLString osOldHead(CPLGetConfigOption("CPL_VSIL_CURL_USE_HEAD", ""));
     CPLString osOldExt(CPLGetConfigOption("CPL_VSIL_CURL_ALLOWED_EXTENSIONS", ""));
@@ -320,7 +328,7 @@ GDALDataset* OGRPLScenesDataset::OpenRasterScene(GDALOpenInfo* poOpenInfo,
         poOutDS->SetDescription(poOpenInfo->pszFilename);
         poOutDS->GetFileList(); /* so as to probe all auxiliary files before reseting the allowed extensions */
 
-        if( !EQUAL(osProductType, "thumb") )
+        if( !EQUAL(pszProductType, "thumb") )
         {
             OGRPLScenesLayer* poLayer = new OGRPLScenesLayer(this, "ortho",
                                             (osBaseURL + "ortho/").c_str());
@@ -375,50 +383,56 @@ GDALDataset* OGRPLScenesDataset::Open(GDALOpenInfo* poOpenInfo)
 
     poDS->osBaseURL = CPLGetConfigOption("PL_URL", "https://api.planet.com/v0/scenes/");
 
-    poDS->osAPIKey = CPLGetConfigOption("PL_API_KEY","");
-    const char* pszApiKey = strstr(poOpenInfo->pszFilename, "api_key=");
-    if( pszApiKey )
-    {
-        poDS->osAPIKey = pszApiKey + strlen("api_key=");
-        const char* pszEnd = strchr(poDS->osAPIKey, ',');
-        if( pszEnd == NULL )
-            pszEnd = strchr(poDS->osAPIKey, ' ');
-        if( pszEnd )
-            poDS->osAPIKey.resize(pszEnd - poDS->osAPIKey.c_str());
-    }
-    else if( CSLFetchNameValue(poOpenInfo->papszOpenOptions, "API_KEY") )
-        poDS->osAPIKey = CSLFetchNameValue(poOpenInfo->papszOpenOptions, "API_KEY");
+    char** papszOptions = CSLTokenizeStringComplex(
+            poOpenInfo->pszFilename+strlen("PLScenes:"), ",", TRUE, FALSE );
 
+    poDS->osAPIKey = CSLFetchNameValueDef(papszOptions, "api_key",
+        CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "API_KEY",
+                                CPLGetConfigOption("PL_API_KEY","")) );
     if( poDS->osAPIKey.size() == 0 )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Missing PL_API_KEY configuration option or API_KEY open option");
         delete poDS;
+        CSLDestroy(papszOptions);
         return NULL;
     }
 
-    const char* pszScene = strstr(poOpenInfo->pszFilename, "scene=");
-    if( pszScene != NULL )
-        pszScene += strlen("scene=");
-    else
-        pszScene = CSLFetchNameValue(poOpenInfo->papszOpenOptions, "SCENE");
+    const char* pszScene = CSLFetchNameValueDef(papszOptions, "scene",
+                CSLFetchNameValue(poOpenInfo->papszOpenOptions, "SCENE"));
     if( pszScene )
     {
-        CPLString osScene(pszScene);
-        const char* pszEnd = strchr(pszScene, ',');
-        if( pszEnd == NULL )
-            pszEnd = strchr(pszScene, ' ');
-        if( pszEnd )
-            osScene.resize(pszEnd - pszScene);
-        GDALDataset* poRasterDS = poDS->OpenRasterScene(poOpenInfo, osScene);
+        GDALDataset* poRasterDS = poDS->OpenRasterScene(poOpenInfo, pszScene,
+                                                        papszOptions);
         delete poDS;
+        CSLDestroy(papszOptions);
         return poRasterDS;
+    }
+
+    for( char** papszIter = papszOptions; papszIter && *papszIter; papszIter ++ )
+    {
+        char* pszKey;
+        const char* pszValue = CPLParseNameValue(*papszIter, &pszKey);
+        if( pszValue != NULL )
+        {
+            if( !EQUAL(pszKey, "api_key") &&
+                !EQUAL(pszKey, "spat") )
+            {
+                CPLError(CE_Failure, CPLE_NotSupported, "Unsupported option %s", pszKey);
+                CPLFree(pszKey);
+                delete poDS;
+                CSLDestroy(papszOptions);
+                return NULL;
+            }
+            CPLFree(pszKey);
+        }
     }
 
     json_object* poObj = poDS->RunRequest(poDS->osBaseURL);
     if( poObj == NULL )
     {
         delete poDS;
+        CSLDestroy(papszOptions);
         return NULL;
     }
     
@@ -436,11 +450,10 @@ GDALDataset* OGRPLScenesDataset::Open(GDALOpenInfo* poOpenInfo)
                                         sizeof(OGRPLScenesLayer*) * (poDS->nLayers + 1));
             poDS->papoLayers[poDS->nLayers ++] = poLayer;
             
-            const char* pszSpat = strstr(poOpenInfo->pszFilename, "spat=");
+            const char* pszSpat = CSLFetchNameValue(papszOptions, "spat");
             if( pszSpat )
             {
-                pszSpat += strlen("spat=");
-                char** papszTokens = CSLTokenizeString2(pszSpat, " ,", 0);
+                char** papszTokens = CSLTokenizeString2(pszSpat, " ", 0);
                 if( CSLCount(papszTokens) >= 4 )
                 {
                     poLayer->SetMainFilterRect(CPLAtof(papszTokens[0]),
@@ -454,6 +467,8 @@ GDALDataset* OGRPLScenesDataset::Open(GDALOpenInfo* poOpenInfo)
     }
 
     json_object_put(poObj);
+
+    CSLDestroy(papszOptions);
 
     if( !(poOpenInfo->nOpenFlags & GDAL_OF_VECTOR) )
     {
