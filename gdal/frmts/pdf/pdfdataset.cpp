@@ -1274,6 +1274,7 @@ static void PDFFreeDoc(PDFDoc* poDoc)
     {
         /* hack to avoid potential cross heap issues on Win32 */
         /* str is the VSIPDFFileStream object passed in the constructor of PDFDoc */
+        // NOTE: This is potentially very dangerous. See comment in VSIPDFFileStream::FillBuffer() */
         delete poDoc->str;
         poDoc->str = NULL;
 
