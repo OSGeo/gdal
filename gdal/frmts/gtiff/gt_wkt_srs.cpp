@@ -965,6 +965,9 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
         // Hack to be able to read properly what we have written for EPSG:102113 (ESRI ancient WebMercator)
         if( EQUAL(oSRS.GetAttrValue("PROJCS"), "WGS_1984_Web_Mercator") )
             oSRS.importFromEPSG(102113);
+        // And for EPSG:900913
+        else if( EQUAL(oSRS.GetAttrValue("PROJCS"), "Google Maps Global Mercator") )
+            oSRS.importFromEPSG(900913);
     }
 
 /* ==================================================================== */
