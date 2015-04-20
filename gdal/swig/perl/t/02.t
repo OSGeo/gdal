@@ -55,30 +55,17 @@ ok($data->[5][5] == 3, "WriteTile");
 #    print "@$row\n";
 #}
 
-# BuildOverviews
-
-# CreateMaskBand
-
-# GCPs
-# GetGCPProjection
-
-# SpatialReference
-
-# StartTransaction
-# CommitTransaction
-# RollbackTransaction
-
-
 __END__
 
-# Classes
+tests to do
 
-AsyncReader
-Band
-ColorTable
-GCP
-GeoTransform
-MajorObject
-RasterAttributeTable
-Transformer
-VSIF
+CreateMaskBand
+
+GCPs
+GetGCPProjection
+
+SpatialReference
+
+StartTransaction
+CommitTransaction
+RollbackTransaction
