@@ -1043,6 +1043,8 @@ def validate(filename, expected_gmljp2 = True, return_error_count = False, oidoc
     inspire_tg = True
     try:
         os.stat('tmp/cache/SCHEMAS_OPENGIS_NET')
+        os.stat('tmp/cache/SCHEMAS_OPENGIS_NET/xlink.xsd')
+        os.stat('tmp/cache/SCHEMAS_OPENGIS_NET/xml.xsd')
         ogc_schemas_location = 'tmp/cache/SCHEMAS_OPENGIS_NET'
     except:
         ogc_schemas_location = 'disabled'

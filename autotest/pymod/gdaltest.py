@@ -1058,7 +1058,11 @@ def download_file(url, filename, download_size = -1, force_download = False, max
                 chunk_size = 1024
                 if download_size >= 0 and len(val) + chunk_size > download_size:
                     chunk_size = download_size - len(val)
-                chunk = handle.read(chunk_size)
+                try:
+                    chunk = handle.read(chunk_size)
+                except:
+                    print('Did not get expected data length.')
+                    return False
                 if len(chunk) < chunk_size:
                     if download_size < 0:
                         break
