@@ -191,16 +191,57 @@ ok(defined($o), "GetOverview");
 my $b = $band1->HasArbitraryOverviews;
 ok(!$b, "HasArbitraryOverviews");
 
+Geo::GDAL::VSIF::Unlink('/vsimem/test.gtiff');
+$dataset = Geo::GDAL::Driver('GTiff')->Create(Name => '/vsimem/test.gtiff', Type => 'Float64');
+$band = $dataset->Band;
 
+my $data = $band->ReadTile;
+my ($min, $max);
+for my $y (0..@$data-1) {
+    for my $x (0..@{$data->[$y]}-1) {
+        $data->[$y][$x] = rand 10;
+        if (defined $min) {
+            $min = $data->[$y][$x] if $data->[$y][$x] < $min;
+        } else {
+            $min = $data->[$y][$x];
+        }
+        if (defined $max) {
+            $max = $data->[$y][$x] if $data->[$y][$x] > $max;
+        } else {
+            $max = $data->[$y][$x];
+        }
+    }
+}
+$band->WriteTile($data);
+
+my $h = $band->GetHistogram(Max => 10.0, Buckets => 11);
+my $sum = 0;
+for (@$h) {
+    $sum += $_;
+}
+ok($sum == 256*256, "GetHistogram");
+ok(@$h == 11, "GetHistogram");
+my ($min, $max, $histogram) = $band->GetDefaultHistogram;
+ok(ref($histogram) eq 'ARRAY', "GetDefaultHistogram");
+eval {
+    $band->SetDefaultHistogram($min, $max, $histogram);
+};
+ok(!$@, "SetDefaultHistogram");
+
+my $buf = $band->ReadRaster();
+my $pc = $band->PackCharacter;
+my @data = unpack("$pc*", $buf);
+my $n = @data;
+ok($n == 256*256, "ReadRaster");
+
+$buf = pack("$pc*", @data);
+eval {
+    $band->WriteRaster(XOff => 0, yoff => 0, buf => $buf);
+};
+ok(!$@, "WriteRaster");
 
 __END__
 
  
 public Geo::OGR::Layer 	Contours (scalar DataSource, hashref LayerConstructor, scalar ContourInterval, scalar ContourBase, arrayref FixedLevels, scalar NoDataValue, scalar IDField, scalar ElevField, subref callback, scalar callback_data)
  
-public list 	SetDefaultHistogram (scalar min, scalar max, scalar histogram) 
-public list 	GetDefaultHistogram (scalar force=1, subref callback=undef, scalar callback_data=undef)
-public list 	GetHistogram (hash parameters)
-
-public scalar 	ReadRaster (hash params)
-public method 	WriteRaster (hash params)

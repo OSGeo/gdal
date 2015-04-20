@@ -8,6 +8,11 @@
 ## @ignore TermProgress_nocb
 
 ## @ignore BuildPolygonFromEdges
+
+## @ignore ApproximateArcAngles
+
+## @ignore ForceTo
+## @ignore ForceToLineString
 ## @ignore ForceToMultiLineString
 ## @ignore ForceToMultiPoint
 ## @ignore ForceToMultiPolygon
@@ -30,13 +35,13 @@
 
 ## @method $GeometryTypeModify($type, $modifier)
 # @param type a geometry type (one of Geo::OGR::GeometryTypes).
-# @param modifier one of flatten, set_Z make_collection, or make_curve make_linear.
+# @param modifier one of 'flatten', 'set_Z', 'make_collection', 'make_curve', or 'make_linear'.
 # @return modified geometry type.
 
 ## @method $GeometryTypeTest($type, $test, $type2)
 # @param type a geometry type (one of Geo::OGR::GeometryTypes).
-# @param test one of has_z, is_subclass_of, is_curve, is_surface, or is_non_linear.
-# @param type2 [optional] a geometry type (one of Geo::OGR::GeometryTypes).
+# @param test one of 'has_z', 'is_subclass_of', 'is_curve', 'is_surface', or 'is_non_linear'.
+# @param type2 a geometry type (one of Geo::OGR::GeometryTypes). Required for 'is_subclass_of' test.
 # @return result of the test.
 
 ## @ignore CreateGeometryFromWkb
@@ -228,7 +233,7 @@
 # - \a Options (hash reference) driver specific hash of layer creation options.
 # - \a Schema (hash reference, deprecated) may contain keys Name, Fields, GeomFields, GeometryType.
 # - \a SRS (scalar, deprecated) the spatial reference for the default geometry field.
-# - \a GeometryType (scalar, deprecated) the type of the default geometry field.
+# - \a GeometryType (scalar) the type of the default geometry field (if only one geometry field).
 #
 # @note If Fields or Schema|Fields is not given, a default geometry
 # field (Name => '', GeometryType => 'Unknown') is created. The type
@@ -237,11 +242,11 @@
 # Example:
 # \code
 # my $roads = Geo::OGR::Driver('Memory')->Create('road')->
-#     CreateLayer(
-#         Fields => [ { Name => 'class', 
-#                       Type => 'Integer' },
-#                     { Name => 'geom', 
-#                       Type => 'LineString25D' } ] );
+# .   CreateLayer(
+# .       Fields => [ { Name => 'class', 
+# .                     Type => 'Integer' },
+# .                   { Name => 'geom', 
+# .                     Type => 'LineString25D' } ] );
 # \endcode
 # @return a new Geo::OGR::Layer object.
 
@@ -1206,18 +1211,32 @@
 # - \a GeoJSON geometry written in GeoJSON (JavaScript Object Notation for Geographic data).
 # - \a arc a reference to a list of values defining an arc: [CenterX,
 #    CenterY, CenterZ, PrimaryRadius, SecondaryRadius, Rotation,
-#    StartAngle, EndAngle, MaxAngleStepSizeDegrees]
+#    StartAngle, EndAngle, MaxAngleStepSizeDegrees] (see also Geo::OGR::Geometry::ApproximateArcAngles)
 # - \a Points An anonymous array as in method
 #      Geo::OGR::Geometry::Points; Note: requires also GeometryType
 #      parameter
 #
 # @note uses CreateGeometryFrom* functions from Geo::OGR
 #
-# @return a new Geo::OGR::Geometry object
+# @return a new Geo::OGR::Geometry object.
 # Usage:
 # \code
 # $g = Geo::OGR::Geometry->create(...arguments...);
 # \endcode
+
+## @cmethod Geo::OGR::Geometry ApproximateArcAngles(%params)
+# Create a line string, which approximates an arc. 
+# @note All angles are in degrees.
+#
+# @param %params named parameters, these are:
+# - \a Center center point (default is [0, 0, 0])
+# - \a PrimaryRadius default is 1,
+# - \a SecondaryAxis default is 1,
+# - \a Rotation default is 0,
+# - \a StartAngle default is 0,
+# - \a EndAngle default is 360,
+# - \a MaxAngleStepSizeDegrees default is 4 
+# @return a new Geo::OGR::Geometry object.
 
 ## @method FlattenTo2D()
 
@@ -1432,10 +1451,20 @@
 # Dissolve a geometrycollection into separate geometries.
 # @return a list of new Geo::OGR::Geometry objects cloned from the collection.
 
+## @method Geo::OGR::Geometry ForceTo($type, ref options)
+# Attempt to make a geometry of type 'type' out of this geometry.
+# @param type target geometry type. One of Geo::OGR::GeometryTypes.
+# @param options not used currently.
+# @return a new Geo::OGR::Geometry object.
+
+## @method Geo::OGR::Geometry ForceToLineString()
+# Attempt to create a line string from this geometry.
+# @return a new Geo::OGR::Geometry object.
+
 ## @method Geo::OGR::Geometry ForceToPolygon()
 # Attempt to create a polygon from this geometry.
 # @exception None reported. If this method fails, just a copy is returned.
-# @return a new Geo::OGR::Geometry object
+# @return a new Geo::OGR::Geometry object.
 
 ## @method Geo::OGR::Geometry ForceToMultiPoint(@points)
 # Attempt to create a multipoint from the geometry, which must be a point.

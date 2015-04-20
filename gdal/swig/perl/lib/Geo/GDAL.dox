@@ -569,12 +569,14 @@ sub traverse {
 # projection coordinate (access as $gcp->{Z})
 
 ## @attr Column
-# @note Pixel is deprecated.
 # pixel x coordinate (access as $gcp->{Column})
+# @note Pixel is deprecated.
+#
 
 ## @attr Row
-# @note Line is deprecated.
 # pixel y coordinate (access as $gcp->{Row})
+# @note Line is deprecated.
+#
 
 ## @attr Info
 # informational message (access as $gcp->{Info})
