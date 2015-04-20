@@ -1545,6 +1545,7 @@ int GDALValidateOptions( const char* pszOptionList,
                 if( !(EQUAL(psChildSubNode->pszValue, "name") ||
                       EQUAL(psChildSubNode->pszValue, "alias") ||
                       EQUAL(psChildSubNode->pszValue, "deprecated_alias") ||
+                      EQUAL(psChildSubNode->pszValue, "alt_config_option") ||
                       EQUAL(psChildSubNode->pszValue, "description") ||
                       EQUAL(psChildSubNode->pszValue, "type") ||
                       EQUAL(psChildSubNode->pszValue, "min") ||
