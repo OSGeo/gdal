@@ -32,7 +32,7 @@ Optional for vector layer access.</li>
 (for raster fetching). Default is "visual". Optional for vector layer access.</li>
 </ul>
 
-If several parameters are specified, they must be separated by a space.<p>
+If several parameters are specified, they must be separated by a comma.<p>
 
 <h2>Open options</h2>
 
@@ -166,7 +166,7 @@ content of the value of the 'id' field of the features of the 'ortho' vector lay
 Displaying raster metadata :
 
 <pre>
-gdalinfo "PLScenes:scene=scene_id product_type=analytic" -oo API_KEY=some_value
+gdalinfo "PLScenes:scene=scene_id,product_type=analytic" -oo API_KEY=some_value
 </pre>
 or
 <pre>

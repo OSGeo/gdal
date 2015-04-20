@@ -209,6 +209,16 @@ def ogr_plscenes_2():
                           my_id_only)
 
     gdal.SetConfigOption('PL_URL', '/vsimem/root/')
+    gdal.PushErrorHandler()
+    ds = gdal.OpenEx('PLScenes:api_key=foo,unsupported_option=val', gdal.OF_VECTOR)
+    gdal.PopErrorHandler()
+    gdal.SetConfigOption('PL_URL', None)
+    if ds is not None or gdal.GetLastErrorMsg().find('Unsupported option unsupported_option') < 0:
+        gdaltest.post_reason('fail')
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+
+    gdal.SetConfigOption('PL_URL', '/vsimem/root/')
     ds = gdal.OpenEx('PLScenes:', gdal.OF_VECTOR, open_options = ['API_KEY=foo'])
     gdal.SetConfigOption('PL_URL', None)
     if ds is None:
@@ -458,7 +468,7 @@ def ogr_plscenes_2():
     # Test spat option
     ds = None
     gdal.SetConfigOption('PL_URL', '/vsimem/root/')
-    ds = gdal.OpenEx('PLScenes:spat=2,49,3,50', gdal.OF_VECTOR, open_options = ['API_KEY=foo'])
+    ds = gdal.OpenEx('PLScenes:spat=2 49 3 50', gdal.OF_VECTOR, open_options = ['API_KEY=foo'])
     gdal.SetConfigOption('PL_URL', None)
     lyr = ds.GetLayer(0)
     if lyr.GetFeatureCount() != 1:
@@ -471,7 +481,7 @@ def ogr_plscenes_2():
     ds = None
 
     gdal.SetConfigOption('PL_URL', '/vsimem/root/')
-    ds = gdal.OpenEx('PLScenes:spat=2.5,49.5,2.5,49.5', gdal.OF_VECTOR, open_options = ['API_KEY=foo'])
+    ds = gdal.OpenEx('PLScenes:spat=2.5 49.5 2.5 49.5', gdal.OF_VECTOR, open_options = ['API_KEY=foo'])
     gdal.SetConfigOption('PL_URL', None)
     lyr = ds.GetLayer(0)
     if lyr.GetFeatureCount() != 1:
@@ -539,6 +549,16 @@ def ogr_plscenes_3():
                            open('../gcore/data/byte.tif', 'rb').read())
     gdal.FileFromMemBuffer('/vsimem/root/ortho/my_id/thumb',
                            open('../gcore/data/byte.tif', 'rb').read())
+
+    gdal.SetConfigOption('PL_URL', '/vsimem/root/')
+    gdal.PushErrorHandler()
+    ds = gdal.OpenEx('PLScenes:api_key=foo,scene=my_id,unsupported_option=val', gdal.OF_RASTER)
+    gdal.PopErrorHandler()
+    gdal.SetConfigOption('PL_URL', None)
+    if ds is not None or gdal.GetLastErrorMsg().find('Unsupported option unsupported_option') < 0:
+        gdaltest.post_reason('fail')
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
 
     gdal.SetConfigOption('PL_URL', '/vsimem/root/')
     ds = gdal.OpenEx('PLScenes:', gdal.OF_RASTER, open_options = ['API_KEY=foo', 'SCENE=my_id'])

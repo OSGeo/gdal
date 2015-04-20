@@ -53,7 +53,8 @@ class OGRPLScenesDataset: public GDALDataset
         
         char             **GetBaseHTTPOptions();
         GDALDataset       *OpenRasterScene(GDALOpenInfo* poOpenInfo,
-                                           CPLString osScene);
+                                           CPLString osScene,
+                                           char** papszOptions);
 
     public:
                             OGRPLScenesDataset();
