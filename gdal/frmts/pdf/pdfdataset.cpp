@@ -3108,14 +3108,27 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLDebug("PDF", "OGC Encoding Best Practice style detected");
         if (poDS->ParseLGIDictObject(poLGIDict))
         {
-            if (poDS->bHasCTM)
+            if (poDS->bHasCTM )
             {
-                poDS->adfGeoTransform[0] = poDS->adfCTM[4] + poDS->adfCTM[0] * dfX1 + poDS->adfCTM[2] * dfY2;
-                poDS->adfGeoTransform[1] = poDS->adfCTM[0] / dfUserUnit;
-                poDS->adfGeoTransform[2] = - poDS->adfCTM[2] / dfUserUnit;
-                poDS->adfGeoTransform[3] = poDS->adfCTM[5] + poDS->adfCTM[1] * dfX1 + poDS->adfCTM[3] * dfY2;
-                poDS->adfGeoTransform[4] = poDS->adfCTM[1] / dfUserUnit;
-                poDS->adfGeoTransform[5] = - poDS->adfCTM[3] / dfUserUnit;
+                if ( dfRotation == 90 )
+                {
+                    poDS->adfGeoTransform[0] = poDS->adfCTM[4];
+                    poDS->adfGeoTransform[1] = poDS->adfCTM[2] / dfUserUnit;
+                    poDS->adfGeoTransform[2] = poDS->adfCTM[0] / dfUserUnit;
+                    poDS->adfGeoTransform[3] = poDS->adfCTM[5];
+                    poDS->adfGeoTransform[4] = poDS->adfCTM[3] / dfUserUnit;
+                    poDS->adfGeoTransform[5] = poDS->adfCTM[1] / dfUserUnit;
+                }
+                else
+                {
+                    poDS->adfGeoTransform[0] = poDS->adfCTM[4] + poDS->adfCTM[2] * poDS->dfPageHeight;
+                    poDS->adfGeoTransform[1] = poDS->adfCTM[0] / dfUserUnit;
+                    poDS->adfGeoTransform[2] = - poDS->adfCTM[2] / dfUserUnit;
+                    poDS->adfGeoTransform[3] = poDS->adfCTM[5] + poDS->adfCTM[3] * poDS->dfPageHeight;
+                    poDS->adfGeoTransform[4] = poDS->adfCTM[1] / dfUserUnit;
+                    poDS->adfGeoTransform[5] = - poDS->adfCTM[3] / dfUserUnit;
+                }
+                
                 poDS->bGeoTransformValid = TRUE;
             }
 
@@ -3124,8 +3137,18 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
             int i;
             for(i=0;i<poDS->nGCPCount;i++)
             {
-                poDS->pasGCPList[i].dfGCPPixel = poDS->pasGCPList[i].dfGCPPixel * dfUserUnit;
-                poDS->pasGCPList[i].dfGCPLine = poDS->nRasterYSize - poDS->pasGCPList[i].dfGCPLine * dfUserUnit;
+                if ( dfRotation == 90 )
+                {
+                    double dfPixel = poDS->pasGCPList[i].dfGCPPixel * dfUserUnit;
+                    double dfLine = poDS->pasGCPList[i].dfGCPLine * dfUserUnit;
+                    poDS->pasGCPList[i].dfGCPPixel = dfLine;
+                    poDS->pasGCPList[i].dfGCPLine = dfPixel;
+                }
+                else
+                {
+                    poDS->pasGCPList[i].dfGCPPixel = poDS->pasGCPList[i].dfGCPPixel * dfUserUnit;
+                    poDS->pasGCPList[i].dfGCPLine = poDS->nRasterYSize - poDS->pasGCPList[i].dfGCPLine * dfUserUnit;
+                }
             }
         }
     }
@@ -3251,8 +3274,17 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
 
             for(i=0;i<nPoints;i++)
             {
-                double x = poRing->getX(i) * dfUserUnit;
-                double y = poDS->nRasterYSize - poRing->getY(i) * dfUserUnit;
+                double x, y;
+                if( dfRotation == 90.0 )
+                {
+                    x = poRing->getY(i) * dfUserUnit;
+                    y = poRing->getX(i) * dfUserUnit;
+                }
+                else
+                {
+                    x = poRing->getX(i) * dfUserUnit;
+                    y = poDS->nRasterYSize - poRing->getY(i) * dfUserUnit;
+                }
                 double X = poDS->adfGeoTransform[0] + x * poDS->adfGeoTransform[1] +
                                                       y * poDS->adfGeoTransform[2];
                 double Y = poDS->adfGeoTransform[3] + x * poDS->adfGeoTransform[4] +
