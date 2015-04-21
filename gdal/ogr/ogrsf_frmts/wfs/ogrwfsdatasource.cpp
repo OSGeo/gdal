@@ -2028,9 +2028,10 @@ OGRLayer * OGRWFSDataSource::ExecuteSQL( const char *pszSQLCommand,
 /* -------------------------------------------------------------------- */
     if( IsGenericSQLDialect(pszDialect) )
     {
-        OGRLayer* poResLayer = OGRDataSource::ExecuteSQL( pszSQLCommand,
-                                                          poSpatialFilter,
-                                                          pszDialect );
+        OGRLayer* poResLayer = GDALDataset::ExecuteSQL( pszSQLCommand,
+                                                        poSpatialFilter,
+                                                        pszDialect,
+                                                        WFSGetCustomFuncRegistrar() );
         oMap[poResLayer] = NULL;
         return poResLayer;
     }
@@ -2159,7 +2160,7 @@ OGRLayer * OGRWFSDataSource::ExecuteSQL( const char *pszSQLCommand,
     if (EQUALN(pszSQLCommand, "SELECT", 6))
     {
         swq_select* psSelectInfo = new swq_select();
-        if( psSelectInfo->preparse( pszSQLCommand ) != CPLE_None )
+        if( psSelectInfo->preparse( pszSQLCommand, TRUE ) != CPLE_None )
         {
             delete psSelectInfo;
             return NULL;
@@ -2209,9 +2210,10 @@ OGRLayer * OGRWFSDataSource::ExecuteSQL( const char *pszSQLCommand,
                 /* that temporary layer */
                 papoLayers[iLayer] = poDupLayer;
                 
-                OGRLayer* poResLayer = OGRDataSource::ExecuteSQL( pszSQLWithoutOrderBy,
-                                                                  poSpatialFilter,
-                                                                  pszDialect );
+                OGRLayer* poResLayer = GDALDataset::ExecuteSQL( pszSQLWithoutOrderBy,
+                                                                poSpatialFilter,
+                                                                pszDialect,
+                                                                WFSGetCustomFuncRegistrar() );
                 papoLayers[iLayer] = poSrcLayer;
                 
                 CPLFree(pszSQLWithoutOrderBy);
@@ -2229,7 +2231,8 @@ OGRLayer * OGRWFSDataSource::ExecuteSQL( const char *pszSQLCommand,
 
     OGRLayer* poResLayer = OGRDataSource::ExecuteSQL( pszSQLCommand,
                                                       poSpatialFilter,
-                                                      pszDialect );
+                                                      pszDialect,
+                                                      WFSGetCustomFuncRegistrar() );
     oMap[poResLayer] = NULL;
     return poResLayer;
 }

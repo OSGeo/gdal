@@ -749,8 +749,14 @@ swq_expr_node *swq_expr_node::Evaluate( swq_field_fetcher pfnFetcher,
         }
         else
         {
-            apoValues.push_back(papoSubExpr[i]->Evaluate(pfnFetcher,pRecord));
-            anValueNeedsFree.push_back( TRUE );
+            swq_expr_node* poSubExprVal = papoSubExpr[i]->Evaluate(pfnFetcher,pRecord);
+            if( poSubExprVal == NULL )
+                bError = TRUE;
+            else
+            {
+                apoValues.push_back(poSubExprVal);
+                anValueNeedsFree.push_back( TRUE );
+            }
         }
     }
 
@@ -761,8 +767,20 @@ swq_expr_node *swq_expr_node::Evaluate( swq_field_fetcher pfnFetcher,
     {
         const swq_operation *poOp = 
             swq_op_registrar::GetOperator( (swq_op) nOperation );
-        
-        poRetNode = poOp->pfnEvaluator( this, &(apoValues[0]) );
+        if( poOp == NULL )
+        {
+            if( nOperation == SWQ_CUSTOM_FUNC )
+                CPLError( CE_Failure, CPLE_AppDefined,
+                        "Evaluate(): Unable to find definition for operator %s.",
+                        string_value );
+            else
+                CPLError( CE_Failure, CPLE_AppDefined,
+                        "Evaluate(): Unable to find definition for operator %d.",
+                        nOperation );
+            poRetNode = NULL;
+        }
+        else
+            poRetNode = poOp->pfnEvaluator( this, &(apoValues[0]) );
     }
 
 /* -------------------------------------------------------------------- */

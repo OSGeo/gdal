@@ -4878,6 +4878,15 @@ OGRLayer * GDALDataset::ExecuteSQL( const char *pszStatement,
                                       const char *pszDialect )
 
 {
+    return ExecuteSQL(pszStatement, poSpatialFilter, pszDialect, NULL);
+}
+
+OGRLayer * GDALDataset::ExecuteSQL( const char *pszStatement,
+                                    OGRGeometry *poSpatialFilter,
+                                    const char *pszDialect,
+                                    swq_custom_func_registrar* poCustomFuncRegistrar)
+
+{
     swq_select *psSelectInfo = NULL;
 
     if( pszDialect != NULL && EQUAL(pszDialect, "SQLite") )
@@ -4966,7 +4975,8 @@ OGRLayer * GDALDataset::ExecuteSQL( const char *pszStatement,
 /*      Preparse the SQL statement.                                     */
 /* -------------------------------------------------------------------- */
     psSelectInfo = new swq_select();
-    if( psSelectInfo->preparse( pszStatement ) != CPLE_None )
+    if( psSelectInfo->preparse( pszStatement,
+                                poCustomFuncRegistrar != NULL ) != CPLE_None )
     {
         delete psSelectInfo;
         return NULL;
@@ -4979,7 +4989,8 @@ OGRLayer * GDALDataset::ExecuteSQL( const char *pszStatement,
     {
         return BuildLayerFromSelectInfo(psSelectInfo,
                                         poSpatialFilter,
-                                        pszDialect);
+                                        pszDialect,
+                                        poCustomFuncRegistrar);
     }
 
 /* -------------------------------------------------------------------- */
@@ -4995,7 +5006,8 @@ OGRLayer * GDALDataset::ExecuteSQL( const char *pszStatement,
 
         OGRLayer* poLayer = BuildLayerFromSelectInfo(psSelectInfo,
                                                      poSpatialFilter,
-                                                     pszDialect);
+                                                     pszDialect,
+                                                     poCustomFuncRegistrar);
         if( poLayer == NULL )
         {
             /* Each source layer owns an independant select info */
@@ -5031,8 +5043,9 @@ OGRLayer * GDALDataset::ExecuteSQL( const char *pszStatement,
 /************************************************************************/
 
 OGRLayer* GDALDataset::BuildLayerFromSelectInfo(void* psSelectInfoIn,
-                                                  OGRGeometry *poSpatialFilter,
-                                                  const char *pszDialect)
+                                                OGRGeometry *poSpatialFilter,
+                                                const char *pszDialect,
+                                                swq_custom_func_registrar* poCustomFuncRegistrar)
 {
     swq_select* psSelectInfo = (swq_select*) psSelectInfoIn;
 
@@ -5209,7 +5222,7 @@ OGRLayer* GDALDataset::BuildLayerFromSelectInfo(void* psSelectInfoIn,
 /* -------------------------------------------------------------------- */
 /*      Finish the parse operation.                                     */
 /* -------------------------------------------------------------------- */
-    if( psSelectInfo->parse( &sFieldList, 0 ) != CE_None )
+    if( psSelectInfo->parse( &sFieldList, poCustomFuncRegistrar ) != CE_None )
     {
         delete psSelectInfo;
         goto end;
