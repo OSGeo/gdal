@@ -257,6 +257,7 @@ class OGRLayer;
 class OGRGeometry;
 class OGRSpatialReference;
 class OGRStyleTable;
+class swq_custom_func_registrar;
 
 #ifdef DETECT_OLD_IRASTERIO
 typedef void signature_changed;
@@ -422,7 +423,8 @@ private:
 
     OGRLayer*       BuildLayerFromSelectInfo(void* psSelectInfo,
                                              OGRGeometry *poSpatialFilter,
-                                             const char *pszDialect);
+                                             const char *pszDialect,
+                                             swq_custom_func_registrar* poCustomFuncRegistrar);
 
   public:
 
@@ -449,6 +451,10 @@ private:
     virtual OGRLayer *  ExecuteSQL( const char *pszStatement,
                                     OGRGeometry *poSpatialFilter,
                                     const char *pszDialect );
+    OGRLayer *          ExecuteSQL( const char *pszStatement,
+                                    OGRGeometry *poSpatialFilter,
+                                    const char *pszDialect,
+                                    swq_custom_func_registrar* poCustomFuncRegistrar);
     virtual void        ReleaseResultSet( OGRLayer * poResultsSet );
 
     int                 GetRefCount() const;
