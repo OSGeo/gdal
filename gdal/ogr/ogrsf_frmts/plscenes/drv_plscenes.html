@@ -75,8 +75,8 @@ are retrieved into the following feature fields :<p>
 <tr><td>data.products.visual.full</td><td>String</td><td>URL to download scene GeoTIFF of the "visual" product.</td></tr>
 <tr><td>file_size</td><td>Integer</td><td>The size of the full image in bytes.</td></tr>
 <tr><td>image_statistics.gsd</td><td>Real</td><td>The ground sample distance (distance between pixel centers measured on the ground) of the image in meters.</td></tr>
-<tr><td>image_statistics.image_quality</td><td>String</td><td>The estimated signal to noise ratio. Decimal > 0. Values greater than or equal to 50 are considered excellent quality. Values less than 50 and greater than or equal to 20 are considered adequate quality. Values less than 20 are considered poor quality.</td></tr>
-<tr><td>image_statistics.snr</td><td>Real</td><td>The time that image was taken in UTC</td></tr>
+<tr><td>image_statistics.image_quality</td><td>String</td><td>Image quality category for scene. One of 'test', 'standard', or 'target'.</td></tr>
+<tr><td>image_statistics.snr</td><td>Real</td><td>The estimated signal to noise ratio. Decimal > 0. Values greater than or equal to 50 are considered excellent quality. Values less than 50 and greater than or equal to 20 are considered adequate quality. Values less than 20 are considered poor quality.</td></tr>
 <tr><td>links.full</td><td>String</td><td>URL to download scene GeoTIFF (same content as data.products.visual.full currently)</td></tr>
 <tr><td>links.self</td><td>String</td><td>URL to scene information</td></tr>
 <tr><td>links.square_thumbnail</td><td>String</td><td>URL to image thumbnail</td></tr>
@@ -101,7 +101,8 @@ WGS84 coordinate system (EPSG:4326).
 
 The driver will forward any spatial filter set with SetSpatialFilter() to
 the server. It also makes the same for simple attribute filters set with
-SetAttributeFilter().<p>
+SetAttributeFilter(). Note that not all attributes support all comparison
+operators. Refer to comparator column in <a href="https://www.planet.com/docs/v0/scenes/#metadata">Metadata properties</a> <p>
 
 <h3>Paging</h3>
 
