@@ -1109,11 +1109,11 @@ OGRLayer* OGROpenFileGDBDataSource::ExecuteSQL( const char *pszSQLCommand,
                 }
                 if( eErr == OGRERR_NONE )
                 {
-                    swq_op op = SWQ_UNKNOWN;
+                    int op = -1;
                     swq_expr_node* poValue = NULL;
                     if( oSelect.where_expr != NULL )
                     {
-                        op = (swq_op)oSelect.where_expr->nOperation;
+                        op = oSelect.where_expr->nOperation;
                         poValue = oSelect.where_expr->papoSubExpr[1];
                     }
 

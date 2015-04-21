@@ -115,7 +115,7 @@ public:
   int                   HasIndexForField(const char* pszFieldName);
   FileGDBIterator*      BuildIndex(const char* pszFieldName,
                                    int bAscending,
-                                   swq_op op,
+                                   int op,
                                    swq_expr_node* poValue);
   SPIState              GetSpatialIndexState() const { return m_eSpatialIndexState; }
   int                   IsValidLayerDefn() { return BuildLayerDefinition(); }
