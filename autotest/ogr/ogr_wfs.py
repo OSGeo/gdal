@@ -2371,7 +2371,7 @@ def ogr_wfs_vsimem_wfs110_one_layer_filter():
     ds = ogr.Open('WFS:/vsimem/wfs_endpoint')
     lyr = ds.GetLayer(0)
 
-    gdal.FileFromMemBuffer('/vsimem/wfs_endpoint?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=my_layer&FILTER=%3CFilter%20xmlns%3D%22http:%2F%2Fwww.opengis.net%2Fogc%22%20xmlns:gml%3D%22http:%2F%2Fwww.opengis.net%2Fgml%22%3E%3COr%3E%3COr%3E%3COr%3E%3COr%3E%3COr%3E%3COr%3E%3COr%3E%3CAnd%3E%3CAnd%3E%3CPropertyIsEqualTo%3E%3CPropertyName%3Estr%3C%2FPropertyName%3E%3CLiteral%3Estr%3C%2FLiteral%3E%3C%2FPropertyIsEqualTo%3E%3CPropertyIsEqualTo%3E%3CPropertyName%3Eshort%3C%2FPropertyName%3E%3CLiteral%3E1%3C%2FLiteral%3E%3C%2FPropertyIsEqualTo%3E%3C%2FAnd%3E%3CPropertyIsEqualTo%3E%3CPropertyName%3Efloat%3C%2FPropertyName%3E%3CLiteral%3E1.2%3C%2FLiteral%3E%3C%2FPropertyIsEqualTo%3E%3C%2FAnd%3E%3CPropertyIsLike%20wildCard%3D%27%2A%27%20singleChar%3D%27_%27%20escapeChar%3D%27%21%27%3E%3CPropertyName%3Estr%3C%2FPropertyName%3E%3CLiteral%3Est%2A%3C%2FLiteral%3E%3C%2FPropertyIsLike%3E%3C%2FOr%3E%3CNot%3E%3CPropertyIsNull%3E%3CPropertyName%3Eboolean%3C%2FPropertyName%3E%3C%2FPropertyIsNull%3E%3C%2FNot%3E%3C%2FOr%3E%3CPropertyIsGreaterThan%3E%3CPropertyName%3Eint%3C%2FPropertyName%3E%3CLiteral%3E1%3C%2FLiteral%3E%3C%2FPropertyIsGreaterThan%3E%3C%2FOr%3E%3CPropertyIsGreaterThanOrEqualTo%3E%3CPropertyName%3Eint%3C%2FPropertyName%3E%3CLiteral%3E1%3C%2FLiteral%3E%3C%2FPropertyIsGreaterThanOrEqualTo%3E%3C%2FOr%3E%3CPropertyIsNotEqualTo%3E%3CPropertyName%3EINT%3C%2FPropertyName%3E%3CLiteral%3E2%3C%2FLiteral%3E%3C%2FPropertyIsNotEqualTo%3E%3C%2FOr%3E%3CPropertyIsLessThan%3E%3CPropertyName%3EINT%3C%2FPropertyName%3E%3CLiteral%3E2000000000%3C%2FLiteral%3E%3C%2FPropertyIsLessThan%3E%3C%2FOr%3E%3CPropertyIsLessThanOrEqualTo%3E%3CPropertyName%3EINT%3C%2FPropertyName%3E%3CLiteral%3E2000000000%3C%2FLiteral%3E%3C%2FPropertyIsLessThanOrEqualTo%3E%3C%2FOr%3E%3C%2FFilter%3E',
+    gdal.FileFromMemBuffer('/vsimem/wfs_endpoint?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=my_layer&FILTER=%3CFilter%20xmlns%3D%22http:%2F%2Fwww.opengis.net%2Fogc%22%20xmlns:gml%3D%22http:%2F%2Fwww.opengis.net%2Fgml%22%3E%3COr%3E%3COr%3E%3COr%3E%3COr%3E%3COr%3E%3COr%3E%3COr%3E%3CAnd%3E%3CAnd%3E%3CPropertyIsEqualTo%3E%3CPropertyName%3Estr%3C%2FPropertyName%3E%3CLiteral%3Estr%3C%2FLiteral%3E%3C%2FPropertyIsEqualTo%3E%3CPropertyIsEqualTo%3E%3CPropertyName%3Eshort%3C%2FPropertyName%3E%3CLiteral%3E1%3C%2FLiteral%3E%3C%2FPropertyIsEqualTo%3E%3C%2FAnd%3E%3CPropertyIsEqualTo%3E%3CPropertyName%3Efloat%3C%2FPropertyName%3E%3CLiteral%3E1.2%3C%2FLiteral%3E%3C%2FPropertyIsEqualTo%3E%3C%2FAnd%3E%3CPropertyIsLike%20wildCard%3D%27%2A%27%20singleChar%3D%27_%27%20escapeChar%3D%27%21%27%3E%3CPropertyName%3Estr%3C%2FPropertyName%3E%3CLiteral%3Est%2A%3C%2FLiteral%3E%3C%2FPropertyIsLike%3E%3C%2FOr%3E%3CNot%3E%3CPropertyIsNull%3E%3CPropertyName%3Eboolean%3C%2FPropertyName%3E%3C%2FPropertyIsNull%3E%3C%2FNot%3E%3C%2FOr%3E%3CPropertyIsGreaterThan%3E%3CPropertyName%3Eint%3C%2FPropertyName%3E%3CLiteral%3E1%3C%2FLiteral%3E%3C%2FPropertyIsGreaterThan%3E%3C%2FOr%3E%3CPropertyIsGreaterThanOrEqualTo%3E%3CPropertyName%3Eint%3C%2FPropertyName%3E%3CLiteral%3E1%3C%2FLiteral%3E%3C%2FPropertyIsGreaterThanOrEqualTo%3E%3C%2FOr%3E%3CPropertyIsNotEqualTo%3E%3CPropertyName%3Eint%3C%2FPropertyName%3E%3CLiteral%3E2%3C%2FLiteral%3E%3C%2FPropertyIsNotEqualTo%3E%3C%2FOr%3E%3CPropertyIsLessThan%3E%3CPropertyName%3Eint%3C%2FPropertyName%3E%3CLiteral%3E2000000000%3C%2FLiteral%3E%3C%2FPropertyIsLessThan%3E%3C%2FOr%3E%3CPropertyIsLessThanOrEqualTo%3E%3CPropertyName%3Eint%3C%2FPropertyName%3E%3CLiteral%3E2000000000%3C%2FLiteral%3E%3C%2FPropertyIsLessThanOrEqualTo%3E%3C%2FOr%3E%3C%2FFilter%3E',
 """<wfs:FeatureCollection xmlns:xs="http://www.w3.org/2001/XMLSchema"
 xmlns:ogc="http://www.opengis.net/ogc"
 xmlns:foo="http://foo"
@@ -2403,7 +2403,165 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
 </wfs:FeatureCollection>
 """)
 
-    lyr.SetAttributeFilter("(str = 'str' AND short = 1 AND float = 1.2) OR str LIKE 'st%' OR boolean IS NOT NULL OR int > 1 OR int >= 1 or INT != 2 or INT < 2000000000 or INT <= 2000000000")
+    lyr.SetAttributeFilter("(str = 'str' AND short = 1 AND float = 1.2) OR str LIKE 'st%' OR boolean IS NOT NULL OR int > 1 OR int >= 1 or int != 2 or int < 2000000000 or int <= 2000000000")
+
+    f = lyr.GetNextFeature()
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+def ogr_wfs_vsimem_wfs110_one_layer_filter_spatial_ops():
+
+    if gdaltest.wfs_drv is None:
+        return 'skip'
+
+    gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
+
+    ds = ogr.Open('WFS:/vsimem/wfs_endpoint')
+    lyr = ds.GetLayer(0)
+
+    content = """<wfs:FeatureCollection xmlns:xs="http://www.w3.org/2001/XMLSchema"
+xmlns:ogc="http://www.opengis.net/ogc"
+xmlns:foo="http://foo"
+xmlns:wfs="http://www.opengis.net/wfs"
+xmlns:ows="http://www.opengis.net/ows"
+xmlns:xlink="http://www.w3.org/1999/xlink"
+xmlns:gml="http://www.opengis.net/gml"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+numberOfFeatures="1"
+timeStamp="2015-04-17T14:14:24.859Z"
+xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.0&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=my_layer
+                    http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.1.0/wfs.xsd">
+    <gml:featureMembers>
+        <foo:my_layer gml:id="my_layer.1">
+            <foo:str>str</foo:str>
+            <foo:boolean>true</foo:boolean>
+            <foo:short>1</foo:short>
+            <foo:int>123456789</foo:int>
+            <foo:float>1.2</foo:float>
+            <foo:double>1.23</foo:double>
+            <foo:dt>2015-04-17T12:34:56Z</foo:dt>
+            <foo:shape>
+                <gml:Point srsDimension="2" srsName="urn:ogc:def:crs:EPSG::4326">
+                    <gml:pos>49 2</gml:pos>
+                </gml:Point>
+            </foo:shape>
+        </foo:my_layer>
+    </gml:featureMembers>
+</wfs:FeatureCollection>
+"""
+
+    # Invalid syntax
+    gdal.PushErrorHandler()
+    ret = lyr.SetAttributeFilter("ST_Intersects(shape)")
+    gdal.PopErrorHandler()
+    if ret == 0 or gdal.GetLastErrorMsg().find('Wrong number of arguments for ST_Intersects') < 0:
+        gdaltest.post_reason('fail')
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+
+    gdal.PushErrorHandler()
+    ret = lyr.SetAttributeFilter("ST_Intersects(shape, 5)")
+    gdal.PopErrorHandler()
+    if ret == 0 or gdal.GetLastErrorMsg().find('Wrong field type for argument 2 of ST_Intersects') < 0:
+        gdaltest.post_reason('fail')
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+
+    gdal.PushErrorHandler()
+    ret = lyr.SetAttributeFilter("ST_Intersects(shape, ST_MakeEnvelope(1))")
+    gdal.PopErrorHandler()
+    if ret == 0 or gdal.GetLastErrorMsg().find('Wrong number of arguments for ST_MakeEnvelope') < 0:
+        gdaltest.post_reason('fail')
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+
+    gdal.PushErrorHandler()
+    ret = lyr.SetAttributeFilter("ST_Intersects(shape, ST_MakeEnvelope(1,1,1,'a'))")
+    gdal.PopErrorHandler()
+    if ret == 0 or gdal.GetLastErrorMsg().find('Wrong field type for argument 4 of ST_MakeEnvelope') < 0:
+        gdaltest.post_reason('fail')
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+
+    gdal.PushErrorHandler()
+    ret = lyr.SetAttributeFilter("ST_Intersects(shape, ST_MakeEnvelope(1,1,1,1,3.5))")
+    gdal.PopErrorHandler()
+    if ret == 0 or gdal.GetLastErrorMsg().find('Wrong field type for argument 5 of ST_MakeEnvelope') < 0:
+        gdaltest.post_reason('fail')
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+
+    gdal.PushErrorHandler()
+    ret = lyr.SetAttributeFilter("ST_Intersects(shape, ST_MakeEnvelope(1,1,1,1,'not_a_srs'))")
+    gdal.PopErrorHandler()
+    if ret == 0 or gdal.GetLastErrorMsg().find('Wrong value for argument 5 of ST_MakeEnvelope') < 0:
+        gdaltest.post_reason('fail')
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+
+    gdal.PushErrorHandler()
+    ret = lyr.SetAttributeFilter("ST_Intersects(shape, ST_MakeEnvelope(1,1,1,1,-5))")
+    gdal.PopErrorHandler()
+    if ret == 0 or gdal.GetLastErrorMsg().find('Wrong value for argument 5 of ST_MakeEnvelope') < 0:
+        gdaltest.post_reason('fail')
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+
+    gdal.PushErrorHandler()
+    ret = lyr.SetAttributeFilter("ST_Intersects(shape, ST_GeomFromText(1,2,3))")
+    gdal.PopErrorHandler()
+    if ret == 0 or gdal.GetLastErrorMsg().find('Wrong number of arguments for ST_GeomFromText') < 0:
+        gdaltest.post_reason('fail')
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+
+    gdal.PushErrorHandler()
+    ret = lyr.SetAttributeFilter("ST_Intersects(shape, ST_GeomFromText(1))")
+    gdal.PopErrorHandler()
+    if ret == 0 or gdal.GetLastErrorMsg().find('Wrong field type for argument 1 of ST_GeomFromText') < 0:
+        gdaltest.post_reason('fail')
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+
+    gdal.PushErrorHandler()
+    ret = lyr.SetAttributeFilter("ST_Intersects(shape, ST_GeomFromText('INVALID_GEOM'))")
+    gdal.PopErrorHandler()
+    if ret == 0 or gdal.GetLastErrorMsg().find('Wrong value for argument 1 of ST_GeomFromText') < 0:
+        gdaltest.post_reason('fail')
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+
+    gdal.PushErrorHandler()
+    ret = lyr.SetAttributeFilter("ST_Intersects(shape, ST_GeomFromText('POINT(0 0)', 'invalid_srs'))")
+    gdal.PopErrorHandler()
+    if ret == 0 or gdal.GetLastErrorMsg().find('Wrong value for argument 2 of ST_GeomFromText') < 0:
+        gdaltest.post_reason('fail')
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+
+    # Now valid requests
+    gdal.FileFromMemBuffer('/vsimem/wfs_endpoint?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=my_layer&FILTER=%3CFilter%20xmlns%3D%22http:%2F%2Fwww.opengis.net%2Fogc%22%20xmlns:gml%3D%22http:%2F%2Fwww.opengis.net%2Fgml%22%3E%3COr%3E%3COr%3E%3COr%3E%3CIntersects%3E%3CPropertyName%3Eshape%3C%2FPropertyName%3E%3Cgml:Envelope%20srsName%3D%22urn:ogc:def:crs:EPSG::4326%22%3E%3Cgml:lowerCorner%3E48.5%201.5%3C%2Fgml:lowerCorner%3E%3Cgml:upperCorner%3E49.5%202.5%3C%2Fgml:upperCorner%3E%3C%2Fgml:Envelope%3E%3C%2FIntersects%3E%3CIntersects%3E%3CPropertyName%3Eshape%3C%2FPropertyName%3E%3Cgml:Envelope%20srsName%3D%22urn:ogc:def:crs:EPSG::4326%22%3E%3Cgml:lowerCorner%3E48.5%201.5%3C%2Fgml:lowerCorner%3E%3Cgml:upperCorner%3E49.5%202.5%3C%2Fgml:upperCorner%3E%3C%2Fgml:Envelope%3E%3C%2FIntersects%3E%3C%2FOr%3E%3CIntersects%3E%3CPropertyName%3Eshape%3C%2FPropertyName%3E%3Cgml:Envelope%20srsName%3D%22EPSG:4326%22%3E%3Cgml:lowerCorner%3E1.5%2048.5%3C%2Fgml:lowerCorner%3E%3Cgml:upperCorner%3E2.5%2049.5%3C%2Fgml:upperCorner%3E%3C%2Fgml:Envelope%3E%3C%2FIntersects%3E%3C%2FOr%3E%3CIntersects%3E%3CPropertyName%3Eshape%3C%2FPropertyName%3E%3Cgml:Envelope%20srsName%3D%22urn:ogc:def:crs:EPSG::32630%22%3E%3Cgml:lowerCorner%3E380000%205370000%3C%2Fgml:lowerCorner%3E%3Cgml:upperCorner%3E470000%205490000%3C%2Fgml:upperCorner%3E%3C%2Fgml:Envelope%3E%3C%2FIntersects%3E%3C%2FOr%3E%3C%2FFilter%3E',
+                           content)
+
+    lyr.SetAttributeFilter("ST_Intersects(shape, ST_MakeEnvelope(1.5,48.5,2.5,49.5)) OR " + \
+                           "ST_Intersects(shape, ST_MakeEnvelope(1.5,48.5,2.5,49.5, 4326)) OR " + \
+                           "ST_Intersects(shape, ST_MakeEnvelope(1.5,48.5,2.5,49.5, 'EPSG:4326')) OR " + \
+                           "ST_Intersects(shape, ST_MakeEnvelope(380000,5370000,470000,5490000,32630))")
+
+    f = lyr.GetNextFeature()
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.FileFromMemBuffer('/vsimem/wfs_endpoint?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=my_layer&FILTER=%3CFilter%20xmlns%3D%22http:%2F%2Fwww.opengis.net%2Fogc%22%20xmlns:gml%3D%22http:%2F%2Fwww.opengis.net%2Fgml%22%3E%3COr%3E%3CIntersects%3E%3CPropertyName%3Eshape%3C%2FPropertyName%3E%3Cgml:Polygon%20srsName%3D%22urn:ogc:def:crs:EPSG::4326%22%20gml:id%3D%22id1%22%3E%3Cgml:exterior%3E%3Cgml:LinearRing%3E%3Cgml:posList%3E48.5%201.5%2049.5%202.5%2049.5%202.5%2048.5%202.5%2048.5%201.5%3C%2Fgml:posList%3E%3C%2Fgml:LinearRing%3E%3C%2Fgml:exterior%3E%3C%2Fgml:Polygon%3E%3C%2FIntersects%3E%3CIntersects%3E%3CPropertyName%3Eshape%3C%2FPropertyName%3E%3Cgml:Polygon%20srsName%3D%22urn:ogc:def:crs:EPSG::4326%22%20gml:id%3D%22id2%22%3E%3Cgml:exterior%3E%3Cgml:LinearRing%3E%3Cgml:posList%3E48.5%201.5%2049.5%202.5%2049.5%202.5%2048.5%202.5%2048.5%201.5%3C%2Fgml:posList%3E%3C%2Fgml:LinearRing%3E%3C%2Fgml:exterior%3E%3C%2Fgml:Polygon%3E%3C%2FIntersects%3E%3C%2FOr%3E%3C%2FFilter%3E',
+                           content)
+
+    lyr.SetAttributeFilter("ST_Intersects(shape, ST_GeomFromText('POLYGON((1.5 48.5,2.5 49.5,2.5 49.5,2.5 48.5,1.5 48.5)))')) OR " + \
+                           "ST_Intersects(shape, ST_GeomFromText('POLYGON((1.5 48.5,2.5 49.5,2.5 49.5,2.5 48.5,1.5 48.5)))', 4326))")
 
     f = lyr.GetNextFeature()
     if f is None:
@@ -4319,9 +4477,11 @@ def ogr_wfs_vsimem_cleanup():
     gdal.Unlink('/vsimem/wfs_endpoint?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=my_layer&FILTER=%3CFilter%20xmlns%3D%22http:%2F%2Fwww.opengis.net%2Fogc%22%20xmlns:gml%3D%22http:%2F%2Fwww.opengis.net%2Fgml%22%3E%3CGmlObjectId%20id%3D%22my_layer.1%22%2F%3E%3CGmlObjectId%20id%3D%22my_layer.1%22%2F%3E%3C%2FFilter%3E')
     gdal.Unlink('/vsimem/wfs_endpoint?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=my_layer&FILTER=%3CFilter%20xmlns%3D%22http:%2F%2Fwww.opengis.net%2Fogc%22%20xmlns:gml%3D%22http:%2F%2Fwww.opengis.net%2Fgml%22%3E%3CGmlObjectId%20id%3D%22my_layer.100%22%2F%3E%3C%2FFilter%3E')
     gdal.Unlink('/vsimem/wfs_endpoint?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=my_layer&FILTER=%3CFilter%20xmlns%3D%22http:%2F%2Fwww.opengis.net%2Fogc%22%20xmlns:gml%3D%22http:%2F%2Fwww.opengis.net%2Fgml%22%3E%3CGmlObjectId%20id%3D%22my_layer.200%22%2F%3E%3C%2FFilter%3E')
-    gdal.Unlink('/vsimem/wfs_endpoint?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=my_layer&FILTER=%3CFilter%20xmlns%3D%22http:%2F%2Fwww.opengis.net%2Fogc%22%20xmlns:gml%3D%22http:%2F%2Fwww.opengis.net%2Fgml%22%3E%3COr%3E%3COr%3E%3COr%3E%3COr%3E%3COr%3E%3COr%3E%3COr%3E%3CAnd%3E%3CAnd%3E%3CPropertyIsEqualTo%3E%3CPropertyName%3Estr%3C%2FPropertyName%3E%3CLiteral%3Estr%3C%2FLiteral%3E%3C%2FPropertyIsEqualTo%3E%3CPropertyIsEqualTo%3E%3CPropertyName%3Eshort%3C%2FPropertyName%3E%3CLiteral%3E1%3C%2FLiteral%3E%3C%2FPropertyIsEqualTo%3E%3C%2FAnd%3E%3CPropertyIsEqualTo%3E%3CPropertyName%3Efloat%3C%2FPropertyName%3E%3CLiteral%3E1.2%3C%2FLiteral%3E%3C%2FPropertyIsEqualTo%3E%3C%2FAnd%3E%3CPropertyIsLike%20wildCard%3D%27%2A%27%20singleChar%3D%27_%27%20escapeChar%3D%27%21%27%3E%3CPropertyName%3Estr%3C%2FPropertyName%3E%3CLiteral%3Est%2A%3C%2FLiteral%3E%3C%2FPropertyIsLike%3E%3C%2FOr%3E%3CNot%3E%3CPropertyIsNull%3E%3CPropertyName%3Eboolean%3C%2FPropertyName%3E%3C%2FPropertyIsNull%3E%3C%2FNot%3E%3C%2FOr%3E%3CPropertyIsGreaterThan%3E%3CPropertyName%3Eint%3C%2FPropertyName%3E%3CLiteral%3E1%3C%2FLiteral%3E%3C%2FPropertyIsGreaterThan%3E%3C%2FOr%3E%3CPropertyIsGreaterThanOrEqualTo%3E%3CPropertyName%3Eint%3C%2FPropertyName%3E%3CLiteral%3E1%3C%2FLiteral%3E%3C%2FPropertyIsGreaterThanOrEqualTo%3E%3C%2FOr%3E%3CPropertyIsNotEqualTo%3E%3CPropertyName%3EINT%3C%2FPropertyName%3E%3CLiteral%3E2%3C%2FLiteral%3E%3C%2FPropertyIsNotEqualTo%3E%3C%2FOr%3E%3CPropertyIsLessThan%3E%3CPropertyName%3EINT%3C%2FPropertyName%3E%3CLiteral%3E2000000000%3C%2FLiteral%3E%3C%2FPropertyIsLessThan%3E%3C%2FOr%3E%3CPropertyIsLessThanOrEqualTo%3E%3CPropertyName%3EINT%3C%2FPropertyName%3E%3CLiteral%3E2000000000%3C%2FLiteral%3E%3C%2FPropertyIsLessThanOrEqualTo%3E%3C%2FOr%3E%3C%2FFilter%3E')
+    gdal.Unlink('/vsimem/wfs_endpoint?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=my_layer&FILTER=%3CFilter%20xmlns%3D%22http:%2F%2Fwww.opengis.net%2Fogc%22%20xmlns:gml%3D%22http:%2F%2Fwww.opengis.net%2Fgml%22%3E%3COr%3E%3COr%3E%3COr%3E%3COr%3E%3COr%3E%3COr%3E%3COr%3E%3CAnd%3E%3CAnd%3E%3CPropertyIsEqualTo%3E%3CPropertyName%3Estr%3C%2FPropertyName%3E%3CLiteral%3Estr%3C%2FLiteral%3E%3C%2FPropertyIsEqualTo%3E%3CPropertyIsEqualTo%3E%3CPropertyName%3Eshort%3C%2FPropertyName%3E%3CLiteral%3E1%3C%2FLiteral%3E%3C%2FPropertyIsEqualTo%3E%3C%2FAnd%3E%3CPropertyIsEqualTo%3E%3CPropertyName%3Efloat%3C%2FPropertyName%3E%3CLiteral%3E1.2%3C%2FLiteral%3E%3C%2FPropertyIsEqualTo%3E%3C%2FAnd%3E%3CPropertyIsLike%20wildCard%3D%27%2A%27%20singleChar%3D%27_%27%20escapeChar%3D%27%21%27%3E%3CPropertyName%3Estr%3C%2FPropertyName%3E%3CLiteral%3Est%2A%3C%2FLiteral%3E%3C%2FPropertyIsLike%3E%3C%2FOr%3E%3CNot%3E%3CPropertyIsNull%3E%3CPropertyName%3Eboolean%3C%2FPropertyName%3E%3C%2FPropertyIsNull%3E%3C%2FNot%3E%3C%2FOr%3E%3CPropertyIsGreaterThan%3E%3CPropertyName%3Eint%3C%2FPropertyName%3E%3CLiteral%3E1%3C%2FLiteral%3E%3C%2FPropertyIsGreaterThan%3E%3C%2FOr%3E%3CPropertyIsGreaterThanOrEqualTo%3E%3CPropertyName%3Eint%3C%2FPropertyName%3E%3CLiteral%3E1%3C%2FLiteral%3E%3C%2FPropertyIsGreaterThanOrEqualTo%3E%3C%2FOr%3E%3CPropertyIsNotEqualTo%3E%3CPropertyName%3Eint%3C%2FPropertyName%3E%3CLiteral%3E2%3C%2FLiteral%3E%3C%2FPropertyIsNotEqualTo%3E%3C%2FOr%3E%3CPropertyIsLessThan%3E%3CPropertyName%3Eint%3C%2FPropertyName%3E%3CLiteral%3E2000000000%3C%2FLiteral%3E%3C%2FPropertyIsLessThan%3E%3C%2FOr%3E%3CPropertyIsLessThanOrEqualTo%3E%3CPropertyName%3Eint%3C%2FPropertyName%3E%3CLiteral%3E2000000000%3C%2FLiteral%3E%3C%2FPropertyIsLessThanOrEqualTo%3E%3C%2FOr%3E%3C%2FFilter%3E')
     gdal.Unlink('/vsimem/wfs_endpoint?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=my_layer&FILTER=%3CFilter%20xmlns%3D%22http:%2F%2Fwww.opengis.net%2Fogc%22%20xmlns:gml%3D%22http:%2F%2Fwww.opengis.net%2Fgml%22%3E%3CBBOX%3E%3CPropertyName%3Eshape%3C%2FPropertyName%3E%3Cgml:Box%3E%3Cgml:coordinates%3E48.0000000000000000,1.0000000000000000%2050.0000000000000000,3.0000000000000000%3C%2Fgml:coordinates%3E%3C%2Fgml:Box%3E%3C%2FBBOX%3E%3C%2FFilter%3E')
     gdal.Unlink('/vsimem/wfs_endpoint?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=my_layer&FILTER=%3CFilter%20xmlns%3D%22http:%2F%2Fwww.opengis.net%2Fogc%22%20xmlns:gml%3D%22http:%2F%2Fwww.opengis.net%2Fgml%22%3E%3CAnd%3E%3CPropertyIsEqualTo%3E%3CPropertyName%3Estr%3C%2FPropertyName%3E%3CLiteral%3Estr%3C%2FLiteral%3E%3C%2FPropertyIsEqualTo%3E%3CBBOX%3E%3CPropertyName%3Eshape%3C%2FPropertyName%3E%3Cgml:Box%3E%3Cgml:coordinates%3E48.0000000000000000,1.0000000000000000%2050.0000000000000000,3.0000000000000000%3C%2Fgml:coordinates%3E%3C%2Fgml:Box%3E%3C%2FBBOX%3E%3C%2FAnd%3E%3C%2FFilter%3E')
+    gdal.Unlink('/vsimem/wfs_endpoint?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=my_layer&FILTER=%3CFilter%20xmlns%3D%22http:%2F%2Fwww.opengis.net%2Fogc%22%20xmlns:gml%3D%22http:%2F%2Fwww.opengis.net%2Fgml%22%3E%3COr%3E%3COr%3E%3COr%3E%3CIntersects%3E%3CPropertyName%3Eshape%3C%2FPropertyName%3E%3Cgml:Envelope%20srsName%3D%22urn:ogc:def:crs:EPSG::4326%22%3E%3Cgml:lowerCorner%3E48.5%201.5%3C%2Fgml:lowerCorner%3E%3Cgml:upperCorner%3E49.5%202.5%3C%2Fgml:upperCorner%3E%3C%2Fgml:Envelope%3E%3C%2FIntersects%3E%3CIntersects%3E%3CPropertyName%3Eshape%3C%2FPropertyName%3E%3Cgml:Envelope%20srsName%3D%22urn:ogc:def:crs:EPSG::4326%22%3E%3Cgml:lowerCorner%3E48.5%201.5%3C%2Fgml:lowerCorner%3E%3Cgml:upperCorner%3E49.5%202.5%3C%2Fgml:upperCorner%3E%3C%2Fgml:Envelope%3E%3C%2FIntersects%3E%3C%2FOr%3E%3CIntersects%3E%3CPropertyName%3Eshape%3C%2FPropertyName%3E%3Cgml:Envelope%20srsName%3D%22EPSG:4326%22%3E%3Cgml:lowerCorner%3E1.5%2048.5%3C%2Fgml:lowerCorner%3E%3Cgml:upperCorner%3E2.5%2049.5%3C%2Fgml:upperCorner%3E%3C%2Fgml:Envelope%3E%3C%2FIntersects%3E%3C%2FOr%3E%3CIntersects%3E%3CPropertyName%3Eshape%3C%2FPropertyName%3E%3Cgml:Envelope%20srsName%3D%22urn:ogc:def:crs:EPSG::32630%22%3E%3Cgml:lowerCorner%3E380000%205370000%3C%2Fgml:lowerCorner%3E%3Cgml:upperCorner%3E470000%205490000%3C%2Fgml:upperCorner%3E%3C%2Fgml:Envelope%3E%3C%2FIntersects%3E%3C%2FOr%3E%3C%2FFilter%3E')
+    gdal.Unlink('/vsimem/wfs_endpoint?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=my_layer&FILTER=%3CFilter%20xmlns%3D%22http:%2F%2Fwww.opengis.net%2Fogc%22%20xmlns:gml%3D%22http:%2F%2Fwww.opengis.net%2Fgml%22%3E%3COr%3E%3CIntersects%3E%3CPropertyName%3Eshape%3C%2FPropertyName%3E%3Cgml:Polygon%20srsName%3D%22urn:ogc:def:crs:EPSG::4326%22%20gml:id%3D%22id1%22%3E%3Cgml:exterior%3E%3Cgml:LinearRing%3E%3Cgml:posList%3E48.5%201.5%2049.5%202.5%2049.5%202.5%2048.5%202.5%2048.5%201.5%3C%2Fgml:posList%3E%3C%2Fgml:LinearRing%3E%3C%2Fgml:exterior%3E%3C%2Fgml:Polygon%3E%3C%2FIntersects%3E%3CIntersects%3E%3CPropertyName%3Eshape%3C%2FPropertyName%3E%3Cgml:Polygon%20srsName%3D%22urn:ogc:def:crs:EPSG::4326%22%20gml:id%3D%22id2%22%3E%3Cgml:exterior%3E%3Cgml:LinearRing%3E%3Cgml:posList%3E48.5%201.5%2049.5%202.5%2049.5%202.5%2048.5%202.5%2048.5%201.5%3C%2Fgml:posList%3E%3C%2Fgml:LinearRing%3E%3C%2Fgml:exterior%3E%3C%2Fgml:Polygon%3E%3C%2FIntersects%3E%3C%2FOr%3E%3C%2FFilter%3E')
     gdal.Unlink('/vsimem/wfs_endpoint_schema_not_understood?SERVICE=WFS&REQUEST=GetCapabilities')
     gdal.Unlink('/vsimem/wfs_endpoint_schema_not_understood?SERVICE=WFS&VERSION=1.1.0&REQUEST=DescribeFeatureType&TYPENAME=my_layer')
     gdal.Unlink('/vsimem/wfs_endpoint_schema_not_understood?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=my_layer&MAXFEATURES=1')
@@ -4421,6 +4581,7 @@ gdaltest_vsimem_list = [
     ogr_wfs_vsimem_wfs110_one_layer_filter_gml_id_failed,
     ogr_wfs_vsimem_wfs110_one_layer_filter_gml_id_success,
     ogr_wfs_vsimem_wfs110_one_layer_filter,
+    ogr_wfs_vsimem_wfs110_one_layer_filter_spatial_ops,
     ogr_wfs_vsimem_wfs110_one_layer_spatial_filter,
     ogr_wfs_vsimem_wfs110_one_layer_spatial_filter_and_attribute_filter,
     ogr_wfs_vsimem_wfs110_insertfeature,

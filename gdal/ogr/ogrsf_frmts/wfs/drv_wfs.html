@@ -85,6 +85,21 @@ The driver will forward any spatial filter set with SetSpatialFilter() to the se
 filters set with SetAttributeFilter() when possible (turning OGR SQL language into OGC filter description). When this is not possible,
 it will default to client-side only filtering, which can be a slow operation because involving fetching all the features from the servers.<p>
 
+Starting with GDAL 2.0, the following spatial functions can be used :
+<ul>
+<li>the 8 spatial binary predicate: <b>ST_Equals, ST_Disjoint, ST_Touches,
+ST_Contains, ST_Intersects, ST_Within, ST_Crosses and ST_Overlaps</b> that take
+2 geometry arguments. Typically the geometry column name, and a constant geometry such
+as built with ST_MakeEnvelope or ST_GeomFromText.</li>
+<li><b>ST_MakeEnvelope(xmin,ymin,xmax,ymax[,srs])</b>: to build an envelope. srs
+can be an integer (an EPSG code), or a string directly set as the srsName attribute
+of the gml:Envelope. GDAL will take care of needed axis swapping, so coordinates
+should be expressed in the "natural GIS order" (for example long,lat for geodetic
+systems)</li>
+<li><b>ST_GeomFromText(wkt,[srs])</b>: to build a geometry from its WKT representation.</li>
+</ul>
+Note that those spatial functions are only supported as server-side filters.<p>
+
 <h2>Write support / WFS-T</h2>
 
 The WFS-T protocol only eanbles the user to operate at feature level. No datasource, layer or field creations are possible.<p>

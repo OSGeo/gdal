@@ -48,6 +48,7 @@ CPLString WFS_TurnSQLFilterToOGCFilter( const swq_expr_node* poExpr,
                                         int bUseFeatureId,
                                         int bGmlObjectIdNeedsGMLPrefix,
                                         int* pbOutNeedsNullCheck );
+swq_custom_func_registrar* WFSGetCustomFuncRegistrar();
 
 const char* FindSubStringInsensitive(const char* pszStr,
                                      const char* pszSubStr);
