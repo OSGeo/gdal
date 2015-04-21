@@ -202,7 +202,8 @@ void swq_expr_node::ReverseSubExpressions()
 
 swq_field_type swq_expr_node::Check( swq_field_list *poFieldList,
                                      int bAllowFieldsInSecondaryTables,
-                                     int bAllowMismatchTypeOnFieldComparison )
+                                     int bAllowMismatchTypeOnFieldComparison,
+                                     swq_custom_func_registrar* poCustomFuncRegistrar )
 
 {
 /* -------------------------------------------------------------------- */
@@ -251,13 +252,20 @@ swq_field_type swq_expr_node::Check( swq_field_list *poFieldList,
 /*      We are dealing with an operation - fetch the definition.        */
 /* -------------------------------------------------------------------- */
     const swq_operation *poOp = 
-        swq_op_registrar::GetOperator((swq_op)nOperation);
+        (nOperation == SWQ_CUSTOM_FUNC && poCustomFuncRegistrar != NULL ) ?
+            poCustomFuncRegistrar->GetOperator(string_value) :
+            swq_op_registrar::GetOperator((swq_op)nOperation);
 
     if( poOp == NULL )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Check(): Unable to find definition for operator %d.",
-                  nOperation );
+        if( nOperation == SWQ_CUSTOM_FUNC )
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Check(): Unable to find definition for operator %s.",
+                      string_value );
+        else
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Check(): Unable to find definition for operator %d.",
+                      nOperation );
         return SWQ_ERROR;
     }
 
@@ -269,7 +277,8 @@ swq_field_type swq_expr_node::Check( swq_field_list *poFieldList,
     for( i = 0; i < nSubExprCount; i++ )
     {
         if( papoSubExpr[i]->Check(poFieldList, bAllowFieldsInSecondaryTables,
-                                  bAllowMismatchTypeOnFieldComparison) == SWQ_ERROR )
+                                  bAllowMismatchTypeOnFieldComparison,
+                                  poCustomFuncRegistrar) == SWQ_ERROR )
             return SWQ_ERROR;
     }
     
@@ -329,8 +338,10 @@ void swq_expr_node::Dump( FILE * fp, int depth )
 
     const swq_operation *op_def = 
         swq_op_registrar::GetOperator( (swq_op) nOperation );
-
-    fprintf( fp, "%s%s\n", spaces, op_def->pszName );
+    if( op_def )
+        fprintf( fp, "%s%s\n", spaces, op_def->pszName );
+    else
+        fprintf( fp, "%s%s\n", spaces, string_value );
 
     for( i = 0; i < nSubExprCount; i++ )
         papoSubExpr[i]->Dump( fp, depth+1 );
@@ -522,7 +533,7 @@ CPLString swq_expr_node::UnparseOperationFromUnparsedSubExpr(char** apszSubExpr)
     const swq_operation *poOp = 
         swq_op_registrar::GetOperator( (swq_op) nOperation );
 
-    if( poOp == NULL )
+    if( poOp == NULL && nOperation != SWQ_CUSTOM_FUNC )
     {
         CPLAssert( FALSE );
         return osExpr;
@@ -636,7 +647,10 @@ CPLString swq_expr_node::UnparseOperationFromUnparsedSubExpr(char** apszSubExpr)
         break;
 
       default: // function style.
-        osExpr.Printf( "%s(", poOp->pszName );
+        if( nOperation != SWQ_CUSTOM_FUNC )
+            osExpr.Printf( "%s(", poOp->pszName );
+        else
+            osExpr.Printf( "%s(", string_value );
         for( i = 0; i < nSubExprCount; i++ )
         {
             if( i > 0 )
@@ -676,12 +690,10 @@ swq_expr_node *swq_expr_node::Clone()
         poRetNode->field_index = field_index;
         poRetNode->table_index = table_index;
         poRetNode->table_name = table_name ? CPLStrdup(table_name) : NULL;
-        poRetNode->string_value = string_value ? CPLStrdup(string_value) : NULL;
     }
     else if( eNodeType == SNT_CONSTANT )
     {
         poRetNode->is_null = is_null;
-        poRetNode->string_value = string_value ? CPLStrdup(string_value) : NULL;
         poRetNode->int_value = int_value;
         poRetNode->float_value = float_value;
         if( geometry_value )
@@ -689,6 +701,7 @@ swq_expr_node *swq_expr_node::Clone()
         else
             poRetNode->geometry_value = NULL;
     }
+    poRetNode->string_value = string_value ? CPLStrdup(string_value) : NULL;
     return poRetNode;
 }
 

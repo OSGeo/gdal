@@ -763,6 +763,8 @@ CPLErr swq_expr_compile( const char *where_clause,
                          int field_count,
                          char **field_names, 
                          swq_field_type *field_types, 
+                         int bCheck,
+                         swq_custom_func_registrar* poCustomFuncRegistrar,
                          swq_expr_node **expr_out )
 
 {
@@ -777,7 +779,8 @@ CPLErr swq_expr_compile( const char *where_clause,
     field_list.table_count = 0;
     field_list.table_defs = NULL;
 
-    return swq_expr_compile2( where_clause, &field_list, expr_out );
+    return swq_expr_compile2( where_clause, &field_list,
+                              bCheck, poCustomFuncRegistrar, expr_out );
 }
 
 
@@ -787,6 +790,8 @@ CPLErr swq_expr_compile( const char *where_clause,
 
 CPLErr swq_expr_compile2( const char *where_clause, 
                           swq_field_list *field_list,
+                          int bCheck,
+                          swq_custom_func_registrar* poCustomFuncRegistrar,
                           swq_expr_node **expr_out )
 
 {
@@ -797,9 +802,10 @@ CPLErr swq_expr_compile2( const char *where_clause,
     context.pszNext = where_clause;
     context.pszLastValid = where_clause;
     context.nStartToken = SWQT_VALUE_START;
+    context.bAcceptCustomFuncs = poCustomFuncRegistrar != NULL;
     
     if( swqparse( &context ) == 0 
-        && context.poRoot->Check( field_list, FALSE, FALSE ) != SWQ_ERROR )
+        && bCheck && context.poRoot->Check( field_list, FALSE, FALSE, poCustomFuncRegistrar ) != SWQ_ERROR )
     {
         *expr_out = context.poRoot;
 

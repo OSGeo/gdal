@@ -59,8 +59,8 @@ typedef enum {
     SWQ_COUNT,
     SWQ_SUM,
     SWQ_CAST,
-    SWQ_FUNC_DEFINED,
-    SWQ_UNKNOWN
+    SWQ_CUSTOM_FUNC, /* only if parsing done in bAcceptCustomFuncs mode */
+    SWQ_ARGUMENT_LIST /* temporary value only set during parsing and replaced by something else at the end */
 } swq_op;
 
 typedef enum {
@@ -99,6 +99,8 @@ typedef swq_expr_node *(*swq_op_evaluator)(swq_expr_node *op,
 typedef swq_field_type (*swq_op_checker)( swq_expr_node *op,
                                           int bAllowMismatchTypeOnFieldComparison );
 
+class swq_custom_func_registrar;
+
 class swq_expr_node {
 public:
     swq_expr_node();
@@ -117,7 +119,8 @@ public:
     char          *Unparse( swq_field_list *, char chColumnQuote );
     void           Dump( FILE *fp, int depth );
     swq_field_type Check( swq_field_list *, int bAllowFieldsInSecondaryTables,
-                          int bAllowMismatchTypeOnFieldComparison );
+                          int bAllowMismatchTypeOnFieldComparison,
+                          swq_custom_func_registrar* poCustomFuncRegistrar );
     swq_expr_node* Evaluate( swq_field_fetcher pfnFetcher, 
                              void *record );
     swq_expr_node* Clone();
@@ -145,7 +148,8 @@ public:
     double      float_value;
     OGRGeometry *geometry_value;
     
-    /* shared by SNT_COLUMN and SNT_CONSTANT */
+    /* shared by SNT_COLUMN, SNT_CONSTANT and also possibly SNT_OPERATION when */
+    /* nOperation == SWQ_CUSTOM_FUNC */
     char        *string_value; /* column name when SNT_COLUMN */
 
 
@@ -165,6 +169,14 @@ public:
     static const swq_operation *GetOperator( const char * );
     static const swq_operation *GetOperator( swq_op eOperation );
 };
+
+class swq_custom_func_registrar
+{
+    public:
+        virtual ~swq_custom_func_registrar() {}
+        virtual const swq_operation *GetOperator( const char * ) = 0;
+};
+
 
 typedef struct {
     char       *data_source;
@@ -186,12 +198,15 @@ public:
 
 class swq_parse_context {
 public:
-    swq_parse_context() : nStartToken(0), poRoot(NULL), poCurSelect(NULL) {}
+    swq_parse_context() : nStartToken(0), pszInput(NULL), pszNext(NULL),
+                          pszLastValid(NULL), bAcceptCustomFuncs(FALSE),
+                          poRoot(NULL), poCurSelect(NULL) {}
 
     int        nStartToken;
     const char *pszInput;
     const char *pszNext;
     const char *pszLastValid;
+    int        bAcceptCustomFuncs;
 
     swq_expr_node *poRoot;
 
@@ -214,10 +229,14 @@ CPLErr swq_expr_compile( const char *where_clause,
                          int field_count,
                          char **field_list,
                          swq_field_type *field_types,
+                         int bCheck,
+                         swq_custom_func_registrar* poCustomFuncRegistrar,
                          swq_expr_node **expr_root );
 
 CPLErr swq_expr_compile2( const char *where_clause, 
                           swq_field_list *field_list, 
+                          int bCheck,
+                          swq_custom_func_registrar* poCustomFuncRegistrar,
                           swq_expr_node **expr_root );
 
 /*
@@ -293,6 +312,8 @@ typedef struct {
 
 class swq_select
 {
+    void        postpreparse();
+
 public:
     swq_select();
     ~swq_select();
@@ -326,10 +347,11 @@ public:
     swq_select *poOtherSelect;
     void        PushUnionAll( swq_select* poOtherSelectIn );
 
-    CPLErr      preparse( const char *select_statement );
-    void        postpreparse();
+    CPLErr      preparse( const char *select_statement,
+                          int bAcceptCustomFuncs = FALSE );
     CPLErr      expand_wildcard( swq_field_list *field_list );
-    CPLErr      parse( swq_field_list *field_list, int parse_flags );
+    CPLErr      parse( swq_field_list *field_list,
+                       swq_custom_func_registrar* poCustomFuncRegistrar );
 
     char       *Unparse();
     void        Dump( FILE * );
