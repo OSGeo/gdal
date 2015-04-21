@@ -130,7 +130,8 @@ swq_select::~swq_select()
 /*      tables and fields.                                              */
 /************************************************************************/
 
-CPLErr swq_select::preparse( const char *select_statement )
+CPLErr swq_select::preparse( const char *select_statement,
+                             int bAcceptCustomFuncs )
 
 {
 /* -------------------------------------------------------------------- */
@@ -142,6 +143,7 @@ CPLErr swq_select::preparse( const char *select_statement )
     context.pszNext = select_statement;
     context.pszLastValid = select_statement;
     context.nStartToken = SWQT_SELECT_START;
+    context.bAcceptCustomFuncs = bAcceptCustomFuncs;
     context.poCurSelect = this;
 
 /* -------------------------------------------------------------------- */
@@ -1006,7 +1008,7 @@ static int CheckCompatibleJoinExpr( swq_expr_node* poExpr,
 /************************************************************************/
 
 CPLErr swq_select::parse( swq_field_list *field_list,
-                          CPL_UNUSED int parse_flags )
+                          swq_custom_func_registrar* poCustomFuncRegistrar )
 {
     int  i;
     CPLErr eError;
@@ -1028,7 +1030,7 @@ CPLErr swq_select::parse( swq_field_list *field_list,
             def->field_index = -1;
             def->table_index = -1;
 
-            if( def->expr->Check( field_list, TRUE, FALSE ) == SWQ_ERROR )
+            if( def->expr->Check( field_list, TRUE, FALSE, poCustomFuncRegistrar ) == SWQ_ERROR )
                 return CE_Failure;
                 
             def->field_type = def->expr->field_type;
@@ -1149,7 +1151,7 @@ CPLErr swq_select::parse( swq_field_list *field_list,
     for( i = 0; i < join_count; i++ )
     {
         swq_join_def *def = join_defs + i;
-        if( def->poExpr->Check( field_list, TRUE, TRUE ) == SWQ_ERROR )
+        if( def->poExpr->Check( field_list, TRUE, TRUE, poCustomFuncRegistrar ) == SWQ_ERROR )
             return CE_Failure;
         if( !CheckCompatibleJoinExpr( def->poExpr, def->secondary_table, field_list ) )
             return CE_Failure;
@@ -1197,7 +1199,7 @@ CPLErr swq_select::parse( swq_field_list *field_list,
 /*      doing final validation.                                         */
 /* -------------------------------------------------------------------- */
     if( where_expr != NULL 
-        && where_expr->Check( field_list, FALSE, FALSE ) == SWQ_ERROR )
+        && where_expr->Check( field_list, FALSE, FALSE, poCustomFuncRegistrar ) == SWQ_ERROR )
     {
         return CE_Failure;
     }

@@ -435,6 +435,7 @@ class CPL_DLL OGRFeature
 
 class OGRLayer;
 class swq_expr_node;
+class swq_custom_func_registrar;
 
 class CPL_DLL OGRFeatureQuery
 {
@@ -452,7 +453,8 @@ class CPL_DLL OGRFeatureQuery
                 OGRFeatureQuery();
                 ~OGRFeatureQuery();
 
-    OGRErr      Compile( OGRFeatureDefn *, const char * );
+    OGRErr      Compile( OGRFeatureDefn *, const char *,
+                         int bCheck = TRUE, swq_custom_func_registrar* poCustomFuncRegistrar = NULL );
     int         Evaluate( OGRFeature * );
 
     GIntBig       *EvaluateAgainstIndices( OGRLayer *, OGRErr * );

@@ -341,7 +341,7 @@ value_expr_list:
 
     | value_expr
             {
-            $$ = new swq_expr_node( SWQ_UNKNOWN ); /* list */
+            $$ = new swq_expr_node( SWQ_ARGUMENT_LIST ); /* temporary value */
             $$->PushSubExpression( $1 );
         }
 
@@ -452,12 +452,24 @@ value_expr_non_logical:
 
             if( poOp == NULL )
             {
-                CPLError( CE_Failure, CPLE_AppDefined, 
-                                "Undefined function '%s' used.",
-                                $1->string_value );
-                delete $1;
-                delete $3;
-                YYERROR;
+                if( context->bAcceptCustomFuncs )
+                {
+                    $$ = $3;
+                    $$->eNodeType = SNT_OPERATION;
+                    $$->nOperation = SWQ_CUSTOM_FUNC;
+                    $$->string_value = CPLStrdup($1->string_value);
+                    $$->ReverseSubExpressions();
+                    delete $1;
+                }
+                else
+                {
+                    CPLError( CE_Failure, CPLE_AppDefined, 
+                                    "Undefined function '%s' used.",
+                                    $1->string_value );
+                    delete $1;
+                    delete $3;
+                    YYERROR;
+                }
             }
             else
             {

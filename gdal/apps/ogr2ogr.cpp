@@ -3225,7 +3225,7 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
             {
                 /* We must not ignore fields used in the -where expression (#4015) */
                 OGRFeatureQuery oFeatureQuery;
-                if ( oFeatureQuery.Compile( poSrcLayer->GetLayerDefn(), pszWHERE ) == OGRERR_NONE )
+                if ( oFeatureQuery.Compile( poSrcLayer->GetLayerDefn(), pszWHERE, FALSE, NULL ) == OGRERR_NONE )
                 {
                     papszWHEREUsedFields = oFeatureQuery.GetUsedFields();
                 }
@@ -3235,7 +3235,7 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
                 }
             }
 
-            for(iSrcField=0;iSrcField<poSrcFDefn->GetFieldCount();iSrcField++)
+            for(iSrcField=0;bUseIgnoredFields && iSrcField<poSrcFDefn->GetFieldCount();iSrcField++)
             {
                 const char* pszFieldName =
                     poSrcFDefn->GetFieldDefn(iSrcField)->GetNameRef();
