@@ -1041,6 +1041,8 @@ OGRFeatureDefn * OGRWFSLayer::BuildLayerDefn(OGRFeatureDefn* poSrcFDefn)
 
     int i;
     poFeatureDefn->SetGeomType(poSrcFDefn->GetGeomType());
+    if( poSrcFDefn->GetGeomFieldCount() > 0 )
+        poFeatureDefn->GetGeomFieldDefn(0)->SetName(poSrcFDefn->GetGeomFieldDefn(0)->GetNameRef());
     for(i=0;i<poSrcFDefn->GetFieldCount();i++)
     {
         if (pszPropertyName[0] != 0)
