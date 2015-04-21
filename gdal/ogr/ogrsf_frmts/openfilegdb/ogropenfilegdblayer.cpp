@@ -1689,7 +1689,7 @@ int OGROpenFileGDBLayer::HasIndexForField(const char* pszFieldName)
 
 FileGDBIterator* OGROpenFileGDBLayer::BuildIndex(const char* pszFieldName,
                                                  int bAscending,
-                                                 swq_op op,
+                                                 int op,
                                                  swq_expr_node* poValue)
 {
     if( !BuildLayerDefinition() )
@@ -1703,7 +1703,7 @@ FileGDBIterator* OGROpenFileGDBLayer::BuildIndex(const char* pszFieldName,
     int nTableColIdx = m_poLyrTable->GetFieldIdx(pszFieldName);
     if( nTableColIdx >= 0 && m_poLyrTable->GetField(nTableColIdx)->HasIndex() )
     {
-        if( op == SWQ_UNKNOWN )
+        if( op < 0 )
             return FileGDBIterator::BuildIsNotNull(m_poLyrTable, nTableColIdx, bAscending);
         else
         {
