@@ -689,7 +689,7 @@ char *VSIStrdup( const char * pszString )
     memcpy(ptr, pszString, nSize);
     return ptr;
 #else
-    return( strdup( pszString ) );
+    return( CPLStrdup( pszString ) );
 #endif
 }
 
