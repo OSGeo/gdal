@@ -1265,12 +1265,28 @@ OGRErr OGRWFSLayer::SetAttributeFilter( const char * pszFilter )
     if (pszFilter != NULL && pszFilter[0] == 0)
         pszFilter = NULL;
 
-    OGRErr eErr = OGRLayer::SetAttributeFilter(pszFilter);
-    if (eErr != CE_None)
-        return eErr;
-
     CPLString osOldWFSWhere(osWFSWhere);
 
+    CPLFree(m_pszAttrQueryString);
+    m_pszAttrQueryString = (pszFilter) ? CPLStrdup(pszFilter) : NULL;
+
+    delete m_poAttrQuery;
+    m_poAttrQuery = NULL;
+    
+    if( pszFilter != NULL )
+    {
+        m_poAttrQuery = new OGRFeatureQuery();
+
+        OGRErr eErr = m_poAttrQuery->Compile( GetLayerDefn(), pszFilter, TRUE,
+                                              WFSGetCustomFuncRegistrar() );
+        if( eErr != OGRERR_NONE )
+        {
+            delete m_poAttrQuery;
+            m_poAttrQuery = NULL;
+            return eErr;
+        }
+    }
+    
     if (poDS->HasMinOperators() && m_poAttrQuery != NULL )
     {
         swq_expr_node* poNode = (swq_expr_node*) m_poAttrQuery->GetSWQExpr();
@@ -1279,7 +1295,10 @@ OGRErr OGRWFSLayer::SetAttributeFilter( const char * pszFilter )
         int bNeedsNullCheck = FALSE;
         int nVersion = (strcmp(poDS->GetVersion(),"1.0.0") == 0) ? 100 :
                        (atoi(poDS->GetVersion()) >= 2) ? 200 : 110;
-        osWFSWhere = WFS_TurnSQLFilterToOGCFilter(poNode,
+        if( poNode->field_type != SWQ_BOOLEAN )
+            osWFSWhere = "";
+        else
+            osWFSWhere = WFS_TurnSQLFilterToOGCFilter(poNode,
                                                   GetLayerDefn(),
                                                   nVersion,
                                                   poDS->PropertyIsNotEqualToSupported(),
@@ -1288,13 +1307,18 @@ OGRErr OGRWFSLayer::SetAttributeFilter( const char * pszFilter )
                                                   &bNeedsNullCheck);
         if (bNeedsNullCheck && !poDS->HasNullCheck())
             osWFSWhere = "";
-        if (osWFSWhere.size() == 0)
-        {
-            CPLDebug("WFS", "Using client-side only mode for filter \"%s\"", pszFilter);
-        }
     }
     else
         osWFSWhere = "";
+
+    if (m_poAttrQuery != NULL && osWFSWhere.size() == 0)
+    {
+        CPLDebug("WFS", "Using client-side only mode for filter \"%s\"", pszFilter);
+        OGRErr eErr = OGRLayer::SetAttributeFilter(pszFilter);
+        if (eErr != OGRERR_NONE)
+            return eErr;
+    }
+    ResetReading();
 
     osSQLWhere = (pszFilter) ? pszFilter : "";
 
@@ -1304,7 +1328,7 @@ OGRErr OGRWFSLayer::SetAttributeFilter( const char * pszFilter )
         bReloadNeeded = FALSE;
     nFeatures = -1;
 
-    return CE_None;
+    return OGRERR_NONE;
 }
 
 /************************************************************************/
