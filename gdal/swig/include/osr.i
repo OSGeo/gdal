@@ -814,11 +814,10 @@ public:
     return OSRImportFromMICoordSys( self, pszCoordSys );
   }
 
-%apply Pointer NONNULL {char const *projParms};
-  OGRErr ImportFromOzi( char const *datum,
-                        char const *proj,
-                        char const *projParms ) {
-    return OSRImportFromOzi( self, datum, proj, projParms );
+%apply Pointer NONNULL {const char* const *papszLines};
+%apply (char **options) { (const char* const *papszLines) };
+  OGRErr ImportFromOzi( const char* const *papszLines ) {
+    return OSRImportFromOzi( self, papszLines );
   }
 
   OGRErr ExportToWkt( char **argout ) {

@@ -39,68 +39,31 @@ CPL_CVSID("$Id$");
 /*                          OSRImportFromOzi()                          */
 /************************************************************************/
 
+/**
+ * Import coordinate system from OziExplorer projection definition.
+ *
+ * This function will import projection definition in style, used by
+ * OziExplorer software.
+ *
+ * Note: another version of this function with a different signature existed
+ * in GDAL 1.X.
+ *
+ * @param hSRS spatial reference object.
+ * @param papszLines Map file lines. This is an array of strings containing
+ * the whole OziExplorer .MAP file. The array is terminated by a NULL pointer.
+ * 
+ * @return OGRERR_NONE on success or an error code in case of failure. 
+ *
+ * @since OGR 2.0
+ */
+
 OGRErr OSRImportFromOzi( OGRSpatialReferenceH hSRS,
-                         const char *pszDatum, const char *pszProj,
-                         const char *pszProjParms )
+                         const char * const* papszLines )
 
 {
     VALIDATE_POINTER1( hSRS, "OSRImportFromOzi", CE_Failure );
 
-    return ((OGRSpatialReference *) hSRS)->importFromOzi( pszDatum, pszProj,
-                                                          pszProjParms );
-}
-
-/************************************************************************/
-/*                            importFromOzi()                           */
-/************************************************************************/
-
-/**
- * Note : This method is obsolete, but has been kept to avoid breaking the API.
- *        It can be removed in GDAL 2.0
- */
-
-/**
- * Import coordinate system from OziExplorer projection definition.
- *
- * This method will import projection definition in style, used by
- * OziExplorer software.
- *
- * This function is the equivalent of the C function OSRImportFromOzi().
- *
- * @param pszDatum Datum string. This is a fifth string in the
- * OziExplorer .MAP file.
- *
- * @param pszProj Projection string. Search for line starting with
- * "Map Projection" name in the OziExplorer .MAP file and supply it as a
- * whole in this parameter.
- *
- * @param pszProjParms String containing projection parameters. Search for
- * "Projection Setup" name in the OziExplorer .MAP file and supply it as a
- * whole in this parameter.
- * 
- * @return OGRERR_NONE on success or an error code in case of failure. 
- *
- * @deprecated Use importFromOzi( const char * const* papszLines ) instead
- */
-
-OGRErr OGRSpatialReference::importFromOzi( const char *pszDatum,
-                                           const char *pszProj,
-                                           const char *pszProjParms )
-
-{
-    const char* papszLines[8];
-
-    // Fake
-    papszLines[0] = "";
-    papszLines[1] = "";
-    papszLines[2] = "";
-    papszLines[3] = "";
-    papszLines[4] = pszDatum; /* Must be in that position */
-    papszLines[5] = pszProj; /* Must be after 5th line */
-    papszLines[6] = pszProjParms; /* Must be after 5th line */
-    papszLines[7] = NULL;
-
-    return importFromOzi(papszLines);
+    return ((OGRSpatialReference *) hSRS)->importFromOzi( papszLines );
 }
 
 /************************************************************************/
