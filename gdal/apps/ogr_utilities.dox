@@ -28,6 +28,7 @@ ogrinfo [--help-general] [-ro] [-q] [-where restricted_where]
         [-sql statement] [-dialect dialect] [-al] [-so] [-fields={YES/NO}]
         [-geom={YES/NO/SUMMARY}] [-formats] [[-oo NAME=VALUE] ...]
         [-nomd] [-listmdd] [-mdd domain|`all`]*
+        [-nocount] [-noextent]
         datasource_name [layer [layer ...]]
 
 \endverbatim
@@ -74,6 +75,8 @@ of metadata strings.</dd>
 <dt> <b>-listmdd</b></dt><dd>(starting with GDAL 2.0)  List all metadata domains available for the dataset.</dd>
 <dt> <b>-mdd domain</b></dt><dd>(starting with GDAL 2.0)  Report metadata for the specified domain.
 "all" can be used to report metadata in all domains</dd>
+<dt> <b>-nocount</b></dt><dd>(starting with GDAL 2.0)  Suppress feature count printing.</dd>
+<dt> <b>-noextent</b></dt><dd>(starting with GDAL 2.0)  Suppress spatial extent printing.</dd>
 <dt> <b>--formats</b>:</dt><dd> List the format drivers that are
 enabled.</dd>
 <dt> <i>datasource_name</i>:</dt><dd> The data source to open.  May be a filename, 
