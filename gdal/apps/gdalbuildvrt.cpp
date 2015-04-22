@@ -105,6 +105,7 @@ static void Usage(const char* pszErrorMsg = NULL)
             "                    [-addalpha] [-hidenodata]\n"
             "                    [-srcnodata \"value [value...]\"] [-vrtnodata \"value [value...]\"] \n"
             "                    [-a_srs srs_def]\n"
+            "                    [-r {nearest,bilinear,cubic,cubicspline,lanczos,average,mode}]\n"
             "                    [-input_file_list my_liste.txt] [-overwrite] output.vrt [gdalfile]*\n"
             "\n"
             "eg.\n"
@@ -226,6 +227,7 @@ class VRTBuilder
     char               *pszSrcNoData;
     char               *pszVRTNoData;
     char               *pszOutputSRS;
+    char               *pszResampling;
 
     /* Internal variables */
     char               *pszProjectionRef;
@@ -262,7 +264,8 @@ class VRTBuilder
                            int bSeparate, int bAllowProjectionDifference,
                            int bAddAlpha, int bHideNoData, int nSubdataset,
                            const char* pszSrcNoData, const char* pszVRTNoData,
-                           const char* pszOutputSRS);
+                           const char* pszOutputSRS,
+                           const char* pszResampling);
 
                ~VRTBuilder();
 
@@ -284,7 +287,8 @@ VRTBuilder::VRTBuilder(const char* pszOutputFilename,
                        int bSeparate, int bAllowProjectionDifference,
                        int bAddAlpha, int bHideNoData, int nSubdataset,
                        const char* pszSrcNoData, const char* pszVRTNoData,
-                       const char* pszOutputSRS)
+                       const char* pszOutputSRS,
+                       const char* pszResampling)
 {
     this->pszOutputFilename = CPLStrdup(pszOutputFilename);
     this->nInputFiles = nInputFiles;
@@ -316,6 +320,7 @@ VRTBuilder::VRTBuilder(const char* pszOutputFilename,
     this->pszSrcNoData = (pszSrcNoData) ? CPLStrdup(pszSrcNoData) : NULL;
     this->pszVRTNoData = (pszVRTNoData) ? CPLStrdup(pszVRTNoData) : NULL;
     this->pszOutputSRS = (pszOutputSRS) ? CPLStrdup(pszOutputSRS) : NULL;
+    this->pszResampling = (pszResampling) ? CPLStrdup(pszResampling) : NULL;
 
     bUserExtent = FALSE;
     pszProjectionRef = NULL;
@@ -839,20 +844,28 @@ void VRTBuilder::CreateVRTSeparate(VRTDatasetH hVRTDS)
         if (bHideNoData)
             GDALSetMetadataItem(hVRTBand,"HideNoDataValue","1",NULL);
 
+        VRTSourcedRasterBand* poVRTBand = (VRTSourcedRasterBand*)hVRTBand;
+
+        VRTSimpleSource* poSimpleSource;
         if (bAllowSrcNoData && psDatasetProperties->panHasNoData[0])
         {
             GDALSetRasterNoDataValue(hVRTBand, psDatasetProperties->padfNoDataValues[0]);
-            VRTAddComplexSource(hVRTBand, GDALGetRasterBand((GDALDatasetH)hProxyDS, 1),
-                            nSrcXOff, nSrcYOff, nSrcXSize, nSrcYSize,
-                            nDstXOff, nDstYOff, nDstXSize, nDstYSize,
-                            0, 1, psDatasetProperties->padfNoDataValues[0]);
+            poSimpleSource = new VRTComplexSource();
+            poSimpleSource->SetNoDataValue( psDatasetProperties->padfNoDataValues[0] );
         }
         else
-            /* Place the raster band at the right position in the VRT */
-            VRTAddSimpleSource(hVRTBand, GDALGetRasterBand((GDALDatasetH)hProxyDS, 1),
-                            nSrcXOff, nSrcYOff, nSrcXSize, nSrcYSize,
-                            nDstXOff, nDstYOff, nDstXSize, nDstYSize,
-                            "near", VRT_NODATA_UNSET);
+            poSimpleSource = new VRTSimpleSource();
+        if( pszResampling )
+            poSimpleSource->SetResampling(pszResampling);
+        poVRTBand->ConfigureSource( poSimpleSource,
+                                    (GDALRasterBand*)GDALGetRasterBand((GDALDatasetH)hProxyDS, 1),
+                                    FALSE,
+                                    nSrcXOff, nSrcYOff,
+                                    nSrcXSize, nSrcYSize,
+                                    nDstXOff, nDstYOff,
+                                    nDstXSize, nDstYSize );
+
+        poVRTBand->AddSource( poSimpleSource );
 
         GDALDereferenceDataset(hProxyDS);
 
@@ -885,7 +898,7 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDatasetH hVRTDS)
             GDALSetMetadataItem(hBand,"HideNoDataValue","1",NULL);
     }
 
-    VRTSourcedRasterBand* hMaskVRTBand = NULL;
+    VRTSourcedRasterBand* poMaskVRTBand = NULL;
     if (bAddAlpha)
     {
         GDALRasterBandH hBand;
@@ -896,7 +909,7 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDatasetH hVRTDS)
     else if (bHasDatasetMask)
     {
         GDALCreateDatasetMaskBand(hVRTDS, GMF_PER_DATASET);
-        hMaskVRTBand = (VRTSourcedRasterBand*)GDALGetMaskBand(GDALGetRasterBand(hVRTDS, 1));
+        poMaskVRTBand = (VRTSourcedRasterBand*)GDALGetMaskBand(GDALGetRasterBand(hVRTDS, 1));
     }
 
 
@@ -946,16 +959,27 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDatasetH hVRTDS)
 
             /* Place the raster band at the right position in the VRT */
             int nSelBand = panBandList[j] - 1;
+            VRTSourcedRasterBand* poVRTBand = (VRTSourcedRasterBand*)hVRTBand;
+
+            VRTSimpleSource* poSimpleSource;
             if (bAllowSrcNoData && psDatasetProperties->panHasNoData[nSelBand])
-                VRTAddComplexSource(hVRTBand, GDALGetRasterBand((GDALDatasetH)hProxyDS, nSelBand + 1),
-                                nSrcXOff, nSrcYOff, nSrcXSize, nSrcYSize,
-                                nDstXOff, nDstYOff, nDstXSize, nDstYSize,
-                                0, 1, psDatasetProperties->padfNoDataValues[nSelBand]);
+            {
+                poSimpleSource = new VRTComplexSource();
+                poSimpleSource->SetNoDataValue( psDatasetProperties->padfNoDataValues[nSelBand] );
+            }
             else
-                VRTAddSimpleSource(hVRTBand, GDALGetRasterBand((GDALDatasetH)hProxyDS, nSelBand + 1),
-                                nSrcXOff, nSrcYOff, nSrcXSize, nSrcYSize,
-                                nDstXOff, nDstYOff, nDstXSize, nDstYSize,
-                                "near", VRT_NODATA_UNSET);
+                poSimpleSource = new VRTSimpleSource();
+            if( pszResampling )
+                poSimpleSource->SetResampling(pszResampling);
+            poVRTBand->ConfigureSource( poSimpleSource,
+                                        (GDALRasterBand*)GDALGetRasterBand((GDALDatasetH)hProxyDS, nSelBand + 1),
+                                        FALSE,
+                                        nSrcXOff, nSrcYOff,
+                                        nSrcXSize, nSrcYSize,
+                                        nDstXOff, nDstYOff,
+                                        nDstXSize, nDstYSize );
+
+            poVRTBand->AddSource( poSimpleSource );
         }
 
         if (bAddAlpha)
@@ -971,9 +995,18 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDatasetH hVRTDS)
         }
         else if (bHasDatasetMask)
         {
-            hMaskVRTBand->AddMaskBandSource((GDALRasterBand*)GDALGetRasterBand((GDALDatasetH)hProxyDS, 1),
-                                            nSrcXOff, nSrcYOff, nSrcXSize, nSrcYSize,
-                                            nDstXOff, nDstYOff, nDstXSize, nDstYSize);
+            VRTSimpleSource* poSimpleSource = new VRTSimpleSource();
+            if( pszResampling )
+                poSimpleSource->SetResampling(pszResampling);
+            poMaskVRTBand->ConfigureSource( poSimpleSource,
+                                            (GDALRasterBand*)GDALGetRasterBand((GDALDatasetH)hProxyDS, 1),
+                                            TRUE,
+                                            nSrcXOff, nSrcYOff,
+                                            nSrcXSize, nSrcYSize,
+                                            nDstXOff, nDstYOff,
+                                            nDstXSize, nDstYSize );
+
+            poMaskVRTBand->AddSource( poSimpleSource );
         }
 
         GDALDereferenceDataset(hProxyDS);
@@ -1298,6 +1331,7 @@ int main( int nArgc, char ** papszArgv )
     int nBandCount = 0;
     int nMaxBandNo = 0;
     int nRet;
+    const char* pszResampling = NULL;
 
     /* Check strict compilation and runtime library version as we use C++ API */
     if (! GDAL_CHECK_VERSION(papszArgv[0]))
@@ -1453,6 +1487,11 @@ int main( int nArgc, char ** papszArgv )
             OSRDestroySpatialReference( hOutputSRS );
             iArg++;
         }
+        else if( EQUAL(papszArgv[iArg],"-r") )
+        {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            pszResampling = papszArgv[++iArg];
+        }  
         else if ( papszArgv[iArg][0] == '-' )
         {
             Usage(CPLSPrintf("Unknown option name '%s'", papszArgv[iArg]));
@@ -1545,7 +1584,7 @@ int main( int nArgc, char ** papszArgv )
                         panBandList, nBandCount, nMaxBandNo,
                         eStrategy, we_res, ns_res, bTargetAlignedPixels, xmin, ymin, xmax, ymax,
                         bSeparate, bAllowProjectionDifference, bAddAlpha, bHideNoData, nSubdataset,
-                        pszSrcNoData, pszVRTNoData, pszOutputSRS);
+                        pszSrcNoData, pszVRTNoData, pszOutputSRS, pszResampling);
 
     nRet = (oBuilder.Build(pfnProgress, NULL) == CE_None) ? 0 : 1;
     
