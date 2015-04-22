@@ -715,7 +715,7 @@ class SpatialReference(_object):
         return _osr.SpatialReference_ImportFromMICoordSys(self, *args)
 
     def ImportFromOzi(self, *args):
-        """ImportFromOzi(self, char datum, char proj, char projParms) -> OGRErr"""
+        """ImportFromOzi(self, char papszLines) -> OGRErr"""
         return _osr.SpatialReference_ImportFromOzi(self, *args)
 
     def ExportToWkt(self, *args):

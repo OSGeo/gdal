@@ -3734,8 +3734,8 @@ SWIGINTERN OGRErr OSRSpatialReferenceShadow_ImportFromERM(OSRSpatialReferenceSha
 SWIGINTERN OGRErr OSRSpatialReferenceShadow_ImportFromMICoordSys(OSRSpatialReferenceShadow *self,char const *pszCoordSys){
     return OSRImportFromMICoordSys( self, pszCoordSys );
   }
-SWIGINTERN OGRErr OSRSpatialReferenceShadow_ImportFromOzi(OSRSpatialReferenceShadow *self,char const *datum,char const *proj,char const *projParms){
-    return OSRImportFromOzi( self, datum, proj, projParms );
+SWIGINTERN OGRErr OSRSpatialReferenceShadow_ImportFromOzi(OSRSpatialReferenceShadow *self,char const *const *papszLines){
+    return OSRImportFromOzi( self, papszLines );
   }
 SWIGINTERN OGRErr OSRSpatialReferenceShadow_ExportToWkt(OSRSpatialReferenceShadow *self,char **argout){
     return OSRExportToWkt( self, argout );
@@ -11434,59 +11434,65 @@ fail:
 SWIGINTERN PyObject *_wrap_SpatialReference_ImportFromOzi(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
-  char *arg2 = (char *) 0 ;
-  char *arg3 = (char *) 0 ;
-  char *arg4 = (char *) 0 ;
+  char **arg2 = (char **) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
-  int res2 ;
-  char *buf2 = 0 ;
-  int alloc2 = 0 ;
-  int res3 ;
-  char *buf3 = 0 ;
-  int alloc3 = 0 ;
-  int res4 ;
-  char *buf4 = 0 ;
-  int alloc4 = 0 ;
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
-  PyObject * obj2 = 0 ;
-  PyObject * obj3 = 0 ;
   OGRErr result;
   
-  if (!PyArg_ParseTuple(args,(char *)"OOOO:SpatialReference_ImportFromOzi",&obj0,&obj1,&obj2,&obj3)) SWIG_fail;
+  if (!PyArg_ParseTuple(args,(char *)"OO:SpatialReference_ImportFromOzi",&obj0,&obj1)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "SpatialReference_ImportFromOzi" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
   }
   arg1 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp1);
-  res2 = SWIG_AsCharPtrAndSize(obj1, &buf2, NULL, &alloc2);
-  if (!SWIG_IsOK(res2)) {
-    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "SpatialReference_ImportFromOzi" "', argument " "2"" of type '" "char const *""'");
+  {
+    /* %typemap(in) char **options */
+    /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
+    if ( ! PySequence_Check(obj1) || PyUnicode_Check(obj1)
+  #if PY_VERSION_HEX < 0x03000000
+      || PyString_Check(obj1)
+  #endif
+      ) {
+      PyErr_SetString(PyExc_TypeError,"not a sequence");
+      SWIG_fail;
+    }
+    
+    int size = PySequence_Size(obj1);
+    for (int i = 0; i < size; i++) {
+      PyObject* pyObj = PySequence_GetItem(obj1,i);
+      if (PyUnicode_Check(pyObj))
+      {
+        char *pszStr;
+        Py_ssize_t nLen;
+        PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
+#if PY_VERSION_HEX >= 0x03000000
+        PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
+#else
+        PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
+#endif
+        arg2 = CSLAddString( arg2, pszStr );
+        Py_XDECREF(pyUTF8Str);
+      }
+#if PY_VERSION_HEX >= 0x03000000
+      else if (PyBytes_Check(pyObj))
+      arg2 = CSLAddString( arg2, PyBytes_AsString(pyObj) );
+#else
+      else if (PyString_Check(pyObj))
+      arg2 = CSLAddString( arg2, PyString_AsString(pyObj) );
+#endif
+      else
+      {
+        Py_DECREF(pyObj);
+        PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
+        SWIG_fail;
+      }
+      Py_DECREF(pyObj);
+    }
   }
-  arg2 = reinterpret_cast< char * >(buf2);
-  res3 = SWIG_AsCharPtrAndSize(obj2, &buf3, NULL, &alloc3);
-  if (!SWIG_IsOK(res3)) {
-    SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "SpatialReference_ImportFromOzi" "', argument " "3"" of type '" "char const *""'");
-  }
-  arg3 = reinterpret_cast< char * >(buf3);
-  res4 = SWIG_AsCharPtrAndSize(obj3, &buf4, NULL, &alloc4);
-  if (!SWIG_IsOK(res4)) {
-    SWIG_exception_fail(SWIG_ArgError(res4), "in method '" "SpatialReference_ImportFromOzi" "', argument " "4"" of type '" "char const *""'");
-  }
-  arg4 = reinterpret_cast< char * >(buf4);
   {
     if (!arg2) {
-      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
-    }
-  }
-  {
-    if (!arg3) {
-      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
-    }
-  }
-  {
-    if (!arg4) {
       SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
     }
   }
@@ -11494,7 +11500,7 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ImportFromOzi(PyObject *SWIGUNUSEDPA
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRErr)OSRSpatialReferenceShadow_ImportFromOzi(arg1,(char const *)arg2,(char const *)arg3,(char const *)arg4);
+    result = (OGRErr)OSRSpatialReferenceShadow_ImportFromOzi(arg1,(char const *const *)arg2);
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
@@ -11509,9 +11515,10 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ImportFromOzi(PyObject *SWIGUNUSEDPA
       SWIG_fail;
     }
   }
-  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
-  if (alloc3 == SWIG_NEWOBJ) delete[] buf3;
-  if (alloc4 == SWIG_NEWOBJ) delete[] buf4;
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg2 );
+  }
   {
     /* %typemap(ret) OGRErr */
     if (resultobj == Py_None ) {
@@ -11524,9 +11531,10 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ImportFromOzi(PyObject *SWIGUNUSEDPA
   }
   return resultobj;
 fail:
-  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
-  if (alloc3 == SWIG_NEWOBJ) delete[] buf3;
-  if (alloc4 == SWIG_NEWOBJ) delete[] buf4;
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg2 );
+  }
   return NULL;
 }
 
@@ -13169,7 +13177,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"SpatialReference_ImportFromXML", _wrap_SpatialReference_ImportFromXML, METH_VARARGS, (char *)"SpatialReference_ImportFromXML(SpatialReference self, char xmlString) -> OGRErr"},
 	 { (char *)"SpatialReference_ImportFromERM", _wrap_SpatialReference_ImportFromERM, METH_VARARGS, (char *)"SpatialReference_ImportFromERM(SpatialReference self, char proj, char datum, char units) -> OGRErr"},
 	 { (char *)"SpatialReference_ImportFromMICoordSys", _wrap_SpatialReference_ImportFromMICoordSys, METH_VARARGS, (char *)"SpatialReference_ImportFromMICoordSys(SpatialReference self, char pszCoordSys) -> OGRErr"},
-	 { (char *)"SpatialReference_ImportFromOzi", _wrap_SpatialReference_ImportFromOzi, METH_VARARGS, (char *)"SpatialReference_ImportFromOzi(SpatialReference self, char datum, char proj, char projParms) -> OGRErr"},
+	 { (char *)"SpatialReference_ImportFromOzi", _wrap_SpatialReference_ImportFromOzi, METH_VARARGS, (char *)"SpatialReference_ImportFromOzi(SpatialReference self, char papszLines) -> OGRErr"},
 	 { (char *)"SpatialReference_ExportToWkt", _wrap_SpatialReference_ExportToWkt, METH_VARARGS, (char *)"SpatialReference_ExportToWkt(SpatialReference self) -> OGRErr"},
 	 { (char *)"SpatialReference_ExportToPrettyWkt", _wrap_SpatialReference_ExportToPrettyWkt, METH_VARARGS, (char *)"SpatialReference_ExportToPrettyWkt(SpatialReference self, int simplify = 0) -> OGRErr"},
 	 { (char *)"SpatialReference_ExportToProj4", _wrap_SpatialReference_ExportToProj4, METH_VARARGS, (char *)"SpatialReference_ExportToProj4(SpatialReference self) -> OGRErr"},

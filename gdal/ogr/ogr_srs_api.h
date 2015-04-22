@@ -340,8 +340,7 @@ OGRErr CPL_DLL OSRImportFromDict( OGRSpatialReferenceH, const char *,
                                   const char * );
 OGRErr CPL_DLL OSRImportFromPanorama( OGRSpatialReferenceH, long, long, long,
                                       double * );
-OGRErr CPL_DLL OSRImportFromOzi( OGRSpatialReferenceH , const char *, const char *,
-                                 const char * );
+OGRErr CPL_DLL OSRImportFromOzi( OGRSpatialReferenceH , const char * const *);
 OGRErr CPL_DLL OSRImportFromMICoordSys( OGRSpatialReferenceH, const char *);
 OGRErr CPL_DLL OSRImportFromERM( OGRSpatialReferenceH,
                                  const char *, const char *, const char * );
