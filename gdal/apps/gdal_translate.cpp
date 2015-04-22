@@ -1379,6 +1379,44 @@ static int ProxyMain( int argc, char ** argv )
         if( papszMD != NULL )
             poVDS->SetMetadata( papszMD, "GEOLOCATION" );
     }
+    else
+    {
+        char **papszMD;
+
+        papszMD = ((GDALDataset*)hDataset)->GetMetadata("RPC");
+        if( papszMD != NULL )
+        {
+            papszMD = CSLDuplicate(papszMD);
+ 
+            double dfSAMP_OFF = CPLAtof(CSLFetchNameValueDef(papszMD, "SAMP_OFF", "0"));
+            double dfLINE_OFF = CPLAtof(CSLFetchNameValueDef(papszMD, "LINE_OFF", "0"));
+            double dfSAMP_SCALE = CPLAtof(CSLFetchNameValueDef(papszMD, "SAMP_SCALE", "1"));
+            double dfLINE_SCALE = CPLAtof(CSLFetchNameValueDef(papszMD, "LINE_SCALE", "1"));
+
+            dfSAMP_OFF -= anSrcWin[0];
+            dfLINE_OFF -= anSrcWin[1];
+            dfSAMP_OFF *= (nOXSize / (double) anSrcWin[2] );
+            dfLINE_OFF *= (nOYSize / (double) anSrcWin[3] );
+            dfSAMP_SCALE *= (nOXSize / (double) anSrcWin[2] );
+            dfLINE_SCALE *= (nOYSize / (double) anSrcWin[3] );
+
+            CPLString osField;
+            osField.Printf( "%.15g", dfLINE_OFF );
+            papszMD = CSLSetNameValue( papszMD, "LINE_OFF", osField );
+
+            osField.Printf( "%.15g", dfSAMP_OFF );
+            papszMD = CSLSetNameValue( papszMD, "SAMP_OFF", osField );
+
+            osField.Printf( "%.15g", dfLINE_SCALE );
+            papszMD = CSLSetNameValue( papszMD, "LINE_SCALE", osField );
+
+            osField.Printf( "%.15g", dfSAMP_SCALE );
+            papszMD = CSLSetNameValue( papszMD, "SAMP_SCALE", osField );
+
+            poVDS->SetMetadata( papszMD, "RPC" );
+            CSLDestroy(papszMD);
+        }
+    }
 
     int nSrcBandCount = nBandCount;
 
