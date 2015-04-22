@@ -472,6 +472,34 @@ def test_gdalbuildvrt_13():
     return 'success'
 
 ###############################################################################
+# Test -r
+
+def test_gdalbuildvrt_14():
+    if test_cli_utilities.get_gdalbuildvrt_path() is None:
+        return 'skip'
+    if test_cli_utilities.get_gdal_translate_path() is None:
+        return 'skip'
+
+    gdaltest.runexternal(test_cli_utilities.get_gdalbuildvrt_path() + ' tmp/test_gdalbuildvrt_14.vrt ../gcore/data/byte.tif -r cubic -tr 30 30')
+
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -of VRT ../gcore/data/byte.tif tmp/test_gdalbuildvrt_14_ref.vrt -r cubic -outsize 40 40')
+    
+    ds = gdal.Open('tmp/test_gdalbuildvrt_14.vrt')
+    ds_ref = gdal.Open('tmp/test_gdalbuildvrt_14_ref.vrt')
+    cs = ds.GetRasterBand(1).Checksum()
+    cs_ref = ds_ref.GetRasterBand(1).Checksum()
+    ds = None
+    ds_ref = None
+    
+    if cs != cs_ref:
+        gdaltest.post_reason('fail')
+        print(cs)
+        print(cs_ref)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def test_gdalbuildvrt_cleanup():
@@ -489,6 +517,8 @@ def test_gdalbuildvrt_cleanup():
     gdal.GetDriverByName('VRT').Delete('tmp/gdalbuildvrt11.vrt')
     gdal.GetDriverByName('VRT').Delete('tmp/gdalbuildvrt12.vrt')
     gdal.GetDriverByName('VRT').Delete('tmp/gdalbuildvrt13.vrt')
+    gdal.GetDriverByName('VRT').Delete('tmp/test_gdalbuildvrt_14.vrt')
+    gdal.GetDriverByName('VRT').Delete('tmp/test_gdalbuildvrt_14_ref.vrt')
 
     drv = gdal.GetDriverByName('GTiff')
 
@@ -525,6 +555,7 @@ gdaltest_list = [
     test_gdalbuildvrt_11,
     test_gdalbuildvrt_12,
     test_gdalbuildvrt_13,
+    test_gdalbuildvrt_14,
     test_gdalbuildvrt_cleanup
     ]
 
