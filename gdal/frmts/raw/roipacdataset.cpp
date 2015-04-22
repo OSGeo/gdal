@@ -664,8 +664,9 @@ void ROIPACDataset::FlushCache( void )
 /* -------------------------------------------------------------------- */
     if ( pszProjection != NULL )
     {
+        char *pszProjectionTmp = pszProjection;
         OGRSpatialReference oSRS;
-        if( oSRS.SetFromUserInput( pszProjection ) != OGRERR_NONE )
+        if( oSRS.importFromWkt( &pszProjectionTmp ) == OGRERR_NONE )
         {
             int bNorth;
             int iUTMZone;
@@ -679,15 +680,32 @@ void ROIPACDataset::FlushCache( void )
             {
                 VSIFPrintfL( fpRsc, "%-40s %s\n", "PROJECTION", "LL" );
             }
+            else
+            {
+                CPLError( CE_Warning, CPLE_AppDefined,
+                          "ROI_PAC format only support Latitude/Longitude and "
+                              "UTM projections, discarding projection.");
+            }
 
             if ( oSRS.GetAttrValue( "DATUM" ) != NULL )
             {
-                VSIFPrintfL( fpRsc, "%-40s %s\n", "DATUM", oSRS.GetAttrValue( "DATUM" ) );
+                if ( strcmp( oSRS.GetAttrValue( "DATUM" ), "WGS_1984" ) == 0 )
+                {
+                    VSIFPrintfL( fpRsc, "%-40s %s\n", "DATUM", "WGS84" );
+                }
+                else
+                {
+                    CPLError( CE_Warning, CPLE_AppDefined,
+                              "Datum \"%s\" probably not supported in the "
+                                  "ROI_PAC format, saving it anyway",
+                                  oSRS.GetAttrValue( "DATUM" ) );
+                    VSIFPrintfL( fpRsc, "%-40s %s\n", "DATUM", oSRS.GetAttrValue( "DATUM" ) );
+                }
             }
             if ( oSRS.GetAttrValue( "UNIT" ) != NULL )
             {
-                VSIFPrintfL( fpRsc, "%-40s %s\n", "X_UNIT", oSRS.GetAttrValue( "X_UNIT" ) );
-                VSIFPrintfL( fpRsc, "%-40s %s\n", "Y_UNIT", oSRS.GetAttrValue( "X_UNIT" ) );
+                VSIFPrintfL( fpRsc, "%-40s %s\n", "X_UNIT", oSRS.GetAttrValue( "UNIT" ) );
+                VSIFPrintfL( fpRsc, "%-40s %s\n", "Y_UNIT", oSRS.GetAttrValue( "UNIT" ) );
             }
         }
     }
