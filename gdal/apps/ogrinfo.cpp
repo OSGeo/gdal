@@ -50,7 +50,9 @@ static void ReportOnLayer( OGRLayer *, const char *, const char* pszGeomField,
                            OGRGeometry *,
                            int bListMDD,
                            int bShowMetadata,
-                           char** papszExtraMDDomains );
+                           char** papszExtraMDDomains,
+                           int bFeatureCount,
+                           int bExtent  );
 static void GDALInfoReportMetadata( GDALMajorObjectH hObject,
                                     int bListMDD,
                                     int bShowMetadata,
@@ -80,6 +82,7 @@ int main( int nArgc, char ** papszArgv )
     char      **papszExtraMDDomains = NULL;
     int                 bListMDD = FALSE;
     int                  bShowMetadata = TRUE;
+    int         bFeatureCount = TRUE, bExtent = TRUE;
     
     /* Check strict compilation and runtime library version as we use C++ API */
     if (! GDAL_CHECK_VERSION(papszArgv[0]))
@@ -198,6 +201,10 @@ int main( int nArgc, char ** papszArgv )
             papszExtraMDDomains = CSLAddString( papszExtraMDDomains,
                                                 papszArgv[++iArg] );
         }
+        else if( EQUAL(papszArgv[iArg], "-nocount") )
+            bFeatureCount = FALSE;
+        else if( EQUAL(papszArgv[iArg], "-noextent") )
+            bExtent = FALSE;
         else if( papszArgv[iArg][0] == '-' )
         {
             Usage(CPLSPrintf("Unknown option name '%s'", papszArgv[iArg]));
@@ -310,10 +317,12 @@ int main( int nArgc, char ** papszArgv )
 
             if( pszGeomField != NULL )
                 ReportOnLayer( poResultSet, NULL, pszGeomField, poSpatialFilter,
-                               bListMDD, bShowMetadata, papszExtraMDDomains );
+                               bListMDD, bShowMetadata, papszExtraMDDomains,
+                               bFeatureCount, bExtent );
             else
                 ReportOnLayer( poResultSet, NULL, NULL, NULL,
-                               bListMDD, bShowMetadata, papszExtraMDDomains );
+                               bListMDD, bShowMetadata, papszExtraMDDomains,
+                               bFeatureCount, bExtent );
             poDS->ReleaseResultSet( poResultSet );
         }
     }
@@ -374,7 +383,8 @@ int main( int nArgc, char ** papszArgv )
                         poLayer->ResetReading();
 
                     ReportOnLayer( poLayer, pszWHERE, pszGeomField, poSpatialFilter,
-                                   bListMDD, bShowMetadata, papszExtraMDDomains );
+                                   bListMDD, bShowMetadata, papszExtraMDDomains,
+                                   bFeatureCount, bExtent );
                 }
             }
         }
@@ -399,7 +409,8 @@ int main( int nArgc, char ** papszArgv )
                     poLayer->ResetReading();
 
                 ReportOnLayer( poLayer, pszWHERE, pszGeomField, poSpatialFilter,
-                               bListMDD, bShowMetadata, papszExtraMDDomains );
+                               bListMDD, bShowMetadata, papszExtraMDDomains,
+                               bFeatureCount, bExtent );
             }
         }
     }
@@ -435,6 +446,7 @@ static void Usage(const char* pszErrorMsg)
             "               [-sql statement] [-dialect sql_dialect] [-al] [-so] [-fields={YES/NO}]\n"
             "               [-geom={YES/NO/SUMMARY}] [-formats] [[-oo NAME=VALUE] ...]\n"
             "               [-nomd] [-listmdd] [-mdd domain|`all`]*\n"
+            "               [-nocount] [-noextent]\n"
             "               datasource_name [layer [layer ...]]\n");
 
     if( pszErrorMsg != NULL )
@@ -452,7 +464,9 @@ static void ReportOnLayer( OGRLayer * poLayer, const char *pszWHERE,
                            OGRGeometry *poSpatialFilter,
                            int bListMDD,
                            int bShowMetadata,
-                           char** papszExtraMDDomains )
+                           char** papszExtraMDDomains,
+                           int bFeatureCount,
+                           int bExtent )
 
 {
     OGRFeatureDefn      *poDefn = poLayer->GetLayerDefn();
@@ -516,10 +530,11 @@ static void ReportOnLayer( OGRLayer * poLayer, const char *pszWHERE,
                     OGRGeometryTypeToName( poLayer->GetGeomType() ) );
         }
         
-        printf( "Feature Count: " CPL_FRMT_GIB "\n", poLayer->GetFeatureCount() );
+        if( bFeatureCount )
+            printf( "Feature Count: " CPL_FRMT_GIB "\n", poLayer->GetFeatureCount() );
         
         OGREnvelope oExt;
-        if( nGeomFieldCount > 1 )
+        if( bExtent && nGeomFieldCount > 1 )
         {
             for(int iGeom = 0;iGeom < nGeomFieldCount; iGeom ++ )
             {
@@ -533,7 +548,7 @@ static void ReportOnLayer( OGRLayer * poLayer, const char *pszWHERE,
                 }
             }
         }
-        else if (poLayer->GetExtent(&oExt, TRUE) == OGRERR_NONE)
+        else if ( bExtent && poLayer->GetExtent(&oExt, TRUE) == OGRERR_NONE)
         {
             CPLprintf("Extent: (%f, %f) - (%f, %f)\n", 
                    oExt.MinX, oExt.MinY, oExt.MaxX, oExt.MaxY);
