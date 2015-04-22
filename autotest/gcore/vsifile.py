@@ -333,13 +333,34 @@ def vsifile_7():
 
     return 'success'
 
+###############################################################################
+# Test renaming directory in /vsimem
+
+def vsifile_8():
+
+    gdal.Mkdir('/vsimem/mydir', 0666)
+    fp = gdal.VSIFOpenL('/vsimem/mydir/a', 'wb')
+    gdal.VSIFCloseL(fp)
+    gdal.Rename('/vsimem/mydir', '/vsimem/newdir')
+    if gdal.VSIStatL('/vsimem/newdir') is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if gdal.VSIStatL('/vsimem/newdir/a') is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.Unlink('/vsimem/newdir/a')
+    gdal.Rmdir('/vsimem/newdir')
+
+    return 'success'
+
 gdaltest_list = [ vsifile_1,
                   vsifile_2,
                   vsifile_3,
                   vsifile_4,
                   vsifile_5,
                   vsifile_6,
-                  vsifile_7 ]
+                  vsifile_7,
+                  vsifile_8 ]
 
 if __name__ == '__main__':
 
