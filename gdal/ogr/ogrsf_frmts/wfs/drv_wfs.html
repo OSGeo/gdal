@@ -91,6 +91,8 @@ Starting with GDAL 2.0, the following spatial functions can be used :
 ST_Contains, ST_Intersects, ST_Within, ST_Crosses and ST_Overlaps</b> that take
 2 geometry arguments. Typically the geometry column name, and a constant geometry such
 as built with ST_MakeEnvelope or ST_GeomFromText.</li>
+<li><b>ST_DWithin(geom1,geom2,distance_in_meters)</b></li>
+<li><b>ST_Beyond(geom1,geom2,distance_in_meters)</b></li>
 <li><b>ST_MakeEnvelope(xmin,ymin,xmax,ymax[,srs])</b>: to build an envelope. srs
 can be an integer (an EPSG code), or a string directly set as the srsName attribute
 of the gml:Envelope. GDAL will take care of needed axis swapping, so coordinates
@@ -99,6 +101,30 @@ systems)</li>
 <li><b>ST_GeomFromText(wkt,[srs])</b>: to build a geometry from its WKT representation.</li>
 </ul>
 Note that those spatial functions are only supported as server-side filters.<p>
+
+<h2>Layer joins</h2>
+
+<p>
+Starting with GDAL 2.0, and for WFS 2.0 servers that support joins, SELECT
+statements that involve joins will be run on server side. Spatial joins can
+also be done by using the above mentionned spatial functions, if the server
+supports spatial joins.</p>
+
+<p>There might be restrictions set by server on the complexity of the joins.
+The OGR WFS driver also restricts column selection to be column names, potentially
+with aliases and type casts, but not expressions. The ON and WHERE clauses must
+also be evaluated on server side, so no OGR special fields are allowed for example.</p>
+
+<p>
+Example of valid statement :
+<pre>
+SELECT t1.id, t1.val1, t1.geom, t2.val1 FROM my_table AS t1 JOIN another_table AS t2 ON t1.id = t2.t1id
+</pre>
+or
+<pre>
+SELECT * FROM my_table AS t1 JOIN another_table AS t2 ON ST_Intersects(t1.geom, t2.geom)
+</pre>
+</p>
 
 <h2>Write support / WFS-T</h2>
 

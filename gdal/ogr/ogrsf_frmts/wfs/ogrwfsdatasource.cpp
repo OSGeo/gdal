@@ -179,6 +179,8 @@ OGRWFSDataSource::OGRWFSDataSource()
             nBaseStartIndex = atoi(pszOption);
     }
 
+    bStandardJoinsWFS2 = FALSE;
+
     bLoadMultipleLayerDefn = CSLTestBoolean(CPLGetConfigOption("OGR_WFS_LOAD_MULTIPLE_LAYER_DEFN", "TRUE"));
 
     poLayerMetadataDS = NULL;
@@ -677,10 +679,55 @@ int OGRWFSDataSource::DetectSupportPagingWFS2(CPLXMLNode* psRoot)
             psChild = psChild->psNext;
         }
     }
+    const char* pszOption = CPLGetConfigOption("OGR_WFS_PAGE_SIZE", NULL);
+    if( pszOption != NULL )
+    {
+        nPageSize = atoi(pszOption);
+        if (nPageSize <= 0)
+            nPageSize = DEFAULT_PAGE_SIZE;
+    }
 
     CPLDebug("WFS", "Paging support with page size %d", nPageSize);
     bPagingAllowed = TRUE;
 
+    return TRUE;
+}
+
+/************************************************************************/
+/*                   DetectSupportStandardJoinsWFS2()                   */
+/************************************************************************/
+
+int OGRWFSDataSource::DetectSupportStandardJoinsWFS2(CPLXMLNode* psRoot)
+{
+    CPLXMLNode* psOperationsMetadata =
+        CPLGetXMLNode(psRoot, "OperationsMetadata");
+    if (!psOperationsMetadata)
+    {
+        return FALSE;
+    }
+
+    CPLXMLNode* psChild = psOperationsMetadata->psChild;
+    while(psChild)
+    {
+        if (psChild->eType == CXT_Element &&
+            strcmp(psChild->pszValue, "Constraint") == 0 &&
+            strcmp(CPLGetXMLValue(psChild, "name", ""), "ImplementsStandardJoins") == 0)
+        {
+            if( !EQUAL(CPLGetXMLValue(psChild, "DefaultValue", ""), "TRUE") )
+            {
+                psChild = NULL;
+                break;
+            }
+            break;
+        }
+        psChild = psChild->psNext;
+    }
+    if (!psChild)
+    {
+        CPLDebug("WFS", "No ImplementsStandardJoins support");
+        return FALSE;
+    }
+    bStandardJoinsWFS2 = TRUE;
     return TRUE;
 }
 
@@ -1121,6 +1168,7 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn,
         }
 
         DetectSupportPagingWFS2(psWFSCapabilities);
+        DetectSupportStandardJoinsWFS2(psWFSCapabilities);
     }
 
     DetectTransactionSupport(psWFSCapabilities);
@@ -2023,6 +2071,9 @@ OGRLayer * OGRWFSDataSource::ExecuteSQL( const char *pszSQLCommand,
                                         const char *pszDialect )
 
 {
+    swq_select_parse_options oParseOptions;
+    oParseOptions.poCustomFuncRegistrar = WFSGetCustomFuncRegistrar();
+
 /* -------------------------------------------------------------------- */
 /*      Use generic implementation for recognized dialects              */
 /* -------------------------------------------------------------------- */
@@ -2031,7 +2082,7 @@ OGRLayer * OGRWFSDataSource::ExecuteSQL( const char *pszSQLCommand,
         OGRLayer* poResLayer = GDALDataset::ExecuteSQL( pszSQLCommand,
                                                         poSpatialFilter,
                                                         pszDialect,
-                                                        WFSGetCustomFuncRegistrar() );
+                                                        &oParseOptions );
         oMap[poResLayer] = NULL;
         return poResLayer;
     }
@@ -2134,6 +2185,7 @@ OGRLayer * OGRWFSDataSource::ExecuteSQL( const char *pszSQLCommand,
         swq_expr_node* poNode = (swq_expr_node*) oQuery.GetSWQExpr();
         poNode->ReplaceBetweenByGEAndLERecurse();
         CPLString osOGCFilter = WFS_TurnSQLFilterToOGCFilter(poNode,
+                                                             NULL,
                                                              poLayer->GetLayerDefn(),
                                                              nVersion,
                                                              bPropertyIsNotEqualToSupported,
@@ -2171,7 +2223,8 @@ OGRLayer * OGRWFSDataSource::ExecuteSQL( const char *pszSQLCommand,
             psSelectInfo->table_defs[0].data_source == NULL &&
             (iLayer = GetLayerIndex( psSelectInfo->table_defs[0].table_name )) >= 0 &&
             psSelectInfo->join_count == 0 &&
-            psSelectInfo->order_specs > 0 )
+            psSelectInfo->order_specs > 0 &&
+            psSelectInfo->poOtherSelect == NULL )
         {
             OGRWFSLayer* poSrcLayer = papoLayers[iLayer];
             std::vector<OGRWFSSortDesc> aoSortColumns;
@@ -2213,7 +2266,7 @@ OGRLayer * OGRWFSDataSource::ExecuteSQL( const char *pszSQLCommand,
                 OGRLayer* poResLayer = GDALDataset::ExecuteSQL( pszSQLWithoutOrderBy,
                                                                 poSpatialFilter,
                                                                 pszDialect,
-                                                                WFSGetCustomFuncRegistrar() );
+                                                                &oParseOptions );
                 papoLayers[iLayer] = poSrcLayer;
                 
                 CPLFree(pszSQLWithoutOrderBy);
@@ -2225,6 +2278,33 @@ OGRLayer * OGRWFSDataSource::ExecuteSQL( const char *pszSQLCommand,
                 return poResLayer;
             }
         }
+        else if( bStandardJoinsWFS2 &&
+                 psSelectInfo->join_count > 0 &&
+                 psSelectInfo->poOtherSelect == NULL )
+        {
+            // Just to make sure everything is valid, but we won't use
+            // that one as we want to run the join on server-side
+            oParseOptions.bAllowFieldsInSecondaryTablesInWhere = TRUE;
+            oParseOptions.bAddSecondaryTablesGeometryFields = TRUE;
+            oParseOptions.bAlwaysPrefixWithTableName = TRUE;
+            GDALSQLParseInfo* psParseInfo = BuildParseInfo(psSelectInfo,
+                                                           &oParseOptions);
+            oParseOptions.bAllowFieldsInSecondaryTablesInWhere = FALSE;
+            oParseOptions.bAddSecondaryTablesGeometryFields = FALSE;
+            oParseOptions.bAlwaysPrefixWithTableName = FALSE;
+            int bOK = psParseInfo != NULL;
+            DestroyParseInfo(psParseInfo);
+
+            OGRLayer* poResLayer = NULL;
+            if( bOK )
+            {
+                poResLayer = OGRWFSJoinLayer::Build(this, psSelectInfo);
+                oMap[poResLayer] = NULL;
+            }
+
+            delete psSelectInfo;
+            return poResLayer;
+        }
 
         delete psSelectInfo;
     }
@@ -2232,7 +2312,7 @@ OGRLayer * OGRWFSDataSource::ExecuteSQL( const char *pszSQLCommand,
     OGRLayer* poResLayer = OGRDataSource::ExecuteSQL( pszSQLCommand,
                                                       poSpatialFilter,
                                                       pszDialect,
-                                                      WFSGetCustomFuncRegistrar() );
+                                                      &oParseOptions );
     oMap[poResLayer] = NULL;
     return poResLayer;
 }

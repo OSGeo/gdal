@@ -1299,6 +1299,7 @@ OGRErr OGRWFSLayer::SetAttributeFilter( const char * pszFilter )
             osWFSWhere = "";
         else
             osWFSWhere = WFS_TurnSQLFilterToOGCFilter(poNode,
+                                                      NULL,
                                                   GetLayerDefn(),
                                                   nVersion,
                                                   poDS->PropertyIsNotEqualToSupported(),

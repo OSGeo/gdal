@@ -782,7 +782,8 @@ void swq_select::PushUnionAll( swq_select* poOtherSelectIn )
 /*      fields.                                                         */
 /************************************************************************/
 
-CPLErr swq_select::expand_wildcard( swq_field_list *field_list )
+CPLErr swq_select::expand_wildcard( swq_field_list *field_list,
+                                    int bAlwaysPrefixWithTableName )
 
 {
     int isrc;
@@ -899,7 +900,7 @@ CPLErr swq_select::expand_wildcard( swq_field_list *field_list )
         for( i = 0; i < field_list->count; i++ )
         {
             swq_col_def *def;
-            int compose = itable != -1;
+            int compose = (itable != -1) || bAlwaysPrefixWithTableName;
 
             /* skip this field if it isn't in the target table.  */
             if( itable != -1 && itable != field_list->table_ids[i] )
@@ -1008,15 +1009,20 @@ static int CheckCompatibleJoinExpr( swq_expr_node* poExpr,
 /************************************************************************/
 
 CPLErr swq_select::parse( swq_field_list *field_list,
-                          swq_custom_func_registrar* poCustomFuncRegistrar )
+                          swq_select_parse_options* poParseOptions )
 {
     int  i;
     CPLErr eError;
 
-    eError = expand_wildcard( field_list );
+    int bAlwaysPrefixWithTableName = poParseOptions &&
+                                     poParseOptions->bAlwaysPrefixWithTableName;
+    eError = expand_wildcard( field_list, bAlwaysPrefixWithTableName );
     if( eError != CE_None )
         return eError;
 
+    swq_custom_func_registrar* poCustomFuncRegistrar = NULL;
+    if( poParseOptions != NULL )
+        poCustomFuncRegistrar = poParseOptions->poCustomFuncRegistrar;
 
 /* -------------------------------------------------------------------- */
 /*      Identify field information.                                     */
@@ -1198,8 +1204,11 @@ CPLErr swq_select::parse( swq_field_list *field_list,
 /*      Post process the where clause, subbing in field indexes and     */
 /*      doing final validation.                                         */
 /* -------------------------------------------------------------------- */
+    int bAllowFieldsInSecondaryTablesInWhere = FALSE;
+    if( poParseOptions != NULL )
+        bAllowFieldsInSecondaryTablesInWhere = poParseOptions->bAllowFieldsInSecondaryTablesInWhere;
     if( where_expr != NULL 
-        && where_expr->Check( field_list, FALSE, FALSE, poCustomFuncRegistrar ) == SWQ_ERROR )
+        && where_expr->Check( field_list, bAllowFieldsInSecondaryTablesInWhere, FALSE, poCustomFuncRegistrar ) == SWQ_ERROR )
     {
         return CE_Failure;
     }
