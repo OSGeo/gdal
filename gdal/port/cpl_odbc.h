@@ -258,6 +258,7 @@ class CPL_DLL CPLODBCStatement {
     const char    *GetColData( int, const char * = NULL );
     const char    *GetColData( const char *, const char * = NULL );
     int            GetColDataLength( int );
+    int            GetRowCountAffected();
 
     // Fetch special metadata.
     int            GetColumns( const char *pszTable, 

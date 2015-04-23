@@ -596,6 +596,18 @@ int CPLODBCStatement::CollectResultsInfo()
 }
 
 /************************************************************************/
+/*                            GetRowCountAffected()                     */
+/************************************************************************/
+
+int CPLODBCStatement::GetRowCountAffected()
+{
+    SQLINTEGER nResultCount=0;
+    SQLRowCount( m_hStmt, &nResultCount );
+    
+    return nResultCount;
+}
+
+/************************************************************************/
 /*                            GetColCount()                             */
 /************************************************************************/
 
