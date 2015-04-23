@@ -1050,6 +1050,9 @@ OGRErr OGRMSSQLSpatialTableLayer::ISetFeature( OGRFeature *poFeature )
     for( i = 0; i < bind_num; i++ )
             CPLFree(bind_buffer[i]);
     CPLFree(bind_buffer);
+
+    if (oStmt.GetRowCountAffected() < 1)
+        return OGRERR_NON_EXISTING_FEATURE;
     
     return OGRERR_NONE;
 }
@@ -1095,6 +1098,9 @@ OGRErr OGRMSSQLSpatialTableLayer::DeleteFeature( GIntBig nFID )
 
         return OGRERR_FAILURE;
     }
+
+    if (oStatement.GetRowCountAffected() < 1)
+        return OGRERR_NON_EXISTING_FEATURE;
     
     return OGRERR_NONE;
 }
