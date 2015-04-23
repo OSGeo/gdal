@@ -3073,6 +3073,7 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
         dfRotation = poPagePodofo->GetRotation();
 #endif
     if ( dfRotation == 90 ||
+         dfRotation == -90 ||
          dfRotation == 270 )
     {
 /* FIXME: the non poppler case should be implemented. This needs to rotate */
@@ -3119,6 +3120,15 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
                     poDS->adfGeoTransform[4] = poDS->adfCTM[3] / dfUserUnit;
                     poDS->adfGeoTransform[5] = poDS->adfCTM[1] / dfUserUnit;
                 }
+                else if ( dfRotation == -90 || dfRotation == 270 )
+                {
+                    poDS->adfGeoTransform[0] = poDS->adfCTM[4] + poDS->adfCTM[2] * poDS->dfPageHeight + poDS->adfCTM[0] * poDS->dfPageWidth;
+                    poDS->adfGeoTransform[1] = -poDS->adfCTM[2] / dfUserUnit;
+                    poDS->adfGeoTransform[2] = -poDS->adfCTM[0] / dfUserUnit;
+                    poDS->adfGeoTransform[3] = poDS->adfCTM[5] + poDS->adfCTM[3] * poDS->dfPageHeight + poDS->adfCTM[1] * poDS->dfPageWidth;
+                    poDS->adfGeoTransform[4] = -poDS->adfCTM[3] / dfUserUnit;
+                    poDS->adfGeoTransform[5] = -poDS->adfCTM[1] / dfUserUnit;
+                }
                 else
                 {
                     poDS->adfGeoTransform[0] = poDS->adfCTM[4] + poDS->adfCTM[2] * poDS->dfPageHeight;
@@ -3143,6 +3153,13 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
                     double dfLine = poDS->pasGCPList[i].dfGCPLine * dfUserUnit;
                     poDS->pasGCPList[i].dfGCPPixel = dfLine;
                     poDS->pasGCPList[i].dfGCPLine = dfPixel;
+                }
+                else if ( dfRotation == -90 || dfRotation == 270 )
+                {
+                    double dfPixel = poDS->pasGCPList[i].dfGCPPixel * dfUserUnit;
+                    double dfLine = poDS->pasGCPList[i].dfGCPLine * dfUserUnit;
+                    poDS->pasGCPList[i].dfGCPPixel = poDS->nRasterXSize - dfLine;
+                    poDS->pasGCPList[i].dfGCPLine = poDS->nRasterYSize - dfPixel;
                 }
                 else
                 {
@@ -3279,6 +3296,11 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
                 {
                     x = poRing->getY(i) * dfUserUnit;
                     y = poRing->getX(i) * dfUserUnit;
+                }
+                else if( dfRotation == -90.0 || dfRotation == 270.0 )
+                {
+                    x = poDS->nRasterXSize - poRing->getY(i) * dfUserUnit;
+                    y = poDS->nRasterYSize - poRing->getX(i) * dfUserUnit;
                 }
                 else
                 {
@@ -3762,7 +3784,8 @@ int PDFDataset::ParseLGIDictDictSecondPass(GDALPDFDictionary* poLGIDict)
     {
         GDALPDFArray* poRegistrationArray = poRegistration->GetArray();
         int nLength = poRegistrationArray->GetLength();
-        if (nLength > 4 || (!bHasCTM && nLength >= 2) )
+        if( nLength > 4 || (!bHasCTM && nLength >= 2) ||
+            CSLTestBoolean(CPLGetConfigOption("PDF_REPORT_GCPS", "NO")) )
         {
             nGCPCount = 0;
             pasGCPList = (GDAL_GCP *) CPLCalloc(sizeof(GDAL_GCP),nLength);
