@@ -494,6 +494,8 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath )
     }
 
     char** papszOpenOptions = GDALDeserializeOpenOptionsFromXML(psSrc);
+    if( strstr(pszSrcDSName,"<VRTDataset") != NULL )
+        papszOpenOptions = CSLSetNameValue(papszOpenOptions, "ROOT_PATH", pszVRTPath);
 
     GDALDataset *poSrcDS;
     if (nRasterXSize == 0 || nRasterYSize == 0 || eDataType == (GDALDataType)-1 ||
