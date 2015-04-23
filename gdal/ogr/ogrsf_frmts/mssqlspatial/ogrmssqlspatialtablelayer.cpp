@@ -924,6 +924,8 @@ OGRErr OGRMSSQLSpatialTableLayer::ISetFeature( OGRFeature *poFeature )
     int bNeedComma = FALSE;
     if(poGeom != NULL && pszGeomColumn != NULL)
     {
+        oStmt.Appendf( "[%s] = ", pszGeomColumn );
+        
         if (nUploadGeometryFormat == MSSQLGEOMETRY_WKB)
         {
             int nWKBLen = poGeom->WkbSize();
