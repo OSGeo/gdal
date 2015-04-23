@@ -257,7 +257,9 @@ class OGRLayer;
 class OGRGeometry;
 class OGRSpatialReference;
 class OGRStyleTable;
-class swq_custom_func_registrar;
+class swq_select;
+class swq_select_parse_options;
+typedef struct GDALSQLParseInfo GDALSQLParseInfo;
 
 #ifdef DETECT_OLD_IRASTERIO
 typedef void signature_changed;
@@ -421,10 +423,10 @@ class CPL_DLL GDALDataset : public GDALMajorObject
 private:
     CPLMutex        *m_hMutex;
 
-    OGRLayer*       BuildLayerFromSelectInfo(void* psSelectInfo,
+    OGRLayer*       BuildLayerFromSelectInfo(swq_select* psSelectInfo,
                                              OGRGeometry *poSpatialFilter,
                                              const char *pszDialect,
-                                             swq_custom_func_registrar* poCustomFuncRegistrar);
+                                             swq_select_parse_options* poSelectParseOptions);
 
   public:
 
@@ -451,10 +453,6 @@ private:
     virtual OGRLayer *  ExecuteSQL( const char *pszStatement,
                                     OGRGeometry *poSpatialFilter,
                                     const char *pszDialect );
-    OGRLayer *          ExecuteSQL( const char *pszStatement,
-                                    OGRGeometry *poSpatialFilter,
-                                    const char *pszDialect,
-                                    swq_custom_func_registrar* poCustomFuncRegistrar);
     virtual void        ReleaseResultSet( OGRLayer * poResultsSet );
 
     int                 GetRefCount() const;
@@ -466,6 +464,15 @@ private:
     virtual OGRErr      RollbackTransaction();
     
     static int          IsGenericSQLDialect(const char* pszDialect);
+    
+    // Semi-public methods. Only to be used by in-tree drivers.
+    GDALSQLParseInfo*   BuildParseInfo(swq_select* psSelectInfo,
+                                       swq_select_parse_options* poSelectParseOptions);
+    void                DestroyParseInfo(GDALSQLParseInfo* psParseInfo );
+    OGRLayer *          ExecuteSQL( const char *pszStatement,
+                                    OGRGeometry *poSpatialFilter,
+                                    const char *pszDialect,
+                                    swq_select_parse_options* poSelectParseOptions);
 
   protected:
 

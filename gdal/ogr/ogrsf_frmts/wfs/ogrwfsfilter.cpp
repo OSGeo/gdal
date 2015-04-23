@@ -37,6 +37,7 @@ typedef struct
     int nVersion;
     int bPropertyIsNotEqualToSupported;
     int bOutNeedsNullCheck;
+    OGRDataSource* poDS;
     OGRFeatureDefn* poFDefn;
     int nUniqueGeomGMLId;
 } ExprDumpFilterOptions;
@@ -191,20 +192,51 @@ static int WFS_ExprDumpAsOGCFilter(CPLString& osFilter,
             return FALSE;
         }
 
-        const char* pszFieldname = poExpr->string_value;
+        const char* pszFieldname = NULL;
         int nIndex;
-        if( (nIndex = psOptions->poFDefn->GetFieldIndex(pszFieldname)) >= 0 )
+        int bSameTable = psOptions->poFDefn != NULL &&
+                         ( poExpr->table_name == NULL ||
+                           EQUAL(poExpr->table_name, psOptions->poFDefn->GetName()) );
+        if( bSameTable )
         {
-            pszFieldname = psOptions->poFDefn->GetFieldDefn(nIndex)->GetNameRef();
+            if( (nIndex = psOptions->poFDefn->GetFieldIndex(poExpr->string_value)) >= 0 )
+            {
+                pszFieldname = psOptions->poFDefn->GetFieldDefn(nIndex)->GetNameRef();
+            }
+            else if( (nIndex = psOptions->poFDefn->GetGeomFieldIndex(poExpr->string_value)) >= 0 )
+            {
+                pszFieldname = psOptions->poFDefn->GetGeomFieldDefn(nIndex)->GetNameRef();
+            }
         }
-        else if( (nIndex = psOptions->poFDefn->GetGeomFieldIndex(pszFieldname)) >= 0 )
+        else if( psOptions->poDS != NULL )
         {
-            pszFieldname = psOptions->poFDefn->GetGeomFieldDefn(nIndex)->GetNameRef();
+            OGRLayer* poLayer = psOptions->poDS->GetLayerByName(poExpr->table_name);
+            if( poLayer )
+            {
+                OGRFeatureDefn* poFDefn = poLayer->GetLayerDefn();
+                if( (nIndex = poFDefn->GetFieldIndex(poExpr->string_value)) >= 0 )
+                {
+                    pszFieldname = CPLSPrintf("%s/%s",
+                                              poLayer->GetName(),
+                                              poFDefn->GetFieldDefn(nIndex)->GetNameRef());
+                }
+                else if( (nIndex = poFDefn->GetGeomFieldIndex(poExpr->string_value)) >= 0 )
+                {
+                    pszFieldname = CPLSPrintf("%s/%s",
+                                              poLayer->GetName(),
+                                              poFDefn->GetGeomFieldDefn(nIndex)->GetNameRef());
+                }
+            }
         }
-        else
+
+        if( pszFieldname == NULL )
         {
-            CPLDebug("WFS", "Field '%s' unknown. Cannot use server-side filtering",
-                        pszFieldname);
+            if( poExpr->table_name != NULL )
+                CPLDebug("WFS", "Field \"%s\".\"%s\" unknown. Cannot use server-side filtering",
+                         poExpr->table_name, poExpr->string_value);
+            else
+                CPLDebug("WFS", "Field \"%s\" unknown. Cannot use server-side filtering",
+                         poExpr->string_value);
             return FALSE;
         }
 
@@ -453,16 +485,25 @@ static int WFS_ExprDumpAsOGCFilter(CPLString& osFilter,
             EQUAL(poExpr->string_value, "ST_Within") ? "Within" :
             EQUAL(poExpr->string_value, "ST_Crosses") ? "Crosses" :
             EQUAL(poExpr->string_value, "ST_Overlaps") ? "Overlaps" :
+            EQUAL(poExpr->string_value, "ST_DWithin") ? "DWithin" :
+            EQUAL(poExpr->string_value, "ST_Beyond") ? "Beyond" :
             NULL;
         if( pszName == NULL )
             return FALSE;
         osFilter += "<";
         osFilter += pszName;
         osFilter += ">";
-        for(int i=0;i<poExpr->nSubExprCount;i++)
+        for(int i=0;i<2;i++)
         {
             if (!WFS_ExprDumpAsOGCFilter(osFilter, poExpr->papoSubExpr[i], FALSE, psOptions))
                 return FALSE;
+        }
+        if( poExpr->nSubExprCount > 2 )
+        {
+            osFilter += "<Distance unit=\"m\">";
+            if (!WFS_ExprDumpRawLitteral(osFilter, poExpr->papoSubExpr[2]) )
+                return FALSE;
+            osFilter += "</Distance>";
         }
         osFilter += "</";
         osFilter += pszName;
@@ -478,6 +519,7 @@ static int WFS_ExprDumpAsOGCFilter(CPLString& osFilter,
 /************************************************************************/
 
 CPLString WFS_TurnSQLFilterToOGCFilter( const swq_expr_node* poExpr,
+                                        OGRDataSource* poDS,
                                         OGRFeatureDefn* poFDefn,
                                         int nVersion,
                                         int bPropertyIsNotEqualToSupported,
@@ -495,6 +537,7 @@ CPLString WFS_TurnSQLFilterToOGCFilter( const swq_expr_node* poExpr,
         sOptions.nVersion = nVersion;
         sOptions.bPropertyIsNotEqualToSupported = bPropertyIsNotEqualToSupported;
         sOptions.bOutNeedsNullCheck = FALSE;
+        sOptions.poDS = poDS;
         sOptions.poFDefn = poFDefn;
         sOptions.nUniqueGeomGMLId = 1;
         osFilter = "";
@@ -637,6 +680,39 @@ static swq_field_type OGRWFSGeomFromTextChecker( swq_expr_node *op,
 }
 
 /************************************************************************/
+/*                      OGRWFSDWithinBeyondChecker()                    */
+/************************************************************************/
+
+static swq_field_type OGRWFSDWithinBeyondChecker( swq_expr_node *op,
+                            CPL_UNUSED int bAllowMismatchTypeOnFieldComparison )
+{
+    if( op->nSubExprCount != 3 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Wrong number of arguments for %s",
+                 op->string_value);
+        return SWQ_ERROR;
+    }
+    for(int i=0;i<2;i++)
+    {
+        if( op->papoSubExpr[i]->field_type != SWQ_GEOMETRY )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Wrong field type for argument %d of %s",
+                     i+1, op->string_value);
+            return SWQ_ERROR;
+        }
+    }
+    if( op->papoSubExpr[2]->field_type != SWQ_INTEGER &&
+        op->papoSubExpr[2]->field_type != SWQ_INTEGER64 &&
+        op->papoSubExpr[2]->field_type != SWQ_FLOAT )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Wrong field type for argument %d of %s",
+                    2+1, op->string_value);
+        return SWQ_ERROR;
+    }
+    return SWQ_BOOLEAN;
+}
+
+/************************************************************************/
 /*                   OGRWFSCustomFuncRegistrar                          */
 /************************************************************************/
 
@@ -672,6 +748,8 @@ static const swq_operation OGRWFSSpatialOps[] = {
 /*{ "ST_CoveredBy", SWQ_CUSTOM_FUNC, NULL, OGRWFSSpatialBooleanPredicateChecker },*/
 { "ST_Crosses", SWQ_CUSTOM_FUNC, NULL, OGRWFSSpatialBooleanPredicateChecker },
 { "ST_Overlaps", SWQ_CUSTOM_FUNC, NULL, OGRWFSSpatialBooleanPredicateChecker },
+{ "ST_DWithin", SWQ_CUSTOM_FUNC, NULL, OGRWFSDWithinBeyondChecker },
+{ "ST_Beyond", SWQ_CUSTOM_FUNC, NULL, OGRWFSDWithinBeyondChecker },
 { "ST_MakeEnvelope", SWQ_CUSTOM_FUNC, NULL, OGRWFSMakeEnvelopeChecker },
 { "ST_GeomFromText", SWQ_CUSTOM_FUNC, NULL, OGRWFSGeomFromTextChecker }
 };

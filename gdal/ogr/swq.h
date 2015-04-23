@@ -310,6 +310,20 @@ typedef struct {
     swq_expr_node  *poExpr;
 } swq_join_def;
 
+class swq_select_parse_options
+{
+public:
+    swq_custom_func_registrar* poCustomFuncRegistrar;
+    int                        bAllowFieldsInSecondaryTablesInWhere;
+    int                        bAddSecondaryTablesGeometryFields;
+    int                        bAlwaysPrefixWithTableName;
+
+                    swq_select_parse_options(): poCustomFuncRegistrar(NULL),
+                                                bAllowFieldsInSecondaryTablesInWhere(FALSE),
+                                                bAddSecondaryTablesGeometryFields(FALSE),
+                                                bAlwaysPrefixWithTableName(FALSE) {}
+};
+
 class swq_select
 {
     void        postpreparse();
@@ -349,9 +363,10 @@ public:
 
     CPLErr      preparse( const char *select_statement,
                           int bAcceptCustomFuncs = FALSE );
-    CPLErr      expand_wildcard( swq_field_list *field_list );
+    CPLErr      expand_wildcard( swq_field_list *field_list,
+                                 int bAlwaysPrefixWithTableName );
     CPLErr      parse( swq_field_list *field_list,
-                       swq_custom_func_registrar* poCustomFuncRegistrar );
+                       swq_select_parse_options* poParseOptions );
 
     char       *Unparse();
     void        Dump( FILE * );

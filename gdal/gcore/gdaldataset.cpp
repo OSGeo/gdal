@@ -4884,7 +4884,7 @@ OGRLayer * GDALDataset::ExecuteSQL( const char *pszStatement,
 OGRLayer * GDALDataset::ExecuteSQL( const char *pszStatement,
                                     OGRGeometry *poSpatialFilter,
                                     const char *pszDialect,
-                                    swq_custom_func_registrar* poCustomFuncRegistrar)
+                                    swq_select_parse_options* poSelectParseOptions)
 
 {
     swq_select *psSelectInfo = NULL;
@@ -4975,6 +4975,9 @@ OGRLayer * GDALDataset::ExecuteSQL( const char *pszStatement,
 /*      Preparse the SQL statement.                                     */
 /* -------------------------------------------------------------------- */
     psSelectInfo = new swq_select();
+    swq_custom_func_registrar* poCustomFuncRegistrar = NULL;
+    if( poSelectParseOptions != NULL )
+        poCustomFuncRegistrar = poSelectParseOptions->poCustomFuncRegistrar;
     if( psSelectInfo->preparse( pszStatement,
                                 poCustomFuncRegistrar != NULL ) != CPLE_None )
     {
@@ -4990,7 +4993,7 @@ OGRLayer * GDALDataset::ExecuteSQL( const char *pszStatement,
         return BuildLayerFromSelectInfo(psSelectInfo,
                                         poSpatialFilter,
                                         pszDialect,
-                                        poCustomFuncRegistrar);
+                                        poSelectParseOptions);
     }
 
 /* -------------------------------------------------------------------- */
@@ -5007,7 +5010,7 @@ OGRLayer * GDALDataset::ExecuteSQL( const char *pszStatement,
         OGRLayer* poLayer = BuildLayerFromSelectInfo(psSelectInfo,
                                                      poSpatialFilter,
                                                      pszDialect,
-                                                     poCustomFuncRegistrar);
+                                                     poSelectParseOptions);
         if( poLayer == NULL )
         {
             /* Each source layer owns an independant select info */
@@ -5042,28 +5045,82 @@ OGRLayer * GDALDataset::ExecuteSQL( const char *pszStatement,
 /*                        BuildLayerFromSelectInfo()                    */
 /************************************************************************/
 
-OGRLayer* GDALDataset::BuildLayerFromSelectInfo(void* psSelectInfoIn,
+struct GDALSQLParseInfo
+{
+    swq_field_list sFieldList;
+    int            nExtraDSCount;
+    GDALDataset**  papoExtraDS;
+    char          *pszWHERE;
+};
+
+OGRLayer* GDALDataset::BuildLayerFromSelectInfo(swq_select* psSelectInfo,
                                                 OGRGeometry *poSpatialFilter,
                                                 const char *pszDialect,
-                                                swq_custom_func_registrar* poCustomFuncRegistrar)
+                                                swq_select_parse_options* poSelectParseOptions)
 {
-    swq_select* psSelectInfo = (swq_select*) psSelectInfoIn;
-
-    swq_field_list sFieldList;
-    int            nFIDIndex = 0;
     OGRGenSQLResultsLayer *poResults = NULL;
-    char *pszWHERE = NULL;
+    GDALSQLParseInfo* psParseInfo = BuildParseInfo(psSelectInfo,
+                                                   poSelectParseOptions);
 
-    memset( &sFieldList, 0, sizeof(sFieldList) );
+    if( psParseInfo )
+    {
+        poResults = new OGRGenSQLResultsLayer( this, psSelectInfo,
+                                               poSpatialFilter,
+                                               psParseInfo->pszWHERE,
+                                               pszDialect );
+    }
+    else
+    {
+        delete psSelectInfo;
+    }
+    DestroyParseInfo(psParseInfo);
+
+    return poResults;
+}
+
+/************************************************************************/
+/*                             DestroyParseInfo()                       */
+/************************************************************************/
+
+void GDALDataset::DestroyParseInfo(GDALSQLParseInfo* psParseInfo )
+{
+    if( psParseInfo != NULL )
+    {
+        CPLFree( psParseInfo->sFieldList.names );
+        CPLFree( psParseInfo->sFieldList.types );
+        CPLFree( psParseInfo->sFieldList.table_ids );
+        CPLFree( psParseInfo->sFieldList.ids );
+
+        /* Release the datasets we have opened with OGROpenShared() */
+        /* It is safe to do that as the 'new OGRGenSQLResultsLayer' itself */
+        /* has taken a reference on them, which it will release in its */
+        /* destructor */
+        for(int iEDS = 0; iEDS < psParseInfo->nExtraDSCount; iEDS++)
+            GDALClose( (GDALDatasetH)psParseInfo->papoExtraDS[iEDS] );
+        CPLFree(psParseInfo->papoExtraDS);
+
+        CPLFree(psParseInfo->pszWHERE);
+
+        CPLFree(psParseInfo);
+    }
+}
+
+/************************************************************************/
+/*                            BuildParseInfo()                          */
+/************************************************************************/
+
+GDALSQLParseInfo* GDALDataset::BuildParseInfo(swq_select* psSelectInfo,
+                                              swq_select_parse_options* poSelectParseOptions)
+{
+    int            nFIDIndex = 0;
+
+    GDALSQLParseInfo* psParseInfo = (GDALSQLParseInfo*)CPLCalloc(1, sizeof(GDALSQLParseInfo));
 
 /* -------------------------------------------------------------------- */
 /*      Validate that all the source tables are recognised, count       */
 /*      fields.                                                         */
 /* -------------------------------------------------------------------- */
     int  nFieldCount = 0, iTable, iField;
-    int  iEDS;
-    int  nExtraDSCount = 0;
-    GDALDataset** papoExtraDS = NULL;
 
     for( iTable = 0; iTable < psSelectInfo->table_count; iTable++ )
     {
@@ -5083,14 +5140,15 @@ OGRLayer* GDALDataset::BuildLayerFromSelectInfo(void* psSelectInfoIn,
                               "`%s' required by JOIN.",
                               psTableDef->data_source );
 
-                delete psSelectInfo;
-                goto end;
+                DestroyParseInfo(psParseInfo);
+                return NULL;
             }
 
             /* Keep in an array to release at the end of this function */
-            papoExtraDS = (GDALDataset** )CPLRealloc(papoExtraDS,
-                               sizeof(GDALDataset*) * (nExtraDSCount + 1));
-            papoExtraDS[nExtraDSCount++] = poTableDS;
+            psParseInfo->papoExtraDS = (GDALDataset** )CPLRealloc(
+                               psParseInfo->papoExtraDS,
+                               sizeof(GDALDataset*) * (psParseInfo->nExtraDSCount + 1));
+            psParseInfo->papoExtraDS[psParseInfo->nExtraDSCount++] = poTableDS;
         }
 
         poSrcLayer = poTableDS->GetLayerByName( psTableDef->table_name );
@@ -5100,12 +5158,14 @@ OGRLayer* GDALDataset::BuildLayerFromSelectInfo(void* psSelectInfoIn,
             CPLError( CE_Failure, CPLE_AppDefined, 
                       "SELECT from table %s failed, no such table/featureclass.",
                       psTableDef->table_name );
-            delete psSelectInfo;
-            goto end;
+
+            DestroyParseInfo(psParseInfo);
+            return NULL;
         }
 
         nFieldCount += poSrcLayer->GetLayerDefn()->GetFieldCount();
-        if( iTable == 0 )
+        if( iTable == 0 || (poSelectParseOptions &&
+                            poSelectParseOptions->bAddSecondaryTablesGeometryFields) )
             nFieldCount += poSrcLayer->GetLayerDefn()->GetGeomFieldCount();
     }
     
@@ -5113,16 +5173,16 @@ OGRLayer* GDALDataset::BuildLayerFromSelectInfo(void* psSelectInfoIn,
 /*      Build the field list for all indicated tables.                  */
 /* -------------------------------------------------------------------- */
 
-    sFieldList.table_count = psSelectInfo->table_count;
-    sFieldList.table_defs = psSelectInfo->table_defs;
+    psParseInfo->sFieldList.table_count = psSelectInfo->table_count;
+    psParseInfo->sFieldList.table_defs = psSelectInfo->table_defs;
 
-    sFieldList.count = 0;
-    sFieldList.names = (char **) CPLMalloc( sizeof(char *) * (nFieldCount+SPECIAL_FIELD_COUNT) );
-    sFieldList.types = (swq_field_type *)  
+    psParseInfo->sFieldList.count = 0;
+    psParseInfo->sFieldList.names = (char **) CPLMalloc( sizeof(char *) * (nFieldCount+SPECIAL_FIELD_COUNT) );
+    psParseInfo->sFieldList.types = (swq_field_type *)  
         CPLMalloc( sizeof(swq_field_type) * (nFieldCount+SPECIAL_FIELD_COUNT) );
-    sFieldList.table_ids = (int *) 
+    psParseInfo->sFieldList.table_ids = (int *) 
         CPLMalloc( sizeof(int) * (nFieldCount+SPECIAL_FIELD_COUNT) );
-    sFieldList.ids = (int *) 
+    psParseInfo->sFieldList.ids = (int *) 
         CPLMalloc( sizeof(int) * (nFieldCount+SPECIAL_FIELD_COUNT) );
     
     for( iTable = 0; iTable < psSelectInfo->table_count; iTable++ )
@@ -5146,56 +5206,57 @@ OGRLayer* GDALDataset::BuildLayerFromSelectInfo(void* psSelectInfoIn,
              iField++ )
         {
             OGRFieldDefn *poFDefn=poSrcLayer->GetLayerDefn()->GetFieldDefn(iField);
-            int iOutField = sFieldList.count++;
-            sFieldList.names[iOutField] = (char *) poFDefn->GetNameRef();
+            int iOutField = psParseInfo->sFieldList.count++;
+            psParseInfo->sFieldList.names[iOutField] = (char *) poFDefn->GetNameRef();
             if( poFDefn->GetType() == OFTInteger )
             {
                 if( poFDefn->GetSubType() == OFSTBoolean )
-                    sFieldList.types[iOutField] = SWQ_BOOLEAN;
+                    psParseInfo->sFieldList.types[iOutField] = SWQ_BOOLEAN;
                 else
-                    sFieldList.types[iOutField] = SWQ_INTEGER;
+                    psParseInfo->sFieldList.types[iOutField] = SWQ_INTEGER;
             }
             else if( poFDefn->GetType() == OFTInteger64 )
             {
                 if( poFDefn->GetSubType() == OFSTBoolean )
-                    sFieldList.types[iOutField] = SWQ_BOOLEAN;
+                    psParseInfo->sFieldList.types[iOutField] = SWQ_BOOLEAN;
                 else
-                    sFieldList.types[iOutField] = SWQ_INTEGER64;
+                    psParseInfo->sFieldList.types[iOutField] = SWQ_INTEGER64;
             }
             else if( poFDefn->GetType() == OFTReal )
-                sFieldList.types[iOutField] = SWQ_FLOAT;
+                psParseInfo->sFieldList.types[iOutField] = SWQ_FLOAT;
             else if( poFDefn->GetType() == OFTString )
-                sFieldList.types[iOutField] = SWQ_STRING;
+                psParseInfo->sFieldList.types[iOutField] = SWQ_STRING;
             else if( poFDefn->GetType() == OFTTime )
-                sFieldList.types[iOutField] = SWQ_TIME;
+                psParseInfo->sFieldList.types[iOutField] = SWQ_TIME;
             else if( poFDefn->GetType() == OFTDate )
-                sFieldList.types[iOutField] = SWQ_DATE;
+                psParseInfo->sFieldList.types[iOutField] = SWQ_DATE;
             else if( poFDefn->GetType() == OFTDateTime )
-                sFieldList.types[iOutField] = SWQ_TIMESTAMP;
+                psParseInfo->sFieldList.types[iOutField] = SWQ_TIMESTAMP;
             else
-                sFieldList.types[iOutField] = SWQ_OTHER;
+                psParseInfo->sFieldList.types[iOutField] = SWQ_OTHER;
 
-            sFieldList.table_ids[iOutField] = iTable;
-            sFieldList.ids[iOutField] = iField;
+            psParseInfo->sFieldList.table_ids[iOutField] = iTable;
+            psParseInfo->sFieldList.ids[iOutField] = iField;
         }
 
-        if( iTable == 0 )
+        if( iTable == 0 || (poSelectParseOptions &&
+                            poSelectParseOptions->bAddSecondaryTablesGeometryFields) )
         {
-            nFIDIndex = sFieldList.count;
+            nFIDIndex = psParseInfo->sFieldList.count;
 
             for( iField = 0; 
                  iField < poSrcLayer->GetLayerDefn()->GetGeomFieldCount();
                  iField++ )
             {
                 OGRGeomFieldDefn *poFDefn=poSrcLayer->GetLayerDefn()->GetGeomFieldDefn(iField);
-                int iOutField = sFieldList.count++;
-                sFieldList.names[iOutField] = (char *) poFDefn->GetNameRef();
-                if( *sFieldList.names[iOutField] == '\0' )
-                    sFieldList.names[iOutField] = (char*) OGR_GEOMETRY_DEFAULT_NON_EMPTY_NAME;
-                sFieldList.types[iOutField] = SWQ_GEOMETRY;
+                int iOutField = psParseInfo->sFieldList.count++;
+                psParseInfo->sFieldList.names[iOutField] = (char *) poFDefn->GetNameRef();
+                if( *psParseInfo->sFieldList.names[iOutField] == '\0' )
+                    psParseInfo->sFieldList.names[iOutField] = (char*) OGR_GEOMETRY_DEFAULT_NON_EMPTY_NAME;
+                psParseInfo->sFieldList.types[iOutField] = SWQ_GEOMETRY;
 
-                sFieldList.table_ids[iOutField] = iTable;
-                sFieldList.ids[iOutField] =
+                psParseInfo->sFieldList.table_ids[iOutField] = iTable;
+                psParseInfo->sFieldList.ids[iOutField] =
                     GEOM_FIELD_INDEX_TO_ALL_FIELD_INDEX(poSrcLayer->GetLayerDefn(), iField);
             }
         }
@@ -5204,28 +5265,31 @@ OGRLayer* GDALDataset::BuildLayerFromSelectInfo(void* psSelectInfoIn,
 /* -------------------------------------------------------------------- */
 /*      Expand '*' in 'SELECT *' now before we add the pseudo fields    */
 /* -------------------------------------------------------------------- */
-    if( psSelectInfo->expand_wildcard( &sFieldList )  != CE_None )
+    int bAlwaysPrefixWithTableName = poSelectParseOptions &&
+                                     poSelectParseOptions->bAlwaysPrefixWithTableName;
+    if( psSelectInfo->expand_wildcard( &psParseInfo->sFieldList,
+                                       bAlwaysPrefixWithTableName)  != CE_None )
     {
-        delete psSelectInfo;
-        goto end;
+        DestroyParseInfo(psParseInfo);
+        return NULL;
     }
 
     for (iField = 0; iField < SPECIAL_FIELD_COUNT; iField++)
     {
-        sFieldList.names[sFieldList.count] = (char*) SpecialFieldNames[iField];
-        sFieldList.types[sFieldList.count] = SpecialFieldTypes[iField];
-        sFieldList.table_ids[sFieldList.count] = 0;
-        sFieldList.ids[sFieldList.count] = nFIDIndex + iField;
-        sFieldList.count++;
+        psParseInfo->sFieldList.names[psParseInfo->sFieldList.count] = (char*) SpecialFieldNames[iField];
+        psParseInfo->sFieldList.types[psParseInfo->sFieldList.count] = SpecialFieldTypes[iField];
+        psParseInfo->sFieldList.table_ids[psParseInfo->sFieldList.count] = 0;
+        psParseInfo->sFieldList.ids[psParseInfo->sFieldList.count] = nFIDIndex + iField;
+        psParseInfo->sFieldList.count++;
     }
     
 /* -------------------------------------------------------------------- */
 /*      Finish the parse operation.                                     */
 /* -------------------------------------------------------------------- */
-    if( psSelectInfo->parse( &sFieldList, poCustomFuncRegistrar ) != CE_None )
+    if( psSelectInfo->parse( &psParseInfo->sFieldList, poSelectParseOptions ) != CE_None )
     {
-        delete psSelectInfo;
-        goto end;
+        DestroyParseInfo(psParseInfo);
+        return NULL;
     }
 
 /* -------------------------------------------------------------------- */
@@ -5233,38 +5297,11 @@ OGRLayer* GDALDataset::BuildLayerFromSelectInfo(void* psSelectInfoIn,
 /* -------------------------------------------------------------------- */
     if( psSelectInfo->where_expr != NULL )
     {
-        pszWHERE = psSelectInfo->where_expr->Unparse( &sFieldList, '"' );
+        psParseInfo->pszWHERE = psSelectInfo->where_expr->Unparse( &psParseInfo->sFieldList, '"' );
         //CPLDebug( "OGR", "Unparse() -> %s", pszWHERE );
     }
 
-/* -------------------------------------------------------------------- */
-/*      Everything seems OK, try to instantiate a results layer.        */
-/* -------------------------------------------------------------------- */
-
-    poResults = new OGRGenSQLResultsLayer( this, psSelectInfo,
-                                           poSpatialFilter,
-                                           pszWHERE,
-                                           pszDialect );
-
-    CPLFree( pszWHERE );
-
-    // Eventually, we should keep track of layers to cleanup.
-
-end:
-    CPLFree( sFieldList.names );
-    CPLFree( sFieldList.types );
-    CPLFree( sFieldList.table_ids );
-    CPLFree( sFieldList.ids );
-
-    /* Release the datasets we have opened with OGROpenShared() */
-    /* It is safe to do that as the 'new OGRGenSQLResultsLayer' itself */
-    /* has taken a reference on them, which it will release in its */
-    /* destructor */
-    for(iEDS = 0; iEDS < nExtraDSCount; iEDS++)
-        GDALClose( (GDALDatasetH)papoExtraDS[iEDS] );
-    CPLFree(papoExtraDS);
-
-    return poResults;
+    return psParseInfo;
 }
 
 /************************************************************************/
