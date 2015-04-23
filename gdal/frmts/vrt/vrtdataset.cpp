@@ -722,6 +722,12 @@ GDALDataset *VRTDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         pszXML = CPLStrdup( poOpenInfo->pszFilename );
     }
+    
+    if( CSLFetchNameValue(poOpenInfo->papszOpenOptions, "ROOT_PATH") != NULL )
+    {
+        CPLFree(pszVRTPath);
+        pszVRTPath = CPLStrdup(CSLFetchNameValue(poOpenInfo->papszOpenOptions, "ROOT_PATH"));
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Turn the XML representation into a VRTDataset.                  */

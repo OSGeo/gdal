@@ -373,6 +373,11 @@ void GDALRegister_VRT()
         poDriver->pfnIdentify = VRTDataset::Identify;
         poDriver->pfnDelete = VRTDataset::Delete;
 
+        poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
+"<OpenOptionList>"
+"  <Option name='ROOT_PATH' type='string' description='Root path to evaluate relative paths inside the VRT. Mainly useful for inlined VRT, or in-memory VRT, where their own directory does not make sense'/>"
+"</OpenOptionList>" );
+
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
         poDriver->AddSourceParser( "SimpleSource", 
