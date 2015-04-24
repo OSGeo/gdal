@@ -117,10 +117,9 @@ OGRFeatureDefn * OGRCARTODBTableLayer::GetLayerDefnInternal(CPL_UNUSED json_obje
     osBaseSQL.Printf("SELECT * FROM %s",
                      OGRCARTODBEscapeIdentifier(osName).c_str());
 
+    CPLString osCommand;
     if( poDS->IsAuthenticatedConnection() )
     {
-        CPLString osCommand;
-
         // Get everything !
         osCommand.Printf(
                  "SELECT a.attname, t.typname, a.attlen, "
@@ -146,8 +145,35 @@ OGRFeatureDefn * OGRCARTODBTableLayer::GetLayerDefnInternal(CPL_UNUSED json_obje
                  "ORDER BY a.attnum",
                  OGRCARTODBEscapeLiteral(osName).c_str(),
                  OGRCARTODBEscapeLiteral(poDS->GetCurrentSchema()).c_str());
+    }
+    else if( poDS->HasOGRMetadataFunction() != FALSE )
+    {
+        osCommand.Printf( "SELECT * FROM ogr_table_metadata('%s', '%s')",
+                          OGRCARTODBEscapeLiteral(poDS->GetCurrentSchema()).c_str(),
+                          OGRCARTODBEscapeLiteral(osName).c_str() );
+    }
 
+    if( osCommand.size() )
+    {
+        if( !poDS->IsAuthenticatedConnection() && poDS->HasOGRMetadataFunction() < 0 )
+            CPLPushErrorHandler(CPLQuietErrorHandler);
         OGRLayer* poLyr = poDS->ExecuteSQLInternal(osCommand);
+        if( !poDS->IsAuthenticatedConnection() && poDS->HasOGRMetadataFunction() < 0 )
+        {
+            CPLPopErrorHandler();
+            if( poLyr == NULL )
+            {
+                CPLDebug("CARTODB", "ogr_table_metadata(text, text) not available");
+                CPLErrorReset();
+            }
+            else if( poLyr->GetLayerDefn()->GetFieldCount() != 12 )
+            {
+                CPLDebug("CARTODB", "ogr_table_metadata(text, text) has unexpected column count");
+                poDS->ReleaseResultSet(poLyr);
+                poLyr = NULL;
+            }
+            poDS->SetOGRMetadataFunction(poLyr != NULL);
+        }
         if( poLyr )
         {
             poFeatureDefn = new OGRFeatureDefn(osName);

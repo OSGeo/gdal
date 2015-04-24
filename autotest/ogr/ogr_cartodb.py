@@ -357,7 +357,7 @@ Error""")
     if lyr_defn.GetGeomFieldDefn(0).GetSpatialRef().ExportToWkt().find('4326') < 0:
         gdaltest.post_reason('fail')
         return 'fail'
-  
+
     gdal.PushErrorHandler()
     fc = lyr.GetFeatureCount()
     gdal.PopErrorHandler()
@@ -626,6 +626,8 @@ Error""")
 
     ds = None
 
+    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=DROP FUNCTION IF EXISTS ogr_table_metadata(TEXT,TEXT); CREATE OR REPLACE FUNCTION ogr_table_metadata(schema_name TEXT, table_name TEXT) RETURNS TABLE (attname TEXT, typname TEXT, attlen INT, format_type TEXT, attnum INT, attnotnull BOOLEAN, indisprimary BOOLEAN, defaultexpr TEXT, dim INT, srid INT, geomtyp TEXT, srtext TEXT) AS $$ SELECT a.attname::text, t.typname::text, a.attlen::int, format_type(a.atttypid,a.atttypmod)::text, a.attnum::int, a.attnotnull::boolean, i.indisprimary::boolean, pg_get_expr(def.adbin, c.oid)::text AS defaultexpr, (CASE WHEN t.typname = 'geometry' THEN postgis_typmod_dims(a.atttypmod) ELSE NULL END)::int dim, (CASE WHEN t.typname = 'geometry' THEN postgis_typmod_srid(a.atttypmod) ELSE NULL END)::int srid, (CASE WHEN t.typname = 'geometry' THEN postgis_typmod_type(a.atttypmod) ELSE NULL END)::text geomtyp, srtext FROM pg_class c JOIN pg_attribute a ON a.attnum > 0 AND a.attrelid = c.oid AND c.relname = $2 AND c.relname IN (SELECT CDB_UserTables())JOIN pg_type t ON a.atttypid = t.oid JOIN pg_namespace n ON c.relnamespace=n.oid AND n.nspname = $1 LEFT JOIN pg_index i ON c.oid = i.indrelid AND i.indisprimary = 't' AND a.attnum = ANY(i.indkey) LEFT JOIN pg_attrdef def ON def.adrelid = c.oid AND def.adnum = a.attnum LEFT JOIN spatial_ref_sys srs ON srs.srid = postgis_typmod_srid(a.atttypmod) ORDER BY a.attnum $$ LANGUAGE SQL&api_key=foo""",
+    """""""")
     gdal.SetConfigOption('CARTODB_PAGE_SIZE', None)
     ds = ogr.Open('CARTODB:foo', update = 1)
     lyr = ds.CreateLayer('MY_LAYER')
