@@ -552,7 +552,7 @@ Error""")
         gdaltest.post_reason('fail')
         return 'fail'
 
-    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=SELECT COUNT(*) FROM "table1" WHERE strfield is NULL&api_key=foo""",
+    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=SELECT COUNT(*) FROM "table1" WHERE (strfield is NULL)&api_key=foo""",
         """{"rows":[{"count":9876543210}],
             "fields":{"count":{"type":"number"}}}""")
     if lyr.GetFeatureCount() != 9876543210:
@@ -568,7 +568,7 @@ Error""")
         gdaltest.post_reason('fail')
         return 'fail'
 
-    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=SELECT * FROM "table1" WHERE ("my_geom" %26%26 'BOX3D(-180 -90, 180 90)'::box3d AND strfield is NULL) AND "cartodb_id" >= 0 ORDER BY "cartodb_id" ASC LIMIT 2&api_key=foo""",
+    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=SELECT * FROM "table1" WHERE ("my_geom" %26%26 'BOX3D(-180 -90, 180 90)'::box3d) AND (strfield is NULL) AND "cartodb_id" >= 0 ORDER BY "cartodb_id" ASC LIMIT 2&api_key=foo""",
         """{"rows":[{"cartodb_id":20, "my_geom": "010100000000000000000000400000000000804840" }],
             "fields":{"cartodb_id":{"type":"numeric"}, "my_geom":{"type":"string"}}}""")
 
@@ -585,7 +585,7 @@ Error""")
         gdaltest.post_reason('fail')
         return 'fail'
 
-    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=SELECT COUNT(*) FROM "table1" WHERE "my_geom" %26%26 'BOX3D(-180 -90, 180 90)'::box3d AND strfield is NULL&api_key=foo""",
+    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=SELECT COUNT(*) FROM "table1" WHERE ("my_geom" %26%26 'BOX3D(-180 -90, 180 90)'::box3d) AND (strfield is NULL)&api_key=foo""",
         """{"rows":[{"count":9876543210}],
             "fields":{"count":{"type":"number"}}}""")
     if lyr.GetFeatureCount() != 9876543210:
