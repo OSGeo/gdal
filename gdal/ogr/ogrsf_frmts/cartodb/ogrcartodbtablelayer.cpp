@@ -279,45 +279,14 @@ json_object* OGRCARTODBTableLayer::FetchNewFeatures(GIntBig iNext)
     if( osFIDColName.size() > 0 )
     {
         CPLString osSQL;
-        osSQL.Printf("SELECT * FROM %s WHERE %s%s BETWEEN " CPL_FRMT_GIB " AND " CPL_FRMT_GIB " ORDER BY %s ASC",
+        osSQL.Printf("SELECT * FROM %s WHERE %s%s >= " CPL_FRMT_GIB " ORDER BY %s ASC LIMIT %d",
                      OGRCARTODBEscapeIdentifier(osName).c_str(),
                      ( osWHERE.size() ) ? CPLSPrintf("(%s) AND ", osWHERE.c_str()) : "",
                      OGRCARTODBEscapeIdentifier(osFIDColName).c_str(),
                      iNext,
-                     iNext + GetFeaturesToFetch() - 1,
-                     OGRCARTODBEscapeIdentifier(osFIDColName).c_str());
-        json_object* poObj = poDS->RunSQL(osSQL);
-        if( poObj )
-        {
-            json_object* poRows = json_object_object_get(poObj, "rows");
-            int nRows = (poRows && json_object_get_type(poRows) == json_type_array) ?
-                            json_object_array_length(poRows) : 0;
-            if( nRows == 0 )
-            {
-                osSQL.Printf("SELECT MIN(cartodb_id) AS next_id FROM %s WHERE %s%s >= " CPL_FRMT_GIB,
-                             OGRCARTODBEscapeIdentifier(osName).c_str(),
-                             ( osWHERE.size() ) ? CPLSPrintf("(%s) AND ", osWHERE.c_str()) : "",
-                             OGRCARTODBEscapeIdentifier(osFIDColName).c_str(),
-                             iNext);
-                json_object* poObj2 = poDS->RunSQL(osSQL);
-                json_object* poSingleRow = OGRCARTODBGetSingleRow(poObj2);
-                if( poSingleRow != NULL )
-                {
-                    json_object* poNextID = json_object_object_get(poSingleRow, "next_id");
-                    if( poNextID != NULL && json_object_get_type(poNextID) == json_type_int )
-                    {
-                        iNext = json_object_get_int64(poNextID);
-                        json_object_put(poObj);
-                        json_object_put(poObj2);
-                        return FetchNewFeatures(iNext);
-                    }
-                }
-
-                if( poObj2 != NULL )
-                    json_object_put(poObj2);
-            }
-        }
-        return poObj;
+                     OGRCARTODBEscapeIdentifier(osFIDColName).c_str(),
+                     GetFeaturesToFetch());
+        return poDS->RunSQL(osSQL);
     }
     else
         return OGRCARTODBLayer::FetchNewFeatures(iNext);
