@@ -184,6 +184,7 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
             CPLDebug("HTTP", "Cannot find %s", osURL.c_str());
             psResult->nStatus = 1;
             psResult->pszErrBuf = CPLStrdup(CPLSPrintf("HTTP error code : %d", 404));
+            CPLError( CE_Failure, CPLE_AppDefined, "%s", psResult->pszErrBuf );
         }
         else if( nLength != 0 )
         {
