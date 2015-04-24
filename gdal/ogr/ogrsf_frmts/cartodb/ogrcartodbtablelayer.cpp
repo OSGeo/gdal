@@ -896,26 +896,11 @@ CPLString OGRCARTODBTableLayer::GetSRS_SQL(const char* pszGeomCol)
 {
     CPLString osSQL;
 
-    if( poDS->IsAuthenticatedConnection() )
-    {
-        /* Find_SRID needs access to geometry_columns table, whhose access */
-        /* is restricted to authenticated connections. */
-        osSQL.Printf("SELECT srid, srtext FROM spatial_ref_sys WHERE srid IN "
-                    "(SELECT Find_SRID('%s', '%s', '%s'))",
-                    OGRCARTODBEscapeLiteral(poDS->GetCurrentSchema()).c_str(),
-                    OGRCARTODBEscapeLiteral(osName).c_str(),
-                    OGRCARTODBEscapeLiteral(pszGeomCol).c_str());
-    }
-    else
-    {
-        /* Assuming that the SRID of the first non-NULL geometry applies */
-        /* to geometries of all rows. */
-        osSQL.Printf("SELECT srid, srtext FROM spatial_ref_sys WHERE srid IN "
-                    "(SELECT ST_SRID(%s) FROM %s WHERE %s IS NOT NULL LIMIT 1)",
-                    OGRCARTODBEscapeIdentifier(pszGeomCol).c_str(),
-                    OGRCARTODBEscapeIdentifier(osName).c_str(),
-                    OGRCARTODBEscapeIdentifier(pszGeomCol).c_str());
-    }
+    osSQL.Printf("SELECT srid, srtext FROM spatial_ref_sys WHERE srid IN "
+                "(SELECT Find_SRID('%s', '%s', '%s'))",
+                OGRCARTODBEscapeLiteral(poDS->GetCurrentSchema()).c_str(),
+                OGRCARTODBEscapeLiteral(osName).c_str(),
+                OGRCARTODBEscapeLiteral(pszGeomCol).c_str());
 
     return osSQL;
 }
