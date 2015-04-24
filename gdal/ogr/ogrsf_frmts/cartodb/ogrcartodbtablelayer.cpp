@@ -241,14 +241,60 @@ OGRFeatureDefn * OGRCARTODBTableLayer::GetLayerDefnInternal(CPL_UNUSED json_obje
         EstablishLayerDefn(osName, NULL);
     }
 
+    return poFeatureDefn;
+}
+
+/************************************************************************/
+/*                        FetchNewFeatures()                            */
+/************************************************************************/
+
+json_object* OGRCARTODBTableLayer::FetchNewFeatures(GIntBig iNext)
+{
     if( osFIDColName.size() > 0 )
     {
-        osBaseSQL.Printf("SELECT * FROM %s ORDER BY %s ASC",
-                         OGRCARTODBEscapeIdentifier(osName).c_str(),
-                         OGRCARTODBEscapeIdentifier(osFIDColName).c_str());
-    }
+        CPLString osSQL;
+        osSQL.Printf("SELECT * FROM %s WHERE %s%s BETWEEN " CPL_FRMT_GIB " AND " CPL_FRMT_GIB " ORDER BY %s ASC",
+                     OGRCARTODBEscapeIdentifier(osName).c_str(),
+                     ( osWHERE.size() ) ? CPLSPrintf("(%s) AND ", osWHERE.c_str()) : "",
+                     OGRCARTODBEscapeIdentifier(osFIDColName).c_str(),
+                     iNext,
+                     iNext + GetFeaturesToFetch() - 1,
+                     OGRCARTODBEscapeIdentifier(osFIDColName).c_str());
+        json_object* poObj = poDS->RunSQL(osSQL);
+        if( poObj )
+        {
+            json_object* poRows = json_object_object_get(poObj, "rows");
+            int nRows = (poRows && json_object_get_type(poRows) == json_type_array) ?
+                            json_object_array_length(poRows) : 0;
+            if( nRows == 0 )
+            {
+                osSQL.Printf("SELECT MIN(cartodb_id) AS next_id FROM %s WHERE %s%s >= " CPL_FRMT_GIB,
+                             OGRCARTODBEscapeIdentifier(osName).c_str(),
+                             ( osWHERE.size() ) ? CPLSPrintf("(%s) AND ", osWHERE.c_str()) : "",
+                             OGRCARTODBEscapeIdentifier(osFIDColName).c_str(),
+                             iNext);
+                json_object* poObj2 = poDS->RunSQL(osSQL);
+                json_object* poSingleRow = OGRCARTODBGetSingleRow(poObj2);
+                if( poSingleRow != NULL )
+                {
+                    json_object* poNextID = json_object_object_get(poSingleRow, "next_id");
+                    if( poNextID != NULL && json_object_get_type(poNextID) == json_type_int )
+                    {
+                        iNext = json_object_get_int64(poNextID);
+                        json_object_put(poObj);
+                        json_object_put(poObj2);
+                        return FetchNewFeatures(iNext);
+                    }
+                }
 
-    return poFeatureDefn;
+                if( poObj2 != NULL )
+                    json_object_put(poObj2);
+            }
+        }
+        return poObj;
+    }
+    else
+        return OGRCARTODBLayer::FetchNewFeatures(iNext);
 }
 
 /************************************************************************/
@@ -909,31 +955,27 @@ void OGRCARTODBTableLayer::BuildWhere()
         CPLsnprintf(szBox3D_2, sizeof(szBox3D_2), "%.18g %.18g", sEnvelope.MaxX, sEnvelope.MaxY);
         while((pszComma = strchr(szBox3D_2, ',')) != NULL)
             *pszComma = '.';
-        osWHERE.Printf("WHERE %s && 'BOX3D(%s, %s)'::box3d",
+        osWHERE.Printf("%s && 'BOX3D(%s, %s)'::box3d",
                        OGRCARTODBEscapeIdentifier(osGeomColumn).c_str(),
                        szBox3D_1, szBox3D_2 );
     }
 
     if( strlen(osQuery) > 0 )
     {
-        if( strlen(osWHERE) == 0 )
-            osWHERE = "WHERE ";
-        else
+        if( osWHERE.size() > 0 )
             osWHERE += " AND ";
         osWHERE += osQuery;
     }
 
-    osBaseSQL.Printf("SELECT * FROM %s",
-                     OGRCARTODBEscapeIdentifier(osName).c_str());
-    if( osWHERE.size() )
+    if( osFIDColName.size() == 0 )
     {
-        osBaseSQL += " ";
-        osBaseSQL += osWHERE;
-    }
-    if( osFIDColName.size() > 0 )
-    {
-        osBaseSQL += CPLSPrintf(" ORDER BY %s ASC",
-                         OGRCARTODBEscapeIdentifier(osFIDColName).c_str());
+        osBaseSQL.Printf("SELECT * FROM %s",
+                        OGRCARTODBEscapeIdentifier(osName).c_str());
+        if( osWHERE.size() )
+        {
+            osBaseSQL += " WHERE ";
+            osBaseSQL += osWHERE;
+        }
     }
 }
 
@@ -990,7 +1032,7 @@ GIntBig OGRCARTODBTableLayer::GetFeatureCount(int bForce)
                                OGRCARTODBEscapeIdentifier(osName).c_str()));
     if( osWHERE.size() )
     {
-        osSQL += " ";
+        osSQL += " WHERE ";
         osSQL += osWHERE;
     }
 
@@ -1181,9 +1223,8 @@ void OGRCARTODBTableLayer::SetDeferedCreation (OGRwkbGeometryType eGType,
         }
     }
     osFIDColName = "cartodb_id";
-    osBaseSQL.Printf("SELECT * FROM %s ORDER BY %s ASC",
-                         OGRCARTODBEscapeIdentifier(osName).c_str(),
-                         OGRCARTODBEscapeIdentifier(osFIDColName).c_str());
+    osBaseSQL.Printf("SELECT * FROM %s",
+                     OGRCARTODBEscapeIdentifier(osName).c_str());
 }
 
 /************************************************************************/
