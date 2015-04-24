@@ -213,6 +213,8 @@ class OGRWFSJoinLayer : public OGRLayer
     OGRFeatureDefn     *poFeatureDefn;
 
     CPLString           osGlobalFilter;
+    CPLString           osSortBy;
+
     std::vector<OGRWFSLayer*> apoLayers;
 
     GDALDataset        *poBaseDS;
