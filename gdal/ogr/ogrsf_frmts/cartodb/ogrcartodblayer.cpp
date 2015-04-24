@@ -177,12 +177,6 @@ OGRFeature *OGRCARTODBLayer::BuildFeature(json_object* poRowObj)
 
 json_object* OGRCARTODBLayer::FetchNewFeatures(GIntBig iNext)
 {
-    if( nFetchedObjects > 0 && nFetchedObjects < GetFeaturesToFetch() )
-    {
-        bEOF = TRUE;
-        return NULL;
-    }
-
     CPLString osSQL = osBaseSQL;
     if( osSQL.ifind("SELECT") != std::string::npos &&
         osSQL.ifind(" LIMIT ") == std::string::npos )
@@ -206,6 +200,12 @@ OGRFeature *OGRCARTODBLayer::GetNextRawFeature()
 
     if( iNextInFetchedObjects >= nFetchedObjects )
     {
+        if( nFetchedObjects > 0 && nFetchedObjects < GetFeaturesToFetch() )
+        {
+            bEOF = TRUE;
+            return NULL;
+        }
+
         if( poFeatureDefn == NULL && osBaseSQL.size() == 0 )
         {
             GetLayerDefn();
