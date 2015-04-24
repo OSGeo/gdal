@@ -1976,7 +1976,7 @@ OGRErr OGRPGTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
 /* -------------------------------------------------------------------- */
     if( bLaunderColumnNames )
     {
-        char    *pszSafeName = poDS->LaunderName( oField.GetNameRef() );
+        char    *pszSafeName = OGRPGCommonLaunderName( oField.GetNameRef(), "PG" );
 
         oField.SetName( pszSafeName );
         CPLFree( pszSafeName );
@@ -2173,7 +2173,7 @@ OGRErr OGRPGTableLayer::CreateGeomField( OGRGeomFieldDefn *poGeomFieldIn,
 /* -------------------------------------------------------------------- */
     if( bLaunderColumnNames )
     {
-        char    *pszSafeName = poDS->LaunderName( poGeomField->GetNameRef() );
+        char    *pszSafeName = OGRPGCommonLaunderName( poGeomField->GetNameRef(), "PG" );
 
         poGeomField->SetName( pszSafeName );
         CPLFree( pszSafeName );
@@ -2432,7 +2432,7 @@ OGRErr OGRPGTableLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn
     {
         if (bLaunderColumnNames)
         {
-            char    *pszSafeName = poDS->LaunderName( oField.GetNameRef() );
+            char    *pszSafeName = OGRPGCommonLaunderName( oField.GetNameRef(), "PG" );
             oField.SetName( pszSafeName );
             CPLFree( pszSafeName );
         }

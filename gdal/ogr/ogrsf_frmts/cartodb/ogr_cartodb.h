@@ -112,6 +112,8 @@ class OGRCARTODBTableLayer : public OGRCARTODBLayer
     CPLString           osQuery;
     CPLString           osWHERE;
 
+    int                 bLaunderColumnNames;
+
     int                 bInDeferedInsert;
     CPLString           osDeferedInsertSQL;
     GIntBig             nNextFID;
@@ -152,6 +154,8 @@ class OGRCARTODBTableLayer : public OGRCARTODBLayer
     virtual OGRErr      GetExtent( OGREnvelope *psExtent, int bForce ) { return GetExtent(0, psExtent, bForce); }
     virtual OGRErr      GetExtent( int iGeomField, OGREnvelope *psExtent, int bForce );
 
+    void                SetLaunderFlag( int bFlag )
+                                { bLaunderColumnNames = bFlag; }
     void                SetDeferedCreation( OGRwkbGeometryType eGType,
                                             OGRSpatialReference* poSRS,
                                             int bGeomNullable,

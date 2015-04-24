@@ -86,6 +86,7 @@ OGRCARTODBTableLayer::OGRCARTODBTableLayer(OGRCARTODBDataSource* poDS,
 {
     osName = pszName;
     SetDescription( osName );
+    bLaunderColumnNames = TRUE;
     bInDeferedInsert = FALSE;
     nNextFID = -1;
     bDeferedCreation = FALSE;
@@ -122,8 +123,8 @@ OGRFeatureDefn * OGRCARTODBTableLayer::GetLayerDefnInternal(CPL_UNUSED json_obje
         int bHasDefault = FALSE;
 
         osCommand.Printf(
-                 "SELECT DISTINCT a.attname, t.typname, a.attlen,"
-                 "       format_type(a.atttypid,a.atttypmod), a.attnum, a.attnotnull, a.atthasdef "
+                 "SELECT DISTINCT a.attname, t.typname, a.attlen, "
+                 "format_type(a.atttypid,a.atttypmod), a.attnum, a.attnotnull, a.atthasdef "
                  "FROM pg_class c, pg_attribute a, pg_type t, pg_namespace n "
                  "WHERE c.relname = '%s' "
                  "AND a.attnum > 0 AND a.attrelid = c.oid "
@@ -344,6 +345,14 @@ OGRErr OGRCARTODBTableLayer::CreateField( OGRFieldDefn *poFieldIn,
         return OGRERR_FAILURE;
     }
 
+    OGRFieldDefn oField(poFieldIn);
+    if( bLaunderColumnNames )
+    {
+        char* pszName = OGRPGCommonLaunderName(oField.GetNameRef());
+        oField.SetName(pszName);
+        CPLFree(pszName);
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Create the new field.                                           */
 /* -------------------------------------------------------------------- */
@@ -353,14 +362,14 @@ OGRErr OGRCARTODBTableLayer::CreateField( OGRFieldDefn *poFieldIn,
         CPLString osSQL;
         osSQL.Printf( "ALTER TABLE %s ADD COLUMN %s %s",
                     OGRCARTODBEscapeIdentifier(osName).c_str(),
-                    OGRCARTODBEscapeIdentifier(poFieldIn->GetNameRef()).c_str(),
-                    OGRPGCommonLayerGetType(*poFieldIn, FALSE, TRUE).c_str() );
-        if( !poFieldIn->IsNullable() )
+                    OGRCARTODBEscapeIdentifier(oField.GetNameRef()).c_str(),
+                    OGRPGCommonLayerGetType(oField, FALSE, TRUE).c_str() );
+        if( !oField.IsNullable() )
             osSQL += " NOT NULL";
-        if( poFieldIn->GetDefault() != NULL && !poFieldIn->IsDefaultDriverSpecific() )
+        if( oField.GetDefault() != NULL && !oField.IsDefaultDriverSpecific() )
         {
             osSQL += " DEFAULT ";
-            osSQL += OGRPGCommonLayerGetPGDefault(poFieldIn);
+            osSQL += OGRPGCommonLayerGetPGDefault(&oField);
         }
 
         json_object* poObj = poDS->RunSQL(osSQL);
@@ -369,7 +378,7 @@ OGRErr OGRCARTODBTableLayer::CreateField( OGRFieldDefn *poFieldIn,
         json_object_put(poObj);
     }
 
-    poFeatureDefn->AddFieldDefn( poFieldIn );
+    poFeatureDefn->AddFieldDefn( &oField );
 
     return OGRERR_NONE;
 }
@@ -585,7 +594,10 @@ OGRErr OGRCARTODBTableLayer::ICreateFeature( OGRFeature *poFeature )
             if( poObj != NULL )
                 json_object_put(poObj);
             else
+            {
+                bInDeferedInsert = FALSE;
                 eRet = OGRERR_FAILURE;
+            }
             osDeferedInsertSQL = "";
         }
 
@@ -599,7 +611,10 @@ OGRErr OGRCARTODBTableLayer::ICreateFeature( OGRFeature *poFeature )
             if( poObj != NULL )
                 json_object_put(poObj);
             else
+            {
+                bInDeferedInsert = FALSE;
                 eRet = OGRERR_FAILURE;
+            }
             osDeferedInsertSQL = "";
         }
 
@@ -751,13 +766,6 @@ OGRErr OGRCARTODBTableLayer::ISetFeature( OGRFeature *poFeature )
     osSQL += CPLSPrintf(" WHERE %s = " CPL_FRMT_GIB,
                     OGRCARTODBEscapeIdentifier(osFIDColName).c_str(),
                     poFeature->GetFID());
-    
-    if( bInDeferedInsert )
-    {
-        osDeferedInsertSQL += osSQL;
-        osDeferedInsertSQL += ";";
-        return OGRERR_NONE;
-    }
 
     OGRErr eRet = OGRERR_FAILURE;
     json_object* poObj = poDS->RunSQL(osSQL);
@@ -809,14 +817,7 @@ OGRErr OGRCARTODBTableLayer::DeleteFeature( GIntBig nFID )
                     OGRCARTODBEscapeIdentifier(osName).c_str(),
                     OGRCARTODBEscapeIdentifier(osFIDColName).c_str(),
                     nFID);
-    
-    if( bInDeferedInsert )
-    {
-        osDeferedInsertSQL += osSQL;
-        osDeferedInsertSQL += ";";
-        return OGRERR_NONE;
-    }
-    
+
     OGRErr eRet = OGRERR_FAILURE;
     json_object* poObj = poDS->RunSQL(osSQL);
     if( poObj != NULL )

@@ -1477,7 +1477,7 @@ OGRErr OGRPGDumpLayer::CreateField( OGRFieldDefn *poFieldIn,
 /* -------------------------------------------------------------------- */
     if( bLaunderColumnNames )
     {
-        char    *pszSafeName = poDS->LaunderName( oField.GetNameRef() );
+        char    *pszSafeName = OGRPGCommonLaunderName( oField.GetNameRef(), "PGDump" );
 
         oField.SetName( pszSafeName );
         CPLFree( pszSafeName );
@@ -1555,7 +1555,7 @@ OGRErr OGRPGDumpLayer::CreateGeomField( OGRGeomFieldDefn *poGeomFieldIn,
 /* -------------------------------------------------------------------- */
     if( bLaunderColumnNames )
     {
-        char    *pszSafeName = poDS->LaunderName( poGeomField->GetNameRef() );
+        char    *pszSafeName = OGRPGCommonLaunderName( poGeomField->GetNameRef(), "PGDump" );
 
         poGeomField->SetName( pszSafeName );
         CPLFree( pszSafeName );
