@@ -242,7 +242,7 @@ def transform_abs_links_to_ref_links(path, level = 0):
                     lines[i] = l
 
             if rewrite:
-                f = open(filename, 'wb')
+                f = open(filename, 'wt')
                 f.writelines(lines)
                 f.close()
 
