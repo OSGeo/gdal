@@ -212,6 +212,8 @@ class OGRCARTODBDataSource : public OGRDataSource
     int                 bMustCleanPersistant;
     
     CPLString           osCurrentSchema;
+    
+    int                 bHasOGRMetadataFunction;
 
   public:
                         OGRCARTODBDataSource();
@@ -249,6 +251,8 @@ class OGRCARTODBDataSource : public OGRDataSource
     int                         FetchSRSId( OGRSpatialReference * poSRS );
 
     int                         IsAuthenticatedConnection() { return osAPIKey.size() != 0; }
+    int                         HasOGRMetadataFunction() { return bHasOGRMetadataFunction; }
+    void                        SetOGRMetadataFunction(int bFlag) { bHasOGRMetadataFunction = bFlag; }
     
     OGRLayer *                  ExecuteSQLInternal( const char *pszSQLCommand,
                                                     OGRGeometry *poSpatialFilter = NULL,
