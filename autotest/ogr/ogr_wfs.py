@@ -4984,6 +4984,16 @@ xsi:schemaLocation="http://foo blabla
         return 'fail'
     ds.ReleaseResultSet(sql_lyr)
 
+    gdal.FileFromMemBuffer('/vsimem/wfs200_endpoint_join?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=%28lyr1,lyr2%29&STARTINDEX=0&COUNT=1&FILTER=%3CFilter%20xmlns%3D%22http:%2F%2Fwww.opengis.net%2Ffes%2F2.0%22%20xmlns:gml%3D%22http:%2F%2Fwww.opengis.net%2Fgml%2F3.2%22%3E%3CPropertyIsEqualTo%3E%3CValueReference%3Elyr1%2Fstr%3C%2FValueReference%3E%3CValueReference%3Elyr2%2Fstr2%3C%2FValueReference%3E%3C%2FPropertyIsEqualTo%3E%3C%2FFilter%3E&SORTBY=str%20DESC',
+                           content)
+    sql_lyr = ds.ExecuteSQL("SELECT * FROM lyr1 JOIN lyr2 ON lyr1.str = lyr2.str2 ORDER BY lyr1.str DESC")
+    f = sql_lyr.GetNextFeature()
+    if f['lyr1.gml_id'] != 'lyr1-100':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+
     gdal.PushErrorHandler()
     sql_lyr = ds.ExecuteSQL("SELECT * FROM lyr1 JOIN lyr2 ON lyr1.str = lyr2.str2 WHERE lyr1.OGR_GEOMETRY IS NOT NULL")
     gdal.PopErrorHandler()

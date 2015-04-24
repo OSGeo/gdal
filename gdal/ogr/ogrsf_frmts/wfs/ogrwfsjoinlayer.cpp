@@ -142,6 +142,23 @@ OGRWFSJoinLayer::OGRWFSJoinLayer(OGRWFSDataSource* poDS,
         }
     }
 
+    for(int i=0;i<psSelectInfo->order_specs;i++)
+    {
+        int nFieldIndex = apoLayers[0]->GetLayerDefn()->GetFieldIndex(
+                                psSelectInfo->order_defs[i].field_name);
+        if (nFieldIndex < 0)
+            break;
+
+        /* Make sure to have the right case */
+        const char* pszFieldName = apoLayers[0]->GetLayerDefn()->
+            GetFieldDefn(nFieldIndex)->GetNameRef();
+        if( osSortBy.size() )
+            osSortBy += ",";
+        osSortBy += pszFieldName;
+        if( !psSelectInfo->order_defs[i].ascending_flag )
+            osSortBy += " DESC";
+    }
+
     CPLXMLNode* psGlobalSchema = CPLCreateXMLNode( NULL, CXT_Element, "Schema" );
     for(int i=0;i<(int)apoLayers.size();i++)
     {
@@ -379,6 +396,10 @@ CPLString OGRWFSJoinLayer::MakeGetFeatureURL(int bRequestHits)
     if (bRequestHits)
     {
         osURL = CPLURLAddKVP(osURL, "RESULTTYPE", "hits");
+    }
+    else if( osSortBy.size() )
+    {
+        osURL = CPLURLAddKVP(osURL, "SORTBY", WFS_EscapeURL(osSortBy));
     }
 
     return osURL;

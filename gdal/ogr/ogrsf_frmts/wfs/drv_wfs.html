@@ -113,7 +113,8 @@ supports spatial joins.</p>
 <p>There might be restrictions set by server on the complexity of the joins.
 The OGR WFS driver also restricts column selection to be column names, potentially
 with aliases and type casts, but not expressions. The ON and WHERE clauses must
-also be evaluated on server side, so no OGR special fields are allowed for example.</p>
+also be evaluated on server side, so no OGR special fields are allowed for example.
+ORDER BY clauses are supported, but the fields must belong to the primary table.</p>
 
 <p>
 Example of valid statement :
