@@ -46,6 +46,7 @@ OGRCARTODBDataSource::OGRCARTODBDataSource()
     pszAccount = NULL;
 
     bReadWrite = FALSE;
+    bBatchInsert = TRUE;
     bUseHTTPS = FALSE;
 
     bMustCleanPersistant = FALSE;
@@ -136,10 +137,13 @@ CPLString OGRCARTODBGetOptionValue(const char* pszFilename,
 /*                                Open()                                */
 /************************************************************************/
 
-int OGRCARTODBDataSource::Open( const char * pszFilename, int bUpdateIn)
+int OGRCARTODBDataSource::Open( const char * pszFilename,
+                                char** papszOpenOptions,
+                                int bUpdateIn )
 
 {
     bReadWrite = bUpdateIn;
+    bBatchInsert = CSLTestBoolean(CSLFetchNameValueDef(papszOpenOptions, "BATCH_INSERT", "YES"));
 
     pszName = CPLStrdup( pszFilename );
     pszAccount = CPLStrdup(pszFilename + strlen("CARTODB:"));
@@ -160,7 +164,7 @@ int OGRCARTODBDataSource::Open( const char * pszFilename, int bUpdateIn)
 
     bUseHTTPS = CSLTestBoolean(CPLGetConfigOption("CARTODB_HTTPS", "YES"));
 
-    OGRLayer* poSchemaLayer = ExecuteSQL("SELECT current_schema()", NULL, NULL);
+    OGRLayer* poSchemaLayer = ExecuteSQLInternal("SELECT current_schema()");
     if( poSchemaLayer )
     {
         OGRFeature* poFeat = poSchemaLayer->GetNextFeature();
@@ -190,7 +194,7 @@ int OGRCARTODBDataSource::Open( const char * pszFilename, int bUpdateIn)
         return TRUE;
     }
 
-    OGRLayer* poTableListLayer = ExecuteSQL("SELECT CDB_UserTables()", NULL, NULL);
+    OGRLayer* poTableListLayer = ExecuteSQLInternal("SELECT CDB_UserTables()");
     if( poTableListLayer )
     {
         OGRFeature* poFeat;
@@ -217,7 +221,7 @@ int OGRCARTODBDataSource::Open( const char * pszFilename, int bUpdateIn)
         osSQL.Printf("SELECT c.relname FROM pg_class c, pg_namespace n "
                      "WHERE c.relkind in ('r', 'v') AND c.relname !~ '^pg_' AND c.relnamespace=n.oid AND n.nspname = '%s'",
                      OGRCARTODBEscapeLiteral(osCurrentSchema).c_str());
-        poTableListLayer = ExecuteSQL(osSQL, NULL, NULL);
+        poTableListLayer = ExecuteSQLInternal(osSQL);
         if( poTableListLayer )
         {
             OGRFeature* poFeat;
@@ -589,10 +593,23 @@ OGRLayer * OGRCARTODBDataSource::ExecuteSQL( const char *pszSQLCommand,
                                         const char *pszDialect )
 
 {
-    for( int iLayer = 0; iLayer < nLayers; iLayer++ )
+    return ExecuteSQLInternal(pszSQLCommand, poSpatialFilter, pszDialect,
+                              TRUE);
+}
+
+OGRLayer * OGRCARTODBDataSource::ExecuteSQLInternal( const char *pszSQLCommand,
+                                                     OGRGeometry *poSpatialFilter,
+                                                     const char *pszDialect,
+                                                     int bRunDeferedActions )
+
+{
+    if( bRunDeferedActions )
     {
-        papoLayers[iLayer]->RunDeferedCreationIfNecessary();
-        papoLayers[iLayer]->FlushDeferedInsert();
+        for( int iLayer = 0; iLayer < nLayers; iLayer++ )
+        {
+            papoLayers[iLayer]->RunDeferedCreationIfNecessary();
+            papoLayers[iLayer]->FlushDeferedInsert();
+        }
     }
 
     /* Skip leading spaces */
@@ -626,6 +643,12 @@ OGRLayer * OGRCARTODBDataSource::ExecuteSQL( const char *pszSQLCommand,
                 break;
             }
         }
+        return NULL;
+    }
+    
+    if( !EQUALN(pszSQLCommand, "SELECT", 5) )
+    {
+        RunSQL(pszSQLCommand);
         return NULL;
     }
 

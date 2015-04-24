@@ -102,6 +102,14 @@ SQL commands provided to the OGRDataSource::ExecuteSQL() call are executed on th
 dialect is specified. You can use the full power of PostgreSQL + PostGIS SQL
 capabilities.<p>
 
+<h2>Open options</h2>
+
+<p>Starting with GDAL 2.0, the following open options are available:</p>
+<ul>
+<li><b>BATCH_INSERT</b>=YES/NO: Whether to group feature insertions in a batch.
+Defaults to YES. Only apply in creation or update mode.</li>
+</ul>
+
 <h2>Layer creation options</h2>
 
 <p>The following layer creation options are available:</p>
