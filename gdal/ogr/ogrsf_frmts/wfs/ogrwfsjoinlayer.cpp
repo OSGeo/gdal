@@ -509,8 +509,7 @@ GDALDataset* OGRWFSJoinLayer::FetchGetFeature()
     poDS = (OGRDataSource*) OGROpen(osTmpFileName, FALSE, NULL);
     if (poDS == NULL)
     {
-        if (pabyData != NULL &&
-            strstr((const char*)pabyData, "<wfs:FeatureCollection") == NULL &&
+        if( strstr((const char*)pabyData, "<wfs:FeatureCollection") == NULL &&
             strstr((const char*)pabyData, "<gml:FeatureCollection") == NULL)
         {
             if (nDataLen > 1000)
@@ -601,8 +600,8 @@ OGRFeature* OGRWFSJoinLayer::GetNextFeature()
                 OGRGeometry* poGeom = poSrcFeature->StealGeometry(iSrcField);
                 if( poGeom )
                 {
-                    poNewFeature->SetGeomFieldDirectly(i, poGeom);
                     poGeom->assignSpatialReference(poFeatureDefn->GetGeomFieldDefn(i)->GetSpatialRef());
+                    poNewFeature->SetGeomFieldDirectly(i, poGeom);
                 }
             }
         }

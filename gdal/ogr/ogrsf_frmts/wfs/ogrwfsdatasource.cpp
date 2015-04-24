@@ -190,6 +190,8 @@ OGRWFSDataSource::OGRWFSDataSource()
     poLayerGetCapabilitiesLayer = NULL;
 
     bKeepLayerNamePrefix = FALSE;
+    apszGetCapabilities[0] = NULL;
+    apszGetCapabilities[1] = NULL;
 }
 
 /************************************************************************/
