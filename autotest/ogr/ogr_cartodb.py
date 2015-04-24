@@ -280,7 +280,7 @@ Error""")
         gdaltest.post_reason('fail')
         return 'fail'
         
-    get_full_details_fields_url = """/vsimem/cartodb&POSTFIELDS=q=SELECT DISTINCT a.attname, t.typname, a.attlen, format_type(a.atttypid,a.atttypmod), a.attnum, a.attnotnull, a.atthasdef FROM pg_class c, pg_attribute a, pg_type t, pg_namespace n WHERE c.relname = 'table1' AND a.attnum > 0 AND a.attrelid = c.oid AND a.atttypid = t.oid AND c.relnamespace=n.oid AND n.nspname= 'public' ORDER BY a.attnum LIMIT 500 OFFSET 0&api_key=foo"""
+    get_full_details_fields_url = """/vsimem/cartodb&POSTFIELDS=q=SELECT a.attname, t.typname, a.attlen, format_type(a.atttypid,a.atttypmod), a.attnum, a.attnotnull, i.indisprimary, pg_get_expr(def.adbin, c.oid) AS defaultexpr, postgis_typmod_dims(a.atttypmod) dim, postgis_typmod_srid(a.atttypmod) srid, postgis_typmod_type(a.atttypmod)::text geomtyp, srtext FROM pg_class c JOIN pg_attribute a ON a.attnum > 0 AND a.attrelid = c.oid AND c.relname = 'table1' JOIN pg_type t ON a.atttypid = t.oid JOIN pg_namespace n ON c.relnamespace=n.oid AND n.nspname= 'public' LEFT JOIN pg_index i ON c.oid = i.indrelid AND i.indisprimary = 't' AND a.attnum = ANY(i.indkey) LEFT JOIN pg_attrdef def ON def.adrelid = c.oid AND def.adnum = a.attnum LEFT JOIN spatial_ref_sys srs ON srs.srid = postgis_typmod_srid(a.atttypmod) ORDER BY a.attnum LIMIT 500 OFFSET 0&api_key=foo"""
     gdal.FileFromMemBuffer(get_full_details_fields_url, '')
     ds = ogr.Open('CARTODB:foo')
     gdal.PushErrorHandler()
@@ -309,15 +309,16 @@ Error""")
         return 'fail'
 
     gdal.FileFromMemBuffer(get_full_details_fields_url,
-    """{"rows":[{"attname":"strfield", "typname":"varchar", "attnotnull": true, "atthasdef": true},
+    """{"rows":[{"attname":"strfield", "typname":"varchar", "attnotnull": true, "defaultexpr": "def_value"},
                {"attname":"intfield", "typname":"int4"},
                {"attname":"doublefield", "typname":"float"},
                {"attname":"boolfield", "typname":"bool"},
                {"attname":"datetimefield", "typname":"timestamp"},
-               {"attname":"cartodb_id","typname":"integer"},
+               {"attname":"cartodb_id","typname":"int4","indisprimary":true},
                {"attname":"created_at","typname":"date"},
                {"attname":"updated_at","typname":"date"},
-               {"attname":"my_geom","typname":"geometry"},
+               {"attname":"my_geom","typname":"geometry","dim":3,"srid":4326,"geomtyp":"Point",
+                "srtext":"GEOGCS[\\"WGS 84\\",DATUM[\\"WGS_1984\\",SPHEROID[\\"WGS 84\\",6378137,298.257223563,AUTHORITY[\\"EPSG\\",\\"7030\\"]],AUTHORITY[\\"EPSG\\",\\"6326\\"]],PRIMEM[\\"Greenwich\\",0,AUTHORITY[\\"EPSG\\",\\"8901\\"]],UNIT[\\"degree\\",0.0174532925199433,AUTHORITY[\\"EPSG\\",\\"9122\\"]],AUTHORITY[\\"EPSG\\",\\"4326\\"]]"},
                {"attname":"the_geom_webmercator","typname":"geometry"}],
         "fields":{"attname":{"type":"string"},
                   "typname":{"type":"string"},
@@ -325,24 +326,11 @@ Error""")
                   "format_type":{"type":"string"},
                   "attnum":{"type":"number"},
                   "attnotnull":{"type":"boolean"},
-                  "atthasdef":{"type":"boolean"}}}""")
-
-    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=SELECT a.attname, pg_get_expr(def.adbin, c.oid) FROM pg_attrdef def, pg_class c, pg_attribute a, pg_type t, pg_namespace n WHERE c.relname = 'table1' AND a.attnum > 0 AND a.attrelid = c.oid AND a.atttypid = t.oid AND c.relnamespace=n.oid AND def.adrelid = c.oid AND def.adnum = a.attnum AND n.nspname= 'public' ORDER BY a.attnum LIMIT 500 OFFSET 0&api_key=foo""",
-    """{"rows":[{"attname": "strfield", "pg_get_expr": "def_value"}],
-        "fields":{"attname":{"type":"string"},
-                  "pg_get_expr":{"type":"string"}}}""")
-
-    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=SELECT f_geometry_column, type, coord_dimension, g.srid AS srid, srtext FROM geometry_columns g LEFT JOIN spatial_ref_sys srs ON g.srid = srs.srid WHERE f_table_schema = 'public' AND f_table_name = 'table1' LIMIT 500 OFFSET 0&api_key=foo""",
-    """{"rows":[{"f_geometry_column":"my_geom",
-                  "type":"POINT",
-                  "coord_dimension":3,
-                  "srid":4326,
-                  "srtext":"GEOGCS[\\"WGS 84\\",DATUM[\\"WGS_1984\\",SPHEROID[\\"WGS 84\\",6378137,298.257223563,AUTHORITY[\\"EPSG\\",\\"7030\\"]],AUTHORITY[\\"EPSG\\",\\"6326\\"]],PRIMEM[\\"Greenwich\\",0,AUTHORITY[\\"EPSG\\",\\"8901\\"]],UNIT[\\"degree\\",0.0174532925199433,AUTHORITY[\\"EPSG\\",\\"9122\\"]],AUTHORITY[\\"EPSG\\",\\"4326\\"]]"
-                 }],
-        "fields":{"f_geometry_column":{"type":"string"},
-                  "type":{"type":"string"},
-                  "coord_dimension":{"type":"number"},
+                  "indisprimary":{"type":"boolean"},
+                  "defaultexpr":{"type":"string"},
+                  "dim":{"type":"number"},
                   "srid":{"type":"number"},
+                  "geomtyp":{"type":"string"},
                   "srtext":{"type":"string"}}}""")
 
     ds = ogr.Open('CARTODB:foo')
