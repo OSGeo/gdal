@@ -281,7 +281,7 @@ json_object* OGRCARTODBTableLayer::FetchNewFeatures(GIntBig iNext)
         CPLString osSQL;
         osSQL.Printf("SELECT * FROM %s WHERE %s%s >= " CPL_FRMT_GIB " ORDER BY %s ASC LIMIT %d",
                      OGRCARTODBEscapeIdentifier(osName).c_str(),
-                     ( osWHERE.size() ) ? CPLSPrintf("(%s) AND ", osWHERE.c_str()) : "",
+                     ( osWHERE.size() ) ? CPLSPrintf("%s AND ", osWHERE.c_str()) : "",
                      OGRCARTODBEscapeIdentifier(osFIDColName).c_str(),
                      iNext,
                      OGRCARTODBEscapeIdentifier(osFIDColName).c_str(),
@@ -317,7 +317,9 @@ OGRErr OGRCARTODBTableLayer::SetAttributeFilter( const char *pszQuery )
         osQuery = "";
     else
     {
-        osQuery = pszQuery;
+        osQuery = "(";
+        osQuery += pszQuery;
+        osQuery += ")";
     }
 
     BuildWhere();
@@ -950,7 +952,7 @@ void OGRCARTODBTableLayer::BuildWhere()
         CPLsnprintf(szBox3D_2, sizeof(szBox3D_2), "%.18g %.18g", sEnvelope.MaxX, sEnvelope.MaxY);
         while((pszComma = strchr(szBox3D_2, ',')) != NULL)
             *pszComma = '.';
-        osWHERE.Printf("%s && 'BOX3D(%s, %s)'::box3d",
+        osWHERE.Printf("(%s && 'BOX3D(%s, %s)'::box3d)",
                        OGRCARTODBEscapeIdentifier(osGeomColumn).c_str(),
                        szBox3D_1, szBox3D_2 );
     }
