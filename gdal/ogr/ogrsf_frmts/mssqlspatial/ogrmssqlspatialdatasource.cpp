@@ -218,6 +218,7 @@ OGRLayer * OGRMSSQLSpatialDataSource::ICreateLayer( const char * pszLayerName,
     const char          *pszGeomType = NULL;
     const char          *pszGeomColumn = NULL;
     int                 nCoordDimension = 3;
+    char                *pszFIDColumnName = NULL;
 
     /* determine the dimension */
     if( eType == wkbFlatten(eType) )
@@ -374,18 +375,28 @@ OGRLayer * OGRMSSQLSpatialDataSource::ICreateLayer( const char * pszLayerName,
         oStmt.Appendf("IF NOT EXISTS (SELECT name from sys.schemas WHERE name = '%s') EXEC sp_executesql N'CREATE SCHEMA [%s]'\n", pszSchemaName, pszSchemaName);
     }
 
+     /* determine the FID column name */
+    const char* pszFIDColumnNameIn = CSLFetchNameValueDef(papszOptions, "FID", "ogr_fid");
+    if( CSLFetchBoolean(papszOptions,"LAUNDER", TRUE) )
+        pszFIDColumnName = LaunderName( pszFIDColumnNameIn );
+    else
+        pszFIDColumnName = CPLStrdup( pszFIDColumnNameIn );
+
     if( eType == wkbNone ) 
     { 
-        oStmt.Appendf("CREATE TABLE [%s].[%s] ([ogr_fid] [int] IDENTITY(1,1) NOT NULL, "
-            "CONSTRAINT [PK_%s] PRIMARY KEY CLUSTERED ([ogr_fid] ASC))",
-            pszSchemaName, pszTableName, pszTableName);
+        oStmt.Appendf("CREATE TABLE [%s].[%s] ([%s] [int] IDENTITY(1,1) NOT NULL, "
+            "CONSTRAINT [PK_%s] PRIMARY KEY CLUSTERED ([%s] ASC))",
+            pszSchemaName, pszTableName, pszFIDColumnName, pszTableName, pszFIDColumnName);
     }
     else
     {
-        oStmt.Appendf("CREATE TABLE [%s].[%s] ([ogr_fid] [int] IDENTITY(1,1) NOT NULL, "
-            "[%s] [%s] NULL, CONSTRAINT [PK_%s] PRIMARY KEY CLUSTERED ([ogr_fid] ASC))",
-            pszSchemaName, pszTableName, pszGeomColumn, pszGeomType, pszTableName);
+        oStmt.Appendf("CREATE TABLE [%s].[%s] ([%s] [int] IDENTITY(1,1) NOT NULL, "
+            "[%s] [%s] NULL, CONSTRAINT [PK_%s] PRIMARY KEY CLUSTERED ([%s] ASC))",
+            pszSchemaName, pszTableName, pszFIDColumnName, pszGeomColumn, pszGeomType, pszTableName, pszFIDColumnName);
     }
+
+    CPLFree( pszFIDColumnName );
+
     oSession.BeginTransaction();
         
     if( !oStmt.ExecuteSQL() )

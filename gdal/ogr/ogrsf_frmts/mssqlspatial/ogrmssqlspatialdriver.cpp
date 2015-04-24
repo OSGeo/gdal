@@ -146,6 +146,7 @@ void RegisterOGRMSSQLSpatial()
 "    <Value>wkb</Value>"
 "    <Value>wkt</Value>"
 "  </Option>"
+"  <Option name='FID' type='string' description='Name of the FID column to create' default='ogr_fid'/>"
 "</LayerCreationOptionList>");
 
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES, "Integer Real String Date Time DateTime Binary" );
