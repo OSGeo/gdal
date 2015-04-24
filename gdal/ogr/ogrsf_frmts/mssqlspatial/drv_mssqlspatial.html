@@ -95,8 +95,9 @@ omitted it defaults to <i>ogr_geometry</i>.. Note: option was called GEOM_NAME i
 If this parameter is not supported the default schema "<i>dbo"</i> is used.</li>
 <li> <b>SRID</b>: Set the spatial reference id of the new table explicitly.
 The corresponding entry should already be added to the spatial_ref_sys metadata table. If this parameter is not set the SRID is derived from the authority code of source layer SRS.</li>
-<li> <b>SPATIAL_INDEX</b>: (From GDAL 2.0.0) Enable/disable the automatic creation of a spatial index on the newly created layers (enabled by default).</li>
+<li> <b>SPATIAL_INDEX</b>: (From GDAL 2.0.0) Boolean flag (YES/NO) to enable/disable the automatic creation of a spatial index on the newly created layers (enabled by default).</li>
 <li> <b>UPLOAD_GEOM_FORMAT</b>: (From GDAL 2.0.0) Specify the geometry format (wkb or wkt) when creating or modifying features. The default is wkb.</li>
+<li> <b>FID</b>: (From GDAL 2.0.0) Name of the FID column to create. Defaults to ogr_fid.</li>
 </ul>
 
 <h3>Spatial Index Creation</h3>
