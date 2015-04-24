@@ -1022,7 +1022,7 @@ OGRErr OGRGeoPackageTableLayer::CreateGeomField( OGRGeomFieldDefn *poGeomFieldIn
 
         pszSQL = sqlite3_mprintf("ALTER TABLE \"%s\" ADD COLUMN \"%s\" %s%s", 
                                  m_pszTableName, oGeomField.GetNameRef(),
-                                 OGRToOGCGeomType(oGeomField.GetType()),
+                                 m_poDS->GetGeometryTypeString(oGeomField.GetType()),
                                  !oGeomField.IsNullable() ? " NOT NULL DEFAULT ''" : "");
 
         OGRErr err = SQLCommand(m_poDS->GetDB(), pszSQL);
@@ -1970,7 +1970,7 @@ void OGRGeoPackageTableLayer::CheckUnknownExtensions()
                     "('gpkg_rtree_index', 'gpkg_geometry_type_trigger', 'gpkg_srs_id_trigger')",
                     pszT,
                     m_poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef(),
-                    OGRToOGCGeomType(m_poFeatureDefn->GetGeomFieldDefn(0)->GetType()) );
+                    m_poDS->GetGeometryTypeString(m_poFeatureDefn->GetGeomFieldDefn(0)->GetType()) );
     }
     SQLResult oResultTable;
     OGRErr err = SQLQuery(m_poDS->GetDB(), pszSQL, &oResultTable);
@@ -2030,7 +2030,7 @@ int OGRGeoPackageTableLayer::CreateGeometryExtensionIfNecessary(OGRwkbGeometryTy
 
     const char* pszT = m_pszTableName;
     const char* pszC = m_poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef();
-    const char *pszGeometryType = OGRToOGCGeomType(eGType);
+    const char *pszGeometryType = m_poDS->GetGeometryTypeString(eGType);
 
     /* Register the table in gpkg_extensions */
     char* pszSQL = sqlite3_mprintf(
@@ -2326,7 +2326,7 @@ void OGRGeoPackageTableLayer::SetCreationParameters( OGRwkbGeometryType eGType,
 OGRErr OGRGeoPackageTableLayer::RegisterGeometryColumn()
 {
     OGRwkbGeometryType eGType = GetGeomType();
-    const char *pszGeometryType = OGRToOGCGeomType(eGType);
+    const char *pszGeometryType = m_poDS->GetGeometryTypeString(eGType);
     /* Requirement 27: The z value in a gpkg_geometry_columns table row */
     /* SHALL be one of 0 (none), 1 (mandatory), or 2 (optional) */
     int bGeometryTypeHasZ = wkbHasZ(eGType);
@@ -2369,7 +2369,7 @@ OGRErr OGRGeoPackageTableLayer::RunDeferredCreationIfNecessary()
     /* Requirement 25: The geometry_type_name value in a gpkg_geometry_columns */
     /* row SHALL be one of the uppercase geometry type names specified in */
     /* Geometry Types (Normative). */
-    const char *pszGeometryType = OGRToOGCGeomType(eGType);
+    const char *pszGeometryType = m_poDS->GetGeometryTypeString(eGType);
 
     /* Create the table! */
     char *pszSQL = NULL;

@@ -253,6 +253,8 @@ class GDALGeoPackageDataset : public OGRSQLiteBaseDataSource
         int                 HasExtensionsTable();
         OGRErr              CreateGDALAspatialExtension();
 
+        const char*         GetGeometryTypeString(OGRwkbGeometryType eType);
+
         static GDALDataset* CreateCopy( const char *pszFilename,
                                                    GDALDataset *poSrcDS, 
                                                    int bStrict,

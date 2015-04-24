@@ -4261,3 +4261,19 @@ OGRErr GDALGeoPackageDataset::RollbackTransaction()
 
     return OGRSQLiteBaseDataSource::RollbackTransaction();
 }
+
+/************************************************************************/
+/*                       GetGeometryTypeString()                        */
+/************************************************************************/
+
+const char* GDALGeoPackageDataset::GetGeometryTypeString(OGRwkbGeometryType eType)
+{
+    const char* pszGPKGGeomType = OGRToOGCGeomType(eType);
+    if( EQUAL(pszGPKGGeomType, "GEOMETRYCOLLECTION") &&
+        CSLTestBoolean(CPLGetConfigOption("OGR_GPKG_GEOMCOLLECTION", "YES")) )
+    {
+        pszGPKGGeomType = "GEOMCOLLECTION";
+    }
+    return pszGPKGGeomType;
+}
+
