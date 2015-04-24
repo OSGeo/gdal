@@ -383,6 +383,7 @@ VRTBuilder::~VRTBuilder()
     CPLFree(padfSrcNoData);
     CPLFree(padfVRTNoData);
     CPLFree(pszOutputSRS);
+    CPLFree(pszResampling);
 }
 
 /************************************************************************/
