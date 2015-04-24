@@ -1360,7 +1360,7 @@ OGRPGDataSource::ICreateLayer( const char * pszLayerName,
     {
         if( CSLFetchBoolean(papszOptions,"LAUNDER", TRUE) )
         {
-            char* pszLaunderedFid = LaunderName(pszFIDColumnName);
+            char* pszLaunderedFid = OGRPGCommonLaunderName(pszFIDColumnName, "PG");
             osFIDColumnName += OGRPGEscapeColumnName(pszLaunderedFid);
             CPLFree(pszLaunderedFid);
         }
@@ -1410,7 +1410,7 @@ OGRPGDataSource::ICreateLayer( const char * pszLayerName,
       pszSchemaName[length] = '\0';
       
       if( CSLFetchBoolean(papszOptions,"LAUNDER", TRUE) )
-          pszTableName = LaunderName( pszDotPos + 1 ); //skip "."
+          pszTableName = OGRPGCommonLaunderName( pszDotPos + 1, "PG" ); //skip "."
       else
           pszTableName = CPLStrdup( pszDotPos + 1 ); //skip "."
     }
@@ -1418,7 +1418,7 @@ OGRPGDataSource::ICreateLayer( const char * pszLayerName,
     {
       pszSchemaName = NULL;
       if( CSLFetchBoolean(papszOptions,"LAUNDER", TRUE) )
-          pszTableName = LaunderName( pszLayerName ); //skip "."
+          pszTableName = OGRPGCommonLaunderName( pszLayerName, "PG" ); //skip "."
       else
           pszTableName = CPLStrdup( pszLayerName ); //skip "."
     }
@@ -2793,29 +2793,6 @@ void OGRPGDataSource::ReleaseResultSet( OGRLayer * poLayer )
 
 {
     delete poLayer;
-}
-
-/************************************************************************/
-/*                            LaunderName()                             */
-/************************************************************************/
-
-char *OGRPGDataSource::LaunderName( const char *pszSrcName )
-
-{
-    char    *pszSafeName = CPLStrdup( pszSrcName );
-
-    for( int i = 0; pszSafeName[i] != '\0'; i++ )
-    {
-        pszSafeName[i] = (char) tolower( pszSafeName[i] );
-        if( pszSafeName[i] == '\'' || pszSafeName[i] == '-' || pszSafeName[i] == '#' )
-            pszSafeName[i] = '_';
-    }
-
-    if( strcmp(pszSrcName,pszSafeName) != 0 )
-        CPLDebug("PG","LaunderName('%s') -> '%s'", 
-                 pszSrcName, pszSafeName);
-
-    return pszSafeName;
 }
 
 /************************************************************************/

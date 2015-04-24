@@ -128,10 +128,10 @@ void OGRPGDumpDataSource::LogCommit()
 }
 
 /************************************************************************/
-/*                            LaunderName()                             */
+/*                         OGRPGCommonLaunderName()                     */
 /************************************************************************/
 
-char *OGRPGDumpDataSource::LaunderName( const char *pszSrcName )
+char *OGRPGCommonLaunderName( const char *pszSrcName, const char* pszDebugPrefix )
 
 {
     char    *pszSafeName = CPLStrdup( pszSrcName );
@@ -144,7 +144,7 @@ char *OGRPGDumpDataSource::LaunderName( const char *pszSrcName )
     }
 
     if( strcmp(pszSrcName,pszSafeName) != 0 )
-        CPLDebug("PG","LaunderName('%s') -> '%s'", 
+        CPLDebug(pszDebugPrefix,"LaunderName('%s') -> '%s'", 
                  pszSrcName, pszSafeName);
 
     return pszSafeName;
@@ -176,7 +176,7 @@ OGRPGDumpDataSource::ICreateLayer( const char * pszLayerName,
     {
         if( CSLFetchBoolean(papszOptions,"LAUNDER", TRUE) )
         {
-            char* pszLaunderedFid = LaunderName(pszFIDColumnNameIn);
+            char* pszLaunderedFid = OGRPGCommonLaunderName(pszFIDColumnNameIn, "PGDump");
             osFIDColumnName = pszLaunderedFid;
             osFIDColumnNameEscaped = OGRPGDumpEscapeColumnName(osFIDColumnName);
             CPLFree(pszLaunderedFid);
@@ -232,7 +232,7 @@ OGRPGDumpDataSource::ICreateLayer( const char * pszLayerName,
       pszSchemaName[length] = '\0';
 
       if( CSLFetchBoolean(papszOptions,"LAUNDER", TRUE) )
-          pszTableName = LaunderName( pszDotPos + 1 ); //skip "."
+          pszTableName = OGRPGCommonLaunderName( pszDotPos + 1, "PGDump" ); //skip "."
       else
           pszTableName = CPLStrdup( pszDotPos + 1 ); //skip "."
     }
@@ -240,7 +240,7 @@ OGRPGDumpDataSource::ICreateLayer( const char * pszLayerName,
     {
       pszSchemaName = NULL;
       if( CSLFetchBoolean(papszOptions,"LAUNDER", TRUE) )
-          pszTableName = LaunderName( pszLayerName ); //skip "."
+          pszTableName = OGRPGCommonLaunderName( pszLayerName, "PGDump" ); //skip "."
       else
           pszTableName = CPLStrdup( pszLayerName ); //skip "."
     }

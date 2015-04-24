@@ -28,6 +28,7 @@
  ****************************************************************************/
 
 #include "ogr_cartodb.h"
+#include "ogr_pgdump.h"
 
 CPL_CVSID("$Id$");
 
@@ -48,7 +49,6 @@ OGRCARTODBDataSource::OGRCARTODBDataSource()
     bUseHTTPS = FALSE;
 
     bMustCleanPersistant = FALSE;
-    osCurrentSchema = "public";
 }
 
 /************************************************************************/
@@ -174,6 +174,8 @@ int OGRCARTODBDataSource::Open( const char * pszFilename, int bUpdateIn)
         }
         ReleaseResultSet(poSchemaLayer);
     }
+    if( osCurrentSchema.size() == 0 )
+        return FALSE;
 
     if (osTables.size() != 0)
     {
@@ -205,11 +207,15 @@ int OGRCARTODBDataSource::Open( const char * pszFilename, int bUpdateIn)
         }
         ReleaseResultSet(poTableListLayer);
     }
+    else if( osCurrentSchema == "public" )
+        return FALSE;
+
     /* There's currently a bug with CDB_UserTables() on multi-user accounts */
     if( nLayers == 0 && osCurrentSchema != "public" )
     {
         CPLString osSQL;
-        osSQL.Printf("SELECT DISTINCT f_table_name FROM geometry_columns WHERE f_table_schema='%s'",
+        osSQL.Printf("SELECT c.relname FROM pg_class c, pg_namespace n "
+                     "WHERE c.relkind in ('r', 'v') AND c.relname !~ '^pg_' AND c.relnamespace=n.oid AND n.nspname = '%s'",
                      OGRCARTODBEscapeLiteral(osCurrentSchema).c_str());
         poTableListLayer = ExecuteSQL(osSQL, NULL, NULL);
         if( poTableListLayer )
@@ -228,6 +234,8 @@ int OGRCARTODBDataSource::Open( const char * pszFilename, int bUpdateIn)
             }
             ReleaseResultSet(poTableListLayer);
         }
+        else
+            return FALSE;
     }
 
     return TRUE;
@@ -345,10 +353,20 @@ OGRLayer   *OGRCARTODBDataSource::ICreateLayer( const char *pszName,
             }
         }
     }
+    
+    CPLString osName(pszName);
+    if( CSLFetchBoolean(papszOptions,"LAUNDER", TRUE) )
+    {
+        char* pszTmp = OGRPGCommonLaunderName(pszName);
+        osName = pszTmp;
+        CPLFree(pszTmp);
+    }
 
-    OGRCARTODBTableLayer* poLayer = new OGRCARTODBTableLayer(this, pszName);
+    OGRCARTODBTableLayer* poLayer = new OGRCARTODBTableLayer(this, osName);
     int bGeomNullable = CSLFetchBoolean(papszOptions, "GEOMETRY_NULLABLE", TRUE);
-    int bCartoDBify = CSLFetchBoolean(papszOptions, "CARTODBIFY", TRUE);
+    int bCartoDBify = CSLFetchBoolean(papszOptions, "CARTODBFY",
+                                      CSLFetchBoolean(papszOptions, "CARTODBIFY", TRUE));
+    poLayer->SetLaunderFlag( CSLFetchBoolean(papszOptions,"LAUNDER",TRUE) );
     poLayer->SetDeferedCreation(eGType, poSpatialRef, bGeomNullable, bCartoDBify);
     papoLayers = (OGRCARTODBTableLayer**) CPLRealloc(
                     papoLayers, (nLayers + 1) * sizeof(OGRCARTODBTableLayer*));
@@ -451,7 +469,9 @@ json_object* OGRCARTODBDataSource::RunSQL(const char* pszUnescapedSQL)
 /* -------------------------------------------------------------------- */
 /*      Collection the header options and execute request.              */
 /* -------------------------------------------------------------------- */
-    char** papszOptions = CSLAddString(AddHTTPOptions(), osSQL);
+    const char* pszAPIURL = GetAPIURL();
+    char** papszOptions = CSLAddString(
+        strncmp(pszAPIURL, "/vsimem/", strlen("/vsimem/")) != 0 ? AddHTTPOptions(): NULL, osSQL);
     CPLHTTPResult * psResult = CPLHTTPFetch( GetAPIURL(), papszOptions);
     CSLDestroy(papszOptions);
 
