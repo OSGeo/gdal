@@ -40,6 +40,7 @@ typedef struct
     OGRDataSource* poDS;
     OGRFeatureDefn* poFDefn;
     int nUniqueGeomGMLId;
+    OGRSpatialReference* poSRS;
 } ExprDumpFilterOptions;
 
 /************************************************************************/
@@ -151,16 +152,14 @@ static const char* WFS_ExprGetSRSName( const swq_expr_node* poExpr,
         }
     }
     else if( poExpr->nSubExprCount == iSubArgIndex &&
-             psOptions->poFDefn->GetGeomFieldCount() > 0 )
+             psOptions->poSRS != NULL )
     {
-        OGRSpatialReference* poSRS = psOptions->poFDefn->GetGeomFieldDefn(0)->GetSpatialRef();
-        if( poSRS &&
-            poSRS->GetAuthorityName(NULL) &&
-            EQUAL(poSRS->GetAuthorityName(NULL), "EPSG") &&
-            poSRS->GetAuthorityCode(NULL) &&
-            oSRS.importFromEPSGA(atoi(poSRS->GetAuthorityCode(NULL))) == OGRERR_NONE )
+        if( psOptions->poSRS->GetAuthorityName(NULL) &&
+            EQUAL(psOptions->poSRS->GetAuthorityName(NULL), "EPSG") &&
+            psOptions->poSRS->GetAuthorityCode(NULL) &&
+            oSRS.importFromEPSGA(atoi(psOptions->poSRS->GetAuthorityCode(NULL))) == OGRERR_NONE )
         {
-            return CPLSPrintf("urn:ogc:def:crs:EPSG::%s", poSRS->GetAuthorityCode(NULL));
+            return CPLSPrintf("urn:ogc:def:crs:EPSG::%s", psOptions->poSRS->GetAuthorityCode(NULL));
         }
     }
     return NULL;
@@ -457,10 +456,12 @@ static int WFS_ExprDumpAsOGCFilter(CPLString& osFilter,
                 OGR_SRSNode *poPROJCS = oSRS.GetAttrNode( "PROJCS" );
                 if (poPROJCS != NULL && oSRS.EPSGTreatsAsNorthingEasting())
                     poPROJCS->StripNodes( "AXIS" );
-
-                if( EQUALN(pszSRSName, "urn:ogc:def:crs:EPSG::", strlen("urn:ogc:def:crs:EPSG::")) )
-                    papszOptions = CSLSetNameValue(papszOptions, "GML3_LONGSRS", "YES");
             }
+
+            if( EQUALN(pszSRSName, "urn:ogc:def:crs:EPSG::", strlen("urn:ogc:def:crs:EPSG::")) )
+                papszOptions = CSLSetNameValue(papszOptions, "GML3_LONGSRS", "YES");
+            else
+                papszOptions = CSLSetNameValue(papszOptions, "GML3_LONGSRS", "NO");
 
             poGeom->assignSpatialReference(&oSRS);
         }
@@ -495,7 +496,40 @@ static int WFS_ExprDumpAsOGCFilter(CPLString& osFilter,
         osFilter += ">";
         for(int i=0;i<2;i++)
         {
-            if (!WFS_ExprDumpAsOGCFilter(osFilter, poExpr->papoSubExpr[i], FALSE, psOptions))
+            if( i == 1 && poExpr->papoSubExpr[0]->eNodeType == SNT_COLUMN &&
+                poExpr->papoSubExpr[1]->eNodeType == SNT_OPERATION &&
+                poExpr->papoSubExpr[1]->nOperation == SWQ_CUSTOM_FUNC &&
+                (EQUAL(poExpr->papoSubExpr[1]->string_value, "ST_GeomFromText") ||
+                 EQUAL(poExpr->papoSubExpr[1]->string_value, "ST_MakeEnvelope")) )
+            {
+                int bSameTable = psOptions->poFDefn != NULL &&
+                                ( poExpr->papoSubExpr[0]->table_name == NULL ||
+                                EQUAL(poExpr->papoSubExpr[0]->table_name, psOptions->poFDefn->GetName()) );
+                if( bSameTable )
+                {
+                    int nIndex;
+                    if( (nIndex = psOptions->poFDefn->GetGeomFieldIndex(poExpr->papoSubExpr[0]->string_value)) >= 0 )
+                    {
+                        psOptions->poSRS = psOptions->poFDefn->GetGeomFieldDefn(nIndex)->GetSpatialRef();
+                    }
+                }
+                else if( psOptions->poDS != NULL )
+                {
+                    OGRLayer* poLayer = psOptions->poDS->GetLayerByName(poExpr->papoSubExpr[0]->table_name);
+                    if( poLayer )
+                    {
+                        OGRFeatureDefn* poFDefn = poLayer->GetLayerDefn();
+                        int nIndex;
+                        if( (nIndex = poFDefn->GetGeomFieldIndex(poExpr->papoSubExpr[0]->string_value)) >= 0 )
+                        {
+                            psOptions->poSRS = poFDefn->GetGeomFieldDefn(nIndex)->GetSpatialRef();
+                        }
+                    }
+                }
+            }
+            int bRet = WFS_ExprDumpAsOGCFilter(osFilter, poExpr->papoSubExpr[i], FALSE, psOptions);
+            psOptions->poSRS = NULL;
+            if( !bRet )
                 return FALSE;
         }
         if( poExpr->nSubExprCount > 2 )
@@ -540,6 +574,7 @@ CPLString WFS_TurnSQLFilterToOGCFilter( const swq_expr_node* poExpr,
         sOptions.poDS = poDS;
         sOptions.poFDefn = poFDefn;
         sOptions.nUniqueGeomGMLId = 1;
+        sOptions.poSRS = NULL;
         osFilter = "";
         if (!WFS_ExprDumpAsOGCFilter(osFilter, poExpr, TRUE, &sOptions))
             osFilter = "";
