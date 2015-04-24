@@ -120,18 +120,29 @@ OGRFeatureDefn * OGRCARTODBTableLayer::GetLayerDefnInternal(CPL_UNUSED json_obje
     if( poDS->IsAuthenticatedConnection() )
     {
         CPLString osCommand;
-        int bHasDefault = FALSE;
 
-        // Get column names and types
+        // Get everything !
         osCommand.Printf(
-                 "SELECT DISTINCT a.attname, t.typname, a.attlen, "
-                 "format_type(a.atttypid,a.atttypmod), a.attnum, a.attnotnull, a.atthasdef "
-                 "FROM pg_class c, pg_attribute a, pg_type t, pg_namespace n "
-                 "WHERE c.relname = '%s' "
-                 "AND a.attnum > 0 AND a.attrelid = c.oid "
-                 "AND a.atttypid = t.oid "
-                 "AND c.relnamespace=n.oid "
-                 "AND n.nspname= '%s' "
+                 "SELECT a.attname, t.typname, a.attlen, "
+                        "format_type(a.atttypid,a.atttypmod), "
+                        "a.attnum, "
+                        "a.attnotnull, "
+                        "i.indisprimary, "
+                        "pg_get_expr(def.adbin, c.oid) AS defaultexpr, "
+                        "postgis_typmod_dims(a.atttypmod) dim, "
+                        "postgis_typmod_srid(a.atttypmod) srid, "
+                        "postgis_typmod_type(a.atttypmod)::text geomtyp, "
+                        "srtext "
+                 "FROM pg_class c "
+                 "JOIN pg_attribute a ON a.attnum > 0 AND "
+                                        "a.attrelid = c.oid AND c.relname = '%s' "
+                 "JOIN pg_type t ON a.atttypid = t.oid "
+                 "JOIN pg_namespace n ON c.relnamespace=n.oid AND n.nspname= '%s' "
+                 "LEFT JOIN pg_index i ON c.oid = i.indrelid AND "
+                                         "i.indisprimary = 't' AND a.attnum = ANY(i.indkey) "
+                 "LEFT JOIN pg_attrdef def ON def.adrelid = c.oid AND "
+                                              "def.adnum = a.attnum "
+                 "LEFT JOIN spatial_ref_sys srs ON srs.srid = postgis_typmod_srid(a.atttypmod) "
                  "ORDER BY a.attnum",
                  OGRCARTODBEscapeLiteral(osName).c_str(),
                  OGRCARTODBEscapeLiteral(poDS->GetCurrentSchema()).c_str());
@@ -151,9 +162,16 @@ OGRFeatureDefn * OGRCARTODBTableLayer::GetLayerDefnInternal(CPL_UNUSED json_obje
                 int nWidth = poFeat->GetFieldAsInteger("attlen");
                 const char* pszFormatType = poFeat->GetFieldAsString("format_type");
                 int bNotNull = poFeat->GetFieldAsInteger("attnotnull");
-                if( poFeat->GetFieldAsInteger("atthasdef") )
-                    bHasDefault = TRUE;
-                if( strcmp(pszAttname, "cartodb_id") == 0 )
+                int bIsPrimary = poFeat->GetFieldAsInteger("indisprimary");
+                const char* pszDefault = (poFeat->IsFieldSet(poLyr->GetLayerDefn()->GetFieldIndex("defaultexpr"))) ?
+                            poFeat->GetFieldAsString("defaultexpr") : NULL;
+
+                if( bIsPrimary &&
+                    (EQUAL(pszType, "int2") ||
+                     EQUAL(pszType, "int4") ||
+                     EQUAL(pszType, "int8") ||
+                     EQUAL(pszType, "serial") ||
+                     EQUAL(pszType, "bigserial")) )
                 {
                     osFIDColName = pszAttname;
                 }
@@ -167,58 +185,19 @@ OGRFeatureDefn * OGRCARTODBTableLayer::GetLayerDefnInternal(CPL_UNUSED json_obje
                 {
                     if( EQUAL(pszType,"geometry") )
                     {
-                        OGRCartoDBGeomFieldDefn *poFieldDefn =
-                            new OGRCartoDBGeomFieldDefn(pszAttname, wkbUnknown);
-                        if( bNotNull )
-                            poFieldDefn->SetNullable(FALSE);
-                        poFeatureDefn->AddGeomFieldDefn(poFieldDefn, FALSE);
-                    }
-                    else
-                    {
-                        OGRFieldDefn oField(pszAttname, OFTString);
-                        if( bNotNull )
-                            oField.SetNullable(FALSE);
-                        OGRPGCommonLayerSetType(oField, pszType, pszFormatType, nWidth);
-
-                        poFeatureDefn->AddFieldDefn( &oField );
-                    }
-                }
-                delete poFeat;
-            }
-
-            poDS->ReleaseResultSet(poLyr);
-        }
-
-        // Retrieve type and SRS of geometry fields
-        if( poFeatureDefn != NULL && poFeatureDefn->GetGeomFieldCount() > 0 )
-        {
-            osCommand.Printf(
-                    "SELECT f_geometry_column, type, coord_dimension, g.srid AS srid, srtext "
-                    "FROM geometry_columns g LEFT JOIN spatial_ref_sys srs ON g.srid = srs.srid "
-                    "WHERE f_table_schema = '%s' AND f_table_name = '%s'",
-                    OGRCARTODBEscapeLiteral(poDS->GetCurrentSchema()).c_str(),
-                    OGRCARTODBEscapeLiteral(osName).c_str());
-
-            poLyr = poDS->ExecuteSQLInternal(osCommand);
-            if( poLyr != NULL )
-            {
-                OGRFeature* poFeat;
-                while( (poFeat = poLyr->GetNextFeature()) != NULL )
-                {
-                    const char      *pszName = poFeat->GetFieldAsString(0);
-                    const char      *pszType = poFeat->GetFieldAsString(1);
-                    int nDim = poFeat->GetFieldAsInteger(2);
-                    int nSRID  = poFeat->GetFieldAsInteger(3);
-                    const char* pszSRText = poFeat->IsFieldSet(4) ? poFeat->GetFieldAsString(4) : NULL;
-                    int nIdx = poFeatureDefn->GetGeomFieldIndex(pszName);
-                    if( nIdx >= 0 )
-                    {
-                        OGRCartoDBGeomFieldDefn *poFieldDefn =
-                            (OGRCartoDBGeomFieldDefn *)poFeatureDefn->GetGeomFieldDefn(nIdx);
-                        OGRwkbGeometryType eType = OGRFromOGCGeomType(pszType);
+                        int nDim = poFeat->GetFieldAsInteger("dim");
+                        int nSRID = poFeat->GetFieldAsInteger("srid");
+                        const char* pszGeomType = poFeat->GetFieldAsString("geomtyp");
+                        const char* pszSRText = (poFeat->IsFieldSet(
+                            poLyr->GetLayerDefn()->GetFieldIndex("srtext"))) ?
+                                    poFeat->GetFieldAsString("srtext") : NULL;
+                        OGRwkbGeometryType eType = OGRFromOGCGeomType(pszGeomType);
                         if( nDim == 3 )
                             eType = wkbSetZ(eType);
-
+                        OGRCartoDBGeomFieldDefn *poFieldDefn =
+                            new OGRCartoDBGeomFieldDefn(pszAttname, eType);
+                        if( bNotNull )
+                            poFieldDefn->SetNullable(FALSE);
                         OGRSpatialReference* poSRS = NULL;
                         if( pszSRText != NULL )
                         {
@@ -229,56 +208,31 @@ OGRFeatureDefn * OGRCARTODBTableLayer::GetLayerDefnInternal(CPL_UNUSED json_obje
                                 delete poSRS;
                                 poSRS = NULL;
                             }
+                            if( poSRS != NULL )
+                            {
+                                poFieldDefn->SetSpatialRef(poSRS);
+                                poSRS->Release();
+                            }
                         }
-
-                        poFieldDefn->SetType(eType);
                         poFieldDefn->nSRID = nSRID;
-                        if( poSRS != NULL )
-                        {
-                            poFieldDefn->SetSpatialRef(poSRS);
-                            poSRS->Release();
-                        }
+                        poFeatureDefn->AddGeomFieldDefn(poFieldDefn, FALSE);
                     }
-                    delete poFeat;
-                }
-
-                poDS->ReleaseResultSet(poLyr);
-            }
-        }
-
-        // Retrieve default values
-        if( bHasDefault )
-        {
-            osCommand.Printf(
-                    "SELECT a.attname, pg_get_expr(def.adbin, c.oid) "
-                    "FROM pg_attrdef def, pg_class c, pg_attribute a, pg_type t, pg_namespace n "
-                    "WHERE c.relname = '%s' AND a.attnum > 0 AND a.attrelid = c.oid "
-                    "AND a.atttypid = t.oid AND c.relnamespace=n.oid AND "
-                    "def.adrelid = c.oid AND def.adnum = a.attnum "
-                    "AND n.nspname= '%s' "
-                    "ORDER BY a.attnum",
-                    OGRCARTODBEscapeLiteral(osName).c_str(),
-                    OGRCARTODBEscapeLiteral(poDS->GetCurrentSchema()).c_str());
-
-            poLyr = poDS->ExecuteSQLInternal(osCommand);
-            if( poLyr != NULL )
-            {
-                OGRFeature* poFeat;
-                while( (poFeat = poLyr->GetNextFeature()) != NULL )
-                {
-                    const char      *pszName = poFeat->GetFieldAsString(0);
-                    const char      *pszDefault = poFeat->GetFieldAsString(1);
-                    int nIdx = poFeatureDefn->GetFieldIndex(pszName);
-                    if( nIdx >= 0 )
+                    else
                     {
-                        OGRFieldDefn* poFieldDefn = poFeatureDefn->GetFieldDefn(nIdx);
-                        OGRPGCommonLayerNormalizeDefault(poFieldDefn, pszDefault);
-                    }
-                    delete poFeat;
-                }
+                        OGRFieldDefn oField(pszAttname, OFTString);
+                        if( bNotNull )
+                            oField.SetNullable(FALSE);
+                        OGRPGCommonLayerSetType(oField, pszType, pszFormatType, nWidth);
+                        if( pszDefault )
+                            OGRPGCommonLayerNormalizeDefault(&oField, pszDefault);
 
-                poDS->ReleaseResultSet(poLyr);
+                        poFeatureDefn->AddFieldDefn( &oField );
+                    }
+                }
+                delete poFeat;
             }
+
+            poDS->ReleaseResultSet(poLyr);
         }
     }
 
