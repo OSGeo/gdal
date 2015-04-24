@@ -601,10 +601,10 @@ int CPLODBCStatement::CollectResultsInfo()
 
 int CPLODBCStatement::GetRowCountAffected()
 {
-    SQLINTEGER nResultCount=0;
+    SQLLEN nResultCount=0;
     SQLRowCount( m_hStmt, &nResultCount );
     
-    return nResultCount;
+    return (int)nResultCount;
 }
 
 /************************************************************************/
