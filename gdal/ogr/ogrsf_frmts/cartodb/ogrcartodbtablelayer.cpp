@@ -87,7 +87,7 @@ OGRCARTODBTableLayer::OGRCARTODBTableLayer(OGRCARTODBDataSource* poDS,
     osName = pszName;
     SetDescription( osName );
     bLaunderColumnNames = TRUE;
-    bInDeferedInsert = FALSE;
+    bInDeferedInsert = poDS->DoBatchInsert();
     nNextFID = -1;
     bDeferedCreation = FALSE;
     bCartoDBify = FALSE;
@@ -122,6 +122,7 @@ OGRFeatureDefn * OGRCARTODBTableLayer::GetLayerDefnInternal(CPL_UNUSED json_obje
         CPLString osCommand;
         int bHasDefault = FALSE;
 
+        // Get column names and types
         osCommand.Printf(
                  "SELECT DISTINCT a.attname, t.typname, a.attlen, "
                  "format_type(a.atttypid,a.atttypmod), a.attnum, a.attnotnull, a.atthasdef "
@@ -135,7 +136,7 @@ OGRFeatureDefn * OGRCARTODBTableLayer::GetLayerDefnInternal(CPL_UNUSED json_obje
                  OGRCARTODBEscapeLiteral(osName).c_str(),
                  OGRCARTODBEscapeLiteral(poDS->GetCurrentSchema()).c_str());
 
-        OGRLayer* poLyr = poDS->ExecuteSQL(osCommand, NULL, NULL);
+        OGRLayer* poLyr = poDS->ExecuteSQLInternal(osCommand);
         if( poLyr )
         {
             poFeatureDefn = new OGRFeatureDefn(osName);
@@ -171,13 +172,6 @@ OGRFeatureDefn * OGRCARTODBTableLayer::GetLayerDefnInternal(CPL_UNUSED json_obje
                         if( bNotNull )
                             poFieldDefn->SetNullable(FALSE);
                         poFeatureDefn->AddGeomFieldDefn(poFieldDefn, FALSE);
-                        OGRSpatialReference* poSRS = GetSRS(pszAttname, &poFieldDefn->nSRID);
-                        if( poSRS != NULL )
-                        {
-                            poFeatureDefn->GetGeomFieldDefn(
-                                poFeatureDefn->GetGeomFieldCount() - 1)->SetSpatialRef(poSRS);
-                            poSRS->Release();
-                        }
                     }
                     else
                     {
@@ -195,6 +189,64 @@ OGRFeatureDefn * OGRCARTODBTableLayer::GetLayerDefnInternal(CPL_UNUSED json_obje
             poDS->ReleaseResultSet(poLyr);
         }
 
+        // Retrieve type and SRS of geometry fields
+        if( poFeatureDefn != NULL && poFeatureDefn->GetGeomFieldCount() > 0 )
+        {
+            osCommand.Printf(
+                    "SELECT f_geometry_column, type, coord_dimension, g.srid AS srid, srtext "
+                    "FROM geometry_columns g LEFT JOIN spatial_ref_sys srs ON g.srid = srs.srid "
+                    "WHERE f_table_schema = '%s' AND f_table_name = '%s'",
+                    OGRCARTODBEscapeLiteral(poDS->GetCurrentSchema()).c_str(),
+                    OGRCARTODBEscapeLiteral(osName).c_str());
+
+            poLyr = poDS->ExecuteSQLInternal(osCommand);
+            if( poLyr != NULL )
+            {
+                OGRFeature* poFeat;
+                while( (poFeat = poLyr->GetNextFeature()) != NULL )
+                {
+                    const char      *pszName = poFeat->GetFieldAsString(0);
+                    const char      *pszType = poFeat->GetFieldAsString(1);
+                    int nDim = poFeat->GetFieldAsInteger(2);
+                    int nSRID  = poFeat->GetFieldAsInteger(3);
+                    const char* pszSRText = poFeat->IsFieldSet(4) ? poFeat->GetFieldAsString(4) : NULL;
+                    int nIdx = poFeatureDefn->GetGeomFieldIndex(pszName);
+                    if( nIdx >= 0 )
+                    {
+                        OGRCartoDBGeomFieldDefn *poFieldDefn =
+                            (OGRCartoDBGeomFieldDefn *)poFeatureDefn->GetGeomFieldDefn(nIdx);
+                        OGRwkbGeometryType eType = OGRFromOGCGeomType(pszType);
+                        if( nDim == 3 )
+                            eType = wkbSetZ(eType);
+
+                        OGRSpatialReference* poSRS = NULL;
+                        if( pszSRText != NULL )
+                        {
+                            poSRS = new OGRSpatialReference();
+                            char* pszTmp = (char* )pszSRText;
+                            if( poSRS->importFromWkt(&pszTmp) != OGRERR_NONE )
+                            {
+                                delete poSRS;
+                                poSRS = NULL;
+                            }
+                        }
+
+                        poFieldDefn->SetType(eType);
+                        poFieldDefn->nSRID = nSRID;
+                        if( poSRS != NULL )
+                        {
+                            poFieldDefn->SetSpatialRef(poSRS);
+                            poSRS->Release();
+                        }
+                    }
+                    delete poFeat;
+                }
+
+                poDS->ReleaseResultSet(poLyr);
+            }
+        }
+
+        // Retrieve default values
         if( bHasDefault )
         {
             osCommand.Printf(
@@ -208,7 +260,7 @@ OGRFeatureDefn * OGRCARTODBTableLayer::GetLayerDefnInternal(CPL_UNUSED json_obje
                     OGRCARTODBEscapeLiteral(osName).c_str(),
                     OGRCARTODBEscapeLiteral(poDS->GetCurrentSchema()).c_str());
 
-            poLyr = poDS->ExecuteSQL(osCommand, NULL, NULL);
+            poLyr = poDS->ExecuteSQLInternal(osCommand);
             if( poLyr != NULL )
             {
                 OGRFeature* poFeat;
@@ -1151,7 +1203,6 @@ void OGRCARTODBTableLayer::SetDeferedCreation (OGRwkbGeometryType eGType,
                                                int bCartoDBify)
 {
     bDeferedCreation = TRUE;
-    bInDeferedInsert = TRUE;
     nNextFID = 1;
     CPLAssert(poFeatureDefn == NULL);
     this->bCartoDBify = bCartoDBify;

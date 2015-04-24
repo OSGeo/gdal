@@ -332,9 +332,17 @@ Error""")
         "fields":{"attname":{"type":"string"},
                   "pg_get_expr":{"type":"string"}}}""")
 
-    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=SELECT srid, srtext FROM spatial_ref_sys WHERE srid IN (SELECT Find_SRID('public', 'table1', 'my_geom'))&api_key=foo""",
-    """{"rows":[{"srid":4326, "srtext":"GEOGCS[\\"WGS 84\\",DATUM[\\"WGS_1984\\",SPHEROID[\\"WGS 84\\",6378137,298.257223563,AUTHORITY[\\"EPSG\\",\\"7030\\"]],AUTHORITY[\\"EPSG\\",\\"6326\\"]],PRIMEM[\\"Greenwich\\",0,AUTHORITY[\\"EPSG\\",\\"8901\\"]],UNIT[\\"degree\\",0.0174532925199433,AUTHORITY[\\"EPSG\\",\\"9122\\"]],AUTHORITY[\\"EPSG\\",\\"4326\\"]]"}],
-        "fields":{"srid":{"type":"number"},
+    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=SELECT f_geometry_column, type, coord_dimension, g.srid AS srid, srtext FROM geometry_columns g LEFT JOIN spatial_ref_sys srs ON g.srid = srs.srid WHERE f_table_schema = 'public' AND f_table_name = 'table1' LIMIT 500 OFFSET 0&api_key=foo""",
+    """{"rows":[{"f_geometry_column":"my_geom",
+                  "type":"POINT",
+                  "coord_dimension":3,
+                  "srid":4326,
+                  "srtext":"GEOGCS[\\"WGS 84\\",DATUM[\\"WGS_1984\\",SPHEROID[\\"WGS 84\\",6378137,298.257223563,AUTHORITY[\\"EPSG\\",\\"7030\\"]],AUTHORITY[\\"EPSG\\",\\"6326\\"]],PRIMEM[\\"Greenwich\\",0,AUTHORITY[\\"EPSG\\",\\"8901\\"]],UNIT[\\"degree\\",0.0174532925199433,AUTHORITY[\\"EPSG\\",\\"9122\\"]],AUTHORITY[\\"EPSG\\",\\"4326\\"]]"
+                 }],
+        "fields":{"f_geometry_column":{"type":"string"},
+                  "type":{"type":"string"},
+                  "coord_dimension":{"type":"number"},
+                  "srid":{"type":"number"},
                   "srtext":{"type":"string"}}}""")
 
     ds = ogr.Open('CARTODB:foo')
@@ -353,6 +361,9 @@ Error""")
         gdaltest.post_reason('fail')
         return 'fail'
     if lyr_defn.GetGeomFieldDefn(0).GetName() != 'my_geom':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr_defn.GetGeomFieldDefn(0).GetType() != ogr.wkbPoint25D:
         gdaltest.post_reason('fail')
         return 'fail'
     if lyr_defn.GetGeomFieldDefn(0).GetSpatialRef().ExportToWkt().find('4326') < 0:

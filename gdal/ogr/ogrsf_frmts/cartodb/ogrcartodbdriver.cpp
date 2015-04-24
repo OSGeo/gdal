@@ -36,37 +36,28 @@ CPL_CVSID("$Id$");
 extern "C" void RegisterOGRCartoDB();
 
 /************************************************************************/
-/*                        ~OGRCARTODBDriver()                           */
+/*                        OGRCartoDBDriverIdentify()                    */
 /************************************************************************/
 
-OGRCARTODBDriver::~OGRCARTODBDriver()
-
+static int OGRCartoDBDriverIdentify( GDALOpenInfo* poOpenInfo )
 {
+    return EQUALN(poOpenInfo->pszFilename, "CARTODB:", strlen("CARTODB:"));
 }
 
 /************************************************************************/
-/*                              GetName()                               */
+/*                           OGRCartoDBDriverOpen()                     */
 /************************************************************************/
 
-const char *OGRCARTODBDriver::GetName()
+static GDALDataset *OGRCartoDBDriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
-    return "CartoDB";
-}
-
-/************************************************************************/
-/*                                Open()                                */
-/************************************************************************/
-
-OGRDataSource *OGRCARTODBDriver::Open( const char * pszFilename, int bUpdate )
-
-{
-    if (!EQUALN(pszFilename, "CARTODB:", strlen("CARTODB:")))
+    if( !OGRCartoDBDriverIdentify(poOpenInfo) )
         return NULL;
 
     OGRCARTODBDataSource   *poDS = new OGRCARTODBDataSource();
 
-    if( !poDS->Open( pszFilename, bUpdate ) )
+    if( !poDS->Open( poOpenInfo->pszFilename, poOpenInfo->papszOpenOptions,
+                     poOpenInfo->eAccess == GA_Update ) )
     {
         delete poDS;
         poDS = NULL;
@@ -76,16 +67,20 @@ OGRDataSource *OGRCARTODBDriver::Open( const char * pszFilename, int bUpdate )
 }
 
 /************************************************************************/
-/*                          CreateDataSource()                          */
+/*                      OGRCartoDBDriverCreate()                        */
 /************************************************************************/
 
-OGRDataSource *OGRCARTODBDriver::CreateDataSource( const char * pszName,
-                                              char ** /* papszOptions */ )
+static GDALDataset *OGRCartoDBDriverCreate( const char * pszName,
+                                            CPL_UNUSED int nBands,
+                                            CPL_UNUSED int nXSize,
+                                            CPL_UNUSED int nYSize,
+                                            CPL_UNUSED GDALDataType eDT,
+                                            CPL_UNUSED char **papszOptions )
 
 {
     OGRCARTODBDataSource   *poDS = new OGRCARTODBDataSource();
 
-    if( !poDS->Open( pszName, TRUE ) )
+    if( !poDS->Open( pszName, NULL, TRUE ) )
     {
         delete poDS;
         CPLError( CE_Failure, CPLE_AppDefined, 
@@ -97,44 +92,48 @@ OGRDataSource *OGRCARTODBDriver::CreateDataSource( const char * pszName,
 }
 
 /************************************************************************/
-/*                           TestCapability()                           */
-/************************************************************************/
-
-int OGRCARTODBDriver::TestCapability( const char * pszCap )
-
-{
-    if( EQUAL(pszCap,ODrCCreateDataSource) )
-        return TRUE;
-    else
-        return FALSE;
-}
-
-/************************************************************************/
 /*                         RegisterOGRCARTODB()                         */
 /************************************************************************/
 
 void RegisterOGRCartoDB()
 
 {
-    OGRSFDriver* poDriver = new OGRCARTODBDriver;
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                "drv_cartodb.html" );
+    if( GDALGetDriverByName( "CartoDB" ) == NULL )
+    {
+        GDALDriver* poDriver = new GDALDriver();
 
-    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, "<CreationOptionList/>");
+        poDriver->SetDescription( "CartoDB" );
+        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                                  "CartoDB" );
+        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
+                                    "drv_cartodb.html" );
 
-    poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
-"<LayerCreationOptionList>"
-"  <Option name='OVERWRITE' type='boolean' description='Whether to overwrite an existing table with the layer name to be created' default='NO'/>"
-"  <Option name='LAUNDER' type='boolean' description='Whether layer and field names will be laundered' default='YES'/>"
-"  <Option name='GEOMETRY_NULLABLE' type='boolean' description='Whether the values of the geometry column can be NULL' default='YES'/>"
-"  <Option name='CARTODBFY' alias='CARTODBIFY' type='boolean' description='Whether the created layer should be \"CartoDBifi&apos;ed\" (i.e. registered in dashboard)' default='YES'/>"
-"</LayerCreationOptionList>");
-    
-    poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES, "Integer Integer64 Real String Date DateTime Time" );
-    poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_FIELDS, "YES" );
-    poDriver->SetMetadataItem( GDAL_DCAP_DEFAULT_FIELDS, "YES" );
-    poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_GEOMFIELDS, "YES" );
+        poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
+    "<OpenOptionList>"
+    "  <Option name='BATCH_INSERT' type='boolean' description='Whether to group features to be inserted in a batch' default='YES'/>"
+    "</OpenOptionList>");
 
-    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( poDriver );
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, "<CreationOptionList/>");
+
+        poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
+    "<LayerCreationOptionList>"
+    "  <Option name='OVERWRITE' type='boolean' description='Whether to overwrite an existing table with the layer name to be created' default='NO'/>"
+    "  <Option name='LAUNDER' type='boolean' description='Whether layer and field names will be laundered' default='YES'/>"
+    "  <Option name='GEOMETRY_NULLABLE' type='boolean' description='Whether the values of the geometry column can be NULL' default='YES'/>"
+    "  <Option name='CARTODBFY' alias='CARTODBIFY' type='boolean' description='Whether the created layer should be \"CartoDBifi&apos;ed\" (i.e. registered in dashboard)' default='YES'/>"
+    "</LayerCreationOptionList>");
+        
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES, "Integer Integer64 Real String Date DateTime Time" );
+        poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_FIELDS, "YES" );
+        poDriver->SetMetadataItem( GDAL_DCAP_DEFAULT_FIELDS, "YES" );
+        poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_GEOMFIELDS, "YES" );
+
+        poDriver->pfnOpen = OGRCartoDBDriverOpen;
+        poDriver->pfnIdentify = OGRCartoDBDriverIdentify;
+        poDriver->pfnCreate = OGRCartoDBDriverCreate;
+
+        GetGDALDriverManager()->RegisterDriver( poDriver );
+    }
 }
 

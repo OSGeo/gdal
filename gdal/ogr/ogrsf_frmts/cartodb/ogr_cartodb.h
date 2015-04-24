@@ -201,6 +201,7 @@ class OGRCARTODBDataSource : public OGRDataSource
     int                 nLayers;
 
     int                 bReadWrite;
+    int                 bBatchInsert;
 
     int                 bUseHTTPS;
 
@@ -215,6 +216,7 @@ class OGRCARTODBDataSource : public OGRDataSource
                         ~OGRCARTODBDataSource();
 
     int                 Open( const char * pszFilename,
+                              char** papszOpenOptions,
                               int bUpdate );
 
     virtual const char* GetName() { return pszName; }
@@ -238,29 +240,18 @@ class OGRCARTODBDataSource : public OGRDataSource
 
     const char*                 GetAPIURL() const;
     int                         IsReadWrite() const { return bReadWrite; }
+    int                         DoBatchInsert() const { return bBatchInsert; }
     char**                      AddHTTPOptions();
     json_object*                RunSQL(const char* pszUnescapedSQL);
     const CPLString&            GetCurrentSchema() { return osCurrentSchema; }
     int                         FetchSRSId( OGRSpatialReference * poSRS );
 
     int                         IsAuthenticatedConnection() { return osAPIKey.size() != 0; }
-};
-
-/************************************************************************/
-/*                           OGRCARTODBDriver                           */
-/************************************************************************/
-
-class OGRCARTODBDriver : public OGRSFDriver
-{
-  public:
-                ~OGRCARTODBDriver();
-
-    virtual const char*         GetName();
-    virtual OGRDataSource*      Open( const char *, int );
-    virtual OGRDataSource*      CreateDataSource( const char * pszName,
-                                                  char ** /* papszOptions */ );
-
-    virtual int                 TestCapability( const char * );
+    
+    OGRLayer *                  ExecuteSQLInternal( const char *pszSQLCommand,
+                                                    OGRGeometry *poSpatialFilter = NULL,
+                                                    const char *pszDialect = NULL,
+                                                    int bRunDeferedActions = FALSE );
 };
 
 #endif /* ndef _OGR_CARTODB_H_INCLUDED */
