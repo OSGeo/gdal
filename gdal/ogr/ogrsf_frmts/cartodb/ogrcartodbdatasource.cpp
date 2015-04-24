@@ -646,7 +646,9 @@ OGRLayer * OGRCARTODBDataSource::ExecuteSQLInternal( const char *pszSQLCommand,
         return NULL;
     }
     
-    if( !EQUALN(pszSQLCommand, "SELECT", 5) )
+    if( !EQUALN(pszSQLCommand, "SELECT", strlen("SELECT")) &&
+        !EQUALN(pszSQLCommand, "EXPLAIN", strlen("EXPLAIN")) &&
+        !EQUALN(pszSQLCommand, "WITH", strlen("WITH")) )
     {
         RunSQL(pszSQLCommand);
         return NULL;

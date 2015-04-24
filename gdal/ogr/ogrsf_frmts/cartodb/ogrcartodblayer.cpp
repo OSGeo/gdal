@@ -172,6 +172,30 @@ OGRFeature *OGRCARTODBLayer::BuildFeature(json_object* poRowObj)
 }
 
 /************************************************************************/
+/*                        FetchNewFeatures()                            */
+/************************************************************************/
+
+json_object* OGRCARTODBLayer::FetchNewFeatures(GIntBig iNext)
+{
+    if( nFetchedObjects > 0 && nFetchedObjects < GetFeaturesToFetch() )
+    {
+        bEOF = TRUE;
+        return NULL;
+    }
+
+    CPLString osSQL = osBaseSQL;
+    if( osSQL.ifind("SELECT") != std::string::npos &&
+        osSQL.ifind(" LIMIT ") == std::string::npos )
+    {
+        osSQL += " LIMIT ";
+        osSQL += CPLSPrintf("%d", GetFeaturesToFetch());
+        osSQL += " OFFSET ";
+        osSQL += CPLSPrintf(CPL_FRMT_GIB, iNext);
+    }
+    return poDS->RunSQL(osSQL);
+}
+
+/************************************************************************/
 /*                        GetNextRawFeature()                           */
 /************************************************************************/
 
@@ -182,27 +206,12 @@ OGRFeature *OGRCARTODBLayer::GetNextRawFeature()
 
     if( iNextInFetchedObjects >= nFetchedObjects )
     {
-        if( nFetchedObjects > 0 && nFetchedObjects < GetFeaturesToFetch() )
-        {
-            bEOF = TRUE;
-            return NULL;
-        }
-
         if( poFeatureDefn == NULL && osBaseSQL.size() == 0 )
         {
             GetLayerDefn();
         }
 
-        CPLString osSQL = osBaseSQL;
-        if( osSQL.ifind("SELECT") != std::string::npos &&
-            osSQL.ifind(" LIMIT ") == std::string::npos )
-        {
-            osSQL += " LIMIT ";
-            osSQL += CPLSPrintf("%d", GetFeaturesToFetch());
-            osSQL += " OFFSET ";
-            osSQL += CPLSPrintf("%d", iNext);
-        }
-        json_object* poObj = poDS->RunSQL(osSQL);
+        json_object* poObj = FetchNewFeatures(iNext);
         if( poObj == NULL )
         {
             bEOF = TRUE;
@@ -238,7 +247,7 @@ OGRFeature *OGRCARTODBLayer::GetNextRawFeature()
     iNextInFetchedObjects ++;
 
     OGRFeature* poFeature = BuildFeature(poRowObj);
-    iNext ++;
+    iNext = poFeature->GetFID() + 1;
 
     return poFeature;
 }

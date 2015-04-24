@@ -484,7 +484,7 @@ Error""")
         gdaltest.post_reason('fail')
         return 'fail'
 
-    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=SELECT * FROM "table1" ORDER BY "cartodb_id" ASC LIMIT 500 OFFSET 0&api_key=foo""",
+    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=SELECT * FROM "table1" WHERE "cartodb_id" BETWEEN 0 AND 499 ORDER BY "cartodb_id" ASC&api_key=foo""",
         """{"rows":[{"cartodb_id":0}],
             "fields":{"cartodb_id":{"type":"numeric"}}}""")
     lyr.ResetReading()
@@ -492,13 +492,15 @@ Error""")
     if f.GetFID() != 0:
         gdaltest.post_reason('fail')
         return 'fail'
+    gdal.PushErrorHandler()
     f = lyr.GetNextFeature()
+    gdal.PopErrorHandler()
     if f is not None:
         gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.SetConfigOption('CARTODB_PAGE_SIZE', '2')
-    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=SELECT * FROM "table1" ORDER BY "cartodb_id" ASC LIMIT 2 OFFSET 0&api_key=foo""",
+    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=SELECT * FROM "table1" WHERE "cartodb_id" BETWEEN 0 AND 1 ORDER BY "cartodb_id" ASC&api_key=foo""",
         """{"rows":[{"cartodb_id":0},{"cartodb_id":10}],
             "fields":{"cartodb_id":{"type":"numeric"}}}""")
     lyr.ResetReading()
@@ -511,15 +513,35 @@ Error""")
         gdaltest.post_reason('fail')
         return 'fail'
 
-    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=SELECT * FROM "table1" ORDER BY "cartodb_id" ASC LIMIT 2 OFFSET 2&api_key=foo""",
-        """{"rows":[{"cartodb_id":20}],
+    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=SELECT * FROM "table1" WHERE "cartodb_id" BETWEEN 11 AND 12 ORDER BY "cartodb_id" ASC&api_key=foo""",
+        """{"rows":[{"cartodb_id":12}],
             "fields":{"cartodb_id":{"type":"numeric"}}}""")
     f = lyr.GetNextFeature()
-    if f.GetFID() != 20:
+    if f.GetFID() != 12:
         gdaltest.post_reason('fail')
         return 'fail'
+    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=SELECT * FROM "table1" WHERE "cartodb_id" BETWEEN 13 AND 14 ORDER BY "cartodb_id" ASC&api_key=foo""",
+        """{"rows":[],
+            "fields":{"cartodb_id":{"type":"numeric"}}}""")
+    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=SELECT MIN(cartodb_id) AS next_id FROM "table1" WHERE "cartodb_id" >= 13&api_key=foo""",
+        """{"rows":[{"next_id":100}],
+            "fields":{"next_id":{"type":"numeric"}}}""")
+    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=SELECT * FROM "table1" WHERE "cartodb_id" BETWEEN 100 AND 101 ORDER BY "cartodb_id" ASC&api_key=foo""",
+        """{"rows":[{"cartodb_id":100}],
+            "fields":{"cartodb_id":{"type":"numeric"}}}""")
     f = lyr.GetNextFeature()
-    if f is not None:
+    if f.GetFID() != 100:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=SELECT * FROM "table1" WHERE "cartodb_id" BETWEEN 101 AND 102 ORDER BY "cartodb_id" ASC&api_key=foo""",
+        """{"rows":[],
+            "fields":{"cartodb_id":{"type":"numeric"}}}""")
+    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=SELECT MIN(cartodb_id) AS next_id FROM "table1" WHERE "cartodb_id" >= 101&api_key=foo""",
+        """{"rows":[],
+            "fields":{"next_id":{"type":"numeric"}}}""")
+    gdal.ErrorReset()
+    f = lyr.GetNextFeature()
+    if f is not None or gdal.GetLastErrorMsg() != '':
         gdaltest.post_reason('fail')
         return 'fail'
 
@@ -532,12 +554,23 @@ Error""")
         gdaltest.post_reason('fail')
         return 'fail'
 
-    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=SELECT * FROM "table1" WHERE strfield is NULL ORDER BY "cartodb_id" ASC LIMIT 2 OFFSET 0&api_key=foo""",
-        """{"rows":[{"cartodb_id":20}],
+    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=SELECT * FROM "table1" WHERE (strfield is NULL) AND "cartodb_id" BETWEEN 0 AND 1 ORDER BY "cartodb_id" ASC&api_key=foo""",
+        """{"rows":[{"cartodb_id":0}],
             "fields":{"cartodb_id":{"type":"numeric"}}}""")
     lyr.ResetReading()
     f = lyr.GetNextFeature()
     if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=SELECT * FROM "table1" WHERE (strfield is NULL) AND "cartodb_id" BETWEEN 1 AND 2 ORDER BY "cartodb_id" ASC&api_key=foo""",
+        """{"rows":[],
+            "fields":{"cartodb_id":{"type":"numeric"}}}""")
+    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=SELECT MIN(cartodb_id) AS next_id FROM "table1" WHERE (strfield is NULL) AND "cartodb_id" >= 1&api_key=foo""",
+            """{"rows":[],
+            "fields":{"next_id":{"type":"numeric"}}}""")
+    gdal.ErrorReset()
+    f = lyr.GetNextFeature()
+    if f is not None or gdal.GetLastErrorMsg() != '':
         gdaltest.post_reason('fail')
         return 'fail'
 
@@ -557,7 +590,7 @@ Error""")
         gdaltest.post_reason('fail')
         return 'fail'
 
-    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=SELECT * FROM "table1" WHERE "my_geom" %26%26 'BOX3D(-180 -90, 180 90)'::box3d AND strfield is NULL ORDER BY "cartodb_id" ASC LIMIT 2 OFFSET 0&api_key=foo""",
+    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=SELECT * FROM "table1" WHERE ("my_geom" %26%26 'BOX3D(-180 -90, 180 90)'::box3d AND strfield is NULL) AND "cartodb_id" BETWEEN 0 AND 1 ORDER BY "cartodb_id" ASC&api_key=foo""",
         """{"rows":[{"cartodb_id":20, "my_geom": "010100000000000000000000400000000000804840" }],
             "fields":{"cartodb_id":{"type":"numeric"}, "my_geom":{"type":"string"}}}""")
 
@@ -876,7 +909,7 @@ def ogr_cartodb_test_ogrsf():
     if test_cli_utilities.get_test_ogrsf_path() is None:
         return 'skip'
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' --config CARTODB_HTTPS NO -ro "CARTODB:gdalautotest2 tables=tm_world_borders_simpl_0_3"')
+    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' --config CARTODB_HTTPS NO --config CARTODB_PAGE_SIZE 300 -ro "CARTODB:gdalautotest2 tables=tm_world_borders_simpl_0_3"')
 
     if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
         print(ret)

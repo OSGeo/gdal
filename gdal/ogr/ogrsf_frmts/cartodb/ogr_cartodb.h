@@ -73,7 +73,7 @@ protected:
     int                  bEOF;
     int                  nFetchedObjects;
     int                  iNextInFetchedObjects;
-    int                  iNext;
+    GIntBig              iNext;
     json_object         *poCachedObj;
 
     virtual OGRFeature  *GetNextRawFeature();
@@ -93,6 +93,7 @@ protected:
 
     virtual OGRFeatureDefn *    GetLayerDefn();
     virtual OGRFeatureDefn *    GetLayerDefnInternal(json_object* poObjIn) = 0;
+    virtual json_object*        FetchNewFeatures(GIntBig iNext);
     
     virtual const char*         GetFIDColumn() { return osFIDColName.c_str(); }
 
@@ -132,6 +133,7 @@ class OGRCARTODBTableLayer : public OGRCARTODBLayer
 
     virtual const char*         GetName() { return osName.c_str(); }
     virtual OGRFeatureDefn *    GetLayerDefnInternal(json_object* poObjIn);
+    virtual json_object*        FetchNewFeatures(GIntBig iNext);
 
     virtual GIntBig             GetFeatureCount( int bForce = TRUE );
     virtual OGRFeature         *GetFeature( GIntBig nFeatureId );
