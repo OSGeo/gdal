@@ -339,7 +339,25 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
     }
 
     pszName = CPLStrdup( pszNewName );
-    char* pszConnectionName = CPLStrdup(pszName);
+    
+    CPLString osConnectionName(pszName);
+    const char* apszOpenOptions[] = { "dbname", "port", "user", "password",
+                                      "host", "active_schema", "schemas", "tables" };
+    for(int i=0; i <(int)(sizeof(apszOpenOptions)/sizeof(char*));i++)
+    {
+        const char* pszVal = CSLFetchNameValue(papszOpenOptions, apszOpenOptions[i]);
+        if( pszVal )
+        {
+            if( osConnectionName[osConnectionName.size()-1] != ':' )
+                osConnectionName += " ";
+            osConnectionName += apszOpenOptions[i];
+            osConnectionName += "=";
+            osConnectionName += pszVal;
+        }
+    }
+    
+    char* pszConnectionName = CPLStrdup(osConnectionName);
+    
 
 /* -------------------------------------------------------------------- */
 /*      Determine if the connection string contains an optional         */

@@ -2647,6 +2647,11 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
                 printf( "\n%s\n", pszFormattedXML );
                 CPLFree( pszFormattedXML );
             }
+
+            if( CSLFetchNameValue( papszMD, GDAL_DMD_CONNECTION_PREFIX ) )
+                printf( "  Connection prefix: %s\n", 
+                        CSLFetchNameValue( papszMD, GDAL_DMD_CONNECTION_PREFIX ) );
+
             if( CSLFetchNameValue( papszMD, GDAL_DMD_OPENOPTIONLIST ) )
             {
                 CPLXMLNode *psCOL = 

@@ -100,8 +100,11 @@ void RegisterOGRWFS()
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
                                    "drv_wfs.html" );
 
+        poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, "WFS:" );
+
         poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
 "<OpenOptionList>"
+"  <Option name='URL' type='string' description='URL to the WFS server endpoint' required='true'/>"
 "  <Option name='TRUST_CAPABILITIES_BOUNDS' type='boolean' description='Whether to trust layer bounds declared in GetCapabilities response' default='NO'/>"
 "</OpenOptionList>" );
 

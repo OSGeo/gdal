@@ -147,12 +147,23 @@ int OGRCARTODBDataSource::Open( const char * pszFilename,
     bBatchInsert = CSLTestBoolean(CSLFetchNameValueDef(papszOpenOptions, "BATCH_INSERT", "YES"));
 
     pszName = CPLStrdup( pszFilename );
-    pszAccount = CPLStrdup(pszFilename + strlen("CARTODB:"));
-    char* pchSpace = strchr(pszAccount, ' ');
-    if( pchSpace )
-        *pchSpace = '\0';
+    if( CSLFetchNameValue(papszOpenOptions, "ACCOUNT") )
+        pszAccount = CPLStrdup(CSLFetchNameValue(papszOpenOptions, "ACCOUNT"));
+    else
+    {
+        pszAccount = CPLStrdup(pszFilename + strlen("CARTODB:"));
+        char* pchSpace = strchr(pszAccount, ' ');
+        if( pchSpace )
+            *pchSpace = '\0';
+        if( pszAccount[0] == 0 )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Missing account name");
+            return FALSE;
+        }
+    }
 
-    osAPIKey = CPLGetConfigOption("CARTODB_API_KEY", "");
+    osAPIKey = CSLFetchNameValueDef(papszOpenOptions, "API_KEY",
+                                    CPLGetConfigOption("CARTODB_API_KEY", ""));
 
     CPLString osTables = OGRCARTODBGetOptionValue(pszFilename, "tables");
     

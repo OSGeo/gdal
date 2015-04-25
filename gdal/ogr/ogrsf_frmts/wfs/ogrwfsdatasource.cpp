@@ -907,9 +907,13 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn,
             return FALSE;
         }
 
-        pszBaseURL = pszFilename;
-        if (EQUALN(pszFilename, "WFS:", 4))
-            pszBaseURL += 4;
+        pszBaseURL = CSLFetchNameValue(papszOpenOptions, "URL");
+        if( pszBaseURL == NULL )
+        {
+            pszBaseURL = pszFilename;
+            if (EQUALN(pszFilename, "WFS:", 4))
+                pszBaseURL += 4;
+        }
 
         osBaseURL = pszBaseURL;
 
