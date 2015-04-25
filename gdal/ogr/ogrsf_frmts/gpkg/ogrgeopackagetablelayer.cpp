@@ -2589,9 +2589,20 @@ char **OGRGeoPackageTableLayer::GetMetadata( const char *pszDomain )
             pszMimeType != NULL && EQUAL(pszMimeType, "text/xml") )
             continue;
 
-        oMDMD.SetMetadataItem( CPLSPrintf("GPKG_METADATA_ITEM_%d", nNonGDALMDILocal),
-                                pszMetadata );
-        nNonGDALMDILocal ++;
+        /*if( strcmp( pszMDStandardURI, "http://www.isotc211.org/2005/gmd" ) == 0 &&
+            strcmp( pszMimeType, "text/xml" ) == 0 )
+        {
+            char* apszMD[2];
+            apszMD[0] = (char*)pszMetadata;
+            apszMD[1] = NULL;
+            oMDMD.SetMetadata(apszMD, "xml:MD_Metadata");
+        }
+        else*/
+        {
+            oMDMD.SetMetadataItem( CPLSPrintf("GPKG_METADATA_ITEM_%d", nNonGDALMDILocal),
+                                    pszMetadata );
+            nNonGDALMDILocal ++;
+        }
     }
 
     SQLResultFree(&oResult);

@@ -54,15 +54,21 @@ static int OGRGeoPackageDriverIdentify( GDALOpenInfo* poOpenInfo )
     if( poOpenInfo->fpL == NULL)
         return FALSE;
 
+    if ( poOpenInfo->nHeaderBytes < 16 ||
+        strncmp( (const char*)poOpenInfo->pabyHeader, "SQLite format 3", 15 ) != 0 )
+    {
+        return FALSE;
+    }
+
     /* Requirement 2: A GeoPackage SHALL contain 0x47503130 ("GP10" in ASCII) */
     /* in the application id */
     /* http://opengis.github.io/geopackage/#_file_format */
+    /* Be tolerant since some datasets don't actually follow that requirement */
     if( poOpenInfo->nHeaderBytes < 68 + 4 ||
         memcmp(poOpenInfo->pabyHeader + 68, aGpkgId, 4) != 0 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, "bad application_id on '%s'",
+        CPLError( CE_Warning, CPLE_AppDefined, "GPKG: bad application_id on '%s'",
                   poOpenInfo->pszFilename);
-        return FALSE;
     }
 
     return TRUE;
