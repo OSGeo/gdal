@@ -1003,10 +1003,11 @@ OGRFeature* OGRCARTODBTableLayer::GetFeature( GIntBig nFeatureId )
     if( osFIDColName.size() == 0 )
         return OGRCARTODBLayer::GetFeature(nFeatureId);
 
-    CPLString osSQL(CPLSPrintf("SELECT * FROM %s WHERE %s = " CPL_FRMT_GIB,
-                               OGRCARTODBEscapeIdentifier(osName).c_str(),
-                               OGRCARTODBEscapeIdentifier(osFIDColName).c_str(),
-                               nFeatureId));
+    CPLString osSQL = osSELECTWithoutWHERE;
+    osSQL += " WHERE ";
+    osSQL += OGRCARTODBEscapeIdentifier(osFIDColName).c_str();
+    osSQL += " = ";
+    osSQL += CPLSPrintf(CPL_FRMT_GIB, nFeatureId);
 
     json_object* poObj = poDS->RunSQL(osSQL);
     json_object* poRowObj = OGRCARTODBGetSingleRow(poObj);
