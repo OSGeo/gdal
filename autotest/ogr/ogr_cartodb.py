@@ -258,7 +258,7 @@ Error""")
         gdaltest.post_reason('fail')
         return 'fail'
 
-    gdal.FileFromMemBuffer('/vsimem/cartodb&POSTFIELDS=q=SELECT * FROM "table1" LIMIT 500 OFFSET 0',
+    gdal.FileFromMemBuffer('/vsimem/cartodb&POSTFIELDS=q=SELECT "strfield", "realfield", "boolfield", "datefield" FROM "table1" LIMIT 500 OFFSET 0',
 """{"rows":[{ "strfield": "foo", "realfield": 1.23, "boolfield": true, "datefield": "2015-04-24T12:34:56.123Z" }],"fields":{"strfield":{"type":"string"}, "realfield":{"type":"number"}, "boolfield":{"type":"boolean"}, "datefield":{"type":"date"}}}""")
     f = lyr.GetNextFeature()
     if f['strfield'] != 'foo' or f['realfield'] != 1.23 or f['boolfield'] != 1 or \
@@ -484,7 +484,7 @@ Error""")
         gdaltest.post_reason('fail')
         return 'fail'
 
-    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=SELECT * FROM "table1" WHERE "cartodb_id" >= 0 ORDER BY "cartodb_id" ASC LIMIT 500&api_key=foo""",
+    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=SELECT "cartodb_id", "my_geom", "strfield", "intfield", "doublefield", "boolfield", "datetimefield" FROM "table1" WHERE "cartodb_id" >= 0 ORDER BY "cartodb_id" ASC LIMIT 500&api_key=foo""",
         """{"rows":[{"cartodb_id":0}],
             "fields":{"cartodb_id":{"type":"numeric"}}}""")
     lyr.ResetReading()
@@ -500,7 +500,7 @@ Error""")
         return 'fail'
 
     gdal.SetConfigOption('CARTODB_PAGE_SIZE', '2')
-    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=SELECT * FROM "table1" WHERE "cartodb_id" >= 0 ORDER BY "cartodb_id" ASC LIMIT 2&api_key=foo""",
+    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=SELECT "cartodb_id", "my_geom", "strfield", "intfield", "doublefield", "boolfield", "datetimefield" FROM "table1" WHERE "cartodb_id" >= 0 ORDER BY "cartodb_id" ASC LIMIT 2&api_key=foo""",
         """{"rows":[{"cartodb_id":0},{"cartodb_id":10}],
             "fields":{"cartodb_id":{"type":"numeric"}}}""")
     lyr.ResetReading()
@@ -513,7 +513,7 @@ Error""")
         gdaltest.post_reason('fail')
         return 'fail'
 
-    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=SELECT * FROM "table1" WHERE "cartodb_id" >= 11 ORDER BY "cartodb_id" ASC LIMIT 2&api_key=foo""",
+    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=SELECT "cartodb_id", "my_geom", "strfield", "intfield", "doublefield", "boolfield", "datetimefield" FROM "table1" WHERE "cartodb_id" >= 11 ORDER BY "cartodb_id" ASC LIMIT 2&api_key=foo""",
         """{"rows":[{"cartodb_id":12}],
             "fields":{"cartodb_id":{"type":"numeric"}}}""")
     f = lyr.GetNextFeature()
@@ -535,7 +535,7 @@ Error""")
         gdaltest.post_reason('fail')
         return 'fail'
 
-    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=SELECT * FROM "table1" WHERE (strfield is NULL) AND "cartodb_id" >= 0 ORDER BY "cartodb_id" ASC LIMIT 2&api_key=foo""",
+    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=SELECT "cartodb_id", "my_geom", "strfield", "intfield", "doublefield", "boolfield", "datetimefield" FROM "table1" WHERE (strfield is NULL) AND "cartodb_id" >= 0 ORDER BY "cartodb_id" ASC LIMIT 2&api_key=foo""",
         """{"rows":[{"cartodb_id":0}],
             "fields":{"cartodb_id":{"type":"numeric"}}}""")
     lyr.ResetReading()
@@ -543,7 +543,7 @@ Error""")
     if f is None:
         gdaltest.post_reason('fail')
         return 'fail'
-    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=SELECT * FROM "table1" WHERE (strfield is NULL) AND "cartodb_id" >= 1 ORDER BY "cartodb_id" ASC LIMIT 2&api_key=foo""",
+    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=SELECT "cartodb_id", "my_geom", "strfield", "intfield", "doublefield", "boolfield", "datetimefield" FROM "table1" WHERE (strfield is NULL) AND "cartodb_id" >= 1 ORDER BY "cartodb_id" ASC LIMIT 2&api_key=foo""",
         """{"rows":[],
             "fields":{"cartodb_id":{"type":"numeric"}}}""")
     gdal.ErrorReset()
@@ -568,7 +568,7 @@ Error""")
         gdaltest.post_reason('fail')
         return 'fail'
 
-    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=SELECT * FROM "table1" WHERE ("my_geom" %26%26 'BOX3D(-180 -90, 180 90)'::box3d) AND (strfield is NULL) AND "cartodb_id" >= 0 ORDER BY "cartodb_id" ASC LIMIT 2&api_key=foo""",
+    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=SELECT "cartodb_id", "my_geom", "strfield", "intfield", "doublefield", "boolfield", "datetimefield" FROM "table1" WHERE ("my_geom" %26%26 'BOX3D(-180 -90, 180 90)'::box3d) AND (strfield is NULL) AND "cartodb_id" >= 0 ORDER BY "cartodb_id" ASC LIMIT 2&api_key=foo""",
         """{"rows":[{"cartodb_id":20, "my_geom": "010100000000000000000000400000000000804840" }],
             "fields":{"cartodb_id":{"type":"numeric"}, "my_geom":{"type":"string"}}}""")
 
