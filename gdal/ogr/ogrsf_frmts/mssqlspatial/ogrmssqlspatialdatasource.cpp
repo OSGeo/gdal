@@ -382,17 +382,20 @@ OGRLayer * OGRMSSQLSpatialDataSource::ICreateLayer( const char * pszLayerName,
     else
         pszFIDColumnName = CPLStrdup( pszFIDColumnNameIn );
 
+    int bFID64 = CSLFetchBoolean(papszOptions, "FID64", FALSE);
+ 	const char* pszFIDType = bFID64 ? "bigint": "int";
+
     if( eType == wkbNone ) 
     { 
-        oStmt.Appendf("CREATE TABLE [%s].[%s] ([%s] [int] IDENTITY(1,1) NOT NULL, "
+        oStmt.Appendf("CREATE TABLE [%s].[%s] ([%s] [%s] IDENTITY(1,1) NOT NULL, "
             "CONSTRAINT [PK_%s] PRIMARY KEY CLUSTERED ([%s] ASC))",
-            pszSchemaName, pszTableName, pszFIDColumnName, pszTableName, pszFIDColumnName);
+            pszSchemaName, pszTableName, pszFIDColumnName, pszFIDType, pszTableName, pszFIDColumnName);
     }
     else
     {
-        oStmt.Appendf("CREATE TABLE [%s].[%s] ([%s] [int] IDENTITY(1,1) NOT NULL, "
+        oStmt.Appendf("CREATE TABLE [%s].[%s] ([%s] [%s] IDENTITY(1,1) NOT NULL, "
             "[%s] [%s] NULL, CONSTRAINT [PK_%s] PRIMARY KEY CLUSTERED ([%s] ASC))",
-            pszSchemaName, pszTableName, pszFIDColumnName, pszGeomColumn, pszGeomType, pszTableName, pszFIDColumnName);
+            pszSchemaName, pszTableName, pszFIDColumnName, pszFIDType, pszGeomColumn, pszGeomType, pszTableName, pszFIDColumnName);
     }
 
     CPLFree( pszFIDColumnName );
@@ -438,6 +441,9 @@ OGRLayer * OGRMSSQLSpatialDataSource::ICreateLayer( const char * pszLayerName,
         CPLFree(pszWKT);
         pszWKT = NULL;
     }
+
+    if( bFID64 )
+        poLayer->SetMetadataItem(OLMD_FID64, "YES");
     
     if (poLayer->Initialize(pszSchemaName, pszTableName, pszGeomColumn, nCoordDimension, nSRSId, pszWKT, eType) == OGRERR_FAILURE)
     {

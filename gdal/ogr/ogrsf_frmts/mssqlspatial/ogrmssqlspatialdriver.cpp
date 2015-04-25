@@ -147,8 +147,9 @@ void RegisterOGRMSSQLSpatial()
 "    <Value>wkt</Value>"
 "  </Option>"
 "  <Option name='FID' type='string' description='Name of the FID column to create' default='ogr_fid'/>"
+"  <Option name='FID64' type='boolean' description='Whether to create the FID column with bigint type to handle 64bit wide ids' default='NO'/>"
 "</LayerCreationOptionList>");
 
-    poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES, "Integer Real String Date Time DateTime Binary" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES, "Integer Integer64 Real String Date Time DateTime Binary" );
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver(poDriver);
 }
