@@ -130,6 +130,11 @@ CPLErr OGRODBCLayer::BuildFeatureDefn( const char *pszLayerName,
                 oField.SetType( OFTInteger );
                 break;
 
+            case SQL_C_SBIGINT:
+            case SQL_C_UBIGINT:
+                oField.SetType( OFTInteger64 );
+                break;
+
             case SQL_C_BINARY:
                 oField.SetType( OFTBinary );
                 break;
