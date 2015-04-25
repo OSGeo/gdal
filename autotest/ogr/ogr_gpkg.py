@@ -1014,10 +1014,18 @@ def ogr_gpkg_19():
     ds = None
     
     ds = ogr.Open('/vsimem/ogr_gpkg_19.gpkg')
+    if ds.GetMetadataDomainList() != ['']:
+        print(ds.GetMetadataDomainList())
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ds = ogr.Open('/vsimem/ogr_gpkg_19.gpkg')
     if len(ds.GetMetadata()) != 1:
         print(ds.GetMetadata())
         gdaltest.post_reason('fail')
         return 'fail'
+        
+    ds = ogr.Open('/vsimem/ogr_gpkg_19.gpkg')
     if ds.GetMetadataItem('foo') != 'bar':
         gdaltest.post_reason('fail')
         print(ds.GetMetadata())

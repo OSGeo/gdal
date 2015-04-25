@@ -1757,6 +1757,9 @@ CPLErr GDALGeoPackageDataset::IBuildOverviews(
 
 char **GDALGeoPackageDataset::GetMetadataDomainList()
 {
+    GetMetadata();
+    if( m_osRasterTable.size() != 0 )
+        GetMetadata("GEOPACKAGE");
     return BuildMetadataDomainList(GDALPamDataset::GetMetadataDomainList(),
                                    TRUE,
                                    "SUBDATASETS", NULL);
