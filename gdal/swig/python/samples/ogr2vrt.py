@@ -156,20 +156,22 @@ vrt = '<OGRVRTDataSource>\n'
 #############################################################################
 # Metadata
 
-for domain in src_ds.GetMetadataDomainList():
-    if domain == '':
-        vrt += '  <Metadata>\n'
-    elif len(domain) > 4 and domain[0:4] == 'xml:':
-        vrt += '  <Metadata domain="%s" format="xml">\n' % Esc(domain)
-    else:
-        vrt += '  <Metadata domain="%s">\n' % Esc(domain)
-    if len(domain) > 4 and domain[0:4] == 'xml:':
-        vrt += src_ds.GetMetadata_List(domain)[0]
-    else:
-        md = src_ds.GetMetadata(domain)
-        for key in md:
-            vrt += '    <MDI key="%s">%s</MDI>\n' % (Esc(key), Esc(md[key]))
-    vrt += '  </Metadata>\n'
+mdd_list = src_ds.GetMetadataDomainList()
+if mdd_list is not None:
+    for domain in mdd_list:
+        if domain == '':
+            vrt += '  <Metadata>\n'
+        elif len(domain) > 4 and domain[0:4] == 'xml:':
+            vrt += '  <Metadata domain="%s" format="xml">\n' % Esc(domain)
+        else:
+            vrt += '  <Metadata domain="%s">\n' % Esc(domain)
+        if len(domain) > 4 and domain[0:4] == 'xml:':
+            vrt += src_ds.GetMetadata_List(domain)[0]
+        else:
+            md = src_ds.GetMetadata(domain)
+            for key in md:
+                vrt += '    <MDI key="%s">%s</MDI>\n' % (Esc(key), Esc(md[key]))
+        vrt += '  </Metadata>\n'
 
 
 #############################################################################
@@ -181,20 +183,22 @@ for name in layer_list:
 
     vrt += '  <OGRVRTLayer name="%s">\n' % Esc(name)
 
-    for domain in src_ds.GetMetadataDomainList():
-        if domain == '':
-            vrt += '    <Metadata>\n'
-        elif len(domain) > 4 and domain[0:4] == 'xml:':
-            vrt += '    <Metadata domain="%s" format="xml">\n' % Esc(domain)
-        else:
-            vrt += '    <Metadata domain="%s">\n' % Esc(domain)
-        if len(domain) > 4 and domain[0:4] == 'xml:':
-            vrt += src_ds.GetMetadata_List(domain)[0]
-        else:
-            md = src_ds.GetMetadata(domain)
-            for key in md:
-                vrt += '      <MDI key="%s">%s</MDI>\n' % (Esc(key), Esc(md[key]))
-        vrt += '    </Metadata>\n'
+    mdd_list = layer.GetMetadataDomainList()
+    if mdd_list is not None:
+        for domain in mdd_list:
+            if domain == '':
+                vrt += '    <Metadata>\n'
+            elif len(domain) > 4 and domain[0:4] == 'xml:':
+                vrt += '    <Metadata domain="%s" format="xml">\n' % Esc(domain)
+            else:
+                vrt += '    <Metadata domain="%s">\n' % Esc(domain)
+            if len(domain) > 4 and domain[0:4] == 'xml:':
+                vrt += layer.GetMetadata_List(domain)[0]
+            else:
+                md = layer.GetMetadata(domain)
+                for key in md:
+                    vrt += '      <MDI key="%s">%s</MDI>\n' % (Esc(key), Esc(md[key]))
+            vrt += '    </Metadata>\n'
 
 
     vrt += '    <SrcDataSource relativeToVRT="%s" shared="%d">%s</SrcDataSource>\n' \
