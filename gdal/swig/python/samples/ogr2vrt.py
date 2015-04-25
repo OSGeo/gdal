@@ -40,28 +40,26 @@ import sys
 #############################################################################
 
 def GeomType2Name( type ):
-    if type == ogr.wkbUnknown:
-        return 'wkbUnknown'
-    elif type == ogr.wkbPoint:
-        return 'wkbPoint'
-    elif type == ogr.wkbLineString:
-        return 'wkbLineString'
-    elif type == ogr.wkbPolygon:
-        return 'wkbPolygon'
-    elif type == ogr.wkbMultiPoint:
-        return 'wkbMultiPoint'
-    elif type == ogr.wkbMultiLineString:
-        return 'wkbMultiLineString'
-    elif type == ogr.wkbMultiPolygon:
-        return 'wkbMultiPolygon'
-    elif type == ogr.wkbGeometryCollection:
-        return 'wkbGeometryCollection'
-    elif type == ogr.wkbNone:
-        return 'wkbNone'
-    elif type == ogr.wkbLinearRing:
-        return 'wkbLinearRing'
-    else:
-        return 'wkbUnknown'
+    flat_type = ogr.GT_Flatten(type)
+    dic = { ogr.wkbUnknown : ('wkbUnknown', '25D'),
+            ogr.wkbPoint : ('wkbPoint', '25D'),
+            ogr.wkbLineString : ('wkbLineString', '25D'),
+            ogr.wkbPolygon : ('wkbPolygon', '25D'),
+            ogr.wkbMultiPoint : ('wkbMultiPoint', '25D'),
+            ogr.wkbMultiLineString : ('wkbMultiLineString', '25D'),
+            ogr.wkbMultiPolygon : ('wkbMultiPolygon', '25D'),
+            ogr.wkbGeometryCollection : ('wkbGeometryCollection', '25D'),
+            ogr.wkbNone : ('wkbNone', ''),
+            ogr.wkbLinearRing : ('wkbLinearRing', ''),
+            ogr.wkbCircularString : ('wkbCircularString', 'Z'),
+            ogr.wkbCompoundCurve : ('wkbCompoundCurve', 'Z'),
+            ogr.wkbCurvePolygon : ('wkbCurvePolygon', 'Z'),
+            ogr.wkbMultiCurve : ('wkbMultiCurve', 'Z'),
+            ogr.wkbMultiSurface : ('wkbMultiSurface', 'Z') }
+    ret = dic[flat_type][0]
+    if flat_type != type:
+        ret += dic[flat_type][1]
+    return ret
 
 #############################################################################
 def Esc(x):
