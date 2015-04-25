@@ -3447,6 +3447,7 @@ void GDALRegister_JP2OpenJPEG()
                                    "frmt_jp2openjpeg.html" );
         poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/jp2" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "jp2" );
+        poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "jp2 j2k" );
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
                                    "Byte Int16 UInt16 Int32 UInt32" );
 
