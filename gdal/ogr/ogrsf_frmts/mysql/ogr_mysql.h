@@ -226,7 +226,7 @@ class OGRMySQLDataSource : public OGRDataSource
 
     OGRErr              InitializeMetadataTables();
 
-    int                 Open( const char *, int bUpdate );
+    int                 Open( const char *, char** papszOpenOptions, int bUpdate );
     int                 OpenTable( const char *, int bUpdate );
 
     const char          *GetName() { return pszName; }

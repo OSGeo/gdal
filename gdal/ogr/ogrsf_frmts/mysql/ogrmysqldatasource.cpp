@@ -109,7 +109,8 @@ void OGRMySQLDataSource::ReportError( const char *pszDescription )
 /*                                Open()                                */
 /************************************************************************/
 
-int OGRMySQLDataSource::Open( const char * pszNewName, int bUpdate )
+int OGRMySQLDataSource::Open( const char * pszNewName, char** papszOpenOptions,
+                              int bUpdate )
 
 {
     CPLAssert( nLayers == 0 );
@@ -121,10 +122,40 @@ int OGRMySQLDataSource::Open( const char * pszNewName, int bUpdate )
     char **papszTableNames=NULL;
     std::string oHost, oPassword, oUser, oDB;
 
+    CPLString osNewName(pszNewName);
+    const char* apszOpenOptions[] = { "dbname", "port", "user", "password",
+                                      "host", "tables" };
+    for(int i=0; i <(int)(sizeof(apszOpenOptions)/sizeof(char*));i++)
+    {
+        const char* pszVal = CSLFetchNameValue(papszOpenOptions, apszOpenOptions[i]);
+        if( pszVal )
+        {
+            if( osNewName[osNewName.size()-1] != ':' )
+                osNewName += ",";
+            if( i > 0 )
+            {
+                osNewName += apszOpenOptions[i];
+                osNewName += "=";
+            }
+            if( EQUAL(apszOpenOptions[i], "tables") )
+            {
+                for( ; *pszVal; ++pszVal )
+                {
+                    if( *pszVal == ',' )
+                        osNewName += ";";
+                    else
+                        osNewName += *pszVal;
+                }
+            }
+            else
+                osNewName += pszVal;
+        }
+    }
+    
 /* -------------------------------------------------------------------- */
 /*      Parse out connection information.                               */
 /* -------------------------------------------------------------------- */
-    char **papszItems = CSLTokenizeString2( pszNewName+6, ",", 
+    char **papszItems = CSLTokenizeString2( osNewName+6, ",", 
                                             CSLT_HONOURSTRINGS );
 
     if( CSLCount(papszItems) < 1 )

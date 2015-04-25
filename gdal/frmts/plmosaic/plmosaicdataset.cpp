@@ -1492,9 +1492,11 @@ void GDALRegister_PLMOSAIC()
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
                                    "frmt_plmosaic.html" );
 
+        poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, "PLMOSAIC:" );
+
         poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST, 
 "<OpenOptionList>"
-"  <Option name='API_KEY' type='string' description='Account API key'/>"
+"  <Option name='API_KEY' type='string' description='Account API key' required='true'/>"
 "  <Option name='MOSAIC' type='string' description='Mosaic name'/>"
 "  <Option name='CACHE_PATH' type='string' description='Directory where to put cached quads'/>"
 "  <Option name='TRUST_CACHE' type='boolean' description='Whether already cached quads should be trusted as the most recent version' default='NO'/>"

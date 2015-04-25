@@ -120,8 +120,18 @@ void RegisterOGRPG()
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
                                     "drv_pg.html" );
 
+        poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, "PG:" );
+
         poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
 "<OpenOptionList>"
+"  <Option name='DBNAME' type='string' description='Database name'/>"
+"  <Option name='PORT' type='int' description='Port'/>"
+"  <Option name='USER' type='string' description='User name'/>"
+"  <Option name='PASSWORD' type='string' description='Password'/>"
+"  <Option name='HOST' type='string' description='Server hostname'/>"
+"  <Option name='ACTIVE_SCHEMA' type='string' description='Active schema'/>"
+"  <Option name='SCHEMAS' type='string' description='Restricted sets of schemas to explore (comma separated)'/>"
+"  <Option name='TABLES' type='string' description='Restricted set of tables to list (comma separated)'/>"
 "  <Option name='LIST_ALL_TABLES' type='boolean' description='Whether all tables, including non-spatial ones, should be listed' default='NO'/>"
 "</OpenOptionList>");
 
