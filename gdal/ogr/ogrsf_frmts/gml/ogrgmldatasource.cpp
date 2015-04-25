@@ -129,6 +129,9 @@ OGRGMLDataSource::~OGRGMLDataSource()
 
     if( fpOutput != NULL )
     {
+        if( nLayers == 0 )
+            WriteTopElements();
+
         const char* pszPrefix = GetAppPrefix();
         if( RemoveAppPrefix() )
             PrintLine( fpOutput, "</FeatureCollection>" );
@@ -578,10 +581,10 @@ int OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
     ((GMLReader*)poReader)->SetIsWFSJointLayer(bIsWFSJointLayer);
 
 /* -------------------------------------------------------------------- */
-/*      Find <gml:boundedBy>                                            */
+/*      Find <gml:description>, <gml:name> and <gml:boundedBy>          */
 /* -------------------------------------------------------------------- */
 
-    FindAndParseBoundedBy(fp);
+    FindAndParseTopElements(fp);
 
     if( szSRSName[0] != '\0' )
         poReader->SetGlobalSRSName(szSRSName);
@@ -1589,8 +1592,12 @@ int OGRGMLDataSource::Create( const char *pszFilename,
         PrintLine( fpOutput, "<%s:FeatureCollection", pszPrefix );
 
     if (IsGML32Output())
-        PrintLine( fpOutput, "%s",
-                "     gml:id=\"aFeatureCollection\"" );
+    {
+        char* pszGMLId = CPLEscapeString(
+            CSLFetchNameValueDef(papszOptions, "GML_ID", "aFeatureCollection"), -1, CPLES_XML);
+        PrintLine( fpOutput, "     gml:id=\"%s\"", pszGMLId );
+        CPLFree(pszGMLId);
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Write out schema info if provided in creation options.          */
@@ -1633,12 +1640,44 @@ int OGRGMLDataSource::Create( const char *pszFilename,
         PrintLine( fpOutput, "%s",
                     "     xmlns:gml=\"http://www.opengis.net/gml\">" );
 
+    return TRUE;
+}
+
+
+/************************************************************************/
+/*                         WriteTopElements()                           */
+/************************************************************************/
+
+void OGRGMLDataSource::WriteTopElements()
+{
+    const char* pszDescription = CSLFetchNameValueDef(papszCreateOptions,
+        "DESCRIPTION", GetMetadataItem("DESCRIPTION"));
+    if( pszDescription != NULL )
+    {
+        if (bWriteSpaceIndentation)
+            VSIFPrintfL( fpOutput, "  ");
+        char* pszTmp = CPLEscapeString(pszDescription, -1, CPLES_XML);
+        PrintLine( fpOutput, "<gml:description>%s</gml:description>", pszTmp );
+        CPLFree(pszTmp);
+    }
+
+    const char* pszName = CSLFetchNameValueDef(papszCreateOptions,
+        "NAME", GetMetadataItem("NAME"));
+    if( pszName != NULL )
+    {
+        if (bWriteSpaceIndentation)
+            VSIFPrintfL( fpOutput, "  ");
+        char* pszTmp = CPLEscapeString(pszName, -1, CPLES_XML);
+        PrintLine( fpOutput, "<gml:name>%s</gml:name>", pszTmp );
+        CPLFree(pszTmp);
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Should we initialize an area to place the boundedBy element?    */
 /*      We will need to seek back to fill it in.                        */
 /* -------------------------------------------------------------------- */
     nBoundedByLocation = -1;
-    if( CSLFetchBoolean( papszOptions, "BOUNDEDBY", TRUE ))
+    if( CSLFetchBoolean( papszCreateOptions , "BOUNDEDBY", TRUE ))
     {
         if (!bFpOutputIsNonSeekable )
         {
@@ -1657,8 +1696,6 @@ int OGRGMLDataSource::Create( const char *pszFilename,
                 PrintLine( fpOutput, "<gml:boundedBy><gml:null>missing</gml:null></gml:boundedBy>" );
         }
     }
-
-    return TRUE;
 }
 
 /************************************************************************/
@@ -1702,6 +1739,7 @@ OGRGMLDataSource::ICreateLayer( const char * pszLayerName,
 /* -------------------------------------------------------------------- */
     if (nLayers == 0)
     {
+        WriteTopElements();
         if (poSRS)
             poWriteGlobalSRS = poSRS->Clone();
         bWriteGlobalSRS = TRUE;
@@ -2513,10 +2551,10 @@ static int ExtractSRSName(const char* pszXML, char* szSRSName,
 }
 
 /************************************************************************/
-/*                         FindAndParseBoundedBy()                      */
+/*                      FindAndParseTopElements()                       */
 /************************************************************************/
 
-void OGRGMLDataSource::FindAndParseBoundedBy(VSILFILE* fp)
+void OGRGMLDataSource::FindAndParseTopElements(VSILFILE* fp)
 {
     /* Build a shortened XML file that contain only the global */
     /* boundedBy element, so as to be able to parse it easily */
@@ -2544,6 +2582,41 @@ void OGRGMLDataSource::FindAndParseBoundedBy(VSILFILE* fp)
             }
             else
                 pszStartTag = NULL;
+        }
+    }
+
+    const char* pszDescription = strstr(pszXML, "<gml:description>");
+    if( pszDescription )
+    {
+        pszDescription += strlen("<gml:description>");
+        const char* pszEndDescription = strstr(pszDescription,
+                                               "</gml:description>");
+        if( pszEndDescription )
+        {
+            CPLString osTmp(pszDescription);
+            osTmp.resize(pszEndDescription-pszDescription);
+            char* pszTmp = CPLUnescapeString(osTmp, NULL, CPLES_XML);
+            if( pszTmp )
+                SetMetadataItem("DESCRIPTION", pszTmp);
+            CPLFree(pszTmp);
+        }
+    }
+
+    const char* pszName = strstr(pszXML, "<gml:name");
+    if( pszName )
+        pszName = strchr(pszName, '>');
+    if( pszName )
+    {
+        pszName ++;
+        const char* pszEndName = strstr(pszName, "</gml:name>");
+        if( pszEndName )
+        {
+            CPLString osTmp(pszName);
+            osTmp.resize(pszEndName-pszName);
+            char* pszTmp = CPLUnescapeString(osTmp, NULL, CPLES_XML);
+            if( pszTmp )
+                SetMetadataItem("NAME", pszTmp);
+            CPLFree(pszTmp);
         }
     }
 

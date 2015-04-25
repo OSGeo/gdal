@@ -151,11 +151,13 @@ class OGRGMLDataSource : public OGRDataSource
     GMLFeature         *poStoredGMLFeature;
     OGRGMLLayer        *poLastReadLayer;
 
-    void                FindAndParseBoundedBy(VSILFILE* fp);
+    void                FindAndParseTopElements(VSILFILE* fp);
     void                SetExtents(double dfMinX, double dfMinY, double dfMaxX, double dfMaxY);
     
     void                BuildJointClassFromXSD();
     void                BuildJointClassFromScannedSchema();
+    
+    void                WriteTopElements();
 
   public:
                         OGRGMLDataSource();

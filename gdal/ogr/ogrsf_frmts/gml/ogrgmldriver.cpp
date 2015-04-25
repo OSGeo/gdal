@@ -190,6 +190,9 @@ void RegisterOGRGML()
 "    <Value>GEOMETRY</Value>"
 "    <Value>GEOMETRY,POSLIST</Value>"
 "  </Option>"
+"  <Option name='GML_ID' type='string' description='Value of feature collection gml:id (GML 3.2 only)' default='aFeatureCollection'/>"
+"  <Option name='NAME' type='string' description='Content of GML name element'/>"
+"  <Option name='DESCRIPTION' type='string' description='Content of GML description element'/>"
 "</CreationOptionList>");
 
         poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST, "<LayerCreationOptionList/>");

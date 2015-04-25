@@ -3755,6 +3755,43 @@ def ogr_gml_71():
     return 'success'
 
 ###############################################################################
+# Test name and description
+
+def ogr_gml_72():
+
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    ds = ogr.GetDriverByName('GML').CreateDataSource('/vsimem/ogr_gml_72.gml', options = ['NAME=name', 'DESCRIPTION=description'])
+    ds.SetMetadata({ 'NAME': 'ignored', 'DESCRIPTION': 'ignored' })
+    ds = None
+    
+    ds = ogr.Open('/vsimem/ogr_gml_72.gml')
+    if ds.GetMetadata() != { 'NAME': 'name', 'DESCRIPTION': 'description' }:
+        gdaltest.post_reason('fail')
+        print(ds.GetMetadata())
+        return 'fail'
+    ds = None
+
+    gdal.Unlink("/vsimem/ogr_gml_72.gml")
+    gdal.Unlink("/vsimem/ogr_gml_72.xsd")
+
+    ds = ogr.GetDriverByName('GML').CreateDataSource('/vsimem/ogr_gml_72.gml')
+    ds.SetMetadata({'NAME': 'name', 'DESCRIPTION': 'description' })
+    ds = None
+    
+    ds = ogr.Open('/vsimem/ogr_gml_72.gml')
+    if ds.GetMetadata() != { 'NAME': 'name', 'DESCRIPTION': 'description' }:
+        gdaltest.post_reason('fail')
+        print(ds.GetMetadata())
+        return 'fail'
+    ds = None
+
+    gdal.Unlink("/vsimem/ogr_gml_72.gml")
+    gdal.Unlink("/vsimem/ogr_gml_72.xsd")
+
+    return 'success'
+###############################################################################
 #  Cleanup
 
 def ogr_gml_cleanup():
@@ -3957,6 +3994,7 @@ gdaltest_list = [
     ogr_gml_69,
     ogr_gml_70,
     ogr_gml_71,
+    ogr_gml_72,
     ogr_gml_cleanup ]
 
 disabled_gdaltest_list = [ 
