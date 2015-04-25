@@ -130,14 +130,35 @@ CPLErr OGRMSSQLSpatialLayer::BuildFeatureDefn( const char *pszLayerName,
                 continue;
         }
 
-        if( pszFIDColumn != NULL &&
-		    EQUAL(poStmt->GetColName(iCol), pszFIDColumn) )
+        if( pszFIDColumn != NULL)
         {
-            if ( EQUAL(poStmt->GetColTypeName( iCol ), "int identity") ||
-                 EQUAL(poStmt->GetColTypeName( iCol ), "bigint identity"))
+		    if (EQUAL(poStmt->GetColName(iCol), pszFIDColumn) )
+            {
+                if (EQUALN(poStmt->GetColTypeName( iCol ), "bigint", 6))
+                    SetMetadataItem(OLMD_FID64, "YES");
+            
+                if ( EQUAL(poStmt->GetColTypeName( iCol ), "int identity") ||
+                     EQUAL(poStmt->GetColTypeName( iCol ), "bigint identity"))
+                    bIsIdentityFid = TRUE;
+                /* skip FID */
+                continue;
+            }
+        }
+        else
+        {
+            if (EQUAL(poStmt->GetColTypeName( iCol ), "int identity"))
+            {
+                pszFIDColumn = CPLStrdup( poStmt->GetColName(iCol) );
                 bIsIdentityFid = TRUE;
-            /* skip FID */
-            continue;
+                continue;
+            }
+            else if (EQUAL(poStmt->GetColTypeName( iCol ), "bigint identity"))
+            {
+                pszFIDColumn = CPLStrdup( poStmt->GetColName(iCol) );
+                bIsIdentityFid = TRUE;
+                SetMetadataItem(OLMD_FID64, "YES");
+                continue;
+            }
         }
 
         OGRFieldDefn    oField( poStmt->GetColName(iCol), OFTString );
@@ -150,6 +171,11 @@ CPLErr OGRMSSQLSpatialLayer::BuildFeatureDefn( const char *pszLayerName,
             case SQL_C_SLONG:
             case SQL_C_ULONG:
                 oField.SetType( OFTInteger );
+                break;
+
+            case SQL_C_SBIGINT:
+            case SQL_C_UBIGINT:
+                oField.SetType( OFTInteger64 );
                 break;
 
             case SQL_C_BINARY:
@@ -272,7 +298,7 @@ OGRFeature *OGRMSSQLSpatialLayer::GetNextRawFeature()
 
     if( pszFIDColumn != NULL && poStmt->GetColId(pszFIDColumn) > -1 )
         poFeature->SetFID( 
-            atoi(poStmt->GetColData(poStmt->GetColId(pszFIDColumn))) );
+            CPLAtoGIntBig(poStmt->GetColData(poStmt->GetColId(pszFIDColumn))) );
     else
         poFeature->SetFID( iNextShapeId );
 

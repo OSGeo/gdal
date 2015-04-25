@@ -785,6 +785,13 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateField( OGRFieldDefn *poFieldIn,
         else
             strcpy( szFieldType, "int" );
     }
+    else if( oField.GetType() == OFTInteger64 )
+    {
+        if( oField.GetWidth() > 0 && bPreservePrecision )
+            sprintf( szFieldType, "numeric(%d,0)", oField.GetWidth() );
+        else
+            strcpy( szFieldType, "bigint" );
+    }
     else if( oField.GetType() == OFTReal )
     {
         if( oField.GetWidth() > 0 && oField.GetPrecision() > 0
@@ -1154,6 +1161,16 @@ OGRErr OGRMSSQLSpatialTableLayer::ICreateFeature( OGRFeature *poFeature )
 
     if( poFeature->GetFID() != OGRNullFID && pszFIDColumn != NULL )
     {
+        if( (GIntBig)(int)poFeature->GetFID() != poFeature->GetFID() &&
+            GetMetadataItem(OLMD_FID64) == NULL )
+        {
+            /* MSSQL server doesn't support modifying pk columns without recreating the field */
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Failed to create feature with large integer fid. "
+                  "The FID64 layer creation option should be used." );
+            return OGRERR_FAILURE;
+        }
+        
         if (bNeedComma)
             oStatement.Appendf( ", [%s]", pszFIDColumn );
         else
@@ -1396,7 +1413,7 @@ void OGRMSSQLSpatialTableLayer::AppendFieldValue(CPLODBCStatement *poStatement,
             *pszComma = '.';
     }
 
-    if( nOGRFieldType != OFTInteger && nOGRFieldType != OFTReal
+    if( nOGRFieldType != OFTInteger && nOGRFieldType != OFTInteger64 && nOGRFieldType != OFTReal
         && !bIsDateNull )
     {
         if (nOGRFieldType == OFTString)
