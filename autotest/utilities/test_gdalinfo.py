@@ -426,7 +426,7 @@ def test_gdalinfo_22():
     expected_strings = [
         'Short Name:',
         'Long Name:',
-        'Extension:',
+        'Extensions:',
         'Mime Type:',
         'Help Topic:',
         'Supports: Create()',
