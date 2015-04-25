@@ -106,7 +106,8 @@ class OGRFeatureEdit
                 else
                     Console.WriteLine("feature updated successfully");
             }
-            Console.WriteLine("feature not found");
+            else
+                Console.WriteLine("feature not found");
         }
         else if (args[0].Equals("copy", StringComparison.InvariantCultureIgnoreCase))
         {
