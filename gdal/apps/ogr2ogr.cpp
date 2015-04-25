@@ -113,6 +113,7 @@ public:
     int bUnsetDefault;
     int bUnsetFid;
     int bPreserveFID;
+    int bCopyMD;
 
     TargetLayerInfo*            Setup(OGRLayer * poSrcLayer,
                                       const char *pszNewLayerName);
@@ -980,6 +981,8 @@ int main( int nArgc, char ** papszArgv )
     int          bUnsetDefault = FALSE;
     int          bUnsetFid = FALSE;
     int          bPreserveFID = FALSE;
+    int          bCopyMD = TRUE;
+    char       **papszMetadataOptions = NULL;
 
     int          nGCPCount = 0;
     GDAL_GCP    *pasGCPs = NULL;
@@ -1517,6 +1520,16 @@ int main( int nArgc, char ** papszArgv )
         {
             bUnsetFid = TRUE;
         }
+        else if( EQUAL(papszArgv[iArg],"-nomd") )
+        {
+            bCopyMD = FALSE;
+        }
+        else if( EQUAL(papszArgv[iArg],"-mo") )
+        {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            papszMetadataOptions = CSLAddString( papszMetadataOptions,
+                                                 papszArgv[++iArg] );
+        }
         else if( papszArgv[iArg][0] == '-' )
         {
             Usage(CPLSPrintf("Unknown option name '%s'", papszArgv[iArg]));
@@ -1779,6 +1792,29 @@ int main( int nArgc, char ** papszArgv )
                     pszFormat, pszDestDataSource );
             exit( 1 );
         }
+        
+        if( bCopyMD )
+        {
+            char** papszDomains = poDS->GetMetadataDomainList();
+            for(char** papszIter = papszDomains; papszIter && *papszIter; ++papszIter )
+            {
+                char** papszMD = poDS->GetMetadata(*papszIter);
+                if( papszMD )
+                    poODS->SetMetadata(papszMD, *papszIter);
+            }
+            CSLDestroy(papszDomains);
+        }
+        for(char** papszIter = papszMetadataOptions; papszIter && *papszIter; ++papszIter )
+        {
+            char    *pszKey = NULL;
+            const char *pszValue;
+            pszValue = CPLParseNameValue( *papszIter, &pszKey );
+            if( pszKey )
+            {
+                poODS->SetMetadataItem(pszKey,pszValue);
+                CPLFree( pszKey );
+            }
+        }
     }
 
     if( bLayerTransaction < 0 )
@@ -1869,6 +1905,7 @@ int main( int nArgc, char ** papszArgv )
     oSetup.bUnsetDefault = bUnsetDefault;
     oSetup.bUnsetFid = bUnsetFid;
     oSetup.bPreserveFID = bPreserveFID;
+    oSetup.bCopyMD = bCopyMD;
 
     LayerTranslator oTranslator;
     oTranslator.poSrcDS = poDS;
@@ -2433,6 +2470,7 @@ int main( int nArgc, char ** papszArgv )
     CSLDestroy( papszOpenOptions );
     CSLDestroy( papszDestOpenOptions );
     CSLDestroy( papszFieldTypesToString );
+    CSLDestroy( papszMetadataOptions );
     CPLFree( pszNewLayerName );
 
     OGRCleanupAll();
@@ -2489,7 +2527,8 @@ static void Usage(const char* pszAdditionalMsg, int bShort)
             "               [-fieldmap identity | index1[,index2]*]\n"
             "               [-splitlistfields] [-maxsubfields val]\n"
             "               [-explodecollections] [-zfield field_name]\n"
-            "               [-gcp pixel line easting northing [elevation]]* [-order n | -tps]\n");
+            "               [-gcp pixel line easting northing [elevation]]* [-order n | -tps]\n"
+            "               [-nomd] [-mo \"META-TAG=VALUE\"]*\n");
 
     if (bShort)
     {
@@ -3051,6 +3090,18 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
 
         if( poDstLayer == NULL )
             return NULL;
+        
+        if( bCopyMD )
+        {
+            char** papszDomains = poSrcLayer->GetMetadataDomainList();
+            for(char** papszIter = papszDomains; papszIter && *papszIter; ++papszIter )
+            {
+                char** papszMD = poSrcLayer->GetMetadata(*papszIter);
+                if( papszMD )
+                    poDstLayer->SetMetadata(papszMD, *papszIter);
+            }
+            CSLDestroy(papszDomains);
+        }
 
         if( anRequestedGeomFields.size() == 0 &&
             nSrcGeomFieldCount > 1 &&
