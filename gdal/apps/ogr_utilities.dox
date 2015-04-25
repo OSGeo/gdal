@@ -211,6 +211,7 @@ Advanced options :
                [-splitlistfields] [-maxsubfields val]
                [-explodecollections] [-zfield field_name]
                [-gcp pixel line easting northing [elevation]]* [-order n | -tps]
+               [-nomd] [-mo \"META-TAG=VALUE\"]*
 
 \endverbatim
 
@@ -367,6 +368,12 @@ to target layer if they exist in source layer..</dd>
 the new default behaviour that consists in, if the output driver
 has a FID layer creation option and we are not in append mode, to preserve the
 name of the source FID column and source feature IDs</dd>
+<dt> <b>-nomd</b>:</dt><dd>(starting with GDAL 2.0) To disable copying of metadata
+from source dataset and layers into target dataset and layers, when supported by
+output driver.</dd>
+<dt> <b>-mo</b> <i>"META-TAG=VALUE"</i>:</dt><dd>(starting with GDAL 2.0)  Passes a metadata key and
+value to set on the output dataset, when supported by output driver.</dd>
+
 </dl>
 
 \section ogr2ogr_performance PERFORMANCE HINTS

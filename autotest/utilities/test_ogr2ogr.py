@@ -2385,6 +2385,66 @@ def test_ogr2ogr_58():
 
     return 'success'
 
+###############################################################################
+# Test metadata support
+
+def test_ogr2ogr_59():
+    if test_cli_utilities.get_ogr2ogr_path() is None:
+        return 'skip'
+    if ogr.GetDriverByName('GPKG') is None:
+        return 'skip'
+
+    ds = ogr.GetDriverByName('GPKG').CreateDataSource('tmp/test_ogr2ogr_59_src.gpkg')
+    ds.SetMetadataItem('FOO', 'BAR')
+    ds.SetMetadataItem('BAR', 'BAZ', 'another_domain')
+    lyr = ds.CreateLayer('mylayer')
+    lyr.SetMetadataItem('lyr_FOO', 'lyr_BAR')
+    lyr.SetMetadataItem('lyr_BAR', 'lyr_BAZ', 'lyr_another_domain')
+    ds = None
+
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f GPKG tmp/test_ogr2ogr_59_dest.gpkg tmp/test_ogr2ogr_59_src.gpkg -mo BAZ=BAW')
+
+    ds = ogr.Open('tmp/test_ogr2ogr_59_dest.gpkg')
+    if ds.GetMetadata() != { 'FOO': 'BAR', 'BAZ': 'BAW' }:
+        gdaltest.post_reason('fail')
+        print(ds.GetMetadata())
+        return 'fail'
+    if ds.GetMetadata('another_domain') != { 'BAR': 'BAZ' }:
+        gdaltest.post_reason('fail')
+        print(ds.GetMetadata())
+        return 'fail'
+    lyr = ds.GetLayer(0)
+    if lyr.GetMetadata() != { 'lyr_FOO': 'lyr_BAR' }:
+        gdaltest.post_reason('fail')
+        print(lyr.GetMetadata())
+        return 'fail'
+    if lyr.GetMetadata('lyr_another_domain') != { 'lyr_BAR': 'lyr_BAZ' }:
+        gdaltest.post_reason('fail')
+        print(lyr.GetMetadata())
+        return 'fail'
+    ds = None
+
+    ogr.GetDriverByName('GPKG').DeleteDataSource('tmp/test_ogr2ogr_59_dest.gpkg')
+
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f GPKG tmp/test_ogr2ogr_59_dest.gpkg tmp/test_ogr2ogr_59_src.gpkg -nomd')
+    ds = ogr.Open('tmp/test_ogr2ogr_59_dest.gpkg')
+    if ds.GetMetadata() != {}:
+        gdaltest.post_reason('fail')
+        print(ds.GetMetadata())
+        return 'fail'
+    lyr = ds.GetLayer(0)
+    if lyr.GetMetadata() != {}:
+        gdaltest.post_reason('fail')
+        print(lyr.GetMetadata())
+        return 'fail'
+    ds = None
+
+    ogr.GetDriverByName('GPKG').DeleteDataSource('tmp/test_ogr2ogr_59_dest.gpkg')
+
+    ogr.GetDriverByName('GPKG').DeleteDataSource('tmp/test_ogr2ogr_59_src.gpkg')
+
+    return 'success'
+
 
 gdaltest_list = [
     test_ogr2ogr_1,
@@ -2446,6 +2506,7 @@ gdaltest_list = [
     test_ogr2ogr_56,
     test_ogr2ogr_57,
     test_ogr2ogr_58,
+    test_ogr2ogr_59
     ]
 
 if __name__ == '__main__':
