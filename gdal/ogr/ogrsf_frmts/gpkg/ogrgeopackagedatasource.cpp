@@ -200,7 +200,7 @@ OGRSpatialReference* GDALGeoPackageDataset::GetSpatialRef(int iSrsId)
     }
     
     CPLString oSQL;
-    oSQL.Printf("SELECT definition FROM gpkg_spatial_ref_sys WHERE srs_id = %d", iSrsId);
+    oSQL.Printf("SELECT definition, organization, organization_coordsys_id FROM gpkg_spatial_ref_sys WHERE srs_id = %d", iSrsId);
     
     OGRErr err = SQLQuery(hDB, oSQL.c_str(), &oResult);
 
@@ -221,16 +221,22 @@ OGRSpatialReference* GDALGeoPackageDataset::GetSpatialRef(int iSrsId)
         return NULL;
     }
     
-    OGRSpatialReference *poSpatialRef = new OGRSpatialReference(pszWkt);
+    const char* pszOrganization = SQLResultGetValue(&oResult, 1, 0);
+    const char* pszOrganizationCoordsysID = SQLResultGetValue(&oResult, 2, 0);
     
-    if ( poSpatialRef == NULL )
+    OGRSpatialReference *poSpatialRef = new OGRSpatialReference();
+    // Try to import first from EPSG code, and then from WKT
+    if( !(pszOrganization && pszOrganizationCoordsysID && EQUAL(pszOrganization, "EPSG") &&
+          poSpatialRef->importFromEPSG(atoi(pszOrganizationCoordsysID)) == OGRERR_NONE) &&
+        poSpatialRef->SetFromUserInput(pszWkt) != OGRERR_NONE )
     {
-        SQLResultFree(&oResult);
         CPLError( CE_Warning, CPLE_AppDefined, "unable to parse srs_id '%d' well-known text '%s'",
-                  iSrsId, pszWkt);
+                iSrsId, pszWkt);
+        SQLResultFree(&oResult);
+        delete poSpatialRef;
         return NULL;
     }
-    
+
     SQLResultFree(&oResult);
     return poSpatialRef;
 }
@@ -593,11 +599,18 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
     CheckUnknownExtensions();
 
     int bRet = FALSE;
+    int bHasGPKGGeometryColumns = FALSE;
     if( poOpenInfo->nOpenFlags & GDAL_OF_VECTOR )
+    {
+        SQLResult oResult;
+        err = SQLQuery(hDB, "pragma table_info('gpkg_geometry_columns')", &oResult);
+        bHasGPKGGeometryColumns = (err == OGRERR_NONE && oResult.nRowCount > 0);
+        SQLResultFree(&oResult);
+    }
+    if( bHasGPKGGeometryColumns )
     {
         /* Load layer definitions for all tables in gpkg_contents & gpkg_geometry_columns */
         /* and non-spatial tables as well */
-        SQLResult oResult;
         std::string osSQL =
             "SELECT c.table_name, c.identifier, 1 as is_spatial, c.min_x, c.min_y, c.max_x, c.max_y "
             "  FROM gpkg_geometry_columns g JOIN gpkg_contents c ON (g.table_name = c.table_name)"
@@ -611,6 +624,7 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
                 "  WHERE data_type = 'aspatial' ";
         }
 
+        SQLResult oResult;
         err = SQLQuery(hDB, osSQL.c_str(), &oResult);
         if  ( err != OGRERR_NONE )
         {
@@ -1910,6 +1924,14 @@ char **GDALGeoPackageDataset::GetMetadata( const char *pszDomain )
                                    "GEOPACKAGE" );
             nNonGDALMDIGeopackage ++;
         }
+        /*else if( strcmp( pszMDStandardURI, "http://www.isotc211.org/2005/gmd" ) == 0 &&
+            strcmp( pszMimeType, "text/xml" ) == 0 )
+        {
+            char* apszMD[2];
+            apszMD[0] = (char*)pszMetadata;
+            apszMD[1] = NULL;
+            oMDMD.SetMetadata(apszMD, "xml:MD_Metadata");
+        }*/
         else
         {
             oMDMD.SetMetadataItem( CPLSPrintf("GPKG_METADATA_ITEM_%d", nNonGDALMDILocal),
