@@ -3096,9 +3096,13 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
             char** papszDomains = poSrcLayer->GetMetadataDomainList();
             for(char** papszIter = papszDomains; papszIter && *papszIter; ++papszIter )
             {
-                char** papszMD = poSrcLayer->GetMetadata(*papszIter);
-                if( papszMD )
-                    poDstLayer->SetMetadata(papszMD, *papszIter);
+                if( !EQUAL(*papszIter, "IMAGE_STRUCTURE") &&
+                    !EQUAL(*papszIter, "SUBDATASETS") )
+                {
+                    char** papszMD = poSrcLayer->GetMetadata(*papszIter);
+                    if( papszMD )
+                        poDstLayer->SetMetadata(papszMD, *papszIter);
+                }
             }
             CSLDestroy(papszDomains);
         }
