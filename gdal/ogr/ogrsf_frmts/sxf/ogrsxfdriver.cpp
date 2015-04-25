@@ -138,6 +138,7 @@ void RegisterOGRSXF()
                                 "Storage and eXchange Format" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
                                 "drv_sxf.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "sxf" );
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver(poDriver);
 }
 

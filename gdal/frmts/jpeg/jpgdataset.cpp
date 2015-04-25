@@ -3716,6 +3716,7 @@ void GDALRegister_JPEG()
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
                                    "frmt_jpeg.html" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "jpg" );
+        poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "jpg jpeg" );
         poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/jpeg" );
 
 #if defined(JPEG_LIB_MK1_OR_12BIT) || defined(JPEG_DUAL_MODE_8_12)
