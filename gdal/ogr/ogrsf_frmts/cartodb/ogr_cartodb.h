@@ -112,6 +112,7 @@ class OGRCARTODBTableLayer : public OGRCARTODBLayer
     CPLString           osName;
     CPLString           osQuery;
     CPLString           osWHERE;
+    CPLString           osSELECTWithoutWHERE;
 
     int                 bLaunderColumnNames;
 

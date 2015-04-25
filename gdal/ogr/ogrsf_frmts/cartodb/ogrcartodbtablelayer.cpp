@@ -114,9 +114,6 @@ OGRFeatureDefn * OGRCARTODBTableLayer::GetLayerDefnInternal(CPL_UNUSED json_obje
     if( poFeatureDefn != NULL )
         return poFeatureDefn;
 
-    osBaseSQL.Printf("SELECT * FROM %s",
-                     OGRCARTODBEscapeIdentifier(osName).c_str());
-
     CPLString osCommand;
     if( poDS->IsAuthenticatedConnection() )
     {
@@ -264,8 +261,38 @@ OGRFeatureDefn * OGRCARTODBTableLayer::GetLayerDefnInternal(CPL_UNUSED json_obje
 
     if( poFeatureDefn == NULL )
     {
+        osBaseSQL.Printf("SELECT * FROM %s", OGRCARTODBEscapeIdentifier(osName).c_str());
         EstablishLayerDefn(osName, NULL);
+        osBaseSQL = "";
     }
+
+    if( osFIDColName.size() > 0 )
+    {
+        osBaseSQL = "SELECT ";
+        osBaseSQL += OGRCARTODBEscapeIdentifier(osFIDColName);
+    }
+    for(int i=0; i<poFeatureDefn->GetGeomFieldCount(); i++)
+    {
+        if( osBaseSQL.size() == 0 )
+            osBaseSQL = "SELECT ";
+        else
+            osBaseSQL += ", ";
+        osBaseSQL += OGRCARTODBEscapeIdentifier(poFeatureDefn->GetGeomFieldDefn(i)->GetNameRef());
+    }
+    for(int i=0; i<poFeatureDefn->GetFieldCount(); i++)
+    {
+        if( osBaseSQL.size() == 0 )
+            osBaseSQL = "SELECT ";
+        else
+            osBaseSQL += ", ";
+        osBaseSQL += OGRCARTODBEscapeIdentifier(poFeatureDefn->GetFieldDefn(i)->GetNameRef());
+    }
+    if( osBaseSQL.size() == 0 )
+        osBaseSQL = "SELECT *";
+    osBaseSQL += " FROM ";
+    osBaseSQL += OGRCARTODBEscapeIdentifier(osName);
+
+    osSELECTWithoutWHERE = osBaseSQL;
 
     return poFeatureDefn;
 }
@@ -279,8 +306,8 @@ json_object* OGRCARTODBTableLayer::FetchNewFeatures(GIntBig iNext)
     if( osFIDColName.size() > 0 )
     {
         CPLString osSQL;
-        osSQL.Printf("SELECT * FROM %s WHERE %s%s >= " CPL_FRMT_GIB " ORDER BY %s ASC LIMIT %d",
-                     OGRCARTODBEscapeIdentifier(osName).c_str(),
+        osSQL.Printf("%s WHERE %s%s >= " CPL_FRMT_GIB " ORDER BY %s ASC LIMIT %d",
+                     osSELECTWithoutWHERE.c_str(),
                      ( osWHERE.size() ) ? CPLSPrintf("%s AND ", osWHERE.c_str()) : "",
                      OGRCARTODBEscapeIdentifier(osFIDColName).c_str(),
                      iNext,
@@ -951,8 +978,7 @@ void OGRCARTODBTableLayer::BuildWhere()
 
     if( osFIDColName.size() == 0 )
     {
-        osBaseSQL.Printf("SELECT * FROM %s",
-                        OGRCARTODBEscapeIdentifier(osName).c_str());
+        osBaseSQL = osSELECTWithoutWHERE;
         if( osWHERE.size() )
         {
             osBaseSQL += " WHERE ";
