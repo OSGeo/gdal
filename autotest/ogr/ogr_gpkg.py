@@ -1002,6 +1002,10 @@ def ogr_gpkg_19():
     if len(ds.GetMetadata()) != 0:
         gdaltest.post_reason('fail')
         return 'fail'
+    lyr = ds.CreateLayer('test_without_md')
+    if len(lyr.GetMetadata()) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
 
     ds.SetMetadataItem('foo', 'bar')
 
@@ -1029,6 +1033,78 @@ def ogr_gpkg_19():
     if ds.GetMetadataItem('foo') != 'bar':
         gdaltest.post_reason('fail')
         print(ds.GetMetadata())
+        return 'fail'
+    ds = None
+    
+    ds = ogr.Open('/vsimem/ogr_gpkg_19.gpkg', update = 1)
+    lyr = ds.CreateLayer('test_with_md', options = ['IDENTIFIER=ident', 'DESCRIPTION=desc'])
+    lyr.SetMetadataItem('IDENTIFIER', 'ignored_because_of_lco')
+    lyr.SetMetadataItem('DESCRIPTION', 'ignored_because_of_lco')
+    lyr.SetMetadata( { 'IDENTIFIER': 'ignored_because_of_lco', 'DESCRIPTION': 'ignored_because_of_lco'} )
+    ds = None
+    
+    ds = ogr.Open('/vsimem/ogr_gpkg_19.gpkg')
+    lyr = ds.GetLayer('test_with_md')
+    if lyr.GetMetadataItem('IDENTIFIER') != 'ident':
+        gdaltest.post_reason('fail')
+        print(lyr.GetMetadataItem('IDENTIFIER'))
+        return 'fail'
+    if lyr.GetMetadataItem('DESCRIPTION') != 'desc':
+        gdaltest.post_reason('fail')
+        print(lyr.GetMetadataItem('DESCRIPTION'))
+        return 'fail'
+
+    ds = ogr.Open('/vsimem/ogr_gpkg_19.gpkg', update = 1)
+    lyr = ds.GetLayer('test_with_md')
+    if lyr.GetMetadata() != {'IDENTIFIER': 'ident', 'DESCRIPTION': 'desc'}:
+        gdaltest.post_reason('fail')
+        print(lyr.GetMetadata())
+        return 'fail'
+    lyr.SetMetadataItem('IDENTIFIER', 'another_ident')
+    lyr.SetMetadataItem('DESCRIPTION', 'another_desc')
+    ds = None
+
+    ds = ogr.Open('/vsimem/ogr_gpkg_19.gpkg', update = 1)
+    lyr = ds.GetLayer('test_with_md')
+    if lyr.GetMetadata() != {'IDENTIFIER': 'another_ident', 'DESCRIPTION': 'another_desc'}:
+        gdaltest.post_reason('fail')
+        print(lyr.GetMetadata())
+        return 'fail'
+    lyr.SetMetadataItem('foo', 'bar')
+    lyr.SetMetadataItem('bar', 'baz', 'another_domain')
+    ds = None
+
+    ds = ogr.Open('/vsimem/ogr_gpkg_19.gpkg', update = 1)
+    lyr = ds.GetLayer('test_with_md')
+    if lyr.GetMetadataDomainList() != ['', 'another_domain']:
+        gdaltest.post_reason('fail')
+        print(lyr.GetMetadataDomainList())
+        return 'fail'
+    ds = None
+
+    ds = ogr.Open('/vsimem/ogr_gpkg_19.gpkg', update = 1)
+    lyr = ds.GetLayer('test_with_md')
+    if lyr.GetMetadata() != {'IDENTIFIER': 'another_ident', 'foo': 'bar', 'DESCRIPTION': 'another_desc'}:
+        gdaltest.post_reason('fail')
+        print(lyr.GetMetadata())
+        return 'fail'
+    if lyr.GetMetadata('another_domain') != {'bar': 'baz'}:
+        gdaltest.post_reason('fail')
+        print(lyr.GetMetadata('another_domain'))
+        return 'fail'
+    lyr.SetMetadata(None)
+    lyr.SetMetadata(None, 'another_domain')
+    ds = None
+
+    ds = ogr.Open('/vsimem/ogr_gpkg_19.gpkg', update = 1)
+    lyr = ds.GetLayer('test_with_md')
+    if lyr.GetMetadata() != {'IDENTIFIER': 'another_ident', 'DESCRIPTION': 'another_desc'}:
+        gdaltest.post_reason('fail')
+        print(lyr.GetMetadata())
+        return 'fail'
+    if lyr.GetMetadataDomainList() != ['']:
+        gdaltest.post_reason('fail')
+        print(lyr.GetMetadataDomainList())
         return 'fail'
     ds = None
 

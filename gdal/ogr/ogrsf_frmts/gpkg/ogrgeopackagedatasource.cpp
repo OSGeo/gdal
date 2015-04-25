@@ -2309,6 +2309,64 @@ CPLErr GDALGeoPackageDataset::FlushMetadata()
         }
     }
 
+    for(int i=0;i<m_nLayers;i++)
+    {
+        const char* pszIdentifier = m_papoLayers[i]->GetMetadataItem("IDENTIFIER");
+        const char* pszDescription = m_papoLayers[i]->GetMetadataItem("DESCRIPTION");
+        if( pszIdentifier != NULL )
+        {
+            char* pszSQL = sqlite3_mprintf(
+                "UPDATE gpkg_contents SET identifier = '%q' WHERE table_name = '%q'",
+                pszIdentifier, m_papoLayers[i]->GetName());
+            SQLCommand(hDB, pszSQL);
+            sqlite3_free(pszSQL);
+        }
+        if( pszDescription != NULL )
+        {
+            char* pszSQL = sqlite3_mprintf(
+                "UPDATE gpkg_contents SET description = '%q' WHERE table_name = '%q'",
+                pszDescription, m_papoLayers[i]->GetName());
+            SQLCommand(hDB, pszSQL);
+            sqlite3_free(pszSQL);
+        }
+
+        char** papszMDDup = NULL;
+        for( char** papszIter = m_papoLayers[i]->GetMetadata(); papszIter && *papszIter; ++papszIter )
+        {
+            if( EQUALN(*papszIter, "IDENTIFIER=", strlen("IDENTIFIER=")) )
+                continue;
+            if( EQUALN(*papszIter, "DESCRIPTION=", strlen("DESCRIPTION=")) )
+                continue;
+            if( EQUALN(*papszIter, "OLMD_FID64=", strlen("OLMD_FID64=")) )
+                continue;
+            papszMDDup = CSLInsertString(papszMDDup, -1, *papszIter);
+        }
+
+        CPLXMLNode* psXMLNode;
+        {
+            GDALMultiDomainMetadata oLocalMDMD;
+            char** papszDomainList = m_papoLayers[i]->GetMetadataDomainList();
+            char** papszIter = papszDomainList;
+            oLocalMDMD.SetMetadata(papszMDDup);
+            while( papszIter && *papszIter )
+            {
+                if( !EQUAL(*papszIter, "") )
+                    oLocalMDMD.SetMetadata(m_papoLayers[i]->GetMetadata(*papszIter), *papszIter);
+                papszIter ++;
+            }
+            CSLDestroy(papszDomainList);
+            psXMLNode = oLocalMDMD.Serialize();
+        }
+
+        CSLDestroy(papszMDDup);
+        papszMDDup = NULL;
+
+        if( psXMLNode != NULL )
+        {
+            WriteMetadata(psXMLNode, m_papoLayers[i]->GetName() );
+        }
+    }
+
     return CE_None;
 }
 
@@ -3310,7 +3368,9 @@ OGRLayer* GDALGeoPackageDataset::ICreateLayer( const char * pszLayerName,
     poLayer->SetCreationParameters( eGType, pszGeomColumnName,
                                     bGeomNullable,
                                     poSpatialRef,
-                                    pszFIDColumnName );
+                                    pszFIDColumnName,
+                                    CSLFetchNameValue(papszOptions, "IDENTIFIER"),
+                                    CSLFetchNameValue(papszOptions, "DESCRIPTION") );
 
     /* Should we create a spatial index ? */
     const char *pszSI = CSLFetchNameValue( papszOptions, "SPATIAL_INDEX" );

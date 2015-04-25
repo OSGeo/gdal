@@ -521,36 +521,42 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(int bIsSpatial)
     CPLString osGeomColsType;
     int bHasZ = FALSE;
 
+    /* Check that the table name is registered in gpkg_contents */
+    pszSQL = sqlite3_mprintf(
+                "SELECT table_name, data_type, identifier, "
+                "description, min_x, min_y, max_x, max_y, srs_id "
+                "FROM gpkg_contents "
+                "WHERE table_name = '%q'",
+                m_pszTableName);
+                
+    SQLResult oResultContents;
+    err = SQLQuery(poDb, pszSQL, &oResultContents);
+    sqlite3_free(pszSQL);
+    
+    /* gpkg_contents query has to work */
+    /* gpkg_contents.table_name is supposed to be unique */
+    if ( err != OGRERR_NONE || oResultContents.nRowCount != 1 )
+    {
+        if ( err != OGRERR_NONE )
+            CPLError( CE_Failure, CPLE_AppDefined, "%s", oResultContents.pszErrMsg );
+        else if ( oResultContents.nRowCount != 1 )
+            CPLError( CE_Failure, CPLE_AppDefined, "layer '%s' is not registered in gpkg_contents", m_pszTableName );
+        else
+            CPLError( CE_Failure, CPLE_AppDefined, "error reading gpkg_contents" );
+            
+        SQLResultFree(&oResultContents);
+        return OGRERR_FAILURE;
+    }
+    
+    const char* pszIdentifier = SQLResultGetValue(&oResultContents, 2, 0);
+    if( pszIdentifier && strcmp(pszIdentifier, m_pszTableName) != 0 )
+        OGRLayer::SetMetadataItem("IDENTIFIER", pszIdentifier);
+    const char* pszDescription = SQLResultGetValue(&oResultContents, 3, 0);
+    if( pszDescription && pszDescription[0] )
+        OGRLayer::SetMetadataItem("DESCRIPTION", pszDescription);
+
     if( bIsSpatial )
     {
-        /* Check that the table name is registered in gpkg_contents */
-        pszSQL = sqlite3_mprintf(
-                    "SELECT table_name, data_type, identifier, "
-                    "description, min_x, min_y, max_x, max_y, srs_id "
-                    "FROM gpkg_contents "
-                    "WHERE table_name = '%q' AND "
-                    "Lower(data_type) = 'features'",
-                    m_pszTableName);
-                    
-        SQLResult oResultContents;
-        err = SQLQuery(poDb, pszSQL, &oResultContents);
-        sqlite3_free(pszSQL);
-        
-        /* gpkg_contents query has to work */
-        /* gpkg_contents.table_name is supposed to be unique */
-        if ( err != OGRERR_NONE || oResultContents.nRowCount != 1 )
-        {
-            if ( err != OGRERR_NONE )
-                CPLError( CE_Failure, CPLE_AppDefined, "%s", oResultContents.pszErrMsg );
-            else if ( oResultContents.nRowCount != 1 )
-                CPLError( CE_Failure, CPLE_AppDefined, "layer '%s' is not registered in gpkg_contents", m_pszTableName );
-            else
-                CPLError( CE_Failure, CPLE_AppDefined, "error reading gpkg_contents" );
-                
-            SQLResultFree(&oResultContents);
-            return OGRERR_FAILURE;
-        }
-
         const char *pszMinX = SQLResultGetValue(&oResultContents, 4, 0);
         const char *pszMinY = SQLResultGetValue(&oResultContents, 5, 0);
         const char *pszMaxX = SQLResultGetValue(&oResultContents, 6, 0);
@@ -601,6 +607,8 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(int bIsSpatial)
 
         SQLResultFree(&oResultGeomCols);
     }
+    else
+        SQLResultFree(&oResultContents);
 
     /* Use the "PRAGMA TABLE_INFO()" call to get table definition */
     /*  #|name|type|notnull|default|pk */
@@ -798,7 +806,7 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(int bIsSpatial)
             {
                 GIntBig nMaxId = sqlite3_column_int64( hColStmt, 0 );
                 if( nMaxId > INT_MAX )
-                    SetMetadataItem(OLMD_FID64, "YES");
+                    OGRLayer::SetMetadataItem(OLMD_FID64, "YES");
             }
         }
         sqlite3_finalize( hColStmt );
@@ -846,6 +854,7 @@ OGRGeoPackageTableLayer::OGRGeoPackageTableLayer(
     m_bTruncateFields = FALSE;
     m_bDeferredCreation = FALSE;
     m_iFIDAsRegularColumnIndex = -1;
+    m_bHasReadMetadataFromStorage = FALSE;
 }
 
 
@@ -2300,7 +2309,9 @@ void OGRGeoPackageTableLayer::SetCreationParameters( OGRwkbGeometryType eGType,
                                                      const char* pszGeomColumnName,
                                                      int bGeomNullable,
                                                      OGRSpatialReference* poSRS,
-                                                     const char* pszFIDColumnName )
+                                                     const char* pszFIDColumnName,
+                                                     const char* pszIdentifier,
+                                                     const char* pszDescription )
 {
     m_bDeferredCreation = TRUE;
     m_pszFidColumn = CPLStrdup(pszFIDColumnName);
@@ -2316,6 +2327,16 @@ void OGRGeoPackageTableLayer::SetCreationParameters( OGRwkbGeometryType eGType,
         oGeomFieldDefn.SetSpatialRef(poSRS);
         oGeomFieldDefn.SetNullable(bGeomNullable);
         m_poFeatureDefn->AddGeomFieldDefn(&oGeomFieldDefn);
+    }
+    if( pszIdentifier )
+    {
+        m_osIdentifierLCO = pszIdentifier;
+        OGRLayer::SetMetadataItem("IDENTIFIER", pszIdentifier);
+    }
+    if( pszDescription )
+    {
+        m_osDescriptionLCO = pszDescription;
+        OGRLayer::SetMetadataItem("DESCRIPTION", pszDescription);
     }
 }
 
@@ -2457,12 +2478,18 @@ OGRErr OGRGeoPackageTableLayer::RunDeferredCreationIfNecessary()
     if ( err != OGRERR_NONE )
         return OGRERR_FAILURE;
 
+    const char* pszIdentifier = GetMetadataItem("IDENTIFIER");
+    if( pszIdentifier == NULL )
+        pszIdentifier = pszLayerName;
+    const char* pszDescription = GetMetadataItem("DESCRIPTION");
+    if( pszDescription == NULL )
+        pszDescription = "";
     pszSQL = sqlite3_mprintf(
         "INSERT INTO gpkg_contents "
-        "(table_name,data_type,identifier,last_change,srs_id)"
+        "(table_name,data_type,identifier,description,last_change,srs_id)"
         " VALUES "
-        "('%q','%q','%q',strftime('%%Y-%%m-%%dT%%H:%%M:%%fZ',CURRENT_TIMESTAMP),%d)",
-        pszLayerName, (bIsSpatial ? "features": "aspatial"), pszLayerName, m_iSrs);
+        "('%q','%q','%q','%q',strftime('%%Y-%%m-%%dT%%H:%%M:%%fZ',CURRENT_TIMESTAMP),%d)",
+        pszLayerName, (bIsSpatial ? "features": "aspatial"), pszIdentifier, pszDescription, m_iSrs);
 
     err = SQLCommand(m_poDS->GetDB(), pszSQL);
     sqlite3_free(pszSQL);
@@ -2472,4 +2499,160 @@ OGRErr OGRGeoPackageTableLayer::RunDeferredCreationIfNecessary()
     ResetReading();
 
     return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                            GetMetadata()                             */
+/************************************************************************/
+
+char **OGRGeoPackageTableLayer::GetMetadata( const char *pszDomain )
+
+{
+    if( m_bHasReadMetadataFromStorage )
+        return OGRLayer::GetMetadata( pszDomain );
+
+    m_bHasReadMetadataFromStorage = TRUE;
+
+    if ( !m_poDS->HasMetadataTables() )
+        return OGRLayer::GetMetadata( pszDomain );
+
+    char* pszSQL;
+
+    pszSQL = sqlite3_mprintf(
+        "SELECT md.metadata, md.md_standard_uri, md.mime_type, mdr.reference_scope FROM gpkg_metadata md "
+        "JOIN gpkg_metadata_reference mdr ON (md.id = mdr.md_file_id ) "
+        "WHERE mdr.table_name = '%q' ORDER BY md.id",
+        m_pszTableName);
+
+
+    SQLResult oResult;
+    OGRErr err = SQLQuery(m_poDS->GetDB(), pszSQL, &oResult);
+    sqlite3_free(pszSQL);
+    if  ( err != OGRERR_NONE )
+    {
+        SQLResultFree(&oResult);
+        return OGRLayer::GetMetadata( pszDomain );
+    }
+
+    char** papszMetadata = CSLDuplicate(OGRLayer::GetMetadata());
+
+    /* GDAL metadata */
+    for(int i=0;i<oResult.nRowCount;i++)
+    {
+        const char *pszMetadata = SQLResultGetValue(&oResult, 0, i);
+        const char* pszMDStandardURI = SQLResultGetValue(&oResult, 1, i);
+        const char* pszMimeType = SQLResultGetValue(&oResult, 2, i);
+        //const char* pszReferenceScope = SQLResultGetValue(&oResult, 3, i);
+        //int bIsGPKGScope = EQUAL(pszReferenceScope, "geopackage");
+        if( pszMetadata == NULL )
+            continue;
+        if( pszMDStandardURI != NULL && EQUAL(pszMDStandardURI, "http://gdal.org") &&
+            pszMimeType != NULL && EQUAL(pszMimeType, "text/xml") )
+        {
+            CPLXMLNode* psXMLNode = CPLParseXMLString(pszMetadata);
+            if( psXMLNode )
+            {
+                GDALMultiDomainMetadata oLocalMDMD;
+                oLocalMDMD.XMLInit(psXMLNode, FALSE);
+
+                papszMetadata = CSLMerge(papszMetadata, oLocalMDMD.GetMetadata());
+                char** papszDomainList = oLocalMDMD.GetDomainList();
+                char** papszIter = papszDomainList;
+                while( papszIter && *papszIter )
+                {
+                    if( !EQUAL(*papszIter, "") )
+                        oMDMD.SetMetadata(oLocalMDMD.GetMetadata(*papszIter), *papszIter);
+                    papszIter ++;
+                }
+
+                CPLDestroyXMLNode(psXMLNode);
+            }
+        }
+    }
+
+    OGRLayer::SetMetadata(papszMetadata);
+    CSLDestroy(papszMetadata);
+    papszMetadata = NULL;
+
+    /* Add non-GDAL metadata now */
+    int nNonGDALMDILocal = 1;
+    for(int i=0;i<oResult.nRowCount;i++)
+    {
+        const char *pszMetadata = SQLResultGetValue(&oResult, 0, i);
+        const char* pszMDStandardURI = SQLResultGetValue(&oResult, 1, i);
+        const char* pszMimeType = SQLResultGetValue(&oResult, 2, i);
+        //const char* pszReferenceScope = SQLResultGetValue(&oResult, 3, i);
+        //int bIsGPKGScope = EQUAL(pszReferenceScope, "geopackage");
+        if( pszMetadata == NULL )
+            continue;
+        if( pszMDStandardURI != NULL && EQUAL(pszMDStandardURI, "http://gdal.org") &&
+            pszMimeType != NULL && EQUAL(pszMimeType, "text/xml") )
+            continue;
+
+        oMDMD.SetMetadataItem( CPLSPrintf("GPKG_METADATA_ITEM_%d", nNonGDALMDILocal),
+                                pszMetadata );
+        nNonGDALMDILocal ++;
+    }
+
+    SQLResultFree(&oResult);
+
+    return OGRLayer::GetMetadata(pszDomain);
+}
+
+/************************************************************************/
+/*                          GetMetadataItem()                           */
+/************************************************************************/
+
+const char *OGRGeoPackageTableLayer::GetMetadataItem( const char * pszName,
+                                                    const char * pszDomain )
+{
+    return CSLFetchNameValue( GetMetadata(pszDomain), pszName );
+}
+
+/************************************************************************/
+/*                      GetMetadataDomainList()                         */
+/************************************************************************/
+
+char **OGRGeoPackageTableLayer::GetMetadataDomainList()
+{
+    GetMetadata();
+    return OGRLayer::GetMetadataDomainList();
+}
+
+/************************************************************************/
+/*                            SetMetadata()                             */
+/************************************************************************/
+
+CPLErr OGRGeoPackageTableLayer::SetMetadata( char ** papszMetadata, const char * pszDomain )
+{
+    GetMetadata(); /* force loading from storage if needed */
+    CPLErr eErr = OGRLayer::SetMetadata(papszMetadata, pszDomain);
+    m_poDS->SetMetadataDirty();
+    if( pszDomain == NULL || EQUAL(pszDomain, "") )
+    {
+        if( m_osIdentifierLCO.size() )
+            OGRLayer::SetMetadataItem("IDENTIFIER", m_osIdentifierLCO);
+        if( m_osDescriptionLCO.size() )
+            OGRLayer::SetMetadataItem("DESCRIPTION", m_osDescriptionLCO);
+    }
+    return eErr;
+}
+
+/************************************************************************/
+/*                          SetMetadataItem()                           */
+/************************************************************************/
+
+CPLErr OGRGeoPackageTableLayer::SetMetadataItem( const char * pszName,
+                                                 const char * pszValue,
+                                                 const char * pszDomain )
+{
+    GetMetadata(); /* force loading from storage if needed */
+    if( m_osIdentifierLCO.size() && EQUAL(pszName, "IDENTIFIER") &&
+        (pszDomain == NULL || EQUAL(pszDomain, "")) )
+        return CE_None;
+    if( m_osDescriptionLCO.size() && EQUAL(pszName, "DESCRIPTION") &&
+        (pszDomain == NULL || EQUAL(pszDomain, "")) )
+        return CE_None;
+    m_poDS->SetMetadataDirty();
+    return OGRLayer::SetMetadataItem(pszName, pszValue, pszDomain);
 }

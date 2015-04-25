@@ -215,6 +215,8 @@ COMPRESSION_OPTIONS
 "  <Option name='PRECISION' type='boolean' description='Whether text fields created should keep the width' default='YES'/>"
 "  <Option name='TRUNCATE_FIELDS' type='boolean' description='Whether to truncate text content that exceeds maximum width' default='NO'/>"
 "  <Option name='SPATIAL_INDEX' type='boolean' description='Whether to create a spatial index' default='YES'/>"
+"  <Option name='IDENTIFIER' type='string' description='Identifier of the layer, as put in the contents table'/>"
+"  <Option name='DESCRIPTION' type='string' description='Description of the layer, as put in the contents table'/>"
 "</LayerCreationOptionList>");
         
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES, "Integer Integer64 Real String Date DateTime Binary" );
