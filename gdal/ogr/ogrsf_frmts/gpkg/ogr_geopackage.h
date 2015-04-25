@@ -63,6 +63,7 @@ typedef enum
 class GDALGeoPackageDataset : public OGRSQLiteBaseDataSource
 {
     friend class GDALGeoPackageRasterBand;
+    friend class OGRGeoPackageTableLayer;
 
     OGRGeoPackageTableLayer** m_papoLayers;
     int                 m_nLayers;
@@ -252,6 +253,7 @@ class GDALGeoPackageDataset : public OGRSQLiteBaseDataSource
         OGRErr              CreateExtensionsTableIfNecessary();
         int                 HasExtensionsTable();
         OGRErr              CreateGDALAspatialExtension();
+        void                SetMetadataDirty() { m_bMetadataDirty = TRUE; }
 
         const char*         GetGeometryTypeString(OGRwkbGeometryType eType);
 
@@ -369,6 +371,10 @@ class OGRGeoPackageTableLayer : public OGRGeoPackageLayer
     int                         m_bTruncateFields;
     int                         m_bDeferredCreation;
     int                         m_iFIDAsRegularColumnIndex;
+    
+    CPLString                   m_osIdentifierLCO;
+    CPLString                   m_osDescriptionLCO;
+    int                         m_bHasReadMetadataFromStorage;
 
     virtual OGRErr      ResetStatement();
     
@@ -410,13 +416,26 @@ class OGRGeoPackageTableLayer : public OGRGeoPackageLayer
                                                const char* pszGeomColumnName,
                                                int bGeomNullable,
                                                OGRSpatialReference* poSRS,
-                                               const char* pszFIDColumnName );
+                                               const char* pszFIDColumnName,
+                                               const char* pszIdentifier,
+                                               const char* pszDescription );
     void                SetDeferedSpatialIndexCreation( int bFlag )
                                 { bDeferedSpatialIndexCreation = bFlag; }
 
     void                CreateSpatialIndexIfNecessary();
     int                 CreateSpatialIndex();
     int                 DropSpatialIndex(int bCalledFromSQLFunction = FALSE);
+
+    virtual char **     GetMetadata( const char *pszDomain = NULL );
+    virtual const char *GetMetadataItem( const char * pszName,
+                                             const char * pszDomain = "" );
+    virtual char **     GetMetadataDomainList();
+
+    virtual CPLErr      SetMetadata( char ** papszMetadata,
+                                        const char * pszDomain = "" );
+    virtual CPLErr      SetMetadataItem( const char * pszName,
+                                            const char * pszValue,
+                                            const char * pszDomain = "" );
 
     void                RenameTo(const char* pszDstTableName);
 

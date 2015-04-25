@@ -110,7 +110,35 @@ using TEXT(width) types. If "NO" then the type TEXT will be used instead. The de
 <li><b>TRUNCATE_FIELDS</b>: (GDAL &gt;=2.0)  This may be "YES" to force truncated of field values
 that exceed the maximum allowed width of text fields, and also to "fix" the passed string if needed
 to make it a valid UTF-8 string. If "NO" then the value is not truncated nor modified. The default is "NO".<p>
+<li><b>IDENTIFIER</b>=string: (GDAL &gt;=2.0) Identifier of the layer, as put in the contents table.<p>
+<li><b>DESCRIPTION</b>=string: (GDAL &gt;=2.0) Description of the layer, as put in the contents table.<p>
 </ul>
+
+<h3>Metadata</h3>
+
+<p>(GDAL &gt;=2.0) GDAL uses the standardized <a href="http://www.geopackage.org/spec/#_metadata_table">
+<code>gpkg_metadata</code></a> and <a href="http://www.geopackage.org/spec/#_metadata_reference_table">
+<code>gpkg_metadata_reference</code></a> tables to read and write metadata,
+on the dataset and layer objects.</p>
+
+<p>GDAL metadata, from the default metadata domain and possibly other metadata
+domains, is serialized in a single XML document, conformant with the format used
+in GDAL PAM (Persistent Auxiliary Metadata) .aux.xml files, and registered with
+md_scope=dataset and md_standard_uri=http://gdal.org in gpkg_metadata.
+For the dataset, this entry is referenced in gpkg_metadata_reference with a
+reference_scope=geopackage.
+For a layer, this entry is referenced in gpkg_metadata_reference with a
+reference_scope=table and table_name={name of the table}</p>
+
+<p>Metadata not originating from GDAL can be read by the driver and will be
+exposed as metadata items with keys of the form GPKG_METADATA_ITEM_XXX and
+values the content of the <i>metadata</i> columns of the gpkg_metadata table.
+Update of such metadata is not currently supported through GDAL interfaces (
+although it can be through direct SQL commands).</p>
+
+<p>The specific DESCRIPTION and IDENTIFIER metadata item of the default metadata
+domain can be used in read/write to read from/update the corresponding columns of
+the gpkg_contents table.</p>
 
 <h3>Examples</h3>
 
