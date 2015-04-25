@@ -1741,9 +1741,11 @@ SQLSMALLINT CPLODBCStatement::GetTypeMapping( SQLSMALLINT nTypeCode )
         case SQL_DOUBLE:
             return SQL_C_DOUBLE;
 
+        case SQL_BIGINT:
+            return SQL_C_SBIGINT;
+
         case SQL_BIT:
         case SQL_TINYINT:
-        case SQL_BIGINT:
 /*        case SQL_TYPE_UTCDATETIME:
         case SQL_TYPE_UTCTIME:*/
         case SQL_INTERVAL_MONTH:
