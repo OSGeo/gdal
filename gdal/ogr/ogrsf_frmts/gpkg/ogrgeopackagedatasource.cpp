@@ -188,6 +188,16 @@ OGRErr GDALGeoPackageDataset::PragmaCheck(const char * pszPragma, const char * p
     return OGRERR_NONE; 
 }
 
+static OGRErr GDALGPKGImportFromEPSG(OGRSpatialReference *poSpatialRef,
+                                     int nEPSGCode)
+{
+    CPLPushErrorHandler(CPLQuietErrorHandler);
+    OGRErr eErr = poSpatialRef->importFromEPSG(nEPSGCode);
+    CPLPopErrorHandler();
+    CPLErrorReset();
+    return eErr;
+}
+
 
 OGRSpatialReference* GDALGeoPackageDataset::GetSpatialRef(int iSrsId)
 {
@@ -227,7 +237,7 @@ OGRSpatialReference* GDALGeoPackageDataset::GetSpatialRef(int iSrsId)
     OGRSpatialReference *poSpatialRef = new OGRSpatialReference();
     // Try to import first from EPSG code, and then from WKT
     if( !(pszOrganization && pszOrganizationCoordsysID && EQUAL(pszOrganization, "EPSG") &&
-          poSpatialRef->importFromEPSG(atoi(pszOrganizationCoordsysID)) == OGRERR_NONE) &&
+          GDALGPKGImportFromEPSG(poSpatialRef, atoi(pszOrganizationCoordsysID)) == OGRERR_NONE) &&
         poSpatialRef->SetFromUserInput(pszWkt) != OGRERR_NONE )
     {
         CPLError( CE_Warning, CPLE_AppDefined, "unable to parse srs_id '%d' well-known text '%s'",
