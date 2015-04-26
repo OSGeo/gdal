@@ -386,8 +386,6 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateSpatialIndex()
         return OGRERR_FAILURE;
     }
 
-    //poDS->GetSession()->BeginTransaction();
-    
     if( !oStatement.ExecuteSQL() )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
@@ -395,8 +393,6 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateSpatialIndex()
                       poDS->GetSession()->GetLastError());
         return OGRERR_FAILURE;
     } 
-
-    //poDS->GetSession()->CommitTransaction();
 
     return OGRERR_NONE;
 }
@@ -421,8 +417,6 @@ void OGRMSSQLSpatialTableLayer::DropSpatialIndex()
                        pszSchemaName, pszTableName, pszGeomColumn, 
                        pszSchemaName, pszTableName );
     
-    //poDS->GetSession()->BeginTransaction();
-
     if( !oStatement.ExecuteSQL() )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
@@ -430,8 +424,6 @@ void OGRMSSQLSpatialTableLayer::DropSpatialIndex()
                       poDS->GetSession()->GetLastError());
         return;
     } 
-
-    //poDS->GetSession()->CommitTransaction();
 }
 
 /************************************************************************/

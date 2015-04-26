@@ -186,6 +186,8 @@ int CPLODBCSession::CloseSession()
 {
     if( m_hDBC!=NULL ) 
     {
+        if ( IsInTransaction() )
+            CPLError( CE_Warning, CPLE_AppDefined, "Closing session with active transactions." );
         CPLDebug( "ODBC", "SQLDisconnect()" );
         SQLDisconnect( m_hDBC );
         SQLFreeConnect( m_hDBC );
@@ -225,6 +227,7 @@ int CPLODBCSession::ClearTransaction()
             return FALSE;
     }
 
+    m_bInTransaction = FALSE;
     m_bAutoCommit = TRUE;
 
 #endif
@@ -294,10 +297,10 @@ int CPLODBCSession::RollbackTransaction()
     {
         m_bInTransaction = FALSE;
 
-        int nRetCode = SQLEndTran( SQL_HANDLE_DBC, m_hDBC, SQL_ROLLBACK );
-        
-        if( nRetCode != SQL_SUCCESS && nRetCode != SQL_SUCCESS_WITH_INFO )
+        if( Failed( SQLEndTran( SQL_HANDLE_DBC, m_hDBC, SQL_ROLLBACK ) ) )
+        {
             return FALSE;
+        }
     }
 
 #endif
