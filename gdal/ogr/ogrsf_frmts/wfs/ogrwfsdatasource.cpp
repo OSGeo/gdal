@@ -2293,11 +2293,15 @@ OGRLayer * OGRWFSDataSource::ExecuteSQL( const char *pszSQLCommand,
             oParseOptions.bAllowFieldsInSecondaryTablesInWhere = TRUE;
             oParseOptions.bAddSecondaryTablesGeometryFields = TRUE;
             oParseOptions.bAlwaysPrefixWithTableName = TRUE;
+            oParseOptions.bAllowDistinctOnGeometryField = TRUE;
+            oParseOptions.bAllowDistinctOnMultipleFields = TRUE;
             GDALSQLParseInfo* psParseInfo = BuildParseInfo(psSelectInfo,
                                                            &oParseOptions);
             oParseOptions.bAllowFieldsInSecondaryTablesInWhere = FALSE;
             oParseOptions.bAddSecondaryTablesGeometryFields = FALSE;
             oParseOptions.bAlwaysPrefixWithTableName = FALSE;
+            oParseOptions.bAllowDistinctOnGeometryField = FALSE;
+            oParseOptions.bAllowDistinctOnMultipleFields = FALSE;
             int bOK = psParseInfo != NULL;
             DestroyParseInfo(psParseInfo);
 

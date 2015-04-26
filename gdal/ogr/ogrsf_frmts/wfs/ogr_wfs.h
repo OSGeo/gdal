@@ -214,6 +214,8 @@ class OGRWFSJoinLayer : public OGRLayer
 
     CPLString           osGlobalFilter;
     CPLString           osSortBy;
+    int                 bDistinct;
+    std::set<CPLString> aoSetMD5;
 
     std::vector<OGRWFSLayer*> apoLayers;
 

@@ -28,6 +28,7 @@
  ****************************************************************************/
 
 #include "ogr_wfs.h"
+#include "../../frmts/wms/md5.h"
 
 CPL_CVSID("$Id$");
 
@@ -50,6 +51,7 @@ OGRWFSJoinLayer::OGRWFSJoinLayer(OGRWFSDataSource* poDS,
     poBaseLayer = NULL;
     bReloadNeeded = FALSE;
     bHasFetched = FALSE;
+    bDistinct = (psSelectInfo->query_mode == SWQM_DISTINCT_LIST);
 
     CPLString osName("join_");
     CPLString osLayerName;
@@ -334,6 +336,7 @@ void OGRWFSJoinLayer::ResetReading()
     }
     if (poBaseLayer)
         poBaseLayer->ResetReading();
+    aoSetMD5.clear();
 }
 
 /************************************************************************/
@@ -536,40 +539,45 @@ GDALDataset* OGRWFSJoinLayer::FetchGetFeature()
 
 OGRFeature* OGRWFSJoinLayer::GetNextFeature()
 {
-    if (bPagingActive && nFeatureRead == nPagingStartIndex + nFeatureCountRequested)
-    {
-        bReloadNeeded = TRUE;
-        nPagingStartIndex = nFeatureRead;
-    }
-    if (bReloadNeeded)
-    {
-        GDALClose(poBaseDS);
-        poBaseDS = NULL;
-        poBaseLayer = NULL;
-        bHasFetched = FALSE;
-        bReloadNeeded = FALSE;
-    }
-    if (poBaseDS == NULL && !bHasFetched)
-    {
-        bHasFetched = TRUE;
-        poBaseDS = FetchGetFeature();
-        if (poBaseDS)
-        {
-            poBaseLayer = poBaseDS->GetLayer(0);
-            poBaseLayer->ResetReading();
-        }
-    }
-    if (!poBaseLayer)
-        return NULL;
-
     while(TRUE)
     {
+        if (bPagingActive && nFeatureRead == nPagingStartIndex + nFeatureCountRequested)
+        {
+            bReloadNeeded = TRUE;
+            nPagingStartIndex = nFeatureRead;
+        }
+        if (bReloadNeeded)
+        {
+            GDALClose(poBaseDS);
+            poBaseDS = NULL;
+            poBaseLayer = NULL;
+            bHasFetched = FALSE;
+            bReloadNeeded = FALSE;
+        }
+        if (poBaseDS == NULL && !bHasFetched)
+        {
+            bHasFetched = TRUE;
+            poBaseDS = FetchGetFeature();
+            if (poBaseDS)
+            {
+                poBaseLayer = poBaseDS->GetLayer(0);
+                poBaseLayer->ResetReading();
+            }
+        }
+        if (!poBaseLayer)
+            return NULL;
+
         OGRFeature* poSrcFeature = poBaseLayer->GetNextFeature();
         if (poSrcFeature == NULL)
             return NULL;
         nFeatureRead ++;
 
         OGRFeature* poNewFeature = new OGRFeature(poFeatureDefn);
+
+        struct cvs_MD5Context sMD5Context;
+        if( bDistinct )
+            cvs_MD5Init(&sMD5Context);
+
         for(int i=0;i<(int)aoSrcFieldNames.size();i++)
         {
             int iSrcField = poSrcFeature->GetFieldIndex(aoSrcFieldNames[i]);
@@ -590,6 +598,29 @@ OGRFeature* OGRWFSJoinLayer::GetNextFeature()
                     poNewFeature->SetField(i, poSrcFeature->GetFieldAsDouble(iSrcField));
                 else
                     poNewFeature->SetField(i, poSrcFeature->GetFieldAsString(iSrcField));
+                if( bDistinct )
+                {
+                    if( eType == OFTInteger )
+                    {
+                        int nVal = poNewFeature->GetFieldAsInteger(i);
+                        cvs_MD5Update( &sMD5Context, (const GByte*)&nVal, sizeof(nVal));
+                    }
+                    else if( eType == OFTInteger64 )
+                    {
+                        GIntBig nVal = poNewFeature->GetFieldAsInteger64(i);
+                        cvs_MD5Update( &sMD5Context, (const GByte*)&nVal, sizeof(nVal));
+                    }
+                    else if( eType == OFTReal )
+                    {
+                        double dfVal = poNewFeature->GetFieldAsDouble(i);
+                        cvs_MD5Update( &sMD5Context, (const GByte*)&dfVal, sizeof(dfVal));
+                    }
+                    else
+                    {
+                        const char* pszStr = poNewFeature->GetFieldAsString(i);
+                        cvs_MD5Update( &sMD5Context, (const GByte*)pszStr, strlen(pszStr));
+                    }
+                }
             }
         }
         for(int i=0;i<(int)aoSrcGeomFieldNames.size();i++)
@@ -602,13 +633,34 @@ OGRFeature* OGRWFSJoinLayer::GetNextFeature()
                 {
                     poGeom->assignSpatialReference(poFeatureDefn->GetGeomFieldDefn(i)->GetSpatialRef());
                     poNewFeature->SetGeomFieldDirectly(i, poGeom);
+
+                    if( bDistinct )
+                    {
+                        int nSize = poGeom->WkbSize();
+                        GByte* pabyGeom = (GByte*)CPLMalloc(nSize);
+                        poGeom->exportToWkb(wkbNDR, pabyGeom);
+                        cvs_MD5Update( &sMD5Context, (const GByte*)pabyGeom, nSize);
+                        CPLFree(pabyGeom);
+                    }
                 }
             }
         }
 
         poNewFeature->SetFID(nFeatureRead);
         delete poSrcFeature;
-        return poNewFeature;
+
+        if( bDistinct )
+        {
+            CPLString osDigest = "0123456789abcdef";
+            cvs_MD5Final((unsigned char*)osDigest.c_str(), &sMD5Context);
+            if( aoSetMD5.find(osDigest) == aoSetMD5.end() )
+            {
+                aoSetMD5.insert(osDigest);
+                return poNewFeature;
+            }
+        }
+        else
+            return poNewFeature;
     }
 }
 
@@ -687,9 +739,14 @@ GIntBig OGRWFSJoinLayer::ExecuteGetFeatureResultTypeHits()
 
 GIntBig OGRWFSJoinLayer::GetFeatureCount( int bForce )
 {
-    GIntBig nFeatures = ExecuteGetFeatureResultTypeHits();
-    if (nFeatures >= 0)
-        return nFeatures;
+    GIntBig nFeatures;
+
+    if( !bDistinct )
+    {
+        nFeatures = ExecuteGetFeatureResultTypeHits();
+        if (nFeatures >= 0)
+            return nFeatures;
+    }
 
     nFeatures = OGRLayer::GetFeatureCount(bForce);
     return nFeatures;

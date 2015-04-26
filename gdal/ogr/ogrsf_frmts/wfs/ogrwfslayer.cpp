@@ -1106,54 +1106,55 @@ void OGRWFSLayer::ResetReading()
 OGRFeature *OGRWFSLayer::GetNextFeature()
 {
     GetLayerDefn();
-    if (bPagingActive && nFeatureRead == nPagingStartIndex + nFeatureCountRequested)
-    {
-        bReloadNeeded = TRUE;
-        nPagingStartIndex = nFeatureRead;
-    }
-    if (bReloadNeeded)
-    {
-        GDALClose(poBaseDS);
-        poBaseDS = NULL;
-        poBaseLayer = NULL;
-        bHasFetched = FALSE;
-        bReloadNeeded = FALSE;
-    }
-    if (poBaseDS == NULL && !bHasFetched)
-    {
-        bHasFetched = TRUE;
-        poBaseDS = FetchGetFeature(0);
-        if (poBaseDS)
-        {
-            poBaseLayer = poBaseDS->GetLayer(0);
-            poBaseLayer->ResetReading();
 
-            /* Check that the layer field definition is consistent with the one */
-            /* we got in BuildLayerDefn() */
-            if (poFeatureDefn->GetFieldCount() != poBaseLayer->GetLayerDefn()->GetFieldCount())
-                bGotApproximateLayerDefn = TRUE;
-            else
+    while(TRUE)
+    {
+        if (bPagingActive && nFeatureRead == nPagingStartIndex + nFeatureCountRequested)
+        {
+            bReloadNeeded = TRUE;
+            nPagingStartIndex = nFeatureRead;
+        }
+        if (bReloadNeeded)
+        {
+            GDALClose(poBaseDS);
+            poBaseDS = NULL;
+            poBaseLayer = NULL;
+            bHasFetched = FALSE;
+            bReloadNeeded = FALSE;
+        }
+        if (poBaseDS == NULL && !bHasFetched)
+        {
+            bHasFetched = TRUE;
+            poBaseDS = FetchGetFeature(0);
+            if (poBaseDS)
             {
-                int iField;
-                for(iField = 0;iField < poFeatureDefn->GetFieldCount(); iField++)
+                poBaseLayer = poBaseDS->GetLayer(0);
+                poBaseLayer->ResetReading();
+
+                /* Check that the layer field definition is consistent with the one */
+                /* we got in BuildLayerDefn() */
+                if (poFeatureDefn->GetFieldCount() != poBaseLayer->GetLayerDefn()->GetFieldCount())
+                    bGotApproximateLayerDefn = TRUE;
+                else
                 {
-                    OGRFieldDefn* poFDefn1 = poFeatureDefn->GetFieldDefn(iField);
-                    OGRFieldDefn* poFDefn2 = poBaseLayer->GetLayerDefn()->GetFieldDefn(iField);
-                    if (strcmp(poFDefn1->GetNameRef(), poFDefn2->GetNameRef()) != 0 ||
-                        poFDefn1->GetType() != poFDefn2->GetType())
+                    int iField;
+                    for(iField = 0;iField < poFeatureDefn->GetFieldCount(); iField++)
                     {
-                        bGotApproximateLayerDefn = TRUE;
-                        break;
+                        OGRFieldDefn* poFDefn1 = poFeatureDefn->GetFieldDefn(iField);
+                        OGRFieldDefn* poFDefn2 = poBaseLayer->GetLayerDefn()->GetFieldDefn(iField);
+                        if (strcmp(poFDefn1->GetNameRef(), poFDefn2->GetNameRef()) != 0 ||
+                            poFDefn1->GetType() != poFDefn2->GetType())
+                        {
+                            bGotApproximateLayerDefn = TRUE;
+                            break;
+                        }
                     }
                 }
             }
         }
-    }
-    if (!poBaseLayer)
-        return NULL;
+        if (!poBaseLayer)
+            return NULL;
 
-    while(TRUE)
-    {
         OGRFeature* poSrcFeature = poBaseLayer->GetNextFeature();
         if (poSrcFeature == NULL)
             return NULL;
