@@ -928,7 +928,8 @@ OGRLayer* OGROpenFileGDBDataSource::ExecuteSQL( const char *pszSQLCommand,
 /*      MIN/MAX/SUM/AVG/COUNT optimization                              */
 /* -------------------------------------------------------------------- */
         if( oSelect.join_count == 0 && oSelect.poOtherSelect == NULL &&
-            oSelect.table_count == 1 && oSelect.order_specs == 0 )
+            oSelect.table_count == 1 && oSelect.order_specs == 0 &&
+            oSelect.query_mode != SWQM_DISTINCT_LIST )
         {
             OGROpenFileGDBLayer* poLayer = 
                 (OGROpenFileGDBLayer*)GetLayerByName( oSelect.table_defs[0].table_name);
@@ -1058,7 +1059,8 @@ OGRLayer* OGROpenFileGDBDataSource::ExecuteSQL( const char *pszSQLCommand,
 /*      ORDER BY optimization                                           */
 /* -------------------------------------------------------------------- */
         if( oSelect.join_count == 0 && oSelect.poOtherSelect == NULL &&
-            oSelect.table_count == 1 && oSelect.order_specs == 1 )
+            oSelect.table_count == 1 && oSelect.order_specs == 1 &&
+            oSelect.query_mode != SWQM_DISTINCT_LIST )
         {
             OGROpenFileGDBLayer* poLayer = 
                 (OGROpenFileGDBLayer*)GetLayerByName( oSelect.table_defs[0].table_name);

@@ -1164,6 +1164,11 @@ CPLErr swq_select::parse( swq_field_list *field_list,
             query_mode = this_indicator;
     }
 
+    if (result_columns == 0)
+    {
+        query_mode = SWQM_RECORDSET;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Process column names in JOIN specs.                             */
 /* -------------------------------------------------------------------- */
