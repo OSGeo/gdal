@@ -444,6 +444,7 @@ char* GMLExpatHandler::GetAttributeByIdx(void* attr, unsigned int idx, char** pp
 
 static const char* const apszGMLGeometryElements[] =
 {
+    "BoundingBox", /* ows:BoundingBox */
     "CompositeCurve",
     "CompositeSurface",
     "Curve",
@@ -1510,6 +1511,24 @@ OGRErr GMLHandler::endElementGeometry()
                 psInterestNode->pszValue = CPLStrdup("gml:Point");
             }
         }
+        else if( psInterestNode != NULL &&
+                 strcmp(psInterestNode->pszValue, "BoundingBox") == 0 )
+        {
+            CPLFree(psInterestNode->pszValue);
+            psInterestNode->pszValue = CPLStrdup("Envelope");
+            for( CPLXMLNode* psChild = psInterestNode->psChild;
+                 psChild;
+                 psChild = psChild->psNext )
+            {
+                if( psChild->eType == CXT_Attribute &&
+                    strcmp(psChild->pszValue, "crs") == 0 )
+                {
+                    CPLFree(psChild->pszValue);
+                    psChild->pszValue = CPLStrdup("srsName");
+                    break;
+                }
+            }
+        }
 
         GMLFeature* poGMLFeature = m_poReader->GetState()->m_poFeature;
         if (m_poReader->FetchAllGeometries())
@@ -1820,7 +1839,8 @@ int GMLHandler::IsGeometryElement( const char *pszElement )
             nFirst = nMiddle + 1;
     } while(nFirst <= nLast);
 
-    if (eAppSchemaType == APPSCHEMA_AIXM && strcmp( pszElement, "ElevatedPoint") == 0)
+    if (eAppSchemaType == APPSCHEMA_AIXM &&
+        strcmp( pszElement, "ElevatedPoint") == 0)
         return TRUE;
 
     if( eAppSchemaType == APPSCHEMA_MTKGML &&

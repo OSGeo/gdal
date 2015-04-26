@@ -254,7 +254,8 @@ OGRGMLDataSource::~OGRGMLDataSource()
 
 int OGRGMLDataSource::CheckHeader(const char* pszStr)
 {
-    if( strstr(pszStr,"opengis.net/gml") == NULL )
+    if( strstr(pszStr,"opengis.net/gml") == NULL &&
+        strstr(pszStr,"<csw:GetRecordsResponse") == NULL )
     {
         return FALSE;
     }
@@ -279,8 +280,9 @@ int OGRGMLDataSource::CheckHeader(const char* pszStr)
         return FALSE;
     }
 
-    /* Ignore OGR WFS xml description files */
-    if( strstr(pszStr, "<OGRWFSDataSource>") != NULL )
+    /* Ignore OGR WFS xml description files, or WFS Capabilities results */
+    if( strstr(pszStr, "<OGRWFSDataSource>") != NULL ||
+        strstr(pszStr, "<wfs:WFS_Capabilities") != NULL )
     {
         return FALSE;
     }
@@ -506,7 +508,10 @@ int OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
     if (pszSchemaLocation)
         pszSchemaLocation += strlen("schemaLocation=");
 
-    if (bIsWFS && EQUALN(pszFilename, "/vsicurl_streaming/", strlen("/vsicurl_streaming/")))
+    if (strncmp(pszFilename, "/vsicurl_streaming/", strlen("/vsicurl_streaming/")) == 0)
+        bCheckAuxFile = FALSE;
+    else if (strncmp(pszFilename, "/vsicurl/", strlen("/vsicurl/")) == 0 &&
+             (strstr(pszFilename, "?SERVICE=") || strstr(pszFilename, "&SERVICE=")) )
         bCheckAuxFile = FALSE;
 
     int bIsWFSJointLayer = bIsWFS && strstr(szPtr, "<wfs:Tuple>");

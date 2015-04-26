@@ -3791,6 +3791,47 @@ def ogr_gml_72():
     gdal.Unlink("/vsimem/ogr_gml_72.xsd")
 
     return 'success'
+
+###############################################################################
+# Read a CSW GetRecordsResponse document
+
+def ogr_gml_73():
+
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    try:
+        os.remove( 'data/cswresults.gfs' )
+    except:
+        pass
+
+    ds = ogr.Open('data/cswresults.xml')
+    for i in range(3):
+        lyr = ds.GetLayer(i)
+        sr = lyr.GetSpatialRef()
+        got_wkt = sr.ExportToWkt()
+        if got_wkt.find('4326') < 0:
+            gdaltest.post_reason('did not get expected SRS')
+            print(got_wkt)
+            return 'fail'
+
+        feat = lyr.GetNextFeature()
+        geom = feat.GetGeometryRef()
+        got_wkt = geom.ExportToWkt()
+        if got_wkt != 'POLYGON ((-180 -90,-180 90,180 90,180 -90,-180 -90))':
+            gdaltest.post_reason('did not get expected geometry')
+            print(got_wkt)
+            return 'fail'
+
+    ds = None
+
+    try:
+        os.remove( 'data/cswresults.gfs' )
+    except:
+        pass
+
+    return 'success'
+
 ###############################################################################
 #  Cleanup
 
@@ -3995,6 +4036,7 @@ gdaltest_list = [
     ogr_gml_70,
     ogr_gml_71,
     ogr_gml_72,
+    ogr_gml_73,
     ogr_gml_cleanup ]
 
 disabled_gdaltest_list = [ 
