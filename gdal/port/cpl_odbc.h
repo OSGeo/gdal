@@ -214,6 +214,7 @@ class CPL_DLL CPLODBCStatement {
     _SQLULEN      *m_panColSize;
     SQLSMALLINT   *m_panColPrecision;
     SQLSMALLINT   *m_panColNullable;
+    char         **m_papszColColumnDef;
 
     char         **m_papszColValues;
     _SQLLEN       *m_panColValueLengths;
@@ -253,6 +254,7 @@ class CPL_DLL CPLODBCStatement {
     short          GetColSize( int );
     short          GetColPrecision( int );
     short          GetColNullable( int );
+    const char    *GetColColumnDef( int );
 
     int            GetColId( const char * );
     const char    *GetColData( int, const char * = NULL );

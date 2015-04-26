@@ -456,6 +456,7 @@ CPLODBCStatement::CPLODBCStatement( CPLODBCSession *poSession )
     m_panColSize = NULL;
     m_panColPrecision = NULL;
     m_panColNullable = NULL;
+    m_papszColColumnDef = NULL;
 
     m_papszColValues = NULL;
     m_panColValueLengths = NULL;
@@ -557,6 +558,7 @@ int CPLODBCStatement::CollectResultsInfo()
     m_panColSize = (_SQLULEN *) CPLCalloc(sizeof(_SQLULEN),m_nColCount);
     m_panColPrecision = (SQLSMALLINT *) CPLCalloc(sizeof(SQLSMALLINT),m_nColCount);
     m_panColNullable = (SQLSMALLINT *) CPLCalloc(sizeof(SQLSMALLINT),m_nColCount);
+    m_papszColColumnDef = (char **) CPLCalloc(sizeof(char *),(m_nColCount+1));
 
 /* -------------------------------------------------------------------- */
 /*      Fetch column descriptions.                                      */
@@ -758,6 +760,30 @@ short CPLODBCStatement::GetColNullable( int iCol )
         return -1;
     else
         return m_panColNullable[iCol];
+}
+
+/************************************************************************/
+/*                             GetColColumnDef()                        */
+/************************************************************************/
+
+/**
+ * Fetch a column default value.
+ *
+ * Returns the default value of a column.
+ *
+ * @param iCol the zero based column index.
+ *
+ * @return NULL if the default value is not dpecified
+ * or the internal copy of the default value.
+ */
+
+const char *CPLODBCStatement::GetColColumnDef( int iCol )
+
+{
+    if( iCol < 0 || iCol >= m_nColCount )
+        return NULL;
+    else
+        return m_papszColColumnDef[iCol];
 }
 
 /************************************************************************/
@@ -1314,6 +1340,9 @@ void CPLODBCStatement::Clear()
         CPLFree( m_panColNullable );
         m_panColNullable = NULL;
 
+        CSLDestroy( m_papszColColumnDef );
+        m_papszColColumnDef = NULL;
+
         CSLDestroy( m_papszColNames );
         m_papszColNames = NULL;
 
@@ -1409,6 +1438,7 @@ int CPLODBCStatement::GetColumns( const char *pszTable,
     m_panColSize = (_SQLULEN *) CPLCalloc(sizeof(_SQLULEN),m_nColCount);
     m_panColPrecision = (SQLSMALLINT *) CPLCalloc(sizeof(SQLSMALLINT),m_nColCount);
     m_panColNullable = (SQLSMALLINT *) CPLCalloc(sizeof(SQLSMALLINT),m_nColCount);
+    m_papszColColumnDef = (char **) CPLCalloc(sizeof(char *),(m_nColCount+1));
 
 /* -------------------------------------------------------------------- */
 /*      Establish columns to use for key information.                   */
@@ -1451,6 +1481,12 @@ int CPLODBCStatement::GetColumns( const char *pszTable,
         SQLGetData( m_hStmt, SQLColumns_NULLABLE, SQL_C_CHAR,
                     szWrkData, sizeof(szWrkData)-1, &cbDataLen );
         m_panColNullable[iCol] = atoi(szWrkData) == SQL_NULLABLE;
+#if (ODBCVER >= 0x0300)
+        SQLGetData( m_hStmt, SQLColumns_COLUMN_DEF, SQL_C_CHAR,
+                    szWrkData, sizeof(szWrkData)-1, &cbDataLen );
+        if (cbDataLen > 0)
+            m_papszColColumnDef[iCol] = CPLStrdup(szWrkData);
+#endif
     }
 
     return TRUE;

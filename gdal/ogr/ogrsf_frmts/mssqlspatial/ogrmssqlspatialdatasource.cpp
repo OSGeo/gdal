@@ -326,6 +326,7 @@ OGRLayer * OGRMSSQLSpatialDataSource::ICreateLayer( const char * pszLayerName,
         if (!pszGeomColumn)
             pszGeomColumn = "ogr_geometry";
     }
+    int bGeomNullable = CSLFetchBoolean(papszOptions, "GEOMETRY_NULLABLE", TRUE);
 
 /* -------------------------------------------------------------------- */
 /*      Initialize the metadata tables                                  */
@@ -394,8 +395,9 @@ OGRLayer * OGRMSSQLSpatialDataSource::ICreateLayer( const char * pszLayerName,
     else
     {
         oStmt.Appendf("CREATE TABLE [%s].[%s] ([%s] [%s] IDENTITY(1,1) NOT NULL, "
-            "[%s] [%s] NULL, CONSTRAINT [PK_%s] PRIMARY KEY CLUSTERED ([%s] ASC))",
-            pszSchemaName, pszTableName, pszFIDColumnName, pszFIDType, pszGeomColumn, pszGeomType, pszTableName, pszFIDColumnName);
+            "[%s] [%s] %s, CONSTRAINT [PK_%s] PRIMARY KEY CLUSTERED ([%s] ASC))",
+            pszSchemaName, pszTableName, pszFIDColumnName, pszFIDType, pszGeomColumn, pszGeomType,
+            bGeomNullable? "NULL":"NOT NULL", pszTableName, pszFIDColumnName);
     }
 
     CPLFree( pszFIDColumnName );
