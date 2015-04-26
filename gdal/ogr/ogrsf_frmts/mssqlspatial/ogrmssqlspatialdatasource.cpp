@@ -87,6 +87,10 @@ OGRMSSQLSpatialDataSource::~OGRMSSQLSpatialDataSource()
 int OGRMSSQLSpatialDataSource::TestCapability( const char * pszCap )
 
 {
+#if (ODBCVER >= 0x0300)
+    if ( EQUAL(pszCap,ODsCTransactions) )
+        return TRUE;
+#endif
     if( EQUAL(pszCap,ODsCCreateLayer) || EQUAL(pszCap,ODsCDeleteLayer) )
         return TRUE;
     else
@@ -188,17 +192,23 @@ int OGRMSSQLSpatialDataSource::DeleteLayer( int iLayer )
 /*      Remove from the database.                                       */
 /* -------------------------------------------------------------------- */
 
-    oSession.BeginTransaction();
+    int bInTransaction = oSession.IsInTransaction();
+    if (!bInTransaction)
+        oSession.BeginTransaction();
     
     if( !oStmt.ExecuteSQL() )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                     "Error deleting layer: %s", GetSession()->GetLastError() );
 
+        if (!bInTransaction)
+            oSession.RollbackTransaction();
+
         return OGRERR_FAILURE;
     }
 
-    oSession.CommitTransaction();
+    if (!bInTransaction)
+        oSession.CommitTransaction();
 
     return OGRERR_NONE;
 }
@@ -402,17 +412,23 @@ OGRLayer * OGRMSSQLSpatialDataSource::ICreateLayer( const char * pszLayerName,
 
     CPLFree( pszFIDColumnName );
 
-    oSession.BeginTransaction();
+    int bInTransaction = oSession.IsInTransaction();
+    if (!bInTransaction)
+        oSession.BeginTransaction();
         
     if( !oStmt.ExecuteSQL() )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                     "Error creating layer: %s", GetSession()->GetLastError() );
 
+        if (!bInTransaction)
+            oSession.RollbackTransaction();
+
         return NULL;
     }
 
-    oSession.CommitTransaction();
+    if (!bInTransaction)
+        oSession.CommitTransaction();
 
 /* -------------------------------------------------------------------- */
 /*      Create the layer object.                                        */
@@ -1068,16 +1084,23 @@ OGRErr OGRMSSQLSpatialDataSource::InitializeMetadataTables()
             "CREATE TABLE spatial_ref_sys (srid integer not null "
             "PRIMARY KEY, auth_name varchar(256), auth_srid integer, srtext varchar(2048), proj4text varchar(2048))" );
 
-        oSession.BeginTransaction();
+        int bInTransaction = oSession.IsInTransaction();
+        if (!bInTransaction)
+            oSession.BeginTransaction();
     
         if( !oStmt.ExecuteSQL() )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                         "Error initializing the metadata tables : %s", GetSession()->GetLastError() );
+            
+            if (!bInTransaction)
+                oSession.RollbackTransaction();
+
             return OGRERR_FAILURE;
         }
 
-        oSession.CommitTransaction();
+        if (!bInTransaction)
+            oSession.CommitTransaction();
     }
 
     return OGRERR_NONE;
@@ -1286,7 +1309,11 @@ int OGRMSSQLSpatialDataSource::FetchSRSId( OGRSpatialReference * poSRS)
     nSRSId = nAuthorityCode;
 
     oStmt.Clear();
-    oSession.BeginTransaction();
+    
+    int bInTransaction = oSession.IsInTransaction();
+    if (!bInTransaction)
+        oSession.BeginTransaction();
+
     if (nAuthorityCode > 0)
     {
         oStmt.Appendf("SELECT srid FROM spatial_ref_sys where srid = %d", nAuthorityCode);
@@ -1314,7 +1341,8 @@ int OGRMSSQLSpatialDataSource::FetchSRSId( OGRSpatialReference * poSRS)
     if (nSRSId == 0)
     {
         /* unable to allocate srid */
-        oSession.RollbackTransaction();
+        if (!bInTransaction)
+            oSession.RollbackTransaction();
         CPLFree( pszProj4 );
         CPLFree(pszWKT);
         return 0;
@@ -1348,9 +1376,69 @@ int OGRMSSQLSpatialDataSource::FetchSRSId( OGRSpatialReference * poSRS)
     CPLFree( pszWKT);
 
     if ( oStmt.ExecuteSQL() )
-        oSession.CommitTransaction();
+    {
+        if (!bInTransaction)
+            oSession.CommitTransaction();
+    }
     else
-        oSession.RollbackTransaction();
+    {
+        if (!bInTransaction)
+            oSession.RollbackTransaction();
+    }
 
     return nSRSId;
+}
+	
+/************************************************************************/
+/*                         StartTransaction()                           */
+/*                                                                      */
+/* Should only be called by user code. Not driver internals.            */
+/************************************************************************/
+
+OGRErr OGRMSSQLSpatialDataSource::StartTransaction(CPL_UNUSED int bForce)
+{
+    if (!oSession.BeginTransaction())
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                    "Failed to start transaction: %s", oSession.GetLastError() );
+        return OGRERR_FAILURE;
+    }
+    
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                         CommitTransaction()                          */
+/*                                                                      */
+/* Should only be called by user code. Not driver internals.            */
+/************************************************************************/
+
+OGRErr OGRMSSQLSpatialDataSource::CommitTransaction()
+{
+    if (!oSession.CommitTransaction())
+     {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                    "Failed to commit transaction: %s", oSession.GetLastError() );
+        return OGRERR_FAILURE;
+    }
+    
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                        RollbackTransaction()                         */
+/*                                                                      */
+/* Should only be called by user code. Not driver internals.            */
+/************************************************************************/
+
+OGRErr OGRMSSQLSpatialDataSource::RollbackTransaction()
+{
+    if (!oSession.RollbackTransaction())
+     {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                    "Failed to roll back transaction: %s", oSession.GetLastError() );
+        return OGRERR_FAILURE;
+    }
+    
+    return OGRERR_NONE;
 }

@@ -360,6 +360,10 @@ class OGRMSSQLSpatialDataSource : public OGRDataSource
     OGRSpatialReference* FetchSRS( int nId );
     int                 FetchSRSId( OGRSpatialReference * poSRS );
 
+    OGRErr              StartTransaction(CPL_UNUSED int bForce);
+    OGRErr              CommitTransaction();
+    OGRErr              RollbackTransaction();
+
     // Internal use
     CPLODBCSession     *GetSession() { return &oSession; }
 

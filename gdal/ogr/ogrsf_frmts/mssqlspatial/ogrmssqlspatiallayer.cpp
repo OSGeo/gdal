@@ -479,7 +479,12 @@ int OGRMSSQLSpatialLayer::TestCapability( CPL_UNUSED const char * pszCap )
 OGRErr OGRMSSQLSpatialLayer::StartTransaction()
 
 {
-    poDS->GetSession()->BeginTransaction();
+    if (!poDS->GetSession()->BeginTransaction())
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                    "Failed to start transaction: %s", poDS->GetSession()->GetLastError() );
+        return OGRERR_FAILURE;
+    }
     return OGRERR_NONE;
 }
 
@@ -490,7 +495,12 @@ OGRErr OGRMSSQLSpatialLayer::StartTransaction()
 OGRErr OGRMSSQLSpatialLayer::CommitTransaction()
 
 {
-    poDS->GetSession()->CommitTransaction();
+    if (!poDS->GetSession()->CommitTransaction())
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                    "Failed to commit transaction: %s", poDS->GetSession()->GetLastError() );
+        return OGRERR_FAILURE;
+    }
     return OGRERR_NONE;
 }
 
@@ -501,7 +511,12 @@ OGRErr OGRMSSQLSpatialLayer::CommitTransaction()
 OGRErr OGRMSSQLSpatialLayer::RollbackTransaction()
 
 {
-    poDS->GetSession()->RollbackTransaction();
+    if (!poDS->GetSession()->RollbackTransaction())
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                    "Failed to roll back transaction: %s", poDS->GetSession()->GetLastError() );
+        return OGRERR_FAILURE;
+    }
     return OGRERR_NONE;
 }
 

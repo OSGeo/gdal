@@ -111,6 +111,13 @@ The corresponding entry should already be added to the spatial_ref_sys metadata 
 
 <blockquote><pre>drop spatial index on schema.table</pre></blockquote>
 
+<h2>Transaction support (GDAL &gt;= 2.0)</h2>
+
+<p>
+The driver implements transactions at the dataset level, per
+<a href="http://trac.osgeo.org/gdal/wiki/rfc54_dataset_transactions">RFC 54</a>
+</p>
+
 <h2>Examples</h2>
 
 <p>Creating a layer from an OGR data source</p>
