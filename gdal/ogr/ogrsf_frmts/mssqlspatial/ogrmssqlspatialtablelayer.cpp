@@ -851,6 +851,21 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateField( OGRFieldDefn *poFieldIn,
     oStmt.Appendf( "ALTER TABLE [%s].[%s] ADD [%s] %s", 
         pszSchemaName, pszTableName, oField.GetNameRef(), szFieldType);
 
+    if ( !oField.IsNullable() )
+    {
+        oStmt.Append(" NOT NULL");
+    }
+    if ( oField.GetDefault() != NULL && !oField.IsDefaultDriverSpecific() )
+    {
+        /* process default value specifications */
+        if ( EQUAL(oField.GetDefault(), "CURRENT_TIME") )
+            oStmt.Append(" DEFAULT(CONVERT([time],getdate()))");
+        else if ( EQUAL(oField.GetDefault(), "CURRENT_DATE") )
+            oStmt.Append( " DEFAULT(CONVERT([date],getdate()))" );
+        else 
+            oStmt.Appendf(" DEFAULT(%s)", oField.GetDefault());
+    }
+
     if( !oStmt.ExecuteSQL() )
     {
         CPLError( CE_Failure, CPLE_AppDefined,

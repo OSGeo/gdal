@@ -115,19 +115,27 @@ CPLErr OGRMSSQLSpatialLayer::BuildFeatureDefn( const char *pszLayerName,
             {
                 nGeomColumnType = MSSQLCOLTYPE_GEOMETRY;
                 pszGeomColumn = CPLStrdup( poStmt->GetColName(iCol) );
+                if (poFeatureDefn->GetGeomFieldCount() == 1)
+                    poFeatureDefn->GetGeomFieldDefn(0)->SetNullable( poStmt->GetColNullable(iCol) );
                 continue;
             }
             else if ( EQUAL(poStmt->GetColTypeName( iCol ), "geography") )
             {
                 nGeomColumnType = MSSQLCOLTYPE_GEOGRAPHY;
                 pszGeomColumn = CPLStrdup( poStmt->GetColName(iCol) );
+                if (poFeatureDefn->GetGeomFieldCount() == 1)
+                    poFeatureDefn->GetGeomFieldDefn(0)->SetNullable( poStmt->GetColNullable(iCol) );
                 continue;
             }
         }
         else
         {
             if( EQUAL(poStmt->GetColName(iCol),pszGeomColumn) )
+            {
+                if (poFeatureDefn->GetGeomFieldCount() == 1)
+                    poFeatureDefn->GetGeomFieldDefn(0)->SetNullable( poStmt->GetColNullable(iCol) );
                 continue;
+            }
         }
 
         if( pszFIDColumn != NULL)
@@ -207,6 +215,43 @@ CPLErr OGRMSSQLSpatialLayer::BuildFeatureDefn( const char *pszLayerName,
 
             default:
                 /* leave it as OFTString */;
+        }
+
+        oField.SetNullable( poStmt->GetColNullable(iCol) );
+
+        if ( poStmt->GetColColumnDef(iCol) )
+        {         
+            /* process default value specification */
+            if ( EQUAL(poStmt->GetColColumnDef(iCol), "(getdate())") )
+                oField.SetDefault( "CURRENT_TIMESTAMP" );
+            else if ( EQUALN(poStmt->GetColColumnDef(iCol), "(CONVERT([time],getdate(),0))", 25) )
+                oField.SetDefault( "CURRENT_TIME" );
+            else if ( EQUALN(poStmt->GetColColumnDef(iCol), "(CONVERT([date],getdate(),0))", 25) )
+                oField.SetDefault( "CURRENT_DATE" );
+            else
+            {
+                char* pszDefault = CPLStrdup(poStmt->GetColColumnDef(iCol));
+                int nLen = strlen(pszDefault);
+                if (nLen >= 1 && pszDefault[0] == '(' && pszDefault[nLen-1] == ')')
+                {
+                    /* all default values are encapsulated in backets by MSSQL server */
+                    if (nLen >= 4 && pszDefault[1] == '(' && pszDefault[nLen-2] == ')')
+                    {
+                        /* for numeric values double brackets are used */
+                        pszDefault[nLen-2] = '\0';
+                        oField.SetDefault(pszDefault + 2);
+                    }
+                    else
+                    {
+                        pszDefault[nLen-1] = '\0';
+                        oField.SetDefault(pszDefault + 1);
+                    }
+                }
+                else
+                    oField.SetDefault( pszDefault );
+
+                CPLFree(pszDefault);
+            }
         }
 
         poFeatureDefn->AddFieldDefn( &oField );
