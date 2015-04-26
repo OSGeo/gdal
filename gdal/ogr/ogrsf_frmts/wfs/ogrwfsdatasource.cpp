@@ -2197,6 +2197,7 @@ OGRLayer * OGRWFSDataSource::ExecuteSQL( const char *pszSQLCommand,
                                                              bPropertyIsNotEqualToSupported,
                                                              bUseFeatureId,
                                                              bGmlObjectIdNeedsGMLPrefix,
+                                                             "",
                                                              &bNeedsNullCheck);
         if (bNeedsNullCheck && !HasNullCheck())
             osOGCFilter = "";

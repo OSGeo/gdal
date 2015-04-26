@@ -277,6 +277,9 @@ void OGRRegisterAllInternal()
 #ifdef PLSCENES_ENABLED
     RegisterOGRPLSCENES();
 #endif
+#ifdef CSW_ENABLED
+    RegisterOGRCSW();
+#endif
 
 /* Put TIGER and AVCBIN at end since they need poOpenInfo->GetSiblingFiles() */
 #ifdef TIGER_ENABLED

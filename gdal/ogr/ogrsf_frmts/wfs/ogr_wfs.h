@@ -41,6 +41,7 @@
 #include "swq.h"
 
 CPLXMLNode* WFSFindNode(CPLXMLNode* psXML, const char* pszRootName);
+void OGRWFSRecursiveUnlink( const char *pszName );
 CPLString WFS_TurnSQLFilterToOGCFilter( const swq_expr_node* poExpr,
                                         OGRDataSource* poDS,
                                         OGRFeatureDefn* poFDefn,
@@ -48,7 +49,8 @@ CPLString WFS_TurnSQLFilterToOGCFilter( const swq_expr_node* poExpr,
                                         int bPropertyIsNotEqualToSupported,
                                         int bUseFeatureId,
                                         int bGmlObjectIdNeedsGMLPrefix,
-                                        int* pbOutNeedsNullCheck );
+                                        const char* pszNSPrefix,
+                                        int* pbOutNeedsNullCheck);
 swq_custom_func_registrar* WFSGetCustomFuncRegistrar();
 
 const char* FindSubStringInsensitive(const char* pszStr,

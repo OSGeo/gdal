@@ -202,8 +202,8 @@ OGRWFSJoinLayer::~OGRWFSJoinLayer()
     if( poBaseDS != NULL )
         GDALClose(poBaseDS);
 
-    CPLString osTmpFileName = CPLSPrintf("/vsimem/tempwfs_%p/file.xsd", this);
-    VSIUnlink(osTmpFileName);
+    CPLString osTmpDirName = CPLSPrintf("/vsimem/tempwfs_%p", this);
+    OGRWFSRecursiveUnlink(osTmpDirName);
 }
 
 /************************************************************************/
@@ -275,6 +275,7 @@ OGRWFSJoinLayer* OGRWFSJoinLayer::Build(OGRWFSDataSource* poDS,
                                       TRUE, /* bPropertyIsNotEqualToSupported */
                                       FALSE, /* bUseFeatureId */
                                       FALSE, /* bGmlObjectIdNeedsGMLPrefix */
+                                      "",
                                       &bOutNeedsNullCheck);
         if( osFilter.size() == 0 )
         {
@@ -297,6 +298,7 @@ OGRWFSJoinLayer* OGRWFSJoinLayer::Build(OGRWFSDataSource* poDS,
                                       TRUE, /* bPropertyIsNotEqualToSupported */
                                       FALSE, /* bUseFeatureId */
                                       FALSE, /* bGmlObjectIdNeedsGMLPrefix */
+                                      "",
                                       &bOutNeedsNullCheck);
         if( osFilter.size() == 0 )
         {
