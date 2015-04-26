@@ -812,7 +812,41 @@ def ogr_rfc28_35():
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     lyr = gdaltest.ds.ExecuteSQL( "select distinct eas_id, distinct name from idlink" )
     gdal.PopErrorHandler()
-    if gdal.GetLastErrorMsg().find('SELECTing more than one DISTINCT') != 0:
+    if gdal.GetLastErrorMsg().find('SQL Expression Parsing Error') != 0:
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+
+    if lyr is None:
+        return 'success'
+    else:
+        return 'fail'
+
+###############################################################################
+# Test selecting more than one distinct
+
+def ogr_rfc28_35_bis():
+
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    lyr = gdaltest.ds.ExecuteSQL( "select distinct eas_id, name from idlink" )
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorMsg().find('SELECT DISTINCT not supported on multiple columns') != 0:
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+
+    if lyr is None:
+        return 'success'
+    else:
+        return 'fail'
+
+###############################################################################
+# Test selecting more than one distinct
+
+def ogr_rfc28_35_ter():
+
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    lyr = gdaltest.ds.ExecuteSQL( "select distinct * from idlink" )
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorMsg().find('SELECT DISTINCT not supported on multiple columns') != 0:
         print(gdal.GetLastErrorMsg())
         return 'fail'
 
@@ -1258,6 +1292,8 @@ gdaltest_list = [
     ogr_rfc28_33,
     ogr_rfc28_34,
     ogr_rfc28_35,
+    ogr_rfc28_35_bis,
+    ogr_rfc28_35_ter,
     ogr_rfc28_36,
     ogr_rfc28_37,
     ogr_rfc28_38,

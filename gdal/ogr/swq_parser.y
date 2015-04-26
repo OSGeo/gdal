@@ -558,6 +558,12 @@ select_core:
         delete $4;
     }
 
+    | SWQT_SELECT SWQT_DISTINCT select_field_list SWQT_FROM table_def opt_joins opt_where opt_order_by
+    {
+        context->poCurSelect->query_mode = SWQM_DISTINCT_LIST;
+        delete $5;
+    }
+
 opt_union_all:
     | union_all select_statement
 
@@ -573,34 +579,13 @@ select_field_list:
     | column_spec ',' select_field_list
 
 column_spec: 
-    SWQT_DISTINCT field_value
-        {
-            if( !context->poCurSelect->PushField( $2, NULL, TRUE ) )
-            {
-                delete $2;
-                YYERROR;
-            }
-        }
-
-    | value_expr
+    value_expr
         {
             if( !context->poCurSelect->PushField( $1 ) )
             {
                 delete $1;
                 YYERROR;
             }
-        }
-
-    | SWQT_DISTINCT field_value as_clause
-        {
-            if( !context->poCurSelect->PushField( $2, $3->string_value, TRUE ))
-            {
-                delete $2;
-                delete $3;
-                YYERROR;
-            }
-
-            delete $3;
         }
 
     | value_expr as_clause

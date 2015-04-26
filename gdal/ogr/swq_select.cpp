@@ -321,6 +321,8 @@ char* swq_select::Unparse()
 {
     int i;
     CPLString osSelect("SELECT ");
+    if( query_mode == SWQM_DISTINCT_LIST )
+        osSelect += "DISTINCT ";
 
     for( i = 0; i < result_columns; i++ )
     {
@@ -348,7 +350,7 @@ char* swq_select::Unparse()
             else if( def->col_func == SWQCF_SUM )
                 osSelect += "SUM(";
 
-            if( def->distinct_flag )
+            if( def->distinct_flag && def->col_func == SWQCF_COUNT )
                 osSelect += "DISTINCT ";
 
             if( (def->field_alias == NULL || table_count > 1) &&
@@ -438,6 +440,12 @@ int swq_select::PushField( swq_expr_node *poExpr, const char *pszAlias,
                            int distinct_flag )
 
 {
+    if( query_mode == SWQM_DISTINCT_LIST && distinct_flag )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, "SELECT DISTINCT and COUNT(DISTINCT...) not supported together");
+        return FALSE;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Grow the array.                                                 */
 /* -------------------------------------------------------------------- */
@@ -1088,11 +1096,33 @@ CPLErr swq_select::parse( swq_field_list *field_list,
 /*      of records.  Generate an error if we get conflicting            */
 /*      indications.                                                    */
 /* -------------------------------------------------------------------- */
-    query_mode = -1;
+
+    int bAllowDistinctOnMultipleFields = (
+        poParseOptions && poParseOptions->bAllowDistinctOnMultipleFields );
+    if( query_mode == SWQM_DISTINCT_LIST && result_columns > 1 &&
+        !bAllowDistinctOnMultipleFields )
+    {
+            CPLError( CE_Failure, CPLE_NotSupported,
+                        "SELECT DISTINCT not supported on multiple columns." );
+            return CE_Failure;
+    }
+
     for( i = 0; i < result_columns; i++ )
     {
         swq_col_def *def = column_defs + i;
         int this_indicator = -1;
+
+        if( query_mode == SWQM_DISTINCT_LIST && def->field_type == SWQ_GEOMETRY )
+        {
+            int bAllowDistinctOnGeometryField = (
+                    poParseOptions && poParseOptions->bAllowDistinctOnGeometryField );
+            if( !bAllowDistinctOnGeometryField )
+            {
+                CPLError( CE_Failure, CPLE_NotSupported,
+                            "SELECT DISTINCT on a geometry not supported." );
+                return CE_Failure;
+            }
+        }
 
         if( def->col_func == SWQCF_MIN 
             || def->col_func == SWQCF_MAX
@@ -1112,15 +1142,10 @@ CPLErr swq_select::parse( swq_field_list *field_list,
         }
         else if( def->col_func == SWQCF_NONE )
         {
-            if( def->distinct_flag )
+            if( query_mode == SWQM_DISTINCT_LIST )
             {
+                def->distinct_flag = TRUE;
                 this_indicator = SWQM_DISTINCT_LIST;
-                if( def->field_type == SWQ_GEOMETRY )
-                {
-                    CPLError( CE_Failure, CPLE_AppDefined,
-                              "SELECT DISTINCT on a geometry not supported." );
-                    return CE_Failure;
-                }
             }
             else
                 this_indicator = SWQM_RECORDSET;
@@ -1128,7 +1153,7 @@ CPLErr swq_select::parse( swq_field_list *field_list,
 
         if( this_indicator != query_mode
              && this_indicator != -1
-            && query_mode != -1 )
+            && query_mode != 0 )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Field list implies mixture of regular recordset mode, summary mode or distinct field list mode." );
@@ -1137,18 +1162,6 @@ CPLErr swq_select::parse( swq_field_list *field_list,
 
         if( this_indicator != -1 )
             query_mode = this_indicator;
-    }
-
-    if( result_columns > 1 
-        && query_mode == SWQM_DISTINCT_LIST )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "SELECTing more than one DISTINCT field is a query not supported." );
-        return CE_Failure;
-    }
-    else if (result_columns == 0)
-    {
-        query_mode = SWQM_RECORDSET;
     }
 
 /* -------------------------------------------------------------------- */
