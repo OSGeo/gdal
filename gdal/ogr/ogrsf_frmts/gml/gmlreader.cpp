@@ -789,6 +789,28 @@ int GMLReader::GetFeatureElementIndex( const char *pszElement, int nElementLengt
         {
             /* GML answer of MapServer WMS GetFeatureInfo request */
         }
+
+        /* Begin of CSW SearchResults */
+        else if (nElementLength == strlen("BriefRecord") &&
+                 nLenLast == strlen("SearchResults") &&
+                 strcmp(pszElement, "BriefRecord") == 0 &&
+                 strcmp(pszLast, "SearchResults") == 0)
+        {
+        }
+        else if (nElementLength == strlen("SummaryRecord") &&
+                 nLenLast == strlen("SearchResults") &&
+                 strcmp(pszElement, "SummaryRecord") == 0 &&
+                 strcmp(pszLast, "SearchResults") == 0)
+        {
+        }
+        else if (nElementLength == strlen("Record") &&
+                 nLenLast == strlen("SearchResults") &&
+                 strcmp(pszElement, "Record") == 0 &&
+                 strcmp(pszLast, "SearchResults") == 0)
+        {
+        }
+        /* End of CSW SearchResults */
+
         else
         {
             if( m_bClassListLocked )
