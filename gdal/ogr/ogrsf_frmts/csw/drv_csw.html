@@ -57,14 +57,14 @@ ogrinfo -ro -al -noextent CSW:http://catalog.data.gov/csw
 <li>
 Listing all the records of a CSW server with spatial and an attribute filter on a give field:
 <pre>
-ogrinfo -ro -al -noextent CSW:http://catalog.data.gov/csw --debug on -spat 2 49 2 49 -where "subject LIKE '%mineralogy%'"
+ogrinfo -ro -al -noextent CSW:http://catalog.data.gov/csw -spat 2 49 2 49 -where "subject LIKE '%mineralogy%'"
 </pre>
 <p>
 
 <li>
 Listing all the records of a CSW server that matches a text on any text field:
 <pre>
-ogrinfo -ro -al -q CSW:http://catalog.data.gov/csw --debug on -spat 2 49 2 49 -where "anytext LIKE '%France%'"
+ogrinfo -ro -al -q CSW:http://catalog.data.gov/csw -spat 2 49 2 49 -where "anytext LIKE '%France%'"
 </pre>
 <p>
 
