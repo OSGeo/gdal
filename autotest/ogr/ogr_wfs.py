@@ -5141,6 +5141,171 @@ def ogr_wfs_vsimem_wfs200_join_layer_with_namespace_prefix():
     return 'success'
 
 ###############################################################################
+def ogr_wfs_vsimem_wfs200_join_distinct():
+
+    if gdaltest.wfs_drv is None:
+        return 'skip'
+
+    gdal.FileFromMemBuffer('/vsimem/wfs200_endpoint_join?SERVICE=WFS&REQUEST=GetCapabilities',
+"""<WFS_Capabilities version="2.0.0">
+    <OperationsMetadata>
+        <ows:Operation name="GetFeature">
+            <ows:Constraint name="CountDefault">
+                <ows:NoValues/>
+                <ows:DefaultValue>4</ows:DefaultValue>
+            </ows:Constraint>
+        </ows:Operation>
+        <ows:Constraint name="ImplementsResultPaging">
+            <ows:NoValues/><ows:DefaultValue>TRUE</ows:DefaultValue>
+        </ows:Constraint>
+        <ows:Constraint name="ImplementsStandardJoins">
+            <ows:NoValues/><ows:DefaultValue>TRUE</ows:DefaultValue>
+        </ows:Constraint>
+    </OperationsMetadata>
+    <FeatureTypeList>
+        <FeatureType xmlns:foo="http://foo">
+            <Name>foo:lyr1</Name>
+            <DefaultSRS>urn:ogc:def:crs:EPSG::4326</DefaultSRS>
+            <ows:WGS84BoundingBox>
+                <ows:LowerCorner>-180.0 -90.0</ows:LowerCorner>
+                <ows:UpperCorner>180.0 90.0</ows:UpperCorner>
+            </ows:WGS84BoundingBox>
+        </FeatureType>
+        <FeatureType xmlns:foo="http://foo">
+            <Name>foo:lyr2</Name>
+            <DefaultSRS>urn:ogc:def:crs:EPSG::4326</DefaultSRS>
+            <ows:WGS84BoundingBox>
+                <ows:LowerCorner>-180.0 -90.0</ows:LowerCorner>
+                <ows:UpperCorner>180.0 90.0</ows:UpperCorner>
+            </ows:WGS84BoundingBox>
+        </FeatureType>
+    </FeatureTypeList>
+</WFS_Capabilities>
+""")
+
+    gdal.FileFromMemBuffer('/vsimem/wfs200_endpoint_join?SERVICE=WFS&VERSION=2.0.0&REQUEST=DescribeFeatureType&TYPENAME=foo:lyr1,foo:lyr2',
+"""<xsd:schema xmlns:foo="http://foo" xmlns:gml="http://www.opengis.net/gml" xmlns:xsd="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="http://foo">
+  <xsd:import namespace="http://www.opengis.net/gml" schemaLocation="http://foo/schemas/gml/3.2.1/base/gml.xsd"/>
+  <xsd:complexType name="lyr1Type">
+    <xsd:complexContent>
+      <xsd:extension base="gml:AbstractFeatureType">
+        <xsd:sequence>
+          <xsd:element maxOccurs="1" minOccurs="0" name="str" nillable="true" type="xsd:string"/>
+          <xsd:element maxOccurs="1" minOccurs="0" name="int" nillable="true" type="xsd:int"/>
+          <xsd:element maxOccurs="1" minOccurs="0" name="int64" nillable="true" type="xsd:long"/>
+          <xsd:element maxOccurs="1" minOccurs="0" name="double" nillable="true" type="xsd:double"/>
+          <xsd:element maxOccurs="1" minOccurs="0" name="dt" nillable="true" type="xsd:dateTime"/>
+          <xsd:element maxOccurs="1" minOccurs="0" name="shape" nillable="true" type="gml:PointPropertyType"/>
+        </xsd:sequence>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:element name="lyr1" substitutionGroup="gml:_Feature" type="foo:lyr1Type"/>
+  <xsd:complexType name="lyr2Type">
+    <xsd:complexContent>
+      <xsd:extension base="gml:AbstractFeatureType">
+        <xsd:sequence>
+          <xsd:element maxOccurs="1" minOccurs="0" name="str2" nillable="true" type="xsd:string"/>
+          <xsd:element maxOccurs="1" minOccurs="0" name="another_str" nillable="true" type="xsd:string"/>
+          <xsd:element maxOccurs="1" minOccurs="0" name="another_shape" nillable="true" type="gml:PointPropertyType"/>
+        </xsd:sequence>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:element name="lyr2" substitutionGroup="gml:_Feature" type="foo:lyr2Type"/>
+</xsd:schema>
+""")
+
+    gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
+
+    ds = ogr.Open('WFS:/vsimem/wfs200_endpoint_join')
+    sql_lyr = ds.ExecuteSQL('SELECT DISTINCT lyr1.str, lyr1.int, lyr1.int64, lyr1.double, lyr1.dt, lyr2.another_shape FROM lyr1 JOIN lyr2 ON lyr1.str = lyr2.str2')
+
+    gdal.FileFromMemBuffer('/vsimem/wfs200_endpoint_join?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=%28foo:lyr1,foo:lyr2%29&STARTINDEX=0&COUNT=4&FILTER=%3CFilter%20xmlns%3D%22http:%2F%2Fwww.opengis.net%2Ffes%2F2.0%22%20xmlns:foo%3D%22http:%2F%2Ffoo%22%20xmlns:gml%3D%22http:%2F%2Fwww.opengis.net%2Fgml%2F3.2%22%3E%3CPropertyIsEqualTo%3E%3CValueReference%3Efoo:lyr1%2Fstr%3C%2FValueReference%3E%3CValueReference%3Efoo:lyr2%2Fstr2%3C%2FValueReference%3E%3C%2FPropertyIsEqualTo%3E%3C%2FFilter%3E',
+"""<?xml version="1.0" encoding="UTF-8"?>
+<wfs:FeatureCollection xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    xmlns:foo="http://foo"
+    xmlns:wfs="http://www.opengis.net/wfs/2.0"
+    xmlns:gml="http://www.opengis.net/gml/3.2"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    numberMatched="unknown" numberReturned="3" timeStamp="2015-01-01T00:00:00.000Z"
+    xsi:schemaLocation="http://www.opengis.net/gml/3.2 http://schemas.opengis.net/gml/3.2.1/gml.xsd 
+                        http://www.opengis.net/wfs/2.0 http://schemas.opengis.net/wfs/2.0/wfs.xsd
+                        http://foo /vsimem/wfs200_endpoint_join?SERVICE=WFS&amp;VERSION=2.0.0&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=lyr1,lyr2">
+  <wfs:member>
+    <wfs:Tuple>
+      <wfs:member>
+        <foo:lyr1 gml:id="lyr1-1">
+          <foo:str>foo</foo:str>
+          <foo:int>1</foo:int>
+          <foo:int64>9876543210</foo:int64>
+          <foo:double>123.4</foo:double>
+          <foo:dt>2015-04-17T12:34:56Z</foo:dt>
+          <foo:shape><gml:Point srsName="urn:ogc:def:crs:EPSG::4326" gml:id="bla"><gml:pos>48.5 2.5</gml:pos></gml:Point></foo:shape>
+        </foo:lyr1>
+      </wfs:member>
+      <wfs:member>
+        <foo:lyr2 gml:id="lyr2-1">
+          <foo:str2>foo</foo:str2>
+          <foo:another_str>foo</foo:another_str>
+          <foo:another_shape><gml:Point srsName="urn:ogc:def:crs:EPSG::4326" gml:id="bla"><gml:pos>49 2</gml:pos></gml:Point></foo:another_shape>
+        </foo:lyr2>
+      </wfs:member>
+    </wfs:Tuple>
+  </wfs:member>
+  <wfs:member>
+    <wfs:Tuple>
+      <wfs:member>
+        <foo:lyr1 gml:id="lyr1-1">
+          <foo:str>foo</foo:str>
+          <foo:int>1</foo:int>
+          <foo:int64>9876543210</foo:int64>
+          <foo:double>123.4</foo:double>
+          <foo:dt>2015-04-17T12:34:56Z</foo:dt>
+          <foo:shape><gml:Point srsName="urn:ogc:def:crs:EPSG::4326" gml:id="bla"><gml:pos>48.5 2.5</gml:pos></gml:Point></foo:shape>
+        </foo:lyr1>
+      </wfs:member>
+      <wfs:member>
+        <foo:lyr2 gml:id="lyr2-2">
+          <foo:str2>foo</foo:str2>
+          <foo:another_str>bar</foo:another_str>
+          <foo:another_shape><gml:Point srsName="urn:ogc:def:crs:EPSG::4326" gml:id="bla"><gml:pos>49 2</gml:pos></gml:Point></foo:another_shape>
+        </foo:lyr2>
+      </wfs:member>
+    </wfs:Tuple>
+  </wfs:member>
+  <wfs:member>
+    <wfs:Tuple>
+      <wfs:member>
+        <foo:lyr1 gml:id="lyr1-2">
+          <foo:str>bar</foo:str>
+          <foo:int>1</foo:int>
+          <foo:int64>9876543210</foo:int64>
+          <foo:double>123.4</foo:double>
+          <foo:dt>2015-04-17T12:34:56Z</foo:dt>
+          <foo:shape><gml:Point srsName="urn:ogc:def:crs:EPSG::4326" gml:id="bla"><gml:pos>48.5 2.5</gml:pos></gml:Point></foo:shape>
+        </foo:lyr1>
+      </wfs:member>
+      <wfs:member>
+        <foo:lyr2 gml:id="lyr2-3">
+          <foo:str2>bar</foo:str2>
+          <foo:another_str>bar</foo:another_str>
+          <foo:another_shape><gml:Point srsName="urn:ogc:def:crs:EPSG::4326" gml:id="bla"><gml:pos>49 2</gml:pos></gml:Point></foo:another_shape>
+        </foo:lyr2>
+      </wfs:member>
+    </wfs:Tuple>
+  </wfs:member>
+</wfs:FeatureCollection>
+""")
+    if sql_lyr.GetFeatureCount() != 2:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ds.ReleaseResultSet(sql_lyr)
+
+    return 'success'
+
+###############################################################################
 
 def ogr_wfs_vsimem_cleanup():
 
@@ -5233,6 +5398,7 @@ gdaltest_vsimem_list = [
     ogr_wfs_vsimem_wfs200_multipart,
     ogr_wfs_vsimem_wfs200_join,
     ogr_wfs_vsimem_wfs200_join_layer_with_namespace_prefix,
+    ogr_wfs_vsimem_wfs200_join_distinct,
     ogr_wfs_vsimem_cleanup,
 ]
 
