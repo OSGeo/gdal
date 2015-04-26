@@ -41,7 +41,7 @@ CPL_CVSID("$Id$");
 /*                      OGRWFSRecursiveUnlink()                         */
 /************************************************************************/
 
-static void OGRWFSRecursiveUnlink( const char *pszName )
+void OGRWFSRecursiveUnlink( const char *pszName )
 
 {
     char **papszFileList;
@@ -1306,6 +1306,7 @@ OGRErr OGRWFSLayer::SetAttributeFilter( const char * pszFilter )
                                                   poDS->PropertyIsNotEqualToSupported(),
                                                   poDS->UseFeatureId() || bUseFeatureIdAtLayerLevel,
                                                   poDS->DoesGmlObjectIdNeedGMLPrefix(),
+                                                  "",
                                                   &bNeedsNullCheck);
         if (bNeedsNullCheck && !poDS->HasNullCheck())
             osWFSWhere = "";

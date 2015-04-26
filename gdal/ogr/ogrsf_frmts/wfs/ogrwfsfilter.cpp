@@ -41,6 +41,7 @@ typedef struct
     OGRFeatureDefn* poFDefn;
     int nUniqueGeomGMLId;
     OGRSpatialReference* poSRS;
+    const char* pszNSPrefix;
 } ExprDumpFilterOptions;
 
 /************************************************************************/
@@ -227,6 +228,9 @@ static int WFS_ExprDumpAsOGCFilter(CPLString& osFilter,
                 }
             }
         }
+        
+        if( psOptions->poFDefn == NULL && psOptions->poDS == NULL )
+            pszFieldname = poExpr->string_value;
 
         if( pszFieldname == NULL )
         {
@@ -240,16 +244,16 @@ static int WFS_ExprDumpAsOGCFilter(CPLString& osFilter,
         }
 
         if (psOptions->nVersion >= 200)
-            osFilter += "<ValueReference>";
+            osFilter += CPLSPrintf("<%sValueReference>", psOptions->pszNSPrefix);
         else
-            osFilter += "<PropertyName>";
+            osFilter += CPLSPrintf("<%sPropertyName>", psOptions->pszNSPrefix);
         char* pszFieldnameXML = CPLEscapeString(pszFieldname, -1, CPLES_XML);
         osFilter += pszFieldnameXML;
         CPLFree(pszFieldnameXML);
         if (psOptions->nVersion >= 200)
-            osFilter += "</ValueReference>";
+            osFilter += CPLSPrintf("</%sValueReference>", psOptions->pszNSPrefix);
         else
-            osFilter += "</PropertyName>";
+            osFilter += CPLSPrintf("</%sPropertyName>", psOptions->pszNSPrefix);
 
         return TRUE;
     }
@@ -259,10 +263,10 @@ static int WFS_ExprDumpAsOGCFilter(CPLString& osFilter,
         if (bExpectBinary)
             return FALSE;
 
-        osFilter += "<Literal>";
+        osFilter += CPLSPrintf("<%sLiteral>", psOptions->pszNSPrefix);
         if( !WFS_ExprDumpRawLitteral(osFilter, poExpr) )
             return FALSE;
-        osFilter += "</Literal>";
+        osFilter += CPLSPrintf("</%sLiteral>", psOptions->pszNSPrefix);
 
         return TRUE;
     }
@@ -272,10 +276,10 @@ static int WFS_ExprDumpAsOGCFilter(CPLString& osFilter,
 
     if( poExpr->nOperation == SWQ_NOT )
     {
-        osFilter += "<Not>";
+        osFilter +=  CPLSPrintf("<%sNot>", psOptions->pszNSPrefix);
         if (!WFS_ExprDumpAsOGCFilter(osFilter, poExpr->papoSubExpr[0], TRUE, psOptions))
             return FALSE;
-        osFilter += "</Not>";
+        osFilter +=  CPLSPrintf("</%sNot>", psOptions->pszNSPrefix);
         return TRUE;
     }
 
@@ -286,15 +290,15 @@ static int WFS_ExprDumpAsOGCFilter(CPLString& osFilter,
         char firstCh = 0;
         int i;
         if (psOptions->nVersion == 100)
-            osFilter += "<PropertyIsLike wildCard='*' singleChar='_' escape='!'>";
+            osFilter += CPLSPrintf("<%sPropertyIsLike wildCard='*' singleChar='_' escape='!'>", psOptions->pszNSPrefix);
         else
-            osFilter += "<PropertyIsLike wildCard='*' singleChar='_' escapeChar='!'>";
+            osFilter += CPLSPrintf("<%sPropertyIsLike wildCard='*' singleChar='_' escapeChar='!'>", psOptions->pszNSPrefix);
         if (!WFS_ExprDumpAsOGCFilter(osFilter, poExpr->papoSubExpr[0], FALSE, psOptions))
             return FALSE;
         if (poExpr->papoSubExpr[1]->eNodeType != SNT_CONSTANT &&
             poExpr->papoSubExpr[1]->field_type != SWQ_STRING)
             return FALSE;
-        osFilter += "<Literal>";
+        osFilter += CPLSPrintf("<%sLiteral>", psOptions->pszNSPrefix);
 
         /* Escape value according to above special characters */
         /* For URL compatibility reason, we remap the OGR SQL '%' wildchard into '*' */
@@ -326,17 +330,17 @@ static int WFS_ExprDumpAsOGCFilter(CPLString& osFilter,
         char* pszXML = CPLEscapeString(osVal, -1, CPLES_XML);
         osFilter += pszXML;
         CPLFree(pszXML);
-        osFilter += "</Literal>";
-        osFilter += "</PropertyIsLike>";
+        osFilter += CPLSPrintf("</%sLiteral>", psOptions->pszNSPrefix);
+        osFilter += CPLSPrintf("</%sPropertyIsLike>", psOptions->pszNSPrefix);
         return TRUE;
     }
 
     if( poExpr->nOperation == SWQ_ISNULL )
     {
-        osFilter += "<PropertyIsNull>";
+        osFilter += CPLSPrintf("<%sPropertyIsNull>", psOptions->pszNSPrefix);
         if (!WFS_ExprDumpAsOGCFilter(osFilter, poExpr->papoSubExpr[0], FALSE, psOptions))
             return FALSE;
-        osFilter += "</PropertyIsNull>";
+        osFilter += CPLSPrintf("</%sPropertyIsNull>", psOptions->pszNSPrefix);
         psOptions->bOutNeedsNullCheck = TRUE;
         return TRUE;
     }
@@ -352,7 +356,7 @@ static int WFS_ExprDumpAsOGCFilter(CPLString& osFilter,
         int bAddClosingNot = FALSE;
         if (!psOptions->bPropertyIsNotEqualToSupported && nOperation == SWQ_NE)
         {
-            osFilter += "<Not>";
+            osFilter += CPLSPrintf("<%sNot>", psOptions->pszNSPrefix);
             nOperation = SWQ_EQ;
             bAddClosingNot = TRUE;
         }
@@ -369,6 +373,7 @@ static int WFS_ExprDumpAsOGCFilter(CPLString& osFilter,
             default: break;
         }
         osFilter += "<";
+        osFilter += psOptions->pszNSPrefix;
         osFilter += pszName;
         osFilter += ">";
         if (!WFS_ExprDumpAsOGCFilter(osFilter, poExpr->papoSubExpr[0], FALSE, psOptions))
@@ -376,10 +381,11 @@ static int WFS_ExprDumpAsOGCFilter(CPLString& osFilter,
         if (!WFS_ExprDumpAsOGCFilter(osFilter, poExpr->papoSubExpr[1], FALSE, psOptions))
             return FALSE;
         osFilter += "</";
+        osFilter += psOptions->pszNSPrefix;
         osFilter += pszName;
         osFilter += ">";
         if (bAddClosingNot)
-            osFilter += "</Not>";
+            osFilter += CPLSPrintf("</%sNot>", psOptions->pszNSPrefix);
         return TRUE;
     }
 
@@ -388,6 +394,7 @@ static int WFS_ExprDumpAsOGCFilter(CPLString& osFilter,
     {
         const char* pszName = (poExpr->nOperation == SWQ_AND) ? "And" : "Or";
         osFilter += "<";
+        osFilter += psOptions->pszNSPrefix;
         osFilter += pszName;
         osFilter += ">";
         if (!WFS_ExprDumpAsOGCFilter(osFilter, poExpr->papoSubExpr[0], TRUE, psOptions))
@@ -395,6 +402,7 @@ static int WFS_ExprDumpAsOGCFilter(CPLString& osFilter,
         if (!WFS_ExprDumpAsOGCFilter(osFilter, poExpr->papoSubExpr[1], TRUE, psOptions))
             return FALSE;
         osFilter += "</";
+        osFilter += psOptions->pszNSPrefix;
         osFilter += pszName;
         osFilter += ">";
         return TRUE;
@@ -492,6 +500,7 @@ static int WFS_ExprDumpAsOGCFilter(CPLString& osFilter,
         if( pszName == NULL )
             return FALSE;
         osFilter += "<";
+        osFilter += psOptions->pszNSPrefix;
         osFilter += pszName;
         osFilter += ">";
         for(int i=0;i<2;i++)
@@ -534,12 +543,13 @@ static int WFS_ExprDumpAsOGCFilter(CPLString& osFilter,
         }
         if( poExpr->nSubExprCount > 2 )
         {
-            osFilter += "<Distance unit=\"m\">";
+            osFilter += CPLSPrintf("<%sDistance unit=\"m\">", psOptions->pszNSPrefix);
             if (!WFS_ExprDumpRawLitteral(osFilter, poExpr->papoSubExpr[2]) )
                 return FALSE;
-            osFilter += "</Distance>";
+            osFilter += CPLSPrintf("</%sDistance>", psOptions->pszNSPrefix);
         }
         osFilter += "</";
+        osFilter += psOptions->pszNSPrefix;
         osFilter += pszName;
         osFilter += ">";
         return TRUE;
@@ -559,6 +569,7 @@ CPLString WFS_TurnSQLFilterToOGCFilter( const swq_expr_node* poExpr,
                                         int bPropertyIsNotEqualToSupported,
                                         int bUseFeatureId,
                                         int bGmlObjectIdNeedsGMLPrefix,
+                                        const char* pszNSPrefix,
                                         int* pbOutNeedsNullCheck )
 {
     CPLString osFilter;
@@ -575,6 +586,7 @@ CPLString WFS_TurnSQLFilterToOGCFilter( const swq_expr_node* poExpr,
         sOptions.poFDefn = poFDefn;
         sOptions.nUniqueGeomGMLId = 1;
         sOptions.poSRS = NULL;
+        sOptions.pszNSPrefix = pszNSPrefix;
         osFilter = "";
         if (!WFS_ExprDumpAsOGCFilter(osFilter, poExpr, TRUE, &sOptions))
             osFilter = "";

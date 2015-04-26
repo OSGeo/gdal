@@ -402,6 +402,7 @@ void CPL_DLL RegisterOGROpenFileGDB();
 void CPL_DLL RegisterOGRSelafin();
 void CPL_DLL RegisterOGRJML();
 void CPL_DLL RegisterOGRPLSCENES();
+void CPL_DLL RegisterOGRCSW();
 CPL_C_END
 
 
