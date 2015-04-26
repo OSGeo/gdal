@@ -147,7 +147,7 @@ static const char* WFS_ExprGetSRSName( const swq_expr_node* poExpr,
     else if ( poExpr->nSubExprCount == iSubArgIndex + 1 &&
               poExpr->papoSubExpr[iSubArgIndex]->field_type == SWQ_INTEGER )
     {
-        if( oSRS.importFromEPSGA(poExpr->papoSubExpr[iSubArgIndex]->int_value) == OGRERR_NONE )
+        if( oSRS.importFromEPSGA((int)poExpr->papoSubExpr[iSubArgIndex]->int_value) == OGRERR_NONE )
         {
             return CPLSPrintf("urn:ogc:def:crs:EPSG::%d", (int)poExpr->papoSubExpr[iSubArgIndex]->int_value);
         }
@@ -632,7 +632,7 @@ static int OGRWFSCheckSRIDArg( swq_expr_node *op, int iSubArgIndex )
     if( op->papoSubExpr[iSubArgIndex]->field_type == SWQ_INTEGER )
     {
         OGRSpatialReference oSRS;
-        if( oSRS.importFromEPSGA(op->papoSubExpr[iSubArgIndex]->int_value) != OGRERR_NONE )
+        if( oSRS.importFromEPSGA((int)op->papoSubExpr[iSubArgIndex]->int_value) != OGRERR_NONE )
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Wrong value for argument %d of %s",
                      iSubArgIndex + 1, op->string_value);

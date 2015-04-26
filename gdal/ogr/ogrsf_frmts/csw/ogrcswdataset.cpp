@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id $
+ * $Id$
  *
  * Project:  CSW Translator
  * Purpose:  Implements OGRCSWDriver.
@@ -277,7 +277,7 @@ OGRFeature* OGRCSWLayer::GetNextFeature()
             {
                 poBaseLayer = poBaseDS->GetLayer(0);
                 poBaseLayer->ResetReading();
-                nFeaturesInCurrentPage = poBaseLayer->GetFeatureCount();
+                nFeaturesInCurrentPage = (int)poBaseLayer->GetFeatureCount();
             }
         }
         if (!poBaseLayer)
@@ -861,7 +861,7 @@ int OGRCSWDataSource::Open( const char * pszFilename,
 OGRLayer *OGRCSWDataSource::GetLayer( int iLayer )
 
 {
-    if( iLayer < 0 || iLayer >= (poLayer != NULL) )
+    if( iLayer < 0 || iLayer >= ((poLayer != NULL) ? 1 : 0) )
         return NULL;
     else
         return poLayer;
