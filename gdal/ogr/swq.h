@@ -317,11 +317,15 @@ public:
     int                        bAllowFieldsInSecondaryTablesInWhere;
     int                        bAddSecondaryTablesGeometryFields;
     int                        bAlwaysPrefixWithTableName;
+    int                        bAllowDistinctOnGeometryField;
+    int                        bAllowDistinctOnMultipleFields;
 
                     swq_select_parse_options(): poCustomFuncRegistrar(NULL),
                                                 bAllowFieldsInSecondaryTablesInWhere(FALSE),
                                                 bAddSecondaryTablesGeometryFields(FALSE),
-                                                bAlwaysPrefixWithTableName(FALSE) {}
+                                                bAlwaysPrefixWithTableName(FALSE),
+                                                bAllowDistinctOnGeometryField(FALSE),
+                                                bAllowDistinctOnMultipleFields(FALSE) {}
 };
 
 class swq_select
