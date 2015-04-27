@@ -302,7 +302,7 @@ In C :
 \endcode
 
 The OGRLayer returned by GDALDataset::GetLayerByName() is also a reference
-to an internal layer owned by the OGRDataSource so we don't need to delete
+to an internal layer owned by the GDALDataset so we don't need to delete
 it.  But we do need to delete the datasource in order to close the input file.
 Once again we do this with a custom delete method to avoid special win32 
 heap issus. 
@@ -752,7 +752,7 @@ int main()
         exit( 1 );
     }
 
-    OGRDataSource *poDS;
+    GDALDataset *poDS;
 
     poDS = poDriver->Create( "point_out.shp", 0, 0, 0, GDT_Unknown, NULL );
     if( poDS == NULL )
