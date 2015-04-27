@@ -570,6 +570,27 @@ def ogr_csw_vsimem_csw_output_schema_csw():
     lyr = ds.GetLayer(0)
 
     gdal.FileFromMemBuffer("""/vsimem/csw_endpoint&POSTFIELDS=<?xml version="1.0" encoding="UTF-8"?><csw:GetRecords resultType="results" service="CSW" version="2.0.2" outputSchema="http://www.opengis.net/cat/csw/2.0.2" startPosition="1" maxRecords="500" xmlns:csw="http://www.opengis.net/cat/csw/2.0.2" xmlns:gml="http://www.opengis.net/gml" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dct="http://purl.org/dc/terms/" xmlns:ogc="http://www.opengis.net/ogc" xmlns:ows="http://www.opengis.net/ows" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opengis.net/cat/csw/2.0.2 http://schemas.opengis.net/csw/2.0.2/CSW-discovery.xsd"><csw:Query typeNames="csw:Record"><csw:ElementSetName>full</csw:ElementSetName></csw:Query></csw:GetRecords>""",
+"""<invalid_xml
+""")
+    lyr.ResetReading()
+    gdal.PushErrorHandler()
+    f = lyr.GetNextFeature()
+    gdal.PopErrorHandler()
+    if f is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.FileFromMemBuffer("""/vsimem/csw_endpoint&POSTFIELDS=<?xml version="1.0" encoding="UTF-8"?><csw:GetRecords resultType="results" service="CSW" version="2.0.2" outputSchema="http://www.opengis.net/cat/csw/2.0.2" startPosition="1" maxRecords="500" xmlns:csw="http://www.opengis.net/cat/csw/2.0.2" xmlns:gml="http://www.opengis.net/gml" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dct="http://purl.org/dc/terms/" xmlns:ogc="http://www.opengis.net/ogc" xmlns:ows="http://www.opengis.net/ows" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opengis.net/cat/csw/2.0.2 http://schemas.opengis.net/csw/2.0.2/CSW-discovery.xsd"><csw:Query typeNames="csw:Record"><csw:ElementSetName>full</csw:ElementSetName></csw:Query></csw:GetRecords>""",
+"""<csw:GetRecordsResponse/>""")
+    lyr.ResetReading()
+    gdal.PushErrorHandler()
+    f = lyr.GetNextFeature()
+    gdal.PopErrorHandler()
+    if f is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.FileFromMemBuffer("""/vsimem/csw_endpoint&POSTFIELDS=<?xml version="1.0" encoding="UTF-8"?><csw:GetRecords resultType="results" service="CSW" version="2.0.2" outputSchema="http://www.opengis.net/cat/csw/2.0.2" startPosition="1" maxRecords="500" xmlns:csw="http://www.opengis.net/cat/csw/2.0.2" xmlns:gml="http://www.opengis.net/gml" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dct="http://purl.org/dc/terms/" xmlns:ogc="http://www.opengis.net/ogc" xmlns:ows="http://www.opengis.net/ows" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opengis.net/cat/csw/2.0.2 http://schemas.opengis.net/csw/2.0.2/CSW-discovery.xsd"><csw:Query typeNames="csw:Record"><csw:ElementSetName>full</csw:ElementSetName></csw:Query></csw:GetRecords>""",
 """<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <csw:GetRecordsResponse
     xmlns:dc="http://purl.org/dc/elements/1.1/"
@@ -592,7 +613,7 @@ def ogr_csw_vsimem_csw_output_schema_csw():
   </csw:SearchResults>
 </csw:GetRecordsResponse>
 """)
-
+    lyr.ResetReading()
     f = lyr.GetNextFeature()
     if f['raw_xml'].find('<csw:Record') != 0 or \
        f['boundingbox'].ExportToWkt() != 'POLYGON ((-180 -90,-180 90,180 90,180 -90,-180 -90))':

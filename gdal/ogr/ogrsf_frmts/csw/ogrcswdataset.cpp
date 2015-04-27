@@ -51,10 +51,7 @@ class OGRCSWLayer : public OGRLayer
 
     GDALDataset        *poBaseDS;
     OGRLayer           *poBaseLayer;
-    int                 bReloadNeeded;
-    int                 bHasFetched;
 
-    int                 bPagingActive;
     int                 nPagingStartIndex;
     int                 nFeatureRead;
     int                 nFeaturesInCurrentPage;
@@ -213,10 +210,7 @@ OGRCSWLayer::OGRCSWLayer(OGRCSWDataSource* poDS)
 
     poBaseDS = NULL;
     poBaseLayer = NULL;
-    bReloadNeeded = FALSE;
-    bHasFetched = FALSE;
 
-    bPagingActive = FALSE;
     nPagingStartIndex = 0;
     nFeatureRead = 0;
     nFeaturesInCurrentPage = 0;
@@ -242,21 +236,12 @@ OGRCSWLayer::~OGRCSWLayer()
 
 void OGRCSWLayer::ResetReading()
 {
-    if (bPagingActive)
-        bReloadNeeded = TRUE;
     nPagingStartIndex = 0;
     nFeatureRead = 0;
     nFeaturesInCurrentPage = 0;
-    if (bReloadNeeded)
-    {
-        GDALClose(poBaseDS);
-        poBaseDS = NULL;
-        poBaseLayer = NULL;
-        bHasFetched = FALSE;
-        bReloadNeeded = FALSE;
-    }
-    if (poBaseLayer)
-        poBaseLayer->ResetReading();
+    GDALClose(poBaseDS);
+    poBaseDS = NULL;
+    poBaseLayer = NULL;
 }
 
 /************************************************************************/
@@ -267,22 +252,13 @@ OGRFeature* OGRCSWLayer::GetNextFeature()
 {
     while(TRUE)
     {
-        if (bPagingActive && nFeatureRead == nPagingStartIndex + nFeaturesInCurrentPage)
+        if (nFeatureRead == nPagingStartIndex + nFeaturesInCurrentPage)
         {
-            bReloadNeeded = TRUE;
             nPagingStartIndex = nFeatureRead;
-        }
-        if (bReloadNeeded)
-        {
+
             GDALClose(poBaseDS);
-            poBaseDS = NULL;
             poBaseLayer = NULL;
-            bHasFetched = FALSE;
-            bReloadNeeded = FALSE;
-        }
-        if (poBaseDS == NULL && !bHasFetched)
-        {
-            bHasFetched = TRUE;
+
             poBaseDS = FetchGetRecords();
             if (poBaseDS)
             {
@@ -463,8 +439,6 @@ GIntBig OGRCSWLayer::GetFeatureCountWithHits()
 GDALDataset* OGRCSWLayer::FetchGetRecords()
 {
     CPLHTTPResult* psResult = NULL;
-
-    bPagingActive = TRUE;
 
     CPLString osOutputSchema = poDS->GetOutputSchema();
     if( osOutputSchema.size() )
@@ -673,7 +647,6 @@ GDALDataset* OGRCSWLayer::FetchGetRecords()
 void OGRCSWLayer::SetSpatialFilter( OGRGeometry * poGeom )
 {
     OGRLayer::SetSpatialFilter(poGeom);
-    bReloadNeeded = TRUE;
     ResetReading();
     BuildQuery();
 }
@@ -809,7 +782,6 @@ OGRErr OGRCSWLayer::SetAttributeFilter( const char * pszFilter )
             return eErr;
     }
 
-    bReloadNeeded = TRUE;
     ResetReading();
     BuildQuery();
 
