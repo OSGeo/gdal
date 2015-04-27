@@ -42,6 +42,12 @@
  * Classes related to registration of format support, and opening datasets.
  */
 
+#if !defined(GDAL_COMPILATION) && !defined(SUPPRESS_DEPRECATION_WARNINGS)
+#define OGR_DEPRECATED(x) CPL_WARN_DEPRECATED(x)
+#else
+#define OGR_DEPRECATED(x) 
+#endif
+
 class OGRLayerAttrIndex;
 class OGRSFDriver;
 
@@ -206,13 +212,13 @@ class CPL_DLL OGRLayer : public GDALMajorObject
     GIntBig              m_nFeaturesRead;
 };
 
-
 /************************************************************************/
 /*                            OGRDataSource                             */
 /************************************************************************/
 
 /**
- * LEGACY class. Use GDALDataset in your new code !
+ * LEGACY class. Use GDALDataset in your new code ! This class may be
+ * removed in a later release.
  * 
  * This class represents a data source.  A data source potentially
  * consists of many layers (OGRLayer).  A data source normally consists
@@ -222,6 +228,10 @@ class CPL_DLL OGRLayer : public GDALMajorObject
  * When an OGRDataSource is destroyed, all it's associated OGRLayers objects
  * are also destroyed.
  *
+ * NOTE: Starting with GDAL 2.0, it is *NOT* safe to cast the handle of
+ * a C function that returns a OGRDataSourceH to a OGRDataSource*. If a C++ object
+ * is needed, the handle should be cast to GDALDataset*.
+ *
  * @deprecated
  */ 
 
@@ -230,9 +240,9 @@ class CPL_DLL OGRDataSource : public GDALDataset
 public:
                         OGRDataSource();
 
-    virtual const char  *GetName() = 0;
+    virtual const char  *GetName() OGR_DEPRECATED("Use GDALDataset class instead") = 0;
 
-    static void         DestroyDataSource( OGRDataSource * );
+    static void         DestroyDataSource( OGRDataSource * ) OGR_DEPRECATED("Use GDALDataset class instead");
 };
 
 /************************************************************************/
@@ -240,7 +250,8 @@ public:
 /************************************************************************/
 
 /**
- * LEGACY class. Use GDALDriver in your new code !
+ * LEGACY class. Use GDALDriver in your new code ! This class may be
+ * removed in a later release.
  *
  * Represents an operational format driver.
  *
@@ -248,6 +259,10 @@ public:
  * registered for use, regardless of whether a file has or will be opened.
  * The list of available drivers is normally managed by the
  * OGRSFDriverRegistrar.
+ *
+ * NOTE: Starting with GDAL 2.0, it is *NOT* safe to cast the handle of
+ * a C function that returns a OGRSFDriverH to a OGRSFDriver*. If a C++ object
+ * is needed, the handle should be cast to GDALDriver*.
  *
  * @deprecated
  */
@@ -257,15 +272,15 @@ class CPL_DLL OGRSFDriver : public GDALDriver
   public:
     virtual     ~OGRSFDriver();
 
-    virtual const char  *GetName() = 0;
+    virtual const char  *GetName() OGR_DEPRECATED("Use GDALDriver class instead") = 0;
 
-    virtual OGRDataSource *Open( const char *pszName, int bUpdate=FALSE ) = 0;
+    virtual OGRDataSource *Open( const char *pszName, int bUpdate=FALSE ) OGR_DEPRECATED("Use GDALDriver class instead") = 0;
     
-    virtual int            TestCapability( const char *pszCap ) = 0;
+    virtual int            TestCapability( const char *pszCap ) OGR_DEPRECATED("Use GDALDriver class instead") = 0;
 
     virtual OGRDataSource *CreateDataSource( const char *pszName,
-                                             char ** = NULL );
-    virtual OGRErr      DeleteDataSource( const char *pszName );
+                                             char ** = NULL ) OGR_DEPRECATED("Use GDALDriver class instead");
+    virtual OGRErr      DeleteDataSource( const char *pszName ) OGR_DEPRECATED("Use GDALDriver class instead");
 };
 
 
@@ -274,7 +289,8 @@ class CPL_DLL OGRSFDriver : public GDALDriver
 /************************************************************************/
 
 /**
- * LEGACY class. Use GDALDriverManager in your new code !
+ * LEGACY class. Use GDALDriverManager in your new code ! This class may be
+ * removed in a later release.
  *
  * Singleton manager for OGRSFDriver instances that will be used to try
  * and open datasources.  Normally the registrar is populated with 
@@ -301,16 +317,16 @@ class CPL_DLL OGRSFDriverRegistrar
 
   public:
 
-    static OGRSFDriverRegistrar *GetRegistrar();
+    static OGRSFDriverRegistrar *GetRegistrar() OGR_DEPRECATED("Use GDALDriverManager class instead");
 
-    void        RegisterDriver( OGRSFDriver * poDriver );
+    void        RegisterDriver( OGRSFDriver * poDriver ) OGR_DEPRECATED("Use GDALDriverManager class instead");
 
-    int         GetDriverCount( void );
-    GDALDriver *GetDriver( int iDriver );
-    GDALDriver *GetDriverByName( const char * );
+    int         GetDriverCount( void ) OGR_DEPRECATED("Use GDALDriverManager class instead");
+    GDALDriver *GetDriver( int iDriver ) OGR_DEPRECATED("Use GDALDriverManager class instead");
+    GDALDriver *GetDriverByName( const char * ) OGR_DEPRECATED("Use GDALDriverManager class instead");
 
-    int         GetOpenDSCount();
-    OGRDataSource *GetOpenDS( int );
+    int         GetOpenDSCount() OGR_DEPRECATED("Use GDALDriverManager class instead");
+    OGRDataSource *GetOpenDS( int ) OGR_DEPRECATED("Use GDALDriverManager class instead");
 };
 
 /* -------------------------------------------------------------------- */

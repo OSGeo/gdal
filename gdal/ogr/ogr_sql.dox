@@ -1,7 +1,7 @@
 /*! \page ogr_sql OGR SQL
 
-The OGRDataSource supports executing commands against a datasource via the
-OGRDataSource::ExecuteSQL() method.  While in theory 
+The GDALDataset supports executing commands against a datasource via the
+GDALDataset::ExecuteSQL() method.  While in theory 
 any sort of command could be handled this way, in practice the mechanism is 
 used to provide a subset of SQL SELECT capability to applications.  This 
 page discusses the generic SQL implementation implemented within OGR, and 
@@ -631,11 +631,11 @@ DROP TABLE nation
 
 \section ogr_sql_exec_sql ExecuteSQL()
 
-SQL is executed against an OGRDataSource, not against a specific layer.  The
+SQL is executed against an GDALDataset, not against a specific layer.  The
 call looks like this:
 
 \code
-OGRLayer * OGRDataSource::ExecuteSQL( const char *pszSQLCommand,
+OGRLayer * GDALDataset::ExecuteSQL( const char *pszSQLCommand,
 				      OGRGeometry *poSpatialFilter,
                                       const char *pszDialect );
 \endcode
@@ -652,7 +652,7 @@ restriction.<p>
 The result of an ExecuteSQL() call is usually a temporary OGRLayer representing
 the results set from the statement.  This is the case for a SELECT statement
 for instance.  The returned temporary layer should be released with 
-OGRDataSource::ReleaseResultsSet() method when no longer needed.  Failure
+GDALDataset::ReleaseResultsSet() method when no longer needed.  Failure
 to release it before the datasource is destroyed may result in a crash.<p>
 
 \section ogr_sql_non_ogr_sql Non-OGR SQL
@@ -664,7 +664,7 @@ Oracle (<a href="/ogr/drv_oci.html">OCI</a>),
 <a href="/ogr/drv_odbc.html">ODBC</a>,
 ESRI Personal Geodatabase (<a href="/ogr/drv_pgeo.html">PGeo</a>) and
 MS SQL Spatial (<a href="/ogr/drv_mssqlspatial.html">MSSQLSpatial</a>),
-override the OGRDataSource::ExecuteSQL() function with dedicated implementation 
+override the GDALDataset::ExecuteSQL() function with dedicated implementation 
 and, by default, pass the SQL statements directly to the underlying RDBMS. 
 In these cases the SQL syntax varies in some particulars from OGR SQL.
 Also, anything possible in SQL can then be accomplished for these particular
