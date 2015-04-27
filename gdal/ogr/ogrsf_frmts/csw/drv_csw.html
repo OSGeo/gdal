@@ -24,9 +24,16 @@ or <i>CSW:http://path/to/CSW/endpoint</i><p>
 The following open options are available:
 <ul>
 <li><b>URL</b>: URL to the CSW server endpoint (if not specified in the connection string already)</li>
-<li><b>ELEMENTSETNAME</b>=brief/summary/full: Level of details of properties. Defaults to "full".</li>
+<li><b>ELEMENTSETNAME</b>=brief/summary/full: Level of details of properties. Defaults to <i>full</i>.</li>
 <li><b>FULL_EXTENT_RECORDS_AS_NON_SPATIAL</b>=YES/NO: Whether records with
 (-180,-90,180,90) extent should be considered non-spatial. Defaults to NO.</li>
+<li><b>OUTPUT_SCHEMA</b>=URL : Value of outputSchema parameter, in the restricted
+set supported by the serve. Special value <i>gmd</i> can be used as a shortcut for
+http://www.isotc211.org/2005/gmd, <i>csw</i> for http://www.opengis.net/cat/csw/2.0.2.
+When this open option is set, a <i>raw_xml</i> field will be filled with the
+XML content of each record. Other metadata fields will remain empty.</li>
+<li><b>MAX_RECORDS</b>=value : Maximum number of records to retrieve in a single time.
+Defaults to 500. Servers might have a lower accepted value.</li>
 </ul>
 
 <h2>Filtering</h2>
@@ -65,6 +72,13 @@ ogrinfo -ro -al -noextent CSW:http://catalog.data.gov/csw -spat 2 49 2 49 -where
 Listing all the records of a CSW server that matches a text on any text field:
 <pre>
 ogrinfo -ro -al -q CSW:http://catalog.data.gov/csw -spat 2 49 2 49 -where "anytext LIKE '%France%'"
+</pre>
+<p>
+
+<li>
+Listing all the records of a CSW server as ISO 19115/19119:
+<pre>
+ogrinfo -ro -al -q CSW:http://catalog.data.gov/csw -oo OUTPUT_SCHEMA=gmd
 </pre>
 <p>
 

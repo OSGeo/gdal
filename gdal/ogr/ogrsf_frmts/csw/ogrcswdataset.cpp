@@ -31,6 +31,8 @@
 #include "cpl_conv.h"
 #include "cpl_http.h"
 #include "ogr_wfs.h"
+#include "ogr_p.h"
+#include "gmlutils.h"
 
 CPL_CVSID("$Id$");
 
@@ -89,6 +91,8 @@ class OGRCSWDataSource : public OGRDataSource
     CPLString           osBaseURL;
     CPLString           osVersion;
     CPLString           osElementSetName;
+    CPLString           osOutputSchema;
+    int                 nMaxRecords;
 
     OGRCSWLayer*        poLayer;
     int                 bFullExtentRecordsAsNonSpatial;
@@ -114,7 +118,9 @@ class OGRCSWDataSource : public OGRDataSource
     const CPLString&            GetBaseURL() { return osBaseURL; }
     const CPLString&            GetVersion() { return osVersion; }
     const CPLString&            GetElementSetName() { return osElementSetName; }
+    const CPLString&            GetOutputSchema() { return osOutputSchema; }
     int                         FullExtentRecordsAsNonSpatial() { return bFullExtentRecordsAsNonSpatial; }
+    int                         GetMaxRecords() { return nMaxRecords; }
 };
 
 /************************************************************************/
@@ -197,6 +203,11 @@ OGRCSWLayer::OGRCSWLayer(OGRCSWDataSource* poDS)
     }
     {
         OGRFieldDefn oField("anytext", OFTString);
+        poFeatureDefn->AddFieldDefn(&oField);
+    }
+    if( poDS->GetOutputSchema().size() )
+    {
+        OGRFieldDefn oField("raw_xml", OFTString);
         poFeatureDefn->AddFieldDefn(&oField);
     }
 
@@ -455,10 +466,16 @@ GDALDataset* OGRCSWLayer::FetchGetRecords()
 
     bPagingActive = TRUE;
 
+    CPLString osOutputSchema = poDS->GetOutputSchema();
+    if( osOutputSchema.size() )
+        osOutputSchema = " outputSchema=\"" + osOutputSchema + "\"";
+
     CPLString osPost = CPLSPrintf(
 "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
 "<csw:GetRecords resultType=\"results\" service=\"CSW\" version=\"%s\""
+"%s"
 " startPosition=\"%d\""
+" maxRecords=\"%d\""
 " xmlns:csw=\"http://www.opengis.net/cat/csw/2.0.2\""
 " xmlns:gml=\"http://www.opengis.net/gml\""
 " xmlns:dc=\"http://purl.org/dc/elements/1.1/\""
@@ -473,7 +490,9 @@ GDALDataset* OGRCSWLayer::FetchGetRecords()
 "</csw:Query>"
 "</csw:GetRecords>",
             poDS->GetVersion().c_str(),
+            osOutputSchema.c_str(),
             nPagingStartIndex + 1,
+            poDS->GetMaxRecords(),
             poDS->GetElementSetName().c_str(),
             osQuery.c_str());
 
@@ -513,30 +532,138 @@ GDALDataset* OGRCSWLayer::FetchGetRecords()
 
     CPLHTTPDestroyResult(psResult);
 
-    OGRDataSource* poDS;
+    GDALDataset* poBaseDS = NULL;
 
-    poDS = (OGRDataSource*) OGROpen(osTmpFileName, FALSE, NULL);
-    if (poDS == NULL)
+    if( poDS->GetOutputSchema().size() )
     {
-        if( strstr((const char*)pabyData, "<csw:GetRecordsResponse") == NULL &&
-            strstr((const char*)pabyData, "<GetRecordsResponse") == NULL )
+        GDALDriver* poDrv = (GDALDriver*)GDALGetDriverByName("Memory");
+        if( poDrv == NULL )
+            return NULL;
+        CPLXMLNode* psRoot = CPLParseXMLFile(osTmpFileName);
+        if( psRoot == NULL )
         {
-            if (nDataLen > 1000)
-                pabyData[1000] = 0;
-            CPLError(CE_Failure, CPLE_AppDefined,
-                    "Error: cannot parse %s", pabyData);
+            if( strstr((const char*)pabyData, "<csw:GetRecordsResponse") == NULL &&
+                strstr((const char*)pabyData, "<GetRecordsResponse") == NULL )
+            {
+                if (nDataLen > 1000)
+                    pabyData[1000] = 0;
+                CPLError(CE_Failure, CPLE_AppDefined,
+                        "Error: cannot parse %s", pabyData);
+            }
+            return NULL;
         }
-        return NULL;
+        CPLXMLNode* psSearchResults = CPLGetXMLNode(psRoot, "=csw:GetRecordsResponse.csw:SearchResults");
+        if( psSearchResults == NULL )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Cannot find GetRecordsResponse.SearchResults");
+            CPLDestroyXMLNode(psRoot);
+            return NULL;
+        }
+
+        poBaseDS = poDrv->Create("", 0, 0, 0, GDT_Unknown, NULL);
+        OGRLayer* poLyr = poBaseDS->CreateLayer("records");
+        OGRFieldDefn oField("raw_xml", OFTString);
+        poLyr->CreateField(&oField);
+        for( CPLXMLNode* psIter = psSearchResults->psChild; psIter; psIter = psIter->psNext )
+        {
+            if( psIter->eType == CXT_Element )
+            {
+                OGRFeature* poFeature = new OGRFeature(poLyr->GetLayerDefn());
+
+                CPLXMLNode* psNext = psIter->psNext;
+                psIter->psNext = NULL;
+                char* pszXML = CPLSerializeXMLTree(psIter);
+
+                const char* pszWest = NULL;
+                const char* pszEast = NULL;
+                const char* pszSouth = NULL;
+                const char* pszNorth = NULL;
+                CPLXMLNode* psBBox = CPLSearchXMLNode( psIter, "gmd:EX_GeographicBoundingBox");
+                if( psBBox )
+                {
+                    /* ISO 19115/19119: http://www.isotc211.org/2005/gmd */
+                    pszWest = CPLGetXMLValue(psBBox, "gmd:westBoundLongitude.gco:Decimal", NULL);
+                    pszEast = CPLGetXMLValue(psBBox, "gmd:eastBoundLongitude.gco:Decimal", NULL);
+                    pszSouth = CPLGetXMLValue(psBBox, "gmd:southBoundLatitude.gco:Decimal", NULL);
+                    pszNorth = CPLGetXMLValue(psBBox, "gmd:northBoundLatitude.gco:Decimal", NULL);
+                }
+                else if( (psBBox = CPLSearchXMLNode( psIter, "spdom") ) != NULL )
+                {
+                    /* FGDC: http://www.opengis.net/cat/csw/csdgm */
+                    pszWest = CPLGetXMLValue(psBBox, "bounding.westbc", NULL);
+                    pszEast = CPLGetXMLValue(psBBox, "bounding.eastbc", NULL);
+                    pszSouth = CPLGetXMLValue(psBBox, "bounding.southbc", NULL);
+                    pszNorth = CPLGetXMLValue(psBBox, "bounding.northbc", NULL);
+                }
+                if( pszWest && pszEast && pszSouth && pszNorth )
+                {
+                    double dfMinX = CPLAtof(pszWest);
+                    double dfMaxX = CPLAtof(pszEast);
+                    double dfMinY = CPLAtof(pszSouth);
+                    double dfMaxY = CPLAtof(pszNorth);
+                    OGRLinearRing* poLR = new OGRLinearRing();
+                    poLR->addPoint(dfMinX, dfMinY);
+                    poLR->addPoint(dfMinX, dfMaxY);
+                    poLR->addPoint(dfMaxX, dfMaxY);
+                    poLR->addPoint(dfMaxX, dfMinY);
+                    poLR->addPoint(dfMinX, dfMinY);
+                    OGRPolygon* poPoly = new OGRPolygon();
+                    poPoly->addRingDirectly(poLR);
+                    poFeature->SetGeometryDirectly(poPoly);
+                }
+                else if( (psBBox = CPLSearchXMLNode( psIter, "ows:BoundingBox") ) != NULL )
+                {
+                    CPLFree(psBBox->pszValue);
+                    psBBox->pszValue = CPLStrdup("gml:Envelope");
+                    CPLString osSRS = CPLGetXMLValue(psBBox, "crs", "");
+                    OGRGeometry* poGeom = GML2OGRGeometry_XMLNode( psBBox,
+                                                          FALSE,
+                                                          0, 0, FALSE, TRUE,
+                                                          FALSE );
+                    int bLatLongOrder = TRUE;
+                    if( osSRS.size() )
+                        bLatLongOrder = GML_IsSRSLatLongOrder(osSRS);
+                    if( bLatLongOrder && CSLTestBoolean(
+                            CPLGetConfigOption("GML_INVERT_AXIS_ORDER_IF_LAT_LONG", "YES")) )
+                        poGeom->swapXY();
+                    poFeature->SetGeometryDirectly(poGeom);
+                }
+
+                psIter->psNext = psNext;
+
+                poFeature->SetField(0, pszXML);
+                poLyr->CreateFeature(poFeature);
+                CPLFree(pszXML);
+                delete poFeature;
+            }
+        }
+        CPLDestroyXMLNode(psRoot);
+    }
+    else
+    {
+        poBaseDS = (GDALDataset*) OGROpen(osTmpFileName, FALSE, NULL);
+        if (poBaseDS == NULL)
+        {
+            if( strstr((const char*)pabyData, "<csw:GetRecordsResponse") == NULL &&
+                strstr((const char*)pabyData, "<GetRecordsResponse") == NULL )
+            {
+                if (nDataLen > 1000)
+                    pabyData[1000] = 0;
+                CPLError(CE_Failure, CPLE_AppDefined,
+                        "Error: cannot parse %s", pabyData);
+            }
+            return NULL;
+        }
     }
 
-    OGRLayer* poLayer = poDS->GetLayer(0);
+    OGRLayer* poLayer = poBaseDS->GetLayer(0);
     if (poLayer == NULL)
     {
-        OGRDataSource::DestroyDataSource(poDS);
+        GDALClose(poBaseDS);
         return NULL;
     }
 
-    return poDS;
+    return poBaseDS;
 }
 
 /************************************************************************/
@@ -741,6 +868,7 @@ OGRCSWDataSource::OGRCSWDataSource()
     pszName = NULL;
     poLayer = NULL;
     bFullExtentRecordsAsNonSpatial = FALSE;
+    nMaxRecords = 500;
 }
 
 /************************************************************************/
@@ -815,6 +943,12 @@ int OGRCSWDataSource::Open( const char * pszFilename,
     bFullExtentRecordsAsNonSpatial = CSLFetchBoolean(papszOpenOptions,
                                                      "FULL_EXTENT_RECORDS_AS_NON_SPATIAL",
                                                      FALSE);
+    osOutputSchema = CSLFetchNameValueDef(papszOpenOptions, "OUTPUT_SCHEMA", "");
+    if( EQUAL(osOutputSchema, "gmd") )
+        osOutputSchema = "http://www.isotc211.org/2005/gmd";
+    else if( EQUAL(osOutputSchema, "csw") )
+        osOutputSchema = "http://www.opengis.net/cat/csw/2.0.2";
+    nMaxRecords = atoi(CSLFetchNameValueDef(papszOpenOptions, "MAX_RECORDS", "500"));
 
     if (strncmp(osBaseURL, "http://", 7) != 0 &&
         strncmp(osBaseURL, "https://", 8) != 0 &&
@@ -966,9 +1100,9 @@ void RegisterOGRCSW()
 "    <Value>full</Value>"
 "  </Option>"
 "  <Option name='FULL_EXTENT_RECORDS_AS_NON_SPATIAL' type='boolean' description='Whether records with (-180,-90,180,90) extent should be considered non-spatial' default='false'/>"
+"  <Option name='OUTPUT_SCHEMA' type='string' description='Value of outputSchema parameter'/>"
+"  <Option name='MAX_RECORDS' type='int' description='Maximum number of records to retrieve in a single time' default='500'/>"
 "</OpenOptionList>" );
-
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
         poDriver->pfnIdentify = OGRCSWDriverIdentify;
         poDriver->pfnOpen = OGRCSWDriverOpen;
