@@ -1311,7 +1311,8 @@ void VSIGZipFilesystemHandler::SaveInfo_unlocked(  VSIGZipHandle* poHandle )
             poTmp->SaveInfo_unlocked();
             delete poTmp;
             poHandleLastGZipFile = poHandle->Duplicate();
-            poHandleLastGZipFile->CloseBaseHandle();
+            if( poHandleLastGZipFile )
+                poHandleLastGZipFile->CloseBaseHandle();
         }
     }
     else
@@ -1324,7 +1325,8 @@ void VSIGZipFilesystemHandler::SaveInfo_unlocked(  VSIGZipHandle* poHandle )
             delete poTmp;
         }
         poHandleLastGZipFile = poHandle->Duplicate();
-        poHandleLastGZipFile->CloseBaseHandle();
+        if( poHandleLastGZipFile )
+            poHandleLastGZipFile->CloseBaseHandle();
     }
 }
 
