@@ -356,7 +356,7 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
     }
 
 /* -------------------------------------------------------------------- */
-/*      If 503 or 504 status code retry this HTTP call until max        */
+/*      If 502, 503 or 504 status code retry this HTTP call until max        */
 /*      retry has been rearched                                         */
 /* -------------------------------------------------------------------- */
     const char *pszRetryDelay = CSLFetchNameValue( papszOptions, "RETRY_DELAY" );
@@ -433,8 +433,8 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
 
             if (response_code >= 400 && response_code < 600)
             {
-                /* If HTTP 503 or 504 gateway timeout error retry after a pause */
-                if ((response_code == 503 || response_code == 504) && nRetryCount < nMaxRetries)
+                /* If HTTP 502, 503 or 504 gateway timeout error retry after a pause */
+                if ((response_code >= 502 && response_code <= 504) && nRetryCount < nMaxRetries)
                 {
                     CPLError(CE_Warning, CPLE_AppDefined,
                              "HTTP error code: %d - %s. Retrying again in %d secs",
