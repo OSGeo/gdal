@@ -45,7 +45,16 @@ JP2 nor J2K, J2K codec is used.</p></li>
 
 <li> <b>GMLJP2=YES/NO</b>: (Starting with GDAL 1.10) Indicates whether a GML box
  conforming to the OGC GML in JPEG2000 specification should be included in the
-file.  Defaults to YES.<p>
+file. Unless GMLJP2V2_DEF is used, the version of the GMLJP2 box will be
+version 1. Defaults to YES.<p>
+
+<li> <b>GMLJP2V2_DEF=filename</b>: (Starting with GDAL 2.0) Indicates whether a GML box
+conforming to the <a href="http://docs.opengeospatial.org/is/08-085r4/08-085r4.html">
+OGC GML in JPEG2000, version 2</a> specification should be included in the
+file. <i>filename</i> must point to a file with a JSon content that defines how
+the GMLJP2 v2 box should be built. See below section for the syntax of the JSon configuration file.
+It is also possible to directly pass the JSon content inlined as a string.
+If filename is just set to YES, a minimal instance will be built.<p>
 
 <li> <b>GeoJP2=YES/NO</b>: (Starting with GDAL 1.10) Indicates whether a
 UUID/GeoTIFF box conforming to the GeoJP2 (GeoTIFF in JPEG2000) specification
@@ -213,6 +222,107 @@ Lossless compression can be achieved if ALL the following creation options are d
 <li>REVERSIBLE=YES</li>
 <li>YCBCR420=NO (which is the default)</li>
 </ul>
+
+<h3>GMLJP2v2 definition file</h3>
+
+A GMLJP2v2 box typically contains a GMLJP2RectifiedGridCoverage with the 
+SRS information and geotransformation matrix. It is also possible to add metadata,
+vector features (GML feature collections) or annotations (KML).
+
+The value of the GMLJP2V2_DEF creation option should be a file that conforms with
+the below syntax (elements starting with "#" are documentation, and can be omitted):
+
+<pre>
+{
+    "#doc" : "Unless otherwise specified, all elements are optional",
+
+    "#root_instance_doc": "Describe content of the GMLJP2CoverageCollection",
+    "root_instance": {
+        "#gml_id_doc": "Specify GMLJP2CoverageCollection gml:id. Default is ID_GMLJP2_0",
+        "gml_id": "some_gml_id",
+
+        "#grid_coverage_file_doc": [
+            "External XML file, whose root might be a GMLJP2GridCoverage, ",
+            "GMLJP2RectifiedGridCoverage or a GMLJP2ReferenceableGridCoverage.",
+            "If not specified, GDAL will auto-generate a GMLJP2RectifiedGridCoverage" ],
+        "grid_coverage_file": "gmljp2gridcoverage.xml",
+
+        "#crs_url_doc": [
+            "true for http://www.opengis.net/def/crs/EPSG/0/XXXX CRS URL.",
+            "If false, use CRS URN. Default value is true",
+            "Only taken into account for a auto-generated GMLJP2RectifiedGridCoverage"],
+        "crs_url": true,
+
+        "#metadata_doc": [ "An array of metadata items. Can be either strings, with ",
+                           "a filename or directly inline XML content, or either ",
+                           "a more complete description." ],
+        "metadata": [
+
+            "dcmetadata.xml",
+
+            {
+                "#file_doc": "Can use relative or absolute paths. Required",
+                "file": "dcmetadata.xml",
+
+                "#content": "Exclusive of file. Inline XML metadata content",
+                "content": "<gmljp2:metadata>Some simple textual metadata</gmljp2:metadata>",
+
+                "#parent_node": ["Where to put the metadata.",
+                                 "Under CoverageCollection (default) or GridCoverage" ],
+                "parent_node": "CoverageCollection"
+            }
+        ],
+
+        "#annotations_doc": [ "An array of filenames, either directly KML files",
+                              "or other vector files recognized by GDAL that ",
+                              "will be translated on-the-fly as KML" ],
+        "annotations": [
+            "my.kml"
+        ],
+
+        "#gml_filelist_doc" :[
+            "An array of GML files. Can be either GML filenames, ",
+            "or a more complete description" ],
+        "gml_filelist": [
+
+            "my.gml",
+
+            {
+                "#file_doc": "can use relative or absolute paths. Required",
+                "file": "converted/test_0.gml",
+
+                "#namespace_doc": ["The namespace in schemaLocation for which to substitute",
+                                  "its original schemaLocation with the one provided below"],
+                "namespace": "http://example.com",
+
+                "#schema_location_doc": ["Value of the substitued schemaLocation. ",
+                                         "Typically a schema box label (link)"],
+                "schema_location": "gmljp2://xml/schema_0.xsd",
+
+                "#inline_doc": "Whether to inline the content, or put it in a separate xml box. Default is true",
+                "inline": true,
+
+                "#parent_node": ["Where to put the FeatureCollection.",
+                                 "Under CoverageCollection (default) or GridCoverage" ],
+                "parent_node": "CoverageCollection"
+            }
+        ]
+    },
+
+    "#boxes_doc": "An array to describe the content of XML asoc boxes",
+    "boxes": [
+        {
+            "#file_doc": "can use relative or absolute paths. Required",
+            "file": "converted/test_0.xsd",
+
+            "#label_doc": ["the label of the XML box. If not specified, will be the ",
+                          "filename without the directory part." ],
+            "label": "schema_0.xsd"
+        }
+    ]
+}
+</pre>
+
 
 <h2>See Also:</h2>
 

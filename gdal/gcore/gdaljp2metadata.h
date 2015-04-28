@@ -125,6 +125,13 @@ private:
 
     int    nMSIGSize;
     GByte  *pabyMSIGData;
+    
+    int      GetGMLJP2GeoreferencingInfo( int& nEPSGCode,
+                                          double adfOrigin[2],
+                                          double adfXVector[2],
+                                          double adfYVector[2],
+                                          const char*& pszComment,
+                                          CPLString& osDictBox );
 
 public:
     char  **papszGMLMetadata;
@@ -163,6 +170,8 @@ public:
     
     GDALJP2Box *CreateJP2GeoTIFF();
     GDALJP2Box *CreateGMLJP2( int nXSize, int nYSize );
+    GDALJP2Box *CreateGMLJP2V2( int nXSize, int nYSize,
+                                const char* pszDefFilename );
 
     static GDALJP2Box* CreateGDALMultiDomainMetadataXMLBox(
                                        GDALDataset* poSrcDS,
