@@ -287,6 +287,75 @@ def vrtmisc_9():
     return 'success'
 
 ###############################################################################
+# Test metadata serialization (#5944)
+
+def vrtmisc_10():
+    
+    gdal.FileFromMemBuffer("/vsimem/vrtmisc_10.vrt",
+"""<VRTDataset rasterXSize="1" rasterYSize="1">
+  <Metadata>
+      <MDI key="foo">bar</MDI>
+  </Metadata>
+  <Metadata domain="some_domain">
+    <MDI key="bar">baz</MDI>
+  </Metadata>
+  <Metadata domain="xml:a_xml_domain" format="xml">
+    <some_xml />
+  </Metadata>
+  <VRTRasterBand dataType="Byte" band="1">
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">foo.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="1" RasterYSize="1" DataType="Byte" BlockXSize="1" BlockYSize="1" />
+      <SrcRect xOff="0" yOff="0" xSize="1" ySize="1" />
+      <DstRect xOff="0" yOff="0" xSize="1" ySize="1" />
+    </SimpleSource>
+  </VRTRasterBand>
+</VRTDataset>
+""")
+
+    ds = gdal.Open("/vsimem/vrtmisc_10.vrt", gdal.GA_Update)
+    # to trigger a flush
+    ds.SetMetadata(ds.GetMetadata())
+    ds = None
+
+    ds = gdal.Open("/vsimem/vrtmisc_10.vrt", gdal.GA_Update)
+    if ds.GetMetadata() != { 'foo': 'bar' }:
+        gdaltest.post_reason('fail')
+        print(ds.GetMetadata())
+        return 'fail'
+    if ds.GetMetadata('some_domain') != { 'bar' : 'baz' }:
+        gdaltest.post_reason('fail')
+        print(ds.GetMetadata('some_domain'))
+        return 'fail'
+    if ds.GetMetadata_List('xml:a_xml_domain')[0] != '<some_xml />\n':
+        gdaltest.post_reason('fail')
+        print(ds.GetMetadata_List('xml:a_xml_domain'))
+        return 'fail'
+    # Empty default domain
+    ds.SetMetadata({})
+    ds = None
+
+    ds = gdal.Open("/vsimem/vrtmisc_10.vrt")
+    if ds.GetMetadata() != {}:
+        gdaltest.post_reason('fail')
+        print(ds.GetMetadata())
+        return 'fail'
+    if ds.GetMetadata('some_domain') != { 'bar' : 'baz' }:
+        gdaltest.post_reason('fail')
+        print(ds.GetMetadata('some_domain'))
+        return 'fail'
+    if ds.GetMetadata_List('xml:a_xml_domain')[0] != '<some_xml />\n':
+        gdaltest.post_reason('fail')
+        print(ds.GetMetadata_List('xml:a_xml_domain'))
+        return 'fail'
+    ds = None
+    
+    gdal.Unlink("/vsimem/vrtmisc_10.vrt")
+
+    return "success"
+
+###############################################################################
 # Cleanup.
 
 def vrtmisc_cleanup():
@@ -302,6 +371,7 @@ gdaltest_list = [
     vrtmisc_7,
     vrtmisc_8,
     vrtmisc_9,
+    vrtmisc_10,
     vrtmisc_cleanup ]
 
 if __name__ == '__main__':

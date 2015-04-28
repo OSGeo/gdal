@@ -220,10 +220,7 @@ CPLXMLNode *GDALPamRasterBand::SerializeToXML( CPL_UNUSED const char *pszUnused 
     psMD = oMDMD.Serialize();
     if( psMD != NULL )
     {
-        if( psMD->psChild == NULL )
-            CPLDestroyXMLNode( psMD );
-        else
-            CPLAddXMLChild( psTree, psMD );
+        CPLAddXMLChild( psTree, psMD );
     }
 
 /* -------------------------------------------------------------------- */

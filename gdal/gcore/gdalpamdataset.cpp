@@ -211,10 +211,7 @@ CPLXMLNode *GDALPamDataset::SerializeToXML( const char *pszUnused )
         psMD = oMDMD.Serialize();
         if( psMD != NULL )
         {
-            if( psMD->psChild == NULL && psMD->psNext == NULL )
-                CPLDestroyXMLNode( psMD );
-            else
-                CPLAddXMLChild( psDSTree, psMD );
+            CPLAddXMLChild( psDSTree, psMD );
         }
     }
 

@@ -1962,11 +1962,9 @@ char **GDALGeoPackageDataset::GetMetadata( const char *pszDomain )
 void GDALGeoPackageDataset::WriteMetadata(CPLXMLNode* psXMLNode, /* will be destroyed by the method /*/
                                           const char* pszTableName)
 {
-    int bIsEmpty = (psXMLNode->psChild == NULL);
+    int bIsEmpty = (psXMLNode == NULL);
     char *pszXML = NULL;
-    if( bIsEmpty )
-        CPLDestroyXMLNode(psXMLNode);
-    else
+    if( !bIsEmpty )
     {
         CPLXMLNode* psMasterXMLNode = CPLCreateXMLNode( NULL, CXT_Element,
                                                         "GDALMultiDomainMetadata" );
@@ -2305,7 +2303,9 @@ CPLErr GDALGeoPackageDataset::FlushMetadata()
         oLocalMDMD.SetMetadata(papszMDDup);
         while( papszIter && *papszIter )
         {
-            if( !EQUAL(*papszIter, "") &&  !EQUAL(*papszIter, "IMAGE_STRUCTURE") )
+            if( !EQUAL(*papszIter, "") && 
+                !EQUAL(*papszIter, "IMAGE_STRUCTURE") && 
+                !EQUAL(*papszIter, "GEOPACKAGE") )
                 oLocalMDMD.SetMetadata(oMDMD.GetMetadata(*papszIter), *papszIter);
             papszIter ++;
         }
@@ -2315,10 +2315,7 @@ CPLErr GDALGeoPackageDataset::FlushMetadata()
     CSLDestroy(papszMDDup);
     papszMDDup = NULL;
 
-    if( psXMLNode != NULL )
-    {
-        WriteMetadata(psXMLNode, m_osRasterTable.c_str() );
-    }
+    WriteMetadata(psXMLNode, m_osRasterTable.c_str() );
 
     if( m_osRasterTable.size() )
     {
@@ -2335,10 +2332,8 @@ CPLErr GDALGeoPackageDataset::FlushMetadata()
         CSLDestroy(papszMDDup);
         papszMDDup = NULL;
         psXMLNode = oLocalMDMD.Serialize();
-        if( psXMLNode != NULL )
-        {
-            WriteMetadata(psXMLNode, NULL);
-        }
+
+        WriteMetadata(psXMLNode, NULL);
     }
 
     for(int i=0;i<m_nLayers;i++)
@@ -2393,10 +2388,7 @@ CPLErr GDALGeoPackageDataset::FlushMetadata()
         CSLDestroy(papszMDDup);
         papszMDDup = NULL;
 
-        if( psXMLNode != NULL )
-        {
-            WriteMetadata(psXMLNode, m_papoLayers[i]->GetName() );
-        }
+        WriteMetadata(psXMLNode, m_papoLayers[i]->GetName() );
     }
 
     return CE_None;

@@ -540,10 +540,7 @@ CPLXMLNode *VRTRasterBand::SerializeToXML( const char *pszVRTPath )
     psMD = oMDMD.Serialize();
     if( psMD != NULL )
     {
-        if( psMD->psChild != NULL )
-            CPLAddXMLChild( psTree, psMD );
-        else
-            CPLDestroyXMLNode(psMD);
+        CPLAddXMLChild( psTree, psMD );
     }
 
     if( strlen(GetDescription()) > 0 )
