@@ -57,7 +57,7 @@ def dump_gmljp2(filename, out_gmljp2):
         f = open(out_gmljp2, 'wt')
         f.write(mdd[0])
         f.close()
-        print('INFO: %s written with content of GMLJP2 box' % filename)
+        print('INFO: %s written with content of GMLJP2 box' % out_gmljp2)
     return 0
 
 def dump_crsdictionary(filename, out_crsdictionary):
@@ -76,7 +76,7 @@ def dump_crsdictionary(filename, out_crsdictionary):
                     f = open(out_crsdictionary, 'wt')
                     f.write(mdd_item)
                     f.close()
-                    print('INFO: %s written with content of CRS dictionary box (%s)' % (filename, domain[4:]))
+                    print('INFO: %s written with content of CRS dictionary box (%s)' % (out_crsdictionary, domain[4:]))
                 return 0
 
     print('No CRS dictionary content found in %s' % filename)
