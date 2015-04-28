@@ -2390,6 +2390,15 @@ def jp2openjpeg_45():
         gdaltest.post_reason('fail')
         return 'fail'
 
+    # Non existing file
+    gdal.ErrorReset()
+    gdal.PushErrorHandler()
+    out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_45.jp2', src_ds, options = ['GMLJP2V2_DEF=/vsimem/i_do_not_exist'])
+    gdal.PopErrorHandler()
+    if out_ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
     # Test JSon conf file as a file
     gdal.FileFromMemBuffer("/vsimem/conf.json", '{ "root_instance": { "gml_id": "some_gml_id", "crs_url": false } }')
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_45.jp2', src_ds, options = ['GMLJP2V2_DEF=/vsimem/conf.json'])
@@ -2408,9 +2417,70 @@ def jp2openjpeg_45():
     ds = None
     gdal.Unlink('/vsimem/jp2openjpeg_45.jp2')
 
-    # Test most options
+    # Test most invalid cases
     import json
-    
+
+    conf = {
+    "root_instance": {
+        "grid_coverage_file": "/vsimem/i_dont_exist.xml",
+    }
+}
+
+    gdal.ErrorReset()
+    gdal.PushErrorHandler()
+    out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_45.jp2', src_ds, options = ['GMLJP2V2_DEF=' + json.dumps(conf)])
+    gdal.PopErrorHandler()
+    if out_ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+        
+
+    conf = {
+    "root_instance": {
+        "metadata": [
+                "<invalid_root/>",
+                "/vsimem/i_dont_exist.xml",
+                {
+                    "file": "/vsimem/third_metadata.xml",
+                    "parent_node": "CoverageCollection"
+                },
+                {
+                    "content": "<invalid_content",
+                    "parent_node": "invalid_value"
+                }
+            ],
+
+            "annotations": [
+                "/vsimem/i_dont_exist.shp",
+                "/vsimem/i_dont_exist.kml"
+            ],
+
+            "gml_filelist": [
+                "/vsimem/i_dont_exist.xml",
+                {
+                    "file": "/vsimem/i_dont_exist.shp",
+                    "parent_node": "invalid_value",
+                    "schema_location": "gmljp2://xml/schema_that_does_not_exist.xsd"
+                },
+            ],
+    },
+
+    "boxes" : [
+        "/vsimem/i_dont_exist.xsd",
+        {
+            "file": "/vsimem/i_dont_exist_too.xsd",
+            "label": "i_dont_exist.xsd"
+        }
+    ]
+}
+    gdal.PushErrorHandler()
+    out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_45.jp2', src_ds, options = ['GMLJP2V2_DEF=' + json.dumps(conf)])
+    gdal.PopErrorHandler()
+    del out_ds
+    gdal.Unlink('/vsimem/jp2openjpeg_45.jp2')
+
+
+    # Test most options: valid case
     gdal.FileFromMemBuffer("/vsimem/second_metadata.xml",
 """<gmljp2:dcMetadata xmlns:dc="http://purl.org/dc/elements/1.1/">
     <dc:title>Second metadata</dc:title>
