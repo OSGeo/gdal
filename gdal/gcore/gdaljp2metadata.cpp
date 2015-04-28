@@ -1509,6 +1509,33 @@ static CPLXMLNode* GetXMLRoot(CPLXMLNode* psNode)
     return NULL;
 }
 
+static void PatchFeatureCollectionSubstitutionGroup(CPLXMLNode* psRoot)
+{
+    /* GML 3.2 SF profile recommands the feature collection type to derive */
+    /* from gml:AbstractGML to prevent it to be included in another feature */
+    /* collection, but this is what we want to do. So patch that... */
+
+    /* <xs:element name="FeatureCollection" type="ogr:FeatureCollectionType" substitutionGroup="gml:AbstractGML"/> */
+    /* --> */
+    /* <xs:element name="FeatureCollection" type="ogr:FeatureCollectionType" substitutionGroup="gml:AbstractFeature"/> */
+    if( psRoot->eType == CXT_Element &&
+        (strcmp(psRoot->pszValue, "schema") == 0 || strcmp(psRoot->pszValue, "xs:schema") == 0) )
+    {
+        for(CPLXMLNode* psIter = psRoot->psChild; psIter != NULL; psIter = psIter->psNext)
+        {
+            if( psIter->eType == CXT_Element &&
+                (strcmp(psIter->pszValue, "element") == 0 || strcmp(psIter->pszValue, "xs:element") == 0) &&
+                strcmp(CPLGetXMLValue(psIter, "name", ""), "FeatureCollection") == 0 &&
+                strcmp(CPLGetXMLValue(psIter, "substitutionGroup", ""), "gml:AbstractGML") == 0 )
+            {
+                CPLDebug("GMLJP2", "Patching substitutionGroup=\"gml:AbstractGML\" to \"gml:AbstractFeature\"");
+                CPLSetXMLValue( psIter, "#substitutionGroup", "gml:AbstractFeature" );
+                break;
+            }
+        }
+    }
+}
+
 GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                                              const char* pszDefFilename )
 
@@ -2410,6 +2437,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                 CPLXMLNode* psRoot = GetXMLRoot(psNode);
                 if( psRoot ) 
                 {
+                    PatchFeatureCollectionSubstitutionGroup(psRoot);
                     pabyContent = (GByte*) CPLSerializeXMLTree(psRoot);
                     apoGMLBoxes.push_back(
                         GDALJP2Box::CreateLabelledXMLAssoc( aoBoxes[i].osLabel,

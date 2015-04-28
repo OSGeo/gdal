@@ -2452,11 +2452,13 @@ def jp2openjpeg_45():
 
             "annotations": [
                 "/vsimem/i_dont_exist.shp",
-                "/vsimem/i_dont_exist.kml"
+                "/vsimem/i_dont_exist.kml",
+                "../gcore/data/byte.tif"
             ],
 
             "gml_filelist": [
                 "/vsimem/i_dont_exist.xml",
+                "../gcore/data/byte.tif",
                 {
                     "file": "/vsimem/i_dont_exist.shp",
                     "parent_node": "invalid_value",
