@@ -225,10 +225,7 @@ CPLXMLNode *VRTDataset::SerializeToXML( const char *pszVRTPath )
     psMD = oMDMD.Serialize();
     if( psMD != NULL )
     {
-        if( psMD->psChild != NULL )
-            CPLAddXMLChild( psDSTree, psMD );
-        else
-            CPLDestroyXMLNode(psMD);
+        CPLAddXMLChild( psDSTree, psMD );
     }
 
  /* -------------------------------------------------------------------- */
