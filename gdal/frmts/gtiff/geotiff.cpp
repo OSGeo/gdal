@@ -12674,10 +12674,12 @@ CPLErr GTiffDataset::SetProjection( const char * pszNewProjection )
         return CE_Failure;
     }
 
-    bForceUnsetProjection = (
-         EQUAL(pszNewProjection, "") &&
+    if ( EQUAL(pszNewProjection, "") &&
          pszProjection != NULL &&
-         !EQUAL(pszProjection, "") );
+         !EQUAL(pszProjection, "") )
+    {
+        bForceUnsetProjection = TRUE;
+    }
 
     CPLFree( pszProjection );
     pszProjection = CPLStrdup( pszNewProjection );
@@ -12718,7 +12720,7 @@ CPLErr GTiffDataset::SetGeoTransform( double * padfTransform )
 
     if( GetAccess() == GA_Update )
     {
-        bForceUnsetGTOrGCPs = (
+        if (
             padfTransform[0] == 0.0 &&
             padfTransform[1] == 1.0 &&
             padfTransform[2] == 0.0 &&
@@ -12730,7 +12732,10 @@ CPLErr GTiffDataset::SetGeoTransform( double * padfTransform )
             adfGeoTransform[2] == 0.0 &&
             adfGeoTransform[3] == 0.0 &&
             adfGeoTransform[4] == 0.0 &&
-            adfGeoTransform[5] == 1.0) );
+            adfGeoTransform[5] == 1.0) )
+        {
+            bForceUnsetGTOrGCPs = TRUE;
+        }
 
         memcpy( adfGeoTransform, padfTransform, sizeof(double)*6 );
         bGeoTransformValid = TRUE;
@@ -12794,10 +12799,12 @@ CPLErr GTiffDataset::SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
     {
         LookForProjection();
 
-        bForceUnsetGTOrGCPs = (this->nGCPCount > 0 && nGCPCount == 0);
-        bForceUnsetProjection = ( !EQUAL(this->pszProjection, "") &&
-                                  (pszGCPProjection == NULL ||
-                                   pszGCPProjection[0] == '\0') );
+        if (this->nGCPCount > 0 && nGCPCount == 0)
+            bForceUnsetGTOrGCPs = TRUE;
+        if( !EQUAL(this->pszProjection, "") &&
+                   (pszGCPProjection == NULL ||
+                   pszGCPProjection[0] == '\0') )
+            bForceUnsetProjection = TRUE;
 
         if( this->nGCPCount > 0 )
         {

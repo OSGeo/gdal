@@ -5782,6 +5782,25 @@ def tiff_write_135():
         return 'fail'
     ds = None
 
+    # Double clear
+    src_ds = gdal.Open( 'data/gcps.vrt' )
+    ds = gdaltest.tiff_drv.CreateCopy( '/vsimem/tiff_write_135.tif', src_ds )
+    ds = None
+
+    ds = gdal.Open( '/vsimem/tiff_write_135.tif', gdal.GA_Update )
+    ds.SetGCPs([], '')
+    ds.SetGCPs([], '')
+    ds = None
+
+    ds = gdal.Open('/vsimem/tiff_write_135.tif')
+    if len(ds.GetGCPs()) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetGCPProjection() != '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
 
     # Clear + set geotransform and new projection
     src_ds = gdal.Open( 'data/gcps.vrt' )
