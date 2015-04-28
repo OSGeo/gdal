@@ -258,7 +258,7 @@ class GTiffDataset : public GDALPamDataset
     int         IsBlockAvailable( int nBlockId );
 
     int         bGeoTIFFInfoChanged;
-    int         bForceUnsetGT;
+    int         bForceUnsetGTOrGCPs;
     int         bForceUnsetProjection;
 
     int         bNoDataChanged;
@@ -4895,7 +4895,7 @@ GTiffDataset::GTiffDataset()
     bMetadataChanged = FALSE;
     bColorProfileMetadataChanged = FALSE;
     bGeoTIFFInfoChanged = FALSE;
-    bForceUnsetGT = FALSE;
+    bForceUnsetGTOrGCPs = FALSE;
     bForceUnsetProjection = FALSE;
     bCrystalized = TRUE;
     poColorTable = NULL;
@@ -7079,10 +7079,10 @@ void GTiffDataset::WriteGeoTIFFInfo()
                                                "FALSE") );
     }
 
-    if( bForceUnsetGT )
+    if( bForceUnsetGTOrGCPs )
     {
         bNeedsRewrite = TRUE;
-        bForceUnsetGT = FALSE;
+        bForceUnsetGTOrGCPs = FALSE;
 
 #ifdef HAVE_UNSETFIELD
         TIFFUnsetField( hTIFF, TIFFTAG_GEOPIXELSCALE );
@@ -8562,7 +8562,7 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->bMetadataChanged = FALSE;
     poDS->bGeoTIFFInfoChanged = FALSE;
     poDS->bNoDataChanged = FALSE;
-    poDS->bForceUnsetGT = FALSE;
+    poDS->bForceUnsetGTOrGCPs = FALSE;
     poDS->bForceUnsetProjection = FALSE;
 
 /* -------------------------------------------------------------------- */
@@ -8709,7 +8709,7 @@ void GTiffDataset::LookForProjection()
     }
 
     bGeoTIFFInfoChanged = FALSE;
-    bForceUnsetGT = FALSE;
+    bForceUnsetGTOrGCPs = FALSE;
     bForceUnsetProjection = FALSE;
 }
 
@@ -9850,7 +9850,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
         
         CPLFree( pszTabWKT );
         bGeoTIFFInfoChanged = FALSE;
-        bForceUnsetGT = FALSE;
+        bForceUnsetGTOrGCPs = FALSE;
         bForceUnsetProjection = FALSE;
     }
 
@@ -12327,7 +12327,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     poDS->bMetadataChanged = FALSE;
     poDS->bGeoTIFFInfoChanged = FALSE;
     poDS->bNoDataChanged = FALSE;
-    poDS->bForceUnsetGT = FALSE;
+    poDS->bForceUnsetGTOrGCPs = FALSE;
     poDS->bForceUnsetProjection = FALSE;
     poDS->bStreamingOut = bStreaming;
 
@@ -12718,7 +12718,7 @@ CPLErr GTiffDataset::SetGeoTransform( double * padfTransform )
 
     if( GetAccess() == GA_Update )
     {
-        bForceUnsetGT = (
+        bForceUnsetGTOrGCPs = (
             padfTransform[0] == 0.0 &&
             padfTransform[1] == 1.0 &&
             padfTransform[2] == 0.0 &&
@@ -12792,8 +12792,12 @@ CPLErr GTiffDataset::SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
 {
     if( GetAccess() == GA_Update )
     {
-        LoadMDAreaOrPoint();
-        bLookedForProjection = TRUE;
+        LookForProjection();
+
+        bForceUnsetGTOrGCPs = (this->nGCPCount > 0 && nGCPCount == 0);
+        bForceUnsetProjection = ( !EQUAL(this->pszProjection, "") &&
+                                  (pszGCPProjection == NULL ||
+                                   pszGCPProjection[0] == '\0') );
 
         if( this->nGCPCount > 0 )
         {
