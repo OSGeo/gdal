@@ -33,6 +33,7 @@ import os
 import sys
 import shutil
 from osgeo import gdal
+from osgeo import ogr
 from osgeo import osr
 
 sys.path.append( '../pymod' )
@@ -1032,7 +1033,7 @@ def jp2openjpeg_25():
     return 'success'
 
 ###############################################################################
-def validate(filename, expected_gmljp2 = True, return_error_count = False, oidoc = None):
+def validate(filename, expected_gmljp2 = True, return_error_count = False, oidoc = None, inspire_tg = True):
 
     try:
         import validate_jp2
@@ -1040,7 +1041,6 @@ def validate(filename, expected_gmljp2 = True, return_error_count = False, oidoc
         print('Cannot run validate_jp2')
         return 'skip'
 
-    inspire_tg = True
     try:
         os.stat('tmp/cache/SCHEMAS_OPENGIS_NET')
         os.stat('tmp/cache/SCHEMAS_OPENGIS_NET/xlink.xsd')
@@ -2294,6 +2294,458 @@ def jp2openjpeg_44():
     return ret
 
 ###############################################################################
+# Test GMLJP2v2
+
+def jp2openjpeg_45():
+
+    if gdaltest.jp2openjpeg_drv is None:
+        return 'skip'
+
+    # Test GMLJP2V2_DEF=YES
+    src_ds = gdal.Open('data/byte.tif')
+    out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_45.jp2', src_ds, options = ['GMLJP2V2_DEF=YES'])
+    del out_ds
+
+    ds = gdal.Open('/vsimem/jp2openjpeg_45.jp2')
+    gmljp2 = ds.GetMetadata_List("xml:gml.root-instance")[0]
+    minimal_instance = """<gmljp2:GMLJP2CoverageCollection gml:id="ID_GMLJP2_0"
+     xmlns:gml="http://www.opengis.net/gml/3.2"
+     xmlns:gmlcov="http://www.opengis.net/gmlcov/1.0"
+     xmlns:gmljp2="http://www.opengis.net/gmljp2/2.0"
+     xmlns:swe="http://www.opengis.net/swe/2.0"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://www.opengis.net/gmljp2/2.0 http://schemas.opengis.net/gmljp2/2.0/gmljp2.xsd">
+  <gml:gridDomain/>
+  <gml:rangeSet>
+   <gml:File>
+     <gml:rangeParameters/>
+     <gml:fileName>gmljp2://codestream</gml:fileName>
+     <gml:fileStructure>inapplicable</gml:fileStructure>
+   </gml:File>
+  </gml:rangeSet>
+  <gmlcov:rangeType/>
+  <gmljp2:featureMember>
+   <gmljp2:GMLJP2RectifiedGridCoverage gml:id="RGC_1_ID_GMLJP2_0">
+     <gml:domainSet>
+      <gml:RectifiedGrid gml:id="RGC_1_GRID_ID_GMLJP2_0" dimension="2" srsName="http://www.opengis.net/def/crs/EPSG/0/26711">
+       <gml:limits>
+         <gml:GridEnvelope>
+           <gml:low>0 0</gml:low>
+           <gml:high>19 19</gml:high>
+         </gml:GridEnvelope>
+       </gml:limits>
+       <gml:axisName>x</gml:axisName>
+       <gml:axisName>y</gml:axisName>
+       <gml:origin>
+         <gml:Point gml:id="P0001" srsName="http://www.opengis.net/def/crs/EPSG/0/26711">
+           <gml:pos>440750 3751290</gml:pos>
+         </gml:Point>
+       </gml:origin>
+       <gml:offsetVector srsName="http://www.opengis.net/def/crs/EPSG/0/26711">60 0</gml:offsetVector>
+       <gml:offsetVector srsName="http://www.opengis.net/def/crs/EPSG/0/26711">0 -60</gml:offsetVector>
+      </gml:RectifiedGrid>
+     </gml:domainSet>
+     <gml:rangeSet>
+      <gml:File>
+        <gml:rangeParameters/>
+        <gml:fileName>gmljp2://codestream/0</gml:fileName>
+        <gml:fileStructure>inapplicable</gml:fileStructure>
+      </gml:File>
+     </gml:rangeSet>
+     <gmlcov:rangeType/>
+   </gmljp2:GMLJP2RectifiedGridCoverage>
+  </gmljp2:featureMember>
+</gmljp2:GMLJP2CoverageCollection>
+"""
+    if gmljp2 != minimal_instance:
+        gdaltest.post_reason('fail')
+        print(gmljp2)
+        return 'fail'
+    
+    ret = validate('/vsimem/jp2openjpeg_45.jp2', inspire_tg = False)
+    if ret == 'fail':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.Unlink('/vsimem/jp2openjpeg_45.jp2')
+
+    # GMLJP2V2_DEF={} (inline JSon)
+    out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_45.jp2', src_ds, options = ['GMLJP2V2_DEF={}'])
+    del out_ds
+    ds = gdal.Open('/vsimem/jp2openjpeg_45.jp2')
+    gmljp2 = ds.GetMetadata_List("xml:gml.root-instance")[0]
+    if gmljp2 != minimal_instance:
+        gdaltest.post_reason('fail')
+        print(gmljp2)
+        return 'fail'
+    ds = None
+    gdal.Unlink('/vsimem/jp2openjpeg_45.jp2')
+
+    # Invalid JSon
+    gdal.ErrorReset()
+    gdal.PushErrorHandler()
+    out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_45.jp2', src_ds, options = ['GMLJP2V2_DEF={'])
+    gdal.PopErrorHandler()
+    if out_ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Test JSon conf file as a file
+    gdal.FileFromMemBuffer("/vsimem/conf.json", '{ "root_instance": { "gml_id": "some_gml_id", "crs_url": false } }')
+    out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_45.jp2', src_ds, options = ['GMLJP2V2_DEF=/vsimem/conf.json'])
+    gdal.Unlink('/vsimem/conf.json')
+    del out_ds
+    ds = gdal.Open('/vsimem/jp2openjpeg_45.jp2')
+    gmljp2 = ds.GetMetadata_List("xml:gml.root-instance")[0]
+    if gmljp2.find('some_gml_id') < 0:
+        gdaltest.post_reason('fail')
+        print(gmljp2)
+        return 'fail'
+    if gmljp2.find('urn:ogc:def:crs:EPSG::26711') < 0:
+        gdaltest.post_reason('fail')
+        print(gmljp2)
+        return 'fail'
+    ds = None
+    gdal.Unlink('/vsimem/jp2openjpeg_45.jp2')
+
+    # Test most options
+    import json
+    
+    gdal.FileFromMemBuffer("/vsimem/second_metadata.xml",
+"""<gmljp2:dcMetadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <dc:title>Second metadata</dc:title>
+</gmljp2:dcMetadata>""")
+    
+    gdal.FileFromMemBuffer("/vsimem/third_metadata.xml",
+"""<gmljp2:dcMetadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <dc:title>Third metadata</dc:title>
+</gmljp2:dcMetadata>""")
+
+    gdal.FileFromMemBuffer("/vsimem/feature.xml",
+"""<FeatureCollection gml:id="myFC1">
+    <featureMember>
+        <Observation gml:id="myFC1_Observation">
+            <validTime/>
+            <resultOf/>
+        </Observation>
+    </featureMember>
+</FeatureCollection>""")
+
+    gdal.FileFromMemBuffer("/vsimem/a_schema.xsd",
+"""<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:ogr="http://ogr.maptools.org/" targetNamespace="http://ogr.maptools.org/" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:gmlsf="http://www.opengis.net/gmlsf/2.0" elementFormDefault="qualified" version="1.0">
+  <xs:annotation>
+    <xs:appinfo source="http://schemas.opengis.net/gmlsfProfile/2.0/gmlsfLevels.xsd">
+      <gmlsf:ComplianceLevel>0</gmlsf:ComplianceLevel>
+    </xs:appinfo>
+  </xs:annotation>
+  <xs:import namespace="http://www.opengis.net/gml/3.2" schemaLocation="http://schemas.opengis.net/gml/3.2.1/gml.xsd" />
+  <xs:import namespace="http://www.opengis.net/gmlsf/2.0" schemaLocation="http://schemas.opengis.net/gmlsfProfile/2.0/gmlsfLevels.xsd" />
+  <xs:element name="FeatureCollection" type="ogr:FeatureCollectionType" substitutionGroup="gml:AbstractGML" />
+  <xs:complexType name="FeatureCollectionType">
+    <xs:complexContent>
+      <xs:extension base="gml:AbstractFeatureType">
+        <xs:sequence minOccurs="0" maxOccurs="unbounded">
+          <xs:element name="featureMember">
+            <xs:complexType>
+              <xs:complexContent>
+                <xs:extension base="gml:AbstractFeatureMemberType">
+                  <xs:sequence>
+                    <xs:element ref="gml:AbstractFeature" />
+                  </xs:sequence>
+                </xs:extension>
+              </xs:complexContent>
+            </xs:complexType>
+          </xs:element>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:element name="myshape" type="ogr:myshape_Type" substitutionGroup="gml:AbstractFeature" />
+  <xs:complexType name="myshape_Type">
+    <xs:complexContent>
+      <xs:extension base="gml:AbstractFeatureType">
+        <xs:sequence>
+          <xs:element name="geometryProperty" type="gml:PointPropertyType" nillable="true" minOccurs="0" maxOccurs="1" />
+          <xs:element name="foo" nillable="true" minOccurs="0" maxOccurs="1">
+            <xs:simpleType>
+              <xs:restriction base="xs:string">
+                <xs:maxLength value="80" />
+              </xs:restriction>
+            </xs:simpleType>
+          </xs:element>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+</xs:schema>""")
+
+    for name in [ 'myshape', 'myshape2' ]:
+        ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/' + name + '.shp')
+        srs = osr.SpatialReference()
+        srs.ImportFromEPSG(4326)
+        lyr = ds.CreateLayer(name, srs = srs)
+        lyr.CreateField(ogr.FieldDefn('foo', ogr.OFTString))
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetField('foo', 'bar')
+        f.SetGeometry(ogr.CreateGeometryFromWkt('POINT(2 49)'))
+        lyr.CreateFeature(f)
+        ds = None
+
+    gdal.FileFromMemBuffer("/vsimem/feature2.gml",
+"""<FeatureCollection xmlns:ogr="http://ogr.maptools.org/" xmlns:gml="http://www.opengis.net/gml/3.2" xsi:schemaLocation="http://ogr.maptools.org/ http://dummy" gml:id="myFC3">
+    <featureMember>
+        <Observation gml:id="myFC3_Observation">
+            <validTime/>
+            <resultOf/>
+        </Observation>
+    </featureMember>
+</FeatureCollection>""")
+
+    gdal.FileFromMemBuffer("/vsimem/feature3.gml",
+"""<FeatureCollection xmlns:ogr="http://ogr.maptools.org/" xmlns:gml="http://www.opengis.net/gml/3.2" xsi:schemaLocation="http://www.opengis.net/gml/3.2 http://schemas.opengis.net/gml/3.2.1/gml.xsd http://ogr.maptools.org/ http://dummy" gml:id="myFC4">
+    <featureMember>
+        <Observation gml:id="myFC4_Observation">
+            <validTime/>
+            <resultOf/>
+        </Observation>
+    </featureMember>
+</FeatureCollection>""")
+
+    gdal.FileFromMemBuffer("/vsimem/empty.kml",
+"""<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xsi:schemaLocation="http://www.opengis.net/kml/2.2 http://schemas.opengis.net/kml/2.2.0/ogckml22.xsd">
+    <Document id="empty_doc"/>
+</kml>
+""")
+    # So that the Python text is real JSon
+    #true = True
+    false = False
+
+    conf = {
+    "root_instance": {
+        "grid_coverage_file": "/vsimem/grid_coverage_file.xml",
+        "metadata": [
+                "<gmljp2:metadata>First metadata</gmljp2:metadata>",
+                "/vsimem/second_metadata.xml",
+                {
+                    "file": "/vsimem/third_metadata.xml",
+                    "parent_node": "CoverageCollection"
+                },
+                {
+                    "content":
+"""<?xml version="1.0" encoding="UTF-8"?>
+<!-- some comments -->
+<gmljp2:eopMetadata>
+        <eop:EarthObservation xmlns:eop="http://www.opengis.net/eop/2.0" xmlns:om="http://www.opengis.net/om/2.0" gml:id="EOP1">
+                <om:phenomenonTime></om:phenomenonTime>
+                <om:resultTime></om:resultTime>
+                <om:procedure></om:procedure>
+                <om:observedProperty></om:observedProperty>
+                <om:featureOfInterest></om:featureOfInterest>
+                <om:result></om:result>
+                <eop:metaDataProperty>
+                        <eop:EarthObservationMetaData>
+                                <eop:identifier>Fourth metadata</eop:identifier>
+                                <eop:acquisitionType>NOMINAL</eop:acquisitionType>
+                                <eop:status>ACQUIRED</eop:status>
+                        </eop:EarthObservationMetaData>
+                </eop:metaDataProperty>
+        </eop:EarthObservation>
+</gmljp2:eopMetadata>""",
+                    "parent_node": "GridCoverage"
+                }
+            ],
+
+            "annotations": [
+                "/vsimem/myshape.shp",
+                "/vsimem/empty.kml"
+            ],
+
+            "gml_filelist": [
+                "/vsimem/feature.xml",
+                {
+                    "file": "/vsimem/myshape.shp",
+                    "inline": false,
+                    "parent_node": "CoverageCollection"
+                },
+                {
+                    "file": "/vsimem/myshape2.shp",
+                    "namespace": "http://ogr.maptools.org/",
+                    "inline": false,
+                    "schema_location": "gmljp2://xml/a_schema.xsd",
+                    "parent_node": "GridCoverage"
+                },
+                {
+                    "file": "/vsimem/feature2.gml",
+                    "inline": false,
+                    "schema_location": "gmljp2://xml/a_schema.xsd"
+                },
+                {
+                    "file": "/vsimem/feature3.gml",
+                    "inline": false,
+                    "namespace": "http://ogr.maptools.org/",
+                    "schema_location": "gmljp2://xml/a_schema.xsd"
+                }
+            ],
+    },
+
+    "boxes" : [
+        "/vsimem/a_schema.xsd",
+        {
+            "file": "/vsimem/a_schema.xsd",
+            "label": "duplicated.xsd"
+        }
+    ]
+}
+    gdal.FileFromMemBuffer("/vsimem/grid_coverage_file.xml",
+"""
+    <gmljp2:GMLJP2RectifiedGridCoverage gml:id="my_GMLJP2RectifiedGridCoverage">
+     <gml:domainSet>
+      <gml:RectifiedGrid gml:id="RGC_1_GRID_ID_GMLJP2_0" dimension="2" srsName="http://www.opengis.net/def/crs/EPSG/0/26711">
+       <gml:limits>
+         <gml:GridEnvelope>
+           <gml:low>0 0</gml:low>
+           <gml:high>19 19</gml:high>
+         </gml:GridEnvelope>
+       </gml:limits>
+       <gml:axisName>x</gml:axisName>
+       <gml:axisName>y</gml:axisName>
+       <gml:origin>
+         <gml:Point gml:id="P0001" srsName="http://www.opengis.net/def/crs/EPSG/0/26711">
+           <gml:pos>440750 3751290</gml:pos>
+         </gml:Point>
+       </gml:origin>
+       <gml:offsetVector srsName="http://www.opengis.net/def/crs/EPSG/0/26711">60 0</gml:offsetVector>
+       <gml:offsetVector srsName="http://www.opengis.net/def/crs/EPSG/0/26711">0 -60</gml:offsetVector>
+      </gml:RectifiedGrid>
+     </gml:domainSet>
+     <gml:rangeSet>
+      <gml:File>
+        <gml:rangeParameters/>
+        <gml:fileName>gmljp2://codestream/0</gml:fileName>
+        <gml:fileStructure>inapplicable</gml:fileStructure>
+      </gml:File>
+     </gml:rangeSet>
+     <gmlcov:rangeType/>
+   </gmljp2:GMLJP2RectifiedGridCoverage>
+""")
+    out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_45.jp2', src_ds, options = ['GMLJP2V2_DEF=' + json.dumps(conf)])
+    gdal.Unlink("/vsimem/grid_coverage_file.xml")
+    gdal.Unlink("/vsimem/second_metadata.xml")
+    gdal.Unlink("/vsimem/third_metadata.xml")
+    gdal.Unlink("/vsimem/feature.xml")
+    for name in [ 'myshape', 'myshape2' ]:
+        gdal.Unlink("/vsimem/" + name + ".shp")
+        gdal.Unlink("/vsimem/" + name + ".shx")
+        gdal.Unlink("/vsimem/" + name + ".dbf")
+        gdal.Unlink("/vsimem/" + name + ".prj")
+    gdal.Unlink("/vsimem/feature2.gml")
+    gdal.Unlink("/vsimem/feature3.gml")
+    gdal.Unlink("/vsimem/empty.kml")
+    del out_ds
+
+    # Now do the checks
+    dircontent = gdal.ReadDir('/vsimem/gmljp2')
+    if dircontent is not None:
+        gdaltest.post_reason('fail')
+        print(dircontent)
+        return 'fail'
+
+    ds = gdal.Open('/vsimem/jp2openjpeg_45.jp2')
+    gmljp2 = ds.GetMetadata_List("xml:gml.root-instance")[0]
+    if gmljp2.find('my_GMLJP2RectifiedGridCoverage') < 0:
+        gdaltest.post_reason('fail')
+        print(gmljp2)
+        return 'fail'
+    first_metadata_pos = gmljp2.find("First metadata")
+    second_metadata_pos = gmljp2.find("Second metadata")
+    third_metadata_pos = gmljp2.find("Third metadata")
+    GMLJP2RectifiedGridCoverage_pos = gmljp2.find('GMLJP2RectifiedGridCoverage')
+    fourth_metadata_pos = gmljp2.find("Fourth metadata")
+    feature_pos = gmljp2.find("""<FeatureCollection gml:id="ID_GMLJP2_0_0_myFC1" """)
+    myshape_gml_pos = gmljp2.find("""<gmljp2:feature xlink:href="gmljp2://xml/myshape.gml" """)
+    myshape2_gml_pos = gmljp2.find("""<gmljp2:feature xlink:href="gmljp2://xml/myshape2.gml" """)
+    feature2_pos = gmljp2.find("""<gmljp2:feature xlink:href="gmljp2://xml/feature2.gml" """)
+    feature3_pos = gmljp2.find("""<gmljp2:feature xlink:href="gmljp2://xml/feature3.gml" """)
+    myshape_kml_pos = gmljp2.find("""<Document id="root_doc">""")
+    empty_kml_pos = gmljp2.find("""<Document id="empty_doc" />""")
+
+    if first_metadata_pos < 0 or second_metadata_pos < 0 or third_metadata_pos < 0 or \
+       GMLJP2RectifiedGridCoverage_pos < 0 or fourth_metadata_pos < 0 or \
+       feature_pos < 0 or myshape_gml_pos < 0 or myshape2_gml_pos < 0 or \
+       feature2_pos < 0 or myshape_kml_pos < 0 or empty_kml_pos < 0 or \
+       not( first_metadata_pos < second_metadata_pos and \
+            second_metadata_pos < third_metadata_pos and \
+            third_metadata_pos < GMLJP2RectifiedGridCoverage_pos and \
+            GMLJP2RectifiedGridCoverage_pos < fourth_metadata_pos and \
+            fourth_metadata_pos < feature_pos and \
+            fourth_metadata_pos < feature_pos  and \
+            myshape2_gml_pos < myshape_kml_pos and \
+            myshape_kml_pos < empty_kml_pos and \
+            empty_kml_pos < feature_pos and \
+            feature_pos < myshape_gml_pos and \
+            myshape_gml_pos < feature2_pos and \
+            feature2_pos < feature3_pos ):
+        gdaltest.post_reason('fail')
+        print(gmljp2)
+        return 'fail'
+    #print(gmljp2)
+
+    myshape_gml = ds.GetMetadata_List("xml:myshape.gml")[0]
+    if myshape_gml.find("""<ogr:FeatureCollection gml:id="ID_GMLJP2_0_1_aFeatureCollection" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://ogr.maptools.org/ gmljp2://xml/myshape.xsd" xmlns:ogr="http://ogr.maptools.org/" xmlns:gml="http://www.opengis.net/gml/3.2">""") < 0:
+        gdaltest.post_reason('fail')
+        print(myshape_gml)
+        return 'fail'
+
+    myshape_xsd = ds.GetMetadata_List("xml:myshape.xsd")[0]
+    if myshape_xsd.find("""<xs:schema targetNamespace="http://ogr.maptools.org/" xmlns:ogr="http://ogr.maptools.org/" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:gmlsf="http://www.opengis.net/gmlsf/2.0" elementFormDefault="qualified" version="1.0">""") < 0:
+        gdaltest.post_reason('fail')
+        print(myshape_xsd)
+        return 'fail'
+
+    myshape2_gml = ds.GetMetadata_List("xml:myshape2.gml")[0]
+    if myshape2_gml.find("""<ogr:FeatureCollection gml:id="ID_GMLJP2_0_2_aFeatureCollection" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://ogr.maptools.org/ gmljp2://xml/a_schema.xsd" xmlns:ogr="http://ogr.maptools.org/" xmlns:gml="http://www.opengis.net/gml/3.2">""") < 0:
+        gdaltest.post_reason('fail')
+        print(myshape2_gml)
+        return 'fail'
+
+    feature2_gml = ds.GetMetadata_List("xml:feature2.gml")[0]
+    if feature2_gml.find("""<FeatureCollection xmlns:ogr="http://ogr.maptools.org/" xmlns:gml="http://www.opengis.net/gml/3.2" xsi:schemaLocation="http://ogr.maptools.org/ gmljp2://xml/a_schema.xsd" gml:id="ID_GMLJP2_0_3_myFC3">""") < 0:
+        gdaltest.post_reason('fail')
+        print(feature2_gml)
+        return 'fail'
+
+    feature3_gml = ds.GetMetadata_List("xml:feature3.gml")[0]
+    if feature3_gml.find("""<FeatureCollection xmlns:ogr="http://ogr.maptools.org/" xmlns:gml="http://www.opengis.net/gml/3.2" xsi:schemaLocation="http://www.opengis.net/gml/3.2 http://schemas.opengis.net/gml/3.2.1/gml.xsd http://ogr.maptools.org/ gmljp2://xml/a_schema.xsd" gml:id="ID_GMLJP2_0_4_myFC4">""") < 0:
+        gdaltest.post_reason('fail')
+        print(feature3_gml)
+        return 'fail'
+
+    myshape2_xsd = ds.GetMetadata_List("xml:a_schema.xsd")[0]
+    if myshape2_xsd.find("""<xs:schema xmlns:ogr="http://ogr.maptools.org/" """) < 0:
+        gdaltest.post_reason('fail')
+        print(myshape2_xsd)
+        return 'fail'
+
+    duplicated_xsd = ds.GetMetadata_List("xml:duplicated.xsd")[0]
+    if duplicated_xsd.find("""<xs:schema xmlns:ogr="http://ogr.maptools.org/" """) < 0:
+        gdaltest.post_reason('fail')
+        print(myshape2_xsd)
+        return 'fail'
+
+    ds = None
+
+    ret = validate('/vsimem/jp2openjpeg_45.jp2', inspire_tg = False)
+    if ret == 'fail':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.Unlink('/vsimem/jp2openjpeg_45.jp2')
+
+    return 'success'
+
+###############################################################################
 def jp2openjpeg_online_1():
 
     if gdaltest.jp2openjpeg_drv is None:
@@ -2509,6 +2961,7 @@ gdaltest_list = [
     jp2openjpeg_42,
     jp2openjpeg_43,
     jp2openjpeg_44,
+    jp2openjpeg_45,
     jp2openjpeg_online_1,
     jp2openjpeg_online_2,
     jp2openjpeg_online_3,
@@ -2519,7 +2972,8 @@ gdaltest_list = [
 
 disabled_gdaltest_list = [
     jp2openjpeg_1,
-    jp2openjpeg_29 ]
+    jp2openjpeg_45,
+    jp2openjpeg_cleanup ]
 
 if __name__ == '__main__':
 

@@ -410,6 +410,8 @@ def validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location,
         gmljp2_found = gmljp2 is not None
         if expected_gmljp2 and not gmljp2_found:
             error_report.EmitError('GMLJP2', 'No GMLJP2 box found whereas it was expected')
+        if gmljp2_found and inspire_tg and gmljp2.find('gmljp2:GMLJP2CoverageCollection') >= 0:
+            error_report.EmitError('INSPIRE_TG', 'GMLJP2 v2 box found, but Inspire TG require GMLJP2 v1', conformance_class = 'A.8.6')
         if gmljp2_found and ogc_schemas_location != 'disabled':
             if ogc_schemas_location is not None:
                 import os
