@@ -5758,7 +5758,60 @@ def tiff_write_134():
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_134.tif')
 
     return 'success'
+
+###############################################################################
+# Test clearing GCPs (#5945)
+
+def tiff_write_135():
+
+    # Simple clear
+    src_ds = gdal.Open( 'data/gcps.vrt' )
+    ds = gdaltest.tiff_drv.CreateCopy( '/vsimem/tiff_write_135.tif', src_ds )
+    ds = None
+
+    ds = gdal.Open( '/vsimem/tiff_write_135.tif', gdal.GA_Update )
+    ds.SetGCPs([], '')
+    ds = None
+
+    ds = gdal.Open('/vsimem/tiff_write_135.tif')
+    if len(ds.GetGCPs()) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetGCPProjection() != '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+
+    # Clear + set geotransform and new projection
+    src_ds = gdal.Open( 'data/gcps.vrt' )
+    ds = gdaltest.tiff_drv.CreateCopy( '/vsimem/tiff_write_135.tif', src_ds )
+    ds = None
+
+    ds = gdal.Open( '/vsimem/tiff_write_135.tif', gdal.GA_Update )
+    ds.SetGCPs([], '')
+    ds.SetGeoTransform([1,2,3,4,5,-6])
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput('EPSG:32601')
+    ds.SetProjection(srs.ExportToWkt())
+    ds = None
+
+    ds = gdal.Open('/vsimem/tiff_write_135.tif')
+    if len(ds.GetGCPs()) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetGeoTransform() != (1,2,3,4,5,-6):
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetProjectionRef().find('32601') < 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
     
+    gdal.Unlink('/vsimem/tiff_write_135.tif')
+
+    return 'success'
+
 ###############################################################################
 # Ask to run again tests with GDAL_API_PROXY=YES
 
@@ -5926,6 +5979,7 @@ gdaltest_list = [
     tiff_write_132,
     tiff_write_133,
     tiff_write_134,
+    tiff_write_135,
     #tiff_write_api_proxy,
     tiff_write_cleanup ]
 
