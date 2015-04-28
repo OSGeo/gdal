@@ -1085,7 +1085,8 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     {
 #ifdef HAVE_JASPER_UUID
         double  adfGeoTransform[6];
-        if( ((poSrcDS->GetGeoTransform(adfGeoTransform) == CE_None
+        if( CSLFetchBoolean( papszOptions, "GeoJP2", TRUE ) &&
+            ((poSrcDS->GetGeoTransform(adfGeoTransform) == CE_None
                  && (adfGeoTransform[0] != 0.0 
                      || adfGeoTransform[1] != 1.0 
                      || adfGeoTransform[2] != 0.0 
@@ -1179,6 +1180,89 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     }
 
 /* -------------------------------------------------------------------- */
+/*      Add GMLJP2 box at end of file.                                  */
+/* -------------------------------------------------------------------- */
+    if ( EQUALN( pszFormatName, "jp2", 3 ) )
+    {
+        double  adfGeoTransform[6];
+        if( CSLFetchBoolean( papszOptions, "GMLJP2", TRUE ) &&
+            poSrcDS->GetGeoTransform(adfGeoTransform) == CE_None &&
+            poSrcDS->GetProjectionRef() != NULL &&
+            poSrcDS->GetProjectionRef()[0] != '\0' )
+        {
+            VSILFILE* fp = VSIFOpenL(pszFilename, "rb+");
+            if( fp )
+            {
+                // Look for jp2c box and patch its LBox to be the real box size
+                // instead of zero
+                int bOK = FALSE;
+                GUInt32   nLBox;
+                GUInt32   nTBox;
+
+                while(TRUE)
+                {
+                    if( VSIFReadL(&nLBox, 4, 1, fp) != 1 ||
+                        VSIFReadL(&nTBox, 4, 1, fp) != 1 )
+                        break;
+                    nLBox = CPL_MSBWORD32( nLBox );
+                    if( memcmp(&nTBox, "jp2c", 4) == 0 )
+                    {
+                        if( nLBox >= 8 )
+                        {
+                            bOK = TRUE;
+                            break;
+                        }
+                        if( nLBox == 0 )
+                        {
+                            vsi_l_offset nPos = VSIFTellL(fp);
+                            VSIFSeekL(fp, 0, SEEK_END);
+                            vsi_l_offset nEnd = VSIFTellL(fp);
+                            VSIFSeekL(fp, nPos - 8, SEEK_SET);
+                            nLBox = (GUInt32)(8 + nEnd - nPos);
+                            if( nLBox == (vsi_l_offset)8 + nEnd - nPos )
+                            {
+                                nLBox = CPL_MSBWORD32( nLBox );
+                                VSIFWriteL(&nLBox, 1, 4, fp);
+                                bOK = TRUE;
+                            }
+                        }
+                        break;
+                    }
+                    if( nLBox < 8 )
+                        break;
+                    VSIFSeekL(fp, nLBox - 8, SEEK_CUR);
+                }
+
+                // Can write GMLJP2 box
+                if( bOK )
+                {
+                    GDALJP2Metadata oJP2MD;
+                    oJP2MD.SetProjection( poSrcDS->GetProjectionRef() );
+                    oJP2MD.SetGeoTransform( adfGeoTransform );
+                    GDALJP2Box *poBox;
+                    const char* pszGMLJP2V2Def = CSLFetchNameValue( papszOptions, "GMLJP2V2_DEF" );
+                    if( pszGMLJP2V2Def != NULL )
+                        poBox = oJP2MD.CreateGMLJP2V2(nXSize,nYSize,pszGMLJP2V2Def);
+                    else
+                        poBox = oJP2MD.CreateGMLJP2(nXSize,nYSize);
+
+                    nLBox = (int) poBox->GetDataLength() + 8;
+                    nLBox = CPL_MSBWORD32( nLBox );
+                    memcpy(&nTBox, poBox->GetType(), 4);
+
+                    VSIFSeekL(fp, 0, SEEK_END);
+                    VSIFWriteL( &nLBox, 4, 1, fp );
+                    VSIFWriteL( &nTBox, 4, 1, fp );
+                    VSIFWriteL(poBox->GetWritableData(), 1, (int) poBox->GetDataLength(), fp);
+                    VSIFCloseL(fp);
+
+                    delete poBox;
+                }
+            }
+        }
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Do we need a world file?                                        */
 /* -------------------------------------------------------------------- */
     if( CSLFetchBoolean( papszOptions, "WORLDFILE", FALSE ) )
@@ -1196,7 +1280,37 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     GDALPamDataset *poDS = (GDALPamDataset*) JPEG2000Dataset::Open(&oOpenInfo);
 
     if( poDS )
-        poDS->CloneInfo( poSrcDS, GCIF_PAM_DEFAULT );
+    {
+        poDS->CloneInfo( poSrcDS, GCIF_PAM_DEFAULT & (~GCIF_METADATA) );
+
+        /* Only write relevant metadata to PAM, and if needed */
+        char** papszSrcMD = CSLDuplicate(poSrcDS->GetMetadata());
+        papszSrcMD = CSLSetNameValue(papszSrcMD, GDALMD_AREA_OR_POINT, NULL);
+        papszSrcMD = CSLSetNameValue(papszSrcMD, "Corder", NULL);
+        for(char** papszSrcMDIter = papszSrcMD;
+                papszSrcMDIter && *papszSrcMDIter; )
+        {
+            /* Remove entries like KEY= (without value) */
+            if( (*papszSrcMDIter)[0] &&
+                (*papszSrcMDIter)[strlen((*papszSrcMDIter))-1] == '=' )
+            {
+                CPLFree(*papszSrcMDIter);
+                memmove(papszSrcMDIter, papszSrcMDIter + 1,
+                        sizeof(char*) * (CSLCount(papszSrcMDIter + 1) + 1));
+            }
+            else
+                ++papszSrcMDIter;
+        }
+        char** papszMD = CSLDuplicate(poDS->GetMetadata());
+        papszMD = CSLSetNameValue(papszMD, GDALMD_AREA_OR_POINT, NULL);
+        if( papszSrcMD && papszSrcMD[0] != NULL &&
+            CSLCount(papszSrcMD) != CSLCount(papszMD) )
+        {
+            poDS->SetMetadata(papszSrcMD);
+        }
+        CSLDestroy(papszSrcMD);
+        CSLDestroy(papszMD);
+    }
 
     return poDS;
 }
@@ -1234,6 +1348,42 @@ void GDALRegister_JPEG2000()
 "<OpenOptionList>"
 "   <Option name='1BIT_ALPHA_PROMOTION' type='boolean' description='Whether a 1-bit alpha channel should be promoted to 8-bit' default='YES'/>"
 "</OpenOptionList>" );
+
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
+"<CreationOptionList>"
+"   <Option name='FORMAT' type='string-select' default='according to file extension. If unknown, default to J2K'>"
+"       <Value>JP2</Value>"
+"       <Value>JPC</Value>"
+"   </Option>"
+"   <Option name='GeoJP2' type='boolean' description='Whether to emit a GeoJP2 box' default='YES'/>"
+"   <Option name='GMLJP2' type='boolean' description='Whether to emit a GMLJP2 v1 box' default='YES'/>"
+"   <Option name='GMLJP2V2_DEF' type='string' description='Definition file to describe how a GMLJP2 v2 box should be generated. If set to YES, a minimal instance will be created'/>"
+"   <Option name='WORLDFILE' type='boolean' description='Whether to write a worldfile .wld' default='NO'/>"
+"   <Option name='imgareatlx' type='string' />"
+"   <Option name='imgareatly' type='string' />"
+"   <Option name='tilegrdtlx' type='string' />"
+"   <Option name='tilegrdtly' type='string' />"
+"   <Option name='tilewidth' type='string' />"
+"   <Option name='tileheight' type='string' />"
+"   <Option name='prcwidth' type='string' />"
+"   <Option name='prcheight' type='string' />"
+"   <Option name='cblkwidth' type='string' />"
+"   <Option name='cblkheight' type='string' />"
+"   <Option name='mode' type='string' />"
+"   <Option name='rate' type='string' />"
+"   <Option name='ilyrrates' type='string' />"
+"   <Option name='prg' type='string' />"
+"   <Option name='numrlvls' type='string' />"
+"   <Option name='sop' type='string' />"
+"   <Option name='eph' type='string' />"
+"   <Option name='lazy' type='string' />"
+"   <Option name='termall' type='string' />"
+"   <Option name='segsym' type='string' />"
+"   <Option name='vcausal' type='string' />"
+"   <Option name='pterm' type='string' />"
+"   <Option name='resetprob' type='string' />"
+"   <Option name='numgbits' type='string' />"
+"</CreationOptionList>"  );
 
         poDriver->pfnIdentify = JPEG2000Dataset::Identify;
         poDriver->pfnOpen = JPEG2000Dataset::Open;

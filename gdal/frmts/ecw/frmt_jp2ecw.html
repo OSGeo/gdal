@@ -67,7 +67,20 @@ Common examples are NUTM11, or GEODETIC.<p>
 <li> <b>DATUM=name</b>: Name of the ECW datum string to use. 
 Common examples are WGS84 or NAD83.<p>
 
-<li> <b>GMLJP2=YES/NO</b>: Indicates whether a GML box conforming to the OGC GML in JPEG2000 specification should be included in the file.  Defaults to YES.<p>
+<li> <b>GMLJP2=YES/NO</b>: Indicates whether a GML box
+conforming to the OGC GML in JPEG2000 specification should be included in the
+file. Unless GMLJP2V2_DEF is used, the version of the GMLJP2 box will be
+version 1. Defaults to YES.<p>
+
+<li> <b>GMLJP2V2_DEF=filename</b>: (Starting with GDAL 2.0) Indicates whether a GML box
+conforming to the <a href="http://docs.opengeospatial.org/is/08-085r4/08-085r4.html">
+OGC GML in JPEG2000, version 2</a> specification should be included in the
+file. <i>filename</i> must point to a file with a JSon content that defines how
+the GMLJP2 v2 box should be built. See <a href="frmt_jp2openjpeg.html#GMLJP2v2Def">
+GMLJP2v2 definition file section</a> in documentation of the JP2OpenJPEG driver
+for the syntax of the JSon configuration file.
+It is also possible to directly pass the JSon content inlined as a string.
+If filename is just set to YES, a minimal instance will be built.<p>
 
 <li> <b>GeoJP2=YES/NO</b>: Indicates whether a UUID/GeoTIFF box conforming to the GeoJP2 (GeoTIFF in JPEG2000) specification should be included in the file.  Defaults to YES.<p>
 

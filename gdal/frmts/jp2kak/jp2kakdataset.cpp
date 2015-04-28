@@ -2643,7 +2643,13 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         oJP2MD.bPixelIsPoint = pszAreaOrPoint != NULL && EQUAL(pszAreaOrPoint, GDALMD_AOP_POINT);
 
         if( CSLFetchBoolean( papszOptions, "GMLJP2", TRUE ) )
-            JP2KAKWriteBox( &jp2_out, oJP2MD.CreateGMLJP2(nXSize,nYSize) );
+        {
+            const char* pszGMLJP2V2Def = CSLFetchNameValue( papszOptions, "GMLJP2V2_DEF" );
+            if( pszGMLJP2V2Def != NULL )
+                JP2KAKWriteBox( &jp2_out, oJP2MD.CreateGMLJP2V2(nXSize,nYSize,pszGMLJP2V2Def) );
+            else
+                JP2KAKWriteBox( &jp2_out, oJP2MD.CreateGMLJP2(nXSize,nYSize) );
+        }
         if( CSLFetchBoolean( papszOptions, "GeoJP2", TRUE ) )
             JP2KAKWriteBox( &jp2_out, oJP2MD.CreateJP2GeoTIFF() );
     }
@@ -2818,6 +2824,7 @@ void GDALRegister_JP2KAK()
 "   <Option name='BLOCKYSIZE' type='int' description='Tile Height'/>"
 "   <Option name='GeoJP2' type='boolean' description='defaults to ON'/>"
 "   <Option name='GMLJP2' type='boolean' description='defaults to ON'/>"
+"   <Option name='GMLJP2V2_DEF' type='string' description='Definition file to describe how a GMLJP2 v2 box should be generated. If set to YES, a minimal instance will be created'/>"
 "   <Option name='LAYERS' type='integer'/>"
 "   <Option name='ROI' type='string'/>"
 "   <Option name='COMSEG' type='boolean' />"
