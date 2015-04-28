@@ -964,7 +964,13 @@ CPLErr GDALECWCompressor::Initialize(
                         m_poSrcDS, CSLFetchBoolean(papszOptions, "MAIN_MD_DOMAIN_ONLY", FALSE)));
             }
             if( CSLFetchBoolean( papszOptions, "GMLJP2", TRUE ) )
-                WriteJP2Box( oJP2MD.CreateGMLJP2(nXSize,nYSize) );
+            {
+                const char* pszGMLJP2V2Def = CSLFetchNameValue( papszOptions, "GMLJP2V2_DEF" );
+                if( pszGMLJP2V2Def != NULL )
+                    WriteJP2Box( oJP2MD.CreateGMLJP2V2(nXSize,nYSize,pszGMLJP2V2Def) );
+                else
+                    WriteJP2Box( oJP2MD.CreateGMLJP2(nXSize,nYSize) );
+            }
             if( CSLFetchBoolean( papszOptions, "GeoJP2", TRUE ) )
                 WriteJP2Box( oJP2MD.CreateJP2GeoTIFF() );
             if( CSLFetchBoolean(papszOptions, "WRITE_METADATA", FALSE) &&

@@ -3470,6 +3470,7 @@ void GDALRegister_JP2ECW()
 
 "   <Option name='GeoJP2' type='boolean' description='defaults to ON'/>"
 "   <Option name='GMLJP2' type='boolean' description='defaults to ON'/>"
+"   <Option name='GMLJP2V2_DEF' type='string' description='Definition file to describe how a GMLJP2 v2 box should be generated. If set to YES, a minimal instance will be created'/>"
 "   <Option name='PROFILE' type='string-select'>"
 "       <Value>BASELINE_0</Value>"
 "       <Value>BASELINE_1</Value>"
