@@ -2845,6 +2845,24 @@ def jp2openjpeg_45():
 
     gdal.Unlink('/vsimem/jp2openjpeg_45.jp2')
 
+    # Test reading a feature collection with a schema and within GridCoverage
+    conf = { "root_instance": { "gml_filelist": [ { "file": "../ogr/data/poly.shp", "parent_node": "GridCoverage"} ] } }
+    out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_45.jp2', src_ds, options = ['GMLJP2V2_DEF=' + json.dumps(conf)])
+    del out_ds
+
+    ds = ogr.Open('/vsimem/jp2openjpeg_45.jp2')
+    if ds.GetLayerCount() != 1:
+        gdaltest.post_reason('fail')
+        print(ds.GetLayerCount())
+        return 'fail'
+    if ds.GetLayer(0).GetName() != 'FC_GridCoverage_1_poly':
+        gdaltest.post_reason('fail')
+        print(ds.GetLayer(0).GetName())
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/jp2openjpeg_45.jp2')
+
     return 'success'
 
 ###############################################################################
