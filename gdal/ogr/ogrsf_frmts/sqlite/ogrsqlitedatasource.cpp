@@ -147,6 +147,7 @@ OGRSQLiteBaseDataSource::OGRSQLiteBaseDataSource()
 {
     m_pszFilename = NULL;
     hDB = NULL;
+    bUpdate = FALSE;
 
 #ifdef HAVE_SQLITE_VFS
     pMyVFS = NULL;
@@ -217,7 +218,6 @@ OGRSQLiteDataSource::OGRSQLiteDataSource()
     bHaveGeometryColumns = FALSE;
     bIsSpatiaLiteDB = FALSE;
     bSpatialite4Layout = FALSE;
-    bUpdate = FALSE;
 
     nUndefinedSRID = -1; /* will be changed to 0 if Spatialite >= 4.0 detected */
 
