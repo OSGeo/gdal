@@ -11358,7 +11358,9 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
 
     TIFFGetField( hTIFF, TIFFTAG_SAMPLEFORMAT, &(poDS->nSampleFormat) );
     TIFFGetField( hTIFF, TIFFTAG_PLANARCONFIG, &(poDS->nPlanarConfig) );
-    TIFFGetField( hTIFF, TIFFTAG_PHOTOMETRIC, &(poDS->nPhotometric) );
+    // Weird that we need this, but otherwise we get a Valgrind warning on tiff_write_124
+    if( !TIFFGetField( hTIFF, TIFFTAG_PHOTOMETRIC, &(poDS->nPhotometric) ) )
+        poDS->nPhotometric = PHOTOMETRIC_MINISBLACK;
     TIFFGetField( hTIFF, TIFFTAG_BITSPERSAMPLE, &(poDS->nBitsPerSample) );
     TIFFGetField( hTIFF, TIFFTAG_COMPRESSION, &(poDS->nCompression) );
 
