@@ -35,6 +35,7 @@
 #include "cpl_vsi.h"
 #include "gdal.h"
 #include "gdal_priv.h"
+#include "cpl_minixml.h"
 
 /************************************************************************/
 /*                              GDALJP2Box                              */
@@ -132,6 +133,9 @@ private:
                                           double adfYVector[2],
                                           const char*& pszComment,
                                           CPLString& osDictBox );
+    static CPLXMLNode* CreateGDALMultiDomainMetadataXML(
+                                       GDALDataset* poSrcDS,
+                                       int bMainMDDomainOnly );
 
 public:
     char  **papszGMLMetadata;
@@ -174,7 +178,8 @@ public:
     GDALJP2Box *CreateJP2GeoTIFF();
     GDALJP2Box *CreateGMLJP2( int nXSize, int nYSize );
     GDALJP2Box *CreateGMLJP2V2( int nXSize, int nYSize,
-                                const char* pszDefFilename );
+                                const char* pszDefFilename,
+                                GDALDataset* poSrcDS );
 
     static GDALJP2Box* CreateGDALMultiDomainMetadataXMLBox(
                                        GDALDataset* poSrcDS,

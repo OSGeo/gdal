@@ -2502,7 +2502,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
         if( nGMLJP2Version == 1)
             poGMLJP2Box = oJP2MD.CreateGMLJP2(nXSize,nYSize);
         else
-            poGMLJP2Box = oJP2MD.CreateGMLJP2V2(nXSize,nYSize,pszGMLJP2V2Def);
+            poGMLJP2Box = oJP2MD.CreateGMLJP2V2(nXSize,nYSize,pszGMLJP2V2Def,poSrcDS);
         if( poGMLJP2Box == NULL )
             return NULL;
     }

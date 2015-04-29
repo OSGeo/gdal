@@ -2666,7 +2666,7 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         {
             const char* pszGMLJP2V2Def = CSLFetchNameValue( papszOptions, "GMLJP2V2_DEF" );
             if( pszGMLJP2V2Def != NULL )
-                JP2KAKWriteBox( &jp2_out, oJP2MD.CreateGMLJP2V2(nXSize,nYSize,pszGMLJP2V2Def) );
+                JP2KAKWriteBox( &jp2_out, oJP2MD.CreateGMLJP2V2(nXSize,nYSize,pszGMLJP2V2Def,poSrcDS) );
             else
                 JP2KAKWriteBox( &jp2_out, oJP2MD.CreateGMLJP2(nXSize,nYSize) );
         }

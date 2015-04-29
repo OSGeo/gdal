@@ -1262,7 +1262,7 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                     GDALJP2Box *poBox;
                     const char* pszGMLJP2V2Def = CSLFetchNameValue( papszOptions, "GMLJP2V2_DEF" );
                     if( pszGMLJP2V2Def != NULL )
-                        poBox = oJP2MD.CreateGMLJP2V2(nXSize,nYSize,pszGMLJP2V2Def);
+                        poBox = oJP2MD.CreateGMLJP2V2(nXSize,nYSize,pszGMLJP2V2Def,poSrcDS);
                     else
                         poBox = oJP2MD.CreateGMLJP2(nXSize,nYSize);
 
