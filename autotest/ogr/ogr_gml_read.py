@@ -3833,6 +3833,22 @@ def ogr_gml_73():
     return 'success'
 
 ###############################################################################
+# Test FORCE_SRS_DETECTION open option
+
+def ogr_gml_74():
+
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    ds = gdal.OpenEx('data/expected_gml_gml32.gml', open_options = ['FORCE_SRS_DETECTION=YES'] )
+    lyr = ds.GetLayer(0)
+    if lyr.GetSpatialRef() is None:
+        gdaltest.post_reason('did not get expected SRS')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 #  Cleanup
 
 def ogr_gml_cleanup():
@@ -4037,6 +4053,7 @@ gdaltest_list = [
     ogr_gml_71,
     ogr_gml_72,
     ogr_gml_73,
+    ogr_gml_74,
     ogr_gml_cleanup ]
 
 disabled_gdaltest_list = [ 

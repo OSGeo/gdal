@@ -358,6 +358,10 @@ belongs to another layer. In that case, the file should be read with code simila
 <ul>
 <li> <b>XSD=filename</b>: (GDAL &gt;=2.0) to specify an explicit filename for the XSD
 application schema to use</li>.
+<li> <b>FORCE_SRS_DETECTION=YES/NO</b>: (GDAL &gt;=2.0) Force a full scan to detect the SRS of layers.
+This option may be needed in the case where the .gml file is accompanied with
+a .xsd. Normally in that situation, OGR would not detect the SRS, because this
+requires to do a full scan of the file. Defaults to NO</li>
 </ul>
 
 <h2>Creation Issues</h2>

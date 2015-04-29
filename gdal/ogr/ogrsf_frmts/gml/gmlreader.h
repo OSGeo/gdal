@@ -302,7 +302,9 @@ public:
                                    int pbSqlitIsTempFile,
                                    int iSqliteCacheMB ) = 0;
 
-    virtual int PrescanForSchema( int bGetExtents = TRUE, int bAnalyzeSRSPerFeature = TRUE ) = 0;
+    virtual int PrescanForSchema( int bGetExtents = TRUE,
+                                  int bAnalyzeSRSPerFeature = TRUE,
+                                  int bOnlyDetectSRS = FALSE ) = 0;
     virtual int PrescanForTemplate( void ) = 0;
 
     virtual int HasStoppedParsing() = 0;

@@ -1075,23 +1075,28 @@ int OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
 /*      will have mechanisms for remembering the schema and related     */
 /*      information.                                                    */
 /* -------------------------------------------------------------------- */
-    if( !bHaveSchema )
+    if( !bHaveSchema ||
+        CSLFetchBoolean(poOpenInfo->papszOpenOptions, "FORCE_SRS_DETECTION", FALSE) )
     {
-        if( !poReader->PrescanForSchema( TRUE, bAnalyzeSRSPerFeature ) )
+        int bOnlyDetectSRS = bHaveSchema;
+        if( !poReader->PrescanForSchema( TRUE, bAnalyzeSRSPerFeature,
+                                         bOnlyDetectSRS ) )
         {
             // we assume an errors have been reported.
             return FALSE;
         }
-
-        if( bIsWFSJointLayer && poReader->GetClassCount() == 1 )
+        if( !bHaveSchema )
         {
-            BuildJointClassFromScannedSchema();
-        }
+            if( bIsWFSJointLayer && poReader->GetClassCount() == 1 )
+            {
+                BuildJointClassFromScannedSchema();
+            }
 
-        if( bHasFoundXSD )
-        {
-            CPLDebug("GML", "Generating %s file, ignoring %s",
-                     osGFSFilename.c_str(), osXSDFilename.c_str());
+            if( bHasFoundXSD )
+            {
+                CPLDebug("GML", "Generating %s file, ignoring %s",
+                        osGFSFilename.c_str(), osXSDFilename.c_str());
+            }
         }
     }
 

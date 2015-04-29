@@ -163,6 +163,7 @@ void RegisterOGRGML()
         poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
 "<OpenOptionList>"
 "  <Option name='XSD' type='string' description='Name of the related application schema file (.xsd).'/>"
+"  <Option name='FORCE_SRS_DETECTION' type='boolean' description='Force a full scan to detect the SRS of layers.' default='NO'/>"
 "</OpenOptionList>" );
 
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,

@@ -505,7 +505,9 @@ public:
                                        int pbSqliteIsTempFile,
                                        int iSqliteCacheMB );
 
-    int              PrescanForSchema(int bGetExtents = TRUE, int bAnalyzeSRSPerFeature = TRUE );
+    int              PrescanForSchema(int bGetExtents = TRUE,
+                                      int bAnalyzeSRSPerFeature = TRUE,
+                                      int bOnlyDetectSRS = FALSE );
     int              PrescanForTemplate( void );
     int              ReArrangeTemplateClasses( GFSTemplateList *pCC );
     void             ResetReading();
