@@ -261,8 +261,11 @@ the below syntax (elements starting with "#" are documentation, and can be omitt
             "dcmetadata.xml",
 
             {
-                "#file_doc": "Can use relative or absolute paths. Exclusive of content and generated_metadata.",
+                "#file_doc": "Can use relative or absolute paths. Exclusive of content, gdal_metadata and generated_metadata.",
                 "file": "dcmetadata.xml",
+
+                "#gdal_metadata_doc": "Whether to serialize GDAL metadata as GDALMultiDomainMetadata",
+                "gdal_metadata": false,
 
                 "#dynamic_metadata_doc":
                     [ "The metadata file will be generated from a template and a source file.",

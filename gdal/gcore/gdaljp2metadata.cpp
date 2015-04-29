@@ -268,8 +268,25 @@ void GDALJP2Metadata::CollectGMLData( GDALJP2Box *poGMLData )
             }
             
             if( pszLabel != NULL && pszXML != NULL )
+            {
                 papszGMLMetadata = CSLSetNameValue( papszGMLMetadata, 
                                                     pszLabel, pszXML );
+
+                if( strcmp(pszLabel, "gml.root-instance") == 0 &&
+                    pszGDALMultiDomainMetadata == NULL &&
+                    strstr(pszXML, "GDALMultiDomainMetadata") != NULL )
+                {
+                    CPLXMLNode* psTree = CPLParseXMLString(pszXML);
+                    if( psTree != NULL )
+                    {
+                        CPLXMLNode* psGDALMDMD = CPLSearchXMLNode(psTree, "GDALMultiDomainMetadata");
+                        if( psGDALMDMD )
+                            pszGDALMultiDomainMetadata = CPLSerializeXMLTree(psGDALMDMD);
+                    }
+                    CPLDestroyXMLNode(psTree);
+                }
+            }
+
             CPLFree( pszLabel );
             CPLFree( pszXML );
         }
@@ -1556,9 +1573,10 @@ class GMLJP2V2MetadataDesc
         CPLString osContent;
         CPLString osTemplateFile;
         CPLString osSourceFile;
+        int       bGDALMetadata;
         int       bParentCoverageCollection;
 
-            GMLJP2V2MetadataDesc(): bParentCoverageCollection(TRUE) {}
+            GMLJP2V2MetadataDesc(): bGDALMetadata(FALSE), bParentCoverageCollection(TRUE) {}
 };
 
 class GMLJP2V2BoxDesc
@@ -1569,7 +1587,8 @@ class GMLJP2V2BoxDesc
 };
 
 GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
-                                             const char* pszDefFilename )
+                                             const char* pszDefFilename,
+                                             GDALDataset* poSrcDS )
 
 {
     CPLString osRootGMLId = "ID_GMLJP2_0";
@@ -1621,8 +1640,11 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
             "dcmetadata.xml",
 
             {
-                "#file_doc": "Can use relative or absolute paths. Exclusive of content and generated_metadata.",
+                "#file_doc": "Can use relative or absolute paths. Exclusive of content, gdal_metadata and generated_metadata.",
                 "file": "dcmetadata.xml",
+
+                "#gdal_metadata_doc": "Whether to serialize GDAL metadata as GDALMultiDomainMetadata",
+                "gdal_metadata": false,
 
                 "#dynamic_metadata_doc":
                     [ "The metadata file will be generated from a template and a source file.",
@@ -1780,8 +1802,14 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                             }
                         }
 
+                        int bGDALMetadata = FALSE;
+                        json_object* poGDALMetadata = json_object_object_get(poMetadata, "gdal_metadata");
+                        if( poGDALMetadata && json_object_get_type(poGDALMetadata) == json_type_boolean )
+                            bGDALMetadata = json_object_get_boolean(poGDALMetadata);
+
                         if( pszFile != NULL || pszContent != NULL ||
-                            (pszTemplate != NULL && pszSource != NULL) )
+                            (pszTemplate != NULL && pszSource != NULL) ||
+                            bGDALMetadata )
                         {
                             GMLJP2V2MetadataDesc oDesc;
                             if( pszFile )
@@ -1792,6 +1820,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                                 oDesc.osTemplateFile = pszTemplate;
                             if( pszSource )
                                 oDesc.osSourceFile = pszSource;
+                            oDesc.bGDALMetadata = bGDALMetadata;
 
                             json_object* poLocation = json_object_object_get(poMetadata, "parent_node");
                             if( poLocation && json_object_get_type(poLocation) == json_type_string )
@@ -2076,6 +2105,17 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                 psMetadata = CPLParseXMLFile(aoMetadata[i].osFile);
             else if( aoMetadata[i].osContent.size() )
                 psMetadata = CPLParseXMLString(aoMetadata[i].osContent);
+            else if( aoMetadata[i].bGDALMetadata )
+            {
+                psMetadata = CreateGDALMultiDomainMetadataXML(poSrcDS, TRUE);
+                if( psMetadata )
+                {
+                    CPLSetXMLValue(psMetadata, "#xmlns", "http://gdal.org");
+                    CPLXMLNode* psNewMetadata = CPLCreateXMLNode(NULL, CXT_Element, "gmljp2:metadata");
+                    CPLAddXMLChild(psNewMetadata, psMetadata);
+                    psMetadata = psNewMetadata;
+                }
+            }
             else
                 psMetadata = GDALGMLJP2GenerateMetadata(aoMetadata[i].osTemplateFile,
                                                         aoMetadata[i].osSourceFile);
@@ -2554,10 +2594,10 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
 }
 
 /************************************************************************/
-/*                CreateGDALMultiDomainMetadataXMLBox()                 */
+/*                 CreateGDALMultiDomainMetadataXML()                   */
 /************************************************************************/
 
-GDALJP2Box *GDALJP2Metadata::CreateGDALMultiDomainMetadataXMLBox(
+CPLXMLNode* GDALJP2Metadata::CreateGDALMultiDomainMetadataXML(
                                        GDALDataset* poSrcDS,
                                        int bMainMDDomainOnly )
 {
@@ -2566,7 +2606,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGDALMultiDomainMetadataXMLBox(
     /* Remove useless metadata */
     papszSrcMD = CSLSetNameValue(papszSrcMD, GDALMD_AREA_OR_POINT, NULL);
     papszSrcMD = CSLSetNameValue(papszSrcMD, "TIFFTAG_RESOLUTIONUNIT", NULL);
-    papszSrcMD = CSLSetNameValue(papszSrcMD, "TIFFTAG_XRESOLUTION", NULL);
+    papszSrcMD = CSLSetNameValue(papszSrcMD, "TIFFTAG_XREpsMasterXMLNodeSOLUTION", NULL);
     papszSrcMD = CSLSetNameValue(papszSrcMD, "TIFFTAG_YRESOLUTION", NULL);
     papszSrcMD = CSLSetNameValue(papszSrcMD, "Corder", NULL); /* from JP2KAK */
     if( poSrcDS->GetDriver() != NULL &&
@@ -2610,21 +2650,37 @@ GDALJP2Box *GDALJP2Metadata::CreateGDALMultiDomainMetadataXMLBox(
         CSLDestroy(papszMDList);
     }
 
-    GDALJP2Box* poBox = NULL;
+    CPLXMLNode* psMasterXMLNode = NULL;
     if( bHasMD )
     {
         CPLXMLNode* psXMLNode = oLocalMDMD.Serialize();
-        CPLXMLNode* psMasterXMLNode = CPLCreateXMLNode( NULL, CXT_Element,
+        psMasterXMLNode = CPLCreateXMLNode( NULL, CXT_Element,
                                                     "GDALMultiDomainMetadata" );
         psMasterXMLNode->psChild = psXMLNode;
-        char* pszXML = CPLSerializeXMLTree(psMasterXMLNode);
-        CPLDestroyXMLNode(psMasterXMLNode);
-
-        poBox = new GDALJP2Box();
-        poBox->SetType("xml ");
-        poBox->SetWritableData(strlen(pszXML) + 1, (const GByte*)pszXML);
-        CPLFree(pszXML);
     }
+    return psMasterXMLNode;
+}
+
+/************************************************************************/
+/*                CreateGDALMultiDomainMetadataXMLBox()                 */
+/************************************************************************/
+
+GDALJP2Box *GDALJP2Metadata::CreateGDALMultiDomainMetadataXMLBox(
+                                       GDALDataset* poSrcDS,
+                                       int bMainMDDomainOnly )
+{
+    CPLXMLNode* psMasterXMLNode = CreateGDALMultiDomainMetadataXML(
+                                       poSrcDS, bMainMDDomainOnly );
+    if( psMasterXMLNode == NULL )
+        return NULL;
+    char* pszXML = CPLSerializeXMLTree(psMasterXMLNode);
+    CPLDestroyXMLNode(psMasterXMLNode);
+
+    GDALJP2Box* poBox = new GDALJP2Box();
+    poBox->SetType("xml ");
+    poBox->SetWritableData(strlen(pszXML) + 1, (const GByte*)pszXML);
+    CPLFree(pszXML);
+
     return poBox;
 }
 

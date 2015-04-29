@@ -2606,7 +2606,6 @@ def jp2openjpeg_45():
 </kml>
 """)
     # So that the Python text is real JSon
-    #true = True
     false = False
 
     conf = {
@@ -2858,6 +2857,30 @@ def jp2openjpeg_45():
     if ds.GetLayer(0).GetName() != 'FC_GridCoverage_1_poly':
         gdaltest.post_reason('fail')
         print(ds.GetLayer(0).GetName())
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/jp2openjpeg_45.jp2')
+
+    # Test serializing GDAL metadata
+    true = True
+    conf = { "root_instance": { "metadata": [ { "gdal_metadata": true } ] } }
+    src_ds = gdal.GetDriverByName('MEM').Create('',10,10)
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(32631)
+    src_ds.SetProjection(sr.ExportToWkt())
+    src_ds.SetGeoTransform([450000,1,0,5000000,0,-1])
+    src_ds.SetMetadataItem('FOO', 'BAR')
+    out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_45.jp2', src_ds, options = ['GMLJP2V2_DEF=' + json.dumps(conf)])
+    del out_ds
+    if gdal.VSIStatL('/vsimem/jp2openjpeg_45.jp2.aux.xml') is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ds = gdal.Open('/vsimem/jp2openjpeg_45.jp2')
+    if ds.GetMetadata() != { 'FOO': 'BAR' }:
+        gdaltest.post_reason('fail')
+        print(ds.GetMetadata())
         return 'fail'
     ds = None
 

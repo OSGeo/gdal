@@ -92,7 +92,8 @@ public:
                         GDALDataType eType, 
                         const char *pszWKT, double *padfGeoTransform,
                         int nGCPCount, const GDAL_GCP *pasGCPList,
-                        int bIsJPEG2000, int bPixelIsPoint, char** papszRPCMD );
+                        int bIsJPEG2000, int bPixelIsPoint, char** papszRPCMD,
+                        GDALDataset* poSrcDS = NULL );
     CPLErr  CloseDown();
 
     CPLErr  PrepareCoverageBox( const char *pszWKT, double *padfGeoTransform );
@@ -538,7 +539,8 @@ CPLErr GDALECWCompressor::Initialize(
     GDALDataType eType, 
     const char *pszWKT, double *padfGeoTransform,
     int nGCPCount, const GDAL_GCP *pasGCPList,
-    int bIsJPEG2000, int bPixelIsPoint, char** papszRPCMD )
+    int bIsJPEG2000, int bPixelIsPoint, char** papszRPCMD,
+    GDALDataset* poSrcDS )
 
 {
      const char *pszOption;
@@ -968,7 +970,7 @@ CPLErr GDALECWCompressor::Initialize(
             {
                 const char* pszGMLJP2V2Def = CSLFetchNameValue( papszOptions, "GMLJP2V2_DEF" );
                 if( pszGMLJP2V2Def != NULL )
-                    WriteJP2Box( oJP2MD.CreateGMLJP2V2(nXSize,nYSize,pszGMLJP2V2Def) );
+                    WriteJP2Box( oJP2MD.CreateGMLJP2V2(nXSize,nYSize,pszGMLJP2V2Def,poSrcDS) );
                 else
                     WriteJP2Box( oJP2MD.CreateGMLJP2(nXSize,nYSize) );
             }
@@ -1252,7 +1254,8 @@ ECWCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                                 poSrcDS->GetGCPCount(), 
                                 poSrcDS->GetGCPs(),
                                 bIsJPEG2000, bPixelIsPoint,
-                                poSrcDS->GetMetadata("RPC") )
+                                poSrcDS->GetMetadata("RPC"),
+                                poSrcDS )
         != CE_None )
     {
         for (i=0;i<nBands;i++)
