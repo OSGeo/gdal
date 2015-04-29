@@ -275,15 +275,43 @@ void GDALJP2AbstractDataset::LoadVectorLayers()
         {
             if( psGCorGMLJP2FeaturesChildIter->eType != CXT_Element ||
                 strcmp(psGCorGMLJP2FeaturesChildIter->pszValue, "gmljp2:feature") != 0 ||
-                psGCorGMLJP2FeaturesChildIter->psChild == NULL ||
-                psGCorGMLJP2FeaturesChildIter->psChild->eType != CXT_Element ||
-                strstr(psGCorGMLJP2FeaturesChildIter->psChild->pszValue, "FeatureCollection") == NULL )
+                psGCorGMLJP2FeaturesChildIter->psChild == NULL )
                 continue;
+
+            CPLXMLNode* psFC = NULL;
+            int bFreeFC = FALSE;
+            CPLXMLNode* psChild = psGCorGMLJP2FeaturesChildIter->psChild;
+            if( psChild->eType == CXT_Attribute &&
+                strcmp(psChild->pszValue, "xlink:href") == 0 &&
+                strncmp(psChild->psChild->pszValue,
+                        "gmljp2://xml/", strlen("gmljp2://xml/")) == 0 )
+            {
+                const char* pszBoxName = psChild->psChild->pszValue + strlen("gmljp2://xml/");
+                char** papszBoxData = GetMetadata(CPLSPrintf("xml:%s", pszBoxName));
+                if( papszBoxData != NULL )
+                {
+                    psFC = CPLParseXMLString(papszBoxData[0]);
+                    bFreeFC = TRUE;
+                }
+                else
+                {
+                    CPLDebug("GMLJP2",
+                             "gmljp2:feature references %s, but no corresponding box found",
+                             psChild->psChild->pszValue);
+                }
+            }
+            else if( psChild->eType == CXT_Element &&
+                     strstr(psChild->pszValue, "FeatureCollection") != NULL )
+            {
+                psFC = psChild;
+            }
+            if( psFC == NULL )
+                continue;
+
             CPLDebug("GMLJP2", "Found a FeatureCollection at %s level",
                      (bIsGC) ? "GridCoverage" : "CoverageCollection");
 
             // Create temporary .gml file
-            CPLXMLNode* psFC = psGCorGMLJP2FeaturesChildIter->psChild;
             CPLString osGMLTmpFile(CPLSPrintf("/vsimem/jp2openjpeg/%p/my.gml", this));
             CPLString osXSDTmpFile;
             CPLSerializeXMLTreeToFile(psFC, osGMLTmpFile);
@@ -323,6 +351,11 @@ void GDALJP2AbstractDataset::LoadVectorLayers()
                     }
                 }
                 CSLDestroy(papszTokens);
+            }
+            if( bFreeFC )
+            {
+                CPLDestroyXMLNode(psFC);
+                psFC = NULL;
             }
 
             GDALDriverH hDrv = GDALIdentifyDriver(osGMLTmpFile, NULL);
