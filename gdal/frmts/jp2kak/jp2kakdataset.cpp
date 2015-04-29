@@ -1429,7 +1429,24 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
                       " datasets.\n" );
             return NULL;
         }
-    
+
+/* -------------------------------------------------------------------- */
+/*      Vector layers                                                   */
+/* -------------------------------------------------------------------- */
+        if( poOpenInfo->nOpenFlags & GDAL_OF_VECTOR )
+        {
+            poDS->LoadVectorLayers();
+
+            // If file opened in vector-only mode and there's no vector,
+            // return
+            if( (poOpenInfo->nOpenFlags & GDAL_OF_RASTER) == 0 &&
+                poDS->GetLayerCount() == 0 )
+            {
+                delete poDS;
+                return NULL;
+            }
+        }
+
         return( poDS );
     }
 
@@ -2803,6 +2820,7 @@ void GDALRegister_JP2KAK()
         
         poDriver->SetDescription( "JP2KAK" );
         poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "JPEG-2000 (based on Kakadu " 
                                    KDU_CORE_VERSION ")" );

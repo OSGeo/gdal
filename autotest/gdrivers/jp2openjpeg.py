@@ -111,6 +111,11 @@ def jp2openjpeg_3():
         gdaltest.post_reason('Image too different from reference')
         return 'fail'
 
+    ds = ogr.Open( 'data/int16.jp2' )
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
     return 'success'
 
 ###############################################################################
@@ -2300,10 +2305,20 @@ def jp2openjpeg_45():
 
     if gdaltest.jp2openjpeg_drv is None:
         return 'skip'
+    if gdal.GetDriverByName('GML') is None:
+        return 'skip'
+    if gdal.GetDriverByName('KML') is None and gdal.GetDriverByName('LIBKML') is None:
+        return 'skip'
 
     # Test GMLJP2V2_DEF=YES
     src_ds = gdal.Open('data/byte.tif')
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_45.jp2', src_ds, options = ['GMLJP2V2_DEF=YES'])
+    if out_ds.GetLayerCount() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if out_ds.GetLayer(0) is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
     del out_ds
 
     ds = gdal.Open('/vsimem/jp2openjpeg_45.jp2')
@@ -2806,6 +2821,21 @@ def jp2openjpeg_45():
         print(myshape2_xsd)
         return 'fail'
 
+    ds = None
+
+    ds = ogr.Open('/vsimem/jp2openjpeg_45.jp2')
+    if ds.GetLayerCount() != 2:
+        gdaltest.post_reason('fail')
+        print(ds.GetLayerCount())
+        return 'fail'
+    if ds.GetLayer(0).GetName() != 'FC_CoverageCollection_1_Observation':
+        gdaltest.post_reason('fail')
+        print(ds.GetLayer(0).GetName())
+        return 'fail'
+    if ds.GetLayer(1).GetName() != 'Annotation_1_myshape':
+        gdaltest.post_reason('fail')
+        print(ds.GetLayer(1).GetName())
+        return 'fail'
     ds = None
 
     ret = validate('/vsimem/jp2openjpeg_45.jp2', inspire_tg = False)

@@ -373,6 +373,23 @@ EXPR can be :
 a template file to process XML metadata of GeoEye/WorldView imagery can be found
 <a href="eoptemplate_worldviewgeoeye.xml">here</a>.</p>
 
+<h2>Vector information</h2>
+
+Starting with GDAL 2.0, a JPEG2000 file containing a GMLJP2 v2 box with GML feature
+collections and/or KML annotations embedded can be opened as a vector file with
+the OGR API.
+
+For example:
+<pre>
+ogrinfo -ro my.jp2 
+
+INFO: Open of my.jp2'
+      using driver `JP2OpenJPEG' successful.
+1: FC_GridCoverage_1_rivers (LineString)
+2: FC_GridCoverage_1_borders (LineString)
+3: Annotation_1_poly
+</pre>
+
 <h2>See Also:</h2>
 
 <ul>
