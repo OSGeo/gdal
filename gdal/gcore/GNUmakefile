@@ -11,7 +11,8 @@ OBJ	=	gdalopeninfo.o gdaldrivermanager.o gdaldriver.o gdaldataset.o \
  		gdalproxydataset.o gdalproxypool.o gdaldefaultasync.o \
 		gdalnodatavaluesmaskband.o gdaldllmain.o gdalexif.o gdalclientserver.o \
 		gdalgeorefpamdataset.o gdaljp2abstractdataset.o gdalvirtualmem.o \
-		gdaloverviewdataset.o gdalrescaledalphaband.o gdaljp2structure.o
+		gdaloverviewdataset.o gdalrescaledalphaband.o gdaljp2structure.o \
+		gdaljp2metadatagenerator.o
 
 # Enable the following if you want to use MITAB's code to convert
 # .tab coordinate systems into well known text.  But beware that linking
@@ -28,6 +29,10 @@ CPPFLAGS	:=	 -I../frmts/gtiff -I../frmts/mem -I../frmts/vrt -I../ogr -I../ogr/og
 
 ifeq ($(HAVE_SQLITE),yes)
 CXXFLAGS :=	$(CXXFLAGS) -DSQLITE_ENABLED
+endif
+
+ifeq ($(HAVE_LIBXML2),yes)
+CXXFLAGS	:=	$(CXXFLAGS) $(LIBXML2_INC) -DHAVE_LIBXML2
 endif
 
 default:	$(OBJ:.o=.$(OBJ_EXT))

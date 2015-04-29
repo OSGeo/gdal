@@ -12,7 +12,7 @@ OBJ	=	gdalopeninfo.obj gdaldrivermanager.obj gdaldriver.obj \
 		gdaldllmain.obj gdalexif.obj gdalclientserver.obj \
 		gdalgeorefpamdataset.obj  gdaljp2abstractdataset.obj \
 		gdalvirtualmem.obj gdaloverviewdataset.obj gdalrescaledalphaband.obj \
-		gdaljp2structure.obj
+		gdaljp2structure.obj gdaljp2metadatagenerator.obj
 
 RES	=	Version.res
 
@@ -24,6 +24,10 @@ EXTRAFLAGS =	$(PAM_SETTING) -I..\frmts\gtiff -I..\frmts\mem -I..\frmts\vrt -I..\
 
 !IFDEF SQLITE_LIB
 SQLITEDEF	=	-DSQLITE_ENABLED
+!ENDIF
+
+!IFDEF LIBXML2_INC
+EXTRAFLAGS =	$(EXTRAFLAGS) -DHAVE_LIBXML2 $(LIBXML2_INC)
 !ENDIF
 
 default:	$(OBJ) $(RES)
