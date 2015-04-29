@@ -31,6 +31,7 @@
 
 #include "gdaljp2abstractdataset.h"
 #include "gdaljp2metadata.h"
+#include "ogrsf_frmts.h"
 
 /************************************************************************/
 /*                     GDALJP2AbstractDataset()                         */
@@ -39,6 +40,7 @@
 GDALJP2AbstractDataset::GDALJP2AbstractDataset()
 {
     pszWldFilename = NULL;
+    poMemDS = NULL;
 }
 
 /************************************************************************/
@@ -48,6 +50,23 @@ GDALJP2AbstractDataset::GDALJP2AbstractDataset()
 GDALJP2AbstractDataset::~GDALJP2AbstractDataset()
 {
     CPLFree(pszWldFilename);
+    CloseDependentDatasets();
+}
+
+/************************************************************************/
+/*                      CloseDependentDatasets()                        */
+/************************************************************************/
+
+int GDALJP2AbstractDataset::CloseDependentDatasets()
+{
+    int bRet = GDALGeorefPamDataset::CloseDependentDatasets();
+    if( poMemDS )
+    {
+        GDALClose(poMemDS);
+        poMemDS = NULL;
+        bRet = TRUE;
+    }
+    return bRet;
 }
 
 /************************************************************************/
@@ -211,4 +230,215 @@ char **GDALJP2AbstractDataset::GetFileList()
         papszFileList = CSLAddString( papszFileList, pszWldFilename );
     }
     return papszFileList;
+}
+
+/************************************************************************/
+/*                        LoadVectorLayers()                            */
+/************************************************************************/
+
+void GDALJP2AbstractDataset::LoadVectorLayers()
+{
+    char** papszGMLJP2 = GetMetadata("xml:gml.root-instance");
+    if( papszGMLJP2 == NULL )
+        return;
+    GDALDriver* poMemDriver = (GDALDriver*)GDALGetDriverByName("Memory");
+    if( poMemDriver == NULL )
+        return;
+    CPLXMLNode* psRoot = CPLParseXMLString(papszGMLJP2[0]);
+    if( psRoot == NULL )
+        return;
+    CPLXMLNode* psCC = CPLGetXMLNode(psRoot, "=gmljp2:GMLJP2CoverageCollection");
+    if( psCC == NULL )
+    {
+        CPLDestroyXMLNode(psRoot);
+        return;
+    }
+
+    // Find feature collections
+    CPLXMLNode* psCCChildIter = psCC->psChild;
+    int nLayersAtCC = 0;
+    int nLayersAtGC = 0;
+    for( ; psCCChildIter != NULL; psCCChildIter = psCCChildIter->psNext )
+    {
+        if( psCCChildIter->eType != CXT_Element ||
+            strcmp(psCCChildIter->pszValue, "gmljp2:featureMember") != 0 ||
+            psCCChildIter->psChild == NULL ||
+            psCCChildIter->psChild->eType != CXT_Element )
+            continue;
+
+        CPLXMLNode* psGCorGMLJP2Features = psCCChildIter->psChild;
+        int bIsGC = ( strstr(psGCorGMLJP2Features->pszValue, "GridCoverage") != NULL );
+
+        CPLXMLNode* psGCorGMLJP2FeaturesChildIter = psGCorGMLJP2Features->psChild;
+        for( ; psGCorGMLJP2FeaturesChildIter != NULL;
+               psGCorGMLJP2FeaturesChildIter = psGCorGMLJP2FeaturesChildIter->psNext )
+        {
+            if( psGCorGMLJP2FeaturesChildIter->eType != CXT_Element ||
+                strcmp(psGCorGMLJP2FeaturesChildIter->pszValue, "gmljp2:feature") != 0 ||
+                psGCorGMLJP2FeaturesChildIter->psChild == NULL ||
+                psGCorGMLJP2FeaturesChildIter->psChild->eType != CXT_Element ||
+                strstr(psGCorGMLJP2FeaturesChildIter->psChild->pszValue, "FeatureCollection") == NULL )
+                continue;
+            CPLDebug("GMLJP2", "Found a FeatureCollection at %s level",
+                     (bIsGC) ? "GridCoverage" : "CoverageCollection");
+
+            // Create temporary .gml file
+            CPLXMLNode* psFC = psGCorGMLJP2FeaturesChildIter->psChild;
+            CPLString osGMLTmpFile(CPLSPrintf("/vsimem/jp2openjpeg/%p/my.gml", this));
+            CPLString osXSDTmpFile;
+            CPLSerializeXMLTreeToFile(psFC, osGMLTmpFile);
+
+            // Try to localize its .xsd schema in a GMLJP2 auxiliary box
+            const char* pszSchemaLocation = CPLGetXMLValue(psFC, "xsi:schemaLocation", NULL);
+            if( pszSchemaLocation )
+            {
+                char **papszTokens = CSLTokenizeString2(
+                        pszSchemaLocation, " \t\n", 
+                        CSLT_HONOURSTRINGS | CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES);
+
+                if( (CSLCount(papszTokens) % 2) == 0 )
+                {
+                    for(char** papszIter = papszTokens; *papszIter; papszIter += 2 )
+                    {
+                        if( strncmp(papszIter[1], "gmljp2://xml/", strlen("gmljp2://xml/")) == 0 )
+                        {
+                            const char* pszBoxName = papszIter[1] + strlen("gmljp2://xml/");
+                            char** papszBoxData = GetMetadata(CPLSPrintf("xml:%s", pszBoxName));
+                            if( papszBoxData != NULL )
+                            {
+                                osXSDTmpFile = CPLSPrintf("/vsimem/jp2openjpeg/%p/my.xsd", this);
+                                VSIFCloseL(VSIFileFromMemBuffer(osXSDTmpFile,
+                                                                (GByte*)papszBoxData[0],
+                                                                strlen(papszBoxData[0]),
+                                                                FALSE));
+                            }
+                            else
+                            {
+                                CPLDebug("GMLJP2",
+                                         "Feature collection references %s, but no corresponding box found",
+                                         papszIter[1]);
+                            }
+                            break;
+                        }
+                    }
+                }
+                CSLDestroy(papszTokens);
+            }
+
+            GDALDriverH hDrv = GDALIdentifyDriver(osGMLTmpFile, NULL);
+            GDALDriverH hGMLDrv = GDALGetDriverByName("GML");
+            if( hDrv != NULL && hDrv == hGMLDrv )
+            {
+                char* apszOpenOptions[2];
+                apszOpenOptions[0] = (char*) "FORCE_SRS_DETECTION=YES";
+                apszOpenOptions[1] = NULL;
+                GDALDataset* poTmpDS = (GDALDataset*)GDALOpenEx( osGMLTmpFile,
+                                        GDAL_OF_VECTOR, NULL, apszOpenOptions, NULL );
+                if( poTmpDS )
+                {
+                    int nLayers = poTmpDS->GetLayerCount();
+                    for(int i=0;i<nLayers;i++)
+                    {
+                        if( poMemDS == NULL )
+                            poMemDS = poMemDriver->Create("", 0, 0, 0, GDT_Unknown, NULL);
+                        OGRLayer* poSrcLyr = poTmpDS->GetLayer(i);
+                        const char* pszLayerName;
+                        if( bIsGC )
+                            pszLayerName = CPLSPrintf("FC_GridCoverage_%d_%s",
+                                                    ++nLayersAtGC, poSrcLyr->GetName());
+                        else
+                            pszLayerName = CPLSPrintf("FC_CoverageCollection_%d_%s",
+                                                    ++nLayersAtCC, poSrcLyr->GetName());
+                        poMemDS->CopyLayer(poSrcLyr, pszLayerName, NULL);
+                    }
+                    GDALClose(poTmpDS);
+                }
+            }
+            else
+            {
+                CPLDebug("GMLJP2", "No GML driver found to read feature collection");
+            }
+
+            VSIUnlink(osGMLTmpFile);
+            if( osXSDTmpFile.size() )
+                VSIUnlink(osXSDTmpFile);
+        }
+    }
+
+    // Find annotations
+    psCCChildIter = psCC->psChild;
+    int nAnnotations = 0;
+    for( ; psCCChildIter != NULL; psCCChildIter = psCCChildIter->psNext )
+    {
+        if( psCCChildIter->eType != CXT_Element ||
+            strcmp(psCCChildIter->pszValue, "gmljp2:featureMember") != 0 ||
+            psCCChildIter->psChild == NULL ||
+            psCCChildIter->psChild->eType != CXT_Element )
+            continue;
+        CPLXMLNode* psGCorGMLJP2Features = psCCChildIter->psChild;
+        int bIsGC = ( strstr(psGCorGMLJP2Features->pszValue, "GridCoverage") != NULL );
+        if( !bIsGC )
+            continue;
+        CPLXMLNode* psGCorGMLJP2FeaturesChildIter = psGCorGMLJP2Features->psChild;
+        for( ; psGCorGMLJP2FeaturesChildIter != NULL;
+               psGCorGMLJP2FeaturesChildIter = psGCorGMLJP2FeaturesChildIter->psNext )
+        {
+            if( psGCorGMLJP2FeaturesChildIter->eType != CXT_Element ||
+                strcmp(psGCorGMLJP2FeaturesChildIter->pszValue, "gmljp2:annotation") != 0 ||
+                psGCorGMLJP2FeaturesChildIter->psChild == NULL ||
+                psGCorGMLJP2FeaturesChildIter->psChild->eType != CXT_Element ||
+                strstr(psGCorGMLJP2FeaturesChildIter->psChild->pszValue, "kml") == NULL )
+                continue;
+            CPLDebug("GMLJP2", "Found a KML annotation");
+
+            // Create temporary .kml file
+            CPLXMLNode* psKML = psGCorGMLJP2FeaturesChildIter->psChild;
+            CPLString osKMLTmpFile(CPLSPrintf("/vsimem/jp2openjpeg/%p/my.kml", this));
+            CPLSerializeXMLTreeToFile(psKML, osKMLTmpFile);
+
+            GDALDataset* poTmpDS = (GDALDataset*)GDALOpenEx( osKMLTmpFile,
+                                    GDAL_OF_VECTOR, NULL, NULL, NULL );
+            if( poTmpDS )
+            {
+                int nLayers = poTmpDS->GetLayerCount();
+                for(int i=0;i<nLayers;i++)
+                {
+                    if( poMemDS == NULL )
+                        poMemDS = poMemDriver->Create("", 0, 0, 0, GDT_Unknown, NULL);
+                    OGRLayer* poSrcLyr = poTmpDS->GetLayer(i);
+                    const char* pszLayerName;
+                    pszLayerName = CPLSPrintf("Annotation_%d_%s",
+                                                ++nAnnotations, poSrcLyr->GetName());
+                    poMemDS->CopyLayer(poSrcLyr, pszLayerName, NULL);
+                }
+                GDALClose(poTmpDS);
+            }
+            else
+            {
+                CPLDebug("GMLJP2", "No KML/LIBKML driver found to read annotation");
+            }
+
+            VSIUnlink(osKMLTmpFile);
+        }
+    }
+
+    CPLDestroyXMLNode(psRoot);
+}
+
+/************************************************************************/
+/*                           GetLayerCount()                            */
+/************************************************************************/
+
+int GDALJP2AbstractDataset::GetLayerCount()
+{
+    return (poMemDS != NULL) ? poMemDS->GetLayerCount() : 0;
+}
+
+/************************************************************************/
+/*                             GetLayer()                               */
+/************************************************************************/
+
+OGRLayer* GDALJP2AbstractDataset::GetLayer(int i)
+{
+    return (poMemDS != NULL) ? poMemDS->GetLayer(i) : NULL;
 }

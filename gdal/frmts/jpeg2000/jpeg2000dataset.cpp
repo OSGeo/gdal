@@ -791,7 +791,24 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Check for overviews.                                            */
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
-    
+
+/* -------------------------------------------------------------------- */
+/*      Vector layers                                                   */
+/* -------------------------------------------------------------------- */
+    if( poOpenInfo->nOpenFlags & GDAL_OF_VECTOR )
+    {
+        poDS->LoadVectorLayers();
+
+        // If file opened in vector-only mode and there's no vector,
+        // return
+        if( (poOpenInfo->nOpenFlags & GDAL_OF_RASTER) == 0 &&
+            poDS->GetLayerCount() == 0 )
+        {
+            delete poDS;
+            return NULL;
+        }
+    }
+
     return( poDS );
 }
 
@@ -1336,6 +1353,7 @@ void GDALRegister_JPEG2000()
         
         poDriver->SetDescription( "JPEG2000" );
         poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "JPEG-2000 part 1 (ISO/IEC 15444-1)" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 

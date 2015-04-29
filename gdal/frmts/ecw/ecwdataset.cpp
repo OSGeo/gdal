@@ -2730,7 +2730,24 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJPEG2000 )
 /* -------------------------------------------------------------------- */
     poDS->SetDescription( osFilename );
     poDS->TryLoadXML();
-    
+
+/* -------------------------------------------------------------------- */
+/*      Vector layers                                                   */
+/* -------------------------------------------------------------------- */
+    if( bIsJPEG2000 && poOpenInfo->nOpenFlags & GDAL_OF_VECTOR )
+    {
+        poDS->LoadVectorLayers();
+
+        // If file opened in vector-only mode and there's no vector,
+        // return
+        if( (poOpenInfo->nOpenFlags & GDAL_OF_RASTER) == 0 &&
+            poDS->GetLayerCount() == 0 )
+        {
+            delete poDS;
+            return NULL;
+        }
+    }
+
     return( poDS );
 }
 
@@ -3422,6 +3439,7 @@ void GDALRegister_JP2ECW()
         
         poDriver->SetDescription( "JP2ECW" );
         poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
 
         CPLString osLongName = "ERDAS JPEG2000 (SDK ";
 

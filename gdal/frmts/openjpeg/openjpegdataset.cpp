@@ -1202,7 +1202,7 @@ JP2OpenJPEGDataset::~JP2OpenJPEGDataset()
 
 int JP2OpenJPEGDataset::CloseDependentDatasets()
 {
-    int bRet = GDALPamDataset::CloseDependentDatasets();
+    int bRet = GDALJP2AbstractDataset::CloseDependentDatasets();
     if ( papoOverviewDS )
     {
         for( int i = 0; i < nOverviewCount; i++ )
@@ -1885,6 +1885,23 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->bHasGeoreferencingAtOpening = 
         ((poDS->pszProjection != NULL && poDS->pszProjection[0] != '\0' )||
          poDS->nGCPCount != 0 || poDS->bGeoTransformValid);
+
+/* -------------------------------------------------------------------- */
+/*      Vector layers                                                   */
+/* -------------------------------------------------------------------- */
+    if( poOpenInfo->nOpenFlags & GDAL_OF_VECTOR )
+    {
+        poDS->LoadVectorLayers();
+
+        // If file opened in vector-only mode and there's no vector,
+        // return
+        if( (poOpenInfo->nOpenFlags & GDAL_OF_RASTER) == 0 &&
+            poDS->GetLayerCount() == 0 )
+        {
+            delete poDS;
+            return NULL;
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
@@ -3476,6 +3493,7 @@ void GDALRegister_JP2OpenJPEG()
         
         poDriver->SetDescription( "JP2OpenJPEG" );
         poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "JPEG-2000 driver based on OpenJPEG library" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
