@@ -144,6 +144,8 @@ public:
 
     int         nGCPCount;
     GDAL_GCP    *pasGCPList;
+    
+    char **papszRPCMD;
 
     char  **papszMetadata; /* TIFFTAG_?RESOLUTION* for now from resd box */
     char   *pszXMPMetadata;
@@ -167,6 +169,7 @@ public:
     void    SetProjection( const char *pszWKT );
     void    SetGeoTransform( double * );
     void    SetGCPs( int, const GDAL_GCP * );
+    void    SetRPCMD( char** papszRPCMDIn );
     
     GDALJP2Box *CreateJP2GeoTIFF();
     GDALJP2Box *CreateGMLJP2( int nXSize, int nYSize );

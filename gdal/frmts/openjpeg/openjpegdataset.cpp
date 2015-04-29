@@ -2449,6 +2449,11 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
                         ( pszWKT != NULL && pszWKT[0] != '\0' ) && 
                           poSrcDS->GetGeoTransform( adfGeoTransform ) == CE_None;
         }
+        if( poSrcDS->GetMetadata("RPC") != NULL )
+        {
+            oJP2MD.SetRPCMD(  poSrcDS->GetMetadata("RPC") );
+            bGeoreferencingCompatOfGeoJP2 = TRUE;
+        }
 
         const char* pszAreaOrPoint = poSrcDS->GetMetadataItem(GDALMD_AREA_OR_POINT);
         oJP2MD.bPixelIsPoint = pszAreaOrPoint != NULL && EQUAL(pszAreaOrPoint, GDALMD_AOP_POINT);
