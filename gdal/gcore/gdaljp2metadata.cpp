@@ -38,6 +38,7 @@
 #include "ogr_api.h"
 #include "gt_wkt_srs_for_gdal.h"
 #include "json.h"
+#include "gdaljp2metadatagenerator.h"
 
 CPL_CVSID("$Id$");
 
@@ -1461,6 +1462,51 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2( int nXSize, int nYSize )
 }
 
 /************************************************************************/
+/*                      GDALGMLJP2GetXMLRoot()                          */
+/************************************************************************/
+
+static CPLXMLNode* GDALGMLJP2GetXMLRoot(CPLXMLNode* psNode)
+{
+    for( ; psNode != NULL; psNode = psNode->psNext )
+    {
+        if( psNode->eType == CXT_Element && psNode->pszValue[0] != '?' )
+            return psNode;
+    }
+    return NULL;
+}
+
+/************************************************************************/
+/*            GDALGMLJP2PatchFeatureCollectionSubstitutionGroup()       */
+/************************************************************************/
+
+static void GDALGMLJP2PatchFeatureCollectionSubstitutionGroup(CPLXMLNode* psRoot)
+{
+    /* GML 3.2 SF profile recommands the feature collection type to derive */
+    /* from gml:AbstractGML to prevent it to be included in another feature */
+    /* collection, but this is what we want to do. So patch that... */
+
+    /* <xs:element name="FeatureCollection" type="ogr:FeatureCollectionType" substitutionGroup="gml:AbstractGML"/> */
+    /* --> */
+    /* <xs:element name="FeatureCollection" type="ogr:FeatureCollectionType" substitutionGroup="gml:AbstractFeature"/> */
+    if( psRoot->eType == CXT_Element &&
+        (strcmp(psRoot->pszValue, "schema") == 0 || strcmp(psRoot->pszValue, "xs:schema") == 0) )
+    {
+        for(CPLXMLNode* psIter = psRoot->psChild; psIter != NULL; psIter = psIter->psNext)
+        {
+            if( psIter->eType == CXT_Element &&
+                (strcmp(psIter->pszValue, "element") == 0 || strcmp(psIter->pszValue, "xs:element") == 0) &&
+                strcmp(CPLGetXMLValue(psIter, "name", ""), "FeatureCollection") == 0 &&
+                strcmp(CPLGetXMLValue(psIter, "substitutionGroup", ""), "gml:AbstractGML") == 0 )
+            {
+                CPLDebug("GMLJP2", "Patching substitutionGroup=\"gml:AbstractGML\" to \"gml:AbstractFeature\"");
+                CPLSetXMLValue( psIter, "#substitutionGroup", "gml:AbstractFeature" );
+                break;
+            }
+        }
+    }
+}
+
+/************************************************************************/
 /*                          CreateGMLJP2V2()                            */
 /************************************************************************/
 
@@ -1487,6 +1533,8 @@ class GMLJP2V2MetadataDesc
     public:
         CPLString osFile;
         CPLString osContent;
+        CPLString osTemplateFile;
+        CPLString osSourceFile;
         int       bParentCoverageCollection;
 
             GMLJP2V2MetadataDesc(): bParentCoverageCollection(TRUE) {}
@@ -1498,43 +1546,6 @@ class GMLJP2V2BoxDesc
         CPLString osFile;
         CPLString osLabel;
 };
-
-static CPLXMLNode* GetXMLRoot(CPLXMLNode* psNode)
-{
-    for( ; psNode != NULL; psNode = psNode->psNext )
-    {
-        if( psNode->eType == CXT_Element && strcmp(psNode->pszValue, "?xml") != 0 )
-            return psNode;
-    }
-    return NULL;
-}
-
-static void PatchFeatureCollectionSubstitutionGroup(CPLXMLNode* psRoot)
-{
-    /* GML 3.2 SF profile recommands the feature collection type to derive */
-    /* from gml:AbstractGML to prevent it to be included in another feature */
-    /* collection, but this is what we want to do. So patch that... */
-
-    /* <xs:element name="FeatureCollection" type="ogr:FeatureCollectionType" substitutionGroup="gml:AbstractGML"/> */
-    /* --> */
-    /* <xs:element name="FeatureCollection" type="ogr:FeatureCollectionType" substitutionGroup="gml:AbstractFeature"/> */
-    if( psRoot->eType == CXT_Element &&
-        (strcmp(psRoot->pszValue, "schema") == 0 || strcmp(psRoot->pszValue, "xs:schema") == 0) )
-    {
-        for(CPLXMLNode* psIter = psRoot->psChild; psIter != NULL; psIter = psIter->psNext)
-        {
-            if( psIter->eType == CXT_Element &&
-                (strcmp(psIter->pszValue, "element") == 0 || strcmp(psIter->pszValue, "xs:element") == 0) &&
-                strcmp(CPLGetXMLValue(psIter, "name", ""), "FeatureCollection") == 0 &&
-                strcmp(CPLGetXMLValue(psIter, "substitutionGroup", ""), "gml:AbstractGML") == 0 )
-            {
-                CPLDebug("GMLJP2", "Patching substitutionGroup=\"gml:AbstractGML\" to \"gml:AbstractFeature\"");
-                CPLSetXMLValue( psIter, "#substitutionGroup", "gml:AbstractFeature" );
-                break;
-            }
-        }
-    }
-}
 
 GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                                              const char* pszDefFilename )
@@ -1589,8 +1600,21 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
             "dcmetadata.xml",
 
             {
-                "#file_doc": "Can use relative or absolute paths. Required",
+                "#file_doc": "Can use relative or absolute paths. Exclusive of content and generated_metadata.",
                 "file": "dcmetadata.xml",
+
+                "#dynamic_metadata_doc":
+                    [ "The metadata file will be generated from a template and a source file.",
+                      "The template is a valid GMLJP2 metadata XML tree with placeholders like",
+                      "{{{XPATH(some_xpath_expression)}}}",
+                      "that are evalated from the source XML file. Typical use case",
+                      "is to generate a gmljp2:eopMetadata from the XML metadata",
+                      "provided by the image provider in their own particular format." ],
+                "dynamic_metadata" :
+                {
+                    "template": "my_template.xml",
+                    "source": "my_source.xml"
+                },
 
                 "#content": "Exclusive of file. Inline XML metadata content",
                 "content": "<gmljp2:metadata>Some simple textual metadata</gmljp2:metadata>",
@@ -1598,7 +1622,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                 "#parent_node": ["Where to put the metadata.",
                                  "Under CoverageCollection (default) or GridCoverage" ],
                 "parent_node": "CoverageCollection"
-            }
+            },
         ],
 
         "#annotations_doc": [ "An array of filenames, either directly KML files",
@@ -1711,13 +1735,42 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                         if( poContent && json_object_get_type(poContent) == json_type_string )
                             pszContent = json_object_get_string(poContent);
 
-                        if( pszFile != NULL || pszContent != NULL )
+                        const char* pszTemplate = NULL;
+                        const char* pszSource = NULL;
+                        json_object* poDynamicMetadata = json_object_object_get(poMetadata, "dynamic_metadata");
+                        if( poDynamicMetadata && json_object_get_type(poDynamicMetadata) == json_type_object )
+                        {
+#ifdef HAVE_LIBXML2
+                            if( CSLTestBoolean(CPLGetConfigOption("GDAL_DEBUG_PROCESS_DYNAMIC_METADATA", "YES")) )
+                            {
+                                json_object* poTemplate = json_object_object_get(poDynamicMetadata, "template");
+                                if( poTemplate && json_object_get_type(poTemplate) == json_type_string )
+                                    pszTemplate = json_object_get_string(poTemplate);
+
+                                json_object* poSource = json_object_object_get(poDynamicMetadata, "source");
+                                if( poSource && json_object_get_type(poSource) == json_type_string )
+                                    pszSource = json_object_get_string(poSource);
+                            }
+                            else
+#endif
+                            {
+                            CPLError(CE_Warning, CPLE_NotSupported,
+                                     "dynamic_metadata not supported since libxml2 is not available");
+                            }
+                        }
+
+                        if( pszFile != NULL || pszContent != NULL ||
+                            (pszTemplate != NULL && pszSource != NULL) )
                         {
                             GMLJP2V2MetadataDesc oDesc;
                             if( pszFile )
                                 oDesc.osFile = pszFile;
                             if( pszContent )
                                 oDesc.osContent = pszContent;
+                            if( pszTemplate )
+                                oDesc.osTemplateFile = pszTemplate;
+                            if( pszSource )
+                                oDesc.osSourceFile = pszSource;
 
                             json_object* poLocation = json_object_object_get(poMetadata, "parent_node");
                             if( poLocation && json_object_get_type(poLocation) == json_type_string )
@@ -1872,7 +1925,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
             CPLXMLNode* psTmp = CPLParseXMLFile(osGridCoverageFile);
             if( psTmp == NULL )
                 return NULL;
-            CPLXMLNode* psTmpRoot = GetXMLRoot(psTmp);
+            CPLXMLNode* psTmpRoot = GDALGMLJP2GetXMLRoot(psTmp);
             if( psTmpRoot )
             {
                 char* pszTmp = CPLSerializeXMLTree(psTmpRoot);
@@ -1992,7 +2045,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
     {
         CPLXMLNode* psRoot = CPLParseXMLString(osDoc);
         CPLAssert(psRoot);
-        CPLXMLNode* psGMLJP2CoverageCollection = GetXMLRoot(psRoot);
+        CPLXMLNode* psGMLJP2CoverageCollection = GDALGMLJP2GetXMLRoot(psRoot);
         CPLAssert(psGMLJP2CoverageCollection);
 
         for( int i=0; i < (int)aoMetadata.size(); i++ )
@@ -2000,13 +2053,23 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
             CPLXMLNode* psMetadata;
             if( aoMetadata[i].osFile.size() )
                 psMetadata = CPLParseXMLFile(aoMetadata[i].osFile);
-            else
+            else if( aoMetadata[i].osContent.size() )
                 psMetadata = CPLParseXMLString(aoMetadata[i].osContent);
+            else
+                psMetadata = GDALGMLJP2GenerateMetadata(aoMetadata[i].osTemplateFile,
+                                                        aoMetadata[i].osSourceFile);
             if( psMetadata == NULL )
                 continue;
-            CPLXMLNode* psMetadataRoot = GetXMLRoot(psMetadata);
+            CPLXMLNode* psMetadataRoot = GDALGMLJP2GetXMLRoot(psMetadata);
             if( psMetadataRoot )
             {
+                if( strcmp(psMetadataRoot->pszValue, "eop:EarthObservation") == 0 )
+                {
+                    CPLXMLNode* psNewMetadata = CPLCreateXMLNode(NULL, CXT_Element, "gmljp2:eopMetadata");
+                    CPLAddXMLChild(psNewMetadata, CPLCloneXMLTree(psMetadataRoot));
+                    CPLDestroyXMLNode(psMetadata);
+                    psMetadata = psMetadataRoot = psNewMetadata;
+                }
                 if( strcmp(psMetadataRoot->pszValue, "gmljp2:isoMetadata") != 0 &&
                     strcmp(psMetadataRoot->pszValue, "gmljp2:eopMetadata") != 0 &&
                     strcmp(psMetadataRoot->pszValue, "gmljp2:dcMetadata") != 0 &&
@@ -2131,7 +2194,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
             if( psGMLFile == NULL )
                 continue;
 
-            CPLXMLNode* psGMLFileRoot = GetXMLRoot(psGMLFile);
+            CPLXMLNode* psGMLFileRoot = GDALGMLJP2GetXMLRoot(psGMLFile);
             if( psGMLFileRoot ) 
             {
                 CPLXMLNode *node_f;
@@ -2365,7 +2428,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
             if( psKMLFile == NULL )
                 continue;
 
-            CPLXMLNode* psKMLFileRoot = GetXMLRoot(psKMLFile);
+            CPLXMLNode* psKMLFileRoot = GDALGMLJP2GetXMLRoot(psKMLFile);
             if( psKMLFileRoot ) 
             {
                 CPLXMLNode* psFeatureMemberOfGridCoverage =
@@ -2434,10 +2497,10 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
             pabyContent = NULL;
             if( psNode )
             {
-                CPLXMLNode* psRoot = GetXMLRoot(psNode);
+                CPLXMLNode* psRoot = GDALGMLJP2GetXMLRoot(psNode);
                 if( psRoot ) 
                 {
-                    PatchFeatureCollectionSubstitutionGroup(psRoot);
+                    GDALGMLJP2PatchFeatureCollectionSubstitutionGroup(psRoot);
                     pabyContent = (GByte*) CPLSerializeXMLTree(psRoot);
                     apoGMLBoxes.push_back(
                         GDALJP2Box::CreateLabelledXMLAssoc( aoBoxes[i].osLabel,
