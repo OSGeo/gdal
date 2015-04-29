@@ -2267,7 +2267,7 @@ def jp2openjpeg_42():
         return 'fail'
     ds = None
 
-    gdal.Unlink('/vsimem/jp2openjpeg_41.jp2')
+    gdal.Unlink('/vsimem/jp2openjpeg_42.jp2')
 
     return 'success'
 
@@ -2295,6 +2295,7 @@ def jp2openjpeg_44():
     del out_ds
     ret = validate('/vsimem/jp2openjpeg_44.jp2', oidoc = 'data/utm_inspire_tg_oi.xml')
     gdal.Unlink('/vsimem/jp2openjpeg_44.jp2')
+    gdal.Unlink('/vsimem/jp2openjpeg_44.jp2.aux.xml')
 
     return ret
 
@@ -2729,6 +2730,7 @@ def jp2openjpeg_45():
     gdal.Unlink("/vsimem/feature2.gml")
     gdal.Unlink("/vsimem/feature3.gml")
     gdal.Unlink("/vsimem/empty.kml")
+    gdal.Unlink("/vsimem/a_schema.xsd")
     del out_ds
 
     # Now do the checks
