@@ -662,6 +662,7 @@ Error""")
     if ret == 0:
         gdaltest.post_reason('fail')
         return 'fail'
+    f = None
         
     fld_defn = ogr.FieldDefn('INTFIELD', ogr.OFTInteger)
     gdal.PushErrorHandler()
