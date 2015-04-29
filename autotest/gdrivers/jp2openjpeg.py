@@ -2825,18 +2825,22 @@ def jp2openjpeg_45():
     ds = None
 
     ds = ogr.Open('/vsimem/jp2openjpeg_45.jp2')
-    if ds.GetLayerCount() != 2:
+    if ds.GetLayerCount() != 6:
         gdaltest.post_reason('fail')
         print(ds.GetLayerCount())
         return 'fail'
-    if ds.GetLayer(0).GetName() != 'FC_CoverageCollection_1_Observation':
-        gdaltest.post_reason('fail')
-        print(ds.GetLayer(0).GetName())
-        return 'fail'
-    if ds.GetLayer(1).GetName() != 'Annotation_1_myshape':
-        gdaltest.post_reason('fail')
-        print(ds.GetLayer(1).GetName())
-        return 'fail'
+    expected_layers = [ 'FC_GridCoverage_1_myshape',
+                        'FC_CoverageCollection_1_Observation',
+                        'FC_CoverageCollection_2_Observation',
+                        'FC_CoverageCollection_3_Observation',
+                        'FC_CoverageCollection_4_Observation',
+                        'Annotation_1_myshape' ]
+    for j in range(6):
+        if ds.GetLayer(j).GetName() != expected_layers[j]:
+            gdaltest.post_reason('fail')
+            for i in range(ds.GetLayerCount()):
+                print(ds.GetLayer(i).GetName())
+            return 'fail'
     ds = None
 
     ret = validate('/vsimem/jp2openjpeg_45.jp2', inspire_tg = False)
@@ -2850,6 +2854,12 @@ def jp2openjpeg_45():
     conf = { "root_instance": { "gml_filelist": [ { "file": "../ogr/data/poly.shp", "parent_node": "GridCoverage"} ] } }
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_45.jp2', src_ds, options = ['GMLJP2V2_DEF=' + json.dumps(conf)])
     del out_ds
+
+    dircontent = gdal.ReadDir('/vsimem/gmljp2')
+    if dircontent is not None:
+        gdaltest.post_reason('fail')
+        print(dircontent)
+        return 'fail'
 
     ds = ogr.Open('/vsimem/jp2openjpeg_45.jp2')
     if ds.GetLayerCount() != 1:
