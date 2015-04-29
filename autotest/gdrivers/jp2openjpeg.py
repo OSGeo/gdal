@@ -2831,9 +2831,9 @@ def jp2openjpeg_45():
         return 'fail'
     expected_layers = [ 'FC_GridCoverage_1_myshape',
                         'FC_CoverageCollection_1_Observation',
-                        'FC_CoverageCollection_2_Observation',
-                        'FC_CoverageCollection_3_Observation',
-                        'FC_CoverageCollection_4_Observation',
+                        'FC_CoverageCollection_2_myshape',
+                        'FC_CoverageCollection_3_myshape',
+                        'FC_CoverageCollection_4_myshape',
                         'Annotation_1_myshape' ]
     for j in range(6):
         if ds.GetLayer(j).GetName() != expected_layers[j]:

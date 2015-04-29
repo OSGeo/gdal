@@ -312,7 +312,7 @@ void GDALJP2AbstractDataset::LoadVectorLayers()
                      (bIsGC) ? "GridCoverage" : "CoverageCollection");
 
             // Create temporary .gml file
-            CPLString osGMLTmpFile(CPLSPrintf("/vsimem/jp2openjpeg/%p/my.gml", this));
+            CPLString osGMLTmpFile(CPLSPrintf("/vsimem/gmljp2/%p/my.gml", this));
             CPLString osXSDTmpFile;
             CPLSerializeXMLTreeToFile(psFC, osGMLTmpFile);
 
@@ -334,7 +334,7 @@ void GDALJP2AbstractDataset::LoadVectorLayers()
                             char** papszBoxData = GetMetadata(CPLSPrintf("xml:%s", pszBoxName));
                             if( papszBoxData != NULL )
                             {
-                                osXSDTmpFile = CPLSPrintf("/vsimem/jp2openjpeg/%p/my.xsd", this);
+                                osXSDTmpFile = CPLSPrintf("/vsimem/gmljp2/%p/my.xsd", this);
                                 VSIFCloseL(VSIFileFromMemBuffer(osXSDTmpFile,
                                                                 (GByte*)papszBoxData[0],
                                                                 strlen(papszBoxData[0]),
@@ -385,6 +385,9 @@ void GDALJP2AbstractDataset::LoadVectorLayers()
                         poMemDS->CopyLayer(poSrcLyr, pszLayerName, NULL);
                     }
                     GDALClose(poTmpDS);
+
+                    // In case we don't have a schema, a .gfs might have been generated
+                    VSIUnlink(CPLSPrintf("/vsimem/gmljp2/%p/my.gfs", this));
                 }
             }
             else
@@ -426,7 +429,7 @@ void GDALJP2AbstractDataset::LoadVectorLayers()
 
             // Create temporary .kml file
             CPLXMLNode* psKML = psGCorGMLJP2FeaturesChildIter->psChild;
-            CPLString osKMLTmpFile(CPLSPrintf("/vsimem/jp2openjpeg/%p/my.kml", this));
+            CPLString osKMLTmpFile(CPLSPrintf("/vsimem/gmljp2/%p/my.kml", this));
             CPLSerializeXMLTreeToFile(psKML, osKMLTmpFile);
 
             GDALDataset* poTmpDS = (GDALDataset*)GDALOpenEx( osKMLTmpFile,
