@@ -209,23 +209,23 @@ void GDALWMSMiniDriver_AGS::GetTiledImageInfo(CPLString *url,
 	URLAppendF(url, "&layerTimeOptions=");
 
 	CPLString layers("visible");
-	if ( m_layers.find("show") != -1 )
+	if ( m_layers.find("show") != std::string::npos )
 	{
 		layers = m_layers;
 		layers.replace( layers.find("show"), 4, "all" );
 	}
 	
-	if ( m_layers.find("hide") != -1 )
+	if ( m_layers.find("hide") != std::string::npos )
 	{
 		layers = "top";
 	}
 	
-	if ( m_layers.find("include") != -1 )
+	if ( m_layers.find("include") != std::string::npos )
 	{
 		layers = "top";
 	}
 	
-	if ( m_layers.find("exclude") != -1 )
+	if ( m_layers.find("exclude") != std::string::npos )
 	{
 		layers = "top";
 	}
