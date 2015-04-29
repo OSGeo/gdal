@@ -74,6 +74,8 @@ GDALJP2Metadata::GDALJP2Metadata()
     nGCPCount = 0;
     pasGCPList = NULL;
 
+    papszRPCMD = NULL;
+
     papszGMLMetadata = NULL;
     papszMetadata = NULL;
 
@@ -110,6 +112,7 @@ GDALJP2Metadata::~GDALJP2Metadata()
         GDALDeinitGCPs( nGCPCount, pasGCPList );
         CPLFree( pasGCPList );
     }
+    CSLDestroy(papszRPCMD);
 
     for( int i=0; i < nGeoTIFFBoxesCount; i++ )
     {
@@ -183,7 +186,8 @@ int GDALJP2Metadata::ReadAndParse( VSILFILE *fpLL )
 /* -------------------------------------------------------------------- */
     return bHaveGeoTransform
         || nGCPCount > 0 
-        || (pszProjection != NULL && strlen(pszProjection) > 0);
+        || (pszProjection != NULL && strlen(pszProjection) > 0)
+        || papszRPCMD != NULL;
 }
 
 /************************************************************************/
@@ -526,6 +530,7 @@ int GDALJP2Metadata::ParseJP2GeoTIFF()
     int anGCPCount[MAX_JP2GEOTIFF_BOXES] = { 0 };
     GDAL_GCP    *apasGCPList[MAX_JP2GEOTIFF_BOXES] = { NULL };
     int abPixelIsPoint[MAX_JP2GEOTIFF_BOXES] = { 0 };
+    char** apapszRPCMD[MAX_JP2GEOTIFF_BOXES] = { NULL };
 
     int i;
     int nMax = MIN(nGeoTIFFBoxesCount, MAX_JP2GEOTIFF_BOXES);
@@ -543,7 +548,8 @@ int GDALJP2Metadata::ParseJP2GeoTIFF()
         if( GTIFWktFromMemBufEx( pasGeoTIFFBoxes[i].nGeoTIFFSize,
                                pasGeoTIFFBoxes[i].pabyGeoTIFFData,
                                &apszProjection[i], aadfGeoTransform[i],
-                               &anGCPCount[i], &apasGCPList[i], &abPixelIsPoint[i] ) == CE_None )
+                               &anGCPCount[i], &apasGCPList[i],
+                               &abPixelIsPoint[i], &apapszRPCMD[i] ) == CE_None )
         {
             if( apszProjection[i] != NULL && strlen(apszProjection[i]) != 0 ) 
                 abValidProjInfo[i] = TRUE;
@@ -576,7 +582,8 @@ int GDALJP2Metadata::ParseJP2GeoTIFF()
                 || aadfGeoTransform[i][3] != 0 
                 || aadfGeoTransform[i][4] != 0
                 || aadfGeoTransform[i][5] != 1
-                || anGCPCount[i] > 0)
+                || anGCPCount[i] > 0
+                || apapszRPCMD[i] != NULL )
             {
                 iBestIndex = i;
             }
@@ -590,6 +597,7 @@ int GDALJP2Metadata::ParseJP2GeoTIFF()
         nGCPCount = anGCPCount[iBestIndex];
         pasGCPList = apasGCPList[iBestIndex];
         bPixelIsPoint = abPixelIsPoint[iBestIndex];
+        papszRPCMD = apapszRPCMD[iBestIndex];
 
         if( adfGeoTransform[0] != 0 
             || adfGeoTransform[1] != 1 
@@ -616,6 +624,7 @@ int GDALJP2Metadata::ParseJP2GeoTIFF()
                 GDALDeinitGCPs( anGCPCount[i], apasGCPList[i] );
                 CPLFree( apasGCPList[i] );
             }
+            CSLDestroy( apapszRPCMD[i] );
         }
     }
 
@@ -1110,6 +1119,17 @@ void GDALJP2Metadata::SetGeoTransform( double *padfGT )
 }
 
 /************************************************************************/
+/*                             SetRPCMD()                               */
+/************************************************************************/
+
+void GDALJP2Metadata::SetRPCMD( char** papszRPCMDIn )
+
+{
+    CSLDestroy( papszRPCMD );
+    papszRPCMD = CSLDuplicate(papszRPCMDIn);
+}
+
+/************************************************************************/
 /*                          CreateJP2GeoTIFF()                          */
 /************************************************************************/
 
@@ -1125,7 +1145,8 @@ GDALJP2Box *GDALJP2Metadata::CreateJP2GeoTIFF()
 
     if( GTIFMemBufFromWktEx( pszProjection, adfGeoTransform, 
                              nGCPCount, pasGCPList,
-                             &nGTBufSize, &pabyGTBuf, bPixelIsPoint ) != CE_None )
+                             &nGTBufSize, &pabyGTBuf, bPixelIsPoint,
+                             papszRPCMD ) != CE_None )
         return NULL;
 
     if( nGTBufSize == 0 )

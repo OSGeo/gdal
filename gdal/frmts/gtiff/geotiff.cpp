@@ -280,9 +280,6 @@ class GTiffDataset : public GDALPamDataset
 
     int         bLoadingOtherBands;
 
-    static void WriteRPCTag( TIFF *, char ** );
-    void        ReadRPCTag();
-
     void*        pabyTempWriteBuffer;
     int          nTempWriteBufferSize;
     int          WriteEncodedTile(uint32 tile, GByte* pabyData, int bPreserveDataBuffer);
@@ -7470,7 +7467,7 @@ void GTiffDataset::WriteRPC( GDALDataset *poSrcDS, TIFF *hTIFF,
         if( EQUAL(pszProfile,"GDALGeoTIFF") )
         {
             if( !bWriteOnlyInPAMIfNeeded )
-                WriteRPCTag( hTIFF, papszRPCMD );
+                GTiffDatasetWriteRPCTag( hTIFF, papszRPCMD );
             bRPCSerializedOtherWay = TRUE;
         }
 
@@ -7745,15 +7742,14 @@ void GTiffDataset::PushMetadataToPam()
 }
 
 /************************************************************************/
-/*                            WriteRPCTag()                             */
+/*                     GTiffDatasetWriteRPCTag()                        */
 /*                                                                      */
 /*      Format a TAG according to:                                      */
 /*                                                                      */
 /*      http://geotiff.maptools.org/rpc_prop.html                       */
 /************************************************************************/
 
-/* static */
-void GTiffDataset::WriteRPCTag( TIFF *hTIFF, char **papszRPCMD )
+void GTiffDatasetWriteRPCTag( TIFF *hTIFF, char **papszRPCMD )
 
 {
     double adfRPCTag[92];
@@ -7792,7 +7788,7 @@ void GTiffDataset::WriteRPCTag( TIFF *hTIFF, char **papszRPCMD )
 /*      http://geotiff.maptools.org/rpc_prop.html                       */
 /************************************************************************/
 
-void GTiffDataset::ReadRPCTag()
+char** GTiffDatasetReadRPCTag(TIFF* hTIFF)
 
 {
     double *padfRPCTag;
@@ -7804,7 +7800,7 @@ void GTiffDataset::ReadRPCTag()
 
     if( !TIFFGetField( hTIFF, TIFFTAG_RPCCOEFFICIENT, &nCount, &padfRPCTag ) 
         || nCount != 92 )
-        return;
+        return NULL;
 
     asMD.SetNameValue("LINE_OFF", CPLOPrintf("%.15g", padfRPCTag[2]));
     asMD.SetNameValue("SAMP_OFF", CPLOPrintf("%.15g", padfRPCTag[3]));
@@ -7861,7 +7857,7 @@ void GTiffDataset::ReadRPCTag()
     }
     asMD.SetNameValue( "SAMP_DEN_COEFF", osMultiField );
 
-    oGTiffMDMD.SetMetadata( asMD, "RPC" );
+    return asMD.StealList();
 }
 
 /************************************************************************/
@@ -13135,7 +13131,14 @@ void GTiffDataset::LoadRPCRPB()
         CSLDestroy( papszRPCMD );
     }
     else
-        ReadRPCTag();
+    {
+        char** papszRPCMD = GTiffDatasetReadRPCTag(hTIFF);
+        if( papszRPCMD )
+        {
+            oGTiffMDMD.SetMetadata( papszRPCMD, "RPC" );
+            CSLDestroy( papszRPCMD );
+        }
+    }
 }
 
 /************************************************************************/

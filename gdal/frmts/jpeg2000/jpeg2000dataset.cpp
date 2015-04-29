@@ -1093,7 +1093,8 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                      || adfGeoTransform[3] != 0.0 
                      || adfGeoTransform[4] != 0.0 
                      || ABS(adfGeoTransform[5]) != 1.0))
-                || poSrcDS->GetGCPCount() > 0) )
+                || poSrcDS->GetGCPCount() > 0
+                || poSrcDS->GetMetadata("RPC") != NULL ) )
         {
             GDALJP2Metadata oJP2Geo;
 
@@ -1107,6 +1108,8 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                 oJP2Geo.SetProjection( poSrcDS->GetProjectionRef() );
                 oJP2Geo.SetGeoTransform( adfGeoTransform );
             }
+
+            oJP2Geo.SetRPCMD(  poSrcDS->GetMetadata("RPC") );
 
             const char* pszAreaOrPoint = poSrcDS->GetMetadataItem(GDALMD_AREA_OR_POINT);
             oJP2Geo.bPixelIsPoint = pszAreaOrPoint != NULL && EQUAL(pszAreaOrPoint, GDALMD_AOP_POINT);

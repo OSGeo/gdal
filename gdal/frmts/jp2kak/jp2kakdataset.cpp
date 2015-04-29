@@ -2624,7 +2624,8 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                  || adfGeoTransform[3] != 0.0 
                  || adfGeoTransform[4] != 0.0 
                  || ABS(adfGeoTransform[5]) != 1.0))
-            || poSrcDS->GetGCPCount() > 0) )
+            || poSrcDS->GetGCPCount() > 0
+            || poSrcDS->GetMetadata("RPC") != NULL) )
     {
         GDALJP2Metadata oJP2MD;
 
@@ -2638,6 +2639,8 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             oJP2MD.SetProjection( poSrcDS->GetProjectionRef() );
             oJP2MD.SetGeoTransform( adfGeoTransform );
         }
+
+        oJP2MD.SetRPCMD( poSrcDS->GetMetadata("RPC") );
 
         const char* pszAreaOrPoint = poSrcDS->GetMetadataItem(GDALMD_AREA_OR_POINT);
         oJP2MD.bPixelIsPoint = pszAreaOrPoint != NULL && EQUAL(pszAreaOrPoint, GDALMD_AOP_POINT);

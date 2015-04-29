@@ -82,6 +82,8 @@ void GDALJP2AbstractDataset::LoadJP2Metadata(GDALOpenInfo* poOpenInfo,
 
         if( oJP2Geo.bPixelIsPoint )
             GDALDataset::SetMetadataItem(GDALMD_AREA_OR_POINT, GDALMD_AOP_POINT);
+        if( oJP2Geo.papszRPCMD )
+            GDALDataset::SetMetadata( oJP2Geo.papszRPCMD, "RPC" );
     }
 
 /* -------------------------------------------------------------------- */

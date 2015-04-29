@@ -2950,6 +2950,31 @@ def jp2openjpeg_46():
     return 'success'
 
 ###############################################################################
+# Test writing & reading RPC in GeoJP2 box
+
+def jp2openjpeg_47():
+
+    if gdaltest.jp2openjpeg_drv is None:
+        return 'skip'
+
+    src_ds = gdal.Open('../gcore/data/byte_rpc.tif')
+    out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_47.jp2', src_ds)
+    del out_ds
+    if gdal.VSIStatL('/vsimem/jp2openjpeg_47.jp2.aux.xml') is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ds = gdal.Open('/vsimem/jp2openjpeg_47.jp2')
+    if ds.GetMetadata('RPC') is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/jp2openjpeg_47.jp2')
+
+    return 'success'
+
+###############################################################################
 def jp2openjpeg_online_1():
 
     if gdaltest.jp2openjpeg_drv is None:
@@ -3167,6 +3192,7 @@ gdaltest_list = [
     jp2openjpeg_44,
     jp2openjpeg_45,
     jp2openjpeg_46,
+    jp2openjpeg_47,
     jp2openjpeg_online_1,
     jp2openjpeg_online_2,
     jp2openjpeg_online_3,
@@ -3179,6 +3205,7 @@ disabled_gdaltest_list = [
     jp2openjpeg_1,
     jp2openjpeg_45,
     jp2openjpeg_46,
+    jp2openjpeg_47,
     jp2openjpeg_cleanup ]
 
 if __name__ == '__main__':

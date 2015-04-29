@@ -44,6 +44,7 @@
 #include "gt_wkt_srs_for_gdal.h"
 #include "gt_citation.h"
 #include "gt_wkt_srs_priv.h"
+#include "gtiff.h"
 
 CPL_CVSID("$Id$")
 
@@ -58,8 +59,6 @@ CPL_CVSID("$Id$")
 #endif
 
 CPL_C_START
-void CPL_DLL LibgeotiffOneTimeInit();
-void    LibgeotiffOneTimeCleanupMutex();
 #ifndef INTERNAL_LIBGEOTIFF
 void CPL_DLL gtSetCSVFilenameHook( const char *(*)(const char *) );
 #define SetCSVFilenameHook gtSetCSVFilenameHook
@@ -2434,13 +2433,13 @@ CPLErr GTIFWktFromMemBuf( int nSize, unsigned char *pabyBuffer,
                           int *pnGCPCount, GDAL_GCP **ppasGCPList )
 {
     return GTIFWktFromMemBufEx(nSize, pabyBuffer, ppszWKT, padfGeoTransform,
-                               pnGCPCount, ppasGCPList, NULL);
+                               pnGCPCount, ppasGCPList, NULL, NULL);
 }
 
 CPLErr GTIFWktFromMemBufEx( int nSize, unsigned char *pabyBuffer, 
                             char **ppszWKT, double *padfGeoTransform,
                             int *pnGCPCount, GDAL_GCP **ppasGCPList,
-                            int *pbPixelIsPoint )
+                            int *pbPixelIsPoint, char*** ppapszRPCMD )
 
 {
     bool    bPixelIsPoint = false;
@@ -2454,6 +2453,7 @@ CPLErr GTIFWktFromMemBufEx( int nSize, unsigned char *pabyBuffer,
 /* -------------------------------------------------------------------- */
 /*      Make sure we have hooked CSVFilename().                         */
 /* -------------------------------------------------------------------- */
+    GTiffOneTimeInit(); /* for RPC tag */
     LibgeotiffOneTimeInit();
 
 /* -------------------------------------------------------------------- */
@@ -2498,6 +2498,8 @@ CPLErr GTIFWktFromMemBufEx( int nSize, unsigned char *pabyBuffer,
     }
     if( pbPixelIsPoint )
         *pbPixelIsPoint = bPixelIsPoint;
+    if( ppapszRPCMD )
+        *ppapszRPCMD = NULL;
 
 #if LIBGEOTIFF_VERSION >= 1410
     psGTIFDefn = GTIFAllocDefn();
@@ -2593,6 +2595,14 @@ CPLErr GTIFWktFromMemBufEx( int nSize, unsigned char *pabyBuffer,
     }
 
 /* -------------------------------------------------------------------- */
+/*      Read RPC                                                        */
+/* -------------------------------------------------------------------- */
+    if( ppapszRPCMD != NULL )
+    {
+        *ppapszRPCMD =  GTiffDatasetReadRPCTag( hTIFF );
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Cleanup.                                                        */
 /* -------------------------------------------------------------------- */
     XTIFFClose( hTIFF );
@@ -2616,13 +2626,13 @@ CPLErr GTIFMemBufFromWkt( const char *pszWKT, const double *padfGeoTransform,
 {
     return GTIFMemBufFromWktEx(pszWKT, padfGeoTransform,
                                nGCPCount,pasGCPList,
-                               pnSize, ppabyBuffer, FALSE);
+                               pnSize, ppabyBuffer, FALSE, NULL);
 }
 
 CPLErr GTIFMemBufFromWktEx( const char *pszWKT, const double *padfGeoTransform,
                             int nGCPCount, const GDAL_GCP *pasGCPList,
                             int *pnSize, unsigned char **ppabyBuffer,
-                            int bPixelIsPoint )
+                            int bPixelIsPoint, char** papszRPCMD )
 
 {
     TIFF        *hTIFF;
@@ -2635,6 +2645,7 @@ CPLErr GTIFMemBufFromWktEx( const char *pszWKT, const double *padfGeoTransform,
 /* -------------------------------------------------------------------- */
 /*      Make sure we have hooked CSVFilename().                         */
 /* -------------------------------------------------------------------- */
+    GTiffOneTimeInit(); /* for RPC tag */
     LibgeotiffOneTimeInit();
 
 /* -------------------------------------------------------------------- */
@@ -2774,6 +2785,14 @@ CPLErr GTIFMemBufFromWktEx( const char *pszWKT, const double *padfGeoTransform,
         TIFFSetField( hTIFF, TIFFTAG_GEOTIEPOINTS, 6*nGCPCount, padfTiePoints);
         CPLFree( padfTiePoints );
     } 
+
+/* -------------------------------------------------------------------- */
+/*      Write RPC                                                       */
+/* -------------------------------------------------------------------- */
+    if( papszRPCMD != NULL )
+    {
+        GTiffDatasetWriteRPCTag( hTIFF, papszRPCMD );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Cleanup and return the created memory buffer.                   */

@@ -46,6 +46,9 @@ void    GTIFFGetOverviewBlockSize(int* pnBlockXSize, int* pnBlockYSize);
 void    GTIFFSetJpegQuality(GDALDatasetH hGTIFFDS, int nJpegQuality);
 int     GTIFFGetCompressionMethod(const char* pszValue, const char* pszVariableName);
 
+void GTiffDatasetWriteRPCTag( TIFF *hTIFF, char **papszRPCMD );
+char** GTiffDatasetReadRPCTag( TIFF *hTIFF );
+
 #define TIFFTAG_GDAL_METADATA  42112
 #define TIFFTAG_GDAL_NODATA    42113
 #define TIFFTAG_RPCCOEFFICIENT 50844

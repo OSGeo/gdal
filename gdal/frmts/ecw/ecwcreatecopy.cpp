@@ -92,7 +92,7 @@ public:
                         GDALDataType eType, 
                         const char *pszWKT, double *padfGeoTransform,
                         int nGCPCount, const GDAL_GCP *pasGCPList,
-                        int bIsJPEG2000, int bPixelIsPoint );
+                        int bIsJPEG2000, int bPixelIsPoint, char** papszRPCMD );
     CPLErr  CloseDown();
 
     CPLErr  PrepareCoverageBox( const char *pszWKT, double *padfGeoTransform );
@@ -538,7 +538,7 @@ CPLErr GDALECWCompressor::Initialize(
     GDALDataType eType, 
     const char *pszWKT, double *padfGeoTransform,
     int nGCPCount, const GDAL_GCP *pasGCPList,
-    int bIsJPEG2000, int bPixelIsPoint )
+    int bIsJPEG2000, int bPixelIsPoint, char** papszRPCMD )
 
 {
      const char *pszOption;
@@ -944,7 +944,7 @@ CPLErr GDALECWCompressor::Initialize(
           padfGeoTransform[3] == 0.0 &&
           padfGeoTransform[4] == 0.0 &&
           padfGeoTransform[5] == 1.0) ||
-         nGCPCount > 0 )
+         nGCPCount > 0  || papszRPCMD != NULL )
     {
         GDALJP2Metadata oJP2MD;
 
@@ -952,6 +952,7 @@ CPLErr GDALECWCompressor::Initialize(
         oJP2MD.SetGeoTransform( padfGeoTransform );
         oJP2MD.SetGCPs( nGCPCount, pasGCPList );
         oJP2MD.bPixelIsPoint = bPixelIsPoint;
+        oJP2MD.SetRPCMD( papszRPCMD );
 
         if (bIsJPEG2000) {
             if( CSLFetchBoolean(papszOptions, "WRITE_METADATA", FALSE) )
@@ -1250,7 +1251,8 @@ ECWCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                                 eType, pszWKT, adfGeoTransform, 
                                 poSrcDS->GetGCPCount(), 
                                 poSrcDS->GetGCPs(),
-                                bIsJPEG2000, bPixelIsPoint )
+                                bIsJPEG2000, bPixelIsPoint,
+                                poSrcDS->GetMetadata("RPC") )
         != CE_None )
     {
         for (i=0;i<nBands;i++)
@@ -1791,7 +1793,7 @@ CPLErr ECWWriteDataset::Crystalize()
                                    eDataType, 
                                    pszProjection, adfGeoTransform, 
                                    0, NULL,
-                                   bIsJPEG2000, FALSE );
+                                   bIsJPEG2000, FALSE, NULL );
 
     if( eErr == CE_None )
         bCrystalized = TRUE;
