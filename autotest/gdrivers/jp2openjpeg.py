@@ -2794,6 +2794,10 @@ def jp2openjpeg_45():
     gdal.Unlink("/vsimem/style2.xml")
     gdal.Unlink("/vsimem/style3.xml")
     gdal.Unlink("/vsimem/style4.xml")
+    gdal.Unlink("/vsimem/extension1.xml")
+    gdal.Unlink("/vsimem/extension2.xml")
+    gdal.Unlink("/vsimem/extension3.xml")
+    gdal.Unlink("/vsimem/extension4.xml")
     del out_ds
 
     # Now do the checks
