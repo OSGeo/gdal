@@ -304,18 +304,25 @@ the below syntax (elements starting with "#" are documentation, and can be omitt
             "my.gml",
 
             {
-                "#file_doc": "can use relative or absolute paths. Required",
+                "#file_doc": "Can use relative or absolute paths. Exclusive of remote_resource",
                 "file": "converted/test_0.gml",
 
+                "#remote_resource_doc": "URL of a feature collection that must be referenced through a xlink:href",
+                "remote_resource": "http://svn.osgeo.org/gdal/trunk/autotest/ogr/data/expected_gml_gml32.gml",
+
                 "#namespace_doc": ["The namespace in schemaLocation for which to substitute",
-                                  "its original schemaLocation with the one provided below"],
+                                  "its original schemaLocation with the one provided below.",
+                                  "Ignored for a remote_resource"],
                 "namespace": "http://example.com",
 
                 "#schema_location_doc": ["Value of the substitued schemaLocation. ",
-                                         "Typically a schema box label (link)"],
+                                         "Typically a schema box label (link)",
+                                         "Ignored for a remote_resource"],
                 "schema_location": "gmljp2://xml/schema_0.xsd",
 
-                "#inline_doc": "Whether to inline the content, or put it in a separate xml box. Default is true",
+                "#inline_doc": [
+                    "Whether to inline the content, or put it in a separate xml box. Default is true",
+                    "Ignored for a remote_resource." ],
                 "inline": true,
 
                 "#parent_node": ["Where to put the FeatureCollection.",
@@ -374,6 +381,10 @@ INFO: Open of my.jp2'
 2: FC_GridCoverage_1_borders (LineString)
 3: Annotation_1_poly
 </pre>
+
+<p>Feature collections can be linked from the GMLJP2 v2 box to a remote location.
+By default, the link is not followed. It will be followed if the open option
+OPEN_REMOTE_GML is set to YES.</p>
 
 <h2>See Also:</h2>
 

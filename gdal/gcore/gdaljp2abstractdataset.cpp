@@ -236,7 +236,7 @@ char **GDALJP2AbstractDataset::GetFileList()
 /*                        LoadVectorLayers()                            */
 /************************************************************************/
 
-void GDALJP2AbstractDataset::LoadVectorLayers()
+void GDALJP2AbstractDataset::LoadVectorLayers(int bOpenRemoteResources)
 {
     char** papszGMLJP2 = GetMetadata("xml:gml.root-instance");
     if( papszGMLJP2 == NULL )
@@ -280,6 +280,8 @@ void GDALJP2AbstractDataset::LoadVectorLayers()
 
             CPLXMLNode* psFC = NULL;
             int bFreeFC = FALSE;
+            CPLString osGMLTmpFile;
+
             CPLXMLNode* psChild = psGCorGMLJP2FeaturesChildIter->psChild;
             if( psChild->eType == CXT_Attribute &&
                 strcmp(psChild->pszValue, "xlink:href") == 0 &&
@@ -300,62 +302,80 @@ void GDALJP2AbstractDataset::LoadVectorLayers()
                              psChild->psChild->pszValue);
                 }
             }
+            if( psChild->eType == CXT_Attribute &&
+                strcmp(psChild->pszValue, "xlink:href") == 0 &&
+                (strncmp(psChild->psChild->pszValue, "http://", strlen("http://")) == 0 ||
+                 strncmp(psChild->psChild->pszValue, "https://", strlen("https://")) == 0) )
+            {
+                if( !bOpenRemoteResources )
+                    CPLDebug("GMLJP2", "Remote feature collection %s mentionned in GMLJP2 box",
+                             psChild->psChild->pszValue);
+                else
+                    osGMLTmpFile = "/vsicurl/" + CPLString(psChild->psChild->pszValue);
+            }
             else if( psChild->eType == CXT_Element &&
                      strstr(psChild->pszValue, "FeatureCollection") != NULL )
             {
                 psFC = psChild;
             }
-            if( psFC == NULL )
+            if( psFC == NULL && osGMLTmpFile.size() == 0 )
                 continue;
+
+            if( psFC != NULL )
+            {
+                osGMLTmpFile = CPLSPrintf("/vsimem/gmljp2/%p/my.gml", this);
+                // Create temporary .gml file
+                CPLSerializeXMLTreeToFile(psFC, osGMLTmpFile);
+            }
 
             CPLDebug("GMLJP2", "Found a FeatureCollection at %s level",
                      (bIsGC) ? "GridCoverage" : "CoverageCollection");
 
-            // Create temporary .gml file
-            CPLString osGMLTmpFile(CPLSPrintf("/vsimem/gmljp2/%p/my.gml", this));
             CPLString osXSDTmpFile;
-            CPLSerializeXMLTreeToFile(psFC, osGMLTmpFile);
 
-            // Try to localize its .xsd schema in a GMLJP2 auxiliary box
-            const char* pszSchemaLocation = CPLGetXMLValue(psFC, "xsi:schemaLocation", NULL);
-            if( pszSchemaLocation )
+            if( psFC )
             {
-                char **papszTokens = CSLTokenizeString2(
-                        pszSchemaLocation, " \t\n", 
-                        CSLT_HONOURSTRINGS | CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES);
-
-                if( (CSLCount(papszTokens) % 2) == 0 )
+                // Try to localize its .xsd schema in a GMLJP2 auxiliary box
+                const char* pszSchemaLocation = CPLGetXMLValue(psFC, "xsi:schemaLocation", NULL);
+                if( pszSchemaLocation )
                 {
-                    for(char** papszIter = papszTokens; *papszIter; papszIter += 2 )
+                    char **papszTokens = CSLTokenizeString2(
+                            pszSchemaLocation, " \t\n", 
+                            CSLT_HONOURSTRINGS | CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES);
+
+                    if( (CSLCount(papszTokens) % 2) == 0 )
                     {
-                        if( strncmp(papszIter[1], "gmljp2://xml/", strlen("gmljp2://xml/")) == 0 )
+                        for(char** papszIter = papszTokens; *papszIter; papszIter += 2 )
                         {
-                            const char* pszBoxName = papszIter[1] + strlen("gmljp2://xml/");
-                            char** papszBoxData = GetMetadata(CPLSPrintf("xml:%s", pszBoxName));
-                            if( papszBoxData != NULL )
+                            if( strncmp(papszIter[1], "gmljp2://xml/", strlen("gmljp2://xml/")) == 0 )
                             {
-                                osXSDTmpFile = CPLSPrintf("/vsimem/gmljp2/%p/my.xsd", this);
-                                VSIFCloseL(VSIFileFromMemBuffer(osXSDTmpFile,
-                                                                (GByte*)papszBoxData[0],
-                                                                strlen(papszBoxData[0]),
-                                                                FALSE));
+                                const char* pszBoxName = papszIter[1] + strlen("gmljp2://xml/");
+                                char** papszBoxData = GetMetadata(CPLSPrintf("xml:%s", pszBoxName));
+                                if( papszBoxData != NULL )
+                                {
+                                    osXSDTmpFile = CPLSPrintf("/vsimem/gmljp2/%p/my.xsd", this);
+                                    VSIFCloseL(VSIFileFromMemBuffer(osXSDTmpFile,
+                                                                    (GByte*)papszBoxData[0],
+                                                                    strlen(papszBoxData[0]),
+                                                                    FALSE));
+                                }
+                                else
+                                {
+                                    CPLDebug("GMLJP2",
+                                            "Feature collection references %s, but no corresponding box found",
+                                            papszIter[1]);
+                                }
+                                break;
                             }
-                            else
-                            {
-                                CPLDebug("GMLJP2",
-                                         "Feature collection references %s, but no corresponding box found",
-                                         papszIter[1]);
-                            }
-                            break;
                         }
                     }
+                    CSLDestroy(papszTokens);
                 }
-                CSLDestroy(papszTokens);
-            }
-            if( bFreeFC )
-            {
-                CPLDestroyXMLNode(psFC);
-                psFC = NULL;
+                if( bFreeFC )
+                {
+                    CPLDestroyXMLNode(psFC);
+                    psFC = NULL;
+                }
             }
 
             GDALDriverH hDrv = GDALIdentifyDriver(osGMLTmpFile, NULL);
@@ -395,7 +415,8 @@ void GDALJP2AbstractDataset::LoadVectorLayers()
                 CPLDebug("GMLJP2", "No GML driver found to read feature collection");
             }
 
-            VSIUnlink(osGMLTmpFile);
+            if( strncmp(osGMLTmpFile, "/vsicurl/", strlen("/vsicurl/")) != 0 )
+                VSIUnlink(osGMLTmpFile);
             if( osXSDTmpFile.size() )
                 VSIUnlink(osXSDTmpFile);
         }

@@ -1552,6 +1552,7 @@ class GMLJP2V2GMLFileDesc
 {
     public:
         CPLString osFile;
+        CPLString osRemoteResource;
         CPLString osNamespace;
         CPLString osSchemaLocation;
         int       bInline;
@@ -1683,18 +1684,25 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
             "my.gml",
 
             {
-                "#file_doc": "can use relative or absolute paths. Required",
+                "#file_doc": "Can use relative or absolute paths. Exclusive of remote_resource",
                 "file": "converted/test_0.gml",
 
+                "#remote_resource_doc": "URL of a feature collection that must be referenced through a xlink:href",
+                "remote_resource": "http://svn.osgeo.org/gdal/trunk/autotest/ogr/data/expected_gml_gml32.gml",
+
                 "#namespace_doc": ["The namespace in schemaLocation for which to substitute",
-                                  "its original schemaLocation with the one provided below"],
+                                  "its original schemaLocation with the one provided below.",
+                                  "Ignored for a remote_resource"],
                 "namespace": "http://example.com",
 
                 "#schema_location_doc": ["Value of the substitued schemaLocation. ",
-                                         "Typically a schema box label (link)"],
+                                         "Typically a schema box label (link)",
+                                         "Ignored for a remote_resource"],
                 "schema_location": "gmljp2://xml/schema_0.xsd",
 
-                "#inline_doc": "Whether to inline the content, or put it in a separate xml box. Default is true",
+                "#inline_doc": [
+                    "Whether to inline the content, or put it in a separate xml box. Default is true",
+                    "Ignored for a remote_resource." ],
                 "inline": true,
 
                 "#parent_node": ["Where to put the FeatureCollection.",
@@ -1864,11 +1872,23 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                     json_object* poGMLFile = json_object_array_get_idx(poGMLFileList, i);
                     if( poGMLFile && json_object_get_type(poGMLFile) == json_type_object )
                     {
+                        const char* pszFile = NULL;
                         json_object* poFile = json_object_object_get(poGMLFile, "file");
                         if( poFile && json_object_get_type(poFile) == json_type_string )
+                            pszFile = json_object_get_string(poFile);
+
+                        const char* pszRemoteResource = NULL;
+                        json_object* poRemoteResource = json_object_object_get(poGMLFile, "remote_resource");
+                        if( poRemoteResource && json_object_get_type(poRemoteResource) == json_type_string )
+                            pszRemoteResource = json_object_get_string(poRemoteResource);
+
+                        if( pszFile || pszRemoteResource )
                         {
                             GMLJP2V2GMLFileDesc oDesc;
-                            oDesc.osFile = json_object_get_string(poFile);
+                            if( pszFile )
+                                oDesc.osFile = pszFile;
+                            else if( pszRemoteResource )
+                                oDesc.osRemoteResource = pszRemoteResource;
 
                             json_object* poNamespace = json_object_object_get(poGMLFile, "namespace");
                             if( poNamespace && json_object_get_type(poNamespace) == json_type_string )
@@ -2189,74 +2209,77 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
         {
             // Is the file already a GML file ?
             CPLXMLNode* psGMLFile = NULL;
-            if( EQUAL(CPLGetExtension(aoGMLFiles[i].osFile), "gml") ||
-                EQUAL(CPLGetExtension(aoGMLFiles[i].osFile), "xml") )
+            if( aoGMLFiles[i].osFile.size() )
             {
-                 psGMLFile = CPLParseXMLFile(aoGMLFiles[i].osFile);
-            }
-            GDALDriverH hDrv = NULL;
-            if( psGMLFile == NULL )
-            {
-                hDrv = GDALIdentifyDriver(aoGMLFiles[i].osFile, NULL);
-                if( hDrv == NULL )
+                if( EQUAL(CPLGetExtension(aoGMLFiles[i].osFile), "gml") ||
+                    EQUAL(CPLGetExtension(aoGMLFiles[i].osFile), "xml") )
                 {
-                    CPLError(CE_Failure, CPLE_AppDefined,
-                             "%s is no a GDAL recognized file",
-                             aoGMLFiles[i].osFile.c_str());
-                    continue;
+                    psGMLFile = CPLParseXMLFile(aoGMLFiles[i].osFile);
                 }
-            }
-            GDALDriverH hGMLDrv = GDALGetDriverByName("GML");
-            if( psGMLFile == NULL && hDrv == hGMLDrv )
-            {
-                // Yes, parse it
-                psGMLFile = CPLParseXMLFile(aoGMLFiles[i].osFile);
-            }
-            else if( psGMLFile == NULL )
-            {
-                if( hGMLDrv == NULL )
+                GDALDriverH hDrv = NULL;
+                if( psGMLFile == NULL )
                 {
-                    CPLError(CE_Failure, CPLE_AppDefined,
-                             "Cannot translate %s to GML",
-                             aoGMLFiles[i].osFile.c_str());
-                    continue;
-                }
-
-                // On-the-fly translation to GML 3.2
-                GDALDatasetH hSrcDS = GDALOpenEx(aoGMLFiles[i].osFile, 0, NULL, NULL, NULL);
-                if( hSrcDS )
-                {
-                    CPLString osTmpFile = CPLSPrintf("/vsimem/gmljp2/%p/%d/%s.gml",
-                                                     this,
-                                                     i,
-                                                     CPLGetBasename(aoGMLFiles[i].osFile));
-                    char* apszOptions[2];
-                    apszOptions[0] = (char*) "FORMAT=GML3.2";
-                    apszOptions[1] = NULL;
-                    GDALDatasetH hDS = GDALCreateCopy(hGMLDrv, osTmpFile, hSrcDS,
-                                                      FALSE, apszOptions, NULL, NULL);
-                    if( hDS )
-                    {
-                        GDALClose(hDS);
-                        psGMLFile = CPLParseXMLFile(osTmpFile);
-                        aoGMLFiles[i].osFile = osTmpFile;
-                        VSIUnlink(osTmpFile);
-                        aosTmpFiles.push_back(CPLResetExtension(osTmpFile, "xsd"));
-                    }
-                    else
+                    hDrv = GDALIdentifyDriver(aoGMLFiles[i].osFile, NULL);
+                    if( hDrv == NULL )
                     {
                         CPLError(CE_Failure, CPLE_AppDefined,
-                                 "Conversion of %s to GML failed",
-                                 aoGMLFiles[i].osFile.c_str());
+                                "%s is no a GDAL recognized file",
+                                aoGMLFiles[i].osFile.c_str());
+                        continue;
                     }
                 }
-                GDALClose(hSrcDS);
-            }
-            if( psGMLFile == NULL )
-                continue;
+                GDALDriverH hGMLDrv = GDALGetDriverByName("GML");
+                if( psGMLFile == NULL && hDrv == hGMLDrv )
+                {
+                    // Yes, parse it
+                    psGMLFile = CPLParseXMLFile(aoGMLFiles[i].osFile);
+                }
+                else if( psGMLFile == NULL )
+                {
+                    if( hGMLDrv == NULL )
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                "Cannot translate %s to GML",
+                                aoGMLFiles[i].osFile.c_str());
+                        continue;
+                    }
 
-            CPLXMLNode* psGMLFileRoot = GDALGMLJP2GetXMLRoot(psGMLFile);
-            if( psGMLFileRoot ) 
+                    // On-the-fly translation to GML 3.2
+                    GDALDatasetH hSrcDS = GDALOpenEx(aoGMLFiles[i].osFile, 0, NULL, NULL, NULL);
+                    if( hSrcDS )
+                    {
+                        CPLString osTmpFile = CPLSPrintf("/vsimem/gmljp2/%p/%d/%s.gml",
+                                                        this,
+                                                        i,
+                                                        CPLGetBasename(aoGMLFiles[i].osFile));
+                        char* apszOptions[2];
+                        apszOptions[0] = (char*) "FORMAT=GML3.2";
+                        apszOptions[1] = NULL;
+                        GDALDatasetH hDS = GDALCreateCopy(hGMLDrv, osTmpFile, hSrcDS,
+                                                        FALSE, apszOptions, NULL, NULL);
+                        if( hDS )
+                        {
+                            GDALClose(hDS);
+                            psGMLFile = CPLParseXMLFile(osTmpFile);
+                            aoGMLFiles[i].osFile = osTmpFile;
+                            VSIUnlink(osTmpFile);
+                            aosTmpFiles.push_back(CPLResetExtension(osTmpFile, "xsd"));
+                        }
+                        else
+                        {
+                            CPLError(CE_Failure, CPLE_AppDefined,
+                                    "Conversion of %s to GML failed",
+                                    aoGMLFiles[i].osFile.c_str());
+                        }
+                    }
+                    GDALClose(hSrcDS);
+                }
+                if( psGMLFile == NULL )
+                    continue;
+            }
+
+            CPLXMLNode* psGMLFileRoot = psGMLFile ? GDALGMLJP2GetXMLRoot(psGMLFile) : NULL;
+            if( psGMLFileRoot || aoGMLFiles[i].osRemoteResource.size() ) 
             {
                 CPLXMLNode *node_f;
                 if( aoGMLFiles[i].bParentCoverageCollection )
@@ -2285,8 +2308,25 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                     node_f = CPLCreateXMLNode( psGridCoverage, CXT_Element, "gmljp2:feature"  );
                 }
 
+                if( !aoGMLFiles[i].bInline || aoGMLFiles[i].osRemoteResource.size() )
+                {
+                    if( !bRootHasXLink )
+                    {
+                        bRootHasXLink = TRUE;
+                        CPLSetXMLValue(psGMLJP2CoverageCollection, "#xmlns:xlink",
+                                       "http://www.w3.org/1999/xlink");
+                    }
+                }
+
+                if( aoGMLFiles[i].osRemoteResource.size() )
+                {
+                    CPLSetXMLValue(node_f, "#xlink:href",
+                                   aoGMLFiles[i].osRemoteResource.c_str());
+                    continue;
+                }
+
                 CPLString osTmpFile;
-                if( !aoGMLFiles[i].bInline )
+                if( !aoGMLFiles[i].bInline || aoGMLFiles[i].osRemoteResource.size() )
                 {
                     osTmpFile = CPLSPrintf("/vsimem/gmljp2/%p/%d/%s.gml",
                                            this,
@@ -2299,15 +2339,8 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                     oDesc.osLabel = CPLGetFilename(oDesc.osFile);
                     aoBoxes.push_back(oDesc);
 
-                    if( !bRootHasXLink )
-                    {
-                        bRootHasXLink = TRUE;
-                        CPLSetXMLValue(psGMLJP2CoverageCollection, "#xmlns:xlink",
-                                       "http://www.w3.org/1999/xlink");
-                    }
-
                     CPLSetXMLValue(node_f, "#xlink:href",
-                                   CPLSPrintf("gmljp2://xml/%s", oDesc.osLabel.c_str()));
+                            CPLSPrintf("gmljp2://xml/%s", oDesc.osLabel.c_str()));
                 }
 
                 if( CPLGetXMLNode(psGMLFileRoot, "xmlns") == NULL &&
