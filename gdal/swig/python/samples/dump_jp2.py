@@ -9,6 +9,7 @@
 # 
 #******************************************************************************
 #  Copyright (c) 2015, European Union (European Environment Agency)
+#  Copyright (c) 2015, European Union Satellite Centre
 # 
 #  Permission is hereby granted, free of charge, to any person obtaining a
 #  copy of this software and associated documentation files (the "Software"),
@@ -33,13 +34,20 @@ import sys
 from osgeo import gdal
 
 def Usage():
-    print('Usage:  dump_jp2 [-dump_gmljp2 out.txt|-] [-dump_crsdictionary out.txt|-] test.jp2')
+    print('Usage:  dump_jp2 [-dump_gmljp2 out.xml|-] [-dump_crsdictionary out.xml|-]')
+    print('                 [-extract_all_xml_boxes filename_prefix]')
+    print('                 test.jp2')
     print('')
-    print('Options:')
+    print('Options (all are exclusive of the regular dump):')
+    print('')
     print('-dump_gmljp2: Writes the content of the GMLJP2 box in the specified')
     print('              file, or on the console if "-" syntax is used.')
     print('-dump_crsdictionary: Writes the content of the GML CRS dictionary box in the specified')
     print('                     file, or on the console if "-" syntax is used.')
+    print('-extract_all_xml_boxes: Extract all XML boxes in separate files, and prefix each filename')
+    print('                        with the supplied prefix. gmljp2://xml/ link will be replaced by')
+    print('                        links to on-disk files.')
+
     return 1
 
 def dump_gmljp2(filename, out_gmljp2):
@@ -66,6 +74,8 @@ def dump_crsdictionary(filename, out_crsdictionary):
         print('Cannot open %s' % filename)
         return 1
     mdd_list = ds.GetMetadataDomainList()
+    if mdd_list is None:
+        mdd_list = []
     for domain in mdd_list:
         if domain.startswith('xml:'):
             mdd_item = ds.GetMetadata(domain)[0]
@@ -82,10 +92,68 @@ def dump_crsdictionary(filename, out_crsdictionary):
     print('No CRS dictionary content found in %s' % filename)
     return 1
 
+def extract_all_xml_boxes(filename, prefix):
+    ds = gdal.Open(filename)
+    if ds is None:
+        print('Cannot open %s' % filename)
+        return 1
+    mdd_list = ds.GetMetadataDomainList()
+    if mdd_list is None:
+        mdd_list = []
+    for domain in mdd_list:
+        if domain.startswith('xml:'):
+            mdd_item = ds.GetMetadata(domain)[0]
+            boxname = domain[4:]
+            if boxname == 'gml.root-instance':
+                boxname = 'gml_root_instance.gml'
+            out_filename = prefix + boxname
+
+            # Correct references to gmljp2://xml/foo to prefix_foo
+            out_content = ''
+            pos = 0
+            while True:
+                new_pos = mdd_item.find('gmljp2://xml/', pos)
+                if new_pos < 0:
+                    out_content += mdd_item[pos:]
+                    break
+
+                # Check that the referenced box really exists
+                end_gmljp2_link_space = mdd_item.find(' ', new_pos)
+                end_gmljp2_link_double_quote = mdd_item.find('"', new_pos)
+                end_gmljp2_link = -1
+                if end_gmljp2_link_space >= 0 and end_gmljp2_link_double_quote >= 0:
+                    if end_gmljp2_link_space < end_gmljp2_link_double_quote:
+                        end_gmljp2_link = end_gmljp2_link_space
+                    else:
+                        end_gmljp2_link = end_gmljp2_link_double_quote
+                elif end_gmljp2_link_space >= 0:
+                     end_gmljp2_link = end_gmljp2_link_space
+                elif end_gmljp2_link_double_quote >= 0:
+                     end_gmljp2_link = end_gmljp2_link_double_quote
+                if end_gmljp2_link >= 0:
+                    referenced_box = mdd_item[new_pos + len('gmljp2://xml/'):end_gmljp2_link]
+                    if not (('xml:' + referenced_box) in mdd_list):
+                        print('Warning: box %s reference box %s, but the latter is not found' % (boxname, referenced_box))
+
+                out_content += mdd_item[pos:new_pos]
+                out_content += prefix
+                pos = new_pos + len('gmljp2://xml/')
+
+            f = open(out_filename, 'wt')
+            f.write(out_content)
+            f.close()
+            print('INFO: %s written' % out_filename)
+
+    if len(mdd_list) == 0:
+        print('No XML box found')
+        return 1
+    return 0
+
 def main():
     i = 1
     out_gmljp2 = None
     out_crsdictionary = None
+    extract_all_xml_boxes_prefix = None
     filename = None
     while i < len(sys.argv):
         if sys.argv[i] == "-dump_gmljp2":
@@ -97,6 +165,11 @@ def main():
             if i >= len(sys.argv) - 1:
                 return Usage()
             out_crsdictionary = sys.argv[i+1]
+            i = i + 1
+        elif sys.argv[i] == "-extract_all_xml_boxes":
+            if i >= len(sys.argv) - 1:
+                return Usage()
+            extract_all_xml_boxes_prefix = sys.argv[i+1]
             i = i + 1
         elif sys.argv[i][0] == '-':
             return Usage()
@@ -110,12 +183,15 @@ def main():
     if filename is None:
         return Usage()
 
-    if out_gmljp2 or out_crsdictionary:
+    if out_gmljp2 or out_crsdictionary or extract_all_xml_boxes_prefix:
         if out_gmljp2:
             if dump_gmljp2(filename, out_gmljp2) != 0:
                 return 1
         if out_crsdictionary:
             if dump_crsdictionary(filename, out_crsdictionary) != 0:
+                return 1
+        if extract_all_xml_boxes_prefix:
+            if extract_all_xml_boxes(filename, extract_all_xml_boxes_prefix) != 0:
                 return 1
     else:
         s = gdal.GetJPEG2000StructureAsString(filename, ['ALL=YES'])
