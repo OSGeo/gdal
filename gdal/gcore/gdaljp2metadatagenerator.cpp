@@ -800,7 +800,11 @@ CPLXMLNode* GDALGMLJP2GenerateMetadata(const CPLString& osTemplateFile,
     
     xmlDocPtr pDoc = xmlParseDoc((const xmlChar *)osSource.c_str());
     if( pDoc == NULL )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot parse %s",
+                 osSourceFile.c_str());
         return NULL;
+    }
 
     xmlXPathContextPtr pXPathCtx = xmlXPathNewContext(pDoc);
     if( pXPathCtx == NULL )
