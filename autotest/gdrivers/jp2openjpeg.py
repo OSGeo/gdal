@@ -2925,7 +2925,7 @@ def jp2openjpeg_46():
 }
 
     gdal.FileFromMemBuffer("/vsimem/template.xml",
-"""<gmljp2:metadata>{{{XPATH(if(//B/text() = 'my_value',concat('yeah: ',uuid()),'doh!'))}}}</gmljp2:metadata>""")
+"""<gmljp2:metadata>{{{XPATH(if(//B/text() = 'my_value',if(false(),'not_expected',concat('yeah: ',uuid())),'doh!'))}}}</gmljp2:metadata>""")
 
     gdal.FileFromMemBuffer("/vsimem/source.xml",
 """<A><B>my_value</B></A>""")
