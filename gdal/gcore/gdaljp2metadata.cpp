@@ -1589,6 +1589,14 @@ class GMLJP2V2StyleDesc
             GMLJP2V2StyleDesc(): bParentCoverageCollection(TRUE) {}
 };
 
+class GMLJP2V2ExtensionDesc
+{
+    public:
+        CPLString osFile;
+        int       bParentCoverageCollection;
+
+            GMLJP2V2ExtensionDesc(): bParentCoverageCollection(TRUE) {}
+};
 class GMLJP2V2BoxDesc
 {
     public:
@@ -1609,6 +1617,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
     std::vector<GMLJP2V2AnnotationDesc> aoAnnotations;
     std::vector<GMLJP2V2GMLFileDesc> aoGMLFiles;
     std::vector<GMLJP2V2StyleDesc> aoStyles;
+    std::vector<GMLJP2V2ExtensionDesc> aoExtensions;
     std::vector<GMLJP2V2BoxDesc> aoBoxes;
 
 /* -------------------------------------------------------------------- */
@@ -1726,6 +1735,18 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
             {
                 "#file_doc": "Can use relative or absolute paths.",
                 "file": "my.sld",
+
+                "#parent_node": ["Where to put the FeatureCollection.",
+                                 "Under CoverageCollection (default) or GridCoverage" ],
+                "parent_node": "CoverageCollection"
+            }
+        ],
+
+        "#extensions_doc: [ "An array of extensions." ],
+        "extensions" : [
+            {
+                "#file_doc": "Can use relative or absolute paths.",
+                "file": "my.xml",
 
                 "#parent_node": ["Where to put the FeatureCollection.",
                                  "Under CoverageCollection (default) or GridCoverage" ],
@@ -1862,7 +1883,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                                     oDesc.bParentCoverageCollection = FALSE;
                                 else
                                     CPLError(CE_Warning, CPLE_NotSupported,
-                                             "metadata.location should be CoverageCollection or GridCoverage");
+                                             "metadata[].parent_node should be CoverageCollection or GridCoverage");
                             }
 
                             aoMetadata.push_back(oDesc);
@@ -1935,7 +1956,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                                     oDesc.bParentCoverageCollection = FALSE;
                                 else
                                     CPLError(CE_Warning, CPLE_NotSupported,
-                                             "gml_filelist.location should be CoverageCollection or GridCoverage");
+                                             "gml_filelist[].parent_node should be CoverageCollection or GridCoverage");
                             }
 
                             aoGMLFiles.push_back(oDesc);
@@ -1978,7 +1999,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                                     oDesc.bParentCoverageCollection = FALSE;
                                 else
                                     CPLError(CE_Warning, CPLE_NotSupported,
-                                             "gml_filelist.location should be CoverageCollection or GridCoverage");
+                                             "styles[].parent_node should be CoverageCollection or GridCoverage");
                             }
 
                             aoStyles.push_back(oDesc);
@@ -1989,6 +2010,49 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                         GMLJP2V2StyleDesc oDesc;
                         oDesc.osFile = json_object_get_string(poStyle);
                         aoStyles.push_back(oDesc);
+                    }
+                }
+            }
+
+            json_object* poExtensions = json_object_object_get(poRootInstance, "extensions"); 
+            if( poExtensions && json_object_get_type(poExtensions) == json_type_array )
+            {
+                for(int i=0;i<json_object_array_length(poExtensions);i++)
+                {
+                    json_object* poExtension = json_object_array_get_idx(poExtensions, i);
+                    if( poExtension && json_object_get_type(poExtension) == json_type_object )
+                    {
+                        const char* pszFile = NULL;
+                        json_object* poFile = json_object_object_get(poExtension, "file");
+                        if( poFile && json_object_get_type(poFile) == json_type_string )
+                            pszFile = json_object_get_string(poFile);
+
+                        if( pszFile )
+                        {
+                            GMLJP2V2ExtensionDesc oDesc;
+                            oDesc.osFile = pszFile;
+
+                            json_object* poLocation = json_object_object_get(poExtension, "parent_node");
+                            if( poLocation && json_object_get_type(poLocation) == json_type_string )
+                            {
+                                const char* pszLocation = json_object_get_string(poLocation);
+                                if( EQUAL(pszLocation, "CoverageCollection") )
+                                    oDesc.bParentCoverageCollection  = TRUE;
+                                else if( EQUAL(pszLocation, "GridCoverage") )
+                                    oDesc.bParentCoverageCollection = FALSE;
+                                else
+                                    CPLError(CE_Warning, CPLE_NotSupported,
+                                             "extensions[].parent_node should be CoverageCollection or GridCoverage");
+                            }
+
+                            aoExtensions.push_back(oDesc);
+                        }
+                    }
+                    else if( poExtension && json_object_get_type(poExtension) == json_type_string )
+                    {
+                        GMLJP2V2ExtensionDesc oDesc;
+                        oDesc.osFile = json_object_get_string(poExtension);
+                        aoExtensions.push_back(oDesc);
                     }
                 }
             }
@@ -2175,7 +2239,8 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
 /* -------------------------------------------------------------------- */
     std::vector<CPLString> aosTmpFiles;
     int bRootHasXLink = FALSE;
-    if( aoMetadata.size() || aoAnnotations.size() || aoGMLFiles.size() || aoStyles.size() )
+    if( aoMetadata.size() || aoAnnotations.size() || aoGMLFiles.size() ||
+        aoStyles.size() || aoExtensions.size() )
     {
         CPLXMLNode* psRoot = CPLParseXMLString(osDoc);
         CPLAssert(psRoot);
@@ -2648,6 +2713,43 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                 CPLAddXMLChild( psGMLJP2Style, CPLCloneXMLTree(psStyleRoot) );
             }
             CPLDestroyXMLNode(psStyle);
+        }
+
+        // Add extensions
+        for( int i=0; i < (int)aoExtensions.size(); i++ )
+        {
+            CPLXMLNode* psExtension = CPLParseXMLFile(aoExtensions[i].osFile);
+            if( psExtension == NULL )
+                continue;
+
+            CPLXMLNode* psExtensionRoot = GDALGMLJP2GetXMLRoot(psExtension);
+            if( psExtensionRoot ) 
+            {
+                CPLXMLNode *psGMLJP2Extension;
+                if( aoExtensions[i].bParentCoverageCollection )
+                {
+                    psGMLJP2Extension = CPLCreateXMLNode( psGMLJP2CoverageCollection, CXT_Element, "gmljp2:extension"  );
+                }
+                else
+                {
+                    CPLXMLNode* psFeatureMemberOfGridCoverage =
+                        CPLGetXMLNode(psGMLJP2CoverageCollection, "gmljp2:featureMember");
+                    CPLAssert(psFeatureMemberOfGridCoverage);
+                    CPLXMLNode* psGridCoverage = psFeatureMemberOfGridCoverage->psChild;
+                    CPLAssert(psGridCoverage);
+                    psGMLJP2Extension = CPLCreateXMLNode( psGridCoverage, CXT_Element, "gmljp2:extension"  );
+                }
+
+                // Add dummy namespace for validation purposes if needed
+                if( strchr(psExtensionRoot->pszValue, ':') == NULL &&
+                    CPLGetXMLValue(psExtensionRoot, "xmlns", NULL) == NULL )
+                {
+                    CPLSetXMLValue(psExtensionRoot, "#xmlns", "http://undefined_namespace");
+                }
+
+                CPLAddXMLChild( psGMLJP2Extension, CPLCloneXMLTree(psExtensionRoot) );
+            }
+            CPLDestroyXMLNode(psExtension);
         }
 
         char* pszRoot = CPLSerializeXMLTree(psRoot);
