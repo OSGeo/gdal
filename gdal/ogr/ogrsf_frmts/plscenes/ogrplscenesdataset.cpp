@@ -365,9 +365,19 @@ GDALDataset* OGRPLScenesDataset::OpenRasterScene(GDALOpenInfo* poOpenInfo,
     int bUseVSICURL = CSLFetchBoolean(poOpenInfo->papszOpenOptions, "RANDOM_ACCESS", TRUE);
     if( bUseVSICURL && !(strncmp(osBaseURL, "/vsimem/", strlen("/vsimem/")) == 0) )
     {
-        osRasterURL = "/vsicurl/" + osRasterURL;
         CPLSetThreadLocalConfigOption("CPL_VSIL_CURL_USE_HEAD", "NO");
         CPLSetThreadLocalConfigOption("CPL_VSIL_CURL_ALLOWED_EXTENSIONS", "{noext}");
+
+        VSIStatBufL sStat;
+        if( VSIStatL(("/vsicurl/" + osRasterURL).c_str(), &sStat) == 0 &&
+            sStat.st_size > 0 )
+        {
+            osRasterURL = "/vsicurl/" + osRasterURL;
+        }
+        else
+        {
+            CPLDebug("PLSCENES", "Cannot use random access for that file");
+        }
     }
 
     GDALDataset* poOutDS = (GDALDataset*) GDALOpen(osRasterURL, GA_ReadOnly);
