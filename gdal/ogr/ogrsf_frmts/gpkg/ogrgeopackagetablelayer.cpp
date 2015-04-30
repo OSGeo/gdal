@@ -1284,10 +1284,11 @@ OGRErr OGRGeoPackageTableLayer::ISetFeature( OGRFeature *poFeature )
         m_poUpdateStatement = NULL;
 
         OGRErr errOgr = DeleteFeature( poFeature->GetFID() );
-        if ( errOgr != OGRERR_NONE )
-            return errOgr;
 
         m_poUpdateStatement = hBackupStmt;
+
+        if ( errOgr != OGRERR_NONE )
+            return errOgr;
 
         /* Bind values onto the statement now */
         errOgr = FeatureBindInsertParameters(poFeature, m_poUpdateStatement, TRUE, TRUE);
