@@ -71,20 +71,20 @@ system "rm -rf tmp_ds_*" unless $^O eq 'MSWin32';
 
 {
     # test conversion methods
-    my $g = Geo::OGR::Geometry->create(WKT=>'POINT (1 1)');
-    my $x = Geo::OGR::Geometry->create(WKT=>'POINT (2 2)');
+    my $g = Geo::OGR::Geometry->new(WKT=>'POINT (1 1)');
+    my $x = Geo::OGR::Geometry->new(WKT=>'POINT (2 2)');
     my $g2 = $g->ForceToMultiPoint($x);
     ok($g2->AsText eq 'MULTIPOINT (1 1,2 2)', 'ForceToMultiPoint');
-    $g = Geo::OGR::Geometry->create(WKT=>'LINESTRING (1 1,2 2)');
-    $x = Geo::OGR::Geometry->create(WKT=>'LINESTRING (2 2,3 3)');
+    $g = Geo::OGR::Geometry->new(WKT=>'LINESTRING (1 1,2 2)');
+    $x = Geo::OGR::Geometry->new(WKT=>'LINESTRING (2 2,3 3)');
     $g2 = $g->ForceToMultiLineString($x);
     ok($g2->AsText eq 'MULTILINESTRING ((1 1,2 2),(2 2,3 3))', 'ForceToMultiLineString');
-    $g = Geo::OGR::Geometry->create(WKT=>'POLYGON ((0.49 0.5,0.83 0.5,0.83 0.77,0.49 0.77,0.49 0.5))');
-    $x = Geo::OGR::Geometry->create(WKT=>'POLYGON ((0.49 0.5,0.83 0.5,0.83 0.77,0.49 0.77,0.49 0.5))');
+    $g = Geo::OGR::Geometry->new(WKT=>'POLYGON ((0.49 0.5,0.83 0.5,0.83 0.77,0.49 0.77,0.49 0.5))');
+    $x = Geo::OGR::Geometry->new(WKT=>'POLYGON ((0.49 0.5,0.83 0.5,0.83 0.77,0.49 0.77,0.49 0.5))');
     $g2 = $g->ForceToMultiPolygon($x);
     ok($g2->AsText eq 'MULTIPOLYGON (((0.49 0.5,0.83 0.5,0.83 0.77,0.49 0.77,0.49 0.5)),((0.49 0.5,0.83 0.5,0.83 0.77,0.49 0.77,0.49 0.5)))', 'ForceToMultiPolygon');
-    $g = Geo::OGR::Geometry->create(WKT=>'POINT (1 1)');
-    $x = Geo::OGR::Geometry->create(WKT=>'LINESTRING (2 2,3 3)');
+    $g = Geo::OGR::Geometry->new(WKT=>'POINT (1 1)');
+    $x = Geo::OGR::Geometry->new(WKT=>'LINESTRING (2 2,3 3)');
     $g2 = $g->ForceToCollection($x);
     ok($g2->AsText eq 'GEOMETRYCOLLECTION (POINT (1 1),LINESTRING (2 2,3 3))', 'ForceToCollection');
     my @g = $g2->Dissolve;
@@ -93,7 +93,7 @@ system "rm -rf tmp_ds_*" unless $^O eq 'MSWin32';
 }
 
 {
-    my $g = Geo::OGR::Geometry->create(wkt => "point(1 2)");
+    my $g = Geo::OGR::Geometry->new(wkt => "point(1 2)");
     $g->Point(2,3);
     my @p = $g->Point;
     ok($p[0] == 2, "Point");
@@ -101,29 +101,29 @@ system "rm -rf tmp_ds_*" unless $^O eq 'MSWin32';
 	my $wkb = "0102000000050000005555555524F3484100000000A0F05941555555552".
 	    "4F34841000000E09CF05941000000C02EF34841ABAAAAAA97F05941ABAAAA2A39F3".
 	    "4841000000E09CF05941ABAAAA2A39F3484100000000A0F05941";
-	$g = Geo::OGR::Geometry->create(hexwkb => $wkb);
+	$g = Geo::OGR::Geometry->new(hexwkb => $wkb);
     };
-    ok ($@ eq '', "create from WKb: $@");
+    ok ($@ eq '', "new from WKb: $@");
     eval {
 	my $gml = "<gml:Point><gml:coordinates>1,1</gml:coordinates></gml:Point>";
-	$g = Geo::OGR::Geometry->create(gml => $gml);
+	$g = Geo::OGR::Geometry->new(gml => $gml);
     };
-    ok ($@ eq '', "create from GML: $@");
+    ok ($@ eq '', "new from GML: $@");
     eval {
-	$g = Geo::OGR::Geometry->create(GeoJSON => "abc");
+	$g = Geo::OGR::Geometry->new(GeoJSON => "abc");
     };
-    ok ($@ =~ /GeoJSON parsing error/, "create from GeoJSON: $@");
+    ok ($@ =~ /GeoJSON parsing error/, "new from GeoJSON: $@");
 }
 
 {
     # test the Points method
-    my $g = Geo::OGR::Geometry->create( WKT => 'POINT(1.1 2.2)');
+    my $g = Geo::OGR::Geometry->new( WKT => 'POINT(1.1 2.2)');
     my $p = $g->Points;
     ok ($p->[0] == 1.1 && $p->[1] == 2.2, "Points from a point is a simple anonymous array");
     $g->Points($p);
     my $q = $g->Points;
     is_deeply($p, $q, "Points with a point");
-    $g = Geo::OGR::Geometry->create(wkt => "linestring(1 1, 1 2, 2 2)");
+    $g = Geo::OGR::Geometry->new(wkt => "linestring(1 1, 1 2, 2 2)");
     $p = $g->Points;
     ok ($p->[0]->[0] == 1 && $p->[1]->[1] == 2, "Points from a linestring is an anonymous array of points");
     $g->Points($p);
@@ -132,13 +132,13 @@ system "rm -rf tmp_ds_*" unless $^O eq 'MSWin32';
 }
 
 {
-    my $g = Geo::OGR::Geometry->create(wkt => "linestring(1 1, 1 2, 2 2)");
+    my $g = Geo::OGR::Geometry->new(wkt => "linestring(1 1, 1 2, 2 2)");
     ok ($g->Length == 2, "Length 1");
 }
 
 {
     # test list valued fields
-    my $d = Geo::OGR::FeatureDefn->create(
+    my $d = Geo::OGR::FeatureDefn->new(
         Fields=>[
             { Name => 'ilist',
               Type => 'IntegerList',
@@ -189,10 +189,10 @@ system "rm -rf tmp_ds_*" unless $^O eq 'MSWin32';
 {
     my $g2;
     {
-	my $d = Geo::OGR::FeatureDefn->create(Fields=>[Geo::OGR::FieldDefn->create(Name=>'Foo')]);
+	my $d = Geo::OGR::FeatureDefn->new(Fields=>[Geo::OGR::FieldDefn->new(Name=>'Foo')]);
         $d->AddField(Type => 'Point');
 	my $f = Geo::OGR::Feature->new($d);
-	my $g = Geo::OGR::Geometry->create('Point');
+	my $g = Geo::OGR::Geometry->new('Point');
 	$f->SetGeometry($g);
 	my $fd = $f->GetDefnRef;
 	my $s = $fd->Schema;
@@ -205,7 +205,7 @@ system "rm -rf tmp_ds_*" unless $^O eq 'MSWin32';
     $g2->GetDimension; # does not cause a kaboom
 }
 {
-    my $f = Geo::OGR::FieldDefn->create();
+    my $f = Geo::OGR::FieldDefn->new();
     my $s = $f->Schema(Width => 10);
     ok($s->{Width} == 10, 'fieldefn schema 1');
     ok($s->{Type} eq 'String', 'fieldefn schema 2');
@@ -267,8 +267,7 @@ system "rm -rf tmp_ds_*" unless $^O eq 'MSWin32';
     ok($t[4]->ExportToWkt eq 'POINT (5 6)', "layer row and tuple");
 }
 
-my $osr = new Geo::OSR::SpatialReference;
-$osr->SetWellKnownGeogCS('WGS84');
+my $osr = Geo::OSR::SpatialReference->new(WGS => 84);
 
 @types = Geo::OGR::GeometryType();
 
@@ -408,7 +407,7 @@ sub ogr_tests {
 	    
 	    for my $ft (@field_types) {
 		
-		my $column = Geo::OGR::FieldDefn->create($ft, $ft);
+		my $column = Geo::OGR::FieldDefn->new($ft, $ft);
 		$column->SetWidth(5) if $ft eq 'Integer';
 		$layer->CreateField($column);
 		
@@ -431,12 +430,12 @@ sub ogr_tests {
 		my $t = $schema->GeometryType;
                 $t = 'Polygon' if $t eq 'Unknown';
 
-		my $geom = Geo::OGR::Geometry->create($t);
+		my $geom = Geo::OGR::Geometry->new($t);
 		
 		if ($type eq 'MultiPoint') {
 
 		    for (0..1) {
-			my $g = Geo::OGR::Geometry->create('Point');
+			my $g = Geo::OGR::Geometry->new('Point');
 			test_geom($g,$name,'Point','create');
 			$geom->AddGeometry($g);
 		    }
@@ -444,7 +443,7 @@ sub ogr_tests {
 		} elsif ($type eq 'MultiLineString') {
 
 		    for (0..1) {
-			my $g = Geo::OGR::Geometry->create('LineString');
+			my $g = Geo::OGR::Geometry->new('LineString');
 			test_geom($g,$name,'LineString','create');
 			$geom->AddGeometry($g);
 		    }
@@ -580,7 +579,7 @@ sub ogr_tests {
 
     # specific tests:
 
-    my $geom = Geo::OGR::Geometry->create('Point');
+    my $geom = Geo::OGR::Geometry->new('Point');
     $geom->AddPoint(1,1);
     ok($geom->GeometryType eq 'Point', "Add 2D Point");
     $geom->AddPoint(1,1,1);
@@ -628,7 +627,7 @@ sub test_geom {
 	my @pts = ([1.1,1],[1.11,0],[0,0.2],[0,2.1],[1,1.23],[1.1,1]);
 
 	if ($mode eq 'create') {
-	    my $r = Geo::OGR::Geometry->create('LinearRing');
+	    my $r = Geo::OGR::Geometry->new('LinearRing');
 	    pop @pts;
 	    my $n = @pts;
 	    for my $pt (@pts) {
@@ -658,7 +657,7 @@ sub test_geom {
 	}
 
     } else {
-	mytest('skipped',undef,$name,$type,'geom create/open');
+	mytest('skipped',undef,$name,$type,'geom new/open');
     }
 }
 

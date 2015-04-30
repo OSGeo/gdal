@@ -7,6 +7,15 @@ non-breaking.
 To be on the safe side, new code should be written according to
 what is presented in the documentation.
 
+constructors:
+
+    Geo::GDAL does not use the "create" constructors any more.  All
+    constructors are called "new" and use the new syntax.  This
+    applieds to classes Geo::GDAL::ColorTable, Geo::OGR::Feature,
+    Geo::OGR::FeatureDefn, Geo::OGR::FieldDefn,
+    Geo::OGR::GeomFieldDefn, Geo::OGR::Geometry, and
+    Geo::OSR::SpatialReference.
+
 class Geo::GDAL::GCP:
 
     attributes GCP* are renamed as * (the prefix GCP is removed)

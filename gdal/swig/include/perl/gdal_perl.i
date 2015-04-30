@@ -1179,14 +1179,20 @@ for my $string (qw/Gray RGB CMYK HLS/) {
     $PALETTE_INTERPRETATION_STRING2INT{$string} = $int;
     $PALETTE_INTERPRETATION_INT2STRING{$int} = $string;
 }
+%}
 
-sub create {
+%feature("shadow") GDALColorTableShadow(GDALPaletteInterp palette = GPI_RGB)
+%{
+use Carp;
+sub new {
     my($pkg, $pi) = @_;
     $pi = $PALETTE_INTERPRETATION_STRING2INT{$pi} if defined $pi and exists $PALETTE_INTERPRETATION_STRING2INT{$pi};
     my $self = Geo::GDALc::new_ColorTable($pi);
     bless $self, $pkg if defined($self);
 }
+%}
 
+%perlcode %{
 sub GetPaletteInterpretation {
     my $self = shift;
     return $PALETTE_INTERPRETATION_INT2STRING{GetPaletteInterpretation($self)};

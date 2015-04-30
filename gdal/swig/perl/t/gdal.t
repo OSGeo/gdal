@@ -238,8 +238,7 @@ if (0) {
 
 gdal_tests();
 
-$src = Geo::OSR::SpatialReference->new();
-$src->ImportFromEPSG(2392);
+$src = Geo::OSR::SpatialReference->new(EPSG => 2392);
 
 $xml = $src->ExportToXML();
 $a = Geo::GDAL::ParseXMLString($xml);
@@ -377,8 +376,7 @@ sub gdal_tests {
 		
 	    } else 
 	    {
-		#my $colortable = Geo::GDAL::ColorTable->create('RGB');
-		my $colortable = Geo::GDAL::ColorTable->new($Geo::GDAL::Constc::GPI_Gray);
+		my $colortable = Geo::GDAL::ColorTable->new('Gray');
 		my @rgba = (255,0,0,255);
 		$colortable->SetColorEntry(0, \@rgba);
 		$band->ColorTable($colortable);

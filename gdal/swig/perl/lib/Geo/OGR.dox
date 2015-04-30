@@ -652,12 +652,7 @@
 # separetely. The data model of a feature is a definition object.
 # @isa (Geo::OGR)
 
-## @cmethod Geo::OGR::Feature new(Geo::OGR::FeatureDefn defn)
-# @param defn a Geo::OGR::FeatureDefn object to be used as the schema of
-# the new feature. 
-# @return a new Geo::OGR::Feature object.
-
-## @cmethod Geo::OGR::Feature create(%schema)
+## @cmethod Geo::OGR::Feature new(%schema)
 # @param schema as in Schema
 # @return a new Geo::OGR::Feature object
 
@@ -853,11 +848,7 @@
 # read-only definition object is obtained from a layer or a feature.
 # @isa (Geo::OGR)
 
-## @cmethod Geo::OGR::FeatureDefn new($name = undef)
-# @param name
-# @return a Geo::OGR::FeatureDefn object
-
-## @cmethod Geo::OGR::FeatureDefn create(%schema)
+## @cmethod Geo::OGR::FeatureDefn new(%schema)
 # Creates a new layer or feature definition. The new definition is
 # either initialized to the given schema or it will contain no
 # non-spatial fields and one spatial field, whose Name is '' and
@@ -984,14 +975,7 @@
 # Justify values supported by GDAL. Current list is
 # +list Geo::OGR OJ
 
-## @cmethod Geo::OGR::FieldDefn new($name = "unnamed", $type = $Geo::OGR::OFTString)
-# @deprecated use Geo::OGR::FieldDefn::create, which accepts type as a string
-#
-# @param name
-# @param type as integer
-# @return a new Geo::OGR::FieldDefn object
-
-## @cmethod Geo::OGR::FieldDefn create(%params)
+## @cmethod Geo::OGR::FieldDefn new(%params)
 # @brief Create a new field definition.
 #
 # This method supports both an argument list and named arguments.
@@ -1110,7 +1094,7 @@
 # @brief A definition of a spatial attribute.
 # @isa (Geo::OGR)
 
-## @cmethod Geo::OGR::GeomFieldDefn create(%params)
+## @cmethod Geo::OGR::GeomFieldDefn new(%params)
 # @brief Create a new spatial field definition.
 #
 # @param params one or more of:
@@ -1190,16 +1174,7 @@
 ## @cmethod list ByteOrders
 # Same as Geo::OGR::ByteOrders
 
-## @cmethod Geo::OGR::Geometry new($type = $Geo::OGR::wkbUnknown, $WKT = undef, $WKB = undef, $GML = undef)
-# @deprecated use Geo::OGR::Geometry::create, which accepts type as a string
-#
-# @param type one of Geo::OGR::wkb*
-# @param WKT
-# @param WKB
-# @param GML
-# @return a new Geo::OGR::Geometry object
-
-## @cmethod Geo::OGR::Geometry create(%params)
+## @cmethod Geo::OGR::Geometry new(%params)
 # @param %params A named parameter, one of: WKT, WKB, HEXWKB,
 # HEXEWKB, GML, GeoJSON, arc, or GeometryType and optionally Points.
 # - \a GeometryType one the supported geometry types, see Geo::OGR::GeometryTypes.

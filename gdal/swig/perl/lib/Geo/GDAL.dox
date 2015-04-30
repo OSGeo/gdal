@@ -1143,12 +1143,7 @@ sub traverse {
 # @brief A color table in a raster band.
 # @isa ( Geo::GDAL::MajorObject Geo::GDAL )
 
-## @cmethod Geo::GDAL::ColorTable new($GDALPaletteInterp = $Geo::GDAL::Const::GPI_RGB)
-# @deprecated use Geo::GDAL::ColorTable::create, which uses string constants
-#
-# @return a new Geo::GDAL::ColorTable object
-
-## @cmethod Geo::GDAL::ColorTable create($GDALPaletteInterp = 'RGB')
+## @cmethod Geo::GDAL::ColorTable new($GDALPaletteInterp = 'RGB')
 #
 # Usage:
 # \code

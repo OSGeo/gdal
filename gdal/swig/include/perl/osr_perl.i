@@ -63,8 +63,12 @@ package Geo::OSR::SpatialReference;
 use strict;
 use warnings;
 use Carp;
+%}
 
-sub create {
+%feature("shadow") OSRSpatialReferenceShadow( char const * wkt = "" )
+%{
+use Carp;
+sub new {
     my $pkg = shift;
     my %param = @_;
     my $self = Geo::OSRc::new_SpatialReference();
@@ -104,11 +108,13 @@ sub create {
         };
         confess "$@" if $@;
     } else {
-        confess "Unrecognized create parameters.";
+        confess "Unrecognized/missing parameters: @_.";
     }
     bless $self, $pkg if defined $self;
 }
+%}
 
+%perlcode %{
 sub Export {
     my $self = shift;
     my $format;

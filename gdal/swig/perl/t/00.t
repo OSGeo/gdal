@@ -172,8 +172,8 @@ public method 	GetJPEG2000StructureAsString ()
 
 Algorithms:
 
-my $src_srs = Geo::OSR::SpatialReference->create(EPSG => 2392);
-my $dst_srs = Geo::OSR::SpatialReference->create(EPSG => 2393);
+my $src_srs = Geo::OSR::SpatialReference->new(EPSG => 2392);
+my $dst_srs = Geo::OSR::SpatialReference->new(EPSG => 2393);
 my $ResampleAlg = 'NearestNeighbour';
 my $maxerror = 0.0;
 my $dataset = Geo::GDAL::AutoCreateWarpedVRT($src, $src_srs, $dst_srs, $ResampleAlg, $maxerror);
