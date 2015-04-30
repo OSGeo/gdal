@@ -3291,6 +3291,31 @@ def ogr_sqlite_40():
     return 'success'
 
 ###############################################################################
+# Test reading dates from Julian day floating point representation
+
+def ogr_sqlite_41():
+
+    if gdaltest.sl_ds is None:
+        return 'skip'
+    ds = ogr.GetDriverByName('SQLite').CreateDataSource('/vsimem/ogr_sqlite_41.sqlite', options = ['METADATA=NO'])
+    ds.ExecuteSQL('CREATE TABLE test(a_date DATETIME);')
+    ds.ExecuteSQL("INSERT INTO test(a_date) VALUES (strftime('%J', '2015-04-30 12:34:56'))")
+    ds = None
+    
+    ds = ogr.Open('/vsimem/ogr_sqlite_41.sqlite')
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if f['a_date'] != '2015/04/30 12:34:56':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ds = None
+    
+    ogr.GetDriverByName('SQLite').DeleteDataSource('/vsimem/ogr_sqlite_41.sqlite')
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_sqlite_cleanup():
@@ -3472,13 +3497,14 @@ gdaltest_list = [
     ogr_spatialite_10,
     ogr_sqlite_39,
     ogr_sqlite_40,
+    ogr_sqlite_41,
     ogr_sqlite_cleanup,
     ogr_sqlite_without_spatialite,
 ]
 
 disabled_gdaltest_list = [ 
     ogr_sqlite_1,
-    ogr_sqlite_40,
+    ogr_sqlite_41,
     ogr_sqlite_cleanup,
 ]
 
