@@ -80,7 +80,10 @@
 PCRasterRasterBand::PCRasterRasterBand(
          PCRasterDataset* dataset)
 
-  : GDALPamRasterBand(), d_dataset(dataset)
+  : GDALPamRasterBand(),
+    d_dataset(dataset),
+    d_missing_value(-FLT_MAX),
+    d_create_in(GDT_Unknown)
 
 {
   this->poDS = dataset;
