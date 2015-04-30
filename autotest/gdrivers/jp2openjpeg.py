@@ -2489,6 +2489,15 @@ def jp2openjpeg_45():
                     "file": "/vsimem/i_dont_exist.xml",
                     "parent_node": "invalid_value"
                 }
+            ],
+
+            "extensions": [
+                "/vsimem/i_dont_exist.xml",
+                "../gcore/data/byte.tif",
+                {
+                    "file": "/vsimem/i_dont_exist.xml",
+                    "parent_node": "invalid_value"
+                }
             ]
     },
 
@@ -2621,6 +2630,11 @@ def jp2openjpeg_45():
     gdal.FileFromMemBuffer("/vsimem/style3.xml", '<style3 />')
     gdal.FileFromMemBuffer("/vsimem/style4.xml", '<style4 />')
 
+    gdal.FileFromMemBuffer("/vsimem/extension1.xml", '<extension1 xmlns="http://dummy" />')
+    gdal.FileFromMemBuffer("/vsimem/extension2.xml", '<mydummyns:extension2 xmlns:mydummyns="http://dummy" />')
+    gdal.FileFromMemBuffer("/vsimem/extension3.xml", '<extension3 />')
+    gdal.FileFromMemBuffer("/vsimem/extension4.xml", '<extension4 />')
+
     # So that the Python text is real JSon
     false = False
 
@@ -2703,6 +2717,21 @@ def jp2openjpeg_45():
                 },
                 {
                     "file": "/vsimem/style4.xml"
+                }
+            ],
+
+            "extensions" : [
+                "/vsimem/extension1.xml",
+                {
+                    "file": "/vsimem/extension2.xml",
+                    "parent_node": "GridCoverage"
+                },
+                {
+                    "file": "/vsimem/extension3.xml",
+                    "parent_node": "CoverageCollection"
+                },
+                {
+                    "file": "/vsimem/extension4.xml"
                 }
             ]
     },
@@ -2796,12 +2825,17 @@ def jp2openjpeg_45():
     style2_pos = gmljp2.find("""<mydummyns:style2 xmlns:mydummyns="http://dummy" />""")
     style3_pos = gmljp2.find("""<style3 xmlns="http://undefined_namespace" />""")
     style4_pos = gmljp2.find("""<style4 xmlns="http://undefined_namespace" />""")
+    extension1_pos = gmljp2.find("""<extension1 xmlns="http://dummy" />""")
+    extension2_pos = gmljp2.find("""<mydummyns:extension2 xmlns:mydummyns="http://dummy" />""")
+    extension3_pos = gmljp2.find("""<extension3 xmlns="http://undefined_namespace" />""")
+    extension4_pos = gmljp2.find("""<extension4 xmlns="http://undefined_namespace" />""")
 
     if first_metadata_pos < 0 or second_metadata_pos < 0 or third_metadata_pos < 0 or \
        GMLJP2RectifiedGridCoverage_pos < 0 or fourth_metadata_pos < 0 or \
        feature_pos < 0 or myshape_gml_pos < 0 or myshape2_gml_pos < 0 or \
        feature2_pos < 0 or myshape_kml_pos < 0 or empty_kml_pos < 0 or \
        style1_pos < 0 or style2_pos < 0 or style3_pos < 0 or style4_pos < 0 or \
+       extension1_pos < 0 or extension2_pos < 0 or extension3_pos < 0 or extension4_pos < 0 or \
        not( first_metadata_pos < second_metadata_pos and \
             second_metadata_pos < third_metadata_pos and \
             third_metadata_pos < GMLJP2RectifiedGridCoverage_pos and \
@@ -2811,13 +2845,17 @@ def jp2openjpeg_45():
             myshape2_gml_pos < myshape_kml_pos and \
             myshape_kml_pos < empty_kml_pos and \
             empty_kml_pos < style2_pos and \
-            style2_pos < feature_pos and \
+            style2_pos < extension2_pos and \
+            extension2_pos < feature_pos and \
             feature_pos < myshape_gml_pos and \
             myshape_gml_pos < feature2_pos and \
             feature2_pos < feature3_pos and \
             feature3_pos < style1_pos and \
             style1_pos < style3_pos and \
-            style3_pos < style4_pos):
+            style3_pos < style4_pos and \
+            style4_pos < extension1_pos and \
+            extension1_pos < extension3_pos and \
+            extension3_pos < extension4_pos):
         gdaltest.post_reason('fail')
         print(gmljp2)
         return 'fail'

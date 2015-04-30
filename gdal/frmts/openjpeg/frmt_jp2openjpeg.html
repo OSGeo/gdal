@@ -227,8 +227,8 @@ Lossless compression can be achieved if ALL the following creation options are d
 
 A GMLJP2v2 box typically contains a GMLJP2RectifiedGridCoverage with the 
 SRS information and geotransformation matrix. It is also possible to add metadata,
-vector features (GML feature collections), annotations (KML) or styles (typically
-SLD, or other XML format).
+vector features (GML feature collections), annotations (KML), styles (typically
+SLD, or other XML format) or any XML content as an extension.
 
 The value of the GMLJP2V2_DEF creation option should be a file that conforms with
 the below syntax (elements starting with "#" are documentation, and can be omitted):
@@ -338,6 +338,18 @@ the below syntax (elements starting with "#" are documentation, and can be omitt
             {
                 "#file_doc": "Can use relative or absolute paths.",
                 "file": "my.sld",
+
+                "#parent_node": ["Where to put the FeatureCollection.",
+                                 "Under CoverageCollection (default) or GridCoverage" ],
+                "parent_node": "CoverageCollection"
+            }
+        ],
+
+        "#extensions_doc: [ "An array of extensions." ],
+        "extensions" : [
+            {
+                "#file_doc": "Can use relative or absolute paths.",
+                "file": "my.xml",
 
                 "#parent_node": ["Where to put the FeatureCollection.",
                                  "Under CoverageCollection (default) or GridCoverage" ],
