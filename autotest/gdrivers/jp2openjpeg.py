@@ -2925,73 +2925,7 @@ def jp2openjpeg_46():
 }
 
     gdal.FileFromMemBuffer("/vsimem/template.xml",
-"""<gmljp2:metadata>{{{IF(EQ(XPATH(//B/text()),'my_value'),
-                          CONCAT('yeah: ',
-                                 EVAL('{{{1}}}'),
-                                 ' ',
-                                 STRING(NUMERIC('23e1')),
-                                 ' ',
-                                 STRING_LENGTH('a'),
-                                 ' ',
-                                 AND('true','true'),
-                                 ' ',
-                                 OR('false','true'),
-                                 ' ',
-                                 LT('a','b'),
-                                 ' ',
-                                 LE('a','b'),
-                                 ' ',
-                                 GT('a','b'),
-                                 ' ',
-                                 GE('a','b'),
-                                 ' ',
-                                 NOT('true'),
-                                 ' ',
-                                 SUBSTRING('abcdef',2,3),
-                                 ' ',
-                                 EQ(1,1),
-                                 ' ',
-                                 LT(1,1),
-                                 ' ',
-                                 LE(1,1),
-                                 ' ',
-                                 ADD(3,2),
-                                 ' ',
-                                 SUB(3,2),
-                                 ' ',
-                                 'a\\\\\\'b',
-                                 ' ',
-                                 IF('true','A','B'),
-                                 ' ',
-                                 IF('false','A','B'),
-                                 ' ',
-                                 SUBSTRING('abcdef',0,2),
-                                 '-',
-                                 SUBSTRING('abcdef',-2,2),
-                                 '-',
-                                 SUBSTRING('abcdef',20,2),
-                                 '-',
-                                 SUBSTRING('abcdef',5,3),
-                                 ' ',
-                                 NOT('true'),
-                                 ' ',
-                                 SUBSTRING_BEFORE('abcdef','def'),
-                                 '-',
-                                 SUBSTRING_BEFORE('abcdef','XXX'),
-                                 '-',
-                                 SUBSTRING_AFTER('abcdef','abc'),
-                                 '-',
-                                 SUBSTRING_AFTER('abcdef','XXX'),
-                                 '-',
-                                 XPATH(string('a_string')),
-                                 ' ',
-                                 XPATH(true()),
-                                 ' ',
-                                 XPATH(number(5)),
-                                 ' ',
-                                 UUID()
-                                 ),
-                          'oh!')}}}</gmljp2:metadata>""")
+"""<gmljp2:metadata>{{{XPATH(if(//B/text() = 'my_value',concat('yeah: ',uuid()),'doh!'))}}}</gmljp2:metadata>""")
 
     gdal.FileFromMemBuffer("/vsimem/source.xml",
 """<A><B>my_value</B></A>""")
@@ -3007,7 +2941,7 @@ def jp2openjpeg_46():
 
     ds = gdal.Open('/vsimem/jp2openjpeg_46.jp2')
     gmljp2 = ds.GetMetadata_List("xml:gml.root-instance")[0]
-    if gmljp2.find("""<gmljp2:metadata>yeah: 1 230 1 true true true true false false false bcd true false true 5 1 a\\'b A B a---ef false abc--def--a_string true 5 """) < 0:
+    if gmljp2.find("""<gmljp2:metadata>yeah: """) < 0:
         gdaltest.post_reason('fail')
         print(gmljp2)
         return 'fail'
@@ -3023,15 +2957,6 @@ def jp2openjpeg_46():
             '<gmljp2:metadata>{{{XPATH(}}}</gmljp2:metadata>',
             '<gmljp2:metadata>{{{XPATH()}}}</gmljp2:metadata>',
             '<gmljp2:metadata>{{{XPATH(//node[)}}}</gmljp2:metadata>',
-            "<gmljp2:metadata>{{{IF('true')}}}</gmljp2:metadata>",
-            "<gmljp2:metadata>{{{'\\b'}}}</gmljp2:metadata>",
-            "<gmljp2:metadata>{{{'}}}</gmljp2:metadata>",
-            "<gmljp2:metadata>{{{1</gmljp2:metadata>",
-            "<gmljp2:metadata>{{{1 </gmljp2:metadata>",
-            "<gmljp2:metadata>{{{NOT",
-            "<gmljp2:metadata>{{{NOT(",
-            "<gmljp2:metadata>{{{NOT('true' unexpected)}}}</gmljp2:metadata>",
-            "<gmljp2:metadata>{{{NOT('true','unexpected')}}}</gmljp2:metadata>",
     ]:
 
         gdal.FileFromMemBuffer("/vsimem/template.xml", invalid_template)

@@ -342,32 +342,14 @@ the below syntax (elements starting with "#" are documentation, and can be omitt
 <p>
 Metadata can be dynamically generated from a template file (in that context,
 with a XML structure) and a XML source file. The template file is processed
-by searching for patterns like {{{EXPR}}} and replacing them by their evaluation
-against the content of the source file.
-</p>
-<p>
-EXPR can be :
+by searching for patterns like {{{XPATH(xpath_expr)}}} and replacing them by their evaluation
+against the content of the source file. xpath_expr must be a XPath 1.0 compatible
+expression, with the addition of the following functions :
+
 <ul>
-<li><b>XPATH(a_xpath_expr)</b>: where a_xpath_expr is a XPath 1.0 expression. E.g XPATH(/root_node/child/text())</li>
-<li><b>IF(cond_expr,expr_if_true,expr_if_false)</b>: if cond_expr evalutes to
-"true", evaluates to the evaluation of expr_if_true. Otherwise to expr_if_false</li>
-<li><b>'string_literal_value'</b>: e.g. 'A value'. Single quote characters are escaped by \. And \ is escaped by itself</li>
-<li><b>numeric_literal_value</b>: e.g. 5.67</li>
-<li><b>AND(bool_expr_1,bool_expr_2)</b>: evaluates to "true" if bool_expr_1 and bool_expr_2 evaluates to "true"</li>
-<li><b>OR(bool_expr_1,bool_expr_2)</b>:  evaluates to "true" if bool_expr_1 or bool_expr_2 evaluates to "true"</li>
-<li><b>NOT(bool_expr)</b>: evaluates to "false" if bool_expr is "true", "true" otherwise</li>
-<li><b>EQ(expr_1,expr_2)</b>: evaluates to "true" if expr_1 == expr_2</li>
-<li><b>LT(expr_1,expr_2)</b>: evaluates to "true" if expr_1 &lt; expr_2</li>
-<li><b>LE(expr_1,expr_2)</b>: evaluates to "true" if expr_1 &lt;= expr_2</li>
-<li><b>GT(expr_1,expr_2)</b>: evaluates to "true" if expr_1 &gt; expr_2</li>
-<li><b>GE(expr_1,expr_2)</b>: evaluates to "true" if expr_1 &gt;= expr_2</li>
-<li><b>CONCAT(expr_1,expr_2,...,expr_n)</b>: evaluates to the concatenation of all expressions</li>
-<li><b>STRING_LENGTH(expr)</b>: evaluates to the length of the string representation of expr</li>
-<li><b>SUBSTRING(string_expr,start_pos,length)</b>: evaluates to extracting length characters from string_expr, starting at position start_pos (start_pos=1 means the first character)</li>
-<li><b>EVAL(expr)</b>: evaluates to expr after replacing all patterns like {{{EXPR}}} with above explained rules</li>
-<li><b>STRING(expr)</b>: cast a number into a string</b>
-<li><b>NUMERIC(expr)</b>: cast a string to a number</b>
-<li><b>UUID()</b>: evaluates to a random UUID</b></li>
+<li><b>if(cond_expr,expr_if_true,expr_if_false)</b>: if cond_expr evalutes to
+true, returns expr_if_true. Otherwise returns expr_if_false</li>
+<li><b>uuid()</b>: evaluates to a random UUID</b></li>
 </ul>
 </p>
 

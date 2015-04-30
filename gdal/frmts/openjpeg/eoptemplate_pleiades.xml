@@ -1,18 +1,18 @@
 <eop:EarthObservation
-    gml:id="GMLID_{{{UUID()}}}"
+    gml:id="GMLID_{{{XPATH(uuid())}}}"
     xmlns:eop="http://www.opengis.net/eop/2.0"
     xmlns:gml="http://www.opengis.net/gml/3.2"
     xmlns:om="http://www.opengis.net/om/2.0"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://www.opengis.net/eop/2.0 http://schemas.opengis.net/omeo/1.0/eop.xsd http://www.opengis.net/om/2.0 http://schemas.opengis.net/om/2.0/observation.xsd">
     <om:phenomenonTime>
-        <gml:TimeInstant gml:id="GMLID_{{{UUID()}}}">
+        <gml:TimeInstant gml:id="GMLID_{{{XPATH(uuid())}}}">
             <gml:timePosition>{{{XPATH(//PRODUCTION_DATE/text())}}}</gml:timePosition>
         </gml:TimeInstant>
     </om:phenomenonTime>
     <om:resultTime />
     <om:procedure>
-        <eop:EarthObservationEquipment gml:id="GMLID_{{{UUID()}}}">
+        <eop:EarthObservationEquipment gml:id="GMLID_{{{XPATH(uuid())}}}">
             <eop:platform>
                 <eop:Platform>
                     <eop:shortName>{{{XPATH(//PRODUCT_CODE/text())}}}</eop:shortName>
@@ -26,8 +26,7 @@
             <eop:sensor>
                 <eop:Sensor>
                     <eop:sensorType>{{{XPATH(//DATASET_TYPE/text())}}}</eop:sensorType>
-                    <eop:operationalMode>{{{ IF(EQ(XPATH(//PAN_RESTORATION/text()),'true'), 'P' ,
-                                            IF(EQ(XPATH(//MS_RESTORATION/text()),'true'), 'Multi' , 'Unknown') ) }}}</eop:operationalMode>
+                    <eop:operationalMode>{{{XPATH(if(//PAN_RESTORATION/text() = 'true','P',if(//MS_RESTORATION/text() = 'true','Multi','Unknown')))}}}</eop:operationalMode>
                     <eop:resolution uom="{{{XPATH(string(//RESAMPLING_SPACING/@unit))}}}">{{{XPATH(//RESAMPLING_SPACING/text())}}}</eop:resolution>
                 </eop:Sensor>
         </eop:sensor>
@@ -38,7 +37,7 @@
     <om:result />
     <eop:metaDataProperty>
         <eop:EarthObservationMetaData>
-            <eop:identifier>{{{UUID()}}}</eop:identifier>
+            <eop:identifier>{{{XPATH(uuid())}}}</eop:identifier>
             <eop:acquisitionType>NOMINAL</eop:acquisitionType>
             <eop:status>ACQUIRED</eop:status>
         </eop:EarthObservationMetaData>

@@ -32,6 +32,8 @@
 
 CPL_CVSID("$Id$");
 
+//#define ENABLE_BRAIN_DAMAGE
+
 #ifdef HAVE_LIBXML2
 
 #include <libxml/tree.h>
@@ -46,9 +48,10 @@ CPL_CVSID("$Id$");
 typedef enum 
 {
     GDALGMLJP2Expr_Unknown,
-    GDALGMLJP2Expr_STRING_LITERAL,
-    GDALGMLJP2Expr_NUMERIC_LITERAL,
     GDALGMLJP2Expr_XPATH,
+    GDALGMLJP2Expr_STRING_LITERAL,
+#ifdef ENABLE_BRAIN_DAMAGE
+    GDALGMLJP2Expr_NUMERIC_LITERAL,
     GDALGMLJP2Expr_ADD,
     GDALGMLJP2Expr_SUB,
     GDALGMLJP2Expr_NOT,
@@ -70,6 +73,7 @@ typedef enum
     GDALGMLJP2Expr_SUBSTRING_AFTER,
     GDALGMLJP2Expr_STRING_LENGTH,
     GDALGMLJP2Expr_UUID
+#endif
 } GDALGMLJP2ExprType;
 
 // {{{IF(EQ(XPATH(), '5'), '', '')}}}
@@ -88,7 +92,9 @@ class GDALGMLJP2Expr
                                 GDALGMLJP2Expr(): eType(GDALGMLJP2Expr_Unknown) {}
                                 GDALGMLJP2Expr(const char* pszVal): eType(GDALGMLJP2Expr_STRING_LITERAL), osValue(pszVal) {}
                                 GDALGMLJP2Expr(CPLString osVal): eType(GDALGMLJP2Expr_STRING_LITERAL), osValue(osVal) {}
+#ifdef ENABLE_BRAIN_DAMAGE
                                 GDALGMLJP2Expr(bool b): eType(GDALGMLJP2Expr_STRING_LITERAL), osValue(b ? "true" : "false") {}
+#endif
                                ~GDALGMLJP2Expr();
 
         GDALGMLJP2Expr          Evaluate(xmlXPathContextPtr pXPathCtx,
@@ -159,6 +165,8 @@ void GDALGMLJP2Expr::SkipSpaces(const char*& pszStr)
         pszStr ++;
 }
 
+#ifdef ENABLE_BRAIN_DAMAGE
+
 /************************************************************************/
 /*                             Build()                                  */
 /************************************************************************/
@@ -213,9 +221,13 @@ GDALGMLJP2Expr* GDALGMLJP2Expr::BuildNaryOp(const char* pszOriStr,
     return poExpr;
 }
 
+#endif // ENABLE_BRAIN_DAMAGE
+
 /************************************************************************/
 /*                             Build()                                  */
 /************************************************************************/
+
+#ifdef ENABLE_BRAIN_DAMAGE
 
 typedef struct
 {
@@ -223,6 +235,8 @@ typedef struct
     GDALGMLJP2ExprType eType;
     int                nary;
 } GDALGMLJP2Operators;
+
+#endif
 
 GDALGMLJP2Expr* GDALGMLJP2Expr::Build(const char* pszOriStr,
                                       const char*& pszStr)
@@ -303,6 +317,7 @@ GDALGMLJP2Expr* GDALGMLJP2Expr::Build(const char* pszOriStr,
         ReportError(pszOriStr, pszStr);
         return NULL;
     }
+#ifdef ENABLE_BRAIN_DAMAGE
     else if( pszStr[0] == '\'' )
     {
         pszStr ++;
@@ -426,6 +441,13 @@ GDALGMLJP2Expr* GDALGMLJP2Expr::Build(const char* pszOriStr,
         ReportError(pszOriStr, pszStr);
         return NULL;
     }
+#else
+    else
+    {
+        ReportError(pszOriStr, pszStr);
+        return NULL;
+    }
+#endif
 }
 
 /************************************************************************/
@@ -450,9 +472,11 @@ GDALGMLJP2Expr GDALGMLJP2Expr::Evaluate(xmlXPathContextPtr pXPathCtx,
 {
     switch(eType)
     {
+#ifdef ENABLE_BRAIN_DAMAGE
         case GDALGMLJP2Expr_STRING_LITERAL:
         case GDALGMLJP2Expr_NUMERIC_LITERAL:
             return *this;
+#endif
 
         case GDALGMLJP2Expr_XPATH:
         {
@@ -487,7 +511,7 @@ GDALGMLJP2Expr GDALGMLJP2Expr::Evaluate(xmlXPathContextPtr pXPathCtx,
             xmlXPathFreeObject(pXPathObj);
             return GDALGMLJP2Expr(osXMLRes);
         }
-
+#ifdef ENABLE_BRAIN_DAMAGE
         case GDALGMLJP2Expr_AND:
         {
             return GDALGMLJP2Expr(
@@ -685,7 +709,7 @@ GDALGMLJP2Expr GDALGMLJP2Expr::Evaluate(xmlXPathContextPtr pXPathCtx,
                 return GDALGMLJP2Expr("");
             return GDALGMLJP2Expr(oExpr1.osValue.substr(nPos + oExpr2.osValue.size()));
         }
-
+#endif
         default:
             CPLAssert(FALSE);
             return GDALGMLJP2Expr("");
@@ -775,6 +799,63 @@ static void GDALGMLJP2RegisterNamespaces(xmlXPathContextPtr pXPathCtx,
     }
 }
 
+/************************************************************************/
+/*                         GDALGMLJP2XPathIf()                          */
+/************************************************************************/
+
+static void GDALGMLJP2XPathIf(xmlXPathParserContextPtr ctxt, int nargs)
+{
+    xmlXPathObjectPtr cond_val,then_val,else_val;
+
+    CHECK_ARITY(3);
+    else_val = valuePop(ctxt);
+    then_val = valuePop(ctxt);
+    CAST_TO_BOOLEAN
+    cond_val = valuePop(ctxt);
+
+    if( cond_val->boolval )
+    {
+        xmlXPathFreeObject(else_val);
+        valuePush(ctxt, then_val);
+    }
+    else
+    {
+        xmlXPathFreeObject(then_val);
+        valuePush(ctxt, else_val);
+    }
+    xmlXPathFreeObject(cond_val);
+}
+
+/************************************************************************/
+/*                        GDALGMLJP2XPathUUID()                         */
+/************************************************************************/
+
+static void GDALGMLJP2XPathUUID(xmlXPathParserContextPtr ctxt, int nargs)
+{
+    CHECK_ARITY(0);
+
+    CPLString osRet;
+    static int nCounter = 0;
+    srand((unsigned int)time(NULL) + nCounter);
+    nCounter ++;
+    for( int i=0; i<4; i ++ )
+        osRet += GDALGMLJP2HexFormatter(rand() & 0xFF);
+    osRet += "-";
+    osRet += GDALGMLJP2HexFormatter(rand() & 0xFF);
+    osRet += GDALGMLJP2HexFormatter(rand() & 0xFF);
+    osRet += "-";
+    osRet += GDALGMLJP2HexFormatter((rand() & 0x0F) | 0x40); // set the version number bits (4 == random)
+    osRet += GDALGMLJP2HexFormatter(rand() & 0xFF);
+    osRet += "-";
+    osRet += GDALGMLJP2HexFormatter((rand() & 0x3F) | 0x80); // set the variant bits
+    osRet += GDALGMLJP2HexFormatter(rand() & 0xFF);
+    osRet += "-";
+    for( int i=0; i<6; i ++ )
+        osRet += GDALGMLJP2HexFormatter(rand() & 0xFF);
+
+    valuePush(ctxt, xmlXPathNewString((const xmlChar*)osRet.c_str()));
+}
+
 #endif /* defined(LIBXML2) */
 
 /************************************************************************/
@@ -812,6 +893,10 @@ CPLXMLNode* GDALGMLJP2GenerateMetadata(const CPLString& osTemplateFile,
         xmlFreeDoc(pDoc); 
         return NULL;
     }
+
+    xmlXPathRegisterFunc(pXPathCtx, (const xmlChar *)"if", GDALGMLJP2XPathIf);
+    xmlXPathRegisterFunc(pXPathCtx, (const xmlChar *)"uuid", GDALGMLJP2XPathUUID);
+
     pXPathCtx->error = GDALGMLJP2XPathErrorHandler;
     
     GDALGMLJP2RegisterNamespaces(pXPathCtx, xmlDocGetRootElement(pDoc));
