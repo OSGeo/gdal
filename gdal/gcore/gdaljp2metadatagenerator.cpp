@@ -87,7 +87,9 @@ class GDALGMLJP2Expr
     public:
         GDALGMLJP2ExprType           eType;
         CPLString                    osValue;
+#ifdef ENABLE_BRAIN_DAMAGE
         std::vector<GDALGMLJP2Expr*> apoSubExpr;
+#endif
 
                                 GDALGMLJP2Expr(): eType(GDALGMLJP2Expr_Unknown) {}
                                 GDALGMLJP2Expr(const char* pszVal): eType(GDALGMLJP2Expr_STRING_LITERAL), osValue(pszVal) {}
@@ -113,8 +115,10 @@ class GDALGMLJP2Expr
 
 GDALGMLJP2Expr::~GDALGMLJP2Expr()
 {
+#ifdef ENABLE_BRAIN_DAMAGE
     for(size_t i=0;i<apoSubExpr.size();i++)
         delete apoSubExpr[i];
+#endif
 }
 
 /************************************************************************/
