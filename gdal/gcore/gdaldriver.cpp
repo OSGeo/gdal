@@ -1538,10 +1538,10 @@ int GDALValidateOptions( const char* pszOptionList,
                         pszErrorMessageContainerName,
                         pszErrorMessageOptionType,
                         pszKey);
-                CPLFree(pszKey);
                 bRet = FALSE;
             }
 
+            CPLFree(pszKey);
             papszOptionsToValidate ++;
             continue;
         }
