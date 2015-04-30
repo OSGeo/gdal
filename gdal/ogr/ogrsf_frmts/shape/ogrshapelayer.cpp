@@ -2329,10 +2329,12 @@ OGRErr OGRShapeLayer::Repack()
 /* -------------------------------------------------------------------- */
 /*      Create a new dbf file, matching the old.                        */
 /* -------------------------------------------------------------------- */
-    int bMustReopenDBF = ( hDBF != NULL );
+    int bMustReopenDBF = FALSE;
 
     if( hDBF != NULL && nDeleteCount > 0 )
     {
+        bMustReopenDBF = TRUE;
+
         CPLString oTempFile(CPLFormFilename(osDirname, osBasename, NULL));
         oTempFile += "_packed.dbf";
 
