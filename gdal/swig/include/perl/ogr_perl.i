@@ -399,10 +399,10 @@ sub CreateField {
             delete $params{GeometryType};
         }
         if (exists $Geo::OGR::FieldDefn::TYPE_STRING2INT{$params{Type}}) {
-            my $fd = Geo::OGR::FieldDefn->create(%params);
+            my $fd = Geo::OGR::FieldDefn->new(%params);
             _CreateField($self, $fd, $a);
         } else {
-            my $fd = Geo::OGR::GeomFieldDefn->create(%params);
+            my $fd = Geo::OGR::GeomFieldDefn->new(%params);
             CreateGeomField($self, $fd, $a);
         }
     }
@@ -420,7 +420,7 @@ sub AlterFieldDefn {
         _AlterFieldDefn($self, $index, @_);
     } elsif (@_ % 2 == 0) {
         my %params = @_;
-        my $definition = Geo::OGR::FieldDefn->create(%params);
+        my $definition = Geo::OGR::FieldDefn->new(%params);
         my $flags = 0;
         $flags |= 1 if exists $params{Name};
         $flags |= 2 if exists $params{Type};
@@ -506,7 +506,7 @@ sub InsertFeature {
     my $self = shift;
     my $feature = shift;
     confess "Usage: \$feature->InsertFeature(reference to a hash or array)." unless ref($feature);
-    my $new = Geo::OGR::Feature->create($self->GetDefn);
+    my $new = Geo::OGR::Feature->new($self->GetDefn);
     if (ref($feature) eq 'HASH') {
         $new->Row(%$feature);
     } elsif (ref($feature) eq 'ARRAY') {
@@ -606,8 +606,13 @@ sub RELEASE_PARENTS {
     delete $Geo::OGR::Feature::DEFNS{$self};
     delete $Geo::OGR::Layer::DEFNS{$self};
 }
+%}
 
-sub create {
+%feature("shadow") OGRFeatureDefnShadow(const char* name_null_ok=NULL)
+%{
+use Carp;
+use Scalar::Util 'blessed';
+sub new {
     my $pkg = shift;
     my %schema;
     if (@_ == 1 and ref($_[0]) eq 'HASH') {
@@ -631,9 +636,9 @@ sub create {
         my $d = $fd;
         if (ref($fd) eq 'HASH') {
             if ($fd->{GeometryType} or exists $Geo::OGR::Geometry::TYPE_STRING2INT{$fd->{Type}}) {
-                $d = Geo::OGR::GeomFieldDefn->create(%$fd);
+                $d = Geo::OGR::GeomFieldDefn->new(%$fd);
             } else {
-                $d = Geo::OGR::FieldDefn->create(%$fd);
+                $d = Geo::OGR::FieldDefn->new(%$fd);
             }
         }
         if (blessed($d) and $d->isa('Geo::OGR::FieldDefn')) {
@@ -646,6 +651,9 @@ sub create {
     }
     return $self;
 }
+%}
+
+%perlcode %{
 *Name = *GetName;
 
 sub GetSchema {
@@ -687,10 +695,10 @@ sub AddField {
     }
     $params{Type} = '' unless defined $params{Type};
     if (exists $Geo::OGR::FieldDefn::TYPE_STRING2INT{$params{Type}}) {
-        my $fd = Geo::OGR::FieldDefn->create(%params);
+        my $fd = Geo::OGR::FieldDefn->new(%params);
         $self->AddFieldDefn($fd);
     } else {
-        my $fd = Geo::OGR::GeomFieldDefn->create(%params);
+        my $fd = Geo::OGR::GeomFieldDefn->new(%params);
         $self->AddGeomFieldDefn($fd);
     }
 }
@@ -766,16 +774,22 @@ use vars qw /%GEOMETRIES %DEFNS/;
 use Carp;
 use Encode;
 use Scalar::Util 'blessed';
+%}
 
-sub create {
+%feature("shadow") OGRFeatureShadow()
+%{
+use Carp;
+sub new {
     my $pkg = shift;
     if (blessed($_[0]) and $_[0]->isa('Geo::OGR::FeatureDefn')) {
         return $pkg->new($_[0]);
     } else {
-        return $pkg->new(Geo::OGR::FeatureDefn->create(@_));
+        return $pkg->new(Geo::OGR::FeatureDefn->new(@_));
     }
 }
+%}
 
+%perlcode %{
 sub FETCH {
     my($self, $index) = @_;
     my $i;
@@ -1091,7 +1105,7 @@ sub Geometry {
         } elsif (ref($geometry) eq 'HASH') {
             $geometry->{GeometryType} = $type unless exists $geometry->{GeometryType};
             eval {
-                $geometry = Geo::OGR::Geometry->create($geometry);
+                $geometry = Geo::OGR::Geometry->new($geometry);
             };
             confess "The type of the inserted geometry ('".$geometry->GeometryType."') is not the field type ('$type')."
                 if $type ne 'Unknown' and $type ne $geometry->GeometryType;
@@ -1173,8 +1187,12 @@ sub SubTypes {
 sub JustifyValues {
     return @JUSTIFY_VALUES;
 }
+%}
 
-sub create {
+%feature("shadow") OGRFieldDefnShadow( const char* name_null_ok="unnamed", OGRFieldType field_type=OFTString)
+%{
+use Carp;
+sub new {
     my $pkg = shift;
     my ($name, $type) = ('unnamed', 'String');
     my %args;
@@ -1190,7 +1208,7 @@ sub create {
             if ($SCHEMA_KEYS{$key}) {
                 $args{$key} = $named{$key};
             } else {
-                carp "Unknown field definition create argument: '$key'." if $key ne 'Index';
+                carp "Unrecognized argument: '$key'." if $key ne 'Index';
             }
         }
         $name = $args{Name} if exists $args{Name};
@@ -1207,7 +1225,9 @@ sub create {
     }
     return $self;
 }
+%}
 
+%perlcode %{
 sub Schema {
     my $self = shift;
     if (@_) {
@@ -1303,8 +1323,12 @@ use vars qw / %SCHEMA_KEYS /;
 use Carp;
 use Scalar::Util 'blessed';
 %SCHEMA_KEYS = map {$_ => 1} qw/Name Type SpatialReference Nullable Ignored/;
+%}
 
-sub create {
+%feature("shadow") OGRGeomFieldDefnShadow( const char* name_null_ok="", OGRwkbGeometryType field_type = wkbUnknown)
+%{
+use Carp;
+sub new {
     my $pkg = shift;
     my ($name, $type) = ('geom', 'Unknown');
     my %args;
@@ -1320,7 +1344,7 @@ sub create {
             if ($SCHEMA_KEYS{$key}) {
                 $args{$key} = $named{$key};
             } else {
-                carp "Unknown geometry field definition create argument: '$key'." if $key ne 'Index';
+                carp "Unrecognized argument: '$key'." if $key ne 'Index';
             }
         }
         $name = $args{Name} if exists $args{Name};
@@ -1339,7 +1363,9 @@ sub create {
     }
     return $self;
 }
+%}
 
+%perlcode %{
 sub Schema {
     my $self = shift;
     if (@_) {
@@ -1438,8 +1464,12 @@ sub RELEASE_PARENTS {
     my $self = shift;
     delete $Geo::OGR::Feature::GEOMETRIES{$self};
 }
+%}
 
-sub create {
+%feature("shadow") OGRGeometryShadow( OGRwkbGeometryType type = wkbUnknown, char *wkt = 0, int wkb = 0, char *wkb_buf = 0, char *gml = 0 )
+%{
+use Carp;
+sub new {
     my $pkg = shift;
     my ($type, $wkt, $wkb, $gml, $json, $srs, $points, $arc);
     my %param;
@@ -1485,7 +1515,8 @@ sub create {
     } elsif (defined $type) {
         confess "Unknown geometry type: '$type'." unless exists $TYPE_STRING2INT{$type};
         $type = $TYPE_STRING2INT{$type};
-        $self = Geo::OGRc::new_Geometry($type);
+        $self = Geo::OGRc::new_Geometry($type); # flattens the type
+        SetCoordinateDimension($self, 3) if Geo::OGR::GT_HasZ($type);
     } elsif (defined $arc) {
         $self = Geo::OGRc::ApproximateArcAngles(@$arc);
     } else {
@@ -1495,7 +1526,9 @@ sub create {
     $self->Points($points) if $points;
     return $self;
 }
+%}
 
+%perlcode %{
 sub ApproximateArcAngles {
     my %p = @_;
     my %default = ( Center => [0,0,0],
@@ -1658,8 +1691,9 @@ sub Point {
 sub Points {
     my $self = shift;
     my $t = $self->GetGeometryType;
-    my $flat = ($t & 0x80000000) == 0;
-    $t = $TYPE_INT2STRING{$t & ~0x80000000};
+    my $flat = not Geo::OGR::GT_HasZ($t);
+    $t = Geo::OGR::GT_Flatten($t);
+    $t = $TYPE_INT2STRING{$t};
     my $points = shift;
     if ($points) {
         Empty($self);
@@ -1688,26 +1722,26 @@ sub Points {
             }
         } elsif ($t eq 'Polygon') {
             for my $r (@$points) {
-                my $ring = Geo::OGR::Geometry->create('LinearRing');
+                my $ring = Geo::OGR::Geometry->new('LinearRing');
                 $ring->SetCoordinateDimension(3) unless $flat;
                 $ring->Points($r);
                 $self->AddGeometryDirectly($ring);
             }
         } elsif ($t eq 'MultiPoint') {
             for my $p (@$points) {
-                my $point = Geo::OGR::Geometry->create($flat ? 'Point' : 'Point25D');
+                my $point = Geo::OGR::Geometry->new($flat ? 'Point' : 'Point25D');
                 $point->Points($p);
                 $self->AddGeometryDirectly($point);
             }
         } elsif ($t eq 'MultiLineString') {
             for my $l (@$points) {
-                my $linestring = Geo::OGR::Geometry->create($flat ? 'LineString' : 'LineString25D');
+                my $linestring = Geo::OGR::Geometry->new($flat ? 'LineString' : 'LineString25D');
                 $linestring->Points($l);
                 $self->AddGeometryDirectly($linestring);
             }
         } elsif ($t eq 'MultiPolygon') {
             for my $p (@$points) {
-                my $polygon = Geo::OGR::Geometry->create($flat ? 'Polygon' : 'Polygon25D');
+                my $polygon = Geo::OGR::Geometry->new($flat ? 'Polygon' : 'Polygon25D');
                 $polygon->Points($p);
                 $self->AddGeometryDirectly($polygon);
             }
@@ -1800,7 +1834,7 @@ sub ForceToMultiPolygon {
 }
 
 sub ForceToCollection {
-    my $self = Geo::OGR::Geometry->create(GeometryType => 'GeometryCollection');
+    my $self = Geo::OGR::Geometry->new(GeometryType => 'GeometryCollection');
     for my $g (@_) {
         $self->AddGeometry($g);
     }

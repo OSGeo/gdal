@@ -46,10 +46,6 @@
 # <a href="http://www.gdal.org/ogr/classOGRSpatialReference.html">Documentation
 # of the underlying C++ class at www.gdal.org</a>
 
-## @cmethod Geo::OSR::SpatialReference new($wkt = undef)
-# @param wkt well known text
-# @return a new Geo::OSR::SpatialReference object
-
 ## @ignore ImportFromEPSGA
 ## @ignore ImportFromERM
 ## @ignore ImportFromMICoordSys
@@ -62,7 +58,7 @@
 ## @ignore ImportFromXML
 ## @ignore ImportFromUrl
 
-## @cmethod Geo::OSR::SpatialReference create(%params)
+## @cmethod Geo::OSR::SpatialReference new(%params)
 # Create a new spatial reference object using a named parameter. This
 # constructor recognizes the following key words (alternative in
 # parenthesis): WKT (Text), Proj4, ESRI, EPSG, EPSGA, PCI, USGS, GML
