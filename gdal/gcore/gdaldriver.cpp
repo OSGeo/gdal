@@ -1485,6 +1485,12 @@ int GDALValidateOptions( const char* pszOptionList,
             continue;
         }
 
+        if( EQUAL(pszKey, "VALIDATE_OPEN_OPTIONS") )
+        {
+            papszOptionsToValidate ++;
+            continue;
+        }
+
         CPLXMLNode* psChildNode = psNode->psChild;
         while(psChildNode)
         {
@@ -1524,13 +1530,17 @@ int GDALValidateOptions( const char* pszOptionList,
         }
         if (psChildNode == NULL)
         {
-            CPLError(CE_Warning, CPLE_NotSupported,
-                     "%s does not support %s %s",
-                     pszErrorMessageContainerName,
-                     pszErrorMessageOptionType,
-                     pszKey);
-            CPLFree(pszKey);
-            bRet = FALSE;
+            if( !EQUAL(pszErrorMessageOptionType, "open option") ||
+                CSLFetchBoolean((char**)papszOptionsToValidate, "VALIDATE_OPEN_OPTIONS", TRUE) )
+            {
+                CPLError(CE_Warning, CPLE_NotSupported,
+                        "%s does not support %s %s",
+                        pszErrorMessageContainerName,
+                        pszErrorMessageOptionType,
+                        pszKey);
+                CPLFree(pszKey);
+                bRet = FALSE;
+            }
 
             papszOptionsToValidate ++;
             continue;

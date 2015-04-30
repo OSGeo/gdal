@@ -2411,6 +2411,10 @@ GDALOpen( const char * pszFilename, GDALAccess eAccess )
  * OVERVIEW_LEVEL=level, to select a particular overview level of a dataset.
  * The level index starts at 0. The level number can be suffixed by "only" to specify that
  * only this overview level must be visible, and not sub-levels.
+ * Open options are validated by default, and a warning is emitted in case the
+ * option is not recognized. In some scenarios, it might be not desirable (e.g.
+ * when not knowing which driver will open the file), so the special open option
+ * VALIDATE_OPEN_OPTIONS can be set to NO to avoid such warnings.
  *
  * @param papszSiblingFiles  NULL, or a NULL terminated list of strings that are
  * filenames that are auxiliary to the main filename. If NULL is passed, a probing
@@ -2539,7 +2543,9 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char* pszFilename,
         }
 
         if( poDriver->pfnIdentify && poDriver->pfnIdentify(&oOpenInfo) > 0 )
+        {
             GDALValidateOpenOptions( poDriver, oOpenInfo.papszOpenOptions );
+        }
 
         if ( poDriver->pfnOpen != NULL )
         {
