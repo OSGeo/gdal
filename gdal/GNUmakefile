@@ -124,8 +124,7 @@ docs:
 	cp doc/images/*.* html
 	cp doc/grid/*.png html
 	cp frmts/*.html frmts/*/frmt_*.html html
-	cp frmts/wms/frmt_wms_*.xml html
-	cp frmts/wms/frmt_twms_*.xml html
+	cp frmts/wms/frmt_*.xml html
 	cp ogr/ogrsf_frmts/*/drv_*.html html
 	cp ogr/ogrsf_frmts/ogr_formats.html html
 	cp ogr/ogr_feature_style.html html
