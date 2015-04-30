@@ -2965,6 +2965,30 @@ def jp2openjpeg_46():
                                  ' ',
                                  IF('false','A','B'),
                                  ' ',
+                                 SUBSTRING('abcdef',0,2),
+                                 '-',
+                                 SUBSTRING('abcdef',-2,2),
+                                 '-',
+                                 SUBSTRING('abcdef',20,2),
+                                 '-',
+                                 SUBSTRING('abcdef',5,3),
+                                 ' ',
+                                 NOT('true'),
+                                 ' ',
+                                 SUBSTRING_BEFORE('abcdef','def'),
+                                 '-',
+                                 SUBSTRING_BEFORE('abcdef','XXX'),
+                                 '-',
+                                 SUBSTRING_AFTER('abcdef','abc'),
+                                 '-',
+                                 SUBSTRING_AFTER('abcdef','XXX'),
+                                 '-',
+                                 XPATH(string('a_string')),
+                                 ' ',
+                                 XPATH(true()),
+                                 ' ',
+                                 XPATH(number(5)),
+                                 ' ',
                                  UUID()
                                  ),
                           'oh!')}}}</gmljp2:metadata>""")
@@ -2983,7 +3007,7 @@ def jp2openjpeg_46():
 
     ds = gdal.Open('/vsimem/jp2openjpeg_46.jp2')
     gmljp2 = ds.GetMetadata_List("xml:gml.root-instance")[0]
-    if gmljp2.find("""<gmljp2:metadata>yeah: 1 230 1 true true true true false false false bcd true false true 5 1 a\\'b A B """) < 0:
+    if gmljp2.find("""<gmljp2:metadata>yeah: 1 230 1 true true true true false false false bcd true false true 5 1 a\\'b A B a---ef false abc--def--a_string true 5 """) < 0:
         gdaltest.post_reason('fail')
         print(gmljp2)
         return 'fail'
@@ -2995,6 +3019,7 @@ def jp2openjpeg_46():
     for invalid_template in [
             '<gmljp2:metadata>{{{</gmljp2:metadata>',
             '<gmljp2:metadata>{{{}}}</gmljp2:metadata>',
+            '<gmljp2:metadata>{{{XPATH</gmljp2:metadata>',
             '<gmljp2:metadata>{{{XPATH(}}}</gmljp2:metadata>',
             '<gmljp2:metadata>{{{XPATH()}}}</gmljp2:metadata>',
             '<gmljp2:metadata>{{{XPATH(//node[)}}}</gmljp2:metadata>',
@@ -3002,6 +3027,9 @@ def jp2openjpeg_46():
             "<gmljp2:metadata>{{{'\\b'}}}</gmljp2:metadata>",
             "<gmljp2:metadata>{{{'}}}</gmljp2:metadata>",
             "<gmljp2:metadata>{{{1</gmljp2:metadata>",
+            "<gmljp2:metadata>{{{1 </gmljp2:metadata>",
+            "<gmljp2:metadata>{{{NOT",
+            "<gmljp2:metadata>{{{NOT(",
             "<gmljp2:metadata>{{{NOT('true' unexpected)}}}</gmljp2:metadata>",
             "<gmljp2:metadata>{{{NOT('true','unexpected')}}}</gmljp2:metadata>",
     ]:
@@ -3029,6 +3057,82 @@ def jp2openjpeg_46():
             print(invalid_template)
             print(gmljp2)
             return 'fail'
+
+
+    # Inexisting template
+    gdal.FileFromMemBuffer("/vsimem/source.xml","""<A/>""")
+    conf = {
+    "root_instance": {
+        "metadata": [
+                {
+                    "dynamic_metadata":
+                    {
+                        "template": "/vsimem/not_existing_template.xml",
+                        "source": "/vsimem/source.xml",
+                    }
+                }
+            ]
+    }
+}
+    gdal.ErrorReset()
+    gdal.PushErrorHandler()
+    out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_46.jp2', src_ds, options = ['GMLJP2V2_DEF=' + json.dumps(conf)])
+    gdal.PopErrorHandler()
+    del out_ds
+    gdal.Unlink("/vsimem/source.xml")
+    gdal.Unlink('/vsimem/jp2openjpeg_46.jp2')
+
+    # Inexisting source
+    gdal.FileFromMemBuffer("/vsimem/template.xml","""<gmljp2:metadata></gmljp2:metadata>""")
+    conf = {
+    "root_instance": {
+        "metadata": [
+                {
+                    "dynamic_metadata":
+                    {
+                        "template": "/vsimem/template.xml",
+                        "source": "/vsimem/not_existing_source.xml",
+                    }
+                }
+            ]
+    }
+}
+    gdal.ErrorReset()
+    gdal.PushErrorHandler()
+    out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_46.jp2', src_ds, options = ['GMLJP2V2_DEF=' + json.dumps(conf)])
+    gdal.PopErrorHandler()
+    del out_ds
+    gdal.Unlink("/vsimem/template.xml")
+    gdal.Unlink('/vsimem/jp2openjpeg_46.jp2')
+
+    # Invalid source
+    gdal.FileFromMemBuffer("/vsimem/template.xml","""<gmljp2:metadata></gmljp2:metadata>""")
+    gdal.FileFromMemBuffer("/vsimem/source.xml","""<A""")
+    conf = {
+    "root_instance": {
+        "metadata": [
+                {
+                    "dynamic_metadata":
+                    {
+                        "template": "/vsimem/template.xml",
+                        "source": "/vsimem/source.xml",
+                    }
+                }
+            ]
+    }
+}
+    gdal.ErrorReset()
+    gdal.PushErrorHandler()
+    out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_46.jp2', src_ds, options = ['GMLJP2V2_DEF=' + json.dumps(conf)])
+    gdal.PopErrorHandler()
+    del out_ds
+    gdal.Unlink("/vsimem/template.xml")
+    gdal.Unlink("/vsimem/source.xml")
+    #ds = gdal.Open('/vsimem/jp2openjpeg_46.jp2')
+    #gmljp2 = ds.GetMetadata_List("xml:gml.root-instance")[0]
+    #print(gmljp2)
+    #ds = None
+    gdal.Unlink('/vsimem/jp2openjpeg_46.jp2')
 
     return 'success'
 
