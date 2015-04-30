@@ -514,6 +514,41 @@ def ogr_plscenes_3():
 
     gdal.FileFromMemBuffer('/vsimem/root', '{"ortho":"/vsimem/root/ortho/"}')
 
+    # Error case: missing scene
+    gdal.SetConfigOption('PL_URL', '/vsimem/root/')
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ds = gdal.OpenEx('PLScenes:', gdal.OF_RASTER, open_options = ['API_KEY=foo', 'SCENE=not_existing_scene'])
+    gdal.PopErrorHandler()
+    gdal.SetConfigOption('PL_URL', None)
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Error case: invalid scene JSon
+    gdal.FileFromMemBuffer('/vsimem/root/ortho/my_id', """{""")
+
+    gdal.SetConfigOption('PL_URL', '/vsimem/root/')
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ds = gdal.OpenEx('PLScenes:', gdal.OF_RASTER, open_options = ['API_KEY=foo', 'SCENE=my_id'])
+    gdal.PopErrorHandler()
+    gdal.SetConfigOption('PL_URL', None)
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Error case: mssing properties
+    gdal.FileFromMemBuffer('/vsimem/root/ortho/my_id', """{}""")
+
+    gdal.SetConfigOption('PL_URL', '/vsimem/root/')
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ds = gdal.OpenEx('PLScenes:', gdal.OF_RASTER, open_options = ['API_KEY=foo', 'SCENE=my_id'])
+    gdal.PopErrorHandler()
+    gdal.SetConfigOption('PL_URL', None)
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+
     gdal.FileFromMemBuffer('/vsimem/root/ortho/my_id', """{
         "type": "Feature",
         "id": "my_id",
@@ -533,6 +568,48 @@ def ogr_plscenes_3():
         }
     }""")
 
+    # Error case: missing links
+    gdal.SetConfigOption('PL_URL', '/vsimem/root/')
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ds = gdal.OpenEx('PLScenes:', gdal.OF_RASTER, open_options = ['API_KEY=foo', 'SCENE=my_id'])
+    gdal.PopErrorHandler()
+    gdal.SetConfigOption('PL_URL', None)
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.FileFromMemBuffer('/vsimem/root/ortho/my_id', """{
+        "type": "Feature",
+        "id": "my_id",
+        "geometry": {
+                "coordinates": [ [ [2,49],[2,50],[3,50],[3,49],[2,49] ] ],
+                "type": "Polygon"
+        },
+        "properties": {
+            "acquired" : "2015-03-27T12:34:56.123+00",
+            "camera" : {
+                "bit_depth" : 12,
+                "color_mode": "RGB"
+            },
+            "cloud_cover" : {
+                "estimated" : 0.25
+            },
+            "data": {
+                "products": {
+                    "visual": {
+                        "full": "/vsimem/root/ortho/my_id/full?product=visual"
+                    },
+                    "analytic": {
+                        "full": "/vsimem/root/ortho/my_id/full?product=analytic"
+                    }
+                }
+            },
+            "links": {
+                "thumbnail": "/vsimem/root/ortho/my_id/thumb"
+            }
+        }
+    }""")
+
     # Error case: raster file not accessible
     gdal.SetConfigOption('PL_URL', '/vsimem/root/')
     gdal.PushErrorHandler('CPLQuietErrorHandler')
@@ -542,7 +619,8 @@ def ogr_plscenes_3():
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
-    
+
+    # Now everything ok
     gdal.FileFromMemBuffer('/vsimem/root/ortho/my_id/full?product=visual',
                            open('../gcore/data/byte.tif', 'rb').read())
     gdal.FileFromMemBuffer('/vsimem/root/ortho/my_id/full?product=analytic',

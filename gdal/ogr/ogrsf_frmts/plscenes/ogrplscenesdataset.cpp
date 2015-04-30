@@ -298,18 +298,66 @@ GDALDataset* OGRPLScenesDataset::OpenRasterScene(GDALOpenInfo* poOpenInfo,
                 CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "PRODUCT_TYPE", "visual"));
 
     CPLString osRasterURL;
-    if( strncmp(osBaseURL, "/vsimem/", strlen("/vsimem/")) == 0 )
-        osRasterURL = osBaseURL;
-    else
-        osRasterURL.Printf("https://%s:@api.planet.com/v0/scenes/",
-                           osAPIKey.c_str());
+    osRasterURL = osBaseURL;
     osRasterURL += "ortho/";
     osRasterURL += osScene;
-    osRasterURL += "/";
+    json_object* poObj = RunRequest( osRasterURL );
+    if( poObj == NULL )
+        return NULL;
+    json_object* poProperties = json_object_object_get(poObj, "properties");
+    if( poProperties == NULL || json_object_get_type(poProperties) != json_type_object )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot find properties object");
+        json_object_put(poObj);
+        return NULL;
+    }
+
+    const char* pszLink = NULL;
     if( EQUAL(pszProductType, "thumb") )
-        osRasterURL += "thumb";
+    {
+        json_object* poLinks = json_object_object_get(poProperties, "links");
+        if( poLinks != NULL && json_object_get_type(poLinks) == json_type_object )
+        {
+            json_object* poThumbnail = json_object_object_get(poLinks, "thumbnail");
+            if( poThumbnail && json_object_get_type(poThumbnail) == json_type_string )
+                pszLink = json_object_get_string(poThumbnail);
+        }
+    }
     else
-        osRasterURL += CPLSPrintf("full?product=%s", pszProductType);
+    {
+        json_object* poData = json_object_object_get(poProperties, "data");
+        if( poData != NULL && json_object_get_type(poData) == json_type_object )
+        {
+            json_object* poProducts = json_object_object_get(poData, "products");
+            if( poProducts != NULL && json_object_get_type(poProducts) == json_type_object )
+            {
+                json_object* poProduct = json_object_object_get(poProducts, pszProductType);
+                if( poProduct != NULL && json_object_get_type(poProduct) == json_type_object )
+                {
+                    json_object* poFull = json_object_object_get(poProduct, "full");
+                    if( poFull && json_object_get_type(poFull) == json_type_string )
+                        pszLink = json_object_get_string(poFull);
+                }
+            }
+        }
+    }
+    osRasterURL = pszLink ? pszLink : "";
+    json_object_put(poObj);
+    if( osRasterURL.size() == 0 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot find link to scene %s",
+                 osScene.c_str());
+        return NULL;
+    }
+    
+    if( strncmp(osRasterURL, "http://", strlen("http://")) == 0 )
+    {
+        osRasterURL = "http://" + osAPIKey + ":@" + osRasterURL.substr(strlen("http://"));
+    }
+    else if( strncmp(osRasterURL, "https://", strlen("https://")) == 0 )
+    {
+        osRasterURL = "https://" + osAPIKey + ":@" + osRasterURL.substr(strlen("https://"));
+    }
 
     CPLString osOldHead(CPLGetConfigOption("CPL_VSIL_CURL_USE_HEAD", ""));
     CPLString osOldExt(CPLGetConfigOption("CPL_VSIL_CURL_ALLOWED_EXTENSIONS", ""));
