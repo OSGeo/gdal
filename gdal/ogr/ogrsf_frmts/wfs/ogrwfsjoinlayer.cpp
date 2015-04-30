@@ -660,6 +660,8 @@ OGRFeature* OGRWFSJoinLayer::GetNextFeature()
                 aoSetMD5.insert(osDigest);
                 return poNewFeature;
             }
+            else
+                delete poNewFeature;
         }
         else
             return poNewFeature;
