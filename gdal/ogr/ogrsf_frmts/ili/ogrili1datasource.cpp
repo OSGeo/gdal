@@ -165,11 +165,18 @@ int OGRILI1DataSource::Open( const char * pszNewName, int bTestOpen )
     if (osModelFilename.length() > 0 )
         poReader->ReadModel( poImdReader, osModelFilename.c_str(), this );
 
+    int bResetConfigOption = FALSE;
     if (EQUAL(CPLGetConfigOption("OGR_ARC_STEPSIZE", ""), ""))
-        CPLSetConfigOption("OGR_ARC_STEPSIZE", "0.96");
+    {
+        bResetConfigOption = TRUE;
+        CPLSetThreadLocalConfigOption("OGR_ARC_STEPSIZE", "0.96");
+    }
 
     //Parse model and read data - without surface joing and polygonizing
     poReader->ReadFeatures();
+    
+    if( bResetConfigOption )
+        CPLSetThreadLocalConfigOption("OGR_ARC_STEPSIZE", NULL);
 
     return TRUE;
 }
