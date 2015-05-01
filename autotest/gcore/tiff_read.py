@@ -1588,6 +1588,19 @@ def tiff_direct_and_virtual_mem_io():
 
   return 'success'
 
+###############################################################################
+# Test reading a TIFFTAG_GDAL_NODATA with empty text
+
+def tiff_read_empty_nodata_tag():
+
+    ds = gdal.Open('data/empty_nodata.tif')
+    if ds.GetRasterBand(1).GetNoDataValue() is not None:
+        gdaltest.post_reason('fail')
+        print(ds.GetRasterBand(1).GetNoDataValue())
+        return 'fail'
+
+    return 'success'
+
 ###############################################################################################
 
 for item in init_list:
@@ -1641,6 +1654,7 @@ gdaltest_list.append( (tiff_read_bigtiff) )
 gdaltest_list.append( (tiff_read_tiff_metadata) )
 gdaltest_list.append( (tiff_read_irregular_tile_size_jpeg_in_tiff) )
 gdaltest_list.append( (tiff_direct_and_virtual_mem_io) )
+gdaltest_list.append( (tiff_read_empty_nodata_tag) )
 
 gdaltest_list.append( (tiff_read_online_1) )
 gdaltest_list.append( (tiff_read_online_2) )

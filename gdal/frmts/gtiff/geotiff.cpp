@@ -9570,7 +9570,8 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
 /*      Check for NODATA                                                */
 /* -------------------------------------------------------------------- */
     char    *pszText;
-    if( TIFFGetField( hTIFF, TIFFTAG_GDAL_NODATA, &pszText ) )
+    if( TIFFGetField( hTIFF, TIFFTAG_GDAL_NODATA, &pszText ) &&
+        !EQUAL(pszText, "") )
     {
         bNoDataSet = TRUE;
         dfNoDataValue = CPLAtofM( pszText );
