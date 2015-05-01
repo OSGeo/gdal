@@ -197,8 +197,35 @@ static void AppendCoordinateList( OGRLineString *poLine, OGRILI1DataSource *poDS
     VSIFPrintf( poDS->GetTransferFile(), "ELIN\n" );
 }
 
+static void AppendCoumpoundCurve( OGRCompoundCurve *poCC, OGRILI1DataSource *poDS)
+{
+    for( int iMember = 0; iMember < poCC->getNumCurves(); iMember++)
+    {
+        OGRCurve *poGeometry = poCC->getCurve( iMember );
+        int b3D = wkbHasZ(poGeometry->getGeometryType());
+        int bIsArc = (poGeometry->getGeometryType() == wkbCircularString
+              || poGeometry->getGeometryType() == wkbCircularStringZ );
+        OGRSimpleCurve *poLine = (OGRSimpleCurve *)poGeometry;
+        for( int iPoint = 0; iPoint < poLine->getNumPoints(); iPoint++ )
+        {
+            //Skip last point in curve member
+            if (iPoint == poLine->getNumPoints()-1 && iMember < poCC->getNumCurves()-1)
+                continue;
+            if (iMember == 0 && iPoint == 0) VSIFPrintf( poDS->GetTransferFile(), "STPT" );
+            else if (bIsArc && iPoint == 1) VSIFPrintf( poDS->GetTransferFile(), "ARCP" );
+            else VSIFPrintf( poDS->GetTransferFile(), "LIPT" );
+            VSIFPrintf( poDS->GetTransferFile(), " %s", d2str(poLine->getX(iPoint)) );
+            VSIFPrintf( poDS->GetTransferFile(), " %s", d2str(poLine->getY(iPoint)) );
+            if (b3D) VSIFPrintf( poDS->GetTransferFile(), " %s", d2str(poLine->getZ(iPoint)) );
+            VSIFPrintf( poDS->GetTransferFile(), "\n" );
+        }
+    }
+    VSIFPrintf( poDS->GetTransferFile(), "ELIN\n" );
+}
+
 int OGRILI1Layer::GeometryAppend( OGRGeometry *poGeometry )
 {
+    //CPLDebug( "OGR_ILI", "OGRILI1Layer::GeometryAppend OGRGeometryType: %s", OGRGeometryTypeToName(poGeometry->getGeometryType()));
 /* -------------------------------------------------------------------- */
 /*      2D Point                                                        */
 /* -------------------------------------------------------------------- */
@@ -252,7 +279,9 @@ int OGRILI1Layer::GeometryAppend( OGRGeometry *poGeometry )
     else if( wkbFlatten(poGeometry->getGeometryType()) == wkbMultiPolygon
              || wkbFlatten(poGeometry->getGeometryType()) == wkbMultiLineString
              || wkbFlatten(poGeometry->getGeometryType()) == wkbMultiPoint
-             || wkbFlatten(poGeometry->getGeometryType()) == wkbGeometryCollection )
+             || wkbFlatten(poGeometry->getGeometryType()) == wkbGeometryCollection
+             || wkbFlatten(poGeometry->getGeometryType()) == wkbMultiCurve
+             || wkbFlatten(poGeometry->getGeometryType()) == wkbMultiCurveZ )
     {
         OGRGeometryCollection *poGC = (OGRGeometryCollection *) poGeometry;
         int             iMember;
@@ -273,15 +302,19 @@ int OGRILI1Layer::GeometryAppend( OGRGeometry *poGeometry )
         for( iMember = 0; iMember < poGC->getNumGeometries(); iMember++)
         {
             OGRGeometry *poMember = poGC->getGeometryRef( iMember );
-
             if( !GeometryAppend( poMember ) )
                 return FALSE;
         }
 
     }
-
-    else
+    else if( poGeometry->getGeometryType() == wkbCompoundCurve
+             || poGeometry->getGeometryType() == wkbCompoundCurveZ )
+    {
+        AppendCoumpoundCurve( ( OGRCompoundCurve *) poGeometry, poDS );
+    } else {
+        CPLError(CE_Warning, CPLE_AppDefined, "Skipping unknown geometry type '%s'", OGRGeometryTypeToName(poGeometry->getGeometryType()));
         return FALSE;
+    }
 
     return TRUE;
 }
@@ -329,28 +362,25 @@ OGRErr OGRILI1Layer::ICreateFeature( OGRFeature *poFeature ) {
     // Write all fields.
     for(int iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
     {
-        if ( !EQUAL(poFeatureDefn->GetFieldDefn(iField)->GetNameRef(), "ILI_Geometry") )
+        if ( poFeature->IsFieldSet( iField ) )
         {
-          if ( poFeature->IsFieldSet( iField ) )
-          {
-              const char *pszRaw = poFeature->GetFieldAsString( iField );
-              if (poFeatureDefn->GetFieldDefn( iField )->GetType() == OFTString) {
-                  //Interlis 1 encoding is ISO 8859-1 (Latin1) -> Recode from UTF-8
-                  char* pszString  = CPLRecode(pszRaw, CPL_ENC_UTF8, CPL_ENC_ISO8859_1);
-                  //Replace spaces
-                  for(size_t i=0; i<strlen(pszString); i++ ) {
-                      if (pszString[i] == ' ') pszString[i] = '_';
-                  }
-                  VSIFPrintf( poDS->GetTransferFile(), " %s", pszString );
-                  CPLFree( pszString );
-              } else {
-                  VSIFPrintf( poDS->GetTransferFile(), " %s", pszRaw );
+          const char *pszRaw = poFeature->GetFieldAsString( iField );
+          if (poFeatureDefn->GetFieldDefn( iField )->GetType() == OFTString) {
+              //Interlis 1 encoding is ISO 8859-1 (Latin1) -> Recode from UTF-8
+              char* pszString  = CPLRecode(pszRaw, CPL_ENC_UTF8, CPL_ENC_ISO8859_1);
+              //Replace spaces
+              for(size_t i=0; i<strlen(pszString); i++ ) {
+                  if (pszString[i] == ' ') pszString[i] = '_';
               }
+              VSIFPrintf( poDS->GetTransferFile(), " %s", pszString );
+              CPLFree( pszString );
+          } else {
+              VSIFPrintf( poDS->GetTransferFile(), " %s", pszRaw );
           }
-          else
-          {
-              VSIFPrintf( poDS->GetTransferFile(), " @" );
-          }
+        }
+        else
+        {
+          VSIFPrintf( poDS->GetTransferFile(), " @" );
         }
     }
     VSIFPrintf( poDS->GetTransferFile(), "\n" );
@@ -358,16 +388,7 @@ OGRErr OGRILI1Layer::ICreateFeature( OGRFeature *poFeature ) {
     // Write out Geometry
     if( poFeature->GetGeometryRef() != NULL )
     {
-        if (EQUAL(poFeatureDefn->GetFieldDefn(poFeatureDefn->GetFieldCount()-1)->GetNameRef(), "ILI_Geometry"))
-        {
-            //Write original ILI geometry
-            VSIFPrintf( poDS->GetTransferFile(), "%s", poFeature->GetFieldAsString( poFeatureDefn->GetFieldCount()-1 ) );
-        }
-        else
-        {
-            //Convert to ILI geometry
-            GeometryAppend(poFeature->GetGeometryRef());
-        }
+        GeometryAppend(poFeature->GetGeometryRef());
     }
 
     return OGRERR_NONE;
@@ -378,7 +399,10 @@ OGRErr OGRILI1Layer::ICreateFeature( OGRFeature *poFeature ) {
 /************************************************************************/
 
 int OGRILI1Layer::TestCapability( CPL_UNUSED const char * pszCap ) {
-    return FALSE;
+    if( EQUAL(pszCap,OLCCurveGeometries) )
+        return TRUE;
+    else
+        return FALSE;
 }
 
 /************************************************************************/
@@ -422,22 +446,38 @@ void OGRILI1Layer::JoinGeomLayers()
 }
 
 
-void OGRILI1Layer::JoinSurfaceLayer( OGRILI1Layer* poSurfacePolyLayer, int nSurfaceFieldIndex )
+void OGRILI1Layer::JoinSurfaceLayer( OGRILI1Layer* poSurfaceLineLayer, int nSurfaceFieldIndex )
 {
     CPLDebug( "OGR_ILI", "Joining surface layer %s with geometries", GetLayerDefn()->GetName());
-    poSurfacePolyLayer->ResetReading();
-    while (OGRFeature *polyfeature = poSurfacePolyLayer->GetNextFeatureRef()) {
-        GIntBig reftid = polyfeature->GetFID();
+    OGRwkbGeometryType geomType = GetLayerDefn()->GetGeomFieldDefn(nSurfaceFieldIndex)->GetType();
+    poSurfaceLineLayer->ResetReading();
+    while (OGRFeature *linefeature = poSurfaceLineLayer->GetNextFeatureRef()) {
+        GIntBig reftid = linefeature->GetFieldAsInteger64(1); //_RefTID
         OGRFeature *feature = GetFeatureRef((int)reftid);
         if (feature) {
-            feature->SetGeomField(nSurfaceFieldIndex, polyfeature->GetGeomFieldRef(0));
+            OGRCurvePolygon *poly;
+            if (feature->GetGeomFieldRef(nSurfaceFieldIndex)) {
+                CPLDebug( "OGR_ILI", "Adding ring to FID " CPL_FRMT_GIB, reftid );
+                poly = (OGRCurvePolygon *)feature->GetGeomFieldRef(nSurfaceFieldIndex);
+            } else {
+                poly = (geomType == wkbPolygon) ? new OGRPolygon() : new OGRCurvePolygon();
+                feature->SetGeomFieldDirectly(nSurfaceFieldIndex, poly);
+            }
+            OGRMultiCurve *lines = (OGRMultiCurve*)linefeature->GetGeomFieldRef(0);
+            for( int i = 0; i < lines->getNumGeometries(); i++ ) {
+                OGRCurve *line = (OGRCurve*)lines->getGeometryRef(i);
+                OGRCurve *ring = (geomType == wkbPolygon) ?
+                    OGRCurve::CastToLinearRing((OGRCurve*)line->clone()) :
+                    (OGRCurve*)line->clone();
+                poly->addRingDirectly(ring);
+            }
         } else {
-            CPLDebug( "OGR_ILI", "Couldn't join feature FID " CPL_FRMT_GIB, reftid );
+            CPLError(CE_Warning, CPLE_AppDefined, "Couldn't join feature FID " CPL_FRMT_GIB, reftid );
         }
     }
 
     ResetReading();
-    poSurfacePolyLayer = 0;
+    poSurfaceLineLayer = 0;
 }
 
 OGRMultiPolygon* OGRILI1Layer::Polygonize( OGRGeometryCollection* poLines, bool fix_crossing_lines )

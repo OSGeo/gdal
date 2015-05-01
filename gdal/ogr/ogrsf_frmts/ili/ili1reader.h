@@ -47,7 +47,6 @@ public:
     virtual OGRLayer *GetLayer( int ) = 0;
     virtual OGRLayer *GetLayerByName( const char* ) = 0;
     virtual int  GetLayerCount() = 0;
-    virtual void SetArcDegrees(double newArcDegrees) = 0;
 };
 
 IILI1Reader *CreateILI1Reader();

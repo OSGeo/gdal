@@ -165,10 +165,8 @@ int OGRILI1DataSource::Open( const char * pszNewName, int bTestOpen )
     if (osModelFilename.length() > 0 )
         poReader->ReadModel( poImdReader, osModelFilename.c_str(), this );
 
-    if( getenv( "ARC_DEGREES" ) != NULL ) {
-      //No better way to pass arguments to the reader (it could even be an -lco arg)
-      poReader->SetArcDegrees( CPLAtof( getenv("ARC_DEGREES") ) );
-    }
+    if (EQUAL(CPLGetConfigOption("OGR_ARC_STEPSIZE", ""), ""))
+        CPLSetConfigOption("OGR_ARC_STEPSIZE", "0.96");
 
     //Parse model and read data - without surface joing and polygonizing
     poReader->ReadFeatures();
@@ -299,6 +297,8 @@ int OGRILI1DataSource::TestCapability( const char * pszCap )
 
 {
     if( EQUAL(pszCap,ODsCCreateLayer) )
+        return TRUE;
+    else if( EQUAL(pszCap,ODsCCurveGeometries) )
         return TRUE;
     else
         return FALSE;
