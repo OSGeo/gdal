@@ -186,6 +186,7 @@ private:
     //
     char* pszName_;
     char* pszGeoData_;
+    vsi_l_offset nGeoDataLen_;
     OGRLayer** papoLayers_;
     int nLayers_;
     VSILFILE* fpOut_;

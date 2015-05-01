@@ -41,7 +41,7 @@ using namespace std;
 /************************************************************************/
 
 OGRGeoJSONDataSource::OGRGeoJSONDataSource()
-    : pszName_(NULL), pszGeoData_(NULL),
+    : pszName_(NULL), pszGeoData_(NULL), nGeoDataLen_(0),
         papoLayers_(NULL), nLayers_(0), fpOut_(NULL),
         flTransGeom_( OGRGeoJSONDataSource::eGeometryPreserve ),
         flTransAttrs_( OGRGeoJSONDataSource::eAtributesPreserve ),
@@ -110,10 +110,27 @@ int OGRGeoJSONDataSource::Open( GDALOpenInfo* poOpenInfo,
     LoadLayers(poOpenInfo->papszOpenOptions);
     if( nLayers_ == 0 )
     {
+        int bEmitError = TRUE;
+        if( eGeoJSONSourceService == nSrcType )
+        {
+            CPLString osTmpFilename = CPLSPrintf("/vsimem/%p/%s", this,
+                                        CPLGetFilename(poOpenInfo->pszFilename));
+            VSIFCloseL(VSIFileFromMemBuffer( osTmpFilename,
+                                             (GByte*)pszGeoData_,
+                                             nGeoDataLen_, 
+                                             TRUE ));
+            pszGeoData_ = NULL;
+            if( GDALIdentifyDriver(osTmpFilename, NULL) )
+                bEmitError = FALSE;
+            VSIUnlink(osTmpFilename);
+        }
         Clear();
-        
-        CPLError( CE_Failure, CPLE_OpenFailed, 
-                  "Failed to read GeoJSON data" );
+
+        if( bEmitError )
+        {
+            CPLError( CE_Failure, CPLE_OpenFailed, 
+                    "Failed to read GeoJSON data" );
+        }
         return FALSE;
     }
 
@@ -334,6 +351,7 @@ void OGRGeoJSONDataSource::Clear()
 
     CPLFree( pszGeoData_ );
     pszGeoData_ = NULL;
+    nGeoDataLen_ = 0;
 
     if( NULL != fpOut_ )
     {
@@ -426,7 +444,9 @@ int OGRGeoJSONDataSource::ReadFromService( const char* pszSource )
 
     // Directly assign CPLHTTPResult::pabyData to pszGeoData_
     pszGeoData_ = (char*) pszData;
+    nGeoDataLen_ = pResult->nDataLen;
     pResult->pabyData = NULL;
+    pResult->nDataLen = 0;
 
     pszName_ = CPLStrdup( pszSource );
 

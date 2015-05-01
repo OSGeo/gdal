@@ -62,8 +62,8 @@ OGRCouchDBDataSource::~OGRCouchDBDataSource()
 
     if (bMustCleanPersistant)
     {
-        char** papszOptions = CSLAddString(NULL,
-                          CPLSPrintf("CLOSE_PERSISTENT=CouchDB:%p", this));
+        char** papszOptions = NULL;
+        papszOptions = CSLSetNameValue(papszOptions, "CLOSE_PERSISTENT", CPLSPrintf("CouchDB:%p", this));
         CPLHTTPFetch( osURL, papszOptions);
         CSLDestroy(papszOptions);
     }
@@ -254,7 +254,11 @@ int OGRCouchDBDataSource::Open( const char * pszFilename, int bUpdateIn)
     json_object* poAnswerObj = GET("/_all_dbs");
 
     if (poAnswerObj == NULL)
+    {
+        if (!EQUALN(pszFilename, "CouchDB:", 8))
+            CPLErrorReset();
         return FALSE;
+    }
 
     if ( !json_object_is_type(poAnswerObj, json_type_array) )
     {
