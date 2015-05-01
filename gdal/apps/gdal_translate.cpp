@@ -57,7 +57,7 @@ static void Usage(const char* pszErrorMsg = NULL, int bShort = TRUE)
             "       [-ot {Byte/Int16/UInt16/UInt32/Int32/Float32/Float64/\n"
             "             CInt16/CInt32/CFloat32/CFloat64}] [-strict]\n"
             "       [-of format] [-b band] [-mask band] [-expand {gray|rgb|rgba}]\n"
-            "       [-outsize xsize[%%] ysize[%%]] [-tr xres yres]\n"
+            "       [-outsize xsize[%%]|auto ysize[%%]|auto] [-tr xres yres]\n"
             "       [-r {nearest,bilinear,cubic,cubicspline,lanczos,average,mode}]\n"
             "       [-unscale] [-scale[_bn] [src_min src_max [dst_min dst_max]]]* [-exponent[_bn] exp_val]*\n"
             "       [-srcwin xoff yoff xsize ysize] [-epo] [-eco]\n"
@@ -1210,10 +1210,24 @@ static int ProxyMain( int argc, char ** argv )
     }
     else
     {
-        nOXSize = (int) ((pszOXSize[strlen(pszOXSize)-1]=='%' 
-                          ? CPLAtofM(pszOXSize)/100*anSrcWin[2] : atoi(pszOXSize)));
-        nOYSize = (int) ((pszOYSize[strlen(pszOYSize)-1]=='%' 
-                          ? CPLAtofM(pszOYSize)/100*anSrcWin[3] : atoi(pszOYSize)));
+        if( EQUAL(pszOXSize, "auto") && EQUAL(pszOYSize, "auto") )
+        {
+            fprintf(stderr, "-outsize auto auto invalid.\n");
+            GDALClose( hDataset );
+            CPLFree( panBandList );
+            GDALDestroyDriverManager();
+            exit( 1 );
+        }
+        if( !EQUAL(pszOXSize, "auto") )
+            nOXSize = (int) ((pszOXSize[strlen(pszOXSize)-1]=='%' 
+                            ? CPLAtofM(pszOXSize)/100*anSrcWin[2] : atoi(pszOXSize)));
+        if( !EQUAL(pszOYSize, "auto") )
+            nOYSize = (int) ((pszOYSize[strlen(pszOYSize)-1]=='%' 
+                            ? CPLAtofM(pszOYSize)/100*anSrcWin[3] : atoi(pszOYSize)));
+        if( EQUAL(pszOXSize, "auto") )
+            nOXSize = (int)((double)nOYSize * anSrcWin[2] / anSrcWin[3] + 0.5);
+        else if( EQUAL(pszOYSize, "auto") )
+            nOYSize = (int)((double)nOXSize * anSrcWin[3] / anSrcWin[2] + 0.5);
     }
 
     if( nOXSize == 0 || nOYSize == 0 )

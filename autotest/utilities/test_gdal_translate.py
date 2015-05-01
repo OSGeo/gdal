@@ -905,6 +905,40 @@ def test_gdal_translate_32():
     return 'success'
 
 ###############################################################################
+# Test -outsize option in auto mode
+
+def test_gdal_translate_33():
+    if test_cli_utilities.get_gdal_translate_path() is None:
+        return 'skip'
+
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -outsize 100 auto ../gdrivers/data/small_world.tif tmp/test_gdal_translate_33.tif')
+
+    ds = gdal.Open('tmp/test_gdal_translate_33.tif')
+    if ds.RasterYSize != 50:
+        gdaltest.post_reason('fail')
+        print(ds.RasterYSize)
+        return 'fail'
+    ds = None
+
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -outsize auto 100 ../gdrivers/data/small_world.tif tmp/test_gdal_translate_33.tif')
+
+    ds = gdal.Open('tmp/test_gdal_translate_33.tif')
+    if ds.RasterXSize != 200:
+        gdaltest.post_reason('fail')
+        print(ds.RasterYSize)
+        return 'fail'
+    ds = None
+
+    os.unlink('tmp/test_gdal_translate_33.tif')
+
+    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_translate_path() + ' -outsize auto auto ../gdrivers/data/small_world.tif tmp/test_gdal_translate_33.tif')
+    if err.find('-outsize auto auto invalid') < 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def test_gdal_translate_cleanup():
@@ -1046,6 +1080,7 @@ gdaltest_list = [
     test_gdal_translate_30,
     test_gdal_translate_31,
     test_gdal_translate_32,
+    test_gdal_translate_33,
     test_gdal_translate_cleanup
     ]
 
