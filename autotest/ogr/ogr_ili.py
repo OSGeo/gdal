@@ -1099,6 +1099,8 @@ def ogr_interlis_cleanup():
     if not gdaltest.have_ili_reader:
         return 'skip'
 
+    gdal.SetConfigOption('OGR_STROKE_CURVE', None)
+
     gdaltest.clean_tmp()
 
     return 'success'
