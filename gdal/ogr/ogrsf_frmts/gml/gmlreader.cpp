@@ -1413,7 +1413,7 @@ int GMLReader::PrescanForSchema( int bGetExtents,
         }
 
 #ifdef SUPPORT_GEOMETRY
-        if( bGetExtents )
+        if( bGetExtents && papsGeometry != NULL )
         {
             OGRGeometry *poGeometry = GML_BuildOGRGeometryFromList(
                 papsGeometry, TRUE, m_bInvertAxisOrderIfLatLong,
