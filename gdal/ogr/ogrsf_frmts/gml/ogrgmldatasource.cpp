@@ -287,6 +287,12 @@ int OGRGMLDataSource::CheckHeader(const char* pszStr)
         return FALSE;
     }
 
+    /* Ignore WMTS capabilities results */
+    if( strstr(pszStr, "http://www.opengis.net/wmts/1.0") != NULL )
+    {
+        return FALSE;
+    }
+
     return TRUE;
 }
 
