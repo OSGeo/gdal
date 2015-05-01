@@ -220,6 +220,15 @@ def http_5():
         conn.close()
         gdaltest.post_reason('fail')
         return 'fail'
+    filename = ds.GetDescription()
+    ds = None
+    
+    try:
+        os.stat(filename)
+        gdaltest.post_reason('file %s should have been removed' % filename)
+        return 'fail'
+    except:
+        pass
 
     return 'success'
 
