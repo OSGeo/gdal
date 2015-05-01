@@ -3849,6 +3849,49 @@ def ogr_gml_74():
     return 'success'
 
 ###############################################################################
+# Test we don't open a WMTS Capabilities doc
+
+def ogr_gml_75():
+
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+        
+    gdal.FileFromMemBuffer("/vsimem/ogr_gml_75.xml",
+    """<?xml version="1.0" encoding="UTF-8"?>
+<Capabilities xmlns="http://www.opengis.net/wmts/1.0"
+xmlns:ows="http://www.opengis.net/ows/1.1"
+xmlns:xlink="http://www.w3.org/1999/xlink"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+xmlns:gml="http://www.opengis.net/gml"
+xsi:schemaLocation="http://www.opengis.net/wmts/1.0 http://somewhere"
+version="1.0.0">
+        <ows:OperationsMetadata>
+                <ows:Operation name="GetCapabilities">
+                        <ows:DCP>
+                                <ows:HTTP>
+                                        <ows:Get xlink:href="http://foo"/>
+                                </ows:HTTP>
+                        </ows:DCP>
+                </ows:Operation>
+                <ows:Operation name="GetTile">
+                        <ows:DCP>
+                                <ows:HTTP>
+                                        <ows:Get xlink:href="http://foo"/>
+                                </ows:HTTP>
+                        </ows:DCP>
+                </ows:Operation>
+        </ows:OperationsMetadata>
+</Capabilities>""")
+
+    ds = ogr.Open('/vsimem/ogr_gml_75.xml')
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.Unlink('/vsimem/ogr_gml_75.xml')
+
+    return 'success'
+
+###############################################################################
 #  Cleanup
 
 def ogr_gml_cleanup():
@@ -4054,6 +4097,7 @@ gdaltest_list = [
     ogr_gml_72,
     ogr_gml_73,
     ogr_gml_74,
+    ogr_gml_75,
     ogr_gml_cleanup ]
 
 disabled_gdaltest_list = [ 
