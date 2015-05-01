@@ -275,7 +275,8 @@ int ILI1Reader::ReadTable(CPL_UNUSED const char *layername) {
           //Check for features spread over multiple objects
           if (featureDef->GetGeomType() == wkbPolygon)
           {
-            //Multiple polygon rings
+            //Surface: OBJE entries with same _RefTID are polygon rings of same feature
+            //TODO: non-numeric _RefTID/FID is not supported yet!
             feature = curLayer->GetFeatureRef(atol(CSLGetField(tokens, 2)));
           }
           else if (featureDef->GetGeomType() == wkbGeometryCollection)

@@ -25,6 +25,18 @@ TOPIC SURFC_TOP =
             ID1;
       END SURFC_TBL;  
 
+      TABLE SURFC_TBL_TEXT_ID = 
+       SHAPE : SURFACE WITH (STRAIGHTS) VERTEX LKoord;
+            OBJ_ID: TEXT*20;
+            ID2:  I9;
+            ID3:  I9;
+            ID4:  I9;
+            ID5: I9;
+            ID6: I8;
+      IDENT
+            OBJ_ID;
+      END SURFC_TBL_TEXT_ID;  
+
 END SURFC_TOP.
 
 

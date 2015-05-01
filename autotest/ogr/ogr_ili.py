@@ -574,21 +574,30 @@ def ogr_interlis1_13():
 
     ds = ogr.Open('data/ili/surface.itf,data/ili/surface.imd')
 
-    layers = ['SURFC_TOP__SURFC_TBL', 'SURFC_TOP__SURFC_TBL_SHAPE']
+    layers = ['SURFC_TOP__SURFC_TBL',
+              'SURFC_TOP__SURFC_TBL_SHAPE',
+              'SURFC_TOP__SURFC_TBL_TEXT_ID',
+              'SURFC_TOP__SURFC_TBL_TEXT_ID_SHAPE']
 
     if ds.GetLayerCount() != len(layers):
         gdaltest.post_reason( 'layer count wrong.' )
         return 'fail'
 
     for i in range(ds.GetLayerCount()):
-      if not ds.GetLayer(i).GetName() in layers:
-          gdaltest.post_reason( 'Did not get right layers' )
-          return 'fail'
+        if not ds.GetLayer(i).GetName() in layers:
+            gdaltest.post_reason( 'Did not get right layers' )
+            return 'fail'
+
+    lyr = ds.GetLayerByName('SURFC_TOP__SURFC_TBL_SHAPE')
+
+    if lyr.GetFeatureCount() != 4:
+        gdaltest.post_reason('feature count wrong.')
+        return 'fail'
 
     lyr = ds.GetLayerByName('SURFC_TOP__SURFC_TBL')
 
-    if lyr.GetFeatureCount() != 3:
-        gdaltest.post_reason( 'feature count wrong.' )
+    if lyr.GetFeatureCount() != 4:
+        gdaltest.post_reason('feature count wrong.')
         return 'fail'
 
     feat = lyr.GetNextFeature()
@@ -601,12 +610,118 @@ def ogr_interlis1_13():
 
     for i in range(feat.GetFieldCount()):
         if feat.GetFieldAsString(i) != str(field_values[i]):
-          feat.DumpReadable()
-          print(feat.GetFieldAsString(i))
-          gdaltest.post_reason( 'field value wrong.' )
-          return 'fail'
+            feat.DumpReadable()
+            print(feat.GetFieldAsString(i))
+            gdaltest.post_reason( 'field value wrong.' )
+            return 'fail'
 
     geom_field_values = ['POLYGON ((598600.961 249487.174,598608.899 249538.768,598624.774 249594.331,598648.586 249630.05,598684.305 249661.8,598763.68 249685.612,598850.993 249685.612,598854.962 249618.143,598843.055 249550.675,598819.243 249514.956,598763.68 249479.237,598692.243 249447.487,598612.868 249427.643,598600.961 249487.174))']
+
+    if feat.GetGeomFieldCount() != len(geom_field_values):
+        gdaltest.post_reason( 'geom field count wrong.' )
+        print(feat.GetGeomFieldCount())
+        return 'fail'
+
+    for i in range(feat.GetGeomFieldCount()):
+        geom = feat.GetGeomFieldRef(i)
+        if ogrtest.check_feature_geometry(geom, geom_field_values[i]) != 0:
+            feat.DumpReadable()
+            return 'fail'
+
+    # --- test multi-ring polygon
+
+    feat = lyr.GetNextFeature()
+    feat = lyr.GetNextFeature()
+    feat = lyr.GetNextFeature()
+    field_values = ['106', 3, 3, 1, 23, 25000, 20060111]
+
+    if feat.GetFieldCount() != len(field_values):
+        gdaltest.post_reason( 'field count wrong.' )
+        return 'fail'
+
+    for i in range(feat.GetFieldCount()):
+        if feat.GetFieldAsString(i) != str(field_values[i]):
+            feat.DumpReadable()
+            print(feat.GetFieldAsString(i))
+            gdaltest.post_reason( 'field value wrong.' )
+            return 'fail'
+
+    geom_field_values = ['POLYGON ((747925.762 265857.606,747927.618 265861.533,747928.237 265860.794,747930.956 265857.547,747925.762 265857.606),(747951.24 265833.326,747955.101 265828.716,747954.975 265827.862,747951.166 265828.348,747951.24 265833.326))']
+
+    if feat.GetGeomFieldCount() != len(geom_field_values):
+        gdaltest.post_reason( 'geom field count wrong.' )
+        print(feat.GetGeomFieldCount())
+        return 'fail'
+
+    for i in range(feat.GetGeomFieldCount()):
+        geom = feat.GetGeomFieldRef(i)
+        if ogrtest.check_feature_geometry(geom, geom_field_values[i]) != 0:
+            feat.DumpReadable()
+            return 'fail'
+
+    # --- same with text IDENT field
+    return 'success'  # TODO: Surface with text IDENT field not supported yet
+
+    lyr = ds.GetLayerByName('SURFC_TOP__SURFC_TBL_TEXT_ID_SHAPE')
+
+    if lyr.GetFeatureCount() != 4:
+        gdaltest.post_reason('feature count wrong.')
+        return 'fail'
+
+    lyr = ds.GetLayerByName('SURFC_TOP__SURFC_TBL_TEXT_ID')
+
+    if lyr.GetFeatureCount() != 4:
+        gdaltest.post_reason('feature count wrong.')
+        return 'fail'
+
+    feat = lyr.GetNextFeature()
+
+    # Note: original value 'AAA_EZ20156' includes blank-symbol
+    field_values = ['AAA EZ20156', 1, 3, 1, 23, 25000, 20060111]
+
+    if feat.GetFieldCount() != len(field_values):
+        gdaltest.post_reason( 'field count wrong.' )
+        return 'fail'
+
+    for i in range(feat.GetFieldCount()):
+        if feat.GetFieldAsString(i) != str(field_values[i]):
+            feat.DumpReadable()
+            print(feat.GetFieldAsString(i))
+            gdaltest.post_reason( 'field value wrong.' )
+            return 'fail'
+
+    geom_field_values = ['POLYGON ((598600.961 249487.174,598608.899 249538.768,598624.774 249594.331,598648.586 249630.05,598684.305 249661.8,598763.68 249685.612,598850.993 249685.612,598854.962 249618.143,598843.055 249550.675,598819.243 249514.956,598763.68 249479.237,598692.243 249447.487,598612.868 249427.643,598600.961 249487.174))']
+
+    if feat.GetGeomFieldCount() != len(geom_field_values):
+        gdaltest.post_reason( 'geom field count wrong.' )
+        print(feat.GetGeomFieldCount())
+        return 'fail'
+
+    for i in range(feat.GetGeomFieldCount()):
+        geom = feat.GetGeomFieldRef(i)
+        if ogrtest.check_feature_geometry(geom, geom_field_values[i]) != 0:
+            feat.DumpReadable()
+            return 'fail'
+
+    # --- test multi-ring polygon
+
+    feat = lyr.GetNextFeature()
+    feat = lyr.GetNextFeature()
+    feat = lyr.GetNextFeature()
+    field_values = ['AAA EZ36360', 3, 3, 1, 23, 25000, 20060111]
+
+    if feat.GetFieldCount() != len(field_values):
+        gdaltest.post_reason( 'field count wrong.' )
+        return 'fail'
+
+    for i in range(feat.GetFieldCount()):
+        if feat.GetFieldAsString(i) != str(field_values[i]):
+            feat.DumpReadable()
+            print(feat.GetFieldAsString(i))
+            gdaltest.post_reason( 'field value wrong.' )
+            return 'fail'
+
+    geom_field_values = ['POLYGON ((747925.762 265857.606,747927.618 265861.533,747928.237 265860.794,747930.956 265857.547,747925.762 265857.606),(747951.24 265833.326,747955.101 265828.716,747954.975 265827.862,747951.166 265828.348,747951.24 265833.326))']
 
     if feat.GetGeomFieldCount() != len(geom_field_values):
         gdaltest.post_reason( 'geom field count wrong.' )
