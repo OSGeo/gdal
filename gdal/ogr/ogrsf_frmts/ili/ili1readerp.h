@@ -48,7 +48,6 @@ private:
     int          nLayers;
     OGRILI1Layer **papoLayers;
     OGRILI1Layer *curLayer;
-    double       arcIncr;
     char         codeBlank;
     char         codeUndefined;
     char         codeContinue;
@@ -57,7 +56,6 @@ public:
                  ILI1Reader();
                 ~ILI1Reader();
 
-    void         SetArcDegrees(double arcDegrees);
     int          OpenFile( const char *pszFilename );
     int          ReadModel( ImdReader *poImdReader, const char *pszModelFilename, OGRILI1DataSource *poDS );
     int          ReadFeatures();
@@ -66,7 +64,6 @@ public:
     char         **ReadParseLine();
 
     void         AddLayer( OGRILI1Layer * poNewLayer );
-    int          AddIliGeom(OGRFeature *feature, int iField, long fpos);
     OGRILI1Layer *GetLayer( int );
     OGRILI1Layer *GetLayerByName( const char* );
     int          GetLayerCount();

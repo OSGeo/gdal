@@ -119,12 +119,12 @@ public:
         return false;
     }
     // Add additional Geometry table for Interlis 1
-    void AddGeomTable(CPLString layerName, const char* psFieldName, OGRwkbGeometryType eType)
+    void AddGeomTable(CPLString layerName, const char* psFieldName, OGRwkbGeometryType eType, bool bRefTIDField = false)
     {
         OGRFeatureDefn* poGeomTableDefn = new OGRFeatureDefn(layerName);
         OGRFieldDefn fieldDef("_TID", OFTString);
         poGeomTableDefn->AddFieldDefn(&fieldDef);
-        if (eType == wkbPolygon)
+        if (bRefTIDField)
         {
             OGRFieldDefn fieldDefRef("_RefTID", OFTString);
             poGeomTableDefn->AddFieldDefn(&fieldDefRef);
@@ -254,12 +254,15 @@ public:
                 {
                     const char* psKind = CPLGetXMLValue( psElementNode, "Kind", NULL );
                     poGeomFieldInfos[psName].iliGeomType = psKind;
+                    bool linearGeom = CSLTestBoolean(CPLGetConfigOption("OGR_STROKE_CURVE", "FALSE")); //TODO: check line types in model
+                    OGRwkbGeometryType multiLineType = linearGeom ? wkbMultiLineString : wkbMultiCurve;
+                    OGRwkbGeometryType polyType = linearGeom ? wkbPolygon : wkbCurvePolygon;
                     if (iliVersion == 1)
                     {
                         if (EQUAL(psKind, "Area"))
                         {
                             CPLString lineLayerName = GetName() + CPLString("_") + psName;
-                            AddGeomTable(lineLayerName, psName, wkbMultiLineString);
+                            AddGeomTable(lineLayerName, psName, multiLineType);
 
                             //Add geometry field for polygonized areas
                             AddGeomField(psName, wkbPolygon);
@@ -271,10 +274,10 @@ public:
                         } else if (EQUAL(psKind, "Surface"))
                         {
                             CPLString geomLayerName = GetName() + CPLString("_") + psName;
-                            AddGeomTable(geomLayerName, psName, wkbPolygon);
-                            AddGeomField(psName, wkbPolygon);
+                            AddGeomTable(geomLayerName, psName, multiLineType, true);
+                            AddGeomField(psName, polyType);
                         } else { // Polyline, DirectedPolyline
-                            AddGeomField(psName, wkbMultiLineString);
+                            AddGeomField(psName, multiLineType);
                         }
                     } else {
                         if (EQUAL(psKind, "Area") || EQUAL(psKind, "Surface"))
