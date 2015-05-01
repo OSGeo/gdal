@@ -178,6 +178,9 @@ GDALDataset::GDALDataset()
     nRefCount = 1;
     bShared = FALSE;
     bIsInternal = TRUE;
+    bSuppressOnClose = FALSE;
+    bReserved1 = FALSE;
+    bReserved2 = FALSE;
     papszOpenOptions = NULL;
 
 /* -------------------------------------------------------------------- */
@@ -228,6 +231,9 @@ GDALDataset::~GDALDataset()
             CPLDebug( "GDAL", 
                       "GDALClose(%s, this=%p)", GetDescription(), this );
     }
+
+    if( bSuppressOnClose )
+        VSIUnlink(GetDescription());
 
 /* -------------------------------------------------------------------- */
 /*      Remove dataset from the "open" dataset list.                    */

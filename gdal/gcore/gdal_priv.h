@@ -303,7 +303,10 @@ class CPL_DLL GDALDataset : public GDALMajorObject
 
     int         nRefCount;
     int         bShared;
-    int         bIsInternal;
+    GByte       bIsInternal;
+    GByte       bSuppressOnClose;
+    GByte       bReserved1;
+    GByte       bReserved2;
 
                 GDALDataset(void);
 
@@ -410,6 +413,8 @@ class CPL_DLL GDALDataset : public GDALMajorObject
 
     int           GetShared();
     void          MarkAsShared();
+    
+    void          MarkSuppressOnClose() { bSuppressOnClose = TRUE; }
     
     char        **GetOpenOptions() { return papszOpenOptions; }
 
