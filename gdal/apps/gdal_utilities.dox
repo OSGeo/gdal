@@ -299,7 +299,7 @@ gdal_translate [--help-general]
        [-ot {Byte/Int16/UInt16/UInt32/Int32/Float32/Float64/
              CInt16/CInt32/CFloat32/CFloat64}] [-strict]
        [-of format] [-b band] [-mask band] [-expand {gray|rgb|rgba}]
-       [-outsize xsize[%] ysize[%]] [-tr xres yres]
+       [-outsize xsize[%]|auto ysize[%]|auto] [-tr xres yres]
        [-r {nearest,bilinear,cubic,cubicspline,lanczos,average,mode}]
        [-unscale] [-scale[_bn] [src_min src_max [dst_min dst_max]]]* [-exponent[_bn] exp_val]*
        [-srcwin xoff yoff xsize ysize] [-epo] [-eco]
@@ -345,7 +345,9 @@ dataset with a color table that only contains gray levels to a gray indexed
 dataset.</dd>
 <dt> <b>-outsize</b> <i>xsize[%] ysize[%]</i>:</dt><dd> Set the size of the output
 file.  Outsize is in pixels and lines unless '\%' is attached in which case it
-is as a fraction of the input image size.</dd>
+is as a fraction of the input image size. If one of the 2 values is set to auto,
+its value will be determined from the other one, while maintaining the aspect ratio
+of the source dataset.</dd>
 <dt> <b>-tr</b> xres yres :</dt><dd>  (starting with GDAL 2.0)
 set target resolution. The values must be expressed in georeferenced units.
 Both must be positive values. This is exclusive with -outsize and -a_ullr.
