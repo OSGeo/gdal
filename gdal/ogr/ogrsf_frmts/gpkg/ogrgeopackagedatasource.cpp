@@ -670,7 +670,15 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
         bRet = TRUE;
     }
     
-    if(  poOpenInfo->nOpenFlags & GDAL_OF_RASTER )
+    int bHasTileMatrixSet = FALSE;
+    if( poOpenInfo->nOpenFlags & GDAL_OF_RASTER )
+    {
+        SQLResult oResult;
+        err = SQLQuery(hDB, "pragma table_info('gpkg_tile_matrix_set')", &oResult);
+        bHasTileMatrixSet = (err == OGRERR_NONE && oResult.nRowCount > 0);
+        SQLResultFree(&oResult);
+    }
+    if( bHasTileMatrixSet )
     {
         SQLResult oResult;
         std::string osSQL =
