@@ -599,6 +599,21 @@ CPLXMLNode *CPLParseXMLString( const char *pszString )
     }
 
 /* -------------------------------------------------------------------- */
+/*      Check for a UTF-8 BOM and skip if found                         */
+/*                                                                      */
+/*      TODO: BOM is variable-length parameter and depends on encoding. */
+/*            Add BOM detection for other encodings.                    */
+/* -------------------------------------------------------------------- */
+
+    // Used to skip to actual beginning of XML data
+    if( ( (unsigned char)pszString[0] == 0xEF )
+        && ( (unsigned char)pszString[1] == 0xBB )
+        && ( (unsigned char)pszString[2] == 0xBF) )
+    {
+        pszString += 3;
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Initialize parse context.                                       */
 /* -------------------------------------------------------------------- */
     sContext.pszInput = pszString;
