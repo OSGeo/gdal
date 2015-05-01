@@ -2656,6 +2656,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
         CPLError(CE_Failure, CPLE_AppDefined,
                  "opj_create_compress() failed");
         CPLFree(pasBandParams);
+        delete poGMLJP2Box;
         return NULL;
     }
 
@@ -2689,6 +2690,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
         opj_destroy_codec(pCodec);
         CPLFree(pasBandParams);
         pasBandParams = NULL;
+        delete poGMLJP2Box;
         return NULL;
     }
 
@@ -2707,6 +2709,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
         opj_destroy_codec(pCodec);
         CPLFree(pasBandParams);
         pasBandParams = NULL;
+        delete poGMLJP2Box;
         return NULL;
     }
 
@@ -2723,6 +2726,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
         opj_destroy_codec(pCodec);
         CPLFree(pasBandParams);
         pasBandParams = NULL;
+        delete poGMLJP2Box;
         return NULL;
     }
 
