@@ -174,8 +174,13 @@ static GDALDataset *HTTPOpen( GDALOpenInfo * poOpenInfo )
                             poOpenInfo->papszOpenOptions, NULL );
             if( VSIUnlink( osTempFilename ) != 0 && poDS != NULL )
                 poDS->MarkSuppressOnClose(); /* VSIUnlink() may not work on windows */
+            if( poDS && strcmp(poDS->GetDescription(), osTempFilename) == 0 )
+                poDS->SetDescription(poOpenInfo->pszFilename);
+
         }
     }
+    else if( strcmp(poDS->GetDescription(), osResultFilename) == 0 )
+        poDS->SetDescription(poOpenInfo->pszFilename);
 
 /* -------------------------------------------------------------------- */
 /*      Release our hold on the vsi memory file, though if it is        */
