@@ -143,7 +143,8 @@ static GDALDataset *HTTPOpen( GDALOpenInfo * poOpenInfo )
     /* suppress errors as not all drivers support /vsimem */
     CPLPushErrorHandler( CPLQuietErrorHandler );
     GDALDataset *poDS = (GDALDataset *) 
-        GDALOpenEx( osResultFilename, poOpenInfo->nOpenFlags, NULL, NULL, NULL);
+        GDALOpenEx( osResultFilename, poOpenInfo->nOpenFlags, NULL,
+                    poOpenInfo->papszOpenOptions, NULL);
     CPLPopErrorHandler();
 
 /* -------------------------------------------------------------------- */
@@ -169,7 +170,8 @@ static GDALDataset *HTTPOpen( GDALOpenInfo * poOpenInfo )
         else
         {
             poDS =  (GDALDataset *) 
-                GDALOpenEx( osTempFilename, poOpenInfo->nOpenFlags, NULL, NULL, NULL);
+                GDALOpenEx( osTempFilename, poOpenInfo->nOpenFlags, NULL,
+                            poOpenInfo->papszOpenOptions, NULL );
             if( VSIUnlink( osTempFilename ) != 0 && poDS != NULL )
                 poDS->MarkSuppressOnClose(); /* VSIUnlink() may not work on windows */
         }
