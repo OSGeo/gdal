@@ -153,8 +153,13 @@ static GDALDataset *HTTPOpen( GDALOpenInfo * poOpenInfo )
     if( poDS == NULL )
     {
         CPLString osTempFilename;
-        
-        osTempFilename.Printf( "/tmp/%s", CPLGetFilename(osResultFilename) );
+
+#ifdef WIN32
+        const char* pszPath = CPLGetPath(CPLGenerateTempFilename(NULL));
+#else
+        const char* pszPath = "/tmp";
+#endif
+        osTempFilename = CPLFormFilename(pszPath, CPLGetFilename(osResultFilename), NULL );
         if( CPLCopyFile( osTempFilename, osResultFilename ) != 0 )
         {
             CPLError( CE_Failure, CPLE_OpenFailed, 
@@ -164,8 +169,9 @@ static GDALDataset *HTTPOpen( GDALOpenInfo * poOpenInfo )
         else
         {
             poDS =  (GDALDataset *) 
-                GDALOpenEx( osResultFilename, poOpenInfo->nOpenFlags, NULL, NULL, NULL);
-            VSIUnlink( osTempFilename ); /* this may not work on windows */
+                GDALOpenEx( osTempFilename, poOpenInfo->nOpenFlags, NULL, NULL, NULL);
+            if( VSIUnlink( osTempFilename ) != 0 && poDS != NULL )
+                poDS->MarkSuppressOnClose(); /* VSIUnlink() may not work on windows */
         }
     }
 

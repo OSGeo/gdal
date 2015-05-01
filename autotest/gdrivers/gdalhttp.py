@@ -194,6 +194,36 @@ def http_4():
     return 'success'
 
 ###############################################################################
+# Test HTTP driver with non VSIL driver
+
+def http_5():
+
+    try:
+        drv = gdal.GetDriverByName( 'HTTP' )
+    except:
+        drv = None
+
+    if drv is None:
+        return 'skip'
+
+    ds = gdal.Open('http://svn.osgeo.org/gdal/trunk/autotest/gdrivers/data/s4103.blx')
+    if ds is None:
+        conn = gdaltest.gdalurlopen('http://svn.osgeo.org/gdal/trunk/autotest/gdrivers/data/s4103.blx')
+        if conn is None:
+            print('cannot open URL')
+            return 'skip'
+        try:
+            conn.read()
+        except:
+            print('cannot read')
+            return 'skip'
+        conn.close()
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 #
 
 def http_cleanup():
@@ -208,6 +238,7 @@ gdaltest_list = [ http_1,
                   http_3,
                   #http_4_old,
                   http_4,
+                  http_5,
                   http_cleanup ]
 
 if __name__ == '__main__':
