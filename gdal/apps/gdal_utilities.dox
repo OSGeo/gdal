@@ -343,11 +343,11 @@ output drivers such as JPEG, JPEG2000, MrSID, ECW that don't support color
 indexed datasets. The 'gray' value (from GDAL 1.7.0) enables to expand a
 dataset with a color table that only contains gray levels to a gray indexed
 dataset.</dd>
-<dt> <b>-outsize</b> <i>xsize[%] ysize[%]</i>:</dt><dd> Set the size of the output
+<dt> <b>-outsize</b> <i>xsize[%]|auto ysize[%]|auto</i>:</dt><dd> Set the size of the output
 file.  Outsize is in pixels and lines unless '\%' is attached in which case it
-is as a fraction of the input image size. If one of the 2 values is set to auto,
-its value will be determined from the other one, while maintaining the aspect ratio
-of the source dataset.</dd>
+is as a fraction of the input image size. Starting with GDAL 2.0, if one of the
+2 values is set to auto, its value will be determined from the other one,
+while maintaining the aspect ratio of the source dataset.</dd>
 <dt> <b>-tr</b> xres yres :</dt><dd>  (starting with GDAL 2.0)
 set target resolution. The values must be expressed in georeferenced units.
 Both must be positive values. This is exclusive with -outsize and -a_ullr.
