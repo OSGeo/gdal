@@ -99,7 +99,7 @@ class OGRILI2DataSource : public OGRDataSource
                 OGRILI2DataSource();
                ~OGRILI2DataSource();
 
-    int         Open( const char *, int bTestOpen );
+    int         Open( const char *, char** papszOpenOptions, int bTestOpen );
     int         Create( const char *pszFile, char **papszOptions );
 
     const char *GetName() { return pszName; }

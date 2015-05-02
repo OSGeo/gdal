@@ -58,7 +58,7 @@ static GDALDataset *OGRILI2DriverOpen( GDALOpenInfo* poOpenInfo )
 
     poDS = new OGRILI2DataSource();
 
-    if( !poDS->Open( poOpenInfo->pszFilename, TRUE )
+    if( !poDS->Open( poOpenInfo->pszFilename, poOpenInfo->papszOpenOptions, TRUE )
         || poDS->GetLayerCount() == 0 )
     {
         delete poDS;
@@ -107,7 +107,12 @@ void RegisterOGRILI2() {
                                    "Interlis 2" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
                                    "drv_ili.html" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "xtf xml ili imd" );
+        poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "xtf xml ili" );
+
+        poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
+"<OpenOptionList>"
+"  <Option name='MODEL' type='string' description='Filename of the model in IlisMeta format (.imd)'/>"
+"</OpenOptionList>" );
 
         poDriver->pfnOpen = OGRILI2DriverOpen;
         poDriver->pfnCreate = OGRILI2DriverCreate;
