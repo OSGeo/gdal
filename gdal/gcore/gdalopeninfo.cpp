@@ -156,7 +156,7 @@ retry:
                 bIsDirectory = TRUE;
         }
 #ifdef HAVE_READLINK
-        else if (!bHasRetried)
+        else if ( !bHasRetried && strncmp(pszFilename, "/vsi", strlen("/vsi")) != 0 )
         {
             /* If someone creates a file with "ln -sf /vsicurl/http://download.osgeo.org/gdal/data/gtiff/utm.tif my_remote_utm.tif" */
             /* we will be able to open it by passing my_remote_utm.tif */
