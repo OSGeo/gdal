@@ -1860,6 +1860,41 @@ def ogr_gpkg_26():
     return 'success'
 
 ###############################################################################
+# Test interface with Spatialite
+
+def ogr_gpkg_27():
+
+    if gdaltest.gpkg_dr is None:
+        return 'skip'
+
+    ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_27.gpkg')
+    gdal.PushErrorHandler()
+    sql_lyr = ds.ExecuteSQL("SELECT GeomFromGPB(null)")
+    gdal.PopErrorHandler()
+    if sql_lyr is None:
+        ds = None
+        gdaltest.gpkg_dr.DeleteDataSource('/vsimem/ogr_gpkg_27.gpkg')
+        return 'skip'
+    ds.ReleaseResultSet(sql_lyr)
+
+    lyr = ds.CreateLayer('test')
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POINT (2 49)'))
+    lyr.CreateFeature(f)
+    sql_lyr = ds.ExecuteSQL('SELECT GeomFromGPB(geom) FROM test')
+    f = sql_lyr.GetNextFeature()
+    if f.GetGeometryRef().ExportToWkt() != 'POINT (2 49)':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+    
+    ds = None
+    gdaltest.gpkg_dr.DeleteDataSource('/vsimem/ogr_gpkg_27.gpkg')
+
+    return 'success'
+
+###############################################################################
 # Run test_ogrsf
 
 def ogr_gpkg_test_ogrsf():
@@ -1943,6 +1978,7 @@ gdaltest_list = [
     ogr_gpkg_24,
     ogr_gpkg_25,
     ogr_gpkg_26,
+    ogr_gpkg_27,
     ogr_gpkg_test_ogrsf,
     ogr_gpkg_cleanup,
 ]
