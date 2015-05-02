@@ -22,7 +22,13 @@ The implementation is based on <a href="http://wiki.geojson.org/GeoJSON_draft_ve
 
 <p>Starting with OGR 1.8.0, the GeoJSON driver can read the JSON output of Feature Service request following the
 <a href="http://www.esri.com/industries/landing-pages/geoservices/geoservices.html">GeoServices REST Specification<a/>, like
-implemented by <a href="http://help.arcgis.com/en/arcgisserver/10.0/apis/rest/index.html">ArcGIS Server REST API</a></p>
+implemented by <a href="http://help.arcgis.com/en/arcgisserver/10.0/apis/rest/index.html">ArcGIS Server REST API</a>.
+And starting with OGR 2.0, the GeoJSON driver can scroll through such result sets that
+are spread over multiple pages (for ArcGIS servers &gt;= 10.3). This is automatically enabled
+if URL does not contain an explicit <i>resultOffset</i> parameter. If it contains
+this parameter and scrolling is still desired, the FEATURE_SERVER_PAGING open option must be set to YES.
+The page size can be explicitely set with the <i>resultRecordCount</i> parameter. If it
+is not set, OGR will set it to 1000.</p>
 
 <p>Starting with OGR 1.11, the GeoJSON driver can read the <a href="https://github.com/mbostock/topojson/wiki/Specification">TopoJSON format</a></p>
 
@@ -99,9 +105,11 @@ This behavior may be controlled by setting environment variable <strong>GEOMETRY
 recursively explore nested objects and produce flatten OGR attributes. Defaults to NO.</li>
 <li><b>NESTED_ATTRIBUTE_SEPARATOR</b> = character : Separator between components
 of nested attributes. Defaults to '_'</li>
+<li><b>FEATURE_SERVER_PAGING</b> = YES/NO: Whether to automatically scroll through
+results with a ArcGIS Feature Service endpoint.</li>
 </ul>
 
-<p>Consider the following GeoJSON fragment :</p>
+<p>To explain FLATTEN_NESTED_ATTRIBUTES, consider the following GeoJSON fragment :</p>
 
 <pre>
 {

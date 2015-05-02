@@ -102,6 +102,8 @@ public:
                     const char* pszName,
                     json_object* poObj );
 
+    json_object* GetJSonObject() { return poGJObject_; }
+
 private:
 
     json_object* poGJObject_;
@@ -184,6 +186,8 @@ public:
 
     OGRErr Parse( const char* pszText );
     void ReadLayers( OGRGeoJSONDataSource* poDS );
+
+    json_object* GetJSonObject() { return poGJObject_; }
 
 private:
 

@@ -1725,37 +1725,6 @@ def ogr_geojson_35():
     return 'success'
 
 ###############################################################################
-
-def ogr_geojson_cleanup():
-
-    try:
-        if gdaltest.tests is not None:
-            gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
-            for i in range(len(gdaltest.tests)):
-
-                fname = os.path.join('tmp', gdaltest.tests[i][0] + '.geojson')
-                ogr.GetDriverByName('GeoJSON').DeleteDataSource( fname )
-
-                fname = os.path.join('tmp', gdaltest.tests[i][0] + '.geojson.gz')
-                gdal.Unlink(fname)
-
-                fname = os.path.join('tmp', gdaltest.tests[i][0] + '.geojson.gz.properties')
-                gdal.Unlink(fname)
-
-            gdal.PopErrorHandler()
-
-        gdaltest.tests = None
-    except:
-        pass
-
-    try:
-        os.remove('tmp/out_ogr_geojson_14.geojson')
-    except:
-        pass
-
-    return 'success'
-
-###############################################################################
 # Test reading file with UTF-8 BOM (which is supposed to be illegal in JSON...) (#5630)
 
 def ogr_geojson_36():
@@ -2011,6 +1980,158 @@ def ogr_geojson_41():
 
     return 'success'
 
+###############################################################################
+# Test ESRI FeatureService scrolling
+
+def ogr_geojson_42():
+
+    if gdaltest.geojson_drv is None:
+        return 'skip'
+
+    gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', 'YES')
+
+    resultOffset0 = """
+{ "type":"FeatureCollection",
+  "properties" : {
+    "exceededTransferLimit" : true
+  }, 
+  "features" :
+  [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [ 2, 49 ]
+      }, 
+      "properties": {
+        "id": 1,
+        "a_property": 1, 
+      }
+    } ] }"""
+    gdal.FileFromMemBuffer('/vsimem/geojson/test.json?', resultOffset0)
+    gdal.FileFromMemBuffer('/vsimem/geojson/test.json?resultRecordCount=1000&resultOffset=0', resultOffset0)
+
+    ds = ogr.Open('/vsimem/geojson/test.json?')
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if f is None or f.GetFID() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    lyr.ResetReading()
+    lyr.ResetReading()
+    f = lyr.GetNextFeature()
+    if f is None or f.GetFID() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    resultOffset1 = """
+{ "type":"FeatureCollection",
+  "features" :
+  [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [ 2, 49 ]
+      }, 
+      "properties": {
+        "id": 2,
+        "a_property": 1, 
+      }
+    } ] }""" 
+    gdal.FileFromMemBuffer('/vsimem/geojson/test.json?resultRecordCount=1000&resultOffset=1', resultOffset1)
+    f = lyr.GetNextFeature()
+    if f is None or f.GetFID() != 2:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.PushErrorHandler()
+    fc = lyr.GetFeatureCount()
+    gdal.PopErrorHandler()
+    if fc != 2:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.FileFromMemBuffer('/vsimem/geojson/test.json?resultRecordCount=1000&returnCountOnly=true',
+"""{ "count": 123456}""")
+    fc = lyr.GetFeatureCount()
+    if fc != 123456:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.PushErrorHandler()
+    extent = lyr.GetExtent()
+    gdal.PopErrorHandler()
+    if extent != (2,2,49,49):
+        gdaltest.post_reason('fail')
+        print(extent)
+        return 'fail'
+
+    gdal.FileFromMemBuffer('/vsimem/geojson/test.json?resultRecordCount=1000&returnExtentOnly=true&f=geojson',
+"""{"type":"FeatureCollection","bbox":[1, 2, 3, 4],"features":[]}""")
+    extent = lyr.GetExtent()
+    if extent != (1.0, 3.0, 2.0, 4.0):
+        gdaltest.post_reason('fail')
+        print(extent)
+        return 'fail'
+
+    if lyr.TestCapability(ogr.OLCFastFeatureCount) != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    if lyr.TestCapability(ogr.OLCFastGetExtent) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    if lyr.TestCapability('foo') != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+
+def ogr_geojson_cleanup():
+
+    gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', None)
+
+    try:
+        if gdaltest.tests is not None:
+            gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
+            for i in range(len(gdaltest.tests)):
+
+                fname = os.path.join('tmp', gdaltest.tests[i][0] + '.geojson')
+                ogr.GetDriverByName('GeoJSON').DeleteDataSource( fname )
+
+                fname = os.path.join('tmp', gdaltest.tests[i][0] + '.geojson.gz')
+                gdal.Unlink(fname)
+
+                fname = os.path.join('tmp', gdaltest.tests[i][0] + '.geojson.gz.properties')
+                gdal.Unlink(fname)
+
+            gdal.PopErrorHandler()
+
+        gdaltest.tests = None
+    except:
+        pass
+
+    try:
+        os.remove('tmp/out_ogr_geojson_14.geojson')
+    except:
+        pass
+    
+    for f in gdal.ReadDir('/vsimem/geojson'):
+        gdal.Unlink('/vsimem/geojson/' + f)
+
+    return 'success'
 
 gdaltest_list = [ 
     ogr_geojson_1,
@@ -2054,6 +2175,7 @@ gdaltest_list = [
     ogr_geojson_39,
     ogr_geojson_40,
     ogr_geojson_41,
+    ogr_geojson_42,
     ogr_geojson_cleanup ]
 
 if __name__ == '__main__':

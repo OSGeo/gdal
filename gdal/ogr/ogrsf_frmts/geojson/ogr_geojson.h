@@ -178,6 +178,7 @@ public:
 
     int  GetFpOutputIsSeekable() const { return bFpOutputIsSeekable_; }
     int  GetBBOXInsertLocation() const { return nBBOXInsertLocation_; }
+    int  HasOtherPages() const { return bOtherPages_; }
 
 private:
 
@@ -196,6 +197,7 @@ private:
     // 
     GeometryTranslation flTransGeom_;
     AttributesTranslation flTransAttrs_;
+    int bOtherPages_; /* ERSI Feature Service specific */
 
     int bFpOutputIsSeekable_;
     int nBBOXInsertLocation_;
