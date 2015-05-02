@@ -1196,6 +1196,21 @@ def osr_esri_25():
       return 'fail'
 
     return 'success'
+
+###############################################################################
+# Test LCC_1SP (#2072)
+#
+def osr_esri_26():
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput("""PROJCS["NAD_1983_HARN_WISCRS_Washburn_County_Meters",GEOGCS["GCS_North_American_1983_HARN",DATUM["D_North_American_1983_HARN",SPHEROID["GRS_1980",6378137.0,298.257222101]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["Lambert_Conformal_Conic"],PARAMETER["False_Easting",234086.8682],PARAMETER["False_Northing",188358.6058],PARAMETER["Central_Meridian",-91.78333333333333],PARAMETER["Standard_Parallel_1",45.96121983333334],PARAMETER["Scale_Factor",1.0000475376],PARAMETER["Latitude_Of_Origin",45.96121983333334],UNIT["Meter",1.0]]""")
+    srs.MorphFromESRI()
+    if srs.Validate() != 0:
+        gdaltest.post_reason('fail')
+        print(srs.ExportToWkt())
+        return 'fail'
+
+    return 'success'
+   
 ###############################################################################
 #
 
@@ -1225,6 +1240,7 @@ gdaltest_list = [
     osr_esri_23,
     osr_esri_24,
     osr_esri_25,
+    osr_esri_26,
    None ]
 
 if __name__ == '__main__':

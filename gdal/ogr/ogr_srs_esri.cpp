@@ -1679,6 +1679,25 @@ OGRErr OGRSpatialReference::morphFromESRI()
         GetRoot()->applyRemapper( 
             "PARAMETER", (char **)apszLambertConformalConicMapping + 0,
             (char **)apszLambertConformalConicMapping + 1, 2 );
+
+        /* LCC 1SP has duplicated parameters Standard_Parallel_1 and Latitude_Of_Origin */
+        /* http://trac.osgeo.org/gdal/ticket/2072 */
+        if( EQUAL( pszProjection, SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP ) )
+        {
+            OGR_SRSNode *poPROJCS = GetAttrNode( "PROJCS" );
+            int iSP1Child = FindProjParm( "Standard_Parallel_1", poPROJCS );
+            int iLatOrigChild = FindProjParm( "Latitude_Of_Origin", poPROJCS );
+            if( iSP1Child != -1 && iLatOrigChild != 1 )
+            {
+                /* Do a sanity check before removing Standard_Parallel_1 */
+                if( EQUAL(poPROJCS->GetChild(iSP1Child)->GetValue(),
+                          poPROJCS->GetChild(iLatOrigChild)->GetValue()) )
+                {
+                    poPROJCS->DestroyChild( iSP1Child );
+                }
+            }
+        }
+
     }
 
 /* -------------------------------------------------------------------- */
