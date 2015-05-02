@@ -156,15 +156,6 @@ static size_t CPLHdrWriteFct(void *buffer, size_t size, size_t nmemb, void *reqI
 CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
 
 {
-#ifndef HAVE_CURL
-    (void) papszOptions;
-    (void) pszURL;
-
-    CPLError( CE_Failure, CPLE_NotSupported,
-              "GDAL/OGR not compiled with libcurl support, remote requests not supported." );
-    return NULL;
-#else
-
     if( strncmp(pszURL, "/vsimem/", strlen("/vsimem/")) == 0 &&
         /* Disabled by default for potential security issues */
         CSLTestBoolean(CPLGetConfigOption("CPL_CURL_ENABLE_VSIMEM", "FALSE")) )
@@ -213,6 +204,15 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
 
         return psResult;
     }
+
+#ifndef HAVE_CURL
+    (void) papszOptions;
+    (void) pszURL;
+
+    CPLError( CE_Failure, CPLE_NotSupported,
+              "GDAL/OGR not compiled with libcurl support, remote requests not supported." );
+    return NULL;
+#else
 
 /* -------------------------------------------------------------------- */
 /*      Are we using a persistent named session?  If so, search for     */
