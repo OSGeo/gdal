@@ -152,6 +152,7 @@ def ogr_fgdb_1():
         lyr = ds.GetLayerByName(data[0])
         if data[1] != ogr.wkbNone:
             if lyr.GetSpatialRef().IsSame(srs) != 1:
+                gdaltest.post_reason('fail')
                 print(lyr.GetSpatialRef())
                 return 'fail'
         feat = lyr.GetNextFeature()
@@ -160,10 +161,15 @@ def ogr_fgdb_1():
                 expected_wkt = data[3]
             except:
                 expected_wkt = data[2]
-            geom = feat.GetGeometryRef()
-            if geom:
-                geom = geom.ExportToWkt()
-            if geom != expected_wkt:
+            if expected_wkt is None:
+                if feat.GetGeometryRef() is not None:
+                    gdaltest.post_reason('fail')
+                    print(data)
+                    feat.DumpReadable()
+                    return 'fail'
+            elif ogrtest.check_feature_geometry(feat, expected_wkt) != 0:
+                gdaltest.post_reason('fail')
+                print(data)
                 feat.DumpReadable()
                 return 'fail'
 
@@ -178,6 +184,7 @@ def ogr_fgdb_1():
            feat.GetField('binary') != "00FF7F" or \
            feat.GetField('binary2') != "123456" or \
            feat.GetField('smallint2') != -32768:
+            gdaltest.post_reason('fail')
             feat.DumpReadable()
             return 'fail'
 
@@ -253,6 +260,12 @@ def ogr_fgdb_DeleteField():
     if lyr.DeleteField(lyr.GetLayerDefn().GetFieldIndex('str')) != 0:
         gdaltest.post_reason('failure')
         return 'fail'
+
+    # Needed since FileGDB v1.4, otherwise crash/error ...
+    if True:
+        ds = ogr.Open("tmp/test.gdb", update = 1)
+        lyr = ds.GetLayerByIndex(0)
+
     fld_defn = ogr.FieldDefn("str2", ogr.OFTString)
     fld_defn.SetWidth(80)
     lyr.CreateField(fld_defn)

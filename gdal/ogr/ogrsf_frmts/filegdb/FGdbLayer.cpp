@@ -1925,10 +1925,12 @@ bool FGdbLayer::ParseGeometryDef(CPLXMLNode* psRoot)
 /************************************************************************/
 
 bool FGdbLayer::ParseSpatialReference(CPLXMLNode* psSpatialRefNode,
-                                      string* pOutWkt, string* pOutWKID, string* pOutLatestWKID)
+                                      string* pOutWkt, string* pOutWKID,
+                                      string* pOutLatestWKID)
 {
     *pOutWkt = "";
     *pOutWKID = "";
+    *pOutLatestWKID = "";
 
     CPLXMLNode* psSRItemNode;
 
@@ -1945,6 +1947,10 @@ bool FGdbLayer::ParseSpatialReference(CPLXMLNode* psSpatialRefNode,
             char* pszUnescaped = CPLUnescapeString(psSRItemNode->psChild->pszValue, NULL, CPLES_XML);
             *pOutWKID = pszUnescaped;
             CPLFree(pszUnescaped);
+
+            // Needed with FileGDB v1.4 with layers with empty SRS
+            if( *pOutWKID == "0" )
+                *pOutWKID = "";
         }
         /* The concept of LatestWKID is explained in http://resources.arcgis.com/en/help/arcgis-rest-api/index.html#//02r3000000n1000000 */
         else if( psSRItemNode->eType == CXT_Element &&
