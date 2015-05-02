@@ -12,13 +12,14 @@
 <a href="http://json.org/">JavaScript Object Notation (JSON)</a>. The JSON is a lightweight 
 plain text format for data interchange and GeoJSON is nothing other than its specialization for geographic content.</p>
 
-<p>At the moment of writing this, GeoJSON is supported as output format of services implemented by 
-<a href="http://featureserver.org/">FeatureServer</a>, <a href="http://docs.codehaus.org/display/GEOSDOC/GeoJSON+Output+Format">GeoServer</a> 
-and <a href="http://exportgge.sourceforge.net/kml/">CartoWeb</a>.</p>
+<p>GeoJSON is supported as output format of a number of services :
+<a href="http://featureserver.org/">FeatureServer</a>,
+<a href="http://docs.geoserver.org/2.6.x/en/user/services/wfs/outputformats.html">GeoServer</a> ,
+<a href="http://exportgge.sourceforge.net/kml/">CartoWeb</a>, etc...</p>
 
 <p>The OGR GeoJSON driver translates a GeoJSON encoded data to objects of <a href="/ogr/ogr_arch.html">OGR Simple Features model</a>: 
 Datasource, Layer, Feature, Geometry. 
-The implementation is based on <a href="http://wiki.geojson.org/GeoJSON_draft_version_5">GeoJSON Specification draft, v5.0</a>.</p>
+The implementation is based on <a href="http://geojson.org/geojson-spec.html">GeoJSON Specification, v1.0</a>.</p>
 
 <p>Starting with OGR 1.8.0, the GeoJSON driver can read the JSON output of Feature Service request following the
 <a href="http://www.esri.com/industries/landing-pages/geoservices/geoservices.html">GeoServices REST Specification<a/>, like
@@ -36,7 +37,7 @@ is not set, OGR will set it to 1000.</p>
 
 <p>The OGR GeoJSON driver accepts three types of sources of data:
 <ul>
-    <li>Uniform Resource Locator (<a href="http://en.wikipedia.org/wiki/URL">URL</a>) - a Web address to 
+<li>Uniform Resource Locator (<a href="http://en.wikipedia.org/wiki/URL">URL</a>) - a Web address to 
     perform <a href="http://en.wikipedia.org/wiki/HTTP">HTTP</a> request</li>
 <li>Plain text file with GeoJSON data - identified from the file extension .geojson or .json</li>
 <li>Text passed directly and encoded in GeoJSON</li>
