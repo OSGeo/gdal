@@ -86,16 +86,32 @@ OGRILI2DataSource::~OGRILI2DataSource()
 /*                                Open()                                */
 /************************************************************************/
 
-int OGRILI2DataSource::Open( const char * pszNewName, int bTestOpen )
+int OGRILI2DataSource::Open( const char * pszNewName, char** papszOpenOptions, int bTestOpen )
 
 {
     FILE        *fp;
     char        szHeader[1000];
+    CPLString   osBasename;
+    CPLString   osModelFilename;
 
-    char **filenames = CSLTokenizeString2( pszNewName, ",", 0 );
-    const char *pszModelFilename = (CSLCount(filenames)>1) ? filenames[1] : NULL;
+    if( CSLFetchNameValue(papszOpenOptions, "MODEL") != NULL )
+    {
+        osBasename = pszNewName;
+        osModelFilename = CSLFetchNameValue(papszOpenOptions, "MODEL");
+    }
+    else
+    {
+        char **filenames = CSLTokenizeString2( pszNewName, ",", 0 );
 
-    pszName = CPLStrdup( filenames[0] );
+        osBasename = filenames[0];
+
+        if( CSLCount(filenames) > 1 )
+            osModelFilename = filenames[1];
+
+        CSLDestroy( filenames );
+    }
+
+    pszName = CPLStrdup( osBasename );
 
 /* -------------------------------------------------------------------- */
 /*      Open the source file.                                           */
@@ -108,7 +124,6 @@ int OGRILI2DataSource::Open( const char * pszNewName, int bTestOpen )
                       "Failed to open ILI2 file `%s'.",
                       pszNewName );
 
-        CSLDestroy( filenames );
         return FALSE;
     }
 
@@ -128,7 +143,6 @@ int OGRILI2DataSource::Open( const char * pszNewName, int bTestOpen )
             || strstr(szHeader,"interlis.ch/INTERLIS2") == NULL )
         { // "www.interlis.ch/INTERLIS2.3"
             VSIFClose( fp );
-            CSLDestroy( filenames );
             return FALSE;
         }
     }
@@ -147,12 +161,11 @@ int OGRILI2DataSource::Open( const char * pszNewName, int bTestOpen )
                   "be instantiated, likely because Xerces support wasn't\n"
                   "configured in.", 
                   pszNewName );
-        CSLDestroy( filenames );
         return FALSE;
     }
 
-    if (pszModelFilename)
-        poReader->ReadModel( poImdReader, pszModelFilename );
+    if (osModelFilename.size())
+        poReader->ReadModel( poImdReader, osModelFilename );
 
     if( getenv( "ARC_DEGREES" ) != NULL ) {
       //No better way to pass arguments to the reader (it could even be an -lco arg)
@@ -168,8 +181,6 @@ int OGRILI2DataSource::Open( const char * pszNewName, int bTestOpen )
     for (layerIt = listLayer.begin(); layerIt != listLayer.end(); ++layerIt) {
         (*layerIt)->ResetReading();
     }
-
-    CSLDestroy( filenames );
 
     return TRUE;
 }

@@ -87,7 +87,7 @@ OGRILI1DataSource::~OGRILI1DataSource()
 /*                                Open()                                */
 /************************************************************************/
 
-int OGRILI1DataSource::Open( const char * pszNewName, int bTestOpen )
+int OGRILI1DataSource::Open( const char * pszNewName, char** papszOpenOptions, int bTestOpen )
 
 {
     FILE        *fp;
@@ -98,15 +98,23 @@ int OGRILI1DataSource::Open( const char * pszNewName, int bTestOpen )
     {
         return FALSE;
     }
+    
+    if( CSLFetchNameValue(papszOpenOptions, "MODEL") != NULL )
+    {
+        osBasename = pszNewName;
+        osModelFilename = CSLFetchNameValue(papszOpenOptions, "MODEL");
+    }
+    else
+    {
+        char **filenames = CSLTokenizeString2( pszNewName, ",", 0 );
 
-    char **filenames = CSLTokenizeString2( pszNewName, ",", 0 );
+        osBasename = filenames[0];
 
-    osBasename = filenames[0];
+        if( CSLCount(filenames) > 1 )
+            osModelFilename = filenames[1];
 
-    if( CSLCount(filenames) > 1 )
-        osModelFilename = filenames[1];
-
-    CSLDestroy( filenames );
+        CSLDestroy( filenames );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Open the source file.                                           */
