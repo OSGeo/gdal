@@ -447,7 +447,8 @@ int GDALDriverManager::RegisterDriver( GDALDriver * poDriver )
     }
     
     if( poDriver->GetMetadataItem( GDAL_DMD_OPENOPTIONLIST ) != NULL &&
-        poDriver->pfnIdentify == NULL )
+        poDriver->pfnIdentify == NULL &&
+        !EQUALN(poDriver->GetDescription(), "Interlis", strlen("Interlis")) )
     {
         CPLDebug("GDAL", "Driver %s that defines GDAL_DMD_OPENOPTIONLIST must also "
                  "implement Identify(), so that it can be used",
