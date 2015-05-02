@@ -2280,6 +2280,8 @@ OGRErr OGRSpatialReference::importFromURNPart(const char* pszAuthority,
         return SetWellKnownGeogCS( pszCode );
     else if( EQUALN(pszCode,"CRS27",5) )
         return SetWellKnownGeogCS( pszCode );
+    else if( EQUALN(pszCode,"84",2) ) /* urn:ogc:def:crs:OGC:2:84 */
+        return SetWellKnownGeogCS( "CRS84" );
 
 /* -------------------------------------------------------------------- */
 /*      Handle auto codes.  We need to convert from format              */
