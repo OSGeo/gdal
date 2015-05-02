@@ -320,15 +320,18 @@ OGRFeature* OGRESRIJSONReader::ReadFeature( json_object* poObj )
         json_object_object_foreachC( poObjProps, it )
         {
             nField = poFeature->GetFieldIndex(it.key);
-            poFieldDefn = poFeature->GetFieldDefnRef(nField);
-            if (poFieldDefn && it.val != NULL )
+            if( nField >= 0 )
             {
-                if ( EQUAL( it.key,  poLayer_->GetFIDColumn() ) )
-                    poFeature->SetFID( json_object_get_int( it.val ) );
-                if ( poLayer_->GetLayerDefn()->GetFieldDefn(nField)->GetType() == OFTReal )
-                    poFeature->SetField( nField, CPLAtofM(json_object_get_string(it.val)) );
-                else
-                    poFeature->SetField( nField, json_object_get_string(it.val) );
+                poFieldDefn = poFeature->GetFieldDefnRef(nField);
+                if (poFieldDefn && it.val != NULL )
+                {
+                    if ( EQUAL( it.key,  poLayer_->GetFIDColumn() ) )
+                        poFeature->SetFID( json_object_get_int( it.val ) );
+                    if ( poLayer_->GetLayerDefn()->GetFieldDefn(nField)->GetType() == OFTReal )
+                        poFeature->SetField( nField, CPLAtofM(json_object_get_string(it.val)) );
+                    else
+                        poFeature->SetField( nField, json_object_get_string(it.val) );
+                }
             }
         }
     }
