@@ -513,14 +513,10 @@ void OGRGeoJSONDataSource::LoadLayers(char** papszOpenOptions)
             json_object* poObj = reader.GetJSonObject();
             if( poObj && json_object_get_type(poObj) == json_type_object )
             {
-                json_object* poProperties = json_object_object_get(poObj, "properties");
-                if( poProperties && json_object_get_type(poProperties) == json_type_object )
-                {
-                    json_object* poExceededTransferLimit =
-                        json_object_object_get(poProperties, "exceededTransferLimit");
-                    if( poExceededTransferLimit && json_object_get_type(poExceededTransferLimit) == json_type_boolean )
-                        bOtherPages_ = json_object_get_boolean(poExceededTransferLimit);
-                }
+                json_object* poExceededTransferLimit =
+                    json_object_object_get(poObj, "exceededTransferLimit");
+                if( poExceededTransferLimit && json_object_get_type(poExceededTransferLimit) == json_type_boolean )
+                    bOtherPages_ = json_object_get_boolean(poExceededTransferLimit);
             }
             reader.ReadLayers( this );
         }
