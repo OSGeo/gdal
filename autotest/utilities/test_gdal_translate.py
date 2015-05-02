@@ -911,7 +911,7 @@ def test_gdal_translate_33():
     if test_cli_utilities.get_gdal_translate_path() is None:
         return 'skip'
 
-    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -outsize 100 auto ../gdrivers/data/small_world.tif tmp/test_gdal_translate_33.tif')
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -outsize 100 0 ../gdrivers/data/small_world.tif tmp/test_gdal_translate_33.tif')
 
     ds = gdal.Open('tmp/test_gdal_translate_33.tif')
     if ds.RasterYSize != 50:
@@ -920,7 +920,7 @@ def test_gdal_translate_33():
         return 'fail'
     ds = None
 
-    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -outsize auto 100 ../gdrivers/data/small_world.tif tmp/test_gdal_translate_33.tif')
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -outsize 0 100 ../gdrivers/data/small_world.tif tmp/test_gdal_translate_33.tif')
 
     ds = gdal.Open('tmp/test_gdal_translate_33.tif')
     if ds.RasterXSize != 200:
@@ -931,8 +931,8 @@ def test_gdal_translate_33():
 
     os.unlink('tmp/test_gdal_translate_33.tif')
 
-    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_translate_path() + ' -outsize auto auto ../gdrivers/data/small_world.tif tmp/test_gdal_translate_33.tif')
-    if err.find('-outsize auto auto invalid') < 0:
+    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_translate_path() + ' -outsize 0 0 ../gdrivers/data/small_world.tif tmp/test_gdal_translate_33.tif')
+    if err.find('-outsize 0 0 invalid') < 0:
         gdaltest.post_reason('fail')
         return 'fail'
 
