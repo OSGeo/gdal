@@ -40,10 +40,12 @@ following non-linear geometry types :CIRCULARSTRING, COMPOUNDCURVE, CURVEPOLYGON
 <p>
   Starting with GDAL 2.0, SQL SELECT statements passed to ExecuteSQL() are
   also executed directly against the database. If Spatialite is used, a recent
-  version (4.2.0) is needed and use of explicit cast operators AsGPB(), GeomFromGPB()
-  are required. It is also possible to use with any Spatialite version, but in
+  version (4.2.0) is needed and use of explicit cast operators AsGPB() is required
+  to transform GeoPackage geometries to Spatialite geometries (the reverse conversion
+  from Spatialite geometries is automatically done by the GPKG driver).
+  It is also possible to use with any Spatialite version, but in
   a slower way, by specifying the "INDIRECT_SQLITE" dialect. In which case,
-  GeoPackage geometries appear as Spatialite geometries after translation by OGR.
+  GeoPackage geometries automatically appear as Spatialite geometries after translation by OGR.
 </p>
 
 <h3>SQL functions</h3>

@@ -192,7 +192,12 @@ OGRFeature *OGRGeoPackageLayer::TranslateFeature( sqlite3_stmt* hStmt )
             OGRGeometry *poGeom = GPkgGeometryToOGR(pabyGpkg, iGpkgSize, poSrs);
             if ( ! poGeom )
             {
-                CPLError( CE_Failure, CPLE_AppDefined, "Unable to read geometry");
+                // Try also spatialite geometry blobs
+                if( OGRSQLiteLayer::ImportSpatiaLiteGeometry( pabyGpkg, iGpkgSize,
+                                                              &poGeom ) != OGRERR_NONE )
+                {
+                    CPLError( CE_Failure, CPLE_AppDefined, "Unable to read geometry");
+                }
             }
             poFeature->SetGeometryDirectly( poGeom );
         }
@@ -351,8 +356,11 @@ void OGRGeoPackageLayer::BuildFeatureDefn( const char *pszLayerName,
             const int nBytes = sqlite3_column_bytes( hStmt, iCol );
             if( nBytes > 4 )
             {
+                int iGpkgSize = sqlite3_column_bytes(hStmt, iCol);
                 const GByte* pabyGpkg = (const GByte*)sqlite3_column_blob( hStmt, iCol  );
                 GPkgHeader oHeader;
+                OGRGeometry* poGeom = NULL;
+                int nSRID;
                 if( GPkgHeaderFromWKB(pabyGpkg, &oHeader) == OGRERR_NONE )
                 {
                     OGRGeomFieldDefn oGeomField(oField.GetNameRef(), wkbUnknown);
@@ -385,6 +393,26 @@ void OGRGeoPackageLayer::BuildFeatureDefn( const char *pszLayerName,
                         }
                     }
 #endif
+
+                    m_poFeatureDefn->AddGeomFieldDefn(&oGeomField);
+                    iGeomCol = iCol;
+                    continue;
+                }
+
+                // Try also spatialite geometry blobs
+                else if( OGRSQLiteLayer::ImportSpatiaLiteGeometry( pabyGpkg, iGpkgSize,
+                                                                   &poGeom, &nSRID ) == OGRERR_NONE )
+                {
+                    OGRGeomFieldDefn oGeomField(oField.GetNameRef(), wkbUnknown);
+
+                    /* Read the SRS */
+                    OGRSpatialReference *poSRS = m_poDS->GetSpatialRef(nSRID);
+                    if ( poSRS )
+                    {
+                        oGeomField.SetSpatialRef(poSRS);
+                        poSRS->Dereference();
+                    }
+                    delete poGeom;
 
                     m_poFeatureDefn->AddGeomFieldDefn(&oGeomField);
                     iGeomCol = iCol;
