@@ -553,7 +553,7 @@ GDALdllImageLineAllTouched(int nRasterXSize, int nRasterYSize,
             }
 
             // step from pixel to pixel.
-            while( dfX < dfXEnd )
+            while( dfX >= 0 && dfX < dfXEnd )
             {
                 int iX = (int) floor(dfX);
                 int iY = (int) floor(dfY);
