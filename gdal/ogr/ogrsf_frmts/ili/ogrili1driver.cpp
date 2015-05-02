@@ -41,7 +41,8 @@ static GDALDataset *OGRILI1DriverOpen( GDALOpenInfo* poOpenInfo )
 {
     OGRILI1DataSource    *poDS;
 
-    if( poOpenInfo->eAccess == GA_Update )
+    if( poOpenInfo->eAccess == GA_Update ||
+        (!poOpenInfo->bStatOK && strchr(poOpenInfo->pszFilename, ',') == NULL) )
         return NULL;
 
     if( poOpenInfo->fpL != NULL )
