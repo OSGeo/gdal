@@ -147,7 +147,12 @@ OGRFeature* OGRGeoJSONLayer::GetNextFeature()
 
 int OGRGeoJSONLayer::TestCapability( const char* pszCap )
 {
-    UNREFERENCED_PARAM(pszCap);
+    if( EQUAL(pszCap, OLCFastFeatureCount) ||
+        EQUAL(pszCap, OLCFastGetExtent) ||
+        EQUAL(pszCap, OLCStringsAsUTF8) )
+    {
+        return TRUE;
+    }
 
     return FALSE;
 }
