@@ -1040,8 +1040,11 @@ def ogr_interlis2_3():
 </RoadsExdm2ien.RoadsExtended>
 </DATASECTION>
 </TRANSFER>"""
+        expected = expected.replace('.11499999999999', '.115')
+        xtf = xtf.replace('.11499999999999', '.115')
         if expected not in xtf:
             gdaltest.post_reason("Interlis output doesn't match.")
+            print(xtf)
             return 'fail'
     return 'success'
 
