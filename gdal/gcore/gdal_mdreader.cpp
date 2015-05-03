@@ -595,7 +595,7 @@ char ** GDALLoadRPCFile( const CPLString& soFilePath )
 /*                         GDALWriteRPCTXTFile()                        */
 /************************************************************************/
 
-CPLErr CPL_STDCALL GDALWriteRPCTXTFile( const char *pszFilename, char **papszMD )
+CPLErr GDALWriteRPCTXTFile( const char *pszFilename, char **papszMD )
 
 {
     CPLString osRPCFilename = pszFilename;
@@ -688,7 +688,7 @@ CPLErr CPL_STDCALL GDALWriteRPCTXTFile( const char *pszFilename, char **papszMD 
 /*                          GDALWriteRPBFile()                          */
 /************************************************************************/
 
-CPLErr CPL_STDCALL GDALWriteRPBFile( const char *pszFilename, char **papszMD )
+CPLErr GDALWriteRPBFile( const char *pszFilename, char **papszMD )
 
 {
     CPLString osRPBFilename = CPLResetExtension( pszFilename, "RPB" );
@@ -972,7 +972,7 @@ static void GDALWriteIMDMultiLine( VSILFILE *fp, const char *pszValue )
 /*                          GDALWriteIMDFile()                          */
 /************************************************************************/
 
-CPLErr CPL_STDCALL GDALWriteIMDFile( const char *pszFilename, char **papszMD )
+CPLErr GDALWriteIMDFile( const char *pszFilename, char **papszMD )
 
 {
     CPLString osRPBFilename = CPLResetExtension( pszFilename, "IMD" );

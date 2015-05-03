@@ -36,6 +36,7 @@ clean:
 	-del *.obj *.res
 	cd mdreader
 	$(MAKE) /f makefile.vc clean
+	cd ..
 
 Version.res:	
 	rc -fo Version.res -r -I..\port -I..\ogr Version.rc
@@ -45,3 +46,4 @@ gdal_misc.obj:	gdal_misc.cpp gdal_version.h
 mdreader_dir:
 	cd mdreader
 	$(MAKE) /f makefile.vc
+	cd ..
