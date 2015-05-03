@@ -68,6 +68,7 @@ def jp2metadata_2():
         gdaltest.jp2openjpeg_drv = gdal.GetDriverByName( 'JP2OpenJPEG' )
     except:
         gdaltest.jp2openjpeg_drv = None
+    if gdaltest.jp2openjpeg_drv is None:
         return 'skip'
 
     gdaltest.deregister_all_jpeg2000_drivers_but('JP2OpenJPEG')
@@ -78,6 +79,8 @@ def jp2metadata_2():
         pass
 
     ds = gdal.Open( 'data/IMG_md_ple.jp2', gdal.GA_ReadOnly )
+    gdaltest.reregister_all_jpeg2000_drivers()
+
     filelist = ds.GetFileList()
 
     if len(filelist) != 3:
