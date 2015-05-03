@@ -422,6 +422,13 @@ OGRErr OGRILI1Layer::CreateField( OGRFieldDefn *poField, CPL_UNUSED int bApproxO
 
 void OGRILI1Layer::JoinGeomLayers()
 {
+    int bResetConfigOption = FALSE;
+    if (EQUAL(CPLGetConfigOption("OGR_ARC_STEPSIZE", ""), ""))
+    {
+        bResetConfigOption = TRUE;
+        CPLSetThreadLocalConfigOption("OGR_ARC_STEPSIZE", "0.96");
+    }
+
     for (GeomFieldInfos::const_iterator it = oGeomFieldInfos.begin(); it != oGeomFieldInfos.end(); ++it)
     {
         OGRFeatureDefn* geomFeatureDefn = it->second.geomTable;
@@ -443,6 +450,9 @@ void OGRILI1Layer::JoinGeomLayers()
         }
     }
     bGeomsJoined = TRUE;
+
+    if( bResetConfigOption )
+        CPLSetThreadLocalConfigOption("OGR_ARC_STEPSIZE", NULL);
 }
 
 
@@ -452,6 +462,8 @@ void OGRILI1Layer::JoinSurfaceLayer( OGRILI1Layer* poSurfaceLineLayer, int nSurf
     OGRwkbGeometryType geomType = GetLayerDefn()->GetGeomFieldDefn(nSurfaceFieldIndex)->GetType();
     poSurfaceLineLayer->ResetReading();
     while (OGRFeature *linefeature = poSurfaceLineLayer->GetNextFeatureRef()) {
+        //OBJE entries with same _RefTID are polygon rings of same feature
+        //TODO: non-numeric _RefTID/FID is not supported yet!
         GIntBig reftid = linefeature->GetFieldAsInteger64(1); //_RefTID
         OGRFeature *feature = GetFeatureRef((int)reftid);
         if (feature) {
