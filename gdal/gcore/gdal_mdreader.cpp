@@ -286,15 +286,14 @@ char** GDALMDReaderBase::ReadXMLToList(CPLXMLNode* psNode, char** papszList,
         {
             if (psChildNode->eType == CXT_Element)
             {
+                if(bReset)
+                {
+                    bReset = false;
+                    nAddIndex = 0;
+                }
                 // check name duplicates
                 if(NULL != psChildNode->psNext && psChildNode->psNext->eType == CXT_Element)
                 {
-                    if(bReset)
-                    {
-                        bReset = false;
-                        nAddIndex = 0;
-                    }
-
                     if(EQUAL(psChildNode->pszValue, psChildNode->psNext->pszValue))
                     {
                         nAddIndex++;
