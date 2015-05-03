@@ -245,30 +245,52 @@ int OGRSXFDataSource::Open( const char * pszFilename, int bUpdateIn)
 
 /*---------------- TRY READ THE RSC FILE HEADER  -----------------------*/
 
-    CPLString pszRSCRileName = CPLGetConfigOption("SXF_RSC_FILENAME", "");
-    if (CPLCheckForFile((char *)pszRSCRileName.c_str(), NULL) == FALSE)
+    CPLString soRSCRileName;
+    const char* pszRSCRileName = CPLGetConfigOption("SXF_RSC_FILENAME", "");
+    if (CPLCheckForFile((char *)pszRSCRileName, NULL) == TRUE)
+    {
+        soRSCRileName = pszRSCRileName;
+    }
+
+    if(soRSCRileName.empty())
     {
         pszRSCRileName = CPLResetExtension(pszFilename, "rsc");
-        if (CPLCheckForFile((char *)pszRSCRileName.c_str(), NULL) == FALSE)
+        if (CPLCheckForFile((char *)pszRSCRileName, NULL) == TRUE)
         {
-            CPLError(CE_Warning, CPLE_None, "RSC file %s not exist", pszRSCRileName.c_str());
-            pszRSCRileName.Clear();
+            soRSCRileName = pszRSCRileName;
         }
     }
 
+    if(soRSCRileName.empty())
+    {
+        pszRSCRileName = CPLResetExtension(pszFilename, "RSC");
+        if (CPLCheckForFile((char *)pszRSCRileName, NULL) == TRUE)
+        {
+            soRSCRileName = pszRSCRileName;
+        }
+    }
+
+
     //1. Create layers from RSC file or create default set of layers from osm.rsc
 
-    if (!pszRSCRileName.empty())
+    if (soRSCRileName.empty())
+    { 
+        CPLError(CE_Warning, CPLE_None, "RSC file for %s not exist", pszFilename);
+    }
+    else
     {
         VSILFILE* fpRSC;
 
-        fpRSC = VSIFOpenL(pszRSCRileName, "rb");
+        fpRSC = VSIFOpenL(soRSCRileName, "rb");
         if (fpRSC == NULL)
         {
-            CPLError(CE_Warning, CPLE_OpenFailed, "RSC open file %s failed", pszFilename);
+            CPLError(CE_Warning, CPLE_OpenFailed, "RSC file %s open failed",
+                     soRSCRileName.c_str());
         }
         else
         {
+            CPLDebug( "OGRSXFDataSource", "RSC Filename: %s",
+                      soRSCRileName.c_str() );
             CreateLayers(fpRSC);
             VSIFCloseL(fpRSC);
         }
