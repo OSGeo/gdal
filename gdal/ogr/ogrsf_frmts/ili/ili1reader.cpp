@@ -238,109 +238,84 @@ int ILI1Reader::ReadTable(CPL_UNUSED const char *layername) {
       firsttok = CSLGetField(tokens, 0);
       if (EQUAL(firsttok, "OBJE"))
       {
-        // Handle Interlis geometry helper tables
-        if (curLayer->GetGeomFieldInfos().size() == 1 &&
-            curLayer->GetGeomFieldInfos().begin()->second.geomTable == 0)
+        if (featureDef->GetFieldCount() == 0)
         {
-          //Check for features spread over multiple objects
-          if (featureDef->GetGeomType() == wkbPolygon)
+          CPLError(CE_Warning, CPLE_AppDefined,
+              "No field definition found for table: %s", featureDef->GetName() );
+          //Model not read - use heuristics
+          for (fIndex=1; fIndex<CSLCount(tokens); fIndex++)
           {
-            //Surface: OBJE entries with same _RefTID are polygon rings of same feature
-            //TODO: non-numeric _RefTID/FID is not supported yet!
-            feature = curLayer->GetFeatureRef(atol(CSLGetField(tokens, 2)));
-          }
-          else
-          {
-            //wkbMultiLineString
-            feature = NULL;
+            char szFieldName[32];
+            sprintf(szFieldName, "Field%02d", fIndex);
+            OGRFieldDefn oFieldDefn(szFieldName, OFTString);
+            featureDef->AddFieldDefn(&oFieldDefn);
           }
         }
-        else
-        {
-          feature = NULL;
-        }
+        //start new feature
+        feature = new OGRFeature(featureDef);
 
-        if (feature == NULL)
+        int fieldno = 0;
+        for (fIndex=1; fIndex<CSLCount(tokens) && fieldno < featureDef->GetFieldCount(); fIndex++, fieldno++)
         {
-          if (featureDef->GetFieldCount() == 0)
-          {
-            CPLError(CE_Warning, CPLE_AppDefined,
-                "No field definition found for table: %s", featureDef->GetName() );
-            //Model not read - use heuristics
-            for (fIndex=1; fIndex<CSLCount(tokens); fIndex++)
-            {
-              char szFieldName[32];
-              sprintf(szFieldName, "Field%02d", fIndex);
-              OGRFieldDefn oFieldDefn(szFieldName, OFTString);
-              featureDef->AddFieldDefn(&oFieldDefn);
+          if (!(tokens[fIndex][0] == codeUndefined && tokens[fIndex][1] == '\0')) {
+            //CPLDebug( "READ TABLE OGR_ILI", "Setting Field %d (Type %d): %s", fieldno, featureDef->GetFieldDefn(fieldno)->GetType(), tokens[fIndex]);
+            if (featureDef->GetFieldDefn(fieldno)->GetType() == OFTString) {
+                //Interlis 1 encoding is ISO 8859-1 (Latin1) -> Recode to UTF-8
+                char* pszRecoded = CPLRecode(tokens[fIndex], CPL_ENC_ISO8859_1, CPL_ENC_UTF8);
+                //Replace space marks
+                for(char* pszString = pszRecoded; *pszString != '\0'; pszString++ ) {
+                    if (*pszString == codeBlank) *pszString = ' ';
+                }
+                feature->SetField(fieldno, pszRecoded);
+                CPLFree(pszRecoded);
+            } else {
+              feature->SetField(fieldno, tokens[fIndex]);
             }
-          }
-          //start new feature
-          feature = new OGRFeature(featureDef);
-
-          int fieldno = 0;
-          for (fIndex=1; fIndex<CSLCount(tokens) && fieldno < featureDef->GetFieldCount(); fIndex++, fieldno++)
-          {
-            if (!(tokens[fIndex][0] == codeUndefined && tokens[fIndex][1] == '\0')) {
-              //CPLDebug( "READ TABLE OGR_ILI", "Setting Field %d (Type %d): %s", fieldno, featureDef->GetFieldDefn(fieldno)->GetType(), tokens[fIndex]);
-              if (featureDef->GetFieldDefn(fieldno)->GetType() == OFTString) {
-                  //Interlis 1 encoding is ISO 8859-1 (Latin1) -> Recode to UTF-8
-                  char* pszRecoded = CPLRecode(tokens[fIndex], CPL_ENC_ISO8859_1, CPL_ENC_UTF8);
-                  //Replace space marks
-                  for(char* pszString = pszRecoded; *pszString != '\0'; pszString++ ) {
-                      if (*pszString == codeBlank) *pszString = ' ';
-                  }
-                  feature->SetField(fieldno, pszRecoded);
-                  CPLFree(pszRecoded);
+            if (featureDef->GetFieldDefn(fieldno)->GetType() == OFTReal
+                && fieldno > 0
+                && featureDef->GetFieldDefn(fieldno-1)->GetType() == OFTReal) {
+              //check for Point geometry (Coord type)
+              // if there is no ili model read,
+              // we have no chance to detect the
+              // geometry column!!
+              CPLString geomfldname = featureDef->GetFieldDefn(fieldno)->GetNameRef();
+              //Check if name ends with _1
+              if (geomfldname.size() >= 2 && geomfldname[geomfldname.size()-2] == '_') {
+                geomfldname = geomfldname.substr(0, geomfldname.size()-2);
+                geomIdx = featureDef->GetGeomFieldIndex(geomfldname.c_str());
+                if (geomIdx == -1)
+                {
+                  CPLError(CE_Warning, CPLE_AppDefined,
+                      "No matching definition for field '%s' of table %s found", geomfldname.c_str(), featureDef->GetName());
+                }
               } else {
-                feature->SetField(fieldno, tokens[fIndex]);
+                geomIdx = -1;
               }
-              if (featureDef->GetFieldDefn(fieldno)->GetType() == OFTReal
-                  && fieldno > 0
-                  && featureDef->GetFieldDefn(fieldno-1)->GetType() == OFTReal) {
-                //check for Point geometry (Coord type)
-                // if there is no ili model read,
-                // we have no chance to detect the
-                // geometry column!!
-                CPLString geomfldname = featureDef->GetFieldDefn(fieldno)->GetNameRef();
-                //Check if name ends with _1
-                if (geomfldname.size() >= 2 && geomfldname[geomfldname.size()-2] == '_') {
-                  geomfldname = geomfldname.substr(0, geomfldname.size()-2);
-                  geomIdx = featureDef->GetGeomFieldIndex(geomfldname.c_str());
-                  if (geomIdx == -1)
-                  {
-                    CPLError(CE_Warning, CPLE_AppDefined,
-                        "No matching definition for field '%s' of table %s found", geomfldname.c_str(), featureDef->GetName());
-                  }
-                } else {
-                  geomIdx = -1;
-                }
-                if (geomIdx >= 0) {
-                  if (featureDef->GetGeomFieldDefn(geomIdx)->GetType() == wkbPoint) {
-                    //add Point geometry
-                    OGRPoint *ogrPoint = new OGRPoint(CPLAtof(tokens[fIndex-1]), CPLAtof(tokens[fIndex]));
-                    feature->SetGeomFieldDirectly(geomIdx, ogrPoint);
-                  } else if (featureDef->GetGeomFieldDefn(geomIdx)->GetType() == wkbPoint25D && fieldno > 1 && featureDef->GetFieldDefn(fieldno-2)->GetType() == OFTReal) {
-                    //add 3D Point geometry
-                    OGRPoint *ogrPoint = new OGRPoint(CPLAtof(tokens[fIndex-2]), CPLAtof(tokens[fIndex-1]), CPLAtof(tokens[fIndex]));
-                    feature->SetGeomFieldDirectly(geomIdx, ogrPoint);
-                  }
+              if (geomIdx >= 0) {
+                if (featureDef->GetGeomFieldDefn(geomIdx)->GetType() == wkbPoint) {
+                  //add Point geometry
+                  OGRPoint *ogrPoint = new OGRPoint(CPLAtof(tokens[fIndex-1]), CPLAtof(tokens[fIndex]));
+                  feature->SetGeomFieldDirectly(geomIdx, ogrPoint);
+                } else if (featureDef->GetGeomFieldDefn(geomIdx)->GetType() == wkbPoint25D && fieldno > 1 && featureDef->GetFieldDefn(fieldno-2)->GetType() == OFTReal) {
+                  //add 3D Point geometry
+                  OGRPoint *ogrPoint = new OGRPoint(CPLAtof(tokens[fIndex-2]), CPLAtof(tokens[fIndex-1]), CPLAtof(tokens[fIndex]));
+                  feature->SetGeomFieldDirectly(geomIdx, ogrPoint);
                 }
               }
             }
           }
-          if (!warned && featureDef->GetFieldCount() != CSLCount(tokens)-1 && !(featureDef->GetFieldCount() == CSLCount(tokens) && EQUAL(featureDef->GetFieldDefn(featureDef->GetFieldCount()-1)->GetNameRef(), "ILI_Geometry"))) {
-            CPLError(CE_Warning, CPLE_AppDefined,
-                "Field count of table %s doesn't match. %d declared, %d found (e.g. ignored LINEATTR)", featureDef->GetName(), featureDef->GetFieldCount(), CSLCount(tokens)-1);
-            warned = TRUE;
-          }
-          if (feature->GetFieldCount() > 0) {
-            // USE _TID as FID. TODO: respect IDENT field from model
-            feature->SetFID(feature->GetFieldAsInteger64(0));
-          }
-          curLayer->AddFeature(feature);
-          geomIdx = -1; //Reset
         }
+        if (!warned && featureDef->GetFieldCount() != CSLCount(tokens)-1) {
+          CPLError(CE_Warning, CPLE_AppDefined,
+              "Field count of table %s doesn't match. %d declared, %d found (e.g. ignored LINEATTR)", featureDef->GetName(), featureDef->GetFieldCount(), CSLCount(tokens)-1);
+          warned = TRUE;
+        }
+        if (feature->GetFieldCount() > 0) {
+          // USE _TID as FID. TODO: respect IDENT field from model
+          feature->SetFID(feature->GetFieldAsInteger64(0));
+        }
+        curLayer->AddFeature(feature);
+        geomIdx = -1; //Reset
       }
       else if (EQUAL(firsttok, "STPT"))
       {

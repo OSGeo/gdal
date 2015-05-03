@@ -180,7 +180,7 @@ int OGRILI1DataSource::Open( const char * pszNewName, char** papszOpenOptions, i
         CPLSetThreadLocalConfigOption("OGR_ARC_STEPSIZE", "0.96");
     }
 
-    //Parse model and read data - without surface joing and polygonizing
+    //Parse model and read data - without surface join and area polygonizing
     poReader->ReadFeatures();
     
     if( bResetConfigOption )
