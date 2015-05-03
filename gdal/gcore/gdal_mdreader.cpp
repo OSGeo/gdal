@@ -330,6 +330,12 @@ char** GDALMDReaderBase::ReadXMLToList(CPLXMLNode* psNode, char** papszList,
 
                 papszList = ReadXMLToList(psChildNode, papszList, szNameNew);
             }
+            else if( psChildNode->eType == CXT_Attribute )
+            {
+                papszList = AddXMLNameValueToList(papszList,
+                                                  CPLSPrintf("%s.%s", pszName, psChildNode->pszValue),
+                                                  psChildNode->psChild->pszValue);
+            }
             else
             {
                 // Text nodes should always have name
