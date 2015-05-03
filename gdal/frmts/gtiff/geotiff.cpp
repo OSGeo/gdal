@@ -7326,7 +7326,7 @@ static void WriteMDMetadata( GDALMultiDomainMetadata *poMDMD, TIFF *hTIFF,
             continue; // ignored
         if( EQUAL(papszDomainList[iDomain], "COLOR_PROFILE") )
             continue; // ignored
-        if( EQUAL(papszDomainList[iDomain], MD_DOMAIN_IMD) )
+        if( EQUAL(papszDomainList[iDomain], MD_DOMAIN_RPC) )
             continue; // handled elsewhere
         if( EQUAL(papszDomainList[iDomain], "xml:ESRI") 
             && CSLTestBoolean(CPLGetConfigOption( "ESRI_XML_PAM", "NO" )) )
