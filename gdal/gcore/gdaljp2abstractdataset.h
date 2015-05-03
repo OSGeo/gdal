@@ -38,6 +38,7 @@ class CPL_DLL GDALJP2AbstractDataset: public GDALGeorefPamDataset
     char*               pszWldFilename;
 
     GDALDataset*        poMemDS;
+    char**              papszMetadataFiles;
 
   protected:
     virtual int         CloseDependentDatasets();
