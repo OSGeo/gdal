@@ -142,7 +142,7 @@ void GDALMDReaderLandsat::LoadMetadata()
                             "L1_METADATA_FILE.IMAGE_ATTRIBUTES.CLOUD_COVER");
     if(NULL != pszCloudCover)
     {
-        float fCC = CPLAtofM(pszCloudCover);
+        double fCC = CPLAtofM(pszCloudCover);
         if(fCC < 0)
         {
             m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD, MD_NAME_CLOUDCOVER,

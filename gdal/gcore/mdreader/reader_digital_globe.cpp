@@ -147,7 +147,7 @@ void GDALMDReaderDigitalGlobe::LoadMetadata()
                                                   "IMAGE.CLOUDCOVER");
     if(NULL != pszCloudCover)
     {
-        float fCC = CPLAtofM(pszCloudCover);
+        double fCC = CPLAtofM(pszCloudCover);
         if(fCC < 0)
         {
             m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD, MD_NAME_CLOUDCOVER,
@@ -164,7 +164,7 @@ void GDALMDReaderDigitalGlobe::LoadMetadata()
         pszCloudCover = CSLFetchNameValue(m_papszIMDMD, "IMAGE_1.cloudCover");
         if(NULL != pszCloudCover)
         {
-            float fCC = CPLAtofM(pszCloudCover);
+            double fCC = CPLAtofM(pszCloudCover);
             if(fCC < 0)
             {
                 m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD, MD_NAME_CLOUDCOVER,
