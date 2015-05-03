@@ -370,7 +370,7 @@ const bool GDALCheckFileHeader(const CPLString& soFilePath,
     if( fpL == NULL )
         return false;
     char *pBuffer = new char[nBufferSize + 1];
-    pBuffer[nBufferSize + 1] = 0;
+    pBuffer[nBufferSize] = 0;
     int nReadBytes = (int) VSIFReadL( pBuffer, 1, nBufferSize, fpL );
     VSIFCloseL(fpL);
     if(nReadBytes == 0)
