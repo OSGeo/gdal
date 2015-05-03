@@ -275,7 +275,24 @@ OGRESRIFeatureServiceDataset::OGRESRIFeatureServiceDataset(const CPLString &osUR
     poLayer = new OGRESRIFeatureServiceLayer(this);
     this->osURL = osURL;
     if( CPLURLGetValue(this->osURL, "resultRecordCount").size() == 0 )
-        this->osURL = CPLURLAddKVP(this->osURL, "resultRecordCount", "1000");
+    {
+        // We assume that if the server sets the exceededTransferLimit, the
+        // and resultRecordCount is not set, the number of features returned
+        // in our first request is the maximum allowed by the server
+        // So set it for following requests
+        this->osURL = CPLURLAddKVP(this->osURL, "resultRecordCount",
+                CPLSPrintf("%d", (int)poFirst->GetLayer(0)->GetFeatureCount()));
+    }
+    else
+    {
+        int nUserSetRecordCount = atoi(CPLURLGetValue(this->osURL, "resultRecordCount"));
+        if( nUserSetRecordCount > poFirst->GetLayer(0)->GetFeatureCount() )
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Specificied resultRecordCount=%d is greater than the maximum %d supported by the server",
+                     nUserSetRecordCount, (int)poFirst->GetLayer(0)->GetFeatureCount() );
+        }
+    }
     nFirstOffset = atoi(CPLURLGetValue(this->osURL, "resultOffset"));
     nLastOffset = nFirstOffset;
 }

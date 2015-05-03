@@ -2008,8 +2008,39 @@ def ogr_geojson_42():
         "a_property": 1, 
       }
     } ] }"""
+
+    gdal.FileFromMemBuffer('/vsimem/geojson/test.json?resultRecordCount=1', resultOffset0)
+    ds = ogr.Open('/vsimem/geojson/test.json?resultRecordCount=1')
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if f is None or f.GetFID() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+    gdal.Unlink('/vsimem/geojson/test.json?resultRecordCount=1')
+
+    gdal.FileFromMemBuffer('/vsimem/geojson/test.json?resultRecordCount=10', resultOffset0)
+    gdal.PushErrorHandler()
+    ds = ogr.Open('/vsimem/geojson/test.json?resultRecordCount=10')
+    gdal.PopErrorHandler()
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if f is None or f.GetFID() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+    gdal.Unlink('/vsimem/geojson/test.json?resultRecordCount=10')
+
     gdal.FileFromMemBuffer('/vsimem/geojson/test.json?', resultOffset0)
-    gdal.FileFromMemBuffer('/vsimem/geojson/test.json?resultRecordCount=1000&resultOffset=0', resultOffset0)
+    gdal.FileFromMemBuffer('/vsimem/geojson/test.json?resultRecordCount=1&resultOffset=0', resultOffset0)
 
     ds = ogr.Open('/vsimem/geojson/test.json?')
     lyr = ds.GetLayer(0)
@@ -2043,7 +2074,7 @@ def ogr_geojson_42():
         "a_property": 1, 
       }
     } ] }""" 
-    gdal.FileFromMemBuffer('/vsimem/geojson/test.json?resultRecordCount=1000&resultOffset=1', resultOffset1)
+    gdal.FileFromMemBuffer('/vsimem/geojson/test.json?resultRecordCount=1&resultOffset=1', resultOffset1)
     f = lyr.GetNextFeature()
     if f is None or f.GetFID() != 2:
         gdaltest.post_reason('fail')
@@ -2060,7 +2091,7 @@ def ogr_geojson_42():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    gdal.FileFromMemBuffer('/vsimem/geojson/test.json?resultRecordCount=1000&returnCountOnly=true',
+    gdal.FileFromMemBuffer('/vsimem/geojson/test.json?resultRecordCount=1&returnCountOnly=true',
 """{ "count": 123456}""")
     fc = lyr.GetFeatureCount()
     if fc != 123456:
@@ -2075,7 +2106,7 @@ def ogr_geojson_42():
         print(extent)
         return 'fail'
 
-    gdal.FileFromMemBuffer('/vsimem/geojson/test.json?resultRecordCount=1000&returnExtentOnly=true&f=geojson',
+    gdal.FileFromMemBuffer('/vsimem/geojson/test.json?resultRecordCount=1&returnExtentOnly=true&f=geojson',
 """{"type":"FeatureCollection","bbox":[1, 2, 3, 4],"features":[]}""")
     extent = lyr.GetExtent()
     if extent != (1.0, 3.0, 2.0, 4.0):
