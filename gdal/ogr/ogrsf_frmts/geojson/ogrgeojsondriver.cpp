@@ -64,7 +64,7 @@ class OGRESRIFeatureServiceLayer: public OGRLayer
 class OGRESRIFeatureServiceDataset: public GDALDataset
 {
         CPLString              osURL;
-        int                    nFirstOffset, nLastOffset;
+        GIntBig                nFirstOffset, nLastOffset;
         OGRGeoJSONDataSource* poCurrent;
         OGRESRIFeatureServiceLayer* poLayer;
         
@@ -293,7 +293,7 @@ OGRESRIFeatureServiceDataset::OGRESRIFeatureServiceDataset(const CPLString &osUR
                      nUserSetRecordCount, (int)poFirst->GetLayer(0)->GetFeatureCount() );
         }
     }
-    nFirstOffset = atoi(CPLURLGetValue(this->osURL, "resultOffset"));
+    nFirstOffset = CPLAtoGIntBig(CPLURLGetValue(this->osURL, "resultOffset"));
     nLastOffset = nFirstOffset;
 }
 
@@ -343,7 +343,8 @@ int OGRESRIFeatureServiceDataset::LoadNextPage()
 
 int OGRESRIFeatureServiceDataset::LoadPage()
 {
-    CPLString osNewURL = CPLURLAddKVP(osURL, "resultOffset", CPLSPrintf("%d", nLastOffset));
+    CPLString osNewURL = CPLURLAddKVP(osURL, "resultOffset",
+                                        CPLSPrintf(CPL_FRMT_GIB, nLastOffset));
     OGRGeoJSONDataSource* poDS = NULL;
     poDS = new OGRGeoJSONDataSource();
     GDALOpenInfo oOpenInfo(osNewURL, GA_ReadOnly);
