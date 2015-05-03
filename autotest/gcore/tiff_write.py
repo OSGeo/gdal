@@ -753,9 +753,16 @@ def tiff_write_rpc_txt():
     # Translate RPC controlled data to GeoTIFF.
 
     ds_in = gdal.Open('data/rpc.vrt')
+
+    # Remove IMD before creating the TIFF to avoid creating an .IMD
+    # since .IMD + _RPC.TXT is an odd combination
+    # If the .IMD is found, we don't try reading _RPC.TXT
+    ds_in_without_imd = gdal.GetDriverByName('VRT').CreateCopy('', ds_in)
+    ds_in_without_imd.SetMetadata(None, 'IMD')
+
     rpc_md = ds_in.GetMetadata('RPC')
 
-    ds = gdaltest.tiff_drv.CreateCopy( 'tmp/tiff_write_rpc_txt.tif', ds_in,
+    ds = gdaltest.tiff_drv.CreateCopy( 'tmp/tiff_write_rpc_txt.tif', ds_in_without_imd,
                          options = [ 'PROFILE=BASELINE', 'RPCTXT=YES' ] )
 
     ds_in = None
