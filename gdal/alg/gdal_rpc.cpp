@@ -32,6 +32,7 @@
 #include "gdal_alg.h"
 #include "ogr_spatialref.h"
 #include "cpl_minixml.h"
+#include "gdal_mdreader.h"
 
 CPL_CVSID("$Id$");
 
@@ -54,34 +55,34 @@ char ** RPCInfoToMD( GDALRPCInfo *psRPCInfo )
     int i;
 
     osField.Printf( "%.15g", psRPCInfo->dfLINE_OFF );
-    papszMD = CSLSetNameValue( papszMD, "LINE_OFF", osField );
+    papszMD = CSLSetNameValue( papszMD, RPC_LINE_OFF, osField );
 
     osField.Printf( "%.15g", psRPCInfo->dfSAMP_OFF );
-    papszMD = CSLSetNameValue( papszMD, "SAMP_OFF", osField );
+    papszMD = CSLSetNameValue( papszMD, RPC_SAMP_OFF, osField );
 
     osField.Printf( "%.15g", psRPCInfo->dfLAT_OFF );
-    papszMD = CSLSetNameValue( papszMD, "LAT_OFF", osField );
+    papszMD = CSLSetNameValue( papszMD, RPC_LAT_OFF, osField );
 
     osField.Printf( "%.15g", psRPCInfo->dfLONG_OFF );
-    papszMD = CSLSetNameValue( papszMD, "LONG_OFF", osField );
+    papszMD = CSLSetNameValue( papszMD, RPC_LONG_OFF, osField );
 
     osField.Printf( "%.15g", psRPCInfo->dfHEIGHT_OFF );
-    papszMD = CSLSetNameValue( papszMD, "HEIGHT_OFF", osField );
+    papszMD = CSLSetNameValue( papszMD, RPC_HEIGHT_OFF, osField );
 
     osField.Printf( "%.15g", psRPCInfo->dfLINE_SCALE );
-    papszMD = CSLSetNameValue( papszMD, "LINE_SCALE", osField );
+    papszMD = CSLSetNameValue( papszMD, RPC_LINE_SCALE, osField );
 
     osField.Printf( "%.15g", psRPCInfo->dfSAMP_SCALE );
-    papszMD = CSLSetNameValue( papszMD, "SAMP_SCALE", osField );
+    papszMD = CSLSetNameValue( papszMD, RPC_SAMP_SCALE, osField );
 
     osField.Printf( "%.15g", psRPCInfo->dfLAT_SCALE );
-    papszMD = CSLSetNameValue( papszMD, "LAT_SCALE", osField );
+    papszMD = CSLSetNameValue( papszMD, RPC_LAT_SCALE, osField );
 
     osField.Printf( "%.15g", psRPCInfo->dfLONG_SCALE );
-    papszMD = CSLSetNameValue( papszMD, "LONG_SCALE", osField );
+    papszMD = CSLSetNameValue( papszMD, RPC_LONG_SCALE, osField );
 
     osField.Printf( "%.15g", psRPCInfo->dfHEIGHT_SCALE );
-    papszMD = CSLSetNameValue( papszMD, "HEIGHT_SCALE", osField );
+    papszMD = CSLSetNameValue( papszMD, RPC_HEIGHT_SCALE, osField );
 
     osField.Printf( "%.15g", psRPCInfo->dfMIN_LONG );
     papszMD = CSLSetNameValue( papszMD, "MIN_LONG", osField );

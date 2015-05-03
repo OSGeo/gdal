@@ -1,0 +1,39 @@
+<?xml version ="1.0" ?>
+<MSP_ROOT>
+Version = "0.0.1"
+nNumberKA = 40
+cCodeKA = "RDK1"
+cCodePPI = "NTSOMZ"
+cStation = "NA VRL"
+dDateHeaderFile = 1/1/2015
+cOrganization = "NTSOMZ-NKPOI"
+cProgramm = "PK KFI"
+cFormatNamePasport = "MSP"
+nImageType = 0
+<Pasport>
+cDeviceName = "GEOTON"
+nStringLength = 36000
+nBitsPerPixel = 10
+nFokalLength = 4005.408
+</Pasport>
+<Geographic>
+aNWLat = 54:50:11.360508
+aNWLong = 35:24:50.248891
+aNELat = 54:51:13.449236
+aNELong = 35:27:29.080959
+aSELat = 54:49:44.072484
+aSELong = 35:29:12.837671
+aSWLat = 54:48:42.028900
+aSWLong = 35:26:34.056061
+aMidLat = 54:49:57.743237
+aMidLong = 35:27:1.522895
+</Geographic>
+<Normal>
+nBitsPerPixel = 10
+nNChannel = 1
+nWidth = 4000
+nHeight = 4000
+dSceneDate = 1/8/2014
+tSceneTime = 19:00:00.0000000
+</Normal>
+</MSP_ROOT>

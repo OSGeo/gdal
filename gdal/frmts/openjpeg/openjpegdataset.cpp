@@ -44,6 +44,7 @@
 #include "cpl_multiproc.h"
 #include "cpl_atomic_ops.h"
 #include "vrt/vrtdataset.h"
+#include "gdal_mdreader.h"
 
 CPL_CVSID("$Id$");
 
@@ -195,6 +196,8 @@ class JP2OpenJPEGDataset : public GDALJP2AbstractDataset
     int         bRewrite;
     int         bHasGeoreferencingAtOpening;
 
+    char**      papszMetadataFiles;
+
   protected:
     virtual int         CloseDependentDatasets();
 
@@ -228,6 +231,8 @@ class JP2OpenJPEGDataset : public GDALJP2AbstractDataset
                                GSpacing nPixelSpace, GSpacing nLineSpace,
                                GSpacing nBandSpace,
                                GDALRasterIOExtraArg* psExtraArg);
+
+    virtual char **GetFileList(void);
 
     static void         WriteBox(VSILFILE* fp, GDALJP2Box* poBox);
     static void         WriteGDALMetadataBox( VSILFILE* fp, GDALDataset* poSrcDS,
@@ -954,6 +959,7 @@ JP2OpenJPEGDataset::JP2OpenJPEGDataset()
     bEnoughMemoryToLoadOtherBands = TRUE;
     bRewrite = FALSE;
     bHasGeoreferencingAtOpening = FALSE;
+    papszMetadataFiles = NULL;
 }
 
 /************************************************************************/
@@ -1194,6 +1200,9 @@ JP2OpenJPEGDataset::~JP2OpenJPEGDataset()
     }
 
     CloseDependentDatasets();
+
+    CSLDestroy(papszMetadataFiles);
+    papszMetadataFiles = NULL;
 }
 
 /************************************************************************/
@@ -1881,6 +1890,16 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
     poOpenInfo->fpL = poDS->fp;
     poDS->LoadJP2Metadata(poOpenInfo);
     poOpenInfo->fpL = NULL;
+
+    GDALMDReaderManager mdreadermanager;
+    GDALMDReaderBase* mdreader = mdreadermanager.GetReader(poOpenInfo->pszFilename,
+                                         poOpenInfo->GetSiblingFiles(), MDR_ANY);
+
+    if(NULL != mdreader)
+    {
+        mdreader->FillMetadata(&(poDS->oMDMD));
+        poDS->papszMetadataFiles = mdreader->GetMetadataFiles();
+    }
 
     poDS->bHasGeoreferencingAtOpening = 
         ((poDS->pszProjection != NULL && poDS->pszProjection[0] != '\0' )||
@@ -3480,6 +3499,26 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
     }
 
     return poDS;
+}
+
+/************************************************************************/
+/*                            GetFileList()                             */
+/************************************************************************/
+
+char **JP2OpenJPEGDataset::GetFileList()
+
+{
+    char **papszFileList = GDALJP2AbstractDataset::GetFileList();
+
+    if(NULL != papszMetadataFiles)
+    {
+        for( int i = 0; papszMetadataFiles[i] != NULL; i++ )
+        {
+            papszFileList = CSLAddString( papszFileList, papszMetadataFiles[i] );
+        }
+    }
+
+    return papszFileList;
 }
 
 /************************************************************************/

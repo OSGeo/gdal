@@ -7,12 +7,12 @@ OBJ	=	gdalopeninfo.obj gdaldrivermanager.obj gdaldriver.obj \
 		gdaljp2metadata.obj gdaljp2box.obj gdalgmlcoverage.obj \
 		gdalmultidomainmetadata.obj gdalpamproxydb.obj \
 		gdalallvalidmaskband.obj gdalnodatamaskband.obj \
-		gdal_rpcimdio.obj gdalproxydataset.obj gdalproxypool.obj \
+                gdalproxydataset.obj gdalproxypool.obj \
 		gdalnodatavaluesmaskband.obj gdaldefaultasync.obj \
 		gdaldllmain.obj gdalexif.obj gdalclientserver.obj \
 		gdalgeorefpamdataset.obj  gdaljp2abstractdataset.obj \
 		gdalvirtualmem.obj gdaloverviewdataset.obj gdalrescaledalphaband.obj \
-		gdaljp2structure.obj gdaljp2metadatagenerator.obj
+		gdaljp2structure.obj gdal_mdreader.obj gdaljp2metadatagenerator.obj
 
 RES	=	Version.res
 
@@ -30,12 +30,18 @@ SQLITEDEF	=	-DSQLITE_ENABLED
 EXTRAFLAGS =	$(EXTRAFLAGS) -DHAVE_LIBXML2 $(LIBXML2_INC)
 !ENDIF
 
-default:	$(OBJ) $(RES)
+default:	$(OBJ) $(RES) mdreader_dir
 
 clean:
 	-del *.obj *.res
+	cd mdreader
+	$(MAKE) /f makefile.vc clean
 
 Version.res:	
 	rc -fo Version.res -r -I..\port -I..\ogr Version.rc
 
 gdal_misc.obj:	gdal_misc.cpp gdal_version.h
+
+mdreader_dir:
+	cd mdreader
+	$(MAKE) /f makefile.vc
