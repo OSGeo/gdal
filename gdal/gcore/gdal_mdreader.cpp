@@ -142,7 +142,8 @@ GDALMDReaderBase* GDALMDReaderManager::GetReader(const char *pszPath,
 /**
  * GDALMDReaderBase()
  */ 
-GDALMDReaderBase::GDALMDReaderBase(const char *pszPath, char **papszSiblingFiles)
+GDALMDReaderBase::GDALMDReaderBase(CPL_UNUSED const char *pszPath,
+                                   CPL_UNUSED char **papszSiblingFiles)
 {
     m_bIsMetadataLoad = false;    
     m_papszIMDMD = NULL;

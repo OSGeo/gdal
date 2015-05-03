@@ -104,11 +104,13 @@ void GDALMDReaderDigitalGlobe::LoadMetadata()
         {
             CPLXMLNode* psisdNode = psNode->psNext;
             if(psisdNode != NULL)
-            {                
-                m_papszIMDMD = LoadIMDXmlNode( CPLSearchXMLNode(psisdNode,
-                                                                    "IMD") );
-                m_papszRPCMD = LoadRPBXmlNode( CPLSearchXMLNode(psisdNode,
-                                                                    "RPB") );
+            {
+                if( m_papszIMDMD == NULL )
+                    m_papszIMDMD = LoadIMDXmlNode( CPLSearchXMLNode(psisdNode,
+                                                                        "IMD") );
+                if( m_papszRPCMD == NULL )
+                    m_papszRPCMD = LoadRPBXmlNode( CPLSearchXMLNode(psisdNode,
+                                                                        "RPB") );
             }
             CPLDestroyXMLNode(psNode);
         }
