@@ -43,6 +43,8 @@
 #include "mdreader/reader_rdk1.h"
 #include "mdreader/reader_landsat.h"
 
+CPL_CVSID("$Id$");
+
 /**
  * The RPC parameters names
  */

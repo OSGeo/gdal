@@ -30,6 +30,8 @@
 
 #include "reader_landsat.h"
 
+CPL_CVSID("$Id$");
+
 /**
  * GDALMDReaderLandsat()
  */
