@@ -32,6 +32,7 @@
 #include "gdaljp2abstractdataset.h"
 #include "gdaljp2metadata.h"
 #include "ogrsf_frmts.h"
+#include "gdal_mdreader.h"
 
 /************************************************************************/
 /*                     GDALJP2AbstractDataset()                         */
@@ -41,6 +42,7 @@ GDALJP2AbstractDataset::GDALJP2AbstractDataset()
 {
     pszWldFilename = NULL;
     poMemDS = NULL;
+    papszMetadataFiles = NULL;
 }
 
 /************************************************************************/
@@ -51,6 +53,7 @@ GDALJP2AbstractDataset::~GDALJP2AbstractDataset()
 {
     CPLFree(pszWldFilename);
     CloseDependentDatasets();
+    CSLDestroy(papszMetadataFiles);
 }
 
 /************************************************************************/
@@ -213,6 +216,15 @@ void GDALJP2AbstractDataset::LoadJP2Metadata(GDALOpenInfo* poOpenInfo,
                                    adfGeoTransform,
                                    poOpenInfo->GetSiblingFiles(), &pszWldFilename );
     }
+
+    GDALMDReaderManager mdreadermanager;
+    GDALMDReaderBase* mdreader = mdreadermanager.GetReader(poOpenInfo->pszFilename,
+                                poOpenInfo->GetSiblingFiles(), MDR_ANY);
+    if(NULL != mdreader)
+    {
+        mdreader->FillMetadata(&(oMDMD));
+        papszMetadataFiles = mdreader->GetMetadataFiles();
+    }
 }
 
 /************************************************************************/
@@ -228,6 +240,13 @@ char **GDALJP2AbstractDataset::GetFileList()
         CSLFindString( papszFileList, pszWldFilename ) == -1 )
     {
         papszFileList = CSLAddString( papszFileList, pszWldFilename );
+    }
+    if(NULL != papszMetadataFiles)
+    {
+        for( int i = 0; papszMetadataFiles[i] != NULL; i++ )
+        {
+            papszFileList = CSLAddString( papszFileList, papszMetadataFiles[i] );
+        }
     }
     return papszFileList;
 }

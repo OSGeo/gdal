@@ -65,21 +65,13 @@ def jp2metadata_1():
 def jp2metadata_2():
 
     try:
-        gdaltest.jp2openjpeg_drv = gdal.GetDriverByName( 'JP2OpenJPEG' )
-    except:
-        gdaltest.jp2openjpeg_drv = None
-    if gdaltest.jp2openjpeg_drv is None:
-        return 'skip'
-
-    gdaltest.deregister_all_jpeg2000_drivers_but('JP2OpenJPEG')
-
-    try:
         os.remove('data/IMG_md_ple.jp2.aux.xml')
     except:
         pass
 
     ds = gdal.Open( 'data/IMG_md_ple.jp2', gdal.GA_ReadOnly )
-    gdaltest.reregister_all_jpeg2000_drivers()
+    if ds is None:
+        return 'skip'
 
     filelist = ds.GetFileList()
 
@@ -87,9 +79,10 @@ def jp2metadata_2():
         gdaltest.post_reason( 'did not get expected file list.' )
         return 'fail'
 
-    metadata = ds.GetMetadataDomainList()
-    if len(metadata) != 6:
+    mddlist = ds.GetMetadataDomainList()
+    if not 'IMD' in mddlist or not 'RPC' in mddlist or not 'IMAGERY' in mddlist:
         gdaltest.post_reason( 'did not get expected metadata list.' )
+        print(mddlist)
         return 'fail'
 
     md = ds.GetMetadata('IMAGERY')
