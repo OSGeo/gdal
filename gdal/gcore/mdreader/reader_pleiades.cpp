@@ -30,6 +30,8 @@
 
 #include "reader_pleiades.h"
 
+CPL_CVSID("$Id$");
+
 /**
  * GDALMDReaderPleiades()
  */

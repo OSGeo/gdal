@@ -30,6 +30,8 @@
  
 #include "reader_digital_globe.h"
  
+CPL_CVSID("$Id$");
+
 /**
  * GDALMDReaderDigitalGlobe()
  */

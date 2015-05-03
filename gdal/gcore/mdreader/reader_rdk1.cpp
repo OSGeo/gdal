@@ -30,6 +30,8 @@
 
 #include "reader_rdk1.h"
 
+CPL_CVSID("$Id$");
+
 /**
  * GDALMDReaderResursDK1()
  */

@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  GDAL Core
- * Purpose:  Read metadata from DigitalGlobe imagery.
+ * Purpose:  Read metadata from GeoEye imagery.
  * Author:   Alexander Lisovenko
  * Author:   Dmitry Baryshnikov, polimax@mail.ru
  *
@@ -29,6 +29,8 @@
  ****************************************************************************/
  
 #include "reader_geo_eye.h"
+
+CPL_CVSID("$Id$");
 
 /**
  * GDALMDReaderGeoEye()

@@ -30,6 +30,8 @@
 
 #include "reader_orb_view.h"
 
+CPL_CVSID("$Id$");
+
 /**
  * GDALMDReaderOrbView()
  */
