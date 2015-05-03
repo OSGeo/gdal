@@ -431,7 +431,7 @@ char  **GDALOverviewDataset::GetMetadata( const char * pszDomain )
     papszMD = poMainDS->GetMetadata(pszDomain);
 
     /* We may need to rescale some values from the RPC metadata domain */
-    if( pszDomain != NULL && EQUAL(pszDomain, MD_DOMAIN_IMD) && papszMD != NULL )
+    if( pszDomain != NULL && EQUAL(pszDomain, MD_DOMAIN_RPC) && papszMD != NULL )
     {
         if( papszMD_RPC )
             return papszMD_RPC;
