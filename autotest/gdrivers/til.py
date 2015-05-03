@@ -28,12 +28,14 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import os
 import sys
-from osgeo import gdal
+import shutil
 
 sys.path.append( '../pymod' )
 
 import gdaltest
+from osgeo import gdal
 
 ###############################################################################
 # Test a fake TIL dataset
