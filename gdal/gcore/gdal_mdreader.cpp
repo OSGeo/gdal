@@ -280,13 +280,14 @@ char** GDALMDReaderBase::ReadXMLToList(CPLXMLNode* psNode, char** papszList,
 
         int nAddIndex = 0;
         bool bReset = false;
+        const char* pszLastNodeName = NULL;
         for(CPLXMLNode* psChildNode = psNode->psChild; NULL != psChildNode;
             psChildNode = psChildNode->psNext)
         {
             if (psChildNode->eType == CXT_Element)
             {
                 // check name duplicates
-                if(NULL != psChildNode->psNext)
+                if(NULL != psChildNode->psNext && psChildNode->psNext->eType == CXT_Element)
                 {
                     if(bReset)
                     {
@@ -297,16 +298,21 @@ char** GDALMDReaderBase::ReadXMLToList(CPLXMLNode* psNode, char** papszList,
                     if(EQUAL(psChildNode->pszValue, psChildNode->psNext->pszValue))
                     {
                         nAddIndex++;
+                        pszLastNodeName = psChildNode->pszValue;
                     }
                     else
                     { // the name changed
-
+                        pszLastNodeName = NULL;
                         if(nAddIndex > 0)
                         {
                             bReset = true;
                             nAddIndex++;
                         }
                     }
+                }
+                else if( pszLastNodeName && EQUAL(psChildNode->pszValue, pszLastNodeName) )
+                {
+                    nAddIndex++;
                 }
 
                 char szName[512];
