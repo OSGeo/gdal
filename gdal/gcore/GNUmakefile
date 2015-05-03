@@ -7,12 +7,12 @@ OBJ	=	gdalopeninfo.o gdaldrivermanager.o gdaldriver.o gdaldataset.o \
 		gdaldefaultoverviews.o gdalpamdataset.o gdalpamrasterband.o \
 		gdaljp2metadata.o gdaljp2box.o gdalmultidomainmetadata.o \
 		gdal_rat.o gdalgmlcoverage.o gdalpamproxydb.o \
-		gdalallvalidmaskband.o gdalnodatamaskband.o gdal_rpcimdio.o \
+                gdalallvalidmaskband.o gdalnodatamaskband.o \
  		gdalproxydataset.o gdalproxypool.o gdaldefaultasync.o \
 		gdalnodatavaluesmaskband.o gdaldllmain.o gdalexif.o gdalclientserver.o \
 		gdalgeorefpamdataset.o gdaljp2abstractdataset.o gdalvirtualmem.o \
 		gdaloverviewdataset.o gdalrescaledalphaband.o gdaljp2structure.o \
-		gdaljp2metadatagenerator.o
+		gdal_mdreader.o gdaljp2metadatagenerator.o
 
 # Enable the following if you want to use MITAB's code to convert
 # .tab coordinate systems into well known text.  But beware that linking
@@ -35,11 +35,11 @@ ifeq ($(HAVE_LIBXML2),yes)
 CXXFLAGS	:=	$(CXXFLAGS) $(LIBXML2_INC) -DHAVE_LIBXML2
 endif
 
-default:	$(OBJ:.o=.$(OBJ_EXT))
+default: mdreader-target $(OBJ:.o=.$(OBJ_EXT))
 
 $(OBJ):	gdal_priv.h gdal_proxy.h
 
-clean:
+clean: mdreader-clean
 	$(RM) *.o $(O_OBJ)
 
 docs:	

@@ -38,6 +38,7 @@
 CPL_CVSID("$Id$");
 
 #include "ogr_spatialref.h"
+#include "gdal_mdreader.h"
 
 /************************************************************************/
 /*                           __pure_virtual()                           */
@@ -2776,37 +2777,37 @@ static int _FetchDblFromMD( char **papszMD, const char *pszKey,
 int CPL_STDCALL GDALExtractRPCInfo( char **papszMD, GDALRPCInfo *psRPC )
 
 {
-    if( CSLFetchNameValue( papszMD, "LINE_NUM_COEFF" ) == NULL )
+    if( CSLFetchNameValue( papszMD, RPC_LINE_NUM_COEFF ) == NULL )
         return FALSE;
 
-    if( CSLFetchNameValue( papszMD, "LINE_NUM_COEFF" ) == NULL 
-        || CSLFetchNameValue( papszMD, "LINE_DEN_COEFF" ) == NULL 
-        || CSLFetchNameValue( papszMD, "SAMP_NUM_COEFF" ) == NULL 
-        || CSLFetchNameValue( papszMD, "SAMP_DEN_COEFF" ) == NULL )
+    if( CSLFetchNameValue( papszMD, RPC_LINE_NUM_COEFF ) == NULL
+        || CSLFetchNameValue( papszMD, RPC_LINE_DEN_COEFF ) == NULL
+        || CSLFetchNameValue( papszMD, RPC_SAMP_NUM_COEFF ) == NULL
+        || CSLFetchNameValue( papszMD, RPC_SAMP_DEN_COEFF ) == NULL )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                  "Some required RPC metadata missing in GDALExtractRPCInfo()");
         return FALSE;
     }
 
-    _FetchDblFromMD( papszMD, "LINE_OFF", &(psRPC->dfLINE_OFF), 1, 0.0 );
-    _FetchDblFromMD( papszMD, "LINE_SCALE", &(psRPC->dfLINE_SCALE), 1, 1.0 );
-    _FetchDblFromMD( papszMD, "SAMP_OFF", &(psRPC->dfSAMP_OFF), 1, 0.0 );
-    _FetchDblFromMD( papszMD, "SAMP_SCALE", &(psRPC->dfSAMP_SCALE), 1, 1.0 );
-    _FetchDblFromMD( papszMD, "HEIGHT_OFF", &(psRPC->dfHEIGHT_OFF), 1, 0.0 );
-    _FetchDblFromMD( papszMD, "HEIGHT_SCALE", &(psRPC->dfHEIGHT_SCALE),1, 1.0);
-    _FetchDblFromMD( papszMD, "LAT_OFF", &(psRPC->dfLAT_OFF), 1, 0.0 );
-    _FetchDblFromMD( papszMD, "LAT_SCALE", &(psRPC->dfLAT_SCALE), 1, 1.0 );
-    _FetchDblFromMD( papszMD, "LONG_OFF", &(psRPC->dfLONG_OFF), 1, 0.0 );
-    _FetchDblFromMD( papszMD, "LONG_SCALE", &(psRPC->dfLONG_SCALE), 1, 1.0 );
+    _FetchDblFromMD( papszMD, RPC_LINE_OFF, &(psRPC->dfLINE_OFF), 1, 0.0 );
+    _FetchDblFromMD( papszMD, RPC_LINE_SCALE, &(psRPC->dfLINE_SCALE), 1, 1.0 );
+    _FetchDblFromMD( papszMD, RPC_SAMP_OFF, &(psRPC->dfSAMP_OFF), 1, 0.0 );
+    _FetchDblFromMD( papszMD, RPC_SAMP_SCALE, &(psRPC->dfSAMP_SCALE), 1, 1.0 );
+    _FetchDblFromMD( papszMD, RPC_HEIGHT_OFF, &(psRPC->dfHEIGHT_OFF), 1, 0.0 );
+    _FetchDblFromMD( papszMD, RPC_HEIGHT_SCALE, &(psRPC->dfHEIGHT_SCALE),1, 1.0);
+    _FetchDblFromMD( papszMD, RPC_LAT_OFF, &(psRPC->dfLAT_OFF), 1, 0.0 );
+    _FetchDblFromMD( papszMD, RPC_LAT_SCALE, &(psRPC->dfLAT_SCALE), 1, 1.0 );
+    _FetchDblFromMD( papszMD, RPC_LONG_OFF, &(psRPC->dfLONG_OFF), 1, 0.0 );
+    _FetchDblFromMD( papszMD, RPC_LONG_SCALE, &(psRPC->dfLONG_SCALE), 1, 1.0 );
 
-    _FetchDblFromMD( papszMD, "LINE_NUM_COEFF", psRPC->adfLINE_NUM_COEFF, 
+    _FetchDblFromMD( papszMD, RPC_LINE_NUM_COEFF, psRPC->adfLINE_NUM_COEFF,
                      20, 0.0 );
-    _FetchDblFromMD( papszMD, "LINE_DEN_COEFF", psRPC->adfLINE_DEN_COEFF, 
+    _FetchDblFromMD( papszMD, RPC_LINE_DEN_COEFF, psRPC->adfLINE_DEN_COEFF,
                      20, 0.0 );
-    _FetchDblFromMD( papszMD, "SAMP_NUM_COEFF", psRPC->adfSAMP_NUM_COEFF, 
+    _FetchDblFromMD( papszMD, RPC_SAMP_NUM_COEFF, psRPC->adfSAMP_NUM_COEFF,
                      20, 0.0 );
-    _FetchDblFromMD( papszMD, "SAMP_DEN_COEFF", psRPC->adfSAMP_DEN_COEFF, 
+    _FetchDblFromMD( papszMD, RPC_SAMP_DEN_COEFF, psRPC->adfSAMP_DEN_COEFF,
                      20, 0.0 );
     
     _FetchDblFromMD( papszMD, "MIN_LONG", &(psRPC->dfMIN_LONG), 1, -180.0 );

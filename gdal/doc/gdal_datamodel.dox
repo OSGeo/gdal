@@ -168,6 +168,15 @@ honoured by GDAL drivers, algorithms or utilities at this time.
     <li>SYMMETRIZED_KENNAUGH
     </ul>
 <li> POLARIMETRIC_INTERP: This metadata item is defined for Raster Bands for polarimetric SAR data. This indicates which entry in the specified matrix representation of the data this band represents. For a dataset provided as a scattering matrix, for example, acceptable values for this metadata item are HH, HV, VH, VV. When the dataset is a covariance matrix, for example, this metadata item will be one of Covariance_11, Covariance_22, Covariance_33, Covariance_12, Covariance_13, Covariance_23 (since the matrix itself is a hermitian matrix, that is all the data that is required to describe the matrix).
+<li> METADATATYPE: If IMAGERY Domain present, the item consist the reader which processed the metadata. Now present such readers:
+    <ul>
+    <li>  DG: DigitalGlobe imagery metadata
+    <li>  GE: GeoEye (or formally SpaceImaging) imagery metadata
+    <li>  OV: OrbView imagery metadata
+    <li>  DIMAP: Pleiades imagery metadata
+    <li>  MSP: Resurs DK-1 imagery metadata
+    <li>  ODL: Landsat imagery metadata
+    </ul>
 </ul>
 
 \subsubsection gdal_datamodel_subdatasets SUBDATASETS Domain
@@ -245,6 +254,17 @@ items defining the model are:
 </ul>
 
 These fields are directly derived from the document prospective GeoTIFF RPC document (http://geotiff.maptools.org/rpc_prop.html) which in turn is closely modelled on the NITF RPC00B definition.
+
+\subsubsection gdal_datamodel_subdatasets IMAGERY Domain
+
+For satellite or aerial imagery the IMAGERY Domain may be present. It depends on exist special metadata files near the image file. The files at the same directory with image file tested by the set of metadata readers, if files can be processed by the metadata reader, it fill the IMAGERY Domain with the following items:
+   
+<ul>
+<li>  SATELLITEID: A satellite or scanner name
+<li>  CLOUDCOVER: Cloud coverage. The value between 0 - 100 or 999 if not available
+<li>  ACQUISITIONDATETIME: The image acquisition date time in UTC
+</ul>  
+
 
 \subsubsection gdal_datamodel_xml xml: Domains
 

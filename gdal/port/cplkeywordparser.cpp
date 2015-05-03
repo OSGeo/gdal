@@ -118,7 +118,7 @@ int CPLKeywordParser::ReadGroup( const char *pszPathPrefix )
         if( !ReadPair( osName, osValue ) )
             return FALSE;
 
-        if( EQUAL(osName,"BEGIN_GROUP") )
+        if( EQUAL(osName,"BEGIN_GROUP") || EQUAL(osName,"GROUP") )
         {
             if( !ReadGroup( (CPLString(pszPathPrefix) + osValue + ".").c_str() ) )
                 return FALSE;

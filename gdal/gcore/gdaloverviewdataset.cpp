@@ -28,6 +28,7 @@
  ****************************************************************************/
 
 #include "gdal_proxy.h"
+#include "gdal_mdreader.h"
 
 CPL_CVSID("$Id$");
 
@@ -430,19 +431,19 @@ char  **GDALOverviewDataset::GetMetadata( const char * pszDomain )
     papszMD = poMainDS->GetMetadata(pszDomain);
 
     /* We may need to rescale some values from the RPC metadata domain */
-    if( pszDomain != NULL && EQUAL(pszDomain, "RPC") && papszMD != NULL )
+    if( pszDomain != NULL && EQUAL(pszDomain, MD_DOMAIN_IMD) && papszMD != NULL )
     {
         if( papszMD_RPC )
             return papszMD_RPC;
         papszMD_RPC = CSLDuplicate(papszMD);
 
-        Rescale(papszMD_RPC, "LINE_OFF",
+        Rescale(papszMD_RPC, RPC_LINE_OFF,
                 (double)nRasterYSize / poMainDS->GetRasterYSize(), 0.0);
-        Rescale(papszMD_RPC, "LINE_SCALE",
+        Rescale(papszMD_RPC, RPC_LINE_SCALE,
                 (double)nRasterYSize / poMainDS->GetRasterYSize(), 1.0);
-        Rescale(papszMD_RPC, "SAMP_OFF",
+        Rescale(papszMD_RPC, RPC_SAMP_OFF,
                 (double)nRasterXSize / poMainDS->GetRasterXSize(), 0.0);
-        Rescale(papszMD_RPC, "SAMP_SCALE",
+        Rescale(papszMD_RPC, RPC_SAMP_SCALE,
                 (double)nRasterXSize / poMainDS->GetRasterXSize(), 1.0);
 
         papszMD = papszMD_RPC;
