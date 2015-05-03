@@ -822,12 +822,6 @@ def ogr_interlis2_1():
               'RoadsExdm2ien.RoadsExtended.StreetAxis',
               'RoadsExdm2ben.Roads.StreetNamePosition',
               'RoadsExdm2ien.RoadsExtended.RoadSign']
-    #ILI 2.2 Example
-    #layers = ['RoadsExdm2ben_10.Roads.LandCover',
-    #          'RoadsExdm2ben_10.Roads.Street',
-    #          'RoadsExdm2ien_10.RoadsExtended.StreetAxis',
-    #          'RoadsExdm2ben_10.Roads.StreetNamePosition',
-    #          'RoadsExdm2ien_10.RoadsExtended.RoadSign']
 
     if ds.GetLayerCount() != len(layers):
         gdaltest.post_reason( 'layer count wrong.' )
@@ -875,9 +869,9 @@ def ogr_interlis2_2():
 
     feat = lyr.GetNextFeature()
 
-    field_values = [501, 'prohibition.noparking', 'POINT (69.389 92.056)']
+    field_values = [501, 'prohibition.noparking']
 
-    if feat.GetFieldCount() != len(field_values)-1:
+    if feat.GetFieldCount() != len(field_values):
         feat.DumpReadable()
         gdaltest.post_reason( 'field count wrong.' )
         return 'fail'
@@ -894,9 +888,60 @@ def ogr_interlis2_2():
         gdaltest.post_reason( 'dimension wrong.' )
         return 'fail'
 
-    if geom.GetGeometryName() != 'POINT':
-        gdaltest.post_reason( 'Geometry of wrong type.' )
+    geom_field_values = ['POINT (69.389 92.056)']
+
+    if feat.GetGeomFieldCount() != len(geom_field_values):
+        gdaltest.post_reason( 'geom field count wrong.' )
+        print(feat.GetGeomFieldCount())
         return 'fail'
+
+    for i in range(feat.GetGeomFieldCount()):
+        geom = feat.GetGeomFieldRef(i)
+        if ogrtest.check_feature_geometry(geom, geom_field_values[i]) != 0:
+            feat.DumpReadable()
+            return 'fail'
+
+
+    lyr = ds.GetLayerByName('RoadsExdm2ien.RoadsExtended.StreetAxis')
+    if lyr.GetFeatureCount() != 7:
+        gdaltest.post_reason( 'feature count wrong.' )
+        return 'fail'
+
+    feat = lyr.GetNextFeature()
+
+    geom_field_values = ['LINESTRING (55.6 37.649,15.573 25.785)']
+
+    if feat.GetGeomFieldCount() != len(geom_field_values):
+        gdaltest.post_reason( 'geom field count wrong.' )
+        print(feat.GetGeomFieldCount())
+        return 'fail'
+
+    for i in range(feat.GetGeomFieldCount()):
+        geom = feat.GetGeomFieldRef(i)
+        if ogrtest.check_feature_geometry(geom, geom_field_values[i]) != 0:
+            feat.DumpReadable()
+            return 'fail'
+
+
+    lyr = ds.GetLayerByName('RoadsExdm2ben.Roads.LandCover')
+    if lyr.GetFeatureCount() != 12:
+        gdaltest.post_reason( 'feature count wrong.' )
+        return 'fail'
+
+    feat = lyr.GetNextFeature()
+
+    geom_field_values = ['POLYGON ((39.038 60.315,41.2 59.302,43.362 60.315,44.713 66.268,45.794 67.662,48.766 67.408,53.36 64.115,56.197 62.595,57.818 63.862,58.899 68.928,55.927 72.348,47.955 75.515,42.281 75.388,39.308 73.235,36.741 69.688,35.525 66.268,35.661 63.735,37.957 61.455,39.038 60.315))']
+
+    if feat.GetGeomFieldCount() != len(geom_field_values):
+        gdaltest.post_reason( 'geom field count wrong.' )
+        print(feat.GetGeomFieldCount())
+        return 'fail'
+
+    for i in range(feat.GetGeomFieldCount()):
+        geom = feat.GetGeomFieldRef(i)
+        if ogrtest.check_feature_geometry(geom, geom_field_values[i]) != 0:
+            feat.DumpReadable()
+            return 'fail'
 
     return 'success'
 

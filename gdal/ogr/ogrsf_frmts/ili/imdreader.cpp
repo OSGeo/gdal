@@ -34,6 +34,7 @@
 #include "cpl_minixml.h"
 #include <set>
 #include <vector>
+#include <algorithm>
 
 
 CPL_CVSID("$Id$");
@@ -193,7 +194,7 @@ public:
         if (CSLTestBoolean(CPLGetXMLValue( node, "Abstract", "FALSE" )))
             hasDerivedClasses = true;
     }
-    void AddFieldDefinitions()
+    void AddFieldDefinitions(NodeVector oArcLineTypes)
     {
         for (NodeVector::const_iterator it = oFields.begin(); it != oFields.end(); ++it)
         {
@@ -254,7 +255,8 @@ public:
                 {
                     const char* psKind = CPLGetXMLValue( psElementNode, "Kind", NULL );
                     poGeomFieldInfos[psName].iliGeomType = psKind;
-                    bool linearGeom = CSLTestBoolean(CPLGetConfigOption("OGR_STROKE_CURVE", "FALSE")); //TODO: check line types in model
+                    bool isLinearType = (std::find(oArcLineTypes.begin(), oArcLineTypes.end(), psElementNode) == oArcLineTypes.end());
+                    bool linearGeom = isLinearType || CSLTestBoolean(CPLGetConfigOption("OGR_STROKE_CURVE", "FALSE"));
                     OGRwkbGeometryType multiLineType = linearGeom ? wkbMultiLineString : wkbMultiCurve;
                     OGRwkbGeometryType polyType = linearGeom ? wkbPolygon : wkbCurvePolygon;
                     if (iliVersion == 1)
@@ -282,9 +284,9 @@ public:
                     } else {
                         if (EQUAL(psKind, "Area") || EQUAL(psKind, "Surface"))
                         {
-                            AddGeomField(psName, wkbPolygon);
+                            AddGeomField(psName, polyType);
                         } else { // Polyline, DirectedPolyline
-                            AddGeomField(psName, wkbMultiLineString);
+                            AddGeomField(psName, multiLineType);
                         }
                     }
                 }
@@ -336,6 +338,7 @@ void ImdReader::ReadModel(const char *pszFilename) {
     StrNodeMap oTidLookup; /* for fast lookup of REF relations */
     ClassesMap oClasses;
     NodeCountMap oAxisCount;
+    NodeVector oArcLineTypes;
     const char *modelName;
 
     /* Fill TID lookup map and IliClasses lookup map */
@@ -429,6 +432,15 @@ void ImdReader::ReadModel(const char *pszFilename) {
                     CPLXMLNode* psCoordTypeNode = oTidLookup[psClassRef];
                     oAxisCount[psCoordTypeNode] += 1;
                 }
+                else if( EQUAL(psEntry->pszValue, "IlisMeta07.ModelData.LinesForm") && !EQUAL(modelName, "MODEL.INTERLIS"))
+                {
+                    const char* psLineForm = CPLGetXMLValue( psEntry, "LineForm.REF", NULL );
+                    if (EQUAL(psLineForm, "INTERLIS.ARCS")) {
+                        const char* psElementRef = CPLGetXMLValue( psEntry, "LineType.REF", NULL );
+                        CPLXMLNode* psElementNode = oTidLookup[psElementRef];
+                        oArcLineTypes.push_back(psElementNode);
+                    }
+                }
             }
             psEntry = psEntry->psNext;
 
@@ -445,7 +457,7 @@ void ImdReader::ReadModel(const char *pszFilename) {
         if (psRefSuper)
             oClasses[oTidLookup[psRefSuper]]->hasDerivedClasses = true;
         it->second->InitFieldDefinitions();
-        it->second->AddFieldDefinitions();
+        it->second->AddFieldDefinitions(oArcLineTypes);
     }
 
     /* Filter relevant classes */

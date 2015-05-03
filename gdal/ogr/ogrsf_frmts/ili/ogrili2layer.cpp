@@ -327,7 +327,10 @@ OGRErr OGRILI2Layer::ICreateFeature( OGRFeature *poFeature ) {
 /************************************************************************/
 
 int OGRILI2Layer::TestCapability( CPL_UNUSED const char * pszCap ) {
-    return FALSE;
+    if( EQUAL(pszCap,OLCCurveGeometries) )
+        return TRUE;
+    else
+        return FALSE;
 }
 
 /************************************************************************/
