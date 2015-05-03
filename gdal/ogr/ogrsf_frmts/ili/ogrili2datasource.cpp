@@ -167,11 +167,6 @@ int OGRILI2DataSource::Open( const char * pszNewName, char** papszOpenOptions, i
     if (osModelFilename.size())
         poReader->ReadModel( poImdReader, osModelFilename );
 
-    if( getenv( "ARC_DEGREES" ) != NULL ) {
-      //No better way to pass arguments to the reader (it could even be an -lco arg)
-      poReader->SetArcDegrees( CPLAtof( getenv("ARC_DEGREES") ) );
-    }
-
     poReader->SetSourceFile( pszName );
 
     poReader->SaveClasses( pszName );
@@ -304,6 +299,8 @@ int OGRILI2DataSource::TestCapability( const char * pszCap )
 
 {
     if( EQUAL(pszCap,ODsCCreateLayer) )
+        return TRUE;
+    else if( EQUAL(pszCap,ODsCCurveGeometries) )
         return TRUE;
     else
         return FALSE;

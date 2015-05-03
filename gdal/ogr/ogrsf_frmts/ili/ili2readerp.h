@@ -138,7 +138,6 @@ public:
              ILI2Reader();
             ~ILI2Reader();
 
-    void     SetArcDegrees(double arcDegrees);
     void     SetSourceFile( const char *pszFilename );
     int      ReadModel( ImdReader *poImdReader, const char *modelFilename );
     int      SaveClasses( const char *pszFile );
@@ -151,7 +150,7 @@ public:
     void     SetFieldValues(OGRFeature *feature, DOMElement* elem);
     const char* GetLayerName(/*IOM_BASKET model, IOM_OBJECT table*/);
     void     AddField(OGRLayer* layer/*, IOM_BASKET model, IOM_OBJECT obj*/);
-    OGRLineString *getArc(DOMElement *elem);
+    OGRCircularString *getArc(DOMElement *elem);
     OGRGeometry *getGeometry(DOMElement *elem, int type);
     void     setFieldDefn(OGRFeatureDefn *featureDef, DOMElement* elem);
 };
