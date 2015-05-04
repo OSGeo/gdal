@@ -368,10 +368,12 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
     int nRetryDelaySecs = atoi(pszRetryDelay);
     int nMaxRetries = atoi(pszMaxRetries);
     int nRetryCount = 0;
-    bool bRequestRetry = FALSE;
+    bool bRequestRetry;
 
     do
     {
+        bRequestRetry = FALSE;
+
 /* -------------------------------------------------------------------- */
 /*      Execute the request, waiting for results.                       */
 /* -------------------------------------------------------------------- */
