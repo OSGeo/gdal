@@ -1469,6 +1469,61 @@ def test_gdalwarp_45():
 
     return 'success'
 
+
+###############################################################################
+# Test -crop_to_cutline
+
+def test_gdalwarp_46():
+    if test_cli_utilities.get_gdalwarp_path() is None:
+        return 'skip'
+    if test_cli_utilities.get_ogr2ogr_path() is None:
+        return 'skip'
+
+    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' ../gcore/data/utmsmall.tif tmp/test_gdalwarp_46.tif -cutline data/cutline.vrt -crop_to_cutline -overwrite')
+
+    ds = gdal.Open('tmp/test_gdalwarp_46.tif')
+    if ds is None:
+        return 'fail'
+
+    if ds.GetRasterBand(1).Checksum() != 19582:
+        print(ds.GetRasterBand(1).Checksum())
+        gdaltest.post_reason('Bad checksum')
+        return 'fail'
+
+    ds = None
+
+    # With explicit -s_srs and -t_srs
+    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' ../gcore/data/utmsmall.tif tmp/test_gdalwarp_46.tif -cutline data/cutline.vrt -crop_to_cutline -overwrite -s_srs EPSG:26711 -t_srs EPSG:26711')
+
+    ds = gdal.Open('tmp/test_gdalwarp_46.tif')
+    if ds is None:
+        return 'fail'
+
+    if ds.GetRasterBand(1).Checksum() != 19582:
+        print(ds.GetRasterBand(1).Checksum())
+        gdaltest.post_reason('Bad checksum')
+        return 'fail'
+
+    ds = None
+
+    # With cutline in another SRS
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' tmp/cutline_4326.shp data/cutline.vrt -s_srs EPSG:26711 -t_srs EPSG:4326')
+    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' ../gcore/data/utmsmall.tif tmp/test_gdalwarp_46.tif -cutline tmp/cutline_4326.shp -crop_to_cutline -overwrite -t_srs EPSG:32711')
+
+    ds = gdal.Open('tmp/test_gdalwarp_46.tif')
+    if ds is None:
+        return 'fail'
+
+    if ds.GetRasterBand(1).Checksum() != 19582:
+        print(ds.GetRasterBand(1).Checksum())
+        gdaltest.post_reason('Bad checksum')
+        return 'fail'
+
+    ds = None
+    
+    return 'success'
+
+
 ###############################################################################
 # Cleanup
 
@@ -1561,6 +1616,18 @@ def test_gdalwarp_cleanup():
         os.remove('tmp/test_gdalwarp_45.tif')
     except:
         pass
+    try:
+        os.remove('tmp/test_gdalwarp_46.tif')
+    except:
+        pass
+    try:
+        os.remove('tmp/cutline_4326.shp')
+        os.remove('tmp/cutline_4326.shx')
+        os.remove('tmp/cutline_4326.dbf')
+        os.remove('tmp/cutline_4326.prj')
+    except:
+        pass
+    
     return 'success'
 
 gdaltest_list = [
@@ -1610,12 +1677,13 @@ gdaltest_list = [
     test_gdalwarp_43,
     test_gdalwarp_44,
     test_gdalwarp_45,
+    test_gdalwarp_46,
     test_gdalwarp_cleanup
     ]
 
 disabled_gdaltest_list = [
     test_gdalwarp_cleanup,
-    test_gdalwarp_45,
+    test_gdalwarp_46,
     test_gdalwarp_cleanup ]
 
 if __name__ == '__main__':
