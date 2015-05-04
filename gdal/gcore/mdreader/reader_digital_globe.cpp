@@ -45,13 +45,15 @@ GDALMDReaderDigitalGlobe::GDALMDReaderDigitalGlobe(const char *pszPath,
     m_osXMLSourceFilename = GDALFindAssociatedFile( pszPath, "XML", 
                                                          papszSiblingFiles, 0 );
 
-
-    CPLDebug( "MDReaderDigitalGlobe", "IMD Filename: %s",
-              m_osIMDSourceFilename.c_str() );
-    CPLDebug( "MDReaderDigitalGlobe", "RPB Filename: %s",
-              m_osRPBSourceFilename.c_str() );
-    CPLDebug( "MDReaderDigitalGlobe", "XML Filename: %s",
-              m_osXMLSourceFilename.c_str() );
+    if( m_osIMDSourceFilename.size() )
+        CPLDebug( "MDReaderDigitalGlobe", "IMD Filename: %s",
+                  m_osIMDSourceFilename.c_str() );
+    if( m_osRPBSourceFilename.size() )
+        CPLDebug( "MDReaderDigitalGlobe", "RPB Filename: %s",
+                  m_osRPBSourceFilename.c_str() );
+    if( m_osXMLSourceFilename.size() )
+        CPLDebug( "MDReaderDigitalGlobe", "XML Filename: %s",
+                  m_osXMLSourceFilename.c_str() );
 }
 
 /**

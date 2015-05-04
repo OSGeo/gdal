@@ -56,8 +56,8 @@ GDALMDReaderLandsat::GDALMDReaderLandsat(const char *pszPath,
     // form metadata file name
     CPLStrlcpy(szMetadataName + i, "_MTL.txt", 9);
 
-    CPLDebug( "MDReaderLandsat", "Try IMD Filename: %s",
-              szMetadataName );
+    //CPLDebug( "MDReaderLandsat", "Try IMD Filename: %s",
+    //        szMetadataName );
 
     const char* pszIMDSourceFilename = CPLFormFilename( pszDirName,
                                                         szMetadataName, NULL );
@@ -75,8 +75,9 @@ GDALMDReaderLandsat::GDALMDReaderLandsat(const char *pszPath,
         }
     }
 
-    CPLDebug( "MDReaderLandsat", "IMD Filename: %s",
-              m_osIMDSourceFilename.c_str() );
+    if( m_osIMDSourceFilename.size() )
+        CPLDebug( "MDReaderLandsat", "IMD Filename: %s",
+                  m_osIMDSourceFilename.c_str() );
 }
 
 /**

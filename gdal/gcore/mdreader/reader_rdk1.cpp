@@ -40,8 +40,9 @@ GDALMDReaderResursDK1::GDALMDReaderResursDK1(const char *pszPath,
 {
     m_osXMLSourceFilename = GDALFindAssociatedFile( pszPath, "XML",
                                                          papszSiblingFiles, 0 );
-    CPLDebug( "MDReaderResursDK1", "XML Filename: %s",
-              m_osXMLSourceFilename.c_str() );
+    if( m_osXMLSourceFilename.size() )
+        CPLDebug( "MDReaderResursDK1", "XML Filename: %s",
+                  m_osXMLSourceFilename.c_str() );
 }
 
 /**
