@@ -1025,17 +1025,18 @@ static int ProxyMain( int argc, char ** argv )
                     {
                         OGRCoordinateTransformation::DestroyCT(poCT);
 
-                        fprintf( stderr, "-projwin_srs ignored since coordinate transformation failed.");
+                        fprintf( stderr, "-projwin_srs ignored since coordinate transformation failed.\n");
                         GDALClose( hDataset );
                         CPLFree( panBandList );
                         GDALDestroyDriverManager();
                         exit( 1 );
                     }
+                    delete poCT;
                 }
             }
             else
             {
-                fprintf( stderr, "-projwin_srs ignored since the dataset has no projection.");
+                fprintf( stderr, "-projwin_srs ignored since the dataset has no projection.\n");
             }
         }
 

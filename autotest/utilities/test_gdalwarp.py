@@ -1441,6 +1441,35 @@ def test_gdalwarp_44():
     return 'success'
 
 ###############################################################################
+# Test -te_srs
+
+def test_gdalwarp_45():
+    if test_cli_utilities.get_gdalwarp_path() is None:
+        return 'skip'
+
+    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -te_srs EPSG:4267 -te -117.641087629972 33.8915301685897 -117.628190189534 33.9024195619201 ../gcore/data/byte.tif tmp/test_gdalwarp_45.tif -overwrite')
+
+    ds = gdal.Open('tmp/test_gdalwarp_45.tif')
+    if ds.GetRasterBand(1).Checksum() != 4672:
+        gdaltest.post_reason('fail')
+        print(ds.GetRasterBand(1).Checksum())
+        return 'fail'
+
+    ds = None
+
+    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -te_srs EPSG:4267 -te -117.641087629972 33.8915301685897 -117.628190189534 33.9024195619201 -t_srs EPSG:32611 ../gcore/data/byte.tif tmp/test_gdalwarp_45.tif -overwrite')
+
+    ds = gdal.Open('tmp/test_gdalwarp_45.tif')
+    if ds.GetRasterBand(1).Checksum() != 4672:
+        gdaltest.post_reason('fail')
+        print(ds.GetRasterBand(1).Checksum())
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def test_gdalwarp_cleanup():
@@ -1528,6 +1557,10 @@ def test_gdalwarp_cleanup():
         os.remove('tmp/test_gdalwarp_44.tif')
     except:
         pass
+    try:
+        os.remove('tmp/test_gdalwarp_45.tif')
+    except:
+        pass
     return 'success'
 
 gdaltest_list = [
@@ -1576,12 +1609,13 @@ gdaltest_list = [
     test_gdalwarp_42,
     test_gdalwarp_43,
     test_gdalwarp_44,
+    test_gdalwarp_45,
     test_gdalwarp_cleanup
     ]
 
 disabled_gdaltest_list = [
     test_gdalwarp_cleanup,
-    test_gdalwarp_44,
+    test_gdalwarp_45,
     test_gdalwarp_cleanup ]
 
 if __name__ == '__main__':
