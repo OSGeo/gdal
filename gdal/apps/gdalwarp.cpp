@@ -84,7 +84,8 @@ gdalwarp [--help-general] [--formats]
     [-s_srs srs_def] [-t_srs srs_def] [-to "NAME=VALUE"]
     [-order n | -tps | -rpc | -geoloc] [-et err_threshold]
     [-refine_gcps tolerance [minimum_gcps]]
-    [-te xmin ymin xmax ymax] [-tr xres yres] [-tap] [-ts width height]
+    [-te xmin ymin xmax ymax] [-te_srs srs_def]
+    [-tr xres yres] [-tap] [-ts width height]
     [-ovr level|AUTO|AUTO-n|NONE] [-wo "NAME=VALUE"] [-ot Byte/Int16/...] [-wt Byte/Int16]
     [-srcnodata "value [value...]"] [-dstnodata "value [value...]"] -dstalpha
     [-r resampling_method] [-wm memory_in_mb] [-multi] [-q]
@@ -133,7 +134,17 @@ Not that GCP refinement only works with polynomial interpolation.
 The tolerance is in pixel units if no projection is available, otherwise it is in SRS units.
 If minimum_gcps is not provided, the minimum GCPs according to the polynomial model is used.</dd>
 <dt> <b>-te</b> <em>xmin ymin xmax ymax</em>:</dt><dd> set georeferenced
-extents of output file to be created (in target SRS).</dd>
+extents of output file to be created (in target SRS by default, or in the SRS
+specified with -te_srs)
+</dd>
+<dt> <b>-te_srs</b> <i>srs_def</i>:</dt><dd> (GDAL >= 2.0) Specifies the SRS in
+which to interpret the coordinates given with -te. The <i>srs_def</i> may
+be any of the usual GDAL/OGR forms, complete WKT, PROJ.4, EPSG:n or a file
+containing the WKT.
+This must not be confused with -t_srs which is the target SRS of the output
+dataset. -te_srs is a conveniency e.g. when knowing the output coordinates in a
+geodetic long/lat SRS, but still wanting a result in a projected coordinate system.
+</dd>
 <dt> <b>-tr</b> <em>xres yres</em>:</dt><dd> set output file resolution (in
 target georeferenced units)</dd>
 <dt> <b>-tap</b>:</dt><dd> (GDAL >= 1.8.0) (target aligned pixels) align
@@ -394,6 +405,7 @@ int main( int argc, char ** argv )
     int                  bSetColorInterpretation = FALSE;
     char               **papszOpenOptions = NULL;
     int                  nOvLevel = -2;
+    CPLString            osTE_SRS;
 
     /* Check that we are running against at least GDAL 1.6 */
     /* Note to developers : if we use newer API, please change the requirement */
@@ -645,6 +657,14 @@ int main( int argc, char ** argv )
             dfMaxY = CPLAtofM(argv[++i]);
             bCreateOutput = TRUE;
         }
+        else if( EQUAL(argv[i],"-te_srs") )
+        {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            char *pszSRS = SanitizeSRS(argv[++i]);
+            osTE_SRS = pszSRS;
+            CPLFree(pszSRS);
+            bCreateOutput = TRUE;
+        }
         else if( EQUAL(argv[i],"-rn") )
             eResampleAlg = GRA_NearestNeighbour;
 
@@ -786,6 +806,14 @@ int main( int argc, char ** argv )
     {
         Usage("-tap option cannot be used without using -tr.");
     }
+    
+    if( !bQuiet && !(dfMinX == 0.0 && dfMinY == 0.0 && dfMaxX == 0.0 && dfMaxY == 0.0)  )
+    {
+        if( dfMinX >= dfMaxX )
+            printf("-ts values have minx >= maxx. This will result in a horizontally flipped image.\n");
+        if( dfMinY >= dfMaxY )
+            printf("-ts values have miny >= maxy. This will result in a vertically flipped image.\n");
+    }
 
 /* -------------------------------------------------------------------- */
 /*      The last filename in the file list is really our destination    */
@@ -884,6 +912,68 @@ int main( int argc, char ** argv )
                      pszDstFilename );
             GDALClose(hDstDS);
             GDALExit( 1 );
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      -te_srs option                                                  */
+/* -------------------------------------------------------------------- */
+    if( osTE_SRS.size() )
+    {
+        if( dfMinX == 0.0 && dfMinY == 0.0 && dfMaxX == 0.0 && dfMaxY == 0.0 )
+        {
+            fprintf( stderr, "-te_srs ignored since -te is not specified.\n");
+        }
+        else
+        {
+            OGRSpatialReference oSRSIn;
+            oSRSIn.SetFromUserInput(osTE_SRS);
+            OGRSpatialReference oSRSDS;
+            int bOK = FALSE;
+            if( CSLFetchNameValue( papszTO, "DST_SRS" ) != NULL )
+            {
+                oSRSDS.SetFromUserInput( CSLFetchNameValue( papszTO, "DST_SRS" ) );
+                bOK = TRUE;
+            }
+            else if( CSLFetchNameValue( papszTO, "SRC_SRS" ) != NULL )
+            {
+                oSRSDS.SetFromUserInput( CSLFetchNameValue( papszTO, "SRC_SRS" ) );
+                bOK = TRUE;
+            }
+            else
+            {
+                if( papszSrcFiles[0] != NULL )
+                {
+                    GDALDatasetH hSrcDS = GDALOpen( papszSrcFiles[0], GA_ReadOnly );
+                    if( hSrcDS && GDALGetProjectionRef(hSrcDS) && GDALGetProjectionRef(hSrcDS)[0] )
+                    {
+                        oSRSDS.SetFromUserInput( GDALGetProjectionRef(hSrcDS) );
+                        bOK = TRUE;
+                    }
+                    GDALClose(hSrcDS);
+                }
+            }
+            if( !bOK )
+            {
+                fprintf( stderr, "-te_srs ignored since none of -t_srs, -s_srs is specified or the input dataset has no projection.\n");
+                GDALClose(hDstDS);
+                GDALExit( 1 );
+            }
+            if( !oSRSIn.IsSame(&oSRSDS) )
+            {
+                OGRCoordinateTransformation* poCT = OGRCreateCoordinateTransformation(&oSRSIn, &oSRSDS);
+                if( !(poCT &&
+                    poCT->Transform(1, &dfMinX, &dfMinY) &&
+                    poCT->Transform(1, &dfMaxX, &dfMaxY)) )
+                {
+                    OGRCoordinateTransformation::DestroyCT(poCT);
+
+                    fprintf( stderr, "-te_srs ignored since coordinate transformation failed.\n");
+                    GDALClose(hDstDS);
+                    GDALExit( 1 );
+                }
+                delete poCT;
+            }
         }
     }
 
