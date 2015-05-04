@@ -1342,6 +1342,7 @@ def test_gdalwarp_42():
         gdaltest.post_reason('failure')
         print(got_cs)
         return 'fail'
+    ds = None
 
     # In one step
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' tmp/small_world_left.tif tmp/small_world_right.tif tmp/test_gdalwarp_42.tif -overwrite -te -180 -90 180 90 -dstalpha')
@@ -1353,6 +1354,7 @@ def test_gdalwarp_42():
         gdaltest.post_reason('failure')
         print(got_cs)
         return 'fail'
+    ds = None
 
     # In one step with -wo INIT_DEST=255,255,255,0
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' tmp/small_world_left.tif tmp/small_world_right.tif tmp/test_gdalwarp_42.tif -wo INIT_DEST=255,255,255,0 -overwrite -te -180 -90 180 90 -dstalpha')
@@ -1364,6 +1366,7 @@ def test_gdalwarp_42():
         gdaltest.post_reason('failure')
         print(got_cs)
         return 'fail'
+    ds = None
 
     # In one step with -wo INIT_DEST=0,0,0,0
     # Different checksum since there are source pixels at 255, so they get remap to 0
@@ -1376,6 +1379,7 @@ def test_gdalwarp_42():
         gdaltest.post_reason('failure')
         print(got_cs)
         return 'fail'
+    ds = None
 
     return 'success'
 
