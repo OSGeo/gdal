@@ -1,4 +1,4 @@
-= GDAL/OGR 2.0 Release Notes (to r29070) =
+= GDAL/OGR 2.0 Release Notes (to r29147) =
 
 ***** Work in progress ***** 
 
@@ -103,6 +103,7 @@ Port:
  * CPLHexToBinary(): faster implementation (#5812)
 
 Core:
+ * Add imagery (satellite or aerial) metadata support (DigitalGlobe, GeoEye, OrbView, Landsat, Pleiades, Resurs-DK1).
  * Reduce lock contention on the global cache mutex and make it possible to use spin lock instead with GDAL_RB_LOCK_TYPE=SPIN
  * EXIF reader: fix memleak in error code path
  * EXIF reader: add missing validation for some data types (#3078)
@@ -166,13 +167,15 @@ Utilities:
  * gdal_translate: add -oo option per RFC 46
  * gdal_translate: add -r and -tr options per RFC 51
  * gdal_translate: add a -projwin_srs option to be able to express -projwin coordinates in another SRS than the one of the dataset
+ * gdal_translate: support -'outsize avalue 0' or '-outsize 0 avalue' to preserve aspect ratio
  * gdal_translate: avoid preserving statistics when changing data type in situations where clamping can occur
  * gdal_translate: adjust RPC metadata (pixel/line offset/scale) when subsetting/rescaling, instead of just discarding it
  * gdal_translate: don't recopy band units if rescaling or unscaling is involved (#3085)
  * gdal_translate: increase GDAL_MAX_DATASET_POOL_SIZE default value to 450. (#5828)
  * gdalwarp: add -oo option per RFC 46
- * gdalwarp: initialize destination dataset to no_data value when automatically propagating source nodata (#5675)
+ * gdalwarp: add -te_srs option to specify -te in a SRS which isn't the target SRS
  * gdalwarp: add a -ovr option to select which overview level to use, and default to AUTO. Also add a generic OVERVIEW_LEVEL=level open option, and make it available in standard VRT (#5688)
+ * gdalwarp: initialize destination dataset to no_data value when automatically propagating source nodata (#5675)
  * gdalwarp: only apply INIT_DEST when processing the first input dataset (#5387)
  * gdalwarp: increase GDAL_MAX_DATASET_POOL_SIZE default value to 450. (#5828)
  * gdalwarp: do not preserve NODATA_VALUES metadata item in output dataset if adding an alpha channel with -dstalpha
@@ -303,6 +306,10 @@ HDF5 driver:
 HFA driver:
  * fix recognition of Hotine Mercator Azimuth Center in Imagine format (and Swisstopo GeoTIFF) (#5551)
  * fix various hangs on invalid files
+
+HTTP driver/wrapper:
+  * make it work with vector files too
+  * fix handling of non VSI*L file on Windows
 
 IRIS driver:
  * add support for the SHEAR data type (#5549)
@@ -554,13 +561,15 @@ FileGDB driver:
  * avoid emitting error when opening a FileGDB v9, so that OpenFileGDB can be tried to open it, in the case FileGDB is a plugin (#5674)
  * fix CreateFeature() to work when a esriFieldTypeGlobalID field is not set
  * report width of string fields (#5806)
+ * add compatibility with FileGDB SDK v1.4
 
 GeoJSON driver:
  * implement Date/Time/DateTime field type detection
  * expose a 'id' object, of type string, directly on Feature object (not in its properties) as a field
  * add FLATTEN_NESTED_ATTRIBUTES and NESTED_ATTRIBUTE_SEPARATOR open options
- * accept and skip UTF-8 BOM (#5630)
  * TopoJSON: establish layer schema from objects properties (#5870)
+ * implement automatic scrolling through result sets of ArcGIS GeoServices Feature Service (#5943)
+ * accept and skip UTF-8 BOM (#5630)
  * ESRIJson: parse correctly rings of esriGeometryPolygon objects to build correct Polygon or MultiPolygon (#5538)
  * avoid truncation of real numbers on reading (#5882)
  * internal libjson-c: Fix to read floating point numbers in non C locale (#5461)
@@ -620,6 +629,7 @@ GPKG driver:
  * accept spatial tables whose geometry field is declared as BLOB
  * recognize both GeomCollection and GeometryCollection as possible values, until GeoPackage SWG clears what is the official value
  * escape all column names in SQL (#5520)
+ * accept geometries with Spatialite format, that can be returned with issuing a SQL request using spatialite functions
 
 GTM driver:
  * declare OLCCreateField and OLCSequentialWrite capabilities
@@ -632,6 +642,8 @@ ILI driver:
  * Fix crash in polygon geometry reading
  * Fix reading SURFACE polygons with multiple rings
  * Fix reading tables with polygon type
+ * Support curve geometries for ILI1 and ILI2.
+ * Add a MODEL open option
 
 ISIS3 driver:
  * fix to recognize IsisCube.Mapping.LatitudeType = Planetocentric (#5717)
@@ -777,12 +789,14 @@ SQLite/Spatialite driver:
  * Fix segmentation fault when executing OGR2SQLITE_Register() when compiling against sqlite 3.8.7 (#5725)
  * make GetFIDColumn() work when run as first method call (#5781)
  * emit warning when reading text values in a integer/real field (possible since SQLite has no strong typing)
+ * support reading date/datetime from Julian day floating point representation
 
 SXF driver:
  * Fix SXF file version check (#5456)
  * Fix wrong Miller Cylindrical projection string
  * Fix encoding issues (#5647)
  * Fix extract z value to OGRGeometry
+ * Fix case sensitivity of RSC file
 
 VFK driver:
  * recode also header values
