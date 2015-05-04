@@ -94,10 +94,12 @@ GDALMDReaderGeoEye::GDALMDReaderGeoEye(const char *pszPath,
         }
     }
 
-    CPLDebug( "MDReaderGeoEye", "IMD Filename: %s",
-              m_osIMDSourceFilename.c_str() );
-    CPLDebug( "MDReaderGeoEye", "RPB Filename: %s",
-              m_osRPBSourceFilename.c_str() );
+    if( m_osIMDSourceFilename.size() )
+        CPLDebug( "MDReaderGeoEye", "IMD Filename: %s",
+                  m_osIMDSourceFilename.c_str() );
+    if( m_osRPBSourceFilename.size() )
+        CPLDebug( "MDReaderGeoEye", "RPB Filename: %s",
+                  m_osRPBSourceFilename.c_str() );
 }
 
 /**

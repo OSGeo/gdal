@@ -62,11 +62,12 @@ GDALMDReaderOrbView::GDALMDReaderOrbView(const char *pszPath,
         }
     }
 
-
-    CPLDebug( "MDReaderOrbView", "IMD Filename: %s",
-              m_osIMDSourceFilename.c_str() );
-    CPLDebug( "MDReaderOrbView", "RPB Filename: %s",
-              m_osRPBSourceFilename.c_str() );
+    if( m_osIMDSourceFilename.size() )
+        CPLDebug( "MDReaderOrbView", "IMD Filename: %s",
+                  m_osIMDSourceFilename.c_str() );
+    if( m_osRPBSourceFilename.size() )
+        CPLDebug( "MDReaderOrbView", "RPB Filename: %s",
+                  m_osRPBSourceFilename.c_str() );
 }
 
 /**

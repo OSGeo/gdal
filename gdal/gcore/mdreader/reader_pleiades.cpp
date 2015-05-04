@@ -87,10 +87,12 @@ GDALMDReaderPleiades::GDALMDReaderPleiades(const char *pszPath,
         }
     }
 
-    CPLDebug( "MDReaderPleiades", "IMD Filename: %s",
-              m_osIMDSourceFilename.c_str() );
-    CPLDebug( "MDReaderPleiades", "RPB Filename: %s",
-              m_osRPBSourceFilename.c_str() );
+    if( m_osIMDSourceFilename.size() )
+        CPLDebug( "MDReaderPleiades", "IMD Filename: %s",
+                  m_osIMDSourceFilename.c_str() );
+    if( m_osRPBSourceFilename.size() )
+        CPLDebug( "MDReaderPleiades", "RPB Filename: %s",
+                  m_osRPBSourceFilename.c_str() );
 }
 
 /**
