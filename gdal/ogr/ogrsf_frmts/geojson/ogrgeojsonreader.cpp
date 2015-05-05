@@ -1069,11 +1069,12 @@ OGRFeature* OGRGeoJSONReader::ReadFeature( OGRGeoJSONLayer* poLayer, json_object
     }
     else
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Invalid Feature object. "
-                  "Missing \'geometry\' member." );
-        delete poFeature;
-        return NULL;
+        static int bWarned = FALSE;
+        if( !bWarned )
+        {
+            bWarned = TRUE;
+            CPLDebug("GeoJSON", "Non conformant Feature object. Missing \'geometry\' member." );
+        }
     }
 
     return poFeature;
