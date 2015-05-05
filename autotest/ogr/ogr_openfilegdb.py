@@ -1306,6 +1306,33 @@ def ogr_openfilegdb_15():
         return 'fail'
     return 'success'
 
+
+###############################################################################
+# Read layers with sparse pages
+
+def ogr_openfilegdb_16():
+
+    ds = ogr.Open('data/sparse.gdb.zip')
+    lyr = ds.GetLayer(0)
+    for fid in [2,3,4,7,8,9,10,2049,8191,16384,10000000,10000001]:
+        f = lyr.GetNextFeature()
+        if f.GetFID() != fid:
+            gdaltest.post_reason('fail')
+            print(f.GetFID())
+            print(fid)
+            return 'fail'
+
+    f = lyr.GetFeature(10000000-1)
+    if f is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
 ###############################################################################
 # Cleanup
 
@@ -1352,6 +1379,7 @@ gdaltest_list = [
     ogr_openfilegdb_13,
     ogr_openfilegdb_14,
     ogr_openfilegdb_15,
+    ogr_openfilegdb_16,
     ogr_openfilegdb_cleanup,
     ]
 
