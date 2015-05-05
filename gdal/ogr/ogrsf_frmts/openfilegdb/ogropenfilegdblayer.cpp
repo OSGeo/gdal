@@ -1403,8 +1403,15 @@ OGRFeature* OGROpenFileGDBLayer::GetNextFeature()
                 {
                     return NULL;
                 }
-                if( m_poLyrTable->SelectRow(m_iCurFeat++) )
+                m_iCurFeat = m_poLyrTable->GetAndSelectNextNonEmptyRow(m_iCurFeat);
+                if( m_iCurFeat < 0 )
                 {
+                    m_bEOF = TRUE;
+                    return NULL;
+                }
+                else
+                {
+                    m_iCurFeat ++;
                     poFeature = GetCurrentFeature();
                     if( m_eSpatialIndexState == SPI_IN_BUILDING &&
                         m_iCurFeat == m_poLyrTable->GetTotalRecordCount() )
@@ -1414,11 +1421,6 @@ OGRFeature* OGROpenFileGDBLayer::GetNextFeature()
                     }
                     if( poFeature )
                         break;
-                }
-                else if( m_poLyrTable->HasGotError() )
-                {
-                    m_bEOF = TRUE;
-                    return NULL;
                 }
             }
         }

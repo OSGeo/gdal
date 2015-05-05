@@ -235,6 +235,8 @@ class FileGDBTable
         std::vector<vsi_l_offset>   anFeatureOffsets; /* MSb set marks deleted feature */
 
         GByte*                      pabyTablXBlockMap;
+        int                         nCountBlocksBeforeIBlockIdx; /* optimization */
+        int                         nCountBlocksBeforeIBlockValue; /* optimization */
 
         char                        achGUIDBuffer[32 + 6 + 1];
         int                         nChSaved;
@@ -302,6 +304,7 @@ class FileGDBTable
 
        /* Next call to SelectRow() or GetFieldValue() invalidates previously returned values */
        int                      SelectRow(int iRow);
+       int                      GetAndSelectNextNonEmptyRow(int iRow);
        int                      HasGotError() const { return bError; }
        int                      GetCurRow() const { return nCurRow; }
        int                      IsCurRowDeleted() const { return bIsDeleted; }

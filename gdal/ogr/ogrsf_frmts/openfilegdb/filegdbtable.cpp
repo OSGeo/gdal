@@ -111,6 +111,8 @@ void FileGDBTable::Init()
     osObjectIdColName = "";
     nChSaved = -1;
     pabyTablXBlockMap = NULL;
+    nCountBlocksBeforeIBlockIdx = 0;
+    nCountBlocksBeforeIBlockValue = 0;
     bHasReadGDBIndexes = FALSE;
     nOffsetFieldDesc = 0;
     nFieldDescLength = 0;
@@ -1122,8 +1124,22 @@ vsi_l_offset FileGDBTable::GetOffsetInTableForRow(int iRow)
         if( TEST_BIT(pabyTablXBlockMap, iBlock) == 0 )
             return 0;
 
-        for(int i=0;i<iBlock;i++)
-            nCountBlocksBefore += TEST_BIT(pabyTablXBlockMap, i) != 0;
+        // In case of sequential reading, optimization to avoid recomputing
+        // the number of blocks since the beginning of the map
+        if( iBlock >= nCountBlocksBeforeIBlockIdx )
+        {
+            nCountBlocksBefore = nCountBlocksBeforeIBlockValue;
+            for(int i=nCountBlocksBeforeIBlockIdx;i<iBlock;i++)
+                nCountBlocksBefore += TEST_BIT(pabyTablXBlockMap, i) != 0;
+        }
+        else
+        {
+            nCountBlocksBefore = 0;
+            for(int i=0;i<iBlock;i++)
+                nCountBlocksBefore += TEST_BIT(pabyTablXBlockMap, i) != 0;
+        }
+        nCountBlocksBeforeIBlockIdx = iBlock;
+        nCountBlocksBeforeIBlockValue = nCountBlocksBefore;
         int iCorrectedRow = nCountBlocksBefore * 1024 + (iRow % 1024);
         VSIFSeekL(fpTableX, 16 + nTablxOffsetSize * iCorrectedRow, SEEK_SET);
     }
@@ -1152,6 +1168,46 @@ vsi_l_offset FileGDBTable::GetOffsetInTableForRow(int iRow)
 #endif
 
     return nOffset;
+}
+
+/************************************************************************/
+/*                      GetAndSelectNextNonEmptyRow()                   */
+/************************************************************************/
+
+int FileGDBTable::GetAndSelectNextNonEmptyRow(int iRow)
+{
+    const int errorRetValue = -1;
+    returnErrorAndCleanupIf(iRow < 0 || iRow >= nTotalRecordCount, nCurRow = -1 );
+
+    while( iRow < nTotalRecordCount )
+    {
+        if( pabyTablXBlockMap != NULL && (iRow % 1024) == 0 )
+        {
+            int iBlock = iRow / 1024;
+            if( TEST_BIT(pabyTablXBlockMap, iBlock) == 0 )
+            {
+                int nBlocks = (nTotalRecordCount+1023)/1024;
+                do
+                {
+                    iBlock ++;
+                }
+                while( iBlock < nBlocks &&
+                    TEST_BIT(pabyTablXBlockMap, iBlock) == 0 );
+
+                iRow = iBlock * 1024;
+                if( iRow >= nTotalRecordCount )
+                    return -1;
+            }
+        }
+
+        if( SelectRow(iRow) )
+            return iRow;
+        if( HasGotError() )
+            return -1;
+        iRow ++;
+    }
+
+    return -1;
 }
 
 /************************************************************************/
