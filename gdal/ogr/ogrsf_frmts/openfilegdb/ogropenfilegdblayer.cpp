@@ -377,7 +377,7 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
             case FGTGT_MULTIPATCH: eGeomType = wkbMultiPolygon; break;
         }
 
-        if( wkbFlatten(eGeomType) != wkbFlatten(m_eGeomType) )
+        if( m_eGeomType != wkbUnknown && wkbFlatten(eGeomType) != wkbFlatten(m_eGeomType) )
         {
             CPLError(CE_Warning, CPLE_AppDefined,
                      "Inconsistency for layer geometry type");
