@@ -2129,6 +2129,32 @@ def ogr_geojson_42():
     return 'success'
 
 ###############################################################################
+# Test Feature without geometry
+
+def ogr_geojson_43():
+    if gdaltest.geojson_drv is None:
+        return 'skip'
+
+    ds = ogr.Open("""{"type": "FeatureCollection", "features":[
+{"type": "Feature", "properties": {"foo": "bar"}}]}""")
+    if ds is None:
+        gdaltest.post_reason('Failed to open datasource')
+        return 'fail'
+
+    lyr = ds.GetLayerByName('OGRGeoJSON')
+
+    feature = lyr.GetNextFeature()
+    if feature.GetFieldAsString("foo") != 'bar':
+        feature.DumpReadable()
+        return 'fail'
+
+    lyr = None
+    ds = None
+
+    return 'success'
+
+
+###############################################################################
 
 def ogr_geojson_cleanup():
 
@@ -2207,6 +2233,7 @@ gdaltest_list = [
     ogr_geojson_40,
     ogr_geojson_41,
     ogr_geojson_42,
+    ogr_geojson_43,
     ogr_geojson_cleanup ]
 
 if __name__ == '__main__':
