@@ -510,6 +510,21 @@ A list of subdatasets will be returned, resulting from the parsing of the GetTil
 </p></li>
 </ul>
 
+<h2>Generation of WMS service description XML file</h2>
+
+The WMS service description XML file can be generated manually, or created
+as the output of the CreateCopy() operation of the WMS driver, only if the source
+dataset is itself a WMS dataset. Said otherwise, you can use gdal_translate
+with as source dataset any of the above syntax mentioned in "Open syntax" and
+as output an XML file.
+
+For example:
+<pre>
+gdal_translate "http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer?f=json" wms.xml -of WMS
+</pre>
+
+The generated file will come with default values that you may need to edit.
+
 <h2>See Also:</h2>
 
 <ul>
