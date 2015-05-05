@@ -1322,12 +1322,22 @@ def ogr_openfilegdb_16():
             print(fid)
             return 'fail'
 
+    f = lyr.GetFeature(100000)
+    if f is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
     f = lyr.GetFeature(10000000-1)
     if f is not None:
         gdaltest.post_reason('fail')
         return 'fail'
     f = lyr.GetNextFeature()
     if f is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    f = lyr.GetFeature(16384)
+    if f is None:
         gdaltest.post_reason('fail')
         return 'fail'
 
