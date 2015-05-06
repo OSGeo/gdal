@@ -76,6 +76,34 @@ OGRLayer *OGRPLScenesDataset::GetLayer(int idx)
     return papoLayers[idx];
 }
 
+/************************************************************************/
+/*                          GetLayerByName()                            */
+/************************************************************************/
+
+OGRLayer *OGRPLScenesDataset::GetLayerByName(const char* pszName)
+{
+    OGRLayer* poLayer = GDALDataset::GetLayerByName(pszName);
+    if( poLayer != NULL )
+        return poLayer;
+
+    CPLString osURL;
+    osURL = osBaseURL;
+    osURL += pszName;
+    osURL += "/";
+    json_object* poObj = RunRequest( (osURL + CPLString("?count=10")).c_str() );
+    if( poObj == NULL )
+        return NULL;
+
+    OGRPLScenesLayer* poPLLayer = new OGRPLScenesLayer(this, pszName, osURL, poObj);
+    papoLayers = (OGRPLScenesLayer**) CPLRealloc(papoLayers,
+                                sizeof(OGRPLScenesLayer*) * (nLayers + 1));
+    papoLayers[nLayers ++] = poPLLayer;
+
+    json_object_put(poObj);
+
+    return poPLLayer;
+}
+
 /***********************************************************************/
 /*                            ExecuteSQL()                             */
 /***********************************************************************/
@@ -502,8 +530,17 @@ GDALDataset* OGRPLScenesDataset::Open(GDALOpenInfo* poOpenInfo)
     {
         if( it.val != NULL && json_object_get_type(it.val) == json_type_string )
         {
-            OGRPLScenesLayer* poLayer = new OGRPLScenesLayer(poDS, it.key,
-                                                     json_object_get_string(it.val));
+            const char* pszSceneType = it.key;
+            const char* pszSceneTypeURL = json_object_get_string(it.val);
+            json_object* poObj = NULL;
+            if( !EQUAL(pszSceneType, "ortho") )
+                poObj = poDS->RunRequest( (CPLString(pszSceneTypeURL) + CPLString("?count=10")).c_str() );
+
+            OGRPLScenesLayer* poLayer = new OGRPLScenesLayer(poDS, pszSceneType, pszSceneTypeURL, poObj);
+
+            if( poObj )
+                json_object_put(poObj);
+
             poDS->papoLayers = (OGRPLScenesLayer**) CPLRealloc(poDS->papoLayers,
                                         sizeof(OGRPLScenesLayer*) * (poDS->nLayers + 1));
             poDS->papoLayers[poDS->nLayers ++] = poLayer;

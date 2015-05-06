@@ -678,10 +678,96 @@ def ogr_plscenes_3():
 
     return 'success'
 
+###############################################################################
+# Test accessing non-ortho scene type
+
+def ogr_plscenes_4():
+
+    if gdaltest.plscenes_drv is None:
+        return 'skip'
+
+    gdal.FileFromMemBuffer('/vsimem/root', '{"ortho":"/vsimem/root/ortho/"}')
+
+    gdal.FileFromMemBuffer('/vsimem/root/another_layer/?count=10', """{
+    "type": "FeatureCollection",
+    "count": 1,
+    "features": [
+        {
+            "type": "Feature",
+            "id": "my_id",
+            "properties": {
+                "prop_10": "prop_10",
+                "prop_1" : "prop_1"
+            }
+        }
+    ]
+}""")
+
+    gdal.FileFromMemBuffer('/vsimem/root/another_layer/?count=1000', """{
+    "type": "FeatureCollection",
+    "count": 1,
+    "features": [
+        {
+            "type": "Feature",
+            "id": "my_id",
+            "properties": {
+                "prop_10": "prop_10",
+                "prop_1" : "prop_1"
+            }
+        }
+    ]
+}""")
+
+    gdal.SetConfigOption('PL_URL', '/vsimem/root/')
+    ds = gdal.OpenEx('PLScenes:', gdal.OF_VECTOR, open_options = ['API_KEY=foo'])
+    gdal.SetConfigOption('PL_URL', None)
+    if ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetLayerCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    lyr = ds.GetLayerByName('another_layer')
+    if lyr is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if f['prop_1'] != 'prop_1' or f['prop_10'] != 'prop_10':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.PushErrorHandler()
+    lyr = ds.GetLayerByName('does_not_exist')
+    gdal.PopErrorHandler()
+    if lyr is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    gdal.FileFromMemBuffer('/vsimem/root', '{"ortho":"/vsimem/root/another_layer/"}')
+    gdal.SetConfigOption('PL_URL', '/vsimem/root/')
+    ds = gdal.OpenEx('PLScenes:', gdal.OF_VECTOR, open_options = ['API_KEY=foo'])
+    gdal.SetConfigOption('PL_URL', None)
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/root')
+    gdal.Unlink('/vsimem/root/another_layer/?count=10')
+    gdal.Unlink('/vsimem/root/another_layer/?count=1000')
+
+    return 'success'
+
 gdaltest_list = [ 
     ogr_plscenes_1,
     ogr_plscenes_2,
-    ogr_plscenes_3 ]
+    ogr_plscenes_3,
+    ogr_plscenes_4 ]
 
 if __name__ == '__main__':
 
