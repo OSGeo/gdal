@@ -1527,19 +1527,25 @@ CPLErr GDALDataset::IRasterIO( GDALRWFlag eRWFlag,
 
         pabyBandData = ((GByte *) pData) + iBandIndex * nBandSpace;
 
-        psExtraArg->pfnProgress = GDALScaledProgress;
-        psExtraArg->pProgressData = 
-            GDALCreateScaledProgress( 1.0 * iBandIndex / nBandCount,
-                                      1.0 * (iBandIndex + 1) / nBandCount,
-                                      pfnProgressGlobal,
-                                      pProgressDataGlobal );
+        if( nBandCount > 1 )
+        {
+            psExtraArg->pfnProgress = GDALScaledProgress;
+            psExtraArg->pProgressData = 
+                GDALCreateScaledProgress( 1.0 * iBandIndex / nBandCount,
+                                        1.0 * (iBandIndex + 1) / nBandCount,
+                                        pfnProgressGlobal,
+                                        pProgressDataGlobal );
+            if( psExtraArg->pProgressData == NULL )
+                psExtraArg->pfnProgress = NULL;
+        }
 
         eErr = poBand->IRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize, 
                                   (void *) pabyBandData, nBufXSize, nBufYSize,
                                   eBufType, nPixelSpace, nLineSpace,
                                   psExtraArg );
 
-        GDALDestroyScaledProgress( psExtraArg->pProgressData );
+        if( nBandCount > 1 )
+            GDALDestroyScaledProgress( psExtraArg->pProgressData );
     }
     
     psExtraArg->pfnProgress = pfnProgressGlobal;

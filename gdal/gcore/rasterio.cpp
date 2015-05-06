@@ -3679,6 +3679,8 @@ CPLErr CPL_STDCALL GDALDatasetCopyWholeRaster(
                                                 (nBlocksDone + 0.5) / (double)nTotalBlocks,
                                                 pfnProgress,
                                                 pProgressData );
+                    if( sExtraArg.pProgressData == NULL )
+                        sExtraArg.pfnProgress = NULL;
 
                     eErr = poSrcDS->RasterIO( GF_Read, 
                                             iX, iY, nThisCols, nThisLines,
@@ -3742,6 +3744,8 @@ CPLErr CPL_STDCALL GDALDatasetCopyWholeRaster(
                                             (nBlocksDone + 0.5) / (double)nTotalBlocks,
                                             pfnProgress,
                                             pProgressData );
+                if( sExtraArg.pProgressData == NULL )
+                    sExtraArg.pfnProgress = NULL;
 
                 eErr = poSrcDS->RasterIO( GF_Read, 
                                         iX, iY, nThisCols, nThisLines,
