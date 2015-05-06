@@ -28,6 +28,7 @@
  ****************************************************************************/
 
 #include "ogr_plscenes.h"
+#include <algorithm>
 
 CPL_CVSID("$Id$");
 
@@ -67,13 +68,31 @@ static const PLAttribute apsAttrs[] = {
     { "sun.local_time_of_day",            OFTReal },
 };
 
+static bool OGRPLScenesLayerFieldNameComparator(const CPLString& osFirst,
+                                                const CPLString& osSecond)
+{
+    const char* pszUnderscore1 = strrchr(osFirst.c_str(), '_');
+    const char* pszUnderscore2 = strrchr(osSecond.c_str(), '_');
+    int val1, val2;
+    if( pszUnderscore1 && pszUnderscore2 &&
+        (CPLString(osFirst).substr(0, pszUnderscore1-osFirst.c_str()) ==
+         CPLString(osSecond).substr(0, pszUnderscore2-osSecond.c_str())) &&
+        sscanf(pszUnderscore1 + 1, "%d", &val1) == 1 &&
+        sscanf(pszUnderscore2 + 1, "%d", &val2) == 1 )
+    {
+        return val1 < val2;
+    }
+    return osFirst < osSecond;
+}
+
 /************************************************************************/
 /*                           OGRPLScenesLayer()                         */
 /************************************************************************/
 
 OGRPLScenesLayer::OGRPLScenesLayer(OGRPLScenesDataset* poDS,
-                           const char* pszName,
-                           const char* pszBaseURL)
+                                   const char* pszName,
+                                   const char* pszBaseURL,
+                                   json_object* poObjCount10)
 {
     this->poDS = poDS;
     osBaseURL = pszBaseURL;
@@ -99,6 +118,36 @@ OGRPLScenesLayer::OGRPLScenesLayer(OGRPLScenesDataset* poDS,
     bAcquiredAscending = -1;
     bFilterMustBeClientSideEvaluated = FALSE;
     ResetReading();
+    
+    if( poObjCount10 != NULL )
+    {
+        json_object* poCount = json_object_object_get(poObjCount10, "count");
+        if( poCount != NULL )
+            nFeatureCount = MAX(0, json_object_get_int64(poCount));
+
+        OGRGeoJSONDataSource* poTmpDS = new OGRGeoJSONDataSource();
+        OGRGeoJSONReader oReader;
+        oReader.SetFlattenNestedAttributes(true, '.');
+        oReader.ReadLayer( poTmpDS, "layer", poObjCount10 );
+        OGRLayer* poTmpLayer = poTmpDS->GetLayer(0);
+        if( poTmpLayer )
+        {
+            OGRFeatureDefn* poTmpFDefn = poTmpLayer->GetLayerDefn();
+            std::vector<CPLString> aosNewFields;
+            for(int i=0;i<poTmpFDefn->GetFieldCount();i++)
+            {
+                if( poFeatureDefn->GetFieldIndex(poTmpFDefn->GetFieldDefn(i)->GetNameRef()) < 0 )
+                    aosNewFields.push_back(poTmpFDefn->GetFieldDefn(i)->GetNameRef());
+            }
+            std::sort(aosNewFields.begin(), aosNewFields.end(), OGRPLScenesLayerFieldNameComparator);
+            for(int i=0;i<(int)aosNewFields.size();i++)
+            {
+                OGRFieldDefn oField(poTmpFDefn->GetFieldDefn(poTmpFDefn->GetFieldIndex(aosNewFields[i])));
+                poFeatureDefn->AddFieldDefn(&oField);
+            }
+        }
+        delete poTmpDS;
+    }
 }
 
 /************************************************************************/
@@ -551,7 +600,7 @@ OGRFeature* OGRPLScenesLayer::GetNextRawFeature()
         OGRFieldDefn* poFieldDefn = poFeatureDefn->GetFieldDefn(i);
         OGRFieldType eType = poFieldDefn->GetType();
         int iSrcField = poGeoJSONFeature->GetFieldIndex(poFieldDefn->GetNameRef());
-        if( iSrcField >= 0 )
+        if( iSrcField >= 0 && poGeoJSONFeature->IsFieldSet(iSrcField) )
         {
             if( eType == OFTInteger )
                 poFeature->SetField(i,

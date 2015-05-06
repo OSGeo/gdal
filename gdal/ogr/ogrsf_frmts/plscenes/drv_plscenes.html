@@ -14,7 +14,7 @@ GDAL/OGR must be built with Curl support in order for the
 PLScenes driver to be compiled.<p>
 
 The driver supports read-only operations to list scenes and their metadata
-as a vector layer (currently only "ortho"). It can also access raster scenes.<p>
+as a vector layer per scene type ("ortho" for example). It can also access raster scenes.<p>
 
 <h2>Dataset name syntax</h2>
 
@@ -58,7 +58,7 @@ The following configuration options are available :
 <h2>Attributes</h2>
 
 The <a href="https://www.planet.com/docs/v0/scenes/#metadata">scene metadata</a>
-are retrieved into the following feature fields :<p>
+are retrieved into the following feature fields for the "ortho" layer :<p>
 
 <table border="1">
 <tr><th>Name</th><th>Type</th><th>Description</th></tr>
@@ -91,6 +91,8 @@ are retrieved into the following feature fields :<p>
 <tr><td>sun.azimuth</td><td>Real</td><td>The azimuth (angle clockwise from north) of the sun from the imaged location at the time of capture in degrees.</td></tr>
 <tr><td>sun.local_time_of_day</td><td>Real</td><td>The local sun time at the imaged location at the time of capture (0-24).</td></tr>
 </table>
+
+For other layers / scene types, additional attributes may be retrieved.<p>
 
 <h3>Geometry</h3>
 
