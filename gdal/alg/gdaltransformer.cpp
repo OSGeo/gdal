@@ -2913,7 +2913,7 @@ static int GDALApproxTransformInternal( void *pCBData, int bDstToSrc, int nPoint
 /*      should implement iterative searching to find a result within    */
 /*      our error threshold.                                            */
 /*      NOTE: the above comment is not true: gdalwarp uses approximator */
-/*      for forward transforms.                                         */
+/*      also to compute the source pixel of each target pixel.          */
 /* -------------------------------------------------------------------- */
     for( i = nPoints-1; i >= 0; i-- )
     {
