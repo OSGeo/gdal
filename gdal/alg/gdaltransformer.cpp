@@ -1152,6 +1152,7 @@ static GDALGenImgProjTransformInfo* GDALCreateGenImgProjTransformerInternal()
  * to georef transformation on the destination dataset.
  * <li> RPC_HEIGHT: A fixed height to be used with RPC calculations.
  * <li> RPC_DEM: The name of a DEM file to be used with RPC calculations.
+ * <li> Other RPC related options. See GDALCreateRPCTransformer()
  * <li> INSERT_CENTER_LONG: May be set to FALSE to disable setting up a 
  * CENTER_LONG value on the coordinate system to rewrap things around the
  * center of the image.  
