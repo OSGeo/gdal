@@ -746,13 +746,16 @@ def ogr_plscenes_4():
         return 'fail'
     ds = None
 
-    gdal.FileFromMemBuffer('/vsimem/root', '{"ortho":"/vsimem/root/another_layer/"}')
+    gdal.FileFromMemBuffer('/vsimem/root', '{"another_layer":"/vsimem/root/another_layer/"}')
     gdal.SetConfigOption('PL_URL', '/vsimem/root/')
     ds = gdal.OpenEx('PLScenes:', gdal.OF_VECTOR, open_options = ['API_KEY=foo'])
     gdal.SetConfigOption('PL_URL', None)
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if f['prop_1'] != 'prop_1' or f['prop_10'] != 'prop_10':
         gdaltest.post_reason('fail')
         return 'fail'
     ds = None
