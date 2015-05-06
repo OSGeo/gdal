@@ -2912,13 +2912,29 @@ static int GDALApproxTransformInternal( void *pCBData, int bDstToSrc, int nPoint
 /*      approximation of the reverse transform.  Eventually we          */
 /*      should implement iterative searching to find a result within    */
 /*      our error threshold.                                            */
+/*      NOTE: the above comment is not true: gdalwarp uses approximator */
+/*      for forward transforms.                                         */
 /* -------------------------------------------------------------------- */
     for( i = nPoints-1; i >= 0; i-- )
     {
+#ifdef check_error
+        double xtemp = x[i], ytemp = y[i], ztemp = z[i];
+        double x_ori = xtemp, y_ori = ytemp;
+        int btemp;
+        psATInfo->pfnBaseTransformer( psATInfo->pBaseCBData, bDstToSrc,
+                                      1, &xtemp, &ytemp, &ztemp, &btemp);
+#endif
         dfDist = (x[i] - x[0]);
         x[i] = xSMETransformed[0] + dfDeltaX * dfDist;
         y[i] = ySMETransformed[0] + dfDeltaY * dfDist;
         z[i] = zSMETransformed[0] + dfDeltaZ * dfDist;
+#ifdef check_error
+        dfError = fabs(x[i] - xtemp) + fabs(y[i] - ytemp);
+        if( dfError > 4 /*10 * psATInfo->dfMaxError*/ )
+        {
+            printf("Error = %f on (%f, %f)\n", dfError,  x_ori, y_ori);
+        }
+#endif
         panSuccess[i] = TRUE;
     }
     
