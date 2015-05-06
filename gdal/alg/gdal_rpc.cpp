@@ -357,7 +357,7 @@ void* GDALCreateSimilarRPCTransformer( void *hTransformArg, double dfRatioX, dou
  * normally read from metadata using GDALExtractRPCInfo().  
  *
  * GDAL RPC Metadata has the following entries (also described in GDAL RFC 22
- * and the GeoTIFF RPC document http://geotiff.maptools.org/rpc_prop.html.  
+ * and the GeoTIFF RPC document http://geotiff.maptools.org/rpc_prop.html .  
  *
  * <ul>
  * <li>ERR_BIAS: Error - Bias. The RMS bias error in meters per horizontal axis of all points in the image (-1.0 if unknown)
