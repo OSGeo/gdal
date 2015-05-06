@@ -96,6 +96,7 @@ def ogr_plscenes_2():
 
     # Error cases
     for ortho_json in [ """{}""",
+                        '"valid_json_but_not_a_json_object"',
                         """{ invalid_json,""",
                         """{ "type": "FeatureCollection" }""",
                         """{ "type": "FeatureCollection", "count": -1 }""",
