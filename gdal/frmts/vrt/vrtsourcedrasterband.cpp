@@ -206,11 +206,13 @@ CPLErr VRTSourcedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
     for( iSource = 0; eErr == CE_None && iSource < nSources; iSource++ )
     {
         psExtraArg->pfnProgress = GDALScaledProgress;
-            psExtraArg->pProgressData = 
+        psExtraArg->pProgressData = 
                 GDALCreateScaledProgress( 1.0 * iSource / nSources,
                                         1.0 * (iSource + 1) / nSources,
                                         pfnProgressGlobal,
                                         pProgressDataGlobal );
+        if( psExtraArg->pProgressData == NULL )
+            psExtraArg->pfnProgress = NULL;
 
         eErr = 
             papoSources[iSource]->RasterIO( nXOff, nYOff, nXSize, nYSize, 
