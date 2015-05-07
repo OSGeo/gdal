@@ -374,8 +374,8 @@ OGRErr FGdbDriver::CommitTransaction(OGRDataSource*& poDSInOut, int& bOutHasReop
                  "Cannot rename %s to %s. Edited database during transaction is in %s"
                  "Dataset should be closed",
                  osName.c_str(), osTmpName.c_str(), osEditedName.c_str());
-        Release(osName);
         pConnection->SetLocked(FALSE);
+        Release(osName);
         return OGRERR_FAILURE;
     }
     
@@ -386,8 +386,8 @@ OGRErr FGdbDriver::CommitTransaction(OGRDataSource*& poDSInOut, int& bOutHasReop
                  "Cannot rename %s to %s. The original geodatabase is in '%s'. "
                  "Dataset should be closed",
                  osEditedName.c_str(), osName.c_str(), osTmpName.c_str());
-        Release(osName);
         pConnection->SetLocked(FALSE);
+        Release(osName);
         return OGRERR_FAILURE;
     }
 
@@ -404,9 +404,9 @@ OGRErr FGdbDriver::CommitTransaction(OGRDataSource*& poDSInOut, int& bOutHasReop
     {
         delete pConnection->m_pGeodatabase;
         pConnection->m_pGeodatabase = NULL;
+        pConnection->SetLocked(FALSE);
         Release(osName);
         GDBErr(hr, "Failed to re-open Geodatabase. Dataset should be closed");
-        pConnection->SetLocked(FALSE);
         return OGRERR_FAILURE;
     }
 
