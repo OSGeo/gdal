@@ -31,7 +31,7 @@ $nodata = -1;         # nodata value
 $dataset = Geo::GDAL::Driver($driver)->Create($name.$ext, $width, $height, $bands, $datatype);
 # Set the transformation matrix from pixels to projection, note minus in front of $dy
 $dataset->GeoTransform($minx, $dx, 0, $maxy, 0, -$dy);
-$dataset->Projection(Geo::OSR::SpatialReference->create(EPSG=>$epsg)->As('WKT'));
+$dataset->Projection(Geo::OSR::SpatialReference->new(EPSG=>$epsg)->As('WKT'));
 $band = $dataset->Band(1);
 $band->NoDataValue($nodata);
 
