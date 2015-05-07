@@ -82,7 +82,7 @@
 #
 # Usage:
 # \code
-# $sr = Geo::OSR::SpatialReference->create( key => value );
+# $sr = Geo::OSR::SpatialReference->new( key => value );
 # \endcode
 # @return a new Geo::OSR::SpatialReference object
 

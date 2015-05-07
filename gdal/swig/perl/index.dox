@@ -96,7 +96,7 @@ Geo::GDAL::Class::subroutine();
 The disctinction between class methods and subroutines is subtle but
 often important. The method invocation passes the class name as the
 first argument while the subroutine invocation does not. Especially
-constructors (new and create) must be called as class methods.
+constructor (new) must be called as a class method.
 
 Similar to methods, also attributes are either class attributes or
 object attributes. Class attributes are global variables that are
@@ -133,7 +133,7 @@ caught by signal \_\_WARN\_\_. Examples:
 
 \code
 eval {
-    $point = Geo::OGR::Geometry->create(WKT=>"POINTXX(1 1)");
+    $point = Geo::OGR::Geometry->new(WKT=>"POINTXX(1 1)");
 };
 print STDERR "Error: $@";
 \endcode

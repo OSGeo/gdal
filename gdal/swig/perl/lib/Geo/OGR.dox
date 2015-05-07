@@ -434,12 +434,12 @@
 
 ## @method CreateField(%params)
 # Create a field.
-# @param params as in Geo::OGR::FieldDefn::create or
-# Geo::OGR::GeomFieldDefn::create, plus ApproxOK (whose default is true).
+# @param params as in Geo::OGR::FieldDefn::new or
+# Geo::OGR::GeomFieldDefn::new, plus ApproxOK (whose default is true).
 
 ## @method AlterFieldDefn($name, %params)
 # @param field the name of the field to be altered.
-# @param params as in Geo::OGR::FieldDefn::create. Width and
+# @param params as in Geo::OGR::FieldDefn::new. Width and
 # Precision should be both or neither.
 # @note Only non-spatial fields can be altered.
 # @note Also the deprecated form AlterFieldDefn($field,
@@ -794,7 +794,7 @@
 # of the first spatial field.
 # @param geometry [optional] a Geo::OGR::Geometry object or a hash
 # array from which such can be created (using
-# Geo::OGR::Geometry::create)
+# Geo::OGR::Geometry::new)
 # @return in a non-void context the geometry in the feature
 # as a Geo::OGR::Geometry object.
 
@@ -860,7 +860,7 @@
 #
 # Example usage:
 # \code
-# $fd = Geo::OGR::FeatureDefn->create( 
+# $fd = Geo::OGR::FeatureDefn->new( 
 #     Name => "name",
 #     Fields => [{ Name => 'field1', Type => 'String' },
 #                { Name => 'geom', GeometryType => 'Point' }] );
@@ -1000,8 +1000,8 @@
 
 ## @method \%Schema(%params)
 # Get the schema or set parts of the schema
-# @param params [optional] as those in Geo::OGR::FieldDefn::create.
-# @return a reference to a hash whose keys are as those in Geo::OGR::FieldDefn::create.
+# @param params [optional] as those in Geo::OGR::FieldDefn::new.
+# @return a reference to a hash whose keys are as those in Geo::OGR::FieldDefn::new.
 
 ## @ignore GetName
 ## @ignore GetNameRef
@@ -1107,8 +1107,8 @@
 
 ## @method \%Schema(%params)
 # Get the schema or set parts of the schema.
-# @param params [optional] as those in Geo::OGR::GeomFieldDefn::create
-# @return a reference to a hash whose keys are as those in Geo::OGR::GeomFieldDefn::create
+# @param params [optional] as those in Geo::OGR::GeomFieldDefn::new.
+# @return a reference to a hash whose keys are as those in Geo::OGR::GeomFieldDefn::new.
 
 ## @method Type
 # @return the type of this geometry field. One of Geo::OGR::GeomFieldDefn::Types
@@ -1196,7 +1196,7 @@
 # @return a new Geo::OGR::Geometry object.
 # Usage:
 # \code
-# $g = Geo::OGR::Geometry->create(...arguments...);
+# $g = Geo::OGR::Geometry->new(...arguments...);
 # \endcode
 
 ## @cmethod Geo::OGR::Geometry ApproximateArcAngles(%params)
