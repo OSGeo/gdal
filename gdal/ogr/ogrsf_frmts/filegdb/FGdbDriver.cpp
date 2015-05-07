@@ -278,30 +278,35 @@ OGRErr FGdbDriver::StartTransaction(OGRDataSource*& poDSInOut, int& bOutHasReope
     delete pConnection->m_pGeodatabase;
     pConnection->m_pGeodatabase = NULL;
 
-    CPLString osBackupName(osName);
-    osBackupName += ".ogrbak";
+    CPLString osEditedName(osName);
+    osEditedName += ".ogredited";
 
     CPLPushErrorHandler(CPLQuietErrorHandler);
-    CPLUnlinkTree(osBackupName);
+    CPLUnlinkTree(osEditedName);
     CPLPopErrorHandler();
 
     OGRErr eErr = OGRERR_NONE;
+    CPLString osDatabaseToReopen;
     if( EQUAL(CPLGetConfigOption("FGDB_SIMUL_FAIL", ""), "CASE1") ||
-        CPLCopyTree( osBackupName, osName ) != 0 )
+        CPLCopyTree( osEditedName, osName ) != 0 )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Cannot backup geodatabase");
         eErr = OGRERR_FAILURE;
+        osDatabaseToReopen = osName;
     }
+    else
+        osDatabaseToReopen = osEditedName;
 
     pConnection->m_pGeodatabase = new Geodatabase;
-    long hr = ::OpenGeodatabase(StringToWString(osName), *(pConnection->m_pGeodatabase));
+    long hr = ::OpenGeodatabase(StringToWString(osDatabaseToReopen), *(pConnection->m_pGeodatabase));
     if( EQUAL(CPLGetConfigOption("FGDB_SIMUL_FAIL", ""), "CASE2") || FAILED(hr))
     {
         delete pConnection->m_pGeodatabase;
         pConnection->m_pGeodatabase = NULL;
         Release(osName);
-        GDBErr(hr, "Failed to re-open Geodatabase. Dataset should be closed");
+        GDBErr(hr, CPLSPrintf("Failed to open %s. Dataset should be closed",
+                              osDatabaseToReopen.c_str()));
 
         return OGRERR_FAILURE;
     }
@@ -325,6 +330,7 @@ OGRErr FGdbDriver::CommitTransaction(OGRDataSource*& poDSInOut, int& bOutHasReop
 
     bOutHasReopenedDS = FALSE;
 
+
     OGRMutexedDataSource* poMutexedDS = (OGRMutexedDataSource*)poDSInOut;
     FGdbDataSource* poDS = (FGdbDataSource* )poMutexedDS->GetBaseDataSource();
     FGdbDatabaseConnection* pConnection = poDS->GetConnection();
@@ -335,17 +341,81 @@ OGRErr FGdbDriver::CommitTransaction(OGRDataSource*& poDSInOut, int& bOutHasReop
         return OGRERR_FAILURE;
     }
 
+    bOutHasReopenedDS = TRUE;
+
     CPLString osName(poMutexedDS->GetName());
     if( osName[osName.size()-1] == '/' || osName[osName.size()-1] == '\\' )
         osName.resize(osName.size()-1);
 
-    CPLString osBackupName(osName);
-    osBackupName += ".ogrbak";
-    CPLPushErrorHandler(CPLQuietErrorHandler);
-    CPLUnlinkTree(osBackupName);
-    CPLPopErrorHandler();
+    pConnection->m_nRefCount ++;
+    delete poDSInOut;
+    poDSInOut = NULL;
+    poMutexedDS = NULL;
+    poDS = NULL;
+
+    ::CloseGeodatabase(*(pConnection->m_pGeodatabase));
+    delete pConnection->m_pGeodatabase;
+    pConnection->m_pGeodatabase = NULL;
+
+    CPLString osEditedName(osName);
+    osEditedName += ".ogredited";
+    CPLString osTmpName(osName);
+    osTmpName += ".ogrtmp";
+    
+    /* Install the backup copy as the main database in 3 steps : */
+    /* first rename the main directory  in .tmp */
+    /* then rename the edited copy under regular name */
+    /* and finally dispose the .tmp directory */
+    /* That way there's no risk definitely losing data */
+    if( EQUAL(CPLGetConfigOption("FGDB_SIMUL_FAIL", ""), "CASE1") || 
+        VSIRename(osName, osTmpName) != 0 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Cannot rename %s to %s. Edited database during transaction is in %s"
+                 "Dataset should be closed",
+                 osName.c_str(), osTmpName.c_str(), osEditedName.c_str());
+        Release(osName);
+        pConnection->SetLocked(FALSE);
+        return OGRERR_FAILURE;
+    }
+    
+    if( EQUAL(CPLGetConfigOption("FGDB_SIMUL_FAIL", ""), "CASE2") || 
+        VSIRename(osEditedName, osName) != 0 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Cannot rename %s to %s. The original geodatabase is in '%s'. "
+                 "Dataset should be closed",
+                 osEditedName.c_str(), osName.c_str(), osTmpName.c_str());
+        Release(osName);
+        pConnection->SetLocked(FALSE);
+        return OGRERR_FAILURE;
+    }
+
+    if( EQUAL(CPLGetConfigOption("FGDB_SIMUL_FAIL", ""), "CASE3") || 
+        CPLUnlinkTree(osTmpName) != 0 )
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "Cannot remove %s. Manual cleanup required", osTmpName.c_str());
+    }
+
+    pConnection->m_pGeodatabase = new Geodatabase;
+    long hr = ::OpenGeodatabase(StringToWString(osName), *(pConnection->m_pGeodatabase));
+    if( EQUAL(CPLGetConfigOption("FGDB_SIMUL_FAIL", ""), "CASE4") || FAILED(hr))
+    {
+        delete pConnection->m_pGeodatabase;
+        pConnection->m_pGeodatabase = NULL;
+        Release(osName);
+        GDBErr(hr, "Failed to re-open Geodatabase. Dataset should be closed");
+        pConnection->SetLocked(FALSE);
+        return OGRERR_FAILURE;
+    }
+
+    FGdbDataSource* pDS = new FGdbDataSource(this, pConnection);
+    pDS->Open(osName, TRUE);
+    poDSInOut = new OGRMutexedDataSource(pDS, TRUE, hMutex, TRUE);
 
     pConnection->SetLocked(FALSE);
+
     return OGRERR_NONE;
 }
 
@@ -369,8 +439,6 @@ OGRErr FGdbDriver::RollbackTransaction(OGRDataSource*& poDSInOut, int& bOutHasRe
         return OGRERR_FAILURE;
     }
 
-    pConnection->SetLocked(FALSE);
-
     bOutHasReopenedDS = TRUE;
 
     CPLString osName(poMutexedDS->GetName());
@@ -387,52 +455,26 @@ OGRErr FGdbDriver::RollbackTransaction(OGRDataSource*& poDSInOut, int& bOutHasRe
     delete pConnection->m_pGeodatabase;
     pConnection->m_pGeodatabase = NULL;
 
-    CPLString osBackupName(osName);
-    osBackupName += ".ogrbak";
-    CPLString osTmpName(osName);
-    osTmpName += ".ogrtmp";
-    
-    /* Restore the backup copy in 3 steps : */
-    /* first rename the active directory (the one that we want to discard) in .tmp */
-    /* then rename the backup copy (the one we want to restore) under regular name */
-    /* and finally dispose the .tmp directory */
-    /* That way there's no risk definitely losing data */
-    if( EQUAL(CPLGetConfigOption("FGDB_SIMUL_FAIL", ""), "CASE1") || 
-        VSIRename(osName, osTmpName) != 0 )
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Cannot rename %s to %s. The original geodatabase is supposed to be in '%s'. "
-                 "Dataset should be closed",
-                 osName.c_str(), osTmpName.c_str(), osBackupName.c_str());
-        Release(osName);
-        return OGRERR_FAILURE;
-    }
-    
-    if( EQUAL(CPLGetConfigOption("FGDB_SIMUL_FAIL", ""), "CASE2") || 
-        VSIRename(osBackupName, osName) != 0 )
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Cannot rename %s to %s. The original geodatabase is supposed to be in '%s'. "
-                 "Dataset should be closed",
-                 osBackupName.c_str(), osName.c_str(), osBackupName.c_str());
-        Release(osName);
-        return OGRERR_FAILURE;
-    }
+    CPLString osEditedName(osName);
+    osEditedName += ".ogredited";
 
-    if( EQUAL(CPLGetConfigOption("FGDB_SIMUL_FAIL", ""), "CASE3") || 
-        CPLUnlinkTree(osTmpName) != 0 )
+    OGRErr eErr = OGRERR_NONE;
+    if( EQUAL(CPLGetConfigOption("FGDB_SIMUL_FAIL", ""), "CASE1") || 
+        CPLUnlinkTree(osEditedName) != 0 )
     {
         CPLError(CE_Warning, CPLE_AppDefined,
-                 "Cannot remove %s. Manual cleanup required", osTmpName.c_str());
+                 "Cannot remove %s. Manual cleanup required", osEditedName.c_str());
+        eErr = OGRERR_FAILURE;
     }
 
     pConnection->m_pGeodatabase = new Geodatabase;
     long hr = ::OpenGeodatabase(StringToWString(osName), *(pConnection->m_pGeodatabase));
-    if (EQUAL(CPLGetConfigOption("FGDB_SIMUL_FAIL", ""), "CASE4") ||
+    if (EQUAL(CPLGetConfigOption("FGDB_SIMUL_FAIL", ""), "CASE2") ||
         FAILED(hr))
     {
         delete pConnection->m_pGeodatabase;
         pConnection->m_pGeodatabase = NULL;
+        pConnection->SetLocked(FALSE);
         Release(osName);
         GDBErr(hr, "Failed to re-open Geodatabase. Dataset should be closed");
         return OGRERR_FAILURE;
@@ -442,7 +484,9 @@ OGRErr FGdbDriver::RollbackTransaction(OGRDataSource*& poDSInOut, int& bOutHasRe
     pDS->Open(osName, TRUE);
     poDSInOut = new OGRMutexedDataSource(pDS, TRUE, hMutex, TRUE);
 
-    return OGRERR_NONE;
+    pConnection->SetLocked(FALSE);
+
+    return eErr;
 }
 
 /***********************************************************************/
