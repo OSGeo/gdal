@@ -1199,9 +1199,13 @@ int VRTDataset::CheckCompatibleForDatasetIO()
                 VRTSimpleSource* poSource = (VRTSimpleSource* )papoSources[iSource];
                 if (!EQUAL(poSource->GetType(), "SimpleSource"))
                     return FALSE;
-                if (poSource->GetBand() == NULL)
+
+                GDALRasterBand *srcband = poSource->GetBand();
+                if (srcband == NULL)
                     return FALSE;
-                if (poSource->GetBand()->GetBand() != iBand + 1)
+                if (srcband->GetDataset() == NULL)
+                    return FALSE;
+                if (srcband->GetDataset()->GetRasterBand(iBand + 1) != srcband)
                     return FALSE;
                 osResampling = poSource->GetResampling();
             }
@@ -1220,9 +1224,13 @@ int VRTDataset::CheckCompatibleForDatasetIO()
                     return FALSE;
                 if (!poSource->IsSameExceptBandNumber(poRefSource))
                     return FALSE;
-                if (poSource->GetBand() == NULL)
+
+                GDALRasterBand *srcband = poSource->GetBand();
+                if (srcband == NULL)
                     return FALSE;
-                if (poSource->GetBand()->GetBand() != iBand + 1)
+                if (srcband->GetDataset() == NULL)
+                    return FALSE;
+                if (srcband->GetDataset()->GetRasterBand(iBand + 1) != srcband)
                     return FALSE;
                 if (osResampling.compare(poSource->GetResampling()) != 0)
                     return FALSE;
