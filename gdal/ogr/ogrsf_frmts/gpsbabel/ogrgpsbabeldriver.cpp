@@ -196,8 +196,13 @@ void RegisterOGRGPSBabel()
         poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
 "<OpenOptionList>"
 "  <Option name='FILENAME' type='string' description='Filename to open'/>"
-"  <Option name='DRIVER' type='string' description='Name of the GPSBabel to use'/>"
+"  <Option name='GPSBABEL_DRIVER' type='string' description='Name of the GPSBabel to use'/>"
 "</OpenOptionList>");
+
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
+"<CreationOptionList>"
+"  <Option name='GPSBABEL_DRIVER' type='string' description='Name of the GPSBabel to use'/>"
+"</CreationOptionList>");
 
         poDriver->pfnOpen = OGRGPSBabelDriverOpen;
         poDriver->pfnIdentify = OGRGPSBabelDriverIdentify;

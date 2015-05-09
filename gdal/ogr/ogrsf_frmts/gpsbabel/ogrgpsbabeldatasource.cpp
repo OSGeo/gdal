@@ -168,7 +168,7 @@ int OGRGPSBabelDataSource::Open( const char * pszDatasourceName,
             pszFilename = CPLStrdup(CSLFetchNameValue(papszOpenOptions,
                                                       "FILENAME"));
 
-        if( CSLFetchNameValue(papszOpenOptions, "DRIVER") )
+        if( CSLFetchNameValue(papszOpenOptions, "GPSBABEL_DRIVER") )
         {
             if( pszFilename == NULL )
             {
