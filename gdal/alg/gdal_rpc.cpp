@@ -921,7 +921,7 @@ static int GDALRPCTransformWholeLineWithDEM( GDALRPCTransformInfo *psTransform,
                 }
                 if( bFoundNoDataElev )
                 {
-                    if( k_valid_sample )
+                    if( k_valid_sample >= 0 )
                     {
                         dfDEMH = adfElevData[k_valid_sample];
                         RPCTransformPoint( psRPC, padfX[i], padfY[i], 
