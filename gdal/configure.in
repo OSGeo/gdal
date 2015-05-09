@@ -4025,6 +4025,7 @@ elif test "x$with_python" != "x" -a "$with_python" != "no" ; then
   fi
   AC_MSG_RESULT([enabled])
 else
+  PYTHON=""
   AC_MSG_RESULT([disabled])
 fi
 
