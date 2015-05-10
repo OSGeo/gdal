@@ -89,26 +89,6 @@ class CPL_DLL IOGRTransactionBehaviour
         */
        virtual OGRErr RollbackTransaction(OGRDataSource*& poDSInOut,
                                           int& bOutHasReopenedDS) = 0;
-
-        /** Ask a layer to re-"adopt" its previous feature definition object.
-        *
-        * The aim is that the user doesn't see visible object changes.
-        *
-        * This method is called if StartTransaction(), CommitTransaction() or
-        * RollbackTransaction() has closed and reopened a datasource.
-        *
-        * The implementation os the method should drop the reference to feature
-        * definition object it may have currently, assign the poFeatureDefn as
-        * its current definition object, and take a new reference on it.
-        *
-        * The passed poFeatureDefn object is supposed to be the "same" as
-        * the one the layer has currently (as verified with IsSame()) since
-        * the emulated datasource wrapper prevents layer structural modifications
-        * in cases where the user has already called GetLayerDefn()
-        */
-        virtual void   ReadoptOldFeatureDefn(OGRDataSource* poDS,
-                                            OGRLayer* poLayer,
-                                            OGRFeatureDefn* poFeatureDefn) = 0;    
 };
 
 
