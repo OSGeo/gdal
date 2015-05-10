@@ -58,6 +58,15 @@ class OGRLayerWithTransaction: public OGRLayerDecorator
     virtual OGRErr      DeleteField( int iField );
     virtual OGRErr      ReorderFields( int* panMap );
     virtual OGRErr      AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nFlags );
+
+    virtual OGRErr      CreateGeomField( OGRGeomFieldDefn *poField,
+                                     int bApproxOK = TRUE );
+
+    virtual OGRFeature *GetNextFeature();
+    virtual OGRFeature *GetFeature( GIntBig nFID );
+    virtual OGRErr      ISetFeature( OGRFeature *poFeature );
+    virtual OGRErr      ICreateFeature( OGRFeature *poFeature );
+  
 };
 
 
@@ -494,11 +503,11 @@ OGRFeatureDefn *OGRLayerWithTransaction::GetLayerDefn()
         }
         return m_poFeatureDefn;
     }
-    if( m_poFeatureDefn == NULL )
+    else if( m_poFeatureDefn == NULL )
     {
-        m_poFeatureDefn = m_poDecoratedLayer->GetLayerDefn();
-        if( m_poFeatureDefn )
-            m_poFeatureDefn->Reference();
+        OGRFeatureDefn* poSrcFeatureDefn = m_poDecoratedLayer->GetLayerDefn();
+        m_poFeatureDefn = poSrcFeatureDefn->Clone();
+        m_poFeatureDefn->Reference();
     }
     return m_poFeatureDefn;
 }
@@ -507,37 +516,44 @@ OGRErr      OGRLayerWithTransaction::CreateField( OGRFieldDefn *poField,
                                             int bApproxOK )
 {
     if( !m_poDecoratedLayer ) return OGRERR_FAILURE;
-    if( m_poFeatureDefn != NULL && m_poDS->IsInTransaction() )
+    int nFields = m_poDecoratedLayer->GetLayerDefn()->GetFieldCount();
+    OGRErr eErr = m_poDecoratedLayer->CreateField(poField, bApproxOK);
+    if( m_poFeatureDefn && eErr == OGRERR_NONE && m_poDecoratedLayer->GetLayerDefn()->GetFieldCount() == nFields + 1 )
     {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "Layer structural changes not allowed within emulated transaction");
-        return OGRERR_FAILURE;
+        m_poFeatureDefn->AddFieldDefn( m_poDecoratedLayer->GetLayerDefn()->GetFieldDefn(nFields) );
     }
-    return m_poDecoratedLayer->CreateField(poField, bApproxOK);
+    return eErr;
+}
+
+OGRErr      OGRLayerWithTransaction::CreateGeomField( OGRGeomFieldDefn *poField,
+                                            int bApproxOK )
+{
+    if( !m_poDecoratedLayer ) return OGRERR_FAILURE;
+    int nFields = m_poDecoratedLayer->GetLayerDefn()->GetGeomFieldCount();
+    OGRErr eErr = m_poDecoratedLayer->CreateGeomField(poField, bApproxOK);
+    if( m_poFeatureDefn && eErr == OGRERR_NONE && m_poDecoratedLayer->GetLayerDefn()->GetGeomFieldCount() == nFields + 1 )
+    {
+        m_poFeatureDefn->AddGeomFieldDefn( m_poDecoratedLayer->GetLayerDefn()->GetGeomFieldDefn(nFields) );
+    }
+    return eErr;
 }
 
 OGRErr      OGRLayerWithTransaction::DeleteField( int iField )
 {
     if( !m_poDecoratedLayer ) return OGRERR_FAILURE;
-    if( m_poFeatureDefn != NULL && m_poDS->IsInTransaction() )
-    {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "Layer structural changes not allowed within emulated transaction");
-        return OGRERR_FAILURE;
-    }
-    return m_poDecoratedLayer->DeleteField(iField);
+    OGRErr eErr = m_poDecoratedLayer->DeleteField(iField);
+    if( m_poFeatureDefn && eErr == OGRERR_NONE )
+        m_poFeatureDefn->DeleteFieldDefn(iField);
+    return eErr;
 }
 
 OGRErr      OGRLayerWithTransaction::ReorderFields( int* panMap )
 {
     if( !m_poDecoratedLayer ) return OGRERR_FAILURE;
-    if( m_poFeatureDefn != NULL && m_poDS->IsInTransaction() )
-    {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "Layer structural changes not allowed within emulated transaction");
-        return OGRERR_FAILURE;
-    }
-    return m_poDecoratedLayer->ReorderFields(panMap);
+    OGRErr eErr = m_poDecoratedLayer->ReorderFields(panMap);
+    if( m_poFeatureDefn && eErr == OGRERR_NONE )
+        m_poFeatureDefn->ReorderFieldDefns(panMap);
+    return eErr;
 }
 
 OGRErr      OGRLayerWithTransaction::AlterFieldDefn( int iField,
@@ -545,12 +561,68 @@ OGRErr      OGRLayerWithTransaction::AlterFieldDefn( int iField,
                                                      int nFlags )
 {
     if( !m_poDecoratedLayer ) return OGRERR_FAILURE;
-    if( m_poFeatureDefn != NULL && m_poDS->IsInTransaction() )
+    OGRErr eErr = m_poDecoratedLayer->AlterFieldDefn(iField, poNewFieldDefn, nFlags);
+    if( m_poFeatureDefn && eErr == OGRERR_NONE )
     {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "Layer structural changes not allowed within emulated transaction");
-        return OGRERR_FAILURE;
+        OGRFieldDefn* poSrcFieldDefn = m_poDecoratedLayer->GetLayerDefn()->GetFieldDefn(iField);
+        OGRFieldDefn* poDstFieldDefn = m_poFeatureDefn->GetFieldDefn(iField);
+        poDstFieldDefn->SetName(poSrcFieldDefn->GetNameRef());
+        poDstFieldDefn->SetType(poSrcFieldDefn->GetType());
+        poDstFieldDefn->SetSubType(poSrcFieldDefn->GetSubType());
+        poDstFieldDefn->SetWidth(poSrcFieldDefn->GetWidth());
+        poDstFieldDefn->SetPrecision(poSrcFieldDefn->GetPrecision());
+        poDstFieldDefn->SetDefault(poSrcFieldDefn->GetDefault());
+        poDstFieldDefn->SetNullable(poSrcFieldDefn->IsNullable());
     }
-    return m_poDecoratedLayer->AlterFieldDefn(iField, poNewFieldDefn, nFlags);
+    return eErr;
+}
+
+OGRFeature * OGRLayerWithTransaction::GetNextFeature()
+{
+    if( !m_poDecoratedLayer ) return NULL;
+    OGRFeature* poSrcFeature = m_poDecoratedLayer->GetNextFeature();
+    if( !poSrcFeature )
+        return NULL;
+    OGRFeature* poFeature = new OGRFeature(GetLayerDefn());
+    poFeature->SetFrom(poSrcFeature);
+    poFeature->SetFID(poSrcFeature->GetFID());
+    delete poSrcFeature;
+    return poFeature;
+}
+
+OGRFeature * OGRLayerWithTransaction::GetFeature( GIntBig nFID )
+{
+    if( !m_poDecoratedLayer ) return NULL;
+    OGRFeature* poSrcFeature = m_poDecoratedLayer->GetFeature(nFID);
+    if( !poSrcFeature )
+        return NULL;
+    OGRFeature* poFeature = new OGRFeature(GetLayerDefn());
+    poFeature->SetFrom(poSrcFeature);
+    poFeature->SetFID(poSrcFeature->GetFID());
+    delete poSrcFeature;
+    return poFeature;
+}
+
+OGRErr       OGRLayerWithTransaction::ISetFeature( OGRFeature *poFeature )
+{
+    if( !m_poDecoratedLayer ) return OGRERR_FAILURE;
+    OGRFeature* poSrcFeature = new OGRFeature(m_poDecoratedLayer->GetLayerDefn());
+    poSrcFeature->SetFrom(poFeature);
+    poSrcFeature->SetFID(poFeature->GetFID());
+    OGRErr eErr = m_poDecoratedLayer->SetFeature(poSrcFeature);
+    delete poSrcFeature;
+    return eErr;
+}
+
+OGRErr       OGRLayerWithTransaction::ICreateFeature( OGRFeature *poFeature )
+{
+    if( !m_poDecoratedLayer ) return OGRERR_FAILURE;
+    OGRFeature* poSrcFeature = new OGRFeature(m_poDecoratedLayer->GetLayerDefn());
+    poSrcFeature->SetFrom(poFeature);
+    poSrcFeature->SetFID(poFeature->GetFID());
+    OGRErr eErr = m_poDecoratedLayer->CreateFeature(poSrcFeature);
+    poFeature->SetFID(poSrcFeature->GetFID());
+    delete poSrcFeature;
+    return eErr;
 }
 

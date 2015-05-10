@@ -1209,23 +1209,23 @@ def ogr_fgdb_19():
     except:
         pass
 
-    # Cannot modify the layer structure if the layer defn has already been fetched by user
-    gdal.PushErrorHandler()
     ret = lyr.CreateField(ogr.FieldDefn('foobar', ogr.OFTString))
-    gdal.PopErrorHandler()
-    if ret == 0:
+    if ret != 0:
         gdaltest.post_reason('fail')
         return 'fail'
 
-    # Cannot modify the layer structure if the layer defn has already been fetched by user
+    ret = lyr.DeleteField(lyr.GetLayerDefn().GetFieldIndex('foobar'))
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
     gdal.PushErrorHandler()
-    ret = lyr.DeleteField(0)
+    ret = lyr.CreateGeomField(ogr.GeomFieldDefn('foobar', ogr.wkbPoint))
     gdal.PopErrorHandler()
     if ret == 0:
         gdaltest.post_reason('fail')
         return 'fail'
 
-    # Cannot modify the layer structure if the layer defn has already been fetched by user
     gdal.PushErrorHandler()
     ret = lyr.ReorderFields([i for i in range(lyr.GetLayerDefn().GetFieldCount())])
     gdal.PopErrorHandler()
@@ -1233,7 +1233,6 @@ def ogr_fgdb_19():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    # Cannot modify the layer structure if the layer defn has already been fetched by user
     gdal.PushErrorHandler()
     ret = lyr.AlterFieldDefn(0, ogr.FieldDefn('foo', ogr.OFTString), 0)
     gdal.PopErrorHandler()
@@ -1242,7 +1241,23 @@ def ogr_fgdb_19():
         return 'fail'
 
     f = ogr.Feature(lyr_defn)
+    f.SetField('field_string', 'foo')
     lyr.CreateFeature(f)
+    lyr.SetFeature(f)
+    fid = f.GetFID()
+    if fid != 2:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    lyr.ResetReading()
+    f = lyr.GetNextFeature()
+    f = lyr.GetNextFeature()
+    if f.GetFID() != 2 or f.GetField('field_string') != 'foo':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = lyr.GetFeature(2)
+    if f.GetFID() != 2 or f.GetField('field_string') != 'foo':
+        gdaltest.post_reason('fail')
+        return 'fail'
     
     f = ogr.Feature(layer_created_before_transaction_defn)
     layer_created_before_transaction.CreateFeature(f)
