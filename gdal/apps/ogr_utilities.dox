@@ -299,6 +299,10 @@ Advanced options :
 <dt> <b>-gt</b> <em>n</em>:</dt><dd> group <em>n</em> features per transaction (default 20000 in OGR 1.11, 200 in previous releases). Increase the value
 for better performance when writing into DBMS drivers that have transaction support. Starting with GDAL 2.0,
 n can be set to unlimited to load the data into a single transaction.</dd>
+<dt> <b>-ds_transaction</b>:</dt><dd>(starting with GDAL 2.0) Force the use of
+a dataset level transaction (for drivers that support such mechanism),
+especially for drivers such as FileGDB that only support dataset level transaction
+in emulation mode.</dd>
 <dt> <b>-clipsrc</b><em> [xmin ymin xmax ymax]|WKT|datasource|spat_extent</em>:
 </dt><dd> (starting with GDAL 1.7.0) clip geometries to the specified bounding
 box (expressed in source SRS), WKT geometry (POLYGON or MULTIPOLYGON), from a
