@@ -223,25 +223,8 @@ void OGRDataSourceWithTransaction::RemapLayers()
             poWrappedLayer->m_poDecoratedLayer = NULL;
         else
         {
-            OGRFeatureDefn* poOldFeatureDefn = poWrappedLayer->m_poFeatureDefn;
             poWrappedLayer->m_poDecoratedLayer =
                 m_poBaseDataSource->GetLayerByName(poWrappedLayer->GetName());
-            if( poOldFeatureDefn != NULL )
-            {
-                if( poWrappedLayer->m_poDecoratedLayer != NULL )
-                {
-#ifdef DEBUG
-                    int nRefCount = poOldFeatureDefn->GetReferenceCount();
-#endif
-                    m_poTransactionBehaviour->ReadoptOldFeatureDefn(m_poBaseDataSource,
-                                                                    poWrappedLayer->m_poDecoratedLayer,
-                                                                    poOldFeatureDefn);
-#ifdef DEBUG
-                    CPLAssert(poWrappedLayer->m_poDecoratedLayer->GetLayerDefn() == poOldFeatureDefn);
-                    CPLAssert(poOldFeatureDefn->GetReferenceCount() == nRefCount + 1 );
-#endif
-                }
-            }
         }
     }
     m_oMapLayers.clear();

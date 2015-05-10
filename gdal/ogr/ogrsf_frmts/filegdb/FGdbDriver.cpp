@@ -490,18 +490,6 @@ OGRErr FGdbDriver::RollbackTransaction(OGRDataSource*& poDSInOut, int& bOutHasRe
 }
 
 /***********************************************************************/
-/*                       ReadoptOldFeatureDefn()                       */
-/***********************************************************************/
-
-void FGdbDriver::ReadoptOldFeatureDefn(CPL_UNUSED OGRDataSource* poDS,
-                                       OGRLayer* poLayer,
-                                       OGRFeatureDefn* poFeatureDefn)
-{
-    FGdbLayer* poFGdbLayer = (FGdbLayer* )((OGRMutexedLayer*)poLayer)->GetBaseLayer();
-    poFGdbLayer->ReadoptOldFeatureDefn(poFeatureDefn);
-}
-
-/***********************************************************************/
 /*                            Release()                                */
 /***********************************************************************/
 
