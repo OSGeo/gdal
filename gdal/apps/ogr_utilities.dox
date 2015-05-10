@@ -297,7 +297,8 @@ Advanced options :
 <dt> <b>-oo</b> <em>NAME=VALUE</em>:</dt><dd>(starting with GDAL 2.0) Input dataset open option (format specific)</dd>
 <dt> <b>-doo</b> <em>NAME=VALUE</em>:</dt><dd>(starting with GDAL 2.0) Destination dataset open option (format specific), only valid in -update mode</dd>
 <dt> <b>-gt</b> <em>n</em>:</dt><dd> group <em>n</em> features per transaction (default 20000 in OGR 1.11, 200 in previous releases). Increase the value
-for better performance when writing into DBMS drivers that have transaction support.</dd>
+for better performance when writing into DBMS drivers that have transaction support. Starting with GDAL 2.0,
+n can be set to unlimited to load the data into a single transaction.</dd>
 <dt> <b>-clipsrc</b><em> [xmin ymin xmax ymax]|WKT|datasource|spat_extent</em>:
 </dt><dd> (starting with GDAL 1.7.0) clip geometries to the specified bounding
 box (expressed in source SRS), WKT geometry (POLYGON or MULTIPOLYGON), from a
