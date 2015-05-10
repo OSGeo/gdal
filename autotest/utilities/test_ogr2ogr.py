@@ -2445,6 +2445,27 @@ def test_ogr2ogr_59():
 
     return 'success'
 
+###############################################################################
+# Test forced datasource transactions
+
+def test_ogr2ogr_60():
+    if test_cli_utilities.get_ogr2ogr_path() is None:
+        return 'skip'
+    if ogr.GetDriverByName('FileGDB') is None:
+        return 'skip'
+
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -ds_transaction -f FileGDB tmp/test_ogr2ogr_60.gdb ../ogr/data/poly.shp -mapFieldType Integer64=Integer')
+
+    ds = ogr.Open('tmp/test_ogr2ogr_60.gdb')
+    lyr = ds.GetLayer(0)
+    if lyr.GetFeatureCount() != 10:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    ogr.GetDriverByName('FileGDB').DeleteDataSource('tmp/test_ogr2ogr_60.gdb')
+
+    return 'success'
 
 gdaltest_list = [
     test_ogr2ogr_1,
@@ -2506,7 +2527,8 @@ gdaltest_list = [
     test_ogr2ogr_56,
     test_ogr2ogr_57,
     test_ogr2ogr_58,
-    test_ogr2ogr_59
+    test_ogr2ogr_59,
+    test_ogr2ogr_60
     ]
 
 if __name__ == '__main__':
