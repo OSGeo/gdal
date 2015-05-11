@@ -180,6 +180,8 @@ int OGRMSSQLSpatialDataSource::DeleteLayer( int iLayer )
 
     CPLDebug( "MSSQLSpatial", "DeleteLayer(%s)", pszTableName );
 
+    papoLayers[iLayer]->SetSpatialIndexFlag(FALSE);
+
     delete papoLayers[iLayer];
     memmove( papoLayers + iLayer, papoLayers + iLayer + 1,
              sizeof(void *) * (nLayers - iLayer - 1) );
