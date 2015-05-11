@@ -1147,7 +1147,7 @@ OGRErr OGRMSSQLSpatialTableLayer::ICreateFeature( OGRFeature *poFeature )
 /*      Form the INSERT command.                                        */
 /* -------------------------------------------------------------------- */
 
-    oStatement.Appendf( "INSERT INTO [%s].[%s] (", pszSchemaName, pszTableName );
+    oStatement.Appendf( "INSERT INTO [%s].[%s] ", pszSchemaName, pszTableName );
 
     OGRMSSQLGeometryValidator oValidator(poFeature->GetGeometryRef());
     OGRGeometry *poGeom = oValidator.GetValidGeometryRef();
@@ -1162,7 +1162,9 @@ OGRErr OGRMSSQLSpatialTableLayer::ICreateFeature( OGRFeature *poFeature )
 
     if (poGeom != NULL && pszGeomColumn != NULL)
     {
+        oStatement.Append("([");
         oStatement.Append( pszGeomColumn );
+        oStatement.Append("]");
         bNeedComma = TRUE;
     }
 
@@ -1182,7 +1184,7 @@ OGRErr OGRMSSQLSpatialTableLayer::ICreateFeature( OGRFeature *poFeature )
             oStatement.Appendf( ", [%s]", pszFIDColumn );
         else
         {
-            oStatement.Appendf( "[%s]", pszFIDColumn );
+            oStatement.Appendf( "([%s]", pszFIDColumn );
             bNeedComma = TRUE;
         }
     }
@@ -1202,127 +1204,135 @@ OGRErr OGRMSSQLSpatialTableLayer::ICreateFeature( OGRFeature *poFeature )
             oStatement.Appendf( ", [%s]", poFeatureDefn->GetFieldDefn(i)->GetNameRef() );
         else
         {
-            oStatement.Appendf( "[%s]", poFeatureDefn->GetFieldDefn(i)->GetNameRef() );
+            oStatement.Appendf( "([%s]", poFeatureDefn->GetFieldDefn(i)->GetNameRef() );
             bNeedComma = TRUE;
         }
     }
 
-    oStatement.Appendf( ") VALUES (" );
-
-    /* Set the geometry */
-    bNeedComma = FALSE;
-    if(poGeom != NULL && pszGeomColumn != NULL)
+    if (oStatement.GetCommand()[strlen(oStatement.GetCommand()) - 1] != ']')
     {
-        if (nUploadGeometryFormat == MSSQLGEOMETRY_WKB)
+        /* no fields were added */
+        oStatement.Appendf( "DEFAULT VALUES;" );
+    }
+    else
+    {
+        oStatement.Appendf( ") VALUES (" );
+
+        /* Set the geometry */
+        bNeedComma = FALSE;
+        if(poGeom != NULL && pszGeomColumn != NULL)
         {
-            int nWKBLen = poGeom->WkbSize();
-            GByte *pabyWKB = (GByte *) CPLMalloc(nWKBLen + 1);
-        
-            if( poGeom->exportToWkb( wkbNDR, pabyWKB ) == OGRERR_NONE && (nGeomColumnType == MSSQLCOLTYPE_GEOMETRY 
-                || nGeomColumnType == MSSQLCOLTYPE_GEOGRAPHY))
+            if (nUploadGeometryFormat == MSSQLGEOMETRY_WKB)
             {
-                int nRetCode = SQLBindParameter(oStatement.GetStatement(), (SQLUSMALLINT)(bind_num + 1), 
-                    SQL_PARAM_INPUT, SQL_C_BINARY, SQL_LONGVARBINARY, 
-                    nWKBLen, 0, (SQLPOINTER)pabyWKB, nWKBLen, (SQLLEN*)&nWKBLen);
-                if ( nRetCode == SQL_SUCCESS || nRetCode == SQL_SUCCESS_WITH_INFO )
+                int nWKBLen = poGeom->WkbSize();
+                GByte *pabyWKB = (GByte *) CPLMalloc(nWKBLen + 1);
+        
+                if( poGeom->exportToWkb( wkbNDR, pabyWKB ) == OGRERR_NONE && (nGeomColumnType == MSSQLCOLTYPE_GEOMETRY 
+                    || nGeomColumnType == MSSQLCOLTYPE_GEOGRAPHY))
                 {
-                    if (nGeomColumnType == MSSQLCOLTYPE_GEOGRAPHY)
+                    int nRetCode = SQLBindParameter(oStatement.GetStatement(), (SQLUSMALLINT)(bind_num + 1), 
+                        SQL_PARAM_INPUT, SQL_C_BINARY, SQL_LONGVARBINARY, 
+                        nWKBLen, 0, (SQLPOINTER)pabyWKB, nWKBLen, (SQLLEN*)&nWKBLen);
+                    if ( nRetCode == SQL_SUCCESS || nRetCode == SQL_SUCCESS_WITH_INFO )
                     {
-                        oStatement.Append( "geography::STGeomFromWKB(?" );
-                        oStatement.Appendf(",%d)", nSRSId );
+                        if (nGeomColumnType == MSSQLCOLTYPE_GEOGRAPHY)
+                        {
+                            oStatement.Append( "geography::STGeomFromWKB(?" );
+                            oStatement.Appendf(",%d)", nSRSId );
+                        }
+                        else
+                        {
+                            oStatement.Append( "geometry::STGeomFromWKB(?" );
+                            oStatement.Appendf(",%d).MakeValid()", nSRSId );
+                        }    
+                        bind_buffer[bind_num] = pabyWKB;
+                        ++bind_num;
                     }
                     else
                     {
-                        oStatement.Append( "geometry::STGeomFromWKB(?" );
-                        oStatement.Appendf(",%d).MakeValid()", nSRSId );
-                    }    
-                    bind_buffer[bind_num] = pabyWKB;
-                    ++bind_num;
+                        oStatement.Append( "null" );
+                        CPLFree(pabyWKB);
+                    }           
                 }
                 else
                 {
                     oStatement.Append( "null" );
                     CPLFree(pabyWKB);
-                }           
+                }
             }
-            else
+            else if (nUploadGeometryFormat == MSSQLGEOMETRY_WKT)
             {
-                oStatement.Append( "null" );
-                CPLFree(pabyWKB);
-            }
-        }
-        else if (nUploadGeometryFormat == MSSQLGEOMETRY_WKT)
-        {
-            char    *pszWKT = NULL;
-            if( poGeom->exportToWkt( &pszWKT ) == OGRERR_NONE && (nGeomColumnType == MSSQLCOLTYPE_GEOMETRY 
-                || nGeomColumnType == MSSQLCOLTYPE_GEOGRAPHY))
-            {
-                size_t nLen = 0;
-                while(pszWKT[nLen] != '\0')
-                    nLen ++;
-                
-                int nRetCode = SQLBindParameter(oStatement.GetStatement(), (SQLUSMALLINT)(bind_num + 1), 
-                    SQL_PARAM_INPUT, SQL_C_CHAR, SQL_LONGVARCHAR, 
-                    nLen, 0, (SQLPOINTER)pszWKT, 0, NULL);
-                if ( nRetCode == SQL_SUCCESS || nRetCode == SQL_SUCCESS_WITH_INFO )
+                char    *pszWKT = NULL;
+                if( poGeom->exportToWkt( &pszWKT ) == OGRERR_NONE && (nGeomColumnType == MSSQLCOLTYPE_GEOMETRY 
+                    || nGeomColumnType == MSSQLCOLTYPE_GEOGRAPHY))
                 {
-                    if (nGeomColumnType == MSSQLCOLTYPE_GEOGRAPHY)
+                    size_t nLen = 0;
+                    while(pszWKT[nLen] != '\0')
+                        nLen ++;
+                
+                    int nRetCode = SQLBindParameter(oStatement.GetStatement(), (SQLUSMALLINT)(bind_num + 1), 
+                        SQL_PARAM_INPUT, SQL_C_CHAR, SQL_LONGVARCHAR, 
+                        nLen, 0, (SQLPOINTER)pszWKT, 0, NULL);
+                    if ( nRetCode == SQL_SUCCESS || nRetCode == SQL_SUCCESS_WITH_INFO )
                     {
-                        oStatement.Append( "geography::STGeomFromText(?" );
-                        oStatement.Appendf(",%d)", nSRSId );
+                        if (nGeomColumnType == MSSQLCOLTYPE_GEOGRAPHY)
+                        {
+                            oStatement.Append( "geography::STGeomFromText(?" );
+                            oStatement.Appendf(",%d)", nSRSId );
+                        }
+                        else
+                        {
+                            oStatement.Append( "geometry::STGeomFromText(?" );
+                            oStatement.Appendf(",%d).MakeValid()", nSRSId );
+                        }    
+                        bind_buffer[bind_num] = pszWKT;
+                        ++bind_num;
                     }
                     else
                     {
-                        oStatement.Append( "geometry::STGeomFromText(?" );
-                        oStatement.Appendf(",%d).MakeValid()", nSRSId );
-                    }    
-                    bind_buffer[bind_num] = pszWKT;
-                    ++bind_num;
+                        oStatement.Append( "null" );
+                        CPLFree(pszWKT);
+                    }           
                 }
                 else
                 {
                     oStatement.Append( "null" );
                     CPLFree(pszWKT);
-                }           
+                }
             }
             else
-            {
                 oStatement.Append( "null" );
-                CPLFree(pszWKT);
+
+            bNeedComma = TRUE;
+        }
+
+        /* Set the FID */
+        if( poFeature->GetFID() != OGRNullFID && pszFIDColumn != NULL )
+        {
+            if (bNeedComma)
+                oStatement.Appendf( ", " CPL_FRMT_GIB, poFeature->GetFID() );
+            else
+            {
+                oStatement.Appendf( CPL_FRMT_GIB, poFeature->GetFID() );
+                bNeedComma = TRUE;
             }
         }
-        else
-            oStatement.Append( "null" );
 
-        bNeedComma = TRUE;
-    }
-
-    /* Set the FID */
-    if( poFeature->GetFID() != OGRNullFID && pszFIDColumn != NULL )
-    {
-        if (bNeedComma)
-            oStatement.Appendf( ", " CPL_FRMT_GIB, poFeature->GetFID() );
-        else
+        for( i = 0; i < nFieldCount; i++ )
         {
-            oStatement.Appendf( CPL_FRMT_GIB, poFeature->GetFID() );
-            bNeedComma = TRUE;
+            if( !poFeature->IsFieldSet( i ) )
+                continue;
+
+            if (bNeedComma)
+                oStatement.Append( ", " );
+            else
+                bNeedComma = TRUE;
+
+            AppendFieldValue(&oStatement, poFeature, i, &bind_num, bind_buffer);
         }
+
+        oStatement.Append( ");" );
     }
-
-    for( i = 0; i < nFieldCount; i++ )
-    {
-        if( !poFeature->IsFieldSet( i ) )
-            continue;
-
-        if (bNeedComma)
-            oStatement.Append( ", " );
-        else
-            bNeedComma = TRUE;
-
-        AppendFieldValue(&oStatement, poFeature, i, &bind_num, bind_buffer);
-    }
-
-    oStatement.Append( ");" );
 
     if( poFeature->GetFID() != OGRNullFID && pszFIDColumn != NULL && bIsIdentityFid )
         oStatement.Appendf("SET IDENTITY_INSERT [%s].[%s] OFF;", pszSchemaName, pszTableName );
