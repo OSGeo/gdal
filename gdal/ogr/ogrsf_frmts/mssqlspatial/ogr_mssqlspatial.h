@@ -36,6 +36,12 @@
 
 class OGRMSSQLSpatialDataSource;
 
+/* layer status */
+#define MSSQLLAYERSTATUS_ORIGINAL  0
+#define MSSQLLAYERSTATUS_INITIAL 1
+#define MSSQLLAYERSTATUS_CREATED 2
+#define MSSQLLAYERSTATUS_DISABLED 3
+
 /* geometry format to transfer geometry column */
 #define MSSQLGEOMETRY_NATIVE 0
 #define MSSQLGEOMETRY_WKB 1
@@ -149,6 +155,8 @@ class OGRMSSQLSpatialLayer : public OGRLayer
 
     int                bIsIdentityFid;
 
+    int                nLayerStatus;
+
     int                *panFieldOrdinals;
 
     CPLErr              BuildFeatureDefn( const char *pszLayerName,
@@ -179,6 +187,9 @@ class OGRMSSQLSpatialLayer : public OGRLayer
 
     virtual int         TestCapability( const char * );
     char*               GByteArrayToHexString( const GByte* pabyData, int nLen);
+
+    void               SetLayerStatus( int nStatus ) { nLayerStatus = nStatus; }
+    int                GetLayerStatus() { return nLayerStatus; }
 };
 
 /************************************************************************/

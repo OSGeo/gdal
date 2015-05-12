@@ -107,8 +107,9 @@ OGRMSSQLSpatialTableLayer::OGRMSSQLSpatialTableLayer( OGRMSSQLSpatialDataSource 
 OGRMSSQLSpatialTableLayer::~OGRMSSQLSpatialTableLayer()
 
 {
-    if ( bNeedSpatialIndex )
+    if ( bNeedSpatialIndex && nLayerStatus == MSSQLLAYERSTATUS_CREATED )
     {
+        /* recreate spatial index */
         DropSpatialIndex();
         CreateSpatialIndex();
     }
@@ -358,7 +359,7 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateSpatialIndex()
         OGREnvelope oExt;
         if (GetExtent(&oExt, TRUE) != OGRERR_NONE)
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Warning, CPLE_AppDefined, 
                           "Failed to get extent for spatial index." );
             return OGRERR_FAILURE;
         }

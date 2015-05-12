@@ -439,6 +439,11 @@ OGRLayer * OGRMSSQLSpatialDataSource::ICreateLayer( const char * pszLayerName,
 
     poLayer = new OGRMSSQLSpatialTableLayer( this );
 
+    if (bInTransaction)
+        poLayer->SetLayerStatus(MSSQLLAYERSTATUS_INITIAL);
+    else
+        poLayer->SetLayerStatus(MSSQLLAYERSTATUS_CREATED);
+
     poLayer->SetLaunderFlag( CSLFetchBoolean(papszOptions,"LAUNDER",TRUE) );
     poLayer->SetPrecisionFlag( CSLFetchBoolean(papszOptions,"PRECISION",TRUE));
 
@@ -1421,7 +1426,20 @@ OGRErr OGRMSSQLSpatialDataSource::CommitTransaction()
      {
         CPLError( CE_Failure, CPLE_AppDefined,
                     "Failed to commit transaction: %s", oSession.GetLastError() );
+
+        for( int iLayer = 0; iLayer < nLayers; iLayer++ )
+        {
+            if( papoLayers[iLayer]->GetLayerStatus() == MSSQLLAYERSTATUS_INITIAL )
+                papoLayers[iLayer]->SetLayerStatus(MSSQLLAYERSTATUS_DISABLED);
+        }
         return OGRERR_FAILURE;
+    }
+
+    /* set the status for the newly created layers */
+    for( int iLayer = 0; iLayer < nLayers; iLayer++ )
+    {
+        if( papoLayers[iLayer]->GetLayerStatus() == MSSQLLAYERSTATUS_INITIAL )
+            papoLayers[iLayer]->SetLayerStatus(MSSQLLAYERSTATUS_CREATED);
     }
     
     return OGRERR_NONE;
@@ -1435,6 +1453,13 @@ OGRErr OGRMSSQLSpatialDataSource::CommitTransaction()
 
 OGRErr OGRMSSQLSpatialDataSource::RollbackTransaction()
 {
+    /* set the status for the newly created layers */
+    for( int iLayer = 0; iLayer < nLayers; iLayer++ )
+    {
+        if( papoLayers[iLayer]->GetLayerStatus() == MSSQLLAYERSTATUS_INITIAL )
+            papoLayers[iLayer]->SetLayerStatus(MSSQLLAYERSTATUS_DISABLED);
+    }
+    
     if (!oSession.RollbackTransaction())
      {
         CPLError( CE_Failure, CPLE_AppDefined,
