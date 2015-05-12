@@ -51,6 +51,7 @@ OGRMSSQLSpatialLayer::OGRMSSQLSpatialLayer()
 
     poSRS = NULL;
     nSRSId = -1; // we haven't even queried the database for it yet. 
+    nLayerStatus = MSSQLLAYERSTATUS_ORIGINAL;
 }
 
 /************************************************************************/
