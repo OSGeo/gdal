@@ -991,11 +991,10 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
 /* -------------------------------------------------------------------- */
     int bNeedAxisFlip = FALSE;
 
+    OGRSpatialReference oSRS;
     if( bSuccess && pszSRSName != NULL 
         && (pszProjection == NULL || strlen(pszProjection) == 0) )
     {
-        OGRSpatialReference oSRS;
-
         if( EQUALN(pszSRSName,"epsg:",5) )
         {
             if( oSRS.SetFromUserInput( pszSRSName ) == OGRERR_NONE )
@@ -1033,9 +1032,6 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
                   "Got projection from GML box: %s", 
                  pszProjection );
 
-    CPLDestroyXMLNode( psXML );
-    psXML = NULL;
-
 /* -------------------------------------------------------------------- */
 /*      Do we need to flip the axes?                                    */
 /* -------------------------------------------------------------------- */
@@ -1046,6 +1042,60 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
         bNeedAxisFlip = FALSE;
         CPLDebug( "GMLJP2", "Suppressed axis flipping based on GDAL_IGNORE_AXIS_ORIENTATION." );
     }
+    
+    if( pszSRSName && bNeedAxisFlip )
+    {
+        // Suppress explicit axis order in SRS definition
+
+        OGR_SRSNode *poGEOGCS = oSRS.GetAttrNode( "GEOGCS" );
+        if( poGEOGCS != NULL )
+            poGEOGCS->StripNodes( "AXIS" );
+
+        OGR_SRSNode *poPROJCS = oSRS.GetAttrNode( "PROJCS" );
+        if (poPROJCS != NULL && oSRS.EPSGTreatsAsNorthingEasting())
+            poPROJCS->StripNodes( "AXIS" );
+        
+        CPLFree(pszProjection);
+        oSRS.exportToWkt( &pszProjection );
+
+    }
+    
+    /* Some Pleiades files have explicit <gml:axisName>Easting</gml:axisName> */
+    /* <gml:axisName>Northing</gml:axisName> to override default EPSG order */
+    if( bNeedAxisFlip && psRG != NULL )
+    {
+        int nAxisCount = 0;
+        int bFirstAxisIsEastOrLong = FALSE, bSecondAxisIsNorthOrLat = FALSE;
+        for(CPLXMLNode* psIter = psRG->psChild; psIter != NULL; psIter = psIter->psNext )
+        {
+            if( psIter->eType == CXT_Element && strcmp(psIter->pszValue, "axisName") == 0 &&
+                psIter->psChild != NULL && psIter->psChild->eType == CXT_Text )
+            {
+                if( nAxisCount == 0 && 
+                    (EQUALN(psIter->psChild->pszValue, "EAST", 4) ||
+                     EQUALN(psIter->psChild->pszValue, "LONG", 4) ) )
+                {
+                    bFirstAxisIsEastOrLong = TRUE;
+                }
+                else if( nAxisCount == 1 &&
+                         (EQUALN(psIter->psChild->pszValue, "NORTH", 5) ||
+                          EQUALN(psIter->psChild->pszValue, "LAT", 3)) )
+                {
+                    bSecondAxisIsNorthOrLat = TRUE;
+                }
+                nAxisCount ++;
+            }
+        }
+        if( bFirstAxisIsEastOrLong && bSecondAxisIsNorthOrLat )
+        {
+            CPLDebug( "GMLJP2", "Disable axis flip because of explicit axisName disabling it" );
+            bNeedAxisFlip = FALSE;
+        }
+    }
+
+    CPLDestroyXMLNode( psXML );
+    psXML = NULL;
+    psRG = NULL;
 
     if( bNeedAxisFlip )
     {
