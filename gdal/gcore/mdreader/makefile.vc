@@ -1,5 +1,7 @@
 OBJ	=	reader_digital_globe.obj reader_geo_eye.obj reader_orb_view.obj \
-                reader_pleiades.obj reader_rdk1.obj reader_landsat.obj
+                reader_pleiades.obj reader_rdk1.obj reader_landsat.obj \
+                reader_spot.obj reader_rapid_eye.obj reader_alos.obj \
+                reader_eros.obj reader_kompsat.obj
 
 !INCLUDE ..\..\nmake.opt
 

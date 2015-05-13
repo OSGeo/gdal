@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  GDAL Core
- * Purpose:  Read metadata from Pleiades imagery.
+ * Purpose:  Read metadata from Kompsat imagery.
  * Author:   Alexander Lisovenko
  * Author:   Dmitry Baryshnikov, polimax@mail.ru
  *
@@ -28,37 +28,38 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef READER_PLEIADES_H_INCLUDED
-#define READER_PLEIADES_H_INCLUDED
+#ifndef READER_KOMPSAT_H_INCLUDED
+#define READER_KOMPSAT_H_INCLUDED
 
-#include "../gdal_mdreader.h"
+#include "reader_pleiades.h"
 
 /**
-@brief Metadata reader for Pleiades
+@brief Metadata reader for Kompsat
 
-TIFF filename:      IMG_xxxxxx.tif
-Metadata filename:  DIM_xxxxxx.XML
-RPC filename:       RPC_xxxxxx.XML
+TIFF filename:      aaaaaaaaaa.tif
+Metadata filename:  aaaaaaaaaa.eph aaaaaaaaaa.txt
+RPC filename:       aaaaaaaaaa.rpc
 
 Common metadata (from metadata filename):
-    SatelliteId:         MISSION, MISSION_INDEX
-    AcquisitionDateTime: IMAGING_DATE, IMAGING_TIME
-
+    SatelliteId:            AUX_SATELLITE_NAME
+    AcquisitionDateTime:    IMG_ACQISITION_START_TIME, IMG_ACQISITION_END_TIME
 */
 
-class GDALMDReaderPleiades: public GDALMDReaderBase
+class GDALMDReaderKompsat: public GDALMDReaderBase
 {
 public:
-    GDALMDReaderPleiades(const char *pszPath, char **papszSiblingFiles);
-    virtual ~GDALMDReaderPleiades();
+    GDALMDReaderKompsat(const char *pszPath, char **papszSiblingFiles);
+    virtual ~GDALMDReaderKompsat();
     virtual const bool HasRequiredFiles() const;
     virtual char** GetMetadataFiles() const;
 protected:
     virtual void LoadMetadata();
-    char** LoadRPCXmlFile();
+    char** ReadTxtToList();
+    virtual const time_t GetAcquisitionTimeFromString(const char* pszDateTime);
 protected:
     CPLString m_osIMDSourceFilename;
     CPLString m_osRPBSourceFilename;
 };
 
-#endif // READER_PLEIADES_H_INCLUDED
+#endif // READER_KOMPSAT_H_INCLUDED
+

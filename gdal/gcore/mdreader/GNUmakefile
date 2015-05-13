@@ -2,7 +2,9 @@
 include ../../GDALmake.opt
 
 OBJ	=	reader_digital_globe.o reader_geo_eye.o reader_orb_view.o \
-                reader_pleiades.o reader_rdk1.o reader_landsat.o
+                reader_pleiades.o reader_rdk1.o reader_landsat.o \
+                reader_spot.o reader_rapid_eye.o reader_alos.o reader_eros.o \
+                reader_kompsat.o
 
 UP_OBJ   = $(addprefix ../,$(OBJ))
 

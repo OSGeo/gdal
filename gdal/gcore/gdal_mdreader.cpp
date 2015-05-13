@@ -42,6 +42,11 @@
 #include "mdreader/reader_pleiades.h"
 #include "mdreader/reader_rdk1.h"
 #include "mdreader/reader_landsat.h"
+#include "mdreader/reader_spot.h"
+#include "mdreader/reader_rapid_eye.h"
+#include "mdreader/reader_alos.h"
+#include "mdreader/reader_eros.h"
+#include "mdreader/reader_kompsat.h"
 
 CPL_CVSID("$Id$");
 
@@ -117,10 +122,14 @@ GDALMDReaderBase* GDALMDReaderManager::GetReader(const char *pszPath,
         INIT_READER(GDALMDReaderOrbView);
     }
 
-    // required filename.tif filename_rpc.txt (filename_metadata.txt optional)
     if(nType & MDR_GE)
     {
         INIT_READER(GDALMDReaderGeoEye);
+    }
+
+    if(nType & MDR_LS)
+    {
+        INIT_READER(GDALMDReaderLandsat);
     }
 
     if(nType & MDR_PLEIADES)
@@ -128,14 +137,35 @@ GDALMDReaderBase* GDALMDReaderManager::GetReader(const char *pszPath,
         INIT_READER(GDALMDReaderPleiades);
     }
 
+    if(nType & MDR_SPOT)
+    {
+        INIT_READER(GDALMDReaderSpot);
+    }
+
     if(nType & MDR_RDK1)
     {
         INIT_READER(GDALMDReaderResursDK1);
     }
 
-    if(nType & MDR_LS)
+    if(nType & MDR_RE)
     {
-        INIT_READER(GDALMDReaderLandsat);
+        INIT_READER(GDALMDReaderRapidEye);
+    }
+
+    // required filename.tif filename.rpc filename.txt
+    if(nType & MDR_KOMPSAT)
+    {
+        INIT_READER(GDALMDReaderKompsat);
+    }
+
+    if(nType & MDR_EROS)
+    {
+        INIT_READER(GDALMDReaderEROS);
+    }
+
+    if(nType & MDR_ALOS)
+    {
+        INIT_READER(GDALMDReaderALOS);
     }
 
     return NULL;
@@ -193,7 +223,7 @@ void GDALMDReaderBase::LoadMetadata()
 }
 
 /**
- * GetAcqisitionTimeFromString1()
+ * GetAcqisitionTimeFromString()
  */
 const time_t GDALMDReaderBase::GetAcquisitionTimeFromString(
         const char* pszDateTime)
@@ -272,7 +302,7 @@ char** GDALMDReaderBase::ReadXMLToList(CPLXMLNode* psNode, char** papszList,
 
     if (psNode->eType == CXT_Text)
     {
-        return AddXMLNameValueToList(papszList, pszName, psNode->pszValue);
+        papszList = AddXMLNameValueToList(papszList, pszName, psNode->pszValue);
     }
 
     if (psNode->eType == CXT_Element)
@@ -280,28 +310,27 @@ char** GDALMDReaderBase::ReadXMLToList(CPLXMLNode* psNode, char** papszList,
 
         int nAddIndex = 0;
         bool bReset = false;
-        const char* pszLastNodeName = NULL;
         for(CPLXMLNode* psChildNode = psNode->psChild; NULL != psChildNode;
             psChildNode = psChildNode->psNext)
         {
             if (psChildNode->eType == CXT_Element)
             {
-                if(bReset)
-                {
-                    bReset = false;
-                    nAddIndex = 0;
-                }
                 // check name duplicates
-                if(NULL != psChildNode->psNext && psChildNode->psNext->eType == CXT_Element)
+                if(NULL != psChildNode->psNext)
                 {
+                    if(bReset)
+                    {
+                        bReset = false;
+                        nAddIndex = 0;
+                    }
+
                     if(EQUAL(psChildNode->pszValue, psChildNode->psNext->pszValue))
                     {
                         nAddIndex++;
-                        pszLastNodeName = psChildNode->pszValue;
                     }
                     else
                     { // the name changed
-                        pszLastNodeName = NULL;
+
                         if(nAddIndex > 0)
                         {
                             bReset = true;
@@ -309,9 +338,18 @@ char** GDALMDReaderBase::ReadXMLToList(CPLXMLNode* psNode, char** papszList,
                         }
                     }
                 }
-                else if( pszLastNodeName && EQUAL(psChildNode->pszValue, pszLastNodeName) )
+                else
                 {
-                    nAddIndex++;
+                    if(bReset)
+                    {
+                        bReset = false;
+                        nAddIndex = 0;
+                    }
+
+                    if(nAddIndex > 0)
+                    {
+                        nAddIndex++;
+                    }
                 }
 
                 char szName[512];
@@ -356,13 +394,13 @@ char** GDALMDReaderBase::ReadXMLToList(CPLXMLNode* psNode, char** papszList,
                 }
             }
         }
+    }
 
-        // proceed next only on top level
+    // proceed next only on top level
 
-        if(NULL != psNode->psNext && EQUAL(pszName, ""))
-        {
-             papszList = ReadXMLToList(psNode->psNext, papszList, pszName);
-        }
+    if(NULL != psNode->psNext && EQUAL(pszName, ""))
+    {
+         papszList = ReadXMLToList(psNode->psNext, papszList, pszName);
     }
 
     return papszList;
@@ -566,7 +604,7 @@ char ** GDALLoadRPCFile( const CPLString& soFilePath )
         }
         else
         {
-            while( *pszRPBVal == ' ' ) pszRPBVal ++;
+            while( *pszRPBVal == ' ' || *pszRPBVal == '\t' ) pszRPBVal ++;
             papszMD = CSLSetNameValue( papszMD, apszRPBMap[i], pszRPBVal );
         }
     }
@@ -592,7 +630,7 @@ char ** GDALLoadRPCFile( const CPLString& soFilePath )
             }
             else
             {
-                while( *pszRPBVal == ' ' ) pszRPBVal ++;
+                while( *pszRPBVal == ' ' || *pszRPBVal == '\t' ) pszRPBVal ++;
                 soVal += pszRPBVal;
                 soVal += " ";
             }

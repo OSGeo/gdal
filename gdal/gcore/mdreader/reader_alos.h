@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  GDAL Core
- * Purpose:  Read metadata from Pleiades imagery.
+ * Purpose:  Read metadata from Alos imagery.
  * Author:   Alexander Lisovenko
  * Author:   Dmitry Baryshnikov, polimax@mail.ru
  *
@@ -28,37 +28,42 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef READER_PLEIADES_H_INCLUDED
-#define READER_PLEIADES_H_INCLUDED
+#ifndef READER_ALOS_H_INCLUDED
+#define READER_ALOS_H_INCLUDED
 
-#include "../gdal_mdreader.h"
+#include "reader_pleiades.h"
 
 /**
-@brief Metadata reader for Pleiades
+Metadata reader for ALOS
 
-TIFF filename:      IMG_xxxxxx.tif
-Metadata filename:  DIM_xxxxxx.XML
-RPC filename:       RPC_xxxxxx.XML
+TIFF filename:      IMG-sssssssssssssss-pppppppp.tif or
+                    IMG-01-sssssssssssssss-pppppppp.tif
+                    IMG-02-sssssssssssssss-pppppppp.tif
+Metadata filename:  summary.txt
+RPC filename:       RPC-sssssssssssssss-pppppppp.txt
 
 Common metadata (from metadata filename):
-    SatelliteId:         MISSION, MISSION_INDEX
-    AcquisitionDateTime: IMAGING_DATE, IMAGING_TIME
-
+    AcquisitionDateTime: Img_SceneCenterDateTime or Lbi_ObservationDate
+    SatelliteId:         Lbi_Satellite
+    CloudCover:          Img_CloudQuantityOfAllImage
 */
 
-class GDALMDReaderPleiades: public GDALMDReaderBase
+class GDALMDReaderALOS: public GDALMDReaderBase
 {
 public:
-    GDALMDReaderPleiades(const char *pszPath, char **papszSiblingFiles);
-    virtual ~GDALMDReaderPleiades();
+    GDALMDReaderALOS(const char *pszPath, char **papszSiblingFiles);
+    virtual ~GDALMDReaderALOS();
     virtual const bool HasRequiredFiles() const;
     virtual char** GetMetadataFiles() const;
 protected:
     virtual void LoadMetadata();
-    char** LoadRPCXmlFile();
+    char** LoadRPCTxtFile();
+    virtual const time_t GetAcquisitionTimeFromString(const char* pszDateTime);
 protected:
     CPLString m_osIMDSourceFilename;
+    CPLString m_osHDRSourceFilename;
     CPLString m_osRPBSourceFilename;
 };
 
-#endif // READER_PLEIADES_H_INCLUDED
+#endif // READER_ALOS_H_INCLUDED
+

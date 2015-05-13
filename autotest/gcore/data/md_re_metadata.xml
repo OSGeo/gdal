@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<re:EarthObservation>
+    <gml:using>
+        <eop:EarthObservationEquipment>
+            <eop:platform>
+                <eop:Platform>
+                    <eop:shortName>RE00</eop:shortName>
+                    <eop:serialIdentifier>RE-0</eop:serialIdentifier>
+                </eop:Platform>
+            </eop:platform>
+            <eop:acquisitionParameters>
+                <re:Acquisition>
+                    <re:acquisitionDateTime>2010-02-01T12:00:00.000000Z</re:acquisitionDateTime>
+                </re:Acquisition>
+            </eop:acquisitionParameters>
+        </eop:EarthObservationEquipment>
+    </gml:using>
+    <gml:resultOf>
+        <re:EarthObservationResult>
+            <opt:cloudCoverPercentage uom="%">0</opt:cloudCoverPercentage>
+            <opt:cloudCoverPercentageAssessmentConfidence uom="%">70</opt:cloudCoverPercentageAssessmentConfidence>
+            <opt:cloudCoverPercentageQuotationMode>AUTOMATIC</opt:cloudCoverPercentageQuotationMode>
+        </re:EarthObservationResult>
+    </gml:resultOf>
+</re:EarthObservation>

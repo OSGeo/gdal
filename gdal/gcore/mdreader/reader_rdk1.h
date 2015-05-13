@@ -36,13 +36,13 @@
 /**
 @brief Metadata reader for RDK1
 
-TIFF filename:		aaaaaaaaaa.tif
-Metadata filename:	aaaaaaaaaa.xml
+TIFF filename:      aaaaaaaaaa.tif
+Metadata filename:  aaaaaaaaaa.xml
 RPC filename:
 
 Common metadata (from metadata filename):
-        MDName_SatelliteId:			cCodeKA
-        MDName_AcquisitionDateTime:	dSceneDate, tSceneTime
+    SatelliteId:         cCodeKA
+    AcquisitionDateTime: dSceneDate, tSceneTime
 */
 
 class GDALMDReaderResursDK1: public GDALMDReaderBase

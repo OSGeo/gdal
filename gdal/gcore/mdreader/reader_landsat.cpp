@@ -56,9 +56,6 @@ GDALMDReaderLandsat::GDALMDReaderLandsat(const char *pszPath,
     // form metadata file name
     CPLStrlcpy(szMetadataName + i, "_MTL.txt", 9);
 
-    //CPLDebug( "MDReaderLandsat", "Try IMD Filename: %s",
-    //        szMetadataName );
-
     const char* pszIMDSourceFilename = CPLFormFilename( pszDirName,
                                                         szMetadataName, NULL );
     if (CPLCheckForFile((char*)pszIMDSourceFilename, papszSiblingFiles))
