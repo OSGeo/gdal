@@ -330,7 +330,7 @@ PCRasterDataset::PCRasterDataset(
   CPLAssert(d_cellRepresentation != CR_UNDEFINED);
   d_valueScale = RgetValueScale(d_map);
   CPLAssert(d_valueScale != VS_UNDEFINED);
-  d_missingValue = ::missingValue(d_cellRepresentation);
+  d_defaultNoDataValue = ::missingValue(d_cellRepresentation);
   d_location_changed = false;
 
   // Create band information objects.
@@ -421,9 +421,9 @@ CSF_VS PCRasterDataset::valueScale() const
 /*!
   \return    Missing value
 */
-double PCRasterDataset::missingValue() const
+double PCRasterDataset::defaultNoDataValue() const
 {
-  return d_missingValue;
+  return d_defaultNoDataValue;
 }
 
 
