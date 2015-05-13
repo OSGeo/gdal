@@ -36,14 +36,14 @@
 /**
 @brief Metadata reader for OrbView
 
-TIFF filename:        aaaaaaaaa.tif
-Metadata filename:    aaaaaaaaa.pvl
-RPC filename:         aaaaaaaaa_rpc.txt
+TIFF filename:      aaaaaaaaa.tif
+Metadata filename:  aaaaaaaaa.pvl
+RPC filename:       aaaaaaaaa_rpc.txt
 
 Common metadata (from metadata filename):
-    MDName_SatelliteId:         sensorInfo.satelliteName
-    MDName_CloudCover:          productInfo.productCloudCoverPercentage
-    MDName_AcquisitionDateTime: inputImageInfo.firstLineAcquisitionDateTime
+    SatelliteId:         sensorInfo.satelliteName
+    CloudCover:          productInfo.productCloudCoverPercentage
+    AcquisitionDateTime: inputImageInfo.firstLineAcquisitionDateTime
 */
 class GDALMDReaderOrbView: public GDALMDReaderBase
 {

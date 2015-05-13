@@ -46,7 +46,7 @@
 #define MD_NAME_MDTYPE      "METADATATYPE"         /**< Metadata reader type property name. The reader processed this metadata */
 
 #define MD_DATETIMEFORMAT "%Y-%m-%d %H:%M:%S"      /**< Date time format */
-#define MD_CLOUDCOVER_NA "999"               /**< The value if cloud cover n/a*/
+#define MD_CLOUDCOVER_NA "999"           /**< The value if cloud cover is n/a */
 
 /**
  * RPC/RPB specific defines
@@ -72,15 +72,20 @@
  */
 
 typedef enum {
-    MDR_None     = 0x000000,    /**< no reader */
-    MDR_DG       = 0x000001,    /**< Digital Globe, METADATATYPE=DG */
-    MDR_GE       = 0x000002,    /**< Geo Eye,       METADATATYPE=GE */
-    MDR_OV       = 0x000004,    /**< Orb View,      METADATATYPE=OV */
-    MDR_PLEIADES = 0x000008,    /**< Pleiades,      METADATATYPE=DIMAP */
-    MDR_RDK1     = 0x000010,    /**< Resurs DK1,    METADATATYPE=MSP */
-    MDR_LS       = 0x000020,    /**< Landsat,       METADATATYPE=ODL */
-    MDR_ANY  = MDR_DG | MDR_GE | MDR_OV | MDR_PLEIADES | MDR_RDK1 |
-               MDR_LS /**< any reader */
+    MDR_None     = 0x00000000,    /**< no reader */
+    MDR_DG       = 0x00000001,    /**< Digital Globe, METADATATYPE=DG */
+    MDR_GE       = 0x00000002,    /**< Geo Eye,       METADATATYPE=GE */
+    MDR_OV       = 0x00000004,    /**< Orb View,      METADATATYPE=OV */
+    MDR_PLEIADES = 0x00000008,    /**< Pleiades,      METADATATYPE=DIMAP */
+    MDR_SPOT     = 0x00000010,    /**< Spot,          METADATATYPE=DIMAP */
+    MDR_RDK1     = 0x00000020,    /**< Resurs DK1,    METADATATYPE=MSP */
+    MDR_LS       = 0x00000040,    /**< Landsat,       METADATATYPE=ODL */
+    MDR_RE       = 0x00000080,    /**< RapidEye,      METADATATYPE=RE */
+    MDR_KOMPSAT  = 0x00000100,    /**< Kompsat,       METADATATYPE=KARI */
+    MDR_EROS     = 0x00000200,    /**< EROS,          METADATATYPE=EROS */
+    MDR_ALOS     = 0x00000400,    /**< ALOS,          METADATATYPE=ALOS */
+    MDR_ANY  = MDR_DG | MDR_GE | MDR_OV | MDR_PLEIADES | MDR_SPOT | MDR_RDK1 |
+               MDR_LS | MDR_RE | MDR_KOMPSAT | MDR_EROS | MDR_ALOS /**< any reader */
 } MDReaders;
 
 
@@ -146,7 +151,7 @@ protected:
      * @param papszList A list to fill with name=value strings
      * @param pszName A name to add
      * @param pszValue A value to add
-     * @return
+     * @return An input list filled with values
      */
     virtual char** AddXMLNameValueToList(char** papszList, const char *pszName,
                                          const char *pszValue);

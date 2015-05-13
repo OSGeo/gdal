@@ -2,12 +2,12 @@
  * $Id$
  *
  * Project:  GDAL Core
- * Purpose:  Read metadata from Pleiades imagery.
+ * Purpose:  Read metadata from EROS imagery.
  * Author:   Alexander Lisovenko
  * Author:   Dmitry Baryshnikov, polimax@mail.ru
  *
  ******************************************************************************
- * Copyright (c) 2014-2015 NextGIS <info@nextgis.ru>
+ * Copyright (c) 2014-2015, NextGIS info@nextgis.ru
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,37 +28,37 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef READER_PLEIADES_H_INCLUDED
-#define READER_PLEIADES_H_INCLUDED
+#ifndef READER_EROS_H_INCLUDED
+#define READER_EROS_H_INCLUDED
 
 #include "../gdal_mdreader.h"
 
 /**
-@brief Metadata reader for Pleiades
+@brief Metadata reader for EROS
 
-TIFF filename:      IMG_xxxxxx.tif
-Metadata filename:  DIM_xxxxxx.XML
-RPC filename:       RPC_xxxxxx.XML
+TIFF filename:      aaaaaaa.bb.ccc.tif
+Metadata filename:  aaaaaaa.pass
 
 Common metadata (from metadata filename):
-    SatelliteId:         MISSION, MISSION_INDEX
-    AcquisitionDateTime: IMAGING_DATE, IMAGING_TIME
-
+    SatelliteId:         satellite
+    AcquisitionDateTime: sweep_start_utc, sweep_end_utc
 */
 
-class GDALMDReaderPleiades: public GDALMDReaderBase
+class GDALMDReaderEROS: public GDALMDReaderBase
 {
 public:
-    GDALMDReaderPleiades(const char *pszPath, char **papszSiblingFiles);
-    virtual ~GDALMDReaderPleiades();
+    GDALMDReaderEROS(const char *pszPath, char **papszSiblingFiles);
+    virtual ~GDALMDReaderEROS();
     virtual const bool HasRequiredFiles() const;
     virtual char** GetMetadataFiles() const;
 protected:
     virtual void LoadMetadata();
-    char** LoadRPCXmlFile();
+    char** LoadImdTxtFile();
+    virtual const time_t GetAcquisitionTimeFromString(const char* pszDateTime);
 protected:
     CPLString m_osIMDSourceFilename;
     CPLString m_osRPBSourceFilename;
 };
 
-#endif // READER_PLEIADES_H_INCLUDED
+#endif // READER_EROS_H_INCLUDED
+

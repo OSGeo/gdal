@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  GDAL Core
- * Purpose:  Read metadata from Pleiades imagery.
+ * Purpose:  Read metadata from Spot imagery.
  * Author:   Alexander Lisovenko
  * Author:   Dmitry Baryshnikov, polimax@mail.ru
  *
@@ -28,37 +28,33 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef READER_PLEIADES_H_INCLUDED
-#define READER_PLEIADES_H_INCLUDED
+#ifndef READER_SPOT_H_INCLUDED
+#define READER_SPOT_H_INCLUDED
 
-#include "../gdal_mdreader.h"
+#include "reader_pleiades.h"
 
 /**
-@brief Metadata reader for Pleiades
+@brief Metadata reader for Spot
 
-TIFF filename:      IMG_xxxxxx.tif
-Metadata filename:  DIM_xxxxxx.XML
-RPC filename:       RPC_xxxxxx.XML
+TIFF filename:      aaaaaaaaaa.tif
+Metadata filename:  METADATA.DIM
+RPC filename:
 
 Common metadata (from metadata filename):
     SatelliteId:         MISSION, MISSION_INDEX
     AcquisitionDateTime: IMAGING_DATE, IMAGING_TIME
-
 */
 
-class GDALMDReaderPleiades: public GDALMDReaderBase
+class GDALMDReaderSpot: public GDALMDReaderPleiades
 {
 public:
-    GDALMDReaderPleiades(const char *pszPath, char **papszSiblingFiles);
-    virtual ~GDALMDReaderPleiades();
-    virtual const bool HasRequiredFiles() const;
-    virtual char** GetMetadataFiles() const;
+    GDALMDReaderSpot(const char *pszPath, char **papszSiblingFiles);
+    virtual ~GDALMDReaderSpot();
 protected:
     virtual void LoadMetadata();
-    char** LoadRPCXmlFile();
-protected:
-    CPLString m_osIMDSourceFilename;
-    CPLString m_osRPBSourceFilename;
+    virtual char** ReadXMLToList(CPLXMLNode* psNode, char** papszList,
+                                 const char* pszName = "");
 };
 
-#endif // READER_PLEIADES_H_INCLUDED
+#endif // READER_SPOT_H_INCLUDED
+

@@ -36,21 +36,21 @@
 /**
 @brief Metadata reader for DigitalGlobe
 
-TIFF filename:        aaaaaaaaaa.tif
-Metadata filename:    aaaaaaaaaa.IMD
-RPC filename:         aaaaaaaaaa.RPB
+TIFF filename:      aaaaaaaaaa.tif
+Metadata filename:  aaaaaaaaaa.IMD
+RPC filename:       aaaaaaaaaa.RPB
 
 Common metadata (from metadata filename):
-    MDName_SatelliteId:            satId    
-    MDName_CloudCover:             cloudCover
-    MDName_AcquisitionDateTime:    earliestAcqTime, latestAcqTime
+    SatelliteId:         satId
+    CloudCover:          cloudCover
+    AcquisitionDateTime: earliestAcqTime, latestAcqTime
 
 OR
 Metadata and RPC filename:    aaaaaaaaaa.XML
 Common metadata (from metadata filename):
-    MDName_SatelliteId:            SATID    
-    MDName_CloudCover:             CLOUDCOVER
-    MDName_AcquisitionDateTime:    EARLIESTACQTIME, LATESTACQTIME
+    SatelliteId:         SATID
+    CloudCover:          CLOUDCOVER
+    AcquisitionDateTime: EARLIESTACQTIME, LATESTACQTIME
 
 */
 

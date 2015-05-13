@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  GDAL Core
- * Purpose:  Read metadata from Pleiades imagery.
+ * Purpose:  Read metadata from RapidEye imagery.
  * Author:   Alexander Lisovenko
  * Author:   Dmitry Baryshnikov, polimax@mail.ru
  *
@@ -28,37 +28,36 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef READER_PLEIADES_H_INCLUDED
-#define READER_PLEIADES_H_INCLUDED
+#ifndef READER_RAPID_EYE_H_INCLUDED
+#define READER_RAPID_EYE_H_INCLUDED
 
 #include "../gdal_mdreader.h"
 
 /**
-@brief Metadata reader for Pleiades
+@brief Metadata reader for RapidEye
 
-TIFF filename:      IMG_xxxxxx.tif
-Metadata filename:  DIM_xxxxxx.XML
-RPC filename:       RPC_xxxxxx.XML
+TIFF filename:      aaaaaaaa.tif
+Metadata filename:  aaaaaaaa_metadata.xml
+RPC filename:
 
 Common metadata (from metadata filename):
-    SatelliteId:         MISSION, MISSION_INDEX
-    AcquisitionDateTime: IMAGING_DATE, IMAGING_TIME
-
+    SatelliteId:         eop:serialIdentifier
+    CloudCover:          opt:cloudCoverPercentage
+    AcquisitionDateTime: re:acquisitionDateTime
 */
 
-class GDALMDReaderPleiades: public GDALMDReaderBase
+class GDALMDReaderRapidEye: public GDALMDReaderBase
 {
 public:
-    GDALMDReaderPleiades(const char *pszPath, char **papszSiblingFiles);
-    virtual ~GDALMDReaderPleiades();
+    GDALMDReaderRapidEye(const char *pszPath, char **papszSiblingFiles);
+    virtual ~GDALMDReaderRapidEye();
     virtual const bool HasRequiredFiles() const;
     virtual char** GetMetadataFiles() const;
 protected:
     virtual void LoadMetadata();
-    char** LoadRPCXmlFile();
 protected:
-    CPLString m_osIMDSourceFilename;
-    CPLString m_osRPBSourceFilename;
+    CPLString m_osXMLSourceFilename;
 };
 
-#endif // READER_PLEIADES_H_INCLUDED
+#endif // READER_RAPID_EYE_H_INCLUDED
+
