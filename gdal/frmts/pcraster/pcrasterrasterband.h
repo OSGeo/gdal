@@ -64,7 +64,9 @@ private:
   //! Dataset this band is part of. For use only.
   PCRasterDataset const* d_dataset;
 
-  double           d_missing_value;
+  double           d_noDataValue;
+
+  bool             d_defaultNoDataValueOverridden;
 
   GDALDataType     d_create_in;
 
@@ -82,7 +84,7 @@ private:
 
 protected:
 
-  double           GetNoDataValue      (int* success);
+  double           GetNoDataValue      (int* success=NULL);
 
   double           GetMinimum          (int* success);
 
@@ -108,7 +110,7 @@ public:
 
   CPLErr           SetNoDataValue      (double no_data);
 
- //----------------------------------------------------------------------------
+  //----------------------------------------------------------------------------
   // ACCESSORS
   //----------------------------------------------------------------------------
 

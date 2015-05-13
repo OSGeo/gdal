@@ -82,7 +82,8 @@ PCRasterRasterBand::PCRasterRasterBand(
 
   : GDALPamRasterBand(),
     d_dataset(dataset),
-    d_missing_value(-FLT_MAX),
+    d_noDataValue(),
+    d_defaultNoDataValueOverridden(false),
     d_create_in(GDT_Unknown)
 
 {
@@ -111,7 +112,8 @@ double PCRasterRasterBand::GetNoDataValue(
     *success = 1;
   }
 
-  return d_dataset->missingValue();
+  return d_defaultNoDataValueOverridden
+    ? d_noDataValue : d_dataset->defaultNoDataValue();
 }
 
 
@@ -269,7 +271,7 @@ CPLErr PCRasterRasterBand::IReadBlock(
 
   // Replace in-file MV with in-app MV which may be different.
   alterFromStdMV(buffer, nrCellsRead, d_dataset->cellRepresentation(),
-         d_dataset->missingValue());
+         GetNoDataValue());
 
   return CE_None;
 }
@@ -353,25 +355,44 @@ CPLErr PCRasterRasterBand::IWriteBlock(
   memcpy(buffer, source, nr_cols * 4);
 
   // convert source no_data values to MV in dest
-  if((valuescale == VS_BOOLEAN) || (valuescale == VS_LDD)) {
-    alterToStdMV(buffer, nr_cols, CR_UINT1, d_missing_value);
-  }
-  if((valuescale == VS_SCALAR) || (valuescale == VS_DIRECTION)) {
-    alterToStdMV(buffer, nr_cols, CR_REAL4, d_missing_value);
-  }
-  if((valuescale == VS_NOMINAL)|| (valuescale == VS_ORDINAL)) {
-    alterToStdMV(buffer, nr_cols, CR_INT4, d_missing_value);
+  switch(valuescale) {
+    case VS_BOOLEAN:
+    case VS_LDD: {
+      alterToStdMV(buffer, nr_cols, CR_UINT1, GetNoDataValue());
+      break;
+    }
+    case VS_NOMINAL:
+    case VS_ORDINAL: {
+      alterToStdMV(buffer, nr_cols, CR_INT4, GetNoDataValue());
+      break;
+    }
+    case VS_SCALAR:
+    case VS_DIRECTION: {
+      alterToStdMV(buffer, nr_cols, CR_REAL4, GetNoDataValue());
+      break;
+    }
+    default: {
+      break;
+    }
   }
 
   // conversion of values according to value scale
-  if(valuescale == VS_BOOLEAN) {
-    castValuesToBooleanRange(buffer, nr_cols, CR_UINT1);
-  }
-  if(valuescale == VS_LDD) {
-    castValuesToLddRange(buffer, nr_cols);
-  }
-  if(valuescale == VS_DIRECTION) {
-    castValuesToDirectionRange(buffer, nr_cols);
+  switch(valuescale) {
+    case VS_BOOLEAN: {
+      castValuesToBooleanRange(buffer, nr_cols, CR_UINT1);
+      break;
+    }
+    case VS_LDD: {
+      castValuesToLddRange(buffer, nr_cols);
+      break;
+    }
+    case VS_DIRECTION: {
+      castValuesToDirectionRange(buffer, nr_cols);
+      break;
+    }
+    default: {
+      break;
+    }
   }
 
   RputRow(d_dataset->map(), nBlockYoff, buffer);
@@ -381,12 +402,13 @@ CPLErr PCRasterRasterBand::IWriteBlock(
 }
 
 
-CPLErr PCRasterRasterBand::SetNoDataValue(double nodata){
-  d_missing_value = nodata;
+CPLErr PCRasterRasterBand::SetNoDataValue(double nodata)
+{
+  d_noDataValue = nodata;
+  d_defaultNoDataValueOverridden = true;
 
   return CE_None;
 }
-
 
 
 //------------------------------------------------------------------------------
