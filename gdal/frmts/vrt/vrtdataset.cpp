@@ -1205,6 +1205,8 @@ int VRTDataset::CheckCompatibleForDatasetIO()
                     return FALSE;
                 if (srcband->GetDataset() == NULL)
                     return FALSE;
+                if (srcband->GetDataset()->GetRasterCount() <= iBand)
+                    return FALSE;
                 if (srcband->GetDataset()->GetRasterBand(iBand + 1) != srcband)
                     return FALSE;
                 osResampling = poSource->GetResampling();
@@ -1229,6 +1231,8 @@ int VRTDataset::CheckCompatibleForDatasetIO()
                 if (srcband == NULL)
                     return FALSE;
                 if (srcband->GetDataset() == NULL)
+                    return FALSE;
+                if (srcband->GetDataset()->GetRasterCount() <= iBand)
                     return FALSE;
                 if (srcband->GetDataset()->GetRasterBand(iBand + 1) != srcband)
                     return FALSE;
