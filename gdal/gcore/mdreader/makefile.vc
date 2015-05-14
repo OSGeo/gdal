@@ -3,6 +3,8 @@ OBJ	=	reader_digital_globe.obj reader_geo_eye.obj reader_orb_view.obj \
                 reader_spot.obj reader_rapid_eye.obj reader_alos.obj \
                 reader_eros.obj reader_kompsat.obj
 
+GDAL_ROOT	=	..\..
+                
 !INCLUDE ..\..\nmake.opt
 
 EXTRAFLAGS =	-I..\..\port -I..\..\ogr -I..\
@@ -11,4 +13,4 @@ default:	$(OBJ)
     xcopy /D  /Y *.obj ..\
 
 clean:
-	-del *.obj *.res
+	-del *.obj
