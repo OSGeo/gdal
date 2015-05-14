@@ -26,7 +26,9 @@ i.e. not depending on a third-party library) read-only driver.</p>
 The FGDB_BULK_LOAD configuration option can be set to YES to speed-up feature insertion (or sometimes solve problems
 when inserting a lot of features (see http://trac.osgeo.org/gdal/ticket/4420). The effect of this configuration option
 is to cause a write lock to be taken and a temporary disabling of the indexes. Those are restored when the datasource is
-closed or when a read operation is done.
+closed or when a read operation is done.<p>
+
+Starting with GDAL 2.0, bulk load is enabled by default for newly created layers (unless otherwise specified).
 
 <h2>SQL support (OGR &gt;= 1.10)</h2>
 
