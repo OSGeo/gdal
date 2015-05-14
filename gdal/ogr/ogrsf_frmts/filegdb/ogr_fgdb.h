@@ -99,6 +99,8 @@ class FGdbDataSource;
 
 class FGdbLayer : public FGdbBaseLayer
 {
+  friend class FGdbDataSource;
+
   int                 m_bBulkLoadAllowed;
   int                 m_bBulkLoadInProgress;
 

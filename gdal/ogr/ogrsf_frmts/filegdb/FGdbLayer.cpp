@@ -1676,6 +1676,9 @@ bool FGdbLayer::Create(FGdbDataSource* pParentDataSource,
 
     m_papszOptions = CSLDuplicate(papszOptions);
     m_bCreateMultipatch = CSLTestBoolean(CSLFetchNameValueDef(m_papszOptions, "CREATE_MULTIPATCH", "NO"));
+    
+    // Default to YES here assuming ogr2ogr scenario
+    m_bBulkLoadAllowed = CSLTestBoolean(CPLGetConfigOption("FGDB_BULK_LOAD", "YES"));
 
     /* Store the new FGDB Table pointer and set up the OGRFeatureDefn */
     return FGdbLayer::Initialize(pParentDataSource, table, wtable_path, L"Table");

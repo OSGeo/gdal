@@ -430,6 +430,12 @@ OGRLayer * FGdbDataSource::ExecuteSQL( const char *pszSQLCommand,
                                        const char *pszDialect )
 
 {
+    size_t count = m_layers.size();
+    for(size_t i = 0; i < count; ++i )
+    {
+        m_layers[i]->EndBulkLoad();
+    }
+    
 /* -------------------------------------------------------------------- */
 /*      Use generic implementation for recognized dialects              */
 /* -------------------------------------------------------------------- */
