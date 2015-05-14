@@ -1195,7 +1195,9 @@ int VRTDataset::CheckCompatibleForDatasetIO()
                     return FALSE;
                 if (srcband->GetDataset() == NULL)
                     return FALSE;
-                if (poSource->GetBand()->GetBand() != iBand + 1)
+                if (srcband->GetDataset()->GetRasterCount() <= iBand)
+                    return FALSE;
+                if (srcband->GetDataset()->GetRasterBand(iBand + 1) != srcband)
                     return FALSE;
             }
         }
@@ -1219,9 +1221,9 @@ int VRTDataset::CheckCompatibleForDatasetIO()
                     return FALSE;
                 if (srcband->GetDataset() == NULL)
                     return FALSE;
-                if (srcband->GetDataset()->GetRasterBand(iBand + 1) != srcband)
+                if (srcband->GetDataset()->GetRasterCount() <= iBand)
                     return FALSE;
-                if (poSource->GetBand()->GetBand() != iBand + 1)
+                if (srcband->GetDataset()->GetRasterBand(iBand + 1) != srcband)
                     return FALSE;
             }
         }
