@@ -1474,8 +1474,10 @@ int FileGDBIndexIterator::SortRows()
     if( nSortedCount == 0 )
         return FALSE;
     std::sort(panSortedRows, panSortedRows + nSortedCount);
+#ifdef nValueCountInIdx_reliable
     if( eOp == FGSO_ISNOTNULL && (int)nValueCountInIdx != nSortedCount )
         PrintError();
+#endif
     return TRUE;
 }
 
@@ -1509,8 +1511,10 @@ int FileGDBIndexIterator::GetNextRowSortedByFID()
 
 int FileGDBIndexIterator::GetRowCount()
 {
+#ifdef nValueCountInIdx_reliable
     if( eOp == FGSO_ISNOTNULL )
         return (int)nValueCountInIdx;
+#endif
 
     if( nSortedCount >= 0 )
         return nSortedCount;
