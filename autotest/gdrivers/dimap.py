@@ -42,8 +42,8 @@ import gdaltest
 
 def dimap_1():
     
-    shutil.copy('data/METADATA.DIM', 'tmp')
-    shutil.copy('data/IMAGERY.TIF', 'tmp')
+    shutil.copy('data/dimap/METADATA.DIM', 'tmp')
+    shutil.copy('data/dimap/IMAGERY.TIF', 'tmp')
     shutil.copy('data/rgbsmall.tif', 'tmp')
 
     ds = gdal.Open( 'tmp/METADATA.DIM' )
