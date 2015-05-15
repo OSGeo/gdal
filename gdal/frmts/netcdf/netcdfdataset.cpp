@@ -4638,7 +4638,8 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
             if ( papszTokens) CSLDestroy( papszTokens );
             CPLFree( pszTemp );
         }
-        if ( NCDFGetAttr( cdfid, j, "bounds", &pszTemp ) == CE_None ) { 
+        if ( NCDFGetAttr( cdfid, j, "bounds", &pszTemp ) == CE_None &&
+             pszTemp != NULL ) { 
             if ( !EQUAL( pszTemp, "" ) )
                 papszIgnoreVars = CSLAddString( papszIgnoreVars, pszTemp );
             CPLFree( pszTemp );
@@ -6871,7 +6872,7 @@ int NCDFDoesVarContainAttribVal( int nCdfId,
 
     for( int i=0; !bFound && i<CSLCount((char**)papszAttribNames); i++ ) {
         if ( NCDFGetAttr( nCdfId, nVarId, papszAttribNames[i], &pszTemp ) 
-             == CE_None ) { 
+             == CE_None && pszTemp != NULL ) { 
             if ( bStrict ) {
                 if ( EQUAL( pszTemp, papszAttribValues[i] ) )
                     bFound=TRUE;
@@ -6902,7 +6903,7 @@ int NCDFDoesVarContainAttribVal2( int nCdfId,
     if ( nVarId == -1 ) return -1;
 
     if ( NCDFGetAttr( nCdfId, nVarId, papszAttribName, &pszTemp ) 
-         != CE_None ) return FALSE;
+         != CE_None || pszTemp == NULL ) return FALSE;
 
     for( int i=0; !bFound && i<CSLCount((char**)papszAttribValues); i++ ) {
         if ( bStrict ) {
