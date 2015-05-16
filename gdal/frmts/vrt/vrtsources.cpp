@@ -836,10 +836,20 @@ VRTSimpleSource::GetSrcDstWindow( int nXOff, int nYOff, int nXSize, int nYSize,
         *pnReqXSize = poRasterBand->GetXSize() - *pnReqXOff;
         bModifiedX = TRUE;
     }
+    if( *pdfReqXOff + *pdfReqXSize > poRasterBand->GetXSize() )
+    {
+        *pdfReqXSize = poRasterBand->GetXSize() - *pdfReqXOff;
+        bModifiedX = TRUE;
+    }
 
     if( *pnReqYOff + *pnReqYSize > poRasterBand->GetYSize() )
     {
         *pnReqYSize = poRasterBand->GetYSize() - *pnReqYOff;
+        bModifiedY = TRUE;
+    }
+    if( *pdfReqYOff + *pdfReqYSize > poRasterBand->GetYSize() )
+    {
+        *pdfReqYSize = poRasterBand->GetYSize() - *pdfReqYOff;
         bModifiedY = TRUE;
     }
 
@@ -915,15 +925,13 @@ VRTSimpleSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
                            GDALDataType eBufType, 
                            GSpacing nPixelSpace,
                            GSpacing nLineSpace,
-                           GDALRasterIOExtraArg* psExtraArg )
+                           GDALRasterIOExtraArg* psExtraArgIn )
 
 {
     GDALRasterIOExtraArg sExtraArg;
-    if( psExtraArg == NULL )
-    {
-        INIT_RASTERIO_EXTRA_ARG(sExtraArg);
-        psExtraArg = &sExtraArg;
-    }
+
+    INIT_RASTERIO_EXTRA_ARG(sExtraArg);
+    GDALRasterIOExtraArg* psExtraArg = &sExtraArg;
 
     // The window we will actually request from the source raster band.
     double dfReqXOff, dfReqYOff, dfReqXSize, dfReqYSize;
@@ -946,10 +954,13 @@ VRTSimpleSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
 /* -------------------------------------------------------------------- */
     CPLErr eErr;
 
-    GDALRIOResampleAlg     eResampleAlgBack = psExtraArg->eResampleAlg;
     if( osResampling.size() )
     {
         psExtraArg->eResampleAlg = GDALRasterIOGetResampleAlg(osResampling);
+    }
+    else if( psExtraArgIn != NULL )
+    {
+        psExtraArg->eResampleAlg = psExtraArgIn->eResampleAlg;
     }
     psExtraArg->bFloatingPointWindowValidity = TRUE;
     psExtraArg->dfXOff = dfReqXOff;
@@ -965,10 +976,6 @@ VRTSimpleSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
                                 + (GPtrDiff_t)nOutYOff * nLineSpace, 
                                 nOutXSize, nOutYSize, 
                                 eBufType, nPixelSpace, nLineSpace, psExtraArg );
-
-    if( osResampling.size() )
-        psExtraArg->eResampleAlg = eResampleAlgBack;
-    psExtraArg->bFloatingPointWindowValidity = FALSE;
 
     return eErr;
 }
@@ -1139,7 +1146,7 @@ CPLErr VRTSimpleSource::DatasetRasterIO(
                                int nBandCount, int *panBandMap,
                                GSpacing nPixelSpace, GSpacing nLineSpace,
                                GSpacing nBandSpace,
-                               GDALRasterIOExtraArg* psExtraArg)
+                               GDALRasterIOExtraArg* psExtraArgIn)
 {
     if (!EQUAL(GetType(), "SimpleSource"))
     {
@@ -1147,6 +1154,11 @@ CPLErr VRTSimpleSource::DatasetRasterIO(
                  "DatasetRasterIO() not implemented for %s", GetType());
         return CE_Failure;
     }
+
+    GDALRasterIOExtraArg sExtraArg;
+
+    INIT_RASTERIO_EXTRA_ARG(sExtraArg);
+    GDALRasterIOExtraArg* psExtraArg = &sExtraArg;
 
     // The window we will actually request from the source raster band.
     double dfReqXOff, dfReqYOff, dfReqXSize, dfReqYSize;
@@ -1168,10 +1180,13 @@ CPLErr VRTSimpleSource::DatasetRasterIO(
     if (poDS == NULL)
         return CE_Failure;
 
-    GDALRIOResampleAlg     eResampleAlgBack = psExtraArg->eResampleAlg;
     if( osResampling.size() )
     {
         psExtraArg->eResampleAlg = GDALRasterIOGetResampleAlg(osResampling);
+    }
+    else if( psExtraArgIn != NULL )
+    {
+        psExtraArg->eResampleAlg = psExtraArgIn->eResampleAlg;
     }
     psExtraArg->bFloatingPointWindowValidity = TRUE;
     psExtraArg->dfXOff = dfReqXOff;
@@ -1187,9 +1202,6 @@ CPLErr VRTSimpleSource::DatasetRasterIO(
                            nOutXSize, nOutYSize,
                            eBufType, nBandCount, panBandMap,
                            nPixelSpace, nLineSpace, nBandSpace, psExtraArg );
-    if( osResampling.size() )
-        psExtraArg->eResampleAlg = eResampleAlgBack;
-    psExtraArg->bFloatingPointWindowValidity = FALSE;
 
     return eErr;
 }
@@ -1245,15 +1257,13 @@ VRTAveragedSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
                            GDALDataType eBufType, 
                            GSpacing nPixelSpace,
                            GSpacing nLineSpace,
-                           GDALRasterIOExtraArg* psExtraArg )
+                           GDALRasterIOExtraArg* psExtraArgIn )
 
 {
     GDALRasterIOExtraArg sExtraArg;
-    if( psExtraArg == NULL )
-    {
-        INIT_RASTERIO_EXTRA_ARG(sExtraArg);
-        psExtraArg = &sExtraArg;
-    }
+
+    INIT_RASTERIO_EXTRA_ARG(sExtraArg);
+    GDALRasterIOExtraArg* psExtraArg = &sExtraArg;
 
     // The window we will actually request from the source raster band.
     double dfReqXOff, dfReqYOff, dfReqXSize, dfReqYSize;
@@ -1287,11 +1297,15 @@ VRTAveragedSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
 /* -------------------------------------------------------------------- */
     CPLErr eErr;
 
-    GDALRIOResampleAlg     eResampleAlgBack = psExtraArg->eResampleAlg;
     if( osResampling.size() )
     {
         psExtraArg->eResampleAlg = GDALRasterIOGetResampleAlg(osResampling);
     }
+    else if( psExtraArgIn != NULL )
+    {
+        psExtraArg->eResampleAlg = psExtraArgIn->eResampleAlg;
+    }
+
     psExtraArg->bFloatingPointWindowValidity = TRUE;
     psExtraArg->dfXOff = dfReqXOff;
     psExtraArg->dfYOff = dfReqYOff;
@@ -1302,10 +1316,6 @@ VRTAveragedSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
                                    nReqXOff, nReqYOff, nReqXSize, nReqYSize,
                                    pafSrc, nReqXSize, nReqYSize, GDT_Float32, 
                                    0, 0, psExtraArg );
-
-    if( osResampling.size() )
-        psExtraArg->eResampleAlg = eResampleAlgBack;
-    psExtraArg->bFloatingPointWindowValidity = FALSE;
 
     if( eErr != CE_None )
     {
@@ -1799,15 +1809,13 @@ VRTComplexSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
                             GDALDataType eBufType, 
                             GSpacing nPixelSpace,
                             GSpacing nLineSpace,
-                            GDALRasterIOExtraArg* psExtraArg)
+                            GDALRasterIOExtraArg* psExtraArgIn)
     
 {
     GDALRasterIOExtraArg sExtraArg;
-    if( psExtraArg == NULL )
-    {
-        INIT_RASTERIO_EXTRA_ARG(sExtraArg);
-        psExtraArg = &sExtraArg;
-    }
+
+    INIT_RASTERIO_EXTRA_ARG(sExtraArg);
+    GDALRasterIOExtraArg* psExtraArg = &sExtraArg;
 
     // The window we will actually request from the source raster band.
     double dfReqXOff, dfReqYOff, dfReqXSize, dfReqYSize;
@@ -1822,10 +1830,13 @@ VRTComplexSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
                           &nOutXOff, &nOutYOff, &nOutXSize, &nOutYSize ) )
         return CE_None;
 
-    GDALRIOResampleAlg     eResampleAlgBack = psExtraArg->eResampleAlg;
     if( osResampling.size() )
     {
         psExtraArg->eResampleAlg = GDALRasterIOGetResampleAlg(osResampling);
+    }
+    else if( psExtraArgIn != NULL )
+    {
+        psExtraArg->eResampleAlg = psExtraArgIn->eResampleAlg;
     }
     psExtraArg->bFloatingPointWindowValidity = TRUE;
     psExtraArg->dfXOff = dfReqXOff;
@@ -1840,10 +1851,6 @@ VRTComplexSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
                        nOutXSize, nOutYSize,
                        eBufType,
                        nPixelSpace, nLineSpace, psExtraArg );
-
-    if( osResampling.size() )
-        psExtraArg->eResampleAlg = eResampleAlgBack;
-    psExtraArg->bFloatingPointWindowValidity = FALSE;
 
     return eErr;
 }
