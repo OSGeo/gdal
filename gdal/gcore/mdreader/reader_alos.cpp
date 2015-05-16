@@ -99,7 +99,7 @@ GDALMDReaderALOS::GDALMDReaderALOS(const char *pszPath,
     }
     else
     {
-        pszHDRFileName = CPLFormFilename(osDirName, CPLSPrintf("RPC%s",
+        pszRPCFileName = CPLFormFilename(osDirName, CPLSPrintf("RPC%s",
                                          osBaseName + 6), "TXT");
         if (CPLCheckForFile((char*)pszRPCFileName, papszSiblingFiles))
         {
@@ -109,7 +109,7 @@ GDALMDReaderALOS::GDALMDReaderALOS(const char *pszPath,
     // test without 3 symbols
     if(m_osRPBSourceFilename.empty())
     {
-        pszHDRFileName = CPLFormFilename(osDirName, CPLSPrintf("RPC%s",
+        pszRPCFileName = CPLFormFilename(osDirName, CPLSPrintf("RPC%s",
                                          osBaseName + 3), "txt");
         if (CPLCheckForFile((char*)pszRPCFileName, papszSiblingFiles))
         {
