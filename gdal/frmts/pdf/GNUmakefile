@@ -26,9 +26,13 @@ ifeq ($(HAVE_PODOFO),yes)
 CPPFLAGS +=  -DHAVE_PODOFO
 endif
 
+ifeq ($(HAVE_PDFIUM),yes)
+CPPFLAGS +=  -DHAVE_PDFIUM
+endif
+
 $(O_OBJ):       pdfobject.h pdfio.h pdfcreatecopy.h gdal_pdf.h
 
-CPPFLAGS	:=	 $(CPPFLAGS) -I../vrt -I../mem -I../../ogr/ogrsf_frmts/mem $(POPPLER_INC) $(PODOFO_INC)
+CPPFLAGS	:=	 $(CPPFLAGS) -I../vrt -I../mem -I../../ogr/ogrsf_frmts/mem $(POPPLER_INC) $(PODOFO_INC) $(PDFIUM_INC)
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
 
