@@ -4039,6 +4039,11 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
 #endif  // ~ HAVE_PDFIUM
 
     int nBands = 3;
+#ifdef HAVE_PDFIUM
+    // Use Alpha channel for PDFIUM as default format RGBA
+    if(bUseLib.test(PDFLIB_PDFIUM))
+        nBands = 4;
+#endif
     if( nBandsGuessed )
         nBands = nBandsGuessed;
     const char* pszPDFBands = GetOption(poOpenInfo->papszOpenOptions, "BANDS", NULL);
