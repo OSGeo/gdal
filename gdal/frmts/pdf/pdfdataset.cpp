@@ -535,11 +535,12 @@ void GDALPDFDumper::Dump(GDALPDFDictionary* poDict, int nDepth)
 /*                         PDFRasterBand()                              */
 /************************************************************************/
 
-PDFRasterBand::PDFRasterBand( PDFDataset *poDS, int nBand )
+PDFRasterBand::PDFRasterBand( PDFDataset *poDS, int nBand, int nResolutionLevel )
 
 {
     this->poDS = poDS;
     this->nBand = nBand;
+    this->arbOvs = FALSE;
 
     eDataType = GDT_Byte;
 
@@ -559,7 +560,70 @@ PDFRasterBand::PDFRasterBand( PDFDataset *poDS, int nBand )
         nBlockYSize = MIN(1024, poDS->GetRasterYSize());
         poDS->SetMetadataItem( "INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE" );
     }
+#ifdef HAVE_PDFIUM
+    PDFDataset* pds = (PDFDataset*)poDS;
+    this->nResolutionLevel = nResolutionLevel;
+    this->nOverviewCount = 0;
+    this->papoOverviewBand = 0;
+    if(pds->bUseLib.test(PDFLIB_PDFIUM) && GDALPamRasterBand::GetOverviewCount() == 0
+      && nResolutionLevel > 0)
+    {
+      this->nRasterXSize = pds->nRasterXSize >> (this->nResolutionLevel-1);
+      this->nRasterYSize = pds->nRasterYSize >> (this->nResolutionLevel-1);
+      // If raster size is not div by 2, this will increase by one pixel
+      this->nRasterXSize += this->nRasterXSize % 2;
+      this->nRasterYSize += this->nRasterYSize % 2;
+      this->nRasterXSize  >>= 1;
+      this->nRasterYSize  >>= 1;
+    }
+#else
+    // Not used without Pdfium
+    (void)nResolutionLevel;
+#endif  // ~ HAVE_PDFIUM
 }
+
+/************************************************************************/
+/*                         InitOverviews()                              */
+/************************************************************************/
+
+#ifdef HAVE_PDFIUM
+void PDFRasterBand::InitOverviews()
+{
+    PDFDataset* pds = (PDFDataset*)poDS;
+    // Only if used pdfium, make "arbitrary overviews"
+    // Blocks are 256x256
+    if(pds->bUseLib.test(PDFLIB_PDFIUM) &&
+      nResolutionLevel == 0 && GDALPamRasterBand::GetOverviewCount() == 0)
+    {
+        this->arbOvs = TRUE;
+        this->nRasterXSize = pds->nRasterXSize;
+        this->nRasterYSize = pds->nRasterYSize;
+        int  nXSize = pds->nRasterXSize, nYSize = pds->nRasterYSize;
+        int defBlockXSize = pds->nBlockXSize; // save old values
+        int defBlockYSize = pds->nBlockYSize; // save old values
+        pds->nBlockXSize = 256;
+        pds->nBlockYSize = 256;
+        int blockXSize = pds->nBlockXSize ? pds->nBlockXSize : nBlockXSize;
+        int blockYSize = pds->nBlockYSize ? pds->nBlockYSize : nBlockYSize;
+        int nDiscard = 1;
+        while (nXSize > blockXSize || nYSize > blockYSize)
+        {
+            nXSize = (nXSize+1) / 2;
+            nYSize = (nYSize+1) / 2;
+
+            nOverviewCount++;
+            papoOverviewBand = (PDFRasterBand **)CPLRealloc(
+                papoOverviewBand, sizeof(void*) * nOverviewCount );
+            papoOverviewBand[nOverviewCount-1] =
+                new PDFRasterBand(pds, nBand, nDiscard);
+            ++nDiscard;
+        }
+        // Restore old values
+        pds->nBlockXSize = defBlockXSize;
+        pds->nBlockYSize = defBlockYSize;
+    }
+}
+#endif
 
 /************************************************************************/
 /*                        GetColorInterpretation()                      */
@@ -572,6 +636,52 @@ GDALColorInterp PDFRasterBand::GetColorInterpretation()
         return GCI_GrayIndex;
     else
         return (GDALColorInterp)(GCI_RedBand + (nBand - 1));
+}
+
+#ifdef HAVE_PDFIUM
+
+/************************************************************************/
+/*                          GetOverviewCount()                          */
+/************************************************************************/
+
+int PDFRasterBand::GetOverviewCount()
+{
+    if( GDALPamRasterBand::GetOverviewCount() > 0 )
+        return GDALPamRasterBand::GetOverviewCount();
+    else
+        return nOverviewCount;
+}
+
+/************************************************************************/
+/*                            GetOverview()                             */
+/************************************************************************/
+
+GDALRasterBand* PDFRasterBand::GetOverview( int iOverviewIndex)
+{
+    if( GDALPamRasterBand::GetOverviewCount() > 0 )
+        return GDALPamRasterBand::GetOverview( iOverviewIndex );
+
+    else if( iOverviewIndex < 0 || iOverviewIndex >= nOverviewCount )
+        return NULL;
+    else
+        return papoOverviewBand[iOverviewIndex];
+}
+
+#endif  // ~ HAVE_PDFIUM
+
+/************************************************************************/
+/*                           ~PDFRasterBand()                           */
+/************************************************************************/
+
+PDFRasterBand::~PDFRasterBand()
+{
+#ifdef HAVE_PDFIUM
+    for( int i = 0; i < nOverviewCount; i++ )
+        delete papoOverviewBand[i];
+
+    CPLFree( papoOverviewBand );
+#endif  // ~ HAVE_PDFIUM
+
 }
 
 /************************************************************************/
@@ -681,6 +791,10 @@ CPLErr PDFRasterBand::IReadBlockFromTile( int nBlockXOff, int nBlockYOff,
 
     if( poGDS->nLastBlockXOff == nBlockXOff &&
         poGDS->nLastBlockYOff == nBlockYOff &&
+#ifdef HAVE_PDFIUM
+        (!poGDS->bUseLib.test(PDFLIB_PDFIUM) ||
+          poGDS->nLastBlockResolution == nResolutionLevel) &&
+#endif
         poGDS->pabyCachedData != NULL )
     {
         CPLDebug("PDF", "Using cached block (%d, %d)",
@@ -717,6 +831,9 @@ CPLErr PDFRasterBand::IReadBlockFromTile( int nBlockXOff, int nBlockYOff,
         VSIFree(pabyStream);
         poGDS->nLastBlockXOff = nBlockXOff;
         poGDS->nLastBlockYOff = nBlockYOff;
+#ifdef HAVE_PDFIUM
+        poGDS->nLastBlockResolution = nResolutionLevel;
+#endif
     }
 
     GByte* pabyData = (GByte*) pImage;
@@ -774,6 +891,9 @@ CPLErr PDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             poGDS->pabyCachedData = NULL;
             poGDS->nLastBlockXOff = -1;
             poGDS->nLastBlockYOff = -1;
+#ifdef HAVE_PDFIUM
+            poGDS->nLastBlockResolution = -1;
+#endif
         }
     }
 
@@ -799,6 +919,10 @@ CPLErr PDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
     if( poGDS->nLastBlockXOff == nBlockXOff &&
         (nBlockYSize == 1 || poGDS->nLastBlockYOff == nBlockYOff) &&
+#ifdef HAVE_PDFIUM
+        (!poGDS->bUseLib.test(PDFLIB_PDFIUM) ||
+          poGDS->nLastBlockResolution == nResolutionLevel) &&
+#endif
         poGDS->pabyCachedData != NULL )
     {
         /*CPLDebug("PDF", "Using cached block (%d, %d)",
@@ -814,6 +938,20 @@ CPLErr PDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             return CE_None;
         }
 #endif
+        int scale = 1;
+#ifdef HAVE_PDFIUM
+        int blockXOff = nBlockXOff;
+        int blockYOff = nBlockYOff;
+        if(poGDS->bUseLib.test(PDFLIB_PDFIUM) && nResolutionLevel) {
+            scale = 1 << nResolutionLevel;
+            nBlockXOff *= scale;
+            nBlockYOff *= scale;
+        }
+        CPLDebug("PDF", "PDFRasterBand::IReadBlock(%d, %d, resolution %d, scale %d)\n"
+                " - block size: %dx%d\n",
+                nBlockXOff, nBlockYOff, nResolutionLevel, scale,
+                nBlockXSize, nBlockYSize);
+#endif
 
         CPLErr eErr = poGDS->ReadPixels( nBlockXOff * nBlockXSize,
                                          (nBlockYSize == 1) ? 0 : nBlockYOff * nBlockYSize,
@@ -822,11 +960,19 @@ CPLErr PDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                          1,
                                          nBlockXSize,
                                          nBlockXSize * ((nBlockYSize == 1) ? nRasterYSize : nBlockYSize),
-                                         poGDS->pabyCachedData);
+                                         poGDS->pabyCachedData,
+                                         scale);
+#ifdef HAVE_PDFIUM
+        nBlockXOff = blockXOff;
+        nBlockYOff = blockYOff;
+#endif
         if( eErr == CE_None )
         {
             poGDS->nLastBlockXOff = nBlockXOff;
             poGDS->nLastBlockYOff = nBlockYOff;
+#ifdef HAVE_PDFIUM
+            poGDS->nLastBlockResolution = nResolutionLevel;
+#endif
         }
         else
         {
@@ -1234,7 +1380,7 @@ class PDFImageRasterBand : public PDFRasterBand
 /*                        PDFImageRasterBand()                          */
 /************************************************************************/
 
-PDFImageRasterBand::PDFImageRasterBand( PDFDataset *poDS, int nBand ) : PDFRasterBand(poDS, nBand)
+PDFImageRasterBand::PDFImageRasterBand( PDFDataset *poDS, int nBand ) : PDFRasterBand(poDS, nBand, 0)
 
 {
 }
@@ -1340,6 +1486,9 @@ PDFDataset::PDFDataset()
     pabyCachedData = NULL;
     nLastBlockXOff = -1;
     nLastBlockYOff = -1;
+#ifdef HAVE_PDFIUM
+    nLastBlockResolution = -1;
+#endif
     iPage = -1;
     poNeatLine = NULL;
     bUseOCG = FALSE;
@@ -1360,6 +1509,45 @@ PDFDataset::PDFDataset()
 
     InitMapOperators();
 }
+
+#ifdef HAVE_PDFIUM
+
+/************************************************************************/
+/*                          IBuildOverviews()                           */
+/************************************************************************/
+
+CPLErr PDFDataset::IBuildOverviews( const char *pszResampling,
+                                       int nOverviews, int *panOverviewList,
+                                       int nListBands, int *panBandList,
+                                       GDALProgressFunc pfnProgress,
+                                       void *pProgressData )
+
+{
+/* -------------------------------------------------------------------- */
+/*      In order for building external overviews to work properly we    */
+/*      discard any concept of internal overviews when the user         */
+/*      first requests to build external overviews.                     */
+/* -------------------------------------------------------------------- */
+    for( int iBand = 0; iBand < GetRasterCount(); iBand++ )
+    {
+        PDFRasterBand *poBand =
+            (PDFRasterBand *) GetRasterBand( iBand+1 );
+
+        for( int i = 0; i < poBand->nOverviewCount; i++ )
+            delete poBand->papoOverviewBand[i];
+
+        CPLFree( poBand->papoOverviewBand );
+        poBand->papoOverviewBand = NULL;
+        poBand->nOverviewCount = 0;
+    }
+
+    return GDALPamDataset::IBuildOverviews( pszResampling,
+                                            nOverviews, panOverviewList,
+                                            nListBands, panBandList,
+                                            pfnProgress, pProgressData );
+}
+
+#endif  // ~ HAVE_PDFIUM
 
 /************************************************************************/
 /*                           PDFFreeDoc()                               */
@@ -1561,6 +1749,8 @@ CPLErr PDFDataset::IRasterIO( GDALRWFlag eRWFlag,
                               GDALRasterIOExtraArg* psExtraArg)
 {
     int nBandBlockXSize, nBandBlockYSize;
+    int bReadPixels = FALSE;
+    int scale = 1;
     GetRasterBand(1)->GetBlockSize(&nBandBlockXSize, &nBandBlockYSize);
     if( aiTiles.size() == 0 &&
         eRWFlag == GF_Read && nXSize == nBufXSize && nYSize == nBufYSize &&
@@ -1569,17 +1759,36 @@ CPLErr PDFDataset::IRasterIO( GDALRWFlag eRWFlag,
         (nBands >= 3 && panBandMap[0] == 1 && panBandMap[1] == 2 &&
          panBandMap[2] == 3 && ( nBands == 3 || panBandMap[3] == 4)) )
     {
-        int bReadPixels = TRUE;
+        bReadPixels = TRUE;
 #ifdef HAVE_PODOFO
         if (bUseLib.test(PDFLIB_PODOFO) && nBands == 4)
         {
             bReadPixels = FALSE;
         }
 #endif
-        if( bReadPixels )
-            return ReadPixels(nXOff, nYOff, nXSize, nYSize,
-                              nPixelSpace, nLineSpace, nBandSpace, (GByte*)pData);
     }
+#ifdef HAVE_PDFIUM
+    // PDFium is fast for rendering after loading page
+    // We can use scale to reduce output image rendered in pdfium
+    if(bUseLib.test(PDFLIB_PDFIUM) && aiTiles.size() == 0 &&
+        eRWFlag == GF_Read &&
+        eBufType == GDT_Byte && nBandCount == nBands &&
+        (nBands >= 3 && panBandMap[0] == 1 && panBandMap[1] == 2 &&
+         panBandMap[2] == 3 && ( nBands == 3 || panBandMap[3] == 4)) )
+    {
+      GDALRasterBand* poBand = GetRasterBand(1)->GetRasterSampleOverview(nXSize * nYSize);
+      // Read only if suggested Band is not arbitrary and is better than normal band
+      bReadPixels = (poBand == GetRasterBand(1) && !GetRasterBand(1)->HasArbitraryOverviews());
+      scale = floor( ((float)nXSize / (float)nBufXSize) + 0.5);
+    }
+
+    CPLDebug("PDF", "PDFDataset::IRasterIO(%d, %d, %d, %d, buff, %d, %d, type, %d, %d, %d)\n",
+        nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize, nBandCount, scale, bReadPixels);
+#endif  // ~ HAVE_PDFIUM
+
+    if( bReadPixels )
+        return ReadPixels(nXOff, nYOff, nXSize, nYSize,
+                          nPixelSpace, nLineSpace, nBandSpace, (GByte*)pData, scale);
 
     return GDALPamDataset::IRasterIO( eRWFlag,
                                         nXOff, nYOff, nXSize, nYSize,
@@ -3648,7 +3857,7 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
         if (poDS->poImageObj != NULL)
             poDS->SetBand(iBand, new PDFImageRasterBand(poDS, iBand));
         else
-            poDS->SetBand(iBand, new PDFRasterBand(poDS, iBand));
+            poDS->SetBand(iBand, new PDFRasterBand(poDS, iBand, 0));
     }
 
     int bHasNonEmptyVectorLayers = poDS->OpenVectorLayers(poPageDict);
@@ -3675,6 +3884,11 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Support overviews.                                              */
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
+
+#ifdef HAVE_PDFIUM
+    for(iBand = 1; iBand <= nBands; iBand ++)
+      ((PDFRasterBand*)poDS->GetRasterBand(iBand))->InitOverviews();
+#endif
 
     /* Clear dirty flag */
     poDS->bProjDirty = FALSE;

@@ -200,6 +200,9 @@ class PDFDataset : public GDALPamDataset
     int          bTried;
     GByte       *pabyCachedData;
     int          nLastBlockXOff, nLastBlockYOff;
+#ifdef HAVE_PDFIUM
+    int          nLastBlockResolution;
+#endif
 
     OGRPolygon*  poNeatLine;
 
@@ -331,6 +334,11 @@ class PDFDataset : public GDALPamDataset
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
+
+#ifdef HAVE_PDFIUM
+    virtual CPLErr IBuildOverviews( const char *, int, int *,
+                                    int, int *, GDALProgressFunc, void * );
+#endif
 };
 
 /************************************************************************/
@@ -343,14 +351,30 @@ class PDFRasterBand : public GDALPamRasterBand
 {
     friend class PDFDataset;
 
+    int arbOvs;
+#ifdef HAVE_PDFIUM
+    int   nResolutionLevel;
+    int   nOverviewCount;
+    PDFRasterBand **papoOverviewBand;
+#endif  // ~ HAVE_PDFIUM
+
     CPLErr IReadBlockFromTile( int, int, void * );
 
   public:
 
-                PDFRasterBand( PDFDataset *, int );
+                PDFRasterBand( PDFDataset *, int, int );
+                ~PDFRasterBand();
+
+#ifdef HAVE_PDFIUM
+    virtual int    GetOverviewCount();
+    virtual GDALRasterBand *GetOverview( int );
+    virtual void    InitOverviews();
+#endif  // ~ HAVE_PDFIUM
 
     virtual CPLErr IReadBlock( int, int, void * );
     virtual GDALColorInterp GetColorInterpretation();
+
+    virtual int HasArbitraryOverviews() { return arbOvs; }
 };
 
 #endif /*  defined(HAVE_POPPLER) || defined(HAVE_PODOFO) */
