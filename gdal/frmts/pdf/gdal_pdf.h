@@ -48,6 +48,23 @@
 #endif
 
 #ifdef HAVE_PDFIUM
+#include "cpl_multiproc.h"
+// Defined in GDAL 2.0
+#ifndef CPLMutex
+#define CPLMutex void
+#endif  // ~ CPLMutex
+
+#if (!defined(CPL_MULTIPROC_WIN32) && !defined(CPL_MULTIPROC_PTHREAD)) || defined(CPL_MULTIPROC_STUB) || defined(CPL_MULTIPROC_NONE)
+#error PDF driver compiled with PDFium library requires working threads with mutex locking!
+#endif
+
+// Linux ignores timeout, Windows returns if not INFINITE
+#ifdef WIN32
+#define  PDFIUM_MUTEX_TIMEOUT     INFINITE
+#else
+#define  PDFIUM_MUTEX_TIMEOUT     0.0f
+#endif
+
 #include <cstring>
 #include <fpdfsdk/include/fsdk_define.h>
 #include <fpdfsdk/include/fpdfview.h>
@@ -129,6 +146,44 @@ typedef struct
     int            nBands;
 } GDALPDFTileDesc;
 
+#ifdef HAVE_PDFIUM
+/**
+ * Structures for Document and Document's Page for PDFium library,
+ *  which does not support multi-threading.
+ * Structures keeps objects for PDFium library and exclusive mutex locks
+ *  for one-per-time access of PDFium library methods with multi-threading GDAL
+ * Structures also keeps only one object per each opened PDF document
+ *  - this saves time for opening and memory for opened objects
+ * Document is closed after closing all pages object.
+ */
+
+/************************************************************************/
+/*                           TPdfiumPageStruct                          */
+/************************************************************************/
+
+// Map of Pdfium pages in following structure
+typedef struct {
+  int pageNum;
+  CPDF_Page* page;
+  CPLMutex * readMutex;
+  int sharedNum;
+} TPdfiumPageStruct;
+
+typedef std::map<int, TPdfiumPageStruct*>        TMapPdfiumPages;
+
+/************************************************************************/
+/*                         TPdfiumDocumentStruct                        */
+/************************************************************************/
+
+// Structure for Mutex on File
+typedef struct {
+  char* filename;
+  CPDF_Document* doc;
+  TMapPdfiumPages pages;
+} TPdfiumDocumentStruct;
+
+#endif  // ~ HAVE_PDFIUM
+
 /************************************************************************/
 /* ==================================================================== */
 /*                              PDFDataset                              */
@@ -178,8 +233,8 @@ class PDFDataset : public GDALPamDataset
     int          bPdfToPpmFailed;
 #endif
 #ifdef HAVE_PDFIUM
-    CPDF_Document*  poDocPdfium;
-    CPDF_Page*      poPagePdfium;
+    TPdfiumDocumentStruct*  poDocPdfium;
+    TPdfiumPageStruct*      poPagePdfium;
 #endif
     GDALPDFObject* poPageObj;
 
@@ -338,6 +393,8 @@ class PDFDataset : public GDALPamDataset
 #ifdef HAVE_PDFIUM
     virtual CPLErr IBuildOverviews( const char *, int, int *,
                                     int, int *, GDALProgressFunc, void * );
+    
+    static int bPdfiumInit;
 #endif
 };
 
