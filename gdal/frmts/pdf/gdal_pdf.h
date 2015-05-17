@@ -6,6 +6,13 @@
  * Author:   Even Rouault, even dot rouault at mines dash paris dot org
  *
  ******************************************************************************
+ *
+ * Support for open-source PDFium library
+ *
+ * Copyright (C) 2015 Klokan Technologies GmbH (http://www.klokantech.com/)
+ * Author: Martin Mikita <martin.mikita@klokantech.com>, xmikit00 @ FIT VUT Brno
+ *
+ ******************************************************************************
  * Copyright (c) 2010-2014, Even Rouault <even dot rouault at mines-paris dot org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -40,6 +47,13 @@
 #include <goo/gtypes.h>
 #endif
 
+#ifdef HAVE_PDFIUM
+#include <cstring>
+#include <fpdfsdk/include/fsdk_define.h>
+#include <fpdfsdk/include/fpdfview.h>
+#include <core/include/fpdfapi/fpdf_page.h>
+#endif // HAVE_PDFIUM
+
 #include "gdal_pam.h"
 #include "ogrsf_frmts.h"
 
@@ -48,12 +62,18 @@
 
 #include <map>
 #include <stack>
+#include <bitset>   // For detecting usage of PDF library
+
+#define     PDFLIB_POPPLER    0
+#define     PDFLIB_PODOFO     1
+#define     PDFLIB_PDFIUM     2
+#define     PDFLIB_COUNT      3
 
 /************************************************************************/
 /*                             OGRPDFLayer                              */
 /************************************************************************/
 
-#if defined(HAVE_POPPLER) || defined(HAVE_PODOFO)
+#if defined(HAVE_POPPLER) || defined(HAVE_PODOFO) || defined(HAVE_PDFIUM)
 
 class PDFDataset;
 
@@ -125,7 +145,7 @@ class ObjectAutoFree;
 #define MAX_TOKEN_SIZE 256
 #define TOKEN_STACK_SIZE 8
 
-#if defined(HAVE_POPPLER) || defined(HAVE_PODOFO)
+#if defined(HAVE_POPPLER) || defined(HAVE_PODOFO) || defined(HAVE_PDFIUM)
 
 class PDFDataset : public GDALPamDataset
 {
@@ -149,13 +169,17 @@ class PDFDataset : public GDALPamDataset
     int          bInfoDirty;
     int          bXMPDirty;
 
-    int          bUsePoppler;
+    std::bitset<PDFLIB_COUNT> bUseLib;
 #ifdef HAVE_POPPLER
     PDFDoc*      poDocPoppler;
 #endif
 #ifdef HAVE_PODOFO
     PoDoFo::PdfMemDocument* poDocPodofo;
     int          bPdfToPpmFailed;
+#endif
+#ifdef HAVE_PDFIUM
+    CPDF_Document*  poDocPdfium;
+    CPDF_Page*      poPagePdfium;
 #endif
     GDALPDFObject* poPageObj;
 
@@ -295,7 +319,8 @@ class PDFDataset : public GDALPamDataset
                        GSpacing nPixelSpace,
                        GSpacing nLineSpace,
                        GSpacing nBandSpace,
-                       GByte* pabyData );
+                       GByte* pabyData,
+                       int scaleFactor = 1 );
 
     virtual int                 GetLayerCount();
     virtual OGRLayer*           GetLayer( int );

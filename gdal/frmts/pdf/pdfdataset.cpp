@@ -6,6 +6,13 @@
  * Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
  *
  ******************************************************************************
+ *
+ * Support for open-source PDFium library
+ *
+ * Copyright (C) 2015 Klokan Technologies GmbH (http://www.klokantech.com/)
+ * Author: Martin Mikita <martin.mikita@klokantech.com>, xmikit00 @ FIT VUT Brno
+ *
+ ******************************************************************************
  * Copyright (c) 2010-2014, Even Rouault <even dot rouault at mines-paris dot org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -54,7 +61,7 @@ CPL_C_START
 void    GDALRegister_PDF(void);
 CPL_C_END
 
-#if defined(HAVE_POPPLER) || defined(HAVE_PODOFO)
+#if defined(HAVE_POPPLER) || defined(HAVE_PODOFO) || defined(HAVE_PDFIUM)
 static const char* pszOpenOptionList =
 "<OpenOptionList>"
 "  <Option name='RENDERING_OPTIONS' type='string-select' description='Which graphical elements to render' default='RASTER,VECTOR,TEXT' alt_config_option='GDAL_PDF_RENDERING_OPTIONS'>"
@@ -68,12 +75,25 @@ static const char* pszOpenOptionList =
 "  </Option>"
 "  <Option name='DPI' type='float' description='Resolution in Dot Per Inch' default='72' alt_config_option='GDAL_PDF_DPI'/>"
 "  <Option name='USER_PWD' type='string' description='Password' alt_config_option='PDF_USER_PWD'/>"
-#if defined(HAVE_POPPLER) && defined(HAVE_PODOFO)
-"  <Option name='PDF_LIB' type='string-select' description='Which underlying PDF library to use' default='POPPLER' alt_config_option='GDAL_PDF_LIB'>"
+"  <Option name='PDF_LIB' type='string-select' description='Which underlying PDF library to use' "
+#if defined(HAVE_PDFIUM)
+  "default='POPPLER'"
+#elif defined(HAVE_POPPLER)
+  "default='POPPLER'"
+#elif defined(HAVE_PODOFO)
+  "default='PODOFO'"
+#endif  // ~ default PDF_LIB
+  "alt_config_option='GDAL_PDF_LIB'>"
+#if defined(HAVE_POPPLER)
 "     <Value>POPPLER</Value>\n"
+#endif  // HAVE_POPPLER
+#if defined(HAVE_PODOFO)
 "     <Value>PODOFO</Value>\n"
+#endif  // HAVE_PODOFO
+#if defined(HAVE_PDFIUM)
+"     <Value>PDFIUM</Value>\n"
+#endif  // HAVE_PDFIUM
 "  </Option>"
-#endif // HAVE_POPPLER && HAVE_PODOFO
 "  <Option name='LAYERS' type='string' description='List of layers (comma separated) to turn ON (or ALL to turn all layers ON)' alt_config_option='GDAL_PDF_LAYERS'/>"
 "  <Option name='LAYERS_OFF' type='string' description='List of layers (comma separated) to turn OFF' alt_config_option='GDAL_PDF_LAYERS_OFF'/>"
 "  <Option name='BANDS' type='string-select' description='Number of raster bands' default='3' alt_config_option='GDAL_PDF_BANDS'>"
@@ -309,7 +329,7 @@ class GDALPDFOutputDev : public SplashOutputDev
         }
 };
 
-#endif
+#endif  // ~ HAVE_POPPLER
 
 /************************************************************************/
 /*                         Dump routines                                */
@@ -788,7 +808,7 @@ CPLErr PDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     else
     {
 #ifdef HAVE_PODOFO
-        if (!poGDS->bUsePoppler && nBand == 4)
+        if (poGDS->bUseLib.test(PDFLIB_PODOFO) && nBand == 4)
         {
             memset(pImage, 255, nBlockXSize * nBlockYSize);
             return CE_None;
@@ -881,13 +901,13 @@ CPLErr PDFDataset::ReadPixels( int nReqXOff, int nReqYOff,
                                int nReqXSize, int nReqYSize,
                                GSpacing nPixelSpace, GSpacing nLineSpace,
                                GSpacing nBandSpace,
-                               GByte* pabyData )
+                               GByte* pabyData, int scaleFactor )
 {
     CPLErr eErr = CE_None;
     const char* pszRenderingOptions = GetOption(papszOpenOptions, "RENDERING_OPTIONS", NULL);
 
 #ifdef HAVE_POPPLER
-    if(bUsePoppler)
+    if(bUseLib.test(PDFLIB_POPPLER))
     {
         SplashColor sColor;
         sColor[0] = 255;
@@ -1004,7 +1024,7 @@ CPLErr PDFDataset::ReadPixels( int nReqXOff, int nReqYOff,
 #endif // HAVE_POPPLER
 
 #ifdef HAVE_PODOFO
-    if (!bUsePoppler)
+    if (bUseLib.test(PDFLIB_PODOFO))
     {
         if( bPdfToPpmFailed )
             return CE_Failure;
@@ -1113,7 +1133,81 @@ CPLErr PDFDataset::ReadPixels( int nReqXOff, int nReqYOff,
         }
         VSIUnlink(osTmpFilename);
     }
-#endif
+#endif  // HAVE_PODOFO
+#ifdef HAVE_PDFIUM
+    if (bUseLib.test(PDFLIB_PDFIUM))
+    {
+        if(!poPagePdfium) {
+            return CE_Failure;
+        }
+        // Parsing content required before rastering
+        // can takes too long for PDF with large number of objects/layers
+        poPagePdfium->ParseContent();
+
+        if (pszRenderingOptions != NULL)
+        {
+            CPLError(CE_Warning, CPLE_NotSupported,
+                        "GDAL_PDF_RENDERING_OPTIONS only supported "
+                        "when PDF driver is compiled against Poppler.");
+        }
+        FPDF_BITMAP bitmap = FPDFBitmap_Create(nReqXSize, nReqYSize, nBands == 4/*alpha*/);
+        // alpha is 0% which is transported to FF if not alpha
+        // Default background color is white
+        FPDF_DWORD color = 0x00FFFFFF; // A,R,G,B
+        FPDFBitmap_FillRect(bitmap, 0, 0, nReqXSize, nReqYSize, color);
+
+        // start_x, start_y, size_x, size_y, rotate, flags
+        CPLDebug("PDF", "PDFDataset::ReadPixels(%d, %d, %d, %d, %d)\n",
+            nReqXOff, nReqYOff, nReqXSize, nReqYSize, scaleFactor);
+
+        // ScaleFactor is used for speeding up rendering part of the page
+        // If not used (calculated in IRasterIO) it is 1
+        int xOff = (int)(nReqXOff / scaleFactor);
+        int yOff = (int)(nReqYOff / scaleFactor);
+        int rasterXSize = (int)(nRasterXSize / scaleFactor);
+        int rasterYSize = (int)(nRasterYSize / scaleFactor);
+        CPLDebug("PDF", " - Raster Size: %dx%d\n"
+                 " - FPDF_RenderPageBitmap(%d, %d, %d, %d)\n",
+                 nRasterXSize, nRasterYSize,
+                 -xOff, -yOff, rasterXSize, rasterYSize);
+
+        // Part of PDF is render with -x, -y, page_width, page_height
+        // (not requested size!)
+        FPDF_RenderPageBitmap(bitmap, poPagePdfium,
+              -xOff, -yOff, rasterXSize, rasterYSize, 0, 0);
+
+        int stride = FPDFBitmap_GetStride(bitmap);
+        GByte* buffer = reinterpret_cast<GByte*>(FPDFBitmap_GetBuffer(bitmap));
+
+        // Source data is B, G, R, unused.
+        // Destination data is R, G, B (,A if is alpha)
+        GByte* pabyDataR = pabyData;
+        GByte* pabyDataG = pabyData + 1 * nBandSpace;
+        GByte* pabyDataB = pabyData + 2 * nBandSpace;
+        GByte* pabyDataA = pabyData + 3 * nBandSpace;
+        // Copied from Poppler
+        int i, j;
+        for(j=0;j<nReqYSize;j++)
+        {
+            for(i=0;i<nReqXSize;i++)
+            {
+                pabyDataR[i * nPixelSpace] = buffer[(i*4) + 2];
+                pabyDataG[i * nPixelSpace] = buffer[(i*4) + 1];
+                pabyDataB[i * nPixelSpace] = buffer[(i*4) + 0];
+                if (nBands == 4)
+                {
+                    pabyDataA[i * nPixelSpace] = buffer[(i*4) + 3];
+                }
+            }
+            pabyDataR += nLineSpace;
+            pabyDataG += nLineSpace;
+            pabyDataB += nLineSpace;
+            pabyDataA += nLineSpace;
+            buffer += stride;
+        }
+        FPDFBitmap_Destroy(bitmap);
+    }
+#endif  // ~ HAVE_PDFIUM
 
     return eErr;
 }
@@ -1212,13 +1306,17 @@ CPLErr PDFImageRasterBand::IReadBlock( int CPL_UNUSED nBlockXOff, int nBlockYOff
 
 PDFDataset::PDFDataset()
 {
-    bUsePoppler = FALSE;
+    bUseLib.reset();
 #ifdef HAVE_POPPLER
     poDocPoppler = NULL;
 #endif
 #ifdef HAVE_PODOFO
     poDocPodofo = NULL;
     bPdfToPpmFailed = FALSE;
+#endif
+#ifdef HAVE_PDFIUM
+    poDocPdfium = NULL;
+    poPagePdfium = NULL;
 #endif
     poImageObj = NULL;
     pszWKT = NULL;
@@ -1292,7 +1390,7 @@ GDALPDFObject* PDFDataset::GetCatalog()
         return poCatalogObject;
 
 #ifdef HAVE_POPPLER
-    if (bUsePoppler)
+    if (bUseLib.test(PDFLIB_POPPLER))
     {
         poCatalogObjectPoppler = new ObjectAutoFree;
         poDocPoppler->getXRef()->getCatalog(poCatalogObjectPoppler);
@@ -1302,7 +1400,7 @@ GDALPDFObject* PDFDataset::GetCatalog()
 #endif
 
 #ifdef HAVE_PODOFO
-    if (!bUsePoppler)
+    if (bUseLib.test(PDFLIB_PODOFO))
     {
         int nCatalogNum = 0, nCatalogGen = 0;
         VSILFILE* fp = VSIFOpenL(osFilename.c_str(), "rb");
@@ -1323,6 +1421,15 @@ GDALPDFObject* PDFDataset::GetCatalog()
             poCatalogObject = new GDALPDFObjectPodofo(poCatalogPodofo, poDocPodofo->GetObjects());
     }
 #endif
+
+#ifdef HAVE_PDFIUM
+    if(bUseLib.test(PDFLIB_PDFIUM))
+    {
+        CPDF_Dictionary* catalog = poDocPdfium->GetRoot();
+        if(catalog)
+            poCatalogObject = new GDALPDFObjectPdfium(catalog);
+    }
+#endif  // ~ HAVE_PDFIUM
 
     return poCatalogObject;
 }
@@ -1368,14 +1475,26 @@ PDFDataset::~PDFDataset()
     delete poCatalogObject;
     poCatalogObject = NULL;
 #ifdef HAVE_POPPLER
-    delete poCatalogObjectPoppler;
-    PDFFreeDoc(poDocPoppler);
+    if(bUseLib.test(PDFLIB_POPPLER)) {
+        delete poCatalogObjectPoppler;
+        PDFFreeDoc(poDocPoppler);
+    }
     poDocPoppler = NULL;
 #endif
 #ifdef HAVE_PODOFO
-    delete poDocPodofo;
+    if(bUseLib.test(PDFLIB_PODOFO)) {
+        delete poDocPodofo;
+    }
     poDocPodofo = NULL;
 #endif
+#ifdef HAVE_PDFIUM
+    if(bUseLib.test(PDFLIB_PDFIUM)) {
+        FPDF_ClosePage(poPagePdfium);
+        FPDF_CloseDocument(poDocPdfium);
+    }
+    poDocPdfium = NULL;
+    poPagePdfium = NULL;
+#endif  // ~ HAVE_PDFIUM
 
     /* Now do the update */
     if (poPageDictCopy)
@@ -1452,7 +1571,7 @@ CPLErr PDFDataset::IRasterIO( GDALRWFlag eRWFlag,
     {
         int bReadPixels = TRUE;
 #ifdef HAVE_PODOFO
-        if (!bUsePoppler && nBands == 4)
+        if (bUseLib.test(PDFLIB_PODOFO) && nBands == 4)
         {
             bReadPixels = FALSE;
         }
@@ -1796,7 +1915,7 @@ int PDFDataset::CheckTiledRaster()
         GDALPDFObject* poFilter = poImageDict->Get("Filter");
 
         /* Podofo cannot uncompress JPEG2000 streams */
-        if( !bUsePoppler && poFilter != NULL &&
+        if( bUseLib.test(PDFLIB_PODOFO) && poFilter != NULL &&
             poFilter->GetType() == PDFObjectType_Name &&
             poFilter->GetName() == "JPXDecode" )
         {
@@ -2643,25 +2762,44 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
     else
         iPage = 1;
 
-    int bUsePoppler;
-#if defined(HAVE_POPPLER) && !defined(HAVE_PODOFO)
-    bUsePoppler = TRUE;
-#elif !defined(HAVE_POPPLER) && defined(HAVE_PODOFO)
-    bUsePoppler = FALSE;
-#elif defined(HAVE_POPPLER) && defined(HAVE_PODOFO)
-    const char* pszPDFLib = GetOption(poOpenInfo->papszOpenOptions, "PDF_LIB", "POPPLER");
-    if (EQUAL(pszPDFLib, "POPPLER"))
-        bUsePoppler = TRUE;
-    else if (EQUAL(pszPDFLib, "PODOFO"))
-        bUsePoppler = FALSE;
-    else
-    {
-        CPLDebug("PDF", "Invalid value for GDAL_PDF_LIB config option");
-        bUsePoppler = TRUE;
+    std::bitset<PDFLIB_COUNT> bHasLib;
+    bHasLib.reset();
+    // Each library set their flag
+#if defined(HAVE_POPPLER)
+    bHasLib.set(PDFLIB_POPPLER);
+#endif  // HAVE_POPPLER
+#if defined(HAVE_PODOFO)
+    bHasLib.set(PDFLIB_PODOFO);
+#endif  // HAVE_PODOFO
+#if defined(HAVE_PDFIUM)
+    bHasLib.set(PDFLIB_PDFIUM);
+#endif  // HAVE_PDFIUM
+
+    // No library defined
+    if(bHasLib.count() == 0)
+        return NULL;
+
+    std::bitset<PDFLIB_COUNT> bUseLib;
+    bUseLib.reset();
+    // More than one library defined
+    // Detect which one
+    if(bHasLib.count() != 1) {
+        const char* pszPDFLib = CPLGetConfigOption("GDAL_PDF_LIB", "PDFIUM");
+        if (EQUAL(pszPDFLib, "POPPLER"))
+            bUseLib.set(PDFLIB_POPPLER);
+        else if (EQUAL(pszPDFLib, "PODOFO"))
+            bUseLib.set(PDFLIB_PODOFO);
+        else if (EQUAL(pszPDFLib, "PDFIUM"))
+            bUseLib.set(PDFLIB_PDFIUM);
+
+        if(bUseLib.count() != 1 || (bHasLib & bUseLib) == 0)
+        {
+            CPLDebug("PDF", "Invalid value for GDAL_PDF_LIB config option");
+            return NULL;
+        }
     }
-#else
-    return NULL;
-#endif
+    else
+        bUseLib = bHasLib;
 
     GDALPDFObject* poPageObj = NULL;
 #ifdef HAVE_POPPLER
@@ -2674,10 +2812,14 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
     PoDoFo::PdfMemDocument* poDocPodofo = NULL;
     PoDoFo::PdfPage* poPagePodofo = NULL;
 #endif
+#ifdef HAVE_PDFIUM
+    CPDF_Document* poDocPdfium = NULL;
+    CPDF_Page* poPagePdfium = NULL;
+#endif
     int nPages = 0;
 
 #ifdef HAVE_POPPLER
-  if(bUsePoppler)
+  if(bUseLib.test(PDFLIB_POPPLER))
   {
     GooString* poUserPwd = NULL;
 
@@ -2824,10 +2966,10 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
         ((GDALPDFObjectPoppler*)poPageObj)->SetRefNumAndGen(poPageRef->num, poPageRef->gen);
     }
   }
-#endif
+#endif  // ~ HAVE_POPPLER
 
 #ifdef HAVE_PODOFO
-  if (!bUsePoppler)
+  if (bUseLib.test(PDFLIB_PODOFO))
   {
     PoDoFo::PdfError::EnableDebug( false );
     PoDoFo::PdfError::EnableLogging( false );
@@ -2944,17 +3086,105 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
     PoDoFo::PdfObject* pObj = poPagePodofo->GetObject();
     poPageObj = new GDALPDFObjectPodofo(pObj, poDocPodofo->GetObjects());
   }
-#endif
+#endif  // ~ HAVE_PODOFO
+
+#ifdef HAVE_PDFIUM
+  if (bUseLib.test(PDFLIB_PDFIUM))
+  {
+    // Try without password (if PDF not requires password it can fail)
+    poDocPdfium = reinterpret_cast<CPDF_Document*>(FPDF_LoadDocument(pszFilename, NULL));
+    if(poDocPdfium == NULL)
+    {
+      unsigned long err = FPDF_GetLastError();
+      if( err == FPDF_ERR_PASSWORD) {
+          if(pszUserPwd) {
+            if (EQUAL(pszUserPwd, "ASK_INTERACTIVE")) {
+              printf( "Enter password (will be echo'ed in the console): " );
+              if (0 == fgets( szPassword, sizeof(szPassword), stdin ))
+              {
+                fprintf(stderr, "WARNING: Error getting password.\n");
+              }
+              szPassword[sizeof(szPassword)-1] = 0;
+              char* sz10 = strchr(szPassword, '\n');
+              if (sz10)
+                  *sz10 = 0;
+              pszUserPwd = szPassword;
+            }
+            poDocPdfium = reinterpret_cast<CPDF_Document*>(FPDF_LoadDocument(pszFilename, pszUserPwd));
+            if(poDocPdfium == NULL)
+              err = FPDF_GetLastError();
+            else
+              err = FPDF_ERR_SUCCESS;
+          }
+          else {
+            CPLError(CE_Failure, CPLE_AppDefined,
+              "A password is needed. You can specify it through the PDF_USER_PWD "
+              "configuration option (that can be set to ASK_INTERACTIVE)");
+            return NULL;
+          }
+      } // First Error Password [null password given]
+      if( err != FPDF_ERR_SUCCESS ) {
+        if(err == FPDF_ERR_PASSWORD)
+          CPLError(CE_Failure, CPLE_AppDefined, "PDFium Invalid password.");
+        else if(err == FPDF_ERR_SECURITY)
+          CPLError(CE_Failure, CPLE_AppDefined, "PDFium Unsupported security scheme.");
+        else if(err == FPDF_ERR_FORMAT)
+          CPLError(CE_Failure, CPLE_AppDefined, "PDFium File not in PDF format or corrupted.");
+        else if(err == FPDF_ERR_FILE)
+          CPLError(CE_Failure, CPLE_AppDefined, "PDFium File not found or could not be opened.");
+        else
+          CPLError(CE_Failure, CPLE_AppDefined, "PDFium Unknown PDF error or invalid PDF.");
+        return NULL;
+      }
+    } // ~ wrong PDF or password required
+
+    nPages = poDocPdfium->GetPageCount();
+    if (iPage < 1 || iPage > nPages)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid page number (%d/%d)",
+                 iPage, nPages);
+        FPDF_CloseDocument(poDocPdfium);
+        return NULL;
+    }
+
+    // This can take long time! - large GeoPDF are read in memory now and parsed!
+    poPagePdfium = (CPDF_Page*)FPDF_LoadPage(poDocPdfium, iPage - 1);
+    if ( poPagePdfium == NULL )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid PDF : invalid page");
+        FPDF_CloseDocument(poDocPdfium);
+        return NULL;
+    }
+
+    CPDF_Object* pageObj = poPagePdfium->m_pFormDict;
+    if(pageObj == NULL) {
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid PDF : invalid page object");
+        FPDF_ClosePage(poPagePdfium);
+        FPDF_CloseDocument(poDocPdfium);
+        return NULL;
+    }
+    poPageObj = new GDALPDFObjectPdfium(pageObj);
+  }
+#endif  // ~ HAVE_PDFIUM
 
     GDALPDFDictionary* poPageDict = poPageObj->GetDictionary();
     if ( poPageDict == NULL )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Invalid PDF : poPageDict == NULL");
 #ifdef HAVE_POPPLER
-        PDFFreeDoc(poDocPoppler);
+        if (bUseLib.test(PDFLIB_POPPLER))
+            PDFFreeDoc(poDocPoppler);
 #endif
 #ifdef HAVE_PODOFO
-        delete poDocPodofo;
+        if (bUseLib.test(PDFLIB_PODOFO)) {
+            delete poDocPodofo;
+        }
+#endif
+#ifdef HAVE_PDFIUM
+        if (bUseLib.test(PDFLIB_PDFIUM)) {
+            FPDF_ClosePage(poPagePdfium);
+            FPDF_CloseDocument(poDocPdfium);
+        }
 #endif
         return NULL;
     }
@@ -2980,7 +3210,7 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
 
     PDFDataset* poDS = new PDFDataset();
     poDS->papszOpenOptions = CSLDuplicate(poOpenInfo->papszOpenOptions);
-    poDS->bUsePoppler = bUsePoppler;
+    poDS->bUseLib = bUseLib;
     poDS->osFilename = pszFilename;
     poDS->eAccess = poOpenInfo->eAccess;
 
@@ -3005,6 +3235,10 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
 #ifdef HAVE_PODOFO
     poDS->poDocPodofo = poDocPodofo;
 #endif
+#ifdef HAVE_PDFIUM
+    poDS->poDocPdfium = poDocPdfium;
+    poDS->poPagePdfium = poPagePdfium;
+#endif
     poDS->poPageObj = poPageObj;
     poDS->osUserPwd = pszUserPwd ? pszUserPwd : "";
     poDS->iPage = iPage;
@@ -3028,7 +3262,7 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
     double dfX1 = 0.0, dfY1 = 0.0, dfX2 = 0.0, dfY2 = 0.0;
 
 #ifdef HAVE_POPPLER
-    if (bUsePoppler)
+    if (bUseLib.test(PDFLIB_POPPLER))
     {
         PDFRectangle* psMediaBox = poPagePoppler->getMediaBox();
         dfX1 = psMediaBox->x1;
@@ -3039,7 +3273,7 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
 #endif
 
 #ifdef HAVE_PODOFO
-    if (!bUsePoppler)
+    if (bUseLib.test(PDFLIB_PODOFO))
     {
         PoDoFo::PdfRect oMediaBox = poPagePodofo->GetMediaBox();
         dfX1 = oMediaBox.GetLeft();
@@ -3048,6 +3282,16 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
         dfY2 = dfY1 + oMediaBox.GetHeight();
     }
 #endif
+
+#ifdef HAVE_PDFIUM
+    if (bUseLib.test(PDFLIB_PDFIUM)) {
+        CFX_FloatRect rect = poPagePdfium->GetPageBBox();
+        dfX1 = rect.left;
+        dfX2 = rect.right;
+        dfY1 = rect.bottom;
+        dfY2 = rect.top;
+    }
+#endif  // ~ HAVE_PDFIUM
 
     double dfUserUnit = poDS->dfDPI * USER_UNIT_IN_INCH;
     poDS->dfPageWidth = dfX2 - dfX1;
@@ -3063,21 +3307,33 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
 
     double dfRotation = 0;
 #ifdef HAVE_POPPLER
-    if (bUsePoppler)
+    if (bUseLib.test(PDFLIB_POPPLER))
         dfRotation = poDocPoppler->getPageRotate(iPage);
 #endif
 
 #ifdef HAVE_PODOFO
-    if (!bUsePoppler)
+    if (bUseLib.test(PDFLIB_PODOFO))
         dfRotation = poPagePodofo->GetRotation();
 #endif
+
+#ifdef HAVE_PDFIUM
+    if (bUseLib.test(PDFLIB_PDFIUM))
+    {
+        CPDF_Object* pRotate = poPagePdfium->GetPageAttr(FX_BSTRC("Rotate"));
+        if (pRotate)
+          dfRotation = pRotate->GetInteger();
+        if(dfRotation < 0)
+          dfRotation += 360.0;
+    }
+#endif
+
     if ( dfRotation == 90 ||
          dfRotation == 270 )
     {
 /* FIXME: the non poppler case should be implemented. This needs to rotate */
 /* the output of pdftoppm */
-#ifdef HAVE_POPPLER
-      if (bUsePoppler)
+#if defined(HAVE_POPPLER) || defined(HAVE_PDFIUM)
+      if (bUseLib.test(PDFLIB_POPPLER) || bUseLib.test(PDFLIB_PDFIUM))
       {
         /* Wondering how it would work with a georeferenced image */
         /* Has only been tested with ungeoreferenced image */
@@ -3269,7 +3525,7 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
 
 
 #ifdef HAVE_POPPLER
-  if (bUsePoppler)
+  if (bUseLib.test(PDFLIB_POPPLER))
   {
     GooString* poMetadata = poCatalogPoppler->readMetadata();
     if (poMetadata)
@@ -3307,7 +3563,7 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
 #endif
 
 #ifdef HAVE_PODOFO
-  if (!bUsePoppler)
+  if (bUseLib.test(PDFLIB_PODOFO))
   {
     PoDoFo::TIVecObjects it = poDocPodofo->GetObjects().begin();
     for( ; it != poDocPodofo->GetObjects().end(); ++it )
@@ -3328,6 +3584,39 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
     }
   }
 #endif
+#ifdef HAVE_PDFIUM
+    if (bUseLib.test(PDFLIB_PDFIUM))
+    {
+        GDALPDFObjectPdfium poRoot(poDocPdfium->GetRoot());
+        if(poRoot.GetType() == PDFObjectType_Dictionary) {
+          GDALPDFDictionary* poDict = poRoot.GetDictionary();
+          GDALPDFObject* poMetadata(poDict->Get("Metadata"));
+          if(poMetadata != NULL) {
+            GDALPDFStream* poStream = poMetadata->GetStream();
+            if (poStream != NULL) {
+              char* pszContent = poStream->GetBytes();
+              int nLength = (int)poStream->GetLength();
+              if (pszContent != NULL && nLength > 15 &&
+                  strncmp(pszContent, "<?xpacket begin=", strlen("<?xpacket begin=")) == 0)
+              {
+                  char *apszMDList[2];
+                  apszMDList[0] = pszContent;
+                  apszMDList[1] = NULL;
+                  poDS->SetMetadata(apszMDList, "xml:XMP");
+              }
+              CPLFree(pszContent);
+            }
+          }
+        }
+
+        /* Find layers */
+        poDS->FindLayersGeneric(poPageDict);
+
+        GDALPDFObjectPdfium poInfo(poDocPdfium->GetInfo());
+        /* Read Info object */
+        poDS->ParseInfo(&poInfo);
+    }
+#endif  // ~ HAVE_PDFIUM
 
     int nBands = 3;
     if( nBandsGuessed )
@@ -3344,10 +3633,10 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
         }
     }
 #ifdef HAVE_PODOFO
-    if (!bUsePoppler && nBands == 4 && poDS->aiTiles.size() == 0)
+    if (bUseLib.test(PDFLIB_PODOFO) && nBands == 4 && poDS->aiTiles.size() == 0)
     {
         CPLError(CE_Warning, CPLE_NotSupported,
-                 "GDAL_PDF_BANDS=4 only supported when PDF driver is compiled against Poppler. "
+                 "GDAL_PDF_BANDS=4 not supported when PDF driver is compiled against Podofo. "
                  "Using 3 as a fallback");
         nBands = 3;
     }
@@ -5099,14 +5388,14 @@ CPLErr PDFDataset::SetGCPs( int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
     return CE_None;
 }
 
-#endif // #if defined(HAVE_POPPLER) || defined(HAVE_PODOFO)
+#endif // #if defined(HAVE_POPPLER) || defined(HAVE_PODOFO) || defined(HAVE_PDFIUM)
 
 /************************************************************************/
 /*                          GDALPDFOpen()                               */
 /************************************************************************/
 
 GDALDataset* GDALPDFOpen(
-#if defined(HAVE_POPPLER) || defined(HAVE_PODOFO)
+#if defined(HAVE_POPPLER) || defined(HAVE_PODOFO) || defined(HAVE_PDFIUM)
                          const char* pszFilename,
                          GDALAccess eAccess
 #else
@@ -5115,7 +5404,7 @@ GDALDataset* GDALPDFOpen(
 #endif
                          )
 {
-#if defined(HAVE_POPPLER) || defined(HAVE_PODOFO)
+#if defined(HAVE_POPPLER) || defined(HAVE_PODOFO) || defined(HAVE_PDFIUM)
     GDALOpenInfo oOpenInfo(pszFilename, eAccess);
     return PDFDataset::Open(&oOpenInfo);
 #else
@@ -5132,6 +5421,9 @@ static void GDALPDFUnloadDriver(CPL_UNUSED GDALDriver * poDriver)
 #ifdef HAVE_POPPLER
     if( hGlobalParamsMutex != NULL )
         CPLDestroyMutex(hGlobalParamsMutex);
+#endif
+#ifdef HAVE_PDFIUM
+    FPDF_DestroyLibrary();
 #endif
 }
 
@@ -5185,6 +5477,9 @@ void GDALRegister_PDF()
 #ifdef HAVE_PODOFO
         poDriver->SetMetadataItem( "HAVE_PODOFO", "YES" );
 #endif // HAVE_PODOFO
+#ifdef HAVE_PDFIUM
+        poDriver->SetMetadataItem( "HAVE_PDFIUM", "YES" );
+#endif // HAVE_PDFIUM
 
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>\n"
@@ -5244,17 +5539,20 @@ void GDALRegister_PDF()
 "   <Option name='JAVASCRIPT_FILE' type='string' description='Filename of the Javascript script to embed and run at file opening'/>\n"
 "</CreationOptionList>\n" );
 
-#if defined(HAVE_POPPLER) || defined(HAVE_PODOFO)
+#if defined(HAVE_POPPLER) || defined(HAVE_PODOFO) || defined(HAVE_PDFIUM)
         poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST, pszOpenOptionList );
         poDriver->pfnOpen = PDFDataset::Open;
         poDriver->pfnIdentify = PDFDataset::Identify;
         poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );
-#endif // HAVE_POPPLER || HAVE_PODOFO
+#endif // HAVE_POPPLER || HAVE_PODOFO || defined(HAVE_PDFIUM)
 
         poDriver->pfnCreateCopy = GDALPDFCreateCopy;
         poDriver->pfnCreate = PDFWritableVectorDataset::Create;
         poDriver->pfnUnloadDriver = GDALPDFUnloadDriver;
 
+#ifdef HAVE_PDFIUM
+        FPDF_InitLibrary();
+#endif
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }

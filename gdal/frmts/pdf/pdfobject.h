@@ -6,6 +6,13 @@
  * Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
  *
  ******************************************************************************
+ *
+ * Support for open-source PDFium library
+ *
+ * Copyright (C) 2015 Klokan Technologies GmbH (http://www.klokantech.com/)
+ * Author: Martin Mikita <martin.mikita@klokantech.com>, xmikit00 @ FIT VUT Brno
+ *
+ ******************************************************************************
  * Copyright (c) 2011-2014, Even Rouault <even dot rouault at mines-paris dot org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -78,6 +85,9 @@
 #include "podofo.h"
 #endif // HAVE_PODOFO
 
+#ifdef HAVE_PDFIUM
+#include <core/include/fpdfapi/fpdf_objects.h>
+#endif // HAVE_PDFIUM
 
 double ROUND_TO_INT_IF_CLOSE(double x, double eps = 0);
 
@@ -337,5 +347,39 @@ class GDALPDFObjectPodofo : public GDALPDFObject
 };
 
 #endif // HAVE_PODOFO
+
+#ifdef HAVE_PDFIUM
+
+class GDALPDFObjectPdfium : public GDALPDFObject
+{
+    private:
+        CPDF_Object* m_po;
+        GDALPDFDictionary* m_poDict;
+        GDALPDFArray* m_poArray;
+        GDALPDFStream* m_poStream;
+        CPLString osStr;
+
+    protected:
+        virtual const char*       GetTypeNameNative();
+
+    public:
+        GDALPDFObjectPdfium(CPDF_Object *po);
+
+        virtual ~GDALPDFObjectPdfium();
+
+        virtual GDALPDFObjectType GetType();
+        virtual int               GetBool();
+        virtual int               GetInt();
+        virtual double            GetReal();
+        virtual const CPLString&  GetString();
+        virtual const CPLString&  GetName();
+        virtual GDALPDFDictionary*  GetDictionary();
+        virtual GDALPDFArray*       GetArray();
+        virtual GDALPDFStream*      GetStream();
+        virtual int                 GetRefNum();
+        virtual int                 GetRefGen();
+};
+
+#endif // HAVE_PDFIUM
 
 #endif // PDFOBJECT_H_INCLUDED
