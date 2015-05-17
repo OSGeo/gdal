@@ -2,6 +2,15 @@ include ../../GDALmake.opt
 
 OBJ	=	pdfdataset.o pdfio.o pdfobject.o pdfcreatecopy.o ogrpdflayer.o pdfwritabledataset.o pdfreadvectors.o
 
+PLUGIN_DL =	gdal_PDF.so
+
+ifeq ($(MACOSX_FRAMEWORK),yes)
+PLUGIN_DL = gdal_PDF.dylib
+LDFLAGS += -Wl,-undefined -Wl,dynamic_lookup -stdlib=libstdc++
+CPPFLAGS += -stdlib=libstdc++
+LD_SHARED = $(LD) -bundle
+endif
+
 ifeq ($(HAVE_POPPLER),yes)
 CPPFLAGS +=  -DHAVE_POPPLER
 endif
@@ -38,5 +47,11 @@ default:	$(OBJ:.o=.$(OBJ_EXT))
 
 clean:
 	rm -f *.o $(O_OBJ)
+	rm -f $(PLUGIN_DL)
 
 install-obj:	$(O_OBJ:.o=.$(OBJ_EXT))
+
+plugin: $(PLUGIN_DL)
+
+$(PLUGIN_DL):  $(OBJ)
+	$(LD_SHARED) $(OBJ) $(LDFLAGS) $(CONFIG_LIBS_INS) -o $(PLUGIN_DL) $(PDFIUM_PLUGIN_LIB)

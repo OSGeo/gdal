@@ -3778,6 +3778,7 @@ if test "$with_pdfium" != "no" -a "$with_pdfium" != ""; then
         if test -z "`${CXX} testpdfium.cpp -o testpdfium ${TEST_PDFIUM_INC} ${PDFIUM_LIB}  2>&1`" ; then
             HAVE_PDFIUM=yes
             LIBS="${PDFIUM_LIB} ${LIBS}"
+            PDFIUM_PLUGIN_LIB="${PDFIUM_LIB}"
             PDFIUM_INC=$TEST_PDFIUM_INC
             AC_MSG_RESULT([yes])
         fi
@@ -3808,6 +3809,7 @@ if test "$with_pdfium" != "no" -a "$with_pdfium" != ""; then
         if test -z "`${CXX} testpdfium.cpp -o testpdfium ${TEST_PDFIUM_INC} ${TEST_PDFIUM_LIB} 2>&1`" ; then
             HAVE_PDFIUM=yes
             LIBS="${PDFIUM_LIB} ${LIBS}"
+            PDFIUM_PLUGIN_LIB="${PDFIUM_LIB}"
             PDFIUM_INC=$TEST_PDFIUM_INC
             AC_MSG_RESULT([yes])
         else
@@ -3822,6 +3824,7 @@ fi
 
 AC_SUBST(HAVE_PDFIUM, $HAVE_PDFIUM)
 AC_SUBST(PDFIUM_INC, $PDFIUM_INC)
+AC_SUBST(PDFIUM_PLUGIN_LIB, $PDFIUM_PLUGIN_LIB)
 
 dnl ---------------------------------------------------------------------------
 dnl PROJ.4 related stuff.

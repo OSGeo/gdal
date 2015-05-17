@@ -652,6 +652,7 @@ GDAL_VERSION_MINOR
 GDAL_VERSION_MAJOR
 PROJ_INCLUDE
 PROJ_STATIC
+PDFIUM_PLUGIN_LIB
 PDFIUM_INC
 HAVE_PDFIUM
 PODOFO_INC
@@ -28285,6 +28286,7 @@ fi
         if test -z "`${CXX} testpdfium.cpp -o testpdfium ${TEST_PDFIUM_INC} ${PDFIUM_LIB}  2>&1`" ; then
             HAVE_PDFIUM=yes
             LIBS="${PDFIUM_LIB} ${LIBS}"
+            PDFIUM_PLUGIN_LIB="${PDFIUM_LIB}"
             PDFIUM_INC=$TEST_PDFIUM_INC
             { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
@@ -28320,6 +28322,7 @@ fi
         if test -z "`${CXX} testpdfium.cpp -o testpdfium ${TEST_PDFIUM_INC} ${TEST_PDFIUM_LIB} 2>&1`" ; then
             HAVE_PDFIUM=yes
             LIBS="${PDFIUM_LIB} ${LIBS}"
+            PDFIUM_PLUGIN_LIB="${PDFIUM_LIB}"
             PDFIUM_INC=$TEST_PDFIUM_INC
             { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
@@ -28339,6 +28342,7 @@ HAVE_PDFIUM=$HAVE_PDFIUM
 
 PDFIUM_INC=$PDFIUM_INC
 
+PDFIUM_PLUGIN_LIB=$PDFIUM_PLUGIN_LIB
 
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking how to link PROJ.4 library" >&5
