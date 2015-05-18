@@ -1677,7 +1677,8 @@ void GDALSetGenImgProjTransformerDstGeoTransform(
 void GDALDestroyGenImgProjTransformer( void *hTransformArg )
 
 {
-    VALIDATE_POINTER0( hTransformArg, "GDALDestroyGenImgProjTransformer" );
+    if( hTransformArg == NULL )
+        return;
 
     GDALGenImgProjTransformInfo *psInfo = 
         (GDALGenImgProjTransformInfo *) hTransformArg;
@@ -2365,7 +2366,8 @@ void *GDALCreateReprojectionTransformer( const char *pszSrcWKT,
 void GDALDestroyReprojectionTransformer( void *pTransformArg )
 
 {
-    VALIDATE_POINTER0( pTransformArg, "GDALDestroyReprojectionTransformer" );
+    if( pTransformArg == NULL )
+        return;
 
     GDALReprojectionTransformInfo *psInfo = 
         (GDALReprojectionTransformInfo *) pTransformArg;		
@@ -2672,7 +2674,8 @@ void GDALApproxTransformerOwnsSubtransformer( void *pCBData, int bOwnFlag )
 void GDALDestroyApproxTransformer( void * pCBData )
 
 {
-    VALIDATE_POINTER0( pCBData, "GDALDestroyApproxTransformer" );
+    if( pCBData == NULL)
+        return;
 
     ApproxTransformInfo	*psATInfo = (ApproxTransformInfo *) pCBData;
 
@@ -3350,10 +3353,13 @@ CPLErr GDALDeserializeTransformer( CPLXMLNode *psTree,
 void GDALDestroyTransformer( void *pTransformArg )
 
 {
+    if( pTransformArg == NULL )
+        return;
+
     GDALTransformerInfo *psInfo = (GDALTransformerInfo *) pTransformArg;
 
-    if( psInfo == NULL ||
-        memcmp(psInfo->abySignature,GDAL_GTI2_SIGNATURE, strlen(GDAL_GTI2_SIGNATURE)) != 0 )
+    if( memcmp(psInfo->abySignature,GDAL_GTI2_SIGNATURE,
+        strlen(GDAL_GTI2_SIGNATURE)) != 0 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Attempt to destroy non-GTI2 transformer." );

@@ -913,6 +913,9 @@ void *GDALCreateGeoLocTransformer( GDALDatasetH hBaseDS,
 void GDALDestroyGeoLocTransformer( void *pTransformAlg )
 
 {
+    if( pTransformAlg == NULL )
+        return;
+
     GDALGeoLocTransformInfo *psTransform = 
         (GDALGeoLocTransformInfo *) pTransformAlg;
 

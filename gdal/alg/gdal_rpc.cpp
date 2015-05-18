@@ -570,6 +570,9 @@ void *GDALCreateRPCTransformer( GDALRPCInfo *psRPCInfo, int bReversed,
 void GDALDestroyRPCTransformer( void *pTransformAlg )
 
 {
+    if( pTransformAlg == NULL )
+        return;
+
     GDALRPCTransformInfo *psTransform = (GDALRPCTransformInfo *) pTransformAlg;
 
     CPLFree( psTransform->pszDEMPath );
