@@ -86,9 +86,8 @@ GDALDriver::~GDALDriver()
 void CPL_STDCALL GDALDestroyDriver( GDALDriverH hDriver )
 
 {
-    VALIDATE_POINTER0( hDriver, "GDALDestroyDriver" );
-
-    delete ((GDALDriver *) hDriver);
+    if( hDriver != NULL )
+        delete ((GDALDriver *) hDriver);
 }
 
 /************************************************************************/

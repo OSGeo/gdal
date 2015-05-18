@@ -248,7 +248,8 @@ void *GDALCreateTPSTransformerInt( int nGCPCount, const GDAL_GCP *pasGCPList,
 void GDALDestroyTPSTransformer( void *pTransformArg )
 
 {
-    VALIDATE_POINTER0( pTransformArg, "GDALDestroyTPSTransformer" );
+    if( pTransformArg == NULL )
+        return;
 
     TPSTransformInfo *psInfo = (TPSTransformInfo *) pTransformArg;
 

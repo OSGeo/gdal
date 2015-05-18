@@ -331,10 +331,13 @@ void *GDALCreateGCPRefineTransformer( int nGCPCount, const GDAL_GCP *pasGCPList,
 void GDALDestroyGCPTransformer( void *pTransformArg )
 
 {
-    GCPTransformInfo *psInfo = (GCPTransformInfo *) pTransformArg;
+    GCPTransformInfo *psInfo = NULL;
 
-    VALIDATE_POINTER0( pTransformArg, "GDALDestroyGCPTransformer" );
-    
+    if( pTransformArg == NULL )
+        return;
+
+    psInfo = (GCPTransformInfo *) pTransformArg;
+
     if( CPLAtomicDec(&(psInfo->nRefCount)) == 0 )
     {
         GDALDeinitGCPs( psInfo->nGCPCount, psInfo->pasGCPList );
