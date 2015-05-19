@@ -295,11 +295,11 @@ double HDF4Dataset::AnyTypeToDouble( int32 iNumType, void *pData )
         case DFNT_UINT16:
             return (double)*(unsigned short *)pData;
         case DFNT_INT32:
-            return (double)*(long *)pData;
+            return (double)*(int *)pData;
         case DFNT_UINT32:
-            return (double)*(unsigned long *)pData;
+            return (double)*(unsigned int *)pData;
         case DFNT_INT64:
-            return (double)*(char *)pData;
+            return (double)*(char *)pData; // highly suspicious ! Should be GIntBig. But cannot verify
         case DFNT_UINT64:
             return (double)*(GIntBig *)pData;
         case DFNT_FLOAT32:
