@@ -1240,7 +1240,8 @@ int GDALJP2Metadata::GetGMLJP2GeoreferencingInfo( int& nEPSGCode,
                                                   double adfXVector[2],
                                                   double adfYVector[2],
                                                   const char*& pszComment,
-                                                  CPLString& osDictBox )
+                                                  CPLString& osDictBox,
+                                                  int& bNeedAxisFlip )
 {
 
 /* -------------------------------------------------------------------- */
@@ -1249,7 +1250,7 @@ int GDALJP2Metadata::GetGMLJP2GeoreferencingInfo( int& nEPSGCode,
     OGRSpatialReference oSRS;
     char *pszWKTCopy = (char *) pszProjection;
     nEPSGCode = 0;
-    int  bNeedAxisFlip = FALSE;
+    bNeedAxisFlip = FALSE;
 
     if( oSRS.importFromWkt( &pszWKTCopy ) != OGRERR_NONE )
         return FALSE;
@@ -1445,9 +1446,10 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2( int nXSize, int nYSize )
     double adfYVector[2];
     const char* pszComment = "";
     CPLString osDictBox;
+    int bNeedAxisFlip = FALSE;
     if( !GetGMLJP2GeoreferencingInfo( nEPSGCode, adfOrigin,
                                       adfXVector, adfYVector,
-                                      pszComment, osDictBox ) )
+                                      pszComment, osDictBox, bNeedAxisFlip ) )
     {
         return NULL;
     }
@@ -1458,6 +1460,30 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2( int nXSize, int nYSize )
     else
         strcpy( szSRSName, 
                 "gmljp2://xml/CRSDictionary.gml#ogrcrs1" );
+
+    // Compute bounding box
+    double dfX1 = adfGeoTransform[0];
+    double dfX2 = adfGeoTransform[0] + nXSize * adfGeoTransform[1];
+    double dfX3 = adfGeoTransform[0] +                               nYSize * adfGeoTransform[2];
+    double dfX4 = adfGeoTransform[0] + nXSize * adfGeoTransform[1] + nYSize * adfGeoTransform[2];
+    double dfY1 = adfGeoTransform[3];
+    double dfY2 = adfGeoTransform[3] + nXSize * adfGeoTransform[4];
+    double dfY3 = adfGeoTransform[3] +                               nYSize * adfGeoTransform[5];
+    double dfY4 = adfGeoTransform[3] + nXSize * adfGeoTransform[4] + nYSize * adfGeoTransform[5];
+    double dfLCX = MIN(MIN(dfX1,dfX2),MIN(dfX3,dfX4));
+    double dfLCY = MIN(MIN(dfY1,dfY2),MIN(dfY3,dfY4));
+    double dfUCX = MAX(MAX(dfX1,dfX2),MAX(dfX3,dfX4));
+    double dfUCY = MAX(MAX(dfY1,dfY2),MAX(dfY3,dfY4));
+    if( bNeedAxisFlip )
+    {
+        double dfTmp = dfLCX;
+        dfLCX = dfLCY;
+        dfLCY = dfTmp;
+        
+        dfTmp = dfUCX;
+        dfUCX = dfUCY;
+        dfUCY = dfTmp;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      For now we hardcode for a minimal instance format.              */
@@ -1470,7 +1496,10 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2( int nXSize, int nYSize )
 "   xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
 "   xsi:schemaLocation=\"http://www.opengis.net/gml http://schemas.opengis.net/gml/3.1.1/profiles/gmlJP2Profile/1.0.0/gmlJP2Profile.xsd\">\n"
 "  <gml:boundedBy>\n"
-"    <gml:Null>withheld</gml:Null>\n"
+"    <gml:Envelope srsName=\"%s\">\n"
+"      <gml:lowerCorner>%.15g %.15g</gml:lowerCorner>\n"
+"      <gml:upperCorner>%.15g %.15g</gml:upperCorner>\n"
+"    </gml:Envelope>\n"
 "  </gml:boundedBy>\n"
 "  <gml:featureMember>\n"
 "    <gml:FeatureCollection>\n"
@@ -1508,6 +1537,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2( int nXSize, int nYSize )
 "    </gml:FeatureCollection>\n"
 "  </gml:featureMember>\n"
 "</gml:FeatureCollection>\n",
+             szSRSName, dfLCX, dfLCY, dfUCX, dfUCY,
              nXSize-1, nYSize-1, szSRSName, adfOrigin[0], adfOrigin[1],
              pszComment,
              szSRSName, adfXVector[0], adfXVector[1], 
@@ -2197,9 +2227,10 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
         double adfXVector[2];
         double adfYVector[2];
         const char* pszComment = "";   
+        int bNeedAxisFlip = FALSE;
         if( !GetGMLJP2GeoreferencingInfo( nEPSGCode, adfOrigin,
                                         adfXVector, adfYVector,
-                                        pszComment, osDictBox ) )
+                                        pszComment, osDictBox, bNeedAxisFlip ) )
         {
             return NULL;
         }
