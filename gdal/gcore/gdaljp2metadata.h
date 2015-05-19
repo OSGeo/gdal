@@ -132,7 +132,8 @@ private:
                                           double adfXVector[2],
                                           double adfYVector[2],
                                           const char*& pszComment,
-                                          CPLString& osDictBox );
+                                          CPLString& osDictBox,
+                                          int& bNeedAxisFlip );
     static CPLXMLNode* CreateGDALMultiDomainMetadataXML(
                                        GDALDataset* poSrcDS,
                                        int bMainMDDomainOnly );
