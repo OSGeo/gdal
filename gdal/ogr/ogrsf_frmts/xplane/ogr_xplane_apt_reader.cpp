@@ -47,6 +47,9 @@ OGRXPlaneReader* OGRXPlaneCreateAptFileReader( OGRXPlaneDataSource* poDataSource
 /************************************************************************/
 OGRXPlaneAptReader::OGRXPlaneAptReader()
 {
+    poDataSource = NULL;
+    nVersion = APT_V_UNKNOWN;
+
     poAPTLayer = NULL;
     poRunwayLayer = NULL;
     poRunwayThresholdLayer = NULL;
@@ -65,6 +68,7 @@ OGRXPlaneAptReader::OGRXPlaneAptReader()
     poAPTWindsockLayer = NULL;
     poTaxiwaySignLayer = NULL;
     poVASI_PAPI_WIGWAG_Layer = NULL;
+    poTaxiLocationLayer = NULL;
     
     Rewind();
 }
@@ -73,8 +77,11 @@ OGRXPlaneAptReader::OGRXPlaneAptReader()
 /*                         OGRXPlaneAptReader()                         */
 /************************************************************************/
 
-OGRXPlaneAptReader::OGRXPlaneAptReader( OGRXPlaneDataSource* poDataSource )
+OGRXPlaneAptReader::OGRXPlaneAptReader( OGRXPlaneDataSource* poDataSourceIn )
 {
+    poDataSource = poDataSourceIn;
+    nVersion = APT_V_UNKNOWN;
+
     poAPTLayer = new OGRXPlaneAPTLayer();
     poRunwayLayer = new OGRXPlaneRunwayLayer();
     poRunwayThresholdLayer = new OGRXPlaneRunwayThresholdLayer();
@@ -93,6 +100,7 @@ OGRXPlaneAptReader::OGRXPlaneAptReader( OGRXPlaneDataSource* poDataSource )
     poAPTWindsockLayer = new OGRXPlaneAPTWindsockLayer();
     poTaxiwaySignLayer = new OGRXPlaneTaxiwaySignLayer();
     poVASI_PAPI_WIGWAG_Layer = new OGRXPlane_VASI_PAPI_WIGWAG_Layer();
+    poTaxiLocationLayer = NULL;
 
     poDataSource->RegisterLayer(poAPTLayer);
     poDataSource->RegisterLayer(poRunwayLayer);
@@ -143,6 +151,7 @@ OGRXPlaneReader* OGRXPlaneAptReader::CloneForLayer(OGRXPlaneLayer* poLayer)
     SET_IF_INTEREST_LAYER(poAPTWindsockLayer);
     SET_IF_INTEREST_LAYER(poTaxiwaySignLayer);
     SET_IF_INTEREST_LAYER(poVASI_PAPI_WIGWAG_Layer);
+    SET_IF_INTEREST_LAYER(poTaxiLocationLayer);
 
     if (pszFilename)
     {
@@ -181,9 +190,25 @@ void OGRXPlaneAptReader::Rewind()
 
 int OGRXPlaneAptReader::IsRecognizedVersion( const char* pszVersionString)
 {
-    return EQUALN(pszVersionString, "850 Version", 11) ||
-           EQUALN(pszVersionString, "810 Version", 11) ||
-           EQUALN(pszVersionString, "1000 Version", 12);
+    if (EQUALN(pszVersionString, "810 Version", 11))
+        nVersion = APT_V_810;
+    else if (EQUALN(pszVersionString, "850 Version", 11))
+        nVersion = APT_V_850;
+    else if (EQUALN(pszVersionString, "1000 Version", 12))
+        nVersion = APT_V_1000;
+    else
+        nVersion = APT_V_UNKNOWN;
+
+    if (nVersion == APT_V_1000)
+    {
+        if (poDataSource)
+        {
+            poTaxiLocationLayer = new OGRXPlaneTaxiLocationLayer();
+            poDataSource->RegisterLayer(poTaxiLocationLayer);
+        }
+    }
+
+    return nVersion != APT_V_UNKNOWN;
 }
 
 /************************************************************************/
@@ -342,7 +367,13 @@ void OGRXPlaneAptReader::Read()
                         ParseAPTBoundary();
                     break;
 
+                case APT_TAXI_LOCATION:
+                    if (poTaxiLocationLayer)
+                        ParseTaxiLocation();
+                    break;
+
                 default:
+                    CPLDebug("XPLANE", "Line %d, Unknown code : %d", nLineNumber, nType);
                     break;
             }
         } while(bResumeLine);
@@ -1788,6 +1819,32 @@ void OGRXPlaneAptReader::ParseVasiPapiWigWagRecord()
 }
 
 /************************************************************************/
+/*                          ParseTaxiLocation                           */
+/************************************************************************/
+
+void OGRXPlaneAptReader::ParseTaxiLocation()
+{
+    double dfLat, dfLon;
+    double dfTrueHeading;
+    CPLString osLocationType;
+    CPLString osAirplaneTypes;
+    CPLString osName;
+
+    RET_IF_FAIL(assertMinCol(7));
+
+    RET_IF_FAIL(readLatLon(&dfLat, &dfLon, 1));
+    RET_IF_FAIL(readTrueHeading(&dfTrueHeading, 3, "heading"));
+    osLocationType = papszTokens[4];
+    osAirplaneTypes = papszTokens[5];
+    osName = readStringUntilEnd(6);
+
+    if (poTaxiLocationLayer)
+        poTaxiLocationLayer->AddFeature(osAptICAO, dfLat, dfLon,
+                                        dfTrueHeading, osLocationType,
+                                        osAirplaneTypes, osName);
+}
+
+/************************************************************************/
 /*                         OGRXPlaneAPTLayer()                          */
 /************************************************************************/
 
@@ -3101,6 +3158,60 @@ OGRFeature*
     poFeature->SetGeometryDirectly( new OGRPoint( dfLon, dfLat ) );
     poFeature->SetField( nCount++, dfHeading );
     poFeature->SetField( nCount++, dfVisualGlidePathAngle );
+
+    RegisterFeature(poFeature);
+
+    return poFeature;
+}
+
+/************************************************************************/
+/*                       OGRXPlaneTaxiLocationLayer()                   */
+/************************************************************************/
+
+OGRXPlaneTaxiLocationLayer::OGRXPlaneTaxiLocationLayer() : OGRXPlaneLayer("TaxiLocation")
+{
+    poFeatureDefn->SetGeomType( wkbPoint );
+
+    OGRFieldDefn oFieldAptICAO("apt_icao", OFTString );
+    oFieldAptICAO.SetWidth( 4 );
+    poFeatureDefn->AddFieldDefn( &oFieldAptICAO );
+
+    OGRFieldDefn oFieldTrueHeading("true_heading_deg", OFTReal );
+    oFieldTrueHeading.SetWidth( 6 );
+    oFieldTrueHeading.SetPrecision( 2 );
+    poFeatureDefn->AddFieldDefn( &oFieldTrueHeading );
+
+    OGRFieldDefn oFieldLocationType("location_type", OFTString );
+    poFeatureDefn->AddFieldDefn( &oFieldLocationType );
+
+    OGRFieldDefn oFieldAirplaneTypes("airplane_types", OFTString );
+    poFeatureDefn->AddFieldDefn( &oFieldAirplaneTypes );
+    
+    OGRFieldDefn oFieldName("name", OFTString );
+    poFeatureDefn->AddFieldDefn( &oFieldName );
+}
+
+/************************************************************************/
+/*                           AddFeature()                               */
+/************************************************************************/
+
+OGRFeature*
+     OGRXPlaneTaxiLocationLayer::AddFeature (const char* pszAptICAO,
+                                             double dfLat,
+                                             double dfLon,
+                                             double dfHeading,
+                                             const char* pszLocationType,
+                                             const char* pszAirplaneTypes,
+                                             const char* pszName)
+{
+    int nCount = 0;
+    OGRFeature* poFeature = new OGRFeature(poFeatureDefn);
+    poFeature->SetField( nCount++, pszAptICAO );
+    poFeature->SetGeometryDirectly( new OGRPoint( dfLon, dfLat ) );
+    poFeature->SetField( nCount++, dfHeading );
+    poFeature->SetField( nCount++, pszLocationType );
+    poFeature->SetField( nCount++, pszAirplaneTypes );
+    poFeature->SetField( nCount++, pszName );
 
     RegisterFeature(poFeature);
 
