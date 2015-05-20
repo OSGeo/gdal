@@ -1593,7 +1593,7 @@ OGRErr GMLHandler::endElementAttribute()
 
     if (m_bInCurField)
     {
-        if (m_pszCurField == NULL)
+        if (m_pszCurField == NULL && m_poReader->IsEmptyAsNull())
         {
             if (m_pszValue != NULL)
             {
@@ -1605,7 +1605,7 @@ OGRErr GMLHandler::endElementAttribute()
         else
         {
             m_poReader->SetFeaturePropertyDirectly( poState->osPath.c_str(),
-                                            m_pszCurField,
+                                            m_pszCurField ? m_pszCurField : CPLStrdup(""),
                                             m_nAttributeIndex );
             m_pszCurField = NULL;
         }

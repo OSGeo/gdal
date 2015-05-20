@@ -106,6 +106,7 @@ void RegisterOGRWFS()
 "<OpenOptionList>"
 "  <Option name='URL' type='string' description='URL to the WFS server endpoint' required='true'/>"
 "  <Option name='TRUST_CAPABILITIES_BOUNDS' type='boolean' description='Whether to trust layer bounds declared in GetCapabilities response' default='NO'/>"
+"  <Option name='EMPTY_AS_NULL' type='boolean' description='Force empty fields to be reported as NULL. Set to NO so that not-nullable fields can be exposed' default='YES'/>"
 "</OpenOptionList>" );
 
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );

@@ -362,6 +362,12 @@ application schema to use</li>.
 This option may be needed in the case where the .gml file is accompanied with
 a .xsd. Normally in that situation, OGR would not detect the SRS, because this
 requires to do a full scan of the file. Defaults to NO</li>
+<li> <b>EMPTY_AS_NULL=YES/NO</b>: (GDAL &gt;=2.0) By default (EMPTY_AS_NULL=YES),
+fields with empty content will be reported as being NULL, instead of being an empty
+string. This is the historic behaviour. However this will prevent such fields to
+be declared as not-nullable if the application schema declared them as mandatory.
+So this option can be set to NO to have both empty strings being report as such,
+and mandatory fields being reported as not nullable.</li>
 </ul>
 
 <h2>Creation Issues</h2>

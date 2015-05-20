@@ -117,6 +117,7 @@ OGRGMLDataSource::OGRGMLDataSource()
     m_bInvertAxisOrderIfLatLong = FALSE;
     m_bConsiderEPSGAsURN = FALSE;
     m_bGetSecondaryGeometryOption = FALSE;
+    bEmptyAsNull = TRUE;
 }
 
 /************************************************************************/
@@ -590,6 +591,8 @@ int OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
 
     poReader->SetSourceFile( pszFilename );
     ((GMLReader*)poReader)->SetIsWFSJointLayer(bIsWFSJointLayer);
+    bEmptyAsNull = CSLFetchBoolean(poOpenInfo->papszOpenOptions, "EMPTY_AS_NULL", TRUE);
+    ((GMLReader*)poReader)->SetEmptyAsNull(bEmptyAsNull);
 
 /* -------------------------------------------------------------------- */
 /*      Find <gml:description>, <gml:name> and <gml:boundedBy>          */
@@ -1496,7 +1499,8 @@ OGRGMLLayer *OGRGMLDataSource::TranslateGMLSchema( GMLFeatureClass *poClass )
             oField.SetSubType(OFSTInt16);
         else if( poProperty->GetType() == GMLPT_Float) 
             oField.SetSubType(OFSTFloat32);
-        oField.SetNullable(poProperty->IsNullable() );
+        if( !bEmptyAsNull )
+            oField.SetNullable(poProperty->IsNullable() );
 
         poLayer->GetLayerDefn()->AddFieldDefn( &oField );
     }

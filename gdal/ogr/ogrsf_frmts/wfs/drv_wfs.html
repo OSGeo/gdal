@@ -212,8 +212,16 @@ interfaces.<p>
 
 The following options are available:
 <ul>
+<li><b>URL</b>=url: URL to the WFS server endpoint. Required when using the
+"WFS:" string as the connection string.</li>
 <li><b>TRUST_CAPABILITIES_BOUNDS</b>=YES/NO: Whether to trust layer bounds
 declared in GetCapabilities response, for faster GetExtent() runtime. Defaults to NO</li>
+<li> <b>EMPTY_AS_NULL=YES/NO</b>: (GDAL &gt;=2.0) By default (EMPTY_AS_NULL=YES),
+fields with empty content will be reported as being NULL, instead of being an empty
+string. This is the historic behaviour. However this will prevent such fields to
+be declared as not-nullable if the application schema declared them as mandatory.
+So this option can be set to NO to have both empty strings being report as such,
+and mandatory fields being reported as not nullable.</li>
 </ul>
 
 <h2>Examples</h2>

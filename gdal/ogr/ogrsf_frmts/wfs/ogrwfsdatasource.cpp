@@ -192,6 +192,7 @@ OGRWFSDataSource::OGRWFSDataSource()
     bKeepLayerNamePrefix = FALSE;
     apszGetCapabilities[0] = NULL;
     apszGetCapabilities[1] = NULL;
+    bEmptyAsNull = TRUE;
 }
 
 /************************************************************************/
@@ -898,6 +899,8 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn,
     CPLXMLNode* psXML = LoadFromFile(pszFilename);
     CPLString osTypeName;
     const char* pszBaseURL = NULL;
+
+    bEmptyAsNull = CSLFetchBoolean(papszOpenOptions, "EMPTY_AS_NULL", TRUE);
 
     if (psXML == NULL)
     {

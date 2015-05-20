@@ -188,6 +188,7 @@ CPL_UNUSED
                     CPLGetConfigOption("GML_ATTRIBUTES_TO_OGR_FIELDS", "NO"));
 
     m_bIsWFSJointLayer = FALSE;
+    m_bEmptyAsNull = TRUE;
 }
 
 /************************************************************************/

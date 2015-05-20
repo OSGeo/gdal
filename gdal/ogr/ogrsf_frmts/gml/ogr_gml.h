@@ -150,6 +150,8 @@ class OGRGMLDataSource : public OGRDataSource
     ReadMode            eReadMode;
     GMLFeature         *poStoredGMLFeature;
     OGRGMLLayer        *poLastReadLayer;
+    
+    int                 bEmptyAsNull;
 
     void                FindAndParseTopElements(VSILFILE* fp);
     void                SetExtents(double dfMinX, double dfMinY, double dfMaxX, double dfMaxY);
