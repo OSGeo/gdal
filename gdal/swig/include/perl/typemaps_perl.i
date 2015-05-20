@@ -224,6 +224,21 @@ CreateArrayFromIntArray( int *first, unsigned int size ) {
 }
 %}
 
+%fragment("CreateArrayFromGUIntBigArray","header") %{
+#define LENGTH_OF_GUIntBig_AS_STRING 30
+static SV *
+CreateArrayFromGUIntBigArray( GUIntBig *first, unsigned int size ) {
+  AV *av = (AV*)sv_2mortal((SV*)newAV());
+  for( unsigned int i=0; i<size; i++ ) {
+    char s[LENGTH_OF_GUIntBig_AS_STRING];
+    snprintf(s, LENGTH_OF_GUIntBig_AS_STRING-1, "%llu", *first);
+    av_store(av,i,newSVpv(s, 0));
+    ++first;
+  }
+  return sv_2mortal(newRV((SV*)av));
+}
+%}
+
 %fragment("CreateArrayFromDoubleArray","header") %{
 static SV *
 CreateArrayFromDoubleArray( double *first, unsigned int size ) {
@@ -250,6 +265,8 @@ CreateArrayFromStringArray( char **first ) {
 }
 %}
 
+/* typemaps for (int *nLen, const int **pList) */
+
 %typemap(in,numinputs=0) (int *nLen, const int **pList) (int nLen, int *pList)
 {
   /* %typemap(in,numinputs=0) (int *nLen, const int **pList) */
@@ -262,6 +279,23 @@ CreateArrayFromStringArray( char **first ) {
   $result = CreateArrayFromIntArray( *($2), *($1) );
   argvi++;
 }
+
+/* typemaps for (int *nLen, const GUIntBig **pList) */
+
+%typemap(in,numinputs=0) (int *nLen, const GUIntBig **pList) (int nLen, GUIntBig *pList)
+{
+  /* %typemap(in,numinputs=0) (int *nLen, const GUIntBig **pList) */
+  $1 = &nLen;
+  $2 = &pList;
+}
+%typemap(argout,fragment="CreateArrayFromGUIntBigArray") (int *nLen, const GUIntBig **pList)
+{
+  /* %typemap(argout) (int *nLen, const GUIntBig **pList) */
+  $result = CreateArrayFromGUIntBigArray( *($2), *($1) );
+  argvi++;
+}
+
+/* typemaps for (int len, int *output) */
 
 %typemap(in,numinputs=1) (int len, int *output)
 {
@@ -283,7 +317,7 @@ CreateArrayFromStringArray( char **first ) {
     int i;
     EXTEND(SP, argvi+$1-items+1);
     for (i = 0; i < $1; i++)
-      ST(argvi++) = sv_2mortal(newSVnv($2[i]));
+      ST(argvi++) = sv_2mortal(newSViv($2[i]));
   } else {
     $result = CreateArrayFromIntArray( $2, $1 );
     argvi++;
@@ -294,6 +328,45 @@ CreateArrayFromStringArray( char **first ) {
   /* %typemap(freearg) (int len, int *output) */
   CPLFree($2);
 }
+
+/* typemaps for (int len, GUIntBig *output) */
+
+%typemap(in,numinputs=1) (int len, GUIntBig *output)
+{
+  /* %typemap(in,numinputs=1) (int len, GUIntBig *output) */
+  $1 = SvIV($input);
+}
+%typemap(check) (int len, GUIntBig *output)
+{
+  /* %typemap(check) (int len, GUIntBig *output) */
+  if ($1 < 1) $1 = 1; /* stop idiocy */
+  $2 = (GUIntBig*)CPLMalloc( $1 * sizeof(GUIntBig) );
+    
+}
+%typemap(argout,fragment="CreateArrayFromGUIntBigArray") (int len, GUIntBig *output)
+{
+  /* %typemap(argout) (int len, GUIntBig *output) */
+  if (GIMME_V == G_ARRAY) {
+    /* return a list */
+    int i;
+    EXTEND(SP, argvi+$1-items+1);
+    for (i = 0; i < $1; i++) {
+      char s[LENGTH_OF_GUIntBig_AS_STRING];
+      snprintf(s, LENGTH_OF_GUIntBig_AS_STRING-1, "%llu", $2[i]);
+      ST(argvi++) = sv_2mortal(newSVpv(s, 0));
+    }
+  } else {
+    $result = CreateArrayFromGUIntBigArray( $2, $1 );
+    argvi++;
+  }
+}
+%typemap(freearg) (int len, GUIntBig *output)
+{
+  /* %typemap(freearg) (int len, GUIntBig *output) */
+  CPLFree($2);
+}
+
+/* typemaps for (int nLen, double *pList) */
 
 %typemap(in,numinputs=0) (int *nLen, const double **pList) (int nLen, double *pList)
 {
@@ -369,9 +442,8 @@ CreateArrayFromStringArray( char **first ) {
     }
 }
 
-/*
- *  Typemap for counted arrays of ints <- Perl list
- */
+/* typemaps for (int nList, int* pList) */
+
 %typemap(in,numinputs=1) (int nList, int* pList)
 {
     /* %typemap(in,numinputs=1) (int nList, int* pList) */
@@ -393,6 +465,32 @@ CreateArrayFromStringArray( char **first ) {
     /* %typemap(freearg) (int nList, int* pList) */
     CPLFree((void*) $2);
 }
+
+/* typemaps for (int nList, GUIntBig* pList) */
+
+%typemap(in,numinputs=1) (int nList, GUIntBig* pList)
+{
+    /* %typemap(in,numinputs=1) (int nList, GUIntBig* pList) */
+    if (!(SvROK($input) && (SvTYPE(SvRV($input))==SVt_PVAV)))
+        SWIG_croak("Expected a reference to an array.");
+    AV *av = (AV*)(SvRV($input));
+    $1 = av_len(av)+1;
+    $2 = (GUIntBig*)CPLMalloc($1*sizeof(GUIntBig));
+    if ($2) {
+        for( int i = 0; i<$1; i++ ) {
+            SV **sv = av_fetch(av, i, 0);
+            $2[i] =  strtoull(SvPV_nolen(*sv), NULL, 10);
+        }
+    } else
+        SWIG_fail;
+}
+%typemap(freearg) (int nList, GUIntBig* pList)
+{
+    /* %typemap(freearg) (int nList, GUIntBig* pList) */
+    CPLFree((void*) $2);
+}
+
+/* typemaps for (int nList, double* pList) */
 
 %typemap(in,numinputs=1) (int nList, double* pList)
 {
