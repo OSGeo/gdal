@@ -99,24 +99,9 @@
   $result = SWIG_AppendOutput($result, argOut);
 }
 
-/* Define a simple return code typemap which checks if the return code from
- * the wrapped method is non-zero. If non-zero, return None.  Otherwise,
- * return any argout or None.
- *
- * Applied like this:
- * %apply (IF_ERR_RETURN_NONE) {CPLErr};
- * CPLErr function_to_wrap( );
- * %clear (CPLErr); */
-
-%typemap(out) IF_ERR_RETURN_NONE
+%typemap(out) TRUE_IS_SUCCESS_FALSE_IS_ERROR
 {
-  /* %typemap(out) IF_ERR_RETURN_NONE */
-  /* result = Qnil; */
-}
-
-%typemap(out) IF_FALSE_RETURN_NONE
-{
-  /* %typemap(out) IF_FALSE_RETURN_NONE */
+  /* %typemap(out) TRUE_IS_SUCCESS_FALSE_IS_ERROR */
   if ($1 == 0 ) {
     $result = Qnil;
   }

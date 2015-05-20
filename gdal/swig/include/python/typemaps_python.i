@@ -122,19 +122,13 @@
  * the wrapped method is non-zero. If zero, return None.  Otherwise,
  * return any argout or None.
  *
- * Applied like this:
- * %apply (IF_FALSE_RETURN_NONE) {int};
- * int function_to_wrap( );
- * %clear (int);
+ * TRUE_IS_SUCCESS_FALSE_IS_ERROR is a typdef'd int and used in the
+ * bindings as a return value instead of int as needed.
  */
-/*
- * The out typemap prevents the default typemap for output integers from
- * applying.
- */
-%typemap(out) IF_FALSE_RETURN_NONE "/*%typemap(out) IF_FALSE_RETURN_NONE */"
-%typemap(ret) IF_FALSE_RETURN_NONE
+%typemap(out) TRUE_IS_SUCCESS_FALSE_IS_ERROR "/*%typemap(out) TRUE_IS_SUCCESS_FALSE_IS_ERROR */"
+%typemap(ret) TRUE_IS_SUCCESS_FALSE_IS_ERROR
 {
- /* %typemap(ret) IF_FALSE_RETURN_NONE */
+ /* %typemap(ret) TRUE_IS_SUCCESS_FALSE_IS_ERROR */
   if ($1 == 0 ) {
     Py_XDECREF( $result );
     $result = Py_None;
@@ -147,9 +141,9 @@
 }
 
 
-%typemap(out) IF_ERROR_RETURN_NONE
+%typemap(out) CPLErr
 {
-  /* %typemap(out) IF_ERROR_RETURN_NONE */
+  /* %typemap(out) CPLErr */
 }
 
 

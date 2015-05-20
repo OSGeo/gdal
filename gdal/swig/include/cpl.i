@@ -389,12 +389,15 @@ int VSIRename(const char * pszOld, const char *pszNew );
 typedef void VSILFILE;
 #endif
 
-#if defined(SWIGPERL)
-%apply RETURN_NONE_TRUE_IS_ERROR {RETURN_NONE};
-RETURN_NONE VSIStatL( const char * utf8_path, VSIStatBufL *psStatBuf );
-%clear RETURN_NONE;
+#if !defined(SWIGPYTHON)
 
-#elif defined(SWIGPYTHON)
+%inline %{
+  typedef int ZERO_IS_SUCCESS_MINUS_ONE_IS_ERROR;
+%}
+
+ZERO_IS_SUCCESS_MINUS_ONE_IS_ERROR VSIStatL( const char * utf8_path, VSIStatBufL *psStatBuf );
+
+#else
 
 %{
 typedef struct
@@ -453,7 +456,7 @@ int wrapper_VSIStatL( const char * utf8_path, StatBuf *psStatBufOut, int nFlags 
 }
 }
 
-#endif
+#endif /* if !defined(SWIGPYTHON) */
 
 %rename (VSIFOpenL) wrapper_VSIFOpenL;
 %inline %{

@@ -93,12 +93,6 @@ typedef struct OGRStyleTableHS OGRStyleTableShadow;
 typedef int OGRErr;
 #endif
 
-%{
-/* use this to not return the int returned by GDAL */
-typedef int RETURN_NONE;
-
-%}
-
 //************************************************************************
 //
 // Enums.
@@ -520,6 +514,10 @@ void GDAL_GCP_set_Id( GDAL_GCP *gcp, const char * pszId ) {
 
 %clear GDAL_GCP *gcp;
 
+%inline %{
+  typedef int TRUE_IS_SUCCESS_FALSE_IS_ERROR;
+%}
+
 #ifdef SWIGJAVA
 %rename (GCPsToGeoTransform) wrapper_GDALGCPsToGeoTransform;
 %inline
@@ -531,10 +529,8 @@ int wrapper_GDALGCPsToGeoTransform( int nGCPs, GDAL_GCP const * pGCPs,
 }
 }
 #else
-%apply (IF_FALSE_RETURN_NONE) { (RETURN_NONE) };
-RETURN_NONE GDALGCPsToGeoTransform( int nGCPs, GDAL_GCP const * pGCPs, 
-    	                             double argout[6], int bApproxOK = 1 ); 
-%clear (RETURN_NONE);
+TRUE_IS_SUCCESS_FALSE_IS_ERROR GDALGCPsToGeoTransform( int nGCPs, GDAL_GCP const * pGCPs,
+                                                       double argout[6], int bApproxOK = 1 );
 #endif
 
 %include "cplvirtualmem.i"
@@ -586,14 +582,7 @@ void GDALApplyGeoTransform( double padfGeoTransform[6],
 
 %apply (double argin[ANY]) {double gt_in[6]};
 %apply (double argout[ANY]) {double gt_out[6]};
-#ifdef SWIGJAVA
-// FIXME: we should implement correctly the IF_FALSE_RETURN_NONE typemap
-int GDALInvGeoTransform( double gt_in[6], double gt_out[6] );
-#else
-%apply (IF_FALSE_RETURN_NONE) { (RETURN_NONE) };
-RETURN_NONE GDALInvGeoTransform( double gt_in[6], double gt_out[6] );
-%clear (RETURN_NONE);
-#endif
+TRUE_IS_SUCCESS_FALSE_IS_ERROR GDALInvGeoTransform( double gt_in[6], double gt_out[6] );
 %clear (double *gt_in);
 %clear (double *gt_out);
 

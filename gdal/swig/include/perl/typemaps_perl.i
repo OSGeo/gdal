@@ -134,35 +134,35 @@
   argvi++;
 }
 /* drop GDAL return value */
-%typemap(out) IF_FALSE_RETURN_NONE
+%typemap(out) TRUE_IS_SUCCESS_FALSE_IS_ERROR
 {
-  /* %typemap(out) IF_FALSE_RETURN_NONE */
+  /* %typemap(out) TRUE_IS_SUCCESS_FALSE_IS_ERROR */
 }
 /* croak if GDAL return FALSE */
-%typemap(ret) IF_FALSE_RETURN_NONE
+%typemap(ret) TRUE_IS_SUCCESS_FALSE_IS_ERROR
 {
- /* %typemap(ret) IF_FALSE_RETURN_NONE */
+ /* %typemap(ret) TRUE_IS_SUCCESS_FALSE_IS_ERROR */
   if ($1 == 0 ) {
     SWIG_croak("unexpected error in '$symname'");
   }
 }
 /* drop GDAL return value */
-%typemap(out) RETURN_NONE_TRUE_IS_ERROR
+%typemap(out) ZERO_IS_SUCCESS_MINUS_ONE_IS_ERROR
 {
-  /* %typemap(out) RETURN_NONE_TRUE_IS_ERROR */
+  /* %typemap(out) ZERO_IS_SUCCESS_MINUS_ONE_IS_ERROR */
 }
 /* croak if GDAL return TRUE */
-%typemap(ret) RETURN_NONE_TRUE_IS_ERROR
+%typemap(ret) ZERO_IS_SUCCESS_MINUS_ONE_IS_ERROR
 {
- /* %typemap(ret) RETURN_NONE_TRUE_IS_ERROR */
+ /* %typemap(ret) ZERO_IS_SUCCESS_MINUS_ONE_IS_ERROR */
   if ($1 != 0 ) {
     SWIG_croak("unexpected error in '$symname'");
   }
 }
 /* drop GDAL return value */
-%typemap(out) IF_ERROR_RETURN_NONE
+%typemap(out) CPLErr
 {
-  /* %typemap(out) IF_ERROR_RETURN_NONE */
+  /* %typemap(out) CPLErr */
 }
 %typemap(out) CPLErr
 {
