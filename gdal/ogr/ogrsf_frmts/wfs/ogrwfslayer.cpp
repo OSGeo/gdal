@@ -377,7 +377,8 @@ OGRFeatureDefn* OGRWFSLayer::BuildLayerDefnFromFeatureClass(GMLFeatureClass* poC
             oField.SetSubType(OFSTInt16);
         else if( poProperty->GetType() == GMLPT_Float) 
             oField.SetSubType(OFSTFloat32);
-        oField.SetNullable(poProperty->IsNullable());
+        if( !poDS->IsEmptyAsNull() )
+            oField.SetNullable(poProperty->IsNullable());
 
         poFDefn->AddFieldDefn( &oField );
     }
@@ -738,8 +739,9 @@ GDALDataset* OGRWFSLayer::FetchGetFeature(int nRequestMaxFeatures)
         }
 
         const char* const apszAllowedDrivers[] = { "GML", NULL };
-        const char* apszOpenOptions[2] = { NULL, NULL };
+        const char* apszOpenOptions[3] = { NULL, NULL, NULL };
         apszOpenOptions[0] = CPLSPrintf("XSD=%s", osXSDFileName.c_str());
+        apszOpenOptions[1] = CPLSPrintf("EMPTY_AS_NULL=%s", poDS->IsEmptyAsNull() ? "YES" : "NO");
         GDALDataset* poGML_DS = (GDALDataset*)
                 GDALOpenEx(pszStreamingName, GDAL_OF_VECTOR, apszAllowedDrivers,
                            apszOpenOptions, NULL);
