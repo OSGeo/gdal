@@ -1890,10 +1890,6 @@ void HDF4ImageDataset::GetGridAttrs( int32 hGD )
 /*      download.osgeo.org/gdal/data/hdf4/A2006005182000.L2_LAC_SST.x.hdf */
 /*                                                                      */
 /*      As reported in ticket #1895.                                    */
-/*                                                                      */
-/*      Note that we don't check that the dimensions of the latitude    */
-/*      and longitude exactly match the dimensions of the basedata,     */
-/*      though we ought to.                                             */
 /************************************************************************/
 
 void HDF4ImageDataset::ProcessModisSDSGeolocation(void)
@@ -1916,6 +1912,9 @@ void HDF4ImageDataset::ProcessModisSDSGeolocation(void)
     if ( SDfileinfo( hSD, &nDatasets, &nAttributes ) != 0 )
 	return;
 
+
+    int nLongitudeWidth = 0, nLongitudeHeight = 0;
+    int nLatitudeWidth = 0, nLatitudeHeight = 0;
     for( iDSIndex = 0; iDSIndex < nDatasets; iDSIndex++ )
     {
         int32	    iRank, iNumType, nAttrs, iSDS;
@@ -1928,10 +1927,24 @@ void HDF4ImageDataset::ProcessModisSDSGeolocation(void)
                        &nAttrs) == 0 )
         {
             if( EQUAL(szName,"latitude") )
+            {
                 iYIndex = iDSIndex;
+                if( iRank == 2 )
+                {
+                    nLatitudeWidth = aiDimSizes[1];
+                    nLatitudeHeight = aiDimSizes[0];
+                }
+            }
 
             if( EQUAL(szName,"longitude") )
+            {
                 iXIndex = iDSIndex;
+                if( iRank == 2 )
+                {
+                    nLongitudeWidth = aiDimSizes[1];
+                    nLongitudeHeight = aiDimSizes[0];
+                }
+            }
         }
 
         SDendaccess(iSDS);
@@ -1939,6 +1952,20 @@ void HDF4ImageDataset::ProcessModisSDSGeolocation(void)
 
     if( iXIndex == -1 || iYIndex == -1 )
         return;
+
+    int nPixelOffset = 0, nLineOffset = 0;
+    int nPixelStep = 1, nLineStep = 1;
+    if( nLongitudeWidth != nLatitudeWidth || nLongitudeHeight != nLatitudeHeight )
+    {
+        CPLDebug("HDF4", "Longitude and latitude subdatasets don't have same dimensions...");
+    }
+    else if( nLongitudeWidth > 0 && nLongitudeHeight > 0 )
+    {
+        nPixelStep = (int)(0.5 + 1.0 * nRasterXSize / nLongitudeWidth);
+        nLineStep = (int)(0.5 + 1.0 * nRasterYSize / nLongitudeHeight);
+        nPixelOffset = (nPixelStep-1) / 2;
+        nLineOffset = (nLineStep-1) / 2;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      We found geolocation information.  Record it as metadata.       */
@@ -1957,11 +1984,11 @@ void HDF4ImageDataset::ProcessModisSDSGeolocation(void)
     SetMetadataItem( "Y_DATASET", osWrk, "GEOLOCATION" );
     SetMetadataItem( "Y_BAND", "1" , "GEOLOCATION" );
 
-    SetMetadataItem( "PIXEL_OFFSET", "0", "GEOLOCATION" );
-    SetMetadataItem( "PIXEL_STEP", "1", "GEOLOCATION" );
+    SetMetadataItem( "PIXEL_OFFSET", CPLSPrintf("%d", nPixelOffset), "GEOLOCATION" );
+    SetMetadataItem( "PIXEL_STEP", CPLSPrintf("%d", nPixelStep), "GEOLOCATION" );
 
-    SetMetadataItem( "LINE_OFFSET", "0", "GEOLOCATION" );
-    SetMetadataItem( "LINE_STEP", "1", "GEOLOCATION" );
+    SetMetadataItem( "LINE_OFFSET", CPLSPrintf("%d", nLineOffset), "GEOLOCATION" );
+    SetMetadataItem( "LINE_STEP", CPLSPrintf("%d", nLineStep), "GEOLOCATION" );
 }
 
 /************************************************************************/
