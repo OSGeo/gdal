@@ -3557,7 +3557,7 @@ def ogr_gml_69():
 
     ds = None
 
-    ds = ogr.Open('/vsimem/ogr_gml_69.gml')
+    ds = gdal.OpenEx('/vsimem/ogr_gml_69.gml', open_options = ['EMPTY_AS_NULL=NO'])
     lyr = ds.GetLayerByName('test')
     if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_not_nullable')).IsNullable() != 0:
         gdaltest.post_reason('fail')
