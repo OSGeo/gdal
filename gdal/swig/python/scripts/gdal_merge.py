@@ -56,11 +56,19 @@ def raster_copy( s_fh, s_xoff, s_yoff, s_xsize, s_ysize, s_band_n,
                  t_fh, t_xoff, t_yoff, t_xsize, t_ysize, t_band_n,
                  nodata=None ):
 
-    if nodata is not None:
-        return raster_copy_with_nodata(
+    s_band = s_fh.GetRasterBand( s_band_n )
+    m_band = None
+    # Works only in binary mode and doesn't take into account
+    # intermediate transparency values for compositing
+    if s_band.GetMaskFlags() != gdal.GMF_ALL_VALID:
+        m_band = s_band.GetMaskBand()
+    elif s_band.GetColorInterpretation() == gdal.GCI_AlphaBand:
+        m_band = s_band
+    if m_band is not None:
+        return raster_copy_with_mask(
             s_fh, s_xoff, s_yoff, s_xsize, s_ysize, s_band_n,
             t_fh, t_xoff, t_yoff, t_xsize, t_ysize, t_band_n,
-            nodata )
+            m_band )
 
     if verbose != 0:
         print('Copy %d,%d,%d,%d to %d,%d,%d,%d.' \
@@ -79,9 +87,9 @@ def raster_copy( s_fh, s_xoff, s_yoff, s_xsize, s_ysize, s_band_n,
     return 0
     
 # =============================================================================
-def raster_copy_with_nodata( s_fh, s_xoff, s_yoff, s_xsize, s_ysize, s_band_n,
-                             t_fh, t_xoff, t_yoff, t_xsize, t_ysize, t_band_n,
-                             nodata ):
+def raster_copy_with_mask( s_fh, s_xoff, s_yoff, s_xsize, s_ysize, s_band_n,
+                           t_fh, t_xoff, t_yoff, t_xsize, t_ysize, t_band_n,
+                           m_band ):
     try:
         import numpy as Numeric
     except ImportError:
@@ -97,10 +105,12 @@ def raster_copy_with_nodata( s_fh, s_xoff, s_yoff, s_xsize, s_ysize, s_band_n,
 
     data_src = s_band.ReadAsArray( s_xoff, s_yoff, s_xsize, s_ysize,
                                    t_xsize, t_ysize )
+    data_mask = m_band.ReadAsArray( s_xoff, s_yoff, s_xsize, s_ysize,
+                                    t_xsize, t_ysize )
     data_dst = t_band.ReadAsArray( t_xoff, t_yoff, t_xsize, t_ysize )
 
-    nodata_test = Numeric.equal(data_src,nodata)
-    to_write = Numeric.choose( nodata_test, (data_src, data_dst) )
+    mask_test = Numeric.equal(data_mask, 0)
+    to_write = Numeric.choose( mask_test, (data_src, data_dst) )
 
     t_band.WriteArray( to_write, t_xoff, t_yoff )
 
