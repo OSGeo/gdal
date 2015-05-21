@@ -12,20 +12,21 @@ OGR has support for INTERLIS reading and writing.<br>
 
 With the usage of unified, documented geodata and the flexible exchange possibilities the following advantage may occur:
 <ul>
-<li>the standardized documentation 
-<li>the compatible data exchange 
-<li>the comprehensive integration of geodata e.g. from different data owners. 
-<li>the quality proofing 
-<li>the long term data storage 
-<li>the contract-proof security and the availability of the software 
+<li>the standardized documentation</li>
+<li>the compatible data exchange</li>
+<li>the comprehensive integration of geodata e.g. from different data owners.</li>
+<li>the quality proofing</li>
+<li>the long term data storage</li>
+<li>the contract-proof security and the availability of the software</li>
 </ul>
 
 OGR supports INTERLIS 1 and INTERLIS 2 (2.2 and 2.3) with the following limitations:
 <ul>
-<li>Curves are converted to line segments
-<li>Embedded INTERLIS 2 structures are not supported yet
-<li>Incremental transfer is not supported
-<li>Transfer id (TID) is used as feature id
+<li>Curves in Interlis 1 areas are converted to line segments</li>
+<li>Embedded INTERLIS 2 structures are not supported</li>
+<li>Incremental transfer is not supported</li>
+<li>Interlis 1 Surface geometries with non-numeric IDENT field are not included in the attribute layer</li>
+<li>Transfer id (TID) is used as feature id</li>
 </ul>
 
 <h2>Model support</h2>
@@ -78,9 +79,17 @@ ogr2ogr -f PostgreSQL PG:dbname=warmerda av_fixpunkte_mit_LFPNachfuehrung.itf,av
 <p>
 
 <h3>Arc interpolation</h3>
-INTERLIS arc geometries are converted to polygons.<br></br>
-The interpolation angle can be changed with the environment variable ARC_DEGREES (Default: 1 degree).<br></br>
+Converting INTERLIS arc geometries to line segements can be forced by setting the configuration
+variable OGR_STROKE_CURVE to TRUE.<br></br>
+The approximation of arcs as linestrings is done by splitting the arcs into subarcs of no more than a
+threshhold angle. This angle is the OGR_ARC_STEPSIZE. This defaults to
+one degree, but may be overridden by setting the configuration variable
+OGR_ARC_STEPSIZE.<br></br>
 
+
+<h3>OGR versions prior to 2.0</h3>
+
+Arcs are always interpolated and the interpolation angle can be configured with the environment variable ARC_DEGREES.<p>
 
 <h3>OGR versions prior to 1.11</h3>
 
