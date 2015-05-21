@@ -105,6 +105,8 @@ wcs_virtds_params.py    Generates MapServer WCS layer definition from a tileinde
 ogr_build_junction_table.py Create junction tables for layers coming from GML datasources
                             that reference other objects in _href fields
 
+gcps2ogr.py             Outputs GDAL GCPs as OGR points
+
 ------------------------------------------------------------------------------
 Ports of .c/.cpp utilities
 ------------------------------------------------------------------------------
