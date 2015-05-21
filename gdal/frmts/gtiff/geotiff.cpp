@@ -5351,13 +5351,17 @@ int GTiffDataset::WriteEncodedTile(uint32 tile, GByte *pabyData,
     /*
     ** Perform tile fill if needed.
     */
-    if( bNeedTileFill )
+    // TODO: we should also handle the case of nBitsPerSample == 12
+    // but this is more involved...
+    if( bNeedTileFill && nBitsPerSample == 8 )
     {
         int nRightPixelsToFill = 0;
         int nBottomPixelsToFill = 0;
-        int nPixelSize = cc / (nBlockXSize * nBlockYSize);
         unsigned int iX, iY, iSrcX, iSrcY;
-        
+        int nComponents = 1;
+        if( nPlanarConfig == PLANARCONFIG_CONTIG )
+            nComponents = nBands;
+
         CPLDebug( "GTiff", "Filling out jpeg edge tile on write." );
 
         if( iColumn == nBlocksPerRow - 1 )
@@ -5372,9 +5376,9 @@ int GTiffDataset::WriteEncodedTile(uint32 tile, GByte *pabyData,
         {
             for( iY = 0; iY < nBlockYSize; iY++ )
             {
-                memcpy( pabyData + (nBlockXSize * iY + iX) * nPixelSize, 
-                        pabyData + (nBlockXSize * iY + iSrcX) * nPixelSize, 
-                        nPixelSize );
+                memcpy( pabyData + (nBlockXSize * iY + iX) * nComponents, 
+                        pabyData + (nBlockXSize * iY + iSrcX) * nComponents, 
+                        nComponents );
             }
         }
 
@@ -5382,9 +5386,9 @@ int GTiffDataset::WriteEncodedTile(uint32 tile, GByte *pabyData,
         iSrcY = nBlockYSize - nBottomPixelsToFill - 1;
         for( iY = iSrcY+1; iY < nBlockYSize; iY++ )
         {
-            memcpy( pabyData + nBlockXSize * nPixelSize * iY, 
-                    pabyData + nBlockXSize * nPixelSize * iSrcY, 
-                    nPixelSize * nBlockXSize );
+            memcpy( pabyData + nBlockXSize * nComponents * iY, 
+                    pabyData + nBlockXSize * nComponents * iSrcY, 
+                    nBlockXSize * nComponents );
         }
     }
 
