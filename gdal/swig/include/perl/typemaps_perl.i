@@ -231,7 +231,7 @@ CreateArrayFromGUIntBigArray( GUIntBig *first, unsigned int size ) {
   AV *av = (AV*)sv_2mortal((SV*)newAV());
   for( unsigned int i=0; i<size; i++ ) {
     char s[LENGTH_OF_GUIntBig_AS_STRING];
-    snprintf(s, LENGTH_OF_GUIntBig_AS_STRING-1, "%llu", *first);
+    snprintf(s, LENGTH_OF_GUIntBig_AS_STRING-1, CPL_FRMT_GUIB, *first);
     av_store(av,i,newSVpv(s, 0));
     ++first;
   }
@@ -352,7 +352,7 @@ CreateArrayFromStringArray( char **first ) {
     EXTEND(SP, argvi+$1-items+1);
     for (i = 0; i < $1; i++) {
       char s[LENGTH_OF_GUIntBig_AS_STRING];
-      snprintf(s, LENGTH_OF_GUIntBig_AS_STRING-1, "%llu", $2[i]);
+      snprintf(s, LENGTH_OF_GUIntBig_AS_STRING-1, CPL_FRMT_GUIB, $2[i]);
       ST(argvi++) = sv_2mortal(newSVpv(s, 0));
     }
   } else {
