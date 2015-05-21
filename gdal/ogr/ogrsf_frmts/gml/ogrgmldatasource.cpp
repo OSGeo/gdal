@@ -593,6 +593,9 @@ int OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
     ((GMLReader*)poReader)->SetIsWFSJointLayer(bIsWFSJointLayer);
     bEmptyAsNull = CSLFetchBoolean(poOpenInfo->papszOpenOptions, "EMPTY_AS_NULL", TRUE);
     ((GMLReader*)poReader)->SetEmptyAsNull(bEmptyAsNull);
+    ((GMLReader*)poReader)->SetReportAllAttributes(
+        CSLFetchBoolean(poOpenInfo->papszOpenOptions, "GML_ATTRIBUTES_TO_OGR_FIELDS",
+            CSLTestBoolean(CPLGetConfigOption("GML_ATTRIBUTES_TO_OGR_FIELDS", "NO"))));
 
 /* -------------------------------------------------------------------- */
 /*      Find <gml:description>, <gml:name> and <gml:boundedBy>          */
