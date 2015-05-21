@@ -3845,7 +3845,9 @@ int GTiffDataset::WriteEncodedTile(uint32 tile, GByte *pabyData,
     /*
     ** Perform tile fill if needed.
     */
-    if( bNeedTileFill )
+    // TODO: we should also handle the case of nBitsPerSample == 12
+    // but this is more involved...
+    if( bNeedTileFill && nBitsPerSample == 8 )
     {
         int nRightPixelsToFill = 0;
         int nBottomPixelsToFill = 0;

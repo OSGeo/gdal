@@ -1625,7 +1625,7 @@ def tiff_ovr_43():
         gdaltest.post_reason('did not get expected NBITS')
         return 'fail'
 
-    if cs != 354:
+    if cs != 642:
         print(cs)
         gdaltest.post_reason('did not get expected checksum')
         return 'fail'
