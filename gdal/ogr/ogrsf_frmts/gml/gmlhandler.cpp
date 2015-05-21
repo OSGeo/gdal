@@ -788,25 +788,22 @@ void GMLHandler::DealWithAttributes(const char *pszName, int nLenName, void* att
         /* Hard-coded historic cases */
         else if( strcmp(pszAttrKey, "xlink:href") == 0 )
         {
-            if (m_bReportHref)
+            if( (m_bReportHref || m_poReader->ReportAllAttributes()) && m_bInCurField )
             {
-                if( m_bInCurField )
-                {
-                    CPLFree(m_pszHref);
-                    m_pszHref = pszAttrVal;
-                    pszAttrVal = NULL;
-                }
-                else if( !poClass->IsSchemaLocked() ||
-                         (nAttrIndex =
-                            m_poReader->GetAttributeElementIndex( CPLSPrintf("%s_href", pszName ),
-                                                      nLenName + 5 )) != -1 )
-                {
-                    poState->PushPath( pszName, nLenName );
-                    CPLString osPropNameHref = poState->osPath + "_href";
-                    poState->PopPath();
-                    m_poReader->SetFeaturePropertyDirectly( osPropNameHref, pszAttrVal, nAttrIndex );
-                    pszAttrVal = NULL;
-                }
+                CPLFree(m_pszHref);
+                m_pszHref = pszAttrVal;
+                pszAttrVal = NULL;
+            }
+            else if( (!poClass->IsSchemaLocked() && (m_bReportHref || m_poReader->ReportAllAttributes())) ||
+                        (poClass->IsSchemaLocked() && (nAttrIndex =
+                        m_poReader->GetAttributeElementIndex( CPLSPrintf("%s_href", pszName ),
+                                                    nLenName + 5 )) != -1) )
+            {
+                poState->PushPath( pszName, nLenName );
+                CPLString osPropNameHref = poState->osPath + "_href";
+                poState->PopPath();
+                m_poReader->SetFeaturePropertyDirectly( osPropNameHref, pszAttrVal, nAttrIndex );
+                pszAttrVal = NULL;
             }
         }
         else if( strcmp(pszAttrKey, "uom") == 0 )
@@ -834,8 +831,12 @@ void GMLHandler::DealWithAttributes(const char *pszName, int nLenName, void* att
         /* Should we report all attributes ? */
         else if( m_poReader->ReportAllAttributes() && !poClass->IsSchemaLocked() )
         {
+            poState->PushPath( pszName, nLenName );
+            CPLString osPropName = poState->osPath;
+            poState->PopPath();
+
             m_poReader->SetFeaturePropertyDirectly(
-                CPLSPrintf("%s@%s", pszName, pszAttrKeyNoNS ? pszAttrKeyNoNS : pszAttrKey),
+                CPLSPrintf("%s@%s", osPropName.c_str(), pszAttrKeyNoNS ? pszAttrKeyNoNS : pszAttrKey),
                 pszAttrVal, -1 );
             pszAttrVal = NULL;
         }
