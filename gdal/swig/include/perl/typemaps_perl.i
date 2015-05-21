@@ -133,6 +133,25 @@
   sv_2mortal($result);
   argvi++;
 }
+
+/* typemaps for VSI_RETVAL */
+
+/* drop GDAL return value */
+%typemap(out) VSI_RETVAL
+{
+  /* %typemap(out) VSI_RETVAL */
+}
+/* croak if GDAL returns -1 */
+%typemap(ret) VSI_RETVAL
+{
+ /* %typemap(ret) VSI_RETVAL */
+  if ($1 == -1 ) {
+    croak(strerror(errno));
+  }
+}
+
+/* typemaps for IF_FALSE_RETURN_NONE */
+
 /* drop GDAL return value */
 %typemap(out) IF_FALSE_RETURN_NONE
 {
