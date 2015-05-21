@@ -25,7 +25,7 @@
      - GDAL and OGR PDF drivers are unified into a single one
      - GDAL and OGR PCIDSK drivers are unified into a single one
  * RFC 49: Add support for curve geometries (http://trac.osgeo.org/gdal/wiki/rfc49_curve_geometries)
-   In OGR core, and GML, NAS, PostgreSQL, PGDUMP, GPKG, SQLite, VFK, VRT drivers
+   In OGR core, and GML, NAS, PostgreSQL, PGDUMP, GPKG, SQLite, VFK, VRT, Interlis drivers
  * RFC 50: Add support for OGR field subtypes (http://trac.osgeo.org/gdal/wiki/rfc50_ogr_field_subtype)
    In OGR core, OGR SQL, swig bindings, CSV, FileGDB, GeoJSON, GML, GPKG, OpenFileGDB, PG, PGDump, SQLite, VRT
  * RFC 51: RasterIO() improvements : resampling and progress callback (http://trac.osgeo.org/gdal/wiki/rfc51_rasterio_resampling_progress)
