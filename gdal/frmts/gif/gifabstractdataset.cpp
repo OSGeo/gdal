@@ -324,19 +324,47 @@ int GIFAbstractDataset::Identify( GDALOpenInfo * poOpenInfo )
 }
 
 /************************************************************************/
+/*                            GetFileList()                             */
+/************************************************************************/
+
+char **GIFAbstractDataset::GetFileList()
+
+{
+    char **papszFileList = GDALPamDataset::GetFileList();
+
+    if (osWldFilename.size() != 0 &&
+        CSLFindString(papszFileList, osWldFilename) == -1)
+    {
+        papszFileList = CSLAddString( papszFileList, osWldFilename );
+    }
+
+    return papszFileList;
+}
+
+/************************************************************************/
 /*                         DetectGeoreferencing()                       */
 /************************************************************************/
 
 void GIFAbstractDataset::DetectGeoreferencing( GDALOpenInfo * poOpenInfo )
 {
+    char* pszWldFilename = NULL;
+
     bGeoTransformValid =
         GDALReadWorldFile2( poOpenInfo->pszFilename, NULL,
-                           adfGeoTransform, poOpenInfo->GetSiblingFiles(), NULL );
+                            adfGeoTransform, poOpenInfo->GetSiblingFiles(), 
+                            &pszWldFilename );
     if ( !bGeoTransformValid )
     {
         bGeoTransformValid =
             GDALReadWorldFile2( poOpenInfo->pszFilename, ".wld",
-                               adfGeoTransform, poOpenInfo->GetSiblingFiles(), NULL );
+                                adfGeoTransform, poOpenInfo->GetSiblingFiles(),
+                                &pszWldFilename );
+    }
+
+    if (pszWldFilename)
+    {
+        osWldFilename = pszWldFilename;
+        CPLFree(pszWldFilename);
     }
 }
 
