@@ -22,6 +22,8 @@
  */
 %include "typemaps.i"
 
+%apply (int) {VSI_RETVAL};
+
 %apply (double *OUTPUT) { double *argout };
 
 %typemap(in) GIntBig

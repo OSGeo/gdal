@@ -33,6 +33,8 @@
 
 /* CSHARP TYPEMAPS */
 
+%apply (int) {VSI_RETVAL};
+
 %fragment("OGRErrMessages","header") %{
 static char const *
 OGRErrMessages( int rc ) {
