@@ -243,7 +243,7 @@ def FileFromMemBuffer(*args):
   return _gdal.FileFromMemBuffer(*args)
 
 def Unlink(*args):
-  """Unlink(char utf8_path) -> int"""
+  """Unlink(char utf8_path) -> VSI_RETVAL"""
   return _gdal.Unlink(*args)
 
 def HasThreadSupport(*args):
@@ -251,15 +251,15 @@ def HasThreadSupport(*args):
   return _gdal.HasThreadSupport(*args)
 
 def Mkdir(*args):
-  """Mkdir(char utf8_path, int mode) -> int"""
+  """Mkdir(char utf8_path, int mode) -> VSI_RETVAL"""
   return _gdal.Mkdir(*args)
 
 def Rmdir(*args):
-  """Rmdir(char utf8_path) -> int"""
+  """Rmdir(char utf8_path) -> VSI_RETVAL"""
   return _gdal.Rmdir(*args)
 
 def Rename(*args):
-  """Rename(char pszOld, char pszNew) -> int"""
+  """Rename(char pszOld, char pszNew) -> VSI_RETVAL"""
   return _gdal.Rename(*args)
 VSI_STAT_EXISTS_FLAG = _gdal.VSI_STAT_EXISTS_FLAG
 VSI_STAT_NATURE_FLAG = _gdal.VSI_STAT_NATURE_FLAG
@@ -301,7 +301,7 @@ def VSIFOpenL(*args):
   return _gdal.VSIFOpenL(*args)
 
 def VSIFCloseL(*args):
-  """VSIFCloseL(VSILFILE arg0)"""
+  """VSIFCloseL(VSILFILE arg0) -> VSI_RETVAL"""
   return _gdal.VSIFCloseL(*args)
 
 def VSIFSeekL(*args):

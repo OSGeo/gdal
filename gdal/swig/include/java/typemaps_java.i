@@ -20,6 +20,8 @@
 %include "arrays_java.i";
 %include "typemaps.i"
 
+%apply (int) {VSI_RETVAL};
+
 %typemap(javabody) SWIGTYPE %{
   private long swigCPtr;
   protected boolean swigCMemOwn;
