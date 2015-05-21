@@ -368,6 +368,10 @@ string. This is the historic behaviour. However this will prevent such fields to
 be declared as not-nullable if the application schema declared them as mandatory.
 So this option can be set to NO to have both empty strings being report as such,
 and mandatory fields being reported as not nullable.</li>
+<li> <b>GML_ATTRIBUTES_TO_OGR_FIELDS=YES/NO</b>: (GDAL &gt;=2.0) Whether GM
+Lattributes should be reported as OGR fields. Note that this option has only an
+effect the first time a GML file is opened (before the .gfs file is created),
+and if it has no valid associated .xsd. Defaults to NO.</li>
 </ul>
 
 <h2>Creation Issues</h2>

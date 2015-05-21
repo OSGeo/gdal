@@ -552,6 +552,7 @@ public:
 
     int         IsSequentialLayers() const { return m_bSequentialLayers == TRUE; }
     
+    void        SetReportAllAttributes(int bFlag) { m_bReportAllAttributes = bFlag; }
     int         ReportAllAttributes() const { return m_bReportAllAttributes; }
     
     void             SetIsWFSJointLayer( int bFlag ) { m_bIsWFSJointLayer = bFlag; }

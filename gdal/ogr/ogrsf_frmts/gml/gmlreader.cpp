@@ -184,8 +184,7 @@ CPL_UNUSED
 
     m_bSetWidthFlag = TRUE;
 
-    m_bReportAllAttributes = CSLTestBoolean(
-                    CPLGetConfigOption("GML_ATTRIBUTES_TO_OGR_FIELDS", "NO"));
+    m_bReportAllAttributes = FALSE;
 
     m_bIsWFSJointLayer = FALSE;
     m_bEmptyAsNull = TRUE;
