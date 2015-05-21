@@ -422,6 +422,7 @@ OGRErr OGRILI1Layer::CreateField( OGRFieldDefn *poField, CPL_UNUSED int bApproxO
 
 void OGRILI1Layer::JoinGeomLayers()
 {
+    bGeomsJoined = TRUE;
     int bResetConfigOption = FALSE;
     if (EQUAL(CPLGetConfigOption("OGR_ARC_STEPSIZE", ""), ""))
     {
@@ -449,7 +450,6 @@ void OGRILI1Layer::JoinGeomLayers()
             }
         }
     }
-    bGeomsJoined = TRUE;
 
     if( bResetConfigOption )
         CPLSetThreadLocalConfigOption("OGR_ARC_STEPSIZE", NULL);
