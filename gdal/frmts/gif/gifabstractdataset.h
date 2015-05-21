@@ -61,6 +61,8 @@ class GIFAbstractDataset : public GDALPamDataset
     int         bHasReadXMPMetadata;
     void        CollectXMPMetadata();
 
+    CPLString   osWldFilename;
+
     void        DetectGeoreferencing( GDALOpenInfo * poOpenInfo );
 
   public:
@@ -75,6 +77,8 @@ class GIFAbstractDataset : public GDALPamDataset
 
     virtual char      **GetMetadataDomainList();
     virtual char  **GetMetadata( const char * pszDomain = "" );
+
+    virtual char **GetFileList(void);
 
     static int          Identify( GDALOpenInfo * );
 
