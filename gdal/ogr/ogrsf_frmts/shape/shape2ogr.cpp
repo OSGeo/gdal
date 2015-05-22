@@ -1078,6 +1078,8 @@ OGRFeature *SHPReadOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "Attempt to read shape with feature id (%d), but it is marked deleted.",
                   iShape );
+        if( psShape != NULL )
+            SHPDestroyObject(psShape);
         return NULL;
     }
 
