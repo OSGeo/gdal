@@ -73,9 +73,21 @@ out (char **dict) - Required - The return value is a collection of name/value pa
 converted into a native dictionary or hash structure.  Use CPLParseNameValue() to
 access the char ** type.
 
-out (CPLErr) - CPLErr is an enum defined in port/cpl_error.h.  This code is returned
-by many functions in GDAL core.  Suggested useage is to test the return code an convert
-to an exception.
+out (CPLErr) - CPLErr is an enum defined in port/cpl_error.h.  This
+code is returned by many functions in GDAL core.  It is assumed that
+every GDAL function which returns CPLErr also calls CPLError thus
+making the error type and message available so that they are usable in
+the exception handler defined in cpl_exceptions.i.
+
+out/ret (VSI_RETVAL) - VSI_RETVAL is typedef int in the bindings
+(%inline, so both for the bindings and for swig). CPL uses int. 0 is
+ok, -1 is an error. The error can be retrieved with strerror(errno).
+
+out/ret (GDAL_SUCCESS) - GDAL_SUCCESS is typedef int in the bindings
+(%inline, so both for the bindings and for swig). GDAL uses int. TRUE
+on success and FALSE on not success. The user needs to be advised to
+read the docs for possible causes of the failure. Currently only
+GDALGCPsToGeoTransform and GDALInvGeoTransform use this(?).
 
 out GDALColorEntry* - Return a GDALColorEntry from a function.
 

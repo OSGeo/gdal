@@ -150,43 +150,28 @@
   }
 }
 
-/* typemaps for IF_FALSE_RETURN_NONE */
+/* typemaps for GDAL_SUCCESS */
 
 /* drop GDAL return value */
-%typemap(out) IF_FALSE_RETURN_NONE
+%typemap(out) GDAL_SUCCESS
 {
-  /* %typemap(out) IF_FALSE_RETURN_NONE */
+  /* %typemap(out) GDAL_SUCCESS */
 }
 /* croak if GDAL return FALSE */
-%typemap(ret) IF_FALSE_RETURN_NONE
+%typemap(ret) GDAL_SUCCESS
 {
- /* %typemap(ret) IF_FALSE_RETURN_NONE */
+ /* %typemap(ret) GDAL_SUCCESS */
   if ($1 == 0 ) {
     SWIG_croak("unexpected error in '$symname'");
   }
 }
+
 /* drop GDAL return value */
-%typemap(out) RETURN_NONE_TRUE_IS_ERROR
-{
-  /* %typemap(out) RETURN_NONE_TRUE_IS_ERROR */
-}
-/* croak if GDAL return TRUE */
-%typemap(ret) RETURN_NONE_TRUE_IS_ERROR
-{
- /* %typemap(ret) RETURN_NONE_TRUE_IS_ERROR */
-  if ($1 != 0 ) {
-    SWIG_croak("unexpected error in '$symname'");
-  }
-}
-/* drop GDAL return value */
-%typemap(out) IF_ERROR_RETURN_NONE
-{
-  /* %typemap(out) IF_ERROR_RETURN_NONE */
-}
 %typemap(out) CPLErr
 {
   /* %typemap(out) CPLErr */
 }
+
 /* return value is really void or prepared by typemaps, avoids unnecessary sv_newmortal */
 %typemap(out) void
 {

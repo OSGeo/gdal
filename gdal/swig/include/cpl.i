@@ -358,6 +358,11 @@ void wrapper_VSIFileFromMemBuffer( const char* utf8_path, int nBytes, const GByt
 %clear ( int nBytes, const GByte *pabyData );
 #endif
 
+/* return value type that is used for VSI methods which return -1 on error (and set errno) */
+%inline %{
+typedef int VSI_RETVAL;
+%}
+
 /* Added in GDAL 1.7.0 */
 VSI_RETVAL VSIUnlink(const char * utf8_path );
 

@@ -22,8 +22,6 @@
  */
 %include "typemaps.i"
 
-%apply (int) {VSI_RETVAL};
-
 %apply (double *OUTPUT) { double *argout };
 
 %typemap(in) GIntBig
@@ -149,9 +147,9 @@
 }
 
 
-%typemap(out) IF_ERROR_RETURN_NONE
+%typemap(out) CPLErr
 {
-  /* %typemap(out) IF_ERROR_RETURN_NONE */
+  /* %typemap(out) CPLErr */
 }
 
 

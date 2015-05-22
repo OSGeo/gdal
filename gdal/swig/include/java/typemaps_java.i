@@ -20,8 +20,6 @@
 %include "arrays_java.i";
 %include "typemaps.i"
 
-%apply (int) {VSI_RETVAL};
-
 %typemap(javabody) SWIGTYPE %{
   private long swigCPtr;
   protected boolean swigCMemOwn;
@@ -538,23 +536,23 @@
 
 /* GDAL Typemaps */
 
-%typemap(out) IF_ERR_RETURN_NONE
+%typemap(out) GDAL_SUCCESS
 {
-  /* %typemap(out) IF_ERR_RETURN_NONE */
+  /* %typemap(out) GDAL_SUCCESS */
   $result = 0;
 }
-%typemap(ret) IF_ERR_RETURN_NONE
+%typemap(ret) GDAL_SUCCESS
 {
- /* %typemap(ret) IF_ERR_RETURN_NONE */
+ /* %typemap(ret) GDAL_SUCCESS */
 }
-%typemap(out) IF_FALSE_RETURN_NONE
+%typemap(out) VSI_RETVAL
 {
-  /* %typemap(out) IF_FALSE_RETURN_NONE */
+  /* %typemap(out) VSI_RETVAL */
   $result = 0;
 }
-%typemap(ret) IF_FALSE_RETURN_NONE
+%typemap(ret) VSI_RETVAL
 {
- /* %typemap(ret) IF_FALSE_RETURN_NONE */
+ /* %typemap(ret) VSI_RETVAL */
 }
 
 /***************************************************
