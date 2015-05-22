@@ -1755,6 +1755,11 @@ int main( int nArgc, char ** papszArgv )
                     pszFormat );
             exit( 1 );
         }
+        
+        if( papszDestOpenOptions != NULL )
+        {
+            fprintf(stderr, "-doo ignored when creating the output datasource.\n");
+        }
 
 /* -------------------------------------------------------------------- */
 /*      Special case to improve user experience when translating        */
