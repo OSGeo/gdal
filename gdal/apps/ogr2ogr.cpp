@@ -3755,21 +3755,13 @@ int LayerTranslator::Translate( TargetLayerInfo* psInfo,
                                         psInfo->iRequestedSrcGeomField);
             else
                 poSrcGeometry = poFeature->GetGeometryRef();
-            if (poSrcGeometry)
+            if (poSrcGeometry &&
+                OGR_GT_IsSubClassOf(poSrcGeometry->getGeometryType(), wkbGeometryCollection) )
             {
-                switch (wkbFlatten(poSrcGeometry->getGeometryType()))
-                {
-                    case wkbMultiPoint:
-                    case wkbMultiLineString:
-                    case wkbMultiPolygon:
-                    case wkbGeometryCollection:
-                        nParts = ((OGRGeometryCollection*)poSrcGeometry)->getNumGeometries();
-                        nIters = nParts;
-                        if (nIters == 0)
-                            nIters = 1;
-                    default:
-                        break;
-                }
+                nParts = ((OGRGeometryCollection*)poSrcGeometry)->getNumGeometries();
+                nIters = nParts;
+                if (nIters == 0)
+                    nIters = 1;
             }
         }
 
