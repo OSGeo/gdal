@@ -72,13 +72,19 @@ The following functions, with identical syntax and semantics as in Spatialite, a
 
 <h3>Link with Spatialite</h3>
 
-Starting with GDAL 2.0, if it has been compiled against Spatialite 4.2 or later, it is also possible
-to use Spatialite SQL functions. Explicit transformation from GPKG geometry binary
-encoding to/from Spatialite geometry binary encoding must be done.
+<p>
+Starting with GDAL 2.0, if it has been compiled against Spatialite 4.2 or later,
+it is also possible to use Spatialite SQL functions. Explicit transformation
+from GPKG geometry binary encoding to Spatialite geometry binary encoding must be done.
+</p>
 
 <pre>
-ogrinfo poly.gpkg -sql "SELECT AsGPB(ST_Buffer(CastAutomagic(geom),5)) FROM poly"
+ogrinfo poly.gpkg -sql "SELECT ST_Buffer(CastAutomagic(geom),5) FROM poly"
 </pre>
+
+<p>
+Starting with Spatialite 4.3, CastAutomagic is no longer needed.
+</p>
 
 <h2>Transaction support (GDAL &gt;= 2.0)</h2>
 

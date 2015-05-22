@@ -4258,6 +4258,11 @@ int GDALGeoPackageDataset::OpenOrCreateDB(int flags)
 
 #ifdef SPATIALITE_412_OR_LATER
     InitNewSpatialite();
+
+    // Enable Spatialite 4.3 "amphibious" mode, i.e. that spatialite functions
+    // that take geometries will accept GPKG encoded gometries without
+    // explicit conversion
+    sqlite3_exec(hDB, "SELECT EnableGpkgAmphibiousMode()", NULL, NULL, NULL);
 #endif
 
     /* Used by RTree Spatial Index Extension */

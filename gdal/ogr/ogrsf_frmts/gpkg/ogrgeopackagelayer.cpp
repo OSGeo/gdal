@@ -346,6 +346,12 @@ void OGRGeoPackageLayer::BuildFeatureDefn( const char *pszLayerName,
         if( EQUAL(oField.GetNameRef(),"_rowid_") )
             continue;
 
+        // this will avoid the old geom field to appear when running something
+        // like "select st_buffer(geom,5) as geom, * from my_layer"
+        if( m_poFeatureDefn->GetGeomFieldCount() &&
+            EQUAL(oField.GetNameRef(), m_poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef()) )
+            continue;
+
         int nColType = sqlite3_column_type( hStmt, iCol );
         const char * pszDeclType = sqlite3_column_decltype(hStmt, iCol);
 
