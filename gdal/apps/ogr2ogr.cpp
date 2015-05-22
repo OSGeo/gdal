@@ -3529,6 +3529,9 @@ static int TranslateLayer( TargetLayerInfo* psInfo,
 
                 if (poClipDst)
                 {
+                    if( poDstGeometry == NULL )
+                        goto end_loop;
+
                     OGRGeometry* poClipped = poDstGeometry->Intersection(poClipDst);
                     if (poClipped == NULL || poClipped->IsEmpty())
                     {
