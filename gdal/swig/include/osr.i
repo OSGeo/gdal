@@ -29,6 +29,8 @@
 
 %include constraints.i
 
+%import gdal_typedefs.i
+
 #ifdef PERL_CPAN_NAMESPACE
 %module "Geo::OSR"
 #elif defined(SWIGCSHARP)

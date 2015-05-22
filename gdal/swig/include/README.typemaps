@@ -24,6 +24,10 @@ argout (int *nLen, char **pBuf) -
   type.  Typemap needs to deallocate memory.
   FrankW:  Should this be done with free?
 
+argout (int *nLen, const int **pList) - return an integer array
+
+argout (int *nLen, const GIntBig **pList) - return a big integer array
+
 argout (char **argout ) - Required - 
 
 argout (long *OUTPUT) - Required - 
@@ -57,6 +61,8 @@ in (int nGCPs, GDAL_GCP const *pGCPs) -
 in (int nList, int *pList) - Required - Pass a fixed length integer array into a function.
 
 in (int nLen, char *pBuf) - Required - Pass a fixed length character buffer into a function.
+
+in (GIntBig nLen, char *pBuf) - Required - Pass a fixed length character buffer into a function.
 
 in (tostring argin ) - Required - Converts any argument in the script types to a string representation.
 In python this functionality directly calls AsString (ie str()) on the object.  This functionality

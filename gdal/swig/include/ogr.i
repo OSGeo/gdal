@@ -27,6 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
+%import gdal_typedefs.i
+
 #ifndef FROM_GDAL_I
 %include "exception.i"
 #endif
@@ -1322,7 +1324,9 @@ public:
   }
 #endif
 
-#if defined(SWIGPYTHON)
+#if defined(SWIGJAVA)
+#elif defined(SWIGCSHARP)
+#else
   void GetFieldAsInteger64List(int id, int *nLen, const GIntBig **pList) {
       *pList = OGR_F_GetFieldAsInteger64List(self, id, nLen);
   }
@@ -1551,11 +1555,9 @@ public:
       OGR_F_SetFieldIntegerList(self, id, nList, pList);
   }
 
-#if defined(SWIGPYTHON)
   void SetFieldInteger64List(int id, int nList, GIntBig *pList) {
       OGR_F_SetFieldInteger64List(self, id, nList, pList);
   }
-#endif
 
   void SetFieldDoubleList(int id, int nList, double *pList) {
       OGR_F_SetFieldDoubleList(self, id, nList, pList);

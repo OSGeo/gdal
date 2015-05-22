@@ -30,6 +30,8 @@
 
 %include constraints.i
 
+%import gdal_typedefs.i
+
 #ifdef PERL_CPAN_NAMESPACE
 %module "Geo::GDAL"
 #elif defined(SWIGCSHARP)
@@ -605,7 +607,6 @@ void GDALAllRegister();
 
 void GDALDestroyDriverManager();
 
-#ifdef SWIGPYTHON
 %inline {
 GIntBig wrapper_GDALGetCacheMax()
 {
@@ -626,29 +627,6 @@ void wrapper_GDALSetCacheMax(GIntBig nBytes)
     return GDALSetCacheMax64(nBytes);
 }
 }
-
-#else
-%inline {
-int wrapper_GDALGetCacheMax()
-{
-    return GDALGetCacheMax();
-}
-}
-
-%inline {
-int wrapper_GDALGetCacheUsed()
-{
-    return GDALGetCacheUsed();
-}
-}
-
-%inline {
-void wrapper_GDALSetCacheMax(int nBytes)
-{
-    return GDALSetCacheMax(nBytes);
-}
-}
-#endif
 
 int GDALGetDataTypeSize( GDALDataType eDataType );
 

@@ -30,6 +30,8 @@
 
 %include constraints.i
 
+%import gdal_typedefs.i
+
 #ifdef SWIGCSHARP
 typedef enum
 {
@@ -468,16 +470,9 @@ VSILFILE   *wrapper_VSIFOpenL( const char *utf8_path, const char *pszMode )
 }
 %}
 VSI_RETVAL VSIFCloseL( VSILFILE * );
-
-#if defined(SWIGPYTHON)
-int     VSIFSeekL( VSILFILE *, GIntBig, int );
+VSI_RETVAL VSIFSeekL( VSILFILE *, GIntBig, int );
 GIntBig    VSIFTellL( VSILFILE * );
-int     VSIFTruncateL( VSILFILE *, GIntBig );
-#else
-VSI_RETVAL VSIFSeekL( VSILFILE *, long, int );
-long    VSIFTellL( VSILFILE * );
-VSI_RETVAL VSIFTruncateL( VSILFILE *, long );
-#endif
+VSI_RETVAL VSIFTruncateL( VSILFILE *, GIntBig );
 
 #if defined(SWIGPYTHON)
 %rename (VSIFWriteL) wrapper_VSIFWriteL;

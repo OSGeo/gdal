@@ -48,19 +48,6 @@
     }
 }
 
-%typemap(in) GIntBig
-{
-  /* %typemap(in) GIntBig */
-  $1 = SvIV($input); //FIXME is that right ??
-}
-
-%typemap(out) GIntBig
-{
-  /* %typemap(out) GIntBig */
-  $result = sv_newmortal();
-  sv_setiv($result, (IV) $1);
-  argvi++;
-}
 %typemap(out) const char *
 {
     /* %typemap(out) const char * */
@@ -228,6 +215,21 @@ CreateArrayFromIntArray( int *first, unsigned int size ) {
 }
 %}
 
+%fragment("CreateArrayFromGIntBigArray","header") %{
+#define LENGTH_OF_GIntBig_AS_STRING 30
+static SV *
+CreateArrayFromGIntBigArray( GIntBig *first, unsigned int size ) {
+  AV *av = (AV*)sv_2mortal((SV*)newAV());
+  for( unsigned int i=0; i<size; i++ ) {
+    char s[LENGTH_OF_GIntBig_AS_STRING];
+    snprintf(s, LENGTH_OF_GIntBig_AS_STRING-1, CPL_FRMT_GIB, *first);
+    av_store(av,i,newSVpv(s, 0));
+    ++first;
+  }
+  return sv_2mortal(newRV((SV*)av));
+}
+%}
+
 %fragment("CreateArrayFromGUIntBigArray","header") %{
 #define LENGTH_OF_GUIntBig_AS_STRING 30
 static SV *
@@ -281,6 +283,21 @@ CreateArrayFromStringArray( char **first ) {
 {
   /* %typemap(argout) (int *nLen, const int **pList) */
   $result = CreateArrayFromIntArray( *($2), *($1) );
+  argvi++;
+}
+
+/* typemaps for (int *nLen, const GIntBig **pList) */
+
+%typemap(in,numinputs=0) (int *nLen, const GIntBig **pList) (int nLen, GIntBig *pList)
+{
+  /* %typemap(in,numinputs=0) (int *nLen, const GIntBig **pList) */
+  $1 = &nLen;
+  $2 = &pList;
+}
+%typemap(argout,fragment="CreateArrayFromGIntBigArray") (int *nLen, const GIntBig **pList)
+{
+  /* %typemap(argout) (int *nLen, const GIntBig **pList) */
+  $result = CreateArrayFromGIntBigArray( *($2), *($1) );
   argvi++;
 }
 
@@ -593,6 +610,20 @@ CreateArrayFromStringArray( char **first ) {
             SWIG_croak("Expected binary data.");
         STRLEN len = SvCUR($input);
         $2 = (unsigned char *)SvPV_nolen($input);
+        $1 = len;
+    } else {
+        $2 = NULL;
+        $1 = 0;
+    }
+}
+%typemap(in,numinputs=1) (GIntBig nLen, char *pBuf )
+{
+    /* %typemap(in,numinputs=1) (GIntBig nLen, char *pBuf ) */
+    if (SvOK($input)) {
+        if (!SvPOK($input))
+            croak("Expected binary data.");
+        STRLEN len = SvCUR($input);
+        $2 = SvPV_nolen($input);
         $1 = len;
     } else {
         $2 = NULL;
