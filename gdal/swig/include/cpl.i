@@ -140,10 +140,6 @@ void CPLErrorReset();
 retStringAndCPLFree* EscapeString(int nLen, char *pBuf, int scheme=CPLES_SQL) {
     return CPLEscapeString((const char*)pBuf, nLen, scheme);
 } 
-
-retStringAndCPLFree* EscapeString(const char* str, int scheme) {
-    return CPLEscapeString(str, (str) ? strlen(str) : 0, scheme);
-}
 %}
 
 %rename (GetLastErrorNo) CPLGetLastErrorNo;

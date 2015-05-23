@@ -177,6 +177,9 @@ for my $string (@NODE_TYPES) {
 sub RELEASE_PARENTS {
 }
 
+*CPLBinaryToHex = *BinaryToHex;
+*CPLHexToBinary = *HexToBinary;
+
 sub DataTypes {
     return @DATA_TYPES;
 }
