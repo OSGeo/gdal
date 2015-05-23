@@ -218,13 +218,14 @@ sub Child {
     return $node->[2+$child];
 }
 
-sub GetDataTypeSize {
+sub GetDataTypeSize2 {
     my $t = shift;
     my $t2 = $t;
     $t2 = $TYPE_STRING2INT{$t} if exists $TYPE_STRING2INT{$t};
     confess "Unknown data type: '$t'." unless exists $TYPE_INT2STRING{$t2};
-    return _GetDataTypeSize($t2);
+    return Geo::GDALc::GetDataTypeSize($t2);
 }
+*GetDataTypeSize = *GetDataTypeSize2;
 
 sub DataTypeValueRange {
     my $t = shift;
@@ -239,13 +240,14 @@ sub DataTypeValueRange {
     return (-4294967295.0,4294967295.0) if $t =~/Float64/;
 }
 
-sub DataTypeIsComplex {
+sub DataTypeIsComplex2 {
     my $t = shift;
     my $t2 = $t;
     $t2 = $TYPE_STRING2INT{$t} if exists $TYPE_STRING2INT{$t};
     confess "Unknown data type: '$t'." unless exists $TYPE_INT2STRING{$t2};
-    return _DataTypeIsComplex($t2);
+    return Geo::GDALc::DataTypeIsComplex($t2);
 }
+*DataTypeIsComplex = *DataTypeIsComplex2;
 
 sub PackCharacter {
     my $t = shift;

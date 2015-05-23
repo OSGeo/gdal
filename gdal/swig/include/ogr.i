@@ -2084,10 +2084,10 @@ public:
 #ifdef SWIGJAVA
 %newobject CreateGeometryFromWkb;
 %inline {
-OGRGeometryShadow* CreateGeometryFromWkb(int nLen, unsigned char *pBuf, 
+OGRGeometryShadow* CreateGeometryFromWkb(int nLen, char *pBuf, 
                                             OSRSpatialReferenceShadow *reference=NULL ) {
     OGRGeometryH geom = NULL;
-    OGRErr err = OGR_G_CreateFromWkb((unsigned char*) pBuf, reference, &geom, nLen);
+    OGRErr err = OGR_G_CreateFromWkb((unsigned char *)pBuf, reference, &geom, nLen);
     if (err != 0 ) {
        CPLError(CE_Failure, err, "%s", OGRErrMessages(err));
        return NULL;
@@ -2261,7 +2261,6 @@ public:
     OGR_G_DestroyGeometry( self );
   }
   
-#ifndef SWIGJAVA
 #ifdef SWIGCSHARP
 %apply (void *buffer_ptr) {char *wkb_buf};
 #else
@@ -2291,7 +2290,6 @@ public:
 %clear (char *wkb_buf);
 #else
 %clear (int wkb, char *wkb_buf);
-#endif
 #endif
 
   OGRErr ExportToWkt( char** argout ) {

@@ -40,25 +40,11 @@
 
 /*
  *
- * Define a simple return code typemap which checks if the return code from
- * the wrapped method is non-zero. If non-zero, return None.  Otherwise,
- * return any argout or None.
+ * To do: define a simple out and ret typemaps for those mentioned in
+ * READM.typemaps. You may check if the return value from the wrapped
+ * method is an error and possibly raise an error.
  *
- * Applied like this:
- * %apply (IF_ERR_RETURN_NONE) {CPLErr};
- * CPLErr function_to_wrap( );
- * %clear (CPLErr);
  */
-%typemap(out) IF_FALSE_RETURN_NONE
-{
- /* %typemap(out) IF_FALSE_RETURN_NONE */
- RETVAL_NULL();  
-}
-%typemap(ret) IF_FALSE_RETURN_NONE
-{
- /* %typemap(ret) IF_FALSE_RETURN_NONE */
- RETVAL_NULL();
-}
 
 /*
  * Another output typemap which will raise an

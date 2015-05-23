@@ -77,13 +77,6 @@ OGRErrMessages( int rc ) {
 /* GDAL Typemaps */
 
 %typemap(out) GDAL_SUCCESS %{ $result = $1; %}
-%typemap(ctype) IF_FALSE_RETURN_NONE "int"
-%typemap(imtype) IF_FALSE_RETURN_NONE "int"
-%typemap(cstype) IF_FALSE_RETURN_NONE "int"
-%typemap(csout, excode=SWIGEXCODE) GDAL_SUCCESS {
-    int res = $imcall;$excode
-    return res;
-}
 
 %typemap(out) CPLErr %{ $result = $1; %}
 

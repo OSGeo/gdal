@@ -29,12 +29,14 @@
  *****************************************************************************/
 
 /*
-  Typedefs for GDAL types for swig, extracted from GDAL headers.
+  Typedefs for GDAL types for swig, some extracted from GDAL headers.
 */
 
 %include "../../port/cpl_config.h"
 
 %include <windows.i>
+
+typedef unsigned char   GByte;
 
 #if defined(WIN32) && defined(_MSC_VER)
 
@@ -51,6 +53,23 @@ typedef unsigned long long GUIntBig;
 typedef long             GIntBig;
 typedef unsigned long    GUIntBig;
 
+#endif
+
+/* Language specifics should not be here. 
+   To do: include generic lang_typedefs.i, which comes from 
+   included (swig command line) lang dir */
+#ifdef SWIGCSHARP
+typedef enum
+{
+    CE_None = 0,
+    CE_Log = 1,
+    CE_Warning = 2,
+    CE_Failure = 3,
+    CE_Fatal = 4
+} CPLErr;
+#else
+/* why not for CSHARP? */
+typedef void VSILFILE;
 #endif
 
 /*
@@ -86,4 +105,7 @@ typedef void GDALAsyncReaderShadow;
 
 %inline %{
     typedef char retStringAndCPLFree;
+
+    /* return value type that is used for VSI methods which return -1 on error (and set errno) */
+    typedef int VSI_RETVAL;
 %}
