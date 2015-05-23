@@ -30,7 +30,7 @@
 
 %include constraints.i
 
-%import gdal_typedefs.i
+%include typedefs.i
 
 #ifdef SWIGCSHARP
 typedef enum
@@ -42,10 +42,6 @@ typedef enum
     CE_Fatal = 4
 } CPLErr;
 #endif
-
-%inline %{
-typedef char retStringAndCPLFree;
-%}
 
 %inline %{
   void Debug( const char *msg_class, const char *message ) {

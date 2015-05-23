@@ -27,7 +27,7 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
-%import gdal_typedefs.i
+%include typedefs.i
 
 #ifndef FROM_GDAL_I
 %include "exception.i"
@@ -39,12 +39,6 @@
 %module Ogr
 #else
 %module ogr
-#endif
-
-#ifndef FROM_GDAL_I
-%inline %{
-typedef char retStringAndCPLFree;
-%}
 #endif
 
 #ifdef SWIGCSHARP

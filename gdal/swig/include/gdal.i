@@ -30,7 +30,7 @@
 
 %include constraints.i
 
-%import gdal_typedefs.i
+%include typedefs.i
 
 #ifdef PERL_CPAN_NAMESPACE
 %module "Geo::GDAL"

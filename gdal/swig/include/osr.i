@@ -29,7 +29,7 @@
 
 %include constraints.i
 
-%import gdal_typedefs.i
+%include typedefs.i
 
 #ifdef PERL_CPAN_NAMESPACE
 %module "Geo::OSR"
@@ -59,12 +59,6 @@
 %csconst(0);
 #elif defined(SWIGJAVA)
 %javaconst(0);
-#endif
-
-#if !defined(FROM_GDAL_I) && !defined(FROM_OGR_I)
-%inline %{
-typedef char retStringAndCPLFree;
-%}
 #endif
 
 %{
