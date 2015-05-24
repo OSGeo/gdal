@@ -54,7 +54,7 @@ public:
 %apply Pointer NONNULL { const char* newName, const char* oldName, GDALDatasetShadow* src };
 
 %newobject Create;
-#ifndef SWIGJAVA
+#if defined(SWIGPYTHON) || defined(SWIGRUBY)
 %feature( "kwargs" ) Create;
 #endif
   GDALDatasetShadow *Create(    const char *utf8_path, 
@@ -75,10 +75,8 @@ public:
   }
 
 %newobject CreateCopy;
-#ifndef SWIGJAVA
-#ifndef SWIGJAVA
+#if defined(SWIGPYTHON) || defined(SWIGRUBY)
 %feature( "kwargs" ) CreateCopy;
-#endif
 #endif
   GDALDatasetShadow *CreateCopy(    const char *utf8_path, 
                                     GDALDatasetShadow* src, 

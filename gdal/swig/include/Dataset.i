@@ -392,7 +392,7 @@ public:
   // The (int,int*) arguments are typemapped.  The name of the first argument
   // becomes the kwarg name for it.
 #ifndef SWIGCSHARP  
-#ifndef SWIGJAVA
+#if defined(SWIGPYTHON) || defined(SWIGRUBY)
 %feature("kwargs") BuildOverviews;
 #endif
 %apply (int nList, int* pList) { (int overviewlist, int *pOverviews) };
@@ -453,7 +453,7 @@ public:
     GDALFlushCache( self );
   }
 
-#ifndef SWIGJAVA
+#if defined(SWIGPYTHON) || defined(SWIGRUBY)
 %feature ("kwargs") AddBand;
 #endif
 /* uses the defined char **options typemap */
@@ -788,7 +788,7 @@ CPLErr ReadRaster(  int xoff, int yoff, int xsize, int ysize,
 #if defined(SWIGPYTHON) || defined(SWIGJAVA)
 
   /* Note that datasources own their layers */
-#ifndef SWIGJAVA
+#if defined(SWIGPYTHON) || defined(SWIGRUBY)
   %feature( "kwargs" ) CreateLayer;
 #endif
   OGRLayerShadow *CreateLayer(const char* name, 
@@ -803,7 +803,7 @@ CPLErr ReadRaster(  int xoff, int yoff, int xsize, int ysize,
     return layer;
   }
 
-#ifndef SWIGJAVA
+#if defined(SWIGPYTHON) || defined(SWIGRUBY)
   %feature( "kwargs" ) CopyLayer;
 #endif
 %apply Pointer NONNULL {OGRLayerShadow *src_layer};
@@ -843,7 +843,7 @@ CPLErr ReadRaster(  int xoff, int yoff, int xsize, int ysize,
     return (GDALDatasetTestCapability(self, cap) > 0);
   }
 
-#ifndef SWIGJAVA
+#if defined(SWIGPYTHON) || defined(SWIGRUBY)
   %feature( "kwargs" ) ExecuteSQL;
 #endif
   %apply Pointer NONNULL {const char * statement};
@@ -874,7 +874,7 @@ CPLErr ReadRaster(  int xoff, int yoff, int xsize, int ysize,
 
 #endif /* defined(SWIGPYTHON) || defined(SWIGJAVA) */
 
-#ifndef SWIGJAVA
+#if defined(SWIGPYTHON) || defined(SWIGRUBY)
   %feature( "kwargs" ) StartTransaction;
 #endif
   OGRErr StartTransaction(int force = FALSE)

@@ -43,7 +43,7 @@
 %include swig_csharp_extensions.i
 #endif
 
-#if !defined(SWIGJAVA) && !defined(SWIGPERLx)
+#if !defined(SWIGJAVA)
 %feature("compactdefaultargs");
 #endif
 

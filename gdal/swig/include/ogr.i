@@ -45,7 +45,7 @@
 %include swig_csharp_extensions.i
 #endif
 
-#if !defined(SWIGJAVA) && !defined(SWIGPERLx)
+#if !defined(SWIGJAVA)
 %feature("compactdefaultargs");
 #endif
 
@@ -513,7 +513,7 @@ public:
 %mutable;
 
 %newobject CreateDataSource;
-#ifndef SWIGJAVA
+#if defined(SWIGPYTHON) || defined(SWIGRUBY)
 %feature( "kwargs" ) CreateDataSource;
 #endif
   OGRDataSourceShadow *CreateDataSource( const char *utf8_path, 
@@ -523,7 +523,7 @@ public:
   }
   
 %newobject CopyDataSource;
-#ifndef SWIGJAVA
+#if defined(SWIGPYTHON) || defined(SWIGRUBY)
 %feature( "kwargs" ) CopyDataSource;
 #endif
   OGRDataSourceShadow *CopyDataSource( OGRDataSourceShadow* copy_ds, 
@@ -534,7 +534,7 @@ public:
   }
   
 %newobject Open;
-#ifndef SWIGJAVA
+#if defined(SWIGPYTHON) || defined(SWIGRUBY)
 %feature( "kwargs" ) Open;
 #endif
   OGRDataSourceShadow *Open( const char* utf8_path, 
@@ -643,7 +643,7 @@ public:
   }
 
   /* Note that datasources own their layers */
-#ifndef SWIGJAVA
+#if defined(SWIGPYTHON) || defined(SWIGRUBY)
   %feature( "kwargs" ) CreateLayer;
 #endif
   OGRLayerShadow *CreateLayer(const char* name, 
@@ -658,7 +658,7 @@ public:
     return layer;
   }
 
-#ifndef SWIGJAVA
+#if defined(SWIGPYTHON) || defined(SWIGRUBY)
   %feature( "kwargs" ) CopyLayer;
 #endif
 %apply Pointer NONNULL {OGRLayerShadow *src_layer};
@@ -690,7 +690,7 @@ public:
     return (OGR_DS_TestCapability(self, cap) > 0);
   }
 
-#ifndef SWIGJAVA
+#if defined(SWIGPYTHON) || defined(SWIGRUBY)
   %feature( "kwargs" ) ExecuteSQL;
 #endif
   %apply Pointer NONNULL {const char * statement};
@@ -719,7 +719,7 @@ public:
         OGR_DS_SetStyleTable(self, (OGRStyleTableH) table);
   }
 
-#ifndef SWIGJAVA
+#if defined(SWIGPYTHON) || defined(SWIGRUBY)
   %feature( "kwargs" ) StartTransaction;
 #endif
   OGRErr StartTransaction(int force = FALSE)
@@ -852,7 +852,7 @@ public:
     return (OGRFeatureDefnShadow*) OGR_L_GetLayerDefn(self);
   }
 
-#ifndef SWIGJAVA
+#if defined(SWIGPYTHON) || defined(SWIGRUBY)
   %feature( "kwargs" ) GetFeatureCount;  
 #endif
   GIntBig GetFeatureCount(int force=1) {
@@ -889,7 +889,7 @@ public:
     return (OGR_L_TestCapability(self, cap) > 0);
   }
   
-#ifndef SWIGJAVA
+#if defined(SWIGPYTHON) || defined(SWIGRUBY)
   %feature( "kwargs" ) CreateField;
 #endif
 %apply Pointer NONNULL {OGRFieldDefnShadow *field_def};
@@ -927,7 +927,7 @@ public:
   }
 %clear OGRFieldDefnShadow *field_def;
 
-#ifndef SWIGJAVA
+#if defined(SWIGPYTHON) || defined(SWIGRUBY)
   %feature( "kwargs" ) CreateGeomField;
 #endif
 %apply Pointer NONNULL {OGRGeomFieldDefnShadow *field_def};
@@ -971,7 +971,7 @@ public:
 %apply Pointer NONNULL {OGRFieldDefnShadow *method_layer};
 %apply Pointer NONNULL {OGRFieldDefnShadow *result_layer};
 
-#ifndef SWIGJAVA
+#if defined(SWIGPYTHON) || defined(SWIGRUBY)
   %feature( "kwargs" ) Intersection;
 #endif
   OGRErr Intersection( OGRLayerShadow *method_layer, 
@@ -982,7 +982,7 @@ public:
     return OGR_L_Intersection( self, method_layer, result_layer, options, callback, callback_data );
   }
 
-#ifndef SWIGJAVA
+#if defined(SWIGPYTHON) || defined(SWIGRUBY)
   %feature( "kwargs" ) Union;
 #endif
   OGRErr Union( OGRLayerShadow *method_layer, 
@@ -993,7 +993,7 @@ public:
     return OGR_L_Union( self, method_layer, result_layer, options, callback, callback_data );
   }
 
-#ifndef SWIGJAVA
+#if defined(SWIGPYTHON) || defined(SWIGRUBY)
   %feature( "kwargs" ) SymDifference;
 #endif
   OGRErr SymDifference( OGRLayerShadow *method_layer, 
@@ -1004,7 +1004,7 @@ public:
     return OGR_L_SymDifference( self, method_layer, result_layer, options, callback, callback_data );
   }
 
-#ifndef SWIGJAVA
+#if defined(SWIGPYTHON) || defined(SWIGRUBY)
   %feature( "kwargs" ) Identity;
 #endif
   OGRErr Identity( OGRLayerShadow *method_layer, 
@@ -1015,7 +1015,7 @@ public:
     return OGR_L_Identity( self, method_layer, result_layer, options, callback, callback_data );
   }
 
-#ifndef SWIGJAVA
+#if defined(SWIGPYTHON) || defined(SWIGRUBY)
   %feature( "kwargs" ) Update;
 #endif
   OGRErr Update( OGRLayerShadow *method_layer, 
@@ -1026,7 +1026,7 @@ public:
     return OGR_L_Update( self, method_layer, result_layer, options, callback, callback_data );
   }
 
-#ifndef SWIGJAVA
+#if defined(SWIGPYTHON) || defined(SWIGRUBY)
   %feature( "kwargs" ) Clip;
 #endif
   OGRErr Clip( OGRLayerShadow *method_layer, 
@@ -1037,7 +1037,7 @@ public:
     return OGR_L_Clip( self, method_layer, result_layer, options, callback, callback_data );
   }
 
-#ifndef SWIGJAVA
+#if defined(SWIGPYTHON) || defined(SWIGRUBY)
   %feature( "kwargs" ) Erase;
 #endif
   OGRErr Erase( OGRLayerShadow *method_layer, 
@@ -1083,7 +1083,7 @@ public:
     OGR_F_Destroy(self);
   }
 
-#ifndef SWIGJAVA
+#if defined(SWIGPYTHON) || defined(SWIGRUBY)
   %feature("kwargs") OGRFeatureShadow;
 #endif
 %apply Pointer NONNULL {OGRFeatureDefnShadow *feature_def};
@@ -1585,7 +1585,7 @@ public:
 
   /* ------------------------------------------- */  
   
-#ifndef SWIGJAVA
+#if defined(SWIGPYTHON) || defined(SWIGRUBY)
   %feature("kwargs") SetFrom;
 #endif
 %apply Pointer NONNULL {OGRFeatureShadow *other};
@@ -1703,7 +1703,7 @@ public:
     OGR_FD_Release( OGRFeatureDefnH(self) );
   }
 
-#ifndef SWIGJAVA
+#if defined(SWIGPYTHON) || defined(SWIGRUBY)
   %feature("kwargs") OGRFeatureDefnShadow;
 #endif
   OGRFeatureDefnShadow(const char* name_null_ok=NULL) {
@@ -1856,7 +1856,7 @@ public:
     OGR_Fld_Destroy(self);
   }
 
-#ifndef SWIGJAVA
+#if defined(SWIGPYTHON) || defined(SWIGRUBY)
   %feature("kwargs") OGRFieldDefnShadow;
 #endif
   OGRFieldDefnShadow( const char* name_null_ok="unnamed", 
@@ -1979,7 +1979,7 @@ public:
     OGR_GFld_Destroy(self);
   }
 
-#ifndef SWIGJAVA
+#if defined(SWIGPYTHON) || defined(SWIGRUBY)
   %feature("kwargs") OGRGeomFieldDefnShadow;
 #endif
   OGRGeomFieldDefnShadow( const char* name_null_ok="", 
@@ -2048,7 +2048,7 @@ public:
 /*      Geometry factory methods.                                       */
 /* -------------------------------------------------------------------- */
 
-#ifndef SWIGJAVA
+#if defined(SWIGPYTHON) || defined(SWIGRUBY)
 %feature( "kwargs" ) CreateGeometryFromWkb;
 %newobject CreateGeometryFromWkb;
 #ifndef SWIGCSHARP
@@ -2095,7 +2095,7 @@ OGRGeometryShadow* CreateGeometryFromWkb(int nLen, char *pBuf,
 }
 #endif
 
-#ifndef SWIGJAVA
+#if defined(SWIGPYTHON) || defined(SWIGRUBY)
 %feature( "kwargs" ) CreateGeometryFromWkt;
 #endif
 %apply (char **ignorechange) { (char **) };
@@ -2136,7 +2136,7 @@ OGRGeometryShadow* CreateGeometryFromWkb(int nLen, char *pBuf,
 %}
 
 %newobject BuildPolygonFromEdges;
-#ifndef SWIGJAVA
+#if defined(SWIGPYTHON) || defined(SWIGRUBY)
 %feature( "kwargs" ) BuildPolygonFromEdges;
 #endif
 %inline %{
@@ -2162,7 +2162,7 @@ OGRGeometryShadow* CreateGeometryFromWkb(int nLen, char *pBuf,
 %}
 
 %newobject ApproximateArcAngles;
-#ifndef SWIGJAVA
+#if defined(SWIGPYTHON) || defined(SWIGRUBY)
 %feature( "kwargs" ) ApproximateArcAngles;
 #endif
 %inline %{

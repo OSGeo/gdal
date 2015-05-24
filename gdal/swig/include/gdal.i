@@ -44,7 +44,7 @@
 %include swig_csharp_extensions.i
 #endif
 
-#if !defined(SWIGJAVA) && !defined(SWIGPERLx)
+#if !defined(SWIGJAVA)
 %feature ("compactdefaultargs");
 #endif
 
@@ -228,7 +228,6 @@ typedef enum {
 %include "gdal_java.i"
 #endif
 
-
 /* Default memberin typemaps required to support SWIG 1.3.39 and above */
 %typemap(memberin) char *Info %{
 /* char* Info memberin typemap */
@@ -283,19 +282,6 @@ $1;
 #define FROM_GDAL_I
 %import ogr.i
 #endif /* #if defined(SWIGPYTHON) || defined(SWIGJAVA) */
-
-
-//************************************************************************
-//
-// Define renames.
-//
-//************************************************************************
-%rename (PackedDMSToDec) GDALPackedDMSToDec;
-%rename (DecToPackedDMS) GDALDecToPackedDMS;
-%rename (ParseXMLString) CPLParseXMLString;
-%rename (SerializeXMLTree) CPLSerializeXMLTree;
-%rename (GetJPEG2000Structure) GDALGetJPEG2000Structure;
-
 
 //************************************************************************
 //
@@ -562,23 +548,29 @@ const char *wrapper_GDALDecToDMS( double dfAngle, const char * pszAxis,
 }
 }
 
+%rename (PackedDMSToDec) GDALPackedDMSToDec;
+
 double GDALPackedDMSToDec( double dfPacked );
+
+%rename (DecToPackedDMS) GDALDecToPackedDMS;
 
 double GDALDecToPackedDMS( double dfDec );
 
+%rename (ParseXMLString) CPLParseXMLString;
 
 #if defined(SWIGCSHARP) || defined(SWIGJAVA)
 %newobject CPLParseXMLString;
 #endif
 CPLXMLNode *CPLParseXMLString( char * pszXMLString );
 
-#if defined(SWIGJAVA) || defined(SWIGCSHARP) || defined(SWIGPYTHON) || defined(SWIGPERL)
+%rename (SerializeXMLTree) CPLSerializeXMLTree;
+
 retStringAndCPLFree *CPLSerializeXMLTree( CPLXMLNode *xmlnode );
-#else
-char *CPLSerializeXMLTree( CPLXMLNode *xmlnode );
-#endif
+
+%rename (GetJPEG2000Structure) GDALGetJPEG2000Structure;
 
 #if defined(SWIGPYTHON)
+/* Does Python want XMLNode objects? Then see above CPLParseXMLString and %include XMLNode.i. */
 %newobject GDALGetJPEG2000Structure;
 CPLXMLNode *GDALGetJPEG2000Structure( const char* pszFilename, char** options = NULL );
 #endif
@@ -624,10 +616,9 @@ GDALDriverShadow* GetDriver( int i ) {
 }
 %}
 
-#ifdef SWIGJAVA
 %newobject Open;
 %inline %{
-GDALDatasetShadow* Open( char const* utf8_path, GDALAccess eAccess) {
+GDALDatasetShadow* Open( char const* utf8_path, GDALAccess eAccess = GA_ReadOnly) {
   CPLErrorReset();
   GDALDatasetShadow *ds = GDALOpen( utf8_path, eAccess );
   if( ds != NULL && CPLGetLastErrorType() == CE_Failure )
@@ -639,34 +630,9 @@ GDALDatasetShadow* Open( char const* utf8_path, GDALAccess eAccess) {
   return (GDALDatasetShadow*) ds;
 }
 %}
-
-%newobject Open;
-%inline %{
-GDALDatasetShadow* Open( char const* name ) {
-  return Open( name, GA_ReadOnly );
-}
-%}
-
-#else
-%newobject Open;
-%inline %{
-GDALDatasetShadow* Open( char const* utf8_path, GDALAccess eAccess = GA_ReadOnly ) {
-  CPLErrorReset();
-  GDALDatasetShadow *ds = GDALOpen( utf8_path, eAccess );
-  if( ds != NULL && CPLGetLastErrorType() == CE_Failure )
-  {
-      if ( GDALDereferenceDataset( ds ) <= 0 )
-          GDALClose(ds);
-      ds = NULL;
-  }
-  return (GDALDatasetShadow*) ds;
-}
-%}
-
-#endif
 
 %newobject OpenEx;
-#ifndef SWIGJAVA
+#if defined(SWIGPYTHON) || defined(SWIGRUBY)
 %feature( "kwargs" ) OpenEx;
 #endif
 %apply (char **options) {char** allowed_drivers};
