@@ -58,36 +58,28 @@ GDALMDReaderSpot::GDALMDReaderSpot(const char *pszPath,
     }
 
     // if the file name ended on METADATA.DIM
+    // Linux specific
     // example: R2_CAT_091028105025131_1\METADATA.DIM
     if(m_osIMDSourceFilename.empty())
     {
-        char pszName[512];
-        size_t nPathLenTruncated = (size_t)CPLStrnlen(pszPath, 511);
-
-        for(size_t i = 0; i < nPathLenTruncated; i++)
+        if(EQUAL(CPLGetFilename(pszPath), "IMAGERY.TIF"))
         {
-            if(EQUALN(pszPath + i, "\\IMAGERY.TIF", 12))
+            pszIMDSourceFilename = CPLSPrintf( "%s\\METADATA.DIM",
+                                                           CPLGetPath(pszPath));
+
+            if (CPLCheckForFile((char*)pszIMDSourceFilename, papszSiblingFiles))
             {
-                pszName[i] = 0;
-                pszIMDSourceFilename = CPLSPrintf( "%s\\METADATA.DIM", pszName);
-
-                CPLDebug( "MDReaderSpot", "pszIMDSourceFilename: %s",
-                          pszIMDSourceFilename );
-
+                m_osIMDSourceFilename = pszIMDSourceFilename;
+            }
+            else
+            {
+                pszIMDSourceFilename = CPLSPrintf( "%s\\metadata.dim",
+                                                           CPLGetPath(pszPath));
                 if (CPLCheckForFile((char*)pszIMDSourceFilename, papszSiblingFiles))
                 {
                     m_osIMDSourceFilename = pszIMDSourceFilename;
                 }
-                else
-                {
-                    pszIMDSourceFilename = CPLSPrintf( "%s\\metadata.dim", pszName);
-                    if (CPLCheckForFile((char*)pszIMDSourceFilename, papszSiblingFiles))
-                    {
-                        m_osIMDSourceFilename = pszIMDSourceFilename;
-                    }
-                }
             }
-            pszName[i] = pszPath[i];
         }
     }
 
