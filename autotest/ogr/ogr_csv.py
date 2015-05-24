@@ -1581,6 +1581,51 @@ def ogr_csv_34():
     return 'success'
 
 ###############################################################################
+# Test comma separator
+
+def ogr_csv_35():
+    
+    gdal.FileFromMemBuffer('/vsimem/ogr_csv_35.csv',
+"""FIELD_1  "FIELD 2" FIELD_3
+VAL1   "VAL 2"   "VAL 3"  
+""")
+
+    ds = gdal.OpenEx('/vsimem/ogr_csv_35.csv', gdal.OF_VECTOR, \
+        open_options = ['MERGE_SEPARATOR=YES'])
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if f['FIELD_1'] != 'VAL1' or f['FIELD 2'] != 'VAL 2' or f['FIELD_3'] != 'VAL 3':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/ogr_csv_35.csv')
+
+    ds = ogr.GetDriverByName('CSV').CreateDataSource('/vsimem/ogr_csv_35.csv')
+    lyr = ds.CreateLayer('ogr_csv_35', options = ['SEPARATOR=SPACE'])
+    lyr.CreateField(ogr.FieldDefn('FIELD_1', ogr.OFTString))
+    lyr.CreateField(ogr.FieldDefn('FIELD 2', ogr.OFTString))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField('FIELD_1', 'VAL1')
+    f.SetField('FIELD 2', 'VAL 2')
+    lyr.CreateFeature(f)
+    ds = None
+
+    f = gdal.VSIFOpenL('/vsimem/ogr_csv_35.csv', 'rb')
+    data = gdal.VSIFReadL(1, 10000, f)
+    gdal.VSIFCloseL(f)
+    
+    if data.find('FIELD_1 "FIELD 2"') < 0 or data.find('VAL1 "VAL 2"') < 0:
+        gdaltest.post_reason('fail')
+        print(data)
+        return 'fail'
+
+    gdal.Unlink('/vsimem/ogr_csv_35.csv')
+
+    return 'success'
+
+###############################################################################
 #
 
 def ogr_csv_cleanup():
@@ -1651,6 +1696,7 @@ gdaltest_list = [
     ogr_csv_32,
     ogr_csv_33,
     ogr_csv_34,
+    ogr_csv_35,
     ogr_csv_cleanup ]
 
 if __name__ == '__main__':

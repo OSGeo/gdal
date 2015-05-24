@@ -48,7 +48,8 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 static char **CSVSplitLine( const char *pszString, char chDelimiter,
-                            int bKeepLeadingAndClosingQuotes )
+                            int bKeepLeadingAndClosingQuotes,
+                            int bMergeDelimiter )
 
 {
     char        **papszRetList = NULL;
@@ -72,6 +73,11 @@ static char **CSVSplitLine( const char *pszString, char chDelimiter,
             if( !bInString && *pszString == chDelimiter )
             {
                 pszString++;
+                if( bMergeDelimiter )
+                {
+                    while( *pszString == chDelimiter )
+                        pszString ++;
+                }
                 break;
             }
 
@@ -128,7 +134,8 @@ static char **CSVSplitLine( const char *pszString, char chDelimiter,
 
 char **OGRCSVReadParseLineL( VSILFILE * fp, char chDelimiter,
                              int bDontHonourStrings,
-                             int bKeepLeadingAndClosingQuotes )
+                             int bKeepLeadingAndClosingQuotes,
+                             int bMergeDelimiter )
 
 {
     const char  *pszLine;
@@ -155,7 +162,8 @@ char **OGRCSVReadParseLineL( VSILFILE * fp, char chDelimiter,
 /*      Parse, and return tokens.                                       */
 /* -------------------------------------------------------------------- */
     if( strchr(pszLine,'\"') == NULL )
-        return CSVSplitLine( pszLine, chDelimiter, bKeepLeadingAndClosingQuotes );
+        return CSVSplitLine( pszLine, chDelimiter, bKeepLeadingAndClosingQuotes,
+                             bMergeDelimiter );
 
 /* -------------------------------------------------------------------- */
 /*      We must now count the quotes in our working string, and as      */
@@ -195,7 +203,8 @@ char **OGRCSVReadParseLineL( VSILFILE * fp, char chDelimiter,
         nWorkLineLength += nLineLen + 1;
     }
 
-    papszReturn = CSVSplitLine( pszWorkLine, chDelimiter, bKeepLeadingAndClosingQuotes );
+    papszReturn = CSVSplitLine( pszWorkLine, chDelimiter,
+                                bKeepLeadingAndClosingQuotes, bMergeDelimiter );
 
     CPLFree( pszWorkLine );
 
@@ -250,6 +259,8 @@ OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn,
     nTotalFeatures = -1;
     bWarningBadTypeOrWidth = FALSE;
     bKeepSourceColumns = FALSE;
+    
+    bMergeDelimiter = FALSE;
 }
 
 /************************************************************************/
@@ -260,6 +271,8 @@ void OGRCSVLayer::BuildFeatureDefn( const char* pszNfdcGeomField,
                                     const char* pszGeonamesGeomFieldPrefix,
                                     char** papszOpenOptions )
 {
+
+    bMergeDelimiter = CSLFetchBoolean(papszOpenOptions, "MERGE_SEPARATOR", FALSE);
 
 /* -------------------------------------------------------------------- */
 /*      If this is not a new file, read ahead to establish if it is     */
@@ -339,9 +352,10 @@ void OGRCSVLayer::BuildFeatureDefn( const char* pszNfdcGeomField,
             /* tokenize without quotes to get the actual values */
             CSLDestroy( papszTokens );
             // papszTokens = OGRCSVReadParseLineL( fpCSV, chDelimiter, FALSE );   
-            papszTokens = CSLTokenizeString2( pszLine, szDelimiter, 
-                                              (CSLT_HONOURSTRINGS |
-                                               CSLT_ALLOWEMPTYTOKENS));
+            int nFlags = CSLT_HONOURSTRINGS;
+            if( !bMergeDelimiter )
+                nFlags |= CSLT_ALLOWEMPTYTOKENS;
+            papszTokens = CSLTokenizeString2( pszLine, szDelimiter,  nFlags );
             nFieldCount = CSLCount( papszTokens );
         }
     }
@@ -427,7 +441,7 @@ void OGRCSVLayer::BuildFeatureDefn( const char* pszNfdcGeomField,
         CPLFree(fname);
         if (fpCSVT!=NULL) {
             VSIRewindL(fpCSVT);
-            papszFieldTypes = OGRCSVReadParseLineL(fpCSVT, ',', FALSE);
+            papszFieldTypes = OGRCSVReadParseLineL(fpCSVT, ',', FALSE,FALSE);
             VSIFCloseL(fpCSVT);
         }
     }
@@ -762,7 +776,8 @@ char** OGRCSVLayer::AutodetectFieldTypes(char** papszOpenOptions, int nFieldCoun
         while( !VSIFEofL(fpMem) )
         {
             char** papszTokens = OGRCSVReadParseLineL( fpMem, chDelimiter, FALSE,
-                                                       bQuotedFieldAsString );
+                                                       bQuotedFieldAsString,
+                                                       bMergeDelimiter );
             /* Can happen if we just reach EOF while trying to read new bytes */
             if( papszTokens == NULL )
                 break;
@@ -1052,7 +1067,8 @@ char** OGRCSVLayer::GetNextLineTokens()
 
     while(TRUE)
     {
-        papszTokens = OGRCSVReadParseLineL( fpCSV, chDelimiter, bDontHonourStrings );
+        papszTokens = OGRCSVReadParseLineL( fpCSV, chDelimiter, bDontHonourStrings,
+                                            FALSE, bMergeDelimiter );
         if( papszTokens == NULL )
             return NULL;
 
@@ -1638,7 +1654,17 @@ OGRErr OGRCSVLayer::WriteHeader()
                 CPLEscapeString( poFeatureDefn->GetFieldDefn(iField)->GetNameRef(), 
                                  -1, CPLES_CSV );
 
-            if (fpCSV) VSIFPrintfL( fpCSV, "%s", pszEscaped );
+            if (fpCSV)
+            {
+                int bAddDoubleQuote = FALSE;
+                if( chDelimiter == ' ' && pszEscaped[0] != '"' && strchr(pszEscaped, ' ') != NULL )
+                    bAddDoubleQuote = TRUE;
+                if( bAddDoubleQuote )
+                    VSIFWriteL( "\"", 1, 1, fpCSV );
+                VSIFPrintfL( fpCSV, "%s", pszEscaped );
+                if( bAddDoubleQuote )
+                    VSIFWriteL( "\"", 1, 1, fpCSV );
+            }
             CPLFree( pszEscaped );
 
             if (fpCSVT)
@@ -1882,7 +1908,14 @@ OGRErr OGRCSVLayer::ICreateFeature( OGRFeature *poNewFeature )
 
         int nLen = (int)strlen(pszEscaped);
         bNonEmptyLine |= (nLen != 0);
+        int bAddDoubleQuote = FALSE;
+        if( chDelimiter == ' ' && pszEscaped[0] != '"' && strchr(pszEscaped, ' ') != NULL )
+            bAddDoubleQuote = TRUE;
+        if( bAddDoubleQuote )
+            VSIFWriteL( "\"", 1, 1, fpCSV );
         VSIFWriteL( pszEscaped, 1, nLen, fpCSV );
+        if( bAddDoubleQuote )
+            VSIFWriteL( "\"", 1, 1, fpCSV );
         CPLFree( pszEscaped );
     }
 
