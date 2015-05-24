@@ -254,6 +254,7 @@ public:
      * (GetRowCount() * GetColCount() > RAT_MAX_ELEM_FOR_CLONE)
      */
     virtual CPLXMLNode   *Serialize() const;
+    virtual void   *SerializeJSON() const;
     virtual CPLErr        XMLInit( CPLXMLNode *, const char * );
 
     virtual CPLErr        InitializeFromColorTable( const GDALColorTable * );

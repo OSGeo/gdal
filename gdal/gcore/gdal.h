@@ -989,6 +989,9 @@ void CPL_DLL CPL_STDCALL GDALRATDumpReadable( GDALRasterAttributeTableH,
 GDALRasterAttributeTableH CPL_DLL CPL_STDCALL 
     GDALRATClone( GDALRasterAttributeTableH );
 
+void CPL_DLL* CPL_STDCALL 
+    GDALRATSerializeJSON( GDALRasterAttributeTableH );
+
 int CPL_DLL CPL_STDCALL GDALRATGetRowOfValue( GDALRasterAttributeTableH , double );
 
 
