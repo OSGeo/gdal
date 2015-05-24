@@ -489,11 +489,13 @@ int OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
         bExposeFid = strstr(szPtr, " fid=\"") != NULL ||
                         strstr(szPtr, " fid='") != NULL;
         
-        const char* pszExposeGMLId = CPLGetConfigOption("GML_EXPOSE_GML_ID", NULL);
+        const char* pszExposeGMLId = CSLFetchNameValueDef(poOpenInfo->papszOpenOptions,
+            "EXPOSE_GML_ID", CPLGetConfigOption("GML_EXPOSE_GML_ID", NULL));
         if (pszExposeGMLId)
             bExposeGMLId = CSLTestBoolean(pszExposeGMLId);
 
-        const char* pszExposeFid = CPLGetConfigOption("GML_EXPOSE_FID", NULL);
+        const char* pszExposeFid = CSLFetchNameValueDef(poOpenInfo->papszOpenOptions,
+            "EXPOSE_FID", CPLGetConfigOption("GML_EXPOSE_FID", NULL));
         if (pszExposeFid)
             bExposeFid = CSLTestBoolean(pszExposeFid);
     }
@@ -529,7 +531,11 @@ int OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
 /*      We assume now that it is GML.  Instantiate a GMLReader on it.   */
 /* -------------------------------------------------------------------- */
 
-    const char* pszReadMode = CPLGetConfigOption("GML_READ_MODE", NULL);
+    const char* pszReadMode = CSLFetchNameValueDef(poOpenInfo->papszOpenOptions,
+            "READ_MODE",
+            CPLGetConfigOption("GML_READ_MODE", "AUTO"));
+    if( EQUAL(pszReadMode, "AUTO") )
+        pszReadMode = NULL;
     if (pszReadMode == NULL || EQUAL(pszReadMode, "STANDARD"))
         eReadMode = STANDARD;
     else if (EQUAL(pszReadMode, "SEQUENTIAL_LAYERS"))
@@ -541,12 +547,16 @@ int OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
         CPLDebug("GML", "Unrecognized value for GML_READ_MODE configuration option.");
     }
 
-    m_bInvertAxisOrderIfLatLong = CSLTestBoolean(
-        CPLGetConfigOption("GML_INVERT_AXIS_ORDER_IF_LAT_LONG", "YES"));
+    m_bInvertAxisOrderIfLatLong = 
+        CSLTestBoolean(CSLFetchNameValueDef(poOpenInfo->papszOpenOptions,
+            "INVERT_AXIS_ORDER_IF_LAT_LONG",
+            CPLGetConfigOption("GML_INVERT_AXIS_ORDER_IF_LAT_LONG", "YES")));
 
     const char* pszConsiderEPSGAsURN =
-        CPLGetConfigOption("GML_CONSIDER_EPSG_AS_URN", NULL);
-    if (pszConsiderEPSGAsURN != NULL)
+        CSLFetchNameValueDef(poOpenInfo->papszOpenOptions,
+            "CONSIDER_EPSG_AS_URN",
+            CPLGetConfigOption("GML_CONSIDER_EPSG_AS_URN", "AUTO"));
+    if( !EQUAL(pszConsiderEPSGAsURN, "AUTO") )
         m_bConsiderEPSGAsURN = CSLTestBoolean(pszConsiderEPSGAsURN);
     else if (bHintConsiderEPSGAsURN)
     {
@@ -672,7 +682,8 @@ int OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
 /*      Is some GML Feature Schema (.gfs) TEMPLATE required ?           */
 /* -------------------------------------------------------------------- */
     const char *pszGFSTemplateName = 
-                CPLGetConfigOption( "GML_GFS_TEMPLATE", NULL);
+        CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "GFS_TEMPLATE",
+                CPLGetConfigOption( "GML_GFS_TEMPLATE", NULL));
     if( pszGFSTemplateName != NULL )
     {
         /* attempting to load the GFS TEMPLATE */
@@ -804,7 +815,9 @@ int OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
         /* that might match a declared namespace and featuretype */
         if( !bHasFoundXSD )
         {
-            GMLRegistry oRegistry;
+            GMLRegistry oRegistry(CSLFetchNameValueDef(
+                    poOpenInfo->papszOpenOptions, "REGISTRY",
+                                    CPLGetConfigOption("GML_REGISTRY", "")));
             if( oRegistry.Parse() )
             {
                 CPLString osHeader(szHeader);
@@ -924,7 +937,9 @@ int OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
                             papszTypeNames = CSLTokenizeString2( osTypeName, ",", 0);
 
                             if (!bHasFoundXSD && CPLHTTPEnabled() &&
-                                CSLTestBoolean(CPLGetConfigOption("GML_DOWNLOAD_WFS_SCHEMA", "YES")))
+                                CSLFetchBoolean(poOpenInfo->papszOpenOptions,
+                                    "DOWNLOAD_SCHEMA",
+                                    CSLTestBoolean(CPLGetConfigOption("GML_DOWNLOAD_WFS_SCHEMA", "YES"))) )
                             {
                                 CPLHTTPResult* psResult = CPLHTTPFetch(pszEscapedURL, NULL);
                                 if (psResult)

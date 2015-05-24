@@ -61,9 +61,12 @@ class GMLRegistryNamespace
 
 class GMLRegistry
 {
+        CPLString osRegistryPath;
+
     public:
         std::vector<GMLRegistryNamespace> aoNamespaces;
 
+        GMLRegistry(const CPLString& osRegistryPath) : osRegistryPath(osRegistryPath) {}
         int Parse();
 };
 
