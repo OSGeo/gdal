@@ -108,4 +108,6 @@ typedef void GDALAsyncReaderShadow;
 
     /* return value type that is used for VSI methods which return -1 on error (and set errno) */
     typedef int VSI_RETVAL;
+    /* return value type that is used for some methods which return FALSE on error */
+    typedef int GDAL_SUCCESS;
 %}

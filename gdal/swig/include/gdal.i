@@ -292,11 +292,8 @@ $1;
 // Define renames.
 //
 //************************************************************************
-%rename (GCP) GDAL_GCP;
-%rename (GCPsToGeoTransform) GDALGCPsToGeoTransform;
 %rename (ApplyGeoTransform) GDALApplyGeoTransform;
 %rename (InvGeoTransform) GDALInvGeoTransform;
-%rename (VersionInfo) GDALVersionInfo;
 %rename (AllRegister) GDALAllRegister;
 %rename (GetCacheMax) wrapper_GDALGetCacheMax;
 %rename (SetCacheMax) wrapper_GDALSetCacheMax;
@@ -341,6 +338,8 @@ typedef struct
 //
 //************************************************************************
 // GCP - class?  serialize() method missing.
+%rename (GCP) GDAL_GCP;
+
 struct GDAL_GCP {
 %extend {
 %mutable;
@@ -435,28 +434,12 @@ void GDAL_GCP_Id_set( GDAL_GCP *gcp, const char * pszId ) {
 }
 %}
 
-
 %clear GDAL_GCP *gcp;
 
-/* return value type that is used for some methods which return FALSE on error */
-%inline %{
-typedef int GDAL_SUCCESS;
-%}
+%rename (GCPsToGeoTransform) GDALGCPsToGeoTransform;
 
-#ifdef SWIGJAVA
-%rename (GCPsToGeoTransform) wrapper_GDALGCPsToGeoTransform;
-%inline
-{
-GDAL_SUCCESS wrapper_GDALGCPsToGeoTransform( int nGCPs, GDAL_GCP const * pGCPs, 
-    	                             double argout[6], int bApproxOK = 1 )
-{
-    return GDALGCPsToGeoTransform(nGCPs, pGCPs, argout, bApproxOK);
-}
-}
-#else
 GDAL_SUCCESS GDALGCPsToGeoTransform( int nGCPs, GDAL_GCP const * pGCPs, 
-    	                             double argout[6], int bApproxOK = 1 ); 
-#endif
+    	                             double argout[6], int bApproxOK = 1 );
 
 %include "cplvirtualmem.i"
 
@@ -511,8 +494,6 @@ GDAL_SUCCESS GDALInvGeoTransform( double gt_in[6], double gt_out[6] );
 %clear (double *gt_in);
 %clear (double *gt_out);
 
-#ifdef SWIGJAVA
-%apply (const char* stringWithDefaultValue) {const char *request};
 %rename (VersionInfo) wrapper_GDALVersionInfo;
 %inline {
 const char *wrapper_GDALVersionInfo( const char *request = "VERSION_NUM" )
@@ -520,10 +501,6 @@ const char *wrapper_GDALVersionInfo( const char *request = "VERSION_NUM" )
     return GDALVersionInfo(request ? request : "VERSION_NUM");
 }
 }
-%clear (const char* request);
-#else
-const char *GDALVersionInfo( const char *request = "VERSION_NUM" );
-#endif
 
 void GDALAllRegister();
 
