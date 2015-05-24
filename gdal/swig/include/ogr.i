@@ -2048,8 +2048,11 @@ public:
 /*      Geometry factory methods.                                       */
 /* -------------------------------------------------------------------- */
 
+#ifndef SWIGJAVA
+
 #if defined(SWIGPYTHON) || defined(SWIGRUBY)
 %feature( "kwargs" ) CreateGeometryFromWkb;
+#endif
 %newobject CreateGeometryFromWkb;
 #ifndef SWIGCSHARP
 %apply (int nLen, char *pBuf ) { (int len, char *bin_string)};
@@ -2072,14 +2075,14 @@ public:
   }
  
 %}
-#endif
+
 #ifndef SWIGCSHARP
 %clear (int len, char *bin_string);
 #else
 %clear (char *bin_string);
 #endif
 
-#ifdef SWIGJAVA
+#else /* #ifndef SWIGJAVA */
 %newobject CreateGeometryFromWkb;
 %inline {
 OGRGeometryShadow* CreateGeometryFromWkb(int nLen, char *pBuf, 
@@ -2093,7 +2096,7 @@ OGRGeometryShadow* CreateGeometryFromWkb(int nLen, char *pBuf,
     return (OGRGeometryShadow*) geom;
   }
 }
-#endif
+#endif /* #ifndef SWIGJAVA */
 
 #if defined(SWIGPYTHON) || defined(SWIGRUBY)
 %feature( "kwargs" ) CreateGeometryFromWkt;
