@@ -436,10 +436,15 @@ void GDAL_GCP_Id_set( GDAL_GCP *gcp, const char * pszId ) {
 
 %clear GDAL_GCP *gcp;
 
-%rename (GCPsToGeoTransform) GDALGCPsToGeoTransform;
+%rename (GCPsToGeoTransform) wrapper_GDALGCPsToGeoTransform;
 
-GDAL_SUCCESS GDALGCPsToGeoTransform( int nGCPs, GDAL_GCP const * pGCPs, 
-    	                             double argout[6], int bApproxOK = 1 );
+%inline {
+GDAL_SUCCESS wrapper_GDALGCPsToGeoTransform( int nGCPs, GDAL_GCP const * pGCPs, 
+    	                             double argout[6], int bApproxOK = 1 )
+{
+    return GDALGCPsToGeoTransform( nGCPs, pGCPs, argout, bApproxOK );
+}
+}
 
 %include "cplvirtualmem.i"
 
