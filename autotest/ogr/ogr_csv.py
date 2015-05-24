@@ -1613,7 +1613,7 @@ VAL1   "VAL 2"   "VAL 3"
     ds = None
 
     f = gdal.VSIFOpenL('/vsimem/ogr_csv_35.csv', 'rb')
-    data = gdal.VSIFReadL(1, 10000, f)
+    data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
     gdal.VSIFCloseL(f)
     
     if data.find('FIELD_1 "FIELD 2"') < 0 or data.find('VAL1 "VAL 2"') < 0:
