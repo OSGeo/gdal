@@ -46,7 +46,8 @@ class OGRCSVDataSource;
 
 char **OGRCSVReadParseLineL( VSILFILE * fp, char chDelimiter,
                              int bDontHonourStrings = FALSE,
-                             int bKeepLeadingAndClosingQuotes = FALSE);
+                             int bKeepLeadingAndClosingQuotes = FALSE,
+                             int bMergeDelimiter = FALSE);
 
 /************************************************************************/
 /*                             OGRCSVLayer                              */
@@ -96,6 +97,8 @@ class OGRCSVLayer : public OGRLayer
     
     int                 bWarningBadTypeOrWidth;
     int                 bKeepSourceColumns;
+    
+    int                 bMergeDelimiter;
     
     char              **GetNextLineTokens();
 

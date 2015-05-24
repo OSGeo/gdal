@@ -252,6 +252,7 @@ void RegisterOGRCSV()
 "    <Value>COMMA</Value>"
 "    <Value>SEMICOLON</Value>"
 "    <Value>TAB</Value>"
+"    <Value>SPACE</Value>"
 "  </Option>"
 #ifdef WIN32
 "  <Option name='LINEFORMAT' type='string-select' description='end-of-line sequence' default='CRLF'>"
@@ -273,6 +274,16 @@ void RegisterOGRCSV()
 
         poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
 "<OpenOptionList>"
+#if 0
+"  <Option name='SEPARATOR' type='string-select' description='field separator' default='AUTO'>"
+"    <Value>AUTO</Value>"
+"    <Value>COMMA</Value>"
+"    <Value>SEMICOLON</Value>"
+"    <Value>TAB</Value>"
+"    <Value>SPACE</Value>"
+"  </Option>"
+#endif
+"  <Option name='MERGE_SEPARATOR' type='boolean' description='whether to merge consecutive separators' default='NO'/>"
 "  <Option name='AUTODETECT_TYPE' type='boolean' description='whether to guess data type from first bytes of the file' default='NO'/>"
 "  <Option name='KEEP_SOURCE_COLUMNS' type='boolean' description='whether to add original columns whose guessed data type is not String. Only used if AUTODETECT_TYPE=YES' default='NO'/>"
 "  <Option name='AUTODETECT_WIDTH' type='string-select' description='whether to auto-detect width/precision. Only used if AUTODETECT_TYPE=YES' default='NO'>"
