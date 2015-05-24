@@ -39,6 +39,9 @@ GDALMDReaderPleiades::GDALMDReaderPleiades(const char *pszPath,
         char **papszSiblingFiles) : GDALMDReaderBase(pszPath, papszSiblingFiles)
 {
     const char* pszBaseName = CPLGetBasename(pszPath);
+    size_t nBaseNameLen = strlen(pszBaseName);
+    if( nBaseNameLen < 4 || nBaseNameLen > 511 )
+        return;
 
     const char* pszDirName = CPLGetDirname(pszPath);
 
@@ -50,7 +53,7 @@ GDALMDReaderPleiades::GDALMDReaderPleiades(const char *pszPath,
     // find last underline
     char sBaseName[512];
     int nLastUnderline = 0;
-    for(size_t i = 4; i < CPLStrnlen(pszBaseName, 512); i++)
+    for(size_t i = 4; i < nBaseNameLen; i++)
     {
         sBaseName[i - 4] = pszBaseName[i];
         if(pszBaseName[i] == '_')
