@@ -186,7 +186,7 @@ lists information about a raster dataset
 \section gdalinfo_synopsis SYNOPSIS
 
 \verbatim
-gdalinfo [--help-general] [-mm] [-stats] [-hist] [-nogcp] [-nomd]
+gdalinfo [--help-general] [-json] [-mm] [-stats] [-hist] [-nogcp] [-nomd]
          [-norat] [-noct] [-nofl] [-checksum] [-proj4]
          [-listmdd] [-mdd domain|`all`]*
          [-sd subdataset] [-oo NAME=VALUE]* datasetname
@@ -197,6 +197,7 @@ gdalinfo [--help-general] [-mm] [-stats] [-hist] [-nogcp] [-nomd]
 The gdalinfo program lists various information about a GDAL supported
 raster dataset. 
 <dl>
+<dt> <b>-json</b></dt><dd> Display the output in json format.</dd>
 <dt> <b>-mm</b></dt><dd> Force computation of the actual min/max values for each
 band in the dataset.</dd>
 <dt> <b>-stats</b></dt><dd> Read and display image statistics. Force computation if no statistics are stored in an image.</dd>

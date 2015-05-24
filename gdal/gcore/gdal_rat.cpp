@@ -30,6 +30,8 @@
 
 #include "gdal_priv.h"
 #include "gdal_rat.h"
+#include "json.h"
+#include "ogrgeojsonwriter.h"
 
 CPL_CVSID("$Id$");
 
@@ -589,6 +591,99 @@ CPLXMLNode *GDALRasterAttributeTable::Serialize() const
     }
 
     return psTree;
+}
+
+/************************************************************************/
+/*                             SerializeJSON()                              */
+/************************************************************************/
+
+void *GDALRasterAttributeTable::SerializeJSON() const
+
+{
+    json_object *poRAT = json_object_new_object();
+
+    if( ( GetColumnCount() == 0 ) && ( GetRowCount() == 0 ) ) 
+        return poRAT;
+
+
+/* -------------------------------------------------------------------- */
+/*      Add attributes with regular binning info if appropriate.        */
+/* -------------------------------------------------------------------- */
+    double dfRow0Min, dfBinSize;
+    json_object *poRow0Min, *poBinSize;
+
+    if( GetLinearBinning(&dfRow0Min, &dfBinSize) )
+    {
+        poRow0Min = json_object_new_double_with_precision( dfRow0Min, 16 );
+        json_object_object_add( poRAT, "row0Min", poRow0Min );
+
+        poBinSize = json_object_new_double_with_precision( dfBinSize, 16 );
+        json_object_object_add( poRAT, "binSize", poBinSize );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Define each column.                                             */
+/* -------------------------------------------------------------------- */
+    int iCol;
+    int iColCount = GetColumnCount();
+    json_object *poFieldDefnArray = json_object_new_array();
+    json_object *poFieldDefn, *poColumnIndex, *poName, *poType, *poUsage;
+
+    for( iCol = 0; iCol < iColCount; iCol++ )
+    {
+        poFieldDefn = json_object_new_object();
+
+        poColumnIndex = json_object_new_int( iCol );
+        json_object_object_add( poFieldDefn, "index", poColumnIndex );
+
+        poName = json_object_new_string( GetNameOfCol(iCol) );
+        json_object_object_add( poFieldDefn, "name", poName );
+
+        poType = json_object_new_int( (int) GetTypeOfCol(iCol) );
+        json_object_object_add( poFieldDefn, "type", poType );
+
+        poUsage = json_object_new_int( (int) GetUsageOfCol(iCol) );
+        json_object_object_add( poFieldDefn, "usage", poUsage );
+
+        json_object_array_add( poFieldDefnArray, poFieldDefn );
+    }
+
+    json_object_object_add( poRAT, "fieldDefn", poFieldDefnArray );
+
+/* -------------------------------------------------------------------- */
+/*      Write out each row.                                             */
+/* -------------------------------------------------------------------- */
+    int iRow;
+    int iRowCount = GetRowCount();
+    json_object *poRowArray = json_object_new_array();
+    json_object *poRow, *poRowIndex, *poFArray, *poF;
+
+    for( iRow = 0; iRow < iRowCount; iRow++ )
+    {
+        poRow = json_object_new_object();
+
+        poRowIndex = json_object_new_int(iRow);
+        json_object_object_add( poRow, "index", poRowIndex );
+
+        poFArray = json_object_new_array();
+
+        for( iCol = 0; iCol < iColCount; iCol++ )
+        {
+            if( GetTypeOfCol(iCol) == GFT_Integer )
+                poF = json_object_new_int( GetValueAsInt(iRow, iCol) );
+            else if( GetTypeOfCol(iCol) == GFT_Real )
+                poF = json_object_new_double_with_precision( GetValueAsDouble(iRow, iCol), 16 );
+            else
+                poF = json_object_new_string( GetValueAsString(iRow, iCol) );
+
+            json_object_array_add( poFArray, poF );
+        }
+        json_object_object_add( poRow, "f", poFArray );
+        json_object_array_add( poRowArray, poRow );
+    }
+    json_object_object_add( poRAT, "row", poRowArray );
+
+    return poRAT;
 }
 
 /************************************************************************/
@@ -1817,4 +1912,22 @@ GDALRATClone( GDALRasterAttributeTableH hRAT )
     VALIDATE_POINTER1( hRAT, "GDALRATClone", NULL );
 
     return ((GDALRasterAttributeTable *) hRAT)->Clone();
+}
+
+/************************************************************************/
+/*                            GDALRATSerializeJSON()                    */
+/************************************************************************/
+
+/**
+ * \brief Serialize Raster Attribute Table in Json format
+ *
+ * This function is the same as the C++ method GDALRasterAttributeTable::SerializeJSON()
+ */
+void* CPL_STDCALL 
+GDALRATSerializeJSON( GDALRasterAttributeTableH hRAT )
+
+{
+    VALIDATE_POINTER1( hRAT, "GDALRATSerializeJSON", NULL );
+
+    return ((GDALRasterAttributeTable *) hRAT)->SerializeJSON();
 }
