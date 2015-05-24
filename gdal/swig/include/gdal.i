@@ -44,7 +44,7 @@
 %include swig_csharp_extensions.i
 #endif
 
-#ifndef SWIGJAVA
+#if !defined(SWIGJAVA) && !defined(SWIGPERLx)
 %feature ("compactdefaultargs");
 #endif
 
@@ -226,8 +226,6 @@ typedef enum {
 %include "gdal_perl.i"
 #elif defined(SWIGJAVA)
 %include "gdal_java.i"
-#else
-%include "gdal_typemaps.i"
 #endif
 
 
@@ -292,19 +290,6 @@ $1;
 // Define renames.
 //
 //************************************************************************
-%rename (ApplyGeoTransform) GDALApplyGeoTransform;
-%rename (InvGeoTransform) GDALInvGeoTransform;
-%rename (AllRegister) GDALAllRegister;
-%rename (GetCacheMax) wrapper_GDALGetCacheMax;
-%rename (SetCacheMax) wrapper_GDALSetCacheMax;
-%rename (GetCacheUsed) wrapper_GDALGetCacheUsed;
-%rename (GetDataTypeSize) GDALGetDataTypeSize;
-%rename (DataTypeIsComplex) GDALDataTypeIsComplex;
-%rename (GetDataTypeName) GDALGetDataTypeName;
-%rename (GetDataTypeByName) GDALGetDataTypeByName;
-%rename (GetColorInterpretationName) GDALGetColorInterpretationName;
-%rename (GetPaletteInterpretationName) GDALGetPaletteInterpretationName;
-%rename (DecToDMS) GDALDecToDMS;
 %rename (PackedDMSToDec) GDALPackedDMSToDec;
 %rename (DecToPackedDMS) GDALDecToPackedDMS;
 %rename (ParseXMLString) CPLParseXMLString;
@@ -483,6 +468,8 @@ GDAL_SUCCESS wrapper_GDALGCPsToGeoTransform( int nGCPs, GDAL_GCP const * pGCPs,
 //************************************************************************
 %include "Operations.i"
 
+%rename (ApplyGeoTransform) GDALApplyGeoTransform;
+
 %apply (double argin[ANY]) {(double padfGeoTransform[6])};
 %apply (double *OUTPUT) {(double *pdfGeoX)};
 %apply (double *OUTPUT) {(double *pdfGeoY)};
@@ -492,6 +479,8 @@ void GDALApplyGeoTransform( double padfGeoTransform[6],
 %clear (double *padfGeoTransform);
 %clear (double *pdfGeoX);
 %clear (double *pdfGeoY);
+
+%rename (InvGeoTransform) GDALInvGeoTransform;
 
 %apply (double argin[ANY]) {double gt_in[6]};
 %apply (double argout[ANY]) {double gt_out[6]};
@@ -507,9 +496,13 @@ const char *wrapper_GDALVersionInfo( const char *request = "VERSION_NUM" )
 }
 }
 
+%rename (AllRegister) GDALAllRegister;
+
 void GDALAllRegister();
 
 void GDALDestroyDriverManager();
+
+%rename (GetCacheMax) wrapper_GDALGetCacheMax;
 
 %inline {
 GIntBig wrapper_GDALGetCacheMax()
@@ -518,12 +511,16 @@ GIntBig wrapper_GDALGetCacheMax()
 }
 }
 
+%rename (GetCacheUsed) wrapper_GDALGetCacheUsed;
+
 %inline {
 GIntBig wrapper_GDALGetCacheUsed()
 {
     return GDALGetCacheUsed64();
 }
 }
+
+%rename (SetCacheMax) wrapper_GDALSetCacheMax;
 
 %inline {
 void wrapper_GDALSetCacheMax(GIntBig nBytes)
@@ -532,20 +529,30 @@ void wrapper_GDALSetCacheMax(GIntBig nBytes)
 }
 }
 
+%rename (GetDataTypeSize) GDALGetDataTypeSize;
+
 int GDALGetDataTypeSize( GDALDataType eDataType );
+
+%rename (DataTypeIsComplex) GDALDataTypeIsComplex;
 
 int GDALDataTypeIsComplex( GDALDataType eDataType );
 
+%rename (GetDataTypeName) GDALGetDataTypeName;
+
 const char *GDALGetDataTypeName( GDALDataType eDataType );
+
+%rename (GetDataTypeByName) GDALGetDataTypeByName;
 
 GDALDataType GDALGetDataTypeByName( const char * pszDataTypeName );
 
+%rename (GetColorInterpretationName) GDALGetColorInterpretationName;
+
 const char *GDALGetColorInterpretationName( GDALColorInterp eColorInterp );
+
+%rename (GetPaletteInterpretationName) GDALGetPaletteInterpretationName;
 
 const char *GDALGetPaletteInterpretationName( GDALPaletteInterp ePaletteInterp );
 
-#ifdef SWIGJAVA
-%apply (const char* stringWithDefaultValue) {const char *request};
 %rename (DecToDMS) wrapper_GDALDecToDMS;
 %inline {
 const char *wrapper_GDALDecToDMS( double dfAngle, const char * pszAxis,
@@ -554,10 +561,6 @@ const char *wrapper_GDALDecToDMS( double dfAngle, const char * pszAxis,
     return GDALDecToDMS(dfAngle, pszAxis, nPrecision);
 }
 }
-%clear (const char* request);
-#else
-const char *GDALDecToDMS( double, const char *, int = 2 );
-#endif
 
 double GDALPackedDMSToDec( double dfPacked );
 

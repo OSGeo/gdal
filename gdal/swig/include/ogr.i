@@ -45,7 +45,7 @@
 %include swig_csharp_extensions.i
 #endif
 
-#ifndef SWIGJAVA
+#if !defined(SWIGJAVA) && !defined(SWIGPERLx)
 %feature("compactdefaultargs");
 #endif
 
@@ -377,8 +377,6 @@ typedef int OGRErr;
 %include ogr_perl.i
 #elif defined(SWIGJAVA)
 %include ogr_java.i
-#else
-%include gdal_typemaps.i
 #endif
 
 /*

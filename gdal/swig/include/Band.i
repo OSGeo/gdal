@@ -300,7 +300,7 @@ public:
 
   /* Interface method added for GDAL 1.7.0 */
 %apply (double *OUTPUT){double *min, double *max, double *mean, double *stddev};
-  CPLErr ComputeStatistics( bool approx_ok, double *min = NULL, double *max = NULL, double *mean = NULL, double *stddev = NULL,
+  CPLErr ComputeStatistics( bool approx_ok, double *min, double *max, double *mean, double *stddev,
                             GDALProgressFunc callback = NULL, void* callback_data=NULL){
     return GDALComputeRasterStatistics( self, approx_ok, min, max, mean, stddev, callback, callback_data );
   }

@@ -680,13 +680,14 @@ CreateArrayFromStringArray( char **first ) {
   /* %typemap(argout) (int *nGCPs, GDAL_GCP const **pGCPs ) */
   AV *dict = (AV*)sv_2mortal((SV*)newAV());
   for( int i = 0; i < *$1; i++ ) {
-    GDAL_GCP *o = new_GDAL_GCP( (*$2)[i].dfGCPX,
-                                (*$2)[i].dfGCPY,
-                                (*$2)[i].dfGCPZ,
-                                (*$2)[i].dfGCPPixel,
-                                (*$2)[i].dfGCPLine,
-                                (*$2)[i].pszInfo,
-                                (*$2)[i].pszId );
+    GDAL_GCP *o = (GDAL_GCP*) CPLMalloc( sizeof( GDAL_GCP ) );
+    o->dfGCPX = (*$2)[i].dfGCPX;
+    o->dfGCPY = (*$2)[i].dfGCPY;
+    o->dfGCPZ = (*$2)[i].dfGCPZ;
+    o->dfGCPPixel = (*$2)[i].dfGCPPixel;
+    o->dfGCPLine = (*$2)[i].dfGCPLine;
+    o->pszInfo =  CPLStrdup( ((*$2)[i].pszInfo == 0) ? "" : (*$2)[i].pszInfo );
+    o->pszId = CPLStrdup( ((*$2)[i].pszId==0)? "" : (*$2)[i].pszId );
     SV *sv = newSV(0);
     SWIG_MakePtr( sv, (void*)o, $*2_descriptor, SWIG_SHADOW|SWIG_OWNER);
     av_store(dict, i, sv);
@@ -1213,12 +1214,37 @@ IF_UNDEF_NULL(const char *, target_key)
     CPLFree($4);
 }
 
-%typemap(arginit, noblock=1) ( void* callback_data = NULL)
+/*
+Typemaps for callbacks.
+
+Here we rely on %feature ("compactdefaultargs"); 
+
+If it is not on, the swig method for finding a matching function requires
+something like this additional wrapping to work:
+
+%inline %{
+  typedef int (*GDALProgressFunc)(double, const char *, void *);
+  GDALProgressFunc ConvertToGDALProgressFunc(SV *sub) {
+    return (GDALProgressFunc)sub;
+  }
+  void* ConvertToCallbackDataPtr(SV *data) {
+    return (void*)data;
+  }
+%}
+
+ */
+
+%typemap(arginit, noblock=1) (GDALProgressFunc callback = NULL)
 {
-    /* %typemap(arginit, noblock=1) ( void* callback_data = NULL) */
+    /* %typemap(arginit, noblock=1) (GDALProgressFunc callback = NULL) */
     SavedEnv saved_env;
     saved_env.fct = NULL;
     saved_env.data = &PL_sv_undef;
+}
+
+%typemap(arginit, noblock=1) (void* callback_data = NULL)
+{
+    /* %typemap(arginit, noblock=1) (void* callback_data = NULL) */
     $1 = (void *)(&saved_env);
 }
 

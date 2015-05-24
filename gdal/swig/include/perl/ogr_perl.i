@@ -78,33 +78,39 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 
 }
 
-%extend OGRGeometryShadow {
-
-    void Move(double dx, double dy, double dz = 0) {
-        int n = OGR_G_GetGeometryCount(self);
-        if (n > 0) {
-            int i;
-            for (i = 0; i < n; i++) {
-                OGRGeometryShadow *g = (OGRGeometryShadow*)OGR_G_GetGeometryRef(self, i);
-                OGRGeometryShadow_Move(g, dx, dy, dz);
-            }
-        } else {
-            int i;
-            int d = OGR_G_GetCoordinateDimension(self);
-            for (i = 0; i < OGR_G_GetPointCount(self); i++) {
-                if (d == 0) {
+%{
+void wrapped_OGRGeometryShadow_Move(OGRGeometryShadow *self, double dx, double dy, double dz) {
+    int n = OGR_G_GetGeometryCount(self);
+    if (n > 0) {
+        int i;
+        for (i = 0; i < n; i++) {
+            OGRGeometryShadow *g = (OGRGeometryShadow*)OGR_G_GetGeometryRef(self, i);
+            wrapped_OGRGeometryShadow_Move(g, dx, dy, dz);
+        }
+    } else {
+        int i;
+        int d = OGR_G_GetCoordinateDimension(self);
+        for (i = 0; i < OGR_G_GetPointCount(self); i++) {
+            if (d == 0) {
+            } else {
+                double x = OGR_G_GetX(self, i);
+                double y = OGR_G_GetY(self, i);
+                if (d == 2) {
+                    OGR_G_SetPoint_2D(self, i, x+dx, y+dy);
                 } else {
-                    double x = OGR_G_GetX(self, i);
-                    double y = OGR_G_GetY(self, i);
-                    if (d == 2) {
-                        OGR_G_SetPoint_2D(self, i, x+dx, y+dy);
-                    } else {
-                        double z = OGR_G_GetZ(self, i);
-                        OGR_G_SetPoint(self, i, x+dx, y+dy, z+dz);
-                    }
+                    double z = OGR_G_GetZ(self, i);
+                    OGR_G_SetPoint(self, i, x+dx, y+dy, z+dz);
                 }
             }
         }
+    }
+}
+%}
+
+%extend OGRGeometryShadow {
+
+    void Move(double dx, double dy, double dz = 0) {
+        wrapped_OGRGeometryShadow_Move(self, dx, dy, dz);
     }
 
 }
