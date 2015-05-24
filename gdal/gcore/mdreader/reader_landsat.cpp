@@ -40,11 +40,14 @@ GDALMDReaderLandsat::GDALMDReaderLandsat(const char *pszPath,
 {
     const char* pszBaseName = CPLGetBasename(pszPath);
     const char* pszDirName = CPLGetDirname(pszPath);
+    size_t nBaseNameLen = strlen(pszBaseName);
+    if( nBaseNameLen > 511 )
+        return;
 
     // split file name by _B or _b
     char szMetadataName[512] = {0};
     size_t i;
-    for(i = 0; i < CPLStrnlen(pszBaseName, 511); i++)
+    for(i = 0; i < nBaseNameLen; i++)
     {
         szMetadataName[i] = pszBaseName[i];
         if(EQUALN(pszBaseName + i, "_B", 2) || EQUALN(pszBaseName + i, "_b", 2))

@@ -62,8 +62,9 @@ GDALMDReaderSpot::GDALMDReaderSpot(const char *pszPath,
     if(m_osIMDSourceFilename.empty())
     {
         char pszName[512];
+        size_t nPathLenTruncated = (size_t)CPLStrnlen(pszPath, 511);
 
-        for(size_t i = 0; i < CPLStrnlen(pszPath, 511); i++)
+        for(size_t i = 0; i < nPathLenTruncated; i++)
         {
             if(EQUALN(pszPath + i, "\\IMAGERY.TIF", 12))
             {

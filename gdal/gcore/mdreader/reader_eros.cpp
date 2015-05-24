@@ -41,7 +41,9 @@ GDALMDReaderEROS::GDALMDReaderEROS(const char *pszPath,
     char szMetadataName[512] = {0};
     const char* pszPassFileName;
     size_t i;
-    for(i = 0; i < CPLStrnlen(osBaseName, 511); i++)
+    if( osBaseName.size() > 511 )
+        return;
+    for(i = 0; i < osBaseName.size(); i++)
     {
         if(EQUALN(osBaseName + i, ".", 1))
         {

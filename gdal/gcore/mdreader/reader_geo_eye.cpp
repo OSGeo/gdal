@@ -41,13 +41,16 @@ GDALMDReaderGeoEye::GDALMDReaderGeoEye(const char *pszPath,
     
     const char* pszBaseName = CPLGetBasename(pszPath);
     const char* pszDirName = CPLGetDirname(pszPath);
+    size_t nBaseNameLen = strlen(pszBaseName);
+    if( nBaseNameLen > 511 )
+        return;
 
     // get _metadata.txt file
     
     // split file name by _rgb_ or _pan_
     char szMetadataName[512] = {0};
     size_t i;
-    for(i = 0; i < CPLStrnlen(pszBaseName, 511); i++)
+    for(i = 0; i < nBaseNameLen; i++)
     {
         szMetadataName[i] = pszBaseName[i];
         if(EQUALN(pszBaseName + i, "_rgb_", 5) || EQUALN(pszBaseName + i, "_pan_", 5))
