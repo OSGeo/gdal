@@ -222,6 +222,10 @@ string. This is the historic behaviour. However this will prevent such fields to
 be declared as not-nullable if the application schema declared them as mandatory.
 So this option can be set to NO to have both empty strings being report as such,
 and mandatory fields being reported as not nullable.</li>
+<li> <b>INVERT_AXIS_ORDER_IF_LAT_LONG=YES/NO</b>: (GDAL &gt;=2.0) Whether to
+present SRS and coordinate ordering in traditional GIS order. Defaults to YES.</li>
+<li> <b>CONSIDER_EPSG_AS_URN=YES/NO/AUTO</b>: (GDAL &gt;=2.0) Whether to
+consider srsName like EPSG:XXXX as respecting EPSG axis order. Defaults to AUTO.</li>
 </ul>
 
 <h2>Examples</h2>

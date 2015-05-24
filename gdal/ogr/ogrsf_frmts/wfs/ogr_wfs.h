@@ -326,6 +326,9 @@ class OGRWFSDataSource : public OGRDataSource
     int                 bKeepLayerNamePrefix;
     
     int                 bEmptyAsNull;
+    
+    int                 bInvertAxisOrderIfLatLong;
+    CPLString           osConsiderEPSGAsURN;
 
     CPLHTTPResult*      SendGetCapabilities(const char* pszBaseURL,
                                             CPLString& osTypeName);
@@ -388,6 +391,8 @@ class OGRWFSDataSource : public OGRDataSource
     const CPLString&            GetBaseURL() { return osBaseURL; }
     
     int                         IsEmptyAsNull() const { return bEmptyAsNull; }
+    int                         InvertAxisOrderIfLatLong() const { return bInvertAxisOrderIfLatLong; }
+    const CPLString&            GetConsiderEPSGAsURN() const { return osConsiderEPSGAsURN; }
 
     virtual char**              GetMetadataDomainList();
     virtual char**              GetMetadata( const char * pszDomain = "" );
