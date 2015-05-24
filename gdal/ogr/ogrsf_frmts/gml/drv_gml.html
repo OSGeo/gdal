@@ -325,7 +325,7 @@ the layers must be read in the order they appear in the file.<p>
 If no .xsd and .gfs files are found, the parser will detect the layout of layers when
 building the .gfs file. If the layers are found to be sequential, a <i>&lt;SequentialLayers&gt;true&lt;/SequentialLayers&gt;</i>
 element will be written in the .gfs file, so that the GML_READ_MODE will be automatically
-initialized to MONOBLOCK_LAYERS if not explicitly set by the user.<p>
+initialized to SEQUENTIAL_LAYERS if not explicitly set by the user.<p>
 
 Starting with OGR 1.9.0, the GML_READ_MODE configuration option can be set to INTERLEAVED_LAYERS to be able
 to read a GML file whose features from different layers are interleaved. In the case, the semantics of the
@@ -357,7 +357,7 @@ belongs to another layer. In that case, the file should be read with code simila
 
 <ul>
 <li> <b>XSD=filename</b>: (GDAL &gt;=2.0) to specify an explicit filename for the XSD
-application schema to use</li>.
+application schema to use.</li>
 <li> <b>FORCE_SRS_DETECTION=YES/NO</b>: (GDAL &gt;=2.0) Force a full scan to detect the SRS of layers.
 This option may be needed in the case where the .gml file is accompanied with
 a .xsd. Normally in that situation, OGR would not detect the SRS, because this
@@ -372,6 +372,20 @@ and mandatory fields being reported as not nullable.</li>
 Lattributes should be reported as OGR fields. Note that this option has only an
 effect the first time a GML file is opened (before the .gfs file is created),
 and if it has no valid associated .xsd. Defaults to NO.</li>
+<li> <b>INVERT_AXIS_ORDER_IF_LAT_LONG=YES/NO</b>: (GDAL &gt;=2.0) Whether to
+present SRS and coordinate ordering in traditional GIS order. Defaults to YES.</li>
+<li> <b>CONSIDER_EPSG_AS_URN=YES/NO/AUTO</b>: (GDAL &gt;=2.0) Whether to
+consider srsName like EPSG:XXXX as respecting EPSG axis order. Defaults to AUTO.</li>
+<li> <b>READ_MODE=AUTO/STANDARD/SEQUENTIAL_LAYERS/INTERLEAVED_LAYERS</b>: (GDAL &gt;=2.0)
+Read mode. Defaults to AUTO.</li>
+<li> <b>EXPOSE_GML_ID=YES/NO/AUTO</b>: (GDAL &gt;=2.0)
+Whether to make feature gml:id as a gml_id attribute. Defaults to AUTO.</li>
+<li> <b>EXPOSE_FID=YES/NO/AUTO</b>: (GDAL &gt;=2.0)
+Whether to make feature fid as a fid attribute. Defaults to AUTO.</li>
+<li> <b>DOWNLOAD_SCHEMA=YES/NO</b>: (GDAL &gt;=2.0)
+Whether to download the remote application schema if needed (only for WFS currently). Defaults to YES.</li>
+<li> <b>REGISTRY=filename</b>: (GDAL &gt;=2.0)
+Filename of the registry with application schemas. Defaults to {GDAL_DATA}/gml_registry.xml.</li>
 </ul>
 
 <h2>Creation Issues</h2>
