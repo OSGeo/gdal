@@ -68,9 +68,13 @@ typedef enum
     CE_Fatal = 4
 } CPLErr;
 #else
+typedef int CPLErr;
 /* why not for CSHARP? */
 typedef void VSILFILE;
+/* CSHARP has a specific typemap for OGRErr */
+typedef int OGRErr;
 #endif
+
 
 /*
   Typedefs for new types for both the bindings and swig.
@@ -78,6 +82,7 @@ typedef void VSILFILE;
 
 /*
   First some things needed by the bindings.
+  These definitions are shared by all bindings.
 */
 %{
 #include <iostream>
@@ -85,6 +90,7 @@ using namespace std;
 
 #include "cpl_port.h"
 #include "cpl_string.h"
+#include "cpl_conv.h"
 #include "cpl_multiproc.h"
 #include "cpl_http.h"
 
@@ -92,6 +98,11 @@ using namespace std;
 #include "gdal_priv.h"
 #include "gdal_alg.h"
 #include "gdalwarper.h"
+
+#include "ogr_api.h"
+#include "ogr_p.h"
+#include "ogr_core.h"
+#include "ogr_srs_api.h"
 
 typedef void GDALMajorObjectShadow;
 typedef void GDALDriverShadow;

@@ -50,7 +50,6 @@
   GDALRegister_NUMPY();
 %}
 
-typedef int CPLErr;
 typedef int GDALRIOResampleAlg;
 
 %include "python_strings.i"

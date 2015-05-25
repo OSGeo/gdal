@@ -52,30 +52,6 @@
 // We register all the drivers upon module initialization
 //
 
-%{
-#include <iostream>
-using namespace std;
-
-#include "cpl_port.h"
-#include "cpl_string.h"
-#include "cpl_multiproc.h"
-#include "cpl_http.h"
-
-#include "gdal.h"
-#include "gdal_priv.h"
-#include "gdal_alg.h"
-#include "gdalwarper.h"
-
-typedef void GDALMajorObjectShadow;
-typedef void GDALDriverShadow;
-typedef void GDALDatasetShadow;
-typedef void GDALRasterBandShadow;
-typedef void GDALColorTableShadow;
-typedef void GDALRasterAttributeTableShadow;
-typedef void GDALTransformerInfoShadow;
-typedef void GDALAsyncReaderShadow;
-%}
-
 #if defined(SWIGPYTHON) || defined(SWIGJAVA)
 %{
 #ifdef DEBUG 
@@ -91,10 +67,6 @@ typedef struct OGRStyleTableHS OGRStyleTableShadow;
 %}
 #endif /* #if defined(SWIGPYTHON) || defined(SWIGJAVA) */
 
-#if defined(SWIGCSHARP)
-typedef int OGRErr;
-#endif
-
 //************************************************************************
 //
 // Enums.
@@ -107,7 +79,6 @@ typedef int GDALPaletteInterp;
 typedef int GDALColorInterp;
 typedef int GDALAccess;
 typedef int GDALDataType;
-typedef int CPLErr;
 typedef int GDALResampleAlg;
 typedef int GDALAsyncStatusType;
 typedef int GDALRWFlag;
