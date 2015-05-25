@@ -80,7 +80,7 @@ install:
   - cd swig/python
   - make generate
   - make
-  - sudo make install
+  - sudo python setup.py install
   - cd ../..
   - sudo rm -f /usr/lib/libgdal.so*
   - sudo make install
