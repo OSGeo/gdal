@@ -45,10 +45,6 @@
 %include swig_csharp_extensions.i
 #endif
 
-#if !defined(SWIGJAVA)
-%feature("compactdefaultargs");
-#endif
-
 %feature("autodoc");
 
 /************************************************************************/
@@ -2486,7 +2482,7 @@ public:
 #ifdef SWIGJAVA
   void GetPoint(int iPoint, double argout[3]) {
 #else
-  void GetPoint(int iPoint = 0, double argout[3] = NULL) {
+    void GetPoint(double argout[3], int iPoint = 0) {
 #endif
     OGR_G_GetPoint( self, iPoint, argout+0, argout+1, argout+2 );
   }
@@ -2494,7 +2490,7 @@ public:
 #ifdef SWIGJAVA
   void GetPoint_2D(int iPoint, double argout[2]) {
 #else
-  void GetPoint_2D(int iPoint = 0, double argout[2] = NULL) {
+    void GetPoint_2D(double argout[2], int iPoint = 0) {
 #endif
     OGR_G_GetPoint( self, iPoint, argout+0, argout+1, NULL );
   }

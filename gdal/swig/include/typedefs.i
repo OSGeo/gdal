@@ -122,3 +122,7 @@ typedef void GDALAsyncReaderShadow;
     /* return value type that is used for some methods which return FALSE on error */
     typedef int GDAL_SUCCESS;
 %}
+
+#if !defined(SWIGJAVA) && !defined(SWIGPERL)
+%feature ("compactdefaultargs");
+#endif

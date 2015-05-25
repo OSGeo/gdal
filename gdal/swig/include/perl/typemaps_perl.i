@@ -465,6 +465,10 @@ CreateArrayFromStringArray( char **first ) {
 
 /* typemaps for (int nList, int* pList) */
 
+%typemap(typecheck) (int nList, int* pList) {
+   /* %typemap(typecheck) int nList, int* pList */
+   $1 = SvOK($input) && SvROK($input) ? 1 : 0;
+}
 %typemap(in,numinputs=1) (int nList, int* pList)
 {
     /* %typemap(in,numinputs=1) (int nList, int* pList) */
@@ -513,6 +517,10 @@ CreateArrayFromStringArray( char **first ) {
 
 /* typemaps for (int nList, double* pList) */
 
+%typemap(typecheck) (int nList, double* pList) {
+   /* %typemap(typecheck) int nList, double* pList */
+   $1 = SvOK($input) && SvROK($input) ? 1 : 0;
+}
 %typemap(in,numinputs=1) (int nList, double* pList)
 {
     /* %typemap(in,numinputs=1) (int nList, double* pList) */
@@ -587,6 +595,11 @@ CreateArrayFromStringArray( char **first ) {
   if( *$1 ) {
     free( *$2 );
   }
+}
+
+%typemap(typecheck) (int nLen, char *pBuf) {
+   /* %typemap(typecheck) int nLen, char *pBuf */
+   $1 = SvOK($input) && SvPOK($input) ? 1 : 0;
 }
 %typemap(in,numinputs=1) (int nLen, char *pBuf )
 {
@@ -835,6 +848,10 @@ CreateArrayFromStringArray( char **first ) {
 /*
  * Typemap char **options <-> AV
  */
+%typemap(typecheck) (char **options) {
+   /* %typemap(typecheck) char **options */
+  $1 = SvOK($input) && SvROK($input) ? 1 : 0;
+}
 %typemap(in) char **options
 {
     /* %typemap(in) char **options */
@@ -893,6 +910,10 @@ CreateArrayFromStringArray( char **first ) {
  * Typemaps map mutable char ** arguments from AV.  Does not
  * return the modified argument
  */
+%typemap(typecheck) (char **ignorechange) {
+    /* %typemap(typecheck) (char **ignorechange) */
+    $1 = SvOK($input) ? 1 : 0;
+}
 %typemap(in) (char **ignorechange) ( char *val )
 {
     /* %typemap(in) (char **ignorechange) */
@@ -959,7 +980,7 @@ CreateArrayFromStringArray( char **first ) {
 %typemap(typecheck,precedence=SWIG_TYPECHECK_POINTER) (tostring argin)
 {
   /* %typemap(typecheck,precedence=SWIG_TYPECHECK_POINTER) (tostring argin) */
-  $1 = 1;
+  $1 = SvOK($input) ? 1 : 0;
 }
 
 /*
@@ -1237,6 +1258,7 @@ something like this additional wrapping to work:
 %typemap(arginit, noblock=1) (GDALProgressFunc callback = NULL)
 {
     /* %typemap(arginit, noblock=1) (GDALProgressFunc callback = NULL) */
+    $1 = NULL;
     SavedEnv saved_env;
     saved_env.fct = NULL;
     saved_env.data = &PL_sv_undef;
@@ -1410,4 +1432,14 @@ something like this additional wrapping to work:
 {
     /* %typemap(freearg) (int object_list_count, GDALRasterBandShadow **poObjects) */
     CPLFree($2);
+}
+
+%typemap(typecheck,precedence=SWIG_TYPECHECK_POINTER) GDALProgressFunc {
+   /* %typemap(typecheck,precedence=SWIG_TYPECHECK_POINTER) GDALProgressFunc */
+  $1 = SvOK($input) ? 1 : 0;
+}
+
+%typemap(typecheck,precedence=SWIG_TYPECHECK_POINTER) void* {
+   /* %typemap(typecheck,precedence=SWIG_TYPECHECK_POINTER) void* */
+  $1 = SvOK($input) ? 1 : 0;
 }

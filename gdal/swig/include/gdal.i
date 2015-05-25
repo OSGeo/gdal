@@ -44,10 +44,6 @@
 %include swig_csharp_extensions.i
 #endif
 
-#if !defined(SWIGJAVA)
-%feature ("compactdefaultargs");
-#endif
-
 //
 // We register all the drivers upon module initialization
 //

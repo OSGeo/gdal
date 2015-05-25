@@ -43,10 +43,6 @@
 %include swig_csharp_extensions.i
 #endif
 
-#if !defined(SWIGJAVA)
-%feature("compactdefaultargs");
-#endif
-
 #ifdef SWIGCSHARP
 %csconst(1);
 #elif defined(SWIGJAVA)

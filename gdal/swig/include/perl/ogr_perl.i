@@ -1113,7 +1113,10 @@ sub Geometry {
             eval {
                 $geometry = Geo::OGR::Geometry->new($geometry);
             };
-            confess "The type of the inserted geometry ('".$geometry->GeometryType."') is not the field type ('$type')."
+            confess "$@" if $@;
+            confess "The type of the argument geometry ('".
+                $geometry->GeometryType.
+                "') conflicts the field type ('$type')."
                 if $type ne 'Unknown' and $type ne $geometry->GeometryType;
             eval {
                 $self->SetGeomFieldDirectly($field, $geometry);
