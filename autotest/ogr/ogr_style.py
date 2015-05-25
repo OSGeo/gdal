@@ -45,10 +45,11 @@ def ogr_style_styletable():
     style_table = ogr.StyleTable()
     style_table.AddStyle("style1_normal", 'SYMBOL(id:"http://style1_normal",c:#67452301)')
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    ret = style_table.SaveStyleTable('/nonexisting')
+    ret = style_table.SaveStyleTable('/nonexistingdir/nonexistingfile')
     gdal.PopErrorHandler()
     if ret != 0:
         gdaltest.post_reason('failure')
+        print(ret)
         return 'fail'
     if style_table.SaveStyleTable("/vsimem/out.txt") != 1:
         gdaltest.post_reason('failure')
