@@ -131,10 +131,10 @@
  * The out typemap prevents the default typemap for output integers from
  * applying.
  */
-%typemap(out) IF_FALSE_RETURN_NONE "/*%typemap(out) IF_FALSE_RETURN_NONE */"
-%typemap(ret) IF_FALSE_RETURN_NONE
+%typemap(out) GDAL_SUCCESS "/*%typemap(out) GDAL_SUCCESS */"
+%typemap(ret) GDAL_SUCCESS
 {
- /* %typemap(ret) IF_FALSE_RETURN_NONE */
+ /* %typemap(ret) GDAL_SUCCESS */
   if ($1 == 0 ) {
     Py_XDECREF( $result );
     $result = Py_None;

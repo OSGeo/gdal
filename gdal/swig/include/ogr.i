@@ -2422,8 +2422,14 @@ public:
 #if defined(SWIGPYTHON) || defined(SWIGJAVA)
 #if defined(SWIGPYTHON)
   %feature("kwargs") GetPoints;
+  void
+#else
+  %{
+    typedef void retGetPoints;
+  %}
+  retGetPoints* 
 #endif
-  void GetPoints(int* pnCount, double** ppadfXY, double** ppadfZ, int nCoordDimension = 0)
+  GetPoints(int* pnCount, double** ppadfXY, double** ppadfZ, int nCoordDimension = 0)
   {
     int nPoints = OGR_G_GetPointCount(self);
     *pnCount = nPoints;
@@ -2437,7 +2443,11 @@ public:
     {
         CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate resulting array");
         *pnCount = 0;
+#if defined(SWIGPYTHON)
         return;
+#else
+        return NULL;
+#endif
     }
     if (nCoordDimension <= 0)
         nCoordDimension = OGR_G_GetCoordinateDimension(self);
@@ -2446,6 +2456,9 @@ public:
                     *ppadfXY, 2 * sizeof(double),
                     (*ppadfXY) + 1, 2 * sizeof(double),
                     *ppadfZ, sizeof(double));
+#if defined(SWIGJAVA)
+        return NULL;
+#endif
   }
 #endif
 

@@ -1714,3 +1714,11 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
     VSIFree(*$2);
     VSIFree(*$3);
 }
+
+%typemap(jni) ( retGetPoints* ) "jobjectArray"
+%typemap(jtype) ( retGetPoints* ) "double[][]"
+%typemap(jstype) ( retGetPoints* ) "double[][]"
+%typemap(javain) ( retGetPoints* ) "$javainput"
+%typemap(javaout) ( retGetPoints* ) {
+    return $jnicall;
+  }
