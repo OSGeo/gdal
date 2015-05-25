@@ -153,7 +153,7 @@ def gdal_edit(argv):
 
     if (srs is None and lry is None and yres is None and not unsetgt
             and not unsetstats and not stats and nodata is None
-            and len(molist) == 0 and not unsetmd):
+            and len(molist) == 0 and not unsetmd and len(gcp_list) == 0):
         print('No option specified')
         print('')
         return Usage()
