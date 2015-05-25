@@ -184,7 +184,7 @@ Usage: ogr2ogr [--help-general] [-skipfailures] [-append] [-update]
                [-select field_list] [-where restricted_where] 
                [-progress] [-sql <sql statement>] [-dialect dialect]
                [-preserve_fid] [-fid FID]
-               [-spat xmin ymin xmax ymax] [-geomfield field]
+               [-spat xmin ymin xmax ymax] [-spat_srs srs_def] [-geomfield field]
                [-a_srs srs_def] [-t_srs srs_def] [-s_srs srs_def]
                [-f format_name] [-overwrite] [[-dsco NAME=VALUE] ...]
                dst_datasource_name src_datasource_name
@@ -249,8 +249,10 @@ The resulting table/layer will be saved to the output.</dd>
 Starting with GDAL 1.10, the "SQLITE" dialect can also be used with any datasource.</dd>
 <dt> <b>-where</b><em> restricted_where</em>:</dt><dd> Attribute query (like SQL WHERE)</dd>
 <dt> <b>-skipfailures</b>:</dt><dd>Continue after a failure, skipping the failed feature.</dd>
-<dt> <b>-spat</b><em> xmin ymin xmax ymax</em>:</dt><dd> spatial query extents. Only features
+<dt> <b>-spat</b><em> xmin ymin xmax ymax</em>:</dt><dd> spatial query extents, in the
+SRS of the source layer(s) (or the one specified with -spat_srs). Only features
 whose geometry intersects the extents will be selected. The geometries will not be clipped unless -clipsrc is specified</dd>
+<dt> <b>-spat_srs</b><em> srs_def</em>:</dt><dd> (OGR &gt;= 2.0) Override spatial filter SRS.</dd>
 <dt> <b>-geomfield</b> <i>field</i>:</dt><dd> (OGR &gt;= 1.11) Name of the geometry field
 on which the spatial filter operates on.</dd>
 <dt> <b>-dsco</b> <em>NAME=VALUE</em>:</dt><dd> Dataset creation option (format specific)</dd>
