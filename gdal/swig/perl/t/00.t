@@ -2,6 +2,8 @@ use strict;
 use Test::More qw(no_plan);
 BEGIN { use_ok('Geo::GDAL') };
 
+use vars qw /@list/;
+
 # Documented subs in Geo::GDAL 
 
 my $binary = Geo::GDAL::CPLHexToBinary('ab10');
@@ -35,9 +37,12 @@ eval {
 ok($@ eq '', "FinderClean, PushFinderLocation and PopFinderLocation, got $@");
 
 $s = Geo::GDAL::FindFile('', 'gcs.csv');
-ok($s, "FindFile, got $s");
-
-my @list;
+if (not defined $s) {
+    $s = 'undef';
+} else {
+    $s = "'$s'";
+}
+ok($s ne 'undef', "FindFile returned $s instead of 'gcs.csv'");
 
 eval {
     @list = Geo::GDAL::AccessTypes();

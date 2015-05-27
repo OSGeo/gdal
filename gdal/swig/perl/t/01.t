@@ -73,5 +73,5 @@ ok($ext eq 'image/tiff', "MIMEType, got $ext");
 
 $dataset->GetDriver->CopyFiles('/vsimem/new.gtiff', '/vsimem/test.gtiff');
 $dataset->GetDriver->Rename('/vsimem/new2.gtiff', '/vsimem/new.gtiff');
-my %files = map {$_=>1} Geo::GDAL::VSIF::ReadDir('/vsimem/');
+%files = map {$_=>1} Geo::GDAL::VSIF::ReadDir('/vsimem/');
 ok(($files{'new2.gtiff'} and $files{'test.gtiff'}), "Rename");
