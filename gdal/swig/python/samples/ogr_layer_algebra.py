@@ -131,7 +131,7 @@ def main(argv = None):
     opt = []
     overwrite = False
     input_fields = 'ALL'
-    method_fields = 'ALL'
+    method_fields = None
     geom_type = ogr.wkbUnknown
     srs_name = None
     srs = None
@@ -286,6 +286,12 @@ def main(argv = None):
        output_ds_name is None or \
        op_str is None:
            return Usage()
+
+    if method_fields is None:
+        if op_str in ( 'Update', 'Clip', 'Erase' ):
+            method_fields = 'NONE'
+        else:
+            method_fields = 'ALL'
 
     if input_fields == 'NONE' and method_fields == 'NONE':
         print('Warning: -input_fields NONE and -method_fields NONE results in all fields being added')
