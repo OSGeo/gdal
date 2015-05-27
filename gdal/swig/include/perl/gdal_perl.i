@@ -1191,8 +1191,14 @@ for my $string (qw/Gray RGB CMYK HLS/) {
 use Carp;
 sub new {
     my($pkg, $pi) = @_;
-    $pi = $PALETTE_INTERPRETATION_STRING2INT{$pi} if defined $pi and exists $PALETTE_INTERPRETATION_STRING2INT{$pi};
-    my $self = Geo::GDALc::new_ColorTable($pi);
+    my $self;
+    if (defined $pi) {
+        confess "Unknown palette interpretation string: '$t'." unless exists $PALETTE_INTERPRETATION_STRING2INT{$pi};
+        $pi = $PALETTE_INTERPRETATION_STRING2INT{$pi};
+        $self = Geo::GDALc::new_ColorTable($pi);
+    } else {
+        $self = Geo::GDALc::new_ColorTable();
+    }
     bless $self, $pkg if defined($self);
 }
 %}
