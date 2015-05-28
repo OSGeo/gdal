@@ -27,12 +27,6 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
-%include typedefs.i
-
-#ifndef FROM_GDAL_I
-%include "exception.i"
-#endif
-
 #ifdef PERL_CPAN_NAMESPACE
 %module "Geo::OGR"
 #elif defined(SWIGCSHARP)
@@ -41,9 +35,7 @@
 %module ogr
 #endif
 
-#ifdef SWIGCSHARP
-%include swig_csharp_extensions.i
-#endif
+%include typedefs.i
 
 %feature("autodoc");
 
@@ -144,33 +136,6 @@ typedef enum
     OJRight = 2
 } OGRJustification;
 #endif
-
-%{
-#ifdef DEBUG 
-typedef struct OGRSpatialReferenceHS OSRSpatialReferenceShadow;
-typedef struct OGRDriverHS OGRDriverShadow;
-typedef struct OGRDataSourceHS OGRDataSourceShadow;
-typedef struct OGRLayerHS OGRLayerShadow;
-typedef struct OGRFeatureHS OGRFeatureShadow;
-typedef struct OGRFeatureDefnHS OGRFeatureDefnShadow;
-typedef struct OGRGeometryHS OGRGeometryShadow;
-typedef struct OGRCoordinateTransformationHS OSRCoordinateTransformationShadow;
-typedef struct OGRCoordinateTransformationHS OGRCoordinateTransformationShadow;
-typedef struct OGRFieldDefnHS OGRFieldDefnShadow;
-#else
-typedef void OSRSpatialReferenceShadow;
-typedef void OGRDriverShadow;
-typedef void OGRDataSourceShadow;
-typedef void OGRLayerShadow;
-typedef void OGRFeatureShadow;
-typedef void OGRFeatureDefnShadow;
-typedef void OGRGeometryShadow;
-typedef void OSRCoordinateTransformationShadow;
-typedef void OGRFieldDefnShadow;
-#endif
-typedef struct OGRStyleTableHS OGRStyleTableShadow;
-typedef struct OGRGeomFieldDefnHS OGRGeomFieldDefnShadow;
-%}
 
 #ifndef SWIGCSHARP
 #ifdef SWIGJAVA
@@ -288,7 +253,6 @@ typedef struct OGRGeomFieldDefnHS OGRGeomFieldDefnShadow;
 %constant char *OLMD_FID64             = "OLMD_FID64";
 
 #else
-typedef int OGRErr;
 
 #define wkb25DBit 0x80000000
 #define ogrZMarker 0x21125711

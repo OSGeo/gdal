@@ -30,8 +30,6 @@
 
 %include constraints.i
 
-%include typedefs.i
-
 #ifdef PERL_CPAN_NAMESPACE
 %module "Geo::GDAL"
 #elif defined(SWIGCSHARP)
@@ -40,28 +38,7 @@
 %module gdal
 #endif
 
-#ifdef SWIGCSHARP
-%include swig_csharp_extensions.i
-#endif
-
-//
-// We register all the drivers upon module initialization
-//
-
-#if defined(SWIGPYTHON) || defined(SWIGJAVA)
-%{
-#ifdef DEBUG 
-typedef struct OGRSpatialReferenceHS OSRSpatialReferenceShadow;
-typedef struct OGRLayerHS OGRLayerShadow;
-typedef struct OGRGeometryHS OGRGeometryShadow;
-#else
-typedef void OSRSpatialReferenceShadow;
-typedef void OGRLayerShadow;
-typedef void OGRGeometryShadow;
-#endif
-typedef struct OGRStyleTableHS OGRStyleTableShadow;
-%}
-#endif /* #if defined(SWIGPYTHON) || defined(SWIGJAVA) */
+%include typedefs.i
 
 //************************************************************************
 //
@@ -194,17 +171,6 @@ typedef enum {
 #elif defined(SWIGJAVA)
 %include "gdal_java.i"
 #endif
-
-/* Default memberin typemaps required to support SWIG 1.3.39 and above */
-%typemap(memberin) char *Info %{
-/* char* Info memberin typemap */
-$1;
-%}
-
-%typemap(memberin) char *Id %{
-/* char* Info memberin typemap */
-$1;
-%}
 
 //************************************************************************
 // Apply NONNULL to all utf8_path's. 
@@ -713,6 +679,8 @@ GDALDriverShadow *IdentifyDriver( const char *utf8_path,
   }
 %}
 #endif
+
+
 %clear char **;
 
 
@@ -723,12 +691,5 @@ GDALDriverShadow *IdentifyDriver( const char *utf8_path,
 //************************************************************************
 
 #ifdef SWIGCSHARP
-%include "gdal_csharp_extend.i"
-#endif
 
-#ifdef SWIGPYTHON
-/* Add a __version__ attribute to match the convention */
-%pythoncode %{
-__version__ = _gdal.VersionInfo("RELEASE_NAME") 
-%}
 #endif

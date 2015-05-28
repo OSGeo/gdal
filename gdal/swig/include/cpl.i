@@ -30,8 +30,6 @@
 
 %include constraints.i
 
-%include typedefs.i
-
 %inline %{
   void Debug( const char *msg_class, const char *message ) {
     CPLDebug( msg_class, "%s", message );

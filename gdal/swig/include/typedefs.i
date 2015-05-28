@@ -32,7 +32,20 @@
   Typedefs for GDAL types for swig, some extracted from GDAL headers.
 */
 
+#ifdef SWIGCSHARP
+%csconst(1);
+#elif defined(SWIGJAVA)
+%javaconst(1);
+#endif
+
 %include "../../port/cpl_config.h"
+%include "../../ogr/ogr_srs_api.h"
+
+#ifdef SWIGCSHARP
+%csconst(0);
+#elif defined(SWIGJAVA)
+%javaconst(0);
+#endif
 
 %include <windows.i>
 
@@ -71,10 +84,9 @@ typedef enum
 typedef int CPLErr;
 /* why not for CSHARP? */
 typedef void VSILFILE;
-/* CSHARP has a specific typemap for OGRErr */
-typedef int OGRErr;
 #endif
 
+typedef int OGRErr;
 
 /*
   Typedefs for new types for both the bindings and swig.
@@ -82,7 +94,7 @@ typedef int OGRErr;
 
 /*
   First some things needed by the bindings.
-  These definitions are shared by all bindings.
+  These definitions are used by all bindings and no harm done if one doesn't.
 */
 %{
 #include <iostream>
@@ -112,6 +124,33 @@ typedef void GDALColorTableShadow;
 typedef void GDALRasterAttributeTableShadow;
 typedef void GDALTransformerInfoShadow;
 typedef void GDALAsyncReaderShadow;
+
+#ifdef DEBUG
+typedef struct OGRSpatialReferenceHS OSRSpatialReferenceShadow;
+typedef struct OGRCoordinateTransformationHS OSRCoordinateTransformationShadow;
+typedef struct OGRCoordinateTransformationHS OGRCoordinateTransformationShadow;
+typedef struct OGRDriverHS OGRDriverShadow;
+typedef struct OGRDataSourceHS OGRDataSourceShadow;
+typedef struct OGRLayerHS OGRLayerShadow;
+typedef struct OGRFeatureHS OGRFeatureShadow;
+typedef struct OGRFeatureDefnHS OGRFeatureDefnShadow;
+typedef struct OGRGeometryHS OGRGeometryShadow;
+typedef struct OGRFieldDefnHS OGRFieldDefnShadow;
+#else
+typedef void OSRSpatialReferenceShadow;
+typedef void OSRCoordinateTransformationShadow;
+typedef void OGRDriverShadow;
+typedef void OGRDataSourceShadow;
+typedef void OGRLayerShadow;
+typedef void OGRFeatureShadow;
+typedef void OGRFeatureDefnShadow;
+typedef void OGRGeometryShadow;
+typedef void OGRFieldDefnShadow;
+#endif
+
+typedef struct OGRStyleTableHS OGRStyleTableShadow;
+typedef struct OGRGeomFieldDefnHS OGRGeomFieldDefnShadow;
+
 %}
 
 %inline %{
