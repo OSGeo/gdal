@@ -5839,6 +5839,30 @@ def tiff_write_135():
     return 'success'
 
 ###############################################################################
+# Test writing a single-strip mono-bit dataset
+
+def tiff_write_136():
+
+    src_ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_136_src.tif', 8, 2001)
+    src_ds.GetRasterBand(1).Fill(1)
+    expected_cs = src_ds.GetRasterBand(1).Checksum()
+    ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_136.tif', src_ds, options = ['NBITS=1', 'COMPRESS=DEFLATE', 'BLOCKYSIZE=2001'])
+    src_ds = None
+    ds = None
+    ds = gdal.Open('/vsimem/tiff_write_136.tif')
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != expected_cs:
+        gdaltest.post_reason('fail')
+        print(cs)
+        print(expected_cs)
+        return 'fail'
+
+    gdal.Unlink('/vsimem/tiff_write_126_src.tif')
+    gdal.Unlink('/vsimem/tiff_write_136.tif')
+
+    return 'success'
+
+###############################################################################
 # Ask to run again tests with GDAL_API_PROXY=YES
 
 def tiff_write_api_proxy():
@@ -6006,6 +6030,7 @@ gdaltest_list = [
     tiff_write_133,
     tiff_write_134,
     tiff_write_135,
+    tiff_write_136,
     #tiff_write_api_proxy,
     tiff_write_cleanup ]
 

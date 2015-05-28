@@ -9470,8 +9470,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
         // Lets treat large "one row" bitmaps using the scanline api.
         if( !TIFFIsTiled(hTIFF) 
             && nBlockYSize == nYSize 
-            && nYSize > 2000 
-            && bAllowRGBAInterface )
+            && nYSize > 2000 )
             bTreatAsSplitBitmap = TRUE;
     }
 
@@ -12517,7 +12516,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         else
         {
             int iBand, j;
-            GByte* pabyScanline = (GByte *) CPLMalloc(TIFFScanlineSize(hTIFF));
+            GByte* pabyScanline = (GByte *) CPLMalloc(nXSize);
             eErr = CE_None;
             for(iBand=1;iBand<=nBands && eErr == CE_None;iBand++)
             {
