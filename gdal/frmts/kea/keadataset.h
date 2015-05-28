@@ -32,6 +32,9 @@
 #define KEADATASET_H
 
 #include "gdal_pam.h"
+#if defined(USE_GCC_VISIBILITY_FLAG) && !defined(DllExport)
+#define DllExport CPL_DLL
+#endif
 #include "libkea/KEAImageIO.h"
 
 // class that implements a GDAL dataset
