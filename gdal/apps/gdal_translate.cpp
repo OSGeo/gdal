@@ -1601,6 +1601,14 @@ static int ProxyMain( int argc, char ** argv )
             continue;
         }
 
+        // Preserve nbits if no option change values
+        const char* pszNBits = poSrcBand->GetMetadataItem("NBITS", "IMAGE_STRUCTURE");
+        if( pszNBits && nRGBExpand == 0 && nScaleRepeat == 0 &&
+            !bUnscale && eOutputType == GDT_Unknown && pszResampling == NULL )
+        {
+            poVRTBand->SetMetadataItem("NBITS", pszNBits, "IMAGE_STRUCTURE");
+        }
+
 /* -------------------------------------------------------------------- */
 /*      Do we need to collect scaling information?                      */
 /* -------------------------------------------------------------------- */
