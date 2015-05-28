@@ -939,6 +939,25 @@ def test_gdal_translate_33():
     return 'success'
 
 ###############################################################################
+# Test NBITS is preserved
+
+def test_gdal_translate_34():
+    if test_cli_utilities.get_gdal_translate_path() is None:
+        return 'skip'
+
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' ../gcore/data/oddsize1bit.tif tmp/test_gdal_translate_34.vrt -of VRT -mo FOO=BAR')
+
+    ds = gdal.Open('tmp/test_gdal_translate_34.vrt')
+    if ds.GetRasterBand(1).GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') != '1':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    os.unlink('tmp/test_gdal_translate_34.vrt')
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def test_gdal_translate_cleanup():
@@ -1081,6 +1100,7 @@ gdaltest_list = [
     test_gdal_translate_31,
     test_gdal_translate_32,
     test_gdal_translate_33,
+    test_gdal_translate_34,
     test_gdal_translate_cleanup
     ]
 
