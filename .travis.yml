@@ -57,6 +57,7 @@ before_install:
   - sudo make install
   - cd ../..
   - sudo ldconfig
+  - sudo apt-get install mono-mcs
 
 # installing PostGIS 2 from Ubuntu PPA draws libgdal1.9 dependency. We must install ourselves
 # in /usr too to avoid gdal version conflict. Might be fragile however
@@ -74,6 +75,10 @@ install:
   - make
   - cd ../..
   - cd swig/perl
+  - make generate
+  - make
+  - cd ../..
+  - cd swig/csharp
   - make generate
   - make
   - cd ../..
@@ -101,6 +106,10 @@ script:
   - cd ../..
 # Java unit tests
   - cd swig/java
+  - make test
+  - cd ../..
+# CSharp unit tests
+  - cd swig/csharp
   - make test
   - cd ../..
 # CPP unit tests
