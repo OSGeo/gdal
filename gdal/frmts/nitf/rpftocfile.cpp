@@ -497,10 +497,22 @@ RPFToc* RPFTOCReadFromBuffer(const char* pszFilename, VSILFILE* fp, const char* 
         frameEntry->directory[pathLength] = 0;
         if (pathLength > 0 && frameEntry->directory[pathLength-1] == '/')
             frameEntry->directory[pathLength-1] = 0;
-        
+
         if (frameEntry->directory[0] == '.' && frameEntry->directory[1] == '/')
+        {
             memmove(frameEntry->directory, frameEntry->directory+2, strlen(frameEntry->directory+2)+1);
-        
+
+            // Some A.TOC have subdirectory names like ".//X/" ... (#5979)
+            // Check if it wasn't intended to be "./X/" instead
+            VSIStatBufL sStatBuf;
+            if( frameEntry->directory[0] == '/' &&
+                VSIStatL(CPLFormFilename(CPLGetDirname(pszFilename), frameEntry->directory+1, NULL), &sStatBuf) == 0 &&
+                VSI_ISDIR(sStatBuf.st_mode) )
+            {
+                memmove(frameEntry->directory, frameEntry->directory+1, strlen(frameEntry->directory+1)+1);
+            }
+        }
+
         {
             char* baseDir = CPLStrdup(CPLGetDirname(pszFilename));
             VSIStatBufL sStatBuf;
