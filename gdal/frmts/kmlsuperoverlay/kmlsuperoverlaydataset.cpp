@@ -1201,9 +1201,7 @@ CPLErr KmlSuperOverlayReadDataset::IRasterIO( GDALRWFlag eRWFlag,
                         }
                         else
                         {
-                            osSubFilename = CPLGetPath(pszBaseFilename);
-                            osSubFilename += "/";
-                            osSubFilename += pszHref;
+                            osSubFilename = CPLFormFilename(CPLGetPath(pszBaseFilename), pszHref, NULL);
                         }
                         osSubFilename = KMLRemoveSlash(osSubFilename);
                     }
@@ -1545,13 +1543,30 @@ int KmlSuperOverlayReadDataset::Identify(GDALOpenInfo * poOpenInfo)
 {
     const char* pszExt = CPLGetExtension(poOpenInfo->pszFilename);
     if( EQUAL(pszExt, "kmz") )
-        return TRUE;
+        return -1;
     if( poOpenInfo->nHeaderBytes == 0 )
         return FALSE;
-    if( EQUAL(pszExt, "kml") &&
-        strstr((const char*)poOpenInfo->pabyHeader, "<kml") != NULL )
-        return TRUE;
-    return FALSE;
+    if( !EQUAL(pszExt, "kml") ||
+        strstr((const char*)poOpenInfo->pabyHeader, "<kml") == NULL )
+        return FALSE;
+    
+    for( int i=0;i<2;i++ )
+    {
+        if( strstr((const char*)poOpenInfo->pabyHeader, "<NetworkLink>") != NULL &&
+            strstr((const char*)poOpenInfo->pabyHeader, "<Region>") != NULL &&
+            strstr((const char*)poOpenInfo->pabyHeader, "<Link>") != NULL )
+            return TRUE;
+        
+        if( strstr((const char*)poOpenInfo->pabyHeader, "<Document>") != NULL &&
+            strstr((const char*)poOpenInfo->pabyHeader, "<Region>") != NULL &&
+            strstr((const char*)poOpenInfo->pabyHeader, "<GroundOverlay>") != NULL )
+            return TRUE;
+
+        if( i == 0 && !poOpenInfo->TryToIngest(1024*10) )
+            return FALSE;
+    }
+    
+    return -1;
 }
 
 /************************************************************************/
@@ -1561,7 +1576,7 @@ int KmlSuperOverlayReadDataset::Identify(GDALOpenInfo * poOpenInfo)
 GDALDataset *KmlSuperOverlayReadDataset::Open(GDALOpenInfo * poOpenInfo)
 
 {
-    if( !Identify(poOpenInfo) )
+    if( Identify(poOpenInfo) == FALSE )
         return NULL;
 
     return Open(poOpenInfo->pszFilename);
@@ -1587,9 +1602,7 @@ GDALDataset* KmlSuperOverlayLoadIcon(const char* pszBaseFilename, const char* ps
         osSubFilename = CPLSPrintf("/vsicurl_streaming/%s", pszIcon);
     else
     {
-        osSubFilename = CPLGetPath(pszBaseFilename);
-        osSubFilename += "/";
-        osSubFilename += pszIcon;
+        osSubFilename = CPLFormFilename(CPLGetPath(pszBaseFilename), pszIcon, NULL);
         osSubFilename = KMLRemoveSlash(osSubFilename);
     }
 
@@ -1652,9 +1665,7 @@ static void KmlSuperOverlayComputeDepth(CPLString osFilename,
                     osSubFilename = CPLSPrintf("/vsicurl_streaming/%s", pszHref);
                 else
                 {
-                    osSubFilename = CPLGetPath(osFilename);
-                    osSubFilename += "/";
-                    osSubFilename += pszHref;
+                    osSubFilename = CPLFormFilename(CPLGetPath(osFilename), pszHref, NULL),
                     osSubFilename = KMLRemoveSlash(osSubFilename);
                 }
 
@@ -2324,9 +2335,7 @@ GDALDataset *KmlSuperOverlayReadDataset::Open(const char* pszFilename,
             osSubFilename = CPLSPrintf("/vsicurl_streaming/%s", pszHref);
         else
         {
-            osSubFilename = CPLGetPath(osFilename);
-            osSubFilename += "/";
-            osSubFilename += pszHref;
+            osSubFilename = CPLFormFilename(CPLGetPath(osFilename), pszHref, NULL);
             osSubFilename = KMLRemoveSlash(osSubFilename);
         }
 
