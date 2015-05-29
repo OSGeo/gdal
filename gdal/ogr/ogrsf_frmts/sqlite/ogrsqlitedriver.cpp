@@ -78,7 +78,11 @@ static int OGRSQLiteDriverIdentify( GDALOpenInfo* poOpenInfo )
     if( poOpenInfo->nHeaderBytes < 16 )
         return FALSE;
 
-    return( strncmp( (const char*)poOpenInfo->pabyHeader, "SQLite format 3", 15 ) == 0 );
+    if( strncmp( (const char*)poOpenInfo->pabyHeader, "SQLite format 3", 15 ) != 0 )
+        return FALSE;
+    
+    // Could be a Rasterlite file as well
+    return -1;
 }
 
 /************************************************************************/
@@ -88,7 +92,7 @@ static int OGRSQLiteDriverIdentify( GDALOpenInfo* poOpenInfo )
 static GDALDataset *OGRSQLiteDriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
-    if( !OGRSQLiteDriverIdentify(poOpenInfo) )
+    if( OGRSQLiteDriverIdentify(poOpenInfo) == FALSE )
         return NULL;
 
 /* -------------------------------------------------------------------- */
