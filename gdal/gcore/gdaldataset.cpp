@@ -2554,7 +2554,9 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char* pszFilename,
             oOpenInfo.papszOpenOptions = papszTmpOpenOptions;
         }
 
-        if( poDriver->pfnIdentify && poDriver->pfnIdentify(&oOpenInfo) > 0 )
+        int bIdentifyRes =
+            ( poDriver->pfnIdentify && poDriver->pfnIdentify(&oOpenInfo) > 0 );
+        if( bIdentifyRes )
         {
             GDALValidateOpenOptions( poDriver, oOpenInfo.papszOpenOptions );
         }
@@ -2562,6 +2564,10 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char* pszFilename,
         if ( poDriver->pfnOpen != NULL )
         {
             poDS = poDriver->pfnOpen( &oOpenInfo );
+            // If we couldn't determine for sure with Identify() (it returned -1)
+            // but that Open() managed to open the file, post validate options.
+            if( poDS != NULL && poDriver->pfnIdentify && !bIdentifyRes )
+                GDALValidateOpenOptions( poDriver, oOpenInfo.papszOpenOptions );
         }
         else if( poDriver->pfnOpenWithDriverArg != NULL )
         {
