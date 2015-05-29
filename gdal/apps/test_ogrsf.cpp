@@ -2145,7 +2145,7 @@ static int TestSpatialFilter( OGRLayer *poLayer )
 /*      filter that doesn't include this feature, and test again.       */
 /************************************************************************/
 
-static int TestAttributeFilter( GDALDataset* poDS, OGRLayer *poLayer )
+static int TestAttributeFilter( CPL_UNUSED GDALDataset* poDS, OGRLayer *poLayer )
 
 {
     int bRet = TRUE;
