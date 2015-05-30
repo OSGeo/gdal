@@ -1431,13 +1431,20 @@ static void GDALInfoPrintMetadata( GDALMajorObjectH hObject,
             if(bJson)
             {
                 if(bIsxml)
+                {
                     poValue = json_object_new_string( papszMetadata[i] );
+                    break;
+                }
                 else
                 {
+                    pszKey = NULL;
                     pszValue = CPLParseNameValue( papszMetadata[i], &pszKey );
-                    poValue = json_object_new_string( pszValue );
-                    json_object_object_add( poDomain, pszKey, poValue );
-                    CPLFree( pszKey );
+                    if( pszKey )
+                    {
+                        poValue = json_object_new_string( pszValue );
+                        json_object_object_add( poDomain, pszKey, poValue );
+                        CPLFree( pszKey );
+                    }
                 }
             }
             else
