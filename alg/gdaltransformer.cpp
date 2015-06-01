@@ -698,14 +698,16 @@ retry:
 /*      compute an approximate pixel size in the output                 */
 /*      georeferenced coordinates.                                      */
 /* -------------------------------------------------------------------- */
-    double dfDiagonalDist, dfDeltaX, dfDeltaY;
+    double dfDiagonalDist, dfDeltaX = 0.0, dfDeltaY = 0.0;
 
     if( pabSuccess[0] && pabSuccess[nSamplePoints - 1] )
     {
         dfDeltaX = padfX[nSamplePoints-1] - padfX[0];
         dfDeltaY = padfY[nSamplePoints-1] - padfY[0];
+        // In some cases this can result in 0 values. See #5980
+        // so fallback to safer method in that case
     }
-    else
+    if( dfDeltaX == 0.0 || dfDeltaX == 0.0 )
     {
         dfDeltaX = dfMaxXOut - dfMinXOut;
         dfDeltaY = dfMaxYOut - dfMinYOut;
