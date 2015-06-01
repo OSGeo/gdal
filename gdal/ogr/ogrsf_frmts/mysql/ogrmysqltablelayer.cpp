@@ -634,6 +634,9 @@ int OGRMySQLTableLayer::TestCapability( const char * pszCap )
     else if( EQUAL(pszCap,OLCCreateField) )
         return bUpdateAccess;
 
+    else if( EQUAL(pszCap,OLCDeleteField) )
+        return bUpdateAccess;
+	
     else if( EQUAL(pszCap,OLCDeleteFeature) )
         return bUpdateAccess;
 
@@ -1080,6 +1083,49 @@ OGRErr OGRMySQLTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
     return OGRERR_NONE;
 }
 
+/************************************************************************/
+/*                            DeleteField()                             */
+/************************************************************************/
+OGRErr OGRMySQLTableLayer::DeleteField( int iFieldToDelete )
+{
+    if (iFieldToDelete < 0 || iFieldToDelete >= poFeatureDefn->GetFieldCount())
+    {   
+	CPLError( CE_Failure, CPLE_NotSupported,
+		  "Invalid field index");
+	return OGRERR_FAILURE;
+    }  
+/* -------------------------------------------------------------------- */
+/*      Discard any existing resultset.                                 */
+/* -------------------------------------------------------------------- */
+    ResetReading();
+
+    const char* pszFieldName = poFeatureDefn->GetFieldDefn(iFieldToDelete)->GetNameRef();
+ 
+/* -------------------------------------------------------------------- */
+/*      Delete selected field.                                          */
+/* -------------------------------------------------------------------- */
+    MYSQL_RES           *hResult=NULL;
+    CPLString            osCommand;
+    osCommand.Printf(
+	     "ALTER TABLE `%s` DROP COLUMN `%s`",
+	     poFeatureDefn->GetName(), pszFieldName);
+
+    if( mysql_query(poDS->GetConn(), osCommand.c_str() ) )
+    {
+	poDS->ReportError( osCommand.c_str() );
+	return OGRERR_FAILURE;
+    }
+
+    // make sure to attempt to free results of successful queries
+    hResult = mysql_store_result( poDS->GetConn() );
+    if( hResult != NULL )
+	mysql_free_result( hResult );
+    hResult = NULL;   
+
+    poFeatureDefn->DeleteFieldDefn( iFieldToDelete );    
+    
+    return OGRERR_NONE;
+}
 
 /************************************************************************/
 /*                             GetFeature()                             */

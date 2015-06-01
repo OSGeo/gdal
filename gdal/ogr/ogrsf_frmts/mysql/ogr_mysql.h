@@ -148,7 +148,7 @@ class OGRMySQLTableLayer : public OGRMySQLLayer
     
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
                                      int bApproxOK = TRUE );
-
+    virtual OGRErr      DeleteField( int iFieldToDelete );
     void                SetLaunderFlag( int bFlag )
                                 { bLaunderColumnNames = bFlag; }
     void                SetPrecisionFlag( int bFlag )
