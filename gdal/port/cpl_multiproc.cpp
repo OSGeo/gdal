@@ -2001,6 +2001,9 @@ CPLLock *CPLCreateLock( CPLLockType eType )
             CPLLock* psLock = (CPLLock*)malloc(sizeof(CPLLock));
             psLock->eType = eType;
             psLock->u.hMutex = hMutex;
+#ifdef DEBUG_CONTENTION
+            psLock->bDebugPerf = FALSE;
+#endif
             return psLock;
         }
         case LOCK_SPIN:
@@ -2011,6 +2014,9 @@ CPLLock *CPLCreateLock( CPLLockType eType )
             CPLLock* psLock = (CPLLock*)malloc(sizeof(CPLLock));
             psLock->eType = eType;
             psLock->u.hSpinLock = hSpinLock;
+#ifdef DEBUG_CONTENTION
+            psLock->bDebugPerf = FALSE;
+#endif
             return psLock;
         }
         default:
