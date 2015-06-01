@@ -318,8 +318,7 @@ def parse_jp2_box(xml_tree, out_f, src_jp2file):
             print('Cannot decode VRTDataset. Outputing empty content')
             binary_content = ''
         else:
-            out_ds = gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/out.tif', vrt_ds)
-            del out_ds
+            gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/out.tif', vrt_ds)
             tif_f = gdal.VSIFOpenL('/vsimem/out.tif', 'rb')
             binary_content = gdal.VSIFReadL(1, 10000, tif_f)
             gdal.VSIFCloseL(tif_f)
