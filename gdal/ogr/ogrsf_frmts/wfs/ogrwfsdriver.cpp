@@ -113,6 +113,7 @@ void RegisterOGRWFS()
 "    <Value>YES</Value>"
 "    <Value>NO</Value>"
 "  </Option>"
+"  <Option name='EXPOSE_GML_ID' type='boolean' description='Whether to make feature gml:id as a gml_id attribute.' default='YES'/>"
 "</OpenOptionList>" );
 
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );

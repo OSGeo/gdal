@@ -226,6 +226,9 @@ and mandatory fields being reported as not nullable.</li>
 present SRS and coordinate ordering in traditional GIS order. Defaults to YES.</li>
 <li> <b>CONSIDER_EPSG_AS_URN=YES/NO/AUTO</b>: (GDAL &gt;=2.0) Whether to
 consider srsName like EPSG:XXXX as respecting EPSG axis order. Defaults to AUTO.</li>
+<li> <b>EXPOSE_GML_ID=YES/NO</b>: (GDAL &gt;=2.0) Whether to expose the gml:id
+attribute of a GML feature as the gml_id OGR field. Note that hiding gml_id will prevent
+WFS-T from working. Defaults to YES.</li>
 </ul>
 
 <h2>Examples</h2>
