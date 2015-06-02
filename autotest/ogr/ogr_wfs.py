@@ -1490,6 +1490,40 @@ def ogr_wfs_vsimem_wfs110_one_layer_describefeaturetype():
         gdaltest.post_reason('fail')
         return 'fail'
 
+    ds = gdal.OpenEx('WFS:/vsimem/wfs_endpoint', open_options = ['EXPOSE_GML_ID=NO'])
+    lyr = ds.GetLayer(0)
+    lyr_defn = lyr.GetLayerDefn()
+    if lyr_defn.GetFieldCount() != 7:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.SetConfigOption('GML_EXPOSE_GML_ID', 'YES')
+    ds = gdal.OpenEx('WFS:/vsimem/wfs_endpoint', open_options = ['EXPOSE_GML_ID=NO'])
+    gdal.SetConfigOption('GML_EXPOSE_GML_ID', None)
+    lyr = ds.GetLayer(0)
+    lyr_defn = lyr.GetLayerDefn()
+    if lyr_defn.GetFieldCount() != 7:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.SetConfigOption('GML_EXPOSE_GML_ID', 'NO')
+    ds = gdal.OpenEx('WFS:/vsimem/wfs_endpoint', open_options = ['EXPOSE_GML_ID=YES'])
+    gdal.SetConfigOption('GML_EXPOSE_GML_ID', None)
+    lyr = ds.GetLayer(0)
+    lyr_defn = lyr.GetLayerDefn()
+    if lyr_defn.GetFieldCount() != 8:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.SetConfigOption('GML_EXPOSE_GML_ID', 'NO')
+    ds = gdal.OpenEx('WFS:/vsimem/wfs_endpoint')
+    gdal.SetConfigOption('GML_EXPOSE_GML_ID', None)
+    lyr = ds.GetLayer(0)
+    lyr_defn = lyr.GetLayerDefn()
+    if lyr_defn.GetFieldCount() != 7:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
     return 'success'
 
 

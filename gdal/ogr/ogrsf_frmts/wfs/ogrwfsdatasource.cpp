@@ -195,6 +195,7 @@ OGRWFSDataSource::OGRWFSDataSource()
     bEmptyAsNull = TRUE;
     
     bInvertAxisOrderIfLatLong = TRUE;
+    bExposeGMLId = TRUE;
 }
 
 /************************************************************************/
@@ -1108,6 +1109,10 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn,
         CSLFetchNameValueDef(papszOpenOptions,
             "CONSIDER_EPSG_AS_URN",
             CPLGetConfigOption("GML_CONSIDER_EPSG_AS_URN", "AUTO"));
+    bExposeGMLId =
+        CSLTestBoolean(CSLFetchNameValueDef(papszOpenOptions,
+            "EXPOSE_GML_ID",
+            CPLGetConfigOption("GML_EXPOSE_GML_ID", "YES")));
 
     CPLXMLNode* psStrippedXML = CPLCloneXMLTree(psXML);
     CPLStripXMLNamespace( psStrippedXML, NULL, TRUE );

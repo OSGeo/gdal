@@ -329,9 +329,12 @@ OGRFeatureDefn* OGRWFSLayer::BuildLayerDefnFromFeatureClass(GMLFeatureClass* poC
 /* -------------------------------------------------------------------- */
 /*      Added attributes (properties).                                  */
 /* -------------------------------------------------------------------- */
-    OGRFieldDefn oField( "gml_id", OFTString );
-    oField.SetNullable(FALSE);
-    poFDefn->AddFieldDefn( &oField );
+    if( poDS->ExposeGMLId() )
+    {
+        OGRFieldDefn oField( "gml_id", OFTString );
+        oField.SetNullable(FALSE);
+        poFDefn->AddFieldDefn( &oField );
+    }
 
     for( int iField = 0; iField < poGMLFeatureClass->GetPropertyCount(); iField++ )
     {
@@ -739,7 +742,7 @@ GDALDataset* OGRWFSLayer::FetchGetFeature(int nRequestMaxFeatures)
         }
 
         const char* const apszAllowedDrivers[] = { "GML", NULL };
-        const char* apszOpenOptions[5] = { NULL, NULL, NULL, NULL, NULL };
+        const char* apszOpenOptions[6] = { NULL, NULL, NULL, NULL, NULL, NULL };
         apszOpenOptions[0] = CPLSPrintf("XSD=%s", osXSDFileName.c_str());
         apszOpenOptions[1] = CPLSPrintf("EMPTY_AS_NULL=%s", poDS->IsEmptyAsNull() ? "YES" : "NO");
         int iGMLOOIdex = 2;
@@ -753,6 +756,12 @@ GDALDataset* OGRWFSLayer::FetchGetFeature(int nRequestMaxFeatures)
         {
             apszOpenOptions[iGMLOOIdex] = CPLSPrintf("CONSIDER_EPSG_AS_URN=%s",
                                             poDS->GetConsiderEPSGAsURN().c_str());
+            iGMLOOIdex ++;
+        }
+        if( CPLGetConfigOption("GML_EXPOSE_GML_ID", NULL) == NULL )
+        {
+            apszOpenOptions[iGMLOOIdex] = CPLSPrintf("EXPOSE_GML_ID=%s",
+                                            poDS->ExposeGMLId() ? "YES" : "NO");
             iGMLOOIdex ++;
         }
 
@@ -964,7 +973,7 @@ GDALDataset* OGRWFSLayer::FetchGetFeature(int nRequestMaxFeatures)
     CPLHTTPDestroyResult(psResult);
 
     const char* const * papszOpenOptions = NULL;
-    const char* apszGMLOpenOptions[3] = { NULL, NULL, NULL };
+    const char* apszGMLOpenOptions[4] = { NULL, NULL, NULL, NULL };
     int iGMLOOIdex = 0;
     if( CPLGetConfigOption("GML_INVERT_AXIS_ORDER_IF_LAT_LONG", NULL) == NULL )
     {
@@ -976,6 +985,12 @@ GDALDataset* OGRWFSLayer::FetchGetFeature(int nRequestMaxFeatures)
     {
         apszGMLOpenOptions[iGMLOOIdex] = CPLSPrintf("CONSIDER_EPSG_AS_URN=%s",
                                         poDS->GetConsiderEPSGAsURN().c_str());
+        iGMLOOIdex ++;
+    }
+    if( CPLGetConfigOption("GML_EXPOSE_GML_ID", NULL) == NULL )
+    {
+        apszGMLOpenOptions[iGMLOOIdex] = CPLSPrintf("EXPOSE_GML_ID=%s",
+                                        poDS->ExposeGMLId() ? "YES" : "NO");
         iGMLOOIdex ++;
     }
 
