@@ -234,7 +234,17 @@ int FGdbLayer::EditIndexesForFIDHack(const char* pszRadixTablename)
     }
     CSLDestroy(papszFiles);
 
-    VSIRename(osNewGDBTablX, osGDBTablX);
+    CPLString osGDBTablXTmp(CPLSPrintf("%s.tmp", osGDBTablX.c_str()));
+    int bRet2 = (VSIRename(osGDBTablX,osGDBTablXTmp) == 0 &&
+                 VSIRename(osNewGDBTablX, osGDBTablX) == 0);
+    VSIUnlink(osGDBTablXTmp);
+    if( !bRet2 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Cannot rename %s to %s", osNewGDBTablX.c_str(), osGDBTablX.c_str());
+        bRet = FALSE;
+    }
+
     return bRet;
 }
 
@@ -614,6 +624,8 @@ int  FGdbLayer::EditGDBTablX( const CPLString& osGDBTablX,
     int nMaxOGRFID = 0;
     for(; oIterO2F != m_oMapOGRFIDToFGDBFID.end(); ++oIterO2F )
         nMaxOGRFID = oIterO2F->first;
+    //printf("nInMaxFID = %d\n", nInMaxFID);
+    //printf("nMaxOGRFID = %d\n", nMaxOGRFID);
     int nOutMaxFID = MAX(nInMaxFID, nMaxOGRFID);
 
     // Optimization: If the feature ids at the end of the file all map to a OGR fid
@@ -628,6 +640,9 @@ int  FGdbLayer::EditGDBTablX( const CPLString& osGDBTablX,
         else
             break;
     }
+    
+    //printf("nInMaxFID = %d\n", nInMaxFID);
+    //printf("nOutMaxFID = %d\n", nOutMaxFID);
 
     int n1024BlocksOut = (int)(((GIntBig)nOutMaxFID + 1023) / 1024);
     int nTmp;
@@ -726,17 +741,20 @@ int  FGdbLayer::EditGDBTablX( const CPLString& osGDBTablX,
             // This FID matches a user defined OGR FID, then find the
             // corresponding FGDB record
             nSrcFID = oIterO2F->second;
+            //printf("(1) i = %d, nSrcFID = %d\n", i, nSrcFID);
         }
         else if( i == nNextFGDBFID || i > nInMaxFID )
         {
             // This record is a temporary one (will be moved to a user-define FID)
             // or we are out of the validity zone of input records
+            //printf("(2) i = %d, nNextFGDBFID = %d, nInMaxFID = %d\n", i, nNextFGDBFID, nInMaxFID);
             continue;
         }
         else
         {
             // Regular record, not overloaded by user defined FID
             nSrcFID = i;
+            //printf("(3) i = %d, nSrcFID = %d\n", i, nSrcFID);
         }
 
         if( pabyBlockMap != NULL )
@@ -786,6 +804,7 @@ int  FGdbLayer::EditGDBTablX( const CPLString& osGDBTablX,
             }
         }
     }
+    //printf("nLastWrittenOffset = %d\n", nLastWrittenOffset);
     if( nLastWrittenOffset > 0 || bDisableSparsePages )
     {
         SET_BIT(pabyBlockMapOut, (nOutMaxFID - 1) / 1024);
