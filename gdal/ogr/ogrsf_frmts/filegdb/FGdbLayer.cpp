@@ -604,7 +604,9 @@ int  FGdbLayer::EditGDBTablX( const CPLString& osGDBTablX,
     VSIFReadL(abyBuffer, 1, 16, fp);
     int n1024Blocks = GetInt32(abyBuffer, 1);
     int nInMaxFID = GetInt32(abyBuffer, 2);
+#ifdef DEBUG
     const int nInMaxFIDOri = nInMaxFID;
+#endif
     int nRecordSize = GetInt32(abyBuffer, 3);
     CPLAssert(nRecordSize >= 4 && nRecordSize <= 6);
 
@@ -2041,7 +2043,7 @@ CPLXMLNode* XMLSpatialReference(OGRSpatialReference* poSRS, char** papszOptions)
     // default tolerance is 1mm in the units of the coordinate system
     double ztol = 0.001 * (poSRS ? poSRS->GetTargetLinearUnits("VERT_CS") : 1.0);
     // default scale is 10x the tolerance
-    long zscale = 1 / ztol * 10;
+    long zscale = (long)(1 / ztol * 10);
 
     char s_xyscale[50], s_xytol[50], s_zscale[50], s_ztol[50];
     CPLsnprintf(s_ztol, 50, "%f", ztol);
@@ -2052,7 +2054,7 @@ CPLXMLNode* XMLSpatialReference(OGRSpatialReference* poSRS, char** papszOptions)
         // default tolerance is 1mm in the units of the coordinate system
         double xytol = 0.001 * (poSRS ? poSRS->GetTargetLinearUnits("PROJCS") : 1.0);
         // default scale is 10x the tolerance
-        long xyscale = 1 / xytol * 10;
+        long xyscale = (long)(1 / xytol * 10);
 
         CPLsnprintf(s_xytol, 50, "%f", xytol);
         snprintf(s_xyscale, 50, "%ld", xyscale);
@@ -3335,7 +3337,7 @@ bool FGdbBaseLayer::OGRFeatureFromGdbRow(Row* pRow, OGRFeature** ppFeature)
                 }
 
                 pOutFeature->SetField(i, val.tm_year + 1900, val.tm_mon + 1,
-                                      val.tm_mday, val.tm_hour, val.tm_min, val.tm_sec);
+                                      val.tm_mday, val.tm_hour, val.tm_min, (float)val.tm_sec);
             // Examine test data to figure out how to extract that
             }
             break;
