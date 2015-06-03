@@ -276,7 +276,9 @@ OGRErr FGdbDriver::StartTransaction(OGRDataSource*& poDSInOut, int& bOutHasReope
     if( osName[osName.size()-1] == '/' || osName[osName.size()-1] == '\\' )
         osName.resize(osName.size()-1);
 
+#ifndef WIN32
     int bPerLayerCopyingForTransaction = poDS->HasPerLayerCopyingForTransaction();
+#endif
 
     pConnection->m_nRefCount ++;
     delete poDSInOut;
@@ -430,7 +432,9 @@ OGRErr FGdbDriver::CommitTransaction(OGRDataSource*& poDSInOut, int& bOutHasReop
     if( osName[osName.size()-1] == '/' || osName[osName.size()-1] == '\\' )
         osName.resize(osName.size()-1);
 
+#ifndef WIN32
     int bPerLayerCopyingForTransaction = poDS->HasPerLayerCopyingForTransaction();
+#endif
 
     pConnection->m_nRefCount ++;
     delete poDSInOut;
