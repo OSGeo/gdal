@@ -182,6 +182,7 @@ void CPL_DLL GDALRegister_KRO(void);
 void CPL_DLL GDALRegister_KEA(void);
 void CPL_DLL GDALRegister_ROIPAC(void);
 void CPL_DLL GDALRegister_PLMOSAIC(void);
+void CPL_DLL GDALRegister_CALS(void);
 CPL_C_END
 
 #endif /* ndef GDAL_FRMTS_H_INCLUDED */
