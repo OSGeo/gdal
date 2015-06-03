@@ -1878,6 +1878,7 @@ CPLErr VRTComplexSource::RasterIOInternal( int nReqXOff, int nReqYOff,
     int bIsComplex = GDALDataTypeIsComplex(eBufType);
     GDALDataType eWrkDataType = (bIsComplex) ? GDT_CFloat32 : GDT_Float32;
     int nWordSize = GDALGetDataTypeSize(eWrkDataType) / 8;
+    int bNoDataSetIsNan = bNoDataSet && CPLIsNan(dfNoDataValue);
     int bNoDataSetAndNotNan = bNoDataSet && !CPLIsNan(dfNoDataValue);
 
     if( eScalingType == VRT_SCALING_LINEAR && bNoDataSet == FALSE && dfScaleRatio == 0)
@@ -1948,7 +1949,7 @@ CPLErr VRTComplexSource::RasterIOInternal( int nReqXOff, int nReqYOff,
             if (pafData && !bIsComplex)
             {
                 float fResult = pafData[iX + iY * nOutXSize];
-                if( CPLIsNan(dfNoDataValue) && CPLIsNan(fResult) )
+                if( bNoDataSetIsNan && CPLIsNan(fResult) )
                     continue;
                 if( bNoDataSetAndNotNan && ARE_REAL_EQUAL(fResult, dfNoDataValue) )
                     continue;
