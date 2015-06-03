@@ -182,7 +182,7 @@ int main(int argc, char* argv[])
     hDS = GDALOpen("../gdrivers/tmp/cache/Europe 2001_OZF.map", GA_ReadOnly);
 
     CPLDebug("TEST","Call GDALDestroyDriverManager()");
-    GDALDestroyDriverManager();
+    //GDALDestroyDriverManager();
 
     unlink("byte.tif");
     unlink("byte.tif.ovr");
