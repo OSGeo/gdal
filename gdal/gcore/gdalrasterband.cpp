@@ -266,14 +266,22 @@ CPLErr GDALRasterBand::RasterIO( GDALRWFlag eRWFlag,
 /* -------------------------------------------------------------------- */
 /*      Call the format specific function.                              */
 /* -------------------------------------------------------------------- */
+    CPLErr eErr;
+
+    int bCallLeaveReadWrite = EnterReadWrite(eRWFlag);
+
     if( bForceCachedIO )
-        return GDALRasterBand::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
+        eErr = GDALRasterBand::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                          pData, nBufXSize, nBufYSize, eBufType,
                                          nPixelSpace, nLineSpace, psExtraArg );
     else
-        return IRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
+        eErr = IRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
                           pData, nBufXSize, nBufYSize, eBufType,
                           nPixelSpace, nLineSpace, psExtraArg ) ;
+
+    if( bCallLeaveReadWrite) LeaveReadWrite();
+
+    return eErr;
 }
 
 /************************************************************************/
@@ -456,7 +464,10 @@ CPLErr GDALRasterBand::ReadBlock( int nXBlockOff, int nYBlockOff,
 /* -------------------------------------------------------------------- */
 /*      Invoke underlying implementation method.                        */
 /* -------------------------------------------------------------------- */
-    return( IReadBlock( nXBlockOff, nYBlockOff, pImage ) );
+    int bCallLeaveReadWrite = EnterReadWrite(GF_Read);
+    CPLErr eErr = IReadBlock( nXBlockOff, nYBlockOff, pImage );
+    if( bCallLeaveReadWrite) LeaveReadWrite();
+    return eErr;
 }
 
 /************************************************************************/
@@ -577,7 +588,12 @@ CPLErr GDALRasterBand::WriteBlock( int nXBlockOff, int nYBlockOff,
 /* -------------------------------------------------------------------- */
 /*      Invoke underlying implementation method.                        */
 /* -------------------------------------------------------------------- */
-    return( IWriteBlock( nXBlockOff, nYBlockOff, pImage ) );
+
+    int bCallLeaveReadWrite = EnterReadWrite(GF_Write);
+    CPLErr eErr = IWriteBlock( nXBlockOff, nYBlockOff, pImage );
+    if( bCallLeaveReadWrite ) LeaveReadWrite();
+
+    return eErr;
 }
 
 /************************************************************************/
@@ -1449,6 +1465,8 @@ CPLErr GDALRasterBand::Fill(double dfRealValue, double dfImaginaryValue) {
     GDALCopyWords(complexSrc, GDT_CFloat64, 0,
                   srcBlock, eDataType, elementSize, blockSize);
 
+    int bCallLeaveReadWrite = EnterReadWrite(GF_Write);
+
     // Write block to block cache
     for (int j = 0; j < nBlocksPerColumn; ++j) {
 	for (int i = 0; i < nBlocksPerRow; ++i) {
@@ -1471,6 +1489,8 @@ CPLErr GDALRasterBand::Fill(double dfRealValue, double dfImaginaryValue) {
             destBlock->DropLock();
 	}
     }
+    
+    if( bCallLeaveReadWrite ) LeaveReadWrite();
 
     // Free up the source block
     VSIFree(srcBlock);
@@ -5409,4 +5429,26 @@ CPLVirtualMem * GDALGetVirtualMemAuto( GDALRasterBandH hBand,
 
     return poBand->GetVirtualMemAuto(eRWFlag, pnPixelSpace,
                                      pnLineSpace, papszOptions);
+}
+
+
+/************************************************************************/
+/*                          EnterReadWrite()                            */
+/************************************************************************/
+
+int GDALRasterBand::EnterReadWrite(GDALRWFlag eRWFlag)
+{
+    if( poDS != NULL )
+        return poDS->EnterReadWrite(eRWFlag);
+    return FALSE;
+}
+
+/************************************************************************/
+/*                         LeaveReadWrite()                             */
+/************************************************************************/
+
+void GDALRasterBand::LeaveReadWrite()
+{
+    if( poDS != NULL )
+        poDS->LeaveReadWrite();
 }
