@@ -1,6 +1,4 @@
-= GDAL/OGR 2.0 Release Notes (to r29246) =
-
-***** Work in progress ***** 
+= GDAL/OGR 2.0 Release Notes =
 
 == In a nutshell... ==
 
@@ -158,6 +156,7 @@ Algorithms:
  * Warper: fix integer overflow when reprojecting into an area with (part of) bounds completely outside of the source projection (#5789)
  * Warper: add min,max,med,q1 and q3 resampling algorithms (#5868)
  * Warper: add a SRC_COORD_PRECISION warping option to help getting more reproducable output when -wm parameter changes (#5925)
+ * Warper: fix failure in GDALSuggestedWarpOut2() when top-left and bottom-right corners tranform to the same point (#5980)
  * GDALReprojectImage(): takes into account nodata values set on destination dataset
  * Median cut and dithering: optimizations and enhancements to deal with 8-bit precision (only if using internal interface for now)
  * rasterfill: add option to specify driver to use for temporary files
@@ -177,6 +176,7 @@ Utilities:
  * gdal_translate: adjust RPC metadata (pixel/line offset/scale) when subsetting/rescaling, instead of just discarding it
  * gdal_translate: don't recopy band units if rescaling or unscaling is involved (#3085)
  * gdal_translate: increase GDAL_MAX_DATASET_POOL_SIZE default value to 450. (#5828)
+ * gdal_translate: preserve NBITS image structure metadata when possible
  * gdalwarp: add -oo option per RFC 46
  * gdalwarp: add -te_srs option to specify -te in a SRS which isn't the target SRS
  * gdalwarp: add a -ovr option to select which overview level to use, and default to AUTO. Also add a generic OVERVIEW_LEVEL=level open option, and make it available in standard VRT (#5688)
@@ -302,6 +302,7 @@ Fixes:
  * serialize RPC in PAM .aux.xml file if using PROFILE != GDALGeoTIFF and RPB = NO
  * fix clearing of GCPs (#5945)
  * avoid generated corrupted right-most and bottom-most tiles for 12-bit JPEG-compressed (#5971)
+ * make sure to use scanline write API when writing single-band single-strip 1-bit datasets
 
 GRASS driver:
  * fix compilation issues against GRASS 7
@@ -389,6 +390,7 @@ JPIPKAK driver:
 
 KMLSuperOverlay driver:
  * fix truncated raster on 32 bit builds (#5683)
+ * make Identify() more restrictive to avoid false positives
 
 L1B driver:
  * add support for little-endian LRPT datasets (#5645)
@@ -462,6 +464,9 @@ PostgisRaster driver:
 Rasterlite driver:
  * accept space in filename
 
+RPFTOC driver:
+ * add tweak for weird relative directory names in the A.TOC file (#5979)
+
 VRT driver:
  * VRT warp: make selection of source overview work (#5688)
  * VRT warp: expose as many overviews in warped dataset as there are in source dataset, and make warped VRT honour -ovr parameter of gdalwarp (#5688)
@@ -528,6 +533,7 @@ Utilities:
  * ogrinfo: display dataset and layer metadata. Add -nomdd, -listmdd, -mdd all|domain options, like in gdalinfo. OGR VRT: add dataset and layer metadata support
  * ogrinfo: add -nocount and -noextent options
  * ogr2ogr: add -oo and -doo options per RFC 46
+ * ogr2ogr: add -spat_srs option
  * ogr2ogr: turn string value to one element list if destination field is stringlist
  * ogr2ogr: fix problem with SRS when copying layers with multiple geometry columns with different SRS (#5546)
  * ogr2ogr: add special case for -update and GPKG and input=output
@@ -537,6 +543,7 @@ Utilities:
  * ogr2ogr: add -ds_transaction to force dataset transactions, mainly for FileGDB driver
  * ogr2ogr: fix crash with -clipdst when a reprojection fails before (#5973)
  * ogrlineref: fix project if reper lies on first point or last point of line
+ * ogr_layer_algebra.py: for Update, Clip and Erase, only creates attribute of input layer by default (#5976)
 
 Other:
  * OGR WCTS removed from tree
@@ -629,6 +636,7 @@ GML driver:
  * make Expat parser accept trailing nul characters
  * correctly record path to attribute in case of attribute located on a nested element when .gfs is created with GML_ATTRIBUTES_TO_OGR_FIELDS=YES
  * fix GML_ATTRIBUTES_TO_OGR_FIELDS=YES to work correctly with xlink:href too (#5970
+ * make GML_EXPOSE_GML_ID to be honoured on WFS documents
 
 GPKG driver:
  * add support for non-spatial layers via the gdal_aspatial extension (#5521)
@@ -745,6 +753,9 @@ ODBC driver:
 ODS driver:
  * fix export of OFTDate fields that were exported as string
 
+OpenAir driver:
+ * tweak detection logic to read beyond first 10KB bytes when needed (#5975)
+
 OpenFileGDB driver:
  * add compatibility with .gdbtable files bigger than 4 GB (#5615)
  * support opening files with ConfigurationKeyword=MAX_FILE_SIZE_4GB or MAX_FILE_SIZE_256TB (#5615)
@@ -826,6 +837,9 @@ SQLite/Spatialite driver:
  * emit warning when reading text values in a integer/real field (possible since SQLite has no strong typing)
  * support reading date/datetime from Julian day floating point representation
 
+SUA driver:
+ * tweak detection logic to read beyond first 10KB bytes when needed (#5975)
+
 SXF driver:
  * Fix SXF file version check (#5456)
  * Fix wrong Miller Cylindrical projection string
@@ -859,7 +873,7 @@ WFS driver:
  * automatically enable paging if WFS 2.0 capabilities report paging support
  * evaluate SELECT with JOIN on server-side for a Join-capable WFS 2.0 server
  * add a TRUST_CAPABILITIES_BOUNDS open option, that can be set to YES to trust layer bounds declared in GetCapabilities response, for faster GetExtent() runtime (#4041)
- * add INVERT_AXIS_ORDER_IF_LAT_LONG, CONSIDER_EPSG_AS_URN open options
+ * add INVERT_AXIS_ORDER_IF_LAT_LONG, CONSIDER_EPSG_AS_URN and EXPOSE_GML_ID open options
  * add capability to use spatial functions ST_xxxxx() as server-side filters
  * add dataset and layer metadata
  * allow SELECT with several ORDER BY columns
