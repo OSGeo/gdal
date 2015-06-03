@@ -974,16 +974,47 @@ int OGRProj4CT::TransformEx( int nCount, double *x, double *y, double *z,
     if( bWebMercatorToWGS84 )
     {
 #define REVERSE_SPHERE_RADIUS  (1. / 6378137.)
+
         double y0 = y[0];
         for( i = 0; i < nCount; i++ )
         {
             if( x[i] != HUGE_VAL )
             {
                 x[i] = x[i] * REVERSE_SPHERE_RADIUS;
-                while( x[i] > M_PI )
-                    x[i] -= 2 * M_PI;
-                while( x[i] < -M_PI )
-                    x[i] += 2 * M_PI;
+                if( x[i] > M_PI )
+                {
+                    if( x[i] < M_PI+1e-14 )
+                        x[i] = M_PI;
+                    else if (bCheckWithInvertProj)
+                    {
+                        x[i] = y[i] = HUGE_VAL;
+                        y0 = HUGE_VAL;
+                        continue;
+                    }
+                    else 
+                    {
+                        do {
+                            x[i] -= 2 * M_PI;
+                        } while ( x[i] > M_PI );
+                    }
+                }
+                else if( x[i] < -M_PI )
+                {
+                    if( x[i] > -M_PI-1e-14 )
+                        x[i] = -M_PI;
+                    else if (bCheckWithInvertProj)
+                    {
+                        x[i] = y[i] = HUGE_VAL;
+                        y0 = HUGE_VAL;
+                        continue;
+                    }
+                    else
+                    {
+                        do {
+                            x[i] += 2 * M_PI;
+                        } while( x[i] < -M_PI );
+                    }
+                }
                  // Optimization for the case where we are provided a whole line of same northing
                 if( i > 0 && y[i] == y0 )
                     y[i] = y[0];
