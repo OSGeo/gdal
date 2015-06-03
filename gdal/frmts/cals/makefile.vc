@@ -1,0 +1,15 @@
+GDAL_ROOT = ..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+OBJ	= calsdataset.obj
+
+EXTRAFLAGS = -I..\gtiff\libtiff
+
+default:	$(OBJ)
+	xcopy /D  /Y *.obj ..\o
+	cd ..
+	
+clean:
+	-del *.obj
+	cd ..
