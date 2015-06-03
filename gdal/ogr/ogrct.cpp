@@ -648,9 +648,6 @@ int OGRProj4CT::InitializeNoLock( OGRSpatialReference * poSourceIn,
         /* a tolerance of 10000 */
         dfThreshold = CPLAtof(CPLGetConfigOption( "THRESHOLD", "10000" ));
 
-/* -------------------------------------------------------------------- */
-/*      Establish PROJ.4 handle for source if projection.               */
-/* -------------------------------------------------------------------- */
     // OGRThreadSafety: The following variable is not a thread safety issue 
     // since the only issue is incrementing while accessing which at worse 
     // means debug output could be one "increment" late. 
@@ -673,6 +670,56 @@ int OGRProj4CT::InitializeNoLock( OGRSpatialReference * poSourceIn,
         return FALSE;
     }
 
+    char        *pszDstProj4Defn = NULL;
+
+    if( poSRSTarget->exportToProj4( &pszDstProj4Defn ) != OGRERR_NONE )
+    {
+        CPLFree( pszSrcProj4Defn );
+        CPLFree( pszDstProj4Defn );
+        return FALSE;
+    }
+
+    if( strlen(pszDstProj4Defn) == 0 )
+    {
+        CPLFree( pszSrcProj4Defn );
+        CPLFree( pszDstProj4Defn );
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "No PROJ.4 translation for destination SRS, coordinate\n"
+                  "transformation initialization has failed." );
+        return FALSE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Optimization to avoid useless nadgrids evaluation.              */
+/*      For example when converting between WGS84 and WebMercator       */
+/* -------------------------------------------------------------------- */
+    if( strstr(pszSrcProj4Defn, "+ellps=WGS84 +towgs84=0,0,0,0,0,0,0 ") != NULL &&
+        strstr(pszDstProj4Defn, "+nadgrids=@null ") != NULL &&
+        strstr(pszDstProj4Defn, "+towgs84") == NULL )
+    {
+        char* pszDst = strstr(pszSrcProj4Defn, "+towgs84=0,0,0,0,0,0,0 ");
+        char* pszSrc = pszDst + strlen("+towgs84=0,0,0,0,0,0,0 ");
+        memmove(pszDst, pszSrc, strlen(pszSrc)+1);
+        pszDst = strstr(pszDstProj4Defn, "+nadgrids=@null ");
+        pszSrc = pszDst + strlen("+nadgrids=@null ");
+        memmove(pszDst, pszSrc, strlen(pszSrc)+1);
+    }
+    else
+    if( strstr(pszDstProj4Defn, "+ellps=WGS84 +towgs84=0,0,0,0,0,0,0 ") != NULL &&
+        strstr(pszSrcProj4Defn, "+nadgrids=@null ") != NULL &&
+        strstr(pszSrcProj4Defn, "+towgs84") == NULL )
+    {
+        char* pszDst = strstr(pszDstProj4Defn, "+towgs84=0,0,0,0,0,0,0 ");
+        char* pszSrc = pszDst + strlen("+towgs84=0,0,0,0,0,0,0 ");
+        memmove(pszDst, pszSrc, strlen(pszSrc)+1);
+        pszDst = strstr(pszSrcProj4Defn, "+nadgrids=@null ");
+        pszSrc = pszDst + strlen("+nadgrids=@null ");
+        memmove(pszDst, pszSrc, strlen(pszSrc)+1);
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Establish PROJ.4 handle for source if projection.               */
+/* -------------------------------------------------------------------- */
     if (pjctx)
         psPJSource = pfn_pj_init_plus_ctx( pjctx, pszSrcProj4Defn );
     else
@@ -713,31 +760,13 @@ int OGRProj4CT::InitializeNoLock( OGRSpatialReference * poSourceIn,
     if( psPJSource == NULL )
     {
         CPLFree( pszSrcProj4Defn );
+        CPLFree( pszDstProj4Defn );
         return FALSE;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Establish PROJ.4 handle for target if projection.               */
 /* -------------------------------------------------------------------- */
-
-    char        *pszDstProj4Defn = NULL;
-
-    if( poSRSTarget->exportToProj4( &pszDstProj4Defn ) != OGRERR_NONE )
-    {
-        CPLFree( pszSrcProj4Defn );
-        CPLFree( pszDstProj4Defn );
-        return FALSE;
-    }
-
-    if( strlen(pszDstProj4Defn) == 0 )
-    {
-        CPLFree( pszSrcProj4Defn );
-        CPLFree( pszDstProj4Defn );
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "No PROJ.4 translation for destination SRS, coordinate\n"
-                  "transformation initialization has failed." );
-        return FALSE;
-    }
 
     if (pjctx)
         psPJTarget = pfn_pj_init_plus_ctx( pjctx, pszDstProj4Defn );
