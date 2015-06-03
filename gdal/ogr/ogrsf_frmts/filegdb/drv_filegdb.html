@@ -52,8 +52,17 @@ If the transaction is committed, the backup copy is destroyed. If the transactio
 is rolled back, the backup copy is restored. So this might be costly when operating
 on huge geodatabases.<p>
 
+Starting with GDAL 2.1, on Linux/Unix, instead of a full backup copy only layers
+that are modified are backed up.<p>
+
 Note that this emulation has an unspecified behaviour in case of concurrent updates
 (with different connections in the same or another process).<p>
+
+<h2>CreateFeature() support</h2>
+
+The FileGDB SDK API does not allow to create a feature with a FID specified by
+the user. Starting with GDAL 2.1, the FileGDB driver implements a special FID
+remapping technique to enable the user to create features at the FID of their choice.<p>
 
 <h2>Dataset Creation Options</h2>
 
