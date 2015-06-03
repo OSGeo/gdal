@@ -135,17 +135,8 @@ listed</a> using Trac.<p>
 
 \section index_bindings GDAL In Other Languages
 
-The following bindings of GDAL in other languages are available:
-
-<ul>
-<li> <a href="http://trac.osgeo.org/gdal/wiki/GdalOgrInPerl">Perl</a>
-<li> <a href="http://trac.osgeo.org/gdal/wiki/GdalOgrInPython">Python</a>
-<li> <a href="vb6_tutorial.html">VB6 Bindings</a> (not using SWIG)
-<li> <a href="http://trac.osgeo.org/gdal/wiki/GdalOgrInJava">Java</a>
-<li> <a href="http://trac.osgeo.org/gdal/wiki/GdalOgrInCsharp">C# / .Net</a>
-<li> <a href="http://trac.osgeo.org/gdal/wiki/GdalOgrInRuby">Ruby</a>
-<li> <a href="http://trac.osgeo.org/gdal/wiki/GdalOgrInR">R</a>
-
-</ul>
+The list of bindings of GDAL in other languages is maintained on the
+<a href="http://trac.osgeo.org/gdal/#GDALOGRInOtherLanguages">GDAL
+wiki</a>.
 
 */
