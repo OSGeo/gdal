@@ -1,6 +1,12 @@
 OBJ     =       FGdbDriver.obj FGdbDatasource.obj FGdbLayer.obj FGdbUtils.obj FGdbResultLayer.obj
 EXTRAFLAGS =	-I.. -I..\generic -I..\.. -I$(FGDB_INC)
 
+!IFDEF FGDB_VERSION
+EXTRAFLAGS = $(EXTRAFLAGS) -DFGDB_VERSION=$(FGDB_VERSION)
+!ELSE
+EXTRAFLAGS = $(EXTRAFLAGS) -DFGDB_VERSION=010300
+!ENDIF
+
 GDAL_ROOT	=	..\..\..
 
 PLUGIN_DLL 	=	ogr_FileGDB.dll
