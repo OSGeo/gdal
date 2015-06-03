@@ -1801,6 +1801,8 @@ CPLErr GDALDataset::RasterIO( GDALRWFlag eRWFlag,
     }
 
 
+    int bCallLeaveReadWrite = EnterReadWrite(eRWFlag);
+
 /* -------------------------------------------------------------------- */
 /*      We are being forced to use cached IO instead of a driver        */
 /*      specific implementation.                                        */
@@ -1827,6 +1829,8 @@ CPLErr GDALDataset::RasterIO( GDALRWFlag eRWFlag,
                        nPixelSpace, nLineSpace, nBandSpace,
                        psExtraArg );
     }
+
+    if( bCallLeaveReadWrite ) LeaveReadWrite();
 
 /* -------------------------------------------------------------------- */
 /*      Cleanup                                                         */
@@ -5730,4 +5734,27 @@ OGRErr GDALDatasetRollbackTransaction(GDALDatasetH hDS)
 #endif
 
     return ((GDALDataset*) hDS)->RollbackTransaction();
+}
+
+/************************************************************************/
+/*                          EnterReadWrite()                            */
+/************************************************************************/
+
+int GDALDataset::EnterReadWrite(GDALRWFlag eRWFlag)
+{
+    if( eAccess == GA_Update && (eRWFlag == GF_Write || m_hMutex != NULL) )
+    {
+        CPLCreateOrAcquireMutex(&m_hMutex, 1000.0);
+        return TRUE;
+    }
+    return FALSE;
+}
+
+/************************************************************************/
+/*                         LeaveReadWrite()                             */
+/************************************************************************/
+
+void GDALDataset::LeaveReadWrite()
+{
+    CPLReleaseMutex(m_hMutex);
 }
