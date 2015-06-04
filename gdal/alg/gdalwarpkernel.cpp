@@ -39,7 +39,7 @@
 #include "cpl_string.h"
 #include "gdalwarpkernel_opencl.h"
 #include "cpl_atomic_ops.h"
-#include "cpl_multiproc.h"
+#include "cpl_worker_thread_pool.h"
 #include <limits>
 
 CPL_CVSID("$Id$");
@@ -160,7 +160,6 @@ typedef struct _GWKJobStruct GWKJobStruct;
 
 struct _GWKJobStruct
 {
-    CPLJoinableThread *hThread;
     GDALWarpKernel *poWK;
     int             iYMin;
     int             iYMax;
@@ -170,6 +169,10 @@ struct _GWKJobStruct
     CPLMutex       *hCondMutex;
     int           (*pfnProgress)(GWKJobStruct* psJob);
     void           *pTransformerArg;
+
+    // Just used during thread initialization phase
+    GDALTransformerFunc pfnTransformerInit;
+    void           *pTransformerArgInit;
 } ;
 
 /************************************************************************/
@@ -226,13 +229,155 @@ static CPLErr GWKGenericMonoThread( GDALWarpKernel *poWK,
     sThreadJob.pbStop = &bStop;
     sThreadJob.hCond = NULL;
     sThreadJob.hCondMutex = NULL;
-    sThreadJob.hThread = NULL;
     sThreadJob.pfnProgress = GWKProgressMonoThread;
     sThreadJob.pTransformerArg = poWK->pTransformerArg;
 
     pfnFunc(&sThreadJob);
 
     return !bStop ? CE_None : CE_Failure;
+}
+
+/************************************************************************/
+/*                     GWKThreadInitTransformer()                       */
+/************************************************************************/
+
+static void GWKThreadInitTransformer(void* pData)
+{
+    GWKJobStruct* psJob = (GWKJobStruct*)pData;
+    if( psJob->pTransformerArg == NULL )
+        psJob->pTransformerArg = GDALCloneTransformer(psJob->pTransformerArgInit);
+    if( psJob->pTransformerArg != NULL )
+    {
+        // In case of lazy opening (for example RPCDEM), do a dummy transformation
+        // to be sure that the DEM is really opened with the context of this thread.
+        double dfX = 0.5, dfY = 0.5, dfZ = 0.0;
+        int bSuccess = FALSE;
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        psJob->pfnTransformerInit(psJob->pTransformerArg, TRUE, 1, 
+                                  &dfX, &dfY, &dfZ, &bSuccess );
+        CPLPopErrorHandler();
+    }
+}
+
+/************************************************************************/
+/*                          GWKThreadsCreate()                          */
+/************************************************************************/
+
+typedef struct
+{
+    WorkerThreadPool* poThreadPool;
+    GWKJobStruct* pasThreadJob;
+    CPLCond* hCond;
+    CPLMutex* hCondMutex;
+} GWKThreadData;
+
+void* GWKThreadsCreate(char** papszWarpOptions,
+                       GDALTransformerFunc pfnTransformer, void* pTransformerArg)
+{
+    int nThreads;
+    const char* pszWarpThreads = CSLFetchNameValue(papszWarpOptions, "NUM_THREADS");
+    if (pszWarpThreads == NULL)
+        pszWarpThreads = CPLGetConfigOption("GDAL_NUM_THREADS", "1");
+    if (EQUAL(pszWarpThreads, "ALL_CPUS"))
+        nThreads = CPLGetNumCPUs();
+    else
+        nThreads = atoi(pszWarpThreads);
+    if( nThreads <= 1 )
+        nThreads = 0;
+    if (nThreads > 128)
+        nThreads = 128;
+    
+    GWKThreadData* psThreadData = (GWKThreadData*)CPLCalloc(1,sizeof(GWKThreadData));
+    
+    CPLCond* hCond = NULL;
+    if( nThreads )
+        hCond = CPLCreateCond();
+    if( nThreads && hCond )
+    {
+/* -------------------------------------------------------------------- */
+/*      Duplicate pTransformerArg per thread.                           */
+/* -------------------------------------------------------------------- */
+        int i;
+        int bTransformerCloningSuccess = TRUE;
+        
+        psThreadData->pasThreadJob =
+                (GWKJobStruct*)CPLCalloc(sizeof(GWKJobStruct), nThreads);
+        psThreadData->hCond = hCond;
+        psThreadData->hCondMutex = CPLCreateMutex();
+        CPLReleaseMutex(psThreadData->hCondMutex);
+
+        std::vector<void*> apInitData;
+        for(i=0;i<nThreads;i++)
+        {
+            psThreadData->pasThreadJob[i].hCond = psThreadData->hCond;
+            psThreadData->pasThreadJob[i].hCondMutex = psThreadData->hCondMutex;
+            psThreadData->pasThreadJob[i].pfnTransformerInit = pfnTransformer;
+            psThreadData->pasThreadJob[i].pTransformerArgInit = pTransformerArg;
+            if( i == 0 )
+                psThreadData->pasThreadJob[i].pTransformerArg = pTransformerArg;
+            else
+                psThreadData->pasThreadJob[i].pTransformerArg = NULL;
+            apInitData.push_back(&(psThreadData->pasThreadJob[i]));
+        }
+
+        psThreadData->poThreadPool = new WorkerThreadPool();
+        psThreadData->poThreadPool->Setup(nThreads,
+                                          GWKThreadInitTransformer,
+                                          &apInitData[0]);
+
+        for(i=1;i<nThreads;i++)
+        {
+            if( psThreadData->pasThreadJob[i].pTransformerArg == NULL )
+            {
+                CPLDebug("WARP", "Cannot deserialize transformer");
+                bTransformerCloningSuccess = FALSE;
+                break;
+            }
+        }
+
+        if (!bTransformerCloningSuccess)
+        {
+            for(i=1;i<nThreads;i++)
+            {
+                if( psThreadData->pasThreadJob[i].pTransformerArg )
+                    GDALDestroyTransformer(psThreadData->pasThreadJob[i].pTransformerArg);
+            }
+            CPLFree(psThreadData->pasThreadJob);
+            psThreadData->pasThreadJob = NULL;
+            delete psThreadData->poThreadPool;
+            psThreadData->poThreadPool = NULL;
+
+            CPLDebug("WARP", "Cannot duplicate transformer function. "
+                     "Falling back to mono-thread computation");
+        }
+    }
+
+    return psThreadData;
+}
+
+/************************************************************************/
+/*                             GWKThreadsEnd()                          */
+/************************************************************************/
+
+void GWKThreadsEnd(void* psThreadDataIn)
+{
+    GWKThreadData* psThreadData = (GWKThreadData*)psThreadDataIn;
+    if( psThreadData->poThreadPool )
+    {
+        int nThreads = psThreadData->poThreadPool->GetThreadCount();
+        for(int i=1;i<nThreads;i++)
+        {
+            if( psThreadData->pasThreadJob[i].pTransformerArg )
+                GDALDestroyTransformer(psThreadData->pasThreadJob[i].pTransformerArg);
+        }
+        CPLFree(psThreadData->pasThreadJob);
+        delete psThreadData->poThreadPool;
+    }
+    if( psThreadData->hCond )
+        CPLDestroyCond(psThreadData->hCond);
+    if( psThreadData->hCondMutex )
+        CPLDestroyMutex(psThreadData->hCondMutex);
+    CPLFree(psThreadData);
 }
 
 /************************************************************************/
@@ -259,141 +404,72 @@ static CPLErr GWKRun( GDALWarpKernel *poWK,
         CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
         return CE_Failure;
     }
-
-    const char* pszWarpThreads = CSLFetchNameValue(poWK->papszWarpOptions, "NUM_THREADS");
-    int nThreads;
-    if (pszWarpThreads == NULL)
-        pszWarpThreads = CPLGetConfigOption("GDAL_NUM_THREADS", "1");
-    if (EQUAL(pszWarpThreads, "ALL_CPUS"))
-        nThreads = CPLGetNumCPUs();
-    else
-        nThreads = atoi(pszWarpThreads);
-    if (nThreads > 128)
-        nThreads = 128;
-    if (nThreads >= nDstYSize / 2)
-        nThreads = nDstYSize / 2;
-
-    if (nThreads <= 1)
+    
+    GWKThreadData* psThreadData = (GWKThreadData*)poWK->psThreadData;
+    if( psThreadData == NULL || psThreadData->poThreadPool == NULL )
     {
         return GWKGenericMonoThread(poWK, pfnFunc);
     }
-    else
+
+    int nThreads = psThreadData->poThreadPool->GetThreadCount();
+    if (nThreads >= nDstYSize / 2)
+        nThreads = nDstYSize / 2;
+
+    CPLDebug("WARP", "Using %d threads", nThreads);
+
+    volatile int bStop = FALSE;
+    volatile int nCounter = 0;
+
+    CPLAcquireMutex(psThreadData->hCondMutex, 1000);
+    
+/* -------------------------------------------------------------------- */
+/*      Submit jobs                                                     */
+/* -------------------------------------------------------------------- */
+    for(int i=0;i<nThreads;i++)
     {
-        GWKJobStruct* pasThreadJob =
-            (GWKJobStruct*)CPLCalloc(sizeof(GWKJobStruct), nThreads);
-
-/* -------------------------------------------------------------------- */
-/*      Duplicate pTransformerArg per thread.                           */
-/* -------------------------------------------------------------------- */
-        int i;
-        int bTransformerCloningSuccess = TRUE;
-
-        for(i=0;i<nThreads;i++)
-        {
-            pasThreadJob[i].pTransformerArg = GDALCloneTransformer(poWK->pTransformerArg);
-            if( pasThreadJob[i].pTransformerArg == NULL )
-            {
-                CPLDebug("WARP", "Cannot deserialize transformer");
-                bTransformerCloningSuccess = FALSE;
-                break;
-            }
-        }
-
-        if (!bTransformerCloningSuccess)
-        {
-            for(i=0;i<nThreads;i++)
-            {
-                if( pasThreadJob[i].pTransformerArg )
-                    GDALDestroyTransformer(pasThreadJob[i].pTransformerArg);
-            }
-            CPLFree(pasThreadJob);
-
-            CPLDebug("WARP", "Cannot duplicate transformer function. "
-                     "Falling back to mono-thread computation");
-            return GWKGenericMonoThread(poWK, pfnFunc);
-        }
-
-        CPLCond* hCond = CPLCreateCond();
-        if (hCond == NULL)
-        {
-            for(i=0;i<nThreads;i++)
-            {
-                if( pasThreadJob[i].pTransformerArg )
-                    GDALDestroyTransformer(pasThreadJob[i].pTransformerArg);
-            }
-            CPLFree(pasThreadJob);
-
-            CPLDebug("WARP", "Multithreading disabled. "
-                     "Falling back to mono-thread computation");
-            return GWKGenericMonoThread(poWK, pfnFunc);
-        }
-
-        CPLDebug("WARP", "Using %d threads", nThreads);
-
-        CPLMutex* hCondMutex = CPLCreateMutex(); /* and take implicitely the mutex */
-
-        volatile int bStop = FALSE;
-        volatile int nCounter = 0;
-
-/* -------------------------------------------------------------------- */
-/*      Lannch worker threads                                           */
-/* -------------------------------------------------------------------- */
-        for(i=0;i<nThreads;i++)
-        {
-            pasThreadJob[i].poWK = poWK;
-            pasThreadJob[i].pnCounter = &nCounter;
-            pasThreadJob[i].iYMin = (int)(((GIntBig)i) * nDstYSize / nThreads);
-            pasThreadJob[i].iYMax = (int)(((GIntBig)(i + 1)) * nDstYSize / nThreads);
-            pasThreadJob[i].pbStop = &bStop;
-            pasThreadJob[i].hCond = hCond;
-            pasThreadJob[i].hCondMutex = hCondMutex;
-            if( poWK->pfnProgress != GDALDummyProgress )
-                pasThreadJob[i].pfnProgress = GWKProgressThread;
-            else
-                pasThreadJob[i].pfnProgress = NULL;
-            pasThreadJob[i].hThread = CPLCreateJoinableThread( pfnFunc,
-                                                  (void*) &pasThreadJob[i] );
-        }
+        psThreadData->pasThreadJob[i].poWK = poWK;
+        psThreadData->pasThreadJob[i].pnCounter = &nCounter;
+        psThreadData->pasThreadJob[i].iYMin = (int)(((GIntBig)i) * nDstYSize / nThreads);
+        psThreadData->pasThreadJob[i].iYMax = (int)(((GIntBig)(i + 1)) * nDstYSize / nThreads);
+        psThreadData->pasThreadJob[i].pbStop = &bStop;
+        if( poWK->pfnProgress != GDALDummyProgress )
+            psThreadData->pasThreadJob[i].pfnProgress = GWKProgressThread;
+        else
+            psThreadData->pasThreadJob[i].pfnProgress = NULL;
+        psThreadData->poThreadPool->SubmitJob( pfnFunc,
+                                   (void*) &psThreadData->pasThreadJob[i] );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Report progress.                                                */
 /* -------------------------------------------------------------------- */
-        if( poWK->pfnProgress != GDALDummyProgress )
+    if( poWK->pfnProgress != GDALDummyProgress )
+    {
+        while(nCounter < nDstYSize)
         {
-            while(nCounter < nDstYSize)
-            {
-                CPLCondWait(hCond, hCondMutex);
+            CPLCondWait(psThreadData->hCond, psThreadData->hCondMutex);
 
-                if( !poWK->pfnProgress( poWK->dfProgressBase + poWK->dfProgressScale *
-                                        (nCounter / (double) nDstYSize),
-                                        "", poWK->pProgress ) )
-                {
-                    CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
-                    bStop = TRUE;
-                    break;
-                }
+            if( !poWK->pfnProgress( poWK->dfProgressBase + poWK->dfProgressScale *
+                                    (nCounter / (double) nDstYSize),
+                                    "", poWK->pProgress ) )
+            {
+                CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
+                bStop = TRUE;
+                break;
             }
         }
-
-        /* Release mutex before joining threads, otherwise they will dead-lock */
-        /* forever in GWKProgressThread() */
-        CPLReleaseMutex(hCondMutex);
-
-/* -------------------------------------------------------------------- */
-/*      Wait for all threads to complete and finish.                    */
-/* -------------------------------------------------------------------- */
-        for(i=0;i<nThreads;i++)
-        {
-            CPLJoinThread(pasThreadJob[i].hThread);
-            GDALDestroyTransformer(pasThreadJob[i].pTransformerArg);
-        }
-
-        CPLFree(pasThreadJob);
-        CPLDestroyCond(hCond);
-        CPLDestroyMutex(hCondMutex);
-
-        return !bStop ? CE_None : CE_Failure;
     }
+
+    /* Release mutex before joining threads, otherwise they will dead-lock */
+    /* forever in GWKProgressThread() */
+    CPLReleaseMutex(psThreadData->hCondMutex);
+
+/* -------------------------------------------------------------------- */
+/*      Wait for all jobs to complete.                                  */
+/* -------------------------------------------------------------------- */
+    psThreadData->poThreadPool->WaitCompletion();
+
+    return !bStop ? CE_None : CE_Failure;
 }
 
 /************************************************************************/
@@ -856,6 +932,7 @@ GDALWarpKernel::GDALWarpKernel()
     pfnTransformer = NULL;
     pTransformerArg = NULL;
     papszWarpOptions = NULL;
+    psThreadData = NULL;
 }
 
 /************************************************************************/
