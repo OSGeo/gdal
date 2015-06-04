@@ -133,6 +133,7 @@ GDALWarpOperation::GDALWarpOperation()
 
     bReportTimings = FALSE;
     nLastTimeReported = 0;
+    psThreadData = NULL;
 }
 
 /************************************************************************/
@@ -151,6 +152,8 @@ GDALWarpOperation::~GDALWarpOperation()
     }
 
     WipeChunkList();
+    if( psThreadData )
+        GWKThreadsEnd(psThreadData);
 }
 
 /************************************************************************/
@@ -575,6 +578,10 @@ CPLErr GDALWarpOperation::Initialize( const GDALWarpOptions *psNewOptions )
 
     if( eErr != CE_None )
         WipeOptions();
+
+    psThreadData = GWKThreadsCreate(psOptions->papszWarpOptions,
+                                    psOptions->pfnTransformer,
+                                    psOptions->pTransformerArg);
 
     return eErr;
 }
@@ -1535,6 +1542,7 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
     oWK.dfProgressScale = dfProgressScale;
 
     oWK.papszWarpOptions = psOptions->papszWarpOptions;
+    oWK.psThreadData = psThreadData;
     
     oWK.padfDstNoDataReal = psOptions->padfDstNoDataReal;
 

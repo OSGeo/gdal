@@ -325,6 +325,8 @@ public:
     double              dfProgressScale;
     
     double              *padfDstNoDataReal;
+    
+    void                *psThreadData;
 
                        GDALWarpKernel();
     virtual           ~GDALWarpKernel();
@@ -332,6 +334,11 @@ public:
     CPLErr              Validate();
     CPLErr              PerformWarp();
 };
+
+void* GWKThreadsCreate(char** papszWarpOptions,
+                       GDALTransformerFunc pfnTransformer,
+                       void* pTransformerArg);
+void GWKThreadsEnd(void* psThreadDataIn);
 
 /************************************************************************/
 /*                         GDALWarpOperation()                          */
@@ -372,6 +379,8 @@ private:
     int             bReportTimings;
     unsigned long   nLastTimeReported;
 
+    void           *psThreadData;
+    
     void            WipeChunkList();
     CPLErr          CollectChunkList( int nDstXOff, int nDstYOff, 
                                       int nDstXSize, int nDstYSize );
