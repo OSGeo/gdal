@@ -356,6 +356,41 @@ def vrtmisc_10():
     return "success"
 
 ###############################################################################
+# Test relativeToVRT is preserved during re-serialization (#5985)
+
+def vrtmisc_11():
+    
+    f = open('tmp/vrtmisc_11.vrt', 'wt')
+    f.write(
+"""<VRTDataset rasterXSize="1" rasterYSize="1">
+  <VRTRasterBand dataType="Byte" band="1">
+    <SimpleSource>
+      <SourceFilename relativeToVRT="1">../data/byte.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="1" RasterYSize="1" DataType="Byte" BlockXSize="1" BlockYSize="1" />
+      <SrcRect xOff="0" yOff="0" xSize="1" ySize="1" />
+      <DstRect xOff="0" yOff="0" xSize="1" ySize="1" />
+    </SimpleSource>
+  </VRTRasterBand>
+</VRTDataset>
+""")
+    f.close()
+
+    ds = gdal.Open("tmp/vrtmisc_11.vrt", gdal.GA_Update)
+    # to trigger a flush
+    ds.SetMetadata(ds.GetMetadata())
+    ds = None
+    
+    data = open('tmp/vrtmisc_11.vrt', 'rt').read()
+
+    gdal.Unlink("tmp/vrtmisc_11.vrt")
+    
+    if data.find('<SourceFilename relativeToVRT="1">../data/byte.tif</SourceFilename>') < 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return "success"
+###############################################################################
 # Cleanup.
 
 def vrtmisc_cleanup():
@@ -372,6 +407,7 @@ gdaltest_list = [
     vrtmisc_8,
     vrtmisc_9,
     vrtmisc_10,
+    vrtmisc_11,
     vrtmisc_cleanup ]
 
 if __name__ == '__main__':
