@@ -1372,3 +1372,28 @@ CPLErr VRTDataset::IRasterIO( GDALRWFlag eRWFlag,
                                   nBandCount, panBandMap,
                                   nPixelSpace, nLineSpace, nBandSpace, psExtraArg);
 }
+
+/************************************************************************/
+/*                  UnsetPreservedRelativeFilenames()                   */
+/************************************************************************/
+
+void VRTDataset::UnsetPreservedRelativeFilenames()
+{
+    for(int iBand = 0; iBand < nBands; iBand++)
+    {
+        if (!((VRTRasterBand *) papoBands[iBand])->IsSourcedRasterBand())
+            continue;
+
+        VRTSourcedRasterBand* poBand = (VRTSourcedRasterBand* )papoBands[iBand];
+        int nSources = poBand->nSources;
+        VRTSource** papoSources = poBand->papoSources;
+        for(int iSource = 0; iSource < nSources; iSource++)
+        {
+            if (!papoSources[iSource]->IsSimpleSource())
+                continue;
+
+            VRTSimpleSource* poSource = (VRTSimpleSource* )papoSources[iSource];
+            poSource->UnsetPreservedRelativeFilenames();
+        }
+    }
+}
