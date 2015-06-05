@@ -64,7 +64,7 @@ class CPL_DLL WorkerThreadPool
                    CPLThreadFunc pfnInitFunc,
                    void** pasInitData);
         void SubmitJob(CPLThreadFunc pfnFunc, void* pData);
-        void WaitCompletion();
+        void WaitCompletion(int nMaxRemainingJobs = 0);
 
         int GetThreadCount() const { return (int)aWT.size(); }
 };
