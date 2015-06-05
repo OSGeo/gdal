@@ -5857,8 +5857,63 @@ def tiff_write_136():
         print(expected_cs)
         return 'fail'
 
-    gdal.Unlink('/vsimem/tiff_write_126_src.tif')
+    gdal.Unlink('/vsimem/tiff_write_136_src.tif')
     gdal.Unlink('/vsimem/tiff_write_136.tif')
+
+    return 'success'
+
+###############################################################################
+# Test multi-threaded writing
+
+def tiff_write_137():
+    
+    src_ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_137_src.tif', 4000, 4000)
+    src_ds.GetRasterBand(1).Fill(1)
+    expected_cs = src_ds.GetRasterBand(1).Checksum()
+    
+    # Test NUM_THREADS as creation option
+    ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_137.tif', src_ds, \
+        options = ['BLOCKYSIZE=16', 'COMPRESS=DEFLATE', 'NUM_THREADS=ALL_CPUS'])
+    src_ds = None
+    ds = None
+    ds = gdal.Open('/vsimem/tiff_write_137.tif')
+    cs = ds.GetRasterBand(1).Checksum()
+    ds = None
+    if cs != expected_cs:
+        gdaltest.post_reason('fail')
+        print(cs)
+        print(expected_cs)
+        return 'fail'
+
+    # Test NUM_THREADS as open option
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_137.tif', 4000, 4000, \
+        options = ['TILED=YES', 'COMPRESS=DEFLATE', 'PREDICTOR=2', 'SPARSE_OK=YES'])
+    ds = None
+    ds = gdal.OpenEx('/vsimem/tiff_write_137.tif', gdal.OF_UPDATE, open_options = ['NUM_THREADS=4'])
+    ds.GetRasterBand(1).Fill(1)
+    ds = None
+    ds = gdal.Open('/vsimem/tiff_write_137.tif')
+    cs = ds.GetRasterBand(1).Checksum()
+    ds = None
+    if cs != expected_cs:
+        gdaltest.post_reason('fail')
+        print(cs)
+        print(expected_cs)
+        return 'fail'
+    
+    # Ask data immediately while the block is compressed
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_137.tif', 4000, 4000, \
+                            options = ['BLOCKYSIZE=4000', 'COMPRESS=DEFLATE'])
+    ds.GetRasterBand(1).Fill(65)
+    val = ds.ReadRaster(0,0,1,1).decode('ascii')
+    if val != 'A':
+        gdaltest.post_reason('fail')
+        print(val)
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/tiff_write_137_src.tif')
+    gdal.Unlink('/vsimem/tiff_write_137.tif')
 
     return 'success'
 
@@ -6031,12 +6086,13 @@ gdaltest_list = [
     tiff_write_134,
     tiff_write_135,
     tiff_write_136,
+    tiff_write_137,
     #tiff_write_api_proxy,
     tiff_write_cleanup ]
 
-#gdaltest_list = [
-#    tiff_write_1,
-#    tiff_write_134 ]
+disabled_gdaltest_list = [
+    tiff_write_1,
+    tiff_write_137 ]
 
 if __name__ == '__main__':
 

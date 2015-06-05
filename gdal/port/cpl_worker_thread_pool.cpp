@@ -153,16 +153,18 @@ void WorkerThreadPool::SubmitJob(CPLThreadFunc pfnFunc, void* pData)
 /*                            WaitCompletion()                          */
 /************************************************************************/
 
-void WorkerThreadPool::WaitCompletion()
+void WorkerThreadPool::WaitCompletion(int nMaxRemainingJobs)
 {
+    if( nMaxRemainingJobs < 0 )
+        nMaxRemainingJobs = 0;
     while( TRUE )
     {
         CPLAcquireMutex(hCondMutex, 1000.0);
         int nPendingJobsLocal = nPendingJobs;
-        if( nPendingJobsLocal )
+        if( nPendingJobsLocal > nMaxRemainingJobs )
             CPLCondWait(hCondWarnSubmitter, hCondMutex);
         CPLReleaseMutex(hCondMutex);
-        if( nPendingJobsLocal == 0 )
+        if( nPendingJobsLocal <= nMaxRemainingJobs )
             break;
     }
 }
