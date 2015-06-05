@@ -5903,8 +5903,9 @@ def tiff_write_137():
     
     # Ask data immediately while the block is compressed
     ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_137.tif', 4000, 4000, \
-                            options = ['BLOCKYSIZE=4000', 'COMPRESS=DEFLATE'])
-    ds.GetRasterBand(1).Fill(65)
+                            options = ['BLOCKYSIZE=4000', 'COMPRESS=DEFLATE', 'NUM_THREADS=4'])
+    ds.WriteRaster(0,0,1,1,'A')
+    ds.FlushCache()
     val = ds.ReadRaster(0,0,1,1).decode('ascii')
     if val != 'A':
         gdaltest.post_reason('fail')
