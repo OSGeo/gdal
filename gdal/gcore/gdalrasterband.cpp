@@ -1704,8 +1704,7 @@ GDALGetRasterNoDataValue( GDALRasterBandH hBand, int *pbSuccess )
 /**
  * \brief Set the no data value for this band. 
  *
- * To clear the nodata value, just set it with an "out of range" value.
- * Complex band no data values must have an imagery component of zero.
+ * To clear the nodata value, use DeleteNoDataValue().
  *
  * This method is the same as the C function GDALSetRasterNoDataValue().
  *
@@ -1744,6 +1743,56 @@ GDALSetRasterNoDataValue( GDALRasterBandH hBand, double dfValue )
 
     GDALRasterBand *poBand = static_cast<GDALRasterBand*>(hBand);
     return poBand->SetNoDataValue( dfValue );
+}
+
+/************************************************************************/
+/*                        DeleteNoDataValue()                           */
+/************************************************************************/
+
+/**
+ * \brief Remove the no data value for this band. 
+ *
+ * This method is the same as the C function GDALDeleteRasterNoDataValue().
+ *
+ * @param dfNoData the value to set.
+ *
+ * @return CE_None on success, or CE_Failure on failure.  If unsupported
+ * by the driver, CE_Failure is returned by no error message will have
+ * been emitted.
+ * 
+ * @since GDAL 2.1
+ */
+
+CPLErr GDALRasterBand::DeleteNoDataValue()
+
+{
+    if( !(GetMOFlags() & GMO_IGNORE_UNIMPLEMENTED) )
+        ReportError( CE_Failure, CPLE_NotSupported,
+                  "DeleteNoDataValue() not supported for this dataset." );
+
+    return CE_Failure;
+}
+
+/************************************************************************/
+/*                       GDALDeleteRasterNoDataValue()                  */
+/************************************************************************/
+
+/**
+ * \brief Remove the no data value for this band. 
+ *
+ * @see GDALRasterBand::DeleteNoDataValue()
+ * 
+ * @since GDAL 2.1
+ */
+
+CPLErr CPL_STDCALL 
+GDALDeleteRasterNoDataValue( GDALRasterBandH hBand )
+
+{
+    VALIDATE_POINTER1( hBand, "GDALDeleteRasterNoDataValue", CE_Failure );
+
+    GDALRasterBand *poBand = static_cast<GDALRasterBand*>(hBand);
+    return poBand->DeleteNoDataValue();
 }
 
 /************************************************************************/

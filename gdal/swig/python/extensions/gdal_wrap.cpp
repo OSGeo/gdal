@@ -4558,6 +4558,9 @@ SWIGINTERN void GDALRasterBandShadow_GetNoDataValue(GDALRasterBandShadow *self,d
 SWIGINTERN CPLErr GDALRasterBandShadow_SetNoDataValue(GDALRasterBandShadow *self,double d){
     return GDALSetRasterNoDataValue( self, d );
   }
+SWIGINTERN CPLErr GDALRasterBandShadow_DeleteNoDataValue(GDALRasterBandShadow *self){
+    return GDALDeleteRasterNoDataValue( self );
+  }
 SWIGINTERN char const *GDALRasterBandShadow_GetUnitType(GDALRasterBandShadow *self){
       return GDALGetRasterUnitType( self );
   }
@@ -15097,6 +15100,49 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_Band_DeleteNoDataValue(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  CPLErr result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:Band_DeleteNoDataValue",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Band_DeleteNoDataValue" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALRasterBandShadow * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      CPLErrorReset();
+    }
+    result = (CPLErr)GDALRasterBandShadow_DeleteNoDataValue(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_From_int(static_cast< int >(result));
+  {
+    /* %typemap(ret) CPLErr */
+    if ( bUseExceptions == 0 ) {
+      /* We're not using exceptions.  And no error has occurred */
+      if ( resultobj == 0 ) {
+        /* No other return values set so return ErrorCode */
+        resultobj = PyInt_FromLong(result);
+      }
+    }
+  }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_Band_GetUnitType(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
@@ -24373,6 +24419,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"Band_SetRasterColorInterpretation", _wrap_Band_SetRasterColorInterpretation, METH_VARARGS, (char *)"Band_SetRasterColorInterpretation(Band self, GDALColorInterp val) -> CPLErr"},
 	 { (char *)"Band_GetNoDataValue", _wrap_Band_GetNoDataValue, METH_VARARGS, (char *)"Band_GetNoDataValue(Band self)"},
 	 { (char *)"Band_SetNoDataValue", _wrap_Band_SetNoDataValue, METH_VARARGS, (char *)"Band_SetNoDataValue(Band self, double d) -> CPLErr"},
+	 { (char *)"Band_DeleteNoDataValue", _wrap_Band_DeleteNoDataValue, METH_VARARGS, (char *)"Band_DeleteNoDataValue(Band self) -> CPLErr"},
 	 { (char *)"Band_GetUnitType", _wrap_Band_GetUnitType, METH_VARARGS, (char *)"Band_GetUnitType(Band self) -> char"},
 	 { (char *)"Band_SetUnitType", _wrap_Band_SetUnitType, METH_VARARGS, (char *)"Band_SetUnitType(Band self, char val) -> CPLErr"},
 	 { (char *)"Band_GetRasterCategoryNames", _wrap_Band_GetRasterCategoryNames, METH_VARARGS, (char *)"Band_GetRasterCategoryNames(Band self) -> char"},

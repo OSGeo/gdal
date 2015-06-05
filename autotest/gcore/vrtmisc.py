@@ -391,6 +391,48 @@ def vrtmisc_11():
 
     return "success"
 ###############################################################################
+# Test set/delete nodata
+
+def vrtmisc_11():
+    
+    gdal.FileFromMemBuffer("/vsimem/vrtmisc_11.vrt",
+"""<VRTDataset rasterXSize="1" rasterYSize="1">
+  <VRTRasterBand dataType="Byte" band="1">
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">foo.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="1" RasterYSize="1" DataType="Byte" BlockXSize="1" BlockYSize="1" />
+      <SrcRect xOff="0" yOff="0" xSize="1" ySize="1" />
+      <DstRect xOff="0" yOff="0" xSize="1" ySize="1" />
+    </SimpleSource>
+  </VRTRasterBand>
+</VRTDataset>
+""")
+
+    ds = gdal.Open("/vsimem/vrtmisc_11.vrt", gdal.GA_Update)
+    ds.GetRasterBand(1).SetNoDataValue(123)
+    ds = None
+
+    ds = gdal.Open("/vsimem/vrtmisc_11.vrt", gdal.GA_Update)
+    if ds.GetRasterBand(1).GetNoDataValue() != 123:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(1).DeleteNoDataValue() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    ds = gdal.Open("/vsimem/vrtmisc_11.vrt")
+    if ds.GetRasterBand(1).GetNoDataValue() is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+    
+    gdal.Unlink("/vsimem/vrtmisc_11.vrt")
+
+    return "success"
+
+###############################################################################
 # Cleanup.
 
 def vrtmisc_cleanup():

@@ -239,6 +239,10 @@ public:
     return GDALSetRasterNoDataValue( self, d );
   }
   
+  CPLErr DeleteNoDataValue() {
+    return GDALDeleteRasterNoDataValue( self );
+  }
+
   /* Interface method added for GDAL 1.7.0 */
   const char* GetUnitType() {
       return GDALGetRasterUnitType( self );

@@ -83,6 +83,7 @@ MEMRasterBand::MEMRasterBand( GDALDataset *poDS, int nBand,
     pabyData = pabyDataIn;
 
     bNoDataSet  = FALSE;
+    dfNoData = 0.0;
 
     poColorTable = NULL;
     
@@ -386,6 +387,18 @@ CPLErr MEMRasterBand::SetNoDataValue( double dfNewValue )
 {
     dfNoData = dfNewValue;
     bNoDataSet = TRUE;
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                         DeleteNoDataValue()                          */
+/************************************************************************/
+
+CPLErr MEMRasterBand::DeleteNoDataValue()
+{
+    dfNoData = 0.0;
+    bNoDataSet = FALSE;
 
     return CE_None;
 }

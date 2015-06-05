@@ -2515,6 +2515,28 @@ def tiff_write_70():
         return 'fail'
     ds = None
 
+    ds = gdal.Open('tmp/tiff_write_70.tif', gdal.GA_Update)
+    if ds.GetRasterBand(1).DeleteNoDataValue() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(1).GetNoDataValue() is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    try:
+        os.stat('tmp/tiff_write_70.tif.aux.xml')
+        gdaltest.post_reason('fail')
+        return 'fail'
+    except:
+        pass
+
+    ds = gdal.Open('tmp/tiff_write_70.tif')
+    if ds.GetRasterBand(1).GetNoDataValue() is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
     gdaltest.tiff_drv.Delete( 'tmp/tiff_write_70.tif' )
     gdaltest.tiff_drv.Delete( 'tmp/tiff_write_70_ref.tif' )
 

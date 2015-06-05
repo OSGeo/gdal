@@ -148,6 +148,7 @@ class netCDFRasterBand : public GDALPamRasterBand
 
     virtual double GetNoDataValue( int * );
     virtual CPLErr SetNoDataValue( double );
+    //virtual CPLErr DeleteNoDataValue();
     virtual double GetOffset( int * );
     virtual CPLErr SetOffset( double );
     virtual double GetScale( int * );
@@ -837,6 +838,46 @@ CPLErr netCDFRasterBand::SetNoDataValue( double dfNoData )
     bNoDataSet = TRUE;
     return CE_None;
 }
+    
+/************************************************************************/
+/*                        DeleteNoDataValue()                           */
+/************************************************************************/
+
+#ifdef notdef
+CPLErr netCDFRasterBand::DeleteNoDataValue()
+
+{
+    CPLMutexHolderD(&hNCMutex);
+
+    if ( !bNoDataSet )
+        return CE_None;
+
+    /* write value if in update mode */
+    if ( poDS->GetAccess() == GA_Update ) {
+
+        /* make sure we are in define mode */
+        ( ( netCDFDataset * ) poDS )->SetDefineMode( TRUE );
+        
+        status = nc_del_att( cdfid, nZId, _FillValue );
+
+        NCDF_ERR(status);
+
+        /* update status if write worked */
+        if ( status == NC_NOERR ) {
+            dfNoDataValue = 0.0;
+            bNoDataSet = FALSE;
+            return CE_None;
+        }
+        else
+            return CE_Failure;
+
+    }
+
+    dfNoDataValue = 0.0;
+    bNoDataSet = FALSE;
+    return CE_None;
+}
+#endif
 
 /************************************************************************/
 /*                           SerializeToXML()                           */

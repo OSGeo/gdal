@@ -140,6 +140,7 @@ class CPL_DLL MEMRasterBand : public GDALPamRasterBand
                                   GDALRasterIOExtraArg* psExtraArg );
     virtual double GetNoDataValue( int *pbSuccess = NULL );
     virtual CPLErr SetNoDataValue( double );
+    virtual CPLErr DeleteNoDataValue();
 
     virtual GDALColorInterp GetColorInterpretation();
     virtual GDALColorTable *GetColorTable();

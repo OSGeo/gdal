@@ -1072,6 +1072,10 @@ class Band(MajorObject):
         """SetNoDataValue(self, double d) -> CPLErr"""
         return _gdal.Band_SetNoDataValue(self, *args)
 
+    def DeleteNoDataValue(self, *args):
+        """DeleteNoDataValue(self) -> CPLErr"""
+        return _gdal.Band_DeleteNoDataValue(self, *args)
+
     def GetUnitType(self, *args):
         """GetUnitType(self) -> char"""
         return _gdal.Band_GetUnitType(self, *args)

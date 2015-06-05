@@ -728,6 +728,7 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
 
     virtual CPLErr SetCategoryNames( char ** );
     virtual CPLErr SetNoDataValue( double );
+    virtual CPLErr DeleteNoDataValue();
     virtual CPLErr SetColorTable( GDALColorTable * ); 
     virtual CPLErr SetColorInterpretation( GDALColorInterp );
     virtual CPLErr SetOffset( double );
