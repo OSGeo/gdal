@@ -338,7 +338,8 @@ def vsifile_7():
 
 def vsifile_8():
 
-    gdal.Mkdir('/vsimem/mydir', 0666)
+    # octal 0666 = decimal 438
+    gdal.Mkdir('/vsimem/mydir', 438)
     fp = gdal.VSIFOpenL('/vsimem/mydir/a', 'wb')
     gdal.VSIFCloseL(fp)
     gdal.Rename('/vsimem/mydir', '/vsimem/newdir')
