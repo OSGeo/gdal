@@ -134,6 +134,7 @@ class CPL_DLL GDALProxyRasterBand : public GDALRasterBand
 
         virtual CPLErr SetCategoryNames( char ** );
         virtual CPLErr SetNoDataValue( double );
+        virtual CPLErr DeleteNoDataValue();
         virtual CPLErr SetColorTable( GDALColorTable * ); 
         virtual CPLErr SetColorInterpretation( GDALColorInterp );
         virtual CPLErr SetOffset( double );

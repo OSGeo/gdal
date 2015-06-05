@@ -111,6 +111,13 @@ def mem_1():
         gdaltest.post_reason( 'GetGCPProjection wrong' )
         return 'fail'
 
+    if band.DeleteNoDataValue() != 0:
+        gdaltest.post_reason('wrong return code')
+        return 'fail'
+    if band.GetNoDataValue() is not None:
+        gdaltest.post_reason('got nodata value whereas none was expected')
+        return 'fail'
+
     gdaltest.mem_ds = None
 
     return 'success'

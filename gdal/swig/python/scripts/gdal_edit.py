@@ -35,7 +35,7 @@ from osgeo import osr
 
 def Usage():
     print('Usage: gdal_edit [--help-general] [-ro] [-a_srs srs_def] [-a_ullr ulx uly lrx lry]')
-    print('                 [-tr xres yres] [-unsetgt] [-a_nodata value]')
+    print('                 [-tr xres yres] [-unsetgt] [-a_nodata value] [-unsetnodata]')
     print('                 [-unsetstats] [-stats] [-approx_stats]')
     print('                 [-gcp pixel line easting northing [elevation]]*')
     print('                 [-unsetmd] [-oo NAME=VALUE]* [-mo "META-TAG=VALUE"]*  datasetname')
@@ -67,6 +67,7 @@ def gdal_edit(argv):
     lrx = None
     lry = None
     nodata = None
+    unsetnodata = False
     xres = None
     yres = None
     unsetgt = False
@@ -134,6 +135,8 @@ def gdal_edit(argv):
             stats = True
         elif argv[i] == '-unsetmd':
             unsetmd = True
+        elif argv[i] == '-unsetnodata':
+            unsetnodata = True
         elif argv[i] == '-oo' and i < len(argv)-1:
             open_options.append(argv[i+1])
             i = i + 1
@@ -153,7 +156,7 @@ def gdal_edit(argv):
 
     if (srs is None and lry is None and yres is None and not unsetgt
             and not unsetstats and not stats and nodata is None
-            and len(molist) == 0 and not unsetmd and len(gcp_list) == 0):
+            and len(molist) == 0 and not unsetmd and len(gcp_list) == 0 and not unsetnodata):
         print('No option specified')
         print('')
         return Usage()
@@ -172,6 +175,11 @@ def gdal_edit(argv):
 
     if unsetstats and stats:
         print('-unsetstats and either -stats or -approx_stats options are exclusive.')
+        print('')
+        return Usage()
+
+    if unsetnodata and nodata:
+        print('-unsetnodata and -nodata options are exclusive.')
         print('')
         return Usage()
 
@@ -226,6 +234,9 @@ def gdal_edit(argv):
     if nodata is not None:
         for i in range(ds.RasterCount):
             ds.GetRasterBand(i+1).SetNoDataValue(nodata)
+    elif unsetnodata:
+        for i in range(ds.RasterCount):
+            ds.GetRasterBand(i+1).DeleteNoDataValue()
 
     if unsetstats:
         for i in range(ds.RasterCount):

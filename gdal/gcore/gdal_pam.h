@@ -246,6 +246,7 @@ class CPL_DLL GDALPamRasterBand : public GDALRasterBand
 
     virtual CPLErr SetNoDataValue( double );
     virtual double GetNoDataValue( int *pbSuccess = NULL );
+    virtual CPLErr DeleteNoDataValue();
 
     virtual CPLErr SetColorTable( GDALColorTable * ); 
     virtual GDALColorTable *GetColorTable();

@@ -137,6 +137,18 @@ def pam_3():
         gdaltest.post_reason( 'nodata not saved via pam' )
         return 'fail'
     
+    ds = None
+    ds = gdal.Open('tmp/pam.pnm', gdal.GA_Update)
+    if ds.GetRasterBand(1).DeleteNoDataValue() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+    
+    ds = gdal.Open('tmp/pam.pnm')
+    if ds.GetRasterBand(1).GetNoDataValue() is not None:
+        gdaltest.post_reason('got nodata value whereas none was expected')
+        return 'fail'
+
     return 'success' 
 
 ###############################################################################
@@ -477,6 +489,43 @@ def pam_12():
     
     return 'success'
     
+###############################################################################
+# Test various stuff with PAM disabled
+#
+def pam_13():
+
+    gdal.SetConfigOption( 'GDAL_PAM_ENABLED', 'NO' )
+
+    ds = gdal.GetDriverByName('PNM').Create('/vsimem/tmp.pnm', 1, 1)
+    #if ds.GetRasterBand(1).SetColorTable(None) == 0:
+    #    gdaltest.post_reason('fail')
+    #    return 'fail'
+    gdal.PushErrorHandler()
+    ret = ds.GetRasterBand(1).SetNoDataValue(0)
+    gdal.PopErrorHandler()
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    
+    gdal.PushErrorHandler()
+    ret = ds.GetRasterBand(1).DeleteNoDataValue()
+    gdal.PopErrorHandler()
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+        
+    ds = None
+    
+    if gdal.VSIStatL('/vsimem/tmp.pnm.aux.xml') is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.Unlink('/vsimem/tmp.pnm')
+    
+    gdal.SetConfigOption( 'GDAL_PAM_ENABLED', 'YES' )
+    
+    return 'success'
+
 
 ###############################################################################
 # Cleanup.
@@ -513,6 +562,7 @@ gdaltest_list = [
     pam_10,
     pam_11,
     pam_12,
+    pam_13,
     pam_cleanup ]
 
 if __name__ == '__main__':

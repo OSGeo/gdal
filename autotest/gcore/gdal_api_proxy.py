@@ -516,6 +516,15 @@ def gdal_api_proxy_sub():
         gdaltest.post_reason('fail')
         return 'fail'
 
+    ret = ds.GetRasterBand(1).DeleteNoDataValue()
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    got_nodatavalue = ds.GetRasterBand(1).GetNoDataValue()
+    if got_nodatavalue is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
     ds.CreateMaskBand(0)
 
     if ds.GetRasterBand(1).GetMaskFlags() != 2:

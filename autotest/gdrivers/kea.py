@@ -557,8 +557,14 @@ def kea_10():
             print(dt)
             print(out2_ds.GetRasterBand(1).GetNoDataValue())
             return 'fail'
-
+        out2_ds.GetRasterBand(1).DeleteNoDataValue()
         out2_ds = None
+        
+        ds = gdal.Open('tmp/out2.kea')
+        if ds.GetRasterBand(1).GetNoDataValue() is not None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        ds = None
 
         gdaltest.kea_driver.Delete('tmp/out.kea')
         gdaltest.kea_driver.Delete('tmp/out2.kea')

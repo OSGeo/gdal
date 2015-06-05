@@ -220,6 +220,7 @@ RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, Fill,
 
 RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, SetCategoryNames, ( char ** arg ), (arg))
 RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, SetNoDataValue, ( double arg ), (arg))
+RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, DeleteNoDataValue, (), ())
 RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, SetColorTable, ( GDALColorTable *arg ), (arg))
 RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, SetColorInterpretation,
                                     ( GDALColorInterp arg ), (arg))

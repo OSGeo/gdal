@@ -685,6 +685,26 @@ CPLErr GDALPamRasterBand::SetNoDataValue( double dfNewValue )
 }
 
 /************************************************************************/
+/*                          DeleteNoDataValue()                         */
+/************************************************************************/
+
+CPLErr GDALPamRasterBand::DeleteNoDataValue()
+
+{
+    PamInitialize();
+
+    if( psPam )
+    {
+        psPam->bNoDataValueSet = FALSE;
+        psPam->dfNoDataValue = 0.0;
+        psPam->poParentDS->MarkPamDirty();
+        return CE_None;
+    }
+    else
+        return GDALRasterBand::DeleteNoDataValue();
+}
+
+/************************************************************************/
 /*                           GetNoDataValue()                           */
 /************************************************************************/
 

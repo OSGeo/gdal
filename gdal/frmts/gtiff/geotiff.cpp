@@ -470,6 +470,7 @@ class GTiffDataset : public GDALPamDataset
     static int	    WriteMetadata( GDALDataset *, TIFF *, int, const char *,
                                    const char *, char **, int bExcludeRPBandIMGFileWriting = FALSE );
     static void	    WriteNoDataValue( TIFF *, double );
+    static void     UnsetNoDataValue( TIFF * );
 
     static TIFF *   CreateLL( const char * pszFilename,
                               int nXSize, int nYSize, int nBands,
@@ -938,6 +939,7 @@ public:
     virtual CPLErr          SetColorTable( GDALColorTable * );
     virtual double	    GetNoDataValue( int * );
     virtual CPLErr	    SetNoDataValue( double );
+    virtual CPLErr DeleteNoDataValue();
 
     virtual double GetOffset( int *pbSuccess = NULL );
     virtual CPLErr SetOffset( double dfNewValue );
@@ -3626,6 +3628,32 @@ CPLErr GTiffRasterBand::SetNoDataValue( double dfNoData )
 
     bNoDataSet = TRUE;
     dfNoDataValue = dfNoData;
+    return CE_None;
+}
+
+/************************************************************************/
+/*                        DeleteNoDataValue()                           */
+/************************************************************************/
+
+CPLErr GTiffRasterBand::DeleteNoDataValue()
+
+{
+    if( !poGDS->bNoDataSet )
+        return CE_None;
+    if( poGDS->bStreamingOut && poGDS->bCrystalized )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Cannot modify nodata at that point in a streamed output file");
+        return CE_Failure;
+    }
+
+    poGDS->bNoDataSet = FALSE;
+    poGDS->dfNoDataValue = -9999.0;
+
+    poGDS->bNoDataChanged = TRUE;
+
+    bNoDataSet = FALSE;
+    dfNoDataValue = -9999.0;;
     return CE_None;
 }
 
@@ -6493,9 +6521,13 @@ void GTiffDataset::FlushDirectory()
             if( bNoDataSet )
             {
                 WriteNoDataValue( hTIFF, dfNoDataValue );
-                bNeedsRewrite = TRUE;
-                bNoDataChanged = FALSE;
             }
+            else
+            {
+                UnsetNoDataValue( hTIFF );
+            }
+            bNeedsRewrite = TRUE;
+            bNoDataChanged = FALSE;
         }
 
         if( bNeedsRewrite )
@@ -8220,6 +8252,20 @@ void GTiffDataset::WriteNoDataValue( TIFF *hTIFF, double dfNoData )
 	else
         CPLsnprintf(szVal, sizeof(szVal), "%.18g", dfNoData);
     TIFFSetField( hTIFF, TIFFTAG_GDAL_NODATA, szVal );
+}
+
+/************************************************************************/
+/*                         UnsetNoDataValue()                           */
+/************************************************************************/
+
+void GTiffDataset::UnsetNoDataValue( TIFF *hTIFF )
+
+{
+#ifdef HAVE_UNSETFIELD
+    TIFFUnsetField( hTIFF, TIFFTAG_GDAL_NODATA );
+#else
+    TIFFSetField( hTIFF, TIFFTAG_GDAL_NODATA, "" );
+#endif
 }
 
 /************************************************************************/

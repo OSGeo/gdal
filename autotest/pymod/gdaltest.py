@@ -829,7 +829,7 @@ class GDALTest:
 
         return 'success'
 
-    def testSetNoDataValue(self):
+    def testSetNoDataValue(self, delete = False):
         if self.testDriver() == 'fail':
             return 'skip'
 
@@ -853,7 +853,11 @@ class GDALTest:
         src_ds = None
         new_ds = None
 
-        new_ds = gdal.Open( new_filename )
+        if delete:
+            mode = gdal.GA_Update
+        else:
+            mode = gdal.GA_ReadOnly
+        new_ds = gdal.Open( new_filename, mode )
         if new_ds is None:
             post_reason( 'Failed to open dataset: ' + new_filename )
             return 'fail'
@@ -862,13 +866,28 @@ class GDALTest:
             post_reason( 'Did not get expected NoData value.' )
             return 'fail'
 
+        if delete:
+            if new_ds.GetRasterBand(1).DeleteNoDataValue() != 0:
+                post_reason( 'Did not manage to delete nodata value' )
+                return 'fail'
+
         new_ds = None
+        
+        if delete:
+            new_ds = gdal.Open (new_filename)
+            if new_ds.GetRasterBand(1).GetNoDataValue() is not None:
+                post_reason( 'Got nodata value whereas none was expected' )
+                return 'fail'
+            new_ds = None
         
         if gdal.GetConfigOption( 'CPL_DEBUG', 'OFF' ) != 'ON':
             self.driver.Delete( new_filename )
 
         return 'success'
 
+    def testSetNoDataValueAndDelete(self):
+        return self.testSetNoDataValue(delete = True)
+        
     def testSetDescription(self):
         if self.testDriver() == 'fail':
             return 'skip'

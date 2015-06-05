@@ -121,7 +121,7 @@ from multiple threads. However, it is safe to use several client datasets from m
 
 /* REMINDER: upgrade this number when the on-wire protocol changes */
 /* Note: please at least keep the version exchange protocol unchanged ! */
-#define GDAL_CLIENT_SERVER_PROTOCOL_MAJOR 2
+#define GDAL_CLIENT_SERVER_PROTOCOL_MAJOR 3
 #define GDAL_CLIENT_SERVER_PROTOCOL_MINOR 0
 
 #include <map>
@@ -239,6 +239,7 @@ typedef enum
     INSTR_Band_GetDefaultRAT,
     INSTR_Band_SetDefaultRAT,
     INSTR_Band_AdviseRead,
+    INSTR_Band_DeleteNoDataValue,
     INSTR_Band_End,
     INSTR_END
 } InstrEnum;
@@ -324,6 +325,7 @@ static const char* apszInstr[] =
     "Band_GetDefaultRAT",
     "Band_SetDefaultRAT",
     "Band_AdviseRead",
+    "Band_DeleteNoDataValue",
     "Band_End",
     "END",
 };
@@ -597,6 +599,7 @@ class GDALClientRasterBand : public GDALPamRasterBand
 
         virtual CPLErr SetCategoryNames( char ** );
         virtual CPLErr SetNoDataValue( double );
+        virtual CPLErr DeleteNoDataValue();
         virtual CPLErr SetOffset( double );
         virtual CPLErr SetScale( double );
 
@@ -2840,6 +2843,12 @@ static int GDALServerLoop(GDALPipe* p,
             if( !GDALPipeRead(p, &dfVal ) )
                 break;
             CPLErr eErr = poBand->SetNoDataValue(dfVal);
+            GDALEmitEndOfJunkMarker(p);
+            GDALPipeWrite(p, eErr);
+        }
+        else if( instr == INSTR_Band_DeleteNoDataValue )
+        {
+            CPLErr eErr = poBand->DeleteNoDataValue();
             GDALEmitEndOfJunkMarker(p);
             GDALPipeWrite(p, eErr);
         }
@@ -5220,6 +5229,22 @@ CPLErr GDALClientRasterBand::SetNoDataValue( double dfVal )
 }
 
 /************************************************************************/
+/*                         DeleteNoDataValue()                          */
+/************************************************************************/
+
+CPLErr GDALClientRasterBand::DeleteNoDataValue()
+{
+    if( !SupportsInstr(INSTR_Band_DeleteNoDataValue) )
+        return GDALPamRasterBand::DeleteNoDataValue();
+
+
+    CLIENT_ENTER();
+    if( !WriteInstr(INSTR_Band_DeleteNoDataValue) )
+        return CE_Failure;
+    return CPLErrOnlyRet(p);
+}
+
+/************************************************************************/
 /*                             SetScale()                               */
 /************************************************************************/
 
@@ -6056,7 +6081,7 @@ GDALDriver* GDALGetAPIPROXYDriver()
         CPLAssert(INSTR_END + 1 == sizeof(apszInstr) / sizeof(apszInstr[0]));
 #endif
         /* If asserted, change GDAL_CLIENT_SERVER_PROTOCOL_MAJOR / GDAL_CLIENT_SERVER_PROTOCOL_MINOR */
-        CPLAssert(INSTR_END + 1 == 80);
+        CPLAssert(INSTR_END + 1 == 81);
 
         const char* pszConnPool = CPLGetConfigOption("GDAL_API_PROXY_CONN_POOL", "YES");
         if( atoi(pszConnPool) > 0 )
