@@ -5857,7 +5857,7 @@ def tiff_write_136():
         print(expected_cs)
         return 'fail'
 
-    gdal.Unlink('/vsimem/tiff_write_126_src.tif')
+    gdal.Unlink('/vsimem/tiff_write_136_src.tif')
     gdal.Unlink('/vsimem/tiff_write_136.tif')
 
     return 'success'
