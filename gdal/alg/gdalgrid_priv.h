@@ -66,10 +66,19 @@ CPLErr GDALGridInverseDistanceToAPower2NoSmoothingNoSearchAVX(
 #endif
 
 #if defined(__GNUC__) 
+#if defined(__x86_64)
+#define GCC_CPUID(level, a, b, c, d)            \
+  __asm__ ("xchgq %%rbx, %q1\n"                 \
+           "cpuid\n"                            \
+           "xchgq %%rbx, %q1"                   \
+       : "=a" (a), "=r" (b), "=c" (c), "=d" (d) \
+       : "0" (level))
+#else
 #define GCC_CPUID(level, a, b, c, d)            \
   __asm__ ("xchgl %%ebx, %1\n"                  \
            "cpuid\n"                            \
            "xchgl %%ebx, %1"                    \
        : "=a" (a), "=r" (b), "=c" (c), "=d" (d) \
        : "0" (level))
+#endif
 #endif
