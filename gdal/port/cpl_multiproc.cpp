@@ -804,7 +804,7 @@ int CPLAcquireMutex( CPLMutex *hMutexIn, double dfWaitInSeconds )
             dfWaitInSeconds -= 0.01;
         }
     }
-    
+
     return ret;
 #endif
 }
