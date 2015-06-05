@@ -606,6 +606,9 @@ protected:
     int                 bNoDataSet;
     double              dfNoDataValue;
     CPLString           osResampling;
+    
+    int                 bRelativeToVRTOri;
+    CPLString           osSourceFileNameOri;
 
 public:
             VRTSimpleSource();
