@@ -104,6 +104,7 @@ Port:
 Core:
  * Add imagery (satellite or aerial) metadata support (Alos, DigitalGlobe, Eros, GeoEye, OrbView, Landsat, Pleiades, Resurs-DK1, Spot/Formosat).
  * Reduce lock contention on the global cache mutex and make it possible to use spin lock instead with GDAL_RB_LOCK_TYPE=SPIN
+ * Block cache: make block cache manager safe with respect to writing dirty blocks (#5983)
  * EXIF reader: fix memleak in error code path
  * EXIF reader: add missing validation for some data types (#3078)
  * Fix crash in GDALPamRasterBand::SerializeToXML() when saving an empty RAT (#5451)
@@ -480,7 +481,8 @@ VRT driver:
  * do not output empty <Metadata> node on VRTDataset and VRTRasterBand elements
  * fix rounding of output window size on VRTSimpleSource (#5874)
  * add trick to make relativeToVRT works for a VRT-in-VRT
- * VRT: add more checks to CheckCompatibleForDatasetIO() to avoid issues with overview bands (#5954)
+ * add more checks to CheckCompatibleForDatasetIO() to avoid issues with overview bands (#5954)
+ * preserves relative links on reserialization of existing VRT (#5985)
 
 USGSDEM driver:
  * take into account horizontal unit = ft in the UTM case (#5819)
