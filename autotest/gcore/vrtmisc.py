@@ -390,12 +390,13 @@ def vrtmisc_11():
         return 'fail'
 
     return "success"
+    
 ###############################################################################
 # Test set/delete nodata
 
-def vrtmisc_11():
+def vrtmisc_12():
     
-    gdal.FileFromMemBuffer("/vsimem/vrtmisc_11.vrt",
+    gdal.FileFromMemBuffer("/vsimem/vrtmisc_12.vrt",
 """<VRTDataset rasterXSize="1" rasterYSize="1">
   <VRTRasterBand dataType="Byte" band="1">
     <SimpleSource>
@@ -409,11 +410,11 @@ def vrtmisc_11():
 </VRTDataset>
 """)
 
-    ds = gdal.Open("/vsimem/vrtmisc_11.vrt", gdal.GA_Update)
+    ds = gdal.Open("/vsimem/vrtmisc_12.vrt", gdal.GA_Update)
     ds.GetRasterBand(1).SetNoDataValue(123)
     ds = None
 
-    ds = gdal.Open("/vsimem/vrtmisc_11.vrt", gdal.GA_Update)
+    ds = gdal.Open("/vsimem/vrtmisc_12.vrt", gdal.GA_Update)
     if ds.GetRasterBand(1).GetNoDataValue() != 123:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -422,13 +423,13 @@ def vrtmisc_11():
         return 'fail'
     ds = None
 
-    ds = gdal.Open("/vsimem/vrtmisc_11.vrt")
+    ds = gdal.Open("/vsimem/vrtmisc_12.vrt")
     if ds.GetRasterBand(1).GetNoDataValue() is not None:
         gdaltest.post_reason('fail')
         return 'fail'
     ds = None
     
-    gdal.Unlink("/vsimem/vrtmisc_11.vrt")
+    gdal.Unlink("/vsimem/vrtmisc_12.vrt")
 
     return "success"
 
@@ -450,6 +451,7 @@ gdaltest_list = [
     vrtmisc_9,
     vrtmisc_10,
     vrtmisc_11,
+    vrtmisc_12,
     vrtmisc_cleanup ]
 
 if __name__ == '__main__':
