@@ -113,6 +113,16 @@ VRTSimpleSource::~VRTSimpleSource()
 }
 
 /************************************************************************/
+/*                    UnsetPreservedRelativeFilenames()                 */
+/************************************************************************/
+
+void VRTSimpleSource::UnsetPreservedRelativeFilenames()
+{
+    bRelativeToVRTOri = -1;
+    osSourceFileNameOri = "";
+}
+
+/************************************************************************/
 /*                             SetSrcBand()                             */
 /************************************************************************/
 
