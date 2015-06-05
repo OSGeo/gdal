@@ -186,6 +186,7 @@ VRTCreateCopy( const char * pszFilename,
     /*      Convert tree to a single block of XML text.                     */
     /* -------------------------------------------------------------------- */
         char *pszVRTPath = CPLStrdup(CPLGetPath(pszFilename));
+        ((VRTDataset *) poSrcDS)->UnsetPreservedRelativeFilenames();
         CPLXMLNode *psDSTree = ((VRTDataset *) poSrcDS)->SerializeToXML( pszVRTPath );
 
         char *pszXML = CPLSerializeXMLTree( psDSTree );

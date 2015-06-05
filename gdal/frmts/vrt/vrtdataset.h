@@ -191,6 +191,8 @@ class CPL_DLL VRTDataset : public GDALDataset
 
     /* Used by PDF driver for example */
     GDALDataset*        GetSingleSimpleSource();
+    
+    void                UnsetPreservedRelativeFilenames();
  
     static int          Identify( GDALOpenInfo * );
     static GDALDataset *Open( GDALOpenInfo * );
@@ -672,6 +674,8 @@ public:
                                GSpacing nPixelSpace, GSpacing nLineSpace,
                                GSpacing nBandSpace,
                                GDALRasterIOExtraArg* psExtraArg);
+
+    void             UnsetPreservedRelativeFilenames();
 };
 
 /************************************************************************/
