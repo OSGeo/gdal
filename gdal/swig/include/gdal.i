@@ -38,68 +38,7 @@
 %module gdal
 #endif
 
-#ifdef SWIGCSHARP
-%include swig_csharp_extensions.i
-#endif
-
-#ifndef SWIGJAVA
-%feature ("compactdefaultargs");
-#endif
-
-//
-// We register all the drivers upon module initialization
-//
-
-%{
-#include <iostream>
-using namespace std;
-
-#include "cpl_port.h"
-#include "cpl_string.h"
-#include "cpl_multiproc.h"
-#include "cpl_http.h"
-
-#include "gdal.h"
-#include "gdal_priv.h"
-#include "gdal_alg.h"
-#include "gdalwarper.h"
-
-typedef void GDALMajorObjectShadow;
-typedef void GDALDriverShadow;
-typedef void GDALDatasetShadow;
-typedef void GDALRasterBandShadow;
-typedef void GDALColorTableShadow;
-typedef void GDALRasterAttributeTableShadow;
-typedef void GDALTransformerInfoShadow;
-typedef void GDALAsyncReaderShadow;
-%}
-
-#if defined(SWIGPYTHON) || defined(SWIGJAVA)
-%{
-#ifdef DEBUG 
-typedef struct OGRSpatialReferenceHS OSRSpatialReferenceShadow;
-typedef struct OGRLayerHS OGRLayerShadow;
-typedef struct OGRGeometryHS OGRGeometryShadow;
-#else
-typedef void OSRSpatialReferenceShadow;
-typedef void OGRLayerShadow;
-typedef void OGRGeometryShadow;
-#endif
-typedef struct OGRStyleTableHS OGRStyleTableShadow;
-%}
-#endif /* #if defined(SWIGPYTHON) || defined(SWIGJAVA) */
-
-#if defined(SWIGCSHARP)
-typedef int OGRErr;
-#endif
-
-%{
-/* use this to not return the int returned by GDAL */
-typedef int RETURN_NONE;
-/* return value that is used for VSI methods that return -1 on error (and set errno) */
-typedef int VSI_RETVAL;
-
-%}
+%include typedefs.i
 
 //************************************************************************
 //
@@ -113,7 +52,6 @@ typedef int GDALPaletteInterp;
 typedef int GDALColorInterp;
 typedef int GDALAccess;
 typedef int GDALDataType;
-typedef int CPLErr;
 typedef int GDALResampleAlg;
 typedef int GDALAsyncStatusType;
 typedef int GDALRWFlag;
@@ -232,21 +170,7 @@ typedef enum {
 %include "gdal_perl.i"
 #elif defined(SWIGJAVA)
 %include "gdal_java.i"
-#else
-%include "gdal_typemaps.i"
 #endif
-
-
-/* Default memberin typemaps required to support SWIG 1.3.39 and above */
-%typemap(memberin) char *Info %{
-/* char* Info memberin typemap */
-$1;
-%}
-
-%typemap(memberin) char *Id %{
-/* char* Info memberin typemap */
-$1;
-%}
 
 //************************************************************************
 // Apply NONNULL to all utf8_path's. 
@@ -292,59 +216,6 @@ $1;
 %import ogr.i
 #endif /* #if defined(SWIGPYTHON) || defined(SWIGJAVA) */
 
-
-//************************************************************************
-//
-// Define renames.
-//
-//************************************************************************
-%rename (GCP) GDAL_GCP;
-
-#ifdef SWIGRUBY
-%rename (all_register) GDALAllRegister;
-%rename (get_cache_max) wrapper_GDALGetCacheMax;
-%rename (set_cache_max) wrapper_GDALSetCacheMax;
-%rename (get_cache_used) wrapper_GDALGetCacheUsed;
-%rename (get_data_type_size) GDALGetDataTypeSize;
-%rename (data_type_is_complex) GDALDataTypeIsComplex;
-%rename (gcps_to_geo_transform) GDALGCPsToGeoTransform;
-%rename (get_data_type_name) GDALGetDataTypeName;
-%rename (get_data_type_by_name) GDALGetDataTypeByName;
-%rename (get_color_interpretation_name) GDALGetColorInterpretationName;
-%rename (get_palette_interpretation_name) GDALGetPaletteInterpretationName;
-%rename (dec_to_dms) GDALDecToDMS;
-%rename (packed_dms_to_dec) GDALPackedDMSToDec;
-%rename (dec_to_packed_dms) GDALDecToPackedDMS;
-%rename (parse_xml_string) CPLParseXMLString;
-%rename (serialize_xml_tree) CPLSerializeXMLTree;
-#else
-%rename (GCP) GDAL_GCP;
-%rename (GCPsToGeoTransform) GDALGCPsToGeoTransform;
-%rename (ApplyGeoTransform) GDALApplyGeoTransform;
-%rename (InvGeoTransform) GDALInvGeoTransform;
-%rename (VersionInfo) GDALVersionInfo;
-%rename (AllRegister) GDALAllRegister;
-%rename (GetCacheMax) wrapper_GDALGetCacheMax;
-%rename (SetCacheMax) wrapper_GDALSetCacheMax;
-%rename (GetCacheUsed) wrapper_GDALGetCacheUsed;
-%rename (GetDataTypeSize) GDALGetDataTypeSize;
-%rename (DataTypeIsComplex) GDALDataTypeIsComplex;
-%rename (GetDataTypeName) GDALGetDataTypeName;
-%rename (GetDataTypeByName) GDALGetDataTypeByName;
-%rename (GetColorInterpretationName) GDALGetColorInterpretationName;
-%rename (GetPaletteInterpretationName) GDALGetPaletteInterpretationName;
-%rename (DecToDMS) GDALDecToDMS;
-%rename (PackedDMSToDec) GDALPackedDMSToDec;
-%rename (DecToPackedDMS) GDALDecToPackedDMS;
-%rename (ParseXMLString) CPLParseXMLString;
-%rename (SerializeXMLTree) CPLSerializeXMLTree;
-%rename (GetJPEG2000Structure) GDALGetJPEG2000Structure;
-#endif
-#ifdef SWIGPERL
-%include "gdal_perl_rename.i"
-#endif
-
-
 //************************************************************************
 //
 // GDALColorEntry
@@ -371,6 +242,8 @@ typedef struct
 //
 //************************************************************************
 // GCP - class?  serialize() method missing.
+%rename (GCP) GDAL_GCP;
+
 struct GDAL_GCP {
 %extend {
 %mutable;
@@ -416,8 +289,7 @@ struct GDAL_GCP {
 }; /* GDAL_GCP */
 
 %apply Pointer NONNULL {GDAL_GCP *gcp};
-%inline %{
-
+%{
 double GDAL_GCP_GCPX_get( GDAL_GCP *gcp ) {
   return gcp->dfGCPX;
 }
@@ -464,80 +336,19 @@ void GDAL_GCP_Id_set( GDAL_GCP *gcp, const char * pszId ) {
     CPLFree( gcp->pszId );
   gcp->pszId = CPLStrdup(pszId);
 }
-%} //%inline 
-
-#if defined(SWIGCSHARP)
-%inline %{
-/* Duplicate, but transposed names for C# because 
-*  the C# module outputs backwards names
-*/
-double GDAL_GCP_get_GCPX( GDAL_GCP *gcp ) {
-  return gcp->dfGCPX;
-}
-void GDAL_GCP_set_GCPX( GDAL_GCP *gcp, double dfGCPX ) {
-  gcp->dfGCPX = dfGCPX;
-}
-double GDAL_GCP_get_GCPY( GDAL_GCP *gcp ) {
-  return gcp->dfGCPY;
-}
-void GDAL_GCP_set_GCPY( GDAL_GCP *gcp, double dfGCPY ) {
-  gcp->dfGCPY = dfGCPY;
-}
-double GDAL_GCP_get_GCPZ( GDAL_GCP *gcp ) {
-  return gcp->dfGCPZ;
-}
-void GDAL_GCP_set_GCPZ( GDAL_GCP *gcp, double dfGCPZ ) {
-  gcp->dfGCPZ = dfGCPZ;
-}
-double GDAL_GCP_get_GCPPixel( GDAL_GCP *gcp ) {
-  return gcp->dfGCPPixel;
-}
-void GDAL_GCP_set_GCPPixel( GDAL_GCP *gcp, double dfGCPPixel ) {
-  gcp->dfGCPPixel = dfGCPPixel;
-}
-double GDAL_GCP_get_GCPLine( GDAL_GCP *gcp ) {
-  return gcp->dfGCPLine;
-}
-void GDAL_GCP_set_GCPLine( GDAL_GCP *gcp, double dfGCPLine ) {
-  gcp->dfGCPLine = dfGCPLine;
-}
-const char * GDAL_GCP_get_Info( GDAL_GCP *gcp ) {
-  return gcp->pszInfo;
-}
-void GDAL_GCP_set_Info( GDAL_GCP *gcp, const char * pszInfo ) {
-  if ( gcp->pszInfo ) 
-    CPLFree( gcp->pszInfo );
-  gcp->pszInfo = CPLStrdup(pszInfo);
-}
-const char * GDAL_GCP_get_Id( GDAL_GCP *gcp ) {
-  return gcp->pszId;
-}
-void GDAL_GCP_set_Id( GDAL_GCP *gcp, const char * pszId ) {
-  if ( gcp->pszId ) 
-    CPLFree( gcp->pszId );
-  gcp->pszId = CPLStrdup(pszId);
-}
-%} //%inline 
-#endif //if defined(SWIGCSHARP)
+%}
 
 %clear GDAL_GCP *gcp;
 
-#ifdef SWIGJAVA
 %rename (GCPsToGeoTransform) wrapper_GDALGCPsToGeoTransform;
-%inline
-{
-int wrapper_GDALGCPsToGeoTransform( int nGCPs, GDAL_GCP const * pGCPs, 
+
+%inline {
+GDAL_SUCCESS wrapper_GDALGCPsToGeoTransform( int nGCPs, GDAL_GCP const * pGCPs, 
     	                             double argout[6], int bApproxOK = 1 )
 {
-    return GDALGCPsToGeoTransform(nGCPs, pGCPs, argout, bApproxOK);
+    return GDALGCPsToGeoTransform( nGCPs, pGCPs, argout, bApproxOK );
 }
 }
-#else
-%apply (IF_FALSE_RETURN_NONE) { (RETURN_NONE) };
-RETURN_NONE GDALGCPsToGeoTransform( int nGCPs, GDAL_GCP const * pGCPs, 
-    	                             double argout[6], int bApproxOK = 1 ); 
-%clear (RETURN_NONE);
-#endif
 
 %include "cplvirtualmem.i"
 
@@ -576,6 +387,8 @@ RETURN_NONE GDALGCPsToGeoTransform( int nGCPs, GDAL_GCP const * pGCPs,
 //************************************************************************
 %include "Operations.i"
 
+%rename (ApplyGeoTransform) GDALApplyGeoTransform;
+
 %apply (double argin[ANY]) {(double padfGeoTransform[6])};
 %apply (double *OUTPUT) {(double *pdfGeoX)};
 %apply (double *OUTPUT) {(double *pdfGeoY)};
@@ -586,21 +399,14 @@ void GDALApplyGeoTransform( double padfGeoTransform[6],
 %clear (double *pdfGeoX);
 %clear (double *pdfGeoY);
 
+%rename (InvGeoTransform) GDALInvGeoTransform;
+
 %apply (double argin[ANY]) {double gt_in[6]};
 %apply (double argout[ANY]) {double gt_out[6]};
-#ifdef SWIGJAVA
-// FIXME: we should implement correctly the IF_FALSE_RETURN_NONE typemap
-int GDALInvGeoTransform( double gt_in[6], double gt_out[6] );
-#else
-%apply (IF_FALSE_RETURN_NONE) { (RETURN_NONE) };
-RETURN_NONE GDALInvGeoTransform( double gt_in[6], double gt_out[6] );
-%clear (RETURN_NONE);
-#endif
+GDAL_SUCCESS GDALInvGeoTransform( double gt_in[6], double gt_out[6] );
 %clear (double *gt_in);
 %clear (double *gt_out);
 
-#ifdef SWIGJAVA
-%apply (const char* stringWithDefaultValue) {const char *request};
 %rename (VersionInfo) wrapper_GDALVersionInfo;
 %inline {
 const char *wrapper_GDALVersionInfo( const char *request = "VERSION_NUM" )
@@ -608,22 +414,23 @@ const char *wrapper_GDALVersionInfo( const char *request = "VERSION_NUM" )
     return GDALVersionInfo(request ? request : "VERSION_NUM");
 }
 }
-%clear (const char* request);
-#else
-const char *GDALVersionInfo( const char *request = "VERSION_NUM" );
-#endif
+
+%rename (AllRegister) GDALAllRegister;
 
 void GDALAllRegister();
 
 void GDALDestroyDriverManager();
 
-#ifdef SWIGPYTHON
+%rename (GetCacheMax) wrapper_GDALGetCacheMax;
+
 %inline {
 GIntBig wrapper_GDALGetCacheMax()
 {
     return GDALGetCacheMax64();
 }
 }
+
+%rename (GetCacheUsed) wrapper_GDALGetCacheUsed;
 
 %inline {
 GIntBig wrapper_GDALGetCacheUsed()
@@ -632,6 +439,8 @@ GIntBig wrapper_GDALGetCacheUsed()
 }
 }
 
+%rename (SetCacheMax) wrapper_GDALSetCacheMax;
+
 %inline {
 void wrapper_GDALSetCacheMax(GIntBig nBytes)
 {
@@ -639,43 +448,30 @@ void wrapper_GDALSetCacheMax(GIntBig nBytes)
 }
 }
 
-#else
-%inline {
-int wrapper_GDALGetCacheMax()
-{
-    return GDALGetCacheMax();
-}
-}
-
-%inline {
-int wrapper_GDALGetCacheUsed()
-{
-    return GDALGetCacheUsed();
-}
-}
-
-%inline {
-void wrapper_GDALSetCacheMax(int nBytes)
-{
-    return GDALSetCacheMax(nBytes);
-}
-}
-#endif
+%rename (GetDataTypeSize) GDALGetDataTypeSize;
 
 int GDALGetDataTypeSize( GDALDataType eDataType );
 
+%rename (DataTypeIsComplex) GDALDataTypeIsComplex;
+
 int GDALDataTypeIsComplex( GDALDataType eDataType );
+
+%rename (GetDataTypeName) GDALGetDataTypeName;
 
 const char *GDALGetDataTypeName( GDALDataType eDataType );
 
+%rename (GetDataTypeByName) GDALGetDataTypeByName;
+
 GDALDataType GDALGetDataTypeByName( const char * pszDataTypeName );
+
+%rename (GetColorInterpretationName) GDALGetColorInterpretationName;
 
 const char *GDALGetColorInterpretationName( GDALColorInterp eColorInterp );
 
+%rename (GetPaletteInterpretationName) GDALGetPaletteInterpretationName;
+
 const char *GDALGetPaletteInterpretationName( GDALPaletteInterp ePaletteInterp );
 
-#ifdef SWIGJAVA
-%apply (const char* stringWithDefaultValue) {const char *request};
 %rename (DecToDMS) wrapper_GDALDecToDMS;
 %inline {
 const char *wrapper_GDALDecToDMS( double dfAngle, const char * pszAxis,
@@ -684,28 +480,30 @@ const char *wrapper_GDALDecToDMS( double dfAngle, const char * pszAxis,
     return GDALDecToDMS(dfAngle, pszAxis, nPrecision);
 }
 }
-%clear (const char* request);
-#else
-const char *GDALDecToDMS( double, const char *, int = 2 );
-#endif
+
+%rename (PackedDMSToDec) GDALPackedDMSToDec;
 
 double GDALPackedDMSToDec( double dfPacked );
 
+%rename (DecToPackedDMS) GDALDecToPackedDMS;
+
 double GDALDecToPackedDMS( double dfDec );
 
+%rename (ParseXMLString) CPLParseXMLString;
 
 #if defined(SWIGCSHARP) || defined(SWIGJAVA)
 %newobject CPLParseXMLString;
 #endif
 CPLXMLNode *CPLParseXMLString( char * pszXMLString );
 
-#if defined(SWIGJAVA) || defined(SWIGCSHARP) || defined(SWIGPYTHON) || defined(SWIGPERL)
+%rename (SerializeXMLTree) CPLSerializeXMLTree;
+
 retStringAndCPLFree *CPLSerializeXMLTree( CPLXMLNode *xmlnode );
-#else
-char *CPLSerializeXMLTree( CPLXMLNode *xmlnode );
-#endif
+
+%rename (GetJPEG2000Structure) GDALGetJPEG2000Structure;
 
 #if defined(SWIGPYTHON)
+/* Does Python want XMLNode objects? Then see above CPLParseXMLString and %include XMLNode.i. */
 %newobject GDALGetJPEG2000Structure;
 CPLXMLNode *GDALGetJPEG2000Structure( const char* pszFilename, char** options = NULL );
 #endif
@@ -751,10 +549,9 @@ GDALDriverShadow* GetDriver( int i ) {
 }
 %}
 
-#ifdef SWIGJAVA
 %newobject Open;
 %inline %{
-GDALDatasetShadow* Open( char const* utf8_path, GDALAccess eAccess) {
+GDALDatasetShadow* Open( char const* utf8_path, GDALAccess eAccess = GA_ReadOnly) {
   CPLErrorReset();
   GDALDatasetShadow *ds = GDALOpen( utf8_path, eAccess );
   if( ds != NULL && CPLGetLastErrorType() == CE_Failure )
@@ -766,34 +563,9 @@ GDALDatasetShadow* Open( char const* utf8_path, GDALAccess eAccess) {
   return (GDALDatasetShadow*) ds;
 }
 %}
-
-%newobject Open;
-%inline %{
-GDALDatasetShadow* Open( char const* name ) {
-  return Open( name, GA_ReadOnly );
-}
-%}
-
-#else
-%newobject Open;
-%inline %{
-GDALDatasetShadow* Open( char const* utf8_path, GDALAccess eAccess = GA_ReadOnly ) {
-  CPLErrorReset();
-  GDALDatasetShadow *ds = GDALOpen( utf8_path, eAccess );
-  if( ds != NULL && CPLGetLastErrorType() == CE_Failure )
-  {
-      if ( GDALDereferenceDataset( ds ) <= 0 )
-          GDALClose(ds);
-      ds = NULL;
-  }
-  return (GDALDatasetShadow*) ds;
-}
-%}
-
-#endif
 
 %newobject OpenEx;
-#ifndef SWIGJAVA
+#if defined(SWIGPYTHON) || defined(SWIGRUBY)
 %feature( "kwargs" ) OpenEx;
 #endif
 %apply (char **options) {char** allowed_drivers};
@@ -907,6 +679,8 @@ GDALDriverShadow *IdentifyDriver( const char *utf8_path,
   }
 %}
 #endif
+
+
 %clear char **;
 
 
@@ -917,12 +691,5 @@ GDALDriverShadow *IdentifyDriver( const char *utf8_path,
 //************************************************************************
 
 #ifdef SWIGCSHARP
-%include "gdal_csharp_extend.i"
-#endif
 
-#ifdef SWIGPYTHON
-/* Add a __version__ attribute to match the convention */
-%pythoncode %{
-__version__ = _gdal.VersionInfo("RELEASE_NAME") 
-%}
 #endif

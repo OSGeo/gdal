@@ -24,6 +24,10 @@ argout (int *nLen, char **pBuf) -
   type.  Typemap needs to deallocate memory.
   FrankW:  Should this be done with free?
 
+argout (int *nLen, const int **pList) - return an integer array
+
+argout (int *nLen, const GIntBig **pList) - return a big integer array
+
 argout (char **argout ) - Required - 
 
 argout (long *OUTPUT) - Required - 
@@ -58,6 +62,8 @@ in (int nList, int *pList) - Required - Pass a fixed length integer array into a
 
 in (int nLen, char *pBuf) - Required - Pass a fixed length character buffer into a function.
 
+in (GIntBig nLen, char *pBuf) - Required - Pass a fixed length character buffer into a function.
+
 in (tostring argin ) - Required - Converts any argument in the script types to a string representation.
 In python this functionality directly calls AsString (ie str()) on the object.  This functionality
 could be reduced in other languages as long as it's documented.
@@ -69,26 +75,35 @@ in (const char *utf8_path) - Optional -
 
 -------------------
 
+out/ret (CPLErr) - CPLErr is an enum defined in port/cpl_error.h.  This
+code is returned by many functions in GDAL core.  It is assumed that
+every GDAL function which returns CPLErr also calls CPLError thus
+making the error type and message available so that they are usable in
+the exception handler defined in cpl_exceptions.i.
+
+out/ret OGRErr - 
+
+out/ret (VSI_RETVAL) - VSI_RETVAL is typedef int in the bindings
+(%inline, so both for the bindings and for swig). CPL uses int. 0 is
+ok, -1 is an error. The error can be retrieved with strerror(errno).
+
+out/ret (GDAL_SUCCESS) - GDAL_SUCCESS is typedef int in the bindings
+(%inline, so both for the bindings and for swig). GDAL uses int. TRUE
+on success and FALSE on not success. The user needs to be advised to
+read the docs for possible causes of the failure. Currently only
+GDALGCPsToGeoTransform and GDALInvGeoTransform use this(?).
+
+out/ret (retStringAndCPLFree*) - Required - The returned string should be
+copied to target language and then CPLFree'd
+
 out (char **dict) - Required - The return value is a collection of name/value pairs.  This can be
 converted into a native dictionary or hash structure.  Use CPLParseNameValue() to
 access the char ** type.
 
-out (CPLErr) - CPLErr is an enum defined in port/cpl_error.h.  This code is returned
-by many functions in GDAL core.  Suggested useage is to test the return code an convert
-to an exception.
-
 out GDALColorEntry* - Return a GDALColorEntry from a function.
-
-out (IF_FALSE_RETURN_NONE) - Required - This is a typedef'd int.  Must support use in conjunction with
-argout typemaps.
-
-out OGRErr - 
 
 out (char **CSL) - Required - The return value is a list that is copied
 into a list in the target language and then CSLDestroyed
-
-out (retStringAndCPLFree*) - Required - The returned string should be
-copied to target language and then CPLFree'd
 
 -------------------
 

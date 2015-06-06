@@ -37,54 +37,11 @@
 %module osr
 #endif
 
-#ifdef SWIGCSHARP
+#ifdef SWIGCSHARPx
 %include swig_csharp_extensions.i
 #endif
 
-#ifndef SWIGJAVA
-%feature("compactdefaultargs");
-#endif
-
-#ifdef SWIGCSHARP
-%csconst(1);
-#elif defined(SWIGJAVA)
-%javaconst(1);
-#endif
-
-%include "../../ogr/ogr_srs_api.h"
-
-#ifdef SWIGCSHARP
-%csconst(0);
-#elif defined(SWIGJAVA)
-%javaconst(0);
-#endif
-
-#if !defined(FROM_GDAL_I) && !defined(FROM_OGR_I)
-%inline %{
-typedef char retStringAndCPLFree;
-%}
-#endif
-
-%{
-#include <iostream>
-using namespace std;
-
-#include "cpl_string.h"
-#include "cpl_conv.h"
-
-#include "ogr_srs_api.h"
-
-#ifdef DEBUG
-typedef struct OGRSpatialReferenceHS OSRSpatialReferenceShadow;
-typedef struct OGRCoordinateTransformationHS OSRCoordinateTransformationShadow;
-typedef struct OGRCoordinateTransformationHS OGRCoordinateTransformationShadow;
-#else
-typedef void OSRSpatialReferenceShadow;
-typedef void OSRCoordinateTransformationShadow;
-#endif
-%}
-
-typedef int OGRErr;
+%include typedefs.i
 
 #if defined(SWIGPYTHON)
 %include osr_python.i
@@ -98,8 +55,6 @@ typedef int OGRErr;
 %include osr_java.i
 #elif defined(SWIGPERL)
 %include osr_perl.i
-#else
-%include gdal_typemaps.i
 #endif
 
 /******************************************************************************

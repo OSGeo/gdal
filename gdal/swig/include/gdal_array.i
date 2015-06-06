@@ -33,8 +33,10 @@
 %module gdal_array
 
 %include constraints.i
+%include typedefs.i
 
 %import typemaps_python.i
+%include "python_exceptions.i"
 
 %import MajorObject.i
 %import Band.i
@@ -48,7 +50,6 @@
   GDALRegister_NUMPY();
 %}
 
-typedef int CPLErr;
 typedef int GDALRIOResampleAlg;
 
 %include "python_strings.i"
@@ -80,8 +81,6 @@ CPL_C_START
 GDALRasterBandH CPL_DLL MEMCreateRasterBand( GDALDataset *, int, GByte *,
                                              GDALDataType, int, int, int );
 CPL_C_END
-
-typedef char retStringAndCPLFree;
 
 class NUMPYDataset : public GDALDataset
 {

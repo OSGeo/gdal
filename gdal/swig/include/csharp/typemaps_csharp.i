@@ -33,8 +33,6 @@
 
 /* CSHARP TYPEMAPS */
 
-%apply (int) {VSI_RETVAL};
-
 %fragment("OGRErrMessages","header") %{
 static char const *
 OGRErrMessages( int rc ) {
@@ -78,16 +76,9 @@ OGRErrMessages( int rc ) {
 
 /* GDAL Typemaps */
 
-%typemap(out) IF_FALSE_RETURN_NONE %{ $result = $1; %}
-%typemap(ctype) IF_FALSE_RETURN_NONE "int"
-%typemap(imtype) IF_FALSE_RETURN_NONE "int"
-%typemap(cstype) IF_FALSE_RETURN_NONE "int"
-%typemap(csout, excode=SWIGEXCODE) IF_FALSE_RETURN_NONE {
-    int res = $imcall;$excode
-    return res;
-}
+%typemap(out) GDAL_SUCCESS %{ $result = $1; %}
 
-%typemap(out) IF_ERROR_RETURN_NONE %{ $result = $1; %}
+%typemap(out) CPLErr %{ $result = $1; %}
 
 %define OPTIONAL_POD(CTYPE, CSTYPE)
 %typemap(imtype) (CTYPE *optional_##CTYPE) "IntPtr"

@@ -48,19 +48,6 @@
     }
 }
 
-%typemap(in) GIntBig
-{
-  /* %typemap(in) GIntBig */
-  $1 = SvIV($input); //FIXME is that right ??
-}
-
-%typemap(out) GIntBig
-{
-  /* %typemap(out) GIntBig */
-  $result = sv_newmortal();
-  sv_setiv($result, (IV) $1);
-  argvi++;
-}
 %typemap(out) const char *
 {
     /* %typemap(out) const char * */
@@ -150,43 +137,28 @@
   }
 }
 
-/* typemaps for IF_FALSE_RETURN_NONE */
+/* typemaps for GDAL_SUCCESS */
 
 /* drop GDAL return value */
-%typemap(out) IF_FALSE_RETURN_NONE
+%typemap(out) GDAL_SUCCESS
 {
-  /* %typemap(out) IF_FALSE_RETURN_NONE */
+  /* %typemap(out) GDAL_SUCCESS */
 }
 /* croak if GDAL return FALSE */
-%typemap(ret) IF_FALSE_RETURN_NONE
+%typemap(ret) GDAL_SUCCESS
 {
- /* %typemap(ret) IF_FALSE_RETURN_NONE */
+ /* %typemap(ret) GDAL_SUCCESS */
   if ($1 == 0 ) {
     SWIG_croak("unexpected error in '$symname'");
   }
 }
+
 /* drop GDAL return value */
-%typemap(out) RETURN_NONE_TRUE_IS_ERROR
-{
-  /* %typemap(out) RETURN_NONE_TRUE_IS_ERROR */
-}
-/* croak if GDAL return TRUE */
-%typemap(ret) RETURN_NONE_TRUE_IS_ERROR
-{
- /* %typemap(ret) RETURN_NONE_TRUE_IS_ERROR */
-  if ($1 != 0 ) {
-    SWIG_croak("unexpected error in '$symname'");
-  }
-}
-/* drop GDAL return value */
-%typemap(out) IF_ERROR_RETURN_NONE
-{
-  /* %typemap(out) IF_ERROR_RETURN_NONE */
-}
 %typemap(out) CPLErr
 {
   /* %typemap(out) CPLErr */
 }
+
 /* return value is really void or prepared by typemaps, avoids unnecessary sv_newmortal */
 %typemap(out) void
 {
@@ -237,6 +209,21 @@ CreateArrayFromIntArray( int *first, unsigned int size ) {
   AV *av = (AV*)sv_2mortal((SV*)newAV());
   for( unsigned int i=0; i<size; i++ ) {
     av_store(av,i,newSViv(*first));
+    ++first;
+  }
+  return sv_2mortal(newRV((SV*)av));
+}
+%}
+
+%fragment("CreateArrayFromGIntBigArray","header") %{
+#define LENGTH_OF_GIntBig_AS_STRING 30
+static SV *
+CreateArrayFromGIntBigArray( GIntBig *first, unsigned int size ) {
+  AV *av = (AV*)sv_2mortal((SV*)newAV());
+  for( unsigned int i=0; i<size; i++ ) {
+    char s[LENGTH_OF_GIntBig_AS_STRING];
+    snprintf(s, LENGTH_OF_GIntBig_AS_STRING-1, CPL_FRMT_GIB, *first);
+    av_store(av,i,newSVpv(s, 0));
     ++first;
   }
   return sv_2mortal(newRV((SV*)av));
@@ -296,6 +283,21 @@ CreateArrayFromStringArray( char **first ) {
 {
   /* %typemap(argout) (int *nLen, const int **pList) */
   $result = CreateArrayFromIntArray( *($2), *($1) );
+  argvi++;
+}
+
+/* typemaps for (int *nLen, const GIntBig **pList) */
+
+%typemap(in,numinputs=0) (int *nLen, const GIntBig **pList) (int nLen, GIntBig *pList)
+{
+  /* %typemap(in,numinputs=0) (int *nLen, const GIntBig **pList) */
+  $1 = &nLen;
+  $2 = &pList;
+}
+%typemap(argout,fragment="CreateArrayFromGIntBigArray") (int *nLen, const GIntBig **pList)
+{
+  /* %typemap(argout) (int *nLen, const GIntBig **pList) */
+  $result = CreateArrayFromGIntBigArray( *($2), *($1) );
   argvi++;
 }
 
@@ -463,6 +465,10 @@ CreateArrayFromStringArray( char **first ) {
 
 /* typemaps for (int nList, int* pList) */
 
+%typemap(typecheck) (int nList, int* pList) {
+   /* %typemap(typecheck) int nList, int* pList */
+   $1 = SvOK($input) && SvROK($input) ? 1 : 0;
+}
 %typemap(in,numinputs=1) (int nList, int* pList)
 {
     /* %typemap(in,numinputs=1) (int nList, int* pList) */
@@ -511,6 +517,10 @@ CreateArrayFromStringArray( char **first ) {
 
 /* typemaps for (int nList, double* pList) */
 
+%typemap(typecheck) (int nList, double* pList) {
+   /* %typemap(typecheck) int nList, double* pList */
+   $1 = SvOK($input) && SvROK($input) ? 1 : 0;
+}
 %typemap(in,numinputs=1) (int nList, double* pList)
 {
     /* %typemap(in,numinputs=1) (int nList, double* pList) */
@@ -586,6 +596,11 @@ CreateArrayFromStringArray( char **first ) {
     free( *$2 );
   }
 }
+
+%typemap(typecheck) (int nLen, char *pBuf) {
+   /* %typemap(typecheck) int nLen, char *pBuf */
+   $1 = SvOK($input) && SvPOK($input) ? 1 : 0;
+}
 %typemap(in,numinputs=1) (int nLen, char *pBuf )
 {
     /* %typemap(in,numinputs=1) (int nLen, char *pBuf ) */
@@ -608,6 +623,20 @@ CreateArrayFromStringArray( char **first ) {
             SWIG_croak("Expected binary data.");
         STRLEN len = SvCUR($input);
         $2 = (unsigned char *)SvPV_nolen($input);
+        $1 = len;
+    } else {
+        $2 = NULL;
+        $1 = 0;
+    }
+}
+%typemap(in,numinputs=1) (GIntBig nLen, char *pBuf )
+{
+    /* %typemap(in,numinputs=1) (GIntBig nLen, char *pBuf ) */
+    if (SvOK($input)) {
+        if (!SvPOK($input))
+            croak("Expected binary data.");
+        STRLEN len = SvCUR($input);
+        $2 = SvPV_nolen($input);
         $1 = len;
     } else {
         $2 = NULL;
@@ -664,13 +693,14 @@ CreateArrayFromStringArray( char **first ) {
   /* %typemap(argout) (int *nGCPs, GDAL_GCP const **pGCPs ) */
   AV *dict = (AV*)sv_2mortal((SV*)newAV());
   for( int i = 0; i < *$1; i++ ) {
-    GDAL_GCP *o = new_GDAL_GCP( (*$2)[i].dfGCPX,
-                                (*$2)[i].dfGCPY,
-                                (*$2)[i].dfGCPZ,
-                                (*$2)[i].dfGCPPixel,
-                                (*$2)[i].dfGCPLine,
-                                (*$2)[i].pszInfo,
-                                (*$2)[i].pszId );
+    GDAL_GCP *o = (GDAL_GCP*) CPLMalloc( sizeof( GDAL_GCP ) );
+    o->dfGCPX = (*$2)[i].dfGCPX;
+    o->dfGCPY = (*$2)[i].dfGCPY;
+    o->dfGCPZ = (*$2)[i].dfGCPZ;
+    o->dfGCPPixel = (*$2)[i].dfGCPPixel;
+    o->dfGCPLine = (*$2)[i].dfGCPLine;
+    o->pszInfo =  CPLStrdup( ((*$2)[i].pszInfo == 0) ? "" : (*$2)[i].pszInfo );
+    o->pszId = CPLStrdup( ((*$2)[i].pszId==0)? "" : (*$2)[i].pszId );
     SV *sv = newSV(0);
     SWIG_MakePtr( sv, (void*)o, $*2_descriptor, SWIG_SHADOW|SWIG_OWNER);
     av_store(dict, i, sv);
@@ -818,6 +848,10 @@ CreateArrayFromStringArray( char **first ) {
 /*
  * Typemap char **options <-> AV
  */
+%typemap(typecheck) (char **options) {
+   /* %typemap(typecheck) char **options */
+  $1 = SvOK($input) && SvROK($input) ? 1 : 0;
+}
 %typemap(in) char **options
 {
     /* %typemap(in) char **options */
@@ -876,6 +910,10 @@ CreateArrayFromStringArray( char **first ) {
  * Typemaps map mutable char ** arguments from AV.  Does not
  * return the modified argument
  */
+%typemap(typecheck) (char **ignorechange) {
+    /* %typemap(typecheck) (char **ignorechange) */
+    $1 = SvOK($input) ? 1 : 0;
+}
 %typemap(in) (char **ignorechange) ( char *val )
 {
     /* %typemap(in) (char **ignorechange) */
@@ -942,7 +980,7 @@ CreateArrayFromStringArray( char **first ) {
 %typemap(typecheck,precedence=SWIG_TYPECHECK_POINTER) (tostring argin)
 {
   /* %typemap(typecheck,precedence=SWIG_TYPECHECK_POINTER) (tostring argin) */
-  $1 = 1;
+  $1 = SvOK($input) ? 1 : 0;
 }
 
 /*
@@ -1197,12 +1235,38 @@ IF_UNDEF_NULL(const char *, target_key)
     CPLFree($4);
 }
 
-%typemap(arginit, noblock=1) ( void* callback_data = NULL)
+/*
+Typemaps for callbacks.
+
+Here we rely on %feature ("compactdefaultargs"); 
+
+If it is not on, the swig method for finding a matching function requires
+something like this additional wrapping to work:
+
+%inline %{
+  typedef int (*GDALProgressFunc)(double, const char *, void *);
+  GDALProgressFunc ConvertToGDALProgressFunc(SV *sub) {
+    return (GDALProgressFunc)sub;
+  }
+  void* ConvertToCallbackDataPtr(SV *data) {
+    return (void*)data;
+  }
+%}
+
+ */
+
+%typemap(arginit, noblock=1) (GDALProgressFunc callback = NULL)
 {
-    /* %typemap(arginit, noblock=1) ( void* callback_data = NULL) */
+    /* %typemap(arginit, noblock=1) (GDALProgressFunc callback = NULL) */
+    $1 = NULL;
     SavedEnv saved_env;
     saved_env.fct = NULL;
     saved_env.data = &PL_sv_undef;
+}
+
+%typemap(arginit, noblock=1) (void* callback_data = NULL)
+{
+    /* %typemap(arginit, noblock=1) (void* callback_data = NULL) */
     $1 = (void *)(&saved_env);
 }
 
@@ -1368,4 +1432,14 @@ IF_UNDEF_NULL(const char *, target_key)
 {
     /* %typemap(freearg) (int object_list_count, GDALRasterBandShadow **poObjects) */
     CPLFree($2);
+}
+
+%typemap(typecheck,precedence=SWIG_TYPECHECK_POINTER) GDALProgressFunc {
+   /* %typemap(typecheck,precedence=SWIG_TYPECHECK_POINTER) GDALProgressFunc */
+  $1 = SvOK($input) ? 1 : 0;
+}
+
+%typemap(typecheck,precedence=SWIG_TYPECHECK_POINTER) void* {
+   /* %typemap(typecheck,precedence=SWIG_TYPECHECK_POINTER) void* */
+  $1 = SvOK($input) ? 1 : 0;
 }

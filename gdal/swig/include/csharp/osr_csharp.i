@@ -31,3 +31,5 @@
 %include cpl_exceptions.i
 
 %include typemaps_csharp.i
+
+%include swig_csharp_extensions.i

@@ -10,10 +10,14 @@
 */
 
 // Ensure the class is not marked BeforeFieldInit causing memory corruption with CLR4 
+/*
+causes static $imclassname() {
+} to be twice in classPINVOKE.cs
 %pragma(csharp) imclasscode=%{
   static $imclassname() {
   }
 %}
+*/
 
 %typemap(csout, excode=SWIGEXCODE) SWIGTYPE {
     $&csclassname ret = new $&csclassname($imcall, true, null);$excode
@@ -92,7 +96,7 @@
 %typemap(csbody_derived) SWIGTYPE %{
   private HandleRef swigCPtr;
 
-  public $csclassname(IntPtr cPtr, bool cMemoryOwn, object parent) : base($modulePINVOKE.$csclassnameUpcast(cPtr), cMemoryOwn, parent) {
+  public $csclassname(IntPtr cPtr, bool cMemoryOwn, object parent) : base($modulePINVOKE.$csclassname_SWIGUpcast(cPtr), cMemoryOwn, parent) {
     swigCPtr = new HandleRef(this, cPtr);
   }
 

@@ -22,8 +22,6 @@
  */
 %include "typemaps.i"
 
-%apply (int) {VSI_RETVAL};
-
 %apply (double *OUTPUT) { double *argout };
 
 %typemap(in) GIntBig
@@ -133,10 +131,10 @@
  * The out typemap prevents the default typemap for output integers from
  * applying.
  */
-%typemap(out) IF_FALSE_RETURN_NONE "/*%typemap(out) IF_FALSE_RETURN_NONE */"
-%typemap(ret) IF_FALSE_RETURN_NONE
+%typemap(out) GDAL_SUCCESS "/*%typemap(out) GDAL_SUCCESS */"
+%typemap(ret) GDAL_SUCCESS
 {
- /* %typemap(ret) IF_FALSE_RETURN_NONE */
+ /* %typemap(ret) GDAL_SUCCESS */
   if ($1 == 0 ) {
     Py_XDECREF( $result );
     $result = Py_None;
@@ -149,9 +147,9 @@
 }
 
 
-%typemap(out) IF_ERROR_RETURN_NONE
+%typemap(out) CPLErr
 {
-  /* %typemap(out) IF_ERROR_RETURN_NONE */
+  /* %typemap(out) CPLErr */
 }
 
 

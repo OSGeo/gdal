@@ -20,8 +20,6 @@
 %include "arrays_java.i";
 %include "typemaps.i"
 
-%apply (int) {VSI_RETVAL};
-
 %typemap(javabody) SWIGTYPE %{
   private long swigCPtr;
   protected boolean swigCMemOwn;
@@ -286,29 +284,29 @@
   }
 
 /***************************************************
- * Typemaps for (int nLen, unsigned char *pBuf )
+ * Typemaps for (int nLen, char *pBuf )
  ***************************************************/
 
-%typemap(in) (int nLen, unsigned char *pBuf )
+%typemap(in) (int nLen, char *pBuf )
 {
-  /* %typemap(in) (int nLen, unsigned char *pBuf ) */
+  /* %typemap(in) (int nLen, char *pBuf ) */
   $1 = 0;
   $2 = NULL;
   if ($input)
   {
     $1 = jenv->GetArrayLength($input);
-    $2 = (unsigned char *)jenv->GetByteArrayElements($input, NULL);
+    $2 = (char *)jenv->GetByteArrayElements($input, NULL);
   }
 }
 
-%typemap(argout) (int nLen, unsigned char *pBuf )
+%typemap(argout) (int nLen, char *pBuf )
 {
-  /* %typemap(argout) (int nLen, unsigned char *pBuf ) */
+  /* %typemap(argout) (int nLen, char *pBuf ) */
 }
 
-%typemap(freearg) (int nLen, unsigned char *pBuf )
+%typemap(freearg) (int nLen, char *pBuf )
 {
-  /* %typemap(freearg) (int nLen, unsigned char *pBuf ) */
+  /* %typemap(freearg) (int nLen, char *pBuf ) */
   /* This calls JNI_ABORT, so any modifications will not be passed back
       into the Java caller
    */
@@ -317,11 +315,11 @@
   }
 }
 
-%typemap(jni) (int nLen, unsigned char *pBuf ) "jbyteArray"
-%typemap(jtype) (int nLen, unsigned char *pBuf ) "byte[]"
-%typemap(jstype) (int nLen, unsigned char *pBuf ) "byte[]"
-%typemap(javain) (int nLen, unsigned char *pBuf ) "$javainput"
-%typemap(javaout) (int nLen, unsigned char *pBuf ) {
+%typemap(jni) (int nLen, char *pBuf ) "jbyteArray"
+%typemap(jtype) (int nLen, char *pBuf ) "byte[]"
+%typemap(jstype) (int nLen, char *pBuf ) "byte[]"
+%typemap(javain) (int nLen, char *pBuf ) "$javainput"
+%typemap(javaout) (int nLen, char *pBuf ) {
     return $jnicall;
   }
 
@@ -341,18 +339,6 @@
         SWIG_JavaException(jenv, SWIG_ValueError, "Received a NULL pointer."); return $null; 
     }
     $2 = &nBytes;
-}
-
-%typemap(argout) (const char *pszHex, int *pnBytes)
-{
-    /* %typemap(argout) (const char *pszHex, int *pnBytes) */
-    if ($input)
-    {
-        jenv->ReleaseStringUTFChars($input, (char*)$1);
-    }
-    $result = jenv->NewByteArray(nBytes$argnum);
-    jenv->SetByteArrayRegion($result, (jsize)0, (jsize)nBytes$argnum, (jbyte*)result);
-    CPLFree(result);
 }
 
 %typemap(jni) (const char *pszHex, int *pnBytes) "jstring"
@@ -538,23 +524,23 @@
 
 /* GDAL Typemaps */
 
-%typemap(out) IF_ERR_RETURN_NONE
+%typemap(out) GDAL_SUCCESS
 {
-  /* %typemap(out) IF_ERR_RETURN_NONE */
+  /* %typemap(out) GDAL_SUCCESS */
   $result = 0;
 }
-%typemap(ret) IF_ERR_RETURN_NONE
+%typemap(ret) GDAL_SUCCESS
 {
- /* %typemap(ret) IF_ERR_RETURN_NONE */
+ /* %typemap(ret) GDAL_SUCCESS */
 }
-%typemap(out) IF_FALSE_RETURN_NONE
+%typemap(out) VSI_RETVAL
 {
-  /* %typemap(out) IF_FALSE_RETURN_NONE */
+  /* %typemap(out) VSI_RETVAL */
   $result = 0;
 }
-%typemap(ret) IF_FALSE_RETURN_NONE
+%typemap(ret) VSI_RETVAL
 {
- /* %typemap(ret) IF_FALSE_RETURN_NONE */
+ /* %typemap(ret) VSI_RETVAL */
 }
 
 /***************************************************
@@ -1727,11 +1713,6 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
     /* %typemap(freearg)  (int* pnCount, double** ppadfXY, double** ppadfZ) */
     VSIFree(*$2);
     VSIFree(*$3);
-}
-
-%typemap(argout)  (retGetPoints*)
-{
-    /* foo */
 }
 
 %typemap(jni) ( retGetPoints* ) "jobjectArray"

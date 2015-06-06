@@ -15,7 +15,6 @@
 %}
 
 %pythoncode %{
-
   
   have_warned = 0
   def deprecation_warn( module ):
@@ -726,3 +725,8 @@ CPLErr ReadRaster1(  int xoff, int yoff, int xsize, int ysize,
 }
 
 %include "callback.i"
+
+/* Add a __version__ attribute to match the convention */
+%pythoncode %{
+__version__ = _gdal.VersionInfo("RELEASE_NAME") 
+%}

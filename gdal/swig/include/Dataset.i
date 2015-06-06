@@ -392,7 +392,7 @@ public:
   // The (int,int*) arguments are typemapped.  The name of the first argument
   // becomes the kwarg name for it.
 #ifndef SWIGCSHARP  
-#ifndef SWIGJAVA
+#if defined(SWIGPYTHON) || defined(SWIGRUBY)
 %feature("kwargs") BuildOverviews;
 #endif
 %apply (int nList, int* pList) { (int overviewlist, int *pOverviews) };
@@ -453,7 +453,7 @@ public:
     GDALFlushCache( self );
   }
 
-#ifndef SWIGJAVA
+#if defined(SWIGPYTHON) || defined(SWIGRUBY)
 %feature ("kwargs") AddBand;
 #endif
 /* uses the defined char **options typemap */
@@ -471,7 +471,7 @@ public:
   }
 %clear char **;
 
-#if defined(SWIGPYTHON)
+#if !defined(SWIGCSHARP) && !defined(SWIGJAVA)
 %feature("kwargs") WriteRaster;
 %apply (GIntBig nLen, char *pBuf) { (GIntBig buf_len, char *buf_string) };
 %apply (int *optional_int) { (int*) };
@@ -523,58 +523,6 @@ public:
 %clear (GDALDataType *buf_type);
 %clear (int*);
 %clear (GIntBig buf_len, char *buf_string);
-#elif !defined(SWIGCSHARP) && !defined(SWIGJAVA)
-%feature("kwargs") WriteRaster;
-%apply (int nLen, char *pBuf) { (int buf_len, char *buf_string) };
-%apply (int *optional_int) { (int*) };
-%apply (int *optional_int) { (GDALDataType *buf_type) };
-%apply (int nList, int *pList ) { (int band_list, int *pband_list ) };
-  CPLErr WriteRaster( int xoff, int yoff, int xsize, int ysize,
-                      int buf_len, char *buf_string,
-                      int *buf_xsize = 0, int *buf_ysize = 0,
-                      GDALDataType *buf_type = 0,
-                      int band_list = 0, int *pband_list = 0,
-                      int* buf_pixel_space = 0, int* buf_line_space = 0, int* buf_band_space = 0) {
-    CPLErr eErr;
-    int nxsize = (buf_xsize==0) ? xsize : *buf_xsize;
-    int nysize = (buf_ysize==0) ? ysize : *buf_ysize;
-    GDALDataType ntype;
-    if ( buf_type != 0 ) {
-      ntype = (GDALDataType) *buf_type;
-    } else {
-      int lastband = GDALGetRasterCount( self ) - 1;
-      if (lastband < 0)
-        return CE_Failure;
-      ntype = GDALGetRasterDataType( GDALGetRasterBand( self, lastband ) );
-    }
-
-    int pixel_space = (buf_pixel_space == 0) ? 0 : *buf_pixel_space;
-    int line_space = (buf_line_space == 0) ? 0 : *buf_line_space;
-    int band_space = (buf_band_space == 0) ? 0 : *buf_band_space;
-
-    GIntBig min_buffer_size =
-      ComputeDatasetRasterIOSize (nxsize, nysize, GDALGetDataTypeSize( ntype ) / 8,
-                                  band_list ? band_list : GDALGetRasterCount(self), pband_list, band_list,
-                                  pixel_space, line_space, band_space, FALSE);
-    if (min_buffer_size == 0)
-        return CE_Failure;
-
-    if ( buf_len < min_buffer_size )
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "Buffer too small");
-        return CE_Failure;
-    }
-  
-    eErr = GDALDatasetRasterIO( self, GF_Write, xoff, yoff, xsize, ysize,
-                                (void*) buf_string, nxsize, nysize, ntype,
-                                band_list, pband_list, pixel_space, line_space, band_space );
-
-    return eErr;
-  }
-%clear (int band_list, int *pband_list );
-%clear (GDALDataType *buf_type);
-%clear (int*);
-%clear (int buf_len, char *buf_string);
 #endif
 
 #if !defined(SWIGCSHARP) && !defined(SWIGJAVA) && !defined(SWIGPYTHON)
@@ -840,7 +788,7 @@ CPLErr ReadRaster(  int xoff, int yoff, int xsize, int ysize,
 #if defined(SWIGPYTHON) || defined(SWIGJAVA)
 
   /* Note that datasources own their layers */
-#ifndef SWIGJAVA
+#if defined(SWIGPYTHON) || defined(SWIGRUBY)
   %feature( "kwargs" ) CreateLayer;
 #endif
   OGRLayerShadow *CreateLayer(const char* name, 
@@ -855,7 +803,7 @@ CPLErr ReadRaster(  int xoff, int yoff, int xsize, int ysize,
     return layer;
   }
 
-#ifndef SWIGJAVA
+#if defined(SWIGPYTHON) || defined(SWIGRUBY)
   %feature( "kwargs" ) CopyLayer;
 #endif
 %apply Pointer NONNULL {OGRLayerShadow *src_layer};
@@ -895,7 +843,7 @@ CPLErr ReadRaster(  int xoff, int yoff, int xsize, int ysize,
     return (GDALDatasetTestCapability(self, cap) > 0);
   }
 
-#ifndef SWIGJAVA
+#if defined(SWIGPYTHON) || defined(SWIGRUBY)
   %feature( "kwargs" ) ExecuteSQL;
 #endif
   %apply Pointer NONNULL {const char * statement};
@@ -926,7 +874,7 @@ CPLErr ReadRaster(  int xoff, int yoff, int xsize, int ysize,
 
 #endif /* defined(SWIGPYTHON) || defined(SWIGJAVA) */
 
-#ifndef SWIGJAVA
+#if defined(SWIGPYTHON) || defined(SWIGRUBY)
   %feature( "kwargs" ) StartTransaction;
 #endif
   OGRErr StartTransaction(int force = FALSE)

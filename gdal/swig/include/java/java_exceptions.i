@@ -29,3 +29,5 @@ void DontUseExceptions() {
   CPLSetErrorHandler( CPLDefaultErrorHandler );
 }
 %}
+
+%include exception.i

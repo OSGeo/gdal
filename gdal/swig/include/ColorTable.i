@@ -43,7 +43,7 @@ public:
 
 %extend {
 
-#ifndef SWIGJAVA
+#if defined(SWIGPYTHON) || defined(SWIGRUBY)
     %feature("kwargs") GDALColorTableShadow;
 #endif
     GDALColorTableShadow(GDALPaletteInterp palette = GPI_RGB ) {

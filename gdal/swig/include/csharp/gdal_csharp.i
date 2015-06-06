@@ -35,6 +35,8 @@
 
 %include typemaps_csharp.i
 
+%include swig_csharp_extensions.i
+
 %apply (int *pList) {int *band_list, int *panHistogram_in};
 %apply (double *OUTPUT) {double *min_ret, double *max_ret};
 %apply (int *nLen) {int *buckets_ret};
@@ -218,9 +220,12 @@ public CPLErr SetGCPs(GCP[] pGCPs, string pszGCPProjection) {
  public static void FileFromMemBuffer(string utf8_path, byte[] bytes) {
      GCHandle handle = GCHandle.Alloc(bytes, GCHandleType.Pinned);
      try {
-          FileFromMemBuffer(utf8_path, bytes.Length, handle.AddrOfPinnedObject());
+       /* the ToString is probably wrong but I'm no C# expert */
+       FileFromMemBuffer(utf8_path, bytes.Length, handle.AddrOfPinnedObject().ToString());
      } finally {
         handle.Free();
      }
   }
 %}
+
+%include "gdal_csharp_extend.i"
