@@ -4496,6 +4496,10 @@ class Geometry(_object):
         """
         return _ogr.Geometry_SimplifyPreserveTopology(self, *args)
 
+    def DelaunayTriangulation(self, *args, **kwargs):
+        """DelaunayTriangulation(self, double dfTolerance = 0.0, int bOnlyEdges = True) -> Geometry"""
+        return _ogr.Geometry_DelaunayTriangulation(self, *args, **kwargs)
+
     def Boundary(self, *args):
         """
         Boundary(self) -> Geometry

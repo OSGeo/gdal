@@ -208,6 +208,7 @@ class CPL_DLL OGRGeometry
     virtual OGRErr       Centroid( OGRPoint * poPoint ) const;
     virtual OGRGeometry *Simplify(double dTolerance) const;
     OGRGeometry *SimplifyPreserveTopology(double dTolerance) const;
+    virtual OGRGeometry *DelaunayTriangulation(double dfTolerance, int bOnlyEdges) const;
 
     virtual OGRGeometry *Polygonize() const;
 

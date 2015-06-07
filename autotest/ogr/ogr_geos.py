@@ -695,6 +695,26 @@ def ogr_geos_pointonsurface():
 
     return 'success'
 
+###############################################################################
+
+def ogr_geos_DelaunayTriangulation():
+
+    if not ogrtest.have_geos():
+        return 'skip'
+
+    g1 = ogr.CreateGeometryFromWkt( 'MULTIPOINT(0 0,0 1,1 1,1 0)' )
+
+    gdal.ErrorReset()
+    triangulation = g1.DelaunayTriangulation()
+    if triangulation is None and gdal.GetLastErrorMsg() == '':
+        return 'fail'
+
+    if triangulation.ExportToWkt() != 'GEOMETRYCOLLECTION (POLYGON ((0 1,0 0,1 0,0 1)),POLYGON ((0 1,1 0,1 1,0 1)))':
+        print('Got: ', triangulation.ExportToWkt())
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [ 
     ogr_geos_union,
     ogr_geos_intersection,
@@ -722,7 +742,8 @@ gdaltest_list = [
     ogr_geos_issimple_false,
     ogr_geos_isvalid_true,
     ogr_geos_isvalid_false,
-    ogr_geos_pointonsurface ]
+    ogr_geos_pointonsurface,
+    ogr_geos_DelaunayTriangulation ]
 
 if __name__ == '__main__':
 
