@@ -2571,6 +2571,15 @@ public:
     return (OGRGeometryShadow*) OGR_G_SimplifyPreserveTopology(self, tolerance);
   }
 
+  /* OGR >= 2.1 */
+  %newobject DelaunayTriangulation;
+#ifndef SWIGJAVA
+  %feature("kwargs") DelaunayTriangulation;
+#endif
+  OGRGeometryShadow* DelaunayTriangulation(double dfTolerance = 0.0, int bOnlyEdges = FALSE) {
+    return (OGRGeometryShadow*) OGR_G_DelaunayTriangulation(self, dfTolerance, bOnlyEdges);
+  }
+  
   %newobject Boundary;
   OGRGeometryShadow* Boundary() {
     return (OGRGeometryShadow*) OGR_G_Boundary(self);
