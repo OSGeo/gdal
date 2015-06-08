@@ -1,4 +1,4 @@
-/* $Id: tif_luv.c,v 1.35 2011-04-02 20:54:09 bfriesen Exp $ */
+/* $Id: tif_luv.c,v 1.39 2015-05-31 21:24:44 bfriesen Exp $ */
 
 /*
  * Copyright (c) 1997 Greg Ward Larson
@@ -379,6 +379,9 @@ LogLuvDecodeStrip(TIFF* tif, uint8* bp, tmsize_t cc, uint16 s)
 {
 	tmsize_t rowlen = TIFFScanlineSize(tif);
 
+        if (rowlen == 0)
+                return 0;
+
 	assert(cc%rowlen == 0);
 	while (cc && (*tif->tif_decoderow)(tif, bp, rowlen, s))
 		bp += rowlen, cc -= rowlen;
@@ -394,6 +397,9 @@ static int
 LogLuvDecodeTile(TIFF* tif, uint8* bp, tmsize_t cc, uint16 s)
 {
 	tmsize_t rowlen = TIFFTileRowSize(tif);
+
+        if (rowlen == 0)
+                return 0;
 
 	assert(cc%rowlen == 0);
 	while (cc && (*tif->tif_decoderow)(tif, bp, rowlen, s))
@@ -658,6 +664,9 @@ static int
 LogLuvEncodeTile(TIFF* tif, uint8* bp, tmsize_t cc, uint16 s)
 {
 	tmsize_t rowlen = TIFFTileRowSize(tif);
+
+        if (rowlen == 0)
+                return 0;
 
 	assert(cc%rowlen == 0);
 	while (cc && (*tif->tif_encoderow)(tif, bp, rowlen, s) == 1)

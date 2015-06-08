@@ -1,4 +1,4 @@
-/* $Id: tif_dirwrite.c,v 1.77 2012-07-06 19:18:31 bfriesen Exp $ */
+/* $Id: tif_dirwrite.c,v 1.78 2015-05-31 00:38:46 bfriesen Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -2839,13 +2839,14 @@ _TIFFRewriteField(TIFF* tif, uint16 tag, TIFFDataType in_datatype,
                          "Error writing directory link");
             return (0);
         }
-        
-        _TIFFfree( buf_to_write );
     }
     else
     {
         memcpy( &entry_offset, buf_to_write, count*TIFFDataWidth(datatype));
     }
+
+    _TIFFfree( buf_to_write );
+    buf_to_write = 0;
 
 /* -------------------------------------------------------------------- */
 /*      Adjust the directory entry.                                     */

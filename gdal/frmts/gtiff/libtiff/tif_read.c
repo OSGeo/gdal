@@ -1,4 +1,4 @@
-/* $Id: tif_read.c,v 1.44 2014-12-23 10:15:35 erouault Exp $ */
+/* $Id: tif_read.c,v 1.45 2015-06-07 22:35:40 bfriesen Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -990,10 +990,12 @@ TIFFStartStrip(TIFF* tif, uint32 strip)
 static int
 TIFFStartTile(TIFF* tif, uint32 tile)
 {
+        static const char module[] = "TIFFStartTile";
 	TIFFDirectory *td = &tif->tif_dir;
+        uint32 howmany32;
 
-    if (!_TIFFFillStriles( tif ) || !tif->tif_dir.td_stripbytecount)
-        return 0;
+        if (!_TIFFFillStriles( tif ) || !tif->tif_dir.td_stripbytecount)
+                return 0;
 
 	if ((tif->tif_flags & TIFF_CODERSETUP) == 0) {
 		if (!(*tif->tif_setupdecode)(tif))
@@ -1001,12 +1003,18 @@ TIFFStartTile(TIFF* tif, uint32 tile)
 		tif->tif_flags |= TIFF_CODERSETUP;
 	}
 	tif->tif_curtile = tile;
-	tif->tif_row =
-	    (tile % TIFFhowmany_32(td->td_imagewidth, td->td_tilewidth)) *
-		td->td_tilelength;
-	tif->tif_col =
-	    (tile % TIFFhowmany_32(td->td_imagelength, td->td_tilelength)) *
-		td->td_tilewidth;
+        howmany32=TIFFhowmany_32(td->td_imagewidth, td->td_tilewidth);
+        if (howmany32 == 0) {
+                 TIFFErrorExt(tif->tif_clientdata,module,"Zero tiles");
+                return 0;
+        }
+	tif->tif_row = (tile % howmany32) * td->td_tilelength;
+        howmany32=TIFFhowmany_32(td->td_imagelength, td->td_tilelength);
+        if (howmany32 == 0) {
+                TIFFErrorExt(tif->tif_clientdata,module,"Zero tiles");
+                return 0;
+        }
+	tif->tif_col = (tile % howmany32) * td->td_tilewidth;
         tif->tif_flags &= ~TIFF_BUF4WRITE;
 	if (tif->tif_flags&TIFF_NOREADRAW)
 	{

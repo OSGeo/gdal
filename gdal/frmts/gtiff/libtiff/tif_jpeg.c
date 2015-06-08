@@ -1,4 +1,4 @@
-/* $Id: tif_jpeg.c,v 1.114 2014-12-30 16:37:22 erouault Exp $ */
+/* $Id: tif_jpeg.c,v 1.116 2015-05-31 15:44:40 bfriesen Exp $ */
 
 /*
  * Copyright (c) 1994-1997 Sam Leffler
@@ -1215,8 +1215,10 @@ JPEGDecode(TIFF* tif, uint8* buf, tmsize_t cc, uint16 s)
 			    _TIFFmalloc(sizeof(short) * sp->cinfo.d.output_width
 			    * sp->cinfo.d.num_components );
 		}
+#endif /* JPEG_LIB_MK1_OR_12BIT */
 
 		do {
+#if JPEG_LIB_MK1_OR_12BIT /* BITS_IN_JSAMPLE 12 or 16 */
 			if( line_work_buf != NULL )
 			{
 				/*
@@ -1258,7 +1260,9 @@ JPEGDecode(TIFF* tif, uint8* buf, tmsize_t cc, uint16 s)
 					}
 				}
 			}
-			else
+			/* else */
+#endif /* JPEG_LIB_MK1_OR_12BIT */
+#if !JPEG_LIB_MK1_OR_12BIT
 			{
 				/*
 				 * In the libjpeg6b 8bit case.  We read directly into the
@@ -1269,14 +1273,17 @@ JPEGDecode(TIFF* tif, uint8* buf, tmsize_t cc, uint16 s)
 				if (TIFFjpeg_read_scanlines(sp, &bufptr, 1) != 1)
 					return (0);
 			}
+#endif /* !JPEG_LIB_MK1_OR_12BIT */
 
 			++tif->tif_row;
 			buf += sp->bytesperline;
 			cc -= sp->bytesperline;
 		} while (--nrows > 0);
 
+#if JPEG_LIB_MK1_OR_12BIT /* BITS_IN_JSAMPLE 12 or 16 */
 		if( line_work_buf != NULL )
 			_TIFFfree( line_work_buf );
+#endif /* JPEG_LIB_MK1_OR_12BIT */
 	}
 
         /* Update information on consumed data */
@@ -2016,13 +2023,10 @@ JPEGCleanup(TIFF* tif)
 	tif->tif_tagmethods.vgetfield = sp->vgetparent;
 	tif->tif_tagmethods.vsetfield = sp->vsetparent;
 	tif->tif_tagmethods.printdir = sp->printdir;
-
-	if( sp != NULL ) {
-		if( sp->cinfo_initialized )
-		    TIFFjpeg_destroy(sp);	/* release libjpeg resources */
-		if (sp->jpegtables)		/* tag value */
-			_TIFFfree(sp->jpegtables);
-	}
+        if( sp->cinfo_initialized )
+                TIFFjpeg_destroy(sp);	/* release libjpeg resources */
+        if (sp->jpegtables)		/* tag value */
+                _TIFFfree(sp->jpegtables);
 	_TIFFfree(tif->tif_data);	/* release local state */
 	tif->tif_data = NULL;
 
