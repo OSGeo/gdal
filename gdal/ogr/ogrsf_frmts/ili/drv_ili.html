@@ -22,10 +22,10 @@ With the usage of unified, documented geodata and the flexible exchange possibil
 
 OGR supports INTERLIS 1 and INTERLIS 2 (2.2 and 2.3) with the following limitations:
 <ul>
-<li>Curves in Interlis 1 areas are converted to line segments</li>
+<li>Curves in Interlis 1 area polygons are converted to line segments</li>
+<li>Interlis 1 Surface geometries with non-numeric IDENT field are not included in the attribute layer</li>
 <li>Embedded INTERLIS 2 structures are not supported</li>
 <li>Incremental transfer is not supported</li>
-<li>Interlis 1 Surface geometries with non-numeric IDENT field are not included in the attribute layer</li>
 <li>Transfer id (TID) is used as feature id</li>
 </ul>
 
