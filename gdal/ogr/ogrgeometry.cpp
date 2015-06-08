@@ -71,6 +71,27 @@ OGRGeometry::OGRGeometry()
 }
 
 /************************************************************************/
+/*                   OGRGeometry( const OGRGeometry& )                  */
+/************************************************************************/
+
+/**
+ * \brief Copy constructor.
+ * 
+ * Note: before GDAL 2.1, only the default implementation of the constructor
+ * existed, which could be unsafe to use.
+ * 
+ * @since GDAL 2.1
+ */
+
+OGRGeometry::OGRGeometry( const OGRGeometry& other ) :
+    poSRS(other.poSRS),
+    nCoordDimension(other.nCoordDimension)
+{
+    if( poSRS != NULL )
+        poSRS->Reference();
+}
+
+/************************************************************************/
 /*                            ~OGRGeometry()                            */
 /************************************************************************/
 
@@ -79,6 +100,29 @@ OGRGeometry::~OGRGeometry()
 {
     if( poSRS != NULL )
         poSRS->Release();
+}
+
+/************************************************************************/
+/*                    operator=( const OGRGeometry&)                    */
+/************************************************************************/
+
+/**
+ * \brief Assignment operator.
+ * 
+ * Note: before GDAL 2.1, only the default implementation of the operator
+ * existed, which could be unsafe to use.
+ * 
+ * @since GDAL 2.1
+ */
+
+OGRGeometry& OGRGeometry::operator=( const OGRGeometry& other )
+{
+    if( this != &other)
+    {
+        assignSpatialReference( other.getSpatialReference() );
+        nCoordDimension = other.nCoordDimension;
+    }
+    return *this;
 }
 
 /************************************************************************/

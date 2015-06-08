@@ -48,6 +48,28 @@ OGRSimpleCurve::OGRSimpleCurve()
 }
 
 /************************************************************************/
+/*                OGRSimpleCurve( const OGRSimpleCurve& )               */
+/************************************************************************/
+
+/**
+ * \brief Copy constructor.
+ * 
+ * Note: before GDAL 2.1, only the default implementation of the constructor
+ * existed, which could be unsafe to use.
+ * 
+ * @since GDAL 2.1
+ */
+
+OGRSimpleCurve::OGRSimpleCurve( const OGRSimpleCurve& other ) :
+    OGRCurve( other ),
+    nPointCount( 0 ),
+    paoPoints( NULL ),
+    padfZ( NULL )
+{
+    setPoints( other.nPointCount, other.paoPoints, other.padfZ );
+}
+
+/************************************************************************/
 /*                          ~OGRSimpleCurve()                           */
 /************************************************************************/
 
@@ -58,6 +80,30 @@ OGRSimpleCurve::~OGRSimpleCurve()
         OGRFree( paoPoints );
     if( padfZ != NULL )
         OGRFree( padfZ );
+}
+
+/************************************************************************/
+/*                       operator=( const OGRPoint& )                   */
+/************************************************************************/
+
+/**
+ * \brief Assignment operator.
+ * 
+ * Note: before GDAL 2.1, only the default implementation of the operator
+ * existed, which could be unsafe to use.
+ * 
+ * @since GDAL 2.1
+ */
+
+OGRSimpleCurve& OGRSimpleCurve::operator=( const OGRSimpleCurve& other )
+{
+    if( this != &other)
+    {
+        OGRCurve::operator=( other );
+        
+        setPoints( other.nPointCount, other.paoPoints, other.padfZ );
+    }
+    return *this;
 }
 
 /************************************************************************/
@@ -1854,12 +1900,52 @@ OGRLineString::OGRLineString()
 }
 
 /************************************************************************/
+/*                  OGRLineString( const OGRLineString& )               */
+/************************************************************************/
+
+/**
+ * \brief Copy constructor.
+ * 
+ * Note: before GDAL 2.1, only the default implementation of the constructor
+ * existed, which could be unsafe to use.
+ * 
+ * @since GDAL 2.1
+ */
+
+OGRLineString::OGRLineString( const OGRLineString& other ) :
+    OGRSimpleCurve( other )
+{
+}
+
+/************************************************************************/
 /*                          ~OGRLineString()                            */
 /************************************************************************/
 
 OGRLineString::~OGRLineString()
 
 {
+}
+
+/************************************************************************/
+/*                    operator=( const OGRLineString& )                 */
+/************************************************************************/
+
+/**
+ * \brief Assignment operator.
+ * 
+ * Note: before GDAL 2.1, only the default implementation of the operator
+ * existed, which could be unsafe to use.
+ * 
+ * @since GDAL 2.1
+ */
+
+OGRLineString& OGRLineString::operator=( const OGRLineString& other )
+{
+    if( this != &other)
+    {
+        OGRSimpleCurve::operator=( other );
+    }
+    return *this;
 }
 
 /************************************************************************/

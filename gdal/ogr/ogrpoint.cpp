@@ -85,12 +85,59 @@ OGRPoint::OGRPoint( double xIn, double yIn )
 }
 
 /************************************************************************/
+/*                       OGRPoint( const OGRPoint& )                    */
+/************************************************************************/
+
+/**
+ * \brief Copy constructor.
+ * 
+ * Note: before GDAL 2.1, only the default implementation of the constructor
+ * existed, which could be unsafe to use.
+ * 
+ * @since GDAL 2.1
+ */
+
+OGRPoint::OGRPoint( const OGRPoint& other ) :
+    OGRGeometry( other ),
+    x( other.x ),
+    y( other.y ),
+    z( other.z )
+{
+}
+
+/************************************************************************/
 /*                             ~OGRPoint()                              */
 /************************************************************************/
 
 OGRPoint::~OGRPoint()
 
 {
+}
+
+/************************************************************************/
+/*                       operator=( const OGRPoint& )                   */
+/************************************************************************/
+
+/**
+ * \brief Assignment operator.
+ * 
+ * Note: before GDAL 2.1, only the default implementation of the operator
+ * existed, which could be unsafe to use.
+ * 
+ * @since GDAL 2.1
+ */
+
+OGRPoint& OGRPoint::operator=( const OGRPoint& other )
+{
+    if( this != &other)
+    {
+        OGRGeometry::operator=( other );
+        
+        x = other.x;
+        y = other.y;
+        z = other.z;
+    }
+    return *this;
 }
 
 /************************************************************************/

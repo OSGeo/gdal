@@ -47,12 +47,55 @@ OGRCompoundCurve::OGRCompoundCurve()
 }
 
 /************************************************************************/
+/*             OGRCompoundCurve( const OGRCompoundCurve& )              */
+/************************************************************************/
+
+/**
+ * \brief Copy constructor.
+ * 
+ * Note: before GDAL 2.1, only the default implementation of the constructor
+ * existed, which could be unsafe to use.
+ * 
+ * @since GDAL 2.1
+ */
+
+OGRCompoundCurve::OGRCompoundCurve( const OGRCompoundCurve& other ) :
+    OGRCurve(other),
+    oCC(other.oCC)
+{
+}
+
+/************************************************************************/
 /*                         ~OGRCompoundCurve()                          */
 /************************************************************************/
 
 OGRCompoundCurve::~OGRCompoundCurve()
 
 {
+}
+
+/************************************************************************/
+/*                 operator=( const OGRCompoundCurve&)                  */
+/************************************************************************/
+
+/**
+ * \brief Assignment operator.
+ * 
+ * Note: before GDAL 2.1, only the default implementation of the operator
+ * existed, which could be unsafe to use.
+ * 
+ * @since GDAL 2.1
+ */
+
+OGRCompoundCurve& OGRCompoundCurve::operator=( const OGRCompoundCurve& other )
+{
+    if( this != &other)
+    {
+        OGRCurve::operator=( other );
+        
+        oCC = other.oCC;
+    }
+    return *this;
 }
 
 /************************************************************************/

@@ -134,7 +134,10 @@ class CPL_DLL OGRGeometry
                                                         OGRwkbVariant eWkbVariant );
   public:
                 OGRGeometry();
+                OGRGeometry( const OGRGeometry& other );
     virtual     ~OGRGeometry();
+    
+    OGRGeometry& operator=( const OGRGeometry& other );
                         
     // standard IGeometry
     virtual int getDimension() const = 0;
@@ -247,7 +250,10 @@ class CPL_DLL OGRPoint : public OGRGeometry
                 OGRPoint();
                 OGRPoint( double x, double y );
                 OGRPoint( double x, double y, double z );
+                OGRPoint( const OGRPoint& other );
     virtual     ~OGRPoint();
+    
+    OGRPoint& operator=( const OGRPoint& other );
 
     // IWks Interface
     virtual int WkbSize() const;
@@ -322,6 +328,7 @@ class CPL_DLL OGRCurve : public OGRGeometry
 {
   protected:
             OGRCurve();
+            OGRCurve( const OGRCurve& other );
 
     virtual OGRCurveCasterToLineString GetCasterToLineString() const = 0;
     virtual OGRCurveCasterToLinearRing GetCasterToLinearRing() const = 0;
@@ -333,6 +340,8 @@ class CPL_DLL OGRCurve : public OGRGeometry
 
   public:
     virtual ~OGRCurve();
+    
+    OGRCurve& operator=( const OGRCurve& other );
 
     // ICurve methods
     virtual double get_Length() const = 0;
@@ -387,9 +396,12 @@ class CPL_DLL OGRSimpleCurve: public OGRCurve
     virtual double get_LinearArea() const;
 
                 OGRSimpleCurve();
+                OGRSimpleCurve( const OGRSimpleCurve& other );
 
   public:
     virtual     ~OGRSimpleCurve();
+    
+    OGRSimpleCurve& operator=( const OGRSimpleCurve& other );
 
     // IWks Interface
     virtual int WkbSize() const;
@@ -482,7 +494,10 @@ class CPL_DLL OGRLineString : public OGRSimpleCurve
 
   public:
                 OGRLineString();
+                OGRLineString(const OGRLineString& other);
     virtual    ~OGRLineString();
+    
+    OGRLineString& operator=(const OGRLineString& other);
 
     virtual OGRLineString* CurveToLine(double dfMaxAngleStepSizeDegrees = 0,
                                        const char* const* papszOptions = NULL) const;
@@ -537,8 +552,11 @@ class CPL_DLL OGRLinearRing : public OGRLineString
 
   public:
                         OGRLinearRing();
+                        OGRLinearRing(const OGRLinearRing& other);
                         OGRLinearRing( OGRLinearRing * );
     virtual            ~OGRLinearRing();
+    
+    OGRLinearRing& operator=(const OGRLinearRing& other);
 
     // Non standard.
     virtual const char *getGeometryName() const;
@@ -588,7 +606,10 @@ class CPL_DLL OGRCircularString : public OGRSimpleCurve
 
   public:
                 OGRCircularString();
+                OGRCircularString(const OGRCircularString& other);
     virtual    ~OGRCircularString();
+    
+    OGRCircularString& operator=(const OGRCircularString& other);
 
     // IWks Interface
     virtual OGRErr importFromWkb( unsigned char *, int = -1, OGRwkbVariant=wkbVariantOldOgc );
@@ -643,7 +664,10 @@ class CPL_DLL OGRCurveCollection
 
   public:
                 OGRCurveCollection();
+                OGRCurveCollection(const OGRCurveCollection& other);
                ~OGRCurveCollection();
+    
+    OGRCurveCollection& operator=(const OGRCurveCollection& other);
 
     void            empty(OGRGeometry* poGeom);
     OGRBoolean      IsEmpty() const;
@@ -721,7 +745,10 @@ class CPL_DLL OGRCompoundCurve : public OGRCurve
 
   public:
                 OGRCompoundCurve();
+                OGRCompoundCurve(const OGRCompoundCurve& other);
     virtual     ~OGRCompoundCurve();
+    
+    OGRCompoundCurve& operator=(const OGRCompoundCurve& other);
 
     // IWks Interface
     virtual int WkbSize() const;
@@ -839,7 +866,10 @@ class CPL_DLL OGRCurvePolygon : public OGRSurface
 
   public:
                 OGRCurvePolygon();
+                OGRCurvePolygon(const OGRCurvePolygon&);
     virtual    ~OGRCurvePolygon();
+    
+    OGRCurvePolygon& operator=(const OGRCurvePolygon& other);
 
     // Non standard (OGRGeometry).
     virtual const char *getGeometryName() const;
@@ -926,7 +956,10 @@ class CPL_DLL OGRPolygon : public OGRCurvePolygon
 
   public:
                 OGRPolygon();
+                OGRPolygon(const OGRPolygon& other);
     virtual    ~OGRPolygon();
+    
+    OGRPolygon& operator=(const OGRPolygon& other);
 
     // Non standard (OGRGeometry).
     virtual const char *getGeometryName() const;
@@ -994,7 +1027,10 @@ class CPL_DLL OGRGeometryCollection : public OGRGeometry
 
   public:
                 OGRGeometryCollection();
+                OGRGeometryCollection(const OGRGeometryCollection& other);
     virtual     ~OGRGeometryCollection();
+    
+    OGRGeometryCollection& operator=(const OGRGeometryCollection& other);
 
     // Non standard (OGRGeometry).
     virtual const char *getGeometryName() const;
@@ -1060,7 +1096,10 @@ class CPL_DLL OGRMultiSurface : public OGRGeometryCollection
 
   public:
             OGRMultiSurface();
+            OGRMultiSurface(const OGRMultiSurface& other);
     virtual ~OGRMultiSurface();
+    
+    OGRMultiSurface& operator=(const OGRMultiSurface& other);
 
     // Non standard (OGRGeometry).
     virtual const char *getGeometryName() const;
@@ -1095,7 +1134,10 @@ class CPL_DLL OGRMultiPolygon : public OGRMultiSurface
 
   public:
             OGRMultiPolygon();
+            OGRMultiPolygon(const OGRMultiPolygon& other);
     virtual ~OGRMultiPolygon();
+    
+    OGRMultiPolygon& operator=(const OGRMultiPolygon& other);
 
     // Non standard (OGRGeometry).
     virtual const char *getGeometryName() const;
@@ -1129,7 +1171,10 @@ class CPL_DLL OGRMultiPoint : public OGRGeometryCollection
 
   public:
             OGRMultiPoint();
+            OGRMultiPoint(const OGRMultiPoint& other);
     virtual ~OGRMultiPoint();
+    
+    OGRMultiPoint& operator=(const OGRMultiPoint& other);
 
     // Non standard (OGRGeometry).
     virtual const char *getGeometryName() const;
@@ -1162,7 +1207,10 @@ class CPL_DLL OGRMultiCurve : public OGRGeometryCollection
 
   public:
             OGRMultiCurve();
+            OGRMultiCurve(const OGRMultiCurve& other);
     virtual ~OGRMultiCurve();
+    
+    OGRMultiCurve& operator=(const OGRMultiCurve& other);
 
     // Non standard (OGRGeometry).
     virtual const char *getGeometryName() const;
@@ -1194,7 +1242,10 @@ class CPL_DLL OGRMultiLineString : public OGRMultiCurve
 
   public:
             OGRMultiLineString();
+            OGRMultiLineString(const OGRMultiLineString& other);
     virtual ~OGRMultiLineString();
+    
+    OGRMultiLineString& operator=(const OGRMultiLineString& other);
 
     // Non standard (OGRGeometry).
     virtual const char *getGeometryName() const;

@@ -45,6 +45,38 @@ OGRCurveCollection::OGRCurveCollection()
 }
 
 /************************************************************************/
+/*             OGRCurveCollection( const OGRCurveCollection& )          */
+/************************************************************************/
+
+/**
+ * \brief Copy constructor.
+ * 
+ * Note: before GDAL 2.1, only the default implementation of the constructor
+ * existed, which could be unsafe to use.
+ * 
+ * @since GDAL 2.1
+ */
+
+OGRCurveCollection::OGRCurveCollection( const OGRCurveCollection& other ) :
+    nCurveCount( 0 ),
+    papoCurves( NULL )
+{
+    if( other.nCurveCount > 0 )
+    {
+        nCurveCount = other.nCurveCount;
+        papoCurves = (OGRCurve **) VSIMalloc2(sizeof(void*), nCurveCount);
+        
+        if( papoCurves )
+        {
+            for( int i = 0; i < nCurveCount; i++ )
+            {
+                papoCurves[i] = (OGRCurve*)other.papoCurves[i]->clone();
+            }
+        }
+    }
+}
+
+/************************************************************************/
 /*                         ~OGRCurveCollection()                        */
 /************************************************************************/
 
@@ -52,6 +84,42 @@ OGRCurveCollection::~OGRCurveCollection()
 
 {
     empty(NULL);
+}
+
+/************************************************************************/
+/*                 operator=( const OGRCurveCollection& )               */
+/************************************************************************/
+
+/**
+ * \brief Assignment operator.
+ * 
+ * Note: before GDAL 2.1, only the default implementation of the operator
+ * existed, which could be unsafe to use.
+ * 
+ * @since GDAL 2.1
+ */
+
+OGRCurveCollection& OGRCurveCollection::operator=( const OGRCurveCollection& other )
+{
+    if( this != &other)
+    {
+        empty(NULL);
+        
+        if( other.nCurveCount > 0 )
+        {
+            nCurveCount = other.nCurveCount;
+            papoCurves = (OGRCurve **) VSIMalloc2(sizeof(void*), nCurveCount);
+            
+            if( papoCurves )
+            {
+                for( int i = 0; i < nCurveCount; i++ )
+                {
+                    papoCurves[i] = (OGRCurve*)other.papoCurves[i]->clone();
+                }
+            }
+        }
+    }
+    return *this;
 }
 
 /************************************************************************/
