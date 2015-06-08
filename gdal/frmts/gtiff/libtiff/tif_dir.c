@@ -1,4 +1,4 @@
-/* $Id: tif_dir.c,v 1.119 2014-12-27 15:20:42 erouault Exp $ */
+/* $Id: tif_dir.c,v 1.121 2015-05-31 23:11:43 bfriesen Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -1486,7 +1486,8 @@ TIFFAdvanceDirectory(TIFF* tif, uint64* nextdir, uint64* off)
 				(void) TIFFSeekFile(tif,
 				    dircount16*20, SEEK_CUR);
 			if (!ReadOK(tif, nextdir, sizeof (uint64))) {
-				TIFFErrorExt(tif->tif_clientdata, module, "%s: Error fetching directory link",
+				TIFFErrorExt(tif->tif_clientdata, module,
+                                             "%s: Error fetching directory link",
 				    tif->tif_name);
 				return (0);
 			}
@@ -1513,10 +1514,14 @@ TIFFNumberOfDirectories(TIFF* tif)
 	n = 0;
 	while (nextdir != 0 && TIFFAdvanceDirectory(tif, &nextdir, NULL))
         {
-		if(++n == 0)
+                if (n != 65535) {
+                        ++n;
+                }
+		else
                 {
                         TIFFErrorExt(tif->tif_clientdata, module,
-                                     "Directory count exceeded 65535 limit, giving up on counting.");
+                                     "Directory count exceeded 65535 limit,"
+                                     " giving up on counting.");
                         return (65535);
                 }
         }

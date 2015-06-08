@@ -1,4 +1,4 @@
-/* $Id: tif_write.c,v 1.38 2013-01-18 21:57:12 fwarmerdam Exp $ */
+/* $Id: tif_write.c,v 1.42 2015-06-07 23:00:23 bfriesen Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -115,6 +115,10 @@ TIFFWriteScanline(TIFF* tif, void* buf, uint32 row, uint16 sample)
 		if (strip >= td->td_stripsperimage && imagegrew)
 			td->td_stripsperimage =
 			    TIFFhowmany_32(td->td_imagelength,td->td_rowsperstrip);
+                if (td->td_stripsperimage == 0) {
+                        TIFFErrorExt(tif->tif_clientdata, module, "Zero strips per image");
+                        return (-1);
+                }
 		tif->tif_row =
 		    (strip % td->td_stripsperimage) * td->td_rowsperstrip;
 		if ((tif->tif_flags & TIFF_CODERSETUP) == 0) {
@@ -220,6 +224,11 @@ TIFFWriteEncodedStrip(TIFF* tif, uint32 strip, void* data, tmsize_t cc)
         tif->tif_flags |= TIFF_BUF4WRITE;
 	tif->tif_curstrip = strip;
 
+        if (td->td_stripsperimage == 0) {
+                TIFFErrorExt(tif->tif_clientdata, module, "Zero strips per image");
+                return ((tmsize_t) -1);
+        }
+
 	tif->tif_row = (strip % td->td_stripsperimage) * td->td_rowsperstrip;
 	if ((tif->tif_flags & TIFF_CODERSETUP) == 0) {
 		if (!(*tif->tif_setupencode)(tif))
@@ -311,6 +320,10 @@ TIFFWriteRawStrip(TIFF* tif, uint32 strip, void* data, tmsize_t cc)
 			return ((tmsize_t) -1);
 	}
 	tif->tif_curstrip = strip;
+        if (td->td_stripsperimage == 0) {
+                TIFFErrorExt(tif->tif_clientdata, module,"Zero strips per image");
+                return ((tmsize_t) -1);
+        }
 	tif->tif_row = (strip % td->td_stripsperimage) * td->td_rowsperstrip;
 	return (TIFFAppendToStrip(tif, strip, (uint8*) data, cc) ?
 	    cc : (tmsize_t) -1);
@@ -353,6 +366,7 @@ TIFFWriteEncodedTile(TIFF* tif, uint32 tile, void* data, tmsize_t cc)
 	static const char module[] = "TIFFWriteEncodedTile";
 	TIFFDirectory *td;
 	uint16 sample;
+        uint32 howmany32;
 
 	if (!WRITECHECKTILES(tif, module))
 		return ((tmsize_t)(-1));
@@ -398,10 +412,18 @@ TIFFWriteEncodedTile(TIFF* tif, uint32 tile, void* data, tmsize_t cc)
 	 * Compute tiles per row & per column to compute
 	 * current row and column
 	 */
-	tif->tif_row = (tile % TIFFhowmany_32(td->td_imagelength, td->td_tilelength))
-		* td->td_tilelength;
-	tif->tif_col = (tile % TIFFhowmany_32(td->td_imagewidth, td->td_tilewidth))
-		* td->td_tilewidth;
+        howmany32=TIFFhowmany_32(td->td_imagelength, td->td_tilelength);
+        if (howmany32 == 0) {
+                 TIFFErrorExt(tif->tif_clientdata,module,"Zero tiles");
+                return ((tmsize_t)(-1));
+        }
+	tif->tif_row = (tile % howmany32) * td->td_tilelength;
+        howmany32=TIFFhowmany_32(td->td_imagewidth, td->td_tilewidth);
+        if (howmany32 == 0) {
+                 TIFFErrorExt(tif->tif_clientdata,module,"Zero tiles");
+                return ((tmsize_t)(-1));
+        }
+	tif->tif_col = (tile % howmany32) * td->td_tilewidth;
 
 	if ((tif->tif_flags & TIFF_CODERSETUP) == 0) {
 		if (!(*tif->tif_setupencode)(tif))
