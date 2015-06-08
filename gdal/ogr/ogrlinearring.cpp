@@ -43,6 +43,24 @@ OGRLinearRing::OGRLinearRing()
 }
 
 /************************************************************************/
+/*                  OGRLinearRing( const OGRLinearRing& )               */
+/************************************************************************/
+
+/**
+ * \brief Copy constructor.
+ * 
+ * Note: before GDAL 2.1, only the default implementation of the constructor
+ * existed, which could be unsafe to use.
+ * 
+ * @since GDAL 2.1
+ */
+
+OGRLinearRing::OGRLinearRing( const OGRLinearRing& other ) :
+    OGRLineString( other )
+{
+}
+
+/************************************************************************/
 /*                          ~OGRLinearRing()                            */
 /************************************************************************/
 
@@ -74,6 +92,28 @@ OGRLinearRing::OGRLinearRing( OGRLinearRing * poSrcRing )
         Make3D();
         memcpy( padfZ, poSrcRing->padfZ, sizeof(double) * getNumPoints() );
     }
+}
+
+/************************************************************************/
+/*                    operator=( const OGRLinearRing& )                 */
+/************************************************************************/
+
+/**
+ * \brief Assignment operator.
+ * 
+ * Note: before GDAL 2.1, only the default implementation of the operator
+ * existed, which could be unsafe to use.
+ * 
+ * @since GDAL 2.1
+ */
+
+OGRLinearRing& OGRLinearRing::operator=( const OGRLinearRing& other )
+{
+    if( this != &other)
+    {
+        OGRLineString::operator=( other );
+    }
+    return *this;
 }
 
 /************************************************************************/

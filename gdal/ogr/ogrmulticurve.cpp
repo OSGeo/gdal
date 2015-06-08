@@ -46,11 +46,51 @@ OGRMultiCurve::OGRMultiCurve()
 }
 
 /************************************************************************/
+/*                OGRMultiCurve( const OGRMultiCurve& )                 */
+/************************************************************************/
+
+/**
+ * \brief Copy constructor.
+ * 
+ * Note: before GDAL 2.1, only the default implementation of the constructor
+ * existed, which could be unsafe to use.
+ * 
+ * @since GDAL 2.1
+ */
+
+OGRMultiCurve::OGRMultiCurve( const OGRMultiCurve& other ) :
+    OGRGeometryCollection(other)
+{
+}
+
+/************************************************************************/
 /*                           ~OGRMultiCurve()                           */
 /************************************************************************/
 
 OGRMultiCurve::~OGRMultiCurve()
 {
+}
+
+/************************************************************************/
+/*                  operator=( const OGRMultiCurve&)                    */
+/************************************************************************/
+
+/**
+ * \brief Assignment operator.
+ * 
+ * Note: before GDAL 2.1, only the default implementation of the operator
+ * existed, which could be unsafe to use.
+ * 
+ * @since GDAL 2.1
+ */
+
+OGRMultiCurve& OGRMultiCurve::operator=( const OGRMultiCurve& other )
+{
+    if( this != &other)
+    {
+        OGRGeometryCollection::operator=( other );
+    }
+    return *this;
 }
 
 /************************************************************************/

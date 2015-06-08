@@ -113,8 +113,245 @@ namespace tut
         reg = OGRSFDriverRegistrar::GetRegistrar();
         ensure(NULL != reg);
 
-        OGRSFDriver* drv = reg->GetDriverByName(drv_shape_.c_str());
+        GDALDriver* drv = reg->GetDriverByName(drv_shape_.c_str());
         ensure("Shapefile driver is not registered", NULL != drv);
     }
+    
+    template<class T>
+    void testSpatialReferenceLeakOnCopy(OGRSpatialReference* poSRS)
+    {
+        ensure("GetReferenceCount expected to be 1 before copies", 1 == poSRS->GetReferenceCount());
+        {
+            T value;
+            value.assignSpatialReference(poSRS);
+            ensure("SRS reference count not incremented by assignSpatialReference", 2 == poSRS->GetReferenceCount());
+            
+            T value2(value);
+            ensure("SRS reference count not incremented by copy constructor", 3 == poSRS->GetReferenceCount());
+            
+            T value3;
+            value3 = value;
+            ensure("SRS reference count not incremented by assignment operator", 4 == poSRS->GetReferenceCount());
+            
+            value3 = value;
+            ensure("SRS reference count incremented by assignment operator", 4 == poSRS->GetReferenceCount());
+            
+        }
+        ensure("GetReferenceCount expected to be decremented by destructions", 1 == poSRS->GetReferenceCount());
+    }
+    
+    // Test if copy does not leak or double delete the spatial reference
+    template<>
+    template<>
+    void object::test<4>()
+    {
+        OGRSpatialReference* poSRS = new OGRSpatialReference();
+        ensure(NULL != poSRS);
+        
+        testSpatialReferenceLeakOnCopy<OGRPoint>(poSRS);
+        testSpatialReferenceLeakOnCopy<OGRLineString>(poSRS);
+        testSpatialReferenceLeakOnCopy<OGRLinearRing>(poSRS);
+        testSpatialReferenceLeakOnCopy<OGRCompoundCurve>(poSRS);
+        testSpatialReferenceLeakOnCopy<OGRCurvePolygon>(poSRS);
+        testSpatialReferenceLeakOnCopy<OGRPolygon>(poSRS);
+        testSpatialReferenceLeakOnCopy<OGRGeometryCollection>(poSRS);
+        testSpatialReferenceLeakOnCopy<OGRMultiSurface>(poSRS);
+        testSpatialReferenceLeakOnCopy<OGRMultiPolygon>(poSRS);
+        testSpatialReferenceLeakOnCopy<OGRMultiPoint>(poSRS);
+        testSpatialReferenceLeakOnCopy<OGRMultiCurve>(poSRS);
+        testSpatialReferenceLeakOnCopy<OGRMultiLineString>(poSRS);
+        
+        delete poSRS;
+    }
+    
+    template<class T> 
+    T* make();
+    
+    template<>
+    OGRPoint* make()
+    {
+        return new OGRPoint(1.0, 2.0, 3.0);
+    }
+    
+    template<>
+    OGRLineString* make()
+    {
+        OGRLineString* poLineString = new OGRLineString();
+        
+        poLineString->addPoint(1.0, 2.0, 3.0);
+        poLineString->addPoint(1.1, 2.1, 3.1);
+        poLineString->addPoint(1.2, 2.2, 3.2);
+        
+        return poLineString;
+    }
+    
+    template<>
+    OGRLinearRing* make()
+    {
+        OGRLinearRing* poLinearRing = new OGRLinearRing();
+        
+        poLinearRing->addPoint(1.0, 2.0, 3.0);
+        poLinearRing->addPoint(1.1, 2.1, 3.1);
+        poLinearRing->addPoint(1.2, 2.2, 3.2);
+        poLinearRing->addPoint(1.0, 2.0, 3.0);
+        
+        return poLinearRing;
+    }
+    
+    template<>
+    OGRCircularString* make()
+    {
+        OGRCircularString* poCircularString = new OGRCircularString();
+        
+        poCircularString->addPoint(1.0, 2.0, 3.0);
+        poCircularString->addPoint(1.1, 2.1, 3.1);
+        poCircularString->addPoint(1.2, 2.2, 3.2);
+        
+        return poCircularString;
+    }
+    
+    template<>
+    OGRCompoundCurve* make()
+    {
+        OGRCompoundCurve* poCompoundCurve = new OGRCompoundCurve();
+        
+        poCompoundCurve->addCurveDirectly(make<OGRLineString>());
+        OGRCircularString* poCircularString = make<OGRCircularString>();
+        poCircularString->reversePoints();
+        poCompoundCurve->addCurveDirectly(poCircularString);
+        
+        return poCompoundCurve;
+    }
+    
+    template<>
+    OGRCurvePolygon* make()
+    {
+        OGRCurvePolygon* poCurvePolygon = new OGRCurvePolygon();
+        
+        poCurvePolygon->addRingDirectly(make<OGRCompoundCurve>());
+        poCurvePolygon->addRingDirectly(make<OGRCompoundCurve>());
+        
+        return poCurvePolygon;
+    }
+    
+    template<>
+    OGRPolygon* make()
+    {
+        OGRPolygon* poPolygon = new OGRPolygon();
+        
+        poPolygon->addRingDirectly(make<OGRLinearRing>());
+        poPolygon->addRingDirectly(make<OGRLinearRing>());
+        
+        return poPolygon;
+    }
+    
+    template<>
+    OGRGeometryCollection* make()
+    {
+        OGRGeometryCollection* poCollection = new OGRGeometryCollection();
+        
+        poCollection->addGeometryDirectly(make<OGRPoint>());
+        poCollection->addGeometryDirectly(make<OGRLinearRing>());
+        
+        return poCollection;
+    }
+    
+    template<>
+    OGRMultiSurface* make()
+    {
+        OGRMultiSurface* poCollection = new OGRMultiSurface();
+        
+        poCollection->addGeometryDirectly(make<OGRPolygon>());
+        poCollection->addGeometryDirectly(make<OGRCurvePolygon>());
+        
+        return poCollection;
+    }
+    
+    template<>
+    OGRMultiPolygon* make()
+    {
+        OGRMultiPolygon* poCollection = new OGRMultiPolygon();
+        
+        poCollection->addGeometryDirectly(make<OGRPolygon>());
+        
+        return poCollection;
+    }
+    
+    template<>
+    OGRMultiPoint* make()
+    {
+        OGRMultiPoint* poCollection = new OGRMultiPoint();
+        
+        poCollection->addGeometryDirectly(make<OGRPoint>());
+        
+        return poCollection;
+    }
+    
+    template<>
+    OGRMultiCurve* make()
+    {
+        OGRMultiCurve* poCollection = new OGRMultiCurve();
+        
+        poCollection->addGeometryDirectly(make<OGRLineString>());
+        poCollection->addGeometryDirectly(make<OGRCompoundCurve>());
+        
+        return poCollection;
+    }
+    
+    template<>
+    OGRMultiLineString* make()
+    {
+        OGRMultiLineString* poCollection = new OGRMultiLineString();
+        
+        poCollection->addGeometryDirectly(make<OGRLineString>());
+        poCollection->addGeometryDirectly(make<OGRLinearRing>());
+        
+        return poCollection;
+    }
+    
+    template<class T>
+    void testCopyEquals()
+    {
+        T* poOrigin = make<T>();
+        ensure( NULL != poOrigin);
+        
+        T value2( *poOrigin );
+        
+        std::ostringstream strErrorCopy; 
+        strErrorCopy << poOrigin->getGeometryName() << ": copy constructor changed a value";
+        ensure(strErrorCopy.str().c_str(), poOrigin->Equals(&value2));
+        
+        T value3;
+        value3 = *poOrigin;
+        value3 = *poOrigin;
+        
+        std::ostringstream strErrorAssign; 
+        strErrorAssign << poOrigin->getGeometryName() << ": assignment operator changed a value";
+        ensure(strErrorAssign.str().c_str(), poOrigin->Equals(&value3));
+        
+        OGRGeometryFactory::destroyGeometry(poOrigin);
+    }
+    
+    // Test if copy constructor and assignment operators succeeds on copying the geometry data
+    template<>
+    template<>
+    void object::test<5>()
+    {        
+        testCopyEquals<OGRPoint>();
+        testCopyEquals<OGRLineString>();
+        testCopyEquals<OGRLinearRing>();
+        testCopyEquals<OGRCircularString>();
+        testCopyEquals<OGRCompoundCurve>();
+        testCopyEquals<OGRCurvePolygon>();
+        testCopyEquals<OGRPolygon>();
+        testCopyEquals<OGRGeometryCollection>();
+        testCopyEquals<OGRMultiSurface>();
+        testCopyEquals<OGRMultiPolygon>();
+        testCopyEquals<OGRMultiPoint>();
+        testCopyEquals<OGRMultiCurve>();
+        testCopyEquals<OGRMultiLineString>();
+        
+    }
+    
 
 } // namespace tut

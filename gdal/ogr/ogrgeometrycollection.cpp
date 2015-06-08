@@ -50,6 +50,30 @@ OGRGeometryCollection::OGRGeometryCollection()
 }
 
 /************************************************************************/
+/*         OGRGeometryCollection( const OGRGeometryCollection& )        */
+/************************************************************************/
+
+/**
+ * \brief Copy constructor.
+ * 
+ * Note: before GDAL 2.1, only the default implementation of the constructor
+ * existed, which could be unsafe to use.
+ * 
+ * @since GDAL 2.1
+ */
+
+OGRGeometryCollection::OGRGeometryCollection( const OGRGeometryCollection& other ) :
+    OGRGeometry( other ),
+    nGeomCount( 0 ),
+    papoGeoms( NULL )
+{
+    for( int i = 0; i < other.nGeomCount; i++ )
+    {
+        addGeometry( other.papoGeoms[i] );
+    }
+}
+
+/************************************************************************/
 /*                       ~OGRGeometryCollection()                       */
 /************************************************************************/
 
@@ -57,6 +81,35 @@ OGRGeometryCollection::~OGRGeometryCollection()
 
 {
     empty();
+}
+
+/************************************************************************/
+/*               operator=( const OGRGeometryCollection&)               */
+/************************************************************************/
+
+/**
+ * \brief Assignment operator.
+ * 
+ * Note: before GDAL 2.1, only the default implementation of the operator
+ * existed, which could be unsafe to use.
+ * 
+ * @since GDAL 2.1
+ */
+
+OGRGeometryCollection& OGRGeometryCollection::operator=( const OGRGeometryCollection& other )
+{
+    if( this != &other)
+    {
+        empty();
+        
+        OGRGeometry::operator=( other );
+        
+        for( int i = 0; i < other.nGeomCount; i++ )
+        {
+            addGeometry( other.papoGeoms[i] );
+        }
+    }
+    return *this;
 }
 
 /************************************************************************/
