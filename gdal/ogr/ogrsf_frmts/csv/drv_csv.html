@@ -96,10 +96,6 @@ other variations into a form that is compatible with the OGR CSV driver.</p>
 
 <h2>Reading CSV containing spatial information</h2>
 
-<p>It is possible to extract spatial information (points) from a CSV file
-which has columns for the X and Y coordinates, through the use of the
-<a href="drv_vrt.html">VRT</a> driver.</p>
-
 <p>Consider the following CSV file (test.csv):
 <pre>
 Latitude,Longitude,Name
@@ -107,6 +103,34 @@ Latitude,Longitude,Name
 49.2,1.1,"Second point"
 47.5,0.75,"Third point"
 </pre>
+</p>
+
+<p>Starting with GDAL 2.1, it is possible to directly specify the potential
+names of the columns that can contain X/longitude and Y/latitudee with the
+X_POSSIBLE_NAMES and Y_POSSIBLE_NAMES open option.</p>
+
+<p><i>ogrinfo -ro -al test.csv -oo X_POSSIBLE_NAMES=Lon* -oo Y_POSSIBLE_NAMES=Lat* -oo KEEP_GEOM_COLUMNS=NO</i> will return :</p>
+<pre>
+OGRFeature(test):1
+  Name (String) = First point
+  POINT (0.25 48.1)
+
+OGRFeature(test):2
+  Name (String) = Second point
+  POINT (1.1 49.2)
+
+OGRFeature(test):3
+  Name (String) = Third point
+  POINT (0.75 47.5)
+</pre>
+
+<p>Otherwise, if one
+or several columns contain a geometry definition encoded as WKT, WKB (encoded
+in hexadecimal) or GeoJSON, the name of such column(s) the GEOM_POSSIBLE_NAMES open option.</p>
+
+<p>For older versions, it is possible to extract spatial information (points) from a CSV file
+which has columns for the X and Y coordinates, through the use of the
+<a href="drv_vrt.html">VRT</a> driver.</p>
 
 You can write the associated VRT file (test.vrt):
 <pre>
@@ -174,6 +198,30 @@ Setting 0 means inspecting the whole file.  Note : specifying a value over 1 MB
 Whether to enforce quoted fields as string fields when set to YES. Otherwise,
 by default, the content of quoted fields will be tested for real, integer, etc...
 data types.</li>
+<li><b>X_POSSIBLE_NAMES</b>=list_of_names. (GDAL &gt;= 2.1) Comma separated list of
+possible names for X/longitude coordinate of a point. Each name might be a pattern
+using the star character in starting and/or ending position. E.g.: prefix*, *suffix or *middle*.
+The values in the column must be floating point values.
+X_POSSIBLE_NAMES and Y_POSSIBLE_NAMES must be both specified and a matching for
+each must be found in the columns of the CSV file. Only one geometry column per
+layer might be built when using X_POSSIBLE_NAMES/Y_POSSIBLE_NAMES.</li>
+<li><b>Y_POSSIBLE_NAMES</b>=list_of_names. (GDAL &gt;= 2.1) Comma separated list of
+possible names for Y/latitude coordinate of a point. Each name might be a pattern
+using the star character in starting and/or ending position. E.g.: prefix*, *suffix or *middle*.
+The values in the column must be floating point values.
+X_POSSIBLE_NAMES and Y_POSSIBLE_NAMES must be both specified and a matching for
+each must be found in the columns of the CSV file.</li>
+<li><b>Z_POSSIBLE_NAMES</b>=list_of_names. (GDAL &gt;= 2.1) Comma separated list of
+possible names for Z/elevation coordinate of a point. Each name might be a pattern
+using the star character in starting and/or ending position. E.g.: prefix*, *suffix or *middle*.
+The values in the column must be floating point values.
+Only taken into account in combination with X_POSSIBLE_NAMES and Y_POSSIBLE_NAMES.</li>
+<li><b>GEOM_POSSIBLE_NAMES</b>=list_of_names. (GDAL &gt;= 2.1) Comma separated list of
+possible names for geometry columns that contain geometry definitions encoded as
+WKT, WKB (in hexadecimal form, potentially in PostGIS 2.0 extended WKB) or GeoJSON. Each name might be a pattern
+using the star character in starting and/or ending position. E.g.: prefix*, *suffix or *middle*</li>
+<li><b>KEEP_GEOM_COLUMNS</b>=YES/NO (default YES) Expose the detected X,Y,Z or geometry columns
+as regular attribute fields.</li>
 </ul>
 
 <h2>Creation Issues</h2>

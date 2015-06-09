@@ -270,6 +270,7 @@ void RegisterOGRCSV()
 "  </Option>"
 "  <Option name='CREATE_CSVT' type='boolean' description='whether to create a .csvt file' default='NO'/>"
 "  <Option name='WRITE_BOM' type='boolean' description='whether to write a UTF-8 BOM prefix' default='NO'/>"
+"  <Option name='GEOMETRY_NAME' type='string' description='Name of geometry column. Only used if GEOMETRY=AS_WKT' default='WKT'/>"
 "</LayerCreationOptionList>");
 
         poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
@@ -293,6 +294,11 @@ void RegisterOGRCSV()
 "  </Option>"
 "  <Option name='AUTODETECT_SIZE_LIMIT' type='int' description='number of bytes to inspect for auto-detection of data type. Only used if AUTODETECT_TYPE=YES' default='1000000'/>"
 "  <Option name='QUOTED_FIELDS_AS_STRING' type='boolean' description='Only used if AUTODETECT_TYPE=YES. Whether to enforce quoted fields as string fields.' default='NO'/>"
+"  <Option name='X_POSSIBLE_NAMES' type='string' description='Comma separated list of possible names for X/longitude coordinate of a point.'/>"
+"  <Option name='Y_POSSIBLE_NAMES' type='string' description='Comma separated list of possible names for Y/latitude coordinate of a point.'/>"
+"  <Option name='Z_POSSIBLE_NAMES' type='string' description='Comma separated list of possible names for Z/elevation coordinate of a point.'/>"
+"  <Option name='GEOM_POSSIBLE_NAMES' type='string' description='Comma separated list of possible names for geometry columns.' default='WKT'/>"
+"  <Option name='KEEP_GEOM_COLUMNS' type='boolean' description='whether to add original x/y/geometry columns as regular fields.' default='YES'/>"
 "</OpenOptionList>");
 
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );

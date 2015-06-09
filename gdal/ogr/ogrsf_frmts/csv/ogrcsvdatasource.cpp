@@ -625,13 +625,15 @@ OGRCSVDataSource::ICreateLayer( const char *pszLayerName,
     const char *pszGeometry = CSLFetchNameValue( papszOptions, "GEOMETRY");
     if( bEnableGeometryFields )
     {
-        papoLayers[nLayers-1]->SetWriteGeometry(eGType, OGR_CSV_GEOM_AS_WKT);
+        papoLayers[nLayers-1]->SetWriteGeometry(eGType, OGR_CSV_GEOM_AS_WKT,
+            CSLFetchNameValueDef(papszOptions, "GEOMETRY_NAME", "WKT"));
     }
     else if (pszGeometry != NULL)
     {
         if (EQUAL(pszGeometry, "AS_WKT"))
         {
-            papoLayers[nLayers-1]->SetWriteGeometry(eGType, OGR_CSV_GEOM_AS_WKT);
+            papoLayers[nLayers-1]->SetWriteGeometry(eGType, OGR_CSV_GEOM_AS_WKT,
+                CSLFetchNameValueDef(papszOptions, "GEOMETRY_NAME", "WKT"));
         }
         else if (EQUAL(pszGeometry, "AS_XYZ") ||
                  EQUAL(pszGeometry, "AS_XY") ||
