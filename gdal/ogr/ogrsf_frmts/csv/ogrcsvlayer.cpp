@@ -564,7 +564,42 @@ void OGRCSVLayer::BuildFeatureDefn( const char* pszNfdcGeomField,
 
         OGRFieldDefn oField(pszFieldName, OFTString);
         if (papszFieldTypes!=NULL && iField<CSLCount(papszFieldTypes)) {
-            if (EQUAL(papszFieldTypes[iField], "Integer(Boolean)"))
+            if( EQUAL(papszFieldTypes[iField], "WKT") )
+            {
+                eGeometryFormat = OGR_CSV_GEOM_AS_WKT;
+                const char* pszFieldName = oField.GetNameRef();
+                panGeomFieldIndex[iField] = poFeatureDefn->GetGeomFieldCount();
+                OGRGeomFieldDefn oGeomFieldDefn(pszFieldName, wkbUnknown );
+                poFeatureDefn->AddGeomFieldDefn(&oGeomFieldDefn);
+                if( bKeepGeomColumns )
+                    poFeatureDefn->AddFieldDefn( &oField );
+                continue;
+            }
+            else if( EQUAL(papszFieldTypes[iField], "CoordX") || EQUAL(papszFieldTypes[iField], "Point(X)") )
+            {
+                oField.SetType(OFTReal);
+                iLongitudeField = iField;
+                if( bKeepGeomColumns )
+                    poFeatureDefn->AddFieldDefn( &oField );
+                continue;
+            }
+            else if( EQUAL(papszFieldTypes[iField], "CoordY") || EQUAL(papszFieldTypes[iField], "Point(Y)") )
+            {
+                oField.SetType(OFTReal);
+                iLatitudeField = iField;
+                if( bKeepGeomColumns )
+                    poFeatureDefn->AddFieldDefn( &oField );
+                continue;
+            }
+            else if( EQUAL(papszFieldTypes[iField], "CoordZ") || EQUAL(papszFieldTypes[iField], "Point(Z)") )
+            {
+                oField.SetType(OFTReal);
+                iZField = iField;
+                if( bKeepGeomColumns )
+                    poFeatureDefn->AddFieldDefn( &oField );
+                continue;
+            }
+            else if (EQUAL(papszFieldTypes[iField], "Integer(Boolean)"))
             {
                 oField.SetType(OFTInteger);
                 oField.SetSubType(OFSTBoolean);
@@ -760,6 +795,27 @@ void OGRCSVLayer::BuildFeatureDefn( const char* pszNfdcGeomField,
             poFeatureDefn->SetGeomType( (iZField) ? wkbPoint25D : wkbPoint );
         else
             iLatitudeField = iLongitudeField = -1;
+    }
+    
+    if( poFeatureDefn->GetGeomFieldCount() > 0 &&
+        poFeatureDefn->GetGeomFieldDefn(0)->GetSpatialRef() == NULL )
+    {
+        VSILFILE* fpPRJ = VSIFOpenL(CPLResetExtension(pszFilename, "prj"), "rb");
+        if( fpPRJ != NULL )
+        {
+            GByte* pabyRet = NULL;
+            if( VSIIngestFile( fpPRJ, NULL, &pabyRet, NULL, 1000000 ) )
+            {
+                OGRSpatialReference* poSRS = new OGRSpatialReference();
+                if( poSRS->SetFromUserInput((const char*)pabyRet) == OGRERR_NONE )
+                {
+                    poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
+                }
+                poSRS->Release();
+            }
+            CPLFree(pabyRet);
+            VSIFCloseL(fpPRJ);
+        }
     }
     
     CSLDestroy(papszGeomPossibleNames);
@@ -1757,7 +1813,7 @@ OGRErr OGRCSVLayer::WriteHeader()
         if (eGeometryFormat == OGR_CSV_GEOM_AS_XYZ)
         {
             if (fpCSV) VSIFPrintfL( fpCSV, "X%cY%cZ", chDelimiter, chDelimiter);
-            if (fpCSVT) VSIFPrintfL( fpCSVT, "%s", "Real,Real,Real");
+            if (fpCSVT) VSIFPrintfL( fpCSVT, "%s", "CoordX,CoordY,Real");
             if (poFeatureDefn->GetFieldCount() > 0)
             {
                 if (fpCSV) VSIFPrintfL( fpCSV, "%c", chDelimiter );
@@ -1767,7 +1823,7 @@ OGRErr OGRCSVLayer::WriteHeader()
         else if (eGeometryFormat == OGR_CSV_GEOM_AS_XY)
         {
             if (fpCSV) VSIFPrintfL( fpCSV, "X%cY", chDelimiter);
-            if (fpCSVT) VSIFPrintfL( fpCSVT, "%s", "Real,Real");
+            if (fpCSVT) VSIFPrintfL( fpCSVT, "%s", "CoordX,CoordY");
             if (poFeatureDefn->GetFieldCount() > 0)
             {
                 if (fpCSV) VSIFPrintfL( fpCSV, "%c", chDelimiter );
@@ -1777,7 +1833,7 @@ OGRErr OGRCSVLayer::WriteHeader()
         else if (eGeometryFormat == OGR_CSV_GEOM_AS_YX)
         {
             if (fpCSV) VSIFPrintfL( fpCSV, "Y%cX", chDelimiter);
-            if (fpCSVT) VSIFPrintfL( fpCSVT, "%s", "Real,Real");
+            if (fpCSVT) VSIFPrintfL( fpCSVT, "%s", "CoordY,CoordX");
             if (poFeatureDefn->GetFieldCount() > 0)
             {
                 if (fpCSV) VSIFPrintfL( fpCSV, "%c", chDelimiter );
@@ -1788,7 +1844,7 @@ OGRErr OGRCSVLayer::WriteHeader()
         if( bHiddenWKTColumn )
         {
             if (fpCSV) VSIFPrintfL( fpCSV, "%s", poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef() );
-            if (fpCSVT) VSIFPrintfL( fpCSVT, "%s", "String");
+            if (fpCSVT) VSIFPrintfL( fpCSVT, "%s", "WKT");
         }
 
         for( int iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )

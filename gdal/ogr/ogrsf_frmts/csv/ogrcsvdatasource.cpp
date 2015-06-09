@@ -491,7 +491,7 @@ int OGRCSVDataSource::OpenTable( const char * pszFilename,
 
 OGRLayer *
 OGRCSVDataSource::ICreateLayer( const char *pszLayerName,
-                                CPL_UNUSED OGRSpatialReference *poSpatialRef,
+                                OGRSpatialReference *poSpatialRef,
                                 OGRwkbGeometryType eGType,
                                 char ** papszOptions  )
 {
@@ -666,8 +666,30 @@ OGRCSVDataSource::ICreateLayer( const char *pszLayerName,
 /* -------------------------------------------------------------------- */
 
     const char *pszCreateCSVT = CSLFetchNameValue( papszOptions, "CREATE_CSVT");
-    if (pszCreateCSVT)
-        papoLayers[nLayers-1]->SetCreateCSVT(CSLTestBoolean(pszCreateCSVT));
+    if (pszCreateCSVT && CSLTestBoolean(pszCreateCSVT))
+    {
+        papoLayers[nLayers-1]->SetCreateCSVT(TRUE);
+    
+/* -------------------------------------------------------------------- */
+/*      Create .prj file                                                */
+/* -------------------------------------------------------------------- */
+
+        if( poSpatialRef != NULL && osFilename != "/vsistdout/" )
+        {
+            char* pszWKT = NULL;
+            poSpatialRef->exportToWkt(&pszWKT);
+            if( pszWKT )
+            {
+                VSILFILE* fpPRJ = VSIFOpenL(CPLResetExtension(osFilename, "prj"), "wb");
+                if( fpPRJ )
+                {
+                    VSIFPrintfL(fpPRJ, "%s\n", pszWKT);
+                    VSIFCloseL(fpPRJ);
+                }
+                CPLFree(pszWKT);
+            }
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Should we write a UTF8 BOM ?                                    */

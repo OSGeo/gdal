@@ -35,6 +35,7 @@ sys.path.append( '../pymod' )
 import gdaltest
 import ogrtest
 from osgeo import ogr
+from osgeo import osr
 from osgeo import gdal
 
 ###############################################################################
@@ -1801,6 +1802,71 @@ def ogr_csv_37():
     return 'success'
 
 ###############################################################################
+# Test GeoCSV WKT type
+
+def ogr_csv_38():
+    
+    ds = ogr.GetDriverByName('CSV').CreateDataSource('/vsimem/ogr_csv_38.csv')
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput('EPSG:4326')
+    lyr = ds.CreateLayer('ogr_csv_38', srs = srs, options = ['GEOMETRY=AS_WKT', 'CREATE_CSVT=YES', 'GEOMETRY_NAME=mygeom'])
+    lyr.CreateField(ogr.FieldDefn('id', ogr.OFTInteger))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField('id', 1)
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POINT(2 49)'))
+    lyr.CreateFeature(f)
+    ds = None
+
+    ds = ogr.Open('/vsimem/ogr_csv_38.csv')
+    lyr = ds.GetLayer(0)
+    if lyr.GetLayerDefn().GetGeomFieldDefn(0).GetName() != 'mygeom':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetLayerDefn().GetGeomFieldDefn(0).GetSpatialRef().ExportToWkt().find('4326') < 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f.GetGeometryRef().ExportToWkt() != 'POINT (2 49)':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/ogr_csv_38.csv')
+    gdal.Unlink('/vsimem/ogr_csv_38.csvt')
+    gdal.Unlink('/vsimem/ogr_csv_38.prj')
+
+    return 'success'
+
+###############################################################################
+# Test GeoCSV CoordX and CoordY types
+
+def ogr_csv_39():
+    
+    ds = ogr.GetDriverByName('CSV').CreateDataSource('/vsimem/ogr_csv_39.csv')
+    lyr = ds.CreateLayer('ogr_csv_38', options = ['GEOMETRY=AS_XY', 'CREATE_CSVT=YES'])
+    lyr.CreateField(ogr.FieldDefn('id', ogr.OFTInteger))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField('id', 1)
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POINT(2 49)'))
+    lyr.CreateFeature(f)
+    ds = None
+
+    ds = ogr.Open('/vsimem/ogr_csv_39.csv')
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if f.GetGeometryRef().ExportToWkt() != 'POINT (2 49)':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/ogr_csv_39.csv')
+    gdal.Unlink('/vsimem/ogr_csv_39.csvt')
+
+    return 'success'
+
+###############################################################################
 #
 
 def ogr_csv_cleanup():
@@ -1874,6 +1940,8 @@ gdaltest_list = [
     ogr_csv_35,
     ogr_csv_36,
     ogr_csv_37,
+    ogr_csv_38,
+    ogr_csv_39,
     ogr_csv_cleanup ]
 
 if __name__ == '__main__':
