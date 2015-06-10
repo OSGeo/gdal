@@ -93,11 +93,14 @@ VRTSimpleSource::VRTSimpleSource()
 VRTSimpleSource::~VRTSimpleSource()
 
 {
+    // We use bRelativeToVRTOri to know if the file has been opened from
+    // XMLInit(), and thus we are sure that no other code has a direct reference
+    // to the dataset
     if( poMaskBandMainBand != NULL )
     {
         if (poMaskBandMainBand->GetDataset() != NULL )
         {
-            if( poMaskBandMainBand->GetDataset()->GetShared() )
+            if( poMaskBandMainBand->GetDataset()->GetShared() || bRelativeToVRTOri >= 0 )
                 GDALClose( (GDALDatasetH) poMaskBandMainBand->GetDataset() );
             else
                 poMaskBandMainBand->GetDataset()->Dereference();
@@ -105,7 +108,7 @@ VRTSimpleSource::~VRTSimpleSource()
     }
     else if( poRasterBand != NULL && poRasterBand->GetDataset() != NULL )
     {
-        if( poRasterBand->GetDataset()->GetShared() )
+        if( poRasterBand->GetDataset()->GetShared() || bRelativeToVRTOri >= 0 )
             GDALClose( (GDALDatasetH) poRasterBand->GetDataset() );
         else
             poRasterBand->GetDataset()->Dereference();
@@ -323,6 +326,14 @@ CPLXMLNode *VRTSimpleSource::SerializeToXML( const char *pszVRTPath )
         CPLCreateXMLNode( CPLGetXMLNode( psSrc, "SourceFilename" ), 
                           CXT_Attribute, "relativeToVRT" ), 
         CXT_Text, bRelativeToVRT ? "1" : "0" );
+    
+    if( !CSLTestBoolean(CPLGetConfigOption("VRT_SHARED_SOURCE", "TRUE")) )
+    {
+        CPLCreateXMLNode( 
+            CPLCreateXMLNode( CPLGetXMLNode( psSrc, "SourceFilename" ), 
+                              CXT_Attribute, "shared" ), 
+                              CXT_Text, "0" );
+    }
 
     char** papszOpenOptions = poDS->GetOpenOptions();
     GDALSerializeOpenOptionsToXML(psSrc, papszOpenOptions);
@@ -406,7 +417,13 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath )
     // serialize them identically again (#5985)
     osSourceFileNameOri = pszFilename;
     bRelativeToVRTOri = atoi(CPLGetXMLValue( psSourceFileNameNode, "relativetoVRT", "0"));
-    
+    const char* pszShared = CPLGetXMLValue( psSourceFileNameNode, "shared", NULL);
+    int bShared = FALSE;
+    if( pszShared != NULL )
+        bShared = CSLTestBoolean(pszShared);
+    else
+        bShared = CSLTestBoolean(CPLGetConfigOption("VRT_SHARED_SOURCE", "TRUE"));
+
     if( pszVRTPath != NULL
         && bRelativeToVRTOri )
     {
@@ -525,8 +542,11 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath )
         /* -------------------------------------------------------------------- */
         /*      Open the file (shared).                                         */
         /* -------------------------------------------------------------------- */
+        int nOpenFlags = GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR;
+        if( bShared )
+            nOpenFlags |= GDAL_OF_SHARED;
         poSrcDS = (GDALDataset *) GDALOpenEx(
-                    pszSrcDSName, GDAL_OF_SHARED | GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR, NULL,
+                    pszSrcDSName, nOpenFlags, NULL,
                     (const char* const* )papszOpenOptions, NULL );
     }
     else
@@ -535,7 +555,7 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath )
         /*      Create a proxy dataset                                          */
         /* -------------------------------------------------------------------- */
         int i;
-        GDALProxyPoolDataset* proxyDS = new GDALProxyPoolDataset(pszSrcDSName, nRasterXSize, nRasterYSize, GA_ReadOnly, TRUE);
+        GDALProxyPoolDataset* proxyDS = new GDALProxyPoolDataset(pszSrcDSName, nRasterXSize, nRasterYSize, GA_ReadOnly, bShared);
         proxyDS->SetOpenOptions(papszOpenOptions);
         poSrcDS = proxyDS;
 
