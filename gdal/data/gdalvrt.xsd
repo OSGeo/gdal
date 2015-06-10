@@ -340,9 +340,29 @@
             <xs:extension base="xs:string">
                 <xs:attribute name="relativeToVRT" type="ZeroOrOne" />
                 <xs:attribute name="relativetoVRT" type="ZeroOrOne" /> <!-- typo: deprecated -->
+                <xs:attribute name="shared" type="OGRBooleanType"/>
             </xs:extension>
         </xs:simpleContent>
     </xs:complexType>
+
+    <xs:simpleType name="OGRBooleanType">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="1"/>
+            <xs:enumeration value="0"/>
+            <xs:enumeration value="ON"/>
+            <xs:enumeration value="OFF"/>
+            <xs:enumeration value="on"/>
+            <xs:enumeration value="off"/>
+            <xs:enumeration value="YES"/>
+            <xs:enumeration value="NO"/>
+            <xs:enumeration value="yes"/>
+            <xs:enumeration value="no"/>
+            <xs:enumeration value="TRUE"/>
+            <xs:enumeration value="FALSE"/>
+            <xs:enumeration value="true"/>
+            <xs:enumeration value="false"/>
+        </xs:restriction>
+    </xs:simpleType>
 
     <xs:complexType name="SourcePropertiesType">
         <xs:attribute name="RasterXSize" type="nonNegativeInteger32" />
