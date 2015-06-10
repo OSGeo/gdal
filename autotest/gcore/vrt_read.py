@@ -614,6 +614,42 @@ def vrt_read_18():
 
     return 'success'
 
+###############################################################################
+# Test shared="0"
+
+def vrt_read_19():
+
+    vrt_ds = gdal.Open("""<VRTDataset rasterXSize="20" rasterYSize="20">
+  <VRTRasterBand dataType="Byte" band="1">
+    <AveragedSource>
+      <SourceFilename relativeToVRT="0" shared="0">data/byte.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="20" RasterYSize="20" DataType="Byte" BlockXSize="20" BlockYSize="20" />
+    </AveragedSource>
+  </VRTRasterBand>
+</VRTDataset>""")
+
+    vrt2_ds = gdal.Open("""<VRTDataset rasterXSize="20" rasterYSize="20">
+  <VRTRasterBand dataType="Byte" band="1">
+    <AveragedSource>
+      <SourceFilename relativeToVRT="0" shared="0">data/byte.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+    </AveragedSource>
+  </VRTRasterBand>
+</VRTDataset>""")
+
+    cs = vrt_ds.GetRasterBand(1).Checksum()
+    if cs != 4672:
+        print(cs)
+        return 'fail'
+
+    cs = vrt2_ds.GetRasterBand(1).Checksum()
+    if cs != 4672:
+        print(cs)
+        return 'fail'
+
+    return 'success'
+
 for item in init_list:
     ut = gdaltest.GDALTest( 'VRT', item[0], item[1], item[2] )
     if ut is None:
@@ -639,6 +675,7 @@ gdaltest_list.append( vrt_read_15 )
 gdaltest_list.append( vrt_read_16 )
 gdaltest_list.append( vrt_read_17 )
 gdaltest_list.append( vrt_read_18 )
+gdaltest_list.append( vrt_read_19 )
 
 if __name__ == '__main__':
 
