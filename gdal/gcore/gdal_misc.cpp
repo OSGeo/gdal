@@ -2871,7 +2871,10 @@ GDALDataset *GDALFindAssociatedAuxFile( const char *pszBasename,
             /* Avoid causing failure in opening of main file from SWIG bindings */
             /* when auxiliary file cannot be opened (#3269) */
             CPLTurnFailureIntoWarning(TRUE);
-            poODS = (GDALDataset *) GDALOpenShared( osAuxFilename, eAccess );
+            if( poDependentDS != NULL && poDependentDS->GetShared() )
+                poODS = (GDALDataset *) GDALOpenShared( osAuxFilename, eAccess );
+            else
+                poODS = (GDALDataset *) GDALOpen( osAuxFilename, eAccess );
             CPLTurnFailureIntoWarning(FALSE);
         }
         VSIFCloseL( fp );
@@ -2965,7 +2968,10 @@ GDALDataset *GDALFindAssociatedAuxFile( const char *pszBasename,
                 /* Avoid causing failure in opening of main file from SWIG bindings */
                 /* when auxiliary file cannot be opened (#3269) */
                 CPLTurnFailureIntoWarning(TRUE);
-                poODS = (GDALDataset *) GDALOpenShared( osAuxFilename, eAccess );
+                if( poDependentDS != NULL && poDependentDS->GetShared() )
+                    poODS = (GDALDataset *) GDALOpenShared( osAuxFilename, eAccess );
+                else
+                    poODS = (GDALDataset *) GDALOpen( osAuxFilename, eAccess );
                 CPLTurnFailureIntoWarning(FALSE);
             }
             VSIFCloseL( fp );
