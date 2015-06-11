@@ -233,9 +233,9 @@ def vsizip_4():
     if res is None:
         gdaltest.post_reason('fail read')
         return 'fail'
-    if res != ['subdir/', 'subdir/subdir/', 'subdir/subdir/uint16.tif', \
-                   'subdir/subdir/test_rpc.txt', 'subdir/test_rpc.txt', \
-                   'test_rpc.txt', 'uint16.tif']:
+    if res != ['subdir/', 'subdir/subdir/', 'subdir/subdir/uint16.tif',
+               'subdir/subdir/test_rpc.txt', 'subdir/test_rpc.txt',
+               'test_rpc.txt', 'uint16.tif']:
         gdaltest.post_reason('bad content')
         print(res)
         return 'fail'
@@ -449,4 +449,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-
