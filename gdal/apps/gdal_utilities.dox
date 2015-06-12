@@ -960,8 +960,8 @@ This program burns vector geometries (points, lines, and polygons) into the
 raster band(s) of a raster image.  Vectors are read from OGR supported vector 
 formats. 
 
-Note that the vector data must be in the same coordinate system as the
-raster data; on the fly reprojection is not provided.
+Note that on the refly reprojection of vector data to the coordinate system of the
+raster data is only supported since GDAL 2.1.0.
 
 Since GDAL 1.8.0, the target GDAL file can be created by gdal_rasterize. Either
 the -tr or -ts option must be used in that case.

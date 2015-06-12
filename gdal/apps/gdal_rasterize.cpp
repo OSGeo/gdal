@@ -153,6 +153,7 @@ static void ProcessLayer(
 /*      Checkout that SRS are the same.                                 */
 /*      If -a_srs is specified, skip the test                           */
 /* -------------------------------------------------------------------- */
+    OGRCoordinateTransformationH hCT = NULL;
     if (!bSRSIsSet)
     {
         OGRSpatialReferenceH  hDstSRS = NULL;
@@ -175,9 +176,13 @@ static void ProcessLayer(
         {
             if( OSRIsSame(hSrcSRS, hDstSRS) == FALSE )
             {
-                fprintf(stderr,
+                hCT = OCTNewCoordinateTransformation(hSrcSRS, hDstSRS);
+                if( hCT == NULL )
+                {
+                    fprintf(stderr,
                         "Warning : the output raster dataset and the input vector layer do not have the same SRS.\n"
-                        "Results might be incorrect (no on-the-fly reprojection of input data).\n");
+                        "And reprojection of input data did not work. Results might be incorrect.\n");
+                }
             }
         }
         else if( hDstSRS != NULL && hSrcSRS == NULL )
@@ -213,6 +218,8 @@ static void ProcessLayer(
             printf( "Failed to find field %s on layer %s, skipping.\n",
                     pszBurnAttribute, 
                     OGR_FD_GetName( OGR_L_GetLayerDefn( hSrcLayer ) ) );
+            if( hCT != NULL )
+                OCTDestroyCoordinateTransformation(hCT);
             return;
         }
     }
@@ -238,6 +245,15 @@ static void ProcessLayer(
         }
 
         hGeom = OGR_G_Clone( OGR_F_GetGeometryRef( hFeat ) );
+        if( hCT != NULL )
+        {
+            if( OGR_G_Transform(hGeom, hCT) != OGRERR_NONE )
+            {
+                OGR_F_Destroy( hFeat );
+                OGR_G_DestroyGeometry(hGeom);
+                continue;
+            }
+        }
         ahGeometries.push_back( hGeom );
 
         for( unsigned int iBand = 0; iBand < anBandList.size(); iBand++ )
@@ -265,6 +281,9 @@ static void ProcessLayer(
         
         OGR_F_Destroy( hFeat );
     }
+    
+    if( hCT != NULL )
+        OCTDestroyCoordinateTransformation(hCT);
 
 /* -------------------------------------------------------------------- */
 /*      If we are in inverse mode, we add one extra ring around the     */
