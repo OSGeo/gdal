@@ -301,6 +301,44 @@ def test_gdal_rasterize_5():
 
     return 'success'
 
+###############################################################################
+# Test on the fly reprojection of input data
+
+def test_gdal_rasterize_6():
+
+    if test_cli_utilities.get_gdal_rasterize_path() is None:
+        return 'skip'
+
+    f = open('tmp/test_gdal_rasterize_6.csv', 'wb')
+    f.write("""WKT,Value
+"POLYGON((2 49,2 50,3 50,3 49,2 49))",255
+""".encode('ascii'))
+    f.close()
+    
+    f = open('tmp/test_gdal_rasterize_6.prj', 'wb')
+    f.write("""EPSG:4326""".encode('ascii'))
+    f.close()
+    
+    ds = gdal.GetDriverByName('GTiff').Create('tmp/test_gdal_rasterize_6.tif', 100, 100)
+    ds.SetGeoTransform([200000,(400000-200000)/100,0,6500000,0,-(6500000-6200000)/100])
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(3857)
+    ds.SetProjection(sr.ExportToWkt())
+    ds = None
+
+    gdaltest.runexternal(test_cli_utilities.get_gdal_rasterize_path() + ' -l test_gdal_rasterize_6 tmp/test_gdal_rasterize_6.csv tmp/test_gdal_rasterize_6.tif -a Value')
+
+    ds = gdal.Open('tmp/test_gdal_rasterize_6.tif')
+    if ds.GetRasterBand(1).Checksum() != 39190:
+        gdaltest.post_reason('did not get expected checksum')
+        print(ds.GetRasterBand(1).Checksum())
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
+
 ###########################################
 def test_gdal_rasterize_cleanup():
 
@@ -319,6 +357,10 @@ def test_gdal_rasterize_cleanup():
     os.unlink('tmp/test_gdal_rasterize_5.csv')
     os.unlink('tmp/test_gdal_rasterize_5.vrt')
 
+    gdal.GetDriverByName('GTiff').Delete( 'tmp/test_gdal_rasterize_6.tif' )
+    os.unlink('tmp/test_gdal_rasterize_6.csv')
+    os.unlink('tmp/test_gdal_rasterize_6.prj')
+
     return 'success'
 
 gdaltest_list = [
@@ -327,6 +369,7 @@ gdaltest_list = [
     test_gdal_rasterize_3,
     test_gdal_rasterize_4,
     test_gdal_rasterize_5,
+    test_gdal_rasterize_6,
     test_gdal_rasterize_cleanup
     ]
 
