@@ -36,7 +36,7 @@ CPL_CVSID("$Id$");
 /* -------------------------------------------------------------------- */
 /*                      CheckExtensionConsistency()                     */
 /*                                                                      */
-/*      Check that the target file extension is consistant with the     */
+/*      Check that the target file extension is consistent with the     */
 /*      requested driver. Actually, we only warn in cases where the     */
 /*      inconsistency is blatant (use of an extension declared by one   */
 /*      or several drivers, and not by the selected one)                */

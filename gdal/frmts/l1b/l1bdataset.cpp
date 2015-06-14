@@ -178,7 +178,7 @@ static const char *apszBandDesc[] =
 #define L1B_NOAA15_HDR_REC_SRC_OFF  154 // Receiving station name offset
 #define L1B_NOAA15_HDR_REC_ELLIPSOID_OFF 328
 
-/* This only apply if L1B_HIGH_GCP_DENSITY is explicitely set to NO */
+/* This only apply if L1B_HIGH_GCP_DENSITY is explicitly set to NO */
 /* otherwise we will report more GCPs */
 #define DESIRED_GCPS_PER_LINE 11
 #define DESIRED_LINES_OF_GCPS 20

@@ -409,7 +409,7 @@ int OGRVRTLayer::ParseGeometryField(CPLXMLNode* psNode,
         CSLTestBoolean(CPLGetXMLValue( psNode, "reportSrcColumn", "YES" ));
 
 /* -------------------------------------------------------------------- */
-/*      Guess geometry type if not explicitely provided (or computed)   */
+/*      Guess geometry type if not explicitly provided (or computed)   */
 /* -------------------------------------------------------------------- */
     if( pszGType == NULL && poProps->eGeomType == wkbUnknown )
     {
@@ -2322,7 +2322,7 @@ OGRErr OGRVRTLayer::SetIgnoredFields( const char **papszFields )
     char** papszFieldsSrc = NULL;
     OGRFeatureDefn* poSrcFeatureDefn = poSrcLayer->GetLayerDefn();
 
-    /* Translate explicitely ignored fields of VRT layers to their equivalent */
+    /* Translate explicitly ignored fields of VRT layers to their equivalent */
     /* source fields. */
     while ( papszIter != NULL && *papszIter != NULL )
     {
