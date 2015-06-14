@@ -1253,6 +1253,21 @@ def ogr_dxf_26():
     ds = None
 
     return 'success'
+
+###############################################################################
+# Test reading a DXF file without .dxf extensions (#5994)
+
+def ogr_dxf_27():
+    
+    gdal.FileFromMemBuffer('/vsimem/a_dxf_without_extension', open('data/solid.dxf').read())
+
+    ds = ogr.Open('/vsimem/a_dxf_without_extension')
+    if ds is None:
+        return 'fail'
+
+    gdal.Unlink('/vsimem/a_dxf_without_extension')
+
+    return 'success'
     
 ###############################################################################
 # cleanup
@@ -1294,6 +1309,7 @@ gdaltest_list = [
     ogr_dxf_24,
     ogr_dxf_25,
     ogr_dxf_26,
+    ogr_dxf_27,
     ogr_dxf_cleanup ]
 
 if __name__ == '__main__':
