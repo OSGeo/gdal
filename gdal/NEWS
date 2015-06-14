@@ -100,6 +100,7 @@ Port:
  * vsipreload: implement clearerr() and readdir64() (#5742)
  * CPLsetlocale(): return a string that is thread-locale storage to avoid potential race in CPLLocaleC::CPLLocaleC() (#5747)
  * CPLHexToBinary(): faster implementation (#5812)
+ * CPLAcquireMutex(): improve performance on Windows (#5986)
 
 Core:
  * Add imagery (satellite or aerial) metadata support (Alos, DigitalGlobe, Eros, GeoEye, OrbView, Landsat, Pleiades, Resurs-DK1, Spot/Formosat).
@@ -191,6 +192,7 @@ Utilities:
  * gdallocationinfo: add -oo option
  * gdaltransform: add a -output_xy flag to restrict output coordinates to 'x y' only
  * gdal_grid: use nodata= parameter in the algorithm string to determine the nodata value to set on the band (#5605)
+ * gdal_grid: fix crash in optimized mode with GCC 4.4 on 64bit (#5987)
  * gdalbuildvrt: add a -r option to specify the resampling algorithm
  * gdal_edit.py: add -unsetstats option (and fix -a_nodata to run on all bands, ant not just first one)
  * gdal_edit.py: add -stats and -approx_stats flags (patch by mwtoews, #5805)
@@ -469,6 +471,7 @@ RPFTOC driver:
  * add tweak for weird relative directory names in the A.TOC file (#5979)
 
 VRT driver:
+ * add handling of a shared='0' attribute on <SourceFilename> to open sources in non-shared mode, and VRT_SHARED_SOURCE config option that can be set to 0 in case the shared attribute isn't there (#5992)
  * VRT warp: make selection of source overview work (#5688)
  * VRT warp: expose as many overviews in warped dataset as there are in source dataset, and make warped VRT honour -ovr parameter of gdalwarp (#5688)
  * make sure nodata value set on VRT raster band is taken into account in statistics computation (#5463)
