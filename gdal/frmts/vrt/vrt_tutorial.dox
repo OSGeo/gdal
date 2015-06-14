@@ -265,7 +265,7 @@ The relativeToVRT attribute on the SourceFilename indicates whether the
 filename should be interpreted as relative to the .vrt file (value is 1)
 or not relative to the .vrt file (value is 0).  The default is 0.
 
-The shared attribute, added in GDAL 2.0.1, on the SourceFilename indicates whether the
+The shared attribute, added in GDAL 2.0.0, on the SourceFilename indicates whether the
 dataset should be shared (value is 1) or not (value is 0). The default is 1.
 If several VRT datasets refering to the same underlying sources are used in a multithreaded context,
 shared should be set to 0. Alternatively, the VRT_SHARED_SOURCE configuration
@@ -877,7 +877,7 @@ underlying datasets. So, if you open twice the same VRT dataset by the same
 thread, both VRT datasets will share the same handles to the underlying
 datasets.
 
-The shared attribute, added in GDAL 2.0.1, on the SourceFilename indicates whether the
+The shared attribute, added in GDAL 2.0.0, on the SourceFilename indicates whether the
 dataset should be shared (value is 1) or not (value is 0). The default is 1.
 If several VRT datasets refering to the same underlying sources are used in a multithreaded context,
 shared should be set to 0. Alternatively, the VRT_SHARED_SOURCE configuration
