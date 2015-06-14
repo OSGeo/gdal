@@ -1671,7 +1671,7 @@ dnl Not found... again, with -lsz.
     fi
 
     dnl HDF4 library newer than 4.2.5 has a SDreset_maxopenfiles/SDget_maxopenfiles interface
-    dnl which allows to open many HDF files simultaneously (the max number of files was previously
+    dnl which allows opening many HDF files simultaneously (the max number of files was previously
     dnl hardcoded and too low, smth. like 32). Search for it and use if available.
     AC_CHECK_LIB(mfhdfalt,SDget_maxopenfiles,HDF4_HAS_MAXOPENFILES=yes,HDF4_HAS_MAXOPENFILES=no,$HDF_LIB_NAME)
     if test "$HDF4_HAS_MAXOPENFILES" = "no" ; then
