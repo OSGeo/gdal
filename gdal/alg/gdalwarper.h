@@ -45,7 +45,7 @@
 
 CPL_C_START
 
-/* Note: values are selected to be consistant with GDALRIOResampleAlg of gcore/gdal.h */ 
+/* Note: values are selected to be consistent with GDALRIOResampleAlg of gcore/gdal.h */ 
 /*! Warp Resampling Algorithm */
 typedef enum {
   /*! Nearest neighbour (select on one input pixel) */ GRA_NearestNeighbour=0,

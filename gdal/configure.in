@@ -257,7 +257,7 @@ if test "$with_sse" = "yes" -o "$with_sse" = ""; then
 
     dnl On Solaris, the presence of SSE instructions is flagged in the binary
     dnl and prevent it to run on non SSE hardware even if the instructions are
-    dnl not executed. So if the user did not explicitely requires SSE, test that
+    dnl not executed. So if the user did not explicitly requires SSE, test that
     dnl we can run SSE binaries
     if test "$HAVE_SSE_AT_COMPILE_TIME" = "yes"; then
        case $host_os in
@@ -270,7 +270,7 @@ if test "$with_sse" = "yes" -o "$with_sse" = ""; then
              if test "$with_sse" = "yes"; then
                echo "Caution: the generated binaries will not run on this system."
              else
-               echo "Disabling SSE as it is not explicitely required"
+               echo "Disabling SSE as it is not explicitly required"
                HAVE_SSE_AT_COMPILE_TIME=""
                SSEFLAGS=""
              fi
@@ -324,7 +324,7 @@ if test "$with_avx" = "yes" -o "$with_avx" = ""; then
 
     dnl On Solaris, the presence of AVX instructions is flagged in the binary
     dnl and prevent it to run on non AVX hardware even if the instructions are
-    dnl not executed. So if the user did not explicitely requires AVX, test that
+    dnl not executed. So if the user did not explicitly requires AVX, test that
     dnl we can run AVX binaries
     if test "$HAVE_AVX_AT_COMPILE_TIME" = "yes"; then
        case $host_os in
@@ -337,7 +337,7 @@ if test "$with_avx" = "yes" -o "$with_avx" = ""; then
              if test "$with_avx" = "yes"; then
                echo "Caution: the generated binaries will not run on this system."
              else
-               echo "Disabling AVX as it is not explicitely required"
+               echo "Disabling AVX as it is not explicitly required"
                AVXFLAGS=""
                HAVE_AVX_AT_COMPILE_TIME=""
              fi
@@ -1671,7 +1671,7 @@ dnl Not found... again, with -lsz.
     fi
 
     dnl HDF4 library newer than 4.2.5 has a SDreset_maxopenfiles/SDget_maxopenfiles interface
-    dnl which allows to open many HDF files simultaneously (the max number of files was previously
+    dnl which allows opening many HDF files simultaneously (the max number of files was previously
     dnl hardcoded and too low, smth. like 32). Search for it and use if available.
     AC_CHECK_LIB(mfhdfalt,SDget_maxopenfiles,HDF4_HAS_MAXOPENFILES=yes,HDF4_HAS_MAXOPENFILES=no,$HDF_LIB_NAME)
     if test "$HDF4_HAS_MAXOPENFILES" = "no" ; then

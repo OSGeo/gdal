@@ -789,12 +789,22 @@ int CPLAcquireMutex( CPLMutex *hMutexIn, double dfWaitInSeconds )
     CRITICAL_SECTION *pcs = (CRITICAL_SECTION *)hMutexIn;
     BOOL ret;
 
-    while( (ret = TryEnterCriticalSection(pcs)) == 0 && dfWaitInSeconds > 0.0 )
+    if( dfWaitInSeconds >= 1000.0 )
     {
-        CPLSleep( MIN(dfWaitInSeconds,0.125) );
-        dfWaitInSeconds -= 0.125;
+        // We assume this is the synonymous for infinite, so it is more
+        // efficient to use EnterCriticalSection() directly
+        EnterCriticalSection(pcs);
+        ret = TRUE;
     }
-    
+    else
+    {
+        while( (ret = TryEnterCriticalSection(pcs)) == 0 && dfWaitInSeconds > 0.0 )
+        {
+            CPLSleep( MIN(dfWaitInSeconds,0.01) );
+            dfWaitInSeconds -= 0.01;
+        }
+    }
+
     return ret;
 #endif
 }

@@ -93,7 +93,7 @@ can cause performance penalties when issuing a lot of commands due to many clien
 
 So, on a newly created layer, the INSERT of CreateFeature() operations are grouped together
 in chunks until they reach 15 MB (can be changed with the CARTODB_MAX_CHUNK_SIZE
-configuration option, with a value in MB), at which point they are transfered
+configuration option, with a value in MB), at which point they are transferred
 to the server. By setting CARTODB_MAX_CHUNK_SIZE to 0, immediate transfer occurs.<p>
 
 <h2>SQL</h2>

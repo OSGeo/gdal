@@ -356,7 +356,7 @@ void OGRGeoPackageLayer::BuildFeatureDefn( const char *pszLayerName,
         const char * pszDeclType = sqlite3_column_decltype(hStmt, iCol);
 
         // Recognize a geometry column from trying to build the geometry
-        // Usefull for OGRSQLiteSelectLayer
+        // Useful for OGRSQLiteSelectLayer
         if( nColType == SQLITE_BLOB && m_poFeatureDefn->GetGeomFieldCount() == 0 )
         {
             const int nBytes = sqlite3_column_bytes( hStmt, iCol );

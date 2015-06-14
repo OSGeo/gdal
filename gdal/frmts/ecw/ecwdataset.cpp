@@ -1010,7 +1010,7 @@ ECWDataset::~ECWDataset()
     //
     // We also have an issue with ECW SDK 5.0 and ECW files on Linux when
     // running a multi-threaded test under Java if there's still an ECW dataset
-    // not explicitely closed at process termination.
+    // not explicitly closed at process termination.
     /*  #0  0x00007fffb26e7a80 in NCSAtomicAdd64 () from /home/even/ecwjp2_sdk/redistributable/x64/libNCSEcw.so
         #1  0x00007fffb2aa7684 in NCS::SDK::CBuffer2D::Free() () from /home/even/ecwjp2_sdk/redistributable/x64/libNCSEcw.so
         #2  0x00007fffb2aa7727 in NCS::SDK::CBuffer2D::~CBuffer2D() () from /home/even/ecwjp2_sdk/redistributable/x64/libNCSEcw.so

@@ -48,7 +48,7 @@ FGdbResultLayer::FGdbResultLayer(FGdbDataSource* pParentDataSource,
     m_pDS = pParentDataSource;
     osSQL = pszSQL;
 
-    m_supressColumnMappingError = false;
+    m_suppressColumnMappingError = false;
 
     FieldInfo fieldInfo;
     m_pEnumRows->GetFieldInformation(fieldInfo);

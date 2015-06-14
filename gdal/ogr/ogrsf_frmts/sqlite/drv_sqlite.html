@@ -309,7 +309,7 @@ appropriately in order to get optimal performance.
 The default OGR behavior is to COMMIT a transaction every 200 inserted rows. This
 value is surely too low for SQLite; and closing too much frequently the current
 transaction causes severe performance degradation.
-The <b>-gt</b> argument allows to explicitly set the number of rows for each transaction.
+The <b>-gt</b> argument allows explicitly setting the number of rows for each transaction.
 Explicitly defining <b>-gt 1024</b> usually ensures a noticeable performance boost;
 defining an even bigger <b>-gt 65536</b> ensures optimal performance while
 populating some table containing many hundredth thousand or million rows.<p>

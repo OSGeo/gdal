@@ -115,7 +115,7 @@ protected:
     //buffers are used for avoiding constant reallocation of temp memory
     unsigned char* m_pBuffer;
     long  m_bufferSize; //in bytes
-    bool  m_supressColumnMappingError;
+    bool  m_suppressColumnMappingError;
     bool  m_forceMulti;
 };
 

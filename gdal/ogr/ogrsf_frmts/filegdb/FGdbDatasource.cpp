@@ -487,7 +487,7 @@ OGRLayer * FGdbDataSource::ExecuteSQL( const char *pszSQLCommand,
         CPLDebug("FGDB", "Support for SELECT is known to be partially "
                          "non-compliant with FileGDB SDK API v1.2.\n"
                          "So for now, we use default OGR SQL engine. "
-                         "Explicitely specify -dialect FileGDB\n"
+                         "Explicitly specify -dialect FileGDB\n"
                          "to use the SQL engine from the FileGDB SDK API");
         return OGRDataSource::ExecuteSQL( pszSQLCommand,
                                         poSpatialFilter,

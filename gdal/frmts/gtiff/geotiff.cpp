@@ -2559,7 +2559,7 @@ CPLErr GTiffRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /*      Handle the case of a strip or tile that doesn't exist yet.      */
 /*      Just set to zeros and return.                                   */
 /* -------------------------------------------------------------------- */
-    if( !poGDS->IsBlockAvailable(nBlockId) )
+    if( nBlockId != poGDS->nLoadedBlock && !poGDS->IsBlockAvailable(nBlockId) )
     {
         NullBlock( pImage );
         return CE_None;
@@ -4392,7 +4392,7 @@ CPLErr GTiffOddBitsBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /*	exist yet, but that we want to read.  Just set to zeros and	*/
 /*	return.								*/
 /* -------------------------------------------------------------------- */
-    if( !poGDS->IsBlockAvailable(nBlockId) )
+    if( nBlockId != poGDS->nLoadedBlock && !poGDS->IsBlockAvailable(nBlockId) )
     {
         NullBlock( pImage );
         return CE_None;
@@ -7470,14 +7470,14 @@ void GTiffDataset::WriteRPC( GDALDataset *poSrcDS, TIFF *hTIFF,
             bRPCSerializedOtherWay = TRUE;
         }
 
-        /* Write RPB file if explicitely asked, or if a non GDAL specific */
+        /* Write RPB file if explicitly asked, or if a non GDAL specific */
         /* profile is selected and RPCTXT is not asked */
-        int bRPBExplicitelyAsked = CSLFetchBoolean( papszCreationOptions, "RPB", FALSE );
-        int bRPBExplicitelyDenied = !CSLFetchBoolean( papszCreationOptions, "RPB", TRUE );
+        int bRPBExplicitlyAsked = CSLFetchBoolean( papszCreationOptions, "RPB", FALSE );
+        int bRPBExplicitlyDenied = !CSLFetchBoolean( papszCreationOptions, "RPB", TRUE );
         if( (!EQUAL(pszProfile,"GDALGeoTIFF") && 
              !CSLFetchBoolean( papszCreationOptions, "RPCTXT", FALSE ) &&
-             !bRPBExplicitelyDenied )
-            || bRPBExplicitelyAsked )
+             !bRPBExplicitlyDenied )
+            || bRPBExplicitlyAsked )
         {
             if( !bWriteOnlyInPAMIfNeeded )
                 GDALWriteRPBFile( pszTIFFFilename, papszRPCMD );
@@ -7882,8 +7882,6 @@ int GTiffDataset::SetDirectory( toff_t nNewOffset )
 
 {
     Crystalize();
-
-    FlushBlockBuf();
 
     if( nNewOffset == 0 )
         nNewOffset = nDirOffset;
