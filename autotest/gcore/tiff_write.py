@@ -5863,6 +5863,55 @@ def tiff_write_136():
     return 'success'
 
 ###############################################################################
+# Test that pixel-interleaved writing generates optimal size
+
+def tiff_write_138():
+
+    # Test that consecutive IWriteBlock() calls for the same block but in
+    # different bands only generate a single tile write, and not 3 rewrites
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tiff_write_138.tif', 10, 1, 3, options = ['COMPRESS=DEFLATE'])
+    ds.GetRasterBand(1).WriteRaster(0, 0, 10, 1, 'A', buf_xsize=1, buf_ysize=1)
+    ds.GetRasterBand(1).FlushCache()
+    ds.GetRasterBand(2).WriteRaster(0, 0, 10, 1, 'A', buf_xsize=1, buf_ysize=1)
+    ds.GetRasterBand(2).FlushCache()
+    ds.GetRasterBand(3).WriteRaster(0, 0, 10, 1, 'A', buf_xsize=1, buf_ysize=1)
+    ds.GetRasterBand(3).FlushCache()
+    ds = None
+    size = gdal.VSIStatL('/vsimem/tiff_write_138.tif').size
+    if size != 181:
+        gdaltest.post_reason('fail')
+        print(size)
+        return 'fail'
+
+
+    # Test fix for #5999
+
+    # Create a file with a huge block that will satuurate the block cache
+    tmp_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tiff_write_138_saturate.tif', gdal.GetCacheMax(), 1)
+    tmp_ds = None
+
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tiff_write_138.tif', 10, 1, 3, options = ['COMPRESS=DEFLATE'])
+    ds.GetRasterBand(1).WriteRaster(0, 0, 10, 1, 'A', buf_xsize=1, buf_ysize=1)
+    ds.GetRasterBand(2).WriteRaster(0, 0, 10, 1, 'A', buf_xsize=1, buf_ysize=1)
+    ds.GetRasterBand(3).WriteRaster(0, 0, 10, 1, 'A', buf_xsize=1, buf_ysize=1)
+    # When internalizing the huge block, check that the 3 above dirty blocks
+    # get written as a single tile write.
+    tmp_ds = gdal.Open('/vsimem/tiff_write_138_saturate.tif')
+    tmp_ds.GetRasterBand(1).Checksum()
+    tmp_ds = None
+    ds = None
+    size = gdal.VSIStatL('/vsimem/tiff_write_138.tif').size
+    if size != 181:
+        gdaltest.post_reason('fail')
+        print(size)
+        return 'fail'
+
+    gdal.Unlink('/vsimem/tiff_write_138.tif')
+    gdal.Unlink('/vsimem/tiff_write_138_saturate.tif')
+
+    return 'success'
+
+###############################################################################
 # Ask to run again tests with GDAL_API_PROXY=YES
 
 def tiff_write_api_proxy():
@@ -6031,6 +6080,7 @@ gdaltest_list = [
     tiff_write_134,
     tiff_write_135,
     tiff_write_136,
+    tiff_write_138,
     #tiff_write_api_proxy,
     tiff_write_cleanup ]
 
