@@ -1223,7 +1223,7 @@ int main( int nArgc, char ** papszArgv )
         else if( EQUAL(papszArgv[iArg],"-f") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            //bFormatExplicitelySet = TRUE;
+            //bFormatExplicitlySet = TRUE;
             pszFormat = papszArgv[++iArg];
         }
         else if( EQUAL(papszArgv[iArg],"-dsco") )

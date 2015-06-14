@@ -112,7 +112,7 @@ class OGRUnionLayer : public OGRLayer
     void                SetFields(FieldUnionStrategy eFieldStrategy,
                                   int nFields,
                                   OGRFieldDefn** papoFields,  /* duplicated by the method */
-                                  int nGeomFields, /* maybe -1 to explicitely disable geometry fields */
+                                  int nGeomFields, /* maybe -1 to explicitly disable geometry fields */
                                   OGRUnionLayerGeomFieldDefn** papoGeomFields  /* duplicated by the method */);
     void                SetSourceLayerFieldName(const char* pszSourceLayerFieldName);
     void                SetPreserveSrcFID(int bPreserveSrcFID);

@@ -1509,7 +1509,7 @@ OGRFeature *OGRPGLayer::GetNextRawFeature()
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Cursor used to read layer has been closed due to a COMMIT. "
-                 "ResetReading() must be explicitely called to restart reading");
+                 "ResetReading() must be explicitly called to restart reading");
         return NULL;
     }
     
