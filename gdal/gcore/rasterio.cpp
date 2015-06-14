@@ -459,7 +459,7 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 
                 // FIXME: this code likely doesn't work if the dirty block gets flushed
                 // to disk before being completely written.
-                // In the meantime, bJustInitalize should probably be set to FALSE
+                // In the meantime, bJustInitialize should probably be set to FALSE
                 // even if it is not ideal performance wise, and for lossy compression
 
     /* -------------------------------------------------------------------- */
@@ -3165,7 +3165,7 @@ GDALDataset::BlockBasedRasterIO( GDALRWFlag eRWFlag,
 
             // FIXME: this code likely doesn't work if the dirty block gets flushed
             // to disk before being completely written.
-            // In the meantime, bJustInitalize should probably be set to FALSE
+            // In the meantime, bJustInitialize should probably be set to FALSE
             // even if it is not ideal performance wise, and for lossy compression
 
 /* -------------------------------------------------------------------- */
