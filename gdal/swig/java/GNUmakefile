@@ -38,11 +38,11 @@ JAVA_OBJECTS = gdalconst_wrap.$(OBJ_EXT) gdal_wrap.$(OBJ_EXT) osr_wrap.$(OBJ_EXT
 
 clean:
 	-rm -f ${JAVA_MODULES}
-	-rm *.$(OBJ_EXT)
-	-rm .libs/*.so
-	-rm .libs/*.dylib
-	-rm *.so
-	-rm *.dylib
+	-rm -f *.$(OBJ_EXT)
+	-rm -f .libs/*.so
+	-rm -f .libs/*.dylib
+	-rm -f *.so
+	-rm -f *.dylib
 
 	ant clean
 
