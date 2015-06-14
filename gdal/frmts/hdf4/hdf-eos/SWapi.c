@@ -4922,7 +4922,7 @@ SWwrrdfield(int32 swathID, const char *fieldname, const char *code,
 
 
 		/*
-		 * If strideOne is true use NULL paramater for stride. This
+		 * If strideOne is true use NULL parameter for stride. This
 		 * is a work-around to HDF compression problem
 		 */
 		if (strideOne == 1)

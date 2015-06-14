@@ -243,7 +243,7 @@ void    E00ReadClose(E00ReadPtr psInfo)
 /**********************************************************************
  *                          E00ReadRewind()
  *
- * Rewind the E00ReadPtr.  Allows to start another read pass on the 
+ * Rewind the E00ReadPtr.  Allows starting another read pass on the 
  * input file.
  **********************************************************************/
 void    E00ReadRewind(E00ReadPtr psInfo)
