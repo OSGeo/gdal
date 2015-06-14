@@ -266,7 +266,7 @@ types.
 Add "25D" to the name to get 2.5D versions.
 Starting with GDAL 1.10, PROMOTE_TO_MULTI can be used to automatically promote layers
 that mix polygon or multipolygons to multipolygons, and layers that mix linestrings or
-multilinestrings to multilinestrings. Can be usefull when converting shapefiles to PostGIS
+multilinestrings to multilinestrings. Can be useful when converting shapefiles to PostGIS
 (and other target drivers) that implements strict checks for geometry type.
 Starting with GDAL 2.0, CONVERT_TO_LINEAR can be used to to convert non-linear geometries
 types into linear geometries by approximating them.</dd>

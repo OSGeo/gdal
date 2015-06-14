@@ -1421,7 +1421,7 @@ OGRGMLLayer *OGRGMLDataSource::TranslateGMLSchema( GMLFeatureClass *poClass )
         }
     }
 
-    /* Report a COMPD_CS only if GML_REPORT_COMPD_CS is explicitely set to TRUE */
+    /* Report a COMPD_CS only if GML_REPORT_COMPD_CS is explicitly set to TRUE */
     if( poSRS != NULL &&
         !CSLTestBoolean(CPLGetConfigOption("GML_REPORT_COMPD_CS", "FALSE")) )
     {

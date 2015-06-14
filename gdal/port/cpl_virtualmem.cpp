@@ -626,7 +626,7 @@ static void CPLVirtualMemSIGUSR1Handler(int signum_unused,
     /* I guess this is only POSIX correct if it is implemented by an intrinsic */
     CPLAtomicInc(&nCountThreadsInSigUSR1);
     while( nWaitHelperThread )
-        usleep(1); /* not explicitely indicated as signal-async-safe, but hopefully ok */
+        usleep(1); /* not explicitly indicated as signal-async-safe, but hopefully ok */
     CPLAtomicDec(&nCountThreadsInSigUSR1);
     /* fprintfstderr("leaving CPLVirtualMemSIGUSR1Handler %X\n", pthread_self()); */
 }

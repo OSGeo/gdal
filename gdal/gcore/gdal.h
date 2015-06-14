@@ -103,7 +103,7 @@ typedef enum {
     /*! Write data */  GF_Write = 1
 } GDALRWFlag;
 
-/* NOTE: values are selected to be consistant with GDALResampleAlg of alg/gdalwarper.h */ 
+/* NOTE: values are selected to be consistent with GDALResampleAlg of alg/gdalwarper.h */ 
 /** RasterIO() resampling method.
   * @since GDAL 2.0
   */
