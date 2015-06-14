@@ -39,8 +39,41 @@ CPL_CVSID("$Id$");
 static int OGRDXFDriverIdentify( GDALOpenInfo* poOpenInfo )
 
 {
-    return poOpenInfo->fpL != NULL &&
-           EQUAL(CPLGetExtension(poOpenInfo->pszFilename),"dxf");
+    if( poOpenInfo->fpL == NULL || poOpenInfo->nHeaderBytes == 0 )
+        return FALSE;
+    if( EQUAL(CPLGetExtension(poOpenInfo->pszFilename),"dxf") )
+        return TRUE;
+    const char* pszIter = (const char*)poOpenInfo->pabyHeader;
+    int bFoundZero = FALSE;
+    int i = 0;
+    for(i=0; pszIter[i]; i++)
+    {
+        if( pszIter[i] == '0' )
+        {
+            int j=i-1;
+            for(; j>=0; j--)
+            {
+                if( pszIter[j] != ' ' )
+                    break;
+            }
+            if( j < 0 || pszIter[j] == '\n'|| pszIter[j] == '\r' )
+            {
+                bFoundZero = TRUE;
+                break;
+            }
+        }
+    }
+    if( !bFoundZero )
+        return FALSE;
+    i ++;
+    while( pszIter[i] == ' ' )
+        i ++;
+    while( pszIter[i] == '\n' || pszIter[i] == '\r' )
+        i ++;
+    if( !EQUALN(pszIter + i, "SECTION", strlen("SECTION")) )
+        return FALSE;
+    i += strlen("SECTION");
+    return pszIter[i] == '\n' || pszIter[i] == '\r';
 }
 
 /************************************************************************/
