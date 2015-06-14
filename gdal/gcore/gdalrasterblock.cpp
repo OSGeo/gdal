@@ -686,7 +686,7 @@ void GDALRasterBlock::Touch_unlocked()
 CPLErr GDALRasterBlock::Internalize()
 
 {
-    void        *pNewData;
+    void        *pNewData = NULL;
     int         nSizeInBytes;
 
     CPLAssert( pData == NULL );
@@ -701,71 +701,89 @@ CPLErr GDALRasterBlock::Internalize()
 /* -------------------------------------------------------------------- */
 /*      Flush old blocks if we are nearing our memory limit.            */
 /* -------------------------------------------------------------------- */
-    GDALRasterBlock* apoBlocksToFree[64];
-    int nBlocksToFree = 0;
+    int bFirstIter = TRUE;
+    int bLoopAgain;
+    do
     {
-        TAKE_LOCK;
-
-        nCacheUsed += nSizeInBytes;
-        GDALRasterBlock *poTarget = poOldest;
-        while( nCacheUsed > nCurCacheMax )
+        bLoopAgain = FALSE;
+        GDALRasterBlock* apoBlocksToFree[64];
+        int nBlocksToFree = 0;
         {
-            while( poTarget != NULL && poTarget->GetLockCount() > 0 ) 
-                poTarget = poTarget->poPrevious;
+            TAKE_LOCK;
 
-            if( poTarget != NULL )
+            if( bFirstIter )
+                nCacheUsed += nSizeInBytes;
+            GDALRasterBlock *poTarget = poOldest;
+            while( nCacheUsed > nCurCacheMax )
             {
-                GDALRasterBlock* _poPrevious = poTarget->poPrevious;
+                while( poTarget != NULL && poTarget->GetLockCount() > 0 ) 
+                    poTarget = poTarget->poPrevious;
 
-                poTarget->Detach_unlocked();
-                poTarget->GetBand()->UnreferenceBlock(poTarget->GetXOff(),poTarget->GetYOff());
-
-                apoBlocksToFree[nBlocksToFree++] = poTarget;
-                if( nBlocksToFree == 64 )
+                if( poTarget != NULL )
                 {
-                    CPLDebug("GDAL", "More than 64 blocks are flagged to be flushed. Not trying more");
-                    break;
+                    GDALRasterBlock* _poPrevious = poTarget->poPrevious;
+
+                    poTarget->Detach_unlocked();
+                    poTarget->GetBand()->UnreferenceBlock(poTarget->GetXOff(),poTarget->GetYOff());
+
+                    apoBlocksToFree[nBlocksToFree++] = poTarget;
+                    if( poTarget->GetDirty() )
+                    {
+                        // Only free one dirty block at a time so that
+                        // other dirty blocks of other bands with the same coordinates
+                        // can be found with TryGetLockedBlock()
+                        bLoopAgain = ( nCacheUsed > nCurCacheMax );
+                        break;
+                    }
+                    if( nBlocksToFree == 64 )
+                    {
+                        CPLDebug("GDAL", "More than 64 blocks are flagged to be flushed. Not trying more");
+                        break;
+                    }
+
+                    poTarget = _poPrevious;
                 }
-
-                poTarget = _poPrevious;
+                else
+                    break;
             }
-            else
-                break;
+
+        /* -------------------------------------------------------------------- */
+        /*      Add this block to the list.                                     */
+        /* -------------------------------------------------------------------- */
+            if( !bLoopAgain )
+                Touch_unlocked();
         }
 
-    /* -------------------------------------------------------------------- */
-    /*      Add this block to the list.                                     */
-    /* -------------------------------------------------------------------- */
-        Touch_unlocked();
-    }
+        bFirstIter = FALSE;
 
-    /* Now free blocks we have detached and removed from their band */
-    pNewData = NULL;
-    for(int i=0;i<nBlocksToFree;i++)
-    {
-        GDALRasterBlock *poBlock = apoBlocksToFree[i];
-
-        if( poBlock->GetDirty() )
+        /* Now free blocks we have detached and removed from their band */
+        for(int i=0;i<nBlocksToFree;i++)
         {
-            CPLErr eErr = poBlock->Write();
-            if( eErr != CE_None )
+            GDALRasterBlock *poBlock = apoBlocksToFree[i];
+
+            if( poBlock->GetDirty() )
             {
-                 /* Save the error for later reporting */
-                poBlock->GetBand()->SetFlushBlockErr(eErr);
+                CPLErr eErr = poBlock->Write();
+                if( eErr != CE_None )
+                {
+                    /* Save the error for later reporting */
+                    poBlock->GetBand()->SetFlushBlockErr(eErr);
+                }
             }
-        }
 
-        /* Try to recycle the data of an existing block */
-        void* pDataBlock = poBlock->pData;
-        if( pNewData == NULL && pDataBlock != NULL &&
-            poBlock->GetBlockSize() >= nSizeInBytes )
-        {
-            pNewData = pDataBlock;
-            poBlock->pData = NULL;
-        }
+            /* Try to recycle the data of an existing block */
+            void* pDataBlock = poBlock->pData;
+            if( pNewData == NULL && pDataBlock != NULL &&
+                poBlock->GetBlockSize() >= nSizeInBytes )
+            {
+                pNewData = pDataBlock;
+                poBlock->pData = NULL;
+            }
 
-        delete poBlock;
+            delete poBlock;
+        }
     }
+    while(bLoopAgain);
 
     if( pNewData == NULL )
     {
