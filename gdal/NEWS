@@ -100,10 +100,12 @@ Port:
  * vsipreload: implement clearerr() and readdir64() (#5742)
  * CPLsetlocale(): return a string that is thread-locale storage to avoid potential race in CPLLocaleC::CPLLocaleC() (#5747)
  * CPLHexToBinary(): faster implementation (#5812)
+ * CPLAcquireMutex(): improve performance on Windows (#5986)
 
 Core:
  * Add imagery (satellite or aerial) metadata support (Alos, DigitalGlobe, Eros, GeoEye, OrbView, Landsat, Pleiades, Resurs-DK1, Spot/Formosat).
  * Reduce lock contention on the global cache mutex and make it possible to use spin lock instead with GDAL_RB_LOCK_TYPE=SPIN
+ * Block cache: make block cache manager safe with respect to writing dirty blocks (#5983)
  * EXIF reader: fix memleak in error code path
  * EXIF reader: add missing validation for some data types (#3078)
  * Fix crash in GDALPamRasterBand::SerializeToXML() when saving an empty RAT (#5451)
@@ -190,6 +192,7 @@ Utilities:
  * gdallocationinfo: add -oo option
  * gdaltransform: add a -output_xy flag to restrict output coordinates to 'x y' only
  * gdal_grid: use nodata= parameter in the algorithm string to determine the nodata value to set on the band (#5605)
+ * gdal_grid: fix crash in optimized mode with GCC 4.4 on 64bit (#5987)
  * gdalbuildvrt: add a -r option to specify the resampling algorithm
  * gdal_edit.py: add -unsetstats option (and fix -a_nodata to run on all bands, ant not just first one)
  * gdal_edit.py: add -stats and -approx_stats flags (patch by mwtoews, #5805)
@@ -468,6 +471,7 @@ RPFTOC driver:
  * add tweak for weird relative directory names in the A.TOC file (#5979)
 
 VRT driver:
+ * add handling of a shared='0' attribute on <SourceFilename> to open sources in non-shared mode, and VRT_SHARED_SOURCE config option that can be set to 0 in case the shared attribute isn't there (#5992)
  * VRT warp: make selection of source overview work (#5688)
  * VRT warp: expose as many overviews in warped dataset as there are in source dataset, and make warped VRT honour -ovr parameter of gdalwarp (#5688)
  * make sure nodata value set on VRT raster band is taken into account in statistics computation (#5463)
@@ -480,7 +484,8 @@ VRT driver:
  * do not output empty <Metadata> node on VRTDataset and VRTRasterBand elements
  * fix rounding of output window size on VRTSimpleSource (#5874)
  * add trick to make relativeToVRT works for a VRT-in-VRT
- * VRT: add more checks to CheckCompatibleForDatasetIO() to avoid issues with overview bands (#5954)
+ * add more checks to CheckCompatibleForDatasetIO() to avoid issues with overview bands (#5954)
+ * preserves relative links on reserialization of existing VRT (#5985)
 
 USGSDEM driver:
  * take into account horizontal unit = ft in the UTM case (#5819)
