@@ -17463,7 +17463,7 @@ $as_echo "no" >&6; }
              if test "$with_sse" = "yes"; then
                echo "Caution: the generated binaries will not run on this system."
              else
-               echo "Disabling SSE as it is not explicitely required"
+               echo "Disabling SSE as it is not explicitly required"
                HAVE_SSE_AT_COMPILE_TIME=""
                SSEFLAGS=""
              fi
@@ -17537,7 +17537,7 @@ $as_echo "no" >&6; }
              if test "$with_avx" = "yes"; then
                echo "Caution: the generated binaries will not run on this system."
              else
-               echo "Disabling AVX as it is not explicitely required"
+               echo "Disabling AVX as it is not explicitly required"
                AVXFLAGS=""
                HAVE_AVX_AT_COMPILE_TIME=""
              fi

@@ -24,7 +24,7 @@ C++ API:
 
   * OGRLayer::GetInfo() has been removed.
 
-  * All methods of OGRDataSource have been transfered to GDALDataset, except
+  * All methods of OGRDataSource have been transferred to GDALDataset, except
     SyncToDisk() that should now be implemented as FlushCache() in drivers.
 
   * GDALOpenInfo::papszSiblingFiles member is now private. Use the new
@@ -141,7 +141,7 @@ Behaviour changes:
 
   * The PG and SQLite drivers could accept apparently nested calls to StartTransaction()
     (at the layer level). This is no longer possible since they are now redirected
-    to dataset transactions, that explicitely do not support it.
+    to dataset transactions, that explicitly do not support it.
 
 H) RFC 55: Refined SetFeature() and DeleteFeature() semantics
 
@@ -227,7 +227,7 @@ OGR drivers :
 
   * Due to RFC 41, if a OGR driver calls SetGeomType(wkbNone) on a layer,
     it will be impossible to affect geometries to features of that layer.
-    This worked before, although it was inconsistant, but it does no longer now.
+    This worked before, although it was inconsistent, but it does no longer now.
     In the developmenet of RFC 41, the CSV and VRT drivers have been upgraded
     to fix such errors.
 

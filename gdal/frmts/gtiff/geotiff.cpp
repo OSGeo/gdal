@@ -7470,14 +7470,14 @@ void GTiffDataset::WriteRPC( GDALDataset *poSrcDS, TIFF *hTIFF,
             bRPCSerializedOtherWay = TRUE;
         }
 
-        /* Write RPB file if explicitely asked, or if a non GDAL specific */
+        /* Write RPB file if explicitly asked, or if a non GDAL specific */
         /* profile is selected and RPCTXT is not asked */
-        int bRPBExplicitelyAsked = CSLFetchBoolean( papszCreationOptions, "RPB", FALSE );
-        int bRPBExplicitelyDenied = !CSLFetchBoolean( papszCreationOptions, "RPB", TRUE );
+        int bRPBExplicitlyAsked = CSLFetchBoolean( papszCreationOptions, "RPB", FALSE );
+        int bRPBExplicitlyDenied = !CSLFetchBoolean( papszCreationOptions, "RPB", TRUE );
         if( (!EQUAL(pszProfile,"GDALGeoTIFF") && 
              !CSLFetchBoolean( papszCreationOptions, "RPCTXT", FALSE ) &&
-             !bRPBExplicitelyDenied )
-            || bRPBExplicitelyAsked )
+             !bRPBExplicitlyDenied )
+            || bRPBExplicitlyAsked )
         {
             if( !bWriteOnlyInPAMIfNeeded )
                 GDALWriteRPBFile( pszTIFFFilename, papszRPCMD );

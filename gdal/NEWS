@@ -57,7 +57,7 @@ Build(Unix):
  * Make sure $(GDAL_INCLUDE) is first to avoid being confused by GDAL headers of a previous version elsewhere in the include path (#5664)
  * Always use stat rather than stat64 for Mac OSX in AC_UNIX_STDIO_64. (#5780, #5414).
  * Add support for ECW SDK 5.1 (#5390)
- * Do not enable Python bindings if PYTHON env variable is set without --with-python being explicitely specified (#5956)
+ * Do not enable Python bindings if PYTHON env variable is set without --with-python being explicitly specified (#5956)
 
 Build(Windows):
  * PDF: fix compilation issue with Visual Studio 2012 (#5744)
@@ -204,7 +204,7 @@ Utilities:
  * pct2rgb.py: make it work with color tables with less than 256 entries (#5555)
  * gdal_fillnodata.py: FillNodata: copy no data value to destination band when creating a dataset (if available) (#4625)
  * gdal_proximity.py: add a -use_input_nodata flag
- * gdalcompare.py: add options to supress selected comparisons
+ * gdalcompare.py: add options to suppress selected comparisons
  * gdalcompare.py: takes into account differences in overview bands
  * gdalcompare.py: compute difference on float to avoid integer underflow
  * epsg_tr.py: change to make it possible to export GEOCCS and COMPD_CS to proj.4 epsg and PostGIS spatial_ref_sys.sql files
@@ -818,7 +818,7 @@ Shapefile driver:
  * make REPACK compact .shp if SetFeature() is called and changes one geometry size (#5706)
  * add check not to cut unicode character while cut the string lengnt for field max length during SetFeature
  * avoid reading whole .shx at open time for /vsicurl/
- * add SHAPE_REWIND_ON_WRITE configuration option that can be set to NO to disable correction of ring winding order on write. Usefull when dealing with MultiPolygon that are MultiPatch objects in fact (#5888)
+ * add SHAPE_REWIND_ON_WRITE configuration option that can be set to NO to disable correction of ring winding order on write. Useful when dealing with MultiPolygon that are MultiPatch objects in fact (#5888)
  * Make ENCODING layer creation option prioritary over SHAPE_ENCODING config. option
 
 SOSI driver:
@@ -1064,8 +1064,8 @@ Utilities:
  * gdal_translate: fix output file naming scheme in gdal_translate -sds (#5119)
  * gdal_translate: fix logic in detection non-gray color table level (#5245)
  * gdal_translate: add a -norat option
- * gdal_translate: don't add 0.1 when -scale is used with a dstmin equal to dstmax (usefull to generate a raster with uniform color, i.e. scaleRatio = 0)
- * gdal_translate: use floor() to compute image coordinates from world coordinates when specifying -projwin (usefull when extracting from left or top of upper-left corner, which generate negative image coordinates) (#5367)
+ * gdal_translate: don't add 0.1 when -scale is used with a dstmin equal to dstmax (useful to generate a raster with uniform color, i.e. scaleRatio = 0)
+ * gdal_translate: use floor() to compute image coordinates from world coordinates when specifying -projwin (useful when extracting from left or top of upper-left corner, which generate negative image coordinates) (#5367)
  * gdaltindex: remove annoying warning 'Warning 1: Field location of width 255 truncated to 254' (#5121)
  * gdaltindex: add -src_srs_name and -src_srs_format to go with MapServer RFC100; add also a -f and -lyr_name options to be able to create a non-shapefile tileindex
  * gdalwarp: Fix segfault where metadata values weren't being nullchecked properly during conflict resolution (#5069)
@@ -1354,9 +1354,9 @@ Core:
  * introduce OGRLayer::FindFieldIndex() / OGR_L_FindFieldIndex() to lookup potentially laundered field names (RFC 42)
  * OGR SQL: upgrade to support RFC 41 (multiple geometry fields)
  * OGR SQL: more stricter checks
- * OGR SQL: make parsing error report a usefull hint where the syntax error occured
+ * OGR SQL: make parsing error report a useful hint where the syntax error occured
  * OGR SQL: fix thread-safety of swq_op_registrar::GetOperator() (#5196)
- * OGR SQL: support not explicitely specifying AS keyword for aliasing a column spec
+ * OGR SQL: support not explicitly specifying AS keyword for aliasing a column spec
  * OGR SQL: don't call CONCAT(a_column ...) or SUBSTR(a_column ...) as a_column
  * OGR SQL: validate that arguments of MAX, MIN, AVG, SUM, COUNT are columns and not any expression since this is not supported
  * OGR SQL: make AVG field definition a OFTReal
@@ -1513,7 +1513,7 @@ LIBKML driver:
  * when writing a .kmz file, put layers .kml docs into a layers/ subdirectory
  * fix mem leaks, and use after free in kml2FeatureDef() (#5240)
  * create document with default namespace set to http://www.opengis.net/kml/2.2
- * when writing, consider empty strings as unset (usefull when converting from CSV)
+ * when writing, consider empty strings as unset (useful when converting from CSV)
  * don't write empty <Style /> element if OGR_STYLE is empty string
  * transform multigeometry with one single component into single geometry
  * create libkml/ subdirectory entry in .kmz
@@ -3511,7 +3511,7 @@ Port:
 Core:
  * RFC 24: progressive/async raster reading
  * On Unix, add capability of opening the target of a symlink through GDALOpen()
-   even if it not a real filename. Usefull for opening resources expressed as
+   even if it not a real filename. Useful for opening resources expressed as
    GDAL virtual filenames in software offering only file explorers (#3902)
  * Assume anything less than 100000 for GDAL_CACHEMAX is measured in metabytes.
  * Read cartesian coordinates if applicable in GDALLoadOziMapFile().
@@ -3931,7 +3931,7 @@ Core:
  * Add OGRLayer::GetName() and OGRLayer::GetGeomType() virtual methods,
    and their C and SWIG mappings (#3719)
  * On Unix, add capability of opening the target of a symlink through OGROpen()
-   even if it not a real filename. Usefull for opening resources expressed as
+   even if it not a real filename. Useful for opening resources expressed as
    GDAL virtual filenames in software offering only file explorers (#3902)
  * Expat based XML readers : add support for reading files with Windows-1252
    encoding
@@ -5019,7 +5019,7 @@ XPlane/Flightgear driver:
 == SWIG Language Bindings ==
 
 General:
- * Recommanded SWIG version is 1.3.39
+ * Recommended SWIG version is 1.3.39
  * Added API : 
     - GDAL :
         gdal.FilldoData(), gdal.FileFromMemBuffer(), gdal.Unlink()

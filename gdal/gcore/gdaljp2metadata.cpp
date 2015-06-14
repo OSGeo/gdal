@@ -1139,7 +1139,7 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
         {
             CPLError(CE_Warning, CPLE_AppDefined,
                      "It is likely that the axis order of the GMLJP2 box is not "
-                     "consistant with the EPSG order and that the resulting georeferencing "
+                     "consistent with the EPSG order and that the resulting georeferencing "
                      "will be incorrect. Try setting GDAL_IGNORE_AXIS_ORIENTATION=TRUE if it is the case");
         }
     }

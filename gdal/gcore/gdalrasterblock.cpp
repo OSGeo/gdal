@@ -393,7 +393,7 @@ int GDALRasterBlock::FlushCacheBlock(int bDirtyBlocksOnly)
  * \brief Flush all dirty blocks from cache.
  *
  * This static method is normally used to recover memory and is especially
- * usefull when doing multi-threaded code that can trigger the block cache.
+ * useful when doing multi-threaded code that can trigger the block cache.
  *
  * Due to the current design of the block cache, dirty blocks belonging to a same
  * dataset could be pushed simultanously to the IWriteBlock() method of that

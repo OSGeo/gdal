@@ -2412,7 +2412,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
         (GDALGetDataTypeSize(eDataType) == 32 && (nBits <= 16 || nBits > 32)) )
     {
         CPLError(CE_Warning, CPLE_NotSupported,
-                 "Inconsistant NBITS value with data type. Using %d",
+                 "Inconsistent NBITS value with data type. Using %d",
                  GDALGetDataTypeSize(eDataType));
     }
 
@@ -2484,7 +2484,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
         !bGeoreferencingCompatOfGMLJP2 && nGMLJP2Version == 1 )
     {
         CPLError(CE_Warning, CPLE_AppDefined,
-                 "GMLJP2 box was explicitely required but cannot be written due "
+                 "GMLJP2 box was explicitly required but cannot be written due "
                  "to lack of georeferencing and/or unsupported georeferencing for GMLJP2");
     }
 
@@ -2492,7 +2492,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
         !bGeoreferencingCompatOfGeoJP2 )
     {
         CPLError(CE_Warning, CPLE_AppDefined,
-                 "GeoJP2 box was explicitely required but cannot be written due "
+                 "GeoJP2 box was explicitly required but cannot be written due "
                  "to lack of georeferencing");
     }
     int bGeoBoxesAfter = CSLFetchBoolean(papszOptions, "GEOBOXES_AFTER_JP2C",

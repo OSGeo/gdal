@@ -315,7 +315,7 @@ OGRErr OGRCurveCollection::exportToWkb( const OGRGeometry* poGeom,
         if( nGType == wkbCurvePolygon )
             nGType = POSTGIS15_CURVEPOLYGON;
         if( bIs3D )
-            nGType = (OGRwkbGeometryType)(nGType | wkb25DBitInternalUse); /* yes we explicitely set wkb25DBit */
+            nGType = (OGRwkbGeometryType)(nGType | wkb25DBitInternalUse); /* yes we explicitly set wkb25DBit */
     }
 
     if( eByteOrder == wkbNDR )

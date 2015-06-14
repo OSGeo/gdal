@@ -591,7 +591,7 @@ int FileGDBTable::ReadTableXHeader()
             returnErrorIf(VSIFReadL( pabyTablXBlockMap, nSizeInBytes, 1, fpTableX ) != 1 );
             /* returnErrorIf(nMagic2 == 0 ); */
 
-            // Check that the map is consistant with n1024Blocks
+            // Check that the map is consistent with n1024Blocks
             GUInt32 nCountBlocks = 0;
             for(GUInt32 i=0;i<nBitsForBlockMap;i++)
                 nCountBlocks += TEST_BIT(pabyTablXBlockMap, i) != 0;

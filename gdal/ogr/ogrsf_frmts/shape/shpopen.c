@@ -1792,7 +1792,7 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
         {
             char str[128];
             sprintf( str,
-                    "Sanity check failed when trying to recover from inconsistant .shx/.shp with shape %d",
+                    "Sanity check failed when trying to recover from inconsistent .shx/.shp with shape %d",
                     hEntity );
 
             psSHP->sHooks.Error( str );

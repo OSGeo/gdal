@@ -3383,7 +3383,7 @@ OGRLayer *GDALDataset::CreateLayer( const char * pszName,
         !poLayer->TestCapability(OLCCurveGeometries) )
     {
         CPLError( CE_Warning, CPLE_AppDefined,
-                  "Inconsistant driver: Layer geometry type is non-linear, but "
+                  "Inconsistent driver: Layer geometry type is non-linear, but "
                   "TestCapability(OLCCurveGeometries) returns FALSE." );
     }
 #endif
@@ -3535,7 +3535,7 @@ OGRLayerH GDALDatasetCopyLayer( GDALDatasetH hDS,
  @param hSpatialFilter geometry which represents a spatial filter. Can be NULL.
  @param pszDialect allows control of the statement dialect. If set to NULL, the
 OGR SQL engine will be used, except for RDBMS drivers that will use their dedicated SQL engine,
-unless OGRSQL is explicitely passed as the dialect. Starting with OGR 1.10, the SQLITE dialect
+unless OGRSQL is explicitly passed as the dialect. Starting with OGR 1.10, the SQLITE dialect
 can also be used.
 
  @return an OGRLayer containing the results of the query.  Deallocate with
@@ -4893,7 +4893,7 @@ OGRErr GDALDataset::ProcessSQLAlterTableAlterColumn( const char *pszSQLCommand )
  @param poSpatialFilter geometry which represents a spatial filter. Can be NULL.
  @param pszDialect allows control of the statement dialect. If set to NULL, the
 OGR SQL engine will be used, except for RDBMS drivers that will use their dedicated SQL engine,
-unless OGRSQL is explicitely passed as the dialect. Starting with OGR 1.10, the SQLITE dialect
+unless OGRSQL is explicitly passed as the dialect. Starting with OGR 1.10, the SQLITE dialect
 can also be used.
 
  @return an OGRLayer containing the results of the query.  Deallocate with
@@ -5559,7 +5559,7 @@ int GDALDataset::TestCapability( CPL_UNUSED const char * pszCap )
  
  By default, when bForce is set to FALSE, only "efficient" transactions will be
  attempted. Some drivers may offer an emulation of transactions, but sometimes
- with significant overhead, in which case the user must explicitely allow for such
+ with significant overhead, in which case the user must explicitly allow for such
  an emulation by setting bForce to TRUE. Drivers that offer emulated transactions
  should advertize the ODsCEmulatedTransactions capability (and not ODsCTransactions).
  
@@ -5609,7 +5609,7 @@ OGRErr GDALDataset::StartTransaction(CPL_UNUSED int bForce)
 
  By default, when bForce is set to FALSE, only "efficient" transactions will be
  attempted. Some drivers may offer an emulation of transactions, but sometimes
- with significant overhead, in which case the user must explicitely allow for such
+ with significant overhead, in which case the user must explicitly allow for such
  an emulation by setting bForce to TRUE. Drivers that offer emulated transactions
  should advertize the ODsCEmulatedTransactions capability (and not ODsCTransactions).
 
