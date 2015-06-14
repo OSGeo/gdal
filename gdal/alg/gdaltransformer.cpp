@@ -710,7 +710,7 @@ retry:
         // In some cases this can result in 0 values. See #5980
         // so fallback to safer method in that case
     }
-    if( dfDeltaX == 0.0 || dfDeltaX == 0.0 )
+    if( dfDeltaX == 0.0 || dfDeltaY == 0.0 )
     {
         dfDeltaX = dfMaxXOut - dfMinXOut;
         dfDeltaY = dfMaxYOut - dfMinYOut;

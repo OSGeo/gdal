@@ -897,7 +897,7 @@ OGRErr  OGRSimpleCurve::exportToWkb( OGRwkbByteOrder eByteOrder,
     if ( eWkbVariant == wkbVariantIso )
         nGType = getIsoGeometryType();
     else if( eWkbVariant == wkbVariantPostGIS1 && wkbHasZ((OGRwkbGeometryType)nGType) )
-        nGType = (OGRwkbGeometryType)(wkbFlatten(nGType) | wkb25DBitInternalUse); /* yes we explicitely set wkb25DBit */
+        nGType = (OGRwkbGeometryType)(wkbFlatten(nGType) | wkb25DBitInternalUse); /* yes we explicitly set wkb25DBit */
 
     if( eByteOrder == wkbNDR )
         nGType = CPL_LSBWORD32( nGType );

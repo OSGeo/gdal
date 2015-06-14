@@ -1300,7 +1300,7 @@ def test_gdalwarp_41():
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' tmp/test_gdalwarp_41_src.tif tmp/test_gdalwarp_41.tif -overwrite  -t_srs EPSG:4326 -te -180 -90 180 90  -wo INIT_DEST=127 -wo SKIP_NOSOURCE=YES')
     
     ds = gdal.Open('tmp/test_gdalwarp_41.tif')
-    if ds.GetRasterBand(1).Checksum() != 46583:
+    if ds.GetRasterBand(1).Checksum() != 25945:
         gdaltest.post_reason('failure')
         print(ds.GetRasterBand(1).Checksum())
         return 'fail'
@@ -1310,7 +1310,7 @@ def test_gdalwarp_41():
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' tmp/test_gdalwarp_41_src.tif tmp/test_gdalwarp_41.tif -overwrite  -t_srs EPSG:4326 -te -180 -90 180 90  -wo INIT_DEST=127 -wo SKIP_NOSOURCE=YES -wo SRC_FILL_RATIO_HEURISTICS=NO')
     
     ds = gdal.Open('tmp/test_gdalwarp_41.tif')
-    if ds.GetRasterBand(1).Checksum() != 30582:
+    if ds.GetRasterBand(1).Checksum() != 65068:
         gdaltest.post_reason('failure')
         print(ds.GetRasterBand(1).Checksum())
         return 'fail'

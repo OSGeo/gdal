@@ -274,9 +274,9 @@ def DatasetReadAsArray( ds, xoff=0, yoff=0, win_xsize=None, win_ysize=None, buf_
         shape_buf_xsize = buf_obj.shape[2]
         shape_buf_ysize = buf_obj.shape[1]
         if buf_xsize is not None and buf_xsize != shape_buf_xsize:
-            raise ValueError('Specified buf_xsize not consistant with array shape')
+            raise ValueError('Specified buf_xsize not consistent with array shape')
         if buf_ysize is not None and buf_ysize != shape_buf_ysize:
-            raise ValueError('Specified buf_ysize not consistant with array shape')
+            raise ValueError('Specified buf_ysize not consistent with array shape')
         if buf_obj.shape[0] != ds.RasterCount:
             raise ValueError('Array should have space for %d bands' % ds.RasterCount)
 
@@ -284,7 +284,7 @@ def DatasetReadAsArray( ds, xoff=0, yoff=0, win_xsize=None, win_ysize=None, buf_
         if not datatype:
             raise ValueError("array does not have corresponding GDAL data type")
         if buf_type is not None and buf_type != datatype:
-            raise ValueError("Specified buf_type not consistant with array type")
+            raise ValueError("Specified buf_type not consistent with array type")
         buf_type = datatype
 
     if DatasetIONumPy( ds, 0, xoff, yoff, win_xsize, win_ysize,
@@ -332,15 +332,15 @@ def BandReadAsArray( band, xoff = 0, yoff = 0, win_xsize = None, win_ysize = Non
             shape_buf_xsize = buf_obj.shape[2]
             shape_buf_ysize = buf_obj.shape[1]
         if buf_xsize is not None and buf_xsize != shape_buf_xsize:
-            raise ValueError('Specified buf_xsize not consistant with array shape')
+            raise ValueError('Specified buf_xsize not consistent with array shape')
         if buf_ysize is not None and buf_ysize != shape_buf_ysize:
-            raise ValueError('Specified buf_ysize not consistant with array shape')
+            raise ValueError('Specified buf_ysize not consistent with array shape')
 
         datatype = NumericTypeCodeToGDALTypeCode( buf_obj.dtype.type )
         if not datatype:
             raise ValueError("array does not have corresponding GDAL data type")
         if buf_type is not None and buf_type != datatype:
-            raise ValueError("Specified buf_type not consistant with array type")
+            raise ValueError("Specified buf_type not consistent with array type")
         buf_type = datatype
 
     if BandRasterIONumPy( band, 0, xoff, yoff, win_xsize, win_ysize,

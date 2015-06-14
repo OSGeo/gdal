@@ -124,8 +124,8 @@ recompression of tiles to be done, which might cause unnecessary quality loss wh
 lossy compression (JPEG, WebP). To avoid that, the driver will create a temporary
 database next to the main GeoPackage file to store partial GeoPackage tiles in a
 lossless (and uncompressed) way. Once a tile has received data for its four quadrants
-and for all the bands (or the dataset is closed or explicitely flushed with FlushCache()),
-those uncompressed tiles are definitely transfered to the GeoPackage file with
+and for all the bands (or the dataset is closed or explicitly flushed with FlushCache()),
+those uncompressed tiles are definitely transferred to the GeoPackage file with
 the appropriate compression. All of this is transparent to the user of GDAL API/utilities</p>
 
 <h3><a id="tile_formats">Tile formats</a></h3>

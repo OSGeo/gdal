@@ -4,6 +4,7 @@
 
 /*! 
 \page gdal_utilities GDAL Utilities
+\brief A collection of GDAL related programs.
 
 The following utility programs are distributed with GDAL. 
 

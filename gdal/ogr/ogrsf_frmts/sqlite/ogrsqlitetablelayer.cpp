@@ -2585,7 +2585,7 @@ OGRErr OGRSQLiteTableLayer::ISetFeature( OGRFeature *poFeature )
             poFeature->GetFieldAsInteger64(iFIDAsRegularColumnIndex) != poFeature->GetFID() )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                        "Inconsistant values of FID and field of same name");
+                        "Inconsistent values of FID and field of same name");
             return CE_Failure;
         }
     }
@@ -2946,7 +2946,7 @@ OGRErr OGRSQLiteTableLayer::ICreateFeature( OGRFeature *poFeature )
                 poFeature->GetFieldAsInteger64(iFIDAsRegularColumnIndex) != poFeature->GetFID() )
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                            "Inconsistant values of FID and field of same name");
+                            "Inconsistent values of FID and field of same name");
                 return CE_Failure;
             }
         }

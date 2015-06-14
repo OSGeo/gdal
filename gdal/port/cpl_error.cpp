@@ -537,7 +537,7 @@ void CPL_STDCALL CPLErrorReset()
 /**
  * Restore an error state, without emitting an error.
  *
- * Can be usefull if a routine might call CPLErrorReset() and one wants to
+ * Can be useful if a routine might call CPLErrorReset() and one wants to
  * preserve the previous error state.
  *
  * @since GDAL 2.0
