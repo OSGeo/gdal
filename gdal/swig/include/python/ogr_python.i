@@ -429,7 +429,14 @@ layer[0:4] would return a list of the first four features."""
             output['id'] = fid
             
         for key in self.keys():
-            output['properties'][key] = self.GetField(key)
+            fld_defn = self.GetFieldDefnRef(self.GetFieldIndex(key))
+            if fld_defn.GetType() == _ogr.OFTInteger and fld_defn.GetSubType() == _ogr.OFSTBoolean:
+                if self.GetField(key):
+                    output['properties'][key] = True
+                else:
+                    output['properties'][key] = False
+            else:
+                output['properties'][key] = self.GetField(key)
         
         if not as_object:
             output = simplejson.dumps(output)
