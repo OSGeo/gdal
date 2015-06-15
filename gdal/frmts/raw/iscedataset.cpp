@@ -405,9 +405,9 @@ GDALDataset *ISCEDataset::Open( GDALOpenInfo *poOpenInfo )
         const char *sByteOrder = CSLFetchNameValue( papszXmlProps,
                                                     "BYTE_ORDER" );
 #ifdef CPL_LSB
-        if ( strcasecmp( sByteOrder, "b" ) == 0 )
+        if ( EQUAL( sByteOrder, "b" ) )
 #else
-        if ( strcasecmp( sByteOrder, "l" ) == 0 )
+        if ( EQUAL( sByteOrder, "l" ) )
 #endif
             bNativeOrder = false;
     }
@@ -453,21 +453,21 @@ GDALDataset *ISCEDataset::Open( GDALOpenInfo *poOpenInfo )
     int nBands = atoi( CSLFetchNameValue( papszXmlProps, "NUMBER_BANDS" ) );
     const char *sScheme = CSLFetchNameValue( papszXmlProps, "SCHEME" );
     int nPixelOffset, nLineOffset, nBandOffset;
-    if ( strcasecmp( sScheme, "BIL" ) == 0)
+    if ( EQUAL( sScheme, "BIL" ) )
     {
 		poDS->eScheme = BIL;
         nPixelOffset = GDALGetDataTypeSize(eDataType)/8;
         nLineOffset = nPixelOffset * nWidth * nBands;
         nBandOffset = GDALGetDataTypeSize(eDataType)/8 * nWidth;
     }
-    else if ( strcasecmp( sScheme, "BIP" ) == 0)
+    else if ( EQUAL( sScheme, "BIP" ) )
     {
 		poDS->eScheme = BIP;
         nPixelOffset = GDALGetDataTypeSize(eDataType)/8 * nBands;
         nLineOffset = nPixelOffset * nWidth * nBands;
         nBandOffset = GDALGetDataTypeSize(eDataType)/8;
     }
-    else if ( strcasecmp( sScheme, "BSQ" ) == 0)
+    else if ( EQUAL( sScheme, "BSQ" ) )
     {
 		poDS->eScheme = BSQ;
         nPixelOffset = GDALGetDataTypeSize(eDataType)/8;
