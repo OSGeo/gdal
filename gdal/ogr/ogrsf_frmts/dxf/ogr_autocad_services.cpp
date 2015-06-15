@@ -456,15 +456,15 @@ void ACAdjustText( double dfAngle, double dfScale, OGRFeature *poFeature )
         if( nEndOfAngleOff == std::string::npos )
             nEndOfAngleOff = osOldStyle.find( ")", nAngleOff + 1 );
 
-        osPreAngle.assign( osOldStyle, nAngleOff );
-        osPostAngle.assign( osOldStyle.c_str() + nEndOfAngleOff );
+        osPreAngle.assign( osOldStyle, 0, nAngleOff );
+        osPostAngle.assign( osOldStyle, nEndOfAngleOff, std::string::npos );
         
         dfOldAngle = CPLAtof( osOldStyle.c_str() + nAngleOff + 3 );
     }
     else
     {
         CPLAssert( osOldStyle[osOldStyle.size()-1] == ')' );
-        osPreAngle.assign( osOldStyle, osOldStyle.size() - 1 );
+        osPreAngle.assign( osOldStyle, 0, osOldStyle.size() - 1 );
         osPostAngle = ")";
     }
 
@@ -494,15 +494,15 @@ void ACAdjustText( double dfAngle, double dfScale, OGRFeature *poFeature )
         if( nEndOfScaleOff == std::string::npos )
             nEndOfScaleOff = osOldStyle.find( ")", nScaleOff + 1 );
 
-        osPreScale.assign( osOldStyle, nScaleOff );
-        osPostScale.assign( osOldStyle.c_str() + nEndOfScaleOff );
+        osPreScale.assign( osOldStyle, 0, nScaleOff );
+        osPostScale.assign( osOldStyle, nEndOfScaleOff, std::string::npos );
         
         dfOldScale = CPLAtof( osOldStyle.c_str() + nScaleOff + 3 );
     }
     else
     {
         CPLAssert( osOldStyle[osOldStyle.size()-1] == ')' );
-        osPreScale.assign( osOldStyle, osOldStyle.size() - 1 );
+        osPreScale.assign( osOldStyle, 0, osOldStyle.size() - 1 );
         osPostScale = ")";
     }
 
