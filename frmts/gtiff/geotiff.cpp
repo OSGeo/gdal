@@ -4308,10 +4308,16 @@ int GTiffDataset::IsBlockAvailable( int nBlockId )
             vsi_l_offset nCurOffset = VSIFTellL(fp);
             if( ~(hTIFF->tif_dir.td_stripoffset[nBlockId]) == 0 )
             {
+                vsi_l_offset nDirOffset;
+                if( hTIFF->tif_flags&TIFF_BIGTIFF )
+                    nDirOffset = hTIFF->tif_dir.td_stripoffset_entry.tdir_offset.toff_long8;
+                else
+                    nDirOffset = hTIFF->tif_dir.td_stripoffset_entry.tdir_offset.toff_long;
+
                 if( hTIFF->tif_dir.td_stripoffset_entry.tdir_type == TIFF_LONG )
                 {
                     GTiffCacheOffsetOrCount4(fp,
-                                             hTIFF->tif_dir.td_stripoffset_entry.tdir_offset.toff_long,
+                                             nDirOffset,
                                              nBlockId,
                                              hTIFF->tif_dir.td_nstrips,
                                              hTIFF->tif_dir.td_stripoffset);
@@ -4319,7 +4325,7 @@ int GTiffDataset::IsBlockAvailable( int nBlockId )
                 else
                 {
                     GTiffCacheOffsetOrCount8(fp,
-                                             hTIFF->tif_dir.td_stripoffset_entry.tdir_offset.toff_long8,
+                                             nDirOffset,
                                              nBlockId,
                                              hTIFF->tif_dir.td_nstrips,
                                              hTIFF->tif_dir.td_stripoffset);
@@ -4328,10 +4334,16 @@ int GTiffDataset::IsBlockAvailable( int nBlockId )
 
             if( ~(hTIFF->tif_dir.td_stripbytecount[nBlockId]) == 0 )
             {
+                vsi_l_offset nDirOffset;
+                if( hTIFF->tif_flags&TIFF_BIGTIFF )
+                    nDirOffset = hTIFF->tif_dir.td_stripbytecount_entry.tdir_offset.toff_long8;
+                else
+                    nDirOffset = hTIFF->tif_dir.td_stripbytecount_entry.tdir_offset.toff_long;
+
                 if( hTIFF->tif_dir.td_stripbytecount_entry.tdir_type == TIFF_LONG )
                 {
                     GTiffCacheOffsetOrCount4(fp,
-                                             hTIFF->tif_dir.td_stripbytecount_entry.tdir_offset.toff_long,
+                                             nDirOffset,
                                              nBlockId,
                                              hTIFF->tif_dir.td_nstrips,
                                              hTIFF->tif_dir.td_stripbytecount);
@@ -4339,7 +4351,7 @@ int GTiffDataset::IsBlockAvailable( int nBlockId )
                 else
                 {
                     GTiffCacheOffsetOrCount8(fp,
-                                             hTIFF->tif_dir.td_stripbytecount_entry.tdir_offset.toff_long8,
+                                             nDirOffset,
                                              nBlockId,
                                              hTIFF->tif_dir.td_nstrips,
                                              hTIFF->tif_dir.td_stripbytecount);
