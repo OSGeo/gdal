@@ -585,6 +585,21 @@ OCI_INCLUDE =	-I$(ORACLE_HOME)\oci\include
 #GTA_CFLAGS = -IC:/gdal_trunk/libgta-1.0.0-w32/include -IC:/gdal_trunk/libgta-1.0.0-w32/include/gta
 #GTA_LIBS = C:/gdal_trunk/libgta-1.0.0-w32/lib/libgta.dll.a
 
+# Uncomment for MongoDB support
+# The following has been tested with a statically built mongodbclient
+# The libmongoclient_s.lib file had to be renamed without the _s prefix to enable successfull linking
+# It was built with: c:\Python27\Scripts\scons.bat --32 --prefix=c:\users\even\dev\mongo-client-install --cpppath=c:\users\even\dev\boost_1_55_0_32bit --libpath=c:\users\even\dev\boost_1_55_0_32bit\lib32-msvc-10.0 install
+# With that setup, only building as a plugin works
+#
+# MONGODB_PLUGIN = YES
+# MONGODB_INC = c:/users/even/dev/mongo-client-install/include
+# MONGODB_CFLAGS = -DSTATIC_LIBMONGOCLIENT
+# BOOST_INC = c:/users/even/dev/boost_1_55_0_32bit
+# BOOST_LIB_PATH= c:\users\even\dev\boost_1_55_0_32bit\lib32-msvc-10.0
+# Boost library names must be edited to reflect the actual MSVC and Boost versions
+# MONGODB_LIBS = c:/users/even/dev/mongo-client-install/lib/libmongoclient.lib $(BOOST_LIB_PATH)\libboost_thread-vc100-mt-1_55.lib  $(BOOST_LIB_PATH)\libboost_thread-vc100-mt-s-1_55.lib $(BOOST_LIB_PATH)\libboost_system-vc100-mt-1_55.lib $(BOOST_LIB_PATH)\libboost_system-vc100-mt-s-1_55.lib $(BOOST_LIB_PATH)\libboost_date_time-vc100-mt-1_55.lib  $(BOOST_LIB_PATH)\libboost_date_time-vc100-mt-s-1_55.lib $(BOOST_LIB_PATH)\libboost_chrono-vc100-mt-1_55.lib $(BOOST_LIB_PATH)\libboost_chrono-vc100-mt-s-1_55.lib $(BOOST_LIB_PATH)\libboost_regex-vc100-mt-s-1_55.lib /nodefaultlib:msvcprt /nodefaultlib:libcmt
+
+
 # Any extra libraries needed on this platform?
 ADD_LIBS	= 
 
@@ -724,6 +739,14 @@ FGDB_LIB_LINK =
 !ENDIF
 !ENDIF
 
+!IFDEF MONGODB_INC
+!IF "$(MONGODB_PLUGIN)" != "YES"
+MONGODB_LIB_LINK = $(MONGODB_LIBS)
+!ELSE
+MONGODB_LIB_LINK =
+!ENDIF
+!ENDIF
+
 !IFDEF XERCES_DIR
 NAS_ENABLED = YES
 !ENDIF
@@ -745,5 +768,5 @@ EXTERNAL_LIBS =	$(OGDILIB) $(XERCES_LIB) $(EXPAT_LIB) $(OCI_LIB) $(PG_LIB) \
 	$(ODBCLIB) $(JASPER_LIB) $(PNG_LIB) $(ADD_LIBS) $(OPENJPEG_LIB) \
 	$(MRSID_LIDAR_LIB) $(LIBKML_LIBS) $(SOSI_LIBS) $(PDF_LIB_LINK) $(LZMA_LIBS) \
 	$(LIBICONV_LIBRARY) $(WEBP_LIBS) $(FGDB_LIB_LINK) $(FREEXL_LIBS) $(GTA_LIBS) \
-	$(INGRES_LIB) $(LIBXML2_LIB) $(PCRE_LIB) ws2_32.lib
+	$(INGRES_LIB) $(LIBXML2_LIB) $(PCRE_LIB) $(MONGODB_LIB_LINK) ws2_32.lib
 		
