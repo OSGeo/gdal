@@ -215,6 +215,10 @@ ifeq ($(CURL_SETTING),yes)
 CXXFLAGS :=	$(CXXFLAGS) -DPLSCENES_ENABLED
 endif
 
+ifeq ($(HAVE_MONGODB),yes)
+CXXFLAGS :=	$(CXXFLAGS) -DMONGODB_ENABLED
+endif
+
 endif
 
 CPPFLAGS	:=	-I.. -I../..  $(CPPFLAGS)

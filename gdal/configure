@@ -763,6 +763,9 @@ HAVE_HDF5
 HDF4_HAS_MAXOPENFILES
 HDF4_INCLUDE
 HAVE_HDF4
+MONGODB_INC
+MONGODB_LIB
+MONGODB_ENABLED
 SOSI_INC
 SOSI_LIB
 SOSI_ENABLED
@@ -935,6 +938,8 @@ with_gif
 with_ogdi
 with_fme
 with_sosi
+with_mongocxx
+with_boost_lib_path
 with_hdf4
 with_hdf5
 with_kea
@@ -1675,6 +1680,8 @@ Optional Packages:
   --with-ogdi=ARG       Include OGDI support (ARG=path)
   --with-fme=ARG        Include FMEObjects support (ARG=FME_HOME path)
   --with-sosi=ARG        Include SOSI support (ARG=SOSI lib Path, yes or no)
+  --with-mongocxx=ARG        Include MongoCXX support (ARG=Path, yes or no)
+  --with-boost-lib-path=ARG   Path to boost libraries for mongocxx client
   --with-hdf4=ARG       Include HDF4 support (ARG=path)
   --with-hdf5=ARG       Include HDF5 support (ARG=path)
   --with-kea=ARG      Include kealib (ARG=path to kea-config) [default=yes]
@@ -3843,7 +3850,7 @@ ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
  ac_save_CFLAGS="$CFLAGS"
-for ac_arg in "-pedantic -Wdeclaration-after-statement %        -Wall -Wdeclaration-after-statement"    "-pedantic  % -Wall"          "-xstrconst % -v"             "-std1      % -verbose -w0 -warnprotos"    "-qlanglvl=ansi % -qsrcmsg -qinfo=all:noppt:noppc:noobs:nocnd"    "-ansi -ansiE % -fullwarn"    "+ESlit     % +w1"            "-Xc        % -pvctl,fullmsg"    "-h conform % -h msglevel 2"    #
+for ac_arg in "-pedantic -Wdeclaration-after-statement -Wunused-parameter %        -Wall -Wdeclaration-after-statement -Wunused-parameter"    "-pedantic -Wdeclaration-after-statement %        -Wall -Wdeclaration-after-statement"    "-pedantic  % -Wall"          "-xstrconst % -v"             "-std1      % -verbose -w0 -warnprotos"    "-qlanglvl=ansi % -qsrcmsg -qinfo=all:noppt:noppc:noobs:nocnd"    "-ansi -ansiE % -fullwarn"    "+ESlit     % +w1"            "-Xc        % -pvctl,fullmsg"    "-h conform % -h msglevel 2"    #
 do CFLAGS="$ac_save_CFLAGS "`echo $ac_arg | sed -e 's,%%.*,,' -e 's,%,,'`
    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -4165,7 +4172,7 @@ ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ex
 ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
 
  ac_save_CXXFLAGS="$CXXFLAGS"
-for ac_arg in "-pedantic  % -Wall"          "-xstrconst % -v"             "-std1      % -verbose -w0 -warnprotos"    "-qlanglvl=ansi % -qsrcmsg -qinfo=all:noppt:noppc:noobs:nocnd"    "-ansi -ansiE % -fullwarn"    "+ESlit     % +w1"            "-Xc        % -pvctl,fullmsg"    "-h conform % -h msglevel 2"    #
+for ac_arg in "-pedantic  % -Wall -Wunused-parameter"          "-pedantic  % -Wall"          "-xstrconst % -v"             "-std1      % -verbose -w0 -warnprotos"    "-qlanglvl=ansi % -qsrcmsg -qinfo=all:noppt:noppc:noobs:nocnd"    "-ansi -ansiE % -fullwarn"    "+ESlit     % +w1"            "-Xc        % -pvctl,fullmsg"    "-h conform % -h msglevel 2"    #
 do CXXFLAGS="$ac_save_CXXFLAGS "`echo $ac_arg | sed -e 's,%%.*,,' -e 's,%,,'`
    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -21277,6 +21284,95 @@ SOSI_INC=$SOSI_INC
 
 
 
+
+# Check whether --with-mongocxx was given.
+if test "${with_mongocxx+set}" = set; then :
+  withval=$with_mongocxx;
+fi
+
+
+MONGODB_ENABLED=no
+
+if test "$with_mongocxx" = "no" ; then
+
+  echo "MONGODB support disabled."
+
+elif test "$with_mongocxx" = "yes" -o "$with_mongocxx" = "" ; then
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for MongoCXX" >&5
+$as_echo_n "checking for MongoCXX... " >&6; }
+
+    rm -f testmongocxx.*
+    rm -f testmongocxx
+    echo "#include <mongo/client/dbclient.h>" > testmongocxx.cpp
+    echo "using namespace mongo;" >> testmongocxx.cpp
+    echo "int main() { client::initialize(client::Options()); return 0; }" >> testmongocxx.cpp
+    if test -z "`${CXX} ${CPPFLAGS} testmongocxx.cpp -lmongoclient -lboost_system -lboost_thread -lboost_regex -o testmongocxx 2>&1`" ; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: MongoCXX found" >&5
+$as_echo "MongoCXX found" >&6; }
+        MONGODB_ENABLED="yes"
+        MONGODB_LIB=" -lmongoclient -lboost_system -lboost_thread -lboost_regex"
+    else
+        if test "$with_mongocxx" = "yes"; then
+            as_fn_error $? "MongoCXX not found." "$LINENO" 5
+        else
+            { $as_echo "$as_me:${as_lineno-$LINENO}: result: MongoCXX not found." >&5
+$as_echo "MongoCXX not found." >&6; }
+        fi
+    fi
+    rm -f testmongocxx.*
+    rm -f testmongocxx
+
+else
+
+
+# Check whether --with-boost-lib-path was given.
+if test "${with_boost_lib_path+set}" = set; then :
+  withval=$with_boost_lib_path;
+fi
+
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for libmongoclient.so in in $with_mongocxx/lib" >&5
+$as_echo_n "checking for libmongoclient.so in in $with_mongocxx/lib... " >&6; }
+  MONGODB_ENABLED=yes
+  if test -r $with_mongocxx/lib/libmongoclient.so; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: found." >&5
+$as_echo "found." >&6; }
+    MONGODB_LIB="-L$with_mongocxx/lib -lmongoclient"
+  elif test -r $with_mongocxx/lib/libmongoclient.dylib; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: found." >&5
+$as_echo "found." >&6; }
+    MONGODB_LIB="-L$with_mongocxx/lib -lmongoclient"
+  else
+    as_fn_error $? "not found." "$LINENO" 5
+  fi
+
+  if test "$with_boost_lib_path" = "" ; then
+    MONGODB_LIB="$MONGODB_LIB -lboost_system -lboost_thread -lboost_regex"
+  else
+    MONGODB_LIB="$MONGODB_LIB -L$with_boost_lib_path -lboost_system -lboost_thread -lboost_regex"
+  fi
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for mongo/client/dbclient.h in $with_mongocxx/include" >&5
+$as_echo_n "checking for mongo/client/dbclient.h in $with_mongocxx/include... " >&6; }
+  if test -r $with_mongocxx/include/mongo/client/dbclient.h ; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: found." >&5
+$as_echo "found." >&6; }
+    MONGODB_INC="-I$with_mongocxx/include"
+  else
+    as_fn_error $? "not found." "$LINENO" 5
+  fi
+
+fi
+
+MONGODB_ENABLED=$MONGODB_ENABLED
+
+MONGODB_LIB=$MONGODB_LIB
+
+MONGODB_INC=$MONGODB_INC
+
+
+
 HDF4_INCLUDE=""
 
 
@@ -32175,6 +32271,9 @@ echo "  FreeXL support:            ${HAVE_FREEXL}"
 
 
 echo "  SOSI support:              ${SOSI_ENABLED}"
+
+
+echo "  MongoDB support:           ${MONGODB_ENABLED}"
 
 
 echo ""
