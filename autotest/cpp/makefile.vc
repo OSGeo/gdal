@@ -69,13 +69,17 @@ CPPFLAGS = $(CFLAGS)
 
 GDAL_TEST_EXE = gdal_unit_test.exe
 
-default: $(GDAL_TEST_EXE) testcopywords.exe testperfcopywords.exe testclosedondestroydm.exe testthreadcond.exe
+default: $(GDAL_TEST_EXE) testcopywords.exe testperfcopywords.exe testclosedondestroydm.exe testthreadcond.exe testblockcache.exe testblockcachewrite.exe
 
-check:	 $(GDAL_TEST_EXE)
+check:	 $(GDAL_TEST_EXE) testblockcache.exe testblockcachewrite.exe
 	 $(GDAL_TEST_EXE)
+	testblockcache.exe -check -co TILED=YES --debug TEST,LOCK -loops 3 --config GDAL_RB_LOCK_DEBUG_CONTENTION YES
+	testblockcache.exe -check -co TILED=YES --debug TEST,LOCK -loops 3 --config GDAL_RB_LOCK_DEBUG_CONTENTION YES --config GDAL_RB_LOCK_TYPE SPIN
+	testblockcache.exe -check -co TILED=YES -migrate
+	testblockcache.exe -check -memdriver
+	testblockcachewrite.exe --debug ON
 
-check-all:	 $(GDAL_TEST_EXE) testcopywords.exe testperfcopywords.exe testclosedondestroydm.exe testthreadcond.exe
-	 $(GDAL_TEST_EXE)
+check-all:	 check testcopywords.exe testperfcopywords.exe testclosedondestroydm.exe testthreadcond.exe
 	testcopywords.exe
 	testperfcopywords.exe
 	testclosedondestroydm.exe
@@ -100,6 +104,14 @@ testclosedondestroydm.exe: testclosedondestroydm.c
 testthreadcond.exe: testthreadcond.c
 	$(CC) testthreadcond.c $(CFLAGS) $(GDAL_LIB)
     if exist testthreadcond.exe.manifest mt -manifest testthreadcond.exe.manifest -outputresource:testthreadcond.exe;1
+
+testblockcache.exe: testblockcache.cpp
+	$(CC) testblockcache.cpp $(CFLAGS) $(GDAL_LIB)
+    if exist testblockcache.exe.manifest mt -manifest testblockcache.exe.manifest -outputresource:testblockcache.exe;1
+
+testblockcachewrite.exe: testblockcachewrite.cpp
+	$(CC) testblockcachewrite.cpp $(CFLAGS) $(GDAL_LIB)
+    if exist testblockcachewrite.exe.manifest mt -manifest testblockcachewrite.exe.manifest -outputresource:testblockcachewrite.exe;1
 
 copy-gdal-dll:	$(GDAL_DLL) 
 
