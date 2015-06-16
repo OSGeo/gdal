@@ -27,6 +27,11 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#if defined(__MINGW32__) || defined(__MINGW64__)
+// This avoids i586-mingw32msvc/include/direct.h from including libqhull/io.h ...
+#define _DIRECT_H_
+#endif
+
 #include "cpl_error.h"
 #include "cpl_conv.h"
 #include "cpl_multiproc.h"
