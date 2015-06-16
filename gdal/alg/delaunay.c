@@ -28,8 +28,11 @@
  ****************************************************************************/
 
 #if defined(__MINGW32__) || defined(__MINGW64__)
-// This avoids i586-mingw32msvc/include/direct.h from including libqhull/io.h ...
+/*  This avoids i586-mingw32msvc/include/direct.h from including libqhull/io.h ... */
 #define _DIRECT_H_
+/* For __MINGW64__ */
+#define _INC_DIRECT
+#define _INC_STAT
 #endif
 
 #include "cpl_error.h"
