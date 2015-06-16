@@ -85,7 +85,7 @@ namespace tut
             double adfX[] = { 0, -5, -5, 5, 5 };
             double adfY[] = { 0, -5, 5, -5, 5 };
             int i, j;
-            GDALTriangulation* psDT = GDALTriangulationCreateDelaunay(5, adfX, adfY);
+            psDT = GDALTriangulationCreateDelaunay(5, adfX, adfY);
             ensure(psDT != NULL);
             ensure_equals(psDT->nFacets, 4);
             for(i=0;i<psDT->nFacets;i++)
@@ -102,6 +102,8 @@ namespace tut
             CPLPushErrorHandler(CPLQuietErrorHandler);
             ensure_equals(GDALTriangulationFindFacetDirected(psDT, 0, 0, 0, &face), FALSE);
             ensure_equals(GDALTriangulationFindFacetBruteForce(psDT, 0, 0, &face), FALSE);
+            double l1, l2, l3;
+            ensure_equals(GDALTriangulationComputeBarycentricCoordinates(psDT, 0, 0, 0, &l1, &l2, &l3), FALSE);
             CPLPopErrorHandler();
             ensure_equals(GDALTriangulationComputeBarycentricCoefficients(psDT, adfX, adfY) , TRUE);
             ensure_equals(GDALTriangulationComputeBarycentricCoefficients(psDT, adfX, adfY) , TRUE);
