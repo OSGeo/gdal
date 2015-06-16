@@ -284,6 +284,11 @@ GDALDriverManager::~GDALDriverManager()
     CPLCleanupSetlocaleMutex();
 
 /* -------------------------------------------------------------------- */
+/*      Cleanup QHull mutex                                             */
+/* -------------------------------------------------------------------- */
+    GDALTriangulationTerminate();
+
+/* -------------------------------------------------------------------- */
 /*      Cleanup the master CPL mutex, which governs the creation        */
 /*      of all other mutexes.                                           */ 
 /* -------------------------------------------------------------------- */
