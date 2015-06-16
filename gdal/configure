@@ -667,6 +667,7 @@ FREEXL_INCLUDE
 HAVE_FREEXL
 OPENCL_LIB
 OPENCL_FLAGS
+QHULL_SETTING
 GEOS_CONFIG
 GEOS_VERSION
 HAVE_GEOS
@@ -984,6 +985,7 @@ with_sde_version
 with_epsilon
 with_webp
 with_geos
+with_qhull
 with_opencl
 with_opencl_include
 with_opencl_lib
@@ -1735,6 +1737,7 @@ Optional Packages:
   --with-webp=ARG    Include WEBP support (ARG=no, yes or libwebp install root path)
   --with-geos=ARG         Include GEOS support (ARG=yes, no or geos-config
                           path)
+  --with-qhull=ARG     Include QHull support (ARG=no, yes, internal)
   --with-opencl=ARG       Include OpenCL (GPU) support
   --with-opencl-include=ARG OpenCL Include directory (with a CL subdirectory)
   --with-opencl-lib=ARG   OpenCL Link Flags (ie. -L/xxx -lOpenCL)
@@ -27380,6 +27383,104 @@ $as_echo "$as_me: Using C API from GEOS $GEOS_VERSION" >&6;}
 fi
 
 
+
+# Check whether --with-qhull was given.
+if test "${with_qhull+set}" = set; then :
+  withval=$with_qhull;
+fi
+
+
+QHULL_SETTING=no
+
+if test "$with_qhull" = "no" ; then
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: QHull support disabled." >&5
+$as_echo "$as_me: QHull support disabled." >&6;}
+
+elif test "$with_qhull" = "yes" -o "$with_qhull" = "" ; then
+
+  # Only qhull 2012 is reliable on certain datasets. Older Ubuntu have
+  # qhull/qhull.h
+  for ac_header in qhull/libqhull.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "qhull/libqhull.h" "ac_cv_header_qhull_libqhull_h" "$ac_includes_default"
+if test "x$ac_cv_header_qhull_libqhull_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_QHULL_LIBQHULL_H 1
+_ACEOF
+
+fi
+
+done
+
+  if test "$ac_cv_header_qhull_libqhull_h" = "yes"; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for qh_new_qhull in -lqhull" >&5
+$as_echo_n "checking for qh_new_qhull in -lqhull... " >&6; }
+if ${ac_cv_lib_qhull_qh_new_qhull+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lqhull  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char qh_new_qhull ();
+int
+main ()
+{
+return qh_new_qhull ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_qhull_qh_new_qhull=yes
+else
+  ac_cv_lib_qhull_qh_new_qhull=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_qhull_qh_new_qhull" >&5
+$as_echo "$ac_cv_lib_qhull_qh_new_qhull" >&6; }
+if test "x$ac_cv_lib_qhull_qh_new_qhull" = xyes; then :
+  QHULL_SETTING=yes
+else
+  QHULL_SETTING=no
+fi
+
+    if test "$QHULL_SETTING" = "yes"; then
+        QHULL_SETTING=external
+        if test -f /usr/include/qhull/libqhull.h; then
+            EXTRA_INCLUDES="-I/usr/include/qhull $EXTRA_INCLUDES"
+        else
+            EXTRA_INCLUDES="-I/usr/include/local/qhull $EXTRA_INCLUDES"
+        fi
+        LIBS="-lqhull $LIBS"
+    fi
+  fi
+  if test "$QHULL_SETTING" = "no" ; then
+    if test "$with_qhull" = "yes"; then
+        as_fn_error $? "--with-qhull requested, but library not found!" "$LINENO" 5
+    else
+        QHULL_SETTING=internal
+    fi
+  fi
+else
+  QHULL_SETTING=internal
+fi
+
+QHULL_SETTING=$QHULL_SETTING
+
+
+
 OPENCL_SETTING=no
 OPENCL_FLAGS=
 OPENCL_LIB=
@@ -32253,6 +32354,9 @@ echo "  INFORMIX DataBlade support:${HAVE_IDB}"
 
 
 echo "  GEOS support:              ${HAVE_GEOS_RESULT}"
+
+
+echo "  QHull support:             ${QHULL_SETTING}"
 
 
 echo "  Poppler support:           ${HAVE_POPPLER}"
