@@ -1535,7 +1535,10 @@ int GDALTriangulationFindFacetDirected(const GDALTriangulation* psDT,
 void GDALTriangulationTerminate()
 {
 #if HAVE_INTERNAL_OR_EXTERNAL_QHULL
-    CPLDestroyMutex(hMutex);
-    hMutex = NULL;
+    if( hMutex != NULL )
+    {
+        CPLDestroyMutex(hMutex);
+        hMutex = NULL;
+    }
 #endif
 }
