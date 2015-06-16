@@ -93,7 +93,7 @@ position of the first runway threshold found.<p>
 
 Fields:
 <ul>
-<li>apt_icao: String (4.0). ICAO code for the airport.
+<li>apt_icao: String (5.0). ICAO code for the airport.
 <li>apt_name: String (0.0). Full name of the airport.
 <li>type: Integer (1.0). Airport type : 0 for regular airport, 1 for seaplane/floatplane base, 2 for heliport (added in GDAL 1.7.0)
 <li>elevation_m: Real (8.2). Elevation of the airport (in meters).
@@ -114,7 +114,7 @@ the non-displaced threshold position (is_displaced=0), and another one at the di
 
 Fields:
 <ul>
-<li>apt_icao: String (4.0). ICAO code for the airport of this runway threshold.
+<li>apt_icao: String (5.0). ICAO code for the airport of this runway threshold.
 <li>rwy_num: String (3.0). Code for the runway, such as 18, 02L, etc... Unique for each aiport.
 <li>width_m: Real (3.0). Width in meters.
 <li>surface: String (0.0). Type of the <a name="surface">surface</a> among :
@@ -194,7 +194,7 @@ When not specified, the meaning of the fields is the same as the <a href="#Runwa
 
 Fields:
 <ul>
-<li>apt_icao: String (4.0)
+<li>apt_icao: String (5.0)
 <li>rwy_num1: String (3.0). Code for first runway threshold. For example 20L.
 <li>rwy_num2: String (3.0). Code for the second the runway threshold. For example 02R.
 <li>width_m: Real (3.0)
@@ -213,7 +213,7 @@ Fields:
 
 Fields:
 <ul>
-<li>apt_icao: String (4.0)
+<li>apt_icao: String (5.0)
 <li>rwy_num: String (3.0). Code for the runway, such as 18. Unique for each aiport.
 <li>width_m: Real (3.0)
 <li>has_buoys: Integer (1.0). Set to 1 if the runway should be marked with buoys bobbing in the water
@@ -227,7 +227,7 @@ This layer contains the rectangular shape of a water runway. It is computed from
 
 Fields:
 <ul>
-<li>apt_icao: String (4.0)
+<li>apt_icao: String (5.0)
 <li>rwy_num1: String (3.0)
 <li>rwy_num2: String (3.0)
 <li>width_m: Real (3.0)
@@ -248,7 +248,7 @@ When not specified, the meaning of the fields is the same as the <a href="#Runwa
 
 Fields:
 <ul>
-<li>apt_icao: String (4.0)
+<li>apt_icao: String (5.0)
 <li>rwy_num: String (3.0).
 <li>width_m: Real (3.0)
 <li>length_m: Real (5.0) : Length of stopway/blastpad/over-run at the approach end of runway in meters.
@@ -260,7 +260,7 @@ This layer contains the center of a helipad.
 
 Fields:
 <ul>
-<li>apt_icao: String (4.0)
+<li>apt_icao: String (5.0)
 <li>helipad_name: String (5.0). Name of the helipad in the format "Hxx". Unique for each aiport.
 <li>true_heading_deg: Real (6.2)
 <li>length_m: Real (5.0)
@@ -290,7 +290,7 @@ This layer contains the rectangular shape of a taxiway.
 
 Fields:
 <ul>
-<li>apt_icao: String (4.0)
+<li>apt_icao: String (5.0)
 <li>true_heading_deg: Real (6.2)
 <li>length_m: Real (5.0)
 <li>width_m: Real (3.0)
@@ -306,7 +306,7 @@ The source file may contain Bezier curves as sides of the polygon. Due to the la
 
 Fields:
 <ul>
-<li>apt_icao: String (4.0)
+<li>apt_icao: String (5.0)
 <li>name: String (0.0)
 <li>surface: String (0.0). See above runway <a href="#surface">surface</a> codes.
 <li>smoothness: Real (4.2). See above runway <a href="#smoothness">smoothness</a> description.
@@ -320,7 +320,7 @@ The polygon may include holes. Bezier curves are discretized into linear pieces.
 
 Fields:
 <ul>
-<li>apt_icao: String (4.0)
+<li>apt_icao: String (5.0)
 <li>name: String (0.0)
 </ul>
 
@@ -330,7 +330,7 @@ This layer contains linear features. Bezier curves are discretized into linear p
 
 Fields:
 <ul>
-<li>apt_icao: String (4.0)
+<li>apt_icao: String (5.0)
 <li>name: String (0.0)
 </ul>
 
@@ -340,7 +340,7 @@ Define gate positions, ramp locations etc.<p>
 
 Fields:
 <ul>
-<li>apt_icao: String (4.0)
+<li>apt_icao: String (5.0)
 <li>name: String (0.0)
 <li>true_heading_deg: Real (6.2)
 </ul>
@@ -351,7 +351,7 @@ Define airport light beacons.<p>
 
 Fields:
 <ul>
-<li>apt_icao: String (4.0)
+<li>apt_icao: String (5.0)
 <li>name: String (0.0)
 <li>color: String (0.0). Color of the light beacon among :
     <ul>
@@ -369,7 +369,7 @@ Define airport windsocks.<p>
 
 Fields:
 <ul>
-<li>apt_icao: String (4.0)
+<li>apt_icao: String (5.0)
 <li>name: String (0.0)
 <li>is_illuminated: Integer (1.0)
 </li>
@@ -381,7 +381,7 @@ Define airport taxiway signs.<p>
 
 Fields:
 <ul>
-<li>apt_icao: String (4.0)
+<li>apt_icao: String (5.0)
 <li>text: String (0.0). This is somehow encoded into a specific format. See X-Plane <a href="http://x-plane.org/home/robinp/Apt850.htm#SignTextSpec">specification</a> for more details.
 <li>true_heading_deg: Real (6.2)
 <li>size: Integer (1.0). From 1 to 5. See X-Plane specification for more details.
@@ -393,7 +393,7 @@ Define a VASI, PAPI or Wig-Wag. For PAPIs and Wig-Wags, the coordinate is the ce
 
 Fields:
 <ul>
-<li>apt_icao: String (4.0)
+<li>apt_icao: String (5.0)
 <li>rwy_num: String (3.0). Foreign key to the rwy_num field of the <a href="#RunwayThreshold">RunwayThreshold</a> layer.
 <li>type: String (0.0). Type among :
     <ul>
@@ -414,7 +414,7 @@ Define an airport ATC frequency. Note that this layer has no geometry.<p>
 
 Fields:
 <ul>
-<li>apt_icao: String (4.0)
+<li>apt_icao: String (5.0)
 <li>atc_type: String (4.0). Type of the frequency among (derived from the record type number) :
     <ul>
         <li>ATIS : AWOS (Automatic Weather Observation System), ASOS (Automatic Surface Observation System) or ATIS (Automated Terminal Information System)
@@ -453,7 +453,7 @@ Localiser that is part of a full ILS, or Stand-alone localiser (LOC), also inclu
 Fields :
 <ul>
 <li>navaid_id: String (4.0). Identification of nav-aid. *NOT* unique.
-<li>apt_icao: String (4.0). Foreign key to the apt_icao field of the <a href="#RunwayThreshold">RunwayThreshold</a> layer.
+<li>apt_icao: String (5.0). Foreign key to the apt_icao field of the <a href="#RunwayThreshold">RunwayThreshold</a> layer.
 <li>rwy_num: String (3.0). Foreign key to the rwy_num field of the <a href="#RunwayThreshold">RunwayThreshold</a> layer.
 <li>subtype: String (10.0). Sub-type among :
     <ul>
@@ -506,7 +506,7 @@ Glideslope nav-aid.<p>
 Fields :
 <ul>
 <li>navaid_id: String (4.0). Identification of nav-aid. *NOT* unique.
-<li>apt_icao: String (4.0). Foreign key to the apt_icao field of the <a href="#RunwayThreshold">RunwayThreshold</a> layer.
+<li>apt_icao: String (5.0). Foreign key to the apt_icao field of the <a href="#RunwayThreshold">RunwayThreshold</a> layer.
 <li>rwy_num: String (3.0). Foreign key to the rwy_num field of the <a href="#RunwayThreshold">RunwayThreshold</a> layer.
 <li>elevation_m: Real (8.2)
 <li>freq_mhz: Real (7.3)
@@ -521,7 +521,7 @@ Nav-aids of type Outer Marker (OM), Middle Marker (MM) or Inner Marker (IM).<p>
 
 Fields:
 <ul>
-<li>apt_icao: String (4.0). Foreign key to the apt_icao field of the <a href="#RunwayThreshold">RunwayThreshold</a> layer.
+<li>apt_icao: String (5.0). Foreign key to the apt_icao field of the <a href="#RunwayThreshold">RunwayThreshold</a> layer.
 <li>rwy_num: String (3.0). Foreign key to the rwy_num field of the <a href="#RunwayThreshold">RunwayThreshold</a> layer.
 <li>subtype: String (10.0). Among OM, MM or IM.
 <li>elevation_m: Real (8.2)
@@ -550,7 +550,7 @@ DME element of an ILS.<p>
 Fields:
 <ul>
 <li>navaid_id: String (4.0). Identification of nav-aid. *NOT* unique.
-<li>apt_icao: String (4.0). Foreign key to the apt_icao field of the <a href="#RunwayThreshold">RunwayThreshold</a> layer.
+<li>apt_icao: String (5.0). Foreign key to the apt_icao field of the <a href="#RunwayThreshold">RunwayThreshold</a> layer.
 <li>rwy_num: String (3.0). Foreign key to the rwy_num field of the <a href="#RunwayThreshold">RunwayThreshold</a> layer.
 <li>elevation_m: Real (8.2)
 <li>freq_mhz: Real (7.3)
