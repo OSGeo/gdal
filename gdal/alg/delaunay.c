@@ -1012,7 +1012,7 @@ static void gdal_qh_symbols_unused()
 #include "mem.c"
 #include "user.c"
 #include "global.c"
-#include "userprintf.c"
+/*#include "userprintf.c"*/
 #include "random.c"
 #include "qset.c"
 #include "io.c"
@@ -1021,6 +1021,15 @@ static void gdal_qh_symbols_unused()
 #include "geom2.c"
 #include "stat.c"
 #include "merge.c"
+
+/* Replaces userprintf.c implementation */
+static void qh_fprintf(CPL_UNUSED FILE *fp, CPL_UNUSED int msgcode, const char *fmt, ... )
+{
+    va_list args;
+    va_start(args, fmt);
+    CPLErrorV(CE_Warning, CPLE_AppDefined, fmt, args);
+    va_end(args);
+}
 
 #else /* INTERNAL_QHULL */
 
