@@ -120,7 +120,11 @@ static void ReadRaster(GDALDataset* poDS, int nXSize, int nYSize, int nBands,
                     pBuffer, nXWin, nYWin,
                     GDT_Byte,
                     nBands, NULL,
-                    0, 0, 0);
+                    0, 0, 0
+#ifdef GDAL_COMPILATION
+                    , NULL
+#endif
+                    );
     if( bCheck )
     {
         Check(pBuffer, nXSize, nYSize, nBands,
@@ -445,7 +449,11 @@ int main(int argc, char* argv[])
                                pabyLine, nXSize, 1,
                                GDT_Byte,
                                nBands, NULL,
-                               0, 0, 0);
+                               0, 0, 0
+#ifdef GDAL_COMPILATION
+                               , NULL
+#endif
+                               );
             }
             VSIFree(pabyLine);
         }
