@@ -10,7 +10,7 @@ OBJ	=	gdalmediancut.o gdaldither.o gdal_crs.o gdaltransformer.o \
 		gdalsievefilter.o gdalwarpkernel_opencl.o polygonize.o \
 		gdalrasterfpolygonenumerator.o fpolygonize.o \
 		contour.o gdaltransformgeolocs.o \
-		gdal_octave.o gdal_simplesurf.o gdalmatching.o
+		gdal_octave.o gdal_simplesurf.o gdalmatching.o delaunay.o
 
 ifeq ($(HAVE_AVX_AT_COMPILE_TIME),yes)
 CPPFLAGS 	:=	-DHAVE_AVX_AT_COMPILE_TIME $(CPPFLAGS)
@@ -26,6 +26,13 @@ endif
 
 ifeq ($(HAVE_ARMADILLO),yes)
 CPPFLAGS 	:=	-DHAVE_ARMADILLO $(CPPFLAGS)
+endif
+
+ifeq ($(QHULL_SETTING),external)
+CPPFLAGS 	:=	-DEXTERNAL_QHULL $(CPPFLAGS)
+endif
+ifeq ($(QHULL_SETTING),internal)
+CPPFLAGS 	:=	-DINTERNAL_QHULL -Ilibqhull $(CPPFLAGS)
 endif
 
 CPPFLAGS	:=	$(CPPFLAGS) $(OPENCL_FLAGS)

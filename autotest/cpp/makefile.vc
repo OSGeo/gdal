@@ -50,6 +50,7 @@ OBJ = \
     test_gdal_aaigrid.obj \
     test_gdal_dted.obj \
     test_gdal_gtiff.obj \
+    test_triangulation.obj \
     test_ogr.obj \
     test_ogr_geos.obj \
     test_ogr_shape.obj \

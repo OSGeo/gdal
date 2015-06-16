@@ -476,7 +476,73 @@ GDAL_GCP CPL_DLL *
 GDALComputeMatchingPoints( GDALDatasetH hFirstImage,
                            GDALDatasetH hSecondImage,
                            char **papszOptions,
-                           int *pnGCPCount ); 
+                           int *pnGCPCount );
+
+/************************************************************************/
+/*  Delaunay triangulation interface.                                   */
+/************************************************************************/
+
+typedef struct
+{
+    int anVertexIdx[3];   /* index to the padfX/padfY arrays */
+    int anNeighborIdx[3]; /* index to GDALDelaunayTriangulation.pasFacets, or -1 */
+                          /* anNeighborIdx[k] is the triangle to the opposite side */
+                          /* of the opposite segment of anVertexIdx[k] */
+} GDALTriFacet;
+
+/* Conversion from cartesian (x,y) to barycentric (l1,l2,l3) with :
+   l1 = dfMul1X * (x - dfCxtX) + dfMul1Y * (y - dfCstY)
+   l2 = dfMul2X * (x - dfCxtX) + dfMul2Y * (y - dfCstY)
+   l3 = 1 - l1 - l2
+*/
+typedef struct
+{
+    double      dfMul1X;
+    double      dfMul1Y;
+    double      dfMul2X;
+    double      dfMul2Y;
+    double      dfCstX;
+    double      dfCstY;
+} GDALTriBarycentricCoefficients;
+
+typedef struct
+{
+    int                             nFacets;
+    GDALTriFacet                   *pasFacets;     /* nFacets elements */
+    GDALTriBarycentricCoefficients *pasFacetCoefficients; /* nFacets elements */
+} GDALTriangulation;
+
+int CPL_DLL GDALHasTriangulation();
+
+GDALTriangulation CPL_DLL *GDALTriangulationCreateDelaunay(int nPoints,
+                                                           const double* padfX,
+                                                           const double* padfY);
+int  CPL_DLL GDALTriangulationComputeBarycentricCoefficients(
+                                                GDALTriangulation* psDT,
+                                                const double* padfX,
+                                                const double* padfY);
+int  CPL_DLL GDALTriangulationComputeBarycentricCoordinates(
+                                                const GDALTriangulation* psDT,
+                                                int nFacetIdx,
+                                                double dfX,
+                                                double dfY,
+                                                double* pdfL1,
+                                                double* pdfL2,
+                                                double* pdfL3);
+int CPL_DLL GDALTriangulationFindFacetBruteForce( const GDALTriangulation* psDT,
+                                                  double dfX,
+                                                  double dfY,
+                                                  int* panOutputFacetIdx );
+int CPL_DLL GDALTriangulationFindFacetDirected( const GDALTriangulation* psDT,
+                                                int nFacetIdx,
+                                                double dfX,
+                                                double dfY,
+                                                int* panOutputFacetIdx );
+void CPL_DLL GDALTriangulationFree(GDALTriangulation* psDT);
+
+// GDAL internal use only
+void GDALTriangulationTerminate();
+
 CPL_C_END
                             
 #endif /* ndef GDAL_ALG_H_INCLUDED */

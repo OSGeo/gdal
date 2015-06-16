@@ -3406,6 +3406,48 @@ if test "${HAVE_GEOS}" = "yes" ; then
 fi
 
 dnl ---------------------------------------------------------------------------
+dnl Check if QHull library is available.
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(qhull,[  --with-qhull[=ARG]     Include QHull support (ARG=no, yes, internal)],,)
+
+QHULL_SETTING=no
+
+if test "$with_qhull" = "no" ; then
+
+  AC_MSG_NOTICE([QHull support disabled.])
+
+elif test "$with_qhull" = "yes" -o "$with_qhull" = "" ; then
+
+  # Only qhull 2012 is reliable on certain datasets. Older Ubuntu have
+  # qhull/qhull.h
+  AC_CHECK_HEADERS([qhull/libqhull.h])
+  if test "$ac_cv_header_qhull_libqhull_h" = "yes"; then
+    AC_CHECK_LIB(qhull,qh_new_qhull,QHULL_SETTING=yes,QHULL_SETTING=no,)
+    if test "$QHULL_SETTING" = "yes"; then
+        QHULL_SETTING=external
+        if test -f /usr/include/qhull/libqhull.h; then
+            EXTRA_INCLUDES="-I/usr/include/qhull $EXTRA_INCLUDES"
+        else
+            EXTRA_INCLUDES="-I/usr/include/local/qhull $EXTRA_INCLUDES"
+        fi
+        LIBS="-lqhull $LIBS"
+    fi
+  fi
+  if test "$QHULL_SETTING" = "no" ; then
+    if test "$with_qhull" = "yes"; then
+        AC_MSG_ERROR([--with-qhull requested, but library not found!])
+    else
+        QHULL_SETTING=internal
+    fi
+  fi
+else
+  QHULL_SETTING=internal
+fi
+
+AC_SUBST([QHULL_SETTING],$QHULL_SETTING)
+
+dnl ---------------------------------------------------------------------------
 dnl Check if opencl library is available.
 dnl ---------------------------------------------------------------------------
 
@@ -4554,6 +4596,7 @@ LOC_MSG([  SpatiaLite support:        ${HAVE_SPATIALITE}])
 LOC_MSG([  DWGdirect support          ${HAVE_DWGDIRECT}])
 LOC_MSG([  INFORMIX DataBlade support:${HAVE_IDB}])
 LOC_MSG([  GEOS support:              ${HAVE_GEOS_RESULT}])
+LOC_MSG([  QHull support:             ${QHULL_SETTING}])
 LOC_MSG([  Poppler support:           ${HAVE_POPPLER}])
 LOC_MSG([  Podofo support:            ${HAVE_PODOFO}])
 LOC_MSG([  OpenCL support:            ${OPENCL_SETTING}])
