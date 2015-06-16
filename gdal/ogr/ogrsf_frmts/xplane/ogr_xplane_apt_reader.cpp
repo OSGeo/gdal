@@ -1854,7 +1854,7 @@ OGRXPlaneAPTLayer::OGRXPlaneAPTLayer() : OGRXPlaneLayer("APT")
     poFeatureDefn->SetGeomType( wkbPoint );
 
     OGRFieldDefn oFieldID("apt_icao", OFTString );
-    oFieldID.SetWidth( 4 );
+    oFieldID.SetWidth( 5 );
     poFeatureDefn->AddFieldDefn( &oFieldID );
 
     OGRFieldDefn oFieldName("apt_name", OFTString );
@@ -1937,7 +1937,7 @@ OGRXPlaneRunwayThresholdLayer::OGRXPlaneRunwayThresholdLayer() : OGRXPlaneLayer(
     poFeatureDefn->SetGeomType( wkbPoint );
 
     OGRFieldDefn oFieldAptICAO("apt_icao", OFTString );
-    oFieldAptICAO.SetWidth( 4 );
+    oFieldAptICAO.SetWidth( 5 );
     poFeatureDefn->AddFieldDefn( &oFieldAptICAO );
 
     OGRFieldDefn oFieldRwyNum("rwy_num", OFTString );
@@ -2100,7 +2100,7 @@ OGRXPlaneRunwayLayer::OGRXPlaneRunwayLayer() : OGRXPlaneLayer("RunwayPolygon")
     poFeatureDefn->SetGeomType( wkbPolygon );
 
     OGRFieldDefn oFieldAptICAO("apt_icao", OFTString );
-    oFieldAptICAO.SetWidth( 4 );
+    oFieldAptICAO.SetWidth( 5 );
     poFeatureDefn->AddFieldDefn( &oFieldAptICAO );
 
     OGRFieldDefn oFieldRwyNum1("rwy_num1", OFTString );
@@ -2221,7 +2221,7 @@ OGRXPlaneStopwayLayer::OGRXPlaneStopwayLayer() : OGRXPlaneLayer("Stopway")
     poFeatureDefn->SetGeomType( wkbPolygon );
 
     OGRFieldDefn oFieldAptICAO("apt_icao", OFTString );
-    oFieldAptICAO.SetWidth( 4 );
+    oFieldAptICAO.SetWidth( 5 );
     poFeatureDefn->AddFieldDefn( &oFieldAptICAO );
 
     OGRFieldDefn oFieldRwyNum1("rwy_num", OFTString );
@@ -2294,7 +2294,7 @@ OGRXPlaneWaterRunwayThresholdLayer::OGRXPlaneWaterRunwayThresholdLayer() : OGRXP
     poFeatureDefn->SetGeomType( wkbPoint );
 
     OGRFieldDefn oFieldAptICAO("apt_icao", OFTString );
-    oFieldAptICAO.SetWidth( 4 );
+    oFieldAptICAO.SetWidth( 5 );
     poFeatureDefn->AddFieldDefn( &oFieldAptICAO );
 
     OGRFieldDefn oFieldRwyNum("rwy_num", OFTString );
@@ -2365,7 +2365,7 @@ OGRXPlaneWaterRunwayLayer::OGRXPlaneWaterRunwayLayer() : OGRXPlaneLayer("WaterRu
     poFeatureDefn->SetGeomType( wkbPolygon );
 
     OGRFieldDefn oFieldAptICAO("apt_icao", OFTString );
-    oFieldAptICAO.SetWidth( 4 );
+    oFieldAptICAO.SetWidth( 5 );
     poFeatureDefn->AddFieldDefn( &oFieldAptICAO );
 
     OGRFieldDefn oFieldRwyNum1("rwy_num1", OFTString );
@@ -2456,7 +2456,7 @@ OGRXPlaneHelipadLayer::OGRXPlaneHelipadLayer() : OGRXPlaneLayer("Helipad")
     poFeatureDefn->SetGeomType( wkbPoint );
 
     OGRFieldDefn oFieldAptICAO("apt_icao", OFTString );
-    oFieldAptICAO.SetWidth( 4 );
+    oFieldAptICAO.SetWidth( 5 );
     poFeatureDefn->AddFieldDefn( &oFieldAptICAO );
 
     OGRFieldDefn oFieldHelipadName("helipad_name", OFTString );
@@ -2542,7 +2542,7 @@ OGRXPlaneHelipadPolygonLayer::OGRXPlaneHelipadPolygonLayer() : OGRXPlaneLayer("H
     poFeatureDefn->SetGeomType( wkbPolygon );
 
     OGRFieldDefn oFieldAptICAO("apt_icao", OFTString );
-    oFieldAptICAO.SetWidth( 4 );
+    oFieldAptICAO.SetWidth( 5 );
     poFeatureDefn->AddFieldDefn( &oFieldAptICAO );
 
     OGRFieldDefn oFieldHelipadName("helipad_name", OFTString );
@@ -2651,7 +2651,7 @@ OGRXPlaneTaxiwayRectangleLayer::OGRXPlaneTaxiwayRectangleLayer() : OGRXPlaneLaye
     poFeatureDefn->SetGeomType( wkbPolygon );
 
     OGRFieldDefn oFieldAptICAO("apt_icao", OFTString );
-    oFieldAptICAO.SetWidth( 4 );
+    oFieldAptICAO.SetWidth( 5 );
     poFeatureDefn->AddFieldDefn( &oFieldAptICAO );
 
     OGRFieldDefn oFieldTrueHeading("true_heading_deg", OFTReal );
@@ -2745,7 +2745,7 @@ OGRXPlanePavementLayer::OGRXPlanePavementLayer() : OGRXPlaneLayer("Pavement")
     poFeatureDefn->SetGeomType( wkbPolygon );
 
     OGRFieldDefn oFieldAptICAO("apt_icao", OFTString );
-    oFieldAptICAO.SetWidth( 4 );
+    oFieldAptICAO.SetWidth( 5 );
     poFeatureDefn->AddFieldDefn( &oFieldAptICAO );
 
     OGRFieldDefn oFieldName("name", OFTString );
@@ -2806,7 +2806,7 @@ OGRXPlaneAPTBoundaryLayer::OGRXPlaneAPTBoundaryLayer() : OGRXPlaneLayer("APTBoun
     poFeatureDefn->SetGeomType( wkbPolygon );
 
     OGRFieldDefn oFieldAptICAO("apt_icao", OFTString );
-    oFieldAptICAO.SetWidth( 4 );
+    oFieldAptICAO.SetWidth( 5 );
     poFeatureDefn->AddFieldDefn( &oFieldAptICAO );
 
     OGRFieldDefn oFieldName("name", OFTString );
@@ -2846,7 +2846,7 @@ OGRXPlaneAPTLinearFeatureLayer::OGRXPlaneAPTLinearFeatureLayer() : OGRXPlaneLaye
     poFeatureDefn->SetGeomType( wkbMultiLineString );
 
     OGRFieldDefn oFieldAptICAO("apt_icao", OFTString );
-    oFieldAptICAO.SetWidth( 4 );
+    oFieldAptICAO.SetWidth( 5 );
     poFeatureDefn->AddFieldDefn( &oFieldAptICAO );
 
     OGRFieldDefn oFieldName("name", OFTString );
@@ -2886,7 +2886,7 @@ OGRXPlaneATCFreqLayer::OGRXPlaneATCFreqLayer() : OGRXPlaneLayer("ATCFreq")
     poFeatureDefn->SetGeomType( wkbNone );
 
     OGRFieldDefn oFieldAptICAO("apt_icao", OFTString );
-    oFieldAptICAO.SetWidth( 4 );
+    oFieldAptICAO.SetWidth( 5 );
     poFeatureDefn->AddFieldDefn( &oFieldAptICAO );
 
     OGRFieldDefn oFieldATCFreqType("atc_type", OFTString );
@@ -2934,7 +2934,7 @@ OGRXPlaneStartupLocationLayer::OGRXPlaneStartupLocationLayer() : OGRXPlaneLayer(
     poFeatureDefn->SetGeomType( wkbPoint );
 
     OGRFieldDefn oFieldAptICAO("apt_icao", OFTString );
-    oFieldAptICAO.SetWidth( 4 );
+    oFieldAptICAO.SetWidth( 5 );
     poFeatureDefn->AddFieldDefn( &oFieldAptICAO );
 
     OGRFieldDefn oFieldName("name", OFTString );
@@ -2979,7 +2979,7 @@ OGRXPlaneAPTLightBeaconLayer::OGRXPlaneAPTLightBeaconLayer() : OGRXPlaneLayer("A
     poFeatureDefn->SetGeomType( wkbPoint );
 
     OGRFieldDefn oFieldAptICAO("apt_icao", OFTString );
-    oFieldAptICAO.SetWidth( 4 );
+    oFieldAptICAO.SetWidth( 5 );
     poFeatureDefn->AddFieldDefn( &oFieldAptICAO );
 
     OGRFieldDefn oFieldName("name", OFTString );
@@ -3021,7 +3021,7 @@ OGRXPlaneAPTWindsockLayer::OGRXPlaneAPTWindsockLayer() : OGRXPlaneLayer("APTWind
     poFeatureDefn->SetGeomType( wkbPoint );
 
     OGRFieldDefn oFieldAptICAO("apt_icao", OFTString );
-    oFieldAptICAO.SetWidth( 4 );
+    oFieldAptICAO.SetWidth( 5 );
     poFeatureDefn->AddFieldDefn( &oFieldAptICAO );
 
     OGRFieldDefn oFieldName("name", OFTString );
@@ -3065,7 +3065,7 @@ OGRXPlaneTaxiwaySignLayer::OGRXPlaneTaxiwaySignLayer() : OGRXPlaneLayer("Taxiway
     poFeatureDefn->SetGeomType( wkbPoint );
 
     OGRFieldDefn oFieldAptICAO("apt_icao", OFTString );
-    oFieldAptICAO.SetWidth( 4 );
+    oFieldAptICAO.SetWidth( 5 );
     poFeatureDefn->AddFieldDefn( &oFieldAptICAO );
 
     OGRFieldDefn oFieldText("text", OFTString );
@@ -3116,7 +3116,7 @@ OGRXPlane_VASI_PAPI_WIGWAG_Layer::OGRXPlane_VASI_PAPI_WIGWAG_Layer() : OGRXPlane
     poFeatureDefn->SetGeomType( wkbPoint );
 
     OGRFieldDefn oFieldAptICAO("apt_icao", OFTString );
-    oFieldAptICAO.SetWidth( 4 );
+    oFieldAptICAO.SetWidth( 5 );
     poFeatureDefn->AddFieldDefn( &oFieldAptICAO );
 
     OGRFieldDefn oFieldRwyNum("rwy_num", OFTString );
@@ -3173,7 +3173,7 @@ OGRXPlaneTaxiLocationLayer::OGRXPlaneTaxiLocationLayer() : OGRXPlaneLayer("TaxiL
     poFeatureDefn->SetGeomType( wkbPoint );
 
     OGRFieldDefn oFieldAptICAO("apt_icao", OFTString );
-    oFieldAptICAO.SetWidth( 4 );
+    oFieldAptICAO.SetWidth( 5 );
     poFeatureDefn->AddFieldDefn( &oFieldAptICAO );
 
     OGRFieldDefn oFieldTrueHeading("true_heading_deg", OFTReal );

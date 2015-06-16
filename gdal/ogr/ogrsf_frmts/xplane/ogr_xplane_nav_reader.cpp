@@ -417,7 +417,7 @@ OGRXPlaneILSLayer::OGRXPlaneILSLayer() : OGRXPlaneLayer("ILS")
     poFeatureDefn->AddFieldDefn( &oFieldID );
 
     OGRFieldDefn oFieldAptICAO("apt_icao", OFTString );
-    oFieldAptICAO.SetWidth( 4 );
+    oFieldAptICAO.SetWidth( 5 );
     poFeatureDefn->AddFieldDefn( &oFieldAptICAO );
 
     OGRFieldDefn oFieldRwyNum("rwy_num", OFTString );
@@ -631,7 +631,7 @@ OGRXPlaneGSLayer::OGRXPlaneGSLayer() : OGRXPlaneLayer("GS")
     poFeatureDefn->AddFieldDefn( &oFieldID );
 
     OGRFieldDefn oFieldAptICAO("apt_icao", OFTString );
-    oFieldAptICAO.SetWidth( 4 );
+    oFieldAptICAO.SetWidth( 5 );
     poFeatureDefn->AddFieldDefn( &oFieldAptICAO );
 
     OGRFieldDefn oFieldRwyNum("rwy_num", OFTString );
@@ -707,7 +707,7 @@ OGRXPlaneMarkerLayer::OGRXPlaneMarkerLayer() : OGRXPlaneLayer("Marker")
     poFeatureDefn->SetGeomType( wkbPoint );
 
     OGRFieldDefn oFieldAptICAO("apt_icao", OFTString );
-    oFieldAptICAO.SetWidth( 4 );
+    oFieldAptICAO.SetWidth( 5 );
     poFeatureDefn->AddFieldDefn( &oFieldAptICAO );
 
     OGRFieldDefn oFieldRwyNum("rwy_num", OFTString );
@@ -769,7 +769,7 @@ OGRXPlaneDMEILSLayer::OGRXPlaneDMEILSLayer() : OGRXPlaneLayer("DMEILS")
     poFeatureDefn->AddFieldDefn( &oFieldID );
 
     OGRFieldDefn oFieldAptICAO("apt_icao", OFTString );
-    oFieldAptICAO.SetWidth( 4 );
+    oFieldAptICAO.SetWidth( 5 );
     poFeatureDefn->AddFieldDefn( &oFieldAptICAO );
 
     OGRFieldDefn oFieldRwyNum("rwy_num", OFTString );
