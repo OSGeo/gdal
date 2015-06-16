@@ -179,7 +179,7 @@ STDCALL=YES
 # Version number embedded in DLL name. 
 # If GDAL version is X.Y.Z, VERSION = X * 100 + Y
 !IFNDEF VERSION
-VERSION =	200
+VERSION =	201
 !ENDIF
 
 # Comment the following out if you want PAM supported disabled
