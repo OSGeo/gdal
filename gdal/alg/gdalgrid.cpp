@@ -1266,6 +1266,110 @@ GDALGridDataMetricAverageDistancePts( const void *poOptions, GUInt32 nPoints,
 }
 
 /************************************************************************/
+/*                        GDALGridLinear()                              */
+/************************************************************************/
+
+/**
+ * Linear interpolation
+ *
+ * The Linear method performs linear interpolation by finding in which triangle
+ * of a Delaunay triangulation the point is, and by doing interpolation from
+ * its barycentric coordinates within the triangle.
+ * If the point is not in any triangle, depending on the radius, the
+ * algorithm will use the value of the nearest point or the nodata value.
+ *
+ * @param poOptions Algorithm parameters. This should point to
+ * GDALGridLinearOptions object. 
+ * @param nPoints Number of elements in input arrays.
+ * @param padfX Input array of X coordinates. 
+ * @param padfY Input array of Y coordinates. 
+ * @param padfZ Input array of Z values. 
+ * @param dfXPoint X coordinate of the point to compute.
+ * @param dfYPoint Y coordinate of the point to compute.
+ * @param pdfValue Pointer to variable where the computed grid node value
+ * will be returned.
+ *
+ * @return CE_None on success or CE_Failure if something goes wrong.
+ *
+ * @since GDAL 2.1
+ */
+
+CPLErr
+GDALGridLinear( const void *poOptions, CPL_UNUSED GUInt32 nPoints,
+                const double *padfX, const double *padfY,
+                const double *padfZ,
+                double dfXPoint, double dfYPoint, double *pdfValue,
+                void* hExtraParams )
+{
+    GDALGridExtraParameters* psExtraParams = (GDALGridExtraParameters*) hExtraParams;
+    GDALTriangulation* psTriangulation = psExtraParams->psTriangulation;
+
+    int nOutputFacetIdx = -1;
+    int bRet = GDALTriangulationFindFacetDirected( psTriangulation,
+                                                   psExtraParams->nInitialFacetIdx,
+                                                   dfXPoint, dfYPoint,
+                                                   &nOutputFacetIdx );
+    CPLAssert(nOutputFacetIdx >= 0);
+    // Reuse output facet idx as next initial index since we proceed line by line
+    psExtraParams->nInitialFacetIdx = nOutputFacetIdx;
+    
+    if( bRet )
+    {
+        double lambda1, lambda2, lambda3;
+        GDALTriangulationComputeBarycentricCoordinates(
+                                                psTriangulation,
+                                                nOutputFacetIdx,
+                                                dfXPoint, dfYPoint,
+                                                &lambda1, &lambda2, &lambda3);
+        int i1 = psTriangulation->pasFacets[nOutputFacetIdx].anVertexIdx[0];
+        int i2 = psTriangulation->pasFacets[nOutputFacetIdx].anVertexIdx[1];
+        int i3 = psTriangulation->pasFacets[nOutputFacetIdx].anVertexIdx[2];
+        *pdfValue = lambda1 * padfZ[i1] + lambda2 * padfZ[i2] + lambda3 * padfZ[i3];
+    }
+    else 
+    {
+        double dfRadius = ((GDALGridLinearOptions*)poOptions)->dfRadius;
+        if( dfRadius == 0 )
+            *pdfValue = ((GDALGridLinearOptions*)poOptions)->dfNoDataValue;
+        else
+        {
+            GDALGridNearestNeighborOptions sNeighbourOptions;
+            sNeighbourOptions.dfRadius1 = dfRadius < 0 ? 0 : dfRadius;
+            sNeighbourOptions.dfRadius2 = dfRadius < 0 ? 0 : dfRadius;
+            sNeighbourOptions.dfAngle = 0;
+            sNeighbourOptions.dfNoDataValue = ((GDALGridLinearOptions*)poOptions)->dfNoDataValue;
+            return GDALGridNearestNeighbor(&sNeighbourOptions, nPoints,
+                                        padfX, padfY, padfZ,
+                                        dfXPoint, dfYPoint, pdfValue,
+                                        hExtraParams);
+#if 0
+            // Disabled since the nearest point is not necessarily the nearest
+            // vertex of the "nearest" triangle
+            int iBestIdx;
+            double dfBestDist;
+            for(int i=0;i<3;i++)
+            {
+                int idx = psTriangulation->pasFacets[nOutputFacetIdx].anVertexIdx[i];
+                double dfDist = (padfX[idx] - dfXPoint) * (padfX[idx] - dfXPoint) +
+                                (padfY[idx] - dfYPoint) * (padfY[idx] - dfYPoint);
+                if( i == 0 || dfDist < dfBestDist )
+                {
+                    iBestIdx = idx;
+                    dfBestDist = dfDist;
+                }
+            }
+            if( dfRadius < 0 || dfBestDist <= dfRadius * dfRadius )
+                *pdfValue = padfZ[iBestIdx];
+            else
+                *pdfValue = ((GDALGridLinearOptions*)poOptions)->dfNoDataValue;
+#endif
+        }
+    }
+
+    return CE_None;
+}
+
+/************************************************************************/
 /*                             GDALGridJob                              */
 /************************************************************************/
 
@@ -1362,7 +1466,9 @@ static void GDALGridJobProcess(void* user_data)
     const double* padfZ = psJob->padfZ;
     const void *poOptions = psJob->poOptions;
     GDALGridFunction  pfnGDALGridMethod = psJob->pfnGDALGridMethod;
-    GDALGridExtraParameters *psExtraParameters = psJob->psExtraParameters;
+    // Have a local copy of sExtraParameters since we want to modify
+    // nInitialFacetIdx
+    GDALGridExtraParameters sExtraParameters = *(psJob->psExtraParameters);
     GDALDataType eType = psJob->eType;
     int (*pfnProgress)(GDALGridJob* psJob) = psJob->pfnProgress;
 
@@ -1392,7 +1498,7 @@ static void GDALGridJobProcess(void* user_data)
 
             if ( (*pfnGDALGridMethod)( poOptions, nPoints, padfX, padfY, padfZ,
                                        dfXPoint, dfYPoint,
-                                       padfValues + nXPoint, psExtraParameters ) != CE_None )
+                                       padfValues + nXPoint, &sExtraParameters ) != CE_None )
             {
                 CPLError( CE_Failure, CPLE_AppDefined,
                           "Gridding failed at X position %lu, Y position %lu",
@@ -1439,6 +1545,8 @@ struct GDALGridContext
     void               *pabyY;
     void               *pabyZ;
 };
+
+static void GDALGridContextCreateQuadTree(GDALGridContext* psContext);
 
 /**
  * Creates a context to do regular gridding from the scattered data.
@@ -1655,6 +1763,13 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
             pfnGDALGridMethod = GDALGridDataMetricAverageDistancePts;
             break;
 
+        case GGA_Linear:
+            poOptionsNew = CPLMalloc(sizeof(GDALGridLinearOptions));
+            memcpy(poOptionsNew, poOptions, sizeof(GDALGridLinearOptions));
+
+            pfnGDALGridMethod = GDALGridLinear;
+            break;
+
         default:
             CPLError( CE_Failure, CPLE_IllegalArg,
                       "GDAL does not support gridding method %d", eAlgorithm );
@@ -1699,6 +1814,8 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
     psContext->sExtraParameters.pafX = pafXAligned;
     psContext->sExtraParameters.pafY = pafYAligned;
     psContext->sExtraParameters.pafZ = pafZAligned;
+    psContext->sExtraParameters.psTriangulation = NULL;
+    psContext->sExtraParameters.nInitialFacetIdx = 0;
     psContext->padfX = pafXAligned ? NULL : (double*)padfX;
     psContext->padfY = pafXAligned ? NULL : (double*)padfY;
     psContext->padfZ = pafXAligned ? NULL : (double*)padfZ;
@@ -1710,48 +1827,74 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
 /* -------------------------------------------------------------------- */
 /*  Create quadtree if requested and possible.                          */
 /* -------------------------------------------------------------------- */
-
     if( bCreateQuadTree )
     {
-        psContext->pasGridPoints = (GDALGridPoint*) VSIMalloc2(nPoints, sizeof(GDALGridPoint));
-        if( psContext->pasGridPoints != NULL )
+        GDALGridContextCreateQuadTree(psContext);
+    }
+    
+    if( eAlgorithm == GGA_Linear )
+    {
+        psContext->sExtraParameters.psTriangulation =
+                GDALTriangulationCreateDelaunay(nPoints, padfX, padfY);
+        if( psContext->sExtraParameters.psTriangulation == NULL )
         {
-            CPLRectObj sRect;
-            GUInt32 i;
-
-            /* Determine point extents */
-            sRect.minx = padfX[0];
-            sRect.miny = padfY[0];
-            sRect.maxx = padfX[0];
-            sRect.maxy = padfY[0];
-            for(i = 1; i < nPoints; i++)
-            {
-                if( padfX[i] < sRect.minx ) sRect.minx = padfX[i];
-                if( padfY[i] < sRect.miny ) sRect.miny = padfY[i];
-                if( padfX[i] > sRect.maxx ) sRect.maxx = padfX[i];
-                if( padfY[i] > sRect.maxy ) sRect.maxy = padfY[i];
-            }
-
-            /* Initial value for search radius is the typical dimension of a */
-            /* "pixel" of the point array (assuming rather uniform distribution) */
-            psContext->sExtraParameters.dfInitialSearchRadius =
-                                    sqrt((sRect.maxx - sRect.minx) *
-                                         (sRect.maxy - sRect.miny) / nPoints);
-
-            psContext->sExtraParameters.hQuadTree =
-                        CPLQuadTreeCreate(&sRect, GDALGridGetPointBounds );
-
-            for(i = 0; i < nPoints; i++)
-            {
-                psContext->pasGridPoints[i].psXYArrays = &(psContext->sXYArrays);
-                psContext->pasGridPoints[i].i = i;
-                CPLQuadTreeInsert(psContext->sExtraParameters.hQuadTree,
-                                  psContext->pasGridPoints + i);
-            }
+            GDALGridContextFree(psContext);
+            return NULL;
         }
+        GDALTriangulationComputeBarycentricCoefficients(
+            psContext->sExtraParameters.psTriangulation, padfX, padfY );
     }
 
     return psContext;
+}
+
+/************************************************************************/
+/*                      GDALGridContextCreateQuadTree()                 */
+/************************************************************************/
+
+void GDALGridContextCreateQuadTree(GDALGridContext* psContext)
+{
+    GUInt32 nPoints = psContext->nPoints;
+    psContext->pasGridPoints = (GDALGridPoint*)
+            VSIMalloc2(nPoints, sizeof(GDALGridPoint));
+    if( psContext->pasGridPoints != NULL )
+    {
+        const double* padfX = psContext->padfX;
+        const double* padfY = psContext->padfY;
+
+        CPLRectObj sRect;
+        GUInt32 i;
+
+        /* Determine point extents */
+        sRect.minx = padfX[0];
+        sRect.miny = padfY[0];
+        sRect.maxx = padfX[0];
+        sRect.maxy = padfY[0];
+        for(i = 1; i < nPoints; i++)
+        {
+            if( padfX[i] < sRect.minx ) sRect.minx = padfX[i];
+            if( padfY[i] < sRect.miny ) sRect.miny = padfY[i];
+            if( padfX[i] > sRect.maxx ) sRect.maxx = padfX[i];
+            if( padfY[i] > sRect.maxy ) sRect.maxy = padfY[i];
+        }
+
+        /* Initial value for search radius is the typical dimension of a */
+        /* "pixel" of the point array (assuming rather uniform distribution) */
+        psContext->sExtraParameters.dfInitialSearchRadius =
+                                sqrt((sRect.maxx - sRect.minx) *
+                                        (sRect.maxy - sRect.miny) / nPoints);
+
+        psContext->sExtraParameters.hQuadTree =
+                    CPLQuadTreeCreate(&sRect, GDALGridGetPointBounds );
+
+        for(i = 0; i < nPoints; i++)
+        {
+            psContext->pasGridPoints[i].psXYArrays = &(psContext->sXYArrays);
+            psContext->pasGridPoints[i].i = i;
+            CPLQuadTreeInsert(psContext->sExtraParameters.hQuadTree,
+                                psContext->pasGridPoints + i);
+        }
+    }
 }
 
 /************************************************************************/
@@ -1782,6 +1925,8 @@ void GDALGridContextFree(GDALGridContext* psContext)
         CPLFree(psContext->pabyX);
         CPLFree(psContext->pabyY);
         CPLFree(psContext->pabyZ);
+        if( psContext->sExtraParameters.psTriangulation )
+            GDALTriangulationFree( psContext->sExtraParameters.psTriangulation );
         CPLFree(psContext);
     }
 }
@@ -1839,6 +1984,67 @@ CPLErr GDALGridContextProcess(GDALGridContext* psContext,
         return CE_Failure;
     }
 
+    const double    dfDeltaX = ( dfXMax - dfXMin ) / nXSize;
+    const double    dfDeltaY = ( dfYMax - dfYMin ) / nYSize;
+    
+    // For linear, check if we will need to fallback to nearest neighbour
+    // by sampling along the edges (if all points on edges are within triangles,
+    // then interior points will also be!)
+    if( psContext->eAlgorithm == GGA_Linear &&
+        psContext->sExtraParameters.hQuadTree == NULL )
+    {
+        int bNeedNearest = FALSE;
+        int nStartLeft = 0, nStartRight = 0;
+        const double    dfXPointMin = dfXMin + ( 0 + 0.5 ) * dfDeltaX;
+        const double    dfXPointMax = dfXMin + ( nXSize - 1 + 0.5 ) * dfDeltaX;
+        for ( GUInt32 nYPoint = 0; !bNeedNearest && nYPoint < nYSize; nYPoint ++ )
+        {
+            const double    dfYPoint = dfYMin + ( nYPoint + 0.5 ) * dfDeltaY;
+
+            if( !GDALTriangulationFindFacetDirected( psContext->sExtraParameters.psTriangulation,
+                                                     nStartLeft,
+                                                     dfXPointMin, dfYPoint,
+                                                     &nStartLeft) )
+            {
+                bNeedNearest = TRUE;
+            }
+            if( !GDALTriangulationFindFacetDirected( psContext->sExtraParameters.psTriangulation,
+                                                     nStartRight,
+                                                     dfXPointMax, dfYPoint,
+                                                     &nStartRight) )
+            {
+                bNeedNearest = TRUE;
+            }
+        }
+        int nStartTop = 0, nStartBottom = 0;
+        const double    dfYPointMin = dfYMin + ( 0 + 0.5 ) * dfDeltaY;
+        const double    dfYPointMax = dfYMin + ( nYSize - 1 + 0.5 ) * dfDeltaY;
+        for ( GUInt32 nXPoint = 1; !bNeedNearest && nXPoint + 1 < nXSize; nXPoint ++ )
+        {
+            const double    dfXPoint = dfXMin + ( nXPoint + 0.5 ) * dfDeltaX;
+
+            if( !GDALTriangulationFindFacetDirected( psContext->sExtraParameters.psTriangulation,
+                                                     nStartTop,
+                                                     dfXPoint, dfYPointMin,
+                                                     &nStartTop) )
+            {
+                bNeedNearest = TRUE;
+            }
+            if( !GDALTriangulationFindFacetDirected( psContext->sExtraParameters.psTriangulation,
+                                                     nStartBottom,
+                                                     dfXPoint, dfYPointMax,
+                                                     &nStartBottom) )
+            {
+                bNeedNearest = TRUE;
+            }
+        }
+        if( bNeedNearest )
+        {
+            CPLDebug("GDAL_GRID", "Will need nearest neighbour");
+            GDALGridContextCreateQuadTree(psContext);
+        }
+    }
+
     const char* pszThreads = CPLGetConfigOption("GDAL_NUM_THREADS", "ALL_CPUS");
     int nThreads;
     if (EQUAL(pszThreads, "ALL_CPUS"))
@@ -1853,9 +2059,6 @@ CPLErr GDALGridContextProcess(GDALGridContext* psContext,
     volatile int nCounter = 0;
     volatile int bStop = FALSE;
 
-    const double    dfDeltaX = ( dfXMax - dfXMin ) / nXSize;
-    const double    dfDeltaY = ( dfYMax - dfYMin ) / nYSize;
-    
     GDALGridJob sJob;
     sJob.nYStart = 0;
     sJob.pabyData = (GByte*) pData;
@@ -2083,6 +2286,8 @@ CPLErr ParseAlgorithmAndOptions( const char *pszAlgorithm,
         *peAlgorithm = GGA_MetricAverageDistance;
     else if ( EQUAL(papszParms[0], szAlgNameAverageDistancePts) )
         *peAlgorithm = GGA_MetricAverageDistancePts;
+    else if ( EQUAL(papszParms[0], szAlgNameLinear) )
+        *peAlgorithm = GGA_Linear;
     else
     {
         fprintf( stderr, "Unsupported gridding method \"%s\".\n",
@@ -2212,6 +2417,18 @@ CPLErr ParseAlgorithmAndOptions( const char *pszAlgorithm,
                 dfNoDataValue = (pszValue) ? CPLAtofM(pszValue) : 0.0;
             break;
 
+        case GGA_Linear:
+            *ppOptions =
+                CPLMalloc( sizeof(GDALGridLinearOptions) );
+
+            pszValue = CSLFetchNameValue( papszParms, "radius" );
+            ((GDALGridLinearOptions *)*ppOptions)->
+                dfRadius = (pszValue) ? CPLAtofM(pszValue) : -1.0;
+
+            pszValue = CSLFetchNameValue( papszParms, "nodata" );
+            ((GDALGridLinearOptions *)*ppOptions)->
+                dfNoDataValue = (pszValue) ? CPLAtofM(pszValue) : 0.0;
+            break;
    }
 
     CSLDestroy( papszParms );

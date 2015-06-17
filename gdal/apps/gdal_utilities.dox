@@ -1904,6 +1904,28 @@ Default is 0.0.</dd>
 0.0).</dd>
 </dl>
 
+\subsection gdal_grid_algorithms_linear linear
+
+(Since GDAL 2.1) Linear interpolation algorithm.
+
+The Linear method performs linear interpolation by compution a Delaunay
+triangulation of the point cloud, finding in which triangle of the triangulation
+the point is, and by doing linear interpolation from its barycentric coordinates
+within the triangle.
+If the point is not in any triangle, depending on the radius, the
+algorithm will use the value of the nearest point or the nodata value.
+
+It has following parameters:
+
+<dl>
+<dt><i>radius</i>:</dt> <dd>In case the point to be interpolated does not fit
+into a triangle of the Delaunay triangulation, use that maximum distance to search a nearest
+neighbour, or use nodata otherwise. If set to -1, the search distance is infinite.
+If set to 0, nodata value will be always used. Default is -1.</dd>
+<dt><i>nodata</i>:</dt> <dd>NODATA marker to fill empty points (default
+0.0).</dd>
+</dl>
+
 \section gdal_grid_metrics DATA METRICS
 
 Besides the interpolation functionality \ref gdal_grid can be used to compute

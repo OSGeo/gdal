@@ -52,6 +52,7 @@ static const char szAlgNameRange[] = "range";
 static const char szAlgNameCount[] = "count";
 static const char szAlgNameAverageDistance[] = "average_distance";
 static const char szAlgNameAverageDistancePts[] = "average_distance_pts";
+static const char szAlgNameLinear[] = "linear";
 
 CPL_C_START
 
@@ -113,6 +114,13 @@ GDALGridDataMetricAverageDistancePts( const void *, GUInt32,
                                       const double *, double, double,
                                       double *,
                                       void*  );
+CPLErr
+GDALGridLinear( const void *, GUInt32,
+                                 const double *, const double *,
+                                 const double *,
+                                 double, double, double *,
+                                 void* );
+
 CPLErr CPL_DLL
 ParseAlgorithmAndOptions( const char *,
                           GDALGridAlgorithm *,

@@ -81,6 +81,8 @@ static void Usage(const char* pszErrorMsg = NULL)
         "            count\n"
         "            average_distance\n"
         "            average_distance_pts\n"
+        "    Linear\n"
+        "        linear:radius=-1.0:nodata=0.0\n"
         "\n");
 
     if( pszErrorMsg != NULL )
@@ -200,6 +202,13 @@ static void PrintAlgorithmAndOptions( GDALGridAlgorithm eAlgorithm,
                 ((GDALGridDataMetricsOptions *)pOptions)->dfAngle,
                 (unsigned long)((GDALGridDataMetricsOptions *)pOptions)->nMinPoints,
                 ((GDALGridDataMetricsOptions *)pOptions)->dfNoDataValue);
+            break;
+        case GGA_Linear:
+            printf( "Algorithm name: \"%s\".\n", szAlgNameLinear );
+            CPLprintf( "Options are "
+                    "\"radius=%f:nodata=%f\"\n",
+                ((GDALGridLinearOptions *)pOptions)->dfRadius,
+                ((GDALGridLinearOptions *)pOptions)->dfNoDataValue);
             break;
         default:
             printf( "Algorithm is unknown.\n" );
