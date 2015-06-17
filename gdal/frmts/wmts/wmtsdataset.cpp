@@ -345,8 +345,8 @@ const char *WMTSBand::GetMetadataItem( const char * pszName,
 
         const WMTSTileMatrix& oTM = poGDS->oTMS.aoTM[poGDS->oTMS.aoTM.size()-1];
 
-        iPixel += floor(0.5 + (poGDS->adfGT[0] - oTM.dfTLX) / oTM.dfPixelSize);
-        iLine += floor(0.5 + (oTM.dfTLY - poGDS->adfGT[3]) / oTM.dfPixelSize);
+        iPixel += (int)floor(0.5 + (poGDS->adfGT[0] - oTM.dfTLX) / oTM.dfPixelSize);
+        iLine += (int)floor(0.5 + (oTM.dfTLY - poGDS->adfGT[3]) / oTM.dfPixelSize);
 
         CPLString osURL(poGDS->osURLFeatureInfoTemplate);
         osURL = WMTSDataset::Replace(osURL, "{TileMatrixSet}", poGDS->osTMS);
@@ -1776,8 +1776,8 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
             double dfTileHeightUnits = oTM.dfPixelSize * oTM.nTileHeight;
 
             // Compute the shift in terms of tiles between AOI and TM origin
-            int nTileX = floor(poDS->adfGT[0] - oTM.dfTLX + 1e-10) / dfTileWidthUnits;
-            int nTileY = floor(oTM.dfTLY - poDS->adfGT[3] + 1e-10) / dfTileHeightUnits;
+            int nTileX = (int)(floor(poDS->adfGT[0] - oTM.dfTLX + 1e-10) / dfTileWidthUnits);
+            int nTileY = (int)(floor(oTM.dfTLY - poDS->adfGT[3] + 1e-10) / dfTileHeightUnits);
 
             // Compute extent of this zoom level slightly larger than the AOI and
             // aligned on tile boundaries at this TM
