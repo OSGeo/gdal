@@ -365,7 +365,9 @@ typedef enum {
   /*! Number of Points (Data Metric) */ GGA_MetricCount = 7,
   /*! Average Distance (Data Metric) */ GGA_MetricAverageDistance = 8,
   /*! Average Distance Between Data Points (Data Metric) */
-                                        GGA_MetricAverageDistancePts = 9
+                                        GGA_MetricAverageDistancePts = 9,
+  /*! Linear interpolation (from Delaunay triangulation. Since GDAL 2.1 */
+                                        GGA_Linear = 10
 } GDALGridAlgorithm;
 
 /** Inverse distance to a power method control options */
@@ -464,6 +466,20 @@ typedef struct
     /*! No data marker to fill empty points. */
     double  dfNoDataValue;
 } GDALGridDataMetricsOptions;
+
+/** Linear method control options */
+typedef struct
+{
+    /*! In case the point to be interpolated does not fit into a triangle of
+     * the Delaunay triangulation, use that maximum distance to search a nearest
+     * neighbour, or use nodata otherwise. If set to -1, the search distance is infinite.
+     * If set to 0, nodata value will be always used.
+     */
+    double  dfRadius;
+    /*! No data marker to fill empty points. */
+    double  dfNoDataValue;
+} GDALGridLinearOptions;
+
 
 CPLErr CPL_DLL
 GDALGridCreate( GDALGridAlgorithm, const void *, GUInt32,

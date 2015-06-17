@@ -805,6 +805,34 @@ def test_gdal_grid_10():
     return 'success'
 
 ###############################################################################
+# Test linear
+
+def test_gdal_grid_11():
+    if gdal_grid is None:
+        return 'skip'
+
+    outfiles.append('tmp/n43_linear.tif')
+
+    # Create a GDAL dataset from the previous generated OGR grid
+    (out, err) = gdaltest.runexternal_out_and_err(gdal_grid + ' -txe -80.0041667 -78.9958333 -tye 42.9958333 44.0041667 -outsize 121 121 -ot Int16 -l n43 -a linear -co TILED=YES -co BLOCKXSIZE=256 -co BLOCKYSIZE=256 tmp/n43.shp ' + outfiles[-1])
+    if not (err is None or err == '') :
+        gdaltest.post_reason('got error/warning')
+        print(err)
+        return 'fail'
+
+    # We should get the same values as in n43.td0
+    ds = gdal.Open('../gdrivers/data/n43.dt0')
+    ds2 = gdal.Open(outfiles[-1])
+    if ds.GetRasterBand(1).Checksum() != ds2.GetRasterBand(1).Checksum():
+        print('bad checksum : got %d, expected %d' % (ds.GetRasterBand(1).Checksum() , ds2.GetRasterBand(1).Checksum()))
+        return 'fail'
+
+    ds = None
+    ds2 = None
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def test_gdal_grid_cleanup():
@@ -827,6 +855,7 @@ gdaltest_list = [
     test_gdal_grid_8,
     test_gdal_grid_9,
     test_gdal_grid_10,
+    test_gdal_grid_11,
     test_gdal_grid_cleanup
     ]
 

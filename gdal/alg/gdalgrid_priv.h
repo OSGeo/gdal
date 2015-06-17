@@ -49,6 +49,8 @@ typedef struct
     const float *pafX;
     const float *pafY;
     const float *pafZ;
+    GDALTriangulation* psTriangulation;
+    int                nInitialFacetIdx;
 } GDALGridExtraParameters;
 
 #ifdef HAVE_SSE_AT_COMPILE_TIME
