@@ -1622,7 +1622,7 @@ void OGRMongoDBLayer::SerializeField(BSONObjBuilder& b,
         tm.tm_hour = nHour;
         tm.tm_min = nMinute;
         tm.tm_sec = (int)fSecond;
-        GIntBig millis = 1000 * CPLYMDHMSToUnixTime(&tm) + 1000 * fmod(fSecond, 1);
+        GIntBig millis = 1000 * CPLYMDHMSToUnixTime(&tm) + (GIntBig)(1000 * fmod(fSecond, 1));
         b.append( pszJSonField, Date_t((GUIntBig)millis) );
         //char* pszDT = OGRGetXMLDateTime(poFeature->GetRawFieldRef(i));
         //StatusWith<Date_t> d = dateFromISOString(pszDT);
