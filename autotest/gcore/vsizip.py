@@ -428,6 +428,59 @@ def vsizip_11():
 
     return 'success'
     
+###############################################################################
+# Test changing the content of a zip file (#6005)
+
+def vsizip_12():
+    
+    fmain = gdal.VSIFOpenL("/vsizip/vsimem/vsizip_12_src1.zip", "wb")
+    f = gdal.VSIFOpenL("/vsizip/vsimem/vsizip_12_src1.zip/foo.bar", "wb")
+    data = '0123456'
+    gdal.VSIFWriteL(data, 1, len(data), f)
+    gdal.VSIFCloseL(f)
+    gdal.VSIFCloseL(fmain)
+    
+    fmain = gdal.VSIFOpenL("/vsizip/vsimem/vsizip_12_src2.zip", "wb")
+    f = gdal.VSIFOpenL("/vsizip/vsimem/vsizip_12_src2.zip/bar.baz", "wb")
+    data = '01234567'
+    gdal.VSIFWriteL(data, 1, len(data), f)
+    gdal.VSIFCloseL(f)
+    gdal.VSIFCloseL(fmain)
+    
+    # Copy vsizip_12_src1 into vsizip_12
+    f = gdal.VSIFOpenL('/vsimem/vsizip_12_src1.zip', 'rb')
+    data = gdal.VSIFReadL(1, 10000, f)
+    gdal.VSIFCloseL(f)
+    
+    f = gdal.VSIFOpenL('/vsimem/vsizip_12.zip', 'wb')
+    gdal.VSIFWriteL(data, 1, len(data), f)
+    gdal.VSIFCloseL(f)
+
+    gdal.ReadDir('/vsizip/vsimem/vsizip_12.zip')
+    
+    # Copy vsizip_12_src2 into vsizip_12
+    f = gdal.VSIFOpenL('/vsimem/vsizip_12_src2.zip', 'rb')
+    data = gdal.VSIFReadL(1, 10000, f)
+    gdal.VSIFCloseL(f)
+    
+    f = gdal.VSIFOpenL('/vsimem/vsizip_12.zip', 'wb')
+    gdal.VSIFWriteL(data, 1, len(data), f)
+    gdal.VSIFCloseL(f)
+    
+    content = gdal.ReadDir('/vsizip/vsimem/vsizip_12.zip')
+    
+    gdal.Unlink('/vsizip/vsimem/vsizip_12_src1.zip')
+    gdal.Unlink('/vsizip/vsimem/vsizip_12_src2.zip')
+    gdal.Unlink('/vsizip/vsimem/vsizip_12.zip')
+    
+    if content != ['bar.baz']:
+        gdaltest.post_reason('fail')
+        print(content)
+        return 'fail'
+
+    return 'success'
+
+
 gdaltest_list = [ vsizip_1,
                   vsizip_2,
                   vsizip_3,
@@ -439,6 +492,7 @@ gdaltest_list = [ vsizip_1,
                   vsizip_9,
                   vsizip_10,
                   vsizip_11,
+                  vsizip_12,
                   ]
 
 
