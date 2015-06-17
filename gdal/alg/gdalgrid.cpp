@@ -33,7 +33,7 @@
 #include "gdalgrid.h"
 #include <float.h>
 #include <limits.h>
-#include "cpl_multiproc.h"
+#include "cpl_worker_thread_pool.h"
 #include "gdalgrid_priv.h"
 
 CPL_CVSID("$Id$");
@@ -1397,7 +1397,6 @@ struct _GDALGridJob
     int               (*pfnProgress)(GDALGridJob* psJob);
     GDALDataType        eType;
 
-    CPLJoinableThread  *hThread;
     volatile int   *pnCounter;
     volatile int   *pbStop;
     CPLCond        *hCond;
@@ -1484,7 +1483,8 @@ static void GDALGridJobProcess(void* user_data)
     if( padfValues == NULL )
     {
         *(psJob->pbStop) = TRUE;
-        pfnProgress(psJob); /* to notify the main thread */
+        if( pfnProgress != NULL )
+            pfnProgress(psJob); /* to notify the main thread */
         return;
     }
 
@@ -1505,7 +1505,8 @@ static void GDALGridJobProcess(void* user_data)
                           (long unsigned int)nXPoint,
                           (long unsigned int)nYPoint );
                 *(psJob->pbStop) = TRUE;
-                pfnProgress(psJob); /* to notify the main thread */
+                if( pfnProgress != NULL )
+                    pfnProgress(psJob); /* to notify the main thread */
                 break;
             }
         }
@@ -1514,7 +1515,7 @@ static void GDALGridJobProcess(void* user_data)
                        pabyData + nYPoint * nLineSpace, eType, nDataTypeSize,
                        nXSize );
 
-        if( *(psJob->pbStop) || pfnProgress(psJob) )
+        if( *(psJob->pbStop) || (pfnProgress != NULL && pfnProgress(psJob)) )
             break;
     }
 
@@ -1544,6 +1545,8 @@ struct GDALGridContext
     void               *pabyX;
     void               *pabyY;
     void               *pabyZ;
+
+    WorkerThreadPool   *poWorkerThreadPool;
 };
 
 static void GDALGridContextCreateQuadTree(GDALGridContext* psContext);
@@ -1566,7 +1569,11 @@ static void GDALGridContextCreateQuadTree(GDALGridContext* psContext);
  * A further optimized version can use the AVX
  * instruction set. This can be disabled by setting the GDAL_USE_AVX
  * configuration option to NO.
- * 
+ *
+ * It is possible to set the GDAL_NUM_THREADS
+ * configuration option to parallelize the processing. The value to set is
+ * the number of worker threads, or ALL_CPUS to use all the cores/CPUs of the
+ * computer (default value).
  *
  * @param eAlgorithm Gridding method. 
  * @param poOptions Options to control choosen gridding method.
@@ -1801,7 +1808,7 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
         padfZ = padfZNew;
     }
 
-    GDALGridContext* psContext = (GDALGridContext*)CPLMalloc(sizeof(GDALGridContext));
+    GDALGridContext* psContext = (GDALGridContext*)CPLCalloc(1, sizeof(GDALGridContext));
     psContext->eAlgorithm = eAlgorithm;
     psContext->poOptions = poOptionsNew;
     psContext->pfnGDALGridMethod = pfnGDALGridMethod;
@@ -1844,6 +1851,33 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
         GDALTriangulationComputeBarycentricCoefficients(
             psContext->sExtraParameters.psTriangulation, padfX, padfY );
     }
+
+/* -------------------------------------------------------------------- */
+/*  Start thread pool.                                                  */
+/* -------------------------------------------------------------------- */
+    const char* pszThreads = CPLGetConfigOption("GDAL_NUM_THREADS", "ALL_CPUS");
+    int nThreads;
+    if (EQUAL(pszThreads, "ALL_CPUS"))
+        nThreads = CPLGetNumCPUs();
+    else
+        nThreads = atoi(pszThreads);
+    if (nThreads > 128)
+        nThreads = 128;
+    if( nThreads > 1 )
+    {
+        psContext->poWorkerThreadPool = new WorkerThreadPool();
+        if( !psContext->poWorkerThreadPool->Setup(nThreads, NULL, NULL) )
+        {
+            delete psContext->poWorkerThreadPool;
+            psContext->poWorkerThreadPool = NULL;
+        }
+        else
+        {
+            CPLDebug("GDAL_GRID", "Using %d threads", nThreads);
+        }
+    }
+    else
+        psContext->poWorkerThreadPool = NULL;
 
     return psContext;
 }
@@ -1927,6 +1961,7 @@ void GDALGridContextFree(GDALGridContext* psContext)
         CPLFree(psContext->pabyZ);
         if( psContext->sExtraParameters.psTriangulation )
             GDALTriangulationFree( psContext->sExtraParameters.psTriangulation );
+        delete psContext->poWorkerThreadPool;
         CPLFree(psContext);
     }
 }
@@ -1942,11 +1977,6 @@ void GDALGridContextFree(GDALGridContext* psContext)
  * of regular grid (or call it a raster) from these scattered data.
  * You should supply the extent of the output grid and allocate array
  * sufficient to hold such a grid.
- *
- * It is possible to set the GDAL_NUM_THREADS
- * configuration option to parallelize the processing. The value to set is
- * the number of worker threads, or ALL_CPUS to use all the cores/CPUs of the
- * computer (default value).
  *
  * @param psContext Gridding context.
  * @param dfXMin Lowest X border of output grid.
@@ -1973,9 +2003,6 @@ CPLErr GDALGridContextProcess(GDALGridContext* psContext,
 {
     CPLAssert( psContext );
     CPLAssert( pData );
-
-    if ( pfnProgress == NULL )
-        pfnProgress = GDALDummyProgress;
 
     if ( nXSize == 0 || nYSize == 0 )
     {
@@ -2045,17 +2072,6 @@ CPLErr GDALGridContextProcess(GDALGridContext* psContext,
         }
     }
 
-    const char* pszThreads = CPLGetConfigOption("GDAL_NUM_THREADS", "ALL_CPUS");
-    int nThreads;
-    if (EQUAL(pszThreads, "ALL_CPUS"))
-        nThreads = CPLGetNumCPUs();
-    else
-        nThreads = atoi(pszThreads);
-    if (nThreads > 128)
-        nThreads = 128;
-    if (nThreads >= (int)nYSize / 2)
-        nThreads = (int)nYSize / 2;
-
     volatile int nCounter = 0;
     volatile int bStop = FALSE;
 
@@ -2084,35 +2100,25 @@ CPLErr GDALGridContextProcess(GDALGridContext* psContext,
     sJob.pbStop = &bStop;
     sJob.hCond = NULL;
     sJob.hCondMutex = NULL;
-    sJob.hThread = NULL;
 
-    if( nThreads > 1 )
+    if( psContext->poWorkerThreadPool == NULL )
     {
-        sJob.hCond = CPLCreateCond();
-        if( sJob.hCond == NULL )
-        {
-            CPLError(CE_Warning, CPLE_AppDefined,
-                     "Cannot create condition. Reverting to monothread processing");
-            nThreads = 1;
-        }
-    }
-
-    if( nThreads <= 1 )
-    {
-        sJob.pfnProgress = GDALGridProgressMonoThread;
+        if( sJob.pfnRealProgress != NULL && sJob.pfnRealProgress != GDALDummyProgress )
+            sJob.pfnProgress = GDALGridProgressMonoThread;
 
         GDALGridJobProcess(&sJob);
     }
     else
     {
+        int nThreads  = psContext->poWorkerThreadPool->GetThreadCount();
         GDALGridJob* pasJobs = (GDALGridJob*) CPLMalloc(sizeof(GDALGridJob) * nThreads);
         int i;
 
-        CPLDebug("GDAL_GRID", "Using %d threads", nThreads);
-
         sJob.nYStep = nThreads;
         sJob.hCondMutex = CPLCreateMutex(); /* and take implicitely the mutex */
-        sJob.pfnProgress = GDALGridProgressMultiThread;
+        sJob.hCond = CPLCreateCond();
+        if( sJob.pfnRealProgress != NULL && sJob.pfnRealProgress != GDALDummyProgress )
+            sJob.pfnProgress = GDALGridProgressMultiThread;
 
 /* -------------------------------------------------------------------- */
 /*      Start threads.                                                  */
@@ -2121,8 +2127,8 @@ CPLErr GDALGridContextProcess(GDALGridContext* psContext,
         {
             memcpy(&pasJobs[i], &sJob, sizeof(GDALGridJob));
             pasJobs[i].nYStart = i;
-            pasJobs[i].hThread = CPLCreateJoinableThread( GDALGridJobProcess,
-                                                          (void*) &pasJobs[i] );
+            psContext->poWorkerThreadPool->SubmitJob( GDALGridJobProcess,
+                                                      (void*) &pasJobs[i] );
         }
 
 /* -------------------------------------------------------------------- */
@@ -2151,11 +2157,7 @@ CPLErr GDALGridContextProcess(GDALGridContext* psContext,
 /* -------------------------------------------------------------------- */
 /*      Wait for all threads to complete and finish.                    */
 /* -------------------------------------------------------------------- */
-        for(i=0;i<nThreads;i++)
-        {
-            if( pasJobs[i].hThread )
-                CPLJoinThread(pasJobs[i].hThread);
-        }
+        psContext->poWorkerThreadPool->WaitCompletion();
 
         CPLFree(pasJobs);
         CPLDestroyCond(sJob.hCond);
