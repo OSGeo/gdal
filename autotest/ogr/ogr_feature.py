@@ -678,37 +678,37 @@ def ogr_feature_cp_stringlist():
     dst_feature = mk_dst_feature( src_feature, ogr.OFTStringList )
     dst_feature.SetFrom( src_feature )
 
-    if not check( dst_feature, 'field_integer', None ):
+    if not check( dst_feature, 'field_integer', [ "17" ] ):
         return 'failure'
 
-    if not check( dst_feature, 'field_integer64', None ):
+    if not check( dst_feature, 'field_integer64', ["9876543210"] ):
         return 'failure'
 
-    if not check( dst_feature, 'field_real', None ):
+    if not check( dst_feature, 'field_real', ["18.4"] ):
         return 'failure'
 
     if not check( dst_feature, 'field_string', ['abc def'] ):
         return 'failure'
 
-    if not check( dst_feature, 'field_binary', None ):
+    if not check( dst_feature, 'field_binary', ['0123465789ABCDEF'] ):
         return 'failure'
 
-    if not check( dst_feature, 'field_date', None ):
+    if not check( dst_feature, 'field_date', ['2011/11/11'] ):
         return 'failure'
 
-    if not check( dst_feature, 'field_time', None ):
+    if not check( dst_feature, 'field_time', ['14:10:35'] ):
         return 'failure'
 
-    if not check( dst_feature, 'field_datetime', None ):
+    if not check( dst_feature, 'field_datetime', ['2011/11/11 14:10:35.123'] ):
         return 'failure'
 
-    if not check( dst_feature, 'field_integerlist', None ):
+    if not check( dst_feature, 'field_integerlist', ['10', '20', '30'] ):
         return 'failure'
 
-    if not check( dst_feature, 'field_integer64list', None ):
+    if not check( dst_feature, 'field_integer64list', ['9876543210'] ):
         return 'failure'
 
-    if not check( dst_feature, 'field_reallist', None ):
+    if not check( dst_feature, 'field_reallist', ['123.5', '567'] ):
         return 'failure'
     
     if not check( dst_feature, 'field_stringlist', ['abc', 'def'] ):
