@@ -599,10 +599,10 @@ OCI_INCLUDE =	-I$(ORACLE_HOME)\oci\include
 # Boost library names must be edited to reflect the actual MSVC and Boost versions
 # MONGODB_LIBS = c:/users/even/dev/mongo-client-install/lib/libmongoclient.lib $(BOOST_LIB_PATH)\libboost_thread-vc100-mt-1_55.lib  $(BOOST_LIB_PATH)\libboost_thread-vc100-mt-s-1_55.lib $(BOOST_LIB_PATH)\libboost_system-vc100-mt-1_55.lib $(BOOST_LIB_PATH)\libboost_system-vc100-mt-s-1_55.lib $(BOOST_LIB_PATH)\libboost_date_time-vc100-mt-1_55.lib  $(BOOST_LIB_PATH)\libboost_date_time-vc100-mt-s-1_55.lib $(BOOST_LIB_PATH)\libboost_chrono-vc100-mt-1_55.lib $(BOOST_LIB_PATH)\libboost_chrono-vc100-mt-s-1_55.lib $(BOOST_LIB_PATH)\libboost_regex-vc100-mt-s-1_55.lib /nodefaultlib:msvcprt /nodefaultlib:libcmt
 
-# QHull configuration
+# QHull configuration. By default use internal libqhull.
 # QHULL_SETTING can be set to INTERNAL, EXTERNAL or NO
 # For external qhull, use qhull 2012
-!IFDEF QHULL_SETTING
+!IFNDEF QHULL_SETTING
 QHULL_SETTING = INTERNAL
 !ENDIF
 # To be defined if QHULL_SETTING=EXTERNAL
