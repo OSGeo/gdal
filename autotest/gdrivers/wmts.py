@@ -664,7 +664,7 @@ def wmts_14():
     ds = None
     
     f = gdal.VSIFOpenL('/vsimem/gdal_nominal.xml', 'rb')
-    data = gdal.VSIFReadL(1, 10000, f)
+    data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
     gdal.VSIFCloseL(f)
     if data != """<GDAL_WMTS>
   <GetCapabilitiesUrl>/vsimem/nominal.xml</GetCapabilitiesUrl>
