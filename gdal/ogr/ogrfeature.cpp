@@ -1590,6 +1590,60 @@ double OGR_F_GetFieldAsDouble( OGRFeatureH hFeat, int iField )
 }
 
 /************************************************************************/
+/*                      OGRFeatureFormatDateTimeBuffer()                */
+/************************************************************************/
+
+#define TEMP_BUFFER_SIZE 80
+static void OGRFeatureFormatDateTimeBuffer(char szTempBuffer[TEMP_BUFFER_SIZE],
+                                           int nYear, int nMonth, int nDay,
+                                           int nHour, int nMinute, float fSecond,
+                                           int nTZFlag )
+{
+    int ms = OGR_GET_MS(fSecond);
+    if( ms != 0 )
+        snprintf( szTempBuffer, TEMP_BUFFER_SIZE,
+                "%04d/%02d/%02d %02d:%02d:%06.3f", 
+                nYear,
+                nMonth,
+                nDay,
+                nHour,
+                nMinute,
+                fSecond );
+    else /* default format */
+        snprintf( szTempBuffer, TEMP_BUFFER_SIZE,
+                "%04d/%02d/%02d %02d:%02d:%02d", 
+                nYear,
+                nMonth,
+                nDay,
+                nHour,
+                nMinute,
+                (int)fSecond );
+
+
+    if( nTZFlag > 1 )
+    {
+        int nOffset = (nTZFlag - 100) * 15;
+        int nHours = (int) (nOffset / 60);  // round towards zero
+        int nMinutes = ABS(nOffset - nHours * 60);
+
+        if( nOffset < 0 )
+        {
+            strcat( szTempBuffer, "-" );
+            nHours = ABS(nHours);
+        }
+        else
+            strcat( szTempBuffer, "+" );
+
+        if( nMinutes == 0 )
+            snprintf( szTempBuffer+strlen(szTempBuffer), 
+                    TEMP_BUFFER_SIZE-strlen(szTempBuffer), "%02d", nHours );
+        else
+            snprintf( szTempBuffer+strlen(szTempBuffer), 
+                    TEMP_BUFFER_SIZE-strlen(szTempBuffer), "%02d%02d", nHours, nMinutes );
+    }
+}
+
+/************************************************************************/
 /*                          GetFieldAsString()                          */
 /************************************************************************/
 
@@ -1611,7 +1665,6 @@ double OGR_F_GetFieldAsDouble( OGRFeatureH hFeat, int iField )
 const char *OGRFeature::GetFieldAsString( int iField )
 
 {
-#define TEMP_BUFFER_SIZE 80
     char         szTempBuffer[TEMP_BUFFER_SIZE];
 
     CPLFree(m_pszTmpFieldValue);
@@ -1710,48 +1763,14 @@ const char *OGRFeature::GetFieldAsString( int iField )
     }
     else if( eType == OFTDateTime )
     {
-        int ms = OGR_GET_MS(pauFields[iField].Date.Second);
-        if( ms != 0 )
-            snprintf( szTempBuffer, TEMP_BUFFER_SIZE,
-                    "%04d/%02d/%02d %02d:%02d:%06.3f", 
-                    pauFields[iField].Date.Year,
-                    pauFields[iField].Date.Month,
-                    pauFields[iField].Date.Day,
-                    pauFields[iField].Date.Hour,
-                    pauFields[iField].Date.Minute,
-                    pauFields[iField].Date.Second );
-        else /* default format */
-            snprintf( szTempBuffer, TEMP_BUFFER_SIZE,
-                    "%04d/%02d/%02d %02d:%02d:%02d", 
-                    pauFields[iField].Date.Year,
-                    pauFields[iField].Date.Month,
-                    pauFields[iField].Date.Day,
-                    pauFields[iField].Date.Hour,
-                    pauFields[iField].Date.Minute,
-                    (int)pauFields[iField].Date.Second );
-
-
-        if( pauFields[iField].Date.TZFlag > 1 )
-        {
-            int nOffset = (pauFields[iField].Date.TZFlag - 100) * 15;
-            int nHours = (int) (nOffset / 60);  // round towards zero
-            int nMinutes = ABS(nOffset - nHours * 60);
-
-            if( nOffset < 0 )
-            {
-                strcat( szTempBuffer, "-" );
-                nHours = ABS(nHours);
-            }
-            else
-                strcat( szTempBuffer, "+" );
-
-            if( nMinutes == 0 )
-                snprintf( szTempBuffer+strlen(szTempBuffer), 
-                          TEMP_BUFFER_SIZE-strlen(szTempBuffer), "%02d", nHours );
-            else
-                snprintf( szTempBuffer+strlen(szTempBuffer), 
-                          TEMP_BUFFER_SIZE-strlen(szTempBuffer), "%02d%02d", nHours, nMinutes );
-        }
+        OGRFeatureFormatDateTimeBuffer(szTempBuffer,
+                                       pauFields[iField].Date.Year,
+                                       pauFields[iField].Date.Month,
+                                       pauFields[iField].Date.Day,
+                                       pauFields[iField].Date.Hour,
+                                       pauFields[iField].Date.Minute,
+                                       pauFields[iField].Date.Second,
+                                       pauFields[iField].Date.TZFlag );
 
         return m_pszTmpFieldValue = CPLStrdup( szTempBuffer );
     }
@@ -1925,7 +1944,6 @@ const char *OGRFeature::GetFieldAsString( int iField )
     }
     else
         return "";
-#undef TEMP_BUFFER_SIZE
 }
 
 /************************************************************************/
@@ -2577,6 +2595,16 @@ void OGRFeature::SetField( int iField, int nValue )
 
         pauFields[iField].String = CPLStrdup( szTempBuffer );
     }
+    else if( eType == OFTStringList )
+    {
+        char    szTempBuffer[64];
+
+        sprintf( szTempBuffer, "%d", nValue );
+        char   *apszValues[2];
+        apszValues[0] = szTempBuffer;
+        apszValues[1] = NULL;
+        SetField( iField, apszValues);
+    }
     else
     {
         /* do nothing for other field types */
@@ -2686,6 +2714,16 @@ void OGRFeature::SetField( int iField, GIntBig nValue )
 
         pauFields[iField].String = CPLStrdup( szTempBuffer );
     }
+    else if( eType == OFTStringList )
+    {
+        char    szTempBuffer[64];
+
+        sprintf( szTempBuffer, CPL_FRMT_GIB, nValue );
+        char   *apszValues[2];
+        apszValues[0] = szTempBuffer;
+        apszValues[1] = NULL;
+        SetField( iField, apszValues);
+    }
     else
     {
         /* do nothing for other field types */
@@ -2790,6 +2828,16 @@ void OGRFeature::SetField( int iField, double dfValue )
             CPLFree( pauFields[iField].String );
 
         pauFields[iField].String = CPLStrdup( szTempBuffer );
+    }
+    else if( eType == OFTStringList )
+    {
+        char    szTempBuffer[64];
+
+        CPLsprintf( szTempBuffer, "%.16g", dfValue );
+        char   *apszValues[2];
+        apszValues[0] = szTempBuffer;
+        apszValues[1] = NULL;
+        SetField( iField, apszValues);
     }
     else
     {
@@ -2966,7 +3014,8 @@ void OGRFeature::SetField( int iField, const char * pszValue )
     {
         if( pszValue && *pszValue )
         {
-            if( pszValue[0] == '(' && strchr(pszValue,':') != NULL )
+            if( pszValue[0] == '(' && strchr(pszValue,':') != NULL &&
+                pszValue[strlen(pszValue)-1] == ')' )
             {
                 char** papszValueList = CSLTokenizeString2( 
                                                         pszValue, ",:()", 0 );
@@ -3046,7 +3095,8 @@ void OGRFeature::SetField( int iField, int nCount, int *panValues )
     if( poFDefn == NULL )
         return;
     
-    if( poFDefn->GetType() == OFTIntegerList )
+    OGRFieldType eType = poFDefn->GetType();
+    if( eType == OFTIntegerList )
     {
         OGRField        uField;
         int            *panValuesMod = NULL;
@@ -3075,7 +3125,7 @@ void OGRFeature::SetField( int iField, int nCount, int *panValues )
         SetField( iField, &uField );
         CPLFree(panValuesMod);
     }
-    else if( poFDefn->GetType() == OFTInteger64List )
+    else if( eType == OFTInteger64List )
     {
         std::vector<GIntBig> anValues;
 
@@ -3084,7 +3134,7 @@ void OGRFeature::SetField( int iField, int nCount, int *panValues )
 
         SetField( iField, nCount, &anValues[0] );
     }
-    else if( poFDefn->GetType() == OFTRealList )
+    else if( eType == OFTRealList )
     {
         std::vector<double> adfValues;
 
@@ -3093,12 +3143,21 @@ void OGRFeature::SetField( int iField, int nCount, int *panValues )
 
         SetField( iField, nCount, &adfValues[0] );
     }
-    else if( (poFDefn->GetType() == OFTInteger ||
-              poFDefn->GetType() == OFTInteger64 || 
-              poFDefn->GetType() == OFTReal)
+    else if( (eType == OFTInteger ||
+              eType == OFTInteger64 || 
+              eType == OFTReal)
              && nCount == 1 )
     {
         SetField( iField, panValues[0] );
+    }
+    else if( eType == OFTStringList )
+    {
+        char** papszValues = (char**)CPLMalloc((nCount+1) * sizeof(char*));
+        for( int i=0; i < nCount; i++ )
+            papszValues[i] = CPLStrdup(CPLSPrintf("%d", panValues[i]));
+        papszValues[nCount] = NULL;
+        SetField( iField, papszValues);
+        CSLDestroy(papszValues);
     }
 }
 
@@ -3155,7 +3214,8 @@ void OGRFeature::SetField( int iField, int nCount, const GIntBig *panValues )
     if( poFDefn == NULL )
         return;
     
-    if( poFDefn->GetType() == OFTIntegerList )
+    OGRFieldType eType = poFDefn->GetType();
+    if( eType == OFTIntegerList )
     {
         std::vector<int> anValues;
 
@@ -3173,7 +3233,7 @@ void OGRFeature::SetField( int iField, int nCount, const GIntBig *panValues )
 
         SetField( iField, nCount, &anValues[0] );
     }
-    else if( poFDefn->GetType() == OFTInteger64List )
+    else if( eType == OFTInteger64List )
     {
         OGRField uField;
         uField.Integer64List.nCount = nCount;
@@ -3182,7 +3242,7 @@ void OGRFeature::SetField( int iField, int nCount, const GIntBig *panValues )
 
         SetField( iField, &uField );
     }
-    else if( poFDefn->GetType() == OFTRealList )
+    else if( eType == OFTRealList )
     {
         std::vector<double> adfValues;
 
@@ -3191,12 +3251,21 @@ void OGRFeature::SetField( int iField, int nCount, const GIntBig *panValues )
 
         SetField( iField, nCount, &adfValues[0] );
     }
-    else if( (poFDefn->GetType() == OFTInteger ||
-              poFDefn->GetType() == OFTInteger64 ||
-              poFDefn->GetType() == OFTReal)
+    else if( (eType == OFTInteger ||
+              eType == OFTInteger64 ||
+              eType == OFTReal)
              && nCount == 1 )
     {
         SetField( iField, panValues[0] );
+    }
+    else if( eType == OFTStringList )
+    {
+        char** papszValues = (char**)CPLMalloc((nCount+1) * sizeof(char*));
+        for( int i=0; i < nCount; i++ )
+            papszValues[i] = CPLStrdup(CPLSPrintf(CPL_FRMT_GIB, panValues[i]));
+        papszValues[nCount] = NULL;
+        SetField( iField, papszValues);
+        CSLDestroy(papszValues);
     }
 }
 
@@ -3253,7 +3322,8 @@ void OGRFeature::SetField( int iField, int nCount, double * padfValues )
     if( poFDefn == NULL )
         return;
     
-    if( poFDefn->GetType() == OFTRealList )
+    OGRFieldType eType = poFDefn->GetType();
+    if( eType == OFTRealList )
     {
         OGRField        uField;
         
@@ -3263,7 +3333,7 @@ void OGRFeature::SetField( int iField, int nCount, double * padfValues )
         
         SetField( iField, &uField );
     }
-    else if( poFDefn->GetType() == OFTIntegerList )
+    else if( eType == OFTIntegerList )
     {
         std::vector<int> anValues;
 
@@ -3272,7 +3342,7 @@ void OGRFeature::SetField( int iField, int nCount, double * padfValues )
 
         SetField( iField, nCount, &anValues[0] );
     }
-    else if( poFDefn->GetType() == OFTInteger64List )
+    else if( eType == OFTInteger64List )
     {
         std::vector<GIntBig> anValues;
 
@@ -3281,12 +3351,21 @@ void OGRFeature::SetField( int iField, int nCount, double * padfValues )
 
         SetField( iField, nCount, &anValues[0] );
     }
-    else if( (poFDefn->GetType() == OFTInteger ||
-              poFDefn->GetType() == OFTInteger64 || 
-              poFDefn->GetType() == OFTReal)
+    else if( (eType == OFTInteger ||
+              eType == OFTInteger64 || 
+              eType == OFTReal)
              && nCount == 1 )
     {
         SetField( iField, padfValues[0] );
+    }
+    else if( eType == OFTStringList )
+    {
+        char** papszValues = (char**)CPLMalloc((nCount+1) * sizeof(char*));
+        for( int i=0; i < nCount; i++ )
+            papszValues[i] = CPLStrdup(CPLSPrintf("%.16g", padfValues[i]));
+        papszValues[nCount] = NULL;
+        SetField( iField, papszValues);
+        CSLDestroy(papszValues);
     }
 }
 
@@ -3340,7 +3419,8 @@ void OGRFeature::SetField( int iField, char ** papszValues )
     if( poFDefn == NULL )
         return;
     
-    if( poFDefn->GetType() == OFTStringList )
+    OGRFieldType eType = poFDefn->GetType();
+    if( eType == OFTStringList )
     {
         OGRField        uField;
         
@@ -3349,6 +3429,51 @@ void OGRFeature::SetField( int iField, char ** papszValues )
         uField.StringList.paList = papszValues;
 
         SetField( iField, &uField );
+    }
+    else if( eType == OFTIntegerList )
+    {
+        int nValues = CSLCount(papszValues);
+        int* panValues = (int*)CPLMalloc(nValues * sizeof(int));
+        for(int i=0;i<nValues;i++)
+        {
+            errno = 0; /* As allowed by C standard, some systems like MSVC doesn't reset errno */
+            int nVal = atoi(papszValues[i]);
+            if( errno == ERANGE )
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "32 bit integer overflow when converting %s",
+                         papszValues[i]);
+                if( papszValues[i][0] == '-' )
+                    nVal = INT_MIN;
+                else
+                    nVal = INT_MAX;
+            }
+            panValues[i] = nVal;
+        }
+        SetField( iField, nValues, panValues );
+        CPLFree(panValues);
+    }
+    else if( eType == OFTInteger64List )
+    {
+        int nValues = CSLCount(papszValues);
+        GIntBig* panValues = (GIntBig*)CPLMalloc(nValues * sizeof(GIntBig));
+        for(int i=0;i<nValues;i++)
+        {
+            panValues[i] = CPLAtoGIntBigEx(papszValues[i], TRUE, NULL);
+        }
+        SetField( iField, nValues, panValues );
+        CPLFree(panValues);
+    }
+    else if( eType == OFTRealList )
+    {
+        int nValues = CSLCount(papszValues);
+        double* padfValues = (double*)CPLMalloc(nValues * sizeof(double));
+        for(int i=0;i<nValues;i++)
+        {
+            padfValues[i] = CPLAtof(papszValues[i]);
+        }
+        SetField( iField, nValues, padfValues );
+        CPLFree(padfValues);
     }
 }
 
@@ -3401,7 +3526,8 @@ void OGRFeature::SetField( int iField, int nBytes, GByte *pabyData )
     if( poFDefn == NULL )
         return;
     
-    if( poFDefn->GetType() == OFTBinary )
+    OGRFieldType eType = poFDefn->GetType();
+    if( eType == OFTBinary )
     {
         OGRField        uField;
 
@@ -3411,7 +3537,7 @@ void OGRFeature::SetField( int iField, int nBytes, GByte *pabyData )
 
         SetField( iField, &uField );
     }
-    else if( poFDefn->GetType() == OFTString )
+    else if( eType == OFTString || eType == OFTStringList )
     {
         char* pszStr = (char*)CPLMalloc(nBytes + 1);
         memcpy(pszStr, pabyData, nBytes);
@@ -3479,9 +3605,10 @@ void OGRFeature::SetField( int iField, int nYear, int nMonth, int nDay,
     if( poFDefn == NULL )
         return;
     
-    if( poFDefn->GetType() == OFTDate 
-        || poFDefn->GetType() == OFTTime 
-        || poFDefn->GetType() == OFTDateTime )
+    OGRFieldType eType = poFDefn->GetType();
+    if( eType == OFTDate 
+        || eType == OFTTime 
+        || eType == OFTDateTime )
     {
         if( (GInt16)nYear != nYear )
         {
@@ -3497,6 +3624,19 @@ void OGRFeature::SetField( int iField, int nYear, int nMonth, int nDay,
         pauFields[iField].Date.Minute = (GByte)nMinute;
         pauFields[iField].Date.Second = fSecond;
         pauFields[iField].Date.TZFlag = (GByte)nTZFlag;
+    }
+    else if( eType == OFTString || eType == OFTStringList )
+    {
+        char szTempBuffer[TEMP_BUFFER_SIZE];
+        OGRFeatureFormatDateTimeBuffer(szTempBuffer,
+                                       nYear,
+                                       nMonth,
+                                       nDay,
+                                       nHour,
+                                       nMinute,
+                                       fSecond,
+                                       nTZFlag);
+        SetField( iField, szTempBuffer );
     }
 }
 
@@ -4563,33 +4703,40 @@ OGRErr OGRFeature::SetFieldsFrom( OGRFeature * poSrcFeature, int *panMap ,
           case OFTDate:
           case OFTDateTime:
           case OFTTime:
-            if (GetFieldDefnRef(iDstField)->GetType() == OFTDate ||
-                GetFieldDefnRef(iDstField)->GetType() == OFTTime ||
-                GetFieldDefnRef(iDstField)->GetType() == OFTDateTime)
+          {
+            OGRFieldType eDstFieldType = GetFieldDefnRef(iDstField)->GetType();
+            if (eDstFieldType == OFTDate ||
+                eDstFieldType == OFTTime ||
+                eDstFieldType == OFTDateTime )
             {
                 SetField( iDstField, poSrcFeature->GetRawFieldRef( iField ) );
             }
-            else if (GetFieldDefnRef(iDstField)->GetType() == OFTString)
+            else if( eDstFieldType == OFTString ||
+                     eDstFieldType == OFTStringList )
             {
                 SetField( iDstField, poSrcFeature->GetFieldAsString( iField ) );
             }
             else if( !bForgiving )
                 return OGRERR_FAILURE;
             break;
+          }
 
           default:
-            if( poSrcFeature->GetFieldDefnRef(iField)->GetType()
-                == GetFieldDefnRef(iDstField)->GetType() )
+          {
+            OGRFieldType eDstFieldType = GetFieldDefnRef(iDstField)->GetType();
+            if( poSrcFeature->GetFieldDefnRef(iField)->GetType() == eDstFieldType )
             {
                 SetField( iDstField, poSrcFeature->GetRawFieldRef(iField) );
             }
-            else if (GetFieldDefnRef(iDstField)->GetType() == OFTString)
+            else if (eDstFieldType == OFTString ||
+                     eDstFieldType == OFTStringList )
             {
                 SetField( iDstField, poSrcFeature->GetFieldAsString( iField ) );
             }
             else if( !bForgiving )
                 return OGRERR_FAILURE;
             break;
+          }
         }
     }
 
