@@ -281,13 +281,44 @@ def ogr_mongodb_2():
         gdaltest.post_reason('fail')
         return 'fail'
 
+    if ogrtest.mongodb_ds.TestCapability(ogr.ODsCCreateLayer) != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    if ogrtest.mongodb_ds.TestCapability(ogr.ODsCDeleteLayer) != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    if ogrtest.mongodb_ds.TestCapability(ogr.ODsCCreateGeomFieldAfterCreateLayer) != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
     # Create layer
     a_uuid = str(uuid.uuid1()).replace('-', '_')
     ogrtest.mongodb_layer_name = 'test_' + a_uuid
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(4258) # ETRS 89 will reproject identically to EPSG:4326
     lyr = ogrtest.mongodb_ds.CreateLayer(ogrtest.mongodb_layer_name, geom_type = ogr.wkbPolygon, srs = srs, options = ['GEOMETRY_NAME=location.mygeom', 'FID='])
-    lyr.CreateField(ogr.FieldDefn('str', ogr.OFTString))
+
+    gdal.PushErrorHandler()
+    ret = lyr.CreateGeomField(ogr.GeomFieldDefn('location.mygeom', ogr.wkbPoint))
+    gdal.PopErrorHandler()
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ret = lyr.CreateField(ogr.FieldDefn('str', ogr.OFTString))
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.PushErrorHandler()
+    ret = lyr.CreateField(ogr.FieldDefn('str', ogr.OFTString))
+    gdal.PopErrorHandler()
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
     lyr.CreateField(ogr.FieldDefn('location.name', ogr.OFTString))
     bool_field = ogr.FieldDefn('bool', ogr.OFTInteger)
     bool_field.SetSubType(ogr.OFSTBoolean)
@@ -302,7 +333,8 @@ def ogr_mongodb_2():
     lyr.CreateField(ogr.FieldDefn('intlist', ogr.OFTIntegerList))
     lyr.CreateField(ogr.FieldDefn('int64list', ogr.OFTInteger64List))
     lyr.CreateField(ogr.FieldDefn('realist', ogr.OFTRealList))
-    lyr.CreateField(ogr.FieldDefn('embed.int', ogr.OFTInteger))
+    lyr.CreateField(ogr.FieldDefn('embed.embed2.int', ogr.OFTInteger))
+    lyr.CreateField(ogr.FieldDefn('embed.embed2.real', ogr.OFTReal))
     
     # Test CreateFeature()
     f = ogr.Feature(lyr.GetLayerDefn())
@@ -319,7 +351,8 @@ def ogr_mongodb_2():
     f['int64list'] = [1234567890123456, 1234567890123456]
     f['realist'] = [1.23, 4.56]
     f['embed.str'] = 'foo'
-    f['embed.int'] = 3
+    f['embed.embed2.int'] = 3
+    f['embed.embed2.real'] = 3.45
     f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POLYGON((2 49,2 50,3 50,3 49,2 49))'))
     if lyr.CreateFeature(f) != 0:
         gdaltest.post_reason('fail')
@@ -428,6 +461,7 @@ def ogr_mongodb_2():
 
     f = f_ref.Clone()
     f.SetFID(-1)
+    f.SetGeometryDirectly(None)
     if lyr.CreateFeature(f) != 0:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -444,6 +478,15 @@ def ogr_mongodb_2():
     lyr.CreateFeature(f)
     ret = lyr.SyncToDisk()
     if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Missing _id
+    f.UnsetField('_id')
+    gdal.PushErrorHandler()
+    ret = lyr.SetFeature(f)
+    gdal.PopErrorHandler()
+    if ret == 0:
         gdaltest.post_reason('fail')
         return 'fail'
 
@@ -613,8 +656,8 @@ def ogr_mongodb_2():
     f['_json'] += '"int": { "$minKey": 1 }, '
     f['_json'] += '"int64": { "$minKey": 1 }, '
     f['_json'] += '"real": { "$minKey": 1 }, '
-    f['_json'] += '"intlist" : [1, "1", { "$minKey": 1 },{ "$maxKey": 1 },{ "$numberLong" : "-1234567890123456" }, { "$numberLong" : "1234567890123456" }, -1234567890123456.1, 1234567890123456.1], '
-    f['_json'] += '"int64list" : [1, { "$numberLong" : "1234567890123456" }, "1", { "$minKey": 1 },{ "$maxKey": 1 }, -1e300, 1e300 ], '
+    f['_json'] += '"intlist" : [1, "1", { "$minKey": 1 },{ "$maxKey": 1 },{ "$numberLong" : "-1234567890123456" }, { "$numberLong" : "1234567890123456" }, -1234567890123456.1, 1234567890123456.1, { "$numberLong" : "1" }, 1.23 ], '
+    f['_json'] += '"int64list" : [1, { "$numberLong" : "1234567890123456" }, "1", { "$minKey": 1 },{ "$maxKey": 1 }, -1e300, 1e300, 1.23 ], '
     f['_json'] += '"reallist" : [1, { "$numberLong" : "1234567890123456" }, 1.0, "1", { "$minKey": 1 },{ "$maxKey": 1 }, { "$numberLong" : "1234567890123456" } ] '
     f['_json'] += '}'
     if lyr.CreateFeature(f) != 0:
@@ -656,12 +699,18 @@ def ogr_mongodb_2():
     if lyr is None:
         gdaltest.post_reason('fail')
         return 'fail'
+    lyr.SetAttributeFilter("layer LIKE '%s%%'" % ogrtest.mongodb_layer_name)
     if lyr.GetFeatureCount() != 2:
         print(lyr.GetFeatureCount())
         gdaltest.post_reason('fail')
         return 'fail'
 
     if ogrtest.mongodb_ds.DeleteLayer(-1) == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr = ogrtest.mongodb_ds.GetLayerByName(ogrtest.mongodb_test_dbname + '.' + '_ogr_metadata')
+    if lyr is None:
         gdaltest.post_reason('fail')
         return 'fail'
 
@@ -754,8 +803,8 @@ def ogr_mongodb_2():
     f = lyr.GetNextFeature()
     f = lyr.GetNextFeature()
     f = lyr.GetNextFeature()
-    if f['intlist'] != [1,1,-2147483648,2147483647,-2147483648,2147483647,-2147483648,2147483647] or \
-       f['int64list'] != [1,1234567890123456,1,-9223372036854775808,9223372036854775807,-9223372036854775808,9223372036854775807] or \
+    if f['intlist'] != [1,1,-2147483648,2147483647,-2147483648,2147483647,-2147483648,2147483647,1,1] or \
+       f['int64list'] != [1,1234567890123456,1,-9223372036854775808,9223372036854775807,-9223372036854775808,9223372036854775807,1] or \
        f['int'] != -2147483648 or f['int64'] != -9223372036854775808 or f['real'] - 1 != f['real']:
         gdaltest.post_reason('fail')
         f.DumpReadable()

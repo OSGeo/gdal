@@ -117,6 +117,15 @@ be set with the FID open option. If the field is not found, the FID returned by
 OGR will be a sequential number starting at 1, but it is not guaranteed to be
 stable at all.<p>
 
+<h2>ExecuteSQL() interface</h2>
+
+If specifying "MongoDB" as the dialect of ExecuteSQL(), a JSon string with a
+serialized <a href="http://docs.mongodb.org/v2.6/reference/command/">MongoDB command</a>
+can be passed. The result will be returned as a
+JSon string in a single OGR feature.<p>
+
+Standard SQL requests will be executed on client-side.<p>
+
 <h2>Write support</h2>
 
 Layer/collection creation and deletion is possible.<p>
