@@ -45,6 +45,8 @@ CPL_CVSID("$Id$");
 #define BIT_XMM_STATE           (1 << 1)
 #define BIT_YMM_STATE           (2 << 1)
 
+#if defined(__GNUC__) && (defined(__i386__) ||defined(__x86_64))
+
 int CPLHaveRuntimeAVX()
 {
     int cpuinfo[4] = {0,0,0,0};
@@ -74,6 +76,48 @@ int CPLHaveRuntimeAVX()
 
     return TRUE;
 }
+
+#elif defined(_MSC_FULL_VER) && (_MSC_FULL_VER >= 160040219) && (defined(_M_IX86) || defined(_M_X64))
+// _xgetbv available only in Visual Studio 2010 SP1 or later
+
+#include <intrin.h>
+
+int CPLHaveRuntimeAVX()
+{
+    int cpuinfo[4] = {0,0,0,0};
+    __cpuid(cpuinfo, 1);
+
+    /* Check OSXSAVE feature */
+    if( (cpuinfo[2] & (1 << CPUID_OSXSAVE_ECX_BIT)) == 0 )
+    {
+        return FALSE;
+    }
+
+    /* Check AVX feature */
+    if( (cpuinfo[2] & (1 << CPUID_AVX_ECX_BIT)) == 0 )
+    {
+        return FALSE;
+    }
+
+    /* Issue XGETBV and check the XMM and YMM state bit */
+    unsigned __int64 xcrFeatureMask = _xgetbv(_XCR_XFEATURE_ENABLED_MASK);
+    if( (xcrFeatureMask & ( BIT_XMM_STATE | BIT_YMM_STATE )) !=
+                          ( BIT_XMM_STATE | BIT_YMM_STATE ) )
+    {
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+#else
+
+int CPLHaveRuntimeAVX()
+{
+    return FALSE;
+}
+
+#endif
 
 /************************************************************************/
 /*         GDALGridInverseDistanceToAPower2NoSmoothingNoSearchAVX()     */
