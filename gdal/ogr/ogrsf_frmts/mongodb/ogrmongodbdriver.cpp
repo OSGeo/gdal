@@ -1431,7 +1431,16 @@ OGRErr OGRMongoDBLayer::CreateField( OGRFieldDefn *poFieldIn, CPL_UNUSED int bAp
     }
 
     if( m_poFeatureDefn->GetFieldIndex(poFieldIn->GetNameRef()) >= 0 )
+    {
+        if( !EQUAL(poFieldIn->GetNameRef(), "_id") &&
+            !EQUAL(poFieldIn->GetNameRef(), "_json") )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "CreateField() called with an already existing field name: %s",
+                     poFieldIn->GetNameRef());
+        }
         return OGRERR_FAILURE;
+    }
 
     m_poFeatureDefn->AddFieldDefn( poFieldIn );
 
@@ -1466,7 +1475,12 @@ OGRErr OGRMongoDBLayer::CreateGeomField( OGRGeomFieldDefn *poFieldIn, CPL_UNUSED
     }
 
     if( m_poFeatureDefn->GetGeomFieldIndex(poFieldIn->GetNameRef()) >= 0 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "CreateGeomField() called with an already existing field name: %s",
+                  poFieldIn->GetNameRef());
         return OGRERR_FAILURE;
+    }
 
     OGRGeomFieldDefn oFieldDefn(poFieldIn);
     if( EQUAL(oFieldDefn.GetNameRef(), "") )
@@ -2151,7 +2165,7 @@ OGRLayer *OGRMongoDBDataSource::GetLayerByName(const char* pszLayerName)
         }
         if( i == 0 )
         {
-            if( osDatabase.size() == 0 )
+            if( m_osDatabase.size() == 0 )
                 break;
             const char* pszDot = strchr(pszLayerName, '.');
             if( pszDot == NULL )
@@ -2644,7 +2658,7 @@ int OGRMongoDBDataSource::TestCapability( const char * pszCap )
     if( EQUAL(pszCap,ODsCCreateLayer) 
         || EQUAL(pszCap,ODsCDeleteLayer)
         || EQUAL(pszCap,ODsCCreateGeomFieldAfterCreateLayer) )
-        return TRUE;
+        return eAccess == GA_Update;
     else
         return FALSE;
 }
