@@ -528,6 +528,10 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_CALS();
 #endif
 
+#ifdef FRMT_wmts
+    GDALRegister_WMTS();
+#endif
+
     OGRRegisterAllInternal();
 
 #ifdef FRMT_wcs
