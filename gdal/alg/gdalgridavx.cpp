@@ -164,6 +164,7 @@ GDALGridInverseDistanceToAPower2NoSmoothingNoSearchAVX(
             if( mask & (1 << j) )
             {
                 (*pdfValue) = (pafZ)[i + j];
+                _mm256_zeroupper();
                 return CE_None;
             }
         }
@@ -174,6 +175,7 @@ GDALGridInverseDistanceToAPower2NoSmoothingNoSearchAVX(
     float afNominator[8], afDenominator[8];
     _mm256_storeu_ps(afNominator, ymm_nominator);
     _mm256_storeu_ps(afDenominator, ymm_denominator);
+    _mm256_zeroupper();
 
     float fNominator = afNominator[0] + afNominator[1] +
                        afNominator[2] + afNominator[3] +
