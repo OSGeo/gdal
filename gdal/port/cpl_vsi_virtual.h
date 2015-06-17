@@ -142,6 +142,8 @@ typedef struct
 
 typedef struct
 {
+    time_t       mTime;
+    vsi_l_offset nFileSize;
     int nEntries;
     VSIArchiveEntry* entries;
 } VSIArchiveContent;
