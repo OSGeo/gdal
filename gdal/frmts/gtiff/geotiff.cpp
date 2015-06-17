@@ -5652,7 +5652,7 @@ void GTiffDataset::InitCompressionThreads(char** papszOptions)
                 }
             }
         }
-        else if (nThreads < 1)
+        else if (nThreads < 0 || !EQUAL(pszValue, "0") )
         {
             CPLError(CE_Warning, CPLE_AppDefined,
                      "Invalid value for NUM_THREADS: %s", pszValue);
