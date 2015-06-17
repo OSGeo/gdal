@@ -5,7 +5,7 @@
 
 GDAL_ROOT	=	..
 
-EXTRAFLAGS =	-I../ogr/ogrsf_frmts $(GEOS_CFLAGS) 
+EXTRAFLAGS =	-I../ogr/ogrsf_frmts $(GEOS_CFLAGS)
 
 !INCLUDE ..\nmake.opt
 
@@ -31,7 +31,7 @@ OBJ =	gdaldither.obj gdalmediancut.obj gdal_crs.obj gdaltransformer.obj \
 	gdalsievefilter.obj gdalrasterpolygonenumerator.obj polygonize.obj \
 	gdalrasterfpolygonenumerator.obj fpolygonize.obj contour.obj \
 	gdal_octave.obj gdal_simplesurf.obj gdalmatching.obj \
-	gdaltransformgeolocs.obj delaunay.obj
+	gdaltransformgeolocs.obj delaunay.obj gdalgridavx.obj
 	
 
 default:	$(OBJ) 
