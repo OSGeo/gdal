@@ -1,0 +1,280 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>WMTS -- OGC Web Map Tile Service</title>
+        <STYLE type="text/css">
+                td.xml { font-family: monospace; white-space: pre; padding-right: 20px; }
+                td.desc { }
+                span.value { color: #00B000; }
+                body { background-color: #ffffff; }
+        </STYLE>
+</head>
+
+<body>
+
+<h1>WMTS -- OGC Web Map Tile Service</h1>
+
+<p>
+  Since GDAL 2.1, access to WMTS layers is possible with the GDAL WMTS client driver (needs Curl support).
+  It support both RESTful and KVP protocols.
+</p>
+
+<h2>Open syntax</h2>
+
+The WMTS driver can open :
+<ul>
+<li><p>
+a local service description XML file, whose syntax is described in the below section : <pre>gdalinfo gdal_wmts.xml</pre>
+</p></li>
+
+<li><p>
+the content of a description XML file provided as filename :
+<pre>gdalinfo "&lt;GDAL_WMTS&gt;&lt;GetCapabilitiesUrl&gt;http://maps.wien.gv.at/wmts/1.0.0/WMTSCapabilities.xml&lt;/GetCapabilitiesUrl&gt;&lt;Layer&gt;lb&lt;/Layer&gt;&lt;/GDAL_WMTS&gt;"</pre>
+</p></li>
+
+<li><p>
+a local GetCapabilities response of a WTMS service : <pre>gdalinfo WMTSCapabilities.xml</pre>
+</p></li>
+
+<li><p>
+the URL to the GetCapabilities response of a WTMS service:
+<pre>gdalinfo "http://maps.wien.gv.at/wmts/1.0.0/WMTSCapabilities.xml"</pre>
+<p></li>
+
+<li><p>
+the URL to the GetCapabilities response of a WTMS service, prefixed with <i>WMTS:</i>,
+and possibly with optional layer, tilematrixset, style and extendbeyonddateline parameters,
+with the following syntax
+<i>WMTS:url[,layer=layer_id][,tilematrixset=tms_id][,style=style_id][,extendbeyonddateline=yes/no]</i>.
+
+<pre>gdalinfo "WMTS:http://maps.wien.gv.at/wmts/1.0.0/WMTSCapabilities.xml"</pre>
+<pre>gdalinfo "WMTS:http://maps.wien.gv.at/wmts/1.0.0/WMTSCapabilities.xml,layer=lb"</pre>
+<p>
+
+
+<li><p>
+the <i>WMTS:</i> prefix with open options URL (required), LAYER, TILEMATRIXSET,
+STYLE, EXTENDBEYONDDATELINE.
+<pre>gdalinfo WMTS: -oo URL=http://maps.wien.gv.at/wmts/1.0.0/WMTSCapabilities.xml -oo LAYER=lb</pre>
+</p></li>
+
+</ul>
+
+In any of the above syntaxes, if several layers are present and no layer disambiguation
+was done with the layer parameter/open option, or if a layer 
+has more than one style or a tile matrix set, a list of subdatasets will be returned.
+If there is only one layer, it will be opened on the default style and the
+first tile matrix set listed.
+
+<h2>Local service description XML file</h2>
+
+<p>
+It is important that there be no spaces or other content before the <tt>&lt;GDAL_WMTS&gt;</tt> element.
+</p>
+
+        <table>
+                <tr>
+                        <td class="xml">&lt;GDAL_WMTS&gt;</td>
+                        <td class="desc"> </td>
+                </tr>
+                <tr>
+                        <td class="xml">  &lt;GetCapabilitiesUrl&gt;<span class="value">http://foo/WMTSCapabilities.xml</span>&lt;/GetCapabilitiesUrl&gt;</td>
+                        <td class="desc">URL (or filename for local files) to GetCapabilities response document (required).
+                                         For a KVP only server, will be like http://end_point?SERVICE=WMTS&amp;amp;REQUEST=GetCapabilities .
+                         </td>
+                </tr>
+                <tr>
+                        <td class="xml">  &lt;Layer&gt;<span class="value">layer_id</span>&lt;/Layer&gt;</td>
+                        <td class="desc">Layer identifier (optional, but may be needed to disambiguate between several layers)</td>
+                </tr>
+                <tr>
+                        <td class="xml">  &lt;Style&gt;<span class="value">style_id</span>&lt;/Style&gt;</td>
+                        <td class="desc">Style identifier. Must be one of the listed styles for the layer. (optional, but may be needed to disambiguate between several styles)</td>
+                </tr>
+                <tr>
+                        <td class="xml">  &lt;TileMatrixSet&gt;<span class="value">tile_matrix_set_id</span>&lt;/TileMatrixSet&gt;</td>
+                        <td class="desc">Tile Matrix Set identifier. Must be one of the listed tile matrix set for the layer. (optional, but may be needed to disambiguate between several tile matrix sets)</td>
+                </tr>
+                <tr>
+                        <td class="xml">  &lt;Format&gt;<span class="value">image/png</span>&lt;/Format&gt;</td>
+                        <td class="desc">Tile format, used by GetTile requests. Must be one of the listed Format for the layer. (optional, but may be needed to disambiguate between several Format)</td>
+                </tr>
+                <tr>
+                        <td class="xml">  &lt;InfoFormat&gt;<span class="value">application/xml</span>&lt;/InfoFormat&gt;</td>
+                        <td class="desc">Info format, used by GetFeatureInfo requests. Must be one of the listed InfoFormat for the layer. (optional, but may be needed to disambiguate between several InfoFormat)</td>
+                </tr>
+                <tr>
+                        <td class="xml">  &lt;DataWindow&gt;</td>
+                        <td class="desc">Define extents of the data. (optional, when not specified the driver will query the
+                                         declared extent of the layer, and if not present fallback to the extent of the select tile matrix set,
+                                         taking into account potential tile matrix set limits)</td>
+                </tr>
+                <tr>
+                        <td class="xml">    &lt;UpperLeftX&gt;<span class="value">-180.0</span>&lt;/UpperLeftX&gt;</td>
+                        <td class="desc">X (longitude/easting) coordinate of upper-left corner, in the SRS of the tile matrix set. (required if DataWindow is present)</td>
+                </tr>
+                <tr>
+                        <td class="xml">    &lt;UpperLeftY&gt;<span class="value">90.0</span>&lt;/UpperLeftY&gt;</td>
+                        <td class="desc">Y (latitude/northing) coordinate of upper-left corner, in the SRS of the tile matrix set. (required if DataWindow is present)</td>
+                </tr>
+                <tr>
+                        <td class="xml">    &lt;LowerRightX&gt;<span class="value">180.0</span>&lt;/LowerRightX&gt;</td>
+                        <td class="desc">X (longitude/easting) coordinate of lower-right corner, in the SRS of the tile matrix set. (required if DataWindow is present)</td>
+                </tr>
+                <tr>
+                        <td class="xml">    &lt;LowerRightY&gt;<span class="value">-90.0</span>&lt;/LowerRightY&gt;</td>
+                        <td class="desc">Y (latitude/northing) coordinate of lower-right corner, in the SRS of the tile matrix set. (required if DataWindow is present)</td>
+                </tr>
+                <tr>
+                        <td class="xml">  &lt;/DataWindow&gt;</td>
+                        <td class="desc"></td>
+                </tr>
+                <tr>
+                        <td class="xml">  &lt;Projection&gt;<span class="value">EPSG:4326</span>&lt;/Projection&gt;</td>
+                        <td class="desc">Declared projection, in case the one of the TileMatrixSet is not desirable (optional, defaults to value of the TileMatrixSet)</td>
+                </tr>
+                <tr>
+                        <td class="xml">  &lt;BandsCount&gt;<span class="value">4</span>&lt;/BandsCount&gt;</td>
+                        <td class="desc">Number of bands/channels, 1 for grayscale data, 3 for RGB, 4 for RGBA. (optional, defaults to 4)</td>
+                </tr>
+                <tr>
+                        <td class="xml">  &lt;ExtendBeyondDateLine&gt;<span class="value">false</span>&lt;/ExtendBeyondDateLine&gt;</td>
+                        <td class="desc">Whether to make the extent go over dateline and warp tile requests.
+                                         Only appropriate when the following conditions are met (optional, defaults to false):
+                                         <ul>
+                                         <li>for geodetic SRS or EPSG:3857, with tile matrix sets such as
+                                         the whole [-180,180] range of longitude is entirely covered by an integral number of tiles
+                                         (e.g. GoogleMapsCompatible).</li>
+                                         <li>when the layer BoundingBox in the SRS of the tile matrix set covers the whole [-180,180] range
+                                         of longitude, and that there is another BoundingBox in another SRS that is centered around longitude 180.
+                                         If such alternate BoundingBox is not present in the GetCapabilities document, DataWindow must be explicitely specified</li>
+                                         </ul></td>
+                </tr>
+                <tr>
+                        <td class="xml">  &lt;Cache&gt;</td>
+                        <td class="desc">Enable local disk cache. Allows for offline operation.
+                                         (optional, absent by default, but enabled in autogenerated XML)</td>
+                </tr>
+                <tr>
+                        <td class="xml">    &lt;Path&gt;<span class="value">./gdalwmscache</span>&lt;/Path&gt;</td>
+                        <td class="desc">Location where to store cache files. It is safe to use same cache path for different data sources. (optional, defaults to ./gdalwmscache if GDAL_DEFAULT_WMS_CACHE_PATH configuration option is not specified)</td>
+                </tr>
+                <tr>
+                        <td class="xml">    &lt;Depth&gt;<span class="value">2</span>&lt;/Depth&gt;</td>
+                        <td class="desc">Number of directory layers. 2 will result in files being written as cache_path/A/B/ABCDEF... (optional, defaults to 2)</td>
+                </tr>
+                <tr>
+                        <td class="xml">    &lt;Extension&gt;<span class="value">.jpg</span>&lt;/Extension&gt;</td>
+                        <td class="desc">Append to cache files. (optional, defaults to none)</td>
+                </tr>
+                <tr>
+                        <td class="xml">  &lt;/Cache&gt;</td>
+                        <td class="desc"></td>
+                </tr>
+                <tr>
+                        <td class="xml">  &lt;MaxConnections&gt;<span class="value">2</span>&lt;/MaxConnections&gt;</td>
+                        <td class="desc">Maximum number of simultaneous connections. (optional, defaults to 2)</td>
+                </tr>
+                <tr>
+                        <td class="xml">  &lt;Timeout&gt;<span class="value">300</span>&lt;/Timeout&gt;</td>
+                        <td class="desc">Connection timeout in seconds. (optional, defaults to 300)</td>
+                </tr>
+                <tr>
+                        <td class="xml">  &lt;OfflineMode&gt;<span class="value">true</span>&lt;/OfflineMode&gt;</td>
+                        <td class="desc">Do not download any new images, use only what is in cache. Useful only with cache enabled. (optional, defaults to false)</td>
+                </tr>
+                <tr>
+                        <td class="xml">  &lt;UserAgent&gt;<span class="value">GDAL WMS driver (http://www.gdal.org/frmt_wms.html)</span>&lt;/UserAgent&gt;</td>
+                        <td class="desc">HTTP User-agent string. Some servers might require a well-known user-agent such as "Mozilla/5.0" (optional, defaults to "GDAL WMS driver (http://www.gdal.org/frmt_wms.html)").</td>
+                </tr>
+                <tr>
+                        <td class="xml">  &lt;UserPwd&gt;<span class="value">user:password</span>&lt;/UserPwd&gt;</td>
+                        <td class="desc">User and Password for HTTP authentication (optional).</td>
+                </tr>
+                <tr>
+                        <td class="xml">  &lt;UnsafeSSL&gt;<span class="value">true</span>&lt;/UnsafeSSL&gt;</td>
+                        <td class="desc">Skip SSL certificate verification. May be needed if server
+                                         is using a self signed certificate
+                                         (optional, defaults to false, but set to true in autogenerated XML).</td>
+                </tr>
+                <tr>
+                        <td class="xml">  &lt;Referer&gt;<span class="value">http://example.foo/</span>&lt;/Referer&gt;</td>
+                        <td class="desc">HTTP Referer string. Some servers might require it (optional).</td>
+                </tr>
+                <tr>
+                        <td class="xml">  &lt;ZeroBlockHttpCodes&gt;<span class="value">204,404</span>&lt;/ZeroBlockHttpCodes&gt;</td>
+                        <td class="desc">Comma separated list of HTTP response codes that will be
+                                          interpreted as a 0 filled image (i.e. black for 3 bands, and transparent
+                                          for 4 bands) instead of aborting the request.
+                                          (optional, defaults to non set, but set to 204,404 in autogenerated XML)</td>
+                </tr>
+                <tr>
+                        <td class="xml">  &lt;ZeroBlockOnServerException&gt;<span class="value">true</span>&lt;/ZeroBlockOnServerException&gt;</td>
+                        <td class="desc">Wether to treat a Service Exception returned by the server as a
+                                         0 filled image instead of aborting the request.
+                                         (optional, defaults to false, but set to true in autogenerated XML)</td>
+                </tr>
+                <tr>
+                        <td class="xml">&lt;/GDAL_WMTS&gt;</td>
+                        <td class="desc"></td>
+                </tr>
+                <tr>
+                        <td class="xml"></td>
+                        <td class="desc"></td>
+                </tr>
+        </table>
+
+<h2>GetFeatureInfo request</h2>
+
+<p>
+     WMTS layers can be queried (through a GetFeatureInfo request) with the gdallocationinfo utility, or
+     with a GetMetadataItem("Pixel_iCol_iLine", "LocationInfo") call on a band object.<p>
+     <pre>gdallocationinfo my_wmts.xml -geoloc -11547071.455 5528616 -xml -b 1</pre>
+</p>
+
+<h2>Generation of WMTS service description XML file</h2>
+
+The WMTS service description XML file can be generated manually, or created
+as the output of the CreateCopy() operation of the WMTS driver, only if the source
+dataset is itself a WMTS dataset. Said otherwise, you can use gdal_translate
+with as source dataset any of the above syntax mentioned in "Open syntax" and
+as output an XML file.
+
+For example:
+<pre>
+gdal_translate "WMTS:http://maps.wien.gv.at/wmts/1.0.0/WMTSCapabilities.xml,layer=lb" wmts.xml -of WMTS
+</pre>
+
+generates the following file:
+<pre>
+&lt;GDAL_WMTS&gt;
+  &lt;GetCapabilitiesUrl&gt;http://maps.wien.gv.at/wmts/1.0.0/WMTSCapabilities.xml&lt;/GetCapabilitiesUrl&gt;
+  &lt;Layer&gt;lb&lt;/Layer&gt;
+  &lt;Style&gt;farbe&lt;/Style&gt;
+  &lt;TileMatrixSet&gt;google3857&lt;/TileMatrixSet&gt;
+  &lt;DataWindow&gt;
+    &lt;UpperLeftX&gt;1800035.8827671&lt;/UpperLeftX&gt;
+    &lt;UpperLeftY&gt;6161931.622311067&lt;/UpperLeftY&gt;
+    &lt;LowerRightX&gt;1845677.148953537&lt;/LowerRightX&gt;
+    &lt;LowerRightY&gt;6123507.385072636&lt;/LowerRightY&gt;
+  &lt;/DataWindow&gt;
+  &lt;BandsCount&gt;4&lt;/BandsCount&gt;
+  &lt;Cache /&gt;
+  &lt;UnsafeSSL&gt;true&lt;/UnsafeSSL&gt;
+  &lt;ZeroBlockHttpCodes&gt;404&lt;/ZeroBlockHttpCodes&gt;
+  &lt;ZeroBlockOnServerException&gt;true&lt;/ZeroBlockOnServerException&gt;
+&lt;/GDAL_WMTS&gt;
+</pre>
+
+The generated file will come with default values that you may need to edit.
+
+<h2>See Also:</h2>
+
+<ul>
+<li><a href="http://www.opengeospatial.org/standards/wmts">OGC WMTS Standard</a></li>
+<li><a href="frmt_wms.html">GDAL WMS driver documentation page</a></li>
+</ul>
+
+</body>
+</html>
