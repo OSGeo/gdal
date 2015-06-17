@@ -470,6 +470,16 @@ static CPLErr ProcessLayer( OGRLayerH hSrcLayer, GDALDatasetH hDstDS,
     GUInt32 nBlockCount = ((nXSize + nBlockXSize - 1) / nBlockXSize)
         * ((nYSize + nBlockYSize - 1) / nBlockYSize);
 
+    GDALGridContext* psContext = GDALGridContextCreate( eAlgorithm, pOptions,
+                                                        adfX.size(),
+                                                        &(adfX[0]), &(adfY[0]), &(adfZ[0]),
+                                                        TRUE );
+    if( psContext == NULL )
+    {
+        CPLFree( pData );
+        return CE_Failure;
+    }
+
     CPLErr eErr = CE_None;
     for ( nYOffset = 0; nYOffset < nYSize && eErr == CE_None; nYOffset += nBlockYSize )
     {
@@ -490,8 +500,7 @@ static CPLErr ProcessLayer( OGRLayerH hSrcLayer, GDALDatasetH hDstDS,
             if (nYOffset + nYRequest > nYSize)
                 nYRequest = nYSize - nYOffset;
 
-            eErr = GDALGridCreate( eAlgorithm, pOptions,
-                            adfX.size(), &(adfX[0]), &(adfY[0]), &(adfZ[0]),
+            eErr = GDALGridContextProcess( psContext,
                             dfXMin + dfDeltaX * nXOffset,
                             dfXMin + dfDeltaX * (nXOffset + nXRequest),
                             dfYMin + dfDeltaY * nYOffset,
@@ -507,6 +516,8 @@ static CPLErr ProcessLayer( OGRLayerH hSrcLayer, GDALDatasetH hDstDS,
             GDALDestroyScaledProgress( pScaledProgress );
         }
     }
+    
+    GDALGridContextFree(psContext);
 
     CPLFree( pData );
     return eErr;

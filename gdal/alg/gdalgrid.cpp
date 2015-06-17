@@ -1416,23 +1416,38 @@ static void GDALGridJobProcess(void* user_data)
 }
 
 /************************************************************************/
-/*                            GDALGridCreate()                          */
+/*                        GDALGridContextCreate()                       */
 /************************************************************************/
 
+struct GDALGridContext
+{
+    GDALGridAlgorithm  eAlgorithm;
+    void               *poOptions;
+    GDALGridFunction    pfnGDALGridMethod;
+
+    GUInt32             nPoints;
+    GDALGridPoint      *pasGridPoints;
+    GDALGridXYArrays    sXYArrays;
+
+    GDALGridExtraParameters sExtraParameters;
+    double*             padfX;
+    double*             padfY;
+    double*             padfZ;
+    int                 bFreePadfXYZArrays;
+
+    void               *pabyX;
+    void               *pabyY;
+    void               *pabyZ;
+};
+
 /**
- * Create regular grid from the scattered data.
+ * Creates a context to do regular gridding from the scattered data.
  *
  * This function takes the arrays of X and Y coordinates and corresponding Z
- * values as input and computes regular grid (or call it a raster) from these
- * scattered data. You should supply geometry and extent of the output grid
- * and allocate array sufficient to hold such a grid.
+ * values as input to preprare computation of regular grid (or call it a raster) from these
+ * scattered data.
  *
- * Starting with GDAL 1.10, it is possible to set the GDAL_NUM_THREADS
- * configuration option to parallelize the processing. The value to set is
- * the number of worker threads, or ALL_CPUS to use all the cores/CPUs of the
- * computer (default value).
- *
- * Starting with GDAL 1.10, on Intel/AMD i386/x86_64 architectures, some
+ * On Intel/AMD i386/x86_64 architectures, some
  * gridding methods will be optimized with SSE instructions (provided GDAL
  * has been compiled with such support, and it is availabable at runtime).
  * Currently, only 'invdist' algorithm with default parameters has an optimized
@@ -1440,7 +1455,7 @@ static void GDALGridJobProcess(void* user_data)
  * This can provide substantial speed-up, but sometimes at the expense of
  * reduced floating point precision. This can be disabled by setting the
  * GDAL_USE_SSE configuration option to NO.
- * Starting with GDAL 1.11, a further optimized version can use the AVX
+ * A further optimized version can use the AVX
  * instruction set. This can be disabled by setting the GDAL_USE_AVX
  * configuration option to NO.
  * 
@@ -1451,46 +1466,27 @@ static void GDALGridJobProcess(void* user_data)
  * @param padfX Input array of X coordinates. 
  * @param padfY Input array of Y coordinates. 
  * @param padfZ Input array of Z values. 
- * @param dfXMin Lowest X border of output grid.
- * @param dfXMax Highest X border of output grid.
- * @param dfYMin Lowest Y border of output grid.
- * @param dfYMax Highest Y border of output grid.
- * @param nXSize Number of columns in output grid.
- * @param nYSize Number of rows in output grid.
- * @param eType Data type of output array.  
- * @param pData Pointer to array where the computed grid will be stored.
- * @param pfnProgress a GDALProgressFunc() compatible callback function for
- * reporting progress or NULL.
- * @param pProgressArg argument to be passed to pfnProgress.  May be NULL.
+ * @param bCallerWillKeepPointArraysAlive Whether the provided padfX, padfY, padfZ
+ *        arrays will still be "alive" during the calls to GDALGridContextProcess().
+ *        Setting to TRUE prevent them from being duplicated in the context.
+ *        If unsure, set to FALSE.
  *
- * @return CE_None on success or CE_Failure if something goes wrong.
+ * @return the context (to be freed with GDALGridContextFree()) or NULL in case or error
+ *
+ * @since GDAL 2.1
  */
 
-CPLErr
-GDALGridCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
-                GUInt32 nPoints,
-                const double *padfX, const double *padfY, const double *padfZ,
-                double dfXMin, double dfXMax, double dfYMin, double dfYMax,
-                GUInt32 nXSize, GUInt32 nYSize, GDALDataType eType, void *pData,
-                GDALProgressFunc pfnProgress, void *pProgressArg )
+GDALGridContext*
+GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
+                       GUInt32 nPoints,
+                       const double *padfX, const double *padfY, const double *padfZ,
+                       int bCallerWillKeepPointArraysAlive )
 {
+    GDALGridFunction    pfnGDALGridMethod = NULL;
     CPLAssert( poOptions );
     CPLAssert( padfX );
     CPLAssert( padfY );
     CPLAssert( padfZ );
-    CPLAssert( pData );
-
-    if ( pfnProgress == NULL )
-        pfnProgress = GDALDummyProgress;
-
-    if ( nXSize == 0 || nYSize == 0 )
-    {
-        CPLError( CE_Failure, CPLE_IllegalArg,
-                  "Output raster dimesions should have non-zero size." );
-        return CE_Failure;
-    }
-
-    GDALGridFunction    pfnGDALGridMethod;
     int bCreateQuadTree = FALSE;
 
     /* Potentially unaligned pointers */
@@ -1503,9 +1499,14 @@ GDALGridCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
     float* pafYAligned = NULL;
     float* pafZAligned = NULL;
 
+    void *poOptionsNew = NULL;
+
     switch ( eAlgorithm )
     {
         case GGA_InverseDistanceToAPower:
+            poOptionsNew = CPLMalloc(sizeof(GDALGridInverseDistanceToAPowerOptions));
+            memcpy(poOptionsNew, poOptions, sizeof(GDALGridInverseDistanceToAPowerOptions));
+
             if ( ((GDALGridInverseDistanceToAPowerOptions *)poOptions)->
                  dfRadius1 == 0.0 &&
                  ((GDALGridInverseDistanceToAPowerOptions *)poOptions)->
@@ -1596,10 +1597,16 @@ GDALGridCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
             break;
 
         case GGA_MovingAverage:
+            poOptionsNew = CPLMalloc(sizeof(GDALGridMovingAverageOptions));
+            memcpy(poOptionsNew, poOptions, sizeof(GDALGridMovingAverageOptions));
+            
             pfnGDALGridMethod = GDALGridMovingAverage;
             break;
 
         case GGA_NearestNeighbor:
+            poOptionsNew = CPLMalloc(sizeof(GDALGridNearestNeighborOptions));
+            memcpy(poOptionsNew, poOptions, sizeof(GDALGridNearestNeighborOptions));
+
             pfnGDALGridMethod = GDALGridNearestNeighbor;
             bCreateQuadTree = (nPoints > 100 &&
                 (((GDALGridNearestNeighborOptions *)poOptions)->dfRadius1 ==
@@ -1607,52 +1614,107 @@ GDALGridCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
             break;
 
         case GGA_MetricMinimum:
+            poOptionsNew = CPLMalloc(sizeof(GDALGridDataMetricsOptions));
+            memcpy(poOptionsNew, poOptions, sizeof(GDALGridDataMetricsOptions));
+
             pfnGDALGridMethod = GDALGridDataMetricMinimum;
             break;
 
         case GGA_MetricMaximum:
+            poOptionsNew = CPLMalloc(sizeof(GDALGridDataMetricsOptions));
+            memcpy(poOptionsNew, poOptions, sizeof(GDALGridDataMetricsOptions));
+
             pfnGDALGridMethod = GDALGridDataMetricMaximum;
             break;
 
         case GGA_MetricRange:
+            poOptionsNew = CPLMalloc(sizeof(GDALGridDataMetricsOptions));
+            memcpy(poOptionsNew, poOptions, sizeof(GDALGridDataMetricsOptions));
+
             pfnGDALGridMethod = GDALGridDataMetricRange;
             break;
 
         case GGA_MetricCount:
+            poOptionsNew = CPLMalloc(sizeof(GDALGridDataMetricsOptions));
+            memcpy(poOptionsNew, poOptions, sizeof(GDALGridDataMetricsOptions));
+
             pfnGDALGridMethod = GDALGridDataMetricCount;
             break;
 
         case GGA_MetricAverageDistance:
+            poOptionsNew = CPLMalloc(sizeof(GDALGridDataMetricsOptions));
+            memcpy(poOptionsNew, poOptions, sizeof(GDALGridDataMetricsOptions));
+
             pfnGDALGridMethod = GDALGridDataMetricAverageDistance;
             break;
 
         case GGA_MetricAverageDistancePts:
+            poOptionsNew = CPLMalloc(sizeof(GDALGridDataMetricsOptions));
+            memcpy(poOptionsNew, poOptions, sizeof(GDALGridDataMetricsOptions));
+
             pfnGDALGridMethod = GDALGridDataMetricAverageDistancePts;
             break;
 
         default:
             CPLError( CE_Failure, CPLE_IllegalArg,
                       "GDAL does not support gridding method %d", eAlgorithm );
-	    return CE_Failure;
+            return NULL;
     }
 
-    const double    dfDeltaX = ( dfXMax - dfXMin ) / nXSize;
-    const double    dfDeltaY = ( dfYMax - dfYMin ) / nYSize;
+    if( pafXAligned != NULL )
+        bCallerWillKeepPointArraysAlive = TRUE;
+    if( !bCallerWillKeepPointArraysAlive )
+    {
+        double* padfXNew = (double*)VSIMalloc2(nPoints, sizeof(double));
+        double* padfYNew = (double*)VSIMalloc2(nPoints, sizeof(double));
+        double* padfZNew = (double*)VSIMalloc2(nPoints, sizeof(double));
+        if( padfXNew == NULL || padfYNew == NULL || padfZNew == NULL )
+        {
+            CPLError( CE_Failure, CPLE_OutOfMemory,
+                      "Not enough memory to duplicate X,Y,Z arrays");
+            VSIFree(padfXNew);
+            VSIFree(padfYNew);
+            VSIFree(padfZNew);
+            CPLFree(poOptionsNew);
+            return NULL;
+        }
+        memcpy(padfXNew, padfX, nPoints * sizeof(double));
+        memcpy(padfYNew, padfY, nPoints * sizeof(double));
+        memcpy(padfZNew, padfZ, nPoints * sizeof(double));
+        padfX = padfXNew;
+        padfY = padfYNew;
+        padfZ = padfZNew;
+    }
 
+    GDALGridContext* psContext = (GDALGridContext*)CPLMalloc(sizeof(GDALGridContext));
+    psContext->eAlgorithm = eAlgorithm;
+    psContext->poOptions = poOptionsNew;
+    psContext->pfnGDALGridMethod = pfnGDALGridMethod;
+    psContext->nPoints = nPoints;
+    psContext->pasGridPoints = NULL;
+    psContext->sXYArrays.padfX = padfX;
+    psContext->sXYArrays.padfY = padfY;
+    psContext->sExtraParameters.hQuadTree = NULL;
+    psContext->sExtraParameters.dfInitialSearchRadius = 0;
+    psContext->sExtraParameters.pafX = pafXAligned;
+    psContext->sExtraParameters.pafY = pafYAligned;
+    psContext->sExtraParameters.pafZ = pafZAligned;
+    psContext->padfX = pafXAligned ? NULL : (double*)padfX;
+    psContext->padfY = pafXAligned ? NULL : (double*)padfY;
+    psContext->padfZ = pafXAligned ? NULL : (double*)padfZ;
+    psContext->bFreePadfXYZArrays = !bCallerWillKeepPointArraysAlive;
+    psContext->pabyX = pabyX;
+    psContext->pabyY = pabyY;
+    psContext->pabyZ = pabyZ;
+    
 /* -------------------------------------------------------------------- */
 /*  Create quadtree if requested and possible.                          */
 /* -------------------------------------------------------------------- */
-    CPLQuadTree* hQuadTree = NULL;
-    double       dfInitialSearchRadius = 0;
-    GDALGridPoint* pasGridPoints = NULL;
-    GDALGridXYArrays sXYArrays;
-    sXYArrays.padfX = padfX;
-    sXYArrays.padfY = padfY;
 
     if( bCreateQuadTree )
     {
-        pasGridPoints = (GDALGridPoint*) VSIMalloc2(nPoints, sizeof(GDALGridPoint));
-        if( pasGridPoints != NULL )
+        psContext->pasGridPoints = (GDALGridPoint*) VSIMalloc2(nPoints, sizeof(GDALGridPoint));
+        if( psContext->pasGridPoints != NULL )
         {
             CPLRectObj sRect;
             GUInt32 i;
@@ -1672,28 +1734,110 @@ GDALGridCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
 
             /* Initial value for search radius is the typical dimension of a */
             /* "pixel" of the point array (assuming rather uniform distribution) */
-            dfInitialSearchRadius = sqrt((sRect.maxx - sRect.minx) *
+            psContext->sExtraParameters.dfInitialSearchRadius =
+                                    sqrt((sRect.maxx - sRect.minx) *
                                          (sRect.maxy - sRect.miny) / nPoints);
 
-            hQuadTree = CPLQuadTreeCreate(&sRect, GDALGridGetPointBounds );
+            psContext->sExtraParameters.hQuadTree =
+                        CPLQuadTreeCreate(&sRect, GDALGridGetPointBounds );
 
             for(i = 0; i < nPoints; i++)
             {
-                pasGridPoints[i].psXYArrays = &sXYArrays;
-                pasGridPoints[i].i = i;
-                CPLQuadTreeInsert(hQuadTree, pasGridPoints + i);
+                psContext->pasGridPoints[i].psXYArrays = &(psContext->sXYArrays);
+                psContext->pasGridPoints[i].i = i;
+                CPLQuadTreeInsert(psContext->sExtraParameters.hQuadTree,
+                                  psContext->pasGridPoints + i);
             }
         }
     }
 
+    return psContext;
+}
 
-    GDALGridExtraParameters sExtraParameters;
+/************************************************************************/
+/*                        GDALGridContextFree()                         */
+/************************************************************************/
 
-    sExtraParameters.hQuadTree = hQuadTree;
-    sExtraParameters.dfInitialSearchRadius = dfInitialSearchRadius;
-    sExtraParameters.pafX = pafXAligned;
-    sExtraParameters.pafY = pafYAligned;
-    sExtraParameters.pafZ = pafZAligned;
+/**
+ * Free a context used created by GDALGridContextCreate()
+ *
+ * @param psContext the context.
+ *
+ * @since GDAL 2.1
+ */
+void GDALGridContextFree(GDALGridContext* psContext)
+{
+    if( psContext )
+    {
+        CPLFree( psContext->poOptions );
+        CPLFree( psContext->pasGridPoints );
+        if( psContext->sExtraParameters.hQuadTree != NULL )
+            CPLQuadTreeDestroy( psContext->sExtraParameters.hQuadTree );
+        if( psContext->bFreePadfXYZArrays )
+        {
+            CPLFree(psContext->padfX);
+            CPLFree(psContext->padfY);
+            CPLFree(psContext->padfZ);
+        }
+        CPLFree(psContext->pabyX);
+        CPLFree(psContext->pabyY);
+        CPLFree(psContext->pabyZ);
+        CPLFree(psContext);
+    }
+}
+
+/************************************************************************/
+/*                        GDALGridContextProcess()                      */
+/************************************************************************/
+
+/**
+ * Do the gridding of a window of a raster.
+ *
+ * This function takes the gridding context as input to preprare computation
+ * of regular grid (or call it a raster) from these scattered data.
+ * You should supply the extent of the output grid and allocate array
+ * sufficient to hold such a grid.
+ *
+ * It is possible to set the GDAL_NUM_THREADS
+ * configuration option to parallelize the processing. The value to set is
+ * the number of worker threads, or ALL_CPUS to use all the cores/CPUs of the
+ * computer (default value).
+ *
+ * @param psContext Gridding context.
+ * @param dfXMin Lowest X border of output grid.
+ * @param dfXMax Highest X border of output grid.
+ * @param dfYMin Lowest Y border of output grid.
+ * @param dfYMax Highest Y border of output grid.
+ * @param nXSize Number of columns in output grid.
+ * @param nYSize Number of rows in output grid.
+ * @param eType Data type of output array.  
+ * @param pData Pointer to array where the computed grid will be stored.
+ * @param pfnProgress a GDALProgressFunc() compatible callback function for
+ * reporting progress or NULL.
+ * @param pProgressArg argument to be passed to pfnProgress.  May be NULL.
+ *
+ * @return CE_None on success or CE_Failure if something goes wrong.
+ *
+ * @since GDAL 2.1
+ */
+
+CPLErr GDALGridContextProcess(GDALGridContext* psContext,
+                              double dfXMin, double dfXMax, double dfYMin, double dfYMax,
+                              GUInt32 nXSize, GUInt32 nYSize, GDALDataType eType, void *pData,
+                              GDALProgressFunc pfnProgress, void *pProgressArg )
+{
+    CPLAssert( psContext );
+    CPLAssert( pData );
+
+    if ( pfnProgress == NULL )
+        pfnProgress = GDALDummyProgress;
+
+    if ( nXSize == 0 || nYSize == 0 )
+    {
+        CPLError( CE_Failure, CPLE_IllegalArg,
+                  "Output raster dimesions should have non-zero size." );
+        return CE_Failure;
+    }
 
     const char* pszThreads = CPLGetConfigOption("GDAL_NUM_THREADS", "ALL_CPUS");
     int nThreads;
@@ -1709,6 +1853,9 @@ GDALGridCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
     volatile int nCounter = 0;
     volatile int bStop = FALSE;
 
+    const double    dfDeltaX = ( dfXMax - dfXMin ) / nXSize;
+    const double    dfDeltaY = ( dfYMax - dfYMin ) / nYSize;
+    
     GDALGridJob sJob;
     sJob.nYStart = 0;
     sJob.pabyData = (GByte*) pData;
@@ -1719,13 +1866,13 @@ GDALGridCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
     sJob.dfYMin = dfYMin;
     sJob.dfDeltaX = dfDeltaX;
     sJob.dfDeltaY = dfDeltaY;
-    sJob.nPoints = nPoints;
-    sJob.padfX = padfX;
-    sJob.padfY = padfY;
-    sJob.padfZ = padfZ;
-    sJob.poOptions = poOptions;
-    sJob.pfnGDALGridMethod = pfnGDALGridMethod;
-    sJob.psExtraParameters = &sExtraParameters;
+    sJob.nPoints = psContext->nPoints;
+    sJob.padfX = psContext->padfX;
+    sJob.padfY = psContext->padfY;
+    sJob.padfZ = psContext->padfZ;
+    sJob.poOptions = psContext->poOptions;
+    sJob.pfnGDALGridMethod = psContext->pfnGDALGridMethod;
+    sJob.psExtraParameters = &psContext->sExtraParameters;
     sJob.pfnProgress = NULL;
     sJob.eType = eType;
     sJob.pfnRealProgress = pfnProgress;
@@ -1812,15 +1959,87 @@ GDALGridCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
         CPLDestroyMutex(sJob.hCondMutex);
     }
 
-    CPLFree( pasGridPoints );
-    if( hQuadTree != NULL )
-        CPLQuadTreeDestroy( hQuadTree );
-    
-    CPLFree(pabyX);
-    CPLFree(pabyY);
-    CPLFree(pabyZ);
-
     return bStop ? CE_Failure : CE_None;
+}
+
+/************************************************************************/
+/*                            GDALGridCreate()                          */
+/************************************************************************/
+
+/**
+ * Create regular grid from the scattered data.
+ *
+ * This function takes the arrays of X and Y coordinates and corresponding Z
+ * values as input and computes regular grid (or call it a raster) from these
+ * scattered data. You should supply geometry and extent of the output grid
+ * and allocate array sufficient to hold such a grid.
+ *
+ * Starting with GDAL 1.10, it is possible to set the GDAL_NUM_THREADS
+ * configuration option to parallelize the processing. The value to set is
+ * the number of worker threads, or ALL_CPUS to use all the cores/CPUs of the
+ * computer (default value).
+ *
+ * Starting with GDAL 1.10, on Intel/AMD i386/x86_64 architectures, some
+ * gridding methods will be optimized with SSE instructions (provided GDAL
+ * has been compiled with such support, and it is availabable at runtime).
+ * Currently, only 'invdist' algorithm with default parameters has an optimized
+ * implementation.
+ * This can provide substantial speed-up, but sometimes at the expense of
+ * reduced floating point precision. This can be disabled by setting the
+ * GDAL_USE_SSE configuration option to NO.
+ * Starting with GDAL 1.11, a further optimized version can use the AVX
+ * instruction set. This can be disabled by setting the GDAL_USE_AVX
+ * configuration option to NO.
+ *
+ * Note: it will be more efficient to use GDALGridContextCreate(),
+ * GDALGridContextProcess() and GDALGridContextFree() when doing repeated
+ * gridding operations with the same algorithm, parameters and points, and
+ * moving the window in the output grid.
+ *
+ * @param eAlgorithm Gridding method. 
+ * @param poOptions Options to control choosen gridding method.
+ * @param nPoints Number of elements in input arrays.
+ * @param padfX Input array of X coordinates. 
+ * @param padfY Input array of Y coordinates. 
+ * @param padfZ Input array of Z values. 
+ * @param dfXMin Lowest X border of output grid.
+ * @param dfXMax Highest X border of output grid.
+ * @param dfYMin Lowest Y border of output grid.
+ * @param dfYMax Highest Y border of output grid.
+ * @param nXSize Number of columns in output grid.
+ * @param nYSize Number of rows in output grid.
+ * @param eType Data type of output array.  
+ * @param pData Pointer to array where the computed grid will be stored.
+ * @param pfnProgress a GDALProgressFunc() compatible callback function for
+ * reporting progress or NULL.
+ * @param pProgressArg argument to be passed to pfnProgress.  May be NULL.
+ *
+ * @return CE_None on success or CE_Failure if something goes wrong.
+ */
+
+CPLErr
+GDALGridCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
+                GUInt32 nPoints,
+                const double *padfX, const double *padfY, const double *padfZ,
+                double dfXMin, double dfXMax, double dfYMin, double dfYMax,
+                GUInt32 nXSize, GUInt32 nYSize, GDALDataType eType, void *pData,
+                GDALProgressFunc pfnProgress, void *pProgressArg )
+{
+    CPLErr eErr = CE_Failure;
+    GDALGridContext* psContext = GDALGridContextCreate( eAlgorithm,poOptions,
+                                                        nPoints,
+                                                        padfX, padfY, padfZ,
+                                                        TRUE );
+    if( psContext )
+    {
+        eErr = GDALGridContextProcess( psContext,
+                                       dfXMin, dfXMax, dfYMin, dfYMax,
+                                       nXSize, nYSize, eType, pData,
+                                       pfnProgress, pProgressArg );
+    }
+
+    GDALGridContextFree(psContext);
+    return eErr;
 }
 
 /************************************************************************/

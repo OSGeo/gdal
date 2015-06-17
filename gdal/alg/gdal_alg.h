@@ -472,6 +472,21 @@ GDALGridCreate( GDALGridAlgorithm, const void *, GUInt32,
                 GUInt32, GUInt32, GDALDataType, void *,
                 GDALProgressFunc, void *);
 
+typedef struct GDALGridContext GDALGridContext;
+
+GDALGridContext CPL_DLL*
+GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
+                       GUInt32 nPoints,
+                       const double *padfX, const double *padfY, const double *padfZ,
+                       int bCallerWillKeepPointArraysAlive );
+
+void CPL_DLL GDALGridContextFree(GDALGridContext* psContext);
+
+CPLErr CPL_DLL GDALGridContextProcess(GDALGridContext* psContext,
+                              double dfXMin, double dfXMax, double dfYMin, double dfYMax,
+                              GUInt32 nXSize, GUInt32 nYSize, GDALDataType eType, void *pData,
+                              GDALProgressFunc pfnProgress, void *pProgressArg );
+
 GDAL_GCP CPL_DLL *
 GDALComputeMatchingPoints( GDALDatasetH hFirstImage,
                            GDALDatasetH hSecondImage,
