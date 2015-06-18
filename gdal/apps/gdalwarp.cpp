@@ -93,6 +93,7 @@ gdalwarp [--help-general] [--formats]
     [-csql statement] [-cblend dist_in_pixels] [-crop_to_cutline]
     [-of format] [-co "NAME=VALUE"]* [-overwrite]
     [-nomd] [-cvmd meta_conflict_value] [-setci] [-oo NAME=VALUE]*
+    [-doo NAME=VALUE]*
     srcfile* dstfile
 \endverbatim
 
@@ -225,6 +226,7 @@ Value to set metadata items that conflict between source datasets (default is "*
 <dt> <b>-setci</b>:</dt><dd>(GDAL >= 1.10.0) 
 Set the color interpretation of the bands of the target dataset from the source dataset.</dd>
 <dt> <b>-oo</b> <em>NAME=VALUE</em>:</dt><dd>(starting with GDAL 2.0) Dataset open option (format specific)</dd>
+<dt> <b>-doo</b> <em>NAME=VALUE</em>:</dt><dd>(starting with GDAL 2.1) Output dataset open option (format specific)</dd>
 
 <dt> <em>srcfile</em>:</dt><dd> The source file name(s). </dd>
 <dt> <em>dstfile</em>:</dt><dd> The destination file name. </dd>
@@ -325,6 +327,7 @@ static void Usage(const char* pszErrorMsg = NULL)
         "    [-csql statement] [-cblend dist_in_pixels] [-crop_to_cutline]\n"
         "    [-of format] [-co \"NAME=VALUE\"]* [-overwrite]\n"
         "    [-nomd] [-cvmd meta_conflict_value] [-setci] [-oo NAME=VALUE]*\n"
+        "    [-doo NAME=VALUE]*\n"
         "    srcfile* dstfile\n"
         "\n"
         "Available resampling methods:\n"
@@ -596,6 +599,7 @@ int main( int argc, char ** argv )
     const char           *pszMDConflictValue = "*";
     int                  bSetColorInterpretation = FALSE;
     char               **papszOpenOptions = NULL;
+    char               **papszDestOpenOptions = NULL;
     int                  nOvLevel = -2;
     CPLString            osTE_SRS;
 
@@ -963,6 +967,12 @@ int main( int argc, char ** argv )
             papszOpenOptions = CSLAddString( papszOpenOptions,
                                                 argv[++i] );
         }
+        else if( EQUAL(argv[i], "-doo") )
+        {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            papszDestOpenOptions = CSLAddString( papszDestOpenOptions,
+                                                argv[++i] );
+        }
         else if( EQUAL(argv[i], "-ovr") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
@@ -1069,7 +1079,8 @@ int main( int argc, char ** argv )
     else
     {
         CPLPushErrorHandler( CPLQuietErrorHandler );
-        hDstDS = GDALOpen( pszDstFilename, GA_Update );
+        hDstDS = GDALOpenEx( pszDstFilename, GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR | GDAL_OF_UPDATE,
+                             NULL, papszDestOpenOptions, NULL );
         CPLPopErrorHandler();
     }
 
@@ -1859,6 +1870,7 @@ int main( int argc, char ** argv )
             CSLDestroy( papszWarpOptions );
             CSLDestroy( papszTO );
             CSLDestroy( papszOpenOptions );
+            CSLDestroy( papszDestOpenOptions );
     
             GDALDumpOpenDatasets( stderr );
         
@@ -1915,6 +1927,7 @@ int main( int argc, char ** argv )
     CSLDestroy( papszWarpOptions );
     CSLDestroy( papszTO );
     CSLDestroy( papszOpenOptions );
+    CSLDestroy( papszDestOpenOptions );
 
     GDALDumpOpenDatasets( stderr );
 
