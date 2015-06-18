@@ -442,7 +442,8 @@ class GDALClientDataset: public GDALPamDataset
                             GDALClientDataset(GDALPipe* p);
                             ~GDALClientDataset();
 
-        int                 Init(const char* pszFilename, GDALAccess eAccess);
+        int                 Init(const char* pszFilename, GDALAccess eAccess,
+                                 char** papszOpenOptions);
 
         void                AttachAsyncProgress(GDALServerAsyncProgress* async) { this->async = async; }
         int                 ProcessAsyncProgress();
@@ -1973,12 +1974,15 @@ static int GDALServerLoop(GDALPipe* p,
             int nAccess;
             char* pszFilename = NULL;
             char* pszCWD = NULL;
+            char** papszOpenOptions = NULL;
             if( !GDALPipeRead(p, &nAccess) ||
                 !GDALPipeRead(p, &pszFilename) ||
-                !GDALPipeRead(p, &pszCWD) )
+                !GDALPipeRead(p, &pszCWD) ||
+                !GDALPipeRead(p, &papszOpenOptions) )
             {
                 CPLFree(pszFilename);
                 CPLFree(pszCWD);
+                CSLDestroy(papszOpenOptions);
                 break;
             }
             if( pszCWD != NULL )
@@ -1989,8 +1993,13 @@ static int GDALServerLoop(GDALPipe* p,
             if( poSrcDS != NULL )
                 poDS = poSrcDS;
             else if( poDS == NULL && pszFilename != NULL )
-                poDS = (GDALDataset*) GDALOpen(pszFilename, (GDALAccess)nAccess);
+                poDS = (GDALDataset*) GDALOpenEx(pszFilename,
+                                                 (nAccess == GA_Update) ? GDAL_OF_UPDATE : 0,
+                                                 NULL,
+                                                 papszOpenOptions,
+                                                 NULL);
             CPLFree(pszFilename);
+            CSLDestroy(papszOpenOptions);
             GDALEmitEndOfJunkMarker(p);
             GDALPipeWrite(p, poDS != NULL);
             if( poDS != NULL )
@@ -2197,7 +2206,7 @@ static int GDALServerLoop(GDALPipe* p,
             if( poDriver != NULL )
             {
                 GDALClientDataset* poSrcDS = new GDALClientDataset(p);
-                if( !poSrcDS->Init(NULL, GA_ReadOnly) )
+                if( !poSrcDS->Init(NULL, GA_ReadOnly, NULL) )
                 {
                     delete poSrcDS;
                     CPLFree(pszFilename);
@@ -5518,7 +5527,8 @@ GDALClientDataset* GDALClientDataset::CreateAndConnect()
 /*                                Init()                                */
 /************************************************************************/
 
-int GDALClientDataset::Init(const char* pszFilename, GDALAccess eAccess)
+int GDALClientDataset::Init(const char* pszFilename, GDALAccess eAccess,
+                            char** papszOpenOptions)
 {
     // FIXME find a way of transmitting the relevant config options to the forked Open() ?
     GDALPipeWriteConfigOption(p, "GTIFF_POINT_GEO_IGNORE", bRecycleChild);
@@ -5541,7 +5551,8 @@ int GDALClientDataset::Init(const char* pszFilename, GDALAccess eAccess)
     if( !GDALPipeWrite(p, INSTR_Open) ||
         !GDALPipeWrite(p, eAccess) ||
         !GDALPipeWrite(p, pszFilename) ||
-        !GDALPipeWrite(p, pszCWD))
+        !GDALPipeWrite(p, pszCWD) ||
+        !GDALPipeWrite(p, papszOpenOptions))
     {
         CPLFree(pszCWD);
         return FALSE;
@@ -5748,7 +5759,8 @@ GDALDataset *GDALClientDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
 
     CPLErrorReset();
-    if( !poDS->Init(pszFilename, poOpenInfo->eAccess) )
+    if( !poDS->Init(pszFilename, poOpenInfo->eAccess,
+                    poOpenInfo->papszOpenOptions) )
     {
         if( CPLGetLastErrorType() == 0 )
         {
@@ -5901,7 +5913,7 @@ int GDALClientDataset::mCreateCopy( const char* pszFilename,
 
     GDALConsumeErrors(p);
 
-    return Init(NULL, GA_Update);
+    return Init(NULL, GA_Update, NULL);
 }
 
 /************************************************************************/
@@ -5992,7 +6004,7 @@ int GDALClientDataset::mCreate( const char * pszFilename,
 
     GDALConsumeErrors(p);
 
-    return Init(NULL, GA_Update);
+    return Init(NULL, GA_Update, NULL);
 }
 
 /************************************************************************/
