@@ -186,8 +186,9 @@ OGRFeatureDefn * OGRCARTODBTableLayer::GetLayerDefnInternal(CPL_UNUSED json_obje
                 const char* pszFormatType = poFeat->GetFieldAsString("format_type");
                 int bNotNull = poFeat->GetFieldAsInteger("attnotnull");
                 int bIsPrimary = poFeat->GetFieldAsInteger("indisprimary");
-                const char* pszDefault = (poFeat->IsFieldSet(poLyr->GetLayerDefn()->GetFieldIndex("defaultexpr"))) ?
-                            poFeat->GetFieldAsString("defaultexpr") : NULL;
+                int iDefaultExpr = poLyr->GetLayerDefn()->GetFieldIndex("defaultexpr");
+                const char* pszDefault = (iDefaultExpr >= 0 && poFeat->IsFieldSet(iDefaultExpr)) ?
+                            poFeat->GetFieldAsString(iDefaultExpr) : NULL;
 
                 if( bIsPrimary &&
                     (EQUAL(pszType, "int2") ||
