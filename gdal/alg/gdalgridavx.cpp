@@ -208,7 +208,11 @@ GDALGridInverseDistanceToAPower2NoSmoothingNoSearchAVX(
             if( mask & (1 << j) )
             {
                 (*pdfValue) = (pafZ)[i + j];
+
+                // GCC and MSVC need explicit zeroing
+#if !defined(__clang__)
                 _mm256_zeroupper();
+#endif
                 return CE_None;
             }
         }
@@ -219,7 +223,12 @@ GDALGridInverseDistanceToAPower2NoSmoothingNoSearchAVX(
     float afNominator[8], afDenominator[8];
     _mm256_storeu_ps(afNominator, ymm_nominator);
     _mm256_storeu_ps(afDenominator, ymm_denominator);
+
+    // MSVC doesn't emit AVX afterwards but may use SSE, so clear upper bits
+    // Other compilers will continue using AVX for the below floating points operations
+#if defined(_MSC_FULL_VER)
     _mm256_zeroupper();
+#endif
 
     float fNominator = afNominator[0] + afNominator[1] +
                        afNominator[2] + afNominator[3] +
@@ -264,6 +273,11 @@ GDALGridInverseDistanceToAPower2NoSmoothingNoSearchAVX(
     }
     else
         (*pdfValue) = fNominator / fDenominator;
+
+    // GCC needs explicit zeroing
+#if defined(__GNUC__) && !defined(__clang__)
+    _mm256_zeroupper();
+#endif
 
     return CE_None;
 }
