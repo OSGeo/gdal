@@ -124,8 +124,13 @@ class GDALPythonServerRasterBand:
 
 class GDALPythonServerDataset:
 
-    def __init__(self, filename, access = gdal.GA_ReadOnly):
-        self.gdal_ds = gdal.Open(filename, access)
+    def __init__(self, filename, access = gdal.GA_ReadOnly, open_options = None):
+        nFlags = 0
+        if access == gdal.GA_Update:
+            nFlags |= gdal.OF_UPDATE
+        if open_options is None:
+            open_options = []
+        self.gdal_ds = gdal.OpenEx(filename, nFlags, open_options = open_options)
         if self.gdal_ds is None:
             raise Exception(gdal.GetLastErrorMsg())
         self.RasterXSize = self.gdal_ds.RasterXSize
@@ -254,8 +259,9 @@ INSTR_Band_GetUnitType = 72
 INSTR_Band_GetDefaultRAT = 75
 #INSTR_Band_SetDefaultRAT = 76
 #INSTR_Band_AdviseRead = 77
-INSTR_Band_End = 78
-#INSTR_END = 79
+#INSTR_Band_DeleteNoDataValue=78
+INSTR_Band_End = 79
+#INSTR_END = 80
 
 caps_list = [
     INSTR_GetGDALVersion,
@@ -336,7 +342,7 @@ caps_list = [
     #INSTR_Band_SetDefaultRAT,
     #INSTR_Band_AdviseRead ,
     #INSTR_Band_End,
-    #INSTR_END = 79
+    #INSTR_END = 80
 ]
 
 CE_None = 0
@@ -484,10 +490,10 @@ def main_loop():
                 sys.stderr.write('protovminor=%d\n' % protovminor)
                 sys.stderr.write('extra_bytes=%d\n' % extra_bytes)
 
-            write_str('2.0')
+            write_str('2.1dev')
             write_int(2) # vmajor
-            write_int(0) # vminor
-            write_int(2) # protovmajor
+            write_int(1) # vminor
+            write_int(3) # protovmajor
             write_int(0) # protovminor
             write_int(0) # extra bytes
             continue
@@ -522,15 +528,17 @@ def main_loop():
             access = read_int()
             filename = read_str()
             cwd = read_str()
+            open_options = read_strlist()
             if cwd is not None:
                 os.chdir(cwd)
             if VERBOSE:
                 sys.stderr.write('access=%d\n' % access)
                 sys.stderr.write('filename=%s\n' % filename)
                 sys.stderr.write('cwd=%s\n' % cwd)
+                sys.stderr.write('open_options=%s\n' % str(open_options))
             #sys.stderr.write('Open(%s)\n' % filename)
             try:
-                server_ds = GDALPythonServerDataset(filename, access)
+                server_ds = GDALPythonServerDataset(filename, access, open_options)
             except:
                 server_ds = None
 
