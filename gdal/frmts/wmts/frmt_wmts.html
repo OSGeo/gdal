@@ -141,15 +141,19 @@ It is important that there be no spaces or other content before the <tt>&lt;GDAL
                 <tr>
                         <td class="xml">  &lt;ExtendBeyondDateLine&gt;<span class="value">false</span>&lt;/ExtendBeyondDateLine&gt;</td>
                         <td class="desc">Whether to make the extent go over dateline and warp tile requests.
-                                         Only appropriate when the following conditions are met (optional, defaults to false):
+                                         Only appropriate when the 2 following conditions are met (optional, defaults to false):
                                          <ul>
-                                         <li>for geodetic SRS or EPSG:3857, with tile matrix sets such as
+                                         <li>for a geodetic SRS or EPSG:3857, with tile matrix sets such as
                                          the whole [-180,180] range of longitude is entirely covered by an integral number of tiles
                                          (e.g. GoogleMapsCompatible).</li>
+                                         <li>AND
+                                         <ul>
                                          <li>when the layer BoundingBox in the SRS of the tile matrix set covers the whole [-180,180] range
                                          of longitude, and that there is another BoundingBox in another SRS that is centered around longitude 180.
                                          If such alternate BoundingBox is not present in the GetCapabilities document, DataWindow must be explicitely specified</li>
-                                         </ul></td>
+                                         <li>OR when the layer BoundingBox in the SRS of the tile matrix set extends beyond the dateline.</li>
+                                         </ul>
+                                         </li></ul></td>
                 </tr>
                 <tr>
                         <td class="xml">  &lt;Cache&gt;</td>
