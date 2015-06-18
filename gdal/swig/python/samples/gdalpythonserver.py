@@ -612,13 +612,6 @@ def main_loop():
                     write_double(gt[i])
             else:
                 write_int(CE_Failure)
-                write_int(6 * 8)
-                write_double(0)
-                write_double(1)
-                write_double(0)
-                write_double(0)
-                write_double(0)
-                write_double(1)
         elif instr == INSTR_GetProjectionRef:
             write_marker()
             write_str(server_ds.GetProjectionRef())
