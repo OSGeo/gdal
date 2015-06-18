@@ -1794,7 +1794,11 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
             double dfDateLineX = oTM.dfTLX + oTM.nMatrixWidth * dfTileWidthUnits;
             int nSizeX1 = int(0.5+(dfDateLineX - dfULX) / oTM.dfPixelSize);
             int nSizeX2 = int(0.5+(dfLRX - dfDateLineX) / oTM.dfPixelSize);
-
+            if( dfDateLineX > dfLRX )
+            {
+                CPLDebug("WMTS", "ExtendBeyondDateLine ignored in that case");
+                bExtendBeyondDateLine = FALSE;
+            }
 
 #define WMS_TMS_TEMPLATE \
     "<GDAL_WMS>" \
