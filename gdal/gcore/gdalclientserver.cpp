@@ -406,7 +406,8 @@ CPL_UNUSED
 #ifdef WIN32
     SetCurrentDirectory(pszCWD);
 #else
-    CPLAssert(chdir(pszCWD) == 0);
+    if(chdir(pszCWD) != 0)
+        fprintf(stderr, "chdir(%s) failed\n", pszCWD);
 #endif
 }
 
@@ -2188,7 +2189,11 @@ static int GDALServerLoopInternal(GDALServerInstance* poSrvInstance,
 
             if( pszCWD != NULL )
             {
-                MyChdir(pszCWD);
+                if( pszFilename )
+                {
+                    if( CPLIsFilenameRelative(pszFilename) )
+                        MyChdir(pszCWD);
+                }
                 CPLFree(pszCWD);
             }
             if( poSrcDS != NULL )
@@ -2304,7 +2309,11 @@ static int GDALServerLoopInternal(GDALServerInstance* poSrvInstance,
 
             if( pszCWD != NULL )
             {
-                MyChdir(pszCWD);
+                if( pszFilename )
+                {
+                    if( CPLIsFilenameRelative(pszFilename) )
+                        MyChdir(pszCWD);
+                }
                 CPLFree(pszCWD);
             }
 
@@ -2337,7 +2346,11 @@ static int GDALServerLoopInternal(GDALServerInstance* poSrvInstance,
 
             if( pszCWD != NULL )
             {
-                MyChdir(pszCWD);
+                if( pszFilename )
+                {
+                    if( CPLIsFilenameRelative(pszFilename) )
+                        MyChdir(pszCWD);
+                }
                 CPLFree(pszCWD);
             }
 
@@ -2408,7 +2421,11 @@ static int GDALServerLoopInternal(GDALServerInstance* poSrvInstance,
 
             if( pszCWD != NULL )
             {
-                MyChdir(pszCWD);
+                if( pszFilename )
+                {
+                    if( CPLIsFilenameRelative(pszFilename) )
+                        MyChdir(pszCWD);
+                }
                 CPLFree(pszCWD);
             }
 
@@ -2474,7 +2491,11 @@ static int GDALServerLoopInternal(GDALServerInstance* poSrvInstance,
 
             if( pszCWD != NULL )
             {
-                MyChdir(pszCWD);
+                if( pszFilename )
+                {
+                    if( CPLIsFilenameRelative(pszFilename) )
+                        MyChdir(pszCWD);
+                }
                 CPLFree(pszCWD);
             }
 
