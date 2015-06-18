@@ -92,6 +92,29 @@ def gdal_api_proxy_3():
     return 'success'
 
 ###############################################################################
+# Test -nofork mode
+
+def gdal_api_proxy_4():
+    
+    if sys.version_info < (2,6,0):
+        return 'skip'
+        
+    if sys.platform == 'win32':
+        return 'skip'
+
+    if sys.platform == 'darwin':
+        print("Fails on MacOSX ('ERROR 1: posix_spawnp() failed'. Not sure why.")
+        return 'skip'
+
+    import test_py_scripts
+    ret = test_py_scripts.run_py_script_as_external_script('.', 'gdal_api_proxy', ' \"%s\" -4' % gdaltest.gdalserver_path, display_live_on_parent_stdout = True)
+
+    if ret.find('Failed:    0') == -1:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 #
 def gdal_api_proxy_sub():
 
@@ -304,6 +327,7 @@ def gdal_api_proxy_sub():
 
     if len(ds.GetRasterBand(1).GetMetadata()) != 0:
         gdaltest.post_reason('fail')
+        print(ds.GetRasterBand(1).GetMetadata())
         return 'fail'
 
     if ds.GetRasterBand(1).GetMetadataItem('foo') is not None:
@@ -582,7 +606,8 @@ def gdal_api_proxy_sub_clean():
 
 gdaltest_list = [ gdal_api_proxy_1,
                   gdal_api_proxy_2,
-                  gdal_api_proxy_3 ]
+                  gdal_api_proxy_3,
+                  gdal_api_proxy_4 ]
 
 if __name__ == '__main__':
 
@@ -633,6 +658,28 @@ if __name__ == '__main__':
         import time
 
         p = subprocess.Popen([gdalserver_path, '-unixserver', 'tmp/gdalapiproxysocket'])
+        time.sleep(1)
+        if p.poll() is None:
+            gdal.SetConfigOption('GDAL_API_PROXY', 'YES')
+            gdal.SetConfigOption('GDAL_API_PROXY_SERVER', 'tmp/gdalapiproxysocket')
+            gdaltest.api_proxy_server_p = p
+            gdaltest_list = [ gdal_api_proxy_sub, gdal_api_proxy_sub_clean ]
+        else:
+            try:
+                p.terminate()
+            except:
+                pass
+            p.wait()
+            gdaltest_list = []
+
+    elif len(sys.argv) >= 3 and sys.argv[2] == '-4':
+
+        gdalserver_path = sys.argv[1]
+
+        import subprocess
+        import time
+
+        p = subprocess.Popen([gdalserver_path, '-nofork', '-unixserver', 'tmp/gdalapiproxysocket'])
         time.sleep(1)
         if p.poll() is None:
             gdal.SetConfigOption('GDAL_API_PROXY', 'YES')
