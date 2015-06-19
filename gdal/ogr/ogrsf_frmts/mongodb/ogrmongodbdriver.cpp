@@ -1633,6 +1633,16 @@ void OGRMongoDBLayer::SerializeField(BSONObjBuilder& b,
 }
 
 /************************************************************************/
+/*                       OGRLocaleSafeFromJSON()                        */
+/************************************************************************/
+
+static BSONObj OGRLocaleSafeFromJSON(const char* pszJSon)
+{
+    CPLThreadLocaleC oCLocale;
+    return fromjson(pszJSon);
+}
+
+/************************************************************************/
 /*                        SerializeGeometry()                           */
 /************************************************************************/
 
@@ -1652,7 +1662,7 @@ void OGRMongoDBLayer::SerializeGeometry(BSONObjBuilder& b,
     {
         char* pszJSon = OGR_G_ExportToJson((OGRGeometryH)poGeom);
         if( pszJSon )
-            b.append(pszJSonField, fromjson(pszJSon));
+            b.append(pszJSonField, OGRLocaleSafeFromJSON(pszJSon));
         CPLFree(pszJSon);
     }
 }
@@ -1762,7 +1772,7 @@ BSONObj OGRMongoDBLayer::BuildBSONObjFromFeature(OGRFeature* poFeature, int bUpd
                      osJSon.substr(j+strlen("\" }"));
         }
 
-        BSONObj obj(fromjson(osJSon));
+        BSONObj obj(OGRLocaleSafeFromJSON(osJSon));
         if( (m_bIgnoreSourceID || !obj.hasField("_id")) && !bUpdate )
         {
             const OID generated = OID::gen();
@@ -1988,7 +1998,7 @@ OGRErr OGRMongoDBLayer::SetAttributeFilter(const char* pszFilter)
         OGRLayer::SetAttributeFilter(NULL);
         try
         {
-            m_oQueryAttr = fromjson(pszFilter);
+            m_oQueryAttr = OGRLocaleSafeFromJSON(pszFilter);
             return OGRERR_NONE;
         }
         catch( const DBException &e )
@@ -2049,7 +2059,7 @@ void OGRMongoDBLayer::SetSpatialFilter( int iGeomField, OGRGeometry * poGeomIn )
         {
             if( m_aosGeomIndexes[m_iGeomFieldFilter] == "2dsphere" )
             {
-                m_oQuerySpat = fromjson(CPLSPrintf("{ \"%s\" : { $geoIntersects : "
+                m_oQuerySpat = OGRLocaleSafeFromJSON(CPLSPrintf("{ \"%s\" : { $geoIntersects : "
                 "{ $geometry : { type : \"Polygon\" , coordinates : [["
                 "[%.16g,%.16g],[%.16g,%.16g],[%.16g,%.16g],[%.16g,%.16g],[%.16g,%.16g]]] } } } }",
                               m_poFeatureDefn->GetGeomFieldDefn(iGeomField)->GetNameRef(),
@@ -2061,7 +2071,7 @@ void OGRMongoDBLayer::SetSpatialFilter( int iGeomField, OGRGeometry * poGeomIn )
             }
             else if( m_aosGeomIndexes[m_iGeomFieldFilter] == "2d" )
             {
-                m_oQuerySpat = fromjson(CPLSPrintf("{ \"%s\" : { $geoWithin : "
+                m_oQuerySpat = OGRLocaleSafeFromJSON(CPLSPrintf("{ \"%s\" : { $geoWithin : "
                 "{ $box : [ [ %.16g , %.16g ] , [ %.16g , %.16g ] ] } } }",
                               m_poFeatureDefn->GetGeomFieldDefn(iGeomField)->GetNameRef(),
                               sEnvelope.MinX, sEnvelope.MinY,
@@ -2400,7 +2410,7 @@ int OGRMongoDBDataSource::Open(const char* pszFilename,
              *     "serviceHostname": The GSSAPI hostname to use.  Defaults to the name of the remote
              *          host.
              */
-            m_poConn->auth(fromjson(pszAuthJSON));
+            m_poConn->auth(OGRLocaleSafeFromJSON(pszAuthJSON));
         }
         catch( const DBException &e)
         {
@@ -2775,7 +2785,7 @@ OGRLayer* OGRMongoDBDataSource::ExecuteSQL( const char *pszSQLCommand,
         BSONObj info;
         try
         {
-            m_poConn->runCommand(m_osDatabase, fromjson(pszSQLCommand), info);
+            m_poConn->runCommand(m_osDatabase, OGRLocaleSafeFromJSON(pszSQLCommand), info);
             return new OGRMongoDBSingleFeatureLayer(info.jsonString().c_str());
         }
         catch( const DBException &e)
