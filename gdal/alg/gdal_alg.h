@@ -543,7 +543,7 @@ typedef struct
     GDALTriBarycentricCoefficients *pasFacetCoefficients; /* nFacets elements */
 } GDALTriangulation;
 
-int CPL_DLL GDALHasTriangulation();
+int CPL_DLL GDALHasTriangulation(void);
 
 GDALTriangulation CPL_DLL *GDALTriangulationCreateDelaunay(int nPoints,
                                                            const double* padfX,
@@ -572,7 +572,7 @@ int CPL_DLL GDALTriangulationFindFacetDirected( const GDALTriangulation* psDT,
 void CPL_DLL GDALTriangulationFree(GDALTriangulation* psDT);
 
 // GDAL internal use only
-void GDALTriangulationTerminate();
+void GDALTriangulationTerminate(void);
 
 CPL_C_END
                             
