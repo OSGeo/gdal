@@ -161,6 +161,27 @@ AC_LANG_POP(C++)
 
 AC_CHECK_FUNC(setlocale)
 
+AC_MSG_CHECKING([for uselocale])
+AC_TRY_COMPILE(
+  [
+#define _XOPEN_SOURCE 700
+#include <locale.h>
+  ], [
+    locale_t alocale = newlocale (LC_NUMERIC_MASK, "C", 0);
+    locale_t oldlocale = uselocale(alocale);
+    uselocale(oldlocale);
+    freelocale(alocale);
+    return 0;
+  ],
+  [
+    AC_MSG_RESULT([yes])
+    AC_DEFINE_UNQUOTED(HAVE_USELOCALE, 1,
+          [Define to 1 if you have the `uselocale' function.])
+  ], [
+    AC_MSG_RESULT([no])
+])
+
+
 OPT_GDAL_FORMATS=
 EXTRA_INCLUDES=
 

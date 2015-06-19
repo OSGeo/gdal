@@ -27,6 +27,10 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
+
+// For uselocale
+#define _XOPEN_SOURCE 700 
+
 #ifdef MSVC_USE_VLD
 #include <vld.h>
 #endif
@@ -2604,6 +2608,68 @@ CPLLocaleC::~CPLLocaleC()
         CPLsetlocale( LC_NUMERIC, pszOldLocale );
         CPLFree( pszOldLocale );
     }
+}
+
+
+/************************************************************************/
+/*                        CPLThreadLocaleC()                            */
+/************************************************************************/
+
+CPLThreadLocaleC::CPLThreadLocaleC()
+
+{
+#ifdef HAVE_USELOCALE
+    nNewLocale = newlocale (LC_NUMERIC_MASK, "C", 0);
+    nOldLocale = uselocale(nNewLocale);
+#else
+
+#if defined(_MSC_VER)
+    nOldValConfigThreadLocale = _configthreadlocale(_ENABLE_PER_THREAD_LOCALE);
+    pszOldLocale = setlocale(LC_NUMERIC, "C");
+    if( pszOldLocale )
+        pszOldLocale = CPLStrdup(pszOldLocale);
+#else
+    pszOldLocale = CPLStrdup(CPLsetlocale(LC_NUMERIC,NULL));
+    if( EQUAL(pszOldLocale,"C")
+        || EQUAL(pszOldLocale,"POSIX")
+        || CPLsetlocale(LC_NUMERIC,"C") == NULL )
+    {
+        CPLFree( pszOldLocale );
+        pszOldLocale = NULL;
+    }
+#endif
+
+#endif
+}
+
+/************************************************************************/
+/*                       ~CPLThreadLocaleC()                            */
+/************************************************************************/
+
+CPLThreadLocaleC::~CPLThreadLocaleC()
+
+{
+#ifdef HAVE_USELOCALE
+    uselocale(nOldLocale);
+    freelocale(nNewLocale);
+#else
+
+#if defined(_MSC_VER)
+    if( pszOldLocale != NULL )
+    {
+        setlocale(LC_NUMERIC, pszOldLocale);
+        CPLFree( pszOldLocale );
+    }
+    _configthreadlocale(nOldValConfigThreadLocale);
+#else
+    if( pszOldLocale != NULL )
+    {
+        CPLsetlocale( LC_NUMERIC, pszOldLocale );
+        CPLFree( pszOldLocale );
+    }
+#endif
+
+#endif
 }
 
 
