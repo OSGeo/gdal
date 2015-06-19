@@ -1546,7 +1546,7 @@ struct GDALGridContext
     void               *pabyY;
     void               *pabyZ;
 
-    WorkerThreadPool   *poWorkerThreadPool;
+    CPLWorkerThreadPool *poWorkerThreadPool;
 };
 
 static void GDALGridContextCreateQuadTree(GDALGridContext* psContext);
@@ -1865,7 +1865,7 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
         nThreads = 128;
     if( nThreads > 1 )
     {
-        psContext->poWorkerThreadPool = new WorkerThreadPool();
+        psContext->poWorkerThreadPool = new CPLWorkerThreadPool();
         if( !psContext->poWorkerThreadPool->Setup(nThreads, NULL, NULL) )
         {
             delete psContext->poWorkerThreadPool;

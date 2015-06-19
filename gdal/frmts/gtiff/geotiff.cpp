@@ -373,7 +373,7 @@ class GTiffDataset : public GDALPamDataset
     void           DiscardLsb(GByte* pabyBuffer, int nBytes, int iBand);
     void           GetDiscardLsbOption(char** papszOptions);
     
-    WorkerThreadPool *poCompressThreadPool;
+    CPLWorkerThreadPool *poCompressThreadPool;
     std::vector<GTiffCompressionJob> asCompressionJobs;
     CPLMutex      *hCompressThreadPoolMutex;
     void           InitCompressionThreads(char** papszOptions);
@@ -5617,7 +5617,7 @@ void GTiffDataset::InitCompressionThreads(char** papszOptions)
             else
             {
                 CPLDebug("GTiff", "Using %d threads for compression", nThreads);
-                poCompressThreadPool = new WorkerThreadPool();
+                poCompressThreadPool = new CPLWorkerThreadPool();
                 if( !poCompressThreadPool->Setup(nThreads, NULL, NULL) )
                 {
                     delete poCompressThreadPool;
