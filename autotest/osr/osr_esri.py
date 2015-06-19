@@ -1310,7 +1310,8 @@ def osr_esri_28():
     # 1SP transformed to 2SP form !
     srs.MorphToESRI()
     got_wkt = srs.ExportToPrettyWkt()
-    if got_wkt != """PROJCS["Segara_Jakarta_NEIEZ_deprecated",
+    # Do not do exact test because of subtle difference of precision among compilers
+    if got_wkt.find("""PROJCS["Segara_Jakarta_NEIEZ_deprecated",
     GEOGCS["GCS_Segara (Jakarta)",
         DATUM["D_Gunung_Segara",
             SPHEROID["Bessel_1841",6377397.155,299.1528128]],
@@ -1320,15 +1321,15 @@ def osr_esri_28():
     PARAMETER["central_meridian",110],
     PARAMETER["false_easting",3900000],
     PARAMETER["false_northing",900000],
-    PARAMETER["standard_parallel_1",7.985562678700922],
-    UNIT["Meter",1]]""":
+    PARAMETER["standard_parallel_1",7.9855626787""") != 0:
         gdaltest.post_reason('fail')
         print(got_wkt)
         return 'fail'
 
     srs.MorphFromESRI()
     got_wkt = srs.ExportToPrettyWkt()
-    if got_wkt != """PROJCS["Segara_Jakarta_NEIEZ_deprecated",
+    # Do not do exact test because of subtle difference of precision among compilers
+    if got_wkt.find("""PROJCS["Segara_Jakarta_NEIEZ_deprecated",
     GEOGCS["GCS_Segara (Jakarta)",
         DATUM["Gunung_Segara",
             SPHEROID["Bessel_1841",6377397.155,299.1528128]],
@@ -1338,8 +1339,7 @@ def osr_esri_28():
     PARAMETER["central_meridian",110],
     PARAMETER["false_easting",3900000],
     PARAMETER["false_northing",900000],
-    PARAMETER["standard_parallel_1",7.985562678700922],
-    UNIT["Meter",1]]""":
+    PARAMETER["standard_parallel_1",7.9855626787""") != 0:
         gdaltest.post_reason('fail')
         print(got_wkt)
         return 'fail'
