@@ -34,13 +34,18 @@ typedef struct
 {
     CPLThreadFunc  pfnFunc;
     void          *pData;
-} WorkerThreadJob;
+} CPLWorkerThreadJob;
 
 /************************************************************************/
-/*                             WorkerThreadPool()                       */
+/*                         CPLWorkerThreadPool()                        */
 /************************************************************************/
 
-WorkerThreadPool::WorkerThreadPool()
+/** Instanciate a new pool of worker threads.
+ *
+ * The pool is in an uninitialized state after this call. The Setup() method
+ * must be called.
+ */
+CPLWorkerThreadPool::CPLWorkerThreadPool()
 {
     hCond = NULL;
     hCondWarnSubmitter = NULL;
@@ -52,10 +57,14 @@ WorkerThreadPool::WorkerThreadPool()
 }
 
 /************************************************************************/
-/*                            ~WorkerThreadPool()                       */
+/*                          ~CPLWorkerThreadPool()                      */
 /************************************************************************/
 
-WorkerThreadPool::~WorkerThreadPool()
+/** Destroys a pool of worker threads.
+ *
+ * Any still pending job will be completed before the destructor returns.
+ */
+CPLWorkerThreadPool::~CPLWorkerThreadPool()
 {
     if( hCond )
     {
@@ -79,13 +88,13 @@ WorkerThreadPool::~WorkerThreadPool()
 }
 
 /************************************************************************/
-/*                        WorkerThreadFunction()                        */
+/*                       WorkerThreadFunction()                         */
 /************************************************************************/
 
-void WorkerThreadPool::WorkerThreadFunction(void* user_data)
+void CPLWorkerThreadPool::WorkerThreadFunction(void* user_data)
 {
-    WorkerThread* psWT = (WorkerThread* ) user_data;
-    WorkerThreadPool* poTP = psWT->poTP;
+    CPLWorkerThread* psWT = (CPLWorkerThread* ) user_data;
+    CPLWorkerThreadPool* poTP = psWT->poTP;
 
     if( psWT->pfnInitFunc )
         psWT->pfnInitFunc( psWT->pInitData );
@@ -111,7 +120,7 @@ void WorkerThreadPool::WorkerThreadFunction(void* user_data)
             break;
         if( psItem )
         {
-            WorkerThreadJob* psJob = (WorkerThreadJob*)psItem->pData;
+            CPLWorkerThreadJob* psJob = (CPLWorkerThreadJob*)psItem->pData;
             if( psJob && psJob->pfnFunc )
             {
                 psJob->pfnFunc(psJob->pData);
@@ -131,11 +140,16 @@ void WorkerThreadPool::WorkerThreadFunction(void* user_data)
 /*                             SubmitJob()                              */
 /************************************************************************/
 
-void WorkerThreadPool::SubmitJob(CPLThreadFunc pfnFunc, void* pData)
+/** Queue a new job.
+ *
+ * @param pfnFunc Function to run for the job.
+ * @param pData User data to pass to the job function.
+ */
+void CPLWorkerThreadPool::SubmitJob(CPLThreadFunc pfnFunc, void* pData)
 {
     CPLAssert( aWT.size() > 0 );
 
-    WorkerThreadJob* psJob = (WorkerThreadJob*)CPLMalloc(sizeof(WorkerThreadJob));
+    CPLWorkerThreadJob* psJob = (CPLWorkerThreadJob*)CPLMalloc(sizeof(CPLWorkerThreadJob));
     psJob->pfnFunc = pfnFunc;
     psJob->pData = pData;
     CPLList* psItem = (CPLList*) CPLMalloc(sizeof(CPLList));
@@ -153,7 +167,13 @@ void WorkerThreadPool::SubmitJob(CPLThreadFunc pfnFunc, void* pData)
 /*                            WaitCompletion()                          */
 /************************************************************************/
 
-void WorkerThreadPool::WaitCompletion(int nMaxRemainingJobs)
+/** Wait for completion of part or whole jobs.
+ *
+ * @param nMaxRemainingJobs Maximum number of pendings jobs that are allowed
+ *                          in the queue after this method has completed. Might be
+ *                          0 to wait for all jobs.
+ */
+void CPLWorkerThreadPool::WaitCompletion(int nMaxRemainingJobs)
 {
     if( nMaxRemainingJobs < 0 )
         nMaxRemainingJobs = 0;
@@ -173,7 +193,15 @@ void WorkerThreadPool::WaitCompletion(int nMaxRemainingJobs)
 /*                                Setup()                               */
 /************************************************************************/
 
-int WorkerThreadPool::Setup(int nThreads,
+/** Setup the pool.
+ *
+ * @param nThreads Number of threads to launch
+ * @param pfnInitFunc Initialization function to run in each thread. May be NULL
+ * @param pasInitData Array of initialization data. Its length must be nThreads,
+ *                    or it should be NULL.
+ * @return TRUE if initialization was successful.
+ */
+int CPLWorkerThreadPool::Setup(int nThreads,
                             CPLThreadFunc pfnInitFunc,
                             void** pasInitData)
 {

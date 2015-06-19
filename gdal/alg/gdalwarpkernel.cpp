@@ -265,7 +265,7 @@ static void GWKThreadInitTransformer(void* pData)
 
 typedef struct
 {
-    WorkerThreadPool* poThreadPool;
+    CPLWorkerThreadPool* poThreadPool;
     GWKJobStruct* pasThreadJob;
     CPLCond* hCond;
     CPLMutex* hCondMutex;
@@ -320,7 +320,7 @@ void* GWKThreadsCreate(char** papszWarpOptions,
             apInitData.push_back(&(psThreadData->pasThreadJob[i]));
         }
 
-        psThreadData->poThreadPool = new WorkerThreadPool();
+        psThreadData->poThreadPool = new CPLWorkerThreadPool();
         psThreadData->poThreadPool->Setup(nThreads,
                                           GWKThreadInitTransformer,
                                           &apInitData[0]);

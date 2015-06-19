@@ -34,19 +34,26 @@
 #include "cpl_list.h"
 #include <vector>
 
-class WorkerThreadPool;
+/**
+ * \file cpl_worker_thread_pool.h
+ *
+ * Class to manage a pool of worker threads.
+ * @since GDAL 2.1
+ */
+
+class CPLWorkerThreadPool;
 
 typedef struct
 {
-    CPLThreadFunc      pfnInitFunc;
-    void              *pInitData;
-    WorkerThreadPool  *poTP;
-    CPLJoinableThread *hThread;
-} WorkerThread;
+    CPLThreadFunc        pfnInitFunc;
+    void                *pInitData;
+    CPLWorkerThreadPool *poTP;
+    CPLJoinableThread   *hThread;
+} CPLWorkerThread;
 
-class CPL_DLL WorkerThreadPool
+class CPL_DLL CPLWorkerThreadPool
 {
-        std::vector<WorkerThread> aWT;
+        std::vector<CPLWorkerThread> aWT;
         CPLCond* hCond;
         CPLCond* hCondWarnSubmitter;
         CPLMutex* hCondMutex;
@@ -57,8 +64,8 @@ class CPL_DLL WorkerThreadPool
         static void WorkerThreadFunction(void* user_data);
 
     public:
-        WorkerThreadPool();
-       ~WorkerThreadPool();
+        CPLWorkerThreadPool();
+       ~CPLWorkerThreadPool();
 
         int  Setup(int nThreads,
                    CPLThreadFunc pfnInitFunc,
