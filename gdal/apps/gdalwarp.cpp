@@ -127,7 +127,9 @@ available GCPs.</dd>
 <dt> <b>-rpc</b>:</dt> <dd>Force use of RPCs.</dd>
 <dt> <b>-geoloc</b>:</dt><dd>Force use of Geolocation Arrays.</dd>
 <dt> <b>-et</b> <em>err_threshold</em>:</dt><dd> error threshold for
-transformation approximation (in pixel units - defaults to 0.125).</dd>
+transformation approximation (in pixel units - defaults to 0.125, unless, starting
+with GDAL 2.1, the RPC_DEM warping option is specified, in which case, an exact
+transformer, i.e. err_threshold=0, will be used).</dd>
 <dt> <b>-refine_gcps</b> <em>tolerance minimum_gcps</em>:</dt><dd>  (GDAL >= 1.9.0) refines the GCPs by automatically eliminating outliers.
 Outliers will be eliminated until minimum_gcps are left or when no outliers can be detected.
 The tolerance is passed to adjust when a GCP will be eliminated.
@@ -578,7 +580,7 @@ int main( int argc, char ** argv )
     int                 bCreateOutput = FALSE, i;
     void               *hTransformArg = NULL;
     char               **papszWarpOptions = NULL;
-    double             dfErrorThreshold = 0.125;
+    double             dfErrorThreshold = -1;
     double             dfWarpMemoryLimit = 0.0;
     GDALTransformerFunc pfnTransformer = NULL;
     char                **papszCreateOptions = NULL;
@@ -1015,6 +1017,15 @@ int main( int argc, char ** argv )
             printf("-ts values have minx >= maxx. This will result in a horizontally flipped image.\n");
         if( dfMinY >= dfMaxY )
             printf("-ts values have miny >= maxy. This will result in a vertically flipped image.\n");
+    }
+
+    if( dfErrorThreshold < 0 )
+    {
+        // By default, use approximate transformer unless RPC_DEM is specified
+        if( CSLFetchNameValue(papszWarpOptions, "RPC_DEM") != NULL )
+            dfErrorThreshold = 0.0;
+        else
+            dfErrorThreshold = 0.125;
     }
 
 /* -------------------------------------------------------------------- */
