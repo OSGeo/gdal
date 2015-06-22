@@ -322,8 +322,10 @@ static void RPCTransformPoint( const GDALRPCTransformInfo *psRPCTransformInfo,
         / RPCEvaluate( padfTerms, psRPCTransformInfo->sRPC.adfLINE_DEN_COEFF );
 #endif
     
-    *pdfPixel = dfResultX * psRPCTransformInfo->sRPC.dfSAMP_SCALE + psRPCTransformInfo->sRPC.dfSAMP_OFF;
-    *pdfLine = dfResultY * psRPCTransformInfo->sRPC.dfLINE_SCALE + psRPCTransformInfo->sRPC.dfLINE_OFF;
+    // RPCs are using the center of upper left pixel = 0,0 convention
+    // convert to top left corner = 0,0 convention used in GDAL
+    *pdfPixel = dfResultX * psRPCTransformInfo->sRPC.dfSAMP_SCALE + psRPCTransformInfo->sRPC.dfSAMP_OFF + 0.5;
+    *pdfLine = dfResultY * psRPCTransformInfo->sRPC.dfLINE_SCALE + psRPCTransformInfo->sRPC.dfLINE_OFF + 0.5;
 }
 
 /************************************************************************/
@@ -765,14 +767,18 @@ int GDALRPCGetDEMHeight( GDALRPCTransformInfo *psTransform,
 
     int bands[1] = {1};
 
-    int dX = int(dfX);
-    int dY = int(dfY);
     double dfDEMH(0);
-    double dfDeltaX = dfX - dX;
-    double dfDeltaY = dfY - dY;
-    
+
     if(psTransform->eResampleAlg == DRA_Cubic)
     {
+        // convert from upper left corner of pixel coordinates to center of pixel coordinates:
+        dfX -= 0.5;
+        dfY -= 0.5;
+        int dX = int(dfX);
+        int dY = int(dfY);
+        double dfDeltaX = dfX - dX;
+        double dfDeltaY = dfY - dY;
+
         int dXNew = dX - 1;
         int dYNew = dY - 1;
         if (!(dXNew >= 0 && dYNew >= 0 && dXNew + 4 <= nRasterXSize && dYNew + 4 <= nRasterYSize))
@@ -821,6 +827,14 @@ int GDALRPCGetDEMHeight( GDALRPCTransformInfo *psTransform,
     }
     else if(psTransform->eResampleAlg == DRA_Bilinear)
     {
+        // convert from upper left corner of pixel coordinates to center of pixel coordinates:
+        dfX -= 0.5;
+        dfY -= 0.5;
+        int dX = int(dfX);
+        int dY = int(dfY);
+        double dfDeltaX = dfX - dX;
+        double dfDeltaY = dfY - dY;
+
         if (!(dX >= 0 && dY >= 0 && dX + 2 <= nRasterXSize && dY + 2 <= nRasterYSize))
         {
             return FALSE;
@@ -859,6 +873,8 @@ int GDALRPCGetDEMHeight( GDALRPCTransformInfo *psTransform,
     }
     else
     {
+        int dX = (int) (dfX);
+        int dY = (int) (dfY);
         if (!(dX >= 0 && dY >= 0 && dX < nRasterXSize && dY < nRasterYSize))
         {
             return FALSE;
@@ -916,23 +932,24 @@ static int GDALRPCTransformWholeLineWithDEM( GDALRPCTransformInfo *psTransform,
     double dfNoDataValue = 0;
     dfNoDataValue = psTransform->poDS->GetRasterBand(1)->GetNoDataValue( &bGotNoDataValue );
 
+    // dfY in pixel center convention
     double dfY = psTransform->adfDEMReverseGeoTransform[3] +
-                        padfY[0] * psTransform->adfDEMReverseGeoTransform[5];
+                        padfY[0] * psTransform->adfDEMReverseGeoTransform[5] - 0.5;
     int nY = int(dfY);
     double dfDeltaY = dfY - nY;
 
     for( i = 0; i < nPointCount; i++ )
     {
-        double dfX = psTransform->adfDEMReverseGeoTransform[0] +
-                        padfX[i] * psTransform->adfDEMReverseGeoTransform[1];
-
         double dfDEMH(0);
-
-        int nX = int(dfX);
-        double dfDeltaX = dfX - nX;
 
         if(psTransform->eResampleAlg == DRA_Cubic)
         {
+            // dfX in pixel center convention
+            double dfX = psTransform->adfDEMReverseGeoTransform[0] +
+                            padfX[i] * psTransform->adfDEMReverseGeoTransform[1] - 0.5;
+            int nX = int(dfX);
+            double dfDeltaX = dfX - nX;
+
             int nXNew = nX - 1;
 
             double dfSumH(0), dfSumWeight(0);
@@ -973,6 +990,11 @@ static int GDALRPCTransformWholeLineWithDEM( GDALRPCTransformInfo *psTransform,
         }
         else if(psTransform->eResampleAlg == DRA_Bilinear)
         {
+            // dfX in pixel center convention
+            double dfX = psTransform->adfDEMReverseGeoTransform[0] +
+                            padfX[i] * psTransform->adfDEMReverseGeoTransform[1] - 0.5;
+            int nX = int(dfX);
+            double dfDeltaX = dfX - nX;
 
             //bilinear interpolation
             double adfElevData[4];
@@ -1033,6 +1055,10 @@ static int GDALRPCTransformWholeLineWithDEM( GDALRPCTransformInfo *psTransform,
         }
         else
         {
+            double dfX = psTransform->adfDEMReverseGeoTransform[0] +
+                            padfX[i] * psTransform->adfDEMReverseGeoTransform[1];
+            int nX = int(dfX);
+
             dfDEMH = padfDEMBuffer[nX - nXLeft];
             if( bGotNoDataValue && ARE_REAL_EQUAL(dfNoDataValue, dfDEMH) )
             {
@@ -1159,6 +1185,14 @@ int GDALRPCTransform( void *pTransformArg, int bDstToSrc,
                 GDALApplyGeoTransform( psTransform->adfDEMReverseGeoTransform,
                                     dfMaxX, padfY[0], &dfX2, &dfY2 );
 
+                // convert to center of pixel convention for reading the image data
+                if( psTransform->eResampleAlg != DRA_NearestNeighbour )
+                {
+                    dfX1 -= 0.5;
+                    dfY1 -= 0.5;
+                    dfX2 -= 0.5;
+                    dfY2 -= 0.5;
+                }
                 int nXLeft = int(floor(dfX1));
                 int nXRight = int(floor(dfX2));
                 int nXWidth = nXRight - nXLeft + 1;
@@ -1177,7 +1211,9 @@ int GDALRPCTransform( void *pTransformArg, int bDstToSrc,
                     nYHeight = 2;
                 }
                 else
+                {
                     nYHeight = 1;
+                }
                 if( nXLeft >= 0 && nXLeft + nXWidth <= psTransform->poDS->GetRasterXSize() &&
                     nYTop >= 0 && nYTop + nYHeight <= psTransform->poDS->GetRasterYSize() )
                 {

@@ -305,8 +305,23 @@ char** GDALMDReaderPleiades::LoadRPCXmlFile()
     int i, j;
     for( i = 0; apszRPBMap[i] != NULL; i += 2 )
     {
-        papszRPB = CSLAddNameValue(papszRPB, apszRPBMap[i],
-                        CSLFetchNameValue(papszRawRPCList, apszRPBMap[i + 1]));
+        // Pleiades RPCs use "center of upper left pixel is 1,1" convention, convert to
+        // Digital globe convention of "center of upper left pixel is 0,0".
+        if (i == 0 || i == 2)
+        {
+            CPLString osField;
+            const char *pszOffset = CSLFetchNameValue(papszRawRPCList,
+                                                    apszRPBMap[i + 1]);
+            osField.Printf( "%.15g", CPLAtofM( pszOffset ) -1.0 );
+            papszRPB = CSLAddNameValue( papszRPB, apszRPBMap[i], osField );
+        }
+        else
+        {
+            papszRPB = CSLAddNameValue(papszRPB, apszRPBMap[i],
+                                    CSLFetchNameValue(papszRawRPCList,
+                                                        apszRPBMap[i + 1]));
+        }
+	
     }
 
     // merge coefficients
