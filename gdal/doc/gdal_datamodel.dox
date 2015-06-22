@@ -255,6 +255,8 @@ items defining the model are:
 
 These fields are directly derived from the document prospective GeoTIFF RPC document (http://geotiff.maptools.org/rpc_prop.html) which in turn is closely modelled on the NITF RPC00B definition.
 
+The line and pixel offset expressed with LINE_OFF and SAMP_OFF are with respect to the center of the pixel.
+
 \subsubsection gdal_datamodel_subdatasets IMAGERY Domain
 
 For satellite or aerial imagery the IMAGERY Domain may be present. It depends on exist special metadata files near the image file. The files at the same directory with image file tested by the set of metadata readers, if files can be processed by the metadata reader, it fill the IMAGERY Domain with the following items:
