@@ -1003,6 +1003,13 @@ def osr_esri_test_ogc_esri_ogc( ifile, ofile_base, fix_config='NO', check_epsg=F
         srs1 = osr.SpatialReference()
         if srs1.ImportFromEPSG( epsg_code ) != 0:
             continue
+
+        # Mercator_1SP gets translate to 2SP form in MorphToESRI (#4861)
+        # so no easy way to check
+        proj1 = srs1.GetAttrValue( 'PROJCS|PROJECTION' )
+        if proj1 == 'Mercator_1SP':
+            continue
+
         wkt1 = srs1.ExportToWkt()
 
         #morph to ESRI
@@ -1020,9 +1027,8 @@ def osr_esri_test_ogc_esri_ogc( ifile, ofile_base, fix_config='NO', check_epsg=F
         if srs1.GetProjParm( 'rectified_grid_angle' ) != 0:
             srs3.SetProjParm( 'rectified_grid_angle', srs1.GetProjParm( 'rectified_grid_angle' ) )
             wkt3 = srs3.ExportToWkt()
-        #missing scale_factor for Mercator_1SP (e.g. EPSG:2934) and Polar_Stereographic (e.g. EPSG:3031)
-        proj1 = srs1.GetAttrValue( 'PROJCS|PROJECTION' )
-        if proj1 == 'Mercator_1SP' or proj1 == 'Polar_Stereographic':
+        #missing scale_factor for Polar_Stereographic (e.g. EPSG:3031)
+        if proj1 == 'Polar_Stereographic':
             if srs1.GetProjParm( 'scale_factor' ) != 0:
                 srs3.SetProjParm( 'scale_factor', srs1.GetProjParm( 'scale_factor' ) )
                 wkt3 = srs3.ExportToWkt()
@@ -1210,7 +1216,136 @@ def osr_esri_26():
         return 'fail'
 
     return 'success'
-   
+
+###############################################################################
+# Test Mercator_2SP (#4861)
+def osr_esri_27():
+    
+    esri_wkt = """PROJCS["Batavia_NEIEZ",
+    GEOGCS["GCS_Batavia",
+        DATUM["D_Batavia",
+            SPHEROID["Bessel_1841",6377397.155,299.1528128]],
+        PRIMEM["Greenwich",0.0],
+        UNIT["Degree",0.0174532925199433]],
+    PROJECTION["Mercator"],
+    PARAMETER["False_Easting",3900000.0],
+    PARAMETER["False_Northing",900000.0],
+    PARAMETER["Central_Meridian",110.0],
+    PARAMETER["Standard_Parallel_1",4.45405154589751],
+    UNIT["Meter",1.0]]"""
+
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput(esri_wkt)
+    srs.MorphFromESRI()
+    
+    got_wkt = srs.ExportToPrettyWkt()
+    if got_wkt != """PROJCS["Batavia_NEIEZ",
+    GEOGCS["GCS_Batavia",
+        DATUM["Batavia",
+            SPHEROID["Bessel_1841",6377397.155,299.1528128]],
+        PRIMEM["Greenwich",0.0],
+        UNIT["Degree",0.0174532925199433]],
+    PROJECTION["Mercator_2SP"],
+    PARAMETER["False_Easting",3900000.0],
+    PARAMETER["False_Northing",900000.0],
+    PARAMETER["Central_Meridian",110.0],
+    PARAMETER["Standard_Parallel_1",4.45405154589751],
+    UNIT["Meter",1.0]]""":
+        gdaltest.post_reason('fail')
+        print(got_wkt)
+        return 'fail'
+        
+    srs.MorphToESRI()
+    got_wkt = srs.ExportToPrettyWkt()
+    if got_wkt != """PROJCS["Batavia_NEIEZ",
+    GEOGCS["GCS_Batavia",
+        DATUM["D_Batavia",
+            SPHEROID["Bessel_1841",6377397.155,299.1528128]],
+        PRIMEM["Greenwich",0.0],
+        UNIT["Degree",0.017453292519943295]],
+    PROJECTION["Mercator"],
+    PARAMETER["False_Easting",3900000.0],
+    PARAMETER["False_Northing",900000.0],
+    PARAMETER["Central_Meridian",110.0],
+    PARAMETER["Standard_Parallel_1",4.45405154589751],
+    UNIT["Meter",1.0]]""":
+        gdaltest.post_reason('fail')
+        print(got_wkt)
+        return 'fail'
+
+    return 'success'
+
+
+###############################################################################
+# Test Mercator_1SP (#4861)
+
+def osr_esri_28():
+    
+    ogc_wkt = """PROJCS["Segara (Jakarta) / NEIEZ (deprecated)",
+    GEOGCS["Segara (Jakarta)",
+        DATUM["Gunung_Segara_Jakarta",
+            SPHEROID["Bessel 1841",6377397.155,299.1528128,
+                AUTHORITY["EPSG","7004"]],
+            TOWGS84[-403,684,41,0,0,0,0],
+            AUTHORITY["EPSG","6820"]],
+        PRIMEM["Jakarta",106.8077194444444,
+            AUTHORITY["EPSG","8908"]],
+        UNIT["degree",0.0174532925199433,
+            AUTHORITY["EPSG","9122"]],
+        AUTHORITY["EPSG","4820"]],
+    PROJECTION["Mercator_1SP"],
+    PARAMETER["central_meridian",110],
+    PARAMETER["scale_factor",0.997],
+    PARAMETER["false_easting",3900000],
+    PARAMETER["false_northing",900000],
+    UNIT["metre",1,
+        AUTHORITY["EPSG","9001"]],
+    AXIS["X",EAST],
+    AXIS["Y",NORTH],
+    AUTHORITY["EPSG","2934"]]"""
+    
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput(ogc_wkt)
+
+    # 1SP transformed to 2SP form !
+    srs.MorphToESRI()
+    got_wkt = srs.ExportToPrettyWkt()
+    # Do not do exact test because of subtle difference of precision among compilers
+    if got_wkt.find("""PROJCS["Segara_Jakarta_NEIEZ_deprecated",
+    GEOGCS["GCS_Segara (Jakarta)",
+        DATUM["D_Gunung_Segara",
+            SPHEROID["Bessel_1841",6377397.155,299.1528128]],
+        PRIMEM["Jakarta",106.8077194444444],
+        UNIT["Degree",0.017453292519943295]],
+    PROJECTION["Mercator"],
+    PARAMETER["central_meridian",110],
+    PARAMETER["false_easting",3900000],
+    PARAMETER["false_northing",900000],
+    PARAMETER["standard_parallel_1",7.9855626787""") != 0:
+        gdaltest.post_reason('fail')
+        print(got_wkt)
+        return 'fail'
+
+    srs.MorphFromESRI()
+    got_wkt = srs.ExportToPrettyWkt()
+    # Do not do exact test because of subtle difference of precision among compilers
+    if got_wkt.find("""PROJCS["Segara_Jakarta_NEIEZ_deprecated",
+    GEOGCS["GCS_Segara (Jakarta)",
+        DATUM["Gunung_Segara",
+            SPHEROID["Bessel_1841",6377397.155,299.1528128]],
+        PRIMEM["Jakarta",106.8077194444444],
+        UNIT["Degree",0.017453292519943295]],
+    PROJECTION["Mercator_2SP"],
+    PARAMETER["central_meridian",110],
+    PARAMETER["false_easting",3900000],
+    PARAMETER["false_northing",900000],
+    PARAMETER["standard_parallel_1",7.9855626787""") != 0:
+        gdaltest.post_reason('fail')
+        print(got_wkt)
+        return 'fail'
+
+    return 'success'
+
 ###############################################################################
 #
 
@@ -1241,6 +1376,8 @@ gdaltest_list = [
     osr_esri_24,
     osr_esri_25,
     osr_esri_26,
+    osr_esri_27,
+    osr_esri_28,
    None ]
 
 if __name__ == '__main__':
