@@ -136,6 +136,31 @@ def pixfun_imag_r():
 
 
 ###############################################################################
+# Verify imaginary part extraction from a real dataset.
+
+def pixfun_makecomplex():
+
+    filename = 'data/pixfun_makecomplex.vrt'
+    ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
+    if ds is None:
+        gdaltest.post_reason('Unable to open "%s" dataset.' % filename)
+        return 'fail'
+    data = ds.GetRasterBand(1).ReadAsArray()
+
+    reffilename = 'data/int32.tif'
+    refds = gdal.Open(reffilename)
+    if refds is None:
+        gdaltest.post_reason('Unable to open "%s" dataset.' % reffilename)
+        return 'fail'
+    refdata = refds.GetRasterBand(1).ReadAsArray()
+
+    if not numpy.allclose(data, refdata + 1j * refdata):
+        return 'fail'
+
+    return 'success'
+
+
+###############################################################################
 # Verify modulus extraction from a complex (float) dataset.
 
 def pixfun_mod_c():
@@ -731,6 +756,7 @@ gdaltest_list = [
     pixfun_real_r,
     pixfun_imag_c,
     pixfun_imag_r,
+    pixfun_makecomplex,
     pixfun_mod_c,
     pixfun_mod_r,
     pixfun_phase_c,
