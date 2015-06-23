@@ -58,13 +58,23 @@ Download:
 \subsection index_devdocs_tutorials Tutorials
 
 <ul>
-<li> <a href="gdal_tutorial.html">Raster API tutorial</a>
-<li> <a href="ogr_apitut.html">Vector API tutorial</a>
-<li> <a href="gdal_drivertut.html">Raster driver implementation</a>
-<li> <a href="ogr_drivertut.html">Vector driver implementation</a>
-<li> <a href="warptut.html">GDAL Warp API tutorial</a> (Reprojection, ...)
+<li> Raster topics:
+  <ul>
+    <li> <a href="gdal_tutorial.html">Raster API tutorial</a>
+    <li> <a href="gdal_drivertut.html">Raster driver implementation</a>
+    <li> <a href="gdal_vrttut.html">Raster Virtual format (VRT)</a>
+    <li> <a href="warptut.html">GDAL Warp API tutorial</a> (Reprojection, ...)
+  </ul>
+</li>
+<li> Vector topics:
+  <ul>
+    <li> <a href="ogr_apitut.html">Vector API tutorial</a>
+    <li> <a href="ogr_drivertut.html">Vector driver implementation</a>
+    <li> <a href="drv_vrt.html">Vector Virtual format (VRT)</a>
+    <li> <a href="ogr_feature_style.html">OGR - Feature Style Specification</a>
+   </ul>
+</li>
 <li> <a href="osr_tutorial.html">Projections and Spatial Reference Systems tutorial</a> (OSR - OGRSpatialReference)
-<li> <a href="ogr_feature_style.html">OGR - Feature Style Specification</a>
 </ul>
 
 \subsection index_devdocs_api API documentation
