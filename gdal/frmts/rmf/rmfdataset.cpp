@@ -626,6 +626,21 @@ CPLErr RMFRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 }
 
 /************************************************************************/
+/*                          GetNoDataValue()                            */
+/************************************************************************/
+
+double RMFRasterBand::GetNoDataValue( int *pbSuccess )
+
+{
+    RMFDataset *poGDS = (RMFDataset *)poDS;
+
+    if ( pbSuccess )
+        *pbSuccess = TRUE;
+
+    return poGDS->sHeader.dfNoData;
+}
+
+/************************************************************************/
 /*                            GetUnitType()                             */
 /************************************************************************/
 
@@ -1094,6 +1109,18 @@ GDALDataset *RMFDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
+#define RMF_READ_SHORT(ptr, value, offset)                              \
+do {                                                                    \
+    if ( poDS->bBigEndian )                                             \
+    {                                                                   \
+        (value) = CPL_MSBWORD16(*(GInt16*)((ptr) + (offset)));          \
+    }                                                                   \
+    else                                                                \
+    {                                                                   \
+        (value) = CPL_LSBWORD16(*(GInt16*)((ptr) + (offset)));          \
+    }                                                                   \
+} while(0);
+
 #define RMF_READ_ULONG(ptr, value, offset)                              \
 do {                                                                    \
     if ( poDS->bBigEndian )                                             \
@@ -1200,7 +1227,24 @@ do {                                                                    \
                 abyHeader + 248, sizeof(poDS->sHeader.abyInvisibleColors) );
         RMF_READ_DOUBLE( abyHeader, poDS->sHeader.adfElevMinMax[0], 280 );
         RMF_READ_DOUBLE( abyHeader, poDS->sHeader.adfElevMinMax[1], 288 );
-        RMF_READ_DOUBLE( abyHeader, poDS->sHeader.dfNoData, 296 );
+
+        if (poDS->sHeader.nBitDepth == 8)
+        {
+            poDS->sHeader.dfNoData = *(char*)(abyHeader + 296);
+        }
+        else if (poDS->sHeader.nBitDepth == 16)
+        {
+            RMF_READ_SHORT(abyHeader, poDS->sHeader.dfNoData, 296);
+        }
+        else if (poDS->sHeader.nBitDepth == 32)
+        {
+            RMF_READ_LONG(abyHeader, poDS->sHeader.dfNoData, 296);
+        }
+        else if (poDS->sHeader.nBitDepth == 64)
+        {
+            RMF_READ_DOUBLE(abyHeader, poDS->sHeader.dfNoData, 296);
+        }
+
         RMF_READ_ULONG( abyHeader, poDS->sHeader.iElevationUnit, 304 );
         poDS->sHeader.iElevationType = *(abyHeader + 308);
         RMF_READ_ULONG( abyHeader, poDS->sHeader.nExtHdrOffset, 312 );
