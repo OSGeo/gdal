@@ -138,9 +138,9 @@ def pixfun_imag_r():
 ###############################################################################
 # Verify imaginary part extraction from a real dataset.
 
-def pixfun_makecomplex():
+def pixfun_complex():
 
-    filename = 'data/pixfun_makecomplex.vrt'
+    filename = 'data/pixfun_complex.vrt'
     ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
     if ds is None:
         gdaltest.post_reason('Unable to open "%s" dataset.' % filename)
@@ -587,7 +587,7 @@ def pixfun_inv_c():
     refdata = refds.GetRasterBand(1).ReadAsArray()
     refdata = refdata.astype('complex')
     delta = data - 1./refdata
-    
+
     if not numpy.alltrue(abs(delta.real) < 1e-13):
         return 'fail'
     if not numpy.alltrue(abs(delta.imag) < 1e-13):
@@ -756,7 +756,7 @@ gdaltest_list = [
     pixfun_real_r,
     pixfun_imag_c,
     pixfun_imag_r,
-    pixfun_makecomplex,
+    pixfun_complex,
     pixfun_mod_c,
     pixfun_mod_r,
     pixfun_phase_c,

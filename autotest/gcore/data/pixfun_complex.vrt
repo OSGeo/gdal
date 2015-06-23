@@ -1,7 +1,7 @@
 <VRTDataset rasterXSize="20" rasterYSize="20">
   <VRTRasterBand dataType="CFloat32" band="1" subClass="VRTDerivedRasterBand">
     <Description>Make complex</Description>
-    <PixelFunctionType>makecomplex</PixelFunctionType>
+    <PixelFunctionType>complex</PixelFunctionType>
     <SourceTransferType>CFloat32</SourceTransferType>
     <SimpleSource>
       <SourceFilename relativeToVRT="1">int32.tif</SourceFilename>

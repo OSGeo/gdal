@@ -26,7 +26,7 @@ List of pixel functions
 :"imag":
     extract imaginary part from a single raster band (0 for
     non-complex)
-:"makecomplex":
+:"complex":
     make a complex band merging two bands used as real and imag values
 :"mod":
     extract module from a single raster band (real or complex)
@@ -34,7 +34,7 @@ List of pixel functions
     extract phase from a single raster band (0 for non-complex)
 :"conj":
     computes the complex conjugate of a single raster band (just a
-         copy if the input is non-complex)
+    copy if the input is non-complex)
 :"sum":
     sum 2 or more raster bands
 :"diff":

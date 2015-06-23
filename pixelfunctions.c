@@ -99,7 +99,7 @@ CPLErr ImagPixelFunc(void **papoSources, int nSources, void *pData,
 } /* ImagPixelFunc */
 
 
-CPLErr MakeComplexPixelFunc(void **papoSources, int nSources, void *pData,
+CPLErr ComplexPixelFunc(void **papoSources, int nSources, void *pData,
                        int nXSize, int nYSize,
                        GDALDataType eSrcType, GDALDataType eBufType,
                        int nPixelSpace, int nLineSpace)
@@ -804,6 +804,8 @@ CPLErr dB2PowPixelFunc(void **papoSources, int nSources, void *pData,
  *           input is non-complex)
  * - "imag": extract imaginary part from a single raster band (0 for
  *           non-complex)
+ * - "complex": make a complex band merging two bands used as real and
+ *              imag values
  * - "mod": extract module from a single raster band (real or complex)
  * - "phase": extract phase from a single raster band (0 for non-complex)
  * - "conj": computes the complex conjugate of a single raster band (just a
@@ -833,7 +835,7 @@ CPLErr CPL_STDCALL GDALRegisterDefaultPixelFunc()
 {
     GDALAddDerivedBandPixelFunc("real", RealPixelFunc);
     GDALAddDerivedBandPixelFunc("imag", ImagPixelFunc);
-    GDALAddDerivedBandPixelFunc("makecomplex", MakeComplexPixelFunc);
+    GDALAddDerivedBandPixelFunc("complex", ComplexPixelFunc);
     GDALAddDerivedBandPixelFunc("mod", ModulePixelFunc);
     GDALAddDerivedBandPixelFunc("phase", PhasePixelFunc);
     GDALAddDerivedBandPixelFunc("conj", ConjPixelFunc);
