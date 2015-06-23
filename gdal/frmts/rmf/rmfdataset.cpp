@@ -79,8 +79,6 @@ RMFRasterBand::RMFRasterBand( RMFDataset *poDS, int nBand,
         (poDS->GetRasterXSize() % poDS->sHeader.nTileWidth) * nDataSize;
     nLastTileHeight = poDS->GetRasterYSize() % poDS->sHeader.nTileHeight;
 
-    dfScale = 1.0;
-
 #ifdef DEBUG
     CPLDebug( "RMF",
               "Band %d: tile width is %d, tile height is %d, "
@@ -640,44 +638,6 @@ double RMFRasterBand::GetNoDataValue( int *pbSuccess )
         *pbSuccess = TRUE;
 
     return poGDS->sHeader.dfNoData;
-}
-
-/************************************************************************/
-/*                            GetScale()                                */
-/************************************************************************/
-
-double RMFRasterBand::GetScale( int *pbSuccess )
-
-{
-    RMFDataset   *poGDS = (RMFDataset *)poDS;
-
-    if (poGDS->eRMFType == RMFT_MTW)
-    {
-        if (pbSuccess)
-            *pbSuccess = TRUE;
-
-        return dfScale;
-    }
-
-    return GDALRasterBand::GetScale( pbSuccess );
-}
-
-/************************************************************************/
-/*                            SetScale()                                */
-/************************************************************************/
-
-CPLErr RMFRasterBand::SetScale( double dfNewValue )
-
-{
-    RMFDataset   *poGDS = (RMFDataset *)poDS;
-
-    if (poGDS->eRMFType == RMFT_MTW)
-    {
-        dfScale = dfNewValue;
-        return CE_None;
-    }
-
-    return GDALRasterBand::SetScale( dfNewValue );
 }
 
 /************************************************************************/

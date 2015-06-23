@@ -180,7 +180,6 @@ class RMFRasterBand : public GDALRasterBand
     GUInt32     nBlockSize, nBlockBytes;
     GUInt32     nLastTileXBytes, nLastTileHeight;
     GUInt32     nDataSize;
-    double      dfScale;
 
     CPLErr   ReadBuffer( GByte *, GUInt32 ) const;
 
@@ -192,11 +191,9 @@ class RMFRasterBand : public GDALRasterBand
     virtual CPLErr          IReadBlock( int, int, void * );
     virtual CPLErr          IWriteBlock( int, int, void * );
     virtual double          GetNoDataValue(int *pbSuccess = NULL);
-    virtual double          GetScale(int *pbSuccess = NULL);
     virtual const char      *GetUnitType();
     virtual GDALColorInterp GetColorInterpretation();
     virtual GDALColorTable  *GetColorTable();
-    virtual CPLErr          SetScale(double);
     virtual CPLErr          SetUnitType(const char *);
     virtual CPLErr          SetColorTable( GDALColorTable * );
 };
