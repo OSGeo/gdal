@@ -99,6 +99,39 @@ CPLErr ImagPixelFunc(void **papoSources, int nSources, void *pData,
 } /* ImagPixelFunc */
 
 
+CPLErr MakeComplexPixelFunc(void **papoSources, int nSources, void *pData,
+                       int nXSize, int nYSize,
+                       GDALDataType eSrcType, GDALDataType eBufType,
+                       int nPixelSpace, int nLineSpace)
+{
+    int ii, iLine, iCol;
+    double adfPixVal[2];
+
+    void *pReal = papoSources[0];
+    void *pImag = papoSources[1];
+
+    /* ---- Init ---- */
+    if (nSources != 2) return CE_Failure;
+
+    /* ---- Set pixels ---- */
+    for( iLine = 0, ii= 0; iLine < nYSize; ++iLine ) {
+        for( iCol = 0; iCol < nXSize; ++iCol, ++ii ) {
+
+            /* Source raster pixels may be obtained with SRCVAL macro */
+            adfPixVal[0] = SRCVAL(pReal, eSrcType, ii); /* re */
+            adfPixVal[1] = SRCVAL(pImag, eSrcType, ii); /* im */
+
+            GDALCopyWords(adfPixVal, GDT_CFloat64, 0,
+                          ((GByte *)pData) + nLineSpace * iLine +
+                          iCol * nPixelSpace, eBufType, nPixelSpace, 1);
+        }
+    }
+
+    /* ---- Return success ---- */
+    return CE_None;
+} /* MakeComplexPixelFunc */
+
+
 CPLErr ModulePixelFunc(void **papoSources, int nSources, void *pData,
                        int nXSize, int nYSize,
                        GDALDataType eSrcType, GDALDataType eBufType,
@@ -800,6 +833,7 @@ CPLErr CPL_STDCALL GDALRegisterDefaultPixelFunc()
 {
     GDALAddDerivedBandPixelFunc("real", RealPixelFunc);
     GDALAddDerivedBandPixelFunc("imag", ImagPixelFunc);
+    GDALAddDerivedBandPixelFunc("makecomplex", MakeComplexPixelFunc);
     GDALAddDerivedBandPixelFunc("mod", ModulePixelFunc);
     GDALAddDerivedBandPixelFunc("phase", PhasePixelFunc);
     GDALAddDerivedBandPixelFunc("conj", ConjPixelFunc);

@@ -26,6 +26,8 @@ List of pixel functions
 :"imag":
     extract imaginary part from a single raster band (0 for
     non-complex)
+:"makecomplex":
+    make a complex band merging two bands used as real and imag values
 :"mod":
     extract module from a single raster band (real or complex)
 :"phase":
