@@ -264,7 +264,7 @@ template <typename T> T SwigValueInit() {
    SWIG errors code.
 
    Finally, if the SWIG_CASTRANK_MODE is enabled, the result code
-   allows returning the 'cast rank', for example, if you have this
+   allows to return the 'cast rank', for example, if you have this
 
        int food(double)
        int fooi(int);
@@ -5042,9 +5042,17 @@ CPLErr  ReprojectImage ( GDALDatasetShadow *src_ds,
                          double WarpMemoryLimit=0.0,
                          double maxerror = 0.0,
 			 GDALProgressFunc callback = NULL,
-                     	 void* callback_data=NULL) {
+                     	 void* callback_data=NULL,
+                         char** options = NULL ) {
 
     CPLErrorReset();
+
+    GDALWarpOptions* psOptions = NULL;
+    if( options != NULL )
+    {
+        psOptions = GDALCreateWarpOptions();
+        psOptions->papszWarpOptions = CSLDuplicate(options);
+    }
 
     CPLErr err = GDALReprojectImage( src_ds,
                                      src_wkt,
@@ -5055,8 +5063,11 @@ CPLErr  ReprojectImage ( GDALDatasetShadow *src_ds,
                                      maxerror,
                                      callback,
                                      callback_data,
-                                     NULL);
-    
+                                     psOptions);
+
+    if( psOptions != NULL )
+        GDALDestroyWarpOptions(psOptions);
+
     return err;
 }
 
@@ -20148,7 +20159,7 @@ fail:
 }
 
 
-SWIGINTERN PyObject *_wrap_ReprojectImage(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+SWIGINTERN PyObject *_wrap_ReprojectImage(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
   PyObject *resultobj = 0;
   GDALDatasetShadow *arg1 = (GDALDatasetShadow *) 0 ;
   GDALDatasetShadow *arg2 = (GDALDatasetShadow *) 0 ;
@@ -20159,6 +20170,7 @@ SWIGINTERN PyObject *_wrap_ReprojectImage(PyObject *SWIGUNUSEDPARM(self), PyObje
   double arg7 = (double) 0.0 ;
   GDALProgressFunc arg8 = (GDALProgressFunc) NULL ;
   void *arg9 = (void *) NULL ;
+  char **arg10 = (char **) NULL ;
   void *argp1 = 0 ;
   int res1 = 0 ;
   void *argp2 = 0 ;
@@ -20184,6 +20196,10 @@ SWIGINTERN PyObject *_wrap_ReprojectImage(PyObject *SWIGUNUSEDPARM(self), PyObje
   PyObject * obj6 = 0 ;
   PyObject * obj7 = 0 ;
   PyObject * obj8 = 0 ;
+  PyObject * obj9 = 0 ;
+  char *  kwnames[] = {
+    (char *) "src_ds",(char *) "dst_ds",(char *) "src_wkt",(char *) "dst_wkt",(char *) "eResampleAlg",(char *) "WarpMemoryLimit",(char *) "maxerror",(char *) "callback",(char *) "callback_data",(char *) "options", NULL 
+  };
   CPLErr result;
   
   /* %typemap(arginit) ( const char* callback_data=NULL)  */
@@ -20193,7 +20209,7 @@ SWIGINTERN PyObject *_wrap_ReprojectImage(PyObject *SWIGUNUSEDPARM(self), PyObje
   psProgressInfo->psPyCallback = NULL;
   psProgressInfo->psPyCallbackData = NULL;
   arg9 = psProgressInfo;
-  if (!PyArg_ParseTuple(args,(char *)"OO|OOOOOOO:ReprojectImage",&obj0,&obj1,&obj2,&obj3,&obj4,&obj5,&obj6,&obj7,&obj8)) SWIG_fail;
+  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OO|OOOOOOOO:ReprojectImage",kwnames,&obj0,&obj1,&obj2,&obj3,&obj4,&obj5,&obj6,&obj7,&obj8,&obj9)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "ReprojectImage" "', argument " "1"" of type '" "GDALDatasetShadow *""'"); 
@@ -20272,6 +20288,52 @@ SWIGINTERN PyObject *_wrap_ReprojectImage(PyObject *SWIGUNUSEDPARM(self), PyObje
       psProgressInfo->psPyCallbackData = obj8 ;
     }
   }
+  if (obj9) {
+    {
+      /* %typemap(in) char **options */
+      /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
+      if ( ! PySequence_Check(obj9) || PyUnicode_Check(obj9)
+  #if PY_VERSION_HEX < 0x03000000
+        || PyString_Check(obj9)
+  #endif
+        ) {
+        PyErr_SetString(PyExc_TypeError,"not a sequence");
+        SWIG_fail;
+      }
+      
+      int size = PySequence_Size(obj9);
+      for (int i = 0; i < size; i++) {
+        PyObject* pyObj = PySequence_GetItem(obj9,i);
+        if (PyUnicode_Check(pyObj))
+        {
+          char *pszStr;
+          Py_ssize_t nLen;
+          PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
+#if PY_VERSION_HEX >= 0x03000000
+          PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
+#else
+          PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
+#endif
+          arg10 = CSLAddString( arg10, pszStr );
+          Py_XDECREF(pyUTF8Str);
+        }
+#if PY_VERSION_HEX >= 0x03000000
+        else if (PyBytes_Check(pyObj))
+        arg10 = CSLAddString( arg10, PyBytes_AsString(pyObj) );
+#else
+        else if (PyString_Check(pyObj))
+        arg10 = CSLAddString( arg10, PyString_AsString(pyObj) );
+#endif
+        else
+        {
+          Py_DECREF(pyObj);
+          PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
+          SWIG_fail;
+        }
+        Py_DECREF(pyObj);
+      }
+    }
+  }
   {
     if (!arg1) {
       SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
@@ -20286,7 +20348,7 @@ SWIGINTERN PyObject *_wrap_ReprojectImage(PyObject *SWIGUNUSEDPARM(self), PyObje
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (CPLErr)ReprojectImage(arg1,arg2,(char const *)arg3,(char const *)arg4,arg5,arg6,arg7,arg8,arg9);
+    result = (CPLErr)ReprojectImage(arg1,arg2,(char const *)arg3,(char const *)arg4,arg5,arg6,arg7,arg8,arg9,arg10);
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
@@ -20303,6 +20365,10 @@ SWIGINTERN PyObject *_wrap_ReprojectImage(PyObject *SWIGUNUSEDPARM(self), PyObje
     CPLFree(psProgressInfo);
     
   }
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg10 );
+  }
   return resultobj;
 fail:
   if (alloc3 == SWIG_NEWOBJ) delete[] buf3;
@@ -20312,6 +20378,10 @@ fail:
     
     CPLFree(psProgressInfo);
     
+  }
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg10 );
   }
   return NULL;
 }
@@ -24550,12 +24620,13 @@ static PyMethodDef SwigMethods[] = {
 		"    GDALProgressFunc callback = None, \n"
 		"    void callback_data = None) -> int\n"
 		""},
-	 { (char *)"ReprojectImage", _wrap_ReprojectImage, METH_VARARGS, (char *)"\n"
+	 { (char *)"ReprojectImage", (PyCFunction) _wrap_ReprojectImage, METH_VARARGS | METH_KEYWORDS, (char *)"\n"
 		"ReprojectImage(Dataset src_ds, Dataset dst_ds, char src_wkt = None, \n"
 		"    char dst_wkt = None, GDALResampleAlg eResampleAlg = GRA_NearestNeighbour, \n"
 		"    double WarpMemoryLimit = 0.0, \n"
 		"    double maxerror = 0.0, GDALProgressFunc callback = None, \n"
-		"    void callback_data = None) -> CPLErr\n"
+		"    void callback_data = None, \n"
+		"    char options = None) -> CPLErr\n"
 		""},
 	 { (char *)"ComputeProximity", (PyCFunction) _wrap_ComputeProximity, METH_VARARGS | METH_KEYWORDS, (char *)"\n"
 		"ComputeProximity(Band srcBand, Band proximityBand, char options = None, \n"

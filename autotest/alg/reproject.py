@@ -125,11 +125,38 @@ def reproject_3():
 
     return 'success'
 
+###############################################################################
+# Test warp options
+
+def reproject_4():
+
+    data = '\x02\x7f\x7f\x02\x02\x7f\x7f\x02\x02\x7f\x7f\x02'
+    src_ds = gdal.GetDriverByName('MEM').Create('',4,3)
+    src_ds.GetRasterBand(1).WriteRaster(0,0,4,3,data)
+    src_ds.GetRasterBand(1).SetNoDataValue(2)
+    src_ds.SetGeoTransform([10,1,0,10,0,-1])
+
+    dst_ds = gdal.GetDriverByName('MEM').Create('',6,3)
+    dst_ds.GetRasterBand(1).SetNoDataValue(3)
+    dst_ds.SetGeoTransform([10,2./3.,0,10,0,-1])
+    
+    gdal.ReprojectImage( src_ds, dst_ds, '', '', gdal.GRA_Bilinear, options = ['INIT_DEST=NO_DATA'])
+    got_data = dst_ds.GetRasterBand(1).ReadRaster(0,0,6,3).decode('latin1')
+    expected_data = '\x03\x7f\x7f\x7f\x7f\x03\x03\x7f\x7f\x7f\x7f\x03\x03\x7f\x7f\x7f\x7f\x03'
+    if got_data != expected_data:
+        gdaltest.post_reason('fail')
+        import struct
+        print(struct.unpack('B' * 18, got_data))
+        return 'fail'
+
+    return 'success'
+
 
 gdaltest_list = [
     reproject_1,
     reproject_2,
     reproject_3,
+    reproject_4
     ]
 
 if __name__ == '__main__':
