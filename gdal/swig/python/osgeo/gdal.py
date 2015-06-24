@@ -1565,15 +1565,16 @@ def DitherRGB2PCT(*args, **kwargs):
   return _gdal.DitherRGB2PCT(*args, **kwargs)
 DitherRGB2PCT = _gdal.DitherRGB2PCT
 
-def ReprojectImage(*args):
+def ReprojectImage(*args, **kwargs):
   """
     ReprojectImage(Dataset src_ds, Dataset dst_ds, char src_wkt = None, 
         char dst_wkt = None, GDALResampleAlg eResampleAlg = GRA_NearestNeighbour, 
         double WarpMemoryLimit = 0.0, 
         double maxerror = 0.0, GDALProgressFunc callback = None, 
-        void callback_data = None) -> CPLErr
+        void callback_data = None, 
+        char options = None) -> CPLErr
     """
-  return _gdal.ReprojectImage(*args)
+  return _gdal.ReprojectImage(*args, **kwargs)
 ReprojectImage = _gdal.ReprojectImage
 
 def ComputeProximity(*args, **kwargs):
