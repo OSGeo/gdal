@@ -12,7 +12,9 @@ OBJ	=	gdalopeninfo.obj gdaldrivermanager.obj gdaldriver.obj \
 		gdaldllmain.obj gdalexif.obj gdalclientserver.obj \
 		gdalgeorefpamdataset.obj  gdaljp2abstractdataset.obj \
 		gdalvirtualmem.obj gdaloverviewdataset.obj gdalrescaledalphaband.obj \
-		gdaljp2structure.obj gdal_mdreader.obj gdaljp2metadatagenerator.obj
+		gdaljp2structure.obj gdal_mdreader.obj gdaljp2metadatagenerator.obj \
+		gdalabstractbandblockcache.obj \
+		gdalarraybandblockcache.obj gdalhashsetbandblockcache.obj
 
 RES	=	Version.res
 

@@ -39,6 +39,11 @@ int CPLAtomicAdd(volatile int* ptr, int increment)
   return OSAtomicAdd32(increment, (int*)(ptr));
 }
 
+int CPLAtomicCompareAndExchange(volatile int* ptr, int oldval, int newval)
+{
+  return OSAtomicCompareAndSwap32(oldval, newval, (int*)(ptr));
+}
+
 #elif defined(_MSC_VER) && (defined(_M_IX86) || defined(_M_X64))
 
 #include <windows.h>
@@ -52,6 +57,11 @@ int CPLAtomicAdd(volatile int* ptr, int increment)
 #endif
 }
 
+int CPLAtomicCompareAndExchange(volatile int* ptr, int oldval, int newval)
+{
+  return (LONG)InterlockedCompareExchange((volatile LONG*)(ptr), (LONG)newval, (LONG)oldval) == (LONG)oldval;
+}
+
 #elif defined(__MINGW32__) && defined(__i386__)
 
 #include <windows.h>
@@ -59,6 +69,11 @@ int CPLAtomicAdd(volatile int* ptr, int increment)
 int CPLAtomicAdd(volatile int* ptr, int increment)
 {
   return InterlockedExchangeAdd((LONG*)(ptr), (LONG)(increment)) + increment;
+}
+
+int CPLAtomicCompareAndExchange(volatile int* ptr, int oldval, int newval)
+{
+  return (LONG)InterlockedCompareExchange((LONG*)(ptr), (LONG)newval, (LONG)oldval) == (LONG)oldval;
 }
 
 #elif defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
@@ -70,6 +85,20 @@ int CPLAtomicAdd(volatile int* ptr, int increment)
                        : "+r" (temp), "+m" (*ptr)
                        : : "memory");
   return temp + increment;
+}
+
+int CPLAtomicCompareAndExchange(volatile int* ptr, int oldval, int newval)
+{
+    unsigned char ret;
+ 
+    __asm__ __volatile__ (
+    " lock; cmpxchgl %2,%1\n"
+    " sete %0\n"
+    : "=q" (ret), "=m" (*ptr)
+    : "r" (newval), "m" (*ptr), "a" (oldval)
+    : "memory");
+ 
+    return (int) ret;
 }
 
 #elif defined(HAVE_GCC_ATOMIC_BUILTINS)
@@ -86,6 +115,11 @@ int CPLAtomicAdd(volatile int* ptr, int increment)
     return __sync_sub_and_fetch(ptr, -increment);
 }
 
+int CPLAtomicCompareAndExchange(volatile int* ptr, int oldval, int newval)
+{
+    return _sync_bool_compare_and_swap (ptr, oldval, newval);
+}
+
 #elif !defined(CPL_MULTIPROC_PTHREAD)
 #warning "Needs real lock API to implement properly atomic increment"
 
@@ -95,18 +129,40 @@ int CPLAtomicAdd(volatile int* ptr, int increment)
     (*ptr) += increment;
     return *ptr;
 }
+
+int CPLAtomicCompareAndExchange(volatile int* ptr, int oldval, int newval)
+{
+    if( *ptr == oldval )
+    {
+        *ptr = newval;
+        return TRUE;
+    }
+    return FALSE;
+}
+
 #else
 
 #include "cpl_multiproc.h"
 
-static CPLMutex *hAtomicOpMutex = NULL;
+static CPLLock *hAtomicOpLock = NULL;
 
 /* Slow, but safe, implemenation using a mutex */
 int CPLAtomicAdd(volatile int* ptr, int increment)
 {
-    CPLMutexHolder oMutex(&hAtomicOpMutex);
+    CPLLockHolderD(&hAtomicOpLock, LOCK_SPIN);
     (*ptr) += increment;
     return *ptr;
+}
+
+int CPLAtomicCompareAndExchange(volatile int* ptr, int oldval, int newval)
+{
+    CPLLockHolderD(&hAtomicOpLock, LOCK_SPIN);
+    if( *ptr == oldval )
+    {
+        *ptr = newval;
+        return TRUE;
+    }
+    return FALSE;
 }
 
 #endif

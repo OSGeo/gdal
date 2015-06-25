@@ -402,6 +402,41 @@ GDALDatasetH CPL_DLL CPL_STDCALL GDALOpenShared( const char *, GDALAccess ) CPL_
  */
 #define     GDAL_OF_INTERNAL        0x80
 
+/** Let GDAL decide if a array-based or hashset-based storage strategy for
+ * cached blocks must be used.
+ *
+ * GDAL_OF_DEFAULT_BLOCK_ACCESS, GDAL_OF_ARRAY_BLOCK_ACCESS and
+ * GDAL_OF_HASHSET_BLOCK_ACCESS are mutually exclusive. 
+ *
+ * Used by GDALOpenEx().
+ * @since GDAL 2.1
+ */
+#define     GDAL_OF_DEFAULT_BLOCK_ACCESS  0
+
+/** Use a array-based storage strategy for cached blocks.
+ *
+ * GDAL_OF_DEFAULT_BLOCK_ACCESS, GDAL_OF_ARRAY_BLOCK_ACCESS and
+ * GDAL_OF_HASHSET_BLOCK_ACCESS are mutually exclusive. 
+ *
+ * Used by GDALOpenEx().
+ * @since GDAL 2.1
+ */
+#define     GDAL_OF_ARRAY_BLOCK_ACCESS    0x100
+
+/** Use a hashset-based storage strategy for cached blocks.
+ *
+ * GDAL_OF_DEFAULT_BLOCK_ACCESS, GDAL_OF_ARRAY_BLOCK_ACCESS and
+ * GDAL_OF_HASHSET_BLOCK_ACCESS are mutually exclusive. 
+ *
+ * Used by GDALOpenEx().
+ * @since GDAL 2.1
+ */
+#define     GDAL_OF_HASHSET_BLOCK_ACCESS  0x200
+
+#define     GDAL_OF_RESERVED_1            0x300
+#define     GDAL_OF_BLOCK_ACCESS_MASK     0x300
+
+
 GDALDatasetH CPL_DLL CPL_STDCALL GDALOpenEx( const char* pszFilename,
                                              unsigned int nOpenFlags,
                                              const char* const* papszAllowedDrivers,
