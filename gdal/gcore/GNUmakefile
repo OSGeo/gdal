@@ -12,7 +12,8 @@ OBJ	=	gdalopeninfo.o gdaldrivermanager.o gdaldriver.o gdaldataset.o \
 		gdalnodatavaluesmaskband.o gdaldllmain.o gdalexif.o gdalclientserver.o \
 		gdalgeorefpamdataset.o gdaljp2abstractdataset.o gdalvirtualmem.o \
 		gdaloverviewdataset.o gdalrescaledalphaband.o gdaljp2structure.o \
-		gdal_mdreader.o gdaljp2metadatagenerator.o
+		gdal_mdreader.o gdaljp2metadatagenerator.o gdalabstractbandblockcache.o \
+		gdalarraybandblockcache.o gdalhashsetbandblockcache.o
 
 # Enable the following if you want to use MITAB's code to convert
 # .tab coordinate systems into well known text.  But beware that linking

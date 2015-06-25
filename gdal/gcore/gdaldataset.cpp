@@ -176,11 +176,10 @@ GDALDataset::GDALDataset()
     nBands = 0;
     papoBands = NULL;
     nRefCount = 1;
+    nOpenFlags = 0;
     bShared = FALSE;
     bIsInternal = TRUE;
     bSuppressOnClose = FALSE;
-    bReserved1 = FALSE;
-    bReserved2 = FALSE;
     papszOpenOptions = NULL;
 
 /* -------------------------------------------------------------------- */
@@ -2589,6 +2588,8 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char* pszFilename,
 
         if( poDS != NULL )
         {
+            poDS->nOpenFlags = nOpenFlags;
+
             if( strlen(poDS->GetDescription()) == 0 )
                 poDS->SetDescription( pszFilename );
 

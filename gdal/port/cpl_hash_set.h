@@ -66,6 +66,8 @@ CPLHashSet CPL_DLL * CPLHashSetNew(CPLHashSetHashFunc fnHashFunc,
 
 void         CPL_DLL CPLHashSetDestroy(CPLHashSet* set);
 
+void         CPL_DLL CPLHashSetClear(CPLHashSet* set);
+
 int          CPL_DLL CPLHashSetSize(const CPLHashSet* set);
 
 void         CPL_DLL CPLHashSetForeach(CPLHashSet* set,
@@ -77,6 +79,7 @@ int          CPL_DLL CPLHashSetInsert(CPLHashSet* set, void* elt);
 void         CPL_DLL * CPLHashSetLookup(CPLHashSet* set, const void* elt);
 
 int          CPL_DLL CPLHashSetRemove(CPLHashSet* set, const void* elt);
+int          CPL_DLL CPLHashSetRemoveDeferRehash(CPLHashSet* set, const void* elt);
 
 unsigned long CPL_DLL CPLHashSetHashPointer(const void* elt);
 
