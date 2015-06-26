@@ -17,13 +17,3 @@ clean:
 $(OBJ) $(O_OBJ):	hdf5dataset.h
 
 install-obj:	$(SUBLIBS) $(O_OBJ:.o=.$(OBJ_EXT))
-
-PLUGIN_SO       = gdal_HDF5.so
-
-plugin: $(PLUGIN_SO)
-
-CPPFLAGS	:=	$(CPPFLAGS) $(GDAL_INCLUDE) -fPIC
-
-$(PLUGIN_SO):   $(OBJ)
-	$(LD_SHARED) $(LNK_FLAGS) $(OBJ) $(CONFIG_LIBS_INS) $(LIBS) \
-		-o $(PLUGIN_SO)
