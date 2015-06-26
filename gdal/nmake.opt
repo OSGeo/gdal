@@ -350,6 +350,7 @@ JPEG12_SUPPORTED = 1
 #JASPER_INCLUDE = $(JASPER_INCLUDE) -DHAVE_JASPER_UUID
 
 # Uncommment and adjust paths if you have Kakadu 6.0 or newer
+#KAKFLAGS=-DKDU_MAJOR_VERSION=6 -DKDU_MINOR_VERSION=0 -DKDU_PATCH_VERSION=0
 #KAKDIR = 	\warmerda\pkg\kakadu-6.2.1
 #KAKLIB =	$(KAKDIR)\lib_x86\kdu_v62R.lib
 #KAKSRC =	$(KAKDIR)\vt_2_1-00256N
