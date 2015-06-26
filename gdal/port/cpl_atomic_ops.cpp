@@ -117,7 +117,7 @@ int CPLAtomicAdd(volatile int* ptr, int increment)
 
 int CPLAtomicCompareAndExchange(volatile int* ptr, int oldval, int newval)
 {
-    return _sync_bool_compare_and_swap (ptr, oldval, newval);
+    return __sync_bool_compare_and_swap (ptr, oldval, newval);
 }
 
 #elif !defined(CPL_MULTIPROC_PTHREAD)
