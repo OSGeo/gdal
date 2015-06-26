@@ -228,7 +228,7 @@ dnl ---------------------------------------------------------------------------
 AC_MSG_CHECKING([whether GCC 4.1 atomic builtins are available])
 
 rm -f atomicbuiltins.c
-echo 'int main(int argc, char* argv[]) { int i; __sync_add_and_fetch(&i, 1); __sync_sub_and_fetch(&i, 1); return 0; } ' > atomicbuiltins.c
+echo 'int main(int argc, char* argv[]) { int i; __sync_add_and_fetch(&i, 1); __sync_sub_and_fetch(&i, 1); __sync_bool_compare_and_swap(&i, 0, 1); return 0; } ' > atomicbuiltins.c
 if test -z "`${CC} atomicbuiltins.c -o atomicbuiltins 2>&1`" ; then
     HAVE_GCC_ATOMIC_BUILTINS=yes
     AC_MSG_RESULT([yes])
