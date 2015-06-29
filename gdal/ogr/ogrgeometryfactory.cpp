@@ -3888,7 +3888,7 @@ static int OGRGF_DetectArc(const OGRLineString* poLS, int i,
                 }
 
 #ifdef VERBOSE_DEBUG_CURVEFROMLINESTRING
-                printf("j=%d, nAlphaRatioReversed = %u --> unconsistent values accross arc. Don't use it\n",
+                printf("j=%d, nAlphaRatioReversed = %u --> inconsistent values accross arc. Don't use it\n",
                         j, nAlphaRatioReversed);
 #endif
                 bValidAlphaRatio = FALSE;
