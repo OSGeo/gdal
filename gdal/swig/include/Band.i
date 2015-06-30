@@ -95,27 +95,21 @@ GIntBig ComputeBandRasterIOSize (int buf_xsize, int buf_ysize, int nPixelSize,
 }
 %}
 
-#if !defined(SWIGCSHARP) && !defined(SWIGJAVA) && !defined(SWIGPYTHON)
+#if defined(SWIGPERL)
 %{
 static
 CPLErr ReadRaster_internal( GDALRasterBandShadow *obj, 
                             int xoff, int yoff, int xsize, int ysize,
                             int buf_xsize, int buf_ysize,
                             GDALDataType buf_type,
-                            int *buf_size, char **buf,
+                            GIntBig *buf_size, char **buf,
                             GIntBig pixel_space, GIntBig line_space,
                             GDALRasterIOExtraArg* psExtraArg )
 {
   CPLErr result;
 
-  GIntBig nRequiredSize = ComputeBandRasterIOSize( buf_xsize, buf_ysize, GDALGetDataTypeSize( buf_type ) / 8,
+  *buf_size = ComputeBandRasterIOSize( buf_xsize, buf_ysize, GDALGetDataTypeSize( buf_type ) / 8,
                                        pixel_space, line_space, FALSE );
-  if (nRequiredSize > 0x7fffffff)
-  {
-     CPLError(CE_Failure, CPLE_IllegalArg, "Integer overflow");
-     nRequiredSize = 0;
-  }
-  *buf_size = (int)nRequiredSize;
   
   if ( *buf_size == 0 )
   {
@@ -138,7 +132,7 @@ CPLErr ReadRaster_internal( GDALRasterBandShadow *obj,
   }
   else
   {
-    CPLError(CE_Failure, CPLE_OutOfMemory, "Not enough memory to allocate %d bytes", *buf_size);
+    CPLError(CE_Failure, CPLE_OutOfMemory, "Not enough memory to allocate "CPL_FRMT_GIB" bytes", *buf_size);
     result = CE_Failure;
     *buf = 0;
     *buf_size = 0;
@@ -149,7 +143,7 @@ CPLErr ReadRaster_internal( GDALRasterBandShadow *obj,
 %}
 #endif
 
-#if !defined(SWIGCSHARP) && !defined(SWIGJAVA)
+#if defined(SWIGPYTHON) || defined(SWIGPERL)
 %{
 static
 CPLErr WriteRaster_internal( GDALRasterBandShadow *obj,
@@ -157,7 +151,8 @@ CPLErr WriteRaster_internal( GDALRasterBandShadow *obj,
                              int buf_xsize, int buf_ysize,
                              GDALDataType buf_type,
                              GIntBig buf_size, char *buffer,
-                             int pixel_space, int line_space)
+                             GIntBig pixel_space, GIntBig line_space,
+                             GDALRasterIOExtraArg* psExtraArg )
 {
     GIntBig min_buffer_size = ComputeBandRasterIOSize (buf_xsize, buf_ysize, GDALGetDataTypeSize( buf_type ) / 8,
                                                    pixel_space, line_space, FALSE );
@@ -169,8 +164,8 @@ CPLErr WriteRaster_internal( GDALRasterBandShadow *obj,
       return CE_Failure;
     }
 
-    return GDALRasterIO( obj, GF_Write, xoff, yoff, xsize, ysize, 
-		        (void *) buffer, buf_xsize, buf_ysize, buf_type, pixel_space, line_space );
+    return GDALRasterIOEx( obj, GF_Write, xoff, yoff, xsize, ysize, 
+                           (void *) buffer, buf_xsize, buf_ysize, buf_type, pixel_space, line_space, psExtraArg );
 }
 %}
 
@@ -353,17 +348,18 @@ public:
     return GDALFillRaster( self, real_fill, imag_fill );
   }
 
-#if !defined(SWIGCSHARP) && !defined(SWIGJAVA) && !defined(SWIGPYTHON)
-%apply ( int *nLen, char **pBuf ) { (int *buf_len, char **buf ) };
+#if defined(SWIGPERL)
+%apply (GIntBig *nLen, char **pBuf) { (GIntBig *buf_len, char **buf) };
+%apply (GIntBig *optional_GIntBig) { (GIntBig*) };
 %apply ( int *optional_int ) {(int*)};
 %feature( "kwargs" ) ReadRaster;
   CPLErr ReadRaster( int xoff, int yoff, int xsize, int ysize,
-                     int *buf_len, char **buf,
+                     GIntBig *buf_len, char **buf,
                      int *buf_xsize = 0,
                      int *buf_ysize = 0,
                      int *buf_type = 0,
-                     int *buf_pixel_space = 0,
-                     int *buf_line_space = 0,
+                     GIntBig *buf_pixel_space = 0,
+                     GIntBig *buf_line_space = 0,
                      GDALRIOResampleAlg resample_alg = GRIORA_NearestNeighbour,
                      GDALProgressFunc callback = NULL,
                      void* callback_data=NULL ) {
@@ -384,12 +380,14 @@ public:
                                 nxsize, nysize, ntype, buf_len, buf, pixel_space, line_space,
                                 &sExtraArg );
   }
-%clear (int *buf_len, char **buf );
+%clear (GIntBig *buf_len, char **buf );
 %clear (int*);
-#endif /* !defined(SWIGCSHARP) && !defined(SWIGJAVA) && !defined(SWIGPYTHON) */
+%clear (GIntBig*);
+#endif
 
-#if defined(SWIGPYTHON)
+#if defined(SWIGPYTHON) || defined(SWIGPERL)
 %apply (GIntBig nLen, char *pBuf) { (GIntBig buf_len, char *buf_string) };
+%apply (GIntBig *optional_GIntBig) { (GIntBig*) };
 %apply ( int *optional_int ) {(int*)};
 %feature( "kwargs" ) WriteRaster;
   CPLErr WriteRaster( int xoff, int yoff, int xsize, int ysize,
@@ -397,42 +395,22 @@ public:
                       int *buf_xsize = 0,
                       int *buf_ysize = 0,
                       int *buf_type = 0,
-                      int *buf_pixel_space = 0,
-                      int *buf_line_space = 0) {
+                      GIntBig *buf_pixel_space = 0,
+                      GIntBig *buf_line_space = 0) {
     int nxsize = (buf_xsize==0) ? xsize : *buf_xsize;
     int nysize = (buf_ysize==0) ? ysize : *buf_ysize;
     GDALDataType ntype  = (buf_type==0) ? GDALGetRasterDataType(self)
                                         : (GDALDataType)*buf_type;
-    int pixel_space = (buf_pixel_space == 0) ? 0 : *buf_pixel_space;
-    int line_space = (buf_line_space == 0) ? 0 : *buf_line_space;
+    GIntBig pixel_space = (buf_pixel_space == 0) ? 0 : *buf_pixel_space;
+    GIntBig line_space = (buf_line_space == 0) ? 0 : *buf_line_space;
+    GDALRasterIOExtraArg* psExtraArg = NULL;
     return WriteRaster_internal( self, xoff, yoff, xsize, ysize,
-                                 nxsize, nysize, ntype, buf_len, buf_string, pixel_space, line_space );
+                                 nxsize, nysize, ntype, buf_len, buf_string, pixel_space, line_space, psExtraArg );
   }
 %clear (GIntBig buf_len, char *buf_string);
 %clear (int*);
-#elif !defined(SWIGCSHARP) && !defined(SWIGJAVA)
-%apply (int nLen, char *pBuf) { (int buf_len, char *buf_string) };
-%apply ( int *optional_int ) {(int*)};
-%feature( "kwargs" ) WriteRaster;
-  CPLErr WriteRaster( int xoff, int yoff, int xsize, int ysize,
-                      int buf_len, char *buf_string,
-                      int *buf_xsize = 0,
-                      int *buf_ysize = 0,
-                      int *buf_type = 0,
-                      int *buf_pixel_space = 0,
-                      int *buf_line_space = 0) {
-    int nxsize = (buf_xsize==0) ? xsize : *buf_xsize;
-    int nysize = (buf_ysize==0) ? ysize : *buf_ysize;
-    GDALDataType ntype  = (buf_type==0) ? GDALGetRasterDataType(self)
-                                        : (GDALDataType)*buf_type;
-    int pixel_space = (buf_pixel_space == 0) ? 0 : *buf_pixel_space;
-    int line_space = (buf_line_space == 0) ? 0 : *buf_line_space;
-    return WriteRaster_internal( self, xoff, yoff, xsize, ysize,
-                                 nxsize, nysize, ntype, buf_len, buf_string, pixel_space, line_space );
-  }
-%clear (int buf_len, char *buf_string);
-%clear (int*);
-#endif /* !defined(SWIGCSHARP) && !defined(SWIGJAVA) */
+%clear (GIntBig*);
+#endif
 
   void FlushCache() {
     GDALFlushRasterCache( self );
