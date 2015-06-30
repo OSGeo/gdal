@@ -1280,16 +1280,20 @@ def jp2openjpeg_27():
     # Test optimization in GDALCopyWholeRasterGetSwathSize()
     # Not sure how we can check that except looking at logs with CPL_DEBUG=GDAL
     # for "GDAL: GDALDatasetCopyWholeRaster(): 2048*2048 swaths, bInterleave=1"
-
+    gdal.SetCacheMax(12346789)
     src_ds = gdal.GetDriverByName('MEM').Create('', 2049, 2049, 4)
     print("(1)")
+    gdal.SetCacheMax(12346789)
     out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_27.jp2', src_ds, options = ['RESOLUTIONS=1','BLOCKXSIZE=2048', 'BLOCKYSIZE=2048'])
     print("(2)")
+    gdal.SetCacheMax(12346789)
     src_ds = None
     print("(3)")
+    gdal.SetCacheMax(12346789)
     #print('End of JP2 decoding')
     out2_ds = gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/jp2openjpeg_27.tif', out_ds, options=['TILED=YES'])
     print("(4)")
+    gdal.SetCacheMax(12346789)
     out_ds = None
     print("(5)")
     del out2_ds
