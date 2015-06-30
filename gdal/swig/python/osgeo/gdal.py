@@ -719,8 +719,8 @@ class Dataset(MajorObject):
         WriteRaster(self, int xoff, int yoff, int xsize, int ysize, GIntBig buf_len, 
             int buf_xsize = None, int buf_ysize = None, 
             GDALDataType buf_type = None, int band_list = 0, 
-            int buf_pixel_space = None, int buf_line_space = None, 
-            int buf_band_space = None) -> CPLErr
+            GIntBig buf_pixel_space = None, GIntBig buf_line_space = None, 
+            GIntBig buf_band_space = None) -> CPLErr
         """
         return _gdal.Dataset_WriteRaster(self, *args, **kwargs)
 
@@ -1156,8 +1156,8 @@ class Band(MajorObject):
         """
         WriteRaster(self, int xoff, int yoff, int xsize, int ysize, GIntBig buf_len, 
             int buf_xsize = None, int buf_ysize = None, 
-            int buf_type = None, int buf_pixel_space = None, 
-            int buf_line_space = None) -> CPLErr
+            int buf_type = None, GIntBig buf_pixel_space = None, 
+            GIntBig buf_line_space = None) -> CPLErr
         """
         return _gdal.Band_WriteRaster(self, *args, **kwargs)
 
