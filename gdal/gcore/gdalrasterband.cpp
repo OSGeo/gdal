@@ -896,6 +896,7 @@ CPLErr GDALRasterBand::UnreferenceBlock( GDALRasterBlock* poBlock,
         printf("nRasterYSize = %d\n", nRasterYSize);
         printf("nBlockXSize = %d\n", nBlockXSize);
         printf("nBlockYSize = %d\n", nBlockYSize);
+        poBlock->DumpBlock();
         if( GetDataset() != NULL )
             printf("Dataset: %s\n", GetDataset()->GetDescription());
         GDALRasterBlock::Verify();
