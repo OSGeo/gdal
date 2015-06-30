@@ -573,6 +573,7 @@ class CPL_DLL GDALRasterBlock
     static void FlushDirtyBlocks();
     static int  FlushCacheBlock(int bDirtyBlocksOnly = FALSE);
     static void Verify();
+    static void CheckNonOrphanedBlocks(GDALRasterBand* poBand);
 
     /* Should only be called by GDALDestroyDriverManager() */
     static void DestroyRBMutex();
@@ -671,7 +672,7 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     GDALAbstractBandBlockCache* poBandBlockCache;
 
     void           SetFlushBlockErr( CPLErr eErr );
-    CPLErr         UnreferenceBlock( GDALRasterBlock* poBlock );
+    CPLErr         UnreferenceBlock( GDALRasterBlock* poBlock, const char* pszCaller );
 
   protected:
     GDALDataset *poDS;

@@ -90,6 +90,7 @@ GDALRasterBand::~GDALRasterBand()
     }
 
     InvalidateMaskBand();
+    nBand = -nBand;
 }
 
 /************************************************************************/
@@ -844,7 +845,10 @@ CPLErr GDALRasterBand::FlushCache()
     if (poBandBlockCache == NULL || !poBandBlockCache->IsInitOK())
         return eGlobalErr;
 
-    return poBandBlockCache->FlushCache();
+    CPLErr eErr = poBandBlockCache->FlushCache();
+    // FIXME: debug section
+    GDALRasterBlock::CheckNonOrphanedBlocks(this);
+    return eErr;
 }
 
 /************************************************************************/
@@ -875,8 +879,28 @@ CPLErr CPL_STDCALL GDALFlushRasterCache( GDALRasterBandH hBand )
 /*      the block cache mutex)                                          */
 /************************************************************************/
 
-CPLErr GDALRasterBand::UnreferenceBlock( GDALRasterBlock* poBlock )
+CPLErr GDALRasterBand::UnreferenceBlock( GDALRasterBlock* poBlock,
+                                         const char* pszCaller)
 {
+    // FIXME: debug section
+    if( poBandBlockCache == NULL || !poBandBlockCache->IsInitOK() )
+    {
+        if( poBandBlockCache == NULL )
+            printf("poBandBlockCache == NULL\n");
+        else
+            printf("!poBandBlockCache->IsInitOK()\n");
+        printf("caller = %s\n", pszCaller);
+        printf("GDALRasterBand: %p\n", this);
+        printf("GDALRasterBand: nBand=%d\n", nBand);
+        printf("nRasterXSize = %d\n", nRasterXSize);
+        printf("nRasterYSize = %d\n", nRasterYSize);
+        printf("nBlockXSize = %d\n", nBlockXSize);
+        printf("nBlockYSize = %d\n", nBlockYSize);
+        if( GetDataset() != NULL )
+            printf("Dataset: %s\n", GetDataset()->GetDescription());
+        GDALRasterBlock::Verify();
+        abort();
+    }
     CPLAssert(poBandBlockCache && poBandBlockCache->IsInitOK());
     return poBandBlockCache->UnreferenceBlock( poBlock );
 }

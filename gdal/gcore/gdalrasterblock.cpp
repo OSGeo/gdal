@@ -379,7 +379,7 @@ int GDALRasterBlock::FlushCacheBlock(int bDirtyBlocksOnly)
             CPLSleep(CPLAtof(CPLGetConfigOption("GDAL_RB_FLUSHBLOCK_SLEEP_AFTER_DROP_LOCK", "0")));
 
         poTarget->Detach_unlocked();
-        poTarget->GetBand()->UnreferenceBlock(poTarget);
+        poTarget->GetBand()->UnreferenceBlock(poTarget, (bDirtyBlocksOnly) ? "FlushCacheBlock(TRUE)" : "FlushCacheBlock(FALSE)");
     }
 
     if( bSleepsForBockCacheDebug )
@@ -642,6 +642,31 @@ void GDALRasterBlock::Verify()
     }
 }
 
+
+void GDALRasterBlock::CheckNonOrphanedBlocks(GDALRasterBand* poBand)
+{
+    TAKE_LOCK;
+    for( GDALRasterBlock *poBlock = poNewest; 
+                          poBlock != NULL;
+                          poBlock = poBlock->poNext )
+    {
+        if ( poBlock->GetBand() == poBand )
+        {
+            printf("Cache has still blocks of band %p\n", poBand);
+            printf("Band : %d\n", poBand->GetBand());
+            printf("nRasterXSize = %d\n", poBand->GetXSize());
+            printf("nRasterYSize = %d\n", poBand->GetYSize());
+            int nBlockXSize, nBlockYSize;
+            poBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
+            printf("nBlockXSize = %d\n", nBlockXSize);
+            printf("nBlockYSize = %d\n", nBlockYSize);
+            printf("Dataset : %p\n", poBand->GetDataset());
+            if( poBand->GetDataset() )
+                printf("Dataset : %s\n", poBand->GetDataset()->GetDescription());
+        }
+    }
+}
+
 /************************************************************************/
 /*                               Write()                                */
 /************************************************************************/
@@ -805,7 +830,7 @@ CPLErr GDALRasterBlock::Internalize()
                     GDALRasterBlock* _poPrevious = poTarget->poPrevious;
 
                     poTarget->Detach_unlocked();
-                    poTarget->GetBand()->UnreferenceBlock(poTarget);
+                    poTarget->GetBand()->UnreferenceBlock(poTarget, "Internalize");
 
                     apoBlocksToFree[nBlocksToFree++] = poTarget;
                     if( poTarget->GetDirty() )
