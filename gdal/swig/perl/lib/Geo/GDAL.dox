@@ -142,10 +142,12 @@
 # +list Geo::GDAL::Const GA_
 
 ## @cmethod @ResamplingTypes()
-# @return a list of GDAL resampling methods.
+# @return a list of GDAL resampling methods. These are currently:
+# +list Geo::GDAL::Const GRA_
 
 ## @cmethod @RIOResamplingTypes()
-# @return a list of GDAL raster IO resampling methods.
+# @return a list of GDAL raster IO resampling methods. These are currently:
+# +list Geo::GDAL::Const GRIORA_
 
 ## @cmethod $DecToDMS($angle, $axis, $precision=2)
 # Convert decimal degrees to degrees, minutes, and seconds string
@@ -1001,6 +1003,11 @@ sub traverse {
 # - \a ApproxOK if histogram can be computed from overviews, default is false
 # - \a Progress an optional progress function, the default is undef
 # - \a ProgressData data for the progress function, the default is undef
+# @note Histogram counts are treated as strings in the bindings to be
+# able to use large integers (if GUIntBig is larger than Perl IV). In
+# practice this is only important if you have a 32 bit machine and
+# very large bucket counts. In those cases it may also be necessary to
+# use Math::BigInt.
 # @return a list which contains the count of values in each bucket
 
 ## @method @GetDefaultHistogram($force = 1, subref progress = undef, $progress_data = undef)
@@ -1008,13 +1015,14 @@ sub traverse {
 # @param progress [optional] a reference to a subroutine, which will
 # be called with parameters (number progress, string msg, progress_data)
 # @param progress_data [optional]
+# @note See Note in Geo::GDAL::Band::GetHistogram.
 # @return a list: ($min, $max, arrayref histogram).
 
 ## @method @SetDefaultHistogram($min, $max, $histogram)
 # @param min
 # @param max
+# @note See Note in Geo::GDAL::Band::GetHistogram.
 # @param histogram reference to an array containing the histogram
-#
 
 ## @method FlushCache()
 # Write cached data to disk. There is usually no need to call this
@@ -1345,6 +1353,7 @@ sub traverse {
 # @return Contents of a directory in an anonymous array or as a list.
 
 ## @cmethod $ReadDirRecursive($dir)
+# @note Give the directory in the form '/vsimem', i.e., without trailing '/'.
 # @return Contents of a directory tree in an anonymous array.
 
 ## @cmethod @Stat($filename)
@@ -1359,20 +1368,20 @@ sub traverse {
 
 ## @ignore Mkdir
 
-## @cmethod Mkdir($path, $mode)
+## @cmethod MkDir($path)
 # Make a directory.
+# @param path The directory to make.
 # @note The name of this method is VSIMkdir in GDAL.
-#
 
-## @cmethod Rmdir($path)
+## @ignore Rmdir
+
+## @cmethod RmDir($path)
 # Remove a directory.
 # @note The name of this method is VSIRmdir in GDAL.
-#
 
 ## @cmethod Rename($old, $new)
 # Rename a file.
 # @note The name of this method is VSIRename in GDAL.
-#
 
 
 

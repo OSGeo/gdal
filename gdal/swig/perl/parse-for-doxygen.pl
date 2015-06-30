@@ -1,3 +1,5 @@
+use strict;
+
 my @pm = qw(lib/Geo/GDAL.pm lib/Geo/OGR.pm lib/Geo/OSR.pm lib/Geo/GDAL/Const.pm);
 
 my %internal_methods = map {$_=>1} qw/TIEHASH CLEAR FIRSTKEY NEXTKEY FETCH STORE 
@@ -64,7 +66,7 @@ for my $pm (@pm) {
             $isa =~ s/\(//;
             $isa =~ s/\)//;
             $isa =~ s/;//;
-            @isa = split /\s+/, $isa;
+            my @isa = split /\s+/, $isa;
             for my $isa (@isa) {
                 next if $isa eq '';
                 push @{$package{$package}{isas}}, $isa;
@@ -96,7 +98,7 @@ for my $dox (@dox) {
         next if $_ eq '';
         s/^[\s#]+//;
         #next if $_ eq '';
-        ($w) = /^(\S+)\s/;
+        my ($w) = /^(\S+)\s/;
         if ($w eq '@class') {
             $package = $_;
             $package =~ s/^(\S+)\s+//;
@@ -119,7 +121,7 @@ for my $dox (@dox) {
         if ($w eq '@cmethod' or $w eq '@method') {
             $sub = $_;
             $sub =~ s/^(\S+)\s+//;
-            $d = $sub;
+            my $d = $sub;
             if (/(\w+)\(/) {
                 $sub = $1;
             } elsif (/(\w+)$/) {
@@ -137,7 +139,7 @@ for my $dox (@dox) {
             $attr =~ s/^(\S+)\s+//;
             $attr =~ s/\s*list\s+/@/;
             $attr = '$'.$attr unless $attr =~ /^@/;;
-            $d = $attr;
+            my $d = $attr;
             $attr =~ s/@//;
             #print "attr: '$d'\n";
             $package{$package}{attrs}{$attr} = 1;
@@ -175,7 +177,7 @@ for my $package (sort keys %package) {
     print "#*\n";
     print "package $package;\n\n";
 
-    print "use base qw(",join(' ', @{$package{$package}{isas}}),")\n\n";
+    print "use base qw(",join(' ', @{$package{$package}{isas}}),")\n\n" if $package{$package}{isas};
 
     for my $attr (sort keys %{$package{$package}{attrs}}) {
         next if $package{$package}{dox}{$attr}{ignore};
@@ -234,7 +236,7 @@ for my $package (sort keys %package) {
         $d =~ s/^\\\@/array reference /;
         $d =~ s/^\%/hash /;
         $d =~ s/^\\\%/hash reference /;
-        $dp = $d;
+        my $dp = $d;
         $dp .= '()' unless $dp =~ /\(/;
         print "#** \@method $dp\n";
         if ($private_methods{$d} or $package{$package}{dox}{$sub}{at} eq '@ignore') {
@@ -248,19 +250,16 @@ for my $package (sort keys %package) {
             if ($c =~ /^\+list/) {
                 $c =~ s/\+list //;
                 my($pkg, $prefix, $exclude) = split / /, $c;
-                #print STDERR "$pkg, $prefix, $exclude\n";
                 my %exclude = map {$_=>1} split /,/, $exclude;
-                print "# ";
                 my @list;
                 for my $l (sort keys %{$package{$pkg}{subs}}) {
                     next unless $l =~ /^$prefix/;
                     $l =~ s/^$prefix//;
                     next if $exclude{$l};
-                    #print STDERR "  $l\n";
                     push @list, $l;
                 }
                 my $last = pop @list;
-                print join(', ', @list),", and $last.\n";
+                print "# ",join(', ', @list),", and $last.\n";
             } else {
                 print "# $c\n";
             }

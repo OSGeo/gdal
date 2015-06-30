@@ -1,8 +1,65 @@
 use strict;
+use Carp;
 use Test::More qw(no_plan);
 BEGIN { use_ok('Geo::GDAL') };
 
-# Geo::GDAL::Dataset
+my $dataset;
+
+# package Geo::GDAL::Dataset
+#
+# sub AddBand
+# sub Band
+# sub Bands
+# sub BuildOverviews
+# sub CommitTransaction
+# sub Domains
+# sub GCPs
+# sub GeoTransform
+# sub GetDriver
+# sub GetFileList
+# sub GetGCPProjection
+# sub Open
+# sub OpenShared
+
+my $dataset = Geo::GDAL::Driver('GTiff')->Create(Name => '/vsimem/test.gtiff', Width => 123, Height => 45);
+undef $dataset; # need to do this since Open is called before the assignment
+
+$dataset = Geo::GDAL::Open('/vsimem/test.gtiff', 'ReadOnly');
+ok($dataset, "Open");
+
+$dataset = Geo::GDAL::OpenShared('/vsimem/test.gtiff', 'ReadOnly');
+ok($dataset, "OpenShared");
+
+$dataset = Geo::GDAL::OpenEx('/vsimem/test.gtiff');
+ok($dataset, "OpenEx");
+
+
+# sub ReadRaster
+# sub RollbackTransaction
+# sub Size
+# sub SpatialReference
+# sub StartTransaction
+# sub WriteRaster
+
+$dataset = Geo::GDAL::Driver('GTiff')->Create(Name => '/vsimem/test.gtiff');
+my @list = $dataset->GetFileList();
+undef $dataset;
+
+@list = Geo::GDAL::VSIF::ReadDir('/vsimem/');
+print "@list\n";
+my $driver = Geo::GDAL::IdentifyDriver('/vsimem/test.gtiff');
+print $driver->Name,"\n";
+
+
+$dataset = Geo::GDAL::Open('/vsimem/test.gtiff', 'ReadOnly');
+print "$dataset\n";
+undef $dataset;
+
+$dataset = Geo::GDAL::OpenShared('/vsimem/test.gtiff', 'ReadOnly');
+print "$dataset\n";
+$dataset = Geo::GDAL::OpenEx('/vsimem/test.gtiff');
+print "$dataset\n";
+
 
 my %dt = map {$_=>1} Geo::GDAL::Dataset::Domains();
 for my $dt (Geo::GDAL::Driver('MEM')->Create->Domains()) {
@@ -54,18 +111,3 @@ ok($data->[5][5] == 3, "WriteTile");
 #for my $row (@$data) {
 #    print "@$row\n";
 #}
-
-__END__
-
-tests to do
-
-CreateMaskBand
-
-GCPs
-GetGCPProjection
-
-SpatialReference
-
-StartTransaction
-CommitTransaction
-RollbackTransaction

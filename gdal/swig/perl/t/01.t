@@ -2,30 +2,11 @@ use strict;
 use Test::More qw(no_plan);
 BEGIN { use_ok('Geo::GDAL') };
 
-# Create and open dataset
+my $dataset;
 
-my $dataset = Geo::GDAL::Driver('GTiff')->Create(Name => '/vsimem/test.gtiff', Width => 123, Height => 45);
-ok($dataset, "Create a geotiff into vsimem");
-my @list = $dataset->GetFileList();
-ok($list[0] eq '/vsimem/test.gtiff', "GetFileList");
-undef $dataset;
-
-@list = Geo::GDAL::VSIF::ReadDir('/vsimem/');
-ok($list[0] eq 'test.gtiff', "ReadDir");
-
-my $driver = Geo::GDAL::IdentifyDriver('/vsimem/test.gtiff');
-ok($driver->Name eq Geo::GDAL::Driver('GTiff')->Name, "IdentifyDriver");
-
-$dataset = Geo::GDAL::Open('/vsimem/test.gtiff', 'ReadOnly');
-ok($dataset, "Open");
-
-$dataset = Geo::GDAL::OpenShared('/vsimem/test.gtiff', 'ReadOnly');
-ok($dataset, "OpenShared");
-
-$dataset = Geo::GDAL::OpenEx('/vsimem/test.gtiff');
-ok($dataset, "OpenEx");
-
-# Geo::GDAL::Driver 
+# package Geo::GDAL::Driver
+#
+# sub Capabilities ok
 
 my %cap = map {$_=>1} Geo::GDAL::Driver::Capabilities;
 my @cap = Geo::GDAL::Driver('GTiff')->Capabilities;
@@ -34,6 +15,29 @@ for my $cap (@cap) {
     my $t = Geo::GDAL::Driver('GTiff')->TestCapability($cap);
     ok($t, "Test capability $cap");
 }
+
+# sub Copy
+# sub CopyFiles
+# sub Create ok
+
+my $dataset = Geo::GDAL::Driver('GTiff')->Create(Name => '/vsimem/test.gtiff', Width => 123, Height => 45);
+ok($dataset, "Create a geotiff into vsimem");
+my @list = $dataset->GetFileList();
+ok($list[0] eq '/vsimem/test.gtiff', "GetFileList");
+
+my $driver = Geo::GDAL::IdentifyDriver('/vsimem/test.gtiff');
+ok($driver->Name eq Geo::GDAL::Driver('GTiff')->Name, "IdentifyDriver");
+
+# sub CreationDataTypes
+# sub CreationOptionList
+# sub Delete
+# sub Domains
+# sub Extension
+# sub MIMEType
+# sub Name
+# sub Rename
+# sub TestCapability above
+
 
 my $dataset2 = Geo::GDAL::Driver('MEM')->Copy('', $dataset);
 my @size1 = $dataset->Size;
