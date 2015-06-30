@@ -361,6 +361,8 @@
             <xs:enumeration value="FALSE"/>
             <xs:enumeration value="true"/>
             <xs:enumeration value="false"/>
+            <xs:enumeration value="True"/>
+            <xs:enumeration value="False"/>
         </xs:restriction>
     </xs:simpleType>
 
