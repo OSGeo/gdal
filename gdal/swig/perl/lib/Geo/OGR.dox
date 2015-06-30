@@ -601,12 +601,10 @@
 # @param force compute the extent even if it is expensive
 # @note In scalar context returns a reference to an anonymous array
 # containing the extent.
-# @note The order of values is different from those returned by
-# Geo::OGR::Geometry::GetEnvelope.
-# @return the extent ($minx, $miny, $maxx, $maxy)
+# @return the extent ($minx, $maxx, $miny, $maxy)
 
 # @param force
-# @return the extent = ($minx, $miny, $maxx, $maxy) as a listref
+# @return the extent = ($minx, $maxx, $miny, $maxy) as a listref
 
 ## @method StartTransaction()
 
@@ -1567,8 +1565,6 @@
 ## @method @GetEnvelope()
 # @note In scalar context returns a reference to an anonymous array
 # containing the envelope.
-# @note The order of values is different from those returned by
-# Geo::OGR::Layer::GetExtent.
 # @return the envelope ($minx, $maxx, $miny, $maxy)
 
 ## @method @GetEnvelope3D()
