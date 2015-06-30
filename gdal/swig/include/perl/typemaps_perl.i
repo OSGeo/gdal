@@ -10,6 +10,18 @@
  */
 %include "typemaps.i"
 
+%include "../../port/cpl_config.h"
+#if defined(WIN32) && defined(_MSC_VER)
+typedef __int64            GIntBig;
+typedef unsigned __int64   GUIntBig;
+#elif HAVE_LONG_LONG
+typedef long long          GIntBig;
+typedef unsigned long long GUIntBig;
+#else
+typedef long               GIntBig;
+typedef unsigned long      GUIntBig;
+#endif
+
 %apply (long *OUTPUT) { long *argout };
 %apply (double *OUTPUT) { double *argout };
 %apply (double *OUTPUT) { double *defaultval };
@@ -48,19 +60,6 @@
     }
 }
 
-%typemap(in) GIntBig
-{
-  /* %typemap(in) GIntBig */
-  $1 = SvIV($input); //FIXME is that right ??
-}
-
-%typemap(out) GIntBig
-{
-  /* %typemap(out) GIntBig */
-  $result = sv_newmortal();
-  sv_setiv($result, (IV) $1);
-  argvi++;
-}
 %typemap(out) const char *
 {
     /* %typemap(out) const char * */
@@ -586,6 +585,25 @@ CreateArrayFromStringArray( char **first ) {
     free( *$2 );
   }
 }
+%typemap(in,numinputs=0) (GIntBig *nLen, char **pBuf ) ( GIntBig nLen = 0, char *pBuf = 0 )
+{
+  /* %typemap(in,numinputs=0) (GIntBig *nLen, char **pBuf ) */
+  $1 = &nLen;
+  $2 = &pBuf;
+}
+%typemap(argout) (GIntBig *nLen, char **pBuf )
+{
+  /* %typemap(argout) (GIntBig *nLen, char **pBuf ) */
+  $result = sv_2mortal(newSVpv( *$2, *$1 ));
+  argvi++;
+}
+%typemap(freearg) (GIntBig *nLen, char **pBuf )
+{
+  /* %typemap(freearg) (GIntBig *nLen, char **pBuf ) */
+  if( *$1 ) {
+    free( *$2 );
+  }
+}
 %typemap(in,numinputs=1) (int nLen, char *pBuf )
 {
     /* %typemap(in,numinputs=1) (int nLen, char *pBuf ) */
@@ -608,6 +626,20 @@ CreateArrayFromStringArray( char **first ) {
             SWIG_croak("Expected binary data.");
         STRLEN len = SvCUR($input);
         $2 = (unsigned char *)SvPV_nolen($input);
+        $1 = len;
+    } else {
+        $2 = NULL;
+        $1 = 0;
+    }
+}
+%typemap(in,numinputs=1) (GIntBig nLen, char *pBuf )
+{
+    /* %typemap(in,numinputs=1) (GIntBig nLen, char *pBuf ) */
+    if (SvOK($input)) {
+        if (!SvPOK($input))
+            croak("Expected binary data.");
+        STRLEN len = SvCUR($input);
+        $2 = SvPV_nolen($input);
         $1 = len;
     } else {
         $2 = NULL;
@@ -923,6 +955,17 @@ CreateArrayFromStringArray( char **first ) {
   }
   else {
     val = SvIV($input);
+    $1 = ($1_type)&val;
+  }
+}
+%typemap(in) (GIntBig *optional_GIntBig) ( GIntBig val )
+{
+  /* %typemap(in) (GIntBig *optional_GIntBig) */
+  if ( !SvOK($input) ) {
+    $1 = 0;
+  }
+  else {
+    val = strtoull(SvPV_nolen($input), 0, 0);
     $1 = ($1_type)&val;
   }
 }
