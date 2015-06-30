@@ -3,7 +3,53 @@ use Scalar::Util 'blessed';
 use Test::More qw(no_plan);
 BEGIN { use_ok('Geo::GDAL') };
 
-# Geo::GDAL::Band
+# package Geo::GDAL::Band
+# sub AttributeTable
+# sub CategoryNames
+# sub Checksum
+# sub ColorInterpretation
+# sub ColorInterpretations
+# sub ColorTable
+# sub ComputeBandStats
+# sub ComputeRasterMinMax
+# sub ComputeStatistics
+# sub Contours
+# sub CreateMaskBand
+# sub DataType
+# sub Domains
+# sub Fill
+# sub FillNodata
+# sub FlushCache
+# sub GetBandNumber
+# sub GetBlockSize
+# sub GetColorTable
+# sub GetDataset
+# sub GetDefaultHistogram
+# sub GetHistogram
+# sub GetMaskBand
+# sub GetMaskFlags
+# sub GetMaximum
+# sub GetMinimum
+# sub GetOverview
+# sub GetOverviewCount
+# sub GetStatistics
+# sub HasArbitraryOverviews
+# sub MaskFlags
+# sub NoDataValue
+# sub PackCharacter
+# sub ReadRaster
+# sub ReadTile
+# sub RegenerateOverview
+# sub RegenerateOverviews
+# sub ScaleAndOffset
+# sub SetColorTable
+# sub SetDefaultHistogram
+# sub SetStatistics
+# sub Size
+# sub Unit
+# sub WriteRaster
+# sub WriteTile
+
 
 my $dataset = Geo::GDAL::Driver('GTiff')->Create(Name => '/vsimem/test.gtiff', Width => 4, Height => 6);
 my $band = $dataset->Band;
@@ -227,6 +273,14 @@ eval {
     $band->SetDefaultHistogram($min, $max, $histogram);
 };
 ok(!$@, "SetDefaultHistogram");
+
+my @h = ('12345678987654321','9223372036854775806');
+$band->SetDefaultHistogram(0, 100, \@h);
+my @hist = $band->GetDefaultHistogram(0);
+ok($hist[0] == 0, "DefaultHistogram");
+ok($hist[1] == 100, "DefaultHistogram");
+ok($hist[2][0] eq $h[0], "DefaultHistogram");
+ok($hist[2][1] eq $h[1], "DefaultHistogram");
 
 my $buf = $band->ReadRaster();
 my $pc = $band->PackCharacter;
