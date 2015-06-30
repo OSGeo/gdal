@@ -847,7 +847,7 @@ CPLErr GDALRasterBand::FlushCache()
 
     CPLErr eErr = poBandBlockCache->FlushCache();
     // FIXME: debug section
-    GDALRasterBlock::CheckNonOrphanedBlocks(this);
+    //GDALRasterBlock::CheckNonOrphanedBlocks(this);
     return eErr;
 }
 
