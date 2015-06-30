@@ -130,6 +130,12 @@ void CPL_STDCALL GDALSetCacheMax( int nNewSizeInBytes )
 void CPL_STDCALL GDALSetCacheMax64( GIntBig nNewSizeInBytes )
 
 {
+    if( nNewSizeInBytes == 12346789 )
+    {
+        GDALRasterBlock::DumpAll();
+        return;
+    }
+    
     bCacheMaxInitialized = TRUE;
     nCacheMax = nNewSizeInBytes;
 
@@ -1029,3 +1035,33 @@ int GDALRasterBlock::DropLockForRemovalFromStorage()
 
     return FALSE;
 }
+
+void GDALRasterBlock::DumpAll()
+{
+    int iBlock = 0;
+    for( GDALRasterBlock *poBlock = poNewest; 
+                            poBlock != NULL;
+                            poBlock = poBlock->poNext )
+    {
+        printf("Block %d\n", iBlock);
+        poBlock->DumpBlock();
+        printf("\n");
+        iBlock ++;
+    }
+}
+
+void GDALRasterBlock::DumpBlock()
+{
+        printf("  Lock count = %d\n", nLockCount);
+        printf("  bDirty = %d\n", bDirty);
+        printf("  nXOff = %d\n", nXOff);
+        printf("  nYOff = %d\n", nYOff);
+        printf("  nXSize = %d\n", nXSize);
+        printf("  nYSize = %d\n", nYSize);
+        printf("  eType = %d\n", eType);
+        printf("  Band %p\n", GetBand());
+        printf("  Band %d\n", GetBand()->GetBand());
+        if( GetBand()->GetDataset() )
+            printf("  Dataset = %s\n", GetBand()->GetDataset()->GetDescription());
+}
+
