@@ -60,7 +60,7 @@ void DontUseExceptions() {
     CPLErr eclass = CPLGetLastErrorType();
     if ( eclass == CE_Failure || eclass == CE_Fatal ) {
 #if defined(SWIGPERL)
-      SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      croak( CPLGetLastErrorMsg() );
 #elif defined(SWIGCSHARP)
       SWIG_CSharpException(SWIG_RuntimeError, CPLGetLastErrorMsg());
 #else

@@ -98,8 +98,8 @@ typedef int OGRErr;
 typedef int RETURN_NONE;
 /* return value that is used for VSI methods that return -1 on error (and set errno) */
 typedef int VSI_RETVAL;
-
 %}
+typedef int RETURN_NONE;
 
 //************************************************************************
 //
