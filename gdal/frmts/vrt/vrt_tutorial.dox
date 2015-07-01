@@ -684,11 +684,11 @@ should be specified with the above SetMetadata() / SetMetadataItem() examples.
   char** papszOptions = NULL;
   papszOptions = CSLAddNameValue(papszOptions, "subclass", "VRTRawRasterBand"); // if not specified, default to VRTRasterBand
   papszOptions = CSLAddNameValue(papszOptions, "SourceFilename", "src.tif"); // mandatory
-  papszOptions = CSLAddNameValue(papszOptions, "ImageOffset", "156"); // optionnal. default = 0 
-  papszOptions = CSLAddNameValue(papszOptions, "PixelOffset", "2"); // optionnal. default = size of band type 
-  papszOptions = CSLAddNameValue(papszOptions, "LineOffset", "1024"); // optionnal. default = size of band type * width 
-  papszOptions = CSLAddNameValue(papszOptions, "ByteOrder", "LSB"); // optionnal. default = machine order
-  papszOptions = CSLAddNameValue(papszOptions, "relativeToVRT", "true"); // optionnal. default = false
+  papszOptions = CSLAddNameValue(papszOptions, "ImageOffset", "156"); // optional. default = 0 
+  papszOptions = CSLAddNameValue(papszOptions, "PixelOffset", "2"); // optional. default = size of band type 
+  papszOptions = CSLAddNameValue(papszOptions, "LineOffset", "1024"); // optional. default = size of band type * width 
+  papszOptions = CSLAddNameValue(papszOptions, "ByteOrder", "LSB"); // optional. default = machine order
+  papszOptions = CSLAddNameValue(papszOptions, "relativeToVRT", "true"); // optional. default = false
   poVRTDS->AddBand(GDT_Byte, papszOptions);
   CSLDestroy(papszOptions);
 
