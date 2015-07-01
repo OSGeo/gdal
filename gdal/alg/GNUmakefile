@@ -10,7 +10,8 @@ OBJ	=	gdalmediancut.o gdaldither.o gdal_crs.o gdaltransformer.o \
 		gdalsievefilter.o gdalwarpkernel_opencl.o polygonize.o \
 		gdalrasterfpolygonenumerator.o fpolygonize.o \
 		contour.o gdaltransformgeolocs.o \
-		gdal_octave.o gdal_simplesurf.o gdalmatching.o delaunay.o
+		gdal_octave.o gdal_simplesurf.o gdalmatching.o delaunay.o \
+		gdalpansharpen.o
 
 ifeq ($(HAVE_AVX_AT_COMPILE_TIME),yes)
 CPPFLAGS 	:=	-DHAVE_AVX_AT_COMPILE_TIME $(CPPFLAGS)

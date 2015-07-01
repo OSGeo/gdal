@@ -381,6 +381,8 @@ CPLErr VRTDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPath )
                 poBand = new VRTRawRasterBand( this, 0 );
             else if( EQUAL(pszSubclass, "VRTWarpedRasterBand") )
                 poBand = new VRTWarpedRasterBand( this, 0 );
+            //else if( EQUAL(pszSubclass, "VRTPansharpenedRasterBand") )
+            //    poBand = new VRTPansharpenedRasterBand( this, 0 );
             else
                 CPLError( CE_Failure, CPLE_AppDefined,
                           "VRTRasterBand of unrecognised subclass '%s'.",
@@ -422,6 +424,8 @@ CPLErr VRTDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPath )
                 poBand = new VRTRawRasterBand( this, nBands+1 );
             else if( EQUAL(pszSubclass, "VRTWarpedRasterBand") )
                 poBand = new VRTWarpedRasterBand( this, nBands+1 );
+            else if( EQUAL(pszSubclass, "VRTPansharpenedRasterBand") )
+                poBand = new VRTPansharpenedRasterBand( this, nBands+1 );
             else
                 CPLError( CE_Failure, CPLE_AppDefined,
                           "VRTRasterBand of unrecognised subclass '%s'.",
@@ -777,9 +781,11 @@ GDALDataset *VRTDataset::OpenXML( const char *pszXML, const char *pszVRTPath,
         return NULL;
     }
 
-    if( CPLGetXMLNode( psRoot, "rasterXSize" ) == NULL
+    int bIsPansharpened = strstr(pszXML,"VRTPansharpenedDataset") != NULL;
+    if( !bIsPansharpened &&
+        (CPLGetXMLNode( psRoot, "rasterXSize" ) == NULL
         || CPLGetXMLNode( psRoot, "rasterYSize" ) == NULL
-        || CPLGetXMLNode( psRoot, "VRTRasterBand" ) == NULL )
+        || CPLGetXMLNode( psRoot, "VRTRasterBand" ) == NULL) )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "Missing one of rasterXSize, rasterYSize or bands on"
@@ -795,7 +801,8 @@ GDALDataset *VRTDataset::OpenXML( const char *pszXML, const char *pszVRTPath,
     int nXSize = atoi(CPLGetXMLValue(psRoot,"rasterXSize","0"));
     int nYSize = atoi(CPLGetXMLValue(psRoot,"rasterYSize","0"));
     
-    if ( !GDALCheckDatasetDimensions(nXSize, nYSize) )
+    if ( !bIsPansharpened &&
+        !GDALCheckDatasetDimensions(nXSize, nYSize) )
     {
         CPLDestroyXMLNode( psTree );
         return NULL;
@@ -803,6 +810,8 @@ GDALDataset *VRTDataset::OpenXML( const char *pszXML, const char *pszVRTPath,
 
     if( strstr(pszXML,"VRTWarpedDataset") != NULL )
         poDS = new VRTWarpedDataset( nXSize, nYSize );
+    else if( bIsPansharpened )
+        poDS = new VRTPansharpenedDataset( nXSize, nYSize );
     else
     {
         poDS = new VRTDataset( nXSize, nYSize );

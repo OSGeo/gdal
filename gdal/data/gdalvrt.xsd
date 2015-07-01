@@ -43,6 +43,7 @@
                     <xs:element name="VRTRasterBand" type="VRTRasterBandType"/> <!-- may be repeated -->
                     <xs:element name="MaskBand" type="MaskBandType"/>
                     <xs:element name="GDALWarpOptions" type="GDALWarpOptionsType"/> <!-- only if subClass="VRTWarpedDataset" -->
+                    <xs:element name="PansharpeningOptions" type="PansharpeningOptionsType"/> <!-- only if subClass="VRTPansharpenedDataset" -->
                 </xs:choice>
             </xs:sequence>
             <xs:attribute name="subClass" type="xs:string"/>
@@ -87,6 +88,39 @@
     </xs:complexType>
 
     <xs:complexType name="GDALWarpOptionsType">
+        <xs:sequence>
+            <xs:any processContents="skip" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="PansharpeningOptionsType">
+        <xs:sequence>
+            <xs:element name="Algorithm" type="xs:string" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="AlgorithmOptions" type="AlgorithmOptionsType" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="Resampling" type="xs:string" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="NumThreads" type="xs:string" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="BitDepth" type="xs:string" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="PanchroBand" type="PanchroBandType" minOccurs="1" maxOccurs="1"/>
+            <xs:element name="SpectralBand" type="SpectralBandType" minOccurs="1" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="PanchroBandType">
+        <xs:sequence>
+            <xs:element name="SourceFilename" type="SourceFilenameType"/>
+            <xs:element name="SourceBand" type="xs:string"/>  <!-- should be refined into xs:nonNegativeInteger or mask,xs:nonNegativeInteger -->
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="SpectralBandType">
+        <xs:sequence>
+            <xs:element name="SourceFilename" type="SourceFilenameType"/>
+            <xs:element name="SourceBand" type="xs:string"/>  <!-- should be refined into xs:nonNegativeInteger or mask,xs:nonNegativeInteger -->
+        </xs:sequence>
+        <xs:attribute name="dstBand" type="xs:nonNegativeInteger"/>
+    </xs:complexType>
+
+    <xs:complexType name="AlgorithmOptionsType">
         <xs:sequence>
             <xs:any processContents="skip" minOccurs="0" maxOccurs="unbounded"/>
         </xs:sequence>
@@ -156,6 +190,7 @@
             <xs:enumeration value="VRTWarpedRasterBand"/>
             <xs:enumeration value="VRTDerivedRasterBand"/>
             <xs:enumeration value="VRTRawRasterBand"/>
+            <xs:enumeration value="VRTPansharpenedRasterBand"/>
         </xs:restriction>
     </xs:simpleType>
 
