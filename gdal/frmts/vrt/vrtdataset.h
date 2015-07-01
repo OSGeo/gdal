@@ -253,6 +253,37 @@ public:
 };
 
 /************************************************************************/
+/*                        VRTPansharpenedDataset                        */
+/************************************************************************/
+
+class GDALPansharpenOperation;
+
+class VRTPansharpenedDataset : public VRTDataset
+{
+    int               nBlockXSize;
+    int               nBlockYSize;
+    GDALPansharpenOperation* poPansharpener;
+
+  protected:
+    virtual int         CloseDependentDatasets();
+
+public:
+                      VRTPansharpenedDataset( int nXSize, int nYSize );
+                     ~VRTPansharpenedDataset();
+
+    virtual CPLErr    XMLInit( CPLXMLNode *, const char * );
+
+    virtual CPLErr AddBand( GDALDataType eType, 
+                            char **papszOptions=NULL );
+
+    virtual char      **GetFileList();
+
+    void              GetBlockSize( int *, int * );
+    
+    GDALPansharpenOperation* GetPansharpener() { return poPansharpener; }
+};
+
+/************************************************************************/
 /*                            VRTRasterBand                             */
 /*                                                                      */
 /*      Provides support for all the various kinds of metadata but      */
@@ -356,6 +387,7 @@ class CPL_DLL VRTRasterBand : public GDALRasterBand
     virtual int         CloseDependentDatasets();
 
     virtual int         IsSourcedRasterBand() { return FALSE; }
+    virtual int         IsPansharpenRasterBand() { return FALSE; }
 };
 
 /************************************************************************/
@@ -482,6 +514,28 @@ class CPL_DLL VRTWarpedRasterBand : public VRTRasterBand
 
     virtual int GetOverviewCount();
     virtual GDALRasterBand *GetOverview(int);
+};
+/************************************************************************/
+/*                        VRTPansharpenedRasterBand                     */
+/************************************************************************/
+
+class VRTPansharpenedRasterBand : public VRTRasterBand
+{
+    int               nIndexAsPansharpenedBand;
+
+  public:
+                   VRTPansharpenedRasterBand( GDALDataset *poDS, int nBand,
+                                              GDALDataType eDataType = GDT_Unknown );
+    virtual        ~VRTPansharpenedRasterBand();
+
+    virtual CPLErr         XMLInit( CPLXMLNode *, const char * );
+
+    virtual CPLErr IReadBlock( int, int, void * );
+    
+    virtual int         IsPansharpenRasterBand() { return TRUE; }
+    
+    void                SetIndexAsPansharpenedBand(int nIdx) { nIndexAsPansharpenedBand = nIdx; }
+    int                 GetIndexAsPansharpenedBand() const { return nIndexAsPansharpenedBand; }
 };
 
 /************************************************************************/
