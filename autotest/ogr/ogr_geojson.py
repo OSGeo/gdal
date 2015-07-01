@@ -546,31 +546,25 @@ def ogr_geojson_11():
         gdaltest.post_reason('Missing layer called OGRGeoJSON')
         return 'fail'
 
-
     extent = (100.0, 102.0, 0.0, 1.0)
 
     rc = validate_layer(lyr, 'OGRGeoJSON', 1, ogr.wkbGeometryCollection, 0, extent)
-    if rc is not True:
+    if not rc:
         return 'fail'
 
     ref = lyr.GetSpatialRef()
-    gcs = int(ref.GetAuthorityCode('GEOGCS'))
-    pcs = ref.GetAuthorityCode('PROJCS')
-    if pcs:
-        pcs = int(pcs)
-        
-    if  not gcs == 4326 and not pcs == 26915:
-        gdaltest.post_reason("Spatial reference was not valid")
+    pcs = int(ref.GetAuthorityCode('PROJCS'))
+    if pcs != 26915:
+        gdaltest.post_reason('Spatial reference was not valid')
         return 'fail'
 
     feature = lyr.GetNextFeature()
     geometry = feature.GetGeometryRef().GetGeometryRef(0)
-    
+
     srs = geometry.GetSpatialReference()
-    gcs = int(srs.GetAuthorityCode('GEOGCS'))
-    pcs = srs.GetAuthorityCode('PROJCS')
-    if not gcs == 4269 and not pcs == 26916:
-        gdaltest.post_reason("Spatial reference for individual geometry was not valid")
+    pcs = int(srs.GetAuthorityCode('PROJCS'))
+    if pcs != 26916:
+        gdaltest.post_reason('Spatial reference for individual geometry was not valid')
         return 'fail'
 
     lyr = None
@@ -2247,4 +2241,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-
