@@ -10,9 +10,6 @@
 (GDAL/OGR &gt;= 2.1.0)<p>
 
 This driver can connect to the a MongoDB service.<p>
-GDAL/OGR must be built against the <a href="https://github.com/mongodb/mongo-cxx-driver">MongoDB C++ driver client library</a>,
-in its "legacy" version (tested with 1.0.2),
-in order to the MongoDB driver to be compiled.<p>
 The driver supports read, creation, update and delete operations.<p>
 
 <h2>MongoDB vs OGR concepts</h2>
@@ -170,6 +167,47 @@ Creating and populating a collection from a shapefile:
 ogr2ogr -f mongodb mongodb://user:password@ds047612.mongolab.com:47612/gdalautotest shapefile.shp
 </pre>
 <p>
+
+<h2>Build instructions</h2>
+
+GDAL/OGR must be built against the <a href="https://github.com/mongodb/mongo-cxx-driver">MongoDB C++ driver client library</a>,
+in its "legacy" version (tested with 1.0.2), in order to the MongoDB driver to be compiled.<p>
+
+You must first follow <a href="https://github.com/mongodb/mongo-cxx-driver/wiki/Download-and-Compile-the-Legacy-Driver">MongoDB C++ driver client build instructions</a>,
+which require to have Boost libraries available.
+<p>
+Then:
+<ul>
+<li>
+On Linux/Unix, run ./configure --with-mongocxx=/path/to/installation/root (if the
+driver is already installed in /usr, this is not needed).
+If the Boost libraries are not found in the system paths, the path to the directory
+when the libraries are found can be specified --with-boost-lib-path=/path/to/boost/libs .
+<p>
+</li>
+<li>
+On Windows, uncomment and adapt the following in nmake.opt (or add in nmake.local):
+<pre>
+# Uncomment for MongoDB support
+# This configuration is valid for a libmongoclient built as a DLL with:
+# scons.bat --32 --dynamic-windows --sharedclient --prefix=c:\users\even\dev\mongo-client-install 
+#           --cpppath=c:\users\even\dev\boost_1_55_0_32bit --libpath=c:\users\even\dev\boost_1_55_0_32bit\lib32-msvc-10.0 install
+
+# Uncomment if plugin is prefered
+#MONGODB_PLUGIN = YES
+
+MONGODB_INC = c:/users/even/dev/mongo-client-install/include
+# Boost library names must be edited to reflect the actual MSVC and Boost versions
+BOOST_INC = c:/users/even/dev/boost_1_55_0_32bit
+BOOST_LIB_PATH= c:\users\even\dev\boost_1_55_0_32bit\lib32-msvc-10.0
+MONGODB_LIBS = c:/users/even/dev/mongo-client-install/lib/mongoclient.lib \
+               $(BOOST_LIB_PATH)\libboost_thread-vc100-mt-1_55.lib \
+               $(BOOST_LIB_PATH)\libboost_system-vc100-mt-1_55.lib \
+               $(BOOST_LIB_PATH)\libboost_date_time-vc100-mt-1_55.lib \
+               $(BOOST_LIB_PATH)\libboost_chrono-vc100-mt-1_55.lib
+</pre>
+</li>
+</ul>
 
 <h2>See Also</h2>
 
