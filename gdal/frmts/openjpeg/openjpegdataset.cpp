@@ -246,6 +246,8 @@ class JP2OpenJPEGDataset : public GDALJP2AbstractDataset
     int         PreloadBlocks( JP2OpenJPEGRasterBand* poBand,
                                int nXOff, int nYOff, int nXSize, int nYSize,
                                int nBandCount, int *panBandMap );
+
+    static void JP2OpenJPEGReadBlockInThread(void* userdata);
 };
 
 /************************************************************************/
@@ -441,7 +443,7 @@ public:
     int                *panBandMap;
 };
 
-static void JP2OpenJPEGReadBlockInThread(void* userdata)
+void JP2OpenJPEGDataset::JP2OpenJPEGReadBlockInThread(void* userdata)
 {
     int nPair;
     JobStruct* poJob = (JobStruct*) userdata;
@@ -461,8 +463,10 @@ static void JP2OpenJPEGReadBlockInThread(void* userdata)
     {
         int nBlockXOff = poJob->oPairs[nPair].first;
         int nBlockYOff = poJob->oPairs[nPair].second;
+        poGDS->AcquireMutex();
         GDALRasterBlock* poBlock = poGDS->GetRasterBand(nBand)->
                 GetLockedBlockRef(nBlockXOff,nBlockYOff, TRUE);
+        poGDS->ReleaseMutex();
         if (poBlock == NULL)
             break;
 
@@ -527,7 +531,7 @@ int JP2OpenJPEGDataset::PreloadBlocks(JP2OpenJPEGRasterBand* poBand,
             CPLJoinableThread** pahThreads = (CPLJoinableThread**) CPLMalloc( sizeof(CPLJoinableThread*) * nThreads );
             int i;
 
-            CPLDebug("OPENJPEG", "%d blocks to load", nBlocksToLoad);
+            CPLDebug("OPENJPEG", "%d blocks to load (%d threads)", nBlocksToLoad, nThreads);
 
             JobStruct oJob;
             oJob.poGDS = this;
@@ -753,16 +757,19 @@ CPLErr JP2OpenJPEGDataset::ReadBlock( int nBand, VSILFILE* fp,
             pDstBuffer = pImage;
         else
         {
+            AcquireMutex();
             poBlock = ((JP2OpenJPEGRasterBand*)GetRasterBand(iBand))->
                 TryGetLockedBlockRef(nBlockXOff,nBlockYOff);
             if (poBlock != NULL)
             {
+                ReleaseMutex();
                 poBlock->DropLock();
                 continue;
             }
 
             poBlock = GetRasterBand(iBand)->
                 GetLockedBlockRef(nBlockXOff,nBlockYOff, TRUE);
+            ReleaseMutex();
             if (poBlock == NULL)
             {
                 continue;

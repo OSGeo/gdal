@@ -5759,3 +5759,22 @@ void GDALDataset::LeaveReadWrite()
 {
     CPLReleaseMutex(m_hMutex);
 }
+
+
+/************************************************************************/
+/*                           AcquireMutex()                             */
+/************************************************************************/
+
+int GDALDataset::AcquireMutex()
+{
+    return CPLCreateOrAcquireMutex(&m_hMutex, 1000.0);
+}
+
+/************************************************************************/
+/*                          ReleaseMutex()                              */
+/************************************************************************/
+
+void GDALDataset::ReleaseMutex()
+{
+    CPLReleaseMutex(m_hMutex);
+}

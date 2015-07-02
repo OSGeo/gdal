@@ -353,6 +353,8 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     int                 EnterReadWrite(GDALRWFlag eRWFlag);
     void                LeaveReadWrite();
     
+    int          AcquireMutex();
+    void         ReleaseMutex();
     
   public:
     virtual     ~GDALDataset();
