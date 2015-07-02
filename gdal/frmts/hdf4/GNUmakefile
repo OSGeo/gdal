@@ -18,7 +18,7 @@ lib-hdfeos:
 
 install-obj:	$(SUBLIBS) $(O_OBJ:.o=.$(OBJ_EXT))
 
-PLUGIN_SO       = gdal_HDF4.so
+PLUGIN_SO       = gdal_HDF4.$(SO_EXT)
 
 plugin: $(PLUGIN_SO)
 
