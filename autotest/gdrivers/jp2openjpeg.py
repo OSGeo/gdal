@@ -1293,7 +1293,7 @@ def jp2openjpeg_27():
     #print('End of JP2 decoding')
     out2_ds = gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/jp2openjpeg_27.tif', out_ds, options=['TILED=YES'])
     print("(4)")
-    gdal.SetCacheMax(12346789)
+    #gdal.SetCacheMax(12346789)
     out_ds = None
     print("(5)")
     del out2_ds
