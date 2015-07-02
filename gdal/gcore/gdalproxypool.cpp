@@ -247,8 +247,7 @@ GDALProxyPoolCacheEntry* GDALDatasetPool::_RefDataset(const char* pszFileName,
             return NULL;
         }
 
-        CPLFree(lastEntryWithZeroRefCount->pszFileName);
-        lastEntryWithZeroRefCount->pszFileName = NULL;
+        lastEntryWithZeroRefCount->pszFileName[0] = '\0';
         if (lastEntryWithZeroRefCount->poDS)
         {
             /* Close by pretending we are the thread that GDALOpen'ed this */
@@ -262,6 +261,7 @@ GDALProxyPoolCacheEntry* GDALDatasetPool::_RefDataset(const char* pszFileName,
             lastEntryWithZeroRefCount->poDS = NULL;
             GDALSetResponsiblePIDForCurrentThread(responsiblePID);
         }
+        CPLFree(lastEntryWithZeroRefCount->pszFileName);
 
         /* Recycle this entry for the to-be-openeded dataset and */
         /* moves it to the top of the list */
@@ -329,6 +329,7 @@ void GDALDatasetPool::_CloseDataset(const char* pszFileName, GDALAccess eAccess)
     {
         GDALProxyPoolCacheEntry* next = cur->next;
 
+        CPLAssert(cur->pszFileName);
         if (strcmp(cur->pszFileName, pszFileName) == 0 && cur->refCount == 0 &&
             cur->poDS != NULL )
         {
