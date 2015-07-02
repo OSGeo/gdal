@@ -32,11 +32,13 @@
 
 import os
 import sys
+import shutil
 
 sys.path.append( '../pymod' )
 
 import gdaltest
 from osgeo import gdal
+import test_cli_utilities
 
 ###############################################################################
 # When imported build a list of units based on the files available.
@@ -650,6 +652,67 @@ def vrt_read_19():
 
     return 'success'
 
+
+###############################################################################
+# Test 2 level of VRT with shared="0"
+
+def vrt_read_20():
+
+    if test_cli_utilities.get_gdalinfo_path() is None:
+        return 'skip'
+    
+    shutil.copy('data/byte.tif', 'tmp')
+    for i in range(3):
+        open('tmp/byte1_%d.vrt' % (i+1), 'wb').write("""<VRTDataset rasterXSize="20" rasterYSize="20">
+    <VRTRasterBand dataType="Byte" band="1">
+        <SimpleSource>
+        <SourceFilename relativeToVRT="1">byte.tif</SourceFilename>
+        <SourceBand>1</SourceBand>
+        <SourceProperties RasterXSize="20" RasterYSize="20" DataType="Byte" BlockXSize="20" BlockYSize="20" />
+        <SrcRect xOff="0" yOff="0" xSize="20" ySize="20" />
+        <DstRect xOff="0" yOff="0" xSize="20" ySize="20" />
+        </SimpleSource>
+    </VRTRasterBand>
+    </VRTDataset>""")
+    open('tmp/byte2.vrt', 'wb').write("""<VRTDataset rasterXSize="20" rasterYSize="20">
+  <VRTRasterBand dataType="Byte" band="1">
+    <SimpleSource>
+      <SourceFilename relativeToVRT="1">byte1_1.vrt</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="20" RasterYSize="20" DataType="Byte" BlockXSize="20" BlockYSize="20" />
+      <SrcRect xOff="0" yOff="0" xSize="20" ySize="20" />
+      <DstRect xOff="0" yOff="0" xSize="20" ySize="20" />
+    </SimpleSource>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="1">byte1_2.vrt</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="20" RasterYSize="20" DataType="Byte" BlockXSize="20" BlockYSize="20" />
+      <SrcRect xOff="0" yOff="0" xSize="20" ySize="20" />
+      <DstRect xOff="0" yOff="0" xSize="20" ySize="20" />
+    </SimpleSource>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="1">byte1_3.vrt</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="20" RasterYSize="20" DataType="Byte" BlockXSize="20" BlockYSize="20" />
+      <SrcRect xOff="0" yOff="0" xSize="20" ySize="20" />
+      <DstRect xOff="0" yOff="0" xSize="20" ySize="20" />
+    </SimpleSource>
+  </VRTRasterBand>
+</VRTDataset>""")
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -checksum tmp/byte2.vrt --config VRT_SHARED_SOURCE 0 --config GDAL_MAX_DATASET_POOL_SIZE 3')
+    if ret.find('Checksum=4672') < 0:
+        gdaltest.post_reason('failure')
+        print(ret)
+        return 'fail'
+        
+    os.unlink('tmp/byte.tif')
+    os.unlink('tmp/byte1_1.vrt')
+    os.unlink('tmp/byte1_2.vrt')
+    os.unlink('tmp/byte1_3.vrt')
+    os.unlink('tmp/byte2.vrt')
+
+    return 'success'
+
 for item in init_list:
     ut = gdaltest.GDALTest( 'VRT', item[0], item[1], item[2] )
     if ut is None:
@@ -676,6 +739,7 @@ gdaltest_list.append( vrt_read_16 )
 gdaltest_list.append( vrt_read_17 )
 gdaltest_list.append( vrt_read_18 )
 gdaltest_list.append( vrt_read_19 )
+gdaltest_list.append( vrt_read_20 )
 
 if __name__ == '__main__':
 
