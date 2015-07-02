@@ -663,7 +663,7 @@ def vrt_read_20():
     
     shutil.copy('data/byte.tif', 'tmp')
     for i in range(3):
-        open('tmp/byte1_%d.vrt' % (i+1), 'wb').write("""<VRTDataset rasterXSize="20" rasterYSize="20">
+        open('tmp/byte1_%d.vrt' % (i+1), 'wt').write("""<VRTDataset rasterXSize="20" rasterYSize="20">
     <VRTRasterBand dataType="Byte" band="1">
         <SimpleSource>
         <SourceFilename relativeToVRT="1">byte.tif</SourceFilename>
@@ -674,7 +674,7 @@ def vrt_read_20():
         </SimpleSource>
     </VRTRasterBand>
     </VRTDataset>""")
-    open('tmp/byte2.vrt', 'wb').write("""<VRTDataset rasterXSize="20" rasterYSize="20">
+    open('tmp/byte2.vrt', 'wt').write("""<VRTDataset rasterXSize="20" rasterYSize="20">
   <VRTRasterBand dataType="Byte" band="1">
     <SimpleSource>
       <SourceFilename relativeToVRT="1">byte1_1.vrt</SourceFilename>
