@@ -786,7 +786,7 @@ int OGRTigerDataSource::Create( const char *pszNameIn, char **papszOptions )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "%s is not a directory, nor can be directly created as one.",
-                  pszName );
+                  pszNameIn );
         return FALSE;
     }
 
