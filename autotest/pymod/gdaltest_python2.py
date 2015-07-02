@@ -178,7 +178,7 @@ def runexternal(cmd, strin = None, check_memleak = True, display_live_on_parent_
         val = os.environ['TRAVIS_BRANCH']
     else:
         val = ''
-    if val.find('trunk_mingw') < 0:
+    if val.find('mingw') < 0:
         has_subprocess = False
         try:
             import subprocess
