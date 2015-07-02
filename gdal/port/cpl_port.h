@@ -356,6 +356,23 @@ typedef int              GPtrDiff_t;
 /*      Provide macros for case insensitive string comparisons.         */
 /* -------------------------------------------------------------------- */
 #ifndef EQUAL
+
+#if defined(__linux__) && defined(DEBUG)
+/* To catch calls with NULL pointers that crash other platforms */
+#define strcmp GDAL_strcmp
+#define strncmp GDAL_strncmp
+#define strcasecmp GDAL_strcasecmp
+#define strncasecmp GDAL_strncasecmp
+
+CPL_C_START
+int CPL_DLL GDAL_strcmp(const char *s1, const char *s2);
+int CPL_DLL GDAL_strncmp(const char *s1, const char *s2, size_t n);
+int CPL_DLL GDAL_strcasecmp(const char *s1, const char *s2);
+int CPL_DLL GDAL_strncasecmp(const char *s1, const char *s2, size_t n);
+CPL_C_END
+
+#endif /* defined(__linux__) && defined(DEBUG) */
+
 #  if defined(WIN32) || defined(WIN32CE)
 #    define STRCASECMP(a,b)         (stricmp(a,b))
 #    define STRNCASECMP(a,b,n)      (strnicmp(a,b,n))
