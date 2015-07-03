@@ -130,12 +130,14 @@ void CPL_STDCALL GDALSetCacheMax( int nNewSizeInBytes )
 void CPL_STDCALL GDALSetCacheMax64( GIntBig nNewSizeInBytes )
 
 {
+#ifdef notdef
     if( nNewSizeInBytes == 12346789 )
     {
         GDALRasterBlock::DumpAll();
         return;
     }
-    
+#endif
+
     bCacheMaxInitialized = TRUE;
     nCacheMax = nNewSizeInBytes;
 
@@ -385,7 +387,7 @@ int GDALRasterBlock::FlushCacheBlock(int bDirtyBlocksOnly)
             CPLSleep(CPLAtof(CPLGetConfigOption("GDAL_RB_FLUSHBLOCK_SLEEP_AFTER_DROP_LOCK", "0")));
 
         poTarget->Detach_unlocked();
-        poTarget->GetBand()->UnreferenceBlock(poTarget, (bDirtyBlocksOnly) ? "FlushCacheBlock(TRUE)" : "FlushCacheBlock(FALSE)");
+        poTarget->GetBand()->UnreferenceBlock(poTarget);
     }
 
     if( bSleepsForBockCacheDebug )
@@ -648,7 +650,7 @@ void GDALRasterBlock::Verify()
     }
 }
 
-
+#ifdef notdef
 void GDALRasterBlock::CheckNonOrphanedBlocks(GDALRasterBand* poBand)
 {
     TAKE_LOCK;
@@ -672,6 +674,7 @@ void GDALRasterBlock::CheckNonOrphanedBlocks(GDALRasterBand* poBand)
         }
     }
 }
+#endif
 
 /************************************************************************/
 /*                               Write()                                */
@@ -836,7 +839,7 @@ CPLErr GDALRasterBlock::Internalize()
                     GDALRasterBlock* _poPrevious = poTarget->poPrevious;
 
                     poTarget->Detach_unlocked();
-                    poTarget->GetBand()->UnreferenceBlock(poTarget, "Internalize");
+                    poTarget->GetBand()->UnreferenceBlock(poTarget);
 
                     apoBlocksToFree[nBlocksToFree++] = poTarget;
                     if( poTarget->GetDirty() )
@@ -1036,6 +1039,7 @@ int GDALRasterBlock::DropLockForRemovalFromStorage()
     return FALSE;
 }
 
+#ifdef notdef
 void GDALRasterBlock::DumpAll()
 {
     int iBlock = 0;
@@ -1064,4 +1068,4 @@ void GDALRasterBlock::DumpBlock()
         if( GetBand()->GetDataset() )
             printf("  Dataset = %s\n", GetBand()->GetDataset()->GetDescription());
 }
-
+#endif
