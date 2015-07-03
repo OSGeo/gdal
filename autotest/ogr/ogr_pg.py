@@ -4720,20 +4720,33 @@ def ogr_pg_77():
     f.close()
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f PostgreSQL "' + 'PG:' + gdaltest.pg_connection_string + '" tmp/ogr_pg_77')
 
-    try:
-        shutil.rmtree('tmp/ogr_pg_77')
-    except:
-        pass
-
+    ds = ogr.Open('PG:' + gdaltest.pg_connection_string, update = 1)
+    lyr = ds.GetLayerByName('ogr_pg_77_1')
+    feat = lyr.GetNextFeature()
+    if feat.GetField(0) != '1':
+        return 'fail'
+    feat.SetField(0, 10)
+    lyr.SetFeature(feat)
+    lyr = ds.GetLayerByName('ogr_pg_77_2')
+    feat = lyr.GetNextFeature()
+    if feat.GetField(0) != '2':
+        return 'fail'
+    ds = None
+    
+    # Test fix for #6018
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f PostgreSQL "' + 'PG:' + gdaltest.pg_connection_string + '" tmp/ogr_pg_77 -overwrite')
+   
     ds = ogr.Open('PG:' + gdaltest.pg_connection_string)
     lyr = ds.GetLayerByName('ogr_pg_77_1')
     feat = lyr.GetNextFeature()
     if feat.GetField(0) != '1':
         return 'fail'
-    lyr = ds.GetLayerByName('ogr_pg_77_2')
-    feat = lyr.GetNextFeature()
-    if feat.GetField(0) != '2':
-        return 'fail'
+    ds = None
+
+    try:
+        shutil.rmtree('tmp/ogr_pg_77')
+    except:
+        pass
 
     return 'success'
 
