@@ -845,10 +845,7 @@ CPLErr GDALRasterBand::FlushCache()
     if (poBandBlockCache == NULL || !poBandBlockCache->IsInitOK())
         return eGlobalErr;
 
-    CPLErr eErr = poBandBlockCache->FlushCache();
-    // FIXME: debug section
-    //GDALRasterBlock::CheckNonOrphanedBlocks(this);
-    return eErr;
+    return poBandBlockCache->FlushCache();
 }
 
 /************************************************************************/
@@ -879,10 +876,9 @@ CPLErr CPL_STDCALL GDALFlushRasterCache( GDALRasterBandH hBand )
 /*      the block cache mutex)                                          */
 /************************************************************************/
 
-CPLErr GDALRasterBand::UnreferenceBlock( GDALRasterBlock* poBlock,
-                                         const char* pszCaller)
+CPLErr GDALRasterBand::UnreferenceBlock( GDALRasterBlock* poBlock )
 {
-    // FIXME: debug section
+#ifdef notdef
     if( poBandBlockCache == NULL || !poBandBlockCache->IsInitOK() )
     {
         if( poBandBlockCache == NULL )
@@ -902,6 +898,7 @@ CPLErr GDALRasterBand::UnreferenceBlock( GDALRasterBlock* poBlock,
         GDALRasterBlock::Verify();
         abort();
     }
+#endif
     CPLAssert(poBandBlockCache && poBandBlockCache->IsInitOK());
     return poBandBlockCache->UnreferenceBlock( poBlock );
 }
