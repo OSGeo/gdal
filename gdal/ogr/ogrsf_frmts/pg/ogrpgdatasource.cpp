@@ -1298,6 +1298,8 @@ int OGRPGDataSource::DeleteLayer( int iLayer )
     if( iLayer < 0 || iLayer >= nLayers )
         return OGRERR_FAILURE;
 
+    EndCopy();
+
 /* -------------------------------------------------------------------- */
 /*      Blow away our OGR structures related to the layer.  This is     */
 /*      pretty dangerous if anything has a reference to this layer!     */
