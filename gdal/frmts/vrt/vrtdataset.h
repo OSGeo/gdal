@@ -35,6 +35,7 @@
 #include "gdal_pam.h"
 #include "gdal_vrt.h"
 #include "cpl_hash_set.h"
+#include <vector>
 
 int VRTApplyMetadata( CPLXMLNode *, GDALMajorObject * );
 CPLXMLNode *VRTSerializeMetadata( GDALMajorObject * );
@@ -260,9 +261,13 @@ class GDALPansharpenOperation;
 
 class VRTPansharpenedDataset : public VRTDataset
 {
+    friend class      VRTPansharpenedRasterBand;
+
     int               nBlockXSize;
     int               nBlockYSize;
     GDALPansharpenOperation* poPansharpener;
+    VRTPansharpenedDataset* poMainDataset;
+    std::vector<VRTPansharpenedDataset*> apoOverviewDatasets;
 
   protected:
     virtual int         CloseDependentDatasets();
@@ -531,6 +536,9 @@ class VRTPansharpenedRasterBand : public VRTRasterBand
     virtual CPLErr         XMLInit( CPLXMLNode *, const char * );
 
     virtual CPLErr IReadBlock( int, int, void * );
+
+    virtual int GetOverviewCount();
+    virtual GDALRasterBand *GetOverview(int);
     
     virtual int         IsPansharpenRasterBand() { return TRUE; }
     

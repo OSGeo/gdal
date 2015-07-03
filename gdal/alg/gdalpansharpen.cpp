@@ -82,7 +82,17 @@ void GDALDestroyPansharpenOptions( GDALPansharpenOptions* psOptions )
 /*                      GDALClonePansharpenOptions()                    */
 /************************************************************************/
 
-static GDALPansharpenOptions* GDALClonePansharpenOptions(
+/** Clone pansharpening options.
+ *
+ * @param psOptions a pansharpening option structure allocated with
+ * GDALCreatePansharpenOptions()
+ * @return a newly allocated pansharpening option structure that must be freed
+ * with GDALDestroyPansharpenOptions().
+ *
+ * @since GDAL 2.1
+ */
+
+GDALPansharpenOptions* GDALClonePansharpenOptions(
                                         const GDALPansharpenOptions* psOptions)
 {
     GDALPansharpenOptions* psNewOptions = GDALCreatePansharpenOptions();
@@ -173,15 +183,7 @@ CPLErr GDALPansharpenOperation::Initialize(const GDALPansharpenOptions* psOption
                  "No weights defined, or not the same number as input spectral bands");
         return CE_Failure;
     }
-    GDALRasterBandH hPanchroBand = psOptionsIn->hPanchroBand;
     GDALRasterBandH hRefBand = psOptionsIn->pahInputSpectralBands[0];
-    if( GDALGetRasterBandXSize(hRefBand) > GDALGetRasterBandXSize(hPanchroBand) ||
-        GDALGetRasterBandYSize(hRefBand) > GDALGetRasterBandYSize(hPanchroBand) )
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Dimensions of first input spectral band larger than panchro band");
-        return CE_Failure;
-    }
     for(int i=1;i<psOptionsIn->nInputSpectralBands;i++)
     {
         GDALRasterBandH hBand = psOptionsIn->pahInputSpectralBands[i];
@@ -299,6 +301,10 @@ template void GDALPansharpenOperation::WeightedBrovey (const GByte* pPanBuffer,
                                                        const GByte* pUpsampledSpectralBuffer,
                                                        GByte* pDataBuf,
                                                        int nValues);
+template void GDALPansharpenOperation::WeightedBrovey (const GUInt16* pPanBuffer,
+                                                       const GUInt16* pUpsampledSpectralBuffer,
+                                                       GUInt16* pDataBuf,
+                                                       int nValues);
 
 /************************************************************************/
 /*                         ProcessRegion()                              */
@@ -353,8 +359,8 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
     sExtraArg.bFloatingPointWindowValidity = TRUE;
     GDALRasterBand* poFirstSpectralBand =
                         (GDALRasterBand*)psOptions->pahInputSpectralBands[0];
-    double dfRatioX = poPanchroBand->GetXSize() / poFirstSpectralBand->GetXSize();
-    double dfRatioY = poPanchroBand->GetYSize() / poFirstSpectralBand->GetYSize();
+    double dfRatioX = (double)poPanchroBand->GetXSize() / poFirstSpectralBand->GetXSize();
+    double dfRatioY = (double)poPanchroBand->GetYSize() / poFirstSpectralBand->GetYSize();
     sExtraArg.dfXOff = nXOff / dfRatioX;
     sExtraArg.dfYOff = nYOff / dfRatioY;
     sExtraArg.dfXSize = nXSize / dfRatioX;
@@ -378,6 +384,13 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
         WeightedBrovey (pPanBuffer,
                         pUpsampledSpectralBuffer,
                         (GByte*)pDataBuf,
+                        nXSize * nYSize);
+    }
+    else if( eBufDataType == GDT_UInt16 )
+    {
+        WeightedBrovey ((GUInt16*)pPanBuffer,
+                        (GUInt16*)pUpsampledSpectralBuffer,
+                        (GUInt16*)pDataBuf,
                         nXSize * nYSize);
     }
     else

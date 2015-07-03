@@ -85,6 +85,8 @@ typedef struct
 
 GDALPansharpenOptions CPL_DLL * GDALCreatePansharpenOptions(void);
 void CPL_DLL GDALDestroyPansharpenOptions( GDALPansharpenOptions * );
+GDALPansharpenOptions CPL_DLL * GDALClonePansharpenOptions(
+                                        const GDALPansharpenOptions* psOptions);
 
 /*! Pansharpening operation handle. */
 typedef void* GDALPansharpenOperationH;

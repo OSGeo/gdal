@@ -6,6 +6,19 @@
 
 \page gdal_vrttut GDAL Virtual Format Tutorial
 
+\section gdal_vrttut_toc Contents
+
+<ol>
+<li> \ref gdal_vrttut_intro
+<li> \ref gdal_vrttut_format
+<li> \ref gdal_vrttut_raw
+<li> \ref gdal_vrttut_creation
+<li> \ref gdal_vrttut_warped
+<li> \ref gdal_vrttut_pansharpen
+<li> \ref gdal_vrttut_mt
+<li> \ref gdal_vrttut_perf
+</ol>
+
 \section gdal_vrttut_intro Introduction
 
 The VRT driver is a format driver for GDAL that allows a virtual GDAL dataset
@@ -13,6 +26,9 @@ to be composed from other GDAL datasets with repositioning, and algorithms
 potentially applied as well as various kinds of metadata altered or added.
 VRT descriptions of datasets can be saved in an XML format normally given the
 extension .vrt.<p>
+
+The VRT format can also describe \ref gdal_vrttut_warped "warping operations"
+and \ref gdal_vrttut_pansharpen "pansharpening operations".<p>
 
 An example of a simple .vrt file referring to a 512x512 dataset with one band
 loaded from utm.tif might look like this:
@@ -54,8 +70,11 @@ elements.<p>
 
 <b>VRTDataset</b>: This is the root element for the whole GDAL dataset. 
 It must have the attributes rasterXSize and rasterYSize describing the width 
-and height of the dataset in pixels.  It may have SRS, GeoTransform, 
-GCPList, Metadata, MaskBand and VRTRasterBand subelements.
+and height of the dataset in pixels.
+It may have a subClass attributes with values VRTWarpedDataset (\ref gdal_vrttut_warped) or 
+VRTPansharpenedDataset (\ref gdal_vrttut_pansharpen).
+It may have SRS, GeoTransform, 
+GCPList, Metadata, MaskBand and VRTRasterBand subelements. 
 
 \code
 <VRTDataset rasterXSize="512" rasterYSize="512">
@@ -435,7 +454,7 @@ child element, that is the description of the mask band itself.
 
 </ul>
 
-\section gdal_vrttut_vrt .vrt Descriptions for Raw Files
+\section gdal_vrttut_raw .vrt Descriptions for Raw Files
 
 So far we have described how to derive new virtual datasets from existing
 files supports by GDAL.  However, it is also common to need to utilize 
@@ -867,6 +886,215 @@ CPLErr TestFunction(void **papoSources, int nSources, void *pData,
 }
 \endcode
 
+\section gdal_vrttut_warped Warped VRT
+
+A warped VRT is a VRTDataset with subClass="VRTWarpedDataset". It has a
+GDALWarpOptions element which describe the warping options.
+
+\code
+<VRTDataset rasterXSize="20" rasterYSize="20" subClass="VRTWarpedDataset">
+  <SRS>PROJCS["NAD27 / UTM zone 11N",GEOGCS["NAD27",DATUM["North_American_Datum_1927",SPHEROID["Clarke 1866",6378206.4,294.9786982138982,AUTHORITY["EPSG","7008"]],AUTHORITY["EPSG","6267"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4267"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-117],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH],AUTHORITY["EPSG","26711"]]</SRS>
+  <GeoTransform>  4.4072000000000000e+05,  6.0000000000000000e+01,  0.0000000000000000e+00,  3.7513200000000000e+06,  0.0000000000000000e+00, -6.0000000000000000e+01</GeoTransform>
+  <Metadata>
+    <MDI key="AREA_OR_POINT">Area</MDI>
+  </Metadata>
+  <VRTRasterBand dataType="Byte" band="1" subClass="VRTWarpedRasterBand">
+    <ColorInterp>Gray</ColorInterp>
+  </VRTRasterBand>
+  <BlockXSize>20</BlockXSize>
+  <BlockYSize>20</BlockYSize>
+  <GDALWarpOptions>
+    <WarpMemoryLimit>6.71089e+07</WarpMemoryLimit>
+    <ResampleAlg>NearestNeighbour</ResampleAlg>
+    <WorkingDataType>Byte</WorkingDataType>
+    <Option name="INIT_DEST">0</Option>
+    <SourceDataset relativeToVRT="1">byte.vrt</SourceDataset>
+    <Transformer>
+      <ApproxTransformer>
+        <MaxError>0.125</MaxError>
+        <BaseTransformer>
+          <GenImgProjTransformer>
+            <SrcGeoTransform>440720,60,0,3751320,0,-60</SrcGeoTransform>
+            <SrcInvGeoTransform>-7345.33333333333303,0.0166666666666666664,0,62522,0,-0.0166666666666666664</SrcInvGeoTransform>
+            <DstGeoTransform>440720,60,0,3751320,0,-60</DstGeoTransform>
+            <DstInvGeoTransform>-7345.33333333333303,0.0166666666666666664,0,62522,0,-0.0166666666666666664</DstInvGeoTransform>
+          </GenImgProjTransformer>
+        </BaseTransformer>
+      </ApproxTransformer>
+    </Transformer>
+    <BandList>
+      <BandMapping src="1" dst="1" />
+    </BandList>
+  </GDALWarpOptions>
+</VRTDataset>
+\endcode
+
+\section gdal_vrttut_pansharpen Pansharpened VRT
+
+(Since GDAL 2.1)
+
+A VRT can describe a dataset resulting from a
+<a href="https://en.wikipedia.org/wiki/Pansharpened_image">pansharpening operation</a>.
+The pansharpening VRT combines a panchromatic band with several spectral bands
+of lower resolution to generate output spectral bands of the same resolution as
+the panchromatic band.
+
+VRT pansharpening assumes that the panchromatic and spectral bands have the same
+georeferencing and projection. If that is not the case, appropriate subwindowing
+and reprojection must be done in a prior step.
+
+Currently the only supported pansharpening algorithm is a "weighted" Brovey algorithm.
+The general principle of this algorithm is that, after resampling the spectral bands
+to the resolution of the panchromatic band, a pseudo panchromatic intensity is computed
+from a weighted average of the spectral bands. Then the output value of the spectral
+band is its input value multiplied by the ratio of the real panchromatic intensity
+over the pseudo panchromatic intensity.
+
+Corresponding pseudo code:
+\code
+pseudo_panchro[pixel] = sum(weight[i] * spectral[pixel][i] for i=0 to nb_spectral_bands-1) 
+ratio = panchro[pixel] / pseudo_panchro[pixel]
+for i=0 to nb_spectral_bands-1:
+    output_value[pixel][i] = input_value[pixel][i] * ratio
+\endcode
+
+A valid pansharpened VRT must declare subClass="VRTPansharpenedDataset" as an
+attribute of the VRTDataset top element. The VRTDataset element must have a
+child <b>PansharpeningOptions</b> element. This PansharpeningOptions element must have
+a <b>PanchroBand</b> child element and one of several <b>SpectralBand</b> elements.
+PanchroBand and SpectralBand elements must have at least a <b>SourceFilename</b> child
+element to specify the name of the dataset. They may also have a <b>SourceBand</b> child
+element to specify the number of the band in the dataset (starting with 1). If not
+specify, the first band will be assumed. 
+
+The SpectralBand element must generally have a <b>dstBand</b> attribute to specify the
+number of the output band (starting with 1) to which the input spectral band must be mapped.
+If the attribute is not specified, the spectral band will be taken into account
+in the computation of the pansharpening, but not exposed as an output band.
+
+Panchromatic and spectral bands should generally come from different datasets,
+since bands of a GDAL dataset are assumed to have all the same dimensions.
+Spectral bands themselves can come from one or several datasets. The only
+constraint is that they have all the same dimensions.
+
+An example of a minimalist working VRT is the following. It will generates a dataset with 3 output
+bands corresponding to the 3 input spectral bands of multispectral.tif, pansharpened
+with panchromatic.tif.
+
+\code
+<VRTDataset subClass="VRTPansharpenedDataset">
+  <PansharpeningOptions>
+    <PanchroBand>
+      <SourceFilename relativeToVRT="1">panchromatic.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+    </PanchroBand>
+    <SpectralBand dstBand="1">
+      <SourceFilename relativeToVRT="1">multispectral.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+    </SpectralBand>
+    <SpectralBand dstBand="2">
+      <SourceFilename relativeToVRT="1">multispectral.tif</SourceFilename>
+      <SourceBand>2</SourceBand>
+    </SpectralBand>
+    <SpectralBand dstBand="3">
+      <SourceFilename relativeToVRT="1">multispectral.tif</SourceFilename>
+      <SourceBand>3</SourceBand>
+    </SpectralBand>
+  </PansharpeningOptions>
+</VRTDataset>
+\endcode
+
+In the above example, 3 output pansharpend bands will be created from the 3 declared
+input spectral bands. The weights will be 1/3. Cubic resampling will be used. The
+projection and geotransform from the panchromatic band will be reused for the VRT
+dataset.
+
+It is possible to create more explicit and declarative pansharpened VRT, allowing
+for example to only output part of the input spectral bands (e.g. only RGB when
+the input multispectral dataset is RGBNir). It is also possible to add "classic"
+VRTRasterBands, in addition to the pansharpened bands.
+
+In addition to the above mentionned required PanchroBand and SpectralBand elements,
+the PansharpeningOptions element may have the following children elements :
+<ul>
+<li> <b>Algorithm</b>: to specify the pansharpening algorithm. Currently, only
+WeightedBrovey is supported.</li>
+<li> <b>AlgorithmOptions</b>: to specify the options of the pansharpening algorithm.
+With WeightedBrovey algorithm, the only supported option is a <b>Weights</b> child
+element whose content must be a comma separated list of real values assigning the
+weight of each of the declared input spectral bands. There must be as many values
+as declared input spectral bands.</li>
+<li> <b>Resampling</b>: the resampling kernel used to resample the spectral bands
+to the resolution of the panchromatic band. Can be one of Cubic (default), Average,
+Near, CubicSpline, Bilinear, Lanczos.</li>
+<li> <b>NumThreads</b>: unused for now.</li>
+<li> <b>BitDepth</b>: unused for now.</li>
+</li>
+</ul>
+
+
+The below examples creates a VRT dataset with 4 bands. The first band is the
+panchromatic band. The 3 following bands are than red, green, blue pansharpened
+bands computed from a multispectral raster with red, green, blue and near-infrared
+bands. The near-infrared bands is taken into account for the computation of the
+pseudo panchromatic intensity, but not bound to an output band.
+
+\code
+<VRTDataset rasterXSize="800" rasterYSize="400" subClass="VRTPansharpenedDataset">
+  <SRS>WGS84</SRS>
+  <GeoTransform>-180, 0.45, 0, 90, 0, -0.45</GeoTransform>
+  <Metadata>
+    <MDI key="DESCRIPTION">Panchromatic band + pan-sharpened red, green and blue bands</MDI>
+  </Metadata>
+  <VRTRasterBand dataType="Byte" band="1" >
+    <SimpleSource>
+      <SourceFilename relativeToVRT="1">world_pan.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+    </SimpleSource>
+  </VRTRasterBand>
+  <VRTRasterBand dataType="Byte" band="2" subClass="VRTPansharpenedRasterBand">
+      <ColorInterp>Red</ColorInterp>
+  </VRTRasterBand>
+  <VRTRasterBand dataType="Byte" band="3" subClass="VRTPansharpenedRasterBand">
+      <ColorInterp>Green</ColorInterp>
+  </VRTRasterBand>
+  <VRTRasterBand dataType="Byte" band="4" subClass="VRTPansharpenedRasterBand">
+      <ColorInterp>Blue</ColorInterp>
+  </VRTRasterBand>
+  <BlockXSize>256</BlockXSize>
+  <BlockYSize>256</BlockYSize>
+  <PansharpeningOptions>
+    <Algorithm>WeightedBrovey</Algorithm>
+    <AlgorithmOptions>
+      <Weights>0.25,0.25,0.25,0.25</Weights>
+    </AlgorithmOptions>
+    <Resampling>Cubic</Resampling>
+    <NumThreads>ALL_CPUS</NumThreads>
+    <BitDepth>8</BitDepth>
+    <PanchroBand>
+      <SourceFilename relativeToVRT="1">world_pan.tif</SourceFilename>
+     <SourceBand>1</SourceBand>
+    </PanchroBand>
+    <SpectralBand dstBand="2">
+      <SourceFilename relativeToVRT="1">world_rgbnir.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+    </SpectralBand>
+    <SpectralBand dstBand="3">
+      <SourceFilename relativeToVRT="1">world_rgbnir.tif</SourceFilename>
+      <SourceBand>2</SourceBand>
+    </SpectralBand>
+    <SpectralBand dstBand="4">
+      <SourceFilename relativeToVRT="1">world_rgbnir.tif</SourceFilename>
+      <SourceBand>3</SourceBand>
+    </SpectralBand>
+    <SpectralBand> <!-- note the absence of the dstBand attribute, to indicate
+                        that the NIR band is not bound to any output band -->
+      <SourceFilename relativeToVRT="1">world_rgbnir.tif</SourceFilename>
+      <SourceBand>4</SourceBand>
+    </SpectralBand>
+  </PansharpeningOptions>
+</VRTDataset>
+\endcode
 
 \section gdal_vrttut_mt Multi-threading issues
 
