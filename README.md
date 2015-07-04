@@ -4,6 +4,7 @@ GDAL - Geospatial Data Abstraction Library
 Linux: [![Build Status](https://travis-ci.org/OSGeo/gdal.svg?branch=trunk)](https://travis-ci.org/OSGeo/gdal)
 Python3: [![Build Status](https://travis-ci.org/rouault/gdal_coverage.svg?branch=python3)](https://travis-ci.org/rouault/gdal_coverage)
 MacOSX: [![Build Status](https://travis-ci.org/rouault/gdal_coverage.svg?branch=trunk_travis_macosx)](https://travis-ci.org/rouault/gdal_coverage)
+MSVC: [![Build status](https://ci.appveyor.com/api/projects/status/tbtcdve977yd5atp?svg=true)](https://ci.appveyor.com/project/rouault/gdal-coverage)
 MinGW: [![Build Status](https://travis-ci.org/rouault/gdal_coverage.svg?branch=trunk_mingw)](https://travis-ci.org/rouault/gdal_coverage)
 MinGW_W64: [![Build Status](https://travis-ci.org/rouault/gdal_coverage.svg?branch=trunk_mingw_w64)](https://travis-ci.org/rouault/gdal_coverage)
 Android: [![Build Status](https://travis-ci.org/rouault/gdal_coverage.svg?branch=trunk_android)](https://travis-ci.org/rouault/gdal_coverage)
