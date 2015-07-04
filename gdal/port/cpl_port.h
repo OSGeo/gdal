@@ -357,7 +357,7 @@ typedef int              GPtrDiff_t;
 /* -------------------------------------------------------------------- */
 #ifndef EQUAL
 
-#if defined(__linux__) && defined(DEBUG)
+#if defined(__linux__) && defined(DEBUG) && defined(GDAL_COMPILATION)
 /* To catch calls with NULL pointers that crash other platforms */
 #define strcmp GDAL_strcmp
 #define strncmp GDAL_strncmp
@@ -371,7 +371,7 @@ int CPL_DLL GDAL_strcasecmp(const char *s1, const char *s2);
 int CPL_DLL GDAL_strncasecmp(const char *s1, const char *s2, size_t n);
 CPL_C_END
 
-#endif /* defined(__linux__) && defined(DEBUG) */
+#endif /* defined(__linux__) && defined(DEBUG) && defined(GDAL_COMPILATION) */
 
 #  if defined(WIN32) || defined(WIN32CE)
 #    define STRCASECMP(a,b)         (stricmp(a,b))
