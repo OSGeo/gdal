@@ -1495,9 +1495,7 @@ def ogr_mitab_30(update = 0):
             continue
         
         for i in range(2):
-            gdal.SetConfigOption('VSI_FLUSH', 'TRUE') # This is a hack for Windows and VSIFFlushL() issue. See http://trac.osgeo.org/gdal/ticket/5556
             ret = lyr.SyncToDisk()
-            gdal.SetConfigOption('VSI_FLUSH', None)
             if ret != 0:
                 gdaltest.post_reason('fail')
                 return 'fail'
