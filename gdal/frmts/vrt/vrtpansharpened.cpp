@@ -747,7 +747,8 @@ int VRTPansharpenedRasterBand::GetOverviewCount()
                     }
                 }
                 poOvrDS->poPansharpener = new GDALPansharpenOperation();
-                CPLAssert( poOvrDS->poPansharpener->Initialize(psPanOvrOptions) == CE_None );
+                CPLErr eErr = poOvrDS->poPansharpener->Initialize(psPanOvrOptions);
+                CPLAssert( eErr == CE_None );
                 GDALDestroyPansharpenOptions(psPanOvrOptions);
 
                 poGDS->apoOverviewDatasets.push_back(poOvrDS);
