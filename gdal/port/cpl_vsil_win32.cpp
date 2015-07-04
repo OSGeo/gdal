@@ -276,6 +276,10 @@ int VSIWin32Handle::Flush()
     /* Nothing needed to offer the same guarantee as POSIX fflush() */
     /* FlushFileBuffers() would be closer to fsync() */
     /* See http://trac.osgeo.org/gdal/ticket/5556 */
+    
+    // Add this as a hack to make ogr_mitab_30 and _31 tests pass
+    if( CSLTestBoolean(CPLGetConfigOption("VSI_FLUSH", "FALSE")) )
+        FlushFileBuffers(hFile);
     return 0;
 }
 
