@@ -44,6 +44,9 @@ from osgeo import osr
 
 def ogr_pdf_1(name = 'tmp/ogr_pdf_1.pdf', write_attributes = 'YES'):
 
+    if ogr.GetDriverByName('PDF') is None:
+        return 'skip'
+
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(4326)
 
@@ -98,6 +101,9 @@ def ogr_pdf_1(name = 'tmp/ogr_pdf_1.pdf', write_attributes = 'YES'):
 # Test read support
 
 def ogr_pdf_2(name = 'tmp/ogr_pdf_1.pdf', has_attributes = True):
+
+    if ogr.GetDriverByName('PDF') is None:
+        return 'skip'
 
     # Check read support
     gdal_pdf_drv = gdal.GetDriverByName('PDF')
@@ -214,6 +220,9 @@ def ogr_pdf_4_podofo():
 
 def ogr_pdf_online_1():
 
+    if ogr.GetDriverByName('PDF') is None:
+        return 'skip'
+
     # Check read support
     gdal_pdf_drv = gdal.GetDriverByName('PDF')
     md = gdal_pdf_drv.GetMetadata()
@@ -273,6 +282,9 @@ def ogr_pdf_online_1():
 # Cleanup
 
 def ogr_pdf_cleanup():
+
+    if ogr.GetDriverByName('PDF') is None:
+        return 'skip'
 
     ogr.GetDriverByName('PDF').DeleteDataSource('tmp/ogr_pdf_1.pdf')
     ogr.GetDriverByName('PDF').DeleteDataSource('tmp/ogr_pdf_2.pdf')
