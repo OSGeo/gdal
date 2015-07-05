@@ -34,8 +34,8 @@ import sys
 from osgeo import gdal
 
 def Usage():
-    print('Usage: gdal_pansharpen [--help-general] pan_dataset ms_dataset out_dataset')
-    print('                       [-of format] [-b band]* [-ib band]* [-w weight_val]*')
+    print('Usage: gdal_pansharpen [--help-general] pan_dataset {spectral_dataset[,band=num]}+ out_dataset')
+    print('                       [-of format] [-b band]* [-w weight]*')
     print('                       [-r {nearest,bilinear,cubic,cubicspline,lanczos,average}]')
     print('                       [-co NAME=VALUE]* [-q]')
     print('')
@@ -49,10 +49,11 @@ def gdal_pansharpen(argv):
         return -1
 
     pan_name = None
-    ms_name = None
+    last_name = None
+    spectral_ds = []
+    spectral_bands = []
     out_name = None
     bands = []
-    input_bands = []
     weights = []
     format = 'GTiff'
     creation_options = []
@@ -71,9 +72,6 @@ def gdal_pansharpen(argv):
         elif argv[i] == '-b' and i < len(argv)-1:
             bands.append(int(argv[i+1]))
             i = i + 1
-        elif argv[i] == '-ib' and i < len(argv)-1:
-            input_bands.append(int(argv[i+1]))
-            i = i + 1
         elif argv[i] == '-w' and i < len(argv)-1:
             weights.append(float(argv[i+1]))
             i = i + 1
@@ -87,69 +85,56 @@ def gdal_pansharpen(argv):
             return Usage()
         elif pan_name is None:
             pan_name = argv[i]
-        elif ms_name is None:
-            ms_name = argv[i]
-        elif out_name is None:
-            out_name = argv[i]
+            pan_ds = gdal.Open(pan_name)
+            if pan_ds is None:
+                return 1
         else:
-            sys.stderr.write('Unexpected option : %s\n' % argv[i])
-            return Usage()
+            if last_name is not None:
+                pos = last_name.find(',band=')
+                if pos > 0:
+                    spectral_name = last_name[0:pos]
+                    ds = gdal.Open(spectral_name)
+                    if ds is None:
+                        return 1
+                    band_num = int(last_name[pos+len(',band='):])
+                    band = ds.GetRasterBand(band_num)
+                    spectral_ds.append(ds)
+                    spectral_bands.append(band)
+                else:
+                    spectral_name = last_name
+                    ds = gdal.Open(spectral_name)
+                    if ds is None:
+                        return 1
+                    for j in range(ds.RasterCount):
+                        spectral_ds.append(ds)
+                        spectral_bands.append(ds.GetRasterBand(j+1))
+
+            last_name = argv[i]
 
         i = i + 1
 
-    if pan_name is None or ms_name is None or out_name is None:
+    if pan_name is None or len(spectral_bands) == 0:
         return Usage()
-
-    pan_ds = gdal.Open(pan_name)
-    if pan_ds is None:
-        return 1
-    ms_ds = gdal.Open(ms_name)
-    if ms_ds is None:
-        return 1
-
-    if len(input_bands) != 0 and len(bands) == 0:
-        print('-b must be explicitely specified when -ib is used')
-        return 1
+    out_name = last_name
 
     if len(bands) == 0:
-        bands = [ j+1 for j in range(ms_ds.RasterCount) ]
-        input_bands = bands
+        bands = [ j+1 for j in range(len(spectral_bands)) ]
     else:
         for i in range(len(bands)):
-            if bands[i] < 0 or bands[i] > ms_ds.RasterCount:
+            if bands[i] < 0 or bands[i] > len(spectral_bands):
                 print('Invalid band number in -b: %d' % bands[i])
                 return 1
-        if len(input_bands) == 0:
-            input_bands = bands
-        else:
-            for i in range(len(input_bands)):
-                if input_bands[i] < 0 or input_bands[i] > ms_ds.RasterCount:
-                    print('Invalid band number in -ib: %d' % input_bands[i])
-                    return 1
-            for i in range(len(bands)):
-                if bands[i] not in input_bands:
-                    print('-b %d specified, but not listed as input band' % bands[i])
-                    return 1
 
-    if len(weights) != 0 and len(weights) != len(input_bands):
-        print('There must be as many -w values specified as -ib values')
+    if len(weights) != 0 and len(weights) != len(spectral_bands):
+        print('There must be as many -w values specified as input spectral bands')
         return 1
 
-    pan_relative='0'
-    ms_relative='0'
-    if format.upper() == 'VRT':
-        if not os.path.isabs(pan_name):
-            pan_relative='1'
-            pan_name = os.path.relpath(pan_name, os.path.dirname(out_name))
-        if not os.path.isabs(ms_name):
-            ms_relative='1'
-            ms_name = os.path.relpath(ms_name, os.path.dirname(out_name))
-
     vrt_xml = """<VRTDataset subClass="VRTPansharpenedDataset">\n"""
-    if input_bands != bands:
+    if bands != [ j+1 for j in range(len(spectral_bands)) ]:
         for i in range(len(bands)):
-            datatype = gdal.GetDataTypeName(ms_ds.GetRasterBand(bands[i]).DataType)
-            colorname = gdal.GetColorInterpretationName(ms_ds.GetRasterBand(bands[i]).GetColorInterpretation())
+            band = spectral_bands[bands[i]-1]
+            datatype = gdal.GetDataTypeName(band.DataType)
+            colorname = gdal.GetColorInterpretationName(band.GetColorInterpretation())
             vrt_xml += """  <VRTRasterBand dataType="%s" band="%d" subClass="VRTPansharpenedRasterBand">
       <ColorInterp>%s</ColorInterp>
   </VRTRasterBand>\n""" % (datatype, i+1, colorname)
@@ -168,22 +153,35 @@ def gdal_pansharpen(argv):
     if resampling is not None:
         vrt_xml += '      <Resampling>%s</Resampling>\n' % resampling
 
-    vrt_xml += """      <PanchroBand>
+    pan_relative='0'
+    if format.upper() == 'VRT':
+        if not os.path.isabs(pan_name):
+            pan_relative='1'
+            pan_name = os.path.relpath(pan_name, os.path.dirname(out_name))
+
+    vrt_xml += """    <PanchroBand>
       <SourceFilename relativeToVRT="%s">%s</SourceFilename>
       <SourceBand>1</SourceBand>
     </PanchroBand>\n""" % (pan_relative, pan_name)
 
-    for i in range(len(input_bands)):
+    for i in range(len(spectral_bands)):
         dstband = ''
         for j in range(len(bands)):
-            if input_bands[i] == bands[j]:
+            if i + 1 == bands[j]:
                 dstband = ' dstBand="%d"' % (j+1)
                 break
+
+        ms_relative='0'
+        ms_name = spectral_ds[i].GetDescription()
+        if format.upper() == 'VRT':
+            if not os.path.isabs(ms_name):
+                ms_relative='1'
+                ms_name = os.path.relpath(ms_name, os.path.dirname(out_name))
 
         vrt_xml += """    <SpectralBand%s>
       <SourceFilename relativeToVRT="%s">%s</SourceFilename>
       <SourceBand>%d</SourceBand>
-    </SpectralBand>\n""" % (dstband, ms_relative, ms_name, input_bands[i])
+    </SpectralBand>\n""" % (dstband, ms_relative, ms_name, spectral_bands[i].GetBand())
 
     vrt_xml += """  </PansharpeningOptions>\n"""
     vrt_xml += """</VRTDataset>\n"""
