@@ -2554,8 +2554,8 @@ Perform a pansharpen operation.
 \section gdal_pansharpen_synopsis SYNOPSIS
 
 \verbatim
-gdal_pansharpen [--help-general] pan_dataset ms_dataset out_dataset
-                [-of format] [-b band]* [-ib band]* [-w weight_val]*
+gdal_pansharpen [--help-general] pan_dataset {spectral_dataset[,band=num]}+ out_dataset
+                [-of format] [-b band]* [-w weight_val]*
                 [-r {nearest,bilinear,cubic,cubicspline,lanczos,average}]
                 [-co NAME=VALUE]* [-q]
 \endverbatim
@@ -2571,18 +2571,12 @@ More details can be found in the <a href="gdal_vrttut.html#gdal_vrttut_pansharpe
 <dl>
 <dt> <b>-of</b> <i>format</i>:</dt><dd> Select the output format.  The default
 is GeoTIFF (GTiff). "VRT" can also be used. Use the short format name.</dd>
-<dt> <b>-b</b> <i>band</i>:</dt><dd> Select band <i>band</i> from the multispectral
-dataset for output. Bands are numbered from 1. Multiple <b>-b</b> switches may be used.
-When no -b switch is used, all bands of the multispectral datasets are set for output.</dd>
-<dt> <b>-ib</b> <i>band</i>:</dt><dd> Select band <i>band</i> from the multispectral
-dataset as an input spectral band. Bands are numbered from 1. Multiple <b>-ib</b> switches may be used.
-When no -ib switch is used, all bands specified explicitly of implicitely with -b are
-used as input bands. When both -ib and -b are specified, it is possible to define
-input bands that are taken into account in the pansharpening computations but not
-exposed as output bands. The bands specified with -ib must be the same or a super-set of the ones
-specified with -b.</dd>
+<dt> <b>-b</b> <i>band</i>:</dt><dd> Select band <i>band</i> from the input spectral
+bands for output. Bands are numbered from 1 in the order spectral bands are specified.
+Multiple <b>-b</b> switches may be used.
+When no -b switch is used, all input spectral bands are set for output.</dd>
 <dt> <b>-w</b> <i>weight_val</i>:</dt><dd>Specify a weight for the computation of the
-pseudo panchromatic value. There must be as many -w switches as -ib (or -b if -ib is not used).</dd>
+pseudo panchromatic value. There must be as many -w switches as input spectral bands.</dd>
 <dt> <b>-r</b>
 <i>{nearest,bilinear,cubic (default),cubicspline,lanczos,average}</i>:</dt><dd>
 Select a resampling algorithm.</dd>
@@ -2592,15 +2586,27 @@ specific documentation for legal creation options for each format.</dd>
 <dt> <b>-q</b>:</dt><dd> Suppress progress monitor and other non-error
 output.</dd>
 <dt> <i>pan_dataset</i></dt><dd> Dataset with panchromatic band (first band will be used).</dd>
-<dt> <i>ms_dataset</i></dt><dd> Dataset with multispectral bands.</dd>
+<dt> <i>spectral_dataset[,band=num]</i></dt><dd> Dataset with one or several spectral bands. If
+the band option is not specified, all bands of the datasets are taken into account. Otherwise,
+only the specified (num)th band. The same dataset can be repeated several times.</dd>
 <dt> <i>out_dataset</i></dt><dd> Output dataset</dd>
 </dl>
 
 \section gdal_pansharpen_example EXAMPLE
 
-Minimal usage :
+With spectral bands in a single dataset :
 \verbatim
 gdal_pansharpen.py panchro.tif multispectral.tif pansharpened_out.tif
+\endverbatim
+
+With a few spectral bands from a single dataset, reordered :
+\verbatim
+gdal_pansharpen.py panchro.tif multispectral.tif,band=3 multispectral.tif,band=2 multispectral.tif,band=1 pansharpened_out.tif
+\endverbatim
+
+With spectral bands in several datasets :
+\verbatim
+gdal_pansharpen.py panchro.tif band1.tif band2.tif band3.tif pansharpened_out.tif
 \endverbatim
 
 Specify weights:
@@ -2608,9 +2614,9 @@ Specify weights:
 gdal_pansharpen.py -w 0.7 -w 0.2 -w 0.1 panchro.tif multispectral.tif pansharpened_out.tif
 \endverbatim
 
-Specify RGB bands from a RGBNir multispectral dataset:
+Specify RGB bands from a RGBNir multispectral dataset while computing the pseudo panchromatic intensity on the 4 RGBNir bands:
 \verbatim
-gdal_pansharpen.py -b 1 -b 2 -b 3 -ib 1 -ib 2 -ib 3 -ib 4 panchro.tif multispectral.tif pansharpened_out.tif
+gdal_pansharpen.py -b 1 -b 2 -b 3 panchro.tif rgbnir.tif pansharpened_out.tif
 \endverbatim
 
 \if man
