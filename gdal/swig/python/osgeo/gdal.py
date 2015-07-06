@@ -1258,10 +1258,10 @@ class Band(MajorObject):
 
     def ReadRaster1(self, *args, **kwargs):
         """
-        ReadRaster1(self, int xoff, int yoff, int xsize, int ysize, int buf_xsize = None, 
-            int buf_ysize = None, int buf_type = None, 
-            GIntBig buf_pixel_space = None, GIntBig buf_line_space = None, 
-            GDALRIOResampleAlg resample_alg = GRIORA_NearestNeighbour, 
+        ReadRaster1(self, double xoff, double yoff, double xsize, double ysize, 
+            int buf_xsize = None, int buf_ysize = None, 
+            int buf_type = None, GIntBig buf_pixel_space = None, 
+            GIntBig buf_line_space = None, GDALRIOResampleAlg resample_alg = GRIORA_NearestNeighbour, 
             GDALProgressFunc callback = None, 
             void callback_data = None) -> CPLErr
         """

@@ -3714,7 +3714,7 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
 }
 
 
-  CPLErr BandRasterIONumPy( GDALRasterBandShadow* band, int bWrite, int xoff, int yoff, int xsize, int ysize,
+  CPLErr BandRasterIONumPy( GDALRasterBandShadow* band, int bWrite, double xoff, double yoff, double xsize, double ysize,
                             PyArrayObject *psArray,
                             int buf_type,
                             GDALRIOResampleAlg resample_alg,
@@ -3744,8 +3744,21 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
     sExtraArg.eResampleAlg = resample_alg;
     sExtraArg.pfnProgress = callback;
     sExtraArg.pProgressData = callback_data;
+    int nXOff = (int)(xoff + 0.5);
+    int nYOff = (int)(yoff + 0.5);
+    int nXSize = (int)(xsize + 0.5);
+    int nYSize = (int)(ysize + 0.5);
+    if( fabs(xoff-nXOff) > 1e-8 || fabs(yoff-nYOff) > 1e-8 ||
+        fabs(xsize-nXSize) > 1e-8 || fabs(ysize-nYSize) > 1e-8 )
+    {
+        sExtraArg.bFloatingPointWindowValidity = TRUE;
+        sExtraArg.dfXOff = xoff;
+        sExtraArg.dfYOff = yoff;
+        sExtraArg.dfXSize = xsize;
+        sExtraArg.dfYSize = ysize;
+    }
 
-    return  GDALRasterIOEx( band, (bWrite) ? GF_Write : GF_Read, xoff, yoff, xsize, ysize,
+    return  GDALRasterIOEx( band, (bWrite) ? GF_Write : GF_Read, nXOff, nYOff, nXSize, nYSize,
                           psArray->data, nxsize, nysize,
                           ntype, pixel_space, line_space, &sExtraArg );
   }
@@ -4411,10 +4424,10 @@ SWIGINTERN PyObject *_wrap_BandRasterIONumPy(PyObject *SWIGUNUSEDPARM(self), PyO
   PyObject *resultobj = 0;
   GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
   int arg2 ;
-  int arg3 ;
-  int arg4 ;
-  int arg5 ;
-  int arg6 ;
+  double arg3 ;
+  double arg4 ;
+  double arg5 ;
+  double arg6 ;
   PyArrayObject *arg7 = (PyArrayObject *) 0 ;
   int arg8 ;
   GDALRIOResampleAlg arg9 ;
@@ -4424,13 +4437,13 @@ SWIGINTERN PyObject *_wrap_BandRasterIONumPy(PyObject *SWIGUNUSEDPARM(self), PyO
   int res1 = 0 ;
   int val2 ;
   int ecode2 = 0 ;
-  int val3 ;
+  double val3 ;
   int ecode3 = 0 ;
-  int val4 ;
+  double val4 ;
   int ecode4 = 0 ;
-  int val5 ;
+  double val5 ;
   int ecode5 = 0 ;
-  int val6 ;
+  double val6 ;
   int ecode6 = 0 ;
   int val8 ;
   int ecode8 = 0 ;
@@ -4470,26 +4483,26 @@ SWIGINTERN PyObject *_wrap_BandRasterIONumPy(PyObject *SWIGUNUSEDPARM(self), PyO
     SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "BandRasterIONumPy" "', argument " "2"" of type '" "int""'");
   } 
   arg2 = static_cast< int >(val2);
-  ecode3 = SWIG_AsVal_int(obj2, &val3);
+  ecode3 = SWIG_AsVal_double(obj2, &val3);
   if (!SWIG_IsOK(ecode3)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "BandRasterIONumPy" "', argument " "3"" of type '" "int""'");
+    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "BandRasterIONumPy" "', argument " "3"" of type '" "double""'");
   } 
-  arg3 = static_cast< int >(val3);
-  ecode4 = SWIG_AsVal_int(obj3, &val4);
+  arg3 = static_cast< double >(val3);
+  ecode4 = SWIG_AsVal_double(obj3, &val4);
   if (!SWIG_IsOK(ecode4)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "BandRasterIONumPy" "', argument " "4"" of type '" "int""'");
+    SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "BandRasterIONumPy" "', argument " "4"" of type '" "double""'");
   } 
-  arg4 = static_cast< int >(val4);
-  ecode5 = SWIG_AsVal_int(obj4, &val5);
+  arg4 = static_cast< double >(val4);
+  ecode5 = SWIG_AsVal_double(obj4, &val5);
   if (!SWIG_IsOK(ecode5)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode5), "in method '" "BandRasterIONumPy" "', argument " "5"" of type '" "int""'");
+    SWIG_exception_fail(SWIG_ArgError(ecode5), "in method '" "BandRasterIONumPy" "', argument " "5"" of type '" "double""'");
   } 
-  arg5 = static_cast< int >(val5);
-  ecode6 = SWIG_AsVal_int(obj5, &val6);
+  arg5 = static_cast< double >(val5);
+  ecode6 = SWIG_AsVal_double(obj5, &val6);
   if (!SWIG_IsOK(ecode6)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode6), "in method '" "BandRasterIONumPy" "', argument " "6"" of type '" "int""'");
+    SWIG_exception_fail(SWIG_ArgError(ecode6), "in method '" "BandRasterIONumPy" "', argument " "6"" of type '" "double""'");
   } 
-  arg6 = static_cast< int >(val6);
+  arg6 = static_cast< double >(val6);
   {
     /* %typemap(in,numinputs=1) (PyArrayObject  *psArray) */
     if (obj6 != NULL && PyArray_Check(obj6))
@@ -5046,10 +5059,10 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"TermProgress_nocb", (PyCFunction) _wrap_TermProgress_nocb, METH_VARARGS | METH_KEYWORDS, (char *)"TermProgress_nocb(double dfProgress, char pszMessage = None, void pData = None) -> int"},
 	 { (char *)"GetArrayFilename", _wrap_GetArrayFilename, METH_VARARGS, (char *)"GetArrayFilename(PyArrayObject psArray) -> retStringAndCPLFree"},
 	 { (char *)"BandRasterIONumPy", (PyCFunction) _wrap_BandRasterIONumPy, METH_VARARGS | METH_KEYWORDS, (char *)"\n"
-		"BandRasterIONumPy(Band band, int bWrite, int xoff, int yoff, int xsize, \n"
-		"    int ysize, PyArrayObject psArray, int buf_type, \n"
-		"    GDALRIOResampleAlg resample_alg, GDALProgressFunc callback = None, \n"
-		"    void callback_data = None) -> CPLErr\n"
+		"BandRasterIONumPy(Band band, int bWrite, double xoff, double yoff, double xsize, \n"
+		"    double ysize, PyArrayObject psArray, \n"
+		"    int buf_type, GDALRIOResampleAlg resample_alg, \n"
+		"    GDALProgressFunc callback = None, void callback_data = None) -> CPLErr\n"
 		""},
 	 { (char *)"DatasetIONumPy", (PyCFunction) _wrap_DatasetIONumPy, METH_VARARGS | METH_KEYWORDS, (char *)"\n"
 		"DatasetIONumPy(Dataset ds, int bWrite, int xoff, int yoff, int xsize, \n"

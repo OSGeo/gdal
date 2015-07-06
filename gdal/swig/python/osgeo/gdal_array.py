@@ -106,10 +106,10 @@ GetArrayFilename = _gdal_array.GetArrayFilename
 
 def BandRasterIONumPy(*args, **kwargs):
   """
-    BandRasterIONumPy(Band band, int bWrite, int xoff, int yoff, int xsize, 
-        int ysize, PyArrayObject psArray, int buf_type, 
-        GDALRIOResampleAlg resample_alg, GDALProgressFunc callback = None, 
-        void callback_data = None) -> CPLErr
+    BandRasterIONumPy(Band band, int bWrite, double xoff, double yoff, double xsize, 
+        double ysize, PyArrayObject psArray, 
+        int buf_type, GDALRIOResampleAlg resample_alg, 
+        GDALProgressFunc callback = None, void callback_data = None) -> CPLErr
     """
   return _gdal_array.BandRasterIONumPy(*args, **kwargs)
 BandRasterIONumPy = _gdal_array.BandRasterIONumPy
