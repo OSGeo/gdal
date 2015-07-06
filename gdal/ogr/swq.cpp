@@ -315,7 +315,7 @@ swq_select_summarize( swq_select *select_info,
 /*      Create the summary information if this is the first row         */
 /*      being processed.                                                */
 /* -------------------------------------------------------------------- */
-    if( select_info->column_summary == NULL && value != NULL )
+    if( select_info->column_summary == NULL )
     {
         int i;
 
@@ -332,9 +332,6 @@ swq_select_summarize( swq_select *select_info,
             strcpy(select_info->column_summary[i].szMax, "0000/00/00 00:00:00");
         }
     }
-
-    if( select_info->column_summary == NULL )
-        return NULL;
 
 /* -------------------------------------------------------------------- */
 /*      If distinct processing is on, process that now.                 */
@@ -399,6 +396,7 @@ swq_select_summarize( swq_select *select_info,
                 if( df_val < summary->min )
                     summary->min = df_val;
             }
+            summary->count++;
         }
         break;
       case SWQCF_MAX:
@@ -420,6 +418,7 @@ swq_select_summarize( swq_select *select_info,
                 if( df_val > summary->max )
                     summary->max = df_val;
             }
+            summary->count++;
         }
         break;
       case SWQCF_AVG:
