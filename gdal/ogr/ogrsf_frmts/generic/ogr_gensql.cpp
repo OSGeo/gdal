@@ -994,7 +994,7 @@ int OGRGenSQLResultsLayer::PrepareSummary()
             {
                 swq_summary *psSummary = psSelectInfo->column_summary + iField;
 
-                if( psColDef->col_func == SWQCF_AVG )
+                if( psColDef->col_func == SWQCF_AVG && psSummary->count > 0 )
                 {
                     if( psColDef->field_type == SWQ_DATE ||
                         psColDef->field_type == SWQ_TIME ||
@@ -1015,7 +1015,7 @@ int OGRGenSQLResultsLayer::PrepareSummary()
                         poSummaryFeature->SetField( iField,
                                                     psSummary->sum / psSummary->count );
                 }
-                else if( psColDef->col_func == SWQCF_MIN )
+                else if( psColDef->col_func == SWQCF_MIN && psSummary->count > 0 )
                 {
                     if( psColDef->field_type == SWQ_DATE ||
                         psColDef->field_type == SWQ_TIME ||
@@ -1024,7 +1024,7 @@ int OGRGenSQLResultsLayer::PrepareSummary()
                     else
                         poSummaryFeature->SetField( iField, psSummary->min );
                 }
-                else if( psColDef->col_func == SWQCF_MAX )
+                else if( psColDef->col_func == SWQCF_MAX && psSummary->count > 0 )
                 {
                     if( psColDef->field_type == SWQ_DATE ||
                         psColDef->field_type == SWQ_TIME ||
@@ -1035,7 +1035,7 @@ int OGRGenSQLResultsLayer::PrepareSummary()
                 }
                 else if( psColDef->col_func == SWQCF_COUNT )
                     poSummaryFeature->SetField( iField, psSummary->count );
-                else if( psColDef->col_func == SWQCF_SUM )
+                else if( psColDef->col_func == SWQCF_SUM && psSummary->count > 0 )
                     poSummaryFeature->SetField( iField, psSummary->sum );
             }
             else if ( psColDef->col_func == SWQCF_COUNT )
