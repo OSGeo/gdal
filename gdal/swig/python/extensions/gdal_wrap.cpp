@@ -4777,7 +4777,7 @@ SWIGINTERN CPLVirtualMemShadow *GDALRasterBandShadow_GetTiledVirtualMem(GDALRast
         vmemshadow->nBandCount = 1;
         return vmemshadow;
     }
-SWIGINTERN CPLErr GDALRasterBandShadow_ReadRaster1(GDALRasterBandShadow *self,int xoff,int yoff,int xsize,int ysize,void **buf,int *buf_xsize=0,int *buf_ysize=0,int *buf_type=0,GIntBig *buf_pixel_space=0,GIntBig *buf_line_space=0,GDALRIOResampleAlg resample_alg=GRIORA_NearestNeighbour,GDALProgressFunc callback=NULL,void *callback_data=NULL){
+SWIGINTERN CPLErr GDALRasterBandShadow_ReadRaster1(GDALRasterBandShadow *self,double xoff,double yoff,double xsize,double ysize,void **buf,int *buf_xsize=0,int *buf_ysize=0,int *buf_type=0,GIntBig *buf_pixel_space=0,GIntBig *buf_line_space=0,GDALRIOResampleAlg resample_alg=GRIORA_NearestNeighbour,GDALProgressFunc callback=NULL,void *callback_data=NULL){
     int nxsize = (buf_xsize==0) ? xsize : *buf_xsize;
     int nysize = (buf_ysize==0) ? ysize : *buf_ysize;
     GDALDataType ntype  = (buf_type==0) ? GDALGetRasterDataType(self)
@@ -4824,8 +4824,21 @@ SWIGINTERN CPLErr GDALRasterBandShadow_ReadRaster1(GDALRasterBandShadow *self,in
     sExtraArg.eResampleAlg = resample_alg;
     sExtraArg.pfnProgress = callback;
     sExtraArg.pProgressData = callback_data;
+    int nXOff = (int)(xoff + 0.5);
+    int nYOff = (int)(yoff + 0.5);
+    int nXSize = (int)(xsize + 0.5);
+    int nYSize = (int)(ysize + 0.5);
+    if( fabs(xoff-nXOff) > 1e-8 || fabs(yoff-nYOff) > 1e-8 ||
+        fabs(xsize-nXSize) > 1e-8 || fabs(ysize-nYSize) > 1e-8 )
+    {
+        sExtraArg.bFloatingPointWindowValidity = TRUE;
+        sExtraArg.dfXOff = xoff;
+        sExtraArg.dfYOff = yoff;
+        sExtraArg.dfXSize = xsize;
+        sExtraArg.dfYSize = ysize;
+    }
 
-    CPLErr eErr = GDALRasterIOEx( self, GF_Read, xoff, yoff, xsize, ysize, 
+    CPLErr eErr = GDALRasterIOEx( self, GF_Read, nXOff, nYOff, nXSize, nYSize, 
                          (void *) data, nxsize, nysize, ntype, 
                          pixel_space, line_space, &sExtraArg ); 
     if (eErr == CE_Failure)
@@ -18024,10 +18037,10 @@ fail:
 SWIGINTERN PyObject *_wrap_Band_ReadRaster1(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
   PyObject *resultobj = 0;
   GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
-  int arg2 ;
-  int arg3 ;
-  int arg4 ;
-  int arg5 ;
+  double arg2 ;
+  double arg3 ;
+  double arg4 ;
+  double arg5 ;
   void **arg6 = (void **) 0 ;
   int *arg7 = (int *) 0 ;
   int *arg8 = (int *) 0 ;
@@ -18039,13 +18052,13 @@ SWIGINTERN PyObject *_wrap_Band_ReadRaster1(PyObject *SWIGUNUSEDPARM(self), PyOb
   void *arg14 = (void *) NULL ;
   void *argp1 = 0 ;
   int res1 = 0 ;
-  int val2 ;
+  double val2 ;
   int ecode2 = 0 ;
-  int val3 ;
+  double val3 ;
   int ecode3 = 0 ;
-  int val4 ;
+  double val4 ;
   int ecode4 = 0 ;
-  int val5 ;
+  double val5 ;
   int ecode5 = 0 ;
   void *pyObject6 = NULL ;
   int val7 ;
@@ -18090,26 +18103,26 @@ SWIGINTERN PyObject *_wrap_Band_ReadRaster1(PyObject *SWIGUNUSEDPARM(self), PyOb
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Band_ReadRaster1" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
   }
   arg1 = reinterpret_cast< GDALRasterBandShadow * >(argp1);
-  ecode2 = SWIG_AsVal_int(obj1, &val2);
+  ecode2 = SWIG_AsVal_double(obj1, &val2);
   if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "Band_ReadRaster1" "', argument " "2"" of type '" "int""'");
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "Band_ReadRaster1" "', argument " "2"" of type '" "double""'");
   } 
-  arg2 = static_cast< int >(val2);
-  ecode3 = SWIG_AsVal_int(obj2, &val3);
+  arg2 = static_cast< double >(val2);
+  ecode3 = SWIG_AsVal_double(obj2, &val3);
   if (!SWIG_IsOK(ecode3)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "Band_ReadRaster1" "', argument " "3"" of type '" "int""'");
+    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "Band_ReadRaster1" "', argument " "3"" of type '" "double""'");
   } 
-  arg3 = static_cast< int >(val3);
-  ecode4 = SWIG_AsVal_int(obj3, &val4);
+  arg3 = static_cast< double >(val3);
+  ecode4 = SWIG_AsVal_double(obj3, &val4);
   if (!SWIG_IsOK(ecode4)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "Band_ReadRaster1" "', argument " "4"" of type '" "int""'");
+    SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "Band_ReadRaster1" "', argument " "4"" of type '" "double""'");
   } 
-  arg4 = static_cast< int >(val4);
-  ecode5 = SWIG_AsVal_int(obj4, &val5);
+  arg4 = static_cast< double >(val4);
+  ecode5 = SWIG_AsVal_double(obj4, &val5);
   if (!SWIG_IsOK(ecode5)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode5), "in method '" "Band_ReadRaster1" "', argument " "5"" of type '" "int""'");
+    SWIG_exception_fail(SWIG_ArgError(ecode5), "in method '" "Band_ReadRaster1" "', argument " "5"" of type '" "double""'");
   } 
-  arg5 = static_cast< int >(val5);
+  arg5 = static_cast< double >(val5);
   if (obj5) {
     {
       /* %typemap(in) (int *optional_##int) */
@@ -24564,10 +24577,11 @@ static PyMethodDef SwigMethods[] = {
 		"    char options = None) -> VirtualMem\n"
 		""},
 	 { (char *)"Band_ReadRaster1", (PyCFunction) _wrap_Band_ReadRaster1, METH_VARARGS | METH_KEYWORDS, (char *)"\n"
-		"Band_ReadRaster1(Band self, int xoff, int yoff, int xsize, int ysize, \n"
-		"    int buf_xsize = None, int buf_ysize = None, \n"
+		"Band_ReadRaster1(Band self, double xoff, double yoff, double xsize, \n"
+		"    double ysize, int buf_xsize = None, int buf_ysize = None, \n"
 		"    int buf_type = None, GIntBig buf_pixel_space = None, \n"
-		"    GIntBig buf_line_space = None, GDALRIOResampleAlg resample_alg = GRIORA_NearestNeighbour, \n"
+		"    GIntBig buf_line_space = None, \n"
+		"    GDALRIOResampleAlg resample_alg = GRIORA_NearestNeighbour, \n"
 		"    GDALProgressFunc callback = None, \n"
 		"    void callback_data = None) -> CPLErr\n"
 		""},

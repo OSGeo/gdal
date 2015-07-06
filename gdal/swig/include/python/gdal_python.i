@@ -180,7 +180,7 @@ int wrapper_VSIFReadL( void **buf, int nMembSize, int nMembCount, VSILFILE *fp)
 %apply ( int *optional_int ) {(int*)};
 %apply ( GIntBig *optional_GIntBig ) {(GIntBig*)};
 %feature( "kwargs" ) ReadRaster1;
-  CPLErr ReadRaster1( int xoff, int yoff, int xsize, int ysize,
+  CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
                      void **buf,
                      int *buf_xsize = 0,
                      int *buf_ysize = 0,
@@ -236,8 +236,21 @@ int wrapper_VSIFReadL( void **buf, int nMembSize, int nMembCount, VSILFILE *fp)
     sExtraArg.eResampleAlg = resample_alg;
     sExtraArg.pfnProgress = callback;
     sExtraArg.pProgressData = callback_data;
+    int nXOff = (int)(xoff + 0.5);
+    int nYOff = (int)(yoff + 0.5);
+    int nXSize = (int)(xsize + 0.5);
+    int nYSize = (int)(ysize + 0.5);
+    if( fabs(xoff-nXOff) > 1e-8 || fabs(yoff-nYOff) > 1e-8 ||
+        fabs(xsize-nXSize) > 1e-8 || fabs(ysize-nYSize) > 1e-8 )
+    {
+        sExtraArg.bFloatingPointWindowValidity = TRUE;
+        sExtraArg.dfXOff = xoff;
+        sExtraArg.dfYOff = yoff;
+        sExtraArg.dfXSize = xsize;
+        sExtraArg.dfYSize = ysize;
+    }
 
-    CPLErr eErr = GDALRasterIOEx( self, GF_Read, xoff, yoff, xsize, ysize, 
+    CPLErr eErr = GDALRasterIOEx( self, GF_Read, nXOff, nYOff, nXSize, nYSize, 
                          (void *) data, nxsize, nysize, ntype, 
                          pixel_space, line_space, &sExtraArg ); 
     if (eErr == CE_Failure)
