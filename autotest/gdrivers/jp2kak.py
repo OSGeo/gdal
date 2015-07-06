@@ -440,6 +440,39 @@ def jp2kak_20():
     return 'success'
 
 ###############################################################################
+# Test non nearest upsampling
+
+def jp2kak_21():
+
+    if gdaltest.jp2kak_drv is None:
+        return 'skip'
+
+    tmp_ds = gdaltest.jp2kak_drv.CreateCopy('/vsimem/jp2kak_21.jp2', gdal.Open('data/int16.tif'), options = ['QUALITY=100'])
+    tmp_ds = None
+    tmp_ds = gdal.Open('/vsimem/jp2kak_21.jp2')
+    full_res_data = tmp_ds.ReadRaster(0, 0, 20, 20)
+    upsampled_data = tmp_ds.ReadRaster(0, 0, 20, 20, 40, 40, resample_alg = gdal.GRIORA_Cubic)
+    tmp_ds = None
+    gdal.Unlink('/vsimem/jp2kak_21.jp2')
+
+    tmp_ds = gdal.GetDriverByName('MEM').Create('', 20, 20, 1, gdal.GDT_Int16)
+    tmp_ds.GetRasterBand(1).WriteRaster(0, 0, 20, 20, full_res_data)
+    ref_upsampled_data = tmp_ds.ReadRaster(0, 0, 20, 20, 40, 40, resample_alg = gdal.GRIORA_Cubic)
+
+    mem_ds = gdal.GetDriverByName('MEM').Create('', 40, 40, 1, gdal.GDT_Int16)
+    mem_ds.GetRasterBand(1).WriteRaster(0, 0, 40, 40, ref_upsampled_data)
+    ref_cs = mem_ds.GetRasterBand(1).Checksum()
+    mem_ds.GetRasterBand(1).WriteRaster(0, 0, 40, 40, upsampled_data)
+    cs = mem_ds.GetRasterBand(1).Checksum()
+    if cs != ref_cs:
+        gdaltest.post_reason('fail')
+        print(cs)
+        print(ref_cs)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup.
 
 def jp2kak_cleanup():
@@ -467,6 +500,7 @@ gdaltest_list = [
     jp2kak_18,
     jp2kak_19,
     jp2kak_20,
+    jp2kak_21,
     jp2kak_cleanup ]
 
 if __name__ == '__main__':
