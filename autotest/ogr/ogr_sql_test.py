@@ -1123,8 +1123,9 @@ def ogr_sql_37():
     lyr.CreateField(ogr.FieldDefn('intfield', ogr.OFTInteger))
     lyr.CreateField(ogr.FieldDefn('floatfield', ogr.OFTReal))
     lyr.CreateField(ogr.FieldDefn('strfield', ogr.OFTString))
-    lyr.CreateField(ogr.FieldDefn('strfield2', ogr.OFTString))
-    lyr.CreateField(ogr.FieldDefn('strfield3', ogr.OFTString))
+    lyr.CreateField(ogr.FieldDefn('strfield_first_null', ogr.OFTString))
+    lyr.CreateField(ogr.FieldDefn('strfield_never_set', ogr.OFTString))
+    lyr.CreateField(ogr.FieldDefn('intfield_never_set', ogr.OFTInteger))
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetField(0, 1)
     feat.SetField(2, "456")
@@ -1135,7 +1136,7 @@ def ogr_sql_37():
     lyr.CreateFeature(feat)
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetField(1, 2.3)
-    feat.SetField(3, "foo")
+    feat.SetField('strfield_first_null', "foo")
     lyr.CreateFeature(feat)
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetField(1, 2.3)
@@ -1174,18 +1175,32 @@ def ogr_sql_37():
     ds.ReleaseResultSet( sql_lyr )
 
     # Fix crash when first values is null (#4509)
-    sql_lyr = ds.ExecuteSQL( "select distinct strfield2 from layer")
+    sql_lyr = ds.ExecuteSQL( "select distinct strfield_first_null from layer")
     feat = sql_lyr.GetNextFeature()
-    if feat.GetFieldAsString('strfield2') != 'foo':
+    if feat.IsFieldSet('strfield_first_null'):
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+    feat = sql_lyr.GetNextFeature()
+    if feat.GetFieldAsString('strfield_first_null') != 'foo':
         gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'
     ds.ReleaseResultSet( sql_lyr )
 
-    sql_lyr = ds.ExecuteSQL( "select distinct strfield3 from layer")
+    sql_lyr = ds.ExecuteSQL( "select distinct strfield_never_set from layer")
     feat = sql_lyr.GetNextFeature()
-    if feat is not None:
+    if feat.IsFieldSet('strfield_never_set'):
         gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+    ds.ReleaseResultSet( sql_lyr )
+
+    sql_lyr = ds.ExecuteSQL( "select min(intfield_never_set), max(intfield_never_set), avg(intfield_never_set), sum(intfield_never_set), count(intfield_never_set) from layer")
+    feat = sql_lyr.GetNextFeature()
+    if feat.IsFieldSet(0) or feat.IsFieldSet(1) or feat.IsFieldSet(2) or feat.IsFieldSet(3) or feat.GetField(4) != 0:
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
         return 'fail'
     ds.ReleaseResultSet( sql_lyr )
 
@@ -1437,7 +1452,7 @@ def ogr_sql_46():
     feat = sql_lyr.GetNextFeature()
     if feat.GetField(0) != 3 or feat.GetField(1) != 3 or feat.GetField(2) != 2 or feat.GetField(3) != 2:
         gdaltest.post_reason('fail')
-        feat.DumpReable()
+        feat.DumpReadable()
         return 'fail'
     ds.ReleaseResultSet(sql_lyr)
 
