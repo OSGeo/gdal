@@ -1872,6 +1872,39 @@ def ecw_44():
     return 'success'
 
 ###############################################################################
+# Test non nearest upsampling
+
+def ecw_46():
+
+    if gdaltest.jp2ecw_drv is None:
+        return 'skip'
+
+    tmp_ds = gdaltest.jp2ecw_drv.CreateCopy('/vsimem/ecw_46.jp2', gdal.Open('data/int16.tif'))
+    tmp_ds = None
+    tmp_ds = gdal.Open('/vsimem/ecw_46.jp2')
+    full_res_data = tmp_ds.ReadRaster(0, 0, 20, 20)
+    upsampled_data = tmp_ds.ReadRaster(0, 0, 20, 20, 40, 40, resample_alg = gdal.GRIORA_Cubic)
+    tmp_ds = None
+    gdal.Unlink('/vsimem/ecw_46.jp2')
+
+    tmp_ds = gdal.GetDriverByName('MEM').Create('', 20, 20, 1, gdal.GDT_Int16)
+    tmp_ds.GetRasterBand(1).WriteRaster(0, 0, 20, 20, full_res_data)
+    ref_upsampled_data = tmp_ds.ReadRaster(0, 0, 20, 20, 40, 40, resample_alg = gdal.GRIORA_Cubic)
+
+    mem_ds = gdal.GetDriverByName('MEM').Create('', 40, 40, 1, gdal.GDT_Int16)
+    mem_ds.GetRasterBand(1).WriteRaster(0, 0, 40, 40, ref_upsampled_data)
+    ref_cs = mem_ds.GetRasterBand(1).Checksum()
+    mem_ds.GetRasterBand(1).WriteRaster(0, 0, 40, 40, upsampled_data)
+    cs = mem_ds.GetRasterBand(1).Checksum()
+    if cs != ref_cs:
+        gdaltest.post_reason('fail')
+        print(cs)
+        print(ref_cs)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Test metadata reading & writing
 
 def RemoveDriverMetadata(md):
@@ -2307,6 +2340,7 @@ gdaltest_list = [
     ecw_43,
     ecw_44,
     ecw_45,
+    ecw_46,
     ecw_online_1,
     ecw_online_2,
     #JTO this test does not make sense. It tests difference between two files pixel by pixel but compression is lossy# ecw_online_3, 
