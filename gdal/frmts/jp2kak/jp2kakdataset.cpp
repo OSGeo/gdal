@@ -34,6 +34,8 @@
 #include "cpl_multiproc.h"
 #include "jp2_local.h"
 
+#include "../mem/memdataset.h"
+
 // Kakadu core includes
 #include "kdu_elementary.h"
 #include "kdu_messaging.h"
@@ -1642,13 +1644,14 @@ JP2KAKDataset::DirectRasterIO( CPL_UNUSED GDALRWFlag eRWFlag,
 /* -------------------------------------------------------------------- */
         else
         {
+            int nDataTypeSize = GDALGetDataTypeSize(eBufType) / 8;
             GByte *pabyIntermediate = (GByte *) 
-                VSIMalloc3(dims.size.x, dims.size.y, 2*nBandCount );
+                VSIMalloc3(dims.size.x, dims.size.y, nDataTypeSize*nBandCount );
             if( pabyIntermediate == NULL )
             {
                 CPLError( CE_Failure, CPLE_OutOfMemory, 
                           "Failed to allocate %d byte intermediate decompression buffer for jpeg2000.", 
-                          dims.size.x * dims.size.y * nBandCount );
+                          dims.size.x * dims.size.y * nDataTypeSize * nBandCount );
 
                 return CE_Failure;
             }
@@ -1689,46 +1692,88 @@ JP2KAKDataset::DirectRasterIO( CPL_UNUSED GDALRWFlag eRWFlag,
                 
             decompressor.finish();
 
+            if( psExtraArg->eResampleAlg == GRIORA_NearestNeighbour )
+            {
 /* -------------------------------------------------------------------- */
 /*      Then resample (normally downsample) from the intermediate       */
 /*      buffer into the final buffer in the desired output layout.      */
 /* -------------------------------------------------------------------- */
-            int iY, iX;
-            double dfYRatio = dims.size.y / (double) nBufYSize;
-            double dfXRatio = dims.size.x / (double) nBufXSize;
+                int iY, iX;
+                double dfYRatio = dims.size.y / (double) nBufYSize;
+                double dfXRatio = dims.size.x / (double) nBufXSize;
 
-            for( iY = 0; iY < nBufYSize; iY++ )
-            {
-                int iSrcY = (int) floor( (iY + 0.5) * dfYRatio );
-
-                iSrcY = MIN(iSrcY, dims.size.y-1);
-
-                for( iX = 0; iX < nBufXSize; iX++ )
+                for( iY = 0; iY < nBufYSize; iY++ )
                 {
-                    int iSrcX = (int) floor( (iX + 0.5) * dfXRatio );
+                    int iSrcY = (int) floor( (iY + 0.5) * dfYRatio );
 
-                    iSrcX = MIN(iSrcX, dims.size.x-1);
+                    iSrcY = MIN(iSrcY, dims.size.y-1);
 
-                    for( i = 0; i < nBandCount; i++ )
+                    for( iX = 0; iX < nBufXSize; iX++ )
                     {
-                        if( eBufType == GDT_Byte )
-                            ((GByte *) pData)[iX*nPixelSpace
-                                              + iY*nLineSpace
-                                              + i*nBandSpace] = 
-                                pabyIntermediate[iSrcX*nBandCount
-                                                 + iSrcY*dims.size.x*nBandCount
-                                                 + i];
-                        else if( eBufType == GDT_Int16
-                                 || eBufType == GDT_UInt16 )
-                            ((GUInt16 *) pData)[iX*nPixelSpace/2
-                                              + iY*nLineSpace/2
-                                              + i*nBandSpace/2] = 
-                                ((GUInt16 *)pabyIntermediate)[
-                                    iSrcX*nBandCount
-                                    + iSrcY*dims.size.x*nBandCount
-                                    + i];
+                        int iSrcX = (int) floor( (iX + 0.5) * dfXRatio );
+
+                        iSrcX = MIN(iSrcX, dims.size.x-1);
+
+                        for( i = 0; i < nBandCount; i++ )
+                        {
+                            if( eBufType == GDT_Byte )
+                                ((GByte *) pData)[iX*nPixelSpace
+                                                + iY*nLineSpace
+                                                + i*nBandSpace] = 
+                                    pabyIntermediate[iSrcX*nBandCount
+                                                    + iSrcY*dims.size.x*nBandCount
+                                                    + i];
+                            else if( eBufType == GDT_Int16
+                                    || eBufType == GDT_UInt16 )
+                                ((GUInt16 *) pData)[iX*nPixelSpace/2
+                                                + iY*nLineSpace/2
+                                                + i*nBandSpace/2] = 
+                                    ((GUInt16 *)pabyIntermediate)[
+                                        iSrcX*nBandCount
+                                        + iSrcY*dims.size.x*nBandCount
+                                        + i];
+                        }
                     }
                 }
+            }
+            else
+            {
+                /* Create a MEM dataset that wraps the input buffer */
+                GDALDataset* poMEMDS = MEMDataset::Create("", dims.size.x,
+                                                        dims.size.y, 0,
+                                                        eBufType, NULL);
+                char szBuffer[64];
+                int nRet;
+
+                for( i = 0; i < nBandCount; i++ )
+                {
+
+                    nRet = CPLPrintPointer(szBuffer, pabyIntermediate + i * nDataTypeSize, sizeof(szBuffer));
+                    szBuffer[nRet] = 0;
+                    char** papszOptions = CSLSetNameValue(NULL, "DATAPOINTER", szBuffer);
+
+                    papszOptions = CSLSetNameValue(papszOptions, "PIXELOFFSET",
+                        CPLSPrintf(CPL_FRMT_GIB, (GIntBig)nDataTypeSize * nBandCount));
+
+                    papszOptions = CSLSetNameValue(papszOptions, "LINEOFFSET",
+                        CPLSPrintf(CPL_FRMT_GIB, (GIntBig)nDataTypeSize * nBandCount * dims.size.x));
+
+                    poMEMDS->AddBand(eBufType, papszOptions);
+                    CSLDestroy(papszOptions);
+                }
+
+                GDALRasterIOExtraArg sExtraArgTmp;
+                INIT_RASTERIO_EXTRA_ARG(sExtraArgTmp);
+                sExtraArgTmp.eResampleAlg = psExtraArg->eResampleAlg;
+
+                poMEMDS->RasterIO(GF_Read, 0, 0, dims.size.x, dims.size.y,
+                                  pData, nBufXSize, nBufYSize,
+                                  eBufType,
+                                  nBandCount, NULL,
+                                  nPixelSpace, nLineSpace, nBandSpace,
+                                  &sExtraArgTmp);
+
+                GDALClose(poMEMDS);
             }
 
             CPLFree( pabyIntermediate );
