@@ -184,6 +184,9 @@ CPLErr GDALPansharpenOperation::Initialize(const GDALPansharpenOptions* psOption
         return CE_Failure;
     }
     GDALRasterBandH hRefBand = psOptionsIn->pahInputSpectralBands[0];
+    int bSameDataset = psOptionsIn->nInputSpectralBands > 1;
+    if( bSameDataset )
+        anInputBands.push_back(GDALGetBandNumber(hRefBand));
     for(int i=1;i<psOptionsIn->nInputSpectralBands;i++)
     {
         GDALRasterBandH hBand = psOptionsIn->pahInputSpectralBands[i];
@@ -194,6 +197,19 @@ CPLErr GDALPansharpenOperation::Initialize(const GDALPansharpenOptions* psOption
                      "Dimensions of input spectral band %d different from first spectral band",
                      i);
             return CE_Failure;
+        }
+        if( bSameDataset )
+        {
+            if( GDALGetBandDataset(hBand) == NULL ||
+                GDALGetBandDataset(hBand) != GDALGetBandDataset(hRefBand) )
+            {
+                anInputBands.resize(0);
+                bSameDataset = FALSE;
+            }
+            else
+            {
+                anInputBands.push_back(GDALGetBandNumber(hBand));
+            }
         }
     }
     if( psOptionsIn->nOutPansharpenedBands == 0 )
@@ -369,14 +385,28 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
     int nSpectralYOff = (int)(0.5 + sExtraArg.dfYOff);
     int nSpectralXSize = (int)(0.5 + sExtraArg.dfXSize);
     int nSpectralYSize = (int)(0.5 + sExtraArg.dfYSize);
-    for(int i=0; eErr == CE_None && i < psOptions->nInputSpectralBands; i++)
+    
+    if( anInputBands.size() )
     {
-        eErr = 
-        ((GDALRasterBand*)psOptions->pahInputSpectralBands[i])->RasterIO(GF_Read,
-                nSpectralXOff, nSpectralYOff, nSpectralXSize, nSpectralYSize,
-                pUpsampledSpectralBuffer + i * nXSize * nYSize * nDataTypeSize,
-                nXSize, nYSize,
-                eBufDataType, 0, 0, &sExtraArg);
+        eErr = ((GDALRasterBand*)psOptions->pahInputSpectralBands[0])->GetDataset()->RasterIO(GF_Read,
+                    nSpectralXOff, nSpectralYOff, nSpectralXSize, nSpectralYSize,
+                    pUpsampledSpectralBuffer,
+                    nXSize, nYSize,
+                    eBufDataType,
+                    (int)anInputBands.size(), &anInputBands[0],
+                    0, 0, 0, &sExtraArg);
+    }
+    else
+    {
+        for(int i=0; eErr == CE_None && i < psOptions->nInputSpectralBands; i++)
+        {
+            eErr = 
+            ((GDALRasterBand*)psOptions->pahInputSpectralBands[i])->RasterIO(GF_Read,
+                    nSpectralXOff, nSpectralYOff, nSpectralXSize, nSpectralYSize,
+                    pUpsampledSpectralBuffer + i * nXSize * nYSize * nDataTypeSize,
+                    nXSize, nYSize,
+                    eBufDataType, 0, 0, &sExtraArg);
+        }
     }
     
     if( eBufDataType == GDT_Byte )

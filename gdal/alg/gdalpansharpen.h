@@ -103,12 +103,15 @@ CPL_C_END
 
 #ifdef __cplusplus 
 
+#include <vector>
+
 /** Pansharpening operation class.
  */
 class GDALPansharpenOperation
 {
         GDALPansharpenOptions* psOptions;
-        
+        std::vector<int> anInputBands;
+
         template<class DataType> void WeightedBrovey(const DataType* pPanBuffer,
                                                      const DataType* pUpsampledSpectralBuffer,
                                                      DataType* pDataBuf,
