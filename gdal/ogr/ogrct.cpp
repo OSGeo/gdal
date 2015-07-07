@@ -77,6 +77,13 @@ static int (*pfn_pj_ctx_get_errno)( projCtx ) = NULL;
 static projCtx (*pfn_pj_ctx_alloc)(void) = NULL;
 static void    (*pfn_pj_ctx_free)( projCtx ) = NULL;
 
+// Locale-safe proj starts with 4.10
+#if defined(PJ_LOCALE_SAFE)
+static int      bProjLocaleSafe = PJ_LOCALE_SAFE;
+#else
+static int      bProjLocaleSafe = FALSE;
+#endif
+
 #if (defined(WIN32) || defined(WIN32CE)) && !defined(__MINGW32__)
 #  define LIBNAME      "proj.dll"
 #elif defined(__MINGW32__)
@@ -254,6 +261,8 @@ static int LoadProjLibrary_unlocked()
     pfn_pj_ctx_get_errno = (int (*)( projCtx ))
         CPLGetSymbol( pszLibName, "pj_ctx_get_errno" );
 
+    bProjLocaleSafe = CPLGetSymbol(pszLibName, "pj_atof") != NULL;
+
     CPLPopErrorHandler();
     CPLErrorReset();
 #endif
@@ -273,6 +282,9 @@ static int LoadProjLibrary_unlocked()
         pfn_pj_init_plus_ctx = NULL;
         pfn_pj_ctx_get_errno = NULL;
     }
+    
+    if( bProjLocaleSafe )
+        CPLDebug("OGRCT", "Using locale-safe proj version");
 
     if( pfn_pj_transform == NULL )
     {
@@ -303,18 +315,10 @@ static int LoadProjLibrary()
 /*      forth as possible.                                              */
 /************************************************************************/
 
-char *OCTProj4Normalize( const char *pszProj4Src )
-
+static char *OCTProj4NormalizeInternal( const char *pszProj4Src )
 {
     char        *pszNewProj4Def, *pszCopy;
     projPJ      psPJSource = NULL;
-
-    CPLMutexHolderD( &hPROJMutex );
-
-    if( !LoadProjLibrary_unlocked() || pfn_pj_dalloc == NULL || pfn_pj_get_def == NULL )
-        return CPLStrdup( pszProj4Src );
-
-    CPLLocaleC  oLocaleEnforcer;
 
     psPJSource = pfn_pj_init_plus( pszProj4Src );
 
@@ -332,6 +336,24 @@ char *OCTProj4Normalize( const char *pszProj4Src )
     pfn_pj_dalloc( pszNewProj4Def );
 
     return pszCopy;
+}
+
+char *OCTProj4Normalize( const char *pszProj4Src )
+
+{
+    CPLMutexHolderD( &hPROJMutex );
+
+    if( !LoadProjLibrary_unlocked() || pfn_pj_dalloc == NULL || pfn_pj_get_def == NULL )
+        return CPLStrdup( pszProj4Src );
+
+    if( bProjLocaleSafe )
+        return OCTProj4NormalizeInternal(pszProj4Src);
+    else
+    {
+        CPLLocaleC  oLocaleEnforcer;
+        return OCTProj4NormalizeInternal(pszProj4Src);
+    }
+
 }
 
 /************************************************************************/
@@ -552,6 +574,11 @@ int OGRProj4CT::Initialize( OGRSpatialReference * poSourceIn,
                             OGRSpatialReference * poTargetIn )
 
 {
+    if( bProjLocaleSafe )
+    {
+        return InitializeNoLock(poSourceIn, poTargetIn);
+    }
+
     CPLLocaleC  oLocaleEnforcer;
     if (pjctx != NULL)
     {
