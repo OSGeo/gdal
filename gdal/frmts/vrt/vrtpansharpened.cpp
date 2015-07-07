@@ -714,6 +714,10 @@ int VRTPansharpenedRasterBand::GetOverviewCount()
             }
 
             int nSpectralOvrCount = ((GDALRasterBand*)psOptions->pahInputSpectralBands[0])->GetOverviewCount();
+            // JP2KAK overviews are not bound to a dataset, so let the full resolution bands
+            // and rely on JP2KAK IRasterIO() to select the appropriate resolution
+            if( nSpectralOvrCount && ((GDALRasterBand*)psOptions->pahInputSpectralBands[0])->GetOverview(0)->GetDataset() == NULL )
+                nSpectralOvrCount = 0;
             for(int i=1;i<psOptions->nInputSpectralBands;i++)
             {
                 if( ((GDALRasterBand*)psOptions->pahInputSpectralBands[i])->GetOverviewCount() != nSpectralOvrCount )
