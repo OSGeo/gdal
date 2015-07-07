@@ -1760,6 +1760,10 @@ JP2KAKDataset::DirectRasterIO( CPL_UNUSED GDALRWFlag eRWFlag,
 
                     poMEMDS->AddBand(eBufType, papszOptions);
                     CSLDestroy(papszOptions);
+
+                    const char* pszNBITS = GetRasterBand(i+1)->GetMetadataItem("NBITS", "IMAGE_STRUCTURE");
+                    if( pszNBITS )
+                        poMEMDS->GetRasterBand(i+1)->SetMetadataItem("NBITS", pszNBITS, "IMAGE_STRUCTURE");
                 }
 
                 GDALRasterIOExtraArg sExtraArgTmp;
