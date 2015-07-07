@@ -112,11 +112,17 @@ class GDALPansharpenOperation
         GDALPansharpenOptions* psOptions;
         std::vector<int> anInputBands;
 
-        template<class DataType> void WeightedBrovey(const DataType* pPanBuffer,
-                                                     const DataType* pUpsampledSpectralBuffer,
-                                                     DataType* pDataBuf,
+        template<class WorkDataType, class OutDataType> void WeightedBrovey(
+                                                     const WorkDataType* pPanBuffer,
+                                                     const WorkDataType* pUpsampledSpectralBuffer,
+                                                     OutDataType* pDataBuf,
                                                      int nValues);
-
+        template<class WorkDataType> CPLErr WeightedBrovey(
+                                                     const WorkDataType* pPanBuffer,
+                                                     const WorkDataType* pUpsampledSpectralBuffer,
+                                                     void *pDataBuf, 
+                                                     GDALDataType eBufDataType,
+                                                     int nValues);
     public:
                              GDALPansharpenOperation();
                             ~GDALPansharpenOperation();

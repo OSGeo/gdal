@@ -268,6 +268,16 @@ class VRTPansharpenedDataset : public VRTDataset
     GDALPansharpenOperation* poPansharpener;
     VRTPansharpenedDataset* poMainDataset;
     std::vector<VRTPansharpenedDataset*> apoOverviewDatasets;
+    
+    int               bLoadingOtherBands;
+    int               bHasWarnedDisableAggressiveBandCaching;
+
+    GByte            *pabyLastBufferBandRasterIO;
+    int               nLastBandRasterIOXOff;
+    int               nLastBandRasterIOYOff;
+    int               nLastBandRasterIOXSize;
+    int               nLastBandRasterIOYSize;
+    GDALDataType      eLastBandRasterIODataType;
 
   protected:
     virtual int         CloseDependentDatasets();
@@ -282,6 +292,15 @@ public:
                             char **papszOptions=NULL );
 
     virtual char      **GetFileList();
+
+    virtual CPLErr  IRasterIO( GDALRWFlag eRWFlag,
+                               int nXOff, int nYOff, int nXSize, int nYSize,
+                               void * pData, int nBufXSize, int nBufYSize,
+                               GDALDataType eBufType,
+                               int nBandCount, int *panBandMap,
+                               GSpacing nPixelSpace, GSpacing nLineSpace,
+                               GSpacing nBandSpace,
+                               GDALRasterIOExtraArg* psExtraArg);
 
     void              GetBlockSize( int *, int * );
     
@@ -536,6 +555,13 @@ class VRTPansharpenedRasterBand : public VRTRasterBand
     virtual CPLErr         XMLInit( CPLXMLNode *, const char * );
 
     virtual CPLErr IReadBlock( int, int, void * );
+
+    virtual CPLErr  IRasterIO( GDALRWFlag eRWFlag,
+                               int nXOff, int nYOff, int nXSize, int nYSize,
+                               void * pData, int nBufXSize, int nBufYSize,
+                               GDALDataType eBufType,
+                               GSpacing nPixelSpace, GSpacing nLineSpace,
+                               GDALRasterIOExtraArg* psExtraArg);
 
     virtual int GetOverviewCount();
     virtual GDALRasterBand *GetOverview(int);

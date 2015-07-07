@@ -54,6 +54,14 @@ VRTPansharpenedDataset::VRTPansharpenedDataset( int nXSize, int nYSize )
     eAccess = GA_Update;
     poPansharpener = NULL;
     poMainDataset = this;
+    bLoadingOtherBands = FALSE;
+    bHasWarnedDisableAggressiveBandCaching = FALSE;
+    pabyLastBufferBandRasterIO = NULL;
+    nLastBandRasterIOXOff = 0;
+    nLastBandRasterIOYOff = 0;
+    nLastBandRasterIOXSize = 0;
+    nLastBandRasterIOYSize = 0;
+    eLastBandRasterIODataType = GDT_Unknown;
 }
 
 /************************************************************************/
@@ -64,6 +72,7 @@ VRTPansharpenedDataset::~VRTPansharpenedDataset()
 
 {
     CloseDependentDatasets();
+    CPLFree(pabyLastBufferBandRasterIO);
 }
 
 /************************************************************************/
@@ -554,6 +563,9 @@ CPLErr VRTPansharpenedDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPa
         psPanOptions->panOutPansharpenedBands[i] = aMapDstBandToSpectralBandIter->second;
     }
 
+    if( nBands == psPanOptions->nOutPansharpenedBands )
+        SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+
     poPansharpener = new GDALPansharpenOperation();
     eErr = poPansharpener->Initialize(psPanOptions);
     if( eErr != CE_None )
@@ -608,6 +620,78 @@ CPLErr VRTPansharpenedDataset::AddBand( CPL_UNUSED GDALDataType eType,
 
 
 /************************************************************************/
+/*                              IRasterIO()                             */
+/************************************************************************/
+
+CPLErr VRTPansharpenedDataset::IRasterIO( GDALRWFlag eRWFlag,
+                               int nXOff, int nYOff, int nXSize, int nYSize,
+                               void * pData, int nBufXSize, int nBufYSize,
+                               GDALDataType eBufType,
+                               int nBandCount, int *panBandMap,
+                               GSpacing nPixelSpace, GSpacing nLineSpace,
+                               GSpacing nBandSpace,
+                               GDALRasterIOExtraArg* psExtraArg)
+{
+    if( eRWFlag == GF_Write )
+        return CE_Failure;
+
+    /* Try to pass the request to the most appropriate overview dataset */
+    if( nBufXSize < nXSize && nBufYSize < nYSize )
+    {
+        int nXOffMod = nXOff, nYOffMod = nYOff, nXSizeMod = nXSize, nYSizeMod = nYSize;
+        GDALRasterIOExtraArg sExtraArg;
+    
+        GDALCopyRasterIOExtraArg(&sExtraArg, psExtraArg);
+
+        int iOvrLevel = GDALBandGetBestOverviewLevel2(papoBands[0],
+                                                     nXOffMod, nYOffMod,
+                                                     nXSizeMod, nYSizeMod,
+                                                     nBufXSize, nBufYSize,
+                                                     &sExtraArg);
+
+        if( iOvrLevel >= 0 && papoBands[0]->GetOverview(iOvrLevel) != NULL &&
+            papoBands[0]->GetOverview(iOvrLevel)->GetDataset() != NULL )
+        {
+            //{static int bDone = 0; if (!bDone) printf("(1)\n"); bDone = 1; }
+            return papoBands[0]->GetOverview(iOvrLevel)->GetDataset()->RasterIO(
+                eRWFlag, nXOffMod, nYOffMod, nXSizeMod, nYSizeMod,
+                pData, nBufXSize, nBufYSize, eBufType,
+                nBandCount, panBandMap, nPixelSpace, nLineSpace, nBandSpace, &sExtraArg);
+        }
+    }
+
+    int nDataTypeSize = GDALGetDataTypeSize(eBufType) / 8;
+    if( nXSize == nBufXSize &&
+        nYSize == nBufYSize &&
+        nDataTypeSize == nPixelSpace &&
+        nLineSpace == nPixelSpace * nBufXSize &&
+        nBandSpace == nLineSpace * nBufYSize &&
+        nBandCount == nBands )
+    {
+        for(int i=0;i<nBands;i++)
+        {
+            if( panBandMap[i] != i + 1 ||
+                !((VRTRasterBand*)GetRasterBand(i+1))->IsPansharpenRasterBand() )
+            {
+                goto default_path;
+            }
+        }
+
+        //{static int bDone = 0; if (!bDone) printf("(2)\n"); bDone = 1; }
+        return poPansharpener->ProcessRegion(
+                    nXOff, nYOff, nXSize, nYSize, pData, eBufType);
+
+    }
+
+default_path:
+    //{static int bDone = 0; if (!bDone) printf("(3)\n"); bDone = 1; }
+    return VRTDataset::IRasterIO(
+            eRWFlag, nXOff, nYOff, nXSize, nYSize,
+            pData, nBufXSize, nBufYSize, eBufType,
+            nBandCount, panBandMap, nPixelSpace, nLineSpace, nBandSpace, psExtraArg);
+}
+
+/************************************************************************/
 /* ==================================================================== */
 /*                        VRTPansharpenedRasterBand                     */
 /* ==================================================================== */
@@ -660,18 +744,198 @@ CPLErr VRTPansharpenedRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         nReqXSize = nRasterXSize - nReqXOff;
     if( nReqYOff + nReqYSize > nRasterYSize )
         nReqYSize = nRasterYSize - nReqYOff;
-    GDALPansharpenOperation* poPansharpener = ((VRTPansharpenedDataset *) poDS)->GetPansharpener();
-    GDALPansharpenOptions* psOptions = poPansharpener->GetOptions();
+
+    //{static int bDone = 0; if (!bDone) printf("(4)\n"); bDone = 1; }
     int nDataTypeSize = GDALGetDataTypeSize(eDataType) / 8;
-    GByte* pabyTemp = (GByte*)VSIMalloc3(nReqXSize, nReqYSize,
-        psOptions->nOutPansharpenedBands * nDataTypeSize);
-    CPLErr eErr = poPansharpener->ProcessRegion(
-        nReqXOff, nReqYOff, nReqXSize, nReqYSize, pabyTemp, eDataType);
-    for(int j=0;j<nReqYSize;j++)
-        memcpy( (GByte*)pImage + j * nBlockXSize * nDataTypeSize,
-                pabyTemp + (nIndexAsPansharpenedBand * nReqYSize + j) * nReqXSize * nDataTypeSize,
-                nReqXSize * nDataTypeSize);
-    CPLFree(pabyTemp);
+    GDALRasterIOExtraArg sExtraArg;
+    INIT_RASTERIO_EXTRA_ARG(sExtraArg);
+    if( IRasterIO( GF_Read, nReqXOff, nReqYOff, nReqXSize, nReqYSize,
+                   pImage, nReqXSize, nReqYSize, eDataType,
+                   nDataTypeSize, nDataTypeSize * nReqXSize,
+                   &sExtraArg ) != CE_None )
+    {
+        return CE_Failure;
+    }
+
+    if( nReqXSize < nBlockXSize )
+    {
+        for(int j=nReqYSize-1;j>=0;j--)
+        {
+            memmove( (GByte*)pImage + j * nDataTypeSize * nBlockXSize,
+                     (GByte*)pImage + j * nDataTypeSize * nReqXSize,
+                     nReqXSize * nDataTypeSize );
+            memset( (GByte*)pImage + (j * nBlockXSize + nReqXSize) * nDataTypeSize,
+                    0,
+                    (nBlockXSize - nReqXSize) * nDataTypeSize );
+        }
+    }
+    if( nReqYSize < nBlockYSize )
+    {
+        memset( (GByte*)pImage + nReqYSize * nBlockXSize * nDataTypeSize,
+                0,
+                (nBlockYSize - nReqYSize ) * nBlockXSize * nDataTypeSize );
+    }
+
+    // Cache other bands
+    CPLErr eErr = CE_None;
+    VRTPansharpenedDataset* poGDS = (VRTPansharpenedDataset *) poDS;
+    if( poGDS->nBands != 1 && !poGDS->bLoadingOtherBands )
+    {
+        int iOtherBand;
+
+        poGDS->bLoadingOtherBands = TRUE;
+
+        for( iOtherBand = 1; iOtherBand <= poGDS->nBands; iOtherBand++ )
+        {
+            if( iOtherBand == nBand )
+                continue;
+
+            GDALRasterBlock *poBlock;
+
+            poBlock = poGDS->GetRasterBand(iOtherBand)->
+                GetLockedBlockRef(nBlockXOff,nBlockYOff);
+            if (poBlock == NULL)
+            {
+                eErr = CE_Failure;
+                break;
+            }
+            poBlock->DropLock();
+        }
+
+        poGDS->bLoadingOtherBands = FALSE;
+    }
+
+    return eErr;
+}
+
+/************************************************************************/
+/*                              IRasterIO()                             */
+/************************************************************************/
+
+CPLErr VRTPansharpenedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
+                               int nXOff, int nYOff, int nXSize, int nYSize,
+                               void * pData, int nBufXSize, int nBufYSize,
+                               GDALDataType eBufType,
+                               GSpacing nPixelSpace, GSpacing nLineSpace,
+                               GDALRasterIOExtraArg* psExtraArg)
+{
+    VRTPansharpenedDataset* poGDS = (VRTPansharpenedDataset *) poDS;
+
+    if( eRWFlag == GF_Write )
+        return CE_Failure;
+
+    /* Try to pass the request to the most appropriate overview dataset */
+    if( nBufXSize < nXSize && nBufYSize < nYSize )
+    {
+        int nXOffMod = nXOff, nYOffMod = nYOff, nXSizeMod = nXSize, nYSizeMod = nYSize;
+        GDALRasterIOExtraArg sExtraArg;
+    
+        GDALCopyRasterIOExtraArg(&sExtraArg, psExtraArg);
+
+        int iOvrLevel = GDALBandGetBestOverviewLevel2(this,
+                                                     nXOffMod, nYOffMod,
+                                                     nXSizeMod, nYSizeMod,
+                                                     nBufXSize, nBufYSize,
+                                                     &sExtraArg);
+
+        if( iOvrLevel >= 0 && GetOverview(iOvrLevel) != NULL )
+        {
+            //{static int bDone = 0; if (!bDone) printf("(5)\n"); bDone = 1; }
+            return ((VRTPansharpenedRasterBand*)GetOverview(iOvrLevel))->IRasterIO(
+                eRWFlag, nXOffMod, nYOffMod, nXSizeMod, nYSizeMod,
+                pData, nBufXSize, nBufYSize, eBufType,
+                nPixelSpace, nLineSpace, &sExtraArg);
+        }
+    }
+
+    int nDataTypeSize = GDALGetDataTypeSize(eBufType) / 8;
+    if( nXSize == nBufXSize &&
+        nYSize == nBufYSize &&
+        nDataTypeSize == nPixelSpace &&
+        nLineSpace == nPixelSpace * nBufXSize )
+    {
+        GDALPansharpenOptions* psOptions = poGDS->poPansharpener->GetOptions();
+
+        // Have we already done this request for another band ?
+        // If so use the cached result
+        size_t nBufferSizePerBand = (size_t)nXSize * nYSize * nDataTypeSize;
+        if( nXOff == poGDS->nLastBandRasterIOXOff &&
+            nYOff >= poGDS->nLastBandRasterIOYOff &&
+            nXSize == poGDS->nLastBandRasterIOXSize &&
+            nYOff + nYSize <= poGDS->nLastBandRasterIOYOff + poGDS->nLastBandRasterIOYSize &&
+            eBufType == poGDS->eLastBandRasterIODataType )
+        {
+            //{static int bDone = 0; if (!bDone) printf("(6)\n"); bDone = 1; }
+            if( poGDS->pabyLastBufferBandRasterIO == NULL )
+                return CE_Failure;
+            size_t nBufferSizePerBandCached = (size_t)nXSize * poGDS->nLastBandRasterIOYSize * nDataTypeSize;
+            memcpy(pData,
+                   poGDS->pabyLastBufferBandRasterIO +
+                        nBufferSizePerBandCached * nIndexAsPansharpenedBand +
+                        (nYOff - poGDS->nLastBandRasterIOYOff) * nXSize * nDataTypeSize,
+                   nBufferSizePerBand);
+            return CE_None;
+        }
+
+        int nYSizeToCache = nYSize;
+        if( nYSize == 1 )
+        {
+            //{static int bDone = 0; if (!bDone) printf("(7)\n"); bDone = 1; }
+            // For efficiency, try to cache at leak 256 K
+            nYSizeToCache = (256 * 1024) / (nXSize * nDataTypeSize);
+            if( nYSizeToCache == 0 )
+                nYSizeToCache = 1;
+            else if( nYOff + nYSizeToCache > nRasterYSize )
+                nYSizeToCache = nRasterYSize - nYOff;
+        }
+        GIntBig nBufferSize = (GIntBig)nXSize * nYSizeToCache * nDataTypeSize * psOptions->nOutPansharpenedBands;
+        if( (GIntBig)(size_t)nBufferSize != nBufferSize )
+        {
+            CPLError(CE_Failure, CPLE_OutOfMemory,
+                 "Out of memory error while allocating working buffers");
+            return CE_Failure;
+        }
+        GByte* pabyTemp = (GByte*)VSIRealloc(poGDS->pabyLastBufferBandRasterIO,
+                                             (size_t)nBufferSize);
+        if( pabyTemp == NULL )
+        {
+            CPLError(CE_Failure, CPLE_OutOfMemory,
+                 "Out of memory error while allocating working buffers");
+            return CE_Failure;
+        }
+        poGDS->nLastBandRasterIOXOff = nXOff;
+        poGDS->nLastBandRasterIOYOff = nYOff;
+        poGDS->nLastBandRasterIOXSize = nXSize;
+        poGDS->nLastBandRasterIOYSize = nYSizeToCache;
+        poGDS->eLastBandRasterIODataType = eBufType;
+        poGDS->pabyLastBufferBandRasterIO = pabyTemp;
+
+        CPLErr eErr = poGDS->poPansharpener->ProcessRegion(
+                            nXOff, nYOff, nXSize, nYSizeToCache,
+                            poGDS->pabyLastBufferBandRasterIO, eBufType);
+        if( eErr == CE_None )
+        {
+            //{static int bDone = 0; if (!bDone) printf("(8)\n"); bDone = 1; }
+            size_t nBufferSizePerBandCached = (size_t)nXSize * poGDS->nLastBandRasterIOYSize * nDataTypeSize;
+            memcpy(pData,
+                   poGDS->pabyLastBufferBandRasterIO +
+                        nBufferSizePerBandCached * nIndexAsPansharpenedBand,
+                   nBufferSizePerBand);
+        }
+        else
+        {
+            VSIFree(poGDS->pabyLastBufferBandRasterIO);
+            poGDS->pabyLastBufferBandRasterIO = NULL;
+        }
+        return eErr;
+    }
+
+    //{static int bDone = 0; if (!bDone) printf("(9)\n"); bDone = 1; }
+    CPLErr eErr = VRTRasterBand::IRasterIO(
+            eRWFlag, nXOff, nYOff, nXSize, nYSize,
+            pData, nBufXSize, nBufYSize, eBufType,
+            nPixelSpace, nLineSpace, psExtraArg);
+
     return eErr;
 }
 
@@ -754,6 +1018,8 @@ int VRTPansharpenedRasterBand::GetOverviewCount()
                 CPLErr eErr = poOvrDS->poPansharpener->Initialize(psPanOvrOptions);
                 CPLAssert( eErr == CE_None );
                 GDALDestroyPansharpenOptions(psPanOvrOptions);
+
+                poOvrDS->SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
 
                 poGDS->apoOverviewDatasets.push_back(poOvrDS);
             }

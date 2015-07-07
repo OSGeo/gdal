@@ -31,7 +31,7 @@
 #include "gdalpansharpen.h"
 #include "gdal_priv.h"
 #include "cpl_conv.h"
-#include <limits>
+#include "gdal_priv_templates.hpp"
 
 CPL_CVSID("$Id$");
 
@@ -233,63 +233,13 @@ CPLErr GDALPansharpenOperation::Initialize(const GDALPansharpenOptions* psOption
 }
 
 /************************************************************************/
-/*                          GWKRoundValueT()                           */
-/************************************************************************/
-
-template<class T>
-static CPL_INLINE T GWKRoundValueT(double dfValue)
-{
-    return (std::numeric_limits<T>::min() < 0) ? (T)floor(dfValue + 0.5) :
-                                                 (T)(dfValue + 0.5);
-}
-#ifdef notused
-template<> float GWKRoundValueT<float>(double dfValue)
-{
-    return (float)dfValue;
-}
-
-
-template<> double GWKRoundValueT<double>(double dfValue)
-{
-    return dfValue;
-}
-#endif
-
-/************************************************************************/
-/*                            GWKClampValueT()                          */
-/************************************************************************/
-
-template<class T>
-static CPL_INLINE T GWKClampValueT(double dfValue)
-{
-    if (dfValue < std::numeric_limits<T>::min())
-        return std::numeric_limits<T>::min();
-    else if (dfValue > std::numeric_limits<T>::max())
-        return std::numeric_limits<T>::max();
-    else
-        return GWKRoundValueT<T>(dfValue);
-}
-
-#ifdef notused
-template<> float GWKClampValueT<float>(double dfValue)
-{
-    return (float)dfValue;
-}
-
-template<> double GWKClampValueT<double>(double dfValue)
-{
-    return dfValue;
-}
-#endif
-
-/************************************************************************/
 /*                         WeightedBrovey()                             */
 /************************************************************************/
 
-template<class DataType> void GDALPansharpenOperation::WeightedBrovey(
-                                                     const DataType* pPanBuffer,
-                                                     const DataType* pUpsampledSpectralBuffer,
-                                                     DataType* pDataBuf,
+template<class WorkDataType, class OutDataType> void GDALPansharpenOperation::WeightedBrovey(
+                                                     const WorkDataType* pPanBuffer,
+                                                     const WorkDataType* pUpsampledSpectralBuffer,
+                                                     OutDataType* pDataBuf,
                                                      int nValues)
 {
     for(int j=0;j<nValues;j++)
@@ -305,22 +255,67 @@ template<class DataType> void GDALPansharpenOperation::WeightedBrovey(
             dfFactor = 0.0;
         for(int i=0;i<psOptions->nOutPansharpenedBands;i++)
         {
-            DataType nRawValue =
+            WorkDataType nRawValue =
                 pUpsampledSpectralBuffer[psOptions->panOutPansharpenedBands[i] * nValues + j];
-            pDataBuf[i * nValues + j] = GWKClampValueT<DataType>(nRawValue * dfFactor);
+            WorkDataType nPansharpendValue;
+            GDALCopyWord(nRawValue * dfFactor, nPansharpendValue);
+            GDALCopyWord(nPansharpendValue, pDataBuf[i * nValues + j]);
         }
     }
 }
 
-/* Explicit instanciation */
-template void GDALPansharpenOperation::WeightedBrovey (const GByte* pPanBuffer,
-                                                       const GByte* pUpsampledSpectralBuffer,
-                                                       GByte* pDataBuf,
-                                                       int nValues);
-template void GDALPansharpenOperation::WeightedBrovey (const GUInt16* pPanBuffer,
-                                                       const GUInt16* pUpsampledSpectralBuffer,
-                                                       GUInt16* pDataBuf,
-                                                       int nValues);
+template<class WorkDataType> CPLErr GDALPansharpenOperation::WeightedBrovey(
+                                                     const WorkDataType* pPanBuffer,
+                                                     const WorkDataType* pUpsampledSpectralBuffer,
+                                                     void *pDataBuf, 
+                                                     GDALDataType eBufDataType,
+                                                     int nValues)
+{
+    switch( eBufDataType )
+    {
+        case GDT_Byte:
+            WeightedBrovey(pPanBuffer, pUpsampledSpectralBuffer,
+                           (GByte*)pDataBuf, nValues);
+            break;
+
+        case GDT_UInt16:
+            WeightedBrovey(pPanBuffer, pUpsampledSpectralBuffer,
+                           (GUInt16*)pDataBuf, nValues);
+            break;
+
+        case GDT_Int16:
+            WeightedBrovey(pPanBuffer, pUpsampledSpectralBuffer,
+                           (GInt16*)pDataBuf, nValues);
+            break;
+
+        case GDT_UInt32:
+            WeightedBrovey(pPanBuffer, pUpsampledSpectralBuffer,
+                           (GUInt32*)pDataBuf, nValues);
+            break;
+
+        case GDT_Int32:
+            WeightedBrovey(pPanBuffer, pUpsampledSpectralBuffer,
+                           (GInt32*)pDataBuf, nValues);
+            break;
+
+        case GDT_Float32:
+            WeightedBrovey(pPanBuffer, pUpsampledSpectralBuffer,
+                           (float*)pDataBuf, nValues);
+            break;
+
+        case GDT_Float64:
+            WeightedBrovey(pPanBuffer, pUpsampledSpectralBuffer,
+                           (double*)pDataBuf, nValues);
+            break;
+
+        default:
+            CPLError(CE_Failure, CPLE_NotSupported, "eBufDataType not supported");
+            return CE_Failure;
+            break;
+    }
+
+    return CE_None;
+}
 
 /************************************************************************/
 /*                         ProcessRegion()                              */
@@ -350,7 +345,9 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
         return CE_Failure;
 
     // TODO: avoid allocating buffers each time
-    int nDataTypeSize = GDALGetDataTypeSize(eBufDataType) / 8;
+    GDALRasterBand* poPanchroBand = (GDALRasterBand*)psOptions->hPanchroBand;
+    GDALDataType eWorkDataType = poPanchroBand->GetRasterDataType();
+    int nDataTypeSize = GDALGetDataTypeSize(eWorkDataType) / 8;
     GByte* pUpsampledSpectralBuffer = (GByte*)VSIMalloc3(nXSize, nYSize,
         psOptions->nInputSpectralBands * nDataTypeSize);
     GByte* pPanBuffer = (GByte*)VSIMalloc3(nXSize, nYSize, nDataTypeSize);
@@ -363,11 +360,10 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
         return CE_Failure;
     }
     
-    GDALRasterBand* poPanchroBand = (GDALRasterBand*)psOptions->hPanchroBand;
     CPLErr eErr = 
         poPanchroBand->RasterIO(GF_Read,
                 nXOff, nYOff, nXSize, nYSize, pPanBuffer, nXSize, nYSize,
-                eBufDataType, 0, 0, NULL);
+                eWorkDataType, 0, 0, NULL);
     // TODO: use dataset rasterio when possible
     GDALRasterIOExtraArg sExtraArg;
     INIT_RASTERIO_EXTRA_ARG(sExtraArg);
@@ -381,10 +377,14 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
     sExtraArg.dfYOff = nYOff / dfRatioY;
     sExtraArg.dfXSize = nXSize / dfRatioX;
     sExtraArg.dfYSize = nYSize / dfRatioY;
-    int nSpectralXOff = (int)(0.5 + sExtraArg.dfXOff);
-    int nSpectralYOff = (int)(0.5 + sExtraArg.dfYOff);
-    int nSpectralXSize = (int)(0.5 + sExtraArg.dfXSize);
-    int nSpectralYSize = (int)(0.5 + sExtraArg.dfYSize);
+    int nSpectralXOff = (int)(0.49999 + sExtraArg.dfXOff);
+    int nSpectralYOff = (int)(0.49999 + sExtraArg.dfYOff);
+    int nSpectralXSize = (int)(0.49999 + sExtraArg.dfXSize);
+    int nSpectralYSize = (int)(0.49999 + sExtraArg.dfYSize);
+    if( nSpectralXSize == 0 )
+        nSpectralXSize = 1;
+    if( nSpectralYSize == 0 )
+        nSpectralYSize = 1;
     
     if( anInputBands.size() )
     {
@@ -392,7 +392,7 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
                     nSpectralXOff, nSpectralYOff, nSpectralXSize, nSpectralYSize,
                     pUpsampledSpectralBuffer,
                     nXSize, nYSize,
-                    eBufDataType,
+                    eWorkDataType,
                     (int)anInputBands.size(), &anInputBands[0],
                     0, 0, 0, &sExtraArg);
     }
@@ -405,28 +405,65 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
                     nSpectralXOff, nSpectralYOff, nSpectralXSize, nSpectralYSize,
                     pUpsampledSpectralBuffer + i * nXSize * nYSize * nDataTypeSize,
                     nXSize, nYSize,
-                    eBufDataType, 0, 0, &sExtraArg);
+                    eWorkDataType, 0, 0, &sExtraArg);
         }
     }
     
-    if( eBufDataType == GDT_Byte )
+    switch( eWorkDataType )
     {
-        WeightedBrovey (pPanBuffer,
-                        pUpsampledSpectralBuffer,
-                        (GByte*)pDataBuf,
-                        nXSize * nYSize);
-    }
-    else if( eBufDataType == GDT_UInt16 )
-    {
-        WeightedBrovey ((GUInt16*)pPanBuffer,
-                        (GUInt16*)pUpsampledSpectralBuffer,
-                        (GUInt16*)pDataBuf,
-                        nXSize * nYSize);
-    }
-    else
-    {
-        CPLError(CE_Failure, CPLE_NotSupported, "eBufDataType not supported");
-        eErr = CE_Failure;
+        case GDT_Byte:
+            eErr = WeightedBrovey ((GByte*)pPanBuffer,
+                                   (GByte*)pUpsampledSpectralBuffer,
+                                   pDataBuf, eBufDataType,
+                                   nXSize * nYSize);
+            break;
+
+        case GDT_UInt16:
+            eErr = WeightedBrovey ((GUInt16*)pPanBuffer,
+                                   (GUInt16*)pUpsampledSpectralBuffer,
+                                   pDataBuf, eBufDataType,
+                                   nXSize * nYSize);
+            break;
+
+        case GDT_Int16:
+            eErr = WeightedBrovey ((GInt16*)pPanBuffer,
+                                   (GInt16*)pUpsampledSpectralBuffer,
+                                   pDataBuf, eBufDataType,
+                                   nXSize * nYSize);
+            break;
+
+        case GDT_UInt32:
+            eErr = WeightedBrovey ((GUInt32*)pPanBuffer,
+                                   (GUInt32*)pUpsampledSpectralBuffer,
+                                   pDataBuf, eBufDataType,
+                                   nXSize * nYSize);
+            break;
+
+        case GDT_Int32:
+            eErr = WeightedBrovey ((GInt32*)pPanBuffer,
+                                   (GInt32*)pUpsampledSpectralBuffer,
+                                   pDataBuf, eBufDataType,
+                                   nXSize * nYSize);
+            break;
+
+        case GDT_Float32:
+            eErr = WeightedBrovey ((float*)pPanBuffer,
+                                   (float*)pUpsampledSpectralBuffer,
+                                   pDataBuf, eBufDataType,
+                                   nXSize * nYSize);
+            break;
+
+        case GDT_Float64:
+            eErr = WeightedBrovey ((double*)pPanBuffer,
+                                   (double*)pUpsampledSpectralBuffer,
+                                   pDataBuf, eBufDataType,
+                                   nXSize * nYSize);
+            break;
+
+        default:
+            CPLError(CE_Failure, CPLE_NotSupported, "eWorkDataType not supported");
+            eErr = CE_Failure;
+            break;
     }
 
 
