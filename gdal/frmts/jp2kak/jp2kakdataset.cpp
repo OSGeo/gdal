@@ -1572,7 +1572,20 @@ JP2KAKDataset::DirectRasterIO( CPL_UNUSED GDALRWFlag eRWFlag,
         dims.pos.y = dims.pos.y + nYOff/nResMult;
         dims.size.x = nXSize/nResMult;
         dims.size.y = nYSize/nResMult;
-    
+
+        // Check if rounding helps detecting when data is being requested exactly
+        // at the current resolution
+        if( nBufXSize != dims.size.x &&
+            (int)(0.5 + (double)nXSize/nResMult) == nBufXSize )
+        {
+            dims.size.x = nBufXSize;
+        }
+        if( nBufYSize != dims.size.y &&
+            (int)(0.5 + (double)nYSize/nResMult) == nBufYSize )
+        {
+            dims.size.y = nBufYSize;
+        }
+
         kdu_dims dims_roi;
 
         poCodeStream->map_region( 0, dims, dims_roi );
