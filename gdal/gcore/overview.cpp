@@ -1404,7 +1404,8 @@ GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc, double dfYRatioDstTo
                                      float fNoDataValue,
                                      FilterFuncType pfnFilterFunc,
                                      FilterFunc4ValuesType pfnFilterFunc4Values,
-                                     int nKernelRadius )
+                                     int nKernelRadius,
+                                     float fMaxVal )
 
 {
 
@@ -1582,6 +1583,7 @@ GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc, double dfYRatioDstTo
 /*      Second pass: vertical filter                                    */
 /* ==================================================================== */
     int nChunkBottomYOff = nChunkYOff + nChunkYSize;
+
     for( int iDstLine = nDstYOff; iDstLine < nDstYOff2; iDstLine++ )
     {
         double dfSrcLine = (iDstLine+0.5)*dfYRatioDstToSrc + dfSrcYDelta;
@@ -1673,6 +1675,15 @@ GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc, double dfYRatioDstTo
             }
         }
 
+        if( fMaxVal )
+        {
+            for(int i=0;i<nDstXSize;i++)
+            {
+                if( pafDstScanline[i] > fMaxVal )
+                    pafDstScanline[i] = fMaxVal;
+            }
+        }
+
         eErr = poOverview->RasterIO( GF_Write, nDstXOff, iDstLine, nDstXSize, 1,
                                      pafDstScanline, nDstXSize, 1, GDT_Float32,
                                      0, 0, NULL );
@@ -1721,6 +1732,21 @@ static CPLErr GDALResampleChunk32R_Convolution(
     FilterFuncType pfnFilterFunc = GWKGetFilterFunc(eResample);
     FilterFunc4ValuesType pfnFilterFunc4Values = GWKGetFilterFunc4Values(eResample);
 
+    float fMaxVal = 0.f;
+    // Cubic, etc... can have overshoots, so make sure we clamp values to the
+    // maximum value if NBITS is set
+    const char* pszNBITS = poOverview->GetMetadataItem("NBITS", "IMAGE_STRUCTURE");
+    GDALDataType eBandDT = poOverview->GetRasterDataType();
+    if( eResample != GRA_Bilinear && pszNBITS != NULL &&
+        (eBandDT == GDT_Byte || eBandDT == GDT_UInt16 || eBandDT == GDT_UInt32) )
+    {
+        int nBits = atoi(pszNBITS);
+        if( nBits == GDALGetDataTypeSize(eBandDT) )
+            nBits = 0;
+        if( nBits )
+            fMaxVal = (float)((1 << nBits) -1);
+    }
+
     if (eWrkDataType == GDT_Byte)
         return GDALResampleChunk32R_ConvolutionT(dfXRatioDstToSrc, dfYRatioDstToSrc,
                         dfSrcXDelta, dfSrcYDelta,
@@ -1733,7 +1759,8 @@ static CPLErr GDALResampleChunk32R_Convolution(
                         bHasNoData, fNoDataValue,
                         pfnFilterFunc,
                         pfnFilterFunc4Values,
-                        nKernelRadius);
+                        nKernelRadius,
+                        fMaxVal);
    else if (eWrkDataType == GDT_UInt16)
         return GDALResampleChunk32R_ConvolutionT(dfXRatioDstToSrc, dfYRatioDstToSrc,
                         dfSrcXDelta, dfSrcYDelta,
@@ -1746,7 +1773,8 @@ static CPLErr GDALResampleChunk32R_Convolution(
                         bHasNoData, fNoDataValue,
                         pfnFilterFunc,
                         pfnFilterFunc4Values,
-                        nKernelRadius);
+                        nKernelRadius,
+                        fMaxVal);
     else if (eWrkDataType == GDT_Float32)
         return GDALResampleChunk32R_ConvolutionT(dfXRatioDstToSrc, dfYRatioDstToSrc,
                         dfSrcXDelta, dfSrcYDelta,
@@ -1759,7 +1787,8 @@ static CPLErr GDALResampleChunk32R_Convolution(
                         bHasNoData, fNoDataValue,
                         pfnFilterFunc,
                         pfnFilterFunc4Values,
-                        nKernelRadius);
+                        nKernelRadius,
+                        fMaxVal);
 
     CPLAssert(0);
     return CE_Failure;

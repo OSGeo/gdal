@@ -9,9 +9,9 @@ endif
 
 OBJ	=	jp2kakdataset.o
 
-KAKINC = -I$(KAKDIR)/coresys/common -I$(KAKDIR)/apps/compressed_io \
-	-I$(KAKDIR)/apps/jp2 -I$(KAKDIR)/apps/image -I$(KAKDIR)/apps/args \
-	-I$(KAKDIR)/apps/support -I$(KAKDIR)/apps/kdu_compress
+KAKINC = -isystem $(KAKDIR)/coresys/common -isystem $(KAKDIR)/apps/compressed_io \
+	-isystem $(KAKDIR)/apps/jp2 -isystem $(KAKDIR)/apps/image -isystem $(KAKDIR)/apps/args \
+	-isystem $(KAKDIR)/apps/support -isystem $(KAKDIR)/apps/kdu_compress
 
 APPOBJ  = $(KAK_OBJ)
 
