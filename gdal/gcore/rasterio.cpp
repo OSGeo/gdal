@@ -799,6 +799,10 @@ CPLErr GDALRasterBand::RasterIOResampled( CPL_UNUSED GDALRWFlag eRWFlag,
     poMEMDS->AddBand(eBufType, papszOptions);
     CSLDestroy(papszOptions);
     GDALRasterBandH hMEMBand = (GDALRasterBandH)poMEMDS->GetRasterBand(1);
+    
+    const char* pszNBITS = GetMetadataItem("NBITS", "IMAGE_STRUCTURE");
+    if( pszNBITS )
+        ((GDALRasterBand*)hMEMBand)->SetMetadataItem("NBITS", pszNBITS, "IMAGE_STRUCTURE");
 
     /* Do the resampling */
     if( bUseWarp )
