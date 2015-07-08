@@ -343,6 +343,8 @@ CPLErr VRTPansharpenedDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPa
     std::vector<GDALRasterBand*> ahSpectralBands;
     std::map<int, int> aMapDstBandToSpectralBand;
     std::map<int,int>::iterator aMapDstBandToSpectralBandIter;
+    int nBitDepth = 0;
+
     for(CPLXMLNode* psIter = psOptions->psChild; psIter; psIter = psIter->psNext )
     {
         if( psIter->eType != CXT_Element || !EQUAL(psIter->pszValue, "SpectralBand") )
@@ -494,6 +496,27 @@ CPLErr VRTPansharpenedDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPa
         }
     }
 
+    // Figure out bit depth
+    {
+        const char* pszBitDepth = CPLGetXMLValue(psOptions, "BitDepth", NULL);
+        if( pszBitDepth == NULL )
+            pszBitDepth = ((GDALRasterBand*)ahSpectralBands[0])->GetMetadataItem("NBITS", "IMAGE_STRUCTURE");
+        if( pszBitDepth )
+            nBitDepth = atoi(pszBitDepth);
+        if( nBitDepth )
+        {
+            for(int i=0;i<nBands;i++)
+            {
+                if( ((VRTRasterBand*)GetRasterBand(i+1))->IsPansharpenRasterBand() &&
+                    GetRasterBand(i+1)->GetMetadataItem("NBITS", "IMAGE_STRUCTURE") == NULL )
+                {
+                    GetRasterBand(i+1)->SetMetadataItem("NBITS",
+                                    CPLSPrintf("%d", nBitDepth), "IMAGE_STRUCTURE");
+                }
+            }
+        }
+    }
+
     if( GDALGetRasterBandXSize(ahSpectralBands[0]) > GDALGetRasterBandXSize(poPanBand) ||
         GDALGetRasterBandYSize(ahSpectralBands[0]) > GDALGetRasterBandYSize(poPanBand) )
     {
@@ -543,6 +566,7 @@ CPLErr VRTPansharpenedDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPa
     psPanOptions = GDALCreatePansharpenOptions();
     psPanOptions->ePansharpenAlg = GDAL_PSH_WEIGHTED_BROVEY;
     psPanOptions->eResampleAlg = eResampleAlg;
+    psPanOptions->nBitDepth = nBitDepth;
     psPanOptions->nWeightCount = (int)adfWeights.size();
     psPanOptions->padfWeights = (double*)CPLMalloc(sizeof(double)*adfWeights.size());
     memcpy(psPanOptions->padfWeights, &adfWeights[0],
@@ -998,8 +1022,12 @@ int VRTPansharpenedRasterBand::GetOverviewCount()
                 poOvrDS->poMainDataset = poGDS;
                 for(int i=0;i<poGDS->GetRasterCount();i++)
                 {
+                    GDALRasterBand* poSrcBand = poGDS->GetRasterBand(i+1);
                     GDALRasterBand* poBand = new VRTPansharpenedRasterBand(poOvrDS, i+1,
-                                                poGDS->GetRasterBand(i+1)->GetRasterDataType());
+                                                poSrcBand->GetRasterDataType());
+                    const char* pszNBITS = poSrcBand->GetMetadataItem("NBITS", "IMAGE_STRUCTURE");
+                    if( pszNBITS )
+                        poBand->SetMetadataItem("NBITS", pszNBITS, "IMAGE_STRUCTURE");
                     poOvrDS->SetBand(i+1, poBand);
                 }
 

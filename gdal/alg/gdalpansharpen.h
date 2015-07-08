@@ -60,6 +60,9 @@ typedef struct
     /*! Resampling algorithm to upsample spectral bands to pan band resoultion. */
     GDALRIOResampleAlg   eResampleAlg;
 
+    /*! Bit depth of the spectral bands. Can be let to 0 for default behaviour. */
+    int                  nBitDepth;
+
     /*! Number of weight coefficients in padfWeights. */
     int                  nWeightCount;
     
@@ -111,18 +114,27 @@ class GDALPansharpenOperation
 {
         GDALPansharpenOptions* psOptions;
         std::vector<int> anInputBands;
+        int bWeightsWillNotOvershoot;
 
+        template<class WorkDataType, class OutDataType, int bHasBitDepth> void WeightedBrovey(
+                                                     const WorkDataType* pPanBuffer,
+                                                     const WorkDataType* pUpsampledSpectralBuffer,
+                                                     OutDataType* pDataBuf,
+                                                     int nValues,
+                                                     WorkDataType nMaxValue);
         template<class WorkDataType, class OutDataType> void WeightedBrovey(
                                                      const WorkDataType* pPanBuffer,
                                                      const WorkDataType* pUpsampledSpectralBuffer,
                                                      OutDataType* pDataBuf,
-                                                     int nValues);
+                                                     int nValues,
+                                                     int nBitDepth);
         template<class WorkDataType> CPLErr WeightedBrovey(
                                                      const WorkDataType* pPanBuffer,
                                                      const WorkDataType* pUpsampledSpectralBuffer,
                                                      void *pDataBuf, 
                                                      GDALDataType eBufDataType,
-                                                     int nValues);
+                                                     int nValues,
+                                                     int nBitDepth);
     public:
                              GDALPansharpenOperation();
                             ~GDALPansharpenOperation();
