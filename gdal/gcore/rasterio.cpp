@@ -2646,6 +2646,87 @@ CPLErr GDALRasterBand::OverviewRasterIO( GDALRWFlag eRWFlag,
 }
 
 /************************************************************************/
+/*                      TryOverviewRasterIO()                           */
+/************************************************************************/
+
+CPLErr GDALRasterBand::TryOverviewRasterIO( GDALRWFlag eRWFlag,
+                                            int nXOff, int nYOff, int nXSize, int nYSize,
+                                            void * pData, int nBufXSize, int nBufYSize,
+                                            GDALDataType eBufType,
+                                            GSpacing nPixelSpace, GSpacing nLineSpace,
+                                            GDALRasterIOExtraArg* psExtraArg,
+                                            int* pbTried )
+{
+    int nXOffMod = nXOff, nYOffMod = nYOff, nXSizeMod = nXSize, nYSizeMod = nYSize;
+    GDALRasterIOExtraArg sExtraArg;
+
+    GDALCopyRasterIOExtraArg(&sExtraArg, psExtraArg);
+
+    int iOvrLevel = GDALBandGetBestOverviewLevel2(this,
+                                                    nXOffMod, nYOffMod,
+                                                    nXSizeMod, nYSizeMod,
+                                                    nBufXSize, nBufYSize,
+                                                    &sExtraArg);
+
+    if( iOvrLevel >= 0 )
+    {
+        GDALRasterBand* poOverviewBand = GetOverview(iOvrLevel);
+        if( poOverviewBand  )
+        {
+            *pbTried = TRUE;
+            return poOverviewBand->RasterIO(
+                eRWFlag, nXOffMod, nYOffMod, nXSizeMod, nYSizeMod,
+                pData, nBufXSize, nBufYSize, eBufType,
+                nPixelSpace, nLineSpace, &sExtraArg);
+        }
+    }
+
+    *pbTried = FALSE;
+    return CE_None;
+}
+
+/************************************************************************/
+/*                      TryOverviewRasterIO()                           */
+/************************************************************************/
+
+CPLErr GDALDataset::TryOverviewRasterIO( GDALRWFlag eRWFlag,
+                                         int nXOff, int nYOff, int nXSize, int nYSize,
+                                         void * pData, int nBufXSize, int nBufYSize,
+                                         GDALDataType eBufType,
+                                         int nBandCount, int *panBandMap,
+                                         GSpacing nPixelSpace, GSpacing nLineSpace,
+                                         GSpacing nBandSpace,
+                                         GDALRasterIOExtraArg* psExtraArg,
+                                         int* pbTried )
+{
+    int nXOffMod = nXOff, nYOffMod = nYOff, nXSizeMod = nXSize, nYSizeMod = nYSize;
+    GDALRasterIOExtraArg sExtraArg;
+
+    GDALCopyRasterIOExtraArg(&sExtraArg, psExtraArg);
+
+    int iOvrLevel = GDALBandGetBestOverviewLevel2(papoBands[0],
+                                                    nXOffMod, nYOffMod,
+                                                    nXSizeMod, nYSizeMod,
+                                                    nBufXSize, nBufYSize,
+                                                    &sExtraArg);
+
+    if( iOvrLevel >= 0 && papoBands[0]->GetOverview(iOvrLevel) != NULL &&
+        papoBands[0]->GetOverview(iOvrLevel)->GetDataset() != NULL )
+    {
+        *pbTried = TRUE;
+        return papoBands[0]->GetOverview(iOvrLevel)->GetDataset()->RasterIO(
+            eRWFlag, nXOffMod, nYOffMod, nXSizeMod, nYSizeMod,
+            pData, nBufXSize, nBufYSize, eBufType,
+            nBandCount, panBandMap, nPixelSpace, nLineSpace, nBandSpace, &sExtraArg);
+    }
+    else
+    {
+        *pbTried = FALSE;
+        return CE_None;
+    }
+}
+
+/************************************************************************/
 /*                        GetBestOverviewLevel()                        */
 /*                                                                      */
 /* Returns the best overview level to satisfy the query or -1 if none   */
