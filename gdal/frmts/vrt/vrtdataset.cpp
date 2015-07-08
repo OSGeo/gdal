@@ -1196,11 +1196,6 @@ int VRTDataset::CheckCompatibleForDatasetIO()
 
         VRTSourcedRasterBand* poBand = (VRTSourcedRasterBand* )papoBands[iBand];
 
-        /* If there are overviews, let's VRTSourcedRasterBand::IRasterIO() */
-        /* do the job */
-        if (poBand->GetOverviewCount() != 0)
-            return FALSE;
-
         if (iBand == 0)
         {
             nSources = poBand->nSources;
@@ -1327,7 +1322,39 @@ CPLErr VRTDataset::IRasterIO( GDALRWFlag eRWFlag,
     {
         bCompatibleForDatasetIO = CheckCompatibleForDatasetIO();
     }
-    if (bCompatibleForDatasetIO && eRWFlag == GF_Read)
+
+    int bLocalCompatibleForDatasetIO = bCompatibleForDatasetIO;
+    if (bLocalCompatibleForDatasetIO && eRWFlag == GF_Read &&
+        (nBufXSize < nXSize || nBufYSize < nYSize))
+    {
+        int bTried;
+        CPLErr eErr = TryOverviewRasterIO( eRWFlag,
+                                    nXOff, nYOff, nXSize, nYSize,
+                                    pData, nBufXSize, nBufYSize,
+                                    eBufType,
+                                    nBandCount, panBandMap,
+                                    nPixelSpace, nLineSpace,
+                                    nBandSpace,
+                                    psExtraArg,
+                                    &bTried );
+        if( bTried )
+            return eErr;
+
+        for(int iBand = 0; iBand < nBands; iBand++)
+        {
+            VRTSourcedRasterBand* poBand = (VRTSourcedRasterBand* )papoBands[iBand];
+
+            /* If there are overviews, let's VRTSourcedRasterBand::IRasterIO() */
+            /* do the job */
+            if( poBand->GetOverviewCount() != 0 )
+            {
+                bLocalCompatibleForDatasetIO = FALSE;
+                break;
+            }
+        }
+    }
+
+    if (bLocalCompatibleForDatasetIO && eRWFlag == GF_Read)
     {
         for(int iBandIndex=0; iBandIndex<nBandCount; iBandIndex++)
         {
