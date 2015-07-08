@@ -704,8 +704,12 @@ protected:
     double              dfNoDataValue;
     CPLString           osResampling;
     
+    int                 nMaxValue;
+    
     int                 bRelativeToVRTOri;
     CPLString           osSourceFileNameOri;
+    
+    int                 NeedMaxValAdjustment() const;
 
 public:
             VRTSimpleSource();
@@ -773,6 +777,8 @@ public:
                                GDALRasterIOExtraArg* psExtraArg);
 
     void             UnsetPreservedRelativeFilenames();
+    
+    void                SetMaxValue(int nVal) { nMaxValue = nVal; }
 };
 
 /************************************************************************/
