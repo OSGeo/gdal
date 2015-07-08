@@ -142,6 +142,8 @@ class CPL_DLL VRTDataset : public GDALDataset
 
     int            bCompatibleForDatasetIO;
     int            CheckCompatibleForDatasetIO();
+    std::vector<GDALDataset*> apoOverviews;
+    std::vector<GDALDataset*> apoOverviewsBak;
 
   protected:
     virtual int         CloseDependentDatasets();
@@ -190,8 +192,12 @@ class CPL_DLL VRTDataset : public GDALDataset
     virtual CPLXMLNode *SerializeToXML( const char *pszVRTPath);
     virtual CPLErr      XMLInit( CPLXMLNode *, const char * );
 
+    virtual CPLErr IBuildOverviews( const char *, int, int *,
+                                    int, int *, GDALProgressFunc, void * );
+    
     /* Used by PDF driver for example */
     GDALDataset*        GetSingleSimpleSource();
+    void                BuildVirtualOverviews();
     
     void                UnsetPreservedRelativeFilenames();
  
@@ -703,6 +709,8 @@ protected:
 
 public:
             VRTSimpleSource();
+            VRTSimpleSource(const VRTSimpleSource* poSrcSource,
+                                 double dfXDstRatio, double dfYDstRatio);
     virtual ~VRTSimpleSource();
 
     virtual CPLErr  XMLInit( CPLXMLNode *psTree, const char * );
@@ -836,6 +844,8 @@ protected:
 
 public:
                    VRTComplexSource();
+                   VRTComplexSource(const VRTComplexSource* poSrcSource,
+                                    double dfXDstRatio, double dfYDstRatio);
     virtual        ~VRTComplexSource();
 
     virtual CPLErr RasterIO( int nXOff, int nYOff, int nXSize, int nYSize, 

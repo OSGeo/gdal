@@ -1004,10 +1004,22 @@ void VRTRasterBand::GetFileList(char*** ppapszFileList, int *pnSize,
 int VRTRasterBand::GetOverviewCount()
 
 {
+    // First: overviews declared in <Overview> element
     if( apoOverviews.size() > 0 )
         return apoOverviews.size();
-    else
-        return GDALRasterBand::GetOverviewCount();
+
+    // If not found, external .ovr overviews
+    int nOverviewCount = GDALRasterBand::GetOverviewCount();
+    if( nOverviewCount )
+        return nOverviewCount;
+
+    // If not found, implicit virtual overviews
+    VRTDataset* poVRTDS = ((VRTDataset *)poDS);
+    poVRTDS->BuildVirtualOverviews();
+    if( poVRTDS->apoOverviews.size() && poVRTDS->apoOverviews[0] )
+        return (int)poVRTDS->apoOverviews.size();
+
+    return 0;
 }
 
 /************************************************************************/
@@ -1017,6 +1029,7 @@ int VRTRasterBand::GetOverviewCount()
 GDALRasterBand *VRTRasterBand::GetOverview( int iOverview )
 
 {
+    // First: overviews declared in <Overview> element
     if( apoOverviews.size() > 0 )
     {
         if( iOverview < 0 || iOverview >= (int) apoOverviews.size() )
@@ -1044,8 +1057,23 @@ GDALRasterBand *VRTRasterBand::GetOverview( int iOverview )
 
         return apoOverviews[iOverview].poBand;
     }
-    else
-        return GDALRasterBand::GetOverview( iOverview );
+    
+    // If not found, external .ovr overviews
+    GDALRasterBand* poRet = GDALRasterBand::GetOverview( iOverview );
+    if( poRet )
+        return poRet;
+    
+    // If not found, implicit virtual overviews
+    VRTDataset* poVRTDS = ((VRTDataset *)poDS);
+    poVRTDS->BuildVirtualOverviews();
+    if( poVRTDS->apoOverviews.size() && poVRTDS->apoOverviews[0] )
+    {
+        if( iOverview < 0 || iOverview >= (int) poVRTDS->apoOverviews.size() )
+            return NULL;
+        return poVRTDS->apoOverviews[iOverview]->GetRasterBand(nBand);
+    }
+    
+    return NULL;
 }
 
 /************************************************************************/

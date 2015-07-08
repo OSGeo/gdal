@@ -87,6 +87,28 @@ VRTSimpleSource::VRTSimpleSource()
 }
 
 /************************************************************************/
+/*                          VRTSimpleSource()                           */
+/************************************************************************/
+
+VRTSimpleSource::VRTSimpleSource(const VRTSimpleSource* poSrcSource,
+                                 double dfXDstRatio, double dfYDstRatio)
+{
+    poRasterBand = poSrcSource->poRasterBand;
+    poMaskBandMainBand = poSrcSource->poMaskBandMainBand;
+    bNoDataSet = poSrcSource->bNoDataSet;
+    dfNoDataValue = poSrcSource->dfNoDataValue;
+    nSrcXOff = poSrcSource->nSrcXOff;
+    nSrcYOff = poSrcSource->nSrcYOff;
+    nSrcXSize = poSrcSource->nSrcXSize;
+    nSrcYSize = poSrcSource->nSrcYSize;
+    nDstXOff = (int)(poSrcSource->nDstXOff * dfXDstRatio);
+    nDstYOff = (int)(poSrcSource->nDstYOff * dfYDstRatio);
+    nDstXSize = (int)(poSrcSource->nDstXSize * dfXDstRatio + 0.5);
+    nDstYSize = (int)(poSrcSource->nDstYSize * dfYDstRatio + 0.5);
+    bRelativeToVRTOri = -1;
+}
+
+/************************************************************************/
 /*                          ~VRTSimpleSource()                          */
 /************************************************************************/
 
@@ -1558,9 +1580,6 @@ VRTComplexSource::VRTComplexSource()
     dfScaleOff = 0.0;
     dfScaleRatio = 1.0;
     
-    bNoDataSet = FALSE;
-    dfNoDataValue = 0.0;
-
     padfLUTInputs = NULL;
     padfLUTOutputs = NULL;
     nLUTItemCount = 0;
@@ -1572,6 +1591,37 @@ VRTComplexSource::VRTComplexSource()
     dfDstMin = 0.0;
     dfDstMax = 0.0;
     dfExponent = 1.0;
+}
+
+VRTComplexSource::VRTComplexSource(const VRTComplexSource* poSrcSource,
+                                   double dfXDstRatio, double dfYDstRatio) :
+                        VRTSimpleSource(poSrcSource, dfXDstRatio, dfYDstRatio)
+{
+    eScalingType = poSrcSource->eScalingType;
+    dfScaleOff = poSrcSource->dfScaleOff;
+    dfScaleRatio = poSrcSource->dfScaleRatio;
+
+    nLUTItemCount = poSrcSource->nLUTItemCount;
+    if( nLUTItemCount )
+    {
+        padfLUTInputs = (double*)CPLMalloc(sizeof(double) * nLUTItemCount);
+        memcpy(padfLUTInputs, poSrcSource->padfLUTInputs, sizeof(double) * nLUTItemCount);
+        padfLUTOutputs = (double*)CPLMalloc(sizeof(double) * nLUTItemCount);
+        memcpy(padfLUTOutputs, poSrcSource->padfLUTOutputs, sizeof(double) * nLUTItemCount);
+    }
+    else
+    {
+        padfLUTInputs = NULL;
+        padfLUTOutputs = NULL;
+    }
+    nColorTableComponent = poSrcSource->nColorTableComponent;
+
+    bSrcMinMaxDefined = poSrcSource->bSrcMinMaxDefined;
+    dfSrcMin = poSrcSource->dfSrcMin;
+    dfSrcMax = poSrcSource->dfSrcMax;
+    dfDstMin = poSrcSource->dfDstMin;
+    dfDstMax = poSrcSource->dfDstMax;
+    dfExponent = poSrcSource->dfExponent;
 }
 
 VRTComplexSource::~VRTComplexSource()
