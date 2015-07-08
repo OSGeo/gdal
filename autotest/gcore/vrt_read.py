@@ -768,6 +768,23 @@ def vrt_read_21():
         return 'fail'
     cs = ovr_band.Checksum()
     cs2 = ds.GetRasterBand(2).GetOverview(0).Checksum()
+    
+    data = ds.ReadRaster(0,0,800,800,400,400)
+    mem_ds = gdal.GetDriverByName('MEM').Create('',400,400,2)
+    mem_ds.WriteRaster(0,0,400,400,data)
+    ref_cs = mem_ds.GetRasterBand(1).Checksum()
+    ref_cs2 = mem_ds.GetRasterBand(2).Checksum()
+    mem_ds = None
+    if cs != ref_cs:
+        gdaltest.post_reason('failure')
+        print(cs)
+        print(ref_cs)
+        return 'fail'
+    if cs2 != ref_cs2:
+        gdaltest.post_reason('failure')
+        print(cs2)
+        print(ref_cs2)
+        return 'fail'
 
     ds.BuildOverviews('NEAR', [2])
     expected_cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
