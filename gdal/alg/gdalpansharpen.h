@@ -135,6 +135,12 @@ class GDALPansharpenOperation
                                                      GDALDataType eBufDataType,
                                                      int nValues,
                                                      int nBitDepth);
+        template<class WorkDataType> CPLErr WeightedBrovey(
+                                                     const WorkDataType* pPanBuffer,
+                                                     const WorkDataType* pUpsampledSpectralBuffer,
+                                                     void *pDataBuf, 
+                                                     GDALDataType eBufDataType,
+                                                     int nValues);
     public:
                              GDALPansharpenOperation();
                             ~GDALPansharpenOperation();
