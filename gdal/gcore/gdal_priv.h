@@ -342,6 +342,16 @@ class CPL_DLL GDALDataset : public GDALMajorObject
                                int nBufXSize, int nBufYSize, 
                                int nBandCount, int *panBandMap);
 
+    CPLErr TryOverviewRasterIO( GDALRWFlag eRWFlag,
+                                int nXOff, int nYOff, int nXSize, int nYSize,
+                                void * pData, int nBufXSize, int nBufYSize,
+                                GDALDataType eBufType,
+                                int nBandCount, int *panBandMap,
+                                GSpacing nPixelSpace, GSpacing nLineSpace,
+                                GSpacing nBandSpace,
+                                GDALRasterIOExtraArg* psExtraArg,
+                                int* pbTried);
+
     virtual int         CloseDependentDatasets();
     
     int                 ValidateLayerCreationOptions( const char* const* papszLCO );
@@ -733,6 +743,14 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     CPLErr         OverviewRasterIO( GDALRWFlag, int, int, int, int,
                                      void *, int, int, GDALDataType,
                                      GSpacing, GSpacing, GDALRasterIOExtraArg* psExtraArg );
+
+    CPLErr TryOverviewRasterIO( GDALRWFlag eRWFlag,
+                                int nXOff, int nYOff, int nXSize, int nYSize,
+                                void * pData, int nBufXSize, int nBufYSize,
+                                GDALDataType eBufType,
+                                GSpacing nPixelSpace, GSpacing nLineSpace,
+                                GDALRasterIOExtraArg* psExtraArg,
+                                int* pbTried );
 
     int            InitBlockInfo();
 

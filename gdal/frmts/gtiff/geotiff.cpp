@@ -1623,30 +1623,20 @@ CPLErr GTiffDataset::IRasterIO( GDALRWFlag eRWFlag,
     /* Try to pass the request to the most appropriate overview dataset */
     if( nBufXSize < nXSize && nBufYSize < nYSize )
     {
-        int nXOffMod = nXOff, nYOffMod = nYOff, nXSizeMod = nXSize, nYSizeMod = nYSize;
-        GDALRasterIOExtraArg sExtraArg;
-    
-        GDALCopyRasterIOExtraArg(&sExtraArg, psExtraArg);
-        
+        int bTried;
         nJPEGOverviewVisibilityFlag ++;
-        int iOvrLevel = GDALBandGetBestOverviewLevel2(papoBands[0],
-                                                     nXOffMod, nYOffMod,
-                                                     nXSizeMod, nYSizeMod,
-                                                     nBufXSize, nBufYSize,
-                                                     &sExtraArg);
+        eErr = TryOverviewRasterIO( eRWFlag,
+                                    nXOff, nYOff, nXSize, nYSize,
+                                    pData, nBufXSize, nBufYSize,
+                                    eBufType,
+                                    nBandCount, panBandMap,
+                                    nPixelSpace, nLineSpace,
+                                    nBandSpace,
+                                    psExtraArg,
+                                    &bTried );
         nJPEGOverviewVisibilityFlag --;
-
-        if( iOvrLevel >= 0 && papoBands[0]->GetOverview(iOvrLevel) != NULL &&
-            papoBands[0]->GetOverview(iOvrLevel)->GetDataset() != NULL )
-        {
-            nJPEGOverviewVisibilityFlag ++;
-            eErr = papoBands[0]->GetOverview(iOvrLevel)->GetDataset()->RasterIO(
-                eRWFlag, nXOffMod, nYOffMod, nXSizeMod, nYSizeMod,
-                pData, nBufXSize, nBufYSize, eBufType,
-                nBandCount, panBandMap, nPixelSpace, nLineSpace, nBandSpace, &sExtraArg);
-            nJPEGOverviewVisibilityFlag --;
+        if( bTried )
             return eErr;
-        }
     }
 
     if( eVirtualMemIOUsage != VIRTUAL_MEM_IO_NO )
@@ -2463,30 +2453,18 @@ CPLErr GTiffRasterBand::IRasterIO( GDALRWFlag eRWFlag,
     /* Try to pass the request to the most appropriate overview dataset */
     if( nBufXSize < nXSize && nBufYSize < nYSize )
     {
-        int nXOffMod = nXOff, nYOffMod = nYOff, nXSizeMod = nXSize, nYSizeMod = nYSize;
-        GDALRasterIOExtraArg sExtraArg;
-    
-        GDALCopyRasterIOExtraArg(&sExtraArg, psExtraArg);
-        
+        int bTried;
         poGDS->nJPEGOverviewVisibilityFlag ++;
-        int iOvrLevel = GDALBandGetBestOverviewLevel2(this,
-                                                     nXOffMod, nYOffMod,
-                                                     nXSizeMod, nYSizeMod,
-                                                     nBufXSize, nBufYSize,
-                                                     &sExtraArg);
+        eErr = TryOverviewRasterIO( eRWFlag,
+                                    nXOff, nYOff, nXSize, nYSize,
+                                    pData, nBufXSize, nBufYSize,
+                                    eBufType,
+                                    nPixelSpace, nLineSpace,
+                                    psExtraArg,
+                                    &bTried );
         poGDS->nJPEGOverviewVisibilityFlag --;
-
-        if( iOvrLevel >= 0 && GetOverview(iOvrLevel) != NULL &&
-            GetOverview(iOvrLevel)->GetDataset() != NULL )
-        {
-            poGDS->nJPEGOverviewVisibilityFlag ++;
-            eErr = GetOverview(iOvrLevel)->RasterIO(
-                eRWFlag, nXOffMod, nYOffMod, nXSizeMod, nYSizeMod,
-                pData, nBufXSize, nBufYSize, eBufType,
-                nPixelSpace, nLineSpace, &sExtraArg);
-            poGDS->nJPEGOverviewVisibilityFlag --;
+        if( bTried )
             return eErr;
-        }
     }
 
 
