@@ -718,9 +718,6 @@ def vrt_read_20():
 
 def vrt_read_21():
 
-    if test_cli_utilities.get_gdalinfo_path() is None:
-        return 'skip'
-
     ds = gdal.Open('data/byte.tif')
     data = ds.ReadRaster(0,0,20,20,400,400)
     ds = None
@@ -794,6 +791,110 @@ def vrt_read_21():
 
     return 'success'
 
+###############################################################################
+# Test that we honour NBITS with SimpleSource and ComplexSource
+
+def vrt_read_22():
+
+    ds = gdal.Open('data/byte.tif')
+    data = ds.ReadRaster()
+    ds = None
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/byte.tif',20,20)
+    ds.WriteRaster(0,0,20,20,data)
+    ds.GetRasterBand(1).ComputeStatistics(False)
+    ds = None
+
+    ds = gdal.Open("""<VRTDataset rasterXSize="20" rasterYSize="20">
+  <VRTRasterBand dataType="Byte" band="1">
+    <Metadata domain="IMAGE_STRUCTURE">
+        <MDI key="NBITS">6</MDI>
+    </Metadata>
+    <SimpleSource>
+      <SourceFilename>/vsimem/byte.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+    </SimpleSource>
+  </VRTRasterBand>
+</VRTDataset>""")
+    if ds.GetRasterBand(1).GetMinimum() != 63:
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    if ds.GetRasterBand(1).GetMaximum() != 63:
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    if ds.GetRasterBand(1).ComputeRasterMinMax() != (63, 63):
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    if ds.GetRasterBand(1).ComputeStatistics(False) != [63.0, 63.0, 63.0, 0.0]:
+        gdaltest.post_reason('failure')
+        print(ds.GetRasterBand(1).ComputeStatistics(False))
+        return 'fail'
+
+    ds = gdal.Open("""<VRTDataset rasterXSize="20" rasterYSize="20">
+  <VRTRasterBand dataType="Byte" band="1">
+    <Metadata domain="IMAGE_STRUCTURE">
+        <MDI key="NBITS">6</MDI>
+    </Metadata>
+    <ComplexSource>
+      <SourceFilename>/vsimem/byte.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+    </ComplexSource>
+  </VRTRasterBand>
+</VRTDataset>""")
+    if ds.GetRasterBand(1).GetMinimum() != 63:
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    if ds.GetRasterBand(1).GetMaximum() != 63:
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    if ds.GetRasterBand(1).ComputeRasterMinMax() != (63, 63):
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    if ds.GetRasterBand(1).ComputeStatistics(False) != [63.0, 63.0, 63.0, 0.0]:
+        gdaltest.post_reason('failure')
+        print(ds.GetRasterBand(1).ComputeStatistics(False))
+        return 'fail'
+
+    ds = gdal.Open("""<VRTDataset rasterXSize="20" rasterYSize="20">
+  <VRTRasterBand dataType="Byte" band="1">
+    <Metadata domain="IMAGE_STRUCTURE">
+        <MDI key="NBITS">6</MDI>
+    </Metadata>
+    <ComplexSource>
+      <SourceFilename>/vsimem/byte.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <ScaleOffset>10</ScaleOffset>
+    </ComplexSource>
+  </VRTRasterBand>
+</VRTDataset>""")
+    if ds.GetRasterBand(1).GetMinimum() is not None:
+        gdaltest.post_reason('failure')
+        print(ds.GetRasterBand(1).GetMinimum())
+        return 'fail'
+
+    if ds.GetRasterBand(1).GetMaximum() is not None:
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    if ds.GetRasterBand(1).ComputeRasterMinMax() != (63, 63):
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    if ds.GetRasterBand(1).ComputeStatistics(False) != [63.0, 63.0, 63.0, 0.0]:
+        gdaltest.post_reason('failure')
+        print(ds.GetRasterBand(1).ComputeStatistics(False))
+        return 'fail'
+        
+    gdal.Unlink('/vsimem/byte.tif')
+    gdal.Unlink('/vsimem/byte.tif.aux.xml')
+
+    return 'success'
+
 
 for item in init_list:
     ut = gdaltest.GDALTest( 'VRT', item[0], item[1], item[2] )
@@ -823,6 +924,7 @@ gdaltest_list.append( vrt_read_18 )
 gdaltest_list.append( vrt_read_19 )
 gdaltest_list.append( vrt_read_20 )
 gdaltest_list.append( vrt_read_21 )
+gdaltest_list.append( vrt_read_22 )
 
 if __name__ == '__main__':
 

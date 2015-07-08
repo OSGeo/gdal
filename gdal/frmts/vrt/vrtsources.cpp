@@ -84,6 +84,7 @@ VRTSimpleSource::VRTSimpleSource()
     bNoDataSet = FALSE;
     dfNoDataValue = VRT_NODATA_UNSET;
     bRelativeToVRTOri = -1;
+    nMaxValue = 0;
 }
 
 /************************************************************************/
@@ -106,6 +107,7 @@ VRTSimpleSource::VRTSimpleSource(const VRTSimpleSource* poSrcSource,
     nDstXSize = (int)(poSrcSource->nDstXSize * dfXDstRatio + 0.5);
     nDstYSize = (int)(poSrcSource->nDstYSize * dfYDstRatio + 0.5);
     bRelativeToVRTOri = -1;
+    nMaxValue = poSrcSource->nMaxValue;
 }
 
 /************************************************************************/
@@ -979,6 +981,25 @@ VRTSimpleSource::GetSrcDstWindow( int nXOff, int nYOff, int nXSize, int nYSize,
 }
 
 /************************************************************************/
+/*                          NeedMaxValAdjustment()                      */
+/************************************************************************/
+
+int VRTSimpleSource::NeedMaxValAdjustment() const
+{
+    if( nMaxValue )
+    {
+        const char* pszNBITS = poRasterBand->GetMetadataItem("NBITS", "IMAGE_STRUCTURE");
+        int nBits = (pszNBITS) ? atoi(pszNBITS) : 0;
+        int nBandMaxValue = (1 << nBits) - 1;
+        if( nBandMaxValue == 0 || nBandMaxValue > nMaxValue )
+        {
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
+/************************************************************************/
 /*                              RasterIO()                              */
 /************************************************************************/
 
@@ -1031,14 +1052,36 @@ VRTSimpleSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
     psExtraArg->dfXSize = dfReqXSize;
     psExtraArg->dfYSize = dfReqYSize;
 
+    GByte* pabyOut = ((unsigned char *) pData) 
+                                + nOutXOff * nPixelSpace
+                                + (GPtrDiff_t)nOutYOff * nLineSpace;
     eErr = 
         poRasterBand->RasterIO( GF_Read, 
                                 nReqXOff, nReqYOff, nReqXSize, nReqYSize,
-                                ((unsigned char *) pData) 
-                                + nOutXOff * nPixelSpace
-                                + (GPtrDiff_t)nOutYOff * nLineSpace, 
+                                pabyOut,
                                 nOutXSize, nOutYSize, 
                                 eBufType, nPixelSpace, nLineSpace, psExtraArg );
+
+    if( NeedMaxValAdjustment() )
+    {
+        for(int j=0;j<nOutYSize;j++)
+        {
+            for(int i=0;i<nOutXSize;i++)
+            {
+                int nVal;
+                GDALCopyWords(pabyOut + j * nLineSpace + i * nPixelSpace,
+                                eBufType, 0,
+                                &nVal, GDT_Int32, 0,
+                                1);
+                if( nVal > nMaxValue )
+                    nVal = nMaxValue;
+                GDALCopyWords(&nVal, GDT_Int32, 0,
+                                pabyOut + j * nLineSpace + i * nPixelSpace,
+                                eBufType, 0,
+                                1);
+            }
+        }
+    }
 
     return eErr;
 }
@@ -1069,7 +1112,10 @@ double VRTSimpleSource::GetMinimum( int nXSize, int nYSize, int *pbSuccess )
         return 0;
     }
 
-    return poRasterBand->GetMinimum(pbSuccess);
+    double dfVal = poRasterBand->GetMinimum(pbSuccess);
+    if( NeedMaxValAdjustment() && dfVal > nMaxValue )
+        dfVal = nMaxValue;
+    return dfVal;
 }
 
 /************************************************************************/
@@ -1098,7 +1144,10 @@ double VRTSimpleSource::GetMaximum( int nXSize, int nYSize, int *pbSuccess )
         return 0;
     }
 
-    return poRasterBand->GetMaximum(pbSuccess);
+    double dfVal = poRasterBand->GetMaximum(pbSuccess);
+    if( NeedMaxValAdjustment() && dfVal > nMaxValue )
+        dfVal = nMaxValue;
+    return dfVal;
 }
 
 /************************************************************************/
@@ -1126,7 +1175,15 @@ CPLErr VRTSimpleSource::ComputeRasterMinMax( int nXSize, int nYSize, int bApprox
         return CE_Failure;
     }
 
-    return poRasterBand->ComputeRasterMinMax(bApproxOK, adfMinMax);
+    CPLErr eErr = poRasterBand->ComputeRasterMinMax(bApproxOK, adfMinMax);
+    if( NeedMaxValAdjustment() )
+    {
+        if( adfMinMax[0] > nMaxValue )
+            adfMinMax[0] = nMaxValue;
+        if( adfMinMax[1] > nMaxValue )
+            adfMinMax[1] = nMaxValue;
+    }
+    return eErr;
 }
 
 /************************************************************************/
@@ -1146,7 +1203,8 @@ CPLErr VRTSimpleSource::ComputeStatistics( int nXSize, int nYSize,
     // The window we will actual set _within_ the pData buffer.
     int nOutXOff, nOutYOff, nOutXSize, nOutYSize;
 
-    if( !GetSrcDstWindow( 0, 0, nXSize, nYSize,
+    if( NeedMaxValAdjustment() ||
+        !GetSrcDstWindow( 0, 0, nXSize, nYSize,
                           nXSize, nYSize,
                           &dfReqXOff, &dfReqYOff, &dfReqXSize, &dfReqYSize,
                           &nReqXOff, &nReqYOff, &nReqXSize, &nReqYSize,
@@ -1180,7 +1238,8 @@ CPLErr VRTSimpleSource::GetHistogram( int nXSize, int nYSize,
     // The window we will actual set _within_ the pData buffer.
     int nOutXOff, nOutYOff, nOutXSize, nOutYSize;
 
-    if( !GetSrcDstWindow( 0, 0, nXSize, nYSize,
+    if( NeedMaxValAdjustment() ||
+        !GetSrcDstWindow( 0, 0, nXSize, nYSize,
                           nXSize, nYSize,
                           &dfReqXOff, &dfReqYOff, &dfReqXSize, &dfReqYSize,
                           &nReqXOff, &nReqYOff, &nReqXSize, &nReqYSize,
@@ -1257,14 +1316,39 @@ CPLErr VRTSimpleSource::DatasetRasterIO(
     psExtraArg->dfXSize = dfReqXSize;
     psExtraArg->dfYSize = dfReqYSize;
 
+    GByte* pabyOut = ((unsigned char *) pData)
+                           + nOutXOff * nPixelSpace
+                           + (GPtrDiff_t)nOutYOff * nLineSpace;
     CPLErr eErr = poDS->RasterIO( GF_Read,
                            nReqXOff, nReqYOff, nReqXSize, nReqYSize,
-                           ((unsigned char *) pData)
-                           + nOutXOff * nPixelSpace
-                           + (GPtrDiff_t)nOutYOff * nLineSpace,
+                           pabyOut,
                            nOutXSize, nOutYSize,
                            eBufType, nBandCount, panBandMap,
                            nPixelSpace, nLineSpace, nBandSpace, psExtraArg );
+
+    if( NeedMaxValAdjustment() )
+    {
+        for(int k=0;k<nBandCount;k++)
+        {
+            for(int j=0;j<nOutYSize;j++)
+            {
+                for(int i=0;i<nOutXSize;i++)
+                {
+                    int nVal;
+                    GDALCopyWords(pabyOut + k * nBandSpace + j * nLineSpace + i * nPixelSpace,
+                                eBufType, 0,
+                                &nVal, GDT_Int32, 0,
+                                1);
+                    if( nVal > nMaxValue )
+                        nVal = nMaxValue;
+                    GDALCopyWords(&nVal, GDT_Int32, 0,
+                                pabyOut + k * nBandSpace + j * nLineSpace + i * nPixelSpace,
+                                eBufType, 0,
+                                1);
+                }
+            }
+        }
+    }
 
     return eErr;
 }
@@ -2109,6 +2193,9 @@ CPLErr VRTComplexSource::RasterIOInternal( int nReqXOff, int nReqYOff,
                 if (nLUTItemCount)
                     fResult = (float) LookupValue( fResult );
 
+                if( nMaxValue != 0 && fResult > nMaxValue )
+                    fResult = nMaxValue;
+
                 if( eBufType == GDT_Byte )
                     *pDstLocation = (GByte) MIN(255,MAX(0,fResult + 0.5));
                 else
@@ -2143,6 +2230,9 @@ CPLErr VRTComplexSource::RasterIOInternal( int nReqXOff, int nReqYOff,
 
                 if (nLUTItemCount)
                     fResult = (float) LookupValue( fResult );
+
+                if( nMaxValue != 0 && fResult > nMaxValue )
+                    fResult = nMaxValue;
 
                 if( eBufType == GDT_Byte )
                     *pDstLocation = (GByte) MIN(255,MAX(0,fResult + 0.5));

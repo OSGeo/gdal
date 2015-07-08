@@ -674,6 +674,13 @@ CPLErr VRTSourcedRasterBand::AddSource( VRTSource *poNewSource )
     papoSources[nSources-1] = poNewSource;
 
     ((VRTDataset *)poDS)->SetNeedsFlush();
+    
+    if( poNewSource->IsSimpleSource() &&
+        GetMetadataItem("NBITS", "IMAGE_STRUCTURE") != NULL)
+    {
+        ((VRTSimpleSource*)poNewSource)->SetMaxValue(
+                (1 << atoi(GetMetadataItem("NBITS", "IMAGE_STRUCTURE")))-1);
+    }
 
     return CE_None;
 }
