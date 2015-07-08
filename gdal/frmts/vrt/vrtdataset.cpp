@@ -1269,6 +1269,8 @@ GDALDataset* VRTDataset::GetSingleSimpleSource()
         return NULL;
 
     VRTSourcedRasterBand* poVRTBand = (VRTSourcedRasterBand* )papoBands[0];
+    if( poVRTBand->nSources != 1 )
+        return NULL;
     VRTSimpleSource* poSource = (VRTSimpleSource* )poVRTBand->papoSources[0];
     GDALRasterBand* poBand = poSource->GetBand();
     if (poBand == NULL)
