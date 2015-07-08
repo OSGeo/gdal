@@ -104,6 +104,11 @@ VRTDataset::~VRTDataset()
     CPLFree( pszVRTPath );
 
     delete poMaskBand;
+
+    for(size_t i=0;i<apoOverviews.size();i++)
+        delete apoOverviews[i];
+    for(size_t i=0;i<apoOverviewsBak.size();i++)
+        delete apoOverviewsBak[i];
 }
 
 /************************************************************************/
@@ -1407,4 +1412,118 @@ void VRTDataset::UnsetPreservedRelativeFilenames()
             poSource->UnsetPreservedRelativeFilenames();
         }
     }
+}
+
+/************************************************************************/
+/*                        BuildVirtualOverviews()                       */
+/************************************************************************/
+
+void VRTDataset::BuildVirtualOverviews()
+{
+    // Currently we expose virtual overviews only if the dataset is made of
+    // a single SimpleSource/ComplexSource, in each band.
+    // And if the underlying sources have overviews of course
+    if( apoOverviews.size() || apoOverviewsBak.size() )
+        return;
+    
+    int nOverviews = 0;
+    GDALRasterBand* poFirstBand = NULL;
+    for(int iBand = 0; iBand < nBands; iBand++)
+    {
+        if (!((VRTRasterBand *) papoBands[iBand])->IsSourcedRasterBand())
+            return;
+
+        VRTSourcedRasterBand* poVRTBand = (VRTSourcedRasterBand* )papoBands[iBand];
+        if( poVRTBand->nSources != 1 )
+            return;
+        if (!poVRTBand->papoSources[0]->IsSimpleSource())
+            return;
+
+        VRTSimpleSource* poSource = (VRTSimpleSource* )poVRTBand->papoSources[0];
+        if (!EQUAL(poSource->GetType(), "SimpleSource") &&
+            !EQUAL(poSource->GetType(), "ComplexSource"))
+            return;
+        GDALRasterBand* poSrcBand = poSource->GetBand();
+        if (poSrcBand == NULL)
+            return;
+        if( poSrcBand->GetOverviewCount() == 0 )
+            return;
+        if( iBand == 0 )
+        {
+            poFirstBand = poSrcBand;
+            nOverviews = poSrcBand->GetOverviewCount();
+        }
+        else if( poSrcBand->GetOverviewCount() < nOverviews )
+            nOverviews = poSrcBand->GetOverviewCount();
+    }
+
+    for(int j=0;j<nOverviews;j++)
+    {
+        double dfXRatio = (double)poFirstBand->GetOverview(j)->GetXSize() / poFirstBand->GetXSize();
+        double dfYRatio = (double)poFirstBand->GetOverview(j)->GetYSize() / poFirstBand->GetYSize();
+        int nOvrXSize = (int)(0.5 + nRasterXSize * dfXRatio);
+        int nOvrYSize = (int)(0.5 + nRasterYSize * dfYRatio);
+        if( nOvrXSize < 128 || nOvrYSize < 128 )
+            break;
+        VRTDataset* poOvrVDS = new VRTDataset(nOvrXSize, nOvrYSize);
+        apoOverviews.push_back(poOvrVDS);
+
+        for(int i=0;i<nBands;i++)
+        {
+            VRTSourcedRasterBand* poVRTBand = (VRTSourcedRasterBand* )GetRasterBand(i+1);
+            VRTSourcedRasterBand* poOvrVRTBand = new VRTSourcedRasterBand(
+                poOvrVDS, poOvrVDS->GetRasterCount() + 1, poVRTBand->GetRasterDataType(), 
+                nOvrXSize, nOvrYSize);
+            poOvrVDS->SetBand( poOvrVDS->GetRasterCount() + 1, poOvrVRTBand );
+
+            VRTSimpleSource* poSrcSource = (VRTSimpleSource* )poVRTBand->papoSources[0];
+            VRTSimpleSource* poNewSource = NULL;
+            if( EQUAL(poSrcSource->GetType(), "SimpleSource") )
+                poNewSource = new VRTSimpleSource(poSrcSource, dfXRatio, dfYRatio);
+            else if( EQUAL(poSrcSource->GetType(), "ComplexSource") )
+                poNewSource = new VRTComplexSource((VRTComplexSource*)poSrcSource, dfXRatio, dfYRatio);
+            else
+                CPLAssert(FALSE);
+            if( poNewSource->GetBand()->GetDataset() )
+                poNewSource->GetBand()->GetDataset()->Reference();
+            poOvrVRTBand->AddSource(poNewSource);
+        }
+    }
+}
+
+/************************************************************************/
+/*                          IBuildOverviews()                           */
+/************************************************************************/
+
+CPLErr
+VRTDataset::IBuildOverviews( const char *pszResampling,
+                             int nOverviews,
+                             int *panOverviewList,
+                             int nListBands,
+                             int *panBandList,
+                             GDALProgressFunc pfnProgress,
+                             void * pProgressData )
+{
+    /* Make implicit overviews invisible, but do not destroy */
+    /* them in case they are already used (not sure that the client */
+    /* has the right to do that. behaviour undefined in GDAL API I think) */
+    if( apoOverviews.size() )
+    {
+        apoOverviewsBak = apoOverviews;
+        apoOverviews.resize(0);
+    }
+    else
+    {
+        // Add a dummy overview so that GDALDataset::IBuildOverviews()
+        // doesn't manage to get a virtual implicit overview
+        apoOverviews.push_back(NULL);
+    }
+
+    return GDALDataset::IBuildOverviews(pszResampling,
+                                               nOverviews,
+                                               panOverviewList,
+                                               nListBands,
+                                               panBandList,
+                                               pfnProgress,
+                                               pProgressData);
 }

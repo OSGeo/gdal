@@ -713,6 +713,88 @@ def vrt_read_20():
 
     return 'success'
 
+###############################################################################
+# Test implicit virtual overviews
+
+def vrt_read_21():
+
+    if test_cli_utilities.get_gdalinfo_path() is None:
+        return 'skip'
+
+    ds = gdal.Open('data/byte.tif')
+    data = ds.ReadRaster(0,0,20,20,400,400)
+    ds = None
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/byte.tif',400,400)
+    ds.WriteRaster(0,0,400,400,data)
+    ds.BuildOverviews('NEAR', [2])
+    ds = None
+
+    gdal.FileFromMemBuffer('/vsimem/vrt_read_21.vrt', """<VRTDataset rasterXSize="800" rasterYSize="800">
+  <VRTRasterBand dataType="Byte" band="1">
+    <SimpleSource>
+      <SourceFilename>/vsimem/byte.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="400" RasterYSize="400" DataType="Byte" BlockXSize="400" BlockYSize="1" />
+      <SrcRect xOff="100" yOff="100" xSize="200" ySize="250" />
+      <DstRect xOff="300" yOff="400" xSize="200" ySize="250" />
+    </SimpleSource>
+  </VRTRasterBand>
+  <VRTRasterBand dataType="Byte" band="2">
+    <ComplexSource>
+      <SourceFilename>/vsimem/byte.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="400" RasterYSize="400" DataType="Byte" BlockXSize="400" BlockYSize="1" />
+      <SrcRect xOff="100" yOff="100" xSize="200" ySize="250" />
+      <DstRect xOff="300" yOff="400" xSize="200" ySize="250" />
+      <ScaleOffset>10</ScaleOffset>
+    </ComplexSource>
+  </VRTRasterBand>
+</VRTDataset>""")
+    ds = gdal.Open('/vsimem/vrt_read_21.vrt')
+    if ds.GetRasterBand(1).GetOverviewCount() != 1:
+        gdaltest.post_reason('failure')
+        print(ds.GetRasterBand(1).GetOverviewCount())
+        return 'fail'
+
+    ds = gdal.Open('/vsimem/vrt_read_21.vrt')
+    ovr_band = ds.GetRasterBand(1).GetOverview(-1)
+    if ovr_band is not None:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    ovr_band = ds.GetRasterBand(1).GetOverview(1)
+    if ovr_band is not None:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    ovr_band = ds.GetRasterBand(1).GetOverview(0)
+    if ovr_band is None:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    cs = ovr_band.Checksum()
+    cs2 = ds.GetRasterBand(2).GetOverview(0).Checksum()
+
+    ds.BuildOverviews('NEAR', [2])
+    expected_cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    expected_cs2 = ds.GetRasterBand(2).GetOverview(0).Checksum()
+    ds = None
+
+    if cs != expected_cs:
+        gdaltest.post_reason('failure')
+        print(cs)
+        print(expected_cs)
+        return 'fail'
+    if cs2 != expected_cs2:
+        gdaltest.post_reason('failure')
+        print(cs2)
+        print(expected_cs2)
+        return 'fail'
+        
+    gdal.Unlink('/vsimem/vrt_read_21.vrt')
+    gdal.Unlink('/vsimem/vrt_read_21.vrt.ovr')
+    gdal.Unlink('/vsimem/byte.tif')
+
+    return 'success'
+
+
 for item in init_list:
     ut = gdaltest.GDALTest( 'VRT', item[0], item[1], item[2] )
     if ut is None:
@@ -740,6 +822,7 @@ gdaltest_list.append( vrt_read_17 )
 gdaltest_list.append( vrt_read_18 )
 gdaltest_list.append( vrt_read_19 )
 gdaltest_list.append( vrt_read_20 )
+gdaltest_list.append( vrt_read_21 )
 
 if __name__ == '__main__':
 

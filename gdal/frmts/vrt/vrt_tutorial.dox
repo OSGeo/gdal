@@ -11,6 +11,7 @@
 <ol>
 <li> \ref gdal_vrttut_intro
 <li> \ref gdal_vrttut_format
+<li> \ref gdal_vrttut_overviews
 <li> \ref gdal_vrttut_raw
 <li> \ref gdal_vrttut_creation
 <li> \ref gdal_vrttut_warped
@@ -453,6 +454,22 @@ child element, that is the description of the mask band itself.
 </ul>
 
 </ul>
+
+\section gdal_vrttut_overviews Overviews
+
+GDAL can make efficient use of overviews available in the sources that compose
+the bands when dealing with RasterIO() requests that involve downsampling.
+But in the general case, the VRT bands themselves will not expose overviews.
+
+Except if (from top priority to lesser priority) :
+<ol>
+<li>The <b>Overview</b> element is present in the VRTRasterBand element. See above.
+</li>
+<li>or external .vrt.ovr overviews are built</li>
+<li>(starting with GDAL 2.1) if the VRTRasterBand are made of a single SimpleSource
+or ComplexSource that has overviews. Those "virtual" overviews will be hidden
+by external .vrt.ovr overviews that might be built later.</li>
+</ol>
 
 \section gdal_vrttut_raw .vrt Descriptions for Raw Files
 

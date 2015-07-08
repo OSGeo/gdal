@@ -1258,8 +1258,8 @@ CPLErr VRTSourcedRasterBand::SetMetadataItem( const char *pszName,
                                               const char *pszDomain )
 
 {
-    CPLDebug( "VRT", "VRTSourcedRasterBand::SetMetadataItem(%s,%s,%s)\n",
-              pszName, pszValue, pszDomain );
+    //CPLDebug( "VRT", "VRTSourcedRasterBand::SetMetadataItem(%s,%s,%s)\n",
+    //          pszName, pszValue, pszDomain );
               
     if( pszDomain != NULL
         && EQUAL(pszDomain,"new_vrt_sources") )
