@@ -1824,21 +1824,22 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
     if( (nBufXSize > nXSize || nBufYSize > nYSize) &&
         psExtraArg->eResampleAlg != GRIORA_NearestNeighbour )
     {
-        GByte* pabyTemp = (GByte*)VSIMalloc3(nXSize, nYSize, nDataTypeSize * nBandCount);
+        int nBufDataTypeSize = (GDALGetDataTypeSize(eBufType) / 8);
+        GByte* pabyTemp = (GByte*)VSIMalloc3(nXSize, nYSize, nBufDataTypeSize * nBandCount);
         if( pabyTemp == NULL )
         {
             CPLError( CE_Failure, CPLE_OutOfMemory, 
                           "Failed to allocate %d byte intermediate decompression buffer for jpeg2000.", 
-                          nXSize * nYSize * nDataTypeSize * nBandCount );
+                          nXSize * nYSize * nBufDataTypeSize * nBandCount );
             return CE_Failure;
         }
         
         CPLErr eErr = IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                 pabyTemp, nXSize, nYSize,
                                 eBufType, nBandCount, panBandMap,
-                                nDataTypeSize,
-                                (GIntBig)nDataTypeSize* nXSize,
-                                (GIntBig)nDataTypeSize*nXSize*nYSize,
+                                nBufDataTypeSize,
+                                (GIntBig)nBufDataTypeSize* nXSize,
+                                (GIntBig)nBufDataTypeSize*nXSize*nYSize,
                                 psExtraArg);
         
         if( eErr == CE_None )
@@ -1851,15 +1852,15 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
 
             for( int i = 0; i < nBandCount; i++ )
             {
-                nRet = CPLPrintPointer(szBuffer, pabyTemp + i * nDataTypeSize, sizeof(szBuffer));
+                nRet = CPLPrintPointer(szBuffer, pabyTemp + i * nBufDataTypeSize, sizeof(szBuffer));
                 szBuffer[nRet] = 0;
                 char** papszOptions = CSLSetNameValue(NULL, "DATAPOINTER", szBuffer);
 
                 papszOptions = CSLSetNameValue(papszOptions, "PIXELOFFSET",
-                    CPLSPrintf(CPL_FRMT_GIB, (GIntBig)nDataTypeSize * nBandCount));
+                    CPLSPrintf(CPL_FRMT_GIB, (GIntBig)nBufDataTypeSize * nBandCount));
 
                 papszOptions = CSLSetNameValue(papszOptions, "LINEOFFSET",
-                    CPLSPrintf(CPL_FRMT_GIB, (GIntBig)nDataTypeSize * nBandCount * nXSize));
+                    CPLSPrintf(CPL_FRMT_GIB, (GIntBig)nBufDataTypeSize * nBandCount * nXSize));
 
                 poMEMDS->AddBand(eBufType, papszOptions);
                 CSLDestroy(papszOptions);
