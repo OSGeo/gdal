@@ -953,14 +953,14 @@ EPSGGetPCSInfo( int nPCSCode, char **ppszEPSGName,
 /*      Search the units database for this unit.  If we don't find      */
 /*      it return failure.                                              */
 /* -------------------------------------------------------------------- */
-    pszFilename = CSVFilename( "pcs.csv" );
+    pszFilename = CSVFilename( "pcs.override.csv" );
     sprintf( szSearchKey, "%d", nPCSCode );
     papszRecord = CSVScanFileByName( pszFilename, "COORD_REF_SYS_CODE",
                                      szSearchKey, CC_Integer );
 
     if( papszRecord == NULL )
     {
-        pszFilename = CSVFilename( "pcs.override.csv" );
+        pszFilename = CSVFilename( "pcs.csv" );
         sprintf( szSearchKey, "%d", nPCSCode );
         papszRecord = CSVScanFileByName( pszFilename, "COORD_REF_SYS_CODE",
                                          szSearchKey, CC_Integer );
