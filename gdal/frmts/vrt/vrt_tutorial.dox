@@ -1028,7 +1028,9 @@ as declared input spectral bands.</li>
 to the resolution of the panchromatic band. Can be one of Cubic (default), Average,
 Near, CubicSpline, Bilinear, Lanczos.</li>
 <li> <b>NumThreads</b>: unused for now.</li>
-<li> <b>BitDepth</b>: unused for now.</li>
+<li> <b>BitDepth</b>: Can be used to specify the bit depth of the panchromatic and
+spectral bands (e.g. 12). If not specified, the NBITS metadata item from the
+panchromatic band will be used if it exists.</li>
 </li>
 </ul>
 

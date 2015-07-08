@@ -1334,6 +1334,94 @@ def vrtpansharpen_5():
     return 'success'
 
 ###############################################################################
+# Test BitDepth limitations
+
+def vrtpansharpen_6():
+    
+    try:
+        from osgeo import gdalnumeric
+        gdalnumeric.zeros
+        import numpy
+    except:
+        return 'skip'
+
+    # i = 0: VRT has <BitDepth>7</BitDepth>
+    # i = 1: bands have NBITS=7 and VRT <BitDepth>7</BitDepth>
+    # i = 2: bands have NBITS=7
+    for dt in [ gdal.GDT_Byte, gdal.GDT_UInt16, gdal.GDT_UInt32 ]:
+        if dt == gdal.GDT_Byte:
+            nbits = 7
+        elif dt == gdal.GDT_UInt16:
+            nbits = 12
+        else:
+            nbits = 17
+        for i in range(3):
+            if i > 0:
+                options = ['NBITS=%d' % nbits]
+            else:
+                options = []
+            mem_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/ms.tif', 4, 1, 1, dt, options = options)
+            ar = numpy.array([[80,125,125,80]])
+            if dt == gdal.GDT_UInt16:
+                ar = ar << (12-7)
+            elif dt == gdal.GDT_UInt32:
+                ar = ar << (17-7)
+            mem_ds.GetRasterBand(1).WriteArray(ar)
+            mem_ds = None
+
+            mem_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/pan.tif', 8, 2, 1, dt, options = options)
+            ar = numpy.array([[ 76, 89, 115, 127, 127, 115, 89, 76],
+                              [ 76, 89, 115, 127, 127, 115, 89, 76]])
+            if dt == gdal.GDT_UInt16:
+                ar = ar << (12-7)
+            elif dt == gdal.GDT_UInt32:
+                ar = ar << (17-7)
+            mem_ds.GetRasterBand(1).WriteArray(ar)
+            mem_ds = None
+
+            xml = """<VRTDataset subClass="VRTPansharpenedDataset">
+            <PansharpeningOptions>"""
+            if i < 2:
+                xml += """            <BitDepth>%d</BitDepth>""" % nbits
+            xml += """            <AlgorithmOptions><Weights>0.8</Weights></AlgorithmOptions>
+                <PanchroBand>
+                        <SourceFilename>/vsimem/pan.tif</SourceFilename>
+                        <SourceBand>1</SourceBand>
+                </PanchroBand>
+                <SpectralBand dstBand="1">
+                        <SourceFilename>/vsimem/ms.tif</SourceFilename>
+                        <SourceBand>1</SourceBand>
+                </SpectralBand>
+            </PansharpeningOptions>
+        </VRTDataset>"""
+
+            vrt_ds = gdal.Open(xml)
+            if vrt_ds.GetRasterBand(1).GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') != str(nbits):
+                gdaltest.post_reason('fail')
+                return 'fail'
+
+            ar = vrt_ds.GetRasterBand(1).ReadAsArray()
+            if dt == gdal.GDT_Byte:
+                expected_ar = [95, 111, 127, 127, 127, 127, 111, 95]
+            elif dt == gdal.GDT_UInt16:
+                expected_ar = [3040, 3560, 4095, 4095, 4095, 4095, 3560, 3040]
+            else:
+                expected_ar = [97280, 113920, 131071, 131071, 131071, 131071, 113920, 97280]
+
+            if list(ar[0]) != expected_ar:
+                gdaltest.post_reason('fail')
+                print(dt)
+                print(i)
+                print(list(ar[0]))
+                return 'fail'
+            vrt_ds = None
+
+            gdal.Unlink('/vsimem/ms.tif')
+            gdal.Unlink('/vsimem/pan.tif')
+        
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def vrtpansharpen_cleanup():
@@ -1350,9 +1438,11 @@ gdaltest_list = [
     vrtpansharpen_3,
     vrtpansharpen_4,
     vrtpansharpen_5,
+    vrtpansharpen_6,
     vrtpansharpen_cleanup,
 ]
 
+#gdaltest_list= [ vrtpansharpen_6 ]
 
 if __name__ == '__main__':
 
