@@ -29,6 +29,7 @@
 
 #include "vrtdataset.h"
 #include "gdalpansharpen.h"
+#include "ogr_spatialref.h"
 #include <map>
 #include <set>
 #include <assert.h>
@@ -62,6 +63,7 @@ VRTPansharpenedDataset::VRTPansharpenedDataset( int nXSize, int nYSize )
     nLastBandRasterIOXSize = 0;
     nLastBandRasterIOYSize = 0;
     eLastBandRasterIODataType = GDT_Unknown;
+    eGTAdjustment = GTAdjust_Union;
 }
 
 /************************************************************************/
@@ -236,69 +238,37 @@ CPLErr VRTPansharpenedDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPa
     }
     int bRelativeToVRT = atoi(CPLGetXMLValue( psPanchroBand, "SourceFilename.relativetoVRT", "0"));
     if( bRelativeToVRT )
-        pszSourceFilename = CPLProjectRelativeFilename( pszVRTPath, pszSourceFilename );
+    {
+        const char* pszAbs = CPLProjectRelativeFilename( pszVRTPath, pszSourceFilename );
+        oMapToRelativeFilenames[pszAbs] = pszSourceFilename;
+        pszSourceFilename = pszAbs;
+    }
     CPLString osSourceFilename(pszSourceFilename);
-    GDALDataset* poDataset = (GDALDataset*)GDALOpen(osSourceFilename, GA_ReadOnly);
-    GDALDataset* poPanDataset = poDataset;
-    if( poDataset == NULL )
+    GDALDataset* poPanDataset = (GDALDataset*)GDALOpen(osSourceFilename, GA_ReadOnly);
+    if( poPanDataset == NULL )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "%s not a valid dataset",
                  osSourceFilename.c_str());
         return CE_Failure;
     }
 
-    if( nRasterXSize == 0 && nRasterYSize == 0 ) 
+    // Figure out which kind of adjustment we should do if the pan and spectral
+    // bands do not share the same geotransform
+    const char* pszGTAdjustment = CPLGetXMLValue(psOptions, "SpatialExtentAdjustment", "Union");
+    if( EQUAL(pszGTAdjustment, "Union") )
+        eGTAdjustment = GTAdjust_Union;
+    else if( EQUAL(pszGTAdjustment, "Intersection") )
+        eGTAdjustment = GTAdjust_Intersection;
+    else if( EQUAL(pszGTAdjustment, "None") )
+        eGTAdjustment = GTAdjust_None;
+    else if( EQUAL(pszGTAdjustment, "NoneWithoutWarning") )
+        eGTAdjustment = GTAdjust_NoneWithoutWarning;
+    else
     {
-        nRasterXSize = poDataset->GetRasterXSize();
-        nRasterYSize = poDataset->GetRasterYSize();
-    }
-    else if( nRasterXSize != poDataset->GetRasterXSize() ||
-             nRasterYSize != poDataset->GetRasterYSize() )
-    {
+        eGTAdjustment = GTAdjust_Union;
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Inconsistant declared VRT dimensions with panchro dataset");
-        GDALClose(poDataset);
-        return CE_Failure;
+                 "Unsupported value for GeoTransformAdjustment. Defaulting to Union");
     }
-
-/* -------------------------------------------------------------------- */
-/*      Initialize all the general VRT stuff.  This will even           */
-/*      create the VRTPansharpenedRasterBands and initialize them.      */
-/* -------------------------------------------------------------------- */
-    eErr = VRTDataset::XMLInit( psTree, pszVRTPath );
-
-    if( eErr != CE_None )
-    {
-        GDALClose(poDataset);
-        return eErr;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Inherit georeferencing info from panchro band if not defined    */
-/*      in VRT.                                                         */
-/* -------------------------------------------------------------------- */
-
-    double adfPanGeoTransform[6];
-    int bPanGeoTransformValid = ( GetGeoTransform(adfPanGeoTransform) == CE_None );
-    if( !bPanGeoTransformValid &&
-        GetGCPCount() == 0 &&
-        GetProjectionRef()[0] == '\0' )
-    {
-        if( poDataset->GetGeoTransform(adfPanGeoTransform) == CE_None )
-        {
-            bPanGeoTransformValid = TRUE;
-            SetGeoTransform(adfPanGeoTransform);
-        }
-        if( poDataset->GetProjectionRef() != NULL &&
-            poDataset->GetProjectionRef()[0] != '\0' )
-        {
-            SetProjection(poDataset->GetProjectionRef());
-        }
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Parse rest of PansharpeningOptions                              */
-/* -------------------------------------------------------------------- */
 
     const char* pszAlgorithm = CPLGetXMLValue(psOptions, 
                                               "Algorithm", "WeightedBrovey");
@@ -306,7 +276,7 @@ CPLErr VRTPansharpenedDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPa
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Algorithm %s unsupported", pszAlgorithm);
-        GDALClose(poDataset);
+        GDALClose(poPanDataset);
         return CE_Failure;
     }
 
@@ -323,20 +293,20 @@ CPLErr VRTPansharpenedDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPa
             CSLDestroy(papszTokens);
         }
     }
-    
+
     GDALRIOResampleAlg eResampleAlg = GDALRasterIOGetResampleAlg(
                     CPLGetXMLValue(psOptions, "Resampling", "Cubic"));
     
     std::map<CPLString, GDALDataset*> oMapNamesToDataset;
-    oMapNamesToDataset[osSourceFilename] = poDataset;
+    oMapNamesToDataset[osSourceFilename] = poPanDataset;
     const char* pszSourceBand = CPLGetXMLValue(psPanchroBand,"SourceBand","1");
     int nBand = atoi(pszSourceBand);
-    GDALRasterBand* poPanBand = poDataset->GetRasterBand(nBand);
+    GDALRasterBand* poPanBand = poPanDataset->GetRasterBand(nBand);
     if( poPanBand == NULL )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "%s invalid band of %s",
                  pszSourceBand, osSourceFilename.c_str());
-        GDALClose(poDataset);
+        GDALClose(poPanDataset);
         return CE_Failure;
     }
 
@@ -344,23 +314,46 @@ CPLErr VRTPansharpenedDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPa
     std::map<int, int> aMapDstBandToSpectralBand;
     std::map<int,int>::iterator aMapDstBandToSpectralBandIter;
     int nBitDepth = 0;
+    int bFoundNonMachingGT = FALSE;
+    double adfPanGT[6];
+    int bPanGeoTransformValid = ( poPanDataset->GetGeoTransform(adfPanGT) == CE_None );
+    double dfMinX = 0.0, dfMinY = 0.0, dfMaxX = 0.0, dfMaxY = 0.0;
+    int bFoundRotatingTerms = FALSE;
+    double dfLRPanX = adfPanGT[0] +
+                        poPanDataset->GetRasterXSize() * adfPanGT[1] +
+                        poPanDataset->GetRasterYSize() * adfPanGT[2];
+    double dfLRPanY = adfPanGT[3] +
+                        poPanDataset->GetRasterXSize() * adfPanGT[4] +
+                        poPanDataset->GetRasterYSize() * adfPanGT[5];
+    if( bPanGeoTransformValid )
+    {
+        bFoundRotatingTerms |= (adfPanGT[2] != 0.0 || adfPanGT[4] != 0.0);
+        dfMinX = adfPanGT[0];
+        dfMaxX = dfLRPanX;
+        dfMaxY = adfPanGT[3];
+        dfMinY = dfLRPanY;
+    }
+    
+    CPLString osPanProjection, osPanProjectionProj4;
+    if( poPanDataset->GetProjectionRef() )
+    {
+        osPanProjection = poPanDataset->GetProjectionRef();
+        char* pszProj4 = NULL;
+        OGRSpatialReference oSRS(osPanProjection);
+        if( oSRS.exportToProj4(&pszProj4) == OGRERR_NONE )
+            osPanProjectionProj4 = pszProj4;
+        CPLFree(pszProj4);
+    }
+
+/* -------------------------------------------------------------------- */
+/*      First pass on spectral datasets to check their georeferencing.  */
+/* -------------------------------------------------------------------- */
 
     for(CPLXMLNode* psIter = psOptions->psChild; psIter; psIter = psIter->psNext )
     {
+        GDALDataset* poDataset;
         if( psIter->eType != CXT_Element || !EQUAL(psIter->pszValue, "SpectralBand") )
             continue;
-        const char* pszDstBand = CPLGetXMLValue(psIter, "dstBand", NULL);
-        int nDstBand = -1;
-        if( pszDstBand != NULL )
-        {
-            nDstBand = atoi(pszDstBand);
-            if( nDstBand <= 0 )
-            {
-                CPLError(CE_Failure, CPLE_AppDefined, "SpectralBand.dstBand = '%s' invalid",
-                         pszDstBand);
-                goto error;
-            }
-        }
         pszSourceFilename = CPLGetXMLValue(psIter, "SourceFilename", NULL);
         if( pszSourceFilename == NULL )
         {
@@ -369,7 +362,11 @@ CPLErr VRTPansharpenedDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPa
         }
         bRelativeToVRT = atoi(CPLGetXMLValue( psIter, "SourceFilename.relativetoVRT", "0"));
         if( bRelativeToVRT )
-            pszSourceFilename = CPLProjectRelativeFilename( pszVRTPath, pszSourceFilename );
+        {
+            const char* pszAbs = CPLProjectRelativeFilename( pszVRTPath, pszSourceFilename );
+            oMapToRelativeFilenames[pszAbs] = pszSourceFilename;
+            pszSourceFilename = pszAbs;
+        }
         osSourceFilename = pszSourceFilename;
         poDataset = oMapNamesToDataset[osSourceFilename];
         if( poDataset == NULL )
@@ -387,23 +384,62 @@ CPLErr VRTPansharpenedDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPa
             // of the spectral band.
             if( bPanGeoTransformValid )
             {
+                CPLString osProjection;
+                if( poDataset->GetProjectionRef() )
+                    osProjection = poDataset->GetProjectionRef();
+
+                if( osPanProjection.size() )
+                {
+                    if( osProjection.size() )
+                    {
+                        if( osPanProjection != osProjection )
+                        {
+                            CPLString osProjectionProj4;
+                            char* pszProj4 = NULL;
+                            OGRSpatialReference oSRS(osProjection);
+                            if( oSRS.exportToProj4(&pszProj4) == OGRERR_NONE )
+                                osProjectionProj4 = pszProj4;
+                            CPLFree(pszProj4);
+
+                            if( osPanProjectionProj4 != osProjectionProj4 )
+                            {
+                                CPLError(CE_Warning, CPLE_AppDefined,
+                                         "Pan dataset and %s do not seem to have same projection. Results might be incorrect",
+                                         osSourceFilename.c_str());
+                            }
+                        }
+                    }
+                    else
+                    {
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                 "Pan dataset has a projection, whereas %s not. Results might be incorrect",
+                                 osSourceFilename.c_str());
+                    }
+                }
+                else if( osProjection.size() )
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "Pan dataset has no projection, whereas %s has one. Results might be incorrect",
+                             osSourceFilename.c_str());
+                }
+
                 double adfSpectralGeoTransform[6];
                 if( poDataset->GetGeoTransform(adfSpectralGeoTransform) == CE_None )
                 {
+                    int bIsThisOneNonMatching = FALSE;
                     double dfPixelSize = MAX(adfSpectralGeoTransform[1], fabs(adfSpectralGeoTransform[5]));
-                    if( fabs(adfPanGeoTransform[0] - adfSpectralGeoTransform[0]) > dfPixelSize ||
-                        fabs(adfPanGeoTransform[3] - adfSpectralGeoTransform[3]) > dfPixelSize )
+                    if( fabs(adfPanGT[0] - adfSpectralGeoTransform[0]) > dfPixelSize ||
+                        fabs(adfPanGT[3] - adfSpectralGeoTransform[3]) > dfPixelSize )
                     {
-                        CPLError(CE_Warning, CPLE_AppDefined,
-                                 "Georeferencing of top-left corner of pan dataset and %s do not match",
-                                 osSourceFilename.c_str());
+                        bIsThisOneNonMatching = TRUE;
+                        if( eGTAdjustment == GTAdjust_None )
+                        {
+                            CPLError(CE_Warning, CPLE_AppDefined,
+                                    "Georeferencing of top-left corner of pan dataset and %s do not match",
+                                    osSourceFilename.c_str());
+                        }
                     }
-                    double dfLRPanX = adfPanGeoTransform[0] +
-                                      poPanDataset->GetRasterXSize() * adfPanGeoTransform[1] +
-                                      poPanDataset->GetRasterYSize() * adfPanGeoTransform[2];
-                    double dfLRPanY = adfPanGeoTransform[3] +
-                                      poPanDataset->GetRasterXSize() * adfPanGeoTransform[4] +
-                                      poPanDataset->GetRasterYSize() * adfPanGeoTransform[5];
+                    bFoundRotatingTerms |= (adfSpectralGeoTransform[2] != 0.0 || adfSpectralGeoTransform[4] != 0.0);
                     double dfLRSpectralX = adfSpectralGeoTransform[0] +
                                       poDataset->GetRasterXSize() * adfSpectralGeoTransform[1] +
                                       poDataset->GetRasterYSize() * adfSpectralGeoTransform[2];
@@ -413,15 +449,231 @@ CPLErr VRTPansharpenedDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPa
                     if( fabs(dfLRPanX - dfLRSpectralX) > dfPixelSize ||
                         fabs(dfLRPanY - dfLRSpectralY) > dfPixelSize )
                     {
-                        CPLError(CE_Warning, CPLE_AppDefined,
-                                 "Georeferencing of bottom-right corner of pan dataset and %s do not match",
-                                 osSourceFilename.c_str());
+                        bIsThisOneNonMatching = TRUE;
+                        if( eGTAdjustment == GTAdjust_None )
+                        {
+                            CPLError(CE_Warning, CPLE_AppDefined,
+                                    "Georeferencing of bottom-right corner of pan dataset and %s do not match",
+                                    osSourceFilename.c_str());
+                        }
                     }
+
+                    if( bIsThisOneNonMatching && eGTAdjustment == GTAdjust_Union )
+                    {
+                        dfMinX = MIN(dfMinX, adfSpectralGeoTransform[0]);
+                        dfMinY = MIN(dfMinY, dfLRSpectralY);
+                        dfMaxX = MAX(dfMaxX, dfLRSpectralX);
+                        dfMaxY = MAX(dfMaxY, adfSpectralGeoTransform[3]);
+                    }
+                    else if( bIsThisOneNonMatching && eGTAdjustment == GTAdjust_Intersection )
+                    {
+                        dfMinX = MAX(dfMinX, adfSpectralGeoTransform[0]);
+                        dfMinY = MAX(dfMinY, dfLRSpectralY);
+                        dfMaxX = MIN(dfMaxX, dfLRSpectralX);
+                        dfMaxY = MIN(dfMaxY, adfSpectralGeoTransform[3]);
+                    }
+
+                    bFoundNonMachingGT |= bIsThisOneNonMatching;
                 }
             }
 
             oMapNamesToDataset[osSourceFilename] = poDataset;
         }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      On-the-fly spatial extent adjustment if needed and asked.       */
+/* -------------------------------------------------------------------- */
+
+    if( bFoundNonMachingGT &&
+            (eGTAdjustment == GTAdjust_Union || eGTAdjustment == GTAdjust_Intersection) )
+    {
+        if( bFoundRotatingTerms )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "One of the panchromatic or spectral datasets has rotating "
+                     "terms in their geotransform matrix. Adjustment not possible");
+            goto error;
+        }
+        if( eGTAdjustment == GTAdjust_Intersection &&
+            (dfMinX >= dfMaxX || dfMinY >= dfMaxY) )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "One of the panchromatic or spectral datasets has rotating "
+                     "terms in their geotransform matrix. Adjustment not possible");
+            goto error;
+        }
+        if( eGTAdjustment == GTAdjust_Union )
+            CPLDebug("VRT", "Do union of bounding box of panchromatic and spectral datasets");
+        else
+            CPLDebug("VRT", "Do intersection of bounding box of panchromatic and spectral datasets");
+
+        // If the pandataset needs adjustments, make sure the coordinates of the
+        // union/intersection properly align with the grid of the pandataset
+        // to avoid annoying sub-pixel shifts on the panchro band.
+        double dfPixelSize = MAX( adfPanGT[1], fabs(adfPanGT[5]) );
+        if( fabs(adfPanGT[0] - dfMinX) > dfPixelSize ||
+            fabs(adfPanGT[3] - dfMaxY) > dfPixelSize ||
+            fabs(dfLRPanX - dfMaxX) > dfPixelSize ||
+            fabs(dfLRPanY - dfMinY) > dfPixelSize )
+        {
+            dfMinX = adfPanGT[0] + floor((dfMinX - adfPanGT[0]) / adfPanGT[1] + 0.5) * adfPanGT[1];
+            dfMaxY = adfPanGT[3] + floor((dfMaxY - adfPanGT[3]) / adfPanGT[5] + 0.5) * adfPanGT[5];
+            dfMaxX = dfLRPanX + floor((dfMaxX - dfLRPanX) / adfPanGT[1] + 0.5) * adfPanGT[1];
+            dfMinY = dfLRPanY + floor((dfMinY - dfLRPanY) / adfPanGT[5] + 0.5) * adfPanGT[5];
+        }
+
+        std::map<CPLString, GDALDataset*>::iterator oIter = oMapNamesToDataset.begin();
+        for(; oIter != oMapNamesToDataset.end(); ++oIter)
+        {
+            GDALDataset* poSrcDS = oIter->second;
+            double adfGT[6];
+            if( poSrcDS->GetGeoTransform(adfGT) != CE_None )
+                continue;
+
+            // Check if this dataset needs adjustments
+            double dfPixelSize = MAX(adfGT[1], fabs(adfGT[5]));
+            dfPixelSize = MAX( adfPanGT[1], dfPixelSize );
+            dfPixelSize = MAX( fabs(adfPanGT[5]), dfPixelSize );
+            if( fabs(adfGT[0] - dfMinX) <= dfPixelSize &&
+                fabs(adfGT[3] - dfMaxY) <= dfPixelSize &&
+                fabs(adfGT[0] + poSrcDS->GetRasterXSize() * adfGT[1] - dfMaxX) <= dfPixelSize &&
+                fabs(adfGT[3] + poSrcDS->GetRasterYSize() * adfGT[5] - dfMinY) <= dfPixelSize )
+            {
+                continue;
+            }
+
+            double adfAdjustedGT[6];
+            adfAdjustedGT[0] = dfMinX;
+            adfAdjustedGT[1] = adfGT[1];
+            adfAdjustedGT[2] = 0;
+            adfAdjustedGT[3] = dfMaxY;
+            adfAdjustedGT[4] = 0;
+            adfAdjustedGT[5] = adfGT[5];
+            int nAdjustRasterXSize = (int)(0.5 + (dfMaxX - dfMinX) / adfAdjustedGT[1]);
+            int nAdjustRasterYSize = (int)(0.5 + (dfMaxY - dfMinY) / (-adfAdjustedGT[5]));
+
+            poSrcDS->MarkAsShared(); // will make ownership easier
+
+            VRTDataset* poVDS = new VRTDataset(nAdjustRasterXSize, nAdjustRasterYSize);
+            poVDS->SetWritable(FALSE);
+            poVDS->SetDescription(poSrcDS->GetDescription());
+            poVDS->SetGeoTransform(adfAdjustedGT);
+            poVDS->SetProjection(poPanDataset->GetProjectionRef());
+
+            for(int i=0;i<poSrcDS->GetRasterCount();i++)
+            {
+                GDALRasterBand* poSrcBand = poSrcDS->GetRasterBand(i+1);
+                poVDS->AddBand(poSrcBand->GetRasterDataType(), NULL);
+                VRTSourcedRasterBand* poVRTBand = (VRTSourcedRasterBand*) poVDS->GetRasterBand(i+1);
+
+                const char* pszNBITS = poSrcBand->GetMetadataItem("NBITS", "IMAGE_STRUCTURE");
+                if( pszNBITS )
+                    poVRTBand->SetMetadataItem("NBITS", pszNBITS, "IMAGE_STRUCTURE");
+
+                VRTSimpleSource* poSimpleSource = new VRTSimpleSource();
+                poVRTBand->ConfigureSource( poSimpleSource,
+                                            poSrcBand,
+                                            FALSE,
+                                            (int)floor((dfMinX - adfGT[0]) / adfGT[1] + 0.001),
+                                            (int)floor((dfMaxY - adfGT[3]) / adfGT[5] + 0.001),
+                                            (int)(0.5 + (dfMaxX - dfMinX) / adfGT[1]),
+                                            (int)(0.5 + (dfMaxY - dfMinY) / (-adfGT[5])),
+                                            0, 0,
+                                            nAdjustRasterXSize, nAdjustRasterYSize );
+
+                poVRTBand->AddSource( poSimpleSource );
+            }
+
+            oIter->second = poVDS;
+            if( poSrcDS == poPanDataset )
+            {
+                memcpy(adfPanGT, adfAdjustedGT, 6*sizeof(double));
+                poPanDataset = poVDS;
+                poPanBand = poPanDataset->GetRasterBand(nBand);
+            }
+
+            poSrcDS->Dereference();
+        }
+    }
+
+    if( nRasterXSize == 0 && nRasterYSize == 0 ) 
+    {
+        nRasterXSize = poPanDataset->GetRasterXSize();
+        nRasterYSize = poPanDataset->GetRasterYSize();
+    }
+    else if( nRasterXSize != poPanDataset->GetRasterXSize() ||
+             nRasterYSize != poPanDataset->GetRasterYSize() )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Inconsistant declared VRT dimensions with panchro dataset");
+        goto error;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Initialize all the general VRT stuff.  This will even           */
+/*      create the VRTPansharpenedRasterBands and initialize them.      */
+/* -------------------------------------------------------------------- */
+    eErr = VRTDataset::XMLInit( psTree, pszVRTPath );
+
+    if( eErr != CE_None )
+    {
+        goto error;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Inherit georeferencing info from panchro band if not defined    */
+/*      in VRT.                                                         */
+/* -------------------------------------------------------------------- */
+
+    {
+        double adfOutGT[6];
+        if( GetGeoTransform(adfOutGT) != CE_None &&
+            GetGCPCount() == 0 &&
+            GetProjectionRef()[0] == '\0' )
+        {
+            if( bPanGeoTransformValid )
+            {
+                SetGeoTransform(adfPanGT);
+            }
+            if( poPanDataset->GetProjectionRef() != NULL &&
+                poPanDataset->GetProjectionRef()[0] != '\0' )
+            {
+                SetProjection(poPanDataset->GetProjectionRef());
+            }
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Parse rest of PansharpeningOptions                              */
+/* -------------------------------------------------------------------- */
+
+    for(CPLXMLNode* psIter = psOptions->psChild; psIter; psIter = psIter->psNext )
+    {
+        GDALDataset* poDataset;
+        if( psIter->eType != CXT_Element || !EQUAL(psIter->pszValue, "SpectralBand") )
+            continue;
+
+        const char* pszDstBand = CPLGetXMLValue(psIter, "dstBand", NULL);
+        int nDstBand = -1;
+        if( pszDstBand != NULL )
+        {
+            nDstBand = atoi(pszDstBand);
+            if( nDstBand <= 0 )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "SpectralBand.dstBand = '%s' invalid",
+                         pszDstBand);
+                goto error;
+            }
+        }
+        pszSourceFilename = CPLGetXMLValue(psIter, "SourceFilename", NULL);
+        CPLAssert(pszSourceFilename);
+        bRelativeToVRT = atoi(CPLGetXMLValue( psIter, "SourceFilename.relativetoVRT", "0"));
+        if( bRelativeToVRT )
+            pszSourceFilename = CPLProjectRelativeFilename( pszVRTPath, pszSourceFilename );
+        osSourceFilename = pszSourceFilename;
+        poDataset = oMapNamesToDataset[osSourceFilename];
+        CPLAssert(poDataset);
         pszSourceBand = CPLGetXMLValue(psIter,"SourceBand","1");
         int nBand = atoi(pszSourceBand);
         GDALRasterBand* poBand = poDataset->GetRasterBand(nBand);
@@ -507,11 +759,19 @@ CPLErr VRTPansharpenedDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPa
         {
             for(int i=0;i<nBands;i++)
             {
-                if( ((VRTRasterBand*)GetRasterBand(i+1))->IsPansharpenRasterBand() &&
-                    GetRasterBand(i+1)->GetMetadataItem("NBITS", "IMAGE_STRUCTURE") == NULL )
+                if( !((VRTRasterBand*)GetRasterBand(i+1))->IsPansharpenRasterBand() )
+                    continue;
+                if( GetRasterBand(i+1)->GetMetadataItem("NBITS", "IMAGE_STRUCTURE") == NULL )
                 {
-                    GetRasterBand(i+1)->SetMetadataItem("NBITS",
-                                    CPLSPrintf("%d", nBitDepth), "IMAGE_STRUCTURE");
+                    if( nBitDepth != 8 && nBitDepth != 16 && nBitDepth != 32 )
+                    {
+                        GetRasterBand(i+1)->SetMetadataItem("NBITS",
+                                        CPLSPrintf("%d", nBitDepth), "IMAGE_STRUCTURE");
+                    }
+                }
+                else if( nBitDepth == 8 || nBitDepth == 16 || nBitDepth == 32 )
+                {
+                    GetRasterBand(i+1)->SetMetadataItem("NBITS", NULL, "IMAGE_STRUCTURE");
                 }
             }
         }
@@ -616,6 +876,170 @@ error:
 }
 
 /************************************************************************/
+/*                           SerializeToXML()                           */
+/************************************************************************/
+
+CPLXMLNode *VRTPansharpenedDataset::SerializeToXML( const char *pszVRTPath )
+
+{
+    CPLXMLNode *psTree;
+
+    psTree = VRTDataset::SerializeToXML( pszVRTPath );
+
+    if( psTree == NULL )
+        return psTree;
+
+/* -------------------------------------------------------------------- */
+/*      Set subclass.                                                   */
+/* -------------------------------------------------------------------- */
+    CPLCreateXMLNode( 
+        CPLCreateXMLNode( psTree, CXT_Attribute, "subClass" ), 
+        CXT_Text, "VRTPansharpenedDataset" );
+
+/* -------------------------------------------------------------------- */
+/*      Serialize the block size.                                       */
+/* -------------------------------------------------------------------- */
+    CPLCreateXMLElementAndValue( psTree, "BlockXSize",
+                                 CPLSPrintf( "%d", nBlockXSize ) );
+    CPLCreateXMLElementAndValue( psTree, "BlockYSize",
+                                 CPLSPrintf( "%d", nBlockYSize ) );
+
+/* -------------------------------------------------------------------- */
+/*      Serialize the options.                                          */
+/* -------------------------------------------------------------------- */
+    if( poPansharpener == NULL )
+        return psTree;
+    GDALPansharpenOptions* psOptions = poPansharpener->GetOptions();
+    if( psOptions == NULL )
+        return psTree;
+
+    CPLXMLNode* psOptionsNode = CPLCreateXMLNode(psTree, CXT_Element, "PansharpeningOptions");
+
+    if( psOptions->ePansharpenAlg == GDAL_PSH_WEIGHTED_BROVEY )
+    {
+        CPLCreateXMLElementAndValue( psOptionsNode, "Algorithm", "WeightedBrovey" );
+    }
+    else
+    {
+        CPLAssert(FALSE);
+    }
+    if( psOptions->nWeightCount )
+    {
+        CPLString osWeights;
+        for(int i=0;i<psOptions->nWeightCount;i++)
+        {
+            if( i ) osWeights += ",";
+            osWeights += CPLSPrintf("%.16g", psOptions->padfWeights[i]);
+        }
+        CPLCreateXMLElementAndValue(
+            CPLCreateXMLNode(psOptionsNode, CXT_Element, "AlgorithmOptions"),
+            "Weights", osWeights.c_str() );
+    }
+    CPLCreateXMLElementAndValue( psOptionsNode, "Resampling",
+                                 GDALRasterIOGetResampleAlg(psOptions->eResampleAlg) );
+
+    if( psOptions->nBitDepth )
+        CPLCreateXMLElementAndValue( psOptionsNode, "BitDepth",
+                                     CPLSPrintf("%d", psOptions->nBitDepth) );
+
+    const char* pszAdjust = NULL;
+    switch( eGTAdjustment )
+    {
+        case GTAdjust_Union:
+            pszAdjust = "Union";
+            break;
+        case GTAdjust_Intersection:
+            pszAdjust = "Intersection";
+            break;
+        case GTAdjust_None:
+            pszAdjust = "None";
+            break;
+        case GTAdjust_NoneWithoutWarning:
+            pszAdjust = "NoneWithoutWarning";
+            break;
+        default:
+            break;
+    }
+
+    if( pszAdjust )
+        CPLCreateXMLElementAndValue( psOptionsNode, "SpatialExtentAdjustment", pszAdjust);
+
+    if( psOptions->hPanchroBand )
+    {
+         CPLXMLNode* psBand = CPLCreateXMLNode(psOptionsNode, CXT_Element, "PanchroBand");
+         GDALRasterBand* poBand = (GDALRasterBand*)psOptions->hPanchroBand;
+         if( poBand->GetDataset() )
+         {
+             std::map<CPLString,CPLString>::iterator oIter = 
+                oMapToRelativeFilenames.find(poBand->GetDataset()->GetDescription());
+             if( oIter == oMapToRelativeFilenames.end() )
+             {
+                CPLCreateXMLElementAndValue( psBand, "SourceFilename", poBand->GetDataset()->GetDescription() );
+             }
+             else
+             {
+                 CPLXMLNode* psSourceFilename =
+                    CPLCreateXMLElementAndValue( psBand, "SourceFilename", oIter->second );
+                 CPLCreateXMLNode( 
+                    CPLCreateXMLNode( psSourceFilename, 
+                                    CXT_Attribute, "relativeToVRT" ), 
+                    CXT_Text, "1" );
+             }
+             CPLCreateXMLElementAndValue( psBand, "SourceBand", CPLSPrintf("%d", poBand->GetBand()) );
+         }
+    }
+    for(int i=0;i<psOptions->nInputSpectralBands;i++)
+    {
+        CPLXMLNode* psBand = CPLCreateXMLNode(psOptionsNode, CXT_Element, "SpectralBand");
+
+        for(int j=0;j<psOptions->nOutPansharpenedBands;j++)
+        {
+            if( psOptions->panOutPansharpenedBands[j] == i )
+            {
+                for(int k=0;k<nBands;k++)
+                {
+                    if( ((VRTRasterBand*)GetRasterBand(k+1))->IsPansharpenRasterBand() )
+                    {
+                        if( ((VRTPansharpenedRasterBand*)GetRasterBand(k+1))->GetIndexAsPansharpenedBand() == j )
+                        {
+                            CPLCreateXMLNode( 
+                                CPLCreateXMLNode( psBand, 
+                                                CXT_Attribute, "dstBand" ), 
+                                CXT_Text, CPLSPrintf("%d", k+1) );
+                            break;
+                        }
+                    }
+                }
+                break;
+            }
+        }
+
+        GDALRasterBand* poBand = (GDALRasterBand*)psOptions->pahInputSpectralBands[i];
+        if( poBand->GetDataset() )
+        {
+            std::map<CPLString,CPLString>::iterator oIter = 
+                oMapToRelativeFilenames.find(poBand->GetDataset()->GetDescription());
+            if( oIter == oMapToRelativeFilenames.end() )
+            {
+                CPLCreateXMLElementAndValue( psBand, "SourceFilename", poBand->GetDataset()->GetDescription() );
+            }
+            else
+            {
+                CPLXMLNode* psSourceFilename =
+                    CPLCreateXMLElementAndValue( psBand, "SourceFilename", oIter->second );
+                CPLCreateXMLNode( 
+                    CPLCreateXMLNode( psSourceFilename, 
+                                      CXT_Attribute, "relativeToVRT" ), 
+                    CXT_Text, "1" );
+            }
+            CPLCreateXMLElementAndValue( psBand, "SourceBand", CPLSPrintf("%d", poBand->GetBand()) );
+        }
+    }
+
+    return psTree;
+}
+
+/************************************************************************/
 /*                            GetBlockSize()                            */
 /************************************************************************/
 
@@ -662,26 +1086,18 @@ CPLErr VRTPansharpenedDataset::IRasterIO( GDALRWFlag eRWFlag,
     /* Try to pass the request to the most appropriate overview dataset */
     if( nBufXSize < nXSize && nBufYSize < nYSize )
     {
-        int nXOffMod = nXOff, nYOffMod = nYOff, nXSizeMod = nXSize, nYSizeMod = nYSize;
-        GDALRasterIOExtraArg sExtraArg;
-    
-        GDALCopyRasterIOExtraArg(&sExtraArg, psExtraArg);
-
-        int iOvrLevel = GDALBandGetBestOverviewLevel2(papoBands[0],
-                                                     nXOffMod, nYOffMod,
-                                                     nXSizeMod, nYSizeMod,
-                                                     nBufXSize, nBufYSize,
-                                                     &sExtraArg);
-
-        if( iOvrLevel >= 0 && papoBands[0]->GetOverview(iOvrLevel) != NULL &&
-            papoBands[0]->GetOverview(iOvrLevel)->GetDataset() != NULL )
-        {
-            //{static int bDone = 0; if (!bDone) printf("(1)\n"); bDone = 1; }
-            return papoBands[0]->GetOverview(iOvrLevel)->GetDataset()->RasterIO(
-                eRWFlag, nXOffMod, nYOffMod, nXSizeMod, nYSizeMod,
-                pData, nBufXSize, nBufYSize, eBufType,
-                nBandCount, panBandMap, nPixelSpace, nLineSpace, nBandSpace, &sExtraArg);
-        }
+        int bTried;
+        CPLErr eErr = TryOverviewRasterIO( eRWFlag,
+                                    nXOff, nYOff, nXSize, nYSize,
+                                    pData, nBufXSize, nBufYSize,
+                                    eBufType,
+                                    nBandCount, panBandMap,
+                                    nPixelSpace, nLineSpace,
+                                    nBandSpace,
+                                    psExtraArg,
+                                    &bTried );
+        if( bTried )
+            return eErr;
     }
 
     int nDataTypeSize = GDALGetDataTypeSize(eBufType) / 8;
@@ -851,25 +1267,16 @@ CPLErr VRTPansharpenedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
     /* Try to pass the request to the most appropriate overview dataset */
     if( nBufXSize < nXSize && nBufYSize < nYSize )
     {
-        int nXOffMod = nXOff, nYOffMod = nYOff, nXSizeMod = nXSize, nYSizeMod = nYSize;
-        GDALRasterIOExtraArg sExtraArg;
-    
-        GDALCopyRasterIOExtraArg(&sExtraArg, psExtraArg);
-
-        int iOvrLevel = GDALBandGetBestOverviewLevel2(this,
-                                                     nXOffMod, nYOffMod,
-                                                     nXSizeMod, nYSizeMod,
-                                                     nBufXSize, nBufYSize,
-                                                     &sExtraArg);
-
-        if( iOvrLevel >= 0 && GetOverview(iOvrLevel) != NULL )
-        {
-            //{static int bDone = 0; if (!bDone) printf("(5)\n"); bDone = 1; }
-            return ((VRTPansharpenedRasterBand*)GetOverview(iOvrLevel))->IRasterIO(
-                eRWFlag, nXOffMod, nYOffMod, nXSizeMod, nYSizeMod,
-                pData, nBufXSize, nBufYSize, eBufType,
-                nPixelSpace, nLineSpace, &sExtraArg);
-        }
+        int bTried;
+        CPLErr eErr = TryOverviewRasterIO( eRWFlag,
+                                    nXOff, nYOff, nXSize, nYSize,
+                                    pData, nBufXSize, nBufYSize,
+                                    eBufType,
+                                    nPixelSpace, nLineSpace,
+                                    psExtraArg,
+                                    &bTried );
+        if( bTried )
+            return eErr;
     }
 
     int nDataTypeSize = GDALGetDataTypeSize(eBufType) / 8;
@@ -972,6 +1379,27 @@ CPLErr VRTPansharpenedRasterBand::XMLInit( CPLXMLNode * psTree,
 
 {
     return VRTRasterBand::XMLInit( psTree, pszVRTPath );
+}
+
+/************************************************************************/
+/*                           SerializeToXML()                           */
+/************************************************************************/
+
+CPLXMLNode *VRTPansharpenedRasterBand::SerializeToXML( const char *pszVRTPath )
+
+{
+    CPLXMLNode *psTree;
+
+    psTree = VRTRasterBand::SerializeToXML( pszVRTPath );
+
+/* -------------------------------------------------------------------- */
+/*      Set subclass.                                                   */
+/* -------------------------------------------------------------------- */
+    CPLCreateXMLNode( 
+        CPLCreateXMLNode( psTree, CXT_Attribute, "subClass" ), 
+        CXT_Text, "VRTPansharpenedRasterBand" );
+
+    return psTree;
 }
 
 /************************************************************************/

@@ -37,7 +37,8 @@ def Usage():
     print('Usage: gdal_pansharpen [--help-general] pan_dataset {spectral_dataset[,band=num]}+ out_dataset')
     print('                       [-of format] [-b band]* [-w weight]*')
     print('                       [-r {nearest,bilinear,cubic,cubicspline,lanczos,average}]')
-    print('                       [-co NAME=VALUE]* [-q]')
+    print('                       [-spat_adjust {union,intersection,none,nonewithoutwarning}]')
+    print('                       [-verbose_vrt] [-co NAME=VALUE]* [-q]')
     print('')
     print('Create a dataset resulting from a pansharpening operation.')
     return -1
@@ -59,6 +60,8 @@ def gdal_pansharpen(argv):
     creation_options = []
     callback = gdal.TermProgress
     resampling = None
+    spat_adjust = None
+    verbose_vrt = False
 
     i = 1
     argc = len(argv)
@@ -68,6 +71,9 @@ def gdal_pansharpen(argv):
             i = i + 1
         elif argv[i] == '-r' and i < len(argv)-1:
             resampling = argv[i+1]
+            i = i + 1
+        elif argv[i] == '-spat_adjust' and i < len(argv)-1:
+            spat_adjust = argv[i+1]
             i = i + 1
         elif argv[i] == '-b' and i < len(argv)-1:
             bands.append(int(argv[i+1]))
@@ -80,6 +86,8 @@ def gdal_pansharpen(argv):
             i = i + 1
         elif argv[i] == '-q':
             callback = None
+        elif argv[i] == '-verbose_vrt':
+            verbose_vrt = True
         elif argv[i][0] == '-':
             sys.stderr.write('Unrecognized option : %s\n' % argv[i])
             return Usage()
@@ -153,6 +161,9 @@ def gdal_pansharpen(argv):
     if resampling is not None:
         vrt_xml += '      <Resampling>%s</Resampling>\n' % resampling
 
+    if spat_adjust is not None:
+        vrt_xml += '      <SpatialExtentAdjustment>%s</SpatialExtentAdjustment>\n' % spat_adjust
+
     pan_relative='0'
     if format.upper() == 'VRT':
         if not os.path.isabs(pan_name):
@@ -193,7 +204,11 @@ def gdal_pansharpen(argv):
             return 1
         gdal.VSIFWriteL(vrt_xml, 1, len(vrt_xml), f)
         gdal.VSIFCloseL(f)
-        vrt_ds = gdal.Open(out_name)
+        if verbose_vrt:
+            vrt_ds = gdal.Open(out_name, gdal.GA_Update)
+            vrt_ds.SetMetadata(vrt_ds.GetMetadata())
+        else:
+            vrt_ds = gdal.Open(out_name)
         if vrt_ds is None:
             return 1
 

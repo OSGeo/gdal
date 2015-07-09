@@ -44,12 +44,14 @@ def vrtpansharpen_1():
     src_ds = gdal.Open('data/small_world.tif')
     src_data = src_ds.GetRasterBand(1).ReadRaster()
     gt = src_ds.GetGeoTransform()
+    wkt = src_ds.GetProjectionRef()
     src_ds = None
     pan_ds = gdal.GetDriverByName('GTiff').Create('tmp/small_world_pan.tif', 800, 400)
     gt = [ gt[i] for i in range(len(gt)) ]
     gt[1] *= 0.5
     gt[5] *= 0.5
     pan_ds.SetGeoTransform(gt)
+    pan_ds.SetProjection(wkt)
     pan_ds.GetRasterBand(1).WriteRaster(0,0,800,400,src_data,400,200)
     pan_ds = None
     
@@ -798,12 +800,14 @@ def vrtpansharpen_1():
         return 'fail'
 
     # Just warnings
+    # Warning 1: Pan dataset and data/byte.tif do not seem to have same projection. Results might be incorrect
     # Georeferencing of top-left corner of pan dataset and data/byte.tif do not match
     # Georeferencing of bottom-right corner of pan dataset and data/byte.tif do not match
     gdal.ErrorReset()
     gdal.PushErrorHandler()
     vrt_ds = gdal.Open("""<VRTDataset subClass="VRTPansharpenedDataset">
     <PansharpeningOptions>
+        <SpatialExtentAdjustment>None</SpatialExtentAdjustment>
         <PanchroBand>
                 <SourceFilename relativeToVRT="1">tmp/small_world_pan.tif</SourceFilename>
                 <SourceBand>1</SourceBand>
@@ -922,6 +926,9 @@ def vrtpansharpen_2():
     if vrt_ds.GetFileList() != [ 'tmp/small_world_pan.tif', 'data/small_world.tif' ]:
         gdaltest.post_reason('fail')
         print(vrt_ds.GetFileList())
+        return 'fail'
+    if vrt_ds.GetRasterBand(1).GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') is not None:
+        gdaltest.post_reason('fail')
         return 'fail'
     cs = [ vrt_ds.GetRasterBand(i+1).Checksum() for i in range(vrt_ds.RasterCount) ]
     if cs != [4735, 10000, 9742]:
@@ -1422,6 +1429,238 @@ def vrtpansharpen_6():
     return 'success'
 
 ###############################################################################
+# Test bands with different extents
+
+def vrtpansharpen_7():
+    
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/vrtpansharpen_7_pan.tif', 20, 40 )
+    ds.SetGeoTransform([120,1,0,80,0,-1])
+    ds = None
+    
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/vrtpansharpen_7_ms.tif', 15, 30 )
+    ds.SetGeoTransform([100,2,0,100,0,-2])
+    ds = None
+
+    xml = """<VRTDataset subClass="VRTPansharpenedDataset">
+    <PansharpeningOptions>
+        <PanchroBand>
+                <SourceFilename>/vsimem/vrtpansharpen_7_pan.tif</SourceFilename>
+        </PanchroBand>
+        <SpectralBand dstBand="1">
+                <SourceFilename>/vsimem/vrtpansharpen_7_ms.tif</SourceFilename>
+        </SpectralBand>
+    </PansharpeningOptions>
+</VRTDataset>"""
+    ds = gdal.Open(xml)
+    if ds.GetGeoTransform() != (100.0, 1.0, 0.0, 100.0, 0.0, -1.0) or ds.RasterXSize != 40 or ds.RasterYSize != 60:
+        gdaltest.post_reason('fail')
+        print(ds.GetGeoTransform())
+        print(ds.RasterXSize)
+        print(ds.RasterYSize)
+        return 'fail'
+    ds = None
+
+    xml = """<VRTDataset subClass="VRTPansharpenedDataset">
+    <PansharpeningOptions>
+        <SpatialExtentAdjustment>Union</SpatialExtentAdjustment>
+        <PanchroBand>
+                <SourceFilename>/vsimem/vrtpansharpen_7_pan.tif</SourceFilename>
+        </PanchroBand>
+        <SpectralBand dstBand="1">
+                <SourceFilename>/vsimem/vrtpansharpen_7_ms.tif</SourceFilename>
+        </SpectralBand>
+    </PansharpeningOptions>
+</VRTDataset>"""
+    ds = gdal.Open(xml)
+    if ds.GetGeoTransform() != (100.0, 1.0, 0.0, 100.0, 0.0, -1.0) or ds.RasterXSize != 40 or ds.RasterYSize != 60:
+        gdaltest.post_reason('fail')
+        print(ds.GetGeoTransform())
+        print(ds.RasterXSize)
+        print(ds.RasterYSize)
+        return 'fail'
+    ds = None
+
+    xml = """<VRTDataset subClass="VRTPansharpenedDataset">
+    <PansharpeningOptions>
+        <SpatialExtentAdjustment>BlaBla</SpatialExtentAdjustment>
+        <PanchroBand>
+                <SourceFilename>/vsimem/vrtpansharpen_7_pan.tif</SourceFilename>
+        </PanchroBand>
+        <SpectralBand dstBand="1">
+                <SourceFilename>/vsimem/vrtpansharpen_7_ms.tif</SourceFilename>
+        </SpectralBand>
+    </PansharpeningOptions>
+</VRTDataset>"""
+    gdal.ErrorReset()
+    gdal.PushErrorHandler()
+    ds = gdal.Open(xml)
+    gdal.PopErrorHandler()
+    if ds.GetGeoTransform() != (100.0, 1.0, 0.0, 100.0, 0.0, -1.0) or ds.RasterXSize != 40 or ds.RasterYSize != 60:
+        gdaltest.post_reason('fail')
+        print(ds.GetGeoTransform())
+        print(ds.RasterXSize)
+        print(ds.RasterYSize)
+        return 'fail'
+    if gdal.GetLastErrorMsg() != '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    xml = """<VRTDataset subClass="VRTPansharpenedDataset">
+    <PansharpeningOptions>
+        <SpatialExtentAdjustment>Intersection</SpatialExtentAdjustment>
+        <PanchroBand>
+                <SourceFilename>/vsimem/vrtpansharpen_7_pan.tif</SourceFilename>
+        </PanchroBand>
+        <SpectralBand dstBand="1">
+                <SourceFilename>/vsimem/vrtpansharpen_7_ms.tif</SourceFilename>
+        </SpectralBand>
+    </PansharpeningOptions>
+</VRTDataset>"""
+    ds = gdal.Open(xml)
+    if ds.GetGeoTransform() != (120.0, 1.0, 0.0, 80.0, 0.0, -1.0) or ds.RasterXSize != 10 or ds.RasterYSize != 40:
+        gdaltest.post_reason('fail')
+        print(ds.GetGeoTransform())
+        print(ds.RasterXSize)
+        print(ds.RasterYSize)
+        return 'fail'
+    ds = None
+
+    xml = """<VRTDataset subClass="VRTPansharpenedDataset">
+    <PansharpeningOptions>
+        <SpatialExtentAdjustment>None</SpatialExtentAdjustment>
+        <PanchroBand>
+                <SourceFilename>/vsimem/vrtpansharpen_7_pan.tif</SourceFilename>
+        </PanchroBand>
+        <SpectralBand dstBand="1">
+                <SourceFilename>/vsimem/vrtpansharpen_7_ms.tif</SourceFilename>
+        </SpectralBand>
+    </PansharpeningOptions>
+</VRTDataset>"""
+    gdal.ErrorReset()
+    gdal.PushErrorHandler()
+    ds = gdal.Open(xml)
+    gdal.PopErrorHandler()
+    if ds.GetGeoTransform() != (120.0, 1.0, 0.0, 80.0, 0.0, -1.0) or ds.RasterXSize != 20 or ds.RasterYSize != 40:
+        gdaltest.post_reason('fail')
+        print(ds.GetGeoTransform())
+        print(ds.RasterXSize)
+        print(ds.RasterYSize)
+        return 'fail'
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    xml = """<VRTDataset subClass="VRTPansharpenedDataset">
+    <PansharpeningOptions>
+        <SpatialExtentAdjustment>NoneWithoutWarning</SpatialExtentAdjustment>
+        <PanchroBand>
+                <SourceFilename>/vsimem/vrtpansharpen_7_pan.tif</SourceFilename>
+        </PanchroBand>
+        <SpectralBand dstBand="1">
+                <SourceFilename>/vsimem/vrtpansharpen_7_ms.tif</SourceFilename>
+        </SpectralBand>
+    </PansharpeningOptions>
+</VRTDataset>"""
+    gdal.ErrorReset()
+    ds = gdal.Open(xml)
+    if ds.GetGeoTransform() != (120.0, 1.0, 0.0, 80.0, 0.0, -1.0) or ds.RasterXSize != 20 or ds.RasterYSize != 40:
+        gdaltest.post_reason('fail')
+        print(ds.GetGeoTransform())
+        print(ds.RasterXSize)
+        print(ds.RasterYSize)
+        return 'fail'
+    if gdal.GetLastErrorMsg() != '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+    
+    # Empty intersection
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/vrtpansharpen_7_ms.tif', 15, 30 )
+    ds.SetGeoTransform([-100,2,0,-100,0,-2])
+    ds = None
+
+    xml = """<VRTDataset subClass="VRTPansharpenedDataset">
+    <PansharpeningOptions>
+        <SpatialExtentAdjustment>Intersection</SpatialExtentAdjustment>
+        <PanchroBand>
+                <SourceFilename>/vsimem/vrtpansharpen_7_pan.tif</SourceFilename>
+        </PanchroBand>
+        <SpectralBand dstBand="1">
+                <SourceFilename>/vsimem/vrtpansharpen_7_ms.tif</SourceFilename>
+        </SpectralBand>
+    </PansharpeningOptions>
+</VRTDataset>"""
+    gdal.PushErrorHandler()
+    ds = gdal.Open(xml)
+    gdal.PopErrorHandler()
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    gdal.GetDriverByName('GTiff').Delete('/vsimem/vrtpansharpen_7_pan.tif')
+    gdal.GetDriverByName('GTiff').Delete('/vsimem/vrtpansharpen_7_ms.tif')
+        
+    return 'success'
+
+###############################################################################
+# Test SerializeToXML()
+
+def vrtpansharpen_8():
+
+    xml = """<VRTDataset subClass="VRTPansharpenedDataset">
+    <VRTRasterBand dataType="Byte" band="1" subClass="VRTPansharpenedRasterBand">
+    </VRTRasterBand>
+    <VRTRasterBand dataType="Byte" band="2">
+    </VRTRasterBand>
+    <VRTRasterBand dataType="Byte" band="3" subClass="VRTPansharpenedRasterBand">
+    </VRTRasterBand>
+    <PansharpeningOptions>
+        <PanchroBand>
+                <SourceFilename relativeToVRT="1">small_world_pan.tif</SourceFilename>
+        </PanchroBand>
+        <SpectralBand dstBand="3">
+                <SourceFilename>data/small_world.tif</SourceFilename>
+        </SpectralBand>
+        <SpectralBand dstBand="1">
+                <SourceFilename>data/small_world.tif</SourceFilename>
+                <SourceBand>2</SourceBand>
+        </SpectralBand>
+    </PansharpeningOptions>
+</VRTDataset>"""
+    open('tmp/vrtpansharpen_8.vrt', 'wt').write(xml)
+
+    ds = gdal.Open('tmp/vrtpansharpen_8.vrt', gdal.GA_Update)
+    expected_cs1 = ds.GetRasterBand(1).Checksum()
+    expected_cs2 = ds.GetRasterBand(2).Checksum()
+    expected_cs3 = ds.GetRasterBand(3).Checksum()
+    # Force update
+    ds.SetMetadata(ds.GetMetadata())
+    ds = None
+
+    ds = gdal.Open('tmp/vrtpansharpen_8.vrt')
+    cs1 = ds.GetRasterBand(1).Checksum()
+    cs2 = ds.GetRasterBand(2).Checksum()
+    cs3 = ds.GetRasterBand(3).Checksum()
+    ds = None
+
+    gdal.Unlink('tmp/vrtpansharpen_8.vrt')
+    
+    if cs1 != expected_cs1 or cs2 != expected_cs2 or cs3 != expected_cs3:
+        gdaltest.post_reason('fail')
+        print(cs1)
+        print(expected_cs1)
+        print(cs2)
+        print(expected_cs2)
+        print(cs3)
+        print(expected_cs3)
+        return 'fail'
+        
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def vrtpansharpen_cleanup():
@@ -1439,10 +1678,12 @@ gdaltest_list = [
     vrtpansharpen_4,
     vrtpansharpen_5,
     vrtpansharpen_6,
+    vrtpansharpen_7,
+    vrtpansharpen_8,
     vrtpansharpen_cleanup,
 ]
 
-#gdaltest_list= [ vrtpansharpen_6 ]
+#gdaltest_list= [ vrtpansharpen_1, vrtpansharpen_8 ]
 
 if __name__ == '__main__':
 

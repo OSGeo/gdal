@@ -289,15 +289,21 @@ template<class WorkDataType, class OutDataType, int bHasBitDepth>
 {
     for(int j=0;j<nValues;j++)
     {
-        double dfPseudoPanchro = 0;
-        for(int i=0;i<psOptions->nInputSpectralBands;i++)
-            dfPseudoPanchro += psOptions->padfWeights[i] *
-                               pUpsampledSpectralBuffer[i * nValues + j];
         double dfFactor;
-        if( dfPseudoPanchro )
-            dfFactor = pPanBuffer[j] / dfPseudoPanchro;
-        else
-            dfFactor = 0.0;
+        //if( pPanBuffer[j] == 0 )
+        //    dfFactor = 1.0;
+        //else
+        {
+            double dfPseudoPanchro = 0;
+            for(int i=0;i<psOptions->nInputSpectralBands;i++)
+                dfPseudoPanchro += psOptions->padfWeights[i] *
+                                pUpsampledSpectralBuffer[i * nValues + j];
+            if( dfPseudoPanchro )
+                dfFactor = pPanBuffer[j] / dfPseudoPanchro;
+            else
+                dfFactor = 0.0;
+        }
+
         for(int i=0;i<psOptions->nOutPansharpenedBands;i++)
         {
             WorkDataType nRawValue =
@@ -457,12 +463,20 @@ static void ClampValues(T* panBuffer, int nValues, T nMaxVal)
 /** Executes a pansharpening operation on a rectangular region of the
  * resulting dataset.
  *
+ * The window is expressed with respect to the dimensions of the panchromatic
+ * band.
+ *
+ * Spectral bands are upsampled and merged with the panchromatic band according
+ * to the select algorithm and options.
+ *
  * @param nXOff pixel offset.
  * @param nYOff pixel offset.
  * @param nXSize width of the pansharpened region to compute.
  * @param nYSize height of the pansharpened region to compute.
  * @param pDataBuf output buffer. Must be nXSize * nYSize * 
- *                 GDALGetDataTypeSize(eBufDataType) / 8 * psOptions->nOutPansharpenedBands large
+ *                 (GDALGetDataTypeSize(eBufDataType) / 8) * psOptions->nOutPansharpenedBands large.
+ *                 It begins with all values of the first output band, followed
+ *                 by values of the second output band, etc...
  * @param eBufDataType data type of the output buffer
  *
  * @return CE_None in case of success, CE_Failure in case of failure.
@@ -497,7 +511,7 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
         poPanchroBand->RasterIO(GF_Read,
                 nXOff, nYOff, nXSize, nYSize, pPanBuffer, nXSize, nYSize,
                 eWorkDataType, 0, 0, NULL);
-    // TODO: use dataset rasterio when possible
+
     GDALRasterIOExtraArg sExtraArg;
     INIT_RASTERIO_EXTRA_ARG(sExtraArg);
     const GDALRIOResampleAlg eResampleAlg = psOptions->eResampleAlg;
@@ -710,13 +724,21 @@ void GDALDestroyPansharpenOperation( GDALPansharpenOperationH hOperation )
 /** Executes a pansharpening operation on a rectangular region of the
  * resulting dataset.
  *
+ * The window is expressed with respect to the dimensions of the panchromatic
+ * band.
+ *
+ * Spectral bands are upsampled and merged with the panchromatic band according
+ * to the select algorithm and options.
+ *
  * @param hOperation a valid pansharpening operation.
  * @param nXOff pixel offset.
  * @param nYOff pixel offset.
  * @param nXSize width of the pansharpened region to compute.
  * @param nYSize height of the pansharpened region to compute.
  * @param pDataBuf output buffer. Must be nXSize * nYSize * 
- *                 GDALGetDataTypeSize(eBufDataType) / 8 * psOptions->nOutPansharpenedBands large
+ *                 (GDALGetDataTypeSize(eBufDataType) / 8) * psOptions->nOutPansharpenedBands large.
+ *                 It begins with all values of the first output band, followed
+ *                 by values of the second output band, etc...
  * @param eBufDataType data type of the output buffer
  *
  * @return CE_None in case of success, CE_Failure in case of failure.

@@ -75,7 +75,12 @@ typedef struct
     /*! Number of input spectral bands. */
     int                  nInputSpectralBands;
 
-    /*! Array of nInputSpectralBands input spectral bands. */
+    /** Array of nInputSpectralBands input spectral bands. The spectral band have
+     *  generally a coarser resolution than the the panchromatic band, but they
+     *  are assumed to have the same spatial extent (and projection) at that point.
+     *  Necessary spatial adjustments must be done priorly, for example by wrapping
+     *  inside a VRT dataset.
+     */
     GDALRasterBandH     *pahInputSpectralBands;
 
     /*! Number of output pansharpened spectral bands. */
