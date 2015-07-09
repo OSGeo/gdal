@@ -3356,6 +3356,36 @@ GDALRIOResampleAlg GDALRasterIOGetResampleAlg(const char* pszResampling)
 }
 
 /************************************************************************/
+/*                    GDALRasterIOGetResampleAlgStr()                   */
+/************************************************************************/
+
+const char* GDALRasterIOGetResampleAlg(GDALRIOResampleAlg eResampleAlg)
+{
+    switch(eResampleAlg)
+    {
+        case GRIORA_NearestNeighbour:
+            return "NearestNeighbour";
+        case GRIORA_Bilinear:
+            return "Bilinear";
+        case GRIORA_Cubic:
+            return "Cubic";
+        case GRIORA_CubicSpline:
+            return "CubicSpline";
+        case GRIORA_Lanczos:
+            return "Lanczos";
+        case GRIORA_Average:
+            return "Average";
+        case GRIORA_Mode:
+            return "Mode";
+        case GRIORA_Gauss:
+            return "Gauss";
+        default:
+            CPLAssert(FALSE);
+            return "Unknown";
+    }
+}
+
+/************************************************************************/
 /*                   GDALRasterIOExtraArgSetResampleAlg()               */
 /************************************************************************/
 

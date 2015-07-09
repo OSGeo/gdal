@@ -1281,6 +1281,7 @@ int GDALValidateOptions( const char* pszOptionList,
                          const char* pszErrorMessageContainerName);
 
 GDALRIOResampleAlg GDALRasterIOGetResampleAlg(const char* pszResampling);
+const char* GDALRasterIOGetResampleAlg(GDALRIOResampleAlg eResampleAlg);
 
 void GDALRasterIOExtraArgSetResampleAlg(GDALRasterIOExtraArg* psExtraArg,
                                         int nXSize, int nYSize,

@@ -957,8 +957,9 @@ of lower resolution to generate output spectral bands of the same resolution as
 the panchromatic band.
 
 VRT pansharpening assumes that the panchromatic and spectral bands have the same
-georeferencing and projection. If that is not the case, appropriate subwindowing
-and reprojection must be done in a prior step.
+projection (or no projection). If that is not the case, reprojection must be done in a prior step.
+Bands might have different geotransform matrices, in which case, by default, the
+resulting dataset will have as extent the union of all extents.
 
 Currently the only supported pansharpening algorithm is a "weighted" Brovey algorithm.
 The general principle of this algorithm is that, after resampling the spectral bands
@@ -1048,6 +1049,13 @@ Near, CubicSpline, Bilinear, Lanczos.</li>
 <li> <b>BitDepth</b>: Can be used to specify the bit depth of the panchromatic and
 spectral bands (e.g. 12). If not specified, the NBITS metadata item from the
 panchromatic band will be used if it exists.</li>
+<li> <b>SpatialExtentAdjustment</b>: Can be one of <i>Union</i> (default), <i>Intersection</i>,
+<i>None</i> or <i>NoneWithoutWarning</i>. Controls the behaviour when panchromatic
+and spectral bands have not the same geospatial extent. By default, Union will take
+the union of all spatial extents. Intersection the intersection of all spatial extents.
+None will not proceed to any adjustment at all (might be usefull if the geotransform are
+somehow dummy, and the top-left and bottom-right corners of all bands match), but will
+emmit a warning. NoneWithoutWarning is the same as None, but in a silent way.</li>
 </li>
 </ul>
 

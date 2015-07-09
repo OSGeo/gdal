@@ -2557,6 +2557,7 @@ Perform a pansharpen operation.
 gdal_pansharpen [--help-general] pan_dataset {spectral_dataset[,band=num]}+ out_dataset
                 [-of format] [-b band]* [-w weight_val]*
                 [-r {nearest,bilinear,cubic,cubicspline,lanczos,average}]
+                [-spat_adjust {union,intersection,none,nonewithoutwarning}]
                 [-co NAME=VALUE]* [-q]
 \endverbatim
 
@@ -2580,6 +2581,10 @@ pseudo panchromatic value. There must be as many -w switches as input spectral b
 <dt> <b>-r</b>
 <i>{nearest,bilinear,cubic (default),cubicspline,lanczos,average}</i>:</dt><dd>
 Select a resampling algorithm.</dd>
+<dt> <b>-spat_adjust</b>
+<i>{union (default),intersection,none,nonewithoutwarning}</i>:</dt><dd>
+Select behaviour when bands have not the same extent. See <i>SpatialExtentAdjustment</i>
+documentation in  <a href="gdal_vrttut.html#gdal_vrttut_pansharpen">VRT tutorial</a></dd>
 <dt> <b>-co</b> <i>"NAME=VALUE"</i>:</dt><dd> Passes a creation option to the
 output format driver.  Multiple <b>-co</b> options may be listed.  See format 
 specific documentation for legal creation options for each format.</dd>
@@ -2591,6 +2596,8 @@ the band option is not specified, all bands of the datasets are taken into accou
 only the specified (num)th band. The same dataset can be repeated several times.</dd>
 <dt> <i>out_dataset</i></dt><dd> Output dataset</dd>
 </dl>
+
+Bands should be in the same projection.
 
 \section gdal_pansharpen_example EXAMPLE
 

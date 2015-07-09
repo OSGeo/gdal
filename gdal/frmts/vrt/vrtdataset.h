@@ -36,6 +36,7 @@
 #include "gdal_vrt.h"
 #include "cpl_hash_set.h"
 #include <vector>
+#include <map>
 
 int VRTApplyMetadata( CPLXMLNode *, GDALMajorObject * );
 CPLXMLNode *VRTSerializeMetadata( GDALMajorObject * );
@@ -265,6 +266,14 @@ public:
 
 class GDALPansharpenOperation;
 
+typedef enum
+{
+    GTAdjust_Union,
+    GTAdjust_Intersection,
+    GTAdjust_None,
+    GTAdjust_NoneWithoutWarning
+} GTAdjustment;
+
 class VRTPansharpenedDataset : public VRTDataset
 {
     friend class      VRTPansharpenedRasterBand;
@@ -274,6 +283,7 @@ class VRTPansharpenedDataset : public VRTDataset
     GDALPansharpenOperation* poPansharpener;
     VRTPansharpenedDataset* poMainDataset;
     std::vector<VRTPansharpenedDataset*> apoOverviewDatasets;
+    std::map<CPLString,CPLString> oMapToRelativeFilenames; // map from absolute to relative
     
     int               bLoadingOtherBands;
     int               bHasWarnedDisableAggressiveBandCaching;
@@ -284,6 +294,8 @@ class VRTPansharpenedDataset : public VRTDataset
     int               nLastBandRasterIOXSize;
     int               nLastBandRasterIOYSize;
     GDALDataType      eLastBandRasterIODataType;
+    
+    GTAdjustment      eGTAdjustment;
 
   protected:
     virtual int         CloseDependentDatasets();
@@ -293,6 +305,7 @@ public:
                      ~VRTPansharpenedDataset();
 
     virtual CPLErr    XMLInit( CPLXMLNode *, const char * );
+    virtual CPLXMLNode *   SerializeToXML( const char *pszVRTPath );
 
     virtual CPLErr AddBand( GDALDataType eType, 
                             char **papszOptions=NULL );
@@ -559,6 +572,7 @@ class VRTPansharpenedRasterBand : public VRTRasterBand
     virtual        ~VRTPansharpenedRasterBand();
 
     virtual CPLErr         XMLInit( CPLXMLNode *, const char * );
+    virtual CPLXMLNode *   SerializeToXML( const char *pszVRTPath );
 
     virtual CPLErr IReadBlock( int, int, void * );
 
