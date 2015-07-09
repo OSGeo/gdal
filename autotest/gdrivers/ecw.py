@@ -2201,6 +2201,28 @@ def ecw_online_6():
     return 'success'
 
 ###############################################################################
+# ECWv2 file with alpha channel (#6028)
+
+def ecw_online_7():
+
+    if gdaltest.ecw_drv is None:
+        return 'skip'
+
+    if not gdaltest.download_file('http://download.osgeo.org/gdal/data/ecw/sandiego2m_null.ecw', 'sandiego2m_null.ecw'):
+        return 'skip'
+
+    ds = gdal.Open('tmp/cache/sandiego2m_null.ecw')
+    if gdaltest.ecw_drv.major_version == 3:
+        expected_band_count = 3
+    else:
+        expected_band_count = 4
+    if ds.RasterCount != expected_band_count:
+        gdaltest.post_reason('Expected %d bands, got %d' % (expected_band_count, ds.RasterCount))
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 def ecw_cleanup():
 
     #gdaltest.clean_tmp()
@@ -2347,6 +2369,7 @@ gdaltest_list = [
     ecw_online_4,
     ecw_online_5,
     ecw_online_6,
+    ecw_online_7,
     ecw_cleanup ]
 
 if __name__ == '__main__':
