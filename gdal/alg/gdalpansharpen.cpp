@@ -32,6 +32,7 @@
 #include "gdal_priv.h"
 #include "cpl_conv.h"
 #include "gdal_priv_templates.hpp"
+#include "../frmts/vrt/vrtdataset.h"
 
 CPL_CVSID("$Id$");
 
@@ -127,6 +128,8 @@ GDALPansharpenOptions* GDALClonePansharpenOptions(
                psOptions->panOutPansharpenedBands,
                sizeof(int) * psOptions->nOutPansharpenedBands);
     }
+    psNewOptions->bHasNoData = psOptions->bHasNoData;
+    psNewOptions->dfNoData = psOptions->dfNoData;
     return psNewOptions;
 }
 
@@ -154,6 +157,8 @@ GDALPansharpenOperation::GDALPansharpenOperation()
 GDALPansharpenOperation::~GDALPansharpenOperation()
 {
     GDALDestroyPansharpenOptions(psOptions);
+    for(size_t i=0;i<aVDS.size();i++)
+        delete aVDS[i];
 }
 
 /************************************************************************/
@@ -272,7 +277,123 @@ CPLErr GDALPansharpenOperation::Initialize(const GDALPansharpenOptions* psOption
     if( dfTotalWeights < 1.0 )
         bWeightsWillNotOvershoot = FALSE;
 
+    for(int i=0;i<psOptions->nInputSpectralBands; i++)
+    {
+        aMSBands.push_back((GDALRasterBand*)psOptions->pahInputSpectralBands[i]);
+    }
+
+    if( psOptions->bHasNoData )
+    {
+        int bNeedToWrapInVRT = FALSE;
+        for(int i=0;i<psOptions->nInputSpectralBands; i++)
+        {
+            GDALRasterBand* poBand = (GDALRasterBand*)psOptions->pahInputSpectralBands[i];
+            int bHasNoData;
+            double dfNoData = poBand->GetNoDataValue(&bHasNoData);
+            if( !bHasNoData || dfNoData != psOptions->dfNoData )
+                bNeedToWrapInVRT = TRUE;
+        }
+
+        if( bNeedToWrapInVRT )
+        {
+            // Wrap spectral bands in a VRT if they don't have the nodata value
+            VRTDataset* poVDS = NULL;
+            for(int i=0;i<psOptions->nInputSpectralBands; i++)
+            {
+                GDALRasterBand* poSrcBand = aMSBands[i];
+                if( anInputBands.size() == 0 || i == 0 )
+                {
+                    poVDS = new VRTDataset(poSrcBand->GetXSize(), poSrcBand->GetYSize());
+                    aVDS.push_back(poVDS);
+                }
+                if( anInputBands.size() )
+                    anInputBands[i] = i + 1;
+                poVDS->AddBand(poSrcBand->GetRasterDataType(), NULL);
+                VRTSourcedRasterBand* poVRTBand = (VRTSourcedRasterBand*) poVDS->GetRasterBand(i+1);
+                aMSBands[i] = poVRTBand;
+                poVRTBand->SetNoDataValue(psOptions->dfNoData);
+                const char* pszNBITS = poSrcBand->GetMetadataItem("NBITS", "IMAGE_STRUCTURE");
+                if( pszNBITS )
+                    poVRTBand->SetMetadataItem("NBITS", pszNBITS, "IMAGE_STRUCTURE");
+
+                VRTSimpleSource* poSimpleSource = new VRTSimpleSource();
+                poVRTBand->ConfigureSource( poSimpleSource,
+                                            poSrcBand,
+                                            FALSE,
+                                            0, 0,
+                                            poSrcBand->GetXSize(), poSrcBand->GetYSize(),
+                                            0, 0,
+                                            poSrcBand->GetXSize(), poSrcBand->GetYSize() );
+                poVRTBand->AddSource( poSimpleSource );
+            }
+        }
+    }
+
     return CE_None;
+}
+
+/************************************************************************/
+/*                    WeightedBroveyWithNoData()                        */
+/************************************************************************/
+
+template<class WorkDataType, class OutDataType>
+                    void GDALPansharpenOperation::WeightedBroveyWithNoData(
+                                                     const WorkDataType* pPanBuffer,
+                                                     const WorkDataType* pUpsampledSpectralBuffer,
+                                                     OutDataType* pDataBuf,
+                                                     int nValues,
+                                                     int bHasBitDepth,
+                                                     WorkDataType nMaxValue)
+{
+    WorkDataType noData, validValue;
+    GDALCopyWord(psOptions->dfNoData, noData);
+
+    if( !(std::numeric_limits<WorkDataType>::is_integer) )
+        validValue = noData + 1e-5;
+    else if (noData == std::numeric_limits<WorkDataType>::min())
+        validValue = std::numeric_limits<WorkDataType>::min() + 1;
+    else
+        validValue = noData - 1;
+
+    for(int j=0;j<nValues;j++)
+    {
+        double dfFactor;
+        double dfPseudoPanchro = 0;
+        for(int i=0;i<psOptions->nInputSpectralBands;i++)
+        {
+            WorkDataType nSpectralVal = pUpsampledSpectralBuffer[i * nValues + j];
+            if( nSpectralVal == noData )
+            {
+                dfPseudoPanchro = 0.0;
+                break;
+            }
+            dfPseudoPanchro += psOptions->padfWeights[i] * nSpectralVal;
+        }
+        if( dfPseudoPanchro && pPanBuffer[j] != noData )
+        {
+            dfFactor = pPanBuffer[j] / dfPseudoPanchro;
+            for(int i=0;i<psOptions->nOutPansharpenedBands;i++)
+            {
+                WorkDataType nRawValue =
+                    pUpsampledSpectralBuffer[psOptions->panOutPansharpenedBands[i] * nValues + j];
+                WorkDataType nPansharpenedValue;
+                GDALCopyWord(nRawValue * dfFactor, nPansharpenedValue);
+                if( bHasBitDepth && nPansharpenedValue > nMaxValue )
+                    nPansharpenedValue = nMaxValue;
+                // We don't want a valid value to be mapped to NoData
+                if( nPansharpenedValue == noData )
+                    nPansharpenedValue = validValue;
+                GDALCopyWord(nPansharpenedValue, pDataBuf[i * nValues + j]);
+            }
+        }
+        else
+        {
+            for(int i=0;i<psOptions->nOutPansharpenedBands;i++)
+            {
+                GDALCopyWord(noData, pDataBuf[i * nValues + j]);
+            }
+        }
+    }
 }
 
 /************************************************************************/
@@ -287,6 +408,14 @@ template<class WorkDataType, class OutDataType, int bHasBitDepth>
                                                      int nValues,
                                                      WorkDataType nMaxValue)
 {
+    if( psOptions->bHasNoData )
+    {
+        WeightedBroveyWithNoData<WorkDataType,OutDataType>
+                                (pPanBuffer, pUpsampledSpectralBuffer,
+                                 pDataBuf, nValues, bHasBitDepth, nMaxValue);
+        return;
+    }
+
     for(int j=0;j<nValues;j++)
     {
         double dfFactor;
@@ -308,11 +437,11 @@ template<class WorkDataType, class OutDataType, int bHasBitDepth>
         {
             WorkDataType nRawValue =
                 pUpsampledSpectralBuffer[psOptions->panOutPansharpenedBands[i] * nValues + j];
-            WorkDataType nPansharpendValue;
-            GDALCopyWord(nRawValue * dfFactor, nPansharpendValue);
-            if( bHasBitDepth && nPansharpendValue > nMaxValue )
-                nPansharpendValue = nMaxValue;
-            GDALCopyWord(nPansharpendValue, pDataBuf[i * nValues + j]);
+            WorkDataType nPansharpenedValue;
+            GDALCopyWord(nRawValue * dfFactor, nPansharpenedValue);
+            if( bHasBitDepth && nPansharpenedValue > nMaxValue )
+                nPansharpenedValue = nMaxValue;
+            GDALCopyWord(nPansharpenedValue, pDataBuf[i * nValues + j]);
         }
     }
 }
@@ -517,10 +646,8 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
     const GDALRIOResampleAlg eResampleAlg = psOptions->eResampleAlg;
     sExtraArg.eResampleAlg = eResampleAlg;
     sExtraArg.bFloatingPointWindowValidity = TRUE;
-    GDALRasterBand* poFirstSpectralBand =
-                        (GDALRasterBand*)psOptions->pahInputSpectralBands[0];
-    double dfRatioX = (double)poPanchroBand->GetXSize() / poFirstSpectralBand->GetXSize();
-    double dfRatioY = (double)poPanchroBand->GetYSize() / poFirstSpectralBand->GetYSize();
+    double dfRatioX = (double)poPanchroBand->GetXSize() / aMSBands[0]->GetXSize();
+    double dfRatioY = (double)poPanchroBand->GetYSize() / aMSBands[0]->GetYSize();
     sExtraArg.dfXOff = nXOff / dfRatioX;
     sExtraArg.dfYOff = nYOff / dfRatioY;
     sExtraArg.dfXSize = nXSize / dfRatioX;
@@ -537,7 +664,7 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
     if( anInputBands.size() )
     {
         // Use dataset RasterIO when possible
-        eErr = ((GDALRasterBand*)psOptions->pahInputSpectralBands[0])->GetDataset()->RasterIO(GF_Read,
+        eErr = aMSBands[0]->GetDataset()->RasterIO(GF_Read,
                     nSpectralXOff, nSpectralYOff, nSpectralXSize, nSpectralYSize,
                     pUpsampledSpectralBuffer,
                     nXSize, nYSize,
@@ -549,8 +676,7 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
     {
         for(int i=0; eErr == CE_None && i < psOptions->nInputSpectralBands; i++)
         {
-            eErr = 
-            ((GDALRasterBand*)psOptions->pahInputSpectralBands[i])->RasterIO(GF_Read,
+            eErr = aMSBands[i]->RasterIO(GF_Read,
                     nSpectralXOff, nSpectralYOff, nSpectralXSize, nSpectralYSize,
                     pUpsampledSpectralBuffer + i * nXSize * nYSize * nDataTypeSize,
                     nXSize, nYSize,
@@ -567,7 +693,7 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
     {
         for(int i=0;i < psOptions->nInputSpectralBands; i++)
         {
-            GDALRasterBand* poBand = (GDALRasterBand*)psOptions->pahInputSpectralBands[i];
+            GDALRasterBand* poBand = aMSBands[i];
             int nBandBitDepth = 0;
             const char* pszNBITS = poBand->GetMetadataItem("NBITS", "IMAGE_STRUCTURE");
             if( pszNBITS )
@@ -601,6 +727,26 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
     if( bWeightsWillNotOvershoot )
     {
         nBitDepth = 0;
+    }
+
+    double* padfTempBuffer = NULL;
+    GDALDataType eBufDataTypeOri = eBufDataType;
+    void* pDataBufOri = pDataBuf;
+    // CFloat64 is the query type used by gdallocationinfo...
+    if( eBufDataType == GDT_CFloat64 )
+    {
+        padfTempBuffer = (double*)VSIMalloc3(nXSize, nYSize,
+                    psOptions->nOutPansharpenedBands * sizeof(double));
+        if( padfTempBuffer == NULL )
+        {
+            CPLError(CE_Failure, CPLE_OutOfMemory,
+                "Out of memory error while allocating working buffers");
+            VSIFree(pUpsampledSpectralBuffer);
+            VSIFree(pPanBuffer);
+            return CE_Failure;
+        }
+        pDataBuf = padfTempBuffer;
+        eBufDataType = GDT_Float64;
     }
 
     switch( eWorkDataType )
@@ -660,6 +806,14 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
             break;
     }
 
+    if( padfTempBuffer )
+    {
+        GDALCopyWords(padfTempBuffer, GDT_Float64, sizeof(double),
+                      pDataBufOri, eBufDataTypeOri,
+                      GDALGetDataTypeSize(eBufDataTypeOri)/8,
+                      nXSize*nYSize*psOptions->nOutPansharpenedBands);
+        VSIFree(padfTempBuffer);
+    }
 
     VSIFree(pUpsampledSpectralBuffer);
     VSIFree(pPanBuffer);

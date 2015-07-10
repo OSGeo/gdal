@@ -88,6 +88,13 @@ typedef struct
 
     /*! Array of nOutPansharpendBands values such as panOutPansharpenedBands[k] is a value in the range [0,nInputSpectralBands-1] . */
     int                 *panOutPansharpenedBands;
+    
+    /*! Whether the panchromatic and spectral bands have a noData value. */
+    int                  bHasNoData;
+
+    /** NoData value of the panchromatic and spectral bands (only taken into account if bHasNoData = TRUE).
+        This will also be use has the output nodata value. */
+    double               dfNoData;
 } GDALPansharpenOptions;
 
 
@@ -112,6 +119,7 @@ CPL_C_END
 #ifdef __cplusplus 
 
 #include <vector>
+#include "gdal_priv.h"
 
 /** Pansharpening operation class.
  */
@@ -119,8 +127,17 @@ class GDALPansharpenOperation
 {
         GDALPansharpenOptions* psOptions;
         std::vector<int> anInputBands;
+        std::vector<GDALDataset*> aVDS; // to destroy
+        std::vector<GDALRasterBand*> aMSBands; // original multispectral bands potentially warped into a VRT
         int bWeightsWillNotOvershoot;
 
+        template<class WorkDataType, class OutDataType> void WeightedBroveyWithNoData(
+                                                     const WorkDataType* pPanBuffer,
+                                                     const WorkDataType* pUpsampledSpectralBuffer,
+                                                     OutDataType* pDataBuf,
+                                                     int nValues,
+                                                     int bHasBitDepth,
+                                                     WorkDataType nMaxValue);
         template<class WorkDataType, class OutDataType, int bHasBitDepth> void WeightedBrovey(
                                                      const WorkDataType* pPanBuffer,
                                                      const WorkDataType* pUpsampledSpectralBuffer,
