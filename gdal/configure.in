@@ -2682,6 +2682,19 @@ fi
 AC_SUBST(OGR_ENABLED,$OGR_ENABLED)
 
 dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(gnm,[  --without-gnm         Don't build GNM into shared library],,)
+
+if test "$with_gnm" = yes -o x"$with_gnm" = x ; then
+  echo checking for GNM ... enabled
+  GNM_ENABLED=yes
+else
+  echo checking for GNM ... disabled by user
+  GNM_ENABLED=no
+fi
+AC_SUBST(GNM_ENABLED,$GNM_ENABLED)
+
+dnl ---------------------------------------------------------------------------
 dnl Select an MySQL Library to use, or disable driver.
 dnl ---------------------------------------------------------------------------
 
