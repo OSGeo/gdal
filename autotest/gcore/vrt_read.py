@@ -736,6 +736,25 @@ def vrt_read_21():
       <DstRect xOff="300" yOff="400" xSize="200" ySize="250" />
     </SimpleSource>
   </VRTRasterBand>
+</VRTDataset>""")
+    ds = gdal.Open('/vsimem/vrt_read_21.vrt')
+    if ds.GetRasterBand(1).GetOverviewCount() != 1:
+        gdaltest.post_reason('failure')
+        print(ds.GetRasterBand(1).GetOverviewCount())
+        return 'fail'
+    data_ds_one_band = ds.ReadRaster(0,0,800,800,400,400)
+    ds = None
+
+    gdal.FileFromMemBuffer('/vsimem/vrt_read_21.vrt', """<VRTDataset rasterXSize="800" rasterYSize="800">
+  <VRTRasterBand dataType="Byte" band="1">
+    <SimpleSource>
+      <SourceFilename>/vsimem/byte.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="400" RasterYSize="400" DataType="Byte" BlockXSize="400" BlockYSize="1" />
+      <SrcRect xOff="100" yOff="100" xSize="200" ySize="250" />
+      <DstRect xOff="300" yOff="400" xSize="200" ySize="250" />
+    </SimpleSource>
+  </VRTRasterBand>
   <VRTRasterBand dataType="Byte" band="2">
     <ComplexSource>
       <SourceFilename>/vsimem/byte.tif</SourceFilename>
@@ -770,6 +789,11 @@ def vrt_read_21():
     cs2 = ds.GetRasterBand(2).GetOverview(0).Checksum()
     
     data = ds.ReadRaster(0,0,800,800,400,400)
+    
+    if data != data_ds_one_band + ds.GetRasterBand(2).ReadRaster(0,0,800,800,400,400):
+        gdaltest.post_reason('failure')
+        return 'fail'
+
     mem_ds = gdal.GetDriverByName('MEM').Create('',400,400,2)
     mem_ds.WriteRaster(0,0,400,400,data)
     ref_cs = mem_ds.GetRasterBand(1).Checksum()
