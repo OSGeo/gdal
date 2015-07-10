@@ -912,6 +912,69 @@ def vrt_read_22():
 
     return 'success'
 
+###############################################################################
+# Test non-nearest resampling on a VRT exposing a nodata value but with
+# an underlying dataset without nodata
+
+def vrt_read_23():
+    
+    try:
+        from osgeo import gdalnumeric
+        gdalnumeric.zeros
+        import numpy
+    except:
+        return 'skip'
+
+    mem_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/vrt_read_23.tif', 2, 1)
+    mem_ds.GetRasterBand(1).WriteArray(numpy.array([[0,10]]))
+    mem_ds = None
+    ds = gdal.Open("""<VRTDataset rasterXSize="2" rasterYSize="1">
+  <VRTRasterBand dataType="Byte" band="1">
+    <NoDataValue>0</NoDataValue>
+    <SimpleSource>
+      <SourceFilename>/vsimem/vrt_read_23.tif</SourceFilename>
+    </SimpleSource>
+  </VRTRasterBand>
+</VRTDataset>""")
+    got_ar = ds.GetRasterBand(1).ReadAsArray(0,0,2,1,4,1, resample_alg = gdal.GRIORA_Bilinear)
+    if list(got_ar[0]) != [0,10,10,10]:
+        gdaltest.post_reason('failure')
+        print(list(got_ar[0]))
+        return 'fail'
+    if ds.ReadRaster(0,0,2,1,4,1, resample_alg = gdal.GRIORA_Bilinear) != ds.GetRasterBand(1).ReadRaster(0,0,2,1,4,1, resample_alg = gdal.GRIORA_Bilinear):
+        gdaltest.post_reason('failure')
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/vrt_read_23.tif')
+
+    # Same but with nodata set on source band too
+    mem_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/vrt_read_23.tif', 2, 1)
+    mem_ds.GetRasterBand(1).SetNoDataValue(0)
+    mem_ds.GetRasterBand(1).WriteArray(numpy.array([[0,10]]))
+    mem_ds = None
+    ds = gdal.Open("""<VRTDataset rasterXSize="2" rasterYSize="1">
+  <VRTRasterBand dataType="Byte" band="1">
+    <NoDataValue>0</NoDataValue>
+    <SimpleSource>
+      <SourceFilename>/vsimem/vrt_read_23.tif</SourceFilename>
+    </SimpleSource>
+  </VRTRasterBand>
+</VRTDataset>""")
+    got_ar = ds.GetRasterBand(1).ReadAsArray(0,0,2,1,4,1, resample_alg = gdal.GRIORA_Bilinear)
+    if list(got_ar[0]) != [0,10,10,10]:
+        gdaltest.post_reason('failure')
+        print(list(got_ar[0]))
+        return 'fail'
+    if ds.ReadRaster(0,0,2,1,4,1, resample_alg = gdal.GRIORA_Bilinear) != ds.GetRasterBand(1).ReadRaster(0,0,2,1,4,1, resample_alg = gdal.GRIORA_Bilinear):
+        gdaltest.post_reason('failure')
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/vrt_read_23.tif')
+
+
+    return 'success'
 
 for item in init_list:
     ut = gdaltest.GDALTest( 'VRT', item[0], item[1], item[2] )
@@ -942,6 +1005,7 @@ gdaltest_list.append( vrt_read_19 )
 gdaltest_list.append( vrt_read_20 )
 gdaltest_list.append( vrt_read_21 )
 gdaltest_list.append( vrt_read_22 )
+gdaltest_list.append( vrt_read_23 )
 
 if __name__ == '__main__':
 
