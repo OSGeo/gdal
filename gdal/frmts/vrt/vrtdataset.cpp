@@ -1229,6 +1229,8 @@ int VRTDataset::CheckCompatibleForDatasetIO()
         {
             for(int iSource = 0; iSource < nSources; iSource++)
             {
+                if (!poBand->papoSources[iSource]->IsSimpleSource())
+                    return FALSE;
                 VRTSimpleSource* poRefSource = (VRTSimpleSource* )papoSources[iSource];
                 VRTSimpleSource* poSource = (VRTSimpleSource* )poBand->papoSources[iSource];
                 if (!EQUAL(poSource->GetType(), "SimpleSource"))
