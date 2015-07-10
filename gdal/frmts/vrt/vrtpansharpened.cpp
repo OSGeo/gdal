@@ -64,6 +64,7 @@ VRTPansharpenedDataset::VRTPansharpenedDataset( int nXSize, int nYSize )
     nLastBandRasterIOYSize = 0;
     eLastBandRasterIODataType = GDT_Unknown;
     eGTAdjustment = GTAdjust_Union;
+    bNoDataDisabled = FALSE;
 }
 
 /************************************************************************/
@@ -104,9 +105,9 @@ int VRTPansharpenedDataset::CloseDependentDatasets()
     if( poPansharpener != NULL )
     {
         GDALPansharpenOptions* psOptions = poPansharpener->GetOptions();
+        std::map<CPLString, GDALDatasetH> oMapNamesToDataset;
         if( psOptions != NULL && bIsMainDataset )
         {
-            std::map<CPLString, GDALDatasetH> oMapNamesToDataset;
             GDALDatasetH hDS;
             if( psOptions->hPanchroBand != NULL &&
                 (hDS = GDALGetBandDataset(psOptions->hPanchroBand)) != NULL )
@@ -121,15 +122,18 @@ int VRTPansharpenedDataset::CloseDependentDatasets()
                     oMapNamesToDataset[GDALGetDescription(hDS)] = hDS;
                 }
             }
-            std::map<CPLString, GDALDatasetH>::iterator oIter = oMapNamesToDataset.begin();
-            for(; oIter != oMapNamesToDataset.end(); ++oIter )
-            {
-                bHasDroppedRef = TRUE;
-                GDALClose(oIter->second);
-            }
         }
+        // Delete the pansharper object before closing the dataset
+        // because it may have warped the bands into an intermediate VRT
         delete poPansharpener;
         poPansharpener = NULL;
+
+        std::map<CPLString, GDALDatasetH>::iterator oIter = oMapNamesToDataset.begin();
+        for(; oIter != oMapNamesToDataset.end(); ++oIter )
+        {
+            bHasDroppedRef = TRUE;
+            GDALClose(oIter->second);
+        }
     }
     
     for( size_t i=0; i<apoOverviewDatasets.size();i++)
@@ -319,6 +323,8 @@ CPLErr VRTPansharpenedDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPa
     int bPanGeoTransformValid = ( poPanDataset->GetGeoTransform(adfPanGT) == CE_None );
     double dfMinX = 0.0, dfMinY = 0.0, dfMaxX = 0.0, dfMaxY = 0.0;
     int bFoundRotatingTerms = FALSE;
+    int bHasNoData = FALSE;
+    double dfNoData = poPanBand->GetNoDataValue(&bHasNoData);
     double dfLRPanX = adfPanGT[0] +
                         poPanDataset->GetRasterXSize() * adfPanGT[1] +
                         poPanDataset->GetRasterYSize() * adfPanGT[2];
@@ -683,6 +689,14 @@ CPLErr VRTPansharpenedDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPa
                     pszSourceBand, osSourceFilename.c_str());
             goto error;
         }
+        
+        if( bHasNoData )
+        {
+            double dfSpectralNoData = poPanBand->GetNoDataValue(&bHasNoData);
+            if( bHasNoData && dfSpectralNoData != dfNoData )
+                bHasNoData = FALSE;
+        }
+
         ahSpectralBands.push_back(poBand);
         if( nDstBand >= 1 )
         {
@@ -703,6 +717,23 @@ CPLErr VRTPansharpenedDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPa
         goto error;
     }
 
+    {
+        const char* pszNoData = CPLGetXMLValue(psOptions, "NoData", NULL);
+        if( pszNoData )
+        {
+            if( EQUAL(pszNoData, "NONE") )
+            {
+                bNoDataDisabled = TRUE;
+                bHasNoData = FALSE;
+            }
+            else
+            {
+                bHasNoData = TRUE;
+                dfNoData = CPLAtof(pszNoData);
+            }
+        }
+    }
+
     if( GetRasterCount() == 0 )
     {
         for(int i=0;i<(int)aMapDstBandToSpectralBand.size();i++)
@@ -717,8 +748,6 @@ CPLErr VRTPansharpenedDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPa
             GDALRasterBand* poBand = new VRTPansharpenedRasterBand(this, i+1,
                                             poInputBand->GetRasterDataType());
             poBand->SetColorInterpretation(poInputBand->GetColorInterpretation());
-            int bHasNoData = FALSE;
-            double dfNoData = poInputBand->GetNoDataValue(&bHasNoData);
             if( bHasNoData )
                 poBand->SetNoDataValue(dfNoData);
             SetBand(i+1, poBand);
@@ -846,6 +875,8 @@ CPLErr VRTPansharpenedDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPa
     {
         psPanOptions->panOutPansharpenedBands[i] = aMapDstBandToSpectralBandIter->second;
     }
+    psPanOptions->bHasNoData = bHasNoData;
+    psPanOptions->dfNoData = dfNoData;
 
     if( nBands == psPanOptions->nOutPansharpenedBands )
         SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
@@ -959,6 +990,16 @@ CPLXMLNode *VRTPansharpenedDataset::SerializeToXML( const char *pszVRTPath )
             break;
         default:
             break;
+    }
+
+    if( psOptions->bHasNoData )
+    {
+        CPLCreateXMLElementAndValue( psOptionsNode, "NoData",
+                                     CPLSPrintf("%.16g", psOptions->dfNoData) );
+    }
+    else if( bNoDataDisabled )
+    {
+        CPLCreateXMLElementAndValue( psOptionsNode, "NoData", "None" );
     }
 
     if( pszAdjust )
@@ -1309,7 +1350,7 @@ CPLErr VRTPansharpenedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         }
 
         int nYSizeToCache = nYSize;
-        if( nYSize == 1 )
+        if( nYSize == 1 && nXSize == nRasterXSize )
         {
             //{static int bDone = 0; if (!bDone) printf("(7)\n"); bDone = 1; }
             // For efficiency, try to cache at leak 256 K

@@ -100,11 +100,16 @@
             <xs:element name="Resampling" type="xs:string" minOccurs="0" maxOccurs="1"/>
             <xs:element name="NumThreads" type="xs:string" minOccurs="0" maxOccurs="1"/>
             <xs:element name="BitDepth" type="xs:string" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="NoData" type="NoDataOrNoneType" minOccurs="0" maxOccurs="1"/>
             <xs:element name="SpatialExtentAdjustment" type="xs:string" minOccurs="0" maxOccurs="1"/>
             <xs:element name="PanchroBand" type="PanchroBandType" minOccurs="1" maxOccurs="1"/>
             <xs:element name="SpectralBand" type="SpectralBandType" minOccurs="1" maxOccurs="unbounded"/>
         </xs:sequence>
     </xs:complexType>
+
+    <xs:simpleType name="NoDataOrNoneType">
+        <xs:union memberTypes="xs:double xs:string" />
+    </xs:simpleType>
 
     <xs:complexType name="PanchroBandType">
         <xs:sequence>
