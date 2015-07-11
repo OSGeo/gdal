@@ -3320,25 +3320,25 @@ SWIGINTERN void GDALMajorObjectShadow_SetDescription(GDALMajorObjectShadow *self
 SWIGINTERN char **GDALMajorObjectShadow_GetMetadataDomainList(GDALMajorObjectShadow *self){
     return GDALGetMetadataDomainList( self );
   }
-SWIGINTERN char **GDALMajorObjectShadow_GetMetadata_Dict__SWIG_0(GDALMajorObjectShadow *self,char const *pszDomain=""){
+SWIGINTERN char **GDALMajorObjectShadow_GetMetadata_Dict(GDALMajorObjectShadow *self,char const *pszDomain=""){
     return GDALGetMetadata( self, pszDomain );
   }
-SWIGINTERN char **GDALMajorObjectShadow_GetMetadata_List__SWIG_0(GDALMajorObjectShadow *self,char const *pszDomain=""){
+SWIGINTERN char **GDALMajorObjectShadow_GetMetadata_List(GDALMajorObjectShadow *self,char const *pszDomain=""){
     return GDALGetMetadata( self, pszDomain );
   }
 SWIGINTERN CPLErr GDALMajorObjectShadow_SetMetadata__SWIG_0(GDALMajorObjectShadow *self,char **papszMetadata,char const *pszDomain=""){
     return GDALSetMetadata( self, papszMetadata, pszDomain );
   }
-SWIGINTERN CPLErr GDALMajorObjectShadow_SetMetadata__SWIG_2(GDALMajorObjectShadow *self,char *pszMetadataString,char const *pszDomain=""){
+SWIGINTERN CPLErr GDALMajorObjectShadow_SetMetadata__SWIG_1(GDALMajorObjectShadow *self,char *pszMetadataString,char const *pszDomain=""){
     char *tmpList[2];
     tmpList[0] = pszMetadataString;
     tmpList[1] = 0;
     return GDALSetMetadata( self, tmpList, pszDomain );
   }
-SWIGINTERN char const *GDALMajorObjectShadow_GetMetadataItem__SWIG_0(GDALMajorObjectShadow *self,char const *pszName,char const *pszDomain=""){
+SWIGINTERN char const *GDALMajorObjectShadow_GetMetadataItem(GDALMajorObjectShadow *self,char const *pszName,char const *pszDomain=""){
     return GDALGetMetadataItem( self, pszName, pszDomain);
   }
-SWIGINTERN CPLErr GDALMajorObjectShadow_SetMetadataItem__SWIG_0(GDALMajorObjectShadow *self,char const *pszName,char const *pszValue,char const *pszDomain=""){
+SWIGINTERN CPLErr GDALMajorObjectShadow_SetMetadataItem(GDALMajorObjectShadow *self,char const *pszName,char const *pszValue,char const *pszDomain=""){
     return GDALSetMetadataItem( self, pszName, pszValue, pszDomain);
   }
 
@@ -3583,7 +3583,7 @@ OGRErrMessages( int rc ) {
 SWIGINTERN int GNMNetworkShadow_GetLayerCount(GNMNetworkShadow *self){
             return GDALDatasetGetLayerCount(self);
         }
-SWIGINTERN OGRLayerShadow *GNMNetworkShadow_GetLayerByIndex__SWIG_0(GNMNetworkShadow *self,int index=0){
+SWIGINTERN OGRLayerShadow *GNMNetworkShadow_GetLayerByIndex(GNMNetworkShadow *self,int index=0){
         
         OGRLayerShadow* layer = (OGRLayerShadow*) GDALDatasetGetLayer(self, 
                                                                       index);
@@ -3661,7 +3661,7 @@ SWIG_AsVal_bool (PyObject *obj, bool *val)
 SWIGINTERN CPLErr GNMGenericNetworkShadow_ChangeBlockState(GNMGenericNetworkShadow *self,GIntBig nFID,bool bIsBlock){
             return GNMChangeBlockState(self, nFID, bIsBlock);
         }
-SWIGINTERN CPLErr GNMGenericNetworkShadow_ChangeAllBlockState__SWIG_0(GNMGenericNetworkShadow *self,bool bIsBlock=false){            
+SWIGINTERN CPLErr GNMGenericNetworkShadow_ChangeAllBlockState(GNMGenericNetworkShadow *self,bool bIsBlock=false){            
             return GNMChangeAllBlockState(self, bIsBlock);
         }
 #ifdef __cplusplus
@@ -3835,10 +3835,10 @@ fail:
 }
 
 
-SWIGINTERN PyObject *_wrap_MajorObject_GetMetadata_Dict__SWIG_0(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+SWIGINTERN PyObject *_wrap_MajorObject_GetMetadata_Dict(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   GDALMajorObjectShadow *arg1 = (GDALMajorObjectShadow *) 0 ;
-  char *arg2 = (char *) 0 ;
+  char *arg2 = (char *) "" ;
   void *argp1 = 0 ;
   int res1 = 0 ;
   int res2 ;
@@ -3848,22 +3848,24 @@ SWIGINTERN PyObject *_wrap_MajorObject_GetMetadata_Dict__SWIG_0(PyObject *SWIGUN
   PyObject * obj1 = 0 ;
   char **result = 0 ;
   
-  if (!PyArg_ParseTuple(args,(char *)"OO:MajorObject_GetMetadata_Dict",&obj0,&obj1)) SWIG_fail;
+  if (!PyArg_ParseTuple(args,(char *)"O|O:MajorObject_GetMetadata_Dict",&obj0,&obj1)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALMajorObjectShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "MajorObject_GetMetadata_Dict" "', argument " "1"" of type '" "GDALMajorObjectShadow *""'"); 
   }
   arg1 = reinterpret_cast< GDALMajorObjectShadow * >(argp1);
-  res2 = SWIG_AsCharPtrAndSize(obj1, &buf2, NULL, &alloc2);
-  if (!SWIG_IsOK(res2)) {
-    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "MajorObject_GetMetadata_Dict" "', argument " "2"" of type '" "char const *""'");
+  if (obj1) {
+    res2 = SWIG_AsCharPtrAndSize(obj1, &buf2, NULL, &alloc2);
+    if (!SWIG_IsOK(res2)) {
+      SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "MajorObject_GetMetadata_Dict" "', argument " "2"" of type '" "char const *""'");
+    }
+    arg2 = reinterpret_cast< char * >(buf2);
   }
-  arg2 = reinterpret_cast< char * >(buf2);
   {
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (char **)GDALMajorObjectShadow_GetMetadata_Dict__SWIG_0(arg1,(char const *)arg2);
+    result = (char **)GDALMajorObjectShadow_GetMetadata_Dict(arg1,(char const *)arg2);
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
@@ -3903,108 +3905,10 @@ fail:
 }
 
 
-SWIGINTERN PyObject *_wrap_MajorObject_GetMetadata_Dict__SWIG_1(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+SWIGINTERN PyObject *_wrap_MajorObject_GetMetadata_List(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   GDALMajorObjectShadow *arg1 = (GDALMajorObjectShadow *) 0 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  PyObject * obj0 = 0 ;
-  char **result = 0 ;
-  
-  if (!PyArg_ParseTuple(args,(char *)"O:MajorObject_GetMetadata_Dict",&obj0)) SWIG_fail;
-  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALMajorObjectShadow, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "MajorObject_GetMetadata_Dict" "', argument " "1"" of type '" "GDALMajorObjectShadow *""'"); 
-  }
-  arg1 = reinterpret_cast< GDALMajorObjectShadow * >(argp1);
-  {
-    if ( bUseExceptions ) {
-      CPLErrorReset();
-    }
-    result = (char **)GDALMajorObjectShadow_GetMetadata_Dict__SWIG_0(arg1);
-    if ( bUseExceptions ) {
-      CPLErr eclass = CPLGetLastErrorType();
-      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-      }
-    }
-  }
-  {
-    /* %typemap(out) char **dict */
-    char **stringarray = result;
-    resultobj = PyDict_New();
-    if ( stringarray != NULL ) {
-      while (*stringarray != NULL ) {
-        char const *valptr;
-        char *keyptr;
-        const char* pszSep = strchr( *stringarray, '=' );
-        if ( pszSep != NULL) {
-          keyptr = CPLStrdup(*stringarray);
-          keyptr[pszSep - *stringarray] = '\0';
-          valptr = pszSep + 1;
-          PyObject *nm = GDALPythonObjectFromCStr( keyptr );
-          PyObject *val = GDALPythonObjectFromCStr( valptr );
-          PyDict_SetItem(resultobj, nm, val );
-          Py_DECREF(nm);
-          Py_DECREF(val);
-          CPLFree( keyptr );
-        }
-        stringarray++;
-      }
-    }
-  }
-  return resultobj;
-fail:
-  return NULL;
-}
-
-
-SWIGINTERN PyObject *_wrap_MajorObject_GetMetadata_Dict(PyObject *self, PyObject *args) {
-  int argc;
-  PyObject *argv[3];
-  int ii;
-  
-  if (!PyTuple_Check(args)) SWIG_fail;
-  argc = args ? (int)PyObject_Length(args) : 0;
-  for (ii = 0; (ii < 2) && (ii < argc); ii++) {
-    argv[ii] = PyTuple_GET_ITEM(args,ii);
-  }
-  if (argc == 1) {
-    int _v;
-    void *vptr = 0;
-    int res = SWIG_ConvertPtr(argv[0], &vptr, SWIGTYPE_p_GDALMajorObjectShadow, 0);
-    _v = SWIG_CheckState(res);
-    if (_v) {
-      return _wrap_MajorObject_GetMetadata_Dict__SWIG_1(self, args);
-    }
-  }
-  if (argc == 2) {
-    int _v;
-    void *vptr = 0;
-    int res = SWIG_ConvertPtr(argv[0], &vptr, SWIGTYPE_p_GDALMajorObjectShadow, 0);
-    _v = SWIG_CheckState(res);
-    if (_v) {
-      int res = SWIG_AsCharPtrAndSize(argv[1], 0, NULL, 0);
-      _v = SWIG_CheckState(res);
-      if (_v) {
-        return _wrap_MajorObject_GetMetadata_Dict__SWIG_0(self, args);
-      }
-    }
-  }
-  
-fail:
-  SWIG_SetErrorMsg(PyExc_NotImplementedError,"Wrong number or type of arguments for overloaded function 'MajorObject_GetMetadata_Dict'.\n"
-    "  Possible C/C++ prototypes are:\n"
-    "    GDALMajorObjectShadow::GetMetadata_Dict(char const *)\n"
-    "    GDALMajorObjectShadow::GetMetadata_Dict()\n");
-  return 0;
-}
-
-
-SWIGINTERN PyObject *_wrap_MajorObject_GetMetadata_List__SWIG_0(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
-  PyObject *resultobj = 0;
-  GDALMajorObjectShadow *arg1 = (GDALMajorObjectShadow *) 0 ;
-  char *arg2 = (char *) 0 ;
+  char *arg2 = (char *) "" ;
   void *argp1 = 0 ;
   int res1 = 0 ;
   int res2 ;
@@ -4014,22 +3918,24 @@ SWIGINTERN PyObject *_wrap_MajorObject_GetMetadata_List__SWIG_0(PyObject *SWIGUN
   PyObject * obj1 = 0 ;
   char **result = 0 ;
   
-  if (!PyArg_ParseTuple(args,(char *)"OO:MajorObject_GetMetadata_List",&obj0,&obj1)) SWIG_fail;
+  if (!PyArg_ParseTuple(args,(char *)"O|O:MajorObject_GetMetadata_List",&obj0,&obj1)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALMajorObjectShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "MajorObject_GetMetadata_List" "', argument " "1"" of type '" "GDALMajorObjectShadow *""'"); 
   }
   arg1 = reinterpret_cast< GDALMajorObjectShadow * >(argp1);
-  res2 = SWIG_AsCharPtrAndSize(obj1, &buf2, NULL, &alloc2);
-  if (!SWIG_IsOK(res2)) {
-    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "MajorObject_GetMetadata_List" "', argument " "2"" of type '" "char const *""'");
+  if (obj1) {
+    res2 = SWIG_AsCharPtrAndSize(obj1, &buf2, NULL, &alloc2);
+    if (!SWIG_IsOK(res2)) {
+      SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "MajorObject_GetMetadata_List" "', argument " "2"" of type '" "char const *""'");
+    }
+    arg2 = reinterpret_cast< char * >(buf2);
   }
-  arg2 = reinterpret_cast< char * >(buf2);
   {
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (char **)GDALMajorObjectShadow_GetMetadata_List__SWIG_0(arg1,(char const *)arg2);
+    result = (char **)GDALMajorObjectShadow_GetMetadata_List(arg1,(char const *)arg2);
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
@@ -4058,96 +3964,6 @@ SWIGINTERN PyObject *_wrap_MajorObject_GetMetadata_List__SWIG_0(PyObject *SWIGUN
 fail:
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   return NULL;
-}
-
-
-SWIGINTERN PyObject *_wrap_MajorObject_GetMetadata_List__SWIG_1(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
-  PyObject *resultobj = 0;
-  GDALMajorObjectShadow *arg1 = (GDALMajorObjectShadow *) 0 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  PyObject * obj0 = 0 ;
-  char **result = 0 ;
-  
-  if (!PyArg_ParseTuple(args,(char *)"O:MajorObject_GetMetadata_List",&obj0)) SWIG_fail;
-  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALMajorObjectShadow, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "MajorObject_GetMetadata_List" "', argument " "1"" of type '" "GDALMajorObjectShadow *""'"); 
-  }
-  arg1 = reinterpret_cast< GDALMajorObjectShadow * >(argp1);
-  {
-    if ( bUseExceptions ) {
-      CPLErrorReset();
-    }
-    result = (char **)GDALMajorObjectShadow_GetMetadata_List__SWIG_0(arg1);
-    if ( bUseExceptions ) {
-      CPLErr eclass = CPLGetLastErrorType();
-      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-      }
-    }
-  }
-  {
-    /* %typemap(out) char **options -> ( string ) */
-    char **stringarray = result;
-    if ( stringarray == NULL ) {
-      resultobj = Py_None;
-      Py_INCREF( resultobj );
-    }
-    else {
-      int len = CSLCount( stringarray );
-      resultobj = PyList_New( len );
-      for ( int i = 0; i < len; ++i ) {
-        PyObject *o = GDALPythonObjectFromCStr( stringarray[i] );
-        PyList_SetItem(resultobj, i, o );
-      }
-    }
-  }
-  return resultobj;
-fail:
-  return NULL;
-}
-
-
-SWIGINTERN PyObject *_wrap_MajorObject_GetMetadata_List(PyObject *self, PyObject *args) {
-  int argc;
-  PyObject *argv[3];
-  int ii;
-  
-  if (!PyTuple_Check(args)) SWIG_fail;
-  argc = args ? (int)PyObject_Length(args) : 0;
-  for (ii = 0; (ii < 2) && (ii < argc); ii++) {
-    argv[ii] = PyTuple_GET_ITEM(args,ii);
-  }
-  if (argc == 1) {
-    int _v;
-    void *vptr = 0;
-    int res = SWIG_ConvertPtr(argv[0], &vptr, SWIGTYPE_p_GDALMajorObjectShadow, 0);
-    _v = SWIG_CheckState(res);
-    if (_v) {
-      return _wrap_MajorObject_GetMetadata_List__SWIG_1(self, args);
-    }
-  }
-  if (argc == 2) {
-    int _v;
-    void *vptr = 0;
-    int res = SWIG_ConvertPtr(argv[0], &vptr, SWIGTYPE_p_GDALMajorObjectShadow, 0);
-    _v = SWIG_CheckState(res);
-    if (_v) {
-      int res = SWIG_AsCharPtrAndSize(argv[1], 0, NULL, 0);
-      _v = SWIG_CheckState(res);
-      if (_v) {
-        return _wrap_MajorObject_GetMetadata_List__SWIG_0(self, args);
-      }
-    }
-  }
-  
-fail:
-  SWIG_SetErrorMsg(PyExc_NotImplementedError,"Wrong number or type of arguments for overloaded function 'MajorObject_GetMetadata_List'.\n"
-    "  Possible C/C++ prototypes are:\n"
-    "    GDALMajorObjectShadow::GetMetadata_List(char const *)\n"
-    "    GDALMajorObjectShadow::GetMetadata_List()\n");
-  return 0;
 }
 
 
@@ -4155,7 +3971,7 @@ SWIGINTERN PyObject *_wrap_MajorObject_SetMetadata__SWIG_0(PyObject *SWIGUNUSEDP
   PyObject *resultobj = 0;
   GDALMajorObjectShadow *arg1 = (GDALMajorObjectShadow *) 0 ;
   char **arg2 = (char **) 0 ;
-  char *arg3 = (char *) 0 ;
+  char *arg3 = (char *) "" ;
   void *argp1 = 0 ;
   int res1 = 0 ;
   int res3 ;
@@ -4166,7 +3982,7 @@ SWIGINTERN PyObject *_wrap_MajorObject_SetMetadata__SWIG_0(PyObject *SWIGUNUSEDP
   PyObject * obj2 = 0 ;
   CPLErr result;
   
-  if (!PyArg_ParseTuple(args,(char *)"OOO:MajorObject_SetMetadata",&obj0,&obj1,&obj2)) SWIG_fail;
+  if (!PyArg_ParseTuple(args,(char *)"OO|O:MajorObject_SetMetadata",&obj0,&obj1,&obj2)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALMajorObjectShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "MajorObject_SetMetadata" "', argument " "1"" of type '" "GDALMajorObjectShadow *""'"); 
@@ -4231,11 +4047,13 @@ SWIGINTERN PyObject *_wrap_MajorObject_SetMetadata__SWIG_0(PyObject *SWIGUNUSEDP
       SWIG_fail;
     }
   }
-  res3 = SWIG_AsCharPtrAndSize(obj2, &buf3, NULL, &alloc3);
-  if (!SWIG_IsOK(res3)) {
-    SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "MajorObject_SetMetadata" "', argument " "3"" of type '" "char const *""'");
+  if (obj2) {
+    res3 = SWIG_AsCharPtrAndSize(obj2, &buf3, NULL, &alloc3);
+    if (!SWIG_IsOK(res3)) {
+      SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "MajorObject_SetMetadata" "', argument " "3"" of type '" "char const *""'");
+    }
+    arg3 = reinterpret_cast< char * >(buf3);
   }
-  arg3 = reinterpret_cast< char * >(buf3);
   {
     if ( bUseExceptions ) {
       CPLErrorReset();
@@ -4278,120 +4096,8 @@ fail:
 SWIGINTERN PyObject *_wrap_MajorObject_SetMetadata__SWIG_1(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   GDALMajorObjectShadow *arg1 = (GDALMajorObjectShadow *) 0 ;
-  char **arg2 = (char **) 0 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  PyObject * obj0 = 0 ;
-  PyObject * obj1 = 0 ;
-  CPLErr result;
-  
-  if (!PyArg_ParseTuple(args,(char *)"OO:MajorObject_SetMetadata",&obj0,&obj1)) SWIG_fail;
-  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALMajorObjectShadow, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "MajorObject_SetMetadata" "', argument " "1"" of type '" "GDALMajorObjectShadow *""'"); 
-  }
-  arg1 = reinterpret_cast< GDALMajorObjectShadow * >(argp1);
-  {
-    /* %typemap(in) char **dict */
-    arg2 = NULL;
-    if ( PySequence_Check( obj1 ) ) {
-      int size = PySequence_Size(obj1);
-      for (int i = 0; i < size; i++) {
-        PyObject* pyObj = PySequence_GetItem(obj1,i);
-        int bFreeStr;
-        char* pszStr = GDALPythonObjectToCStr(pyObj, &bFreeStr);
-        if ( pszStr == NULL ) {
-          Py_DECREF(pyObj);
-          PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
-          SWIG_fail;
-        }
-        arg2 = CSLAddString( arg2, pszStr );
-        GDALPythonFreeCStr(pszStr, bFreeStr);
-        Py_DECREF(pyObj);
-      }
-    }
-    else if ( PyMapping_Check( obj1 ) ) {
-      /* We need to use the dictionary form. */
-      int size = PyMapping_Length( obj1 );
-      if ( size > 0 ) {
-        PyObject *item_list = PyMapping_Items( obj1 );
-        for( int i=0; i<size; i++ ) {
-          PyObject *it = PySequence_GetItem( item_list, i );
-          
-          PyObject *k, *v;
-          if ( ! PyArg_ParseTuple( it, "OO", &k, &v ) ) {
-            Py_DECREF(it);
-            PyErr_SetString(PyExc_TypeError,"dictionnaire must contain tuples of strings");
-            SWIG_fail;
-          }
-          
-          int bFreeK, bFreeV;
-          char* pszK = GDALPythonObjectToCStr(k, &bFreeK);
-          char* pszV = GDALPythonObjectToCStr(v, &bFreeV);
-          if( pszK == NULL || pszV == NULL )
-          {
-            GDALPythonFreeCStr(pszK, bFreeK);
-            GDALPythonFreeCStr(pszV, bFreeV);
-            Py_DECREF(it);
-            PyErr_SetString(PyExc_TypeError,"dictionnaire must contain tuples of strings");
-            SWIG_fail;
-          }
-          arg2 = CSLAddNameValue( arg2, pszK, pszV );
-          
-          GDALPythonFreeCStr(pszK, bFreeK);
-          GDALPythonFreeCStr(pszV, bFreeV);
-          Py_DECREF(it);
-        }
-        Py_DECREF(item_list);
-      }
-    }
-    else {
-      PyErr_SetString(PyExc_TypeError,"Argument must be dictionary or sequence of strings");
-      SWIG_fail;
-    }
-  }
-  {
-    if ( bUseExceptions ) {
-      CPLErrorReset();
-    }
-    result = (CPLErr)GDALMajorObjectShadow_SetMetadata__SWIG_0(arg1,arg2);
-    if ( bUseExceptions ) {
-      CPLErr eclass = CPLGetLastErrorType();
-      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-      }
-    }
-  }
-  resultobj = SWIG_From_int(static_cast< int >(result));
-  {
-    /* %typemap(freearg) char **dict */
-    CSLDestroy( arg2 );
-  }
-  {
-    /* %typemap(ret) CPLErr */
-    if ( bUseExceptions == 0 ) {
-      /* We're not using exceptions.  And no error has occurred */
-      if ( resultobj == 0 ) {
-        /* No other return values set so return ErrorCode */
-        resultobj = PyInt_FromLong(result);
-      }
-    }
-  }
-  return resultobj;
-fail:
-  {
-    /* %typemap(freearg) char **dict */
-    CSLDestroy( arg2 );
-  }
-  return NULL;
-}
-
-
-SWIGINTERN PyObject *_wrap_MajorObject_SetMetadata__SWIG_2(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
-  PyObject *resultobj = 0;
-  GDALMajorObjectShadow *arg1 = (GDALMajorObjectShadow *) 0 ;
   char *arg2 = (char *) 0 ;
-  char *arg3 = (char *) 0 ;
+  char *arg3 = (char *) "" ;
   void *argp1 = 0 ;
   int res1 = 0 ;
   int res2 ;
@@ -4405,7 +4111,7 @@ SWIGINTERN PyObject *_wrap_MajorObject_SetMetadata__SWIG_2(PyObject *SWIGUNUSEDP
   PyObject * obj2 = 0 ;
   CPLErr result;
   
-  if (!PyArg_ParseTuple(args,(char *)"OOO:MajorObject_SetMetadata",&obj0,&obj1,&obj2)) SWIG_fail;
+  if (!PyArg_ParseTuple(args,(char *)"OO|O:MajorObject_SetMetadata",&obj0,&obj1,&obj2)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALMajorObjectShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "MajorObject_SetMetadata" "', argument " "1"" of type '" "GDALMajorObjectShadow *""'"); 
@@ -4416,16 +4122,18 @@ SWIGINTERN PyObject *_wrap_MajorObject_SetMetadata__SWIG_2(PyObject *SWIGUNUSEDP
     SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "MajorObject_SetMetadata" "', argument " "2"" of type '" "char *""'");
   }
   arg2 = reinterpret_cast< char * >(buf2);
-  res3 = SWIG_AsCharPtrAndSize(obj2, &buf3, NULL, &alloc3);
-  if (!SWIG_IsOK(res3)) {
-    SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "MajorObject_SetMetadata" "', argument " "3"" of type '" "char const *""'");
+  if (obj2) {
+    res3 = SWIG_AsCharPtrAndSize(obj2, &buf3, NULL, &alloc3);
+    if (!SWIG_IsOK(res3)) {
+      SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "MajorObject_SetMetadata" "', argument " "3"" of type '" "char const *""'");
+    }
+    arg3 = reinterpret_cast< char * >(buf3);
   }
-  arg3 = reinterpret_cast< char * >(buf3);
   {
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (CPLErr)GDALMajorObjectShadow_SetMetadata__SWIG_2(arg1,arg2,(char const *)arg3);
+    result = (CPLErr)GDALMajorObjectShadow_SetMetadata__SWIG_1(arg1,arg2,(char const *)arg3);
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
@@ -4450,61 +4158,6 @@ SWIGINTERN PyObject *_wrap_MajorObject_SetMetadata__SWIG_2(PyObject *SWIGUNUSEDP
 fail:
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   if (alloc3 == SWIG_NEWOBJ) delete[] buf3;
-  return NULL;
-}
-
-
-SWIGINTERN PyObject *_wrap_MajorObject_SetMetadata__SWIG_3(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
-  PyObject *resultobj = 0;
-  GDALMajorObjectShadow *arg1 = (GDALMajorObjectShadow *) 0 ;
-  char *arg2 = (char *) 0 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  int res2 ;
-  char *buf2 = 0 ;
-  int alloc2 = 0 ;
-  PyObject * obj0 = 0 ;
-  PyObject * obj1 = 0 ;
-  CPLErr result;
-  
-  if (!PyArg_ParseTuple(args,(char *)"OO:MajorObject_SetMetadata",&obj0,&obj1)) SWIG_fail;
-  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALMajorObjectShadow, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "MajorObject_SetMetadata" "', argument " "1"" of type '" "GDALMajorObjectShadow *""'"); 
-  }
-  arg1 = reinterpret_cast< GDALMajorObjectShadow * >(argp1);
-  res2 = SWIG_AsCharPtrAndSize(obj1, &buf2, NULL, &alloc2);
-  if (!SWIG_IsOK(res2)) {
-    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "MajorObject_SetMetadata" "', argument " "2"" of type '" "char *""'");
-  }
-  arg2 = reinterpret_cast< char * >(buf2);
-  {
-    if ( bUseExceptions ) {
-      CPLErrorReset();
-    }
-    result = (CPLErr)GDALMajorObjectShadow_SetMetadata__SWIG_2(arg1,arg2);
-    if ( bUseExceptions ) {
-      CPLErr eclass = CPLGetLastErrorType();
-      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-      }
-    }
-  }
-  resultobj = SWIG_From_int(static_cast< int >(result));
-  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
-  {
-    /* %typemap(ret) CPLErr */
-    if ( bUseExceptions == 0 ) {
-      /* We're not using exceptions.  And no error has occurred */
-      if ( resultobj == 0 ) {
-        /* No other return values set so return ErrorCode */
-        resultobj = PyInt_FromLong(result);
-      }
-    }
-  }
-  return resultobj;
-fail:
-  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   return NULL;
 }
 
@@ -4519,7 +4172,7 @@ SWIGINTERN PyObject *_wrap_MajorObject_SetMetadata(PyObject *self, PyObject *arg
   for (ii = 0; (ii < 3) && (ii < argc); ii++) {
     argv[ii] = PyTuple_GET_ITEM(args,ii);
   }
-  if (argc == 2) {
+  if ((argc >= 2) && (argc <= 3)) {
     int _v;
     void *vptr = 0;
     int res = SWIG_ConvertPtr(argv[0], &vptr, SWIGTYPE_p_GDALMajorObjectShadow, 0);
@@ -4533,37 +4186,9 @@ SWIGINTERN PyObject *_wrap_MajorObject_SetMetadata(PyObject *self, PyObject *arg
         _v = ((PyMapping_Check(argv[1]) || PySequence_Check(argv[1]) ) && !SWIG_CheckState(SWIG_AsCharPtrAndSize(argv[1], 0, NULL, 0)) ) ? 1 : 0;
       }
       if (_v) {
-        return _wrap_MajorObject_SetMetadata__SWIG_1(self, args);
-      }
-    }
-  }
-  if (argc == 2) {
-    int _v;
-    void *vptr = 0;
-    int res = SWIG_ConvertPtr(argv[0], &vptr, SWIGTYPE_p_GDALMajorObjectShadow, 0);
-    _v = SWIG_CheckState(res);
-    if (_v) {
-      int res = SWIG_AsCharPtrAndSize(argv[1], 0, NULL, 0);
-      _v = SWIG_CheckState(res);
-      if (_v) {
-        return _wrap_MajorObject_SetMetadata__SWIG_3(self, args);
-      }
-    }
-  }
-  if (argc == 3) {
-    int _v;
-    void *vptr = 0;
-    int res = SWIG_ConvertPtr(argv[0], &vptr, SWIGTYPE_p_GDALMajorObjectShadow, 0);
-    _v = SWIG_CheckState(res);
-    if (_v) {
-      {
-        /* %typecheck(SWIG_TYPECHECK_POINTER) (char **dict) */
-        /* Note: we exclude explicitly strings, because they can be considered as a sequence of characters, */
-        /* which is not desirable since it makes it impossible to define bindings such as SetMetadata(string) and SetMetadata(array_of_string) */
-        /* (see #4816) */
-        _v = ((PyMapping_Check(argv[1]) || PySequence_Check(argv[1]) ) && !SWIG_CheckState(SWIG_AsCharPtrAndSize(argv[1], 0, NULL, 0)) ) ? 1 : 0;
-      }
-      if (_v) {
+        if (argc <= 2) {
+          return _wrap_MajorObject_SetMetadata__SWIG_0(self, args);
+        }
         int res = SWIG_AsCharPtrAndSize(argv[2], 0, NULL, 0);
         _v = SWIG_CheckState(res);
         if (_v) {
@@ -4572,7 +4197,7 @@ SWIGINTERN PyObject *_wrap_MajorObject_SetMetadata(PyObject *self, PyObject *arg
       }
     }
   }
-  if (argc == 3) {
+  if ((argc >= 2) && (argc <= 3)) {
     int _v;
     void *vptr = 0;
     int res = SWIG_ConvertPtr(argv[0], &vptr, SWIGTYPE_p_GDALMajorObjectShadow, 0);
@@ -4581,10 +4206,13 @@ SWIGINTERN PyObject *_wrap_MajorObject_SetMetadata(PyObject *self, PyObject *arg
       int res = SWIG_AsCharPtrAndSize(argv[1], 0, NULL, 0);
       _v = SWIG_CheckState(res);
       if (_v) {
+        if (argc <= 2) {
+          return _wrap_MajorObject_SetMetadata__SWIG_1(self, args);
+        }
         int res = SWIG_AsCharPtrAndSize(argv[2], 0, NULL, 0);
         _v = SWIG_CheckState(res);
         if (_v) {
-          return _wrap_MajorObject_SetMetadata__SWIG_2(self, args);
+          return _wrap_MajorObject_SetMetadata__SWIG_1(self, args);
         }
       }
     }
@@ -4594,18 +4222,16 @@ fail:
   SWIG_SetErrorMsg(PyExc_NotImplementedError,"Wrong number or type of arguments for overloaded function 'MajorObject_SetMetadata'.\n"
     "  Possible C/C++ prototypes are:\n"
     "    GDALMajorObjectShadow::SetMetadata(char **,char const *)\n"
-    "    GDALMajorObjectShadow::SetMetadata(char **)\n"
-    "    GDALMajorObjectShadow::SetMetadata(char *,char const *)\n"
-    "    GDALMajorObjectShadow::SetMetadata(char *)\n");
+    "    GDALMajorObjectShadow::SetMetadata(char *,char const *)\n");
   return 0;
 }
 
 
-SWIGINTERN PyObject *_wrap_MajorObject_GetMetadataItem__SWIG_0(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+SWIGINTERN PyObject *_wrap_MajorObject_GetMetadataItem(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   GDALMajorObjectShadow *arg1 = (GDALMajorObjectShadow *) 0 ;
   char *arg2 = (char *) 0 ;
-  char *arg3 = (char *) 0 ;
+  char *arg3 = (char *) "" ;
   void *argp1 = 0 ;
   int res1 = 0 ;
   int res2 ;
@@ -4619,7 +4245,7 @@ SWIGINTERN PyObject *_wrap_MajorObject_GetMetadataItem__SWIG_0(PyObject *SWIGUNU
   PyObject * obj2 = 0 ;
   char *result = 0 ;
   
-  if (!PyArg_ParseTuple(args,(char *)"OOO:MajorObject_GetMetadataItem",&obj0,&obj1,&obj2)) SWIG_fail;
+  if (!PyArg_ParseTuple(args,(char *)"OO|O:MajorObject_GetMetadataItem",&obj0,&obj1,&obj2)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALMajorObjectShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "MajorObject_GetMetadataItem" "', argument " "1"" of type '" "GDALMajorObjectShadow *""'"); 
@@ -4630,11 +4256,13 @@ SWIGINTERN PyObject *_wrap_MajorObject_GetMetadataItem__SWIG_0(PyObject *SWIGUNU
     SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "MajorObject_GetMetadataItem" "', argument " "2"" of type '" "char const *""'");
   }
   arg2 = reinterpret_cast< char * >(buf2);
-  res3 = SWIG_AsCharPtrAndSize(obj2, &buf3, NULL, &alloc3);
-  if (!SWIG_IsOK(res3)) {
-    SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "MajorObject_GetMetadataItem" "', argument " "3"" of type '" "char const *""'");
+  if (obj2) {
+    res3 = SWIG_AsCharPtrAndSize(obj2, &buf3, NULL, &alloc3);
+    if (!SWIG_IsOK(res3)) {
+      SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "MajorObject_GetMetadataItem" "', argument " "3"" of type '" "char const *""'");
+    }
+    arg3 = reinterpret_cast< char * >(buf3);
   }
-  arg3 = reinterpret_cast< char * >(buf3);
   {
     if (!arg2) {
       SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
@@ -4644,7 +4272,7 @@ SWIGINTERN PyObject *_wrap_MajorObject_GetMetadataItem__SWIG_0(PyObject *SWIGUNU
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (char *)GDALMajorObjectShadow_GetMetadataItem__SWIG_0(arg1,(char const *)arg2,(char const *)arg3);
+    result = (char *)GDALMajorObjectShadow_GetMetadataItem(arg1,(char const *)arg2,(char const *)arg3);
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
@@ -4663,112 +4291,12 @@ fail:
 }
 
 
-SWIGINTERN PyObject *_wrap_MajorObject_GetMetadataItem__SWIG_1(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
-  PyObject *resultobj = 0;
-  GDALMajorObjectShadow *arg1 = (GDALMajorObjectShadow *) 0 ;
-  char *arg2 = (char *) 0 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  int res2 ;
-  char *buf2 = 0 ;
-  int alloc2 = 0 ;
-  PyObject * obj0 = 0 ;
-  PyObject * obj1 = 0 ;
-  char *result = 0 ;
-  
-  if (!PyArg_ParseTuple(args,(char *)"OO:MajorObject_GetMetadataItem",&obj0,&obj1)) SWIG_fail;
-  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALMajorObjectShadow, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "MajorObject_GetMetadataItem" "', argument " "1"" of type '" "GDALMajorObjectShadow *""'"); 
-  }
-  arg1 = reinterpret_cast< GDALMajorObjectShadow * >(argp1);
-  res2 = SWIG_AsCharPtrAndSize(obj1, &buf2, NULL, &alloc2);
-  if (!SWIG_IsOK(res2)) {
-    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "MajorObject_GetMetadataItem" "', argument " "2"" of type '" "char const *""'");
-  }
-  arg2 = reinterpret_cast< char * >(buf2);
-  {
-    if (!arg2) {
-      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
-    }
-  }
-  {
-    if ( bUseExceptions ) {
-      CPLErrorReset();
-    }
-    result = (char *)GDALMajorObjectShadow_GetMetadataItem__SWIG_0(arg1,(char const *)arg2);
-    if ( bUseExceptions ) {
-      CPLErr eclass = CPLGetLastErrorType();
-      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-      }
-    }
-  }
-  resultobj = SWIG_FromCharPtr((const char *)result);
-  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
-  return resultobj;
-fail:
-  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
-  return NULL;
-}
-
-
-SWIGINTERN PyObject *_wrap_MajorObject_GetMetadataItem(PyObject *self, PyObject *args) {
-  int argc;
-  PyObject *argv[4];
-  int ii;
-  
-  if (!PyTuple_Check(args)) SWIG_fail;
-  argc = args ? (int)PyObject_Length(args) : 0;
-  for (ii = 0; (ii < 3) && (ii < argc); ii++) {
-    argv[ii] = PyTuple_GET_ITEM(args,ii);
-  }
-  if (argc == 2) {
-    int _v;
-    void *vptr = 0;
-    int res = SWIG_ConvertPtr(argv[0], &vptr, SWIGTYPE_p_GDALMajorObjectShadow, 0);
-    _v = SWIG_CheckState(res);
-    if (_v) {
-      int res = SWIG_AsCharPtrAndSize(argv[1], 0, NULL, 0);
-      _v = SWIG_CheckState(res);
-      if (_v) {
-        return _wrap_MajorObject_GetMetadataItem__SWIG_1(self, args);
-      }
-    }
-  }
-  if (argc == 3) {
-    int _v;
-    void *vptr = 0;
-    int res = SWIG_ConvertPtr(argv[0], &vptr, SWIGTYPE_p_GDALMajorObjectShadow, 0);
-    _v = SWIG_CheckState(res);
-    if (_v) {
-      int res = SWIG_AsCharPtrAndSize(argv[1], 0, NULL, 0);
-      _v = SWIG_CheckState(res);
-      if (_v) {
-        int res = SWIG_AsCharPtrAndSize(argv[2], 0, NULL, 0);
-        _v = SWIG_CheckState(res);
-        if (_v) {
-          return _wrap_MajorObject_GetMetadataItem__SWIG_0(self, args);
-        }
-      }
-    }
-  }
-  
-fail:
-  SWIG_SetErrorMsg(PyExc_NotImplementedError,"Wrong number or type of arguments for overloaded function 'MajorObject_GetMetadataItem'.\n"
-    "  Possible C/C++ prototypes are:\n"
-    "    GDALMajorObjectShadow::GetMetadataItem(char const *,char const *)\n"
-    "    GDALMajorObjectShadow::GetMetadataItem(char const *)\n");
-  return 0;
-}
-
-
-SWIGINTERN PyObject *_wrap_MajorObject_SetMetadataItem__SWIG_0(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+SWIGINTERN PyObject *_wrap_MajorObject_SetMetadataItem(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   GDALMajorObjectShadow *arg1 = (GDALMajorObjectShadow *) 0 ;
   char *arg2 = (char *) 0 ;
   char *arg3 = (char *) 0 ;
-  char *arg4 = (char *) 0 ;
+  char *arg4 = (char *) "" ;
   void *argp1 = 0 ;
   int res1 = 0 ;
   int res2 ;
@@ -4786,7 +4314,7 @@ SWIGINTERN PyObject *_wrap_MajorObject_SetMetadataItem__SWIG_0(PyObject *SWIGUNU
   PyObject * obj3 = 0 ;
   CPLErr result;
   
-  if (!PyArg_ParseTuple(args,(char *)"OOOO:MajorObject_SetMetadataItem",&obj0,&obj1,&obj2,&obj3)) SWIG_fail;
+  if (!PyArg_ParseTuple(args,(char *)"OOO|O:MajorObject_SetMetadataItem",&obj0,&obj1,&obj2,&obj3)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALMajorObjectShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "MajorObject_SetMetadataItem" "', argument " "1"" of type '" "GDALMajorObjectShadow *""'"); 
@@ -4802,11 +4330,13 @@ SWIGINTERN PyObject *_wrap_MajorObject_SetMetadataItem__SWIG_0(PyObject *SWIGUNU
     SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "MajorObject_SetMetadataItem" "', argument " "3"" of type '" "char const *""'");
   }
   arg3 = reinterpret_cast< char * >(buf3);
-  res4 = SWIG_AsCharPtrAndSize(obj3, &buf4, NULL, &alloc4);
-  if (!SWIG_IsOK(res4)) {
-    SWIG_exception_fail(SWIG_ArgError(res4), "in method '" "MajorObject_SetMetadataItem" "', argument " "4"" of type '" "char const *""'");
+  if (obj3) {
+    res4 = SWIG_AsCharPtrAndSize(obj3, &buf4, NULL, &alloc4);
+    if (!SWIG_IsOK(res4)) {
+      SWIG_exception_fail(SWIG_ArgError(res4), "in method '" "MajorObject_SetMetadataItem" "', argument " "4"" of type '" "char const *""'");
+    }
+    arg4 = reinterpret_cast< char * >(buf4);
   }
-  arg4 = reinterpret_cast< char * >(buf4);
   {
     if (!arg2) {
       SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
@@ -4816,7 +4346,7 @@ SWIGINTERN PyObject *_wrap_MajorObject_SetMetadataItem__SWIG_0(PyObject *SWIGUNU
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (CPLErr)GDALMajorObjectShadow_SetMetadataItem__SWIG_0(arg1,(char const *)arg2,(char const *)arg3,(char const *)arg4);
+    result = (CPLErr)GDALMajorObjectShadow_SetMetadataItem(arg1,(char const *)arg2,(char const *)arg3,(char const *)arg4);
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
@@ -4844,136 +4374,6 @@ fail:
   if (alloc3 == SWIG_NEWOBJ) delete[] buf3;
   if (alloc4 == SWIG_NEWOBJ) delete[] buf4;
   return NULL;
-}
-
-
-SWIGINTERN PyObject *_wrap_MajorObject_SetMetadataItem__SWIG_1(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
-  PyObject *resultobj = 0;
-  GDALMajorObjectShadow *arg1 = (GDALMajorObjectShadow *) 0 ;
-  char *arg2 = (char *) 0 ;
-  char *arg3 = (char *) 0 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  int res2 ;
-  char *buf2 = 0 ;
-  int alloc2 = 0 ;
-  int res3 ;
-  char *buf3 = 0 ;
-  int alloc3 = 0 ;
-  PyObject * obj0 = 0 ;
-  PyObject * obj1 = 0 ;
-  PyObject * obj2 = 0 ;
-  CPLErr result;
-  
-  if (!PyArg_ParseTuple(args,(char *)"OOO:MajorObject_SetMetadataItem",&obj0,&obj1,&obj2)) SWIG_fail;
-  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALMajorObjectShadow, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "MajorObject_SetMetadataItem" "', argument " "1"" of type '" "GDALMajorObjectShadow *""'"); 
-  }
-  arg1 = reinterpret_cast< GDALMajorObjectShadow * >(argp1);
-  res2 = SWIG_AsCharPtrAndSize(obj1, &buf2, NULL, &alloc2);
-  if (!SWIG_IsOK(res2)) {
-    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "MajorObject_SetMetadataItem" "', argument " "2"" of type '" "char const *""'");
-  }
-  arg2 = reinterpret_cast< char * >(buf2);
-  res3 = SWIG_AsCharPtrAndSize(obj2, &buf3, NULL, &alloc3);
-  if (!SWIG_IsOK(res3)) {
-    SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "MajorObject_SetMetadataItem" "', argument " "3"" of type '" "char const *""'");
-  }
-  arg3 = reinterpret_cast< char * >(buf3);
-  {
-    if (!arg2) {
-      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
-    }
-  }
-  {
-    if ( bUseExceptions ) {
-      CPLErrorReset();
-    }
-    result = (CPLErr)GDALMajorObjectShadow_SetMetadataItem__SWIG_0(arg1,(char const *)arg2,(char const *)arg3);
-    if ( bUseExceptions ) {
-      CPLErr eclass = CPLGetLastErrorType();
-      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-      }
-    }
-  }
-  resultobj = SWIG_From_int(static_cast< int >(result));
-  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
-  if (alloc3 == SWIG_NEWOBJ) delete[] buf3;
-  {
-    /* %typemap(ret) CPLErr */
-    if ( bUseExceptions == 0 ) {
-      /* We're not using exceptions.  And no error has occurred */
-      if ( resultobj == 0 ) {
-        /* No other return values set so return ErrorCode */
-        resultobj = PyInt_FromLong(result);
-      }
-    }
-  }
-  return resultobj;
-fail:
-  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
-  if (alloc3 == SWIG_NEWOBJ) delete[] buf3;
-  return NULL;
-}
-
-
-SWIGINTERN PyObject *_wrap_MajorObject_SetMetadataItem(PyObject *self, PyObject *args) {
-  int argc;
-  PyObject *argv[5];
-  int ii;
-  
-  if (!PyTuple_Check(args)) SWIG_fail;
-  argc = args ? (int)PyObject_Length(args) : 0;
-  for (ii = 0; (ii < 4) && (ii < argc); ii++) {
-    argv[ii] = PyTuple_GET_ITEM(args,ii);
-  }
-  if (argc == 3) {
-    int _v;
-    void *vptr = 0;
-    int res = SWIG_ConvertPtr(argv[0], &vptr, SWIGTYPE_p_GDALMajorObjectShadow, 0);
-    _v = SWIG_CheckState(res);
-    if (_v) {
-      int res = SWIG_AsCharPtrAndSize(argv[1], 0, NULL, 0);
-      _v = SWIG_CheckState(res);
-      if (_v) {
-        int res = SWIG_AsCharPtrAndSize(argv[2], 0, NULL, 0);
-        _v = SWIG_CheckState(res);
-        if (_v) {
-          return _wrap_MajorObject_SetMetadataItem__SWIG_1(self, args);
-        }
-      }
-    }
-  }
-  if (argc == 4) {
-    int _v;
-    void *vptr = 0;
-    int res = SWIG_ConvertPtr(argv[0], &vptr, SWIGTYPE_p_GDALMajorObjectShadow, 0);
-    _v = SWIG_CheckState(res);
-    if (_v) {
-      int res = SWIG_AsCharPtrAndSize(argv[1], 0, NULL, 0);
-      _v = SWIG_CheckState(res);
-      if (_v) {
-        int res = SWIG_AsCharPtrAndSize(argv[2], 0, NULL, 0);
-        _v = SWIG_CheckState(res);
-        if (_v) {
-          int res = SWIG_AsCharPtrAndSize(argv[3], 0, NULL, 0);
-          _v = SWIG_CheckState(res);
-          if (_v) {
-            return _wrap_MajorObject_SetMetadataItem__SWIG_0(self, args);
-          }
-        }
-      }
-    }
-  }
-  
-fail:
-  SWIG_SetErrorMsg(PyExc_NotImplementedError,"Wrong number or type of arguments for overloaded function 'MajorObject_SetMetadataItem'.\n"
-    "  Possible C/C++ prototypes are:\n"
-    "    GDALMajorObjectShadow::SetMetadataItem(char const *,char const *,char const *)\n"
-    "    GDALMajorObjectShadow::SetMetadataItem(char const *,char const *)\n");
-  return 0;
 }
 
 
@@ -5852,10 +5252,10 @@ fail:
 }
 
 
-SWIGINTERN PyObject *_wrap_Network_GetLayerByIndex__SWIG_0(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+SWIGINTERN PyObject *_wrap_Network_GetLayerByIndex(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   GNMNetworkShadow *arg1 = (GNMNetworkShadow *) 0 ;
-  int arg2 ;
+  int arg2 = (int) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
   int val2 ;
@@ -5864,22 +5264,24 @@ SWIGINTERN PyObject *_wrap_Network_GetLayerByIndex__SWIG_0(PyObject *SWIGUNUSEDP
   PyObject * obj1 = 0 ;
   OGRLayerShadow *result = 0 ;
   
-  if (!PyArg_ParseTuple(args,(char *)"OO:Network_GetLayerByIndex",&obj0,&obj1)) SWIG_fail;
+  if (!PyArg_ParseTuple(args,(char *)"O|O:Network_GetLayerByIndex",&obj0,&obj1)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GNMNetworkShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Network_GetLayerByIndex" "', argument " "1"" of type '" "GNMNetworkShadow *""'"); 
   }
   arg1 = reinterpret_cast< GNMNetworkShadow * >(argp1);
-  ecode2 = SWIG_AsVal_int(obj1, &val2);
-  if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "Network_GetLayerByIndex" "', argument " "2"" of type '" "int""'");
-  } 
-  arg2 = static_cast< int >(val2);
+  if (obj1) {
+    ecode2 = SWIG_AsVal_int(obj1, &val2);
+    if (!SWIG_IsOK(ecode2)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "Network_GetLayerByIndex" "', argument " "2"" of type '" "int""'");
+    } 
+    arg2 = static_cast< int >(val2);
+  }
   {
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRLayerShadow *)GNMNetworkShadow_GetLayerByIndex__SWIG_0(arg1,arg2);
+    result = (OGRLayerShadow *)GNMNetworkShadow_GetLayerByIndex(arg1,arg2);
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
@@ -5891,83 +5293,6 @@ SWIGINTERN PyObject *_wrap_Network_GetLayerByIndex__SWIG_0(PyObject *SWIGUNUSEDP
   return resultobj;
 fail:
   return NULL;
-}
-
-
-SWIGINTERN PyObject *_wrap_Network_GetLayerByIndex__SWIG_1(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
-  PyObject *resultobj = 0;
-  GNMNetworkShadow *arg1 = (GNMNetworkShadow *) 0 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  PyObject * obj0 = 0 ;
-  OGRLayerShadow *result = 0 ;
-  
-  if (!PyArg_ParseTuple(args,(char *)"O:Network_GetLayerByIndex",&obj0)) SWIG_fail;
-  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GNMNetworkShadow, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Network_GetLayerByIndex" "', argument " "1"" of type '" "GNMNetworkShadow *""'"); 
-  }
-  arg1 = reinterpret_cast< GNMNetworkShadow * >(argp1);
-  {
-    if ( bUseExceptions ) {
-      CPLErrorReset();
-    }
-    result = (OGRLayerShadow *)GNMNetworkShadow_GetLayerByIndex__SWIG_0(arg1);
-    if ( bUseExceptions ) {
-      CPLErr eclass = CPLGetLastErrorType();
-      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-      }
-    }
-  }
-  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRLayerShadow, 0 |  0 );
-  return resultobj;
-fail:
-  return NULL;
-}
-
-
-SWIGINTERN PyObject *_wrap_Network_GetLayerByIndex(PyObject *self, PyObject *args) {
-  int argc;
-  PyObject *argv[3];
-  int ii;
-  
-  if (!PyTuple_Check(args)) SWIG_fail;
-  argc = args ? (int)PyObject_Length(args) : 0;
-  for (ii = 0; (ii < 2) && (ii < argc); ii++) {
-    argv[ii] = PyTuple_GET_ITEM(args,ii);
-  }
-  if (argc == 1) {
-    int _v;
-    void *vptr = 0;
-    int res = SWIG_ConvertPtr(argv[0], &vptr, SWIGTYPE_p_GNMNetworkShadow, 0);
-    _v = SWIG_CheckState(res);
-    if (_v) {
-      return _wrap_Network_GetLayerByIndex__SWIG_1(self, args);
-    }
-  }
-  if (argc == 2) {
-    int _v;
-    void *vptr = 0;
-    int res = SWIG_ConvertPtr(argv[0], &vptr, SWIGTYPE_p_GNMNetworkShadow, 0);
-    _v = SWIG_CheckState(res);
-    if (_v) {
-      {
-        int res = SWIG_AsVal_int(argv[1], NULL);
-        _v = SWIG_CheckState(res);
-      }
-      if (_v) {
-        return _wrap_Network_GetLayerByIndex__SWIG_0(self, args);
-      }
-    }
-  }
-  
-fail:
-  SWIG_SetErrorMsg(PyExc_NotImplementedError,"Wrong number or type of arguments for overloaded function 'Network_GetLayerByIndex'.\n"
-    "  Possible C/C++ prototypes are:\n"
-    "    GNMNetworkShadow::GetLayerByIndex(int)\n"
-    "    GNMNetworkShadow::GetLayerByIndex()\n");
-  return 0;
 }
 
 
@@ -6997,10 +6322,10 @@ fail:
 }
 
 
-SWIGINTERN PyObject *_wrap_GenericNetwork_ChangeAllBlockState__SWIG_0(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+SWIGINTERN PyObject *_wrap_GenericNetwork_ChangeAllBlockState(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   GNMGenericNetworkShadow *arg1 = (GNMGenericNetworkShadow *) 0 ;
-  bool arg2 ;
+  bool arg2 = (bool) false ;
   void *argp1 = 0 ;
   int res1 = 0 ;
   bool val2 ;
@@ -7009,22 +6334,24 @@ SWIGINTERN PyObject *_wrap_GenericNetwork_ChangeAllBlockState__SWIG_0(PyObject *
   PyObject * obj1 = 0 ;
   CPLErr result;
   
-  if (!PyArg_ParseTuple(args,(char *)"OO:GenericNetwork_ChangeAllBlockState",&obj0,&obj1)) SWIG_fail;
+  if (!PyArg_ParseTuple(args,(char *)"O|O:GenericNetwork_ChangeAllBlockState",&obj0,&obj1)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GNMGenericNetworkShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "GenericNetwork_ChangeAllBlockState" "', argument " "1"" of type '" "GNMGenericNetworkShadow *""'"); 
   }
   arg1 = reinterpret_cast< GNMGenericNetworkShadow * >(argp1);
-  ecode2 = SWIG_AsVal_bool(obj1, &val2);
-  if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "GenericNetwork_ChangeAllBlockState" "', argument " "2"" of type '" "bool""'");
-  } 
-  arg2 = static_cast< bool >(val2);
+  if (obj1) {
+    ecode2 = SWIG_AsVal_bool(obj1, &val2);
+    if (!SWIG_IsOK(ecode2)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "GenericNetwork_ChangeAllBlockState" "', argument " "2"" of type '" "bool""'");
+    } 
+    arg2 = static_cast< bool >(val2);
+  }
   {
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (CPLErr)GNMGenericNetworkShadow_ChangeAllBlockState__SWIG_0(arg1,arg2);
+    result = (CPLErr)GNMGenericNetworkShadow_ChangeAllBlockState(arg1,arg2);
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
@@ -7046,93 +6373,6 @@ SWIGINTERN PyObject *_wrap_GenericNetwork_ChangeAllBlockState__SWIG_0(PyObject *
   return resultobj;
 fail:
   return NULL;
-}
-
-
-SWIGINTERN PyObject *_wrap_GenericNetwork_ChangeAllBlockState__SWIG_1(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
-  PyObject *resultobj = 0;
-  GNMGenericNetworkShadow *arg1 = (GNMGenericNetworkShadow *) 0 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  PyObject * obj0 = 0 ;
-  CPLErr result;
-  
-  if (!PyArg_ParseTuple(args,(char *)"O:GenericNetwork_ChangeAllBlockState",&obj0)) SWIG_fail;
-  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GNMGenericNetworkShadow, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "GenericNetwork_ChangeAllBlockState" "', argument " "1"" of type '" "GNMGenericNetworkShadow *""'"); 
-  }
-  arg1 = reinterpret_cast< GNMGenericNetworkShadow * >(argp1);
-  {
-    if ( bUseExceptions ) {
-      CPLErrorReset();
-    }
-    result = (CPLErr)GNMGenericNetworkShadow_ChangeAllBlockState__SWIG_0(arg1);
-    if ( bUseExceptions ) {
-      CPLErr eclass = CPLGetLastErrorType();
-      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-      }
-    }
-  }
-  resultobj = SWIG_From_int(static_cast< int >(result));
-  {
-    /* %typemap(ret) CPLErr */
-    if ( bUseExceptions == 0 ) {
-      /* We're not using exceptions.  And no error has occurred */
-      if ( resultobj == 0 ) {
-        /* No other return values set so return ErrorCode */
-        resultobj = PyInt_FromLong(result);
-      }
-    }
-  }
-  return resultobj;
-fail:
-  return NULL;
-}
-
-
-SWIGINTERN PyObject *_wrap_GenericNetwork_ChangeAllBlockState(PyObject *self, PyObject *args) {
-  int argc;
-  PyObject *argv[3];
-  int ii;
-  
-  if (!PyTuple_Check(args)) SWIG_fail;
-  argc = args ? (int)PyObject_Length(args) : 0;
-  for (ii = 0; (ii < 2) && (ii < argc); ii++) {
-    argv[ii] = PyTuple_GET_ITEM(args,ii);
-  }
-  if (argc == 1) {
-    int _v;
-    void *vptr = 0;
-    int res = SWIG_ConvertPtr(argv[0], &vptr, SWIGTYPE_p_GNMGenericNetworkShadow, 0);
-    _v = SWIG_CheckState(res);
-    if (_v) {
-      return _wrap_GenericNetwork_ChangeAllBlockState__SWIG_1(self, args);
-    }
-  }
-  if (argc == 2) {
-    int _v;
-    void *vptr = 0;
-    int res = SWIG_ConvertPtr(argv[0], &vptr, SWIGTYPE_p_GNMGenericNetworkShadow, 0);
-    _v = SWIG_CheckState(res);
-    if (_v) {
-      {
-        int res = SWIG_AsVal_bool(argv[1], NULL);
-        _v = SWIG_CheckState(res);
-      }
-      if (_v) {
-        return _wrap_GenericNetwork_ChangeAllBlockState__SWIG_0(self, args);
-      }
-    }
-  }
-  
-fail:
-  SWIG_SetErrorMsg(PyExc_NotImplementedError,"Wrong number or type of arguments for overloaded function 'GenericNetwork_ChangeAllBlockState'.\n"
-    "  Possible C/C++ prototypes are:\n"
-    "    GNMGenericNetworkShadow::ChangeAllBlockState(bool)\n"
-    "    GNMGenericNetworkShadow::ChangeAllBlockState()\n");
-  return 0;
 }
 
 
@@ -7179,10 +6419,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"Network_CopyLayer", (PyCFunction) _wrap_Network_CopyLayer, METH_VARARGS | METH_KEYWORDS, (char *)"Network_CopyLayer(Network self, OGRLayerShadow * src_layer, char const * new_name, char ** options=None) -> OGRLayerShadow *"},
 	 { (char *)"Network_DeleteLayer", _wrap_Network_DeleteLayer, METH_VARARGS, (char *)"Network_DeleteLayer(Network self, int index) -> OGRErr"},
 	 { (char *)"Network_GetLayerCount", _wrap_Network_GetLayerCount, METH_VARARGS, (char *)"Network_GetLayerCount(Network self) -> int"},
-	 { (char *)"Network_GetLayerByIndex", _wrap_Network_GetLayerByIndex, METH_VARARGS, (char *)"\n"
-		"GetLayerByIndex(int index=0) -> OGRLayerShadow\n"
-		"Network_GetLayerByIndex(Network self) -> OGRLayerShadow *\n"
-		""},
+	 { (char *)"Network_GetLayerByIndex", _wrap_Network_GetLayerByIndex, METH_VARARGS, (char *)"Network_GetLayerByIndex(Network self, int index=0) -> OGRLayerShadow *"},
 	 { (char *)"Network_GetLayerByName", _wrap_Network_GetLayerByName, METH_VARARGS, (char *)"Network_GetLayerByName(Network self, char const * layer_name) -> OGRLayerShadow *"},
 	 { (char *)"Network_TestCapability", _wrap_Network_TestCapability, METH_VARARGS, (char *)"Network_TestCapability(Network self, char const * cap) -> bool"},
 	 { (char *)"Network_StartTransaction", (PyCFunction) _wrap_Network_StartTransaction, METH_VARARGS | METH_KEYWORDS, (char *)"Network_StartTransaction(Network self, int force=False) -> OGRErr"},
@@ -7209,10 +6446,7 @@ static PyMethodDef SwigMethods[] = {
 		"    GNMDirection eDir) -> CPLErr\n"
 		""},
 	 { (char *)"GenericNetwork_ChangeBlockState", _wrap_GenericNetwork_ChangeBlockState, METH_VARARGS, (char *)"GenericNetwork_ChangeBlockState(GenericNetwork self, GIntBig nFID, bool bIsBlock) -> CPLErr"},
-	 { (char *)"GenericNetwork_ChangeAllBlockState", _wrap_GenericNetwork_ChangeAllBlockState, METH_VARARGS, (char *)"\n"
-		"ChangeAllBlockState(bool bIsBlock=False) -> CPLErr\n"
-		"GenericNetwork_ChangeAllBlockState(GenericNetwork self) -> CPLErr\n"
-		""},
+	 { (char *)"GenericNetwork_ChangeAllBlockState", _wrap_GenericNetwork_ChangeAllBlockState, METH_VARARGS, (char *)"GenericNetwork_ChangeAllBlockState(GenericNetwork self, bool bIsBlock=False) -> CPLErr"},
 	 { (char *)"GenericNetwork_swigregister", GenericNetwork_swigregister, METH_VARARGS, NULL},
 	 { NULL, NULL, 0, NULL }
 };

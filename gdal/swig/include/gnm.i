@@ -42,6 +42,14 @@
 %module gnm
 #endif
 
+#ifdef SWIGCSHARP
+%include swig_csharp_extensions.i
+#endif
+
+#ifndef SWIGJAVA
+%feature ("compactdefaultargs");
+#endif
+
 %{
 #include "gdal.h"
 #include "gnm_api.h"

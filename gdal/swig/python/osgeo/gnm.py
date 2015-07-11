@@ -70,16 +70,16 @@ except AttributeError:
 
 
 
-def GetUseExceptions():
-  return _gnm.GetUseExceptions()
+def GetUseExceptions(*args):
+  return _gnm.GetUseExceptions(*args)
 GetUseExceptions = _gnm.GetUseExceptions
 
-def UseExceptions():
-  return _gnm.UseExceptions()
+def UseExceptions(*args):
+  return _gnm.UseExceptions(*args)
 UseExceptions = _gnm.UseExceptions
 
-def DontUseExceptions():
-  return _gnm.DontUseExceptions()
+def DontUseExceptions(*args):
+  return _gnm.DontUseExceptions(*args)
 DontUseExceptions = _gnm.DontUseExceptions
 class MajorObject(_object):
     __swig_setmethods__ = {}
@@ -88,11 +88,11 @@ class MajorObject(_object):
     __getattr__ = lambda self, name: _swig_getattr(self, MajorObject, name)
     def __init__(self, *args, **kwargs): raise AttributeError("No constructor defined")
     __repr__ = _swig_repr
-    def GetDescription(self): return _gnm.MajorObject_GetDescription(self)
+    def GetDescription(self, *args): return _gnm.MajorObject_GetDescription(self, *args)
     def SetDescription(self, *args): return _gnm.MajorObject_SetDescription(self, *args)
-    def GetMetadataDomainList(self): return _gnm.MajorObject_GetMetadataDomainList(self)
-    def GetMetadata_Dict(self, pszDomain=""): return _gnm.MajorObject_GetMetadata_Dict(self, pszDomain)
-    def GetMetadata_List(self, pszDomain=""): return _gnm.MajorObject_GetMetadata_List(self, pszDomain)
+    def GetMetadataDomainList(self, *args): return _gnm.MajorObject_GetMetadataDomainList(self, *args)
+    def GetMetadata_Dict(self, *args): return _gnm.MajorObject_GetMetadata_Dict(self, *args)
+    def GetMetadata_List(self, *args): return _gnm.MajorObject_GetMetadata_List(self, *args)
     def SetMetadata(self, *args): return _gnm.MajorObject_SetMetadata(self, *args)
     def GetMetadataItem(self, *args): return _gnm.MajorObject_GetMetadataItem(self, *args)
     def SetMetadataItem(self, *args): return _gnm.MajorObject_SetMetadataItem(self, *args)
@@ -129,13 +129,13 @@ class Network(MajorObject):
         """ReleaseResultSet(Network self, OGRLayerShadow * layer)"""
         return _gnm.Network_ReleaseResultSet(self, *args)
 
-    def GetVersion(self):
+    def GetVersion(self, *args):
         """GetVersion(Network self) -> int"""
-        return _gnm.Network_GetVersion(self)
+        return _gnm.Network_GetVersion(self, *args)
 
-    def GetName(self):
+    def GetName(self, *args):
         """GetName(Network self) -> char const *"""
-        return _gnm.Network_GetName(self)
+        return _gnm.Network_GetName(self, *args)
 
     def GetFeatureByGlobalFID(self, *args):
         """GetFeatureByGlobalFID(Network self, GIntBig GFID) -> OGRFeatureShadow *"""
@@ -145,21 +145,21 @@ class Network(MajorObject):
         """GetPath(Network self, GIntBig nStartFID, GIntBig nEndFID, GNMGraphAlgorithmType eAlgorithm, char ** options=None) -> OGRLayerShadow *"""
         return _gnm.Network_GetPath(self, *args, **kwargs)
 
-    def DisconnectAll(self):
+    def DisconnectAll(self, *args):
         """DisconnectAll(Network self) -> CPLErr"""
-        return _gnm.Network_DisconnectAll(self)
+        return _gnm.Network_DisconnectAll(self, *args)
 
-    def GetProjection(self):
+    def GetProjection(self, *args):
         """GetProjection(Network self) -> char const *"""
-        return _gnm.Network_GetProjection(self)
+        return _gnm.Network_GetProjection(self, *args)
 
-    def GetProjectionRef(self):
+    def GetProjectionRef(self, *args):
         """GetProjectionRef(Network self) -> char const *"""
-        return _gnm.Network_GetProjectionRef(self)
+        return _gnm.Network_GetProjectionRef(self, *args)
 
-    def GetFileList(self):
+    def GetFileList(self, *args):
         """GetFileList(Network self) -> char **"""
-        return _gnm.Network_GetFileList(self)
+        return _gnm.Network_GetFileList(self, *args)
 
     def CreateLayer(self, *args, **kwargs):
         """
@@ -176,16 +176,13 @@ class Network(MajorObject):
         """DeleteLayer(Network self, int index) -> OGRErr"""
         return _gnm.Network_DeleteLayer(self, *args)
 
-    def GetLayerCount(self):
+    def GetLayerCount(self, *args):
         """GetLayerCount(Network self) -> int"""
-        return _gnm.Network_GetLayerCount(self)
+        return _gnm.Network_GetLayerCount(self, *args)
 
-    def GetLayerByIndex(self, index=0):
-        """
-        GetLayerByIndex(Network self, int index=0) -> OGRLayerShadow
-        GetLayerByIndex(Network self) -> OGRLayerShadow *
-        """
-        return _gnm.Network_GetLayerByIndex(self, index)
+    def GetLayerByIndex(self, *args):
+        """GetLayerByIndex(Network self, int index=0) -> OGRLayerShadow *"""
+        return _gnm.Network_GetLayerByIndex(self, *args)
 
     def GetLayerByName(self, *args):
         """GetLayerByName(Network self, char const * layer_name) -> OGRLayerShadow *"""
@@ -195,17 +192,17 @@ class Network(MajorObject):
         """TestCapability(Network self, char const * cap) -> bool"""
         return _gnm.Network_TestCapability(self, *args)
 
-    def StartTransaction(self, force=False):
+    def StartTransaction(self, *args, **kwargs):
         """StartTransaction(Network self, int force=False) -> OGRErr"""
-        return _gnm.Network_StartTransaction(self, force)
+        return _gnm.Network_StartTransaction(self, *args, **kwargs)
 
-    def CommitTransaction(self):
+    def CommitTransaction(self, *args):
         """CommitTransaction(Network self) -> OGRErr"""
-        return _gnm.Network_CommitTransaction(self)
+        return _gnm.Network_CommitTransaction(self, *args)
 
-    def RollbackTransaction(self):
+    def RollbackTransaction(self, *args):
         """RollbackTransaction(Network self) -> OGRErr"""
-        return _gnm.Network_RollbackTransaction(self)
+        return _gnm.Network_RollbackTransaction(self, *args)
 
 Network_swigregister = _gnm.Network_swigregister
 Network_swigregister(Network)
@@ -248,17 +245,17 @@ class GenericNetwork(Network):
         """CreateRule(GenericNetwork self, char const * pszRuleStr) -> CPLErr"""
         return _gnm.GenericNetwork_CreateRule(self, *args)
 
-    def DeleteAllRules(self):
+    def DeleteAllRules(self, *args):
         """DeleteAllRules(GenericNetwork self) -> CPLErr"""
-        return _gnm.GenericNetwork_DeleteAllRules(self)
+        return _gnm.GenericNetwork_DeleteAllRules(self, *args)
 
     def DeleteRule(self, *args):
         """DeleteRule(GenericNetwork self, char const * pszRuleStr) -> CPLErr"""
         return _gnm.GenericNetwork_DeleteRule(self, *args)
 
-    def GetRules(self):
+    def GetRules(self, *args):
         """GetRules(GenericNetwork self) -> char **"""
-        return _gnm.GenericNetwork_GetRules(self)
+        return _gnm.GenericNetwork_GetRules(self, *args)
 
     def ConnectPointsByLines(self, *args, **kwargs):
         """ConnectPointsByLines(GenericNetwork self, char ** papszLayerList, double dfTolerance, double dfCost, double dfInvCost, GNMDirection eDir) -> CPLErr"""
@@ -268,12 +265,9 @@ class GenericNetwork(Network):
         """ChangeBlockState(GenericNetwork self, GIntBig nFID, bool bIsBlock) -> CPLErr"""
         return _gnm.GenericNetwork_ChangeBlockState(self, *args)
 
-    def ChangeAllBlockState(self, bIsBlock=False):
-        """
-        ChangeAllBlockState(GenericNetwork self, bool bIsBlock=False) -> CPLErr
-        ChangeAllBlockState(GenericNetwork self) -> CPLErr
-        """
-        return _gnm.GenericNetwork_ChangeAllBlockState(self, bIsBlock)
+    def ChangeAllBlockState(self, *args):
+        """ChangeAllBlockState(GenericNetwork self, bool bIsBlock=False) -> CPLErr"""
+        return _gnm.GenericNetwork_ChangeAllBlockState(self, *args)
 
 GenericNetwork_swigregister = _gnm.GenericNetwork_swigregister
 GenericNetwork_swigregister(GenericNetwork)
