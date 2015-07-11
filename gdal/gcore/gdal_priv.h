@@ -334,6 +334,15 @@ class CPL_DLL GDALDataset : public GDALMajorObject
                                int, int *, GSpacing, GSpacing, GSpacing,
                                GDALRasterIOExtraArg* psExtraArg );
     void   BlockBasedFlushCache();
+    
+    CPLErr BandBasedRasterIO( GDALRWFlag eRWFlag,
+                               int nXOff, int nYOff, int nXSize, int nYSize,
+                               void * pData, int nBufXSize, int nBufYSize,
+                               GDALDataType eBufType, 
+                               int nBandCount, int *panBandMap,
+                               GSpacing nPixelSpace, GSpacing nLineSpace,
+                               GSpacing nBandSpace,
+                               GDALRasterIOExtraArg* psExtraArg );
 
     CPLErr ValidateRasterIOOrAdviseReadParameters(
                                const char* pszCallingFunc,
