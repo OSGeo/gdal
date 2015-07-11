@@ -1099,6 +1099,13 @@ OGRErr OGRSpatialReference::morphToESRI()
             poGeogCS->GetChild(0)->SetValue( "GCS_WGS_1984" );
             pszUTMPrefix = "WGS_1984";
         }
+        else if( nGCSCode == 4322 
+            || EQUAL(pszGeogCSName,"WGS72") 
+            || EQUAL(pszGeogCSName,"WGS 72") )
+        {
+            poGeogCS->GetChild(0)->SetValue( "GCS_WGS_1972" );
+            pszUTMPrefix = "WGS_1972";
+        }
         else if( nGCSCode == 4267
                  || EQUAL(pszGeogCSName,"NAD27") 
                  || EQUAL(pszGeogCSName,"NAD 27") )
