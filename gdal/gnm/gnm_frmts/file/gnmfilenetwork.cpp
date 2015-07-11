@@ -207,10 +207,19 @@ CPLErr GNMFileNetwork::Delete()
 
     // check if folder empty
     char **papszFiles = CPLReadDir( m_soNetworkFullName );
-    int nFileCount = CSLCount(papszFiles);
+    bool bIsEmpty = true;
+    for(int i = 0; papszFiles[i] != NULL; ++i)
+    {
+        if( !(EQUAL(papszFiles[i], "..") || EQUAL(papszFiles[i], ".")) )
+        {
+            bIsEmpty = false;
+            break;
+        }
+    }
+
     CSLDestroy( papszFiles );
 
-    if( nFileCount > 2 ) // skip .. and .
+    if( !bIsEmpty )
     {        
         return eResult;
     }
@@ -414,6 +423,14 @@ CPLErr GNMFileNetwork::LoadNetworkLayer(const char *pszLayername)
     return CE_None;
 }
 
+bool GNMFileNetwork::CheckStorageDriverSupport(const char *pszDriverName)
+{
+    if(EQUAL(pszDriverName, GNM_MD_DEFAULT_FILE_FORMAT))
+        return true;
+    //TODO: expand this list with supported OGR direvers
+    return false;
+}
+
 CPLErr GNMFileNetwork::FormPath(const char *pszFilename, char **papszOptions)
 {
     if(m_soNetworkFullName.empty())
@@ -434,6 +451,7 @@ CPLErr GNMFileNetwork::FormPath(const char *pszFilename, char **papszOptions)
 
 int GNMFileNetwork::CloseDependentDatasets()
 {
+    size_t nCount = m_mpLayerDatasetMap.size();
     for(std::map<OGRLayer*, GDALDataset*>::iterator
         it = m_mpLayerDatasetMap.begin();
         it != m_mpLayerDatasetMap.end(); ++it)
@@ -441,7 +459,11 @@ int GNMFileNetwork::CloseDependentDatasets()
         GDALClose(it->second);
     }
 
-    return GNMGenericNetwork::CloseDependentDatasets();
+    m_mpLayerDatasetMap.clear();
+
+    GNMGenericNetwork::CloseDependentDatasets();
+
+    return nCount > 0 ? TRUE : FALSE;
 }
 
 OGRErr GNMFileNetwork::DeleteLayer(int nIndex)

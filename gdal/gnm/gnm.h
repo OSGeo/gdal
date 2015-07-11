@@ -32,7 +32,6 @@
 #ifndef GNM
 #define GNM
 
-#include "gdal_priv.h"
 #include "ogrsf_frmts.h"
 #include "gnmgraph.h"
 
@@ -403,6 +402,12 @@ protected:
      */
     virtual CPLErr CheckLayerDriver(const char* pszDefaultDriverName,
                                  char** papszOptions);
+    /**
+     * @brief Check if provided OGR driver acceptad as storage for network data
+     * @param pszDriverName The driver name
+     * @return true if supported, else false
+     */
+    virtual bool CheckStorageDriverSupport(const char* pszDriverName) = 0;
 protected:
     virtual CPLErr CreateMetadataLayer( GDALDataset* const pDS, int nVersion,
                                      size_t nFieldSize = 1024 );
@@ -488,7 +493,6 @@ public:
     virtual void        ResetReading();
     virtual OGRFeature *GetNextFeature();
     virtual OGRErr      SetNextByIndex( GIntBig nIndex );
-    virtual OGRFeature *GetFeature( GIntBig nFID );
 
     virtual OGRErr      DeleteFeature( GIntBig nFID );
 

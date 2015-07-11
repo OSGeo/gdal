@@ -33,15 +33,6 @@
 
 CPL_CVSID("$Id$");
 
-/************************************************************************/
-/*                           GNMRegisterAll()                           */
-/************************************************************************/
-
-void GNMRegisterAll()
-{
-    GDALAllRegister();
-}
-
 void GNMRegisterAllInternal()
 {
     CPLDebug("GNM", "GNMRegisterAllInternal");

@@ -105,6 +105,18 @@ CPLErr GNMDatabaseNetwork::Create( const char* pszFilename, char** papszOptions 
         return CE_Failure;
     }
 
+    GDALDriver *poDriver = m_poDS->GetDriver();
+    if(NULL == poDriver)
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed, "Get dataset driver failed");
+        return CE_Failure;
+    }
+
+    if(!CheckStorageDriverSupport(poDriver->GetDescription()))
+    {
+        return CE_Failure;
+    }
+
     // check required options
 
     const char* pszNetworkDescription = CSLFetchNameValue(papszOptions,
@@ -159,8 +171,7 @@ CPLErr GNMDatabaseNetwork::Create( const char* pszFilename, char** papszOptions 
     if(CE_None != eResult)
     {
         //an error message should come from function
-        return CE_Failure;
-    }
+        return CE_Failure;    }
 
     // Create graph layer
 
@@ -311,6 +322,14 @@ CPLErr GNMDatabaseNetwork::LoadNetworkLayer(const char *pszLayername)
     m_apoLayers.push_back(pGNMLayer);
 
     return CE_None;
+}
+
+bool GNMDatabaseNetwork::CheckStorageDriverSupport(const char *pszDriverName)
+{
+    if(EQUAL(pszDriverName, "PostgreSQL"))
+        return true;
+    //TODO: expand this list with supported OGR direvers
+    return false;
 }
 
 CPLErr GNMDatabaseNetwork::FormName(const char *pszFilename, char **papszOptions)

@@ -226,45 +226,6 @@ OGRErr GNMGenericLayer::SetNextByIndex(GIntBig nIndex)
     return m_poLayer->SetNextByIndex(nIndex);
 }
 
-OGRFeature *GNMGenericLayer::GetFeature(GIntBig nFID)
-{
-    OGRFeature *poFeature;
-
-    /* Save old attribute and spatial filters */
-    char* pszOldFilter = m_pszAttrQueryString ? CPLStrdup(m_pszAttrQueryString) : NULL;
-    OGRGeometry* poOldFilterGeom = ( m_poFilterGeom != NULL ) ? m_poFilterGeom->clone() : NULL;
-    int iOldGeomFieldFilter = m_iGeomFieldFilter;
-    /* Unset filters */
-    SetAttributeFilter(NULL);
-    SetSpatialFilter(0, NULL);
-
-    ResetReading();
-    GNMGFID nGFID = -1;
-    while( (poFeature = GetNextFeature()) != NULL )
-    {
-        nGFID = poFeature->GetFieldAsGNMGFID(GNM_SYSFIELD_GFID);
-
-        if( nGFID == nFID )
-            break;
-        else
-            delete poFeature;
-    }
-
-    /* Restore filters */
-    SetAttributeFilter(pszOldFilter);
-    CPLFree(pszOldFilter);
-    SetSpatialFilter(iOldGeomFieldFilter, poOldFilterGeom);
-    delete poOldFilterGeom;
-
-    if(NULL == poFeature)
-        return NULL;
-
-    m_mnFIDMap[nGFID] = poFeature->GetFID();
-    poFeature->SetFID(nGFID);
-
-    return poFeature;
-}
-
 OGRErr GNMGenericLayer::DeleteFeature(GIntBig nFID)
 {
     OGRFeature *poFeature = GetFeature(nFID);

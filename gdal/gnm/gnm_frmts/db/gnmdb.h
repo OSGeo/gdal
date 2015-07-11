@@ -51,6 +51,7 @@ protected:
     virtual CPLErr DeleteFeaturesLayer();
     virtual CPLErr DeleteNetworkLayers();
     virtual CPLErr LoadNetworkLayer(const char* pszLayername);
+    virtual bool CheckStorageDriverSupport(const char* pszDriverName);
 protected:
     CPLErr FormName(const char* pszFilename, char** papszOptions);
     CPLErr DeleteLayerByName(const char* pszLayerName);

@@ -33,7 +33,6 @@
 #define GNM_API
 
 #include "gnm.h"
-#include "gnm_priv.h"
 
 CPL_C_START
 
@@ -94,7 +93,7 @@ CPLErr CPL_DLL CPL_STDCALL GNMChangeBlockState (GNMGenericNetworkH hNet,
                                                 GNMGFID nFID, bool bIsBlock);
 
 CPLErr CPL_DLL CPL_STDCALL GNMChangeAllBlockState (GNMGenericNetworkH hNet,
-                                                   bool bIsBlock = false);
+                                                   int bIsBlock);
 
 CPL_C_END
 

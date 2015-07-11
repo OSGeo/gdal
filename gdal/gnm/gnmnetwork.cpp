@@ -59,21 +59,21 @@ char **GNMNetwork::GetFileList()
 
 //--- C API --------------------------------------------------------------------
 
-const char* GNMGetName (GNMNetworkH hNet)
+const char* CPL_STDCALL GNMGetName (GNMNetworkH hNet)
 {
     VALIDATE_POINTER1( hNet, "GNMGetVersion", NULL );
 
     return ((GNMNetwork*)hNet)->GetName();
 }
 
-int CPL_DLL GNMGetVersion(GNMNetworkH hNet)
+int CPL_STDCALL GNMGetVersion(GNMNetworkH hNet)
 {
     VALIDATE_POINTER1( hNet, "GNMGetVersion", 0 );
 
     return ((GNMNetwork*)hNet)->GetVersion();
 }
 
-CPLErr CPL_DLL GNMDisconnectAll (GNMNetworkH hNet)
+CPLErr CPL_STDCALL GNMDisconnectAll (GNMNetworkH hNet)
 {
     VALIDATE_POINTER1( hNet, "GNMDisconnectAll", CE_Failure );
 
@@ -81,19 +81,19 @@ CPLErr CPL_DLL GNMDisconnectAll (GNMNetworkH hNet)
 
 }
 
-OGRFeatureH CPL_DLL GNMGetFeatureByGlobalFID (GNMNetworkH hNet, GNMGFID nGFID)
+OGRFeatureH CPL_STDCALL GNMGetFeatureByGlobalFID (GNMNetworkH hNet, GNMGFID nGFID)
 {
     VALIDATE_POINTER1( hNet, "GNMGetFeatureByGlobalFID", NULL );
 
-    return ((GNMNetwork*)hNet)->GetFeatureByGlobalFID(nGFID);
+    return (OGRFeatureH) ((GNMNetwork*)hNet)->GetFeatureByGlobalFID(nGFID);
 }
 
-OGRLayerH CPL_DLL GNMGetPath (GNMNetworkH hNet, GNMGFID nStartFID,
+OGRLayerH CPL_STDCALL GNMGetPath (GNMNetworkH hNet, GNMGFID nStartFID,
                               GNMGFID nEndFID, GNMGraphAlgorithmType eAlgorithm,
                               char** papszOptions)
 {
     VALIDATE_POINTER1( hNet, "GNMGetPath", NULL );
 
-    return ((GNMNetwork*)hNet)->GetPath(nStartFID, nEndFID, eAlgorithm,
-                                        papszOptions);
+    return (OGRLayerH) ((GNMNetwork*)hNet)->GetPath(nStartFID, nEndFID,
+                                                    eAlgorithm, papszOptions);
 }

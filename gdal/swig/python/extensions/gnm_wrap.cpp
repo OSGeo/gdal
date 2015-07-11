@@ -3343,12 +3343,12 @@ SWIGINTERN CPLErr GDALMajorObjectShadow_SetMetadataItem__SWIG_0(GDALMajorObjectS
   }
 
   GNMNetworkShadow* CastToNetwork(GDALMajorObjectShadow* base) {
-    return static_cast<GNMNetworkShadow*>(base);
+      return (GNMNetworkShadow*)dynamic_cast<GNMNetwork*>((GDALMajorObject*)base);
   }
 
 
   GNMGenericNetworkShadow* CastToGenericNetwork(GDALMajorObjectShadow* base) {
-    return static_cast<GNMGenericNetworkShadow*>(base);
+      return (GNMGenericNetworkShadow*)dynamic_cast<GNMGenericNetwork*>((GDALMajorObject*)base);
   }
 
 

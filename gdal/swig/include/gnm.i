@@ -112,13 +112,13 @@ typedef enum
 
 %inline %{
   GNMNetworkShadow* CastToNetwork(GDALMajorObjectShadow* base) {
-    return static_cast<GNMNetworkShadow*>(base);
+      return (GNMNetworkShadow*)dynamic_cast<GNMNetwork*>((GDALMajorObject*)base);
   }
 %}
 
 %inline %{
   GNMGenericNetworkShadow* CastToGenericNetwork(GDALMajorObjectShadow* base) {
-    return static_cast<GNMGenericNetworkShadow*>(base);
+      return (GNMGenericNetworkShadow*)dynamic_cast<GNMGenericNetwork*>((GDALMajorObject*)base);
   }
 %}
 

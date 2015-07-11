@@ -111,12 +111,8 @@ void RegisterGNMDatabase()
 
         poDriver->SetDescription( "GNMDatabase" );
         poDriver->SetMetadataItem( GDAL_DCAP_GNM, "YES" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "NO" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "NO" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                    "Geographic Network generic DB based model" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "gnm_db.html" );
 
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, CPLSPrintf(
 "<CreationOptionList>"

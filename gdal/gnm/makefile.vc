@@ -1,5 +1,4 @@
 
-LINKFLAGS =	/Zi /MTd
 EXTRAFLAGS =	-DWIN32 -I. -Iogrsf_frmts -Iogrsf_frmts\mem -I..\frmts\gtiff\libgeotiff -I..\frmts\zlib \
 		$(PROJ_FLAGS) $(PROJ_INCLUDE) $(GEOS_CFLAGS)
 

@@ -210,6 +210,7 @@ CPLErr GNMGenericNetwork::AddFeatureGlobalFID(GNMGFID nFID,
 
     if( m_poFeaturesLayer->CreateFeature( poFeature ) != OGRERR_NONE )
     {
+        OGRFeature::DestroyFeature( poFeature );
         CPLError( CE_Failure, CPLE_AppDefined, "Failed to create feature." );
         return CE_Failure;
     }
@@ -956,6 +957,7 @@ void GNMGenericNetwork::SaveRules()
         poFeature->SetField(GNM_SYSFIELD_PARAMVALUE, m_asRules[i]);
         if(m_poMetadataLayer->CreateFeature(poFeature) != OGRERR_NONE)
         {
+            OGRFeature::DestroyFeature( poFeature );
             CPLError( CE_Failure, CPLE_AppDefined, "Write rule '%s' failed",
                       m_asRules[i].c_str());
             // TODO: do we need interrupt here?
@@ -1021,6 +1023,14 @@ CPLErr GNMGenericNetwork::CheckLayerDriver(const char* pszDefaultDriverName,
         const char* pszDriverName = CSLFetchNameValueDef(papszOptions,
                                                          GNM_MD_FORMAT,
                                                          pszDefaultDriverName);
+
+        if(!CheckStorageDriverSupport(pszDriverName))
+        {
+            CPLError( CE_Failure, CPLE_IllegalArg, "%s driver not supported as network storage",
+                      pszDriverName );
+            return CE_Failure;
+        }
+
         m_poLayerDriver = GetGDALDriverManager()->GetDriverByName(pszDriverName );
         if(NULL == m_poLayerDriver)
         {
@@ -1028,7 +1038,6 @@ CPLErr GNMGenericNetwork::CheckLayerDriver(const char* pszDefaultDriverName,
                       pszDriverName );
             return CE_Failure;
         }
-
     }
     return CE_None;
 }
@@ -1066,6 +1075,7 @@ CPLErr GNMGenericNetwork::CreateMetadataLayer(GDALDataset * const pDS, int nVers
     poFeature->SetField(GNM_SYSFIELD_PARAMVALUE, m_soName);
     if(pMetadataLayer->CreateFeature(poFeature) != OGRERR_NONE)
     {
+        OGRFeature::DestroyFeature( poFeature );
         CPLError( CE_Failure, CPLE_AppDefined, "Write GNM name failed");
         return CE_Failure;
     }
@@ -1077,6 +1087,7 @@ CPLErr GNMGenericNetwork::CreateMetadataLayer(GDALDataset * const pDS, int nVers
     poFeature->SetField(GNM_SYSFIELD_PARAMVALUE, CPLSPrintf("%d", nVersion));
     if(pMetadataLayer->CreateFeature(poFeature) != OGRERR_NONE)
     {
+        OGRFeature::DestroyFeature( poFeature );
         CPLError( CE_Failure, CPLE_AppDefined, "Write GNM version failed");
         return CE_Failure;
     }
@@ -1090,6 +1101,7 @@ CPLErr GNMGenericNetwork::CreateMetadataLayer(GDALDataset * const pDS, int nVers
         poFeature->SetField(GNM_SYSFIELD_PARAMVALUE, sDescription);
         if(pMetadataLayer->CreateFeature(poFeature) != OGRERR_NONE)
         {
+            OGRFeature::DestroyFeature( poFeature );
             CPLError( CE_Failure, CPLE_AppDefined, "Write GNM description failed");
             return CE_Failure;
         }
@@ -1111,6 +1123,7 @@ CPLErr GNMGenericNetwork::CreateMetadataLayer(GDALDataset * const pDS, int nVers
             poFeature->SetField(GNM_SYSFIELD_PARAMVALUE, m_soSRS);
             if(pMetadataLayer->CreateFeature(poFeature) != OGRERR_NONE)
             {
+                OGRFeature::DestroyFeature( poFeature );
                 CPLError( CE_Failure, CPLE_AppDefined, "Write GNM SRS failed");
                 return CE_Failure;
             }
@@ -1367,309 +1380,31 @@ int GNMGenericNetwork::TestCapability( const char * pszCap )
 OGRLayer *GNMGenericNetwork::CopyLayer(OGRLayer *poSrcLayer,
                                        const char *pszNewName, char **papszOptions)
 {
-    OGRFeatureDefn *poSrcDefn = poSrcLayer->GetLayerDefn();
-    OGRLayer *poDstLayer = NULL;
-
-/* -------------------------------------------------------------------- */
-/*      Create the layer.                                               */
-/* -------------------------------------------------------------------- */
-    if( !TestCapability( ODsCCreateLayer ) )
+    if(CSLFindName(papszOptions, "DST_SRSWKT") == -1)
     {
-        CPLError( CE_Failure, CPLE_NotSupported,
-                  "This datasource does not support creation of layers." );
-        return NULL;
-    }
-
-    CPLErrorReset();
-    if( poSrcDefn->GetGeomFieldCount() > 1 &&
-        TestCapability(ODsCCreateGeomFieldAfterCreateLayer) )
-    {
-        poDstLayer = ICreateLayer( pszNewName, NULL, wkbNone, papszOptions );
+        papszOptions = CSLAddNameValue(papszOptions, "DST_SRSWKT",
+                                       GetProjectionRef());
     }
     else
     {
-        OGRSpatialReference oDstSpaRef(GetProjectionRef());
-        poDstLayer = ICreateLayer( pszNewName, &oDstSpaRef,
-                                  poSrcDefn->GetGeomType(), papszOptions );
+        papszOptions = CSLSetNameValue(papszOptions, "DST_SRSWKT",
+                                       GetProjectionRef());
     }
-
-    if( poDstLayer == NULL )
-        return NULL;
-
-/* -------------------------------------------------------------------- */
-/*      Add fields.  Default to copy all fields, and make sure to       */
-/*      establish a mapping between indices, rather than names, in      */
-/*      case the target datasource has altered it (e.g. Shapefile       */
-/*      limited to 10 char field names).                                */
-/* -------------------------------------------------------------------- */
-    int         nSrcFieldCount = poSrcDefn->GetFieldCount();
-    int         nDstFieldCount = 0;
-    int         iField, *panMap;
-
-    // Initialize the index-to-index map to -1's
-    panMap = (int *) CPLMalloc( sizeof(int) * nSrcFieldCount );
-    for( iField=0; iField < nSrcFieldCount; iField++)
-        panMap[iField] = -1;
-
-    /* Caution : at the time of writing, the MapInfo driver */
-    /* returns NULL until a field has been added */
-    OGRFeatureDefn* poDstFDefn = poDstLayer->GetLayerDefn();
-    if (poDstFDefn)
-        nDstFieldCount = poDstFDefn->GetFieldCount();
-    for( iField = 0; iField < nSrcFieldCount; iField++ )
-    {
-        OGRFieldDefn* poSrcFieldDefn = poSrcDefn->GetFieldDefn(iField);
-        OGRFieldDefn oFieldDefn( poSrcFieldDefn );
-
-        /* The field may have been already created at layer creation */
-        int iDstField = -1;
-        if (poDstFDefn)
-            iDstField = poDstFDefn->GetFieldIndex(oFieldDefn.GetNameRef());
-        if (iDstField >= 0)
-        {
-            panMap[iField] = iDstField;
-        }
-        else if (poDstLayer->CreateField( &oFieldDefn ) == OGRERR_NONE)
-        {
-            /* now that we've created a field, GetLayerDefn() won't return NULL */
-            if (poDstFDefn == NULL)
-                poDstFDefn = poDstLayer->GetLayerDefn();
-
-            /* Sanity check : if it fails, the driver is buggy */
-            if (poDstFDefn != NULL &&
-                poDstFDefn->GetFieldCount() != nDstFieldCount + 1)
-            {
-                CPLError(CE_Warning, CPLE_AppDefined,
-                         "The output driver has claimed to have added the %s field, but it did not!",
-                         oFieldDefn.GetNameRef() );
-            }
-            else
-            {
-                panMap[iField] = nDstFieldCount;
-                nDstFieldCount ++;
-            }
-        }
-    }
-
-    // Check if reproject needed
-    OGRCoordinateTransformation *poCT = NULL;
-    OGRSpatialReference *sourceSRS = poSrcLayer->GetSpatialRef();
-    OGRSpatialReference oDstSpaRef(GetProjectionRef());
-    if (sourceSRS != NULL && sourceSRS->IsSame(&oDstSpaRef) == FALSE)
-    {
-        poCT = OGRCreateCoordinateTransformation(sourceSRS, &oDstSpaRef);
-        if(NULL == poCT)
-        {
-            CPLError( CE_Failure, CPLE_NotSupported,
-                      "This input spatial reference is not supported." );
-            return NULL;
-        }
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Create geometry fields.                                         */
-/* -------------------------------------------------------------------- */
-    int nSrcGeomFieldCount = 1;
-    if( poSrcDefn->GetGeomFieldCount() > 1 &&
-        TestCapability(ODsCCreateGeomFieldAfterCreateLayer) )
-    {
-        nSrcGeomFieldCount = poSrcDefn->GetGeomFieldCount();
-        for( iField = 0; iField < nSrcGeomFieldCount; iField++ )
-        {
-            if(NULL == poCT)
-            {
-                poDstLayer->CreateGeomField( poSrcDefn->GetGeomFieldDefn(iField) );
-            }
-            else
-            {
-                OGRGeomFieldDefn* pDstGeomFieldDefn =
-                        poSrcDefn->GetGeomFieldDefn(iField);
-                pDstGeomFieldDefn->SetSpatialRef(&oDstSpaRef);
-                poDstLayer->CreateGeomField(pDstGeomFieldDefn);
-            }
-        }
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Check if the destination layer supports transactions and set a  */
-/*      default number of features in a single transaction.             */
-/* -------------------------------------------------------------------- */
-    int nGroupTransactions = 0;
-    if( poDstLayer->TestCapability( OLCTransactions ) )
-        nGroupTransactions = 128;
-
-/* -------------------------------------------------------------------- */
-/*      Transfer features.                                              */
-/* -------------------------------------------------------------------- */
-    OGRFeature  *poFeature;
-
-    poSrcLayer->ResetReading();
-
-    if( nGroupTransactions <= 0 )
-    {
-      while( TRUE )
-      {
-        OGRFeature      *poDstFeature = NULL;
-
-        poFeature = poSrcLayer->GetNextFeature();
-
-        if( poFeature == NULL )
-            break;
-
-        CPLErrorReset();
-        poDstFeature = OGRFeature::CreateFeature( poDstLayer->GetLayerDefn() );
-
-        if( poDstFeature->SetFrom( poFeature, panMap, TRUE ) != OGRERR_NONE )
-        {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "Unable to translate feature " CPL_FRMT_GIB
-                      " from layer %s.\n",
-                      poFeature->GetFID(), poSrcDefn->GetName() );
-            OGRFeature::DestroyFeature( poFeature );
-            CPLFree(panMap);
-            return poDstLayer;
-        }
-
-        if(NULL != poCT)
-        {
-            for( iField = 0; iField < nSrcGeomFieldCount; iField++ )
-            {
-                OGRGeometry* pGeom = poDstFeature->GetGeomFieldRef(iField);
-                if(NULL != pGeom)
-                {
-                    OGRErr eErr = pGeom->transform(poCT);
-                    if(eErr != OGRERR_NONE)
-                    {
-                        CPLError( CE_Failure, CPLE_AppDefined,
-                                  "Unable to transform geometry " CPL_FRMT_GIB
-                                  " from layer %s.\n",
-                                  poFeature->GetFID(), poSrcDefn->GetName() );
-                        OGRFeature::DestroyFeature( poFeature );
-                        CPLFree(panMap);
-                        return poDstLayer;
-                    }
-                }
-            }
-        }
-
-        OGRFeature::DestroyFeature( poFeature );
-
-        CPLErrorReset();
-        if( poDstLayer->CreateFeature( poDstFeature ) != OGRERR_NONE )
-        {
-            OGRFeature::DestroyFeature( poDstFeature );
-            CPLFree(panMap);
-            return poDstLayer;
-        }
-
-        OGRFeature::DestroyFeature( poDstFeature );
-      }
-    }
-    else
-    {
-      int i, bStopTransfer = FALSE, bStopTransaction = FALSE;
-      int nFeatCount = 0; // Number of features in the temporary array
-      int nFeaturesToAdd = 0;
-      OGRFeature **papoDstFeature =
-          (OGRFeature **)CPLCalloc(sizeof(OGRFeature *), nGroupTransactions);
-      while( !bStopTransfer )
-      {
-/* -------------------------------------------------------------------- */
-/*      Fill the array with features                                    */
-/* -------------------------------------------------------------------- */
-        for( nFeatCount = 0; nFeatCount < nGroupTransactions; nFeatCount++ )
-        {
-            poFeature = poSrcLayer->GetNextFeature();
-
-            if( poFeature == NULL )
-            {
-                bStopTransfer = 1;
-                break;
-            }
-
-            CPLErrorReset();
-            papoDstFeature[nFeatCount] =
-                        OGRFeature::CreateFeature( poDstLayer->GetLayerDefn() );
-
-            if( papoDstFeature[nFeatCount]->SetFrom( poFeature, panMap, TRUE )
-                    != OGRERR_NONE )
-            {
-                CPLError( CE_Failure, CPLE_AppDefined,
-                          "Unable to translate feature "
-                          CPL_FRMT_GIB " from layer %s.\n",
-                          poFeature->GetFID(), poSrcDefn->GetName() );
-                OGRFeature::DestroyFeature( poFeature );
-                bStopTransfer = TRUE;
-                break;
-            }
-
-            if(NULL != poCT)
-            {
-                for( iField = 0; iField < nSrcGeomFieldCount; iField++ )
-                {
-                    OGRGeometry* pGeom =
-                            papoDstFeature[nFeatCount]->GetGeomFieldRef(iField);
-                    if(NULL != pGeom)
-                    {
-                        OGRErr eErr = pGeom->transform(poCT);
-                        if(eErr != OGRERR_NONE)
-                        {
-                            CPLError( CE_Failure, CPLE_AppDefined,
-                                      "Unable to transform geometry "
-                                      CPL_FRMT_GIB " from layer %s.\n",
-                                      poFeature->GetFID(), poSrcDefn->GetName() );
-                            OGRFeature::DestroyFeature( poFeature );
-                            CPLFree(panMap);
-                            return poDstLayer;
-                        }
-                    }
-                }
-            }
-
-            OGRFeature::DestroyFeature( poFeature );
-        }
-        nFeaturesToAdd = nFeatCount;
-
-        CPLErrorReset();
-        bStopTransaction = FALSE;
-        while( !bStopTransaction )
-        {
-            bStopTransaction = TRUE;
-            poDstLayer->StartTransaction();
-            for( i = 0; i < nFeaturesToAdd; i++ )
-            {
-                if( poDstLayer->CreateFeature( papoDstFeature[i] ) != OGRERR_NONE )
-                {
-                    nFeaturesToAdd = i;
-                    bStopTransfer = TRUE;
-                    bStopTransaction = FALSE;
-                }
-            }
-            if( bStopTransaction )
-                poDstLayer->CommitTransaction();
-            else
-                poDstLayer->RollbackTransaction();
-        }
-
-        for( i = 0; i < nFeatCount; i++ )
-            OGRFeature::DestroyFeature( papoDstFeature[i] );
-      }
-      CPLFree(papoDstFeature);
-    }
-
-    CPLFree(panMap);
-
-    return poDstLayer;
+    return GDALDataset::CopyLayer(poSrcLayer, pszNewName, papszOptions);
 }
 
 int GNMGenericNetwork::CloseDependentDatasets()
 {
-    for(size_t i = 0; i < m_apoLayers.size(); ++i)
+    size_t nCount = m_apoLayers.size();
+    for(size_t i = 0; i < nCount; ++i)
     {
         delete m_apoLayers[i];
     }
+    m_apoLayers.clear();
 
-    return GNMNetwork::CloseDependentDatasets();
+    GNMNetwork::CloseDependentDatasets();
+
+    return nCount > 0 ? TRUE : FALSE;
 }
 
 void GNMGenericNetwork::FlushCache()
@@ -1751,6 +1486,7 @@ char** CPL_STDCALL GNMGetRules(GNMGenericNetworkH hNet)
 {
     VALIDATE_POINTER1( hNet, "GNMDeleteRule", NULL );
 
+    return ((GNMGenericNetwork*)hNet)->GetRules();
 }
 
 CPLErr CPL_STDCALL GNMConnectPointsByLines (GNMGenericNetworkH hNet,
@@ -1777,9 +1513,9 @@ CPLErr CPL_STDCALL GNMChangeBlockState (GNMGenericNetworkH hNet,
 }
 
 CPLErr CPL_STDCALL GNMChangeAllBlockState (GNMGenericNetworkH hNet,
-                                           bool bIsBlock)
+                                           int bIsBlock)
 {
     VALIDATE_POINTER1( hNet, "GNMChangeAllBlockState", CE_Failure );
 
-    return ((GNMGenericNetwork*)hNet)->ChangeAllBlockState(bIsBlock);
+    return ((GNMGenericNetwork*)hNet)->ChangeAllBlockState(bIsBlock == TRUE);
 }
