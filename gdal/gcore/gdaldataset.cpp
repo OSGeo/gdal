@@ -1476,9 +1476,10 @@ CPLErr GDALDataset::IBuildOverviews( const char *pszResampling,
 /************************************************************************/
 /*                             IRasterIO()                              */
 /*                                                                      */
-/*      The default implementation of IRasterIO() is to pass the        */
-/*      request off to each band objects rasterio methods with          */
-/*      appropriate arguments.                                          */
+/*      The default implementation of IRasterIO() is, in the general    */
+/*      case to pass the request off to each band objects rasterio      */
+/*      methods with appropriate arguments. In some cases, it might     */
+/*      choose instead the BlockBasedRasterIO() implementation.         */
 /************************************************************************/
 
 CPLErr GDALDataset::IRasterIO( GDALRWFlag eRWFlag,
@@ -1491,8 +1492,7 @@ CPLErr GDALDataset::IRasterIO( GDALRWFlag eRWFlag,
                                GDALRasterIOExtraArg* psExtraArg )
     
 {
-    int iBandIndex; 
-    CPLErr eErr = CE_None;
+
     const char* pszInterleave = NULL;
 
     CPLAssert( NULL != pData );
@@ -1507,7 +1507,34 @@ CPLErr GDALDataset::IRasterIO( GDALRWFlag eRWFlag,
                                    nPixelSpace, nLineSpace, nBandSpace,
                                    psExtraArg );
     }
+    
+    return BandBasedRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize, 
+                                   pData, nBufXSize, nBufYSize,
+                                   eBufType, nBandCount, panBandMap,
+                                   nPixelSpace, nLineSpace, nBandSpace,
+                                   psExtraArg );
+}
 
+/************************************************************************/
+/*                         BandBasedRasterIO()                          */
+/*                                                                      */
+/*      Pass the request off to each band objects rasterio methods with */
+/*      appropriate arguments.                                          */
+/************************************************************************/
+
+CPLErr GDALDataset::BandBasedRasterIO( GDALRWFlag eRWFlag,
+                               int nXOff, int nYOff, int nXSize, int nYSize,
+                               void * pData, int nBufXSize, int nBufYSize,
+                               GDALDataType eBufType, 
+                               int nBandCount, int *panBandMap,
+                               GSpacing nPixelSpace, GSpacing nLineSpace,
+                               GSpacing nBandSpace,
+                               GDALRasterIOExtraArg* psExtraArg )
+    
+{
+    int iBandIndex; 
+    CPLErr eErr = CE_None;
+    
     GDALProgressFunc  pfnProgressGlobal = psExtraArg->pfnProgress;
     void             *pProgressDataGlobal = psExtraArg->pProgressData;
 
