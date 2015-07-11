@@ -359,6 +359,8 @@ typedef int              GPtrDiff_t;
 
 #if defined(__linux__) && defined(DEBUG) && defined(GDAL_COMPILATION)
 /* To catch calls with NULL pointers that crash other platforms */
+#undef strcmp
+#undef strncmp
 #define strcmp GDAL_strcmp
 #define strncmp GDAL_strncmp
 #define strcasecmp GDAL_strcasecmp
