@@ -3912,7 +3912,7 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
     if (sourceSRS != NULL && pszSRSWKT != NULL &&
             sourceSRS->IsSame(&oDstSpaRef) == FALSE)
     {
-        poCT = OGRCreateCoordinateTransformation(sourceSRS, &oDstSpaRef);
+        poCT = (OGRCoordinateTransformation*)OGRCreateCoordinateTransformation(sourceSRS, &oDstSpaRef);
         if(NULL == poCT)
         {
             CPLError( CE_Failure, CPLE_NotSupported,
@@ -3983,7 +3983,7 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
             OGRFeature::DestroyFeature( poFeature );
             CPLFree(panMap);
             if(NULL != poCT)
-                OCTDestroyCoordinateTransformation(poCT);
+                OCTDestroyCoordinateTransformation((OGRCoordinateTransformationH)poCT);
             return poDstLayer;
         }
 
@@ -4003,7 +4003,7 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
                                   poFeature->GetFID(), poSrcDefn->GetName() );
                         OGRFeature::DestroyFeature( poFeature );
                         CPLFree(panMap);
-                        OCTDestroyCoordinateTransformation(poCT);
+                        OCTDestroyCoordinateTransformation((OGRCoordinateTransformationH)poCT);
                         return poDstLayer;
                     }
                 }
@@ -4020,7 +4020,7 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
             OGRFeature::DestroyFeature( poDstFeature );
             CPLFree(panMap);
             if(NULL != poCT)
-                OCTDestroyCoordinateTransformation(poCT);
+                OCTDestroyCoordinateTransformation((OGRCoordinateTransformationH)poCT);
             return poDstLayer;
         }
 
@@ -4119,7 +4119,7 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
     }
 
     if(NULL != poCT)
-        OCTDestroyCoordinateTransformation(poCT);
+        OCTDestroyCoordinateTransformation((OGRCoordinateTransformationH)poCT);
 
     CPLFree(panMap);
 
