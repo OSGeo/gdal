@@ -1221,16 +1221,8 @@ def vrtpansharpen_4():
 </VRTDataset>"""
 
     vrt_ds = gdal.Open(xml)
-    for dt in [ gdal.GDT_Int16, gdal.GDT_UInt16, gdal.GDT_Int32, gdal.GDT_UInt32, gdal.GDT_Float32, gdal.GDT_Float64, gdal.GDT_CFloat64, gdal.GDT_CFloat32 ]:
-        if dt == gdal.GDT_CFloat32:
-            gdal.PushErrorHandler()
+    for dt in [ gdal.GDT_Int16, gdal.GDT_UInt16, gdal.GDT_Int32, gdal.GDT_UInt32, gdal.GDT_Float32, gdal.GDT_Float64, gdal.GDT_CFloat64 ]:
         data = vrt_ds.GetRasterBand(1).ReadRaster(buf_type = dt)
-        if dt == gdal.GDT_CFloat32:
-            gdal.PopErrorHandler()
-            if data is not None:
-                gdaltest.post_reason('fail')
-                return 'fail'
-            continue
         tmp_ds = gdal.GetDriverByName('MEM').Create('',800,400,1,dt)
         tmp_ds.WriteRaster(0,0,800,400,data)
         cs = tmp_ds.GetRasterBand(1).Checksum()
@@ -1240,7 +1232,7 @@ def vrtpansharpen_4():
             expected_cs = 4735
         if cs != expected_cs:
             gdaltest.post_reason('fail')
-            print(dt)
+            print(gdal.GetDataTypeName(dt))
             print(cs)
             return 'fail'
 
@@ -1310,34 +1302,20 @@ def vrtpansharpen_5():
 </VRTDataset>""" % (gdal.GetDataTypeName(dt), spectral_xml, spectral_xml, spectral_xml)
 
         vrt_ds = gdal.Open(xml)
-        if dt == gdal.GDT_CFloat64:
-            gdal.PushErrorHandler()
         data = vrt_ds.GetRasterBand(1).ReadRaster(buf_type = gdal.GDT_Byte)
-        if dt == gdal.GDT_CFloat64:
-            gdal.PopErrorHandler()
-            if data is not None:
-                gdaltest.post_reason('fail')
-                return 'fail'
-            continue
         tmp_ds = gdal.GetDriverByName('MEM').Create('',800,400,1)
         tmp_ds.WriteRaster(0,0,800,400,data)
         cs = tmp_ds.GetRasterBand(1).Checksum()
-        if dt == gdal.GDT_Int16 or dt == gdal.GDT_Int32:
-            if cs != 5170:
-                gdaltest.post_reason('fail')
-                print(dt)
-                print(cs)
-                return 'fail'
-        elif dt == gdal.GDT_UInt16 or dt == gdal.GDT_UInt32:
+        if dt == gdal.GDT_UInt16:
             if cs != 4553:
                 gdaltest.post_reason('fail')
-                print(dt)
+                print(gdal.GetDataTypeName(dt))
                 print(cs)
                 return 'fail'
         else:
             if cs != 4450:
                 gdaltest.post_reason('fail')
-                print(dt)
+                print(gdal.GetDataTypeName(dt))
                 print(cs)
                 return 'fail'
 
@@ -1359,7 +1337,7 @@ def vrtpansharpen_6():
     # i = 0: VRT has <BitDepth>7</BitDepth>
     # i = 1: bands have NBITS=7 and VRT <BitDepth>7</BitDepth>
     # i = 2: bands have NBITS=7
-    for dt in [ gdal.GDT_Byte, gdal.GDT_UInt16, gdal.GDT_UInt32 ]:
+    for dt in [ gdal.GDT_Byte, gdal.GDT_UInt16 ]:
         if dt == gdal.GDT_Byte:
             nbits = 7
         elif dt == gdal.GDT_UInt16:
@@ -1421,7 +1399,7 @@ def vrtpansharpen_6():
 
             if list(ar[0]) != expected_ar:
                 gdaltest.post_reason('fail')
-                print(dt)
+                print(gdal.GetDataTypeName(dt))
                 print(i)
                 print(list(ar[0]))
                 return 'fail'
