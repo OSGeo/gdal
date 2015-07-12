@@ -34,6 +34,9 @@
 #include "gdal_priv_templates.hpp"
 #include "../frmts/vrt/vrtdataset.h"
 
+// Limit types to practical use cases
+#define LIMIT_TYPES 1
+
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -484,6 +487,7 @@ template<class WorkDataType> CPLErr GDALPansharpenOperation::WeightedBrovey(
                            (GUInt16*)pDataBuf, nValues, nBitDepth);
             break;
 
+#ifndef LIMIT_TYPES
         case GDT_Int16:
             WeightedBrovey(pPanBuffer, pUpsampledSpectralBuffer,
                            (GInt16*)pDataBuf, nValues, nBitDepth);
@@ -503,6 +507,7 @@ template<class WorkDataType> CPLErr GDALPansharpenOperation::WeightedBrovey(
             WeightedBrovey(pPanBuffer, pUpsampledSpectralBuffer,
                            (float*)pDataBuf, nValues, nBitDepth);
             break;
+#endif
 
         case GDT_Float64:
             WeightedBrovey(pPanBuffer, pUpsampledSpectralBuffer,
@@ -537,6 +542,7 @@ template<class WorkDataType> CPLErr GDALPansharpenOperation::WeightedBrovey(
                            (GUInt16*)pDataBuf, nValues, 0);
             break;
 
+#ifndef LIMIT_TYPES
         case GDT_Int16:
             WeightedBrovey<WorkDataType, GInt16, FALSE>(pPanBuffer, pUpsampledSpectralBuffer,
                            (GInt16*)pDataBuf, nValues, 0);
@@ -556,6 +562,7 @@ template<class WorkDataType> CPLErr GDALPansharpenOperation::WeightedBrovey(
             WeightedBrovey<WorkDataType, float, FALSE>(pPanBuffer, pUpsampledSpectralBuffer,
                            (float*)pDataBuf, nValues, 0);
             break;
+#endif
 
         case GDT_Float64:
             WeightedBrovey<WorkDataType, double, FALSE>(pPanBuffer, pUpsampledSpectralBuffer,
@@ -622,7 +629,11 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
 
     // TODO: avoid allocating buffers each time
     GDALRasterBand* poPanchroBand = (GDALRasterBand*)psOptions->hPanchroBand;
-    const GDALDataType eWorkDataType = poPanchroBand->GetRasterDataType();
+    GDALDataType eWorkDataType = poPanchroBand->GetRasterDataType();
+#ifdef LIMIT_TYPES
+    if( eWorkDataType != GDT_Byte && eWorkDataType != GDT_UInt16 )
+        eWorkDataType = GDT_Float64;
+#endif
     const int nDataTypeSize = GDALGetDataTypeSize(eWorkDataType) / 8;
     GByte* pUpsampledSpectralBuffer = (GByte*)VSIMalloc3(nXSize, nYSize,
         psOptions->nInputSpectralBands * nDataTypeSize);
@@ -714,12 +725,14 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
                                nXSize*nYSize,
                                (GUInt16)((1 << nBitDepth)-1));
                 }
+#ifndef LIMIT_TYPES
                 else if( eWorkDataType == GDT_UInt32 )
                 {
                     ClampValues(((GUInt32*)pUpsampledSpectralBuffer) + i * nXSize * nYSize,
                                nXSize*nYSize,
                                (GUInt32)((1 << nBitDepth)-1));
                 }
+#endif
             }
         }
     }
@@ -735,7 +748,11 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
     GDALDataType eBufDataTypeOri = eBufDataType;
     void* pDataBufOri = pDataBuf;
     // CFloat64 is the query type used by gdallocationinfo...
+#ifdef LIMIT_TYPES
+    if( eBufDataType != GDT_Byte && eBufDataType != GDT_UInt16 )
+#else
     if( eBufDataType == GDT_CFloat64 )
+#endif
     {
         padfTempBuffer = (double*)VSIMalloc3(nXSize, nYSize,
                     psOptions->nOutPansharpenedBands * sizeof(double));
@@ -767,6 +784,7 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
                                    nXSize * nYSize, nBitDepth);
             break;
 
+#ifndef LIMIT_TYPES
         case GDT_Int16:
             eErr = WeightedBrovey ((GInt16*)pPanBuffer,
                                    (GInt16*)pUpsampledSpectralBuffer,
@@ -794,7 +812,7 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
                                    pDataBuf, eBufDataType,
                                    nXSize * nYSize);
             break;
-
+#endif
         case GDT_Float64:
             eErr = WeightedBrovey ((double*)pPanBuffer,
                                    (double*)pUpsampledSpectralBuffer,
