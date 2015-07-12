@@ -654,6 +654,8 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
     sExtraArg.dfYSize = nYSize / dfRatioY;
     int nSpectralXOff = (int)(0.49999 + sExtraArg.dfXOff);
     int nSpectralYOff = (int)(0.49999 + sExtraArg.dfYOff);
+    if( nSpectralYOff == aMSBands[0]->GetYSize() && (int)sExtraArg.dfYOff == nSpectralYOff - 1)
+        nSpectralYOff --;
     int nSpectralXSize = (int)(0.49999 + sExtraArg.dfXSize);
     int nSpectralYSize = (int)(0.49999 + sExtraArg.dfYSize);
     if( nSpectralXSize == 0 )
