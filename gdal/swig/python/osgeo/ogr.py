@@ -976,12 +976,12 @@ class DataSource(MajorObject):
         return _ogr.DataSource_RollbackTransaction(self, *args)
 
     def Destroy(self):
-      "Once called, self has effectively been destroyed.  Do not access. For backwards compatiblity only"
+      "Once called, self has effectively been destroyed.  Do not access. For backwards compatibility only"
       _ogr.delete_DataSource( self )
       self.thisown = 0
 
     def Release(self):
-      "Once called, self has effectively been destroyed.  Do not access. For backwards compatiblity only"
+      "Once called, self has effectively been destroyed.  Do not access. For backwards compatibility only"
       _ogr.delete_DataSource( self )
       self.thisown = 0
 
@@ -3200,7 +3200,7 @@ class Feature(_object):
       pass
 
     def Destroy(self):
-      "Once called, self has effectively been destroyed.  Do not access. For backwards compatiblity only"
+      "Once called, self has effectively been destroyed.  Do not access. For backwards compatibility only"
       _ogr.delete_Feature( self )
       self.thisown = 0
 
@@ -3761,7 +3761,7 @@ class FeatureDefn(_object):
         return _ogr.FeatureDefn_IsSame(self, *args)
 
     def Destroy(self):
-      "Once called, self has effectively been destroyed.  Do not access. For backwards compatiblity only"
+      "Once called, self has effectively been destroyed.  Do not access. For backwards compatibility only"
       _ogr.delete_FeatureDefn( self )
       self.thisown = 0
 
@@ -4079,7 +4079,7 @@ class FieldDefn(_object):
     justify = property(GetJustify, SetJustify)
 
     def Destroy(self):
-      "Once called, self has effectively been destroyed.  Do not access. For backwards compatiblity only"
+      "Once called, self has effectively been destroyed.  Do not access. For backwards compatibility only"
       _ogr.delete_FieldDefn( self )
       self.thisown = 0
 
@@ -5703,5 +5703,3 @@ def TermProgress_nocb(*args, **kwargs):
   """TermProgress_nocb(double dfProgress, char pszMessage = None, void pData = None) -> int"""
   return _ogr.TermProgress_nocb(*args, **kwargs)
 TermProgress = _ogr.TermProgress
-
-
