@@ -164,6 +164,13 @@
       <Type>String</Type>
       <Width>12</Width>
     </PropertyDefn>
+    <!-- Datum vzniku -->
+    <PropertyDefn>
+      <Name>DatumVzniku</Name>
+      <ElementPath>DatumVzniku</ElementPath>
+      <Type>String</Type>
+      <Width>19</Width>
+    </PropertyDefn>
   </GMLFeatureClass>
   <!-- Spravní obvody -->
   <GMLFeatureClass>
@@ -242,6 +249,13 @@
       <Type>Integer</Type>
       <SubType>Integer64</SubType>
     </PropertyDefn>
+    <!-- Datum vzniku -->
+    <PropertyDefn>
+      <Name>DatumVzniku</Name>
+      <ElementPath>DatumVzniku</ElementPath>
+      <Type>String</Type>
+      <Width>19</Width>
+    </PropertyDefn>
   </GMLFeatureClass>
   <!-- MOP -->
   <GMLFeatureClass>
@@ -313,6 +327,13 @@
       <ElementPath>GlobalniIdNavrhuZmeny</ElementPath>
       <Type>Integer</Type>
       <SubType>Integer64</SubType>
+    </PropertyDefn>
+    <!-- Datum vzniku -->
+    <PropertyDefn>
+      <Name>DatumVzniku</Name>
+      <ElementPath>DatumVzniku</ElementPath>
+      <Type>String</Type>
+      <Width>19</Width>
     </PropertyDefn>
   </GMLFeatureClass>
   <!-- MOMC -->
@@ -455,6 +476,13 @@
       <ElementPath>ZnakObrazek</ElementPath>
       <Type>Complex</Type> <!-- ??? -->
     </PropertyDefn>
+    <!-- Datum vzniku -->
+    <PropertyDefn>
+      <Name>DatumVzniku</Name>
+      <ElementPath>DatumVzniku</ElementPath>
+      <Type>String</Type>
+      <Width>19</Width>
+    </PropertyDefn>
   </GMLFeatureClass>
   <!-- CastiObci -->
   <GMLFeatureClass>
@@ -551,6 +579,13 @@
       <ElementPath>MluvnickeCharakteristiky|Pad7</ElementPath>
       <Type>String</Type>
       <Width>48</Width>
+    </PropertyDefn>
+    <!-- Datum vzniku -->
+    <PropertyDefn>
+      <Name>DatumVzniku</Name>
+      <ElementPath>DatumVzniku</ElementPath>
+      <Type>String</Type>
+      <Width>19</Width>
     </PropertyDefn>
   </GMLFeatureClass>
   <!-- Katastralní území -->
@@ -675,6 +710,13 @@
       <Type>String</Type>
       <Width>48</Width>
     </PropertyDefn>
+    <!-- Datum vzniku -->
+    <PropertyDefn>
+      <Name>DatumVzniku</Name>
+      <ElementPath>DatumVzniku</ElementPath>
+      <Type>String</Type>
+      <Width>19</Width>
+    </PropertyDefn>
   </GMLFeatureClass>
   <!-- ZSJ -->
   <GMLFeatureClass>
@@ -790,6 +832,13 @@
       <Name>CharakterZsjKod</Name>
       <ElementPath>CharakterZsjKod</ElementPath>
       <Type>Integer</Type>
+    </PropertyDefn>
+    <!-- Datum vzniku -->
+    <PropertyDefn>
+      <Name>DatumVzniku</Name>
+      <ElementPath>DatumVzniku</ElementPath>
+      <Type>String</Type>
+      <Width>19</Width>
     </PropertyDefn>
   </GMLFeatureClass>
   <!-- Ulice -->
