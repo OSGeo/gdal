@@ -60,8 +60,12 @@ static int OGRShapeDriverIdentify( GDALOpenInfo* poOpenInfo )
         unsigned int nRecordLength = pabyBuf[10] + pabyBuf[11]*256;
         if( nHeadLen < 32 )
             return FALSE;
-        if( (nHeadLen % 32) != 0 && (nHeadLen % 32) != 1 )
-            return FALSE;
+        // The header length of some .dbf files can be a non-multiple of 32
+        // See https://trac.osgeo.org/gdal/ticket/6035
+        // Hopefully there are not so many .dbf files around that are not real
+        // DBFs
+        //if( (nHeadLen % 32) != 0 && (nHeadLen % 32) != 1 )
+        //    return FALSE;
         unsigned int nFields = (nHeadLen - 32) / 32;
         if( nRecordLength < nFields )
             return FALSE;
