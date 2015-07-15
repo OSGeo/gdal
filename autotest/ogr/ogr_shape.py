@@ -4119,6 +4119,19 @@ def ogr_shape_86():
     return 'success'
 
 ###############################################################################
+# Check we accept opening standalone .dbf files with weird header lengths (#6035)
+
+def ogr_shape_87():
+
+    ds = ogr.Open('data/weird_header_length.dbf')
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if f.GetField(0) != 1:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_shape_cleanup():
@@ -4246,6 +4259,7 @@ gdaltest_list = [
     ogr_shape_84,
     ogr_shape_85,
     ogr_shape_86,
+    ogr_shape_87,
     ogr_shape_cleanup ]
 
 if __name__ == '__main__':
