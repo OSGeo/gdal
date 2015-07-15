@@ -121,20 +121,13 @@ def verify_geojson_copy(name, fids, names):
 
         if feat is None:
             print('Failed trying to read feature')
-            orig_feat.Destroy()
-            feat.Destroy()
             return False
 
         if ogrtest.check_feature_geometry( feat, orig_feat.GetGeometryRef(),
                                            max_error = 0.001) != 0:
             print('Geometry test failed')
-            orig_feat.Destroy()
-            feat.Destroy()
             gdaltest.gjpoint_feat = None
             return False
-
-        orig_feat.Destroy()
-        feat.Destroy()
 
     gdaltest.gjpoint_feat = None
 
@@ -199,8 +192,6 @@ def copy_shape_to_geojson(gjname, compress = None):
         lyr.CreateFeature(dst_feat)
 
         feat = shp_lyr.GetNextFeature()
-
-    dst_feat.Destroy()
 
     shp_lyr = None
     lyr = None
