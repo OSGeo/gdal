@@ -235,7 +235,7 @@ def ogr_geojson_2():
     extent = (100.0, 100.0, 0.0, 0.0)
 
     rc = validate_layer(lyr, 'OGRGeoJSON', 1, ogr.wkbPoint, 0, extent)
-    if rc is not True:
+    if not rc:
         return 'fail'
 
     lyr = None
@@ -267,7 +267,7 @@ def ogr_geojson_3():
     extent = (100.0, 101.0, 0.0, 1.0)
 
     rc = validate_layer(lyr, 'OGRGeoJSON', 1, ogr.wkbLineString, 0, extent)
-    if rc is not True:
+    if not rc:
         return 'fail'
 
     lyr = None
@@ -299,7 +299,7 @@ def ogr_geojson_4():
     extent = (100.0, 101.0, 0.0, 1.0)
 
     rc = validate_layer(lyr, 'OGRGeoJSON', 1, ogr.wkbPolygon, 0, extent)
-    if rc is not True:
+    if not rc:
         return 'fail'
 
     lyr = None
@@ -331,7 +331,7 @@ def ogr_geojson_5():
     extent = (100.0, 102.0, 0.0, 1.0)
 
     rc = validate_layer(lyr, 'OGRGeoJSON', 1, ogr.wkbGeometryCollection, 0, extent)
-    if rc is not True:
+    if not rc:
         return 'fail'
 
     lyr = None
@@ -363,7 +363,7 @@ def ogr_geojson_6():
     extent = (100.0, 101.0, 0.0, 1.0)
 
     rc = validate_layer(lyr, 'OGRGeoJSON', 1, ogr.wkbMultiPoint, 0, extent)
-    if rc is not True:
+    if not rc:
         return 'fail'
 
     lyr = None
@@ -395,7 +395,7 @@ def ogr_geojson_7():
     extent = (100.0, 103.0, 0.0, 3.0)
 
     rc = validate_layer(lyr, 'OGRGeoJSON', 1, ogr.wkbMultiLineString, 0, extent)
-    if rc is not True:
+    if not rc:
         return 'fail'
 
     lyr = None
@@ -427,7 +427,7 @@ def ogr_geojson_8():
     extent = (100.0, 103.0, 0.0, 3.0)
 
     rc = validate_layer(lyr, 'OGRGeoJSON', 1, ogr.wkbMultiPolygon, 0, extent)
-    if rc is not True:
+    if not rc:
         return 'fail'
 
     lyr = None
@@ -455,12 +455,12 @@ def ogr_geojson_9():
         test = gdaltest.tests[i]
 
         rc = copy_shape_to_geojson(test[0])
-        if rc is False:
+        if not rc:
             gdaltest.post_reason('Failed making copy of ' + test[0] +'.shp')
             return 'fail'
 
         rc = verify_geojson_copy(test[0], test[1], test[2])
-        if rc is False:
+        if not rc:
             gdaltest.post_reason('Verification of copy of ' + test[0] + '.shp failed')
             return 'fail'
 
@@ -487,12 +487,12 @@ def ogr_geojson_10():
         test = gdaltest.tests[i]
 
         rc = copy_shape_to_geojson(test[0], '/vsigzip/')
-        if rc is False:
+        if not rc:
             gdaltest.post_reason('Failed making copy of ' + test[0] +'.shp')
             return 'fail'
 
         rc = verify_geojson_copy(test[0], test[1], test[2])
-        if rc is False:
+        if not rc:
             gdaltest.post_reason('Verification of copy of ' + test[0] + '.shp failed')
             return 'fail'
 
@@ -580,7 +580,7 @@ def ogr_geojson_13():
     test = ['gjpoint', [ 1 ], [ 'Point 1' ] ]
 
     rc = copy_shape_to_geojson(test[0], '/vsistdout/')
-    if rc is False:
+    if not rc:
         gdaltest.post_reason('Failed making copy of ' + test[0] +'.shp')
         return 'fail'
 
@@ -684,7 +684,7 @@ def ogr_geojson_16():
     extent = (2,2,49,49)
 
     rc = validate_layer(lyr, 'OGRGeoJSON', 1, ogr.wkbPoint, 4, extent)
-    if rc is not True:
+    if not rc:
         return 'fail'
 
     ref = lyr.GetSpatialRef()
@@ -746,7 +746,7 @@ def ogr_geojson_17():
     extent = (2,3,49,50)
 
     rc = validate_layer(lyr, 'OGRGeoJSON', 1, ogr.wkbLineString, 0, extent)
-    if rc is not True:
+    if not rc:
         return 'fail'
 
     feature = lyr.GetNextFeature()
@@ -785,7 +785,7 @@ def ogr_geojson_18():
     extent = (-3,3,49,50)
 
     rc = validate_layer(lyr, 'OGRGeoJSON', 1, ogr.wkbPolygon, 0, extent)
-    if rc is not True:
+    if not rc:
         return 'fail'
 
     feature = lyr.GetNextFeature()
@@ -824,7 +824,7 @@ def ogr_geojson_19():
     extent = (2,3,49,50)
 
     rc = validate_layer(lyr, 'OGRGeoJSON', 1, ogr.wkbMultiPoint, 4, extent)
-    if rc is not True:
+    if not rc:
         return 'fail'
 
     feature = lyr.GetNextFeature()
@@ -1300,7 +1300,7 @@ def ogr_geojson_28():
     extent = (2,2,49,49,1,1)
 
     rc = validate_layer(lyr, 'OGRGeoJSON', 1, ogr.wkbPoint, 4, extent)
-    if rc is not True:
+    if not rc:
         return 'fail'
 
     ref = lyr.GetSpatialRef()
@@ -1363,7 +1363,7 @@ def ogr_geojson_29():
     extent = (2,3,49,50,1,2)
 
     rc = validate_layer(lyr, 'OGRGeoJSON', 1, ogr.wkbLineString, 0, extent)
-    if rc is not True:
+    if not rc:
         return 'fail'
 
     feature = lyr.GetNextFeature()
@@ -1403,7 +1403,7 @@ def ogr_geojson_30():
     extent = (2,3,49,50,1,2)
 
     rc = validate_layer(lyr, 'OGRGeoJSON', 1, ogr.wkbMultiPoint, 4, extent)
-    if rc is not True:
+    if not rc:
         return 'fail'
 
     feature = lyr.GetNextFeature()
@@ -1443,7 +1443,7 @@ def ogr_geojson_31():
     extent = (2,3,49,50,1,4)
 
     rc = validate_layer(lyr, 'OGRGeoJSON', 1, ogr.wkbPolygon, 0, extent)
-    if rc is not True:
+    if not rc:
         return 'fail'
 
     feature = lyr.GetNextFeature()
@@ -1483,7 +1483,7 @@ def ogr_geojson_32():
     extent = (2,3,49,50)
 
     rc = validate_layer(lyr, 'OGRGeoJSON', 1, ogr.wkbMultiPoint, 4, extent)
-    if rc is not True:
+    if not rc:
         return 'fail'
 
     feature = lyr.GetNextFeature()
@@ -1523,7 +1523,7 @@ def ogr_geojson_33():
     extent = (2,3,49,50)
 
     rc = validate_layer(lyr, 'OGRGeoJSON', 1, ogr.wkbMultiPoint, 4, extent)
-    if rc is not True:
+    if not rc:
         return 'fail'
 
     feature = lyr.GetNextFeature()
@@ -1563,7 +1563,7 @@ def ogr_geojson_34():
     extent = (2,3,49,50)
 
     rc = validate_layer(lyr, 'OGRGeoJSON', 1, ogr.wkbMultiPoint, 4, extent)
-    if rc is not True:
+    if not rc:
         return 'fail'
 
     feature = lyr.GetNextFeature()
