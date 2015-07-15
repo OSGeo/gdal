@@ -133,9 +133,6 @@ def verify_geojson_copy(name, fids, names):
 
     lyr = None
 
-    # Required by old-gen python bindings
-    ds.Destroy()
-
     return True
 
 
@@ -197,7 +194,6 @@ def copy_shape_to_geojson(gjname, compress = None):
     lyr = None
 
     # Required by old-gen python bindings
-    shp_ds.Destroy()
     ds.Destroy()
 
     return True
@@ -243,8 +239,6 @@ def ogr_geojson_2():
         return 'fail'
 
     lyr = None
-    # Required by old-gen python bindings
-    ds.Destroy()
 
     return 'success'
 
@@ -275,10 +269,8 @@ def ogr_geojson_3():
     rc = validate_layer(lyr, 'OGRGeoJSON', 1, ogr.wkbLineString, 0, extent)
     if rc is not True:
         return 'fail'
-        
+
     lyr = None
-    # Required by old-gen python bindings
-    ds.Destroy()
 
     return 'success'
 
@@ -311,8 +303,6 @@ def ogr_geojson_4():
         return 'fail'
 
     lyr = None
-    # Required by old-gen python bindings
-    ds.Destroy()
 
     return 'success'
 
@@ -345,8 +335,6 @@ def ogr_geojson_5():
         return 'fail'
 
     lyr = None
-    # Required by old-gen python bindings
-    ds.Destroy()
 
     return 'success'
 
@@ -379,8 +367,6 @@ def ogr_geojson_6():
         return 'fail'
 
     lyr = None
-    # Required by old-gen python bindings
-    ds.Destroy()
 
     return 'success'
 
@@ -413,8 +399,6 @@ def ogr_geojson_7():
         return 'fail'
 
     lyr = None
-    # Required by old-gen python bindings
-    ds.Destroy()
 
     return 'success'
 
@@ -447,8 +431,6 @@ def ogr_geojson_8():
         return 'fail'
 
     lyr = None
-    # Required by old-gen python bindings
-    ds.Destroy()
 
     return 'success'
 
@@ -559,8 +541,6 @@ def ogr_geojson_11():
         return 'fail'
 
     lyr = None
-    # Required by old-gen python bindings
-    ds.Destroy()
 
     return 'success'
 
@@ -634,7 +614,7 @@ def ogr_geojson_14():
             out_feat.SetGeometry(geom)
             out_lyr.CreateFeature(out_feat)
         feat = lyr.GetNextFeature()
-    ds.Destroy()
+
     out_ds.Destroy()
 
     return 'success'
