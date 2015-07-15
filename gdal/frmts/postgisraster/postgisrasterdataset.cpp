@@ -2807,6 +2807,15 @@ int PostGISRasterDataset::Identify(GDALOpenInfo* poOpenInfo)
     {
         return FALSE;
     }
+    
+    // Will avoid a OGR PostgreSQL connection string to be recognized as a
+    // PostgisRaster one and later fail (#6034)
+    if( strstr(poOpenInfo->pszFilename, " schemas=") ||
+        strstr(poOpenInfo->pszFilename, " SCHEMAS=") )
+    {
+        return FALSE;
+    }
+    
     return TRUE;
 }
 
