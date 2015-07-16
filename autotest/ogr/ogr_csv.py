@@ -125,10 +125,7 @@ def ogr_csv_copy_layer(layer_name, options):
         dst_feat.SetFrom( feat )
         new_lyr.CreateFeature( dst_feat )
 
-        feat.Destroy()
         feat = srclyr.GetNextFeature()
-
-    dst_feat.Destroy()
 
     return new_lyr
 
@@ -231,7 +228,6 @@ def ogr_csv_7():
         gdaltest.post_reason( 'Layer not destroyed properly?' )
         return 'fail'
 
-    gdaltest.csv_tmpds.Destroy()
     gdaltest.csv_tmpds = None
 
     return 'success'
@@ -255,9 +251,6 @@ def ogr_csv_8():
 
     lyr.CreateFeature( feat )
 
-    feat.Destroy()
-
-    gdaltest.csv_tmpds.Destroy()
     gdaltest.csv_tmpds = None
 
     return 'success'
@@ -382,39 +375,33 @@ def ogr_csv_check_testcsvt(lyr):
     if feat.GetFieldAsString('DATETIME') != '2008/12/25 11:22:33':
         print(feat.GetFieldAsString('DATETIME'))
         return 'fail'
-    feat.Destroy()
 
     feat = lyr.GetNextFeature()
     if feat.GetFieldAsString('DATETIME') != '':
         print(feat.GetFieldAsString('DATETIME'))
         return 'fail'
-    feat.Destroy()
 
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
     if feat.GetFieldAsString('DATE') != '2008/12/25':
         print(feat.GetFieldAsString('DATE'))
         return 'fail'
-    feat.Destroy()
 
     feat = lyr.GetNextFeature()
     if feat.GetFieldAsString('DATE') != '':
         print(feat.GetFieldAsString('DATE'))
         return 'fail'
-    feat.Destroy()
 
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
     if feat.GetFieldAsString('TIME') != '11:22:33':
         print(feat.GetFieldAsString('TIME'))
         return 'fail'
-    feat.Destroy()
 
     feat = lyr.GetNextFeature()
     if feat.GetFieldAsString('TIME') != '':
         print(feat.GetFieldAsString('TIME'))
         return 'fail'
-    feat.Destroy()
 
     if lyr.GetLayerDefn().GetFieldDefn(0).GetWidth() != 5:
         gdaltest.post_reason( 'Field 0 : expecting width = 5')
@@ -458,7 +445,6 @@ def ogr_csv_11():
     if gdaltest.csv_ds is None:
         return 'skip'
 
-    gdaltest.csv_ds.Destroy()
     gdaltest.csv_ds = None
     gdaltest.csv_ds = ogr.Open( 'data/testcsvt.csv' )
 
@@ -506,17 +492,12 @@ def ogr_csv_12():
         dst_feat.SetFrom( feat )
         gdaltest.csv_lyr2.CreateFeature( dst_feat )
 
-        feat.Destroy()
         feat = srclyr.GetNextFeature()
-
-    dst_feat.Destroy()
 
     #######################################################
     # Closes everything and reopen
-    gdaltest.csv_tmpds.Destroy()
     gdaltest.csv_tmpds = None
 
-    gdaltest.csv_ds.Destroy()
     gdaltest.csv_ds = None
     gdaltest.csv_ds = ogr.Open( 'tmp/csvwrk/testcsvt_copy.csv' )
 
@@ -545,7 +526,6 @@ def ogr_csv_13():
 
     field_defn = ogr.FieldDefn( 'ADATA', ogr.OFTString )
     lyr.CreateField(field_defn)
-    field_defn.Destroy()
 
     # Some applications expect the WKT column not to be exposed. Check it
     if lyr.GetLayerDefn().GetFieldCount() != 1:
@@ -555,7 +535,6 @@ def ogr_csv_13():
     dst_feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(1 2)'))
     dst_feat.SetField('ADATA', 'avalue')
     lyr.CreateFeature( dst_feat )
-    dst_feat.Destroy()
 
     # AS_WKT but no field
     options = ['GEOMETRY=AS_WKT','CREATE_CSVT=YES']
@@ -564,7 +543,6 @@ def ogr_csv_13():
     dst_feat = ogr.Feature( feature_def = lyr.GetLayerDefn() )
     dst_feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(1 2)'))
     lyr.CreateFeature( dst_feat )
-    dst_feat.Destroy()
 
     # AS_XY
     options = ['GEOMETRY=AS_XY','CREATE_CSVT=YES']
@@ -572,20 +550,17 @@ def ogr_csv_13():
 
     field_defn = ogr.FieldDefn( 'ADATA', ogr.OFTString )
     lyr.CreateField(field_defn)
-    field_defn.Destroy()
 
     dst_feat = ogr.Feature( feature_def = lyr.GetLayerDefn() )
     dst_feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(1 2)'))
     dst_feat.SetField('ADATA', 'avalue')
     lyr.CreateFeature( dst_feat )
-    dst_feat.Destroy()
 
     # Nothing will be written in the x or y field
     dst_feat = ogr.Feature( feature_def = lyr.GetLayerDefn() )
     dst_feat.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING(1 2,3 4)'))
     dst_feat.SetField('ADATA', 'avalue')
     lyr.CreateFeature( dst_feat )
-    dst_feat.Destroy()
 
     # AS_YX
     options = ['GEOMETRY=AS_YX','CREATE_CSVT=YES']
@@ -593,13 +568,11 @@ def ogr_csv_13():
 
     field_defn = ogr.FieldDefn( 'ADATA', ogr.OFTString )
     lyr.CreateField(field_defn)
-    field_defn.Destroy()
 
     dst_feat = ogr.Feature( feature_def = lyr.GetLayerDefn() )
     dst_feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(1 2)'))
     dst_feat.SetField('ADATA', 'avalue')
     lyr.CreateFeature( dst_feat )
-    dst_feat.Destroy()
 
     # AS_XYZ
     options = ['GEOMETRY=AS_XYZ','CREATE_CSVT=YES']
@@ -607,17 +580,14 @@ def ogr_csv_13():
 
     field_defn = ogr.FieldDefn( 'ADATA', ogr.OFTString )
     lyr.CreateField(field_defn)
-    field_defn.Destroy()
 
     dst_feat = ogr.Feature( feature_def = lyr.GetLayerDefn() )
     dst_feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(1 2 3)'))
     dst_feat.SetField('ADATA', 'avalue')
     lyr.CreateFeature( dst_feat )
-    dst_feat.Destroy()
 
     #######################################################
     # Closes everything and reopen
-    gdaltest.csv_tmpds.Destroy()
     gdaltest.csv_tmpds = None
 
     gdaltest.csv_tmpds = ogr.Open( 'tmp/csvwrk' )
@@ -717,7 +687,7 @@ def ogr_csv_14():
         return 'skip'
 
     gdaltest.csv_tmpds = ogr.Open( 'tmp/csvwrk', update = 1 )
-    gdaltest.csv_ds.Destroy()
+    gdaltest.csv_ds = None
     gdaltest.csv_ds = ogr.Open( 'data/prime_meridian.csv'  )
 
     #######################################################
@@ -744,7 +714,7 @@ def ogr_csv_16():
     if gdaltest.csv_ds is None:
         return 'skip'
 
-    gdaltest.csv_tmpds.Destroy()
+    gdaltest.csv_tmpds = None
     gdaltest.csv_tmpds = ogr.Open( 'tmp/csvwrk' )
     gdaltest.csv_lyr1 = gdaltest.csv_tmpds.GetLayerByName('pm3')
 
@@ -773,16 +743,11 @@ def ogr_csv_17():
     if ogrtest.check_feature_geometry( feat, 'POLYGON((6.25 1.25,7.25 1.25,7.25 2.25,6.25 2.25,6.25 1.25))'):
         return 'fail'
 
-    feat.Destroy()
-
     feat = csv_lyr.GetNextFeature()
-    feat.Destroy()
 
     feat = csv_lyr.GetNextFeature()
     if ogrtest.check_feature_geometry( feat, 'POLYGON((1.001 1.001,3.999 3.999,3.2 1.6,1.001 1.001))'):
         return 'fail'
-
-    feat.Destroy()
 
     return 'success'
 
@@ -813,7 +778,6 @@ def ogr_csv_19():
     if gdaltest.csv_ds is None:
         return 'skip'
 
-    gdaltest.csv_ds.Destroy()
     gdaltest.csv_ds = None
     gdaltest.csv_ds = ogr.Open( 'data/testnull.csv' )
 
@@ -849,7 +813,6 @@ def ogr_csv_20():
     if gdaltest.csv_ds is None:
         return 'skip'
 
-    gdaltest.csv_ds.Destroy()
     gdaltest.csv_ds = None
 
     gdaltest.csv_ds = ogr.Open( 'data/testnumheader1.csv' )
@@ -871,7 +834,6 @@ def ogr_csv_20():
         print('column 1 got name %s expected %s' % (str(got[1]), str(expect[1])) )
         return 'fail'
 
-    gdaltest.csv_ds.Destroy()
     gdaltest.csv_ds = None
 
     gdaltest.csv_ds = ogr.Open( 'data/testnumheader2.csv' )
@@ -903,7 +865,6 @@ def ogr_csv_21():
     if gdaltest.csv_ds is None:
         return 'skip'
 
-    gdaltest.csv_ds.Destroy()
     gdaltest.csv_ds = None
 
     gdaltest.csv_ds = ogr.Open( 'data/testquoteheader1.csv' )
@@ -922,7 +883,6 @@ def ogr_csv_21():
             print('column %d got name %s expected %s' % (i,str(got), str(expect[i])) )
             return 'fail'
 
-    gdaltest.csv_ds.Destroy()
     gdaltest.csv_ds = None
 
     gdaltest.csv_ds = ogr.Open( 'data/testquoteheader2.csv' )
@@ -1874,13 +1834,11 @@ def ogr_csv_cleanup():
     if gdaltest.csv_ds is None:
         return 'skip'
 
-    gdaltest.csv_ds.Destroy()
     gdaltest.csv_ds = None
 
     try:
         gdaltest.csv_lyr1 = None
         gdaltest.csv_lyr2 = None
-        gdaltest.csv_tmpds.Destroy()
         gdaltest.csv_tmpds = None
     except:
         pass
@@ -1951,4 +1909,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-
