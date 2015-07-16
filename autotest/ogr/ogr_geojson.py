@@ -193,8 +193,7 @@ def copy_shape_to_geojson(gjname, compress = None):
     shp_lyr = None
     lyr = None
 
-    # Required by old-gen python bindings
-    ds.Destroy()
+    ds = None
 
     return True
 
@@ -615,7 +614,7 @@ def ogr_geojson_14():
             out_lyr.CreateFeature(out_feat)
         feat = lyr.GetNextFeature()
 
-    out_ds.Destroy()
+    out_ds = None
 
     return 'success'
 
