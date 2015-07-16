@@ -48,12 +48,12 @@
 %extend OGRDataSourceShadow {
   %pythoncode {
     def Destroy(self):
-      "Once called, self has effectively been destroyed.  Do not access. For backwards compatiblity only"
+      "Once called, self has effectively been destroyed.  Do not access. For backwards compatibility only"
       _ogr.delete_DataSource( self )
       self.thisown = 0
 
     def Release(self):
-      "Once called, self has effectively been destroyed.  Do not access. For backwards compatiblity only"
+      "Once called, self has effectively been destroyed.  Do not access. For backwards compatibility only"
       _ogr.delete_DataSource( self )
       self.thisown = 0
 
@@ -211,7 +211,7 @@ layer[0:4] would return a list of the first four features."""
       pass
 
     def Destroy(self):
-      "Once called, self has effectively been destroyed.  Do not access. For backwards compatiblity only"
+      "Once called, self has effectively been destroyed.  Do not access. For backwards compatibility only"
       _ogr.delete_Feature( self )
       self.thisown = 0
 
@@ -502,7 +502,7 @@ layer[0:4] would return a list of the first four features."""
 %extend OGRFeatureDefnShadow {
 %pythoncode {
   def Destroy(self):
-    "Once called, self has effectively been destroyed.  Do not access. For backwards compatiblity only"
+    "Once called, self has effectively been destroyed.  Do not access. For backwards compatibility only"
     _ogr.delete_FeatureDefn( self )
     self.thisown = 0
 
@@ -512,7 +512,7 @@ layer[0:4] would return a list of the first four features."""
 %extend OGRFieldDefnShadow {
 %pythoncode %{
   def Destroy(self):
-    "Once called, self has effectively been destroyed.  Do not access. For backwards compatiblity only"
+    "Once called, self has effectively been destroyed.  Do not access. For backwards compatibility only"
     _ogr.delete_FieldDefn( self )
     self.thisown = 0
 %}

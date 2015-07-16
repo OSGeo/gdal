@@ -2878,7 +2878,7 @@ GDALDataset::BlockBasedRasterIO( GDALRWFlag eRWFlag,
                 CPLDebug( "GDAL", 
                           "GDALDataset::BlockBasedRasterIO() ... "
                           "mismatched block sizes, use std method." );
-                return GDALDataset::IRasterIO( eRWFlag, 
+                return BandBasedRasterIO( eRWFlag, 
                                                nXOff, nYOff, nXSize, nYSize, 
                                                pData, nBufXSize, nBufYSize, 
                                                eBufType, 
@@ -2893,7 +2893,7 @@ GDALDataset::BlockBasedRasterIO( GDALRWFlag eRWFlag,
                 CPLDebug( "GDAL", 
                           "GDALDataset::BlockBasedRasterIO() ... "
                           "mismatched band data types, use std method." );
-                return GDALDataset::IRasterIO( eRWFlag, 
+                return BandBasedRasterIO( eRWFlag, 
                                                nXOff, nYOff, nXSize, nYSize, 
                                                pData, nBufXSize, nBufYSize, 
                                                eBufType, 
@@ -2974,7 +2974,7 @@ GDALDataset::BlockBasedRasterIO( GDALRWFlag eRWFlag,
     /* separate code like done in GDALRasterBand::IRasterIO. */
     if (eRWFlag == GF_Write && (nBufXSize < nXSize || nBufYSize < nYSize))
     {
-        return GDALDataset::IRasterIO( eRWFlag, 
+        return BandBasedRasterIO( eRWFlag, 
                                        nXOff, nYOff, nXSize, nYSize, 
                                        pData, nBufXSize, nBufYSize, 
                                        eBufType, 
@@ -2987,7 +2987,7 @@ GDALDataset::BlockBasedRasterIO( GDALRWFlag eRWFlag,
     if( psExtraArg->eResampleAlg != GRIORA_NearestNeighbour &&
         (nBufXSize != nXSize || nBufYSize != nYSize) )
     {
-        return GDALDataset::IRasterIO( eRWFlag, 
+        return BandBasedRasterIO( eRWFlag, 
                                        nXOff, nYOff, nXSize, nYSize, 
                                        pData, nBufXSize, nBufYSize, 
                                        eBufType, 

@@ -1567,6 +1567,8 @@ JP2KAKDataset::DirectRasterIO( CPL_UNUSED GDALRWFlag eRWFlag,
         kdu_dims dims;
         poCodeStream->apply_input_restrictions( 0, 0, nDiscardLevels, 0, NULL );
         poCodeStream->get_dims( 0, dims );
+        int nOvrXSize = dims.size.x;
+        int nOvrYSize = dims.size.y;
 
         dims.pos.x = dims.pos.x + nXOff/nResMult;
         dims.pos.y = dims.pos.y + nYOff/nResMult;
@@ -1585,6 +1587,10 @@ JP2KAKDataset::DirectRasterIO( CPL_UNUSED GDALRWFlag eRWFlag,
         {
             dims.size.y = nBufYSize;
         }
+        if( dims.pos.x + dims.size.x > nOvrXSize )
+            dims.size.x = nOvrXSize - dims.pos.x;
+        if( dims.pos.y + dims.size.y > nOvrYSize )
+            dims.size.y = nOvrYSize - dims.pos.y;
 
         kdu_dims dims_roi;
 

@@ -296,6 +296,7 @@ class VRTPansharpenedDataset : public VRTDataset
     GDALDataType      eLastBandRasterIODataType;
     
     GTAdjustment      eGTAdjustment;
+    int               bNoDataDisabled;
 
   protected:
     virtual int         CloseDependentDatasets();

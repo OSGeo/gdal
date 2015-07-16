@@ -1229,6 +1229,8 @@ int VRTDataset::CheckCompatibleForDatasetIO()
         {
             for(int iSource = 0; iSource < nSources; iSource++)
             {
+                if (!poBand->papoSources[iSource]->IsSimpleSource())
+                    return FALSE;
                 VRTSimpleSource* poRefSource = (VRTSimpleSource* )papoSources[iSource];
                 VRTSimpleSource* poSource = (VRTSimpleSource* )poBand->papoSources[iSource];
                 if (!EQUAL(poSource->GetType(), "SimpleSource"))
@@ -1353,6 +1355,38 @@ CPLErr VRTDataset::IRasterIO( GDALRWFlag eRWFlag,
             }
         }
     }
+
+    // If resampling with non-nearest neighbour, we need to be carefull
+    // if the VRT band exposes a nodata value, but the sources do not have it
+    if (bLocalCompatibleForDatasetIO && eRWFlag == GF_Read &&
+        (nXSize != nBufXSize || nYSize != nBufYSize) &&
+        psExtraArg->eResampleAlg != GRIORA_NearestNeighbour )
+    {
+        for(int iBandIndex=0; iBandIndex<nBandCount; iBandIndex++)
+        {
+            VRTSourcedRasterBand* poBand =
+                    (VRTSourcedRasterBand*)GetRasterBand(panBandMap[iBandIndex]);
+            int bHasNoData = FALSE;
+            double dfNoDataValue = poBand->GetNoDataValue(&bHasNoData);
+            if( bHasNoData )
+            {
+                for( int i = 0; i < poBand->nSources; i++ )
+                {
+                    VRTSimpleSource* poSource = (VRTSimpleSource*)poBand->papoSources[i];
+                    int bSrcHasNoData = FALSE;
+                    double dfSrcNoData = poSource->GetBand()->GetNoDataValue(&bSrcHasNoData);
+                    if( !bSrcHasNoData || dfSrcNoData != dfNoDataValue )
+                    {
+                        bLocalCompatibleForDatasetIO = FALSE;
+                        break;
+                    }
+                }
+                if( !bLocalCompatibleForDatasetIO )
+                    break;
+            }
+        }
+    }
+
 
     if (bLocalCompatibleForDatasetIO && eRWFlag == GF_Read)
     {

@@ -1222,21 +1222,17 @@ def vrtpansharpen_4():
 
     vrt_ds = gdal.Open(xml)
     for dt in [ gdal.GDT_Int16, gdal.GDT_UInt16, gdal.GDT_Int32, gdal.GDT_UInt32, gdal.GDT_Float32, gdal.GDT_Float64, gdal.GDT_CFloat64 ]:
-        if dt == gdal.GDT_CFloat64:
-            gdal.PushErrorHandler()
         data = vrt_ds.GetRasterBand(1).ReadRaster(buf_type = dt)
-        if dt == gdal.GDT_CFloat64:
-            gdal.PopErrorHandler()
-            if data is not None:
-                gdaltest.post_reason('fail')
-                return 'fail'
-            continue
         tmp_ds = gdal.GetDriverByName('MEM').Create('',800,400,1,dt)
         tmp_ds.WriteRaster(0,0,800,400,data)
         cs = tmp_ds.GetRasterBand(1).Checksum()
-        if cs != 4735:
+        if dt == gdal.GDT_CFloat64:
+            expected_cs = 4724
+        else:
+            expected_cs = 4735
+        if cs != expected_cs:
             gdaltest.post_reason('fail')
-            print(dt)
+            print(gdal.GetDataTypeName(dt))
             print(cs)
             return 'fail'
 
@@ -1306,34 +1302,20 @@ def vrtpansharpen_5():
 </VRTDataset>""" % (gdal.GetDataTypeName(dt), spectral_xml, spectral_xml, spectral_xml)
 
         vrt_ds = gdal.Open(xml)
-        if dt == gdal.GDT_CFloat64:
-            gdal.PushErrorHandler()
         data = vrt_ds.GetRasterBand(1).ReadRaster(buf_type = gdal.GDT_Byte)
-        if dt == gdal.GDT_CFloat64:
-            gdal.PopErrorHandler()
-            if data is not None:
-                gdaltest.post_reason('fail')
-                return 'fail'
-            continue
         tmp_ds = gdal.GetDriverByName('MEM').Create('',800,400,1)
         tmp_ds.WriteRaster(0,0,800,400,data)
         cs = tmp_ds.GetRasterBand(1).Checksum()
-        if dt == gdal.GDT_Int16 or dt == gdal.GDT_Int32:
-            if cs != 5170:
-                gdaltest.post_reason('fail')
-                print(dt)
-                print(cs)
-                return 'fail'
-        elif dt == gdal.GDT_UInt16 or dt == gdal.GDT_UInt32:
+        if dt == gdal.GDT_UInt16:
             if cs != 4553:
                 gdaltest.post_reason('fail')
-                print(dt)
+                print(gdal.GetDataTypeName(dt))
                 print(cs)
                 return 'fail'
         else:
             if cs != 4450:
                 gdaltest.post_reason('fail')
-                print(dt)
+                print(gdal.GetDataTypeName(dt))
                 print(cs)
                 return 'fail'
 
@@ -1355,7 +1337,7 @@ def vrtpansharpen_6():
     # i = 0: VRT has <BitDepth>7</BitDepth>
     # i = 1: bands have NBITS=7 and VRT <BitDepth>7</BitDepth>
     # i = 2: bands have NBITS=7
-    for dt in [ gdal.GDT_Byte, gdal.GDT_UInt16, gdal.GDT_UInt32 ]:
+    for dt in [ gdal.GDT_Byte, gdal.GDT_UInt16 ]:
         if dt == gdal.GDT_Byte:
             nbits = 7
         elif dt == gdal.GDT_UInt16:
@@ -1417,7 +1399,7 @@ def vrtpansharpen_6():
 
             if list(ar[0]) != expected_ar:
                 gdaltest.post_reason('fail')
-                print(dt)
+                print(gdal.GetDataTypeName(dt))
                 print(i)
                 print(list(ar[0]))
                 return 'fail'
@@ -1617,6 +1599,7 @@ def vrtpansharpen_8():
     </VRTRasterBand>
     <VRTRasterBand dataType="Byte" band="3" subClass="VRTPansharpenedRasterBand">
     </VRTRasterBand>
+    <NoData>123</NoData>
     <PansharpeningOptions>
         <PanchroBand>
                 <SourceFilename relativeToVRT="1">small_world_pan.tif</SourceFilename>
@@ -1661,6 +1644,86 @@ def vrtpansharpen_8():
     return 'success'
 
 ###############################################################################
+# Test NoData support
+
+def vrtpansharpen_9():
+
+    # Explicit nodata
+    vrt_ds = gdal.Open("""<VRTDataset subClass="VRTPansharpenedDataset">
+    <PansharpeningOptions>
+        <NoData>0</NoData>
+        <PanchroBand>
+                <SourceFilename relativeToVRT="1">tmp/small_world_pan.tif</SourceFilename>
+                <SourceBand>1</SourceBand>
+        </PanchroBand>
+        <SpectralBand dstBand="1">
+                <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
+                <SourceBand>1</SourceBand>
+        </SpectralBand>
+        <SpectralBand dstBand="2">
+                <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
+                <SourceBand>2</SourceBand>
+        </SpectralBand>
+        <SpectralBand dstBand="3">
+                <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
+                <SourceBand>3</SourceBand>
+        </SpectralBand>
+    </PansharpeningOptions>
+</VRTDataset>""")
+    if vrt_ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    cs = [ vrt_ds.GetRasterBand(i+1).Checksum() for i in range(vrt_ds.RasterCount) ]
+    if cs != [4179, 8767, 52257]:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+
+    # Implicit nodata
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/small_world_pan_nodata.tif', 800, 400)
+    ds.GetRasterBand(1).SetNoDataValue(0)
+    ds.WriteRaster(0,0,800,400,gdal.Open('tmp/small_world_pan.tif').ReadRaster())
+    ds = None
+    
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/small_world_nodata.tif', 400, 200,3)
+    ds.GetRasterBand(1).SetNoDataValue(0)
+    ds.GetRasterBand(2).SetNoDataValue(0)
+    ds.GetRasterBand(3).SetNoDataValue(0)
+    ds.WriteRaster(0,0,400,200,gdal.Open('data/small_world.tif').ReadRaster())
+    ds = None
+    
+    vrt_ds = gdal.Open("""<VRTDataset subClass="VRTPansharpenedDataset">
+    <PansharpeningOptions>
+        <PanchroBand>
+                <SourceFilename>/vsimem/small_world_pan_nodata.tif</SourceFilename>
+                <SourceBand>1</SourceBand>
+        </PanchroBand>
+        <SpectralBand dstBand="1">
+                <SourceFilename>/vsimem/small_world_nodata.tif</SourceFilename>
+                <SourceBand>1</SourceBand>
+        </SpectralBand>
+        <SpectralBand dstBand="2">
+                <SourceFilename>/vsimem/small_world_nodata.tif</SourceFilename>
+                <SourceBand>2</SourceBand>
+        </SpectralBand>
+        <SpectralBand dstBand="3">
+                <SourceFilename>/vsimem/small_world_nodata.tif</SourceFilename>
+                <SourceBand>3</SourceBand>
+        </SpectralBand>
+    </PansharpeningOptions>
+</VRTDataset>""")
+    if vrt_ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    cs = [ vrt_ds.GetRasterBand(i+1).Checksum() for i in range(vrt_ds.RasterCount) ]
+    if cs != [4179, 8767, 52257]:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+        
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def vrtpansharpen_cleanup():
@@ -1680,6 +1743,7 @@ gdaltest_list = [
     vrtpansharpen_6,
     vrtpansharpen_7,
     vrtpansharpen_8,
+    vrtpansharpen_9,
     vrtpansharpen_cleanup,
 ]
 
