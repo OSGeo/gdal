@@ -5703,9 +5703,6 @@ def TermProgress_nocb(*args, **kwargs):
   """TermProgress_nocb(double dfProgress, char pszMessage = None, void pData = None) -> int"""
   return _ogr.TermProgress_nocb(*args, **kwargs)
 TermProgress = _ogr.TermProgress
-<<<<<<< HEAD
 # This file is compatible with both classic and new-style classes.
 
 
-=======
->>>>>>> upstream/trunk
