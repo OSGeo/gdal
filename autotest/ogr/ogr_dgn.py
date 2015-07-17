@@ -70,8 +70,6 @@ def ogr_dgn_2():
         gdaltest.post_reason( 'Style string different than expected.' )
         return 'fail'
 
-    feat.Destroy()
-
     return 'success'
 
 ###############################################################################
@@ -107,8 +105,6 @@ def ogr_dgn_3():
         gdaltest.post_reason( 'geometry extents seem odd' )
         return 'fail'
 
-    feat.Destroy()
-
     return 'success'
 
 ###############################################################################
@@ -132,8 +128,6 @@ def ogr_dgn_4():
     if feat.GetStyleString() != 'BRUSH(fc:#b40000,id:"ogr-brush-0")':
         gdaltest.post_reason( 'Style string different than expected.' )
         return 'fail'
-
-    feat.Destroy()
 
     gdaltest.dgn_lyr.ResetReading()
 
@@ -205,7 +199,6 @@ def ogr_dgn_7():
 
         feat = gdaltest.dgn_lyr.GetNextFeature()
 
-    dst_feat.Destroy()
     dgn2_lyr = None
     dgn2_ds = None
 
@@ -244,8 +237,6 @@ def ogr_dgn_8():
         gdaltest.post_reason( 'feature 1: Style string different than expected.' )
         return 'fail'
 
-    feat.Destroy()
-
     # Check second element, a circle.
 
     feat = dgn2_lyr.GetNextFeature()
@@ -271,8 +262,6 @@ def ogr_dgn_8():
         print(genvelope)
         return 'fail'
 
-    feat.Destroy()
-
     # Check 3rd feature, a polygon
 
     feat = dgn2_lyr.GetNextFeature()
@@ -291,8 +280,6 @@ def ogr_dgn_8():
         gdaltest.post_reason( 'feature 3: Style string different than expected: '+ feat.GetStyleString() )
         return 'fail'
 
-    feat.Destroy()
-
     dgn2_ds = None
 
     return 'success'
@@ -304,13 +291,12 @@ def ogr_dgn_cleanup():
 
     if gdaltest.dgn_ds is not None:
         gdaltest.dgn_lyr = None
-        gdaltest.dgn_ds.Destroy()
         gdaltest.dgn_ds = None
 
     gdaltest.clean_tmp()
     return 'success'
 
-gdaltest_list = [ 
+gdaltest_list = [
     ogr_dgn_1,
     ogr_dgn_2,
     ogr_dgn_3,
@@ -328,4 +314,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-

@@ -309,8 +309,6 @@ def ogr_gml_8():
             print(feat.GetFieldAsString('name'))
             return 'fail'
 
-    gml_ds.Destroy()
-
     return 'success'
 
 ###############################################################################
@@ -338,8 +336,7 @@ def ogr_gml_9():
         gdaltest.post_reason('CreateFeature failed.')
         return 'fail'
 
-    dst_feat.Destroy()
-    ds.Destroy()
+    ds = None
 
     ds = ogr.Open('tmp/broken_utf8.gml')
     lyr = ds.GetLayerByName('test')
@@ -348,9 +345,6 @@ def ogr_gml_9():
         gdaltest.post_reason('Unexpected content.')
         print(feat.GetField('test'))
         return 'fail'
-
-    feat.Destroy()
-    ds.Destroy()
 
     os.remove('tmp/broken_utf8.gml')
     os.remove('tmp/broken_utf8.xsd')
@@ -395,8 +389,7 @@ def ogr_gml_10():
         gdaltest.post_reason('CreateFeature failed.')
         return 'fail'
 
-    dst_feat.Destroy()
-    ds.Destroy()
+    ds = None
 
     ds = ogr.Open('tmp/fields.gml')
     lyr = ds.GetLayerByName('test')
@@ -446,9 +439,6 @@ def ogr_gml_10():
     if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('integer')).GetWidth() != 5:
         gdaltest.post_reason('Unexpected width of integer field.')
         return 'fail'
-
-    feat.Destroy();
-    ds.Destroy()
 
     os.remove('tmp/fields.gml')
     os.remove('tmp/fields.xsd')
@@ -1693,7 +1683,6 @@ def ogr_gml_43():
         gfs_found = True
     except:
         gfs_found = False
-        pass
 
     if gfs_found:
         if gdaltest.gdalurlopen('http://testing.deegree.org:80/deegree-wfs/services?SERVICE=WFS&VERSION=1.1.0&REQUEST=DescribeFeatureType&TYPENAME=app:Springs&NAMESPACE=xmlns(app=http://www.deegree.org/app)') is None:
@@ -4113,4 +4102,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-

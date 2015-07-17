@@ -86,11 +86,7 @@ def ogr_gmt_2():
 
         feat = shp_lyr.GetNextFeature()
 
-    dst_feat.Destroy()
-
     gdaltest.gmt_lyr = None
-
-    gdaltest.gmt_ds.Destroy()
     gdaltest.gmt_ds = None
 
     return 'success'
@@ -123,15 +119,9 @@ def ogr_gmt_3():
                 gdaltest.post_reason( 'Attribute %d does not match' % fld )
                 return 'fail'
 
-        read_feat.Destroy()
-        orig_feat.Destroy()
-
     gdaltest.poly_feat = None
-    gdaltest.shp_ds.Destroy()
-
+    gdaltest.shp_ds = None
     gdaltest.gmt_lyr = None
-
-    gdaltest.gmt_ds.Destroy()
     gdaltest.gmt_ds = None
 
     if tr:
@@ -209,8 +199,6 @@ def ogr_gmt_5():
     gdaltest.gmt_lyr.CreateFeature( dst_feat )
 
     gdaltest.gmt_lyr = None
-
-    gdaltest.gmt_ds.Destroy()
     gdaltest.gmt_ds = None
 
     # Reopen.
@@ -277,4 +265,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-

@@ -520,12 +520,11 @@ def ogr_join_22():
 
 def ogr_join_cleanup():
     gdaltest.lyr = None
-    gdaltest.ds.Destroy()
     gdaltest.ds = None
 
     return 'success'
 
-gdaltest_list = [ 
+gdaltest_list = [
     ogr_join_1,
     ogr_join_2,
     ogr_join_3,
@@ -557,4 +556,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-

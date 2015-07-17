@@ -73,11 +73,11 @@ def ogr_index_1():
 
     # Close and reopen, since it seems the .mif driver does not allow reading
     # from a newly created (updatable) file.
-    
-    gdaltest.p_ds.Destroy()
+
+    gdaltest.p_ds = None
     gdaltest.p_ds = ogr.OpenShared( 'index_p.mif', update = 0 )
     gdaltest.p_lyr = gdaltest.p_ds.GetLayerByName( 'index_p' )
-                                  
+
     return 'success'
 
 ###############################################################################
@@ -539,4 +539,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-

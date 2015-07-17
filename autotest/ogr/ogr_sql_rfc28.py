@@ -1248,7 +1248,6 @@ def ogr_rfc28_45():
 ###############################################################################
 def ogr_rfc28_cleanup():
     gdaltest.lyr = None
-    gdaltest.ds.Destroy()
     gdaltest.ds = None
 
     return 'success'
@@ -1313,4 +1312,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-

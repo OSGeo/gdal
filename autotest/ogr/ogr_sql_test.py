@@ -1492,7 +1492,6 @@ def ogr_sql_46():
 
 def ogr_sql_cleanup():
     gdaltest.lyr = None
-    gdaltest.ds.Destroy()
     gdaltest.ds = None
 
     return 'success'
@@ -1555,4 +1554,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-

@@ -112,13 +112,11 @@ def ogr_vfk_2():
     envelope = geom.GetEnvelope()
     area = (envelope[1] - envelope[0]) * (envelope[3] - envelope[2])
     exp_area = 2010.5
-    
+
     if area < exp_area - 0.5 or area > exp_area + 0.5:
         gdaltest.post_reason('envelope area not as expected, got %g.' % area)
         return 'fail'
-        
-    feat.Destroy()
-    
+
     return 'success'
 
 ###############################################################################

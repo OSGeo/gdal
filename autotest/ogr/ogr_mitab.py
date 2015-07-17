@@ -100,12 +100,9 @@ def ogr_mitab_2():
 
         feat = shp_lyr.GetNextFeature()
 
-    dst_feat.Destroy()
-
     #######################################################
     # Close file.
 
-    gdaltest.mapinfo_ds.Destroy()
     gdaltest.mapinfo_ds = None
 
     return 'success'
@@ -143,11 +140,8 @@ def ogr_mitab_3():
                 gdaltest.post_reason( 'Attribute %d does not match' % fld )
                 return 'fail'
 
-        read_feat.Destroy()
-        orig_feat.Destroy()
-
     gdaltest.poly_feat = None
-    gdaltest.shp_ds.Destroy()
+    gdaltest.shp_ds = None
 
     if tr:
         return 'success'
@@ -171,7 +165,6 @@ def ogr_mitab_4():
         feat_read = sql_lyr.GetNextFeature()
         if ogrtest.check_feature_geometry( feat_read, 'POLYGON ((479750.688 4764702.000,479658.594 4764670.000,479640.094 4764721.000,479735.906 4764752.000,479750.688 4764702.000))', max_error = 0.02 ) != 0:
             tr = 0
-        feat_read.Destroy()
 
     gdaltest.mapinfo_ds.ReleaseResultSet( sql_lyr )
 
@@ -225,7 +218,6 @@ def ogr_mitab_6():
 
 def ogr_mitab_7():
 
-    gdaltest.mapinfo_ds.Destroy()
     gdaltest.mapinfo_ds = None
     gdaltest.mapinfo_drv.DeleteDataSource( 'tmp' )
 
@@ -276,12 +268,9 @@ def ogr_mitab_8():
 
         feat = shp_lyr.GetNextFeature()
 
-    dst_feat.Destroy()
-
     #######################################################
     # Close file.
 
-    gdaltest.mapinfo_ds.Destroy()
     gdaltest.mapinfo_ds = None
 
     return 'success'
@@ -316,11 +305,8 @@ def ogr_mitab_9():
                 gdaltest.post_reason( 'Attribute %d does not match' % fld )
                 return 'fail'
 
-        read_feat.Destroy()
-        orig_feat.Destroy()
-
     gdaltest.poly_feat = None
-    gdaltest.shp_ds.Destroy()
+    gdaltest.shp_ds = None
 
     if tr:
         return 'success'
@@ -359,7 +345,7 @@ def ogr_mitab_10():
         return 'fail'
 
     lyr = None
-    ds.Destroy()
+    ds = None
 
     return 'success'
 
@@ -403,7 +389,7 @@ def ogr_mitab_12():
 
     ogrtest.quick_create_layer_def( lyr, [ ('AREA', ogr.OFTReal) ] )
 
-    ds.Destroy()
+    ds = None
     return 'success'
 
 ###############################################################################
@@ -450,7 +436,7 @@ def ogr_mitab_13():
             gdaltest.post_reason( field[0] + ' field definition wrong.' )
             return 'fail'
 
-    ds.Destroy()
+    ds = None
 
     ogr.GetDriverByName('MapInfo File').DeleteDataSource('tmp/testlyrdef.tab')
 
@@ -503,7 +489,7 @@ def ogr_mitab_14():
             gdaltest.post_reason( field[0] + ' field definition wrong.' )
             return 'fail'
 
-    ds.Destroy()
+    ds = None
 
     ogr.GetDriverByName('MapInfo File').DeleteDataSource('tmp/testlyrdef.mif')
 
@@ -2085,7 +2071,6 @@ def ogr_mitab_cleanup():
     if gdaltest.mapinfo_ds is None:
         return 'skip'
 
-    gdaltest.mapinfo_ds.Destroy()
     gdaltest.mapinfo_ds = None
     gdaltest.mapinfo_drv.DeleteDataSource( 'tmp' )
 
@@ -2139,4 +2124,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-
