@@ -137,7 +137,7 @@ def ogr_sqlite_2():
     # Reopen database to be sure that the data types are properly read
     # even if no record are written
     
-    gdaltest.sl_ds.Destroy()
+    gdaltest.sl_ds = None
     gdaltest.sl_ds = ogr.Open( 'tmp/sqlite_test.db', update = 1  )
     gdaltest.sl_lyr = gdaltest.sl_ds.GetLayerByName( 'tpoly')
     if gdaltest.sl_lyr.GetGeometryColumn() != 'GEOMETRY':
@@ -191,10 +191,8 @@ def ogr_sqlite_2():
 
         feat = shp_lyr.GetNextFeature()
 
-    dst_feat.Destroy()
-    
     gdaltest.sl_lyr.CommitTransaction()
-        
+
     return 'success'
 
 ###############################################################################
@@ -240,9 +238,6 @@ def ogr_sqlite_3():
             gdaltest.post_reason('failure')
             read_feat.DumpReadable()
             return 'fail'
-
-        read_feat.Destroy()
-        orig_feat.Destroy()
 
     gdaltest.poly_feat = None
     gdaltest.shp_ds = None
@@ -290,10 +285,6 @@ def ogr_sqlite_4():
         if ogrtest.check_feature_geometry( feat_read, geom ) != 0:
             return 'fail'
 
-        feat_read.Destroy()
-
-    dst_feat.Destroy()
-    
     return 'success'
     
 ###############################################################################
@@ -337,8 +328,7 @@ def ogr_sqlite_6():
         feat_read = sql_lyr.GetNextFeature()
         if ogrtest.check_feature_geometry( feat_read, 'MULTILINESTRING ((5.00121349 2.99853132,5.00121349 1.99853133),(5.00121349 1.99853133,5.00121349 0.99853133),(3.00121351 1.99853127,5.00121349 1.99853133),(5.00121349 1.99853133,6.00121348 1.99853135))' ) != 0:
             tr = 0
-        feat_read.Destroy()
-        
+
     gdaltest.sl_ds.ReleaseResultSet( sql_lyr )
 
     if tr:
@@ -534,11 +524,8 @@ def ogr_sqlite_10():
         gdaltest.post_reason( 'GetFeature() result seems to not match expected.' )
         return 'fail'
 
-    feat_read.Destroy()
-    feat_read_2.Destroy()
-
     return 'success'
-    
+
 ###############################################################################
 # Test FORMAT=WKB creation option
 
@@ -555,21 +542,20 @@ def ogr_sqlite_11():
     dst_feat = ogr.Feature( feature_def = gdaltest.sl_lyr.GetLayerDefn() )
     dst_feat.SetGeometry( geom )
     gdaltest.sl_lyr.CreateFeature( dst_feat )
-    dst_feat.Destroy()
+    dst_feat = None
 
     # Test adding a column to see if geometry is preserved (#3471)
     gdaltest.sl_lyr.CreateField( ogr.FieldDefn("foo", ogr.OFTString) )
 
     ######################################################
     # Reopen DB
-    gdaltest.sl_ds.Destroy()
+    gdaltest.sl_ds = None
     gdaltest.sl_ds = ogr.Open( 'tmp/sqlite_test.db', update = 1  )
     gdaltest.sl_lyr = gdaltest.sl_ds.GetLayerByName('geomwkb')
 
     feat_read = gdaltest.sl_lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(feat_read,geom,max_error = 0.001 ) != 0:
         return 'fail'
-    feat_read.Destroy()
 
     gdaltest.sl_lyr.ResetReading()
 
@@ -591,21 +577,21 @@ def ogr_sqlite_12():
     dst_feat = ogr.Feature( feature_def = gdaltest.sl_lyr.GetLayerDefn() )
     dst_feat.SetGeometry( geom )
     gdaltest.sl_lyr.CreateFeature( dst_feat )
-    dst_feat.Destroy()
+    dst_feat = None
 
     # Test adding a column to see if geometry is preserved (#3471)
     gdaltest.sl_lyr.CreateField( ogr.FieldDefn("foo", ogr.OFTString) )
 
     ######################################################
     # Reopen DB
-    gdaltest.sl_ds.Destroy()
+    gdaltest.sl_ds = None
     gdaltest.sl_ds = ogr.Open( 'tmp/sqlite_test.db', update = 1  )
     gdaltest.sl_lyr = gdaltest.sl_ds.GetLayerByName('geomwkt')
 
     feat_read = gdaltest.sl_lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(feat_read,geom,max_error = 0.001 ) != 0:
         return 'fail'
-    feat_read.Destroy()
+    feat_read = None
 
     gdaltest.sl_lyr.ResetReading()
 
@@ -614,12 +600,12 @@ def ogr_sqlite_12():
     feat_read = sql_lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(feat_read,geom,max_error = 0.001 ) != 0:
         return 'fail'
-    feat_read.Destroy()
+    feat_read = None
 
     feat_read = sql_lyr.GetFeature(0)
     if ogrtest.check_feature_geometry(feat_read,geom,max_error = 0.001 ) != 0:
         return 'fail'
-    feat_read.Destroy()
+    feat_read = None
 
     gdaltest.sl_ds.ReleaseResultSet( sql_lyr )
 
@@ -641,7 +627,7 @@ def ogr_sqlite_13():
 
     ######################################################
     # Reopen DB
-    gdaltest.sl_ds.Destroy()
+    gdaltest.sl_ds = None
     gdaltest.sl_ds = ogr.Open( 'tmp/sqlite_test.db', update = 1  )
     gdaltest.sl_lyr = gdaltest.sl_ds.GetLayerByName('wgs84layer')
 
@@ -690,11 +676,9 @@ def ogr_sqlite_14():
 
     gdaltest.sl_lyr.CreateFeature( dst_feat )
 
-    dst_feat.Destroy()
-
     ######################################################
     # Reopen DB
-    gdaltest.sl_ds.Destroy()
+    gdaltest.sl_ds = None
     gdaltest.sl_ds = ogr.Open( 'tmp/sqlite_test.db', update = 1  )
     gdaltest.sl_lyr = gdaltest.sl_ds.GetLayerByName('testtypes')
 
@@ -703,7 +687,6 @@ def ogr_sqlite_14():
     feat_read = gdaltest.sl_lyr.GetNextFeature()
     dst_feat.SetFrom(feat_read)
     gdaltest.sl_lyr.CreateFeature( dst_feat )
-    dst_feat.Destroy()
 
     # Check the 2 records
     gdaltest.sl_lyr.ResetReading()
@@ -754,13 +737,12 @@ def ogr_sqlite_15():
         #print(geom)
         dst_feat.SetGeometry( geom )
         gdaltest.sl_lyr.CreateFeature( dst_feat )
-        dst_feat.Destroy()
 
     gdaltest.sl_lyr.CommitTransaction()
-    
+
     ######################################################
     # Reopen DB
-    gdaltest.sl_ds.Destroy()
+    gdaltest.sl_ds = None
     gdaltest.sl_ds = ogr.Open( 'tmp/sqlite_test.db'  )
 
     # Test creating a layer on a read-only DB
@@ -777,7 +759,6 @@ def ogr_sqlite_15():
         feat_read = gdaltest.sl_lyr.GetNextFeature()
         if ogrtest.check_feature_geometry(feat_read,geom,max_error = 0.001 ) != 0:
             return 'fail'
-        feat_read.Destroy()
 
     gdaltest.sl_lyr.ResetReading()
 
@@ -786,12 +767,10 @@ def ogr_sqlite_15():
     feat_read = sql_lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(feat_read,geoms[0],max_error = 0.001 ) != 0:
         return 'fail'
-    feat_read.Destroy()
 
     feat_read = sql_lyr.GetFeature(0)
     if ogrtest.check_feature_geometry(feat_read,geoms[0],max_error = 0.001 ) != 0:
         return 'fail'
-    feat_read.Destroy()
 
     gdaltest.sl_ds.ReleaseResultSet( sql_lyr )
 
@@ -808,7 +787,7 @@ def ogr_sqlite_16():
 
     ######################################################
     # Reopen DB in update
-    gdaltest.sl_ds.Destroy()
+    gdaltest.sl_ds = None
     gdaltest.sl_ds = ogr.Open( 'tmp/sqlite_test.db', update = 1  )
 
     # Hand create a table with FGF geometry
@@ -830,7 +809,7 @@ def ogr_sqlite_16():
 
     ######################################################
     # Reopen DB
-    gdaltest.sl_ds.Destroy()
+    gdaltest.sl_ds = None
     gdaltest.sl_ds = ogr.Open( 'tmp/sqlite_test.db', update = 1 )
     gdaltest.sl_lyr = gdaltest.sl_ds.GetLayerByName('fgf_table')
 
@@ -838,57 +817,49 @@ def ogr_sqlite_16():
     geom = feat.GetGeometryRef()
     if geom.ExportToWkt() != 'POINT (1 2)':
         return 'fail'
-    feat.Destroy()
 
     feat = gdaltest.sl_lyr.GetNextFeature()
     geom = feat.GetGeometryRef()
     if geom.ExportToWkt() != 'LINESTRING EMPTY':
         return 'fail'
-    feat.Destroy()
 
     feat = gdaltest.sl_lyr.GetNextFeature()
     geom = feat.GetGeometryRef()
     if geom.ExportToWkt() != 'LINESTRING (1 2,3 4)':
         return 'fail'
-    feat.Destroy()
 
     feat = gdaltest.sl_lyr.GetNextFeature()
     geom = feat.GetGeometryRef()
     if geom.ExportToWkt() != 'POLYGON EMPTY':
         return 'fail'
-    feat.Destroy()
 
     feat = gdaltest.sl_lyr.GetNextFeature()
     geom = feat.GetGeometryRef()
     if geom.ExportToWkt() != 'POLYGON ((1 2,3 4))':
         return 'fail'
-    feat.Destroy()
 
     feat = gdaltest.sl_lyr.GetNextFeature()
     geom = feat.GetGeometryRef()
     if geom.ExportToWkt() != 'GEOMETRYCOLLECTION EMPTY':
         return 'fail'
-    feat.Destroy()
 
     feat = gdaltest.sl_lyr.GetNextFeature()
     geom = feat.GetGeometryRef()
     if geom.ExportToWkt() != 'GEOMETRYCOLLECTION (POLYGON ((1 2,3 4)),POLYGON ((1 2,3 4)))':
         return 'fail'
-    feat.Destroy()
 
     feat = gdaltest.sl_lyr.GetNextFeature()
     geom = feat.GetGeometryRef()
     if geom.ExportToWkt() != 'POINT (1 2 3)':
         return 'fail'
-    feat.Destroy()
-    
+
     # Test invalid geometries
     for i in range(3):
         feat = gdaltest.sl_lyr.GetNextFeature()
         geom = feat.GetGeometryRef()
         if geom is not None:
             return 'fail'
-        
+
     gdaltest.sl_lyr.ResetReading()
 
     return 'success'
@@ -927,18 +898,16 @@ def ogr_sqlite_17():
     dst_feat = ogr.Feature( feature_def = lyr.GetLayerDefn() )
     dst_feat.SetGeometry( geom )
     lyr.CreateFeature( dst_feat )
-    dst_feat.Destroy()
 
     ######################################################
     # Reopen DB
-    ds.Destroy()
+    ds = None
     ds = ogr.Open( 'tmp/spatialite_test.db'  )
     lyr =ds.GetLayerByName('geomspatialite')
 
     feat_read = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(feat_read,geom,max_error = 0.001 ) != 0:
         return 'fail'
-    feat_read.Destroy()
 
     srs = lyr.GetSpatialRef()
     wkt = srs.ExportToWkt()
@@ -946,8 +915,6 @@ def ogr_sqlite_17():
         gdaltest.post_reason('did not identify correctly SRS')
         print(wkt)
         return 'fail'
-
-    ds.Destroy()
 
     return 'success'
 
@@ -969,7 +936,7 @@ def ogr_sqlite_18():
 
     ######################################################
     # Reopen DB
-    ds.Destroy()
+    ds = None
     ds = ogr.Open( 'tmp/spatialite_test.db'  )
 
     lyr =ds.GetLayerByName('nonepsgsrs')
@@ -988,8 +955,6 @@ def ogr_sqlite_18():
         gdaltest.post_reason('fail')
         return 'fail'
     gdaltest.sl_ds.ReleaseResultSet(sql_lyr)
-
-    ds.Destroy()
 
     return 'success'
 
@@ -1017,15 +982,13 @@ def ogr_sqlite_19():
     srs.SetFromUserInput('EPSG:26632')
     ds.CreateLayer( 'test', srs = srs )
 
-    ds.Destroy()
+    ds = None
     ds = ogr.Open('tmp/spatialite_test_with_epsg.db')
 
     sql_lyr = ds.ExecuteSQL( "select count(*) from spatial_ref_sys" )
     feat = sql_lyr.GetNextFeature()
     nb_srs = feat.GetFieldAsInteger(0)
     ds.ReleaseResultSet( sql_lyr )
-
-    ds.Destroy()
 
     # Currently the injection of the EPSG DB as proj.4 strings adds 3915 entries
     if nb_srs < 3915:
@@ -1055,15 +1018,13 @@ def ogr_sqlite_20():
     srs.SetFromUserInput('EPSG:26632')
     ds.CreateLayer( 'test', srs = srs )
 
-    ds.Destroy()
+    ds = None
     ds = ogr.Open('tmp/non_spatialite_test_with_epsg.db')
 
     sql_lyr = ds.ExecuteSQL( "select count(*) from spatial_ref_sys" )
     feat = sql_lyr.GetNextFeature()
     nb_srs = feat.GetFieldAsInteger(0)
     ds.ReleaseResultSet( sql_lyr )
-
-    ds.Destroy()
 
     # Currently the injection of the EPSG DB as proj.4 strings adds 3945 entries
     if nb_srs < 3945:
@@ -3334,7 +3295,6 @@ def ogr_sqlite_cleanup():
     gdaltest.sl_ds.ExecuteSQL( 'DELLAYER:testtypes' )
     gdaltest.sl_ds.ExecuteSQL( 'DELLAYER:fgf_table' )
 
-    gdaltest.sl_ds.Destroy()
     gdaltest.sl_ds = None
 
     gdaltest.shp_ds = None
@@ -3519,4 +3479,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-

@@ -58,14 +58,12 @@ def ogr_bna_1():
     if ogrtest.check_feature_geometry( feat, 'POINT (573.736 476.563)',
                                        max_error = 0.0001 ) != 0:
         return 'fail'
-    feat.Destroy()
-    
+
     feat = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry( feat, 'POINT (532.991 429.121)',
                                        max_error = 0.0001 ) != 0:
         return 'fail'
-    feat.Destroy()
-    
+
     return 'success'
 
 ###############################################################################
@@ -87,8 +85,7 @@ def ogr_bna_2():
     feat = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry( feat, 'LINESTRING (224.598 307.425,333.043 341.461,396.629 304.952)', max_error = 0.0001 ) != 0:
         return 'fail'
-    feat.Destroy()
-    
+
     return 'success'
 
 ###############################################################################
@@ -107,21 +104,16 @@ def ogr_bna_3():
         return 'fail'
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    feat.Destroy()
     feat = lyr.GetNextFeature()
-    feat.Destroy()
     feat = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry( feat, 'MULTIPOLYGON (((0 0,1 0,1 1,0 1,0 0)))', max_error = 0.0001 ) != 0:
         return 'fail'
-    feat.Destroy()
     feat = lyr.GetFeature(2)
     if ogrtest.check_feature_geometry( feat, 'MULTIPOLYGON (((0 0,1 0,1 1,0 1,0 0)))', max_error = 0.0001 ) != 0:
         return 'fail'
-    feat.Destroy()
     feat = lyr.GetFeature(3)
     if ogrtest.check_feature_geometry( feat, 'POLYGON ((0 0,0 10,10 10,10 0,0 0),(2 2,2 8,8 8,8 2,2 2))', max_error = 0.0001 ) != 0:
         return 'fail'
-    feat.Destroy()
 
     return 'success'
 
@@ -142,7 +134,6 @@ def ogr_bna_4():
 
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    feat.Destroy()
 
     return 'success'
 
@@ -197,9 +188,7 @@ def ogr_bna_write(creation_options):
 
             feat = src_lyr.GetNextFeature()
 
-    dst_feat.Destroy()
-
-    output_ds.Destroy()
+    output_ds = None
 
     # Check features
     output_ds = ogr.Open( 'tmp/out.bna' )
@@ -208,8 +197,6 @@ def ogr_bna_write(creation_options):
         dst_lyr = output_ds.GetLayerByName('out_' + layer_name)
         if ogr_bna_check_content(src_lyr, dst_lyr) != 'success':
             return 'fail'
-
-    output_ds.Destroy()
 
     return 'success'
 
@@ -247,11 +234,10 @@ def ogr_bna_6():
     return 'success'
 
 ###############################################################################
-# 
+#
 
 def ogr_bna_cleanup():
 
-    gdaltest.bna_ds.Destroy()
     gdaltest.bna_ds = None
 
     try:
@@ -277,4 +263,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-

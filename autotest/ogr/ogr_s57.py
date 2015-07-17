@@ -131,8 +131,6 @@ def ogr_s57_3():
     if ogrtest.check_feature_geometry( feat, wkt ):
         return 'fail'
 
-    feat.Destroy()
-
     return 'success'
 
 ###############################################################################
@@ -158,8 +156,6 @@ def ogr_s57_4():
 
     if ogrtest.check_feature_geometry( feat, wkt ):
         return 'fail'
-
-    feat.Destroy()
 
     return 'success'
 
@@ -187,8 +183,6 @@ def ogr_s57_5():
     if ogrtest.check_feature_geometry( feat, wkt ):
         return 'fail'
 
-    feat.Destroy()
-
     return 'success'
 
 ###############################################################################
@@ -211,9 +205,6 @@ def ogr_s57_6():
         gdaltest.post_reason( 'FOGSIG: did not get expected attributes' )
         return 'fail'
 
-    feat.Destroy()
-    ds = None
-
     return 'success'
 
 ###############################################################################
@@ -235,9 +226,6 @@ def ogr_s57_7():
 
     if ogrtest.check_feature_geometry( feat, exp_wkt ):
         return 'fail'
-    
-    feat.Destroy()
-    ds = None
 
     return 'success'
 
@@ -284,7 +272,6 @@ def ogr_s57_9():
             feat = ogr.Feature(lyr.GetLayerDefn())
             feat.SetFrom(src_feat)
             lyr.CreateFeature(feat)
-            feat = None
     src_ds = None
     ds = None
 
@@ -485,4 +472,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-

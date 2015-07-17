@@ -101,8 +101,6 @@ def ogr_ingres_2():
 
         feat = shp_lyr.GetNextFeature()
 
-    dst_feat.Destroy()
-        
     return 'success'
 
 ###############################################################################
@@ -131,9 +129,6 @@ def ogr_ingres_3():
             if orig_feat.GetField(fld) != read_feat.GetField(fld):
                 gdaltest.post_reason( 'Attribute %d does not match' % fld )
                 return 'fail'
-
-        read_feat.Destroy()
-        orig_feat.Destroy()
 
     gdaltest.poly_feat = None
     gdaltest.shp_ds.Destroy()
@@ -342,4 +337,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-

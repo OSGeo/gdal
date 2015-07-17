@@ -144,8 +144,6 @@ def ogr_gxt_2():
 
 def ogr_gxt_3():
 
-    if gdaltest.gxt_ds is not None:
-        gdaltest.gxt_ds.Destroy()
     gdaltest.gxt_ds = None
 
     src_ds = ogr.Open( 'data/points.gxt' )
@@ -182,10 +180,6 @@ def ogr_gxt_3():
 
         feat = src_lyr.GetNextFeature()
 
-    dst_feat.Destroy()
-
-    src_ds.Destroy()
-    gdaltest.gxt_ds.Destroy()
     gdaltest.gxt_ds = None
 
 
@@ -237,12 +231,10 @@ def ogr_gxt_3():
 
 
 ###############################################################################
-# 
+#
 
 def ogr_gxt_cleanup():
 
-    if gdaltest.gxt_ds is not None:
-        gdaltest.gxt_ds.Destroy()
     gdaltest.gxt_ds = None
     try:
         os.remove ('tmp/tmp.gxt')
@@ -251,7 +243,7 @@ def ogr_gxt_cleanup():
     return 'success'
 
 
-gdaltest_list = [ 
+gdaltest_list = [
     ogr_gxt_1,
     ogr_gxt_2,
     ogr_gxt_3,
@@ -265,4 +257,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-
