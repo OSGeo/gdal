@@ -698,6 +698,8 @@ def ogr_vrt_15():
     if vrt_lyr.GetFeatureCount() != 1:
         return 'fail'
 
+    vrt_ds = None
+
     os.remove('tmp/test.csv')
 
     return 'success'
@@ -751,6 +753,7 @@ def ogr_vrt_16():
     vrt_lyr.SetSpatialFilterRect(1, 41, 3, 49.5)
     if vrt_lyr.GetFeatureCount() != 1:
         if gdal.GetLastErrorMsg().find('GEOS support not enabled') != -1:
+            vrt_ds = None
             os.remove('tmp/test.csv')
             os.remove('tmp/test.csvt')
             return 'skip'
@@ -763,6 +766,8 @@ def ogr_vrt_16():
     vrt_lyr.SetSpatialFilter(None)
     if vrt_lyr.GetFeatureCount() != 1:
         return 'fail'
+
+    vrt_ds = None
 
     os.remove('tmp/test.csv')
     os.remove('tmp/test.csvt')
