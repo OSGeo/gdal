@@ -133,7 +133,7 @@ def ogr_bna_4():
         return 'fail'
 
     lyr.ResetReading()
-    feat = lyr.GetNextFeature()
+    lyr.GetNextFeature()
 
     return 'success'
 
