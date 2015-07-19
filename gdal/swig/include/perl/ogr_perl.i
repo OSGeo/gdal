@@ -109,11 +109,11 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 
 }
 
-# wrapped data source methods:
+/* wrapped data source methods: */
 %rename (_GetDriver) GetDriver;
 %rename (_TestCapability) TestCapability;
 
-# wrapped layer methods:
+/* wrapped layer methods: */
 %rename (_ReleaseResultSet) ReleaseResultSet;
 %rename (_CreateLayer) CreateLayer;
 %rename (_DeleteLayer) DeleteLayer;
@@ -121,11 +121,11 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 %rename (_DeleteField) DeleteField;
 %rename (_Validate) Validate;
 
-# wrapped feature methods:
+/* wrapped feature methods: */
 %rename (_AlterFieldDefn) AlterFieldDefn;
 %rename (_SetGeometry) SetGeometry;
 
-# wrapped geometry methods:
+/* wrapped geometry methods: */
 %rename (_ExportToWkb) ExportToWkb;
 
 %perlcode %{
