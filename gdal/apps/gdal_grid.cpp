@@ -68,6 +68,8 @@ static void Usage(const char* pszErrorMsg = NULL)
         "Available algorithms and parameters with their's defaults:\n"
         "    Inverse distance to a power (default)\n"
         "        invdist:power=2.0:smoothing=0.0:radius1=0.0:radius2=0.0:angle=0.0:max_points=0:min_points=0:nodata=0.0\n"
+        "    Inverse distance to a power with nearest neighbor search\n"
+        "        invdistnn:power=2.0:radius=1.0:max_points=12:min_points=0:nodata=0\n"
         "    Moving average\n"
         "        average:radius1=0.0:radius2=0.0:angle=0.0:min_points=0:nodata=0.0\n"
         "    Nearest neighbor\n"
@@ -116,6 +118,17 @@ static void PrintAlgorithmAndOptions( GDALGridAlgorithm eAlgorithm,
                 (unsigned long)((GDALGridInverseDistanceToAPowerOptions *)pOptions)->nMaxPoints,
                 (unsigned long)((GDALGridInverseDistanceToAPowerOptions *)pOptions)->nMinPoints,
                 ((GDALGridInverseDistanceToAPowerOptions *)pOptions)->dfNoDataValue);
+            break;
+        case GGA_InverseDistanceToAPowerNearestNeighbor:
+            printf( "Algorithm name: \"%s\".\n", szAlgNameInvDistNearestNeighbor );
+            CPLprintf( "Options are "
+                        "\"power=%f:radius=%f"
+                    ":max_points=%lu:min_points=%lu:nodata=%f\"\n",
+                ((GDALGridInverseDistanceToAPowerNearestNeighborOptions *)pOptions)->dfPower,
+                ((GDALGridInverseDistanceToAPowerNearestNeighborOptions *)pOptions)->dfRadius,
+                (unsigned long)((GDALGridInverseDistanceToAPowerNearestNeighborOptions *)pOptions)->nMaxPoints,
+                (unsigned long)((GDALGridInverseDistanceToAPowerNearestNeighborOptions *)pOptions)->nMinPoints,
+                ((GDALGridInverseDistanceToAPowerNearestNeighborOptions *)pOptions)->dfNoDataValue);
             break;
         case GGA_MovingAverage:
             printf( "Algorithm name: \"%s\".\n", szAlgNameAverage );

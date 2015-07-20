@@ -33,8 +33,10 @@
 #include "gdalgrid.h"
 #include <float.h>
 #include <limits.h>
+#include <map>
 #include "cpl_worker_thread_pool.h"
 #include "gdalgrid_priv.h"
+#include <cstdlib>
 
 CPL_CVSID("$Id$");
 
@@ -204,6 +206,177 @@ GDALGridInverseDistanceToAPower( const void *poOptions, GUInt32 nPoints,
     }
     else
         (*pdfValue) = dfNominator / dfDenominator;
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                   GDALGridInverseDistanceToAPowerNearestNeighbor()   */
+/************************************************************************/
+
+/**
+ * Inverse distance to a power with nearest neighbor search, ideal when max_points used.
+ *
+ * The Inverse Distance to a Power gridding method is a weighted average
+ * interpolator. You should supply the input arrays with the scattered data
+ * values including coordinates of every data point and output grid geometry.
+ * The function will compute interpolated value for the given position in
+ * output grid.
+ *
+ * For every grid node the resulting value \f$Z\f$ will be calculated using
+ * formula for nearest matches:
+ *
+ * \f[
+ *      Z=\frac{\sum_{i=1}^n{\frac{Z_i}{r_i^p}}}{\sum_{i=1}^n{\frac{1}{r_i^p}}}
+ * \f]
+ *
+ *  where
+ *  <ul>
+ *      <li> \f$Z_i\f$ is a known value at point \f$i\f$,
+ *      <li> \f$r_i\f$ is an Euclidean distance from the grid node
+ *           to point \f$i\f$,
+ *      <li> \f$p\f$ is a weighting power,
+ *      <li> \f$n\f$ is a total number of points in search ellipse.
+ *  </ul>
+ *
+ *  In this method the weighting factor \f$w\f$ is
+ *
+ *  \f[
+ *      w=\frac{1}{r^p}
+ *  \f]
+ *
+ * @param poOptions Algorithm parameters. This should point to
+ * GDALGridInverseDistanceToAPowerNearestNeighborOptions object.
+ * @param nPoints Number of elements in input arrays.
+ * @param padfX Input array of X coordinates.
+ * @param padfY Input array of Y coordinates.
+ * @param padfZ Input array of Z values.
+ * @param dfXPoint X coordinate of the point to compute.
+ * @param dfYPoint Y coordinate of the point to compute.
+ * @param pdfValue Pointer to variable where the computed grid node value
+ * will be returned.
+ * @param hExtraParamsIn extra parameters.
+ *
+ * @return CE_None on success or CE_Failure if something goes wrong.
+ */
+
+CPLErr
+GDALGridInverseDistanceToAPowerNearestNeighbor( const void *poOptions, GUInt32 nPoints,
+                                 const double *padfX, const double *padfY,
+                                 const double *padfZ,
+                                 double dfXPoint, double dfYPoint,
+                                 double *pdfValue,
+                                 void* hExtraParamsIn )
+{
+    double dfRadius =
+        ((GDALGridInverseDistanceToAPowerNearestNeighborOptions *)poOptions)->dfRadius;
+
+    const GUInt32 nMaxPoints =
+        ((GDALGridInverseDistanceToAPowerNearestNeighborOptions *)poOptions)->nMaxPoints;
+    double dfNominator = 0.0, dfDenominator = 0.0;
+    GUInt32 n = 0;
+
+    GDALGridExtraParameters* psExtraParams = (GDALGridExtraParameters*) hExtraParamsIn;
+    CPLQuadTree* phQuadTree = psExtraParams->hQuadTree;
+
+    const double dfRPower2 = psExtraParams->dfRadiusPower2PreComp;
+    const double dfRPower4 = psExtraParams->dfRadiusPower4PreComp;
+
+    const double dfPowerDiv2 = psExtraParams->dfPowerDiv2PreComp;
+
+    std::multimap<double, double> oMapDistanceToZValues;
+    if (phQuadTree != NULL)
+    {
+        CPLRectObj sAoi;
+        double dfSearchRadius = dfRadius;
+        sAoi.minx = dfXPoint - dfSearchRadius;
+        sAoi.miny = dfYPoint - dfSearchRadius;
+        sAoi.maxx = dfXPoint + dfSearchRadius;
+        sAoi.maxy = dfYPoint + dfSearchRadius;
+        int nFeatureCount = 0;
+        GDALGridPoint** papsPoints = (GDALGridPoint**)
+                CPLQuadTreeSearch(phQuadTree, &sAoi, &nFeatureCount);
+        if (nFeatureCount != 0)
+        {
+            for(int k = 0; k < nFeatureCount; k++)
+            {
+                int i = papsPoints[k]->i;
+                double  dfRX = padfX[i] - dfXPoint;
+                double  dfRY = padfY[i] - dfYPoint;
+
+                const double dfR2 = dfRX * dfRX + dfRY * dfRY;
+                if (dfR2 < 0.0000000000001)
+                {
+                    (*pdfValue) = padfZ[i];
+                    CPLFree(papsPoints);
+                    return CE_None;
+                }
+                if(dfR2 <= dfRPower2)
+                {
+                    oMapDistanceToZValues.insert(std::make_pair(dfR2, padfZ[i]));
+                }
+            }
+        }
+        CPLFree(papsPoints);
+    }
+    else
+    {
+        for (GUInt32 i = 0; i < nPoints; i++)
+        {
+            double dfRX = padfX[i] - dfXPoint;
+            double dfRY = padfY[i] - dfYPoint;
+            const double dfR2 =    dfRX * dfRX + dfRY * dfRY;
+
+            // Is this point located inside the search circle?
+            if (dfRPower2 * dfRX * dfRX + dfRPower2 * dfRY * dfRY <= dfRPower4)
+            {
+                // If the test point is close to the grid node, use the point
+                // value directly as a node value to avoid singularity.
+                if (dfR2 < 0.0000000000001)
+                {
+                    (*pdfValue) = padfZ[i];
+                    return CE_None;
+                }
+                else
+                {
+                    oMapDistanceToZValues.insert(std::make_pair(dfR2, padfZ[i]));
+                }
+            }
+        }
+    }
+
+    /**
+     * Examine all "neighbors" within the radius (sorted by distance via the multimap), and use the
+     * closest n points based on distance until the max is reached.
+     */
+    for(std::multimap<double, double>::iterator oMapDistanceToZValuesIter = oMapDistanceToZValues.begin();
+        oMapDistanceToZValuesIter != oMapDistanceToZValues.end();
+        ++oMapDistanceToZValuesIter)
+    {
+        double dfR2 = (*oMapDistanceToZValuesIter).first;
+        double dfZ = (*oMapDistanceToZValuesIter).second;
+
+        const double dfW = pow(dfR2, dfPowerDiv2);
+        double dfInvW = 1.0 / dfW;
+        dfNominator += dfInvW * dfZ;
+        dfDenominator += dfInvW;
+        n++;
+        if (nMaxPoints > 0 && n >= nMaxPoints)
+        {
+            break;
+        }
+    }
+
+    if (n < ((GDALGridInverseDistanceToAPowerNearestNeighborOptions *)poOptions)->nMinPoints
+         || dfDenominator == 0.0 )
+    {
+        (*pdfValue) =
+            ((GDALGridInverseDistanceToAPowerNearestNeighborOptions*)poOptions)->dfNoDataValue;
+    }
+    else
+    {
+        (*pdfValue) = dfNominator / dfDenominator;
+    }
 
     return CE_None;
 }
@@ -1711,6 +1884,14 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
                 pfnGDALGridMethod = GDALGridInverseDistanceToAPower;
             break;
 
+        case GGA_InverseDistanceToAPowerNearestNeighbor:
+            poOptionsNew = CPLMalloc(sizeof(GDALGridInverseDistanceToAPowerNearestNeighborOptions));
+            memcpy(poOptionsNew, poOptions, sizeof(GDALGridInverseDistanceToAPowerNearestNeighborOptions));
+
+            pfnGDALGridMethod = GDALGridInverseDistanceToAPowerNearestNeighbor;
+            bCreateQuadTree = TRUE;
+            break;
+
         case GGA_MovingAverage:
             poOptionsNew = CPLMalloc(sizeof(GDALGridMovingAverageOptions));
             memcpy(poOptionsNew, poOptions, sizeof(GDALGridMovingAverageOptions));
@@ -1807,7 +1988,6 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
         padfY = padfYNew;
         padfZ = padfZNew;
     }
-
     GDALGridContext* psContext = (GDALGridContext*)CPLCalloc(1, sizeof(GDALGridContext));
     psContext->eAlgorithm = eAlgorithm;
     psContext->poOptions = poOptionsNew;
@@ -1838,7 +2018,22 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
     {
         GDALGridContextCreateQuadTree(psContext);
     }
-    
+
+    /* -------------------------------------------------------------------- */
+    /*  Pre-compute extra parameters in GDALGridExtraParameters              */
+    /* -------------------------------------------------------------------- */
+    if( eAlgorithm == GGA_InverseDistanceToAPowerNearestNeighbor )
+    {
+        const double dfPower =
+            ((GDALGridInverseDistanceToAPowerNearestNeighborOptions *)poOptions)->dfPower;
+        psContext->sExtraParameters.dfPowerDiv2PreComp = dfPower / 2;
+
+        const double dfRadius =
+            ((GDALGridInverseDistanceToAPowerNearestNeighborOptions *)poOptions)->dfRadius;
+        psContext->sExtraParameters.dfRadiusPower2PreComp = pow ( dfRadius, 2 );
+        psContext->sExtraParameters.dfRadiusPower4PreComp = pow ( dfRadius, 4 );
+    }
+
     if( eAlgorithm == GGA_Linear )
     {
         psContext->sExtraParameters.psTriangulation =
@@ -2074,7 +2269,6 @@ CPLErr GDALGridContextProcess(GDALGridContext* psContext,
 
     volatile int nCounter = 0;
     volatile int bStop = FALSE;
-
     GDALGridJob sJob;
     sJob.nYStart = 0;
     sJob.pabyData = (GByte*) pData;
@@ -2272,6 +2466,8 @@ CPLErr ParseAlgorithmAndOptions( const char *pszAlgorithm,
 
     if ( EQUAL(papszParms[0], szAlgNameInvDist) )
         *peAlgorithm = GGA_InverseDistanceToAPower;
+    else if ( EQUAL(papszParms[0], szAlgNameInvDistNearestNeighbor) )
+        *peAlgorithm = GGA_InverseDistanceToAPowerNearestNeighbor;
     else if ( EQUAL(papszParms[0], szAlgNameAverage) )
         *peAlgorithm = GGA_MovingAverage;
     else if ( EQUAL(papszParms[0], szAlgNameNearest) )
@@ -2340,6 +2536,31 @@ CPLErr ParseAlgorithmAndOptions( const char *pszAlgorithm,
 
             pszValue = CSLFetchNameValue( papszParms, "nodata" );
             ((GDALGridInverseDistanceToAPowerOptions *)*ppOptions)->
+                dfNoDataValue = (pszValue) ? CPLAtofM(pszValue) : 0.0;
+            break;
+
+        case GGA_InverseDistanceToAPowerNearestNeighbor:
+            *ppOptions =
+                CPLMalloc( sizeof(GDALGridInverseDistanceToAPowerNearestNeighborOptions) );
+
+            pszValue = CSLFetchNameValue( papszParms, "power" );
+            ((GDALGridInverseDistanceToAPowerNearestNeighborOptions *)*ppOptions)->
+                dfPower = (pszValue) ? CPLAtofM(pszValue) : 2.0;
+
+            pszValue = CSLFetchNameValue( papszParms, "radius" );
+            ((GDALGridInverseDistanceToAPowerNearestNeighborOptions *)*ppOptions)->
+                dfRadius = (pszValue) ? CPLAtofM(pszValue) : 1.0;
+
+            pszValue = CSLFetchNameValue( papszParms, "max_points" );
+            ((GDALGridInverseDistanceToAPowerNearestNeighborOptions *)*ppOptions)->
+                nMaxPoints = (GUInt32) ((pszValue) ? CPLAtofM(pszValue) : 12);
+
+            pszValue = CSLFetchNameValue( papszParms, "min_points" );
+            ((GDALGridInverseDistanceToAPowerNearestNeighborOptions *)*ppOptions)->
+                nMinPoints = (GUInt32) ((pszValue) ? CPLAtofM(pszValue) : 0);
+
+            pszValue = CSLFetchNameValue( papszParms, "nodata" );
+            ((GDALGridInverseDistanceToAPowerNearestNeighborOptions *)*ppOptions)->
                 dfNoDataValue = (pszValue) ? CPLAtofM(pszValue) : 0.0;
             break;
 
