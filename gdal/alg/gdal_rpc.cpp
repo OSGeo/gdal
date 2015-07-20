@@ -1125,6 +1125,27 @@ int GDALRPCTransform( void *pTransformArg, int bDstToSrc,
                 if(!poWGSSpaRef->IsSame(poDSSpaRef))
                     psTransform->poCT =OGRCreateCoordinateTransformation(
                                                     poWGSSpaRef, poDSSpaRef );
+                    
+                if( psTransform->poCT != NULL )
+                {
+                    // Empiric attempt to guess if the coordinate transformation
+                    // to WGS84 is a no-op. For example for NED13 datasets in NAD83
+                    double adfX[] = { -179, 179, 179, -179, 0 };
+                    double adfY[] = { 89, 89, -89, -89, 0 };
+                    double adfZ[] = { 0, 0, 0, 0, 0 };
+                    if( psTransform->poCT->Transform(
+                                                5, adfX, adfY, adfZ) &&
+                        fabs(adfX[0] - -179) < 1e-12 && fabs(adfY[0] -  89) < 1e-12 &&
+                        fabs(adfX[1] -  179) < 1e-12 && fabs(adfY[1] -  89) < 1e-12 &&
+                        fabs(adfX[2] -  179) < 1e-12 && fabs(adfY[2] - -89) < 1e-12 &&
+                        fabs(adfX[3] - -179) < 1e-12 && fabs(adfY[3] - -89) < 1e-12 &&
+                        fabs(adfX[4] -    0) < 1e-12 && fabs(adfY[4] -   0) < 1e-12 )
+                    {
+                        delete psTransform->poCT;
+                        psTransform->poCT = NULL;
+                    }
+                }
+
                 delete poWGSSpaRef;
                 delete poDSSpaRef;
             }
