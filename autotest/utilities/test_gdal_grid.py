@@ -833,6 +833,81 @@ def test_gdal_grid_11():
     return 'success'
 
 ###############################################################################
+# Test Inverse Distance to a Power with Nearest Neighbor gridding algorithm
+
+def test_gdal_grid_12():
+    if gdal_grid is None:
+        return 'skip'
+
+    #################
+    # Test generic implementation (no AVX, no SSE)
+    outfiles.append('tmp/grid_invdistnn_generic.tif')
+    try:
+        os.remove(outfiles[-1])
+    except:
+        pass
+
+    # Create a GDAL dataset from the values of "grid.csv".
+    (out, err) = gdaltest.runexternal_out_and_err(gdal_grid + ' -txe 440721.0 441920.0 -tye 3751321.0 3750120.0 -outsize 20 20 -ot Float64 -l grid -a invdistnn:power=2.0:radius=1.0:max_points=12:min_points=0:nodata=0.0 data/grid.vrt ' + outfiles[-1])
+
+    # We should get the same values as in "ref_data/gdal_invdistnn.tif"
+    ds = gdal.Open(outfiles[-1])
+    ds_ref = gdal.Open('ref_data/grid_invdistnn.tif')
+    maxdiff = gdaltest.compare_ds(ds, ds_ref, verbose = 0)
+    if maxdiff > 0.00001:
+        gdaltest.compare_ds(ds, ds_ref, verbose = 1)
+        gdaltest.post_reason('Image too different from the reference')
+        return 'fail'
+    ds_ref = None
+    ds = None
+
+    #################
+    outfiles.append('tmp/grid_invdistnn_250_8minp.tif')
+    try:
+        os.remove(outfiles[-1])
+    except:
+        pass
+
+    # Create a GDAL dataset from the values of "grid.csv".
+    # Circular window, shifted, test min points and NODATA setting.
+    gdaltest.runexternal(gdal_grid + ' -txe 440721.0 441920.0 -tye 3751321.0 3750120.0 -outsize 20 20 -ot Float64 -l grid -a invdistnn:power=2.0:radius=250.0:max_points=12:min_points=8:nodata=0.0 data/grid.vrt ' + outfiles[-1])
+
+    # We should get the same values as in "ref_data/grid_invdistnn_250_8minp.tif"
+    ds = gdal.Open(outfiles[-1])
+    ds_ref = gdal.Open('ref_data/grid_invdistnn_250_8minp.tif')
+    maxdiff = gdaltest.compare_ds(ds, ds_ref, verbose = 0)
+    if maxdiff > 0.00001:
+        gdaltest.compare_ds(ds, ds_ref, verbose = 1)
+        gdaltest.post_reason('Image too different from the reference')
+        return 'fail'
+    ds_ref = None
+    ds = None
+
+    #################
+    # Test generic implementation with max_points and radius specified
+    outfiles.append('tmp/grid_invdistnn_250_10maxp_3pow.tif')
+    try:
+        os.remove(outfiles[-1])
+    except:
+        pass
+
+    # Create a GDAL dataset from the values of "grid.csv".
+    gdaltest.runexternal(gdal_grid + ' -txe 440721.0 441920.0 -tye 3751321.0 3750120.0 -outsize 20 20 -ot Float64 -l grid -a invdistnn:power=3.0:radius=250.0:max_points=10:min_points=0:nodata=0.0 data/grid.vrt ' + outfiles[-1])
+
+    # We should get the same values as in "ref_data/gdal_invdistnn_250_10maxp_3pow.tif"
+    ds = gdal.Open(outfiles[-1])
+    ds_ref = gdal.Open('ref_data/grid_invdistnn_250_10maxp_3pow.tif')
+    maxdiff = gdaltest.compare_ds(ds, ds_ref, verbose = 0)
+    if maxdiff > 0.00001:
+        gdaltest.compare_ds(ds, ds_ref, verbose = 1)
+        gdaltest.post_reason('Image too different from the reference')
+        return 'fail'
+    ds_ref = None
+    ds = None
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def test_gdal_grid_cleanup():
@@ -856,6 +931,7 @@ gdaltest_list = [
     test_gdal_grid_9,
     test_gdal_grid_10,
     test_gdal_grid_11,
+    test_gdal_grid_12,
     test_gdal_grid_cleanup
     ]
 

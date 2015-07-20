@@ -44,6 +44,7 @@
  */
 
 static const char szAlgNameInvDist[] = "invdist";
+static const char szAlgNameInvDistNearestNeighbor[] = "invdistnn";
 static const char szAlgNameAverage[] = "average";
 static const char szAlgNameNearest[] = "nearest";
 static const char szAlgNameMinimum[] = "minimum";
@@ -63,6 +64,12 @@ typedef CPLErr (*GDALGridFunction)( const void *, GUInt32,
                                     void* );
 CPLErr
 GDALGridInverseDistanceToAPower( const void *, GUInt32,
+                                 const double *, const double *,
+                                 const double *,
+                                 double, double, double *,
+                                 void* );
+CPLErr
+GDALGridInverseDistanceToAPowerNearestNeighbor( const void *, GUInt32,
                                  const double *, const double *,
                                  const double *,
                                  double, double, double *,
