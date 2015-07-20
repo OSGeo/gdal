@@ -1865,6 +1865,25 @@ non-zero). Default is 0.</dd>
 0.0).</dd>
 </dl>
 
+\subsection gdal_grid_algorithms_invdist_nearest_neighbor invdistnn
+
+(Since GDAL 2.1) Inverse distance to a power with nearest neighbor searching, ideal when 
+max_points is used. It has following parameters:
+
+<dl>
+<dt><i>power</i>:</dt> <dd>Weighting power (default 2.0).</dd>
+<dt><i>radius</i>:</dt> <dd>The radius of the search circle, which should be 
+non-zero. Default is 1.0.</dd>
+<dt><i>max_points</i>:</dt> <dd>Maximum number of data points to use. Do not
+search for more points than this number. Found points will be ranked from 
+nearest to furthest distance when weighting. Default is 12.</dd>
+<dt><i>min_points</i>:</dt> <dd>Minimum number of data points to use. If less
+amount of points found the grid node is considered empty and will be filled 
+with NODATA marker. Default is 0.</dd>
+<dt><i>nodata</i>:</dt> <dd>NODATA marker to fill empty points (default
+0.0).</dd>
+</dl>
+
 \subsection gdal_grid_algorithms_average average
 
 Moving average algorithm. It has following parameters:
