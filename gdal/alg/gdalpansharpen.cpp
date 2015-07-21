@@ -506,7 +506,7 @@ void GDALPansharpenOperation::WeightedBroveyPositiveWeightsInternal(
     double dfMaxValue = nMaxValue;
     const XMMReg2Double maxValue = XMMReg2Double::Load1ValHighAndLow(&dfMaxValue);
     
-    for(int j=0;j<nValues;j+=2)
+    for(int j=0;j<nValues-1;j+=2)
     {
         XMMReg2Double pseudoPanchro = zero;
 
@@ -548,7 +548,7 @@ void GDALPansharpenOperation::WeightedBroveyPositiveWeightsInternal(
     const double dfw1 = psOptions->padfWeights[1];
     const double dfw2 = psOptions->padfWeights[2];
     const double dfw3 = (NINPUT == 3) ? 0 : psOptions->padfWeights[3];
-    for(int j=0;j<nValues;j+=2)
+    for(int j=0;j<nValues-1;j+=2)
     {
         double dfFactor, dfFactor2;
         double dfPseudoPanchro = 0;
@@ -660,7 +660,7 @@ void GDALPansharpenOperation::WeightedBroveyPositiveWeights(
     }
     else
     {
-        for(j=0;j<nValues;j+=2)
+        for(j=0;j<nValues-1;j+=2)
         {
             double dfFactor, dfFactor2;
             double dfPseudoPanchro = 0;
