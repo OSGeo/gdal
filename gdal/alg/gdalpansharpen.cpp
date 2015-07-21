@@ -148,6 +148,7 @@ GDALPansharpenOperation::GDALPansharpenOperation()
 {
     psOptions = NULL;
     bWeightsWillNotOvershoot = TRUE;
+    bPositiveWeights = TRUE;
 }
 
 /************************************************************************/
@@ -274,7 +275,10 @@ CPLErr GDALPansharpenOperation::Initialize(const GDALPansharpenOptions* psOption
     for(int i=0;i<psOptions->nInputSpectralBands; i++)
     {
         if( psOptions->padfWeights[i] < 0.0 )
+        {
+            bPositiveWeights = FALSE;
             bWeightsWillNotOvershoot = FALSE;
+        }
         dfTotalWeights += psOptions->padfWeights[i];
     }
     if( dfTotalWeights < 1.0 )
@@ -345,7 +349,6 @@ template<class WorkDataType, class OutDataType>
                                                      const WorkDataType* pUpsampledSpectralBuffer,
                                                      OutDataType* pDataBuf,
                                                      int nValues,
-                                                     int bHasBitDepth,
                                                      WorkDataType nMaxValue)
 {
     WorkDataType noData, validValue;
@@ -381,7 +384,7 @@ template<class WorkDataType, class OutDataType>
                     pUpsampledSpectralBuffer[psOptions->panOutPansharpenedBands[i] * nValues + j];
                 WorkDataType nPansharpenedValue;
                 GDALCopyWord(nRawValue * dfFactor, nPansharpenedValue);
-                if( bHasBitDepth && nPansharpenedValue > nMaxValue )
+                if( nMaxValue && nPansharpenedValue > nMaxValue )
                     nPansharpenedValue = nMaxValue;
                 // We don't want a valid value to be mapped to NoData
                 if( nPansharpenedValue == noData )
@@ -415,7 +418,7 @@ template<class WorkDataType, class OutDataType, int bHasBitDepth>
     {
         WeightedBroveyWithNoData<WorkDataType,OutDataType>
                                 (pPanBuffer, pUpsampledSpectralBuffer,
-                                 pDataBuf, nValues, bHasBitDepth, nMaxValue);
+                                 pDataBuf, nValues, nMaxValue);
         return;
     }
 
@@ -449,20 +452,284 @@ template<class WorkDataType, class OutDataType, int bHasBitDepth>
     }
 }
 
+/* We restrict to 64bit processors because they are guaranteed to have SSE2 */
+/* Could possibly be used too on 32bit, but we would need to check at runtime */
+#if defined(__x86_64) || defined(_M_X64)
+
+#include <gdalsse_priv.h>
+
+template<int NINPUT, int NOUTPUT>
+void GDALPansharpenOperation::WeightedBroveyPositiveWeightsInternal(
+                                                     const GUInt16* pPanBuffer,
+                                                     const GUInt16* pUpsampledSpectralBuffer,
+                                                     GUInt16* pDataBuf,
+                                                     int nValues,
+                                                     GUInt16 nMaxValue)
+{
+    CPLAssert( NINPUT == 3 || NINPUT == 4 );
+    const XMMReg2Double w0 = XMMReg2Double::Load1ValHighAndLow(psOptions->padfWeights + 0);
+    const XMMReg2Double w1 = XMMReg2Double::Load1ValHighAndLow(psOptions->padfWeights + 1);
+    const XMMReg2Double w2 = XMMReg2Double::Load1ValHighAndLow(psOptions->padfWeights + 2);
+    const XMMReg2Double w3 = (NINPUT == 3) ? XMMReg2Double::Zero() : XMMReg2Double::Load1ValHighAndLow(psOptions->padfWeights + 3);
+
+    const XMMReg2Double zero = XMMReg2Double::Zero();
+    double dfMaxValue = nMaxValue;
+    const XMMReg2Double maxValue = XMMReg2Double::Load1ValHighAndLow(&dfMaxValue);
+    
+    for(int j=0;j<nValues;j+=2)
+    {
+        XMMReg2Double pseudoPanchro = zero;
+
+        pseudoPanchro += w0 * XMMReg2Double::Load2Val(pUpsampledSpectralBuffer + j);
+        pseudoPanchro += w1 * XMMReg2Double::Load2Val(pUpsampledSpectralBuffer + nValues + j);
+        pseudoPanchro += w2 * XMMReg2Double::Load2Val(pUpsampledSpectralBuffer + 2 * nValues + j);
+        if( NINPUT == 4 )
+            pseudoPanchro += w3 * XMMReg2Double::Load2Val(pUpsampledSpectralBuffer + 3 * nValues + j);
+
+        /* Little trick to avoid use of ternary operator due to one of the branch being zero */
+        XMMReg2Double factor = XMMReg2Double::And(
+            XMMReg2Double::NotEquals(pseudoPanchro, zero),
+            XMMReg2Double::Load2Val(pPanBuffer + j) / pseudoPanchro );
+
+        for(int i=0;i<NOUTPUT;i++)
+        {
+            XMMReg2Double rawValue = XMMReg2Double::Load2Val(pUpsampledSpectralBuffer + i * nValues + j);
+            XMMReg2Double tmp = XMMReg2Double::Min(rawValue * factor, maxValue);
+            __m128i tmp2 = _mm_cvtpd_epi32(tmp.xmm); /* Convert the 2 double values to 2 integers */
+            tmp2 =  _mm_shufflelo_epi16(tmp2,  _MM_SHUFFLE(0, 0, 2, 0)); /* Pack the 2 integers as 2 shorts */
+            pDataBuf[i * nValues + j] = _mm_extract_epi16(tmp2, 0);
+            pDataBuf[i * nValues + j + 1] = _mm_extract_epi16(tmp2, 1);
+        }
+    }
+}
+
+#else
+
+template<int NINPUT, int NOUTPUT>
+void GDALPansharpenOperation::WeightedBroveyPositiveWeightsInternal(
+                                                     const GUInt16* pPanBuffer,
+                                                     const GUInt16* pUpsampledSpectralBuffer,
+                                                     GUInt16* pDataBuf,
+                                                     int nValues,
+                                                     GUInt16 nMaxValue)
+{
+    CPLAssert( NINPUT == 3 || NINPUT == 4 );
+    const double dfw0 = psOptions->padfWeights[0];
+    const double dfw1 = psOptions->padfWeights[1];
+    const double dfw2 = psOptions->padfWeights[2];
+    const double dfw3 = (NINPUT == 3) ? 0 : psOptions->padfWeights[3];
+    for(int j=0;j<nValues;j+=2)
+    {
+        double dfFactor, dfFactor2;
+        double dfPseudoPanchro = 0;
+        double dfPseudoPanchro2 = 0;
+
+        dfPseudoPanchro += dfw0 *
+                        pUpsampledSpectralBuffer[j];
+        dfPseudoPanchro2 += dfw0 *
+                        pUpsampledSpectralBuffer[j + 1];
+
+        dfPseudoPanchro += dfw1 *
+                        pUpsampledSpectralBuffer[nValues + j];
+        dfPseudoPanchro2 += dfw1 *
+                        pUpsampledSpectralBuffer[nValues + j + 1];
+
+        dfPseudoPanchro += dfw2 *
+                        pUpsampledSpectralBuffer[2 * nValues + j];
+        dfPseudoPanchro2 += dfw2 *
+                        pUpsampledSpectralBuffer[2 * nValues + j + 1];
+
+        if( NINPUT == 4 )
+        {
+            dfPseudoPanchro += dfw3 *
+                            pUpsampledSpectralBuffer[3 * nValues + j];
+            dfPseudoPanchro2 += dfw3 *
+                            pUpsampledSpectralBuffer[3 * nValues + j + 1];
+        }
+
+        if( dfPseudoPanchro )
+            dfFactor = pPanBuffer[j] / dfPseudoPanchro;
+        else
+            dfFactor = 0.0;
+        if( dfPseudoPanchro2 )
+            dfFactor2 = pPanBuffer[j+1] / dfPseudoPanchro2;
+        else
+            dfFactor2 = 0.0;
+
+        for(int i=0;i<NOUTPUT;i++)
+        {
+            GUInt16 nRawValue =
+                pUpsampledSpectralBuffer[i * nValues + j];
+            double dfTmp = nRawValue * dfFactor;
+            if( dfTmp > nMaxValue )
+                pDataBuf[i * nValues + j] = nMaxValue;
+            else
+                pDataBuf[i * nValues + j] = (GUInt16)(dfTmp + 0.5);
+
+            GUInt16 nRawValue2 =
+                pUpsampledSpectralBuffer[i * nValues + j + 1];
+            double dfTmp2 = nRawValue2 * dfFactor2;
+            if( dfTmp2 > nMaxValue )
+                pDataBuf[i * nValues + j + 1] = nMaxValue;
+            else
+                pDataBuf[i * nValues + j + 1] = (GUInt16)(dfTmp2 + 0.5);
+        }
+    }
+}
+#endif
+
+void GDALPansharpenOperation::WeightedBroveyPositiveWeights(
+                                                     const GUInt16* pPanBuffer,
+                                                     const GUInt16* pUpsampledSpectralBuffer,
+                                                     GUInt16* pDataBuf,
+                                                     int nValues,
+                                                     GUInt16 nMaxValue)
+{
+    if( psOptions->bHasNoData )
+    {
+        WeightedBroveyWithNoData<GUInt16,GUInt16>
+                                (pPanBuffer, pUpsampledSpectralBuffer,
+                                 pDataBuf, nValues, nMaxValue);
+        return;
+    }
+
+    if( nMaxValue == 0 )
+        nMaxValue = std::numeric_limits<GUInt16>::max();
+    int j;
+    if( psOptions->nInputSpectralBands == 3 &&
+        psOptions->nOutPansharpenedBands == 3 &&
+        psOptions->panOutPansharpenedBands[0] == 0 &&
+        psOptions->panOutPansharpenedBands[1] == 1 &&
+        psOptions->panOutPansharpenedBands[2] == 2 ) 
+    {
+        WeightedBroveyPositiveWeightsInternal<3,3>(pPanBuffer, pUpsampledSpectralBuffer, pDataBuf, nValues, nMaxValue);
+        j = (nValues / 2) * 2;
+    }
+    else if( psOptions->nInputSpectralBands == 4 &&
+        psOptions->nOutPansharpenedBands == 4 &&
+        psOptions->panOutPansharpenedBands[0] == 0 &&
+        psOptions->panOutPansharpenedBands[1] == 1 &&
+        psOptions->panOutPansharpenedBands[2] == 2 &&
+        psOptions->panOutPansharpenedBands[3] == 3 ) 
+    {
+        WeightedBroveyPositiveWeightsInternal<4,4>(pPanBuffer, pUpsampledSpectralBuffer, pDataBuf, nValues, nMaxValue);
+        j = (nValues / 2) * 2;
+    }
+    else if( psOptions->nInputSpectralBands == 4 &&
+        psOptions->nOutPansharpenedBands == 3 &&
+        psOptions->panOutPansharpenedBands[0] == 0 &&
+        psOptions->panOutPansharpenedBands[1] == 1 &&
+        psOptions->panOutPansharpenedBands[2] == 2 ) 
+    {
+        WeightedBroveyPositiveWeightsInternal<4,3>(pPanBuffer, pUpsampledSpectralBuffer, pDataBuf, nValues, nMaxValue);
+        j = (nValues / 2) * 2;
+    }
+    else
+    {
+        for(j=0;j<nValues;j+=2)
+        {
+            double dfFactor, dfFactor2;
+            double dfPseudoPanchro = 0;
+            double dfPseudoPanchro2 = 0;
+            for(int i=0;i<psOptions->nInputSpectralBands;i++)
+            {
+                dfPseudoPanchro += psOptions->padfWeights[i] *
+                                pUpsampledSpectralBuffer[i * nValues + j];
+                dfPseudoPanchro2 += psOptions->padfWeights[i] *
+                                pUpsampledSpectralBuffer[i * nValues + j + 1];
+            }
+            if( dfPseudoPanchro )
+                dfFactor = pPanBuffer[j] / dfPseudoPanchro;
+            else
+                dfFactor = 0.0;
+            if( dfPseudoPanchro2 )
+                dfFactor2 = pPanBuffer[j+1] / dfPseudoPanchro2;
+            else
+                dfFactor2 = 0.0;
+
+            for(int i=0;i<psOptions->nOutPansharpenedBands;i++)
+            {
+                GUInt16 nRawValue =
+                    pUpsampledSpectralBuffer[psOptions->panOutPansharpenedBands[i] * nValues + j];
+                double dfTmp = nRawValue * dfFactor;
+                if( dfTmp > nMaxValue )
+                    pDataBuf[i * nValues + j] = nMaxValue;
+                else
+                    pDataBuf[i * nValues + j] = (GUInt16)(dfTmp + 0.5);
+
+                GUInt16 nRawValue2 =
+                    pUpsampledSpectralBuffer[psOptions->panOutPansharpenedBands[i] * nValues + j + 1];
+                double dfTmp2 = nRawValue2 * dfFactor2;
+                if( dfTmp2 > nMaxValue )
+                    pDataBuf[i * nValues + j + 1] = nMaxValue;
+                else
+                    pDataBuf[i * nValues + j + 1] = (GUInt16)(dfTmp2 + 0.5);
+            }
+        }
+    }
+    if(j<nValues)
+    {
+        double dfFactor;
+        double dfPseudoPanchro = 0;
+        for(int i=0;i<psOptions->nInputSpectralBands;i++)
+            dfPseudoPanchro += psOptions->padfWeights[i] *
+                            pUpsampledSpectralBuffer[i * nValues + j];
+        if( dfPseudoPanchro )
+            dfFactor = pPanBuffer[j] / dfPseudoPanchro;
+        else
+            dfFactor = 0.0;
+
+        for(int i=0;i<psOptions->nOutPansharpenedBands;i++)
+        {
+            GUInt16 nRawValue =
+                pUpsampledSpectralBuffer[psOptions->panOutPansharpenedBands[i] * nValues + j];
+            double dfTmp = nRawValue * dfFactor;
+            if( dfTmp > nMaxValue )
+                pDataBuf[i * nValues + j] = nMaxValue;
+            else
+                pDataBuf[i * nValues + j] = (GUInt16)(dfTmp + 0.5);
+        }
+    }
+}
+
 template<class WorkDataType, class OutDataType> void GDALPansharpenOperation::WeightedBrovey(
                                                      const WorkDataType* pPanBuffer,
                                                      const WorkDataType* pUpsampledSpectralBuffer,
                                                      OutDataType* pDataBuf,
                                                      int nValues,
-                                                     int nBitDepth)
+                                                     WorkDataType nMaxValue)
 {
-    if( nBitDepth == 0 )
+    if( nMaxValue == 0 )
         WeightedBrovey<WorkDataType, OutDataType, FALSE>(
             pPanBuffer, pUpsampledSpectralBuffer, pDataBuf, nValues, 0);
     else
     {
-        WorkDataType nMaxValue = (WorkDataType)((1 << nBitDepth) - 1);
         WeightedBrovey<WorkDataType, OutDataType, TRUE>(
+            pPanBuffer, pUpsampledSpectralBuffer, pDataBuf, nValues, nMaxValue);
+    }
+}
+
+template<>
+void GDALPansharpenOperation::WeightedBrovey<GUInt16,GUInt16>(
+                                                     const GUInt16* pPanBuffer,
+                                                     const GUInt16* pUpsampledSpectralBuffer,
+                                                     GUInt16* pDataBuf,
+                                                     int nValues,
+                                                     GUInt16 nMaxValue)
+{
+    if( bPositiveWeights )
+    {
+        WeightedBroveyPositiveWeights(
+                pPanBuffer, pUpsampledSpectralBuffer, pDataBuf, nValues, nMaxValue);
+    }
+    else if( nMaxValue == 0 )
+    {
+        WeightedBrovey<GUInt16, GUInt16, FALSE>(
+                pPanBuffer, pUpsampledSpectralBuffer, pDataBuf, nValues, 0);
+    }
+    else
+    {
+        WeightedBrovey<GUInt16, GUInt16, TRUE>(
             pPanBuffer, pUpsampledSpectralBuffer, pDataBuf, nValues, nMaxValue);
     }
 }
@@ -473,45 +740,45 @@ template<class WorkDataType> CPLErr GDALPansharpenOperation::WeightedBrovey(
                                                      void *pDataBuf, 
                                                      GDALDataType eBufDataType,
                                                      int nValues,
-                                                     int nBitDepth)
+                                                     WorkDataType nMaxValue)
 {
     switch( eBufDataType )
     {
         case GDT_Byte:
             WeightedBrovey(pPanBuffer, pUpsampledSpectralBuffer,
-                           (GByte*)pDataBuf, nValues, nBitDepth);
+                           (GByte*)pDataBuf, nValues, nMaxValue);
             break;
 
         case GDT_UInt16:
             WeightedBrovey(pPanBuffer, pUpsampledSpectralBuffer,
-                           (GUInt16*)pDataBuf, nValues, nBitDepth);
+                           (GUInt16*)pDataBuf, nValues, nMaxValue);
             break;
 
 #ifndef LIMIT_TYPES
         case GDT_Int16:
             WeightedBrovey(pPanBuffer, pUpsampledSpectralBuffer,
-                           (GInt16*)pDataBuf, nValues, nBitDepth);
+                           (GInt16*)pDataBuf, nValues, nMaxValue);
             break;
 
         case GDT_UInt32:
             WeightedBrovey(pPanBuffer, pUpsampledSpectralBuffer,
-                           (GUInt32*)pDataBuf, nValues, nBitDepth);
+                           (GUInt32*)pDataBuf, nValues, nMaxValue);
             break;
 
         case GDT_Int32:
             WeightedBrovey(pPanBuffer, pUpsampledSpectralBuffer,
-                           (GInt32*)pDataBuf, nValues, nBitDepth);
+                           (GInt32*)pDataBuf, nValues, nMaxValue);
             break;
 
         case GDT_Float32:
             WeightedBrovey(pPanBuffer, pUpsampledSpectralBuffer,
-                           (float*)pDataBuf, nValues, nBitDepth);
+                           (float*)pDataBuf, nValues, nMaxValue);
             break;
 #endif
 
         case GDT_Float64:
             WeightedBrovey(pPanBuffer, pUpsampledSpectralBuffer,
-                           (double*)pDataBuf, nValues, nBitDepth);
+                           (double*)pDataBuf, nValues, nMaxValue);
             break;
 
         default:
@@ -743,6 +1010,7 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
     {
         nBitDepth = 0;
     }
+    GUInt32 nMaxValue = (1 << nBitDepth) - 1;
 
     double* padfTempBuffer = NULL;
     GDALDataType eBufDataTypeOri = eBufDataType;
@@ -774,14 +1042,14 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
             eErr = WeightedBrovey ((GByte*)pPanBuffer,
                                    (GByte*)pUpsampledSpectralBuffer,
                                    pDataBuf, eBufDataType,
-                                   nXSize * nYSize, nBitDepth);
+                                   nXSize * nYSize, (GByte)nMaxValue);
             break;
 
         case GDT_UInt16:
             eErr = WeightedBrovey ((GUInt16*)pPanBuffer,
                                    (GUInt16*)pUpsampledSpectralBuffer,
                                    pDataBuf, eBufDataType,
-                                   nXSize * nYSize, nBitDepth);
+                                   nXSize * nYSize, (GUInt16)nMaxValue);
             break;
 
 #ifndef LIMIT_TYPES
@@ -796,7 +1064,7 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
             eErr = WeightedBrovey ((GUInt32*)pPanBuffer,
                                    (GUInt32*)pUpsampledSpectralBuffer,
                                    pDataBuf, eBufDataType,
-                                   nXSize * nYSize, nBitDepth);
+                                   nXSize * nYSize, nMaxValue);
             break;
 
         case GDT_Int32:

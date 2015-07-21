@@ -1724,12 +1724,118 @@ def vrtpansharpen_9():
     return 'success'
 
 ###############################################################################
+# Test UInt16 optimizations
+
+def vrtpansharpen_10():
+    
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/pan.tif',1024,1024,1,gdal.GDT_UInt16)
+    ds.GetRasterBand(1).Fill(1000)
+    ds = None
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/ms.tif',256,256,4,gdal.GDT_UInt16)
+    for i in range(4):
+        ds.GetRasterBand(i+1).Fill(1000)
+    ds = None
+
+    # 4 bands
+    vrt_ds = gdal.Open("""<VRTDataset subClass="VRTPansharpenedDataset">
+        <PansharpeningOptions>
+            <PanchroBand>
+                    <SourceFilename relativeToVRT="1">/vsimem/pan.tif</SourceFilename>
+                    <SourceBand>1</SourceBand>
+            </PanchroBand>
+            <SpectralBand dstBand="1">
+                    <SourceFilename relativeToVRT="1">/vsimem/ms.tif</SourceFilename>
+                    <SourceBand>1</SourceBand>
+            </SpectralBand>
+            <SpectralBand dstBand="2">
+                    <SourceFilename relativeToVRT="1">/vsimem/ms.tif</SourceFilename>
+                    <SourceBand>2</SourceBand>
+            </SpectralBand>
+            <SpectralBand dstBand="3">
+                    <SourceFilename relativeToVRT="1">/vsimem/ms.tif</SourceFilename>
+                    <SourceBand>3</SourceBand>
+            </SpectralBand>
+            <SpectralBand dstBand="4">
+                    <SourceFilename relativeToVRT="1">/vsimem/ms.tif</SourceFilename>
+                    <SourceBand>4</SourceBand>
+            </SpectralBand>
+        </PansharpeningOptions>
+    </VRTDataset>""")
+    cs = [ vrt_ds.GetRasterBand(i+1).Checksum() for i in range(vrt_ds.RasterCount) ]
+    if cs != [17869, 17869, 17869, 17869]:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+
+    # 4 bands -> 3 bands
+    vrt_ds = gdal.Open("""<VRTDataset subClass="VRTPansharpenedDataset">
+        <PansharpeningOptions>
+            <PanchroBand>
+                    <SourceFilename relativeToVRT="1">/vsimem/pan.tif</SourceFilename>
+                    <SourceBand>1</SourceBand>
+            </PanchroBand>
+            <SpectralBand dstBand="1">
+                    <SourceFilename relativeToVRT="1">/vsimem/ms.tif</SourceFilename>
+                    <SourceBand>1</SourceBand>
+            </SpectralBand>
+            <SpectralBand dstBand="2">
+                    <SourceFilename relativeToVRT="1">/vsimem/ms.tif</SourceFilename>
+                    <SourceBand>2</SourceBand>
+            </SpectralBand>
+            <SpectralBand dstBand="3">
+                    <SourceFilename relativeToVRT="1">/vsimem/ms.tif</SourceFilename>
+                    <SourceBand>3</SourceBand>
+            </SpectralBand>
+            <SpectralBand>
+                    <SourceFilename relativeToVRT="1">/vsimem/ms.tif</SourceFilename>
+                    <SourceBand>4</SourceBand>
+            </SpectralBand>
+        </PansharpeningOptions>
+    </VRTDataset>""")
+    cs = [ vrt_ds.GetRasterBand(i+1).Checksum() for i in range(vrt_ds.RasterCount) ]
+    if cs != [17869, 17869, 17869]:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+
+    # 3 bands
+    vrt_ds = gdal.Open("""<VRTDataset subClass="VRTPansharpenedDataset">
+        <PansharpeningOptions>
+            <PanchroBand>
+                    <SourceFilename relativeToVRT="1">/vsimem/pan.tif</SourceFilename>
+                    <SourceBand>1</SourceBand>
+            </PanchroBand>
+            <SpectralBand dstBand="1">
+                    <SourceFilename relativeToVRT="1">/vsimem/ms.tif</SourceFilename>
+                    <SourceBand>1</SourceBand>
+            </SpectralBand>
+            <SpectralBand dstBand="2">
+                    <SourceFilename relativeToVRT="1">/vsimem/ms.tif</SourceFilename>
+                    <SourceBand>2</SourceBand>
+            </SpectralBand>
+            <SpectralBand dstBand="3">
+                    <SourceFilename relativeToVRT="1">/vsimem/ms.tif</SourceFilename>
+                    <SourceBand>3</SourceBand>
+            </SpectralBand>
+        </PansharpeningOptions>
+    </VRTDataset>""")
+    cs = [ vrt_ds.GetRasterBand(i+1).Checksum() for i in range(vrt_ds.RasterCount) ]
+    if cs != [17869, 17869, 17869]:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+        
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def vrtpansharpen_cleanup():
     
     gdal.GetDriverByName('GTiff').Delete('tmp/small_world_pan.tif')
     gdal.GetDriverByName('GTiff').Delete('tmp/small_world.tif')
+    gdal.GetDriverByName('GTiff').Delete('/vsimem/pan.tif')
+    gdal.GetDriverByName('GTiff').Delete('/vsimem/ms.tif')
 
     return 'success'
 
@@ -1744,6 +1850,7 @@ gdaltest_list = [
     vrtpansharpen_7,
     vrtpansharpen_8,
     vrtpansharpen_9,
+    vrtpansharpen_10,
     vrtpansharpen_cleanup,
 ]
 
