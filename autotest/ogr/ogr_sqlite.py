@@ -1248,7 +1248,9 @@ def ogr_sqlite_25():
     ds = None
     gdal.Unlink('/vsimem/ogr_sqlite_25.db')
 
+    gdal.SetConfigOption('GDAL_HTTP_TIMEOUT', '5')
     ds = ogr.Open('/vsicurl/http://download.osgeo.org/gdal/data/sqlite3/polygon.db')
+    gdal.SetConfigOption('GDAL_HTTP_TIMEOUT', None)
     if ds is None:
         if gdaltest.gdalurlopen('http://download.osgeo.org/gdal/data/sqlite3/polygon.db') is None:
             print('cannot open URL')
