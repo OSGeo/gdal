@@ -881,6 +881,8 @@ def vrtpansharpen_1():
 
 def vrtpansharpen_2():
 
+    shutil.copy('data/small_world.tif', 'tmp/small_world.tif')
+
     # Super verbose case
     vrt_ds = gdal.Open("""<VRTDataset rasterXSize="800" rasterYSize="400" subClass="VRTPansharpenedDataset">
     <SRS>GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433],AUTHORITY["EPSG","4326"]]</SRS>
@@ -1047,8 +1049,6 @@ def vrtpansharpen_2():
         gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
-
-    shutil.copy('data/small_world.tif', 'tmp/small_world.tif')
 
     # Same, but everything scambled, and with spectral bands not in the same dataset
     vrt_ds = gdal.Open("""<VRTDataset rasterXSize="800" rasterYSize="400" subClass="VRTPansharpenedDataset">
