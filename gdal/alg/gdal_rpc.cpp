@@ -1130,17 +1130,35 @@ int GDALRPCTransform( void *pTransformArg, int bDstToSrc,
                 {
                     // Empiric attempt to guess if the coordinate transformation
                     // to WGS84 is a no-op. For example for NED13 datasets in NAD83
-                    double adfX[] = { -179, 179, 179, -179, 0 };
-                    double adfY[] = { 89, 89, -89, -89, 0 };
-                    double adfZ[] = { 0, 0, 0, 0, 0 };
+                    double adfX[] = { -179, 179, 179, -179, 0, 0 };
+                    double adfY[] = { 89, 89, -89, -89, 0, 0 };
+                    double adfZ[] = { 0, 0, 0, 0, 0, 0 };
+                    
+                    // Also test with a "reference point" from the RPC values
+                    double dfRefLong, dfRefLat;
+                    if( psTransform->sRPC.dfMIN_LONG != -180 || psTransform->sRPC.dfMAX_LONG != 180 )
+                    {
+                        dfRefLong = (psTransform->sRPC.dfMIN_LONG + psTransform->sRPC.dfMAX_LONG) * 0.5;
+                        dfRefLat  = (psTransform->sRPC.dfMIN_LAT  + psTransform->sRPC.dfMAX_LAT ) * 0.5;
+                    }
+                    else
+                    {
+                        dfRefLong = psTransform->sRPC.dfLONG_OFF;
+                        dfRefLat  = psTransform->sRPC.dfLAT_OFF;
+                    }
+                    adfX[5] = dfRefLong;
+                    adfY[5] = dfRefLat;
+                    
                     if( psTransform->poCT->Transform(
-                                                5, adfX, adfY, adfZ) &&
+                                                6, adfX, adfY, adfZ) &&
                         fabs(adfX[0] - -179) < 1e-12 && fabs(adfY[0] -  89) < 1e-12 &&
                         fabs(adfX[1] -  179) < 1e-12 && fabs(adfY[1] -  89) < 1e-12 &&
                         fabs(adfX[2] -  179) < 1e-12 && fabs(adfY[2] - -89) < 1e-12 &&
                         fabs(adfX[3] - -179) < 1e-12 && fabs(adfY[3] - -89) < 1e-12 &&
-                        fabs(adfX[4] -    0) < 1e-12 && fabs(adfY[4] -   0) < 1e-12 )
+                        fabs(adfX[4] -    0) < 1e-12 && fabs(adfY[4] -   0) < 1e-12 &&
+                        fabs(adfX[5] - dfRefLong) < 1e-12 && fabs(adfY[5] - dfRefLat) < 1e-12 )
                     {
+                        CPLDebug("RPC", "Short-circuiting coordinate transformation from DEM SRS to WGS 84 due to apparent nop");
                         delete psTransform->poCT;
                         psTransform->poCT = NULL;
                     }
