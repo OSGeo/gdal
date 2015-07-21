@@ -496,9 +496,8 @@ void GDALPansharpenOperation::WeightedBroveyPositiveWeightsInternal(
             XMMReg2Double rawValue = XMMReg2Double::Load2Val(pUpsampledSpectralBuffer + i * nValues + j);
             XMMReg2Double tmp = XMMReg2Double::Min(rawValue * factor, maxValue);
             __m128i tmp2 = _mm_cvtpd_epi32(tmp.xmm); /* Convert the 2 double values to 2 integers */
-            tmp2 =  _mm_shufflelo_epi16(tmp2,  _MM_SHUFFLE(0, 0, 2, 0)); /* Pack the 2 integers as 2 shorts */
-            pDataBuf[i * nValues + j] = _mm_extract_epi16(tmp2, 0);
-            pDataBuf[i * nValues + j + 1] = _mm_extract_epi16(tmp2, 1);
+            pDataBuf[i * nValues + j] = (GUInt16)_mm_extract_epi16(tmp2, 0);
+            pDataBuf[i * nValues + j + 1] = (GUInt16)_mm_extract_epi16(tmp2, 2);
         }
     }
 }
