@@ -355,7 +355,7 @@ template<class WorkDataType, class OutDataType>
     GDALCopyWord(psOptions->dfNoData, noData);
 
     if( !(std::numeric_limits<WorkDataType>::is_integer) )
-        validValue = noData + 1e-5;
+        validValue = (WorkDataType)(noData + 1e-5);
     else if (noData == std::numeric_limits<WorkDataType>::min())
         validValue = std::numeric_limits<WorkDataType>::min() + 1;
     else
