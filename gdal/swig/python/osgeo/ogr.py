@@ -999,9 +999,9 @@ class DataSource(MajorObject):
 
     def __getitem__(self, value):
         """Support dictionary, list, and slice -like access to the datasource.
-    ] would return the first layer on the datasource.
-    aname'] would return the layer named "aname".
-    :4] would return a list of the first four layers."""
+        ds[0] would return the first layer on the datasource.
+        ds['aname'] would return the layer named "aname".
+        ds[0:4] would return a list of the first four layers."""
         if isinstance(value, slice):
             output = []
             for i in xrange(value.start,value.stop,value.step):
@@ -2221,8 +2221,8 @@ class Layer(MajorObject):
 
     def __getitem__(self, value):
         """Support list and slice -like access to the layer.
-    r[0] would return the first feature on the layer.
-    r[0:4] would return a list of the first four features."""
+        layer[0] would return the first feature on the layer.
+        layer[0:4] would return a list of the first four features."""
         if isinstance(value, slice):
             import sys
             output = []
@@ -5703,3 +5703,5 @@ def TermProgress_nocb(*args, **kwargs):
   """TermProgress_nocb(double dfProgress, char pszMessage = None, void pData = None) -> int"""
   return _ogr.TermProgress_nocb(*args, **kwargs)
 TermProgress = _ogr.TermProgress
+
+
