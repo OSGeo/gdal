@@ -273,6 +273,16 @@ CPLErr VRTPansharpenedDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPa
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Unsupported value for GeoTransformAdjustment. Defaulting to Union");
     }
+    
+    const char* pszNumThreads = CPLGetXMLValue(psOptions, "NumThreads", NULL);
+    int nThreads = 0;
+    if( pszNumThreads != NULL )
+    {
+        if( EQUAL(pszNumThreads, "ALL_CPUS") )
+            nThreads = -1;
+        else
+            nThreads = atoi(pszNumThreads);
+    }
 
     const char* pszAlgorithm = CPLGetXMLValue(psOptions, 
                                               "Algorithm", "WeightedBrovey");
@@ -877,6 +887,7 @@ CPLErr VRTPansharpenedDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPa
     }
     psPanOptions->bHasNoData = bHasNoData;
     psPanOptions->dfNoData = dfNoData;
+    psPanOptions->nThreads = nThreads;
 
     if( nBands == psPanOptions->nOutPansharpenedBands )
         SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
@@ -969,6 +980,17 @@ CPLXMLNode *VRTPansharpenedDataset::SerializeToXML( const char *pszVRTPath )
     CPLCreateXMLElementAndValue( psOptionsNode, "Resampling",
                                  GDALRasterIOGetResampleAlg(psOptions->eResampleAlg) );
 
+    if( psOptions->nThreads == -1 )
+    {
+        CPLCreateXMLElementAndValue( psOptionsNode, "NumThreads", "ALL_CPUS" );
+    }
+    else if( psOptions->nThreads > 1 )
+    {
+        CPLCreateXMLElementAndValue( psOptionsNode, "NumThreads",
+                                     CPLSPrintf("%d", psOptions->nThreads) );
+    }
+    
+    
     if( psOptions->nBitDepth )
         CPLCreateXMLElementAndValue( psOptionsNode, "BitDepth",
                                      CPLSPrintf("%d", psOptions->nBitDepth) );
