@@ -111,7 +111,9 @@ def http_3():
     if drv is None:
         return 'skip'
 
+    gdal.SetConfigOption('GDAL_HTTP_TIMEOUT', '5')
     ds = gdal.Open('/vsicurl/http://download.osgeo.org/gdal/data/ehdr/elggll.bil')
+    gdal.SetConfigOption('GDAL_HTTP_TIMEOUT', None)
     if ds is None:
         conn = gdaltest.gdalurlopen('http://download.osgeo.org/gdal/data/ehdr/elggll.bil')
         if conn is None:
