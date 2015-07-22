@@ -289,6 +289,8 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     friend class GDALDriverManager;
     
     void AddToDatasetOpenList();
+    
+    void           Init(int bForceCachedIO);
 
   protected:
     GDALDriver  *poDriver;
@@ -309,6 +311,7 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     GByte       bSuppressOnClose;
 
                 GDALDataset(void);
+                GDALDataset(int bForceCachedIO);
 
     void        RasterInitialize( int, int );
     void        SetBand( int, GDALRasterBand * );
@@ -699,6 +702,8 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
 
     void           SetFlushBlockErr( CPLErr eErr );
     CPLErr         UnreferenceBlock( GDALRasterBlock* poBlock );
+    
+    void           Init(int bForceCachedIO);
 
   protected:
     GDALDataset *poDS;
@@ -769,7 +774,8 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
 
   public:
                 GDALRasterBand();
-                
+                GDALRasterBand(int bForceCachedIO);
+
     virtual     ~GDALRasterBand();
 
     int         GetXSize();

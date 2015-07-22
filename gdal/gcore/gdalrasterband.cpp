@@ -44,6 +44,17 @@ CPL_CVSID("$Id$");
 GDALRasterBand::GDALRasterBand()
 
 {
+    Init(CSLTestBoolean( CPLGetConfigOption( "GDAL_FORCE_CACHING", "NO") ) );
+}
+
+GDALRasterBand::GDALRasterBand(int bForceCachedIOIn)
+
+{
+    Init(bForceCachedIOIn);
+}
+
+void GDALRasterBand::Init(int bForceCachedIOIn)
+{
     poDS = NULL;
     nBand = 0;
     nRasterXSize = nRasterYSize = 0;
@@ -60,8 +71,7 @@ GDALRasterBand::GDALRasterBand()
     nMaskFlags = 0;
 
     nBlockReads = 0;
-    bForceCachedIO =  CSLTestBoolean( 
-        CPLGetConfigOption( "GDAL_FORCE_CACHING", "NO") );
+    bForceCachedIO = bForceCachedIOIn;
 
     eFlushBlockErr = CE_None;
     poBandBlockCache = NULL;

@@ -55,7 +55,8 @@ GDALRasterBandH MEMCreateRasterBand( GDALDataset *poDS, int nBand,
 MEMRasterBand::MEMRasterBand( GDALDataset *poDS, int nBand,
                               GByte *pabyDataIn, GDALDataType eTypeIn, 
                               GSpacing nPixelOffsetIn, GSpacing nLineOffsetIn,
-                              int bAssumeOwnership, const char * pszPixelType)
+                              int bAssumeOwnership, const char * pszPixelType) :
+                                                      GDALPamRasterBand(FALSE)
 
 {
     //CPLDebug( "MEM", "MEMRasterBand(%p)", this );
@@ -654,7 +655,7 @@ MEMRasterBand::GetDefaultHistogram( double *pdfMin, double *pdfMax,
 /*                            MEMDataset()                             */
 /************************************************************************/
 
-MEMDataset::MEMDataset()
+MEMDataset::MEMDataset() : GDALDataset(FALSE)
 
 {
     pszProjection = NULL;
@@ -683,6 +684,25 @@ MEMDataset::~MEMDataset()
     GDALDeinitGCPs( nGCPCount, pasGCPs );
     CPLFree( pasGCPs );
 }
+
+#if 0
+/************************************************************************/
+/*                          EnterReadWrite()                            */
+/************************************************************************/
+
+int MEMDataset::EnterReadWrite(CPL_UNUSED GDALRWFlag eRWFlag)
+{
+    return TRUE;
+}
+
+/************************************************************************/
+/*                         LeaveReadWrite()                             */
+/************************************************************************/
+
+void MEMDataset::LeaveReadWrite()
+{
+}
+#endif
 
 /************************************************************************/
 /*                          GetProjectionRef()                          */
