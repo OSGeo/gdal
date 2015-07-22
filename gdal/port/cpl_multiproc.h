@@ -72,6 +72,7 @@ typedef struct _CPLJoinableThread CPLJoinableThread;
 /* Options for CPLCreateMutexEx() and CPLCreateOrAcquireMutexEx() */
 #define CPL_MUTEX_RECURSIVE         0
 #define CPL_MUTEX_ADAPTIVE          1
+#define CPL_MUTEX_REGULAR           2
 
 CPLMutex CPL_DLL *CPLCreateMutex( void ); /* returned acquired */
 CPLMutex CPL_DLL *CPLCreateMutexEx( int nOptions ); /* returned acquired */

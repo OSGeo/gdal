@@ -1347,17 +1347,28 @@ static MutexLinkedElt* psMutexList = NULL;
 
 static void CPLInitMutex(MutexLinkedElt* psItem)
 {
-    /* When an adaptive mutex is required, we can safely fallback to recursive */
+    if( psItem->nOptions == CPL_MUTEX_REGULAR )
+    {
+        pthread_mutex_t tmp_mutex = PTHREAD_MUTEX_INITIALIZER;
+        psItem->sMutex = tmp_mutex;
+        return;
+    }
+    
+    /* When an adaptive mutex is required, we can safely fallback to regular */
     /* mutex if we don't have HAVE_PTHREAD_MUTEX_ADAPTIVE_NP */
-#if defined(HAVE_PTHREAD_MUTEX_ADAPTIVE_NP)
     if( psItem->nOptions == CPL_MUTEX_ADAPTIVE )
     {
+#if defined(HAVE_PTHREAD_MUTEX_ADAPTIVE_NP)
         pthread_mutexattr_t  attr;
         pthread_mutexattr_init( &attr );
         pthread_mutexattr_settype( &attr, PTHREAD_MUTEX_ADAPTIVE_NP );
         pthread_mutex_init( &(psItem->sMutex), &attr );
-    }
+#else
+        pthread_mutex_t tmp_mutex = PTHREAD_MUTEX_INITIALIZER;
+        psItem->sMutex = tmp_mutex;
 #endif
+        return;
+    }
 
 #if defined(PTHREAD_MUTEX_RECURSIVE) || defined(HAVE_PTHREAD_MUTEX_RECURSIVE)
     {
