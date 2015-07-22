@@ -5772,7 +5772,13 @@ int GDALDataset::EnterReadWrite(GDALRWFlag eRWFlag)
 {
     if( eAccess == GA_Update && (eRWFlag == GF_Write || m_hMutex != NULL) )
     {
-        CPLCreateOrAcquireMutex(&m_hMutex, 1000.0);
+        // There should be no race related to creating this mutex since
+        // it should be first created through IWriteBlock() / IRasterIO()
+        // and then GDALRasterBlock might call it from another thread
+        if( m_hMutex == NULL )
+            m_hMutex = CPLCreateMutex();
+        else
+            CPLAcquireMutex(m_hMutex, 1000.0);
         return TRUE;
     }
     return FALSE;
