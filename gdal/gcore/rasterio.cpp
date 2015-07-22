@@ -1245,7 +1245,7 @@ static void GDALCopyWordsT(const Tin* const pSrcData, int nSrcPixelStride,
 
     const char* const pSrcDataPtr = reinterpret_cast<const char*>(pSrcData);
     char* const pDstDataPtr = reinterpret_cast<char*>(pDstData);
-    for (std::ptrdiff_t n = 0; n < nWordCount; n++)
+    for (std::ptrdiff_t n = 0; n < nWordCount; n++  )
     {
         const Tin tValue = *reinterpret_cast<const Tin*>(pSrcDataPtr + (n * nSrcPixelStride));
         Tout* const pOutPixel = reinterpret_cast<Tout*>(pDstDataPtr + nDstOffset);
@@ -1254,6 +1254,64 @@ static void GDALCopyWordsT(const Tin* const pSrcData, int nSrcPixelStride,
 
         nDstOffset += nDstPixelStride;
     }
+}
+
+
+template <class Tin, class Tout>
+static void GDALCopyWordsT_4atatime(const Tin* const pSrcData, int nSrcPixelStride,
+                           Tout* const pDstData, int nDstPixelStride,
+                           int nWordCount)
+{
+    std::ptrdiff_t nDstOffset = 0;
+
+    const char* const pSrcDataPtr = reinterpret_cast<const char*>(pSrcData);
+    char* const pDstDataPtr = reinterpret_cast<char*>(pDstData);
+    std::ptrdiff_t n = 0;
+    if( nSrcPixelStride == (int)sizeof(Tin) && nDstPixelStride == (int)sizeof(Tout) )
+    {
+        for (; n < nWordCount-3; n+=4)
+        {
+            const Tin* pInValues = reinterpret_cast<const Tin*>(pSrcDataPtr + (n * nSrcPixelStride));
+            Tout* const pOutPixels = reinterpret_cast<Tout*>(pDstDataPtr + nDstOffset);
+
+            GDALCopy4Words(pInValues, pOutPixels);
+
+            nDstOffset += 4 * nDstPixelStride;
+        }
+    }
+    for( ; n < nWordCount; n++  )
+    {
+        const Tin tValue = *reinterpret_cast<const Tin*>(pSrcDataPtr + (n * nSrcPixelStride));
+        Tout* const pOutPixel = reinterpret_cast<Tout*>(pDstDataPtr + nDstOffset);
+
+        GDALCopyWord(tValue, *pOutPixel);
+
+        nDstOffset += nDstPixelStride;
+    }
+}
+
+static void GDALCopyWordsT(const float* const pSrcData, int nSrcPixelStride,
+                           GByte* const pDstData, int nDstPixelStride,
+                           int nWordCount)
+{
+    GDALCopyWordsT_4atatime(pSrcData, nSrcPixelStride,
+                            pDstData, nDstPixelStride, nWordCount);
+}
+
+static void GDALCopyWordsT(const float* const pSrcData, int nSrcPixelStride,
+                           GInt16* const pDstData, int nDstPixelStride,
+                           int nWordCount)
+{
+    GDALCopyWordsT_4atatime(pSrcData, nSrcPixelStride,
+                            pDstData, nDstPixelStride, nWordCount);
+}
+
+static void GDALCopyWordsT(const float* const pSrcData, int nSrcPixelStride,
+                           GUInt16* const pDstData, int nDstPixelStride,
+                           int nWordCount)
+{
+    GDALCopyWordsT_4atatime(pSrcData, nSrcPixelStride,
+                            pDstData, nDstPixelStride, nWordCount);
 }
 
 /************************************************************************/
@@ -1614,14 +1672,16 @@ GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelStride,
 
 #ifdef USE_NEW_COPYWORDS
 
-    int nSrcDataTypeSize = GDALGetDataTypeSize(eSrcType) / 8;
     // Let memcpy() handle the case where we're copying a packed buffer
     // of pixels.
-    if (eSrcType == eDstType && nSrcPixelStride == nDstPixelStride &&
-        nSrcPixelStride == nSrcDataTypeSize)
+    if (eSrcType == eDstType && nSrcPixelStride == nDstPixelStride )
     {
-        memcpy(pDstData, pSrcData, nWordCount * nSrcDataTypeSize);
-        return;
+        int nSrcDataTypeSize = GDALGetDataTypeSize(eSrcType) / 8;
+        if( nSrcPixelStride == nSrcDataTypeSize)
+        {
+            memcpy(pDstData, pSrcData, nWordCount * nSrcDataTypeSize);
+            return;
+        }
     }
 
     // Handle the more general case -- deals with conversion of data types

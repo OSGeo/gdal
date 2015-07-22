@@ -41,9 +41,9 @@ void AssertRes(GDALDataType intype, ConstantType inval, GDALDataType outtype, Co
     {
         std::cout << "Test failed at line " << numLine <<
                      " (intype=" << GDALGetDataTypeName(intype) << 
-                     ",inval=" << inval <<
+                     ",inval=" << (double)inval <<
                      ",outtype=" << GDALGetDataTypeName(outtype) << 
-                     ",got " << outval <<
+                     ",got " << (double)outval <<
                      " expected  " << expected_outval << std::endl;
         bErr = TRUE;
     }
@@ -87,6 +87,27 @@ void Test(GDALDataType intype, ConstantType inval, ConstantType invali,
 
         ASSERT(intype, invali, outtype, outvali, ((OutType*)(pOut + 128 - 16))[1]);
         ASSERT(intype, invali, outtype, outvali, ((OutType*)(pOut + 128 - 16 - 32))[1]);
+    }
+    else
+    {
+        *(InType*)(pIn + GDALGetDataTypeSize(intype)/8) = (InType)inval;
+        /* Test packed offsets */
+        GDALCopyWords(pIn, intype, GDALGetDataTypeSize(intype)/8,
+                      pOut, outtype, GDALGetDataTypeSize(outtype)/8, 2);
+
+        ASSERT(intype, inval, outtype, outval, *(OutType*)(pOut));
+        ASSERT(intype, inval, outtype, outval, *(OutType*)(pOut + GDALGetDataTypeSize(outtype)/8));
+
+        *(InType*)(pIn + 2 * GDALGetDataTypeSize(intype)/8) = (InType)inval;
+        *(InType*)(pIn + 3 * GDALGetDataTypeSize(intype)/8) = (InType)inval;
+        /* Test packed offsets */
+        GDALCopyWords(pIn, intype, GDALGetDataTypeSize(intype)/8,
+                      pOut, outtype, GDALGetDataTypeSize(outtype)/8, 4);
+
+        ASSERT(intype, inval, outtype, outval, *(OutType*)(pOut));
+        ASSERT(intype, inval, outtype, outval, *(OutType*)(pOut + GDALGetDataTypeSize(outtype)/8));
+        ASSERT(intype, inval, outtype, outval, *(OutType*)(pOut + 2 * GDALGetDataTypeSize(outtype)/8));
+        ASSERT(intype, inval, outtype, outval, *(OutType*)(pOut + 3 * GDALGetDataTypeSize(outtype)/8));
     }
 }
 
@@ -295,10 +316,21 @@ void check_GDT_Float32and64()
             {
                 FROM_R_F(intype, 127.1, outtype, 127);
                 FROM_R_F(intype, 127.9, outtype, 128);
+                
+                FROM_R_F(intype, 0.4, outtype, 0);
+                FROM_R_F(intype, 0.5, outtype, 1); /* We could argue how to do this rounding */
+                FROM_R_F(intype, 0.6, outtype, 1);
+                FROM_R_F(intype, 127.5, outtype, 128); /* We could argue how to do this rounding */
+                
                 if (!IS_UNSIGNED(outtype))
                 {
                     FROM_R_F(intype, -125.9, outtype, -126);
                     FROM_R_F(intype, -127.1, outtype, -127);
+                    
+                    FROM_R_F(intype, -0.4, outtype, 0);
+                    FROM_R_F(intype, -0.5, outtype, -1); /* We could argue how to do this rounding */
+                    FROM_R_F(intype, -0.6, outtype, -1);
+                    FROM_R_F(intype, -127.5, outtype, -128); /* We could argue how to do this rounding */
                 }
             }
         }
