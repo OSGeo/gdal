@@ -892,13 +892,13 @@ CPLErr MEMDataset::AddBand( GDALDataType eType, char **papszOptions )
     if( pszOption == NULL )
         nPixelOffset = nPixelSize;
     else
-        nPixelOffset = CPLScanUIntBig(pszOption, strlen(pszOption));
+        nPixelOffset = CPLAtoGIntBig(pszOption);
 
     pszOption = CSLFetchNameValue(papszOptions,"LINEOFFSET");
     if( pszOption == NULL )
         nLineOffset = GetRasterXSize() * (size_t)nPixelOffset;
     else
-        nLineOffset = CPLScanUIntBig(pszOption, strlen(pszOption));
+        nLineOffset = CPLAtoGIntBig(pszOption);
 
     SetBand( nBandId,
              new MEMRasterBand( this, nBandId, pData, eType, 

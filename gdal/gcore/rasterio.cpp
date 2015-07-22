@@ -789,16 +789,19 @@ CPLErr GDALRasterBand::RasterIOResampled( CPL_UNUSED GDALRWFlag eRWFlag,
     nRet = CPLPrintPointer(szBuffer, (GByte*)pData - nPixelSpace * nDestXOffVirtual
                             - nLineSpace * nDestYOffVirtual, sizeof(szBuffer));
     szBuffer[nRet] = 0;
-    char** papszOptions = CSLSetNameValue(NULL, "DATAPOINTER", szBuffer);
+    
+    char* apszOptions[4];
+    char szBuffer0[64], szBuffer1[64], szBuffer2[64];
+    sprintf(szBuffer0, "DATAPOINTER=%s", szBuffer);
+    sprintf(szBuffer1, "PIXELOFFSET="CPL_FRMT_GIB, (GIntBig)nPixelSpace);
+    sprintf(szBuffer2, "LINEOFFSET="CPL_FRMT_GIB, (GIntBig)nLineSpace);
+    apszOptions[0] = szBuffer0;
+    apszOptions[1] = szBuffer1;
+    apszOptions[2] = szBuffer2;
+    apszOptions[3] = NULL;
 
-    papszOptions = CSLSetNameValue(papszOptions, "PIXELOFFSET",
-                                CPLSPrintf(CPL_FRMT_GIB, (GIntBig)nPixelSpace));
+    poMEMDS->AddBand(eBufType, apszOptions);
 
-    papszOptions = CSLSetNameValue(papszOptions, "LINEOFFSET",
-                                CPLSPrintf(CPL_FRMT_GIB, (GIntBig)nLineSpace));
-
-    poMEMDS->AddBand(eBufType, papszOptions);
-    CSLDestroy(papszOptions);
     GDALRasterBandH hMEMBand = (GDALRasterBandH)poMEMDS->GetRasterBand(1);
     
     const char* pszNBITS = GetMetadataItem("NBITS", "IMAGE_STRUCTURE");
