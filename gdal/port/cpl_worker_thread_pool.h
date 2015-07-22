@@ -45,23 +45,39 @@ class CPLWorkerThreadPool;
 
 typedef struct
 {
+    CPLThreadFunc  pfnFunc;
+    void          *pData;
+} CPLWorkerThreadJob;
+
+typedef struct
+{
     CPLThreadFunc        pfnInitFunc;
     void                *pInitData;
     CPLWorkerThreadPool *poTP;
     CPLJoinableThread   *hThread;
+    int                  bMarkedAsWaiting;
+    //CPLWorkerThreadJob  *psNextJob;
+    
+    CPLMutex            *hMutex;
+    CPLCond             *hCond;
 } CPLWorkerThread;
 
 class CPL_DLL CPLWorkerThreadPool
 {
         std::vector<CPLWorkerThread> aWT;
         CPLCond* hCond;
-        CPLCond* hCondWarnSubmitter;
-        CPLMutex* hCondMutex;
+        CPLMutex* hMutex;
         volatile int bStop;
         CPLList* psJobQueue;
         volatile int nPendingJobs;
+        
+        CPLList* psWaitingWorkerThreadsList;
+        int nWaitingWorkerThreads;
 
         static void WorkerThreadFunction(void* user_data);
+
+        void DeclareJobFinished();
+        CPLWorkerThreadJob* GetNextJob(CPLWorkerThread* psWorkerThread);
 
     public:
         CPLWorkerThreadPool();
