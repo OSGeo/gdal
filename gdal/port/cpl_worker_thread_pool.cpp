@@ -300,7 +300,7 @@ int CPLWorkerThreadPool::Setup(int nThreads,
         aWT[i].hCond = CPLCreateCond();
         
         aWT[i].bMarkedAsWaiting = FALSE;
-        aWT[i].psNextJob = NULL;
+        //aWT[i].psNextJob = NULL;
         
         aWT[i].hThread = CPLCreateJoinableThread(WorkerThreadFunction, &(aWT[i]));
     }
