@@ -58,6 +58,12 @@ class CPL_DLL MEMDataset : public GDALDataset
     GDAL_GCP    *pasGCPs;
     CPLString    osGCPProjection;
 
+#if 0
+  protected:
+    virtual int                 EnterReadWrite(GDALRWFlag eRWFlag);
+    virtual void                LeaveReadWrite();
+#endif
+
   public:
                  MEMDataset();
     virtual      ~MEMDataset();

@@ -169,6 +169,18 @@ GIntBig GDALGetResponsiblePIDForCurrentThread()
 GDALDataset::GDALDataset()
 
 {
+    Init( CSLTestBoolean( 
+        CPLGetConfigOption( "GDAL_FORCE_CACHING", "NO") ) );
+}
+
+GDALDataset::GDALDataset(int bForceCachedIOIn)
+
+{
+    Init(bForceCachedIOIn);
+}
+
+void GDALDataset::Init(int bForceCachedIOIn)
+{
     poDriver = NULL;
     eAccess = GA_ReadOnly;
     nRasterXSize = 512;
@@ -185,13 +197,11 @@ GDALDataset::GDALDataset()
 /* -------------------------------------------------------------------- */
 /*      Set forced caching flag.                                        */
 /* -------------------------------------------------------------------- */
-    bForceCachedIO =  CSLTestBoolean( 
-        CPLGetConfigOption( "GDAL_FORCE_CACHING", "NO") );
+    bForceCachedIO = (GByte)bForceCachedIOIn;
     
     m_poStyleTable = NULL;
     m_hMutex = NULL;
 }
-
 
 /************************************************************************/
 /*                            ~GDALDataset()                            */

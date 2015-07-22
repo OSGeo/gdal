@@ -240,6 +240,7 @@ class CPL_DLL GDALPamRasterBand : public GDALRasterBand
 
   public:
                 GDALPamRasterBand();
+                GDALPamRasterBand(int bForceCachedIO);
     virtual     ~GDALPamRasterBand();
 
     virtual void        SetDescription( const char * );
