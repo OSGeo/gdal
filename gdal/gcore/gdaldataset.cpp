@@ -1821,21 +1821,27 @@ CPLErr GDALDataset::RasterIO( GDALRWFlag eRWFlag,
         nBandSpace = nLineSpace * nBufYSize;
     }
 
+    int anBandMap[] = { 1, 2, 3, 4 };
     if( panBandMap == NULL )
     {
-        panBandMap = (int *) VSIMalloc2(sizeof(int), nBandCount);
-        if (panBandMap == NULL)
+        if( nBandCount > 4 )
         {
-            ReportError( CE_Failure, CPLE_OutOfMemory,
-                      "Out of memory while allocating band map array" );
-            return CE_Failure;
+            panBandMap = (int *) VSIMalloc2(sizeof(int), nBandCount);
+            if (panBandMap == NULL)
+            {
+                ReportError( CE_Failure, CPLE_OutOfMemory,
+                          "Out of memory while allocating band map array" );
+                return CE_Failure;
+            }
+
+            for( i = 0; i < nBandCount; i++ )
+                panBandMap[i] = i+1;
+
+            bNeedToFreeBandMap = TRUE;
         }
-        for( i = 0; i < nBandCount; i++ )
-            panBandMap[i] = i+1;
-
-        bNeedToFreeBandMap = TRUE;
+        else
+            panBandMap = anBandMap;
     }
-
 
     int bCallLeaveReadWrite = EnterReadWrite(eRWFlag);
 
