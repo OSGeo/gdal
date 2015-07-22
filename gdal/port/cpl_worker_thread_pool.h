@@ -71,6 +71,7 @@ class CPL_DLL CPLWorkerThreadPool
                    CPLThreadFunc pfnInitFunc,
                    void** pasInitData);
         void SubmitJob(CPLThreadFunc pfnFunc, void* pData);
+        void SubmitJobs(CPLThreadFunc pfnFunc, const std::vector<void*>& apData);
         void WaitCompletion(int nMaxRemainingJobs = 0);
 
         int GetThreadCount() const { return (int)aWT.size(); }

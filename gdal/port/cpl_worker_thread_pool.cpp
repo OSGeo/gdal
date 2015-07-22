@@ -49,7 +49,7 @@ CPLWorkerThreadPool::CPLWorkerThreadPool()
 {
     hCond = NULL;
     hCondWarnSubmitter = NULL;
-    hCondMutex = CPLCreateMutex();
+    hCondMutex = CPLCreateMutexEx(CPL_MUTEX_REGULAR);
     CPLReleaseMutex(hCondMutex);
     bStop = FALSE;
     psJobQueue = NULL;
@@ -102,19 +102,40 @@ void CPLWorkerThreadPool::WorkerThreadFunction(void* user_data)
     poTP->nPendingJobs --;
     CPLCondSignal(poTP->hCondWarnSubmitter);
     CPLReleaseMutex(poTP->hCondMutex);
+    
+    int bSignalFinishedJob = FALSE;
 
     while( TRUE )
     {
+        int bStop;
+        CPLList* psItem;
         CPLAcquireMutex(poTP->hCondMutex, 1000.0);
-        int bStop = poTP->bStop;
-        CPLList* psItem = poTP->psJobQueue;
-        if( psItem )
+        
+        if( bSignalFinishedJob )
         {
-            poTP->psJobQueue = psItem->psNext;
-            psItem->psNext = NULL;
+            poTP->nPendingJobs --;
+            CPLCondSignal(poTP->hCondWarnSubmitter);
+            bSignalFinishedJob = FALSE;
         }
-        else if( !bStop )
-            CPLCondWait(poTP->hCond, poTP->hCondMutex);
+        
+        while(TRUE)
+        {
+            bStop = poTP->bStop;
+            if( bStop )
+                break;
+        
+            psItem = poTP->psJobQueue;
+            if( psItem )
+            {
+                poTP->psJobQueue = psItem->psNext;
+                psItem->psNext = NULL;
+                break;
+            }
+            else
+            {
+                CPLCondWait(poTP->hCond, poTP->hCondMutex);
+            }
+        }
         CPLReleaseMutex(poTP->hCondMutex);
         if( bStop )
             break;
@@ -128,10 +149,7 @@ void CPLWorkerThreadPool::WorkerThreadFunction(void* user_data)
             CPLFree(psJob);
             CPLFree(psItem);
 
-            CPLAcquireMutex(poTP->hCondMutex, 1000.0);
-            poTP->nPendingJobs --;
-            CPLCondSignal(poTP->hCondWarnSubmitter);
-            CPLReleaseMutex(poTP->hCondMutex);
+            bSignalFinishedJob = TRUE;
         }
     }
 }
@@ -160,6 +178,37 @@ void CPLWorkerThreadPool::SubmitJob(CPLThreadFunc pfnFunc, void* pData)
     psItem->psNext = psJobQueue;
     psJobQueue = psItem;
     CPLCondSignal(hCond);
+    CPLReleaseMutex(hCondMutex);
+}
+
+/************************************************************************/
+/*                             SubmitJobs()                              */
+/************************************************************************/
+
+/** Queue several jobs
+ *
+ * @param pfnFunc Function to run for the job.
+ * @param apData User data instances to pass to the job function.
+ */
+void CPLWorkerThreadPool::SubmitJobs(CPLThreadFunc pfnFunc, const std::vector<void*>& apData)
+{
+    CPLAssert( aWT.size() > 0 );
+    
+    CPLAcquireMutex(hCondMutex, 1000.0);
+    
+    for(size_t i=0;i<apData.size();i++)
+    {
+        CPLWorkerThreadJob* psJob = (CPLWorkerThreadJob*)CPLMalloc(sizeof(CPLWorkerThreadJob));
+        psJob->pfnFunc = pfnFunc;
+        psJob->pData = apData[i];
+        CPLList* psItem = (CPLList*) CPLMalloc(sizeof(CPLList));
+        psItem->pData = psJob;
+
+        nPendingJobs ++;
+        psItem->psNext = psJobQueue;
+        psJobQueue = psItem;
+    }
+    CPLCondBroadcast(hCond);
     CPLReleaseMutex(hCondMutex);
 }
 
