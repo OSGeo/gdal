@@ -1728,7 +1728,7 @@ def vrtpansharpen_9():
 
 def vrtpansharpen_10():
     
-    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/pan.tif',1024,1024,1,gdal.GDT_UInt16)
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/pan.tif',1023,1023,1,gdal.GDT_UInt16)
     ds.GetRasterBand(1).Fill(1000)
     ds = None
     ds = gdal.GetDriverByName('GTiff').Create('/vsimem/ms.tif',256,256,4,gdal.GDT_UInt16)
@@ -1739,6 +1739,7 @@ def vrtpansharpen_10():
     # 4 bands
     vrt_ds = gdal.Open("""<VRTDataset subClass="VRTPansharpenedDataset">
         <PansharpeningOptions>
+            <NumThreads>ALL_CPUS</NumThreads>
             <PanchroBand>
                     <SourceFilename relativeToVRT="1">/vsimem/pan.tif</SourceFilename>
                     <SourceBand>1</SourceBand>
@@ -1762,14 +1763,26 @@ def vrtpansharpen_10():
         </PansharpeningOptions>
     </VRTDataset>""")
     cs = [ vrt_ds.GetRasterBand(i+1).Checksum() for i in range(vrt_ds.RasterCount) ]
-    if cs != [17869, 17869, 17869, 17869]:
+    if cs != [62009, 62009, 62009, 62009]:
         gdaltest.post_reason('fail')
         print(cs)
+        return 'fail'
+    
+    # Actually go through the optimized impl
+    data = vrt_ds.ReadRaster()
+    # And check
+    data_int32 = vrt_ds.ReadRaster(buf_type = gdal.GDT_Int32)
+    tmp_ds = gdal.GetDriverByName('MEM').Create('', vrt_ds.RasterXSize, vrt_ds.RasterYSize, vrt_ds.RasterCount, gdal.GDT_Int32)
+    tmp_ds.WriteRaster(0, 0, vrt_ds.RasterXSize, vrt_ds.RasterYSize, data_int32)
+    ref_data = tmp_ds.ReadRaster(buf_type = gdal.GDT_UInt16)
+    if data != ref_data:
+        gdaltest.post_reason('fail')
         return 'fail'
 
     # 4 bands -> 3 bands
     vrt_ds = gdal.Open("""<VRTDataset subClass="VRTPansharpenedDataset">
         <PansharpeningOptions>
+            <NumThreads>ALL_CPUS</NumThreads>
             <PanchroBand>
                     <SourceFilename relativeToVRT="1">/vsimem/pan.tif</SourceFilename>
                     <SourceBand>1</SourceBand>
@@ -1793,14 +1806,26 @@ def vrtpansharpen_10():
         </PansharpeningOptions>
     </VRTDataset>""")
     cs = [ vrt_ds.GetRasterBand(i+1).Checksum() for i in range(vrt_ds.RasterCount) ]
-    if cs != [17869, 17869, 17869]:
+    if cs != [62009, 62009, 62009]:
         gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
-
+    
+    # Actually go through the optimized impl
+    data = vrt_ds.ReadRaster()
+    # And check
+    data_int32 = vrt_ds.ReadRaster(buf_type = gdal.GDT_Int32)
+    tmp_ds = gdal.GetDriverByName('MEM').Create('', vrt_ds.RasterXSize, vrt_ds.RasterYSize, vrt_ds.RasterCount, gdal.GDT_Int32)
+    tmp_ds.WriteRaster(0, 0, vrt_ds.RasterXSize, vrt_ds.RasterYSize, data_int32)
+    ref_data = tmp_ds.ReadRaster(buf_type = gdal.GDT_UInt16)
+    if data != ref_data:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    
     # 3 bands
     vrt_ds = gdal.Open("""<VRTDataset subClass="VRTPansharpenedDataset">
         <PansharpeningOptions>
+            <NumThreads>ALL_CPUS</NumThreads>
             <PanchroBand>
                     <SourceFilename relativeToVRT="1">/vsimem/pan.tif</SourceFilename>
                     <SourceBand>1</SourceBand>
@@ -1820,11 +1845,22 @@ def vrtpansharpen_10():
         </PansharpeningOptions>
     </VRTDataset>""")
     cs = [ vrt_ds.GetRasterBand(i+1).Checksum() for i in range(vrt_ds.RasterCount) ]
-    if cs != [17869, 17869, 17869]:
+    if cs != [62009, 62009, 62009]:
         gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
-        
+    
+    # Actually go through the optimized impl
+    data = vrt_ds.ReadRaster()
+    # And check
+    data_int32 = vrt_ds.ReadRaster(buf_type = gdal.GDT_Int32)
+    tmp_ds = gdal.GetDriverByName('MEM').Create('', vrt_ds.RasterXSize, vrt_ds.RasterYSize, vrt_ds.RasterCount, gdal.GDT_Int32)
+    tmp_ds.WriteRaster(0, 0, vrt_ds.RasterXSize, vrt_ds.RasterYSize, data_int32)
+    ref_data = tmp_ds.ReadRaster(buf_type = gdal.GDT_UInt16)
+    if data != ref_data:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    
     return 'success'
 
 ###############################################################################
