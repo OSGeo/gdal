@@ -1048,24 +1048,27 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
         /* Create a MEM dataset that wraps the input buffer */
         GDALDataset* poMEMDS = MEMDataset::Create("", nXSizeExtract, nYSizeExtract, 0,
                                                   eWorkDataType, NULL);
-        char szBuffer[64];
-        int nRet;
+
+        char* apszOptions[4];
+        char szBuffer0[64], szBuffer1[64], szBuffer2[64];
+
+        sprintf(szBuffer1, "PIXELOFFSET="CPL_FRMT_GIB, (GIntBig)nDataTypeSize);
+        sprintf(szBuffer2, "LINEOFFSET="CPL_FRMT_GIB, (GIntBig)nDataTypeSize * nXSizeExtract);
+        apszOptions[0] = szBuffer0;
+        apszOptions[1] = szBuffer1;
+        apszOptions[2] = szBuffer2;
+        apszOptions[3] = NULL;
 
         for( int i = 0; i < psOptions->nInputSpectralBands; i++ )
         {
-            nRet = CPLPrintPointer(szBuffer,
+            char szBuffer[64];
+            int nRet = CPLPrintPointer(szBuffer,
                        pSpectralBuffer + (size_t)i * nDataTypeSize * nXSizeExtract * nYSizeExtract, sizeof(szBuffer));
             szBuffer[nRet] = 0;
-            char** papszOptions = CSLSetNameValue(NULL, "DATAPOINTER", szBuffer);
-
-            papszOptions = CSLSetNameValue(papszOptions, "PIXELOFFSET",
-                CPLSPrintf(CPL_FRMT_GIB, (GIntBig)nDataTypeSize));
-
-            papszOptions = CSLSetNameValue(papszOptions, "LINEOFFSET",
-                CPLSPrintf(CPL_FRMT_GIB, (GIntBig)nDataTypeSize * nXSizeExtract));
-
-            poMEMDS->AddBand(eWorkDataType, papszOptions);
-            CSLDestroy(papszOptions);
+            
+            sprintf(szBuffer0, "DATAPOINTER=%s", szBuffer);
+            
+            poMEMDS->AddBand(eWorkDataType, apszOptions);
 
             const char* pszNBITS = aMSBands[i]->GetMetadataItem("NBITS", "IMAGE_STRUCTURE");
             if( pszNBITS )
@@ -1094,6 +1097,8 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
         
         std::vector<GDALPansharpenResampleJob> anJobs;
         anJobs.resize( nTasks );
+        std::vector<void*> ahJobData;
+        ahJobData.resize( nTasks );
         for( int i=0;i<nTasks;i++)
         {
             size_t iStartLine = ((size_t)i * nYSize) / nTasks;
@@ -1118,8 +1123,9 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
             anJobs[i].nBufYSize = (int)(iNextStartLine - iStartLine);
             anJobs[i].nBandCount = psOptions->nInputSpectralBands;
             anJobs[i].nBandSpace = (GSpacing)nXSize * nYSize * nDataTypeSize;
-            poThreadPool->SubmitJob(PansharpenResampleJobThreadFunc, &(anJobs[i]));
+            ahJobData[i] = &(anJobs[i]);
         }
+        poThreadPool->SubmitJobs(PansharpenResampleJobThreadFunc, ahJobData);
         poThreadPool->WaitCompletion();
 #endif
 
@@ -1225,6 +1231,8 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
     {
         std::vector<GDALPansharpenJob> anJobs;
         anJobs.resize( nTasks );
+        std::vector<void*> ahJobData;
+        ahJobData.resize( nTasks );
         
         for( int i=0;i<nTasks;i++)
         {
@@ -1239,8 +1247,9 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
             anJobs[i].nValues = (int)(iNextStartLine - iStartLine) * nXSize;
             anJobs[i].nBandValues = nXSize * nYSize;
             anJobs[i].nMaxValue = nMaxValue;
-            poThreadPool->SubmitJob(PansharpenJobThreadFunc, &(anJobs[i]));
+            ahJobData[i] = &(anJobs[i]);
         }
+        poThreadPool->SubmitJobs(PansharpenJobThreadFunc, ahJobData);
         poThreadPool->WaitCompletion();
         eErr = CE_None;
         for( int i=0;i<nTasks;i++)
