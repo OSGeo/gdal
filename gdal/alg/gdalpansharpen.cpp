@@ -341,7 +341,7 @@ CPLErr GDALPansharpenOperation::Initialize(const GDALPansharpenOptions* psOption
     if( nThreads > 1 )
     {
         poThreadPool = new CPLWorkerThreadPool();
-        if( !poThreadPool->Setup( CPLGetNumCPUs(), NULL, NULL ) )
+        if( !poThreadPool->Setup( nThreads, NULL, NULL ) )
         {
             delete poThreadPool;
             poThreadPool = NULL;
