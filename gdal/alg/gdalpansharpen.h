@@ -238,7 +238,7 @@ class GDALPansharpenOperation
                                                      int nBandValues,
                                                      GUInt16 nMaxValue) const;
 
-        template<int NINPUT, int NOUTPUT> void WeightedBroveyPositiveWeightsInternal(
+        template<int NINPUT, int NOUTPUT> int WeightedBroveyPositiveWeightsInternal(
                                                      const GUInt16* pPanBuffer,
                                                      const GUInt16* pUpsampledSpectralBuffer,
                                                      GUInt16* pDataBuf,

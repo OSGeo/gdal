@@ -502,7 +502,7 @@ template<class WorkDataType, class OutDataType, int bHasBitDepth>
 #include <gdalsse_priv.h>
 
 template<int NINPUT, int NOUTPUT>
-void GDALPansharpenOperation::WeightedBroveyPositiveWeightsInternal(
+int GDALPansharpenOperation::WeightedBroveyPositiveWeightsInternal(
                                                      const GUInt16* pPanBuffer,
                                                      const GUInt16* pUpsampledSpectralBuffer,
                                                      GUInt16* pDataBuf,
@@ -511,45 +511,46 @@ void GDALPansharpenOperation::WeightedBroveyPositiveWeightsInternal(
                                                      GUInt16 nMaxValue) const
 {
     CPLAssert( NINPUT == 3 || NINPUT == 4 );
-    const XMMReg2Double w0 = XMMReg2Double::Load1ValHighAndLow(psOptions->padfWeights + 0);
-    const XMMReg2Double w1 = XMMReg2Double::Load1ValHighAndLow(psOptions->padfWeights + 1);
-    const XMMReg2Double w2 = XMMReg2Double::Load1ValHighAndLow(psOptions->padfWeights + 2);
-    const XMMReg2Double w3 = (NINPUT == 3) ? XMMReg2Double::Zero() : XMMReg2Double::Load1ValHighAndLow(psOptions->padfWeights + 3);
+    const XMMReg4Double w0 = XMMReg4Double::Load1ValHighAndLow(psOptions->padfWeights + 0);
+    const XMMReg4Double w1 = XMMReg4Double::Load1ValHighAndLow(psOptions->padfWeights + 1);
+    const XMMReg4Double w2 = XMMReg4Double::Load1ValHighAndLow(psOptions->padfWeights + 2);
+    const XMMReg4Double w3 = (NINPUT == 3) ? XMMReg4Double::Zero() :
+                    XMMReg4Double::Load1ValHighAndLow(psOptions->padfWeights + 3);
 
-    const XMMReg2Double zero = XMMReg2Double::Zero();
+    const XMMReg4Double zero = XMMReg4Double::Zero();
     double dfMaxValue = nMaxValue;
-    const XMMReg2Double maxValue = XMMReg2Double::Load1ValHighAndLow(&dfMaxValue);
+    const XMMReg4Double maxValue = XMMReg4Double::Load1ValHighAndLow(&dfMaxValue);
     
-    for(int j=0;j<nValues-1;j+=2)
+    int j;
+    for(j=0;j<nValues-3;j+=4)
     {
-        XMMReg2Double pseudoPanchro = zero;
+        XMMReg4Double pseudoPanchro = zero;
 
-        pseudoPanchro += w0 * XMMReg2Double::Load2Val(pUpsampledSpectralBuffer + j);
-        pseudoPanchro += w1 * XMMReg2Double::Load2Val(pUpsampledSpectralBuffer + nBandValues + j);
-        pseudoPanchro += w2 * XMMReg2Double::Load2Val(pUpsampledSpectralBuffer + 2 * nBandValues + j);
+        pseudoPanchro += w0 * XMMReg4Double::Load4Val(pUpsampledSpectralBuffer + j);
+        pseudoPanchro += w1 * XMMReg4Double::Load4Val(pUpsampledSpectralBuffer + nBandValues + j);
+        pseudoPanchro += w2 * XMMReg4Double::Load4Val(pUpsampledSpectralBuffer + 2 * nBandValues + j);
         if( NINPUT == 4 )
-            pseudoPanchro += w3 * XMMReg2Double::Load2Val(pUpsampledSpectralBuffer + 3 * nBandValues + j);
+            pseudoPanchro += w3 * XMMReg4Double::Load4Val(pUpsampledSpectralBuffer + 3 * nBandValues + j);
 
         /* Little trick to avoid use of ternary operator due to one of the branch being zero */
-        XMMReg2Double factor = XMMReg2Double::And(
-            XMMReg2Double::NotEquals(pseudoPanchro, zero),
-            XMMReg2Double::Load2Val(pPanBuffer + j) / pseudoPanchro );
+        XMMReg4Double factor = XMMReg4Double::And(
+            XMMReg4Double::NotEquals(pseudoPanchro, zero),
+            XMMReg4Double::Load4Val(pPanBuffer + j) / pseudoPanchro );
 
         for(int i=0;i<NOUTPUT;i++)
         {
-            XMMReg2Double rawValue = XMMReg2Double::Load2Val(pUpsampledSpectralBuffer + i * nBandValues + j);
-            XMMReg2Double tmp = XMMReg2Double::Min(rawValue * factor, maxValue);
-            __m128i tmp2 = _mm_cvtpd_epi32(tmp.xmm); /* Convert the 2 double values to 2 integers */
-            pDataBuf[i * nBandValues + j] = (GUInt16)_mm_extract_epi16(tmp2, 0);
-            pDataBuf[i * nBandValues + j + 1] = (GUInt16)_mm_extract_epi16(tmp2, 2);
+            XMMReg4Double rawValue = XMMReg4Double::Load4Val(pUpsampledSpectralBuffer + i * nBandValues + j);
+            XMMReg4Double tmp = XMMReg4Double::Min(rawValue * factor, maxValue);
+            tmp.Store4Val(pDataBuf + i * nBandValues + j);
         }
     }
+    return j;
 }
 
 #else
 
 template<int NINPUT, int NOUTPUT>
-void GDALPansharpenOperation::WeightedBroveyPositiveWeightsInternal(
+int GDALPansharpenOperation::WeightedBroveyPositiveWeightsInternal(
                                                      const GUInt16* pPanBuffer,
                                                      const GUInt16* pUpsampledSpectralBuffer,
                                                      GUInt16* pDataBuf,
@@ -562,7 +563,8 @@ void GDALPansharpenOperation::WeightedBroveyPositiveWeightsInternal(
     const double dfw1 = psOptions->padfWeights[1];
     const double dfw2 = psOptions->padfWeights[2];
     const double dfw3 = (NINPUT == 3) ? 0 : psOptions->padfWeights[3];
-    for(int j=0;j<nValues-1;j+=2)
+    int j;
+    for(j=0;j<nValues-1;j+=2)
     {
         double dfFactor, dfFactor2;
         double dfPseudoPanchro = 0;
@@ -619,6 +621,7 @@ void GDALPansharpenOperation::WeightedBroveyPositiveWeightsInternal(
                 pDataBuf[i * nBandValues + j + 1] = (GUInt16)(dfTmp2 + 0.5);
         }
     }
+    return j;
 }
 #endif
 
@@ -647,9 +650,8 @@ void GDALPansharpenOperation::WeightedBroveyPositiveWeights(
         psOptions->panOutPansharpenedBands[1] == 1 &&
         psOptions->panOutPansharpenedBands[2] == 2 ) 
     {
-        WeightedBroveyPositiveWeightsInternal<3,3>(
+        j = WeightedBroveyPositiveWeightsInternal<3,3>(
             pPanBuffer, pUpsampledSpectralBuffer, pDataBuf, nValues, nBandValues, nMaxValue);
-        j = (nValues / 2) * 2;
     }
     else if( psOptions->nInputSpectralBands == 4 &&
         psOptions->nOutPansharpenedBands == 4 &&
@@ -658,9 +660,8 @@ void GDALPansharpenOperation::WeightedBroveyPositiveWeights(
         psOptions->panOutPansharpenedBands[2] == 2 &&
         psOptions->panOutPansharpenedBands[3] == 3 ) 
     {
-        WeightedBroveyPositiveWeightsInternal<4,4>(
+        j = WeightedBroveyPositiveWeightsInternal<4,4>(
             pPanBuffer, pUpsampledSpectralBuffer, pDataBuf, nValues, nBandValues, nMaxValue);
-        j = (nValues / 2) * 2;
     }
     else if( psOptions->nInputSpectralBands == 4 &&
         psOptions->nOutPansharpenedBands == 3 &&
@@ -668,9 +669,8 @@ void GDALPansharpenOperation::WeightedBroveyPositiveWeights(
         psOptions->panOutPansharpenedBands[1] == 1 &&
         psOptions->panOutPansharpenedBands[2] == 2 ) 
     {
-        WeightedBroveyPositiveWeightsInternal<4,3>(
+        j = WeightedBroveyPositiveWeightsInternal<4,3>(
             pPanBuffer, pUpsampledSpectralBuffer, pDataBuf, nValues, nBandValues, nMaxValue);
-        j = (nValues / 2) * 2;
     }
     else
     {
@@ -715,7 +715,7 @@ void GDALPansharpenOperation::WeightedBroveyPositiveWeights(
             }
         }
     }
-    if(j<nValues)
+    for( ;j<nValues ;j++)
     {
         double dfFactor;
         double dfPseudoPanchro = 0;
