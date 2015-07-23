@@ -326,6 +326,13 @@ CPLErr MEMDataset::IRasterIO( GDALRWFlag eRWFlag,
         }
     }
     
+    if( nBufXSize != nXSize || nBufYSize != nYSize )
+        return GDALDataset::IRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize, 
+                                   pData, nBufXSize, nBufYSize,
+                                   eBufType, nBandCount, panBandMap,
+                                   nPixelSpaceBuf, nLineSpaceBuf, nBandSpaceBuf,
+                                   psExtraArg );
+    
     GDALProgressFunc  pfnProgressGlobal = psExtraArg->pfnProgress;
     void             *pProgressDataGlobal = psExtraArg->pProgressData;
 
