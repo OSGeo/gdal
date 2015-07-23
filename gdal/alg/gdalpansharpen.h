@@ -96,7 +96,8 @@ typedef struct
         This will also be use has the output nodata value. */
     double               dfNoData;
     
-    /*! Number of threads. -1 means ALL_CPUS. By default, single threaded mode is enabled. */
+    /** Number of threads or -1 to mean ALL_CPUS. By default (0), single threaded mode is enabled
+      * unless the GDAL_NUM_THREADS configuration option is set to an integer or ALL_CPUS. */
     int                  nThreads;
 
 } GDALPansharpenOptions;
@@ -126,6 +127,10 @@ CPL_C_END
 #include "gdal_priv.h"
 #include "cpl_worker_thread_pool.h"
 
+#ifdef DEBUG_TIMING
+#include <sys/time.h>
+#endif
+
 class GDALPansharpenOperation;
 
 typedef struct
@@ -139,6 +144,10 @@ typedef struct
     int nValues;
     int nBandValues;
     GUInt32 nMaxValue;
+    
+#ifdef DEBUG_TIMING
+    struct timeval* ptv;
+#endif
     
     CPLErr eErr;
 } GDALPansharpenJob;
@@ -161,6 +170,10 @@ typedef struct
     int          nBandCount;
     GDALRIOResampleAlg eResampleAlg;
     GSpacing     nBandSpace;
+        
+#ifdef DEBUG_TIMING
+    struct timeval* ptv;
+#endif
 } GDALPansharpenResampleJob;
 
 /** Pansharpening operation class.

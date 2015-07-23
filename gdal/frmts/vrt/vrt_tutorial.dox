@@ -1045,7 +1045,9 @@ as declared input spectral bands.</li>
 <li> <b>Resampling</b>: the resampling kernel used to resample the spectral bands
 to the resolution of the panchromatic band. Can be one of Cubic (default), Average,
 Near, CubicSpline, Bilinear, Lanczos.</li>
-<li> <b>NumThreads</b>: Number of worker threads. Integer number or ALL_CPUS.</li>
+<li> <b>NumThreads</b>: Number of worker threads. Integer number or ALL_CPUS.
+If this option is not set, the GDAL_NUM_THREADS configuration option will be queried
+(its value can also be set to an integer or ALL_CPUS)</li>
 <li> <b>BitDepth</b>: Can be used to specify the bit depth of the panchromatic and
 spectral bands (e.g. 12). If not specified, the NBITS metadata item from the
 panchromatic band will be used if it exists.</li>
