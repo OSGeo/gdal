@@ -280,6 +280,10 @@ CPLXMLNode *GDALMultiDomainMetadata::Serialize()
          iDomain++)
     {
         char **papszMD = papoMetadataLists[iDomain]->List();
+        // Do not serialize empty domains
+        if( papszMD == NULL || papszMD[0] == NULL )
+            continue;
+
         CPLXMLNode *psMD;
         int bFormatXML = FALSE;
         
@@ -309,6 +313,7 @@ CPLXMLNode *GDALMultiDomainMetadata::Serialize()
         if( !bFormatXML )
         {
             CPLXMLNode* psLastChild = NULL;
+            // To go after domain attribute
             if( psMD->psChild != NULL )
             {
                 psLastChild = psMD->psChild;

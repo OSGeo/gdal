@@ -34,6 +34,8 @@
 #include "ogr_api.h"
 #include "ogr_geometry.h"
 
+#include "../mem/memdataset.h"
+
 CPL_CVSID("$Id$");
 
 #undef NOISY_DEBUG
@@ -277,7 +279,7 @@ CPLErr ECWRasterBand::AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
 /************************************************************************/
 
 CPLErr ECWRasterBand::GetDefaultHistogram( double *pdfMin, double *pdfMax,
-    int *pnBuckets, int ** ppanHistogram,
+    int *pnBuckets, GUIntBig ** ppanHistogram,
     int bForce,
     GDALProgressFunc f, void *pProgressData)
 {
@@ -305,9 +307,9 @@ CPLErr ECWRasterBand::GetDefaultHistogram( double *pdfMin, double *pdfMax,
         NCSBandStats& bandStats = poGDS->pStatistics->BandsStats[nStatsBandIndex];
         if ( bandStats.Histogram != NULL && bandStats.nHistBucketCount > 0 ){
             *pnBuckets = bandStats.nHistBucketCount;
-            *ppanHistogram = (int *)VSIMalloc(bandStats.nHistBucketCount *sizeof(int));
+            *ppanHistogram = (GUIntBig *)VSIMalloc(bandStats.nHistBucketCount *sizeof(GUIntBig));
             for (size_t i = 0; i < bandStats.nHistBucketCount; i++){
-                (*ppanHistogram)[i] = (int) bandStats.Histogram[i];
+                (*ppanHistogram)[i] = (GUIntBig) bandStats.Histogram[i];
             }
             //JTO: this is not perfect as You can't tell who wrote the histogram !!! 
             //It will offset it unnecesarilly for files with hists not modified by GDAL. 
@@ -357,7 +359,7 @@ CPLErr ECWRasterBand::GetDefaultHistogram( double *pdfMin, double *pdfMax,
 /************************************************************************/
 
 CPLErr ECWRasterBand::SetDefaultHistogram( double dfMin, double dfMax,
-                                           int nBuckets, int *panHistogram )
+                                           int nBuckets, GUIntBig *panHistogram )
 {
     //Only version 3 supports saving statistics. 
     if (poGDS->psFileInfo->nFormatVersion < 3 || eBandInterp == GCI_AlphaBand){
@@ -367,7 +369,7 @@ CPLErr ECWRasterBand::SetDefaultHistogram( double dfMin, double dfMax,
     //determine if there are statistics in PAM file. 
     double dummy;
     int dummy_i;
-    int *dummy_histogram;
+    GUIntBig *dummy_histogram;
     bool hasPAMDefaultHistogram = GDALPamRasterBand::GetDefaultHistogram(&dummy, &dummy, &dummy_i, &dummy_histogram, FALSE, NULL, NULL) == CE_None;
     if (hasPAMDefaultHistogram){
         VSIFree(dummy_histogram);
@@ -1010,7 +1012,7 @@ ECWDataset::~ECWDataset()
     //
     // We also have an issue with ECW SDK 5.0 and ECW files on Linux when
     // running a multi-threaded test under Java if there's still an ECW dataset
-    // not explicitely closed at process termination.
+    // not explicitly closed at process termination.
     /*  #0  0x00007fffb26e7a80 in NCSAtomicAdd64 () from /home/even/ecwjp2_sdk/redistributable/x64/libNCSEcw.so
         #1  0x00007fffb2aa7684 in NCS::SDK::CBuffer2D::Free() () from /home/even/ecwjp2_sdk/redistributable/x64/libNCSEcw.so
         #2  0x00007fffb2aa7727 in NCS::SDK::CBuffer2D::~CBuffer2D() () from /home/even/ecwjp2_sdk/redistributable/x64/libNCSEcw.so
@@ -1817,6 +1819,76 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
     if ( nBandSpace == 0 ){
         nBandSpace = nDataTypeSize*nBufXSize*nBufYSize;
     }
+    
+    // Use GDAL upsampling if non nearest
+    if( (nBufXSize > nXSize || nBufYSize > nYSize) &&
+        psExtraArg->eResampleAlg != GRIORA_NearestNeighbour )
+    {
+        int nBufDataTypeSize = (GDALGetDataTypeSize(eBufType) / 8);
+        GByte* pabyTemp = (GByte*)VSIMalloc3(nXSize, nYSize, nBufDataTypeSize * nBandCount);
+        if( pabyTemp == NULL )
+        {
+            CPLError( CE_Failure, CPLE_OutOfMemory, 
+                          "Failed to allocate %d byte intermediate decompression buffer for jpeg2000.", 
+                          nXSize * nYSize * nBufDataTypeSize * nBandCount );
+            return CE_Failure;
+        }
+        
+        CPLErr eErr = IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                                pabyTemp, nXSize, nYSize,
+                                eBufType, nBandCount, panBandMap,
+                                nBufDataTypeSize,
+                                (GIntBig)nBufDataTypeSize* nXSize,
+                                (GIntBig)nBufDataTypeSize*nXSize*nYSize,
+                                psExtraArg);
+        
+        if( eErr == CE_None )
+        {
+            /* Create a MEM dataset that wraps the input buffer */
+            GDALDataset* poMEMDS = MEMDataset::Create("", nXSize, nYSize, 0,
+                                                      eBufType, NULL);
+            char szBuffer[64];
+            int nRet;
+
+            for( int i = 0; i < nBandCount; i++ )
+            {
+                nRet = CPLPrintPointer(szBuffer, pabyTemp + i * nBufDataTypeSize, sizeof(szBuffer));
+                szBuffer[nRet] = 0;
+                char** papszOptions = CSLSetNameValue(NULL, "DATAPOINTER", szBuffer);
+
+                papszOptions = CSLSetNameValue(papszOptions, "PIXELOFFSET",
+                    CPLSPrintf(CPL_FRMT_GIB, (GIntBig)nBufDataTypeSize * nBandCount));
+
+                papszOptions = CSLSetNameValue(papszOptions, "LINEOFFSET",
+                    CPLSPrintf(CPL_FRMT_GIB, (GIntBig)nBufDataTypeSize * nBandCount * nXSize));
+
+                poMEMDS->AddBand(eBufType, papszOptions);
+                CSLDestroy(papszOptions);
+
+                const char* pszNBITS = GetRasterBand(i+1)->GetMetadataItem("NBITS", "IMAGE_STRUCTURE");
+                if( pszNBITS )
+                    poMEMDS->GetRasterBand(i+1)->SetMetadataItem("NBITS", pszNBITS, "IMAGE_STRUCTURE");
+            }
+
+            GDALRasterIOExtraArg sExtraArgTmp;
+            INIT_RASTERIO_EXTRA_ARG(sExtraArgTmp);
+            sExtraArgTmp.eResampleAlg = psExtraArg->eResampleAlg;
+
+            poMEMDS->RasterIO(GF_Read, 0, 0, nXSize, nYSize,
+                                pData, nBufXSize, nBufYSize,
+                                eBufType,
+                                nBandCount, NULL,
+                                nPixelSpace, nLineSpace, nBandSpace,
+                                &sExtraArgTmp);
+
+            GDALClose(poMEMDS);
+        }
+
+        VSIFree(pabyTemp);
+        
+        return eErr;
+    }
+    
 /* -------------------------------------------------------------------- */
 /*      ECW SDK 3.3 has a bug with the ECW format when we query the     */
 /*      number of bands of the dataset, but not in the "natural order". */
@@ -2730,7 +2802,25 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJPEG2000 )
 /* -------------------------------------------------------------------- */
     poDS->SetDescription( osFilename );
     poDS->TryLoadXML();
-    
+
+/* -------------------------------------------------------------------- */
+/*      Vector layers                                                   */
+/* -------------------------------------------------------------------- */
+    if( bIsJPEG2000 && poOpenInfo->nOpenFlags & GDAL_OF_VECTOR )
+    {
+        poDS->LoadVectorLayers(
+            CSLFetchBoolean(poOpenInfo->papszOpenOptions, "OPEN_REMOTE_GML", FALSE));
+
+        // If file opened in vector-only mode and there's no vector,
+        // return
+        if( (poOpenInfo->nOpenFlags & GDAL_OF_RASTER) == 0 &&
+            poDS->GetLayerCount() == 0 )
+        {
+            delete poDS;
+            return NULL;
+        }
+    }
+
     return( poDS );
 }
 
@@ -3422,6 +3512,7 @@ void GDALRegister_JP2ECW()
         
         poDriver->SetDescription( "JP2ECW" );
         poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
 
         CPLString osLongName = "ERDAS JPEG2000 (SDK ";
 
@@ -3444,6 +3535,7 @@ void GDALRegister_JP2ECW()
         poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST, 
 "<OpenOptionList>"
 "   <Option name='1BIT_ALPHA_PROMOTION' type='boolean' description='Whether a 1-bit alpha channel should be promoted to 8-bit' default='YES'/>"
+"   <Option name='OPEN_REMOTE_GML' type='boolean' description='Whether to load remote vector layers referenced by a link in a GMLJP2 v2 box' default='NO'/>"
 "</OpenOptionList>" );
 
 #ifdef HAVE_COMPRESS
@@ -3470,6 +3562,7 @@ void GDALRegister_JP2ECW()
 
 "   <Option name='GeoJP2' type='boolean' description='defaults to ON'/>"
 "   <Option name='GMLJP2' type='boolean' description='defaults to ON'/>"
+"   <Option name='GMLJP2V2_DEF' type='string' description='Definition file to describe how a GMLJP2 v2 box should be generated. If set to YES, a minimal instance will be created'/>"
 "   <Option name='PROFILE' type='string-select'>"
 "       <Value>BASELINE_0</Value>"
 "       <Value>BASELINE_1</Value>"

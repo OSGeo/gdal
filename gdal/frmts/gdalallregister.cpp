@@ -387,6 +387,7 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_SNODAS();
     GDALRegister_KRO();
     GDALRegister_ROIPAC();
+    GDALRegister_ISCE();
 #endif
 
 #ifdef FRMT_arg
@@ -521,6 +522,14 @@ void CPL_STDCALL GDALAllRegister()
 
 #ifdef FRMT_plmosaic
     GDALRegister_PLMOSAIC();
+#endif
+
+#ifdef FRMT_cals
+    GDALRegister_CALS();
+#endif
+
+#ifdef FRMT_wmts
+    GDALRegister_WMTS();
 #endif
 
     OGRRegisterAllInternal();

@@ -328,6 +328,10 @@ class CPL_DLL OGRFeature
                                      int *pnYear, int *pnMonth, int *pnDay,
                                      int *pnHour, int *pnMinute, int *pnSecond, 
                                      int *pnTZFlag );
+    int                 GetFieldAsDateTime( int i, 
+                                     int *pnYear, int *pnMonth, int *pnDay,
+                                     int *pnHour, int *pnMinute, float *pfSecond, 
+                                     int *pnTZFlag );
 
     int                 GetFieldAsInteger( const char *pszFName )
                       { return GetFieldAsInteger( GetFieldIndex(pszFName) ); }
@@ -363,7 +367,7 @@ class CPL_DLL OGRFeature
     void                SetField( int i, OGRField * puValue );
     void                SetField( int i, int nCount, GByte * pabyBinary );
     void                SetField( int i, int nYear, int nMonth, int nDay,
-                                  int nHour=0, int nMinute=0, int nSecond=0, 
+                                  int nHour=0, int nMinute=0, float fSecond=0.f, 
                                   int nTZFlag = 0 );
 
     void                SetField( const char *pszFName, int nValue )
@@ -389,11 +393,11 @@ class CPL_DLL OGRFeature
                            { SetField( GetFieldIndex(pszFName), puValue ); }
     void                SetField( const char *pszFName, 
                                   int nYear, int nMonth, int nDay,
-                                  int nHour=0, int nMinute=0, int nSecond=0, 
+                                  int nHour=0, int nMinute=0, float fSecond=0.f, 
                                   int nTZFlag = 0 )
                            { SetField( GetFieldIndex(pszFName), 
                                        nYear, nMonth, nDay, 
-                                       nHour, nMinute, nSecond, nTZFlag ); }
+                                       nHour, nMinute, fSecond, nTZFlag ); }
 
     GIntBig             GetFID() { return nFID; }
     virtual OGRErr      SetFID( GIntBig nFIDIn );
@@ -431,6 +435,7 @@ class CPL_DLL OGRFeature
 
 class OGRLayer;
 class swq_expr_node;
+class swq_custom_func_registrar;
 
 class CPL_DLL OGRFeatureQuery
 {
@@ -448,7 +453,8 @@ class CPL_DLL OGRFeatureQuery
                 OGRFeatureQuery();
                 ~OGRFeatureQuery();
 
-    OGRErr      Compile( OGRFeatureDefn *, const char * );
+    OGRErr      Compile( OGRFeatureDefn *, const char *,
+                         int bCheck = TRUE, swq_custom_func_registrar* poCustomFuncRegistrar = NULL );
     int         Evaluate( OGRFeature * );
 
     GIntBig       *EvaluateAgainstIndices( OGRLayer *, OGRErr * );
@@ -457,7 +463,7 @@ class CPL_DLL OGRFeatureQuery
 
     char      **GetUsedFields();
 
-    void       *GetSWGExpr() { return pSWQExpr; }
+    void       *GetSWQExpr() { return pSWQExpr; }
 };
 
 #endif /* ndef _OGR_FEATURE_H_INCLUDED */

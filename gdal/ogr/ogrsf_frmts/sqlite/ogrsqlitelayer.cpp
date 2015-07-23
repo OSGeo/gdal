@@ -359,13 +359,13 @@ void OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
             }
             else if ((EQUAL(pszDeclType, "TIMESTAMP") ||
                       EQUAL(pszDeclType, "DATETIME")) &&
-                     (nColType == SQLITE_TEXT || nColType == SQLITE_NULL))
+                     (nColType == SQLITE_TEXT || nColType == SQLITE_FLOAT || nColType == SQLITE_NULL))
                 eFieldType = OFTDateTime;
             else if (EQUAL(pszDeclType, "DATE") &&
-                     (nColType == SQLITE_TEXT || nColType == SQLITE_NULL))
+                     (nColType == SQLITE_TEXT || nColType == SQLITE_FLOAT || nColType == SQLITE_NULL))
                 eFieldType = OFTDate;
             else if (EQUAL(pszDeclType, "TIME") &&
-                     (nColType == SQLITE_TEXT || nColType == SQLITE_NULL))
+                     (nColType == SQLITE_TEXT || nColType == SQLITE_FLOAT || nColType == SQLITE_NULL))
                 eFieldType = OFTTime;
         }
         else if( nColType == SQLITE_TEXT &&
@@ -792,6 +792,20 @@ OGRFeature *OGRSQLiteLayer::GetNextRawFeature()
                 const char* pszValue = (const char *) 
                     sqlite3_column_text( hStmt, iRawField );
                 OGRSQLITEStringToDateTimeField( poFeature, iField, pszValue );
+            }
+            else if( sqlite3_column_type( hStmt, iRawField ) == SQLITE_FLOAT )
+            {
+                // Try converting from Julian day
+                char** papszResult = NULL;
+                sqlite3_get_table( poDS->GetDB(),
+                                   CPLSPrintf("SELECT strftime('%%Y-%%m-%%d %%H:%%M:%%S', %.16g)",
+                                               sqlite3_column_double(hStmt, iRawField)),
+                                   &papszResult, NULL, NULL, NULL );
+                if( papszResult && papszResult[0] && papszResult[1] )
+                {
+                    OGRSQLITEStringToDateTimeField( poFeature, iField,  papszResult[1] );
+                }
+                sqlite3_free_table(papszResult);
             }
             break;
         }
@@ -3174,7 +3188,7 @@ int OGRSQLITEStringToDateTimeField( OGRFeature* poFeature, int iField,
     {
         if( poFeature )
             poFeature->SetField( iField, nYear, nMonth,
-                                nDay, nHour, nMinute, (int)(fSecond + 0.5), 0 );
+                                 nDay, nHour, nMinute, fSecond, 0);
         return OFTDateTime;
     }
 
@@ -3188,7 +3202,7 @@ int OGRSQLITEStringToDateTimeField( OGRFeature* poFeature, int iField,
     {
         if( poFeature )
             poFeature->SetField( iField, nYear, nMonth,
-                                nDay, nHour, nMinute, 0, 0 );
+                                 nDay, nHour, nMinute, 0, 0);
         return OFTDateTime;
     }
 
@@ -3200,7 +3214,7 @@ int OGRSQLITEStringToDateTimeField( OGRFeature* poFeature, int iField,
     {
         if( poFeature )
             poFeature->SetField( iField, nYear, nMonth, nDay,
-                                nHour, nMinute, (int)(fSecond + 0.5), 0 );
+                                 nHour, nMinute, fSecond, 0);
         return OFTDateTime;
     }
 
@@ -3212,7 +3226,7 @@ int OGRSQLITEStringToDateTimeField( OGRFeature* poFeature, int iField,
     {
         if( poFeature )
             poFeature->SetField( iField, nYear, nMonth, nDay,
-                                nHour, nMinute, 0, 0 );
+                                 nHour, nMinute, 0, 0);
         return OFTDateTime;
     }
 
@@ -3225,7 +3239,7 @@ int OGRSQLITEStringToDateTimeField( OGRFeature* poFeature, int iField,
     {
         if( poFeature )
             poFeature->SetField( iField, nYear, nMonth, nDay,
-                                0, 0, 0, 0 );
+                                 0, 0, 0, 0 );
         return OFTDate;
     }
 
@@ -3236,7 +3250,7 @@ int OGRSQLITEStringToDateTimeField( OGRFeature* poFeature, int iField,
     {
         if( poFeature )
             poFeature->SetField( iField, 0, 0, 0,
-                                nHour, nMinute, (int)(fSecond + 0.5), 0 );
+                                 nHour, nMinute, fSecond, 0 );
         return OFTTime;
     }
 
@@ -3246,7 +3260,7 @@ int OGRSQLITEStringToDateTimeField( OGRFeature* poFeature, int iField,
     {
         if( poFeature )
             poFeature->SetField( iField, 0, 0, 0,
-                                nHour, nMinute, 0, 0 );
+                                 nHour, nMinute, 0, 0 );
         return OFTTime;
     }
 

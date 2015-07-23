@@ -214,6 +214,10 @@ static const char *apszParamNameMapping[] = {
 "Orthographic", "central_meridian", "Longitude_Of_Center",
 "Orthographic", "latitude_of_origin", "Latitude_Of_Center",
 "New_Zealand_Map_Grid", "central_meridian", "Longitude_Of_Origin",
+"Hotine_Oblique_Mercator_Two_Point_Natural_Origin", "latitude_of_point_1", "Latitude_Of_1st_Point",
+"Hotine_Oblique_Mercator_Two_Point_Natural_Origin", "longitude_of_point_1", "Longitude_Of_1st_Point",
+"Hotine_Oblique_Mercator_Two_Point_Natural_Origin", "latitude_of_point_2", "Latitude_Of_2nd_Point",
+"Hotine_Oblique_Mercator_Two_Point_Natural_Origin", "longitude_of_point_2", "Longitude_Of_2nd_Point", 
 NULL, NULL, NULL};
 
 static const char *apszDeleteParametersBasedOnProjection[] = {

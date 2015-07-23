@@ -80,6 +80,28 @@ GMLFeatureClass::~GMLFeatureClass()
 }
 
 /************************************************************************/
+/*                         StealProperties()                            */
+/************************************************************************/
+
+void GMLFeatureClass::StealProperties()
+{
+    m_nPropertyCount = 0;
+    CPLFree( m_papoProperty );
+    m_papoProperty = NULL;
+}
+
+/************************************************************************/
+/*                       StealGeometryProperties()                      */
+/************************************************************************/
+
+void GMLFeatureClass::StealGeometryProperties()
+{
+    m_nGeometryPropertyCount = 0;
+    CPLFree( m_papoGeometryProperty );
+    m_papoGeometryProperty = NULL;
+}
+
+/************************************************************************/
 /*                            SetName()                                 */
 /************************************************************************/
 
@@ -712,7 +734,37 @@ CPLXMLNode *GMLFeatureClass::SerializeToXML()
     CPLCreateXMLElementAndValue( psRoot, "Name", GetName() );
     CPLCreateXMLElementAndValue( psRoot, "ElementPath", GetElementName() );
     
-    if( m_nGeometryPropertyCount > 0 )
+    if( m_nGeometryPropertyCount > 1 )
+    {
+        for(int i=0; i < m_nGeometryPropertyCount; i++)
+        {
+            GMLGeometryPropertyDefn* poGeomFDefn = m_papoGeometryProperty[i];
+
+            CPLXMLNode *psPDefnNode;
+            psPDefnNode = CPLCreateXMLNode( psRoot, CXT_Element, "GeomPropertyDefn" );
+            if( strlen(poGeomFDefn->GetName()) > 0 )
+                CPLCreateXMLElementAndValue( psPDefnNode, "Name", 
+                                             poGeomFDefn->GetName() );
+            if( poGeomFDefn->GetSrcElement() != NULL && strlen(poGeomFDefn->GetSrcElement()) > 0 )
+                CPLCreateXMLElementAndValue( psPDefnNode, "ElementPath", 
+                                             poGeomFDefn->GetSrcElement() );
+            
+            if( poGeomFDefn->GetType() != 0 /* wkbUnknown */ )
+            {
+                char szValue[128];
+
+                OGRwkbGeometryType eType = (OGRwkbGeometryType)poGeomFDefn->GetType();
+
+                CPLString osStr(OGRToOGCGeomType(eType));
+                if( wkbHasZ(eType) ) osStr += "Z";
+                CPLCreateXMLNode( psPDefnNode, CXT_Comment, osStr.c_str() );
+
+                sprintf( szValue, "%d", eType );
+                CPLCreateXMLElementAndValue( psPDefnNode, "Type", szValue );
+            }
+        }
+    }
+    else if( m_nGeometryPropertyCount == 1 )
     {
         GMLGeometryPropertyDefn* poGeomFDefn = m_papoGeometryProperty[0];
         

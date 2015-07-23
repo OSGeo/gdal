@@ -279,6 +279,50 @@ def osr_ct_7():
     return 'success'
 
 ###############################################################################
+# Test WebMercator -> WGS84 optimized transform
+
+def osr_ct_8():
+
+    if gdaltest.have_proj4 == 0:
+        return 'skip'
+
+    src_srs = osr.SpatialReference()
+    src_srs.ImportFromEPSG( 3857 )
+
+    dst_srs = osr.SpatialReference()
+    dst_srs.SetWellKnownGeogCS( 'WGS84' )
+    
+    ct = osr.CoordinateTransformation( src_srs, dst_srs )
+
+    pnts = [ (0, 6274861.39400658), (1, 6274861.39400658) ]
+    result = ct.TransformPoints( pnts )
+    expected_result = [(0.0, 49.000000000000007, 0.0), (8.9831528411952125e-06, 49.000000000000007, 0.0) ]
+
+    for i in range(2):
+        for j in range(3):
+            if abs(result[i][j] - expected_result[i][j]) > 1e-10:
+                gdaltest.post_reason( 'Failed to transform from Pseudo Mercator to LL')
+                print('Got:      %s' % str(result))
+                print('Expected: %s' % str(expected_result))
+                return 'fail'
+
+    pnts = [ (0, 6274861.39400658), (1+0, 1+6274861.39400658) ]
+    result = ct.TransformPoints( pnts )
+    expected_result = [(0.0, 49.000000000000007, 0.0), (8.9831528411952125e-06, 49.000005893478189, 0.0)]
+
+    for i in range(2):
+        for j in range(3):
+            if abs(result[i][j] - expected_result[i][j]) > 1e-10:
+                gdaltest.post_reason( 'Failed to transform from Pseudo Mercator to LL')
+                print('Got:      %s' % str(result))
+                print('Expected: %s' % str(expected_result))
+                print(i)
+                print(j)
+                return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def osr_ct_cleanup():
@@ -298,6 +342,7 @@ gdaltest_list = [
     osr_ct_5,
     osr_ct_6,
     osr_ct_7,
+    osr_ct_8,
     osr_ct_cleanup,
     None ]
 

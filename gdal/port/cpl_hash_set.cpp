@@ -41,6 +41,9 @@ struct _CPLHashSet
     int                   nSize;
     int                   nIndiceAllocatedSize;
     int                   nAllocatedSize;
+    CPLList              *psRecyclingList;
+    int                   nRecyclingListSize;
+    int                   bRehash;
 #ifdef HASH_DEBUG
     int                   nCollisions;
 #endif
@@ -89,6 +92,9 @@ CPLHashSet* CPLHashSetNew(CPLHashSetHashFunc fnHashFunc,
     set->tabList = (CPLList**) CPLCalloc(sizeof(CPLList*), 53);
     set->nIndiceAllocatedSize = 0;
     set->nAllocatedSize = 53;
+    set->psRecyclingList = NULL;
+    set->nRecyclingListSize = 0;
+    set->bRehash = FALSE;
 #ifdef HASH_DEBUG
     set->nCollisions = 0;
 #endif
@@ -117,6 +123,68 @@ int CPLHashSetSize(const CPLHashSet* set)
 }
 
 /************************************************************************/
+/*                       CPLHashSetGetNewListElt()                      */
+/************************************************************************/
+
+static CPLList* CPLHashSetGetNewListElt(CPLHashSet* set)
+{
+    if( set->psRecyclingList )
+    {
+        CPLList* psRet = set->psRecyclingList;
+        psRet->pData = NULL;
+        set->nRecyclingListSize --;
+        set->psRecyclingList = psRet->psNext;
+        return psRet;
+    }
+    else
+        return (CPLList*) CPLMalloc(sizeof(CPLList));
+}
+
+/************************************************************************/
+/*                       CPLHashSetReturnListElt()                      */
+/************************************************************************/
+
+static void CPLHashSetReturnListElt(CPLHashSet* set, CPLList* psList)
+{
+    if( set->nRecyclingListSize < 128 )
+    {
+        psList->psNext = set->psRecyclingList;
+        set->psRecyclingList = psList;
+        set->nRecyclingListSize ++;
+    }
+    else
+    {
+        CPLFree(psList);
+    }
+}
+
+/************************************************************************/
+/*                   CPLHashSetClearInternal()                          */
+/************************************************************************/
+
+static void CPLHashSetClearInternal(CPLHashSet* set, int bFinalize)
+{
+    CPLAssert(set != NULL);
+    for(int i=0;i<set->nAllocatedSize;i++)
+    {
+        CPLList* cur = set->tabList[i];
+        while(cur)
+        {
+            if (set->fnFreeEltFunc)
+                set->fnFreeEltFunc(cur->pData);
+            CPLList* psNext = cur->psNext;
+            if( bFinalize )
+                CPLFree(cur);
+            else
+                CPLHashSetReturnListElt(set, cur);
+            cur = psNext;
+        }
+        set->tabList[i] = NULL;
+    }
+    set->bRehash = FALSE;
+}
+
+/************************************************************************/
 /*                        CPLHashSetDestroy()                           */
 /************************************************************************/
 
@@ -131,22 +199,36 @@ int CPLHashSetSize(const CPLHashSet* set)
 
 void CPLHashSetDestroy(CPLHashSet* set)
 {
-    CPLAssert(set != NULL);
-    for(int i=0;i<set->nAllocatedSize;i++)
-    {
-        if (set->fnFreeEltFunc)
-        {
-            CPLList* cur = set->tabList[i];
-            while(cur)
-            {
-                set->fnFreeEltFunc(cur->pData);
-                cur = cur->psNext;
-            }
-        }
-        CPLListDestroy(set->tabList[i]);
-    }
+    CPLHashSetClearInternal(set, TRUE);
     CPLFree(set->tabList);
+    CPLListDestroy(set->psRecyclingList);
     CPLFree(set);
+}
+
+/************************************************************************/
+/*                        CPLHashSetClear()                             */
+/************************************************************************/
+
+/**
+ * Clear all elements from a hash set.
+ *
+ * This function also frees the elements if a free function was
+ * provided at the creation of the hash set.
+ * 
+ * @param set the hash set
+ * @since GDAL 2.1
+ */
+
+void CPLHashSetClear(CPLHashSet* set)
+{
+    CPLHashSetClearInternal(set, FALSE);
+    set->tabList = (CPLList**) CPLRealloc(set->tabList, sizeof(CPLList*) * 53);
+    set->nIndiceAllocatedSize = 0;
+    set->nAllocatedSize = 53;
+#ifdef HASH_DEBUG
+    set->nCollisions = 0;
+#endif
+    set->nSize = 0;
 }
 
 /************************************************************************/
@@ -213,14 +295,16 @@ static void CPLHashSetRehash(CPLHashSet* set)
             if (newTabList[nNewHashVal])
                 set->nCollisions ++;
 #endif
-            newTabList[nNewHashVal] = CPLListInsert(newTabList[nNewHashVal], cur->pData, 0);
-            cur = cur->psNext;
+            CPLList* psNext = cur->psNext;
+            cur->psNext = newTabList[nNewHashVal];
+            newTabList[nNewHashVal] = cur;
+            cur = psNext;
         }
-        CPLListDestroy(set->tabList[i]);
     }
     CPLFree(set->tabList);
     set->tabList = newTabList;
     set->nAllocatedSize = nNewAllocatedSize;
+    set->bRehash = FALSE;
 }
 
 
@@ -271,7 +355,8 @@ int CPLHashSetInsert(CPLHashSet* set, void* elt)
         return FALSE;
     }
 
-    if (set->nSize >= 2 * set->nAllocatedSize / 3)
+    if( set->nSize >= 2 * set->nAllocatedSize / 3 ||
+        (set->bRehash && set->nIndiceAllocatedSize > 0 && set->nSize <= set->nAllocatedSize / 2) )
     {
         set->nIndiceAllocatedSize++;
         CPLHashSetRehash(set);
@@ -282,7 +367,11 @@ int CPLHashSetInsert(CPLHashSet* set, void* elt)
     if (set->tabList[nHashVal])
         set->nCollisions ++;
 #endif
-    set->tabList[nHashVal] = CPLListInsert(set->tabList[nHashVal], (void*) elt, 0);
+
+    CPLList* new_elt = CPLHashSetGetNewListElt(set);
+    new_elt->pData = (void*) elt;
+    new_elt->psNext = set->tabList[nHashVal];
+    set->tabList[nHashVal] = new_elt;
     set->nSize++;
 
     return TRUE;
@@ -313,25 +402,20 @@ void* CPLHashSetLookup(CPLHashSet* set, const void* elt)
 }
 
 /************************************************************************/
-/*                         CPLHashSetRemove()                           */
+/*                     CPLHashSetRemoveInternal()                       */
 /************************************************************************/
 
-/**
- * Removes an element from a hash set
- * 
- * @param set the hash set
- * @param elt the new element to remove from the hash set
- *
- * @return TRUE if the element was in the hash set
- */
-
-int CPLHashSetRemove(CPLHashSet* set, const void* elt)
+static
+int CPLHashSetRemoveInternal(CPLHashSet* set, const void* elt, int bDeferRehash)
 {
     CPLAssert(set != NULL);
     if (set->nIndiceAllocatedSize > 0 && set->nSize <= set->nAllocatedSize / 2)
     {
         set->nIndiceAllocatedSize--;
-        CPLHashSetRehash(set);
+        if( bDeferRehash )
+            set->bRehash = TRUE;
+        else
+            CPLHashSetRehash(set);
     }
 
     int nHashVal = set->fnHashFunc(elt) % set->nAllocatedSize;
@@ -349,7 +433,7 @@ int CPLHashSetRemove(CPLHashSet* set, const void* elt)
             if (set->fnFreeEltFunc)
                 set->fnFreeEltFunc(cur->pData);
 
-            CPLFree(cur);
+            CPLHashSetReturnListElt(set, cur);
 #ifdef HASH_DEBUG
             if (set->tabList[nHashVal])
                 set->nCollisions --;
@@ -364,6 +448,45 @@ int CPLHashSetRemove(CPLHashSet* set, const void* elt)
     return FALSE;
 }
 
+/************************************************************************/
+/*                         CPLHashSetRemove()                           */
+/************************************************************************/
+
+/**
+ * Removes an element from a hash set
+ * 
+ * @param set the hash set
+ * @param elt the new element to remove from the hash set
+ *
+ * @return TRUE if the element was in the hash set
+ */
+
+int CPLHashSetRemove(CPLHashSet* set, const void* elt)
+{
+    return CPLHashSetRemoveInternal(set, elt, FALSE);
+}
+
+/************************************************************************/
+/*                     CPLHashSetRemoveDeferRehash()                    */
+/************************************************************************/
+
+/**
+ * Removes an element from a hash set.
+ *
+ * This will defer potential rehashing of the set to later calls to
+ * CPLHashSetInsert() or CPLHashSetRemove().
+ * 
+ * @param set the hash set
+ * @param elt the new element to remove from the hash set
+ *
+ * @return TRUE if the element was in the hash set
+ * @since GDAL 2.1
+ */
+
+int CPLHashSetRemoveDeferRehash(CPLHashSet* set, const void* elt)
+{
+    return CPLHashSetRemoveInternal(set, elt, TRUE);
+}
 
 /************************************************************************/
 /*                    CPLHashSetHashPointer()                           */

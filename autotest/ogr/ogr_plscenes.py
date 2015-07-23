@@ -96,6 +96,7 @@ def ogr_plscenes_2():
 
     # Error cases
     for ortho_json in [ """{}""",
+                        '"valid_json_but_not_a_json_object"',
                         """{ invalid_json,""",
                         """{ "type": "FeatureCollection" }""",
                         """{ "type": "FeatureCollection", "count": -1 }""",
@@ -209,6 +210,16 @@ def ogr_plscenes_2():
                           my_id_only)
 
     gdal.SetConfigOption('PL_URL', '/vsimem/root/')
+    gdal.PushErrorHandler()
+    ds = gdal.OpenEx('PLScenes:api_key=foo,unsupported_option=val', gdal.OF_VECTOR)
+    gdal.PopErrorHandler()
+    gdal.SetConfigOption('PL_URL', None)
+    if ds is not None or gdal.GetLastErrorMsg().find('Unsupported option unsupported_option') < 0:
+        gdaltest.post_reason('fail')
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+
+    gdal.SetConfigOption('PL_URL', '/vsimem/root/')
     ds = gdal.OpenEx('PLScenes:', gdal.OF_VECTOR, open_options = ['API_KEY=foo'])
     gdal.SetConfigOption('PL_URL', None)
     if ds is None:
@@ -236,7 +247,7 @@ def ogr_plscenes_2():
         return 'fail'
     #lyr.ResetReading()
     f = lyr.GetNextFeature()
-    if f.id != 'my_id' or f.acquired != '2015/03/27 12:34:56+00' or \
+    if f.id != 'my_id' or f.acquired != '2015/03/27 12:34:56.123+00' or \
        f['cloud_cover.estimated'] != 0.25:
         gdaltest.post_reason('fail')
         f.DumpReadable()
@@ -458,7 +469,7 @@ def ogr_plscenes_2():
     # Test spat option
     ds = None
     gdal.SetConfigOption('PL_URL', '/vsimem/root/')
-    ds = gdal.OpenEx('PLScenes:spat=2,49,3,50', gdal.OF_VECTOR, open_options = ['API_KEY=foo'])
+    ds = gdal.OpenEx('PLScenes:spat=2 49 3 50', gdal.OF_VECTOR, open_options = ['API_KEY=foo'])
     gdal.SetConfigOption('PL_URL', None)
     lyr = ds.GetLayer(0)
     if lyr.GetFeatureCount() != 1:
@@ -471,7 +482,7 @@ def ogr_plscenes_2():
     ds = None
 
     gdal.SetConfigOption('PL_URL', '/vsimem/root/')
-    ds = gdal.OpenEx('PLScenes:spat=2.5,49.5,2.5,49.5', gdal.OF_VECTOR, open_options = ['API_KEY=foo'])
+    ds = gdal.OpenEx('PLScenes:spat=2.5 49.5 2.5 49.5', gdal.OF_VECTOR, open_options = ['API_KEY=foo'])
     gdal.SetConfigOption('PL_URL', None)
     lyr = ds.GetLayer(0)
     if lyr.GetFeatureCount() != 1:
@@ -504,6 +515,41 @@ def ogr_plscenes_3():
 
     gdal.FileFromMemBuffer('/vsimem/root', '{"ortho":"/vsimem/root/ortho/"}')
 
+    # Error case: missing scene
+    gdal.SetConfigOption('PL_URL', '/vsimem/root/')
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ds = gdal.OpenEx('PLScenes:', gdal.OF_RASTER, open_options = ['API_KEY=foo', 'SCENE=not_existing_scene'])
+    gdal.PopErrorHandler()
+    gdal.SetConfigOption('PL_URL', None)
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Error case: invalid scene JSon
+    gdal.FileFromMemBuffer('/vsimem/root/ortho/my_id', """{""")
+
+    gdal.SetConfigOption('PL_URL', '/vsimem/root/')
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ds = gdal.OpenEx('PLScenes:', gdal.OF_RASTER, open_options = ['API_KEY=foo', 'SCENE=my_id'])
+    gdal.PopErrorHandler()
+    gdal.SetConfigOption('PL_URL', None)
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Error case: mssing properties
+    gdal.FileFromMemBuffer('/vsimem/root/ortho/my_id', """{}""")
+
+    gdal.SetConfigOption('PL_URL', '/vsimem/root/')
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ds = gdal.OpenEx('PLScenes:', gdal.OF_RASTER, open_options = ['API_KEY=foo', 'SCENE=my_id'])
+    gdal.PopErrorHandler()
+    gdal.SetConfigOption('PL_URL', None)
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+
     gdal.FileFromMemBuffer('/vsimem/root/ortho/my_id', """{
         "type": "Feature",
         "id": "my_id",
@@ -523,6 +569,48 @@ def ogr_plscenes_3():
         }
     }""")
 
+    # Error case: missing links
+    gdal.SetConfigOption('PL_URL', '/vsimem/root/')
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ds = gdal.OpenEx('PLScenes:', gdal.OF_RASTER, open_options = ['API_KEY=foo', 'SCENE=my_id'])
+    gdal.PopErrorHandler()
+    gdal.SetConfigOption('PL_URL', None)
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.FileFromMemBuffer('/vsimem/root/ortho/my_id', """{
+        "type": "Feature",
+        "id": "my_id",
+        "geometry": {
+                "coordinates": [ [ [2,49],[2,50],[3,50],[3,49],[2,49] ] ],
+                "type": "Polygon"
+        },
+        "properties": {
+            "acquired" : "2015-03-27T12:34:56.123+00",
+            "camera" : {
+                "bit_depth" : 12,
+                "color_mode": "RGB"
+            },
+            "cloud_cover" : {
+                "estimated" : 0.25
+            },
+            "data": {
+                "products": {
+                    "visual": {
+                        "full": "/vsimem/root/ortho/my_id/full?product=visual"
+                    },
+                    "analytic": {
+                        "full": "/vsimem/root/ortho/my_id/full?product=analytic"
+                    }
+                }
+            },
+            "links": {
+                "thumbnail": "/vsimem/root/ortho/my_id/thumb"
+            }
+        }
+    }""")
+
     # Error case: raster file not accessible
     gdal.SetConfigOption('PL_URL', '/vsimem/root/')
     gdal.PushErrorHandler('CPLQuietErrorHandler')
@@ -532,13 +620,24 @@ def ogr_plscenes_3():
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
-    
+
+    # Now everything ok
     gdal.FileFromMemBuffer('/vsimem/root/ortho/my_id/full?product=visual',
                            open('../gcore/data/byte.tif', 'rb').read())
     gdal.FileFromMemBuffer('/vsimem/root/ortho/my_id/full?product=analytic',
                            open('../gcore/data/byte.tif', 'rb').read())
     gdal.FileFromMemBuffer('/vsimem/root/ortho/my_id/thumb',
                            open('../gcore/data/byte.tif', 'rb').read())
+
+    gdal.SetConfigOption('PL_URL', '/vsimem/root/')
+    gdal.PushErrorHandler()
+    ds = gdal.OpenEx('PLScenes:api_key=foo,scene=my_id,unsupported_option=val', gdal.OF_RASTER)
+    gdal.PopErrorHandler()
+    gdal.SetConfigOption('PL_URL', None)
+    if ds is not None or gdal.GetLastErrorMsg().find('Unsupported option unsupported_option') < 0:
+        gdaltest.post_reason('fail')
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
 
     gdal.SetConfigOption('PL_URL', '/vsimem/root/')
     ds = gdal.OpenEx('PLScenes:', gdal.OF_RASTER, open_options = ['API_KEY=foo', 'SCENE=my_id'])
@@ -580,10 +679,99 @@ def ogr_plscenes_3():
 
     return 'success'
 
+###############################################################################
+# Test accessing non-ortho scene type
+
+def ogr_plscenes_4():
+
+    if gdaltest.plscenes_drv is None:
+        return 'skip'
+
+    gdal.FileFromMemBuffer('/vsimem/root', '{"ortho":"/vsimem/root/ortho/"}')
+
+    gdal.FileFromMemBuffer('/vsimem/root/another_layer/?count=10', """{
+    "type": "FeatureCollection",
+    "count": 1,
+    "features": [
+        {
+            "type": "Feature",
+            "id": "my_id",
+            "properties": {
+                "prop_10": "prop_10",
+                "prop_1" : "prop_1"
+            }
+        }
+    ]
+}""")
+
+    gdal.FileFromMemBuffer('/vsimem/root/another_layer/?count=1000', """{
+    "type": "FeatureCollection",
+    "count": 1,
+    "features": [
+        {
+            "type": "Feature",
+            "id": "my_id",
+            "properties": {
+                "prop_10": "prop_10",
+                "prop_1" : "prop_1"
+            }
+        }
+    ]
+}""")
+
+    gdal.SetConfigOption('PL_URL', '/vsimem/root/')
+    ds = gdal.OpenEx('PLScenes:', gdal.OF_VECTOR, open_options = ['API_KEY=foo'])
+    gdal.SetConfigOption('PL_URL', None)
+    if ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetLayerCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    lyr = ds.GetLayerByName('another_layer')
+    if lyr is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if f['prop_1'] != 'prop_1' or f['prop_10'] != 'prop_10':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.PushErrorHandler()
+    lyr = ds.GetLayerByName('does_not_exist')
+    gdal.PopErrorHandler()
+    if lyr is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    gdal.FileFromMemBuffer('/vsimem/root', '{"another_layer":"/vsimem/root/another_layer/"}')
+    gdal.SetConfigOption('PL_URL', '/vsimem/root/')
+    ds = gdal.OpenEx('PLScenes:', gdal.OF_VECTOR, open_options = ['API_KEY=foo'])
+    gdal.SetConfigOption('PL_URL', None)
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if f['prop_1'] != 'prop_1' or f['prop_10'] != 'prop_10':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/root')
+    gdal.Unlink('/vsimem/root/another_layer/?count=10')
+    gdal.Unlink('/vsimem/root/another_layer/?count=1000')
+
+    return 'success'
+
 gdaltest_list = [ 
     ogr_plscenes_1,
     ogr_plscenes_2,
-    ogr_plscenes_3 ]
+    ogr_plscenes_3,
+    ogr_plscenes_4 ]
 
 if __name__ == '__main__':
 

@@ -157,6 +157,17 @@ stored the EXIF metadata domain.</p>
 files created with the default profile GDALGeoTIFF. Note that all bands must use the same nodata value.
 When BASELINE or GeoTIFF profile are used, the nodata value is stored into a PAM .aux.xml file.</p>
 
+<h2>Open options</h2>
+
+<ul>
+
+<li><p><b>NUM_THREADS=number_of_threads/ALL_CPUS</b>: (From GDAL 2.1)
+Enable multi-threaded compression by specifying the number of worker threads.
+Worth for slow compressions such as DEFLATE or LZMA. Will be ignored for JPEG.
+Default is compression in the main thread.</p></li>
+
+</ul>
+
 <h2>Creation Issues</h2>
 
 <p>GeoTIFF files can be created with any GDAL defined band type, including
@@ -203,7 +214,7 @@ option can be used to force creation of tiled TIFF files.</p></li>
 
 <li><p><b>NBITS=n</b>: Create a file with less than 8 bits per sample by passing a value from 1 to 7.  The apparent pixel type should be Byte. From GDAL 1.6.0, values of n=9...15 (UInt16 type) and n=17...31 (UInt32 type) are also accepted. </p></li>
 
-<li><p><b>COMPRESS=[JPEG/LZW/PACKBITS/DEFLATE/CCITTRLE/CCITTFAX3/CCITTFAX4/NONE]</b>: 
+<li><p><b>COMPRESS=[JPEG/LZW/PACKBITS/DEFLATE/CCITTRLE/CCITTFAX3/CCITTFAX4/LZMA/NONE]</b>: 
 Set the compression to use.  JPEG should generally only be used with Byte data (8 bit per channel).
 But starting with GDAL 1.7.0 and provided that GDAL is built with internal libtiff and libjpeg,
 it is possible to read and write TIFF files with 12bit JPEG compressed TIFF files (seen as UInt16 bands with NBITS=12).
@@ -211,6 +222,11 @@ See the <a href="http://trac.osgeo.org/gdal/wiki/TIFF12BitJPEG">"8 and 12 bit JP
 The CCITT compression should only be used with 1bit (NBITS=1) data.
 LZW and DEFLATE compressions can be used with the PREDICTOR creation option.
 None is the default.</p></li>
+
+<li><p><b>NUM_THREADS=number_of_threads/ALL_CPUS</b>: (From GDAL 2.1)
+Enable multi-threaded compression by specifying the number of worker threads.
+Worth for slow compressions such as DEFLATE or LZMA. Will be ignored for JPEG.
+Default is compression in the main thread.</p></li>
 
 <li><p><b>PREDICTOR=[1/2/3]</b>: Set the predictor for LZW or DEFLATE compression. The default is 1 (no predictor), 2 is horizontal differencing and 3 is floating point prediction.</p></li>
 

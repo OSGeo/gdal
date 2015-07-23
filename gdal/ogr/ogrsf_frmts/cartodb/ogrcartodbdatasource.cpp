@@ -28,6 +28,7 @@
  ****************************************************************************/
 
 #include "ogr_cartodb.h"
+#include "ogr_pgdump.h"
 
 CPL_CVSID("$Id$");
 
@@ -45,10 +46,11 @@ OGRCARTODBDataSource::OGRCARTODBDataSource()
     pszAccount = NULL;
 
     bReadWrite = FALSE;
+    bBatchInsert = TRUE;
     bUseHTTPS = FALSE;
 
     bMustCleanPersistant = FALSE;
-    osCurrentSchema = "public";
+    bHasOGRMetadataFunction = -1;
 }
 
 /************************************************************************/
@@ -64,7 +66,8 @@ OGRCARTODBDataSource::~OGRCARTODBDataSource()
 
     if (bMustCleanPersistant)
     {
-        char** papszOptions = CSLAddString(NULL, CPLSPrintf("CLOSE_PERSISTENT=CARTODB:%p", this));
+        char** papszOptions = NULL;
+        papszOptions = CSLSetNameValue(papszOptions, "CLOSE_PERSISTENT", CPLSPrintf("CARTODB:%p", this));
         CPLHTTPFetch( GetAPIURL(), papszOptions);
         CSLDestroy(papszOptions);
     }
@@ -135,31 +138,45 @@ CPLString OGRCARTODBGetOptionValue(const char* pszFilename,
 /*                                Open()                                */
 /************************************************************************/
 
-int OGRCARTODBDataSource::Open( const char * pszFilename, int bUpdateIn)
+int OGRCARTODBDataSource::Open( const char * pszFilename,
+                                char** papszOpenOptions,
+                                int bUpdateIn )
 
 {
     bReadWrite = bUpdateIn;
+    bBatchInsert = CSLTestBoolean(CSLFetchNameValueDef(papszOpenOptions, "BATCH_INSERT", "YES"));
 
     pszName = CPLStrdup( pszFilename );
-    pszAccount = CPLStrdup(pszFilename + strlen("CARTODB:"));
-    char* pchSpace = strchr(pszAccount, ' ');
-    if( pchSpace )
-        *pchSpace = '\0';
+    if( CSLFetchNameValue(papszOpenOptions, "ACCOUNT") )
+        pszAccount = CPLStrdup(CSLFetchNameValue(papszOpenOptions, "ACCOUNT"));
+    else
+    {
+        pszAccount = CPLStrdup(pszFilename + strlen("CARTODB:"));
+        char* pchSpace = strchr(pszAccount, ' ');
+        if( pchSpace )
+            *pchSpace = '\0';
+        if( pszAccount[0] == 0 )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Missing account name");
+            return FALSE;
+        }
+    }
 
-    osAPIKey = CPLGetConfigOption("CARTODB_API_KEY", "");
+    osAPIKey = CSLFetchNameValueDef(papszOpenOptions, "API_KEY",
+                                    CPLGetConfigOption("CARTODB_API_KEY", ""));
 
     CPLString osTables = OGRCARTODBGetOptionValue(pszFilename, "tables");
     
-    if( osTables.size() == 0 && osAPIKey.size() == 0 )
+    /*if( osTables.size() == 0 && osAPIKey.size() == 0 )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "When not specifying tables option, CARTODB_API_KEY must be defined");
         return FALSE;
-    }
+    }*/
 
     bUseHTTPS = CSLTestBoolean(CPLGetConfigOption("CARTODB_HTTPS", "YES"));
 
-    OGRLayer* poSchemaLayer = ExecuteSQL("SELECT current_schema()", NULL, NULL);
+    OGRLayer* poSchemaLayer = ExecuteSQLInternal("SELECT current_schema()");
     if( poSchemaLayer )
     {
         OGRFeature* poFeat = poSchemaLayer->GetNextFeature();
@@ -173,7 +190,42 @@ int OGRCARTODBDataSource::Open( const char * pszFilename, int bUpdateIn)
         }
         ReleaseResultSet(poSchemaLayer);
     }
+    if( osCurrentSchema.size() == 0 )
+        return FALSE;
 
+    if( osAPIKey.size() && bUpdateIn )
+    {
+        ExecuteSQLInternal(
+                "DROP FUNCTION IF EXISTS ogr_table_metadata(TEXT,TEXT); "
+                "CREATE OR REPLACE FUNCTION ogr_table_metadata(schema_name TEXT, table_name TEXT) RETURNS TABLE "
+                "(attname TEXT, typname TEXT, attlen INT, format_type TEXT, "
+                "attnum INT, attnotnull BOOLEAN, indisprimary BOOLEAN, "
+                "defaultexpr TEXT, dim INT, srid INT, geomtyp TEXT, srtext TEXT) AS $$ "
+                "SELECT a.attname::text, t.typname::text, a.attlen::int, "
+                        "format_type(a.atttypid,a.atttypmod)::text, "
+                        "a.attnum::int, "
+                        "a.attnotnull::boolean, "
+                        "i.indisprimary::boolean, "
+                        "pg_get_expr(def.adbin, c.oid)::text AS defaultexpr, "
+                        "(CASE WHEN t.typname = 'geometry' THEN postgis_typmod_dims(a.atttypmod) ELSE NULL END)::int dim, "
+                        "(CASE WHEN t.typname = 'geometry' THEN postgis_typmod_srid(a.atttypmod) ELSE NULL END)::int srid, "
+                        "(CASE WHEN t.typname = 'geometry' THEN postgis_typmod_type(a.atttypmod) ELSE NULL END)::text geomtyp, "
+                        "srtext "
+                "FROM pg_class c "
+                "JOIN pg_attribute a ON a.attnum > 0 AND "
+                                        "a.attrelid = c.oid AND c.relname = $2 "
+                                        "AND c.relname IN (SELECT CDB_UserTables())"
+                "JOIN pg_type t ON a.atttypid = t.oid "
+                "JOIN pg_namespace n ON c.relnamespace=n.oid AND n.nspname = $1 "
+                "LEFT JOIN pg_index i ON c.oid = i.indrelid AND "
+                                        "i.indisprimary = 't' AND a.attnum = ANY(i.indkey) "
+                "LEFT JOIN pg_attrdef def ON def.adrelid = c.oid AND "
+                                            "def.adnum = a.attnum "
+                "LEFT JOIN spatial_ref_sys srs ON srs.srid = postgis_typmod_srid(a.atttypmod) "
+                "ORDER BY a.attnum "
+                "$$ LANGUAGE SQL");
+    }
+    
     if (osTables.size() != 0)
     {
         char** papszTables = CSLTokenizeString2(osTables, ",", 0);
@@ -187,7 +239,7 @@ int OGRCARTODBDataSource::Open( const char * pszFilename, int bUpdateIn)
         return TRUE;
     }
 
-    OGRLayer* poTableListLayer = ExecuteSQL("SELECT CDB_UserTables()", NULL, NULL);
+    OGRLayer* poTableListLayer = ExecuteSQLInternal("SELECT CDB_UserTables()");
     if( poTableListLayer )
     {
         OGRFeature* poFeat;
@@ -204,13 +256,17 @@ int OGRCARTODBDataSource::Open( const char * pszFilename, int bUpdateIn)
         }
         ReleaseResultSet(poTableListLayer);
     }
+    else if( osCurrentSchema == "public" )
+        return FALSE;
+
     /* There's currently a bug with CDB_UserTables() on multi-user accounts */
     if( nLayers == 0 && osCurrentSchema != "public" )
     {
         CPLString osSQL;
-        osSQL.Printf("SELECT DISTINCT f_table_name FROM geometry_columns WHERE f_table_schema='%s'",
+        osSQL.Printf("SELECT c.relname FROM pg_class c, pg_namespace n "
+                     "WHERE c.relkind in ('r', 'v') AND c.relname !~ '^pg_' AND c.relnamespace=n.oid AND n.nspname = '%s'",
                      OGRCARTODBEscapeLiteral(osCurrentSchema).c_str());
-        poTableListLayer = ExecuteSQL(osSQL, NULL, NULL);
+        poTableListLayer = ExecuteSQLInternal(osSQL);
         if( poTableListLayer )
         {
             OGRFeature* poFeat;
@@ -227,6 +283,8 @@ int OGRCARTODBDataSource::Open( const char * pszFilename, int bUpdateIn)
             }
             ReleaseResultSet(poTableListLayer);
         }
+        else
+            return FALSE;
     }
 
     return TRUE;
@@ -344,10 +402,20 @@ OGRLayer   *OGRCARTODBDataSource::ICreateLayer( const char *pszName,
             }
         }
     }
+    
+    CPLString osName(pszName);
+    if( CSLFetchBoolean(papszOptions,"LAUNDER", TRUE) )
+    {
+        char* pszTmp = OGRPGCommonLaunderName(pszName);
+        osName = pszTmp;
+        CPLFree(pszTmp);
+    }
 
-    OGRCARTODBTableLayer* poLayer = new OGRCARTODBTableLayer(this, pszName);
+    OGRCARTODBTableLayer* poLayer = new OGRCARTODBTableLayer(this, osName);
     int bGeomNullable = CSLFetchBoolean(papszOptions, "GEOMETRY_NULLABLE", TRUE);
-    int bCartoDBify = CSLFetchBoolean(papszOptions, "CARTODBIFY", TRUE);
+    int bCartoDBify = CSLFetchBoolean(papszOptions, "CARTODBFY",
+                                      CSLFetchBoolean(papszOptions, "CARTODBIFY", TRUE));
+    poLayer->SetLaunderFlag( CSLFetchBoolean(papszOptions,"LAUNDER",TRUE) );
     poLayer->SetDeferedCreation(eGType, poSpatialRef, bGeomNullable, bCartoDBify);
     papoLayers = (OGRCARTODBTableLayer**) CPLRealloc(
                     papoLayers, (nLayers + 1) * sizeof(OGRCARTODBTableLayer*));
@@ -450,7 +518,9 @@ json_object* OGRCARTODBDataSource::RunSQL(const char* pszUnescapedSQL)
 /* -------------------------------------------------------------------- */
 /*      Collection the header options and execute request.              */
 /* -------------------------------------------------------------------- */
-    char** papszOptions = CSLAddString(AddHTTPOptions(), osSQL);
+    const char* pszAPIURL = GetAPIURL();
+    char** papszOptions = CSLAddString(
+        strncmp(pszAPIURL, "/vsimem/", strlen("/vsimem/")) != 0 ? AddHTTPOptions(): NULL, osSQL);
     CPLHTTPResult * psResult = CPLHTTPFetch( GetAPIURL(), papszOptions);
     CSLDestroy(papszOptions);
 
@@ -568,10 +638,23 @@ OGRLayer * OGRCARTODBDataSource::ExecuteSQL( const char *pszSQLCommand,
                                         const char *pszDialect )
 
 {
-    for( int iLayer = 0; iLayer < nLayers; iLayer++ )
+    return ExecuteSQLInternal(pszSQLCommand, poSpatialFilter, pszDialect,
+                              TRUE);
+}
+
+OGRLayer * OGRCARTODBDataSource::ExecuteSQLInternal( const char *pszSQLCommand,
+                                                     OGRGeometry *poSpatialFilter,
+                                                     const char *pszDialect,
+                                                     int bRunDeferedActions )
+
+{
+    if( bRunDeferedActions )
     {
-        papoLayers[iLayer]->RunDeferedCreationIfNecessary();
-        papoLayers[iLayer]->FlushDeferedInsert();
+        for( int iLayer = 0; iLayer < nLayers; iLayer++ )
+        {
+            papoLayers[iLayer]->RunDeferedCreationIfNecessary();
+            papoLayers[iLayer]->FlushDeferedInsert();
+        }
     }
 
     /* Skip leading spaces */
@@ -605,6 +688,14 @@ OGRLayer * OGRCARTODBDataSource::ExecuteSQL( const char *pszSQLCommand,
                 break;
             }
         }
+        return NULL;
+    }
+    
+    if( !EQUALN(pszSQLCommand, "SELECT", strlen("SELECT")) &&
+        !EQUALN(pszSQLCommand, "EXPLAIN", strlen("EXPLAIN")) &&
+        !EQUALN(pszSQLCommand, "WITH", strlen("WITH")) )
+    {
+        RunSQL(pszSQLCommand);
         return NULL;
     }
 

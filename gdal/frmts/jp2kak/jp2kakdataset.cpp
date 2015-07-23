@@ -34,6 +34,8 @@
 #include "cpl_multiproc.h"
 #include "jp2_local.h"
 
+#include "../mem/memdataset.h"
+
 // Kakadu core includes
 #include "kdu_elementary.h"
 #include "kdu_messaging.h"
@@ -1429,7 +1431,25 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
                       " datasets.\n" );
             return NULL;
         }
-    
+
+/* -------------------------------------------------------------------- */
+/*      Vector layers                                                   */
+/* -------------------------------------------------------------------- */
+        if( poOpenInfo->nOpenFlags & GDAL_OF_VECTOR )
+        {
+            poDS->LoadVectorLayers(
+                CSLFetchBoolean(poOpenInfo->papszOpenOptions, "OPEN_REMOTE_GML", FALSE));
+
+            // If file opened in vector-only mode and there's no vector,
+            // return
+            if( (poOpenInfo->nOpenFlags & GDAL_OF_RASTER) == 0 &&
+                poDS->GetLayerCount() == 0 )
+            {
+                delete poDS;
+                return NULL;
+            }
+        }
+
         return( poDS );
     }
 
@@ -1547,12 +1567,31 @@ JP2KAKDataset::DirectRasterIO( CPL_UNUSED GDALRWFlag eRWFlag,
         kdu_dims dims;
         poCodeStream->apply_input_restrictions( 0, 0, nDiscardLevels, 0, NULL );
         poCodeStream->get_dims( 0, dims );
+        int nOvrXSize = dims.size.x;
+        int nOvrYSize = dims.size.y;
 
         dims.pos.x = dims.pos.x + nXOff/nResMult;
         dims.pos.y = dims.pos.y + nYOff/nResMult;
         dims.size.x = nXSize/nResMult;
         dims.size.y = nYSize/nResMult;
-    
+
+        // Check if rounding helps detecting when data is being requested exactly
+        // at the current resolution
+        if( nBufXSize != dims.size.x &&
+            (int)(0.5 + (double)nXSize/nResMult) == nBufXSize )
+        {
+            dims.size.x = nBufXSize;
+        }
+        if( nBufYSize != dims.size.y &&
+            (int)(0.5 + (double)nYSize/nResMult) == nBufYSize )
+        {
+            dims.size.y = nBufYSize;
+        }
+        if( dims.pos.x + dims.size.x > nOvrXSize )
+            dims.size.x = nOvrXSize - dims.pos.x;
+        if( dims.pos.y + dims.size.y > nOvrYSize )
+            dims.size.y = nOvrYSize - dims.pos.y;
+
         kdu_dims dims_roi;
 
         poCodeStream->map_region( 0, dims, dims_roi );
@@ -1624,13 +1663,14 @@ JP2KAKDataset::DirectRasterIO( CPL_UNUSED GDALRWFlag eRWFlag,
 /* -------------------------------------------------------------------- */
         else
         {
+            int nDataTypeSize = GDALGetDataTypeSize(eBufType) / 8;
             GByte *pabyIntermediate = (GByte *) 
-                VSIMalloc3(dims.size.x, dims.size.y, 2*nBandCount );
+                VSIMalloc3(dims.size.x, dims.size.y, nDataTypeSize*nBandCount );
             if( pabyIntermediate == NULL )
             {
                 CPLError( CE_Failure, CPLE_OutOfMemory, 
                           "Failed to allocate %d byte intermediate decompression buffer for jpeg2000.", 
-                          dims.size.x * dims.size.y * nBandCount );
+                          dims.size.x * dims.size.y * nDataTypeSize * nBandCount );
 
                 return CE_Failure;
             }
@@ -1671,46 +1711,92 @@ JP2KAKDataset::DirectRasterIO( CPL_UNUSED GDALRWFlag eRWFlag,
                 
             decompressor.finish();
 
+            if( psExtraArg->eResampleAlg == GRIORA_NearestNeighbour )
+            {
 /* -------------------------------------------------------------------- */
 /*      Then resample (normally downsample) from the intermediate       */
 /*      buffer into the final buffer in the desired output layout.      */
 /* -------------------------------------------------------------------- */
-            int iY, iX;
-            double dfYRatio = dims.size.y / (double) nBufYSize;
-            double dfXRatio = dims.size.x / (double) nBufXSize;
+                int iY, iX;
+                double dfYRatio = dims.size.y / (double) nBufYSize;
+                double dfXRatio = dims.size.x / (double) nBufXSize;
 
-            for( iY = 0; iY < nBufYSize; iY++ )
-            {
-                int iSrcY = (int) floor( (iY + 0.5) * dfYRatio );
-
-                iSrcY = MIN(iSrcY, dims.size.y-1);
-
-                for( iX = 0; iX < nBufXSize; iX++ )
+                for( iY = 0; iY < nBufYSize; iY++ )
                 {
-                    int iSrcX = (int) floor( (iX + 0.5) * dfXRatio );
+                    int iSrcY = (int) floor( (iY + 0.5) * dfYRatio );
 
-                    iSrcX = MIN(iSrcX, dims.size.x-1);
+                    iSrcY = MIN(iSrcY, dims.size.y-1);
 
-                    for( i = 0; i < nBandCount; i++ )
+                    for( iX = 0; iX < nBufXSize; iX++ )
                     {
-                        if( eBufType == GDT_Byte )
-                            ((GByte *) pData)[iX*nPixelSpace
-                                              + iY*nLineSpace
-                                              + i*nBandSpace] = 
-                                pabyIntermediate[iSrcX*nBandCount
-                                                 + iSrcY*dims.size.x*nBandCount
-                                                 + i];
-                        else if( eBufType == GDT_Int16
-                                 || eBufType == GDT_UInt16 )
-                            ((GUInt16 *) pData)[iX*nPixelSpace/2
-                                              + iY*nLineSpace/2
-                                              + i*nBandSpace/2] = 
-                                ((GUInt16 *)pabyIntermediate)[
-                                    iSrcX*nBandCount
-                                    + iSrcY*dims.size.x*nBandCount
-                                    + i];
+                        int iSrcX = (int) floor( (iX + 0.5) * dfXRatio );
+
+                        iSrcX = MIN(iSrcX, dims.size.x-1);
+
+                        for( i = 0; i < nBandCount; i++ )
+                        {
+                            if( eBufType == GDT_Byte )
+                                ((GByte *) pData)[iX*nPixelSpace
+                                                + iY*nLineSpace
+                                                + i*nBandSpace] = 
+                                    pabyIntermediate[iSrcX*nBandCount
+                                                    + iSrcY*dims.size.x*nBandCount
+                                                    + i];
+                            else if( eBufType == GDT_Int16
+                                    || eBufType == GDT_UInt16 )
+                                ((GUInt16 *) pData)[iX*nPixelSpace/2
+                                                + iY*nLineSpace/2
+                                                + i*nBandSpace/2] = 
+                                    ((GUInt16 *)pabyIntermediate)[
+                                        iSrcX*nBandCount
+                                        + iSrcY*dims.size.x*nBandCount
+                                        + i];
+                        }
                     }
                 }
+            }
+            else
+            {
+                /* Create a MEM dataset that wraps the input buffer */
+                GDALDataset* poMEMDS = MEMDataset::Create("", dims.size.x,
+                                                        dims.size.y, 0,
+                                                        eBufType, NULL);
+                char szBuffer[64];
+                int nRet;
+
+                for( i = 0; i < nBandCount; i++ )
+                {
+
+                    nRet = CPLPrintPointer(szBuffer, pabyIntermediate + i * nDataTypeSize, sizeof(szBuffer));
+                    szBuffer[nRet] = 0;
+                    char** papszOptions = CSLSetNameValue(NULL, "DATAPOINTER", szBuffer);
+
+                    papszOptions = CSLSetNameValue(papszOptions, "PIXELOFFSET",
+                        CPLSPrintf(CPL_FRMT_GIB, (GIntBig)nDataTypeSize * nBandCount));
+
+                    papszOptions = CSLSetNameValue(papszOptions, "LINEOFFSET",
+                        CPLSPrintf(CPL_FRMT_GIB, (GIntBig)nDataTypeSize * nBandCount * dims.size.x));
+
+                    poMEMDS->AddBand(eBufType, papszOptions);
+                    CSLDestroy(papszOptions);
+
+                    const char* pszNBITS = GetRasterBand(i+1)->GetMetadataItem("NBITS", "IMAGE_STRUCTURE");
+                    if( pszNBITS )
+                        poMEMDS->GetRasterBand(i+1)->SetMetadataItem("NBITS", pszNBITS, "IMAGE_STRUCTURE");
+                }
+
+                GDALRasterIOExtraArg sExtraArgTmp;
+                INIT_RASTERIO_EXTRA_ARG(sExtraArgTmp);
+                sExtraArgTmp.eResampleAlg = psExtraArg->eResampleAlg;
+
+                poMEMDS->RasterIO(GF_Read, 0, 0, dims.size.x, dims.size.y,
+                                  pData, nBufXSize, nBufYSize,
+                                  eBufType,
+                                  nBandCount, NULL,
+                                  nPixelSpace, nLineSpace, nBandSpace,
+                                  &sExtraArgTmp);
+
+                GDALClose(poMEMDS);
             }
 
             CPLFree( pabyIntermediate );
@@ -2624,7 +2710,8 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                  || adfGeoTransform[3] != 0.0 
                  || adfGeoTransform[4] != 0.0 
                  || ABS(adfGeoTransform[5]) != 1.0))
-            || poSrcDS->GetGCPCount() > 0) )
+            || poSrcDS->GetGCPCount() > 0
+            || poSrcDS->GetMetadata("RPC") != NULL) )
     {
         GDALJP2Metadata oJP2MD;
 
@@ -2639,11 +2726,19 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             oJP2MD.SetGeoTransform( adfGeoTransform );
         }
 
+        oJP2MD.SetRPCMD( poSrcDS->GetMetadata("RPC") );
+
         const char* pszAreaOrPoint = poSrcDS->GetMetadataItem(GDALMD_AREA_OR_POINT);
         oJP2MD.bPixelIsPoint = pszAreaOrPoint != NULL && EQUAL(pszAreaOrPoint, GDALMD_AOP_POINT);
 
         if( CSLFetchBoolean( papszOptions, "GMLJP2", TRUE ) )
-            JP2KAKWriteBox( &jp2_out, oJP2MD.CreateGMLJP2(nXSize,nYSize) );
+        {
+            const char* pszGMLJP2V2Def = CSLFetchNameValue( papszOptions, "GMLJP2V2_DEF" );
+            if( pszGMLJP2V2Def != NULL )
+                JP2KAKWriteBox( &jp2_out, oJP2MD.CreateGMLJP2V2(nXSize,nYSize,pszGMLJP2V2Def,poSrcDS) );
+            else
+                JP2KAKWriteBox( &jp2_out, oJP2MD.CreateGMLJP2(nXSize,nYSize) );
+        }
         if( CSLFetchBoolean( papszOptions, "GeoJP2", TRUE ) )
             JP2KAKWriteBox( &jp2_out, oJP2MD.CreateJP2GeoTIFF() );
     }
@@ -2794,6 +2889,7 @@ void GDALRegister_JP2KAK()
         
         poDriver->SetDescription( "JP2KAK" );
         poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "JPEG-2000 (based on Kakadu " 
                                    KDU_CORE_VERSION ")" );
@@ -2809,6 +2905,7 @@ void GDALRegister_JP2KAK()
         poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST, 
 "<OpenOptionList>"
 "   <Option name='1BIT_ALPHA_PROMOTION' type='boolean' description='Whether a 1-bit alpha channel should be promoted to 8-bit' default='YES'/>"
+"   <Option name='OPEN_REMOTE_GML' type='boolean' description='Whether to load remote vector layers referenced by a link in a GMLJP2 v2 box' default='NO'/>"
 "</OpenOptionList>" );
 
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, 
@@ -2818,6 +2915,7 @@ void GDALRegister_JP2KAK()
 "   <Option name='BLOCKYSIZE' type='int' description='Tile Height'/>"
 "   <Option name='GeoJP2' type='boolean' description='defaults to ON'/>"
 "   <Option name='GMLJP2' type='boolean' description='defaults to ON'/>"
+"   <Option name='GMLJP2V2_DEF' type='string' description='Definition file to describe how a GMLJP2 v2 box should be generated. If set to YES, a minimal instance will be created'/>"
 "   <Option name='LAYERS' type='integer'/>"
 "   <Option name='ROI' type='string'/>"
 "   <Option name='COMSEG' type='boolean' />"

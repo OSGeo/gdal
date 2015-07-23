@@ -315,7 +315,7 @@ swq_select_summarize( swq_select *select_info,
 /*      Create the summary information if this is the first row         */
 /*      being processed.                                                */
 /* -------------------------------------------------------------------- */
-    if( select_info->column_summary == NULL && value != NULL )
+    if( select_info->column_summary == NULL )
     {
         int i;
 
@@ -332,9 +332,6 @@ swq_select_summarize( swq_select *select_info,
             strcpy(select_info->column_summary[i].szMax, "0000/00/00 00:00:00");
         }
     }
-
-    if( select_info->column_summary == NULL )
-        return NULL;
 
 /* -------------------------------------------------------------------- */
 /*      If distinct processing is on, process that now.                 */
@@ -399,6 +396,7 @@ swq_select_summarize( swq_select *select_info,
                 if( df_val < summary->min )
                     summary->min = df_val;
             }
+            summary->count++;
         }
         break;
       case SWQCF_MAX:
@@ -420,6 +418,7 @@ swq_select_summarize( swq_select *select_info,
                 if( df_val > summary->max )
                     summary->max = df_val;
             }
+            summary->count++;
         }
         break;
       case SWQCF_AVG:
@@ -430,9 +429,12 @@ swq_select_summarize( swq_select *select_info,
                def->field_type == SWQ_TIME ||
                def->field_type == SWQ_TIMESTAMP)
             {
-                int nYear, nMonth, nDay, nHour, nMin, nSec;
-                if( sscanf(value, "%04d/%02d/%02d %02d:%02d:%02d",
-                           &nYear, &nMonth, &nDay, &nHour, &nMin, &nSec) == 6 )
+                int nYear, nMonth, nDay, nHour = 0, nMin = 0;
+                float fSec = 0 ;
+                if( sscanf(value, "%04d/%02d/%02d %02d:%02d:%f",
+                           &nYear, &nMonth, &nDay, &nHour, &nMin, &fSec) == 6 ||
+                    sscanf(value, "%04d/%02d/%02d",
+                           &nYear, &nMonth, &nDay) == 3 )
                 {
                     struct tm brokendowntime;
                     brokendowntime.tm_year = nYear - 1900;
@@ -440,9 +442,10 @@ swq_select_summarize( swq_select *select_info,
                     brokendowntime.tm_mday = nDay;
                     brokendowntime.tm_hour = nHour;
                     brokendowntime.tm_min = nMin;
-                    brokendowntime.tm_sec = nSec;
+                    brokendowntime.tm_sec = (int)fSec;
                     summary->count++;
                     summary->sum += CPLYMDHMSToUnixTime(&brokendowntime);
+                    summary->sum += fmod((double)fSec, 1);
                 }
             }
             else
@@ -759,6 +762,8 @@ CPLErr swq_expr_compile( const char *where_clause,
                          int field_count,
                          char **field_names, 
                          swq_field_type *field_types, 
+                         int bCheck,
+                         swq_custom_func_registrar* poCustomFuncRegistrar,
                          swq_expr_node **expr_out )
 
 {
@@ -773,7 +778,8 @@ CPLErr swq_expr_compile( const char *where_clause,
     field_list.table_count = 0;
     field_list.table_defs = NULL;
 
-    return swq_expr_compile2( where_clause, &field_list, expr_out );
+    return swq_expr_compile2( where_clause, &field_list,
+                              bCheck, poCustomFuncRegistrar, expr_out );
 }
 
 
@@ -783,6 +789,8 @@ CPLErr swq_expr_compile( const char *where_clause,
 
 CPLErr swq_expr_compile2( const char *where_clause, 
                           swq_field_list *field_list,
+                          int bCheck,
+                          swq_custom_func_registrar* poCustomFuncRegistrar,
                           swq_expr_node **expr_out )
 
 {
@@ -793,9 +801,10 @@ CPLErr swq_expr_compile2( const char *where_clause,
     context.pszNext = where_clause;
     context.pszLastValid = where_clause;
     context.nStartToken = SWQT_VALUE_START;
+    context.bAcceptCustomFuncs = poCustomFuncRegistrar != NULL;
     
     if( swqparse( &context ) == 0 
-        && context.poRoot->Check( field_list, FALSE ) != SWQ_ERROR )
+        && bCheck && context.poRoot->Check( field_list, FALSE, FALSE, poCustomFuncRegistrar ) != SWQ_ERROR )
     {
         *expr_out = context.poRoot;
 

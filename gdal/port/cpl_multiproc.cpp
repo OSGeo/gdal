@@ -789,12 +789,22 @@ int CPLAcquireMutex( CPLMutex *hMutexIn, double dfWaitInSeconds )
     CRITICAL_SECTION *pcs = (CRITICAL_SECTION *)hMutexIn;
     BOOL ret;
 
-    while( (ret = TryEnterCriticalSection(pcs)) == 0 && dfWaitInSeconds > 0.0 )
+    if( dfWaitInSeconds >= 1000.0 )
     {
-        CPLSleep( MIN(dfWaitInSeconds,0.125) );
-        dfWaitInSeconds -= 0.125;
+        // We assume this is the synonymous for infinite, so it is more
+        // efficient to use EnterCriticalSection() directly
+        EnterCriticalSection(pcs);
+        ret = TRUE;
     }
-    
+    else
+    {
+        while( (ret = TryEnterCriticalSection(pcs)) == 0 && dfWaitInSeconds > 0.0 )
+        {
+            CPLSleep( MIN(dfWaitInSeconds,0.01) );
+            dfWaitInSeconds -= 0.01;
+        }
+    }
+
     return ret;
 #endif
 }
@@ -1337,17 +1347,28 @@ static MutexLinkedElt* psMutexList = NULL;
 
 static void CPLInitMutex(MutexLinkedElt* psItem)
 {
-    /* When an adaptive mutex is required, we can safely fallback to recursive */
+    if( psItem->nOptions == CPL_MUTEX_REGULAR )
+    {
+        pthread_mutex_t tmp_mutex = PTHREAD_MUTEX_INITIALIZER;
+        psItem->sMutex = tmp_mutex;
+        return;
+    }
+    
+    /* When an adaptive mutex is required, we can safely fallback to regular */
     /* mutex if we don't have HAVE_PTHREAD_MUTEX_ADAPTIVE_NP */
-#if defined(HAVE_PTHREAD_MUTEX_ADAPTIVE_NP)
     if( psItem->nOptions == CPL_MUTEX_ADAPTIVE )
     {
+#if defined(HAVE_PTHREAD_MUTEX_ADAPTIVE_NP)
         pthread_mutexattr_t  attr;
         pthread_mutexattr_init( &attr );
         pthread_mutexattr_settype( &attr, PTHREAD_MUTEX_ADAPTIVE_NP );
         pthread_mutex_init( &(psItem->sMutex), &attr );
-    }
+#else
+        pthread_mutex_t tmp_mutex = PTHREAD_MUTEX_INITIALIZER;
+        psItem->sMutex = tmp_mutex;
 #endif
+        return;
+    }
 
 #if defined(PTHREAD_MUTEX_RECURSIVE) || defined(HAVE_PTHREAD_MUTEX_RECURSIVE)
     {
@@ -2001,6 +2022,9 @@ CPLLock *CPLCreateLock( CPLLockType eType )
             CPLLock* psLock = (CPLLock*)malloc(sizeof(CPLLock));
             psLock->eType = eType;
             psLock->u.hMutex = hMutex;
+#ifdef DEBUG_CONTENTION
+            psLock->bDebugPerf = FALSE;
+#endif
             return psLock;
         }
         case LOCK_SPIN:
@@ -2011,6 +2035,9 @@ CPLLock *CPLCreateLock( CPLLockType eType )
             CPLLock* psLock = (CPLLock*)malloc(sizeof(CPLLock));
             psLock->eType = eType;
             psLock->u.hSpinLock = hSpinLock;
+#ifdef DEBUG_CONTENTION
+            psLock->bDebugPerf = FALSE;
+#endif
             return psLock;
         }
         default:

@@ -36,7 +36,7 @@
 /************************************************************************/
 /*                         FORWARD DECLARATIONS                         */
 /************************************************************************/
-
+#ifdef __cplusplus
 class OGRFeature;
 class OGRGeometry;
 class OGRPoint;
@@ -47,13 +47,16 @@ class OGRLinearRing;
 class OGRPolygon;
 class OGRMultiPolygon;
 class OGRGeometryCollection;
+#endif
 
-json_object* json_object_new_double_with_precision(double dfVal, int nCoordPrecision);
+CPL_C_START
+json_object CPL_DLL *json_object_new_double_with_precision(double dfVal, int nCoordPrecision);
+CPL_C_END
 
 /************************************************************************/
 /*                 GeoJSON Geometry Translators                         */
 /************************************************************************/
-
+#ifdef __cplusplus
 json_object* OGRGeoJSONWriteFeature( OGRFeature* poFeature, int bWriteBBOX, int nCoordPrecision );
 json_object* OGRGeoJSONWriteAttributes( OGRFeature* poFeature );
 json_object* OGRGeoJSONWriteGeometry( OGRGeometry* poGeometry, int nCoordPrecision );
@@ -68,5 +71,6 @@ json_object* OGRGeoJSONWriteGeometryCollection( OGRGeometryCollection* poGeometr
 json_object* OGRGeoJSONWriteCoords( double const& fX, double const& fY, int nCoordPrecision );
 json_object* OGRGeoJSONWriteCoords( double const& fX, double const& fY, double const& fZ, int nCoordPrecision );
 json_object* OGRGeoJSONWriteLineCoords( OGRLineString* poLine, int nCoordPrecision );
+#endif
 
 #endif /* OGR_GEOJSONWRITER_H_INCLUDED */

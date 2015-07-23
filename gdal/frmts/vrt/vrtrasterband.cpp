@@ -540,10 +540,7 @@ CPLXMLNode *VRTRasterBand::SerializeToXML( const char *pszVRTPath )
     psMD = oMDMD.Serialize();
     if( psMD != NULL )
     {
-        if( psMD->psChild != NULL )
-            CPLAddXMLChild( psTree, psMD );
-        else
-            CPLDestroyXMLNode(psMD);
+        CPLAddXMLChild( psTree, psMD );
     }
 
     if( strlen(GetDescription()) > 0 )
@@ -706,10 +703,10 @@ CPLErr VRTRasterBand::SetNoDataValue( double dfNewValue )
 }
 
 /************************************************************************/
-/*                         UnsetNoDataValue()                           */
+/*                         DeleteNoDataValue()                          */
 /************************************************************************/
 
-CPLErr VRTRasterBand::UnsetNoDataValue()
+CPLErr VRTRasterBand::DeleteNoDataValue()
 {
     bNoDataValueSet = FALSE;
     dfNoDataValue = -10000.0;
@@ -717,6 +714,14 @@ CPLErr VRTRasterBand::UnsetNoDataValue()
     ((VRTDataset *)poDS)->SetNeedsFlush();
 
     return CE_None;
+}
+/************************************************************************/
+/*                         UnsetNoDataValue()                           */
+/************************************************************************/
+
+CPLErr VRTRasterBand::UnsetNoDataValue()
+{
+    return DeleteNoDataValue();
 }
 
 /************************************************************************/
@@ -795,7 +800,7 @@ GDALColorInterp VRTRasterBand::GetColorInterpretation()
 /************************************************************************/
 
 CPLErr VRTRasterBand::GetHistogram( double dfMin, double dfMax,
-                                    int nBuckets, int * panHistogram,
+                                    int nBuckets, GUIntBig * panHistogram,
                                     int bIncludeOutOfRange, int bApproxOK,
                                     GDALProgressFunc pfnProgress, 
                                     void *pProgressData )
@@ -811,13 +816,13 @@ CPLErr VRTRasterBand::GetHistogram( double dfMin, double dfMax,
                                            bIncludeOutOfRange, bApproxOK );
     if( psHistItem != NULL )
     {
-        int *panTempHist = NULL;
+        GUIntBig *panTempHist = NULL;
 
         if( PamParseHistogram( psHistItem, &dfMin, &dfMax, &nBuckets, 
                                &panTempHist,
                                &bIncludeOutOfRange, &bApproxOK ) )
         {
-            memcpy( panHistogram, panTempHist, sizeof(int) * nBuckets );
+            memcpy( panHistogram, panTempHist, sizeof(GUIntBig) * nBuckets );
             CPLFree( panTempHist );
             return CE_None;
         }
@@ -864,7 +869,7 @@ CPLErr VRTRasterBand::GetHistogram( double dfMin, double dfMax,
 /************************************************************************/
 
 CPLErr VRTRasterBand::SetDefaultHistogram( double dfMin, double dfMax, 
-                                           int nBuckets, int *panHistogram)
+                                           int nBuckets, GUIntBig *panHistogram)
 
 {
     CPLXMLNode *psNode;
@@ -914,7 +919,7 @@ CPLErr VRTRasterBand::SetDefaultHistogram( double dfMin, double dfMax,
 
 CPLErr 
 VRTRasterBand::GetDefaultHistogram( double *pdfMin, double *pdfMax, 
-                                    int *pnBuckets, int **ppanHistogram, 
+                                    int *pnBuckets, GUIntBig **ppanHistogram, 
                                     int bForce,
                                     GDALProgressFunc pfnProgress, 
                                     void *pProgressData )
@@ -999,10 +1004,22 @@ void VRTRasterBand::GetFileList(char*** ppapszFileList, int *pnSize,
 int VRTRasterBand::GetOverviewCount()
 
 {
+    // First: overviews declared in <Overview> element
     if( apoOverviews.size() > 0 )
         return apoOverviews.size();
-    else
-        return GDALRasterBand::GetOverviewCount();
+
+    // If not found, external .ovr overviews
+    int nOverviewCount = GDALRasterBand::GetOverviewCount();
+    if( nOverviewCount )
+        return nOverviewCount;
+
+    // If not found, implicit virtual overviews
+    VRTDataset* poVRTDS = ((VRTDataset *)poDS);
+    poVRTDS->BuildVirtualOverviews();
+    if( poVRTDS->apoOverviews.size() && poVRTDS->apoOverviews[0] )
+        return (int)poVRTDS->apoOverviews.size();
+
+    return 0;
 }
 
 /************************************************************************/
@@ -1012,6 +1029,7 @@ int VRTRasterBand::GetOverviewCount()
 GDALRasterBand *VRTRasterBand::GetOverview( int iOverview )
 
 {
+    // First: overviews declared in <Overview> element
     if( apoOverviews.size() > 0 )
     {
         if( iOverview < 0 || iOverview >= (int) apoOverviews.size() )
@@ -1039,8 +1057,23 @@ GDALRasterBand *VRTRasterBand::GetOverview( int iOverview )
 
         return apoOverviews[iOverview].poBand;
     }
-    else
-        return GDALRasterBand::GetOverview( iOverview );
+    
+    // If not found, external .ovr overviews
+    GDALRasterBand* poRet = GDALRasterBand::GetOverview( iOverview );
+    if( poRet )
+        return poRet;
+    
+    // If not found, implicit virtual overviews
+    VRTDataset* poVRTDS = ((VRTDataset *)poDS);
+    poVRTDS->BuildVirtualOverviews();
+    if( poVRTDS->apoOverviews.size() && poVRTDS->apoOverviews[0] )
+    {
+        if( iOverview < 0 || iOverview >= (int) poVRTDS->apoOverviews.size() )
+            return NULL;
+        return poVRTDS->apoOverviews[iOverview]->GetRasterBand(nBand);
+    }
+    
+    return NULL;
 }
 
 /************************************************************************/

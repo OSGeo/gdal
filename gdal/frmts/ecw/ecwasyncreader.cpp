@@ -281,8 +281,8 @@ NCSEcwReadStatus ECWAsyncReader::RefreshCB( NCSFileView *pFileView )
             poReader->bComplete = TRUE;
     }
 
-    /* Call CPLCleanupTLS explicitely since this thread isn't managed */
-    /* by CPL. This will free the ressources taken by the above CPLDebug */
+    /* Call CPLCleanupTLS explicitly since this thread isn't managed */
+    /* by CPL. This will free the resources taken by the above CPLDebug */
     if( poReader->bComplete )
         CPLCleanupTLS();
 

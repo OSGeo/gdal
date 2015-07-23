@@ -26,6 +26,16 @@ arbitrary band count, and adding/reading metadata. Update of georeferencing or
 metadata of existing file is also supported. Optional intellectual property
 metdata can be read/written in the xml:IPR box.</p>
 
+<h2>Option Options</h2>
+
+(GDAL &gt;= 2.0 )
+
+The following open option is available:
+<ul>
+<li><p><b>1BIT_ALPHA_PROMOTION=YES/NO</b>: Whether a 1-bit alpha channel should be promoted to 8-bit.
+Defaults to YES.</li>
+</ul>
+
 <h2>Creation Options</h2>
 
 <ul>
@@ -35,7 +45,16 @@ JP2 nor J2K, J2K codec is used.</p></li>
 
 <li> <b>GMLJP2=YES/NO</b>: (Starting with GDAL 1.10) Indicates whether a GML box
  conforming to the OGC GML in JPEG2000 specification should be included in the
-file.  Defaults to YES.<p>
+file. Unless GMLJP2V2_DEF is used, the version of the GMLJP2 box will be
+version 1. Defaults to YES.<p>
+
+<li> <b>GMLJP2V2_DEF=filename</b>: (Starting with GDAL 2.0) Indicates whether a GML box
+conforming to the <a href="http://docs.opengeospatial.org/is/08-085r4/08-085r4.html">
+OGC GML in JPEG2000, version 2</a> specification should be included in the
+file. <i>filename</i> must point to a file with a JSon content that defines how
+the GMLJP2 v2 box should be built. See below section for the syntax of the JSon configuration file.
+It is also possible to directly pass the JSon content inlined as a string.
+If filename is just set to YES, a minimal instance will be built.<p>
 
 <li> <b>GeoJP2=YES/NO</b>: (Starting with GDAL 1.10) Indicates whether a
 UUID/GeoTIFF box conforming to the GeoJP2 (GeoTIFF in JPEG2000) specification
@@ -91,7 +110,7 @@ are unable to open such files. And regarding the ECW JPEG2000 SDK, decoding of
 </p></li>
 
 <li><p><b>ALPHA=YES/NO</b>: (GDAL &gt;= 2.0) Whether to force encoding last
-channel as alpha channel. Only usefull if the color interpretation of that channel
+channel as alpha channel. Only useful if the color interpretation of that channel
 is not already Alpha. Defaults to NO.</p></li>
 
 <li><p><b>PROFILE=AUTO/UNRESTRICTED/PROFILE_1</b>: (GDAL &gt;= 2.0) Determine
@@ -185,11 +204,11 @@ be written. Defaults to NO.
 <li><p><b>USE_SRC_CODESTREAM=YES/NO</b>: (GDAL &gt;= 2.0)
 (EXPERIMENTAL!) When source dataset is JPEG2000, whether to reuse the codestream
 of the source dataset unmodified. Defaults to NO. Note that enabling that feature might result
-in inconsistant content of the JP2 boxes w.r.t. to the content of the source codestream.
-Most other creation options will be ignored in that mode. Can be usefull in some
+in inconsistent content of the JP2 boxes w.r.t. to the content of the source codestream.
+Most other creation options will be ignored in that mode. Can be useful in some
 use cases when adding/correcting georeferencing, metadata, ... INSPIRE_TG and
 PROFILE options will be ignored, and the profile of the codestream will be overriden
-with the one specified/implied by the options (which may be inconsistant with
+with the one specified/implied by the options (which may be inconsistent with
 the characteristics of the codestream).
 </p></li>
 
@@ -204,11 +223,200 @@ Lossless compression can be achieved if ALL the following creation options are d
 <li>YCBCR420=NO (which is the default)</li>
 </ul>
 
+<h3><a name="GMLJP2v2Def">GMLJP2v2 definition file</a></h3>
+
+A GMLJP2v2 box typically contains a GMLJP2RectifiedGridCoverage with the 
+SRS information and geotransformation matrix. It is also possible to add metadata,
+vector features (GML feature collections), annotations (KML), styles (typically
+SLD, or other XML format) or any XML content as an extension.
+
+The value of the GMLJP2V2_DEF creation option should be a file that conforms with
+the below syntax (elements starting with "#" are documentation, and can be omitted):
+
+<pre>
+{
+    "#doc" : "Unless otherwise specified, all elements are optional",
+
+    "#root_instance_doc": "Describe content of the GMLJP2CoverageCollection",
+    "root_instance": {
+        "#gml_id_doc": "Specify GMLJP2CoverageCollection gml:id. Default is ID_GMLJP2_0",
+        "gml_id": "some_gml_id",
+
+        "#grid_coverage_file_doc": [
+            "External XML file, whose root might be a GMLJP2GridCoverage, ",
+            "GMLJP2RectifiedGridCoverage or a GMLJP2ReferenceableGridCoverage.",
+            "If not specified, GDAL will auto-generate a GMLJP2RectifiedGridCoverage" ],
+        "grid_coverage_file": "gmljp2gridcoverage.xml",
+
+        "#crs_url_doc": [
+            "true for http://www.opengis.net/def/crs/EPSG/0/XXXX CRS URL.",
+            "If false, use CRS URN. Default value is true",
+            "Only taken into account for a auto-generated GMLJP2RectifiedGridCoverage"],
+        "crs_url": true,
+
+        "#metadata_doc": [ "An array of metadata items. Can be either strings, with ",
+                           "a filename or directly inline XML content, or either ",
+                           "a more complete description." ],
+        "metadata": [
+
+            "dcmetadata.xml",
+
+            {
+                "#file_doc": "Can use relative or absolute paths. Exclusive of content, gdal_metadata and generated_metadata.",
+                "file": "dcmetadata.xml",
+
+                "#gdal_metadata_doc": "Whether to serialize GDAL metadata as GDALMultiDomainMetadata",
+                "gdal_metadata": false,
+
+                "#dynamic_metadata_doc":
+                    [ "The metadata file will be generated from a template and a source file.",
+                      "The template is a valid GMLJP2 metadata XML tree with placeholders like",
+                      "{{{XPATH(some_xpath_expression)}}}",
+                      "that are evalated from the source XML file. Typical use case",
+                      "is to generate a gmljp2:eopMetadata from the XML metadata",
+                      "provided by the image provider in their own particular format." ],
+                "dynamic_metadata" :
+                {
+                    "template": "my_template.xml",
+                    "source": "my_source.xml"
+                },
+
+                "#content": "Exclusive of file. Inline XML metadata content",
+                "content": "&lt;gmljp2:metadata&gt;Some simple textual metadata&lt;/gmljp2:metadata&gt;",
+
+                "#parent_node": ["Where to put the metadata.",
+                                 "Under CoverageCollection (default) or GridCoverage" ],
+                "parent_node": "CoverageCollection"
+            }
+        ],
+
+        "#annotations_doc": [ "An array of filenames, either directly KML files",
+                              "or other vector files recognized by GDAL that ",
+                              "will be translated on-the-fly as KML" ],
+        "annotations": [
+            "my.kml"
+        ],
+
+        "#gml_filelist_doc" :[
+            "An array of GML files. Can be either GML filenames, ",
+            "or a more complete description" ],
+        "gml_filelist": [
+
+            "my.gml",
+
+            {
+                "#file_doc": "Can use relative or absolute paths. Exclusive of remote_resource",
+                "file": "converted/test_0.gml",
+
+                "#remote_resource_doc": "URL of a feature collection that must be referenced through a xlink:href",
+                "remote_resource": "http://svn.osgeo.org/gdal/trunk/autotest/ogr/data/expected_gml_gml32.gml",
+
+                "#namespace_doc": ["The namespace in schemaLocation for which to substitute",
+                                  "its original schemaLocation with the one provided below.",
+                                  "Ignored for a remote_resource"],
+                "namespace": "http://example.com",
+
+                "#schema_location_doc": ["Value of the substitued schemaLocation. ",
+                                         "Typically a schema box label (link)",
+                                         "Ignored for a remote_resource"],
+                "schema_location": "gmljp2://xml/schema_0.xsd",
+
+                "#inline_doc": [
+                    "Whether to inline the content, or put it in a separate xml box. Default is true",
+                    "Ignored for a remote_resource." ],
+                "inline": true,
+
+                "#parent_node": ["Where to put the FeatureCollection.",
+                                 "Under CoverageCollection (default) or GridCoverage" ],
+                "parent_node": "CoverageCollection"
+            }
+        ],
+
+
+        "#styles_doc: [ "An array of styles. For example SLD files" ],
+        "styles" : [
+            {
+                "#file_doc": "Can use relative or absolute paths.",
+                "file": "my.sld",
+
+                "#parent_node": ["Where to put the FeatureCollection.",
+                                 "Under CoverageCollection (default) or GridCoverage" ],
+                "parent_node": "CoverageCollection"
+            }
+        ],
+
+        "#extensions_doc: [ "An array of extensions." ],
+        "extensions" : [
+            {
+                "#file_doc": "Can use relative or absolute paths.",
+                "file": "my.xml",
+
+                "#parent_node": ["Where to put the FeatureCollection.",
+                                 "Under CoverageCollection (default) or GridCoverage" ],
+                "parent_node": "CoverageCollection"
+            }
+        ]
+    },
+
+    "#boxes_doc": "An array to describe the content of XML asoc boxes",
+    "boxes": [
+        {
+            "#file_doc": "can use relative or absolute paths. Required",
+            "file": "converted/test_0.xsd",
+
+            "#label_doc": ["the label of the XML box. If not specified, will be the ",
+                          "filename without the directory part." ],
+            "label": "schema_0.xsd"
+        }
+    ]
+}
+</pre>
+
+<p>
+Metadata can be dynamically generated from a template file (in that context,
+with a XML structure) and a XML source file. The template file is processed
+by searching for patterns like {{{XPATH(xpath_expr)}}} and replacing them by their evaluation
+against the content of the source file. xpath_expr must be a XPath 1.0 compatible
+expression, with the addition of the following functions :
+
+<ul>
+<li><b>if(cond_expr,expr_if_true,expr_if_false)</b>: if cond_expr evalutes to
+true, returns expr_if_true. Otherwise returns expr_if_false</li>
+<li><b>uuid()</b>: evaluates to a random UUID</b></li>
+</ul>
+</p>
+
+<p>A template file to process XML metadata of Pleiades imagery can be found
+<a href="eoptemplate_pleiades.xml">here</a>, and
+a template file to process XML metadata of GeoEye/WorldView imagery can be found
+<a href="eoptemplate_worldviewgeoeye.xml">here</a>.</p>
+
+<h2>Vector information</h2>
+
+Starting with GDAL 2.0, a JPEG2000 file containing a GMLJP2 v2 box with GML feature
+collections and/or KML annotations embedded can be opened as a vector file with
+the OGR API.
+
+For example:
+<pre>
+ogrinfo -ro my.jp2 
+
+INFO: Open of my.jp2'
+      using driver `JP2OpenJPEG' successful.
+1: FC_GridCoverage_1_rivers (LineString)
+2: FC_GridCoverage_1_borders (LineString)
+3: Annotation_1_poly
+</pre>
+
+<p>Feature collections can be linked from the GMLJP2 v2 box to a remote location.
+By default, the link is not followed. It will be followed if the open option
+OPEN_REMOTE_GML is set to YES.</p>
+
 <h2>See Also:</h2>
 
 <ul>
 <li><p> Implemented as <tt>gdal/frmts/openjpeg/openjpegdataset.cpp</tt>.</p></li>
-<li><p> <a href="http://www.jpeg.org/JPEG2000.html">Official JPEG-2000 page<a></p></li>
+<li><p> <a href="http://www.jpeg.org/jpeg2000/index.html">Official JPEG-2000 page<a></p></li>
 <li><p> <a href="http://code.google.com/p/openjpeg/">The OpenJPEG library home page</a></p></li>
 <li><p> <a href="http://inspire.ec.europa.eu/documents/Data_Specifications/INSPIRE_DataSpecification_OI_v3.0.pdf">
 Inspire Data Specification on Orthoimagery - Technical Guidelines</a></p></li>

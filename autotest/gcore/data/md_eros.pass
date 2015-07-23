@@ -1,0 +1,9 @@
+satellite           EROS-B1
+camera              NA50
+sweep_start_utc     2013-04-01,11:00:00.00000
+overall_cc          0
+detail_cc           0
+cc_ul               0
+cc_ur               0
+cc_lr               0
+cc_ll               0

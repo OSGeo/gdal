@@ -29,6 +29,7 @@
 #  DEALINGS IN THE SOFTWARE.
 #******************************************************************************
 
+import os
 import sys
 from osgeo import gdal
 from osgeo import osr
@@ -290,7 +291,7 @@ def check_geojp2_gmljp2_consistency(filename, error_report):
             if abs(geojp2_gt[i] - gmljp2_gt[i] > 1e-8):
                 diff = True
         if diff:
-            error_report.EmitError('GENERAL', 'Inconsistant geotransform between GeoJP2 (%s) and GMLJP2 (%s)' % (str(geojp2_gt), str(gmljp2_gt)))
+            error_report.EmitError('GENERAL', 'Inconsistent geotransform between GeoJP2 (%s) and GMLJP2 (%s)' % (str(geojp2_gt), str(gmljp2_gt)))
 
     geojp2_sr = osr.SpatialReference()
     geojp2_sr.ImportFromWkt(geojp2_wkt)
@@ -302,7 +303,7 @@ def check_geojp2_gmljp2_consistency(filename, error_report):
         geojp2_proj4 = geojp2_sr.ExportToProj4()
         gmljp2_proj4 = gmljp2_sr.ExportToProj4()
         if geojp2_proj4 != gmljp2_proj4:
-            error_report.EmitError('GENERAL', 'Inconsistant SRS between GeoJP2 (wkt=%s, proj4=%s) and GMLJP2 (wkt=%s, proj4=%s)' % (geojp2_wkt, geojp2_proj4, gmljp2_wkt, gmljp2_proj4))
+            error_report.EmitError('GENERAL', 'Inconsistent SRS between GeoJP2 (wkt=%s, proj4=%s) and GMLJP2 (wkt=%s, proj4=%s)' % (geojp2_wkt, geojp2_proj4, gmljp2_wkt, gmljp2_proj4))
 
 
 # Check consistency of georeferencing of OrthoimageCoverage with the one embedded in the JPEG2000 file
@@ -362,7 +363,7 @@ def check_oi_rg_consistency(filename, serialized_oi_rg, error_report):
             if abs(oi_gt[i] - gt[i] > 1e-8):
                 diff = True
         if diff:
-            error_report.EmitError('INSPIRE_TG', 'Inconsistant geotransform between OrthoImagery (%s) and GMLJP2/GeoJP2 (%s)' % (str(oi_gt), str(gt)), conformance_class = 'A.8.8')
+            error_report.EmitError('INSPIRE_TG', 'Inconsistent geotransform between OrthoImagery (%s) and GMLJP2/GeoJP2 (%s)' % (str(oi_gt), str(gt)), conformance_class = 'A.8.8')
 
     sr = osr.SpatialReference()
     sr.ImportFromWkt(wkt)
@@ -374,7 +375,7 @@ def check_oi_rg_consistency(filename, serialized_oi_rg, error_report):
         proj4 = sr.ExportToProj4()
         oi_proj4 = oi_sr.ExportToProj4()
         if proj4 != oi_proj4:
-            error_report.EmitError('INSPIRE_TG', 'Inconsistant SRS between OrthoImagery (wkt=%s, proj4=%s) and GMLJP2/GeoJP2 (wkt=%s, proj4=%s)' % (wkt, proj4, oi_wkt, oi_proj4), conformance_class = 'A.8.8')
+            error_report.EmitError('INSPIRE_TG', 'Inconsistent SRS between OrthoImagery (wkt=%s, proj4=%s) and GMLJP2/GeoJP2 (wkt=%s, proj4=%s)' % (wkt, proj4, oi_wkt, oi_proj4), conformance_class = 'A.8.8')
 
 def validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location, datatype = 'imagery', error_report = None):
 
@@ -409,6 +410,8 @@ def validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location,
         gmljp2_found = gmljp2 is not None
         if expected_gmljp2 and not gmljp2_found:
             error_report.EmitError('GMLJP2', 'No GMLJP2 box found whereas it was expected')
+        if gmljp2_found and inspire_tg and gmljp2.find('gmljp2:GMLJP2CoverageCollection') >= 0:
+            error_report.EmitError('INSPIRE_TG', 'GMLJP2 v2 box found, but Inspire TG require GMLJP2 v1', conformance_class = 'A.8.6')
         if gmljp2_found and ogc_schemas_location != 'disabled':
             if ogc_schemas_location is not None:
                 import os
@@ -447,7 +450,7 @@ def validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location,
                 if h != '1':
                     error_report.EmitError('GeoJP2', 'GeoTIFF should have height of 1 pixel, not %s' % str(h))
 
-        # Check that information of GeoJP2 and GMLJP2 are consistant
+        # Check that information of GeoJP2 and GMLJP2 are consistent
         if geotiff_found and gmljp2_found:
             check_geojp2_gmljp2_consistency(filename, error_report)
 
@@ -1200,6 +1203,24 @@ def main():
 
     if filename is None:
         return Usage()
+
+    if ogc_schemas_location is None:
+        try:
+            os.stat('SCHEMAS_OPENGIS_NET')
+            ogc_schemas_location = 'SCHEMAS_OPENGIS_NET'
+        except:
+            pass
+
+    if ogc_schemas_location is not None:
+        try:
+            os.stat('%s/xml.xsd' % ogc_schemas_location)
+        except:
+            try:
+                os.stat('%s/SCHEMAS_OPENGIS_NET/xml.xsd' % ogc_schemas_location)
+                ogc_schemas_location = '%s/SCHEMAS_OPENGIS_NET' % ogc_schemas_location
+            except:
+                print('Cannot find %s/xml.xsd. -ogc_schemas_location value is probably wrong' % ogc_schemas_location)
+                return 1
 
     return validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location, datatype).error_count
 

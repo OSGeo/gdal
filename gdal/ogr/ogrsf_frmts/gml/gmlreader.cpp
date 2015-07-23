@@ -184,9 +184,10 @@ CPL_UNUSED
 
     m_bSetWidthFlag = TRUE;
 
-    m_bReportAllAttributes = CSLTestBoolean(
-                    CPLGetConfigOption("GML_ATTRIBUTES_TO_OGR_FIELDS", "NO"));
+    m_bReportAllAttributes = FALSE;
 
+    m_bIsWFSJointLayer = FALSE;
+    m_bEmptyAsNull = TRUE;
 }
 
 /************************************************************************/
@@ -788,6 +789,28 @@ int GMLReader::GetFeatureElementIndex( const char *pszElement, int nElementLengt
         {
             /* GML answer of MapServer WMS GetFeatureInfo request */
         }
+
+        /* Begin of CSW SearchResults */
+        else if (nElementLength == strlen("BriefRecord") &&
+                 nLenLast == strlen("SearchResults") &&
+                 strcmp(pszElement, "BriefRecord") == 0 &&
+                 strcmp(pszLast, "SearchResults") == 0)
+        {
+        }
+        else if (nElementLength == strlen("SummaryRecord") &&
+                 nLenLast == strlen("SearchResults") &&
+                 strcmp(pszElement, "SummaryRecord") == 0 &&
+                 strcmp(pszLast, "SearchResults") == 0)
+        {
+        }
+        else if (nElementLength == strlen("Record") &&
+                 nLenLast == strlen("SearchResults") &&
+                 strcmp(pszElement, "Record") == 0 &&
+                 strcmp(pszLast, "SearchResults") == 0)
+        {
+        }
+        /* End of CSW SearchResults */
+
         else
         {
             if( m_bClassListLocked )
@@ -1084,7 +1107,28 @@ void GMLReader::SetFeaturePropertyDirectly( const char *pszElement,
 
             CPLString osFieldName;
 
-            if( strchr(pszElement,'|') == NULL )
+            if( IsWFSJointLayer() )
+            {
+                /* At that point the element path should be member|layer|property */
+
+                /* Strip member| prefix. Should always be true normally */
+                if( strncmp(pszElement, "member|", strlen("member|")) == 0 )
+                    osFieldName = pszElement + strlen("member|");
+
+                /* Replace layer|property by layer_property */
+                size_t iPos = osFieldName.find('|');
+                if( iPos != std::string::npos )
+                    osFieldName[iPos] = '.';
+
+                /* Special case for gml:id on layer */
+                iPos = osFieldName.find("@id");
+                if( iPos != std::string::npos )
+                {
+                    osFieldName.resize(iPos);
+                    osFieldName += ".gml_id";
+                }
+            }
+            else if( strchr(pszElement,'|') == NULL )
                 osFieldName = pszElement;
             else
             {
@@ -1318,7 +1362,9 @@ int GMLReader::SaveClasses( const char *pszFile )
 /*      looking for schema information.                                 */
 /************************************************************************/
 
-int GMLReader::PrescanForSchema( int bGetExtents, int bAnalyzeSRSPerFeature )
+int GMLReader::PrescanForSchema( int bGetExtents,
+                                 int bAnalyzeSRSPerFeature,
+                                 int bOnlyDetectSRS )
 
 {
     GMLFeature  *poFeature;
@@ -1326,9 +1372,12 @@ int GMLReader::PrescanForSchema( int bGetExtents, int bAnalyzeSRSPerFeature )
     if( m_pszFilename == NULL )
         return FALSE;
 
-    SetClassListLocked( FALSE );
+    if( !bOnlyDetectSRS )
+    {
+        SetClassListLocked( FALSE );
+        ClearClasses();
+    }
 
-    ClearClasses();
     if( !SetupParser() )
         return FALSE;
 
@@ -1357,21 +1406,21 @@ int GMLReader::PrescanForSchema( int bGetExtents, int bAnalyzeSRSPerFeature )
             poClass->SetFeatureCount( poClass->GetFeatureCount() + 1 );
 
         const CPLXMLNode* const * papsGeometry = poFeature->GetGeometryList();
-        if( papsGeometry != NULL && papsGeometry[0] != NULL )
+        if( !bOnlyDetectSRS && papsGeometry != NULL && papsGeometry[0] != NULL )
         {
             if( poClass->GetGeometryPropertyCount() == 0 )
                 poClass->AddGeometryProperty( new GMLGeometryPropertyDefn( "", "", wkbUnknown, -1, TRUE ) );
         }
 
 #ifdef SUPPORT_GEOMETRY
-        if( bGetExtents )
+        if( bGetExtents && papsGeometry != NULL )
         {
             OGRGeometry *poGeometry = GML_BuildOGRGeometryFromList(
                 papsGeometry, TRUE, m_bInvertAxisOrderIfLatLong,
                 NULL, m_bConsiderEPSGAsURN, m_bGetSecondaryGeometryOption, 
                 hCacheSRS, m_bFaceHoleNegative );
 
-            if( poGeometry != NULL )
+            if( poGeometry != NULL && poClass->GetGeometryPropertyCount() > 0 )
             {
                 double  dfXMin, dfXMax, dfYMin, dfYMax;
                 OGREnvelope sEnvelope;

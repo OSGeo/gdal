@@ -35,15 +35,15 @@
 
 int GMLRegistry::Parse()
 {
-    const char* pszFilename;
-    pszFilename = CPLGetConfigOption("GML_REGISTRY", NULL);
-    if( pszFilename == NULL )
+    if( osRegistryPath.size() == 0 )
     {
-        pszFilename = CPLFindFile( "gdal", "gml_registry.xml" );
+        const char* pszFilename = CPLFindFile( "gdal", "gml_registry.xml" );
+        if( pszFilename )
+            osRegistryPath = pszFilename;
     }
-    if( pszFilename == NULL )
+    if( osRegistryPath.size() == 0 )
         return FALSE;
-    CPLXMLNode* psRootNode = CPLParseXMLFile(pszFilename);
+    CPLXMLNode* psRootNode = CPLParseXMLFile(osRegistryPath);
     if( psRootNode == NULL )
         return FALSE;
     CPLXMLNode *psRegistryNode = CPLGetXMLNode( psRootNode, "=gml_registry" );
@@ -59,7 +59,7 @@ int GMLRegistry::Parse()
             strcmp(psIter->pszValue, "namespace") == 0 )
         {
             GMLRegistryNamespace oNameSpace;
-            if( oNameSpace.Parse(pszFilename, psIter) )
+            if( oNameSpace.Parse(osRegistryPath, psIter) )
             {
                 aoNamespaces.push_back(oNameSpace);
             }

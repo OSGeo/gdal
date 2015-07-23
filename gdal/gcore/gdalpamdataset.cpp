@@ -211,10 +211,7 @@ CPLXMLNode *GDALPamDataset::SerializeToXML( const char *pszUnused )
         psMD = oMDMD.Serialize();
         if( psMD != NULL )
         {
-            if( psMD->psChild == NULL && psMD->psNext == NULL )
-                CPLDestroyXMLNode( psMD );
-            else
-                CPLAddXMLChild( psDSTree, psMD );
+            CPLAddXMLChild( psDSTree, psMD );
         }
     }
 
@@ -570,6 +567,8 @@ const char *GDALPamDataset::BuildPamFilename()
         psPam->pszPamFilename = CPLStrdup(pszProxyPam);
     else
     {
+        if( !GDALCanFileAcceptSidecarFile(pszPhysicalFile) )
+            return NULL;
         psPam->pszPamFilename = (char*) CPLMalloc(strlen(pszPhysicalFile)+10);
         strcpy( psPam->pszPamFilename, pszPhysicalFile );
         strcat( psPam->pszPamFilename, ".aux.xml" );
@@ -1458,7 +1457,8 @@ CPLErr GDALPamDataset::TryLoadAux(char **papszSiblingFiles)
 
         // histograms?
         double dfMin, dfMax;
-        int nBuckets, *panHistogram=NULL;
+        int nBuckets;
+        GUIntBig *panHistogram=NULL;
 
         if( poAuxBand->GetDefaultHistogram( &dfMin, &dfMax, 
                                             &nBuckets, &panHistogram,

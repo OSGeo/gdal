@@ -230,3 +230,6 @@
    on Apple.  It is currently off by default because it doesn't seem to work with 
    newish ( XCode >= 3/28/11) XCodes */
 /* #include "cpl_config_extras.h" */
+
+/* Define to 1 if you have the `uselocale' function. */
+#undef HAVE_USELOCALE

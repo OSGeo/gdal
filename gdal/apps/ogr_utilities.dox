@@ -1,4 +1,5 @@
 /*! \page ogr_utilities OGR Utility Programs
+\brief A collection of OGR related programs.
 
 The following utilities are distributed as part of the OGR Simple Features
 toolkit:
@@ -27,6 +28,8 @@ ogrinfo [--help-general] [-ro] [-q] [-where restricted_where]
         [-spat xmin ymin xmax ymax] [-geomfield field] [-fid fid]
         [-sql statement] [-dialect dialect] [-al] [-so] [-fields={YES/NO}]
         [-geom={YES/NO/SUMMARY}] [-formats] [[-oo NAME=VALUE] ...]
+        [-nomd] [-listmdd] [-mdd domain|`all`]*
+        [-nocount] [-noextent]
         datasource_name [layer [layer ...]]
 
 \endverbatim
@@ -68,6 +71,13 @@ the feature dump will not display the geometry. If set to SUMMARY, only a
 summary of the geometry will be displayed. If set to YES, the geometry will be reported in full OGC WKT format.
 Default value is YES.</dd>
 <dt> <b>-oo</b> <em>NAME=VALUE</em>:</dt><dd>(starting with GDAL 2.0) Dataset open option (format specific)</dd>
+<dt> <b>-nomd</b></dt><dd>(starting with GDAL 2.0)  Suppress metadata printing. Some datasets may contain a lot
+of metadata strings.</dd>
+<dt> <b>-listmdd</b></dt><dd>(starting with GDAL 2.0)  List all metadata domains available for the dataset.</dd>
+<dt> <b>-mdd domain</b></dt><dd>(starting with GDAL 2.0)  Report metadata for the specified domain.
+"all" can be used to report metadata in all domains</dd>
+<dt> <b>-nocount</b></dt><dd>(starting with GDAL 2.0)  Suppress feature count printing.</dd>
+<dt> <b>-noextent</b></dt><dd>(starting with GDAL 2.0)  Suppress spatial extent printing.</dd>
 <dt> <b>--formats</b>:</dt><dd> List the format drivers that are
 enabled.</dd>
 <dt> <i>datasource_name</i>:</dt><dd> The data source to open.  May be a filename, 
@@ -175,7 +185,7 @@ Usage: ogr2ogr [--help-general] [-skipfailures] [-append] [-update]
                [-select field_list] [-where restricted_where] 
                [-progress] [-sql <sql statement>] [-dialect dialect]
                [-preserve_fid] [-fid FID]
-               [-spat xmin ymin xmax ymax] [-geomfield field]
+               [-spat xmin ymin xmax ymax] [-spat_srs srs_def] [-geomfield field]
                [-a_srs srs_def] [-t_srs srs_def] [-s_srs srs_def]
                [-f format_name] [-overwrite] [[-dsco NAME=VALUE] ...]
                dst_datasource_name src_datasource_name
@@ -202,6 +212,7 @@ Advanced options :
                [-splitlistfields] [-maxsubfields val]
                [-explodecollections] [-zfield field_name]
                [-gcp pixel line easting northing [elevation]]* [-order n | -tps]
+               [-nomd] [-mo \"META-TAG=VALUE\"]*
 
 \endverbatim
 
@@ -239,8 +250,10 @@ The resulting table/layer will be saved to the output.</dd>
 Starting with GDAL 1.10, the "SQLITE" dialect can also be used with any datasource.</dd>
 <dt> <b>-where</b><em> restricted_where</em>:</dt><dd> Attribute query (like SQL WHERE)</dd>
 <dt> <b>-skipfailures</b>:</dt><dd>Continue after a failure, skipping the failed feature.</dd>
-<dt> <b>-spat</b><em> xmin ymin xmax ymax</em>:</dt><dd> spatial query extents. Only features
+<dt> <b>-spat</b><em> xmin ymin xmax ymax</em>:</dt><dd> spatial query extents, in the
+SRS of the source layer(s) (or the one specified with -spat_srs). Only features
 whose geometry intersects the extents will be selected. The geometries will not be clipped unless -clipsrc is specified</dd>
+<dt> <b>-spat_srs</b><em> srs_def</em>:</dt><dd> (OGR &gt;= 2.0) Override spatial filter SRS.</dd>
 <dt> <b>-geomfield</b> <i>field</i>:</dt><dd> (OGR &gt;= 1.11) Name of the geometry field
 on which the spatial filter operates on.</dd>
 <dt> <b>-dsco</b> <em>NAME=VALUE</em>:</dt><dd> Dataset creation option (format specific)</dd>
@@ -254,7 +267,7 @@ types.
 Add "25D" to the name to get 2.5D versions.
 Starting with GDAL 1.10, PROMOTE_TO_MULTI can be used to automatically promote layers
 that mix polygon or multipolygons to multipolygons, and layers that mix linestrings or
-multilinestrings to multilinestrings. Can be usefull when converting shapefiles to PostGIS
+multilinestrings to multilinestrings. Can be useful when converting shapefiles to PostGIS
 (and other target drivers) that implements strict checks for geometry type.
 Starting with GDAL 2.0, CONVERT_TO_LINEAR can be used to to convert non-linear geometries
 types into linear geometries by approximating them.</dd>
@@ -287,7 +300,12 @@ Advanced options :
 <dt> <b>-oo</b> <em>NAME=VALUE</em>:</dt><dd>(starting with GDAL 2.0) Input dataset open option (format specific)</dd>
 <dt> <b>-doo</b> <em>NAME=VALUE</em>:</dt><dd>(starting with GDAL 2.0) Destination dataset open option (format specific), only valid in -update mode</dd>
 <dt> <b>-gt</b> <em>n</em>:</dt><dd> group <em>n</em> features per transaction (default 20000 in OGR 1.11, 200 in previous releases). Increase the value
-for better performance when writing into DBMS drivers that have transaction support.</dd>
+for better performance when writing into DBMS drivers that have transaction support. Starting with GDAL 2.0,
+n can be set to unlimited to load the data into a single transaction.</dd>
+<dt> <b>-ds_transaction</b>:</dt><dd>(starting with GDAL 2.0) Force the use of
+a dataset level transaction (for drivers that support such mechanism),
+especially for drivers such as FileGDB that only support dataset level transaction
+in emulation mode.</dd>
 <dt> <b>-clipsrc</b><em> [xmin ymin xmax ymax]|WKT|datasource|spat_extent</em>:
 </dt><dd> (starting with GDAL 1.7.0) clip geometries to the specified bounding
 box (expressed in source SRS), WKT geometry (POLYGON or MULTIPOLYGON), from a
@@ -358,6 +376,12 @@ to target layer if they exist in source layer..</dd>
 the new default behaviour that consists in, if the output driver
 has a FID layer creation option and we are not in append mode, to preserve the
 name of the source FID column and source feature IDs</dd>
+<dt> <b>-nomd</b>:</dt><dd>(starting with GDAL 2.0) To disable copying of metadata
+from source dataset and layers into target dataset and layers, when supported by
+output driver.</dd>
+<dt> <b>-mo</b> <i>"META-TAG=VALUE"</i>:</dt><dd>(starting with GDAL 2.0)  Passes a metadata key and
+value to set on the output dataset, when supported by output driver.</dd>
+
 </dl>
 
 \section ogr2ogr_performance PERFORMANCE HINTS

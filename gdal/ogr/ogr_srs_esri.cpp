@@ -72,7 +72,6 @@ static const char *apszProjMapping[] = {
     "Van_der_Grinten_I", SRS_PT_VANDERGRINTEN,
     SRS_PT_TRANSVERSE_MERCATOR, SRS_PT_TRANSVERSE_MERCATOR,
     "Gauss_Kruger", SRS_PT_TRANSVERSE_MERCATOR,
-    "Mercator", SRS_PT_MERCATOR_1SP,
     NULL, NULL }; 
  
 static const char *apszAlbersMapping[] = {
@@ -84,10 +83,6 @@ static const char *apszAlbersMapping[] = {
 static const char *apszECMapping[] = {
     SRS_PP_CENTRAL_MERIDIAN, SRS_PP_LONGITUDE_OF_CENTER, 
     SRS_PP_LATITUDE_OF_ORIGIN, SRS_PP_LATITUDE_OF_CENTER, 
-    NULL, NULL };
-
-static const char *apszMercatorMapping[] = {
-    SRS_PP_STANDARD_PARALLEL_1, SRS_PP_LATITUDE_OF_ORIGIN,
     NULL, NULL };
 
 static const char *apszPolarStereographicMapping[] = {
@@ -1104,6 +1099,13 @@ OGRErr OGRSpatialReference::morphToESRI()
             poGeogCS->GetChild(0)->SetValue( "GCS_WGS_1984" );
             pszUTMPrefix = "WGS_1984";
         }
+        else if( nGCSCode == 4322 
+            || EQUAL(pszGeogCSName,"WGS72") 
+            || EQUAL(pszGeogCSName,"WGS 72") )
+        {
+            poGeogCS->GetChild(0)->SetValue( "GCS_WGS_1972" );
+            pszUTMPrefix = "WGS_1972";
+        }
         else if( nGCSCode == 4267
                  || EQUAL(pszGeogCSName,"NAD27") 
                  || EQUAL(pszGeogCSName,"NAD 27") )
@@ -1252,7 +1254,7 @@ OGRErr OGRSpatialReference::morphToESRI()
     }
 
 /* -------------------------------------------------------------------- */
-/*      Remap parameters used for Albers and Mercator.                  */
+/*      Remap parameters used for Albers.                               */
 /* -------------------------------------------------------------------- */
     pszProjection = GetAttrValue("PROJECTION");
     poProjCS = GetAttrNode( "PROJCS" );
@@ -1271,12 +1273,6 @@ OGRErr OGRSpatialReference::morphToESRI()
         GetRoot()->applyRemapper( 
             "PARAMETER", (char **)apszECMapping + 1,
             (char **)apszECMapping + 0, 2 );
-
-    if( pszProjection != NULL && EQUAL(pszProjection,"Mercator") )
-        GetRoot()->applyRemapper( 
-            "PARAMETER",
-            (char **)apszMercatorMapping + 1,
-            (char **)apszMercatorMapping + 0, 2 );
 
     if( pszProjection != NULL 
         && EQUALN(pszProjection,"Stereographic_",14)
@@ -1310,6 +1306,39 @@ OGRErr OGRSpatialReference::morphToESRI()
             if( poPROJCS )
                 poPROJCS->DestroyChild( 
                     FindProjParm( SRS_PP_LATITUDE_OF_ORIGIN ) );
+        }
+    }
+
+    /* See #4861 */
+    if( pszProjection != NULL && EQUAL(pszProjection,SRS_PT_MERCATOR_2SP) )
+    {
+        SetNode( "PROJCS|PROJECTION", "Mercator" );
+        pszProjection = GetAttrValue("PROJECTION");
+    }
+    
+    /* See #4861 */
+    if( pszProjection != NULL && EQUAL(pszProjection,SRS_PT_MERCATOR_1SP) )
+    {
+        SetNode( "PROJCS|PROJECTION", "Mercator" );
+        pszProjection = GetAttrValue("PROJECTION");
+        
+        double dfK0 = GetNormProjParm(SRS_PP_SCALE_FACTOR, 1.0);
+        
+        double dfInvFlattening = GetInvFlattening();;
+        double e2 = 0.0;
+        if( dfInvFlattening != 0.0 )
+        {
+            double f = 1 / dfInvFlattening;
+            e2 = 2 *f - f*f;
+        }
+        double dfStdP1Lat = acos( sqrt( (1 - e2) / (1 / (dfK0 * dfK0)) - e2) ) / M_PI * 180.0;
+        if( poProjCS )
+        {
+            int iScaleFactorChild = FindProjParm( SRS_PP_SCALE_FACTOR, poProjCS );
+            if( iScaleFactorChild != -1 )
+                poProjCS->DestroyChild( iScaleFactorChild);
+            SetProjParm(SRS_PP_STANDARD_PARALLEL_1, dfStdP1Lat);
+            FixupOrdering();
         }
     }
 
@@ -1616,12 +1645,6 @@ OGRErr OGRSpatialReference::morphFromESRI()
             "PARAMETER", (char **)apszECMapping + 0,
             (char **)apszECMapping + 1, 2 );
 
-    if( pszProjection != NULL && EQUAL(pszProjection,"Mercator") )
-        GetRoot()->applyRemapper( 
-            "PARAMETER",
-            (char **)apszMercatorMapping + 0,
-            (char **)apszMercatorMapping + 1, 2 );
-
     if( pszProjection != NULL && EQUAL(pszProjection,"Orthographic") )
         GetRoot()->applyRemapper( 
             "PARAMETER", (char **)apszOrthographicMapping + 0,
@@ -1668,6 +1691,15 @@ OGRErr OGRSpatialReference::morphFromESRI()
             (char **)apszPolarStereographicMapping + 1, 2 );
 #endif
 
+/* -------------------------------------------------------------------- */
+/*      Remap Mercator to Mercator_2SP (#4861)                          */
+/* -------------------------------------------------------------------- */
+    if( pszProjection != NULL && EQUAL(pszProjection,"Mercator") )
+    {
+        SetNode( "PROJCS|PROJECTION", SRS_PT_MERCATOR_2SP );
+        pszProjection = GetAttrValue("PROJECTION");
+    }
+
     /*
     ** Handle the value of Central_Parallel -> latitude_of_center.
     ** See ticket #3191.  Other mappings probably need to be added.
@@ -1679,6 +1711,25 @@ OGRErr OGRSpatialReference::morphFromESRI()
         GetRoot()->applyRemapper( 
             "PARAMETER", (char **)apszLambertConformalConicMapping + 0,
             (char **)apszLambertConformalConicMapping + 1, 2 );
+
+        /* LCC 1SP has duplicated parameters Standard_Parallel_1 and Latitude_Of_Origin */
+        /* http://trac.osgeo.org/gdal/ticket/2072 */
+        if( EQUAL( pszProjection, SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP ) )
+        {
+            OGR_SRSNode *poPROJCS = GetAttrNode( "PROJCS" );
+            int iSP1Child = FindProjParm( "Standard_Parallel_1", poPROJCS );
+            int iLatOrigChild = FindProjParm( "Latitude_Of_Origin", poPROJCS );
+            if( iSP1Child != -1 && iLatOrigChild != 1 )
+            {
+                /* Do a sanity check before removing Standard_Parallel_1 */
+                if( EQUAL(poPROJCS->GetChild(iSP1Child)->GetValue(),
+                          poPROJCS->GetChild(iLatOrigChild)->GetValue()) )
+                {
+                    poPROJCS->DestroyChild( iSP1Child );
+                }
+            }
+        }
+
     }
 
 /* -------------------------------------------------------------------- */

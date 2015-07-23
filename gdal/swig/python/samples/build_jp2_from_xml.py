@@ -40,7 +40,7 @@ XML_VALUE_IDX = 1
 XML_FIRST_CHILD_IDX = 2
 
 def Usage():
-    print('Usage:  parse_jp2_from_xml in.xml out.jp2')
+    print('Usage: build_jp2_from_xml in.xml out.jp2')
     return 1
 
 def find_xml_node(ar, element_name, immediate_child = False, only_attributes = False):
@@ -318,8 +318,7 @@ def parse_jp2_box(xml_tree, out_f, src_jp2file):
             print('Cannot decode VRTDataset. Outputing empty content')
             binary_content = ''
         else:
-            out_ds = gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/out.tif', vrt_ds)
-            del out_ds
+            gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/out.tif', vrt_ds)
             tif_f = gdal.VSIFOpenL('/vsimem/out.tif', 'rb')
             binary_content = gdal.VSIFReadL(1, 10000, tif_f)
             gdal.VSIFCloseL(tif_f)

@@ -681,16 +681,12 @@ void VSIFree( void * pData )
 char *VSIStrdup( const char * pszString )
 
 {
-#ifdef DEBUG_VSIMALLOC
     int nSize = strlen(pszString) + 1;
     char* ptr = (char*) VSIMalloc(nSize);
     if (ptr == NULL)
         return NULL;
     memcpy(ptr, pszString, nSize);
     return ptr;
-#else
-    return( strdup( pszString ) );
-#endif
 }
 
 /************************************************************************/

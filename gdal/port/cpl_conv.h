@@ -214,6 +214,7 @@ int CPL_DLL CPLUnlinkTree( const char * );
 int CPL_DLL CPLCopyFile( const char *pszNewPath, const char *pszOldPath );
 int CPL_DLL CPLCopyTree( const char *pszNewPath, const char *pszOldPath );
 int CPL_DLL CPLMoveFile( const char *pszNewPath, const char *pszOldPath );
+int CPL_DLL CPLSymlink( const char* pszOldPath, const char* pszNewPath, char** papszOptions );
 
 /* -------------------------------------------------------------------- */
 /*      ZIP Creation.                                                   */
@@ -270,6 +271,32 @@ private:
     /* Make it non-copyable */
     CPLLocaleC(CPLLocaleC&);
     CPLLocaleC& operator=(CPLLocaleC&);
+};
+
+// Does the same as CPLLocaleC except that, when available, it tries to
+// only affect the current thread. But code that would be dependant of
+// setlocale(LC_NUMERIC, NULL) returning "C", such as current proj.4 versions,
+// will not work depending on the actual implementation
+class CPL_DLL CPLThreadLocaleC
+{
+public:
+    CPLThreadLocaleC();
+    ~CPLThreadLocaleC();
+
+private:
+#ifdef HAVE_USELOCALE
+    locale_t nNewLocale;
+    locale_t nOldLocale;
+#else
+#if defined(_MSC_VER)
+    int   nOldValConfigThreadLocale;
+#endif
+    char *pszOldLocale;
+#endif
+
+    /* Make it non-copyable */
+    CPLThreadLocaleC(CPLThreadLocaleC&);
+    CPLThreadLocaleC& operator=(CPLThreadLocaleC&);
 };
 
 #endif /* def __cplusplus */

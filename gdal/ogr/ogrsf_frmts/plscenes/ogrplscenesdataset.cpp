@@ -58,7 +58,8 @@ OGRPLScenesDataset::~OGRPLScenesDataset()
 
     if (bMustCleanPersistant)
     {
-        char** papszOptions = CSLAddString(NULL, CPLSPrintf("CLOSE_PERSISTENT=PLSCENES:%p", this));
+        char** papszOptions = NULL;
+        papszOptions = CSLSetNameValue(papszOptions, "CLOSE_PERSISTENT", CPLSPrintf("PLSCENES:%p", this));
         CPLHTTPFetch( osBaseURL, papszOptions);
         CSLDestroy(papszOptions);
     }
@@ -73,6 +74,34 @@ OGRLayer *OGRPLScenesDataset::GetLayer(int idx)
     if( idx < 0 || idx >= nLayers )
         return NULL;
     return papoLayers[idx];
+}
+
+/************************************************************************/
+/*                          GetLayerByName()                            */
+/************************************************************************/
+
+OGRLayer *OGRPLScenesDataset::GetLayerByName(const char* pszName)
+{
+    OGRLayer* poLayer = GDALDataset::GetLayerByName(pszName);
+    if( poLayer != NULL )
+        return poLayer;
+
+    CPLString osURL;
+    osURL = osBaseURL;
+    osURL += pszName;
+    osURL += "/";
+    json_object* poObj = RunRequest( (osURL + CPLString("?count=10")).c_str() );
+    if( poObj == NULL )
+        return NULL;
+
+    OGRPLScenesLayer* poPLLayer = new OGRPLScenesLayer(this, pszName, osURL, poObj);
+    papoLayers = (OGRPLScenesLayer**) CPLRealloc(papoLayers,
+                                sizeof(OGRPLScenesLayer*) * (nLayers + 1));
+    papoLayers[nLayers ++] = poPLLayer;
+
+    json_object_put(poObj);
+
+    return poPLLayer;
 }
 
 /***********************************************************************/
@@ -267,40 +296,96 @@ json_object* OGRPLScenesDataset::RunRequest(const char* pszURL,
 /************************************************************************/
 
 GDALDataset* OGRPLScenesDataset::OpenRasterScene(GDALOpenInfo* poOpenInfo,
-                                                 CPLString osScene)
+                                                 CPLString osScene,
+                                                 char** papszOptions)
 {
     if( !(poOpenInfo->nOpenFlags & GDAL_OF_RASTER) )
     {
         return NULL;
     }
 
-    const char* pszProductType = strstr(poOpenInfo->pszFilename, "product_type=");
-    if( pszProductType != NULL )
-        pszProductType += strlen("product_type=");
-    else if( CSLFetchNameValue(poOpenInfo->papszOpenOptions, "PRODUCT_TYPE") )
-        pszProductType = CSLFetchNameValue(poOpenInfo->papszOpenOptions, "PRODUCT_TYPE");
-    else
-        pszProductType = "visual";
-    CPLString osProductType(pszProductType);
-    const char* pszEnd = strchr(pszProductType, ',');
-    if( pszEnd == NULL )
-        pszEnd = strchr(pszProductType, ' ');
-    if( pszEnd )
-        osProductType.resize(pszEnd - pszProductType);
+    for( char** papszIter = papszOptions; papszIter && *papszIter; papszIter ++ )
+    {
+        char* pszKey;
+        const char* pszValue = CPLParseNameValue(*papszIter, &pszKey);
+        if( pszValue != NULL )
+        {
+            if( !EQUAL(pszKey, "api_key") &&
+                !EQUAL(pszKey, "scene") &&
+                !EQUAL(pszKey, "product_type") )
+            {
+                CPLError(CE_Failure, CPLE_NotSupported, "Unsupported option %s", pszKey);
+                CPLFree(pszKey);
+                return NULL;
+            }
+            CPLFree(pszKey);
+        }
+    }
+
+    const char* pszProductType = CSLFetchNameValueDef(papszOptions, "product_type",
+                CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "PRODUCT_TYPE", "visual"));
 
     CPLString osRasterURL;
-    if( strncmp(osBaseURL, "/vsimem/", strlen("/vsimem/")) == 0 )
-        osRasterURL = osBaseURL;
-    else
-        osRasterURL.Printf("https://%s:@api.planet.com/v0/scenes/",
-                           osAPIKey.c_str());
+    osRasterURL = osBaseURL;
     osRasterURL += "ortho/";
     osRasterURL += osScene;
-    osRasterURL += "/";
-    if( EQUAL(osProductType, "thumb") )
-        osRasterURL += "thumb";
+    json_object* poObj = RunRequest( osRasterURL );
+    if( poObj == NULL )
+        return NULL;
+    json_object* poProperties = json_object_object_get(poObj, "properties");
+    if( poProperties == NULL || json_object_get_type(poProperties) != json_type_object )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot find properties object");
+        json_object_put(poObj);
+        return NULL;
+    }
+
+    const char* pszLink = NULL;
+    if( EQUAL(pszProductType, "thumb") )
+    {
+        json_object* poLinks = json_object_object_get(poProperties, "links");
+        if( poLinks != NULL && json_object_get_type(poLinks) == json_type_object )
+        {
+            json_object* poThumbnail = json_object_object_get(poLinks, "thumbnail");
+            if( poThumbnail && json_object_get_type(poThumbnail) == json_type_string )
+                pszLink = json_object_get_string(poThumbnail);
+        }
+    }
     else
-        osRasterURL += CPLSPrintf("full?product=%s", osProductType.c_str());
+    {
+        json_object* poData = json_object_object_get(poProperties, "data");
+        if( poData != NULL && json_object_get_type(poData) == json_type_object )
+        {
+            json_object* poProducts = json_object_object_get(poData, "products");
+            if( poProducts != NULL && json_object_get_type(poProducts) == json_type_object )
+            {
+                json_object* poProduct = json_object_object_get(poProducts, pszProductType);
+                if( poProduct != NULL && json_object_get_type(poProduct) == json_type_object )
+                {
+                    json_object* poFull = json_object_object_get(poProduct, "full");
+                    if( poFull && json_object_get_type(poFull) == json_type_string )
+                        pszLink = json_object_get_string(poFull);
+                }
+            }
+        }
+    }
+    osRasterURL = pszLink ? pszLink : "";
+    json_object_put(poObj);
+    if( osRasterURL.size() == 0 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot find link to scene %s",
+                 osScene.c_str());
+        return NULL;
+    }
+    
+    if( strncmp(osRasterURL, "http://", strlen("http://")) == 0 )
+    {
+        osRasterURL = "http://" + osAPIKey + ":@" + osRasterURL.substr(strlen("http://"));
+    }
+    else if( strncmp(osRasterURL, "https://", strlen("https://")) == 0 )
+    {
+        osRasterURL = "https://" + osAPIKey + ":@" + osRasterURL.substr(strlen("https://"));
+    }
 
     CPLString osOldHead(CPLGetConfigOption("CPL_VSIL_CURL_USE_HEAD", ""));
     CPLString osOldExt(CPLGetConfigOption("CPL_VSIL_CURL_ALLOWED_EXTENSIONS", ""));
@@ -308,9 +393,19 @@ GDALDataset* OGRPLScenesDataset::OpenRasterScene(GDALOpenInfo* poOpenInfo,
     int bUseVSICURL = CSLFetchBoolean(poOpenInfo->papszOpenOptions, "RANDOM_ACCESS", TRUE);
     if( bUseVSICURL && !(strncmp(osBaseURL, "/vsimem/", strlen("/vsimem/")) == 0) )
     {
-        osRasterURL = "/vsicurl/" + osRasterURL;
         CPLSetThreadLocalConfigOption("CPL_VSIL_CURL_USE_HEAD", "NO");
         CPLSetThreadLocalConfigOption("CPL_VSIL_CURL_ALLOWED_EXTENSIONS", "{noext}");
+
+        VSIStatBufL sStat;
+        if( VSIStatL(("/vsicurl/" + osRasterURL).c_str(), &sStat) == 0 &&
+            sStat.st_size > 0 )
+        {
+            osRasterURL = "/vsicurl/" + osRasterURL;
+        }
+        else
+        {
+            CPLDebug("PLSCENES", "Cannot use random access for that file");
+        }
     }
 
     GDALDataset* poOutDS = (GDALDataset*) GDALOpen(osRasterURL, GA_ReadOnly);
@@ -319,7 +414,7 @@ GDALDataset* OGRPLScenesDataset::OpenRasterScene(GDALOpenInfo* poOpenInfo,
         poOutDS->SetDescription(poOpenInfo->pszFilename);
         poOutDS->GetFileList(); /* so as to probe all auxiliary files before reseting the allowed extensions */
 
-        if( !EQUAL(osProductType, "thumb") )
+        if( !EQUAL(pszProductType, "thumb") )
         {
             OGRPLScenesLayer* poLayer = new OGRPLScenesLayer(this, "ortho",
                                             (osBaseURL + "ortho/").c_str());
@@ -374,50 +469,56 @@ GDALDataset* OGRPLScenesDataset::Open(GDALOpenInfo* poOpenInfo)
 
     poDS->osBaseURL = CPLGetConfigOption("PL_URL", "https://api.planet.com/v0/scenes/");
 
-    poDS->osAPIKey = CPLGetConfigOption("PL_API_KEY","");
-    const char* pszApiKey = strstr(poOpenInfo->pszFilename, "api_key=");
-    if( pszApiKey )
-    {
-        poDS->osAPIKey = pszApiKey + strlen("api_key=");
-        const char* pszEnd = strchr(poDS->osAPIKey, ',');
-        if( pszEnd == NULL )
-            pszEnd = strchr(poDS->osAPIKey, ' ');
-        if( pszEnd )
-            poDS->osAPIKey.resize(pszEnd - poDS->osAPIKey.c_str());
-    }
-    else if( CSLFetchNameValue(poOpenInfo->papszOpenOptions, "API_KEY") )
-        poDS->osAPIKey = CSLFetchNameValue(poOpenInfo->papszOpenOptions, "API_KEY");
+    char** papszOptions = CSLTokenizeStringComplex(
+            poOpenInfo->pszFilename+strlen("PLScenes:"), ",", TRUE, FALSE );
 
+    poDS->osAPIKey = CSLFetchNameValueDef(papszOptions, "api_key",
+        CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "API_KEY",
+                                CPLGetConfigOption("PL_API_KEY","")) );
     if( poDS->osAPIKey.size() == 0 )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Missing PL_API_KEY configuration option or API_KEY open option");
         delete poDS;
+        CSLDestroy(papszOptions);
         return NULL;
     }
 
-    const char* pszScene = strstr(poOpenInfo->pszFilename, "scene=");
-    if( pszScene != NULL )
-        pszScene += strlen("scene=");
-    else
-        pszScene = CSLFetchNameValue(poOpenInfo->papszOpenOptions, "SCENE");
+    const char* pszScene = CSLFetchNameValueDef(papszOptions, "scene",
+                CSLFetchNameValue(poOpenInfo->papszOpenOptions, "SCENE"));
     if( pszScene )
     {
-        CPLString osScene(pszScene);
-        const char* pszEnd = strchr(pszScene, ',');
-        if( pszEnd == NULL )
-            pszEnd = strchr(pszScene, ' ');
-        if( pszEnd )
-            osScene.resize(pszEnd - pszScene);
-        GDALDataset* poRasterDS = poDS->OpenRasterScene(poOpenInfo, osScene);
+        GDALDataset* poRasterDS = poDS->OpenRasterScene(poOpenInfo, pszScene,
+                                                        papszOptions);
         delete poDS;
+        CSLDestroy(papszOptions);
         return poRasterDS;
+    }
+
+    for( char** papszIter = papszOptions; papszIter && *papszIter; papszIter ++ )
+    {
+        char* pszKey;
+        const char* pszValue = CPLParseNameValue(*papszIter, &pszKey);
+        if( pszValue != NULL )
+        {
+            if( !EQUAL(pszKey, "api_key") &&
+                !EQUAL(pszKey, "spat") )
+            {
+                CPLError(CE_Failure, CPLE_NotSupported, "Unsupported option %s", pszKey);
+                CPLFree(pszKey);
+                delete poDS;
+                CSLDestroy(papszOptions);
+                return NULL;
+            }
+            CPLFree(pszKey);
+        }
     }
 
     json_object* poObj = poDS->RunRequest(poDS->osBaseURL);
     if( poObj == NULL )
     {
         delete poDS;
+        CSLDestroy(papszOptions);
         return NULL;
     }
     
@@ -429,17 +530,25 @@ GDALDataset* OGRPLScenesDataset::Open(GDALOpenInfo* poOpenInfo)
     {
         if( it.val != NULL && json_object_get_type(it.val) == json_type_string )
         {
-            OGRPLScenesLayer* poLayer = new OGRPLScenesLayer(poDS, it.key,
-                                                     json_object_get_string(it.val));
+            const char* pszSceneType = it.key;
+            const char* pszSceneTypeURL = json_object_get_string(it.val);
+            json_object* poObj = NULL;
+            if( !EQUAL(pszSceneType, "ortho") )
+                poObj = poDS->RunRequest( (CPLString(pszSceneTypeURL) + CPLString("?count=10")).c_str() );
+
+            OGRPLScenesLayer* poLayer = new OGRPLScenesLayer(poDS, pszSceneType, pszSceneTypeURL, poObj);
+
+            if( poObj )
+                json_object_put(poObj);
+
             poDS->papoLayers = (OGRPLScenesLayer**) CPLRealloc(poDS->papoLayers,
                                         sizeof(OGRPLScenesLayer*) * (poDS->nLayers + 1));
             poDS->papoLayers[poDS->nLayers ++] = poLayer;
             
-            const char* pszSpat = strstr(poOpenInfo->pszFilename, "spat=");
+            const char* pszSpat = CSLFetchNameValue(papszOptions, "spat");
             if( pszSpat )
             {
-                pszSpat += strlen("spat=");
-                char** papszTokens = CSLTokenizeString2(pszSpat, " ,", 0);
+                char** papszTokens = CSLTokenizeString2(pszSpat, " ", 0);
                 if( CSLCount(papszTokens) >= 4 )
                 {
                     poLayer->SetMainFilterRect(CPLAtof(papszTokens[0]),
@@ -453,6 +562,8 @@ GDALDataset* OGRPLScenesDataset::Open(GDALOpenInfo* poOpenInfo)
     }
 
     json_object_put(poObj);
+
+    CSLDestroy(papszOptions);
 
     if( !(poOpenInfo->nOpenFlags & GDAL_OF_VECTOR) )
     {
@@ -483,10 +594,12 @@ void RegisterOGRPLSCENES()
                                    "Planet Labs Scenes API" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
                                    "drv_plscenes.html" );
-        
+
+        poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, "PLSCENES:" );
+
         poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
 "<OpenOptionList>"
-"  <Option name='API_KEY' type='string' description='Account API key'/>"
+"  <Option name='API_KEY' type='string' description='Account API key' required='true'/>"
 "  <Option name='SCENE' type='string' description='Scene id (for raster fetching)'/>"
 "  <Option name='PRODUCT_TYPE' type='string' description='Product type: visual, analytic or thumb (for raster fetching)' default='visual'/>"
 "  <Option name='RANDOM_ACCESS' type='boolean' description='Whether raster should be accessed in random access mode (but with potentially not optimal throughput). If no, in-memory ingestion is done' default='YES'/>"

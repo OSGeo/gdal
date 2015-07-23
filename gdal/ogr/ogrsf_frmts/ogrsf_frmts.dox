@@ -39,10 +39,7 @@
   \brief Open a file / data source with one of the registered drivers.
 
   This function loops through all the drivers registered with the driver
-  manager trying each until one succeeds with the given data source.  This
-  function is static.  Applications don't normally need to use any other
-  OGRSFDriverRegistrar function, not do they normally need to have
-  a pointer to an OGRSFDriverRegistrar instance.
+  manager trying each until one succeeds with the given data source.
 
   If this function fails, CPLGetLastErrorMsg() can be used to check if there
   is an error message explaining why.
@@ -50,6 +47,11 @@
   For drivers supporting the VSI virtual file API, it is possible to open
   a file in a .zip archive (see VSIInstallZipFileHandler()), in a .tar/.tar.gz/.tgz archive
   (see VSIInstallTarFileHandler()) or on a HTTP / FTP server (see VSIInstallCurlFileHandler())
+
+  NOTE: Starting with GDAL 2.0, it is *NOT* safe to cast the returned handle to
+  OGRDataSource*. If a C++ object is needed, the handle should be cast to GDALDataset*.
+  Similarly, the returned OGRSFDriverH handle should be cast to GDALDriver*, and
+  *NOT* OGRSFDriver*.
 
   @deprecated Use GDALOpenEx() in GDAL 2.0
 
@@ -60,7 +62,7 @@
          pointer to the driver which was used to open the data source.
 
   @return NULL on error or if the pass name is not supported by this driver,
-  otherwise an handle to an OGRDataSource.  This OGRDataSource should be
+  otherwise an handle to a GDALDataset.  This GDALDataset should be
   closed by deleting the object when it is no longer needed.
 
   <b>Example:</b>
@@ -100,6 +102,9 @@
 
   \brief Fetch the indicated driver.
 
+  NOTE: Starting with GDAL 2.0, it is *NOT* safe to cast the returned handle to
+  OGRSFDriver*. If a C++ object is needed, the handle should be cast to GDALDriver*.
+
   @deprecated Use GDALGetDriver() in GDAL 2.0
 
   @param iDriver the driver index, from 0 to GetDriverCount()-1.
@@ -112,6 +117,9 @@
   \fn OGRSFDriverH OGRGetDriverByName( const char *pszName );
 
   \brief Fetch the indicated driver.
+
+  NOTE: Starting with GDAL 2.0, it is *NOT* safe to cast the returned handle to
+  OGRSFDriver*. If a C++ object is needed, the handle should be cast to GDALDriver*.
 
   @deprecated Use GDALGetDriverByName() in GDAL 2.0
 
@@ -156,6 +164,11 @@
 
   \brief Attempt to open file with this driver. 
 
+  NOTE: Starting with GDAL 2.0, it is *NOT* safe to cast the returned handle to
+  OGRDataSource*. If a C++ object is needed, the handle should be cast to GDALDataset*.
+  Similarly, the returned OGRSFDriverH handle should be cast to GDALDriver*, and
+  *NOT* OGRSFDriver*.
+
   @deprecated Use GDALOpenEx() in GDAL 2.0
 
   @param hDriver handle to the driver that is used to open file.
@@ -164,7 +177,7 @@
   default).
 
   @return NULL on error or if the pass name is not supported by this driver,
-  otherwise an handle to an OGRDataSource.  This OGRDataSource should be
+  otherwise an handle to a GDALDataset.  This GDALDataset should be
   closed by deleting the object when it is no longer needed.
 
 */
@@ -563,6 +576,9 @@ essentially a convenient alias.
  \fn OGRSFDriverH OGR_DS_GetDriver( OGRDataSourceH hDS );
 
 \brief Returns the driver that the dataset was opened with. 
+
+NOTE: Starting with GDAL 2.0, it is *NOT* safe to cast the returned handle to
+OGRSFDriver*. If a C++ object is needed, the handle should be cast to GDALDriver*.
 
 @deprecated Use GDALGetDatasetDriver() in GDAL 2.0
 

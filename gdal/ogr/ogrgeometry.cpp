@@ -71,6 +71,27 @@ OGRGeometry::OGRGeometry()
 }
 
 /************************************************************************/
+/*                   OGRGeometry( const OGRGeometry& )                  */
+/************************************************************************/
+
+/**
+ * \brief Copy constructor.
+ * 
+ * Note: before GDAL 2.1, only the default implementation of the constructor
+ * existed, which could be unsafe to use.
+ * 
+ * @since GDAL 2.1
+ */
+
+OGRGeometry::OGRGeometry( const OGRGeometry& other ) :
+    poSRS(other.poSRS),
+    nCoordDimension(other.nCoordDimension)
+{
+    if( poSRS != NULL )
+        poSRS->Reference();
+}
+
+/************************************************************************/
 /*                            ~OGRGeometry()                            */
 /************************************************************************/
 
@@ -79,6 +100,29 @@ OGRGeometry::~OGRGeometry()
 {
     if( poSRS != NULL )
         poSRS->Release();
+}
+
+/************************************************************************/
+/*                    operator=( const OGRGeometry&)                    */
+/************************************************************************/
+
+/**
+ * \brief Assignment operator.
+ * 
+ * Note: before GDAL 2.1, only the default implementation of the operator
+ * existed, which could be unsafe to use.
+ * 
+ * @since GDAL 2.1
+ */
+
+OGRGeometry& OGRGeometry::operator=( const OGRGeometry& other )
+{
+    if( this != &other)
+    {
+        assignSpatialReference( other.getSpatialReference() );
+        nCoordDimension = other.nCoordDimension;
+    }
+    return *this;
 }
 
 /************************************************************************/
@@ -4359,6 +4403,97 @@ OGRGeometryH OGR_G_SimplifyPreserveTopology( OGRGeometryH hThis, double dToleran
 {
     VALIDATE_POINTER1( hThis, "OGR_G_SimplifyPreserveTopology", NULL );
     return (OGRGeometryH) ((OGRGeometry *) hThis)->SimplifyPreserveTopology( dTolerance );
+}
+
+/************************************************************************/
+/*                         DelaunayTriangulation()                      */
+/************************************************************************/
+
+/**
+ * \brief Return a Delaunay triangulation of the vertices of the geometry.
+ *
+ * This function is the same as the C function OGR_G_DelaunayTriangulation().
+ *
+ * This function is built on the GEOS library, v3.4 or above.
+ * If OGR is built without the GEOS library, this function will always fail,
+ * issuing a CPLE_NotSupported error.
+ *
+ * @param dfTolerance optional snapping tolerance to use for improved robustness
+ * @param bOnlyEdges if TRUE, will return a MULTILINESTRING, otherwise it will
+ *                   return a GEOMETRYCOLLECTION containing triangular POLYGONs.
+ *
+ * @return the geometry resulting from the Delaunay triangulation or NULL if an error occurs.
+ *
+ * @since OGR 2.1
+ */
+
+OGRGeometry *OGRGeometry::DelaunayTriangulation(double dfTolerance, int bOnlyEdges) const
+{
+#ifndef HAVE_GEOS
+
+    CPLError( CE_Failure, CPLE_NotSupported,
+              "GEOS support not enabled." );
+    return NULL;
+
+#elif GEOS_VERSION_MAJOR < 3 || (GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR < 4)
+    CPLError( CE_Failure, CPLE_NotSupported,
+              "GEOS 3.4 or later needed for DelaunayTriangulation." );
+    return NULL;
+
+#else
+    
+    GEOSGeom hThisGeosGeom = NULL;
+    GEOSGeom hGeosProduct = NULL;
+    OGRGeometry *poOGRProduct = NULL;
+
+    GEOSContextHandle_t hGEOSCtxt = createGEOSContext();
+    hThisGeosGeom = exportToGEOS(hGEOSCtxt);
+    if( hThisGeosGeom != NULL )
+    {
+        hGeosProduct = GEOSDelaunayTriangulation_r( hGEOSCtxt, hThisGeosGeom, dfTolerance, bOnlyEdges );
+        GEOSGeom_destroy_r( hGEOSCtxt, hThisGeosGeom );
+        if( hGeosProduct != NULL )
+        {
+            poOGRProduct = OGRGeometryFactory::createFromGEOS(hGEOSCtxt,  hGeosProduct );
+            if( poOGRProduct != NULL && getSpatialReference() != NULL )
+                poOGRProduct->assignSpatialReference(getSpatialReference());
+            GEOSGeom_destroy_r( hGEOSCtxt, hGeosProduct );
+        }
+    }
+    freeGEOSContext( hGEOSCtxt );
+    return poOGRProduct;
+
+#endif
+}
+
+/************************************************************************/
+/*                     OGR_G_DelaunayTriangulation()                    */
+/************************************************************************/
+
+/**
+ * \brief Return a Delaunay triangulation of the vertices of the geometry.
+ *
+ * This function is the same as the C++ method OGRGeometry::DelaunayTriangulation().
+ *
+ * This function is built on the GEOS library, v3.4 or above.
+ * If OGR is built without the GEOS library, this function will always fail,
+ * issuing a CPLE_NotSupported error.
+ *
+ * @param hThis the geometry.
+ * @param dfTolerance optional snapping tolerance to use for improved robustness
+ * @param bOnlyEdges if TRUE, will return a MULTILINESTRING, otherwise it will
+ *                   return a GEOMETRYCOLLECTION containing triangular POLYGONs.
+ *
+ * @return the geometry resulting from the Delaunay triangulation or NULL if an error occurs.
+ *
+ * @since OGR 2.1
+ */
+
+OGRGeometryH OGR_G_DelaunayTriangulation( OGRGeometryH hThis, double dfTolerance, int bOnlyEdges )
+
+{
+    VALIDATE_POINTER1( hThis, "OGR_G_DelaunayTriangulation", NULL );
+    return (OGRGeometryH) ((OGRGeometry *) hThis)->DelaunayTriangulation( dfTolerance, bOnlyEdges );
 }
 
 /************************************************************************/

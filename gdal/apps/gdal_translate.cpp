@@ -57,7 +57,7 @@ static void Usage(const char* pszErrorMsg = NULL, int bShort = TRUE)
             "       [-ot {Byte/Int16/UInt16/UInt32/Int32/Float32/Float64/\n"
             "             CInt16/CInt32/CFloat32/CFloat64}] [-strict]\n"
             "       [-of format] [-b band] [-mask band] [-expand {gray|rgb|rgba}]\n"
-            "       [-outsize xsize[%%] ysize[%%]] [-tr xres yres]\n"
+            "       [-outsize xsize[%%]|0 ysize[%%]|0] [-tr xres yres]\n"
             "       [-r {nearest,bilinear,cubic,cubicspline,lanczos,average,mode}]\n"
             "       [-unscale] [-scale[_bn] [src_min src_max [dst_min dst_max]]]* [-exponent[_bn] exp_val]*\n"
             "       [-srcwin xoff yoff xsize ysize] [-epo] [-eco]\n"
@@ -1025,17 +1025,18 @@ static int ProxyMain( int argc, char ** argv )
                     {
                         OGRCoordinateTransformation::DestroyCT(poCT);
 
-                        fprintf( stderr, "-projwin_srs ignored since coordinate transformation failed.");
+                        fprintf( stderr, "-projwin_srs ignored since coordinate transformation failed.\n");
                         GDALClose( hDataset );
                         CPLFree( panBandList );
                         GDALDestroyDriverManager();
                         exit( 1 );
                     }
+                    delete poCT;
                 }
             }
             else
             {
-                fprintf( stderr, "-projwin_srs ignored since the dataset has no projection.");
+                fprintf( stderr, "-projwin_srs ignored since the dataset has no projection.\n");
             }
         }
 
@@ -1210,10 +1211,26 @@ static int ProxyMain( int argc, char ** argv )
     }
     else
     {
-        nOXSize = (int) ((pszOXSize[strlen(pszOXSize)-1]=='%' 
-                          ? CPLAtofM(pszOXSize)/100*anSrcWin[2] : atoi(pszOXSize)));
-        nOYSize = (int) ((pszOYSize[strlen(pszOYSize)-1]=='%' 
-                          ? CPLAtofM(pszOYSize)/100*anSrcWin[3] : atoi(pszOYSize)));
+        int bXAuto = EQUAL(pszOXSize, "auto") || EQUAL(pszOXSize, "0");
+        int bYAuto = EQUAL(pszOYSize, "auto") || EQUAL(pszOYSize, "0");
+        if( bXAuto && bYAuto )
+        {
+            fprintf(stderr, "-outsize %s %s invalid.\n", pszOXSize, pszOYSize);
+            GDALClose( hDataset );
+            CPLFree( panBandList );
+            GDALDestroyDriverManager();
+            exit( 1 );
+        }
+        if( !bXAuto )
+            nOXSize = (int) ((pszOXSize[strlen(pszOXSize)-1]=='%' 
+                            ? CPLAtofM(pszOXSize)/100*anSrcWin[2] : atoi(pszOXSize)));
+        if( !bYAuto )
+            nOYSize = (int) ((pszOYSize[strlen(pszOYSize)-1]=='%' 
+                            ? CPLAtofM(pszOYSize)/100*anSrcWin[3] : atoi(pszOYSize)));
+        if( bXAuto )
+            nOXSize = (int)((double)nOYSize * anSrcWin[2] / anSrcWin[3] + 0.5);
+        else if( bYAuto )
+            nOYSize = (int)((double)nOXSize * anSrcWin[3] / anSrcWin[2] + 0.5);
     }
 
     if( nOXSize == 0 || nOYSize == 0 )
@@ -1378,6 +1395,44 @@ static int ProxyMain( int argc, char ** argv )
         papszMD = ((GDALDataset*)hDataset)->GetMetadata("GEOLOCATION");
         if( papszMD != NULL )
             poVDS->SetMetadata( papszMD, "GEOLOCATION" );
+    }
+    else
+    {
+        char **papszMD;
+
+        papszMD = ((GDALDataset*)hDataset)->GetMetadata("RPC");
+        if( papszMD != NULL )
+        {
+            papszMD = CSLDuplicate(papszMD);
+ 
+            double dfSAMP_OFF = CPLAtof(CSLFetchNameValueDef(papszMD, "SAMP_OFF", "0"));
+            double dfLINE_OFF = CPLAtof(CSLFetchNameValueDef(papszMD, "LINE_OFF", "0"));
+            double dfSAMP_SCALE = CPLAtof(CSLFetchNameValueDef(papszMD, "SAMP_SCALE", "1"));
+            double dfLINE_SCALE = CPLAtof(CSLFetchNameValueDef(papszMD, "LINE_SCALE", "1"));
+
+            dfSAMP_OFF -= anSrcWin[0];
+            dfLINE_OFF -= anSrcWin[1];
+            dfSAMP_OFF *= (nOXSize / (double) anSrcWin[2] );
+            dfLINE_OFF *= (nOYSize / (double) anSrcWin[3] );
+            dfSAMP_SCALE *= (nOXSize / (double) anSrcWin[2] );
+            dfLINE_SCALE *= (nOYSize / (double) anSrcWin[3] );
+
+            CPLString osField;
+            osField.Printf( "%.15g", dfLINE_OFF );
+            papszMD = CSLSetNameValue( papszMD, "LINE_OFF", osField );
+
+            osField.Printf( "%.15g", dfSAMP_OFF );
+            papszMD = CSLSetNameValue( papszMD, "SAMP_OFF", osField );
+
+            osField.Printf( "%.15g", dfLINE_SCALE );
+            papszMD = CSLSetNameValue( papszMD, "LINE_SCALE", osField );
+
+            osField.Printf( "%.15g", dfSAMP_SCALE );
+            papszMD = CSLSetNameValue( papszMD, "SAMP_SCALE", osField );
+
+            poVDS->SetMetadata( papszMD, "RPC" );
+            CSLDestroy(papszMD);
+        }
     }
 
     int nSrcBandCount = nBandCount;
@@ -1544,6 +1599,14 @@ static int ProxyMain( int argc, char ** argv )
                                          anDstWin[0], anDstWin[1],
                                          anDstWin[2], anDstWin[3]);
             continue;
+        }
+
+        // Preserve nbits if no option change values
+        const char* pszNBits = poSrcBand->GetMetadataItem("NBITS", "IMAGE_STRUCTURE");
+        if( pszNBits && nRGBExpand == 0 && nScaleRepeat == 0 &&
+            !bUnscale && eOutputType == GDT_Unknown && pszResampling == NULL )
+        {
+            poVRTBand->SetMetadataItem("NBITS", pszNBits, "IMAGE_STRUCTURE");
         }
 
 /* -------------------------------------------------------------------- */

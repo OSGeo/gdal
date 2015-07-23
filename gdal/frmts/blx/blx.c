@@ -30,6 +30,8 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "cpl_port.h"
+
 /* Constants */
 #define MAXLEVELS 5
 #define MAXCOMPONENTS 4

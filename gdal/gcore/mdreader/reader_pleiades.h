@@ -1,12 +1,13 @@
 /******************************************************************************
  * $Id$
  *
- * Project:  Interlis 1/2 Translator
- * Purpose:   Definition of classes for OGR Interlis 1 driver.
- * Author:   Pirmin Kalberer, Sourcepole AG
+ * Project:  GDAL Core
+ * Purpose:  Read metadata from Pleiades imagery.
+ * Author:   Alexander Lisovenko
+ * Author:   Dmitry Baryshnikov, polimax@mail.ru
  *
  ******************************************************************************
- * Copyright (c) 2004, Pirmin Kalberer, Sourcepole AG
+ * Copyright (c) 2014-2015 NextGIS <info@nextgis.ru>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -27,17 +28,37 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef _ILIHELPER_H_INCLUDED
-#define _ILIHELPER_H_INCLUDED
+#ifndef READER_PLEIADES_H_INCLUDED
+#define READER_PLEIADES_H_INCLUDED
 
-#include "ogr_geometry.h"
+#include "../gdal_mdreader.h"
 
-#ifndef PI
-#define PI  3.1415926535897932384626433832795
-#endif
+/**
+@brief Metadata reader for Pleiades
 
-OGRPoint *getARCCenter(OGRPoint *ptStart, OGRPoint *ptArc, OGRPoint *ptEnd);
-double getPhi(OGRPoint *center, OGRPoint *pt);
-void interpolateArc(OGRLineString* line, OGRPoint *ptStart, OGRPoint *ptOnArc, OGRPoint *ptEnd, double arcIncr);
+TIFF filename:      IMG_xxxxxx.tif
+Metadata filename:  DIM_xxxxxx.XML
+RPC filename:       RPC_xxxxxx.XML
 
-#endif /* _ILIHELPER_H_INCLUDED */
+Common metadata (from metadata filename):
+    SatelliteId:         MISSION, MISSION_INDEX
+    AcquisitionDateTime: IMAGING_DATE, IMAGING_TIME
+
+*/
+
+class GDALMDReaderPleiades: public GDALMDReaderBase
+{
+public:
+    GDALMDReaderPleiades(const char *pszPath, char **papszSiblingFiles);
+    virtual ~GDALMDReaderPleiades();
+    virtual const bool HasRequiredFiles() const;
+    virtual char** GetMetadataFiles() const;
+protected:
+    virtual void LoadMetadata();
+    char** LoadRPCXmlFile();
+protected:
+    CPLString m_osIMDSourceFilename;
+    CPLString m_osRPBSourceFilename;
+};
+
+#endif // READER_PLEIADES_H_INCLUDED

@@ -45,7 +45,7 @@
 
 CPL_C_START
 
-/* Note: values are selected to be consistant with GDALRIOResampleAlg of gcore/gdal.h */ 
+/* Note: values are selected to be consistent with GDALRIOResampleAlg of gcore/gdal.h */ 
 /*! Warp Resampling Algorithm */
 typedef enum {
   /*! Nearest neighbour (select on one input pixel) */ GRA_NearestNeighbour=0,
@@ -85,7 +85,7 @@ CPLErr CPL_DLL
 GDALWarpNoDataMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
                       int nXOff, int nYOff, int nXSize, int nYSize,
                       GByte **papabyImageData, int bMaskIsFloat,
-                      void *pValidityMask );
+                      void *pValidityMask, int* pbOutAllValid );
 
 CPLErr CPL_DLL 
 GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
@@ -96,7 +96,7 @@ CPLErr CPL_DLL
 GDALWarpSrcAlphaMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
                         int nXOff, int nYOff, int nXSize, int nYSize,
                         GByte ** /*ppImageData */,
-                        int bMaskIsFloat, void *pValidityMask );
+                        int bMaskIsFloat, void *pValidityMask, int* pbOutAllOpaque );
 
 CPLErr CPL_DLL 
 GDALWarpSrcMaskMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
@@ -325,6 +325,8 @@ public:
     double              dfProgressScale;
     
     double              *padfDstNoDataReal;
+    
+    void                *psThreadData;
 
                        GDALWarpKernel();
     virtual           ~GDALWarpKernel();
@@ -332,6 +334,11 @@ public:
     CPLErr              Validate();
     CPLErr              PerformWarp();
 };
+
+void* GWKThreadsCreate(char** papszWarpOptions,
+                       GDALTransformerFunc pfnTransformer,
+                       void* pTransformerArg);
+void GWKThreadsEnd(void* psThreadDataIn);
 
 /************************************************************************/
 /*                         GDALWarpOperation()                          */
@@ -372,6 +379,8 @@ private:
     int             bReportTimings;
     unsigned long   nLastTimeReported;
 
+    void           *psThreadData;
+    
     void            WipeChunkList();
     CPLErr          CollectChunkList( int nDstXOff, int nDstYOff, 
                                       int nDstXSize, int nDstYSize );

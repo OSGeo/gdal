@@ -97,7 +97,9 @@ OGROCIDataSource::~OGROCIDataSource()
 /*                                Open()                                */
 /************************************************************************/
 
-int OGROCIDataSource::Open( const char * pszNewName, int bUpdate,
+int OGROCIDataSource::Open( const char * pszNewName,
+                            char** papszOpenOptions,
+                            int bUpdate,
                             int bTestOpen )
 
 {
@@ -126,38 +128,50 @@ int OGROCIDataSource::Open( const char * pszNewName, int bUpdate,
     char **papszTableList = NULL;
     int   i;
 
-    pszUserid = CPLStrdup( pszNewName + 4 );
-
-    // Is there a table list? 
-    for( i = strlen(pszUserid)-1; i > 1; i-- )
+    if( pszNewName[4] == '\0' )
     {
-        if( pszUserid[i] == ':' )
+        pszUserid = CPLStrdup(CSLFetchNameValueDef(papszOpenOptions, "USER", ""));
+        pszPassword = CSLFetchNameValueDef(papszOpenOptions, "PASSWORD", "");
+        pszDatabase = CSLFetchNameValueDef(papszOpenOptions, "DBNAME", "");
+        const char* pszTables = CSLFetchNameValue(papszOpenOptions, "TABLES");
+        if( pszTables )
+            papszTableList = CSLTokenizeStringComplex(pszTables, ",", TRUE, FALSE );
+    }
+    else
+    {
+        pszUserid = CPLStrdup( pszNewName + 4 );
+
+        // Is there a table list? 
+        for( i = strlen(pszUserid)-1; i > 1; i-- )
         {
-            papszTableList = CSLTokenizeStringComplex( pszUserid+i+1, ",",
-                                                       TRUE, FALSE );
-            pszUserid[i] = '\0';
-            break;
+            if( pszUserid[i] == ':' )
+            {
+                papszTableList = CSLTokenizeStringComplex( pszUserid+i+1, ",",
+                                                        TRUE, FALSE );
+                pszUserid[i] = '\0';
+                break;
+            }
+
+            if( pszUserid[i] == '/' || pszUserid[i] == '@' )
+                break;
         }
 
-        if( pszUserid[i] == '/' || pszUserid[i] == '@' )
-            break;
-    }
+        for( i = 0; 
+            pszUserid[i] != '\0' && pszUserid[i] != '/' && pszUserid[i] != '@';
+            i++ ) {}
 
-    for( i = 0; 
-         pszUserid[i] != '\0' && pszUserid[i] != '/' && pszUserid[i] != '@';
-         i++ ) {}
+        if( pszUserid[i] == '/' )
+        {
+            pszUserid[i++] = '\0';
+            pszPassword = pszUserid + i;
+            for( ; pszUserid[i] != '\0' && pszUserid[i] != '@'; i++ ) {}
+        }
 
-    if( pszUserid[i] == '/' )
-    {
-        pszUserid[i++] = '\0';
-        pszPassword = pszUserid + i;
-        for( ; pszUserid[i] != '\0' && pszUserid[i] != '@'; i++ ) {}
-    }
-
-    if( pszUserid[i] == '@' )
-    {
-        pszUserid[i++] = '\0';
-        pszDatabase = pszUserid + i;
+        if( pszUserid[i] == '@' )
+        {
+            pszUserid[i++] = '\0';
+            pszDatabase = pszUserid + i;
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -180,7 +194,11 @@ int OGROCIDataSource::Open( const char * pszNewName, int bUpdate,
     }
 
     if( poSession == NULL )
+    {
+        CPLFree(pszUserid);
+        CSLDestroy(papszTableList);
         return FALSE;
+    }
 
     pszName = CPLStrdup( pszNewName );
     

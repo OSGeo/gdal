@@ -438,6 +438,19 @@ CPLErr KEARasterBand::SetNoDataValue(double dfNoData)
     }
 }
 
+CPLErr KEARasterBand::DeleteNoDataValue()
+{
+    try
+    {
+        m_pImageIO->undefineNoDataValue(this->nBand);
+        return CE_None;
+    }
+    catch (kealib::KEAIOException &e)
+    {
+        return CE_Failure;
+    }
+}
+
 GDALRasterAttributeTable *KEARasterBand::GetDefaultRAT()
 {
     if( this->m_pAttributeTable == NULL )

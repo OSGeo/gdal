@@ -150,15 +150,22 @@ class OGRGMLDataSource : public OGRDataSource
     ReadMode            eReadMode;
     GMLFeature         *poStoredGMLFeature;
     OGRGMLLayer        *poLastReadLayer;
+    
+    int                 bEmptyAsNull;
 
-    void                FindAndParseBoundedBy(VSILFILE* fp);
+    void                FindAndParseTopElements(VSILFILE* fp);
     void                SetExtents(double dfMinX, double dfMinY, double dfMaxX, double dfMaxY);
+    
+    void                BuildJointClassFromXSD();
+    void                BuildJointClassFromScannedSchema();
+    
+    void                WriteTopElements();
 
   public:
                         OGRGMLDataSource();
                         ~OGRGMLDataSource();
 
-    int                 Open( const char * );
+    int                 Open( GDALOpenInfo* poOpenInfo );
     int                 Create( const char *pszFile, char **papszOptions );
 
     const char          *GetName() { return pszName; }

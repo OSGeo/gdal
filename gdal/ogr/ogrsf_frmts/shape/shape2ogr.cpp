@@ -1078,6 +1078,8 @@ OGRFeature *SHPReadOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "Attempt to read shape with feature id (%d), but it is marked deleted.",
                   iShape );
+        if( psShape != NULL )
+            SHPDestroyObject(psShape);
         return NULL;
     }
 
@@ -1446,20 +1448,16 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
 
           case OFTDate:
           {
-              int  nYear, nMonth, nDay;
+              const OGRField* psField = poFeature->GetRawFieldRef(iField);
 
-              if( poFeature->GetFieldAsDateTime( iField, &nYear, &nMonth, &nDay,
-                                                 NULL, NULL, NULL, NULL ) )
+              if( psField->Date.Year < 0 || psField->Date.Year > 9999 )
               {
-                  if( nYear < 0 || nYear > 9999 )
-                  {
-                      CPLError(CE_Warning, CPLE_NotSupported,
-                               "Year < 0 or > 9999 is not a valid date for shapefile");
-                  }
-                  else
-                      DBFWriteIntegerAttribute( hDBF, (int)poFeature->GetFID(), iField, 
-                                            nYear*10000 + nMonth*100 + nDay );
+                  CPLError(CE_Warning, CPLE_NotSupported,
+                          "Year < 0 or > 9999 is not a valid date for shapefile");
               }
+              else
+                  DBFWriteIntegerAttribute( hDBF, (int)poFeature->GetFID(), iField, 
+                                            psField->Date.Year*10000 + psField->Date.Month*100 + psField->Date.Day );
           }
           break;
 

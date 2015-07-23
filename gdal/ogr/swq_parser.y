@@ -341,7 +341,7 @@ value_expr_list:
 
     | value_expr
             {
-            $$ = new swq_expr_node( SWQ_UNKNOWN ); /* list */
+            $$ = new swq_expr_node( SWQ_ARGUMENT_LIST ); /* temporary value */
             $$->PushSubExpression( $1 );
         }
 
@@ -452,12 +452,24 @@ value_expr_non_logical:
 
             if( poOp == NULL )
             {
-                CPLError( CE_Failure, CPLE_AppDefined, 
-                                "Undefined function '%s' used.",
-                                $1->string_value );
-                delete $1;
-                delete $3;
-                YYERROR;
+                if( context->bAcceptCustomFuncs )
+                {
+                    $$ = $3;
+                    $$->eNodeType = SNT_OPERATION;
+                    $$->nOperation = SWQ_CUSTOM_FUNC;
+                    $$->string_value = CPLStrdup($1->string_value);
+                    $$->ReverseSubExpressions();
+                    delete $1;
+                }
+                else
+                {
+                    CPLError( CE_Failure, CPLE_AppDefined, 
+                                    "Undefined function '%s' used.",
+                                    $1->string_value );
+                    delete $1;
+                    delete $3;
+                    YYERROR;
+                }
             }
             else
             {
@@ -546,6 +558,12 @@ select_core:
         delete $4;
     }
 
+    | SWQT_SELECT SWQT_DISTINCT select_field_list SWQT_FROM table_def opt_joins opt_where opt_order_by
+    {
+        context->poCurSelect->query_mode = SWQM_DISTINCT_LIST;
+        delete $5;
+    }
+
 opt_union_all:
     | union_all select_statement
 
@@ -561,34 +579,13 @@ select_field_list:
     | column_spec ',' select_field_list
 
 column_spec: 
-    SWQT_DISTINCT field_value
-        {
-            if( !context->poCurSelect->PushField( $2, NULL, TRUE ) )
-            {
-                delete $2;
-                YYERROR;
-            }
-        }
-
-    | value_expr
+    value_expr
         {
             if( !context->poCurSelect->PushField( $1 ) )
             {
                 delete $1;
                 YYERROR;
             }
-        }
-
-    | SWQT_DISTINCT field_value as_clause
-        {
-            if( !context->poCurSelect->PushField( $2, $3->string_value, TRUE ))
-            {
-                delete $2;
-                delete $3;
-                YYERROR;
-            }
-
-            delete $3;
         }
 
     | value_expr as_clause
@@ -771,27 +768,17 @@ opt_where:
         }
 
 opt_joins:
-    | SWQT_JOIN table_def SWQT_ON field_value '=' field_value opt_joins
+    | SWQT_JOIN table_def SWQT_ON value_expr opt_joins
         {
             context->poCurSelect->PushJoin( $2->int_value,
-                                            $4->table_name,
-                                            $4->string_value, 
-                                            $6->table_name,
-                                            $6->string_value );
+                                            $4 );
             delete $2;
-            delete $4;
-            delete $6;
         }
-    | SWQT_LEFT SWQT_JOIN table_def SWQT_ON field_value '=' field_value opt_joins
+    | SWQT_LEFT SWQT_JOIN table_def SWQT_ON value_expr opt_joins
         {
             context->poCurSelect->PushJoin( $3->int_value,
-                                            $5->table_name,
-                                            $5->string_value, 
-                                            $7->table_name,
-                                            $7->string_value );
+                                            $5 );
             delete $3;
-            delete $5;
-            delete $7;
 	    }
 
 opt_order_by:
@@ -832,7 +819,7 @@ table_def:
         $$ = new swq_expr_node( iTable );
     }
 
-    | SWQT_IDENTIFIER SWQT_IDENTIFIER
+    | SWQT_IDENTIFIER as_clause
     {
         int iTable;
         iTable = context->poCurSelect->PushTableDef( NULL, $1->string_value,
@@ -854,7 +841,7 @@ table_def:
         $$ = new swq_expr_node( iTable );
     }
 
-    | SWQT_STRING '.' SWQT_IDENTIFIER SWQT_IDENTIFIER
+    | SWQT_STRING '.' SWQT_IDENTIFIER as_clause
     {
         int iTable;
         iTable = context->poCurSelect->PushTableDef( $1->string_value,
@@ -878,7 +865,7 @@ table_def:
         $$ = new swq_expr_node( iTable );
     }
 
-    | SWQT_IDENTIFIER '.' SWQT_IDENTIFIER SWQT_IDENTIFIER
+    | SWQT_IDENTIFIER '.' SWQT_IDENTIFIER as_clause
     {
         int iTable;
         iTable = context->poCurSelect->PushTableDef( $1->string_value,

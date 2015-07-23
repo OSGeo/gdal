@@ -14,7 +14,7 @@ GDAL/OGR must be built with Curl support in order for the
 PLScenes driver to be compiled.<p>
 
 The driver supports read-only operations to list scenes and their metadata
-as a vector layer (currently only "ortho"). It can also access raster scenes.<p>
+as a vector layer per scene type ("ortho" for example). It can also access raster scenes.<p>
 
 <h2>Dataset name syntax</h2>
 
@@ -32,7 +32,7 @@ Optional for vector layer access.</li>
 (for raster fetching). Default is "visual". Optional for vector layer access.</li>
 </ul>
 
-If several parameters are specified, they must be separated by a space.<p>
+If several parameters are specified, they must be separated by a comma.<p>
 
 <h2>Open options</h2>
 
@@ -58,7 +58,7 @@ The following configuration options are available :
 <h2>Attributes</h2>
 
 The <a href="https://www.planet.com/docs/v0/scenes/#metadata">scene metadata</a>
-are retrieved into the following feature fields :<p>
+are retrieved into the following feature fields for the "ortho" layer :<p>
 
 <table border="1">
 <tr><th>Name</th><th>Type</th><th>Description</th></tr>
@@ -75,8 +75,8 @@ are retrieved into the following feature fields :<p>
 <tr><td>data.products.visual.full</td><td>String</td><td>URL to download scene GeoTIFF of the "visual" product.</td></tr>
 <tr><td>file_size</td><td>Integer</td><td>The size of the full image in bytes.</td></tr>
 <tr><td>image_statistics.gsd</td><td>Real</td><td>The ground sample distance (distance between pixel centers measured on the ground) of the image in meters.</td></tr>
-<tr><td>image_statistics.image_quality</td><td>String</td><td>The estimated signal to noise ratio. Decimal > 0. Values greater than or equal to 50 are considered excellent quality. Values less than 50 and greater than or equal to 20 are considered adequate quality. Values less than 20 are considered poor quality.</td></tr>
-<tr><td>image_statistics.snr</td><td>Real</td><td>The time that image was taken in UTC</td></tr>
+<tr><td>image_statistics.image_quality</td><td>String</td><td>Image quality category for scene. One of 'test', 'standard', or 'target'.</td></tr>
+<tr><td>image_statistics.snr</td><td>Real</td><td>The estimated signal to noise ratio. Decimal > 0. Values greater than or equal to 50 are considered excellent quality. Values less than 50 and greater than or equal to 20 are considered adequate quality. Values less than 20 are considered poor quality.</td></tr>
 <tr><td>links.full</td><td>String</td><td>URL to download scene GeoTIFF (same content as data.products.visual.full currently)</td></tr>
 <tr><td>links.self</td><td>String</td><td>URL to scene information</td></tr>
 <tr><td>links.square_thumbnail</td><td>String</td><td>URL to image thumbnail</td></tr>
@@ -92,6 +92,8 @@ are retrieved into the following feature fields :<p>
 <tr><td>sun.local_time_of_day</td><td>Real</td><td>The local sun time at the imaged location at the time of capture (0-24).</td></tr>
 </table>
 
+For other layers / scene types, additional attributes may be retrieved.<p>
+
 <h3>Geometry</h3>
 
 The footprint of each scene is reported as a MultiPolygon with a longitude/latitude
@@ -101,7 +103,8 @@ WGS84 coordinate system (EPSG:4326).
 
 The driver will forward any spatial filter set with SetSpatialFilter() to
 the server. It also makes the same for simple attribute filters set with
-SetAttributeFilter().<p>
+SetAttributeFilter(). Note that not all attributes support all comparison
+operators. Refer to comparator column in <a href="https://www.planet.com/docs/v0/scenes/#metadata">Metadata properties</a> <p>
 
 <h3>Paging</h3>
 
@@ -166,7 +169,7 @@ content of the value of the 'id' field of the features of the 'ortho' vector lay
 Displaying raster metadata :
 
 <pre>
-gdalinfo "PLScenes:scene=scene_id product_type=analytic" -oo API_KEY=some_value
+gdalinfo "PLScenes:scene=scene_id,product_type=analytic" -oo API_KEY=some_value
 </pre>
 or
 <pre>

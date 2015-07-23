@@ -70,7 +70,7 @@ static GDALDataset *OGROSMDriverOpen( GDALOpenInfo* poOpenInfo )
 
     OGROSMDataSource   *poDS = new OGROSMDataSource();
 
-    if( !poDS->Open( poOpenInfo->pszFilename ) )
+    if( !poDS->Open( poOpenInfo->pszFilename, poOpenInfo->papszOpenOptions ) )
     {
         delete poDS;
         poDS = NULL;
@@ -102,6 +102,15 @@ void RegisterOGROSM()
                                    "drv_osm.html" );
 
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+
+        poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
+"<OpenOptionList>"
+"  <Option name='CONFIG_FILE' type='string' description='Configuration filename.'/>"
+"  <Option name='USE_CUSTOM_INDEXING' type='boolean' description='Whether to enable custom indexing.' default='YES'/>"
+"  <Option name='COMPRESS_NODES' type='boolean' description='Whether to compress nodes in temporary DB.' default='NO'/>"
+"  <Option name='MAX_TMPFILE_SIZE' type='int' description='Maximum size in MB of in-memory temporary file. If it exceeds that value, it will go to disk' default='100'/>"
+"  <Option name='INTERLEAVED_READING' type='boolean' description='Whether to enable interleveaved reading.' default='NO'/>"
+"</OpenOptionList>" );
 
         poDriver->pfnOpen = OGROSMDriverOpen;
         poDriver->pfnIdentify = OGROSMDriverIdentify;

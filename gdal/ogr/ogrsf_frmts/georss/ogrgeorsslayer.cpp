@@ -797,20 +797,14 @@ void OGRGeoRSSLayer::endElementCbk(const char *pszName)
             pszSubElementValue[nSubElementValueLen] = 0;
             if (poFeatureDefn->GetFieldDefn(iCurrentField)->GetType() == OFTDateTime)
             {
-                int year, month, day, hour, minute, TZ;
-                int nsecond;
-                float fsecond;
-                if (OGRParseRFC822DateTime(pszSubElementValue, &year, &month, &day,
-                                                 &hour, &minute, &nsecond, &TZ))
+                OGRField sField;
+                if (OGRParseRFC822DateTime(pszSubElementValue, &sField))
                 {
-                    poFeature->SetField(iCurrentField, year, month, day,
-                                        hour, minute, nsecond, TZ);
+                    poFeature->SetField(iCurrentField, &sField);
                 }
-                else if (OGRParseXMLDateTime(pszSubElementValue, &year, &month, &day,
-                                                   &hour, &minute, &fsecond, &TZ))
+                else if (OGRParseXMLDateTime(pszSubElementValue, &sField))
                 {
-                    poFeature->SetField(iCurrentField, year, month, day,
-                                        hour, minute, (int)(fsecond + .5), TZ);
+                    poFeature->SetField(iCurrentField, &sField);
                 }
                 else
                 {
@@ -1243,40 +1237,28 @@ OGRErr OGRGeoRSSLayer::ICreateFeature( OGRFeature *poFeature )
         else if (eFormat == GEORSS_RSS &&
             strcmp(pszName, "pubDate") == 0)
         {
-            int year, month, day, hour, minute, second, TZFlag;
-            if (poFeature->GetFieldAsDateTime(i, &year, &month, &day,
-                                                    &hour, &minute, &second, &TZFlag))
-            {
-                char* pszDate = OGRGetRFC822DateTime(year, month, day, hour, minute, second, TZFlag);
-                VSIFPrintfL(fp, "      <%s>%s</%s>\n",
-                        pszName, pszDate, pszName);
-                CPLFree(pszDate);
-            }
+            const OGRField* psField = poFeature->GetRawFieldRef(i);
+            char* pszDate = OGRGetRFC822DateTime(psField);
+            VSIFPrintfL(fp, "      <%s>%s</%s>\n",
+                    pszName, pszDate, pszName);
+            CPLFree(pszDate);
         }
         else if (eFormat == GEORSS_ATOM &&
                  (strcmp(pszName, "updated") == 0 || strcmp(pszName, "published") == 0))
         {
-            int year, month, day, hour, minute, second, TZFlag;
-            if (poFeature->GetFieldAsDateTime(i, &year, &month, &day,
-                                                    &hour, &minute, &second, &TZFlag))
-            {
-                char* pszDate = OGRGetXMLDateTime(year, month, day, hour, minute, second, TZFlag);
-                VSIFPrintfL(fp, "      <%s>%s</%s>\n",
-                        pszName, pszDate, pszName);
-                CPLFree(pszDate);
-            }
+            const OGRField* psField = poFeature->GetRawFieldRef(i);
+            char* pszDate = OGRGetXMLDateTime(psField);
+            VSIFPrintfL(fp, "      <%s>%s</%s>\n",
+                    pszName, pszDate, pszName);
+            CPLFree(pszDate);
         }
         else if (strcmp(pszName, "dc_date") == 0)
         {
-            int year, month, day, hour, minute, second, TZFlag;
-            if (poFeature->GetFieldAsDateTime(i, &year, &month, &day,
-                                                    &hour, &minute, &second, &TZFlag))
-            {
-                char* pszDate = OGRGetXMLDateTime(year, month, day, hour, minute, second, TZFlag);
-                VSIFPrintfL(fp, "      <%s>%s</%s>\n",
-                        "dc:date", pszDate, "dc:date");
-                CPLFree(pszDate);
-            }
+            const OGRField* psField = poFeature->GetRawFieldRef(i);
+            char* pszDate = OGRGetXMLDateTime(psField);
+            VSIFPrintfL(fp, "      <%s>%s</%s>\n",
+                    "dc:date", pszDate, "dc:date");
+            CPLFree(pszDate);
         }
         /* RSS fields with content and attributes */
         else if (eFormat == GEORSS_RSS &&

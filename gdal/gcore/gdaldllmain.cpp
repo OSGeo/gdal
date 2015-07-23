@@ -55,7 +55,7 @@ void CPLFinalizeTLS();
  * This function calls GDALDestroyDriverManager() and OGRCleanupAll() and
  * finalize Thread Local Storage variables.
  *
- * This function should *not* usually be explicitely called by application code
+ * This function should *not* usually be explicitly called by application code
  * if GDAL is dynamically linked, since it is automatically called through
  * the unregistration mechanisms of dynamic library loading.
  *

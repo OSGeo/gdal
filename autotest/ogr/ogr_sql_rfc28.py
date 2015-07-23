@@ -812,7 +812,41 @@ def ogr_rfc28_35():
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     lyr = gdaltest.ds.ExecuteSQL( "select distinct eas_id, distinct name from idlink" )
     gdal.PopErrorHandler()
-    if gdal.GetLastErrorMsg().find('SELECTing more than one DISTINCT') != 0:
+    if gdal.GetLastErrorMsg().find('SQL Expression Parsing Error') != 0:
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+
+    if lyr is None:
+        return 'success'
+    else:
+        return 'fail'
+
+###############################################################################
+# Test selecting more than one distinct
+
+def ogr_rfc28_35_bis():
+
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    lyr = gdaltest.ds.ExecuteSQL( "select distinct eas_id, name from idlink" )
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorMsg().find('SELECT DISTINCT not supported on multiple columns') != 0:
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+
+    if lyr is None:
+        return 'success'
+    else:
+        return 'fail'
+
+###############################################################################
+# Test selecting more than one distinct
+
+def ogr_rfc28_35_ter():
+
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    lyr = gdaltest.ds.ExecuteSQL( "select distinct * from idlink" )
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorMsg().find('SELECT DISTINCT not supported on multiple columns') != 0:
         print(gdal.GetLastErrorMsg())
         return 'fail'
 
@@ -918,7 +952,7 @@ def ogr_rfc28_40():
     lyr.ResetReading()
     tr2 = ogrtest.check_features_against_list( lyr, 'MAX_DATE', ['2013/12/31 23:59:59'] )
     lyr.ResetReading()
-    tr3 = ogrtest.check_features_against_list( lyr, 'AVG_DATE', ['2013/07/02 11:59:59'] )
+    tr3 = ogrtest.check_features_against_list( lyr, 'AVG_DATE', ['2013/07/02 11:59:59.500'] )
 
     gdaltest.ds.ReleaseResultSet( lyr )
 
@@ -1197,9 +1231,23 @@ def ogr_rfc28_44():
     return 'success'
 
 ###############################################################################
+# Test 'FROM table_name AS alias'
+
+def ogr_rfc28_45():
+
+    ql = gdaltest.ds.ExecuteSQL( "select eas_id from idlink as il where il.eas_id = 166" )
+    
+    count = ql.GetFeatureCount()
+    if count != 1:
+        gdaltest.post_reason( 'Got wrong count with GetFeatureCount() - %d, expecting 1' % count )
+        return 'fail'
+
+    gdaltest.ds.ReleaseResultSet( ql )
+    return 'success'
+
+###############################################################################
 def ogr_rfc28_cleanup():
     gdaltest.lyr = None
-    gdaltest.ds.Destroy()
     gdaltest.ds = None
 
     return 'success'
@@ -1243,6 +1291,8 @@ gdaltest_list = [
     ogr_rfc28_33,
     ogr_rfc28_34,
     ogr_rfc28_35,
+    ogr_rfc28_35_bis,
+    ogr_rfc28_35_ter,
     ogr_rfc28_36,
     ogr_rfc28_37,
     ogr_rfc28_38,
@@ -1252,6 +1302,7 @@ gdaltest_list = [
     ogr_rfc28_42,
     ogr_rfc28_43,
     ogr_rfc28_44,
+    ogr_rfc28_45,
     ogr_rfc28_cleanup ]
 
 if __name__ == '__main__':
@@ -1261,4 +1312,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-

@@ -40,28 +40,26 @@ import sys
 #############################################################################
 
 def GeomType2Name( type ):
-    if type == ogr.wkbUnknown:
-        return 'wkbUnknown'
-    elif type == ogr.wkbPoint:
-        return 'wkbPoint'
-    elif type == ogr.wkbLineString:
-        return 'wkbLineString'
-    elif type == ogr.wkbPolygon:
-        return 'wkbPolygon'
-    elif type == ogr.wkbMultiPoint:
-        return 'wkbMultiPoint'
-    elif type == ogr.wkbMultiLineString:
-        return 'wkbMultiLineString'
-    elif type == ogr.wkbMultiPolygon:
-        return 'wkbMultiPolygon'
-    elif type == ogr.wkbGeometryCollection:
-        return 'wkbGeometryCollection'
-    elif type == ogr.wkbNone:
-        return 'wkbNone'
-    elif type == ogr.wkbLinearRing:
-        return 'wkbLinearRing'
-    else:
-        return 'wkbUnknown'
+    flat_type = ogr.GT_Flatten(type)
+    dic = { ogr.wkbUnknown : ('wkbUnknown', '25D'),
+            ogr.wkbPoint : ('wkbPoint', '25D'),
+            ogr.wkbLineString : ('wkbLineString', '25D'),
+            ogr.wkbPolygon : ('wkbPolygon', '25D'),
+            ogr.wkbMultiPoint : ('wkbMultiPoint', '25D'),
+            ogr.wkbMultiLineString : ('wkbMultiLineString', '25D'),
+            ogr.wkbMultiPolygon : ('wkbMultiPolygon', '25D'),
+            ogr.wkbGeometryCollection : ('wkbGeometryCollection', '25D'),
+            ogr.wkbNone : ('wkbNone', ''),
+            ogr.wkbLinearRing : ('wkbLinearRing', ''),
+            ogr.wkbCircularString : ('wkbCircularString', 'Z'),
+            ogr.wkbCompoundCurve : ('wkbCompoundCurve', 'Z'),
+            ogr.wkbCurvePolygon : ('wkbCurvePolygon', 'Z'),
+            ogr.wkbMultiCurve : ('wkbMultiCurve', 'Z'),
+            ogr.wkbMultiSurface : ('wkbMultiSurface', 'Z') }
+    ret = dic[flat_type][0]
+    if flat_type != type:
+        ret += dic[flat_type][1]
+    return ret
 
 #############################################################################
 def Esc(x):
@@ -152,6 +150,28 @@ if len(layer_list) == 0:
 
 vrt = '<OGRVRTDataSource>\n'
 
+
+#############################################################################
+# Metadata
+
+mdd_list = src_ds.GetMetadataDomainList()
+if mdd_list is not None:
+    for domain in mdd_list:
+        if domain == '':
+            vrt += '  <Metadata>\n'
+        elif len(domain) > 4 and domain[0:4] == 'xml:':
+            vrt += '  <Metadata domain="%s" format="xml">\n' % Esc(domain)
+        else:
+            vrt += '  <Metadata domain="%s">\n' % Esc(domain)
+        if len(domain) > 4 and domain[0:4] == 'xml:':
+            vrt += src_ds.GetMetadata_List(domain)[0]
+        else:
+            md = src_ds.GetMetadata(domain)
+            for key in md:
+                vrt += '    <MDI key="%s">%s</MDI>\n' % (Esc(key), Esc(md[key]))
+        vrt += '  </Metadata>\n'
+
+
 #############################################################################
 #	Process each source layer.
 
@@ -160,6 +180,25 @@ for name in layer_list:
     layerdef = layer.GetLayerDefn()
 
     vrt += '  <OGRVRTLayer name="%s">\n' % Esc(name)
+
+    mdd_list = layer.GetMetadataDomainList()
+    if mdd_list is not None:
+        for domain in mdd_list:
+            if domain == '':
+                vrt += '    <Metadata>\n'
+            elif len(domain) > 4 and domain[0:4] == 'xml:':
+                vrt += '    <Metadata domain="%s" format="xml">\n' % Esc(domain)
+            else:
+                vrt += '    <Metadata domain="%s">\n' % Esc(domain)
+            if len(domain) > 4 and domain[0:4] == 'xml:':
+                vrt += layer.GetMetadata_List(domain)[0]
+            else:
+                md = layer.GetMetadata(domain)
+                for key in md:
+                    vrt += '      <MDI key="%s">%s</MDI>\n' % (Esc(key), Esc(md[key]))
+            vrt += '    </Metadata>\n'
+
+
     vrt += '    <SrcDataSource relativeToVRT="%s" shared="%d">%s</SrcDataSource>\n' \
            % (relative,not schema,Esc(infile))
 

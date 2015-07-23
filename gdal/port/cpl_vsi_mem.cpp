@@ -734,14 +734,20 @@ int VSIMemFilesystemHandler::Rename( const char *pszOldPath,
     }
     else
     {
-        VSIMemFile* poFile = oFileList[osOldPath];
-
-        oFileList.erase( oFileList.find(osOldPath) );
-
-        Unlink_unlocked(osNewPath);
-
-        oFileList[osNewPath] = poFile;
-        poFile->osFilename = osNewPath;
+        std::map<CPLString,VSIMemFile*>::iterator it = oFileList.find(osOldPath);
+        while (it != oFileList.end() && it->first.ifind(osOldPath) == 0)
+        {
+            const CPLString osRemainder = it->first.substr(osOldPath.size());
+            if (osRemainder.empty() || osRemainder[0] == '/')
+            {
+                const CPLString osNewFullPath = osNewPath + osRemainder;
+                Unlink_unlocked(osNewFullPath);
+                oFileList[osNewFullPath] = it->second;
+                it->second->osFilename = osNewFullPath;
+                oFileList.erase(it++);
+            }
+            else ++it;
+        }
 
         return 0;
     }

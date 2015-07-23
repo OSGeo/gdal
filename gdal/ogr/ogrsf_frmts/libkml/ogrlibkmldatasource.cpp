@@ -1709,12 +1709,10 @@ void OGRLIBKMLDataSource::ParseDocumentOptions(KmlPtr poKml,
             }
             if( pszNLCExpires != NULL )
             {
-                int year, month, day, hour, minute, tz;
-                float fSecond;
-                if( OGRParseXMLDateTime( pszNLCExpires, &year, &month, &day,
-                                        &hour, &minute, &fSecond, &tz) )
+                OGRField sField;
+                if( OGRParseXMLDateTime( pszNLCExpires, &sField) )
                 {
-                    char* pszXMLDate = OGRGetXMLDateTime(year, month, day, hour, minute, (int)fSecond, tz);
+                    char* pszXMLDate = OGRGetXMLDateTime(&sField);
                     nlc->set_expires(pszXMLDate);
                     CPLFree(pszXMLDate);
                 }

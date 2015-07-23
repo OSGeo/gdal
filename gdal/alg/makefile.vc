@@ -5,12 +5,22 @@
 
 GDAL_ROOT	=	..
 
-EXTRAFLAGS =	-I../ogr/ogrsf_frmts $(GEOS_CFLAGS) 
+EXTRAFLAGS =	-I../ogr/ogrsf_frmts $(GEOS_CFLAGS)
 
 !INCLUDE ..\nmake.opt
 
 !IFDEF INCLUDE_OGR_FRMTS
 EXTRAFLAGS = $(EXTRAFLAGS) -DOGR_ENABLED
+!ENDIF
+
+!IFDEF QHULL_SETTING
+!IF "$(QHULL_SETTING)" == "INTERNAL"
+EXTRAFLAGS = $(EXTRAFLAGS) -DINTERNAL_QHULL -Ilibqhull
+!ELSE
+!IF "$(QHULL_SETTING)" == "EXTERNAL"
+EXTRAFLAGS = $(EXTRAFLAGS) -DEXTERNAL_QHULL $(QHULL_INC)
+!ENDIF
+!ENDIF
 !ENDIF
 
 OBJ =	gdaldither.obj gdalmediancut.obj gdal_crs.obj gdaltransformer.obj \
@@ -21,7 +31,7 @@ OBJ =	gdaldither.obj gdalmediancut.obj gdal_crs.obj gdaltransformer.obj \
 	gdalsievefilter.obj gdalrasterpolygonenumerator.obj polygonize.obj \
 	gdalrasterfpolygonenumerator.obj fpolygonize.obj contour.obj \
 	gdal_octave.obj gdal_simplesurf.obj gdalmatching.obj \
-	gdaltransformgeolocs.obj
+	gdaltransformgeolocs.obj delaunay.obj gdalgridavx.obj gdalpansharpen.obj
 	
 
 default:	$(OBJ) 

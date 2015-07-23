@@ -48,12 +48,55 @@ OGRCurvePolygon::OGRCurvePolygon()
 }
 
 /************************************************************************/
+/*               OGRCurvePolygon( const OGRCurvePolygon& )              */
+/************************************************************************/
+
+/**
+ * \brief Copy constructor.
+ * 
+ * Note: before GDAL 2.1, only the default implementation of the constructor
+ * existed, which could be unsafe to use.
+ * 
+ * @since GDAL 2.1
+ */
+
+OGRCurvePolygon::OGRCurvePolygon( const OGRCurvePolygon& other ) :
+    OGRSurface(other),
+    oCC(other.oCC)
+{
+}
+
+/************************************************************************/
 /*                           ~OGRCurvePolygon()                         */
 /************************************************************************/
 
 OGRCurvePolygon::~OGRCurvePolygon()
 
 {
+}
+
+/************************************************************************/
+/*                 operator=( const OGRCurvePolygon&)                  */
+/************************************************************************/
+
+/**
+ * \brief Assignment operator.
+ * 
+ * Note: before GDAL 2.1, only the default implementation of the operator
+ * existed, which could be unsafe to use.
+ * 
+ * @since GDAL 2.1
+ */
+
+OGRCurvePolygon& OGRCurvePolygon::operator=( const OGRCurvePolygon& other )
+{
+    if( this != &other)
+    {
+        OGRSurface::operator=( other );
+        
+        oCC = other.oCC;
+    }
+    return *this;
 }
 
 /************************************************************************/

@@ -72,7 +72,9 @@ OGRFeatureQuery::~OGRFeatureQuery()
 /************************************************************************/
 
 OGRErr OGRFeatureQuery::Compile( OGRFeatureDefn *poDefn, 
-                                 const char * pszExpression )
+                                 const char * pszExpression,
+                                 int bCheck,
+                                 swq_custom_func_registrar* poCustomFuncRegistrar )
 
 {
 /* -------------------------------------------------------------------- */
@@ -172,6 +174,8 @@ OGRErr OGRFeatureQuery::Compile( OGRFeatureDefn *poDefn,
     poTargetDefn = poDefn;
     eCPLErr = swq_expr_compile( pszExpression, nFieldCount,
                                 papszFieldNames, paeFieldTypes, 
+                                bCheck,
+                                poCustomFuncRegistrar,
                                 (swq_expr_node **) &pSWQExpr );
     if( eCPLErr != CE_None )
     {

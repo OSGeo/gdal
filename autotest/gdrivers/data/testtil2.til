@@ -1,0 +1,10 @@
+numTiles = 1
+TILE_1.filename = "byte.tif"
+TILE_1.ULColOffset = 0
+TILE_1.ULRowOffset = 0
+TILE_1.LRColOffset = 20
+TILE_1.LRRowOffset = 20
+END;
+                                                                               
+                                                                               
+                                                                               

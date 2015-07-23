@@ -232,15 +232,19 @@ class FileGDBTable
         GUInt32                     nFieldDescLength;
 
         GUInt32                     nTablxOffsetSize;
-        std::vector<vsi_l_offset>   anFeatureOffsets;
+        std::vector<vsi_l_offset>   anFeatureOffsets; /* MSb set marks deleted feature */
 
         GByte*                      pabyTablXBlockMap;
+        int                         nCountBlocksBeforeIBlockIdx; /* optimization */
+        int                         nCountBlocksBeforeIBlockValue; /* optimization */
 
         char                        achGUIDBuffer[32 + 6 + 1];
         int                         nChSaved;
 
         int                         bError;
         int                         nCurRow;
+        int                         bHasDeletedFeaturesListed;
+        int                         bIsDeleted;
         int                         nLastCol;
         GByte*                      pabyIterVals;
         int                         iAccNullable;
@@ -295,11 +299,15 @@ class FileGDBTable
        const FileGDBIndex*      GetIndex(int i) const { return apoIndexes[i]; }
 
        vsi_l_offset             GetOffsetInTableForRow(int iRow);
+       
+       int                      HasDeletedFeaturesListed() const { return bHasDeletedFeaturesListed; }
 
        /* Next call to SelectRow() or GetFieldValue() invalidates previously returned values */
        int                      SelectRow(int iRow);
+       int                      GetAndSelectNextNonEmptyRow(int iRow);
        int                      HasGotError() const { return bError; }
        int                      GetCurRow() const { return nCurRow; }
+       int                      IsCurRowDeleted() const { return bIsDeleted; }
        const OGRField*          GetFieldValue(int iCol);
 
        int                      GetFeatureExtent(const OGRField* psGeomField,

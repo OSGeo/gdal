@@ -21,6 +21,9 @@ CPPFLAGS := $(CPPFLAGS)
 
 default:	$(O_OBJ:.o=.$(OBJ_EXT))
 
+# -D_XOPEN_SOURCE=500 to enable strdup() definition in C11 mode
+CPPFLAGS := -D_XOPEN_SOURCE=500 $(CPPFLAGS)
+
 ../../o/%.$(OBJ_EXT):	%.c
 	$(CC) $(CFLAGS) $(CPPFLAGS) -c -o $@ $<
 

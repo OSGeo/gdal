@@ -463,6 +463,10 @@ private:
     int           m_bSetWidthFlag;
     
     int           m_bReportAllAttributes;
+    
+    int           m_bIsWFSJointLayer;
+    
+    int           m_bEmptyAsNull;
 
     int           ParseXMLHugeFile( const char *pszOutputFilename, 
                                     const int bSqliteIsTempFile,
@@ -503,7 +507,9 @@ public:
                                        int pbSqliteIsTempFile,
                                        int iSqliteCacheMB );
 
-    int              PrescanForSchema(int bGetExtents = TRUE, int bAnalyzeSRSPerFeature = TRUE );
+    int              PrescanForSchema(int bGetExtents = TRUE,
+                                      int bAnalyzeSRSPerFeature = TRUE,
+                                      int bOnlyDetectSRS = FALSE );
     int              PrescanForTemplate( void );
     int              ReArrangeTemplateClasses( GFSTemplateList *pCC );
     void             ResetReading();
@@ -546,7 +552,14 @@ public:
 
     int         IsSequentialLayers() const { return m_bSequentialLayers == TRUE; }
     
+    void        SetReportAllAttributes(int bFlag) { m_bReportAllAttributes = bFlag; }
     int         ReportAllAttributes() const { return m_bReportAllAttributes; }
+    
+    void             SetIsWFSJointLayer( int bFlag ) { m_bIsWFSJointLayer = bFlag; }
+    int              IsWFSJointLayer() const { return m_bIsWFSJointLayer; }
+    
+    void             SetEmptyAsNull( int bFlag ) { m_bEmptyAsNull = bFlag; }
+    int              IsEmptyAsNull() const { return m_bEmptyAsNull; }
 
     static CPLMutex* hMutex;
 };

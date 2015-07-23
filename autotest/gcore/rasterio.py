@@ -783,6 +783,40 @@ def rasterio_10():
 
     return 'success'
 
+###############################################################################
+# Test cubic resampling and nbits
+
+def rasterio_11():
+    
+    try:
+        from osgeo import gdalnumeric
+        gdalnumeric.zeros
+        import numpy
+    except:
+        return 'skip'
+
+    mem_ds = gdal.GetDriverByName('MEM').Create('', 4, 3)
+    mem_ds.GetRasterBand(1).WriteArray(numpy.array([[80,125,125,80],[80,125,125,80],[80,125,125,80]]))
+
+    # A bit dummy
+    mem_ds.GetRasterBand(1).SetMetadataItem('NBITS', '8', 'IMAGE_STRUCTURE')
+    ar = mem_ds.GetRasterBand(1).ReadAsArray(0,0,4,3,8,3, resample_alg = gdal.GRIORA_Cubic)
+    if ar.max() != 129:
+        gdaltest.post_reason('failure')
+        print(ar.max())
+        return 'fail'
+
+    # NBITS=7
+    mem_ds.GetRasterBand(1).SetMetadataItem('NBITS', '7', 'IMAGE_STRUCTURE')
+    ar = mem_ds.GetRasterBand(1).ReadAsArray(0,0,4,3,8,3, resample_alg = gdal.GRIORA_Cubic)
+    # Would overshoot to 129 if NBITS was ignored
+    if ar.max() != 127:
+        gdaltest.post_reason('failure')
+        print(ar.max())
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     rasterio_1,
     rasterio_2,
@@ -794,6 +828,7 @@ gdaltest_list = [
     rasterio_8,
     rasterio_9,
     rasterio_10,
+    rasterio_11,
     ]
 
 if __name__ == '__main__':

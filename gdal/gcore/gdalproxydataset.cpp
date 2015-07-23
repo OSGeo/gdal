@@ -220,6 +220,7 @@ RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, Fill,
 
 RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, SetCategoryNames, ( char ** arg ), (arg))
 RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, SetNoDataValue, ( double arg ), (arg))
+RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, DeleteNoDataValue, (), ())
 RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, SetColorTable, ( GDALColorTable *arg ), (arg))
 RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, SetColorInterpretation,
                                     ( GDALColorInterp arg ), (arg))
@@ -249,7 +250,7 @@ RB_PROXY_METHOD_WITH_RET(int, 0, HasArbitraryOverviews, (), ())
 RB_PROXY_METHOD_WITH_RET(int, 0,  GetOverviewCount, (), ())
 RB_PROXY_METHOD_WITH_RET(GDALRasterBand*, NULL,  GetOverview, (int arg1), (arg1))
 RB_PROXY_METHOD_WITH_RET(GDALRasterBand*, NULL,  GetRasterSampleOverview,
-                        (int arg1), (arg1))
+                        (GUIntBig arg1), (arg1))
 
 RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, BuildOverviews,
                         (const char * arg1, int arg2, int *arg3,
@@ -264,7 +265,7 @@ RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, AdviseRead,
 
 RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, GetHistogram,
                         ( double dfMin, double dfMax,
-                        int nBuckets, int * panHistogram,
+                        int nBuckets, GUIntBig * panHistogram,
                         int bIncludeOutOfRange, int bApproxOK,
                         GDALProgressFunc pfn, void *pProgressData ),
                         (dfMin, dfMax, nBuckets, panHistogram, bIncludeOutOfRange,
@@ -272,7 +273,7 @@ RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, GetHistogram,
 
 RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, GetDefaultHistogram,
                         (double *pdfMin, double *pdfMax,
-                        int *pnBuckets, int ** ppanHistogram,
+                        int *pnBuckets, GUIntBig ** ppanHistogram,
                         int bForce,
                         GDALProgressFunc pfn, void *pProgressData ),
                         (pdfMin, pdfMax, pnBuckets, ppanHistogram, bForce,
@@ -280,7 +281,7 @@ RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, GetDefaultHistogram,
 
 RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, SetDefaultHistogram,
                         ( double dfMin, double dfMax,
-                        int nBuckets, int * panHistogram ),
+                        int nBuckets, GUIntBig * panHistogram ),
                         (dfMin, dfMax, nBuckets, panHistogram))
 
 RB_PROXY_METHOD_WITH_RET(GDALRasterAttributeTable *, NULL,

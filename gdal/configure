@@ -670,6 +670,7 @@ FREEXL_INCLUDE
 HAVE_FREEXL
 OPENCL_LIB
 OPENCL_FLAGS
+QHULL_SETTING
 GEOS_CONFIG
 GEOS_VERSION
 HAVE_GEOS
@@ -763,8 +764,12 @@ HAVE_KEA
 KEA_CONFIG
 HDF5_INCLUDE
 HAVE_HDF5
+HDF4_HAS_MAXOPENFILES
 HDF4_INCLUDE
 HAVE_HDF4
+MONGODB_INC
+MONGODB_LIB
+MONGODB_ENABLED
 SOSI_INC
 SOSI_LIB
 SOSI_ENABLED
@@ -937,6 +942,8 @@ with_gif
 with_ogdi
 with_fme
 with_sosi
+with_mongocxx
+with_boost_lib_path
 with_hdf4
 with_hdf5
 with_kea
@@ -981,6 +988,7 @@ with_sde_version
 with_epsilon
 with_webp
 with_geos
+with_qhull
 with_opencl
 with_opencl_include
 with_opencl_lib
@@ -1680,6 +1688,8 @@ Optional Packages:
   --with-ogdi=ARG       Include OGDI support (ARG=path)
   --with-fme=ARG        Include FMEObjects support (ARG=FME_HOME path)
   --with-sosi=ARG        Include SOSI support (ARG=SOSI lib Path, yes or no)
+  --with-mongocxx=ARG        Include MongoCXX support (ARG=Path, yes or no)
+  --with-boost-lib-path=ARG   Path to boost libraries for mongocxx client
   --with-hdf4=ARG       Include HDF4 support (ARG=path)
   --with-hdf5=ARG       Include HDF5 support (ARG=path)
   --with-kea=ARG      Include kealib (ARG=path to kea-config) [default=yes]
@@ -1733,6 +1743,7 @@ Optional Packages:
   --with-webp=ARG    Include WEBP support (ARG=no, yes or libwebp install root path)
   --with-geos=ARG         Include GEOS support (ARG=yes, no or geos-config
                           path)
+  --with-qhull=ARG     Include QHull support (ARG=no, yes, internal)
   --with-opencl=ARG       Include OpenCL (GPU) support
   --with-opencl-include=ARG OpenCL Include directory (with a CL subdirectory)
   --with-opencl-lib=ARG   OpenCL Link Flags (ie. -L/xxx -lOpenCL)
@@ -17354,6 +17365,47 @@ if test "x$ac_cv_func_setlocale" = xyes; then :
 fi
 
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for uselocale" >&5
+$as_echo_n "checking for uselocale... " >&6; }
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#define _XOPEN_SOURCE 700
+#include <locale.h>
+
+int
+main ()
+{
+
+    locale_t alocale = newlocale (LC_NUMERIC_MASK, "C", 0);
+    locale_t oldlocale = uselocale(alocale);
+    uselocale(oldlocale);
+    freelocale(alocale);
+    return 0;
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_USELOCALE 1
+_ACEOF
+
+
+else
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+
+
 OPT_GDAL_FORMATS=
 EXTRA_INCLUDES=
 
@@ -17397,7 +17449,7 @@ fi
 $as_echo_n "checking whether GCC 4.1 atomic builtins are available... " >&6; }
 
 rm -f atomicbuiltins.c
-echo 'int main(int argc, char* argv) { int i; __sync_add_and_fetch(&i, 1); __sync_sub_and_fetch(&i, 1); return 0; } ' > atomicbuiltins.c
+echo 'int main(int argc, char* argv) { int i; __sync_add_and_fetch(&i, 1); __sync_sub_and_fetch(&i, 1); __sync_bool_compare_and_swap(&i, 0, 1); return 0; } ' > atomicbuiltins.c
 if test -z "`${CC} atomicbuiltins.c -o atomicbuiltins 2>&1`" ; then
     HAVE_GCC_ATOMIC_BUILTINS=yes
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
@@ -17471,7 +17523,7 @@ $as_echo "no" >&6; }
              if test "$with_sse" = "yes"; then
                echo "Caution: the generated binaries will not run on this system."
              else
-               echo "Disabling SSE as it is not explicitely required"
+               echo "Disabling SSE as it is not explicitly required"
                HAVE_SSE_AT_COMPILE_TIME=""
                SSEFLAGS=""
              fi
@@ -17545,7 +17597,7 @@ $as_echo "no" >&6; }
              if test "$with_avx" = "yes"; then
                echo "Caution: the generated binaries will not run on this system."
              else
-               echo "Disabling AVX as it is not explicitely required"
+               echo "Disabling AVX as it is not explicitly required"
                AVXFLAGS=""
                HAVE_AVX_AT_COMPILE_TIME=""
              fi
@@ -21285,6 +21337,95 @@ SOSI_INC=$SOSI_INC
 
 
 
+
+# Check whether --with-mongocxx was given.
+if test "${with_mongocxx+set}" = set; then :
+  withval=$with_mongocxx;
+fi
+
+
+MONGODB_ENABLED=no
+
+if test "$with_mongocxx" = "no" ; then
+
+  echo "MONGODB support disabled."
+
+elif test "$with_mongocxx" = "yes" -o "$with_mongocxx" = "" ; then
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for MongoCXX" >&5
+$as_echo_n "checking for MongoCXX... " >&6; }
+
+    rm -f testmongocxx.*
+    rm -f testmongocxx
+    echo "#include <mongo/client/dbclient.h>" > testmongocxx.cpp
+    echo "using namespace mongo;" >> testmongocxx.cpp
+    echo "int main() { client::initialize(client::Options()); return 0; }" >> testmongocxx.cpp
+    if test -z "`${CXX} ${CPPFLAGS} testmongocxx.cpp -lmongoclient -lboost_system -lboost_thread -lboost_regex -o testmongocxx 2>&1`" ; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: MongoCXX found" >&5
+$as_echo "MongoCXX found" >&6; }
+        MONGODB_ENABLED="yes"
+        MONGODB_LIB=" -lmongoclient -lboost_system -lboost_thread -lboost_regex"
+    else
+        if test "$with_mongocxx" = "yes"; then
+            as_fn_error $? "MongoCXX not found." "$LINENO" 5
+        else
+            { $as_echo "$as_me:${as_lineno-$LINENO}: result: MongoCXX not found." >&5
+$as_echo "MongoCXX not found." >&6; }
+        fi
+    fi
+    rm -f testmongocxx.*
+    rm -f testmongocxx
+
+else
+
+
+# Check whether --with-boost-lib-path was given.
+if test "${with_boost_lib_path+set}" = set; then :
+  withval=$with_boost_lib_path;
+fi
+
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for libmongoclient.so in in $with_mongocxx/lib" >&5
+$as_echo_n "checking for libmongoclient.so in in $with_mongocxx/lib... " >&6; }
+  MONGODB_ENABLED=yes
+  if test -r $with_mongocxx/lib/libmongoclient.so; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: found." >&5
+$as_echo "found." >&6; }
+    MONGODB_LIB="-L$with_mongocxx/lib -lmongoclient"
+  elif test -r $with_mongocxx/lib/libmongoclient.dylib; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: found." >&5
+$as_echo "found." >&6; }
+    MONGODB_LIB="-L$with_mongocxx/lib -lmongoclient"
+  else
+    as_fn_error $? "not found." "$LINENO" 5
+  fi
+
+  if test "$with_boost_lib_path" = "" ; then
+    MONGODB_LIB="$MONGODB_LIB -lboost_system -lboost_thread -lboost_regex"
+  else
+    MONGODB_LIB="$MONGODB_LIB -L$with_boost_lib_path -lboost_system -lboost_thread -lboost_regex"
+  fi
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for mongo/client/dbclient.h in $with_mongocxx/include" >&5
+$as_echo_n "checking for mongo/client/dbclient.h in $with_mongocxx/include... " >&6; }
+  if test -r $with_mongocxx/include/mongo/client/dbclient.h ; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: found." >&5
+$as_echo "found." >&6; }
+    MONGODB_INC="-I$with_mongocxx/include"
+  else
+    as_fn_error $? "not found." "$LINENO" 5
+  fi
+
+fi
+
+MONGODB_ENABLED=$MONGODB_ENABLED
+
+MONGODB_LIB=$MONGODB_LIB
+
+MONGODB_INC=$MONGODB_INC
+
+
+
 HDF4_INCLUDE=""
 
 
@@ -21557,6 +21698,93 @@ fi
       LIBS="$HDF_LIB_NAME $ORIG_LIBS"
     fi
 
+                { $as_echo "$as_me:${as_lineno-$LINENO}: checking for SDget_maxopenfiles in -lmfhdfalt" >&5
+$as_echo_n "checking for SDget_maxopenfiles in -lmfhdfalt... " >&6; }
+if ${ac_cv_lib_mfhdfalt_SDget_maxopenfiles+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lmfhdfalt $HDF_LIB_NAME $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char SDget_maxopenfiles ();
+int
+main ()
+{
+return SDget_maxopenfiles ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_mfhdfalt_SDget_maxopenfiles=yes
+else
+  ac_cv_lib_mfhdfalt_SDget_maxopenfiles=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_mfhdfalt_SDget_maxopenfiles" >&5
+$as_echo "$ac_cv_lib_mfhdfalt_SDget_maxopenfiles" >&6; }
+if test "x$ac_cv_lib_mfhdfalt_SDget_maxopenfiles" = xyes; then :
+  HDF4_HAS_MAXOPENFILES=yes
+else
+  HDF4_HAS_MAXOPENFILES=no
+fi
+
+    if test "$HDF4_HAS_MAXOPENFILES" = "no" ; then
+      { $as_echo "$as_me:${as_lineno-$LINENO}: checking for SDget_maxopenfiles in -lmfhdf" >&5
+$as_echo_n "checking for SDget_maxopenfiles in -lmfhdf... " >&6; }
+if ${ac_cv_lib_mfhdf_SDget_maxopenfiles+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lmfhdf $HDF_LIB_NAME $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char SDget_maxopenfiles ();
+int
+main ()
+{
+return SDget_maxopenfiles ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_mfhdf_SDget_maxopenfiles=yes
+else
+  ac_cv_lib_mfhdf_SDget_maxopenfiles=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_mfhdf_SDget_maxopenfiles" >&5
+$as_echo "$ac_cv_lib_mfhdf_SDget_maxopenfiles" >&6; }
+if test "x$ac_cv_lib_mfhdf_SDget_maxopenfiles" = xyes; then :
+  HDF4_HAS_MAXOPENFILES=yes
+else
+  HDF4_HAS_MAXOPENFILES=no
+fi
+
+    fi
+
       if test "$with_hdf4" = "yes" -o "$with_hdf4" = "" -a -r /usr/include/hdf/hdf.h ; then
       HDF4_INCLUDE="-I/usr/include/hdf"
     elif test -r "$with_hdf4/hdf/hdf.h" ; then
@@ -21587,6 +21815,8 @@ fi
 HAVE_HDF4=$HAVE_HDF4
 
 HDF4_INCLUDE=$HDF4_INCLUDE
+
+HDF4_HAS_MAXOPENFILES=$HDF4_HAS_MAXOPENFILES
 
 
 if test "$HAVE_HDF4" != "no" ; then
@@ -25410,7 +25640,7 @@ if test "$CURL_SETTING" = "yes" ; then
 
   CURL_INC=`$LIBCURL_CONFIG --cflags`
   CURL_LIB=`$LIBCURL_CONFIG --libs`
-  OPT_GDAL_FORMATS="wcs wms plmosaic $OPT_GDAL_FORMATS"
+  OPT_GDAL_FORMATS="wcs wms plmosaic wmts $OPT_GDAL_FORMATS"
 
 fi
 
@@ -27203,6 +27433,104 @@ $as_echo "$as_me: Using C API from GEOS $GEOS_VERSION" >&6;}
 fi
 
 
+
+# Check whether --with-qhull was given.
+if test "${with_qhull+set}" = set; then :
+  withval=$with_qhull;
+fi
+
+
+QHULL_SETTING=no
+
+if test "$with_qhull" = "no" ; then
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: QHull support disabled." >&5
+$as_echo "$as_me: QHull support disabled." >&6;}
+
+elif test "$with_qhull" = "yes" -o "$with_qhull" = "" ; then
+
+  # Only qhull 2012 is reliable on certain datasets. Older Ubuntu have
+  # qhull/qhull.h
+  for ac_header in qhull/libqhull.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "qhull/libqhull.h" "ac_cv_header_qhull_libqhull_h" "$ac_includes_default"
+if test "x$ac_cv_header_qhull_libqhull_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_QHULL_LIBQHULL_H 1
+_ACEOF
+
+fi
+
+done
+
+  if test "$ac_cv_header_qhull_libqhull_h" = "yes"; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for qh_new_qhull in -lqhull" >&5
+$as_echo_n "checking for qh_new_qhull in -lqhull... " >&6; }
+if ${ac_cv_lib_qhull_qh_new_qhull+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lqhull  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char qh_new_qhull ();
+int
+main ()
+{
+return qh_new_qhull ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_qhull_qh_new_qhull=yes
+else
+  ac_cv_lib_qhull_qh_new_qhull=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_qhull_qh_new_qhull" >&5
+$as_echo "$ac_cv_lib_qhull_qh_new_qhull" >&6; }
+if test "x$ac_cv_lib_qhull_qh_new_qhull" = xyes; then :
+  QHULL_SETTING=yes
+else
+  QHULL_SETTING=no
+fi
+
+    if test "$QHULL_SETTING" = "yes"; then
+        QHULL_SETTING=external
+        if test -f /usr/include/qhull/libqhull.h; then
+            EXTRA_INCLUDES="-I/usr/include/qhull $EXTRA_INCLUDES"
+        else
+            EXTRA_INCLUDES="-I/usr/include/local/qhull $EXTRA_INCLUDES"
+        fi
+        LIBS="-lqhull $LIBS"
+    fi
+  fi
+  if test "$QHULL_SETTING" = "no" ; then
+    if test "$with_qhull" = "yes"; then
+        as_fn_error $? "--with-qhull requested, but library not found!" "$LINENO" 5
+    else
+        QHULL_SETTING=internal
+    fi
+  fi
+else
+  QHULL_SETTING=internal
+fi
+
+QHULL_SETTING=$QHULL_SETTING
+
+
+
 OPENCL_SETTING=no
 OPENCL_FLAGS=
 OPENCL_LIB=
@@ -28909,6 +29237,7 @@ elif test "x$with_python" != "x" -a "$with_python" != "no" ; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: enabled" >&5
 $as_echo "enabled" >&6; }
 else
+  PYTHON=""
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: disabled" >&5
 $as_echo "disabled" >&6; }
 fi
@@ -32172,6 +32501,9 @@ echo "  INFORMIX DataBlade support:${HAVE_IDB}"
 echo "  GEOS support:              ${HAVE_GEOS_RESULT}"
 
 
+echo "  QHull support:             ${QHULL_SETTING}"
+
+
 echo "  Poppler support:           ${HAVE_POPPLER}"
 
 
@@ -32191,6 +32523,9 @@ echo "  FreeXL support:            ${HAVE_FREEXL}"
 
 
 echo "  SOSI support:              ${SOSI_ENABLED}"
+
+
+echo "  MongoDB support:           ${MONGODB_ENABLED}"
 
 
 echo ""

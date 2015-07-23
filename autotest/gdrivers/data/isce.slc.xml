@@ -1,0 +1,77 @@
+<imageFile>
+    <property name="BYTE_ORDER">
+        <value>l</value>
+    </property>
+    <property name="family">
+        <value>image</value>
+        <doc>{'doc': 'Instance family name'}</doc>
+    </property>
+    <property name="ACCESS_MODE">
+        <value>writeread</value>
+    </property>
+    <property name="DESCRIPTION">
+        <value>['Single look complex image.']</value>
+    </property>
+    <property name="DATA_TYPE">
+        <value>CFLOAT</value>
+    </property>
+    <property name="IMAGE_TYPE">
+        <value>slc</value>
+    </property>
+    <property name="FILE_NAME">
+        <value>isce_slc</value>
+    </property>
+    <component name="Coordinate1">
+        <factorymodule>isceobj.Image</factorymodule>
+        <factoryname>createCoordinate</factoryname>
+        <doc>First coordinate of a 2D image (witdh).</doc>
+        <property name="name">
+            <value>ImageCoordinate_name</value>
+            <doc>{'doc': 'Instance name'}</doc>
+        </property>
+        <property name="family">
+            <value>ImageCoordinate</value>
+            <doc>{'doc': 'Instance family name'}</doc>
+        </property>
+        <property name="size">
+            <value>5681</value>
+            <doc>{'doc': 'Coordinate size.'}</doc>
+        </property>
+    </component>
+    <property name="NUMBER_BANDS">
+        <value>1</value>
+    </property>
+    <component name="Coordinate2">
+        <factorymodule>isceobj.Image</factorymodule>
+        <factoryname>createCoordinate</factoryname>
+        <doc>Second coordinate of a 2D image (length).</doc>
+        <property name="name">
+            <value>ImageCoordinate_name</value>
+            <doc>{'doc': 'Instance name'}</doc>
+        </property>
+        <property name="family">
+            <value>ImageCoordinate</value>
+            <doc>{'doc': 'Instance family name'}</doc>
+        </property>
+        <property name="size">
+            <value>26624</value>
+            <doc>{'doc': 'Coordinate size.'}</doc>
+        </property>
+    </component>
+    <property name="WIDTH">
+        <value>12</value>
+    </property>
+    <property name="LENGTH">
+        <value>10</value>
+    </property>
+    <property name="SCHEME">
+        <value>BIP</value>
+    </property>
+    <property name="name">
+        <value>image_name</value>
+        <doc>{'doc': 'Instance name'}</doc>
+    </property>
+    <property name="ISCE_VERSION">
+        <value>Release: 2.0.0_201410, svn-1651, 20141103. Current: svn-exported.</value>
+    </property>
+</imageFile>

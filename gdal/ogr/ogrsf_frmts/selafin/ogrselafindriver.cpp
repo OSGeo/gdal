@@ -182,7 +182,7 @@ void RegisterOGRSelafin() {
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"
 "  <Option name='TITLE' type='string' description='Title of the datasource, stored in the Selafin file. The title must not hold more than 72 characters.'/>"
-"  <Option name='DATE' type='string' description='Starting date of the simulation. Each layer in a Selafin file is characterized by a date, counted in seconds since a reference date. This option allows to provide the reference date. The format of this field must be YYYY-MM-DD_hh:mm:ss'/>"
+"  <Option name='DATE' type='string' description='Starting date of the simulation. Each layer in a Selafin file is characterized by a date, counted in seconds since a reference date. This option allows providing the reference date. The format of this field must be YYYY-MM-DD_hh:mm:ss'/>"
 "</CreationOptionList>");
         poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
 "<LayerCreationOptionList>"

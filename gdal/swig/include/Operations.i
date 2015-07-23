@@ -125,6 +125,9 @@ int  DitherRGB2PCT ( GDALRasterBandShadow *red,
 /*                           ReprojectImage()                           */
 /************************************************************************/
 %apply Pointer NONNULL {GDALDatasetShadow *src_ds, GDALDatasetShadow *dst_ds};
+#ifndef SWIGJAVA
+%feature( "kwargs" ) ReprojectImage;
+#endif
 %inline %{
 CPLErr  ReprojectImage ( GDALDatasetShadow *src_ds,
                          GDALDatasetShadow *dst_ds,
@@ -134,9 +137,17 @@ CPLErr  ReprojectImage ( GDALDatasetShadow *src_ds,
                          double WarpMemoryLimit=0.0,
                          double maxerror = 0.0,
 			 GDALProgressFunc callback = NULL,
-                     	 void* callback_data=NULL) {
+                     	 void* callback_data=NULL,
+                         char** options = NULL ) {
 
     CPLErrorReset();
+
+    GDALWarpOptions* psOptions = NULL;
+    if( options != NULL )
+    {
+        psOptions = GDALCreateWarpOptions();
+        psOptions->papszWarpOptions = CSLDuplicate(options);
+    }
 
     CPLErr err = GDALReprojectImage( src_ds,
                                      src_wkt,
@@ -147,8 +158,11 @@ CPLErr  ReprojectImage ( GDALDatasetShadow *src_ds,
                                      maxerror,
                                      callback,
                                      callback_data,
-                                     NULL);
-    
+                                     psOptions);
+
+    if( psOptions != NULL )
+        GDALDestroyWarpOptions(psOptions);
+
     return err;
 }
 %} 

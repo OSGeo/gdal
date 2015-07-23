@@ -359,7 +359,7 @@ void wrapper_VSIFileFromMemBuffer( const char* utf8_path, int nBytes, const GByt
 #endif
 
 /* Added in GDAL 1.7.0 */
-int VSIUnlink(const char * utf8_path );
+VSI_RETVAL VSIUnlink(const char * utf8_path );
 
 /* Added in GDAL 1.7.0 */
 /* Thread support is necessary for binding languages with threaded GC */
@@ -372,9 +372,9 @@ int wrapper_HasThreadSupport()
 }
 
 /* Added for GDAL 1.8 */
-int VSIMkdir(const char *utf8_path, int mode );
-int VSIRmdir(const char *utf8_path );
-int VSIRename(const char * pszOld, const char *pszNew );
+VSI_RETVAL VSIMkdir(const char *utf8_path, int mode );
+VSI_RETVAL VSIRmdir(const char *utf8_path );
+VSI_RETVAL VSIRename(const char * pszOld, const char *pszNew );
 
 /* Added for GDAL 1.8 
 
@@ -390,9 +390,7 @@ typedef void VSILFILE;
 #endif
 
 #if defined(SWIGPERL)
-%apply RETURN_NONE_TRUE_IS_ERROR {RETURN_NONE};
-RETURN_NONE VSIStatL( const char * utf8_path, VSIStatBufL *psStatBuf );
-%clear RETURN_NONE;
+VSI_RETVAL VSIStatL( const char * utf8_path, VSIStatBufL *psStatBuf );
 
 #elif defined(SWIGPYTHON)
 
@@ -464,16 +462,16 @@ VSILFILE   *wrapper_VSIFOpenL( const char *utf8_path, const char *pszMode )
     return VSIFOpenL( utf8_path, pszMode );
 }
 %}
-void    VSIFCloseL( VSILFILE * );
+VSI_RETVAL VSIFCloseL( VSILFILE * );
 
 #if defined(SWIGPYTHON)
 int     VSIFSeekL( VSILFILE *, GIntBig, int );
 GIntBig    VSIFTellL( VSILFILE * );
 int     VSIFTruncateL( VSILFILE *, GIntBig );
 #else
-int     VSIFSeekL( VSILFILE *, long, int );
+VSI_RETVAL VSIFSeekL( VSILFILE *, long, int );
 long    VSIFTellL( VSILFILE * );
-int     VSIFTruncateL( VSILFILE *, long );
+VSI_RETVAL VSIFTruncateL( VSILFILE *, long );
 #endif
 
 #if defined(SWIGPYTHON)

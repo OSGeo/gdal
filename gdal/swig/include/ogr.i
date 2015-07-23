@@ -1292,14 +1292,16 @@ public:
   /* ------------------------------------------- */  
 
   %apply (int *OUTPUT) {(int *)};
+  %apply (float *OUTPUT) {(float *)};
   void GetFieldAsDateTime(int id, int *pnYear, int *pnMonth, int *pnDay,
-			  int *pnHour, int *pnMinute, int *pnSecond,
+			  int *pnHour, int *pnMinute, float *pfSecond,
 			  int *pnTZFlag) {
-      OGR_F_GetFieldAsDateTime(self, id, pnYear, pnMonth, pnDay,
-			       pnHour, pnMinute, pnSecond,
+      OGR_F_GetFieldAsDateTimeEx(self, id, pnYear, pnMonth, pnDay,
+			       pnHour, pnMinute, pfSecond,
 			       pnTZFlag);
   }
   %clear (int *);
+  %clear (float *);
 
 #if defined(SWIGJAVA)
   retIntArray GetFieldAsIntegerList(int id, int *nLen, const int **pList) {
@@ -1524,22 +1526,22 @@ public:
 #endif
   
   void SetField( int id, int year, int month, int day,
-                             int hour, int minute, int second, 
+                             int hour, int minute, float second, 
                              int tzflag ) {
-    OGR_F_SetFieldDateTime(self, id, year, month, day,
+    OGR_F_SetFieldDateTimeEx(self, id, year, month, day,
                              hour, minute, second, 
                              tzflag);
   }
 
 #ifndef SWIGPERL  
   void SetField(const char* name, int year, int month, int day,
-                             int hour, int minute, int second, 
+                             int hour, int minute, float second, 
                              int tzflag ) {
       int i = OGR_F_GetFieldIndex(self, name);
       if (i == -1)
 	  CPLError(CE_Failure, 1, "No such field: '%s'", name);
       else
-	  OGR_F_SetFieldDateTime(self, i, year, month, day,
+	  OGR_F_SetFieldDateTimeEx(self, i, year, month, day,
 				 hour, minute, second, 
 				 tzflag);
   }
@@ -2569,6 +2571,15 @@ public:
     return (OGRGeometryShadow*) OGR_G_SimplifyPreserveTopology(self, tolerance);
   }
 
+  /* OGR >= 2.1 */
+  %newobject DelaunayTriangulation;
+#ifndef SWIGJAVA
+  %feature("kwargs") DelaunayTriangulation;
+#endif
+  OGRGeometryShadow* DelaunayTriangulation(double dfTolerance = 0.0, int bOnlyEdges = FALSE) {
+    return (OGRGeometryShadow*) OGR_G_DelaunayTriangulation(self, dfTolerance, bOnlyEdges);
+  }
+  
   %newobject Boundary;
   OGRGeometryShadow* Boundary() {
     return (OGRGeometryShadow*) OGR_G_Boundary(self);

@@ -19,25 +19,25 @@
 ## @cmethod $GetWellKnownGeogCSAsWKT($name)
 # @brief Get well known geographic coordinate system as WKT
 # @param name a well known name
-# @return a WKT string
+# @return a WKT string.
 
 ## @cmethod $GetUserInputAsWKT($name)
 # @param name the user input
-# @return a WKT string
+# @return a WKT string.
 
 ## @cmethod \@GetProjectionMethods()
 # @deprecated Use Geo::OSR::Projections.
 #
-# @return reference to an array of possible projection methods
+# @return reference to an array of possible projection methods.
 
 ## @cmethod @GetProjectionMethodParameterList($projection)
 # @param projection one of Geo::OSR::Projections
-# @return (arrayref parameters, $projection_name)
+# @return a list (arrayref parameters, $projection_name).
 
 ## @cmethod @GetProjectionMethodParamInfo($projection, $parameter)
 # @param projection one of Geo::OSR::Projections
 # @param parameter one of Geo::OSR::Parameters
-# @return ($user_friendly_name, $type, $default_value)
+# @return a list ($user_friendly_name, $type, $default_value).
 
 
 ## @class Geo::OSR::SpatialReference
@@ -45,10 +45,6 @@
 #
 # <a href="http://www.gdal.org/ogr/classOGRSpatialReference.html">Documentation
 # of the underlying C++ class at www.gdal.org</a>
-
-## @cmethod Geo::OSR::SpatialReference new($wkt = undef)
-# @param wkt well known text
-# @return a new Geo::OSR::SpatialReference object
 
 ## @ignore ImportFromEPSGA
 ## @ignore ImportFromERM
@@ -62,7 +58,7 @@
 ## @ignore ImportFromXML
 ## @ignore ImportFromUrl
 
-## @cmethod Geo::OSR::SpatialReference create(%params)
+## @cmethod Geo::OSR::SpatialReference new(%params)
 # Create a new spatial reference object using a named parameter. This
 # constructor recognizes the following key words (alternative in
 # parenthesis): WKT (Text), Proj4, ESRI, EPSG, EPSGA, PCI, USGS, GML
@@ -86,7 +82,7 @@
 #
 # Usage:
 # \code
-# $sr = Geo::OSR::SpatialReference->create( key => value );
+# $sr = Geo::OSR::SpatialReference->new( key => value );
 # \endcode
 # @return a new Geo::OSR::SpatialReference object
 

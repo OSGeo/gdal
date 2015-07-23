@@ -278,6 +278,16 @@ int OGRPGTableLayer::ReadTableDefinition()
         pszTypnameEqualsAnyClause = "ANY(SELECT '{int2, int4, int8, serial, bigserial}')";
     else
         pszTypnameEqualsAnyClause = "ANY(ARRAY['int2','int4','int8','serial','bigserial'])";
+    
+    const char* pszAttnumEqualAnyIndkey;
+    if( poDS->sPostgreSQLVersion.nMajor > 8 || (
+        poDS->sPostgreSQLVersion.nMajor == 8 && poDS->sPostgreSQLVersion.nMinor >= 2) )
+        pszAttnumEqualAnyIndkey = "a.attnum = ANY(i.indkey)";
+    else
+        pszAttnumEqualAnyIndkey = "(i.indkey[0]=a.attnum OR i.indkey[1]=a.attnum OR i.indkey[2]=a.attnum "
+              "OR i.indkey[3]=a.attnum OR i.indkey[4]=a.attnum OR i.indkey[5]=a.attnum "
+              "OR i.indkey[6]=a.attnum OR i.indkey[7]=a.attnum OR i.indkey[8]=a.attnum "
+              "OR i.indkey[9]=a.attnum)";
 
     CPLString osEscapedTableNameSingleQuote = OGRPGEscapeString(hPGConn, pszTableName);
     const char* pszEscapedTableNameSingleQuote = osEscapedTableNameSingleQuote.c_str();
@@ -290,11 +300,9 @@ int OGRPGTableLayer::ReadTableDefinition()
               "AND a.atttypid = t.oid AND c.relnamespace = n.oid "
               "AND c.oid = i.indrelid AND i.indisprimary = 't' "
               "AND t.typname !~ '^geom' AND c.relname = %s "
-              "AND (i.indkey[0]=a.attnum OR i.indkey[1]=a.attnum OR i.indkey[2]=a.attnum "
-              "OR i.indkey[3]=a.attnum OR i.indkey[4]=a.attnum OR i.indkey[5]=a.attnum "
-              "OR i.indkey[6]=a.attnum OR i.indkey[7]=a.attnum OR i.indkey[8]=a.attnum "
-              "OR i.indkey[9]=a.attnum) %s ORDER BY a.attnum",
-              pszTypnameEqualsAnyClause, pszEscapedTableNameSingleQuote, osSchemaClause.c_str() );
+              "AND %s %s ORDER BY a.attnum",
+              pszTypnameEqualsAnyClause, pszEscapedTableNameSingleQuote,
+              pszAttnumEqualAnyIndkey, osSchemaClause.c_str() );
      
     hResult = OGRPG_PQexec(hPGConn, osCommand.c_str() );
 
@@ -1097,7 +1105,7 @@ OGRErr OGRPGTableLayer::ISetFeature( OGRFeature *poFeature )
             poFeature->GetFieldAsInteger64(iFIDAsRegularColumnIndex) != poFeature->GetFID() )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                        "Inconsistant values of FID and field of same name");
+                        "Inconsistent values of FID and field of same name");
             return CE_Failure;
         }
     }
@@ -1311,7 +1319,7 @@ OGRErr OGRPGTableLayer::ICreateFeature( OGRFeature *poFeature )
                 poFeature->GetFieldAsInteger64(iFIDAsRegularColumnIndex) != poFeature->GetFID() )
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                            "Inconsistant values of FID and field of same name");
+                            "Inconsistent values of FID and field of same name");
                 return CE_Failure;
             }
         }
@@ -1976,7 +1984,7 @@ OGRErr OGRPGTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
 /* -------------------------------------------------------------------- */
     if( bLaunderColumnNames )
     {
-        char    *pszSafeName = poDS->LaunderName( oField.GetNameRef() );
+        char    *pszSafeName = OGRPGCommonLaunderName( oField.GetNameRef(), "PG" );
 
         oField.SetName( pszSafeName );
         CPLFree( pszSafeName );
@@ -2173,7 +2181,7 @@ OGRErr OGRPGTableLayer::CreateGeomField( OGRGeomFieldDefn *poGeomFieldIn,
 /* -------------------------------------------------------------------- */
     if( bLaunderColumnNames )
     {
-        char    *pszSafeName = poDS->LaunderName( poGeomField->GetNameRef() );
+        char    *pszSafeName = OGRPGCommonLaunderName( poGeomField->GetNameRef(), "PG" );
 
         poGeomField->SetName( pszSafeName );
         CPLFree( pszSafeName );
@@ -2432,7 +2440,7 @@ OGRErr OGRPGTableLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn
     {
         if (bLaunderColumnNames)
         {
-            char    *pszSafeName = poDS->LaunderName( oField.GetNameRef() );
+            char    *pszSafeName = OGRPGCommonLaunderName( oField.GetNameRef(), "PG" );
             oField.SetName( pszSafeName );
             CPLFree( pszSafeName );
         }

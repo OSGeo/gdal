@@ -284,6 +284,11 @@ GDALDriverManager::~GDALDriverManager()
     CPLCleanupSetlocaleMutex();
 
 /* -------------------------------------------------------------------- */
+/*      Cleanup QHull mutex                                             */
+/* -------------------------------------------------------------------- */
+    GDALTriangulationTerminate();
+
+/* -------------------------------------------------------------------- */
 /*      Cleanup the master CPL mutex, which governs the creation        */
 /*      of all other mutexes.                                           */ 
 /* -------------------------------------------------------------------- */
@@ -435,7 +440,7 @@ int GDALDriverManager::RegisterDriver( GDALDriver * poDriver )
         poDriver->SetMetadataItem( GDAL_DCAP_CREATECOPY, "YES" );
 
     /* Backward compability for GDAL raster out-of-tree drivers: */
-    /* if a driver hasn't explicitely set a vector capability, assume it is */
+    /* if a driver hasn't explicitly set a vector capability, assume it is */
     /* a raster driver (legacy OGR drivers will have DCAP_VECTOR set before */
     /* calling RegisterDriver() ) */
     if( poDriver->GetMetadataItem( GDAL_DCAP_RASTER ) == NULL &&
@@ -447,7 +452,8 @@ int GDALDriverManager::RegisterDriver( GDALDriver * poDriver )
     }
     
     if( poDriver->GetMetadataItem( GDAL_DMD_OPENOPTIONLIST ) != NULL &&
-        poDriver->pfnIdentify == NULL )
+        poDriver->pfnIdentify == NULL &&
+        !EQUALN(poDriver->GetDescription(), "Interlis", strlen("Interlis")) )
     {
         CPLDebug("GDAL", "Driver %s that defines GDAL_DMD_OPENOPTIONLIST must also "
                  "implement Identify(), so that it can be used",

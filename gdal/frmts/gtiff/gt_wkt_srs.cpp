@@ -44,6 +44,7 @@
 #include "gt_wkt_srs_for_gdal.h"
 #include "gt_citation.h"
 #include "gt_wkt_srs_priv.h"
+#include "gtiff.h"
 
 CPL_CVSID("$Id$")
 
@@ -58,8 +59,6 @@ CPL_CVSID("$Id$")
 #endif
 
 CPL_C_START
-void CPL_DLL LibgeotiffOneTimeInit();
-void    LibgeotiffOneTimeCleanupMutex();
 #ifndef INTERNAL_LIBGEOTIFF
 void CPL_DLL gtSetCSVFilenameHook( const char *(*)(const char *) );
 #define SetCSVFilenameHook gtSetCSVFilenameHook
@@ -352,6 +351,18 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
             strstr(szPeStr, "ESRI PE String = " ) )
         {
             pszWKT = CPLStrdup( szPeStr + strlen("ESRI PE String = ") );
+
+            if( strstr(pszWKT, "PROJCS[\"WGS_1984_Web_Mercator_Auxiliary_Sphere\"") )
+            {
+                oSRS.SetFromUserInput(pszWKT);
+                oSRS.SetExtension( "PROJCS", "PROJ4",  
+                                   "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs" ); 
+                oSRS.FixupOrdering();
+                CPLFree(pszWKT);
+                pszWKT = NULL;
+                oSRS.exportToWkt(&pszWKT);
+            }
+
             return pszWKT;
         }
         else
@@ -695,9 +706,40 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
 #endif
         
 /* ==================================================================== */
+/*      Try to import PROJCS from ProjectedCSTypeGeoKey if we           */
+/*      have essentially only it. We could relax a bit the constraints  */
+/*      but that should do for now. This may mask shortcomings in the   */
+/*      libgeotiff GTIFGetDefn() function.                              */
+/* ==================================================================== */
+    short tmp;
+    int bGotFromEPSG = FALSE;
+    if( psDefn->Model == ModelTypeProjected &&
+        psDefn->PCS != KvUserDefined &&
+        GDALGTIFKeyGetSHORT(hGTIF, ProjectionGeoKey, &tmp, 0, 1  ) == 0 &&
+        GDALGTIFKeyGetSHORT(hGTIF, ProjCoordTransGeoKey, &tmp, 0, 1  ) == 0 &&
+        GDALGTIFKeyGetSHORT(hGTIF, GeographicTypeGeoKey, &tmp, 0, 1  ) == 0 &&
+        GDALGTIFKeyGetSHORT(hGTIF, GeogGeodeticDatumGeoKey, &tmp, 0, 1  ) == 0 &&
+        GDALGTIFKeyGetSHORT(hGTIF, GeogEllipsoidGeoKey, &tmp, 0, 1  ) == 0 &&
+        CSLTestBoolean(CPLGetConfigOption("GTIFF_IMPORT_FROM_EPSG", "YES")) )
+    {
+        // Save error state as importFromEPSGA() will call CPLReset()
+        int errNo = CPLGetLastErrorNo();
+        CPLErr eErr = CPLGetLastErrorType();
+        const char* pszTmp = CPLGetLastErrorMsg();
+        char* pszLastErrorMsg = CPLStrdup(pszTmp ? pszTmp : "");
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        OGRErr eImportErr = oSRS.importFromEPSG(psDefn->PCS);
+        CPLPopErrorHandler();
+        // Restore error state
+        CPLErrorSetState( eErr, errNo, pszLastErrorMsg);
+        CPLFree(pszLastErrorMsg);
+        bGotFromEPSG = (eImportErr == OGRERR_NONE);
+    }
+        
+/* ==================================================================== */
 /*      Handle projection parameters.                                   */
 /* ==================================================================== */
-    if( psDefn->Model == ModelTypeProjected )
+    if( psDefn->Model == ModelTypeProjected && !bGotFromEPSG )
     {
 /* -------------------------------------------------------------------- */
 /*      Make a local copy of parms, and convert back into the           */
@@ -915,6 +957,16 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
 
             GTIFFreeMemory( pszUnitsName );
         }
+    }
+    
+    if( oSRS.IsProjected())
+    {
+        // Hack to be able to read properly what we have written for EPSG:102113 (ESRI ancient WebMercator)
+        if( EQUAL(oSRS.GetAttrValue("PROJCS"), "WGS_1984_Web_Mercator") )
+            oSRS.importFromEPSG(102113);
+        // And for EPSG:900913
+        else if( EQUAL(oSRS.GetAttrValue("PROJCS"), "Google Maps Global Mercator") )
+            oSRS.importFromEPSG(900913);
     }
 
 /* ==================================================================== */
@@ -2381,13 +2433,13 @@ CPLErr GTIFWktFromMemBuf( int nSize, unsigned char *pabyBuffer,
                           int *pnGCPCount, GDAL_GCP **ppasGCPList )
 {
     return GTIFWktFromMemBufEx(nSize, pabyBuffer, ppszWKT, padfGeoTransform,
-                               pnGCPCount, ppasGCPList, NULL);
+                               pnGCPCount, ppasGCPList, NULL, NULL);
 }
 
 CPLErr GTIFWktFromMemBufEx( int nSize, unsigned char *pabyBuffer, 
                             char **ppszWKT, double *padfGeoTransform,
                             int *pnGCPCount, GDAL_GCP **ppasGCPList,
-                            int *pbPixelIsPoint )
+                            int *pbPixelIsPoint, char*** ppapszRPCMD )
 
 {
     bool    bPixelIsPoint = false;
@@ -2401,6 +2453,7 @@ CPLErr GTIFWktFromMemBufEx( int nSize, unsigned char *pabyBuffer,
 /* -------------------------------------------------------------------- */
 /*      Make sure we have hooked CSVFilename().                         */
 /* -------------------------------------------------------------------- */
+    GTiffOneTimeInit(); /* for RPC tag */
     LibgeotiffOneTimeInit();
 
 /* -------------------------------------------------------------------- */
@@ -2445,6 +2498,8 @@ CPLErr GTIFWktFromMemBufEx( int nSize, unsigned char *pabyBuffer,
     }
     if( pbPixelIsPoint )
         *pbPixelIsPoint = bPixelIsPoint;
+    if( ppapszRPCMD )
+        *ppapszRPCMD = NULL;
 
 #if LIBGEOTIFF_VERSION >= 1410
     psGTIFDefn = GTIFAllocDefn();
@@ -2540,6 +2595,14 @@ CPLErr GTIFWktFromMemBufEx( int nSize, unsigned char *pabyBuffer,
     }
 
 /* -------------------------------------------------------------------- */
+/*      Read RPC                                                        */
+/* -------------------------------------------------------------------- */
+    if( ppapszRPCMD != NULL )
+    {
+        *ppapszRPCMD =  GTiffDatasetReadRPCTag( hTIFF );
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Cleanup.                                                        */
 /* -------------------------------------------------------------------- */
     XTIFFClose( hTIFF );
@@ -2563,13 +2626,13 @@ CPLErr GTIFMemBufFromWkt( const char *pszWKT, const double *padfGeoTransform,
 {
     return GTIFMemBufFromWktEx(pszWKT, padfGeoTransform,
                                nGCPCount,pasGCPList,
-                               pnSize, ppabyBuffer, FALSE);
+                               pnSize, ppabyBuffer, FALSE, NULL);
 }
 
 CPLErr GTIFMemBufFromWktEx( const char *pszWKT, const double *padfGeoTransform,
                             int nGCPCount, const GDAL_GCP *pasGCPList,
                             int *pnSize, unsigned char **ppabyBuffer,
-                            int bPixelIsPoint )
+                            int bPixelIsPoint, char** papszRPCMD )
 
 {
     TIFF        *hTIFF;
@@ -2582,6 +2645,7 @@ CPLErr GTIFMemBufFromWktEx( const char *pszWKT, const double *padfGeoTransform,
 /* -------------------------------------------------------------------- */
 /*      Make sure we have hooked CSVFilename().                         */
 /* -------------------------------------------------------------------- */
+    GTiffOneTimeInit(); /* for RPC tag */
     LibgeotiffOneTimeInit();
 
 /* -------------------------------------------------------------------- */
@@ -2721,6 +2785,14 @@ CPLErr GTIFMemBufFromWktEx( const char *pszWKT, const double *padfGeoTransform,
         TIFFSetField( hTIFF, TIFFTAG_GEOTIEPOINTS, 6*nGCPCount, padfTiePoints);
         CPLFree( padfTiePoints );
     } 
+
+/* -------------------------------------------------------------------- */
+/*      Write RPC                                                       */
+/* -------------------------------------------------------------------- */
+    if( papszRPCMD != NULL )
+    {
+        GTiffDatasetWriteRPCTag( hTIFF, papszRPCMD );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Cleanup and return the created memory buffer.                   */

@@ -501,7 +501,7 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
 
 %feature( "kwargs" ) BandRasterIONumPy;
 %inline %{
-  CPLErr BandRasterIONumPy( GDALRasterBandShadow* band, int bWrite, int xoff, int yoff, int xsize, int ysize,
+  CPLErr BandRasterIONumPy( GDALRasterBandShadow* band, int bWrite, double xoff, double yoff, double xsize, double ysize,
                             PyArrayObject *psArray,
                             int buf_type,
                             GDALRIOResampleAlg resample_alg,
@@ -531,8 +531,21 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
     sExtraArg.eResampleAlg = resample_alg;
     sExtraArg.pfnProgress = callback;
     sExtraArg.pProgressData = callback_data;
+    int nXOff = (int)(xoff + 0.5);
+    int nYOff = (int)(yoff + 0.5);
+    int nXSize = (int)(xsize + 0.5);
+    int nYSize = (int)(ysize + 0.5);
+    if( fabs(xoff-nXOff) > 1e-8 || fabs(yoff-nYOff) > 1e-8 ||
+        fabs(xsize-nXSize) > 1e-8 || fabs(ysize-nYSize) > 1e-8 )
+    {
+        sExtraArg.bFloatingPointWindowValidity = TRUE;
+        sExtraArg.dfXOff = xoff;
+        sExtraArg.dfYOff = yoff;
+        sExtraArg.dfXSize = xsize;
+        sExtraArg.dfYSize = ysize;
+    }
 
-    return  GDALRasterIOEx( band, (bWrite) ? GF_Write : GF_Read, xoff, yoff, xsize, ysize,
+    return  GDALRasterIOEx( band, (bWrite) ? GF_Write : GF_Read, nXOff, nYOff, nXSize, nYSize,
                           psArray->data, nxsize, nysize,
                           ntype, pixel_space, line_space, &sExtraArg );
   }
@@ -1076,9 +1089,9 @@ def DatasetReadAsArray( ds, xoff=0, yoff=0, win_xsize=None, win_ysize=None, buf_
         shape_buf_xsize = buf_obj.shape[2]
         shape_buf_ysize = buf_obj.shape[1]
         if buf_xsize is not None and buf_xsize != shape_buf_xsize:
-            raise ValueError('Specified buf_xsize not consistant with array shape')
+            raise ValueError('Specified buf_xsize not consistent with array shape')
         if buf_ysize is not None and buf_ysize != shape_buf_ysize:
-            raise ValueError('Specified buf_ysize not consistant with array shape')
+            raise ValueError('Specified buf_ysize not consistent with array shape')
         if buf_obj.shape[0] != ds.RasterCount:
             raise ValueError('Array should have space for %d bands' % ds.RasterCount)
 
@@ -1086,7 +1099,7 @@ def DatasetReadAsArray( ds, xoff=0, yoff=0, win_xsize=None, win_ysize=None, buf_
         if not datatype:
             raise ValueError("array does not have corresponding GDAL data type")
         if buf_type is not None and buf_type != datatype:
-            raise ValueError("Specified buf_type not consistant with array type")
+            raise ValueError("Specified buf_type not consistent with array type")
         buf_type = datatype
 
     if DatasetIONumPy( ds, 0, xoff, yoff, win_xsize, win_ysize,
@@ -1134,15 +1147,15 @@ def BandReadAsArray( band, xoff = 0, yoff = 0, win_xsize = None, win_ysize = Non
             shape_buf_xsize = buf_obj.shape[2]
             shape_buf_ysize = buf_obj.shape[1]
         if buf_xsize is not None and buf_xsize != shape_buf_xsize:
-            raise ValueError('Specified buf_xsize not consistant with array shape')
+            raise ValueError('Specified buf_xsize not consistent with array shape')
         if buf_ysize is not None and buf_ysize != shape_buf_ysize:
-            raise ValueError('Specified buf_ysize not consistant with array shape')
+            raise ValueError('Specified buf_ysize not consistent with array shape')
 
         datatype = NumericTypeCodeToGDALTypeCode( buf_obj.dtype.type )
         if not datatype:
             raise ValueError("array does not have corresponding GDAL data type")
         if buf_type is not None and buf_type != datatype:
-            raise ValueError("Specified buf_type not consistant with array type")
+            raise ValueError("Specified buf_type not consistent with array type")
         buf_type = datatype
 
     if BandRasterIONumPy( band, 0, xoff, yoff, win_xsize, win_ysize,

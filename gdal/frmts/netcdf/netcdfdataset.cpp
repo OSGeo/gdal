@@ -148,6 +148,7 @@ class netCDFRasterBand : public GDALPamRasterBand
 
     virtual double GetNoDataValue( int * );
     virtual CPLErr SetNoDataValue( double );
+    //virtual CPLErr DeleteNoDataValue();
     virtual double GetOffset( int * );
     virtual CPLErr SetOffset( double );
     virtual double GetScale( int * );
@@ -837,6 +838,46 @@ CPLErr netCDFRasterBand::SetNoDataValue( double dfNoData )
     bNoDataSet = TRUE;
     return CE_None;
 }
+    
+/************************************************************************/
+/*                        DeleteNoDataValue()                           */
+/************************************************************************/
+
+#ifdef notdef
+CPLErr netCDFRasterBand::DeleteNoDataValue()
+
+{
+    CPLMutexHolderD(&hNCMutex);
+
+    if ( !bNoDataSet )
+        return CE_None;
+
+    /* write value if in update mode */
+    if ( poDS->GetAccess() == GA_Update ) {
+
+        /* make sure we are in define mode */
+        ( ( netCDFDataset * ) poDS )->SetDefineMode( TRUE );
+        
+        status = nc_del_att( cdfid, nZId, _FillValue );
+
+        NCDF_ERR(status);
+
+        /* update status if write worked */
+        if ( status == NC_NOERR ) {
+            dfNoDataValue = 0.0;
+            bNoDataSet = FALSE;
+            return CE_None;
+        }
+        else
+            return CE_Failure;
+
+    }
+
+    dfNoDataValue = 0.0;
+    bNoDataSet = FALSE;
+    return CE_None;
+}
+#endif
 
 /************************************************************************/
 /*                           SerializeToXML()                           */
@@ -4638,7 +4679,8 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
             if ( papszTokens) CSLDestroy( papszTokens );
             CPLFree( pszTemp );
         }
-        if ( NCDFGetAttr( cdfid, j, "bounds", &pszTemp ) == CE_None ) { 
+        if ( NCDFGetAttr( cdfid, j, "bounds", &pszTemp ) == CE_None &&
+             pszTemp != NULL ) { 
             if ( !EQUAL( pszTemp, "" ) )
                 papszIgnoreVars = CSLAddString( papszIgnoreVars, pszTemp );
             CPLFree( pszTemp );
@@ -6871,7 +6913,7 @@ int NCDFDoesVarContainAttribVal( int nCdfId,
 
     for( int i=0; !bFound && i<CSLCount((char**)papszAttribNames); i++ ) {
         if ( NCDFGetAttr( nCdfId, nVarId, papszAttribNames[i], &pszTemp ) 
-             == CE_None ) { 
+             == CE_None && pszTemp != NULL ) { 
             if ( bStrict ) {
                 if ( EQUAL( pszTemp, papszAttribValues[i] ) )
                     bFound=TRUE;
@@ -6902,7 +6944,7 @@ int NCDFDoesVarContainAttribVal2( int nCdfId,
     if ( nVarId == -1 ) return -1;
 
     if ( NCDFGetAttr( nCdfId, nVarId, papszAttribName, &pszTemp ) 
-         != CE_None ) return FALSE;
+         != CE_None || pszTemp == NULL ) return FALSE;
 
     for( int i=0; !bFound && i<CSLCount((char**)papszAttribValues); i++ ) {
         if ( bStrict ) {

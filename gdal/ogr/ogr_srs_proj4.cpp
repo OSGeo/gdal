@@ -2086,15 +2086,17 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
     else if( EQUAL(pszProjection,
                    SRS_PT_HOTINE_OBLIQUE_MERCATOR_TWO_POINT_NATURAL_ORIGIN) )
     {
+        // Not really clear which of Point_1/1st_Point convention is the
+        // "normalized" one, so accept both
         CPLsprintf( szProj4+strlen(szProj4),
                  "+proj=omerc +lat_0=%.16g"
                  " +lon_1=%.16g +lat_1=%.16g +lon_2=%.16g +lat_2=%.16g"
                  " +k=%.16g +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
-                 GetNormProjParm(SRS_PP_LATITUDE_OF_POINT_1,0.0),
-                 GetNormProjParm(SRS_PP_LONGITUDE_OF_POINT_1,0.0),
-                 GetNormProjParm(SRS_PP_LATITUDE_OF_POINT_2,0.0),
-                 GetNormProjParm(SRS_PP_LONGITUDE_OF_POINT_2,0.0),
+                 GetNormProjParm(SRS_PP_LONGITUDE_OF_POINT_1,GetNormProjParm(SRS_PP_LONGITUDE_OF_1ST_POINT,0.0)),
+                 GetNormProjParm(SRS_PP_LATITUDE_OF_POINT_1,GetNormProjParm(SRS_PP_LATITUDE_OF_1ST_POINT,0.0)),
+                 GetNormProjParm(SRS_PP_LONGITUDE_OF_POINT_2,GetNormProjParm(SRS_PP_LONGITUDE_OF_2ND_POINT,0.0)),
+                 GetNormProjParm(SRS_PP_LATITUDE_OF_POINT_2,GetNormProjParm(SRS_PP_LATITUDE_OF_2ND_POINT,0.0)),
                  GetNormProjParm(SRS_PP_SCALE_FACTOR,1.0),
                  GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
                  GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );

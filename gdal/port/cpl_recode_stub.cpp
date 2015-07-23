@@ -323,7 +323,7 @@ char *CPLRecodeFromWCharStub( const wchar_t *pwszSource,
 /*      Convert, and confirm we had enough space.                       */
 /* -------------------------------------------------------------------- */
     nDstLen = utf8fromwc( pszResult, nDstBufSize, pwszSource, nSrcLen );
-    if( nDstLen >= nDstBufSize - 1 )
+    if( nDstLen >= nDstBufSize )
     {
         CPLAssert( FALSE ); // too small!
         return NULL;

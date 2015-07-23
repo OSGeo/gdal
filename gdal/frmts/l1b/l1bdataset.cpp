@@ -58,6 +58,7 @@ typedef enum {          // Spacecrafts:
     NOAAB,      // NOAA-B
     NOAA7,      // NOAA-7(C)
     NOAA8,      // NOAA-8(E)
+    NOAA9_UNKNOWN, // Some NOAA-18 and NOAA-19 HRPT are recognized like that...
     NOAA9,      // NOAA-9(F)
     NOAA10,     // NOAA-10(G)
     NOAA11,     // NOAA-11(H)
@@ -177,7 +178,7 @@ static const char *apszBandDesc[] =
 #define L1B_NOAA15_HDR_REC_SRC_OFF  154 // Receiving station name offset
 #define L1B_NOAA15_HDR_REC_ELLIPSOID_OFF 328
 
-/* This only apply if L1B_HIGH_GCP_DENSITY is explicitely set to NO */
+/* This only apply if L1B_HIGH_GCP_DENSITY is explicitly set to NO */
 /* otherwise we will report more GCPs */
 #define DESIRED_GCPS_PER_LINE 11
 #define DESIRED_LINES_OF_GCPS 20
@@ -778,7 +779,7 @@ int L1BDataset::FetchGCPs( GDAL_GCP *pasGCPListRow,
         // Number of good GCPs may be smaller than the total amount of points.
         nGCPs = (*(pabyRecordHeader + iGCPCodeOffset) < nGCPsPerLine) ?
             *(pabyRecordHeader + iGCPCodeOffset) : nGCPsPerLine;
-#ifdef DEBUG
+#ifdef DEBUG_VERBOSE
         CPLDebug( "L1B", "iGCPCodeOffset=%d, nGCPsPerLine=%d, nGoodGCPs=%d",
                   iGCPCodeOffset, nGCPsPerLine, nGCPs );
 #endif
@@ -1499,11 +1500,12 @@ CPLErr L1BDataset::ProcessDatasetHeader(const char* pszFilename)
                 eSpacecraftID = NOAA14;
                 break;
             default:
-#ifdef DEBUG
-                CPLDebug( "L1B", "Unknown spacecraft ID \"%d\".",
+                CPLError( CE_Warning, CPLE_AppDefined,
+                          "Unknown spacecraft ID \"%d\".",
                           abyRecHeader[L1B_NOAA9_HDR_REC_ID_OFF] );
-#endif
-                return CE_Failure;
+
+                eSpacecraftID = NOAA9_UNKNOWN;
+                break;
         }
 
         // Determine the product data type
@@ -1813,6 +1815,9 @@ CPLErr L1BDataset::ProcessDatasetHeader(const char* pszFilename)
             break;
         case NOAA8:
             pszText = "NOAA-8(E)";
+            break;
+        case NOAA9_UNKNOWN:
+            pszText = "UNKNOWN";
             break;
         case NOAA9:
             pszText = "NOAA-9(F)";

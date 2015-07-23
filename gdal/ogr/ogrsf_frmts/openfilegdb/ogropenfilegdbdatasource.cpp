@@ -928,7 +928,8 @@ OGRLayer* OGROpenFileGDBDataSource::ExecuteSQL( const char *pszSQLCommand,
 /*      MIN/MAX/SUM/AVG/COUNT optimization                              */
 /* -------------------------------------------------------------------- */
         if( oSelect.join_count == 0 && oSelect.poOtherSelect == NULL &&
-            oSelect.table_count == 1 && oSelect.order_specs == 0 )
+            oSelect.table_count == 1 && oSelect.order_specs == 0 &&
+            oSelect.query_mode != SWQM_DISTINCT_LIST )
         {
             OGROpenFileGDBLayer* poLayer = 
                 (OGROpenFileGDBLayer*)GetLayerByName( oSelect.table_defs[0].table_name);
@@ -1058,7 +1059,8 @@ OGRLayer* OGROpenFileGDBDataSource::ExecuteSQL( const char *pszSQLCommand,
 /*      ORDER BY optimization                                           */
 /* -------------------------------------------------------------------- */
         if( oSelect.join_count == 0 && oSelect.poOtherSelect == NULL &&
-            oSelect.table_count == 1 && oSelect.order_specs == 1 )
+            oSelect.table_count == 1 && oSelect.order_specs == 1 &&
+            oSelect.query_mode != SWQM_DISTINCT_LIST )
         {
             OGROpenFileGDBLayer* poLayer = 
                 (OGROpenFileGDBLayer*)GetLayerByName( oSelect.table_defs[0].table_name);
@@ -1109,11 +1111,11 @@ OGRLayer* OGROpenFileGDBDataSource::ExecuteSQL( const char *pszSQLCommand,
                 }
                 if( eErr == OGRERR_NONE )
                 {
-                    swq_op op = SWQ_UNKNOWN;
+                    int op = -1;
                     swq_expr_node* poValue = NULL;
                     if( oSelect.where_expr != NULL )
                     {
-                        op = (swq_op)oSelect.where_expr->nOperation;
+                        op = oSelect.where_expr->nOperation;
                         poValue = oSelect.where_expr->papoSubExpr[1];
                     }
 
@@ -1162,6 +1164,16 @@ void OGROpenFileGDBDataSource::ReleaseResultSet( OGRLayer * poResultsSet )
 
 char** OGROpenFileGDBDataSource::GetFileList()
 {
+    int nInterestTable = -1;
+    const char* pszFilenameWithoutPath = CPLGetFilename(m_pszName);
+    CPLString osFilenameRadix;
+    if( strlen(pszFilenameWithoutPath) == strlen("a00000000.gdbtable") &&
+        pszFilenameWithoutPath[0] == 'a' &&
+        sscanf(pszFilenameWithoutPath, "a%08x.gdbtable", &nInterestTable) == 1 )
+    {
+        osFilenameRadix = CPLSPrintf("a%08x.", nInterestTable);
+    }
+
     char** papszFiles = VSIReadDir(m_osDirName);
     CPLStringList osStringList;
     char** papszIter = papszFiles;
@@ -1169,7 +1181,11 @@ char** OGROpenFileGDBDataSource::GetFileList()
     {
         if( strcmp(*papszIter, ".") == 0 || strcmp(*papszIter, "..") == 0 )
             continue;
-        osStringList.AddString(CPLFormFilename(m_osDirName, *papszIter, NULL));
+        if( osFilenameRadix.size() == 0 ||
+            strncmp(*papszIter, osFilenameRadix, osFilenameRadix.size()) == 0 )
+        {
+            osStringList.AddString(CPLFormFilename(m_osDirName, *papszIter, NULL));
+        }
     }
     CSLDestroy(papszFiles);
     return osStringList.StealList();

@@ -1265,7 +1265,7 @@ int MITABLoadCoordSysTable(const char *pszFname)
                 }
                 if( strstr(pszLine, "Bounds") != NULL )
                 {
-                    CPLError(CE_Warning, CPLE_IllegalArg, "Unexpected Bounds paramater at line %d",
+                    CPLError(CE_Warning, CPLE_IllegalArg, "Unexpected Bounds parameter at line %d",
                              iLine);
                 }
                 bHasProjIn = TRUE;

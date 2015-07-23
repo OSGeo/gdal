@@ -1069,11 +1069,12 @@ OGRFeature* OGRGeoJSONReader::ReadFeature( OGRGeoJSONLayer* poLayer, json_object
     }
     else
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Invalid Feature object. "
-                  "Missing \'geometry\' member." );
-        delete poFeature;
-        return NULL;
+        static int bWarned = FALSE;
+        if( !bWarned )
+        {
+            bWarned = TRUE;
+            CPLDebug("GeoJSON", "Non conformant Feature object. Missing \'geometry\' member." );
+        }
     }
 
     return poFeature;
@@ -1762,6 +1763,12 @@ OGRGeometryH OGR_G_CreateGeometryFromJson( const char* pszJson )
 
         OGRGeometry* poGeometry = NULL;
         poGeometry = OGRGeoJSONReadGeometry( poObj );
+
+        /* Assign WGS84 if no CRS defined on geometry */
+        if( poGeometry && poGeometry->getSpatialReference() == NULL )
+        {
+            poGeometry->assignSpatialReference(OGRSpatialReference::GetWGS84SRS());
+        }
         
         /* Release JSON tree. */
         json_object_put( poObj );

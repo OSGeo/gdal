@@ -158,6 +158,33 @@ CPLErr CPLHTTPFetchMulti(CPLHTTPRequest *pasRequest, int nRequestCount, const ch
     int still_running;
     int max_conn;
     int i, conn_i;
+    
+    if( nRequestCount > 0 &&
+        strncmp(pasRequest[0].pszURL, "/vsimem/", strlen("/vsimem/")) == 0 &&
+        /* Disabled by default for potential security issues */
+        CSLTestBoolean(CPLGetConfigOption("CPL_CURL_ENABLE_VSIMEM", "FALSE")) )
+    {
+        for(i = 0; i< nRequestCount;i++)
+        {
+            CPLHTTPResult* psResult = CPLHTTPFetch(pasRequest[i].pszURL, (char**)papszOptions);
+            pasRequest[i].pabyData = psResult->pabyData;
+            pasRequest[i].nDataLen = psResult->nDataLen;
+            pasRequest[i].pszError = psResult->pszErrBuf;
+            // Conventions a bit different between this module and cpl_http...
+            if( psResult->pszErrBuf != NULL &&
+                strcmp(psResult->pszErrBuf, "HTTP error code : 404") == 0 )
+                pasRequest[i].nStatus = 404;
+            else
+                pasRequest[i].nStatus = 200;
+            pasRequest[i].pszContentType = psResult->pszContentType;
+            psResult->pabyData = NULL;
+            psResult->nDataLen = 0;
+            psResult->pszErrBuf = NULL;
+            psResult->pszContentType = NULL;
+            CPLHTTPDestroyResult(psResult);
+        }
+        return CE_None;
+    }
 
     const char *max_conn_opt = CSLFetchNameValue(const_cast<char **>(papszOptions), "MAXCONN");
     if (max_conn_opt && (max_conn_opt[0] != '\0')) {

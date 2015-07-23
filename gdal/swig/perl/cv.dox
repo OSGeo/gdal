@@ -31,7 +31,7 @@ eval {
 };
 die "Can't create data source $dsname: $@" if $@;
 
-$osr = Geo::OSR::SpatialReference->create(WGS => 84);
+$osr = Geo::OSR::SpatialReference->new(WGS => 84);
 
 $layer = $datasource->CreateLayer(
     Name => $lname, 

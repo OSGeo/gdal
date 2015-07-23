@@ -86,7 +86,8 @@ OGRCARTODBTableLayer::OGRCARTODBTableLayer(OGRCARTODBDataSource* poDS,
 {
     osName = pszName;
     SetDescription( osName );
-    bInDeferedInsert = FALSE;
+    bLaunderColumnNames = TRUE;
+    bInDeferedInsert = poDS->DoBatchInsert();
     nNextFID = -1;
     bDeferedCreation = FALSE;
     bCartoDBify = FALSE;
@@ -113,45 +114,95 @@ OGRFeatureDefn * OGRCARTODBTableLayer::GetLayerDefnInternal(CPL_UNUSED json_obje
     if( poFeatureDefn != NULL )
         return poFeatureDefn;
 
-    osBaseSQL.Printf("SELECT * FROM %s",
-                     OGRCARTODBEscapeIdentifier(osName).c_str());
-
+    CPLString osCommand;
     if( poDS->IsAuthenticatedConnection() )
     {
-        CPLString osCommand;
-        int bHasDefault = FALSE;
-
+        // Get everything !
         osCommand.Printf(
-                 "SELECT DISTINCT a.attname, t.typname, a.attlen,"
-                 "       format_type(a.atttypid,a.atttypmod), a.attnum, a.attnotnull, a.atthasdef "
-                 "FROM pg_class c, pg_attribute a, pg_type t, pg_namespace n "
-                 "WHERE c.relname = '%s' "
-                 "AND a.attnum > 0 AND a.attrelid = c.oid "
-                 "AND a.atttypid = t.oid "
-                 "AND c.relnamespace=n.oid "
-                 "AND n.nspname= '%s' "
+                 "SELECT a.attname, t.typname, a.attlen, "
+                        "format_type(a.atttypid,a.atttypmod), "
+                        "a.attnum, "
+                        "a.attnotnull, "
+                        "i.indisprimary, "
+                        "pg_get_expr(def.adbin, c.oid) AS defaultexpr, "
+                        "postgis_typmod_dims(a.atttypmod) dim, "
+                        "postgis_typmod_srid(a.atttypmod) srid, "
+                        "postgis_typmod_type(a.atttypmod)::text geomtyp, "
+                        "srtext "
+                 "FROM pg_class c "
+                 "JOIN pg_attribute a ON a.attnum > 0 AND "
+                                        "a.attrelid = c.oid AND c.relname = '%s' "
+                 "JOIN pg_type t ON a.atttypid = t.oid "
+                 "JOIN pg_namespace n ON c.relnamespace=n.oid AND n.nspname= '%s' "
+                 "LEFT JOIN pg_index i ON c.oid = i.indrelid AND "
+                                         "i.indisprimary = 't' AND a.attnum = ANY(i.indkey) "
+                 "LEFT JOIN pg_attrdef def ON def.adrelid = c.oid AND "
+                                              "def.adnum = a.attnum "
+                 "LEFT JOIN spatial_ref_sys srs ON srs.srid = postgis_typmod_srid(a.atttypmod) "
                  "ORDER BY a.attnum",
                  OGRCARTODBEscapeLiteral(osName).c_str(),
                  OGRCARTODBEscapeLiteral(poDS->GetCurrentSchema()).c_str());
+    }
+    else if( poDS->HasOGRMetadataFunction() != FALSE )
+    {
+        osCommand.Printf( "SELECT * FROM ogr_table_metadata('%s', '%s')",
+                          OGRCARTODBEscapeLiteral(poDS->GetCurrentSchema()).c_str(),
+                          OGRCARTODBEscapeLiteral(osName).c_str() );
+    }
 
-        OGRLayer* poLyr = poDS->ExecuteSQL(osCommand, NULL, NULL);
+    if( osCommand.size() )
+    {
+        if( !poDS->IsAuthenticatedConnection() && poDS->HasOGRMetadataFunction() < 0 )
+            CPLPushErrorHandler(CPLQuietErrorHandler);
+        OGRLayer* poLyr = poDS->ExecuteSQLInternal(osCommand);
+        if( !poDS->IsAuthenticatedConnection() && poDS->HasOGRMetadataFunction() < 0 )
+        {
+            CPLPopErrorHandler();
+            if( poLyr == NULL )
+            {
+                CPLDebug("CARTODB", "ogr_table_metadata(text, text) not available");
+                CPLErrorReset();
+            }
+            else if( poLyr->GetLayerDefn()->GetFieldCount() != 12 )
+            {
+                CPLDebug("CARTODB", "ogr_table_metadata(text, text) has unexpected column count");
+                poDS->ReleaseResultSet(poLyr);
+                poLyr = NULL;
+            }
+            poDS->SetOGRMetadataFunction(poLyr != NULL);
+        }
         if( poLyr )
         {
-            poFeatureDefn = new OGRFeatureDefn(osName);
-            poFeatureDefn->Reference();
-            poFeatureDefn->SetGeomType(wkbNone);
-
             OGRFeature* poFeat;
             while( (poFeat = poLyr->GetNextFeature()) != NULL )
             {
+                if( poFeatureDefn == NULL )
+                {
+                    // We could do that outside of the while() loop, but
+                    // by doing that here, we are somewhat robust to
+                    // ogr_table_metadata() returning suddenly an empty result set
+                    // for example if CDB_UserTables() no longer works
+                    poFeatureDefn = new OGRFeatureDefn(osName);
+                    poFeatureDefn->Reference();
+                    poFeatureDefn->SetGeomType(wkbNone);
+                }
+
                 const char* pszAttname = poFeat->GetFieldAsString("attname");
                 const char* pszType = poFeat->GetFieldAsString("typname");
                 int nWidth = poFeat->GetFieldAsInteger("attlen");
                 const char* pszFormatType = poFeat->GetFieldAsString("format_type");
                 int bNotNull = poFeat->GetFieldAsInteger("attnotnull");
-                if( poFeat->GetFieldAsInteger("atthasdef") )
-                    bHasDefault = TRUE;
-                if( strcmp(pszAttname, "cartodb_id") == 0 )
+                int bIsPrimary = poFeat->GetFieldAsInteger("indisprimary");
+                int iDefaultExpr = poLyr->GetLayerDefn()->GetFieldIndex("defaultexpr");
+                const char* pszDefault = (iDefaultExpr >= 0 && poFeat->IsFieldSet(iDefaultExpr)) ?
+                            poFeat->GetFieldAsString(iDefaultExpr) : NULL;
+
+                if( bIsPrimary &&
+                    (EQUAL(pszType, "int2") ||
+                     EQUAL(pszType, "int4") ||
+                     EQUAL(pszType, "int8") ||
+                     EQUAL(pszType, "serial") ||
+                     EQUAL(pszType, "bigserial")) )
                 {
                     osFIDColName = pszAttname;
                 }
@@ -165,18 +216,37 @@ OGRFeatureDefn * OGRCARTODBTableLayer::GetLayerDefnInternal(CPL_UNUSED json_obje
                 {
                     if( EQUAL(pszType,"geometry") )
                     {
+                        int nDim = poFeat->GetFieldAsInteger("dim");
+                        int nSRID = poFeat->GetFieldAsInteger("srid");
+                        const char* pszGeomType = poFeat->GetFieldAsString("geomtyp");
+                        const char* pszSRText = (poFeat->IsFieldSet(
+                            poLyr->GetLayerDefn()->GetFieldIndex("srtext"))) ?
+                                    poFeat->GetFieldAsString("srtext") : NULL;
+                        OGRwkbGeometryType eType = OGRFromOGCGeomType(pszGeomType);
+                        if( nDim == 3 )
+                            eType = wkbSetZ(eType);
                         OGRCartoDBGeomFieldDefn *poFieldDefn =
-                            new OGRCartoDBGeomFieldDefn(pszAttname, wkbUnknown);
+                            new OGRCartoDBGeomFieldDefn(pszAttname, eType);
                         if( bNotNull )
                             poFieldDefn->SetNullable(FALSE);
-                        poFeatureDefn->AddGeomFieldDefn(poFieldDefn, FALSE);
-                        OGRSpatialReference* poSRS = GetSRS(pszAttname, &poFieldDefn->nSRID);
-                        if( poSRS != NULL )
+                        OGRSpatialReference* poSRS = NULL;
+                        if( pszSRText != NULL )
                         {
-                            poFeatureDefn->GetGeomFieldDefn(
-                                poFeatureDefn->GetGeomFieldCount() - 1)->SetSpatialRef(poSRS);
-                            poSRS->Release();
+                            poSRS = new OGRSpatialReference();
+                            char* pszTmp = (char* )pszSRText;
+                            if( poSRS->importFromWkt(&pszTmp) != OGRERR_NONE )
+                            {
+                                delete poSRS;
+                                poSRS = NULL;
+                            }
+                            if( poSRS != NULL )
+                            {
+                                poFieldDefn->SetSpatialRef(poSRS);
+                                poSRS->Release();
+                            }
                         }
+                        poFieldDefn->nSRID = nSRID;
+                        poFeatureDefn->AddGeomFieldDefn(poFieldDefn, FALSE);
                     }
                     else
                     {
@@ -184,6 +254,8 @@ OGRFeatureDefn * OGRCARTODBTableLayer::GetLayerDefnInternal(CPL_UNUSED json_obje
                         if( bNotNull )
                             oField.SetNullable(FALSE);
                         OGRPGCommonLayerSetType(oField, pszType, pszFormatType, nWidth);
+                        if( pszDefault )
+                            OGRPGCommonLayerNormalizeDefault(&oField, pszDefault);
 
                         poFeatureDefn->AddFieldDefn( &oField );
                     }
@@ -193,55 +265,66 @@ OGRFeatureDefn * OGRCARTODBTableLayer::GetLayerDefnInternal(CPL_UNUSED json_obje
 
             poDS->ReleaseResultSet(poLyr);
         }
-
-        if( bHasDefault )
-        {
-            osCommand.Printf(
-                    "SELECT a.attname, pg_get_expr(def.adbin, c.oid) "
-                    "FROM pg_attrdef def, pg_class c, pg_attribute a, pg_type t, pg_namespace n "
-                    "WHERE c.relname = '%s' AND a.attnum > 0 AND a.attrelid = c.oid "
-                    "AND a.atttypid = t.oid AND c.relnamespace=n.oid AND "
-                    "def.adrelid = c.oid AND def.adnum = a.attnum "
-                    "AND n.nspname= '%s' "
-                    "ORDER BY a.attnum",
-                    OGRCARTODBEscapeLiteral(osName).c_str(),
-                    OGRCARTODBEscapeLiteral(poDS->GetCurrentSchema()).c_str());
-
-            poLyr = poDS->ExecuteSQL(osCommand, NULL, NULL);
-            if( poLyr != NULL )
-            {
-                OGRFeature* poFeat;
-                while( (poFeat = poLyr->GetNextFeature()) != NULL )
-                {
-                    const char      *pszName = poFeat->GetFieldAsString(0);
-                    const char      *pszDefault = poFeat->GetFieldAsString(1);
-                    int nIdx = poFeatureDefn->GetFieldIndex(pszName);
-                    if( nIdx >= 0 )
-                    {
-                        OGRFieldDefn* poFieldDefn = poFeatureDefn->GetFieldDefn(nIdx);
-                        OGRPGCommonLayerNormalizeDefault(poFieldDefn, pszDefault);
-                    }
-                    delete poFeat;
-                }
-
-                poDS->ReleaseResultSet(poLyr);
-            }
-        }
     }
 
     if( poFeatureDefn == NULL )
     {
+        osBaseSQL.Printf("SELECT * FROM %s", OGRCARTODBEscapeIdentifier(osName).c_str());
         EstablishLayerDefn(osName, NULL);
+        osBaseSQL = "";
     }
 
     if( osFIDColName.size() > 0 )
     {
-        osBaseSQL.Printf("SELECT * FROM %s ORDER BY %s ASC",
-                         OGRCARTODBEscapeIdentifier(osName).c_str(),
-                         OGRCARTODBEscapeIdentifier(osFIDColName).c_str());
+        osBaseSQL = "SELECT ";
+        osBaseSQL += OGRCARTODBEscapeIdentifier(osFIDColName);
     }
+    for(int i=0; i<poFeatureDefn->GetGeomFieldCount(); i++)
+    {
+        if( osBaseSQL.size() == 0 )
+            osBaseSQL = "SELECT ";
+        else
+            osBaseSQL += ", ";
+        osBaseSQL += OGRCARTODBEscapeIdentifier(poFeatureDefn->GetGeomFieldDefn(i)->GetNameRef());
+    }
+    for(int i=0; i<poFeatureDefn->GetFieldCount(); i++)
+    {
+        if( osBaseSQL.size() == 0 )
+            osBaseSQL = "SELECT ";
+        else
+            osBaseSQL += ", ";
+        osBaseSQL += OGRCARTODBEscapeIdentifier(poFeatureDefn->GetFieldDefn(i)->GetNameRef());
+    }
+    if( osBaseSQL.size() == 0 )
+        osBaseSQL = "SELECT *";
+    osBaseSQL += " FROM ";
+    osBaseSQL += OGRCARTODBEscapeIdentifier(osName);
+
+    osSELECTWithoutWHERE = osBaseSQL;
 
     return poFeatureDefn;
+}
+
+/************************************************************************/
+/*                        FetchNewFeatures()                            */
+/************************************************************************/
+
+json_object* OGRCARTODBTableLayer::FetchNewFeatures(GIntBig iNext)
+{
+    if( osFIDColName.size() > 0 )
+    {
+        CPLString osSQL;
+        osSQL.Printf("%s WHERE %s%s >= " CPL_FRMT_GIB " ORDER BY %s ASC LIMIT %d",
+                     osSELECTWithoutWHERE.c_str(),
+                     ( osWHERE.size() ) ? CPLSPrintf("%s AND ", osWHERE.c_str()) : "",
+                     OGRCARTODBEscapeIdentifier(osFIDColName).c_str(),
+                     iNext,
+                     OGRCARTODBEscapeIdentifier(osFIDColName).c_str(),
+                     GetFeaturesToFetch());
+        return poDS->RunSQL(osSQL);
+    }
+    else
+        return OGRCARTODBLayer::FetchNewFeatures(iNext);
 }
 
 /************************************************************************/
@@ -269,7 +352,9 @@ OGRErr OGRCARTODBTableLayer::SetAttributeFilter( const char *pszQuery )
         osQuery = "";
     else
     {
-        osQuery = pszQuery;
+        osQuery = "(";
+        osQuery += pszQuery;
+        osQuery += ")";
     }
 
     BuildWhere();
@@ -344,6 +429,14 @@ OGRErr OGRCARTODBTableLayer::CreateField( OGRFieldDefn *poFieldIn,
         return OGRERR_FAILURE;
     }
 
+    OGRFieldDefn oField(poFieldIn);
+    if( bLaunderColumnNames )
+    {
+        char* pszName = OGRPGCommonLaunderName(oField.GetNameRef());
+        oField.SetName(pszName);
+        CPLFree(pszName);
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Create the new field.                                           */
 /* -------------------------------------------------------------------- */
@@ -353,14 +446,14 @@ OGRErr OGRCARTODBTableLayer::CreateField( OGRFieldDefn *poFieldIn,
         CPLString osSQL;
         osSQL.Printf( "ALTER TABLE %s ADD COLUMN %s %s",
                     OGRCARTODBEscapeIdentifier(osName).c_str(),
-                    OGRCARTODBEscapeIdentifier(poFieldIn->GetNameRef()).c_str(),
-                    OGRPGCommonLayerGetType(*poFieldIn, FALSE, TRUE).c_str() );
-        if( !poFieldIn->IsNullable() )
+                    OGRCARTODBEscapeIdentifier(oField.GetNameRef()).c_str(),
+                    OGRPGCommonLayerGetType(oField, FALSE, TRUE).c_str() );
+        if( !oField.IsNullable() )
             osSQL += " NOT NULL";
-        if( poFieldIn->GetDefault() != NULL && !poFieldIn->IsDefaultDriverSpecific() )
+        if( oField.GetDefault() != NULL && !oField.IsDefaultDriverSpecific() )
         {
             osSQL += " DEFAULT ";
-            osSQL += OGRPGCommonLayerGetPGDefault(poFieldIn);
+            osSQL += OGRPGCommonLayerGetPGDefault(&oField);
         }
 
         json_object* poObj = poDS->RunSQL(osSQL);
@@ -369,7 +462,7 @@ OGRErr OGRCARTODBTableLayer::CreateField( OGRFieldDefn *poFieldIn,
         json_object_put(poObj);
     }
 
-    poFeatureDefn->AddFieldDefn( poFieldIn );
+    poFeatureDefn->AddFieldDefn( &oField );
 
     return OGRERR_NONE;
 }
@@ -585,7 +678,10 @@ OGRErr OGRCARTODBTableLayer::ICreateFeature( OGRFeature *poFeature )
             if( poObj != NULL )
                 json_object_put(poObj);
             else
+            {
+                bInDeferedInsert = FALSE;
                 eRet = OGRERR_FAILURE;
+            }
             osDeferedInsertSQL = "";
         }
 
@@ -599,7 +695,10 @@ OGRErr OGRCARTODBTableLayer::ICreateFeature( OGRFeature *poFeature )
             if( poObj != NULL )
                 json_object_put(poObj);
             else
+            {
+                bInDeferedInsert = FALSE;
                 eRet = OGRERR_FAILURE;
+            }
             osDeferedInsertSQL = "";
         }
 
@@ -751,13 +850,6 @@ OGRErr OGRCARTODBTableLayer::ISetFeature( OGRFeature *poFeature )
     osSQL += CPLSPrintf(" WHERE %s = " CPL_FRMT_GIB,
                     OGRCARTODBEscapeIdentifier(osFIDColName).c_str(),
                     poFeature->GetFID());
-    
-    if( bInDeferedInsert )
-    {
-        osDeferedInsertSQL += osSQL;
-        osDeferedInsertSQL += ";";
-        return OGRERR_NONE;
-    }
 
     OGRErr eRet = OGRERR_FAILURE;
     json_object* poObj = poDS->RunSQL(osSQL);
@@ -809,14 +901,7 @@ OGRErr OGRCARTODBTableLayer::DeleteFeature( GIntBig nFID )
                     OGRCARTODBEscapeIdentifier(osName).c_str(),
                     OGRCARTODBEscapeIdentifier(osFIDColName).c_str(),
                     nFID);
-    
-    if( bInDeferedInsert )
-    {
-        osDeferedInsertSQL += osSQL;
-        osDeferedInsertSQL += ";";
-        return OGRERR_NONE;
-    }
-    
+
     OGRErr eRet = OGRERR_FAILURE;
     json_object* poObj = poDS->RunSQL(osSQL);
     if( poObj != NULL )
@@ -846,26 +931,11 @@ CPLString OGRCARTODBTableLayer::GetSRS_SQL(const char* pszGeomCol)
 {
     CPLString osSQL;
 
-    if( poDS->IsAuthenticatedConnection() )
-    {
-        /* Find_SRID needs access to geometry_columns table, whhose access */
-        /* is restricted to authenticated connections. */
-        osSQL.Printf("SELECT srid, srtext FROM spatial_ref_sys WHERE srid IN "
-                    "(SELECT Find_SRID('%s', '%s', '%s'))",
-                    OGRCARTODBEscapeLiteral(poDS->GetCurrentSchema()).c_str(),
-                    OGRCARTODBEscapeLiteral(osName).c_str(),
-                    OGRCARTODBEscapeLiteral(pszGeomCol).c_str());
-    }
-    else
-    {
-        /* Assuming that the SRID of the first non-NULL geometry applies */
-        /* to geometries of all rows. */
-        osSQL.Printf("SELECT srid, srtext FROM spatial_ref_sys WHERE srid IN "
-                    "(SELECT ST_SRID(%s) FROM %s WHERE %s IS NOT NULL LIMIT 1)",
-                    OGRCARTODBEscapeIdentifier(pszGeomCol).c_str(),
-                    OGRCARTODBEscapeIdentifier(osName).c_str(),
-                    OGRCARTODBEscapeIdentifier(pszGeomCol).c_str());
-    }
+    osSQL.Printf("SELECT srid, srtext FROM spatial_ref_sys WHERE srid IN "
+                "(SELECT Find_SRID('%s', '%s', '%s'))",
+                OGRCARTODBEscapeLiteral(poDS->GetCurrentSchema()).c_str(),
+                OGRCARTODBEscapeLiteral(osName).c_str(),
+                OGRCARTODBEscapeLiteral(pszGeomCol).c_str());
 
     return osSQL;
 }
@@ -902,31 +972,26 @@ void OGRCARTODBTableLayer::BuildWhere()
         CPLsnprintf(szBox3D_2, sizeof(szBox3D_2), "%.18g %.18g", sEnvelope.MaxX, sEnvelope.MaxY);
         while((pszComma = strchr(szBox3D_2, ',')) != NULL)
             *pszComma = '.';
-        osWHERE.Printf("WHERE %s && 'BOX3D(%s, %s)'::box3d",
+        osWHERE.Printf("(%s && 'BOX3D(%s, %s)'::box3d)",
                        OGRCARTODBEscapeIdentifier(osGeomColumn).c_str(),
                        szBox3D_1, szBox3D_2 );
     }
 
     if( strlen(osQuery) > 0 )
     {
-        if( strlen(osWHERE) == 0 )
-            osWHERE = "WHERE ";
-        else
+        if( osWHERE.size() > 0 )
             osWHERE += " AND ";
         osWHERE += osQuery;
     }
 
-    osBaseSQL.Printf("SELECT * FROM %s",
-                     OGRCARTODBEscapeIdentifier(osName).c_str());
-    if( osWHERE.size() )
+    if( osFIDColName.size() == 0 )
     {
-        osBaseSQL += " ";
-        osBaseSQL += osWHERE;
-    }
-    if( osFIDColName.size() > 0 )
-    {
-        osBaseSQL += CPLSPrintf(" ORDER BY %s ASC",
-                         OGRCARTODBEscapeIdentifier(osFIDColName).c_str());
+        osBaseSQL = osSELECTWithoutWHERE;
+        if( osWHERE.size() )
+        {
+            osBaseSQL += " WHERE ";
+            osBaseSQL += osWHERE;
+        }
     }
 }
 
@@ -946,10 +1011,11 @@ OGRFeature* OGRCARTODBTableLayer::GetFeature( GIntBig nFeatureId )
     if( osFIDColName.size() == 0 )
         return OGRCARTODBLayer::GetFeature(nFeatureId);
 
-    CPLString osSQL(CPLSPrintf("SELECT * FROM %s WHERE %s = " CPL_FRMT_GIB,
-                               OGRCARTODBEscapeIdentifier(osName).c_str(),
-                               OGRCARTODBEscapeIdentifier(osFIDColName).c_str(),
-                               nFeatureId));
+    CPLString osSQL = osSELECTWithoutWHERE;
+    osSQL += " WHERE ";
+    osSQL += OGRCARTODBEscapeIdentifier(osFIDColName).c_str();
+    osSQL += " = ";
+    osSQL += CPLSPrintf(CPL_FRMT_GIB, nFeatureId);
 
     json_object* poObj = poDS->RunSQL(osSQL);
     json_object* poRowObj = OGRCARTODBGetSingleRow(poObj);
@@ -983,7 +1049,7 @@ GIntBig OGRCARTODBTableLayer::GetFeatureCount(int bForce)
                                OGRCARTODBEscapeIdentifier(osName).c_str()));
     if( osWHERE.size() )
     {
-        osSQL += " ";
+        osSQL += " WHERE ";
         osSQL += osWHERE;
     }
 
@@ -1150,7 +1216,6 @@ void OGRCARTODBTableLayer::SetDeferedCreation (OGRwkbGeometryType eGType,
                                                int bCartoDBify)
 {
     bDeferedCreation = TRUE;
-    bInDeferedInsert = TRUE;
     nNextFID = 1;
     CPLAssert(poFeatureDefn == NULL);
     this->bCartoDBify = bCartoDBify;
@@ -1175,9 +1240,8 @@ void OGRCARTODBTableLayer::SetDeferedCreation (OGRwkbGeometryType eGType,
         }
     }
     osFIDColName = "cartodb_id";
-    osBaseSQL.Printf("SELECT * FROM %s ORDER BY %s ASC",
-                         OGRCARTODBEscapeIdentifier(osName).c_str(),
-                         OGRCARTODBEscapeIdentifier(osFIDColName).c_str());
+    osBaseSQL.Printf("SELECT * FROM %s",
+                     OGRCARTODBEscapeIdentifier(osName).c_str());
 }
 
 /************************************************************************/

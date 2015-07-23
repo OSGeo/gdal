@@ -2,7 +2,7 @@
 OBJ =	ili1reader.obj ili2reader.obj ili2handler.obj \
 	ogrili1driver.obj ogrili1datasource.obj \
 	ogrili1layer.obj ogrili2driver.obj ogrili2datasource.obj \
-	ogrili2layer.obj ilihelper.obj imdreader.obj
+	ogrili2layer.obj imdreader.obj
 
 GDAL_ROOT	=	..\..\..
 

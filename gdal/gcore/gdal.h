@@ -103,7 +103,7 @@ typedef enum {
     /*! Write data */  GF_Write = 1
 } GDALRWFlag;
 
-/* NOTE: values are selected to be consistant with GDALResampleAlg of alg/gdalwarper.h */ 
+/* NOTE: values are selected to be consistent with GDALResampleAlg of alg/gdalwarper.h */ 
 /** RasterIO() resampling method.
   * @since GDAL 2.0
   */
@@ -260,6 +260,12 @@ typedef GIntBig GSpacing;
 /** Extension handled by the driver. */
 #define GDAL_DMD_EXTENSION "DMD_EXTENSION"
 
+/** Connection prefix to provide as the file name of the the open function.
+ * Typically set for non-file based drivers. Generally used with open options.
+ * @since GDAL 2.0
+ */
+#define GDAL_DMD_CONNECTION_PREFIX "DMD_CONNECTION_PREFIX"
+
 /** List of (space separated) extensions handled by the driver.
  * @since GDAL 2.0
  */
@@ -395,6 +401,41 @@ GDALDatasetH CPL_DLL CPL_STDCALL GDALOpenShared( const char *, GDALAccess ) CPL_
  * @since GDAL 2.0
  */
 #define     GDAL_OF_INTERNAL        0x80
+
+/** Let GDAL decide if a array-based or hashset-based storage strategy for
+ * cached blocks must be used.
+ *
+ * GDAL_OF_DEFAULT_BLOCK_ACCESS, GDAL_OF_ARRAY_BLOCK_ACCESS and
+ * GDAL_OF_HASHSET_BLOCK_ACCESS are mutually exclusive. 
+ *
+ * Used by GDALOpenEx().
+ * @since GDAL 2.1
+ */
+#define     GDAL_OF_DEFAULT_BLOCK_ACCESS  0
+
+/** Use a array-based storage strategy for cached blocks.
+ *
+ * GDAL_OF_DEFAULT_BLOCK_ACCESS, GDAL_OF_ARRAY_BLOCK_ACCESS and
+ * GDAL_OF_HASHSET_BLOCK_ACCESS are mutually exclusive. 
+ *
+ * Used by GDALOpenEx().
+ * @since GDAL 2.1
+ */
+#define     GDAL_OF_ARRAY_BLOCK_ACCESS    0x100
+
+/** Use a hashset-based storage strategy for cached blocks.
+ *
+ * GDAL_OF_DEFAULT_BLOCK_ACCESS, GDAL_OF_ARRAY_BLOCK_ACCESS and
+ * GDAL_OF_HASHSET_BLOCK_ACCESS are mutually exclusive. 
+ *
+ * Used by GDALOpenEx().
+ * @since GDAL 2.1
+ */
+#define     GDAL_OF_HASHSET_BLOCK_ACCESS  0x200
+
+#define     GDAL_OF_RESERVED_1            0x300
+#define     GDAL_OF_BLOCK_ACCESS_MASK     0x300
+
 
 GDALDatasetH CPL_DLL CPL_STDCALL GDALOpenEx( const char* pszFilename,
                                              unsigned int nOpenFlags,
@@ -672,6 +713,7 @@ int CPL_DLL CPL_STDCALL GDALGetOverviewCount( GDALRasterBandH );
 GDALRasterBandH CPL_DLL CPL_STDCALL GDALGetOverview( GDALRasterBandH, int );
 double CPL_DLL CPL_STDCALL GDALGetRasterNoDataValue( GDALRasterBandH, int * );
 CPLErr CPL_DLL CPL_STDCALL GDALSetRasterNoDataValue( GDALRasterBandH, double );
+CPLErr CPL_DLL CPL_STDCALL GDALDeleteRasterNoDataValue( GDALRasterBandH );
 char CPL_DLL ** CPL_STDCALL GDALGetRasterCategoryNames( GDALRasterBandH );
 CPLErr CPL_DLL CPL_STDCALL GDALSetRasterCategoryNames( GDALRasterBandH, char ** );
 double CPL_DLL CPL_STDCALL GDALGetRasterMinimum( GDALRasterBandH, int *pbSuccess );
@@ -702,20 +744,37 @@ CPLErr CPL_DLL CPL_STDCALL GDALGetRasterHistogram( GDALRasterBandH hBand,
                                        int nBuckets, int *panHistogram,
                                        int bIncludeOutOfRange, int bApproxOK,
                                        GDALProgressFunc pfnProgress,
+                                       void * pProgressData ) CPL_WARN_DEPRECATED("Use GDALGetRasterHistogramEx() instead");
+CPLErr CPL_DLL CPL_STDCALL GDALGetRasterHistogramEx( GDALRasterBandH hBand,
+                                       double dfMin, double dfMax,
+                                       int nBuckets, GUIntBig *panHistogram,
+                                       int bIncludeOutOfRange, int bApproxOK,
+                                       GDALProgressFunc pfnProgress,
                                        void * pProgressData );
 CPLErr CPL_DLL CPL_STDCALL GDALGetDefaultHistogram( GDALRasterBandH hBand,
                                        double *pdfMin, double *pdfMax,
                                        int *pnBuckets, int **ppanHistogram,
                                        int bForce,
                                        GDALProgressFunc pfnProgress,
+                                       void * pProgressData ) CPL_WARN_DEPRECATED("Use GDALGetDefaultHistogramEx() instead");
+CPLErr CPL_DLL CPL_STDCALL GDALGetDefaultHistogramEx( GDALRasterBandH hBand,
+                                       double *pdfMin, double *pdfMax,
+                                       int *pnBuckets, GUIntBig **ppanHistogram,
+                                       int bForce,
+                                       GDALProgressFunc pfnProgress,
                                        void * pProgressData );
 CPLErr CPL_DLL CPL_STDCALL GDALSetDefaultHistogram( GDALRasterBandH hBand,
                                        double dfMin, double dfMax,
-                                       int nBuckets, int *panHistogram );
+                                       int nBuckets, int *panHistogram ) CPL_WARN_DEPRECATED("Use GDALSetDefaultHistogramEx() instead");
+CPLErr CPL_DLL CPL_STDCALL GDALSetDefaultHistogramEx( GDALRasterBandH hBand,
+                                       double dfMin, double dfMax,
+                                       int nBuckets, GUIntBig *panHistogram );
 int CPL_DLL CPL_STDCALL
 GDALGetRandomRasterSample( GDALRasterBandH, int, float * );
 GDALRasterBandH CPL_DLL CPL_STDCALL
 GDALGetRasterSampleOverview( GDALRasterBandH, int );
+GDALRasterBandH CPL_DLL CPL_STDCALL
+GDALGetRasterSampleOverviewEx( GDALRasterBandH, GUIntBig );
 CPLErr CPL_DLL CPL_STDCALL GDALFillRaster( GDALRasterBandH hBand,
                           double dfRealValue, double dfImaginaryValue );
 CPLErr CPL_DLL CPL_STDCALL
@@ -788,18 +847,6 @@ int CPL_DLL CPL_STDCALL GDALLoadOziMapFile( const char *, double *, char **,
                                             int *, GDAL_GCP ** );
 int CPL_DLL CPL_STDCALL GDALReadOziMapFile( const char * ,  double *,
                                             char **, int *, GDAL_GCP ** );
-char CPL_DLL ** CPL_STDCALL GDALLoadRPBFile( const char *pszFilename, 
-                                             char **papszSiblingFiles );
-char CPL_DLL ** CPL_STDCALL GDALLoadRPCFile( const char *pszFilename, 
-                                             char **papszSiblingFiles );
-CPLErr CPL_DLL CPL_STDCALL GDALWriteRPBFile( const char *pszFilename, 
-                                             char **papszMD );
-CPLErr CPL_DLL CPL_STDCALL GDALWriteRPCTXTFile( const char *pszFilename, 
-                                                char **papszMD );
-char CPL_DLL ** CPL_STDCALL GDALLoadIMDFile( const char *pszFilename, 
-                                             char **papszSiblingFiles );
-CPLErr CPL_DLL CPL_STDCALL GDALWriteIMDFile( const char *pszFilename, 
-                                             char **papszMD );
 
 const char CPL_DLL * CPL_STDCALL GDALDecToDMS( double, const char *, int );
 double CPL_DLL CPL_STDCALL GDALPackedDMSToDec( double );
@@ -977,6 +1024,9 @@ void CPL_DLL CPL_STDCALL GDALRATDumpReadable( GDALRasterAttributeTableH,
                                               FILE * );
 GDALRasterAttributeTableH CPL_DLL CPL_STDCALL 
     GDALRATClone( GDALRasterAttributeTableH );
+
+void CPL_DLL* CPL_STDCALL 
+    GDALRATSerializeJSON( GDALRasterAttributeTableH );
 
 int CPL_DLL CPL_STDCALL GDALRATGetRowOfValue( GDALRasterAttributeTableH , double );
 

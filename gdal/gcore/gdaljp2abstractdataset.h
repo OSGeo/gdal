@@ -37,14 +37,24 @@ class CPL_DLL GDALJP2AbstractDataset: public GDALGeorefPamDataset
 {
     char*               pszWldFilename;
 
+    GDALDataset*        poMemDS;
+    char**              papszMetadataFiles;
+
+  protected:
+    virtual int         CloseDependentDatasets();
+
   public:
         GDALJP2AbstractDataset();
         ~GDALJP2AbstractDataset();
 
         void LoadJP2Metadata(GDALOpenInfo* poOpenInfo,
                              const char* pszOverideFilename = NULL);
+        void            LoadVectorLayers(int bOpenRemoteResources = FALSE);
 
         virtual char      **GetFileList(void);
+
+        virtual int         GetLayerCount();
+        virtual OGRLayer   *GetLayer(int i);
 };
 
 #endif /* GDAL_JP2_ABSTRACT_DATASET_H_INCLUDED */

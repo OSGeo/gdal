@@ -155,6 +155,13 @@ WARNFLAGS =	/W4 /wd4127 /wd4251 /wd4275 /wd4786 /wd4100 /wd4245 /wd4206 /wd4018 
 SSEFLAGS = /DHAVE_SSE_AT_COMPILE_TIME
 !ENDIF
 
+# VS2010 SP1 or later in fact required for runtime detection of AVX instruction set
+!IFNDEF AVXFLAGS
+!IF $(MSVC_VER) >= 1600
+AVXFLAGS = /DHAVE_AVX_AT_COMPILE_TIME
+!ENDIF
+!ENDIF
+
 # The followin are extra disables that can be applied to external source
 # not under our control that we wish to use less stringent warnings with.
 !IFNDEF SOFTWARNFLAGS
@@ -179,7 +186,7 @@ STDCALL=YES
 # Version number embedded in DLL name. 
 # If GDAL version is X.Y.Z, VERSION = X * 100 + Y
 !IFNDEF VERSION
-VERSION =	200
+VERSION =	201
 !ENDIF
 
 # Comment the following out if you want PAM supported disabled
@@ -343,6 +350,7 @@ JPEG12_SUPPORTED = 1
 #JASPER_INCLUDE = $(JASPER_INCLUDE) -DHAVE_JASPER_UUID
 
 # Uncommment and adjust paths if you have Kakadu 6.0 or newer
+#KAKFLAGS=-DKDU_MAJOR_VERSION=6 -DKDU_MINOR_VERSION=0 -DKDU_PATCH_VERSION=0
 #KAKDIR = 	\warmerda\pkg\kakadu-6.2.1
 #KAKLIB =	$(KAKDIR)\lib_x86\kdu_v62R.lib
 #KAKSRC =	$(KAKDIR)\vt_2_1-00256N
@@ -351,6 +359,11 @@ JPEG12_SUPPORTED = 1
 #HDF4_PLUGIN = NO
 #HDF4_DIR =	D:\warmerda\HDF41r5
 #HDF4_LIB =	/LIBPATH:$(HDF4_DIR)\lib Ws2_32.lib
+# HDF4 library newer than 4.2.5 has a SDreset_maxopenfiles/SDget_maxopenfiles
+# interface which allows opening many HDF files simultaneously (the max
+# number of files was previously hardcoded and too low, smth. like 32).
+# Uncomment following if your library is newer than 4.2.5.
+#HDF4_HAS_MAXOPENFILES = YES
 
 # Uncomment the following and update to enable NCSA HDF Release 5 support.
 #HDF5_PLUGIN = NO
@@ -591,6 +604,35 @@ OCI_INCLUDE =	-I$(ORACLE_HOME)\oci\include
 #GTA_CFLAGS = -IC:/gdal_trunk/libgta-1.0.0-w32/include -IC:/gdal_trunk/libgta-1.0.0-w32/include/gta
 #GTA_LIBS = C:/gdal_trunk/libgta-1.0.0-w32/lib/libgta.dll.a
 
+# Uncomment for MongoDB support
+# This configuration is valid for a libmongoclient built as a DLL with: scons.bat --32 --dynamic-windows --sharedclient  --prefix=c:\users\even\dev\mongo-client-install --cpppath=c:\users\even\dev\boost_1_55_0_32bit --libpath=c:\users\even\dev\boost_1_55_0_32bit\lib32-msvc-10.0 install
+#MONGODB_PLUGIN = NO
+#MONGODB_INC = c:/users/even/dev/mongo-client-install/include
+# Boost library names must be edited to reflect the actual MSVC and Boost versions
+#BOOST_INC = c:/users/even/dev/boost_1_55_0_32bit
+#BOOST_LIB_PATH= c:\users\even\dev\boost_1_55_0_32bit\lib32-msvc-10.0
+#MONGODB_LIBS = c:/users/even/dev/mongo-client-install/lib/mongoclient.lib  $(BOOST_LIB_PATH)\libboost_thread-vc100-mt-1_55.lib   $(BOOST_LIB_PATH)\libboost_system-vc100-mt-1_55.lib  $(BOOST_LIB_PATH)\libboost_date_time-vc100-mt-1_55.lib   $(BOOST_LIB_PATH)\libboost_chrono-vc100-mt-1_55.lib
+
+# For a static build of mongoclient, only building the driver as a plugin succeeded
+# The libmongoclient_s.lib file had to be renamed without the _s prefix to enable successfull linking
+# It was built with: c:\Python27\Scripts\scons.bat --32 --prefix=c:\users\even\dev\mongo-client-install --cpppath=c:\users\even\dev\boost_1_55_0_32bit --libpath=c:\users\even\dev\boost_1_55_0_32bit\lib32-msvc-10.0 install
+# MONGODB_PLUGIN = YES
+# MONGODB_INC = c:/users/even/dev/mongo-client-install/include
+# MONGODB_CFLAGS = -DSTATIC_LIBMONGOCLIENT
+# BOOST_INC = c:/users/even/dev/boost_1_55_0_32bit
+# BOOST_LIB_PATH= c:\users\even\dev\boost_1_55_0_32bit\lib32-msvc-10.0
+# MONGODB_LIBS = c:/users/even/dev/mongo-client-install/lib/libmongoclient.lib $(BOOST_LIB_PATH)\libboost_thread-vc100-mt-1_55.lib  $(BOOST_LIB_PATH)\libboost_thread-vc100-mt-s-1_55.lib $(BOOST_LIB_PATH)\libboost_system-vc100-mt-1_55.lib $(BOOST_LIB_PATH)\libboost_system-vc100-mt-s-1_55.lib $(BOOST_LIB_PATH)\libboost_date_time-vc100-mt-1_55.lib  $(BOOST_LIB_PATH)\libboost_date_time-vc100-mt-s-1_55.lib $(BOOST_LIB_PATH)\libboost_chrono-vc100-mt-1_55.lib $(BOOST_LIB_PATH)\libboost_chrono-vc100-mt-s-1_55.lib $(BOOST_LIB_PATH)\libboost_regex-vc100-mt-s-1_55.lib /nodefaultlib:msvcprt /nodefaultlib:libcmt
+
+# QHull configuration. By default use internal libqhull.
+# QHULL_SETTING can be set to INTERNAL, EXTERNAL or NO
+# For external qhull, use qhull 2012
+!IFNDEF QHULL_SETTING
+QHULL_SETTING = INTERNAL
+!ENDIF
+# To be defined if QHULL_SETTING=EXTERNAL
+# QHULL_INC = -I....
+
+
 # Any extra libraries needed on this platform?
 ADD_LIBS	= 
 
@@ -628,7 +670,7 @@ OGR_FLAG = -DOGR_ENABLED
 LINKER_FLAGS = $(EXTRA_LINKER_FLAGS) $(MSVC_VLD_LIB) $(LDEBUG)
 
 
-CFLAGS	=	$(OPTFLAGS) $(WARNFLAGS) $(SSEFLAGS) $(INC) $(EXTRAFLAGS) $(OGR_FLAG) $(MSVC_VLD_FLAGS) -DGDAL_COMPILATION
+CFLAGS	=	$(OPTFLAGS) $(WARNFLAGS) $(SSEFLAGS) $(AVXFLAGS) $(INC) $(EXTRAFLAGS) $(OGR_FLAG) $(MSVC_VLD_FLAGS) -DGDAL_COMPILATION
 CPPFLAGS = $(CFLAGS) 
 MAKE	=	nmake /nologo
 
@@ -738,6 +780,14 @@ FGDB_LIB_LINK =
 !ENDIF
 !ENDIF
 
+!IFDEF MONGODB_INC
+!IF "$(MONGODB_PLUGIN)" != "YES"
+MONGODB_LIB_LINK = $(MONGODB_LIBS)
+!ELSE
+MONGODB_LIB_LINK =
+!ENDIF
+!ENDIF
+
 !IFDEF XERCES_DIR
 NAS_ENABLED = YES
 !ENDIF
@@ -759,5 +809,5 @@ EXTERNAL_LIBS =	$(OGDILIB) $(XERCES_LIB) $(EXPAT_LIB) $(OCI_LIB) $(PG_LIB) \
 	$(ODBCLIB) $(JASPER_LIB) $(PNG_LIB) $(ADD_LIBS) $(OPENJPEG_LIB) \
 	$(MRSID_LIDAR_LIB) $(LIBKML_LIBS) $(SOSI_LIBS) $(PDF_LIB_LINK) $(LZMA_LIBS) \
 	$(LIBICONV_LIBRARY) $(WEBP_LIBS) $(FGDB_LIB_LINK) $(FREEXL_LIBS) $(GTA_LIBS) \
-	$(INGRES_LIB) $(LIBXML2_LIB) $(PCRE_LIB) ws2_32.lib
+	$(INGRES_LIB) $(LIBXML2_LIB) $(PCRE_LIB) $(MONGODB_LIB_LINK) ws2_32.lib
 		

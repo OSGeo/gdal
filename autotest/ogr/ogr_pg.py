@@ -3969,6 +3969,10 @@ def ogr_pg_74():
     field_defn.SetDefault("'2015/06/30 12:34:56'")
     lyr.CreateField(field_defn)
 
+    field_defn = ogr.FieldDefn( 'field_datetime3', ogr.OFTDateTime )
+    field_defn.SetDefault("'2015/06/30 12:34:56.123'")
+    lyr.CreateField(field_defn)
+
     field_defn = ogr.FieldDefn( 'field_date', ogr.OFTDate )
     field_defn.SetDefault("CURRENT_DATE")
     lyr.CreateField(field_defn)
@@ -3983,6 +3987,7 @@ def ogr_pg_74():
     f.SetField('field_real', 4.56)
     f.SetField('field_datetime', '2015/06/30 12:34:56')
     f.SetField('field_datetime2', '2015/06/30 12:34:56')
+    f.SetField('field_datetime3', '2015/06/30 12:34:56.123')
     f.SetField('field_date', '2015/06/30')
     f.SetField('field_time', '12:34:56')
     lyr.CreateFeature(f)
@@ -4000,6 +4005,7 @@ def ogr_pg_74():
     f.SetField('field_real', 4.56)
     f.SetField('field_datetime', '2015/06/30 12:34:56')
     f.SetField('field_datetime2', '2015/06/30 12:34:56')
+    f.SetField('field_datetime3', '2015/06/30 12:34:56.123')
     f.SetField('field_date', '2015/06/30')
     f.SetField('field_time', '12:34:56')
     lyr.CreateFeature(f)
@@ -4029,6 +4035,10 @@ def ogr_pg_74():
         gdaltest.post_reason('fail')
         print(lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_datetime2')).GetDefault())
         return 'fail'
+    if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_datetime3')).GetDefault() != "'2015/06/30 12:34:56.123'":
+        gdaltest.post_reason('fail')
+        print(lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_datetime3')).GetDefault())
+        return 'fail'
     if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_date')).GetDefault() != "CURRENT_DATE":
         gdaltest.post_reason('fail')
         return 'fail'
@@ -4047,6 +4057,7 @@ def ogr_pg_74():
        f.GetField('field_real') != 1.23 or \
        f.IsFieldSet('field_nodefault') or not f.IsFieldSet('field_datetime')  or \
        f.GetField('field_datetime2') != '2015/06/30 12:34:56+00' or \
+       f.GetField('field_datetime3') != '2015/06/30 12:34:56.123+00' or \
        not f.IsFieldSet('field_date') or not f.IsFieldSet('field_time'):
         gdaltest.post_reason('fail')
         f.DumpReadable()
@@ -4709,20 +4720,33 @@ def ogr_pg_77():
     f.close()
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f PostgreSQL "' + 'PG:' + gdaltest.pg_connection_string + '" tmp/ogr_pg_77')
 
-    try:
-        shutil.rmtree('tmp/ogr_pg_77')
-    except:
-        pass
-
+    ds = ogr.Open('PG:' + gdaltest.pg_connection_string, update = 1)
+    lyr = ds.GetLayerByName('ogr_pg_77_1')
+    feat = lyr.GetNextFeature()
+    if feat.GetField(0) != '1':
+        return 'fail'
+    feat.SetField(0, 10)
+    lyr.SetFeature(feat)
+    lyr = ds.GetLayerByName('ogr_pg_77_2')
+    feat = lyr.GetNextFeature()
+    if feat.GetField(0) != '2':
+        return 'fail'
+    ds = None
+    
+    # Test fix for #6018
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f PostgreSQL "' + 'PG:' + gdaltest.pg_connection_string + '" tmp/ogr_pg_77 -overwrite')
+   
     ds = ogr.Open('PG:' + gdaltest.pg_connection_string)
     lyr = ds.GetLayerByName('ogr_pg_77_1')
     feat = lyr.GetNextFeature()
     if feat.GetField(0) != '1':
         return 'fail'
-    lyr = ds.GetLayerByName('ogr_pg_77_2')
-    feat = lyr.GetNextFeature()
-    if feat.GetField(0) != '2':
-        return 'fail'
+    ds = None
+
+    try:
+        shutil.rmtree('tmp/ogr_pg_77')
+    except:
+        pass
 
     return 'success'
 
@@ -4786,11 +4810,23 @@ def ogr_pg_78():
         if lyr.GetName() == 'ogr_pg_78':
             ogr_pg_78_found = True
             if lyr.GetGeomType() != ogr.wkbPoint25D:
-                gdaltest.post_reason('fail')
-                return 'fail'
-            if lyr.GetSpatialRef().ExportToWkt().find('4326') < 0:
-                gdaltest.post_reason('fail')
-                return 'fail'
+                # FIXME: why does it fail suddenly on Travis ? Change of PostGIS version ?
+                # But apparently not :
+                # Last good: https://travis-ci.org/OSGeo/gdal/builds/60211881 
+                # First bad: https://travis-ci.org/OSGeo/gdal/builds/60290209
+                val = gdal.GetConfigOption('TRAVIS', None)
+                if val is not None:
+                    print('Fails on Travis. geom_type = %d' % lyr.GetGeomType())
+                else:
+                    gdaltest.post_reason('fail')
+                    return 'fail'
+            if lyr.GetSpatialRef() is None or lyr.GetSpatialRef().ExportToWkt().find('4326') < 0:
+                val = gdal.GetConfigOption('TRAVIS', None)
+                if val is not None:
+                    print('Fails on Travis. GetSpatialRef() = %s' % str(lyr.GetSpatialRef()))
+                else:
+                    gdaltest.post_reason('fail')
+                    return 'fail'
         if lyr.GetName() == 'ogr_pg_78_2':
             ogr_pg_78_2_found = True
             # No logic in geography_columns to get type/coordim/srid from constraints

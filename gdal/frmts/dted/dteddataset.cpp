@@ -920,6 +920,7 @@ void GDALRegister_DTED()
         poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "DTED Elevation Raster" );
+        poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "dt0 dt1 dt2" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
                                    "frmt_various.html#DTED" );
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 

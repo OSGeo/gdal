@@ -243,7 +243,7 @@ def FileFromMemBuffer(*args):
   return _gdal.FileFromMemBuffer(*args)
 
 def Unlink(*args):
-  """Unlink(char utf8_path) -> int"""
+  """Unlink(char utf8_path) -> VSI_RETVAL"""
   return _gdal.Unlink(*args)
 
 def HasThreadSupport(*args):
@@ -251,15 +251,15 @@ def HasThreadSupport(*args):
   return _gdal.HasThreadSupport(*args)
 
 def Mkdir(*args):
-  """Mkdir(char utf8_path, int mode) -> int"""
+  """Mkdir(char utf8_path, int mode) -> VSI_RETVAL"""
   return _gdal.Mkdir(*args)
 
 def Rmdir(*args):
-  """Rmdir(char utf8_path) -> int"""
+  """Rmdir(char utf8_path) -> VSI_RETVAL"""
   return _gdal.Rmdir(*args)
 
 def Rename(*args):
-  """Rename(char pszOld, char pszNew) -> int"""
+  """Rename(char pszOld, char pszNew) -> VSI_RETVAL"""
   return _gdal.Rename(*args)
 VSI_STAT_EXISTS_FLAG = _gdal.VSI_STAT_EXISTS_FLAG
 VSI_STAT_NATURE_FLAG = _gdal.VSI_STAT_NATURE_FLAG
@@ -301,7 +301,7 @@ def VSIFOpenL(*args):
   return _gdal.VSIFOpenL(*args)
 
 def VSIFCloseL(*args):
-  """VSIFCloseL(VSILFILE arg0)"""
+  """VSIFCloseL(VSILFILE arg0) -> VSI_RETVAL"""
   return _gdal.VSIFCloseL(*args)
 
 def VSIFSeekL(*args):
@@ -719,8 +719,8 @@ class Dataset(MajorObject):
         WriteRaster(self, int xoff, int yoff, int xsize, int ysize, GIntBig buf_len, 
             int buf_xsize = None, int buf_ysize = None, 
             GDALDataType buf_type = None, int band_list = 0, 
-            int buf_pixel_space = None, int buf_line_space = None, 
-            int buf_band_space = None) -> CPLErr
+            GIntBig buf_pixel_space = None, GIntBig buf_line_space = None, 
+            GIntBig buf_band_space = None) -> CPLErr
         """
         return _gdal.Dataset_WriteRaster(self, *args, **kwargs)
 
@@ -1072,6 +1072,10 @@ class Band(MajorObject):
         """SetNoDataValue(self, double d) -> CPLErr"""
         return _gdal.Band_SetNoDataValue(self, *args)
 
+    def DeleteNoDataValue(self, *args):
+        """DeleteNoDataValue(self) -> CPLErr"""
+        return _gdal.Band_DeleteNoDataValue(self, *args)
+
     def GetUnitType(self, *args):
         """GetUnitType(self) -> char"""
         return _gdal.Band_GetUnitType(self, *args)
@@ -1152,8 +1156,8 @@ class Band(MajorObject):
         """
         WriteRaster(self, int xoff, int yoff, int xsize, int ysize, GIntBig buf_len, 
             int buf_xsize = None, int buf_ysize = None, 
-            int buf_type = None, int buf_pixel_space = None, 
-            int buf_line_space = None) -> CPLErr
+            int buf_type = None, GIntBig buf_pixel_space = None, 
+            GIntBig buf_line_space = None) -> CPLErr
         """
         return _gdal.Band_WriteRaster(self, *args, **kwargs)
 
@@ -1209,7 +1213,7 @@ class Band(MajorObject):
     def GetDefaultHistogram(self, *args, **kwargs):
         """
         GetDefaultHistogram(self, double min_ret = None, double max_ret = None, int buckets_ret = None, 
-            int ppanHistogram = None, 
+            GUIntBig ppanHistogram = None, 
             int force = 1, GDALProgressFunc callback = None, 
             void callback_data = None) -> CPLErr
         """
@@ -1254,10 +1258,10 @@ class Band(MajorObject):
 
     def ReadRaster1(self, *args, **kwargs):
         """
-        ReadRaster1(self, int xoff, int yoff, int xsize, int ysize, int buf_xsize = None, 
-            int buf_ysize = None, int buf_type = None, 
-            GIntBig buf_pixel_space = None, GIntBig buf_line_space = None, 
-            GDALRIOResampleAlg resample_alg = GRIORA_NearestNeighbour, 
+        ReadRaster1(self, double xoff, double yoff, double xsize, double ysize, 
+            int buf_xsize = None, int buf_ysize = None, 
+            int buf_type = None, GIntBig buf_pixel_space = None, 
+            GIntBig buf_line_space = None, GDALRIOResampleAlg resample_alg = GRIORA_NearestNeighbour, 
             GDALProgressFunc callback = None, 
             void callback_data = None) -> CPLErr
         """
@@ -1561,15 +1565,16 @@ def DitherRGB2PCT(*args, **kwargs):
   return _gdal.DitherRGB2PCT(*args, **kwargs)
 DitherRGB2PCT = _gdal.DitherRGB2PCT
 
-def ReprojectImage(*args):
+def ReprojectImage(*args, **kwargs):
   """
     ReprojectImage(Dataset src_ds, Dataset dst_ds, char src_wkt = None, 
         char dst_wkt = None, GDALResampleAlg eResampleAlg = GRA_NearestNeighbour, 
         double WarpMemoryLimit = 0.0, 
         double maxerror = 0.0, GDALProgressFunc callback = None, 
-        void callback_data = None) -> CPLErr
+        void callback_data = None, 
+        char options = None) -> CPLErr
     """
-  return _gdal.ReprojectImage(*args)
+  return _gdal.ReprojectImage(*args, **kwargs)
 ReprojectImage = _gdal.ReprojectImage
 
 def ComputeProximity(*args, **kwargs):

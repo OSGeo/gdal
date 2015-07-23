@@ -1588,6 +1588,555 @@ def tiff_direct_and_virtual_mem_io():
 
   return 'success'
 
+###############################################################################
+# Check read Digital Globe metadata IMD & RPB format
+
+def tiff_read_md1():
+
+    try:
+        os.remove('data/md_dg.tif.aux.xml')
+    except:
+        pass
+
+    ds = gdal.Open( 'data/md_dg.tif', gdal.GA_ReadOnly )
+    filelist = ds.GetFileList()
+
+    if len(filelist) != 3:
+        gdaltest.post_reason( 'did not get expected file list.' )
+        return 'fail'
+
+    metadata = ds.GetMetadataDomainList()
+    if len(metadata) != 5:
+        gdaltest.post_reason( 'did not get expected metadata list.' )
+        return 'fail'
+
+    md = ds.GetMetadata('IMAGERY')
+    if 'SATELLITEID' not in md:
+        print('SATELLITEID not present in IMAGERY Domain')
+        return 'fail'
+    if 'CLOUDCOVER' not in md:
+        print('CLOUDCOVER not present in IMAGERY Domain')
+        return 'fail'
+    if 'ACQUISITIONDATETIME' not in md:
+        print('ACQUISITIONDATETIME not present in IMAGERY Domain')
+        return 'fail'
+
+    # Test UTC date
+    if md['ACQUISITIONDATETIME'] != '2010-04-01 12:00:00':
+        print('bad value for IMAGERY[ACQUISITIONDATETIME]')
+        return 'fail'
+
+    ds = None
+
+    try:
+        os.stat('data/md_dg.tif.aux.xml')
+        gdaltest.post_reason('Expected not generation of data/md_dg.tif.aux.xml')
+        return 'fail'
+    except:
+        pass
+
+    return 'success'
+
+###############################################################################
+# Check read Digital Globe metadata XML format
+
+def tiff_read_md2():
+
+    try:
+        os.remove('data/md_dg_2.tif.aux.xml')
+    except:
+        pass
+
+    ds = gdal.Open( 'data/md_dg_2.tif', gdal.GA_ReadOnly )
+    filelist = ds.GetFileList()
+
+    if len(filelist) != 2:
+        gdaltest.post_reason( 'did not get expected file list.' )
+        return 'fail'
+
+    metadata = ds.GetMetadataDomainList()
+    if len(metadata) != 5:
+        gdaltest.post_reason( 'did not get expected metadata list.' )
+        return 'fail'
+
+    md = ds.GetMetadata('IMAGERY')
+    if 'SATELLITEID' not in md:
+        print('SATELLITEID not present in IMAGERY Domain')
+        return 'fail'
+    if 'CLOUDCOVER' not in md:
+        print('CLOUDCOVER not present in IMAGERY Domain')
+        return 'fail'
+    if 'ACQUISITIONDATETIME' not in md:
+        print('ACQUISITIONDATETIME not present in IMAGERY Domain')
+        return 'fail'
+
+    # Test UTC date
+    if md['ACQUISITIONDATETIME'] != '2011-05-01 13:00:00':
+        print('bad value for IMAGERY[ACQUISITIONDATETIME]')
+        return 'fail'
+
+    ds = None
+
+    try:
+        os.stat('data/md_dg_2.tif.aux.xml')
+        gdaltest.post_reason('Expected not generation of data/md_dg_2.tif.aux.xml')
+        return 'fail'
+    except:
+        pass
+
+    return 'success'
+
+###############################################################################
+# Check read GeoEye metadata format
+
+def tiff_read_md3():
+
+    try:
+        os.remove('data/md_ge_rgb_0010000.tif.aux.xml')
+    except:
+        pass
+
+    ds = gdal.Open( 'data/md_ge_rgb_0010000.tif', gdal.GA_ReadOnly )
+    filelist = ds.GetFileList()
+
+    if len(filelist) != 3:
+        gdaltest.post_reason( 'did not get expected file list.' )
+        return 'fail'
+
+    metadata = ds.GetMetadataDomainList()
+    if len(metadata) != 5:
+        gdaltest.post_reason( 'did not get expected metadata list.' )
+        return 'fail'
+
+    md = ds.GetMetadata('IMAGERY')
+    if 'SATELLITEID' not in md:
+        print('SATELLITEID not present in IMAGERY Domain')
+        return 'fail'
+    if 'CLOUDCOVER' not in md:
+        print('CLOUDCOVER not present in IMAGERY Domain')
+        return 'fail'
+    if 'ACQUISITIONDATETIME' not in md:
+        print('ACQUISITIONDATETIME not present in IMAGERY Domain')
+        return 'fail'
+
+    # Test UTC date
+    if md['ACQUISITIONDATETIME'] != '2012-06-01 14:00:00':
+        print('bad value for IMAGERY[ACQUISITIONDATETIME]')
+        return 'fail'
+
+    ds = None
+
+    try:
+        os.stat('data/md_ge_rgb_0010000.tif.aux.xml')
+        gdaltest.post_reason('Expected not generation of data/md_ge_rgb_0010000.tif.aux.xml')
+        return 'fail'
+    except:
+        pass
+
+    return 'success'
+
+###############################################################################
+# Check read OrbView metadata format
+
+def tiff_read_md4():
+
+    try:
+        os.remove('data/md_ov.tif.aux.xml')
+    except:
+        pass
+
+    ds = gdal.Open( 'data/md_ov.tif', gdal.GA_ReadOnly )
+    filelist = ds.GetFileList()
+
+    if len(filelist) != 3:
+        gdaltest.post_reason( 'did not get expected file list.' )
+        return 'fail'
+
+    metadata = ds.GetMetadataDomainList()
+    if len(metadata) != 5:
+        gdaltest.post_reason( 'did not get expected metadata list.' )
+        return 'fail'
+
+    md = ds.GetMetadata('IMAGERY')
+    if 'SATELLITEID' not in md:
+        print('SATELLITEID not present in IMAGERY Domain')
+        return 'fail'
+    if 'CLOUDCOVER' not in md:
+        print('CLOUDCOVER not present in IMAGERY Domain')
+        return 'fail'
+    if 'ACQUISITIONDATETIME' not in md:
+        print('ACQUISITIONDATETIME not present in IMAGERY Domain')
+        return 'fail'
+
+    # Test UTC date
+    if md['ACQUISITIONDATETIME'] != '2013-07-01 15:00:00':
+        print('bad value for IMAGERY[ACQUISITIONDATETIME]')
+        return 'fail'
+
+    ds = None
+
+    try:
+        os.stat('data/md_ov.tif.aux.xml')
+        gdaltest.post_reason('Expected not generation of data/md_ov.tif.aux.xml')
+        return 'fail'
+    except:
+        pass
+
+    return 'success'
+
+###############################################################################
+# Check read Resurs-DK1 metadata format
+
+def tiff_read_md5():
+
+    try:
+        os.remove('data/md_rdk1.tif.aux.xml')
+    except:
+        pass
+
+    ds = gdal.Open( 'data/md_rdk1.tif', gdal.GA_ReadOnly )
+    filelist = ds.GetFileList()
+
+    if len(filelist) != 2:
+        gdaltest.post_reason( 'did not get expected file list.' )
+        return 'fail'
+
+    metadata = ds.GetMetadataDomainList()
+    if len(metadata) != 4:
+        gdaltest.post_reason( 'did not get expected metadata list.' )
+        return 'fail'
+
+    md = ds.GetMetadata('IMAGERY')
+    if 'SATELLITEID' not in md:
+        print('SATELLITEID not present in IMAGERY Domain')
+        return 'fail'
+    if 'CLOUDCOVER' not in md:
+        print('CLOUDCOVER not present in IMAGERY Domain')
+        return 'fail'
+    if 'ACQUISITIONDATETIME' not in md:
+        print('ACQUISITIONDATETIME not present in IMAGERY Domain')
+        return 'fail'
+
+    # Test UTC date
+    if md['ACQUISITIONDATETIME'] != '2014-08-01 16:00:00':
+        print('bad value for IMAGERY[ACQUISITIONDATETIME]')
+        return 'fail'
+
+    ds = None
+
+    try:
+        os.stat('data/md_rdk1.tif.aux.xml')
+        gdaltest.post_reason('Expected not generation of data/md_rdk1.tif.aux.xml')
+        return 'fail'
+    except:
+        pass
+
+    return 'success'
+
+###############################################################################
+# Check read Landsat metadata format
+
+def tiff_read_md6():
+
+    try:
+        os.remove('data/md_ls_b1.tif.aux.xml')
+    except:
+        pass
+
+    ds = gdal.Open( 'data/md_ls_b1.tif', gdal.GA_ReadOnly )
+    filelist = ds.GetFileList()
+
+    if len(filelist) != 2:
+        gdaltest.post_reason( 'did not get expected file list.' )
+        return 'fail'
+
+    metadata = ds.GetMetadataDomainList()
+    if len(metadata) != 4:
+        gdaltest.post_reason( 'did not get expected metadata list.' )
+        return 'fail'
+
+    md = ds.GetMetadata('IMAGERY')
+    if 'SATELLITEID' not in md:
+        print('SATELLITEID not present in IMAGERY Domain')
+        return 'fail'
+    if 'CLOUDCOVER' not in md:
+        print('CLOUDCOVER not present in IMAGERY Domain')
+        return 'fail'
+    if 'ACQUISITIONDATETIME' not in md:
+        print('ACQUISITIONDATETIME not present in IMAGERY Domain')
+        return 'fail'
+
+    # Test UTC date
+    if md['ACQUISITIONDATETIME'] != '2015-09-01 17:00:00':
+        print('bad value for IMAGERY[ACQUISITIONDATETIME]')
+        return 'fail'
+
+    ds = None
+
+    try:
+        os.stat('data/md_ls_b1.tif.aux.xml')
+        gdaltest.post_reason('Expected not generation of data/md_ls_b1.tif.aux.xml')
+        return 'fail'
+    except:
+        pass
+
+    return 'success'
+
+###############################################################################
+# Check read Spot metadata format
+
+def tiff_read_md7():
+
+    try:
+        os.remove('data/spot/md_spot.tif.aux.xml')
+    except:
+        pass
+
+    ds = gdal.Open( 'data/spot/md_spot.tif', gdal.GA_ReadOnly )
+    filelist = ds.GetFileList()
+
+    if len(filelist) != 2:
+        gdaltest.post_reason( 'did not get expected file list.' )
+        return 'fail'
+
+    metadata = ds.GetMetadataDomainList()
+    if len(metadata) != 4:
+        gdaltest.post_reason( 'did not get expected metadata list.' )
+        return 'fail'
+
+    md = ds.GetMetadata('IMAGERY')
+    if 'SATELLITEID' not in md:
+        print('SATELLITEID not present in IMAGERY Domain')
+        return 'fail'
+    if 'CLOUDCOVER' not in md:
+        print('CLOUDCOVER not present in IMAGERY Domain')
+        return 'fail'
+    if 'ACQUISITIONDATETIME' not in md:
+        print('ACQUISITIONDATETIME not present in IMAGERY Domain')
+        return 'fail'
+
+    # Test UTC date
+    if md['ACQUISITIONDATETIME'] != '2001-03-01 00:00:00':
+        print('bad value for IMAGERY[ACQUISITIONDATETIME]')
+        return 'fail'
+
+    ds = None
+
+    try:
+        os.stat('data/spot/md_spot.tif.aux.xml')
+        gdaltest.post_reason('Expected not generation of data/spot/md_spot.tif.aux.xml')
+        return 'fail'
+    except:
+        pass
+
+    return 'success'
+
+###############################################################################
+# Check read RapidEye metadata format
+
+def tiff_read_md8():
+
+    try:
+        os.remove('data/md_re.tif.aux.xml')
+    except:
+        pass
+
+    ds = gdal.Open( 'data/md_re.tif', gdal.GA_ReadOnly )
+    filelist = ds.GetFileList()
+
+    if len(filelist) != 2:
+        gdaltest.post_reason( 'did not get expected file list.' )
+        return 'fail'
+
+    metadata = ds.GetMetadataDomainList()
+    if len(metadata) != 4:
+        gdaltest.post_reason( 'did not get expected metadata list.' )
+        return 'fail'
+
+    md = ds.GetMetadata('IMAGERY')
+    if 'SATELLITEID' not in md:
+        print('SATELLITEID not present in IMAGERY Domain')
+        return 'fail'
+    if 'CLOUDCOVER' not in md:
+        print('CLOUDCOVER not present in IMAGERY Domain')
+        return 'fail'
+    if 'ACQUISITIONDATETIME' not in md:
+        print('ACQUISITIONDATETIME not present in IMAGERY Domain')
+        return 'fail'
+
+    # Test UTC date
+    if md['ACQUISITIONDATETIME'] != '2010-02-01 12:00:00':
+        print('bad value for IMAGERY[ACQUISITIONDATETIME]')
+        return 'fail'
+
+    ds = None
+
+    try:
+        os.stat('data/md_re.tif.aux.xml')
+        gdaltest.post_reason('Expected not generation of data/md_re.tif.aux.xml')
+        return 'fail'
+    except:
+        pass
+
+    return 'success'
+
+###############################################################################
+# Check read Alos metadata format
+
+def tiff_read_md9():
+
+    try:
+        os.remove('data/alos/IMG-md_alos.tif.aux.xml')
+    except:
+        pass
+
+    ds = gdal.Open( 'data/alos/IMG-md_alos.tif', gdal.GA_ReadOnly )
+    filelist = ds.GetFileList()
+
+    if len(filelist) != 3:
+        gdaltest.post_reason( 'did not get expected file list.' )
+        return 'fail'
+
+    metadata = ds.GetMetadataDomainList()
+    if len(metadata) != 5:
+        gdaltest.post_reason( 'did not get expected metadata list.' )
+        return 'fail'
+
+    md = ds.GetMetadata('IMAGERY')
+    if 'SATELLITEID' not in md:
+        print('SATELLITEID not present in IMAGERY Domain')
+        return 'fail'
+    if 'ACQUISITIONDATETIME' not in md:
+        print('ACQUISITIONDATETIME not present in IMAGERY Domain')
+        return 'fail'
+
+    # Test UTC date
+    if md['ACQUISITIONDATETIME'] != '2010-07-01 00:00:00':
+        print('bad value for IMAGERY[ACQUISITIONDATETIME]')
+        return 'fail'
+
+    ds = None
+
+    try:
+        os.stat('data/alos/IMG-md_alos.tif.aux.xml')
+        gdaltest.post_reason('Expected not generation of data/alos/IMG-md_alos.tif.aux.xml')
+        return 'fail'
+    except:
+        pass
+
+    return 'success'
+
+###############################################################################
+# Check read Eros metadata format
+
+def tiff_read_md10():
+
+    try:
+        os.remove('data/md_eros.tif.aux.xml')
+    except:
+        pass
+
+    ds = gdal.Open( 'data/md_eros.tif', gdal.GA_ReadOnly )
+    filelist = ds.GetFileList()
+
+    if len(filelist) != 3:
+        gdaltest.post_reason( 'did not get expected file list.' )
+        return 'fail'
+
+    metadata = ds.GetMetadataDomainList()
+    if len(metadata) != 5:
+        gdaltest.post_reason( 'did not get expected metadata list.' )
+        return 'fail'
+
+    md = ds.GetMetadata('IMAGERY')
+    if 'SATELLITEID' not in md:
+        print('SATELLITEID not present in IMAGERY Domain')
+        return 'fail'
+    if 'CLOUDCOVER' not in md:
+        print('CLOUDCOVER not present in IMAGERY Domain')
+        return 'fail'
+    if 'ACQUISITIONDATETIME' not in md:
+        print('ACQUISITIONDATETIME not present in IMAGERY Domain')
+        return 'fail'
+
+    # Test UTC date
+    if md['ACQUISITIONDATETIME'] != '2013-04-01 11:00:00':
+        print('bad value for IMAGERY[ACQUISITIONDATETIME]')
+        return 'fail'
+
+    ds = None
+
+    try:
+        os.stat('data/md_eros.tif.aux.xml')
+        gdaltest.post_reason('Expected not generation of data/md_eros.tif.aux.xml')
+        return 'fail'
+    except:
+        pass
+
+    return 'success'
+
+###############################################################################
+# Check read Kompsat metadata format
+
+def tiff_read_md11():
+
+    try:
+        os.remove('data/md_kompsat.tif.aux.xml')
+    except:
+        pass
+
+    ds = gdal.Open( 'data/md_kompsat.tif', gdal.GA_ReadOnly )
+    filelist = ds.GetFileList()
+
+    if len(filelist) != 3:
+        gdaltest.post_reason( 'did not get expected file list.' )
+        return 'fail'
+
+    metadata = ds.GetMetadataDomainList()
+    if len(metadata) != 5:
+        gdaltest.post_reason( 'did not get expected metadata list.' )
+        return 'fail'
+
+    md = ds.GetMetadata('IMAGERY')
+    if 'SATELLITEID' not in md:
+        print('SATELLITEID not present in IMAGERY Domain')
+        return 'fail'
+    if 'CLOUDCOVER' not in md:
+        print('CLOUDCOVER not present in IMAGERY Domain')
+        return 'fail'
+    if 'ACQUISITIONDATETIME' not in md:
+        print('ACQUISITIONDATETIME not present in IMAGERY Domain')
+        return 'fail'
+
+    # Test UTC date
+    if md['ACQUISITIONDATETIME'] != '2007-05-01 07:00:00':
+        print('bad value for IMAGERY[ACQUISITIONDATETIME]')
+        return 'fail'
+
+    ds = None
+
+    try:
+        os.stat('data/md_kompsat.tif.aux.xml')
+        gdaltest.post_reason('Expected not generation of data/md_kompsat.tif.aux.xml')
+        return 'fail'
+    except:
+        pass
+
+    return 'success'
+
+###############################################################################
+# Test reading a TIFFTAG_GDAL_NODATA with empty text
+
+def tiff_read_empty_nodata_tag():
+
+    ds = gdal.Open('data/empty_nodata.tif')
+    if ds.GetRasterBand(1).GetNoDataValue() is not None:
+        gdaltest.post_reason('fail')
+        print(ds.GetRasterBand(1).GetNoDataValue())
+        return 'fail'
+
+    return 'success'
+
 ###############################################################################################
 
 for item in init_list:
@@ -1641,9 +2190,21 @@ gdaltest_list.append( (tiff_read_bigtiff) )
 gdaltest_list.append( (tiff_read_tiff_metadata) )
 gdaltest_list.append( (tiff_read_irregular_tile_size_jpeg_in_tiff) )
 gdaltest_list.append( (tiff_direct_and_virtual_mem_io) )
+gdaltest_list.append( (tiff_read_empty_nodata_tag) )
 
 gdaltest_list.append( (tiff_read_online_1) )
 gdaltest_list.append( (tiff_read_online_2) )
+gdaltest_list.append( (tiff_read_md1) )
+gdaltest_list.append( (tiff_read_md2) )
+gdaltest_list.append( (tiff_read_md3) )
+gdaltest_list.append( (tiff_read_md4) )
+gdaltest_list.append( (tiff_read_md5) )
+gdaltest_list.append( (tiff_read_md6) )
+gdaltest_list.append( (tiff_read_md7) )
+gdaltest_list.append( (tiff_read_md8) )
+gdaltest_list.append( (tiff_read_md9) )
+gdaltest_list.append( (tiff_read_md10) )
+gdaltest_list.append( (tiff_read_md11) )
 
 #gdaltest_list = [ tiff_direct_and_virtual_mem_io ]
 

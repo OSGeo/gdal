@@ -35,7 +35,7 @@ INSTALL_DIR	= 	$(GDAL_ROOT)/install-sh -d
 LIBS	=	$(SDE_LIB) @LIBS@ $(KAK_LIBS) $(DWG_LIBS) $(CURL_LIB) \
 		$(MRSID_LIBS) $(MRSID_LIDAR_LIBS) $(ECW_LIBS) $(INGRES_LIB) \
 		$(PCIDSK_LIB) $(RASDAMAN_LIB) $(CHARLS_LIB) $(SOSI_LIB) \
-		$(OPENCL_LIB) $(JVM_LIB) $(LIBICONV) $(FGDB_LIB) $(LIBXML2_LIB)
+		$(OPENCL_LIB) $(JVM_LIB) $(LIBICONV) $(FGDB_LIB) $(LIBXML2_LIB) $(MONGODB_LIB)
 
 SSEFLAGS = @SSEFLAGS@
 HAVE_SSE_AT_COMPILE_TIME = @HAVE_SSE_AT_COMPILE_TIME@
@@ -88,9 +88,9 @@ GDAL_INCLUDE	=	-I$(GDAL_ROOT)/port -I$(GDAL_ROOT)/gcore \
 
 # libtool targets and help variables
 LIBGDAL	:=		libgdal.la
-LIBGDAL_CURRENT	:=	19
+LIBGDAL_CURRENT	:=	20
 LIBGDAL_REVISION	:=	0
-LIBGDAL_AGE	:=	18
+LIBGDAL_AGE	:=	0
 
 # native build targets and variables
 GDAL_VER	=	@GDAL_VER@
@@ -135,6 +135,10 @@ LIBS	   +=	$(MYSQL_LIB)
 #
 HAVE_HDF4     = @HAVE_HDF4@
 HDF4_INCLUDE  = @HDF4_INCLUDE@ -I$(GDAL_ROOT)/ogr
+HDF4_HAS_MAXOPENFILES = @HDF4_HAS_MAXOPENFILES@
+ifeq ($(HDF4_HAS_MAXOPENFILES),yes)
+HDF4_FLAGS=-DHDF4_HAS_MAXOPENFILES
+endif
 
 #
 # HDF5 Support.
@@ -257,6 +261,10 @@ OCI_INCLUDE	= @OCI_INCLUDE@
 HAVE_GEOS       =       @HAVE_GEOS@
 GEOS_CFLAGS     =       @GEOS_CFLAGS@
 
+# QHull Support
+
+QHULL_SETTING   =       @QHULL_SETTING@
+
 # GRASS Support
 
 GRASS_SETTING	=	@GRASS_SETTING@
@@ -277,6 +285,13 @@ SDE_INC = @SDE_INC@
 HAVE_FGDB = @FGDB_ENABLED@
 FGDB_LIB = @FGDB_LIB@
 FGDB_INC = @FGDB_INC@
+
+# 
+# MongoDB
+#
+HAVE_MONGODB = @MONGODB_ENABLED@
+MONGODB_LIB = @MONGODB_LIB@
+MONGODB_INC = @MONGODB_INC@
 
 # 
 # ArcObjects
@@ -498,7 +513,7 @@ GDAL_FORMATS = 	gxf gtiff hfa aigrid aaigrid ceos ceos2 iso8211 xpm \
 		nitf bmp pcidsk airsar rs2 ilwis rmf leveller sgi srtmhgt \
 		idrisi gsg ingr ers jaxapalsar dimap gff cosar pds adrg \
 		coasp tsx terragen blx msgn til r northwood saga xyz hf2 \
-		kmlsuperoverlay ctg e00grid zmap ngsgeoid iris map\
+		kmlsuperoverlay ctg e00grid zmap ngsgeoid iris map cals\
 		@OPT_GDAL_FORMATS@
 
 

@@ -976,12 +976,12 @@ class DataSource(MajorObject):
         return _ogr.DataSource_RollbackTransaction(self, *args)
 
     def Destroy(self):
-      "Once called, self has effectively been destroyed.  Do not access. For backwards compatiblity only"
+      "Once called, self has effectively been destroyed.  Do not access. For backwards compatibility only"
       _ogr.delete_DataSource( self )
       self.thisown = 0
 
     def Release(self):
-      "Once called, self has effectively been destroyed.  Do not access. For backwards compatiblity only"
+      "Once called, self has effectively been destroyed.  Do not access. For backwards compatibility only"
       _ogr.delete_DataSource( self )
       self.thisown = 0
 
@@ -999,9 +999,9 @@ class DataSource(MajorObject):
 
     def __getitem__(self, value):
         """Support dictionary, list, and slice -like access to the datasource.
-    ] would return the first layer on the datasource.
-    aname'] would return the layer named "aname".
-    :4] would return a list of the first four layers."""
+        ds[0] would return the first layer on the datasource.
+        ds['aname'] would return the layer named "aname".
+        ds[0:4] would return a list of the first four layers."""
         if isinstance(value, slice):
             output = []
             for i in xrange(value.start,value.stop,value.step):
@@ -2221,8 +2221,8 @@ class Layer(MajorObject):
 
     def __getitem__(self, value):
         """Support list and slice -like access to the layer.
-    r[0] would return the first feature on the layer.
-    r[0:4] would return a list of the first four features."""
+        layer[0] would return the first feature on the layer.
+        layer[0:4] would return a list of the first four features."""
         if isinstance(value, slice):
             import sys
             output = []
@@ -2929,9 +2929,9 @@ class Feature(_object):
         SetField(self, int id, double value)
         SetField(self, char name, double value)
         SetField(self, int id, int year, int month, int day, int hour, int minute, 
-            int second, int tzflag)
+            float second, int tzflag)
         SetField(self, char name, int year, int month, int day, int hour, 
-            int minute, int second, int tzflag)
+            int minute, float second, int tzflag)
         """
         return _ogr.Feature_SetField(self, *args)
 
@@ -3200,7 +3200,7 @@ class Feature(_object):
       pass
 
     def Destroy(self):
-      "Once called, self has effectively been destroyed.  Do not access. For backwards compatiblity only"
+      "Once called, self has effectively been destroyed.  Do not access. For backwards compatibility only"
       _ogr.delete_Feature( self )
       self.thisown = 0
 
@@ -3418,7 +3418,14 @@ class Feature(_object):
             output['id'] = fid
             
         for key in self.keys():
-            output['properties'][key] = self.GetField(key)
+            fld_defn = self.GetFieldDefnRef(self.GetFieldIndex(key))
+            if fld_defn.GetType() == _ogr.OFTInteger and fld_defn.GetSubType() == _ogr.OFSTBoolean:
+                if self.GetField(key):
+                    output['properties'][key] = True
+                else:
+                    output['properties'][key] = False
+            else:
+                output['properties'][key] = self.GetField(key)
         
         if not as_object:
             output = simplejson.dumps(output)
@@ -3754,7 +3761,7 @@ class FeatureDefn(_object):
         return _ogr.FeatureDefn_IsSame(self, *args)
 
     def Destroy(self):
-      "Once called, self has effectively been destroyed.  Do not access. For backwards compatiblity only"
+      "Once called, self has effectively been destroyed.  Do not access. For backwards compatibility only"
       _ogr.delete_FeatureDefn( self )
       self.thisown = 0
 
@@ -4072,7 +4079,7 @@ class FieldDefn(_object):
     justify = property(GetJustify, SetJustify)
 
     def Destroy(self):
-      "Once called, self has effectively been destroyed.  Do not access. For backwards compatiblity only"
+      "Once called, self has effectively been destroyed.  Do not access. For backwards compatibility only"
       _ogr.delete_FieldDefn( self )
       self.thisown = 0
 
@@ -4495,6 +4502,10 @@ class Geometry(_object):
         OGR 1.9.0 
         """
         return _ogr.Geometry_SimplifyPreserveTopology(self, *args)
+
+    def DelaunayTriangulation(self, *args, **kwargs):
+        """DelaunayTriangulation(self, double dfTolerance = 0.0, int bOnlyEdges = True) -> Geometry"""
+        return _ogr.Geometry_DelaunayTriangulation(self, *args, **kwargs)
 
     def Boundary(self, *args):
         """

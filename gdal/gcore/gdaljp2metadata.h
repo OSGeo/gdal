@@ -35,6 +35,7 @@
 #include "cpl_vsi.h"
 #include "gdal.h"
 #include "gdal_priv.h"
+#include "cpl_minixml.h"
 
 /************************************************************************/
 /*                              GDALJP2Box                              */
@@ -125,6 +126,17 @@ private:
 
     int    nMSIGSize;
     GByte  *pabyMSIGData;
+    
+    int      GetGMLJP2GeoreferencingInfo( int& nEPSGCode,
+                                          double adfOrigin[2],
+                                          double adfXVector[2],
+                                          double adfYVector[2],
+                                          const char*& pszComment,
+                                          CPLString& osDictBox,
+                                          int& bNeedAxisFlip );
+    static CPLXMLNode* CreateGDALMultiDomainMetadataXML(
+                                       GDALDataset* poSrcDS,
+                                       int bMainMDDomainOnly );
 
 public:
     char  **papszGMLMetadata;
@@ -137,6 +149,8 @@ public:
 
     int         nGCPCount;
     GDAL_GCP    *pasGCPList;
+    
+    char **papszRPCMD;
 
     char  **papszMetadata; /* TIFFTAG_?RESOLUTION* for now from resd box */
     char   *pszXMPMetadata;
@@ -160,9 +174,13 @@ public:
     void    SetProjection( const char *pszWKT );
     void    SetGeoTransform( double * );
     void    SetGCPs( int, const GDAL_GCP * );
+    void    SetRPCMD( char** papszRPCMDIn );
     
     GDALJP2Box *CreateJP2GeoTIFF();
     GDALJP2Box *CreateGMLJP2( int nXSize, int nYSize );
+    GDALJP2Box *CreateGMLJP2V2( int nXSize, int nYSize,
+                                const char* pszDefFilename,
+                                GDALDataset* poSrcDS );
 
     static GDALJP2Box* CreateGDALMultiDomainMetadataXMLBox(
                                        GDALDataset* poSrcDS,

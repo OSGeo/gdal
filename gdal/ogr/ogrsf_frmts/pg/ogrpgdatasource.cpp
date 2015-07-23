@@ -339,7 +339,25 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
     }
 
     pszName = CPLStrdup( pszNewName );
-    char* pszConnectionName = CPLStrdup(pszName);
+    
+    CPLString osConnectionName(pszName);
+    const char* apszOpenOptions[] = { "dbname", "port", "user", "password",
+                                      "host", "active_schema", "schemas", "tables" };
+    for(int i=0; i <(int)(sizeof(apszOpenOptions)/sizeof(char*));i++)
+    {
+        const char* pszVal = CSLFetchNameValue(papszOpenOptions, apszOpenOptions[i]);
+        if( pszVal )
+        {
+            if( osConnectionName[osConnectionName.size()-1] != ':' )
+                osConnectionName += " ";
+            osConnectionName += apszOpenOptions[i];
+            osConnectionName += "=";
+            osConnectionName += pszVal;
+        }
+    }
+    
+    char* pszConnectionName = CPLStrdup(osConnectionName);
+    
 
 /* -------------------------------------------------------------------- */
 /*      Determine if the connection string contains an optional         */
@@ -1280,6 +1298,8 @@ int OGRPGDataSource::DeleteLayer( int iLayer )
     if( iLayer < 0 || iLayer >= nLayers )
         return OGRERR_FAILURE;
 
+    EndCopy();
+
 /* -------------------------------------------------------------------- */
 /*      Blow away our OGR structures related to the layer.  This is     */
 /*      pretty dangerous if anything has a reference to this layer!     */
@@ -1360,7 +1380,7 @@ OGRPGDataSource::ICreateLayer( const char * pszLayerName,
     {
         if( CSLFetchBoolean(papszOptions,"LAUNDER", TRUE) )
         {
-            char* pszLaunderedFid = LaunderName(pszFIDColumnName);
+            char* pszLaunderedFid = OGRPGCommonLaunderName(pszFIDColumnName, "PG");
             osFIDColumnName += OGRPGEscapeColumnName(pszLaunderedFid);
             CPLFree(pszLaunderedFid);
         }
@@ -1410,7 +1430,7 @@ OGRPGDataSource::ICreateLayer( const char * pszLayerName,
       pszSchemaName[length] = '\0';
       
       if( CSLFetchBoolean(papszOptions,"LAUNDER", TRUE) )
-          pszTableName = LaunderName( pszDotPos + 1 ); //skip "."
+          pszTableName = OGRPGCommonLaunderName( pszDotPos + 1, "PG" ); //skip "."
       else
           pszTableName = CPLStrdup( pszDotPos + 1 ); //skip "."
     }
@@ -1418,7 +1438,7 @@ OGRPGDataSource::ICreateLayer( const char * pszLayerName,
     {
       pszSchemaName = NULL;
       if( CSLFetchBoolean(papszOptions,"LAUNDER", TRUE) )
-          pszTableName = LaunderName( pszLayerName ); //skip "."
+          pszTableName = OGRPGCommonLaunderName( pszLayerName, "PG" ); //skip "."
       else
           pszTableName = CPLStrdup( pszLayerName ); //skip "."
     }
@@ -1568,8 +1588,7 @@ OGRPGDataSource::ICreateLayer( const char * pszLayerName,
     const char* pszSerialType = bFID64 ? "BIGSERIAL": "SERIAL";
 
     CPLString osCreateTable;
-    int bTemporary = CSLFetchNameValue( papszOptions, "TEMPORARY" ) != NULL &&
-                     CSLTestBoolean(CSLFetchNameValue( papszOptions, "TEMPORARY" ));
+    int bTemporary = CSLFetchBoolean( papszOptions, "TEMPORARY", FALSE );
     if (bTemporary)
     {
         CPLFree(pszSchemaName);
@@ -1578,7 +1597,8 @@ OGRPGDataSource::ICreateLayer( const char * pszLayerName,
                              OGRPGEscapeColumnName(pszTableName).c_str());
     }
     else
-        osCreateTable.Printf("CREATE TABLE %s.%s",
+        osCreateTable.Printf("CREATE%s TABLE %s.%s",
+                             CSLFetchBoolean( papszOptions, "UNLOGGED", FALSE ) ? " UNLOGGED": "",
                              OGRPGEscapeColumnName(pszSchemaName).c_str(), 
                              OGRPGEscapeColumnName(pszTableName).c_str());
     
@@ -1635,6 +1655,16 @@ OGRPGDataSource::ICreateLayer( const char * pszLayerName,
 
     const char *pszSI = CSLFetchNameValue( papszOptions, "SPATIAL_INDEX" );
     int bCreateSpatialIndex = ( pszSI == NULL || CSLTestBoolean(pszSI) );
+    if( eType != wkbNone &&
+        pszSI == NULL &&
+        CSLFetchBoolean( papszOptions, "UNLOGGED", FALSE ) &&
+        !(sPostgreSQLVersion.nMajor > 9 ||
+         (sPostgreSQLVersion.nMajor == 9 && sPostgreSQLVersion.nMinor >= 3)) )
+    {
+        CPLError(CE_Warning, CPLE_NotSupported,
+                 "GiST index only supported since Postgres 9.3 on unlogged table");
+        bCreateSpatialIndex = FALSE;
+    }
 
     CPLString osEscapedTableNameSingleQuote = OGRPGEscapeString(hPGConn, pszTableName);
     const char* pszEscapedTableNameSingleQuote = osEscapedTableNameSingleQuote.c_str();
@@ -2783,29 +2813,6 @@ void OGRPGDataSource::ReleaseResultSet( OGRLayer * poLayer )
 
 {
     delete poLayer;
-}
-
-/************************************************************************/
-/*                            LaunderName()                             */
-/************************************************************************/
-
-char *OGRPGDataSource::LaunderName( const char *pszSrcName )
-
-{
-    char    *pszSafeName = CPLStrdup( pszSrcName );
-
-    for( int i = 0; pszSafeName[i] != '\0'; i++ )
-    {
-        pszSafeName[i] = (char) tolower( pszSafeName[i] );
-        if( pszSafeName[i] == '\'' || pszSafeName[i] == '-' || pszSafeName[i] == '#' )
-            pszSafeName[i] = '_';
-    }
-
-    if( strcmp(pszSrcName,pszSafeName) != 0 )
-        CPLDebug("PG","LaunderName('%s') -> '%s'", 
-                 pszSrcName, pszSafeName);
-
-    return pszSafeName;
 }
 
 /************************************************************************/

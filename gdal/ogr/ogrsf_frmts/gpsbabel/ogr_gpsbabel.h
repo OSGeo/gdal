@@ -60,7 +60,8 @@ class OGRGPSBabelDataSource : public OGRDataSource
     virtual int         TestCapability( const char * );
 
     int                 Open ( const char* pszFilename,
-                               const char* pszGPSBabelDriverNameIn );
+                               const char* pszGPSBabelDriverNameIn,
+                               char** papszOpenOptions );
 
     static int          IsSpecialFile(const char* pszFilename);
     static int          IsValidDriverName(const char* pszGPSBabelDriverName);

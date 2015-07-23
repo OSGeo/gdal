@@ -188,7 +188,9 @@ public:
     int              LoadClasses( const char *pszFile = NULL );
     int              SaveClasses( const char *pszFile = NULL );
 
-    int              PrescanForSchema(int bGetExtents = TRUE, int bAnalyzeSRSPerFeature = TRUE );
+    int              PrescanForSchema(int bGetExtents = TRUE,
+                                      int bAnalyzeSRSPerFeature = TRUE,
+                                      int bOnlyDetectSRS = FALSE);
     int              PrescanForTemplate( void );
     void             ResetReading();
 

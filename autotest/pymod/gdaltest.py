@@ -829,7 +829,7 @@ class GDALTest:
 
         return 'success'
 
-    def testSetNoDataValue(self):
+    def testSetNoDataValue(self, delete = False):
         if self.testDriver() == 'fail':
             return 'skip'
 
@@ -853,7 +853,11 @@ class GDALTest:
         src_ds = None
         new_ds = None
 
-        new_ds = gdal.Open( new_filename )
+        if delete:
+            mode = gdal.GA_Update
+        else:
+            mode = gdal.GA_ReadOnly
+        new_ds = gdal.Open( new_filename, mode )
         if new_ds is None:
             post_reason( 'Failed to open dataset: ' + new_filename )
             return 'fail'
@@ -862,13 +866,28 @@ class GDALTest:
             post_reason( 'Did not get expected NoData value.' )
             return 'fail'
 
+        if delete:
+            if new_ds.GetRasterBand(1).DeleteNoDataValue() != 0:
+                post_reason( 'Did not manage to delete nodata value' )
+                return 'fail'
+
         new_ds = None
+        
+        if delete:
+            new_ds = gdal.Open (new_filename)
+            if new_ds.GetRasterBand(1).GetNoDataValue() is not None:
+                post_reason( 'Got nodata value whereas none was expected' )
+                return 'fail'
+            new_ds = None
         
         if gdal.GetConfigOption( 'CPL_DEBUG', 'OFF' ) != 'ON':
             self.driver.Delete( new_filename )
 
         return 'success'
 
+    def testSetNoDataValueAndDelete(self):
+        return self.testSetNoDataValue(delete = True)
+        
     def testSetDescription(self):
         if self.testDriver() == 'fail':
             return 'skip'
@@ -1020,14 +1039,14 @@ def geotransform_equals(gt1, gt2, gt_epsilon):
 # If GDAL_DOWNLOAD_TEST_DATA is not defined, the function fails
 # If GDAL_DOWNLOAD_TEST_DATA is defined, 'url' is downloaded  as 'filename' in 'tmp/cache/'
 
-def download_file(url, filename, download_size = -1, force_download = False, max_download_duration = None):
+def download_file(url, filename, download_size = -1, force_download = False, max_download_duration = None, base_dir = 'tmp/cache'):
     
-    if filename.startswith('tmp/cache/'):
-        filename = filename[len('tmp/cache/'):]
+    if filename.startswith(base_dir + '/'):
+        filename = filename[len(base_dir + '/'):]
 
     global count_skipped_tests_download
     try:
-        os.stat( 'tmp/cache/' + filename )
+        os.stat( base_dir + '/' + filename )
         return True
     except:
         if 'GDAL_DOWNLOAD_TEST_DATA' in os.environ or force_download:
@@ -1058,7 +1077,11 @@ def download_file(url, filename, download_size = -1, force_download = False, max
                 chunk_size = 1024
                 if download_size >= 0 and len(val) + chunk_size > download_size:
                     chunk_size = download_size - len(val)
-                chunk = handle.read(chunk_size)
+                try:
+                    chunk = handle.read(chunk_size)
+                except:
+                    print('Did not get expected data length.')
+                    return False
                 if len(chunk) < chunk_size:
                     if download_size < 0:
                         break
@@ -1083,12 +1106,12 @@ def download_file(url, filename, download_size = -1, force_download = False, max
                     return False
 
             try:
-                os.stat( 'tmp/cache' )
+                os.stat( base_dir )
             except:
-                os.mkdir('tmp/cache')
+                os.mkdir(base_dir)
 
             try:
-                open( 'tmp/cache/' + filename, 'wb').write(val)
+                open( base_dir + '/' + filename, 'wb').write(val)
                 return True
             except:
                 print('Cannot write %s' % (filename))

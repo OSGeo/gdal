@@ -63,6 +63,9 @@ void CPL_DLL OGRPGCommonAppendFieldValue(CPLString& osCommand,
                                  OGRPGCommonEscapeStringCbk pfnEscapeString,
                                  void* userdata);
 
+char CPL_DLL *OGRPGCommonLaunderName( const char *pszSrcName,
+                                      const char* pszDebugPrefix = "OGR" );
+
 /************************************************************************/
 /*                        OGRPGDumpGeomFieldDefn                        */
 /************************************************************************/
@@ -179,8 +182,7 @@ class OGRPGDumpDataSource : public OGRDataSource
                         OGRPGDumpDataSource(const char* pszName,
                                             char** papszOptions);
                         ~OGRPGDumpDataSource();
-                        
-    char               *LaunderName( const char *pszSrcName );
+
     int                 Log(const char* pszStr, int bAddSemiColumn = TRUE);
 
     virtual const char  *GetName() { return pszName; }

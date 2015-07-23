@@ -1929,18 +1929,16 @@ void OGROSMDataSource::NotifyWay (OSMWay* psWay)
                     psWay->sInfo.ts.nTimeStamp;
             else
             {
-                int year, month, day, hour, minute, TZ;
-                float second;
-                if (OGRParseXMLDateTime(psWay->sInfo.ts.pszTimeStamp, &year, &month, &day,
-                                        &hour, &minute, &second, &TZ))
+                OGRField sField;
+                if (OGRParseXMLDateTime(psWay->sInfo.ts.pszTimeStamp, &sField))
                 {
                     struct tm brokendown;
-                    brokendown.tm_year = year - 1900;
-                    brokendown.tm_mon = month - 1;
-                    brokendown.tm_mday = day;
-                    brokendown.tm_hour = hour;
-                    brokendown.tm_min = minute;
-                    brokendown.tm_sec = (int)(second + .5);
+                    brokendown.tm_year = sField.Date.Year - 1900;
+                    brokendown.tm_mon = sField.Date.Month - 1;
+                    brokendown.tm_mday = sField.Date.Day;
+                    brokendown.tm_hour = sField.Date.Hour;
+                    brokendown.tm_min = sField.Date.Minute;
+                    brokendown.tm_sec = (int)(sField.Date.Second + .5);
                     psWayFeaturePairs->sInfo.ts.nTimeStamp =
                         CPLYMDHMSToUnixTime(&brokendown);
                 }
@@ -2663,7 +2661,7 @@ static void OGROSMNotifyBounds( double dfXMin, double dfYMin,
 /*                                Open()                                */
 /************************************************************************/
 
-int OGROSMDataSource::Open( const char * pszFilename )
+int OGROSMDataSource::Open( const char * pszFilename, char** papszOpenOptions )
 
 {
     pszName = CPLStrdup( pszFilename );
@@ -2677,16 +2675,23 @@ int OGROSMDataSource::Open( const char * pszFilename )
     if( psParser == NULL )
         return FALSE;
 
+    if( CSLFetchBoolean(papszOpenOptions, "INTERLEAVED_READING", FALSE) )
+        bInterleavedReading = TRUE;
+
     /* The following 4 config options are only useful for debugging */
     bIndexPoints = CSLTestBoolean(CPLGetConfigOption("OSM_INDEX_POINTS", "YES"));
     bUsePointsIndex = CSLTestBoolean(CPLGetConfigOption("OSM_USE_POINTS_INDEX", "YES"));
     bIndexWays = CSLTestBoolean(CPLGetConfigOption("OSM_INDEX_WAYS", "YES"));
     bUseWaysIndex = CSLTestBoolean(CPLGetConfigOption("OSM_USE_WAYS_INDEX", "YES"));
 
-    bCustomIndexing = CSLTestBoolean(CPLGetConfigOption("OSM_USE_CUSTOM_INDEXING", "YES"));
+    bCustomIndexing = CSLTestBoolean(CSLFetchNameValueDef(
+            papszOpenOptions, "USE_CUSTOM_INDEXING",
+                        CPLGetConfigOption("OSM_USE_CUSTOM_INDEXING", "YES")));
     if( !bCustomIndexing )
         CPLDebug("OSM", "Using SQLite indexing for points");
-    bCompressNodes = CSLTestBoolean(CPLGetConfigOption("OSM_COMPRESS_NODES", "NO"));
+    bCompressNodes = CSLTestBoolean(CSLFetchNameValueDef(
+            papszOpenOptions, "COMPRESS_NODES",
+                        CPLGetConfigOption("OSM_COMPRESS_NODES", "NO")));
     if( bCompressNodes )
         CPLDebug("OSM", "Using compression for nodes DB");
 
@@ -2708,7 +2713,7 @@ int OGROSMDataSource::Open( const char * pszFilename )
     papoLayers[IDX_LYR_OTHER_RELATIONS] = new OGROSMLayer(this, IDX_LYR_OTHER_RELATIONS, "other_relations");
     papoLayers[IDX_LYR_OTHER_RELATIONS]->GetLayerDefn()->SetGeomType(wkbGeometryCollection);
 
-    if( !ParseConf() )
+    if( !ParseConf(papszOpenOptions) )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Could not parse configuration file for OSM import");
@@ -2750,7 +2755,8 @@ int OGROSMDataSource::Open( const char * pszFilename )
         return FALSE;
     }
 
-    nMaxSizeForInMemoryDBInMB = atoi(CPLGetConfigOption("OSM_MAX_TMPFILE_SIZE", "100"));
+    nMaxSizeForInMemoryDBInMB = atoi(CSLFetchNameValueDef(papszOpenOptions,
+        "MAX_TMPFILE_SIZE", CPLGetConfigOption("OSM_MAX_TMPFILE_SIZE", "100")));
     GIntBig nSize = (GIntBig)nMaxSizeForInMemoryDBInMB * 1024 * 1024;
     if (nSize < 0 || (GIntBig)(size_t)nSize != nSize)
     {
@@ -3247,9 +3253,11 @@ void OGROSMDataSource::AddComputedAttributes(int iCurLayer,
 /*                           ParseConf()                                */
 /************************************************************************/
 
-int OGROSMDataSource::ParseConf()
+int OGROSMDataSource::ParseConf(char** papszOpenOptions)
 {
-    const char *pszFilename = CPLGetConfigOption("OSM_CONFIG_FILE", NULL);
+    const char *pszFilename = 
+        CSLFetchNameValueDef(papszOpenOptions, "CONFIG_FILE",
+                             CPLGetConfigOption("OSM_CONFIG_FILE", NULL));
     if( pszFilename == NULL )
         pszFilename = CPLFindFile( "gdal", "osmconf.ini" );
     if( pszFilename == NULL )

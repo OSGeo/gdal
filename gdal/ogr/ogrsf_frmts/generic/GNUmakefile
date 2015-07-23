@@ -156,6 +156,7 @@ endif
 
 ifeq ($(CURL_SETTING),yes)
 CXXFLAGS :=	$(CXXFLAGS) -DWFS_ENABLED
+CXXFLAGS :=	$(CXXFLAGS) -DCSW_ENABLED
 endif
 
 ifeq ($(GEOMEDIA_SETTING),yes)
@@ -212,6 +213,10 @@ endif
 
 ifeq ($(CURL_SETTING),yes)
 CXXFLAGS :=	$(CXXFLAGS) -DPLSCENES_ENABLED
+endif
+
+ifeq ($(HAVE_MONGODB),yes)
+CXXFLAGS :=	$(CXXFLAGS) -DMONGODB_ENABLED
 endif
 
 endif

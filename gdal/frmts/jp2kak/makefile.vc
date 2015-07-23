@@ -23,7 +23,7 @@ KAK_APPS_OBJ =	\
 	     $(OBJ_PREFIX)\compress\$(OBJ_CONFIG)\jpx.obj
 
 OBJ	=	jp2kakdataset.obj
-EXTRAFLAGS = 	$(KAKINC) /DKDU_PENTIUM_MSVC /EHsc
+EXTRAFLAGS = 	$(KAKINC) /DKDU_PENTIUM_MSVC /EHsc $(KAKFLAGS)
 
 default:	$(OBJ) kakinstall
 	xcopy /D  /Y *.obj ..\o

@@ -885,6 +885,79 @@ def test_gdal_translate_31():
     return 'success'
 
 ###############################################################################
+# Test subsetting a file with a RPC
+
+def test_gdal_translate_32():
+    if test_cli_utilities.get_gdal_translate_path() is None:
+        return 'skip'
+
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' ../gcore/data/byte_rpc.tif tmp/test_gdal_translate_32.tif -srcwin 1 2 13 14 -outsize 150% 300%')
+    ds = gdal.Open('tmp/test_gdal_translate_32.tif')
+    md = ds.GetMetadata('RPC')
+    if abs(float(md['LINE_OFF']) - 47496) > 1e-5 or \
+       abs(float(md['LINE_SCALE']) - 47502) > 1e-5 or \
+       abs(float(md['SAMP_OFF']) - 19676.6923076923) > 1e-5 or \
+       abs(float(md['SAMP_SCALE']) - 19678.1538461538) > 1e-5:
+           gdaltest.post_reason('fail')
+           print(md)
+           return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test -outsize option in auto mode
+
+def test_gdal_translate_33():
+    if test_cli_utilities.get_gdal_translate_path() is None:
+        return 'skip'
+
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -outsize 100 0 ../gdrivers/data/small_world.tif tmp/test_gdal_translate_33.tif')
+
+    ds = gdal.Open('tmp/test_gdal_translate_33.tif')
+    if ds.RasterYSize != 50:
+        gdaltest.post_reason('fail')
+        print(ds.RasterYSize)
+        return 'fail'
+    ds = None
+
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -outsize 0 100 ../gdrivers/data/small_world.tif tmp/test_gdal_translate_33.tif')
+
+    ds = gdal.Open('tmp/test_gdal_translate_33.tif')
+    if ds.RasterXSize != 200:
+        gdaltest.post_reason('fail')
+        print(ds.RasterYSize)
+        return 'fail'
+    ds = None
+
+    os.unlink('tmp/test_gdal_translate_33.tif')
+
+    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_translate_path() + ' -outsize 0 0 ../gdrivers/data/small_world.tif tmp/test_gdal_translate_33.tif')
+    if err.find('-outsize 0 0 invalid') < 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test NBITS is preserved
+
+def test_gdal_translate_34():
+    if test_cli_utilities.get_gdal_translate_path() is None:
+        return 'skip'
+
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' ../gcore/data/oddsize1bit.tif tmp/test_gdal_translate_34.vrt -of VRT -mo FOO=BAR')
+
+    ds = gdal.Open('tmp/test_gdal_translate_34.vrt')
+    if ds.GetRasterBand(1).GetMetadataItem('NBITS', 'IMAGE_STRUCTURE') != '1':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    os.unlink('tmp/test_gdal_translate_34.vrt')
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def test_gdal_translate_cleanup():
@@ -987,6 +1060,10 @@ def test_gdal_translate_cleanup():
         os.remove('tmp/test_gdal_translate_31.tif')
     except:
         pass
+    try:
+        os.remove('tmp/test_gdal_translate_32.tif')
+    except:
+        pass
     return 'success'
 
 gdaltest_list = [
@@ -1021,6 +1098,9 @@ gdaltest_list = [
     test_gdal_translate_29,
     test_gdal_translate_30,
     test_gdal_translate_31,
+    test_gdal_translate_32,
+    test_gdal_translate_33,
+    test_gdal_translate_34,
     test_gdal_translate_cleanup
     ]
 

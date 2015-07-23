@@ -39,7 +39,7 @@
 #include "cpl_string.h"
 #include "gdalwarpkernel_opencl.h"
 #include "cpl_atomic_ops.h"
-#include "cpl_multiproc.h"
+#include "cpl_worker_thread_pool.h"
 #include <limits>
 
 CPL_CVSID("$Id$");
@@ -130,6 +130,7 @@ static CPLErr GWKGeneralCase( GDALWarpKernel * );
 static CPLErr GWKNearestNoMasksOrDstDensityOnlyByte( GDALWarpKernel *poWK );
 static CPLErr GWKBilinearNoMasksOrDstDensityOnlyByte( GDALWarpKernel *poWK );
 static CPLErr GWKCubicNoMasksOrDstDensityOnlyByte( GDALWarpKernel *poWK );
+static CPLErr GWKCubicNoMasksOrDstDensityOnlyFloat( GDALWarpKernel *poWK );
 #ifdef INSTANCIATE_FLOAT64_SSE2_IMPL
 static CPLErr GWKCubicNoMasksOrDstDensityOnlyDouble( GDALWarpKernel *poWK );
 #endif
@@ -137,6 +138,7 @@ static CPLErr GWKCubicSplineNoMasksOrDstDensityOnlyByte( GDALWarpKernel *poWK );
 static CPLErr GWKNearestByte( GDALWarpKernel *poWK );
 static CPLErr GWKNearestNoMasksOrDstDensityOnlyShort( GDALWarpKernel *poWK );
 static CPLErr GWKBilinearNoMasksOrDstDensityOnlyShort( GDALWarpKernel *poWK );
+static CPLErr GWKBilinearNoMasksOrDstDensityOnlyFloat( GDALWarpKernel *poWK );
 #ifdef INSTANCIATE_FLOAT64_SSE2_IMPL
 static CPLErr GWKBilinearNoMasksOrDstDensityOnlyDouble( GDALWarpKernel *poWK );
 #endif
@@ -158,7 +160,6 @@ typedef struct _GWKJobStruct GWKJobStruct;
 
 struct _GWKJobStruct
 {
-    CPLJoinableThread *hThread;
     GDALWarpKernel *poWK;
     int             iYMin;
     int             iYMax;
@@ -168,6 +169,10 @@ struct _GWKJobStruct
     CPLMutex       *hCondMutex;
     int           (*pfnProgress)(GWKJobStruct* psJob);
     void           *pTransformerArg;
+
+    // Just used during thread initialization phase
+    GDALTransformerFunc pfnTransformerInit;
+    void           *pTransformerArgInit;
 } ;
 
 /************************************************************************/
@@ -224,13 +229,155 @@ static CPLErr GWKGenericMonoThread( GDALWarpKernel *poWK,
     sThreadJob.pbStop = &bStop;
     sThreadJob.hCond = NULL;
     sThreadJob.hCondMutex = NULL;
-    sThreadJob.hThread = NULL;
     sThreadJob.pfnProgress = GWKProgressMonoThread;
     sThreadJob.pTransformerArg = poWK->pTransformerArg;
 
     pfnFunc(&sThreadJob);
 
     return !bStop ? CE_None : CE_Failure;
+}
+
+/************************************************************************/
+/*                     GWKThreadInitTransformer()                       */
+/************************************************************************/
+
+static void GWKThreadInitTransformer(void* pData)
+{
+    GWKJobStruct* psJob = (GWKJobStruct*)pData;
+    if( psJob->pTransformerArg == NULL )
+        psJob->pTransformerArg = GDALCloneTransformer(psJob->pTransformerArgInit);
+    if( psJob->pTransformerArg != NULL )
+    {
+        // In case of lazy opening (for example RPCDEM), do a dummy transformation
+        // to be sure that the DEM is really opened with the context of this thread.
+        double dfX = 0.5, dfY = 0.5, dfZ = 0.0;
+        int bSuccess = FALSE;
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        psJob->pfnTransformerInit(psJob->pTransformerArg, TRUE, 1, 
+                                  &dfX, &dfY, &dfZ, &bSuccess );
+        CPLPopErrorHandler();
+    }
+}
+
+/************************************************************************/
+/*                          GWKThreadsCreate()                          */
+/************************************************************************/
+
+typedef struct
+{
+    CPLWorkerThreadPool* poThreadPool;
+    GWKJobStruct* pasThreadJob;
+    CPLCond* hCond;
+    CPLMutex* hCondMutex;
+} GWKThreadData;
+
+void* GWKThreadsCreate(char** papszWarpOptions,
+                       GDALTransformerFunc pfnTransformer, void* pTransformerArg)
+{
+    int nThreads;
+    const char* pszWarpThreads = CSLFetchNameValue(papszWarpOptions, "NUM_THREADS");
+    if (pszWarpThreads == NULL)
+        pszWarpThreads = CPLGetConfigOption("GDAL_NUM_THREADS", "1");
+    if (EQUAL(pszWarpThreads, "ALL_CPUS"))
+        nThreads = CPLGetNumCPUs();
+    else
+        nThreads = atoi(pszWarpThreads);
+    if( nThreads <= 1 )
+        nThreads = 0;
+    if (nThreads > 128)
+        nThreads = 128;
+    
+    GWKThreadData* psThreadData = (GWKThreadData*)CPLCalloc(1,sizeof(GWKThreadData));
+    
+    CPLCond* hCond = NULL;
+    if( nThreads )
+        hCond = CPLCreateCond();
+    if( nThreads && hCond )
+    {
+/* -------------------------------------------------------------------- */
+/*      Duplicate pTransformerArg per thread.                           */
+/* -------------------------------------------------------------------- */
+        int i;
+        int bTransformerCloningSuccess = TRUE;
+        
+        psThreadData->pasThreadJob =
+                (GWKJobStruct*)CPLCalloc(sizeof(GWKJobStruct), nThreads);
+        psThreadData->hCond = hCond;
+        psThreadData->hCondMutex = CPLCreateMutex();
+        CPLReleaseMutex(psThreadData->hCondMutex);
+
+        std::vector<void*> apInitData;
+        for(i=0;i<nThreads;i++)
+        {
+            psThreadData->pasThreadJob[i].hCond = psThreadData->hCond;
+            psThreadData->pasThreadJob[i].hCondMutex = psThreadData->hCondMutex;
+            psThreadData->pasThreadJob[i].pfnTransformerInit = pfnTransformer;
+            psThreadData->pasThreadJob[i].pTransformerArgInit = pTransformerArg;
+            if( i == 0 )
+                psThreadData->pasThreadJob[i].pTransformerArg = pTransformerArg;
+            else
+                psThreadData->pasThreadJob[i].pTransformerArg = NULL;
+            apInitData.push_back(&(psThreadData->pasThreadJob[i]));
+        }
+
+        psThreadData->poThreadPool = new CPLWorkerThreadPool();
+        psThreadData->poThreadPool->Setup(nThreads,
+                                          GWKThreadInitTransformer,
+                                          &apInitData[0]);
+
+        for(i=1;i<nThreads;i++)
+        {
+            if( psThreadData->pasThreadJob[i].pTransformerArg == NULL )
+            {
+                CPLDebug("WARP", "Cannot deserialize transformer");
+                bTransformerCloningSuccess = FALSE;
+                break;
+            }
+        }
+
+        if (!bTransformerCloningSuccess)
+        {
+            for(i=1;i<nThreads;i++)
+            {
+                if( psThreadData->pasThreadJob[i].pTransformerArg )
+                    GDALDestroyTransformer(psThreadData->pasThreadJob[i].pTransformerArg);
+            }
+            CPLFree(psThreadData->pasThreadJob);
+            psThreadData->pasThreadJob = NULL;
+            delete psThreadData->poThreadPool;
+            psThreadData->poThreadPool = NULL;
+
+            CPLDebug("WARP", "Cannot duplicate transformer function. "
+                     "Falling back to mono-thread computation");
+        }
+    }
+
+    return psThreadData;
+}
+
+/************************************************************************/
+/*                             GWKThreadsEnd()                          */
+/************************************************************************/
+
+void GWKThreadsEnd(void* psThreadDataIn)
+{
+    GWKThreadData* psThreadData = (GWKThreadData*)psThreadDataIn;
+    if( psThreadData->poThreadPool )
+    {
+        int nThreads = psThreadData->poThreadPool->GetThreadCount();
+        for(int i=1;i<nThreads;i++)
+        {
+            if( psThreadData->pasThreadJob[i].pTransformerArg )
+                GDALDestroyTransformer(psThreadData->pasThreadJob[i].pTransformerArg);
+        }
+        CPLFree(psThreadData->pasThreadJob);
+        delete psThreadData->poThreadPool;
+    }
+    if( psThreadData->hCond )
+        CPLDestroyCond(psThreadData->hCond);
+    if( psThreadData->hCondMutex )
+        CPLDestroyMutex(psThreadData->hCondMutex);
+    CPLFree(psThreadData);
 }
 
 /************************************************************************/
@@ -257,105 +404,50 @@ static CPLErr GWKRun( GDALWarpKernel *poWK,
         CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
         return CE_Failure;
     }
-
-    const char* pszWarpThreads = CSLFetchNameValue(poWK->papszWarpOptions, "NUM_THREADS");
-    int nThreads;
-    if (pszWarpThreads == NULL)
-        pszWarpThreads = CPLGetConfigOption("GDAL_NUM_THREADS", "1");
-    if (EQUAL(pszWarpThreads, "ALL_CPUS"))
-        nThreads = CPLGetNumCPUs();
-    else
-        nThreads = atoi(pszWarpThreads);
-    if (nThreads > 128)
-        nThreads = 128;
-    if (nThreads >= nDstYSize / 2)
-        nThreads = nDstYSize / 2;
-
-    if (nThreads <= 1)
+    
+    GWKThreadData* psThreadData = (GWKThreadData*)poWK->psThreadData;
+    if( psThreadData == NULL || psThreadData->poThreadPool == NULL )
     {
         return GWKGenericMonoThread(poWK, pfnFunc);
     }
-    else
+
+    int nThreads = psThreadData->poThreadPool->GetThreadCount();
+    if (nThreads >= nDstYSize / 2)
+        nThreads = nDstYSize / 2;
+
+    CPLDebug("WARP", "Using %d threads", nThreads);
+
+    volatile int bStop = FALSE;
+    volatile int nCounter = 0;
+
+    CPLAcquireMutex(psThreadData->hCondMutex, 1000);
+    
+/* -------------------------------------------------------------------- */
+/*      Submit jobs                                                     */
+/* -------------------------------------------------------------------- */
+    for(int i=0;i<nThreads;i++)
     {
-        GWKJobStruct* pasThreadJob =
-            (GWKJobStruct*)CPLCalloc(sizeof(GWKJobStruct), nThreads);
-
-/* -------------------------------------------------------------------- */
-/*      Duplicate pTransformerArg per thread.                           */
-/* -------------------------------------------------------------------- */
-        int i;
-        int bTransformerCloningSuccess = TRUE;
-
-        for(i=0;i<nThreads;i++)
-        {
-            pasThreadJob[i].pTransformerArg = GDALCloneTransformer(poWK->pTransformerArg);
-            if( pasThreadJob[i].pTransformerArg == NULL )
-            {
-                CPLDebug("WARP", "Cannot deserialize transformer");
-                bTransformerCloningSuccess = FALSE;
-                break;
-            }
-        }
-
-        if (!bTransformerCloningSuccess)
-        {
-            for(i=0;i<nThreads;i++)
-            {
-                if( pasThreadJob[i].pTransformerArg )
-                    GDALDestroyTransformer(pasThreadJob[i].pTransformerArg);
-            }
-            CPLFree(pasThreadJob);
-
-            CPLDebug("WARP", "Cannot duplicate transformer function. "
-                     "Falling back to mono-thread computation");
-            return GWKGenericMonoThread(poWK, pfnFunc);
-        }
-
-        CPLCond* hCond = CPLCreateCond();
-        if (hCond == NULL)
-        {
-            for(i=0;i<nThreads;i++)
-            {
-                if( pasThreadJob[i].pTransformerArg )
-                    GDALDestroyTransformer(pasThreadJob[i].pTransformerArg);
-            }
-            CPLFree(pasThreadJob);
-
-            CPLDebug("WARP", "Multithreading disabled. "
-                     "Falling back to mono-thread computation");
-            return GWKGenericMonoThread(poWK, pfnFunc);
-        }
-
-        CPLDebug("WARP", "Using %d threads", nThreads);
-
-        CPLMutex* hCondMutex = CPLCreateMutex(); /* and take implicitely the mutex */
-
-        volatile int bStop = FALSE;
-        volatile int nCounter = 0;
-
-/* -------------------------------------------------------------------- */
-/*      Lannch worker threads                                           */
-/* -------------------------------------------------------------------- */
-        for(i=0;i<nThreads;i++)
-        {
-            pasThreadJob[i].poWK = poWK;
-            pasThreadJob[i].pnCounter = &nCounter;
-            pasThreadJob[i].iYMin = (int)(((GIntBig)i) * nDstYSize / nThreads);
-            pasThreadJob[i].iYMax = (int)(((GIntBig)(i + 1)) * nDstYSize / nThreads);
-            pasThreadJob[i].pbStop = &bStop;
-            pasThreadJob[i].hCond = hCond;
-            pasThreadJob[i].hCondMutex = hCondMutex;
-            pasThreadJob[i].pfnProgress = GWKProgressThread;
-            pasThreadJob[i].hThread = CPLCreateJoinableThread( pfnFunc,
-                                                  (void*) &pasThreadJob[i] );
-        }
+        psThreadData->pasThreadJob[i].poWK = poWK;
+        psThreadData->pasThreadJob[i].pnCounter = &nCounter;
+        psThreadData->pasThreadJob[i].iYMin = (int)(((GIntBig)i) * nDstYSize / nThreads);
+        psThreadData->pasThreadJob[i].iYMax = (int)(((GIntBig)(i + 1)) * nDstYSize / nThreads);
+        psThreadData->pasThreadJob[i].pbStop = &bStop;
+        if( poWK->pfnProgress != GDALDummyProgress )
+            psThreadData->pasThreadJob[i].pfnProgress = GWKProgressThread;
+        else
+            psThreadData->pasThreadJob[i].pfnProgress = NULL;
+        psThreadData->poThreadPool->SubmitJob( pfnFunc,
+                                   (void*) &psThreadData->pasThreadJob[i] );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Report progress.                                                */
 /* -------------------------------------------------------------------- */
+    if( poWK->pfnProgress != GDALDummyProgress )
+    {
         while(nCounter < nDstYSize)
         {
-            CPLCondWait(hCond, hCondMutex);
+            CPLCondWait(psThreadData->hCond, psThreadData->hCondMutex);
 
             if( !poWK->pfnProgress( poWK->dfProgressBase + poWK->dfProgressScale *
                                     (nCounter / (double) nDstYSize),
@@ -366,26 +458,18 @@ static CPLErr GWKRun( GDALWarpKernel *poWK,
                 break;
             }
         }
-
-        /* Release mutex before joining threads, otherwise they will dead-lock */
-        /* forever in GWKProgressThread() */
-        CPLReleaseMutex(hCondMutex);
-
-/* -------------------------------------------------------------------- */
-/*      Wait for all threads to complete and finish.                    */
-/* -------------------------------------------------------------------- */
-        for(i=0;i<nThreads;i++)
-        {
-            CPLJoinThread(pasThreadJob[i].hThread);
-            GDALDestroyTransformer(pasThreadJob[i].pTransformerArg);
-        }
-
-        CPLFree(pasThreadJob);
-        CPLDestroyCond(hCond);
-        CPLDestroyMutex(hCondMutex);
-
-        return !bStop ? CE_None : CE_Failure;
     }
+
+    /* Release mutex before joining threads, otherwise they will dead-lock */
+    /* forever in GWKProgressThread() */
+    CPLReleaseMutex(psThreadData->hCondMutex);
+
+/* -------------------------------------------------------------------- */
+/*      Wait for all jobs to complete.                                  */
+/* -------------------------------------------------------------------- */
+    psThreadData->poThreadPool->WaitCompletion();
+
+    return !bStop ? CE_None : CE_Failure;
 }
 
 /************************************************************************/
@@ -848,6 +932,7 @@ GDALWarpKernel::GDALWarpKernel()
     pfnTransformer = NULL;
     pTransformerArg = NULL;
     papszWarpOptions = NULL;
+    psThreadData = NULL;
 }
 
 /************************************************************************/
@@ -1049,6 +1134,16 @@ CPLErr GDALWarpKernel::PerformWarp()
         && eResample == GRA_NearestNeighbour )
         return GWKNearestFloat( this );
 
+    if( eWorkingDataType == GDT_Float32
+        && eResample == GRA_Bilinear
+        && bNoMasksOrDstDensityOnly )
+        return GWKBilinearNoMasksOrDstDensityOnlyFloat( this );
+
+    if( eWorkingDataType == GDT_Float32
+        && eResample == GRA_Cubic
+        && bNoMasksOrDstDensityOnly )
+        return GWKCubicNoMasksOrDstDensityOnlyFloat( this );
+
 #ifdef INSTANCIATE_FLOAT64_SSE2_IMPL
     if( eWorkingDataType == GDT_Float64
         && eResample == GRA_Bilinear
@@ -1145,6 +1240,11 @@ static CPL_INLINE T GWKRoundValueT(double dfValue)
                                                  (T)(dfValue + 0.5);
 }
 
+template<> float GWKRoundValueT<float>(double dfValue)
+{
+    return (float)dfValue;
+}
+
 #ifdef notused
 template<> double GWKRoundValueT<double>(double dfValue)
 {
@@ -1165,6 +1265,11 @@ static CPL_INLINE T GWKClampValueT(double dfValue)
         return std::numeric_limits<T>::max();
     else
         return GWKRoundValueT<T>(dfValue);
+}
+
+template<> float GWKClampValueT<float>(double dfValue)
+{
+    return (float)dfValue;
 }
 
 #ifdef notused
@@ -3375,6 +3480,18 @@ int GWKResampleNoMasksT<GUInt16>( GDALWarpKernel *poWK, int iBand,
     return GWKResampleNoMasks_SSE2_T(poWK, iBand, dfSrcX, dfSrcY, pValue, padfWeight);
 }
 
+/************************************************************************/
+/*                     GWKResampleNoMasksT<float>()                     */
+/************************************************************************/
+
+template<>
+int GWKResampleNoMasksT<float>( GDALWarpKernel *poWK, int iBand,
+                                 double dfSrcX, double dfSrcY,
+                                 float *pValue, double *padfWeight )
+{
+    return GWKResampleNoMasks_SSE2_T(poWK, iBand, dfSrcX, dfSrcY, pValue, padfWeight);
+}
+
 #ifdef INSTANCIATE_FLOAT64_SSE2_IMPL
 
 /************************************************************************/
@@ -3392,6 +3509,53 @@ int GWKResampleNoMasksT<double>( GDALWarpKernel *poWK, int iBand,
 #endif /* INSTANCIATE_FLOAT64_SSE2_IMPL */
 
 #endif /* defined(__x86_64) || defined(_M_X64) */
+
+/************************************************************************/
+/*                     GWKRoundSourceCoordinates()                      */
+/************************************************************************/
+
+static void GWKRoundSourceCoordinates(int nDstXSize,
+                                      double* padfX,
+                                      double* padfY,
+                                      double* padfZ,
+                                      int* pabSuccess,
+                                      double dfSrcCoordPrecision,
+                                      double dfErrorThreshold,
+                                      GDALTransformerFunc pfnTransformer,
+                                      void* pTransformerArg,
+                                      double dfDstXOff,
+                                      double dfDstY)
+{
+    double dfPct = 0.8;
+    if( dfErrorThreshold > 0 && dfSrcCoordPrecision / dfErrorThreshold >= 10.0 )
+    {
+        dfPct = 1.0 - 2 * 1.0 / (dfSrcCoordPrecision / dfErrorThreshold);
+    }
+    double dfExactTransformThreshold = 0.5 * dfPct * dfSrcCoordPrecision;
+
+    for( int iDstX = 0; iDstX < nDstXSize; iDstX++ )
+    {
+        double dfXBefore = padfX[iDstX], dfYBefore = padfY[iDstX];
+        padfX[iDstX] = floor(padfX[iDstX] / dfSrcCoordPrecision + 0.5) * dfSrcCoordPrecision;
+        padfY[iDstX] = floor(padfY[iDstX] / dfSrcCoordPrecision + 0.5) * dfSrcCoordPrecision;
+
+        /* If we are in an uncertainty zone, go to non approximated transformation */
+        /* Due to the 80% of half-precision threshold, dfSrcCoordPrecision must */
+        /* be at least 10 times greater than the approximation error */
+        if( fabs(dfXBefore - padfX[iDstX]) > dfExactTransformThreshold ||
+            fabs(dfYBefore - padfY[iDstX]) > dfExactTransformThreshold )
+        {
+            padfX[iDstX] = iDstX + dfDstXOff;
+            padfY[iDstX] = dfDstY;
+            padfZ[iDstX] = 0.0;
+            pfnTransformer( pTransformerArg, TRUE, 1, 
+                            padfX + iDstX, padfY + iDstX,
+                            padfZ + iDstX, pabSuccess + iDstX );
+            padfX[iDstX] = floor(padfX[iDstX] / dfSrcCoordPrecision + 0.5) * dfSrcCoordPrecision;
+            padfY[iDstX] = floor(padfY[iDstX] / dfSrcCoordPrecision + 0.5) * dfSrcCoordPrecision;
+        }
+    }
+}
 
 /************************************************************************/
 /*                           GWKOpenCLCase()                            */
@@ -3536,12 +3700,18 @@ static CPLErr GWKOpenCLCase( GDALWarpKernel *poWK )
     /* -------------------------------------------------------------------- */
     double *padfX, *padfY, *padfZ;
     int    *pabSuccess;
+    double dfSrcCoordPrecision;
+    double dfErrorThreshold;
     
     padfX = (double *) CPLMalloc(sizeof(double) * nDstXSize);
     padfY = (double *) CPLMalloc(sizeof(double) * nDstXSize);
     padfZ = (double *) CPLMalloc(sizeof(double) * nDstXSize);
     pabSuccess = (int *) CPLMalloc(sizeof(int) * nDstXSize);
-    
+    dfSrcCoordPrecision = CPLAtof(
+        CSLFetchNameValueDef(poWK->papszWarpOptions, "SRC_COORD_PRECISION", "0"));
+    dfErrorThreshold = CPLAtof(
+        CSLFetchNameValueDef(poWK->papszWarpOptions, "ERROR_THRESHOLD", "0"));
+
     /* ==================================================================== */
     /*      Loop over output lines.                                         */
     /* ==================================================================== */
@@ -3565,7 +3735,17 @@ static CPLErr GWKOpenCLCase( GDALWarpKernel *poWK )
         /* ---------------------------------------------------------------- */
         poWK->pfnTransformer( poWK->pTransformerArg, TRUE, nDstXSize, 
                               padfX, padfY, padfZ, pabSuccess );
-        
+        if( dfSrcCoordPrecision > 0.0 )
+        {
+            GWKRoundSourceCoordinates(nDstXSize, padfX, padfY, padfZ, pabSuccess,
+                                      dfSrcCoordPrecision,
+                                      dfErrorThreshold,
+                                      poWK->pfnTransformer,
+                                      poWK->pTransformerArg,
+                                      0.5 + nDstXOff,
+                                      iDstY + 0.5 + nDstYOff);
+        }
+
         err = GDALWarpKernelOpenCL_setCoordRow(warper, padfX, padfY,
                                                nSrcXOff, nSrcYOff,
                                                pabSuccess, iDstY);
@@ -3798,6 +3978,10 @@ static void GWKGeneralCaseThread( void* pData)
     {
         psWrkStruct = GWKResampleCreateWrkStruct(poWK);
     }
+    double dfSrcCoordPrecision = CPLAtof(
+        CSLFetchNameValueDef(poWK->papszWarpOptions, "SRC_COORD_PRECISION", "0"));
+    double dfErrorThreshold = CPLAtof(
+        CSLFetchNameValueDef(poWK->papszWarpOptions, "ERROR_THRESHOLD", "0"));
 
 /* ==================================================================== */
 /*      Loop over output lines.                                         */
@@ -3822,6 +4006,16 @@ static void GWKGeneralCaseThread( void* pData)
 /* -------------------------------------------------------------------- */
         poWK->pfnTransformer( psJob->pTransformerArg, TRUE, nDstXSize,
                               padfX, padfY, padfZ, pabSuccess );
+        if( dfSrcCoordPrecision > 0.0 )
+        {
+            GWKRoundSourceCoordinates(nDstXSize, padfX, padfY, padfZ, pabSuccess,
+                                      dfSrcCoordPrecision,
+                                      dfErrorThreshold,
+                                      poWK->pfnTransformer,
+                                      psJob->pTransformerArg,
+                                      0.5 + poWK->nDstXOff,
+                                      iDstY + 0.5 + poWK->nDstYOff);
+        }
 
 /* ==================================================================== */
 /*      Loop over pixels in output scanline.                            */
@@ -3939,7 +4133,7 @@ static void GWKGeneralCaseThread( void* pData)
 /* -------------------------------------------------------------------- */
 /*      Report progress to the user, and optionally cancel out.         */
 /* -------------------------------------------------------------------- */
-        if (psJob->pfnProgress(psJob))
+        if (psJob->pfnProgress && psJob->pfnProgress(psJob))
             break;
     }
 
@@ -3985,6 +4179,10 @@ static void GWKResampleNoMasksOrDstDensityOnlyThreadInternal( void* pData )
 
     int     nXRadius = poWK->nXRadius;
     double  *padfWeight = (double *)CPLCalloc( 1 + nXRadius * 2, sizeof(double) );
+    double dfSrcCoordPrecision = CPLAtof(
+        CSLFetchNameValueDef(poWK->papszWarpOptions, "SRC_COORD_PRECISION", "0"));
+    double dfErrorThreshold = CPLAtof(
+        CSLFetchNameValueDef(poWK->papszWarpOptions, "ERROR_THRESHOLD", "0"));
 
 /* ==================================================================== */
 /*      Loop over output lines.                                         */
@@ -4009,6 +4207,16 @@ static void GWKResampleNoMasksOrDstDensityOnlyThreadInternal( void* pData )
 /* -------------------------------------------------------------------- */
         poWK->pfnTransformer( psJob->pTransformerArg, TRUE, nDstXSize,
                               padfX, padfY, padfZ, pabSuccess );
+        if( dfSrcCoordPrecision > 0.0 )
+        {
+            GWKRoundSourceCoordinates(nDstXSize, padfX, padfY, padfZ, pabSuccess,
+                                      dfSrcCoordPrecision,
+                                      dfErrorThreshold,
+                                      poWK->pfnTransformer,
+                                      psJob->pTransformerArg,
+                                      0.5 + poWK->nDstXOff,
+                                      iDstY + 0.5 + poWK->nDstYOff);
+        }
 
 /* ==================================================================== */
 /*      Loop over pixels in output scanline.                            */
@@ -4064,7 +4272,7 @@ static void GWKResampleNoMasksOrDstDensityOnlyThreadInternal( void* pData )
 /* -------------------------------------------------------------------- */
 /*      Report progress to the user, and optionally cancel out.         */
 /* -------------------------------------------------------------------- */
-        if (psJob->pfnProgress(psJob))
+        if (psJob->pfnProgress && psJob->pfnProgress(psJob))
             break;
     }
 
@@ -4115,6 +4323,12 @@ static CPLErr GWKCubicNoMasksOrDstDensityOnlyByte( GDALWarpKernel *poWK )
                    GWKResampleNoMasksOrDstDensityOnlyHas4SampleThread<GByte,GRA_Cubic> );
 }
 
+static CPLErr GWKCubicNoMasksOrDstDensityOnlyFloat( GDALWarpKernel *poWK )
+{
+    return GWKRun( poWK, "GWKCubicNoMasksOrDstDensityOnlyFloat",
+                   GWKResampleNoMasksOrDstDensityOnlyHas4SampleThread<float,GRA_Cubic> );
+}
+
 #ifdef INSTANCIATE_FLOAT64_SSE2_IMPL
 
 static CPLErr GWKCubicNoMasksOrDstDensityOnlyDouble( GDALWarpKernel *poWK )
@@ -4163,6 +4377,11 @@ static void GWKNearestThread( void* pData )
     padfZ = (double *) CPLMalloc(sizeof(double) * nDstXSize);
     pabSuccess = (int *) CPLMalloc(sizeof(int) * nDstXSize);
 
+    double dfSrcCoordPrecision = CPLAtof(
+        CSLFetchNameValueDef(poWK->papszWarpOptions, "SRC_COORD_PRECISION", "0"));
+    double dfErrorThreshold = CPLAtof(
+        CSLFetchNameValueDef(poWK->papszWarpOptions, "ERROR_THRESHOLD", "0"));
+
 /* ==================================================================== */
 /*      Loop over output lines.                                         */
 /* ==================================================================== */
@@ -4186,7 +4405,16 @@ static void GWKNearestThread( void* pData )
 /* -------------------------------------------------------------------- */
         poWK->pfnTransformer( psJob->pTransformerArg, TRUE, nDstXSize,
                               padfX, padfY, padfZ, pabSuccess );
-
+        if( dfSrcCoordPrecision > 0.0 )
+        {
+            GWKRoundSourceCoordinates(nDstXSize, padfX, padfY, padfZ, pabSuccess,
+                                      dfSrcCoordPrecision,
+                                      dfErrorThreshold,
+                                      poWK->pfnTransformer,
+                                      psJob->pTransformerArg,
+                                      0.5 + poWK->nDstXOff,
+                                      iDstY + 0.5 + poWK->nDstYOff);
+        }
 /* ==================================================================== */
 /*      Loop over pixels in output scanline.                            */
 /* ==================================================================== */
@@ -4269,7 +4497,7 @@ static void GWKNearestThread( void* pData )
 /* -------------------------------------------------------------------- */
 /*      Report progress to the user, and optionally cancel out.         */
 /* -------------------------------------------------------------------- */
-        if (psJob->pfnProgress(psJob))
+        if (psJob->pfnProgress && psJob->pfnProgress(psJob))
             break;
     }
 
@@ -4303,6 +4531,12 @@ static CPLErr GWKBilinearNoMasksOrDstDensityOnlyUShort( GDALWarpKernel *poWK )
 {
     return GWKRun( poWK, "GWKBilinearNoMasksOrDstDensityOnlyUShort",
                    GWKResampleNoMasksOrDstDensityOnlyHas4SampleThread<GUInt16,GRA_Bilinear> );
+}
+
+static CPLErr GWKBilinearNoMasksOrDstDensityOnlyFloat( GDALWarpKernel *poWK )
+{
+    return GWKRun( poWK, "GWKBilinearNoMasksOrDstDensityOnlyFloat",
+                   GWKResampleNoMasksOrDstDensityOnlyHas4SampleThread<float,GRA_Bilinear> );
 }
 
 #ifdef INSTANCIATE_FLOAT64_SSE2_IMPL
@@ -4494,6 +4728,11 @@ static void GWKAverageOrModeThread( void* pData)
     pabSuccess = (int *) CPLMalloc(sizeof(int) * nDstXSize);
     pabSuccess2 = (int *) CPLMalloc(sizeof(int) * nDstXSize);
 
+    double dfSrcCoordPrecision = CPLAtof(
+        CSLFetchNameValueDef(poWK->papszWarpOptions, "SRC_COORD_PRECISION", "0"));
+    double dfErrorThreshold = CPLAtof(
+        CSLFetchNameValueDef(poWK->papszWarpOptions, "ERROR_THRESHOLD", "0"));
+
 /* ==================================================================== */
 /*      Loop over output lines.                                         */
 /* ==================================================================== */
@@ -4521,6 +4760,24 @@ static void GWKAverageOrModeThread( void* pData)
                               padfX, padfY, padfZ, pabSuccess );
         poWK->pfnTransformer( psJob->pTransformerArg, TRUE, nDstXSize,
                               padfX2, padfY2, padfZ2, pabSuccess2 );
+
+        if( dfSrcCoordPrecision > 0.0 )
+        {
+            GWKRoundSourceCoordinates(nDstXSize, padfX, padfY, padfZ, pabSuccess,
+                                      dfSrcCoordPrecision,
+                                      dfErrorThreshold,
+                                      poWK->pfnTransformer,
+                                      psJob->pTransformerArg,
+                                      poWK->nDstXOff,
+                                      iDstY + poWK->nDstYOff);
+            GWKRoundSourceCoordinates(nDstXSize, padfX2, padfY2, padfZ2, pabSuccess2,
+                                      dfSrcCoordPrecision,
+                                      dfErrorThreshold,
+                                      poWK->pfnTransformer,
+                                      psJob->pTransformerArg,
+                                      1.0 + poWK->nDstXOff,
+                                      iDstY + 1.0 + poWK->nDstYOff);
+        }
 
 /* ==================================================================== */
 /*      Loop over pixels in output scanline.                            */
@@ -4880,7 +5137,7 @@ static void GWKAverageOrModeThread( void* pData)
 /* -------------------------------------------------------------------- */
 /*      Report progress to the user, and optionally cancel out.         */
 /* -------------------------------------------------------------------- */
-        if (psJob->pfnProgress(psJob))
+        if (psJob->pfnProgress && psJob->pfnProgress(psJob))
             break;
     }
 

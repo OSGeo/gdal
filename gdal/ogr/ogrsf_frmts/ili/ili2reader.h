@@ -52,7 +52,6 @@ public:
     
     virtual std::list<OGRLayer *> GetLayers() = 0;
     virtual int GetLayerCount() = 0;
-    virtual void SetArcDegrees(double newArcDegrees) = 0;
 };
 
 IILI2Reader *CreateILI2Reader();

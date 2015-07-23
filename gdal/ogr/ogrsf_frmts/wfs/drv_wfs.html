@@ -7,9 +7,9 @@
 
 <h1>WFS - OGC WFS service</h1>
 
-(GDAL/OGR >= 1.8.0)<p>
+(GDAL/OGR &gt;= 1.8.0)<p>
 
-This driver can connect to a OGC WFS service. It supports WFS 1.0.0 and WFS 1.1.0 protocols. GDAL/OGR must be built with Curl support in order to the
+This driver can connect to a OGC WFS service. It supports WFS 1.0, 1.1 and 2.0 protocols. GDAL/OGR must be built with Curl support in order to the
 WFS driver to be compiled. Usually WFS requests return results in GML format, so the GML driver should generally be set-up for read support
 (thus requiring GDAL/OGR to be built with Xerces or Expat support). It is sometimes possible to use alternate underlying formats when the server supports them
 (such as OUTPUTFORMAT=json).<p>
@@ -58,7 +58,7 @@ userid and password to the remote server.
 
 Before OGR 1.10, when reading the first feature from a layer, the whole layer content will be fetched from the server.<p>
 
-Some servers (such as MapServer >= 6.0) support a vendor specific option, STARTINDEX, that allow to do the requests per "page",
+Some servers (such as MapServer &gt;= 6.0) support a vendor specific option, STARTINDEX, that allow to do the requests per "page",
 and thus to avoid downloading the whole content of the layer in a single request. The OGR WFS client will use paging when the OGR_WFS_PAGING_ALLOWED
 configuration option is set to ON. The page size (number of features fetched in a single request) is limited to 100 by default.
 It can be changed by setting the OGR_WFS_PAGE_SIZE configuration option.<br>
@@ -76,11 +76,56 @@ When streaming is enabled, GZip compression is also requested. It has been obser
 compression, will cache on their side the whole content to be sent before sending the first bytes on the wire. To avoid this,
 you can set the CPL_CURL_GZIP configuration option to NO.<p>
 
+Starting with GDAL 2.0, the WFS driver will automatically detect if server supports
+paging, when requesting a WFS 2.0 server.<p>
+
 <h2>Filtering</h2>
 
 The driver will forward any spatial filter set with SetSpatialFilter() to the server. It also makes its best effort to do the same for attribute
 filters set with SetAttributeFilter() when possible (turning OGR SQL language into OGC filter description). When this is not possible,
 it will default to client-side only filtering, which can be a slow operation because involving fetching all the features from the servers.<p>
+
+Starting with GDAL 2.0, the following spatial functions can be used :
+<ul>
+<li>the 8 spatial binary predicate: <b>ST_Equals, ST_Disjoint, ST_Touches,
+ST_Contains, ST_Intersects, ST_Within, ST_Crosses and ST_Overlaps</b> that take
+2 geometry arguments. Typically the geometry column name, and a constant geometry such
+as built with ST_MakeEnvelope or ST_GeomFromText.</li>
+<li><b>ST_DWithin(geom1,geom2,distance_in_meters)</b></li>
+<li><b>ST_Beyond(geom1,geom2,distance_in_meters)</b></li>
+<li><b>ST_MakeEnvelope(xmin,ymin,xmax,ymax[,srs])</b>: to build an envelope. srs
+can be an integer (an EPSG code), or a string directly set as the srsName attribute
+of the gml:Envelope. GDAL will take care of needed axis swapping, so coordinates
+should be expressed in the "natural GIS order" (for example long,lat for geodetic
+systems)</li>
+<li><b>ST_GeomFromText(wkt,[srs])</b>: to build a geometry from its WKT representation.</li>
+</ul>
+Note that those spatial functions are only supported as server-side filters.<p>
+
+<h2>Layer joins</h2>
+
+<p>
+Starting with GDAL 2.0, and for WFS 2.0 servers that support joins, SELECT
+statements that involve joins will be run on server side. Spatial joins can
+also be done by using the above mentionned spatial functions, if the server
+supports spatial joins.</p>
+
+<p>There might be restrictions set by server on the complexity of the joins.
+The OGR WFS driver also restricts column selection to be column names, potentially
+with aliases and type casts, but not expressions. The ON and WHERE clauses must
+also be evaluated on server side, so no OGR special fields are allowed for example.
+ORDER BY clauses are supported, but the fields must belong to the primary table.</p>
+
+<p>
+Example of valid statement :
+<pre>
+SELECT t1.id, t1.val1, t1.geom, t2.val1 FROM my_table AS t1 JOIN another_table AS t2 ON t1.id = t2.t1id
+</pre>
+or
+<pre>
+SELECT * FROM my_table AS t1 JOIN another_table AS t2 ON ST_Intersects(t1.geom, t2.geom)
+</pre>
+</p>
 
 <h2>Write support / WFS-T</h2>
 
@@ -147,7 +192,7 @@ interfaces.<p>
 
 <h2>Special layer : WFSLayerMetadata</h2>
 
-<p>(OGR >= 1.9.0)</p>
+<p>(OGR &gt;= 1.9.0)</p>
 
 <p>A "hidden" layer called "WFSLayerMetadata" is filled with records with metadata for each WFS layer.</p>
 
@@ -157,11 +202,34 @@ interfaces.<p>
 
 <h2>Special layer : WFSGetCapabilities</h2>
 
-<p>(OGR >= 1.9.0)</p>
+<p>(OGR &gt;= 1.9.0)</p>
 
 <p>A "hidden" layer called "WFSGetCapabilities" is filled with the raw XML result of the GetCapabilities request.</p>
 
 <p>That layer is returned through GetLayerByName("WFSGetCapabilities").</p>
+
+<h2>Open options (GDAL &gt;= 2.0)</h2>
+
+The following options are available:
+<ul>
+<li><b>URL</b>=url: URL to the WFS server endpoint. Required when using the
+"WFS:" string as the connection string.</li>
+<li><b>TRUST_CAPABILITIES_BOUNDS</b>=YES/NO: Whether to trust layer bounds
+declared in GetCapabilities response, for faster GetExtent() runtime. Defaults to NO</li>
+<li> <b>EMPTY_AS_NULL=YES/NO</b>: (GDAL &gt;=2.0) By default (EMPTY_AS_NULL=YES),
+fields with empty content will be reported as being NULL, instead of being an empty
+string. This is the historic behaviour. However this will prevent such fields to
+be declared as not-nullable if the application schema declared them as mandatory.
+So this option can be set to NO to have both empty strings being report as such,
+and mandatory fields being reported as not nullable.</li>
+<li> <b>INVERT_AXIS_ORDER_IF_LAT_LONG=YES/NO</b>: (GDAL &gt;=2.0) Whether to
+present SRS and coordinate ordering in traditional GIS order. Defaults to YES.</li>
+<li> <b>CONSIDER_EPSG_AS_URN=YES/NO/AUTO</b>: (GDAL &gt;=2.0) Whether to
+consider srsName like EPSG:XXXX as respecting EPSG axis order. Defaults to AUTO.</li>
+<li> <b>EXPOSE_GML_ID=YES/NO</b>: (GDAL &gt;=2.0) Whether to expose the gml:id
+attribute of a GML feature as the gml_id OGR field. Note that hiding gml_id will prevent
+WFS-T from working. Defaults to YES.</li>
+</ul>
 
 <h2>Examples</h2>
 
@@ -192,12 +260,13 @@ ogrinfo "WFS:http://www.tinyows.org/cgi-bin/tinyows" tows:world -ro -al -where "
 </pre>
 
 <li>
-Display layer metadata (OGR >= 1.9.0):
+Display layer metadata (OGR &gt;= 1.9.0):
 <pre>
 ogrinfo -ro -al "WFS:http://v2.suite.opengeo.org/geoserver/ows" WFSLayerMetadata
 </pre>
 
 <p>
+
 
 <h2>See Also</h2>
 

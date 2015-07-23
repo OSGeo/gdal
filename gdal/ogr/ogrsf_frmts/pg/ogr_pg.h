@@ -541,8 +541,6 @@ class OGRPGDataSource : public OGRDataSource
     virtual const char* GetMetadataItem(const char* pszKey,
                                              const char* pszDomain);
 
-    char               *LaunderName( const char * );
-
     int                 UseCopy();
     void                StartCopy( OGRPGTableLayer *poPGLayer );
     OGRErr              EndCopy( );

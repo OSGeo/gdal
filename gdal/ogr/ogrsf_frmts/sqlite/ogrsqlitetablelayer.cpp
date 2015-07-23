@@ -2450,14 +2450,10 @@ OGRErr OGRSQLiteTableLayer::BindValues( OGRFeature *poFeature,
 
                 case OFTDateTime:
                 {
-                    int nYear, nMonth, nDay, nHour, nMinute, nSecond, nTZ;
-                    poFeature->GetFieldAsDateTime(iField, &nYear, &nMonth, &nDay,
-                                                &nHour, &nMinute, &nSecond, &nTZ);
-                    char szBuffer[64];
-                    sprintf(szBuffer, "%04d-%02d-%02dT%02d:%02d:%02d",
-                            nYear, nMonth, nDay, nHour, nMinute, nSecond);
+                    char* pszStr = OGRGetXMLDateTime(poFeature->GetRawFieldRef(iField));
                     rc = sqlite3_bind_text(hStmt, nBindField++,
-                                           szBuffer, -1, SQLITE_TRANSIENT);
+                                           pszStr, -1, SQLITE_TRANSIENT);
+                    CPLFree(pszStr);
                     break;
                 }
 
@@ -2475,11 +2471,15 @@ OGRErr OGRSQLiteTableLayer::BindValues( OGRFeature *poFeature,
 
                 case OFTTime:
                 {
-                    int nYear, nMonth, nDay, nHour, nMinute, nSecond, nTZ;
+                    int nYear, nMonth, nDay, nHour, nMinute, nTZ;
+                    float fSecond;
                     poFeature->GetFieldAsDateTime(iField, &nYear, &nMonth, &nDay,
-                                                &nHour, &nMinute, &nSecond, &nTZ);
+                                                &nHour, &nMinute, &fSecond, &nTZ );
                     char szBuffer[64];
-                    sprintf(szBuffer, "%02d:%02d:%02d", nHour, nMinute, nSecond);
+                    if( OGR_GET_MS(fSecond) != 0 )
+                        sprintf(szBuffer, "%02d:%02d:%06.3f", nHour, nMinute, fSecond);
+                    else
+                        sprintf(szBuffer, "%02d:%02d:%02d", nHour, nMinute, (int)fSecond);
                     rc = sqlite3_bind_text(hStmt, nBindField++,
                                            szBuffer, -1, SQLITE_TRANSIENT);
                     break;
@@ -2585,7 +2585,7 @@ OGRErr OGRSQLiteTableLayer::ISetFeature( OGRFeature *poFeature )
             poFeature->GetFieldAsInteger64(iFIDAsRegularColumnIndex) != poFeature->GetFID() )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                        "Inconsistant values of FID and field of same name");
+                        "Inconsistent values of FID and field of same name");
             return CE_Failure;
         }
     }
@@ -2946,7 +2946,7 @@ OGRErr OGRSQLiteTableLayer::ICreateFeature( OGRFeature *poFeature )
                 poFeature->GetFieldAsInteger64(iFIDAsRegularColumnIndex) != poFeature->GetFID() )
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                            "Inconsistant values of FID and field of same name");
+                            "Inconsistent values of FID and field of same name");
                 return CE_Failure;
             }
         }

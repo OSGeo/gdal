@@ -82,6 +82,25 @@ int CPL_DLL CPLAtomicAdd(volatile int* ptr, int increment);
   */
 #define CPLAtomicDec(ptr) CPLAtomicAdd(ptr, -1)
 
+
+/** Compares *ptr with oldval. If *ptr == oldval, then *ptr is assigned
+  * newval and TRUE is returned. Otherwise nothing is done, and FALSE is returned.
+  *
+  * Current platforms/architectures where an efficient implementation
+  * exists are MacOSX, MS Windows, i386/x86_64 with GCC and platforms
+  * supported by GCC 4.1 or higher. For other platforms supporting
+  * the pthread library, and when GDAL is configured with thread-support,
+  * the atomicity will be done with a mutex, but with
+  * reduced efficiently. For the remaining platforms, a simple addition
+  * with no locking will be done...
+  *
+  * @param ptr a pointer to an integer (aligned on 32bit boundary).
+  * @param oldval old value
+  * @param newval new value
+  * @return TRUE if the exchange has been done
+  */
+int CPLAtomicCompareAndExchange(volatile int* ptr, int oldval, int newval);
+
 CPL_C_END
 
 #endif /* _CPL_ATOMIC_OPS_INCLUDED */

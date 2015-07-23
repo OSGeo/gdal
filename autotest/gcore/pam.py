@@ -137,6 +137,18 @@ def pam_3():
         gdaltest.post_reason( 'nodata not saved via pam' )
         return 'fail'
     
+    ds = None
+    ds = gdal.Open('tmp/pam.pnm', gdal.GA_Update)
+    if ds.GetRasterBand(1).DeleteNoDataValue() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+    
+    ds = gdal.Open('tmp/pam.pnm')
+    if ds.GetRasterBand(1).GetNoDataValue() is not None:
+        gdaltest.post_reason('got nodata value whereas none was expected')
+        return 'fail'
+
     return 'success' 
 
 ###############################################################################
@@ -431,6 +443,91 @@ def pam_11():
     return 'success'
 
 ###############################################################################
+# Test histogram with 64bit counts
+
+def pam_12():
+    
+    shutil.copy('data/byte.tif', 'tmp')
+    open('tmp/byte.tif.aux.xml', 'wt').write("""<PAMDataset>
+  <PAMRasterBand band="1">
+    <Histograms>
+      <HistItem>
+        <HistMin>-0.5</HistMin>
+        <HistMax>255.5</HistMax>
+        <BucketCount>256</BucketCount>
+        <IncludeOutOfRange>1</IncludeOutOfRange>
+        <Approximate>0</Approximate>
+        <HistCounts>6000000000|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|1|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|6|0|0|0|0|0|0|0|0|37|0|0|0|0|0|0|0|57|0|0|0|0|0|0|0|62|0|0|0|0|0|0|0|66|0|0|0|0|0|0|0|0|72|0|0|0|0|0|0|0|31|0|0|0|0|0|0|0|24|0|0|0|0|0|0|0|12|0|0|0|0|0|0|0|0|7|0|0|0|0|0|0|0|12|0|0|0|0|0|0|0|5|0|0|0|0|0|0|0|3|0|0|0|0|0|0|0|1|0|0|0|0|0|0|0|0|2|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|1|0|0|0|0|0|0|0|1</HistCounts>
+      </HistItem>
+    </Histograms>
+  </PAMRasterBand>
+</PAMDataset>""")
+
+    ds = gdal.Open('tmp/byte.tif')
+    (min, max, _, hist1) = ds.GetRasterBand(1).GetDefaultHistogram()
+    hist2 = ds.GetRasterBand(1).GetHistogram(include_out_of_range = 1, approx_ok = 0)
+    ds.SetMetadataItem('FOO', 'BAR')
+    ds.GetRasterBand(1).SetDefaultHistogram(min, max, hist1)
+    ds = None
+    aux_xml = open('tmp/byte.tif.aux.xml', 'rt').read()
+    gdal.Unlink('tmp/byte.tif')
+    gdal.Unlink('tmp/byte.tif.aux.xml')
+
+    if hist1 != hist2:
+        gdaltest.post_reason('fail')
+        print(hist1)
+        print(hist2)
+        return 'fail'
+    if hist1[0] != 6000000000:
+        gdaltest.post_reason('fail')
+        print(hist1)
+        return 'fail'
+    if aux_xml.find('<HistCounts>6000000000|') < 0:
+        gdaltest.post_reason('fail')
+        print(aux_xml)
+        return 'fail'
+    
+    return 'success'
+    
+###############################################################################
+# Test various stuff with PAM disabled
+#
+def pam_13():
+
+    gdal.SetConfigOption( 'GDAL_PAM_ENABLED', 'NO' )
+
+    ds = gdal.GetDriverByName('PNM').Create('/vsimem/tmp.pnm', 1, 1)
+    #if ds.GetRasterBand(1).SetColorTable(None) == 0:
+    #    gdaltest.post_reason('fail')
+    #    return 'fail'
+    gdal.PushErrorHandler()
+    ret = ds.GetRasterBand(1).SetNoDataValue(0)
+    gdal.PopErrorHandler()
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    
+    gdal.PushErrorHandler()
+    ret = ds.GetRasterBand(1).DeleteNoDataValue()
+    gdal.PopErrorHandler()
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+        
+    ds = None
+    
+    if gdal.VSIStatL('/vsimem/tmp.pnm.aux.xml') is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.Unlink('/vsimem/tmp.pnm')
+    
+    gdal.SetConfigOption( 'GDAL_PAM_ENABLED', 'YES' )
+    
+    return 'success'
+
+
+###############################################################################
 # Cleanup.
 
 def pam_cleanup():
@@ -464,6 +561,8 @@ gdaltest_list = [
     pam_9,
     pam_10,
     pam_11,
+    pam_12,
+    pam_13,
     pam_cleanup ]
 
 if __name__ == '__main__':

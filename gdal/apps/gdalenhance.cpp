@@ -490,7 +490,7 @@ ComputeEqualizationLUTs( GDALDatasetH hDataset, int nLUTBins,
     int iBand;
     int nBandCount = GDALGetRasterCount(hDataset);
     int nHistSize = 0;
-    int *panHistogram = NULL;
+    GUIntBig *panHistogram = NULL;
 
     // For now we always compute min/max
     *ppadfScaleMin = (double *) CPLCalloc(sizeof(double),nBandCount);
@@ -510,7 +510,7 @@ ComputeEqualizationLUTs( GDALDatasetH hDataset, int nLUTBins,
 /*      Get a reasonable histogram.                                     */
 /* -------------------------------------------------------------------- */
         eErr =
-            GDALGetDefaultHistogram( hBand, 
+            GDALGetDefaultHistogramEx( hBand, 
                                      *ppadfScaleMin + iBand,
                                      *ppadfScaleMax + iBand,
                                      &nHistSize, &panHistogram, 
@@ -527,8 +527,8 @@ ComputeEqualizationLUTs( GDALDatasetH hDataset, int nLUTBins,
 /*      We take care to use big integers as there may be more than 4    */
 /*      Gigapixels.                                                     */
 /* -------------------------------------------------------------------- */
-        GIntBig *panCumHist = (GIntBig *) CPLCalloc(sizeof(GIntBig),nHistSize);
-        GIntBig nTotal = 0;
+        GUIntBig *panCumHist = (GUIntBig *) CPLCalloc(sizeof(GUIntBig),nHistSize);
+        GUIntBig nTotal = 0;
         int iHist;
 
         for( iHist = 0; iHist < nHistSize; iHist++ )

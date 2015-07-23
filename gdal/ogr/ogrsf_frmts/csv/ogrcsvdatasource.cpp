@@ -408,6 +408,26 @@ int OGRCSVDataSource::OpenTable( const char * pszFilename,
         return FALSE;
     }
     char chDelimiter = CSVDetectSeperator(pszLine);
+#if 0
+    const char *pszDelimiter = CSLFetchNameValueDef( papszOpenOptions, "SEPARATOR", "AUTO");
+    if( !EQUAL(pszDelimiter, "AUTO") )
+    {
+        if (EQUAL(pszDelimiter, "COMMA"))
+            chDelimiter = ',';
+        else if (EQUAL(pszDelimiter, "SEMICOLON"))
+            chDelimiter = ';';
+        else if (EQUAL(pszDelimiter, "TAB"))
+            chDelimiter = '\t';
+        else if (EQUAL(pszDelimiter, "SPACE"))
+            chDelimiter = ' ';
+        else
+        {
+            CPLError( CE_Warning, CPLE_AppDefined, 
+                  "SEPARATOR=%s not understood, use one of COMMA, SEMICOLON, SPACE or TAB.",
+                  pszDelimiter );
+        }
+    }
+#endif
 
     /* Force the delimiter to be TAB for a .tsv file that has a tabulation */
     /* in its first line */
@@ -471,7 +491,7 @@ int OGRCSVDataSource::OpenTable( const char * pszFilename,
 
 OGRLayer *
 OGRCSVDataSource::ICreateLayer( const char *pszLayerName,
-                                CPL_UNUSED OGRSpatialReference *poSpatialRef,
+                                OGRSpatialReference *poSpatialRef,
                                 OGRwkbGeometryType eGType,
                                 char ** papszOptions  )
 {
@@ -546,10 +566,12 @@ OGRCSVDataSource::ICreateLayer( const char *pszLayerName,
             chDelimiter = ';';
         else if (EQUAL(pszDelimiter, "TAB"))
             chDelimiter = '\t';
+        else if (EQUAL(pszDelimiter, "SPACE"))
+            chDelimiter = ' ';
         else
         {
             CPLError( CE_Warning, CPLE_AppDefined, 
-                  "SEPARATOR=%s not understood, use one of COMMA, SEMICOLON or TAB.",
+                  "SEPARATOR=%s not understood, use one of COMMA, SEMICOLON, SPACE or TAB.",
                   pszDelimiter );
         }
     }
@@ -603,13 +625,15 @@ OGRCSVDataSource::ICreateLayer( const char *pszLayerName,
     const char *pszGeometry = CSLFetchNameValue( papszOptions, "GEOMETRY");
     if( bEnableGeometryFields )
     {
-        papoLayers[nLayers-1]->SetWriteGeometry(eGType, OGR_CSV_GEOM_AS_WKT);
+        papoLayers[nLayers-1]->SetWriteGeometry(eGType, OGR_CSV_GEOM_AS_WKT,
+            CSLFetchNameValueDef(papszOptions, "GEOMETRY_NAME", "WKT"));
     }
     else if (pszGeometry != NULL)
     {
         if (EQUAL(pszGeometry, "AS_WKT"))
         {
-            papoLayers[nLayers-1]->SetWriteGeometry(eGType, OGR_CSV_GEOM_AS_WKT);
+            papoLayers[nLayers-1]->SetWriteGeometry(eGType, OGR_CSV_GEOM_AS_WKT,
+                CSLFetchNameValueDef(papszOptions, "GEOMETRY_NAME", "WKT"));
         }
         else if (EQUAL(pszGeometry, "AS_XYZ") ||
                  EQUAL(pszGeometry, "AS_XY") ||
@@ -642,8 +666,30 @@ OGRCSVDataSource::ICreateLayer( const char *pszLayerName,
 /* -------------------------------------------------------------------- */
 
     const char *pszCreateCSVT = CSLFetchNameValue( papszOptions, "CREATE_CSVT");
-    if (pszCreateCSVT)
-        papoLayers[nLayers-1]->SetCreateCSVT(CSLTestBoolean(pszCreateCSVT));
+    if (pszCreateCSVT && CSLTestBoolean(pszCreateCSVT))
+    {
+        papoLayers[nLayers-1]->SetCreateCSVT(TRUE);
+    
+/* -------------------------------------------------------------------- */
+/*      Create .prj file                                                */
+/* -------------------------------------------------------------------- */
+
+        if( poSpatialRef != NULL && osFilename != "/vsistdout/" )
+        {
+            char* pszWKT = NULL;
+            poSpatialRef->exportToWkt(&pszWKT);
+            if( pszWKT )
+            {
+                VSILFILE* fpPRJ = VSIFOpenL(CPLResetExtension(osFilename, "prj"), "wb");
+                if( fpPRJ )
+                {
+                    VSIFPrintfL(fpPRJ, "%s\n", pszWKT);
+                    VSIFCloseL(fpPRJ);
+                }
+                CPLFree(pszWKT);
+            }
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Should we write a UTF8 BOM ?                                    */

@@ -28,198 +28,38 @@
  ****************************************************************************/
 
 #include "ogr_wfs.h"
-
-#include "cpl_list.h"
+#include "ogr_p.h"
 
 CPL_CVSID("$Id$");
 
-typedef enum
+typedef struct
 {
-    TOKEN_GREATER_OR_EQUAL,
-    TOKEN_GREATER,
-    TOKEN_LESSER_OR_EQUAL,
-    TOKEN_LESSER,
-    TOKEN_LIKE,
-    TOKEN_EQUAL,
-    TOKEN_NOT_EQUAL,
-    TOKEN_NOT,
-    TOKEN_AND,
-    TOKEN_OR,
-    TOKEN_VAR_NAME,
-    TOKEN_LITERAL
-} TokenType;
-
-typedef struct _Expr Expr;
-
-struct _Expr
-{
-    TokenType eType;
-    char*     pszVal;
-    Expr*     expr1;
-    Expr*     expr2;
-};
-
-/************************************************************************/
-/*                      WFS_ExprGetPriority()                           */
-/************************************************************************/
-
-static int WFS_ExprGetPriority(const Expr* expr)
-{
-    if (expr->eType == TOKEN_NOT)
-        return 9;
-    else if (expr->eType == TOKEN_GREATER_OR_EQUAL ||
-             expr->eType == TOKEN_GREATER ||
-             expr->eType == TOKEN_LESSER_OR_EQUAL ||
-             expr->eType == TOKEN_LESSER)
-        return 6;
-    else if (expr->eType == TOKEN_EQUAL ||
-             expr->eType == TOKEN_LIKE ||
-             expr->eType == TOKEN_NOT_EQUAL)
-        return 5;
-    else if (expr->eType == TOKEN_AND)
-        return 4;
-    else if (expr->eType == TOKEN_OR)
-        return 3;
-    else
-        return 0;
-}
-
-/************************************************************************/
-/*                          WFS_ExprFree()                              */
-/************************************************************************/
-
-static void WFS_ExprFree(Expr* expr)
-{
-    if (expr == NULL) return;
-    if (expr->expr1)
-        WFS_ExprFree(expr->expr1);
-    if (expr->expr2)
-        WFS_ExprFree(expr->expr2);
-    CPLFree(expr->pszVal);
-    CPLFree(expr);
-}
-
-/************************************************************************/
-/*                        WFS_ExprFreeList()                            */
-/************************************************************************/
-
-static void WFS_ExprFreeList(CPLList* psExprList)
-{
-    CPLList* psIterList = psExprList;
-    while(psIterList)
-    {
-        WFS_ExprFree((Expr*)psIterList->pData);
-        psIterList = psIterList->psNext;
-    }
-    CPLListDestroy(psExprList);
-}
-
-/************************************************************************/
-/*                    WFS_ExprBuildVarName()                            */
-/************************************************************************/
-
-static Expr* WFS_ExprBuildVarName(const char* pszVal)
-{
-    Expr* expr = (Expr*)CPLCalloc(1, sizeof(Expr));
-    expr->eType = TOKEN_VAR_NAME;
-    expr->pszVal = CPLStrdup(pszVal);
-    return expr;
-}
-
-/************************************************************************/
-/*                      WFS_ExprBuildValue()                            */
-/************************************************************************/
-
-static Expr* WFS_ExprBuildValue(const char* pszVal)
-{
-    Expr* expr = (Expr*)CPLCalloc(1, sizeof(Expr));
-    expr->eType = TOKEN_LITERAL;
-    expr->pszVal = CPLStrdup(pszVal);
-    return expr;
-}
-
-/************************************************************************/
-/*                    WFS_ExprBuildOperator()                           */
-/************************************************************************/
-
-static Expr* WFS_ExprBuildOperator(TokenType eType)
-{
-    Expr* expr = (Expr*)CPLCalloc(1, sizeof(Expr));
-    expr->eType = eType;
-    return expr;
-}
-
-/************************************************************************/
-/*                     WFS_ExprBuildBinary()                            */
-/************************************************************************/
-
-static Expr* WFS_ExprBuildBinary(TokenType eType, Expr* expr1, Expr* expr2)
-{
-    Expr* expr = (Expr*)CPLCalloc(1, sizeof(Expr));
-    expr->eType = eType;
-    expr->expr1 = expr1;
-    expr->expr2 = expr2;
-    return expr;
-}
-
-#ifdef notdef
-
-/************************************************************************/
-/*                          WFS_ExprDump()                              */
-/************************************************************************/
-
-static void WFS_ExprDump(FILE* fp, const Expr* expr)
-{
-    switch(expr->eType)
-    {
-        case TOKEN_VAR_NAME:
-        case TOKEN_LITERAL:
-            fprintf(fp, "%s", expr->pszVal);
-            break;
-
-        case TOKEN_NOT:
-            fprintf(fp, "NOT (");
-            WFS_ExprDump(fp, expr->expr1);
-            fprintf(fp, ")");
-            break;
-
-        default:
-            fprintf(fp, "(");
-            WFS_ExprDump(fp, expr->expr1);
-            switch(expr->eType)
-            {
-                case TOKEN_EQUAL:           fprintf(fp, " = "); break;
-                case TOKEN_LIKE:            fprintf(fp, " LIKE "); break;
-                case TOKEN_NOT_EQUAL:       fprintf(fp, " != "); break;
-                case TOKEN_LESSER_OR_EQUAL: fprintf(fp, " <= "); break;
-                case TOKEN_LESSER:          fprintf(fp, " < "); break;
-                case TOKEN_GREATER_OR_EQUAL:fprintf(fp, " >= "); break;
-                case TOKEN_GREATER:         fprintf(fp, " > "); break;
-                case TOKEN_AND:             fprintf(fp, " AND "); break;
-                case TOKEN_OR:              fprintf(fp, " OR "); break;
-                default: break;
-            }
-            WFS_ExprDump(fp, expr->expr2);
-            fprintf(fp, ")");
-            break;
-    }
-}
-#endif
+    int nVersion;
+    int bPropertyIsNotEqualToSupported;
+    int bOutNeedsNullCheck;
+    OGRDataSource* poDS;
+    OGRFeatureDefn* poFDefn;
+    int nUniqueGeomGMLId;
+    OGRSpatialReference* poSRS;
+    const char* pszNSPrefix;
+} ExprDumpFilterOptions;
 
 /************************************************************************/
 /*                WFS_ExprDumpGmlObjectIdFilter()                       */
 /************************************************************************/
 
 static int WFS_ExprDumpGmlObjectIdFilter(CPLString& osFilter,
-                                         const Expr* expr,
+                                         const swq_expr_node* poExpr,
                                          int bUseFeatureId,
                                          int bGmlObjectIdNeedsGMLPrefix,
                                          int nVersion)
 {
-    if (expr->eType == TOKEN_EQUAL &&
-        expr->expr1->eType == TOKEN_VAR_NAME &&
-        EQUAL(expr->expr1->pszVal, "gml_id") &&
-        expr->expr2->eType == TOKEN_LITERAL)
+    if (poExpr->eNodeType == SNT_OPERATION &&
+        poExpr->nOperation == SWQ_EQ &&
+        poExpr->nSubExprCount == 2 &&
+        poExpr->papoSubExpr[0]->eNodeType == SNT_COLUMN &&
+        strcmp(poExpr->papoSubExpr[0]->string_value, "gml_id") == 0 &&
+        poExpr->papoSubExpr[1]->eNodeType == SNT_CONSTANT)
     {
         if (bUseFeatureId)
             osFilter += "<FeatureId fid=\"";
@@ -229,638 +69,744 @@ static int WFS_ExprDumpGmlObjectIdFilter(CPLString& osFilter,
             osFilter += "<GmlObjectId id=\"";
         else
             osFilter += "<GmlObjectId gml:id=\"";
-        if (expr->expr2->pszVal[0] == '\'' || expr->expr2->pszVal[0] == '"')
+        if( poExpr->papoSubExpr[1]->field_type == SWQ_INTEGER ||
+            poExpr->papoSubExpr[1]->field_type == SWQ_INTEGER64 )
+            osFilter += CPLSPrintf(CPL_FRMT_GIB, poExpr->papoSubExpr[1]->int_value);
+        else if( poExpr->papoSubExpr[1]->field_type == SWQ_STRING )
         {
-            CPLString osVal(expr->expr2->pszVal + 1);
-            osVal.resize(osVal.size() - 1);
-            osFilter += osVal;
+            char* pszXML = CPLEscapeString(poExpr->papoSubExpr[1]->string_value, -1, CPLES_XML);
+            osFilter += pszXML;
+            CPLFree(pszXML);
         }
         else
-            osFilter += expr->expr2->pszVal;
+            return FALSE;
         osFilter += "\"/>";
         return TRUE;
     }
-    else if (expr->eType == TOKEN_OR)
+    else if (poExpr->eNodeType == SNT_OPERATION &&
+             poExpr->nOperation == SWQ_OR &&
+             poExpr->nSubExprCount == 2 )
     {
-        return WFS_ExprDumpGmlObjectIdFilter(osFilter, expr->expr1,
+        return WFS_ExprDumpGmlObjectIdFilter(osFilter, poExpr->papoSubExpr[0],
                                              bUseFeatureId, bGmlObjectIdNeedsGMLPrefix, nVersion) &&
-               WFS_ExprDumpGmlObjectIdFilter(osFilter, expr->expr2,
+               WFS_ExprDumpGmlObjectIdFilter(osFilter, poExpr->papoSubExpr[1],
                                              bUseFeatureId, bGmlObjectIdNeedsGMLPrefix, nVersion);
     }
     return FALSE;
 }
 
 /************************************************************************/
-/*                     WFS_ExprDumpAsOGCFilter()                        */
+/*                     WFS_ExprDumpRawLitteral()                        */
 /************************************************************************/
 
-typedef struct
+static int WFS_ExprDumpRawLitteral(CPLString& osFilter,
+                                   const swq_expr_node* poExpr)
 {
-    int nVersion;
-    int bPropertyIsNotEqualToSupported;
-    int bOutNeedsNullCheck;
-    OGRFeatureDefn* poFDefn;
-} ExprDumpFilterOptions;
-
-static int WFS_ExprDumpAsOGCFilter(CPLString& osFilter,
-                                   const Expr* expr,
-                                   int bExpectBinary,
-                                   ExprDumpFilterOptions* psOptions)
-{
-    switch(expr->eType)
+    if( poExpr->field_type == SWQ_INTEGER ||
+        poExpr->field_type == SWQ_INTEGER64 )
+        osFilter += CPLSPrintf(CPL_FRMT_GIB, poExpr->int_value);
+    else if( poExpr->field_type == SWQ_FLOAT )
+        osFilter += CPLSPrintf("%.16g", poExpr->float_value);
+    else if( poExpr->field_type == SWQ_STRING )
     {
-        case TOKEN_VAR_NAME:
-        {
-            if (bExpectBinary)
-                return FALSE;
-
-            /* Special fields not understood by server */
-            if (EQUAL(expr->pszVal, "gml_id") ||
-                EQUAL(expr->pszVal, "FID") ||
-                EQUAL(expr->pszVal, "OGR_GEOMETRY") ||
-                EQUAL(expr->pszVal, "OGR_GEOM_WKT") ||
-                EQUAL(expr->pszVal, "OGR_GEOM_AREA") ||
-                EQUAL(expr->pszVal, "OGR_STYLE"))
-            {
-                CPLDebug("WFS", "Attribute refers to a OGR special field. Cannot use server-side filtering");
-                return FALSE;
-            }
-
-            const char* pszFieldname;
-            CPLString osVal;
-            if (expr->pszVal[0] == '\'' || expr->pszVal[0] == '"')
-            {
-                osVal = expr->pszVal + 1;
-                osVal.resize(osVal.size() - 1);
-                pszFieldname = osVal.c_str();
-            }
-            else
-                pszFieldname = expr->pszVal;
-
-            if (psOptions->poFDefn->GetFieldIndex(pszFieldname) == -1)
-            {
-                CPLDebug("WFS", "Field '%s' unknown. Cannot use server-side filtering",
-                         pszFieldname);
-                return FALSE;
-            }
-
-            if (psOptions->nVersion >= 200)
-                osFilter += "<ValueReference>";
-            else
-                osFilter += "<PropertyName>";
-            char* pszFieldnameXML = CPLEscapeString(pszFieldname, -1, CPLES_XML);
-            osFilter += pszFieldnameXML;
-            CPLFree(pszFieldnameXML);
-            if (psOptions->nVersion >= 200)
-                osFilter += "</ValueReference>";
-            else
-                osFilter += "</PropertyName>";
-            break;
-        }
-
-        case TOKEN_LITERAL:
-        {
-            if (bExpectBinary)
-                return FALSE;
-
-            const char* pszLiteral;
-            CPLString osVal;
-            if (expr->pszVal[0] == '\'' || expr->pszVal[0] == '"')
-            {
-                osVal = expr->pszVal + 1;
-                osVal.resize(osVal.size() - 1);
-                pszLiteral = osVal.c_str();
-            }
-            else
-                pszLiteral = expr->pszVal;
-
-            osFilter += "<Literal>";
-            char* pszLiteralXML = CPLEscapeString(pszLiteral, -1, CPLES_XML);
-            osFilter += pszLiteralXML;
-            CPLFree(pszLiteralXML);
-            osFilter += "</Literal>";
-
-            break;
-        }
-
-        case TOKEN_NOT:
-            osFilter += "<Not>";
-            if (!WFS_ExprDumpAsOGCFilter(osFilter, expr->expr1, TRUE, psOptions))
-                return FALSE;
-            osFilter += "</Not>";
-            break;
-
-        case TOKEN_LIKE:
-        {
-            CPLString osVal;
-            char ch;
-            char firstCh = 0;
-            int i;
-            if (psOptions->nVersion == 100)
-                osFilter += "<PropertyIsLike wildCard='*' singleChar='_' escape='!'>";
-            else
-                osFilter += "<PropertyIsLike wildCard='*' singleChar='_' escapeChar='!'>";
-            if (!WFS_ExprDumpAsOGCFilter(osFilter, expr->expr1, FALSE, psOptions))
-                return FALSE;
-            if (expr->expr2->eType != TOKEN_LITERAL)
-                return FALSE;
-            osFilter += "<Literal>";
-
-            /* Escape value according to above special characters */
-            /* For URL compatibility reason, we remap the OGR SQL '%' wildchard into '*' */
-            i = 0;
-            ch = expr->expr2->pszVal[i];
-            if (ch == '\'' || ch == '"')
-            {
-                firstCh = ch;
-                i ++;
-            }
-            for(;(ch = expr->expr2->pszVal[i]) != '\0';i++)
-            {
-                if (ch == '%')
-                    osVal += "*";
-                else if (ch == '!')
-                    osVal += "!!";
-                else if (ch == '*')
-                    osVal += "!*";
-                else if (ch == firstCh && expr->expr2->pszVal[i + 1] == 0)
-                    break;
-                else
-                {
-                    char ach[2];
-                    ach[0] = ch;
-                    ach[1] = 0;
-                    osVal += ach;
-                }
-            }
-            osFilter += osVal;
-            osFilter += "</Literal>";
-            osFilter += "</PropertyIsLike>";
-            break;
-        }
-
-        case TOKEN_EQUAL:
-        case TOKEN_NOT_EQUAL:
-        case TOKEN_LESSER_OR_EQUAL:
-        case TOKEN_LESSER:
-        case TOKEN_GREATER_OR_EQUAL:
-        case TOKEN_GREATER:
-        {
-            if (expr->eType == TOKEN_EQUAL && expr->expr2->eType == TOKEN_LITERAL &&
-                EQUAL(expr->expr2->pszVal, "NULL"))
-            {
-                osFilter += "<PropertyIsNull>";
-                if (!WFS_ExprDumpAsOGCFilter(osFilter, expr->expr1, FALSE, psOptions))
-                    return FALSE;
-                osFilter += "</PropertyIsNull>";
-                psOptions->bOutNeedsNullCheck = TRUE;
-                break;
-            }
-            if (expr->eType == TOKEN_NOT_EQUAL && expr->expr2->eType == TOKEN_LITERAL &&
-                EQUAL(expr->expr2->pszVal, "NULL"))
-            {
-                osFilter += "<Not><PropertyIsNull>";
-                if (!WFS_ExprDumpAsOGCFilter(osFilter, expr->expr1, FALSE, psOptions))
-                    return FALSE;
-                osFilter += "</PropertyIsNull></Not>";
-                psOptions->bOutNeedsNullCheck = TRUE;
-                break;
-            }
-            TokenType eType = expr->eType;
-            int bAddClosingNot = FALSE;
-            if (!psOptions->bPropertyIsNotEqualToSupported && eType == TOKEN_NOT_EQUAL)
-            {
-                osFilter += "<Not>";
-                eType = TOKEN_EQUAL;
-                bAddClosingNot = TRUE;
-            }
-
-            const char* pszName = NULL;
-            switch(eType)
-            {
-                case TOKEN_EQUAL:           pszName = "PropertyIsEqualTo"; break;
-                case TOKEN_NOT_EQUAL:       pszName = "PropertyIsNotEqualTo"; break;
-                case TOKEN_LESSER_OR_EQUAL: pszName = "PropertyIsLessThanOrEqualTo"; break;
-                case TOKEN_LESSER:          pszName = "PropertyIsLessThan"; break;
-                case TOKEN_GREATER_OR_EQUAL:pszName = "PropertyIsGreaterThanOrEqualTo"; break;
-                case TOKEN_GREATER:         pszName = "PropertyIsGreaterThan"; break;
-                default: break;
-            }
-            osFilter += "<";
-            osFilter += pszName;
-            osFilter += ">";
-            if (!WFS_ExprDumpAsOGCFilter(osFilter, expr->expr1, FALSE, psOptions))
-                return FALSE;
-            if (!WFS_ExprDumpAsOGCFilter(osFilter, expr->expr2, FALSE, psOptions))
-                return FALSE;
-            osFilter += "</";
-            osFilter += pszName;
-            osFilter += ">";
-            if (bAddClosingNot)
-                osFilter += "</Not>";
-            break;
-        }
-
-        case TOKEN_AND:
-        case TOKEN_OR:
-        {
-            const char* pszName = (expr->eType == TOKEN_AND) ? "And" : "Or";
-            osFilter += "<";
-            osFilter += pszName;
-            osFilter += ">";
-            if (!WFS_ExprDumpAsOGCFilter(osFilter, expr->expr1, TRUE, psOptions))
-                return FALSE;
-            if (!WFS_ExprDumpAsOGCFilter(osFilter, expr->expr2, TRUE, psOptions))
-                return FALSE;
-            osFilter += "</";
-            osFilter += pszName;
-            osFilter += ">";
-
-            break;
-        }
-
-        default:
-            return FALSE;
+        char* pszXML = CPLEscapeString(poExpr->string_value, -1, CPLES_XML);
+        osFilter += pszXML;
+        CPLFree(pszXML);
     }
-
+    else if( poExpr->field_type == SWQ_TIMESTAMP )
+    {
+        OGRField sDate;
+        if( !OGRParseDate(poExpr->string_value, &sDate, 0) )
+            return FALSE;
+        char* pszDate = OGRGetXMLDateTime(&sDate);
+        osFilter += pszDate;
+        CPLFree(pszDate);
+    }
+    else
+        return FALSE;
     return TRUE;
 }
 
 /************************************************************************/
-/*                      WFS_ExprBuildInternal()                         */
+/*                       WFS_ExprGetSRSName()                          */
 /************************************************************************/
 
-typedef struct
+static const char* WFS_ExprGetSRSName( const swq_expr_node* poExpr,
+                                       int iSubArgIndex,
+                                       ExprDumpFilterOptions* psOptions,
+                                       OGRSpatialReference& oSRS )
 {
-    int bExpectVarName;
-    int bExpectComparisonOperator;
-    int bExpectLogicalOperator;
-    int bExpectValue;
-    int nParenthesisLevel;
-} ExprBuildContext;
-
-static Expr* WFS_ExprBuildInternal(char*** ppapszTokens,
-                                   ExprBuildContext* psBuildContext)
-{
-    Expr* expr = NULL;
-    Expr* op = NULL;
-    Expr* val1 = NULL;
-    Expr* val2 = NULL;
-    CPLList* psValExprList = NULL;
-    CPLList* psOpExprList = NULL;
-    char** papszTokens = *ppapszTokens;
-    char* pszToken = NULL;
-
-#define PEEK_OP(my_op) my_op = (Expr*)CPLListGetData(psOpExprList)
-#define PUSH_OP(my_op) psOpExprList = CPLListInsert(psOpExprList, my_op, 0)
-#define POP_OP(my_op) do { my_op = (Expr*)CPLListGetData(psOpExprList);  \
-                           if (my_op != NULL) { \
-                                CPLList* psNext = psOpExprList->psNext; \
-                                CPLFree(psOpExprList); \
-                                psOpExprList = psNext; \
-                           } \
-                      } while(0)
-#define PUSH_VAL(my_val) psValExprList = CPLListInsert(psValExprList, my_val, 0)
-#define POP_VAL(my_val) do { my_val = (Expr*)CPLListGetData(psValExprList); \
-                           if (my_val != NULL) { \
-                                CPLList* psNext = psValExprList->psNext; \
-                                CPLFree(psValExprList); \
-                                psValExprList = psNext; \
-                           } \
-                      } while(0)
-    while(TRUE)
+    if( poExpr->nSubExprCount == iSubArgIndex + 1 &&
+        poExpr->papoSubExpr[iSubArgIndex]->field_type == SWQ_STRING )
     {
-        pszToken = *papszTokens;
-        if (pszToken == NULL)
-            break;
-        papszTokens ++;
-
-        if (EQUAL(pszToken, "("))
+        if( oSRS.SetFromUserInput(poExpr->papoSubExpr[iSubArgIndex]->string_value) == OGRERR_NONE )
         {
-            char** papszSub = papszTokens;
-            psBuildContext->nParenthesisLevel ++;
-            Expr* expr = WFS_ExprBuildInternal(&papszSub, psBuildContext);
-            psBuildContext->nParenthesisLevel --;
-            if (expr == NULL)
-                goto invalid_expr;
-            PUSH_VAL(expr);
-            papszTokens = papszSub;
-            if (*papszTokens == NULL)
-                break;
-
-            continue;
+            return poExpr->papoSubExpr[iSubArgIndex]->string_value;
         }
-        else if (EQUAL(pszToken, ")"))
-        {
-            if (psBuildContext->nParenthesisLevel > 0)
-                break;
-            else
-                goto invalid_expr;
-        }
-
-        if (psBuildContext->bExpectVarName)
-        {
-            if (EQUAL(pszToken, "NOT"))
-                op = WFS_ExprBuildOperator(TOKEN_NOT);
-            else
-            {
-                PUSH_VAL(WFS_ExprBuildVarName(pszToken));
-                psBuildContext->bExpectVarName = FALSE;
-                psBuildContext->bExpectComparisonOperator = TRUE;
-            }
-        }
-        else if (psBuildContext->bExpectComparisonOperator)
-        {
-            psBuildContext->bExpectComparisonOperator = FALSE;
-            psBuildContext->bExpectValue = TRUE;
-            if (EQUAL(pszToken, "IS"))
-            {
-                if (*papszTokens != NULL && EQUAL(*papszTokens, "NOT"))
-                {
-                    op = WFS_ExprBuildOperator(TOKEN_NOT_EQUAL);
-                    papszTokens ++;
-                }
-                else
-                    op = WFS_ExprBuildOperator(TOKEN_EQUAL);
-            }
-            else if (EQUAL(pszToken, "="))
-                op = WFS_ExprBuildOperator(TOKEN_EQUAL);
-            else if (EQUAL(pszToken, "LIKE") || EQUAL(pszToken, "ILIKE"))
-                op = WFS_ExprBuildOperator(TOKEN_LIKE);
-            else if (EQUAL(pszToken, "!=") || EQUAL(pszToken, "<>"))
-                op = WFS_ExprBuildOperator(TOKEN_NOT_EQUAL);
-            else if (EQUAL(pszToken, "<"))
-                op = WFS_ExprBuildOperator(TOKEN_LESSER);
-            else if (EQUAL(pszToken, "<="))
-                op = WFS_ExprBuildOperator(TOKEN_LESSER_OR_EQUAL);
-            else if (EQUAL(pszToken, ">"))
-                op = WFS_ExprBuildOperator(TOKEN_GREATER);
-            else if (EQUAL(pszToken, ">="))
-                op = WFS_ExprBuildOperator(TOKEN_GREATER_OR_EQUAL);
-            else
-                goto invalid_expr;
-        }
-        else if (psBuildContext->bExpectLogicalOperator)
-        {
-            psBuildContext->bExpectLogicalOperator = FALSE;
-            psBuildContext->bExpectVarName = TRUE;
-            if (EQUAL(pszToken, "AND"))
-                op = WFS_ExprBuildOperator(TOKEN_AND);
-            else if (EQUAL(pszToken, "OR"))
-                op = WFS_ExprBuildOperator(TOKEN_OR);
-            else if (EQUAL(pszToken, "NOT"))
-                op = WFS_ExprBuildOperator(TOKEN_NOT);
-            else
-                goto invalid_expr;
-        }
-        else if (psBuildContext->bExpectValue)
-        {
-            PUSH_VAL(WFS_ExprBuildValue(pszToken));
-            psBuildContext->bExpectValue = FALSE;
-            psBuildContext->bExpectLogicalOperator = TRUE;
-        }
-        else
-            goto invalid_expr;
-
-        if (op != NULL)
-        {
-            Expr* prevOp;
-
-            while(TRUE)
-            {
-                PEEK_OP(prevOp);
-
-                if (prevOp != NULL &&
-                    (WFS_ExprGetPriority(op) <= WFS_ExprGetPriority(prevOp)))
-                {
-                    if (prevOp->eType != TOKEN_NOT)
-                    {
-                        POP_VAL(val2);
-                        if (val2 == NULL) goto invalid_expr;
-                    }
-                    POP_VAL(val1);
-                    if (val1 == NULL) goto invalid_expr;
-
-                    PUSH_VAL(WFS_ExprBuildBinary(prevOp->eType, val1, val2));
-                    POP_OP(prevOp);
-                    WFS_ExprFree(prevOp);
-                    val1 = val2 = NULL;
-                }
-                else
-                    break;
-            }
-
-            PUSH_OP(op);
-            op = NULL;
-        }
-
     }
-
-    *ppapszTokens = papszTokens;
-
-    while(TRUE)
+    else if ( poExpr->nSubExprCount == iSubArgIndex + 1 &&
+              poExpr->papoSubExpr[iSubArgIndex]->field_type == SWQ_INTEGER )
     {
-        POP_OP(op);
-        if (op == NULL)
-            break;
-        if (op->eType != TOKEN_NOT)
+        if( oSRS.importFromEPSGA((int)poExpr->papoSubExpr[iSubArgIndex]->int_value) == OGRERR_NONE )
         {
-            POP_VAL(val2);
-            if (val2 == NULL) goto invalid_expr;
+            return CPLSPrintf("urn:ogc:def:crs:EPSG::%d", (int)poExpr->papoSubExpr[iSubArgIndex]->int_value);
         }
-        POP_VAL(val1);
-        if (val1 == NULL) goto invalid_expr;
-        PUSH_VAL(WFS_ExprBuildBinary(op->eType, val1, val2));
-        val1 = val2 = NULL;
-
-        WFS_ExprFree(op);
-        op = NULL;
     }
-
-    POP_VAL(expr);
-    return expr;
-
-invalid_expr:
-    WFS_ExprFree(op);
-    WFS_ExprFree(val1);
-    WFS_ExprFree(val2);
-    WFS_ExprFreeList(psValExprList);
-    WFS_ExprFreeList(psOpExprList);
-
+    else if( poExpr->nSubExprCount == iSubArgIndex &&
+             psOptions->poSRS != NULL )
+    {
+        if( psOptions->poSRS->GetAuthorityName(NULL) &&
+            EQUAL(psOptions->poSRS->GetAuthorityName(NULL), "EPSG") &&
+            psOptions->poSRS->GetAuthorityCode(NULL) &&
+            oSRS.importFromEPSGA(atoi(psOptions->poSRS->GetAuthorityCode(NULL))) == OGRERR_NONE )
+        {
+            return CPLSPrintf("urn:ogc:def:crs:EPSG::%s", psOptions->poSRS->GetAuthorityCode(NULL));
+        }
+    }
     return NULL;
 }
 
 /************************************************************************/
-/*                         WFS_ExprTokenize()                           */
+/*                     WFS_ExprDumpAsOGCFilter()                        */
 /************************************************************************/
 
-static char** WFS_ExprTokenize(const char* pszFilter)
+static int WFS_ExprDumpAsOGCFilter(CPLString& osFilter,
+                                   const swq_expr_node* poExpr,
+                                   int bExpectBinary,
+                                   ExprDumpFilterOptions* psOptions)
 {
-    const char* pszIter = pszFilter;
-    CPLString osToken;
-    char** papszTokens = NULL;
-    int bLastCharWasSep = TRUE;
-    char prevCh = 0;
-    char ch;
-    int bInQuote = FALSE;
-    char chQuoteChar = 0;
-
-    if (pszFilter == NULL)
-        return NULL;
-
-    while((ch = *pszIter) != '\0')
+    if( poExpr->eNodeType == SNT_COLUMN )
     {
-        if (bInQuote)
-        {
-            osToken += ch;
-            if (ch == chQuoteChar)
-            {
-                papszTokens = CSLAddString(papszTokens, osToken.c_str());
-                osToken = "";
-                bInQuote = FALSE;
-            }
+        if (bExpectBinary)
+            return FALSE;
 
-            prevCh = ch;
-            pszIter ++;
-            continue;
+        /* Special fields not understood by server */
+        if (EQUAL(poExpr->string_value, "gml_id") ||
+            EQUAL(poExpr->string_value, "FID") ||
+            EQUAL(poExpr->string_value, "OGR_GEOMETRY") ||
+            EQUAL(poExpr->string_value, "OGR_GEOM_WKT") ||
+            EQUAL(poExpr->string_value, "OGR_GEOM_AREA") ||
+            EQUAL(poExpr->string_value, "OGR_STYLE"))
+        {
+            CPLDebug("WFS", "Attribute refers to a OGR special field. Cannot use server-side filtering");
+            return FALSE;
         }
 
-        if (ch == ' ')
+        const char* pszFieldname = NULL;
+        int nIndex;
+        int bSameTable = psOptions->poFDefn != NULL &&
+                         ( poExpr->table_name == NULL ||
+                           EQUAL(poExpr->table_name, psOptions->poFDefn->GetName()) );
+        if( bSameTable )
         {
-            if (!bLastCharWasSep)
+            if( (nIndex = psOptions->poFDefn->GetFieldIndex(poExpr->string_value)) >= 0 )
             {
-                if (osToken.size())
-                    papszTokens = CSLAddString(papszTokens, osToken.c_str());
-                osToken = "";
+                pszFieldname = psOptions->poFDefn->GetFieldDefn(nIndex)->GetNameRef();
             }
-            bLastCharWasSep = TRUE;
-        }
-        else if (ch == '(' || ch == ')' )
-        {
-            if (osToken.size())
-                papszTokens = CSLAddString(papszTokens, osToken.c_str());
-            char ach[2];
-            ach[0] = ch;
-            ach[1] = 0;
-            papszTokens = CSLAddString(papszTokens, ach);
-            osToken = "";
-        }
-        else if (ch == '<' || ch == '>' || ch == '!')
-        {
-            if (ch == '>' && prevCh == '<')
+            else if( (nIndex = psOptions->poFDefn->GetGeomFieldIndex(poExpr->string_value)) >= 0 )
             {
-                osToken += ch;
-                papszTokens = CSLAddString(papszTokens, osToken.c_str());
-                osToken = "";
+                pszFieldname = psOptions->poFDefn->GetGeomFieldDefn(nIndex)->GetNameRef();
             }
+        }
+        else if( psOptions->poDS != NULL )
+        {
+            OGRLayer* poLayer = psOptions->poDS->GetLayerByName(poExpr->table_name);
+            if( poLayer )
+            {
+                OGRFeatureDefn* poFDefn = poLayer->GetLayerDefn();
+                if( (nIndex = poFDefn->GetFieldIndex(poExpr->string_value)) >= 0 )
+                {
+                    pszFieldname = CPLSPrintf("%s/%s",
+                                              poLayer->GetName(),
+                                              poFDefn->GetFieldDefn(nIndex)->GetNameRef());
+                }
+                else if( (nIndex = poFDefn->GetGeomFieldIndex(poExpr->string_value)) >= 0 )
+                {
+                    pszFieldname = CPLSPrintf("%s/%s",
+                                              poLayer->GetName(),
+                                              poFDefn->GetGeomFieldDefn(nIndex)->GetNameRef());
+                }
+            }
+        }
+        
+        if( psOptions->poFDefn == NULL && psOptions->poDS == NULL )
+            pszFieldname = poExpr->string_value;
+
+        if( pszFieldname == NULL )
+        {
+            if( poExpr->table_name != NULL )
+                CPLDebug("WFS", "Field \"%s\".\"%s\" unknown. Cannot use server-side filtering",
+                         poExpr->table_name, poExpr->string_value);
+            else
+                CPLDebug("WFS", "Field \"%s\" unknown. Cannot use server-side filtering",
+                         poExpr->string_value);
+            return FALSE;
+        }
+
+        if (psOptions->nVersion >= 200)
+            osFilter += CPLSPrintf("<%sValueReference>", psOptions->pszNSPrefix);
+        else
+            osFilter += CPLSPrintf("<%sPropertyName>", psOptions->pszNSPrefix);
+        char* pszFieldnameXML = CPLEscapeString(pszFieldname, -1, CPLES_XML);
+        osFilter += pszFieldnameXML;
+        CPLFree(pszFieldnameXML);
+        if (psOptions->nVersion >= 200)
+            osFilter += CPLSPrintf("</%sValueReference>", psOptions->pszNSPrefix);
+        else
+            osFilter += CPLSPrintf("</%sPropertyName>", psOptions->pszNSPrefix);
+
+        return TRUE;
+    }
+
+    if( poExpr->eNodeType == SNT_CONSTANT )
+    {
+        if (bExpectBinary)
+            return FALSE;
+
+        osFilter += CPLSPrintf("<%sLiteral>", psOptions->pszNSPrefix);
+        if( !WFS_ExprDumpRawLitteral(osFilter, poExpr) )
+            return FALSE;
+        osFilter += CPLSPrintf("</%sLiteral>", psOptions->pszNSPrefix);
+
+        return TRUE;
+    }
+    
+    if( poExpr->eNodeType != SNT_OPERATION )
+        return FALSE; /* shouldn't happen */
+
+    if( poExpr->nOperation == SWQ_NOT )
+    {
+        osFilter +=  CPLSPrintf("<%sNot>", psOptions->pszNSPrefix);
+        if (!WFS_ExprDumpAsOGCFilter(osFilter, poExpr->papoSubExpr[0], TRUE, psOptions))
+            return FALSE;
+        osFilter +=  CPLSPrintf("</%sNot>", psOptions->pszNSPrefix);
+        return TRUE;
+    }
+
+    if( poExpr->nOperation == SWQ_LIKE )
+    {
+        CPLString osVal;
+        char ch;
+        char firstCh = 0;
+        int i;
+        if (psOptions->nVersion == 100)
+            osFilter += CPLSPrintf("<%sPropertyIsLike wildCard='*' singleChar='_' escape='!'>", psOptions->pszNSPrefix);
+        else
+            osFilter += CPLSPrintf("<%sPropertyIsLike wildCard='*' singleChar='_' escapeChar='!'>", psOptions->pszNSPrefix);
+        if (!WFS_ExprDumpAsOGCFilter(osFilter, poExpr->papoSubExpr[0], FALSE, psOptions))
+            return FALSE;
+        if (poExpr->papoSubExpr[1]->eNodeType != SNT_CONSTANT &&
+            poExpr->papoSubExpr[1]->field_type != SWQ_STRING)
+            return FALSE;
+        osFilter += CPLSPrintf("<%sLiteral>", psOptions->pszNSPrefix);
+
+        /* Escape value according to above special characters */
+        /* For URL compatibility reason, we remap the OGR SQL '%' wildchard into '*' */
+        i = 0;
+        ch = poExpr->papoSubExpr[1]->string_value[i];
+        if (ch == '\'' || ch == '"')
+        {
+            firstCh = ch;
+            i ++;
+        }
+        for(;(ch = poExpr->papoSubExpr[1]->string_value[i]) != '\0';i++)
+        {
+            if (ch == '%')
+                osVal += "*";
+            else if (ch == '!')
+                osVal += "!!";
+            else if (ch == '*')
+                osVal += "!*";
+            else if (ch == firstCh && poExpr->papoSubExpr[1]->string_value[i + 1] == 0)
+                break;
             else
             {
-                if (osToken.size())
-                    papszTokens = CSLAddString(papszTokens, osToken.c_str());
                 char ach[2];
                 ach[0] = ch;
                 ach[1] = 0;
-                osToken = ach;
+                osVal += ach;
             }
         }
-        else if (ch == '=')
-        {
-            if (prevCh == '<' || prevCh == '>' || prevCh == '!')
-                osToken += ch;
-            else if (prevCh == '=')
-                ;
-            else
-            {
-                if (osToken.size())
-                    papszTokens = CSLAddString(papszTokens, osToken.c_str());
-                osToken = "=";
-            }
-        }
-        else if (ch == '\'' || ch == '"')
-        {
-            if (osToken.size())
-                papszTokens = CSLAddString(papszTokens, osToken.c_str());
-            osToken = "'";
-            bInQuote = TRUE;
-            chQuoteChar = ch;
-        }
-        else
-        {
-            if (prevCh == '<' || prevCh == '>' || prevCh == '!' || prevCh == '=')
-            {
-                if (osToken.size())
-                    papszTokens = CSLAddString(papszTokens, osToken.c_str());
-                osToken = "";
-            }
-            osToken += ch;
-        }
-
-        bLastCharWasSep = (ch == ' ');
-
-        prevCh = ch;
-        pszIter ++;
+        char* pszXML = CPLEscapeString(osVal, -1, CPLES_XML);
+        osFilter += pszXML;
+        CPLFree(pszXML);
+        osFilter += CPLSPrintf("</%sLiteral>", psOptions->pszNSPrefix);
+        osFilter += CPLSPrintf("</%sPropertyIsLike>", psOptions->pszNSPrefix);
+        return TRUE;
     }
-    if (osToken.size())
-        papszTokens = CSLAddString(papszTokens, osToken.c_str());
 
-    if (bInQuote)
+    if( poExpr->nOperation == SWQ_ISNULL )
     {
-        CSLDestroy(papszTokens);
-        papszTokens = NULL;
+        osFilter += CPLSPrintf("<%sPropertyIsNull>", psOptions->pszNSPrefix);
+        if (!WFS_ExprDumpAsOGCFilter(osFilter, poExpr->papoSubExpr[0], FALSE, psOptions))
+            return FALSE;
+        osFilter += CPLSPrintf("</%sPropertyIsNull>", psOptions->pszNSPrefix);
+        psOptions->bOutNeedsNullCheck = TRUE;
+        return TRUE;
     }
 
-    return papszTokens;
+    if( poExpr->nOperation == SWQ_EQ ||
+        poExpr->nOperation == SWQ_NE ||
+        poExpr->nOperation == SWQ_LE ||
+        poExpr->nOperation == SWQ_LT ||
+        poExpr->nOperation == SWQ_GE ||
+        poExpr->nOperation == SWQ_GT )
+    {
+        int nOperation = poExpr->nOperation;
+        int bAddClosingNot = FALSE;
+        if (!psOptions->bPropertyIsNotEqualToSupported && nOperation == SWQ_NE)
+        {
+            osFilter += CPLSPrintf("<%sNot>", psOptions->pszNSPrefix);
+            nOperation = SWQ_EQ;
+            bAddClosingNot = TRUE;
+        }
+
+        const char* pszName = NULL;
+        switch(nOperation)
+        {
+            case SWQ_EQ:  pszName = "PropertyIsEqualTo"; break;
+            case SWQ_NE:  pszName = "PropertyIsNotEqualTo"; break;
+            case SWQ_LE:  pszName = "PropertyIsLessThanOrEqualTo"; break;
+            case SWQ_LT:  pszName = "PropertyIsLessThan"; break;
+            case SWQ_GE:  pszName = "PropertyIsGreaterThanOrEqualTo"; break;
+            case SWQ_GT:  pszName = "PropertyIsGreaterThan"; break;
+            default: break;
+        }
+        osFilter += "<";
+        osFilter += psOptions->pszNSPrefix;
+        osFilter += pszName;
+        osFilter += ">";
+        if (!WFS_ExprDumpAsOGCFilter(osFilter, poExpr->papoSubExpr[0], FALSE, psOptions))
+            return FALSE;
+        if (!WFS_ExprDumpAsOGCFilter(osFilter, poExpr->papoSubExpr[1], FALSE, psOptions))
+            return FALSE;
+        osFilter += "</";
+        osFilter += psOptions->pszNSPrefix;
+        osFilter += pszName;
+        osFilter += ">";
+        if (bAddClosingNot)
+            osFilter += CPLSPrintf("</%sNot>", psOptions->pszNSPrefix);
+        return TRUE;
+    }
+
+    if( poExpr->nOperation == SWQ_AND ||
+        poExpr->nOperation == SWQ_OR )
+    {
+        const char* pszName = (poExpr->nOperation == SWQ_AND) ? "And" : "Or";
+        osFilter += "<";
+        osFilter += psOptions->pszNSPrefix;
+        osFilter += pszName;
+        osFilter += ">";
+        if (!WFS_ExprDumpAsOGCFilter(osFilter, poExpr->papoSubExpr[0], TRUE, psOptions))
+            return FALSE;
+        if (!WFS_ExprDumpAsOGCFilter(osFilter, poExpr->papoSubExpr[1], TRUE, psOptions))
+            return FALSE;
+        osFilter += "</";
+        osFilter += psOptions->pszNSPrefix;
+        osFilter += pszName;
+        osFilter += ">";
+        return TRUE;
+    }
+    
+    if( poExpr->nOperation == SWQ_CUSTOM_FUNC &&
+        EQUAL(poExpr->string_value, "ST_MakeEnvelope") )
+    {
+        OGRSpatialReference oSRS;
+        const char* pszSRSName = WFS_ExprGetSRSName( poExpr, 4, psOptions, oSRS );
+        int bAxisSwap = FALSE;
+
+        osFilter += "<gml:Envelope";
+        if( pszSRSName )
+        {
+            osFilter += " srsName=\"";
+            osFilter += pszSRSName;
+            osFilter += "\"";
+            if( oSRS.EPSGTreatsAsLatLong() || oSRS.EPSGTreatsAsNorthingEasting() )
+                bAxisSwap = TRUE;
+        }
+        osFilter += ">";
+        osFilter += "<gml:lowerCorner>";
+        if (!WFS_ExprDumpRawLitteral(osFilter, poExpr->papoSubExpr[(bAxisSwap) ? 1 : 0]))
+            return FALSE;
+        osFilter += " ";
+        if (!WFS_ExprDumpRawLitteral(osFilter, poExpr->papoSubExpr[(bAxisSwap) ? 0 : 1]))
+            return FALSE;
+        osFilter += "</gml:lowerCorner>";
+        osFilter += "<gml:upperCorner>";
+        if (!WFS_ExprDumpRawLitteral(osFilter, poExpr->papoSubExpr[(bAxisSwap) ? 3 : 2]))
+            return FALSE;
+        osFilter += " ";
+        if (!WFS_ExprDumpRawLitteral(osFilter, poExpr->papoSubExpr[(bAxisSwap) ? 2 : 3]))
+            return FALSE;
+        osFilter += "</gml:upperCorner>";
+        osFilter += "</gml:Envelope>";
+        return TRUE;
+    }
+
+    if( poExpr->nOperation == SWQ_CUSTOM_FUNC &&
+        EQUAL(poExpr->string_value, "ST_GeomFromText") )
+    {
+        OGRSpatialReference oSRS;
+        const char* pszSRSName = WFS_ExprGetSRSName( poExpr, 1, psOptions, oSRS );
+        OGRGeometry* poGeom = NULL;
+        char* pszWKT = (char*)poExpr->papoSubExpr[0]->string_value;
+        OGRGeometryFactory::createFromWkt(&pszWKT, NULL, &poGeom);
+        char** papszOptions = NULL;
+        papszOptions = CSLSetNameValue(papszOptions, "FORMAT", "GML3");
+        if( pszSRSName != NULL )
+        {
+            if( oSRS.EPSGTreatsAsLatLong() || oSRS.EPSGTreatsAsNorthingEasting() )
+            {
+                OGR_SRSNode *poGEOGCS = oSRS.GetAttrNode( "GEOGCS" );
+                if( poGEOGCS != NULL )
+                    poGEOGCS->StripNodes( "AXIS" );
+
+                OGR_SRSNode *poPROJCS = oSRS.GetAttrNode( "PROJCS" );
+                if (poPROJCS != NULL && oSRS.EPSGTreatsAsNorthingEasting())
+                    poPROJCS->StripNodes( "AXIS" );
+            }
+
+            if( EQUALN(pszSRSName, "urn:ogc:def:crs:EPSG::", strlen("urn:ogc:def:crs:EPSG::")) )
+                papszOptions = CSLSetNameValue(papszOptions, "GML3_LONGSRS", "YES");
+            else
+                papszOptions = CSLSetNameValue(papszOptions, "GML3_LONGSRS", "NO");
+
+            poGeom->assignSpatialReference(&oSRS);
+        }
+        papszOptions = CSLSetNameValue(papszOptions, "GMLID",
+                                       CPLSPrintf("id%d", psOptions->nUniqueGeomGMLId ++));
+        char* pszGML = OGR_G_ExportToGMLEx( (OGRGeometryH)poGeom, papszOptions );
+        osFilter += pszGML;
+        CSLDestroy(papszOptions);
+        delete poGeom;
+        CPLFree(pszGML);
+        return TRUE;
+    }
+
+    if( poExpr->nOperation == SWQ_CUSTOM_FUNC )
+    {
+        const char* pszName =
+            EQUAL(poExpr->string_value, "ST_Equals") ? "Equals" :
+            EQUAL(poExpr->string_value, "ST_Disjoint") ? "Disjoint" :
+            EQUAL(poExpr->string_value, "ST_Touches") ? "Touches" :
+            EQUAL(poExpr->string_value, "ST_Contains") ? "Contains" :
+            EQUAL(poExpr->string_value, "ST_Intersects") ? "Intersects" :
+            EQUAL(poExpr->string_value, "ST_Within") ? "Within" :
+            EQUAL(poExpr->string_value, "ST_Crosses") ? "Crosses" :
+            EQUAL(poExpr->string_value, "ST_Overlaps") ? "Overlaps" :
+            EQUAL(poExpr->string_value, "ST_DWithin") ? "DWithin" :
+            EQUAL(poExpr->string_value, "ST_Beyond") ? "Beyond" :
+            NULL;
+        if( pszName == NULL )
+            return FALSE;
+        osFilter += "<";
+        osFilter += psOptions->pszNSPrefix;
+        osFilter += pszName;
+        osFilter += ">";
+        for(int i=0;i<2;i++)
+        {
+            if( i == 1 && poExpr->papoSubExpr[0]->eNodeType == SNT_COLUMN &&
+                poExpr->papoSubExpr[1]->eNodeType == SNT_OPERATION &&
+                poExpr->papoSubExpr[1]->nOperation == SWQ_CUSTOM_FUNC &&
+                (EQUAL(poExpr->papoSubExpr[1]->string_value, "ST_GeomFromText") ||
+                 EQUAL(poExpr->papoSubExpr[1]->string_value, "ST_MakeEnvelope")) )
+            {
+                int bSameTable = psOptions->poFDefn != NULL &&
+                                ( poExpr->papoSubExpr[0]->table_name == NULL ||
+                                EQUAL(poExpr->papoSubExpr[0]->table_name, psOptions->poFDefn->GetName()) );
+                if( bSameTable )
+                {
+                    int nIndex;
+                    if( (nIndex = psOptions->poFDefn->GetGeomFieldIndex(poExpr->papoSubExpr[0]->string_value)) >= 0 )
+                    {
+                        psOptions->poSRS = psOptions->poFDefn->GetGeomFieldDefn(nIndex)->GetSpatialRef();
+                    }
+                }
+                else if( psOptions->poDS != NULL )
+                {
+                    OGRLayer* poLayer = psOptions->poDS->GetLayerByName(poExpr->papoSubExpr[0]->table_name);
+                    if( poLayer )
+                    {
+                        OGRFeatureDefn* poFDefn = poLayer->GetLayerDefn();
+                        int nIndex;
+                        if( (nIndex = poFDefn->GetGeomFieldIndex(poExpr->papoSubExpr[0]->string_value)) >= 0 )
+                        {
+                            psOptions->poSRS = poFDefn->GetGeomFieldDefn(nIndex)->GetSpatialRef();
+                        }
+                    }
+                }
+            }
+            int bRet = WFS_ExprDumpAsOGCFilter(osFilter, poExpr->papoSubExpr[i], FALSE, psOptions);
+            psOptions->poSRS = NULL;
+            if( !bRet )
+                return FALSE;
+        }
+        if( poExpr->nSubExprCount > 2 )
+        {
+            osFilter += CPLSPrintf("<%sDistance unit=\"m\">", psOptions->pszNSPrefix);
+            if (!WFS_ExprDumpRawLitteral(osFilter, poExpr->papoSubExpr[2]) )
+                return FALSE;
+            osFilter += CPLSPrintf("</%sDistance>", psOptions->pszNSPrefix);
+        }
+        osFilter += "</";
+        osFilter += psOptions->pszNSPrefix;
+        osFilter += pszName;
+        osFilter += ">";
+        return TRUE;
+    }
+
+    return FALSE;
 }
 
 /************************************************************************/
 /*               WFS_TurnSQLFilterToOGCFilter()                         */
 /************************************************************************/
 
-CPLString WFS_TurnSQLFilterToOGCFilter( const char * pszFilter,
+CPLString WFS_TurnSQLFilterToOGCFilter( const swq_expr_node* poExpr,
+                                        OGRDataSource* poDS,
                                         OGRFeatureDefn* poFDefn,
                                         int nVersion,
                                         int bPropertyIsNotEqualToSupported,
                                         int bUseFeatureId,
                                         int bGmlObjectIdNeedsGMLPrefix,
+                                        const char* pszNSPrefix,
                                         int* pbOutNeedsNullCheck )
 {
-    char** papszTokens = WFS_ExprTokenize(pszFilter);
-
-    if (papszTokens == NULL)
-        return "";
-
-    char** papszTokens2 = papszTokens;
-
-    ExprBuildContext sBuildContext;
-    sBuildContext.bExpectVarName = TRUE;
-    sBuildContext.bExpectComparisonOperator = FALSE;
-    sBuildContext.bExpectLogicalOperator = FALSE;
-    sBuildContext.bExpectValue = FALSE;
-    sBuildContext.nParenthesisLevel = 0;
-    Expr* expr = WFS_ExprBuildInternal(&papszTokens2, &sBuildContext);
-    CSLDestroy(papszTokens);
-
-    if (expr == NULL)
-        return "";
-
     CPLString osFilter;
     /* If the filter is only made of querying one or several gml_id */
     /* (with OR operator), we turn this to <GmlObjectId> list */
-    if (!WFS_ExprDumpGmlObjectIdFilter(osFilter, expr, bUseFeatureId,
+    if (!WFS_ExprDumpGmlObjectIdFilter(osFilter, poExpr, bUseFeatureId,
                                        bGmlObjectIdNeedsGMLPrefix, nVersion))
     {
         ExprDumpFilterOptions sOptions;
         sOptions.nVersion = nVersion;
         sOptions.bPropertyIsNotEqualToSupported = bPropertyIsNotEqualToSupported;
         sOptions.bOutNeedsNullCheck = FALSE;
+        sOptions.poDS = poDS;
         sOptions.poFDefn = poFDefn;
+        sOptions.nUniqueGeomGMLId = 1;
+        sOptions.poSRS = NULL;
+        sOptions.pszNSPrefix = pszNSPrefix;
         osFilter = "";
-        if (!WFS_ExprDumpAsOGCFilter(osFilter, expr, TRUE, &sOptions))
+        if (!WFS_ExprDumpAsOGCFilter(osFilter, poExpr, TRUE, &sOptions))
             osFilter = "";
+        /*else
+            CPLDebug("WFS", "Filter %s", osFilter.c_str());*/
         *pbOutNeedsNullCheck = sOptions.bOutNeedsNullCheck;
     }
 
-    WFS_ExprFree(expr);
-
     return osFilter;
+}
+
+/************************************************************************/
+/*                  OGRWFSSpatialBooleanPredicateChecker()              */
+/************************************************************************/
+
+static swq_field_type OGRWFSSpatialBooleanPredicateChecker( swq_expr_node *op,
+                                               CPL_UNUSED int bAllowMismatchTypeOnFieldComparison )
+{
+    if( op->nSubExprCount != 2 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Wrong number of arguments for %s",
+                 op->string_value);
+        return SWQ_ERROR;
+    }
+    for(int i=0;i<op->nSubExprCount;i++)
+    {
+        if( op->papoSubExpr[i]->field_type != SWQ_GEOMETRY )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Wrong field type for argument %d of %s",
+                     i+1, op->string_value);
+            return SWQ_ERROR;
+        }
+    }
+    return SWQ_BOOLEAN;
+}
+
+/************************************************************************/
+/*                           OGRWFSCheckSRIDArg()                       */
+/************************************************************************/
+
+static int OGRWFSCheckSRIDArg( swq_expr_node *op, int iSubArgIndex ) 
+{
+    if( op->papoSubExpr[iSubArgIndex]->field_type == SWQ_INTEGER )
+    {
+        OGRSpatialReference oSRS;
+        if( oSRS.importFromEPSGA((int)op->papoSubExpr[iSubArgIndex]->int_value) != OGRERR_NONE )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Wrong value for argument %d of %s",
+                     iSubArgIndex + 1, op->string_value);
+            return FALSE;
+        }
+    }
+    else if( op->papoSubExpr[iSubArgIndex]->field_type == SWQ_STRING )
+    {
+        OGRSpatialReference oSRS;
+        if( oSRS.SetFromUserInput(op->papoSubExpr[iSubArgIndex]->string_value) != OGRERR_NONE )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Wrong value for argument %d of %s",
+                     iSubArgIndex + 1, op->string_value);
+            return FALSE;
+        }
+    }
+    else
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Wrong field type for argument %d of %s",
+                 iSubArgIndex + 1, op->string_value);
+        return FALSE;
+    }
+    return TRUE;
+}
+
+/************************************************************************/
+/*                   OGRWFSMakeEnvelopeChecker()                        */
+/************************************************************************/
+
+static swq_field_type OGRWFSMakeEnvelopeChecker( swq_expr_node *op,
+                                                 CPL_UNUSED int bAllowMismatchTypeOnFieldComparison )
+{
+    if( op->nSubExprCount != 4 && op->nSubExprCount != 5 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Wrong number of arguments for %s",
+                 op->string_value);
+        return SWQ_ERROR;
+    }
+    for(int i=0;i<4;i++)
+    {
+        if( op->papoSubExpr[i]->field_type != SWQ_INTEGER &&
+            op->papoSubExpr[i]->field_type != SWQ_INTEGER64 &&
+            op->papoSubExpr[i]->field_type != SWQ_FLOAT )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Wrong field type for argument %d of %s",
+                     i+1, op->string_value);
+            return SWQ_ERROR;
+        }
+    }
+    if( op->nSubExprCount == 5 )
+    {
+        if( !OGRWFSCheckSRIDArg( op, 4 ) )
+            return SWQ_ERROR;
+    }
+    return SWQ_GEOMETRY;
+}
+
+/************************************************************************/
+/*                   OGRWFSGeomFromTextChecker()                        */
+/************************************************************************/
+
+static swq_field_type OGRWFSGeomFromTextChecker( swq_expr_node *op,
+                                                 CPL_UNUSED int bAllowMismatchTypeOnFieldComparison )
+{
+    if( op->nSubExprCount != 1&& op->nSubExprCount != 2 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Wrong number of arguments for %s",
+                 op->string_value);
+        return SWQ_ERROR;
+    }
+    if( op->papoSubExpr[0]->field_type != SWQ_STRING )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Wrong field type for argument %d of %s",
+                    1, op->string_value);
+        return SWQ_ERROR;
+    }
+    OGRGeometry* poGeom = NULL;
+    char* pszWKT = (char*)op->papoSubExpr[0]->string_value;
+    if( OGRGeometryFactory::createFromWkt(&pszWKT, NULL, &poGeom) != OGRERR_NONE )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Wrong value for argument %d of %s",
+                  1, op->string_value);
+        return SWQ_ERROR;
+    }
+    delete poGeom;
+    if( op->nSubExprCount == 2 )
+    {
+        if( !OGRWFSCheckSRIDArg( op, 1 ) )
+            return SWQ_ERROR;
+    }
+    return SWQ_GEOMETRY;
+}
+
+/************************************************************************/
+/*                      OGRWFSDWithinBeyondChecker()                    */
+/************************************************************************/
+
+static swq_field_type OGRWFSDWithinBeyondChecker( swq_expr_node *op,
+                            CPL_UNUSED int bAllowMismatchTypeOnFieldComparison )
+{
+    if( op->nSubExprCount != 3 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Wrong number of arguments for %s",
+                 op->string_value);
+        return SWQ_ERROR;
+    }
+    for(int i=0;i<2;i++)
+    {
+        if( op->papoSubExpr[i]->field_type != SWQ_GEOMETRY )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Wrong field type for argument %d of %s",
+                     i+1, op->string_value);
+            return SWQ_ERROR;
+        }
+    }
+    if( op->papoSubExpr[2]->field_type != SWQ_INTEGER &&
+        op->papoSubExpr[2]->field_type != SWQ_INTEGER64 &&
+        op->papoSubExpr[2]->field_type != SWQ_FLOAT )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Wrong field type for argument %d of %s",
+                    2+1, op->string_value);
+        return SWQ_ERROR;
+    }
+    return SWQ_BOOLEAN;
+}
+
+/************************************************************************/
+/*                   OGRWFSCustomFuncRegistrar                          */
+/************************************************************************/
+
+class OGRWFSCustomFuncRegistrar: public swq_custom_func_registrar
+{
+    public:
+        OGRWFSCustomFuncRegistrar() {};
+        virtual const swq_operation *GetOperator( const char * ) ;
+};
+
+/************************************************************************/
+/*                  WFSGetCustomFuncRegistrar()                         */
+/************************************************************************/
+
+swq_custom_func_registrar* WFSGetCustomFuncRegistrar()
+{
+    static OGRWFSCustomFuncRegistrar obj;
+    return &obj;
+}
+
+/************************************************************************/
+/*                           GetOperator()                              */
+/************************************************************************/
+
+static const swq_operation OGRWFSSpatialOps[] = {
+{ "ST_Equals", SWQ_CUSTOM_FUNC, NULL, OGRWFSSpatialBooleanPredicateChecker },
+{ "ST_Disjoint", SWQ_CUSTOM_FUNC, NULL, OGRWFSSpatialBooleanPredicateChecker },
+{ "ST_Touches", SWQ_CUSTOM_FUNC, NULL, OGRWFSSpatialBooleanPredicateChecker },
+{ "ST_Contains", SWQ_CUSTOM_FUNC, NULL, OGRWFSSpatialBooleanPredicateChecker },
+/*{ "ST_Covers", SWQ_CUSTOM_FUNC, NULL, OGRWFSSpatialBooleanPredicateChecker },*/
+{ "ST_Intersects", SWQ_CUSTOM_FUNC, NULL, OGRWFSSpatialBooleanPredicateChecker },
+{ "ST_Within", SWQ_CUSTOM_FUNC, NULL, OGRWFSSpatialBooleanPredicateChecker },
+/*{ "ST_CoveredBy", SWQ_CUSTOM_FUNC, NULL, OGRWFSSpatialBooleanPredicateChecker },*/
+{ "ST_Crosses", SWQ_CUSTOM_FUNC, NULL, OGRWFSSpatialBooleanPredicateChecker },
+{ "ST_Overlaps", SWQ_CUSTOM_FUNC, NULL, OGRWFSSpatialBooleanPredicateChecker },
+{ "ST_DWithin", SWQ_CUSTOM_FUNC, NULL, OGRWFSDWithinBeyondChecker },
+{ "ST_Beyond", SWQ_CUSTOM_FUNC, NULL, OGRWFSDWithinBeyondChecker },
+{ "ST_MakeEnvelope", SWQ_CUSTOM_FUNC, NULL, OGRWFSMakeEnvelopeChecker },
+{ "ST_GeomFromText", SWQ_CUSTOM_FUNC, NULL, OGRWFSGeomFromTextChecker }
+};
+
+const swq_operation *OGRWFSCustomFuncRegistrar::GetOperator( const char * pszName )
+{
+    for(int i=0; i< (int)(sizeof(OGRWFSSpatialOps)/sizeof(OGRWFSSpatialOps[0]));i++)
+    {
+        if( EQUAL(OGRWFSSpatialOps[i].pszName, pszName) )
+            return &OGRWFSSpatialOps[i];
+    }
+    return NULL;
 }

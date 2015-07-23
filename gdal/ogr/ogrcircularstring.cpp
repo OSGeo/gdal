@@ -48,12 +48,52 @@ OGRCircularString::OGRCircularString()
 }
 
 /************************************************************************/
+/*              OGRCircularString( const OGRCircularString& )           */
+/************************************************************************/
+
+/**
+ * \brief Copy constructor.
+ * 
+ * Note: before GDAL 2.1, only the default implementation of the constructor
+ * existed, which could be unsafe to use.
+ * 
+ * @since GDAL 2.1
+ */
+
+OGRCircularString::OGRCircularString( const OGRCircularString& other ) :
+    OGRSimpleCurve( other )
+{
+}
+
+/************************************************************************/
 /*                        ~OGRCircularString()                          */
 /************************************************************************/
 
 OGRCircularString::~OGRCircularString()
 
 {
+}
+
+/************************************************************************/
+/*                  operator=( const OGRCircularString& )               */
+/************************************************************************/
+
+/**
+ * \brief Assignment operator.
+ * 
+ * Note: before GDAL 2.1, only the default implementation of the operator
+ * existed, which could be unsafe to use.
+ * 
+ * @since GDAL 2.1
+ */
+
+OGRCircularString& OGRCircularString::operator=( const OGRCircularString& other )
+{
+    if( this != &other)
+    {
+        OGRSimpleCurve::operator=( other );
+    }
+    return *this;
 }
 
 /************************************************************************/

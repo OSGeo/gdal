@@ -48,12 +48,12 @@
 %extend OGRDataSourceShadow {
   %pythoncode {
     def Destroy(self):
-      "Once called, self has effectively been destroyed.  Do not access. For backwards compatiblity only"
+      "Once called, self has effectively been destroyed.  Do not access. For backwards compatibility only"
       _ogr.delete_DataSource( self )
       self.thisown = 0
 
     def Release(self):
-      "Once called, self has effectively been destroyed.  Do not access. For backwards compatiblity only"
+      "Once called, self has effectively been destroyed.  Do not access. For backwards compatibility only"
       _ogr.delete_DataSource( self )
       self.thisown = 0
 
@@ -71,9 +71,9 @@
 
     def __getitem__(self, value):
         """Support dictionary, list, and slice -like access to the datasource.
-ds[0] would return the first layer on the datasource.
-ds['aname'] would return the layer named "aname".
-ds[0:4] would return a list of the first four layers."""
+        ds[0] would return the first layer on the datasource.
+        ds['aname'] would return the layer named "aname".
+        ds[0:4] would return a list of the first four layers."""
         if isinstance(value, slice):
             output = []
             for i in xrange(value.start,value.stop,value.step):
@@ -142,8 +142,8 @@ ds[0:4] would return a list of the first four layers."""
 
     def __getitem__(self, value):
         """Support list and slice -like access to the layer.
-layer[0] would return the first feature on the layer.
-layer[0:4] would return a list of the first four features."""
+        layer[0] would return the first feature on the layer.
+        layer[0:4] would return a list of the first four features."""
         if isinstance(value, slice):
             import sys
             output = []
@@ -211,7 +211,7 @@ layer[0:4] would return a list of the first four features."""
       pass
 
     def Destroy(self):
-      "Once called, self has effectively been destroyed.  Do not access. For backwards compatiblity only"
+      "Once called, self has effectively been destroyed.  Do not access. For backwards compatibility only"
       _ogr.delete_Feature( self )
       self.thisown = 0
 
@@ -429,7 +429,14 @@ layer[0:4] would return a list of the first four features."""
             output['id'] = fid
             
         for key in self.keys():
-            output['properties'][key] = self.GetField(key)
+            fld_defn = self.GetFieldDefnRef(self.GetFieldIndex(key))
+            if fld_defn.GetType() == _ogr.OFTInteger and fld_defn.GetSubType() == _ogr.OFSTBoolean:
+                if self.GetField(key):
+                    output['properties'][key] = True
+                else:
+                    output['properties'][key] = False
+            else:
+                output['properties'][key] = self.GetField(key)
         
         if not as_object:
             output = simplejson.dumps(output)
@@ -495,7 +502,7 @@ layer[0:4] would return a list of the first four features."""
 %extend OGRFeatureDefnShadow {
 %pythoncode {
   def Destroy(self):
-    "Once called, self has effectively been destroyed.  Do not access. For backwards compatiblity only"
+    "Once called, self has effectively been destroyed.  Do not access. For backwards compatibility only"
     _ogr.delete_FeatureDefn( self )
     self.thisown = 0
 
@@ -505,7 +512,7 @@ layer[0:4] would return a list of the first four features."""
 %extend OGRFieldDefnShadow {
 %pythoncode %{
   def Destroy(self):
-    "Once called, self has effectively been destroyed.  Do not access. For backwards compatiblity only"
+    "Once called, self has effectively been destroyed.  Do not access. For backwards compatibility only"
     _ogr.delete_FieldDefn( self )
     self.thisown = 0
 %}

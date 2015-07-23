@@ -143,7 +143,8 @@ static GDALDataset *HTTPOpen( GDALOpenInfo * poOpenInfo )
     /* suppress errors as not all drivers support /vsimem */
     CPLPushErrorHandler( CPLQuietErrorHandler );
     GDALDataset *poDS = (GDALDataset *) 
-        GDALOpenEx( osResultFilename, 0, NULL, NULL, NULL);
+        GDALOpenEx( osResultFilename, poOpenInfo->nOpenFlags, NULL,
+                    poOpenInfo->papszOpenOptions, NULL);
     CPLPopErrorHandler();
 
 /* -------------------------------------------------------------------- */
@@ -153,8 +154,13 @@ static GDALDataset *HTTPOpen( GDALOpenInfo * poOpenInfo )
     if( poDS == NULL )
     {
         CPLString osTempFilename;
-        
-        osTempFilename.Printf( "/tmp/%s", CPLGetFilename(osResultFilename) );
+
+#ifdef WIN32
+        const char* pszPath = CPLGetPath(CPLGenerateTempFilename(NULL));
+#else
+        const char* pszPath = "/tmp";
+#endif
+        osTempFilename = CPLFormFilename(pszPath, CPLGetFilename(osResultFilename), NULL );
         if( CPLCopyFile( osTempFilename, osResultFilename ) != 0 )
         {
             CPLError( CE_Failure, CPLE_OpenFailed, 
@@ -164,10 +170,17 @@ static GDALDataset *HTTPOpen( GDALOpenInfo * poOpenInfo )
         else
         {
             poDS =  (GDALDataset *) 
-                GDALOpenEx( osResultFilename, 0, NULL, NULL, NULL);
-            VSIUnlink( osTempFilename ); /* this may not work on windows */
+                GDALOpenEx( osTempFilename, poOpenInfo->nOpenFlags, NULL,
+                            poOpenInfo->papszOpenOptions, NULL );
+            if( VSIUnlink( osTempFilename ) != 0 && poDS != NULL )
+                poDS->MarkSuppressOnClose(); /* VSIUnlink() may not work on windows */
+            if( poDS && strcmp(poDS->GetDescription(), osTempFilename) == 0 )
+                poDS->SetDescription(poOpenInfo->pszFilename);
+
         }
     }
+    else if( strcmp(poDS->GetDescription(), osResultFilename) == 0 )
+        poDS->SetDescription(poOpenInfo->pszFilename);
 
 /* -------------------------------------------------------------------- */
 /*      Release our hold on the vsi memory file, though if it is        */

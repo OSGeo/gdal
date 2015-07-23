@@ -41,10 +41,11 @@ using namespace std;
 /************************************************************************/
 
 OGRGeoJSONDataSource::OGRGeoJSONDataSource()
-    : pszName_(NULL), pszGeoData_(NULL),
+    : pszName_(NULL), pszGeoData_(NULL), nGeoDataLen_(0),
         papoLayers_(NULL), nLayers_(0), fpOut_(NULL),
         flTransGeom_( OGRGeoJSONDataSource::eGeometryPreserve ),
         flTransAttrs_( OGRGeoJSONDataSource::eAtributesPreserve ),
+        bOtherPages_(FALSE),
         bFpOutputIsSeekable_( FALSE ),
         nBBOXInsertLocation_(0)
 {
@@ -110,10 +111,27 @@ int OGRGeoJSONDataSource::Open( GDALOpenInfo* poOpenInfo,
     LoadLayers(poOpenInfo->papszOpenOptions);
     if( nLayers_ == 0 )
     {
+        int bEmitError = TRUE;
+        if( eGeoJSONSourceService == nSrcType )
+        {
+            CPLString osTmpFilename = CPLSPrintf("/vsimem/%p/%s", this,
+                                        CPLGetFilename(poOpenInfo->pszFilename));
+            VSIFCloseL(VSIFileFromMemBuffer( osTmpFilename,
+                                             (GByte*)pszGeoData_,
+                                             nGeoDataLen_, 
+                                             TRUE ));
+            pszGeoData_ = NULL;
+            if( GDALIdentifyDriver(osTmpFilename, NULL) )
+                bEmitError = FALSE;
+            VSIUnlink(osTmpFilename);
+        }
         Clear();
-        
-        CPLError( CE_Failure, CPLE_OpenFailed, 
-                  "Failed to read GeoJSON data" );
+
+        if( bEmitError )
+        {
+            CPLError( CE_Failure, CPLE_OpenFailed, 
+                    "Failed to read GeoJSON data" );
+        }
         return FALSE;
     }
 
@@ -334,6 +352,7 @@ void OGRGeoJSONDataSource::Clear()
 
     CPLFree( pszGeoData_ );
     pszGeoData_ = NULL;
+    nGeoDataLen_ = 0;
 
     if( NULL != fpOut_ )
     {
@@ -426,7 +445,9 @@ int OGRGeoJSONDataSource::ReadFromService( const char* pszSource )
 
     // Directly assign CPLHTTPResult::pabyData to pszGeoData_
     pszGeoData_ = (char*) pszData;
+    nGeoDataLen_ = pResult->nDataLen;
     pResult->pabyData = NULL;
+    pResult->nDataLen = 0;
 
     pszName_ = CPLStrdup( pszSource );
 
@@ -489,6 +510,14 @@ void OGRGeoJSONDataSource::LoadLayers(char** papszOpenOptions)
         err = reader.Parse( pszGeoData_ );
         if( OGRERR_NONE == err )
         {
+            json_object* poObj = reader.GetJSonObject();
+            if( poObj && json_object_get_type(poObj) == json_type_object )
+            {
+                json_object* poExceededTransferLimit =
+                    json_object_object_get(poObj, "exceededTransferLimit");
+                if( poExceededTransferLimit && json_object_get_type(poExceededTransferLimit) == json_type_boolean )
+                    bOtherPages_ = json_object_get_boolean(poExceededTransferLimit);
+            }
             reader.ReadLayers( this );
         }
         return;
@@ -536,6 +565,19 @@ void OGRGeoJSONDataSource::LoadLayers(char** papszOpenOptions)
     err = reader.Parse( pszGeoData_ );
     if( OGRERR_NONE == err )
     {
+        json_object* poObj = reader.GetJSonObject();
+        if( poObj && json_object_get_type(poObj) == json_type_object )
+        {
+            json_object* poProperties = json_object_object_get(poObj, "properties");
+            if( poProperties && json_object_get_type(poProperties) == json_type_object )
+            {
+                json_object* poExceededTransferLimit =
+                    json_object_object_get(poProperties, "exceededTransferLimit");
+                if( poExceededTransferLimit && json_object_get_type(poExceededTransferLimit) == json_type_boolean )
+                    bOtherPages_ = json_object_get_boolean(poExceededTransferLimit);
+            }
+        }
+
         reader.ReadLayers( this );
     }
 

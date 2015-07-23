@@ -2385,6 +2385,121 @@ def test_ogr2ogr_58():
 
     return 'success'
 
+###############################################################################
+# Test metadata support
+
+def test_ogr2ogr_59():
+    if test_cli_utilities.get_ogr2ogr_path() is None:
+        return 'skip'
+    if ogr.GetDriverByName('GPKG') is None:
+        return 'skip'
+
+    ds = ogr.GetDriverByName('GPKG').CreateDataSource('tmp/test_ogr2ogr_59_src.gpkg')
+    ds.SetMetadataItem('FOO', 'BAR')
+    ds.SetMetadataItem('BAR', 'BAZ', 'another_domain')
+    lyr = ds.CreateLayer('mylayer')
+    lyr.SetMetadataItem('lyr_FOO', 'lyr_BAR')
+    lyr.SetMetadataItem('lyr_BAR', 'lyr_BAZ', 'lyr_another_domain')
+    ds = None
+
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f GPKG tmp/test_ogr2ogr_59_dest.gpkg tmp/test_ogr2ogr_59_src.gpkg -mo BAZ=BAW')
+
+    ds = ogr.Open('tmp/test_ogr2ogr_59_dest.gpkg')
+    if ds.GetMetadata() != { 'FOO': 'BAR', 'BAZ': 'BAW' }:
+        gdaltest.post_reason('fail')
+        print(ds.GetMetadata())
+        return 'fail'
+    if ds.GetMetadata('another_domain') != { 'BAR': 'BAZ' }:
+        gdaltest.post_reason('fail')
+        print(ds.GetMetadata())
+        return 'fail'
+    lyr = ds.GetLayer(0)
+    if lyr.GetMetadata() != { 'lyr_FOO': 'lyr_BAR' }:
+        gdaltest.post_reason('fail')
+        print(lyr.GetMetadata())
+        return 'fail'
+    if lyr.GetMetadata('lyr_another_domain') != { 'lyr_BAR': 'lyr_BAZ' }:
+        gdaltest.post_reason('fail')
+        print(lyr.GetMetadata())
+        return 'fail'
+    ds = None
+
+    ogr.GetDriverByName('GPKG').DeleteDataSource('tmp/test_ogr2ogr_59_dest.gpkg')
+
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f GPKG tmp/test_ogr2ogr_59_dest.gpkg tmp/test_ogr2ogr_59_src.gpkg -nomd')
+    ds = ogr.Open('tmp/test_ogr2ogr_59_dest.gpkg')
+    if ds.GetMetadata() != {}:
+        gdaltest.post_reason('fail')
+        print(ds.GetMetadata())
+        return 'fail'
+    lyr = ds.GetLayer(0)
+    if lyr.GetMetadata() != {}:
+        gdaltest.post_reason('fail')
+        print(lyr.GetMetadata())
+        return 'fail'
+    ds = None
+
+    ogr.GetDriverByName('GPKG').DeleteDataSource('tmp/test_ogr2ogr_59_dest.gpkg')
+
+    ogr.GetDriverByName('GPKG').DeleteDataSource('tmp/test_ogr2ogr_59_src.gpkg')
+
+    return 'success'
+
+###############################################################################
+# Test forced datasource transactions
+
+def test_ogr2ogr_60():
+    if test_cli_utilities.get_ogr2ogr_path() is None:
+        return 'skip'
+    if ogr.GetDriverByName('FileGDB') is None:
+        return 'skip'
+
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -ds_transaction -f FileGDB tmp/test_ogr2ogr_60.gdb ../ogr/data/poly.shp -mapFieldType Integer64=Integer')
+
+    ds = ogr.Open('tmp/test_ogr2ogr_60.gdb')
+    lyr = ds.GetLayer(0)
+    if lyr.GetFeatureCount() != 10:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    ogr.GetDriverByName('FileGDB').DeleteDataSource('tmp/test_ogr2ogr_60.gdb')
+
+    return 'success'
+
+###############################################################################
+# Test -spat_srs
+
+def test_ogr2ogr_61():
+    if test_cli_utilities.get_ogr2ogr_path() is None:
+        return 'skip'
+
+    f = open('tmp/test_ogr2ogr_61.csv', 'wt')
+    f.write('foo,WKT\n')
+    f.write('1,"POINT(2 49)"\n')
+    f.close()
+
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' tmp/test_ogr2ogr_61.shp tmp/test_ogr2ogr_61.csv -spat 426857 5427937 426858 5427938 -spat_srs EPSG:32631 -s_srs EPSG:4326 -a_srs EPSG:4326')
+
+    ds = ogr.Open('tmp/test_ogr2ogr_61.shp')
+    if ds is None or ds.GetLayer(0).GetFeatureCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds.Destroy()
+
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' tmp/test_ogr2ogr_61_2.shp tmp/test_ogr2ogr_61.shp -spat 426857 5427937 426858 5427938 -spat_srs EPSG:32631')
+
+    ds = ogr.Open('tmp/test_ogr2ogr_61_2.shp')
+    if ds is None or ds.GetLayer(0).GetFeatureCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds.Destroy()
+
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_61.shp')
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_61_2.shp')
+    os.unlink('tmp/test_ogr2ogr_61.csv')
+
+    return 'success'
 
 gdaltest_list = [
     test_ogr2ogr_1,
@@ -2446,6 +2561,9 @@ gdaltest_list = [
     test_ogr2ogr_56,
     test_ogr2ogr_57,
     test_ogr2ogr_58,
+    test_ogr2ogr_59,
+    test_ogr2ogr_60,
+    test_ogr2ogr_61
     ]
 
 if __name__ == '__main__':

@@ -87,6 +87,10 @@ OGRMSSQLSpatialDataSource::~OGRMSSQLSpatialDataSource()
 int OGRMSSQLSpatialDataSource::TestCapability( const char * pszCap )
 
 {
+#if (ODBCVER >= 0x0300)
+    if ( EQUAL(pszCap,ODsCTransactions) )
+        return TRUE;
+#endif
     if( EQUAL(pszCap,ODsCCreateLayer) || EQUAL(pszCap,ODsCDeleteLayer) )
         return TRUE;
     else
@@ -176,6 +180,8 @@ int OGRMSSQLSpatialDataSource::DeleteLayer( int iLayer )
 
     CPLDebug( "MSSQLSpatial", "DeleteLayer(%s)", pszTableName );
 
+    papoLayers[iLayer]->SetSpatialIndexFlag(FALSE);
+
     delete papoLayers[iLayer];
     memmove( papoLayers + iLayer, papoLayers + iLayer + 1,
              sizeof(void *) * (nLayers - iLayer - 1) );
@@ -188,17 +194,23 @@ int OGRMSSQLSpatialDataSource::DeleteLayer( int iLayer )
 /*      Remove from the database.                                       */
 /* -------------------------------------------------------------------- */
 
-    oSession.BeginTransaction();
+    int bInTransaction = oSession.IsInTransaction();
+    if (!bInTransaction)
+        oSession.BeginTransaction();
     
     if( !oStmt.ExecuteSQL() )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                     "Error deleting layer: %s", GetSession()->GetLastError() );
 
+        if (!bInTransaction)
+            oSession.RollbackTransaction();
+
         return OGRERR_FAILURE;
     }
 
-    oSession.CommitTransaction();
+    if (!bInTransaction)
+        oSession.CommitTransaction();
 
     return OGRERR_NONE;
 }
@@ -218,6 +230,7 @@ OGRLayer * OGRMSSQLSpatialDataSource::ICreateLayer( const char * pszLayerName,
     const char          *pszGeomType = NULL;
     const char          *pszGeomColumn = NULL;
     int                 nCoordDimension = 3;
+    char                *pszFIDColumnName = NULL;
 
     /* determine the dimension */
     if( eType == wkbFlatten(eType) )
@@ -325,6 +338,7 @@ OGRLayer * OGRMSSQLSpatialDataSource::ICreateLayer( const char * pszLayerName,
         if (!pszGeomColumn)
             pszGeomColumn = "ogr_geometry";
     }
+    int bGeomNullable = CSLFetchBoolean(papszOptions, "GEOMETRY_NULLABLE", TRUE);
 
 /* -------------------------------------------------------------------- */
 /*      Initialize the metadata tables                                  */
@@ -374,29 +388,49 @@ OGRLayer * OGRMSSQLSpatialDataSource::ICreateLayer( const char * pszLayerName,
         oStmt.Appendf("IF NOT EXISTS (SELECT name from sys.schemas WHERE name = '%s') EXEC sp_executesql N'CREATE SCHEMA [%s]'\n", pszSchemaName, pszSchemaName);
     }
 
+     /* determine the FID column name */
+    const char* pszFIDColumnNameIn = CSLFetchNameValueDef(papszOptions, "FID", "ogr_fid");
+    if( CSLFetchBoolean(papszOptions,"LAUNDER", TRUE) )
+        pszFIDColumnName = LaunderName( pszFIDColumnNameIn );
+    else
+        pszFIDColumnName = CPLStrdup( pszFIDColumnNameIn );
+
+    int bFID64 = CSLFetchBoolean(papszOptions, "FID64", FALSE);
+ 	const char* pszFIDType = bFID64 ? "bigint": "int";
+
     if( eType == wkbNone ) 
     { 
-        oStmt.Appendf("CREATE TABLE [%s].[%s] ([ogr_fid] [int] IDENTITY(1,1) NOT NULL, "
-            "CONSTRAINT [PK_%s] PRIMARY KEY CLUSTERED ([ogr_fid] ASC))",
-            pszSchemaName, pszTableName, pszTableName);
+        oStmt.Appendf("CREATE TABLE [%s].[%s] ([%s] [%s] IDENTITY(1,1) NOT NULL, "
+            "CONSTRAINT [PK_%s] PRIMARY KEY CLUSTERED ([%s] ASC))",
+            pszSchemaName, pszTableName, pszFIDColumnName, pszFIDType, pszTableName, pszFIDColumnName);
     }
     else
     {
-        oStmt.Appendf("CREATE TABLE [%s].[%s] ([ogr_fid] [int] IDENTITY(1,1) NOT NULL, "
-            "[%s] [%s] NULL, CONSTRAINT [PK_%s] PRIMARY KEY CLUSTERED ([ogr_fid] ASC))",
-            pszSchemaName, pszTableName, pszGeomColumn, pszGeomType, pszTableName);
+        oStmt.Appendf("CREATE TABLE [%s].[%s] ([%s] [%s] IDENTITY(1,1) NOT NULL, "
+            "[%s] [%s] %s, CONSTRAINT [PK_%s] PRIMARY KEY CLUSTERED ([%s] ASC))",
+            pszSchemaName, pszTableName, pszFIDColumnName, pszFIDType, pszGeomColumn, pszGeomType,
+            bGeomNullable? "NULL":"NOT NULL", pszTableName, pszFIDColumnName);
     }
-    oSession.BeginTransaction();
+
+    CPLFree( pszFIDColumnName );
+
+    int bInTransaction = oSession.IsInTransaction();
+    if (!bInTransaction)
+        oSession.BeginTransaction();
         
     if( !oStmt.ExecuteSQL() )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                     "Error creating layer: %s", GetSession()->GetLastError() );
 
+        if (!bInTransaction)
+            oSession.RollbackTransaction();
+
         return NULL;
     }
 
-    oSession.CommitTransaction();
+    if (!bInTransaction)
+        oSession.CommitTransaction();
 
 /* -------------------------------------------------------------------- */
 /*      Create the layer object.                                        */
@@ -404,6 +438,11 @@ OGRLayer * OGRMSSQLSpatialDataSource::ICreateLayer( const char * pszLayerName,
     OGRMSSQLSpatialTableLayer   *poLayer;
 
     poLayer = new OGRMSSQLSpatialTableLayer( this );
+
+    if (bInTransaction)
+        poLayer->SetLayerStatus(MSSQLLAYERSTATUS_INITIAL);
+    else
+        poLayer->SetLayerStatus(MSSQLLAYERSTATUS_CREATED);
 
     poLayer->SetLaunderFlag( CSLFetchBoolean(papszOptions,"LAUNDER",TRUE) );
     poLayer->SetPrecisionFlag( CSLFetchBoolean(papszOptions,"PRECISION",TRUE));
@@ -427,6 +466,9 @@ OGRLayer * OGRMSSQLSpatialDataSource::ICreateLayer( const char * pszLayerName,
         CPLFree(pszWKT);
         pszWKT = NULL;
     }
+
+    if( bFID64 )
+        poLayer->SetMetadataItem(OLMD_FID64, "YES");
     
     if (poLayer->Initialize(pszSchemaName, pszTableName, pszGeomColumn, nCoordDimension, nSRSId, pszWKT, eType) == OGRERR_FAILURE)
     {
@@ -1049,16 +1091,23 @@ OGRErr OGRMSSQLSpatialDataSource::InitializeMetadataTables()
             "CREATE TABLE spatial_ref_sys (srid integer not null "
             "PRIMARY KEY, auth_name varchar(256), auth_srid integer, srtext varchar(2048), proj4text varchar(2048))" );
 
-        oSession.BeginTransaction();
+        int bInTransaction = oSession.IsInTransaction();
+        if (!bInTransaction)
+            oSession.BeginTransaction();
     
         if( !oStmt.ExecuteSQL() )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                         "Error initializing the metadata tables : %s", GetSession()->GetLastError() );
+            
+            if (!bInTransaction)
+                oSession.RollbackTransaction();
+
             return OGRERR_FAILURE;
         }
 
-        oSession.CommitTransaction();
+        if (!bInTransaction)
+            oSession.CommitTransaction();
     }
 
     return OGRERR_NONE;
@@ -1267,7 +1316,11 @@ int OGRMSSQLSpatialDataSource::FetchSRSId( OGRSpatialReference * poSRS)
     nSRSId = nAuthorityCode;
 
     oStmt.Clear();
-    oSession.BeginTransaction();
+    
+    int bInTransaction = oSession.IsInTransaction();
+    if (!bInTransaction)
+        oSession.BeginTransaction();
+
     if (nAuthorityCode > 0)
     {
         oStmt.Appendf("SELECT srid FROM spatial_ref_sys where srid = %d", nAuthorityCode);
@@ -1295,7 +1348,8 @@ int OGRMSSQLSpatialDataSource::FetchSRSId( OGRSpatialReference * poSRS)
     if (nSRSId == 0)
     {
         /* unable to allocate srid */
-        oSession.RollbackTransaction();
+        if (!bInTransaction)
+            oSession.RollbackTransaction();
         CPLFree( pszProj4 );
         CPLFree(pszWKT);
         return 0;
@@ -1329,9 +1383,89 @@ int OGRMSSQLSpatialDataSource::FetchSRSId( OGRSpatialReference * poSRS)
     CPLFree( pszWKT);
 
     if ( oStmt.ExecuteSQL() )
-        oSession.CommitTransaction();
+    {
+        if (!bInTransaction)
+            oSession.CommitTransaction();
+    }
     else
-        oSession.RollbackTransaction();
+    {
+        if (!bInTransaction)
+            oSession.RollbackTransaction();
+    }
 
     return nSRSId;
+}
+	
+/************************************************************************/
+/*                         StartTransaction()                           */
+/*                                                                      */
+/* Should only be called by user code. Not driver internals.            */
+/************************************************************************/
+
+OGRErr OGRMSSQLSpatialDataSource::StartTransaction(CPL_UNUSED int bForce)
+{
+    if (!oSession.BeginTransaction())
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                    "Failed to start transaction: %s", oSession.GetLastError() );
+        return OGRERR_FAILURE;
+    }
+    
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                         CommitTransaction()                          */
+/*                                                                      */
+/* Should only be called by user code. Not driver internals.            */
+/************************************************************************/
+
+OGRErr OGRMSSQLSpatialDataSource::CommitTransaction()
+{
+    if (!oSession.CommitTransaction())
+     {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                    "Failed to commit transaction: %s", oSession.GetLastError() );
+
+        for( int iLayer = 0; iLayer < nLayers; iLayer++ )
+        {
+            if( papoLayers[iLayer]->GetLayerStatus() == MSSQLLAYERSTATUS_INITIAL )
+                papoLayers[iLayer]->SetLayerStatus(MSSQLLAYERSTATUS_DISABLED);
+        }
+        return OGRERR_FAILURE;
+    }
+
+    /* set the status for the newly created layers */
+    for( int iLayer = 0; iLayer < nLayers; iLayer++ )
+    {
+        if( papoLayers[iLayer]->GetLayerStatus() == MSSQLLAYERSTATUS_INITIAL )
+            papoLayers[iLayer]->SetLayerStatus(MSSQLLAYERSTATUS_CREATED);
+    }
+    
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                        RollbackTransaction()                         */
+/*                                                                      */
+/* Should only be called by user code. Not driver internals.            */
+/************************************************************************/
+
+OGRErr OGRMSSQLSpatialDataSource::RollbackTransaction()
+{
+    /* set the status for the newly created layers */
+    for( int iLayer = 0; iLayer < nLayers; iLayer++ )
+    {
+        if( papoLayers[iLayer]->GetLayerStatus() == MSSQLLAYERSTATUS_INITIAL )
+            papoLayers[iLayer]->SetLayerStatus(MSSQLLAYERSTATUS_DISABLED);
+    }
+    
+    if (!oSession.RollbackTransaction())
+     {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                    "Failed to roll back transaction: %s", oSession.GetLastError() );
+        return OGRERR_FAILURE;
+    }
+    
+    return OGRERR_NONE;
 }

@@ -68,6 +68,8 @@ static void Usage(const char* pszErrorMsg = NULL)
         "Available algorithms and parameters with their's defaults:\n"
         "    Inverse distance to a power (default)\n"
         "        invdist:power=2.0:smoothing=0.0:radius1=0.0:radius2=0.0:angle=0.0:max_points=0:min_points=0:nodata=0.0\n"
+        "    Inverse distance to a power with nearest neighbor search\n"
+        "        invdistnn:power=2.0:radius=1.0:max_points=12:min_points=0:nodata=0\n"
         "    Moving average\n"
         "        average:radius1=0.0:radius2=0.0:angle=0.0:min_points=0:nodata=0.0\n"
         "    Nearest neighbor\n"
@@ -81,6 +83,8 @@ static void Usage(const char* pszErrorMsg = NULL)
         "            count\n"
         "            average_distance\n"
         "            average_distance_pts\n"
+        "    Linear\n"
+        "        linear:radius=-1.0:nodata=0.0\n"
         "\n");
 
     if( pszErrorMsg != NULL )
@@ -114,6 +118,17 @@ static void PrintAlgorithmAndOptions( GDALGridAlgorithm eAlgorithm,
                 (unsigned long)((GDALGridInverseDistanceToAPowerOptions *)pOptions)->nMaxPoints,
                 (unsigned long)((GDALGridInverseDistanceToAPowerOptions *)pOptions)->nMinPoints,
                 ((GDALGridInverseDistanceToAPowerOptions *)pOptions)->dfNoDataValue);
+            break;
+        case GGA_InverseDistanceToAPowerNearestNeighbor:
+            printf( "Algorithm name: \"%s\".\n", szAlgNameInvDistNearestNeighbor );
+            CPLprintf( "Options are "
+                        "\"power=%f:radius=%f"
+                    ":max_points=%lu:min_points=%lu:nodata=%f\"\n",
+                ((GDALGridInverseDistanceToAPowerNearestNeighborOptions *)pOptions)->dfPower,
+                ((GDALGridInverseDistanceToAPowerNearestNeighborOptions *)pOptions)->dfRadius,
+                (unsigned long)((GDALGridInverseDistanceToAPowerNearestNeighborOptions *)pOptions)->nMaxPoints,
+                (unsigned long)((GDALGridInverseDistanceToAPowerNearestNeighborOptions *)pOptions)->nMinPoints,
+                ((GDALGridInverseDistanceToAPowerNearestNeighborOptions *)pOptions)->dfNoDataValue);
             break;
         case GGA_MovingAverage:
             printf( "Algorithm name: \"%s\".\n", szAlgNameAverage );
@@ -200,6 +215,13 @@ static void PrintAlgorithmAndOptions( GDALGridAlgorithm eAlgorithm,
                 ((GDALGridDataMetricsOptions *)pOptions)->dfAngle,
                 (unsigned long)((GDALGridDataMetricsOptions *)pOptions)->nMinPoints,
                 ((GDALGridDataMetricsOptions *)pOptions)->dfNoDataValue);
+            break;
+        case GGA_Linear:
+            printf( "Algorithm name: \"%s\".\n", szAlgNameLinear );
+            CPLprintf( "Options are "
+                    "\"radius=%f:nodata=%f\"\n",
+                ((GDALGridLinearOptions *)pOptions)->dfRadius,
+                ((GDALGridLinearOptions *)pOptions)->dfNoDataValue);
             break;
         default:
             printf( "Algorithm is unknown.\n" );
@@ -470,6 +492,16 @@ static CPLErr ProcessLayer( OGRLayerH hSrcLayer, GDALDatasetH hDstDS,
     GUInt32 nBlockCount = ((nXSize + nBlockXSize - 1) / nBlockXSize)
         * ((nYSize + nBlockYSize - 1) / nBlockYSize);
 
+    GDALGridContext* psContext = GDALGridContextCreate( eAlgorithm, pOptions,
+                                                        adfX.size(),
+                                                        &(adfX[0]), &(adfY[0]), &(adfZ[0]),
+                                                        TRUE );
+    if( psContext == NULL )
+    {
+        CPLFree( pData );
+        return CE_Failure;
+    }
+
     CPLErr eErr = CE_None;
     for ( nYOffset = 0; nYOffset < nYSize && eErr == CE_None; nYOffset += nBlockYSize )
     {
@@ -490,8 +522,7 @@ static CPLErr ProcessLayer( OGRLayerH hSrcLayer, GDALDatasetH hDstDS,
             if (nYOffset + nYRequest > nYSize)
                 nYRequest = nYSize - nYOffset;
 
-            eErr = GDALGridCreate( eAlgorithm, pOptions,
-                            adfX.size(), &(adfX[0]), &(adfY[0]), &(adfZ[0]),
+            eErr = GDALGridContextProcess( psContext,
                             dfXMin + dfDeltaX * nXOffset,
                             dfXMin + dfDeltaX * (nXOffset + nXRequest),
                             dfYMin + dfDeltaY * nYOffset,
@@ -507,6 +538,8 @@ static CPLErr ProcessLayer( OGRLayerH hSrcLayer, GDALDatasetH hDstDS,
             GDALDestroyScaledProgress( pScaledProgress );
         }
     }
+    
+    GDALGridContextFree(psContext);
 
     CPLFree( pData );
     return eErr;
@@ -610,7 +643,7 @@ int main( int argc, char ** argv )
 {
     GDALDriverH     hDriver;
     const char      *pszSource=NULL, *pszDest=NULL, *pszFormat = "GTiff";
-    int             bFormatExplicitelySet = FALSE;
+    int             bFormatExplicitlySet = FALSE;
     char            **papszLayers = NULL;
     const char      *pszBurnAttribute = NULL;
     double          dfIncreaseBurnValue = 0.0;
@@ -665,7 +698,7 @@ int main( int argc, char ** argv )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             pszFormat = argv[++i];
-            bFormatExplicitelySet = TRUE;
+            bFormatExplicitlySet = TRUE;
         }
 
         else if( EQUAL(argv[i],"-q") || EQUAL(argv[i],"-quiet") )
@@ -1021,7 +1054,7 @@ int main( int argc, char ** argv )
     if ( nYSize == 0 )
         nYSize = 256;
 
-    if (!bQuiet && !bFormatExplicitelySet)
+    if (!bQuiet && !bFormatExplicitlySet)
         CheckExtensionConsistency(pszDest, pszFormat);
 
     hDstDS = GDALCreate( hDriver, pszDest, nXSize, nYSize, nBands,

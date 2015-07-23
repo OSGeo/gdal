@@ -951,7 +951,8 @@ static int SWQCheckSubExprAreNotGeometries( swq_expr_node *poNode )
 /*      circumstances.                                                  */
 /************************************************************************/
 
-swq_field_type SWQGeneralChecker( swq_expr_node *poNode )
+swq_field_type SWQGeneralChecker( swq_expr_node *poNode,
+                                  int bAllowMismatchTypeOnFieldComparison  )
 
 {									
     swq_field_type eRetType = SWQ_ERROR;
@@ -1109,6 +1110,37 @@ swq_field_type SWQGeneralChecker( swq_expr_node *poNode )
 
             if( eArgType != eThisArgType )
             {
+                // Conveniency for join. We allow comparing numeric columns
+                // and string columns, by casting string columns to numeric
+                if( bAllowMismatchTypeOnFieldComparison &&
+                    poNode->nSubExprCount == 2 &&
+                    poNode->nOperation == SWQ_EQ &&
+                    poNode->papoSubExpr[0]->eNodeType == SNT_COLUMN &&
+                    poNode->papoSubExpr[i]->eNodeType == SNT_COLUMN &&
+                    eArgType == SWQ_FLOAT && eThisArgType == SWQ_STRING )
+                {
+                    swq_expr_node* poNewNode = new swq_expr_node(SWQ_CAST);
+                    poNewNode->PushSubExpression(poNode->papoSubExpr[i]);
+                    poNewNode->PushSubExpression(new swq_expr_node("FLOAT"));
+                    SWQCastChecker(poNewNode, FALSE);
+                    poNode->papoSubExpr[i] = poNewNode;
+                    break;
+                }
+                if( bAllowMismatchTypeOnFieldComparison &&
+                    poNode->nSubExprCount == 2 &&
+                    poNode->nOperation == SWQ_EQ &&
+                    poNode->papoSubExpr[0]->eNodeType == SNT_COLUMN &&
+                    poNode->papoSubExpr[i]->eNodeType == SNT_COLUMN &&
+                    eThisArgType == SWQ_FLOAT && eArgType == SWQ_STRING )
+                {
+                    swq_expr_node* poNewNode = new swq_expr_node(SWQ_CAST);
+                    poNewNode->PushSubExpression(poNode->papoSubExpr[0]);
+                    poNewNode->PushSubExpression(new swq_expr_node("FLOAT"));
+                    SWQCastChecker(poNewNode, FALSE);
+                    poNode->papoSubExpr[0] = poNewNode;
+                    break;
+                }
+
                 const swq_operation *poOp = 
                     swq_op_registrar::GetOperator((swq_op)poNode->nOperation);
                 
@@ -1318,7 +1350,8 @@ swq_expr_node *SWQCastEvaluator( swq_expr_node *node,
 /*                           SWQCastChecker()                           */
 /************************************************************************/
 
-swq_field_type SWQCastChecker( swq_expr_node *poNode )
+swq_field_type SWQCastChecker( swq_expr_node *poNode,
+                               CPL_UNUSED int bAllowMismatchTypeOnFieldComparison )
 
 {									
     swq_field_type eType = SWQ_ERROR;

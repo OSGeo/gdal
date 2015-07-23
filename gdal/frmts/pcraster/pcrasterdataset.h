@@ -112,7 +112,7 @@ private:
   CSF_VS           d_valueScale;
 
   //! No data value.
-  double           d_missingValue;
+  double           d_defaultNoDataValue;
 
   bool             d_location_changed;
 
@@ -150,7 +150,7 @@ public:
 
   CSF_VS           valueScale          () const;
 
-  double           missingValue        () const;
+  double           defaultNoDataValue  () const;
 
   bool             location_changed    () const;
 

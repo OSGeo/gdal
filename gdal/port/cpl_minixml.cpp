@@ -599,6 +599,21 @@ CPLXMLNode *CPLParseXMLString( const char *pszString )
     }
 
 /* -------------------------------------------------------------------- */
+/*      Check for a UTF-8 BOM and skip if found                         */
+/*                                                                      */
+/*      TODO: BOM is variable-length parameter and depends on encoding. */
+/*            Add BOM detection for other encodings.                    */
+/* -------------------------------------------------------------------- */
+
+    // Used to skip to actual beginning of XML data
+    if( ( (unsigned char)pszString[0] == 0xEF )
+        && ( (unsigned char)pszString[1] == 0xBB )
+        && ( (unsigned char)pszString[2] == 0xBF) )
+    {
+        pszString += 3;
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Initialize parse context.                                       */
 /* -------------------------------------------------------------------- */
     sContext.pszInput = pszString;
@@ -702,6 +717,24 @@ CPLXMLNode *CPLParseXMLString( const char *pszString )
             
             if( ReadToken(&sContext) != TEqual )
             {
+                // Parse stuff like <?valbuddy_schematron ../wmtsSimpleGetCapabilities.sch?>
+                if( sContext.nStackSize > 0 &&
+                    sContext.papsStack[sContext.nStackSize-1].psFirstNode->pszValue[0] == '?' &&
+                    sContext.papsStack[sContext.nStackSize-1].psFirstNode->psChild == psAttr )
+                {
+                    CPLDestroyXMLNode(psAttr);
+                    sContext.papsStack[sContext.nStackSize-1].psFirstNode->psChild = NULL;
+                    sContext.papsStack[sContext.nStackSize-1].psLastChild = NULL;
+
+                    sContext.papsStack[sContext.nStackSize-1].psFirstNode->pszValue = (char*)CPLRealloc(
+                        sContext.papsStack[sContext.nStackSize-1].psFirstNode->pszValue,
+                        strlen(sContext.papsStack[sContext.nStackSize-1].psFirstNode->pszValue) + 1 + strlen(sContext.pszToken) + 1);
+                    strcat(sContext.papsStack[sContext.nStackSize-1].psFirstNode->pszValue, " ");
+                    strcat(sContext.papsStack[sContext.nStackSize-1].psFirstNode->pszValue, sContext.pszToken);
+
+                    continue;
+                }
+
                 CPLError( CE_Failure, CPLE_AppDefined, 
                           "Line %d: Didn't find expected '=' for value of attribute '%.500s'.",
                           sContext.nInputLine, psAttr->pszValue );

@@ -92,7 +92,7 @@ OGRErr OGRSXFDriver::DeleteDataSource(const char* pszName)
 {
     int iExt;
     //TODO: add more extensions if aplicable
-    static const char *apszExtensions[] = { "szf", "rsc", NULL }; 
+    static const char *apszExtensions[] = { "szf", "rsc", "SZF", "RSC", NULL };
 
     VSIStatBufL sStatBuf;
     if (VSIStatL(pszName, &sStatBuf) != 0)
@@ -138,6 +138,7 @@ void RegisterOGRSXF()
                                 "Storage and eXchange Format" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
                                 "drv_sxf.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "sxf" );
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver(poDriver);
 }
 

@@ -37,27 +37,41 @@ CPL_CVSID("$Id$");
 extern "C" void RegisterOGRWFS();
 
 /************************************************************************/
+/*                             Identify()                               */
+/************************************************************************/
+
+static int OGRWFSDriverIdentify( GDALOpenInfo* poOpenInfo )
+
+{
+    if( !EQUALN(poOpenInfo->pszFilename, "WFS:", 4) )
+    {
+        if( poOpenInfo->fpL == NULL )
+            return FALSE;
+        if( !EQUALN((const char*)poOpenInfo->pabyHeader,"<OGRWFSDataSource>",18) &&
+            strstr((const char*)poOpenInfo->pabyHeader,"<WFS_Capabilities") == NULL &&
+            strstr((const char*)poOpenInfo->pabyHeader,"<wfs:WFS_Capabilities") == NULL)
+        {
+            return FALSE;
+        }
+    }
+    return TRUE;
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
 static GDALDataset *OGRWFSDriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
-    if( !EQUALN(poOpenInfo->pszFilename, "WFS:", 4) )
-    {
-        if( poOpenInfo->fpL == NULL )
-            return NULL;
-        if( !EQUALN((const char*)poOpenInfo->pabyHeader,"<OGRWFSDataSource>",18) &&
-            strstr((const char*)poOpenInfo->pabyHeader,"<WFS_Capabilities") == NULL &&
-            strstr((const char*)poOpenInfo->pabyHeader,"<wfs:WFS_Capabilities") == NULL)
-        {
-            return NULL;
-        }
-    }
+    if( !OGRWFSDriverIdentify(poOpenInfo) )
+        return NULL;
 
     OGRWFSDataSource   *poDS = new OGRWFSDataSource();
 
-    if( !poDS->Open( poOpenInfo->pszFilename, poOpenInfo->eAccess == GA_Update ) )
+    if( !poDS->Open( poOpenInfo->pszFilename,
+                     poOpenInfo->eAccess == GA_Update,
+                     poOpenInfo->papszOpenOptions ) )
     {
         delete poDS;
         poDS = NULL;
@@ -86,8 +100,25 @@ void RegisterOGRWFS()
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
                                    "drv_wfs.html" );
 
+        poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, "WFS:" );
+
+        poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
+"<OpenOptionList>"
+"  <Option name='URL' type='string' description='URL to the WFS server endpoint' required='true'/>"
+"  <Option name='TRUST_CAPABILITIES_BOUNDS' type='boolean' description='Whether to trust layer bounds declared in GetCapabilities response' default='NO'/>"
+"  <Option name='EMPTY_AS_NULL' type='boolean' description='Force empty fields to be reported as NULL. Set to NO so that not-nullable fields can be exposed' default='YES'/>"
+"  <Option name='INVERT_AXIS_ORDER_IF_LAT_LONG' type='boolean' description='Whether to present SRS and coordinate ordering in traditional GIS order' default='YES'/>"
+"  <Option name='CONSIDER_EPSG_AS_URN' type='string-select' description='Whether to consider srsName like EPSG:XXXX as respecting EPSG axis order' default='AUTO'>"
+"    <Value>AUTO</Value>"
+"    <Value>YES</Value>"
+"    <Value>NO</Value>"
+"  </Option>"
+"  <Option name='EXPOSE_GML_ID' type='boolean' description='Whether to make feature gml:id as a gml_id attribute.' default='YES'/>"
+"</OpenOptionList>" );
+
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
+        poDriver->pfnIdentify = OGRWFSDriverIdentify;
         poDriver->pfnOpen = OGRWFSDriverOpen;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );

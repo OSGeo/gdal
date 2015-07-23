@@ -10,6 +10,18 @@
  */
 %include "typemaps.i"
 
+%include "../../port/cpl_config.h"
+#if defined(WIN32) && defined(_MSC_VER)
+typedef __int64            GIntBig;
+typedef unsigned __int64   GUIntBig;
+#elif HAVE_LONG_LONG
+typedef long long          GIntBig;
+typedef unsigned long long GUIntBig;
+#else
+typedef long               GIntBig;
+typedef unsigned long      GUIntBig;
+#endif
+
 %apply (long *OUTPUT) { long *argout };
 %apply (double *OUTPUT) { double *argout };
 %apply (double *OUTPUT) { double *defaultval };
@@ -48,19 +60,6 @@
     }
 }
 
-%typemap(in) GIntBig
-{
-  /* %typemap(in) GIntBig */
-  $1 = SvIV($input); //FIXME is that right ??
-}
-
-%typemap(out) GIntBig
-{
-  /* %typemap(out) GIntBig */
-  $result = sv_newmortal();
-  sv_setiv($result, (IV) $1);
-  argvi++;
-}
 %typemap(out) const char *
 {
     /* %typemap(out) const char * */
@@ -133,6 +132,25 @@
   sv_2mortal($result);
   argvi++;
 }
+
+/* typemaps for VSI_RETVAL */
+
+/* drop GDAL return value */
+%typemap(out) VSI_RETVAL
+{
+  /* %typemap(out) VSI_RETVAL */
+}
+/* croak if GDAL returns -1 */
+%typemap(ret) VSI_RETVAL
+{
+ /* %typemap(ret) VSI_RETVAL */
+  if ($1 == -1 ) {
+    croak(strerror(errno));
+  }
+}
+
+/* typemaps for IF_FALSE_RETURN_NONE */
+
 /* drop GDAL return value */
 %typemap(out) IF_FALSE_RETURN_NONE
 {
@@ -143,20 +161,7 @@
 {
  /* %typemap(ret) IF_FALSE_RETURN_NONE */
   if ($1 == 0 ) {
-    SWIG_croak("unexpected error in '$symname'");
-  }
-}
-/* drop GDAL return value */
-%typemap(out) RETURN_NONE_TRUE_IS_ERROR
-{
-  /* %typemap(out) RETURN_NONE_TRUE_IS_ERROR */
-}
-/* croak if GDAL return TRUE */
-%typemap(ret) RETURN_NONE_TRUE_IS_ERROR
-{
- /* %typemap(ret) RETURN_NONE_TRUE_IS_ERROR */
-  if ($1 != 0 ) {
-    SWIG_croak("unexpected error in '$symname'");
+    croak("Unspecified error. Consult documentation for possible causes of failure.");
   }
 }
 /* drop GDAL return value */
@@ -224,6 +229,21 @@ CreateArrayFromIntArray( int *first, unsigned int size ) {
 }
 %}
 
+%fragment("CreateArrayFromGUIntBigArray","header") %{
+#define LENGTH_OF_GUIntBig_AS_STRING 30
+static SV *
+CreateArrayFromGUIntBigArray( GUIntBig *first, unsigned int size ) {
+  AV *av = (AV*)sv_2mortal((SV*)newAV());
+  for( unsigned int i=0; i<size; i++ ) {
+    char s[LENGTH_OF_GUIntBig_AS_STRING];
+    snprintf(s, LENGTH_OF_GUIntBig_AS_STRING-1, CPL_FRMT_GUIB, *first);
+    av_store(av,i,newSVpv(s, 0));
+    ++first;
+  }
+  return sv_2mortal(newRV((SV*)av));
+}
+%}
+
 %fragment("CreateArrayFromDoubleArray","header") %{
 static SV *
 CreateArrayFromDoubleArray( double *first, unsigned int size ) {
@@ -250,6 +270,8 @@ CreateArrayFromStringArray( char **first ) {
 }
 %}
 
+/* typemaps for (int *nLen, const int **pList) */
+
 %typemap(in,numinputs=0) (int *nLen, const int **pList) (int nLen, int *pList)
 {
   /* %typemap(in,numinputs=0) (int *nLen, const int **pList) */
@@ -262,6 +284,23 @@ CreateArrayFromStringArray( char **first ) {
   $result = CreateArrayFromIntArray( *($2), *($1) );
   argvi++;
 }
+
+/* typemaps for (int *nLen, const GUIntBig **pList) */
+
+%typemap(in,numinputs=0) (int *nLen, const GUIntBig **pList) (int nLen, GUIntBig *pList)
+{
+  /* %typemap(in,numinputs=0) (int *nLen, const GUIntBig **pList) */
+  $1 = &nLen;
+  $2 = &pList;
+}
+%typemap(argout,fragment="CreateArrayFromGUIntBigArray") (int *nLen, const GUIntBig **pList)
+{
+  /* %typemap(argout) (int *nLen, const GUIntBig **pList) */
+  $result = CreateArrayFromGUIntBigArray( *($2), *($1) );
+  argvi++;
+}
+
+/* typemaps for (int len, int *output) */
 
 %typemap(in,numinputs=1) (int len, int *output)
 {
@@ -283,7 +322,7 @@ CreateArrayFromStringArray( char **first ) {
     int i;
     EXTEND(SP, argvi+$1-items+1);
     for (i = 0; i < $1; i++)
-      ST(argvi++) = sv_2mortal(newSVnv($2[i]));
+      ST(argvi++) = sv_2mortal(newSViv($2[i]));
   } else {
     $result = CreateArrayFromIntArray( $2, $1 );
     argvi++;
@@ -294,6 +333,45 @@ CreateArrayFromStringArray( char **first ) {
   /* %typemap(freearg) (int len, int *output) */
   CPLFree($2);
 }
+
+/* typemaps for (int len, GUIntBig *output) */
+
+%typemap(in,numinputs=1) (int len, GUIntBig *output)
+{
+  /* %typemap(in,numinputs=1) (int len, GUIntBig *output) */
+  $1 = SvIV($input);
+}
+%typemap(check) (int len, GUIntBig *output)
+{
+  /* %typemap(check) (int len, GUIntBig *output) */
+  if ($1 < 1) $1 = 1; /* stop idiocy */
+  $2 = (GUIntBig*)CPLMalloc( $1 * sizeof(GUIntBig) );
+    
+}
+%typemap(argout,fragment="CreateArrayFromGUIntBigArray") (int len, GUIntBig *output)
+{
+  /* %typemap(argout) (int len, GUIntBig *output) */
+  if (GIMME_V == G_ARRAY) {
+    /* return a list */
+    int i;
+    EXTEND(SP, argvi+$1-items+1);
+    for (i = 0; i < $1; i++) {
+      char s[LENGTH_OF_GUIntBig_AS_STRING];
+      snprintf(s, LENGTH_OF_GUIntBig_AS_STRING-1, CPL_FRMT_GUIB, $2[i]);
+      ST(argvi++) = sv_2mortal(newSVpv(s, 0));
+    }
+  } else {
+    $result = CreateArrayFromGUIntBigArray( $2, $1 );
+    argvi++;
+  }
+}
+%typemap(freearg) (int len, GUIntBig *output)
+{
+  /* %typemap(freearg) (int len, GUIntBig *output) */
+  CPLFree($2);
+}
+
+/* typemaps for (int nLen, double *pList) */
 
 %typemap(in,numinputs=0) (int *nLen, const double **pList) (int nLen, double *pList)
 {
@@ -360,7 +438,7 @@ CreateArrayFromStringArray( char **first ) {
 {
     /* %typemap(in) (double argin[ANY]) */
     if (!(SvROK($input) && (SvTYPE(SvRV($input))==SVt_PVAV)))
-        SWIG_croak("Expected a reference to an array.");
+        croak("Expected a reference to an array.");
     $1 = argin;
     AV *av = (AV*)(SvRV($input));
     for (unsigned int i=0; i<$dim0; i++) {
@@ -369,14 +447,13 @@ CreateArrayFromStringArray( char **first ) {
     }
 }
 
-/*
- *  Typemap for counted arrays of ints <- Perl list
- */
+/* typemaps for (int nList, int* pList) */
+
 %typemap(in,numinputs=1) (int nList, int* pList)
 {
     /* %typemap(in,numinputs=1) (int nList, int* pList) */
     if (!(SvROK($input) && (SvTYPE(SvRV($input))==SVt_PVAV)))
-        SWIG_croak("Expected a reference to an array.");
+        croak("Expected a reference to an array.");
     AV *av = (AV*)(SvRV($input));
     $1 = av_len(av)+1;
     $2 = (int*)CPLMalloc($1*sizeof(int));
@@ -394,11 +471,37 @@ CreateArrayFromStringArray( char **first ) {
     CPLFree((void*) $2);
 }
 
+/* typemaps for (int nList, GUIntBig* pList) */
+
+%typemap(in,numinputs=1) (int nList, GUIntBig* pList)
+{
+    /* %typemap(in,numinputs=1) (int nList, GUIntBig* pList) */
+    if (!(SvROK($input) && (SvTYPE(SvRV($input))==SVt_PVAV)))
+        croak("Expected a reference to an array.");
+    AV *av = (AV*)(SvRV($input));
+    $1 = av_len(av)+1;
+    $2 = (GUIntBig*)CPLMalloc($1*sizeof(GUIntBig));
+    if ($2) {
+        for( int i = 0; i<$1; i++ ) {
+            SV **sv = av_fetch(av, i, 0);
+            $2[i] =  strtoull(SvPV_nolen(*sv), NULL, 10);
+        }
+    } else
+        SWIG_fail;
+}
+%typemap(freearg) (int nList, GUIntBig* pList)
+{
+    /* %typemap(freearg) (int nList, GUIntBig* pList) */
+    CPLFree((void*) $2);
+}
+
+/* typemaps for (int nList, double* pList) */
+
 %typemap(in,numinputs=1) (int nList, double* pList)
 {
     /* %typemap(in,numinputs=1) (int nList, double* pList) */
     if (!(SvROK($input) && (SvTYPE(SvRV($input))==SVt_PVAV)))
-        SWIG_croak("Expected a reference to an array.");
+        croak("Expected a reference to an array.");
     AV *av = (AV*)(SvRV($input));
     $1 = av_len(av)+1;
     $2 = (double*)CPLMalloc($1*sizeof(double));
@@ -420,7 +523,7 @@ CreateArrayFromStringArray( char **first ) {
 {
     /* %typemap(in) (char **pList) */
     if (!(SvROK($input) && (SvTYPE(SvRV($input))==SVt_PVAV)))
-        SWIG_croak("Expected a reference to an array.");
+        croak("Expected a reference to an array.");
     AV *av = (AV*)(SvRV($input));
     for (int i = 0; i < av_len(av)+1; i++) {
         SV *sv = *(av_fetch(av, i, 0));
@@ -469,12 +572,31 @@ CreateArrayFromStringArray( char **first ) {
     free( *$2 );
   }
 }
+%typemap(in,numinputs=0) (GIntBig *nLen, char **pBuf ) ( GIntBig nLen = 0, char *pBuf = 0 )
+{
+  /* %typemap(in,numinputs=0) (GIntBig *nLen, char **pBuf ) */
+  $1 = &nLen;
+  $2 = &pBuf;
+}
+%typemap(argout) (GIntBig *nLen, char **pBuf )
+{
+  /* %typemap(argout) (GIntBig *nLen, char **pBuf ) */
+  $result = sv_2mortal(newSVpv( *$2, *$1 ));
+  argvi++;
+}
+%typemap(freearg) (GIntBig *nLen, char **pBuf )
+{
+  /* %typemap(freearg) (GIntBig *nLen, char **pBuf ) */
+  if( *$1 ) {
+    free( *$2 );
+  }
+}
 %typemap(in,numinputs=1) (int nLen, char *pBuf )
 {
     /* %typemap(in,numinputs=1) (int nLen, char *pBuf ) */
     if (SvOK($input)) {
         if (!SvPOK($input))
-            SWIG_croak("Expected binary data.");
+            croak("Expected binary data.");
         STRLEN len = SvCUR($input);
         $2 = SvPV_nolen($input);
         $1 = len;
@@ -488,9 +610,23 @@ CreateArrayFromStringArray( char **first ) {
     /* %typemap(in,numinputs=1) (int nLen, unsigned char *pBuf ) */
     if (SvOK($input)) {
         if (!SvPOK($input))
-            SWIG_croak("Expected binary data.");
+            croak("Expected binary data.");
         STRLEN len = SvCUR($input);
         $2 = (unsigned char *)SvPV_nolen($input);
+        $1 = len;
+    } else {
+        $2 = NULL;
+        $1 = 0;
+    }
+}
+%typemap(in,numinputs=1) (GIntBig nLen, char *pBuf )
+{
+    /* %typemap(in,numinputs=1) (GIntBig nLen, char *pBuf ) */
+    if (SvOK($input)) {
+        if (!SvPOK($input))
+            croak("Expected binary data.");
+        STRLEN len = SvCUR($input);
+        $2 = SvPV_nolen($input);
         $1 = len;
     } else {
         $2 = NULL;
@@ -565,7 +701,7 @@ CreateArrayFromStringArray( char **first ) {
 {
     /* %typemap(in,numinputs=1) (int nGCPs, GDAL_GCP const *pGCPs ) */
     if (!(SvROK($input) && (SvTYPE(SvRV($input))==SVt_PVAV)))
-        SWIG_croak("Expected a reference to an array.");
+        croak("Expected a reference to an array.");
     AV *av = (AV*)(SvRV($input));
     $1 = av_len(av)+1;
     $2 = (GDAL_GCP *)CPLMalloc($1*sizeof(GDAL_GCP));
@@ -574,10 +710,10 @@ CreateArrayFromStringArray( char **first ) {
             SV **sv = av_fetch(av, i, 0);
             int ret = SWIG_ConvertPtr(*sv, (void**)&($2[i]), SWIGTYPE_p_GDAL_GCP, 0);
             if (!SWIG_IsOK(ret))
-                SWIG_croak("An item in the argument array is not a GCP object.");
+                croak("An item in the argument array is not a GCP object.");
         }
     } else
-        SWIG_croak("Out of memory.");
+        croak("Out of memory.");
 }
 %typemap(freearg) (int nGCPs, GDAL_GCP const *pGCPs )
 {
@@ -593,7 +729,7 @@ CreateArrayFromStringArray( char **first ) {
 {
     /* %typemap(out) GDALColorEntry* */
     if (!result)
-        SWIG_croak("GetColorEntry failed.");
+        croak("GetColorEntry failed.");
     $result = sv_newmortal();
     sv_setiv(ST(argvi++), (IV) result->c1);
     $result = sv_newmortal();
@@ -612,7 +748,7 @@ CreateArrayFromStringArray( char **first ) {
 {
     /* %typemap(argout) GDALColorEntry* */
     if (!result)
-        SWIG_croak("GetColorEntryAsRGB failed.");
+        croak("GetColorEntryAsRGB failed.");
     argvi--;
     $result = sv_newmortal();
     sv_setiv(ST(argvi++), (IV) e3.c1);
@@ -647,7 +783,7 @@ CreateArrayFromStringArray( char **first ) {
       sv = av_fetch(av, 3, 0);
       $1->c4 =  SvIV(*sv);
     } else 
-      SWIG_croak("Color entry is an array of four values: red, green, blue, alpha.");
+      croak("Color entry is an array of four values: red, green, blue, alpha.");
 }
 
 /*
@@ -726,9 +862,9 @@ CreateArrayFromStringArray( char **first ) {
                     $1 = CSLAddNameValue( $1, key, SvPV_nolen(sv) );
                 }
             } else
-                SWIG_croak("the 'options' argument to a Geo::GDAL method is not a reference to an array or hash");
+                croak("The 'options' argument is not a reference to an array or a hash.");
         } else
-            SWIG_croak("the 'options' argument to a Geo::GDAL method is not a reference");   
+            croak("The 'options' argument is not a reference.");   
     }
 }
 %typemap(freearg) char **options
@@ -809,6 +945,17 @@ CreateArrayFromStringArray( char **first ) {
     $1 = ($1_type)&val;
   }
 }
+%typemap(in) (GIntBig *optional_GIntBig) ( GIntBig val )
+{
+  /* %typemap(in) (GIntBig *optional_GIntBig) */
+  if ( !SvOK($input) ) {
+    $1 = 0;
+  }
+  else {
+    val = strtoull(SvPV_nolen($input), 0, 0);
+    $1 = ($1_type)&val;
+  }
+}
 
 /*
  * Typedef const char * <- Any object.
@@ -850,8 +997,8 @@ CreateArrayFromStringArray( char **first ) {
     /* %typemap(out) OGRErr */
     if ( result != 0 ) {
         const char *err = CPLGetLastErrorMsg();
-        if (err and *err) SWIG_croak(err); /* this is usually better */
-        SWIG_croak( OGRErrMessages(result) );
+        if (err and *err) croak(err); /* this is usually better */
+        croak( OGRErrMessages(result) );
     }
 }
 
@@ -908,16 +1055,16 @@ CreateArrayFromStringArray( char **first ) {
 {
     /* %typemap(in) (CPLXMLNode* xmlnode ) */
     if (!(SvROK($input) && (SvTYPE(SvRV($input))==SVt_PVAV)))
-        SWIG_croak("Expected a reference to an array.");
+        croak("Expected a reference to an array.");
     AV *av = (AV*)(SvRV($input));
     int err;
     $1 = AVToXMLTree( av, &err );
     if ( !$1 ) {
         switch (err) {
         case 1:
-            SWIG_croak("Conversion of a Perl array to XMLTree failed: the input XML is empty.");
+            croak("Conversion of a Perl array to XMLTree failed: the input XML is empty.");
         case 2:
-            SWIG_croak("Conversion of a Perl array to XMLTree failed, child should be a reference to an array.");
+            croak("Conversion of a Perl array to XMLTree failed, child should be a reference to an array.");
         }
     }
 }
@@ -982,7 +1129,7 @@ static AV *XMLTreeToAV( CPLXMLNode *psTree )
 {
     /* %typemap(check) (type *param) */
     if (!$1)
-        SWIG_croak("The msg must not be undefined when it is an argument to a Geo::GDAL method");
+        croak("The msg must not be undefined when it is an argument to a Geo::GDAL method.");
 }
 %enddef
 
@@ -1023,7 +1170,7 @@ IF_UNDEF_NULL(const char *, target_key)
     /* %typemap(in) (int nCount, double *x, double *y, double *z) */
     /* $input is a ref to a list of refs to point lists */
     if (! (SvROK($input) && (SvTYPE(SvRV($input))==SVt_PVAV)))
-        SWIG_croak("Expected a reference to an array.");
+        croak("Expected a reference to an array.");
     AV *av = (AV*)(SvRV($input));
     $1 = av_len(av)+1;
     $2 = (double*)CPLMalloc($1*sizeof(double));
@@ -1036,7 +1183,7 @@ IF_UNDEF_NULL(const char *, target_key)
     for (int i = 0; i < $1; i++) {
         SV **sv = av_fetch(av, i, 0); /* ref to one point list */
         if (!(SvROK(*sv) && (SvTYPE(SvRV(*sv))==SVt_PVAV)))
-            SWIG_croak("An item in the list is not a reference to an array.");
+            croak("An item in the list is not a reference to an array.");
         AV *ac = (AV*)(SvRV(*sv));
         int n = av_len(ac)+1;
         SV **c = av_fetch(ac, 0, 0);
@@ -1095,13 +1242,13 @@ IF_UNDEF_NULL(const char *, target_key)
     if (SvOK($input)) {
         if (SvROK($input)) {
             if (SvTYPE(SvRV($input)) != SVt_PVCV) {
-               SWIG_croak("the callback argument of a Geo::GDAL method must be a reference to a subroutine");
+               croak("The callback argument of a Geo::GDAL method must be a reference to a subroutine.");
             } else {
                saved_env.fct = (SV *)$input;
                $1 = &callback_d_cp_vp;
            }
         } else {
-            SWIG_croak("the callback argument of a Geo::GDAL method must be a reference to a subroutine");
+            croak("The callback argument of a Geo::GDAL method must be a reference to a subroutine.");
         }
     }
 }
@@ -1111,6 +1258,19 @@ IF_UNDEF_NULL(const char *, target_key)
     /* %typemap(in) (void* callback_data=NULL) */
     if (SvOK($input))
         saved_env.data = (SV *)$input;
+}
+
+%typemap(in) (GDALDatasetShadow *)
+{
+    /* %typemap(in) (GDALDatasetShadow *) */
+    void *argp = 0;
+    int res = SWIG_ConvertPtr($input, &argp, SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
+    if (!SWIG_IsOK(res)) {
+        croak("$symname: dataset argument is not a dataset object."); 
+    }
+    $1 = reinterpret_cast< GDALDatasetShadow * >(argp);
+    if ($1 == NULL)
+        croak("$symname: dataset argument is undefined.");
 }
 
 /*
@@ -1231,7 +1391,7 @@ IF_UNDEF_NULL(const char *, target_key)
 {
     /* %typemap(in,numinputs=1) (int object_list_count, GDALRasterBandShadow **poObjects) */
     if (!(SvROK($input) && (SvTYPE(SvRV($input))==SVt_PVAV)))
-        SWIG_croak("Expected a reference to an array of Band objects.");
+        croak("Expected a reference to an array of Band objects.");
     AV *av = (AV*)(SvRV($input));
     $1 = av_len(av)+1;
     /* get the pointers from the array into bands */
@@ -1241,10 +1401,10 @@ IF_UNDEF_NULL(const char *, target_key)
             SV **sv = av_fetch(av, i, 0);
             int ret = SWIG_ConvertPtr(*sv, &($2[i]), SWIGTYPE_p_GDALRasterBandShadow, 0);
             if (!SWIG_IsOK(ret))
-                SWIG_croak("An item in the argument array is not a Band object.");
+                croak("An item in the argument array is not a Band object.");
         }
     } else
-        SWIG_croak("Out of memory.");
+        croak("Out of memory.");
         
 }
 %typemap(freearg) (int object_list_count, GDALRasterBandShadow **poObjects)

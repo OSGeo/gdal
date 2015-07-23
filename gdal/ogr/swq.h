@@ -59,8 +59,8 @@ typedef enum {
     SWQ_COUNT,
     SWQ_SUM,
     SWQ_CAST,
-    SWQ_FUNC_DEFINED,
-    SWQ_UNKNOWN
+    SWQ_CUSTOM_FUNC, /* only if parsing done in bAcceptCustomFuncs mode */
+    SWQ_ARGUMENT_LIST /* temporary value only set during parsing and replaced by something else at the end */
 } swq_op;
 
 typedef enum {
@@ -96,11 +96,12 @@ typedef swq_expr_node *(*swq_field_fetcher)( swq_expr_node *op,
                                              void *record_handle );
 typedef swq_expr_node *(*swq_op_evaluator)(swq_expr_node *op,
                                            swq_expr_node **sub_field_values );
-typedef swq_field_type (*swq_op_checker)( swq_expr_node *op );
+typedef swq_field_type (*swq_op_checker)( swq_expr_node *op,
+                                          int bAllowMismatchTypeOnFieldComparison );
+
+class swq_custom_func_registrar;
 
 class swq_expr_node {
-    static CPLString   QuoteIfNecessary( const CPLString &, char chQuote = '\'' );
-    static CPLString   Quote( const CPLString &, char chQuote = '\'' );
 public:
     swq_expr_node();
 
@@ -114,9 +115,12 @@ public:
     ~swq_expr_node();
 
     void           Initialize();
+    CPLString      UnparseOperationFromUnparsedSubExpr(char** apszSubExpr);
     char          *Unparse( swq_field_list *, char chColumnQuote );
     void           Dump( FILE *fp, int depth );
-    swq_field_type Check( swq_field_list *, int bAllowFieldsInSecondaryTables );
+    swq_field_type Check( swq_field_list *, int bAllowFieldsInSecondaryTables,
+                          int bAllowMismatchTypeOnFieldComparison,
+                          swq_custom_func_registrar* poCustomFuncRegistrar );
     swq_expr_node* Evaluate( swq_field_fetcher pfnFetcher, 
                              void *record );
     swq_expr_node* Clone();
@@ -136,14 +140,21 @@ public:
     /* only for SNT_COLUMN */
     int         field_index;
     int         table_index;
+    char        *table_name;
 
     /* only for SNT_CONSTANT */
     int         is_null;
-    char        *table_name;
-    char        *string_value; /* column name */
     GIntBig     int_value;
     double      float_value;
     OGRGeometry *geometry_value;
+    
+    /* shared by SNT_COLUMN, SNT_CONSTANT and also possibly SNT_OPERATION when */
+    /* nOperation == SWQ_CUSTOM_FUNC */
+    char        *string_value; /* column name when SNT_COLUMN */
+
+
+    static CPLString   QuoteIfNecessary( const CPLString &, char chQuote = '\'' );
+    static CPLString   Quote( const CPLString &, char chQuote = '\'' );
 };
 
 typedef struct {
@@ -158,6 +169,14 @@ public:
     static const swq_operation *GetOperator( const char * );
     static const swq_operation *GetOperator( swq_op eOperation );
 };
+
+class swq_custom_func_registrar
+{
+    public:
+        virtual ~swq_custom_func_registrar() {}
+        virtual const swq_operation *GetOperator( const char * ) = 0;
+};
+
 
 typedef struct {
     char       *data_source;
@@ -179,12 +198,15 @@ public:
 
 class swq_parse_context {
 public:
-    swq_parse_context() : nStartToken(0), poRoot(NULL), poCurSelect(NULL) {}
+    swq_parse_context() : nStartToken(0), pszInput(NULL), pszNext(NULL),
+                          pszLastValid(NULL), bAcceptCustomFuncs(FALSE),
+                          poRoot(NULL), poCurSelect(NULL) {}
 
     int        nStartToken;
     const char *pszInput;
     const char *pszNext;
     const char *pszLastValid;
+    int        bAcceptCustomFuncs;
 
     swq_expr_node *poRoot;
 
@@ -207,10 +229,14 @@ CPLErr swq_expr_compile( const char *where_clause,
                          int field_count,
                          char **field_list,
                          swq_field_type *field_types,
+                         int bCheck,
+                         swq_custom_func_registrar* poCustomFuncRegistrar,
                          swq_expr_node **expr_root );
 
 CPLErr swq_expr_compile2( const char *where_clause, 
                           swq_field_list *field_list, 
+                          int bCheck,
+                          swq_custom_func_registrar* poCustomFuncRegistrar,
                           swq_expr_node **expr_root );
 
 /*
@@ -219,9 +245,9 @@ CPLErr swq_expr_compile2( const char *where_clause,
 int swq_test_like( const char *input, const char *pattern );
 
 swq_expr_node *SWQGeneralEvaluator( swq_expr_node *, swq_expr_node **);
-swq_field_type SWQGeneralChecker( swq_expr_node *node );
+swq_field_type SWQGeneralChecker( swq_expr_node *node, int bAllowMismatchTypeOnFieldComparison );
 swq_expr_node *SWQCastEvaluator( swq_expr_node *, swq_expr_node **);
-swq_field_type SWQCastChecker( swq_expr_node *node );
+swq_field_type SWQCastChecker( swq_expr_node *node, int bAllowMismatchTypeOnFieldComparison );
 const char*    SWQFieldTypeToString( swq_field_type field_type );
 
 /****************************************************************************/
@@ -281,20 +307,31 @@ typedef struct {
 
 typedef struct {
     int        secondary_table;
-
-    char      *primary_table_name;
-    char      *primary_field_name;
-    int        primary_field;
-
-    swq_op     op;
-
-    char      *secondary_table_name;
-    char      *secondary_field_name;
-    int        secondary_field;
+    swq_expr_node  *poExpr;
 } swq_join_def;
+
+class swq_select_parse_options
+{
+public:
+    swq_custom_func_registrar* poCustomFuncRegistrar;
+    int                        bAllowFieldsInSecondaryTablesInWhere;
+    int                        bAddSecondaryTablesGeometryFields;
+    int                        bAlwaysPrefixWithTableName;
+    int                        bAllowDistinctOnGeometryField;
+    int                        bAllowDistinctOnMultipleFields;
+
+                    swq_select_parse_options(): poCustomFuncRegistrar(NULL),
+                                                bAllowFieldsInSecondaryTablesInWhere(FALSE),
+                                                bAddSecondaryTablesGeometryFields(FALSE),
+                                                bAlwaysPrefixWithTableName(FALSE),
+                                                bAllowDistinctOnGeometryField(FALSE),
+                                                bAllowDistinctOnMultipleFields(FALSE) {}
+};
 
 class swq_select
 {
+    void        postpreparse();
+
 public:
     swq_select();
     ~swq_select();
@@ -315,11 +352,7 @@ public:
     int         table_count;
     swq_table_def *table_defs;
 
-    void        PushJoin( int iSecondaryTable,
-                          const char *pszPrimaryTable,
-                          const char *pszPrimaryField,
-                          const char *pszSecondaryTable,
-                          const char *pszSecondaryField );
+    void        PushJoin( int iSecondaryTable, swq_expr_node* poExpr );
     int         join_count;
     swq_join_def *join_defs;
 
@@ -332,11 +365,14 @@ public:
     swq_select *poOtherSelect;
     void        PushUnionAll( swq_select* poOtherSelectIn );
 
-    CPLErr      preparse( const char *select_statement );
-    void        postpreparse();
-    CPLErr      expand_wildcard( swq_field_list *field_list );
-    CPLErr      parse( swq_field_list *field_list, int parse_flags );
+    CPLErr      preparse( const char *select_statement,
+                          int bAcceptCustomFuncs = FALSE );
+    CPLErr      expand_wildcard( swq_field_list *field_list,
+                                 int bAlwaysPrefixWithTableName );
+    CPLErr      parse( swq_field_list *field_list,
+                       swq_select_parse_options* poParseOptions );
 
+    char       *Unparse();
     void        Dump( FILE * );
 };
 

@@ -319,7 +319,11 @@ def wms_8():
         gdaltest.post_reason( 'open failed.' )
         return 'fail'
 
+    gdal.ErrorReset()
     data = ds.GetRasterBand(1).GetOverview(18).ReadRaster(0, 0, 512, 256)
+    if gdal.GetLastErrorMsg() != '':
+        if gdaltest.gdalurlopen('http://tilecache.osgeo.org/wms-c/Basic.py/1.0.0/basic/0/0/0.png') is None:
+            return 'skip'
 
     ds = None
 
@@ -518,6 +522,8 @@ def wms_12():
     name = "http://tilecache.osgeo.org/wms-c/Basic.py/1.0.0/"
     ds = gdal.Open( name )
     if ds is None:
+        if gdaltest.gdalurlopen('http://tilecache.osgeo.org/wms-c/Basic.py/1.0.0/basic/0/0/0.png') is None:
+            return 'skip'
         gdaltest.post_reason( 'open of %s failed.' % name)
         return 'fail'
 
@@ -535,6 +541,8 @@ def wms_12():
             name = subdatasets['SUBDATASET_%d_NAME' % (i+1)]
             ds = gdal.Open( name )
             if ds is None:
+                if gdaltest.gdalurlopen('http://tilecache.osgeo.org/wms-c/Basic.py/1.0.0/basic/0/0/0.png') is None:
+                    return 'skip'
                 gdaltest.post_reason( 'open of %s failed.' % name)
                 return 'fail'
             ds = None
@@ -779,6 +787,48 @@ def wms_17():
     return 'success'
 
 ###############################################################################
+# Test a ArcGIS Server 
+
+def wms_18():
+
+    if gdaltest.wms_drv is None:
+        return 'skip'
+    
+    # We don't need to check if the remote service is online as we
+    # don't need a connection for this test
+    
+    fn = '<GDAL_WMS><Service name="AGS"><ServerUrl>http://sampleserver1.arcgisonline.com/ArcGIS/rest/services/Specialty/ESRI_StateCityHighway_USA/MapServer</ServerUrl><BBoxOrder>xyXY</BBoxOrder><SRS>EPSG:3857</SRS></Service><DataWindow><UpperLeftX>-20037508.34</UpperLeftX><UpperLeftY>20037508.34</UpperLeftY><LowerRightX>20037508.34</LowerRightX><LowerRightY>-20037508.34</LowerRightY><SizeX>512</SizeX><SizeY>512</SizeY></DataWindow></GDAL_WMS>'
+
+    ds = gdal.Open( fn )
+
+    if ds is None:
+        gdaltest.post_reason( 'open failed.' )
+        return 'fail'
+
+    if ds.RasterXSize != 512 \
+       or ds.RasterYSize != 512 \
+       or ds.RasterCount != 3:
+        gdaltest.post_reason( 'wrong size or bands' )
+        return 'fail'
+  
+    # todo: add locationinfo test
+    
+    # add getting image test
+    if gdaltest.gdalurlopen('http://sampleserver1.arcgisonline.com/ArcGIS/rest/services/Specialty/ESRI_StateCityHighway_USA/MapServer') is None:
+        return 'skip'
+        
+    expected_cs = 12824
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != expected_cs:
+        gdaltest.post_reason( 'Did not get expected SRTM checksum.' )
+        print(cs)
+        return 'fail'
+        
+    ds = None
+        
+    return 'success'
+    
+###############################################################################
 def wms_cleanup():
 
     gdaltest.wms_ds = None
@@ -804,6 +854,7 @@ gdaltest_list = [
     wms_15,
     wms_16,
     wms_17,
+    wms_18,
     wms_cleanup ]
 
 if __name__ == '__main__':

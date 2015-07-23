@@ -186,6 +186,8 @@ int CPLODBCSession::CloseSession()
 {
     if( m_hDBC!=NULL ) 
     {
+        if ( IsInTransaction() )
+            CPLError( CE_Warning, CPLE_AppDefined, "Closing session with active transactions." );
         CPLDebug( "ODBC", "SQLDisconnect()" );
         SQLDisconnect( m_hDBC );
         SQLFreeConnect( m_hDBC );
@@ -225,6 +227,7 @@ int CPLODBCSession::ClearTransaction()
             return FALSE;
     }
 
+    m_bInTransaction = FALSE;
     m_bAutoCommit = TRUE;
 
 #endif
@@ -294,10 +297,10 @@ int CPLODBCSession::RollbackTransaction()
     {
         m_bInTransaction = FALSE;
 
-        int nRetCode = SQLEndTran( SQL_HANDLE_DBC, m_hDBC, SQL_ROLLBACK );
-        
-        if( nRetCode != SQL_SUCCESS && nRetCode != SQL_SUCCESS_WITH_INFO )
+        if( Failed( SQLEndTran( SQL_HANDLE_DBC, m_hDBC, SQL_ROLLBACK ) ) )
+        {
             return FALSE;
+        }
     }
 
 #endif
@@ -456,6 +459,7 @@ CPLODBCStatement::CPLODBCStatement( CPLODBCSession *poSession )
     m_panColSize = NULL;
     m_panColPrecision = NULL;
     m_panColNullable = NULL;
+    m_papszColColumnDef = NULL;
 
     m_papszColValues = NULL;
     m_panColValueLengths = NULL;
@@ -557,6 +561,7 @@ int CPLODBCStatement::CollectResultsInfo()
     m_panColSize = (_SQLULEN *) CPLCalloc(sizeof(_SQLULEN),m_nColCount);
     m_panColPrecision = (SQLSMALLINT *) CPLCalloc(sizeof(SQLSMALLINT),m_nColCount);
     m_panColNullable = (SQLSMALLINT *) CPLCalloc(sizeof(SQLSMALLINT),m_nColCount);
+    m_papszColColumnDef = (char **) CPLCalloc(sizeof(char *),(m_nColCount+1));
 
 /* -------------------------------------------------------------------- */
 /*      Fetch column descriptions.                                      */
@@ -593,6 +598,18 @@ int CPLODBCStatement::CollectResultsInfo()
     }
 
     return TRUE;
+}
+
+/************************************************************************/
+/*                            GetRowCountAffected()                     */
+/************************************************************************/
+
+int CPLODBCStatement::GetRowCountAffected()
+{
+    SQLLEN nResultCount=0;
+    SQLRowCount( m_hStmt, &nResultCount );
+    
+    return (int)nResultCount;
 }
 
 /************************************************************************/
@@ -746,6 +763,30 @@ short CPLODBCStatement::GetColNullable( int iCol )
         return -1;
     else
         return m_panColNullable[iCol];
+}
+
+/************************************************************************/
+/*                             GetColColumnDef()                        */
+/************************************************************************/
+
+/**
+ * Fetch a column default value.
+ *
+ * Returns the default value of a column.
+ *
+ * @param iCol the zero based column index.
+ *
+ * @return NULL if the default value is not dpecified
+ * or the internal copy of the default value.
+ */
+
+const char *CPLODBCStatement::GetColColumnDef( int iCol )
+
+{
+    if( iCol < 0 || iCol >= m_nColCount )
+        return NULL;
+    else
+        return m_papszColColumnDef[iCol];
 }
 
 /************************************************************************/
@@ -1302,6 +1343,9 @@ void CPLODBCStatement::Clear()
         CPLFree( m_panColNullable );
         m_panColNullable = NULL;
 
+        CSLDestroy( m_papszColColumnDef );
+        m_papszColColumnDef = NULL;
+
         CSLDestroy( m_papszColNames );
         m_papszColNames = NULL;
 
@@ -1397,6 +1441,7 @@ int CPLODBCStatement::GetColumns( const char *pszTable,
     m_panColSize = (_SQLULEN *) CPLCalloc(sizeof(_SQLULEN),m_nColCount);
     m_panColPrecision = (SQLSMALLINT *) CPLCalloc(sizeof(SQLSMALLINT),m_nColCount);
     m_panColNullable = (SQLSMALLINT *) CPLCalloc(sizeof(SQLSMALLINT),m_nColCount);
+    m_papszColColumnDef = (char **) CPLCalloc(sizeof(char *),(m_nColCount+1));
 
 /* -------------------------------------------------------------------- */
 /*      Establish columns to use for key information.                   */
@@ -1439,6 +1484,12 @@ int CPLODBCStatement::GetColumns( const char *pszTable,
         SQLGetData( m_hStmt, SQLColumns_NULLABLE, SQL_C_CHAR,
                     szWrkData, sizeof(szWrkData)-1, &cbDataLen );
         m_panColNullable[iCol] = atoi(szWrkData) == SQL_NULLABLE;
+#if (ODBCVER >= 0x0300)
+        SQLGetData( m_hStmt, SQLColumns_COLUMN_DEF, SQL_C_CHAR,
+                    szWrkData, sizeof(szWrkData)-1, &cbDataLen );
+        if (cbDataLen > 0)
+            m_papszColColumnDef[iCol] = CPLStrdup(szWrkData);
+#endif
     }
 
     return TRUE;
@@ -1729,9 +1780,11 @@ SQLSMALLINT CPLODBCStatement::GetTypeMapping( SQLSMALLINT nTypeCode )
         case SQL_DOUBLE:
             return SQL_C_DOUBLE;
 
+        case SQL_BIGINT:
+            return SQL_C_SBIGINT;
+
         case SQL_BIT:
         case SQL_TINYINT:
-        case SQL_BIGINT:
 /*        case SQL_TYPE_UTCDATETIME:
         case SQL_TYPE_UTCTIME:*/
         case SQL_INTERVAL_MONTH:

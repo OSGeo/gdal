@@ -201,7 +201,9 @@ void swq_expr_node::ReverseSubExpressions()
 /************************************************************************/
 
 swq_field_type swq_expr_node::Check( swq_field_list *poFieldList,
-                                     int bAllowFieldsInSecondaryTables )
+                                     int bAllowFieldsInSecondaryTables,
+                                     int bAllowMismatchTypeOnFieldComparison,
+                                     swq_custom_func_registrar* poCustomFuncRegistrar )
 
 {
 /* -------------------------------------------------------------------- */
@@ -250,13 +252,20 @@ swq_field_type swq_expr_node::Check( swq_field_list *poFieldList,
 /*      We are dealing with an operation - fetch the definition.        */
 /* -------------------------------------------------------------------- */
     const swq_operation *poOp = 
-        swq_op_registrar::GetOperator((swq_op)nOperation);
+        (nOperation == SWQ_CUSTOM_FUNC && poCustomFuncRegistrar != NULL ) ?
+            poCustomFuncRegistrar->GetOperator(string_value) :
+            swq_op_registrar::GetOperator((swq_op)nOperation);
 
     if( poOp == NULL )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Check(): Unable to find definition for operator %d.",
-                  nOperation );
+        if( nOperation == SWQ_CUSTOM_FUNC )
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Check(): Unable to find definition for operator %s.",
+                      string_value );
+        else
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Check(): Unable to find definition for operator %d.",
+                      nOperation );
         return SWQ_ERROR;
     }
 
@@ -267,14 +276,16 @@ swq_field_type swq_expr_node::Check( swq_field_list *poFieldList,
 
     for( i = 0; i < nSubExprCount; i++ )
     {
-        if( papoSubExpr[i]->Check(poFieldList, bAllowFieldsInSecondaryTables) == SWQ_ERROR )
+        if( papoSubExpr[i]->Check(poFieldList, bAllowFieldsInSecondaryTables,
+                                  bAllowMismatchTypeOnFieldComparison,
+                                  poCustomFuncRegistrar) == SWQ_ERROR )
             return SWQ_ERROR;
     }
     
 /* -------------------------------------------------------------------- */
 /*      Check this node.                                                */
 /* -------------------------------------------------------------------- */
-    field_type = poOp->pfnChecker( this );
+    field_type = poOp->pfnChecker( this, bAllowMismatchTypeOnFieldComparison );
 
     return field_type;
 }
@@ -327,8 +338,10 @@ void swq_expr_node::Dump( FILE * fp, int depth )
 
     const swq_operation *op_def = 
         swq_op_registrar::GetOperator( (swq_op) nOperation );
-
-    fprintf( fp, "%s%s\n", spaces, op_def->pszName );
+    if( op_def )
+        fprintf( fp, "%s%s\n", spaces, op_def->pszName );
+    else
+        fprintf( fp, "%s%s\n", spaces, string_value );
 
     for( i = 0; i < nSubExprCount; i++ )
         papoSubExpr[i]->Dump( fp, depth+1 );
@@ -344,10 +357,15 @@ void swq_expr_node::Dump( FILE * fp, int depth )
 CPLString swq_expr_node::QuoteIfNecessary( const CPLString &osExpr, char chQuote )
 
 {
+    if( osExpr[0] == '_' )
+        return Quote(osExpr, chQuote);
+    if( osExpr == "*" )
+        return osExpr;
+
     for( int i = 0; i < (int) osExpr.size(); i++ )
     {
         char ch = osExpr[i];
-        if (!(isalnum((int)ch) || ch == '_'))
+        if ((!(isalnum((int)ch) || ch == '_')) || ch == '.')
         {
             return Quote(osExpr, chQuote);
         }
@@ -489,16 +507,36 @@ char *swq_expr_node::Unparse( swq_field_list *field_list, char chColumnQuote )
     for( i = 0; i < nSubExprCount; i++ )
         apszSubExpr.push_back( papoSubExpr[i]->Unparse(field_list, chColumnQuote) );
 
+    osExpr = UnparseOperationFromUnparsedSubExpr(&apszSubExpr[0]);
+    
+/* -------------------------------------------------------------------- */
+/*      cleanup subexpressions.                                         */
+/* -------------------------------------------------------------------- */
+    for( i = 0; i < nSubExprCount; i++ )
+        CPLFree( apszSubExpr[i] );
+
+    return CPLStrdup( osExpr.c_str() );
+}
+
+/************************************************************************/
+/*                  UnparseOperationFromUnparsedSubExpr()               */
+/************************************************************************/
+
+CPLString swq_expr_node::UnparseOperationFromUnparsedSubExpr(char** apszSubExpr)
+{
+    int i;
+    CPLString osExpr;
+
 /* -------------------------------------------------------------------- */
 /*      Put things together in a fashion depending on the operator.     */
 /* -------------------------------------------------------------------- */
     const swq_operation *poOp = 
         swq_op_registrar::GetOperator( (swq_op) nOperation );
 
-    if( poOp == NULL )
+    if( poOp == NULL && nOperation != SWQ_CUSTOM_FUNC )
     {
         CPLAssert( FALSE );
-        return CPLStrdup("");
+        return osExpr;
     }
 
     switch( nOperation )
@@ -609,7 +647,10 @@ char *swq_expr_node::Unparse( swq_field_list *field_list, char chColumnQuote )
         break;
 
       default: // function style.
-        osExpr.Printf( "%s(", poOp->pszName );
+        if( nOperation != SWQ_CUSTOM_FUNC )
+            osExpr.Printf( "%s(", poOp->pszName );
+        else
+            osExpr.Printf( "%s(", string_value );
         for( i = 0; i < nSubExprCount; i++ )
         {
             if( i > 0 )
@@ -621,14 +662,8 @@ char *swq_expr_node::Unparse( swq_field_list *field_list, char chColumnQuote )
         osExpr += ")";
         break;
     }
-
-/* -------------------------------------------------------------------- */
-/*      cleanup subexpressions.                                         */
-/* -------------------------------------------------------------------- */
-    for( i = 0; i < nSubExprCount; i++ )
-        CPLFree( apszSubExpr[i] );
-
-    return CPLStrdup( osExpr.c_str() );
+    
+    return osExpr;
 }
 
 /************************************************************************/
@@ -654,12 +689,11 @@ swq_expr_node *swq_expr_node::Clone()
     {
         poRetNode->field_index = field_index;
         poRetNode->table_index = table_index;
+        poRetNode->table_name = table_name ? CPLStrdup(table_name) : NULL;
     }
     else if( eNodeType == SNT_CONSTANT )
     {
         poRetNode->is_null = is_null;
-        poRetNode->table_name = table_name ? CPLStrdup(table_name) : NULL;
-        poRetNode->string_value = string_value ? CPLStrdup(string_value) : NULL;
         poRetNode->int_value = int_value;
         poRetNode->float_value = float_value;
         if( geometry_value )
@@ -667,6 +701,7 @@ swq_expr_node *swq_expr_node::Clone()
         else
             poRetNode->geometry_value = NULL;
     }
+    poRetNode->string_value = string_value ? CPLStrdup(string_value) : NULL;
     return poRetNode;
 }
 
@@ -714,8 +749,14 @@ swq_expr_node *swq_expr_node::Evaluate( swq_field_fetcher pfnFetcher,
         }
         else
         {
-            apoValues.push_back(papoSubExpr[i]->Evaluate(pfnFetcher,pRecord));
-            anValueNeedsFree.push_back( TRUE );
+            swq_expr_node* poSubExprVal = papoSubExpr[i]->Evaluate(pfnFetcher,pRecord);
+            if( poSubExprVal == NULL )
+                bError = TRUE;
+            else
+            {
+                apoValues.push_back(poSubExprVal);
+                anValueNeedsFree.push_back( TRUE );
+            }
         }
     }
 
@@ -726,8 +767,20 @@ swq_expr_node *swq_expr_node::Evaluate( swq_field_fetcher pfnFetcher,
     {
         const swq_operation *poOp = 
             swq_op_registrar::GetOperator( (swq_op) nOperation );
-        
-        poRetNode = poOp->pfnEvaluator( this, &(apoValues[0]) );
+        if( poOp == NULL )
+        {
+            if( nOperation == SWQ_CUSTOM_FUNC )
+                CPLError( CE_Failure, CPLE_AppDefined,
+                        "Evaluate(): Unable to find definition for operator %s.",
+                        string_value );
+            else
+                CPLError( CE_Failure, CPLE_AppDefined,
+                        "Evaluate(): Unable to find definition for operator %d.",
+                        nOperation );
+            poRetNode = NULL;
+        }
+        else
+            poRetNode = poOp->pfnEvaluator( this, &(apoValues[0]) );
     }
 
 /* -------------------------------------------------------------------- */

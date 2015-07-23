@@ -173,12 +173,12 @@ int CPL_DLL GDALReprojectionTransform(
 void CPL_DLL *
 GDALCreateGCPTransformer( int nGCPCount, const GDAL_GCP *pasGCPList, 
                           int nReqOrder, int bReversed );
-			  
+
 /* GCP based transformer with refinement of the GCPs ... forward is to georef coordinates */
 void CPL_DLL *
 GDALCreateGCPRefineTransformer( int nGCPCount, const GDAL_GCP *pasGCPList, 
                                 int nReqOrder, int bReversed, double tolerance, int minimumGcps);
-			  
+
 void CPL_DLL GDALDestroyGCPTransformer( void *pTransformArg );
 int CPL_DLL GDALGCPTransform( 
     void *pTransformArg, int bDstToSrc, int nPointCount,
@@ -365,7 +365,11 @@ typedef enum {
   /*! Number of Points (Data Metric) */ GGA_MetricCount = 7,
   /*! Average Distance (Data Metric) */ GGA_MetricAverageDistance = 8,
   /*! Average Distance Between Data Points (Data Metric) */
-                                        GGA_MetricAverageDistancePts = 9
+                                        GGA_MetricAverageDistancePts = 9,
+  /*! Linear interpolation (from Delaunay triangulation. Since GDAL 2.1 */
+                                        GGA_Linear = 10,
+  /*! Inverse distance to a power with nearest neighbor search for max points */
+                                        GGA_InverseDistanceToAPowerNearestNeighbor = 11
 } GDALGridAlgorithm;
 
 /** Inverse distance to a power method control options */
@@ -404,6 +408,30 @@ typedef struct
     /*! No data marker to fill empty points. */
     double  dfNoDataValue;
 } GDALGridInverseDistanceToAPowerOptions;
+
+typedef struct
+{
+    /*! Weighting power. */
+    double  dfPower;
+    /*! The radius of search circle. */
+    double  dfRadius;
+
+    /*! Maximum number of data points to use.
+     *
+     * Do not search for more points than this number.
+     * If less amount of points found the grid node considered empty and will
+     * be filled with NODATA marker.
+     */
+    GUInt32 nMaxPoints;
+    /*! Minimum number of data points to use.
+     *
+     * If less amount of points found the grid node considered empty and will
+     * be filled with NODATA marker.
+     */
+    GUInt32 nMinPoints;
+    /*! No data marker to fill empty points. */
+    double  dfNoDataValue;
+} GDALGridInverseDistanceToAPowerNearestNeighborOptions;
 
 /** Moving average method control options */
 typedef struct
@@ -465,6 +493,20 @@ typedef struct
     double  dfNoDataValue;
 } GDALGridDataMetricsOptions;
 
+/** Linear method control options */
+typedef struct
+{
+    /*! In case the point to be interpolated does not fit into a triangle of
+     * the Delaunay triangulation, use that maximum distance to search a nearest
+     * neighbour, or use nodata otherwise. If set to -1, the search distance is infinite.
+     * If set to 0, nodata value will be always used.
+     */
+    double  dfRadius;
+    /*! No data marker to fill empty points. */
+    double  dfNoDataValue;
+} GDALGridLinearOptions;
+
+
 CPLErr CPL_DLL
 GDALGridCreate( GDALGridAlgorithm, const void *, GUInt32,
                 const double *, const double *, const double *,
@@ -472,11 +514,92 @@ GDALGridCreate( GDALGridAlgorithm, const void *, GUInt32,
                 GUInt32, GUInt32, GDALDataType, void *,
                 GDALProgressFunc, void *);
 
+typedef struct GDALGridContext GDALGridContext;
+
+GDALGridContext CPL_DLL*
+GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
+                       GUInt32 nPoints,
+                       const double *padfX, const double *padfY, const double *padfZ,
+                       int bCallerWillKeepPointArraysAlive );
+
+void CPL_DLL GDALGridContextFree(GDALGridContext* psContext);
+
+CPLErr CPL_DLL GDALGridContextProcess(GDALGridContext* psContext,
+                              double dfXMin, double dfXMax, double dfYMin, double dfYMax,
+                              GUInt32 nXSize, GUInt32 nYSize, GDALDataType eType, void *pData,
+                              GDALProgressFunc pfnProgress, void *pProgressArg );
+
 GDAL_GCP CPL_DLL *
 GDALComputeMatchingPoints( GDALDatasetH hFirstImage,
                            GDALDatasetH hSecondImage,
                            char **papszOptions,
-                           int *pnGCPCount ); 
+                           int *pnGCPCount );
+
+/************************************************************************/
+/*  Delaunay triangulation interface.                                   */
+/************************************************************************/
+
+typedef struct
+{
+    int anVertexIdx[3];   /* index to the padfX/padfY arrays */
+    int anNeighborIdx[3]; /* index to GDALDelaunayTriangulation.pasFacets, or -1 */
+                          /* anNeighborIdx[k] is the triangle to the opposite side */
+                          /* of the opposite segment of anVertexIdx[k] */
+} GDALTriFacet;
+
+/* Conversion from cartesian (x,y) to barycentric (l1,l2,l3) with :
+   l1 = dfMul1X * (x - dfCxtX) + dfMul1Y * (y - dfCstY)
+   l2 = dfMul2X * (x - dfCxtX) + dfMul2Y * (y - dfCstY)
+   l3 = 1 - l1 - l2
+*/
+typedef struct
+{
+    double      dfMul1X;
+    double      dfMul1Y;
+    double      dfMul2X;
+    double      dfMul2Y;
+    double      dfCstX;
+    double      dfCstY;
+} GDALTriBarycentricCoefficients;
+
+typedef struct
+{
+    int                             nFacets;
+    GDALTriFacet                   *pasFacets;     /* nFacets elements */
+    GDALTriBarycentricCoefficients *pasFacetCoefficients; /* nFacets elements */
+} GDALTriangulation;
+
+int CPL_DLL GDALHasTriangulation(void);
+
+GDALTriangulation CPL_DLL *GDALTriangulationCreateDelaunay(int nPoints,
+                                                           const double* padfX,
+                                                           const double* padfY);
+int  CPL_DLL GDALTriangulationComputeBarycentricCoefficients(
+                                                GDALTriangulation* psDT,
+                                                const double* padfX,
+                                                const double* padfY);
+int  CPL_DLL GDALTriangulationComputeBarycentricCoordinates(
+                                                const GDALTriangulation* psDT,
+                                                int nFacetIdx,
+                                                double dfX,
+                                                double dfY,
+                                                double* pdfL1,
+                                                double* pdfL2,
+                                                double* pdfL3);
+int CPL_DLL GDALTriangulationFindFacetBruteForce( const GDALTriangulation* psDT,
+                                                  double dfX,
+                                                  double dfY,
+                                                  int* panOutputFacetIdx );
+int CPL_DLL GDALTriangulationFindFacetDirected( const GDALTriangulation* psDT,
+                                                int nFacetIdx,
+                                                double dfX,
+                                                double dfY,
+                                                int* panOutputFacetIdx );
+void CPL_DLL GDALTriangulationFree(GDALTriangulation* psDT);
+
+// GDAL internal use only
+void GDALTriangulationTerminate(void);
+
 CPL_C_END
                             
 #endif /* ndef GDAL_ALG_H_INCLUDED */

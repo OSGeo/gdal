@@ -169,6 +169,18 @@ GIntBig GDALGetResponsiblePIDForCurrentThread()
 GDALDataset::GDALDataset()
 
 {
+    Init( CSLTestBoolean( 
+        CPLGetConfigOption( "GDAL_FORCE_CACHING", "NO") ) );
+}
+
+GDALDataset::GDALDataset(int bForceCachedIOIn)
+
+{
+    Init(bForceCachedIOIn);
+}
+
+void GDALDataset::Init(int bForceCachedIOIn)
+{
     poDriver = NULL;
     eAccess = GA_ReadOnly;
     nRasterXSize = 512;
@@ -176,20 +188,20 @@ GDALDataset::GDALDataset()
     nBands = 0;
     papoBands = NULL;
     nRefCount = 1;
+    nOpenFlags = 0;
     bShared = FALSE;
     bIsInternal = TRUE;
+    bSuppressOnClose = FALSE;
     papszOpenOptions = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Set forced caching flag.                                        */
 /* -------------------------------------------------------------------- */
-    bForceCachedIO =  CSLTestBoolean( 
-        CPLGetConfigOption( "GDAL_FORCE_CACHING", "NO") );
+    bForceCachedIO = (GByte)bForceCachedIOIn;
     
     m_poStyleTable = NULL;
     m_hMutex = NULL;
 }
-
 
 /************************************************************************/
 /*                            ~GDALDataset()                            */
@@ -228,6 +240,9 @@ GDALDataset::~GDALDataset()
             CPLDebug( "GDAL", 
                       "GDALClose(%s, this=%p)", GetDescription(), this );
     }
+
+    if( bSuppressOnClose )
+        VSIUnlink(GetDescription());
 
 /* -------------------------------------------------------------------- */
 /*      Remove dataset from the "open" dataset list.                    */
@@ -1471,9 +1486,10 @@ CPLErr GDALDataset::IBuildOverviews( const char *pszResampling,
 /************************************************************************/
 /*                             IRasterIO()                              */
 /*                                                                      */
-/*      The default implementation of IRasterIO() is to pass the        */
-/*      request off to each band objects rasterio methods with          */
-/*      appropriate arguments.                                          */
+/*      The default implementation of IRasterIO() is, in the general    */
+/*      case to pass the request off to each band objects rasterio      */
+/*      methods with appropriate arguments. In some cases, it might     */
+/*      choose instead the BlockBasedRasterIO() implementation.         */
 /************************************************************************/
 
 CPLErr GDALDataset::IRasterIO( GDALRWFlag eRWFlag,
@@ -1486,8 +1502,7 @@ CPLErr GDALDataset::IRasterIO( GDALRWFlag eRWFlag,
                                GDALRasterIOExtraArg* psExtraArg )
     
 {
-    int iBandIndex; 
-    CPLErr eErr = CE_None;
+
     const char* pszInterleave = NULL;
 
     CPLAssert( NULL != pData );
@@ -1502,7 +1517,34 @@ CPLErr GDALDataset::IRasterIO( GDALRWFlag eRWFlag,
                                    nPixelSpace, nLineSpace, nBandSpace,
                                    psExtraArg );
     }
+    
+    return BandBasedRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize, 
+                                   pData, nBufXSize, nBufYSize,
+                                   eBufType, nBandCount, panBandMap,
+                                   nPixelSpace, nLineSpace, nBandSpace,
+                                   psExtraArg );
+}
 
+/************************************************************************/
+/*                         BandBasedRasterIO()                          */
+/*                                                                      */
+/*      Pass the request off to each band objects rasterio methods with */
+/*      appropriate arguments.                                          */
+/************************************************************************/
+
+CPLErr GDALDataset::BandBasedRasterIO( GDALRWFlag eRWFlag,
+                               int nXOff, int nYOff, int nXSize, int nYSize,
+                               void * pData, int nBufXSize, int nBufYSize,
+                               GDALDataType eBufType, 
+                               int nBandCount, int *panBandMap,
+                               GSpacing nPixelSpace, GSpacing nLineSpace,
+                               GSpacing nBandSpace,
+                               GDALRasterIOExtraArg* psExtraArg )
+    
+{
+    int iBandIndex; 
+    CPLErr eErr = CE_None;
+    
     GDALProgressFunc  pfnProgressGlobal = psExtraArg->pfnProgress;
     void             *pProgressDataGlobal = psExtraArg->pProgressData;
 
@@ -1521,19 +1563,25 @@ CPLErr GDALDataset::IRasterIO( GDALRWFlag eRWFlag,
 
         pabyBandData = ((GByte *) pData) + iBandIndex * nBandSpace;
 
-        psExtraArg->pfnProgress = GDALScaledProgress;
-        psExtraArg->pProgressData = 
-            GDALCreateScaledProgress( 1.0 * iBandIndex / nBandCount,
-                                      1.0 * (iBandIndex + 1) / nBandCount,
-                                      pfnProgressGlobal,
-                                      pProgressDataGlobal );
+        if( nBandCount > 1 )
+        {
+            psExtraArg->pfnProgress = GDALScaledProgress;
+            psExtraArg->pProgressData = 
+                GDALCreateScaledProgress( 1.0 * iBandIndex / nBandCount,
+                                        1.0 * (iBandIndex + 1) / nBandCount,
+                                        pfnProgressGlobal,
+                                        pProgressDataGlobal );
+            if( psExtraArg->pProgressData == NULL )
+                psExtraArg->pfnProgress = NULL;
+        }
 
         eErr = poBand->IRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize, 
                                   (void *) pabyBandData, nBufXSize, nBufYSize,
                                   eBufType, nPixelSpace, nLineSpace,
                                   psExtraArg );
 
-        GDALDestroyScaledProgress( psExtraArg->pProgressData );
+        if( nBandCount > 1 )
+            GDALDestroyScaledProgress( psExtraArg->pProgressData );
     }
     
     psExtraArg->pfnProgress = pfnProgressGlobal;
@@ -1773,21 +1821,29 @@ CPLErr GDALDataset::RasterIO( GDALRWFlag eRWFlag,
         nBandSpace = nLineSpace * nBufYSize;
     }
 
+    int anBandMap[] = { 1, 2, 3, 4 };
     if( panBandMap == NULL )
     {
-        panBandMap = (int *) VSIMalloc2(sizeof(int), nBandCount);
-        if (panBandMap == NULL)
+        if( nBandCount > 4 )
         {
-            ReportError( CE_Failure, CPLE_OutOfMemory,
-                      "Out of memory while allocating band map array" );
-            return CE_Failure;
-        }
-        for( i = 0; i < nBandCount; i++ )
-            panBandMap[i] = i+1;
+            panBandMap = (int *) VSIMalloc2(sizeof(int), nBandCount);
+            if (panBandMap == NULL)
+            {
+                ReportError( CE_Failure, CPLE_OutOfMemory,
+                          "Out of memory while allocating band map array" );
+                return CE_Failure;
+            }
 
-        bNeedToFreeBandMap = TRUE;
+            for( i = 0; i < nBandCount; i++ )
+                panBandMap[i] = i+1;
+
+            bNeedToFreeBandMap = TRUE;
+        }
+        else
+            panBandMap = anBandMap;
     }
 
+    int bCallLeaveReadWrite = EnterReadWrite(eRWFlag);
 
 /* -------------------------------------------------------------------- */
 /*      We are being forced to use cached IO instead of a driver        */
@@ -1815,6 +1871,8 @@ CPLErr GDALDataset::RasterIO( GDALRWFlag eRWFlag,
                        nPixelSpace, nLineSpace, nBandSpace,
                        psExtraArg );
     }
+
+    if( bCallLeaveReadWrite ) LeaveReadWrite();
 
 /* -------------------------------------------------------------------- */
 /*      Cleanup                                                         */
@@ -2162,7 +2220,8 @@ char **GDALDataset::GetFileList()
 /* -------------------------------------------------------------------- */
 /*      Do we have a world file?                                        */
 /* -------------------------------------------------------------------- */
-    if( bMainFileReal )
+    if( bMainFileReal &&
+        !GDALCanFileAcceptSidecarFile(osMainFilename) )
     {
         const char* pszExtension = CPLGetExtension( osMainFilename );
         if( strlen(pszExtension) > 2 )
@@ -2410,6 +2469,10 @@ GDALOpen( const char * pszFilename, GDALAccess eAccess )
  * OVERVIEW_LEVEL=level, to select a particular overview level of a dataset.
  * The level index starts at 0. The level number can be suffixed by "only" to specify that
  * only this overview level must be visible, and not sub-levels.
+ * Open options are validated by default, and a warning is emitted in case the
+ * option is not recognized. In some scenarios, it might be not desirable (e.g.
+ * when not knowing which driver will open the file), so the special open option
+ * VALIDATE_OPEN_OPTIONS can be set to NO to avoid such warnings.
  *
  * @param papszSiblingFiles  NULL, or a NULL terminated list of strings that are
  * filenames that are auxiliary to the main filename. If NULL is passed, a probing
@@ -2537,12 +2600,20 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char* pszFilename,
             oOpenInfo.papszOpenOptions = papszTmpOpenOptions;
         }
 
-        if( poDriver->pfnIdentify && poDriver->pfnIdentify(&oOpenInfo) > 0 )
+        int bIdentifyRes =
+            ( poDriver->pfnIdentify && poDriver->pfnIdentify(&oOpenInfo) > 0 );
+        if( bIdentifyRes )
+        {
             GDALValidateOpenOptions( poDriver, oOpenInfo.papszOpenOptions );
+        }
 
         if ( poDriver->pfnOpen != NULL )
         {
             poDS = poDriver->pfnOpen( &oOpenInfo );
+            // If we couldn't determine for sure with Identify() (it returned -1)
+            // but that Open() managed to open the file, post validate options.
+            if( poDS != NULL && poDriver->pfnIdentify && !bIdentifyRes )
+                GDALValidateOpenOptions( poDriver, oOpenInfo.papszOpenOptions );
         }
         else if( poDriver->pfnOpenWithDriverArg != NULL )
         {
@@ -2560,6 +2631,8 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char* pszFilename,
 
         if( poDS != NULL )
         {
+            poDS->nOpenFlags = nOpenFlags;
+
             if( strlen(poDS->GetDescription()) == 0 )
                 poDS->SetDescription( pszFilename );
 
@@ -3354,7 +3427,7 @@ OGRLayer *GDALDataset::CreateLayer( const char * pszName,
         !poLayer->TestCapability(OLCCurveGeometries) )
     {
         CPLError( CE_Warning, CPLE_AppDefined,
-                  "Inconsistant driver: Layer geometry type is non-linear, but "
+                  "Inconsistent driver: Layer geometry type is non-linear, but "
                   "TestCapability(OLCCurveGeometries) returns FALSE." );
     }
 #endif
@@ -3506,7 +3579,7 @@ OGRLayerH GDALDatasetCopyLayer( GDALDatasetH hDS,
  @param hSpatialFilter geometry which represents a spatial filter. Can be NULL.
  @param pszDialect allows control of the statement dialect. If set to NULL, the
 OGR SQL engine will be used, except for RDBMS drivers that will use their dedicated SQL engine,
-unless OGRSQL is explicitely passed as the dialect. Starting with OGR 1.10, the SQLITE dialect
+unless OGRSQL is explicitly passed as the dialect. Starting with OGR 1.10, the SQLITE dialect
 can also be used.
 
  @return an OGRLayer containing the results of the query.  Deallocate with
@@ -4864,7 +4937,7 @@ OGRErr GDALDataset::ProcessSQLAlterTableAlterColumn( const char *pszSQLCommand )
  @param poSpatialFilter geometry which represents a spatial filter. Can be NULL.
  @param pszDialect allows control of the statement dialect. If set to NULL, the
 OGR SQL engine will be used, except for RDBMS drivers that will use their dedicated SQL engine,
-unless OGRSQL is explicitely passed as the dialect. Starting with OGR 1.10, the SQLITE dialect
+unless OGRSQL is explicitly passed as the dialect. Starting with OGR 1.10, the SQLITE dialect
 can also be used.
 
  @return an OGRLayer containing the results of the query.  Deallocate with
@@ -4875,6 +4948,15 @@ can also be used.
 OGRLayer * GDALDataset::ExecuteSQL( const char *pszStatement,
                                       OGRGeometry *poSpatialFilter,
                                       const char *pszDialect )
+
+{
+    return ExecuteSQL(pszStatement, poSpatialFilter, pszDialect, NULL);
+}
+
+OGRLayer * GDALDataset::ExecuteSQL( const char *pszStatement,
+                                    OGRGeometry *poSpatialFilter,
+                                    const char *pszDialect,
+                                    swq_select_parse_options* poSelectParseOptions)
 
 {
     swq_select *psSelectInfo = NULL;
@@ -4965,7 +5047,11 @@ OGRLayer * GDALDataset::ExecuteSQL( const char *pszStatement,
 /*      Preparse the SQL statement.                                     */
 /* -------------------------------------------------------------------- */
     psSelectInfo = new swq_select();
-    if( psSelectInfo->preparse( pszStatement ) != CPLE_None )
+    swq_custom_func_registrar* poCustomFuncRegistrar = NULL;
+    if( poSelectParseOptions != NULL )
+        poCustomFuncRegistrar = poSelectParseOptions->poCustomFuncRegistrar;
+    if( psSelectInfo->preparse( pszStatement,
+                                poCustomFuncRegistrar != NULL ) != CPLE_None )
     {
         delete psSelectInfo;
         return NULL;
@@ -4978,7 +5064,8 @@ OGRLayer * GDALDataset::ExecuteSQL( const char *pszStatement,
     {
         return BuildLayerFromSelectInfo(psSelectInfo,
                                         poSpatialFilter,
-                                        pszDialect);
+                                        pszDialect,
+                                        poSelectParseOptions);
     }
 
 /* -------------------------------------------------------------------- */
@@ -4994,7 +5081,8 @@ OGRLayer * GDALDataset::ExecuteSQL( const char *pszStatement,
 
         OGRLayer* poLayer = BuildLayerFromSelectInfo(psSelectInfo,
                                                      poSpatialFilter,
-                                                     pszDialect);
+                                                     pszDialect,
+                                                     poSelectParseOptions);
         if( poLayer == NULL )
         {
             /* Each source layer owns an independant select info */
@@ -5029,27 +5117,82 @@ OGRLayer * GDALDataset::ExecuteSQL( const char *pszStatement,
 /*                        BuildLayerFromSelectInfo()                    */
 /************************************************************************/
 
-OGRLayer* GDALDataset::BuildLayerFromSelectInfo(void* psSelectInfoIn,
-                                                  OGRGeometry *poSpatialFilter,
-                                                  const char *pszDialect)
+struct GDALSQLParseInfo
 {
-    swq_select* psSelectInfo = (swq_select*) psSelectInfoIn;
-
     swq_field_list sFieldList;
-    int            nFIDIndex = 0;
-    OGRGenSQLResultsLayer *poResults = NULL;
-    char *pszWHERE = NULL;
+    int            nExtraDSCount;
+    GDALDataset**  papoExtraDS;
+    char          *pszWHERE;
+};
 
-    memset( &sFieldList, 0, sizeof(sFieldList) );
+OGRLayer* GDALDataset::BuildLayerFromSelectInfo(swq_select* psSelectInfo,
+                                                OGRGeometry *poSpatialFilter,
+                                                const char *pszDialect,
+                                                swq_select_parse_options* poSelectParseOptions)
+{
+    OGRGenSQLResultsLayer *poResults = NULL;
+    GDALSQLParseInfo* psParseInfo = BuildParseInfo(psSelectInfo,
+                                                   poSelectParseOptions);
+
+    if( psParseInfo )
+    {
+        poResults = new OGRGenSQLResultsLayer( this, psSelectInfo,
+                                               poSpatialFilter,
+                                               psParseInfo->pszWHERE,
+                                               pszDialect );
+    }
+    else
+    {
+        delete psSelectInfo;
+    }
+    DestroyParseInfo(psParseInfo);
+
+    return poResults;
+}
+
+/************************************************************************/
+/*                             DestroyParseInfo()                       */
+/************************************************************************/
+
+void GDALDataset::DestroyParseInfo(GDALSQLParseInfo* psParseInfo )
+{
+    if( psParseInfo != NULL )
+    {
+        CPLFree( psParseInfo->sFieldList.names );
+        CPLFree( psParseInfo->sFieldList.types );
+        CPLFree( psParseInfo->sFieldList.table_ids );
+        CPLFree( psParseInfo->sFieldList.ids );
+
+        /* Release the datasets we have opened with OGROpenShared() */
+        /* It is safe to do that as the 'new OGRGenSQLResultsLayer' itself */
+        /* has taken a reference on them, which it will release in its */
+        /* destructor */
+        for(int iEDS = 0; iEDS < psParseInfo->nExtraDSCount; iEDS++)
+            GDALClose( (GDALDatasetH)psParseInfo->papoExtraDS[iEDS] );
+        CPLFree(psParseInfo->papoExtraDS);
+
+        CPLFree(psParseInfo->pszWHERE);
+
+        CPLFree(psParseInfo);
+    }
+}
+
+/************************************************************************/
+/*                            BuildParseInfo()                          */
+/************************************************************************/
+
+GDALSQLParseInfo* GDALDataset::BuildParseInfo(swq_select* psSelectInfo,
+                                              swq_select_parse_options* poSelectParseOptions)
+{
+    int            nFIDIndex = 0;
+
+    GDALSQLParseInfo* psParseInfo = (GDALSQLParseInfo*)CPLCalloc(1, sizeof(GDALSQLParseInfo));
 
 /* -------------------------------------------------------------------- */
 /*      Validate that all the source tables are recognised, count       */
 /*      fields.                                                         */
 /* -------------------------------------------------------------------- */
     int  nFieldCount = 0, iTable, iField;
-    int  iEDS;
-    int  nExtraDSCount = 0;
-    GDALDataset** papoExtraDS = NULL;
 
     for( iTable = 0; iTable < psSelectInfo->table_count; iTable++ )
     {
@@ -5069,14 +5212,15 @@ OGRLayer* GDALDataset::BuildLayerFromSelectInfo(void* psSelectInfoIn,
                               "`%s' required by JOIN.",
                               psTableDef->data_source );
 
-                delete psSelectInfo;
-                goto end;
+                DestroyParseInfo(psParseInfo);
+                return NULL;
             }
 
             /* Keep in an array to release at the end of this function */
-            papoExtraDS = (GDALDataset** )CPLRealloc(papoExtraDS,
-                               sizeof(GDALDataset*) * (nExtraDSCount + 1));
-            papoExtraDS[nExtraDSCount++] = poTableDS;
+            psParseInfo->papoExtraDS = (GDALDataset** )CPLRealloc(
+                               psParseInfo->papoExtraDS,
+                               sizeof(GDALDataset*) * (psParseInfo->nExtraDSCount + 1));
+            psParseInfo->papoExtraDS[psParseInfo->nExtraDSCount++] = poTableDS;
         }
 
         poSrcLayer = poTableDS->GetLayerByName( psTableDef->table_name );
@@ -5086,12 +5230,14 @@ OGRLayer* GDALDataset::BuildLayerFromSelectInfo(void* psSelectInfoIn,
             CPLError( CE_Failure, CPLE_AppDefined, 
                       "SELECT from table %s failed, no such table/featureclass.",
                       psTableDef->table_name );
-            delete psSelectInfo;
-            goto end;
+
+            DestroyParseInfo(psParseInfo);
+            return NULL;
         }
 
         nFieldCount += poSrcLayer->GetLayerDefn()->GetFieldCount();
-        if( iTable == 0 )
+        if( iTable == 0 || (poSelectParseOptions &&
+                            poSelectParseOptions->bAddSecondaryTablesGeometryFields) )
             nFieldCount += poSrcLayer->GetLayerDefn()->GetGeomFieldCount();
     }
     
@@ -5099,16 +5245,16 @@ OGRLayer* GDALDataset::BuildLayerFromSelectInfo(void* psSelectInfoIn,
 /*      Build the field list for all indicated tables.                  */
 /* -------------------------------------------------------------------- */
 
-    sFieldList.table_count = psSelectInfo->table_count;
-    sFieldList.table_defs = psSelectInfo->table_defs;
+    psParseInfo->sFieldList.table_count = psSelectInfo->table_count;
+    psParseInfo->sFieldList.table_defs = psSelectInfo->table_defs;
 
-    sFieldList.count = 0;
-    sFieldList.names = (char **) CPLMalloc( sizeof(char *) * (nFieldCount+SPECIAL_FIELD_COUNT) );
-    sFieldList.types = (swq_field_type *)  
+    psParseInfo->sFieldList.count = 0;
+    psParseInfo->sFieldList.names = (char **) CPLMalloc( sizeof(char *) * (nFieldCount+SPECIAL_FIELD_COUNT) );
+    psParseInfo->sFieldList.types = (swq_field_type *)  
         CPLMalloc( sizeof(swq_field_type) * (nFieldCount+SPECIAL_FIELD_COUNT) );
-    sFieldList.table_ids = (int *) 
+    psParseInfo->sFieldList.table_ids = (int *) 
         CPLMalloc( sizeof(int) * (nFieldCount+SPECIAL_FIELD_COUNT) );
-    sFieldList.ids = (int *) 
+    psParseInfo->sFieldList.ids = (int *) 
         CPLMalloc( sizeof(int) * (nFieldCount+SPECIAL_FIELD_COUNT) );
     
     for( iTable = 0; iTable < psSelectInfo->table_count; iTable++ )
@@ -5132,56 +5278,57 @@ OGRLayer* GDALDataset::BuildLayerFromSelectInfo(void* psSelectInfoIn,
              iField++ )
         {
             OGRFieldDefn *poFDefn=poSrcLayer->GetLayerDefn()->GetFieldDefn(iField);
-            int iOutField = sFieldList.count++;
-            sFieldList.names[iOutField] = (char *) poFDefn->GetNameRef();
+            int iOutField = psParseInfo->sFieldList.count++;
+            psParseInfo->sFieldList.names[iOutField] = (char *) poFDefn->GetNameRef();
             if( poFDefn->GetType() == OFTInteger )
             {
                 if( poFDefn->GetSubType() == OFSTBoolean )
-                    sFieldList.types[iOutField] = SWQ_BOOLEAN;
+                    psParseInfo->sFieldList.types[iOutField] = SWQ_BOOLEAN;
                 else
-                    sFieldList.types[iOutField] = SWQ_INTEGER;
+                    psParseInfo->sFieldList.types[iOutField] = SWQ_INTEGER;
             }
             else if( poFDefn->GetType() == OFTInteger64 )
             {
                 if( poFDefn->GetSubType() == OFSTBoolean )
-                    sFieldList.types[iOutField] = SWQ_BOOLEAN;
+                    psParseInfo->sFieldList.types[iOutField] = SWQ_BOOLEAN;
                 else
-                    sFieldList.types[iOutField] = SWQ_INTEGER64;
+                    psParseInfo->sFieldList.types[iOutField] = SWQ_INTEGER64;
             }
             else if( poFDefn->GetType() == OFTReal )
-                sFieldList.types[iOutField] = SWQ_FLOAT;
+                psParseInfo->sFieldList.types[iOutField] = SWQ_FLOAT;
             else if( poFDefn->GetType() == OFTString )
-                sFieldList.types[iOutField] = SWQ_STRING;
+                psParseInfo->sFieldList.types[iOutField] = SWQ_STRING;
             else if( poFDefn->GetType() == OFTTime )
-                sFieldList.types[iOutField] = SWQ_TIME;
+                psParseInfo->sFieldList.types[iOutField] = SWQ_TIME;
             else if( poFDefn->GetType() == OFTDate )
-                sFieldList.types[iOutField] = SWQ_DATE;
+                psParseInfo->sFieldList.types[iOutField] = SWQ_DATE;
             else if( poFDefn->GetType() == OFTDateTime )
-                sFieldList.types[iOutField] = SWQ_TIMESTAMP;
+                psParseInfo->sFieldList.types[iOutField] = SWQ_TIMESTAMP;
             else
-                sFieldList.types[iOutField] = SWQ_OTHER;
+                psParseInfo->sFieldList.types[iOutField] = SWQ_OTHER;
 
-            sFieldList.table_ids[iOutField] = iTable;
-            sFieldList.ids[iOutField] = iField;
+            psParseInfo->sFieldList.table_ids[iOutField] = iTable;
+            psParseInfo->sFieldList.ids[iOutField] = iField;
         }
 
-        if( iTable == 0 )
+        if( iTable == 0 || (poSelectParseOptions &&
+                            poSelectParseOptions->bAddSecondaryTablesGeometryFields) )
         {
-            nFIDIndex = sFieldList.count;
+            nFIDIndex = psParseInfo->sFieldList.count;
 
             for( iField = 0; 
                  iField < poSrcLayer->GetLayerDefn()->GetGeomFieldCount();
                  iField++ )
             {
                 OGRGeomFieldDefn *poFDefn=poSrcLayer->GetLayerDefn()->GetGeomFieldDefn(iField);
-                int iOutField = sFieldList.count++;
-                sFieldList.names[iOutField] = (char *) poFDefn->GetNameRef();
-                if( *sFieldList.names[iOutField] == '\0' )
-                    sFieldList.names[iOutField] = (char*) OGR_GEOMETRY_DEFAULT_NON_EMPTY_NAME;
-                sFieldList.types[iOutField] = SWQ_GEOMETRY;
+                int iOutField = psParseInfo->sFieldList.count++;
+                psParseInfo->sFieldList.names[iOutField] = (char *) poFDefn->GetNameRef();
+                if( *psParseInfo->sFieldList.names[iOutField] == '\0' )
+                    psParseInfo->sFieldList.names[iOutField] = (char*) OGR_GEOMETRY_DEFAULT_NON_EMPTY_NAME;
+                psParseInfo->sFieldList.types[iOutField] = SWQ_GEOMETRY;
 
-                sFieldList.table_ids[iOutField] = iTable;
-                sFieldList.ids[iOutField] =
+                psParseInfo->sFieldList.table_ids[iOutField] = iTable;
+                psParseInfo->sFieldList.ids[iOutField] =
                     GEOM_FIELD_INDEX_TO_ALL_FIELD_INDEX(poSrcLayer->GetLayerDefn(), iField);
             }
         }
@@ -5190,28 +5337,31 @@ OGRLayer* GDALDataset::BuildLayerFromSelectInfo(void* psSelectInfoIn,
 /* -------------------------------------------------------------------- */
 /*      Expand '*' in 'SELECT *' now before we add the pseudo fields    */
 /* -------------------------------------------------------------------- */
-    if( psSelectInfo->expand_wildcard( &sFieldList )  != CE_None )
+    int bAlwaysPrefixWithTableName = poSelectParseOptions &&
+                                     poSelectParseOptions->bAlwaysPrefixWithTableName;
+    if( psSelectInfo->expand_wildcard( &psParseInfo->sFieldList,
+                                       bAlwaysPrefixWithTableName)  != CE_None )
     {
-        delete psSelectInfo;
-        goto end;
+        DestroyParseInfo(psParseInfo);
+        return NULL;
     }
 
     for (iField = 0; iField < SPECIAL_FIELD_COUNT; iField++)
     {
-        sFieldList.names[sFieldList.count] = (char*) SpecialFieldNames[iField];
-        sFieldList.types[sFieldList.count] = SpecialFieldTypes[iField];
-        sFieldList.table_ids[sFieldList.count] = 0;
-        sFieldList.ids[sFieldList.count] = nFIDIndex + iField;
-        sFieldList.count++;
+        psParseInfo->sFieldList.names[psParseInfo->sFieldList.count] = (char*) SpecialFieldNames[iField];
+        psParseInfo->sFieldList.types[psParseInfo->sFieldList.count] = SpecialFieldTypes[iField];
+        psParseInfo->sFieldList.table_ids[psParseInfo->sFieldList.count] = 0;
+        psParseInfo->sFieldList.ids[psParseInfo->sFieldList.count] = nFIDIndex + iField;
+        psParseInfo->sFieldList.count++;
     }
     
 /* -------------------------------------------------------------------- */
 /*      Finish the parse operation.                                     */
 /* -------------------------------------------------------------------- */
-    if( psSelectInfo->parse( &sFieldList, 0 ) != CE_None )
+    if( psSelectInfo->parse( &psParseInfo->sFieldList, poSelectParseOptions ) != CE_None )
     {
-        delete psSelectInfo;
-        goto end;
+        DestroyParseInfo(psParseInfo);
+        return NULL;
     }
 
 /* -------------------------------------------------------------------- */
@@ -5219,38 +5369,11 @@ OGRLayer* GDALDataset::BuildLayerFromSelectInfo(void* psSelectInfoIn,
 /* -------------------------------------------------------------------- */
     if( psSelectInfo->where_expr != NULL )
     {
-        pszWHERE = psSelectInfo->where_expr->Unparse( &sFieldList, '"' );
+        psParseInfo->pszWHERE = psSelectInfo->where_expr->Unparse( &psParseInfo->sFieldList, '"' );
         //CPLDebug( "OGR", "Unparse() -> %s", pszWHERE );
     }
 
-/* -------------------------------------------------------------------- */
-/*      Everything seems OK, try to instantiate a results layer.        */
-/* -------------------------------------------------------------------- */
-
-    poResults = new OGRGenSQLResultsLayer( this, psSelectInfo,
-                                           poSpatialFilter,
-                                           pszWHERE,
-                                           pszDialect );
-
-    CPLFree( pszWHERE );
-
-    // Eventually, we should keep track of layers to cleanup.
-
-end:
-    CPLFree( sFieldList.names );
-    CPLFree( sFieldList.types );
-    CPLFree( sFieldList.table_ids );
-    CPLFree( sFieldList.ids );
-
-    /* Release the datasets we have opened with OGROpenShared() */
-    /* It is safe to do that as the 'new OGRGenSQLResultsLayer' itself */
-    /* has taken a reference on them, which it will release in its */
-    /* destructor */
-    for(iEDS = 0; iEDS < nExtraDSCount; iEDS++)
-        GDALClose( (GDALDatasetH)papoExtraDS[iEDS] );
-    CPLFree(papoExtraDS);
-
-    return poResults;
+    return psParseInfo;
 }
 
 /************************************************************************/
@@ -5480,7 +5603,7 @@ int GDALDataset::TestCapability( CPL_UNUSED const char * pszCap )
  
  By default, when bForce is set to FALSE, only "efficient" transactions will be
  attempted. Some drivers may offer an emulation of transactions, but sometimes
- with significant overhead, in which case the user must explicitely allow for such
+ with significant overhead, in which case the user must explicitly allow for such
  an emulation by setting bForce to TRUE. Drivers that offer emulated transactions
  should advertize the ODsCEmulatedTransactions capability (and not ODsCTransactions).
  
@@ -5530,7 +5653,7 @@ OGRErr GDALDataset::StartTransaction(CPL_UNUSED int bForce)
 
  By default, when bForce is set to FALSE, only "efficient" transactions will be
  attempted. Some drivers may offer an emulation of transactions, but sometimes
- with significant overhead, in which case the user must explicitely allow for such
+ with significant overhead, in which case the user must explicitly allow for such
  an emulation by setting bForce to TRUE. Drivers that offer emulated transactions
  should advertize the ODsCEmulatedTransactions capability (and not ODsCTransactions).
 
@@ -5655,4 +5778,52 @@ OGRErr GDALDatasetRollbackTransaction(GDALDatasetH hDS)
 #endif
 
     return ((GDALDataset*) hDS)->RollbackTransaction();
+}
+
+/************************************************************************/
+/*                          EnterReadWrite()                            */
+/************************************************************************/
+
+int GDALDataset::EnterReadWrite(GDALRWFlag eRWFlag)
+{
+    if( eAccess == GA_Update && (eRWFlag == GF_Write || m_hMutex != NULL) )
+    {
+        // There should be no race related to creating this mutex since
+        // it should be first created through IWriteBlock() / IRasterIO()
+        // and then GDALRasterBlock might call it from another thread
+        if( m_hMutex == NULL )
+            m_hMutex = CPLCreateMutex();
+        else
+            CPLAcquireMutex(m_hMutex, 1000.0);
+        return TRUE;
+    }
+    return FALSE;
+}
+
+/************************************************************************/
+/*                         LeaveReadWrite()                             */
+/************************************************************************/
+
+void GDALDataset::LeaveReadWrite()
+{
+    CPLReleaseMutex(m_hMutex);
+}
+
+
+/************************************************************************/
+/*                           AcquireMutex()                             */
+/************************************************************************/
+
+int GDALDataset::AcquireMutex()
+{
+    return CPLCreateOrAcquireMutex(&m_hMutex, 1000.0);
+}
+
+/************************************************************************/
+/*                          ReleaseMutex()                              */
+/************************************************************************/
+
+void GDALDataset::ReleaseMutex()
+{
+    CPLReleaseMutex(m_hMutex);
 }

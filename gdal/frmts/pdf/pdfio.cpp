@@ -198,6 +198,27 @@ int VSIPDFFileStream::FillBuffer()
     if (nBufferLength == 0)
         return FALSE;
 
+    // Since we now report a non-zero length (as BaseStream::length member),
+    // PDFDoc::getPage() can go to the linearized mode if the file is linearized,
+    // and thus create a pageCache. If so, in PDFDoc::~PDFDoc(),
+    // if pageCache is not null, it would try to access the stream (str) through
+    // getPageCount(), but we have just freed and nullify str before in PDFFreeDoc().
+    // So make as if the file is not linearized to avoid those issues...
+    // All this is due to our attempt of avoiding cross-heap issues with allocation
+    // and liberation of VSIPDFFileStream as PDFDoc::str member.
+    if( nCurrentPos <= 0 )
+    {
+        for(int i=0;i<nToRead-(int)strlen("/Linearized ");i++)
+        {
+            if( memcmp(abyBuffer + i, "/Linearized ",
+                       strlen("/Linearized ")) == 0 )
+            {
+                memcpy(abyBuffer + i, "/XXXXXXXXXX ", strlen("/Linearized "));
+                break;
+            }
+        }
+    }
+
     return TRUE;
 }
 

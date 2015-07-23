@@ -60,9 +60,11 @@ omitted it defaults to <i>wkb_geometry</i> for GEOM_TYPE=geometry, or <i>the_geo
 Using the same layer name in different schemas is supported, but not in the public schema and others.<p>
 <li> <b>CREATE_SCHEMA</b>: (OGR >= 1.8.1) To be used in combination with SCHEMA. Set to ON by default so that
 the CREATE SCHEMA instruction is emitted. Turn to OFF to prevent CREATE SCHEMA from being emitted.<p>
-<li> <b>SPATIAL_INDEX</b>:  Set to ON by default. Creates a spatial index on the geometry column
+<li> <b>SPATIAL_INDEX</b>:  Set to ON by default. Creates a spatial index (GiST) on the geometry column
 to speed up queries. Set to OFF to disable. (Has effect only when PostGIS is available).<p>
 <li> <b>TEMPORARY</b>: Set to OFF by default. Creates a temporary table instead of a permanent one.<p>
+<li> <b>UNLOGGED</b>: (From GDAL 2.0) Set to OFF by default. Whether to create the table as a unlogged one.
+Unlogged tables are only supported since PostgreSQL 9.1, and GiST indexes used for spatial indexing since PostgreSQL 9.3.<p>
 <li> <b>WRITE_EWKT_GEOM</b>: Set to OFF by default. Turn to ON to write EWKT geometries instead of HEX geometries.
 This option will have no effect if PG_USE_COPY environment variable is to YES.<p>
 <li> <b>CREATE_TABLE</b>: Set to ON by default so that tables are recreated if necessary. Turn to OFF to disable this and use existing table structure.<p>

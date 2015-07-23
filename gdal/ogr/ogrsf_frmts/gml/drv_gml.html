@@ -69,7 +69,8 @@ While this approach is error prone, it has the advantage of working for GML file
 even if the associated schema (.xsd) file has been lost.<p>
 
 Starting with OGR 1.10, it is possible to specify an explicit filename for the XSD
-schema to use, by using "a_filename.gml,xsd=another_filename.xsd" as a connection string.<p>
+schema to use, by using "a_filename.gml,xsd=another_filename.xsd" as a connection string.
+Staring with GDAL 2.0, the XSD can also be specified as the value of the XSD open option.<p>
 
 The first time a GML file is opened, if the associated .xsd is absent or could not been
 parsed correctly, it is completely scanned in order to
@@ -114,6 +115,9 @@ Since OGR 1.11, the GML driver supports reading :
  <li><a href="http://inspire.ec.europa.eu/schemas/cp/3.0/CadastralParcels.xsd">Cadastral data in Inspire GML schemas</a>.</li>
  <li><a href="http://www.cuzk.cz/Uvod/Produkty-a-sluzby/RUIAN/2-Poskytovani-udaju-RUIAN-ISUI-VDP/Vymenny-format-RUIAN/Vymenny-format-RUIAN-%28VFR%29.aspx">Czech RUIAN Exchange Format (VFR)</a>.</li>
 </ul>
+
+Since OGR 2.0, the GML driver supports reading responses to CSW GetRecords
+queries.<p>
 
 <h2>Geometry reading</h2>
 
@@ -321,7 +325,7 @@ the layers must be read in the order they appear in the file.<p>
 If no .xsd and .gfs files are found, the parser will detect the layout of layers when
 building the .gfs file. If the layers are found to be sequential, a <i>&lt;SequentialLayers&gt;true&lt;/SequentialLayers&gt;</i>
 element will be written in the .gfs file, so that the GML_READ_MODE will be automatically
-initialized to MONOBLOCK_LAYERS if not explicitly set by the user.<p>
+initialized to SEQUENTIAL_LAYERS if not explicitly set by the user.<p>
 
 Starting with OGR 1.9.0, the GML_READ_MODE configuration option can be set to INTERLEAVED_LAYERS to be able
 to read a GML file whose features from different layers are interleaved. In the case, the semantics of the
@@ -348,6 +352,41 @@ belongs to another layer. In that case, the file should be read with code simila
         }
     } while (bInterleaved &amp;&amp; bFoundFeature);
 </pre>
+
+<h2>Open options</h2>
+
+<ul>
+<li> <b>XSD=filename</b>: (GDAL &gt;=2.0) to specify an explicit filename for the XSD
+application schema to use.</li>
+<li> <b>FORCE_SRS_DETECTION=YES/NO</b>: (GDAL &gt;=2.0) Force a full scan to detect the SRS of layers.
+This option may be needed in the case where the .gml file is accompanied with
+a .xsd. Normally in that situation, OGR would not detect the SRS, because this
+requires to do a full scan of the file. Defaults to NO</li>
+<li> <b>EMPTY_AS_NULL=YES/NO</b>: (GDAL &gt;=2.0) By default (EMPTY_AS_NULL=YES),
+fields with empty content will be reported as being NULL, instead of being an empty
+string. This is the historic behaviour. However this will prevent such fields to
+be declared as not-nullable if the application schema declared them as mandatory.
+So this option can be set to NO to have both empty strings being report as such,
+and mandatory fields being reported as not nullable.</li>
+<li> <b>GML_ATTRIBUTES_TO_OGR_FIELDS=YES/NO</b>: (GDAL &gt;=2.0) Whether GM
+Lattributes should be reported as OGR fields. Note that this option has only an
+effect the first time a GML file is opened (before the .gfs file is created),
+and if it has no valid associated .xsd. Defaults to NO.</li>
+<li> <b>INVERT_AXIS_ORDER_IF_LAT_LONG=YES/NO</b>: (GDAL &gt;=2.0) Whether to
+present SRS and coordinate ordering in traditional GIS order. Defaults to YES.</li>
+<li> <b>CONSIDER_EPSG_AS_URN=YES/NO/AUTO</b>: (GDAL &gt;=2.0) Whether to
+consider srsName like EPSG:XXXX as respecting EPSG axis order. Defaults to AUTO.</li>
+<li> <b>READ_MODE=AUTO/STANDARD/SEQUENTIAL_LAYERS/INTERLEAVED_LAYERS</b>: (GDAL &gt;=2.0)
+Read mode. Defaults to AUTO.</li>
+<li> <b>EXPOSE_GML_ID=YES/NO/AUTO</b>: (GDAL &gt;=2.0)
+Whether to make feature gml:id as a gml_id attribute. Defaults to AUTO.</li>
+<li> <b>EXPOSE_FID=YES/NO/AUTO</b>: (GDAL &gt;=2.0)
+Whether to make feature fid as a fid attribute. Defaults to AUTO.</li>
+<li> <b>DOWNLOAD_SCHEMA=YES/NO</b>: (GDAL &gt;=2.0)
+Whether to download the remote application schema if needed (only for WFS currently). Defaults to YES.</li>
+<li> <b>REGISTRY=filename</b>: (GDAL &gt;=2.0)
+Filename of the registry with application schemas. Defaults to {GDAL_DATA}/gml_registry.xml.</li>
+</ul>
 
 <h2>Creation Issues</h2>
 
@@ -411,6 +450,19 @@ If set to NO, the &lt;gml:boundedBy&gt; element will not be written for each fea
 
 <li> <b>SPACE_INDENTATION</b>=YES/NO. (OGR &gt;= 1.8.0) Default to YES. If YES, the output will be indented with spaces
 for more readability, but at the expense of file size.<p>
+
+<li> <b>SPACE_INDENTATION</b>=YES/NO. (OGR &gt;= 1.8.0) Default to YES. If YES, the output will be indented with spaces
+for more readability, but at the expense of file size.<p>
+on the top geometry element.<p>
+
+<li> <b>GML_ID</b>=string. (Only valid for GML 3.2, GDAL &gt;= 2.0)
+Value of feature collection gml:id. Default value is "aFeatureCollection".<p>
+
+<li> <b>NAME</b>=string. Content of GML name element. Can also be set as the
+NAME metadata item on the dataset.<p>
+
+<li> <b>DESCRIPTION</b>=string. Content of GML description element. Can also be set as the
+DESCRIPTION metadata item on the dataset.<p>
 
 </ul>
 
@@ -830,6 +882,79 @@ contain the following content :<p>
 <tr><td>myFeature.2</td><td>otherFeature.10</td></tr>
 </table>
 
+<h2>Reading datasets resulting from a WFS 2.0 join queries</h2>
+
+Starting with GDAL 2.0, the GML driver can read datasets resulting from a WFS 2.0 join queries.<p>
+
+Such datasets typically look like:
+<pre>
+&lt;wfs:FeatureCollection xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    xmlns:app="http://app.com"
+    xmlns:wfs="http://www.opengis.net/wfs/2.0"
+    xmlns:gml="http://www.opengis.net/gml/3.2"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    numberMatched="unknown" numberReturned="2" timeStamp="2015-01-01T00:00:00.000Z"
+    xsi:schemaLocation="http://www.opengis.net/gml/3.2 http://schemas.opengis.net/gml/3.2.1/gml.xsd 
+                        http://www.opengis.net/wfs/2.0 http://schemas.opengis.net/wfs/2.0/wfs.xsd"&gt;
+  &lt;wfs:member&gt;
+    &lt;wfs:Tuple&gt;
+      &lt;wfs:member&gt;
+        &lt;app:table1 gml:id="table1-1"&gt;
+          &lt;app:foo&gt;1&lt;/app:foo&gt;
+        &lt;/app:table1&gt;
+      &lt;/wfs:member&gt;
+      &lt;wfs:member&gt;
+        &lt;app:table2 gml:id="table2-1"&gt;
+          &lt;app:bar&gt;2&lt;/app:bar&gt;
+          &lt;app:baz&gt;foo&lt;/app:baz&gt;
+          &lt;app:geometry&gt;&lt;gml:Point gml:id="table2-2.geom.0"&gt;&lt;gml:pos&gt;2 49&lt;/gml:pos&gt;&lt;/gml:Point&gt;&lt;/app:geometry&gt;
+        &lt;/app:table2&gt;
+      &lt;/wfs:member&gt;
+    &lt;/wfs:Tuple&gt;
+  &lt;/wfs:member&gt;
+  &lt;wfs:member&gt;
+    &lt;wfs:Tuple&gt;
+      &lt;wfs:member&gt;
+        &lt;app:table1 gml:id="table1-2"&gt;
+          &lt;app:bar&gt;2&lt;/app:bar&gt;
+          &lt;app:geometry&gt;&lt;gml:Point gml:id="table1-1.geom.0"&gt;&lt;gml:pos&gt;3 50&lt;/gml:pos&gt;&lt;/gml:Point&gt;&lt;/app:geometry&gt;
+        &lt;/app:table1&gt;
+      &lt;/wfs:member&gt;
+      &lt;wfs:member&gt;
+        &lt;app:table2 gml:id="table2-2"&gt;
+          &lt;app:bar&gt;2&lt;/app:bar&gt;
+          &lt;app:baz&gt;bar&lt;/app:baz&gt;
+          &lt;app:geometry&gt;&lt;gml:Point gml:id="table2-2.geom.0"&gt;&lt;gml:pos&gt;2 50&lt;/gml:pos&gt;&lt;/gml:Point&gt;&lt;/app:geometry&gt;
+        &lt;/app:table2&gt;
+      &lt;/wfs:member&gt;
+    &lt;/wfs:Tuple&gt;
+  &lt;/wfs:member&gt;
+&lt;/wfs:FeatureCollection&gt;
+</pre>
+
+<p>OGR will group together the attributes from the layers participating to the
+join and will prefix them with the layer name. So the above example will be
+read as the following:</p>
+<pre>
+OGRFeature(join_table1_table2):0
+  table1.gml_id (String) = table1-1
+  table1.foo (Integer) = 1
+  table1.bar (Integer) = (null)
+  table2.gml_id (String) = table2-1
+  table2.bar (Integer) = 2
+  table2.baz (String) = foo
+  table2.geometry = POINT (2 49)
+
+OGRFeature(join_table1_table2):1
+  table1.gml_id (String) = table1-2
+  table1.foo (Integer) = (null)
+  table1.bar (Integer) = 2
+  table2.gml_id (String) = table2-2
+  table2.bar (Integer) = 2
+  table2.baz (String) = bar
+  table1.geometry = POINT (3 50)
+  table2.geometry = POINT (2 50)
+</pre>
 
 <h2>Examples</h2>
 

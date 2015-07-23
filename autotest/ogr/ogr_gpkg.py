@@ -409,7 +409,7 @@ def ogr_gpkg_8():
     feat = lyr.GetNextFeature()
     if feat.GetField(0) != 10 or feat.GetField(1) != 'test string 0 test' or \
        feat.GetField(2) != 3.14159  or feat.GetField(3) != '2014/05/17' or \
-       feat.GetField(4) != '2014/05/17 12:34:56' or feat.GetField(5) != 'FFFE' or \
+       feat.GetField(4) != '2014/05/17 12:34:56+00' or feat.GetField(5) != 'FFFE' or \
        feat.GetField(6) != 1 or feat.GetField(7) != -32768 or feat.GetField(8) != 1.23 or \
        feat.GetField(9) != 1000000000000:
         gdaltest.post_reason('fail')
@@ -1002,6 +1002,10 @@ def ogr_gpkg_19():
     if len(ds.GetMetadata()) != 0:
         gdaltest.post_reason('fail')
         return 'fail'
+    lyr = ds.CreateLayer('test_without_md')
+    if len(lyr.GetMetadata()) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
 
     ds.SetMetadataItem('foo', 'bar')
 
@@ -1014,13 +1018,93 @@ def ogr_gpkg_19():
     ds = None
     
     ds = ogr.Open('/vsimem/ogr_gpkg_19.gpkg')
+    if ds.GetMetadataDomainList() != ['']:
+        print(ds.GetMetadataDomainList())
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ds = ogr.Open('/vsimem/ogr_gpkg_19.gpkg')
     if len(ds.GetMetadata()) != 1:
         print(ds.GetMetadata())
         gdaltest.post_reason('fail')
         return 'fail'
+        
+    ds = ogr.Open('/vsimem/ogr_gpkg_19.gpkg')
     if ds.GetMetadataItem('foo') != 'bar':
         gdaltest.post_reason('fail')
         print(ds.GetMetadata())
+        return 'fail'
+    ds = None
+    
+    ds = ogr.Open('/vsimem/ogr_gpkg_19.gpkg', update = 1)
+    lyr = ds.CreateLayer('test_with_md', options = ['IDENTIFIER=ident', 'DESCRIPTION=desc'])
+    lyr.SetMetadataItem('IDENTIFIER', 'ignored_because_of_lco')
+    lyr.SetMetadataItem('DESCRIPTION', 'ignored_because_of_lco')
+    lyr.SetMetadata( { 'IDENTIFIER': 'ignored_because_of_lco', 'DESCRIPTION': 'ignored_because_of_lco'} )
+    ds = None
+    
+    ds = ogr.Open('/vsimem/ogr_gpkg_19.gpkg')
+    lyr = ds.GetLayer('test_with_md')
+    if lyr.GetMetadataItem('IDENTIFIER') != 'ident':
+        gdaltest.post_reason('fail')
+        print(lyr.GetMetadataItem('IDENTIFIER'))
+        return 'fail'
+    if lyr.GetMetadataItem('DESCRIPTION') != 'desc':
+        gdaltest.post_reason('fail')
+        print(lyr.GetMetadataItem('DESCRIPTION'))
+        return 'fail'
+
+    ds = ogr.Open('/vsimem/ogr_gpkg_19.gpkg', update = 1)
+    lyr = ds.GetLayer('test_with_md')
+    if lyr.GetMetadata() != {'IDENTIFIER': 'ident', 'DESCRIPTION': 'desc'}:
+        gdaltest.post_reason('fail')
+        print(lyr.GetMetadata())
+        return 'fail'
+    lyr.SetMetadataItem('IDENTIFIER', 'another_ident')
+    lyr.SetMetadataItem('DESCRIPTION', 'another_desc')
+    ds = None
+
+    ds = ogr.Open('/vsimem/ogr_gpkg_19.gpkg', update = 1)
+    lyr = ds.GetLayer('test_with_md')
+    if lyr.GetMetadata() != {'IDENTIFIER': 'another_ident', 'DESCRIPTION': 'another_desc'}:
+        gdaltest.post_reason('fail')
+        print(lyr.GetMetadata())
+        return 'fail'
+    lyr.SetMetadataItem('foo', 'bar')
+    lyr.SetMetadataItem('bar', 'baz', 'another_domain')
+    ds = None
+
+    ds = ogr.Open('/vsimem/ogr_gpkg_19.gpkg', update = 1)
+    lyr = ds.GetLayer('test_with_md')
+    if lyr.GetMetadataDomainList() != ['', 'another_domain']:
+        gdaltest.post_reason('fail')
+        print(lyr.GetMetadataDomainList())
+        return 'fail'
+    ds = None
+
+    ds = ogr.Open('/vsimem/ogr_gpkg_19.gpkg', update = 1)
+    lyr = ds.GetLayer('test_with_md')
+    if lyr.GetMetadata() != {'IDENTIFIER': 'another_ident', 'foo': 'bar', 'DESCRIPTION': 'another_desc'}:
+        gdaltest.post_reason('fail')
+        print(lyr.GetMetadata())
+        return 'fail'
+    if lyr.GetMetadata('another_domain') != {'bar': 'baz'}:
+        gdaltest.post_reason('fail')
+        print(lyr.GetMetadata('another_domain'))
+        return 'fail'
+    lyr.SetMetadata(None)
+    lyr.SetMetadata(None, 'another_domain')
+    ds = None
+
+    ds = ogr.Open('/vsimem/ogr_gpkg_19.gpkg', update = 1)
+    lyr = ds.GetLayer('test_with_md')
+    if lyr.GetMetadata() != {'IDENTIFIER': 'another_ident', 'DESCRIPTION': 'another_desc'}:
+        gdaltest.post_reason('fail')
+        print(lyr.GetMetadata())
+        return 'fail'
+    if lyr.GetMetadataDomainList() != ['']:
+        gdaltest.post_reason('fail')
+        print(lyr.GetMetadataDomainList())
         return 'fail'
     ds = None
 
@@ -1436,6 +1520,10 @@ def ogr_gpkg_24():
     field_defn.SetDefault("(strftime('%Y-%m-%dT%H:%M:%fZ','now'))")
     lyr.CreateField(field_defn)
     
+    field_defn = ogr.FieldDefn( 'field_datetime4', ogr.OFTDateTime )
+    field_defn.SetDefault("'2015/06/30 12:34:56.123'")
+    lyr.CreateField(field_defn)
+
     field_defn = ogr.FieldDefn( 'field_date', ogr.OFTDate )
     field_defn.SetDefault("CURRENT_DATE")
     lyr.CreateField(field_defn)
@@ -1481,6 +1569,10 @@ def ogr_gpkg_24():
         gdaltest.post_reason('fail')
         print(lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_datetime3')).GetDefault())
         return 'fail'
+    if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_datetime4')).GetDefault() != "'2015/06/30 12:34:56.123'":
+        gdaltest.post_reason('fail')
+        print(lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_datetime4')).GetDefault())
+        return 'fail'
     if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_date')).GetDefault() != "CURRENT_DATE":
         gdaltest.post_reason('fail')
         return 'fail'
@@ -1491,7 +1583,8 @@ def ogr_gpkg_24():
     if f.GetField('field_string') != 'a\'b' or f.GetField('field_int') != 123 or \
        f.GetField('field_real') != 1.23 or \
        f.IsFieldSet('field_nodefault') or not f.IsFieldSet('field_datetime')  or \
-       f.GetField('field_datetime2') != '2015/06/30 12:34:56' or \
+       f.GetField('field_datetime2') != '2015/06/30 12:34:56+00' or \
+       f.GetField('field_datetime4') != '2015/06/30 12:34:56.123+00' or \
        not f.IsFieldSet('field_datetime3') or \
        not f.IsFieldSet('field_date'):
         gdaltest.post_reason('fail')
@@ -1767,6 +1860,41 @@ def ogr_gpkg_26():
     return 'success'
 
 ###############################################################################
+# Test interface with Spatialite
+
+def ogr_gpkg_27():
+
+    if gdaltest.gpkg_dr is None:
+        return 'skip'
+
+    ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_27.gpkg')
+    gdal.PushErrorHandler()
+    sql_lyr = ds.ExecuteSQL("SELECT GeomFromGPB(null)")
+    gdal.PopErrorHandler()
+    if sql_lyr is None:
+        ds = None
+        gdaltest.gpkg_dr.DeleteDataSource('/vsimem/ogr_gpkg_27.gpkg')
+        return 'skip'
+    ds.ReleaseResultSet(sql_lyr)
+
+    lyr = ds.CreateLayer('test')
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POINT (2 49)'))
+    lyr.CreateFeature(f)
+    sql_lyr = ds.ExecuteSQL('SELECT GeomFromGPB(geom) FROM test')
+    f = sql_lyr.GetNextFeature()
+    if f.GetGeometryRef().ExportToWkt() != 'POINT (2 49)':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+    
+    ds = None
+    gdaltest.gpkg_dr.DeleteDataSource('/vsimem/ogr_gpkg_27.gpkg')
+
+    return 'success'
+
+###############################################################################
 # Run test_ogrsf
 
 def ogr_gpkg_test_ogrsf():
@@ -1850,6 +1978,7 @@ gdaltest_list = [
     ogr_gpkg_24,
     ogr_gpkg_25,
     ogr_gpkg_26,
+    ogr_gpkg_27,
     ogr_gpkg_test_ogrsf,
     ogr_gpkg_cleanup,
 ]
@@ -1861,4 +1990,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-

@@ -271,7 +271,7 @@ double CPLStrtodDelim(const char *nptr, char **endptr, char point)
         }
 
         if (strcmp(nptr,"-inf") == 0 ||
-            strcmp(nptr,"-1.#INF") == 0)
+            EQUALN (nptr,"-1.#INF",strlen("-1.#INF")))
         {
             if( endptr ) *endptr = (char*)nptr + strlen(nptr);
             return NEG_INFINITY;
@@ -284,7 +284,7 @@ double CPLStrtodDelim(const char *nptr, char **endptr, char point)
             if( endptr ) *endptr = (char*)nptr + strlen(nptr);
             return NAN;
         }
-        if (strcmp (nptr,"1.#INF") == 0)
+        if( EQUALN (nptr,"1.#INF",strlen("1.#INF")) )
         {
             if( endptr ) *endptr = (char*)nptr + strlen(nptr);
             return INFINITY;

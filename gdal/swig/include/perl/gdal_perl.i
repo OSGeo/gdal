@@ -130,8 +130,8 @@ use Geo::OSR;
 # For GDAL 2.0 or above, GDAL X.Y.Z should then
 # VERSION = X + Y / 100.0 + Z / 10000.0
 
-our $VERSION = '2.0000';
-our $GDAL_VERSION = '2.0.0';
+our $VERSION = '2.0100';
+our $GDAL_VERSION = '2.1.0';
 use vars qw/
     @DATA_TYPES @ACCESS_TYPES @RESAMPLING_TYPES @RIO_RESAMPLING_TYPES @NODE_TYPES
     %TYPE_STRING2INT %TYPE_INT2STRING
@@ -1179,14 +1179,20 @@ for my $string (qw/Gray RGB CMYK HLS/) {
     $PALETTE_INTERPRETATION_STRING2INT{$string} = $int;
     $PALETTE_INTERPRETATION_INT2STRING{$int} = $string;
 }
+%}
 
-sub create {
+%feature("shadow") GDALColorTableShadow(GDALPaletteInterp palette = GPI_RGB)
+%{
+use Carp;
+sub new {
     my($pkg, $pi) = @_;
     $pi = $PALETTE_INTERPRETATION_STRING2INT{$pi} if defined $pi and exists $PALETTE_INTERPRETATION_STRING2INT{$pi};
     my $self = Geo::GDALc::new_ColorTable($pi);
     bless $self, $pkg if defined($self);
 }
+%}
 
+%perlcode %{
 sub GetPaletteInterpretation {
     my $self = shift;
     return $PALETTE_INTERPRETATION_INT2STRING{GetPaletteInterpretation($self)};
@@ -1363,7 +1369,12 @@ sub Write {
 
 sub Close {
     my ($self, $data) = @_;
-    Geo::GDAL::VSIFCloseL($self);
+    eval {
+        Geo::GDAL::VSIFCloseL($self);
+    };
+    if ($@) {
+        confess "Cannot close file: $@.";
+    }
 }
 
 sub Read {
@@ -1383,14 +1394,25 @@ sub Tell {
 
 sub Truncate {
     my ($self, $new_size) = @_;
-    Geo::GDAL::VSIFTruncateL($self, $new_size);
+    eval {
+        Geo::GDAL::VSIFTruncateL($self, $new_size);
+    };
+    if ($@) {
+        confess "Cannot truncate file: $@.";
+    }
 }
 
-sub Mkdir {
-    my ($path, $mode) = @_;
-    Geo::GDAL::Mkdir($path, $mode);
+sub MkDir {
+    my ($path) = @_;
+    my $mode = 0; # unused in CPL
+    eval {
+        Geo::GDAL::Mkdir($path, $mode);
+    };
+    if ($@) {
+        confess "Cannot make directory \"$path\": $@.";
+    }
 }
-*MkDir = *Mkdir;
+*Mkdir = *MkDir;
 
 sub ReadDir {
     my ($path) = @_;
@@ -1404,22 +1426,58 @@ sub ReadDirRecursive {
 
 sub Rename {
     my ($old, $new) = @_;
-    Geo::GDAL::Rename($old, $new);
+    eval {
+        Geo::GDAL::Rename($old, $new);
+    };
+    if ($@) {
+        confess "Cannot rename file \"$old\": $@.";
+    }
 }
 
 sub RmDir {
-    my ($dirname) = @_;
-    Geo::GDAL::RmDir($dirname);
+    my ($dirname, $recursive) = @_;
+    eval {
+        if (!$recursive) {
+            Geo::GDAL::Rmdir($dirname);
+        } else {
+            for my $f (ReadDir($dirname)) {
+                next if $f eq '..' or $f eq '.';
+                my @s = Stat($dirname.'/'.$f);
+                if ($s[0] eq 'f') {
+                    Unlink($dirname.'/'.$f);
+                } elsif ($s[0] eq 'd') {
+                    Rmdir($dirname.'/'.$f, 1);
+                    Rmdir($dirname.'/'.$f);
+                }
+            }
+            RmDir($dirname);
+        }
+    };
+    if ($@) {
+        my $r = $recursive ? ' recursively' : '';
+        confess "Cannot remove directory \"$dirname\"$r: $@.";
+    }
 }
+*Rmdir = *RmDir;
 
 sub Stat {
     my ($path) = @_;
-    Geo::GDAL::Stat($path);
+    eval {
+        Geo::GDAL::Stat($path);
+    };
+    if ($@) {
+        confess "Cannot stat file \"$path\": $@.";
+    }
 }
 
 sub Unlink {
     my ($filename) = @_;
-    Geo::GDAL::Unlink($filename);
+    eval {
+        Geo::GDAL::Unlink($filename);
+    };
+    if ($@) {
+        confess "Cannot unlink file \"$filename\": $@.";
+    }
 }
 
 

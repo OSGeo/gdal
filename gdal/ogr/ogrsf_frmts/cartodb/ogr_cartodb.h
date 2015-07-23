@@ -73,7 +73,7 @@ protected:
     int                  bEOF;
     int                  nFetchedObjects;
     int                  iNextInFetchedObjects;
-    int                  iNext;
+    GIntBig              iNext;
     json_object         *poCachedObj;
 
     virtual OGRFeature  *GetNextRawFeature();
@@ -93,6 +93,7 @@ protected:
 
     virtual OGRFeatureDefn *    GetLayerDefn();
     virtual OGRFeatureDefn *    GetLayerDefnInternal(json_object* poObjIn) = 0;
+    virtual json_object*        FetchNewFeatures(GIntBig iNext);
     
     virtual const char*         GetFIDColumn() { return osFIDColName.c_str(); }
 
@@ -111,6 +112,9 @@ class OGRCARTODBTableLayer : public OGRCARTODBLayer
     CPLString           osName;
     CPLString           osQuery;
     CPLString           osWHERE;
+    CPLString           osSELECTWithoutWHERE;
+
+    int                 bLaunderColumnNames;
 
     int                 bInDeferedInsert;
     CPLString           osDeferedInsertSQL;
@@ -130,6 +134,7 @@ class OGRCARTODBTableLayer : public OGRCARTODBLayer
 
     virtual const char*         GetName() { return osName.c_str(); }
     virtual OGRFeatureDefn *    GetLayerDefnInternal(json_object* poObjIn);
+    virtual json_object*        FetchNewFeatures(GIntBig iNext);
 
     virtual GIntBig             GetFeatureCount( int bForce = TRUE );
     virtual OGRFeature         *GetFeature( GIntBig nFeatureId );
@@ -152,6 +157,8 @@ class OGRCARTODBTableLayer : public OGRCARTODBLayer
     virtual OGRErr      GetExtent( OGREnvelope *psExtent, int bForce ) { return GetExtent(0, psExtent, bForce); }
     virtual OGRErr      GetExtent( int iGeomField, OGREnvelope *psExtent, int bForce );
 
+    void                SetLaunderFlag( int bFlag )
+                                { bLaunderColumnNames = bFlag; }
     void                SetDeferedCreation( OGRwkbGeometryType eGType,
                                             OGRSpatialReference* poSRS,
                                             int bGeomNullable,
@@ -197,6 +204,7 @@ class OGRCARTODBDataSource : public OGRDataSource
     int                 nLayers;
 
     int                 bReadWrite;
+    int                 bBatchInsert;
 
     int                 bUseHTTPS;
 
@@ -205,12 +213,15 @@ class OGRCARTODBDataSource : public OGRDataSource
     int                 bMustCleanPersistant;
     
     CPLString           osCurrentSchema;
+    
+    int                 bHasOGRMetadataFunction;
 
   public:
                         OGRCARTODBDataSource();
                         ~OGRCARTODBDataSource();
 
     int                 Open( const char * pszFilename,
+                              char** papszOpenOptions,
                               int bUpdate );
 
     virtual const char* GetName() { return pszName; }
@@ -234,29 +245,20 @@ class OGRCARTODBDataSource : public OGRDataSource
 
     const char*                 GetAPIURL() const;
     int                         IsReadWrite() const { return bReadWrite; }
+    int                         DoBatchInsert() const { return bBatchInsert; }
     char**                      AddHTTPOptions();
     json_object*                RunSQL(const char* pszUnescapedSQL);
     const CPLString&            GetCurrentSchema() { return osCurrentSchema; }
     int                         FetchSRSId( OGRSpatialReference * poSRS );
 
     int                         IsAuthenticatedConnection() { return osAPIKey.size() != 0; }
-};
-
-/************************************************************************/
-/*                           OGRCARTODBDriver                           */
-/************************************************************************/
-
-class OGRCARTODBDriver : public OGRSFDriver
-{
-  public:
-                ~OGRCARTODBDriver();
-
-    virtual const char*         GetName();
-    virtual OGRDataSource*      Open( const char *, int );
-    virtual OGRDataSource*      CreateDataSource( const char * pszName,
-                                                  char ** /* papszOptions */ );
-
-    virtual int                 TestCapability( const char * );
+    int                         HasOGRMetadataFunction() { return bHasOGRMetadataFunction; }
+    void                        SetOGRMetadataFunction(int bFlag) { bHasOGRMetadataFunction = bFlag; }
+    
+    OGRLayer *                  ExecuteSQLInternal( const char *pszSQLCommand,
+                                                    OGRGeometry *poSpatialFilter = NULL,
+                                                    const char *pszDialect = NULL,
+                                                    int bRunDeferedActions = FALSE );
 };
 
 #endif /* ndef _OGR_CARTODB_H_INCLUDED */

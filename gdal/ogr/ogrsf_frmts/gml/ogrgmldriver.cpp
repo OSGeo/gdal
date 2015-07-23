@@ -107,7 +107,7 @@ static GDALDataset *OGRGMLDriverOpen( GDALOpenInfo* poOpenInfo )
 
     poDS = new OGRGMLDataSource();
 
-    if( !poDS->Open(  poOpenInfo->pszFilename ) )
+    if( !poDS->Open(  poOpenInfo ) )
     {
         delete poDS;
         return NULL;
@@ -160,6 +160,39 @@ void RegisterOGRGML()
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
                                    "drv_gml.html" );
 
+        poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
+"<OpenOptionList>"
+"  <Option name='XSD' type='string' description='Name of the related application schema file (.xsd).'/>"
+"  <Option name='GFS_TEMPLATE' type='string' description='Filename of a .gfs template file to appli.'/>"
+"  <Option name='FORCE_SRS_DETECTION' type='boolean' description='Force a full scan to detect the SRS of layers.' default='NO'/>"
+"  <Option name='EMPTY_AS_NULL' type='boolean' description='Force empty fields to be reported as NULL. Set to NO so that not-nullable fields can be exposed' default='YES'/>"
+"  <Option name='GML_ATTRIBUTES_TO_OGR_FIELDS' type='boolean' description='Whether GML attributes should be reported as OGR fields' default='NO'/>"
+"  <Option name='INVERT_AXIS_ORDER_IF_LAT_LONG' type='boolean' description='Whether to present SRS and coordinate ordering in traditional GIS order' default='YES'/>"
+"  <Option name='CONSIDER_EPSG_AS_URN' type='string-select' description='Whether to consider srsName like EPSG:XXXX as respecting EPSG axis order' default='AUTO'>"
+"    <Value>AUTO</Value>"
+"    <Value>YES</Value>"
+"    <Value>NO</Value>"
+"  </Option>"
+"  <Option name='READ_MODE' type='string-select' description='Read mode' default='AUTO'>"
+"    <Value>AUTO</Value>"
+"    <Value>STANDARD</Value>"
+"    <Value>SEQUENTIAL_LAYERS</Value>"
+"    <Value>INTERLEAVED_LAYERS</Value>"
+"  </Option>"
+"  <Option name='EXPOSE_GML_ID' type='string-select' description='Whether to make feature gml:id as a gml_id attribute' default='AUTO'>"
+"    <Value>AUTO</Value>"
+"    <Value>YES</Value>"
+"    <Value>NO</Value>"
+"  </Option>"
+"  <Option name='EXPOSE_FID' type='string-select' description='Whether to make feature fid as a fid attribute' default='AUTO'>"
+"    <Value>AUTO</Value>"
+"    <Value>YES</Value>"
+"    <Value>NO</Value>"
+"  </Option>"
+"  <Option name='DOWNLOAD_SCHEMA' type='boolean' description='Whether to download the remote application schema if needed (only for WFS currently)' default='YES'/>"
+"  <Option name='REGISTRY' type='string' description='Filename of the registry with application schemas.'/>"
+"</OpenOptionList>" );
+
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"
 "  <Option name='XSISCHEMAURI' type='string' description='URI to be inserted as the schema location.'/>"
@@ -185,6 +218,9 @@ void RegisterOGRGML()
 "    <Value>GEOMETRY</Value>"
 "    <Value>GEOMETRY,POSLIST</Value>"
 "  </Option>"
+"  <Option name='GML_ID' type='string' description='Value of feature collection gml:id (GML 3.2 only)' default='aFeatureCollection'/>"
+"  <Option name='NAME' type='string' description='Content of GML name element'/>"
+"  <Option name='DESCRIPTION' type='string' description='Content of GML description element'/>"
 "</CreationOptionList>");
 
         poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST, "<LayerCreationOptionList/>");

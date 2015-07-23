@@ -53,7 +53,8 @@ class OGRPLScenesDataset: public GDALDataset
         
         char             **GetBaseHTTPOptions();
         GDALDataset       *OpenRasterScene(GDALOpenInfo* poOpenInfo,
-                                           CPLString osScene);
+                                           CPLString osScene,
+                                           char** papszOptions);
 
     public:
                             OGRPLScenesDataset();
@@ -61,6 +62,7 @@ class OGRPLScenesDataset: public GDALDataset
 
         virtual int         GetLayerCount() { return nLayers; }
         virtual OGRLayer   *GetLayer(int idx);
+        virtual OGRLayer   *GetLayerByName(const char* pszName);
         virtual OGRLayer   *ExecuteSQL( const char *pszSQLCommand,
                                         OGRGeometry *poSpatialFilter,
                                         const char *pszDialect );
@@ -107,8 +109,9 @@ class OGRPLScenesLayer: public OGRLayer
 
     public:
                             OGRPLScenesLayer(OGRPLScenesDataset* poDS,
-                                         const char* pszName,
-                                         const char* pszBaseURL);
+                                             const char* pszName,
+                                             const char* pszBaseURL,
+                                             json_object* poObjCount10 = NULL);
                            ~OGRPLScenesLayer();
 
         virtual void            ResetReading();

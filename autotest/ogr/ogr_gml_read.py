@@ -309,8 +309,6 @@ def ogr_gml_8():
             print(feat.GetFieldAsString('name'))
             return 'fail'
 
-    gml_ds.Destroy()
-
     return 'success'
 
 ###############################################################################
@@ -338,8 +336,7 @@ def ogr_gml_9():
         gdaltest.post_reason('CreateFeature failed.')
         return 'fail'
 
-    dst_feat.Destroy()
-    ds.Destroy()
+    ds = None
 
     ds = ogr.Open('tmp/broken_utf8.gml')
     lyr = ds.GetLayerByName('test')
@@ -348,9 +345,6 @@ def ogr_gml_9():
         gdaltest.post_reason('Unexpected content.')
         print(feat.GetField('test'))
         return 'fail'
-
-    feat.Destroy()
-    ds.Destroy()
 
     os.remove('tmp/broken_utf8.gml')
     os.remove('tmp/broken_utf8.xsd')
@@ -395,8 +389,7 @@ def ogr_gml_10():
         gdaltest.post_reason('CreateFeature failed.')
         return 'fail'
 
-    dst_feat.Destroy()
-    ds.Destroy()
+    ds = None
 
     ds = ogr.Open('tmp/fields.gml')
     lyr = ds.GetLayerByName('test')
@@ -446,9 +439,6 @@ def ogr_gml_10():
     if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('integer')).GetWidth() != 5:
         gdaltest.post_reason('Unexpected width of integer field.')
         return 'fail'
-
-    feat.Destroy();
-    ds.Destroy()
 
     os.remove('tmp/fields.gml')
     os.remove('tmp/fields.xsd')
@@ -1693,7 +1683,6 @@ def ogr_gml_43():
         gfs_found = True
     except:
         gfs_found = False
-        pass
 
     if gfs_found:
         if gdaltest.gdalurlopen('http://testing.deegree.org:80/deegree-wfs/services?SERVICE=WFS&VERSION=1.1.0&REQUEST=DescribeFeatureType&TYPENAME=app:Springs&NAMESPACE=xmlns(app=http://www.deegree.org/app)') is None:
@@ -3557,7 +3546,7 @@ def ogr_gml_69():
 
     ds = None
 
-    ds = ogr.Open('/vsimem/ogr_gml_69.gml')
+    ds = gdal.OpenEx('/vsimem/ogr_gml_69.gml', open_options = ['EMPTY_AS_NULL=NO'])
     lyr = ds.GetLayerByName('test')
     if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_not_nullable')).IsNullable() != 0:
         gdaltest.post_reason('fail')
@@ -3612,6 +3601,282 @@ def ogr_gml_70():
     
     gdal.Unlink("/vsimem/ogr_gml_70.gml")
     gdal.Unlink("/vsimem/ogr_gml_70.xsd")
+
+    return 'success'
+
+###############################################################################
+# Test reading WFS 2.0 layer resulting from a join operation
+
+def ogr_gml_71_helper(ds):
+
+    if ds.GetLayerCount() != 1:
+        gdaltest.post_reason('fail')
+        print(ds.GetLayerCount())
+        return 'fail'
+    lyr = ds.GetLayer(0)
+    if lyr.GetName() != 'join_table1_table2':
+        gdaltest.post_reason('fail')
+        print(lyr.GetName())
+        return 'fail'
+    fields = [ ('table1.gml_id', ogr.OFTString),
+               ('table1.foo', ogr.OFTInteger),
+               ('table1.bar', ogr.OFTInteger),
+               ('table2.gml_id', ogr.OFTString),
+               ('table2.bar', ogr.OFTInteger),
+               ('table2.baz', ogr.OFTString) ]
+    layer_defn = lyr.GetLayerDefn()
+    if layer_defn.GetFieldCount() != len(fields):
+        gdaltest.post_reason('fail')
+        print(layer_defn.GetFieldCount())
+        return 'fail'
+    for i in range(len(fields)):
+        fld_defn = layer_defn.GetFieldDefn(i)
+        if fld_defn.GetName() != fields[i][0]:
+            gdaltest.post_reason('fail')
+            print(i)
+            print(fld_defn.GetName())
+            return 'fail'
+        if fld_defn.GetType() != fields[i][1]:
+            gdaltest.post_reason('fail')
+            print(i)
+            print(fld_defn.GetType())
+            return 'fail'
+    if layer_defn.GetGeomFieldCount() != 2:
+        gdaltest.post_reason('fail')
+        print(layer_defn.GetGeomFieldCount())
+        return 'fail'
+    if layer_defn.GetGeomFieldDefn(0).GetName() != 'table1.geometry':
+        gdaltest.post_reason('fail')
+        print(layer_defn.GetGeomFieldDefn(0).GetName())
+        return 'fail'
+    if layer_defn.GetGeomFieldDefn(1).GetName() != 'table2.geometry':
+        gdaltest.post_reason('fail')
+        print(layer_defn.GetGeomFieldDefn(1).GetName())
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f.GetField('table1.gml_id') != 'table1-1' or \
+       f.GetField('table1.foo') != 1 or \
+       f.IsFieldSet('table1.bar') or \
+       f.GetField('table2.gml_id') != 'table2-1' or \
+       f.GetField('table2.bar') != 2 or \
+       f.GetField('table2.baz') != 'foo' or \
+       f.GetGeomFieldRef(0) is not None or \
+       f.GetGeomFieldRef(1).ExportToWkt() != 'POINT (2 49)':
+            gdaltest.post_reason('fail')
+            f.DumpReadable()
+            return 'fail'
+    f = lyr.GetNextFeature()
+    if f.GetField('table1.gml_id') != 'table1-2' or \
+       f.IsFieldSet('table1.foo') or \
+       f.GetField('table1.bar') != 2 or \
+       f.GetField('table2.gml_id') != 'table2-2' or \
+       f.GetField('table2.bar') != 2 or \
+       f.GetField('table2.baz') != 'bar' or \
+       f.GetGeomFieldRef(0).ExportToWkt() != 'POINT (3 50)' or \
+       f.GetGeomFieldRef(1).ExportToWkt() != 'POINT (2 50)':
+            gdaltest.post_reason('fail')
+            f.DumpReadable()
+            return 'fail'
+
+    return 'success'
+
+def ogr_gml_71():
+
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    # With .xsd
+    try:
+        os.unlink('data/wfsjointlayer.gfs')
+    except:
+        pass
+    ds = ogr.Open('data/wfsjointlayer.gml')
+    if ogr_gml_71_helper(ds) != 'success':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    try:
+        os.unlink('data/wfsjointlayer.gfs')
+        gdaltest.post_reason('fail')
+        return 'fail'
+    except:
+        pass
+
+    # With .xsd but that is only partially understood
+    ds = gdal.OpenEx('data/wfsjointlayer.gml', open_options = ['XSD=data/wfsjointlayer_not_understood.xsd'])
+    if ogr_gml_71_helper(ds) != 'success':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    try:
+        os.unlink('data/wfsjointlayer.gfs')
+    except:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Without .xsd nor .gfs
+    shutil.copy('data/wfsjointlayer.gml', 'tmp/wfsjointlayer.gml')
+    try:
+        os.unlink('tmp/wfsjointlayer.gfs')
+    except:
+        pass
+    ds = ogr.Open('tmp/wfsjointlayer.gml')
+    if ogr_gml_71_helper(ds) != 'success':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+    
+    try:
+        os.stat('tmp/wfsjointlayer.gfs')
+    except:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # With .gfs
+    ds = ogr.Open('tmp/wfsjointlayer.gml')
+    if ogr_gml_71_helper(ds) != 'success':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Test name and description
+
+def ogr_gml_72():
+
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    ds = ogr.GetDriverByName('GML').CreateDataSource('/vsimem/ogr_gml_72.gml', options = ['NAME=name', 'DESCRIPTION=description'])
+    ds.SetMetadata({ 'NAME': 'ignored', 'DESCRIPTION': 'ignored' })
+    ds = None
+    
+    ds = ogr.Open('/vsimem/ogr_gml_72.gml')
+    if ds.GetMetadata() != { 'NAME': 'name', 'DESCRIPTION': 'description' }:
+        gdaltest.post_reason('fail')
+        print(ds.GetMetadata())
+        return 'fail'
+    ds = None
+
+    gdal.Unlink("/vsimem/ogr_gml_72.gml")
+    gdal.Unlink("/vsimem/ogr_gml_72.xsd")
+
+    ds = ogr.GetDriverByName('GML').CreateDataSource('/vsimem/ogr_gml_72.gml')
+    ds.SetMetadata({'NAME': 'name', 'DESCRIPTION': 'description' })
+    ds = None
+    
+    ds = ogr.Open('/vsimem/ogr_gml_72.gml')
+    if ds.GetMetadata() != { 'NAME': 'name', 'DESCRIPTION': 'description' }:
+        gdaltest.post_reason('fail')
+        print(ds.GetMetadata())
+        return 'fail'
+    ds = None
+
+    gdal.Unlink("/vsimem/ogr_gml_72.gml")
+    gdal.Unlink("/vsimem/ogr_gml_72.xsd")
+
+    return 'success'
+
+###############################################################################
+# Read a CSW GetRecordsResponse document
+
+def ogr_gml_73():
+
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    try:
+        os.remove( 'data/cswresults.gfs' )
+    except:
+        pass
+
+    ds = ogr.Open('data/cswresults.xml')
+    for i in range(3):
+        lyr = ds.GetLayer(i)
+        sr = lyr.GetSpatialRef()
+        got_wkt = sr.ExportToWkt()
+        if got_wkt.find('4326') < 0:
+            gdaltest.post_reason('did not get expected SRS')
+            print(got_wkt)
+            return 'fail'
+
+        feat = lyr.GetNextFeature()
+        geom = feat.GetGeometryRef()
+        got_wkt = geom.ExportToWkt()
+        if got_wkt != 'POLYGON ((-180 -90,-180 90,180 90,180 -90,-180 -90))':
+            gdaltest.post_reason('did not get expected geometry')
+            print(got_wkt)
+            return 'fail'
+
+    ds = None
+
+    try:
+        os.remove( 'data/cswresults.gfs' )
+    except:
+        pass
+
+    return 'success'
+
+###############################################################################
+# Test FORCE_SRS_DETECTION open option
+
+def ogr_gml_74():
+
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    ds = gdal.OpenEx('data/expected_gml_gml32.gml', open_options = ['FORCE_SRS_DETECTION=YES'] )
+    lyr = ds.GetLayer(0)
+    if lyr.GetSpatialRef() is None:
+        gdaltest.post_reason('did not get expected SRS')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test we don't open a WMTS Capabilities doc
+
+def ogr_gml_75():
+
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+        
+    gdal.FileFromMemBuffer("/vsimem/ogr_gml_75.xml",
+    """<?xml version="1.0" encoding="UTF-8"?>
+<Capabilities xmlns="http://www.opengis.net/wmts/1.0"
+xmlns:ows="http://www.opengis.net/ows/1.1"
+xmlns:xlink="http://www.w3.org/1999/xlink"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+xmlns:gml="http://www.opengis.net/gml"
+xsi:schemaLocation="http://www.opengis.net/wmts/1.0 http://somewhere"
+version="1.0.0">
+        <ows:OperationsMetadata>
+                <ows:Operation name="GetCapabilities">
+                        <ows:DCP>
+                                <ows:HTTP>
+                                        <ows:Get xlink:href="http://foo"/>
+                                </ows:HTTP>
+                        </ows:DCP>
+                </ows:Operation>
+                <ows:Operation name="GetTile">
+                        <ows:DCP>
+                                <ows:HTTP>
+                                        <ows:Get xlink:href="http://foo"/>
+                                </ows:HTTP>
+                        </ows:DCP>
+                </ows:Operation>
+        </ows:OperationsMetadata>
+</Capabilities>""")
+
+    ds = ogr.Open('/vsimem/ogr_gml_75.xml')
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.Unlink('/vsimem/ogr_gml_75.xml')
 
     return 'success'
 
@@ -3817,13 +4082,18 @@ gdaltest_list = [
     ogr_gml_68,
     ogr_gml_69,
     ogr_gml_70,
+    ogr_gml_71,
+    ogr_gml_72,
+    ogr_gml_73,
+    ogr_gml_74,
+    ogr_gml_75,
     ogr_gml_cleanup ]
 
-#gdaltest_list = [ 
-#    ogr_gml_clean_files,
-#    ogr_gml_1,
-#    ogr_gml_66,
-#    ogr_gml_cleanup ]
+disabled_gdaltest_list = [ 
+    ogr_gml_clean_files,
+    ogr_gml_1,
+    ogr_gml_71,
+    ogr_gml_cleanup ]
 
 if __name__ == '__main__':
 
@@ -3832,4 +4102,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-

@@ -34,6 +34,7 @@
 #include "cpl_minixml.h"
 #include <set>
 #include <vector>
+#include <algorithm>
 
 
 CPL_CVSID("$Id$");
@@ -61,11 +62,11 @@ public:
     bool isAssocClass;
     bool hasDerivedClasses;
 
-    IliClass(CPLXMLNode* node_, const char* name, int iliVersion_, StrNodeMap& oTidLookup_, ClassesMap& oClasses_, NodeCountMap& oAxisCount_) :
+    IliClass(CPLXMLNode* node_, int iliVersion_, StrNodeMap& oTidLookup_, ClassesMap& oClasses_, NodeCountMap& oAxisCount_) :
         node(node_), iliVersion(iliVersion_), oTidLookup(oTidLookup_), oClasses(oClasses_), oAxisCount(oAxisCount_),
         poGeomFieldInfos(), poStructFieldInfos(), oFields(), isAssocClass(false), hasDerivedClasses(false)
     {
-        char* layerName = LayerName(name);
+        char* layerName = LayerName();
         poTableDefn = new OGRFeatureDefn(layerName);
         CPLFree(layerName);
     };
@@ -76,7 +77,11 @@ public:
     const char* GetName() {
         return poTableDefn->GetName();
     }
-    char* LayerName(const char* psClassTID) {
+    const char* GetIliName() {
+        return CPLGetXMLValue( node, "TID", NULL );
+    }
+    char* LayerName() {
+        const char* psClassTID = GetIliName();
         if (iliVersion == 1)
         {
             //Skip topic and replace . with __
@@ -119,12 +124,12 @@ public:
         return false;
     }
     // Add additional Geometry table for Interlis 1
-    void AddGeomTable(CPLString layerName, const char* psFieldName, OGRwkbGeometryType eType)
+    void AddGeomTable(CPLString layerName, const char* psFieldName, OGRwkbGeometryType eType, bool bRefTIDField = false)
     {
         OGRFeatureDefn* poGeomTableDefn = new OGRFeatureDefn(layerName);
         OGRFieldDefn fieldDef("_TID", OFTString);
         poGeomTableDefn->AddFieldDefn(&fieldDef);
-        if (eType == wkbPolygon)
+        if (bRefTIDField)
         {
             OGRFieldDefn fieldDefRef("_RefTID", OFTString);
             poGeomTableDefn->AddFieldDefn(&fieldDefRef);
@@ -193,7 +198,7 @@ public:
         if (CSLTestBoolean(CPLGetXMLValue( node, "Abstract", "FALSE" )))
             hasDerivedClasses = true;
     }
-    void AddFieldDefinitions()
+    void AddFieldDefinitions(NodeVector oArcLineTypes)
     {
         for (NodeVector::const_iterator it = oFields.begin(); it != oFields.end(); ++it)
         {
@@ -254,12 +259,16 @@ public:
                 {
                     const char* psKind = CPLGetXMLValue( psElementNode, "Kind", NULL );
                     poGeomFieldInfos[psName].iliGeomType = psKind;
+                    bool isLinearType = (std::find(oArcLineTypes.begin(), oArcLineTypes.end(), psElementNode) == oArcLineTypes.end());
+                    bool linearGeom = isLinearType || CSLTestBoolean(CPLGetConfigOption("OGR_STROKE_CURVE", "FALSE"));
+                    OGRwkbGeometryType multiLineType = linearGeom ? wkbMultiLineString : wkbMultiCurve;
+                    OGRwkbGeometryType polyType = linearGeom ? wkbPolygon : wkbCurvePolygon;
                     if (iliVersion == 1)
                     {
                         if (EQUAL(psKind, "Area"))
                         {
                             CPLString lineLayerName = GetName() + CPLString("_") + psName;
-                            AddGeomTable(lineLayerName, psName, wkbMultiLineString);
+                            AddGeomTable(lineLayerName, psName, multiLineType);
 
                             //Add geometry field for polygonized areas
                             AddGeomField(psName, wkbPolygon);
@@ -271,17 +280,17 @@ public:
                         } else if (EQUAL(psKind, "Surface"))
                         {
                             CPLString geomLayerName = GetName() + CPLString("_") + psName;
-                            AddGeomTable(geomLayerName, psName, wkbPolygon);
-                            AddGeomField(psName, wkbPolygon);
+                            AddGeomTable(geomLayerName, psName, multiLineType, true);
+                            AddGeomField(psName, polyType);
                         } else { // Polyline, DirectedPolyline
-                            AddGeomField(psName, wkbMultiLineString);
+                            AddGeomField(psName, multiLineType);
                         }
                     } else {
                         if (EQUAL(psKind, "Area") || EQUAL(psKind, "Surface"))
                         {
-                            AddGeomField(psName, wkbPolygon);
+                            AddGeomField(psName, polyType);
                         } else { // Polyline, DirectedPolyline
-                            AddGeomField(psName, wkbMultiLineString);
+                            AddGeomField(psName, multiLineType);
                         }
                     }
                 }
@@ -333,6 +342,7 @@ void ImdReader::ReadModel(const char *pszFilename) {
     StrNodeMap oTidLookup; /* for fast lookup of REF relations */
     ClassesMap oClasses;
     NodeCountMap oAxisCount;
+    NodeVector oArcLineTypes;
     const char *modelName;
 
     /* Fill TID lookup map and IliClasses lookup map */
@@ -372,15 +382,15 @@ void ImdReader::ReadModel(const char *pszFilename) {
                         codeContinue = atoi(CPLGetXMLValue(psFormatNode, "continueCode", "92"));
                     }
                 }
-                else if( EQUAL(psEntry->pszValue, "IlisMeta07.ModelData.SubModel") && !EQUAL(modelName, "MODEL.INTERLIS"))
+                else if( EQUAL(psEntry->pszValue, "IlisMeta07.ModelData.SubModel"))
                 {
                     mainBasketName = CPLGetXMLValue(psEntry, "TID", "OGR");
                     mainTopicName = CPLGetXMLValue(psEntry, "Name", "OGR");
                 }
-                else if( EQUAL(psEntry->pszValue, "IlisMeta07.ModelData.Class") && !EQUAL(modelName, "MODEL.INTERLIS"))
+                else if( EQUAL(psEntry->pszValue, "IlisMeta07.ModelData.Class") )
                 {
                     CPLDebug( "OGR_ILI", "Class name: '%s'", psTID);
-                    oClasses[psEntry] = new IliClass(psEntry, psTID, iliVersion, oTidLookup, oClasses, oAxisCount);
+                    oClasses[psEntry] = new IliClass(psEntry, iliVersion, oTidLookup, oClasses, oAxisCount);
                 }
             }
             psEntry = psEntry->psNext;
@@ -393,7 +403,7 @@ void ImdReader::ReadModel(const char *pszFilename) {
             if (psEntry->eType != CXT_Attribute) //ignore BID
             {
                 //CPLDebug( "OGR_ILI", "Node tag: '%s'", psEntry->pszValue);
-                if( iliVersion == 1 && EQUAL(psEntry->pszValue, "IlisMeta07.ModelData.Ili1TransferElement") && !EQUAL(modelName, "MODEL.INTERLIS"))
+                if( iliVersion == 1 && EQUAL(psEntry->pszValue, "IlisMeta07.ModelData.Ili1TransferElement"))
                 {
                     const char* psClassRef = CPLGetXMLValue( psEntry, "Ili1TransferClass.REF", NULL );
                     const char* psElementRef = CPLGetXMLValue( psEntry, "Ili1RefAttr.REF", NULL );
@@ -402,7 +412,7 @@ void ImdReader::ReadModel(const char *pszFilename) {
                     CPLXMLNode* psElementNode = oTidLookup[psElementRef];
                     psParentClass->AddFieldNode(psElementNode, iOrderPos);
                 }
-                else if( EQUAL(psEntry->pszValue, "IlisMeta07.ModelData.TransferElement") && !EQUAL(modelName, "MODEL.INTERLIS"))
+                else if( EQUAL(psEntry->pszValue, "IlisMeta07.ModelData.TransferElement"))
                 {
                     const char* psClassRef = CPLGetXMLValue( psEntry, "TransferClass.REF", NULL );
                     const char* psElementRef = CPLGetXMLValue( psEntry, "TransferElement.REF", NULL );
@@ -411,7 +421,7 @@ void ImdReader::ReadModel(const char *pszFilename) {
                     CPLXMLNode* psElementNode = oTidLookup[psElementRef];
                     psParentClass->AddFieldNode(psElementNode, iOrderPos);
                 }
-                else if( EQUAL(psEntry->pszValue, "IlisMeta07.ModelData.Role") && !EQUAL(modelName, "MODEL.INTERLIS"))
+                else if( EQUAL(psEntry->pszValue, "IlisMeta07.ModelData.Role"))
                 {
                     const char* psRefParent = CPLGetXMLValue( psEntry, "Association.REF", NULL );
                     int iOrderPos = atoi(CPLGetXMLValue( psEntry, "Association.ORDER_POS", "0" ))-1;
@@ -419,12 +429,21 @@ void ImdReader::ReadModel(const char *pszFilename) {
                     if (psParentClass)
                         psParentClass->AddRoleNode(psEntry, iOrderPos);
                 }
-                else if( EQUAL(psEntry->pszValue, "IlisMeta07.ModelData.AxisSpec") && !EQUAL(modelName, "MODEL.INTERLIS"))
+                else if( EQUAL(psEntry->pszValue, "IlisMeta07.ModelData.AxisSpec"))
                 {
                     const char* psClassRef = CPLGetXMLValue( psEntry, "CoordType.REF", NULL );
                     //int iOrderPos = atoi(CPLGetXMLValue( psEntry, "Axis.ORDER_POS", "0" ))-1;
                     CPLXMLNode* psCoordTypeNode = oTidLookup[psClassRef];
                     oAxisCount[psCoordTypeNode] += 1;
+                }
+                else if( EQUAL(psEntry->pszValue, "IlisMeta07.ModelData.LinesForm"))
+                {
+                    const char* psLineForm = CPLGetXMLValue( psEntry, "LineForm.REF", NULL );
+                    if (EQUAL(psLineForm, "INTERLIS.ARCS")) {
+                        const char* psElementRef = CPLGetXMLValue( psEntry, "LineType.REF", NULL );
+                        CPLXMLNode* psElementNode = oTidLookup[psElementRef];
+                        oArcLineTypes.push_back(psElementNode);
+                    }
                 }
             }
             psEntry = psEntry->psNext;
@@ -439,17 +458,25 @@ void ImdReader::ReadModel(const char *pszFilename) {
     {
         //CPLDebug( "OGR_ILI", "Class: '%s'", it->second->GetName());
         const char* psRefSuper = CPLGetXMLValue( it->first, "Super.REF", NULL );
-        if (psRefSuper)
-            oClasses[oTidLookup[psRefSuper]]->hasDerivedClasses = true;
+        if (psRefSuper) {
+            if (oTidLookup.find(psRefSuper) != oTidLookup.end() &&
+                oClasses.find(oTidLookup[psRefSuper]) != oClasses.end()) {
+                oClasses[oTidLookup[psRefSuper]]->hasDerivedClasses = true;
+            } else {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                    "Couldn't reference super class '%s'", psRefSuper);
+            }
+        }
         it->second->InitFieldDefinitions();
-        it->second->AddFieldDefinitions();
+        it->second->AddFieldDefinitions(oArcLineTypes);
     }
 
     /* Filter relevant classes */
     for (ClassesMap::const_iterator it = oClasses.begin(); it != oClasses.end(); ++it)
     {
+        const char* className = it->second->GetIliName();
         FeatureDefnInfo oClassInfo = it->second->tableDefs();
-        if (oClassInfo.poTableDefn)
+        if (!EQUALN(className, "INTERLIS.", 9) && oClassInfo.poTableDefn)
             featureDefnInfos.push_back(oClassInfo);
     }
 

@@ -186,6 +186,7 @@ VRTCreateCopy( const char * pszFilename,
     /*      Convert tree to a single block of XML text.                     */
     /* -------------------------------------------------------------------- */
         char *pszVRTPath = CPLStrdup(CPLGetPath(pszFilename));
+        ((VRTDataset *) poSrcDS)->UnsetPreservedRelativeFilenames();
         CPLXMLNode *psDSTree = ((VRTDataset *) poSrcDS)->SerializeToXML( pszVRTPath );
 
         char *pszXML = CPLSerializeXMLTree( psDSTree );
@@ -372,6 +373,11 @@ void GDALRegister_VRT()
         poDriver->pfnCreate = VRTDataset::Create;
         poDriver->pfnIdentify = VRTDataset::Identify;
         poDriver->pfnDelete = VRTDataset::Delete;
+
+        poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
+"<OpenOptionList>"
+"  <Option name='ROOT_PATH' type='string' description='Root path to evaluate relative paths inside the VRT. Mainly useful for inlined VRT, or in-memory VRT, where their own directory does not make sense'/>"
+"</OpenOptionList>" );
 
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 

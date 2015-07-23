@@ -183,10 +183,12 @@ public:
     GMLPropertyDefn *GetProperty( const char *pszName ) const 
         { return GetProperty( GetPropertyIndex(pszName) ); }
     int         GetPropertyIndexBySrcElement( const char *pszElement, int nLen ) const;
-    
+    void        StealProperties();
+
     int         GetGeometryPropertyCount() const { return m_nGeometryPropertyCount; }
     GMLGeometryPropertyDefn *GetGeometryProperty( int iIndex ) const;
     int         GetGeometryPropertyIndexBySrcElement( const char *pszElement ) const;
+    void        StealGeometryProperties();
 
     int         HasFeatureProperties();
 
@@ -300,7 +302,9 @@ public:
                                    int pbSqlitIsTempFile,
                                    int iSqliteCacheMB ) = 0;
 
-    virtual int PrescanForSchema( int bGetExtents = TRUE, int bAnalyzeSRSPerFeature = TRUE ) = 0;
+    virtual int PrescanForSchema( int bGetExtents = TRUE,
+                                  int bAnalyzeSRSPerFeature = TRUE,
+                                  int bOnlyDetectSRS = FALSE ) = 0;
     virtual int PrescanForTemplate( void ) = 0;
 
     virtual int HasStoppedParsing() = 0;
