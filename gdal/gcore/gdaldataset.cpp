@@ -1518,6 +1518,62 @@ CPLErr GDALDataset::IRasterIO( GDALRWFlag eRWFlag,
                                    psExtraArg );
     }
     
+    if( eRWFlag == GF_Read &&
+        (psExtraArg->eResampleAlg == GRIORA_Cubic ||
+         psExtraArg->eResampleAlg == GRIORA_CubicSpline ||
+         psExtraArg->eResampleAlg == GRIORA_Bilinear ||
+         psExtraArg->eResampleAlg == GRIORA_Lanczos) &&
+        !(nXSize == nBufXSize && nYSize == nBufYSize) && nBandCount > 1 )
+    {
+        
+        int bUseDatasetRasterIOResampled = TRUE;
+        GDALDataType eFirstBandDT = GDT_Unknown;
+        for(int i=0;i<nBandCount;i++)
+        {
+            GDALRasterBand* poBand = GetRasterBand(panBandMap[i]);
+            if( (nBufXSize < nXSize || nBufYSize < nYSize) &&
+                poBand->GetOverviewCount() )
+            {
+                // Could be improved to select the appropriate overview
+                bUseDatasetRasterIOResampled = FALSE;
+                break;
+            }
+            if( poBand->GetColorTable() != NULL )
+            {
+                bUseDatasetRasterIOResampled = FALSE;
+                break;
+            }
+            GDALDataType eDT = poBand->GetRasterDataType();
+            if( GDALDataTypeIsComplex( eDT ) )
+            {
+                bUseDatasetRasterIOResampled = FALSE;
+                break;
+            }
+            if( i == 0 )
+                eFirstBandDT = eDT;
+            else if( eDT != eFirstBandDT )
+            {
+                bUseDatasetRasterIOResampled = FALSE;
+                break;
+            }
+            int nMaskFlags = poBand->GetMaskFlags();
+            if( (nMaskFlags & GMF_PER_DATASET) == 0 && nMaskFlags != GMF_ALL_VALID )
+            {
+                bUseDatasetRasterIOResampled = FALSE;
+                break;
+            }
+        }
+        if( bUseDatasetRasterIOResampled )
+        {
+            return RasterIOResampled( eRWFlag, nXOff, nYOff, nXSize, nYSize, 
+                                   pData, nBufXSize, nBufYSize,
+                                   eBufType, nBandCount, panBandMap,
+                                   nPixelSpace, nLineSpace, nBandSpace,
+                                   psExtraArg );
+        }
+
+    }
+        
     return BandBasedRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize, 
                                    pData, nBufXSize, nBufYSize,
                                    eBufType, nBandCount, panBandMap,

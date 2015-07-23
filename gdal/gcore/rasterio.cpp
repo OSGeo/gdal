@@ -1108,6 +1108,461 @@ CPLErr GDALRasterBand::RasterIOResampled( CPL_UNUSED GDALRWFlag eRWFlag,
 }
 
 /************************************************************************/
+/*                          RasterIOResampled()                         */
+/************************************************************************/
+
+CPLErr GDALDataset::RasterIOResampled( CPL_UNUSED GDALRWFlag eRWFlag,
+                               int nXOff, int nYOff, int nXSize, int nYSize,
+                               void * pData, int nBufXSize, int nBufYSize,
+                               GDALDataType eBufType, 
+                               int nBandCount, int *panBandMap,
+                               GSpacing nPixelSpace, GSpacing nLineSpace,
+                               GSpacing nBandSpace,
+                               GDALRasterIOExtraArg* psExtraArg )
+    
+{
+    CPLErr eErr = CE_None;
+
+#if 0
+    // Determine if we use warping resampling or overview resampling
+    int bUseWarp;
+    if( !GDALDataTypeIsComplex( eDataType ) )
+        bUseWarp = FALSE;
+    else
+        bUseWarp = TRUE;
+#endif
+    
+    double dfXOff, dfYOff, dfXSize, dfYSize;
+    if( psExtraArg->bFloatingPointWindowValidity )
+    {
+        dfXOff = psExtraArg->dfXOff;
+        dfYOff = psExtraArg->dfYOff;
+        dfXSize = psExtraArg->dfXSize;
+        dfYSize = psExtraArg->dfYSize;
+        CPLAssert(dfXOff - nXOff < 1.0);
+        CPLAssert(dfYOff - nYOff < 1.0);
+        CPLAssert(nXSize - dfXSize < 1.0);
+        CPLAssert(nYSize - dfYSize < 1.0);
+    }
+    else
+    {
+        dfXOff = nXOff;
+        dfYOff = nYOff;
+        dfXSize = nXSize;
+        dfYSize = nYSize;
+    }
+
+    double dfXRatioDstToSrc = dfXSize / nBufXSize;
+    double dfYRatioDstToSrc = dfYSize / nBufYSize;
+
+    /* Determine the coordinates in the "virtual" output raster to see */
+    /* if there are not integers, in which case we will use them as a shift */
+    /* so that subwindow extracts give the exact same results as entire raster */
+    /* scaling */
+    double dfDestXOff = dfXOff / dfXRatioDstToSrc;
+    int bHasXOffVirtual = FALSE;
+    int nDestXOffVirtual = 0;
+    if( fabs(dfDestXOff - (int)(dfDestXOff + 0.5)) < 1e-8 )
+    {
+        bHasXOffVirtual = TRUE;
+        dfXOff = nXOff;
+        nDestXOffVirtual = (int)(dfDestXOff + 0.5);
+    }
+
+    double dfDestYOff = dfYOff / dfYRatioDstToSrc;
+    int bHasYOffVirtual = FALSE;
+    int nDestYOffVirtual = 0;
+    if( fabs(dfDestYOff - (int)(dfDestYOff + 0.5)) < 1e-8 )
+    {
+        bHasYOffVirtual = TRUE;
+        dfYOff = nYOff;
+        nDestYOffVirtual = (int)(dfDestYOff + 0.5);
+    }
+
+    /* Create a MEM dataset that wraps the output buffer */
+    GDALDataset* poMEMDS = MEMDataset::Create("", nDestXOffVirtual + nBufXSize,
+                                              nDestYOffVirtual + nBufYSize, 0,
+                                              eBufType, NULL);
+    GDALRasterBand** papoDstBands = (GDALRasterBand**) CPLMalloc( nBandCount * sizeof(GDALRasterBand*));
+    for(int i=0;i<nBandCount;i++)
+    {
+        char szBuffer[64];
+        int nRet;
+
+        nRet = CPLPrintPointer(szBuffer, (GByte*)pData - nPixelSpace * nDestXOffVirtual
+                                - nLineSpace * nDestYOffVirtual + nBandSpace * i, sizeof(szBuffer));
+        szBuffer[nRet] = 0;
+        
+        char* apszOptions[4];
+        char szBuffer0[64], szBuffer1[64], szBuffer2[64];
+        sprintf(szBuffer0, "DATAPOINTER=%s", szBuffer);
+        sprintf(szBuffer1, "PIXELOFFSET="CPL_FRMT_GIB, (GIntBig)nPixelSpace);
+        sprintf(szBuffer2, "LINEOFFSET="CPL_FRMT_GIB, (GIntBig)nLineSpace);
+        apszOptions[0] = szBuffer0;
+        apszOptions[1] = szBuffer1;
+        apszOptions[2] = szBuffer2;
+        apszOptions[3] = NULL;
+
+        poMEMDS->AddBand(eBufType, apszOptions);
+
+        GDALRasterBand* poSrcBand = GetRasterBand(panBandMap[i]);
+        papoDstBands[i] = poMEMDS->GetRasterBand(i+1);
+        const char* pszNBITS = poSrcBand->GetMetadataItem("NBITS", "IMAGE_STRUCTURE");
+        if( pszNBITS )
+            poMEMDS->GetRasterBand(i+1)->SetMetadataItem("NBITS", pszNBITS, "IMAGE_STRUCTURE");
+    }
+
+#if 0
+    /* Do the resampling */
+    if( bUseWarp )
+    {
+        VRTDatasetH hVRTDS = NULL;
+        GDALRasterBandH hVRTBand = NULL;
+        if( GetDataset() == NULL )
+        {
+            /* Create VRT dataset that wraps the whole dataset */
+            hVRTDS = VRTCreate(nRasterXSize, nRasterYSize);
+            VRTAddBand( hVRTDS, eDataType, NULL );
+            hVRTBand = GDALGetRasterBand(hVRTDS, 1);
+            VRTAddSimpleSource( (VRTSourcedRasterBandH)hVRTBand,
+                                (GDALRasterBandH)this, 
+                                0, 0, 
+                                nRasterXSize, nRasterYSize,
+                                0, 0,
+                                nRasterXSize, nRasterYSize,
+                                NULL, VRT_NODATA_UNSET );
+
+            /* Add a mask band if needed */
+            if( GetMaskFlags() != GMF_ALL_VALID )
+            {
+                ((GDALDataset*)hVRTDS)->CreateMaskBand(0);
+                VRTSourcedRasterBand* poVRTMaskBand =
+                    (VRTSourcedRasterBand*)(((GDALRasterBand*)hVRTBand)->GetMaskBand());
+                poVRTMaskBand->
+                    AddMaskBandSource( this, 
+                                    0, 0, 
+                                    nRasterXSize, nRasterYSize,
+                                    0, 0,
+                                    nRasterXSize, nRasterYSize);
+            }
+        }
+
+        GDALWarpOptions* psWarpOptions = GDALCreateWarpOptions();
+        psWarpOptions->eResampleAlg = (GDALResampleAlg)psExtraArg->eResampleAlg;
+        psWarpOptions->hSrcDS = (GDALDatasetH) (hVRTDS ? hVRTDS : GetDataset());
+        psWarpOptions->hDstDS = (GDALDatasetH) poMEMDS;
+        psWarpOptions->nBandCount = 1;
+        int nSrcBandNumber = (hVRTDS ? 1 : nBand);
+        int nDstBandNumber = 1;
+        psWarpOptions->panSrcBands = &nSrcBandNumber;
+        psWarpOptions->panDstBands = &nDstBandNumber;
+        psWarpOptions->pfnProgress = psExtraArg->pfnProgress ?
+                    psExtraArg->pfnProgress : GDALDummyProgress;
+        psWarpOptions->pProgressArg = psExtraArg->pProgressData;
+        psWarpOptions->pfnTransformer = GDALRasterIOTransformer;
+        GDALRasterIOTransformerStruct sTransformer;
+        sTransformer.dfXOff = (bHasXOffVirtual) ? 0 : dfXOff;
+        sTransformer.dfYOff = (bHasYOffVirtual) ? 0 : dfYOff;
+        sTransformer.dfXRatioDstToSrc = dfXRatioDstToSrc;
+        sTransformer.dfYRatioDstToSrc = dfYRatioDstToSrc;
+        psWarpOptions->pTransformerArg = &sTransformer;
+
+        GDALWarpOperationH hWarpOperation = GDALCreateWarpOperation(psWarpOptions);
+        eErr = GDALChunkAndWarpImage( hWarpOperation,
+                                      nDestXOffVirtual, nDestYOffVirtual,
+                                      nBufXSize, nBufYSize );
+        GDALDestroyWarpOperation( hWarpOperation );
+
+        psWarpOptions->panSrcBands = NULL;
+        psWarpOptions->panDstBands = NULL;
+        GDALDestroyWarpOptions( psWarpOptions );
+
+        if( hVRTDS )
+            GDALClose(hVRTDS);
+    }
+    else
+#endif
+    {
+        const char* pszResampling =
+            (psExtraArg->eResampleAlg == GRIORA_Bilinear) ? "BILINEAR" :
+            (psExtraArg->eResampleAlg == GRIORA_Cubic) ? "CUBIC" :
+            (psExtraArg->eResampleAlg == GRIORA_CubicSpline) ? "CUBICSPLINE" :
+            (psExtraArg->eResampleAlg == GRIORA_Lanczos) ? "LANCZOS" :
+            (psExtraArg->eResampleAlg == GRIORA_Average) ? "AVERAGE" :
+            (psExtraArg->eResampleAlg == GRIORA_Mode) ? "MODE" :
+            (psExtraArg->eResampleAlg == GRIORA_Gauss) ? "GAUSS" : "UNKNOWN";
+
+        GDALRasterBand* poFirstSrcBand = GetRasterBand(panBandMap[0]);
+        GDALDataType eDataType = poFirstSrcBand->GetRasterDataType();
+        int nBlockXSize, nBlockYSize;
+        poFirstSrcBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
+            
+        int nKernelRadius;
+        GDALResampleFunction pfnResampleFunc =
+                        GDALGetResampleFunction(pszResampling, &nKernelRadius);
+        CPLAssert(pfnResampleFunc);
+#ifdef GDAL_ENABLE_RESAMPLING_MULTIBAND
+        GDALResampleFunctionMultiBands pfnResampleFuncMultiBands =
+                        GDALGetResampleFunctionMultiBands(pszResampling, &nKernelRadius);
+#endif
+        GDALDataType eWrkDataType = 
+            GDALGetOvrWorkDataType(pszResampling, eDataType);
+
+        int nDstBlockXSize = nBufXSize;
+        int nDstBlockYSize = nBufYSize;
+        int nFullResXChunk, nFullResYChunk;
+        while(TRUE)
+        {
+            nFullResXChunk = 3 + (int)(nDstBlockXSize * dfXRatioDstToSrc);
+            nFullResYChunk = 3 + (int)(nDstBlockYSize * dfYRatioDstToSrc);
+            if( (nDstBlockXSize == 1 && nDstBlockYSize == 1) ||
+                ((GIntBig)nFullResXChunk * nFullResYChunk <= 1024 * 1024) )
+                break;
+            /* When operating on the full width of a raster whose block width is */
+            /* the raster width, prefer doing chunks in height */
+            if( nFullResXChunk >= nXSize && nXSize == nBlockXSize && nDstBlockYSize > 1 )
+                nDstBlockYSize /= 2;
+            /* Otherwise cut the maximal dimension */
+            else if( nDstBlockXSize > 1 && nFullResXChunk > nFullResYChunk )
+                nDstBlockXSize /= 2;
+            else
+                nDstBlockYSize /= 2;
+        }
+
+        int nOvrFactor = MAX( (int)(0.5 + dfXRatioDstToSrc),
+                                (int)(0.5 + dfYRatioDstToSrc) );
+        if( nOvrFactor == 0 ) nOvrFactor = 1;
+        int nFullResXSizeQueried = nFullResXChunk + 2 * nKernelRadius * nOvrFactor;
+        int nFullResYSizeQueried = nFullResYChunk + 2 * nKernelRadius * nOvrFactor;
+
+        void * pChunk = 
+            VSIMalloc3((GDALGetDataTypeSize(eWrkDataType)/8) * nBandCount,
+                        nFullResXSizeQueried, nFullResYSizeQueried );
+        GByte * pabyChunkNoDataMask = NULL;
+
+        GDALRasterBand* poMaskBand = NULL;
+        int nMaskFlags = 0;
+        int bUseNoDataMask = FALSE;
+
+        poMaskBand = poFirstSrcBand->GetMaskBand();
+        nMaskFlags = poFirstSrcBand->GetMaskFlags();
+
+        bUseNoDataMask = ((nMaskFlags & GMF_ALL_VALID) == 0);
+        if (bUseNoDataMask)
+        {
+            pabyChunkNoDataMask = (GByte *) 
+                (GByte*) VSIMalloc2( nFullResXSizeQueried, nFullResYSizeQueried );
+        }
+        if( pChunk == NULL || (bUseNoDataMask && pabyChunkNoDataMask == NULL) )
+        {
+            GDALClose(poMEMDS);
+            CPLFree(pChunk);
+            CPLFree(pabyChunkNoDataMask);
+            CPLError( CE_Failure, CPLE_OutOfMemory,
+                      "Out of memory in RasterIO()." );
+            return CE_Failure;
+        }
+
+        int nTotalBlocks = ((nBufXSize + nDstBlockXSize - 1) / nDstBlockXSize) *
+                           ((nBufYSize + nDstBlockYSize - 1) / nDstBlockYSize);
+        int nBlocksDone = 0;
+
+        int nDstYOff;
+        for( nDstYOff = 0; nDstYOff < nBufYSize && eErr == CE_None;
+            nDstYOff += nDstBlockYSize )
+        {
+            int nDstYCount;
+            if  (nDstYOff + nDstBlockYSize <= nBufYSize)
+                nDstYCount = nDstBlockYSize;
+            else
+                nDstYCount = nBufYSize - nDstYOff;
+
+            int nChunkYOff = nYOff + (int) (nDstYOff * dfYRatioDstToSrc);
+            int nChunkYOff2 = nYOff + 1 + (int) ceil((nDstYOff + nDstYCount) * dfYRatioDstToSrc);
+            if( nChunkYOff2 > nRasterYSize )
+                nChunkYOff2 = nRasterYSize;
+            int nYCount = nChunkYOff2 - nChunkYOff;
+            CPLAssert(nYCount <= nFullResYChunk);
+
+            int nChunkYOffQueried = nChunkYOff - nKernelRadius * nOvrFactor;
+            int nChunkYSizeQueried = nYCount + 2 * nKernelRadius * nOvrFactor;
+            if( nChunkYOffQueried < 0 )
+            {
+                nChunkYSizeQueried += nChunkYOffQueried;
+                nChunkYOffQueried = 0;
+            }
+            if( nChunkYSizeQueried + nChunkYOffQueried > nRasterYSize )
+                nChunkYSizeQueried = nRasterYSize - nChunkYOffQueried;
+            CPLAssert(nChunkYSizeQueried <= nFullResYSizeQueried);
+
+            int nDstXOff;
+            for( nDstXOff = 0; nDstXOff < nBufXSize && eErr == CE_None;
+                nDstXOff += nDstBlockXSize )
+            {
+                int nDstXCount;
+                if  (nDstXOff + nDstBlockXSize <= nBufXSize)
+                    nDstXCount = nDstBlockXSize;
+                else
+                    nDstXCount = nBufXSize - nDstXOff;
+
+                int nChunkXOff = nXOff + (int) (nDstXOff * dfXRatioDstToSrc);
+                int nChunkXOff2 = nXOff + 1 + (int) ceil((nDstXOff + nDstXCount) * dfXRatioDstToSrc);
+                if( nChunkXOff2 > nRasterXSize )
+                    nChunkXOff2 = nRasterXSize;
+                int nXCount = nChunkXOff2 - nChunkXOff;
+                CPLAssert(nXCount <= nFullResXChunk);
+
+                int nChunkXOffQueried = nChunkXOff - nKernelRadius * nOvrFactor;
+                int nChunkXSizeQueried = nXCount + 2 * nKernelRadius * nOvrFactor;
+                if( nChunkXOffQueried < 0 )
+                {
+                    nChunkXSizeQueried += nChunkXOffQueried;
+                    nChunkXOffQueried = 0;
+                }
+                if( nChunkXSizeQueried + nChunkXOffQueried > nRasterXSize )
+                    nChunkXSizeQueried = nRasterXSize - nChunkXOffQueried;
+                CPLAssert(nChunkXSizeQueried <= nFullResXSizeQueried);
+
+                int bSkipResample = FALSE;
+                int bNoDataMaskFullyOpaque = FALSE;
+                if (eErr == CE_None && bUseNoDataMask)
+                {
+                    eErr = poMaskBand->RasterIO( GF_Read,
+                                                 nChunkXOffQueried,
+                                                 nChunkYOffQueried,
+                                                 nChunkXSizeQueried,
+                                                 nChunkYSizeQueried, 
+                                                 pabyChunkNoDataMask,
+                                                 nChunkXSizeQueried,
+                                                 nChunkYSizeQueried,
+                                                 GDT_Byte, 0, 0, NULL );
+
+                    /* Optimizations if mask if fully opaque or transparent */
+                    int nPixels = nChunkXSizeQueried * nChunkYSizeQueried;
+                    GByte bVal = pabyChunkNoDataMask[0];
+                    int i = 1;
+                    for( ; i < nPixels; i++ )
+                    {
+                        if( pabyChunkNoDataMask[i] != bVal )
+                            break;
+                    }
+                    if( i == nPixels )
+                    {
+                        if( bVal == 0 )
+                        {
+                            float fNoDataValue = 0.f;
+                            for(int iBand=0;iBand<nBandCount;iBand++)
+                            {
+                                for(int j=0;j<nDstYCount;j++)
+                                {
+                                    GDALCopyWords(&fNoDataValue, GDT_Float32, 0,
+                                                (GByte*)pData + iBand * nBandSpace +
+                                                    nLineSpace * (j + nDstYOff) +
+                                                    nDstXOff * nPixelSpace,
+                                                eBufType, (int)nPixelSpace,
+                                                nDstXCount);
+                                }
+                            }
+                            bSkipResample = TRUE;
+                        }
+                        else
+                        {
+                            bNoDataMaskFullyOpaque = TRUE;
+                        }
+                    }
+                }
+
+                if( !bSkipResample && eErr == CE_None )
+                {
+                    /* Read the source buffers */
+                    eErr = RasterIO( GF_Read,
+                                    nChunkXOffQueried, nChunkYOffQueried,
+                                    nChunkXSizeQueried, nChunkYSizeQueried, 
+                                    pChunk,
+                                    nChunkXSizeQueried, nChunkYSizeQueried,
+                                    eWrkDataType, 
+                                    nBandCount, panBandMap,
+                                    0, 0, 0, NULL );
+                }
+
+#ifdef GDAL_ENABLE_RESAMPLING_MULTIBAND
+                if( pfnResampleFuncMultiBands && !bSkipResample && eErr == CE_None )
+                {
+                    eErr = pfnResampleFuncMultiBands( dfXRatioDstToSrc,
+                                                      dfYRatioDstToSrc,
+                                                      dfXOff - nXOff, /* == 0 if bHasXOffVirtual */
+                                                      dfYOff - nYOff, /* == 0 if bHasYOffVirtual */
+                                                      eWrkDataType,
+                                                      (GByte*)pChunk,
+                                                      nBandCount,
+                                                      (bNoDataMaskFullyOpaque) ? NULL : pabyChunkNoDataMask,
+                                                      nChunkXOffQueried - ((bHasXOffVirtual) ? 0 : nXOff),
+                                                      nChunkXSizeQueried,
+                                                      nChunkYOffQueried - ((bHasYOffVirtual) ? 0 : nYOff),
+                                                      nChunkYSizeQueried,
+                                                      nDstXOff + nDestXOffVirtual,
+                                                      nDstXOff + nDestXOffVirtual + nDstXCount,
+                                                      nDstYOff + nDestYOffVirtual,
+                                                      nDstYOff + nDestYOffVirtual + nDstYCount,
+                                                      papoDstBands,
+                                                      pszResampling,
+                                                      FALSE /*bHasNoData*/,
+                                                      0.f /* fNoDataValue */,
+                                                      NULL /* color table*/,
+                                                      eDataType );
+                }
+                else
+#endif
+                {
+                    size_t nChunkBandOffset = (size_t)nChunkXSizeQueried *
+                            nChunkYSizeQueried * (GDALGetDataTypeSize(eWrkDataType)/8);
+                    for(int i=0; i<nBandCount && !bSkipResample && eErr == CE_None; i++ )
+                    {
+                        eErr = pfnResampleFunc( dfXRatioDstToSrc,
+                                                dfYRatioDstToSrc,
+                                                dfXOff - nXOff, /* == 0 if bHasXOffVirtual */
+                                                dfYOff - nYOff, /* == 0 if bHasYOffVirtual */
+                                                eWrkDataType,
+                                                (GByte*)pChunk + i * nChunkBandOffset,
+                                                (bNoDataMaskFullyOpaque) ? NULL : pabyChunkNoDataMask,
+                                                nChunkXOffQueried - ((bHasXOffVirtual) ? 0 : nXOff),
+                                                nChunkXSizeQueried,
+                                                nChunkYOffQueried - ((bHasYOffVirtual) ? 0 : nYOff),
+                                                nChunkYSizeQueried,
+                                                nDstXOff + nDestXOffVirtual,
+                                                nDstXOff + nDestXOffVirtual + nDstXCount,
+                                                nDstYOff + nDestYOffVirtual,
+                                                nDstYOff + nDestYOffVirtual + nDstYCount,
+                                                poMEMDS->GetRasterBand(i+1),
+                                                pszResampling,
+                                                FALSE /*bHasNoData*/,
+                                                0.f /* fNoDataValue */,
+                                                NULL /* color table*/,
+                                                eDataType );
+                    }
+                }
+
+                nBlocksDone ++;
+                if( eErr == CE_None && psExtraArg->pfnProgress != NULL &&
+                    !psExtraArg->pfnProgress(1.0 * nBlocksDone / nTotalBlocks, "",
+                                             psExtraArg->pProgressData) )
+                {
+                    eErr = CE_Failure;
+                }
+            }
+        }
+
+        CPLFree(pChunk);
+        CPLFree(pabyChunkNoDataMask);
+    }
+
+    CPLFree(papoDstBands);
+    GDALClose(poMEMDS);
+
+    return eErr;
+}
+
+/************************************************************************/
 /*                           GDALSwapWords()                            */
 /************************************************************************/
 
