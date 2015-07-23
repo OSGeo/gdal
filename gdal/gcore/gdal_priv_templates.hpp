@@ -171,15 +171,23 @@ inline void GDALCopyWordSSE(const float fValueIn, Tout &tValueOut)
     float fMaxVal, fMinVal;
     GDALGetDataLimits<float, Tout>(fMaxVal, fMinVal);
     __m128 xmm = _mm_set_ss(fValueIn);
-#ifdef SSE_USE_SAME_ROUNDING_AS_NON_SSE
-    __m128 mask = _mm_cmpge_ss(xmm, _mm_set_ss(0.f));
-    __m128 p0d5 = _mm_set_ss(0.5f);
-    __m128 m0d5 = _mm_set_ss(-0.5f);
-    xmm = _mm_add_ss(xmm, _mm_or_ps(_mm_and_ps(mask, p0d5), _mm_andnot_ps(mask, m0d5)));
-#endif
     __m128 xmm_min = _mm_set_ss(fMinVal);
     __m128 xmm_max = _mm_set_ss(fMaxVal);
     xmm = _mm_min_ss(_mm_max_ss(xmm, xmm_min), xmm_max);
+#ifdef SSE_USE_SAME_ROUNDING_AS_NON_SSE
+    __m128 p0d5 = _mm_set_ss(0.5f);
+    if (std::numeric_limits<Tout>::is_signed)
+    {
+        __m128 mask = _mm_cmpge_ss(xmm, _mm_set_ss(0.f));
+        __m128 m0d5 = _mm_set_ss(-0.5f);
+        xmm = _mm_add_ss(xmm, _mm_or_ps(_mm_and_ps(mask, p0d5), _mm_andnot_ps(mask, m0d5)));
+    }
+    else
+    {
+        xmm = _mm_add_ss(xmm, p0d5);
+    }
+#endif
+
 #ifdef SSE_USE_SAME_ROUNDING_AS_NON_SSE
     tValueOut = (Tout)_mm_cvttss_si32(xmm);
 #else
@@ -368,16 +376,26 @@ inline void GDALCopy4WordsSSE(const float* pValueIn, Tout* const &pValueOut)
     float fMaxVal, fMinVal;
     GDALGetDataLimits<float, Tout>(fMaxVal, fMinVal);
     __m128 xmm = _mm_loadu_ps(pValueIn);
-#ifdef SSE_USE_SAME_ROUNDING_AS_NON_SSE
-    __m128 p0d5 = _mm_set1_ps(0.5f);
-    __m128 m0d5 = _mm_set1_ps(-0.5f);
-    //__m128 mask = _mm_cmpge_ps(xmm, _mm_set1_ps(0.f));
-    __m128 mask = _mm_cmpge_ps(xmm, p0d5);
-    xmm = _mm_add_ps(xmm, _mm_or_ps(_mm_and_ps(mask, p0d5), _mm_andnot_ps(mask, m0d5))); /* f >= 0.5f ? f + 0.5f : f - 0.5f */
-#endif
+    
     __m128 xmm_min = _mm_set1_ps(fMinVal);
     __m128 xmm_max = _mm_set1_ps(fMaxVal);
     xmm = _mm_min_ps(_mm_max_ps(xmm, xmm_min), xmm_max);
+    
+#ifdef SSE_USE_SAME_ROUNDING_AS_NON_SSE
+    __m128 p0d5 = _mm_set1_ps(0.5f);
+     if (std::numeric_limits<Tout>::is_signed)
+     {
+        __m128 m0d5 = _mm_set1_ps(-0.5f);
+        //__m128 mask = _mm_cmpge_ps(xmm, _mm_set1_ps(0.f));
+        __m128 mask = _mm_cmpge_ps(xmm, p0d5);
+        xmm = _mm_add_ps(xmm, _mm_or_ps(_mm_and_ps(mask, p0d5), _mm_andnot_ps(mask, m0d5))); /* f >= 0.5f ? f + 0.5f : f - 0.5f */
+     }
+     else
+     {
+         xmm = _mm_add_ps(xmm, p0d5);
+     }
+#endif
+
 #ifdef SSE_USE_SAME_ROUNDING_AS_NON_SSE
     __m128i xmm_i = _mm_cvttps_epi32 (xmm);
 #else
