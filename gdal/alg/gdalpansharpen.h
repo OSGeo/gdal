@@ -99,6 +99,9 @@ typedef struct
     /** Number of threads or -1 to mean ALL_CPUS. By default (0), single threaded mode is enabled
       * unless the GDAL_NUM_THREADS configuration option is set to an integer or ALL_CPUS. */
     int                  nThreads;
+    
+    double               dfMSShiftX;
+    double               dfMSShiftY;
 
 } GDALPansharpenOptions;
 
