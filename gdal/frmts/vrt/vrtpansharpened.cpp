@@ -888,6 +888,8 @@ CPLErr VRTPansharpenedDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPa
     psPanOptions->bHasNoData = bHasNoData;
     psPanOptions->dfNoData = dfNoData;
     psPanOptions->nThreads = nThreads;
+    psPanOptions->dfMSShiftX = CPLAtof(CPLGetXMLValue(psOptions, "MSShiftX", "0"));
+    psPanOptions->dfMSShiftY = CPLAtof(CPLGetXMLValue(psOptions, "MSShiftY", "0"));
 
     if( nBands == psPanOptions->nOutPansharpenedBands )
         SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
@@ -1022,6 +1024,17 @@ CPLXMLNode *VRTPansharpenedDataset::SerializeToXML( const char *pszVRTPath )
     else if( bNoDataDisabled )
     {
         CPLCreateXMLElementAndValue( psOptionsNode, "NoData", "None" );
+    }
+    
+    if( psOptions->dfMSShiftX )
+    {
+        CPLCreateXMLElementAndValue( psOptionsNode, "MSShiftX",
+                                     CPLSPrintf("%.16g", psOptions->dfMSShiftX) );
+    }
+    if( psOptions->dfMSShiftY )
+    {
+        CPLCreateXMLElementAndValue( psOptionsNode, "MSShiftY",
+                                     CPLSPrintf("%.16g", psOptions->dfMSShiftY) );
     }
 
     if( pszAdjust )

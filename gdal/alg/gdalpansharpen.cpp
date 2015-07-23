@@ -135,6 +135,8 @@ GDALPansharpenOptions* GDALClonePansharpenOptions(
     psNewOptions->bHasNoData = psOptions->bHasNoData;
     psNewOptions->dfNoData = psOptions->dfNoData;
     psNewOptions->nThreads = psOptions->nThreads;
+    psNewOptions->dfMSShiftX = psOptions->dfMSShiftX;
+    psNewOptions->dfMSShiftY = psOptions->dfMSShiftY;
     return psNewOptions;
 }
 
@@ -983,10 +985,14 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
     sExtraArg.bFloatingPointWindowValidity = TRUE;
     double dfRatioX = (double)poPanchroBand->GetXSize() / aMSBands[0]->GetXSize();
     double dfRatioY = (double)poPanchroBand->GetYSize() / aMSBands[0]->GetYSize();
-    sExtraArg.dfXOff = nXOff / dfRatioX;
-    sExtraArg.dfYOff = nYOff / dfRatioY;
+    sExtraArg.dfXOff = (nXOff + psOptions->dfMSShiftX) / dfRatioX;
+    sExtraArg.dfYOff = (nYOff + psOptions->dfMSShiftY) / dfRatioY;
     sExtraArg.dfXSize = nXSize / dfRatioX;
     sExtraArg.dfYSize = nYSize / dfRatioY;
+    if( sExtraArg.dfXOff + sExtraArg.dfXSize > aMSBands[0]->GetXSize() )
+        sExtraArg.dfXOff = aMSBands[0]->GetXSize() - sExtraArg.dfXSize;
+    if( sExtraArg.dfYOff + sExtraArg.dfYSize > aMSBands[0]->GetYSize() )
+        sExtraArg.dfYOff = aMSBands[0]->GetYSize() - sExtraArg.dfYSize;
     int nSpectralXOff = (int)(sExtraArg.dfXOff);
     int nSpectralYOff = (int)(sExtraArg.dfYOff);
     int nSpectralXSize = (int)(0.49999 + sExtraArg.dfXSize);
@@ -996,9 +1002,9 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
     if( nSpectralYSize == 0 )
         nSpectralYSize = 1;
     
-    // For the multi-threaded case, extract the multispectral data at
-    // full resolution in a temp buffer, and then do the upsampling in chunks
-    if( nTasks > 1 && nSpectralXSize < nXSize && nSpectralYSize < nYSize &&
+    // When upstampling, extract the multispectral data at
+    // full resolution in a temp buffer, and then do the upsampling.
+    if( nSpectralXSize < nXSize && nSpectralYSize < nYSize &&
         eResampleAlg != GRIORA_NearestNeighbour && nYSize > 1 )
     {
         // Take some margin to take into account the radius of the resampling kernel
@@ -1085,71 +1091,81 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
             const char* pszNBITS = aMSBands[i]->GetMetadataItem("NBITS", "IMAGE_STRUCTURE");
             if( pszNBITS )
                 poMEMDS->GetRasterBand(i+1)->SetMetadataItem("NBITS", pszNBITS, "IMAGE_STRUCTURE");
+            
+            if( psOptions->bHasNoData )
+                poMEMDS->GetRasterBand(i+1)->SetNoDataValue(psOptions->dfNoData);
         }
 
-#if 0
-        nSpectralXOff -= nXOffExtract;
-        nSpectralYOff -= nYOffExtract;
-        sExtraArg.dfXOff -= nXOffExtract;
-        sExtraArg.dfYOff -= nYOffExtract;
-        poMEMDS->RasterIO(GF_Read,
-                          nSpectralXOff,
-                          nSpectralYOff,
-                          nSpectralXSize, nSpectralYSize,
-                          pUpsampledSpectralBuffer, nXSize, nYSize,
-                          eWorkDataType,
-                          psOptions->nInputSpectralBands, NULL,
-                          0, 0, 0,
-                          &sExtraArg);
-#else
-        // We are abusing the contract of the GDAL API by using the MEMDataset
-        // from several threads. In this case, this is safe. In case that would
-        // no longer be the case we could create as many MEMDataset as threads
-        // pointing to the same buffer.
-        
-        std::vector<GDALPansharpenResampleJob> anJobs;
-        anJobs.resize( nTasks );
-        std::vector<void*> ahJobData;
-        ahJobData.resize( nTasks );
-        
-#ifdef DEBUG_TIMING
-        struct timeval tv;
-#endif
-        for( int i=0;i<nTasks;i++)
+        if( nTasks <= 1 )
         {
-            size_t iStartLine = ((size_t)i * nYSize) / nTasks;
-            size_t iNextStartLine = ((size_t)(i+1) * nYSize) / nTasks;
-            anJobs[i].poMEMDS = poMEMDS;
-            anJobs[i].eResampleAlg = eResampleAlg;
-            anJobs[i].dfXOff = sExtraArg.dfXOff - nXOffExtract;
-            anJobs[i].dfYOff = (nYOff + iStartLine) / dfRatioY - nYOffExtract;
-            anJobs[i].dfXSize = sExtraArg.dfXSize;
-            anJobs[i].dfYSize = (iNextStartLine - iStartLine) / dfRatioY;
-            anJobs[i].nXOff = (int)anJobs[i].dfXOff;
-            anJobs[i].nYOff = (int)anJobs[i].dfYOff;
-            anJobs[i].nXSize = (int)(0.4999 + anJobs[i].dfXSize);
-            anJobs[i].nYSize = (int)(0.4999 + anJobs[i].dfYSize);
-            if( anJobs[i].nXSize == 0 )
-                anJobs[i].nXSize = 1;
-            if( anJobs[i].nYSize == 0 )
-                anJobs[i].nYSize = 1;
-            anJobs[i].pBuffer = pUpsampledSpectralBuffer + (size_t)iStartLine * nXSize * nDataTypeSize;
-            anJobs[i].eDT = eWorkDataType;
-            anJobs[i].nBufXSize = nXSize;
-            anJobs[i].nBufYSize = (int)(iNextStartLine - iStartLine);
-            anJobs[i].nBandCount = psOptions->nInputSpectralBands;
-            anJobs[i].nBandSpace = (GSpacing)nXSize * nYSize * nDataTypeSize;
-#ifdef DEBUG_TIMING
-            anJobs[i].ptv = &tv;
-#endif
-            ahJobData[i] = &(anJobs[i]);
+            nSpectralXOff -= nXOffExtract;
+            nSpectralYOff -= nYOffExtract;
+            sExtraArg.dfXOff -= nXOffExtract;
+            sExtraArg.dfYOff -= nYOffExtract;
+            poMEMDS->RasterIO(GF_Read,
+                              nSpectralXOff,
+                              nSpectralYOff,
+                              nSpectralXSize, nSpectralYSize,
+                              pUpsampledSpectralBuffer, nXSize, nYSize,
+                              eWorkDataType,
+                              psOptions->nInputSpectralBands, NULL,
+                              0, 0, 0,
+                              &sExtraArg);
         }
-#ifdef DEBUG_TIMING
-        gettimeofday(&tv, NULL);
-#endif
-        poThreadPool->SubmitJobs(PansharpenResampleJobThreadFunc, ahJobData);
-        poThreadPool->WaitCompletion();
-#endif
+        else
+        {
+            // We are abusing the contract of the GDAL API by using the MEMDataset
+            // from several threads. In this case, this is safe. In case that would
+            // no longer be the case we could create as many MEMDataset as threads
+            // pointing to the same buffer.
+            
+            std::vector<GDALPansharpenResampleJob> anJobs;
+            anJobs.resize( nTasks );
+            std::vector<void*> ahJobData;
+            ahJobData.resize( nTasks );
+            
+    #ifdef DEBUG_TIMING
+            struct timeval tv;
+    #endif
+            for( int i=0;i<nTasks;i++)
+            {
+                size_t iStartLine = ((size_t)i * nYSize) / nTasks;
+                size_t iNextStartLine = ((size_t)(i+1) * nYSize) / nTasks;
+                anJobs[i].poMEMDS = poMEMDS;
+                anJobs[i].eResampleAlg = eResampleAlg;
+                anJobs[i].dfXOff = sExtraArg.dfXOff - nXOffExtract;
+                anJobs[i].dfYOff = (nYOff + psOptions->dfMSShiftY + iStartLine) / dfRatioY - nYOffExtract;
+                anJobs[i].dfXSize = sExtraArg.dfXSize;
+                anJobs[i].dfYSize = (iNextStartLine - iStartLine) / dfRatioY;
+                if( anJobs[i].dfXOff + anJobs[i].dfXSize > aMSBands[0]->GetXSize() )
+                    anJobs[i].dfXOff = aMSBands[0]->GetXSize() - anJobs[i].dfXSize;
+                if( anJobs[i].dfYOff + anJobs[i].dfYSize > aMSBands[0]->GetYSize() )
+                    anJobs[i].dfYOff = aMSBands[0]->GetYSize() - anJobs[i].dfYSize;
+                anJobs[i].nXOff = (int)anJobs[i].dfXOff;
+                anJobs[i].nYOff = (int)anJobs[i].dfYOff;
+                anJobs[i].nXSize = (int)(0.4999 + anJobs[i].dfXSize);
+                anJobs[i].nYSize = (int)(0.4999 + anJobs[i].dfYSize);
+                if( anJobs[i].nXSize == 0 )
+                    anJobs[i].nXSize = 1;
+                if( anJobs[i].nYSize == 0 )
+                    anJobs[i].nYSize = 1;
+                anJobs[i].pBuffer = pUpsampledSpectralBuffer + (size_t)iStartLine * nXSize * nDataTypeSize;
+                anJobs[i].eDT = eWorkDataType;
+                anJobs[i].nBufXSize = nXSize;
+                anJobs[i].nBufYSize = (int)(iNextStartLine - iStartLine);
+                anJobs[i].nBandCount = psOptions->nInputSpectralBands;
+                anJobs[i].nBandSpace = (GSpacing)nXSize * nYSize * nDataTypeSize;
+    #ifdef DEBUG_TIMING
+                anJobs[i].ptv = &tv;
+    #endif
+                ahJobData[i] = &(anJobs[i]);
+            }
+    #ifdef DEBUG_TIMING
+            gettimeofday(&tv, NULL);
+    #endif
+            poThreadPool->SubmitJobs(PansharpenResampleJobThreadFunc, ahJobData);
+            poThreadPool->WaitCompletion();
+        }
 
         GDALClose(poMEMDS);
         
