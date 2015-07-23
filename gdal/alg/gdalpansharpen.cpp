@@ -338,8 +338,20 @@ CPLErr GDALPansharpenOperation::Initialize(const GDALPansharpenOptions* psOption
     int nThreads = psOptions->nThreads;
     if( nThreads == -1 )
         nThreads = CPLGetNumCPUs();
+    else if( nThreads == 0 )
+    {
+        const char* pszNumThreads = CPLGetConfigOption("GDAL_NUM_THREADS", NULL);
+        if( pszNumThreads )
+        {
+            if( EQUAL(pszNumThreads, "ALL_CPUS") )
+                nThreads = CPLGetNumCPUs();
+            else
+                nThreads = atoi(pszNumThreads);
+        }
+    }
     if( nThreads > 1 )
     {
+        CPLDebug("PANSHARPEN", "Using %d theads", nThreads);
         poThreadPool = new CPLWorkerThreadPool();
         if( !poThreadPool->Setup( nThreads, NULL, NULL ) )
         {
@@ -1099,6 +1111,10 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
         anJobs.resize( nTasks );
         std::vector<void*> ahJobData;
         ahJobData.resize( nTasks );
+        
+#ifdef DEBUG_TIMING
+        struct timeval tv;
+#endif
         for( int i=0;i<nTasks;i++)
         {
             size_t iStartLine = ((size_t)i * nYSize) / nTasks;
@@ -1123,8 +1139,14 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
             anJobs[i].nBufYSize = (int)(iNextStartLine - iStartLine);
             anJobs[i].nBandCount = psOptions->nInputSpectralBands;
             anJobs[i].nBandSpace = (GSpacing)nXSize * nYSize * nDataTypeSize;
+#ifdef DEBUG_TIMING
+            anJobs[i].ptv = &tv;
+#endif
             ahJobData[i] = &(anJobs[i]);
         }
+#ifdef DEBUG_TIMING
+        gettimeofday(&tv, NULL);
+#endif
         poThreadPool->SubmitJobs(PansharpenResampleJobThreadFunc, ahJobData);
         poThreadPool->WaitCompletion();
 #endif
@@ -1233,7 +1255,9 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
         anJobs.resize( nTasks );
         std::vector<void*> ahJobData;
         ahJobData.resize( nTasks );
-        
+#ifdef DEBUG_TIMING
+        struct timeval tv;
+#endif
         for( int i=0;i<nTasks;i++)
         {
             size_t iStartLine = ((size_t)i * nYSize) / nTasks;
@@ -1247,8 +1271,14 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
             anJobs[i].nValues = (int)(iNextStartLine - iStartLine) * nXSize;
             anJobs[i].nBandValues = nXSize * nYSize;
             anJobs[i].nMaxValue = nMaxValue;
+#ifdef DEBUG_TIMING
+            anJobs[i].ptv = &tv;
+#endif
             ahJobData[i] = &(anJobs[i]);
         }
+#ifdef DEBUG_TIMING
+        gettimeofday(&tv, NULL);
+#endif
         poThreadPool->SubmitJobs(PansharpenJobThreadFunc, ahJobData);
         poThreadPool->WaitCompletion();
         eErr = CE_None;
@@ -1288,10 +1318,23 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
 /*                   PansharpenResampleJobThreadFunc()                  */
 /************************************************************************/
 
+//static int acc=0;
+    
 void GDALPansharpenOperation::PansharpenResampleJobThreadFunc(void* pUserData)
 {
     GDALPansharpenResampleJob* psJob = (GDALPansharpenResampleJob*) pUserData;
     
+#ifdef DEBUG_TIMING
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    GIntBig launch_time = (GIntBig)psJob->ptv->tv_sec * 1000000 + (GIntBig)psJob->ptv->tv_usec;
+    GIntBig start_job = (GIntBig)tv.tv_sec * 1000000 + (GIntBig)tv.tv_usec;
+#endif
+    
+#if 0
+    for(int i=0;i<1000000;i++)
+        acc += i * i;
+#else
     GDALRasterIOExtraArg sExtraArg;
     INIT_RASTERIO_EXTRA_ARG(sExtraArg);
     sExtraArg.eResampleAlg = psJob->eResampleAlg;
@@ -1314,6 +1357,16 @@ void GDALPansharpenOperation::PansharpenResampleJobThreadFunc(void* pUserData)
                              NULL,
                              0, 0, psJob->nBandSpace,
                              &sExtraArg);
+#endif
+
+#ifdef DEBUG_TIMING
+    struct timeval tv_end;
+    gettimeofday(&tv_end, NULL);
+    GIntBig end = (GIntBig)tv_end.tv_sec * 1000000 + (GIntBig)tv_end.tv_usec;
+    if( start_job - launch_time > 500 )
+        printf("Resample: Delay before start="CPL_FRMT_GIB ", completion time=" CPL_FRMT_GIB "\n",
+               start_job - launch_time, end - start_job);
+#endif
 }
 
 /************************************************************************/
@@ -1323,6 +1376,19 @@ void GDALPansharpenOperation::PansharpenResampleJobThreadFunc(void* pUserData)
 void GDALPansharpenOperation::PansharpenJobThreadFunc(void* pUserData)
 {
     GDALPansharpenJob* psJob = (GDALPansharpenJob*) pUserData;
+
+#ifdef DEBUG_TIMING
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    GIntBig launch_time = (GIntBig)psJob->ptv->tv_sec * 1000000 + (GIntBig)psJob->ptv->tv_usec;
+    GIntBig start_job = (GIntBig)tv.tv_sec * 1000000 + (GIntBig)tv.tv_usec;
+#endif
+    
+#if 0
+    for(int i=0;i<1000000;i++)
+        acc += i * i;
+    psJob->eErr = CE_None;
+#else
     psJob->eErr = psJob->poPansharpenOperation->PansharpenChunk(psJob->eWorkDataType,
                                   psJob->eBufDataType,
                                   psJob->pPanBuffer,
@@ -1331,6 +1397,16 @@ void GDALPansharpenOperation::PansharpenJobThreadFunc(void* pUserData)
                                   psJob->nValues,
                                   psJob->nBandValues,
                                   psJob->nMaxValue);
+#endif
+
+#ifdef DEBUG_TIMING
+    struct timeval tv_end;
+    gettimeofday(&tv_end, NULL);
+    GIntBig end = (GIntBig)tv_end.tv_sec * 1000000 + (GIntBig)tv_end.tv_usec;
+    if( start_job - launch_time > 500 )
+        printf("Pansharpen: Delay before start="CPL_FRMT_GIB ", completion time=" CPL_FRMT_GIB "\n",
+               start_job - launch_time, end - start_job);
+#endif
 }
 
 /************************************************************************/
