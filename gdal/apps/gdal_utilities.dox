@@ -2576,6 +2576,7 @@ Perform a pansharpen operation.
 gdal_pansharpen [--help-general] pan_dataset {spectral_dataset[,band=num]}+ out_dataset
                 [-of format] [-b band]* [-w weight_val]*
                 [-r {nearest,bilinear,cubic,cubicspline,lanczos,average}]
+                [-threads {ALL_CPUS|number}] [-bitdepth val] [-nodata val]
                 [-spat_adjust {union,intersection,none,nonewithoutwarning}]
                 [-co NAME=VALUE]* [-q]
 \endverbatim
@@ -2600,6 +2601,17 @@ pseudo panchromatic value. There must be as many -w switches as input spectral b
 <dt> <b>-r</b>
 <i>{nearest,bilinear,cubic (default),cubicspline,lanczos,average}</i>:</dt><dd>
 Select a resampling algorithm.</dd>
+<dt> <b>-threads</b> <i>{ALL_CPUS,number}</i>:</dt><dd>
+Specify number of threads to use to do the resampling and pansharpening itself.
+Can be an integer number or ALL_CPUS.</dd>
+<dt> <b>-bitdepth</b> <i>val</i>:</dt><dd>
+Specify the bit depth of the panchromatic and
+spectral bands (e.g. 12). If not specified, the NBITS metadata item from the
+panchromatic band will be used if it exists.</dd>
+<dt> <b>-nodata</b> <i>val</i>:</dt><dd>
+Specify nodata value for bands. Used for the resampling and pansharpening computation
+itself. If not set, deduced from the input bands, provided they have a consistent
+setting.</dd>
 <dt> <b>-spat_adjust</b>
 <i>{union (default),intersection,none,nonewithoutwarning}</i>:</dt><dd>
 Select behaviour when bands have not the same extent. See <i>SpatialExtentAdjustment</i>
