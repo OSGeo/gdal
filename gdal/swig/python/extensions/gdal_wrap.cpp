@@ -4990,7 +4990,6 @@ SWIGINTERN void GDALRasterAttributeTableShadow_DumpReadable(GDALRasterAttributeT
     }
 
 #include "gdalgrid.h"
-#include "gdal_vrt.h"
 
 #ifdef DEBUG 
 typedef struct OGRLayerHS OGRLayerShadow;

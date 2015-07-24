@@ -28,7 +28,7 @@ BUILD_FOR_CHEESESHOP = False
 # (may be overriden with setup.cfg or command line switches).
 # ---------------------------------------------------------------------------
 
-include_dirs = ['../../port', '../../gcore', '../../alg', '../../ogr/', '../../frmts/vrt']
+include_dirs = ['../../port', '../../gcore', '../../alg', '../../ogr/']
 library_dirs = ['../../.libs', '../../']
 libraries = ['gdal']
 
