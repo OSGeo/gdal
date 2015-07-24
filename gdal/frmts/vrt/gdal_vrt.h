@@ -99,6 +99,15 @@ CPLErr CPL_DLL CPL_STDCALL VRTAddFuncSource( VRTSourcedRasterBandH,
                                              VRTImageReadFunc,
                                              void *, double );
 
+/* ==================================================================== */
+/*      VRTPansharpenedDataset class.                                   */
+/* ==================================================================== */
+
+GDALDatasetH CPL_DLL GDALCreatePansharpenedVRT( const char* pszXML,
+                                            GDALRasterBandH hPanchroBand,
+                                            int nInputSpectralBands,
+                                            GDALRasterBandH* pahInputSpectralBands );
+
 CPL_C_END
 
 #endif /* GDAL_VRT_H_INCLUDED */

@@ -1864,6 +1864,87 @@ def vrtpansharpen_10():
     return 'success'
 
 ###############################################################################
+# Test gdal.CreatePansharpenedVRT()
+
+def vrtpansharpen_11():
+    
+    pan_ds = gdal.Open('tmp/small_world_pan.tif')
+    ms_ds = gdal.Open('data/small_world.tif')
+    
+    vrt_ds = gdal.CreatePansharpenedVRT("""<VRTDataset subClass="VRTPansharpenedDataset">
+        <PansharpeningOptions>
+            <SpectralBand dstBand="1">
+            </SpectralBand>
+            <SpectralBand dstBand="2">
+            </SpectralBand>
+            <SpectralBand dstBand="3">
+            </SpectralBand>
+        </PansharpeningOptions>
+    </VRTDataset>""", pan_ds.GetRasterBand(1), [ ms_ds.GetRasterBand(i+1) for i in range(3)] )
+    if vrt_ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    cs = [ vrt_ds.GetRasterBand(i+1).Checksum() for i in range(vrt_ds.RasterCount) ]
+    if cs != [4735, 10000, 9742]:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+
+    # Also test with completely anonymous datasets
+    pan_mem_ds = gdal.GetDriverByName('MEM').CreateCopy('', pan_ds)
+    ms_mem_ds = gdal.GetDriverByName('MEM').CreateCopy('', ms_ds)
+    pan_ds = None
+    ms_ds = None
+    
+    vrt_ds = gdal.CreatePansharpenedVRT("""<VRTDataset subClass="VRTPansharpenedDataset">
+        <PansharpeningOptions>
+            <SpectralBand dstBand="1">
+            </SpectralBand>
+            <SpectralBand dstBand="2">
+            </SpectralBand>
+            <SpectralBand dstBand="3">
+            </SpectralBand>
+        </PansharpeningOptions>
+    </VRTDataset>""", pan_mem_ds.GetRasterBand(1), [ ms_mem_ds.GetRasterBand(i+1) for i in range(3)] )
+    if vrt_ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    cs = [ vrt_ds.GetRasterBand(i+1).Checksum() for i in range(vrt_ds.RasterCount) ]
+    if cs != [4735, 10000, 9742]:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+    vrt_ds = None
+
+    # Check that wrapping with VRT works (when gt are not compatible)
+    pan_mem_ds = gdal.GetDriverByName('MEM').Create('', 20, 40, 1)
+    ms_mem_ds = gdal.GetDriverByName('MEM').Create('', 15, 30, 3)
+    pan_mem_ds.SetGeoTransform([120,1,0,80,0,-1])
+    ms_mem_ds.SetGeoTransform([100,2,0,100,0,-2])
+
+    vrt_ds = gdal.CreatePansharpenedVRT("""<VRTDataset subClass="VRTPansharpenedDataset">
+        <PansharpeningOptions>
+            <SpectralBand dstBand="1">
+            </SpectralBand>
+            <SpectralBand dstBand="2">
+            </SpectralBand>
+            <SpectralBand dstBand="3">
+            </SpectralBand>
+        </PansharpeningOptions>
+    </VRTDataset>""", pan_mem_ds.GetRasterBand(1), [ ms_mem_ds.GetRasterBand(i+1) for i in range(3)] )
+    if vrt_ds.GetGeoTransform() != (100.0, 1.0, 0.0, 100.0, 0.0, -1.0) or vrt_ds.RasterXSize != 40 or vrt_ds.RasterYSize != 60:
+        gdaltest.post_reason('fail')
+        print(vrt_ds.GetGeoTransform())
+        print(vrt_ds.RasterXSize)
+        print(vrt_ds.RasterYSize)
+        return 'fail'
+    vrt_ds = None
+
+
+    return 'success'
+
+
+###############################################################################
 # Cleanup
 
 def vrtpansharpen_cleanup():
@@ -1887,6 +1968,7 @@ gdaltest_list = [
     vrtpansharpen_8,
     vrtpansharpen_9,
     vrtpansharpen_10,
+    vrtpansharpen_11,
     vrtpansharpen_cleanup,
 ]
 
