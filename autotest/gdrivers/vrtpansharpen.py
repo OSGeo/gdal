@@ -1941,8 +1941,49 @@ def vrtpansharpen_11():
     vrt_ds = None
 
 
-    return 'success'
+    # Test error cases as well
+    gdal.PushErrorHandler()
+    vrt_ds = gdal.CreatePansharpenedVRT("""<invalid_xml""", pan_mem_ds.GetRasterBand(1), [ ms_mem_ds.GetRasterBand(i+1) for i in range(3)] )
+    gdal.PopErrorHandler()
+    if vrt_ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
 
+    # Not enough bands
+    gdal.PushErrorHandler()
+    vrt_ds = gdal.CreatePansharpenedVRT("""<VRTDataset subClass="VRTPansharpenedDataset">
+        <PansharpeningOptions>
+            <SpectralBand dstBand="1">
+            </SpectralBand>
+            <SpectralBand dstBand="2">
+            </SpectralBand>
+        </PansharpeningOptions>
+    </VRTDataset>""", pan_mem_ds.GetRasterBand(1), [ ms_mem_ds.GetRasterBand(i+1) for i in range(3)] )
+    gdal.PopErrorHandler()
+    if vrt_ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Too many bands
+    gdal.PushErrorHandler()
+    vrt_ds = gdal.CreatePansharpenedVRT("""<VRTDataset subClass="VRTPansharpenedDataset">
+        <PansharpeningOptions>
+            <SpectralBand dstBand="1">
+            </SpectralBand>
+            <SpectralBand dstBand="2">
+            </SpectralBand>
+            <SpectralBand dstBand="3">
+            </SpectralBand>
+            <SpectralBand dstBand="4">
+            </SpectralBand>
+        </PansharpeningOptions>
+    </VRTDataset>""", pan_mem_ds.GetRasterBand(1), [ ms_mem_ds.GetRasterBand(i+1) for i in range(3)] )
+    gdal.PopErrorHandler()
+    if vrt_ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    
+    return 'success'
 
 ###############################################################################
 # Cleanup
