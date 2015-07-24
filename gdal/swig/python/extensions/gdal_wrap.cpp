@@ -4990,6 +4990,7 @@ SWIGINTERN void GDALRasterAttributeTableShadow_DumpReadable(GDALRasterAttributeT
     }
 
 #include "gdalgrid.h"
+#include "gdal_vrt.h"
 
 #ifdef DEBUG 
 typedef struct OGRLayerHS OGRLayerShadow;
@@ -5265,6 +5266,18 @@ GDALDatasetShadow *AutoCreateWarpedVRT( GDALDatasetShadow *src_ds,
   }
   return ds;
   
+}
+
+
+GDALDatasetShadow*  CreatePansharpenedVRT( const char* pszXML,
+                            GDALRasterBandShadow* panchroBand,
+                            int nInputSpectralBands,
+                            GDALRasterBandShadow** ahInputSpectralBands )
+{
+    CPLErrorReset();
+
+    return (GDALDatasetShadow*)GDALCreatePansharpenedVRT( pszXML, panchroBand,
+                                      nInputSpectralBands, ahInputSpectralBands );
 }
 
 SWIGINTERN GDALTransformerInfoShadow *new_GDALTransformerInfoShadow(GDALDatasetShadow *src,GDALDatasetShadow *dst,char **options){
@@ -21947,6 +21960,94 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_CreatePansharpenedVRT(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  char *arg1 = (char *) 0 ;
+  GDALRasterBandShadow *arg2 = (GDALRasterBandShadow *) 0 ;
+  int arg3 ;
+  GDALRasterBandShadow **arg4 = (GDALRasterBandShadow **) 0 ;
+  int res1 ;
+  char *buf1 = 0 ;
+  int alloc1 = 0 ;
+  void *argp2 = 0 ;
+  int res2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  GDALDatasetShadow *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OOO:CreatePansharpenedVRT",&obj0,&obj1,&obj2)) SWIG_fail;
+  res1 = SWIG_AsCharPtrAndSize(obj0, &buf1, NULL, &alloc1);
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "CreatePansharpenedVRT" "', argument " "1"" of type '" "char const *""'");
+  }
+  arg1 = reinterpret_cast< char * >(buf1);
+  res2 = SWIG_ConvertPtr(obj1, &argp2,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "CreatePansharpenedVRT" "', argument " "2"" of type '" "GDALRasterBandShadow *""'"); 
+  }
+  arg2 = reinterpret_cast< GDALRasterBandShadow * >(argp2);
+  {
+    /*  OBJECT_LIST_INPUT %typemap(in) (int itemcount, GDALRasterBandShadow *optional_##GDALRasterBandShadow)*/
+    if ( !PySequence_Check(obj2) ) {
+      PyErr_SetString(PyExc_TypeError, "not a sequence");
+      SWIG_fail;
+    }
+    arg3 = PySequence_Size(obj2);
+    arg4 = (GDALRasterBandShadow**) CPLMalloc(arg3*sizeof(GDALRasterBandShadow*));
+    
+    for( int i = 0; i<arg3; i++ ) {
+      PyObject *o = PySequence_GetItem(obj2,i);
+#if 0x010340 <= 0x010337
+      PySwigObject *sobj = SWIG_Python_GetSwigThis(o);
+#else
+      SwigPyObject *sobj = SWIG_Python_GetSwigThis(o);
+#endif
+      GDALRasterBandShadow* rawobjectpointer = NULL;
+      if (!sobj) {
+        Py_DECREF(o);
+        SWIG_fail;
+      }
+      rawobjectpointer = (GDALRasterBandShadow*) sobj->ptr;
+      arg4[i] = rawobjectpointer;
+      Py_DECREF(o);
+      
+    }
+  }
+  {
+    if (!arg2) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      CPLErrorReset();
+    }
+    result = (GDALDatasetShadow *)CreatePansharpenedVRT((char const *)arg1,arg2,arg3,arg4);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_GDALDatasetShadow, SWIG_POINTER_OWN |  0 );
+  if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
+  {
+    /* OBJECT_LIST_INPUT %typemap(freearg) (int object_list_count, GDALRasterBandShadow **poObjects)*/
+    CPLFree( arg4 );
+  }
+  return resultobj;
+fail:
+  if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
+  {
+    /* OBJECT_LIST_INPUT %typemap(freearg) (int object_list_count, GDALRasterBandShadow **poObjects)*/
+    CPLFree( arg4 );
+  }
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_new_Transformer(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   GDALDatasetShadow *arg1 = (GDALDatasetShadow *) 0 ;
@@ -24692,6 +24793,7 @@ static PyMethodDef SwigMethods[] = {
 		"    GDALResampleAlg eResampleAlg = GRA_NearestNeighbour, \n"
 		"    double maxerror = 0.0) -> Dataset\n"
 		""},
+	 { (char *)"CreatePansharpenedVRT", _wrap_CreatePansharpenedVRT, METH_VARARGS, (char *)"CreatePansharpenedVRT(char pszXML, Band panchroBand, int nInputSpectralBands) -> Dataset"},
 	 { (char *)"new_Transformer", _wrap_new_Transformer, METH_VARARGS, (char *)"new_Transformer(Dataset src, Dataset dst, char options) -> Transformer"},
 	 { (char *)"delete_Transformer", _wrap_delete_Transformer, METH_VARARGS, (char *)"delete_Transformer(Transformer self)"},
 	 { (char *)"Transformer_TransformPoint", _wrap_Transformer_TransformPoint, METH_VARARGS, (char *)"\n"

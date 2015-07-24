@@ -30,6 +30,7 @@
 
 %{
 #include "gdalgrid.h"
+#include "gdal_vrt.h"
 
 #ifdef DEBUG 
 typedef struct OGRLayerHS OGRLayerShadow;
@@ -547,6 +548,30 @@ GDALDatasetShadow *AutoCreateWarpedVRT( GDALDatasetShadow *src_ds,
 }
 %}
 %clear GDALDatasetShadow *src_ds;
+
+/************************************************************************/
+/*                        CreatePansharpenedVRT()                       */
+/************************************************************************/
+
+%newobject CreatePansharpenedVRT;
+#ifndef SWIGCSHARP
+%apply (int object_list_count, GDALRasterBandShadow **poObjects) {(int nInputSpectralBands, GDALRasterBandShadow **ahInputSpectralBands)};
+#endif /* SWIGCSHARP */
+%apply Pointer NONNULL { GDALRasterBandShadow* panchroBand };
+
+%inline %{
+GDALDatasetShadow*  CreatePansharpenedVRT( const char* pszXML,
+                            GDALRasterBandShadow* panchroBand,
+                            int nInputSpectralBands,
+                            GDALRasterBandShadow** ahInputSpectralBands )
+{
+    CPLErrorReset();
+
+    return (GDALDatasetShadow*)GDALCreatePansharpenedVRT( pszXML, panchroBand,
+                                      nInputSpectralBands, ahInputSpectralBands );
+}
+%}
+%clear GDALRasterBandShadow* panchroBand;
 
 /************************************************************************/
 /*                             Transformer                              */

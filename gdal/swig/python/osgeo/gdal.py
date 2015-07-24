@@ -1659,6 +1659,11 @@ def AutoCreateWarpedVRT(*args):
     """
   return _gdal.AutoCreateWarpedVRT(*args)
 AutoCreateWarpedVRT = _gdal.AutoCreateWarpedVRT
+
+def CreatePansharpenedVRT(*args):
+  """CreatePansharpenedVRT(char pszXML, Band panchroBand, int nInputSpectralBands) -> Dataset"""
+  return _gdal.CreatePansharpenedVRT(*args)
+CreatePansharpenedVRT = _gdal.CreatePansharpenedVRT
 class Transformer(_object):
     """Proxy of C++ GDALTransformerInfoShadow class"""
     __swig_setmethods__ = {}
