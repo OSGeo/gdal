@@ -1114,6 +1114,15 @@ CPLVirtualMem CPL_DLL* GDALRasterBandGetTiledVirtualMem( GDALRasterBandH hBand,
                                                          int bSingleThreadUsage,
                                                          char **papszOptions );
 
+/* ==================================================================== */
+/*      VRTPansharpenedDataset class.                                   */
+/* ==================================================================== */
+
+GDALDatasetH CPL_DLL GDALCreatePansharpenedVRT( const char* pszXML,
+                                            GDALRasterBandH hPanchroBand,
+                                            int nInputSpectralBands,
+                                            GDALRasterBandH* pahInputSpectralBands );
+
 /* =================================================================== */
 /*      Misc API                                                        */
 /* ==================================================================== */
