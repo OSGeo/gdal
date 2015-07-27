@@ -1148,7 +1148,7 @@ int LoadPdfiumDocumentPage(const char* pszFilename, const char* pszUserPwd,
       CPLReleaseMutex(g_oPdfiumLoadDocMutex);
       return FALSE;
     }
-    CPDF_Page* pPage = FX_NEW CPDF_Page;
+    CPDF_Page* pPage = new CPDF_Page;
     if(!pPage) {
       CPLError(CE_Failure, CPLE_AppDefined, "Not enough memory for Pdfium Page object");
 

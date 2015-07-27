@@ -2232,11 +2232,10 @@ char* GDALPDFStreamPdfium::GetBytes()
     int nLength = GetLength();
     if(nLength == 0)
       return NULL;
-    FX_LPBYTE pszContent = (FX_LPBYTE) VSIMalloc(sizeof(FX_BYTE)*(nLength + 1));
+    unsigned char* pszContent = (unsigned char*) VSIMalloc(sizeof(unsigned char)*(nLength + 1));
     if (!pszContent)
         return NULL;
     //memcpy(pszContent, m_pStream->Get(), nLength);
-//     typedef unsigned char*      FX_LPBYTE;
     if(!m_pStream->ReadRawData(0, pszContent, nLength)) {
       VSIFree(pszContent);
       return NULL;

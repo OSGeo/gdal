@@ -66,8 +66,8 @@
 #endif
 
 #include <cstring>
-#include <fpdfsdk/include/fsdk_define.h>
-#include <fpdfsdk/include/fpdfview.h>
+//#include <fpdfsdk/include/fsdk_define.h>
+#include <fpdfview.h>
 #include <core/include/fpdfapi/fpdf_page.h>
 #endif // HAVE_PDFIUM
 

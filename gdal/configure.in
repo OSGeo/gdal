@@ -3926,9 +3926,13 @@ if test "$with_pdfium" != "no" -a "$with_pdfium" != ""; then
         echo '#include <fpdfview.h>' > testpdfium.cpp
         echo '#include <core/include/fpdfapi/fpdf_page.h>' >> testpdfium.cpp
         echo 'int main(int argc, char** argv) { FPDF_InitLibrary(); FPDF_DestroyLibrary(); return 0; } ' >> testpdfium.cpp
-        if test -z "`${CXX} testpdfium.cpp -o testpdfium ${TEST_PDFIUM_INC} ${PDFIUM_LIB}  2>&1`" ; then
+        TEST_CXX_FLAGS="-std=c++0x"
+        if test ! -z "`uname | grep Darwin`" ; then
+          TEST_CXX_FLAGS="$TEST_CXX_FLAGS -stdlib=libstdc++"
+        fi
+        if test -z "`${CXX} $TEST_CXX_FLAGS testpdfium.cpp -o testpdfium ${TEST_PDFIUM_INC} ${PDFIUM_LIB}  2>&1`" ; then
             HAVE_PDFIUM=yes
-            CXXFLAGS="-std=gnu++0x $CXXFLAGS"
+            CXXFLAGS="$TEST_CXX_FLAGS $CXXFLAGS"
             LIBS="${PDFIUM_LIB} ${LIBS}"
             PDFIUM_PLUGIN_LIB="${PDFIUM_LIB}"
             PDFIUM_INC=$TEST_PDFIUM_INC
@@ -3945,7 +3949,7 @@ if test "$with_pdfium" != "no" -a "$with_pdfium" != ""; then
             # This may be a static libpdfium.a, so add dependant libraries
             PDFIUM_LIB="-L$PDFIUM_LIBDIR/lib/pdfium -lbigint -lfpdfapi -lfreetype -lfx_libjpeg -lfxcodec -lfxge -lfdrm -lfpdfdoc -lfx_agg -lfx_libopenjpeg -lfxcrt -lpdfium -lformfiller -lfpdftext -lfx_lcms2 -lfx_zlib -lfxedit -lpdfwindow"
             if test ! -z "`uname | grep Darwin`" ; then
-                PDFIUM_LIB="-stdlib=libstdc++ -framework AppKit -framework CoreFoundation $PDFIUM_LIB"
+                PDFIUM_LIB="-framework AppKit -framework CoreFoundation $PDFIUM_LIB"
             fi
         fi
 
@@ -3962,9 +3966,13 @@ if test "$with_pdfium" != "no" -a "$with_pdfium" != ""; then
         echo '#include <fpdfview.h>' > testpdfium.cpp
         echo '#include <core/include/fpdfapi/fpdf_page.h>' >> testpdfium.cpp
         echo 'int main(int argc, char** argv) { FPDF_InitLibrary(); FPDF_DestroyLibrary(); return 0; } ' >> testpdfium.cpp
-        if test -z "`${CXX} testpdfium.cpp -o testpdfium ${TEST_PDFIUM_INC} ${TEST_PDFIUM_LIB} 2>&1`" ; then
+        TEST_CXX_FLAGS="-std=c++0x"
+        if test ! -z "`uname | grep Darwin`" ; then
+          TEST_CXX_FLAGS="$TEST_CXX_FLAGS -stdlib=libstdc++"
+        fi
+        if test -z "`${CXX} $TEST_CXX_FLAGS testpdfium.cpp -o testpdfium ${TEST_PDFIUM_INC} ${TEST_PDFIUM_LIB} 2>&1`" ; then
             HAVE_PDFIUM=yes
-            CXXFLAGS="-std=gnu++0x $CXXFLAGS"
+            CXXFLAGS="$TEST_CXX_FLAGS $CXXFLAGS"
             LIBS="${PDFIUM_LIB} ${LIBS}"
             PDFIUM_PLUGIN_LIB="${PDFIUM_LIB}"
             PDFIUM_INC=$TEST_PDFIUM_INC
