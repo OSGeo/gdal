@@ -28602,17 +28602,25 @@ fi
     if test "$with_pdfium" = "yes" ; then
         TEST_PDFIUM_INC="-I/usr/include -I/usr/include/pdfium"
         PDFIUM_LIB="-lpdfium"
+        PDFIUM_LIBDIR="/usr"
+
     else
         TEST_PDFIUM_INC="-I$with_pdfium -I$with_pdfium/include -I$with_pdfium/include/pdfium"
-        PDFIUM_LIB="-L$with_pdfium -L$with_pdfium/lib -lpdfium"
+        PDFIUM_LIB="-L$with_pdfium -L$with_pdfium/lib -L$with_pdfium/lib/pdfium -lpdfium"
+        PDFIUM_LIBDIR="$with_pdfium"
     fi
 
+    if test ! -z "`uname | grep Darwin`" ; then
+        PDFIUM_LIB="-stdlib=libstdc++ $PDFIUM_LIB"
+    fi
     if test "x$with_pdfium_lib" = "x" ; then
         rm -f testpdfium.*
-        echo '#include <fpdfsdk/include/fpdfview.h>' > testpdfium.cpp
+        echo '#include <fpdfview.h>' > testpdfium.cpp
+        echo '#include <core/include/fpdfapi/fpdf_page.h>' >> testpdfium.cpp
         echo 'int main(int argc, char** argv) { FPDF_InitLibrary(); FPDF_DestroyLibrary(); return 0; } ' >> testpdfium.cpp
         if test -z "`${CXX} testpdfium.cpp -o testpdfium ${TEST_PDFIUM_INC} ${PDFIUM_LIB}  2>&1`" ; then
             HAVE_PDFIUM=yes
+            CXXFLAGS="-std=gnu++0x $CXXFLAGS"
             LIBS="${PDFIUM_LIB} ${LIBS}"
             PDFIUM_PLUGIN_LIB="${PDFIUM_LIB}"
             PDFIUM_INC=$TEST_PDFIUM_INC
@@ -28628,7 +28636,10 @@ $as_echo "yes" >&6; }
             PDFIUM_LIB="$with_pdfium_lib"
         else
             # This may be a static libpdfium.a, so add dependant libraries
-            PDFIUM_LIB="$PDFIUM_LIB -lpthread"
+            PDFIUM_LIB="-L$PDFIUM_LIBDIR/lib/pdfium -lbigint -lfpdfapi -lfreetype -lfx_libjpeg -lfxcodec -lfxge -lfdrm -lfpdfdoc -lfx_agg -lfx_libopenjpeg -lfxcrt -lpdfium -lformfiller -lfpdftext -lfx_lcms2 -lfx_zlib -lfxedit -lpdfwindow"
+            if test ! -z "`uname | grep Darwin`" ; then
+                PDFIUM_LIB="-stdlib=libstdc++ -framework AppKit -framework CoreFoundation $PDFIUM_LIB"
+            fi
         fi
 
 
@@ -28645,10 +28656,12 @@ fi
         fi
 
         rm -f testpdfium.*
-        echo '#include <fpdfsdk/include/fpdfview.h>' > testpdfium.cpp
+        echo '#include <fpdfview.h>' > testpdfium.cpp
+        echo '#include <core/include/fpdfapi/fpdf_page.h>' >> testpdfium.cpp
         echo 'int main(int argc, char** argv) { FPDF_InitLibrary(); FPDF_DestroyLibrary(); return 0; } ' >> testpdfium.cpp
         if test -z "`${CXX} testpdfium.cpp -o testpdfium ${TEST_PDFIUM_INC} ${TEST_PDFIUM_LIB} 2>&1`" ; then
             HAVE_PDFIUM=yes
+            CXXFLAGS="-std=gnu++0x $CXXFLAGS"
             LIBS="${PDFIUM_LIB} ${LIBS}"
             PDFIUM_PLUGIN_LIB="${PDFIUM_LIB}"
             PDFIUM_INC=$TEST_PDFIUM_INC
