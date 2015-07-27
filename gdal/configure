@@ -28622,6 +28622,7 @@ fi
         if test -z "`${CXX} $TEST_CXX_FLAGS testpdfium.cpp -o testpdfium ${TEST_PDFIUM_INC} ${PDFIUM_LIB}  2>&1`" ; then
             HAVE_PDFIUM=yes
             CXXFLAGS="$TEST_CXX_FLAGS $CXXFLAGS"
+            LDFLAGS="$LDFLAGS $TEST_CXX_FLAGS"
             LIBS="${PDFIUM_LIB} ${LIBS}"
             PDFIUM_PLUGIN_LIB="${PDFIUM_LIB}"
             PDFIUM_INC=$TEST_PDFIUM_INC
@@ -28667,6 +28668,7 @@ fi
         if test -z "`${CXX} $TEST_CXX_FLAGS testpdfium.cpp -o testpdfium ${TEST_PDFIUM_INC} ${TEST_PDFIUM_LIB} 2>&1`" ; then
             HAVE_PDFIUM=yes
             CXXFLAGS="$TEST_CXX_FLAGS $CXXFLAGS"
+            LDFLAGS="$LDFLAGS $TEST_CXX_FLAGS"
             LIBS="${PDFIUM_LIB} ${LIBS}"
             PDFIUM_PLUGIN_LIB="${PDFIUM_LIB}"
             PDFIUM_INC=$TEST_PDFIUM_INC
