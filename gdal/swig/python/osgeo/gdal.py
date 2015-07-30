@@ -1627,7 +1627,7 @@ def AutoCreateWarpedVRT(*args):
 AutoCreateWarpedVRT = _gdal.AutoCreateWarpedVRT
 
 def CreatePansharpenedVRT(*args):
-  """CreatePansharpenedVRT(char pszXML, Band panchroBand, int nInputSpectralBands) -> Dataset"""
+  """CreatePansharpenedVRT(char const * pszXML, Band panchroBand, int nInputSpectralBands) -> Dataset"""
   return _gdal.CreatePansharpenedVRT(*args)
 CreatePansharpenedVRT = _gdal.CreatePansharpenedVRT
 class Transformer(_object):
