@@ -51,6 +51,12 @@ typedef struct
     const float *pafZ;
     GDALTriangulation* psTriangulation;
     int                nInitialFacetIdx;
+    /*! Weighting power divided by 2 (pre-computation). */
+    double  dfPowerDiv2PreComp;
+    /*! The radius of search circle squared (pre-computation). */
+    double  dfRadiusPower2PreComp;
+    /*! The radius of search circle to power 4 (pre-computation). */
+    double  dfRadiusPower4PreComp;
 } GDALGridExtraParameters;
 
 #ifdef HAVE_SSE_AT_COMPILE_TIME

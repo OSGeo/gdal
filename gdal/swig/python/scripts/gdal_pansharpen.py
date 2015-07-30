@@ -37,6 +37,7 @@ def Usage():
     print('Usage: gdal_pansharpen [--help-general] pan_dataset {spectral_dataset[,band=num]}+ out_dataset')
     print('                       [-of format] [-b band]* [-w weight]*')
     print('                       [-r {nearest,bilinear,cubic,cubicspline,lanczos,average}]')
+    print('                       [-threads {ALL_CPUS|number}] [-bitdepth val] [-nodata val]')
     print('                       [-spat_adjust {union,intersection,none,nonewithoutwarning}]')
     print('                       [-verbose_vrt] [-co NAME=VALUE]* [-q]')
     print('')
@@ -62,6 +63,9 @@ def gdal_pansharpen(argv):
     resampling = None
     spat_adjust = None
     verbose_vrt = False
+    num_threads = None
+    bitdepth = None
+    nodata = None
 
     i = 1
     argc = len(argv)
@@ -83,6 +87,15 @@ def gdal_pansharpen(argv):
             i = i + 1
         elif argv[i] == '-co' and i < len(argv)-1:
             creation_options.append(argv[i+1])
+            i = i + 1
+        elif argv[i] == '-threads' and i < len(argv)-1:
+            num_threads = argv[i+1]
+            i = i + 1
+        elif argv[i] == '-bitdepth' and i < len(argv)-1:
+            bitdepth = argv[i+1]
+            i = i + 1
+        elif argv[i] == '-nodata' and i < len(argv)-1:
+            nodata = argv[i+1]
             i = i + 1
         elif argv[i] == '-q':
             callback = None
@@ -160,6 +173,15 @@ def gdal_pansharpen(argv):
 
     if resampling is not None:
         vrt_xml += '      <Resampling>%s</Resampling>\n' % resampling
+
+    if num_threads is not None:
+        vrt_xml += '      <NumThreads>%s</NumThreads>\n' % num_threads
+
+    if bitdepth is not None:
+        vrt_xml += '      <BitDepth>%s</BitDepth>\n' % bitdepth
+
+    if nodata is not None:
+        vrt_xml += '      <NoData>%s</NoData>\n' % nodata
 
     if spat_adjust is not None:
         vrt_xml += '      <SpatialExtentAdjustment>%s</SpatialExtentAdjustment>\n' % spat_adjust

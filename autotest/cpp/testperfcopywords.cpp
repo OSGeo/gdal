@@ -58,6 +58,24 @@ int main(int argc, char* argv[])
                    GDALGetDataTypeName((GDALDataType)intype),
                    GDALGetDataTypeName((GDALDataType)outtype),
                    (end - start) * 1.0 / CLOCKS_PER_SEC);
+            
+            start = clock();
+            
+            for(i=0;i<1000;i++)
+                GDALCopyWords(in,
+                              (GDALDataType)intype,
+                              GDALGetDataTypeSize((GDALDataType)intype) / 8,
+                              out,
+                              (GDALDataType)outtype, 
+                              GDALGetDataTypeSize((GDALDataType)outtype) / 8,
+                              256 * 256);
+                
+            end = clock();
+            
+            printf("%s -> %s (packed) : %.2f s\n",
+                   GDALGetDataTypeName((GDALDataType)intype),
+                   GDALGetDataTypeName((GDALDataType)outtype),
+                   (end - start) * 1.0 / CLOCKS_PER_SEC);
         }
     }
 

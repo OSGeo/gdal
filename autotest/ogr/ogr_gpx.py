@@ -147,14 +147,12 @@ def ogr_gpx_1():
     if ogrtest.check_feature_geometry( feat, 'POINT (1 0)',
                                        max_error = 0.0001 ) != 0:
         return 'fail'
-    feat.Destroy()
-    
+
     feat = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry( feat, 'POINT (4 3)',
                                        max_error = 0.0001 ) != 0:
         return 'fail'
-    feat.Destroy()
-    
+
     return 'success'
 
 ###############################################################################
@@ -173,13 +171,11 @@ def ogr_gpx_2():
     feat = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry( feat, 'LINESTRING (6 5,9 8,12 11)', max_error = 0.0001 ) != 0:
         return 'fail'
-    feat.Destroy()
-    
+
     feat = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry( feat, 'LINESTRING EMPTY', max_error = 0.0001 ) != 0:
         return 'fail'
-    feat.Destroy()
-    
+
     return 'success'
 
 
@@ -205,8 +201,7 @@ def ogr_gpx_3():
     feat = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry( feat, 'POINT (6 5)', max_error = 0.0001 ) != 0:
         return 'fail'
-    feat.Destroy()
-    
+
     return 'success'
 
 ###############################################################################
@@ -225,19 +220,16 @@ def ogr_gpx_4():
     feat = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry( feat, 'MULTILINESTRING ((15 14,18 17),(21 20,24 23))', max_error = 0.0001 ) != 0:
         return 'fail'
-    feat.Destroy()
-    
+
     feat = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry( feat, 'MULTILINESTRING EMPTY', max_error = 0.0001 ) != 0:
         return 'fail'
-    feat.Destroy()
-    
+
     feat = lyr.GetNextFeature()
     f_geom = feat.GetGeometryRef()
     if f_geom.ExportToWkt()!= 'MULTILINESTRING EMPTY':
         return 'fail'
-    feat.Destroy()
-    
+
     return 'success'
 
 ###############################################################################
@@ -262,8 +254,7 @@ def ogr_gpx_5():
     feat = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry( feat, 'POINT (15 14)', max_error = 0.0001 ) != 0:
         return 'fail'
-    feat.Destroy()
-    
+
     return 'success'
 
 ###############################################################################
@@ -306,8 +297,6 @@ def ogr_gpx_6():
 
         feat = gpx_lyr.GetNextFeature()
 
-    dst_feat.Destroy()
-
     # Duplicate routes
     gpx_lyr = gdaltest.gpx_ds.GetLayerByName( 'routes' )
 
@@ -326,8 +315,6 @@ def ogr_gpx_6():
 
         feat = gpx_lyr.GetNextFeature()
 
-    dst_feat.Destroy()
-    
     # Duplicate tracks
     gpx_lyr = gdaltest.gpx_ds.GetLayerByName( 'tracks' )
 
@@ -346,14 +333,11 @@ def ogr_gpx_6():
 
         feat = gpx_lyr.GetNextFeature()
 
-    dst_feat.Destroy()
-    
     gpx_lyr = None
     gpx2_lyr = None
 
-    # Explicit destroy is required for old-gen python bindings
-    gpx2_ds.Destroy()
-    gdaltest.gpx_ds.Destroy()
+    gpx2_ds = None
+    gdaltest.gpx_ds = None
 
     gdaltest.gpx_ds = ogr.Open( 'tmp/gpx.gpx' )
 
@@ -366,12 +350,10 @@ def ogr_gpx_7():
     if not gdaltest.have_gpx:
         return 'skip'
 
-    if gdaltest.gpx_ds is not None:
-        gdaltest.gpx_ds.Destroy()
     gdaltest.gpx_ds = None
-    
+
     bna_ds = ogr.Open( 'data/bna_for_gpx.bna' )
-    
+
     try:
         os.remove ('tmp/gpx.gpx')
     except:
@@ -404,12 +386,8 @@ def ogr_gpx_7():
 
         feat = bna_lyr.GetNextFeature()
 
-    dst_feat.Destroy()
-
-    bna_ds.Destroy()
-    gdaltest.gpx_ds.Destroy()
     gdaltest.gpx_ds = None
-    
+
 #Now check that the extensions fields have been well written
     gdaltest.gpx_ds = ogr.Open('tmp/gpx.gpx')
     gpx_lyr = gdaltest.gpx_ds.GetLayerByName( 'waypoints' )
@@ -445,8 +423,6 @@ def ogr_gpx_8():
     if not gdaltest.have_gpx:
         return 'skip'
 
-    if gdaltest.gpx_ds is not None:
-        gdaltest.gpx_ds.Destroy()
     gdaltest.gpx_ds = None
 
     try:
@@ -518,7 +494,6 @@ def ogr_gpx_8():
     feat.SetGeometry(geom)
     lyr.CreateFeature(feat)
 
-    gdaltest.gpx_ds.Destroy()
     gdaltest.gpx_ds = None
 
     f = open('tmp/gpx.gpx','rb')
@@ -540,8 +515,6 @@ def ogr_gpx_8():
 
 def ogr_gpx_cleanup():
 
-    if gdaltest.gpx_ds is not None:
-        gdaltest.gpx_ds.Destroy()
     gdaltest.gpx_ds = None
     try:
         os.remove ('tmp/gpx.gpx')
@@ -572,4 +545,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-

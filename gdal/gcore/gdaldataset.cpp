@@ -169,6 +169,18 @@ GIntBig GDALGetResponsiblePIDForCurrentThread()
 GDALDataset::GDALDataset()
 
 {
+    Init( CSLTestBoolean( 
+        CPLGetConfigOption( "GDAL_FORCE_CACHING", "NO") ) );
+}
+
+GDALDataset::GDALDataset(int bForceCachedIOIn)
+
+{
+    Init(bForceCachedIOIn);
+}
+
+void GDALDataset::Init(int bForceCachedIOIn)
+{
     poDriver = NULL;
     eAccess = GA_ReadOnly;
     nRasterXSize = 512;
@@ -185,13 +197,11 @@ GDALDataset::GDALDataset()
 /* -------------------------------------------------------------------- */
 /*      Set forced caching flag.                                        */
 /* -------------------------------------------------------------------- */
-    bForceCachedIO =  CSLTestBoolean( 
-        CPLGetConfigOption( "GDAL_FORCE_CACHING", "NO") );
+    bForceCachedIO = (GByte)bForceCachedIOIn;
     
     m_poStyleTable = NULL;
     m_hMutex = NULL;
 }
-
 
 /************************************************************************/
 /*                            ~GDALDataset()                            */
@@ -1508,6 +1518,62 @@ CPLErr GDALDataset::IRasterIO( GDALRWFlag eRWFlag,
                                    psExtraArg );
     }
     
+    if( eRWFlag == GF_Read &&
+        (psExtraArg->eResampleAlg == GRIORA_Cubic ||
+         psExtraArg->eResampleAlg == GRIORA_CubicSpline ||
+         psExtraArg->eResampleAlg == GRIORA_Bilinear ||
+         psExtraArg->eResampleAlg == GRIORA_Lanczos) &&
+        !(nXSize == nBufXSize && nYSize == nBufYSize) && nBandCount > 1 )
+    {
+        
+        int bUseDatasetRasterIOResampled = TRUE;
+        GDALDataType eFirstBandDT = GDT_Unknown;
+        for(int i=0;i<nBandCount;i++)
+        {
+            GDALRasterBand* poBand = GetRasterBand(panBandMap[i]);
+            if( (nBufXSize < nXSize || nBufYSize < nYSize) &&
+                poBand->GetOverviewCount() )
+            {
+                // Could be improved to select the appropriate overview
+                bUseDatasetRasterIOResampled = FALSE;
+                break;
+            }
+            if( poBand->GetColorTable() != NULL )
+            {
+                bUseDatasetRasterIOResampled = FALSE;
+                break;
+            }
+            GDALDataType eDT = poBand->GetRasterDataType();
+            if( GDALDataTypeIsComplex( eDT ) )
+            {
+                bUseDatasetRasterIOResampled = FALSE;
+                break;
+            }
+            if( i == 0 )
+                eFirstBandDT = eDT;
+            else if( eDT != eFirstBandDT )
+            {
+                bUseDatasetRasterIOResampled = FALSE;
+                break;
+            }
+            int nMaskFlags = poBand->GetMaskFlags();
+            if( (nMaskFlags & GMF_PER_DATASET) == 0 && nMaskFlags != GMF_ALL_VALID )
+            {
+                bUseDatasetRasterIOResampled = FALSE;
+                break;
+            }
+        }
+        if( bUseDatasetRasterIOResampled )
+        {
+            return RasterIOResampled( eRWFlag, nXOff, nYOff, nXSize, nYSize, 
+                                   pData, nBufXSize, nBufYSize,
+                                   eBufType, nBandCount, panBandMap,
+                                   nPixelSpace, nLineSpace, nBandSpace,
+                                   psExtraArg );
+        }
+
+    }
+        
     return BandBasedRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize, 
                                    pData, nBufXSize, nBufYSize,
                                    eBufType, nBandCount, panBandMap,
@@ -1811,21 +1877,27 @@ CPLErr GDALDataset::RasterIO( GDALRWFlag eRWFlag,
         nBandSpace = nLineSpace * nBufYSize;
     }
 
+    int anBandMap[] = { 1, 2, 3, 4 };
     if( panBandMap == NULL )
     {
-        panBandMap = (int *) VSIMalloc2(sizeof(int), nBandCount);
-        if (panBandMap == NULL)
+        if( nBandCount > 4 )
         {
-            ReportError( CE_Failure, CPLE_OutOfMemory,
-                      "Out of memory while allocating band map array" );
-            return CE_Failure;
+            panBandMap = (int *) VSIMalloc2(sizeof(int), nBandCount);
+            if (panBandMap == NULL)
+            {
+                ReportError( CE_Failure, CPLE_OutOfMemory,
+                          "Out of memory while allocating band map array" );
+                return CE_Failure;
+            }
+
+            for( i = 0; i < nBandCount; i++ )
+                panBandMap[i] = i+1;
+
+            bNeedToFreeBandMap = TRUE;
         }
-        for( i = 0; i < nBandCount; i++ )
-            panBandMap[i] = i+1;
-
-        bNeedToFreeBandMap = TRUE;
+        else
+            panBandMap = anBandMap;
     }
-
 
     int bCallLeaveReadWrite = EnterReadWrite(eRWFlag);
 
@@ -5867,7 +5939,13 @@ int GDALDataset::EnterReadWrite(GDALRWFlag eRWFlag)
 {
     if( eAccess == GA_Update && (eRWFlag == GF_Write || m_hMutex != NULL) )
     {
-        CPLCreateOrAcquireMutex(&m_hMutex, 1000.0);
+        // There should be no race related to creating this mutex since
+        // it should be first created through IWriteBlock() / IRasterIO()
+        // and then GDALRasterBlock might call it from another thread
+        if( m_hMutex == NULL )
+            m_hMutex = CPLCreateMutex();
+        else
+            CPLAcquireMutex(m_hMutex, 1000.0);
         return TRUE;
     }
     return FALSE;

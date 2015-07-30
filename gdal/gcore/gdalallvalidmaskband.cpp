@@ -36,7 +36,8 @@ CPL_CVSID("$Id$");
 /*                        GDALAllValidMaskBand()                        */
 /************************************************************************/
 
-GDALAllValidMaskBand::GDALAllValidMaskBand( GDALRasterBand *poParent )
+GDALAllValidMaskBand::GDALAllValidMaskBand( GDALRasterBand *poParent ) :
+                                                        GDALRasterBand(FALSE)
 
 {
     poDS = NULL;

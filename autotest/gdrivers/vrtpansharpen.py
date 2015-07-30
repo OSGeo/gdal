@@ -881,6 +881,8 @@ def vrtpansharpen_1():
 
 def vrtpansharpen_2():
 
+    shutil.copy('data/small_world.tif', 'tmp/small_world.tif')
+
     # Super verbose case
     vrt_ds = gdal.Open("""<VRTDataset rasterXSize="800" rasterYSize="400" subClass="VRTPansharpenedDataset">
     <SRS>GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433],AUTHORITY["EPSG","4326"]]</SRS>
@@ -1047,8 +1049,6 @@ def vrtpansharpen_2():
         gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
-
-    shutil.copy('data/small_world.tif', 'tmp/small_world.tif')
 
     # Same, but everything scambled, and with spectral bands not in the same dataset
     vrt_ds = gdal.Open("""<VRTDataset rasterXSize="800" rasterYSize="400" subClass="VRTPansharpenedDataset">
@@ -1724,12 +1724,276 @@ def vrtpansharpen_9():
     return 'success'
 
 ###############################################################################
+# Test UInt16 optimizations
+
+def vrtpansharpen_10():
+    
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/pan.tif',1023,1023,1,gdal.GDT_UInt16)
+    ds.GetRasterBand(1).Fill(1000)
+    ds = None
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/ms.tif',256,256,4,gdal.GDT_UInt16)
+    for i in range(4):
+        ds.GetRasterBand(i+1).Fill(1000)
+    ds = None
+
+    # 4 bands
+    vrt_ds = gdal.Open("""<VRTDataset subClass="VRTPansharpenedDataset">
+        <PansharpeningOptions>
+            <NumThreads>ALL_CPUS</NumThreads>
+            <PanchroBand>
+                    <SourceFilename relativeToVRT="1">/vsimem/pan.tif</SourceFilename>
+                    <SourceBand>1</SourceBand>
+            </PanchroBand>
+            <SpectralBand dstBand="1">
+                    <SourceFilename relativeToVRT="1">/vsimem/ms.tif</SourceFilename>
+                    <SourceBand>1</SourceBand>
+            </SpectralBand>
+            <SpectralBand dstBand="2">
+                    <SourceFilename relativeToVRT="1">/vsimem/ms.tif</SourceFilename>
+                    <SourceBand>2</SourceBand>
+            </SpectralBand>
+            <SpectralBand dstBand="3">
+                    <SourceFilename relativeToVRT="1">/vsimem/ms.tif</SourceFilename>
+                    <SourceBand>3</SourceBand>
+            </SpectralBand>
+            <SpectralBand dstBand="4">
+                    <SourceFilename relativeToVRT="1">/vsimem/ms.tif</SourceFilename>
+                    <SourceBand>4</SourceBand>
+            </SpectralBand>
+        </PansharpeningOptions>
+    </VRTDataset>""")
+    cs = [ vrt_ds.GetRasterBand(i+1).Checksum() for i in range(vrt_ds.RasterCount) ]
+    if cs != [62009, 62009, 62009, 62009]:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+    
+    # Actually go through the optimized impl
+    data = vrt_ds.ReadRaster()
+    # And check
+    data_int32 = vrt_ds.ReadRaster(buf_type = gdal.GDT_Int32)
+    tmp_ds = gdal.GetDriverByName('MEM').Create('', vrt_ds.RasterXSize, vrt_ds.RasterYSize, vrt_ds.RasterCount, gdal.GDT_Int32)
+    tmp_ds.WriteRaster(0, 0, vrt_ds.RasterXSize, vrt_ds.RasterYSize, data_int32)
+    ref_data = tmp_ds.ReadRaster(buf_type = gdal.GDT_UInt16)
+    if data != ref_data:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # 4 bands -> 3 bands
+    vrt_ds = gdal.Open("""<VRTDataset subClass="VRTPansharpenedDataset">
+        <PansharpeningOptions>
+            <NumThreads>ALL_CPUS</NumThreads>
+            <PanchroBand>
+                    <SourceFilename relativeToVRT="1">/vsimem/pan.tif</SourceFilename>
+                    <SourceBand>1</SourceBand>
+            </PanchroBand>
+            <SpectralBand dstBand="1">
+                    <SourceFilename relativeToVRT="1">/vsimem/ms.tif</SourceFilename>
+                    <SourceBand>1</SourceBand>
+            </SpectralBand>
+            <SpectralBand dstBand="2">
+                    <SourceFilename relativeToVRT="1">/vsimem/ms.tif</SourceFilename>
+                    <SourceBand>2</SourceBand>
+            </SpectralBand>
+            <SpectralBand dstBand="3">
+                    <SourceFilename relativeToVRT="1">/vsimem/ms.tif</SourceFilename>
+                    <SourceBand>3</SourceBand>
+            </SpectralBand>
+            <SpectralBand>
+                    <SourceFilename relativeToVRT="1">/vsimem/ms.tif</SourceFilename>
+                    <SourceBand>4</SourceBand>
+            </SpectralBand>
+        </PansharpeningOptions>
+    </VRTDataset>""")
+    cs = [ vrt_ds.GetRasterBand(i+1).Checksum() for i in range(vrt_ds.RasterCount) ]
+    if cs != [62009, 62009, 62009]:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+    
+    # Actually go through the optimized impl
+    data = vrt_ds.ReadRaster()
+    # And check
+    data_int32 = vrt_ds.ReadRaster(buf_type = gdal.GDT_Int32)
+    tmp_ds = gdal.GetDriverByName('MEM').Create('', vrt_ds.RasterXSize, vrt_ds.RasterYSize, vrt_ds.RasterCount, gdal.GDT_Int32)
+    tmp_ds.WriteRaster(0, 0, vrt_ds.RasterXSize, vrt_ds.RasterYSize, data_int32)
+    ref_data = tmp_ds.ReadRaster(buf_type = gdal.GDT_UInt16)
+    if data != ref_data:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    
+    # 3 bands
+    vrt_ds = gdal.Open("""<VRTDataset subClass="VRTPansharpenedDataset">
+        <PansharpeningOptions>
+            <NumThreads>ALL_CPUS</NumThreads>
+            <PanchroBand>
+                    <SourceFilename relativeToVRT="1">/vsimem/pan.tif</SourceFilename>
+                    <SourceBand>1</SourceBand>
+            </PanchroBand>
+            <SpectralBand dstBand="1">
+                    <SourceFilename relativeToVRT="1">/vsimem/ms.tif</SourceFilename>
+                    <SourceBand>1</SourceBand>
+            </SpectralBand>
+            <SpectralBand dstBand="2">
+                    <SourceFilename relativeToVRT="1">/vsimem/ms.tif</SourceFilename>
+                    <SourceBand>2</SourceBand>
+            </SpectralBand>
+            <SpectralBand dstBand="3">
+                    <SourceFilename relativeToVRT="1">/vsimem/ms.tif</SourceFilename>
+                    <SourceBand>3</SourceBand>
+            </SpectralBand>
+        </PansharpeningOptions>
+    </VRTDataset>""")
+    cs = [ vrt_ds.GetRasterBand(i+1).Checksum() for i in range(vrt_ds.RasterCount) ]
+    if cs != [62009, 62009, 62009]:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+    
+    # Actually go through the optimized impl
+    data = vrt_ds.ReadRaster()
+    # And check
+    data_int32 = vrt_ds.ReadRaster(buf_type = gdal.GDT_Int32)
+    tmp_ds = gdal.GetDriverByName('MEM').Create('', vrt_ds.RasterXSize, vrt_ds.RasterYSize, vrt_ds.RasterCount, gdal.GDT_Int32)
+    tmp_ds.WriteRaster(0, 0, vrt_ds.RasterXSize, vrt_ds.RasterYSize, data_int32)
+    ref_data = tmp_ds.ReadRaster(buf_type = gdal.GDT_UInt16)
+    if data != ref_data:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    
+    return 'success'
+
+###############################################################################
+# Test gdal.CreatePansharpenedVRT()
+
+def vrtpansharpen_11():
+    
+    pan_ds = gdal.Open('tmp/small_world_pan.tif')
+    ms_ds = gdal.Open('data/small_world.tif')
+    
+    vrt_ds = gdal.CreatePansharpenedVRT("""<VRTDataset subClass="VRTPansharpenedDataset">
+        <PansharpeningOptions>
+            <SpectralBand dstBand="1">
+            </SpectralBand>
+            <SpectralBand dstBand="2">
+            </SpectralBand>
+            <SpectralBand dstBand="3">
+            </SpectralBand>
+        </PansharpeningOptions>
+    </VRTDataset>""", pan_ds.GetRasterBand(1), [ ms_ds.GetRasterBand(i+1) for i in range(3)] )
+    if vrt_ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    cs = [ vrt_ds.GetRasterBand(i+1).Checksum() for i in range(vrt_ds.RasterCount) ]
+    if cs != [4735, 10000, 9742]:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+
+    # Also test with completely anonymous datasets
+    pan_mem_ds = gdal.GetDriverByName('MEM').CreateCopy('', pan_ds)
+    ms_mem_ds = gdal.GetDriverByName('MEM').CreateCopy('', ms_ds)
+    pan_ds = None
+    ms_ds = None
+    
+    vrt_ds = gdal.CreatePansharpenedVRT("""<VRTDataset subClass="VRTPansharpenedDataset">
+        <PansharpeningOptions>
+            <SpectralBand dstBand="1">
+            </SpectralBand>
+            <SpectralBand dstBand="2">
+            </SpectralBand>
+            <SpectralBand dstBand="3">
+            </SpectralBand>
+        </PansharpeningOptions>
+    </VRTDataset>""", pan_mem_ds.GetRasterBand(1), [ ms_mem_ds.GetRasterBand(i+1) for i in range(3)] )
+    if vrt_ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    cs = [ vrt_ds.GetRasterBand(i+1).Checksum() for i in range(vrt_ds.RasterCount) ]
+    if cs != [4735, 10000, 9742]:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+    vrt_ds = None
+
+    # Check that wrapping with VRT works (when gt are not compatible)
+    pan_mem_ds = gdal.GetDriverByName('MEM').Create('', 20, 40, 1)
+    ms_mem_ds = gdal.GetDriverByName('MEM').Create('', 15, 30, 3)
+    pan_mem_ds.SetGeoTransform([120,1,0,80,0,-1])
+    ms_mem_ds.SetGeoTransform([100,2,0,100,0,-2])
+
+    vrt_ds = gdal.CreatePansharpenedVRT("""<VRTDataset subClass="VRTPansharpenedDataset">
+        <PansharpeningOptions>
+            <SpectralBand dstBand="1">
+            </SpectralBand>
+            <SpectralBand dstBand="2">
+            </SpectralBand>
+            <SpectralBand dstBand="3">
+            </SpectralBand>
+        </PansharpeningOptions>
+    </VRTDataset>""", pan_mem_ds.GetRasterBand(1), [ ms_mem_ds.GetRasterBand(i+1) for i in range(3)] )
+    if vrt_ds.GetGeoTransform() != (100.0, 1.0, 0.0, 100.0, 0.0, -1.0) or vrt_ds.RasterXSize != 40 or vrt_ds.RasterYSize != 60:
+        gdaltest.post_reason('fail')
+        print(vrt_ds.GetGeoTransform())
+        print(vrt_ds.RasterXSize)
+        print(vrt_ds.RasterYSize)
+        return 'fail'
+    vrt_ds = None
+
+
+    # Test error cases as well
+    gdal.PushErrorHandler()
+    vrt_ds = gdal.CreatePansharpenedVRT("""<invalid_xml""", pan_mem_ds.GetRasterBand(1), [ ms_mem_ds.GetRasterBand(i+1) for i in range(3)] )
+    gdal.PopErrorHandler()
+    if vrt_ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Not enough bands
+    gdal.PushErrorHandler()
+    vrt_ds = gdal.CreatePansharpenedVRT("""<VRTDataset subClass="VRTPansharpenedDataset">
+        <PansharpeningOptions>
+            <SpectralBand dstBand="1">
+            </SpectralBand>
+            <SpectralBand dstBand="2">
+            </SpectralBand>
+        </PansharpeningOptions>
+    </VRTDataset>""", pan_mem_ds.GetRasterBand(1), [ ms_mem_ds.GetRasterBand(i+1) for i in range(3)] )
+    gdal.PopErrorHandler()
+    if vrt_ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Too many bands
+    gdal.PushErrorHandler()
+    vrt_ds = gdal.CreatePansharpenedVRT("""<VRTDataset subClass="VRTPansharpenedDataset">
+        <PansharpeningOptions>
+            <SpectralBand dstBand="1">
+            </SpectralBand>
+            <SpectralBand dstBand="2">
+            </SpectralBand>
+            <SpectralBand dstBand="3">
+            </SpectralBand>
+            <SpectralBand dstBand="4">
+            </SpectralBand>
+        </PansharpeningOptions>
+    </VRTDataset>""", pan_mem_ds.GetRasterBand(1), [ ms_mem_ds.GetRasterBand(i+1) for i in range(3)] )
+    gdal.PopErrorHandler()
+    if vrt_ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def vrtpansharpen_cleanup():
     
     gdal.GetDriverByName('GTiff').Delete('tmp/small_world_pan.tif')
     gdal.GetDriverByName('GTiff').Delete('tmp/small_world.tif')
+    gdal.GetDriverByName('GTiff').Delete('/vsimem/pan.tif')
+    gdal.GetDriverByName('GTiff').Delete('/vsimem/ms.tif')
 
     return 'success'
 
@@ -1744,6 +2008,8 @@ gdaltest_list = [
     vrtpansharpen_7,
     vrtpansharpen_8,
     vrtpansharpen_9,
+    vrtpansharpen_10,
+    vrtpansharpen_11,
     vrtpansharpen_cleanup,
 ]
 

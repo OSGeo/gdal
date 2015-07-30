@@ -48,6 +48,17 @@ GDALPamRasterBand::GDALPamRasterBand()
 }
 
 /************************************************************************/
+/*                         GDALPamRasterBand()                          */
+/************************************************************************/
+
+GDALPamRasterBand::GDALPamRasterBand(int bForceCachedIO) : GDALRasterBand(bForceCachedIO)
+
+{
+    psPam = NULL;
+    SetMOFlags( GetMOFlags() | GMO_PAM_CLASS );
+}
+
+/************************************************************************/
 /*                         ~GDALPamRasterBand()                         */
 /************************************************************************/
 

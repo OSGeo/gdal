@@ -289,6 +289,8 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     friend class GDALDriverManager;
     
     void AddToDatasetOpenList();
+    
+    void           Init(int bForceCachedIO);
 
   protected:
     GDALDriver  *poDriver;
@@ -309,6 +311,7 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     GByte       bSuppressOnClose;
 
                 GDALDataset(void);
+                GDALDataset(int bForceCachedIO);
 
     void        RasterInitialize( int, int );
     void        SetBand( int, GDALRasterBand * );
@@ -336,6 +339,15 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     void   BlockBasedFlushCache();
     
     CPLErr BandBasedRasterIO( GDALRWFlag eRWFlag,
+                               int nXOff, int nYOff, int nXSize, int nYSize,
+                               void * pData, int nBufXSize, int nBufYSize,
+                               GDALDataType eBufType, 
+                               int nBandCount, int *panBandMap,
+                               GSpacing nPixelSpace, GSpacing nLineSpace,
+                               GSpacing nBandSpace,
+                               GDALRasterIOExtraArg* psExtraArg );
+    
+    CPLErr RasterIOResampled( GDALRWFlag eRWFlag,
                                int nXOff, int nYOff, int nXSize, int nYSize,
                                void * pData, int nBufXSize, int nBufYSize,
                                GDALDataType eBufType, 
@@ -699,6 +711,8 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
 
     void           SetFlushBlockErr( CPLErr eErr );
     CPLErr         UnreferenceBlock( GDALRasterBlock* poBlock );
+    
+    void           Init(int bForceCachedIO);
 
   protected:
     GDALDataset *poDS;
@@ -769,7 +783,8 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
 
   public:
                 GDALRasterBand();
-                
+                GDALRasterBand(int bForceCachedIO);
+
     virtual     ~GDALRasterBand();
 
     int         GetXSize();
@@ -1177,6 +1192,30 @@ typedef CPLErr (*GDALResampleFunction)
 
 GDALResampleFunction GDALGetResampleFunction(const char* pszResampling,
                                                  int* pnRadius);
+
+#ifdef GDAL_ENABLE_RESAMPLING_MULTIBAND
+typedef CPLErr (*GDALResampleFunctionMultiBands)
+                      ( double dfXRatioDstToSrc,
+                        double dfYRatioDstToSrc,
+                        double dfSrcXDelta,
+                        double dfSrcYDelta,
+                        GDALDataType eWrkDataType,
+                        void * pChunk, int nBands,
+                        GByte * pabyChunkNodataMask,
+                        int nChunkXOff, int nChunkXSize,
+                        int nChunkYOff, int nChunkYSize,
+                        int nDstXOff, int nDstXOff2,
+                        int nDstYOff, int nDstYOff2,
+                        GDALRasterBand ** papoDstBands,
+                        const char * pszResampling,
+                        int bHasNoData, float fNoDataValue,
+                        GDALColorTable* poColorTable,
+                        GDALDataType eSrcDataType);
+
+GDALResampleFunctionMultiBands GDALGetResampleFunctionMultiBands(const char* pszResampling,
+                                                       int* pnRadius);
+#endif
+
 GDALDataType GDALGetOvrWorkDataType(const char* pszResampling,
                                         GDALDataType eSrcDataType);
 

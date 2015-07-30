@@ -96,8 +96,6 @@ def ogr_mem_2():
 
         feat = shp_lyr.GetNextFeature()
 
-    dst_feat.Destroy()
-        
     return 'success'
 
 ###############################################################################
@@ -127,11 +125,8 @@ def ogr_mem_3():
                 gdaltest.post_reason( 'Attribute %d does not match' % fld )
                 return 'fail'
 
-        read_feat.Destroy()
-        orig_feat.Destroy()
-
     gdaltest.poly_feat = None
-    gdaltest.shp_ds.Destroy()
+    gdaltest.shp_ds = None
 
     if tr:
         return 'success'
@@ -171,12 +166,8 @@ def ogr_mem_4():
         if ogrtest.check_feature_geometry( feat_read, geom ) != 0:
             return 'fail'
 
-        feat_read.Destroy()
-
-    dst_feat.Destroy()
-    
     return 'success'
-    
+
 ###############################################################################
 # Test ExecuteSQL() results layers without geometry.
 
@@ -215,8 +206,7 @@ def ogr_mem_6():
         feat_read = sql_lyr.GetNextFeature()
         if ogrtest.check_feature_geometry( feat_read, 'MULTILINESTRING ((5.00121349 2.99853132,5.00121349 1.99853133),(5.00121349 1.99853133,5.00121349 0.99853133),(3.00121351 1.99853127,5.00121349 1.99853133),(5.00121349 1.99853133,6.00121348 1.99853135))' ) != 0:
             tr = 0
-        feat_read.Destroy()
-        
+
     gdaltest.mem_ds.ReleaseResultSet( sql_lyr )
 
     if tr:
@@ -262,16 +252,14 @@ def ogr_mem_8():
     # Add new string field.
     field_defn = ogr.FieldDefn( 'new_string', ogr.OFTString )
     gdaltest.mem_lyr.CreateField( field_defn )
-    field_defn.Destroy()
-    
+
     ####################################################################
     # Apply a value to this field in one feature.
-    
+
     gdaltest.mem_lyr.SetAttributeFilter( "PRFEDEA = '2'" )
     feat_read = gdaltest.mem_lyr.GetNextFeature()
     feat_read.SetField( 'new_string', 'test1' )
     gdaltest.mem_lyr.SetFeature( feat_read )
-    feat_read.Destroy()
 
     # Test expected failed case of SetFeature()
     new_feat = ogr.Feature(gdaltest.mem_lyr.GetLayerDefn())
@@ -599,7 +587,6 @@ def ogr_mem_cleanup():
         return 'skip'
 
     ogr.SetNonLinearGeometriesEnabledFlag(True)
-    gdaltest.mem_ds.Destroy()
     gdaltest.mem_ds = None
 
     return 'success'
@@ -629,4 +616,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-

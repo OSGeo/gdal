@@ -173,12 +173,12 @@ int CPL_DLL GDALReprojectionTransform(
 void CPL_DLL *
 GDALCreateGCPTransformer( int nGCPCount, const GDAL_GCP *pasGCPList, 
                           int nReqOrder, int bReversed );
-			  
+
 /* GCP based transformer with refinement of the GCPs ... forward is to georef coordinates */
 void CPL_DLL *
 GDALCreateGCPRefineTransformer( int nGCPCount, const GDAL_GCP *pasGCPList, 
                                 int nReqOrder, int bReversed, double tolerance, int minimumGcps);
-			  
+
 void CPL_DLL GDALDestroyGCPTransformer( void *pTransformArg );
 int CPL_DLL GDALGCPTransform( 
     void *pTransformArg, int bDstToSrc, int nPointCount,
@@ -367,7 +367,9 @@ typedef enum {
   /*! Average Distance Between Data Points (Data Metric) */
                                         GGA_MetricAverageDistancePts = 9,
   /*! Linear interpolation (from Delaunay triangulation. Since GDAL 2.1 */
-                                        GGA_Linear = 10
+                                        GGA_Linear = 10,
+  /*! Inverse distance to a power with nearest neighbor search for max points */
+                                        GGA_InverseDistanceToAPowerNearestNeighbor = 11
 } GDALGridAlgorithm;
 
 /** Inverse distance to a power method control options */
@@ -406,6 +408,30 @@ typedef struct
     /*! No data marker to fill empty points. */
     double  dfNoDataValue;
 } GDALGridInverseDistanceToAPowerOptions;
+
+typedef struct
+{
+    /*! Weighting power. */
+    double  dfPower;
+    /*! The radius of search circle. */
+    double  dfRadius;
+
+    /*! Maximum number of data points to use.
+     *
+     * Do not search for more points than this number.
+     * If less amount of points found the grid node considered empty and will
+     * be filled with NODATA marker.
+     */
+    GUInt32 nMaxPoints;
+    /*! Minimum number of data points to use.
+     *
+     * If less amount of points found the grid node considered empty and will
+     * be filled with NODATA marker.
+     */
+    GUInt32 nMinPoints;
+    /*! No data marker to fill empty points. */
+    double  dfNoDataValue;
+} GDALGridInverseDistanceToAPowerNearestNeighborOptions;
 
 /** Moving average method control options */
 typedef struct

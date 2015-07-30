@@ -54,6 +54,13 @@ class XMMReg2Double
         return reg;
     }
 
+    static inline XMMReg2Double Load1ValHighAndLow(const double* ptr)
+    {
+        XMMReg2Double reg;
+        reg.nsLoad1ValHighAndLow(ptr);
+        return reg;
+    }
+
     static inline XMMReg2Double Load2Val(const double* ptr)
     {
         XMMReg2Double reg;
@@ -96,6 +103,53 @@ class XMMReg2Double
         return reg;
     }
     
+    static inline XMMReg2Double Equals(const XMMReg2Double& expr1, const XMMReg2Double& expr2)
+    {
+        XMMReg2Double reg;
+        reg.xmm = _mm_cmpeq_pd(expr1.xmm, expr2.xmm);
+        return reg;
+    }
+    
+    static inline XMMReg2Double NotEquals(const XMMReg2Double& expr1, const XMMReg2Double& expr2)
+    {
+        XMMReg2Double reg;
+        reg.xmm = _mm_cmpneq_pd(expr1.xmm, expr2.xmm);
+        return reg;
+    }
+    
+    static inline XMMReg2Double Greater(const XMMReg2Double& expr1, const XMMReg2Double& expr2)
+    {
+        XMMReg2Double reg;
+        reg.xmm = _mm_cmpgt_pd(expr1.xmm, expr2.xmm);
+        return reg;
+    }
+        
+    static inline XMMReg2Double And(const XMMReg2Double& expr1, const XMMReg2Double& expr2)
+    {
+        XMMReg2Double reg;
+        reg.xmm = _mm_and_pd(expr1.xmm, expr2.xmm);
+        return reg;
+    }
+    
+    static inline XMMReg2Double Ternary(const XMMReg2Double& cond, const XMMReg2Double& true_expr, const XMMReg2Double& false_expr)
+    {
+        XMMReg2Double reg;
+        reg.xmm = _mm_or_pd(_mm_and_pd (cond.xmm, true_expr.xmm), _mm_andnot_pd(cond.xmm, false_expr.xmm));
+        return reg;
+    }
+        
+    static inline XMMReg2Double Min(const XMMReg2Double& expr1, const XMMReg2Double& expr2)
+    {
+        XMMReg2Double reg;
+        reg.xmm = _mm_min_pd(expr1.xmm, expr2.xmm);
+        return reg;
+    }
+    
+    inline void nsLoad1ValHighAndLow(const double* ptr)
+    {
+        xmm =  _mm_load1_pd(ptr);
+    }
+
     inline void nsLoad2Val(const double* ptr)
     {
         xmm = _mm_loadu_pd(ptr);
@@ -177,49 +231,56 @@ class XMMReg2Double
         low.xmm = _mm_cvtps_pd(temp1);
         high.xmm = _mm_cvtps_pd(temp2);
     }
-    
+
     inline void Zeroize()
     {
         xmm = _mm_setzero_pd();
     }
 
-    inline const XMMReg2Double& operator= (const XMMReg2Double& other)
+    inline XMMReg2Double& operator= (const XMMReg2Double& other)
     {
         xmm = other.xmm;
         return *this;
     }
 
-    inline const XMMReg2Double& operator+= (const XMMReg2Double& other)
+    inline XMMReg2Double& operator+= (const XMMReg2Double& other)
     {
         xmm = _mm_add_pd(xmm, other.xmm);
         return *this;
     }
 
-    inline XMMReg2Double operator+ (const XMMReg2Double& other)
+    inline XMMReg2Double& operator*= (const XMMReg2Double& other)
+    {
+        xmm = _mm_mul_pd(xmm, other.xmm);
+        return *this;
+    }
+    
+    inline XMMReg2Double operator+ (const XMMReg2Double& other) const
     {
         XMMReg2Double ret;
         ret.xmm = _mm_add_pd(xmm, other.xmm);
         return ret;
     }
 
-    inline XMMReg2Double operator- (const XMMReg2Double& other)
+    inline XMMReg2Double operator- (const XMMReg2Double& other) const
     {
         XMMReg2Double ret;
         ret.xmm = _mm_sub_pd(xmm, other.xmm);
         return ret;
     }
 
-    inline XMMReg2Double operator* (const XMMReg2Double& other)
+    inline XMMReg2Double operator* (const XMMReg2Double& other) const
     {
         XMMReg2Double ret;
         ret.xmm = _mm_mul_pd(xmm, other.xmm);
         return ret;
     }
 
-    inline const XMMReg2Double& operator*= (const XMMReg2Double& other)
+    inline XMMReg2Double operator/ (const XMMReg2Double& other) const
     {
-        xmm = _mm_mul_pd(xmm, other.xmm);
-        return *this;
+        XMMReg2Double ret;
+        ret.xmm = _mm_div_pd(xmm, other.xmm);
+        return ret;
     }
 
     inline void AddLowAndHigh()
@@ -229,16 +290,23 @@ class XMMReg2Double
         xmm = _mm_add_pd(xmm, xmm2);
     }
     
-    inline void Store2Double(double* pval)
+    inline void Store2Double(double* pval) const
     {
         _mm_storeu_pd(pval, xmm);
     }
     
-    inline void Store2DoubleAligned(double* pval)
+    inline void Store2DoubleAligned(double* pval) const
     {
         _mm_store_pd(pval, xmm);
     }
 
+    void Store2Val(unsigned short* ptr) const
+    {
+        __m128i tmp = _mm_cvtpd_epi32(xmm); /* Convert the 2 double values to 2 integers */
+        ptr[0] = (GUInt16)_mm_extract_epi16(tmp, 0);
+        ptr[1] = (GUInt16)_mm_extract_epi16(tmp, 2);
+    }
+    
     inline operator double () const
     {
         double val;
@@ -265,6 +333,104 @@ class XMMReg2Double
     {
         XMMReg2Double reg;
         reg.Zeroize();
+        return reg;
+    }
+        
+    static inline XMMReg2Double Load1ValHighAndLow(const double* ptr)
+    {
+        XMMReg2Double reg;
+        reg.nsLoad1ValHighAndLow(ptr);
+        return reg;
+    }
+    
+    static inline XMMReg2Double Equals(const XMMReg2Double& expr1, const XMMReg2Double& expr2)
+    {
+        XMMReg2Double reg;
+        
+        if (expr1.low == expr2.low)
+            memset(&(reg.low), 0xFF, sizeof(double));
+        else
+            reg.low = 0;
+        
+        if (expr1.high == expr2.high)
+            memset(&(reg.high), 0xFF, sizeof(double));
+        else
+            reg.high = 0;
+
+        return reg;
+    }
+    
+    static inline XMMReg2Double NotEquals(const XMMReg2Double& expr1, const XMMReg2Double& expr2)
+    {
+        XMMReg2Double reg;
+        
+        if (expr1.low != expr2.low)
+            memset(&(reg.low), 0xFF, sizeof(double));
+        else
+            reg.low = 0;
+        
+        if (expr1.high != expr2.high)
+            memset(&(reg.high), 0xFF, sizeof(double));
+        else
+            reg.high = 0;
+
+        return reg;
+    }
+    
+    static inline XMMReg2Double Greater(const XMMReg2Double& expr1, const XMMReg2Double& expr2)
+    {
+        XMMReg2Double reg;
+        
+        if (expr1.low > expr2.low)
+            memset(&(reg.low), 0xFF, sizeof(double));
+        else
+            reg.low = 0;
+        
+        if (expr1.high > expr2.high)
+            memset(&(reg.high), 0xFF, sizeof(double));
+        else
+            reg.high = 0;
+
+        return reg;
+    }
+    
+    static inline XMMReg2Double And(const XMMReg2Double& expr1, const XMMReg2Double& expr2)
+    {
+        XMMReg2Double reg;
+        int low1[2], high1[2];
+        int low2[2], high2[2];
+        memcpy(low1, &expr1.low, sizeof(double));
+        memcpy(high1, &expr1.high, sizeof(double));
+        memcpy(low2, &expr2.low, sizeof(double));
+        memcpy(high2, &expr2.high, sizeof(double));
+        low1[0] &= low2[0];
+        low1[1] &= low2[1];
+        high1[0] &= high2[0];
+        high1[1] &= high2[1];
+        memcpy(&reg.low, low1, sizeof(double));
+        memcpy(&reg.high, high1, sizeof(double));
+        return reg;
+    }
+
+    static inline XMMReg2Double Ternary(const XMMReg2Double& cond, const XMMReg2Double& true_expr, const XMMReg2Double& false_expr)
+    {
+        XMMReg2Double reg;
+        if( cond.low )
+            reg.low = true_expr.low;
+        else
+            reg.low = false_expr.low;
+        if( cond.high )
+            reg.high = true_expr.high;
+        else
+            reg.high = false_expr.high;
+        return reg;
+    }
+    
+    static inline XMMReg2Double Min(const XMMReg2Double& expr1, const XMMReg2Double& expr2)
+    {
+        XMMReg2Double reg;
+        reg.low = (expr1.low < expr2.low) ? expr1.low : expr2.high;
+        reg.high = (expr1.high < expr2.high) ? expr1.high : expr2.low;
         return reg;
     }
     
@@ -303,6 +469,12 @@ class XMMReg2Double
         return reg;
     }
 
+    inline void nsLoad1ValHighAndLow(const double* pval)
+    {
+        low = pval[0];
+        high = pval[0];
+    }
+    
     inline void nsLoad2Val(const double* pval)
     {
         low = pval[0];
@@ -377,21 +549,28 @@ class XMMReg2Double
         high = 0.0;
     }
 
-    inline const XMMReg2Double& operator= (const XMMReg2Double& other)
+    inline XMMReg2Double& operator= (const XMMReg2Double& other)
     {
         low = other.low;
         high = other.high;
         return *this;
     }
 
-    inline const XMMReg2Double& operator+= (const XMMReg2Double& other)
+    inline XMMReg2Double& operator+= (const XMMReg2Double& other)
     {
         low += other.low;
         high += other.high;
         return *this;
     }
 
-    inline XMMReg2Double operator+ (const XMMReg2Double& other)
+    inline XMMReg2Double& operator*= (const XMMReg2Double& other)
+    {
+        low *= other.low;
+        high *= other.high;
+        return *this;
+    }
+
+    inline XMMReg2Double operator+ (const XMMReg2Double& other) const
     {
         XMMReg2Double ret;
         ret.low = low + other.low;
@@ -399,7 +578,7 @@ class XMMReg2Double
         return ret;
     }
 
-    inline XMMReg2Double operator- (const XMMReg2Double& other)
+    inline XMMReg2Double operator- (const XMMReg2Double& other) const
     {
         XMMReg2Double ret;
         ret.low = low - other.low;
@@ -407,7 +586,7 @@ class XMMReg2Double
         return ret;
     }
 
-    inline XMMReg2Double operator* (const XMMReg2Double& other)
+    inline XMMReg2Double operator* (const XMMReg2Double& other) const
     {
         XMMReg2Double ret;
         ret.low = low * other.low;
@@ -415,11 +594,12 @@ class XMMReg2Double
         return ret;
     }
 
-    inline const XMMReg2Double& operator*= (const XMMReg2Double& other)
+    inline XMMReg2Double operator/ (const XMMReg2Double& other) const
     {
-        low *= other.low;
-        high *= other.high;
-        return *this;
+        XMMReg2Double ret;
+        ret.low = low / other.low;
+        ret.high = high / other.high;
+        return ret;
     }
 
     inline void AddLowAndHigh()
@@ -429,18 +609,24 @@ class XMMReg2Double
         high = add;
     }
 
-    inline void Store2Double(double* pval)
+    inline void Store2Double(double* pval) const
     {
         pval[0] = low;
         pval[1] = high;
     }
     
-    inline void Store2DoubleAligned(double* pval)
+    inline void Store2DoubleAligned(double* pval) const
     {
         pval[0] = low;
         pval[1] = high;
     }
 
+    void Store2Val(unsigned short* ptr) const
+    {
+        ptr[0] = (GUInt16)low;
+        ptr[1] = (GUInt16)high;
+    }
+    
     inline operator double () const
     {
         return low;
@@ -464,7 +650,15 @@ class XMMReg4Double
         reg.high.Zeroize();
         return reg;
     }
-    
+
+    static inline XMMReg4Double Load1ValHighAndLow(const double* ptr)
+    {
+        XMMReg4Double reg;
+        reg.low.nsLoad1ValHighAndLow(ptr);
+        reg.high = reg.low;
+        return reg;
+    }
+
     static inline XMMReg4Double Load4Val(const unsigned char* ptr)
     {
         XMMReg4Double reg;
@@ -511,21 +705,76 @@ class XMMReg4Double
         return reg;
     }
     
-    inline const XMMReg4Double& operator= (const XMMReg4Double& other)
+    static inline XMMReg4Double Equals(const XMMReg4Double& expr1, const XMMReg4Double& expr2)
+    {
+        XMMReg4Double reg;
+        reg.low = XMMReg2Double::Equals(expr1.low, expr2.low);
+        reg.high = XMMReg2Double::Equals(expr1.high, expr2.high);
+        return reg;
+    }
+    
+    static inline XMMReg4Double NotEquals(const XMMReg4Double& expr1, const XMMReg4Double& expr2)
+    {
+        XMMReg4Double reg;
+        reg.low = XMMReg2Double::NotEquals(expr1.low, expr2.low);
+        reg.high = XMMReg2Double::NotEquals(expr1.high, expr2.high);
+        return reg;
+    }
+    
+    static inline XMMReg4Double Greater(const XMMReg4Double& expr1, const XMMReg4Double& expr2)
+    {
+        XMMReg4Double reg;
+        reg.low = XMMReg2Double::Greater(expr1.low, expr2.low);
+        reg.high = XMMReg2Double::Greater(expr1.high, expr2.high);
+        return reg;
+    }
+        
+    static inline XMMReg4Double And(const XMMReg4Double& expr1, const XMMReg4Double& expr2)
+    {
+        XMMReg4Double reg;
+        reg.low = XMMReg2Double::And(expr1.low, expr2.low);
+        reg.high = XMMReg2Double::And(expr1.high, expr2.high);
+        return reg;
+    }
+    
+    static inline XMMReg4Double Ternary(const XMMReg4Double& cond, const XMMReg4Double& true_expr, const XMMReg4Double& false_expr)
+    {
+        XMMReg4Double reg;
+        reg.low = XMMReg2Double::Ternary(cond.low, true_expr.low, false_expr.low);
+        reg.high = XMMReg2Double::Ternary(cond.high, true_expr.high, false_expr.high);
+        return reg;
+    }
+        
+    static inline XMMReg4Double Min(const XMMReg4Double& expr1, const XMMReg4Double& expr2)
+    {
+        XMMReg4Double reg;
+        reg.low = XMMReg2Double::Min(expr1.low, expr2.low);
+        reg.high = XMMReg2Double::Min(expr1.high, expr2.high);
+        return reg;
+    }
+    
+    inline XMMReg4Double& operator= (const XMMReg4Double& other)
     {
         low = other.low;
         high = other.high;
         return *this;
     }
 
-    inline const XMMReg4Double& operator+= (const XMMReg4Double& other)
+    inline XMMReg4Double& operator+= (const XMMReg4Double& other)
     {
         low += other.low;
         high += other.high;
         return *this;
     }
-
-    inline XMMReg4Double operator+ (const XMMReg4Double& other)
+    
+    inline XMMReg4Double& operator*= (const XMMReg4Double& other)
+    {
+        low *= other.low;
+        high *= other.high;
+        return *this;
+    }
+    
+    inline XMMReg4Double operator+ (const XMMReg4Double& other) const
     {
         XMMReg4Double ret;
         ret.low = low + other.low;
@@ -533,7 +782,7 @@ class XMMReg4Double
         return ret;
     }
 
-    inline XMMReg4Double operator- (const XMMReg4Double& other)
+    inline XMMReg4Double operator- (const XMMReg4Double& other) const
     {
         XMMReg4Double ret;
         ret.low = low - other.low;
@@ -541,7 +790,7 @@ class XMMReg4Double
         return ret;
     }
 
-    inline XMMReg4Double operator* (const XMMReg4Double& other)
+    inline XMMReg4Double operator* (const XMMReg4Double& other) const
     {
         XMMReg4Double ret;
         ret.low = low * other.low;
@@ -549,11 +798,12 @@ class XMMReg4Double
         return ret;
     }
 
-    inline const XMMReg4Double& operator*= (const XMMReg4Double& other)
+    inline XMMReg4Double operator/ (const XMMReg4Double& other) const
     {
-        low *= other.low;
-        high *= other.high;
-        return *this;
+        XMMReg4Double ret;
+        ret.low = low / other.low;
+        ret.high = high / other.high;
+        return ret;
     }
 
     inline void AddLowAndHigh()
@@ -565,6 +815,17 @@ class XMMReg4Double
     inline XMMReg2Double& GetLow()
     {
         return low;
+    }
+
+    inline XMMReg2Double& GetHigh()
+    {
+        return high;
+    }
+
+    void Store4Val(unsigned short* ptr) const
+    {
+        low.Store2Val(ptr);
+        high.Store2Val(ptr+2);
     }
 };
 
