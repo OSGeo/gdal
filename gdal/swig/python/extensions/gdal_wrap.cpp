@@ -24792,12 +24792,8 @@ static PyMethodDef SwigMethods[] = {
 		"    GDALResampleAlg eResampleAlg = GRA_NearestNeighbour, \n"
 		"    double maxerror = 0.0) -> Dataset\n"
 		""},
-<<<<<<< HEAD
-	 { (char *)"new_Transformer", _wrap_new_Transformer, METH_VARARGS, (char *)"new_Transformer(Dataset src, Dataset dst, char ** options) -> Transformer"},
-=======
 	 { (char *)"CreatePansharpenedVRT", _wrap_CreatePansharpenedVRT, METH_VARARGS, (char *)"CreatePansharpenedVRT(char pszXML, Band panchroBand, int nInputSpectralBands) -> Dataset"},
 	 { (char *)"new_Transformer", _wrap_new_Transformer, METH_VARARGS, (char *)"new_Transformer(Dataset src, Dataset dst, char options) -> Transformer"},
->>>>>>> upstream/trunk
 	 { (char *)"delete_Transformer", _wrap_delete_Transformer, METH_VARARGS, (char *)"delete_Transformer(Transformer self)"},
 	 { (char *)"Transformer_TransformPoint", _wrap_Transformer_TransformPoint, METH_VARARGS, (char *)"\n"
 		"TransformPoint(int bDstToSrc, double inout) -> int\n"
