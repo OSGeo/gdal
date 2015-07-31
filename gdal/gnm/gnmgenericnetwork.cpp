@@ -330,7 +330,7 @@ CPLErr GNMGenericNetwork::DisconnectFeaturesWithId(GNMGFID nFID)
     }
 
     CPLString soFilter;
-    soFilter.Printf("%s = "GNMGFIDFormat" or %s = "GNMGFIDFormat" or %s = "GNMGFIDFormat,
+    soFilter.Printf("%s = " GNMGFIDFormat " or %s = " GNMGFIDFormat " or %s = " GNMGFIDFormat,
                     GNM_SYSFIELD_SOURCE, nFID,
                     GNM_SYSFIELD_TARGET, nFID,
                     GNM_SYSFIELD_CONNECTOR, nFID);
@@ -926,7 +926,7 @@ OGRFeature *GNMGenericNetwork::FindConnection(GNMGFID nSrcFID, GNMGFID nTgtFID,
 {
 
     CPLString soFilter;
-    soFilter.Printf("%s = "GNMGFIDFormat" and %s = "GNMGFIDFormat" and %s = "GNMGFIDFormat,
+    soFilter.Printf("%s = " GNMGFIDFormat " and %s = " GNMGFIDFormat " and %s = " GNMGFIDFormat,
                     GNM_SYSFIELD_SOURCE, nSrcFID,
                     GNM_SYSFIELD_TARGET, nTgtFID,
                     GNM_SYSFIELD_CONNECTOR, nConFID);

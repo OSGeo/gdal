@@ -1070,8 +1070,8 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
         char* apszOptions[4];
         char szBuffer0[64], szBuffer1[64], szBuffer2[64];
 
-        sprintf(szBuffer1, "PIXELOFFSET="CPL_FRMT_GIB, (GIntBig)nDataTypeSize);
-        sprintf(szBuffer2, "LINEOFFSET="CPL_FRMT_GIB, (GIntBig)nDataTypeSize * nXSizeExtract);
+        sprintf(szBuffer1, "PIXELOFFSET=" CPL_FRMT_GIB, (GIntBig)nDataTypeSize);
+        sprintf(szBuffer2, "LINEOFFSET=" CPL_FRMT_GIB, (GIntBig)nDataTypeSize * nXSizeExtract);
         apszOptions[0] = szBuffer0;
         apszOptions[1] = szBuffer1;
         apszOptions[2] = szBuffer2;
@@ -1380,7 +1380,7 @@ void GDALPansharpenOperation::PansharpenResampleJobThreadFunc(void* pUserData)
     gettimeofday(&tv_end, NULL);
     GIntBig end = (GIntBig)tv_end.tv_sec * 1000000 + (GIntBig)tv_end.tv_usec;
     if( start_job - launch_time > 500 )
-        printf("Resample: Delay before start="CPL_FRMT_GIB ", completion time=" CPL_FRMT_GIB "\n",
+        printf("Resample: Delay before start=" CPL_FRMT_GIB ", completion time=" CPL_FRMT_GIB "\n",
                start_job - launch_time, end - start_job);
 #endif
 }
@@ -1420,7 +1420,7 @@ void GDALPansharpenOperation::PansharpenJobThreadFunc(void* pUserData)
     gettimeofday(&tv_end, NULL);
     GIntBig end = (GIntBig)tv_end.tv_sec * 1000000 + (GIntBig)tv_end.tv_usec;
     if( start_job - launch_time > 500 )
-        printf("Pansharpen: Delay before start="CPL_FRMT_GIB ", completion time=" CPL_FRMT_GIB "\n",
+        printf("Pansharpen: Delay before start=" CPL_FRMT_GIB ", completion time=" CPL_FRMT_GIB "\n",
                start_job - launch_time, end - start_job);
 #endif
 }
