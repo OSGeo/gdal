@@ -851,7 +851,7 @@ gdal2tiles temp.vrt""" % self.input )
                         os.unlink(tempfilename)
 
                         # set NODATA_VALUE metadata
-                        self.out_ds.SetMetadataItem('NODATA_VALUES','%i %i %i' % (self.in_nodata[0],self.in_nodata[1],self.in_nodata[2]))
+                        self.out_ds.SetMetadataItem('NODATA_VALUES',' '.join([str(i) for i in self.in_nodata]))
 
                         if self.options.verbose:
                             print("Modified warping result saved into 'tiles1.vrt'")
