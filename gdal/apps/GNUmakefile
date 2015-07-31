@@ -26,6 +26,11 @@ BIN_LIST += 	gdal_contour$(EXE) \
 		gdalbuildvrt$(EXE)
 endif
 
+ifeq ($(GNM_ENABLED),yes)
+BIN_LIST += 	gnmmanage$(EXE) gnmanalyse$(EXE)
+CPPFLAGS +=	-I$(GDAL_ROOT)/gnm
+endif
+
 ifeq ($(HAVE_GEOS),yes)
 CPPFLAGS 	:=	$(CPPFLAGS) -DHAVE_GEOS=1 $(GEOS_CFLAGS)
 endif
@@ -136,6 +141,12 @@ gdalasyncread$(EXE):	gdalasyncread.$(OBJ_EXT) $(DEP_LIBS)
 testreprojmulti$(EXE):	testreprojmulti.$(OBJ_EXT) $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) $< $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
+gnmmanage$(EXE):	gnmmanage.$(OBJ_EXT) commonutils.$(OBJ_EXT) $(DEP_LIBS)
+	$(LD) $(LNK_FLAGS) $< commonutils.$(OBJ_EXT) $(XTRAOBJ) $(CONFIG_LIBS) -o $@
+
+gnmanalyse$(EXE):	gnmanalyse.$(OBJ_EXT) commonutils.$(OBJ_EXT) $(DEP_LIBS)
+	$(LD) $(LNK_FLAGS) $< commonutils.$(OBJ_EXT) $(XTRAOBJ) $(CONFIG_LIBS) -o $@
+
 clean:
 	$(RM) *.o $(BIN_LIST) core gdal-config gdal-config-inst
 
@@ -152,6 +163,7 @@ gdal-config:	gdal-config.in ../GDALmake.opt ./GNUmakefile ../VERSION
 	echo 'CONFIG_DATA="$(GDAL_ROOT)/data"' >> gdal-config
 	echo 'CONFIG_VERSION="'`cat ../VERSION`'"' >> gdal-config
 	echo 'CONFIG_OGR_ENABLED=$(OGR_ENABLED)' >> gdal-config
+	echo 'CONFIG_GNM_ENABLED=$(GNM_ENABLED)' >> gdal-config
 	echo 'CONFIG_FORMATS="$(GDAL_FORMATS)"' >> gdal-config
 	cat gdal-config.in >> gdal-config
 	chmod a+x gdal-config
@@ -166,6 +178,7 @@ gdal-config-inst:	gdal-config.in ../GDALmake.opt ./GNUmakefile ../VERSION
 	echo 'CONFIG_DATA="$(INST_DATA)"' >> gdal-config-inst
 	echo 'CONFIG_VERSION="'`cat ../VERSION`'"' >> gdal-config-inst
 	echo 'CONFIG_OGR_ENABLED=$(OGR_ENABLED)' >> gdal-config-inst
+	echo 'CONFIG_GNM_ENABLED=$(GNM_ENABLED)' >> gdal-config-inst
 	echo 'CONFIG_FORMATS="$(GDAL_FORMATS)"' >> gdal-config-inst
 	cat gdal-config.in >> gdal-config-inst
 	chmod a+x gdal-config-inst

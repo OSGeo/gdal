@@ -31,6 +31,10 @@ OGR_OBJ = ogr\ogrsf_frmts\ogrsf_frmts.lib ogr\ogr.lib
 OGR_INCLUDE = $(OGR_BASE_INCLUDE) \
 		/INCLUDE:$(SYM_PREFIX)OGRRegisterAll
 
+!IFDEF INCLUDE_GNM_FRMTS        
+CPPFLAGS = $(CPPFLAGS) -DGNM_ENABLED        
+!ENDIF
+
 !IF DEFINED(STDCALL) && !DEFINED(WIN64)
 
 !IF $(MSVC_VER) < 1500
@@ -50,18 +54,18 @@ BASE_INCLUDE =	/INCLUDE:$(SYM_PREFIX)GDALSimpleImageWarp \
 		/INCLUDE:$(SYM_PREFIX)OCTNewCoordinateTransformation
 !ENDIF
 
-LIBOBJ = port\*.obj gcore\*.obj alg\*.obj frmts\o\*.obj $(OGR_OBJ) $(VB6_OBJ)
+LIBOBJ = port\*.obj gcore\*.obj alg\*.obj frmts\o\*.obj $(OGR_OBJ) gnm\*.obj gnm\gnm_frmts\o\*.obj $(VB6_OBJ)
 	
 DISTDIR	=	gdal_$(VERSION)
 
-default:	port_dir ogr_dir core_dir frmts_dir $(VB6_TARGET) $(GDAL_DLL) \
+default:	port_dir ogr_dir gnm_dir core_dir frmts_dir $(VB6_TARGET) $(GDAL_DLL) \
 		plugin_dir apps_dir 
 
 staticlib:
 	if exist gdal.lib del gdal.lib
 	lib /nologo /out:gdal.lib $(LIBOBJ)
 
-target-lib: port_dir ogr_dir core_dir frmts_dir dll
+target-lib: port_dir ogr_dir gnm_dir core_dir frmts_dir dll 
 
 clean:	
 	cd port
@@ -77,6 +81,9 @@ clean:
 	$(MAKE) /f makefile.vc clean
 	cd ..
 	cd ogr
+	$(MAKE) /f makefile.vc allclean
+	cd ..
+    cd gnm
 	$(MAKE) /f makefile.vc allclean
 	cd ..
 	cd apps
@@ -146,6 +153,11 @@ ogr_dir:      port_dir
 	$(MAKE) /f makefile.vc ogr.lib frmts
 	cd ..
 
+gnm_dir:      ogr_dir
+    cd gnm
+    $(MAKE) /f makefile.vc gnm.lib frmts
+    cd ..
+
 lib_dist:	default
 	rm -rf $(DISTDIR)
 	mkdir $(DISTDIR)
@@ -188,6 +200,11 @@ install: $(GDAL_DLL) plugin_dir apps_dir
 !ENDIF
 	cd ..\..
 !ENDIF
+!IFDEF INCLUDE_GNM_FRMTS
+    cd gnm
+    $(MAKE) /f makefile.vc install
+    cd ..
+!ENDIF
 
 devinstall: install
 	-mkdir $(INCDIR)
@@ -201,6 +218,9 @@ devinstall: install
 	copy frmts\vrt\*.h $(INCDIR)
 !IFDEF INCLUDE_OGR_FRMTS
 	copy ogr\ogrsf_frmts\*.h $(INCDIR)
+!ENDIF
+!IFDEF INCLUDE_GNM_FRMTS
+	copy gnm\*.h $(INCDIR)
 !ENDIF
 	copy gdal_i.lib $(LIBDIR)
 

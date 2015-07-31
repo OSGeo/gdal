@@ -32,6 +32,10 @@
 #include "gdal_frmts.h"
 #include "ogrsf_frmts.h"
 
+#ifdef GNM_ENABLED
+   #include "gnm_frmts.h"
+#endif
+
 CPL_CVSID("$Id$");
 
 #ifdef notdef
@@ -530,6 +534,10 @@ void CPL_STDCALL GDALAllRegister()
 
 #ifdef FRMT_wmts
     GDALRegister_WMTS();
+#endif
+
+#ifdef GNM_ENABLED
+    GNMRegisterAllInternal();
 #endif
 
     OGRRegisterAllInternal();

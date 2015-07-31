@@ -185,3 +185,13 @@ def get_gdallocationinfo_path():
 #
 def get_gdalsrsinfo_path():
     return get_cli_utility_path('gdalsrsinfo')
+    
+###############################################################################
+#
+def get_gnmmanage_path():
+    return get_cli_utility_path('gnmmanage')
+    
+###############################################################################
+#
+def get_gnmanalyse_path():
+    return get_cli_utility_path('gnmanalyse')

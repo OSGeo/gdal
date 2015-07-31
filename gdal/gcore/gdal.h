@@ -312,6 +312,11 @@ typedef GIntBig GSpacing;
  */
 #define GDAL_DCAP_VECTOR     "DCAP_VECTOR"
 
+/** Capability set by a driver having vector capability.
+ * @since GDAL 2.1
+ */
+#define GDAL_DCAP_GNM         "DCAP_GNM"
+
 /** Capability set by a driver that can create fields with NOT NULL constraint. 
  * @since GDAL 2.0
  */
@@ -375,6 +380,14 @@ GDALDatasetH CPL_DLL CPL_STDCALL GDALOpenShared( const char *, GDALAccess ) CPL_
  * @since GDAL 2.0
  */
 #define     GDAL_OF_VECTOR          0x04
+
+
+/** Allow gnm drivers to be used.
+ * Used by GDALOpenEx().
+ * @since GDAL 2.1
+ */
+#define     GDAL_OF_GNM             0x08
+
 /* Some space for GDAL 3.0 new types ;-) */
 /*#define     GDAL_OF_OTHER_KIND1   0x08 */
 /*#define     GDAL_OF_OTHER_KIND2   0x10 */

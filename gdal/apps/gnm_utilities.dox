@@ -1,0 +1,140 @@
+/*! \page gnm_utilities GNM Utility Programs
+
+There are several Geographical Network Model (GNM) utilities:
+
+<ul>
+<li> \ref gnmmanage - Manages networks
+<li> \ref gnmanalyse - Analyses networks
+</ul>
+
+*/
+
+
+
+
+/*! \page gnmmanage gnmmanage
+
+Manages networks
+
+\section gnmmanage_synopsis SYNOPSIS
+
+\verbatim
+gnmmanage [--help][-q][-quiet][--long-usage]
+          [info]
+          [create [-f format_name] [-t_srs srs_name] [-dsco NAME=VALUE]... ]
+          [import src_dataset_name] [-l layer_name]
+          [connect gfid_src gfid_tgt gfid_con [-c cost] [-ic inv_cost] [-dir dir]]
+          [disconnect gfid_src gfid_tgt gfid_con]
+          [rule rule_str]
+          [autoconnect tolerance]
+          [delete]
+          [change [-bl gfid][-unbl gfid][-unblall]]
+          gnm_name [layer [layer ...]]
+          
+\endverbatim
+
+\section gnmmanage_description DESCRIPTION
+
+The gnmmanage program can perform various managing operations on geographical networks in GDAL. In addition to creating and deleting networks this includes capabilities of managing network's features, topology and rules.
+
+<dl>
+
+<dt> <b>info</b>:</dt><dd> Different information about network: system and class layers, network metadata, network spatial reference. </dd>
+
+<dt> <b>create</b>:</dt><dd> Create network. </dd>
+<dl>
+    <dt> <b>-f</b> <i>format_name</i>:</dt><dd> Output file format name. </dd>
+    <dt> <b>-t_srs</b> <i>srs_name</i>:</dt><dd> Spatial reference input. </dd>
+    <dt> <b>-dsco</b> <i>NAME=VALUE</i>:</dt><dd> Network creation option set as pair name=value. </dd>
+</dl>
+
+<dt> <b>import</b> <i>src_dataset_name</i>:</dt><dd> Import layer with dataset name to copy. </dd>
+<dl>
+    <dt> <b>-l</b> <i>layer_name</i>:</dt><dd> Layer name in dataset. If unset, 0 layer is copied. </dd>
+</dl>
+
+<dt> <b>connect</b> <i>gfid_src</i> <i>gfid_tgt</i> <i>gfid_con</i>:</dt><dd> Make a topological connection, where the gfid_src and gfid_tgt are vertexes and gfid_con is edge (gfid_con can be -1, so the system edge will be inserted). </dd>
+<dl>
+    <dt> <b>-c</b> <i>cost</i> <b>-ic</b> <i>inv_cost</i> <b>-dir</b> <i>dir</i>:</dt><dd> Manually assign the following values: the cost (weight), inverse cost and direction of the edge (optional). </dd>
+</dl>
+
+<dt> <b>disconnect</b> <i>gfid_src</i> <i>gfid_tgt</i> <i>gfid_con</i>:</dt><dd> Removes the connection from the graph. </dd>
+
+<dt> <b>rule</b> <i>rule_str</i>:</dt><dd> Creates a rule in the network by the given rule_str string. </dd>
+
+<dt> <b>autoconnect</b> <i>tolerance</i>:</dt><dd> Create topology automatically with the given double tolerance and layer names. In no layer name provided all layers of network will be used.</dd>
+
+<dt> <b>delete</b>:</dt><dd> Delete network. </dd>
+
+<dt> <b>change</b>:</dt><dd> Change blocking state of network edges or vertices. </dd>
+
+<dt> <b>-bl</b> <i>gfid</i>:</dt><dd> Block feature before the main operation. Blocking features are saved in the special layer. </dd>
+
+<dt> <b>-unbl</b> <i>gfid</i>:</dt><dd> Unblock feature before the main operation. </dd>
+
+<dt> <b>-unblall</b>:</dt><dd> Unblock all blocked features before the main operation. </dd>
+
+
+<dt> <i>gnm_name</i>:</dt><dd> The network to work with (path and name). </dd>
+
+<dt> <i>layer</i>:</dt><dd> The network layer name. </dd>
+
+</dl>
+
+\if man
+\section gnmmanage_author AUTHORS
+Mikhail Gusev <gusevmihs@gmail.com>
+Dmitry Baryshnikov <polimax@mail.ru>
+\endif
+*/
+
+
+
+
+/*! \page gnmanalyse gnmanalyse
+
+Analyses networks
+
+\section gnmanalyse_synopsis SYNOPSIS
+
+\verbatim
+gnmanalyse [--help][-q][-quiet][--long-usage]
+           [dijkstra start_gfid end_gfid [[-alo NAME=VALUE] ...]]]
+           [kpaths start_gfid end_gfid k [[-alo NAME=VALUE] ...]]]
+           [resource [[-alo NAME=VALUE] ...]]]
+           [-ds ds_name][-f ds_format][-l layer_name]
+           [[-dsco NAME=VALUE] ...][-lco NAME=VALUE]
+           gnm_name
+\endverbatim
+
+\section gnmanalyse_description DESCRIPTION
+
+The gnmanalyse program provides analysing capabilities of geographical networks in GDAL. The results of calculations are return in an OGRLayer format or as a console text output if such layer is undefined. All calculations are made considering the blocking state of features. 
+
+<dl>
+
+<dt> <b>dijkstra</b> <i>start_gfid</i> <i>end_gfid</i>:</dt><dd> Calculates the best path between two points using Dijkstra algorithm from start_gfid point to end_gfid point. </dd>
+
+<dt> <b>kpaths</b> <i>start_gfid</i> <i>end_gfid</i>:</dt><dd> Calculates K shortest paths between two points using Yen's algorithm (which internally uses Dijkstra algorithm for single path calculating) from start_gfid point to end_gfid point. </dd>
+
+<dt> <b>resource</b>:</dt><dd> Calculates the "resource distribution". The connected components search is performed using breadth-first search and starting from that features which are marked by rules as 'EMITTERS'. </dd>
+
+<dt> <b>-ds</b> <i>ds_name</i>:</dt><dd> The name&path of the dataset to save the layer with resulting paths. Not need to be existed dataset. </dd>
+
+<dt> <b>-f</b> <i>ds_format</i>:</dt><dd> Define this to set the format of newly created dataset. </dd>
+
+<dt> <b>-l</b> <i>layer_name</i>:</dt><dd> The name of the resulting layer. If the layer exist already - it will be rewritten. </dd>
+
+<dt> <i>gnm_name</i>:</dt><dd> The network to work with (path and name). </dd>
+
+<dt> <b>-dsco</b> <em>NAME=VALUE</em>:</dt><dd> Dataset creation option (format specific)</dd>
+<dt> <b>-lco</b><em>  NAME=VALUE</em>:</dt><dd> Layer creation option (format specific)</dd>
+<dt> <b>-alo</b><em>  NAME=VALUE</em>:</dt><dd> Algorithm option (format specific)</dd>
+</dl>
+
+\if man
+\section gnmmanage_author AUTHORS
+Mikhail Gusev <gusevmihs@gmail.com>
+Dmitry Baryshnikov <polimax@mail.ru>
+\endif
+*/

@@ -28,7 +28,7 @@ BUILD_FOR_CHEESESHOP = False
 # (may be overriden with setup.cfg or command line switches).
 # ---------------------------------------------------------------------------
 
-include_dirs = ['../../port', '../../gcore', '../../alg', '../../ogr/']
+include_dirs = ['../../port', '../../gcore', '../../alg', '../../ogr/', '../../ogr/ogrsf_frmts', '../../gnm']
 library_dirs = ['../../.libs', '../../']
 libraries = ['gdal']
 
@@ -232,15 +232,22 @@ array_module = Extension('osgeo._gdal_array',
                     extra_compile_args = extra_compile_args,
                     extra_link_args = extra_link_args)
 
+gnm_module = Extension('osgeo._gnm',
+                    sources=['extensions/gnm_wrap.cpp'],
+                    extra_compile_args = extra_compile_args,
+                    extra_link_args = extra_link_args)
+
 ext_modules = [gdal_module,
               gdalconst_module,
               osr_module,
-              ogr_module]
+              ogr_module,
+              gnm_module]
 
 py_modules = ['gdal',
               'ogr',
               'osr',
-              'gdalconst']
+              'gdalconst',
+              'gnm']
       
 if HAVE_NUMPY:
     ext_modules.append(array_module)
