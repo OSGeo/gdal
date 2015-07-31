@@ -201,6 +201,10 @@ DLLBUILD=1
 # vector formats. 
 INCLUDE_OGR_FRMTS = YES
 
+# Enable all GNM formats?  Comment out to disable
+# gnm formats.
+#INCLUDE_GNM_FRMTS = YES
+
 # Location of Visual C++ directory (only required for following SETARGV stuff)
 #VCDIR   = 	"D:\Software\VStudio\VC98"
 
@@ -640,7 +644,7 @@ ADD_LIBS	=
 GDAL_DLL =	gdal$(VERSION).dll
 
 INC	=	-I$(GDAL_ROOT)\port -I$(GDAL_ROOT)\ogr -I$(GDAL_ROOT)\gcore \
-		-I$(GDAL_ROOT)\alg -I$(GDAL_ROOT)\ogr\ogrsf_frmts
+		-I$(GDAL_ROOT)\alg -I$(GDAL_ROOT)\ogr\ogrsf_frmts  -I$(GDAL_ROOT)\gnm -I$(GDAL_ROOT)\gnm\gnm_frmts
 
 !IFDEF MSVC_VLD_DIR
 MSVC_VLD_FLAGS=-DMSVC_USE_VLD=1 -I$(MSVC_VLD_DIR)\include
@@ -655,11 +659,15 @@ MSVC_VLD_LIB=/LIBPATH:$(MSVC_VLD_DIR)/lib/Win32
 OGR_FLAG = -DOGR_ENABLED
 !ENDIF
 
+!IFDEF INCLUDE_GNM_FRMTS
+GNM_FLAG = -DGNM_ENABLED
+!ENDIF
+
 #LINKER_FLAGS =	/NODEFAULTLIB:LIBC 
 LINKER_FLAGS = $(EXTRA_LINKER_FLAGS) $(MSVC_VLD_LIB) $(LDEBUG)
 
 
-CFLAGS	=	$(OPTFLAGS) $(WARNFLAGS) $(SSEFLAGS) $(AVXFLAGS) $(INC) $(EXTRAFLAGS) $(OGR_FLAG) $(MSVC_VLD_FLAGS) -DGDAL_COMPILATION
+CFLAGS	=	$(OPTFLAGS) $(WARNFLAGS) $(SSEFLAGS) $(INC) $(AVXFLAGS) $(EXTRAFLAGS) $(OGR_FLAG) $(GNM_FLAG) $(MSVC_VLD_FLAGS) -DGDAL_COMPILATION
 CPPFLAGS = $(CFLAGS) 
 MAKE	=	nmake /nologo
 

@@ -8,6 +8,10 @@ GDAL_OBJ	=	$(GDAL_ROOT)/frmts/o/*.o \
 
 GDAL_OBJ += $(GDAL_ROOT)/ogr/ogrsf_frmts/o/*.o
 
+ifeq ($(GNM_ENABLED),yes)
+   GDAL_OBJ += $(GDAL_ROOT)/gnm/*.o $(GDAL_ROOT)/gnm/gnm_frmts/o/*.o
+endif
+
 include ./ogr/file.lst
 GDAL_OBJ += $(addprefix ./ogr/,$(OBJ))
 
@@ -44,7 +48,7 @@ ifeq ($(MACOSX_FRAMEWORK),yes)
 	install_name_tool -id ${OSX_VERSION_FRAMEWORK_PREFIX}/GDAL .libs/libgdal.dylib
 endif
 
-check-lib:	port-target core-target frmts-target ogr-target
+check-lib:	port-target core-target frmts-target ogr-target gnm-target
 	$(MAKE) $(LIBGDAL-yes)
 
 port-target:
@@ -52,6 +56,13 @@ port-target:
 
 ogr-target:
 	(cd ogr; $(MAKE) lib )
+
+ifeq ($(GNM_ENABLED),yes)
+gnm-target:
+	(cd gnm; $(MAKE) lib )
+else
+gnm-target:	;
+endif
 
 core-target:
 	(cd gcore; $(MAKE))
@@ -79,6 +90,7 @@ swig-modules:	apps-target
 clean:	lclean
 	(cd port; $(MAKE) clean)
 	(cd ogr; $(MAKE) clean)
+	(cd gnm; $(MAKE) clean)
 	(cd gcore; $(MAKE) clean)
 	(cd frmts; $(MAKE) clean)
 	(cd alg; $(MAKE) clean)
@@ -176,6 +188,7 @@ endif
 	(cd frmts; $(MAKE) install)
 	(cd alg; $(MAKE) install)
 	(cd ogr; $(MAKE) install)
+	(cd gnm; $(MAKE) install)
 	(cd apps; $(MAKE) install)
 ifneq ($(BINDINGS),)
 	(cd swig; $(MAKE) install)

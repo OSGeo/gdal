@@ -729,6 +729,7 @@ MYSQL_INC
 HAVE_MYSQL
 MYSQL_CONFIG
 OGR_ENABLED
+GNM_ENABLED
 OPT_GDAL_FORMATS
 ORACLE_OCI_LDFLAGS
 ORACLE_OCI_CFLAGS
@@ -23843,6 +23844,15 @@ fi
 OGR_ENABLED=$OGR_ENABLED
 
 
+if test "$with_gnm" = yes -o x"$with_gnm" = x ; then
+  echo checking for GNM ... enabled
+  GNM_ENABLED=yes
+else
+  echo checking for GNM ... disabled by user
+  GNM_ENABLED=no
+fi
+GNM_ENABLED=$GNM_ENABLED
+
 
 MYSQL_CONFIG=no
 
@@ -32447,6 +32457,9 @@ echo "  Statically link PROJ.4:    ${PROJ_STATIC}"
 
 
 echo "  enable OGR building:       ${OGR_ENABLED}"
+
+
+echo "  enable GNM building:       ${GNM_ENABLED}"
 
 
 echo "  enable pthread support:    ${PTHREAD_ENABLED}"
