@@ -35,7 +35,9 @@ import os
 import sys
 
 sys.path.append( '../pymod' )
+
 import gdaltest
+import ogrtest
 import shutil
 
 from osgeo import gdal
@@ -50,9 +52,19 @@ def gnm_filenetwork_create():
         shutil.rmtree('tmp/test_gnm')
     except:
         pass
+        
+    ogrtest.drv = None
+    ogrtest.have_gnm = 0
+        
+    try:
+        ogrtest.drv = gdal.GetDriverByName('GNMFile')
+    except:
+        pass
 
-    drv = gdal.GetDriverByName('GNMFile')
-    ds = drv.Create( 'tmp/', 0, 0, 0, gdal.GDT_Unknown, options = ['net_name=test_gnm', 'net_description=Test file based GNM', 'net_srs=EPSG:4326'] )
+    if ogrtest.drv is None:
+        return 'skip'    
+
+    ds = ogrtest.drv.Create( 'tmp/', 0, 0, 0, gdal.GDT_Unknown, options = ['net_name=test_gnm', 'net_description=Test file based GNM', 'net_srs=EPSG:4326'] )
     # cast to GNM
     dn = gnm.CastToNetwork(ds)
     if dn is None:
@@ -69,12 +81,16 @@ def gnm_filenetwork_create():
         return 'fail'
 
     dn = None
+    ogrtest.have_gnm = 1
     return 'success'
 
 ###############################################################################
 # Open file base network
 
 def gnm_filenetwork_open():
+    
+    if not ogrtest.have_gnm:
+        return 'skip'
 
     ds = gdal.OpenEx( 'tmp/test_gnm' )
     # cast to GNM
@@ -99,6 +115,9 @@ def gnm_filenetwork_open():
 # Import layers into file base network
 
 def gnm_import():
+    
+    if not ogrtest.have_gnm:
+        return 'skip'
 
     ds = gdal.OpenEx( 'tmp/test_gnm' )
 
@@ -132,6 +151,9 @@ def gnm_import():
 
 def gnm_autoconnect():
 
+    if not ogrtest.have_gnm:
+        return 'skip'
+        
     ds = gdal.OpenEx( 'tmp/test_gnm' )
     dgn = gnm.CastToGenericNetwork(ds)
     if dgn is None:
@@ -151,6 +173,9 @@ def gnm_autoconnect():
 
 def gnm_graph_dijkstra():
 
+    if not ogrtest.have_gnm:
+        return 'skip'
+        
     ds = gdal.OpenEx( 'tmp/test_gnm' )
     dn = gnm.CastToNetwork(ds)
     if dn is None:
@@ -169,12 +194,15 @@ def gnm_graph_dijkstra():
     dn.ReleaseResultSet(lyr)
     dn = None
     return 'success'
-
+import ogrtest
 ###############################################################################
 # KShortest Paths
 
 def gnm_graph_kshortest():
 
+    if not ogrtest.have_gnm:
+        return 'skip'
+        
     ds = gdal.OpenEx( 'tmp/test_gnm' )
     dn = gnm.CastToNetwork(ds)
     if dn is None:
@@ -199,6 +227,9 @@ def gnm_graph_kshortest():
 
 def gnm_graph_connectedcomponents():
 
+    if not ogrtest.have_gnm:
+        return 'skip'
+        
     ds = gdal.OpenEx( 'tmp/test_gnm' )
     dn = gnm.CastToNetwork(ds)
     if dn is None:
@@ -224,6 +255,9 @@ def gnm_graph_connectedcomponents():
 
 def gnm_delete(): 
 
+    if not ogrtest.have_gnm:
+        return 'skip'
+        
     gdal.GetDriverByName('GNMFile').Delete('tmp/test_gnm')
 
     try:
