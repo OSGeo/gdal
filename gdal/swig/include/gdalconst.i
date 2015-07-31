@@ -146,6 +146,7 @@
 %constant OF_ALL     = GDAL_OF_ALL;
 %constant OF_RASTER = GDAL_OF_RASTER;
 %constant OF_VECTOR = GDAL_OF_VECTOR;
+%constant OF_GNM = GDAL_OF_GNM;
 %constant OF_READONLY = GDAL_OF_READONLY;
 %constant OF_UPDATE = GDAL_OF_UPDATE;
 %constant OF_SHARED = GDAL_OF_SHARED;

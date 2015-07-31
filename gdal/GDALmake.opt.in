@@ -50,6 +50,7 @@ BINDINGS	=	@BINDINGS@
 
 HAVE_OGDI = @HAVE_OGDI@
 OGR_ENABLED = @OGR_ENABLED@
+GNM_ENABLED = @GNM_ENABLED@
 
 OSX_FRAMEWORK_PREFIX = /Library/Frameworks/GDAL.framework
 OSX_VERSION_FRAMEWORK_PREFIX = ${OSX_FRAMEWORK_PREFIX}/Versions/@GDAL_VERSION_MAJOR@.@GDAL_VERSION_MINOR@
@@ -84,7 +85,8 @@ endif
 
 GDAL_INCLUDE	=	-I$(GDAL_ROOT)/port -I$(GDAL_ROOT)/gcore \
 			-I$(GDAL_ROOT)/alg \
-			-I$(GDAL_ROOT)/ogr -I$(GDAL_ROOT)/ogr/ogrsf_frmts
+                        -I$(GDAL_ROOT)/ogr -I$(GDAL_ROOT)/ogr/ogrsf_frmts \
+                        -I$(GDAL_ROOT)/gnm
 
 # libtool targets and help variables
 LIBGDAL	:=		libgdal.la
@@ -475,6 +477,10 @@ GDAL_LIBS	:= $(GDAL_LIB) $(OCI_LIB) $(GDAL_LIBS)
 CPPFLAGS	:= -DOGR_ENABLED $(CPPFLAGS)
 else
 GDAL_LIBS	=	$(GDAL_LIB)
+endif
+
+ifeq ($(GNM_ENABLED),yes)
+CPPFLAGS	:= -DGNM_ENABLED $(CPPFLAGS)
 endif
 
 #

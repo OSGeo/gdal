@@ -10,9 +10,9 @@ GDALLIB	=    $(GDAL_ROOT)\gdal.lib
 
 JAVA_RUN = $(JAVA) -Djava.library.path=. -cp gdal.jar;build\apps
 
-OBJ	=	gdal_wrap.obj gdalconst_wrap.obj ogr_wrap.obj osr_wrap.obj
+OBJ	=	gdal_wrap.obj gdalconst_wrap.obj ogr_wrap.obj osr_wrap.obj gnm_wrap.obj
 
-all:  ogr_dir gdal_dir const_dir osr_dir
+all:  ogr_dir gdal_dir const_dir osr_dir gnm_dir
 	set JAVA_HOME="$(JAVA_HOME)"
 	$(ANT_HOME)\bin\ant
 
@@ -23,6 +23,12 @@ ogr_dir:
 	cd ..
 	link ogr_wrap.obj $(GDALLIB) /out:ogrjni.dll /DLL
 	if exist ogrjni.dll.manifest mt -manifest ogrjni.dll.manifest -outputresource:ogrjni.dll;2
+
+gnm_dir:
+	cd gnm
+	$(MAKE) /f makefile.vc
+	ling gnm_wrap.obj $(GDALLIB) /out:gnmjni.dll /DLL
+	if exist gnmjni.dll.manifest mt -manifest gnmjni.dll.manifest -outputresource:gnmjni.dll;2
 
 gdal_dir:
 	cd gdal
@@ -67,6 +73,9 @@ clean:
 	$(MAKE) /f makefile.vc clean
 	cd ..
 	cd ogr
+	$(MAKE) /f makefile.vc clean
+	cd ..
+	cd dnm
 	$(MAKE) /f makefile.vc clean
 	cd ..
 	cd const

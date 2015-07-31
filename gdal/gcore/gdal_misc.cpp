@@ -2506,6 +2506,9 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
                 if( nOptions == GDAL_OF_VECTOR &&
                     !CSLFetchBoolean( papszMD, GDAL_DCAP_VECTOR, FALSE ) )
                     continue;
+                if( nOptions == GDAL_OF_GNM &&
+                    !CSLFetchBoolean( papszMD, GDAL_DCAP_GNM, FALSE ) )
+                    continue;
 
                 if( CSLFetchBoolean( papszMD, GDAL_DCAP_OPEN, FALSE ) )
                     pszRFlag = "r";
@@ -2534,6 +2537,8 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
                     pszKind = "raster";
                 else if( CSLFetchBoolean( papszMD, GDAL_DCAP_VECTOR, FALSE ) )
                     pszKind = "vector";
+                else if( CSLFetchBoolean( papszMD, GDAL_DCAP_GNM, FALSE ) )
+                    pszKind = "geography network";
                 else
                     pszKind = "unknown kind";
 
@@ -2585,6 +2590,8 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
                 printf( "  Supports: Raster\n" );
             if( CSLFetchBoolean( papszMD, GDAL_DCAP_VECTOR, FALSE ) )
                 printf( "  Supports: Vector\n" );
+            if( CSLFetchBoolean( papszMD, GDAL_DCAP_GNM, FALSE ) )
+                printf( "  Supports: Geography Network\n" );
 
             const char* pszExt = CSLFetchNameValue( papszMD, GDAL_DMD_EXTENSIONS );
             if( pszExt != NULL )
