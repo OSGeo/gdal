@@ -793,8 +793,8 @@ CPLErr GDALRasterBand::RasterIOResampled( CPL_UNUSED GDALRWFlag eRWFlag,
     char* apszOptions[4];
     char szBuffer0[64], szBuffer1[64], szBuffer2[64];
     sprintf(szBuffer0, "DATAPOINTER=%s", szBuffer);
-    sprintf(szBuffer1, "PIXELOFFSET="CPL_FRMT_GIB, (GIntBig)nPixelSpace);
-    sprintf(szBuffer2, "LINEOFFSET="CPL_FRMT_GIB, (GIntBig)nLineSpace);
+    sprintf(szBuffer1, "PIXELOFFSET=" CPL_FRMT_GIB, (GIntBig)nPixelSpace);
+    sprintf(szBuffer2, "LINEOFFSET=" CPL_FRMT_GIB, (GIntBig)nLineSpace);
     apszOptions[0] = szBuffer0;
     apszOptions[1] = szBuffer1;
     apszOptions[2] = szBuffer2;
@@ -1196,8 +1196,8 @@ CPLErr GDALDataset::RasterIOResampled( CPL_UNUSED GDALRWFlag eRWFlag,
         char* apszOptions[4];
         char szBuffer0[64], szBuffer1[64], szBuffer2[64];
         sprintf(szBuffer0, "DATAPOINTER=%s", szBuffer);
-        sprintf(szBuffer1, "PIXELOFFSET="CPL_FRMT_GIB, (GIntBig)nPixelSpace);
-        sprintf(szBuffer2, "LINEOFFSET="CPL_FRMT_GIB, (GIntBig)nLineSpace);
+        sprintf(szBuffer1, "PIXELOFFSET=" CPL_FRMT_GIB, (GIntBig)nPixelSpace);
+        sprintf(szBuffer2, "LINEOFFSET=" CPL_FRMT_GIB, (GIntBig)nLineSpace);
         apszOptions[0] = szBuffer0;
         apszOptions[1] = szBuffer1;
         apszOptions[2] = szBuffer2;
