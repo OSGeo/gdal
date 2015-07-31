@@ -179,7 +179,7 @@ class OGRGNMWrappedResultLayer;
  * @since GDAL 2.1
  */
 
-class GNMGenericNetwork: public GNMNetwork
+class CPL_DLL GNMGenericNetwork: public GNMNetwork
 {
 public:
     GNMGenericNetwork();
