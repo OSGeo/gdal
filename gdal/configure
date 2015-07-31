@@ -23843,6 +23843,14 @@ else
 fi
 OGR_ENABLED=$OGR_ENABLED
 
+GNM_ENABLED=no
+
+# Check whether --with-gnm was given.
+if test "${with_gnm+set}" = set; then :
+  withval=$with_gnm;
+else
+  with_gnm=no
+fi
 
 if test "$with_gnm" = yes -o x"$with_gnm" = x ; then
   echo checking for GNM ... enabled

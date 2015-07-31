@@ -2683,9 +2683,14 @@ AC_SUBST(OGR_ENABLED,$OGR_ENABLED)
 
 dnl ---------------------------------------------------------------------------
 
+GNM_ENABLED=no
+
 AC_ARG_WITH(gnm,[  --without-gnm         Don't build GNM into shared library],,)
 
-if test "$with_gnm" = yes -o x"$with_gnm" = x ; then
+if test "$with_gnm" = "no" ; then
+  GNM_ENABLED=no
+  echo "GNM support disabled."
+elif test "$with_gnm" = "yes" -o "$with_gnm" = "" ; then
   echo checking for GNM ... enabled
   GNM_ENABLED=yes
 else
