@@ -2,9 +2,10 @@ GDAL_ROOT	=	..\..
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
+DIRLIST		=	file db
+
 !IFDEF INCLUDE_GNM_FRMTS
 
-DIRLIST		=	file db
 EXTRAFLAGS	=	$(EXTRAFLAGS) -DGNMFILE_ENABLED -DGNMDB_ENABLED
 
 default:	o\gnmregisterall.obj subdirs
@@ -19,7 +20,9 @@ subdirs:
 o\gnmregisterall.obj:	gnmregisterall.cpp $(GDAL_ROOT)\nmake.opt
 	$(CC) $(CFLAGS) $(EXTRAFLAGS) /c gnmregisterall.cpp
 	copy gnmregisterall.obj o        
-                
+    
+!ENDIF
+  
 clean:
 	-del o\*.obj *.obj
 	-for %d in ( $(DIRLIST) ) do \
@@ -27,6 +30,3 @@ clean:
 		&& $(MAKE) /f makefile.vc clean \
 		&& cd .. \
 		|| exit 1
-    $(MAKE) /f makefile.vc clean
-
-!ENDIF

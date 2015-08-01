@@ -75,7 +75,7 @@ clean:
 	cd ogr
 	$(MAKE) /f makefile.vc clean
 	cd ..
-	cd dnm
+	cd gnm
 	$(MAKE) /f makefile.vc clean
 	cd ..
 	cd const

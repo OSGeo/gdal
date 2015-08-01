@@ -22,7 +22,7 @@ GNM_PROGRAMS =	gnmmanage.exe gnmanalyse.exe
 
 default:	gdal_translate.exe gdalinfo.exe gdalserver.exe gdaladdo.exe gdalwarp.exe \
 		nearblack.exe gdalmanage.exe gdalenhance.exe gdaltransform.exe\
-		gdaldem.exe gdallocationinfo.exe gdalsrsinfo.exe $(OGR_PROGRAMS)
+		gdaldem.exe gdallocationinfo.exe gdalsrsinfo.exe $(OGR_PROGRAMS) $(GNM_PROGRAMS)
 
 all:	default multireadtest.exe \
 			dumpoverviews.exe gdalwarpsimple.exe gdalflattenmask.exe \

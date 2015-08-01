@@ -605,7 +605,7 @@ typedef enum
  * @since GDAL 2.1
  */
 
-class GNMRule : public CPLString
+class CPL_DLL GNMRule : public CPLString
 {
 public:
     GNMRule();
