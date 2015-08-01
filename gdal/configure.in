@@ -2685,12 +2685,12 @@ dnl ---------------------------------------------------------------------------
 
 GNM_ENABLED=no
 
-AC_ARG_WITH(gnm,[  --without-gnm         Don't build GNM into shared library],,)
+AC_ARG_WITH(gnm,[  --with-gnm            Build GNM into shared library],,)
 
-if test "$with_gnm" = "no" ; then
+if test "$with_gnm" = "" ; then
   GNM_ENABLED=no
   echo "GNM support disabled."
-elif test "$with_gnm" = "yes" -o "$with_gnm" = "" ; then
+elif test "$with_gnm" = "yes"; then
   echo checking for GNM ... enabled
   GNM_ENABLED=yes
 else
@@ -4657,6 +4657,7 @@ LOC_MSG([  SWIG Bindings:             ${WHAT_BINDINGS}])
 LOC_MSG()
 LOC_MSG([  Statically link PROJ.4:    ${PROJ_STATIC}])
 LOC_MSG([  enable OGR building:       ${OGR_ENABLED}])
+LOC_MSG([  enable GNM building:       ${GNM_ENABLED}])
 LOC_MSG([  enable pthread support:    ${PTHREAD_ENABLED}])
 LOC_MSG([  enable POSIX iconv support:${am_cv_func_iconv}])
 LOC_MSG([  hide internal symbols:     ${HAVE_HIDE_INTERNAL_SYMBOLS}])
