@@ -52,7 +52,7 @@ GNMRule::GNMRule(const GNMRule &oRule) : CPLString(oRule)
     m_soSrcLayerName = oRule.m_soSrcLayerName;
     m_soTgtLayerName = oRule.m_soTgtLayerName;
     m_soConnLayerName = oRule.m_soConnLayerName;
-    m_bAllow = oRule.m_soConnLayerName;
+    m_bAllow = oRule.m_bAllow;
     m_bValid = oRule.m_bValid;
     m_bAny = oRule.m_bAny;
 }
