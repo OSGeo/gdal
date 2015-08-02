@@ -24,6 +24,7 @@ atr;LINK_ID;COUNT;X;Y;foo
 frm;decimal(10);decimal(4);decimal(9,7);decimal(9,7);string(1)
 num;1
 rec;1;1;2.5;49.5;"U"
+rec;1;2;2.7;49.7;"U"
 rec;10;1;2.5;49.5;"U"
 end;1
 
