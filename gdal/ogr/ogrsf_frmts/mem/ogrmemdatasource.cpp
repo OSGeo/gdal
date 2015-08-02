@@ -68,7 +68,7 @@ OGRLayer *
 OGRMemDataSource::ICreateLayer( const char * pszLayerName,
                                 OGRSpatialReference *poSRS,
                                 OGRwkbGeometryType eType,
-                                CPL_UNUSED char ** papszOptions )
+                                char ** papszOptions )
 {
 /* -------------------------------------------------------------------- */
 /*      Create the layer object.                                        */
@@ -76,6 +76,9 @@ OGRMemDataSource::ICreateLayer( const char * pszLayerName,
     OGRMemLayer *poLayer;
 
     poLayer = new OGRMemLayer( pszLayerName, poSRS, eType );
+    
+    if( CSLFetchBoolean(papszOptions, "ADVERTIZE_UTF8", FALSE) )
+        poLayer->SetAdvertizeUTF8(TRUE);
 
 /* -------------------------------------------------------------------- */
 /*      Add layer to data source layer list.                            */
