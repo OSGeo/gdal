@@ -294,7 +294,7 @@ void OGRIDFDataSource::Parse()
                 poLinkLyr->GetLayerDefn()->GetGeomFieldDefn(0)->GetSpatialRef();
             while( (poFeat = poLinkLyr->GetNextFeature()) != NULL )
             {
-                int nLinkID  = poFeat->GetFieldAsInteger64(iLinkID);
+                GIntBig nLinkID = poFeat->GetFieldAsInteger64(iLinkID);
                 std::map<GIntBig, OGRLineString*>::iterator
                     oMapLinkCoordinateIter = oMapLinkCoordinate.find(nLinkID);
                 OGRLineString* poLS = (OGRLineString*)poFeat->GetGeometryRef();
