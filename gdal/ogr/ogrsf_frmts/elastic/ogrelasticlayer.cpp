@@ -34,6 +34,7 @@
 #include "ogr_api.h"
 #include "ogr_p.h"
 #include <json.h> // JSON-C
+#include "../geojson/ogrgeojsonwriter.h"
 
 CPL_CVSID("$Id$");
 
@@ -201,6 +202,8 @@ CPLString OGRElasticLayer::BuildMap() {
 
 static void BuildGeoJSONGeometry(json_object* geometry, OGRGeometry* poGeom)
 {
+    const int nPrecision = 10;
+    double dfEps = pow(10.0, -(double)nPrecision);
     const char* pszGeomType = "";
     switch( wkbFlatten(poGeom->getGeometryType()) )
     {
@@ -222,8 +225,8 @@ static void BuildGeoJSONGeometry(json_object* geometry, OGRGeometry* poGeom)
             OGRPoint* poPoint = (OGRPoint*)poGeom;
             json_object *coordinates = json_object_new_array();
             json_object_object_add(geometry, "coordinates", coordinates);
-            json_object_array_add(coordinates, json_object_new_double(poPoint->getX()));
-            json_object_array_add(coordinates, json_object_new_double(poPoint->getY()));
+            json_object_array_add(coordinates, json_object_new_double_with_precision(poPoint->getX(), nPrecision));
+            json_object_array_add(coordinates, json_object_new_double_with_precision(poPoint->getY(), nPrecision));
             break;
         }
         
@@ -236,8 +239,8 @@ static void BuildGeoJSONGeometry(json_object* geometry, OGRGeometry* poGeom)
             {
                 json_object *point = json_object_new_array();
                 json_object_array_add(coordinates, point);
-                json_object_array_add(point, json_object_new_double(poLS->getX(i)));
-                json_object_array_add(point, json_object_new_double(poLS->getY(i)));
+                json_object_array_add(point, json_object_new_double_with_precision(poLS->getX(i), nPrecision));
+                json_object_array_add(point, json_object_new_double_with_precision(poLS->getY(i), nPrecision));
             }
             break;
         }
@@ -254,10 +257,13 @@ static void BuildGeoJSONGeometry(json_object* geometry, OGRGeometry* poGeom)
                 OGRLineString* poLS = (i==0)?poPoly->getExteriorRing():poPoly->getInteriorRing(i-1);
                 for(int j=0;j<poLS->getNumPoints();j++)
                 {
+                    if( j > 0 && fabs(poLS->getX(j) - poLS->getX(j-1)) < dfEps &&
+                        fabs(poLS->getY(j) - poLS->getY(j-1)) < dfEps )
+                        continue;
                     json_object *point = json_object_new_array();
                     json_object_array_add(ring, point);
-                    json_object_array_add(point, json_object_new_double(poLS->getX(j)));
-                    json_object_array_add(point, json_object_new_double(poLS->getY(j)));
+                    json_object_array_add(point, json_object_new_double_with_precision(poLS->getX(j), nPrecision));
+                    json_object_array_add(point, json_object_new_double_with_precision(poLS->getY(j), nPrecision));
                 }
             }
             break;
@@ -273,8 +279,8 @@ static void BuildGeoJSONGeometry(json_object* geometry, OGRGeometry* poGeom)
                 json_object *point = json_object_new_array();
                 json_object_array_add(coordinates, point);
                 OGRPoint* poPoint = (OGRPoint*) poMP->getGeometryRef(i);
-                json_object_array_add(point, json_object_new_double(poPoint->getX()));
-                json_object_array_add(point, json_object_new_double(poPoint->getY()));
+                json_object_array_add(point, json_object_new_double_with_precision(poPoint->getX(), nPrecision));
+                json_object_array_add(point, json_object_new_double_with_precision(poPoint->getY(), nPrecision));
             }
             break;
         }
@@ -293,8 +299,8 @@ static void BuildGeoJSONGeometry(json_object* geometry, OGRGeometry* poGeom)
                 {
                     json_object *point = json_object_new_array();
                     json_object_array_add(ls, point);
-                    json_object_array_add(point, json_object_new_double(poLS->getX(j)));
-                    json_object_array_add(point, json_object_new_double(poLS->getY(j)));
+                    json_object_array_add(point, json_object_new_double_with_precision(poLS->getX(j), nPrecision));
+                    json_object_array_add(point, json_object_new_double_with_precision(poLS->getY(j), nPrecision));
                 }
             }
             break;
@@ -317,10 +323,13 @@ static void BuildGeoJSONGeometry(json_object* geometry, OGRGeometry* poGeom)
                     OGRLineString* poLS = (j==0)?poPoly->getExteriorRing():poPoly->getInteriorRing(j-1);
                     for(int k=0;k<poLS->getNumPoints();k++)
                     {
+                        if( k > 0 && fabs(poLS->getX(k)- poLS->getX(k-1)) < dfEps &&
+                            fabs(poLS->getY(k) - poLS->getY(k-1)) < dfEps )
+                            continue;
                         json_object *point = json_object_new_array();
                         json_object_array_add(ring, point);
-                        json_object_array_add(point, json_object_new_double(poLS->getX(k)));
-                        json_object_array_add(point, json_object_new_double(poLS->getY(k)));
+                        json_object_array_add(point, json_object_new_double_with_precision(poLS->getX(k), nPrecision));
+                        json_object_array_add(point, json_object_new_double_with_precision(poLS->getY(k), nPrecision));
                     }
                 }
             }
