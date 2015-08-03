@@ -13,7 +13,8 @@ Driver is <b>WRITE Only</b>
 <p>
 
 <a href="http://elasticsearch.org/">ElasticSearch</a> is an Enterprise-level search engine for a variety of data sources. It supports full-text indexing and geospatial querying of those data in a fast and efficient manor using a predefined REST API. This driver serializes all of the supported OGR file formats in to an ElasticSearch index.
-<br> However, the driver is limited in the geometry it handles: even if polygons are provided as input, they are stored as <a href="http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/mapping-geo-point-type.html">geo point</a> and the "center" of the polygon is used as value of the point.
+<br> In GDAL 2.0 and earlier, the driver was limited in the geometry it handles: even if polygons were provided as input, they were stored as <a href="http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/mapping-geo-point-type.html">geo point</a> and the "center" of the polygon is used as value of the point.
+Starting with GDAL 2.1,  <a href="https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-geo-shape-type.html">geo_shape</a> is used to store all geometry types (except curve geometries that are not handled by ElasticSearch and will be approximated to their linear equivalents).
 </p>
 
 <h2>Field definitions</h2>
