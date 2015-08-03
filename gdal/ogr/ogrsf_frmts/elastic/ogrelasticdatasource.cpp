@@ -69,7 +69,8 @@ OGRElasticDataSource::~OGRElasticDataSource() {
 /************************************************************************/
 
 int OGRElasticDataSource::TestCapability(const char * pszCap) {
-    if (EQUAL(pszCap, ODsCCreateLayer))
+    if (EQUAL(pszCap, ODsCCreateLayer) ||
+        EQUAL(pszCap, ODsCCreateGeomFieldAfterCreateLayer) )
         return TRUE;
     else
         return FALSE;
@@ -92,13 +93,43 @@ OGRLayer *OGRElasticDataSource::GetLayer(int iLayer) {
 
 OGRLayer * OGRElasticDataSource::ICreateLayer(const char * pszLayerName,
                                               OGRSpatialReference *poSRS,
-                                              CPL_UNUSED OGRwkbGeometryType eType,
-                                              CPL_UNUSED char ** papszOptions) {
+                                              OGRwkbGeometryType eGType,
+                                              char ** papszOptions)
+{
+    if( bOverwrite || CSLFetchBoolean(papszOptions, "OVERWRITE", FALSE) )
+    {
+        // If we are overwriting, then delete the current index if it exists
+        DeleteIndex(CPLSPrintf("%s/%s", GetName(), pszLayerName));
+    }
+    
+    // Create the index
+    if( !UploadFile(CPLSPrintf("%s/%s", GetName(), pszLayerName), "") )
+        return NULL;
+
+    // If we have a user specified mapping, then go ahead and update it now
+    const char* pszLayerMapping = pszMapping;
+    if (pszLayerMapping != NULL) {
+        if( !UploadFile(CPLSPrintf("%s/%s/FeatureCollection/_mapping", GetName(), pszLayerName),
+                   pszLayerMapping) )
+        {
+            return NULL;
+        }
+    }
+    
+    OGRElasticLayer* poLayer = new OGRElasticLayer(pszName, pszLayerName, this, TRUE, papszOptions);
     nLayers++;
     papoLayers = (OGRElasticLayer **) CPLRealloc(papoLayers, nLayers * sizeof (OGRElasticLayer*));
-    papoLayers[nLayers - 1] = new OGRElasticLayer(pszName, pszLayerName, this, poSRS, TRUE);
+    papoLayers[nLayers - 1] = poLayer;
+    
+    if( eGType != wkbNone )
+    {
+        const char* pszGeometryName = CSLFetchNameValueDef(papszOptions, "GEOMETRY_NAME", "geometry");
+        OGRGeomFieldDefn oFieldDefn(pszGeometryName, eGType);
+        oFieldDefn.SetSpatialRef(poSRS);
+        poLayer->CreateGeomField(&oFieldDefn, FALSE);
+    }
 
-    return papoLayers[nLayers - 1];
+    return poLayer;
 }
 
 /************************************************************************/
@@ -131,7 +162,8 @@ void OGRElasticDataSource::DeleteIndex(const CPLString &url) {
 /*                            UploadFile()                              */
 /************************************************************************/
 
-void OGRElasticDataSource::UploadFile(const CPLString &url, const CPLString &data) {
+int OGRElasticDataSource::UploadFile(const CPLString &url, const CPLString &data) {
+    int bRet = TRUE;
     char** papszOptions = NULL;
     papszOptions = CSLAddNameValue(papszOptions, "POSTFIELDS", data.c_str());
     papszOptions = CSLAddNameValue(papszOptions, "HEADERS",
@@ -140,8 +172,17 @@ void OGRElasticDataSource::UploadFile(const CPLString &url, const CPLString &dat
     CPLHTTPResult* psResult = CPLHTTPFetch(url, papszOptions);
     CSLDestroy(papszOptions);
     if (psResult) {
+        if( psResult->pszErrBuf != NULL ||
+            (psResult->pabyData && strncmp((const char*) psResult->pabyData, "{\"error\":", strlen("{\"error\":")) == 0) )
+        {
+            bRet = FALSE;
+            CPLError(CE_Failure, CPLE_AppDefined, "%s",
+                        psResult->pabyData ? (const char*) psResult->pabyData :
+                        psResult->pszErrBuf);
+        }
         CPLHTTPDestroyResult(psResult);
     }
+    return bRet;
 }
 
 /************************************************************************/
