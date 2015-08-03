@@ -2100,17 +2100,17 @@ DGNCreateCellHeaderElem( DGNHandle hDGN, int nTotLength, const char *pszName,
         double sin_a = sin(-dfRotation * PI / 180.0);
         double dfZScale = 1.0; // Should we get this from somewhere?
         
-        anTrans[0] = (long) (cos_a * dfXScale * 214748);
-        anTrans[1] = (long) (sin_a * dfYScale * 214748);
-        anTrans[2] = (long) (sin_a * dfZScale * 214748);
+        anTrans[0] = (long) ( cos_a * dfXScale * 214748);
+        anTrans[1] = (long) ( sin_a * dfYScale * 214748);
+        anTrans[2] = (long) ( sin_a * dfZScale * 214748);
         
-        anTrans[3] = (long) (sin_a * dfXScale * 214748);
-        anTrans[4] = (long) (cos_a * dfYScale * 214748);
-        anTrans[5] = (long) (sin_a * dfZScale * 214748);
+        anTrans[3] = (long) (-sin_a * dfXScale * 214748);
+        anTrans[4] = (long) ( cos_a * dfYScale * 214748);
+        anTrans[5] = (long) ( sin_a * dfZScale * 214748);
 
-        anTrans[6] = (long) (sin_a * dfXScale * 214748);
-        anTrans[7] = (long) (sin_a * dfYScale * 214748);
-        anTrans[8] = (long) (cos_a * dfZScale * 214748);
+        anTrans[6] = (long) (-sin_a * dfXScale * 214748);
+        anTrans[7] = (long) (-sin_a * dfYScale * 214748);
+        anTrans[8] = (long) ( cos_a * dfZScale * 214748);
         
         DGN_WRITE_INT32( anTrans[0], psCore->raw_data + 76 );
         DGN_WRITE_INT32( anTrans[1], psCore->raw_data + 80 );
