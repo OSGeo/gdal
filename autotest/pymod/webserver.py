@@ -53,10 +53,6 @@ class GDAL_Handler(BaseHTTPRequestHandler):
             f.write('DELETE %s\n' % self.path)
             f.close()
 
-        if self.path.find('/fakeelasticsearch') != -1:
-            self.send_response(200)
-            self.end_headers()
-
         return
 
     def do_POST(self):
@@ -64,10 +60,6 @@ class GDAL_Handler(BaseHTTPRequestHandler):
             f = open('/tmp/log.txt', 'a')
             f.write('POST %s\n' % self.path)
             f.close()
-
-        if self.path.find('/fakeelasticsearch') != -1:
-            self.send_response(200)
-            self.end_headers()
 
         return
 
@@ -93,20 +85,8 @@ class GDAL_Handler(BaseHTTPRequestHandler):
                 self.end_headers()
                 return
 
-
-            # Below is for ElasticSearch
-            if self.path.find('/fakeelasticsearch') != -1:
-                if self.path == '/fakeelasticsearch/_status':
-                    self.send_response(200)
-                    self.end_headers()
-                    self.elastic_search = True
-                    return
-                else:
-                    self.send_error(404,'File Not Found: %s' % self.path)
-                    return
-
             # Below is for geocoding
-            elif self.path.find('/geocoding') != -1:
+            if self.path.find('/geocoding') != -1:
                 if self.path == '/geocoding?q=Paris&addressdetails=1&limit=1&email=foo%40bar':
                     self.send_response(200)
                     self.send_header('Content-type', 'application/xml')

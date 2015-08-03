@@ -14,7 +14,9 @@ Driver is <b>WRITE Only</b>
 
 <a href="http://elasticsearch.org/">ElasticSearch</a> is an Enterprise-level search engine for a variety of data sources. It supports full-text indexing and geospatial querying of those data in a fast and efficient manor using a predefined REST API. This driver serializes all of the supported OGR file formats in to an ElasticSearch index.
 <br> However, the driver is limited in the geometry it handles: even if polygons are provided as input, they are stored as <a href="http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/mapping-geo-point-type.html">geo point</a> and the "center" of the polygon is used as value of the point.
-</p><h2>Field definitions</h2>
+</p>
+
+<h2>Field definitions</h2>
 
 Fields are dynamically mapped from the input OGR data source. However, the driver will take advantage of advanced options within ElasticSearch as defined in a <a href="http://code.google.com/p/ogr2elasticsearch/wiki/ModifyingtheIndex">field mapping file</a>.
 
@@ -31,7 +33,6 @@ The ElasticSearch writer supports the following Configuration Options:
 <li> <b>ES_META</b>=/path/to/mapfile.txt Tells the driver to the user-defined field mappings.<br>
 <li> <b>ES_BULK</b>=10000 Identifies the number of records to be inserted at a time. Lower record counts help with memory consumption within ElasticSearch but take longer to insert.<br>
 <li> <b>ES_OVERWRITE</b>=1 Overwrites the current index by deleting an existing one.<br>
-
 </ul>
 <p>
 
@@ -41,6 +42,21 @@ It is possible to apply several options at a time. The following use case takes 
 ogr2ogr -progress --config ES_OVERWRITE 1 --config ES_BULK 10000 --config ES_META /path/to/file/map.txt -f "ElasticSearch" http://localhost:9200 PG:"host=localhost user=postgres dbname=my_db password=password" "my_table" -nln thetable
 </pre>
 </li>
+
+<h2>Layer creation options</h2>
+
+Starting with GDAL 2.1, the driver supports the following layer creation options:
+<ul>
+<li><b>OVERWRITE</b>=YES/NO. Whether to overwrite an existing collection with the layer name to be created. Defaults to NO.</li>
+<li><b>GEOMETRY_NAME</b>=name. Name of geometry column. Defaults to 'geometry'.</li>
+<li><b>GEOM_MAPPING_TYPE</b>=AUTO/GEO_POINT/GEO_SHAPE. Mapping type for geometry fields. Defaults to AUTO.
+GEO_POINT uses the <a href="https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-geo-point-type.html">geo_point</a> mapping type. If used, the "centroid" of the geometry is used.
+This is the behaviour of GDAL &lt; 2.1.
+GEO_SHAPE uses the <a href="https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-geo-shape-type.html">geo_shape</a> mapping type, compatible of all geometry types.
+When using AUTO, if there is a single geometry field of type Point, a geo_point is used. In other cases, geo_shape is used.
+</li>
+<li><b>BULK_INSERT</b>=YES/NO. Whether to use bulk insert for feature creation. Defaults to NO.</li>
+</ul>
 
 <h2>Examples</h2>
 

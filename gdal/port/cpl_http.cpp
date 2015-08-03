@@ -161,6 +161,12 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
         CSLTestBoolean(CPLGetConfigOption("CPL_CURL_ENABLE_VSIMEM", "FALSE")) )
     {
         CPLString osURL(pszURL);
+        const char* pszCustomRequest = CSLFetchNameValue( papszOptions, "CUSTOMREQUEST" );
+        if( pszCustomRequest != NULL )
+        {
+            osURL += "&CUSTOMREQUEST=";
+            osURL += pszCustomRequest;
+        }
         const char* pszPost = CSLFetchNameValue( papszOptions, "POSTFIELDS" );
         if( pszPost != NULL ) /* Hack: we append post content to filename */
         {

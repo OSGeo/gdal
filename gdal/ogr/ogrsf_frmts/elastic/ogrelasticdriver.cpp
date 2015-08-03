@@ -76,7 +76,18 @@ void RegisterOGRElastic() {
     "<CreationOptionList/>");
 
         poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
-    "<LayerCreationOptionList/>");
+    "<LayerCreationOptionList>"
+    "  <Option name='OVERWRITE' type='boolean' description='Whether to overwrite an existing collection with the layer name to be created' default='NO'/>"
+    "  <Option name='GEOMETRY_NAME' type='string' description='Name of geometry column.' default='geometry'/>"
+    "  <Option name='GEOM_MAPPING_TYPE' type='string-select' description='Mapping type for geometry fields' default='AUTO'>"
+    "    <Value>AUTO</Value>"
+    "    <Value>GEO_POINT</Value>"
+    "    <Value>GEO_SHAPE</Value>"
+    "  </Option>"
+    "  <Option name='BULK_INSERT' type='boolean' description='Whether to use bulk insert for feature creation' default='NO'/>"
+    "</LayerCreationOptionList>");
+
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES, "Integer Integer64 Real String Date DateTime" );
 
         poDriver->pfnCreate = OGRElasticSearchDriverCreate;
 
