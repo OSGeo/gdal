@@ -193,6 +193,10 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_RS2();
 #endif
 
+#ifdef FRMT_safe
+    GDALRegister_SAFE();
+#endif
+
 #ifdef FRMT_pcidsk
     GDALRegister_PCIDSK();
 #endif
