@@ -877,7 +877,7 @@ def ogr_geojson_20():
     return 'success' 
 
 ###############################################################################
-# Test reading outpout of geocouch spatiallist
+# Test reading output of geocouch spatiallist
 
 def ogr_geojson_21():
 
