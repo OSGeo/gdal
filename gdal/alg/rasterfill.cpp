@@ -7,6 +7,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2008, Frank Warmerdam
+ * Copyright (c) 2009-2013, Even Rouault <even dot rouault at mines-paris dot org>
  * Copyright (c) 2015, Sean Gillies <sean@mapbox.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
