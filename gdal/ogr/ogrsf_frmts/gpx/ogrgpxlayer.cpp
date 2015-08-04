@@ -1258,7 +1258,10 @@ void OGRGPXLayer::WriteFeatureAttributes( OGRFeature *poFeature, int nIdentLevel
                     if (pszRaw[0] == '<' && pszRaw[strlen(pszRaw) - 1] == '>')
                     {
                         if (OGRGPX_WriteXMLExtension( compatibleName, pszRaw))
+                        {
+                            CPLFree(compatibleName);
                             continue;
+                        }
                     }
 
                     /* Try to detect XML escaped content */
@@ -1270,6 +1273,7 @@ void OGRGPXLayer::WriteFeatureAttributes( OGRFeature *poFeature, int nIdentLevel
                         if (OGRGPX_WriteXMLExtension(compatibleName, pszUnescapedContent))
                         {
                             CPLFree(pszUnescapedContent);
+                            CPLFree(compatibleName);
                             continue;
                         }
 

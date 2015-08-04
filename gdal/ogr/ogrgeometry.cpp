@@ -4821,7 +4821,7 @@ OGRGeometry *OGRGeometryFromEWKB( GByte *pabyWKB, int nLength, int* pnSRID,
 /* -------------------------------------------------------------------- */
 /*      Try to ingest the geometry.                                     */
 /* -------------------------------------------------------------------- */
-    OGRGeometryFactory::createFromWkb( pabyWKB, NULL, &poGeometry, nLength, 
+    (void) OGRGeometryFactory::createFromWkb( pabyWKB, NULL, &poGeometry, nLength, 
                                        (bIsPostGIS1_EWKB) ? wkbVariantPostGIS1 : wkbVariantOldOgc );
 
     return poGeometry;

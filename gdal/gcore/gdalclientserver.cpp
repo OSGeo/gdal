@@ -2603,7 +2603,11 @@ static int GDALServerLoopInternal(GDALServerInstance* poSrvInstance,
                 break;
             char* pszGCPProjection = NULL;
             if( !GDALPipeRead(p, &pszGCPProjection) )
+            {
+                GDALDeinitGCPs(nGCPCount, pasGCPs);
+                CPLFree(pasGCPs);
                 break;
+            }
             CPLErr eErr = poDS->SetGCPs(nGCPCount, pasGCPs, pszGCPProjection);
             GDALDeinitGCPs(nGCPCount, pasGCPs);
             CPLFree(pasGCPs);

@@ -382,6 +382,16 @@ CPLXMLNode *VRTRawRasterBand::SerializeToXML( const char *pszVRTPath )
 {
     CPLXMLNode *psTree;
 
+/* -------------------------------------------------------------------- */
+/*      We can't set the layout if there is no open rawband.            */
+/* -------------------------------------------------------------------- */
+    if( poRawRaster == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "VRTRawRasterBand::SerializeToXML() fails because poRawRaster is NULL." );
+        return NULL;
+    }
+    
     psTree = VRTRasterBand::SerializeToXML( pszVRTPath );
 
 /* -------------------------------------------------------------------- */
@@ -403,16 +413,6 @@ CPLXMLNode *VRTRawRasterBand::SerializeToXML( const char *pszVRTPath )
     CPLCreateXMLNode( 
         CPLCreateXMLNode( psNode, CXT_Attribute, "relativeToVRT" ), 
         CXT_Text, bRelativeToVRT ? "1" : "0"  );
-
-/* -------------------------------------------------------------------- */
-/*      We can't set the layout if there is no open rawband.            */
-/* -------------------------------------------------------------------- */
-    if( poRawRaster == NULL )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "VRTRawRasterBand::SerializeToXML() fails because poRawRaster is NULL." );
-        return NULL;
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Set other layout information.                                   */
