@@ -37,18 +37,12 @@
 #  DEALINGS IN THE SOFTWARE.
 #******************************************************************************
 
+import math
+import os
 import sys
 
-try:
-    from osgeo import gdal
-    from osgeo import osr
-except:
-    import gdal
-    print('You are using "old gen" bindings. gdal2tiles needs "new gen" bindings.')
-    sys.exit(1)
-
-import os
-import math
+from osgeo import gdal
+from osgeo import osr
 
 try:
     from PIL import Image
@@ -165,7 +159,8 @@ class GlobalMercator(object):
       the ellipsoidal form. Since the projection is used only for map display,
       and not for displaying numeric coordinates, we don't need the extra precision
       of an ellipsoidal projection. The spherical projection causes approximately
-      0.33 percent scale distortion in the Y direction, which is not visually noticable.
+      0.33 percent scale distortion in the Y direction, which is not visually
+      noticeable.
 
     How do I create a raster in EPSG:900913 and convert coordinates with PROJ.4?
 
@@ -174,14 +169,14 @@ class GlobalMercator(object):
 
       For other GIS programs check the exact definition of the projection:
       More info at http://spatialreference.org/ref/user/google-projection/
-      The same projection is degined as EPSG:3785. WKT definition is in the official
-      EPSG database.
+      The same projection is designated as EPSG:3785. WKT definition is in the
+      official EPSG database.
 
       Proj4 Text:
         +proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0
         +k=1.0 +units=m +nadgrids=@null +no_defs
 
-      Human readable WKT format of EPGS:900913:
+      Human readable WKT format of EPSG:900913:
          PROJCS["Google Maps Global Mercator",
              GEOGCS["WGS 84",
                  DATUM["WGS_1984",
@@ -269,7 +264,7 @@ class GlobalMercator(object):
         return ( minx, miny, maxx, maxy )
 
     def TileLatLonBounds(self, tx, ty, zoom ):
-        "Returns bounds of the given tile in latutude/longitude using WGS84 datum"
+        "Returns bounds of the given tile in latitude/longitude using WGS84 datum"
 
         bounds = self.TileBounds( tx, ty, zoom)
         minLat, minLon = self.MetersToLatLon(bounds[0], bounds[1])
@@ -522,7 +517,7 @@ class GDAL2Tiles(object):
         self.tileext = 'png'
 
         # Should we read bigger window of the input raster and scale it down?
-        # Note: Modified leter by open_input()
+        # Note: Modified later by open_input()
         # Not for 'near' resampling
         # Not for Wavelet based drivers (JPEG2000, ECW, MrSID)
         # Not for 'raster' profile
