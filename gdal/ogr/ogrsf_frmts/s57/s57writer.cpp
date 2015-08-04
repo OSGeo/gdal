@@ -883,7 +883,10 @@ int S57Writer::WriteCompleteFeature( OGRFeature *poFeature )
     if( poRegistrar != NULL 
         && poClassContentExplorer->SelectClass( poFeature->GetDefnRef()->GetName() )
         && !WriteATTF( poRec, poFeature ) )
+    {
+        delete poRec;
         return FALSE;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Add the FSPT if needed.                                         */

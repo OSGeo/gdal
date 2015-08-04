@@ -529,7 +529,7 @@ GDALDataset *SAFEDataset::Open( GDALOpenInfo * poOpenInfo )
     if( psManifest == NULL )
         return NULL;
     
-    char *pszPath = CPLStrdup(CPLGetPath( osMDFilename ));
+    CPLString osPath(CPLGetPath( osMDFilename ));
     
 /* -------------------------------------------------------------------- */
 /*      Confirm the requested access is supported.                      */
@@ -650,10 +650,6 @@ GDALDataset *SAFEDataset::Open( GDALOpenInfo * poOpenInfo )
                 CSLT_ALLOWEMPTYTOKENS | CSLT_STRIPLEADSPACES 
                 | CSLT_STRIPENDSPACES );
 
-            if (CSLCount( papszTokens ) == 0) {
-                continue;
-            }
-            
             int j;
             for( j = 0; j < CSLCount( papszTokens ); j++ ) {
                 const char* pszId = papszTokens[j];
@@ -695,13 +691,12 @@ GDALDataset *SAFEDataset::Open( GDALOpenInfo * poOpenInfo )
             
             CSLDestroy(papszTokens);
             
-            if (pszAnnotation == NULL || pszCalibration == NULL
-                    || pszMeasurement == NULL) {
+            if (pszAnnotation == NULL || pszCalibration == NULL ) {
                 continue;
             }
             
             //open Annotation XML file
-            CPLString osAnnotationFilePath = CPLFormFilename( pszPath, 
+            CPLString osAnnotationFilePath = CPLFormFilename( osPath, 
                                                        pszAnnotation, NULL );
             if( psAnnotation )
                 CPLDestroyXMLNode(psAnnotation);
@@ -792,7 +787,7 @@ GDALDataset *SAFEDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Form full filename (path of manifest.safe + measurement file).  */
 /* -------------------------------------------------------------------- */
             char *pszFullname = 
-                CPLStrdup(CPLFormFilename( pszPath, pszMeasurement, NULL ));
+                CPLStrdup(CPLFormFilename( osPath, pszMeasurement, NULL ));
 
 /* -------------------------------------------------------------------- */
 /*      Try and open the file.                                          */
@@ -1028,8 +1023,6 @@ GDALDataset *SAFEDataset::Open( GDALOpenInfo * poOpenInfo )
         }
     }
 
-    CPLFree( pszPath );
-    
     CPLDestroyXMLNode(psAnnotation);
     
 /* -------------------------------------------------------------------- */
