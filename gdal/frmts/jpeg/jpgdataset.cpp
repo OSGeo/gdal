@@ -77,7 +77,8 @@ GDALDataset* JPEGDataset12Open(const char* pszFilename,
                                VSILFILE* fpLin,
                                char** papszSiblingFiles,
                                int nScaleFactor,
-                               int bDoPAMInitialize);
+                               int bDoPAMInitialize,
+                               int bUseInternalOverviews);
 GDALDataset* JPEGDataset12CreateCopy( const char * pszFilename,
                                     GDALDataset *poSrcDS,
                                     int bStrict, char ** papszOptions,
@@ -278,7 +279,8 @@ class JPGDataset : public JPGDatasetCommon
                               VSILFILE* fpLin,
                               char** papszSiblingFiles,
                               int nScaleFactor,
-                              int bDoPAMInitialize );
+                              int bDoPAMInitialize,
+                              int bUseInternalOverviews );
     static GDALDataset* CreateCopy( const char * pszFilename,
                                     GDALDataset *poSrcDS,
                                     int bStrict, char ** papszOptions,
@@ -1372,7 +1374,7 @@ GDALDataset* JPGDatasetCommon::InitEXIFOverview()
 
     const char* pszSubfile = CPLSPrintf("JPEG_SUBFILE:%u,%d,%s",
                             nTIFFHEADER + nJpegIFOffset, nJpegIFByteCount, GetDescription());
-    return JPGDataset::Open(pszSubfile, NULL, NULL, 1, FALSE);
+    return JPGDataset::Open(pszSubfile, NULL, NULL, 1, FALSE, FALSE);
 }
 
 /************************************************************************/
@@ -1448,7 +1450,7 @@ void JPGDatasetCommon::InitInternalOverviews()
                     break;
                 }
                 GDALDataset* poImplicitOverview =
-                    JPGDataset::Open(GetDescription(), NULL, NULL, 1 << (i + 1), FALSE);
+                    JPGDataset::Open(GetDescription(), NULL, NULL, 1 << (i + 1), FALSE, FALSE);
                 if( poImplicitOverview == NULL )
                     break;
                 papoInternalOverviews[nInternalOverviewsCurrent] = poImplicitOverview;
@@ -2164,7 +2166,8 @@ GDALDataset *JPGDatasetCommon::Open( GDALOpenInfo * poOpenInfo )
     return JPGDataset::Open(poOpenInfo->pszFilename,
                             fpL,
                             poOpenInfo->GetSiblingFiles(),
-                            1, TRUE);
+                            1, TRUE,
+                            CSLFetchBoolean(poOpenInfo->papszOpenOptions, "USE_INTERNAL_OVERVIEWS", TRUE) );
 }
 
 #endif // !defined(JPGDataset)
@@ -2177,7 +2180,8 @@ GDALDataset *JPGDataset::Open( const char* pszFilename,
                                VSILFILE* fpLin,
                                char** papszSiblingFiles,
                                int nScaleFactor,
-                               int bDoPAMInitialize )
+                               int bDoPAMInitialize,
+                               int bUseInternalOverviews )
 
 {
 /* -------------------------------------------------------------------- */
@@ -2332,7 +2336,7 @@ GDALDataset *JPGDataset::Open( const char* pszFilename,
             poDS->fpImage = NULL;
             delete poDS;
             return JPEGDataset12Open(pszFilename, fpImage, papszSiblingFiles,
-                                     nScaleFactor, bDoPAMInitialize);
+                                     nScaleFactor, bDoPAMInitialize, bUseInternalOverviews);
         }
 #endif
         delete poDS;
@@ -2457,6 +2461,9 @@ GDALDataset *JPGDataset::Open( const char* pszFilename,
 /*      Open (external) overviews.                                      */
 /* -------------------------------------------------------------------- */
         poDS->oOvManager.Initialize( poDS, real_filename, papszSiblingFiles );
+        
+        if( !bUseInternalOverviews )
+            poDS->bHasInitInternalOverviews = TRUE;
 
         /* In the case of a file downloaded through the HTTP driver, this one */
         /* will unlink the temporary /vsimem file just after GDALOpen(), so */
@@ -3585,7 +3592,7 @@ JPGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     if( CSLTestBoolean(CPLGetConfigOption("GDAL_OPEN_AFTER_COPY", "YES")) )
     {
         CPLPushErrorHandler(CPLQuietErrorHandler);
-        JPGDataset *poDS = (JPGDataset*) Open( pszFilename, NULL, NULL, 1, TRUE );
+        JPGDataset *poDS = (JPGDataset*) Open( pszFilename, NULL, NULL, 1, TRUE, TRUE );
         CPLPopErrorHandler();
         if( poDS )
         {
@@ -3729,6 +3736,11 @@ void GDALRegister_JPEG()
                                    "Byte" );
 #endif
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+        
+        poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
+"<OpenOptionList>\n"
+"   <Option name='USE_INTERNAL_OVERVIEWS' type='boolean' description='whether to use implicit internal overviews' default='YES'/>\n"
+"</OpenOptionList>\n");
 
         poDriver->pfnIdentify = JPGDatasetCommon::Identify;
         poDriver->pfnOpen = JPGDatasetCommon::Open;
