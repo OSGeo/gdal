@@ -689,7 +689,7 @@ def ogr_geojson_16():
     ref = lyr.GetSpatialRef()
     gcs = int(ref.GetAuthorityCode('GEOGCS'))
 
-    if  not gcs == 4326 :
+    if not gcs == 4326:
         gdaltest.post_reason("Spatial reference was not valid")
         return 'fail'
 
@@ -850,14 +850,10 @@ def ogr_geojson_20():
     geojson_files = glob('data/*.json') 
     geojson_files.extend(glob('data/*.geojson')) 
 
-    for gj in geojson_files: 
+    for gj in geojson_files:
         # create tmp file with no file extension
-        f = open(gj, 'rb')
-        data = f.read()
-        #print(gj)
-        #print(data.decode('LATIN1'))
-        f.close()
-        
+        data = open(gj, 'rb').read()
+
         f = gdal.VSIFOpenL('/vsimem/testgj', 'wb')
         gdal.VSIFWriteL(data, 1, len(data), f)
         gdal.VSIFCloseL(f)
@@ -1244,6 +1240,9 @@ def ogr_geojson_27():
     if gdaltest.geojson_drv is None:
         return 'skip'
 
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    # Warning 1: Integer values probably ranging out of 64bit integer range
+    # have been found. Will be clamped to INT64_MIN/INT64_MAX
     ds = ogr.Open("""{"type": "FeatureCollection", "features":[
 {"type": "Feature",
  "geometry": {"type":"Point","coordinates":[1,2]},
@@ -1252,6 +1251,7 @@ def ogr_geojson_27():
  "geometry": {"type":"Point","coordinates":[3,4]},
  "properties": { "intvalue" : 12345678901231234567890123 }},
  ]}""")
+    gdal.PopErrorHandler()
     if ds is None:
         gdaltest.post_reason('Failed to open datasource')
         return 'fail'
@@ -1305,7 +1305,7 @@ def ogr_geojson_28():
     ref = lyr.GetSpatialRef()
     gcs = int(ref.GetAuthorityCode('GEOGCS'))
 
-    if  not gcs == 4326 :
+    if not gcs == 4326:
         gdaltest.post_reason("Spatial reference was not valid")
         return 'fail'
 
@@ -1478,7 +1478,6 @@ def ogr_geojson_32():
         gdaltest.post_reason('Missing layer called OGRGeoJSON')
         return 'fail'
 
-    # validate layer doesn't check z, but put it in
     extent = (2,3,49,50)
 
     rc = validate_layer(lyr, 'OGRGeoJSON', 1, ogr.wkbMultiPoint, 4, extent)
@@ -1518,7 +1517,6 @@ def ogr_geojson_33():
         gdaltest.post_reason('Missing layer called OGRGeoJSON')
         return 'fail'
 
-    # validate layer doesn't check z, but put it in
     extent = (2,3,49,50)
 
     rc = validate_layer(lyr, 'OGRGeoJSON', 1, ogr.wkbMultiPoint, 4, extent)
@@ -1558,7 +1556,6 @@ def ogr_geojson_34():
         gdaltest.post_reason('Missing layer called OGRGeoJSON')
         return 'fail'
 
-    # validate layer doesn't check z, but put it in
     extent = (2,3,49,50)
 
     rc = validate_layer(lyr, 'OGRGeoJSON', 1, ogr.wkbMultiPoint, 4, extent)
@@ -1657,7 +1654,6 @@ def ogr_geojson_35():
     fp = gdal.VSIFOpenL('/vsimem/ogr_geojson_35.json', 'rb')
     data = gdal.VSIFReadL(1, 10000, fp).decode('ascii')
     gdal.VSIFCloseL(fp)
-    #print(data)
 
     gdal.Unlink('/vsimem/ogr_geojson_35.json')
 
@@ -2020,7 +2016,6 @@ def ogr_geojson_42():
     if f is not None:
         gdaltest.post_reason('fail')
         return 'fail'
-    lyr.ResetReading()
     lyr.ResetReading()
     f = lyr.GetNextFeature()
     if f is None or f.GetFID() != 1:
