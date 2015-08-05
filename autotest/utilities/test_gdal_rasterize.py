@@ -338,6 +338,53 @@ def test_gdal_rasterize_6():
 
     return 'success'
 
+###############################################################################
+# Test SQLITE dialect in SQL
+
+def test_gdal_rasterize_7():
+
+    if test_cli_utilities.get_gdal_rasterize_path() is None:
+        return 'skip'
+
+    drv = ogr.GetDriverByName('SQLite')
+    if drv is None:
+        return 'skip'
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ds = drv.CreateDataSource('/vsimem/foo.db', options = ['SPATIALITE=YES'])
+    if ds is None:
+        return 'skip'
+    ds = None
+    gdal.Unlink('/vsimem/foo.db')
+    gdal.PopErrorHandler()
+
+    f = open('tmp/test_gdal_rasterize_7.csv', 'wb')
+    x = (0, 0, 50, 50, 25)
+    y = (0, 50, 0, 50, 25)
+    f.write('WKT,Value\n'.encode('ascii'))
+    for i in range(len(x)):
+        r = 'POINT(%d %d),1\n' % (x[i], y[i])
+        f.write(r.encode('ascii'))
+
+    f.close()
+
+    cmds = '''tmp/test_gdal_rasterize_7.csv
+              tmp/test_gdal_rasterize_7.tif
+              -init 0 -burn 1
+              -sql "SELECT ST_Buffer(GEOMETRY, 2) FROM test_gdal_rasterize_7"
+              -dialect sqlite -tr 1 1 -te -1 -1 51 51'''
+
+    gdaltest.runexternal(test_cli_utilities.get_gdal_rasterize_path() + ' ' + cmds)
+
+    ds = gdal.Open('tmp/test_gdal_rasterize_7.tif')
+    data = ds.GetRasterBand(1).ReadAsArray()
+    if data.sum() <= 5:
+        gdaltest.post_reason('Only rasterized 5 pixels or less.')
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
 
 ###########################################
 def test_gdal_rasterize_cleanup():
@@ -361,6 +408,9 @@ def test_gdal_rasterize_cleanup():
     os.unlink('tmp/test_gdal_rasterize_6.csv')
     os.unlink('tmp/test_gdal_rasterize_6.prj')
 
+    gdal.GetDriverByName('GTiff').Delete( 'tmp/test_gdal_rasterize_7.tif' )
+    os.unlink('tmp/test_gdal_rasterize_7.csv')
+
     return 'success'
 
 gdaltest_list = [
@@ -370,6 +420,7 @@ gdaltest_list = [
     test_gdal_rasterize_4,
     test_gdal_rasterize_5,
     test_gdal_rasterize_6,
+    test_gdal_rasterize_7,
     test_gdal_rasterize_cleanup
     ]
 
