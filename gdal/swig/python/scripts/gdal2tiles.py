@@ -71,7 +71,7 @@ Global Map Tiles as defined in Tile Map Service (TMS) Profiles
 Functions necessary for generation of global tiles used on the web.
 It contains classes implementing coordinate conversions for:
 
-  - GlobalMercator (based on EPSG:900913 = EPSG:3785)
+  - GlobalMercator (based on EPSG:900913 = EPSG:3857)
        for Google Maps, Yahoo Maps, Bing Maps compatible tiles
   - GlobalGeodetic (based on EPSG:4326)
        for OpenLayers Base Map and Google Earth compatible tiles
@@ -102,7 +102,7 @@ class GlobalMercator(object):
     ---------------------------
 
   Functions necessary for generation of tiles in Spherical Mercator projection,
-  EPSG:900913 (EPSG:gOOglE, Google Maps Global Mercator), EPSG:3785, OSGEO:41001.
+  EPSG:900913 (EPSG:gOOglE, Google Maps Global Mercator), EPSG:3857, OSGEO:41001.
 
   Such tiles are compatible with Google Maps, Bing Maps, Yahoo Maps,
   UK Ordnance Survey OpenSpace API, ...
@@ -169,7 +169,7 @@ class GlobalMercator(object):
 
       For other GIS programs check the exact definition of the projection:
       More info at http://spatialreference.org/ref/user/google-projection/
-      The same projection is designated as EPSG:3785. WKT definition is in the
+      The same projection is designated as EPSG:3857. WKT definition is in the
       official EPSG database.
 
       Proj4 Text:
