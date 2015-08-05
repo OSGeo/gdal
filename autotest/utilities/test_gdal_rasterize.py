@@ -409,7 +409,8 @@ def test_gdal_rasterize_cleanup():
     os.unlink('tmp/test_gdal_rasterize_6.prj')
 
     gdal.GetDriverByName('GTiff').Delete( 'tmp/test_gdal_rasterize_7.tif' )
-    os.unlink('tmp/test_gdal_rasterize_7.csv')
+    if os.path.exists('tmp/test_gdal_rasterize_7.csv'):
+        os.unlink('tmp/test_gdal_rasterize_7.csv')
 
     return 'success'
 
