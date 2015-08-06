@@ -359,11 +359,9 @@ GDALDatasetH CreateOutputDataset(std::vector<OGRLayerH> ahLayers,
                 exit(2);
             }
 
-            /* When rasterizing point layers and that the bounds have */
-            /* not been explicitly set, voluntary increase the extent by */
-            /* a half-pixel size to avoid missing points on the border */
-            if (wkbFlatten(OGR_L_GetGeomType(hLayer)) == wkbPoint &&
-                !bTargetAlignedPixels && dfXRes != 0 && dfYRes != 0)
+            /* Voluntarily increase the extent by a half-pixel size to avoid */
+            /* missing points on the border */
+            if (!bTargetAlignedPixels && dfXRes != 0 && dfYRes != 0)
             {
                 sLayerEnvelop.MinX -= dfXRes / 2;
                 sLayerEnvelop.MaxX += dfXRes / 2;
