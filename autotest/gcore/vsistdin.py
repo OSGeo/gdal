@@ -94,6 +94,7 @@ def vsistdin_2():
     ds = gdal.Open("tmp/vsistdin_2_out.tif")
     if ds is None:
         return 'fail'
+    ds = None
 
     try:
         os.unlink("tmp/vsistdin_2_out.tif")
@@ -115,9 +116,52 @@ def vsistdin_3():
 
     return 'success'
 
+###############################################################################
+# Test fix for #6061
+
+def vsistdin_4():
+    if test_cli_utilities.get_gdal_translate_path() is None:
+        return 'skip'
+
+    f = open('tmp/vsistdin_4_src.vrt', 'wt')
+    f.write("""<VRTDataset rasterXSize="20" rasterYSize="20">
+  %s
+  <SRS>PROJCS["NAD27 / UTM zone 11N",GEOGCS["NAD27",DATUM["North_American_Datum_1927",SPHEROID["Clarke 1866",6378206.4,294.9786982138982,AUTHORITY["EPSG","7008"]],AUTHORITY["EPSG","6267"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4267"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-117],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH],AUTHORITY["EPSG","26711"]]</SRS>
+  <GeoTransform>  4.4072000000000000e+05,  6.0000000000000000e+01,  0.0000000000000000e+00,  3.7513200000000000e+06,  0.0000000000000000e+00, -6.0000000000000000e+01</GeoTransform>
+  <VRTRasterBand dataType="Byte" band="1">
+    <ColorInterp>Gray</ColorInterp>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">data/byte.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+    </SimpleSource>
+  </VRTRasterBand>
+</VRTDataset>""" % (' '.join([' ' for i in range(1024*1024)])) )
+    f.close()
+
+    # Should work on both Unix and Windows
+    os.system(test_cli_utilities.get_gdal_translate_path() + " /vsistdin/ tmp/vsistdin_4_out.tif -q < tmp/vsistdin_4_src.vrt")
+
+    try:
+        os.unlink("tmp/vsistdin_4_src.vrt")
+    except:
+        pass
+    
+    ds = gdal.Open("tmp/vsistdin_4_out.tif")
+    if ds is None:
+        return 'fail'
+    ds = None
+
+    try:
+        os.unlink("tmp/vsistdin_4_out.tif")
+    except:
+        pass
+
+    return 'success'
+
 gdaltest_list = [ vsistdin_1,
                   vsistdin_2,
-                  vsistdin_3
+                  vsistdin_3,
+                  vsistdin_4
                 ]
 
 

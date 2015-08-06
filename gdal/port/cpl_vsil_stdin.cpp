@@ -157,8 +157,11 @@ int VSIStdinHandle::Seek( vsi_l_offset nOffset, int nWhence )
         return 0;
 
     VSIStdinInit();
-    if (nBufferLen == 0)
-        nRealPos = nBufferLen = fread(pabyBuffer, 1, BUFFER_SIZE, stdin);
+    if (nRealPos < BUFFER_SIZE )
+    {
+        nRealPos += fread(pabyBuffer + nRealPos, 1, BUFFER_SIZE - (int)nRealPos, stdin);
+        nBufferLen = nRealPos;
+    }
 
     if (nWhence == SEEK_END)
     {
