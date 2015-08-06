@@ -358,6 +358,30 @@ def aaigrid_13():
     return 'success'
 
 ###############################################################################
+# Test fix for #6060
+
+def aaigrid_14():
+
+    ds = gdal.Open('data/byte.tif')
+    mem_ds = gdal.GetDriverByName('MEM').Create('', 20, 20, 1, gdal.GDT_Float32)
+    mem_ds.GetRasterBand(1).WriteRaster(0, 0, 20, 20, ds.ReadRaster(0, 0, 20, 20, buf_type = gdal.GDT_Float32))
+    ds = None
+    gdal.GetDriverByName('AAIGRID').CreateCopy('/vsimem/aaigrid_14.asc', mem_ds )
+    
+    f = gdal.VSIFOpenL('/vsimem/aaigrid_14.asc', 'rb')
+    data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
+    gdal.VSIFCloseL(f)
+
+    gdal.GetDriverByName('AAIGRID').Delete('/vsimem/aaigrid_14.asc')
+    
+    if data.find('107.0 123') < 0:
+        gdaltest.post_reason('fail')
+        print(data)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 
 gdaltest_list = [
     aaigrid_1,
@@ -374,7 +398,8 @@ gdaltest_list = [
     aaigrid_10,
     aaigrid_11,
     aaigrid_12,
-    aaigrid_13 ]
+    aaigrid_13,
+    aaigrid_14 ]
 
 if __name__ == '__main__':
 
