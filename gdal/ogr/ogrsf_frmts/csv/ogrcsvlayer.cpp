@@ -350,8 +350,8 @@ void OGRCSVLayer::BuildFeatureDefn( const char* pszNfdcGeomField,
 
 /* -------------------------------------------------------------------- */
 /*      Check if the first record seems to be field definitions or      */
-/*      not.  We assume it is field definitions if none of the          */
-/*      values are strictly numeric.                                    */
+/*      not.  We assume it is field definitions if the HEADERS option   */
+/*      not supplied and none of the values are strictly numeric.       */
 /* -------------------------------------------------------------------- */
     char **papszTokens = NULL;
     int nFieldCount=0, iField;
@@ -380,26 +380,34 @@ void OGRCSVLayer::BuildFeatureDefn( const char* pszNfdcGeomField,
                                                CSLT_ALLOWEMPTYTOKENS |
                                                CSLT_PRESERVEQUOTES) );
             nFieldCount = CSLCount( papszTokens );
-            bHasFieldNames = TRUE;
 
-            for( iField = 0; iField < nFieldCount && bHasFieldNames; iField++ )
-            {
-                CPLValueType eType = CPLGetValueType(papszTokens[iField]);
-                if ( (eType == CPL_VALUE_INTEGER ||
-                      eType == CPL_VALUE_REAL) ) {
-                    /* we have a numeric field, therefore do not consider the first line as field names */
-                    bHasFieldNames = FALSE;
-                }
-            }
-
-            CPLString osExt = OGRCSVDataSource::GetRealExtension(pszFilename);
-
-            /* Eurostat .tsv files */
-            if( EQUAL(osExt, "tsv") && nFieldCount > 1 &&
-                strchr(papszTokens[0], ',') != NULL && strchr(papszTokens[0], '\\') != NULL )
-            {
+            const char* pszCSVHeaders = CSLFetchNameValueDef(papszOpenOptions, "HEADERS", "AUTO");
+            if (EQUAL(pszCSVHeaders, "YES"))
                 bHasFieldNames = TRUE;
-                bIsEurostatTSV = TRUE;
+            else if (EQUAL(pszCSVHeaders, "NO"))
+                bHasFieldNames = FALSE;
+            else {
+                // detect via checking for the presence of numeric values.
+                bHasFieldNames = TRUE;
+                for( iField = 0; iField < nFieldCount && bHasFieldNames; iField++ )
+                {
+                    CPLValueType eType = CPLGetValueType(papszTokens[iField]);
+                    if ( (eType == CPL_VALUE_INTEGER ||
+                          eType == CPL_VALUE_REAL) ) {
+                        /* we have a numeric field, therefore do not consider the first line as field names */
+                        bHasFieldNames = FALSE;
+                    }
+                }
+
+                CPLString osExt = OGRCSVDataSource::GetRealExtension(pszFilename);
+
+                /* Eurostat .tsv files */
+                if( EQUAL(osExt, "tsv") && nFieldCount > 1 &&
+                    strchr(papszTokens[0], ',') != NULL && strchr(papszTokens[0], '\\') != NULL )
+                {
+                    bHasFieldNames = TRUE;
+                    bIsEurostatTSV = TRUE;
+                }
             }
 
             /* tokenize without quotes to get the actual values */
