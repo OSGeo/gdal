@@ -163,12 +163,15 @@ static void Usage(const char* pszErrorMsg = NULL)
 typedef float (*GDALGeneric3x3ProcessingAlg) (float* pafWindow, float fDstNoDataValue, void* pData);
 
 static float ComputeVal(int bSrcHasNoData, float fSrcNoDataValue,
+                        int bIsSrcNoDataNan,
                         float* afWin, float fDstNoDataValue,
                         GDALGeneric3x3ProcessingAlg pfnAlg,
                         void* pData,
                         int bComputeAtEdges)
 {
-    if (bSrcHasNoData && ARE_REAL_EQUAL(afWin[4], fSrcNoDataValue))
+    if (bSrcHasNoData &&
+            ((!bIsSrcNoDataNan && ARE_REAL_EQUAL(afWin[4], fSrcNoDataValue)) ||
+             (bIsSrcNoDataNan && CPLIsNan(afWin[4]))))
     {
         return fDstNoDataValue;
     }
@@ -177,7 +180,8 @@ static float ComputeVal(int bSrcHasNoData, float fSrcNoDataValue,
         int k;
         for(k=0;k<9;k++)
         {
-            if (ARE_REAL_EQUAL(afWin[k], fSrcNoDataValue))
+            if ((!bIsSrcNoDataNan && ARE_REAL_EQUAL(afWin[k], fSrcNoDataValue)) ||
+                (bIsSrcNoDataNan && CPLIsNan(afWin[k])))
             {
                 if (bComputeAtEdges)
                     afWin[k] = afWin[4];
@@ -232,6 +236,7 @@ CPLErr GDALGeneric3x3Processing  ( GDALRasterBandH hSrcBand,
     fDstNoDataValue = (float) GDALGetRasterNoDataValue(hDstBand, &bDstHasNoData);
     if (!bDstHasNoData)
         fDstNoDataValue = 0.0;
+    int bIsSrcNoDataNan = bSrcHasNoData && CPLIsNan(fSrcNoDataValue);
 
     // Move a 3x3 pafWindow over each cell 
     // (where the cell in question is #4)
@@ -272,6 +277,7 @@ CPLErr GDALGeneric3x3Processing  ( GDALRasterBandH hSrcBand,
             afWin[8] = pafThreeLineWin[nXSize + jmax];
 
             pafOutputBuf[j] = ComputeVal(bSrcHasNoData, fSrcNoDataValue,
+                                         bIsSrcNoDataNan,
                                          afWin, fDstNoDataValue,
                                          pfnAlg, pData, bComputeAtEdges);
         }
@@ -332,6 +338,7 @@ CPLErr GDALGeneric3x3Processing  ( GDALRasterBandH hSrcBand,
             afWin[8] = pafThreeLineWin[nLine3Off + j+1];
 
             pafOutputBuf[j] = ComputeVal(bSrcHasNoData, fSrcNoDataValue,
+                                         bIsSrcNoDataNan,
                                          afWin, fDstNoDataValue,
                                          pfnAlg, pData, bComputeAtEdges);
             j = nXSize - 1;
@@ -347,6 +354,7 @@ CPLErr GDALGeneric3x3Processing  ( GDALRasterBandH hSrcBand,
             afWin[8] = INTERPOL(pafThreeLineWin[nLine3Off + j], pafThreeLineWin[nLine3Off + j-1]);
 
             pafOutputBuf[j] = ComputeVal(bSrcHasNoData, fSrcNoDataValue,
+                                         bIsSrcNoDataNan,
                                          afWin, fDstNoDataValue,
                                          pfnAlg, pData, bComputeAtEdges);
         }
@@ -372,6 +380,7 @@ CPLErr GDALGeneric3x3Processing  ( GDALRasterBandH hSrcBand,
             afWin[8] = pafThreeLineWin[nLine3Off + j+1];
 
             pafOutputBuf[j] = ComputeVal(bSrcHasNoData, fSrcNoDataValue,
+                                         bIsSrcNoDataNan,
                                          afWin, fDstNoDataValue,
                                          pfnAlg, pData, bComputeAtEdges);
         }
@@ -416,6 +425,7 @@ CPLErr GDALGeneric3x3Processing  ( GDALRasterBandH hSrcBand,
             afWin[8] = INTERPOL(pafThreeLineWin[nLine2Off + jmax], pafThreeLineWin[nLine1Off + jmax]);
 
             pafOutputBuf[j] = ComputeVal(bSrcHasNoData, fSrcNoDataValue,
+                                         bIsSrcNoDataNan,
                                          afWin, fDstNoDataValue,
                                          pfnAlg, pData, bComputeAtEdges);
         }
@@ -793,6 +803,9 @@ static int GDALColorReliefSortColors(const void* pA, const void* pB)
 {
     ColorAssociation* pC1 = (ColorAssociation*)pA;
     ColorAssociation* pC2 = (ColorAssociation*)pB;
+    /* Sort NaN in first position */
+    if( CPLIsNan(pC1->dfVal) )
+        return -1;
     return (pC1->dfVal < pC2->dfVal) ? -1 :
            (pC1->dfVal == pC2->dfVal) ? 0 : 1;
 }
@@ -817,6 +830,21 @@ static int GDALColorReliefGetRGBA (ColorAssociation* pasColorAssociation,
     int lower = 0;
     int upper = nColorAssociation - 1;
     int mid;
+
+    // Special case for NaN
+    if( CPLIsNan(pasColorAssociation[0].dfVal) )
+    {
+        if( CPLIsNan(dfVal) )
+        {
+            *pnR = pasColorAssociation[0].nR;
+            *pnG = pasColorAssociation[0].nG;
+            *pnB = pasColorAssociation[0].nB;
+            *pnA = pasColorAssociation[0].nA;
+            return TRUE;
+        }
+        else
+            lower = 1;
+    }
 
     /* Find the index of the first element in the LUT input array that */
     /* is not smaller than the dfVal value. */
@@ -1833,6 +1861,7 @@ class GDALGeneric3x3RasterBand : public GDALRasterBand
     friend class GDALGeneric3x3Dataset;
     int bSrcHasNoData;
     float fSrcNoDataValue;
+    int bIsSrcNoDataNan;
     
     void                    InitWidthNoData(void* pImage);
     
@@ -1905,6 +1934,7 @@ GDALGeneric3x3RasterBand::GDALGeneric3x3RasterBand(GDALGeneric3x3Dataset *poDS,
     bSrcHasNoData = FALSE;
     fSrcNoDataValue = (float)GDALGetRasterNoDataValue(poDS->hSrcBand,
                                                       &bSrcHasNoData);
+    bIsSrcNoDataNan = bSrcHasNoData && CPLIsNan(fSrcNoDataValue);
 }
 
 void   GDALGeneric3x3RasterBand::InitWidthNoData(void* pImage)
@@ -1969,6 +1999,7 @@ CPLErr GDALGeneric3x3RasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
                 afWin[8] = poGDS->apafSourceBuf[2][jmax];
 
                 fVal = ComputeVal(bSrcHasNoData, fSrcNoDataValue,
+                                  bIsSrcNoDataNan,
                                     afWin, (float) poGDS->dfDstNoDataValue,
                                     poGDS->pfnAlg,
                                     poGDS->pAlgData,
@@ -2020,6 +2051,7 @@ CPLErr GDALGeneric3x3RasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
                 afWin[8] = INTERPOL(poGDS->apafSourceBuf[2][jmax], poGDS->apafSourceBuf[1][jmax]);
 
                 fVal = ComputeVal(bSrcHasNoData, fSrcNoDataValue,
+                                  bIsSrcNoDataNan,
                                     afWin, (float) poGDS->dfDstNoDataValue,
                                     poGDS->pfnAlg,
                                     poGDS->pAlgData,
@@ -2101,6 +2133,7 @@ CPLErr GDALGeneric3x3RasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
         afWin[8] = poGDS->apafSourceBuf[2][j+1];
 
         fVal = ComputeVal(bSrcHasNoData, fSrcNoDataValue,
+                          bIsSrcNoDataNan,
                                     afWin, (float) poGDS->dfDstNoDataValue,
                                     poGDS->pfnAlg,
                                     poGDS->pAlgData,
@@ -2124,6 +2157,7 @@ CPLErr GDALGeneric3x3RasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
         afWin[8] = INTERPOL(poGDS->apafSourceBuf[2][j], poGDS->apafSourceBuf[2][j-1]);
 
         fVal = ComputeVal(bSrcHasNoData, fSrcNoDataValue,
+                          bIsSrcNoDataNan,
                                     afWin, (float) poGDS->dfDstNoDataValue,
                                     poGDS->pfnAlg,
                                     poGDS->pAlgData,
@@ -2165,6 +2199,7 @@ CPLErr GDALGeneric3x3RasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
         afWin[8] = poGDS->apafSourceBuf[2][j+1];
 
         fVal = ComputeVal(bSrcHasNoData, fSrcNoDataValue,
+                          bIsSrcNoDataNan,
                                 afWin, (float) poGDS->dfDstNoDataValue,
                                 poGDS->pfnAlg,
                                 poGDS->pAlgData,
