@@ -299,6 +299,11 @@ void RegisterOGRCSV()
 "  <Option name='Z_POSSIBLE_NAMES' type='string' description='Comma separated list of possible names for Z/elevation coordinate of a point.'/>"
 "  <Option name='GEOM_POSSIBLE_NAMES' type='string' description='Comma separated list of possible names for geometry columns.' default='WKT'/>"
 "  <Option name='KEEP_GEOM_COLUMNS' type='boolean' description='whether to add original x/y/geometry columns as regular fields.' default='YES'/>"
+"  <Option name='HEADERS' type='string-select' description='Whether the first line of the file contains column names or not' default='AUTO'>"
+"    <Value>YES</Value>"
+"    <Value>NO</Value>"
+"    <Value>AUTO</Value>"
+"  </Option>"
 "</OpenOptionList>");
 
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
