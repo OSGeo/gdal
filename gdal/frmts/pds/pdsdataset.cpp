@@ -857,10 +857,15 @@ int PDSDataset::ParseImage( CPLString osPrefix, CPLString osFilenamePrefix )
             break;
           case 16 :
             if( strstr(osST,"UNSIGNED") != NULL )
+            {
+                dfNoData = NULL1;
                 eDataType = GDT_UInt16;
+            }
             else
+            {
                 eDataType = GDT_Int16;
-            dfNoData = NULL2;
+                dfNoData = NULL2;
+            }
             break;
           case 32 :
             eDataType = GDT_Float32;
