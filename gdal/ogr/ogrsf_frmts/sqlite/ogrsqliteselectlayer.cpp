@@ -650,6 +650,7 @@ OGRErr OGRSQLiteSelectLayerCommonBehaviour::GetExtent(int iGeomField, OGREnvelop
     /* the layer extent. */
     size_t nOrderByPos = osSQLCommand.ifind(" ORDER BY ");
     if( osSQLCommand.ifind("SELECT ") == 0 &&
+        osSQLCommand.ifind("SELECT ", 1) == std::string::npos && /* Ensure there's no sub SELECT that could confuse our heuristics */
         nOrderByPos != std::string::npos &&
         osSQLCommand.ifind(" LIMIT ") == std::string::npos &&
         osSQLCommand.ifind(" UNION ") == std::string::npos &&
