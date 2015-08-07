@@ -628,6 +628,48 @@ def test_gdaldem_color_relief_nearest_color_entry_vrt():
     ds = None
 
     return 'success'
+    
+###############################################################################
+# Test gdaldem color relief with a nan nodata
+
+def test_gdaldem_color_relief_nodata_nan():
+    if test_cli_utilities.get_gdaldem_path() is None:
+        return 'skip'
+
+    f = open('tmp/nodata_nan_src.asc', 'wt')
+    f.write("""ncols        2
+nrows        2
+xllcorner    440720
+yllcorner    3750120
+cellsize     60
+NODATA_value nan
+ 0.0 0
+ 0 nan""")
+    f.close()
+    
+    f = open('tmp/nodata_nan_plt.txt', 'wt')
+    f.write('0 0 0 0\n')
+    f.write('nv 1 1 1\n')
+    f.close()
+
+    gdaltest.runexternal(test_cli_utilities.get_gdaldem_path() + ' color-relief tmp/nodata_nan_src.asc tmp/nodata_nan_plt.txt tmp/nodata_nan_out.tif')
+
+    ds = gdal.Open('tmp/nodata_nan_out.tif')
+    val = ds.GetRasterBand(1).ReadRaster()
+    ds = None
+
+    import struct
+    val = struct.unpack('B' * 4, val)
+    if val != (0,0,0,1):
+        gdaltest.post_reason('fail')
+        print(val)
+        return 'fail'
+
+    os.unlink('tmp/nodata_nan_src.asc')
+    os.unlink('tmp/nodata_nan_plt.txt')
+    os.unlink('tmp/nodata_nan_out.tif')
+
+    return 'success'
 
 ###############################################################################
 # Cleanup
@@ -727,6 +769,7 @@ gdaltest_list = [
     test_gdaldem_color_relief_from_float32_to_png,
     test_gdaldem_color_relief_nearest_color_entry,
     test_gdaldem_color_relief_nearest_color_entry_vrt,
+    test_gdaldem_color_relief_nodata_nan,
     test_gdaldem_cleanup
     ]
 
