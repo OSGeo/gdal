@@ -100,6 +100,8 @@ other variations into a form that is compatible with the OGR CSV driver.</p>
 
 <h2>Reading CSV containing spatial information</h2>
 
+<h3>Building point geometries</h3>
+
 <p>Consider the following CSV file (test.csv):
 <pre>
 Latitude,Longitude,Name
@@ -169,6 +171,32 @@ OGRFeature(test):3
   Name (String) = Third point
   POINT (0.75 47.5 0)
 </pre>
+
+<h3>Building line geometries</h3>
+
+<p>Consider the following CSV file (test.csv):
+<pre>
+way_id,pt_id,x,y
+1,1,2,49
+1,2,3,50
+2,1,-2,49
+2,2,-3,50 
+</pre>
+</p>
+
+With a GDAL build with Spatialite enabled,
+
+<i>ogrinfo test.csv -dialect SQLite -sql "SELECT way_id, MakeLine(MakePoint(CAST(x AS float),CAST(y AS float))) FROM test GROUP BY way_id"</i> will return :
+<pre>
+OGRFeature(SELECT):0
+  way_id (String) = 1
+  LINESTRING (2 49,3 50)
+
+OGRFeature(SELECT):1
+  way_id (String) = 2
+  LINESTRING (-2 49,-3 50)
+</pre>
+
 
 <h2>Open options</h2>
 
