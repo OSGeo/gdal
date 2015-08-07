@@ -100,7 +100,7 @@ def pds_3():
         return 'fail'
 
     ds = gdal.Open('data/EN0001426030M_truncated.IMG')
-    if ds.GetRasterBand(1).GetNoDataValue() != -32768:
+    if ds.GetRasterBand(1).GetNoDataValue() != 0:
         return 'fail'
 
     gdal.PopErrorHandler()
