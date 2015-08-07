@@ -403,22 +403,19 @@ def test_gdal_rasterize_8():
         return 'skip'
 
     f = open('tmp/test_gdal_rasterize_8.csv', 'wb')
-    x = (0, 0, 50, 50, 25)
-    y = (0, 50, 0, 50, 25)
     f.write('WKT,Value\n'.encode('ascii'))
     f.write('"LINESTRING (0 0, 5 5, 10 0, 10 10)",1'.encode('ascii'))
     f.close()
 
-    cmds = '''tmp/test_gdal_rasterize_8.csv
-              tmp/test_gdal_rasterize_8.tif
-              -init 0 -burn 1 -tr 1 1'''
+    cmds = '''tmp/test_gdal_rasterize_8.csv tmp/test_gdal_rasterize_8.tif -init 0 -burn 1 -tr 1 1'''
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_rasterize_path() + ' ' + cmds)
 
     ds = gdal.Open('tmp/test_gdal_rasterize_8.tif')
-    data = ds.GetRasterBand(1).ReadAsArray()
-    if data.sum() != 21:
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 21:
         gdaltest.post_reason('Did not rasterize line data properly')
+        print(cs)
         return 'fail'
 
     ds = None
