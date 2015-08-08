@@ -100,11 +100,6 @@ def raster_copy_with_nodata( s_fh, s_xoff, s_yoff, s_xsize, s_ysize, s_band_n,
         import numpy as Numeric
     except ImportError:
         import Numeric
-    
-    if verbose != 0:
-        print('Copy %d,%d,%d,%d to %d,%d,%d,%d.' \
-              % (s_xoff, s_yoff, s_xsize, s_ysize,
-             t_xoff, t_yoff, t_xsize, t_ysize ))
 
     s_band = s_fh.GetRasterBand( s_band_n )
     t_band = t_fh.GetRasterBand( t_band_n )
@@ -128,11 +123,6 @@ def raster_copy_with_mask( s_fh, s_xoff, s_yoff, s_xsize, s_ysize, s_band_n,
         import numpy as Numeric
     except ImportError:
         import Numeric
-    
-    if verbose != 0:
-        print('Copy %d,%d,%d,%d to %d,%d,%d,%d.' \
-              % (s_xoff, s_yoff, s_xsize, s_ysize,
-             t_xoff, t_yoff, t_xsize, t_ysize ))
 
     s_band = s_fh.GetRasterBand( s_band_n )
     t_band = t_fh.GetRasterBand( t_band_n )
