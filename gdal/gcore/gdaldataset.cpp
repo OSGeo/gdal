@@ -1518,6 +1518,62 @@ CPLErr GDALDataset::IRasterIO( GDALRWFlag eRWFlag,
                                    psExtraArg );
     }
     
+    if( eRWFlag == GF_Read &&
+        (psExtraArg->eResampleAlg == GRIORA_Cubic ||
+         psExtraArg->eResampleAlg == GRIORA_CubicSpline ||
+         psExtraArg->eResampleAlg == GRIORA_Bilinear ||
+         psExtraArg->eResampleAlg == GRIORA_Lanczos) &&
+        !(nXSize == nBufXSize && nYSize == nBufYSize) && nBandCount > 1 )
+    {
+        
+        int bUseDatasetRasterIOResampled = TRUE;
+        GDALDataType eFirstBandDT = GDT_Unknown;
+        for(int i=0;i<nBandCount;i++)
+        {
+            GDALRasterBand* poBand = GetRasterBand(panBandMap[i]);
+            if( (nBufXSize < nXSize || nBufYSize < nYSize) &&
+                poBand->GetOverviewCount() )
+            {
+                // Could be improved to select the appropriate overview
+                bUseDatasetRasterIOResampled = FALSE;
+                break;
+            }
+            if( poBand->GetColorTable() != NULL )
+            {
+                bUseDatasetRasterIOResampled = FALSE;
+                break;
+            }
+            GDALDataType eDT = poBand->GetRasterDataType();
+            if( GDALDataTypeIsComplex( eDT ) )
+            {
+                bUseDatasetRasterIOResampled = FALSE;
+                break;
+            }
+            if( i == 0 )
+                eFirstBandDT = eDT;
+            else if( eDT != eFirstBandDT )
+            {
+                bUseDatasetRasterIOResampled = FALSE;
+                break;
+            }
+            int nMaskFlags = poBand->GetMaskFlags();
+            if( (nMaskFlags & GMF_PER_DATASET) == 0 && nMaskFlags != GMF_ALL_VALID )
+            {
+                bUseDatasetRasterIOResampled = FALSE;
+                break;
+            }
+        }
+        if( bUseDatasetRasterIOResampled )
+        {
+            return RasterIOResampled( eRWFlag, nXOff, nYOff, nXSize, nYSize, 
+                                   pData, nBufXSize, nBufYSize,
+                                   eBufType, nBandCount, panBandMap,
+                                   nPixelSpace, nLineSpace, nBandSpace,
+                                   psExtraArg );
+        }
+
+    }
+        
     return BandBasedRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize, 
                                    pData, nBufXSize, nBufYSize,
                                    eBufType, nBandCount, panBandMap,
@@ -3840,7 +3896,9 @@ OGRLayer *GDALDataset::ICreateLayer( const char * pszName,
  @param poSrcLayer source layer.
  @param pszNewName the name of the layer to create.
  @param papszOptions a StringList of name=value options.  Options are driver
-                     specific.
+                     specific. There is a common option to set output layer
+                     spatial reference: DST_SRSWKT. The option shoulde be in
+                     WKT format.
 
  @return an handle to the layer, or NULL if an error occurs.
 */
@@ -3863,6 +3921,9 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
         return NULL;
     }
 
+    const char* pszSRSWKT = CSLFetchNameValue(papszOptions, "DST_SRSWKT");
+    OGRSpatialReference oDstSpaRef(pszSRSWKT);
+
     CPLErrorReset();
     if( poSrcDefn->GetGeomFieldCount() > 1 &&
         TestCapability(ODsCCreateGeomFieldAfterCreateLayer) )
@@ -3871,8 +3932,19 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
     }
     else
     {
+        if(NULL == pszSRSWKT)
+        {
         poDstLayer =ICreateLayer( pszNewName, poSrcLayer->GetSpatialRef(),
                                   poSrcDefn->GetGeomType(), papszOptions );
+    }
+        else
+        {
+            // remove DST_WKT from option list to prevent WARNINfrom driver
+            int nSRSPos = CSLFindName(papszOptions, "DST_SRSWKT");
+            papszOptions = CSLRemoveStrings(papszOptions, nSRSPos, 1, NULL);
+            poDstLayer = ICreateLayer( pszNewName, &oDstSpaRef,
+                                  poSrcDefn->GetGeomType(), papszOptions );
+        }
     }
     
     if( poDstLayer == NULL )
@@ -3934,15 +4006,42 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
     }
 
 /* -------------------------------------------------------------------- */
+    OGRCoordinateTransformation *poCT = NULL;
+    OGRSpatialReference *sourceSRS = poSrcLayer->GetSpatialRef();
+    if (sourceSRS != NULL && pszSRSWKT != NULL &&
+            sourceSRS->IsSame(&oDstSpaRef) == FALSE)
+    {
+        poCT = (OGRCoordinateTransformation*)OGRCreateCoordinateTransformation(sourceSRS, &oDstSpaRef);
+        if(NULL == poCT)
+        {
+            CPLError( CE_Failure, CPLE_NotSupported,
+                      "This input/output spatial reference is not supported." );
+            CPLFree(panMap);
+            return NULL;
+        }
+    }
 /*      Create geometry fields.                                         */
 /* -------------------------------------------------------------------- */
-    if( poSrcDefn->GetGeomFieldCount() > 1 &&
+/*      Create geometry fields.                                         */
+/* -------------------------------------------------------------------- */
+    int nSrcGeomFieldCount = poSrcDefn->GetGeomFieldCount();
+    if( nSrcGeomFieldCount > 1 &&
         TestCapability(ODsCCreateGeomFieldAfterCreateLayer) )
     {
-        int nSrcGeomFieldCount = poSrcDefn->GetGeomFieldCount();
+
         for( iField = 0; iField < nSrcGeomFieldCount; iField++ )
         {
+            if(NULL == pszSRSWKT)
+        {
             poDstLayer->CreateGeomField( poSrcDefn->GetGeomFieldDefn(iField) );
+        }
+            else
+            {
+                OGRGeomFieldDefn* pDstGeomFieldDefn =
+                        poSrcDefn->GetGeomFieldDefn(iField);
+                pDstGeomFieldDefn->SetSpatialRef(&oDstSpaRef);
+                poDstLayer->CreateGeomField(pDstGeomFieldDefn);
+            }
         }
     }
 
@@ -3982,7 +4081,32 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
                       poFeature->GetFID(), poSrcDefn->GetName() );
             OGRFeature::DestroyFeature( poFeature );
             CPLFree(panMap);
+            if(NULL != poCT)
+                OCTDestroyCoordinateTransformation((OGRCoordinateTransformationH)poCT);
             return poDstLayer;
+        }
+
+        if(NULL != poCT)
+        {
+            for( iField = 0; iField < nSrcGeomFieldCount; iField++ )
+            {
+                OGRGeometry* pGeom = poDstFeature->GetGeomFieldRef(iField);
+                if(NULL != pGeom)
+                {
+                    OGRErr eErr = pGeom->transform(poCT);
+                    if(eErr != OGRERR_NONE)
+                    {
+                        CPLError( CE_Failure, CPLE_AppDefined,
+                                  "Unable to transform geometry " CPL_FRMT_GIB
+                                  " from layer %s.\n",
+                                  poFeature->GetFID(), poSrcDefn->GetName() );
+                        OGRFeature::DestroyFeature( poFeature );
+                        CPLFree(panMap);
+                        OCTDestroyCoordinateTransformation((OGRCoordinateTransformationH)poCT);
+                        return poDstLayer;
+                    }
+                }
+            }
         }
 
         poDstFeature->SetFID( poFeature->GetFID() );
@@ -3994,6 +4118,8 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
         {
             OGRFeature::DestroyFeature( poDstFeature );
             CPLFree(panMap);
+            if(NULL != poCT)
+                OCTDestroyCoordinateTransformation((OGRCoordinateTransformationH)poCT);
             return poDstLayer;
         }
 
@@ -4036,6 +4162,28 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
                 break;
             }
 
+            if(NULL != poCT)
+            {
+                for( iField = 0; iField < nSrcGeomFieldCount; iField++ )
+                {
+                    OGRGeometry* pGeom = papoDstFeature[nFeatCount]->GetGeomFieldRef(iField);
+                    if(NULL != pGeom)
+                    {
+                        OGRErr eErr = pGeom->transform(poCT);
+                        if(eErr != OGRERR_NONE)
+                        {
+                            CPLError( CE_Failure, CPLE_AppDefined,
+                                      "Unable to transform geometry " CPL_FRMT_GIB
+                                      " from layer %s.\n",
+                                      poFeature->GetFID(), poSrcDefn->GetName() );
+                            OGRFeature::DestroyFeature( poFeature );
+                            bStopTransfer = TRUE;
+                            break;
+                        }
+                    }
+                }
+            }
+
             papoDstFeature[nFeatCount]->SetFID( poFeature->GetFID() );
 
             OGRFeature::DestroyFeature( poFeature );
@@ -4068,6 +4216,9 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
       }
       CPLFree(papoDstFeature);
     }
+
+    if(NULL != poCT)
+        OCTDestroyCoordinateTransformation((OGRCoordinateTransformationH)poCT);
 
     CPLFree(panMap);
 

@@ -145,7 +145,7 @@ typedef unsigned long      GUIntBig;
 {
  /* %typemap(ret) VSI_RETVAL */
   if ($1 == -1 ) {
-    croak(strerror(errno));
+    croak("%s", strerror(errno));
   }
 }
 

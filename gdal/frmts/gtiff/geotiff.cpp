@@ -4211,6 +4211,40 @@ CPLErr GTiffOddBitsBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 
                 continue;
             }
+            
+            if (poGDS->nBitsPerSample == 12 )
+            {
+                for( iX = 0; iX < nBlockXSize; iX++ )
+                {
+                    GUInt32 nInWord = ((GUInt16 *) pImage)[iPixel++];
+                    if (nInWord > nMaxVal)
+                    {
+                        nInWord = nMaxVal;
+                        if( !poGDS->bClipWarn )
+                        {
+                            poGDS->bClipWarn = TRUE;
+                            CPLError( CE_Warning, CPLE_AppDefined,
+                                      "One or more pixels clipped to fit %d bit domain.", poGDS->nBitsPerSample );
+                        }
+                    }
+
+                    if( (iBitOffset % 8) == 0 )
+                    {
+                        poGDS->pabyBlockBuf[iBitOffset>>3] = (GByte) (nInWord >> 4);
+                        /* let 4 lower bits to zero as they're going to be overriden by the next word */
+                        poGDS->pabyBlockBuf[(iBitOffset>>3)+1] = (GByte) ((nInWord & 0xf) << 4);
+                    }
+                    else
+                    {
+                        /* we must or to preserve the 4 upper bits written for the previous word */
+                        poGDS->pabyBlockBuf[iBitOffset>>3] |= (GByte) (nInWord >> 8);
+                        poGDS->pabyBlockBuf[(iBitOffset>>3)+1] = (GByte) (nInWord & 0xff);
+                    }
+                    
+                    iBitOffset += poGDS->nBitsPerSample;
+                }
+                continue;
+            }
 
             for( iX = 0; iX < nBlockXSize; iX++ )
             {
@@ -4325,6 +4359,41 @@ CPLErr GTiffOddBitsBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
         for( iY = 0; iY < nBlockYSize; iY++ )
         {
             iBitOffset = iBandBitOffset + iY * nBitsPerLine;
+            
+            if (poGDS->nBitsPerSample == 12 )
+            {
+                for( iX = 0; iX < nBlockXSize; iX++ )
+                {
+                    GUInt32 nInWord = ((GUInt16 *) pabyThisImage)[iPixel++];
+                    if (nInWord > nMaxVal)
+                    {
+                        nInWord = nMaxVal;
+                        if( !poGDS->bClipWarn )
+                        {
+                            poGDS->bClipWarn = TRUE;
+                            CPLError( CE_Warning, CPLE_AppDefined,
+                                      "One or more pixels clipped to fit %d bit domain.", poGDS->nBitsPerSample );
+                        }
+                    }
+
+                    if( (iBitOffset % 8) == 0 )
+                    {
+                        poGDS->pabyBlockBuf[iBitOffset>>3] = (GByte) (nInWord >> 4);
+                        poGDS->pabyBlockBuf[(iBitOffset>>3)+1] =
+                            (GByte) (((nInWord & 0xf) << 4) | (poGDS->pabyBlockBuf[(iBitOffset>>3)+1] & 0xf));
+                    }
+                    else
+                    {
+                        poGDS->pabyBlockBuf[iBitOffset>>3] =
+                            (GByte) ((poGDS->pabyBlockBuf[iBitOffset>>3] & 0xf0) |
+                                     (nInWord >> 8));
+                        poGDS->pabyBlockBuf[(iBitOffset>>3)+1] = (GByte) (nInWord & 0xff);
+                    }
+                    
+                    iBitOffset += iPixelBitSkip;
+                }
+                continue;
+            }
 
             for( iX = 0; iX < nBlockXSize; iX++ )
             {

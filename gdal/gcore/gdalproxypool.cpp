@@ -320,7 +320,7 @@ GDALProxyPoolCacheEntry* GDALDatasetPool::_RefDataset(const char* pszFileName,
 /*                       _CloseDataset()                                */
 /************************************************************************/
 
-void GDALDatasetPool::_CloseDataset(const char* pszFileName, GDALAccess eAccess)
+void GDALDatasetPool::_CloseDataset(const char* pszFileName, CPL_UNUSED GDALAccess eAccess)
 {
     GDALProxyPoolCacheEntry* cur = firstEntry;
     GIntBig responsiblePID = GDALGetResponsiblePIDForCurrentThread();

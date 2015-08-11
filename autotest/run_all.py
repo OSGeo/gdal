@@ -37,7 +37,7 @@ sys.path.append( 'pymod' )
 import gdaltest
 from osgeo import gdal
 
-all_test_list = [ 'ogr', 'gcore', 'gdrivers', 'osr' , 'alg', 'utilities', 'pyscripts' ]
+all_test_list = [ 'ogr', 'gcore', 'gdrivers', 'osr' , 'alg', 'gnm', 'utilities', 'pyscripts' ]
 
 if len(sys.argv) == 2:
     if sys.argv[1] == '-l':

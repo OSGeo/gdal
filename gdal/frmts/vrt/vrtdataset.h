@@ -297,6 +297,8 @@ class VRTPansharpenedDataset : public VRTDataset
     
     GTAdjustment      eGTAdjustment;
     int               bNoDataDisabled;
+    
+    std::vector<GDALDataset*> apoDatasetsToClose;
 
   protected:
     virtual int         CloseDependentDatasets();
@@ -307,6 +309,11 @@ public:
 
     virtual CPLErr    XMLInit( CPLXMLNode *, const char * );
     virtual CPLXMLNode *   SerializeToXML( const char *pszVRTPath );
+    
+    CPLErr            XMLInit( CPLXMLNode *psTree, const char *pszVRTPath,
+                                        GDALRasterBandH hPanchroBandIn,
+                                        int nInputSpectralBandsIn,
+                                        GDALRasterBandH* pahInputSpectralBandsIn );
 
     virtual CPLErr AddBand( GDALDataType eType, 
                             char **papszOptions=NULL );

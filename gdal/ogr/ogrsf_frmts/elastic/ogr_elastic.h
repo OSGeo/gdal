@@ -33,6 +33,14 @@
 #include "ogrsf_frmts.h"
 #include "ogr_p.h"
 #include "cpl_hash_set.h"
+#include <vector>
+
+typedef enum
+{
+    ES_GEOMTYPE_AUTO,
+    ES_GEOMTYPE_GEO_POINT,
+    ES_GEOMTYPE_GEO_SHAPE
+} ESGeometryTypeMapping;
 
 class OGRElasticDataSource;
 
@@ -42,18 +50,25 @@ class OGRElasticDataSource;
 
 class OGRElasticLayer : public OGRLayer {
     OGRFeatureDefn* poFeatureDefn;
-    OGRSpatialReference* poSRS;
     OGRElasticDataSource* poDS;
     CPLString sIndex;
     void* pAttributes;
+    int bMappingWritten;
     char* pszLayerName;
+    int nBulkUpload;
+    
+    std::vector< OGRCoordinateTransformation* > m_apoCT;
+    ESGeometryTypeMapping eGeomTypeMapping;
 
+    int PushIndex();
+    CPLString BuildMap();
+    
 public:
     OGRElasticLayer(const char *pszFilename,
             const char* layerName,
             OGRElasticDataSource* poDS,
-            OGRSpatialReference *poSRSIn,
-            int bWriteMode = FALSE);
+            int bWriteMode,
+            char** papszOptions);
     ~OGRElasticLayer();
 
     void ResetReading();
@@ -61,15 +76,15 @@ public:
 
     OGRErr ICreateFeature(OGRFeature *poFeature);
     OGRErr CreateField(OGRFieldDefn *poField, int bApproxOK);
+    OGRErr CreateGeomField(OGRGeomFieldDefn *poField, int bApproxOK);
 
     OGRFeatureDefn * GetLayerDefn();
 
     int TestCapability(const char *);
 
     GIntBig GetFeatureCount(int bForce);
-
-    void PushIndex();
-    CPLString BuildMap();
+    
+    virtual OGRErr      SyncToDisk();
 };
 
 /************************************************************************/
@@ -108,7 +123,7 @@ public:
 
     int TestCapability(const char *);
 
-    void UploadFile(const CPLString &url, const CPLString &data);
+    int UploadFile(const CPLString &url, const CPLString &data);
     void DeleteIndex(const CPLString &url);
 
     int bOverwrite;

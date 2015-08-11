@@ -474,24 +474,25 @@ VSIMemFilesystemHandler::Open( const char *pszFilename,
     else
         poFile = oFileList[osFilename];
 
-    if( strstr(pszAccess,"w") == NULL && poFile == NULL )
+    if( strstr(pszAccess,"w") == NULL 
+	&& strstr(pszAccess, "a") == NULL
+	&& poFile == NULL )
     {
         errno = ENOENT;
         return NULL;
     }
 
-    if( strstr(pszAccess,"w") )
-    {
-        if( poFile )
-            poFile->SetLength( 0 );
-        else
-        {
-            poFile = new VSIMemFile;
-            poFile->osFilename = osFilename;
-            oFileList[poFile->osFilename] = poFile;
-            poFile->nRefCount++; // for file list
-        }
-    }
+    // Overwrite
+    if (poFile && strstr(pszAccess, "w"))
+	poFile->SetLength(0);
+
+    // Create
+    if (!poFile && (strstr(pszAccess, "w") || strstr(pszAccess, "a"))) {
+	poFile = new VSIMemFile;
+	poFile->osFilename = osFilename;
+	oFileList[poFile->osFilename] = poFile;
+	poFile->nRefCount++; // for file list
+    } 
 
     if( poFile->bIsDirectory )
     {

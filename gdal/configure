@@ -731,6 +731,7 @@ MYSQL_LIB
 MYSQL_INC
 HAVE_MYSQL
 MYSQL_CONFIG
+GNM_ENABLED
 OGR_ENABLED
 OPT_GDAL_FORMATS
 ORACLE_OCI_LDFLAGS
@@ -963,6 +964,7 @@ with_oci_include
 with_oci_lib
 with_grib
 with_ogr
+with_gnm
 with_mysql
 with_ingres
 with_xerces
@@ -1712,6 +1714,7 @@ Optional Packages:
   --with-oci-lib=[DIR]    use Oracle OCI API libraries from given path
   --without-grib          Disable GRIB driver
   --without-ogr         Don't build OGR into shared library
+  --with-gnm            Build GNM into shared library
   --with-mysql=ARG      Include MySQL (ARG=path to mysql_config) [default=no]
   --with-ingres=ARG     Include Ingres (ARG=$II_SYSTEM)
   --with-xerces=[ARG]     use Xerces C++ Parser from given prefix (ARG=path);
@@ -3862,7 +3865,7 @@ ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
  ac_save_CFLAGS="$CFLAGS"
-for ac_arg in "-pedantic -Wdeclaration-after-statement -Wunused-parameter %        -Wall -Wdeclaration-after-statement -Wunused-parameter"    "-pedantic -Wdeclaration-after-statement %        -Wall -Wdeclaration-after-statement"    "-pedantic  % -Wall"          "-xstrconst % -v"             "-std1      % -verbose -w0 -warnprotos"    "-qlanglvl=ansi % -qsrcmsg -qinfo=all:noppt:noppc:noobs:nocnd"    "-ansi -ansiE % -fullwarn"    "+ESlit     % +w1"            "-Xc        % -pvctl,fullmsg"    "-h conform % -h msglevel 2"    #
+for ac_arg in "-pedantic -Wdeclaration-after-statement %        -Wall -Wdeclaration-after-statement"    "-pedantic  % -Wall"          "-xstrconst % -v"             "-std1      % -verbose -w0 -warnprotos"    "-qlanglvl=ansi % -qsrcmsg -qinfo=all:noppt:noppc:noobs:nocnd"    "-ansi -ansiE % -fullwarn"    "+ESlit     % +w1"            "-Xc        % -pvctl,fullmsg"    "-h conform % -h msglevel 2"    #
 do CFLAGS="$ac_save_CFLAGS "`echo $ac_arg | sed -e 's,%%.*,,' -e 's,%,,'`
    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -4184,7 +4187,7 @@ ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ex
 ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
 
  ac_save_CXXFLAGS="$CXXFLAGS"
-for ac_arg in "-pedantic  % -Wall -Wunused-parameter"          "-pedantic  % -Wall"          "-xstrconst % -v"             "-std1      % -verbose -w0 -warnprotos"    "-qlanglvl=ansi % -qsrcmsg -qinfo=all:noppt:noppc:noobs:nocnd"    "-ansi -ansiE % -fullwarn"    "+ESlit     % +w1"            "-Xc        % -pvctl,fullmsg"    "-h conform % -h msglevel 2"    #
+for ac_arg in "-pedantic  % -Wall"          "-xstrconst % -v"             "-std1      % -verbose -w0 -warnprotos"    "-qlanglvl=ansi % -qsrcmsg -qinfo=all:noppt:noppc:noobs:nocnd"    "-ansi -ansiE % -fullwarn"    "+ESlit     % +w1"            "-Xc        % -pvctl,fullmsg"    "-h conform % -h msglevel 2"    #
 do CXXFLAGS="$ac_save_CXXFLAGS "`echo $ac_arg | sed -e 's,%%.*,,' -e 's,%,,'`
    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -23853,6 +23856,29 @@ OGR_ENABLED=$OGR_ENABLED
 
 
 
+GNM_ENABLED=no
+
+
+# Check whether --with-gnm was given.
+if test "${with_gnm+set}" = set; then :
+  withval=$with_gnm;
+fi
+
+
+if test "$with_gnm" = "" ; then
+  GNM_ENABLED=no
+  echo "GNM support disabled."
+elif test "$with_gnm" = "yes"; then
+  echo checking for GNM ... enabled
+  GNM_ENABLED=yes
+else
+  echo checking for GNM ... disabled by user
+  GNM_ENABLED=no
+fi
+GNM_ENABLED=$GNM_ENABLED
+
+
+
 MYSQL_CONFIG=no
 
 
@@ -32576,6 +32602,9 @@ echo "  Statically link PROJ.4:    ${PROJ_STATIC}"
 
 
 echo "  enable OGR building:       ${OGR_ENABLED}"
+
+
+echo "  enable GNM building:       ${GNM_ENABLED}"
 
 
 echo "  enable pthread support:    ${PTHREAD_ENABLED}"

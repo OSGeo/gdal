@@ -2682,6 +2682,24 @@ fi
 AC_SUBST(OGR_ENABLED,$OGR_ENABLED)
 
 dnl ---------------------------------------------------------------------------
+
+GNM_ENABLED=no
+
+AC_ARG_WITH(gnm,[  --with-gnm            Build GNM into shared library],,)
+
+if test "$with_gnm" = "" ; then
+  GNM_ENABLED=no
+  echo "GNM support disabled."
+elif test "$with_gnm" = "yes"; then
+  echo checking for GNM ... enabled
+  GNM_ENABLED=yes
+else
+  echo checking for GNM ... disabled by user
+  GNM_ENABLED=no
+fi
+AC_SUBST(GNM_ENABLED,$GNM_ENABLED)
+
+dnl ---------------------------------------------------------------------------
 dnl Select an MySQL Library to use, or disable driver.
 dnl ---------------------------------------------------------------------------
 
@@ -4746,6 +4764,7 @@ LOC_MSG([  SWIG Bindings:             ${WHAT_BINDINGS}])
 LOC_MSG()
 LOC_MSG([  Statically link PROJ.4:    ${PROJ_STATIC}])
 LOC_MSG([  enable OGR building:       ${OGR_ENABLED}])
+LOC_MSG([  enable GNM building:       ${GNM_ENABLED}])
 LOC_MSG([  enable pthread support:    ${PTHREAD_ENABLED}])
 LOC_MSG([  enable POSIX iconv support:${am_cv_func_iconv}])
 LOC_MSG([  hide internal symbols:     ${HAVE_HIDE_INTERNAL_SYMBOLS}])

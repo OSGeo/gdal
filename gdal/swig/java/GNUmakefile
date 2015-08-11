@@ -31,10 +31,10 @@ makedir:
 	mkdir -p org/gdal/gdalconst
 	mkdir -p org/gdal/ogr
 	mkdir -p org/gdal/osr
+	mkdir -p org/gdal/gnm
 
-
-JAVA_MODULES = libgdaljni.$(SO_EXT) libogrjni.$(SO_EXT) libgdalconstjni.$(SO_EXT) libosrjni.$(SO_EXT)
-JAVA_OBJECTS = gdalconst_wrap.$(OBJ_EXT) gdal_wrap.$(OBJ_EXT) osr_wrap.$(OBJ_EXT) ogr_wrap.$(OBJ_EXT)
+JAVA_MODULES = libgdaljni.$(SO_EXT) libogrjni.$(SO_EXT) libgdalconstjni.$(SO_EXT) libosrjni.$(SO_EXT) libgnmjni.$(SO_EXT)
+JAVA_OBJECTS = gdalconst_wrap.$(OBJ_EXT) gdal_wrap.$(OBJ_EXT) osr_wrap.$(OBJ_EXT) ogr_wrap.$(OBJ_EXT) gnm_wrap.$(OBJ_EXT)
 
 clean:
 	-rm -f ${JAVA_MODULES}
@@ -100,10 +100,10 @@ $(JAVA_MODULES): lib%jni.$(SO_EXT): %_wrap.$(OBJ_EXT)
 # Do not remove -fno-strict-aliasing while SWIG generates weird code in upcast methods
 # See http://trac.osgeo.org/gdal/changeset/16006
 %.$(OBJ_EXT): %.cpp
-	$(CXX) -fno-strict-aliasing $(CFLAGS) $(CPPFLAGS) $(GDAL_INCLUDE) $(JAVA_INCLUDE) -c $<
+	$(CXX) -fno-strict-aliasing $(GDAL_INCLUDE) $(CFLAGS) $(CPPFLAGS) $(JAVA_INCLUDE) -c $<
 
 %.$(OBJ_EXT): %.cxx
-	$(CXX) -fno-strict-aliasing $(CFLAGS) $(CPPFLAGS) $(GDAL_INCLUDE) $(JAVA_INCLUDE) -c $<
+	$(CXX) -fno-strict-aliasing $(GDAL_INCLUDE) $(CFLAGS) $(CPPFLAGS) $(JAVA_INCLUDE) -c $<
 
 %.$(OBJ_EXT): %.c
-	$(CC) -fno-strict-aliasing $(CFLAGS) $(CPPFLAGS) $(GDAL_INCLUDE) $(JAVA_INCLUDE) -c $<
+	$(CC) -fno-strict-aliasing $(GDAL_INCLUDE) $(CFLAGS) $(CPPFLAGS) $(JAVA_INCLUDE) -c $<

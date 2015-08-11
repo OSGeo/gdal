@@ -18,7 +18,7 @@ SCRIPTS			= `ls ./scripts`
 PY_COMMANDS     =       epsg_tr.py gdalchksum.py gdal2xyz.py gcps2wld.py \
                         gdalimport.py gdal_merge.py pct2rgb.py rgb2pct.py \
                         gcps2vec.py
-PY_MODULES      =       ${PACKAGE_DIR}/gdal.py ${PACKAGE_DIR}/ogr.py ${PACKAGE_DIR}/osr.py ${PACKAGE_DIR}/gdalconst.py ${PACKAGE_DIR}/gdal_array.py
+PY_MODULES      =       ${PACKAGE_DIR}/gdal.py ${PACKAGE_DIR}/ogr.py ${PACKAGE_DIR}/osr.py ${PACKAGE_DIR}/gdalconst.py ${PACKAGE_DIR}/gdal_array.py ${PACKAGE_DIR}/gnm.py
 
 clean:
 	-rm -f ${PACKAGE_DIR}/*.pyc
@@ -38,6 +38,7 @@ veryclean: clean
 	-rm -f ${SWIGOUTPUTDIR}/ogr_wrap.cpp
 	-rm -f ${SWIGOUTPUTDIR}/osr_wrap.cpp
 	-rm -f ${SWIGOUTPUTDIR}/gdal_array_wrap.cpp
+	-rm -f ${SWIGOUTPUTDIR}/gnm_wrap.cpp
 
 gdal_wrap.cpp: ../include/python/gdal_python.i
 

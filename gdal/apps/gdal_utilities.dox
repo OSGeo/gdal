@@ -948,8 +948,8 @@ burns vector geometries into a raster
 Usage: gdal_rasterize [-b band]* [-i] [-at]
        [-burn value]* | [-a attribute_name] [-3d]
        [-l layername]* [-where expression] [-sql select_statement]
-       [-of format] [-a_srs srs_def] [-co "NAME=VALUE"]*
-       [-a_nodata value] [-init value]*
+       [-dialect dialect] [-of format] [-a_srs srs_def]
+       [-co "NAME=VALUE"]* [-a_nodata value] [-init value]*
        [-te xmin ymin xmax ymax] [-tr xres yres] [-tap] [-ts width height]
        [-ot {Byte/Int16/UInt16/UInt32/Int32/Float32/Float64/
              CInt16/CInt32/CFloat32/CFloat64}] [-q]
@@ -1010,6 +1010,12 @@ to burn in from the input layer(s). </dd>
 <dt> <b>-sql</b> <em>select_statement</em>: </dt><dd> 
 An SQL statement to be evaluated against the datasource to produce a
 virtual layer of features to be burned in.</dd>
+
+<dt> <b>-dialect</b> <em>dialect</em>: </dt><dd>
+(starting with GDAL 2.1) The SQL dialect. In some cases can be used to use
+(unoptimized) OGR SQL instead of the native SQL of an RDBMS by passing OGRSQL.
+Starting with GDAL 1.10, the "SQLITE" dialect can also be used with any
+datasource.</dd>
 
 <dt> <b>-of</b> <i>format</i>:</dt><dd> (GDAL >= 1.8.0)
 Select the output format.  The default is GeoTIFF (GTiff).  Use the short format

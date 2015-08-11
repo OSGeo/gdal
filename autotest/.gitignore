@@ -15,3 +15,5 @@ gdrivers/data/byte.jp2.gz.properties
 gdrivers/data/utm.json
 gdrivers/tmp
 osr/tmp
+*~
+*tmp

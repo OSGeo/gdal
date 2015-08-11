@@ -346,7 +346,10 @@ OGRErr OGRMultiPoint::importFromWkt_Bracketed( char ** ppszInput, int bHasM, int
             poGeom->empty();
             eErr = addGeometryDirectly( poGeom );
             if( eErr != OGRERR_NONE )
+            {
+                delete poGeom;
                 return eErr;
+            }
 
             pszInput = pszNext;
 
@@ -374,7 +377,10 @@ OGRErr OGRMultiPoint::importFromWkt_Bracketed( char ** ppszInput, int bHasM, int
 
         eErr = addGeometryDirectly( poGeom );
         if( eErr != OGRERR_NONE )
+        {
+            delete poGeom;
             return eErr;
+        }
     }
 
 /* -------------------------------------------------------------------- */
