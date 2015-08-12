@@ -62,6 +62,7 @@ OGRElasticLayer::OGRElasticLayer(CPL_UNUSED const char* pszFilename,
     nBulkUpload = poDS->nBulkUpload;
     if( CSLFetchBoolean(papszOptions, "BULK_INSERT", FALSE) )
         nBulkUpload = 10000;
+    osPrecision = CSLFetchNameValueDef(papszOptions, "GEOM_PRECISION", "");
 
     poFeatureDefn = new OGRFeatureDefn(pszLayerName);
     SetDescription( poFeatureDefn->GetName() );
@@ -171,7 +172,15 @@ CPLString OGRElasticLayer::BuildMap() {
     {
         json_object *geometry = AppendGroup(Feature, "geometry");
         json_object_object_add(geometry, "type", AddPropertyMap("string"));
-        json_object_object_add(geometry, "coordinates", AddPropertyMap("geo_point"));
+        json_object* geo_point = AddPropertyMap("geo_point");
+        if( osPrecision.size() )
+        {
+            json_object* field_data = json_object_new_object();
+            json_object_object_add(geo_point, "fielddata", field_data);
+            json_object_object_add(field_data, "format", json_object_new_string("compressed"));
+            json_object_object_add(field_data, "precision", json_object_new_string(osPrecision.c_str()));
+        }
+        json_object_object_add(geometry, "coordinates", geo_point);
     }
     else if( poFeatureDefn->GetGeomFieldCount() > 0 &&
         (eGeomTypeMapping == ES_GEOMTYPE_GEO_SHAPE ||
@@ -185,6 +194,8 @@ CPLString OGRElasticLayer::BuildMap() {
                                    poFeatureDefn->GetGeomFieldDefn(i)->GetNameRef(),
                                    geometry);
             json_object_object_add(geometry, "type", json_object_new_string("geo_shape"));
+            if( osPrecision.size() )
+                json_object_object_add(geometry, "precision", json_object_new_string(osPrecision.c_str()));
         }
     }
 
