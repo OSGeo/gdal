@@ -6,7 +6,7 @@ GDAL_ROOT	=	..\..
 KAKINC = -I$(KAKSRC)/managed/all_includes \
        -I$(KAKSRC)/apps/jp2
 OBJ_EXT =	obj
-OBJ_PREFIX =	$(KAKDIR)\v6_generated_x86
+OBJ_PREFIX =	$(KAKOBJDIR)
 OBJ_CONFIG =	release
 
 KAK_APPS_OBJ =	\
@@ -22,8 +22,15 @@ KAK_APPS_OBJ =	\
 	     $(OBJ_PREFIX)\compress\$(OBJ_CONFIG)\kdu_tiff.obj \
 	     $(OBJ_PREFIX)\compress\$(OBJ_CONFIG)\jpx.obj
 
+!IFDEF KAKADU_7_5_OR_LATER
+KAK_APPS_OBJ = $(KAK_APPS_OBJ) \
+       $(OBJ_PREFIX)\buffered_expand\$(OBJ_CONFIG)\avx2_stripe_transfer.obj \
+       $(OBJ_PREFIX)\buffered_expand\$(OBJ_CONFIG)\ssse3_stripe_transfer.obj \
+       $(OBJ_PREFIX)\render\$(OBJ_CONFIG)\ssse3_region_decompressor.obj \
+!ENDIF
+
 OBJ	=	jp2kakdataset.obj
-EXTRAFLAGS = 	$(KAKINC) /DKDU_PENTIUM_MSVC /EHsc
+EXTRAFLAGS = 	$(KAKINC) /DKDU_PENTIUM_MSVC /EHsc $(KAKFLAGS)
 
 default:	$(OBJ) kakinstall
 	xcopy /D  /Y *.obj ..\o
