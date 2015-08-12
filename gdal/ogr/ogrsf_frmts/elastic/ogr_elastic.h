@@ -56,6 +56,7 @@ class OGRElasticLayer : public OGRLayer {
     int bMappingWritten;
     char* pszLayerName;
     int nBulkUpload;
+    CPLString osPrecision;
     
     std::vector< OGRCoordinateTransformation* > m_apoCT;
     ESGeometryTypeMapping eGeomTypeMapping;

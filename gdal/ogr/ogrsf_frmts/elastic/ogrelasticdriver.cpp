@@ -84,6 +84,7 @@ void RegisterOGRElastic() {
     "    <Value>GEO_POINT</Value>"
     "    <Value>GEO_SHAPE</Value>"
     "  </Option>"
+    "  <Option name='GEOM_PRECISION' type='string' description='Desired geometry precision. Number followed by unit. For example 1m'/>"
     "  <Option name='BULK_INSERT' type='boolean' description='Whether to use bulk insert for feature creation' default='NO'/>"
     "</LayerCreationOptionList>");
 
