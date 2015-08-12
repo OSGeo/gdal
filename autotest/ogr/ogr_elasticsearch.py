@@ -126,20 +126,32 @@ def ogr_elasticsearch_1():
         return 'fail'
     
     gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo2&POSTFIELDS=', '{}')
-    gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo2/FeatureCollection/_mapping&POSTFIELDS={ "FeatureCollection": { "properties": { "type": { "store": "yes", "type": "string" }, "properties": { "properties": { "str_field": { "store": "yes", "type": "string" }, "int_field": { "store": "yes", "type": "integer" }, "int64_field": { "store": "yes", "type": "long" }, "real_field": { "store": "yes", "type": "double" }, "real_field_unset": { "store": "yes", "type": "double" } } }, "geometry": { "properties": { "type": { "store": "yes", "type": "string" }, "coordinates": { "store": "yes", "type": "geo_point" } } } } } }', '{}')
+    gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo2/FeatureCollection/_mapping&POSTFIELDS={ "FeatureCollection": { "properties": { "type": { "store": "yes", "type": "string" }, "properties": { "properties": { "str_field": { "store": "yes", "type": "string" }, "int_field": { "store": "yes", "type": "string" }, "int64_field": { "store": "yes", "type": "string" }, "real_field": { "store": "yes", "type": "string" }, "real_field_unset": { "store": "yes", "type": "string" }, "boolean_field": { "store": "yes", "type": "string" }, "strlist_field": { "store": "yes", "type": "string" }, "intlist_field": { "store": "yes", "type": "string" }, "int64list_field": { "store": "yes", "type": "string" }, "reallist_field": { "store": "yes", "type": "string" } } }, "geometry": { "properties": { "type": { "store": "yes", "type": "string" }, "coordinates": { "store": "yes", "type": "geo_point" } } } } } }', '{}')
     lyr = ds.CreateLayer('foo2', geom_type = ogr.wkbPoint)
     lyr.CreateField(ogr.FieldDefn('str_field', ogr.OFTString))
     lyr.CreateField(ogr.FieldDefn('int_field', ogr.OFTInteger))
     lyr.CreateField(ogr.FieldDefn('int64_field', ogr.OFTInteger64))
     lyr.CreateField(ogr.FieldDefn('real_field', ogr.OFTReal))
     lyr.CreateField(ogr.FieldDefn('real_field_unset', ogr.OFTReal))
+    fld_defn = ogr.FieldDefn('boolean_field', ogr.OFTInteger)
+    fld_defn.SetSubType(ogr.OFSTBoolean)
+    lyr.CreateField(fld_defn)
+    lyr.CreateField(ogr.FieldDefn('strlist_field', ogr.OFTStringList))
+    lyr.CreateField(ogr.FieldDefn('intlist_field', ogr.OFTIntegerList))
+    lyr.CreateField(ogr.FieldDefn('int64list_field', ogr.OFTInteger64List))
+    lyr.CreateField(ogr.FieldDefn('reallist_field', ogr.OFTRealList))
 
-    gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo2/FeatureCollection/&POSTFIELDS={ "geometry": { "type": "POINT", "coordinates": [ 0.000000, 1.000000 ] }, "type": "Feature", "properties": { "str_field": "a", "int_field": 1, "int64_field": 123456789012, "real_field": 2.340000 } }', '{}')
+    gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo2/FeatureCollection/&POSTFIELDS={ "geometry": { "type": "POINT", "coordinates": [ 0.000000, 1.000000 ] }, "type": "Feature", "properties": { "str_field": "a", "int_field": 1, "int64_field": 123456789012, "real_field": 2.340000, "boolean_field": true, "strlist_field": [ "a", "b" ], "intlist_field": [ 1, 2 ], "int64list_field": [ 123456789012, 2 ], "reallist_field": [ 1.230000, 4.560000 ] } }', '{}')
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetField('str_field', 'a')
     feat.SetField('int_field', 1)
     feat.SetField('int64_field', 123456789012)
     feat.SetField('real_field', 2.34)
+    feat.SetField('boolean_field', 1)
+    feat['strlist_field'] = ['a', 'b']
+    feat['intlist_field'] =  [1,2]
+    feat['int64list_field'] = [123456789012,2]
+    feat['reallist_field'] = [1.23,4.56]
     feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(0 1)'))
     ret = lyr.CreateFeature(feat)
     if ret != 0:

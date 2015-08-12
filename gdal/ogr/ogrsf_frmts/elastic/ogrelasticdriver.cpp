@@ -88,7 +88,7 @@ void RegisterOGRElastic() {
     "  <Option name='BULK_INSERT' type='boolean' description='Whether to use bulk insert for feature creation' default='NO'/>"
     "</LayerCreationOptionList>");
 
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES, "Integer Integer64 Real String Date DateTime" );
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES, "Integer Integer64 Real String Date DateTime IntegerList Integer64List RealList StringList" );
 
         poDriver->pfnCreate = OGRElasticSearchDriverCreate;
 

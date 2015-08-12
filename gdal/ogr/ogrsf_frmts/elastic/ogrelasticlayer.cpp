@@ -446,13 +446,19 @@ OGRErr OGRElasticLayer::ICreateFeature(OGRFeature *poFeature) {
 
     // For every field that
     int fieldCount = poFeatureDefn->GetFieldCount();
-    for (int i = 0; i < fieldCount; i++) {
-		if(!poFeature->IsFieldSet( i ) ) {
-			continue;
-		}
+    for (int i = 0; i < fieldCount; i++)
+    {
+        if(!poFeature->IsFieldSet( i ) ) {
+                continue;
+        }
         switch (poFeatureDefn->GetFieldDefn(i)->GetType()) {
             case OFTInteger:
-                json_object_object_add(properties,
+                if( poFeatureDefn->GetFieldDefn(i)->GetSubType() == OFSTBoolean )
+                    json_object_object_add(properties,
+                        poFeatureDefn->GetFieldDefn(i)->GetNameRef(),
+                        json_object_new_boolean(poFeature->GetFieldAsInteger(i)));
+                else
+                    json_object_object_add(properties,
                         poFeatureDefn->GetFieldDefn(i)->GetNameRef(),
                         json_object_new_int(poFeature->GetFieldAsInteger(i)));
                 break;
@@ -466,6 +472,49 @@ OGRErr OGRElasticLayer::ICreateFeature(OGRFeature *poFeature) {
                         poFeatureDefn->GetFieldDefn(i)->GetNameRef(),
                         json_object_new_double(poFeature->GetFieldAsDouble(i)));
                 break;
+            case OFTIntegerList:
+            {
+                int nCount;
+                const int* panValues = poFeature->GetFieldAsIntegerList(i, &nCount);
+                json_object* poArray = json_object_new_array();
+                for(int j=0;j<nCount;j++)
+                    json_object_array_add(poArray, json_object_new_int(panValues[j]));
+                json_object_object_add(properties,
+                        poFeatureDefn->GetFieldDefn(i)->GetNameRef(), poArray);
+                break;
+            }
+            case OFTInteger64List:
+            {
+                int nCount;
+                const GIntBig* panValues = poFeature->GetFieldAsInteger64List(i, &nCount);
+                json_object* poArray = json_object_new_array();
+                for(int j=0;j<nCount;j++)
+                    json_object_array_add(poArray, json_object_new_int64(panValues[j]));
+                json_object_object_add(properties,
+                        poFeatureDefn->GetFieldDefn(i)->GetNameRef(), poArray);
+                break;
+            }
+            case OFTRealList:
+            {
+                int nCount;
+                const double* padfValues = poFeature->GetFieldAsDoubleList(i, &nCount);
+                json_object* poArray = json_object_new_array();
+                for(int j=0;j<nCount;j++)
+                    json_object_array_add(poArray, json_object_new_double(padfValues[j]));
+                json_object_object_add(properties,
+                        poFeatureDefn->GetFieldDefn(i)->GetNameRef(), poArray);
+                break;
+            }
+            case OFTStringList:
+            {
+                char** papszValues = poFeature->GetFieldAsStringList(i);
+                json_object* poArray = json_object_new_array();
+                for(int j=0;papszValues[j]!= NULL;j++)
+                    json_object_array_add(poArray, json_object_new_string(papszValues[j]));
+                json_object_object_add(properties,
+                        poFeatureDefn->GetFieldDefn(i)->GetNameRef(), poArray);
+                break;
+            }
             default:
             {
                 CPLString tmp = poFeature->GetFieldAsString(i);
@@ -527,18 +576,28 @@ OGRErr OGRElasticLayer::CreateField(OGRFieldDefn *poFieldDefn,
     if (!pAttributes) {
         pAttributes = json_object_new_object();
     }
+    const char* pszESType = "string";
 
     switch (poFieldDefn->GetType()) {
         case OFTInteger:
-            json_object_object_add((json_object *) pAttributes, poFieldDefn->GetNameRef(), AddPropertyMap("integer"));
+        case OFTIntegerList:
+        {
+            if( poFieldDefn->GetSubType() == OFSTBoolean )
+                json_object_object_add((json_object *) pAttributes, poFieldDefn->GetNameRef(), AddPropertyMap("boolean"));
+            else
+                json_object_object_add((json_object *) pAttributes, poFieldDefn->GetNameRef(), AddPropertyMap("integer"));
             break;
+        }
         case OFTInteger64:
+        case OFTInteger64List:
             json_object_object_add((json_object *) pAttributes, poFieldDefn->GetNameRef(), AddPropertyMap("long"));
             break;
         case OFTReal:
+        case OFTRealList:
             json_object_object_add((json_object *) pAttributes, poFieldDefn->GetNameRef(), AddPropertyMap("double"));
             break;
         case OFTString:
+        case OFTStringList:
             json_object_object_add((json_object *) pAttributes, poFieldDefn->GetNameRef(), AddPropertyMap("string"));
             break;
         case OFTDateTime:
@@ -550,16 +609,11 @@ OGRErr OGRElasticLayer::CreateField(OGRFieldDefn *poFieldDefn,
             // These types are mapped as strings and may not be correct
             /*
                             OFTTime:
-                            OFTIntegerList = 1,
-                            OFTRealList = 3,
-                            OFTStringList = 5,
-                            OFTWideString = 6,
-                            OFTWideStringList = 7,
                             OFTBinary = 8,
-                            OFTMaxType = 11
              */
-            json_object_object_add((json_object *) pAttributes, poFieldDefn->GetNameRef(), AddPropertyMap("string"));
+            break;
     }
+    json_object_object_add((json_object *) pAttributes, poFieldDefn->GetNameRef(), AddPropertyMap(pszESType));
 
     poFeatureDefn->AddFieldDefn(poFieldDefn);
     return OGRERR_NONE;
