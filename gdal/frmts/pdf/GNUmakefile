@@ -54,4 +54,4 @@ install-obj:	$(O_OBJ:.o=.$(OBJ_EXT))
 plugin: $(PLUGIN_DL)
 
 $(PLUGIN_DL):  $(OBJ)
-	$(LD_SHARED) $(OBJ) $(LDFLAGS) $(CONFIG_LIBS_INS) -o $(PLUGIN_DL) $(PDFIUM_PLUGIN_LIB)
+	$(LD_SHARED) $(OBJ) ..\..\ogr\ogrsf_frmts\mem\ogrmemdatasource.obj ..\..\ogr\ogrsf_frmts\mem\ogrmemdriver.obj ..\..\ogr\ogrsf_frmts\mem\ogrmemlayer.obj $(LDFLAGS) $(CONFIG_LIBS_INS) -o $(PLUGIN_DL) $(PDFIUM_PLUGIN_LIB)
