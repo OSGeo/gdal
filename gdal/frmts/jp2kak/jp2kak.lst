@@ -24,4 +24,5 @@ endif
 ifneq ($(wildcard $(KAKDIR)/apps/make/ssse3_region_decompressor.o),)
 KAK_OBJ +=	\
     $(KAKDIR)/apps/make/ssse3_region_decompressor.o
+    $(KAKDIR)/apps/make/avx2_stripe_transfer.o
 endif
