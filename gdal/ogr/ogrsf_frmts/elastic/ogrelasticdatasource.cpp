@@ -98,8 +98,19 @@ OGRLayer * OGRElasticDataSource::ICreateLayer(const char * pszLayerName,
 {
     if( bOverwrite || CSLFetchBoolean(papszOptions, "OVERWRITE", FALSE) )
     {
-        // If we are overwriting, then delete the current index if it exists
-        DeleteIndex(CPLSPrintf("%s/%s", GetName(), pszLayerName));
+        // Check if the index exists
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        CPLHTTPResult* psResult = CPLHTTPFetch(CPLSPrintf("%s/%s", GetName(), pszLayerName), NULL);
+        CPLPopErrorHandler();
+        if (psResult) {
+            int bOK = (psResult->pszErrBuf == NULL);
+            CPLHTTPDestroyResult(psResult);
+            if( bOK )
+            {
+                // Then delete it
+                DeleteIndex(CPLSPrintf("%s/%s", GetName(), pszLayerName));
+            }
+        }
     }
     
     // Create the index
