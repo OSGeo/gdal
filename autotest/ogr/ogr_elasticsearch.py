@@ -126,7 +126,7 @@ def ogr_elasticsearch_1():
         return 'fail'
     
     gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo2&POSTFIELDS=', '{}')
-    gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo2/FeatureCollection/_mapping&POSTFIELDS={ "FeatureCollection": { "properties": { "type": { "store": "yes", "type": "string" }, "properties": { "properties": { "str_field": { "store": "yes", "type": "string" }, "int_field": { "store": "yes", "type": "string" }, "int64_field": { "store": "yes", "type": "string" }, "real_field": { "store": "yes", "type": "string" }, "real_field_unset": { "store": "yes", "type": "string" }, "boolean_field": { "store": "yes", "type": "string" }, "strlist_field": { "store": "yes", "type": "string" }, "intlist_field": { "store": "yes", "type": "string" }, "int64list_field": { "store": "yes", "type": "string" }, "reallist_field": { "store": "yes", "type": "string" } } }, "geometry": { "properties": { "type": { "store": "yes", "type": "string" }, "coordinates": { "store": "yes", "type": "geo_point" } } } } } }', '{}')
+    gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo2/FeatureCollection/_mapping&POSTFIELDS={ "FeatureCollection": { "properties": { "type": { "store": "yes", "type": "string" }, "properties": { "properties": { "str_field": { "store": "yes", "type": "string" }, "int_field": { "store": "yes", "type": "integer" }, "int64_field": { "store": "yes", "type": "long" }, "real_field": { "store": "yes", "type": "double" }, "real_field_unset": { "store": "yes", "type": "double" }, "boolean_field": { "store": "yes", "type": "boolean" }, "strlist_field": { "store": "yes", "type": "string" }, "intlist_field": { "store": "yes", "type": "integer" }, "int64list_field": { "store": "yes", "type": "long" }, "reallist_field": { "store": "yes", "type": "double" }, "date_field": { "store": "yes", "type": "date", "format": "yyyy\/MM\/dd HH:mm:ss.SSS||yyyy\/MM\/dd" }, "datetime_field": { "store": "yes", "type": "date", "format": "yyyy\/MM\/dd HH:mm:ss.SSS||yyyy\/MM\/dd" }, "time_field": { "store": "yes", "type": "date", "format": "HH:mm:ss.SSS" }, "binary_field": { "store": "yes", "type": "binary" } } }, "geometry": { "properties": { "type": { "store": "yes", "type": "string" }, "coordinates": { "store": "yes", "type": "geo_point" } } } } } }', '{}')
     lyr = ds.CreateLayer('foo2', geom_type = ogr.wkbPoint)
     lyr.CreateField(ogr.FieldDefn('str_field', ogr.OFTString))
     lyr.CreateField(ogr.FieldDefn('int_field', ogr.OFTInteger))
@@ -140,8 +140,12 @@ def ogr_elasticsearch_1():
     lyr.CreateField(ogr.FieldDefn('intlist_field', ogr.OFTIntegerList))
     lyr.CreateField(ogr.FieldDefn('int64list_field', ogr.OFTInteger64List))
     lyr.CreateField(ogr.FieldDefn('reallist_field', ogr.OFTRealList))
+    lyr.CreateField(ogr.FieldDefn('date_field', ogr.OFTDate))
+    lyr.CreateField(ogr.FieldDefn('datetime_field', ogr.OFTDateTime))
+    lyr.CreateField(ogr.FieldDefn('time_field', ogr.OFTTime))
+    lyr.CreateField(ogr.FieldDefn('binary_field', ogr.OFTBinary))
 
-    gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo2/FeatureCollection/&POSTFIELDS={ "geometry": { "type": "POINT", "coordinates": [ 0.000000, 1.000000 ] }, "type": "Feature", "properties": { "str_field": "a", "int_field": 1, "int64_field": 123456789012, "real_field": 2.340000, "boolean_field": true, "strlist_field": [ "a", "b" ], "intlist_field": [ 1, 2 ], "int64list_field": [ 123456789012, 2 ], "reallist_field": [ 1.230000, 4.560000 ] } }', '{}')
+    gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo2/FeatureCollection/&POSTFIELDS={ "geometry": { "type": "POINT", "coordinates": [ 0.000000, 1.000000 ] }, "type": "Feature", "properties": { "str_field": "a", "int_field": 1, "int64_field": 123456789012, "real_field": 2.340000, "boolean_field": true, "strlist_field": [ "a", "b" ], "intlist_field": [ 1, 2 ], "int64list_field": [ 123456789012, 2 ], "reallist_field": [ 1.230000, 4.560000 ], "date_field": "2015\/08\/12", "datetime_field": "2015\/08\/12 12:34:56.789", "time_field": "12:34:56.789", "binary_field": "ASNGV4mrze8=" } }', '{}')
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetField('str_field', 'a')
     feat.SetField('int_field', 1)
@@ -152,6 +156,10 @@ def ogr_elasticsearch_1():
     feat['intlist_field'] =  [1,2]
     feat['int64list_field'] = [123456789012,2]
     feat['reallist_field'] = [1.23,4.56]
+    feat['date_field'] = '2015/08/12'
+    feat['datetime_field'] = '2015/08/12 12:34:56.789'
+    feat['time_field'] = '12:34:56.789'
+    feat.SetFieldBinaryFromHexString( 'binary_field', '0123465789ABCDEF' )
     feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(0 1)'))
     ret = lyr.CreateFeature(feat)
     if ret != 0:
