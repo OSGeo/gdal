@@ -358,6 +358,8 @@ JPEG12_SUPPORTED = 1
 #KAKDIR = 	\warmerda\pkg\kakadu-6.2.1
 #KAKLIB =	$(KAKDIR)\lib_x86\kdu_v62R.lib
 #KAKSRC =	$(KAKDIR)\vt_2_1-00256N
+#KAKOBJDIR =  $(KAKDIR)\v6_generated_x86
+#KAKADU_7_5_OR_LATER = YES
 
 # Uncomment the following and update to enable NCSA HDF Release 4 support.
 #HDF4_PLUGIN = NO
