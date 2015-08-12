@@ -3857,7 +3857,9 @@ if test "$with_podofo" != "no" -a "$with_podofo" != ""; then
         rm -f testpodofo.*
         echo '#include <podofo.h>' > testpodofo.cpp
         echo 'int main(int argc, char** argv) { PoDoFo::PdfError::EnableDebug( 0 ); return 0; } ' >> testpodofo.cpp
-        if test -z "`${CXX} testpodofo.cpp -o testpodofo ${TEST_PODOFO_INC} ${PODOFO_LIB}  2>&1`" ; then
+        ${CXX} testpodofo.cpp -o testpodofo ${TEST_PODOFO_INC} ${PODOFO_LIB} 2>/dev/null
+        RETVAL=$?
+        if test $RETVAL -eq 0; then
             HAVE_PODOFO=yes
             LIBS="${PODOFO_LIB} ${LIBS}"
             PODOFO_INC=$TEST_PODOFO_INC
@@ -3887,7 +3889,9 @@ if test "$with_podofo" != "no" -a "$with_podofo" != ""; then
         rm -f testpodofo.*
         echo '#include <podofo.h>' > testpodofo.cpp
         echo 'int main(int argc, char** argv) { PoDoFo::PdfError::EnableDebug( 0 ); return 0; } ' >> testpodofo.cpp
-        if test -z "`${CXX} testpodofo.cpp -o testpodofo ${TEST_PODOFO_INC} ${TEST_PODOFO_LIB} 2>&1`" ; then
+        ${CXX} testpodofo.cpp -o testpodofo ${TEST_PODOFO_INC} ${TEST_PODOFO_LIB} 2>/dev/null
+        RETVAL=$?
+        if test $RETVAL -eq 0; then
             HAVE_PODOFO=yes
             LIBS="${PODOFO_LIB} ${LIBS}"
             PODOFO_INC=$TEST_PODOFO_INC
