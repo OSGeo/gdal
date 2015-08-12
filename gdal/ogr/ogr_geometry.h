@@ -165,7 +165,7 @@ class CPL_DLL OGRGeometry
     virtual void   dumpReadable( FILE *, const char * = NULL, char** papszOptions = NULL ) const;
     virtual void   flattenTo2D() = 0;
     virtual char * exportToGML( const char* const * papszOptions = NULL ) const;
-	virtual char * exportToKML() const;
+    virtual char * exportToKML() const;
     virtual char * exportToJson() const;
 
     static GEOSContextHandle_t createGEOSContext();
