@@ -515,12 +515,23 @@ OGRErr OGRElasticLayer::ICreateFeature(OGRFeature *poFeature) {
                         poFeatureDefn->GetFieldDefn(i)->GetNameRef(), poArray);
                 break;
             }
-            default:
+            case OFTBinary:
             {
-                CPLString tmp = poFeature->GetFieldAsString(i);
+                int nCount;
+                GByte* pabyVal = poFeature->GetFieldAsBinary(i, &nCount);
+                char* pszVal = CPLBase64Encode(nCount, pabyVal);
                 json_object_object_add(properties,
                         poFeatureDefn->GetFieldDefn(i)->GetNameRef(),
-                        json_object_new_string(tmp));
+                        json_object_new_string(pszVal));
+                CPLFree(pszVal);
+                break;
+            }
+            default:
+            {
+                const char* pszVal = poFeature->GetFieldAsString(i);
+                json_object_object_add(properties,
+                        poFeatureDefn->GetFieldDefn(i)->GetNameRef(),
+                        json_object_new_string(pszVal));
             }
         }
     }
@@ -576,7 +587,6 @@ OGRErr OGRElasticLayer::CreateField(OGRFieldDefn *poFieldDefn,
     if (!pAttributes) {
         pAttributes = json_object_new_object();
     }
-    const char* pszESType = "string";
 
     switch (poFieldDefn->GetType()) {
         case OFTInteger:
@@ -602,18 +612,17 @@ OGRErr OGRElasticLayer::CreateField(OGRFieldDefn *poFieldDefn,
             break;
         case OFTDateTime:
         case OFTDate:
-            json_object_object_add((json_object *) pAttributes, poFieldDefn->GetNameRef(), AddPropertyMap("date", "yyyy/MM/dd HH:mm:ss||yyyy/MM/dd"));
+            json_object_object_add((json_object *) pAttributes, poFieldDefn->GetNameRef(), AddPropertyMap("date", "yyyy/MM/dd HH:mm:ss.SSS||yyyy/MM/dd"));
+            break;
+        case OFTTime:
+            json_object_object_add((json_object *) pAttributes, poFieldDefn->GetNameRef(), AddPropertyMap("date", "HH:mm:ss.SSS"));
+            break;
+        case OFTBinary:
+            json_object_object_add((json_object *) pAttributes, poFieldDefn->GetNameRef(), AddPropertyMap("binary"));
             break;
         default:
-
-            // These types are mapped as strings and may not be correct
-            /*
-                            OFTTime:
-                            OFTBinary = 8,
-             */
             break;
     }
-    json_object_object_add((json_object *) pAttributes, poFieldDefn->GetNameRef(), AddPropertyMap(pszESType));
 
     poFeatureDefn->AddFieldDefn(poFieldDefn);
     return OGRERR_NONE;
