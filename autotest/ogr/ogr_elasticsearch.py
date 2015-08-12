@@ -92,11 +92,22 @@ def ogr_elasticsearch_1():
     if lyr is None:
         gdaltest.post_reason('fail')
         return 'fail'
-    
-    gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo&CUSTOMREQUEST=DELETE', '{}')
+
     gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo/FeatureCollection/_mapping&POSTFIELDS={ "FeatureCollection": { "properties": { "type": { "store": "yes", "type": "string" }, "properties": { } } } }', '{}')
 
+    # OVERWRITE an inexisting layer
     lyr = ds.CreateLayer('foo', geom_type = ogr.wkbNone, options = ['OVERWRITE=TRUE'])
+
+    # Simulate failed overwrite
+    gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo', '{}')
+    gdal.PushErrorHandler()
+    lyr = ds.CreateLayer('foo', geom_type = ogr.wkbNone, options = ['OVERWRITE=TRUE'])
+    gdal.PopErrorHandler()
+    
+    # Successful overwrite
+    gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo&CUSTOMREQUEST=DELETE', '{}')
+    lyr = ds.CreateLayer('foo', geom_type = ogr.wkbNone, options = ['OVERWRITE=TRUE'])
+    
     feat = ogr.Feature(lyr.GetLayerDefn())
 
     gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo/FeatureCollection/&POSTFIELDS={ "properties": { } }', '')
