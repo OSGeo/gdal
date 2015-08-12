@@ -426,7 +426,7 @@ def ogr_wfs_deegree():
         return 'skip'
     gdaltest.deegree_wfs = True
 
-    ds = ogr.Open("WFS:http://demo.deegree.org:80/utah-workspace/services?ACCEPTVERSIONS=1.1.0&MAXFEATURES=10")
+    ds = ogr.Open("WFS:http://demo.deegree.org:80/utah-workspace/services/wfs?ACCEPTVERSIONS=1.1.0&MAXFEATURES=10")
     if ds is None:
         if gdal.GetLastErrorMsg().find('Error returned by server') < 0:
             gdaltest.deegree_wfs = False
@@ -457,7 +457,7 @@ def ogr_wfs_deegree():
         return 'fail'
 
     # Test attribute filter
-    ds = ogr.Open("WFS:http://demo.deegree.org:80/utah-workspace/services?ACCEPTVERSIONS=1.1.0")
+    ds = ogr.Open("WFS:http://demo.deegree.org:80/utah-workspace/services/wfs?ACCEPTVERSIONS=1.1.0")
     lyr = ds.GetLayerByName('app:SGID024_Springs')
     lyr.SetAttributeFilter('OBJECTID = 9 or OBJECTID = 100 or (OBJECTID >= 20 and OBJECTID <= 30 and OBJECTID != 27)')
     feat_count = lyr.GetFeatureCount()
@@ -491,7 +491,7 @@ def ogr_wfs_test_ogrsf():
     if test_cli_utilities.get_test_ogrsf_path() is None:
         return 'skip'
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro "WFS:http://demo.deegree.org:80/utah-workspace/services?ACCEPTVERSIONS=1.1.0&MAXFEATURES=10" app:SGID024_Springs')
+    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro "WFS:http://demo.deegree.org:80/utah-workspace/services/wfs?ACCEPTVERSIONS=1.1.0&MAXFEATURES=10" app:SGID024_Springs')
 
     if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
         print(ret)
@@ -875,9 +875,9 @@ def ogr_wfs_deegree_gml321():
     if gdaltest.wfs_drv is None:
         return 'skip'
 
-    ds = ogr.Open('WFS:http://demo.deegree.org:80/inspire-workspace/services?ACCEPTVERSIONS=1.1.0&MAXFEATURES=10')
+    ds = ogr.Open('WFS:http://demo.deegree.org:80/inspire-workspace/services/wfs?ACCEPTVERSIONS=1.1.0&MAXFEATURES=10')
     if ds is None:
-        if gdaltest.gdalurlopen('http://demo.deegree.org:80/inspire-workspace/services?ACCEPTVERSIONS=1.1.0') is None:
+        if gdaltest.gdalurlopen('http://demo.deegree.org:80/inspire-workspace/services/wfs?ACCEPTVERSIONS=1.1.0') is None:
             print('cannot open URL')
             return 'skip'
         if gdal.GetLastErrorMsg().find("Unable to determine the subcontroller for request type 'GetCapabilities' and service type 'WFS'") != -1:
@@ -885,9 +885,9 @@ def ogr_wfs_deegree_gml321():
         return 'fail'
 
     lyr = ds.GetLayerByName("ad:Address")
-    count = lyr.GetFeatureCount()
-    if count != 10:
-        print(count)
+    gdal.ErrorReset()
+    lyr.GetFeatureCount()
+    if gdal.GetLastErrorMsg() != '':
         return 'fail'
 
     return 'success'
@@ -900,9 +900,9 @@ def ogr_wfs_deegree_wfs200():
     if gdaltest.wfs_drv is None:
         return 'skip'
 
-    ds = ogr.Open('WFS:http://demo.deegree.org:80/utah-workspace/services?ACCEPTVERSIONS=2.0.0')
+    ds = ogr.Open('WFS:http://demo.deegree.org:80/utah-workspace/services/wfs?ACCEPTVERSIONS=2.0.0')
     if ds is None:
-        if gdaltest.gdalurlopen('http://demo.deegree.org:80/utah-workspace/services?ACCEPTVERSIONS=2.0.0') is None:
+        if gdaltest.gdalurlopen('http://demo.deegree.org:80/utah-workspace/services/wfs?ACCEPTVERSIONS=2.0.0') is None:
             print('cannot open URL')
             return 'skip'
         return 'fail'
@@ -958,9 +958,9 @@ def ogr_wfs_deegree_sortby():
     if gdaltest.wfs_drv is None:
         return 'skip'
 
-    ds = ogr.Open('WFS:http://demo.deegree.org:80/utah-workspace/services?MAXFEATURES=10&VERSION=1.1.0')
+    ds = ogr.Open('WFS:http://demo.deegree.org:80/utah-workspace/services/wfs?MAXFEATURES=10&VERSION=1.1.0')
     if ds is None:
-        if gdaltest.gdalurlopen('http://demo.deegree.org:80/utah-workspace/services') is None:
+        if gdaltest.gdalurlopen('http://demo.deegree.org:80/utah-workspace/services/wfs') is None:
             print('cannot open URL')
             return 'skip'
         return 'fail'
