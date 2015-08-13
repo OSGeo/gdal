@@ -96,11 +96,22 @@ OGRLayer * OGRElasticDataSource::ICreateLayer(const char * pszLayerName,
                                               OGRwkbGeometryType eGType,
                                               char ** papszOptions)
 {
+    CPLString osLaunderedName(pszLayerName);
+    for(size_t i=0;i<osLaunderedName.size();i++)
+    {
+        if( osLaunderedName[i] >= 'A' && osLaunderedName[i] <= 'Z' )
+            osLaunderedName[i] += 'a' - 'A';
+        else if( osLaunderedName[i] == '/' || osLaunderedName[i] == '?' )
+            osLaunderedName[i] = '_';
+    }
+    if( strcmp(osLaunderedName.c_str(), pszLayerName) != 0 )
+        CPLDebug("ES", "Laundered layer name to %s", osLaunderedName.c_str());
+
     if( bOverwrite || CSLFetchBoolean(papszOptions, "OVERWRITE", FALSE) )
     {
         // Check if the index exists
         CPLPushErrorHandler(CPLQuietErrorHandler);
-        CPLHTTPResult* psResult = CPLHTTPFetch(CPLSPrintf("%s/%s", GetName(), pszLayerName), NULL);
+        CPLHTTPResult* psResult = CPLHTTPFetch(CPLSPrintf("%s/%s", GetName(), osLaunderedName.c_str()), NULL);
         CPLPopErrorHandler();
         if (psResult) {
             int bOK = (psResult->pszErrBuf == NULL);
@@ -108,26 +119,26 @@ OGRLayer * OGRElasticDataSource::ICreateLayer(const char * pszLayerName,
             if( bOK )
             {
                 // Then delete it
-                DeleteIndex(CPLSPrintf("%s/%s", GetName(), pszLayerName));
+                DeleteIndex(CPLSPrintf("%s/%s", GetName(), osLaunderedName.c_str()));
             }
         }
     }
     
     // Create the index
-    if( !UploadFile(CPLSPrintf("%s/%s", GetName(), pszLayerName), "") )
+    if( !UploadFile(CPLSPrintf("%s/%s", GetName(), osLaunderedName.c_str()), "") )
         return NULL;
 
     // If we have a user specified mapping, then go ahead and update it now
     const char* pszLayerMapping = pszMapping;
     if (pszLayerMapping != NULL) {
-        if( !UploadFile(CPLSPrintf("%s/%s/FeatureCollection/_mapping", GetName(), pszLayerName),
+        if( !UploadFile(CPLSPrintf("%s/%s/FeatureCollection/_mapping", GetName(), osLaunderedName.c_str()),
                    pszLayerMapping) )
         {
             return NULL;
         }
     }
     
-    OGRElasticLayer* poLayer = new OGRElasticLayer(pszName, pszLayerName, this, TRUE, papszOptions);
+    OGRElasticLayer* poLayer = new OGRElasticLayer(pszName, osLaunderedName.c_str(), this, TRUE, papszOptions);
     nLayers++;
     papoLayers = (OGRElasticLayer **) CPLRealloc(papoLayers, nLayers * sizeof (OGRElasticLayer*));
     papoLayers[nLayers - 1] = poLayer;

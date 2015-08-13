@@ -226,7 +226,7 @@ def ogr_elasticsearch_2():
     return 'success'
 
 ###############################################################################
-# Test bulk insert
+# Test bulk insert and layer name laundering
 
 def ogr_elasticsearch_3():
     if ogrtest.elasticsearch_drv is None:
@@ -237,10 +237,10 @@ def ogr_elasticsearch_3():
         gdaltest.post_reason('did not managed to open ElasticSearch datastore')
         return 'fail'
     
-    gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo&POSTFIELDS=', '{}')
-    gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo/FeatureCollection/_mapping&POSTFIELDS={ "FeatureCollection": { "properties": { "type": { "store": "yes", "type": "string" }, "properties": { }, "geometry": { "type": "geo_shape" } } } }', '{}')
+    gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/name_laundering&POSTFIELDS=', '{}')
+    gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/name_laundering/FeatureCollection/_mapping&POSTFIELDS={ "FeatureCollection": { "properties": { "type": { "store": "yes", "type": "string" }, "properties": { }, "geometry": { "type": "geo_shape" } } } }', '{}')
    
-    lyr = ds.CreateLayer('foo', options = ['BULK_INSERT=YES'])
+    lyr = ds.CreateLayer('NAME/laundering', options = ['BULK_INSERT=YES'])
     feat = ogr.Feature(lyr.GetLayerDefn())
     ret = lyr.CreateFeature(feat)
     if ret != 0:
@@ -262,7 +262,7 @@ def ogr_elasticsearch_3():
         return 'fail'
     feat = None
     
-    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/_bulk&POSTFIELDS={"index" :{"_index":"foo", "_type":"FeatureCollection"}}
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/_bulk&POSTFIELDS={"index" :{"_index":"name_laundering", "_type":"FeatureCollection"}}
 { "properties": { } }
 
 """, '{}')
