@@ -200,7 +200,7 @@ void qh_clear_outputflags(void) {
   qh TRInormals= False;
   qh USEstdout= False;
   qh VERIFYoutput= False;
-  for (k=qh input_dim+1; k--; ) {  /* duplicated in qh_initqhull_buffers and qh_clear_ouputflags */
+  for (k=qh input_dim+1; k--; ) {  /* duplicated in qh_initqhull_buffers and qh_clear_outputflags */
     qh lower_threshold[k]= -REALmax;
     qh upper_threshold[k]= REALmax;
     qh lower_bound[k]= -REALmax;
@@ -1439,7 +1439,7 @@ void qh_initqhull_buffers(void) {
   qh upper_threshold= (realT *)qh_memalloc((qh input_dim+1) * sizeof(realT));
   qh lower_bound= (realT *)qh_memalloc((qh input_dim+1) * sizeof(realT));
   qh upper_bound= (realT *)qh_memalloc((qh input_dim+1) * sizeof(realT));
-  for (k=qh input_dim+1; k--; ) {  /* duplicated in qh_initqhull_buffers and qh_clear_ouputflags */
+  for (k=qh input_dim+1; k--; ) {  /* duplicated in qh_initqhull_buffers and qh_clear_outputflags */
     qh lower_threshold[k]= -REALmax;
     qh upper_threshold[k]= REALmax;
     qh lower_bound[k]= -REALmax;
@@ -2124,4 +2124,3 @@ qhT *qh_save_qhull(void) {
 } /* save_qhull */
 
 #endif
-
