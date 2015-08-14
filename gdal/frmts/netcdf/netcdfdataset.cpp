@@ -76,11 +76,11 @@ int NCDFIsVarProjectionY( int nCdfId, int nVarId=-1, const char * pszVarName=NUL
 int NCDFIsVarVerticalCoord(int nCdfId, int nVarId=-1, const char * nVarName=NULL );
 int NCDFIsVarTimeCoord(int nCdfId, int nVarId=-1, const char * nVarName=NULL );
 
-char **NCDFTokenizeArray( const char *pszValue );//replace this where used
-void CopyMetadata( void  *poDS, int fpImage, int CDFVarID, 
+char **NCDFTokenizeArray( const char *pszValue ); //replace this where used
+void CopyMetadata( void  *poDS, int fpImage, int CDFVarID,
                    const char *pszMatchPrefix=NULL, int bIsBand=TRUE );
 
-// uncomment this for more debug ouput
+// uncomment this for more debug output
 // #define NCDF_DEBUG 1
 
 CPLMutex *hNCMutex = NULL;
