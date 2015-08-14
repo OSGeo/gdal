@@ -24,7 +24,7 @@
   <p>
     Note that if you build and include this LIBKML driver, it will become the
     default reader of KML for ogr, overriding the previous KML driver. You can
-    still specify either KML or LIBKML as the ouput driver via the command line
+    still specify either KML or LIBKML as the output driver via the command line
   </p>
     
   <p>
@@ -52,7 +52,7 @@
     layers will be read from or written to doc.kml. It contains a
     <a href="https://developers.google.com/kml/documentation/kmlreference#networklink">
     &lt;NetworkLink&gt;</a> to each layer file in the datasource. This feature
-    can be turned off by setting the enviroment variable LIBKML_USE_DOC.KML to
+    can be turned off by setting the environment variable LIBKML_USE_DOC.KML to
     "no"
    </p>
   
@@ -178,7 +178,7 @@
     &lt;Document&gt;</a>
     or
     <a href="https://developers.google.com/kml/documentation/kmlreference#folder">
-    &lt;Folder&gt;</a>, and in kmz files or directorys as a seperate kml file.
+    &lt;Folder&gt;</a>, and in kmz files or directories as a separate kml file.
   </p>
   
   <h3>Style</h3>
@@ -310,7 +310,7 @@
   </p>
 
   <p>If the networklink field is defined, a <a href="https://developers.google.com/kml/documentation/kmlreference#networklink">
-    &lt;NetworkLink&gt;</a> will be generated. Other networklink_ fields are optional.
+    &lt;NetworkLink&gt;</a> will be generated. Other networklink fields are optional.
   </p>
 
   <p>If the photooverlay field is defined, a <a href="https://developers.google.com/kml/documentation/kmlreference#photooverlay">
@@ -350,7 +350,7 @@
     &lt;Placemark&gt;</a>.
   </p>
   <p>
-     When reading a kml feature and the enviroment variable LIBKML_RESOLVE_STYLE
+     When reading a kml feature and the environment variable LIBKML_RESOLVE_STYLE
      is set to yes, styleurls are looked up in the style tables and the features
      style string is set to the style from the table. This is to allow reading 
      of shared styles by applications, like mapserver, that do not read style
@@ -358,16 +358,16 @@
   </p>
   
   <p>
-     When reading a kml feature and the enviroment variable LIBKML_EXTERNAL_STYLE
+     When reading a kml feature and the environment variable LIBKML_EXTERNAL_STYLE
      is set to yes, a styleurl that is external to the datasource is read from 
      disk or fetched from the server and parsed into the datasource style table.
      If the style kml can not be read or LIBKML_EXTERNAL_STYLE is set to no then
-     the styleurl is copyed to the style string.
+     the styleurl is copied to the style string.
   </p>
     
   <p>
      When reading a kml StyleMap the default mapping is set to normal. If you
-     wish to use the highlighted styles set the enviroment variable
+     wish to use the highlighted styles set the environment variable
      LIBKML_STYLEMAP_KEY to "highlight"
   </p>
 
@@ -409,31 +409,31 @@
       This String field maps to the kml tag 
       <a href="https://developers.google.com/kml/documentation/kmlreference#name">
       &lt;name&gt;</a>. The name of the ogr field can be changed with the
-      enviroment variable LIBKML_NAME_FIELD .
+      environment variable LIBKML_NAME_FIELD .
     </dd>
     <dt>description</dt>
     <dd>This String field maps to the kml tag 
       <a href="https://developers.google.com/kml/documentation/kmlreference#description">
       &lt;description&gt;</a>. The name of the ogr field can be changed with the
-      enviroment variable LIBKML_DESCRIPTION_FIELD .
+      environment variable LIBKML_DESCRIPTION_FIELD .
     </dd>
     <dt>timestamp</dt>
     <dd>This string or datetime or date and/or time field maps to the kml tag 
       <a href="https://developers.google.com/kml/documentation/kmlreference#timestamp">
       &lt;timestamp&gt;</a>. The name of the ogr field can be changed with the
-      enviroment variable LIBKML_TIMESTAMP_FIELD .
+      environment variable LIBKML_TIMESTAMP_FIELD .
     </dd>
     <dt>begin</dt>
     <dd>This string or datetime or date and/or time field maps to the kml tag 
       <a href="https://developers.google.com/kml/documentation/kmlreference#begin">
       &lt;begin&gt;</a>. The name of the ogr field can be changed with the
-      enviroment variable LIBKML_BEGIN_FIELD .
+      environment variable LIBKML_BEGIN_FIELD .
     </dd>
     <dt>end</dt>
     <dd>This string or datetime or date and/or time field maps to the kml tag 
       <a href="https://developers.google.com/kml/documentation/kmlreference#end">
       &lt;end&gt;</a>. The name of the ogr field can be changed with the
-      enviroment variable LIBKML_END_FIELD .
+      environment variable LIBKML_END_FIELD .
     </dd>
     <dt>altitudeMode</dt>
     <dd>This string field maps to the kml tag 
@@ -441,63 +441,63 @@
       &lt;altitudeMode&gt;</a> or
       <a href="https://developers.google.com/kml/documentation/kmlreference#gxaltitudemode">
       &lt;gx:altitudeMode&gt;</a>. The name of the ogr field can be changed
-      with the enviroment variable LIBKML_ALTITUDEMODE_FIELD .
+      with the environment variable LIBKML_ALTITUDEMODE_FIELD .
     </dd>
     <dt>tessellate</dt>
     <dd>This integer field maps to the kml tag 
       <a href="https://developers.google.com/kml/documentation/kmlreference#tessellate">
       &lt;tessellate&gt;</a>. The name of the ogr field can be changed with the
-      enviroment variable LIBKML_TESSELLATE_FIELD .
+      environment variable LIBKML_TESSELLATE_FIELD .
     </dd>
     <dt>extrude</dt>
     <dd>This integer field maps to the kml tag 
       <a href="https://developers.google.com/kml/documentation/kmlreference#extrude">
       &lt;extrude&gt;</a>. The name of the ogr field can be changed with the
-      enviroment variable LIBKML_EXTRUDE_FIELD .
+      environment variable LIBKML_EXTRUDE_FIELD .
     </dd>
     <dt>visibility</dt>
     <dd>This integer field maps to the kml tag 
       <a href="https://developers.google.com/kml/documentation/kmlreference#visibility">
       &lt;visibility&gt;</a>. The name of the ogr field can be changed with the
-      enviroment variable LIBKML_VISIBILITY_FIELD .
+      environment variable LIBKML_VISIBILITY_FIELD .
     </dd>
     <dt>icon</dt>
     <dd>This string field maps to the kml tag 
       <a href="https://developers.google.com/kml/documentation/kmlreference#icon">
       &lt;icon&gt;</a>. The name of the ogr field can be changed with the
-      enviroment variable LIBKML_ICON_FIELD .
+      environment variable LIBKML_ICON_FIELD .
     </dd>
     <dt>drawOrder</dt>
     <dd>This integer field maps to the kml tag 
       <a href="https://developers.google.com/kml/documentation/kmlreference#draworder">
       &lt;drawOrder&gt;</a>. The name of the ogr field can be changed with the
-      enviroment variable LIBKML_DRAWORDER_FIELD .
+      environment variable LIBKML_DRAWORDER_FIELD .
     </dd>
     <dt>snippet</dt>
     <dd>This integer field maps to the kml tag 
       <a href="https://developers.google.com/kml/documentation/kmlreference#snippet">
       &lt;snippet&gt;</a>. The name of the ogr field can be changed with the
-      enviroment variable LIBKML_SNIPPET_FIELD .
+      environment variable LIBKML_SNIPPET_FIELD .
     </dd>
     <dt>heading</dt>
     <dd>This real field maps to the kml tag 
       <a href="https://developers.google.com/kml/documentation/kmlreference#heading">
       &lt;heading&gt;</a>. The name of the ogr field can be changed with the
-      enviroment variable LIBKML_HEADING_FIELD. When reading, this field is present only if a Placemark has
+      environment variable LIBKML_HEADING_FIELD. When reading, this field is present only if a Placemark has
       a Camera with a heading element.
     </dd>
     <dt>tilt</dt>
     <dd>This real field maps to the kml tag 
       <a href="https://developers.google.com/kml/documentation/kmlreference#tilt">
       &lt;tilt&gt;</a>. The name of the ogr field can be changed with the
-      enviroment variable LIBKML_TILT_FIELD. When reading, this field is present only if a Placemark has
+      environment variable LIBKML_TILT_FIELD. When reading, this field is present only if a Placemark has
       a Camera with a tilt element.
     </dd>
     <dt>roll</dt>
     <dd>This real field maps to the kml tag 
       <a href="https://developers.google.com/kml/documentation/kmlreference#roll">
       &lt;roll&gt;</a>. The name of the ogr field can be changed with the
-      enviroment variable LIBKML_ROLL_FIELD. When reading, this field is present only if a Placemark has
+      environment variable LIBKML_ROLL_FIELD. When reading, this field is present only if a Placemark has
       a Camera with a roll element.
     </dd>
 
@@ -505,95 +505,95 @@
     <dd>This string field can be used to define the URL of a 3D
       <a href="https://developers.google.com/kml/documentation/kmlreference#model">
       &lt;model&gt;</a>. The name of the ogr field can be changed with the
-      enviroment variable LIBKML_MODEL_FIELD.
+      environment variable LIBKML_MODEL_FIELD.
     </dd>
     <dt>scale_x</dt>
     <dd>This real field maps to the x element of the kml tag 
       <a href="https://developers.google.com/kml/documentation/kmlreference#scale">
       &lt;scale&gt;</a> for a 3D model. The name of the ogr field can be changed with the
-      enviroment variable LIBKML_SCALE_X_FIELD.
+      environment variable LIBKML_SCALE_X_FIELD.
     </dd>
     <dt>scale_y</dt>
     <dd>This real field maps to the y element of the kml tag 
       <a href="https://developers.google.com/kml/documentation/kmlreference#scale">
       &lt;scale&gt;</a>for a 3D model. The name of the ogr field can be changed with the
-      enviroment variable LIBKML_SCALE_Y_FIELD.
+      environment variable LIBKML_SCALE_Y_FIELD.
     </dd>
     <dt>scale_z</dt>
     <dd>This real field maps to the z element of the kml tag 
       <a href="https://developers.google.com/kml/documentation/kmlreference#scale">
       &lt;scale&gt;</a>for a 3D model. The name of the ogr field can be changed with the
-      enviroment variable LIBKML_SCALE_Z_FIELD.
+      environment variable LIBKML_SCALE_Z_FIELD.
     </dd>
 
     <dt>networklink</dt>
     <dd>This string field maps to the href element of the kml tag 
       <a href="https://developers.google.com/kml/documentation/kmlreference#href">
       &lt;href&gt;</a> of a NetworkLink. The name of the ogr field can be changed with the
-      enviroment variable LIBKML_NETWORKLINK_FIELD.
+      environment variable LIBKML_NETWORKLINK_FIELD.
     </dd>
 
     <dt>networklink_refreshvisibility</dt>
     <dd>This integer field maps to kml tag 
       <a href="https://developers.google.com/kml/documentation/kmlreference#refreshvisibility">
       &lt;refreshVisibility&gt;</a> of a NetworkLink. The name of the ogr field can be changed with the
-      enviroment variable LIBKML_NETWORKLINK_REFRESHVISIBILITY_FIELD.
+      environment variable LIBKML_NETWORKLINK_REFRESHVISIBILITY_FIELD.
     </dd>
 
     <dt>networklink_flytoview</dt>
     <dd>This integer field maps to kml tag 
       <a href="https://developers.google.com/kml/documentation/kmlreference#flytoview">
       &lt;flyToView&gt;</a> of a NetworkLink. The name of the ogr field can be changed with the
-      enviroment variable LIBKML_NETWORKLINK_FLYTOVIEW_FIELD.
+      environment variable LIBKML_NETWORKLINK_FLYTOVIEW_FIELD.
     </dd>
 
     <dt>networklink_refreshmode</dt>
     <dd>This string field maps to kml tag 
       <a href="https://developers.google.com/kml/documentation/kmlreference#refreshmode">
       &lt;refreshMode&gt;</a> of a NetworkLink. The name of the ogr field can be changed with the
-      enviroment variable LIBKML_NETWORKLINK_REFRESHMODE_FIELD.
+      environment variable LIBKML_NETWORKLINK_REFRESHMODE_FIELD.
     </dd>
 
     <dt>networklink_refreshinterval</dt>
     <dd>This real field maps to kml tag 
       <a href="https://developers.google.com/kml/documentation/kmlreference#refreshinterval">
       &lt;refreshInterval&gt;</a> of a NetworkLink. The name of the ogr field can be changed with the
-      enviroment variable LIBKML_NETWORKLINK_REFRESHINTERVAL_FIELD.
+      environment variable LIBKML_NETWORKLINK_REFRESHINTERVAL_FIELD.
     </dd>
 
     <dt>networklink_viewrefreshmode</dt>
     <dd>This string field maps to kml tag 
       <a href="https://developers.google.com/kml/documentation/kmlreference#viewrefreshmode">
       &lt;viewRefreshMode&gt;</a> of a NetworkLink. The name of the ogr field can be changed with the
-      enviroment variable LIBKML_NETWORKLINK_VIEWREFRESHMODE_FIELD.
+      environment variable LIBKML_NETWORKLINK_VIEWREFRESHMODE_FIELD.
     </dd>
 
     <dt>networklink_viewrefreshtime</dt>
     <dd>This real field maps to kml tag 
       <a href="https://developers.google.com/kml/documentation/kmlreference#viewrefreshtime">
       &lt;viewRefreshTime&gt;</a> of a NetworkLink. The name of the ogr field can be changed with the
-      enviroment variable LIBKML_NETWORKLINK_VIEWREFRESHTIME_FIELD.
+      environment variable LIBKML_NETWORKLINK_VIEWREFRESHTIME_FIELD.
     </dd>
 
     <dt>networklink_viewboundscale</dt>
     <dd>This real field maps to kml tag 
       <a href="https://developers.google.com/kml/documentation/kmlreference#viewboundscale">
       &lt;viewBoundScale&gt;</a> of a NetworkLink. The name of the ogr field can be changed with the
-      enviroment variable LIBKML_NETWORKLINK_VIEWBOUNDSCALE_FIELD.
+      environment variable LIBKML_NETWORKLINK_VIEWBOUNDSCALE_FIELD.
     </dd>
 
     <dt>networklink_viewformat</dt>
     <dd>This string field maps to kml tag 
       <a href="https://developers.google.com/kml/documentation/kmlreference#viewformat">
       &lt;viewFormat&gt;</a> of a NetworkLink. The name of the ogr field can be changed with the
-      enviroment variable LIBKML_NETWORKLINK_VIEWFORMAT_FIELD.
+      environment variable LIBKML_NETWORKLINK_VIEWFORMAT_FIELD.
     </dd>
 
     <dt>networklink_httpquery</dt>
     <dd>This string field maps to kml tag 
       <a href="https://developers.google.com/kml/documentation/kmlreference#httpquery">
       &lt;httpQuery&gt;</a> of a NetworkLink. The name of the ogr field can be changed with the
-      enviroment variable LIBKML_NETWORKLINK_HTTPQUERY_FIELD.
+      environment variable LIBKML_NETWORKLINK_HTTPQUERY_FIELD.
     </dd>
 
     <dt>camera_longitude</dt>
@@ -601,7 +601,7 @@
       <a href="https://developers.google.com/kml/documentation/kmlreference#longitude">
       &lt;longitude&gt;</a> of a <a href="https://developers.google.com/kml/documentation/kmlreference#camera">
       &lt;Camera&gt;</a>. The name of the ogr field can be changed with the
-      enviroment variable LIBKML_CACameraMERA_LONGITUDE_FIELD.
+      environment variable LIBKML_CACameraMERA_LONGITUDE_FIELD.
     </dd>
 
     <dt>camera_latitude</dt>
@@ -609,7 +609,7 @@
       <a href="https://developers.google.com/kml/documentation/kmlreference#latitude">
       &lt;latitude&gt;</a> of a <a href="https://developers.google.com/kml/documentation/kmlreference#camera">
       &lt;Camera&gt;</a>. The name of the ogr field can be changed with the
-      enviroment variable LIBKML_CAMERA_LATITUDE_FIELD.
+      environment variable LIBKML_CAMERA_LATITUDE_FIELD.
     </dd>
 
     <dt>camera_altitude</dt>
@@ -617,7 +617,7 @@
       <a href="https://developers.google.com/kml/documentation/kmlreference#altitude">
       &lt;altitude&gt;</a> of a <a href="https://developers.google.com/kml/documentation/kmlreference#camera">
       &lt;Camera&gt;</a>. The name of the ogr field can be changed with the
-      enviroment variable LIBKML_CAMERA_ALTITUDE_FIELD.
+      environment variable LIBKML_CAMERA_ALTITUDE_FIELD.
     </dd>
 
     <dt>camera_altitudemode</dt>
@@ -625,7 +625,7 @@
       <a href="https://developers.google.com/kml/documentation/kmlreference#altitudemode">
       &lt;altitudeMode&gt;</a> of a <a href="https://developers.google.com/kml/documentation/kmlreference#camera">
       &lt;Camera&gt;</a>. The name of the ogr field can be changed with the
-      enviroment variable LIBKML_CAMERA_ALTITUDEMODE_FIELD.
+      environment variable LIBKML_CAMERA_ALTITUDEMODE_FIELD.
     </dd>
 
     <dt>photooverlay</dt>
@@ -633,7 +633,7 @@
       <a href="https://developers.google.com/kml/documentation/kmlreference#href">
       &lt;href&gt;</a> of a <a href="https://developers.google.com/kml/documentation/kmlreference#photooverlay">
       &lt;PhotoOverlay&gt;</a>. The name of the ogr field can be changed with the
-      enviroment variable LIBKML_PHOTOOVERLAY_FIELD.
+      environment variable LIBKML_PHOTOOVERLAY_FIELD.
     </dd>
 
     <dt>leftfov</dt>
@@ -641,7 +641,7 @@
       <a href="https://developers.google.com/kml/documentation/kmlreference#leftfov">
       &lt;LeftFov&gt;</a> of a <a href="https://developers.google.com/kml/documentation/kmlreference#photooverlay">
       &lt;PhotoOverlay&gt;</a>. The name of the ogr field can be changed with the
-      enviroment variable LIBKML_LEFTFOV_FIELD.
+      environment variable LIBKML_LEFTFOV_FIELD.
     </dd>
 
     <dt>rightfov</dt>
@@ -649,7 +649,7 @@
       <a href="https://developers.google.com/kml/documentation/kmlreference#rightfov">
       &lt;RightFov&gt;</a> of a <a href="https://developers.google.com/kml/documentation/kmlreference#photooverlay">
       &lt;PhotoOverlay&gt;</a>. The name of the ogr field can be changed with the
-      enviroment variable LIBKML_RightFOV_FIELD.
+      environment variable LIBKML_RightFOV_FIELD.
     </dd>
 
     <dt>bottomfov</dt>
@@ -657,7 +657,7 @@
       <a href="https://developers.google.com/kml/documentation/kmlreference#bottomfov">
       &lt;BottomFov&gt;</a> of a <a href="https://developers.google.com/kml/documentation/kmlreference#photooverlay">
       &lt;PhotoOverlay&gt;</a>. The name of the ogr field can be changed with the
-      enviroment variable LIBKML_BOTTOMTFOV_FIELD.
+      environment variable LIBKML_BOTTOMTFOV_FIELD.
     </dd>
 
     <dt>topfov</dt>
@@ -665,7 +665,7 @@
       <a href="https://developers.google.com/kml/documentation/kmlreference#topfov">
       &lt;TopFov&gt;</a> of a <a href="https://developers.google.com/kml/documentation/kmlreference#photooverlay">
       &lt;PhotoOverlay&gt;</a>. The name of the ogr field can be changed with the
-      enviroment variable LIBKML_TOPFOV_FIELD.
+      environment variable LIBKML_TOPFOV_FIELD.
     </dd>
 
     <dt>near</dt>
@@ -673,7 +673,7 @@
       <a href="https://developers.google.com/kml/documentation/kmlreference#leftfov">
       &lt;Near&gt;</a> of a <a href="https://developers.google.com/kml/documentation/kmlreference#photooverlay">
       &lt;PhotoOverlay&gt;</a>. The name of the ogr field can be changed with the
-      enviroment variable LIBKML_NEAR_FIELD.
+      environment variable LIBKML_NEAR_FIELD.
     </dd>
 
     <dt>shape</dt>
@@ -681,7 +681,7 @@
       <a href="https://developers.google.com/kml/documentation/kmlreference#shape">
       &lt;shape&gt;</a> of a <a href="https://developers.google.com/kml/documentation/kmlreference#photooverlay">
       &lt;PhotoOverlay&gt;</a>. The name of the ogr field can be changed with the
-      enviroment variable LIBKML_SHAPE_FIELD.
+      environment variable LIBKML_SHAPE_FIELD.
     </dd>
 
     <dt>imagepyramid_tilesize</dt>
@@ -689,7 +689,7 @@
       <a href="https://developers.google.com/kml/documentation/kmlreference#tilesize">
       &lt;tileSize&gt;</a> of a <a href="https://developers.google.com/kml/documentation/kmlreference#imagepyramid">
       &lt;ImagePyramid&gt;</a>. The name of the ogr field can be changed with the
-      enviroment variable LIBKML_IMAGEPYRAMID_TILESIZE.
+      environment variable LIBKML_IMAGEPYRAMID_TILESIZE.
     </dd>
 
     <dt>imagepyramid_maxwidth</dt>
@@ -697,7 +697,7 @@
       <a href="https://developers.google.com/kml/documentation/kmlreference#maxwidth">
       &lt;maxWidth&gt;</a> of a <a href="https://developers.google.com/kml/documentation/kmlreference#imagepyramid">
       &lt;ImagePyramid&gt;</a>. The name of the ogr field can be changed with the
-      enviroment variable LIBKML_IMAGEPYRAMID_MAXWIDTH.
+      environment variable LIBKML_IMAGEPYRAMID_MAXWIDTH.
     </dd>
 
     <dt>imagepyramid_maxheight</dt>
@@ -705,7 +705,7 @@
       <a href="https://developers.google.com/kml/documentation/kmlreference#maxheight">
       &lt;maxHeight&gt;</a> of a <a href="https://developers.google.com/kml/documentation/kmlreference#imagepyramid">
       &lt;ImagePyramid&gt;</a>. The name of the ogr field can be changed with the
-      enviroment variable LIBKML_IMAGEPYRAMID_MAXHEIGHT.
+      environment variable LIBKML_IMAGEPYRAMID_MAXHEIGHT.
     </dd>
 
     <dt>imagepyramid_gridorigin</dt>
@@ -713,7 +713,7 @@
       <a href="https://developers.google.com/kml/documentation/kmlreference#maxheight">
       &lt;gridOrigin&gt;</a> of a <a href="https://developers.google.com/kml/documentation/kmlreference#imagepyramid">
       &lt;ImagePyramid&gt;</a>. The name of the ogr field can be changed with the
-      enviroment variable LIBKML_IMAGEPYRAMID_GRIDORIGIN.
+      environment variable LIBKML_IMAGEPYRAMID_GRIDORIGIN.
     </dd>
 
     <dt>OGR_STYLE</dt>
@@ -753,7 +753,7 @@
   <p>
     Sometimes kml geometry will span the dateline, In applications like qgis or
     mapserver this will create horizontal lines all the way around the globe.
-    Setting the enviroment variable LIBKML_WRAPDATELINE to "yes" will cause the
+    Setting the environment variable LIBKML_WRAPDATELINE to "yes" will cause the
     libkml driver to split the geometry at the dateline when read.
   </p>
 
