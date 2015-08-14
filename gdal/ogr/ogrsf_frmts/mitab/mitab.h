@@ -1404,13 +1404,13 @@ class TABRegion: public TABFeature,
  *     TAB_GEOM_ROUNDRECT      0x17
  *
  * A rectangle is defined by the coords of its 2 opposite corners (the MBR)
- * Its corners can optionaly be rounded, in which case a X and Y rounding
+ * Its corners can optionally be rounded, in which case a X and Y rounding
  * radius will be defined.
  *
  * Feature geometry will be OGRPolygon
  *--------------------------------------------------------------------*/
-class TABRectangle: public TABFeature, 
-                    public ITABFeaturePen, 
+class TABRectangle: public TABFeature,
+                    public ITABFeaturePen,
                     public ITABFeatureBrush
 {
   private:

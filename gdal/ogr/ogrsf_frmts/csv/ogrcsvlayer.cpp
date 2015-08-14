@@ -491,7 +491,7 @@ void OGRCSVLayer::BuildFeatureDefn( const char* pszNfdcGeomField,
 
 
 /* -------------------------------------------------------------------- */
-/*      Search a csvt file for types                                */
+/*      Search a csvt file for types                                    */
 /* -------------------------------------------------------------------- */
     char** papszFieldTypes = NULL;
     if (!bNew) {
@@ -508,7 +508,7 @@ void OGRCSVLayer::BuildFeatureDefn( const char* pszNfdcGeomField,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Optionaly auto-detect types                                     */
+/*      Optionally auto-detect types                                    */
 /* -------------------------------------------------------------------- */
     if( !bNew && papszFieldTypes == NULL &&
         CSLTestBoolean(CSLFetchNameValueDef(papszOpenOptions,
@@ -521,7 +521,7 @@ void OGRCSVLayer::BuildFeatureDefn( const char* pszNfdcGeomField,
                                                      "KEEP_SOURCE_COLUMNS", "NO"));
         }
     }
-    
+
     char** papszGeomPossibleNames =
          CSLTokenizeString2(CSLFetchNameValue(papszOpenOptions, "GEOM_POSSIBLE_NAMES"), ",", 0);
     char** papszXPossibleNames =

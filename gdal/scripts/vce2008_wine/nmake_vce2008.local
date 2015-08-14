@@ -55,7 +55,7 @@ OPENJPEG_ENABLED = YES
 OPENJPEG_CFLAGS = -Ic:\release-1500\include
 OPENJPEG_LIB = c:\release-1500\lib\openjp2.lib
 
-# Uncomment for libxml2 support (for cpl_xml_validate.cpp routines, used optionaly by the GML driver)
+# Uncomment for libxml2 support (for cpl_xml_validate.cpp routines, used optionally by the GML driver)
 LIBXML2_INC = -Ic:\release-1500\include
 LIBXML2_LIB = c:\release-1500\lib\libxml2.lib
 

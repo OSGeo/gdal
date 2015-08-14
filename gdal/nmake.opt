@@ -580,7 +580,7 @@ OCI_INCLUDE =	-I$(ORACLE_HOME)\oci\include
 #WEBP_CFLAGS = -IE:/libwebp-0.1-windows/dev/Include
 #WEBP_LIBS = e:/libwebp-0.1-windows/dev/lib/libwebp_a.lib
 
-# Uncomment for libxml2 support (for cpl_xml_validate.cpp routines, used optionaly by the GML driver)
+# Uncomment for libxml2 support (for cpl_xml_validate.cpp routines, used optionally by the GML driver)
 #LIBXML2_INC = -Iz:\home\even\release-1500-dev\release-1500\include
 #LIBXML2_LIB = z:\home\even\release-1500-dev\release-1500\lib\libxml2.lib
 

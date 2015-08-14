@@ -990,7 +990,7 @@ Build(Unix):
 
 Build(Windows):
  * add option to generate VC project for x64 on makegdal_gen.bat
- * nmake.opt: add WITH_PDB=1 option to optionaly generate .pdb file on Release builds (#5420)
+ * nmake.opt: add WITH_PDB=1 option to optionally generate .pdb file on Release builds (#5420)
  * add support for building the OGR SOSI driver as a plugin (#3638)
  * add support for building the HDF4 driver as plugin (#5294)
  * add support for MrSID v9
@@ -2055,7 +2055,7 @@ PostgisRaster driver:
  * Implement CreateCopy and Delete (#4530)
  * Supports reading of tiled raster with irregular blocking and irregular pixel size
  * Cache postgres db connection.
- * Use PG enviroment variables as fallback when settings are not provided in the connection string. (#4533).
+ * Use PG environment variables as fallback when settings are not provided in the connection string. (#4533).
  * Do not report nodata value when there is none (#4414)
  * Removed dependency on the 'rid' column.
  * Fix to make SQL queries with un-rounded floating point string representations. (#4736)
@@ -4596,7 +4596,7 @@ GeoTIFF driver :
  * Changes to units handling.  (#2755)
  * Optimize opening speed by defering fetching the coordinate system till GetProjectionRef (#2957)
  * Optimize GTiffRasterBand::IReadBlock() for multi-band interleaved case.
- * Avoid uncesserary re-writting the TIFF directory (#3021)
+ * Avoid uncesserary re-writing the TIFF directory (#3021)
  * Use official value for inverse flattening of the WGS84 ellipsoid (#2787)
  * Add metadata domain for XML documents (#2786)
  * Make GTiff driver friendly with files with huge number of bands and pixel interleaving (#2838)
