@@ -11,7 +11,7 @@
  *   - Remove old C style function prototypes
  *   - Added CPL* simplified API at bottom.
  *
- *   Original licence available in port/LICENCE_minizip
+ *   Original license available in port/LICENCE_minizip
  *
  *****************************************************************************/
 
@@ -55,7 +55,7 @@
 /* compile with -Dlocal if your debugger can't find static symbols */
 
 #ifndef VERSIONMADEBY
-# define VERSIONMADEBY   (0x0) /* platform depedent */
+# define VERSIONMADEBY   (0x0) /* platform dependent */
 #endif
 
 #ifndef Z_BUFSIZE
@@ -78,7 +78,7 @@
 #define SIZEZIPLOCALHEADER (0x1e)
 */
 
-/* I've found an old Unix (a SunOS 4.1.3_U1) without all SEEK_* defined.... */
+/* I've found an old Unix (a SunOS 4.1.3_U1) without all SEEK_* defined... */
 
 #ifndef SEEK_CUR
 #define SEEK_CUR    1
@@ -145,7 +145,8 @@ typedef struct
 
     int  method;                /* compression method of file currenty wr.*/
     int  raw;                   /* 1 for directly writing raw data */
-    Byte buffered_data[Z_BUFSIZE];/* buffer contain compressed data to be writ*/
+    Byte buffered_data[Z_BUFSIZE]; /* buffer contain compressed data to be
+                                        written. */
     uLong dosDate;
     uLong crc32;
     int  encrypt;
@@ -165,7 +166,7 @@ typedef struct
     curfile_info ci;            /* info on the file curretly writing */
 
     uLong begin_pos;            /* position of the beginning of the zipfile */
-    uLong add_position_when_writting_offset;
+    uLong add_position_when_writing_offset;
     uLong number_entry;
 #ifndef NO_ADDFILEINEXISTINGZIP
     char *globalcomment;
@@ -524,7 +525,7 @@ extern zipFile ZEXPORT cpl_zipOpen2 (
     ziinit.in_opened_file_inzip = 0;
     ziinit.ci.stream_initialised = 0;
     ziinit.number_entry = 0;
-    ziinit.add_position_when_writting_offset = 0;
+    ziinit.add_position_when_writing_offset = 0;
     init_linkedlist(&(ziinit.central_dir));
 
 
@@ -624,7 +625,7 @@ extern zipFile ZEXPORT cpl_zipOpen2 (
 
         byte_before_the_zipfile = central_pos -
                                 (offset_central_dir+size_central_dir);
-        ziinit.add_position_when_writting_offset = byte_before_the_zipfile;
+        ziinit.add_position_when_writing_offset = byte_before_the_zipfile;
 
         {
             uLong size_central_dir_to_read = size_central_dir;
@@ -793,7 +794,7 @@ extern int ZEXPORT cpl_zipOpenNewFileInZip3 (
     else
         ziplocal_putValue_inmemory(zi->ci.central_header+38,(uLong)zipfi->external_fa,4);
 
-    ziplocal_putValue_inmemory(zi->ci.central_header+42,(uLong)zi->ci.pos_local_header- zi->add_position_when_writting_offset,4);
+    ziplocal_putValue_inmemory(zi->ci.central_header+42,(uLong)zi->ci.pos_local_header- zi->add_position_when_writing_offset,4);
 
     for (i=0;i<size_filename;i++)
         *(zi->ci.central_header+SIZECENTRALHEADER+i) = *(filename+i);
@@ -1182,7 +1183,7 @@ extern int ZEXPORT cpl_zipClose (
     if (err==ZIP_OK) /* offset of start of central directory with respect to the
                             starting disk number */
         err = ziplocal_putValue(&zi->z_filefunc,zi->filestream,
-                                (uLong)(centraldir_pos_inzip - zi->add_position_when_writting_offset),4);
+                                (uLong)(centraldir_pos_inzip - zi->add_position_when_writing_offset),4);
 
     if (err==ZIP_OK) /* zipfile comment length */
         err = ziplocal_putValue(&zi->z_filefunc,zi->filestream,(uLong)size_global_comment,2);
