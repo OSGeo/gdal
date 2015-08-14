@@ -1111,7 +1111,7 @@ GDALDataset * AAIGDataset::CreateCopy(
         padfScanline = (double *) CPLMalloc( nXSize *
                                     GDALGetDataTypeSize(GDT_Float64) / 8 );
 
-    int bHasOuputDecimalDot = FALSE;
+    int bHasOutputDecimalDot = FALSE;
     for( iLine = 0; eErr == CE_None && iLine < nYSize; iLine++ )
     {
         CPLString osBuf;
@@ -1146,14 +1146,14 @@ GDALDataset * AAIGDataset::CreateCopy(
                 CPLsprintf( szHeader, szFormatFloat, padfScanline[iPixel] );
 
                 // Make sure that as least one value has a decimal point (#6060)
-                if( !bHasOuputDecimalDot )
+                if( !bHasOutputDecimalDot )
                 {
                     if( strchr(szHeader, '.') || strchr(szHeader, 'e') || strchr(szHeader, 'E') )
-                        bHasOuputDecimalDot = TRUE;
+                        bHasOutputDecimalDot = TRUE;
                     else if( !CPLIsInf(padfScanline[iPixel]) && !CPLIsNan(padfScanline[iPixel]) )
                     {
                         strcat(szHeader, ".0");
-                        bHasOuputDecimalDot = TRUE;
+                        bHasOutputDecimalDot = TRUE;
                     }
                 }
 
