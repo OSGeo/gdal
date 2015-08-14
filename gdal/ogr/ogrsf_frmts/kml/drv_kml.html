@@ -23,7 +23,7 @@ supplied with the GDAL project that can build other kinds of output)</em></p>
 <p>  Supported geometry types are <code>Point</code>, <code>Linestring</code>, <code>Polygon</code>, <code>MultiPoint</code>,
 <code>MultiLineString</code>, <code>MultiPolygon</code> and <code>MultiGeometry</code>. There are limitations,
 for example: the nested nature of folders in a source KML file is lost; folder <code>&lt;description&gt;</code> tags will
-not carry through to ouput. Since GDAL 1.6.1, folders containing multiple geometry types, like POINT and POLYGON, are supported.</p>
+not carry through to output. Since GDAL 1.6.1, folders containing multiple geometry types, like POINT and POLYGON, are supported.</p>
 
 <h3>KML Writing</h3>
 <p>Since not all features of KML
@@ -58,10 +58,10 @@ Expat library supports reading the following built-in encodings :
 </ul>
 
 OGR 1.8.0 adds supports for Windows-1252 encoding (for previous versions, altering the encoding
-mentionned in the XML header to ISO-8859-1 might work in some cases).<p>
+mentioned in the XML header to ISO-8859-1 might work in some cases).<p>
 
 The content returned by OGR will be encoded in UTF-8, after the conversion from the
-encoding mentionned in the file header is.<p>
+encoding mentioned in the file header is.<p>
 
 If your KML file is not encoded in one of the previous encodings, it will not be parsed by the
 KML driver. You may convert it into one of the supported encoding with the <i>iconv</i> utility
