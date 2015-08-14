@@ -22,7 +22,7 @@ OGR handles preferably CouchDB documents following the GeoJSON specification.<p>
 <h2>Dataset name syntax</h2>
 
 The syntax to open a CouchDB datasource is : <pre>couchdb:http://example.com[/layername]</pre> where
-http://example.com points to the root of a CouchDB repository and, optionaly, layername is the name of a CouchDB database.<p>
+http://example.com points to the root of a CouchDB repository and, optionally, layername is the name of a CouchDB database.<p>
 
 It is also possible to directly open a view : <pre>couchdb:http://example.com/layername/_design/adesigndoc/_view/aview[?include_docs=true]</pre>
 The include_docs=true might be needed depending on the value returned by the emit() call in the map() function.<p>
@@ -80,7 +80,7 @@ The following layer creation options are supported:
 <li>Otherwise, all users will be allowed to make changes in non-design documents.</li>
 </ul>
 </li>
-<li><b>GEOJSON</b> = YES|NO : Set to NO to avoid writting documents as GeoJSON documents. Default to YES.</li>
+<li><b>GEOJSON</b> = YES|NO : Set to NO to avoid writing documents as GeoJSON documents. Default to YES.</li>
 <li><b>COORDINATE_PRECISION</b> = int_number : Maximum number of figures after decimal separator to write in coordinates.
 Default to 15. "Smart" truncation will occur to remove trailing zeros.
 Note: when opening a dataset in update mode, the OGR_COUCHDB_COORDINATE_PRECISION configuration option can be set to have a similar role.</li>
