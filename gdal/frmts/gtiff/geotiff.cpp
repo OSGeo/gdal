@@ -11806,7 +11806,7 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
     poDS->nSamplesPerPixel = (uint16) nBands;
     poDS->osFilename = pszFilename;
 
-    /* Avoid premature crystalization that will cause directory re-writting */
+    /* Avoid premature crystalization that will cause directory re-writing */
     /* if GetProjectionRef() or GetGeoTransform() are called on the newly created GeoTIFF */
     poDS->bLookedForProjection = TRUE;
 

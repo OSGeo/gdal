@@ -152,7 +152,7 @@ void CPCIDSKRPCModelSegment::Load()
         pimpl_->downsample = pimpl_->seg_data.GetInt(24, 3);
     }
     
-    //This is requiered if writting with PCIDSKIO 
+    //This is required if writing with PCIDSKIO
     //and reading with GDBIO (probably because of legacy issue)
     // see Bugzilla 255 and 254.
     bool bSecond = false;
@@ -355,7 +355,7 @@ void CPCIDSKRPCModelSegment::Write(void)
     pimpl_->seg_data.Put("DS",22,2);
     pimpl_->seg_data.Put(pimpl_->downsample,24,3);
 
-    //This is requiered if writting with PCIDSKIO 
+    //This is required if writing with PCIDSKIO 
     //and reading with GDBIO (probably because of legacy issue)
     // see Bugzilla 255 and 254.
     pimpl_->seg_data.Put("2ND",27,3);
@@ -677,4 +677,3 @@ void CPCIDSKRPCModelSegment::Synchronize()
         this->Write();
     }
 }
-

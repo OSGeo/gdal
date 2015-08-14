@@ -99,10 +99,10 @@
 #define NCDF_COMPRESS_NONE            0   
 /* TODO */
 /* http://www.unidata.ucar.edu/software/netcdf/docs/BestPractices.html#Packed%20Data%20Values */
-#define NCDF_COMPRESS_PACKED          1  
-#define NCDF_COMPRESS_DEFLATE         2   
-#define NCDF_DEFLATE_LEVEL            1  /* best time/size ratio */  
-#define NCDF_COMPRESS_SZIP            3  /* no support for writting */ 
+#define NCDF_COMPRESS_PACKED          1
+#define NCDF_COMPRESS_DEFLATE         2
+#define NCDF_DEFLATE_LEVEL            1  /* best time/size ratio */
+#define NCDF_COMPRESS_SZIP            3  /* no support for writing */
 
 /* helper for libnetcdf errors */
 #define NCDF_ERR(status) if ( status != NC_NOERR ){ \
