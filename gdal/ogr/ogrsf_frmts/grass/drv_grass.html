@@ -28,7 +28,7 @@ Both 2D and 3D maps are supported.
 <h2>Datasource name</h2>
 
 Datasource name is full path to 'head' file in GRASS vector directory.
-Using names of GRASS enviroment variables it can be expressed:
+Using names of GRASS environment variables it can be expressed:
 <pre>
    $GISDBASE/$LOCATION_NAME/$MAPSET/vector/mymap/head
 </pre>
@@ -39,8 +39,8 @@ where 'mymap' is name of a vector map. For example:
 
 <h2>Layer names</h2>
 
-Usualy layer numbers are used as layer names. Layer number 0 is used
-for all features without any category. It is possible to optionaly
+Usually layer numbers are used as layer names. Layer number 0 is used
+for all features without any category. It is possible to optionally
 give names to GRASS layers linked to database however currently this
 is not supported by grass modules.  A layer name can be added in
 'dbln' vector file as '/name' after layer number, for example to
@@ -58,10 +58,10 @@ the layer 1 will be listed is layer 'rivers'.
 <h2>Attribute filter</h2>
 
 If a layer has attributes stored in a database, the query is passed to
-the underlaying database driver. That means, that SQL conditions which
+the underlying database driver. That means, that SQL conditions which
 can be used depend on the driver and database to which the layer is
 linked. For example, DBF driver has currently very limited set of SQL
-expressions and PostgreSQL offeres very rich set of SQL expressions.
+expressions and PostgreSQL offers very rich set of SQL expressions.
 
 <p>
 If a layer has no attributes linked and it has only categories, OGR
@@ -85,7 +85,7 @@ Evaluation is done once when the spatial filter is set.
 GISBASE is full path to the directory where GRASS is installed.  By
 default, GRASS driver is using the path given to gdal configure
 script.  A different directory can be forced by setting GISBASE
-enviroment variable.  GISBASE is used to find GRASS database drivers.
+environment variable.  GISBASE is used to find GRASS database drivers.
 
 <h2>Missing topology</h2>
 
@@ -101,7 +101,7 @@ layer with attributes, the reading of features can be quite slow. It
 is because the driver has to query attributes by category for each
 feature (to avoid using a lot of memory) and random access to database
 is usually slow. This can be improved on GRASS side optimizing/writing
-file based (DBF,SQLite) drivers.
+file based (DBF, SQLite) drivers.
 
 <h2>Known problem</h2>
 
