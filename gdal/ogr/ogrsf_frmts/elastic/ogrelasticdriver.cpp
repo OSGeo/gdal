@@ -33,6 +33,35 @@
 CPL_CVSID("$Id$");
 
 /************************************************************************/
+/*                   OGRElasticSearchDriverIdentify()                   */
+/************************************************************************/
+
+static int OGRElasticSearchDriverIdentify( GDALOpenInfo* poOpenInfo )
+
+{
+    return EQUALN(poOpenInfo->pszFilename, "ES:", strlen("ES:"));
+}
+
+/************************************************************************/
+/*                  OGRElasticSearchDriverOpen()                        */
+/************************************************************************/
+
+static GDALDataset* OGRElasticSearchDriverOpen( GDALOpenInfo* poOpenInfo )
+
+{
+    if( !OGRElasticSearchDriverIdentify(poOpenInfo) )
+        return NULL;
+
+    OGRElasticDataSource *poDS = new OGRElasticDataSource();
+    if (!poDS->Open(poOpenInfo)) {
+        delete poDS;
+        poDS = NULL;
+    }
+
+    return poDS;
+}
+
+/************************************************************************/
 /*                     OGRElasticSearchDriverCreate()                   */
 /************************************************************************/
 static GDALDataset* OGRElasticSearchDriverCreate( const char * pszName,
@@ -72,6 +101,8 @@ void RegisterOGRElastic() {
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
                                     "drv_elasticsearch.html" );
 
+        poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, "ES:" );
+
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
     "<CreationOptionList/>");
 
@@ -90,6 +121,8 @@ void RegisterOGRElastic() {
 
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES, "Integer Integer64 Real String Date DateTime Time IntegerList Integer64List RealList StringList Binary" );
 
+        poDriver->pfnIdentify = OGRElasticSearchDriverIdentify;
+        poDriver->pfnOpen = OGRElasticSearchDriverOpen;
         poDriver->pfnCreate = OGRElasticSearchDriverCreate;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );

@@ -34,6 +34,7 @@
 #include "ogr_p.h"
 #include "cpl_hash_set.h"
 #include <vector>
+#include <json.h>
 
 typedef enum
 {
@@ -58,17 +59,32 @@ class OGRElasticLayer : public OGRLayer {
     int nBulkUpload;
     CPLString osPrecision;
     
+    std::vector< std::vector<CPLString> > m_aaosFieldPaths;
+    std::map< CPLString, int> m_aosMapToFieldIndex;
+
+    std::vector< std::vector<CPLString> > m_aaosGeomFieldPaths;
+    std::map< CPLString, int> m_aosMapToGeomFieldIndex;
+    
     std::vector< OGRCoordinateTransformation* > m_apoCT;
     ESGeometryTypeMapping eGeomTypeMapping;
+    
+    CPLString osScrollID;
+    GIntBig iCurID;
+    int iCurFeatureInPage;
+    std::vector<OGRFeature*> apoCachedFeatures;
+    int bEOF;
 
     int PushIndex();
     CPLString BuildMap();
-    
+
+    OGRFeature * GetNextRawFeature();
+    void BuildFeature(OGRFeature* poFeature, json_object* poSource,
+                      CPLString osPath);
+
 public:
-    OGRElasticLayer(const char *pszFilename,
+    OGRElasticLayer(
             const char* layerName,
             OGRElasticDataSource* poDS,
-            int bWriteMode,
             char** papszOptions);
     ~OGRElasticLayer();
 
@@ -86,6 +102,8 @@ public:
     GIntBig GetFeatureCount(int bForce);
     
     virtual OGRErr      SyncToDisk();
+    
+    void BuildFeatureCollectionSchema(json_object* poSchema);
 };
 
 /************************************************************************/
@@ -94,6 +112,7 @@ public:
 
 class OGRElasticDataSource : public OGRDataSource {
     char* pszName;
+    CPLString osURL;
 
     OGRElasticLayer** papoLayers;
     int nLayers;
@@ -102,11 +121,12 @@ public:
     OGRElasticDataSource();
     ~OGRElasticDataSource();
 
-    int Open(const char * pszFilename,
-            int bUpdate);
+    int Open(GDALOpenInfo* poOpenInfo);
 
     int Create(const char *pszFilename,
             char **papszOptions);
+
+    const char* GetURL() { return osURL.c_str(); }
 
     const char* GetName() {
         return pszName;
@@ -131,6 +151,8 @@ public:
     int nBulkUpload;
     char* pszWriteMap;
     char* pszMapping;
+
+    json_object* RunRequest(const char* pszURL);
 };
 
 
