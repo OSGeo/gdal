@@ -276,6 +276,255 @@ def ogr_elasticsearch_3():
     return 'success'
 
 ###############################################################################
+# Test basic read functionality
+
+def ogr_elasticsearch_4():
+    if ogrtest.elasticsearch_drv is None:
+        return 'skip'
+
+    gdal.PushErrorHandler()
+    ds = ogr.Open('ES:/vsimem/fakeelasticsearch')
+    gdal.PopErrorHandler()
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/_cat/indices?h=i""", '\n')
+    ds = ogr.Open('ES:/vsimem/fakeelasticsearch')
+    if ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetLayerCount() != 0:
+        gdaltest.post_reason('fail')
+        print(ds.GetLayerCount())
+        return 'fail'
+
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/_cat/indices?h=i""", 'a_layer  \n')
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer?pretty""", """
+{
+    "a_layer":
+    {
+        "mappings":
+        {
+            "FeatureCollection":
+            {
+                "properties":
+                {
+                    "a_geoshape":
+                    {
+                        "type": "geo_shape",
+                    },
+                    "a_geopoint":
+                    {
+                        "properties":
+                        {
+                            "coordinates":
+                            {
+                                "type": "geo_point"
+                            }
+                        }
+                    },
+                    "properties" :
+                    {
+                        "properties":
+                        {
+                            "str_field": { "type": "string"},
+                            "int_field": { "type": "integer"},
+                            "int64_field": { "type": "long"},
+                            "double_field": { "type": "double"},
+                            "float_field": { "type": "float"},
+                            "boolean_field": { "type": "boolean"},
+                            "binary_field": { "type": "binary"},
+                            "dt_field": { "type": "date"},
+                            "date_field": { "type": "date", "format": "yyyy\/MM\/dd"},
+                            "time_field": { "type": "date", "format": "HH:mm:ss.SSS"},
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+""")
+    ds = ogr.Open('ES:/vsimem/fakeelasticsearch')
+    if ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetLayerCount() != 1:
+        gdaltest.post_reason('fail')
+        print(ds.GetLayerCount())
+        return 'fail'
+    lyr = ds.GetLayer(0)
+
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?search_type=count&pretty""", """{
+}""")
+    gdal.PushErrorHandler()
+    lyr.GetFeatureCount()
+    gdal.PopErrorHandler()
+
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?search_type=count&pretty""", """{
+    "hits": null
+}""")
+    gdal.PushErrorHandler()
+    lyr.GetFeatureCount()
+    gdal.PopErrorHandler()
+
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?search_type=count&pretty""", """{
+    "hits": { "count": null }
+}""")
+    gdal.PushErrorHandler()
+    lyr.GetFeatureCount()
+    gdal.PopErrorHandler()
+    
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?search_type=count&pretty""", """{
+    "hits":
+    {
+        "count": 3
+    }
+}""")
+    fc = lyr.GetFeatureCount()
+    if fc != 3:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.PushErrorHandler()
+    f = lyr.GetNextFeature()
+    gdal.PopErrorHandler()
+    if f is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100&pretty""", """{
+
+}""")
+    lyr.ResetReading()
+    f = lyr.GetNextFeature()
+    if f is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100&pretty""", """{
+    "hits": null
+}""")
+    lyr.ResetReading()
+    lyr.GetNextFeature()
+
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100&pretty""", """{
+    "hits": { "hits": null }
+}""")
+    lyr.ResetReading()
+    lyr.GetNextFeature()
+
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100&pretty""", """{
+    "hits": { "hits": [ null, {}, { "_source":null } ] }
+}""")
+    lyr.ResetReading()
+    lyr.GetNextFeature()
+
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100&pretty""", """{
+    "_scroll_id": "my_scrollid",
+    "hits":
+    {
+        "hits":[
+        {
+            "_source": {
+                "type": "Feature",
+                "a_geopoint" : {
+                    "type": "POINT",
+                    "coordinates": [2,49]
+                },
+                "a_geoshape": {
+                    "type": "linestring",
+                    "coordinates": [[2,49],[3,50]]
+                },
+                "properties": {
+                    "str_field": "foo",
+                    "int_field": 1,
+                    "int64_field": 123456789012,
+                    "double_field": 1.23,
+                    "float_field": 3.45,
+                    "boolean_field": true,
+                    "binary_field": "ASNGV4mrze8=",
+                    "dt_field": "2015\/08\/12 12:34:56.789",
+                    "date_field": "2015\/08\/12",
+                    "time_field": "12:34:56.789"
+                }
+            },
+        },
+        {
+            "_source": {
+                "type": "Feature",
+                "properties": {
+                    "non_existing": "foo"
+                }
+            },
+        }
+        ]
+    }
+}""")
+    lyr.ResetReading()
+    f = lyr.GetNextFeature()
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if f['str_field'] != 'foo' or f['int_field'] != 1 or f['int64_field'] != 123456789012 or \
+       f['double_field'] != 1.23 or f['float_field'] != 3.45 or f['boolean_field'] != 1 or \
+       f['binary_field'] != '0123465789ABCDEF' or f['dt_field'] != '2015/08/12 12:34:56.789' or \
+       f['date_field'] != '2015/08/12' or f['time_field'] != '12:34:56.789' or \
+       f['a_geopoint'].ExportToWkt() != 'POINT (2 49)' or \
+       f['a_geoshape'].ExportToWkt() != 'LINESTRING (2 49,3 50)':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/_search/scroll?scroll_id=my_scrollid&CUSTOMREQUEST=DELETE""", '{}')
+    lyr.ResetReading()
+    lyr.GetNextFeature()
+    f = lyr.GetNextFeature()
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/_search/scroll?scroll=1m&size=100&scroll_id=my_scrollid&pretty""", """{
+    "hits":
+    {
+        "hits":[
+        {
+            "_source": {
+                "type": "Feature",
+                "properties": {
+                    "int_field": 2,
+                }
+            },
+        }
+        ]
+    }
+}""")
+    f = lyr.GetNextFeature()
+    if f['int_field'] != 2:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/_search/scroll?scroll=1m&size=100&scroll_id=my_scrollid&pretty""", """{
+    "hits":
+    {
+        "hits":[]
+    }
+}""")
+    f = lyr.GetNextFeature()
+    if f is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def ogr_elasticsearch_cleanup():
@@ -295,6 +544,7 @@ gdaltest_list = [
     ogr_elasticsearch_1,
     ogr_elasticsearch_2,
     ogr_elasticsearch_3,
+    ogr_elasticsearch_4,
     ogr_elasticsearch_cleanup,
     ]
 
