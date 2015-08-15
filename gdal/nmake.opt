@@ -205,12 +205,9 @@ INCLUDE_OGR_FRMTS = YES
 # gnm formats.
 #INCLUDE_GNM_FRMTS = YES
 
-# Location of Visual C++ directory (only required for following SETARGV stuff)
-#VCDIR   = 	"D:\Software\VStudio\VC98"
-
-# Enable the following if VCDIR set properly, and you want the utility
-# programs to be able to expand wildcards. 
-#SETARGV =	$(VCDIR)\lib\setargv.obj
+# To be enabled defined to point to setargv.obj from the Visual C++ directory,
+# when you want the utility programs to be able to expand wildcards. 
+#SETARGV =	"D:\Software\VStudio\VC98\lib\setargv.obj"
 
 # Uncomment to build with libiconv library to support extended character
 # recoding capabilities. GDAL's internal stub implementation supports
