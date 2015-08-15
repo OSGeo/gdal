@@ -2896,6 +2896,8 @@ void RegisterOGRMongoDB()
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
                                    "drv_mongodb.html" );
 
+        poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, "MongoDB:" );
+
 #if 0
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"
