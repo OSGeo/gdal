@@ -522,6 +522,68 @@ def ogr_elasticsearch_4():
         gdaltest.post_reason('fail')
         return 'fail'
 
+    lyr.SetSpatialFilterRect(1,48,3,50)
+    lyr.ResetReading()
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100&pretty&POSTFIELDS={ "query": { "filtered" : { "query" : { "match_all" : {} }, "filter": { "geo_shape": { "a_geoshape": { "shape": { "type": "envelope", "coordinates": [ [ 1.000000, 50.000000 ], [ 3.000000, 48.000000 ] ] } } } } } } }""", """{
+    "hits":
+    {
+        "hits":[
+        {
+            "_source": {
+                "type": "Feature",
+                "properties": {
+                    "int_field": 3,
+                }
+            },
+        }
+        ]
+    }
+}""")
+    f = lyr.GetNextFeature()
+    if f['int_field'] != 3:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr.SetSpatialFilterRect(1,1,48,3,50)
+    lyr.ResetReading()
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100&pretty&POSTFIELDS={ "query": { "filtered" : { "query" : { "match_all" : {} }, "filter": { "geo_bounding_box": { "a_geopoint.coordinates": { "top_left": { "lat": 50.000000, "lon": 1.000000 }, "bottom_right": { "lat": 48.000000, "lon": 3.000000 } } } } } } }""", """{
+    "hits":
+    {
+        "hits":[
+        {
+            "_source": {
+                "type": "Feature",
+                "properties": {
+                    "int_field": 4,
+                }
+            },
+        }
+        ]
+    }
+}""")
+    f = lyr.GetNextFeature()
+    if f['int_field'] != 4:
+        gdaltest.post_reason('fail')
+        return 'fail'
+        
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?search_type=count&pretty&POSTFIELDS={ "query": { "filtered" : { "query" : { "match_all" : {} }, "filter": { "geo_bounding_box": { "a_geopoint.coordinates": { "top_left": { "lat": 50.000000, "lon": 1.000000 }, "bottom_right": { "lat": 48.000000, "lon": 3.000000 } } } } } } }""","""{
+    "hits":
+    {
+        "total": 10
+    }
+}""")
+    fc = lyr.GetFeatureCount()
+    if fc != 10:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr.SetSpatialFilter(None)
+    lyr.SetSpatialFilterRect(-180,-90,180,90)
+    gdal.PushErrorHandler()
+    lyr.SetSpatialFilter(-1, None)
+    lyr.SetSpatialFilter(2, None)
+    gdal.PopErrorHandler()
+
     return 'success'
 
 ###############################################################################

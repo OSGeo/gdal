@@ -66,6 +66,7 @@ class OGRElasticLayer : public OGRLayer {
     std::map< CPLString, int> m_aosMapToGeomFieldIndex;
     
     std::vector< OGRCoordinateTransformation* > m_apoCT;
+    std::vector< int > m_abIsGeoPoint;
     ESGeometryTypeMapping eGeomTypeMapping;
     
     CPLString osScrollID;
@@ -73,6 +74,8 @@ class OGRElasticLayer : public OGRLayer {
     int iCurFeatureInPage;
     std::vector<OGRFeature*> apoCachedFeatures;
     int bEOF;
+    
+    json_object* m_poSpatialFilter;
 
     int PushIndex();
     CPLString BuildMap();
@@ -100,6 +103,9 @@ public:
     int TestCapability(const char *);
 
     GIntBig GetFeatureCount(int bForce);
+    
+    virtual void        SetSpatialFilter( OGRGeometry *poGeom ) { SetSpatialFilter(0, poGeom); }
+    virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom );
     
     virtual OGRErr      SyncToDisk();
     
@@ -152,7 +158,7 @@ public:
     char* pszWriteMap;
     char* pszMapping;
 
-    json_object* RunRequest(const char* pszURL);
+    json_object* RunRequest(const char* pszURL, const char* pszPostContent = NULL);
 };
 
 
