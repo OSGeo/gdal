@@ -72,6 +72,7 @@ OGRElasticLayer::OGRElasticLayer(const char* pszLayerName,
     iCurID = 0;
     iCurFeatureInPage = 0;
     bEOF = FALSE;
+    m_poSpatialFilter = NULL;
 
     ResetReading();
     return;
@@ -85,6 +86,8 @@ OGRElasticLayer::~OGRElasticLayer() {
     SyncToDisk();
 
     ResetReading();
+    
+    json_object_put(m_poSpatialFilter);
 
     CPLFree(pszLayerName);
 
@@ -124,6 +127,8 @@ void OGRElasticLayer::BuildFeatureCollectionSchema(json_object* poSchema)
             m_aaosGeomFieldPaths.push_back(aosPath);
             m_aosMapToGeomFieldIndex[ aosPath[0] ] = poFeatureDefn->GetGeomFieldCount();
 
+            m_abIsGeoPoint.push_back(FALSE);
+
             poFeatureDefn->AddGeomFieldDefn(&oFieldDefn);
 
             m_apoCT.push_back(NULL);
@@ -149,6 +154,8 @@ void OGRElasticLayer::BuildFeatureCollectionSchema(json_object* poSchema)
                     aosPath.push_back(oFieldDefn.GetNameRef());
                     m_aaosGeomFieldPaths.push_back(aosPath);
                     m_aosMapToGeomFieldIndex[ aosPath[0] ] = poFeatureDefn->GetGeomFieldCount();
+                    
+                    m_abIsGeoPoint.push_back(TRUE);
 
                     poFeatureDefn->AddGeomFieldDefn(&oFieldDefn);
 
@@ -207,7 +214,7 @@ void OGRElasticLayer::BuildFeatureCollectionSchema(json_object* poSchema)
                             aosPath.push_back("properties");
                             aosPath.push_back(oFieldDefn.GetNameRef());
                             m_aaosFieldPaths.push_back(aosPath);
-                            m_aosMapToFieldIndex[ aosPath[0] + "|" + aosPath[1] ] = poFeatureDefn->GetFieldCount();
+                            m_aosMapToFieldIndex[ aosPath[0] + "." + aosPath[1] ] = poFeatureDefn->GetFieldCount();
 
                             poFeatureDefn->AddFieldDefn(&oFieldDefn);
                         }
@@ -313,8 +320,19 @@ OGRFeature *OGRElasticLayer::GetNextRawFeature()
 
     if( osScrollID.size() == 0 )
     {
-        poResponse = poDS->RunRequest(
-            CPLSPrintf("%s/%s/FeatureCollection/_search?scroll=1m&size=100&pretty", poDS->GetURL(), pszLayerName));
+        if( m_poSpatialFilter )
+        {
+            CPLString osFilter = CPLSPrintf("{ \"query\": { \"filtered\" : { \"query\" : { \"match_all\" : {} }, \"filter\": %s } } }",
+                                            json_object_to_json_string( m_poSpatialFilter ));
+            poResponse = poDS->RunRequest(
+                CPLSPrintf("%s/%s/FeatureCollection/_search?scroll=1m&size=100&pretty", poDS->GetURL(), pszLayerName),
+                osFilter.c_str());
+        }
+        else
+        {
+            poResponse = poDS->RunRequest(
+                CPLSPrintf("%s/%s/FeatureCollection/_search?scroll=1m&size=100&pretty", poDS->GetURL(), pszLayerName));
+        }
     }
     else
     {
@@ -401,7 +419,7 @@ void OGRElasticLayer::BuildFeature(OGRFeature* poFeature, json_object* poSource,
     json_object_object_foreachC( poSource, it )
     {
         if( osPath.size() )
-            osCurPath = osPath + "|" + it.key;
+            osCurPath = osPath + "." + it.key;
         else
             osCurPath = it.key;
         std::map<CPLString,int>::iterator oIter = m_aosMapToFieldIndex.find(osCurPath);
@@ -567,6 +585,8 @@ CPLString OGRElasticLayer::BuildMap() {
     {
         for(int i=0;i<poFeatureDefn->GetGeomFieldCount();i++)
         {
+            m_abIsGeoPoint[i] = TRUE;
+
             json_object *geometry = json_object_new_object();
             json_object_object_add(Feature,
                                    poFeatureDefn->GetGeomFieldDefn(i)->GetNameRef(),
@@ -1006,7 +1026,7 @@ OGRErr OGRElasticLayer::CreateField(OGRFieldDefn *poFieldDefn,
     aosPath.push_back("properties");
     aosPath.push_back(poFieldDefn->GetNameRef());
     m_aaosFieldPaths.push_back(aosPath);
-    m_aosMapToFieldIndex[ aosPath[0] + "|" + aosPath[1] ] = poFeatureDefn->GetFieldCount();
+    m_aosMapToFieldIndex[ aosPath[0] + "." + aosPath[1] ] = poFeatureDefn->GetFieldCount();
 
     poFeatureDefn->AddFieldDefn(poFieldDefn);
     return OGRERR_NONE;
@@ -1045,6 +1065,17 @@ OGRErr OGRElasticLayer::CreateGeomField( OGRGeomFieldDefn *poFieldIn, CPL_UNUSED
     m_aosMapToGeomFieldIndex[ aosPath[0] ] = poFeatureDefn->GetGeomFieldCount();
 
     poFeatureDefn->AddGeomFieldDefn( &oFieldDefn );
+    
+    if( eGeomTypeMapping == ES_GEOMTYPE_GEO_SHAPE ||
+        (eGeomTypeMapping == ES_GEOMTYPE_AUTO &&
+         poFieldIn->GetType() != wkbPoint) )
+    {
+        m_abIsGeoPoint.push_back(TRUE);
+    }
+    else
+    {
+        m_abIsGeoPoint.push_back(FALSE);
+    }
 
     OGRCoordinateTransformation* poCT = NULL;
     if( oFieldDefn.GetSpatialRef() != NULL )
@@ -1092,14 +1123,28 @@ int OGRElasticLayer::TestCapability(const char * pszCap) {
 
 GIntBig OGRElasticLayer::GetFeatureCount(int bForce)
 {
-    if( m_poAttrQuery != NULL || m_poFilterGeom != NULL )
+    if( m_poAttrQuery != NULL )
         return OGRLayer::GetFeatureCount(bForce);
 
-    json_object* poResponse = poDS->RunRequest(
+    json_object* poResponse;
+    if( m_poSpatialFilter )
+    {
+        CPLString osFilter = CPLSPrintf("{ \"query\": { \"filtered\" : { \"query\" : { \"match_all\" : {} }, \"filter\": %s } } }",
+                                        json_object_to_json_string( m_poSpatialFilter ));
+        poResponse = poDS->RunRequest(
+            CPLSPrintf("%s/%s/FeatureCollection/_search?search_type=count&pretty", poDS->GetURL(), pszLayerName),
+            osFilter.c_str());
+    }
+    else
+    {
+        poResponse = poDS->RunRequest(
             CPLSPrintf("%s/%s/FeatureCollection/_search?search_type=count&pretty", poDS->GetURL(), pszLayerName));
+    }
+
     if( poResponse == NULL )
         return OGRLayer::GetFeatureCount(bForce);
-    
+    //CPLDebug("ES", "Response: %s", json_object_to_json_string(poResponse));
+
     json_object* poHits = json_object_object_get(poResponse, "hits");
     if( poHits == NULL || json_object_get_type(poHits) != json_type_object )
     {
@@ -1108,6 +1153,8 @@ GIntBig OGRElasticLayer::GetFeatureCount(int bForce)
     }
     
     json_object* poCount = json_object_object_get(poHits, "count");
+    if( poCount == NULL ) 
+        poCount = json_object_object_get(poHits, "total");
     if( poCount == NULL || json_object_get_type(poCount) != json_type_int )
     {
         json_object_put(poResponse);
@@ -1117,4 +1164,124 @@ GIntBig OGRElasticLayer::GetFeatureCount(int bForce)
     GIntBig nCount = json_object_get_int64(poCount);
     json_object_put(poResponse);
     return nCount;
+}
+
+/************************************************************************/
+/*                          SetSpatialFilter()                          */
+/************************************************************************/
+
+void OGRElasticLayer::SetSpatialFilter( int iGeomField, OGRGeometry * poGeomIn )
+
+{
+    if( iGeomField < 0 || iGeomField >= GetLayerDefn()->GetGeomFieldCount() ||
+        GetLayerDefn()->GetGeomFieldDefn(iGeomField)->GetType() == wkbNone )
+    {
+        if( iGeomField != 0 )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Invalid geometry field index : %d", iGeomField);
+        }
+        return;
+    }
+    m_iGeomFieldFilter = iGeomField;
+    
+    InstallFilter( poGeomIn );
+    
+    json_object_put(m_poSpatialFilter);
+    m_poSpatialFilter = NULL;
+
+    if( poGeomIn == NULL )
+        return;
+
+    OGREnvelope sEnvelope;
+    poGeomIn->getEnvelope(&sEnvelope);
+
+    if( sEnvelope.MinX < -180 )
+        sEnvelope.MinX = -180;
+    if( sEnvelope.MinX > 180 )
+        sEnvelope.MinX = 180;
+
+    if( sEnvelope.MinY < -90 )
+        sEnvelope.MinY = -90;
+    if( sEnvelope.MinY > 90 )
+        sEnvelope.MinY = 90;
+
+    if( sEnvelope.MaxX > 180 )
+        sEnvelope.MaxX = 180;
+    if( sEnvelope.MaxX < -180 )
+        sEnvelope.MaxX = -180;
+
+    if( sEnvelope.MaxY > 90 )
+        sEnvelope.MaxY = 90;
+    if( sEnvelope.MaxY < -90 )
+        sEnvelope.MaxY = -90;
+
+    if( sEnvelope.MinX == -180 && sEnvelope.MinY == -90 &&
+        sEnvelope.MaxX == 180 && sEnvelope.MaxY == 90 )
+    {
+        return;
+    }
+
+    m_poSpatialFilter = json_object_new_object();
+    
+    if( m_abIsGeoPoint[iGeomField] )
+    {
+        json_object* geo_bounding_box = json_object_new_object();
+        json_object_object_add(m_poSpatialFilter, "geo_bounding_box", geo_bounding_box);
+        
+        CPLString osPath = m_aaosGeomFieldPaths[iGeomField][0];
+        for(size_t i=1;i<m_aaosGeomFieldPaths[iGeomField].size();i++)
+        {
+            osPath += ".";
+            osPath += m_aaosGeomFieldPaths[iGeomField][i];
+        }
+        osPath += ".";
+        osPath += "coordinates";
+
+        json_object* field = json_object_new_object();
+        json_object_object_add(geo_bounding_box, osPath.c_str(), field);
+
+        json_object* top_left = json_object_new_object();
+        json_object_object_add(field, "top_left", top_left);
+        json_object_object_add(top_left, "lat", json_object_new_double(sEnvelope.MaxY));
+        json_object_object_add(top_left, "lon", json_object_new_double(sEnvelope.MinX));
+        
+        json_object* bottom_right = json_object_new_object();
+        json_object_object_add(field, "bottom_right", bottom_right);
+        json_object_object_add(bottom_right, "lat", json_object_new_double(sEnvelope.MinY));
+        json_object_object_add(bottom_right, "lon", json_object_new_double(sEnvelope.MaxX));
+    }
+    else
+    {
+        json_object* geo_shape = json_object_new_object();
+        json_object_object_add(m_poSpatialFilter, "geo_shape", geo_shape);
+        
+        CPLString osPath = m_aaosGeomFieldPaths[iGeomField][0];
+        for(size_t i=1;i<m_aaosGeomFieldPaths[iGeomField].size();i++)
+        {
+            osPath += ".";
+            osPath += m_aaosGeomFieldPaths[iGeomField][i];
+        }
+        
+        json_object* field = json_object_new_object();
+        json_object_object_add(geo_shape, osPath.c_str(), field);
+        
+        json_object* shape = json_object_new_object();
+        json_object_object_add(field, "shape", shape);
+        
+        json_object_object_add(shape, "type", json_object_new_string("envelope"));
+        
+        json_object* coordinates = json_object_new_array();
+        json_object_object_add(shape, "coordinates", coordinates);
+        
+        json_object* top_left = json_object_new_array();
+        json_object_array_add(top_left, json_object_new_double(sEnvelope.MinX));
+        json_object_array_add(top_left, json_object_new_double(sEnvelope.MaxY));
+        json_object_array_add(coordinates, top_left);
+        
+        json_object* bottom_right = json_object_new_array();
+        json_object_array_add(bottom_right, json_object_new_double(sEnvelope.MaxX));
+        json_object_array_add(bottom_right, json_object_new_double(sEnvelope.MinY));
+        json_object_array_add(coordinates, bottom_right);
+    }
 }

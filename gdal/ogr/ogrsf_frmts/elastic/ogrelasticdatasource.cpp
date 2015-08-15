@@ -158,9 +158,19 @@ OGRLayer * OGRElasticDataSource::ICreateLayer(const char * pszLayerName,
 /*                               RunRequest()                           */
 /************************************************************************/
 
-json_object* OGRElasticDataSource::RunRequest(const char* pszURL)
+json_object* OGRElasticDataSource::RunRequest(const char* pszURL, const char* pszPostContent)
 {
-    CPLHTTPResult * psResult = CPLHTTPFetch( pszURL, NULL);
+    char** papszOptions = NULL;
+    
+    if( pszPostContent )
+    {
+        papszOptions = CSLSetNameValue(papszOptions, "POSTFIELDS",
+                                       pszPostContent);
+    }
+
+    CPLHTTPResult * psResult = CPLHTTPFetch( pszURL, papszOptions );
+    CSLDestroy(papszOptions);
+
     if( psResult->pszErrBuf != NULL )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "%s",
