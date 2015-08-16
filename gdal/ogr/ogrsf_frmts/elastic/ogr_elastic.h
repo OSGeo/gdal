@@ -53,9 +53,10 @@ class OGRElasticLayer : public OGRLayer {
     OGRFeatureDefn* poFeatureDefn;
     OGRElasticDataSource* poDS;
     CPLString sIndex;
-    void* pAttributes;
+
     int bMappingWritten;
-    char* pszLayerName;
+    CPLString osIndexName;
+    CPLString osMappingName;
     int nBulkUpload;
     CPLString osPrecision;
     
@@ -83,10 +84,15 @@ class OGRElasticLayer : public OGRLayer {
     OGRFeature * GetNextRawFeature();
     void BuildFeature(OGRFeature* poFeature, json_object* poSource,
                       CPLString osPath);
+    void CreateFieldFromSchema(const char* pszName,
+                               std::vector<CPLString> aosPath,
+                               json_object* poObj);
 
 public:
     OGRElasticLayer(
-            const char* layerName,
+            const char* pszLayerName,
+            const char* pszIndexName,
+            const char* pszMappingName,
             OGRElasticDataSource* poDS,
             char** papszOptions);
     ~OGRElasticLayer();
@@ -109,7 +115,7 @@ public:
     
     virtual OGRErr      SyncToDisk();
     
-    void BuildFeatureCollectionSchema(json_object* poSchema);
+    void BuildSchema(json_object* poSchema);
 };
 
 /************************************************************************/
@@ -151,7 +157,7 @@ public:
     int TestCapability(const char *);
 
     int UploadFile(const CPLString &url, const CPLString &data);
-    void DeleteIndex(const CPLString &url);
+    void Delete(const CPLString &url);
 
     int bOverwrite;
     int nBulkUpload;
