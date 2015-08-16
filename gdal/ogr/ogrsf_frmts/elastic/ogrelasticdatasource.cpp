@@ -97,6 +97,11 @@ OGRLayer * OGRElasticDataSource::ICreateLayer(const char * pszLayerName,
                                               char ** papszOptions)
 {
     CPLString osLaunderedName(pszLayerName);
+
+    const char* pszIndexName = CSLFetchNameValue(papszOptions, "INDEX_NAME");
+    if( pszIndexName != NULL )
+        osLaunderedName = pszIndexName;
+
     for(size_t i=0;i<osLaunderedName.size();i++)
     {
         if( osLaunderedName[i] >= 'A' && osLaunderedName[i] <= 'Z' )
@@ -107,38 +112,69 @@ OGRLayer * OGRElasticDataSource::ICreateLayer(const char * pszLayerName,
     if( strcmp(osLaunderedName.c_str(), pszLayerName) != 0 )
         CPLDebug("ES", "Laundered layer name to %s", osLaunderedName.c_str());
 
+    // Check if the index exists
+    int bIndexExists = FALSE;
+    CPLPushErrorHandler(CPLQuietErrorHandler);
+    CPLHTTPResult* psResult = CPLHTTPFetch(CPLSPrintf("%s/%s",
+                                           GetURL(), osLaunderedName.c_str()), NULL);
+    CPLPopErrorHandler();
+    if (psResult) {
+        bIndexExists = (psResult->pszErrBuf == NULL);
+        CPLHTTPDestroyResult(psResult);
+    }
+
+    const char* pszMappingName = CSLFetchNameValueDef(papszOptions,
+                                        "MAPPING_NAME", "FeatureCollection");
+
+    int bMappingExists = FALSE;
+    if( bIndexExists )
+    {
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        CPLHTTPResult* psResult = CPLHTTPFetch(CPLSPrintf("%s/%s/_mapping/%s",
+                        GetURL(), osLaunderedName.c_str(), pszMappingName), NULL);
+        CPLPopErrorHandler();
+        bMappingExists = psResult != NULL && psResult->pabyData != NULL &&
+                         !EQUALN((const char*)psResult->pabyData, "{}", 2);
+        CPLHTTPDestroyResult(psResult);
+    }
+
     if( bOverwrite || CSLFetchBoolean(papszOptions, "OVERWRITE", FALSE) )
     {
-        // Check if the index exists
-        CPLPushErrorHandler(CPLQuietErrorHandler);
-        CPLHTTPResult* psResult = CPLHTTPFetch(CPLSPrintf("%s/%s", GetURL(), osLaunderedName.c_str()), NULL);
-        CPLPopErrorHandler();
-        if (psResult) {
-            int bOK = (psResult->pszErrBuf == NULL);
-            CPLHTTPDestroyResult(psResult);
-            if( bOK )
-            {
-                // Then delete it
-                DeleteIndex(CPLSPrintf("%s/%s", GetURL(), osLaunderedName.c_str()));
-            }
+        if( bMappingExists )
+        {
+            Delete(CPLSPrintf("%s/%s/_mapping/%s",
+                              GetURL(), osLaunderedName.c_str(), pszMappingName));
         }
     }
-    
-    // Create the index
-    if( !UploadFile(CPLSPrintf("%s/%s", GetURL(), osLaunderedName.c_str()), "") )
+    else if( bMappingExists )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "%s/%s already exists",
+                 osLaunderedName.c_str(), pszMappingName);
         return NULL;
+    }
+
+    // Create the index
+    if( !bIndexExists )
+    {
+        if( !UploadFile(CPLSPrintf("%s/%s", GetURL(), osLaunderedName.c_str()), "") )
+            return NULL;
+    }
 
     // If we have a user specified mapping, then go ahead and update it now
     const char* pszLayerMapping = pszMapping;
     if (pszLayerMapping != NULL) {
-        if( !UploadFile(CPLSPrintf("%s/%s/FeatureCollection/_mapping", GetURL(), osLaunderedName.c_str()),
-                   pszLayerMapping) )
+        if( !UploadFile(CPLSPrintf("%s/%s/%s/_mapping",
+                            GetURL(), osLaunderedName.c_str(), pszMappingName),
+                        pszLayerMapping) )
         {
             return NULL;
         }
     }
     
-    OGRElasticLayer* poLayer = new OGRElasticLayer(osLaunderedName.c_str(), this, papszOptions);
+    OGRElasticLayer* poLayer = new OGRElasticLayer(osLaunderedName.c_str(),
+                                                   osLaunderedName.c_str(),
+                                                   pszMappingName,
+                                                   this, papszOptions);
     nLayers++;
     papoLayers = (OGRElasticLayer **) CPLRealloc(papoLayers, nLayers * sizeof (OGRElasticLayer*));
     papoLayers[nLayers - 1] = poLayer;
@@ -265,14 +301,27 @@ int OGRElasticDataSource::Open(GDALOpenInfo* poOpenInfo) {
                 {
                     aosMappings.push_back(it.key);
                 }
-                if( aosMappings.size() == 1 && aosMappings[0] == "FeatureCollection" )
+                if( aosMappings.size() == 1 &&
+                    (aosMappings[0] == "FeatureCollection" || aosMappings[0] == "default") )
                 {
-                    OGRElasticLayer* poLayer = new OGRElasticLayer(pszCur, this, NULL);
-                    poLayer->BuildFeatureCollectionSchema(json_object_object_get(poMappings, "FeatureCollection"));
+                    OGRElasticLayer* poLayer = new OGRElasticLayer(pszCur, pszCur, aosMappings[0], this, NULL);
+                    poLayer->BuildSchema(json_object_object_get(poMappings, aosMappings[0]));
 
                     nLayers++;
                     papoLayers = (OGRElasticLayer **) CPLRealloc(papoLayers, nLayers * sizeof (OGRElasticLayer*));
                     papoLayers[nLayers - 1] = poLayer;
+                }
+                else
+                {
+                    for(size_t i=0; i<aosMappings.size();i++)
+                    {
+                        OGRElasticLayer* poLayer = new OGRElasticLayer((pszCur + CPLString("_") + aosMappings[i]).c_str(), pszCur, aosMappings[i], this, NULL);
+                        poLayer->BuildSchema(json_object_object_get(poMappings, aosMappings[i]));
+
+                        nLayers++;
+                        papoLayers = (OGRElasticLayer **) CPLRealloc(papoLayers, nLayers * sizeof (OGRElasticLayer*));
+                        papoLayers[nLayers - 1] = poLayer;
+                    }
                 }
             }
             
@@ -289,10 +338,10 @@ int OGRElasticDataSource::Open(GDALOpenInfo* poOpenInfo) {
 
 
 /************************************************************************/
-/*                             DeleteIndex()                            */
+/*                             Delete()                                 */
 /************************************************************************/
 
-void OGRElasticDataSource::DeleteIndex(const CPLString &url) {
+void OGRElasticDataSource::Delete(const CPLString &url) {
     char** papszOptions = NULL;
     papszOptions = CSLAddNameValue(papszOptions, "CUSTOMREQUEST", "DELETE");
     CPLHTTPResult* psResult = CPLHTTPFetch(url, papszOptions);

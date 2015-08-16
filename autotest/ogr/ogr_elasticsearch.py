@@ -105,7 +105,9 @@ def ogr_elasticsearch_1():
     gdal.PopErrorHandler()
     
     # Successful overwrite
-    gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo&CUSTOMREQUEST=DELETE', '{}')
+    gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo/_mapping/FeatureCollection', '{"foo":{"mappings":{"FeatureCollection":{}}}}')
+    gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo/_mapping/FeatureCollection&CUSTOMREQUEST=DELETE', '{}')
+    gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo/FeatureCollection/&POSTFIELDS={ }', '{}')
     lyr = ds.CreateLayer('foo', geom_type = ogr.wkbNone, options = ['OVERWRITE=TRUE'])
     
     feat = ogr.Feature(lyr.GetLayerDefn())
@@ -196,6 +198,7 @@ def ogr_elasticsearch_2():
         return 'fail'
     
     gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo&POSTFIELDS=', '{}')
+    gdal.Unlink('/vsimem/fakeelasticsearch/foo/_mapping/FeatureCollection')
     gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo/FeatureCollection/_mapping&POSTFIELDS={ "FeatureCollection": { "properties": { "type": { "store": "yes", "type": "string" }, "properties": { }, "geometry": { "type": "geo_shape" } } } }', '{}')
    
     lyr = ds.CreateLayer('foo')
@@ -587,6 +590,97 @@ def ogr_elasticsearch_4():
     return 'success'
 
 ###############################################################################
+# Write documents with non geojson structure
+
+def ogr_elasticsearch_5():
+    if ogrtest.elasticsearch_drv is None:
+        return 'skip'
+
+    ds = ogrtest.elasticsearch_drv.CreateDataSource("/vsimem/fakeelasticsearch")
+
+    gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/non_geojson&POSTFIELDS=', '')
+    gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/non_geojson/my_mapping/_mapping&POSTFIELDS={ "my_mapping": { "properties": { "str": { "store": "yes", "type": "string" }, "geometry": { "type": "geo_shape" } } } }', '{}')
+
+    lyr = ds.CreateLayer('non_geojson', options = ['MAPPING_NAME=my_mapping'])
+    lyr.CreateField(ogr.FieldDefn('str', ogr.OFTString))
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat['str'] = 'foo'
+
+    gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/non_geojson/my_mapping/&POSTFIELDS={ "str": "foo" }', '{}')
+    ret = lyr.CreateFeature(feat)
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    feat = None
+    
+    ds = None
+    
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/_cat/indices?h=i""", 'non_geojson\n')
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/non_geojson?pretty""", """
+{
+    "non_geojson":
+    {
+        "mappings":
+        {
+            "my_mapping":
+            {
+                "properties":
+                {
+                    "a_geoshape":
+                    {
+                        "type": "geo_shape",
+                    },
+                    "a_geopoint":
+                    {
+                        "properties":
+                        {
+                            "coordinates":
+                            {
+                                "type": "geo_point"
+                            }
+                        }
+                    },
+                    "str_field": { "type": "string"}
+                }
+            }
+        }
+    }
+}
+""")
+    ds = ogr.Open("ES:/vsimem/fakeelasticsearch")
+    lyr = ds.GetLayer(0)
+    
+    
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/non_geojson/my_mapping/_search?scroll=1m&size=100&pretty""", """{
+    "hits":
+    {
+        "hits":[
+        {
+            "_source": {
+                "a_geopoint" : {
+                    "type": "POINT",
+                    "coordinates": [2,49]
+                },
+                "a_geoshape": {
+                    "type": "linestring",
+                    "coordinates": [[2,49],[3,50]]
+                },
+                "str_field": "foo"
+            },
+        }]
+    }
+}""")
+    f = lyr.GetNextFeature()
+    if f['str_field'] != 'foo' or \
+       f['a_geopoint'].ExportToWkt() != 'POINT (2 49)' or \
+       f['a_geoshape'].ExportToWkt() != 'LINESTRING (2 49,3 50)':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def ogr_elasticsearch_cleanup():
@@ -607,6 +701,7 @@ gdaltest_list = [
     ogr_elasticsearch_2,
     ogr_elasticsearch_3,
     ogr_elasticsearch_4,
+    ogr_elasticsearch_5,
     ogr_elasticsearch_cleanup,
     ]
 

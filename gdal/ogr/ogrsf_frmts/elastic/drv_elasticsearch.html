@@ -48,6 +48,9 @@ ogr2ogr -progress --config ES_OVERWRITE 1 --config ES_BULK 10000 --config ES_MET
 
 Starting with GDAL 2.1, the driver supports the following layer creation options:
 <ul>
+<li><b>INDEX_NAME</b>=name. Name of the index to create (or reuse). By default the index name is the layer name.</li>
+<li><b>MAPPING_NAME=</b>=name. Name of the mapping type within the index.
+By default, the mapping name is "FeatureCollection" and the documents will be written as GeoJSON Feature objects. If another mapping name is chosen, a more "flat" structure will be used.</li>
 <li><b>OVERWRITE</b>=YES/NO. Whether to overwrite an existing collection with the layer name to be created. Defaults to NO.</li>
 <li><b>GEOMETRY_NAME</b>=name. Name of geometry column. Defaults to 'geometry'.</li>
 <li><b>GEOM_MAPPING_TYPE</b>=AUTO/GEO_POINT/GEO_SHAPE. Mapping type for geometry fields. Defaults to AUTO.
