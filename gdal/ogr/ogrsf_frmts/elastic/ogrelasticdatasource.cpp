@@ -49,6 +49,8 @@ OGRElasticDataSource::OGRElasticDataSource() {
     pszName = NULL;
     pszMapping = NULL;
     pszWriteMap = NULL;
+    bOverwrite = FALSE;
+    nBulkUpload = 0;
 }
 
 /************************************************************************/
@@ -70,6 +72,7 @@ OGRElasticDataSource::~OGRElasticDataSource() {
 
 int OGRElasticDataSource::TestCapability(const char * pszCap) {
     if (EQUAL(pszCap, ODsCCreateLayer) ||
+        EQUAL(pszCap, ODsCDeleteLayer) ||
         EQUAL(pszCap, ODsCCreateGeomFieldAfterCreateLayer) )
         return TRUE;
     else
@@ -88,6 +91,43 @@ OGRLayer *OGRElasticDataSource::GetLayer(int iLayer) {
 }
 
 /************************************************************************/
+/*                            DeleteLayer()                             */
+/************************************************************************/
+
+OGRErr OGRElasticDataSource::DeleteLayer( int iLayer )
+
+{
+    if( eAccess != GA_Update )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Dataset opened in read-only mode");
+        return OGRERR_FAILURE;
+    }
+
+    if( iLayer < 0 || iLayer >= nLayers )
+        return OGRERR_FAILURE;
+
+/* -------------------------------------------------------------------- */
+/*      Blow away our OGR structures related to the layer.  This is     */
+/*      pretty dangerous if anything has a reference to this layer!     */
+/* -------------------------------------------------------------------- */
+    CPLString osLayerName = papoLayers[iLayer]->GetName();
+    CPLString osIndex = papoLayers[iLayer]->GetIndexName();
+    CPLString osMapping = papoLayers[iLayer]->GetMappingName();
+    
+    CPLDebug( "ES", "DeleteLayer(%s)", osLayerName.c_str() );
+
+    delete papoLayers[iLayer];
+    memmove(papoLayers + iLayer, papoLayers + iLayer + 1,
+            (nLayers - 1 - iLayer) * sizeof(OGRLayer*));
+    nLayers --;
+    
+    Delete(CPLSPrintf("%s/%s/_mapping/%s",
+                      GetURL(), osIndex.c_str(), osMapping.c_str()));
+    
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
 /*                           ICreateLayer()                             */
 /************************************************************************/
 
@@ -96,6 +136,12 @@ OGRLayer * OGRElasticDataSource::ICreateLayer(const char * pszLayerName,
                                               OGRwkbGeometryType eGType,
                                               char ** papszOptions)
 {
+    if( eAccess != GA_Update )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Dataset opened in read-only mode");
+        return NULL;
+    }
+    
     CPLString osLaunderedName(pszLayerName);
 
     const char* pszIndexName = CSLFetchNameValue(papszOptions, "INDEX_NAME");
@@ -256,10 +302,13 @@ json_object* OGRElasticDataSource::RunRequest(const char* pszURL, const char* ps
 /*                                Open()                                */
 /************************************************************************/
 
-int OGRElasticDataSource::Open(GDALOpenInfo* poOpenInfo) {
-
+int OGRElasticDataSource::Open(GDALOpenInfo* poOpenInfo)
+{
+    eAccess = poOpenInfo->eAccess;
     pszName = CPLStrdup(poOpenInfo->pszFilename);
     osURL = (EQUALN(pszName, "ES:", 3)) ? pszName + 3 : pszName;
+    if( osURL.size() == 0 )
+        osURL = "localhost:9200";
     
     CPLHTTPResult* psResult = CPLHTTPFetch((osURL + "/_cat/indices?h=i").c_str(), NULL);
     if( psResult == NULL || psResult->pabyData == NULL || psResult->pszErrBuf != NULL )
@@ -383,9 +432,13 @@ int OGRElasticDataSource::UploadFile(const CPLString &url, const CPLString &data
 /************************************************************************/
 
 int OGRElasticDataSource::Create(const char *pszFilename,
-                                 CPL_UNUSED char **papszOptions) {
+                                 CPL_UNUSED char **papszOptions)
+{
+    eAccess = GA_Update;
     this->pszName = CPLStrdup(pszFilename);
     osURL = (EQUALN(pszFilename, "ES:", 3)) ? pszFilename + 3 : pszFilename;
+    if( osURL.size() == 0 )
+        osURL = "localhost:9200";
 
     const char* pszMetaFile = CPLGetConfigOption("ES_META", NULL);
     const char* pszWriteMap = CPLGetConfigOption("ES_WRITEMAP", NULL);;

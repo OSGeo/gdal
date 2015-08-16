@@ -81,6 +81,7 @@ class OGRElasticLayer : public OGRLayer {
     int PushIndex();
     CPLString BuildMap();
 
+    OGRErr WriteMapIfNecessary();
     OGRFeature * GetNextRawFeature();
     void BuildFeature(OGRFeature* poFeature, json_object* poSource,
                       CPLString osPath);
@@ -116,13 +117,16 @@ public:
     virtual OGRErr      SyncToDisk();
     
     void BuildSchema(json_object* poSchema);
+    
+    const CPLString& GetIndexName() const { return osIndexName; }
+    const CPLString& GetMappingName() const { return osMappingName; }
 };
 
 /************************************************************************/
 /*                         OGRElasticDataSource                         */
 /************************************************************************/
 
-class OGRElasticDataSource : public OGRDataSource {
+class OGRElasticDataSource : public GDALDataset {
     char* pszName;
     CPLString osURL;
 
@@ -153,6 +157,7 @@ public:
             OGRSpatialReference *poSRS,
             OGRwkbGeometryType eType,
             char ** papszOptions);
+    virtual OGRErr      DeleteLayer( int iLayer );
 
     int TestCapability(const char *);
 

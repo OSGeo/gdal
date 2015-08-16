@@ -70,7 +70,7 @@ OGRElasticLayer::OGRElasticLayer(const char* pszLayerName,
     SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType(wkbNone);
-    bMappingWritten = FALSE;
+    bMappingWritten = TRUE;
 
     iCurID = 0;
     iCurFeatureInPage = 0;
@@ -261,6 +261,9 @@ void OGRElasticLayer::CreateFieldFromSchema(const char* pszName,
 
 OGRErr OGRElasticLayer::SyncToDisk()
 {
+    if( WriteMapIfNecessary() != OGRERR_NONE )
+        return OGRERR_FAILURE;
+    
     if( !PushIndex() )
         return OGRERR_FAILURE;
 
@@ -842,10 +845,11 @@ static void BuildGeoJSONGeometry(json_object* geometry, OGRGeometry* poGeom)
 }
 
 /************************************************************************/
-/*                           ICreateFeature()                            */
+/*                       WriteMapIfNecessary()                          */
 /************************************************************************/
 
-OGRErr OGRElasticLayer::ICreateFeature(OGRFeature *poFeature) {
+OGRErr OGRElasticLayer::WriteMapIfNecessary()
+{
 
     // Check to see if the user has elected to only write out the mapping file
     // This method will only write out one layer from the vector file in cases where there are multiple layers
@@ -872,6 +876,18 @@ OGRErr OGRElasticLayer::ICreateFeature(OGRFeature *poFeature) {
             return OGRERR_FAILURE;
         }
     }
+    
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                           ICreateFeature()                            */
+/************************************************************************/
+
+OGRErr OGRElasticLayer::ICreateFeature(OGRFeature *poFeature)
+{
+    if( WriteMapIfNecessary() != OGRERR_NONE )
+        return OGRERR_FAILURE;
 
     json_object *fieldObject = json_object_new_object();
 
@@ -1066,6 +1082,14 @@ int OGRElasticLayer::PushIndex() {
 OGRErr OGRElasticLayer::CreateField(OGRFieldDefn *poFieldDefn,
                                     CPL_UNUSED int bApproxOK)
 {
+    if( poFeatureDefn->GetFieldIndex(poFieldDefn->GetNameRef()) >= 0 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "CreateField() called with an already existing field name: %s",
+                  poFieldDefn->GetNameRef());
+        return OGRERR_FAILURE;
+    }
+    
     std::vector<CPLString> aosPath;
     aosPath.push_back("properties");
     aosPath.push_back(poFieldDefn->GetNameRef());
@@ -1073,6 +1097,9 @@ OGRErr OGRElasticLayer::CreateField(OGRFieldDefn *poFieldDefn,
     m_aosMapToFieldIndex[ aosPath[0] + "." + aosPath[1] ] = poFeatureDefn->GetFieldCount();
 
     poFeatureDefn->AddFieldDefn(poFieldDefn);
+    
+    bMappingWritten = FALSE;
+    
     return OGRERR_NONE;
 }
 
@@ -1137,6 +1164,8 @@ OGRErr OGRElasticLayer::CreateGeomField( OGRGeomFieldDefn *poFieldIn, CPL_UNUSED
         }
     }
     m_apoCT.push_back(poCT);
+    
+    bMappingWritten = FALSE;
 
     return OGRERR_NONE;
 }

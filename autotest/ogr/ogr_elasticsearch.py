@@ -87,6 +87,16 @@ def ogr_elasticsearch_1():
         gdaltest.post_reason('did not managed to open ElasticSearch datastore')
         return 'fail'
     
+    if ds.TestCapability(ogr.ODsCCreateLayer) == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.TestCapability(ogr.ODsCDeleteLayer) == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.TestCapability(ogr.ODsCCreateGeomFieldAfterCreateLayer) == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
     gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo&POSTFIELDS=', '{}')
     lyr = ds.CreateLayer('foo')
     if lyr is None:
@@ -110,6 +120,22 @@ def ogr_elasticsearch_1():
     gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo/FeatureCollection/&POSTFIELDS={ }', '{}')
     lyr = ds.CreateLayer('foo', geom_type = ogr.wkbNone, options = ['OVERWRITE=TRUE'])
     
+    if lyr.TestCapability(ogr.OLCFastFeatureCount) == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.TestCapability(ogr.OLCStringsAsUTF8) == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.TestCapability(ogr.OLCSequentialWrite) == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.TestCapability(ogr.OLCCreateField) == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.TestCapability(ogr.OLCCreateGeomField) == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    
     feat = ogr.Feature(lyr.GetLayerDefn())
 
     gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo/FeatureCollection/&POSTFIELDS={ "properties": { } }', '')
@@ -124,6 +150,16 @@ def ogr_elasticsearch_1():
     lyr = ds.CreateLayer('foo')
     gdal.PopErrorHandler()
     if lyr is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    
+    
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/foo/FeatureCollection/_mapping&POSTFIELDS={ "FeatureCollection": { "properties": { "type": { "store": "yes", "type": "string" }, "properties": { }, "geometry": { "type": "geo_shape" } } } }""", "")
+    
+    ds.DeleteLayer(-1)
+    ds.DeleteLayer(10)
+    ret = ds.DeleteLayer(0)
+    if ret != 0:
         gdaltest.post_reason('fail')
         return 'fail'
     
@@ -649,7 +685,6 @@ def ogr_elasticsearch_5():
 """)
     ds = ogr.Open("ES:/vsimem/fakeelasticsearch")
     lyr = ds.GetLayer(0)
-    
     
     gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/non_geojson/my_mapping/_search?scroll=1m&size=100&pretty""", """{
     "hits":
