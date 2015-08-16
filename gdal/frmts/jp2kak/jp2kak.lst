@@ -23,6 +23,6 @@ endif
 # The following are for Kakadu 7.5 and later.
 ifneq ($(wildcard $(KAKDIR)/apps/make/ssse3_region_decompressor.o),)
 KAK_OBJ +=	\
-    $(KAKDIR)/apps/make/ssse3_region_decompressor.o
+    $(KAKDIR)/apps/make/ssse3_region_decompressor.o \
     $(KAKDIR)/apps/make/avx2_stripe_transfer.o
 endif
