@@ -466,12 +466,10 @@ def ogr_kml_check_write_1():
     if not ogrtest.have_read_kml:
         return 'skip'
 
-    f = open('tmp/kml.kml')
-    content = f.read()
-    f.close()
+    content = open('tmp/kml.kml').read()
     if content.find('Schema') >= 0:
         gdaltest.post_reason('Did not expect Schema tags.')
-        return 'fail' 
+        return 'fail'
 
     ds = ogr.Open('tmp/kml.kml')
     lyr = ds.GetLayerByName('test_wgs84')
@@ -765,7 +763,7 @@ def ogr_kml_empty_layer():
 def ogr_kml_two_layers():
 
     ds = ogr.GetDriverByName('KML').CreateDataSource('/vsimem/ogr_kml_two_layers.kml')
-    lyr = ds.CreateLayer("empty")
+    ds.CreateLayer("empty")
     lyr = ds.CreateLayer("lyr")
     lyr.CreateField(ogr.FieldDefn("foo", ogr.OFTString))
     feat = ogr.Feature(lyr.GetLayerDefn())
