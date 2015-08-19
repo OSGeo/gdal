@@ -1393,7 +1393,7 @@ def ogr_shape_32():
 # directory afterwards.
 
     return 'skip'
-    
+
     from decimal import Decimal
 
     BigFilePath = '/tmp'
@@ -1414,7 +1414,6 @@ def ogr_shape_32():
     ret = 0
     n = 0
     print('')
-#    gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
     for n in range( 0, 22845571 ):
         dst_feat = ogr.Feature( feature_def = gdaltest.shape_lyr.GetLayerDefn() )
         dst_feat.SetGeometry(geom)
@@ -1426,7 +1425,6 @@ def ogr_shape_32():
         if (n % 22846) == 0:
             sys.stdout.write( '\r%.1f%%   ' % (n/Decimal('228460.0')))
             sys.stdout.flush()
-#    gdal.PopErrorHandler()
 
     #######################################################
     # Check some features
