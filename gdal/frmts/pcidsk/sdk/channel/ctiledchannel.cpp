@@ -358,7 +358,7 @@ int CTiledChannel::ReadBlock( int block_index, void *buffer,
 
     if( block_index < 0 || block_index >= tile_count )
     {
-        ThrowPCIDSKException( "Requested non-existant block (%d)", 
+        ThrowPCIDSKException( "Requested non-existent block (%d)", 
                               block_index );
     }
 
@@ -516,7 +516,7 @@ int CTiledChannel::WriteBlock( int block_index, void *buffer )
 
     if( block_index < 0 || block_index >= tile_count )
     {
-        ThrowPCIDSKException( "Requested non-existant block (%d)", 
+        ThrowPCIDSKException( "Requested non-existent block (%d)", 
                               block_index );
     }
 

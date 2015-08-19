@@ -1387,7 +1387,7 @@ int EnvisatFile_ReadDatasetChunk( EnvisatFile *self,
 {
     if( ds_index < 0 || ds_index >= self->ds_count )
     {
-        SendError( "Attempt to read non-existant dataset in "
+        SendError( "Attempt to read non-existent dataset in "
                    "EnvisatFile_ReadDatasetChunk()" );
         return FAILURE;
     }
@@ -1452,7 +1452,7 @@ int EnvisatFile_WriteDatasetRecord( EnvisatFile *self,
 
     if( ds_index < 0 || ds_index >= self->ds_count )
     {
-        SendError( "Attempt to write non-existant dataset in "
+        SendError( "Attempt to write non-existent dataset in "
                    "EnvisatFile_WriteDatasetRecord()" );
         return FAILURE;
     }
@@ -1569,7 +1569,7 @@ int EnvisatFile_ReadDatasetRecordChunk( EnvisatFile *self,
 
     if( ds_index < 0 || ds_index >= self->ds_count )
     {
-        SendError( "Attempt to read non-existant dataset in "
+        SendError( "Attempt to read non-existent dataset in "
                    "EnvisatFile_ReadDatasetRecordChunk()" );
         return FAILURE;
     }
