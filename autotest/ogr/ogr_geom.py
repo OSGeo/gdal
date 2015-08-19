@@ -174,35 +174,23 @@ def ogr_geom_pickle():
 # Test OGRGeometry::getBoundary() result for point.
 
 def ogr_geom_boundary_point():
-    
-    geom_wkt = 'POINT(1 1)'
-    geom = ogr.CreateGeometryFromWkt(geom_wkt)
-    tmp = ogr.CreateGeometryFromWkt(geom_wkt)
-
-    # Detect GEOS support
-    try:
-        result = geom.Union(tmp)
-    except:
-        result = None
-
-    tmp.Destroy()
 
     if not ogrtest.have_geos():
         return 'skip'
+
+    geom_wkt = 'POINT(1 1)'
+    geom = ogr.CreateGeometryFromWkt(geom_wkt)
 
     bnd = geom.GetBoundary()
     if bnd.GetGeometryType() is not ogr.wkbGeometryCollection:
         gdaltest.post_reason( 'GetBoundary not reported as GEOMETRYCOLLECTION EMPTY' )
         return 'fail'
 
-    # OGR >= 1.8.0
     bnd = geom.Boundary()
     if bnd.GetGeometryType() is not ogr.wkbGeometryCollection:
         gdaltest.post_reason( 'Boundary not reported as GEOMETRYCOLLECTION EMPTY' )
         return 'fail'
 
-    geom.Destroy()
-    
     return 'success'
 
 ###############################################################################
