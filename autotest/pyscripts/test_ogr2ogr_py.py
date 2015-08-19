@@ -545,8 +545,8 @@ def test_ogr2ogr_py_18():
     script_path = test_py_scripts.get_py_script('ogr2ogr')
     if script_path is None:
         return 'skip'
-        
-    if ogrtest.have_geos() is 0:
+
+    if not ogrtest.have_geos():
         return 'skip'
 
     try:
@@ -1561,4 +1561,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-
