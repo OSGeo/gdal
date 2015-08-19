@@ -65,15 +65,21 @@ build:
 
 egg:
 	$(PYTHON) setup.py bdist_egg 
-	
+
+site_package_dir=$(shell $(PYTHON) -c "from __future__ import print_function;from distutils.sysconfig import get_python_lib;print(get_python_lib(prefix=\"$(DESTDIR)$(prefix)\"))")
+
 install:
-
-ifeq ($(PY_HAVE_SETUPTOOLS),1)
-	$(PYTHON) setup.py install 
-else
-	$(PYTHON) setup.py install --prefix=$(DESTDIR)$(prefix)
-endif
-
+	@if [ ! -d $(site_package_dir) ]; then \
+		mkdir -p $(site_package_dir); \
+		echo "----------------------------------------------------------------------";\
+		echo ""; \
+		echo "The GDAL python package has bee installed in $(site_package_dir)"; \
+		echo "Please ensure to add $(site_package_dir) to your PYTHONPATH"; \
+		echo ""; \
+		echo "----------------------------------------------------------------------";\
+	fi
+	env PYTHONPATH=$(site_package_dir)$${PYTHONPATH:+:$$PYTHONPATH} \
+		$(PYTHON) setup.py install --prefix=$(DESTDIR)$(prefix)
 	for f in $(SCRIPTS) ; do $(INSTALL) ./scripts/$$f $(DESTDIR)$(INST_BIN) ; done
 
 docs:
