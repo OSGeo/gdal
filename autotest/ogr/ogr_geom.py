@@ -27,9 +27,10 @@
 # Boston, MA 02111-1307, USA.
 ###############################################################################
 
-import sys
 import math
+import pickle
 import random
+import sys
 
 sys.path.append( '../pymod' )
 
@@ -152,22 +153,15 @@ def ogr_geom_is_empty():
     return 'success'
 
 def ogr_geom_pickle():
-    try:
-        ogr.Geometry.IsEmpty  #IsEmpty is only in the ng bindings
-    except:
-        return 'skip'
-    
-    import pickle
     geom_wkt = 'MULTIPOLYGON( ((0 0,1 1,1 0,0 0)),((0 0,10 0, 10 10, 0 10),(1 1,1 2,2 2,2 1)) )'
     geom = ogr.CreateGeometryFromWkt(geom_wkt)
     p = pickle.dumps(geom)
-    
     g = pickle.loads(p)
-    
+
     if not geom.Equal(g):
         gdaltest.post_reason ("pickled geometries were not equal")
         return 'fail'
-    geom.Destroy()
+
     return 'success'
 
 ###############################################################################
