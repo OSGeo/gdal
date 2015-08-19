@@ -166,10 +166,6 @@ def have_geos():
     if geos_flag is None:
         pnt1 = ogr.CreateGeometryFromWkt( 'POINT(10 20)' )
         pnt2 = ogr.CreateGeometryFromWkt( 'POINT(30 20)' )
-
-        if pnt1.Union( pnt2 ) is None:
-            geos_flag = False
-        else:
-            geos_flag = True
+        geos_flag = pnt1.Union( pnt2 ) is not None
 
     return geos_flag
