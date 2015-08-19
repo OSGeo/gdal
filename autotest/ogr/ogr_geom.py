@@ -187,11 +187,8 @@ def ogr_geom_boundary_point():
 
     tmp.Destroy()
 
-    if result is None:
-        gdaltest.have_geos = 0
+    if not ogrtest.have_geos():
         return 'skip'
-
-    gdaltest.have_geos = 1
 
     bnd = geom.GetBoundary()
     if bnd.GetGeometryType() is not ogr.wkbGeometryCollection:
@@ -213,7 +210,7 @@ def ogr_geom_boundary_point():
 
 def ogr_geom_boundary_multipoint():
     
-    if gdaltest.have_geos == 0:
+    if not ogrtest.have_geos():
         return 'skip'
 
     geom_wkt = 'MULTIPOINT((0 0),(1 1))'
@@ -234,7 +231,7 @@ def ogr_geom_boundary_multipoint():
 
 def ogr_geom_boundary_linestring():
     
-    if gdaltest.have_geos == 0:
+    if not ogrtest.have_geos():
         return 'skip'
 
     geom_wkt = 'LINESTRING(0 0, 1 1, 2 2, 3 2, 4 2)'
@@ -275,8 +272,8 @@ def ogr_geom_boundary_linestring():
 # Test OGRGeometry::getBoundary() result for polygon.
 
 def ogr_geom_boundary_polygon():
-    
-    if gdaltest.have_geos == 0:
+
+    if not ogrtest.have_geos():
         return 'skip'
 
     geom_wkt = 'POLYGON((0 0,1 1,1 0,0 0))'
@@ -298,7 +295,7 @@ def ogr_geom_boundary_polygon():
 
 def ogr_geom_build_from_edges_1():
 
-    if gdaltest.have_geos == 0:
+    if not ogrtest.have_geos():
         return 'skip'
 
     link_coll = ogr.Geometry( type = ogr.wkbGeometryCollection )
@@ -332,7 +329,7 @@ def ogr_geom_build_from_edges_1():
 
 def ogr_geom_build_from_edges_2():
 
-    if gdaltest.have_geos == 0:
+    if not ogrtest.have_geos():
         return 'skip'
 
     link_coll = ogr.Geometry( type = ogr.wkbMultiLineString )
@@ -366,7 +363,7 @@ def ogr_geom_build_from_edges_2():
 
 def ogr_geom_build_from_edges_3():
 
-    if gdaltest.have_geos == 0:
+    if not ogrtest.have_geos():
         return 'skip'
 
     src_geom = ogr.CreateGeometryFromWkt('POINT (0 1)')
@@ -400,7 +397,7 @@ def ogr_geom_build_from_edges_4():
         gdaltest.post_reason('would crash')
         return 'skip'
 
-    if gdaltest.have_geos == 0:
+    if not ogrtest.have_geos():
         return 'skip'
 
     link_coll = ogr.Geometry( type = ogr.wkbGeometryCollection )
@@ -3333,4 +3330,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-
