@@ -27,9 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#if defined(__STDC_VERSION__)
-#define _XOPEN_SOURCE
-#endif
+// So that __USE_XOPEN2K is defined to have getaddrinfo
+#define _XOPEN_SOURCE 600
 
 #include "cpl_port.h"
 
