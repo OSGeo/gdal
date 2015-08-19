@@ -238,7 +238,7 @@ int CPCIDSKBitmap::ReadBlock( int block_index, void *buffer,
 
     if( block_index < 0 || block_index >= GetBlockCount() )
     {
-        ThrowPCIDSKException( "Requested non-existant block (%d)", 
+        ThrowPCIDSKException( "Requested non-existent block (%d)", 
                               block_index );
     }
 /* -------------------------------------------------------------------- */
@@ -343,7 +343,7 @@ int CPCIDSKBitmap::GetOverviewCount()
 PCIDSKChannel *CPCIDSKBitmap::GetOverview( CPL_UNUSED int i )
 {
     // The %d is ignored in the exception.
-    ThrowPCIDSKException("Non-existant overview %d requested on bitmap segment.");
+    ThrowPCIDSKException("Non-existent overview %d requested on bitmap segment.");
     return NULL;
 }
 
