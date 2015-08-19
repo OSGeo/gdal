@@ -534,7 +534,7 @@ def test_ogr2ogr_18():
     if test_cli_utilities.get_ogr2ogr_path() is None:
         return 'skip'
         
-    if ogrtest.have_geos() is 0:
+    if not ogrtest.have_geos():
         return 'skip'
 
     try:
@@ -985,7 +985,7 @@ def test_ogr2ogr_29():
     if test_cli_utilities.get_ogr2ogr_path() is None:
         return 'skip'
 
-    if ogrtest.have_geos() is 0:
+    if not ogrtest.have_geos():
         return 'skip'
 
     for i in range(2):
@@ -2573,4 +2573,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-
