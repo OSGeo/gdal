@@ -1065,11 +1065,15 @@ def ogr_libkml_write_atom_author():
     if not ogrtest.have_read_libkml:
         return 'skip'
 
-    ds = ogr.GetDriverByName('LIBKML').CreateDataSource("/vsimem/ogr_libkml_write_atom_author.kml",
+    filepath = '/vsimem/ogr_libkml_write_atom_author.kml'
+    ds = ogr.GetDriverByName('LIBKML').CreateDataSource(filepath,
                                                         options = ['author_name=name', 'author_uri=http://foo', 'author_email=foo@bar.com'])
+    if ds is None:
+        gdaltest.post_reason('Unable to create %s.' % filepath)
+        return 'fail'
     ds = None
 
-    f = gdal.VSIFOpenL('/vsimem/ogr_libkml_write_atom_author.kml', 'rb')
+    f = gdal.VSIFOpenL(filepath, 'rb')
     data = gdal.VSIFReadL(1, 2048, f)
     data = data.decode('ascii')
     gdal.VSIFCloseL(f)
@@ -1079,7 +1083,7 @@ def ogr_libkml_write_atom_author():
        data.find('<atom:uri>http://foo</atom:uri>') == -1 or \
        data.find('<atom:email>foo@bar.com</atom:email>') == -1:
         print(data)
-        gdaltest.post_reason('failure')
+        gdaltest.post_reason('failure to find an atom string')
         return 'fail'
 
     return 'success'
@@ -1092,11 +1096,15 @@ def ogr_libkml_write_atom_link():
     if not ogrtest.have_read_libkml:
         return 'skip'
 
-    ds = ogr.GetDriverByName('LIBKML').CreateDataSource("/vsimem/ogr_libkml_write_atom_link.kml",
+    filepath = '/vsimem/ogr_libkml_write_atom_link.kml'
+    ds = ogr.GetDriverByName('LIBKML').CreateDataSource(filepath,
                                                         options = ['link=http://foo'])
+    if ds is None:
+        gdaltest.post_reason('Unable to create %s.' % filepath)
+        return 'fail'
     ds = None
 
-    f = gdal.VSIFOpenL('/vsimem/ogr_libkml_write_atom_link.kml', 'rb')
+    f = gdal.VSIFOpenL(filepath, 'rb')
     data = gdal.VSIFReadL(1, 2048, f)
     data = data.decode('ascii')
     gdal.VSIFCloseL(f)
@@ -1117,11 +1125,15 @@ def ogr_libkml_write_phonenumber():
     if not ogrtest.have_read_libkml:
         return 'skip'
 
-    ds = ogr.GetDriverByName('LIBKML').CreateDataSource("/vsimem/ogr_libkml_write_phonenumber.kml",
+    filepath = '/vsimem/ogr_libkml_write_phonenumber.kml'
+    ds = ogr.GetDriverByName('LIBKML').CreateDataSource(filepath,
                                                         options = ['phonenumber=tel:911'])
+    if ds is None:
+        gdaltest.post_reason('Unable to create %s.' % filepath)
+        return 'fail'
     ds = None
 
-    f = gdal.VSIFOpenL('/vsimem/ogr_libkml_write_phonenumber.kml', 'rb')
+    f = gdal.VSIFOpenL(filepath, 'rb')
     data = gdal.VSIFReadL(1, 2048, f)
     data = data.decode('ascii')
     gdal.VSIFCloseL(f)
@@ -1643,6 +1655,9 @@ def ogr_libkml_write_networklinkcontrol():
             name = "/vsimem/ogr_libkml_write_networklinkcontrol_dir"
 
         ds = ogr.GetDriverByName('LIBKML').CreateDataSource(name, options = options)
+        if ds is None:
+            gdaltest.post_reason('Unable to create %s.' % name)
+            return 'fail'
         ds = None
 
         if i == 0:
