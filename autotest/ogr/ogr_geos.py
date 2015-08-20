@@ -563,7 +563,8 @@ def ogr_geos_isvalid_false():
 
     g1 = ogr.CreateGeometryFromWkt( 'POLYGON((0 0,1 1,1 2,1 1,0 0))' )
 
-    isring = g1.IsValid()
+    with gdaltest.error_handler('CPLQuietErrorHandler'):
+      isring = g1.IsValid()
 
     if isring != 0:
         return 'fail'
