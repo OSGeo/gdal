@@ -49,13 +49,8 @@ def ogr_geos_union():
 
     result = pnt1.Union( pnt2 )
 
-    pnt1.Destroy()
-    pnt2.Destroy()
-        
     if ogrtest.check_feature_geometry( result, 'MULTIPOINT (10 20,30 20)' ):
         return 'fail'
-
-    result.Destroy()
 
     return 'success'
 
@@ -72,14 +67,9 @@ def ogr_geos_intersection():
 
     result = g1.Intersection( g2 )
 
-    g1.Destroy()
-    g2.Destroy()
-
     if ogrtest.check_feature_geometry( result, 'POLYGON ((0 0,5 5,10 0,0 0))'):
-        print('Got: ', result.ExportToWkt())
+        gdaltest.post_reason('Got: %s' % result.ExportToWkt())
         return 'fail'
-
-    result.Destroy()
 
     return 'success'
 
@@ -96,15 +86,10 @@ def ogr_geos_difference():
 
     result = g1.Difference( g2 )
 
-    g1.Destroy()
-    g2.Destroy()
-
     if ogrtest.check_feature_geometry( result,
                                        'POLYGON ((5 5,10 10,10 0,5 5))'):
-        print('Got: ', result.ExportToWkt())
+        gdaltest.post_reason('Got: %s' % result.ExportToWkt())
         return 'fail'
-
-    result.Destroy()
 
     return 'success'
 
@@ -121,15 +106,10 @@ def ogr_geos_symmetric_difference():
 
     result = g1.SymmetricDifference( g2 )
 
-    g1.Destroy()
-    g2.Destroy()
-
     if ogrtest.check_feature_geometry( result,
            'MULTIPOLYGON (((5 5,0 0,0 10,5 5)),((5 5,10 10,10 0,5 5)))'):
-        print('Got: ', result.ExportToWkt())
+        gdaltest.post_reason('Got: %s' % result.ExportToWkt())
         return 'fail'
-
-    result.Destroy()
 
     return 'success'
 
@@ -146,18 +126,13 @@ def ogr_geos_sym_difference():
 
     result = g1.SymDifference( g2 )
 
-    g1.Destroy()
-    g2.Destroy()
-
     if ogrtest.check_feature_geometry( result,
            'MULTIPOLYGON (((5 5,0 0,0 10,5 5)),((5 5,10 10,10 0,5 5)))'):
-        print('Got: ', result.ExportToWkt())
+        gdaltest.post_reason('Got: %s' % result.ExportToWkt())
         return 'fail'
 
-    result.Destroy()
-
     return 'success'
-    
+
 ###############################################################################
 # Test Intersect().
 
@@ -171,9 +146,6 @@ def ogr_geos_intersect():
 
     result = g1.Intersect( g2 )
 
-    g1.Destroy()
-    g2.Destroy()
-
     if result == 0:
         gdaltest.post_reason( 'wrong result (got false)' )
         return 'fail'
@@ -182,9 +154,6 @@ def ogr_geos_intersect():
     g2 = ogr.CreateGeometryFromWkt( 'POLYGON((20 20, 20 30, 30 20, 20 20))' )
 
     result = g1.Intersect( g2 )
-
-    g1.Destroy()
-    g2.Destroy()
 
     if result != 0:
         gdaltest.post_reason( 'wrong result (got true)' )
@@ -205,9 +174,6 @@ def ogr_geos_disjoint():
 
     result = g1.Disjoint( g2 )
 
-    g1.Destroy()
-    g2.Destroy()
-
     if result != 0:
         gdaltest.post_reason( 'wrong result (got true)' )
         return 'fail'
@@ -216,9 +182,6 @@ def ogr_geos_disjoint():
     g2 = ogr.CreateGeometryFromWkt( 'POLYGON((20 20, 20 30, 30 20, 20 20))' )
 
     result = g1.Disjoint( g2 )
-
-    g1.Destroy()
-    g2.Destroy()
 
     if result == 0:
         gdaltest.post_reason( 'wrong result (got false)' )
@@ -239,9 +202,6 @@ def ogr_geos_touches():
 
     result = g1.Touches( g2 )
 
-    g1.Destroy()
-    g2.Destroy()
-
     if result == 0:
         gdaltest.post_reason( 'wrong result (got false)' )
         return 'fail'
@@ -250,9 +210,6 @@ def ogr_geos_touches():
     g2 = ogr.CreateGeometryFromWkt( 'POLYGON((20 20, 20 30, 30 20, 20 20))' )
 
     result = g1.Touches( g2 )
-
-    g1.Destroy()
-    g2.Destroy()
 
     if result != 0:
         gdaltest.post_reason( 'wrong result (got true)' )
@@ -273,9 +230,6 @@ def ogr_geos_crosses():
 
     result = g1.Crosses( g2 )
 
-    g1.Destroy()
-    g2.Destroy()
-
     if result == 0:
         gdaltest.post_reason( 'wrong result (got false)' )
         return 'fail'
@@ -284,9 +238,6 @@ def ogr_geos_crosses():
     g2 = ogr.CreateGeometryFromWkt( 'LINESTRING(0 0, 0 10)' )
 
     result = g1.Crosses( g2 )
-
-    g1.Destroy()
-    g2.Destroy()
 
     if result != 0:
         gdaltest.post_reason( 'wrong result (got true)' )
@@ -312,9 +263,6 @@ def ogr_geos_within():
 
     result = g2.Within( g1 )
 
-    g1.Destroy()
-    g2.Destroy()
-
     if result != 0:
         gdaltest.post_reason( 'wrong result (got true)' )
         return 'fail'
@@ -339,9 +287,6 @@ def ogr_geos_contains():
 
     result = g1.Contains( g2 )
 
-    g1.Destroy()
-    g2.Destroy()
-
     if result != 0:
         gdaltest.post_reason( 'wrong result (got true)' )
         return 'fail'
@@ -365,9 +310,6 @@ def ogr_geos_overlaps():
         gdaltest.post_reason( 'wrong result (got true)' )
         return 'fail'
 
-    g1.Destroy()
-    g2.Destroy()
-
     g1 = ogr.CreateGeometryFromWkt( 'POLYGON((0 0, 10 10, 10 0, 0 0))' )
     g2 = ogr.CreateGeometryFromWkt( 'POLYGON((0 -5,10 5,10 -5,0 -5))')
 
@@ -376,9 +318,6 @@ def ogr_geos_overlaps():
     if result == 0:
         gdaltest.post_reason( 'wrong result (got false)' )
         return 'fail'
-
-    g1.Destroy()
-    g2.Destroy()
 
     return 'success'
 
@@ -393,14 +332,10 @@ def ogr_geos_buffer():
 
     result = g1.Buffer(1.0, 3)
 
-    g1.Destroy()
-
     if ogrtest.check_feature_geometry( result,
                                        'POLYGON ((0 -1,-0.555570233019607 -0.831469612302542,-0.923879532511288 -0.382683432365087,-0.98078528040323 0.19509032201613,-0.707106781186547 0.707106781186547,9.292893218813452 10.707106781186548,9.690983005625053 10.951056516295154,10.156434465040231 10.987688340595138,10.587785252292473 10.809016994374947,10.891006524188368 10.453990499739547,11 10,11 0,10.866025403784439 -0.5,10.5 -0.866025403784439,10 -1,0 -1))') != 0:
-        print('Got: ', result.ExportToWkt())
+        gdaltest.post_reason('Got: %s' % result.ExportToWkt())
         return 'fail'
-
-    result.Destroy()
 
     return 'success'
 
@@ -415,26 +350,19 @@ def ogr_geos_centroid():
 
     centroid = g1.Centroid()
 
-    g1.Destroy()
-
     if ogrtest.check_feature_geometry( centroid,
                                        'POINT(6.666666667 3.333333333)') != 0:
-        print('Got: ', centroid.ExportToWkt())
+        gdaltest.post_reason('Got: %s' % centroid.ExportToWkt())
         return 'fail'
-
-    centroid.Destroy()
 
 # Test with a self intersecting polygon too.
 # This particular polygon has two triangles. The right triangle is larger.
     g2 = ogr.CreateGeometryFromWkt( 'POLYGON((0 0, 0 2, 2 -0.1, 2 2.1, 0 0))' )
     centroid2 = g2.Centroid()
-    g2.Destroy()
 
     if ogrtest.check_feature_geometry( centroid2, 'POINT (8.0 1.0)') != 0:
-        print('Got: ', centroid2.ExportToWkt())
+        gdaltest.post_reason('Got: %s' % centroid2.ExportToWkt())
         return 'fail'
-
-    centroid2.Destroy()
 
     return 'success'
 
@@ -449,14 +377,10 @@ def ogr_geos_centroid_multipolygon():
 
     centroid = g1.Centroid()
 
-    g1.Destroy()
-
     if ogrtest.check_feature_geometry( centroid,
                                        'POINT (1.5 0.5)') != 0:
-        print('Got: ', centroid.ExportToWkt())
+        gdaltest.post_reason('Got: %s' % centroid.ExportToWkt())
         return 'fail'
-
-    centroid.Destroy()
 
     return 'success'
 
@@ -471,13 +395,9 @@ def ogr_geos_centroid_point_empty():
 
     centroid = g1.Centroid()
 
-    g1.Destroy()
-
     if centroid.ExportToWkt() != 'POINT EMPTY':
-        print('Got: ', centroid.ExportToWkt())
+        gdaltest.post_reason('Got: %s' % centroid.ExportToWkt())
         return 'fail'
-
-    centroid.Destroy()
 
     return 'success'
 
@@ -493,13 +413,9 @@ def ogr_geos_simplify_linestring():
     gdal.ErrorReset()
     simplify = g1.Simplify(5)
 
-    g1.Destroy()
-
     if simplify.ExportToWkt() != 'LINESTRING (0 0,10 0)':
-        print('Got: ', simplify.ExportToWkt())
+        gdaltest.post_reason('Got: %s' % simplify.ExportToWkt())
         return 'fail'
-
-    simplify.Destroy()
 
     return 'success'
 
@@ -515,13 +431,9 @@ def ogr_geos_simplifypreservetopology_linestring():
     gdal.ErrorReset()
     simplify = g1.SimplifyPreserveTopology(5)
 
-    g1.Destroy()
-
     if simplify.ExportToWkt() != 'LINESTRING (0 0,10 0)':
-        print('Got: ', simplify.ExportToWkt())
+        gdaltest.post_reason('Got: %s' % simplify.ExportToWkt())
         return 'fail'
-
-    simplify.Destroy()
 
     return 'success'
 
@@ -537,13 +449,9 @@ def ogr_geos_unioncascaded():
     gdal.ErrorReset()
     cascadedunion = g1.UnionCascaded()
 
-    g1.Destroy()
-
     if cascadedunion.ExportToWkt() != 'POLYGON ((0 0,0 1,0.5 1.0,0.5 1.5,1.5 1.5,1.5 0.5,1.0 0.5,1 0,0 0))':
-        print('Got: ', cascadedunion.ExportToWkt())
+        gdaltest.post_reason('Got: %s' % cascadedunion.ExportToWkt())
         return 'fail'
-
-    cascadedunion.Destroy()
 
     return 'success'
 
@@ -558,13 +466,9 @@ def ogr_geos_convexhull():
 
     convexhull = g1.ConvexHull()
 
-    g1.Destroy()
-
     if convexhull.ExportToWkt() != 'POLYGON ((0 0,0 1,1 1,1 0,0 0))':
-        print('Got: ', convexhull.ExportToWkt())
+        gdaltest.post_reason('Got: %s' % convexhull.ExportToWkt())
         return 'fail'
-
-    convexhull.Destroy()
 
     return 'success'
 
@@ -579,9 +483,6 @@ def ogr_geos_distance():
     g2 = ogr.CreateGeometryFromWkt( 'POINT(1 0)' )
 
     distance = g1.Distance(g2)
-
-    g1.Destroy()
-    g2.Destroy()
 
     if abs(distance-1) > 0.00000000001:
         gdaltest.post_reason( 'Distance() result wrong, got %g.' % distance )
@@ -600,8 +501,6 @@ def ogr_geos_isring():
 
     isring = g1.IsRing()
 
-    g1.Destroy()
-
     if isring != 1:
         return 'fail'
 
@@ -617,8 +516,6 @@ def ogr_geos_issimple_true():
     g1 = ogr.CreateGeometryFromWkt( 'POLYGON ((0 0,0 1,1 1,1 0,0 0))' )
 
     isring = g1.IsSimple()
-
-    g1.Destroy()
 
     if isring != 1:
         return 'fail'
@@ -636,8 +533,6 @@ def ogr_geos_issimple_false():
 
     isring = g1.IsSimple()
 
-    g1.Destroy()
-
     if isring != 0:
         return 'fail'
 
@@ -654,8 +549,6 @@ def ogr_geos_isvalid_true():
 
     isring = g1.IsValid()
 
-    g1.Destroy()
-
     if isring != 1:
         return 'fail'
 
@@ -671,8 +564,6 @@ def ogr_geos_isvalid_false():
     g1 = ogr.CreateGeometryFromWkt( 'POLYGON((0 0,1 1,1 2,1 1,0 0))' )
 
     isring = g1.IsValid()
-
-    g1.Destroy()
 
     if isring != 0:
         return 'fail'
@@ -710,12 +601,12 @@ def ogr_geos_DelaunayTriangulation():
         return 'fail'
 
     if triangulation.ExportToWkt() != 'GEOMETRYCOLLECTION (POLYGON ((0 1,0 0,1 0,0 1)),POLYGON ((0 1,1 0,1 1,0 1)))':
-        print('Got: ', triangulation.ExportToWkt())
+        gdaltest.post_reason('Got: %s' % triangulation.ExportToWkt())
         return 'fail'
 
     return 'success'
 
-gdaltest_list = [ 
+gdaltest_list = [
     ogr_geos_union,
     ogr_geos_intersection,
     ogr_geos_difference,
@@ -752,4 +643,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-
