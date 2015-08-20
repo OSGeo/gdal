@@ -338,8 +338,13 @@ def ogr_ods_6():
         return 'skip'
 
     src_ds = ogr.Open('ODS:data/content_formulas.xml')
-    out_ds = ogr.GetDriverByName('CSV').CopyDataSource(src_ds, '/vsimem/content_formulas.csv')
-    del out_ds
+    filepath = '/vsimem/content_formulas.csv'
+    with gdaltest.error_handler('CPLQuietErrorHandler'):
+      out_ds = ogr.GetDriverByName('CSV').CopyDataSource(src_ds, filepath)
+    if out_ds is None:
+        gdaltest.post_reason('Unable to create %s.' % filepath)
+        return 'fail'
+    out_ds = None
     src_ds = None
 
     fp = gdal.VSIFOpenL('/vsimem/content_formulas.csv', 'rb')
@@ -364,8 +369,7 @@ AB,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
 """.split()
 
     if res != expected_res:
-        gdaltest.post_reason('did not get expected result')
-        print(res)
+        gdaltest.post_reason('did not get expected result: %s' % res)
         return 'fail'
 
     return 'success'
@@ -379,13 +383,12 @@ def ogr_ods_7():
     if drv is None:
         return 'skip'
 
-    try:
-        os.unlink('tmp/ogr_ods_7.ods')
-    except:
-        pass
-    shutil.copy('data/test.ods', 'tmp/ogr_ods_7.ods')
+    filepath = 'tmp/ogr_ods_7.ods'
+    if os.path.exists(filepath):
+        os.unlink(filepath)
+    shutil.copy('data/test.ods', filepath)
 
-    ds = ogr.Open('tmp/ogr_ods_7.ods', update = 1)
+    ds = ogr.Open(filepath, update = 1)
     lyr = ds.GetLayerByName('Feuille7')
     feat = lyr.GetNextFeature()
     if feat.GetFID() != 2:
@@ -411,7 +414,7 @@ def ogr_ods_7():
     feat = None
     ds = None
 
-    os.unlink('tmp/ogr_ods_7.ods')
+    os.unlink(filepath)
 
     return 'success'
 
@@ -522,4 +525,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-
