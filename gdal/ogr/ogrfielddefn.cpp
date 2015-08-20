@@ -1214,3 +1214,154 @@ void OGR_Fld_SetNullable( OGRFieldDefnH hDefn, int bNullableIn )
 {
     ((OGRFieldDefn *) hDefn)->SetNullable( bNullableIn );
 }
+
+
+/************************************************************************/
+/*                        OGRUpdateFieldType()                          */
+/************************************************************************/
+
+/**
+ * \brief Update the type of a field definition by "merging" its existing type with a new type.
+ *
+ * The update is done such as broadening the type. For example a OFTInteger
+ * updated with OFTInteger64 will be promoted to OFTInteger64.
+ *
+ * @param poFDefn the field definition whose type must be updated.
+ * @param eNewType the new field type to merge into the existing type.
+ * @param eNewSubType the new field subtype to merge into the existing subtype.
+ * @since GDAL 2.1
+ */
+
+void OGRUpdateFieldType( OGRFieldDefn* poFDefn,
+                         OGRFieldType eNewType,
+                         OGRFieldSubType eNewSubType )
+{
+    OGRFieldType eType = poFDefn->GetType();
+    if( eType == OFTInteger )
+    {
+        if( eNewType == OFTInteger &&
+            poFDefn->GetSubType() == OFSTBoolean && eNewSubType != OFSTBoolean )
+        {
+            poFDefn->SetSubType(OFSTNone);
+        }
+        else if( eNewType == OFTInteger64 || eNewType == OFTReal )
+        {
+            poFDefn->SetSubType(OFSTNone);
+            poFDefn->SetType(eNewType);
+        }
+        else if( eNewType == OFTIntegerList || eNewType == OFTInteger64List ||
+                 eNewType == OFTRealList || eNewType == OFTStringList )
+        {
+            if( eNewType != OFTIntegerList || eNewSubType != OFSTBoolean )
+                poFDefn->SetSubType(OFSTNone);
+            poFDefn->SetType(eNewType);
+        }
+        else if( eNewType != OFTInteger )
+        {
+            poFDefn->SetSubType(OFSTNone);
+            poFDefn->SetType(OFTString);
+        }
+    }
+    else if( eType == OFTInteger64 )
+    {
+        if( eNewType == OFTReal )
+        {
+            poFDefn->SetSubType(OFSTNone);
+            poFDefn->SetType(eNewType);
+        }
+        else if( eNewType == OFTIntegerList )
+        {
+            poFDefn->SetSubType(OFSTNone);
+            poFDefn->SetType(OFTInteger64List);
+        }
+        else if( eNewType == OFTInteger64List ||
+                 eNewType == OFTRealList || eNewType == OFTStringList )
+        {
+            if( eNewType != OFTIntegerList )
+                poFDefn->SetSubType(OFSTNone);
+            poFDefn->SetType(eNewType);
+        }
+        else if( eNewType != OFTInteger && eNewType != OFTInteger64 )
+        {
+            poFDefn->SetSubType(OFSTNone);
+            poFDefn->SetType(OFTString);
+        }
+    }
+    else if( eType == OFTReal )
+    {
+        if( eNewType == OFTIntegerList || eNewType == OFTInteger64List ||
+            eNewType == OFTRealList )
+        {
+            poFDefn->SetType(OFTRealList);
+        }
+        else if( eNewType == OFTStringList )
+        {
+            poFDefn->SetType(OFTStringList);
+        }
+        else if( eNewType != OFTInteger && eNewType != OFTInteger64 &&
+                 eNewType != OFTReal )
+        {
+            poFDefn->SetSubType(OFSTNone);
+            poFDefn->SetType(OFTString);
+        }
+    }
+    else if( eType == OFTIntegerList )
+    {
+        if( eNewType == OFTIntegerList &&
+            poFDefn->GetSubType() == OFSTBoolean && eNewSubType != OFSTBoolean )
+        {
+            poFDefn->SetSubType(OFSTNone);
+        }
+        else if( eNewType == OFTInteger64 || eNewType == OFTInteger64List )
+        {
+            poFDefn->SetSubType(OFSTNone);
+            poFDefn->SetType(OFTInteger64List);
+        }
+        else if( eNewType == OFTReal || eNewType == OFTRealList )
+        {
+            poFDefn->SetSubType(OFSTNone);
+            poFDefn->SetType(OFTRealList);
+        }
+        else if( eNewType != OFTInteger && eNewType != OFTIntegerList )
+        {
+            poFDefn->SetSubType(OFSTNone);
+            poFDefn->SetType(OFTStringList);
+        }
+    }
+    else if( eType == OFTInteger64List )
+    {
+        if( eNewType == OFTReal || eNewType == OFTRealList )
+            poFDefn->SetType(OFTRealList);
+        else if( eNewType != OFTInteger && eNewType != OFTInteger64 &&
+                 eNewType != OFTIntegerList && eNewType != OFTInteger64List )
+        {
+            poFDefn->SetSubType(OFSTNone);
+            poFDefn->SetType(OFTStringList);
+        }
+    }
+    else if( eType == OFTRealList )
+    {
+        if( eNewType != OFTInteger && eNewType != OFTInteger64 &&
+            eNewType != OFTReal &&
+            eNewType != OFTIntegerList && eNewType != OFTInteger64List &&
+            eNewType != OFTRealList )
+        {
+            poFDefn->SetSubType(OFSTNone);
+            poFDefn->SetType(OFTStringList);
+        }
+    }
+    else if( eType == OFTDateTime )
+    {
+        if( eNewType != OFTDateTime && eNewType != OFTDate )
+        {
+            poFDefn->SetType(OFTString);
+        }
+    }
+    else if( eType == OFTDate || eType == OFTTime )
+    {
+        if( eNewType == OFTDateTime )
+            poFDefn->SetType(OFTDateTime);
+        else if( eNewType != eType )
+            poFDefn->SetType(OFTString);
+    }
+}
