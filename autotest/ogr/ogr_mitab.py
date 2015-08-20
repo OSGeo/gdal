@@ -122,17 +122,19 @@ def ogr_mitab_3():
 
     expect = [168, 169, 166, 158, 165]
 
-    gdaltest.mapinfo_lyr.SetAttributeFilter( 'eas_id < 170' )
+    gdaltest.mapinfo_lyr.SetAttributeFilter( 'EAS_ID < 170' )
     tr = ogrtest.check_features_against_list( gdaltest.mapinfo_lyr,
-                                              'eas_id', expect )
+                                              'EAS_ID', expect )
     gdaltest.mapinfo_lyr.SetAttributeFilter( None )
 
     for i in range(len(gdaltest.poly_feat)):
         orig_feat = gdaltest.poly_feat[i]
         read_feat = gdaltest.mapinfo_lyr.GetNextFeature()
 
-        if ogrtest.check_feature_geometry(read_feat,orig_feat.GetGeometryRef(),
-                                          max_error = 0.02 ) != 0:
+        if ogrtest.check_feature_geometry( read_feat,
+                                           orig_feat.GetGeometryRef(),
+                                           max_error = 0.02 ) != 0:
+            gdaltest.post_reason( 'Geometry check fail.  i=%d' % i )
             return 'fail'
 
         for fld in range(3):
