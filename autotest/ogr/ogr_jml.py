@@ -179,7 +179,10 @@ def ogr_jml_2():
     lyr.CreateField(ogr.FieldDefn('date', ogr.OFTDate))
     lyr.CreateField(ogr.FieldDefn('datetime', ogr.OFTDateTime))
     lyr.CreateField(ogr.FieldDefn('datetime2', ogr.OFTDateTime))
-    lyr.CreateField(ogr.FieldDefn('time_as_str', ogr.OFTTime))
+
+    with gdaltest.error_handler('CPLQuietErrorHandler'):
+        lyr.CreateField(ogr.FieldDefn('time_as_str', ogr.OFTTime))
+
     if lyr.TestCapability(ogr.OLCCreateField) != 1:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -657,4 +660,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-
