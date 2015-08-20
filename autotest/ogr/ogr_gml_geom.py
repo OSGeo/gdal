@@ -69,11 +69,8 @@ class gml_geom_unit:
             gdaltest.post_reason( 'WKT from GML (%s) does not match clean WKT (%s).\ngml was (%s)' % (gml_wkt, clean_wkt, gml) )
             return 'fail'
 
-        geom_wkt.Destroy()
-        geom_gml.Destroy()
-
         return 'success'
-        
+
 ###############################################################################
 # Test geometries with extra spaces at the end, as sometimes are generated
 # by ESRI WFS software.
@@ -85,8 +82,6 @@ def gml_space_test():
        or geom.GetPointCount() != 8:
         gdaltest.post_reason( 'GML not correctly parsed' )
         return 'fail'
-
-    geom.Destroy()
 
     return 'success'
 
@@ -2122,4 +2117,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-
