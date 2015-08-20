@@ -74,7 +74,8 @@ def ogr_gpx_1():
     
     expect = [2, None]
 
-    tr = ogrtest.check_features_against_list( lyr, 'ele', expect )
+    with gdaltest.error_handler('CPLQuietErrorHandler'):
+        tr = ogrtest.check_features_against_list( lyr, 'ele', expect )
     if not tr:
         return 'fail'
     
