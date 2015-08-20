@@ -602,7 +602,8 @@ def ogr_kml_interleaved_writing():
     lyr1 = ds.CreateLayer("lyr1")
     ds.CreateLayer("lyr2")
     feat = ogr.Feature(lyr1.GetLayerDefn())
-    ret = lyr1.CreateFeature(feat)
+    with gdaltest.error_handler('CPLQuietErrorHandler'):
+        ret = lyr1.CreateFeature(feat)
     ds = None
 
     gdal.Unlink('/vsimem/ogr_kml_interleaved_writing.kml')
