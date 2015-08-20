@@ -192,7 +192,7 @@ def ogr_shape_6():
     if gdaltest.shape_ds is None:
         return 'skip'
 
-    sql_lyr = gdaltest.shape_ds.ExecuteSQL( \
+    sql_lyr = gdaltest.shape_ds.ExecuteSQL(
         "select * from tpoly where prfedea = '35043413'" )
 
     tr = ogrtest.check_features_against_list( sql_lyr, 'prfedea', [ '35043413' ] )
@@ -219,7 +219,7 @@ def ogr_shape_7():
 
     gdaltest.shape_lyr.SetAttributeFilter( None )
     
-    geom = ogr.CreateGeometryFromWkt( \
+    geom = ogr.CreateGeometryFromWkt(
         'LINESTRING(479505 4763195,480526 4762819)' )
     gdaltest.shape_lyr.SetSpatialFilter( geom )
     geom.Destroy()
@@ -249,7 +249,7 @@ def ogr_shape_8():
         gdaltest.post_reason( 'tpoly.qix not created' )
         return 'fail'
     
-    geom = ogr.CreateGeometryFromWkt( \
+    geom = ogr.CreateGeometryFromWkt(
         'LINESTRING(479505 4763195,480526 4762819)' )
     gdaltest.shape_lyr.SetSpatialFilter( geom )
     geom.Destroy()
@@ -406,7 +406,7 @@ def ogr_shape_13():
     feat = gdaltest.shape_lyr.GetFeature( 9 )
     feat.SetField( 'AREA', '6000.00' )
 
-    geom = ogr.CreateGeometryFromWkt( \
+    geom = ogr.CreateGeometryFromWkt(
         'POLYGON ((0 0, 0 60, 100 60, 100 0, 200 30, 0 0))')
     feat.SetGeometry( geom )
 
@@ -420,7 +420,7 @@ def ogr_shape_13():
     feat = gdaltest.shape_lyr.GetFeature( 8 )
     feat.SetField( 'AREA', '7000.00' )
 
-    geom = ogr.CreateGeometryFromWkt( \
+    geom = ogr.CreateGeometryFromWkt(
         'POLYGON ((0 0, 0 60, 100 60, 100 0, 0 0))')
     feat.SetGeometry( geom )
 
@@ -3424,7 +3424,8 @@ def ogr_shape_71():
     shutil.copy('data/poly.dbf', 'tmp/ogr_shape_71.dbf')
     old_mode = os.stat('tmp/ogr_shape_71.dbf').st_mode
     os.chmod('tmp/ogr_shape_71.dbf', stat.S_IREAD)
-    ds = ogr.Open('tmp/ogr_shape_71.shp', update = 1)
+    with gdaltest.error_handler('CPLQuietErrorHandler'):
+      ds = ogr.Open('tmp/ogr_shape_71.shp', update = 1)
     ok = ds is None
     ds = None
     os.chmod('tmp/ogr_shape_71.dbf', old_mode)
@@ -3865,7 +3866,8 @@ def ogr_shape_82():
     init_rus = 'работает два мастера, установка набоек, замена подошвы, замена каблуков, растяжка обуви, растяжка голенищ сапог, швейные работы, ушив голенища сапога, чистка обуви, чистка замшевой обуви, замена стелек'
     result_rus = 'работает два мастера, установка набоек, замена подошвы, замена каблуков, растяжка обуви, растяжка голенищ сапог, швейные работы, ушив голен'
     feat.SetField('cut_field', init_rus)
-    gdaltest.shape_lyr.CreateFeature(feat)
+    with gdaltest.error_handler('CPLQuietErrorHandler'):
+      gdaltest.shape_lyr.CreateFeature(feat)
 
     #insert feature with long string in English
     init_en = 'Remont kablukov i ih zamena; zamena naboek; profilaktika i remont podoshvy; remont i zamena supinatorov; zamena stelek; zamena obuvnoj furnitury; remont golenishha; rastjazhka obuvi; chistka i pokraska obuvi. Smolenskaja oblast, p. Monastyrshhina, ulica Sovetskaja, d. 38.	Rabotaet ponedelnik – chetverg s 9.00 do 18.00, pjatnica s 10.00 do 17.00, vyhodnoj: subbota'
