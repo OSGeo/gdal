@@ -51,6 +51,10 @@ OGRElasticDataSource::OGRElasticDataSource() {
     pszWriteMap = NULL;
     bOverwrite = FALSE;
     nBulkUpload = 0;
+    nBatchSize = 100;
+    nFeatureCountToEstablishFeatureDefn = 100;
+    bJSonField = FALSE;
+    bFlattenNestedAttributes = TRUE;
 }
 
 /************************************************************************/
@@ -207,8 +211,26 @@ OGRLayer * OGRElasticDataSource::ICreateLayer(const char * pszLayerName,
     }
 
     // If we have a user specified mapping, then go ahead and update it now
-    const char* pszLayerMapping = pszMapping;
+    const char* pszLayerMapping = CSLFetchNameValueDef(papszOptions, "MAPPING", pszMapping);
     if (pszLayerMapping != NULL) {
+        CPLString osLayerMapping;
+        if( strchr(pszLayerMapping, '{') == NULL )
+        {
+            VSILFILE* fp = VSIFOpenL(pszLayerMapping, "rb");
+            if( fp )
+            {
+                GByte* pabyRet = NULL;
+                VSIIngestFile( fp, pszLayerMapping, &pabyRet, NULL, 0);
+                if( pabyRet )
+                {
+                    osLayerMapping = (char*)pabyRet;
+                    pszLayerMapping = osLayerMapping.c_str();
+                    VSIFree(pabyRet);
+                }
+                VSIFCloseL(fp);
+            }
+        }
+        
         if( !UploadFile(CPLSPrintf("%s/%s/%s/_mapping",
                             GetURL(), osLaunderedName.c_str(), pszMappingName),
                         pszLayerMapping) )
@@ -224,6 +246,8 @@ OGRLayer * OGRElasticDataSource::ICreateLayer(const char * pszLayerName,
     nLayers++;
     papoLayers = (OGRElasticLayer **) CPLRealloc(papoLayers, nLayers * sizeof (OGRElasticLayer*));
     papoLayers[nLayers - 1] = poLayer;
+
+    poLayer->FinalizeFeatureDefn(FALSE);
     
     if( eGType != wkbNone )
     {
@@ -232,6 +256,11 @@ OGRLayer * OGRElasticDataSource::ICreateLayer(const char * pszLayerName,
         oFieldDefn.SetSpatialRef(poSRS);
         poLayer->CreateGeomField(&oFieldDefn, FALSE);
     }
+    if( pszLayerMapping )
+        poLayer->SetManualMapping();
+    
+    poLayer->SetIgnoreSourceID(CSLFetchBoolean(papszOptions, "IGNORE_SOURCE_ID", FALSE));
+    poLayer->SetDotAsNestedField(CSLFetchBoolean(papszOptions, "DOT_AS_NESTED_FIELD", TRUE));
 
     return poLayer;
 }
@@ -266,6 +295,14 @@ json_object* OGRElasticDataSource::RunRequest(const char* pszURL, const char* ps
     if( psResult->pabyData == NULL )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Empty content returned by server");
+        CPLHTTPDestroyResult(psResult);
+        return NULL;
+    }
+    
+    if( strncmp((const char*) psResult->pabyData, "{\"error\":", strlen("{\"error\":")) == 0 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "%s",
+                    (const char*) psResult->pabyData );
         CPLHTTPDestroyResult(psResult);
         return NULL;
     }
@@ -308,7 +345,21 @@ int OGRElasticDataSource::Open(GDALOpenInfo* poOpenInfo)
     pszName = CPLStrdup(poOpenInfo->pszFilename);
     osURL = (EQUALN(pszName, "ES:", 3)) ? pszName + 3 : pszName;
     if( osURL.size() == 0 )
-        osURL = "localhost:9200";
+    {
+        const char* pszHost =
+            CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "HOST", "localhost");
+        osURL = pszHost;
+        osURL += ":";
+        const char* pszPort = CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "PORT", "9200");
+        osURL += pszPort;
+    }
+    nBatchSize = atoi(CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "BATCH_SIZE", "100"));
+    nFeatureCountToEstablishFeatureDefn = atoi(CSLFetchNameValueDef(
+        poOpenInfo->papszOpenOptions, "FEATURE_COUNT_TO_ESTABLISH_FEATURE_DEFN", "100"));
+    bJSonField = CSLFetchBoolean(poOpenInfo->papszOpenOptions, "JSON_FIELD", FALSE);
+    bFlattenNestedAttributes = CSLFetchBoolean(
+            poOpenInfo->papszOpenOptions, "FLATTEN_NESTED_ATTRIBUTES", TRUE);
+    
     
     CPLHTTPResult* psResult = CPLHTTPFetch((osURL + "/_cat/indices?h=i").c_str(), NULL);
     if( psResult == NULL || psResult->pabyData == NULL || psResult->pszErrBuf != NULL )
@@ -353,8 +404,10 @@ int OGRElasticDataSource::Open(GDALOpenInfo* poOpenInfo)
                 if( aosMappings.size() == 1 &&
                     (aosMappings[0] == "FeatureCollection" || aosMappings[0] == "default") )
                 {
-                    OGRElasticLayer* poLayer = new OGRElasticLayer(pszCur, pszCur, aosMappings[0], this, NULL);
-                    poLayer->BuildSchema(json_object_object_get(poMappings, aosMappings[0]));
+                    OGRElasticLayer* poLayer = new OGRElasticLayer(
+                        pszCur, pszCur, aosMappings[0], this, poOpenInfo->papszOpenOptions);
+                    poLayer->InitFeatureDefnFromMapping(json_object_object_get(poMappings, aosMappings[0]),
+                                                        "", std::vector<CPLString>());
 
                     nLayers++;
                     papoLayers = (OGRElasticLayer **) CPLRealloc(papoLayers, nLayers * sizeof (OGRElasticLayer*));
@@ -364,8 +417,10 @@ int OGRElasticDataSource::Open(GDALOpenInfo* poOpenInfo)
                 {
                     for(size_t i=0; i<aosMappings.size();i++)
                     {
-                        OGRElasticLayer* poLayer = new OGRElasticLayer((pszCur + CPLString("_") + aosMappings[i]).c_str(), pszCur, aosMappings[i], this, NULL);
-                        poLayer->BuildSchema(json_object_object_get(poMappings, aosMappings[i]));
+                        OGRElasticLayer* poLayer = new OGRElasticLayer(
+                            (pszCur + CPLString("_") + aosMappings[i]).c_str(), pszCur, aosMappings[i], this, poOpenInfo->papszOpenOptions);
+                        poLayer->InitFeatureDefnFromMapping(json_object_object_get(poMappings, aosMappings[i]),
+                                                            "", std::vector<CPLString>());
 
                         nLayers++;
                         papoLayers = (OGRElasticLayer **) CPLRealloc(papoLayers, nLayers * sizeof (OGRElasticLayer*));
@@ -452,25 +507,16 @@ int OGRElasticDataSource::Create(const char *pszFilename,
     // Read in the meta file from disk
     if (pszMetaFile != NULL)
     {
-        int fsize;
-        char *fdata;
-        FILE *fp;
-
-        fp = fopen(pszMetaFile, "rb");
-        if (fp != NULL) {
-            fseek(fp, 0, SEEK_END);
-            fsize = (int) ftell(fp);
-
-            fdata = (char *) malloc(fsize + 1);
-
-            fseek(fp, 0, SEEK_SET);
-            if (0 == fread(fdata, fsize, 1, fp)) {
-                CPLError(CE_Failure, CPLE_FileIO,
-                         "OGRElasticDataSource::Create read failed.");
+        VSILFILE* fp = VSIFOpenL(pszMetaFile, "rb");
+        if( fp )
+        {
+            GByte* pabyRet = NULL;
+            VSIIngestFile( fp, pszMetaFile, &pabyRet, NULL, 0);
+            if( pabyRet )
+            {
+                this->pszMapping = (char*)pabyRet;
             }
-            fdata[fsize] = 0;
-            this->pszMapping = fdata;
-            fclose(fp);
+            VSIFCloseL(fp);
         }
     }
 

@@ -9,13 +9,33 @@
 
 (Driver available in GDAL 1.10 or later)</br>
 
-Driver is <b>WRITE Only</b>
+Driver is read-write starting with GDAL 2.1 (was write only in GDAL 2.0 or earlier)
 <p>
 
-<a href="http://elasticsearch.org/">ElasticSearch</a> is an Enterprise-level search engine for a variety of data sources. It supports full-text indexing and geospatial querying of those data in a fast and efficient manor using a predefined REST API. This driver serializes all of the supported OGR file formats in to an ElasticSearch index.
-<br> In GDAL 2.0 and earlier, the driver was limited in the geometry it handles: even if polygons were provided as input, they were stored as <a href="http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/mapping-geo-point-type.html">geo point</a> and the "center" of the polygon is used as value of the point.
-Starting with GDAL 2.1,  <a href="https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-geo-shape-type.html">geo_shape</a> is used to store all geometry types (except curve geometries that are not handled by ElasticSearch and will be approximated to their linear equivalents).
-</p>
+<a href="http://elasticsearch.org/">ElasticSearch</a> is an Enterprise-level search engine for a variety of data sources. It supports full-text indexing and geospatial querying of those data in a fast and efficient manor using a predefined REST API.
+
+<h2>Opening dataset name syntax</h2>
+
+Starting with GDAL 2.1, the driver supports reading existing indices from a ElasticSearch host. There are two main possible syntaxes to open a dataset:
+<ul>
+<li>Using ES:http://hostname:port (where port is typically 9200)</li>
+<li>Using ES: with the open options to specify HOST and PORT</li>
+</ul>
+
+The open options available are :
+<ul>
+<li><b>HOST</b>=hostname: Server hostname. Default to localhost.</li>
+<li><b>PORT</b>=port. Server port. Default to 9200.</li>
+<li><b>BATCH_SIZE</b>=number. Number of features to retrieve per batch. For most queries, the first batch returns 101 documents or just enough documents to exceed 1 megabyte. Subsequent batch size is 4 megabytes.</li>
+<li><b>FEATURE_COUNT_TO_ESTABLISH_FEATURE_DEFN</b>=number. Number of features to retrieve to establish feature definition. -1 = unlimited. Defaults to 100.</li>
+<li><b>JSON_FIELD</b>=YES/NO. Whether to include a field called "_json" with the full document as JSON. Defaults to NO.</li>
+<li><b>FLATTEN_NESTED_ATTRIBUTE</b>=YES/NO. Whether to recursively explore nested objects and produce flatten OGR attributes. Defaults to YES.</li>
+</ul>
+
+<h2>ElasticSearch vs OGR concepts</h2>
+
+Each mapping type inside a ElasticSearch index will be considered as a OGR layer. A ElasticSearch document is considered as a OGR feature.<p>
+
 
 <h2>Field definitions</h2>
 
@@ -30,10 +50,10 @@ ogr2ogr -progress --config ES_WRITEMAP /path/to/file/map.txt -f "ElasticSearch" 
 
 The ElasticSearch writer supports the following Configuration Options:
 <ul>
-<li> <b>ES_WRITEMAP</b>=/path/to/mapfile.txt Creates a mapping file that can be modified by the user prior to insert in to the index.<br>
-<li> <b>ES_META</b>=/path/to/mapfile.txt Tells the driver to the user-defined field mappings.<br>
-<li> <b>ES_BULK</b>=10000 Identifies the number of records to be inserted at a time. Lower record counts help with memory consumption within ElasticSearch but take longer to insert.<br>
-<li> <b>ES_OVERWRITE</b>=1 Overwrites the current index by deleting an existing one.<br>
+<li> <b>ES_WRITEMAP</b>=/path/to/mapfile.txt. Creates a mapping file that can be modified by the user prior to insert in to the index.<br>
+<li> <b>ES_META</b>=/path/to/mapfile.txt. Tells the driver to the user-defined field mappings. Starting with GDAL 2.1, the MAPPING layer creation option should rather be used.<br>
+<li> <b>ES_BULK</b>=10000. Identifies the maximum size in bytes of the buffer to store documents to be inserted at a time. Lower record counts help with memory consumption within ElasticSearch but take longer to insert. Starting with GDAL 2.1, the BULK_SIZE layer creation option should rather be used.<br>
+<li> <b>ES_OVERWRITE</b>=1. Overwrites the current index by deleting an existing one. Starting with GDAL 2.1, the OVERWRITE layer creation option should rather be used.<br>
 </ul>
 <p>
 
@@ -44,6 +64,12 @@ ogr2ogr -progress --config ES_OVERWRITE 1 --config ES_BULK 10000 --config ES_MET
 </pre>
 </li>
 
+<h2>Geometry types</h2>
+
+<br> In GDAL 2.0 and earlier, the driver was limited in the geometry it handles: even if polygons were provided as input, they were stored as <a href="http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/mapping-geo-point-type.html">geo point</a> and the "center" of the polygon is used as value of the point.
+Starting with GDAL 2.1,  <a href="https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-geo-shape-type.html">geo_shape</a> is used to store all geometry types (except curve geometries that are not handled by ElasticSearch and will be approximated to their linear equivalents).
+</p>
+
 <h2>Layer creation options</h2>
 
 Starting with GDAL 2.1, the driver supports the following layer creation options:
@@ -51,6 +77,7 @@ Starting with GDAL 2.1, the driver supports the following layer creation options
 <li><b>INDEX_NAME</b>=name. Name of the index to create (or reuse). By default the index name is the layer name.</li>
 <li><b>MAPPING_NAME=</b>=name. Name of the mapping type within the index.
 By default, the mapping name is "FeatureCollection" and the documents will be written as GeoJSON Feature objects. If another mapping name is chosen, a more "flat" structure will be used.</li>
+<li><b>MAPPING</b>=filename or JSon. Filename with manual mapping, or mapping as serialized JSon.</li>
 <li><b>OVERWRITE</b>=YES/NO. Whether to overwrite an existing collection with the layer name to be created. Defaults to NO.</li>
 <li><b>GEOMETRY_NAME</b>=name. Name of geometry column. Defaults to 'geometry'.</li>
 <li><b>GEOM_MAPPING_TYPE</b>=AUTO/GEO_POINT/GEO_SHAPE. Mapping type for geometry fields. Defaults to AUTO.
@@ -61,10 +88,23 @@ When using AUTO, if there is a single geometry field of type Point, a geo_point 
 <li><b>GEOM_PRECISION</b>={value}{unit}'. Desired geometry precision. Number followed by unit. For example 1m.
 For a geo_point geometry field, this causes a compressed geometry format to be used.</li>
 </li>
-<li><b>BULK_INSERT</b>=YES/NO. Whether to use bulk insert for feature creation. Defaults to NO.</li>
+<li><b>BULK_INSERT</b>=YES/NO. Whether to use bulk insert for feature creation. Defaults to YES.</li>
+<li><b>BULK_SIZE</b>=value. Size in bytes of the buffer for bulk upload. Defaults to 1000000 (1 million).</li>
+<li><b>DOT_AS_NESTED_FIELD</b>=YES/NO. Whether to consider dot character in field name as sub-document. Defaults to YES.</li>
+<li><b>IGNORE_SOURCE_ID</b>=YES/NO. Whether to ignore _id field in features passed to CreateFeature(). Defaults to NO.</li>
 </ul>
 
 <h2>Examples</h2>
+
+<b>Open the local store:</b></br>
+<pre>
+ogrinfo ES:
+</pre>
+
+<b>Open a remote store:</b></br>
+<pre>
+ogrinfo ES:http://example.com:9200
+</pre>
 
 <b>Basic Transform:</b> </br>
 <pre>
