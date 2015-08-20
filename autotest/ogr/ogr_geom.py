@@ -145,7 +145,8 @@ def ogr_geom_pickle():
     geom_wkt = 'MULTIPOLYGON( ((0 0,1 1,1 0,0 0)),((0 0,10 0, 10 10, 0 10),(1 1,1 2,2 2,2 1)) )'
     geom = ogr.CreateGeometryFromWkt(geom_wkt)
     p = pickle.dumps(geom)
-    g = pickle.loads(p)
+    with gdaltest.error_handler('CPLQuietErrorHandler'):
+        g = pickle.loads(p)
 
     if not geom.Equal(g):
         gdaltest.post_reason ("pickled geometries were not equal")
@@ -682,7 +683,8 @@ def ogr_geom_area_point():
     geom_wkt = 'POINT(0 0)'
     geom = ogr.CreateGeometryFromWkt( geom_wkt )
 
-    area = geom.Area()
+    with gdaltest.error_handler('CPLQuietErrorHandler'):
+        area = geom.Area()
     if area != 0:
         gdaltest.post_reason( 'Area() result wrong, got %g.' % area )
         return 'fail'
@@ -698,7 +700,8 @@ def ogr_geom_length_point():
     geom_wkt = 'POINT(0 0)'
     geom = ogr.CreateGeometryFromWkt( geom_wkt )
 
-    length = geom.Length()
+    with gdaltest.error_handler('CPLQuietErrorHandler'):
+        length = geom.Length()
     if length != 0:
         gdaltest.post_reason( 'Length() result wrong, got %g.' % length )
         return 'fail'
