@@ -29,8 +29,9 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
+import contextlib
 import os
+import sys
 import time
 
 from osgeo import gdal
@@ -1638,6 +1639,18 @@ def is_file_open(filename):
         if got_filename.find(filename) >= 0:
             return True
     return False
+
+###############################################################################
+# error_handler()
+# Allow use of "with" for an ErrorHandler that always pops at the scope close.
+
+@contextlib.contextmanager
+def error_handler(error_name):
+  handler = gdal.PushErrorHandler(error_name)
+  try:
+    yield handler
+  finally:
+    gdal.PopErrorHandler()
 
 ###############################################################################
 run_func = gdaltestaux.run_func
