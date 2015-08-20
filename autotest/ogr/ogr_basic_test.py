@@ -110,8 +110,6 @@ def ogr_basic_3():
     gdaltest.lyr.SetSpatialFilter( poly )
     gdaltest.lyr.ResetReading()
 
-    poly.Destroy()
-
     count = gdaltest.lyr.GetFeatureCount()
     if count != 1:
         gdaltest.post_reason( 'Got wrong feature count with spatial filter, expected 1, got %d' % count )
@@ -455,7 +453,8 @@ def ogr_basic_11():
     for i in range(2):
         ogr.UseExceptions()
         geom = ogr.CreateGeometryFromWkt('POLYGON ((-65 0, -30 -30, -30 0, -65 -30, -65 0))')
-        geom.IsValid()
+        with gdaltest.error_handler('CPLQuietErrorHandler'):
+            geom.IsValid()
     if used_exceptions_before == 0:
         ogr.DontUseExceptions()
 
