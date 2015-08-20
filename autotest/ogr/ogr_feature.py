@@ -249,7 +249,8 @@ def ogr_feature_cp_real():
     src_feature.field_reallist = [17.5]
 
     dst_feature = mk_dst_feature( src_feature, ogr.OFTReal )
-    dst_feature.SetFrom( src_feature )
+    with gdaltest.error_handler('CPLQuietErrorHandler'):
+        dst_feature.SetFrom( src_feature )
 
     if not check( dst_feature, 'field_integer', 17.0 ):
         return 'failure'
@@ -1025,4 +1026,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-
