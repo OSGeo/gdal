@@ -787,8 +787,9 @@ def ogr_csv_19():
     lyr = gdaltest.csv_ds.GetLayerByName( 'testnull' )
 
     lyr.ResetReading()
-    if not ogrtest.check_features_against_list( lyr,'INTCOL',[12] ):
-        return 'fail'
+    with gdaltest.error_handler('CPLQuietErrorHandler'):
+        if not ogrtest.check_features_against_list( lyr,'INTCOL',[12] ):
+            return 'fail'
     lyr.ResetReading()
     if not ogrtest.check_features_against_list( lyr,'REALCOL',[5.7] ):
         return 'fail'
