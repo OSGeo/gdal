@@ -921,10 +921,18 @@ CPLErr VRTDataset::AddBand( GDALDataType eType, char **papszOptions )
         VRTRawRasterBand *poBand = 
             new VRTRawRasterBand( this, GetRasterCount() + 1, eType );
 
-        eErr = 
-            poBand->SetRawLink( pszFilename, NULL, bRelativeToVRT,
-                                nImageOffset, nPixelOffset, nLineOffset, 
+        char* pszVRTPath = CPLStrdup(CPLGetPath(GetDescription()));
+        if EQUAL(pszVRTPath, "")
+        {
+            CPLFree(pszVRTPath);
+            pszVRTPath = NULL;
+        }
+
+        eErr =
+            poBand->SetRawLink( pszFilename, pszVRTPath, bRelativeToVRT,
+                                nImageOffset, nPixelOffset, nLineOffset,
                                 pszByteOrder );
+        CPLFree(pszVRTPath);
         if( eErr != CE_None )
         {
             delete poBand;
