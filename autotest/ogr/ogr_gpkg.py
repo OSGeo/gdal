@@ -75,7 +75,7 @@ def ogr_gpkg_1():
     else:
         return 'fail'
 
-    gdaltest.gpkg_ds.Destroy()
+    gdaltest.gpkg_ds = None
 
 
 ###############################################################################
@@ -130,7 +130,7 @@ def ogr_gpkg_4():
     if gdaltest.gpkg_dr is None or gdaltest.gpkg_ds is None:
         return 'skip'
 
-    gdaltest.gpkg_ds.Destroy()
+    gdaltest.gpkg_ds = None
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     gdaltest.gpkg_ds = gdaltest.gpkg_dr.Open( 'tmp/gpkg_test.gpkg', update = 1 )
@@ -213,8 +213,8 @@ def ogr_gpkg_6():
     if lyr.GetLayerDefn().GetFieldDefn(0).GetType() != ogr.OFTString:
         gdaltest.post_reason( 'wrong field type' )
         return 'fail'
-    
-    gdaltest.gpkg_ds.Destroy()
+
+    gdaltest.gpkg_ds = None
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     gdaltest.gpkg_ds = gdaltest.gpkg_dr.Open( 'tmp/gpkg_test.gpkg', update = 1 )
@@ -304,13 +304,11 @@ def ogr_gpkg_7():
     # Test updating non-existing feature
     feat.SetFID(-10)
     if lyr.SetFeature( feat ) != ogr.OGRERR_NON_EXISTING_FEATURE:
-        feat.Destroy()
         gdaltest.post_reason( 'Expected failure of SetFeature().' )
         return 'fail'
 
     # Test deleting non-existing feature
     if lyr.DeleteFeature( -10 ) != ogr.OGRERR_NON_EXISTING_FEATURE:
-        feat.Destroy()
         gdaltest.post_reason( 'Expected failure of DeleteFeature().' )
         return 'fail'
 
