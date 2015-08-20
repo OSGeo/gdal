@@ -42,6 +42,7 @@
 
 #include "ogr_core.h"
 #include "ogr_geometry.h"
+#include "ogr_feature.h"
 
 /* A default name for the default geometry column, instead of '' */
 #define OGR_GEOMETRY_DEFAULT_NON_EMPTY_NAME     "_ogr_geometry_"
@@ -159,5 +160,13 @@ char CPL_DLL * OGRGeometryToHexEWKB( OGRGeometry * poGeometry, int nSRSId,
 OGRErr OGRReadWKBGeometryType( unsigned char * pabyData,
                                OGRwkbVariant wkbVariant,
                                OGRwkbGeometryType *eGeometryType, OGRBoolean *b3D );
+
+/************************************************************************/
+/*                            Other                                     */
+/************************************************************************/
+
+void CPL_DLL OGRUpdateFieldType( OGRFieldDefn* poFDefn,
+                                 OGRFieldType eNewType,
+                                 OGRFieldSubType eNewSubType );
 
 #endif /* ndef OGR_P_H_INCLUDED */
