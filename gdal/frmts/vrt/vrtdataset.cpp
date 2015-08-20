@@ -1537,15 +1537,21 @@ void VRTDataset::BuildVirtualOverviews()
         GDALRasterBand* poSrcBand = poSource->GetBand();
         if (poSrcBand == NULL)
             return;
-        if( poSrcBand->GetOverviewCount() == 0 )
+        
+        // To prevent recursion
+        apoOverviewsBak.push_back(NULL);
+        int nOvrCount = poSrcBand->GetOverviewCount();
+        apoOverviewsBak.resize(0);
+        
+        if( nOvrCount == 0 )
             return;
         if( iBand == 0 )
         {
             poFirstBand = poSrcBand;
-            nOverviews = poSrcBand->GetOverviewCount();
+            nOverviews = nOvrCount;
         }
-        else if( poSrcBand->GetOverviewCount() < nOverviews )
-            nOverviews = poSrcBand->GetOverviewCount();
+        else if( nOvrCount < nOverviews )
+            nOverviews = nOvrCount;
     }
 
     for(int j=0;j<nOverviews;j++)
