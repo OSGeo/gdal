@@ -51,9 +51,11 @@ class OGRElasticDataSource;
 
 class OGRElasticLayer : public OGRLayer {
     OGRFeatureDefn* poFeatureDefn;
+    int bFeatureDefnFinalized;
     OGRElasticDataSource* poDS;
     CPLString sIndex;
 
+    int bManualMapping;
     int bMappingWritten;
     CPLString osIndexName;
     CPLString osMappingName;
@@ -77,6 +79,10 @@ class OGRElasticLayer : public OGRLayer {
     int bEOF;
     
     json_object* m_poSpatialFilter;
+    
+    int bIgnoreSourceID;
+    
+    int bDotAsNestedField;
 
     int PushIndex();
     CPLString BuildMap();
@@ -86,9 +92,19 @@ class OGRElasticLayer : public OGRLayer {
     void BuildFeature(OGRFeature* poFeature, json_object* poSource,
                       CPLString osPath);
     void CreateFieldFromSchema(const char* pszName,
+                               const char* pszPrefix,
                                std::vector<CPLString> aosPath,
                                json_object* poObj);
+    void  AddOrUpdateField(const char* pszAttrName,
+                           const char* pszKey,
+                           json_object* poObj,
+                           char chNestedAttributeSeparator,
+                           std::vector<CPLString>& aosPath);
 
+    CPLString BuildJSonFromFeature(OGRFeature *poFeature);
+    
+    static CPLString BuildPathFromArray(const std::vector<CPLString> aosPath);
+    
 public:
     OGRElasticLayer(
             const char* pszLayerName,
@@ -102,9 +118,11 @@ public:
     OGRFeature * GetNextFeature();
 
     OGRErr ICreateFeature(OGRFeature *poFeature);
+    OGRErr ISetFeature(OGRFeature *poFeature);
     OGRErr CreateField(OGRFieldDefn *poField, int bApproxOK);
     OGRErr CreateGeomField(OGRGeomFieldDefn *poField, int bApproxOK);
 
+    const char* GetName() { return poFeatureDefn->GetName(); }
     OGRFeatureDefn * GetLayerDefn();
 
     int TestCapability(const char *);
@@ -116,10 +134,17 @@ public:
     
     virtual OGRErr      SyncToDisk();
     
-    void BuildSchema(json_object* poSchema);
+    void FinalizeFeatureDefn(int bReadFeatures = TRUE);
+    void InitFeatureDefnFromMapping(json_object* poSchema,
+                                    const char* pszPrefix,
+                                    const std::vector<CPLString>& aosPath);
     
     const CPLString& GetIndexName() const { return osIndexName; }
     const CPLString& GetMappingName() const { return osMappingName; }
+    
+    void                SetIgnoreSourceID(int bFlag) { bIgnoreSourceID = bFlag; }
+    void                SetManualMapping() { bManualMapping = TRUE; }
+    void                SetDotAsNestedField(int bFlag) { bDotAsNestedField = bFlag; }
 };
 
 /************************************************************************/
@@ -168,7 +193,11 @@ public:
     int nBulkUpload;
     char* pszWriteMap;
     char* pszMapping;
-
+    int nBatchSize;
+    int nFeatureCountToEstablishFeatureDefn;
+    int bJSonField;
+    int bFlattenNestedAttributes;
+    
     json_object* RunRequest(const char* pszURL, const char* pszPostContent = NULL);
 };
 
