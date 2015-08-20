@@ -415,18 +415,19 @@ def ogr_mem_12():
     lyr = gdaltest.mem_ds.GetLayerByName('tpoly')
     if lyr is None:
         return 'fail'
-    
+
     # Set the date of the first feature
     f = lyr.GetFeature(1)
-    try:
-        # Old-gen bindings don't accept this form of SetField
-        f.SetField("WHEN", 2008, 3, 19, 16, 15, 00, 0)
-    except:
-        return 'skip'
+    f.SetField("WHEN", 2008, 3, 19, 16, 15, 00, 0)
     lyr.SetFeature(f)
     f = lyr.GetFeature(1)
     idx = f.GetFieldIndex('WHEN')
-    print(f.GetFieldAsDateTime(idx))
+    expected = [2008, 3, 19, 16, 15, 0.0, 0]
+    result = f.GetFieldAsDateTime(idx)
+    for i, value in enumerate(result):
+      if value != expected[i]:
+        gdaltest.post_reason( '%s != %s' % (result, expected) )
+        return 'fail'
     return 'success'
 
 ###############################################################################
