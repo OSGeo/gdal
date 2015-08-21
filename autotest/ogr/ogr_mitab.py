@@ -131,7 +131,6 @@ def ogr_mitab_3():
             print(dir_indent + os.path.basename(root))
             file_indent = '  '  * level + '  '
             for filename in files:
-                if filename
                 print(file_indent + filename)
 
     print('\nogr_mitab_3 STARTING TREE:')
