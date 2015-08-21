@@ -1368,7 +1368,8 @@ def ogr_vrt_24():
 
 def ogr_vrt_25():
 
-    ds = ogr.Open('data/vrt_test.vrt')
+    with gdaltest.error_handler('CPLQuietErrorHandler'):
+        ds = ogr.Open('data/vrt_test.vrt')
 
     # test3 layer just declares fid, and implicit fields (so all source
     # fields are taken as VRT fields), we can report the fid column 
@@ -1507,17 +1508,20 @@ def ogr_vrt_27():
 
 def ogr_vrt_28():
 
-    ds = ogr.Open("<OGRVRTDataSource></foo>")
+    with gdaltest.error_handler('CPLQuietErrorHandler'):
+        ds = ogr.Open("<OGRVRTDataSource></foo>")
     if ds is not None:
         return 'fail'
 
     gdal.FileFromMemBuffer('/vsimem/ogr_vrt_28_invalid.vrt', "<bla><OGRVRTDataSource></OGRVRTDataSource></bla>")
-    ds = ogr.Open("/vsimem/ogr_vrt_28_invalid.vrt")
+    with gdaltest.error_handler('CPLQuietErrorHandler'):
+        ds = ogr.Open("/vsimem/ogr_vrt_28_invalid.vrt")
     if ds is not None:
         return 'fail'
     gdal.Unlink("/vsimem/ogr_vrt_28_invalid.vrt")
 
-    ds = ogr.Open("data/invalid.vrt")
+    with gdaltest.error_handler('CPLQuietErrorHandler'):
+        ds = ogr.Open("data/invalid.vrt")
     if ds is None:
         return 'fail'
 
