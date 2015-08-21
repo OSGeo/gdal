@@ -56,9 +56,8 @@ def ogr_mysql_1():
     try:
         ogr.GetDriverByName( 'MySQL' )
     except:
-#        print 'no driver'
         return 'skip'
-    
+
     try:
         gdaltest.mysql_ds = ogr.Open( 'MYSQL:autotest', update = 1 )
     except:
@@ -67,7 +66,6 @@ def ogr_mysql_1():
     if gdaltest.mysql_ds is not None:
         return 'success'
     else:
-#        print 'no dataset'
         return 'skip'
 
 ###############################################################################
@@ -955,7 +953,8 @@ def ogr_mysql_cleanup():
     gdaltest.mysql_ds.ExecuteSQL( 'DROP TABLE tpoly' )
     gdaltest.mysql_ds.ExecuteSQL( 'DROP TABLE `select`' )
     gdaltest.mysql_ds.ExecuteSQL( 'DROP TABLE tablewithspatialindex' )
-    gdaltest.mysql_ds.ExecuteSQL( 'DROP TABLE tablewithoutspatialindex' )
+    with gdaltest.error_handler('CPLQuietErrorHandler'):
+        gdaltest.mysql_ds.ExecuteSQL( 'DROP TABLE tablewithoutspatialindex' )
     gdaltest.mysql_ds.ExecuteSQL( 'DROP TABLE geometry_columns' )
     gdaltest.mysql_ds.ExecuteSQL( 'DROP TABLE spatial_ref_sys' )
     gdaltest.mysql_ds.ExecuteSQL( 'DROP TABLE ogr_mysql_72' )
@@ -1004,4 +1003,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-
