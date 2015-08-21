@@ -6,6 +6,14 @@ ifndef PYTHON
         PYTHON=python
 endif
 
+ifndef DESTDIR
+    DESTDIR=/
+endif
+
+ifndef INSTALL_LAYOUT
+    INSTALL_LAYOUT=unix
+endif
+
 all: build
 
 BINDING = python
@@ -66,11 +74,15 @@ build:
 egg:
 	$(PYTHON) setup.py bdist_egg 
 
-site_package_dir=$(shell $(PYTHON) -c "from __future__ import print_function;from distutils.sysconfig import get_python_lib;print(get_python_lib(prefix=\"$(DESTDIR)$(prefix)\"))")
+site_package_dir=$(shell $(PYTHON) -c "from __future__ import print_function;from distutils.sysconfig import get_python_lib;print(get_python_lib(prefix=\"$(prefix)\"))")
+
+ifeq ($(PY_HAVE_SETUPTOOLS),1)
+    setup_opts=--single-version-externally-managed --install-layout=$(INSTALL_LAYOUT) --record=record.txt
+endif
 
 install:
 	@if [ ! -d $(site_package_dir) ]; then \
-		mkdir -p $(site_package_dir); \
+		mkdir -p $(DESTDIR)$(site_package_dir); \
 		echo "----------------------------------------------------------------------";\
 		echo ""; \
 		echo "The GDAL python package has bee installed in $(site_package_dir)"; \
@@ -79,7 +91,7 @@ install:
 		echo "----------------------------------------------------------------------";\
 	fi
 	env PYTHONPATH=$(site_package_dir)$${PYTHONPATH:+:$$PYTHONPATH} \
-		$(PYTHON) setup.py install --prefix=$(DESTDIR)$(prefix)
+		$(PYTHON) setup.py install --root=$(DESTDIR) --prefix=$(prefix) ${setup_opts}
 	for f in $(SCRIPTS) ; do $(INSTALL) ./scripts/$$f $(DESTDIR)$(INST_BIN) ; done
 
 docs:
