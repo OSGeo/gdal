@@ -55,7 +55,8 @@ def ogr_pds_1():
         gdaltest.post_reason('did not get expected feature count')
         return 'fail'
 
-    feat = lyr.GetNextFeature()
+    with gdaltest.error_handler('CPLQuietErrorHandler'):
+        feat = lyr.GetNextFeature()
     if feat.GetField('NOISE_COUNTS_1') != 96:
         feat.DumpReadable()
         return 'fail'
@@ -66,14 +67,15 @@ def ogr_pds_1():
         print(geom.ExportToWkt())
         return 'fail'
 
-    feat = lyr.GetFeature(1)
+    with gdaltest.error_handler('CPLQuietErrorHandler'):
+        feat = lyr.GetFeature(1)
     if feat.GetField('MARS_RADIUS') != 3385310.2:
         feat.DumpReadable()
         return 'fail'
 
     return 'success'
 
-gdaltest_list = [ 
+gdaltest_list = [
     ogr_pds_1 ]
 
 
@@ -84,4 +86,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-
