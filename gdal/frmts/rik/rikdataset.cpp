@@ -686,11 +686,18 @@ int RIKDataset::Identify( GDALOpenInfo * poOpenInfo )
         }
         if( actLength == 0 )
             return -1;
-        if( strlen( (const char*)poOpenInfo->pabyHeader + 2 ) != actLength )
+        
+        for( int i=0;i<actLength;i++ )
         {
-            return FALSE;
+            if( poOpenInfo->pabyHeader[2+i] == 0 )
+                return FALSE;
         }
-        return TRUE;
+
+        if( EQUAL( CPLGetExtension(poOpenInfo->pszFilename), "rik") )
+            return TRUE;
+
+        // We really need Open to be able to conclude
+        return -1;
     }
 }
 
