@@ -130,7 +130,8 @@ def arg_unsupported():
     for d in gdaltest.argTests:
         for (name, fmt, nodata) in d['formats']:
             if name == 'int64' or name == 'uint64':
-                ds = gdal.Open('data/arg-'+name+'.arg')
+                with gdaltest.error_handler('CPLQuietErrorHandler'):
+                    ds = gdal.Open('data/arg-'+name+'.arg')
                 if not ds is None:
                     return 'fail'
             else:
@@ -146,7 +147,8 @@ def arg_getrastercount():
 
     for d in gdaltest.argTests:
         for (name, fmt, nodata) in d['formats']:
-            ds = gdal.Open('data/arg-'+name+'.arg')
+            with gdaltest.error_handler('CPLQuietErrorHandler'):
+              ds = gdal.Open('data/arg-'+name+'.arg')
             if ds is None:
                 continue
 
@@ -161,7 +163,8 @@ def arg_getgeotransform():
 
     for d in gdaltest.argTests:
         for (name, fmt, nodata) in d['formats']:
-            ds = gdal.Open('data/arg-'+name+'.arg')
+            with gdaltest.error_handler('CPLQuietErrorHandler'):
+                ds = gdal.Open('data/arg-'+name+'.arg')
             if ds is None:
                 continue
 
@@ -283,7 +286,8 @@ def arg_byteorder():
         for (name, fmt, nodata) in d['formats']:
 
             basename = 'data/arg-'+name
-            orig = gdal.Open(basename+'.arg')
+            with gdaltest.error_handler('CPLQuietErrorHandler'):
+                orig = gdal.Open(basename+'.arg')
             if orig is None:
                 continue
 
