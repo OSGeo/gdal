@@ -124,7 +124,7 @@ def ogr_mitab_3():
         for root, dirs, files in os.walk(startpath):
             level = root.replace(startpath, '').count(os.sep)
             dir_indent = '  ' * level
-            dirname = os.path.basename(root)
+            #dirname = os.path.basename(root)
             if 'data' in root:
                 print(dir_indent + '[skip data]')
                 continue
