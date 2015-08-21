@@ -336,6 +336,20 @@ def basic_test_11():
         gdaltest.post_reason('fail')
         return 'fail'
 
+    old_use_exceptions_status = gdal.GetUseExceptions()
+    gdal.UseExceptions()
+    got_exception = False
+    try:
+        ds = gdal.OpenEx('non existing')
+    except:
+        got_exception = True
+        pass
+    if old_use_exceptions_status == 0:
+        gdal.DontUseExceptions()
+    if not got_exception:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
     return 'success'
 
 ###############################################################################
