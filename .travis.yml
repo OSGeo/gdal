@@ -84,7 +84,7 @@ install:
   - make
   - cd ../..
   - sudo rm -f /usr/lib/libgdal.so*
-  - sudo make install
+  - env INSTALL_LAYOUT=deb sudo make install
   - sudo ldconfig
   - cd ../autotest/cpp
   - make -j3
