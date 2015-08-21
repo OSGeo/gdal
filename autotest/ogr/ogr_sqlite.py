@@ -712,7 +712,8 @@ def ogr_sqlite_15():
 
     ######################################################
     # Create Layer with SPATIALITE geometry
-    gdaltest.sl_lyr = gdaltest.sl_ds.CreateLayer( 'geomspatialite', options = [ 'FORMAT=SPATIALITE' ] )
+    with gdaltest.error_handler():
+        gdaltest.sl_lyr = gdaltest.sl_ds.CreateLayer( 'geomspatialite', options = [ 'FORMAT=SPATIALITE' ] )
 
     geoms = [ ogr.CreateGeometryFromWkt( 'POINT(0 1)' ),
               ogr.CreateGeometryFromWkt( 'MULTIPOINT EMPTY' ),
@@ -731,10 +732,9 @@ def ogr_sqlite_15():
               ogr.CreateGeometryFromWkt( 'GEOMETRYCOLLECTION (POLYGON ((1 2,3 4)),POINT(0 1))' ) ]
 
     gdaltest.sl_lyr.StartTransaction()
-    
+
     for geom in geoms:
         dst_feat = ogr.Feature( feature_def = gdaltest.sl_lyr.GetLayerDefn() )
-        #print(geom)
         dst_feat.SetGeometry( geom )
         gdaltest.sl_lyr.CreateFeature( dst_feat )
 
@@ -875,7 +875,8 @@ def ogr_sqlite_17():
     ######################################################
     # Create dataset with SPATIALITE geometry
 
-    ds = ogr.GetDriverByName( 'SQLite' ).CreateDataSource( 'tmp/spatialite_test.db', options = ['SPATIALITE=YES'] )
+    with gdaltest.error_handler():
+        ds = ogr.GetDriverByName( 'SQLite' ).CreateDataSource( 'tmp/spatialite_test.db', options = ['SPATIALITE=YES'] )
 
     if gdaltest.has_spatialite == False:
         if ds is not None:
@@ -1353,7 +1354,6 @@ def ogr_sqlite_28():
     shutil.copy('data/poly_spatialite.sqlite', 'tmp/poly_spatialite.sqlite')
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' tmp/poly_spatialite.sqlite')
     os.unlink('tmp/poly_spatialite.sqlite')
-    #print(ret)
 
     if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
         gdaltest.post_reason('failed')
@@ -1372,7 +1372,6 @@ def ogr_sqlite_28():
     shutil.copy('data/poly_spatialite4.sqlite', 'tmp/poly_spatialite4.sqlite')
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' tmp/poly_spatialite4.sqlite')
     os.unlink('tmp/poly_spatialite4.sqlite')
-    #print(ret)
 
     if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
         gdaltest.post_reason('failed')

@@ -1643,9 +1643,10 @@ def is_file_open(filename):
 ###############################################################################
 # error_handler()
 # Allow use of "with" for an ErrorHandler that always pops at the scope close.
+# Defaults to suppressing errors and warnings.
 
 @contextlib.contextmanager
-def error_handler(error_name):
+def error_handler(error_name = 'CPLQuietErrorHandler'):
   handler = gdal.PushErrorHandler(error_name)
   try:
     yield handler
