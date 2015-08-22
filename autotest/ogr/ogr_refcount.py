@@ -105,7 +105,8 @@ def ogr_refcount_3():
 
 def ogr_refcount_4():
 
-    ds = ogr.GetOpenDS( 0 )
+    with gdaltest.error_handler():
+        ds = ogr.GetOpenDS( 0 )
     try:
         if ds._o != gdaltest.ds_2._o:
             gdaltest.post_reason( 'failed to fetch expected datasource' )
@@ -141,4 +142,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-
