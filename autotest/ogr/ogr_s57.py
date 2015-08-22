@@ -183,14 +183,14 @@ def ogr_s57_5():
     if ogrtest.check_feature_geometry( feat, wkt ):
         return 'fail'
 
+    gdaltest.s57_ds = None
+
     return 'success'
 
 ###############################################################################
 # Test reading features from dataset with some double byte attributes. (#1526)
 
 def ogr_s57_6():
-    if gdaltest.s57_ds is None:
-        return 'skip'
 
     ds = ogr.Open( 'data/bug1526.000' )
     
@@ -211,8 +211,6 @@ def ogr_s57_6():
 # Test handling of a dataset with a multilinestring feature (#2147).
 
 def ogr_s57_7():
-    if gdaltest.s57_ds is None:
-        return 'skip'
 
     ds = ogr.Open( 'data/bug2147_3R7D0889.000' )
     
@@ -233,8 +231,6 @@ def ogr_s57_7():
 # Run test_ogrsf
 
 def ogr_s57_8():
-    if gdaltest.s57_ds is None:
-        return 'skip'
 
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is None:
@@ -252,8 +248,6 @@ def ogr_s57_8():
 # Test S57 to S57 conversion
 
 def ogr_s57_9():
-    if gdaltest.s57_ds is None:
-        return 'skip'
 
     try:
         os.unlink('tmp/ogr_s57_9.000')
@@ -289,6 +283,8 @@ def ogr_s57_9():
     if ogr_s57_5() != 'success':
         return 'fail'
 
+    gdaltest.s57_ds = None
+
     try:
         os.unlink('tmp/ogr_s57_9.000')
     except:
@@ -300,8 +296,6 @@ def ogr_s57_9():
 # Test decoding of Dutch inland ENCs (#3881).
 
 def ogr_s57_online_1():
-    if gdaltest.s57_ds is None:
-        return 'skip'
 
     if not gdaltest.download_file('ftp://sdg.ivs90.nl/ENC/1R5MK050.000', '1R5MK050.000'):
         return 'skip'
@@ -332,8 +326,6 @@ def ogr_s57_online_1():
 # Test with ENC 3.0 TDS - tile without updates.
 
 def ogr_s57_online_2():
-    if gdaltest.s57_ds is None:
-        return 'skip'
 
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/s57/enctds/GB5X01SW.000', 'GB5X01SW.000'):
         return 'skip'
@@ -371,8 +363,6 @@ def ogr_s57_online_2():
 # Test with ENC 3.0 TDS - tile with updates.
 
 def ogr_s57_online_3():
-    if gdaltest.s57_ds is None:
-        return 'skip'
 
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/s57/enctds/GB5X01SW.001', 'GB5X01SW.001'):
         return 'skip'
@@ -411,8 +401,6 @@ def ogr_s57_online_3():
 # Test ENC LL2 (#5048)
 
 def ogr_s57_online_4():
-    if gdaltest.s57_ds is None:
-        return 'skip'
 
     if not gdaltest.download_file('http://www1.kaiho.mlit.go.jp/KOKAI/ENC/images/sample/sample.zip', 'sample.zip'):
         return 'skip'
