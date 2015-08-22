@@ -448,6 +448,10 @@ def ogr_elasticsearch_4():
                             "dt_field": { "type": "date"},
                             "date_field": { "type": "date", "format": "yyyy\/MM\/dd"},
                             "time_field": { "type": "date", "format": "HH:mm:ss.SSS"},
+                            "strlist_field": { "type": "string"},
+                            "intlist_field": { "type": "integer"},
+                            "int64list_field": { "type": "long"},
+                            "doublelist_field": { "type": "double"}
                         }
                     }
                 }
@@ -555,7 +559,59 @@ def ogr_elasticsearch_4():
                     "binary_field": "ASNGV4mrze8=",
                     "dt_field": "2015\/08\/12 12:34:56.789",
                     "date_field": "2015\/08\/12",
-                    "time_field": "12:34:56.789"
+                    "time_field": "12:34:56.789",
+                    "strlist_field": ["foo"],
+                    "intlist_field": [1],
+                    "int64list_field": [123456789012],
+                    "doublelist_field": [1.23]
+                }
+            },
+        }]
+    }
+}""")
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/_search/scroll?scroll=1m&size=100&scroll_id=my_scrollid&pretty""", "{}")
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/_search/scroll?scroll_id=my_scrollid&CUSTOMREQUEST=DELETE""", '{}')
+
+    ds = ogr.Open('ES:/vsimem/fakeelasticsearch')
+    lyr = ds.GetLayer(0)
+
+    if lyr.GetLayerDefn().GetFieldCount() != 15:
+        gdaltest.post_reason('fail')
+        print(lyr.GetLayerDefn().GetFieldCount())
+        return 'fail'
+
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100&pretty""", """{
+    "_scroll_id": "my_scrollid",
+    "hits":
+    {
+        "hits":[
+        {
+            "_id": "my_id",
+            "_source": {
+                "type": "Feature",
+                "a_geopoint" : {
+                    "type": "POINT",
+                    "coordinates": [2,49]
+                },
+                "a_geoshape": {
+                    "type": "linestring",
+                    "coordinates": [[2,49],[3,50]]
+                },
+                "properties": {
+                    "str_field": "foo",
+                    "int_field": 1,
+                    "int64_field": 123456789012,
+                    "double_field": 1.23,
+                    "float_field": 3.45,
+                    "boolean_field": true,
+                    "binary_field": "ASNGV4mrze8=",
+                    "dt_field": "2015\/08\/12 12:34:56.789",
+                    "date_field": "2015\/08\/12",
+                    "time_field": "12:34:56.789",
+                    "strlist_field": ["foo"],
+                    "intlist_field": [1],
+                    "int64list_field": [123456789012],
+                    "doublelist_field": [1.23]
                 }
             },
         },
@@ -571,11 +627,6 @@ def ogr_elasticsearch_4():
     }
 }""")
 
-    if lyr.GetLayerDefn().GetFieldCount() != 11:
-        gdaltest.post_reason('fail')
-        print(lyr.GetLayerDefn().GetFieldCount())
-        return 'fail'
-
     lyr.ResetReading()
     f = lyr.GetNextFeature()
     if f is None:
@@ -585,13 +636,16 @@ def ogr_elasticsearch_4():
        f['double_field'] != 1.23 or f['float_field'] != 3.45 or f['boolean_field'] != 1 or \
        f['binary_field'] != '0123465789ABCDEF' or f['dt_field'] != '2015/08/12 12:34:56.789' or \
        f['date_field'] != '2015/08/12' or f['time_field'] != '12:34:56.789' or \
+       f['strlist_field'] != ['foo'] or \
+       f['intlist_field'] != [1] or \
+       f['int64list_field'] != [123456789012] or \
+       f['doublelist_field'] != [1.23] or \
        f['a_geopoint'].ExportToWkt() != 'POINT (2 49)' or \
        f['a_geoshape'].ExportToWkt() != 'LINESTRING (2 49,3 50)':
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
     
-    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/_search/scroll?scroll_id=my_scrollid&CUSTOMREQUEST=DELETE""", '{}')
     lyr.ResetReading()
     lyr.GetNextFeature()
     f = lyr.GetNextFeature()
