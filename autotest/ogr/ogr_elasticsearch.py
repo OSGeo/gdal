@@ -824,7 +824,19 @@ def ogr_elasticsearch_5():
     gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/non_geojson/my_mapping/_mapping&POSTFIELDS={ "my_mapping": { "properties": { "str_field": { "store": "yes", "type": "string" }, "superobject": { "properties": { "subfield": { "store": "yes", "type": "string" }, "subobject": { "properties": { "another_subfield": { "store": "yes", "type": "integer" } } }, "subfield2": { "store": "yes", "type": "string" }, "another_geoshape": { "type": "geo_shape" }, "another_geoshape2": { "type": "geo_shape" }, "another_geoshape3": { "type": "geo_shape" } } }, "another_field": { "store": "yes", "type": "string" }, "a_geoshape": { "type": "geo_shape" }, "a_geopoint": { "type": "geo_shape" } } } }""", '{}')
     gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/non_geojson/my_mapping/&POSTFIELDS={ "superobject": { "another_geoshape3": { "type": "point", "coordinates": [ 3.0, 50.0 ] }, "subfield2": "foo" } }""", "{}")
     lyr.CreateFeature(f)
-    
+
+    ds = gdal.OpenEx("ES:/vsimem/fakeelasticsearch", open_options = ['FEATURE_COUNT_TO_ESTABLISH_FEATURE_DEFN=0'])
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if f['str_field'] != 'foo' or \
+       f['superobject.subfield'] != '5' or \
+       f['a_geopoint'].ExportToWkt() != 'POINT (2 49)' or \
+       f['a_geoshape'].ExportToWkt() != 'LINESTRING (2 49,3 50)' or \
+       f['superobject.another_geoshape'].ExportToWkt() != 'POINT (3 50)':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
     ds = gdal.OpenEx("ES:/vsimem/fakeelasticsearch", open_options = ['FEATURE_COUNT_TO_ESTABLISH_FEATURE_DEFN=0', 'FLATTEN_NESTED_ATTRIBUTES=FALSE'])
     lyr = ds.GetLayer(0)
     index = lyr.GetLayerDefn().GetFieldIndex('another_field')

@@ -184,7 +184,7 @@ void OGRElasticLayer::InitFeatureDefnFromMapping(json_object* poSchema,
                 aosNewPaths.push_back(it.key);
                 
                 CPLString osPrefix;
-                if( osPrefix[0] )
+                if( pszPrefix[0] )
                 {
                     osPrefix = pszPrefix;
                     osPrefix += ".";
