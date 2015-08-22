@@ -896,6 +896,11 @@ def ogr_elasticsearch_5():
                     "superobject": {
                         "properties": {
                             "subfield": { "type": "string" },
+                            "subobject": {
+                                "properties": {
+                                    "subfield": { "type": "string" }
+                                }
+                            },
                             "another_geoshape": { "type": "geo_shape" }
                         }
                     }
@@ -928,6 +933,7 @@ def ogr_elasticsearch_5():
                     "subfield": 5,
                     "subobject":
                     {
+                        "subfield": "foo",
                         "another_subfield": 6
                     },
                     "another_geoshape": {
@@ -961,6 +967,7 @@ def ogr_elasticsearch_5():
     f = lyr.GetNextFeature()
     if f['str_field'] != 'foo' or \
        f['superobject.subfield'] != '5' or \
+       f['superobject.subobject.subfield'] != 'foo' or \
        f['superobject.subobject.another_subfield'] != 6 or \
        f['a_geopoint'].ExportToWkt() != 'POINT (2 49)' or \
        f['another_geopoint'].ExportToWkt() != 'POINT (2.5 49.5)' or \
@@ -972,7 +979,7 @@ def ogr_elasticsearch_5():
         return 'fail'
     
     f['_id'] = 'my_id'
-    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/non_geojson/my_mapping/my_id&POSTFIELDS={ "a_geoshape": { "type": "linestring", "coordinates": [ [ 2.0, 49.0 ], [ 3.0, 50.0 ] ] }, "a_geopoint": { "type": "POINT", "coordinates": [ 2.000000, 49.000000 ] }, "another_geopoint": [ 2.500000, 49.500000 ], "superobject": { "another_geoshape": { "type": "point", "coordinates": [ 3.0, 50.0 ] }, "another_geoshape2": { "type": "point", "coordinates": [ 2.0, 50.0 ] }, "subfield": "5", "subobject": { "another_subfield": 6 } }, "str_field": "foo" }""", "{}")
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/non_geojson/my_mapping/my_id&POSTFIELDS={ "a_geoshape": { "type": "linestring", "coordinates": [ [ 2.0, 49.0 ], [ 3.0, 50.0 ] ] }, "a_geopoint": { "type": "POINT", "coordinates": [ 2.000000, 49.000000 ] }, "another_geopoint": [ 2.500000, 49.500000 ], "superobject": { "another_geoshape": { "type": "point", "coordinates": [ 3.0, 50.0 ] }, "another_geoshape2": { "type": "point", "coordinates": [ 2.0, 50.0 ] }, "subfield": "5", "subobject": { "subfield": "foo", "another_subfield": 6 } }, "str_field": "foo" }""", "{}")
     ret = lyr.SetFeature(f)
     if ret != 0:
         gdaltest.post_reason('failure')
@@ -996,7 +1003,7 @@ def ogr_elasticsearch_5():
     f = ogr.Feature(lyr.GetLayerDefn())
     f['superobject.subfield2'] = 'foo'
     f['superobject.another_geoshape3'] = ogr.CreateGeometryFromWkt('POINT (3 50)')
-    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/non_geojson/my_mapping/_mapping&POSTFIELDS={ "my_mapping": { "properties": { "str_field": { "store": "yes", "type": "string" }, "superobject": { "properties": { "subfield": { "store": "yes", "type": "string" }, "subobject": { "properties": { "another_subfield": { "store": "yes", "type": "integer" } } }, "subfield2": { "store": "yes", "type": "string" }, "another_geoshape": { "type": "geo_shape" }, "another_geoshape2": { "type": "geo_shape" }, "another_geoshape3": { "type": "geo_shape" } } }, "another_field": { "store": "yes", "type": "string" }, "a_geoshape": { "type": "geo_shape" }, "a_geopoint": { "properties": { "type": { "store": "yes", "type": "string" }, "coordinates": { "store": "yes", "type": "geo_point" } } }, "another_geopoint": { "store": "yes", "type": "geo_point" } }, "_meta": { "geomfields": { "superobject.another_geoshape2": "POINT", "superobject.another_geoshape3": "POINT" } } } }""", '{}')
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/non_geojson/my_mapping/_mapping&POSTFIELDS={ "my_mapping": { "properties": { "str_field": { "store": "yes", "type": "string" }, "superobject": { "properties": { "subfield": { "store": "yes", "type": "string" }, "subobject": { "properties": { "subfield": { "store": "yes", "type": "string" }, "another_subfield": { "store": "yes", "type": "integer" } } }, "subfield2": { "store": "yes", "type": "string" }, "another_geoshape": { "type": "geo_shape" }, "another_geoshape2": { "type": "geo_shape" }, "another_geoshape3": { "type": "geo_shape" } } }, "another_field": { "store": "yes", "type": "string" }, "a_geoshape": { "type": "geo_shape" }, "a_geopoint": { "properties": { "type": { "store": "yes", "type": "string" }, "coordinates": { "store": "yes", "type": "geo_point" } } }, "another_geopoint": { "store": "yes", "type": "geo_point" } }, "_meta": { "geomfields": { "superobject.another_geoshape2": "POINT", "superobject.another_geoshape3": "POINT" } } } }""", '{}')
     gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/non_geojson/my_mapping/&POSTFIELDS={ "superobject": { "another_geoshape3": { "type": "point", "coordinates": [ 3.0, 50.0 ] }, "subfield2": "foo" } }""", "{}")
     lyr.CreateFeature(f)
 
@@ -1020,7 +1027,7 @@ def ogr_elasticsearch_5():
         return 'fail'
     f = lyr.GetNextFeature()
     if f['str_field'] != 'foo' or \
-       f['superobject'] != '{ "subfield": 5, "subobject": { "another_subfield": 6 }, "another_geoshape": { "type": "point", "coordinates": [ 3, 50 ] }, "another_geoshape2": { "type": "point", "coordinates": [ 2, 50 ] } }' or \
+       f['superobject'] != '{ "subfield": 5, "subobject": { "subfield": "foo", "another_subfield": 6 }, "another_geoshape": { "type": "point", "coordinates": [ 3, 50 ] }, "another_geoshape2": { "type": "point", "coordinates": [ 2, 50 ] } }' or \
        f['a_geopoint'].ExportToWkt() != 'POINT (2 49)' or \
        f['a_geoshape'].ExportToWkt() != 'LINESTRING (2 49,3 50)':
         gdaltest.post_reason('fail')
