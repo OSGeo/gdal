@@ -1142,6 +1142,7 @@ def ogr_elasticsearch_cleanup():
 
 gdaltest_list = [
     ogr_elasticsearch_init,
+    ogr_elasticsearch_unexisting_server,
     ogr_elasticsearch_1,
     ogr_elasticsearch_2,
     ogr_elasticsearch_3,
