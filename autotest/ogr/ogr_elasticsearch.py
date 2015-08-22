@@ -750,6 +750,34 @@ def ogr_elasticsearch_4():
         lyr.SetSpatialFilter(-1, None)
         lyr.SetSpatialFilter(2, None)
 
+    lyr.SetAttributeFilter("{ 'FOO' : 'BAR' }")
+    lyr.ResetReading()
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100&pretty&POSTFIELDS={ 'FOO' : 'BAR' }""", """{
+    "hits":
+    {
+        "hits":[
+        {
+            "_source": {
+                "type": "Feature",
+                "properties": {
+                    "int_field": 5,
+                }
+            },
+        }
+        ]
+    }
+}""")
+    f = lyr.GetNextFeature()
+    if f['int_field'] != 5:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    lyr.SetAttributeFilter(None)
+
+    sql_lyr = ds.ExecuteSQL("{ 'FOO' : 'BAR' }", dialect = 'ES')
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/_search?scroll=1m&size=100&pretty&POSTFIELDS={ 'FOO' : 'BAR' }""", "{}")
+    sql_lyr.GetLayerDefn()
+    ds.ReleaseResultSet(sql_lyr)
+
     return 'success'
 
 ###############################################################################

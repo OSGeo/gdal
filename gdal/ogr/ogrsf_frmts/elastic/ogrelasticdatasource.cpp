@@ -55,6 +55,11 @@ OGRElasticDataSource::OGRElasticDataSource() {
     nFeatureCountToEstablishFeatureDefn = 100;
     bJSonField = FALSE;
     bFlattenNestedAttributes = TRUE;
+
+    const char* pszWriteMapIn = CPLGetConfigOption("ES_WRITEMAP", NULL);
+    if (pszWriteMapIn != NULL) {
+        pszWriteMap = CPLStrdup(pszWriteMapIn);
+    }
 }
 
 /************************************************************************/
@@ -220,7 +225,7 @@ OGRLayer * OGRElasticDataSource::ICreateLayer(const char * pszLayerName,
             if( fp )
             {
                 GByte* pabyRet = NULL;
-                VSIIngestFile( fp, pszLayerMapping, &pabyRet, NULL, 0);
+                VSIIngestFile( fp, pszLayerMapping, &pabyRet, NULL, -1);
                 if( pabyRet )
                 {
                     osLayerMapping = (char*)pabyRet;
@@ -273,7 +278,7 @@ json_object* OGRElasticDataSource::RunRequest(const char* pszURL, const char* ps
 {
     char** papszOptions = NULL;
     
-    if( pszPostContent )
+    if( pszPostContent && pszPostContent[0] )
     {
         papszOptions = CSLSetNameValue(papszOptions, "POSTFIELDS",
                                        pszPostContent);
@@ -508,13 +513,8 @@ int OGRElasticDataSource::Create(const char *pszFilename,
         osURL = "localhost:9200";
 
     const char* pszMetaFile = CPLGetConfigOption("ES_META", NULL);
-    const char* pszWriteMap = CPLGetConfigOption("ES_WRITEMAP", NULL);;
     this->bOverwrite = CSLTestBoolean(CPLGetConfigOption("ES_OVERWRITE", "0"));
     this->nBulkUpload = (int) CPLAtof(CPLGetConfigOption("ES_BULK", "0"));
-
-    if (pszWriteMap != NULL) {
-        this->pszWriteMap = CPLStrdup(pszWriteMap);
-    }
 
     // Read in the meta file from disk
     if (pszMetaFile != NULL)
@@ -523,7 +523,7 @@ int OGRElasticDataSource::Create(const char *pszFilename,
         if( fp )
         {
             GByte* pabyRet = NULL;
-            VSIIngestFile( fp, pszMetaFile, &pabyRet, NULL, 0);
+            VSIIngestFile( fp, pszMetaFile, &pabyRet, NULL, -1);
             if( pabyRet )
             {
                 this->pszMapping = (char*)pabyRet;
@@ -544,4 +544,62 @@ int OGRElasticDataSource::Create(const char *pszFilename,
     CPLHTTPDestroyResult(psResult);
 
     return bOK;
+}
+
+/************************************************************************/
+/*                             ExecuteSQL()                             */
+/************************************************************************/
+
+OGRLayer* OGRElasticDataSource::ExecuteSQL( const char *pszSQLCommand,
+                                            OGRGeometry *poSpatialFilter,
+                                            const char *pszDialect )
+{
+    for(int i=0; i<nLayers; i++ )
+    {
+        papoLayers[i]->SyncToDisk();
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Special case DELLAYER: command.                                 */
+/* -------------------------------------------------------------------- */
+    if( EQUALN(pszSQLCommand,"DELLAYER:",9) )
+    {
+        const char *pszLayerName = pszSQLCommand + 9;
+
+        while( *pszLayerName == ' ' )
+            pszLayerName++;
+
+        for( int iLayer = 0; iLayer < nLayers; iLayer++ )
+        {
+            if( EQUAL(papoLayers[iLayer]->GetName(), 
+                      pszLayerName ))
+            {
+                DeleteLayer( iLayer );
+                break;
+            }
+        }
+        return NULL;
+    }
+
+    if( pszDialect != NULL && EQUAL(pszDialect, "ES") )
+    {
+        return new OGRElasticLayer("RESULT",
+                                   NULL,
+                                   NULL,
+                                   this, papszOpenOptions,
+                                   pszSQLCommand);
+    }
+    else
+    {
+        return GDALDataset::ExecuteSQL(pszSQLCommand, poSpatialFilter, pszDialect);
+    }
+}
+
+/************************************************************************/
+/*                          ReleaseResultSet()                          */
+/************************************************************************/
+
+void OGRElasticDataSource::ReleaseResultSet( OGRLayer * poLayer )
+{
+    delete poLayer;
 }
