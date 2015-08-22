@@ -510,10 +510,7 @@ def ogr_wkbwkt_test_import_bad_multipoint_wkb():
     import struct
     wkb = struct.pack('B' * 30, 0, 0, 0, 0, 6, 0, 0, 0, 1, 0, 0, 0, 0, 1, 64, 0, 0, 0, 0, 0, 0, 0, 64, 0, 0, 0, 0, 0, 0, 0 )
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    old_val = gdal.GetConfigOption('CPL_DEBUG')
-    gdal.SetConfigOption('CPL_DEBUG', 'ON')
     geom =  ogr.CreateGeometryFromWkb(wkb)
-    gdal.SetConfigOption('CPL_DEBUG', old_val)
     gdal.PopErrorHandler()
     if geom is not None:
         return 'fail'
@@ -663,4 +660,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-
