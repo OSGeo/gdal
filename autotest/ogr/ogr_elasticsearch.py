@@ -161,7 +161,7 @@ def ogr_elasticsearch_1():
         return 'fail'
     
     gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo2&POSTFIELDS=', '{}')
-    gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo2/FeatureCollection/_mapping&POSTFIELDS={ "FeatureCollection": { "properties": { "type": { "store": "yes", "type": "string" }, "properties": { "properties": { "str_field": { "store": "yes", "type": "string" }, "int_field": { "store": "yes", "type": "integer" }, "int64_field": { "store": "yes", "type": "long" }, "real_field": { "store": "yes", "type": "double" }, "real_field_unset": { "store": "yes", "type": "double" }, "boolean_field": { "store": "yes", "type": "boolean" }, "strlist_field": { "store": "yes", "type": "string" }, "intlist_field": { "store": "yes", "type": "integer" }, "int64list_field": { "store": "yes", "type": "long" }, "reallist_field": { "store": "yes", "type": "double" }, "date_field": { "store": "yes", "type": "date", "format": "yyyy\/MM\/dd HH:mm:ss.SSS||yyyy\/MM\/dd" }, "datetime_field": { "store": "yes", "type": "date", "format": "yyyy\/MM\/dd HH:mm:ss.SSS||yyyy\/MM\/dd" }, "time_field": { "store": "yes", "type": "date", "format": "HH:mm:ss.SSS" }, "binary_field": { "store": "yes", "type": "binary" } } }, "geometry": { "properties": { "type": { "store": "yes", "type": "string" }, "coordinates": { "store": "yes", "type": "geo_point" } } } } } }', '{}')
+    gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo2/FeatureCollection/_mapping&POSTFIELDS={ "FeatureCollection": { "properties": { "type": { "store": "yes", "type": "string" }, "properties": { "properties": { "str_field": { "store": "yes", "type": "string" }, "int_field": { "store": "yes", "type": "integer" }, "int64_field": { "store": "yes", "type": "long" }, "real_field": { "store": "yes", "type": "double" }, "real_field_unset": { "store": "yes", "type": "double" }, "boolean_field": { "store": "yes", "type": "boolean" }, "strlist_field": { "store": "yes", "type": "string" }, "intlist_field": { "store": "yes", "type": "integer" }, "int64list_field": { "store": "yes", "type": "long" }, "reallist_field": { "store": "yes", "type": "double" }, "date_field": { "store": "yes", "type": "date", "format": "yyyy\/MM\/dd HH:mm:ss.SSS||yyyy\/MM\/dd" }, "datetime_field": { "store": "yes", "type": "date", "format": "yyyy\/MM\/dd HH:mm:ss.SSS||yyyy\/MM\/dd" }, "time_field": { "store": "yes", "type": "date", "format": "HH:mm:ss.SSS" }, "binary_field": { "store": "yes", "type": "binary" } } }, "geometry": { "properties": { "type": { "store": "yes", "type": "string" }, "coordinates": { "store": "yes", "type": "geo_point" } } } }, "_meta": { "fields": { "strlist_field": "StringList", "intlist_field": "IntegerList", "int64list_field": "Integer64List", "reallist_field": "RealList" } } } }', '{}')
     lyr = ds.CreateLayer('foo2', geom_type = ogr.wkbPoint, options = ['BULK_INSERT=NO'])
     lyr.CreateField(ogr.FieldDefn('str_field', ogr.OFTString))
     lyr.CreateField(ogr.FieldDefn('int_field', ogr.OFTInteger))
@@ -426,6 +426,14 @@ def ogr_elasticsearch_4():
         {
             "FeatureCollection":
             {
+                "_meta": {
+                    "fields": {
+                            "strlist_field": "StringList",
+                            "intlist_field": "IntegerList",
+                            "int64list_field": "Integer64List",
+                            "doublelist_field": "RealList"
+                    }
+                },
                 "properties":
                 {
                     "type": { "type": "string" },
@@ -478,6 +486,13 @@ def ogr_elasticsearch_4():
         print(ds.GetLayerCount())
         return 'fail'
     lyr = ds.GetLayer(0)
+
+    with gdaltest.error_handler():
+        lyr_defn = lyr.GetLayerDefn()
+    idx = lyr_defn.GetFieldIndex("strlist_field")
+    if lyr_defn.GetFieldDefn(idx).GetType() != ogr.OFTStringList:
+        gdaltest.post_reason('fail')
+        return 'fail'
 
     gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?search_type=count&pretty""", """{
 }""")
@@ -981,7 +996,7 @@ def ogr_elasticsearch_5():
     f = ogr.Feature(lyr.GetLayerDefn())
     f['superobject.subfield2'] = 'foo'
     f['superobject.another_geoshape3'] = ogr.CreateGeometryFromWkt('POINT (3 50)')
-    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/non_geojson/my_mapping/_mapping&POSTFIELDS={ "my_mapping": { "properties": { "str_field": { "store": "yes", "type": "string" }, "superobject": { "properties": { "subfield": { "store": "yes", "type": "string" }, "subobject": { "properties": { "another_subfield": { "store": "yes", "type": "integer" } } }, "subfield2": { "store": "yes", "type": "string" }, "another_geoshape": { "type": "geo_shape" }, "another_geoshape2": { "type": "geo_shape" }, "another_geoshape3": { "type": "geo_shape" } } }, "another_field": { "store": "yes", "type": "string" }, "a_geoshape": { "type": "geo_shape" }, "a_geopoint": { "properties": { "type": { "store": "yes", "type": "string" }, "coordinates": { "store": "yes", "type": "geo_point" } } }, "another_geopoint": { "store": "yes", "type": "geo_point" } } } }""", '{}')
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/non_geojson/my_mapping/_mapping&POSTFIELDS={ "my_mapping": { "properties": { "str_field": { "store": "yes", "type": "string" }, "superobject": { "properties": { "subfield": { "store": "yes", "type": "string" }, "subobject": { "properties": { "another_subfield": { "store": "yes", "type": "integer" } } }, "subfield2": { "store": "yes", "type": "string" }, "another_geoshape": { "type": "geo_shape" }, "another_geoshape2": { "type": "geo_shape" }, "another_geoshape3": { "type": "geo_shape" } } }, "another_field": { "store": "yes", "type": "string" }, "a_geoshape": { "type": "geo_shape" }, "a_geopoint": { "properties": { "type": { "store": "yes", "type": "string" }, "coordinates": { "store": "yes", "type": "geo_point" } } }, "another_geopoint": { "store": "yes", "type": "geo_point" } }, "_meta": { "geomfields": { "superobject.another_geoshape2": "POINT", "superobject.another_geoshape3": "POINT" } } } }""", '{}')
     gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/non_geojson/my_mapping/&POSTFIELDS={ "superobject": { "another_geoshape3": { "type": "point", "coordinates": [ 3.0, 50.0 ] }, "subfield2": "foo" } }""", "{}")
     lyr.CreateFeature(f)
 

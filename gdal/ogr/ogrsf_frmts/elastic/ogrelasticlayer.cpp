@@ -240,6 +240,51 @@ void OGRElasticLayer::InitFeatureDefnFromMapping(json_object* poSchema,
 
         CreateFieldFromSchema(it.key, pszPrefix, aosPath, it.val);
     }
+
+    if( aosPath.size() == 0 )
+    {
+        json_object* poMeta = json_object_object_get(poSchema, "_meta");
+        if( poMeta && json_object_get_type(poMeta) == json_type_object )
+        {
+            json_object* poGeomFields = json_object_object_get(poMeta, "geomfields");
+            if( poGeomFields && json_object_get_type(poGeomFields) == json_type_object )
+            {
+                for( int i=0; i< poFeatureDefn->GetGeomFieldCount(); i++ )
+                {
+                    json_object* poObj = json_object_object_get(poGeomFields,
+                            poFeatureDefn->GetGeomFieldDefn(i)->GetNameRef());
+                    if( poObj && json_object_get_type(poObj) == json_type_string )
+                    {
+                        OGRwkbGeometryType eType = OGRFromOGCGeomType(json_object_get_string(poObj));
+                        if( eType != wkbUnknown )
+                            poFeatureDefn->GetGeomFieldDefn(i)->SetType(eType);
+                    }
+                }
+            }
+
+            json_object* poFields = json_object_object_get(poMeta, "fields");
+            if( poFields && json_object_get_type(poFields) == json_type_object )
+            {
+                for( int i=0; i< poFeatureDefn->GetFieldCount(); i++ )
+                {
+                    json_object* poObj = json_object_object_get(poFields,
+                            poFeatureDefn->GetFieldDefn(i)->GetNameRef());
+                    if( poObj && json_object_get_type(poObj) == json_type_string )
+                    {
+                        for(int j=0; j<=OFTMaxType;j++)
+                        {
+                            if( EQUAL(OGR_GetFieldTypeName((OGRFieldType)j),
+                                      json_object_get_string(poObj)) )
+                            {
+                                poFeatureDefn->GetFieldDefn(i)->SetType((OGRFieldType)j);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 /************************************************************************/
@@ -1192,15 +1237,19 @@ CPLString OGRElasticLayer::BuildMap() {
 
     std::map< std::vector<CPLString>, json_object* > oMap;
 
-    json_object *Feature = AppendGroup(map, osMappingName);
+    json_object *poMapping = json_object_new_object();
+    json_object *poMappingProperties = json_object_new_object();
+    json_object_object_add(map, osMappingName, poMapping);
+    json_object_object_add(poMapping, "properties", poMappingProperties);
+
     if( osMappingName == "FeatureCollection" )
     {
-        json_object_object_add(Feature, "type", AddPropertyMap("string"));
+        json_object_object_add(poMappingProperties, "type", AddPropertyMap("string"));
 
         std::vector<CPLString> aosPath;
         aosPath.push_back("properties");
         aosPath.push_back("dummy");
-        GetContainerForMapping(Feature, aosPath, oMap);
+        GetContainerForMapping(poMappingProperties, aosPath, oMap);
     }
 
     /* skip _id field */
@@ -1208,7 +1257,7 @@ CPLString OGRElasticLayer::BuildMap() {
     {
         OGRFieldDefn* poFieldDefn = poFeatureDefn->GetFieldDefn(i);
         
-        json_object* poContainer = GetContainerForMapping(Feature,
+        json_object* poContainer = GetContainerForMapping(poMappingProperties,
                                                           m_aaosFieldPaths[i],
                                                           oMap);
         const char* pszLastComponent = m_aaosFieldPaths[i][(int)m_aaosFieldPaths[i].size()-1];
@@ -1263,7 +1312,7 @@ CPLString OGRElasticLayer::BuildMap() {
             aosPath.resize( (int)aosPath.size() - 1 );
         }
 
-        json_object* poContainer = GetContainerForMapping(Feature,
+        json_object* poContainer = GetContainerForMapping(poMappingProperties,
                                                         aosPath,
                                                         oMap);
         const char* pszLastComponent = aosPath[(int)aosPath.size()-1];
@@ -1300,6 +1349,49 @@ CPLString OGRElasticLayer::BuildMap() {
                 json_object_object_add(geometry, "precision", json_object_new_string(osPrecision.c_str()));
         }
     }
+
+    json_object* poMeta = NULL;
+    json_object* poGeomFields = NULL;
+    json_object* poFields = NULL;
+    for( int i=0; i < poFeatureDefn->GetGeomFieldCount(); i++ )
+    {
+        OGRGeomFieldDefn* poGeomFieldDefn = poFeatureDefn->GetGeomFieldDefn(i);
+        if( !m_abIsGeoPoint[i] &&
+            poGeomFieldDefn->GetType() != wkbUnknown )
+        {
+            if( poMeta == NULL )
+                poMeta = json_object_new_object();
+            if( poGeomFields == NULL )
+            {
+                poGeomFields = json_object_new_object();
+                json_object_object_add(poMeta, "geomfields", poGeomFields);
+            }
+            json_object_object_add(poGeomFields,
+                                   poGeomFieldDefn->GetNameRef(),
+                                   json_object_new_string(OGRToOGCGeomType(poGeomFieldDefn->GetType())));
+        }
+    }
+    for( int i=0; i < poFeatureDefn->GetFieldCount(); i++ )
+    {
+        OGRFieldDefn* poFieldDefn = poFeatureDefn->GetFieldDefn(i);
+        OGRFieldType eType = poFieldDefn->GetType();
+        if( eType == OFTIntegerList || eType == OFTInteger64List ||
+            eType == OFTRealList || eType == OFTStringList )
+        {
+            if( poMeta == NULL )
+                poMeta = json_object_new_object();
+            if( poFields == NULL )
+            {
+                poFields = json_object_new_object();
+                json_object_object_add(poMeta, "fields", poFields);
+            }
+            json_object_object_add(poFields,
+                                   poFieldDefn->GetNameRef(),
+                                   json_object_new_string(OGR_GetFieldTypeName(eType)));
+        }
+    }
+    if( poMeta )
+        json_object_object_add(poMapping, "_meta", poMeta );
 
     CPLString jsonMap(json_object_to_json_string(map));
     json_object_put(map);
