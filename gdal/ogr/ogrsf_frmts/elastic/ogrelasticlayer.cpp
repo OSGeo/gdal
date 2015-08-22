@@ -156,6 +156,7 @@ void OGRElasticLayer::InitFeatureDefnFromMapping(json_object* poSchema,
 
                     std::vector<CPLString> aosNewPaths = aosPath;
                     aosNewPaths.push_back(oFieldDefn.GetNameRef());
+                    aosNewPaths.push_back("coordinates");
                     m_aaosGeomFieldPaths.push_back(aosNewPaths);
                     m_aosMapToGeomFieldIndex[ BuildPathFromArray(aosNewPaths) ] = poFeatureDefn->GetGeomFieldCount();
                     
@@ -217,7 +218,6 @@ void OGRElasticLayer::CreateFieldFromSchema(const char* pszName,
         pszType = json_object_get_string(poType);
     }
 
-    
     CPLString osFieldName;
     if( pszPrefix[0] )
     {
@@ -225,8 +225,8 @@ void OGRElasticLayer::CreateFieldFromSchema(const char* pszName,
         osFieldName += ".";
     }
     osFieldName += pszName;
-    
-    if( EQUAL(pszType, "geo_shape") )
+
+    if( EQUAL(pszType, "geo_point") || EQUAL(pszType, "geo_shape") )
     {
         OGRGeomFieldDefn oFieldDefn(osFieldName, wkbUnknown);
         OGRSpatialReference* poSRS_WGS84 = new OGRSpatialReference();
@@ -239,13 +239,13 @@ void OGRElasticLayer::CreateFieldFromSchema(const char* pszName,
 
         m_aosMapToGeomFieldIndex[ BuildPathFromArray(aosPath) ] = poFeatureDefn->GetGeomFieldCount();
 
-        m_abIsGeoPoint.push_back(FALSE);
+        m_abIsGeoPoint.push_back(EQUAL(pszType, "geo_point"));
 
         poFeatureDefn->AddGeomFieldDefn(&oFieldDefn);
 
         m_apoCT.push_back(NULL);
     }
-    else
+    else if( !( aosPath.size() == 0 && osMappingName == "FeatureCollection" ) )
     {
         OGRFieldType eType = OFTString;
         OGRFieldSubType eSubType = OFSTNone;
@@ -882,14 +882,54 @@ void OGRElasticLayer::BuildFeature(OGRFeature* poFeature, json_object* poSource,
         }
         else if( ( oIter = m_aosMapToGeomFieldIndex.find(osCurPath) ) != m_aosMapToGeomFieldIndex.end() )
         {
-            if( json_object_get_type(it.val) == json_type_object )
+            OGRGeometry* poGeom = NULL;
+            if( m_abIsGeoPoint[oIter->second] )
             {
-                OGRGeometry* poGeom = OGRGeoJSONReadGeometry( it.val );
-                if( poGeom )
+                json_type eJSONType = json_object_get_type(it.val);
+                if( eJSONType == json_type_array &&
+                    json_object_array_length(it.val) == 2 )
                 {
-                    poGeom->assignSpatialReference( poFeatureDefn->GetGeomFieldDefn(oIter->second)->GetSpatialRef() );
-                    poFeature->SetGeomFieldDirectly( oIter->second, poGeom );
+                    json_object* poX = json_object_array_get_idx(it.val, 0);
+                    json_object* poY = json_object_array_get_idx(it.val, 1);
+                    if( poX != NULL && poY != NULL )
+                    {
+                        poGeom = new OGRPoint( json_object_get_double(poX),
+                                               json_object_get_double(poY) );
+                    }
                 }
+                else if( eJSONType == json_type_object )
+                {
+                    json_object* poX = json_object_object_get(it.val, "lon");
+                    json_object* poY = json_object_object_get(it.val, "lat");
+                    if( poX != NULL && poY != NULL )
+                    {
+                        poGeom = new OGRPoint( json_object_get_double(poX),
+                                               json_object_get_double(poY) );
+                    }
+                }
+                else if( eJSONType == json_type_string )
+                {
+                    const char* pszLatLon = json_object_get_string(it.val);
+                    char** papszTokens = CSLTokenizeString2(pszLatLon, ",", 0);
+                    if( CSLCount(papszTokens) == 2 )
+                    {
+                        poGeom = new OGRPoint( CPLAtof(papszTokens[1]),
+                                               CPLAtof(papszTokens[0]) );
+                    }
+                    // TODO decode if stored as a geohash string ?
+
+                    CSLDestroy(papszTokens);
+                }
+            }
+            else if( json_object_get_type(it.val) == json_type_object )
+            {
+                poGeom = OGRGeoJSONReadGeometry( it.val );
+            }
+
+            if( poGeom != NULL )
+            {
+                poGeom->assignSpatialReference( poFeatureDefn->GetGeomFieldDefn(oIter->second)->GetSpatialRef() );
+                poFeature->SetGeomFieldDirectly( oIter->second, poGeom );
             }
         }
         else if( json_object_get_type(it.val) == json_type_object &&
@@ -897,6 +937,14 @@ void OGRElasticLayer::BuildFeature(OGRFeature* poFeature, json_object* poSource,
                   (osPath.size() == 0 && osMappingName == "FeatureCollection" && strcmp(it.key, "properties") == 0)) )
         {
             BuildFeature(poFeature, it.val, osCurPath);
+        }
+        else if( json_object_get_type(it.val) == json_type_object && 
+                 !poDS->bFlattenNestedAttributes )
+        {
+            if( ( oIter = m_aosMapToGeomFieldIndex.find(osCurPath + ".coordinates") ) != m_aosMapToGeomFieldIndex.end() )
+            {
+                BuildFeature(poFeature, it.val, osCurPath);
+            }
         }
     }
 }
@@ -940,20 +988,20 @@ static json_object* GetContainerForMapping( json_object* poContainer,
     for(int j=0;j<(int)aosPath.size()-1;j++)
     {
         aosSubPath.push_back(aosPath[j]);
-         std::map< std::vector<CPLString>, json_object* >::iterator oIter = oMap.find(aosSubPath);
-         if( oIter == oMap.end() )
-         {
-             json_object* poNewContainer = json_object_new_object();
-             json_object* poProperties = json_object_new_object();
-             json_object_object_add(poContainer, aosPath[j], poNewContainer);
-             json_object_object_add(poNewContainer, "properties", poProperties);
-             oMap[aosSubPath] = poProperties;
-             poContainer = poProperties;
-         }
-         else
-         {
-             poContainer = oIter->second;
-         }
+        std::map< std::vector<CPLString>, json_object* >::iterator oIter = oMap.find(aosSubPath);
+        if( oIter == oMap.end() )
+        {
+            json_object* poNewContainer = json_object_new_object();
+            json_object* poProperties = json_object_new_object();
+            json_object_object_add(poContainer, aosPath[j], poNewContainer);
+            json_object_object_add(poNewContainer, "properties", poProperties);
+            oMap[aosSubPath] = poProperties;
+            poContainer = poProperties;
+        }
+        else
+        {
+            poContainer = oIter->second;
+        }
     }
     return poContainer;
 }
@@ -966,23 +1014,25 @@ static json_object* GetContainerForMapping( json_object* poContainer,
 CPLString OGRElasticLayer::BuildMap() {
     json_object *map = json_object_new_object();
 
+    std::map< std::vector<CPLString>, json_object* > oMap;
+
     json_object *Feature = AppendGroup(map, osMappingName);
-    json_object *top_properties = Feature;
     if( osMappingName == "FeatureCollection" )
     {
         json_object_object_add(Feature, "type", AddPropertyMap("string"));
-        top_properties = json_object_new_object();
-        json_object_object_add(Feature, "properties", top_properties);
+
+        std::vector<CPLString> aosPath;
+        aosPath.push_back("properties");
+        aosPath.push_back("dummy");
+        GetContainerForMapping(Feature, aosPath, oMap);
     }
-    
-    std::map< std::vector<CPLString>, json_object* > oMap;
 
     /* skip _id field */
     for(int i=1;i<poFeatureDefn->GetFieldCount();i++)
     {
         OGRFieldDefn* poFieldDefn = poFeatureDefn->GetFieldDefn(i);
         
-        json_object* poContainer = GetContainerForMapping(top_properties,
+        json_object* poContainer = GetContainerForMapping(Feature,
                                                           m_aaosFieldPaths[i],
                                                           oMap);
         const char* pszLastComponent = m_aaosFieldPaths[i][(int)m_aaosFieldPaths[i].size()-1];
@@ -1025,45 +1075,50 @@ CPLString OGRElasticLayer::BuildMap() {
         }
     }
 
-    if( poFeatureDefn->GetGeomFieldCount() == 1 &&
-        (eGeomTypeMapping == ES_GEOMTYPE_GEO_POINT ||
-         (eGeomTypeMapping == ES_GEOMTYPE_AUTO && wkbFlatten(poFeatureDefn->GetGeomType()) == wkbPoint)) )
+    for(int i=0;i<poFeatureDefn->GetGeomFieldCount();i++)
     {
-        json_object* poContainer = GetContainerForMapping(Feature,
-                                                      m_aaosGeomFieldPaths[0],
-                                                      oMap);
-        const char* pszLastComponent = m_aaosGeomFieldPaths[0][(int)m_aaosGeomFieldPaths[0].size()-1];
-
-        json_object *geometry = AppendGroup(poContainer, pszLastComponent);
-        json_object_object_add(geometry, "type", AddPropertyMap("string"));
-        json_object* geo_point = AddPropertyMap("geo_point");
-        if( osPrecision.size() )
+        std::vector<CPLString> aosPath = m_aaosGeomFieldPaths[i];
+        int bAddGeoJSONType = FALSE;
+        if( m_abIsGeoPoint[i] &&
+            aosPath.size() >= 2 &&
+            aosPath[(int)aosPath.size()-1] == "coordinates" )
         {
-            json_object* field_data = json_object_new_object();
-            json_object_object_add(geo_point, "fielddata", field_data);
-            json_object_object_add(field_data, "format", json_object_new_string("compressed"));
-            json_object_object_add(field_data, "precision", json_object_new_string(osPrecision.c_str()));
+            bAddGeoJSONType = TRUE;
+            aosPath.resize( (int)aosPath.size() - 1 );
         }
-        json_object_object_add(geometry, "coordinates", geo_point);
-    }
-    else if( poFeatureDefn->GetGeomFieldCount() > 0 &&
-        (eGeomTypeMapping == ES_GEOMTYPE_GEO_SHAPE ||
-         poFeatureDefn->GetGeomFieldCount() > 1 ||
-         (eGeomTypeMapping == ES_GEOMTYPE_AUTO && wkbFlatten(poFeatureDefn->GetGeomType()) != wkbPoint)) )
-    {
-        for(int i=0;i<poFeatureDefn->GetGeomFieldCount();i++)
-        {
-            m_abIsGeoPoint[i] = TRUE;
-            
-            json_object* poContainer = GetContainerForMapping(Feature,
-                                                          m_aaosGeomFieldPaths[i],
-                                                          oMap);
-            const char* pszLastComponent = m_aaosGeomFieldPaths[i][(int)m_aaosGeomFieldPaths[i].size()-1];
 
+        json_object* poContainer = GetContainerForMapping(Feature,
+                                                        aosPath,
+                                                        oMap);
+        const char* pszLastComponent = aosPath[(int)aosPath.size()-1];
+
+        if( m_abIsGeoPoint[i] )
+        {
+            json_object* geo_point = AddPropertyMap("geo_point");
+            if( bAddGeoJSONType )
+            {
+                json_object *geometry = AppendGroup(poContainer, pszLastComponent);
+                json_object_object_add(geometry, "type", AddPropertyMap("string"));
+                json_object_object_add(geometry, "coordinates", geo_point);
+            }
+            else
+            {
+                json_object_object_add(poContainer, pszLastComponent, geo_point);
+            }
+            if( osPrecision.size() )
+            {
+                json_object* field_data = json_object_new_object();
+                json_object_object_add(geo_point, "fielddata", field_data);
+                json_object_object_add(field_data, "format", json_object_new_string("compressed"));
+                json_object_object_add(field_data, "precision", json_object_new_string(osPrecision.c_str()));
+            }
+        }
+        else
+        {
             json_object *geometry = json_object_new_object();
             json_object_object_add(poContainer,
-                                   pszLastComponent,
-                                   geometry);
+                                pszLastComponent,
+                                geometry);
             json_object_object_add(geometry, "type", json_object_new_string("geo_shape"));
             if( osPrecision.size() )
                 json_object_object_add(geometry, "precision", json_object_new_string(osPrecision.c_str()));
@@ -1321,47 +1376,51 @@ CPLString OGRElasticLayer::BuildJSonFromFeature(OGRFeature *poFeature)
         json_object *fieldObject = json_object_new_object();
 
         std::map< std::vector<CPLString>, json_object* > oMap;
-        
-        OGRGeometry* poGeom = poFeature->GetGeometryRef();
-        if( poGeom &&
-            poFeatureDefn->GetGeomFieldCount() == 1 &&
-            (eGeomTypeMapping == ES_GEOMTYPE_GEO_POINT ||
-             (eGeomTypeMapping == ES_GEOMTYPE_AUTO && wkbFlatten(poFeatureDefn->GetGeomType()) == wkbPoint)) )
+
+        for(int i=0;i<poFeature->GetGeomFieldCount();i++)
         {
-            // Get the center point of the geometry
-            OGREnvelope env;
-            poGeom->getEnvelope(&env);
-
-            json_object* poContainer = GetContainerForFeature(fieldObject, m_aaosGeomFieldPaths[0], oMap);
-            const char* pszLastComponent = m_aaosGeomFieldPaths[0][(int)m_aaosGeomFieldPaths[0].size()-1];
-
-            json_object *geometry = json_object_new_object();
-            json_object *coordinates = json_object_new_array();
-
-            json_object_object_add(poContainer, pszLastComponent, geometry);
-            json_object_object_add(geometry, "type", json_object_new_string("POINT"));
-            json_object_object_add(geometry, "coordinates", coordinates);
-            json_object_array_add(coordinates, json_object_new_double((env.MaxX + env.MinX)*0.5));
-            json_object_array_add(coordinates, json_object_new_double((env.MaxY + env.MinY)*0.5));
-
-            json_object_object_add(poContainer, "type", json_object_new_string("Feature"));
-        }
-        else if( poFeatureDefn->GetGeomFieldCount() > 0 &&
-                (eGeomTypeMapping == ES_GEOMTYPE_GEO_SHAPE ||
-                 poFeatureDefn->GetGeomFieldCount() > 1 ||
-                 (eGeomTypeMapping == ES_GEOMTYPE_AUTO && wkbFlatten(poFeatureDefn->GetGeomType()) != wkbPoint)) )
-        {
-            for(int i=0;i<poFeature->GetGeomFieldCount();i++)
+            OGRGeometry* poGeom = poFeature->GetGeomFieldRef(i);
+            if( poGeom != NULL )
             {
-                poGeom = poFeature->GetGeomFieldRef(i);
-                if( poGeom != NULL )
+                if( m_apoCT[i] != NULL )
+                    poGeom->transform( m_apoCT[i] );
+
+                std::vector<CPLString> aosPath = m_aaosGeomFieldPaths[i];
+                int bAddGeoJSONType = FALSE;
+                if( m_abIsGeoPoint[i] &&
+                    aosPath.size() >= 2 &&
+                    aosPath[(int)aosPath.size()-1] == "coordinates" )
                 {
-                    if( m_apoCT[i] != NULL )
-                        poGeom->transform( m_apoCT[i] );
+                    bAddGeoJSONType = TRUE;
+                    aosPath.resize( (int)aosPath.size() - 1 );
+                }
 
-                    json_object* poContainer = GetContainerForFeature(fieldObject, m_aaosGeomFieldPaths[i], oMap);
-                    const char* pszLastComponent = m_aaosGeomFieldPaths[i][(int)m_aaosGeomFieldPaths[i].size()-1];
+                json_object* poContainer = GetContainerForFeature(fieldObject, aosPath, oMap);
+                const char* pszLastComponent = aosPath[(int)aosPath.size()-1];
 
+                if( m_abIsGeoPoint[i] )
+                {
+                    OGREnvelope env;
+                    poGeom->getEnvelope(&env);
+
+                    json_object *coordinates = json_object_new_array();
+                    json_object_array_add(coordinates, json_object_new_double((env.MaxX + env.MinX)*0.5));
+                    json_object_array_add(coordinates, json_object_new_double((env.MaxY + env.MinY)*0.5));
+
+                    if( bAddGeoJSONType )
+                    {
+                        json_object *geometry = json_object_new_object();
+                        json_object_object_add(poContainer, pszLastComponent, geometry);
+                        json_object_object_add(geometry, "type", json_object_new_string("POINT"));
+                        json_object_object_add(geometry, "coordinates", coordinates);
+                    }
+                    else
+                    {
+                        json_object_object_add(poContainer, pszLastComponent, coordinates);
+                    }
+                }
+                else
+                {
                     json_object *geometry = json_object_new_object();
                     json_object_object_add(poContainer, pszLastComponent, geometry);
                     BuildGeoJSONGeometry(geometry, poGeom);
@@ -1371,6 +1430,12 @@ CPLString OGRElasticLayer::BuildJSonFromFeature(OGRFeature *poFeature)
 
         if( osMappingName == "FeatureCollection" )
         {
+            if( poFeature->GetGeomFieldCount() == 1 &&
+                poFeature->GetGeomFieldRef(0) )
+            {
+                json_object_object_add(fieldObject, "type", json_object_new_string("Feature"));
+            }
+
             std::vector<CPLString> aosPath;
             aosPath.push_back("properties");
             aosPath.push_back("dummy");
@@ -1652,7 +1717,7 @@ OGRErr OGRElasticLayer::CreateGeomField( OGRGeomFieldDefn *poFieldIn, CPL_UNUSED
     }
     
     if( eGeomTypeMapping == ES_GEOMTYPE_GEO_POINT &&
-        poFeatureDefn->GetGeomFieldCount() > 1 )
+        poFeatureDefn->GetGeomFieldCount() > 0 )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "ES_GEOM_TYPE=GEO_POINT only supported for single geometry field");
@@ -1673,22 +1738,25 @@ OGRErr OGRElasticLayer::CreateGeomField( OGRGeomFieldDefn *poFieldIn, CPL_UNUSED
     }
     else
         aosPath.push_back(oFieldDefn.GetNameRef());
-    
-    m_aaosGeomFieldPaths.push_back(aosPath);
-    m_aosMapToGeomFieldIndex[ BuildPathFromArray(aosPath) ] = poFeatureDefn->GetGeomFieldCount();
 
-    poFeatureDefn->AddGeomFieldDefn( &oFieldDefn );
-    
     if( eGeomTypeMapping == ES_GEOMTYPE_GEO_SHAPE ||
         (eGeomTypeMapping == ES_GEOMTYPE_AUTO &&
-         poFieldIn->GetType() != wkbPoint) )
-    {
-        m_abIsGeoPoint.push_back(TRUE);
-    }
-    else
+         poFieldIn->GetType() != wkbPoint) ||
+        poFeatureDefn->GetGeomFieldCount() > 0 )
     {
         m_abIsGeoPoint.push_back(FALSE);
     }
+    else
+    {
+        m_abIsGeoPoint.push_back(TRUE);
+        aosPath.push_back("coordinates");
+    }
+    
+    m_aaosGeomFieldPaths.push_back(aosPath);
+    
+    m_aosMapToGeomFieldIndex[ BuildPathFromArray(aosPath) ] = poFeatureDefn->GetGeomFieldCount();
+
+    poFeatureDefn->AddGeomFieldDefn( &oFieldDefn );
 
     OGRCoordinateTransformation* poCT = NULL;
     if( oFieldDefn.GetSpatialRef() != NULL )
@@ -1849,8 +1917,6 @@ void OGRElasticLayer::SetSpatialFilter( int iGeomField, OGRGeometry * poGeomIn )
         json_object_object_add(m_poSpatialFilter, "geo_bounding_box", geo_bounding_box);
         
         CPLString osPath = BuildPathFromArray(m_aaosGeomFieldPaths[iGeomField]);
-        osPath += ".";
-        osPath += "coordinates";
 
         json_object* field = json_object_new_object();
         json_object_object_add(geo_bounding_box, osPath.c_str(), field);
