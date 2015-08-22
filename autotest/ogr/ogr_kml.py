@@ -802,12 +802,14 @@ def ogr_kml_two_layers():
 #  Cleanup
 
 def ogr_kml_cleanup():
+
+    os.remove('tmp/kml.kml')
+
     if not ogrtest.have_read_kml:
         return 'skip'
 
     if ogrtest.kml_ds is not None:
         ogrtest.kml_ds = None
-    os.remove('tmp/kml.kml')
 
     # Re-register LIBKML driver if necessary
     if ogrtest.libkml_drv is not None:
