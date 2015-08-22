@@ -79,23 +79,12 @@ OGRElasticLayer::OGRElasticLayer(const char* pszLayerName,
     poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType(wkbNone);
     
-    std::vector<CPLString> aosPath;
-    aosPath.push_back("_id");
-    AddFieldDefn("_id", OFTString, aosPath);
+    AddFieldDefn("_id", OFTString, std::vector<CPLString>());
     
     if( osESSearch.size() )
     {
-        {
-            std::vector<CPLString> aosPath;
-            aosPath.push_back("_index");
-            AddFieldDefn("_index", OFTString, aosPath);
-        }
-
-        {
-            std::vector<CPLString> aosPath;
-            aosPath.push_back("_type");
-            AddFieldDefn("_type", OFTString, aosPath);
-        }
+        AddFieldDefn("_index", OFTString, std::vector<CPLString>());
+        AddFieldDefn("_type", OFTString, std::vector<CPLString>());
     }
     
     bFeatureDefnFinalized = FALSE;
@@ -509,7 +498,6 @@ void OGRElasticLayer::FinalizeFeatureDefn(int bReadFeatures)
 
     if( poDS->bJSonField )
     {
-        std::vector<CPLString> aosPath;
         AddFieldDefn("_json", OFTString, std::vector<CPLString>() );
     }
 }
