@@ -774,8 +774,42 @@ def ogr_elasticsearch_4():
     lyr.SetAttributeFilter(None)
 
     sql_lyr = ds.ExecuteSQL("{ 'FOO' : 'BAR' }", dialect = 'ES')
-    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/_search?scroll=1m&size=100&pretty&POSTFIELDS={ 'FOO' : 'BAR' }""", "{}")
-    sql_lyr.GetLayerDefn()
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/_search?scroll=1m&size=100&pretty&POSTFIELDS={ 'FOO' : 'BAR' }""", """{
+    "hits":
+    {
+        "hits":[
+        {
+            "_index": "some_layer",
+            "_type": "some_type",
+            "_source": {
+                "some_field": 5
+            },
+        }
+        ]
+    }
+}""")
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/some_layer/_mapping/some_type?pretty""", """
+{
+    "some_layer":
+    {
+        "mappings":
+        {
+            "some_type":
+            {
+                "properties":
+                {
+                    "some_field": { "type": "string"}
+                }
+            }
+        }
+    }
+}
+""")
+    f = sql_lyr.GetNextFeature()
+    if f['some_field'] != '5':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
     ds.ReleaseResultSet(sql_lyr)
 
     return 'success'
