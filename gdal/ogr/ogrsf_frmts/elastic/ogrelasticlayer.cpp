@@ -303,9 +303,9 @@ void OGRElasticLayer::CreateFieldFromSchema(const char* pszName,
             if( poFormat && json_object_get_type(poFormat) == json_type_string )
             {
                 const char* pszFormat = json_object_get_string(poFormat);
-                if( EQUAL(pszFormat, "HH:mm:ss.SSS") )
+                if( EQUAL(pszFormat, "HH:mm:ss.SSS") || EQUAL(pszFormat, "time") )
                     eType = OFTTime;
-                else if( EQUAL(pszFormat, "yyyy/MM/dd") )
+                else if( EQUAL(pszFormat, "yyyy/MM/dd") || EQUAL(pszFormat, "date") )
                     eType = OFTDate;
             }
         }
@@ -601,19 +601,32 @@ void OGRElasticLayer::AddOrUpdateField(const char* pszAttrName,
 
     OGRFieldSubType eNewSubType;
     OGRFieldType eNewType = GeoJSONPropertyToFieldType( poObj, eNewSubType );
-    if( eNewType == OFTString )
+
+    int nIndex = poFeatureDefn->GetFieldIndex(pszAttrName);
+    OGRFieldDefn* poFDefn = NULL;
+    if( nIndex >= 0 )
+        poFDefn = poFeatureDefn->GetFieldDefn(nIndex);
+    if( (poFDefn == NULL && eNewType == OFTString) ||
+        (poFDefn != NULL &&
+         (poFDefn->GetType() == OFTDate || poFDefn->GetType() == OFTDateTime || poFDefn->GetType() == OFTTime) ) )
     {
         int nYear, nMonth, nDay, nHour, nMinute;
         float fSecond;
         if( sscanf(json_object_get_string(poObj),
-                    "%04d/%02d/%02d %02d:%02d",
-                    &nYear, &nMonth, &nDay, &nHour, &nMinute) == 5 )
+                   "%04d/%02d/%02d %02d:%02d",
+                   &nYear, &nMonth, &nDay, &nHour, &nMinute) == 5 ||
+            sscanf(json_object_get_string(poObj),
+                   "%04d-%02d-%02dT%02d:%02d",
+                   &nYear, &nMonth, &nDay, &nHour, &nMinute) == 5 )
         {
             eNewType = OFTDateTime;
         }
         else if( sscanf(json_object_get_string(poObj),
                     "%04d/%02d/%02d",
-                    &nYear, &nMonth, &nDay) == 3 )
+                    &nYear, &nMonth, &nDay) == 3 ||
+                 sscanf(json_object_get_string(poObj),
+                    "%04d-%02d-%02d",
+                    &nYear, &nMonth, &nDay) == 3)
         {
             eNewType = OFTDate;
         }
@@ -624,16 +637,14 @@ void OGRElasticLayer::AddOrUpdateField(const char* pszAttrName,
             eNewType = OFTTime;
         }
     }
-    
-    int nIndex = poFeatureDefn->GetFieldIndex(pszAttrName);
-    if( nIndex < 0 )
+
+    if( poFDefn == NULL )
     {
         aosPath.push_back(pszKey);
         AddFieldDefn( pszAttrName, eNewType, aosPath, eNewSubType );
     }
     else
     {
-        OGRFieldDefn* poFDefn = poFeatureDefn->GetFieldDefn(nIndex);
         OGRUpdateFieldType(poFDefn, eNewType, eNewSubType);
     }
 }
