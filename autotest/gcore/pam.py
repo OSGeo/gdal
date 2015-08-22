@@ -179,13 +179,7 @@ def pam_4():
 def pam_5():
 
     ds = gdal.Open( 'data/sasha.tif' )
-
-    try:
-        filelist = ds.GetFileList()
-    except:
-        # old bindings?
-        return 'skip'
-
+    filelist = ds.GetFileList()
     ds = None
 
     if len(filelist) != 1:
@@ -426,18 +420,14 @@ def pam_11():
     # at the beginning of the process
     import test_py_scripts
     ret = test_py_scripts.run_py_script_as_external_script('.', 'pamproxydb', '-test1')
-    #print(ret)
     if ret.find('success') == -1:
-        gdaltest.post_reason('pamproxydb.py -test1 failed')
-        print(ret)
+        gdaltest.post_reason('pamproxydb.py -test1 failed %s' % ret)
         return 'fail'
 
     # Test loading an existing proxydb
     ret = test_py_scripts.run_py_script_as_external_script('.', 'pamproxydb', '-test2')
-    #print(ret)
     if ret.find('success') == -1:
-        gdaltest.post_reason('pamproxydb.py -test2 failed')
-        print(ret)
+        gdaltest.post_reason('pamproxydb.py -test2 failed %s' % ret)
         return 'fail'
 
     return 'success'
@@ -572,4 +562,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-
