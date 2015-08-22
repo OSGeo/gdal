@@ -221,7 +221,7 @@ def ogr_interlis1_5():
     driver = ogr.GetDriverByName( 'Interlis 1' )
     outfile = "tmp/interlis1_5.itf"
 
-    with gdaltest.error_handler('CPLQuietErrorHandler'):
+    with gdaltest.error_handler():
         dst_ds = driver.CreateDataSource(outfile)
 
     dst_lyr = dst_ds.CreateLayer( 'FormatTests__FormatTable' )

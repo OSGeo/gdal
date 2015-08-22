@@ -249,7 +249,7 @@ def ogr_feature_cp_real():
     src_feature.field_reallist = [17.5]
 
     dst_feature = mk_dst_feature( src_feature, ogr.OFTReal )
-    with gdaltest.error_handler('CPLQuietErrorHandler'):
+    with gdaltest.error_handler():
         dst_feature.SetFrom( src_feature )
 
     if not check( dst_feature, 'field_integer', 17.0 ):

@@ -180,7 +180,7 @@ def ogr_jml_2():
     lyr.CreateField(ogr.FieldDefn('datetime', ogr.OFTDateTime))
     lyr.CreateField(ogr.FieldDefn('datetime2', ogr.OFTDateTime))
 
-    with gdaltest.error_handler('CPLQuietErrorHandler'):
+    with gdaltest.error_handler():
         lyr.CreateField(ogr.FieldDefn('time_as_str', ogr.OFTTime))
 
     if lyr.TestCapability(ogr.OLCCreateField) != 1:

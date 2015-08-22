@@ -787,7 +787,7 @@ def ogr_csv_19():
     lyr = gdaltest.csv_ds.GetLayerByName( 'testnull' )
 
     lyr.ResetReading()
-    with gdaltest.error_handler('CPLQuietErrorHandler'):
+    with gdaltest.error_handler():
         if not ogrtest.check_features_against_list( lyr,'INTCOL',[12] ):
             return 'fail'
     lyr.ResetReading()

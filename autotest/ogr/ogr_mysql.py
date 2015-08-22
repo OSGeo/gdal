@@ -953,7 +953,7 @@ def ogr_mysql_cleanup():
     gdaltest.mysql_ds.ExecuteSQL( 'DROP TABLE tpoly' )
     gdaltest.mysql_ds.ExecuteSQL( 'DROP TABLE `select`' )
     gdaltest.mysql_ds.ExecuteSQL( 'DROP TABLE tablewithspatialindex' )
-    with gdaltest.error_handler('CPLQuietErrorHandler'):
+    with gdaltest.error_handler():
         gdaltest.mysql_ds.ExecuteSQL( 'DROP TABLE tablewithoutspatialindex' )
     gdaltest.mysql_ds.ExecuteSQL( 'DROP TABLE geometry_columns' )
     gdaltest.mysql_ds.ExecuteSQL( 'DROP TABLE spatial_ref_sys' )

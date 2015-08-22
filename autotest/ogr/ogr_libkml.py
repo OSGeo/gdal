@@ -850,7 +850,7 @@ def ogr_libkml_camera():
     dst_feat.SetField("heading", 70)
     dst_feat.SetField("tilt", 75)
     dst_feat.SetField("roll", 10)
-    with gdaltest.error_handler('CPLQuietErrorHandler'):
+    with gdaltest.error_handler():
         lyr.CreateFeature( dst_feat )
 
     dst_feat = ogr.Feature( lyr.GetLayerDefn() )
@@ -996,7 +996,7 @@ def ogr_libkml_write_multigeometry():
     feat = ogr.Feature(lyr.GetLayerDefn())
     # Warning emitted per ATC 66
     feat.SetGeometry(ogr.CreateGeometryFromWkt('MULTIPOINT EMPTY'))
-    with gdaltest.error_handler('CPLQuietErrorHandler'):
+    with gdaltest.error_handler():
         lyr.CreateFeature(feat)
 
     ds = None
@@ -1589,7 +1589,7 @@ def ogr_libkml_write_update():
                                                             options = [ 'UPDATE_TARGETHREF=http://foo'] )
         lyr = ds.CreateLayer('layer_to_edit')
         feat = ogr.Feature(lyr.GetLayerDefn())
-        with gdaltest.error_handler('CPLQuietErrorHandler'):
+        with gdaltest.error_handler():
             lyr.CreateFeature(feat)
         feat.SetFID(10)
         lyr.CreateFeature(feat)
@@ -1702,7 +1702,7 @@ def ogr_libkml_write_liststyle():
     ds.CreateLayer('test_radioFolder', options = [ 'LISTSTYLE_TYPE=radioFolder'] )
     ds.CreateLayer('test_checkOffOnly', options = [ 'LISTSTYLE_TYPE=checkOffOnly'] )
     ds.CreateLayer('test_checkHideChildren', options = [ 'LISTSTYLE_TYPE=checkHideChildren'] )
-    with gdaltest.error_handler('CPLQuietErrorHandler'):
+    with gdaltest.error_handler():
         ds.CreateLayer('test_error', options = [ 'LISTSTYLE_TYPE=error'] )
         ds = None
 
