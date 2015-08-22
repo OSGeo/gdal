@@ -362,10 +362,22 @@ int OGRElasticDataSource::Open(GDALOpenInfo* poOpenInfo)
     
     
     CPLHTTPResult* psResult = CPLHTTPFetch((osURL + "/_cat/indices?h=i").c_str(), NULL);
-    if( psResult == NULL || psResult->pabyData == NULL || psResult->pszErrBuf != NULL )
+    if( psResult == NULL || psResult->pszErrBuf != NULL )
     {
         CPLHTTPDestroyResult(psResult);
         return FALSE;
+    }
+
+    // If no indices, fallback to querying _status
+    if( psResult->pabyData == NULL )
+    {
+        CPLHTTPDestroyResult(psResult);
+
+        json_object* poRes = RunRequest((osURL + "/_status").c_str());
+        if( poRes == NULL )
+            return FALSE;
+        json_object_put(poRes);
+        return TRUE;
     }
 
     char* pszCur = (char*)psResult->pabyData;
