@@ -59,6 +59,7 @@ class OGRElasticLayer : public OGRLayer {
     int bMappingWritten;
     CPLString osIndexName;
     CPLString osMappingName;
+    CPLString osESSearch;
     int nBulkUpload;
     CPLString osPrecision;
     
@@ -79,6 +80,7 @@ class OGRElasticLayer : public OGRLayer {
     int bEOF;
     
     json_object* m_poSpatialFilter;
+    CPLString m_osJSONFilter;
     
     int bIgnoreSourceID;
     
@@ -103,15 +105,24 @@ class OGRElasticLayer : public OGRLayer {
 
     CPLString BuildJSonFromFeature(OGRFeature *poFeature);
     
-    static CPLString BuildPathFromArray(const std::vector<CPLString> aosPath);
+    static CPLString BuildPathFromArray(const std::vector<CPLString>& aosPath);
     
+    void AddFieldDefn( const char* pszName,
+                       OGRFieldType eType,
+                       const std::vector<CPLString>& aosPath,
+                       OGRFieldSubType eSubType = OFSTNone );
+    void AddGeomFieldDefn( const char* pszName,
+                           OGRwkbGeometryType eType,
+                           const std::vector<CPLString>& aosPath,
+                           int bIsGeoPoint );
 public:
     OGRElasticLayer(
             const char* pszLayerName,
             const char* pszIndexName,
             const char* pszMappingName,
             OGRElasticDataSource* poDS,
-            char** papszOptions);
+            char** papszOptions,
+            const char* pszESSearch = NULL);
     ~OGRElasticLayer();
 
     void ResetReading();
@@ -131,6 +142,7 @@ public:
     
     virtual void        SetSpatialFilter( OGRGeometry *poGeom ) { SetSpatialFilter(0, poGeom); }
     virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom );
+    virtual OGRErr      SetAttributeFilter(const char* pszFilter);
     
     virtual OGRErr      SyncToDisk();
     
@@ -183,6 +195,11 @@ public:
             OGRwkbGeometryType eType,
             char ** papszOptions);
     virtual OGRErr      DeleteLayer( int iLayer );
+    
+    virtual OGRLayer *  ExecuteSQL( const char *pszSQLCommand,
+                                            OGRGeometry *poSpatialFilter,
+                                            const char *pszDialect );
+    virtual void        ReleaseResultSet( OGRLayer * poLayer );
 
     int TestCapability(const char *);
 

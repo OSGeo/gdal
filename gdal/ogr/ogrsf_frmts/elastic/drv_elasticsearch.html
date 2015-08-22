@@ -26,7 +26,7 @@ The open options available are :
 <ul>
 <li><b>HOST</b>=hostname: Server hostname. Default to localhost.</li>
 <li><b>PORT</b>=port. Server port. Default to 9200.</li>
-<li><b>BATCH_SIZE</b>=number. Number of features to retrieve per batch. For most queries, the first batch returns 101 documents or just enough documents to exceed 1 megabyte. Subsequent batch size is 4 megabytes.</li>
+<li><b>BATCH_SIZE</b>=number. Number of features to retrieve per batch. Default is 100.</li>
 <li><b>FEATURE_COUNT_TO_ESTABLISH_FEATURE_DEFN</b>=number. Number of features to retrieve to establish feature definition. -1 = unlimited. Defaults to 100.</li>
 <li><b>JSON_FIELD</b>=YES/NO. Whether to include a field called "_json" with the full document as JSON. Defaults to NO.</li>
 <li><b>FLATTEN_NESTED_ATTRIBUTE</b>=YES/NO. Whether to recursively explore nested objects and produce flatten OGR attributes. Defaults to YES.</li>
@@ -35,7 +35,6 @@ The open options available are :
 <h2>ElasticSearch vs OGR concepts</h2>
 
 Each mapping type inside a ElasticSearch index will be considered as a OGR layer. A ElasticSearch document is considered as a OGR feature.<p>
-
 
 <h2>Field definitions</h2>
 
@@ -66,9 +65,85 @@ ogr2ogr -progress --config ES_OVERWRITE 1 --config ES_BULK 10000 --config ES_MET
 
 <h2>Geometry types</h2>
 
-<br> In GDAL 2.0 and earlier, the driver was limited in the geometry it handles: even if polygons were provided as input, they were stored as <a href="http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/mapping-geo-point-type.html">geo point</a> and the "center" of the polygon is used as value of the point.
+In GDAL 2.0 and earlier, the driver was limited in the geometry it handles: even if polygons were provided as input, they were stored as <a href="http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/mapping-geo-point-type.html">geo point</a> and the "center" of the polygon is used as value of the point.
 Starting with GDAL 2.1,  <a href="https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-geo-shape-type.html">geo_shape</a> is used to store all geometry types (except curve geometries that are not handled by ElasticSearch and will be approximated to their linear equivalents).
 </p>
+
+<h2>Filtering</h2>
+
+The driver will forward any spatial filter set with SetSpatialFilter() to the server.<p>
+
+However, in the current state, SQL attribute filters set with SetAttributeFilter()
+are evaluated only on client-side. To enable server-side filtering, the string
+passed to SetAttributeFilter() must be a JSon object in the
+<a href="https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-filters.html">ElasticSearch filter syntax</a>.
+e.g. <pre>{ "filter": { "term": { "EAS_ID": 169 } } }</pre>
+<p>
+
+Note: if defining an Elastic Search JSon filter, the spatial filter specified
+through SetSpatialFilter() will be ignored, and must thus be included in the JSon
+filter if needed.<p>
+
+<h2>Paging</h2>
+
+Features are retrieved from the server by chunks of 100. This can be
+altered with the BATCH_SIZE open option.<p>
+
+<h2>Schema</h2>
+
+When reading a Elastic Search index/type, OGR must establish the schema of attribute and geometry
+fields, since OGR has a fixed schema concept.<p>
+
+In the general case, OGR will read the mapping definition and the first 100 documents (can be altered with
+the FEATURE_COUNT_TO_ESTABLISH_FEATURE_DEFN open option) of the index/type and build
+the schema that best fit to the found fields and values.<p>
+
+It is also possible to set the JSON_FIELD=YES open option so that a _json special
+field is added to the OGR schema. When reading Elastic Search documents as OGR features,
+the full JSon version of the document will be stored in the _json field. This might
+be usefull in case of complex documents or with data types that do not translate well
+in OGR data types. On creation/update of documents, if the _json field is present
+and set, its content will be used directly (other fields will be ignored).<p>
+
+<h2>ExecuteSQL() interface</h2>
+
+If specifying "ES" as the dialect of ExecuteSQL(), a JSon string with a
+serialized <a href="https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-filters.html">Elastic Search filter</a>
+can be passed. The search will be done on all indices and types, unless the
+filter itself restricts the search. The returned layer will be a union of the
+types returned by the FEATURE_COUNT_TO_ESTABLISH_FEATURE_DEFN first documents. It
+will also contain the _index and _type special fields to indicate the provenance
+of the features.<p>
+
+The following filter can be used to restrict the search to the "poly" index and its "FeatureCollection" type mapping:
+<pre>
+{ "filter": {
+    "indices" : {
+        "no_match_filter": "none",
+        "index": "poly",
+        "filter": {
+           "and" : [
+             { "type": { "value": "FeatureCollection" } },
+             { "term" : { "EAS_ID" : 158.0 } }
+           ]
+        }
+      }
+    }
+}
+</pre>
+
+Aggregations are not supported.<p>
+
+Standard SQL requests will be executed on client-side.<p>
+
+<h2>Write support</h2>
+
+Index/type creation and deletion is possible.<p>
+
+Write support is only enabled when the datasource is opened in update mode.<p>
+
+When inserting a new feature with CreateFeature() in non-bulk mode, and if the command is successful, OGR will fetch the
+returned _id and use it for the SetFeature() operation.<p>
 
 <h2>Layer creation options</h2>
 
@@ -104,6 +179,11 @@ ogrinfo ES:
 <b>Open a remote store:</b></br>
 <pre>
 ogrinfo ES:http://example.com:9200
+</pre>
+
+<b>Filtering on a Elastic Search field:</b><br>
+<pre>
+ogrinfo -ro ES: my_type -where '{ "filter": { "term": { "EAS_ID": 168 } } }'
 </pre>
 
 <b>Basic Transform:</b> </br>
