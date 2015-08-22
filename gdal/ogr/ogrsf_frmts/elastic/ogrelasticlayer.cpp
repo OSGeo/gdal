@@ -37,6 +37,7 @@
 #include "../geojson/ogrgeojsonwriter.h"
 #include "../geojson/ogrgeojsonreader.h"
 #include "../geojson/ogrgeojsonutils.h"
+#include "../xplane/ogr_xplane_geo_utils.h"
 #include <set>
 
 CPL_CVSID("$Id$");
@@ -529,6 +530,19 @@ CPLString OGRElasticLayer::BuildPathFromArray(const std::vector<CPLString>& aosP
 }
 
 /************************************************************************/
+/*                         GetOGRGeomTypeFromES()                       */
+/************************************************************************/
+
+static OGRwkbGeometryType GetOGRGeomTypeFromES(const char* pszType)
+{
+    if( EQUAL( pszType, "envelope") )
+        return wkbPolygon;
+    if( EQUAL( pszType, "circle") )
+        return wkbPolygon;
+    return OGRFromOGCGeomType(pszType);
+}
+
+/************************************************************************/
 /*                         AddOrUpdateField()                           */
 /************************************************************************/
 
@@ -547,7 +561,7 @@ void OGRElasticLayer::AddOrUpdateField(const char* pszAttrName,
         json_object* poType = json_object_object_get(poObj, "type");
         OGRwkbGeometryType eGeomType;
         if( poType && json_object_get_type(poType) == json_type_string &&
-            (eGeomType = OGRFromOGCGeomType(json_object_get_string(poType))) != wkbUnknown &&
+            (eGeomType = GetOGRGeomTypeFromES(json_object_get_string(poType))) != wkbUnknown &&
             json_object_object_get(poObj, (eGeomType == wkbGeometryCollection) ? "geometries" : "coordinates") )
         {
             int nIndex = poFeatureDefn->GetGeomFieldIndex(pszAttrName);
@@ -1003,7 +1017,90 @@ void OGRElasticLayer::BuildFeature(OGRFeature* poFeature, json_object* poSource,
             }
             else if( json_object_get_type(it.val) == json_type_object )
             {
-                poGeom = OGRGeoJSONReadGeometry( it.val );
+                json_object* poType = json_object_object_get(it.val, "type");
+                json_object* poRadius = json_object_object_get(it.val, "radius");
+                json_object* poCoordinates = json_object_object_get(it.val, "coordinates");
+                if( poType && poRadius && poCoordinates &&
+                    json_object_get_type(poType) == json_type_string &&
+                    EQUAL( json_object_get_string(poType), "circle" ) &&
+                    (json_object_get_type(poRadius) == json_type_string ||
+                     json_object_get_type(poRadius) == json_type_double ||
+                     json_object_get_type(poRadius) == json_type_int ) &&
+                    json_object_get_type(poCoordinates) == json_type_array &&
+                    json_object_array_length(poCoordinates) == 2 )
+                {
+                    const char* pszRadius = json_object_get_string(poRadius);
+                    double dfX = json_object_get_double(json_object_array_get_idx(poCoordinates, 0));
+                    double dfY = json_object_get_double(json_object_array_get_idx(poCoordinates, 1));
+                    int nRadiusLength = (int)strlen(pszRadius);
+                    double dfRadius = CPLAtof(pszRadius);
+                    double dfUnit = 0.0;
+                    if( nRadiusLength >= 1 && pszRadius[nRadiusLength-1] == 'm' )
+                    {
+                        if( nRadiusLength >= 2 && pszRadius[nRadiusLength-2] == 'k' )
+                            dfUnit = 1000;
+                        else if( nRadiusLength >= 2 &&
+                                 pszRadius[nRadiusLength-2] >= '0' &&
+                                 pszRadius[nRadiusLength-2] <= '9' )
+                            dfUnit = 1;
+                    }
+                    else if ( nRadiusLength >= 1 &&
+                                 pszRadius[nRadiusLength-1] >= '0' &&
+                                 pszRadius[nRadiusLength-1] <= '9' )
+                    {
+                        dfUnit = 1;
+                    }
+
+                    if( dfRadius == 0 )
+                        CPLError(CE_Warning, CPLE_AppDefined, "Unknown unit in %s", pszRadius);
+                    else
+                    {
+                        dfRadius *= dfUnit;
+                        OGRLinearRing* poRing = new OGRLinearRing();
+                        for(double dfStep = 0; dfStep <= 360; dfStep += 4 )
+                        {
+                            double dfLat, dfLon;
+                            OGRXPlane_ExtendPosition( dfY, dfX, dfRadius, dfStep, &dfLat, &dfLon);
+                            poRing->addPoint(dfLon, dfLat);
+                        }
+                        OGRPolygon* poPoly = new OGRPolygon();
+                        poPoly->addRingDirectly(poRing);
+                        poGeom = poPoly;
+                    }
+                }
+                else if( poType && poCoordinates &&
+                    json_object_get_type(poType) == json_type_string &&
+                    EQUAL( json_object_get_string(poType), "envelope" ) &&
+                    json_object_get_type(poCoordinates) == json_type_array &&
+                    json_object_array_length(poCoordinates) == 2 )
+                {
+                    json_object* poCorner1 = json_object_array_get_idx(poCoordinates, 0);
+                    json_object* poCorner2 = json_object_array_get_idx(poCoordinates, 1);
+                    if( poCorner1 && poCorner2 && 
+                        json_object_get_type(poCorner1) == json_type_array &&
+                        json_object_array_length(poCorner1) == 2 && 
+                        json_object_get_type(poCorner2) == json_type_array &&
+                        json_object_array_length(poCorner2) == 2 )
+                    {
+                        double dfX1 = json_object_get_double(json_object_array_get_idx(poCorner1, 0));
+                        double dfY1 = json_object_get_double(json_object_array_get_idx(poCorner1, 1));
+                        double dfX2 = json_object_get_double(json_object_array_get_idx(poCorner2, 0));
+                        double dfY2 = json_object_get_double(json_object_array_get_idx(poCorner2, 1));
+                        OGRLinearRing* poRing = new OGRLinearRing();
+                        poRing->addPoint(dfX1, dfY1);
+                        poRing->addPoint(dfX2, dfY1);
+                        poRing->addPoint(dfX2, dfY2);
+                        poRing->addPoint(dfX1, dfY2);
+                        poRing->addPoint(dfX1, dfY1);
+                        OGRPolygon* poPoly = new OGRPolygon();
+                        poPoly->addRingDirectly(poRing);
+                        poGeom = poPoly;
+                    }
+                }
+                else
+                {
+                    poGeom = OGRGeoJSONReadGeometry( it.val );
+                }
             }
 
             if( poGeom != NULL )

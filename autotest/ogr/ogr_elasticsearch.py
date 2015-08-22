@@ -993,6 +993,105 @@ def ogr_elasticsearch_5():
     return 'success'
 
 ###############################################################################
+# Test reading circle and envelope geometries
+
+def ogr_elasticsearch_6():
+    if ogrtest.elasticsearch_drv is None:
+        return 'skip'
+        
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/_cat/indices?h=i""", 'non_standard_geometries\n')
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/non_standard_geometries?pretty""", """
+{
+    "non_standard_geometries":
+    {
+        "mappings":
+        {
+            "my_mapping":
+            {
+                "properties":
+                {
+                    "geometry":
+                    {
+                        "type": "geo_shape",
+                    }
+                }
+            }
+        }
+    }
+}
+""")
+    ds = gdal.OpenEx("ES:/vsimem/fakeelasticsearch")
+    lyr = ds.GetLayer(0)
+    
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/non_standard_geometries/my_mapping/_search?scroll=1m&size=100&pretty""", """{
+    "hits":
+    {
+        "hits":[
+        {
+            "_source": {
+                "geometry": {
+                    "type": "envelope",
+                    "coordinates": [[2,49],[3,50]]
+                }
+            }
+        },
+        {
+            "_source": {
+                "geometry": {
+                    "type": "circle",
+                    "coordinates": [2,49],
+                    "radius": 100
+                }
+            }
+        },
+        {
+            "_source": {
+                "geometry": {
+                    "type": "circle",
+                    "coordinates": [2,49],
+                    "radius": "100m"
+                }
+            }
+        },
+        {
+            "_source": {
+                "geometry": {
+                    "type": "circle",
+                    "coordinates": [2,49],
+                    "radius": "0.1km"
+                }
+            }
+        }]
+    }
+}""")
+    f = lyr.GetNextFeature()
+    if f['geometry'].ExportToWkt() != 'POLYGON ((2 49,3 49,3 50,2 50,2 49))':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    f = lyr.GetNextFeature()
+    ref_txt = f['geometry'].ExportToWkt()
+    if ref_txt.find('POLYGON ((') != 0:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    f = lyr.GetNextFeature()
+    if f['geometry'].ExportToWkt() != ref_txt:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    f = lyr.GetNextFeature()
+    if f['geometry'].ExportToWkt() != ref_txt:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def ogr_elasticsearch_cleanup():
@@ -1014,6 +1113,7 @@ gdaltest_list = [
     ogr_elasticsearch_3,
     ogr_elasticsearch_4,
     ogr_elasticsearch_5,
+    ogr_elasticsearch_6,
     ogr_elasticsearch_cleanup,
     ]
 
