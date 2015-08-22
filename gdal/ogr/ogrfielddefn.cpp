@@ -1364,4 +1364,8 @@ void OGRUpdateFieldType( OGRFieldDefn* poFDefn,
         else if( eNewType != eType )
             poFDefn->SetType(OFTString);
     }
+    else if( eType == OFTString && eNewType == OFTStringList )
+    {
+        poFDefn->SetType(OFTStringList);
+    }
 }
