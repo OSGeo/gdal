@@ -261,9 +261,18 @@ def ogr_elasticsearch_1():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    # Test successful explicit MAPPING
+    # Test successful explicit MAPPING with inline JSon mapping
     gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo4/FeatureCollection/_mapping&POSTFIELDS={ "FeatureCollection": { "properties": {} }}', '{}')
     lyr = ds.CreateLayer('foo4', options = ['MAPPING={ "FeatureCollection": { "properties": {} }}'])
+    if lyr is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Test successful explicit MAPPING with reference to file with mapping
+    gdal.FileFromMemBuffer('/vsimem/map.txt', '{ "FeatureCollection": { "properties": { "foo": { "type": "string" } } }}')
+    gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo4/FeatureCollection/_mapping&POSTFIELDS={ "FeatureCollection": { "properties": { "foo": { "type": "string" } } }}', '{}')
+    lyr = ds.CreateLayer('foo4', options = ['MAPPING=/vsimem/map.txt'])
+    gdal.Unlink('/vsimem/map.txt')
     if lyr is None:
         gdaltest.post_reason('fail')
         return 'fail'
