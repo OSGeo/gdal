@@ -453,7 +453,7 @@ def ogr_basic_11():
     for i in range(2):
         ogr.UseExceptions()
         geom = ogr.CreateGeometryFromWkt('POLYGON ((-65 0, -30 -30, -30 0, -65 -30, -65 0))')
-        with gdaltest.error_handler('CPLQuietErrorHandler'):
+        with gdaltest.error_handler():
             geom.IsValid()
     if used_exceptions_before == 0:
         ogr.DontUseExceptions()

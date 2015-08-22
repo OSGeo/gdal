@@ -129,7 +129,7 @@ def ogr_rfc28_6():
 # test with distinguished name for field in where clause.
 
 def ogr_rfc28_7_wrong_quoting():
-    with gdaltest.error_handler('CPLQuietErrorHandler'):
+    with gdaltest.error_handler():
         ql = gdaltest.ds.ExecuteSQL( "select eas_id from idlink where \"idlink.eas_id\" = 166" )
 
     count = ql.GetFeatureCount()
@@ -155,7 +155,7 @@ def ogr_rfc28_7_good_quoting():
 # test with distinguished name for field in target columns.
 
 def ogr_rfc28_8_wrong_quoting():
-    with gdaltest.error_handler('CPLQuietErrorHandler'):
+    with gdaltest.error_handler():
         ql = gdaltest.ds.ExecuteSQL( "select \"idlink.eas_id\" from idlink where \"idlink.eas_id\" = 166" )
 
     count = ql.GetFeatureCount()

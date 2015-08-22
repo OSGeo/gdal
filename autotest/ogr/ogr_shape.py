@@ -3424,7 +3424,7 @@ def ogr_shape_71():
     shutil.copy('data/poly.dbf', 'tmp/ogr_shape_71.dbf')
     old_mode = os.stat('tmp/ogr_shape_71.dbf').st_mode
     os.chmod('tmp/ogr_shape_71.dbf', stat.S_IREAD)
-    with gdaltest.error_handler('CPLQuietErrorHandler'):
+    with gdaltest.error_handler():
       ds = ogr.Open('tmp/ogr_shape_71.shp', update = 1)
     ok = ds is None
     ds = None
@@ -3866,7 +3866,7 @@ def ogr_shape_82():
     init_rus = 'работает два мастера, установка набоек, замена подошвы, замена каблуков, растяжка обуви, растяжка голенищ сапог, швейные работы, ушив голенища сапога, чистка обуви, чистка замшевой обуви, замена стелек'
     result_rus = 'работает два мастера, установка набоек, замена подошвы, замена каблуков, растяжка обуви, растяжка голенищ сапог, швейные работы, ушив голен'
     feat.SetField('cut_field', init_rus)
-    with gdaltest.error_handler('CPLQuietErrorHandler'):
+    with gdaltest.error_handler():
       gdaltest.shape_lyr.CreateFeature(feat)
 
     #insert feature with long string in English

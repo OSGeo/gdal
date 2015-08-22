@@ -360,7 +360,7 @@ def ogr_osm_4():
         gdaltest.post_reason('Zero filter ')
         return 'fail'
 
-    with gdaltest.error_handler('CPLQuietErrorHandler'):
+    with gdaltest.error_handler():
       lyr.SetSpatialFilter(None)
 
       # Change layer

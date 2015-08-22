@@ -602,7 +602,7 @@ def ogr_kml_interleaved_writing():
     lyr1 = ds.CreateLayer("lyr1")
     ds.CreateLayer("lyr2")
     feat = ogr.Feature(lyr1.GetLayerDefn())
-    with gdaltest.error_handler('CPLQuietErrorHandler'):
+    with gdaltest.error_handler():
         ret = lyr1.CreateFeature(feat)
     ds = None
 
