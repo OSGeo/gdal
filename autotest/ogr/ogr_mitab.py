@@ -117,26 +117,6 @@ def ogr_mitab_3():
     if gdaltest.mapinfo_drv is None:
         return 'skip'
 
-    # TODO(schwehr): Remove after debugging flaky test issue on mingw.
-    #   https://trac.osgeo.org/gdal/ticket/6076
-    def list_tree(startpath):
-        print('list_tree:')
-        for root, dirs, files in os.walk(startpath):
-            level = root.replace(startpath, '').count(os.sep)
-            dir_indent = '  ' * level
-            if 'data' in root:
-                print(dir_indent + '[skip data]')
-                continue
-            print(dir_indent + os.path.basename(root))
-            file_indent = '  '  * level + '  '
-            for filename in files:
-                print(file_indent + filename)
-
-    print('\nogr_mitab_3 STARTING TREE:')
-    list_tree(os.getcwd())
-    print('END TREE')
-    # END debugging.
-
     gdaltest.mapinfo_ds = ogr.Open( 'tmp' )
     gdaltest.mapinfo_lyr = gdaltest.mapinfo_ds.GetLayer(0)
 
