@@ -2202,48 +2202,49 @@ def tiff_write_60():
     tuples = [ ('TFW=YES', 'tmp/tiff_write_60.tfw'),
                ('WORLDFILE=YES', 'tmp/tiff_write_60.wld') ]
 
-    for tuple in tuples:
+    for options_tuple in tuples:
         # Create case
-        ds = gdaltest.tiff_drv.Create('tmp/tiff_write_60.tif', 10, 10, options = [ tuple[0], 'PROFILE=BASELINE' ])
+        with gdaltest.error_handler():
+          ds = gdaltest.tiff_drv.Create('tmp/tiff_write_60.tif', 10, 10, options = [ options_tuple[0], 'PROFILE=BASELINE' ])
         gt = (0.0, 1.0, 0.0, 50.0, 0.0, -1.0 )
         ds.SetGeoTransform(gt)
         ds = None
 
-        ds = gdal.Open('tmp/tiff_write_60.tif')
+        with gdaltest.error_handler():
+          ds = gdal.Open('tmp/tiff_write_60.tif')
         if ds.GetGeoTransform() != gt:
-            print('case1')
-            print((ds.GetGeoTransform()))
+            gdaltest.post_reason('case1: %s != %s' % (ds.GetGeoTransform(), gt))
             return 'fail'
 
         ds = None
         gdaltest.tiff_drv.Delete( 'tmp/tiff_write_60.tif' )
 
         try:
-            os.stat( tuple[1] )
-            gdaltest.post_reason( '%s should have been deleted' % tuple[1])
+            os.stat( options_tuple[1] )
+            gdaltest.post_reason( '%s should have been deleted' % options_tuple[1])
             return 'fail'
         except:
             pass
 
         # CreateCopy case
         src_ds = gdal.Open('data/byte.tif')
-        ds = gdaltest.tiff_drv.CreateCopy('tmp/tiff_write_60.tif', src_ds, options = [ tuple[0], 'PROFILE=BASELINE' ])
+        with gdaltest.error_handler():
+          ds = gdaltest.tiff_drv.CreateCopy('tmp/tiff_write_60.tif', src_ds, options = [ options_tuple[0], 'PROFILE=BASELINE' ])
         gt = (0.0, 1.0, 0.0, 50.0, 0.0, -1.0 )
         ds.SetGeoTransform(gt)
         ds = None
 
         ds = gdal.Open('tmp/tiff_write_60.tif')
         if ds.GetGeoTransform() != gt:
-            print('case2')
-            print((ds.GetGeoTransform()))
+            gdaltest.post_reason('case2: %s != %s' % (ds.GetGeoTransform(), gt))
             return 'fail'
 
         ds = None
         gdaltest.tiff_drv.Delete( 'tmp/tiff_write_60.tif' )
 
         try:
-            os.stat( tuple[1] )
-            gdaltest.post_reason( '%s should have been deleted' % tuple[1])
+            os.stat( options_tuple[1] )
+            gdaltest.post_reason( '%s should have been deleted' % options_tuple[1])
             return 'fail'
         except:
             pass
@@ -2322,12 +2323,8 @@ def tiff_write_63():
     md = gdaltest.tiff_drv.GetMetadata()
     if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
         return 'skip'
-    try:
-        if int(gdal.VersionInfo('VERSION_NUM')) < 1700:
-            return 'skip'
-    except:
-    # OG-python bindings don't have gdal.VersionInfo. Too bad, but let's hope that GDAL's version isn't too old !
-        pass
+    if int(gdal.VersionInfo('VERSION_NUM')) < 1700:
+        return 'skip'
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ds = gdaltest.tiff_drv.Create( 'tmp/bigtiff.tif', 150000, 150000, 1,
@@ -6178,4 +6175,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-
