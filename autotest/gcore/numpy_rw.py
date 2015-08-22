@@ -40,7 +40,7 @@ from osgeo import gdal
 # verify that we can load Numeric python, and find the Numpy driver.
 
 def numpy_rw_1():
-	
+
     gdaltest.numpy_drv = None
     try:
         from osgeo import gdalnumeric
@@ -48,18 +48,13 @@ def numpy_rw_1():
     except:
         return 'skip'
 
-    try:
-        import _gdal
-        _gdal.GDALRegister_NUMPY()  # only needed for old style bindings.
-        gdal.AllRegister()
-    except:
-        pass
+    gdal.AllRegister()
 
     gdaltest.numpy_drv = gdal.GetDriverByName( 'NUMPY' )
     if gdaltest.numpy_drv is None:
         gdaltest.post_reason( 'NUMPY driver not found!' )
         return 'fail'
-    
+
     return 'success'
 
 ###############################################################################
@@ -766,4 +761,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-
