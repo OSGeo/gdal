@@ -135,8 +135,7 @@ def pdf_online_1():
             print(expected_gt)
             return 'fail'
 
-    expected_wkt = 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9108"]],AUTHORITY["EPSG","4326"]]'
-    if wkt != expected_wkt:
+    if wkt.find('GEOGCS["WGS 84"') != 0:
         gdaltest.post_reason('bad WKT')
         print(wkt)
         return 'fail'
@@ -175,8 +174,7 @@ def pdf_online_2():
             print(expected_gt)
             return 'fail'
 
-    expected_wkt = 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9108"]],AUTHORITY["EPSG","4326"]]'
-    if wkt != expected_wkt:
+    if wkt.find('GEOGCS["WGS 84"') != 0:
         print(wkt)
         return 'fail'
 
