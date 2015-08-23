@@ -4968,29 +4968,8 @@ CPLErr HFADataset::ReadProjection()
     const Eprj_ProParameters  *psPro;
     const Eprj_MapInfo        *psMapInfo;
     OGRSpatialReference        oSRS;
-    char *pszPE_COORDSYS;
-
-/* -------------------------------------------------------------------- */
-/*      Special logic for PE string in ProjectionX node.                */
-/* -------------------------------------------------------------------- */
-    pszPE_COORDSYS = HFAGetPEString( hHFA );
-    if( pszPE_COORDSYS != NULL
-        && strlen(pszPE_COORDSYS) > 0 
-        && oSRS.SetFromUserInput( pszPE_COORDSYS ) == OGRERR_NONE )
-    {
-        CPLFree( pszPE_COORDSYS );
-
-        oSRS.morphFromESRI();
-        oSRS.Fixup();
-
-        CPLFree( pszProjection );
-        pszProjection = NULL;
-        oSRS.exportToWkt( &pszProjection );
-        
-        return CE_None;
-    }
-    
-    CPLFree( pszPE_COORDSYS );
+    char *pszPE_COORDSYS = NULL;
+    int bTryReadingPEString = TRUE;
 
 /* -------------------------------------------------------------------- */
 /*      General case for Erdas style projections.                       */
@@ -5023,6 +5002,38 @@ CPLErr HFADataset::ReadProjection()
 
     pszProjection = HFAPCSStructToWKT( psDatum, psPro, psMapInfo, 
                                        poMapInformation );
+
+    // If we got a valid projection and managed to identify a EPSG code,
+    // then do not use the ESRI PE String.
+    if( pszProjection != NULL )
+    {
+        OGRSpatialReference oSRS(pszProjection);
+        if( oSRS.GetAuthorityCode(NULL) != NULL )
+            bTryReadingPEString = FALSE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Special logic for PE string in ProjectionX node.                */
+/* -------------------------------------------------------------------- */
+    if( bTryReadingPEString )
+        pszPE_COORDSYS = HFAGetPEString( hHFA );
+    if( pszPE_COORDSYS != NULL
+        && strlen(pszPE_COORDSYS) > 0 
+        && oSRS.SetFromUserInput( pszPE_COORDSYS ) == OGRERR_NONE )
+    {
+        CPLFree( pszPE_COORDSYS );
+
+        oSRS.morphFromESRI();
+        oSRS.Fixup();
+
+        CPLFree( pszProjection );
+        pszProjection = NULL;
+        oSRS.exportToWkt( &pszProjection );
+        
+        return CE_None;
+    }
+    
+    CPLFree( pszPE_COORDSYS );
 
     if( pszProjection != NULL )
         return CE_None;
