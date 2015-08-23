@@ -1173,6 +1173,39 @@ def ogr_elasticsearch_6():
     return 'success'
 
 ###############################################################################
+# Test WRITE_MAPPING option
+
+def ogr_elasticsearch_7():
+    if ogrtest.elasticsearch_drv is None:
+        return 'skip'
+
+    gdal.FileFromMemBuffer("/vsimem/fakeelasticsearch/_status", """{"_shards":{"total":0,"successful":0,"failed":0},"indices":{}}""")
+
+    ds = ogrtest.elasticsearch_drv.CreateDataSource("/vsimem/fakeelasticsearch")
+
+    gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/test_write_mapping&POSTFIELDS=', '{}')
+    lyr = ds.CreateLayer('test_write_mapping', options = ['WRITE_MAPPING=/vsimem/map.txt'])
+    f = ogr.Feature(lyr.GetLayerDefn())
+    lyr.CreateFeature(f)
+    ds = None
+    
+    f = gdal.VSIFOpenL('/vsimem/map.txt', 'rb')
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
+    gdal.VSIFCloseL(f)
+
+    gdal.Unlink('/vsimem/map.txt')
+    
+    if data != '{ "FeatureCollection": { "properties": { "type": { "store": "yes", "type": "string" }, "properties": { "properties": { } }, "geometry": { "type": "geo_shape" } } } }':
+        gdaltest.post_reason('fail')
+        print(data)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def ogr_elasticsearch_cleanup():
@@ -1196,6 +1229,7 @@ gdaltest_list = [
     ogr_elasticsearch_4,
     ogr_elasticsearch_5,
     ogr_elasticsearch_6,
+    ogr_elasticsearch_7,
     ogr_elasticsearch_cleanup,
     ]
 

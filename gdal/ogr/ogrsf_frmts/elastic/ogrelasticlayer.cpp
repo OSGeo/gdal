@@ -55,6 +55,8 @@ OGRElasticLayer::OGRElasticLayer(const char* pszLayerName,
     osIndexName = pszIndexName ? pszIndexName : "";
     osMappingName = pszMappingName ? pszMappingName : "";
     osESSearch = pszESSearch ? pszESSearch : "";
+    osWriteMapFilename = CSLFetchNameValueDef(papszOptions, "WRITE_MAPPING",
+                                      poDS->pszWriteMap ? poDS->pszWriteMap : "");
     this->poDS = poDS;
 
     eGeomTypeMapping = ES_GEOMTYPE_AUTO;
@@ -1570,13 +1572,13 @@ OGRErr OGRElasticLayer::WriteMapIfNecessary()
     
     // Check to see if the user has elected to only write out the mapping file
     // This method will only write out one layer from the vector file in cases where there are multiple layers
-    if (poDS->pszWriteMap != NULL) {
+    if (osWriteMapFilename.size()) {
         if (!bMappingWritten) {
             bMappingWritten = TRUE;
             CPLString map = BuildMap();
 
             // Write the map to a file
-            VSILFILE *f = VSIFOpenL(poDS->pszWriteMap, "wb");
+            VSILFILE *f = VSIFOpenL(osWriteMapFilename, "wb");
             if (f) {
                 VSIFWriteL(map.c_str(), 1, map.length(), f);
                 VSIFCloseL(f);
@@ -1586,7 +1588,7 @@ OGRErr OGRElasticLayer::WriteMapIfNecessary()
     }
 
     // Check to see if we have any fields to upload to this index
-    if (poDS->pszMapping == NULL && !bMappingWritten ) {
+    if (osWriteMapFilename.size() == 0 && !bMappingWritten ) {
         bMappingWritten = TRUE;
         if( !poDS->UploadFile(CPLSPrintf("%s/%s/%s/_mapping", poDS->GetURL(), osIndexName.c_str(), osMappingName.c_str()), BuildMap()) )
         {
@@ -1824,6 +1826,9 @@ OGRErr OGRElasticLayer::ICreateFeature(OGRFeature *poFeature)
 
     if( WriteMapIfNecessary() != OGRERR_NONE )
         return OGRERR_FAILURE;
+    
+    if (osWriteMapFilename.size())
+        return OGRERR_NONE;
     
     CPLString osFields(BuildJSonFromFeature(poFeature));
     
