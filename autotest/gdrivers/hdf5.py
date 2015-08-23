@@ -344,8 +344,7 @@ def hdf5_10():
 
     ds = gdal.Open( 'HDF5:"data/CSK_DGM.h5"://S01/SBI' )
     got_gcpprojection = ds.GetGCPProjection()
-    expected_gcpprojection = 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9108"]],AUTHORITY["EPSG","4326"]]'
-    if got_gcpprojection != expected_gcpprojection:
+    if got_gcpprojection.find('GEOGCS["WGS 84",DATUM["WGS_1984"') != 0:
         print(got_gcpprojection)
         gdaltest.post_reason('fail')
         return 'fail'
@@ -385,8 +384,7 @@ def hdf5_11():
 
     ds = gdal.Open( 'HDF5:"data/CSK_GEC.h5"://S01/SBI' )
     got_projection = ds.GetProjection()
-    expected_projection = 'PROJCS["Transverse_Mercator",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9108"]],AUTHORITY["EPSG","4326"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",15],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0]]'
-    if got_projection != expected_projection:
+    if got_projection.find('PROJCS["Transverse_Mercator",GEOGCS["WGS 84",DATUM["WGS_1984"') != 0:
         print(got_projection)
         gdaltest.post_reason('fail')
         return 'fail'
