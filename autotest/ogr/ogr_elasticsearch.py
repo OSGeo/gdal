@@ -216,7 +216,16 @@ def ogr_elasticsearch_1():
     if feat['_id'] != 'my_id':
         gdaltest.post_reason('fail')
         return 'fail'
-    
+
+    # CreateFeature() with _id set
+    gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo2/FeatureCollection/my_id2&POSTFIELDS={ "properties": { } }', '{}')
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat['_id'] = 'my_id2'
+    ret = lyr.CreateFeature(feat)
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
     # Failed SetFeature because of missing _id
     feat = ogr.Feature(lyr.GetLayerDefn())
     with gdaltest.error_handler():
@@ -427,6 +436,9 @@ def ogr_elasticsearch_4():
             "FeatureCollection":
             {
                 "_meta": {
+                    "geomfields": {
+                            "a_geoshape": "LINESTRING"
+                    },
                     "fields": {
                             "strlist_field": "StringList",
                             "intlist_field": "IntegerList",
@@ -491,6 +503,10 @@ def ogr_elasticsearch_4():
         lyr_defn = lyr.GetLayerDefn()
     idx = lyr_defn.GetFieldIndex("strlist_field")
     if lyr_defn.GetFieldDefn(idx).GetType() != ogr.OFTStringList:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    idx = lyr_defn.GetGeomFieldIndex("a_geoshape")
+    if lyr_defn.GetGeomFieldDefn(idx).GetType() != ogr.wkbLineString:
         gdaltest.post_reason('fail')
         return 'fail'
 
