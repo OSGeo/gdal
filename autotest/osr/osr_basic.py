@@ -270,7 +270,7 @@ def osr_basic_6():
 def osr_basic_7():
 
     wkt_1 = osr.GetUserInputAsWKT( 'urn:ogc:def:crs:OGC::AUTO42001:-117:33' )
-    wkt_2 = 'PROJCS["UTM Zone 11, Northern Hemisphere",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9108"]],AUTHORITY["EPSG","4326"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-117],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["Meter",1,AUTHORITY["EPSG","9001"]]]'
+    wkt_2 = 'PROJCS["UTM Zone 11, Northern Hemisphere",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-117],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["Meter",1,AUTHORITY["EPSG","9001"]]]'
     if wkt_1 != wkt_2:
         print(wkt_1)
         print(wkt_2)
@@ -464,7 +464,7 @@ def osr_basic_14():
     srs.SetWellKnownGeogCS( 'WGS84' )
     srs.SetLinearUnits( 'meter', 1.0 )
 
-    expected_wkt = 'GEOCCS["My Geocentric",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["meter",1]]'
+    expected_wkt = 'GEOCCS["My Geocentric",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["meter",1]]'
     wkt = srs.ExportToWkt()
 
     if wkt != expected_wkt:
@@ -620,6 +620,61 @@ def osr_basic_18():
     return 'success'
 
 ###############################################################################
+# Test well known GCS names against their corresponding EPSG definitions (#6080)
+
+def osr_basic_19():
+    
+    sr = osr.SpatialReference()
+    sr.SetWellKnownGeogCS('WGS84')
+    
+    sr_ref = osr.SpatialReference()
+    sr_ref.ImportFromEPSG(4326)
+    
+    if sr.ExportToWkt() != sr_ref.ExportToWkt():
+        gdaltest.post_reason('fail')
+        print(sr.ExportToWkt())
+        print(sr_ref.ExportToWkt())
+        return 'fail'
+    
+    sr = osr.SpatialReference()
+    sr.SetWellKnownGeogCS('WGS72')
+    
+    sr_ref = osr.SpatialReference()
+    sr_ref.ImportFromEPSG(4322)
+    
+    if sr.ExportToWkt() != sr_ref.ExportToWkt():
+        gdaltest.post_reason('fail')
+        print(sr.ExportToWkt())
+        print(sr_ref.ExportToWkt())
+        return 'fail'
+    
+    sr = osr.SpatialReference()
+    sr.SetWellKnownGeogCS('NAD27')
+    
+    sr_ref = osr.SpatialReference()
+    sr_ref.ImportFromEPSG(4267)
+    
+    if sr.ExportToWkt() != sr_ref.ExportToWkt():
+        gdaltest.post_reason('fail')
+        print(sr.ExportToWkt())
+        print(sr_ref.ExportToWkt())
+        return 'fail'
+
+    sr = osr.SpatialReference()
+    sr.SetWellKnownGeogCS('NAD83')
+    
+    sr_ref = osr.SpatialReference()
+    sr_ref.ImportFromEPSG(4269)
+    
+    if sr.ExportToWkt() != sr_ref.ExportToWkt():
+        gdaltest.post_reason('fail')
+        print(sr.ExportToWkt())
+        print(sr_ref.ExportToWkt())
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 
 gdaltest_list = [ 
     osr_basic_1,
@@ -640,6 +695,7 @@ gdaltest_list = [
     osr_basic_16,
     osr_basic_17,
     osr_basic_18,
+    osr_basic_19,
     None ]
 
 if __name__ == '__main__':

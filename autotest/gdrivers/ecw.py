@@ -330,8 +330,9 @@ def ecw_8():
         return 'fail'
 
     prj = ds.GetProjectionRef()
-    if prj.find('UTM Zone 11') == -1 or prj.find('WGS84') == -1:
-        gdaltest.post_reason( 'Coordinate system not UTM 11, WGS84?' )
+    if prj.find('UTM Zone 11') == -1 or prj.find('WGS 84') == -1:
+        gdaltest.post_reason( 'Coordinate system not UTM 11, WGS 84?' )
+        print(prj)
         return 'fail'
 
     ds = None

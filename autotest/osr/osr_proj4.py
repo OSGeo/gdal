@@ -246,7 +246,7 @@ def osr_proj4_6():
         PRIMEM["Greenwich",0,
             AUTHORITY["EPSG","8901"]],
         UNIT["degree",0.0174532925199433,
-            AUTHORITY["EPSG","9108"]],
+            AUTHORITY["EPSG","9122"]],
         AUTHORITY["EPSG","4326"]],
     PROJECTION["Mercator_2SP"],
     PARAMETER["standard_parallel_1",46.1333331],
@@ -258,8 +258,8 @@ def osr_proj4_6():
     srs.SetFromUserInput( proj4 )
     wkt = srs.ExportToPrettyWkt()
     if wkt != expect_wkt:
-        print('Got:   ',wkt)
-        print('Expect:',expect_wkt)
+        print('Got:   %s' % wkt)
+        print('Expect:%s' % expect_wkt)
         gdaltest.post_reason( 'did not get expected mercator_2sp result.' )
         return 'fail'
 
@@ -562,7 +562,7 @@ def osr_proj4_14():
         PRIMEM["Greenwich",0,
             AUTHORITY["EPSG","8901"]],
         UNIT["degree",0.0174532925199433,
-            AUTHORITY["EPSG","9108"]],
+            AUTHORITY["EPSG","9122"]],
         AUTHORITY["EPSG","4326"]],
     PROJECTION["Transverse_Mercator"],
     PARAMETER["latitude_of_origin",0],
@@ -733,7 +733,7 @@ def osr_proj4_19():
     srs = osr.SpatialReference()
     srs.ImportFromProj4( "+proj=longlat +datum=WGS84 +nadgrids=@null" )
 
-    if srs.ExportToWkt() != 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],TOWGS84[0,0,0,0,0,0,0],EXTENSION["PROJ4_GRIDS","@null"],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9108"]],AUTHORITY["EPSG","4326"]]':
+    if srs.ExportToWkt() != 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],EXTENSION["PROJ4_GRIDS","@null"],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]':
         gdaltest.post_reason( 'fail' )
         print(srs.ExportToWkt())
         return 'fail'
