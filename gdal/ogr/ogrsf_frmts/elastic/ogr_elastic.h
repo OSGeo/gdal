@@ -64,6 +64,8 @@ class OGRElasticLayer : public OGRLayer {
     int nBulkUpload;
     CPLString osPrecision;
     
+    CPLString m_osFID;
+    
     std::vector< std::vector<CPLString> > m_aaosFieldPaths;
     std::map< CPLString, int> m_aosMapToFieldIndex;
 
@@ -75,7 +77,7 @@ class OGRElasticLayer : public OGRLayer {
     ESGeometryTypeMapping eGeomTypeMapping;
     
     CPLString osScrollID;
-    GIntBig iCurID;
+    GIntBig iCurID, m_nNextFID;
     int iCurFeatureInPage;
     std::vector<OGRFeature*> apoCachedFeatures;
     int bEOF;
@@ -136,6 +138,7 @@ public:
 
     const char* GetName() { return poFeatureDefn->GetName(); }
     OGRFeatureDefn * GetLayerDefn();
+    const char* GetFIDColumn();
 
     int TestCapability(const char *);
 
@@ -158,6 +161,8 @@ public:
     void                SetIgnoreSourceID(int bFlag) { bIgnoreSourceID = bFlag; }
     void                SetManualMapping() { bManualMapping = TRUE; }
     void                SetDotAsNestedField(int bFlag) { bDotAsNestedField = bFlag; }
+    void                SetFID(const CPLString& m_osFIDIn) { m_osFID = m_osFIDIn; }
+    void                SetNextFID(GIntBig nNextFID) { m_nNextFID = nNextFID; }
 };
 
 /************************************************************************/
@@ -167,6 +172,7 @@ public:
 class OGRElasticDataSource : public GDALDataset {
     char* pszName;
     CPLString osURL;
+    CPLString m_osFID;
 
     OGRElasticLayer** papoLayers;
     int nLayers;
@@ -217,6 +223,7 @@ public:
     int bFlattenNestedAttributes;
     
     json_object* RunRequest(const char* pszURL, const char* pszPostContent = NULL);
+    const CPLString& GetFID() const { return m_osFID; }
 };
 
 

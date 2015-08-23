@@ -266,6 +266,8 @@ OGRLayer * OGRElasticDataSource::ICreateLayer(const char * pszLayerName,
     
     poLayer->SetIgnoreSourceID(CSLFetchBoolean(papszOptions, "IGNORE_SOURCE_ID", FALSE));
     poLayer->SetDotAsNestedField(CSLFetchBoolean(papszOptions, "DOT_AS_NESTED_FIELD", TRUE));
+    poLayer->SetFID(CSLFetchNameValueDef(papszOptions, "FID", "ogc_fid"));
+    poLayer->SetNextFID(0);
 
     return poLayer;
 }
@@ -364,7 +366,7 @@ int OGRElasticDataSource::Open(GDALOpenInfo* poOpenInfo)
     bJSonField = CSLFetchBoolean(poOpenInfo->papszOpenOptions, "JSON_FIELD", FALSE);
     bFlattenNestedAttributes = CSLFetchBoolean(
             poOpenInfo->papszOpenOptions, "FLATTEN_NESTED_ATTRIBUTES", TRUE);
-    
+    m_osFID = CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "FID", "ogc_fid");
     
     CPLHTTPResult* psResult = CPLHTTPFetch((osURL + "/_cat/indices?h=i").c_str(), NULL);
     if( psResult == NULL || psResult->pszErrBuf != NULL )
