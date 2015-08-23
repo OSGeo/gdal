@@ -78,7 +78,7 @@ class TestHFASRS:
                wkt2 = sr2.ExportToWkt().replace('"System_Jednotne_Trigonometricke_Site_Katastralni"', '"System_Jednotne_Trigonometricke_Site_Katastralni_Ferro"')
                sr2.SetFromUserInput(wkt2)
 
-        if sr.IsSame(sr2) != 1:
+        if (self.epsg_code == 4326 and sr2.GetAuthorityCode(None) != '4326') or sr.IsSame(sr2) != 1:
             if self.expected_fail:
                 print('did not get expected SRS. known to be broken currently. FIXME!')
                 #print(sr)
