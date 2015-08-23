@@ -56,6 +56,7 @@ class OGRElasticLayer : public OGRLayer {
     CPLString sIndex;
 
     int bManualMapping;
+    CPLString osWriteMapFilename;
     int bMappingWritten;
     CPLString osIndexName;
     CPLString osMappingName;
