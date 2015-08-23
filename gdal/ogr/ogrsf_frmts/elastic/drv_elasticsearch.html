@@ -36,6 +36,7 @@ retrieve to establish feature definition. -1 = unlimited. Defaults to 100.</li>
 the full document as JSON. Defaults to NO.</li>
 <li><b>FLATTEN_NESTED_ATTRIBUTE</b>=YES/NO. Whether to recursively explore nested
 objects and produce flatten OGR attributes. Defaults to YES.</li>
+<li><b>FID</b>=string. Field name, with integer values, to use as FID. Defaults to 'ogc_fid'</li>
 </ul>
 
 <h2>ElasticSearch vs OGR concepts</h2>
@@ -125,6 +126,16 @@ be usefull in case of complex documents or with data types that do not translate
 in OGR data types. On creation/update of documents, if the _json field is present
 and set, its content will be used directly (other fields will be ignored).<p>
 
+<h2>Feature ID</h2>
+
+Elastic Search have a special _id field that contains the unique ID of the document. This
+field is returned as an OGR field, but cannot be used as the OGR special FeatureID
+field, which must be of integer type. By default, OGR will try to read a potential
+'ogc_fid' field to set the OGR FeatureID. The name of this field to look up can
+be set with the FID open option. If the field is not found, the FID returned by
+OGR will be a sequential number starting at 1, but it is not guaranteed to be
+stable at all.<p>
+
 <h2>ExecuteSQL() interface</h2>
 
 If specifying "ES" as the dialect of ExecuteSQL(), a JSon string with a
@@ -194,6 +205,7 @@ For a geo_point geometry field, this causes a compressed geometry format to be u
 </li>
 <li><b>BULK_INSERT</b>=YES/NO. Whether to use bulk insert for feature creation. Defaults to YES.</li>
 <li><b>BULK_SIZE</b>=value. Size in bytes of the buffer for bulk upload. Defaults to 1000000 (1 million).</li>
+<li><b>FID</b>=string. Field name, with integer values, to use as FID. Can be set to empty to disable the writing of the FID value. Defaults to 'ogc_fid'</li>
 <li><b>DOT_AS_NESTED_FIELD</b>=YES/NO. Whether to consider dot character in field name as sub-document. Defaults to YES.</li>
 <li><b>IGNORE_SOURCE_ID</b>=YES/NO. Whether to ignore _id field in features passed to CreateFeature(). Defaults to NO.</li>
 </ul>
