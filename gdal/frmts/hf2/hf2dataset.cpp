@@ -198,7 +198,7 @@ CPLErr HF2RasterBand::IReadBlock( int nBlockXOff, int nLineYOff,
                 for(i=1;i<nTileWidth;i++)
                 {
                     if (nWordSize == 1)
-                        nVal += ((char*)pabyData)[i-1];
+                        nVal += ((signed char*)pabyData)[i-1];
                     else if (nWordSize == 2)
                         nVal += ((GInt16*)pabyData)[i-1];
                     else
@@ -960,7 +960,7 @@ GDALDataset* HF2Dataset::CreateCopy( const char * pszFilename,
                         if (nWordSize == 1)
                         {
                             CPLAssert(nDiff >= -128 && nDiff <= 127);
-                            char chDiff = (char)nDiff;
+                            signed char chDiff = (signed char)nDiff;
                             VSIFWriteL(&chDiff, 1, 1, fp);
                         }
                         else if (nWordSize == 2)
@@ -1032,7 +1032,7 @@ GDALDataset* HF2Dataset::CreateCopy( const char * pszFilename,
                         if (nWordSize == 1)
                         {
                             CPLAssert(nDiff >= -128 && nDiff <= 127);
-                            char chDiff = (char)nDiff;
+                            signed char chDiff = (signed char)nDiff;
                             VSIFWriteL(&chDiff, 1, 1, fp);
                         }
                         else if (nWordSize == 2)
