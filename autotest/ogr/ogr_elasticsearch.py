@@ -981,6 +981,12 @@ def ogr_elasticsearch_5():
             "_source": {
                 "another_geopoint": "49.2,2.2"
             }
+        },
+        {
+            "_source": {""" +
+                # "this is the geohash format",
+"""                "another_geopoint": "u09qv80meqh16ve02equ"
+            }
         }]
     }
 }""")
@@ -1017,6 +1023,13 @@ def ogr_elasticsearch_5():
     
     f = lyr.GetNextFeature()
     if f['another_geopoint'].ExportToWkt() != 'POINT (2.2 49.2)':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    
+    # Test geohash
+    f = lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry(f['another_geopoint'], 'POINT (2 49)') != 0:
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
