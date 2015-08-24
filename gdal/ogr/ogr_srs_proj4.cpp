@@ -1095,7 +1095,10 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
 /*      Handle TOWGS84 conversion.                                      */
 /* -------------------------------------------------------------------- */
     pszValue = CSLFetchNameValue(papszNV, "towgs84");
-    if(pszValue!=NULL)
+    /* Make sure that we do not inclue a useless TOWGS84 node if the datum isWGS84 */
+    /* Depending on the proj.4 version +datum=WGS84 might be expanded with a +towgs84=0,0,0 or not */
+    if(pszValue!=NULL &&
+        !(EQUAL(CSLFetchNameValueDef(papszNV, "datum", ""), "WGS84") && EQUAL(pszValue, "0,0,0")) )
     {
         char **papszToWGS84 = CSLTokenizeStringComplex( pszValue, ",", 
                                                         FALSE, TRUE );
