@@ -955,6 +955,38 @@ OGRFeature *OGRElasticLayer::GetNextRawFeature()
 }
 
 /************************************************************************/
+/*                      decode_geohash_bbox()                           */
+/************************************************************************/
+
+/* Derived from routine from https://github.com/davetroy/geohash/blob/master/ext/geohash_native.c */
+/* (c) 2008-2010 David Troy, davetroy@gmail.com, (The MIT License) */
+
+static const char BASE32[] = "0123456789bcdefghjkmnpqrstuvwxyz";
+
+static void decode_geohash_bbox(const char *geohash, double lat[2], double lon[2])
+{
+    int i, j, hashlen;
+    char c, cd, mask, is_even=1;
+    static const char bits[] = {16,8,4,2,1};
+    lat[0] = -90.0; lat[1] = 90.0;
+    lon[0] = -180.0; lon[1] = 180.0;
+    hashlen = strlen(geohash);
+    for (i=0; i<hashlen; i++) {
+        c = tolower(geohash[i]);
+        cd = strchr(BASE32, c)-BASE32;
+        for (j=0; j<5; j++) {
+            mask = bits[j];
+            if (is_even) {
+                lon[!(cd&mask)] = (lon[0] + lon[1])/2;
+            } else {
+                lat[!(cd&mask)] = (lat[0] + lat[1])/2;
+            }
+            is_even = !is_even;
+        }
+    }
+}
+
+/************************************************************************/
 /*                            BuildFeature()                            */
 /************************************************************************/
 
@@ -1102,7 +1134,13 @@ void OGRElasticLayer::BuildFeature(OGRFeature* poFeature, json_object* poSource,
                         poGeom = new OGRPoint( CPLAtof(papszTokens[1]),
                                                CPLAtof(papszTokens[0]) );
                     }
-                    // TODO decode if stored as a geohash string ?
+                    else
+                    {
+                        double lat[2], lon[2];
+                        decode_geohash_bbox(pszLatLon, lat, lon);
+                        poGeom = new OGRPoint( (lon[0] + lon[1]) / 2,
+                                               (lat[0] + lat[1]) / 2 );
+                    }
 
                     CSLDestroy(papszTokens);
                 }
