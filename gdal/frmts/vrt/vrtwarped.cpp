@@ -256,10 +256,22 @@ GDALCreateWarpedVRT( GDALDatasetH hSrcDS,
         poBand->CopyCommonInfoFrom( poSrcBand );
     }
 
+    if( psOptions->nDstAlphaBand == psOptions->nBandCount + 1 )
+    {
+        GDALRasterBand *poSrcBand = (GDALRasterBand*)GDALGetRasterBand( hSrcDS, 1);
+        poDS->AddBand( poSrcBand->GetRasterDataType(), NULL );
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Initialize the warp on the VRTWarpedDataset.                    */
 /* -------------------------------------------------------------------- */
-    poDS->Initialize( psOptions );
+    CPLErr eErr = poDS->Initialize( psOptions );
+    if( eErr == CE_Failure )
+    {
+         psOptions->hDstDS = NULL;
+         delete poDS;
+         return NULL;
+    }
     
     return (GDALDatasetH) poDS;
 }
@@ -344,7 +356,7 @@ int VRTWarpedDataset::CloseDependentDatasets()
 /*      though we require that the caller also honour the reference     */
 /*      counting semantics even though it isn't a shared dataset.       */
 /* -------------------------------------------------------------------- */
-        if( psWO->hSrcDS != NULL )
+        if( psWO != NULL && psWO->hSrcDS != NULL )
         {
             if( GDALDereferenceDataset( psWO->hSrcDS ) < 1 )
             {
@@ -357,7 +369,7 @@ int VRTWarpedDataset::CloseDependentDatasets()
 /* -------------------------------------------------------------------- */
 /*      We are responsible for cleaning up the transformer outselves.   */
 /* -------------------------------------------------------------------- */
-        if( psWO->pTransformerArg != NULL )
+        if( psWO != NULL && psWO->pTransformerArg != NULL )
             GDALDestroyTransformer( psWO->pTransformerArg );
 
         delete poWarper;
@@ -553,7 +565,12 @@ void VRTWarpedDataset::CreateImplicitOverviews()
                                       adfDstGeoTransform, psWOOvr );
         
         if( bDeleteSrcOvrDataset )
-            GDALDereferenceDataset( (GDALDatasetH)poSrcOvrDS );
+        {
+            if( hDstDS == NULL )
+                delete poSrcOvrDS;
+            else
+                GDALDereferenceDataset( (GDALDatasetH)poSrcOvrDS );
+        }
         
         GDALDestroyWarpOptions(psWOOvr);
         
@@ -880,6 +897,7 @@ VRTWarpedDataset::IBuildOverviews( CPL_UNUSED const char *pszResampling,
 /*      Create each missing overview (we don't need to do anything      */
 /*      to update existing overviews).                                  */
 /* -------------------------------------------------------------------- */
+    CPLErr eErr = CE_None;
     for( i = 0; i < nNewOverviews; i++ )
     {
         int    nOXSize, nOYSize, iBand;
@@ -929,12 +947,6 @@ VRTWarpedDataset::IBuildOverviews( CPL_UNUSED const char *pszResampling,
             poOverviewDS->SetBand( iBand+1, poNewBand );
         }
 
-        nOverviewCount++;
-        papoOverviews = (VRTWarpedDataset **)
-            CPLRealloc( papoOverviews, sizeof(void*) * nOverviewCount );
-
-        papoOverviews[nOverviewCount-1] = poOverviewDS;
-
 /* -------------------------------------------------------------------- */
 /*      Prepare update transformation information that will apply       */
 /*      the overview decimation.                                        */
@@ -955,10 +967,23 @@ VRTWarpedDataset::IBuildOverviews( CPL_UNUSED const char *pszResampling,
                                         poBaseDataset->GetRasterXSize() / (double) nOXSize,
                                         poBaseDataset->GetRasterYSize() / (double) nOYSize );
 
-        poOverviewDS->Initialize( psWO );
+        eErr = poOverviewDS->Initialize( psWO );
 
         psWO->pfnTransformer = pfnTransformerBase;
         psWO->pTransformerArg = pTransformerBaseArg;
+        
+        if( eErr != CE_None )
+        {
+            delete poOverviewDS;
+            break;
+        }
+
+        nOverviewCount++;
+        papoOverviews = (VRTWarpedDataset **)
+            CPLRealloc( papoOverviews, sizeof(void*) * nOverviewCount );
+
+        papoOverviews[nOverviewCount-1] = poOverviewDS;
+
     }
 
     CPLFree( panNewOverviewList );
@@ -970,7 +995,7 @@ VRTWarpedDataset::IBuildOverviews( CPL_UNUSED const char *pszResampling,
 
     SetNeedsFlush();
 
-    return CE_None;
+    return eErr;
 }
 
 /************************************************************************/
