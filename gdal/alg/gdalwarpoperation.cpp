@@ -578,10 +578,12 @@ CPLErr GDALWarpOperation::Initialize( const GDALWarpOptions *psNewOptions )
 
     if( eErr != CE_None )
         WipeOptions();
-
-    psThreadData = GWKThreadsCreate(psOptions->papszWarpOptions,
-                                    psOptions->pfnTransformer,
-                                    psOptions->pTransformerArg);
+    else
+    {
+        psThreadData = GWKThreadsCreate(psOptions->papszWarpOptions,
+                                        psOptions->pfnTransformer,
+                                        psOptions->pTransformerArg);
+    }
 
     return eErr;
 }
