@@ -51,55 +51,57 @@ OGRElasticLayer::OGRElasticLayer(const char* pszLayerName,
                                  const char* pszMappingName,
                                  OGRElasticDataSource* poDS,
                                  char** papszOptions,
-                                 const char* pszESSearch) {
-    osIndexName = pszIndexName ? pszIndexName : "";
-    osMappingName = pszMappingName ? pszMappingName : "";
-    osESSearch = pszESSearch ? pszESSearch : "";
-    osWriteMapFilename = CSLFetchNameValueDef(papszOptions, "WRITE_MAPPING",
-                                      poDS->pszWriteMap ? poDS->pszWriteMap : "");
-    this->poDS = poDS;
+                                 const char* pszESSearch)
+{
+    m_poDS = poDS;
 
-    eGeomTypeMapping = ES_GEOMTYPE_AUTO;
+    m_osIndexName = pszIndexName ? pszIndexName : "";
+    m_osMappingName = pszMappingName ? pszMappingName : "";
+    m_osESSearch = pszESSearch ? pszESSearch : "";
+    m_osWriteMapFilename = CSLFetchNameValueDef(papszOptions, "WRITE_MAPPING",
+                                      m_poDS->m_pszWriteMap ? m_poDS->m_pszWriteMap : "");
+
+    m_eGeomTypeMapping = ES_GEOMTYPE_AUTO;
     const char* pszESGeomType = CSLFetchNameValue(papszOptions, "GEOM_MAPPING_TYPE");
     if( pszESGeomType != NULL )
     {
         if( EQUAL(pszESGeomType, "GEO_POINT") )
-            eGeomTypeMapping = ES_GEOMTYPE_GEO_POINT;
+            m_eGeomTypeMapping = ES_GEOMTYPE_GEO_POINT;
         else if( EQUAL(pszESGeomType, "GEO_SHAPE") )
-            eGeomTypeMapping = ES_GEOMTYPE_GEO_SHAPE;
+            m_eGeomTypeMapping = ES_GEOMTYPE_GEO_SHAPE;
     }
-    nBulkUpload = poDS->nBulkUpload;
+    m_nBulkUpload = m_poDS->m_nBulkUpload;
     if( CSLFetchBoolean(papszOptions, "BULK_INSERT", TRUE) )
     {
-        nBulkUpload = atoi(CSLFetchNameValueDef(papszOptions, "BULK_SIZE", "1000000"));
+        m_nBulkUpload = atoi(CSLFetchNameValueDef(papszOptions, "BULK_SIZE", "1000000"));
     }
     
-    osPrecision = CSLFetchNameValueDef(papszOptions, "GEOM_PRECISION", "");
+    m_osPrecision = CSLFetchNameValueDef(papszOptions, "GEOM_PRECISION", "");
 
-    poFeatureDefn = new OGRFeatureDefn(pszLayerName);
-    SetDescription( poFeatureDefn->GetName() );
-    poFeatureDefn->Reference();
-    poFeatureDefn->SetGeomType(wkbNone);
+    m_poFeatureDefn = new OGRFeatureDefn(pszLayerName);
+    SetDescription( m_poFeatureDefn->GetName() );
+    m_poFeatureDefn->Reference();
+    m_poFeatureDefn->SetGeomType(wkbNone);
     
     AddFieldDefn("_id", OFTString, std::vector<CPLString>());
     
-    if( osESSearch.size() )
+    if( m_osESSearch.size() )
     {
         AddFieldDefn("_index", OFTString, std::vector<CPLString>());
         AddFieldDefn("_type", OFTString, std::vector<CPLString>());
     }
     
-    bFeatureDefnFinalized = FALSE;
-    bMappingWritten = TRUE;
-    bManualMapping = FALSE;
-    bDotAsNestedField = TRUE;
+    m_bFeatureDefnFinalized = FALSE;
+    m_bSerializeMapping = FALSE;
+    m_bManualMapping = FALSE;
+    m_bDotAsNestedField = TRUE;
 
-    iCurID = 0;
+    m_iCurID = 0;
     m_nNextFID = -1;
-    iCurFeatureInPage = 0;
-    bEOF = FALSE;
+    m_iCurFeatureInPage = 0;
+    m_bEOF = FALSE;
     m_poSpatialFilter = NULL;
-    bIgnoreSourceID = FALSE;
+    m_bIgnoreSourceID = FALSE;
 
     ResetReading();
     return;
@@ -119,7 +121,7 @@ OGRElasticLayer::~OGRElasticLayer() {
     for(int i=0;i<(int)m_apoCT.size();i++)
         delete m_apoCT[i];
 
-    poFeatureDefn->Release();
+    m_poFeatureDefn->Release();
 }
 
 /************************************************************************/
@@ -137,8 +139,8 @@ void OGRElasticLayer::AddFieldDefn( const char* pszName,
         oFieldDefn.SetWidth(1);
     m_aaosFieldPaths.push_back(aosPath);
     if( aosPath.size() )
-        m_aosMapToFieldIndex[ BuildPathFromArray(aosPath) ] = poFeatureDefn->GetFieldCount();
-    poFeatureDefn->AddFieldDefn(&oFieldDefn);
+        m_aosMapToFieldIndex[ BuildPathFromArray(aosPath) ] = m_poFeatureDefn->GetFieldCount();
+    m_poFeatureDefn->AddFieldDefn(&oFieldDefn);
 }
 
 /************************************************************************/
@@ -152,7 +154,7 @@ void OGRElasticLayer::AddGeomFieldDefn( const char* pszName,
 {
     OGRGeomFieldDefn oFieldDefn(pszName, eType);
     m_aaosGeomFieldPaths.push_back(aosPath);
-    m_aosMapToGeomFieldIndex[ BuildPathFromArray(aosPath) ] = poFeatureDefn->GetGeomFieldCount();
+    m_aosMapToGeomFieldIndex[ BuildPathFromArray(aosPath) ] = m_poFeatureDefn->GetGeomFieldCount();
     m_abIsGeoPoint.push_back(bIsGeoPoint);
 
     OGRSpatialReference* poSRS_WGS84 = new OGRSpatialReference();
@@ -160,7 +162,7 @@ void OGRElasticLayer::AddGeomFieldDefn( const char* pszName,
     oFieldDefn.SetSpatialRef(poSRS_WGS84);
     poSRS_WGS84->Dereference();
     
-    poFeatureDefn->AddGeomFieldDefn(&oFieldDefn);
+    m_poFeatureDefn->AddGeomFieldDefn(&oFieldDefn);
 
     m_apoCT.push_back(NULL);
 }
@@ -200,7 +202,7 @@ void OGRElasticLayer::InitFeatureDefnFromMapping(json_object* poSchema,
                     }
                     osFieldName += it.key;
                     
-                    if( poFeatureDefn->GetGeomFieldIndex(osFieldName) < 0 )
+                    if( m_poFeatureDefn->GetGeomFieldIndex(osFieldName) < 0 )
                     {
                         std::vector<CPLString> aosNewPaths = aosPath;
                         aosNewPaths.push_back(osFieldName);
@@ -213,7 +215,7 @@ void OGRElasticLayer::InitFeatureDefnFromMapping(json_object* poSchema,
                 }
             }
 
-            if( aosPath.size() == 0 && osMappingName == "FeatureCollection" && strcmp(it.key, "properties") == 0 )
+            if( aosPath.size() == 0 && m_osMappingName == "FeatureCollection" && strcmp(it.key, "properties") == 0 )
             {
                 std::vector<CPLString> aosNewPaths = aosPath;
                 aosNewPaths.push_back(it.key);
@@ -222,7 +224,7 @@ void OGRElasticLayer::InitFeatureDefnFromMapping(json_object* poSchema,
                 
                 continue;
             }
-            else if( poDS->bFlattenNestedAttributes )
+            else if( m_poDS->m_bFlattenNestedAttributes )
             {
                 std::vector<CPLString> aosNewPaths = aosPath;
                 aosNewPaths.push_back(it.key);
@@ -241,7 +243,7 @@ void OGRElasticLayer::InitFeatureDefnFromMapping(json_object* poSchema,
             }
         }
 
-        if( aosPath.size() == 0 && EQUAL(it.key, poDS->GetFID()) )
+        if( aosPath.size() == 0 && EQUAL(it.key, m_poDS->GetFID()) )
         {
             m_osFID = it.key;
         }
@@ -263,15 +265,15 @@ void OGRElasticLayer::InitFeatureDefnFromMapping(json_object* poSchema,
             json_object* poGeomFields = json_object_object_get(poMeta, "geomfields");
             if( poGeomFields && json_object_get_type(poGeomFields) == json_type_object )
             {
-                for( int i=0; i< poFeatureDefn->GetGeomFieldCount(); i++ )
+                for( int i=0; i< m_poFeatureDefn->GetGeomFieldCount(); i++ )
                 {
                     json_object* poObj = json_object_object_get(poGeomFields,
-                            poFeatureDefn->GetGeomFieldDefn(i)->GetNameRef());
+                            m_poFeatureDefn->GetGeomFieldDefn(i)->GetNameRef());
                     if( poObj && json_object_get_type(poObj) == json_type_string )
                     {
                         OGRwkbGeometryType eType = OGRFromOGCGeomType(json_object_get_string(poObj));
                         if( eType != wkbUnknown )
-                            poFeatureDefn->GetGeomFieldDefn(i)->SetType(eType);
+                            m_poFeatureDefn->GetGeomFieldDefn(i)->SetType(eType);
                     }
                 }
             }
@@ -279,10 +281,10 @@ void OGRElasticLayer::InitFeatureDefnFromMapping(json_object* poSchema,
             json_object* poFields = json_object_object_get(poMeta, "fields");
             if( poFields && json_object_get_type(poFields) == json_type_object )
             {
-                for( int i=0; i< poFeatureDefn->GetFieldCount(); i++ )
+                for( int i=0; i< m_poFeatureDefn->GetFieldCount(); i++ )
                 {
                     json_object* poObj = json_object_object_get(poFields,
-                            poFeatureDefn->GetFieldDefn(i)->GetNameRef());
+                            m_poFeatureDefn->GetFieldDefn(i)->GetNameRef());
                     if( poObj && json_object_get_type(poObj) == json_type_string )
                     {
                         for(int j=0; j<=OFTMaxType;j++)
@@ -290,7 +292,7 @@ void OGRElasticLayer::InitFeatureDefnFromMapping(json_object* poSchema,
                             if( EQUAL(OGR_GetFieldTypeName((OGRFieldType)j),
                                       json_object_get_string(poObj)) )
                             {
-                                poFeatureDefn->GetFieldDefn(i)->SetType((OGRFieldType)j);
+                                m_poFeatureDefn->GetFieldDefn(i)->SetType((OGRFieldType)j);
                                 break;
                             }
                         }
@@ -327,7 +329,7 @@ void OGRElasticLayer::CreateFieldFromSchema(const char* pszName,
 
     if( EQUAL(pszType, "geo_point") || EQUAL(pszType, "geo_shape") )
     {
-        if( poFeatureDefn->GetGeomFieldIndex(osFieldName) >= 0 )
+        if( m_poFeatureDefn->GetGeomFieldIndex(osFieldName) >= 0 )
             return;
 
         aosPath.push_back(pszName);
@@ -335,9 +337,9 @@ void OGRElasticLayer::CreateFieldFromSchema(const char* pszName,
                          EQUAL(pszType, "geo_point") ? wkbPoint : wkbUnknown,
                          aosPath, EQUAL(pszType, "geo_point"));
     }
-    else if( !( aosPath.size() == 0 && osMappingName == "FeatureCollection" ) )
+    else if( !( aosPath.size() == 0 && m_osMappingName == "FeatureCollection" ) )
     {
-        if( poFeatureDefn->GetFieldIndex(osFieldName) >= 0 )
+        if( m_poFeatureDefn->GetFieldIndex(osFieldName) >= 0 )
             return;
 
         OGRFieldType eType = OFTString;
@@ -382,13 +384,13 @@ void OGRElasticLayer::CreateFieldFromSchema(const char* pszName,
 
 void OGRElasticLayer::FinalizeFeatureDefn(int bReadFeatures)
 {
-    if( bFeatureDefnFinalized )
+    if( m_bFeatureDefnFinalized )
         return;
     
-    bFeatureDefnFinalized = TRUE;
+    m_bFeatureDefnFinalized = TRUE;
     
-    int nFeatureCountToEstablishFeatureDefn = poDS->nFeatureCountToEstablishFeatureDefn;
-    if( osESSearch.size() && nFeatureCountToEstablishFeatureDefn <= 0 )
+    int nFeatureCountToEstablishFeatureDefn = m_poDS->m_nFeatureCountToEstablishFeatureDefn;
+    if( m_osESSearch.size() && nFeatureCountToEstablishFeatureDefn <= 0 )
         nFeatureCountToEstablishFeatureDefn = 1;
     std::set< std::pair<CPLString, CPLString> > oVisited;
 
@@ -404,24 +406,24 @@ void OGRElasticLayer::FinalizeFeatureDefn(int bReadFeatures)
             if( bFirst )
             {
                 bFirst = FALSE;
-                if(  osESSearch.size() )
-                    poResponse = poDS->RunRequest(
+                if(  m_osESSearch.size() )
+                    poResponse = m_poDS->RunRequest(
                     CPLSPrintf("%s/_search?scroll=1m&size=%d&pretty",
-                           poDS->GetURL(), poDS->nBatchSize),
-                           osESSearch.c_str());
+                           m_poDS->GetURL(), m_poDS->m_nBatchSize),
+                           m_osESSearch.c_str());
                 else
-                    poResponse = poDS->RunRequest(
+                    poResponse = m_poDS->RunRequest(
                     CPLSPrintf("%s/%s/%s/_search?scroll=1m&size=%d&pretty",
-                           poDS->GetURL(), osIndexName.c_str(),
-                           osMappingName.c_str(), poDS->nBatchSize));
+                           m_poDS->GetURL(), m_osIndexName.c_str(),
+                           m_osMappingName.c_str(), m_poDS->m_nBatchSize));
             }
             else
             {
-                if( osScrollID.size() == 0 )
+                if( m_osScrollID.size() == 0 )
                     break;
-                poResponse = poDS->RunRequest(
+                poResponse = m_poDS->RunRequest(
                     CPLSPrintf("%s/_search/scroll?scroll=1m&size=%d&scroll_id=%s&pretty",
-                               poDS->GetURL(), poDS->nBatchSize, osScrollID.c_str()));
+                               m_poDS->GetURL(), m_poDS->m_nBatchSize, m_osScrollID.c_str()));
             }
 
             if( poResponse == NULL )
@@ -433,7 +435,7 @@ void OGRElasticLayer::FinalizeFeatureDefn(int bReadFeatures)
             {
                 const char* pszScrollID = json_object_get_string(poScrollID);
                 if( pszScrollID )
-                    osScrollID = pszScrollID;
+                    m_osScrollID = pszScrollID;
             }
 
             json_object* poHits = json_object_object_get(poResponse, "hits");
@@ -451,7 +453,7 @@ void OGRElasticLayer::FinalizeFeatureDefn(int bReadFeatures)
             int nHits = json_object_array_length(poHits);
             if( nHits == 0 )
             {
-                osScrollID = "";
+                m_osScrollID = "";
                 json_object_put(poResponse);
                 break;
             }
@@ -468,7 +470,7 @@ void OGRElasticLayer::FinalizeFeatureDefn(int bReadFeatures)
                     continue;
                 }
 
-                if( osESSearch.size() )
+                if( m_osESSearch.size() )
                 {
                     json_object* poIndex = json_object_object_get(poHit, "_index");
                     if( poIndex == NULL || json_object_get_type(poIndex) != json_type_string )
@@ -477,14 +479,14 @@ void OGRElasticLayer::FinalizeFeatureDefn(int bReadFeatures)
                     if( poType == NULL || json_object_get_type(poType) != json_type_string )
                         break;
                     CPLString osIndex(json_object_get_string(poIndex));
-                    osMappingName = json_object_get_string(poType);
+                    m_osMappingName = json_object_get_string(poType);
 
-                    if( oVisited.find( std::pair<CPLString,CPLString>(osIndex, osMappingName) ) == oVisited.end() )
+                    if( oVisited.find( std::pair<CPLString,CPLString>(osIndex, m_osMappingName) ) == oVisited.end() )
                     {
-                        oVisited.insert( std::pair<CPLString,CPLString>(osIndex, osMappingName) );
+                        oVisited.insert( std::pair<CPLString,CPLString>(osIndex, m_osMappingName) );
 
-                        json_object* poMappingRes = poDS->RunRequest(
-                            (poDS->GetURL() + CPLString("/") + osIndex + CPLString("/_mapping/") + osMappingName + CPLString("?pretty")).c_str());
+                        json_object* poMappingRes = m_poDS->RunRequest(
+                            (m_poDS->GetURL() + CPLString("/") + osIndex + CPLString("/_mapping/") + m_osMappingName + CPLString("?pretty")).c_str());
                         if( poMappingRes )
                         {
                             json_object* poLayerObj = json_object_object_get(poMappingRes, osIndex);
@@ -493,7 +495,7 @@ void OGRElasticLayer::FinalizeFeatureDefn(int bReadFeatures)
                                 poMappings = json_object_object_get(poLayerObj, "mappings");
                             if( poMappings && json_object_get_type(poMappings) == json_type_object )
                             {
-                                json_object* poMapping = json_object_object_get(poMappings, osMappingName);
+                                json_object* poMapping = json_object_object_get(poMappings, m_osMappingName);
                                 if( poMapping)
                                 {
                                     InitFeatureDefnFromMapping(poMapping, "", std::vector<CPLString>());
@@ -515,13 +517,13 @@ void OGRElasticLayer::FinalizeFeatureDefn(int bReadFeatures)
                         if( EQUAL(it.key, m_osFID) )
                             continue;
                     }
-                    else if( EQUAL(it.key, poDS->GetFID()) )
+                    else if( EQUAL(it.key, m_poDS->GetFID()) )
                     {
                         m_osFID = it.key;
                         continue;
                     }
 
-                    if( osMappingName == "FeatureCollection" )
+                    if( m_osMappingName == "FeatureCollection" )
                     {
                         if( strcmp(it.key, "properties") == 0 &&
                             json_object_get_type(it.val) == json_type_object )
@@ -565,7 +567,7 @@ void OGRElasticLayer::FinalizeFeatureDefn(int bReadFeatures)
         ResetReading();
     }
 
-    if( poDS->bJSonField )
+    if( m_poDS->m_bJSonField )
     {
         AddFieldDefn("_json", OFTString, std::vector<CPLString>() );
     }
@@ -621,7 +623,7 @@ void OGRElasticLayer::AddOrUpdateField(const char* pszAttrName,
             (eGeomType = GetOGRGeomTypeFromES(json_object_get_string(poType))) != wkbUnknown &&
             json_object_object_get(poObj, (eGeomType == wkbGeometryCollection) ? "geometries" : "coordinates") )
         {
-            int nIndex = poFeatureDefn->GetGeomFieldIndex(pszAttrName);
+            int nIndex = m_poFeatureDefn->GetGeomFieldIndex(pszAttrName);
             if( nIndex < 0 )
             {
                 aosPath.push_back(pszKey);
@@ -629,14 +631,14 @@ void OGRElasticLayer::AddOrUpdateField(const char* pszAttrName,
             }
             else
             {
-                OGRGeomFieldDefn* poFDefn = poFeatureDefn->GetGeomFieldDefn(nIndex);
+                OGRGeomFieldDefn* poFDefn = m_poFeatureDefn->GetGeomFieldDefn(nIndex);
                 if( poFDefn->GetType() != eGeomType )
                     poFDefn->SetType(wkbUnknown);
             }
         }
-        else if( poDS->bFlattenNestedAttributes )
+        else if( m_poDS->m_bFlattenNestedAttributes )
         {
-            if( poFeatureDefn->GetGeomFieldIndex(pszAttrName) >= 0 )
+            if( m_poFeatureDefn->GetGeomFieldIndex(pszAttrName) >= 0 )
                 return;
             aosPath.push_back(pszKey);
             
@@ -661,20 +663,20 @@ void OGRElasticLayer::AddOrUpdateField(const char* pszAttrName,
     }
     /*else if( eJSONType == json_type_array )
     {
-        if( poFeatureDefn->GetGeomFieldIndex(pszAttrName) >= 0 )
+        if( m_poFeatureDefn->GetGeomFieldIndex(pszAttrName) >= 0 )
             return;
     }*/
     
-    if( poFeatureDefn->GetGeomFieldIndex(pszAttrName) >= 0 )
+    if( m_poFeatureDefn->GetGeomFieldIndex(pszAttrName) >= 0 )
         return;
 
     OGRFieldSubType eNewSubType;
     OGRFieldType eNewType = GeoJSONPropertyToFieldType( poObj, eNewSubType );
 
-    int nIndex = poFeatureDefn->GetFieldIndex(pszAttrName);
+    int nIndex = m_poFeatureDefn->GetFieldIndex(pszAttrName);
     OGRFieldDefn* poFDefn = NULL;
     if( nIndex >= 0 )
-        poFDefn = poFeatureDefn->GetFieldDefn(nIndex);
+        poFDefn = m_poFeatureDefn->GetFieldDefn(nIndex);
     if( (poFDefn == NULL && eNewType == OFTString) ||
         (poFDefn != NULL &&
          (poFDefn->GetType() == OFTDate || poFDefn->GetType() == OFTDateTime || poFDefn->GetType() == OFTTime) ) )
@@ -742,7 +744,7 @@ OGRFeatureDefn * OGRElasticLayer::GetLayerDefn() {
     
     FinalizeFeatureDefn();
     
-    return poFeatureDefn;
+    return m_poFeatureDefn;
 }
 
 /************************************************************************/
@@ -761,21 +763,21 @@ const char* OGRElasticLayer::GetFIDColumn()
 
 void OGRElasticLayer::ResetReading()
 {
-    if( osScrollID.size() )
+    if( m_osScrollID.size() )
     {
         char** papszOptions = CSLAddNameValue(NULL, "CUSTOMREQUEST", "DELETE");
-        CPLHTTPResult* psResult = CPLHTTPFetch((poDS->GetURL() + CPLString("/_search/scroll?scroll_id=") + osScrollID).c_str(), papszOptions);
+        CPLHTTPResult* psResult = CPLHTTPFetch((m_poDS->GetURL() + CPLString("/_search/scroll?scroll_id=") + m_osScrollID).c_str(), papszOptions);
         CSLDestroy(papszOptions);
         CPLHTTPDestroyResult(psResult);
 
-        osScrollID = "";
+        m_osScrollID = "";
     }
-    for(int i=0;i<(int)apoCachedFeatures.size();i++)
-        delete apoCachedFeatures[i];
-    apoCachedFeatures.resize(0);
-    iCurID = 0;
-    iCurFeatureInPage = 0;
-    bEOF = FALSE;
+    for(int i=0;i<(int)m_apoCachedFeatures.size();i++)
+        delete m_apoCachedFeatures[i];
+    m_apoCachedFeatures.resize(0);
+    m_iCurID = 0;
+    m_iCurFeatureInPage = 0;
+    m_bEOF = FALSE;
 }
 
 /************************************************************************/
@@ -813,60 +815,60 @@ OGRFeature *OGRElasticLayer::GetNextRawFeature()
 {
     json_object* poResponse = NULL;
 
-    if( bEOF )
+    if( m_bEOF )
         return NULL;
 
-    if( iCurFeatureInPage < (int)apoCachedFeatures.size() )
+    if( m_iCurFeatureInPage < (int)m_apoCachedFeatures.size() )
     {
-        OGRFeature* poRet = apoCachedFeatures[iCurFeatureInPage];
-        apoCachedFeatures[iCurFeatureInPage] = NULL;
-        iCurFeatureInPage ++;
+        OGRFeature* poRet = m_apoCachedFeatures[m_iCurFeatureInPage];
+        m_apoCachedFeatures[m_iCurFeatureInPage] = NULL;
+        m_iCurFeatureInPage ++;
         return poRet;
     }
 
-    for(int i=0;i<(int)apoCachedFeatures.size();i++)
-        delete apoCachedFeatures[i];
-    apoCachedFeatures.resize(0);
-    iCurFeatureInPage = 0;
+    for(int i=0;i<(int)m_apoCachedFeatures.size();i++)
+        delete m_apoCachedFeatures[i];
+    m_apoCachedFeatures.resize(0);
+    m_iCurFeatureInPage = 0;
 
-    if( osScrollID.size() == 0 )
+    if( m_osScrollID.size() == 0 )
     {
-        if( osESSearch.size() )
+        if( m_osESSearch.size() )
         {
-            poResponse = poDS->RunRequest(
+            poResponse = m_poDS->RunRequest(
                 CPLSPrintf("%s/_search?scroll=1m&size=%d&pretty",
-                           poDS->GetURL(), poDS->nBatchSize),
-                osESSearch.c_str());
+                           m_poDS->GetURL(), m_poDS->m_nBatchSize),
+                m_osESSearch.c_str());
         }
         else if( m_poSpatialFilter && m_osJSONFilter.size() == 0 )
         {
             CPLString osFilter = CPLSPrintf("{ \"query\": { \"filtered\" : { \"query\" : { \"match_all\" : {} }, \"filter\": %s } } }",
                                             json_object_to_json_string( m_poSpatialFilter ));
-            poResponse = poDS->RunRequest(
+            poResponse = m_poDS->RunRequest(
                 CPLSPrintf("%s/%s/%s/_search?scroll=1m&size=%d&pretty",
-                           poDS->GetURL(), osIndexName.c_str(),
-                           osMappingName.c_str(), poDS->nBatchSize),
+                           m_poDS->GetURL(), m_osIndexName.c_str(),
+                           m_osMappingName.c_str(), m_poDS->m_nBatchSize),
                 osFilter.c_str());
         }
         else
         {
-            poResponse = poDS->RunRequest(
+            poResponse = m_poDS->RunRequest(
                 CPLSPrintf("%s/%s/%s/_search?scroll=1m&size=%d&pretty",
-                           poDS->GetURL(), osIndexName.c_str(),
-                           osMappingName.c_str(), poDS->nBatchSize),
+                           m_poDS->GetURL(), m_osIndexName.c_str(),
+                           m_osMappingName.c_str(), m_poDS->m_nBatchSize),
                 m_osJSONFilter.c_str());
         }
     }
     else
     {
-        poResponse = poDS->RunRequest(
+        poResponse = m_poDS->RunRequest(
             CPLSPrintf("%s/_search/scroll?scroll=1m&size=%d&scroll_id=%s&pretty",
-                       poDS->GetURL(), poDS->nBatchSize, osScrollID.c_str()));
+                       m_poDS->GetURL(), m_poDS->m_nBatchSize, m_osScrollID.c_str()));
     }
 
     if( poResponse == NULL )
     {
-        bEOF = TRUE;
+        m_bEOF = TRUE;
         return NULL;
     }
     json_object* poScrollID = json_object_object_get(poResponse, "_scroll_id");
@@ -874,28 +876,28 @@ OGRFeature *OGRElasticLayer::GetNextRawFeature()
     {
         const char* pszScrollID = json_object_get_string(poScrollID);
         if( pszScrollID )
-            osScrollID = pszScrollID;
+            m_osScrollID = pszScrollID;
     }
 
     json_object* poHits = json_object_object_get(poResponse, "hits");
     if( poHits == NULL || json_object_get_type(poHits) != json_type_object )
     {
-        bEOF = TRUE;
+        m_bEOF = TRUE;
         json_object_put(poResponse);
         return NULL;
     }
     poHits = json_object_object_get(poHits, "hits");
     if( poHits == NULL || json_object_get_type(poHits) != json_type_array )
     {
-        bEOF = TRUE;
+        m_bEOF = TRUE;
         json_object_put(poResponse);
         return NULL;
     }
     int nHits = json_object_array_length(poHits);
     if( nHits == 0 )
     {
-        osScrollID = "";
-        bEOF = TRUE;
+        m_osScrollID = "";
+        m_bEOF = TRUE;
         json_object_put(poResponse);
         return NULL;
     }
@@ -917,11 +919,11 @@ OGRFeature *OGRElasticLayer::GetNextRawFeature()
         if( poId != NULL && json_object_get_type(poId) == json_type_string )
             pszId = json_object_get_string(poId);
         
-        OGRFeature* poFeature = new OGRFeature(poFeatureDefn);
+        OGRFeature* poFeature = new OGRFeature(m_poFeatureDefn);
         if( pszId )
             poFeature->SetField("_id", pszId);
         
-        if( osESSearch.size() )
+        if( m_osESSearch.size() )
         {
             json_object* poIndex = json_object_object_get(poHit, "_index");
             if( poIndex != NULL && json_object_get_type(poIndex) == json_type_string )
@@ -932,21 +934,21 @@ OGRFeature *OGRElasticLayer::GetNextRawFeature()
                 poFeature->SetField("_type", json_object_get_string(poType));
         }
         
-        if( poDS->bJSonField )
+        if( m_poDS->m_bJSonField )
             poFeature->SetField("_json", json_object_to_json_string(poSource));
         
         BuildFeature(poFeature, poSource, CPLString());
         if( poFeature->GetFID() < 0 )
-            poFeature->SetFID( ++iCurID );
-        apoCachedFeatures.push_back(poFeature);
+            poFeature->SetFID( ++m_iCurID );
+        m_apoCachedFeatures.push_back(poFeature);
     }
 
     json_object_put(poResponse);
-    if( apoCachedFeatures.size() )
+    if( m_apoCachedFeatures.size() )
     {
-        OGRFeature* poRet = apoCachedFeatures[ 0 ];
-        apoCachedFeatures[ 0 ] = NULL;
-        iCurFeatureInPage ++;
+        OGRFeature* poRet = m_apoCachedFeatures[ 0 ];
+        m_apoCachedFeatures[ 0 ] = NULL;
+        m_iCurFeatureInPage ++;
         return poRet;
     }
     return NULL;
@@ -997,7 +999,7 @@ void OGRElasticLayer::BuildFeature(OGRFeature* poFeature, json_object* poSource,
                     break;
                 case json_type_array:
                 {
-                    if( poFeatureDefn->GetFieldDefn(oIter->second)->GetType() == OFTIntegerList )
+                    if( m_poFeatureDefn->GetFieldDefn(oIter->second)->GetType() == OFTIntegerList )
                     {
                         std::vector<int> anValues;
                         int nLength = json_object_array_length(it.val);
@@ -1008,7 +1010,7 @@ void OGRElasticLayer::BuildFeature(OGRFeature* poFeature, json_object* poSource,
                         if( nLength )
                             poFeature->SetField( oIter->second, nLength, &anValues[0] );
                     }
-                    else if( poFeatureDefn->GetFieldDefn(oIter->second)->GetType() == OFTInteger64List )
+                    else if( m_poFeatureDefn->GetFieldDefn(oIter->second)->GetType() == OFTInteger64List )
                     {
                         std::vector<GIntBig> anValues;
                         int nLength = json_object_array_length(it.val);
@@ -1019,7 +1021,7 @@ void OGRElasticLayer::BuildFeature(OGRFeature* poFeature, json_object* poSource,
                         if( nLength )
                             poFeature->SetField( oIter->second, nLength, &anValues[0] );
                     }
-                    else if( poFeatureDefn->GetFieldDefn(oIter->second)->GetType() == OFTRealList )
+                    else if( m_poFeatureDefn->GetFieldDefn(oIter->second)->GetType() == OFTRealList )
                     {
                         std::vector<double> adfValues;
                         int nLength = json_object_array_length(it.val);
@@ -1030,7 +1032,7 @@ void OGRElasticLayer::BuildFeature(OGRFeature* poFeature, json_object* poSource,
                         if( nLength )
                             poFeature->SetField( oIter->second, nLength, &adfValues[0] );
                     }
-                    else if( poFeatureDefn->GetFieldDefn(oIter->second)->GetType() == OFTStringList )
+                    else if( m_poFeatureDefn->GetFieldDefn(oIter->second)->GetType() == OFTStringList )
                     {
                         std::vector<char*> apszValues;
                         int nLength = json_object_array_length(it.val);
@@ -1049,7 +1051,7 @@ void OGRElasticLayer::BuildFeature(OGRFeature* poFeature, json_object* poSource,
                 }
                 default:
                 {
-                    if( poFeatureDefn->GetFieldDefn(oIter->second)->GetType() == OFTBinary )
+                    if( m_poFeatureDefn->GetFieldDefn(oIter->second)->GetType() == OFTBinary )
                     {
                         GByte* pabyBase64 = (GByte*) CPLStrdup( json_object_get_string(it.val) );
                         int nBytes = CPLBase64DecodeInPlace( pabyBase64 );
@@ -1195,18 +1197,18 @@ void OGRElasticLayer::BuildFeature(OGRFeature* poFeature, json_object* poSource,
 
             if( poGeom != NULL )
             {
-                poGeom->assignSpatialReference( poFeatureDefn->GetGeomFieldDefn(oIter->second)->GetSpatialRef() );
+                poGeom->assignSpatialReference( m_poFeatureDefn->GetGeomFieldDefn(oIter->second)->GetSpatialRef() );
                 poFeature->SetGeomFieldDirectly( oIter->second, poGeom );
             }
         }
         else if( json_object_get_type(it.val) == json_type_object &&
-                 (poDS->bFlattenNestedAttributes ||
-                  (osPath.size() == 0 && osMappingName == "FeatureCollection" && strcmp(it.key, "properties") == 0)) )
+                 (m_poDS->m_bFlattenNestedAttributes ||
+                  (osPath.size() == 0 && m_osMappingName == "FeatureCollection" && strcmp(it.key, "properties") == 0)) )
         {
             BuildFeature(poFeature, it.val, osCurPath);
         }
         else if( json_object_get_type(it.val) == json_type_object && 
-                 !poDS->bFlattenNestedAttributes )
+                 !m_poDS->m_bFlattenNestedAttributes )
         {
             if( ( oIter = m_aosMapToGeomFieldIndex.find(osCurPath + ".coordinates") ) != m_aosMapToGeomFieldIndex.end() )
             {
@@ -1285,10 +1287,10 @@ CPLString OGRElasticLayer::BuildMap() {
 
     json_object *poMapping = json_object_new_object();
     json_object *poMappingProperties = json_object_new_object();
-    json_object_object_add(map, osMappingName, poMapping);
+    json_object_object_add(map, m_osMappingName, poMapping);
     json_object_object_add(poMapping, "properties", poMappingProperties);
 
-    if( osMappingName == "FeatureCollection" )
+    if( m_osMappingName == "FeatureCollection" )
     {
         json_object_object_add(poMappingProperties, "type", AddPropertyMap("string"));
 
@@ -1299,9 +1301,9 @@ CPLString OGRElasticLayer::BuildMap() {
     }
 
     /* skip _id field */
-    for(int i=1;i<poFeatureDefn->GetFieldCount();i++)
+    for(int i=1;i<m_poFeatureDefn->GetFieldCount();i++)
     {
-        OGRFieldDefn* poFieldDefn = poFeatureDefn->GetFieldDefn(i);
+        OGRFieldDefn* poFieldDefn = m_poFeatureDefn->GetFieldDefn(i);
         
         json_object* poContainer = GetContainerForMapping(poMappingProperties,
                                                           m_aaosFieldPaths[i],
@@ -1346,7 +1348,7 @@ CPLString OGRElasticLayer::BuildMap() {
         }
     }
 
-    for(int i=0;i<poFeatureDefn->GetGeomFieldCount();i++)
+    for(int i=0;i<m_poFeatureDefn->GetGeomFieldCount();i++)
     {
         std::vector<CPLString> aosPath = m_aaosGeomFieldPaths[i];
         int bAddGeoJSONType = FALSE;
@@ -1376,12 +1378,12 @@ CPLString OGRElasticLayer::BuildMap() {
             {
                 json_object_object_add(poContainer, pszLastComponent, geo_point);
             }
-            if( osPrecision.size() )
+            if( m_osPrecision.size() )
             {
                 json_object* field_data = json_object_new_object();
                 json_object_object_add(geo_point, "fielddata", field_data);
                 json_object_object_add(field_data, "format", json_object_new_string("compressed"));
-                json_object_object_add(field_data, "precision", json_object_new_string(osPrecision.c_str()));
+                json_object_object_add(field_data, "precision", json_object_new_string(m_osPrecision.c_str()));
             }
         }
         else
@@ -1391,8 +1393,8 @@ CPLString OGRElasticLayer::BuildMap() {
                                 pszLastComponent,
                                 geometry);
             json_object_object_add(geometry, "type", json_object_new_string("geo_shape"));
-            if( osPrecision.size() )
-                json_object_object_add(geometry, "precision", json_object_new_string(osPrecision.c_str()));
+            if( m_osPrecision.size() )
+                json_object_object_add(geometry, "precision", json_object_new_string(m_osPrecision.c_str()));
         }
     }
 
@@ -1405,9 +1407,9 @@ CPLString OGRElasticLayer::BuildMap() {
         json_object_object_add(poMeta, "fid",
                                json_object_new_string(m_osFID.c_str()));
     }
-    for( int i=0; i < poFeatureDefn->GetGeomFieldCount(); i++ )
+    for( int i=0; i < m_poFeatureDefn->GetGeomFieldCount(); i++ )
     {
-        OGRGeomFieldDefn* poGeomFieldDefn = poFeatureDefn->GetGeomFieldDefn(i);
+        OGRGeomFieldDefn* poGeomFieldDefn = m_poFeatureDefn->GetGeomFieldDefn(i);
         if( !m_abIsGeoPoint[i] &&
             poGeomFieldDefn->GetType() != wkbUnknown )
         {
@@ -1423,9 +1425,9 @@ CPLString OGRElasticLayer::BuildMap() {
                                    json_object_new_string(OGRToOGCGeomType(poGeomFieldDefn->GetType())));
         }
     }
-    for( int i=0; i < poFeatureDefn->GetFieldCount(); i++ )
+    for( int i=0; i < m_poFeatureDefn->GetFieldCount(); i++ )
     {
-        OGRFieldDefn* poFieldDefn = poFeatureDefn->GetFieldDefn(i);
+        OGRFieldDefn* poFieldDefn = m_poFeatureDefn->GetFieldDefn(i);
         OGRFieldType eType = poFieldDefn->GetType();
         if( eType == OFTIntegerList || eType == OFTInteger64List ||
             eType == OFTRealList || eType == OFTStringList )
@@ -1617,18 +1619,18 @@ static void BuildGeoJSONGeometry(json_object* geometry, OGRGeometry* poGeom)
 
 OGRErr OGRElasticLayer::WriteMapIfNecessary()
 {
-    if( bManualMapping )
+    if( m_bManualMapping )
         return OGRERR_NONE;
     
     // Check to see if the user has elected to only write out the mapping file
     // This method will only write out one layer from the vector file in cases where there are multiple layers
-    if (osWriteMapFilename.size()) {
-        if (!bMappingWritten) {
-            bMappingWritten = TRUE;
+    if (m_osWriteMapFilename.size()) {
+        if (m_bSerializeMapping) {
+            m_bSerializeMapping = FALSE;
             CPLString map = BuildMap();
 
             // Write the map to a file
-            VSILFILE *f = VSIFOpenL(osWriteMapFilename, "wb");
+            VSILFILE *f = VSIFOpenL(m_osWriteMapFilename, "wb");
             if (f) {
                 VSIFWriteL(map.c_str(), 1, map.length(), f);
                 VSIFCloseL(f);
@@ -1638,9 +1640,9 @@ OGRErr OGRElasticLayer::WriteMapIfNecessary()
     }
 
     // Check to see if we have any fields to upload to this index
-    if (osWriteMapFilename.size() == 0 && !bMappingWritten ) {
-        bMappingWritten = TRUE;
-        if( !poDS->UploadFile(CPLSPrintf("%s/%s/%s/_mapping", poDS->GetURL(), osIndexName.c_str(), osMappingName.c_str()), BuildMap()) )
+    if (m_osWriteMapFilename.size() == 0 && m_bSerializeMapping ) {
+        m_bSerializeMapping = FALSE;
+        if( !m_poDS->UploadFile(CPLSPrintf("%s/%s/%s/_mapping", m_poDS->GetURL(), m_osIndexName.c_str(), m_osMappingName.c_str()), BuildMap()) )
         {
             return OGRERR_FAILURE;
         }
@@ -1686,7 +1688,7 @@ CPLString OGRElasticLayer::BuildJSonFromFeature(OGRFeature *poFeature)
 {
     
     CPLString fields;
-    int nJSonFieldIndex = poFeatureDefn->GetFieldIndex("_json");
+    int nJSonFieldIndex = m_poFeatureDefn->GetFieldIndex("_json");
     if( nJSonFieldIndex >= 0 && poFeature->IsFieldSet(nJSonFieldIndex) )
     {
         fields = poFeature->GetFieldAsString(nJSonFieldIndex);
@@ -1755,7 +1757,7 @@ CPLString OGRElasticLayer::BuildJSonFromFeature(OGRFeature *poFeature)
             }
         }
 
-        if( osMappingName == "FeatureCollection" )
+        if( m_osMappingName == "FeatureCollection" )
         {
             if( poFeature->GetGeomFieldCount() == 1 &&
                 poFeature->GetGeomFieldRef(0) )
@@ -1770,7 +1772,7 @@ CPLString OGRElasticLayer::BuildJSonFromFeature(OGRFeature *poFeature)
         }
 
         // For every field (except _id)
-        int fieldCount = poFeatureDefn->GetFieldCount();
+        int fieldCount = m_poFeatureDefn->GetFieldCount();
         for (int i = 1; i < fieldCount; i++)
         {
             if(!poFeature->IsFieldSet( i ) ) {
@@ -1780,9 +1782,9 @@ CPLString OGRElasticLayer::BuildJSonFromFeature(OGRFeature *poFeature)
             json_object* poContainer = GetContainerForFeature(fieldObject, m_aaosFieldPaths[i], oMap);
             const char* pszLastComponent = m_aaosFieldPaths[i][(int)m_aaosFieldPaths[i].size()-1];
             
-            switch (poFeatureDefn->GetFieldDefn(i)->GetType()) {
+            switch (m_poFeatureDefn->GetFieldDefn(i)->GetType()) {
                 case OFTInteger:
-                    if( poFeatureDefn->GetFieldDefn(i)->GetSubType() == OFSTBoolean )
+                    if( m_poFeatureDefn->GetFieldDefn(i)->GetSubType() == OFSTBoolean )
                         json_object_object_add(poContainer,
                             pszLastComponent,
                             json_object_new_boolean(poFeature->GetFieldAsInteger(i)));
@@ -1884,7 +1886,7 @@ OGRErr OGRElasticLayer::ICreateFeature(OGRFeature *poFeature)
     if( WriteMapIfNecessary() != OGRERR_NONE )
         return OGRERR_FAILURE;
     
-    if (osWriteMapFilename.size())
+    if (m_osWriteMapFilename.size())
         return OGRERR_NONE;
 
     if( poFeature->GetFID() < 0 )
@@ -1897,18 +1899,18 @@ OGRErr OGRElasticLayer::ICreateFeature(OGRFeature *poFeature)
     CPLString osFields(BuildJSonFromFeature(poFeature));
     
     const char* pszId = NULL;
-    if( poFeature->IsFieldSet(0) && !bIgnoreSourceID )
+    if( poFeature->IsFieldSet(0) && !m_bIgnoreSourceID )
         pszId = poFeature->GetFieldAsString(0);
 
     // Check to see if we're using bulk uploading
-    if (nBulkUpload > 0) {
-        sIndex += CPLSPrintf("{\"index\" :{\"_index\":\"%s\", \"_type\":\"%s\"", osIndexName.c_str(), osMappingName.c_str());
+    if (m_nBulkUpload > 0) {
+        m_osBulkContent += CPLSPrintf("{\"index\" :{\"_index\":\"%s\", \"_type\":\"%s\"", m_osIndexName.c_str(), m_osMappingName.c_str());
         if( pszId )
-            sIndex += CPLSPrintf(",\"_id\":\"%s\"", pszId);
-        sIndex += "}}\n" + osFields + "\n\n";
+            m_osBulkContent += CPLSPrintf(",\"_id\":\"%s\"", pszId);
+        m_osBulkContent += "}}\n" + osFields + "\n\n";
 
         // Only push the data if we are over our bulk upload limit
-        if ((int) sIndex.length() > nBulkUpload) {
+        if ((int) m_osBulkContent.length() > m_nBulkUpload) {
             if( !PushIndex() )
             {
                 return OGRERR_FAILURE;
@@ -1916,10 +1918,10 @@ OGRErr OGRElasticLayer::ICreateFeature(OGRFeature *poFeature)
         }
 
     } else { // Fall back to using single item upload for every feature
-        CPLString osURL(CPLSPrintf("%s/%s/%s/", poDS->GetURL(), osIndexName.c_str(), osMappingName.c_str()));
+        CPLString osURL(CPLSPrintf("%s/%s/%s/", m_poDS->GetURL(), m_osIndexName.c_str(), m_osMappingName.c_str()));
         if( pszId )
             osURL += pszId;
-        json_object* poRes = poDS->RunRequest(osURL, osFields);
+        json_object* poRes = m_poDS->RunRequest(osURL, osFields);
         if( poRes == NULL )
         {
             return OGRERR_FAILURE;
@@ -1962,9 +1964,9 @@ OGRErr OGRElasticLayer::ISetFeature(OGRFeature *poFeature)
     
     // TODO? we should theoretically detect if the provided _id doesn't exist
     CPLString osURL(CPLSPrintf("%s/%s/%s/%s",
-                               poDS->GetURL(), osIndexName.c_str(),
-                               osMappingName.c_str(),poFeature->GetFieldAsString(0)));
-    json_object* poRes = poDS->RunRequest(osURL, osFields);
+                               m_poDS->GetURL(), m_osIndexName.c_str(),
+                               m_osMappingName.c_str(),poFeature->GetFieldAsString(0)));
+    json_object* poRes = m_poDS->RunRequest(osURL, osFields);
     if( poRes == NULL )
     {
         return OGRERR_FAILURE;
@@ -1979,12 +1981,12 @@ OGRErr OGRElasticLayer::ISetFeature(OGRFeature *poFeature)
 /************************************************************************/
 
 int OGRElasticLayer::PushIndex() {
-    if (sIndex.empty()) {
+    if (m_osBulkContent.empty()) {
         return TRUE;
     }
 
-    int bRet = poDS->UploadFile(CPLSPrintf("%s/_bulk", poDS->GetURL()), sIndex);
-    sIndex.clear();
+    int bRet = m_poDS->UploadFile(CPLSPrintf("%s/_bulk", m_poDS->GetURL()), m_osBulkContent);
+    m_osBulkContent.clear();
     
     return bRet;
 }
@@ -1999,7 +2001,7 @@ OGRErr OGRElasticLayer::CreateField(OGRFieldDefn *poFieldDefn,
     FinalizeFeatureDefn();
     ResetReading();
 
-    if( poFeatureDefn->GetFieldIndex(poFieldDefn->GetNameRef()) >= 0 )
+    if( m_poFeatureDefn->GetFieldIndex(poFieldDefn->GetNameRef()) >= 0 )
     {
         if( !EQUAL(poFieldDefn->GetNameRef(), "_id") &&
             !EQUAL(poFieldDefn->GetNameRef(), "_json") )
@@ -2012,10 +2014,10 @@ OGRErr OGRElasticLayer::CreateField(OGRFieldDefn *poFieldDefn,
     }
     
     std::vector<CPLString> aosPath;
-    if( osMappingName == "FeatureCollection" )
+    if( m_osMappingName == "FeatureCollection" )
         aosPath.push_back("properties");
     
-    if( bDotAsNestedField )
+    if( m_bDotAsNestedField )
     {
         char** papszTokens = CSLTokenizeString2(poFieldDefn->GetNameRef(), ".", 0);
         for(int i=0; papszTokens[i]; i++ )
@@ -2030,8 +2032,8 @@ OGRErr OGRElasticLayer::CreateField(OGRFieldDefn *poFieldDefn,
                   aosPath,
                   poFieldDefn->GetSubType() );
 
-    bMappingWritten = FALSE;
-    
+    m_bSerializeMapping = TRUE;
+
     return OGRERR_NONE;
 }
 
@@ -2045,7 +2047,7 @@ OGRErr OGRElasticLayer::CreateGeomField( OGRGeomFieldDefn *poFieldIn, CPL_UNUSED
     FinalizeFeatureDefn();
     ResetReading();
 
-    if( poFeatureDefn->GetGeomFieldIndex(poFieldIn->GetNameRef()) >= 0 )
+    if( m_poFeatureDefn->GetGeomFieldIndex(poFieldIn->GetNameRef()) >= 0 )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "CreateGeomField() called with an already existing field name: %s",
@@ -2053,8 +2055,8 @@ OGRErr OGRElasticLayer::CreateGeomField( OGRGeomFieldDefn *poFieldIn, CPL_UNUSED
         return OGRERR_FAILURE;
     }
     
-    if( eGeomTypeMapping == ES_GEOMTYPE_GEO_POINT &&
-        poFeatureDefn->GetGeomFieldCount() > 0 )
+    if( m_eGeomTypeMapping == ES_GEOMTYPE_GEO_POINT &&
+        m_poFeatureDefn->GetGeomFieldCount() > 0 )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "ES_GEOM_TYPE=GEO_POINT only supported for single geometry field");
@@ -2066,7 +2068,7 @@ OGRErr OGRElasticLayer::CreateGeomField( OGRGeomFieldDefn *poFieldIn, CPL_UNUSED
         oFieldDefn.SetName("geometry");
 
     std::vector<CPLString> aosPath;
-    if( bDotAsNestedField )
+    if( m_bDotAsNestedField )
     {
         char** papszTokens = CSLTokenizeString2(oFieldDefn.GetNameRef(), ".", 0);
         for(int i=0; papszTokens[i]; i++ )
@@ -2076,10 +2078,10 @@ OGRErr OGRElasticLayer::CreateGeomField( OGRGeomFieldDefn *poFieldIn, CPL_UNUSED
     else
         aosPath.push_back(oFieldDefn.GetNameRef());
 
-    if( eGeomTypeMapping == ES_GEOMTYPE_GEO_SHAPE ||
-        (eGeomTypeMapping == ES_GEOMTYPE_AUTO &&
+    if( m_eGeomTypeMapping == ES_GEOMTYPE_GEO_SHAPE ||
+        (m_eGeomTypeMapping == ES_GEOMTYPE_AUTO &&
          poFieldIn->GetType() != wkbPoint) ||
-        poFeatureDefn->GetGeomFieldCount() > 0 )
+        m_poFeatureDefn->GetGeomFieldCount() > 0 )
     {
         m_abIsGeoPoint.push_back(FALSE);
     }
@@ -2091,9 +2093,9 @@ OGRErr OGRElasticLayer::CreateGeomField( OGRGeomFieldDefn *poFieldIn, CPL_UNUSED
     
     m_aaosGeomFieldPaths.push_back(aosPath);
     
-    m_aosMapToGeomFieldIndex[ BuildPathFromArray(aosPath) ] = poFeatureDefn->GetGeomFieldCount();
+    m_aosMapToGeomFieldIndex[ BuildPathFromArray(aosPath) ] = m_poFeatureDefn->GetGeomFieldCount();
 
-    poFeatureDefn->AddGeomFieldDefn( &oFieldDefn );
+    m_poFeatureDefn->AddGeomFieldDefn( &oFieldDefn );
 
     OGRCoordinateTransformation* poCT = NULL;
     if( oFieldDefn.GetSpatialRef() != NULL )
@@ -2112,7 +2114,7 @@ OGRErr OGRElasticLayer::CreateGeomField( OGRGeomFieldDefn *poFieldIn, CPL_UNUSED
     }
     m_apoCT.push_back(poCT);
     
-    bMappingWritten = FALSE;
+    m_bSerializeMapping = TRUE;
 
     return OGRERR_NONE;
 }
@@ -2149,24 +2151,24 @@ GIntBig OGRElasticLayer::GetFeatureCount(int bForce)
         return OGRLayer::GetFeatureCount(bForce);
 
     json_object* poResponse;
-    if( osESSearch.size() )
+    if( m_osESSearch.size() )
     {
-        poResponse = poDS->RunRequest(
-            CPLSPrintf("%s/_search?search_type=count&pretty", poDS->GetURL()),
-            osESSearch.c_str());
+        poResponse = m_poDS->RunRequest(
+            CPLSPrintf("%s/_search?search_type=count&pretty", m_poDS->GetURL()),
+            m_osESSearch.c_str());
     }
     else if( m_poSpatialFilter )
     {
         CPLString osFilter = CPLSPrintf("{ \"query\": { \"filtered\" : { \"query\" : { \"match_all\" : {} }, \"filter\": %s } } }",
                                         json_object_to_json_string( m_poSpatialFilter ));
-        poResponse = poDS->RunRequest(
-            CPLSPrintf("%s/%s/%s/_search?search_type=count&pretty", poDS->GetURL(), osIndexName.c_str(), osMappingName.c_str()),
+        poResponse = m_poDS->RunRequest(
+            CPLSPrintf("%s/%s/%s/_search?search_type=count&pretty", m_poDS->GetURL(), m_osIndexName.c_str(), m_osMappingName.c_str()),
             osFilter.c_str());
     }
     else
     {
-        poResponse = poDS->RunRequest(
-            CPLSPrintf("%s/%s/%s/_search?search_type=count&pretty", poDS->GetURL(), osIndexName.c_str(), osMappingName.c_str()),
+        poResponse = m_poDS->RunRequest(
+            CPLSPrintf("%s/%s/%s/_search?search_type=count&pretty", m_poDS->GetURL(), m_osIndexName.c_str(), m_osMappingName.c_str()),
             m_osJSONFilter.c_str());
     }
 
@@ -2203,7 +2205,7 @@ OGRErr OGRElasticLayer::SetAttributeFilter(const char* pszFilter)
 {
     if( pszFilter != NULL && pszFilter[0] == '{' )
     {
-        if( osESSearch.size() )
+        if( m_osESSearch.size() )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Setting an ElasticSearch filter on a resulting layer is not supported");
@@ -2249,7 +2251,7 @@ void OGRElasticLayer::SetSpatialFilter( int iGeomField, OGRGeometry * poGeomIn )
     if( poGeomIn == NULL )
         return;
 
-    if( osESSearch.size() )
+    if( m_osESSearch.size() )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                     "Setting a spatial filter on a resulting layer is not supported");
