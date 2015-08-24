@@ -500,6 +500,36 @@ def vrtwarp_10():
 
     return 'success'
 
+###############################################################################
+# Test implicit overviews with dest alpha band (#6081)
+
+def vrtwarp_11():
+    
+    if test_cli_utilities.get_gdalwarp_path() is None:
+        return 'skip'
+
+    src_ds = gdal.Open('../gcore/data/byte.tif')
+    tmp_ds = gdal.GetDriverByName('GTiff').CreateCopy('tmp/vrtwarp_11.tif', src_ds)
+    tmp_ds.BuildOverviews( 'NEAR', overviewlist = [2] )
+    tmp_ds = None
+
+    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' tmp/vrtwarp_11.tif tmp/vrtwarp_11.vrt -dstalpha -of VRT')
+    ds = gdal.Open('tmp/vrtwarp_11.vrt')
+    cs1 = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    cs2 = ds.GetRasterBand(2).GetOverview(0).Checksum()
+    ds = None
+
+    gdal.Unlink('tmp/vrtwarp_11.tif')
+    gdal.Unlink('tmp/vrtwarp_11.vrt')
+    
+    if cs1 != 1087 or cs2 != 1218:
+        gdaltest.post_reason('fail')
+        print(cs1)
+        print(cs2)
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     vrtwarp_1,
     vrtwarp_2,
@@ -510,7 +540,8 @@ gdaltest_list = [
     vrtwarp_7,
     vrtwarp_8,
     vrtwarp_9,
-    vrtwarp_10
+    vrtwarp_10,
+    vrtwarp_11
      ]
 
 
