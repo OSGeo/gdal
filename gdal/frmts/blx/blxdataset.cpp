@@ -165,8 +165,8 @@ BLXDataset::BLXDataset() {
     blxcontext = NULL;
     bIsOverview = FALSE;
     nOverviewCount = 0;
-    
-    for(int i=0; i < nOverviewCount; i++)
+
+    for(int i=0; i < BLX_OVERVIEWLEVELS; i++)
 	papoOverviewDS[i]=NULL;
 }
 
@@ -450,4 +450,3 @@ void GDALRegister_BLX()
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
-
