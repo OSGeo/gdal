@@ -679,17 +679,20 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo * poOpenInfo )
         if (bandNr == 1)
         {
             // important: set DataSet extents before creating first RasterBand in it
-            double * data = NULL;
-            grib_MetaData* metaData;
+            double *data = NULL;
+            grib_MetaData *metaData = NULL;
             GRIBRasterBand::ReadGribData(grib_fp, 0, Inv[i].subgNum, &data, &metaData);
             if (data == 0 || metaData->gds.Nx < 1 || metaData->gds.Ny < 1)
             {
-                CPLError( CE_Failure, CPLE_OpenFailed, 
+                CPLError( CE_Failure, CPLE_OpenFailed,
                           "%s is a grib file, but no raster dataset was successfully identified.",
                           poOpenInfo->pszFilename );
                 CPLReleaseMutex(hGRIBMutex); // Release hGRIBMutex otherwise we'll deadlock with GDALDataset own hGRIBMutex
                 delete poDS;
                 CPLAcquireMutex(hGRIBMutex, 1000.0);
+                if (metaData != NULL) {
+                    delete metaData;
+                }
                 return NULL;
             }
 
