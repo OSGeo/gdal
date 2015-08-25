@@ -247,7 +247,7 @@ double DTEDRasterBand::GetNoDataValue( int * pbSuccess )
 /*                            ~DTEDDataset()                            */
 /************************************************************************/
 
-DTEDDataset::DTEDDataset()
+DTEDDataset::DTEDDataset() : psDTED(NULL)
 {
     pszFilename = CPLStrdup("unknown");
     pszProjection = CPLStrdup("");
