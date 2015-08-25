@@ -5850,7 +5850,10 @@ HFADataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /*      Establish a representative data type to use.                    */
 /* -------------------------------------------------------------------- */
     if( !pfnProgress( 0.0, NULL, pProgressData ) )
+    {
+        CSLDestroy(papszModOptions);
         return NULL;
+    }
 
     for( iBand = 0; iBand < nBandCount; iBand++ )
     {
