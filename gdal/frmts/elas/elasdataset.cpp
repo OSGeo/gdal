@@ -226,11 +226,11 @@ CPLErr ELASRasterBand::IWriteBlock( CPL_UNUSED int nBlockXOff,
 /*                            ELASDataset()                             */
 /************************************************************************/
 
-ELASDataset::ELASDataset()
+ELASDataset::ELASDataset() :
+    fp(NULL), bHeaderModified(0), eRasterDataType(GDT_Unknown), nLineOffset(0),
+    nBandOffset(0)
 
 {
-    fp = NULL;
-
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
     adfGeoTransform[2] = 0.0;
