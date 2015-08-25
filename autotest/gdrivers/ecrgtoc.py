@@ -153,17 +153,40 @@ def ecrgtoc_2():
 
 def ecrgtoc_3():
 
+    # Try different errors
+    for name in [ 'ECRG_TOC_ENTRY:',
+                  'ECRG_TOC_ENTRY:ProductTitle',
+                  'ECRG_TOC_ENTRY:ProductTitle:DiscId',
+                  'ECRG_TOC_ENTRY:ProductTitle:DiscId:not_existing',
+                  'ECRG_TOC_ENTRY:ProductTitle:DiscId:c:/not_existing',
+                  'ECRG_TOC_ENTRY:ProductTitle:DiscId:1_500_K:not_existing',
+                  'ECRG_TOC_ENTRY:ProductTitle:DiscId:1_500_K:c:/not_existing',
+                  'ECRG_TOC_ENTRY:ProductTitle:DiscId:1_500_K:c:/not_existing:extra',
+                  'ECRG_TOC_ENTRY:ProductTitle:DiscId:inexisting_scale:/vsimem/TOC.xml',
+                  'ECRG_TOC_ENTRY:ProductTitle:DiscId2:/vsimem/TOC.xml',
+                  'ECRG_TOC_ENTRY:ProductTitle2:DiscId:/vsimem/TOC.xml']:
+
+        gdal.PushErrorHandler()
+        ds = gdal.Open(name)
+        gdal.PopErrorHandler()
+        if ds is not None:
+            gdaltest.post_reason('fail')
+            print(name)
+            return 'fail'
+
+    # Legacy syntax
     ds = gdal.Open('ECRG_TOC_ENTRY:ProductTitle:DiscId:/vsimem/TOC.xml')
     if ds is None:
+        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
-
-    gdal.PushErrorHandler('CPLQuietErrorHandler')
-    ds = gdal.Open('ECRG_TOC_ENTRY:ProductTitle:DiscId2:/vsimem/TOC.xml')
-    gdal.PopErrorHandler()
-    if ds is not None:
+    
+    ds = gdal.Open('ECRG_TOC_ENTRY:ProductTitle:DiscId:1_500_K:/vsimem/TOC.xml')
+    if ds is None:
+        gdaltest.post_reason('fail')
         return 'fail'
-
+    ds = None
+    
     gdal.Unlink('/vsimem/TOC.xml')
     gdal.Unlink('/vsimem/TOC.xml.1.ovr')
     gdal.Unlink('/vsimem/clfc/2/000000009s0013.lf2')
@@ -172,7 +195,7 @@ def ecrgtoc_3():
     return 'success'
 
 ###############################################################################
-# Test dataset with 2 subdatasets
+# Test dataset with 3 subdatasets
 
 def ecrgtoc_4():
 
@@ -182,8 +205,16 @@ def ecrgtoc_4():
   </file_header>
   <product product_title="ProductTitle">
     <disc id="DiscId">
-      <frame_list number_of_frames="1">
+      <frame_list number_of_frames="2">
         <scale size="1:500 K">
+          <frame name="000000009s0013.lf2">
+            <frame_path>clfc\\2</frame_path>
+            <frame_version>001</frame_version>
+            <frame_chart_type>lf</frame_chart_type>
+            <frame_zone>2</frame_zone>
+          </frame>
+        </scale>
+        <scale size="1:1000 K">
           <frame name="000000009s0013.lf2">
             <frame_path>clfc\\2</frame_path>
             <frame_version>001</frame_version>
@@ -227,12 +258,13 @@ def ecrgtoc_4():
         gdaltest.post_reason('bad raster count')
         return 'fail'
 
-    expected_gt = (-85.43147208121826, 0.00059486040609137061, 0.0, 33.166986564299428, 0.0, -0.00044985604606525913)
+    expected_gt = (-85.43147208121826, 0.00059486040609137061, 0.0, 37.241379310344833, 0.0, -0.00044985604606525913)
     gt = ds.GetGeoTransform()
     for i in range(6):
         if abs(gt[i] - expected_gt[i]) > 1e-10:
             gdaltest.post_reason('did not get expected geotransform')
             print(gt)
+            return 'fail'
 
     wkt = ds.GetProjectionRef()
     if wkt.find('WGS 84') == -1:
@@ -241,19 +273,44 @@ def ecrgtoc_4():
         return 'fail'
 
     filelist = ds.GetFileList()
-    if len(filelist) != 3:
+    if len(filelist) != 4:
         gdaltest.post_reason('did not get expected filelist')
         print(filelist)
         return 'fail'
 
     subdatasets = ds.GetMetadata('SUBDATASETS')
-    if len(subdatasets) != 4:
+    if len(subdatasets) != 6:
         gdaltest.post_reason('did not get expected subdatasets')
         print(filelist)
         return 'fail'
 
     ds = None
 
+    ds = gdal.Open('ECRG_TOC_ENTRY:ProductTitle:DiscId:1_500_K:/vsimem/TOC.xml')
+    if ds is None:
+        gdaltest.post_reason('did not get subdataset')
+        return 'fail'
+    ds = None
+
+    ds = gdal.Open('ECRG_TOC_ENTRY:ProductTitle:DiscId:1_1000_K:/vsimem/TOC.xml')
+    if ds is None:
+        gdaltest.post_reason('did not get subdataset')
+        return 'fail'
+    ds = None
+
+    ds = gdal.Open('ECRG_TOC_ENTRY:ProductTitle:DiscId2:1_500_K:/vsimem/TOC.xml')
+    if ds is None:
+        gdaltest.post_reason('did not get subdataset')
+        return 'fail'
+    ds = None
+    
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ds = gdal.Open('ECRG_TOC_ENTRY:ProductTitle:DiscId:/vsimem/TOC.xml')
+    gdal.PopErrorHandler()
+    if ds is not None:
+        gdaltest.post_reason('should not have got subdataset')
+        return 'fail'
+    
     gdal.Unlink('/vsimem/TOC.xml')
 
     return 'success'
