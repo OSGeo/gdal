@@ -288,7 +288,8 @@ void SetCeosField(CeosRecord_t *record, int32 start_byte, char *format, void *va
 
     default:
 	/* Unknown format */
-	return;
+	HFree(temp_buf);
+        return;
     }
 
     memcpy(record->Buffer + start_byte -1, temp_buf, field_size);
