@@ -50,9 +50,9 @@ class COSARDataset : public GDALDataset
 {
 	long nSize;
 public:
+        COSARDataset() : nSize(0), fp(NULL) { }
 	VSILFILE *fp;
-/*	~COSARDataset(); */
-	
+
 	static GDALDataset *Open( GDALOpenInfo * );
 	long GetSizeInBytes() { return nSize; }
 };
