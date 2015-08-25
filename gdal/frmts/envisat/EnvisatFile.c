@@ -282,10 +282,13 @@ int EnvisatFile_Open( EnvisatFile **self_ptr,
     }
 
     mph_data[MPH_SIZE] = '\0';
-    if( S_NameValueList_Parse( mph_data, 0, 
-                               &(self->mph_count), 
+    if( S_NameValueList_Parse( mph_data, 0,
+                               &(self->mph_count),
                                &(self->mph_entries) ) == FAILURE )
+    {
+        CPLFree( self );
         return FAILURE;
+    }
 
     /*
      * Is this an incomplete level 0 file?
