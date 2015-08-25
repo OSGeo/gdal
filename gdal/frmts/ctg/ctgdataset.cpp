@@ -254,7 +254,8 @@ char **CTGRasterBand::GetCategoryNames()
 /*                            ~CTGDataset()                            */
 /************************************************************************/
 
-CTGDataset::CTGDataset()
+CTGDataset::CTGDataset() :
+    nNWEasting(0), nNWNorthing(0), nCellSize(0), nUTMZone(0)
 {
     pszProjection = NULL;
     bHasReadImagery = FALSE;
