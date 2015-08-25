@@ -480,6 +480,80 @@ def transformer_9():
 
     return 'success' 
 
+###############################################################################
+# Test RPC DEM transform from geoid height to ellipsoidal height
+
+def transformer_10():
+    
+    # Create fake vertical shift grid
+    out_ds = gdal.GetDriverByName('GTX').Create('tmp/fake.gtx',10,10,1,gdal.GDT_Float32)
+    out_ds.SetGeoTransform([-180,36,0,90,0,-18])
+    sr = osr.SpatialReference()
+    sr.SetWellKnownGeogCS('WGS84')
+    out_ds.SetProjection( sr.ExportToWkt() )
+    out_ds.GetRasterBand(1).Fill(100)
+    out_ds = None
+
+    # Creata a fake DEM
+    ds_dem = gdal.GetDriverByName('GTiff').Create('/vsimem/dem.tif', 100, 100, 1, gdal.GDT_Byte)
+    ds_dem.SetGeoTransform([125.647968621436,1.2111052640051412e-05,0,39.869926216038,0,-8.6569068979969188e-06])
+    import random
+    random.seed(0)
+    data = ''.join([ chr(40 + int(10 * random.random()) ) for i in range(100*100) ])
+    ds_dem.GetRasterBand(1).WriteRaster(0, 0, 100, 100, data)
+    ds_dem = None
+
+    ds_dem = gdal.Open('/vsimem/dem.tif')
+    vrt_dem = gdal.GetDriverByName('VRT').CreateCopy('/vsimem/dem.vrt', ds_dem)
+    ds_dem = None
+
+    vrt_dem.SetProjection("""COMPD_CS["WGS 84 + my_height",
+    GEOGCS["WGS 84",
+        DATUM["WGS_1984",
+            SPHEROID["WGS 84",6378137,298.257223563,
+                AUTHORITY["EPSG","7030"]],
+            AUTHORITY["EPSG","6326"]],
+        PRIMEM["Greenwich",0,
+            AUTHORITY["EPSG","8901"]],
+        UNIT["degree",0.0174532925199433,
+            AUTHORITY["EPSG","9122"]],
+        AUTHORITY["EPSG","4326"]],
+    VERT_CS["my_height",
+        VERT_DATUM["my_height",0,
+            EXTENSION["PROJ4_GRIDS","./tmp/fake.gtx"]],
+        UNIT["metre",1,
+            AUTHORITY["EPSG","9001"]],
+        AXIS["Up",UP]]]""")
+    vrt_dem = None
+    
+    ds = gdal.Open('data/rpc.vrt')
+
+    tr = gdal.Transformer( ds, None, [ 'METHOD=RPC', 'RPC_DEM=/vsimem/dem.vrt' ] )
+    (success,pnt) = tr.TransformPoint( 1, 125.64828521533849, 39.869345204440144, 0 )
+
+    if not success \
+       or abs(pnt[0]-27.31476045569616) > 1e-5 \
+       or abs(pnt[1]--53.328814757762302) > 1e-5 \
+       or pnt[2] != 0:
+        print(success, pnt)
+        gdaltest.post_reason( 'got wrong result.' )
+        return 'fail'
+    
+    tr = gdal.Transformer( ds, None, [ 'METHOD=RPC', 'RPC_DEM=/vsimem/dem.vrt', 'RPC_DEM_APPLY_VDATUM_SHIFT=FALSE' ] )
+    (success,pnt) = tr.TransformPoint( 1, 125.64828521533849, 39.869345204440144, 0 )
+
+    if not success \
+       or abs(pnt[0]-21.445626206892484) > 1e-5 \
+       or abs(pnt[1]-1.6460100520871492) > 1e-5 \
+       or pnt[2] != 0:
+        print(success, pnt)
+        gdaltest.post_reason( 'got wrong result.' )
+        return 'fail'
+    
+    gdal.GetDriverByName('GTX').Delete('tmp/fake.gtx')
+    
+    return 'sucess'
+
 gdaltest_list = [
     transformer_1,
     transformer_2,
@@ -489,7 +563,8 @@ gdaltest_list = [
     transformer_6,
     transformer_7,
     transformer_8,
-    transformer_9
+    transformer_9,
+    transformer_10
     ]
 
 disabled_gdaltest_list = [
@@ -497,7 +572,7 @@ disabled_gdaltest_list = [
 ]
 
 if __name__ == '__main__':
-
+    
     gdaltest.setup_run( 'transformer' )
 
     gdaltest.run_tests( gdaltest_list )

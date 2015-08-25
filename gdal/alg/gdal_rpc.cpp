@@ -214,6 +214,7 @@ typedef struct {
     
     int         bHasDEMMissingValue;
     double      dfDEMMissingValue;
+    int         bApplyDEMVDatumShift;
 
     int         bHasTriedOpeningDS;
     GDALDataset *poDS;
@@ -381,6 +382,8 @@ void* GDALCreateSimilarRPCTransformer( void *hTransformArg, double dfRatioX, dou
         if( psInfo->bHasDEMMissingValue )
             papszOptions = CSLSetNameValue(papszOptions, "RPC_DEM_MISSING_VALUE",
                                            CPLSPrintf("%.18g", psInfo->dfDEMMissingValue)) ;
+        papszOptions = CSLSetNameValue(papszOptions, "RPC_DEM_APPLY_VDATUM_SHIFT",
+                                           (psInfo->bApplyDEMVDatumShift) ? "TRUE" : "FALSE") ;
     }
     psInfo = (GDALRPCTransformInfo*) GDALCreateRPCTransformer( &sRPC,
            psInfo->bReversed, psInfo->dfPixErrThreshold, papszOptions );
@@ -481,6 +484,13 @@ void* GDALCreateSimilarRPCTransformer( void *hTransformArg, double dfRatioX, dou
  * cover the requested coordinate. When not specified, missing values will cause
  * a failed transform. (GDAL >= 1.11.2)
  *
+ * <li> RPC_DEM_APPLY_VDATUM_SHIFT: whether the vertical component of a compound SRS
+ * for the DEM should be used (when it is present). This is useful so as to be able to transform the
+ * "raw" values from the DEM expressed with respect to a geoid to the heights with
+ * respect to the WGS84 ellipsoid. When this is enabled, the GTIFF_REPORT_COMPD_CS configuration
+ * option will be also set temporarily so as to get the vertical information from GeoTIFF
+ * files. Defaults to TRUE. (GDAL >= 2.1.0)
+ *
  * </ul>
  *
  * @param psRPCInfo Definition of the RPC parameters.
@@ -578,6 +588,12 @@ void *GDALCreateRPCTransformer( GDALRPCInfo *psRPCInfo, int bReversed,
         psTransform->bHasDEMMissingValue = TRUE;
         psTransform->dfDEMMissingValue = CPLAtof(pszDEMMissingValue);
     }
+
+/* -------------------------------------------------------------------- */
+/*      Whether to apply vdatum shift                                   */
+/* -------------------------------------------------------------------- */
+    psTransform->bApplyDEMVDatumShift = CSLFetchBoolean(
+        papszOptions, "RPC_DEM_APPLY_VDATUM_SHIFT", TRUE );
 
 /* -------------------------------------------------------------------- */
 /*      Establish a reference point for calcualating an affine          */
@@ -1111,6 +1127,12 @@ int GDALRPCTransform( void *pTransformArg, int bDstToSrc,
     {
         int bIsValid = FALSE;
         psTransform->bHasTriedOpeningDS = TRUE;
+        CPLString osPrevValueConfigOption;
+        if( psTransform->bApplyDEMVDatumShift )
+        {
+            osPrevValueConfigOption = CPLGetConfigOption("GTIFF_REPORT_COMPD_CS", "");
+            CPLSetThreadLocalConfigOption("GTIFF_REPORT_COMPD_CS", "YES");
+        }
         psTransform->poDS = (GDALDataset *)
                                 GDALOpen( psTransform->pszDEMPath, GA_ReadOnly );
         if(psTransform->poDS != NULL && psTransform->poDS->GetRasterCount() >= 1)
@@ -1120,13 +1142,17 @@ int GDALRPCTransform( void *pTransformArg, int bDstToSrc,
             {
                 OGRSpatialReference* poWGSSpaRef =
                         new OGRSpatialReference(SRS_WKT_WGS84);
+
                 OGRSpatialReference* poDSSpaRef =
                         new OGRSpatialReference(pszSpatialRef);
+                if( !psTransform->bApplyDEMVDatumShift )
+                    poDSSpaRef->StripVertical();
+
                 if(!poWGSSpaRef->IsSame(poDSSpaRef))
                     psTransform->poCT =OGRCreateCoordinateTransformation(
                                                     poWGSSpaRef, poDSSpaRef );
-                    
-                if( psTransform->poCT != NULL )
+
+                if( psTransform->poCT != NULL && !poDSSpaRef->IsCompound() )
                 {
                     // Empiric attempt to guess if the coordinate transformation
                     // to WGS84 is a no-op. For example for NED13 datasets in NAD83
@@ -1175,6 +1201,12 @@ int GDALRPCTransform( void *pTransformArg, int bDstToSrc,
             {
                 bIsValid = TRUE;
             }
+        }
+
+        if( psTransform->bApplyDEMVDatumShift )
+        {
+            CPLSetThreadLocalConfigOption("GTIFF_REPORT_COMPD_CS",
+                osPrevValueConfigOption.size() ? osPrevValueConfigOption.c_str() : NULL);
         }
 
         if (!bIsValid && psTransform->poDS != NULL)
@@ -1273,6 +1305,8 @@ int GDALRPCTransform( void *pTransformArg, int bDstToSrc,
         
         for( i = 0; i < nPointCount; i++ )
         {
+            double dfVDatumShift = 0.0;
+
             if(psTransform->poDS)
             {
                 double dfX, dfY;
@@ -1281,15 +1315,21 @@ int GDALRPCTransform( void *pTransformArg, int bDstToSrc,
                 {
                     double dfXOrig = padfX[i];
                     double dfYOrig = padfY[i];
-                    double dfZOrig = padfZ[i];
+                    double dfZ = 0.0;
                     if (!psTransform->poCT->Transform(
-                                                1, &dfXOrig, &dfYOrig, &dfZOrig))
+                                                1, &dfXOrig, &dfYOrig, &dfZ))
                     {
                         panSuccess[i] = FALSE;
                         continue;
                     }
                     GDALApplyGeoTransform( psTransform->adfDEMReverseGeoTransform,
                                            dfXOrig, dfYOrig, &dfX, &dfY );
+
+                    // We must take the opposite since poCT transforms from
+                    // WGS84 to geoid. And we are going to do the reverse:
+                    // take an elevation over the geoid and transforms it to WGS84
+                    if( psTransform->bApplyDEMVDatumShift )
+                        dfVDatumShift = -dfZ;
                 }
                 else
                     GDALApplyGeoTransform( psTransform->adfDEMReverseGeoTransform,
@@ -1308,7 +1348,8 @@ int GDALRPCTransform( void *pTransformArg, int bDstToSrc,
                 }
 
                 RPCTransformPoint( psTransform, padfX[i], padfY[i], 
-                                   padfZ[i] + (psTransform->dfHeightOffset + dfDEMH) *
+                                   padfZ[i] + dfVDatumShift +
+                                   (psTransform->dfHeightOffset + dfDEMH) *
                                                 psTransform->dfHeightScale, 
                                    padfX + i, padfY + i );
             }
@@ -1445,6 +1486,9 @@ CPLXMLNode *GDALSerializeRPCTransformer( void *pTransformArg )
             CPLCreateXMLElementAndValue( 
                 psTree, "DEMMissingValue", CPLSPrintf("%.18g", psInfo->dfDEMMissingValue) );
         }
+
+        CPLCreateXMLElementAndValue( 
+                psTree, "DEMApplyVDatumShift", ( psInfo->bApplyDEMVDatumShift ) ? "true" : "false" );
     }
 
 /* -------------------------------------------------------------------- */
@@ -1561,6 +1605,11 @@ void *GDALDeserializeRPCTransformer( CPLXMLNode *psTree )
     if (pszDEMMissingValue != NULL)
         papszOptions = CSLSetNameValue( papszOptions, "RPC_DEM_MISSING_VALUE",
                                         pszDEMMissingValue);
+
+    const char* pszDEMApplyVDatumShift = CPLGetXMLValue(psTree,"DEMApplyVDatumShift", NULL);
+    if (pszDEMApplyVDatumShift != NULL)
+        papszOptions = CSLSetNameValue( papszOptions, "RPC_DEM_APPLY_VDATUM_SHIFT",
+                                        pszDEMApplyVDatumShift);
 
 /* -------------------------------------------------------------------- */
 /*      Generate transformation.                                        */
