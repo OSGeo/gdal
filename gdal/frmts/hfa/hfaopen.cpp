@@ -2787,6 +2787,7 @@ CPLErr HFASetMetadata( HFAHandle hHFA, int nBand, char **papszMD )
         }
         else if ( EQUALN( "STATISTICS_HISTOBINVALUES", pszKey, strlen(pszKey) ) )
         {
+            CPLFree(pszBinValues);
             pszBinValues = CPLStrdup( pszValue );
         }
         else
