@@ -165,6 +165,8 @@ bool AlmostEqual( double dfVal1, double dfVal2 )
 
 GSAGRasterBand::GSAGRasterBand( GSAGDataset *poDS, int nBand,
 				vsi_l_offset nDataStart ) :
+    dfMinX(0.0), dfMaxX(0.0), dfMinY(0.0), dfMaxY(0.0), dfMinZ(0.0),
+    dfMaxZ(0.0),
     padfRowMinZ(NULL),
     padfRowMaxZ(NULL),
     nMinZRow(-1),
