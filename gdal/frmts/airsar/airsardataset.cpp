@@ -273,7 +273,8 @@ CPLErr AirSARRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 /*                           AirSARDataset()                            */
 /************************************************************************/
 
-AirSARDataset::AirSARDataset()
+AirSARDataset::AirSARDataset() :
+    nDataStart(0), nRecordLength(0)
 
 {
     fp = NULL;
