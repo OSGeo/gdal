@@ -77,9 +77,11 @@ public:
     static int Identify( GDALOpenInfo * poOpenInfo );
 };
 
-GFFDataset::GFFDataset()
+GFFDataset::GFFDataset() :
+    fp(NULL), eDataType(GDT_Unknown), nEndianess(0), nVersionMajor(0),
+    nVersionMinor(0), nLength(0), nBPP(0), nFrameCnt(0), nImageType(0),
+    nRowMajor(0), nRgCnt(0), nAzCnt(0)
 {
-    fp = NULL;
 }
 
 GFFDataset::~GFFDataset()
