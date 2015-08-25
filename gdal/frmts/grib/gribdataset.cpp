@@ -487,7 +487,7 @@ GRIBRasterBand::~GRIBRasterBand()
 /* ==================================================================== */
 /************************************************************************/
 
-GRIBDataset::GRIBDataset()
+GRIBDataset::GRIBDataset() : fp(NULL)
 
 {
   poTransform = NULL;
