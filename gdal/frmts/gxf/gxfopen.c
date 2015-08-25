@@ -130,6 +130,7 @@ static char **GXFReadHeaderValue( FILE * fp, char * pszHTitle )
             if( pszTmp == NULL )
             {
                 CSLDestroy(papszReturn);
+                CPLFree(pszTrimmedLine);
                 return NULL;
             }
             strcpy(pszTmp, papszReturn[nReturnLineCount-1]);
@@ -1028,5 +1029,3 @@ CPLErr GXFGetPosition( GXFHandle hGXF,
     else
         return( CE_None );
 }
-
-
