@@ -86,7 +86,7 @@ protected:
 	char *pszItemName;
 	char *pszItemValue;
 public:
-	COASPMetadataItem() { }
+  COASPMetadataItem() : pszItemName(NULL), pszItemValue(NULL) { }
 	COASPMetadataItem(char *pszItemName, char *pszItemValue);
 	char *GetItemName();
 	char *GetItemValue();
