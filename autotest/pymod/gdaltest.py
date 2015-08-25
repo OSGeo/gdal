@@ -136,8 +136,17 @@ def run_tests( test_list ):
             failure_counter = failure_counter + 1
         elif result == 'skip':
             skip_counter = skip_counter + 1
-        else:
+        elif result == 'fail (blowup)':
             blow_counter = blow_counter + 1
+        else:
+            failure_counter = failure_counter + 1
+            print('Unexpected return value: %s' % result)
+            if had_errors_this_script == 0:
+                failure_summary.append( 'Script: ' + cur_name )
+                had_errors_this_script = 1
+            failure_summary.append( outline + result + ' (unexpected value)' )
+            if reason is not None:
+                failure_summary.append( '    ' + reason )
 
     if set_time:
         end_time = time.time()
