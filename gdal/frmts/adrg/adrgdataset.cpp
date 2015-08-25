@@ -521,7 +521,9 @@ static int WriteFieldDecl(VSILFILE* fd, char _data_struct_code , char _data_type
 /*                          ADRGDataset()                               */
 /************************************************************************/
 
-ADRGDataset::ADRGDataset()
+ADRGDataset::ADRGDataset() :
+    offsetInIMG(0), NFC(0), NFL(0), LSO(0.0), PSO(0.0), ARV(0), BRV(0),
+    bGeoTransformValid(0), nNextAvailableBlock(0)
 {
     bCreation = FALSE;
     poOverviewDS = NULL;
