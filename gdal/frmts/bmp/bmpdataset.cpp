@@ -281,7 +281,8 @@ class BMPRasterBand : public GDALPamRasterBand
 /*                           BMPRasterBand()                            */
 /************************************************************************/
 
-BMPRasterBand::BMPRasterBand( BMPDataset *poDS, int nBand )
+BMPRasterBand::BMPRasterBand( BMPDataset *poDS, int nBand ) :
+    nScanSize(0)
 {
     this->poDS = poDS;
     this->nBand = nBand;
