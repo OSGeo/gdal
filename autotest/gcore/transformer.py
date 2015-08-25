@@ -552,7 +552,7 @@ def transformer_10():
     
     gdal.GetDriverByName('GTX').Delete('tmp/fake.gtx')
     
-    return 'sucess'
+    return 'success'
 
 gdaltest_list = [
     transformer_1,
