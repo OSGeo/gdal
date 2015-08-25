@@ -1751,25 +1751,23 @@ double IdrisiRasterBand::GetMaximum( int *pbSuccess )
 /************************************************************************/
 
 double IdrisiRasterBand::GetNoDataValue( int *pbSuccess )
-{      
+{
     IdrisiDataset *poGDS = (IdrisiDataset *) poDS;
 
     double dfNoData;
-    const char *pszFlagDefn;
+    const char *pszFlagDefn = NULL;
 
     if( CSLFetchNameValue( poGDS->papszRDC, rdcFLAG_DEFN ) != NULL )
         pszFlagDefn = CSLFetchNameValue( poGDS->papszRDC, rdcFLAG_DEFN );
     else if( CSLFetchNameValue( poGDS->papszRDC, rdcFLAG_DEFN2 ) != NULL )
         pszFlagDefn = CSLFetchNameValue( poGDS->papszRDC, rdcFLAG_DEFN2 );
-    else
-        pszFlagDefn = CPLStrdup( "none" );
 
     // ------------------------------------------------------------------------
-    // If Flag_Def is not "none", Flag_Value means "background" 
+    // If Flag_Def is not "none", Flag_Value means "background"
     // or "missing data"
     // ------------------------------------------------------------------------
 
-    if( ! EQUAL( pszFlagDefn, "none" ) )
+    if( pszFlagDefn != NULL && ! EQUAL( pszFlagDefn, "none" ) )
     {
         dfNoData = CPLAtof_nz( CSLFetchNameValue( poGDS->papszRDC, rdcFLAG_VALUE ) );
         if( pbSuccess )
@@ -3358,4 +3356,3 @@ void GDALRegister_IDRISI()
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
-
