@@ -27,7 +27,8 @@ ogr_dir:
 gnm_dir:
 	cd gnm
 	$(MAKE) /f makefile.vc
-	ling gnm_wrap.obj $(GDALLIB) /out:gnmjni.dll /DLL
+	cd ..
+	link gnm_wrap.obj $(GDALLIB) /out:gnmjni.dll /DLL
 	if exist gnmjni.dll.manifest mt -manifest gnmjni.dll.manifest -outputresource:gnmjni.dll;2
 
 gdal_dir:

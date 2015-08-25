@@ -50,6 +50,12 @@ java: gdalvars
         cd const
         $(SWIG) -java -c++ -package org.gdal.gdalconst -outdir ../org/gdal/gdalconst -I../../include/java -o gdalconst_wrap.cpp ../../../include/gdalconst.i
         cd ..
+		cd org\gdal
+        if not exist gnm mkdir gnm
+        cd ../../
+		cd gnm
+        $(SWIG) -java -c++ -package org.gdal.gnm -outdir ../org/gdal/gnm -I../../include/java -o gnm_wrap.cpp ../../../include/gnm.i
+        cd ..
         $(MAKE) /f makefile.vc
 
 #ruby: gdalvars
