@@ -166,6 +166,8 @@ class GS7BGRasterBand : public GDALPamRasterBand
 /************************************************************************/
 
 GS7BGRasterBand::GS7BGRasterBand( GS7BGDataset *poDS, int nBand ) :
+    dfMinX(0.0), dfMaxX(0.0), dfMinY(0.0), dfMaxY(0.0), dfMinZ(0.0),
+    dfMaxZ(0.0),
     pafRowMinZ(NULL),
     pafRowMaxZ(NULL),
     nMinZRow(-1),
