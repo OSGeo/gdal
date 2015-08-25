@@ -1371,8 +1371,9 @@ GDALInfoReportCorner( GDALDatasetH hDataset,
 /* -------------------------------------------------------------------- */
     if(bJson)
     {
+        double dfZ = 0.0;
         if( hTransformWGS84 != NULL && !EQUAL( corner_name, "center" ) 
-        && OCTTransform(hTransformWGS84,1,&dfGeoX,&dfGeoY,NULL) )
+        && OCTTransform(hTransformWGS84,1,&dfGeoX,&dfGeoY,&dfZ) )
         {
             poCorner = json_object_new_array();
             poX = json_object_new_double_with_precision( dfGeoX, 7 );
@@ -1384,8 +1385,9 @@ GDALInfoReportCorner( GDALDatasetH hDataset,
     }
     else
     {
+        double dfZ = 0.0;
         if( hTransform != NULL 
-        && OCTTransform(hTransform,1,&dfGeoX,&dfGeoY,NULL) )
+        && OCTTransform(hTransform,1,&dfGeoX,&dfGeoY,&dfZ) )
         {
             printf( "(%s,", GDALDecToDMS( dfGeoX, "Long", 2 ) );
             printf( "%s)", GDALDecToDMS( dfGeoY, "Lat", 2 ) );
