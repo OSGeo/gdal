@@ -327,7 +327,9 @@ CPLErr SRPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /*                          SRPDataset()                               */
 /************************************************************************/
 
-SRPDataset::SRPDataset()
+SRPDataset::SRPDataset() :
+    NFC(0), NFL(0), ZNA(0), LSO(0.0), PSO(0.0), LOD(0.0), LAD(0.0), ARV(0),
+    BRV(0), PCB(0), PVB(0)
 {
     fdIMG = NULL;
     TILEINDEX = NULL;
@@ -1627,4 +1629,3 @@ void GDALRegister_SRP()
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
-
