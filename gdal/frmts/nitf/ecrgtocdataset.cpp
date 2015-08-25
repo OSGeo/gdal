@@ -85,7 +85,8 @@ class ECRGTOCDataset : public GDALPamDataset
 
     void                AddSubDataset(const char* pszFilename,
                                       const char* pszProductTitle,
-                                      const char* pszDiscId);
+                                      const char* pszDiscId,
+                                      const char* pszScale);
 
     virtual CPLErr GetGeoTransform( double * padfGeoTransform)
     {
@@ -102,6 +103,7 @@ class ECRGTOCDataset : public GDALPamDataset
                                 CPLXMLNode* psXML,
                                 CPLString osProduct,
                                 CPLString osDiscId,
+                                CPLString osScale,
                                 const char* pszFilename);
     
     static int Identify( GDALOpenInfo * poOpenInfo );
@@ -153,12 +155,28 @@ class ECRGTOCSubDataset : public VRTDataset
 };
 
 /************************************************************************/
+/*                           LaunderString()                            */
+/************************************************************************/
+
+static CPLString LaunderString(const char* pszStr)
+{
+    CPLString osRet(pszStr);
+    for(size_t i=0;i<osRet.size();i++)
+    {
+        if( osRet[i] == ':' || osRet[i] == ' ' )
+            osRet[i] = '_';
+    }
+    return osRet;
+}
+
+/************************************************************************/
 /*                           AddSubDataset()                            */
 /************************************************************************/
 
 void ECRGTOCDataset::AddSubDataset( const char* pszFilename,
                                     const char* pszProductTitle,
-                                    const char* pszDiscId )
+                                    const char* pszDiscId,
+                                    const char* pszScale)
 
 {
     char	szName[80];
@@ -167,13 +185,15 @@ void ECRGTOCDataset::AddSubDataset( const char* pszFilename,
     sprintf( szName, "SUBDATASET_%d_NAME", nCount+1 );
     papszSubDatasets = 
         CSLSetNameValue( papszSubDatasets, szName, 
-              CPLSPrintf( "ECRG_TOC_ENTRY:%s:%s:%s",
-                          pszProductTitle, pszDiscId, pszFilename ) );
+              CPLSPrintf( "ECRG_TOC_ENTRY:%s:%s:%s:%s",
+                          LaunderString(pszProductTitle).c_str(),
+                          LaunderString(pszDiscId).c_str(),
+                          LaunderString(pszScale).c_str(), pszFilename ) );
 
     sprintf( szName, "SUBDATASET_%d_DESC", nCount+1 );
     papszSubDatasets =
         CSLSetNameValue( papszSubDatasets, szName,
-            CPLSPrintf( "%s:%s", pszProductTitle, pszDiscId));
+            CPLSPrintf( "Product %s, disc %s, scale %s", pszProductTitle, pszDiscId, pszScale));
 }
 
 /************************************************************************/
@@ -638,6 +658,7 @@ GDALDataset* ECRGTOCDataset::Build(const char* pszTOCFilename,
                                    CPLXMLNode* psXML,
                                    CPLString osProduct,
                                    CPLString osDiscId,
+                                   CPLString osScale,
                                    const char* pszOpenInfoFilename)
 {
     CPLXMLNode* psTOC = CPLGetXMLNode(psXML, "=Table_of_Contents");
@@ -679,7 +700,7 @@ GDALDataset* ECRGTOCDataset::Build(const char* pszTOCFilename,
             continue;
         }
 
-        if (bLookForSubDataset && strcmp(pszProductTitle, osProduct.c_str()) != 0)
+        if (bLookForSubDataset && strcmp(LaunderString(pszProductTitle), osProduct.c_str()) != 0)
             continue;
 
         for(CPLXMLNode* psIter2 = psIter1->psChild;
@@ -698,10 +719,8 @@ GDALDataset* ECRGTOCDataset::Build(const char* pszTOCFilename,
                 continue;
             }
 
-            if (bLookForSubDataset && strcmp(pszDiscId, osDiscId.c_str()) != 0)
+            if (bLookForSubDataset && strcmp(LaunderString(pszDiscId), osDiscId.c_str()) != 0)
                 continue;
-
-            nCountSubDataset ++;
 
             CPLXMLNode* psFrameList = CPLGetXMLNode(psIter2, "frame_list");
             if (psFrameList == NULL)
@@ -710,12 +729,6 @@ GDALDataset* ECRGTOCDataset::Build(const char* pszTOCFilename,
                             "Cannot find frame_list element");
                 continue;
             }
-
-            int nValidFrames = 0;
-
-            std::vector<FrameDesc> aosFrameDesc;
-
-            int nSubDatasetScale = -1;
 
             for(CPLXMLNode* psIter3 = psFrameList->psChild;
                             psIter3 != NULL;
@@ -742,10 +755,43 @@ GDALDataset* ECRGTOCDataset::Build(const char* pszTOCFilename,
                     continue;
                 }
 
-                if (nValidFrames == 0)
-                    nSubDatasetScale = nScale;
-                else
-                    nSubDatasetScale = -1;
+                if( bLookForSubDataset )
+                {
+                    if( osScale.size() )
+                    {
+                        if( strcmp(LaunderString(pszSize), osScale.c_str()) != 0 )
+                        {
+                            continue;
+                        }
+                    }
+                    else
+                    {
+                        int nCountScales = 0;
+                        for(CPLXMLNode* psIter4 = psFrameList->psChild;
+                                psIter4 != NULL;
+                                psIter4 = psIter4->psNext)
+                        {
+                            if (!(psIter4->eType == CXT_Element &&
+                                psIter4->pszValue != NULL &&
+                                strcmp(psIter4->pszValue, "scale") == 0))
+                                continue;
+                            nCountScales ++;
+                        }
+                        if( nCountScales > 1 )
+                        {
+                            CPLError(CE_Failure, CPLE_AppDefined,
+                                     "Scale should be mentionned in subdatasets "
+                                     "syntax since this disk contains several scales");
+                            delete poDS;
+                            return NULL;
+                        }
+                    }
+                }
+
+                nCountSubDataset ++;
+
+                std::vector<FrameDesc> aosFrameDesc;
+                int nValidFrames = 0;
 
                 for(CPLXMLNode* psIter4 = psIter3->psChild;
                                 psIter4 != NULL;
@@ -860,6 +906,8 @@ GDALDataset* ECRGTOCDataset::Build(const char* pszTOCFilename,
                             dfGlobalPixelYSize = dfPixelYSize;
                     }
 
+                    nValidFrames ++;
+
                     if (bLookForSubDataset)
                     {
                         FrameDesc frameDesc;
@@ -870,32 +918,32 @@ GDALDataset* ECRGTOCDataset::Build(const char* pszTOCFilename,
                         aosFrameDesc.push_back(frameDesc);
                     }
                 }
-            }
 
-            if (bLookForSubDataset)
-            {
-                delete poDS;
-                if (nValidFrames == 0)
-                    return NULL;
-                return ECRGTOCSubDataset::Build(pszProductTitle,
-                                                pszDiscId,
-                                                nSubDatasetScale,
-                                                nCountSubDataset,
-                                                pszTOCFilename,
-                                                aosFrameDesc,
-                                                dfGlobalMinX,
-                                                dfGlobalMinY,
-                                                dfGlobalMaxX,
-                                                dfGlobalMaxY,
-                                                dfGlobalPixelXSize,
-                                                dfGlobalPixelYSize);
-            }
+                if (bLookForSubDataset)
+                {
+                    delete poDS;
+                    if (nValidFrames == 0)
+                        return NULL;
+                    return ECRGTOCSubDataset::Build(pszProductTitle,
+                                                    pszDiscId,
+                                                    nScale,
+                                                    nCountSubDataset,
+                                                    pszTOCFilename,
+                                                    aosFrameDesc,
+                                                    dfGlobalMinX,
+                                                    dfGlobalMinY,
+                                                    dfGlobalMaxX,
+                                                    dfGlobalMaxY,
+                                                    dfGlobalPixelXSize,
+                                                    dfGlobalPixelYSize);
+                }
 
-            if (nValidFrames)
-            {
-                poDS->AddSubDataset(pszOpenInfoFilename,
-                                    pszProductTitle, pszDiscId);
-                nSubDatasets ++;
+                if (nValidFrames)
+                {
+                    poDS->AddSubDataset(pszOpenInfoFilename,
+                                        pszProductTitle, pszDiscId, pszSize);
+                    nSubDatasets ++;
+                }
             }
         }
     }
@@ -959,7 +1007,7 @@ int ECRGTOCDataset::Identify( GDALOpenInfo * poOpenInfo )
     if( pabyHeader == NULL )
         return FALSE;
 
-    if ( strstr(pabyHeader, "<Table_of_Contents>") != NULL &&
+    if ( strstr(pabyHeader, "<Table_of_Contents") != NULL &&
          strstr(pabyHeader, "<file_header ") != NULL)
         return TRUE;
 
@@ -977,7 +1025,8 @@ GDALDataset *ECRGTOCDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
     const char *pszFilename = poOpenInfo->pszFilename;
-    CPLString osProduct, osDiscId;
+    CPLString osFilename;
+    CPLString osProduct, osDiscId, osScale;
 
     if( !Identify( poOpenInfo ) )
         return NULL;
@@ -985,20 +1034,56 @@ GDALDataset *ECRGTOCDataset::Open( GDALOpenInfo * poOpenInfo )
     if( EQUALN(pszFilename, "ECRG_TOC_ENTRY:",strlen("ECRG_TOC_ENTRY:")))
     {
         pszFilename += strlen("ECRG_TOC_ENTRY:");
-        osProduct = pszFilename;
-        size_t iPos = osProduct.find(":");
-        if (iPos == std::string::npos)
+        
+        /* PRODUCT:DISK:SCALE:FILENAME (or PRODUCT:DISK:FILENAME historically) */
+        /* with FILENAME potentially C:\BLA... */
+        char** papszTokens = CSLTokenizeString2(pszFilename, ":", 0);
+        int nTokens = CSLCount(papszTokens);
+        if( nTokens != 3 && nTokens != 4 && nTokens != 5 )
+        {
+            CSLDestroy(papszTokens);
             return NULL;
-        osProduct.resize(iPos);
+        }
+        
+        osProduct = papszTokens[0];
+        osDiscId = papszTokens[1];
 
-        pszFilename += iPos + 1;
-        osDiscId = pszFilename;
-        iPos = osDiscId.find(":");
-        if (iPos == std::string::npos)
+        if( nTokens == 3 )
+            osFilename = papszTokens[2];
+        else if( nTokens == 4 )
+        {
+            if( strlen(papszTokens[2]) == 1 &&
+                (papszTokens[3][0] == '\\' ||
+                 papszTokens[3][0] == '/') )
+            {
+                osFilename = papszTokens[2];
+                osFilename += ":";
+                osFilename = papszTokens[3];
+            }
+            else
+            {
+                osScale = papszTokens[2];
+                osFilename = papszTokens[3];
+            }
+        }
+        else if( nTokens == 5 &&
+                strlen(papszTokens[3]) == 1 &&
+                (papszTokens[4][0] == '\\' ||
+                 papszTokens[4][0] == '/') )
+        {
+            osScale = papszTokens[2];
+            osFilename = papszTokens[3];
+            osFilename += ":";
+            osFilename = papszTokens[4];
+        }
+        else
+        {
+            CSLDestroy(papszTokens);
             return NULL;
-        osDiscId.resize(iPos);
+        }
 
-        pszFilename += iPos + 1;
+        CSLDestroy(papszTokens);
+        pszFilename = osFilename.c_str();
     }
 
 /* -------------------------------------------------------------------- */
@@ -1011,6 +1096,7 @@ GDALDataset *ECRGTOCDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
     GDALDataset* poDS = Build( pszFilename, psXML, osProduct, osDiscId,
+                               osScale,
                                poOpenInfo->pszFilename);
     CPLDestroyXMLNode(psXML);
 
