@@ -403,8 +403,8 @@ void EnvisatDataset::ScanForGCPs_ASAR()
 void EnvisatDataset::ScanForGCPs_MERIS()
 
 {
-    int		nDatasetIndex, nNumDSR, nDSRSize;
-    bool    isBrowseProduct ; 
+    int  nDatasetIndex, nNumDSR, nDSRSize;
+    bool isBrowseProduct;
 
 /* -------------------------------------------------------------------- */
 /*      Do we have a meaningful geolocation grid?  Seach for a          */
@@ -429,9 +429,6 @@ void EnvisatDataset::ScanForGCPs_MERIS()
 /* -------------------------------------------------------------------- */
     int  nLinesPerTiePoint, nSamplesPerTiePoint;
     int  nTPPerLine, nTPPerColumn = nNumDSR;
-
-    if( nNumDSR == 0 )
-        return;
 
     nLinesPerTiePoint =
         EnvisatFile_GetKeyValueAsInt( hEnvisatFile, SPH,
