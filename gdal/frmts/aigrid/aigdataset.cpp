@@ -1007,10 +1007,7 @@ static CPLErr AIGRename( const char *pszNewName, const char *pszOldName )
     if( VSIStatL( osOldPath, &sStatBuf ) == 0 )
         CPLUnlinkTree( osOldPath );
 
-    for ( i = 0; papszFileList[i] != NULL; ++i) {
-        CPLFree(papszFileList[i]);
-    }
-    CPLFree(papszFileList);
+    CSLDestroy(papszFileList);
 
     return CE_None;
 }
