@@ -270,7 +270,8 @@ HFAEntry::HFAEntry( CPL_UNUSED HFAEntry * poContainer,
                     const char * pszDictionnary,
                     const char * pszTypeName,
                     int nDataSizeIn,
-                    GByte* pabyDataIn )
+                    GByte* pabyDataIn ) :
+    bDirty(FALSE)
 {
 /* -------------------------------------------------------------------- */
 /*      Initialize Entry                                                */
