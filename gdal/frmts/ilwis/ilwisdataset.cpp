@@ -1844,7 +1844,9 @@ static double doubleConv(const char* s)
     return r;
 }
 
-ValueRange::ValueRange(string sRng)
+ValueRange::ValueRange(string sRng) :
+    _rLo(0.0), _rHi(0.0), _rStep(0.0), _iDec(0), _r0(0.0), iRawUndef(0),
+    _iWidth(0), st(stByte)
 {
     char* sRange = new char[sRng.length() + 1];
     for (unsigned int i = 0; i < sRng.length(); ++i)
