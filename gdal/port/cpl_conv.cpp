@@ -1642,6 +1642,30 @@ CPLGetConfigOption( const char *pszKey, const char *pszDefault )
 }
 
 /************************************************************************/
+/*                   CPLGetThreadLocalConfigOption()                    */
+/************************************************************************/
+
+const char * CPL_STDCALL
+CPLGetThreadLocalConfigOption( const char *pszKey, const char *pszDefault )
+
+{
+#ifdef DEBUG_CONFIG_OPTIONS
+    CPLAccessConfigOption(pszKey, TRUE);
+#endif
+
+    const char *pszResult = NULL;
+
+    char **papszTLConfigOptions = (char **) CPLGetTLS( CTLS_CONFIGOPTIONS );
+    if( papszTLConfigOptions != NULL )
+        pszResult = CSLFetchNameValue( papszTLConfigOptions, pszKey );
+
+    if( pszResult == NULL )
+        return pszDefault;
+    else
+        return pszResult;
+}
+
+/************************************************************************/
 /*                         CPLSetConfigOption()                         */
 /************************************************************************/
 

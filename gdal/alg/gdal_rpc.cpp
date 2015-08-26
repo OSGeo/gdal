@@ -1130,7 +1130,7 @@ int GDALRPCTransform( void *pTransformArg, int bDstToSrc,
         CPLString osPrevValueConfigOption;
         if( psTransform->bApplyDEMVDatumShift )
         {
-            osPrevValueConfigOption = CPLGetConfigOption("GTIFF_REPORT_COMPD_CS", "");
+            osPrevValueConfigOption = CPLGetThreadLocalConfigOption("GTIFF_REPORT_COMPD_CS", "");
             CPLSetThreadLocalConfigOption("GTIFF_REPORT_COMPD_CS", "YES");
         }
         psTransform->poDS = (GDALDataset *)
