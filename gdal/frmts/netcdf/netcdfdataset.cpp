@@ -169,8 +169,8 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
                                     int *panBandZLev, 
                                     int *panBandZPos, 
                                     int *paDimIds,
-                                    int nBand )
-
+                                    int nBand ) :
+    dfScale(1.0), dfOffset(0.0)
 {
     double   dfNoData = 0.0;
     int      bGotNoData = FALSE;
@@ -407,23 +407,23 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
 /* variable and set them.  If these values are not available, set       */
 /* offset to 0 and scale to 1                                           */
 /* -------------------------------------------------------------------- */
-    double dfOff = 0.0; 
-    double dfScale = 1.0; 
-    
-    if ( nc_inq_attid ( cdfid, nZId, CF_ADD_OFFSET, NULL) == NC_NOERR ) { 
-        status = nc_get_att_double( cdfid, nZId, CF_ADD_OFFSET, &dfOff );
-        CPLDebug( "GDAL_netCDF", "got add_offset=%.16g, status=%d", dfOff, status );
+    double dfScale_ = 1.0;
+    double dfOffset_ = 0.0;
+
+    if ( nc_inq_attid ( cdfid, nZId, CF_ADD_OFFSET, NULL) == NC_NOERR ) {
+        status = nc_get_att_double( cdfid, nZId, CF_ADD_OFFSET, &dfOffset_ );
+        CPLDebug( "GDAL_netCDF", "got add_offset=%.16g, status=%d", dfOffset_, status );
     }
-    if ( nc_inq_attid ( cdfid, nZId, 
-                        CF_SCALE_FACTOR, NULL) == NC_NOERR ) { 
-        status = nc_get_att_double( cdfid, nZId, CF_SCALE_FACTOR, &dfScale ); 
-        CPLDebug( "GDAL_netCDF", "got scale_factor=%.16g, status=%d", dfScale, status );
+    if ( nc_inq_attid ( cdfid, nZId,
+                        CF_SCALE_FACTOR, NULL) == NC_NOERR ) {
+        status = nc_get_att_double( cdfid, nZId, CF_SCALE_FACTOR, &dfScale_ );
+        CPLDebug( "GDAL_netCDF", "got scale_factor=%.16g, status=%d", dfScale_, status );
     }
-    SetOffset( dfOff );
-    SetScale( dfScale );
+    SetOffset( dfOffset_ );
+    SetScale( dfScale_ );
 
     /* should we check for longitude values > 360 ? */
-    this->bCheckLongitude = 
+    this->bCheckLongitude =
         CSLTestBoolean(CPLGetConfigOption("GDAL_NETCDF_CENTERLONG_180", "YES"))
         && NCDFIsVarLongitude( cdfid, nZId, NULL );
 
