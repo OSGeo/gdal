@@ -32,7 +32,8 @@
 
 CPL_CVSID("$Id$");
 
-HFACompress::HFACompress( void *pData, GUInt32 nBlockSize, int nDataType )
+HFACompress::HFACompress( void *pData, GUInt32 nBlockSize, int nDataType ) :
+    m_pCurrCount(NULL), m_pCurrValues(NULL)
 {
   m_pData       = pData;
   m_nDataType   = nDataType;
@@ -299,4 +300,3 @@ bool HFACompress::QueryDataTypeSupported( int nHFADataType )
   return ( nBits == 8 ) || ( nBits == 16 ) || ( nBits == 32 ) || (nBits == 4)
       || (nBits == 2) || (nBits == 1);
 }
-
