@@ -248,20 +248,20 @@ class LevellerRasterBand;
 class LevellerDataset : public GDALPamDataset
 {
     friend class LevellerRasterBand;
-	friend class digital_axis;
+    friend class digital_axis;
 
     int			m_version;
 
-	char*		m_pszFilename;
+    char*		m_pszFilename;
     char*		m_pszProjection;
 
     //char		m_szUnits[8];
-	char		m_szElevUnits[8];
+    char		m_szElevUnits[8];
     double		m_dElevScale;	// physical-to-logical scaling.
     double		m_dElevBase;	// logical offset.
     double		m_adfTransform[6];
-	//double		m_dMeasurePerPixel;
-	double		m_dLogSpan[2];
+    //double		m_dMeasurePerPixel;
+    double		m_dLogSpan[2];
 
     VSILFILE*			m_fp;
     vsi_l_offset	m_nDataOffset;
@@ -640,12 +640,10 @@ double LevellerRasterBand::GetOffset(int* pbSuccess)
 /*                          LevellerDataset()                           */
 /************************************************************************/
 
-LevellerDataset::LevellerDataset()
-{
-    m_fp = NULL;
-    m_pszProjection = NULL;
-    m_pszFilename = NULL;
-}
+LevellerDataset::LevellerDataset() :
+    m_version(0), m_pszFilename(NULL), m_pszProjection(NULL), m_dElevScale(),
+    m_dElevBase(), m_fp(NULL), m_nDataOffset()
+{ }
 
 /************************************************************************/
 /*                          ~LevellerDataset()                          */
