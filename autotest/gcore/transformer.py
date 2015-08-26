@@ -484,7 +484,16 @@ def transformer_9():
 # Test RPC DEM transform from geoid height to ellipsoidal height
 
 def transformer_10():
-    
+
+    sr = osr.SpatialReference()
+    sr.ImportFromProj4('+proj=longlat +datum=WGS84 +geoidgrids=./tmp/fake.gtx +vunits=m +foo=bar +no_defs')
+    if sr.ExportToProj4().find('foo=bar') >= 0:
+        print('Missing proj.4')
+        return 'skip'
+    if sr.ExportToProj4().find('geoidgrids') < 0:
+        print('Missing geoidgrids in %s. Outdated proj.4 version' % sr.ExportToProj4())
+        return 'skip'
+
     # Create fake vertical shift grid
     out_ds = gdal.GetDriverByName('GTX').Create('tmp/fake.gtx',10,10,1,gdal.GDT_Float32)
     out_ds.SetGeoTransform([-180,36,0,90,0,-18])
@@ -494,7 +503,8 @@ def transformer_10():
     out_ds.GetRasterBand(1).Fill(100)
     out_ds = None
 
-    # Creata a fake DEM
+
+    # Create a fake DEM
     ds_dem = gdal.GetDriverByName('GTiff').Create('/vsimem/dem.tif', 100, 100, 1, gdal.GDT_Byte)
     ds_dem.SetGeoTransform([125.647968621436,1.2111052640051412e-05,0,39.869926216038,0,-8.6569068979969188e-06])
     import random
