@@ -91,6 +91,7 @@ class GS7BGDataset : public GDALPamDataset
     VSILFILE    *fp;
 
   public:
+    GS7BGDataset() : fp(NULL) { }
     ~GS7BGDataset();
 
     static int          Identify( GDALOpenInfo * );
@@ -108,6 +109,8 @@ class GS7BGDataset : public GDALPamDataset
     CPLErr GetGeoTransform( double *padfGeoTransform );
     CPLErr SetGeoTransform( double *padfGeoTransform );
 };
+
+
 
 /* NOTE:  This is not mentioned in the spec, but Surfer 8 uses this value */
 /* 0x7effffee (Little Endian: eeffff7e) */
