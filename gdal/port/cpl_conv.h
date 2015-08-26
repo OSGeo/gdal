@@ -52,6 +52,8 @@ void CPL_DLL CPLVerifyConfiguration(void);
 
 const char CPL_DLL * CPL_STDCALL
 CPLGetConfigOption( const char *, const char * ) CPL_WARN_UNUSED_RESULT;
+const char CPL_DLL * CPL_STDCALL
+CPLGetThreadLocalConfigOption( const char *, const char * ) CPL_WARN_UNUSED_RESULT;
 void CPL_DLL CPL_STDCALL CPLSetConfigOption( const char *, const char * );
 void CPL_DLL CPL_STDCALL CPLSetThreadLocalConfigOption( const char *pszKey, 
                                                         const char *pszValue );
