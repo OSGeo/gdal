@@ -2919,8 +2919,10 @@ CPLErr IdrisiDataset::Wkt2GeoReference( const char *pszProjString,
                     *pszRefSystem   = CPLStrdup( CPLSPrintf( rstSPC, nNADYear, pszState, nZone ) );
                     *pszRefUnit     = GetUnitDefault( oSRS.GetAttrValue( "UNIT" ),
                                                       CPLSPrintf( "%f", oSRS.GetLinearUnits() ) );
+                    CPLFree( pszState );
                     return CE_None;
                 }
+                CPLFree( pszState );
             }
         }//
 
