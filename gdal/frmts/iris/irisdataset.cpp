@@ -69,8 +69,8 @@ class IRISDataset : public GDALPamDataset
     double                dfNoDataValue;
     static const char* const   aszProductNames[];
     static const char* const   aszDataTypeCodes[];
-    static const char* const   aszDataTypes[];   
-    static const char* const   aszProjections[];   
+    static const char* const   aszDataTypes[];
+    static const char* const   aszProjections[];
     unsigned short        nProductCode;
     unsigned short        nDataTypeCode;
     unsigned char         nProjectionCode;
@@ -80,16 +80,16 @@ class IRISDataset : public GDALPamDataset
     int                   bHasLoadedProjection;
     void                  LoadProjection();
     std::pair <double,double> GeodesicCalculation(float fLat, float fLon, float fAngle, float fDist, float fEquatorialRadius, float fPolarRadius, float fFlattening);
-    public:
-        IRISDataset();
-        ~IRISDataset();
+
+public:
+    IRISDataset();
+    ~IRISDataset();
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int Identify( GDALOpenInfo * );
 
     CPLErr 	GetGeoTransform( double * padfTransform );
     const char *GetProjectionRef();
- 
 };
 
 const char* const IRISDataset::aszProductNames[]= {
@@ -150,14 +150,13 @@ class IRISRasterBand : public GDALPamRasterBand
 {
     friend class IRISDataset;
 
- 
     unsigned char*        pszRecord;
     int                   bBufferAllocFailed;
 
-    public:
-        IRISRasterBand( IRISDataset *, int );
-        ~IRISRasterBand();
-    
+public:
+    IRISRasterBand( IRISDataset *, int );
+    ~IRISRasterBand();
+
     virtual CPLErr IReadBlock( int, int, void * );
 
     virtual double          GetNoDataValue( int * );
@@ -380,11 +379,10 @@ double IRISRasterBand::GetNoDataValue( int * pbSuccess )
 /************************************************************************/
 
 IRISDataset::IRISDataset()
-
+    : fp(NULL), bNoDataSet(0), dfNoDataValue(0.0), nProductCode(0),
+      nDataTypeCode(0), nProjectionCode(0), fNyquistVelocity(0.0),
+      pszSRS_WKT(NULL), bHasLoadedProjection(FALSE)
 {
-    bHasLoadedProjection = FALSE;
-    fp = NULL;
-    pszSRS_WKT = NULL;
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
     adfGeoTransform[2] = 0.0;
