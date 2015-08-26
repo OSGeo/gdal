@@ -2925,16 +2925,19 @@ CPLErr HFARasterBand::BuildOverviews( const char *pszResampling,
 /* -------------------------------------------------------------------- */
         if( papoOvBands[iOverview] == NULL )
         {
-            iResult = HFACreateOverview( hHFA, nBand, 
+            iResult = HFACreateOverview( hHFA, nBand,
                                          panOverviewList[iOverview],
                                          pszResampling );
             if( iResult < 0 )
+            {
+                CPLFree( papoOvBands );
                 return CE_Failure;
+            }
 
             if( papoOverviewBands == NULL && nOverviews == 0 && iResult > 0)
             {
                 CPLDebug("HFA", "Shouldn't happen happened at line %d", __LINE__);
-                papoOverviewBands = (HFARasterBand **) 
+                papoOverviewBands = (HFARasterBand **)
                     CPLCalloc( sizeof(void*), iResult );
             }
 
