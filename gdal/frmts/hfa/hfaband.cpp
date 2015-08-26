@@ -1600,7 +1600,12 @@ CPLErr HFABand::SetRasterBlock( int nXBlock, int nYBlock, void * pData )
         {
             char	szVarName[64];
             HFAEntry	*poDMS = poNode->GetNamedChild( "RasterDMS" );
-
+            if (poDMS == NULL) {
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "Unable to get RasterDMS when trying to mark "
+                          "block valid." );
+                return CE_Failure;
+            }
             sprintf( szVarName, "blockinfo[%d].logvalid", iBlock );
             poDMS->SetStringField( szVarName, "true" );
 
