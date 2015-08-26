@@ -69,7 +69,7 @@ build:
 
 egg:
 	$(PYTHON) setup.py bdist_egg 
-prefix:=/usr
+
 site_package_dir=$(shell $(PYTHON) -c "from __future__ import print_function;from distutils.sysconfig import get_python_lib;print(get_python_lib(prefix=\"$(prefix)\"))")
 
 ifeq ($(PY_HAVE_SETUPTOOLS),1)
