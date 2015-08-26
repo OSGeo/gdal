@@ -419,7 +419,7 @@ class HFADictionary
 /*                             HFACompress                              */
 /*                                                                      */
 /*      Class that given a block of memory compresses the contents      */
-/*      using run  length encoding as used by Imagine.                  */
+/*      using run length encoding (RLE) as used by Imagine.             */
 /************************************************************************/
 
 class HFACompress
