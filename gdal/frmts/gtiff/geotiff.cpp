@@ -4973,8 +4973,10 @@ CPLErr GTiffSplitBitmapBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 /*                            GTiffDataset()                            */
 /************************************************************************/
 
-GTiffDataset::GTiffDataset()
-
+GTiffDataset::GTiffDataset() :
+    nPlanarConfig(0), nSamplesPerPixel(0), nBitsPerSample(0), nRowsPerStrip(0),
+    nPhotometric(0), nSampleFormat(0), nCompression(0), nBlocksPerBand(0),
+    nBlockXSize(0), nBlockYSize(0)
 {
     nLoadedBlock = -1;
     bLoadedBlockDirty = FALSE;
