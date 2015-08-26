@@ -94,26 +94,17 @@ static const char *apszDefDefn[] = {
 /*                           HFADictionary()                            */
 /************************************************************************/
 
-HFADictionary::HFADictionary( const char * pszString )
-
+HFADictionary::HFADictionary( const char * pszString ) :
+    nTypes(0), nTypesMax(0), papoTypes(NULL), osDictionaryText(pszString),
+    bDictionaryTextDirty(FALSE)
 {
-    int		i;
-    
-    nTypes = 0;
-    nTypesMax = 0;
-    papoTypes = NULL;
-
-    osDictionaryText = pszString;
-    bDictionaryTextDirty = FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      Read all the types.                                             */
 /* -------------------------------------------------------------------- */
     while( pszString != NULL && *pszString != '.' )
     {
-        HFAType		*poNewType;
-
-        poNewType = new HFAType();
+        HFAType	*poNewType = new HFAType();
         pszString = poNewType->Initialize( pszString );
 
         if( pszString != NULL )
@@ -125,6 +116,7 @@ HFADictionary::HFADictionary( const char * pszString )
 /* -------------------------------------------------------------------- */
 /*      Complete the definitions.                                       */
 /* -------------------------------------------------------------------- */
+    int i;
     for( i = 0; i < nTypes; i++ )
     {
         papoTypes[i]->CompleteDefn( this );
