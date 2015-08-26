@@ -53,8 +53,9 @@ class GMTDataset : public GDALPamDataset
   public:
     int         cdfid;
 
+                GMTDataset() : z_id(0), cdfid(0) { }
 		~GMTDataset();
-    
+
     static GDALDataset *Open( GDALOpenInfo * );
 
     CPLErr 	GetGeoTransform( double * padfTransform );
