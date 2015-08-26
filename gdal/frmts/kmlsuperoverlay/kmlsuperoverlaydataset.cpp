@@ -113,17 +113,13 @@ void GenerateTiles(std::string filename,
             }
 
             int yOffset = ry + row * rowOffset;
-            bool bReadFailed = false;
-            if (poBand)
-            {
-                CPLErr errTest = 
-                    poBand->RasterIO( GF_Read, rx, yOffset, rxsize, rowOffset, pafScanline, dxsize, 1, GDT_Byte, 0, 0, NULL);
+            CPLErr errTest =
+                poBand->RasterIO( GF_Read, rx, yOffset, rxsize, rowOffset, pafScanline, dxsize, 1, GDT_Byte, 0, 0, NULL);
 
-                if ( errTest == CE_Failure )
-                {
-                    hasNoData = 1;
-                    bReadFailed = true;
-                }
+            const bool bReadFailed = ( errTest == CE_Failure );
+            if ( bReadFailed )
+            {
+                hasNoData = 1;
             }
 
 
