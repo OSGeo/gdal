@@ -92,8 +92,9 @@ RawRasterBand::RawRasterBand( GDALDataset *poDS, int nBand,
 RawRasterBand::RawRasterBand( void * fpRaw, vsi_l_offset nImgOffset,
                               int nPixelOffset, int nLineOffset,
                               GDALDataType eDataType, int bNativeOrder,
-                              int nXSize, int nYSize, int bIsVSIL, int bOwnsFP )
-
+                              int nXSize, int nYSize, int bIsVSIL, int bOwnsFP ) :
+    nLineSize(0), nLoadedScanline(0), pLineStart(NULL), bDirty(FALSE),
+    poCT(NULL), eInterp(GCI_Undefined), papszCategoryNames(NULL)
 {
     this->poDS = NULL;
     this->nBand = 1;
