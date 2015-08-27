@@ -46,8 +46,8 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 VRTRawRasterBand::VRTRawRasterBand( GDALDataset *poDS, int nBand,
-                                    GDALDataType eType )
-
+                                    GDALDataType eType ) :
+    poRawRaster(NULL), pszSourceFilename(NULL), bRelativeToVRT(FALSE)
 {
     Initialize( poDS->GetRasterXSize(), poDS->GetRasterYSize() );
 
@@ -56,9 +56,6 @@ VRTRawRasterBand::VRTRawRasterBand( GDALDataset *poDS, int nBand,
 
     if( eType != GDT_Unknown )
         this->eDataType = eType;
-
-    poRawRaster = NULL;
-    pszSourceFilename = NULL;
 }
 
 /************************************************************************/
