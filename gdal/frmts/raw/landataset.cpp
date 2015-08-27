@@ -371,7 +371,10 @@ GDALDataset *LANDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->fpImage = VSIFOpenL( poOpenInfo->pszFilename, "rb+" );
 
     if( poDS->fpImage == NULL )
+    {
+        delete poDS;
         return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Do we need to byte swap the headers to local machine order?     */
