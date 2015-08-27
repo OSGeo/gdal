@@ -447,13 +447,11 @@ GDALRasterBand *WCSRasterBand::GetOverview( int iOverview )
 /*                             WCSDataset()                             */
 /************************************************************************/
 
-WCSDataset::WCSDataset()
-
+WCSDataset::WCSDataset() :
+    bServiceDirty(FALSE), psService(NULL), papszSDSModifiers(NULL),
+    nVersion(0), pszProjection(NULL), pabySavedDataBuffer(NULL),
+    papszHttpOptions(NULL), nMaxCols(-1), nMaxRows(-1)
 {
-    psService = NULL;
-    bServiceDirty = FALSE;
-    pszProjection = NULL;
-    
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
     adfGeoTransform[2] = 0.0;
@@ -461,16 +459,8 @@ WCSDataset::WCSDataset()
     adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = 1.0;
 
-    pabySavedDataBuffer = NULL;
-    papszHttpOptions = NULL;
-
-    nMaxCols = -1;
-    nMaxRows = -1;
-
     apszCoverageOfferingMD[0] = NULL;
     apszCoverageOfferingMD[1] = NULL;
-
-    papszSDSModifiers = NULL;
 }
 
 /************************************************************************/
