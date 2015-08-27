@@ -112,7 +112,7 @@ class SAGADataset : public GDALPamDataset
 class SAGARasterBand : public GDALPamRasterBand
 {
     friend class	SAGADataset;
-    
+
     int				m_Cols;
     int				m_Rows;
     double			m_Xmin;
@@ -124,11 +124,10 @@ class SAGARasterBand : public GDALPamRasterBand
 
     void			SetDataType( GDALDataType eType );
     void            SwapBuffer(void* pImage);
-public:
 
+public:
     SAGARasterBand( SAGADataset *, int );
-    ~SAGARasterBand();
-    
+
     CPLErr		IReadBlock( int, int, void * );
     CPLErr		IWriteBlock( int, int, void * );
 
@@ -139,25 +138,17 @@ public:
 /*                           SAGARasterBand()                           */
 /************************************************************************/
 
-SAGARasterBand::SAGARasterBand( SAGADataset *poDS, int nBand )
-
+SAGARasterBand::SAGARasterBand( SAGADataset *poDS_, int nBand_ )
+    : m_Cols(0), m_Rows(0), m_Xmin(0.0), m_Ymin(0.0), m_Cellsize(0.0),
+      m_NoData(0.0), m_ByteOrder(0), m_nBits(0)
 {
-    this->poDS = poDS;
-    this->nBand = nBand;
-    
+    poDS = poDS_;
+    nBand = nBand_;
+
     eDataType = GDT_Float32;
 
     nBlockXSize = poDS->GetRasterXSize();
     nBlockYSize = 1;
-}
-
-/************************************************************************/
-/*                           ~SAGARasterBand()                          */
-/************************************************************************/
-
-SAGARasterBand::~SAGARasterBand( )
-
-{
 }
 
 /************************************************************************/
