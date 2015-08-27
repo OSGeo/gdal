@@ -64,15 +64,15 @@ class GRIBDataset : public GDALPamDataset
   public:
 		GRIBDataset();
 		~GRIBDataset();
-    
+
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
 
     CPLErr 	GetGeoTransform( double * padfTransform );
     const char *GetProjectionRef();
-    
-	private:
-		void SetGribMetaData(grib_MetaData* meta);
+
+  private:
+    void SetGribMetaData(grib_MetaData* meta);
     VSILFILE	*fp;
     char  *pszProjection;
     OGRCoordinateTransformation *poTransform;
@@ -487,10 +487,10 @@ GRIBRasterBand::~GRIBRasterBand()
 /* ==================================================================== */
 /************************************************************************/
 
-GRIBDataset::GRIBDataset() : fp(NULL)
-
+GRIBDataset::GRIBDataset() :
+    fp(NULL), poTransform(NULL), nCachedBytes(0),
+    bCacheOnlyOneBand(FALSE), poLastUsedBand(NULL)
 {
-  poTransform = NULL;
   pszProjection = CPLStrdup("");
   adfGeoTransform[0] = 0.0;
   adfGeoTransform[1] = 1.0;
@@ -499,12 +499,9 @@ GRIBDataset::GRIBDataset() : fp(NULL)
   adfGeoTransform[4] = 0.0;
   adfGeoTransform[5] = 1.0;
 
-  nCachedBytes = 0;
   /* Switch caching strategy once 100 MB threshold is reached */
   /* Why 100 MB ? --> why not ! */
   nCachedBytesThreshold = ((GIntBig)atoi(CPLGetConfigOption("GRIB_CACHEMAX", "100"))) * 1024 * 1024;
-  bCacheOnlyOneBand = FALSE;
-  poLastUsedBand = NULL;
 }
 
 /************************************************************************/
@@ -517,7 +514,7 @@ GRIBDataset::~GRIBDataset()
     FlushCache();
     if( fp != NULL )
         VSIFCloseL( fp );
-		
+
     CPLFree( pszProjection );
 }
 
@@ -682,7 +679,7 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo * poOpenInfo )
             double *data = NULL;
             grib_MetaData *metaData = NULL;
             GRIBRasterBand::ReadGribData(grib_fp, 0, Inv[i].subgNum, &data, &metaData);
-            if (data == 0 || metaData->gds.Nx < 1 || metaData->gds.Ny < 1)
+            if (data == NULL || metaData == NULL || metaData->gds.Nx < 1 || metaData->gds.Ny < 1)
             {
                 CPLError( CE_Failure, CPLE_OpenFailed,
                           "%s is a grib file, but no raster dataset was successfully identified.",
@@ -690,8 +687,13 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo * poOpenInfo )
                 CPLReleaseMutex(hGRIBMutex); // Release hGRIBMutex otherwise we'll deadlock with GDALDataset own hGRIBMutex
                 delete poDS;
                 CPLAcquireMutex(hGRIBMutex, 1000.0);
-                if (metaData != NULL) {
+                if (metaData != NULL)
+                {
                     delete metaData;
+                }
+                if (data != NULL)
+                {
+                    free(data);
                 }
                 return NULL;
             }
