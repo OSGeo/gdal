@@ -787,7 +787,8 @@ RMFDataset::~RMFDataset()
     CPLFree( pabyColorTable );
     if ( poColorTable != NULL )
         delete poColorTable;
-    VSIFCloseL( fp );
+    if ( fp )
+        VSIFCloseL( fp );
 }
 
 /************************************************************************/
