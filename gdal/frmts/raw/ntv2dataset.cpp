@@ -121,10 +121,7 @@ class NTv2Dataset : public RawDataset
 /*                             NTv2Dataset()                          */
 /************************************************************************/
 
-NTv2Dataset::NTv2Dataset()
-{
-    fpImage = NULL;
-}
+NTv2Dataset::NTv2Dataset() : fpImage(NULL), nRecordLength(0), nGridOffset(0) { }
 
 /************************************************************************/
 /*                            ~NTv2Dataset()                          */
