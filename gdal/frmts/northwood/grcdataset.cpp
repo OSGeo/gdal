@@ -245,8 +245,8 @@ CPLErr NWT_GRCRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 /* ==================================================================== */
 /************************************************************************/
 NWT_GRCDataset::NWT_GRCDataset() :
-    fp(NULL), pGrd(NULL), poColorTable(NULL), papszCategories(NULL),
-    pszProjection(NULL)
+    fp(NULL), pGrd(NULL), papszCategories(NULL), pszProjection(NULL),
+    poColorTable(NULL)
 { }
 
 
