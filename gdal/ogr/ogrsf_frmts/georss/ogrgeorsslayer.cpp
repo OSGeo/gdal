@@ -80,54 +80,50 @@ const char* apszAllowedATOMFieldNames[] = { "category_term", "category_scheme", 
 
 OGRGeoRSSLayer::OGRGeoRSSLayer( const char* pszFilename,
                                 const char* pszLayerName,
-                                OGRGeoRSSDataSource* poDS,
+                                OGRGeoRSSDataSource* poDS_,
                                 OGRSpatialReference *poSRSIn,
-                                int bWriteMode)
-
+                                int bWriteMode_) :
+    poFeatureDefn(NULL), poSRS(poSRSIn), poDS(poDS_), eFormat(GEORSS_ATOM),
+    bWriteMode(bWriteMode_), nTotalFeatureCount(0), eof(FALSE), nNextFID(0),
+    fpGeoRSS(NULL), bHasReadSchema(FALSE),
+#ifdef HAVE_EXPAT
+    oParser(NULL), oSchemaParser(NULL),
+#endif
+    poGlobalGeom(NULL), bStopParsing(FALSE), bInFeature(FALSE),
+    hasFoundLat(FALSE), hasFoundLon(FALSE),
+#ifdef HAVE_EXPAT
+    latVal(0.0), lonVal(0.0),
+#endif
+    pszSubElementName(NULL), pszSubElementValue(NULL), nSubElementValueLen(0),
+#ifdef HAVE_EXPAT
+    iCurrentField(0),
+#endif
+    bInSimpleGeometry(FALSE), bInGMLGeometry(FALSE), bInGeoLat(FALSE),
+    bInGeoLong(FALSE),
+#ifdef HAVE_EXPAT
+    bFoundGeom(FALSE), bSameSRS(FALSE),
+#endif
+    eGeomType(wkbUnknown), pszGMLSRSName(NULL), bInTagWithSubTag(0),
+    pszTagWithSubTag(NULL), currentDepth(0), featureDepth(0), geometryDepth(0),
+#ifdef HAVE_EXPAT
+    currentFieldDefn(NULL), nWithoutEventCounter(0), nDataHandlerCounter(0),
+#endif
+    setOfFoundFields(NULL), poFeature(NULL),
+    ppoFeatureTab(NULL), nFeatureTabLength(0), nFeatureTabIndex(0)
 {
-    eof = FALSE;
-    nNextFID = 0;
-
-    this->poDS = poDS;
-    this->bWriteMode = bWriteMode;
-
     eFormat = poDS->GetFormat();
 
     poFeatureDefn = new OGRFeatureDefn( pszLayerName );
     SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->Reference();
 
-    poSRS = poSRSIn;
     if (poSRS)
     {
         poSRS->Reference();
         poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
     }
 
-    nTotalFeatureCount = 0;
-
-    ppoFeatureTab = NULL;
-    nFeatureTabIndex = 0;
-    nFeatureTabLength = 0;
-    pszSubElementName = NULL;
-    pszSubElementValue = NULL;
-    nSubElementValueLen = 0;
-    pszGMLSRSName = NULL;
-    pszTagWithSubTag = NULL;
-    bStopParsing = FALSE;
-    bHasReadSchema = FALSE;
-    setOfFoundFields = NULL;
-    poGlobalGeom = NULL;
-    hasFoundLat = FALSE;
-    hasFoundLon = FALSE;
-
-    poFeature = NULL;
-
-#ifdef HAVE_EXPAT
-    oParser = NULL;
-#endif
-
-    if (bWriteMode == FALSE)
+    if (!bWriteMode)
     {
         fpGeoRSS = VSIFOpenL( pszFilename, "r" );
         if( fpGeoRSS == NULL )
@@ -136,8 +132,6 @@ OGRGeoRSSLayer::OGRGeoRSSLayer( const char* pszFilename,
             return;
         }
     }
-    else
-        fpGeoRSS = NULL;
 
     ResetReading();
 }
@@ -154,8 +148,8 @@ OGRGeoRSSLayer::~OGRGeoRSSLayer()
         XML_ParserFree(oParser);
 #endif
     poFeatureDefn->Release();
-    
-    if( poSRS != NULL )
+
+    if(poSRS)
         poSRS->Release();
 
     CPLFree(pszSubElementName);
@@ -167,8 +161,7 @@ OGRGeoRSSLayer::~OGRGeoRSSLayer()
     if (poGlobalGeom)
         delete poGlobalGeom;
 
-    int i;
-    for(i=nFeatureTabIndex;i<nFeatureTabLength;i++)
+    for(int i=nFeatureTabIndex;i<nFeatureTabLength;i++)
         delete ppoFeatureTab[i];
     CPLFree(ppoFeatureTab);
 
