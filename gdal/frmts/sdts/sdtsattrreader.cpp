@@ -84,11 +84,9 @@ void SDTSAttrRecord::Dump( FILE * fp )
 /*                           SDTSAttrReader()                           */
 /************************************************************************/
 
-SDTSAttrReader::SDTSAttrReader( SDTS_IREF * poIREFIn )
-
-{
-    poIREF = poIREFIn;
-}
+SDTSAttrReader::SDTSAttrReader( SDTS_IREF * poIREFIn ) :
+    poIREF(poIREFIn), bIsSecondary(FALSE)
+{ }
 
 /************************************************************************/
 /*                          ~SDTSAttrReader()                           */
@@ -223,4 +221,3 @@ SDTSAttrRecord *SDTSAttrReader::GetNextAttrRecord()
 
     return poAttrRecord;
 }
-
