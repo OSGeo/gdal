@@ -59,10 +59,10 @@ public:
     int             nBand;
     GDALRasterBand *poBand;
     int             bTriedToOpen;
-    
-    VRTOverviewInfo() : poBand(NULL), bTriedToOpen(FALSE) {}
+
+    VRTOverviewInfo() : nBand(0), poBand(NULL), bTriedToOpen(FALSE) {}
     ~VRTOverviewInfo() {
-        if( poBand == NULL ) 
+        if( poBand == NULL )
             /* do nothing */;
         else if( poBand->GetDataset()->GetShared() )
             GDALClose( (GDALDatasetH) poBand->GetDataset() );
