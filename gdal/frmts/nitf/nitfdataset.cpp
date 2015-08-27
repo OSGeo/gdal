@@ -63,24 +63,15 @@ static void SetBandMetadata( NITFImage *psImage, GDALRasterBand *poBand, int nBa
 /*                            NITFDataset()                             */
 /************************************************************************/
 
-NITFDataset::NITFDataset()
-
+NITFDataset::NITFDataset() :
+    psFile(NULL), psImage(NULL), poJ2KDataset(NULL), bJP2Writing(FALSE),
+    poJPEGDataset(NULL), bGotGeoTransform(FALSE), nGCPCount(0),
+    pasGCPList(NULL), pszGCPProjection(NULL), panJPEGBlockOffset(NULL),
+    pabyJPEGBlock(NULL), nQLevel(0), nIMIndex(0), papszTextMDToWrite(NULL),
+    papszCgmMDToWrite(NULL), bInLoadXML(FALSE),
+    bExposeUnderlyingJPEGDatasetOverviews(FALSE)
 {
-    psFile = NULL;
-    psImage = NULL;
-    bGotGeoTransform = FALSE;
     pszProjection = CPLStrdup("");
-    poJ2KDataset = NULL;
-    bJP2Writing = FALSE;
-    poJPEGDataset = NULL;
-
-    panJPEGBlockOffset = NULL;
-    pabyJPEGBlock = NULL;
-    nQLevel = 0;
-
-    nGCPCount = 0;
-    pasGCPList = NULL;
-    pszGCPProjection = NULL;
 
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
@@ -88,14 +79,8 @@ NITFDataset::NITFDataset()
     adfGeoTransform[3] = 0.0;
     adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = 1.0;
-    
-    poDriver = (GDALDriver*) GDALGetDriverByName("NITF");
 
-    papszTextMDToWrite = NULL;
-    papszCgmMDToWrite = NULL;
-    
-    bInLoadXML = FALSE;
-    bExposeUnderlyingJPEGDatasetOverviews = FALSE;
+    poDriver = (GDALDriver*) GDALGetDriverByName("NITF");
 }
 
 /************************************************************************/
