@@ -1374,6 +1374,7 @@ GDALDataset *LCPDataset::CreateCopy( const char * pszFilename,
     CPLErr eErr;
     if( bCalculateStats )
     {
+
         for( i = 0; i < nBands; i++ )
         {
             poBand = poSrcDS->GetRasterBand( i + 1 );
@@ -1381,7 +1382,7 @@ GDALDataset *LCPDataset::CreateCopy( const char * pszFilename,
                                           &padfMax[i], &dfDummy, &dfDummy );
             if( eErr != CE_None )
             {
-                CPLError( CE_Warning, CPLE_AppDefined, "Failed to properly " \
+                CPLError( CE_Warning, CPLE_AppDefined, "Failed to properly "
                                                        "calculate statistics "
                                                        "on band %d", i );
                 padfMin[i] = 0.0;
@@ -1394,6 +1395,11 @@ GDALDataset *LCPDataset::CreateCopy( const char * pszFilename,
             {
                 eErr = ClassifyBandData( poBand, panFound+ i,
                                          panClasses + ( i * LCP_MAX_CLASSES ) );
+                if ( eErr != CE_None )
+                {
+                  CPLError( CE_Warning, CPLE_AppDefined,
+                            "Failed to classify band data on band %d.", i );
+                }
             }
         }
     }
@@ -1781,4 +1787,3 @@ void GDALRegister_LCP()
         GetGDALDriverManager()->RegisterDriver( poDriver );
    }
 }
-
