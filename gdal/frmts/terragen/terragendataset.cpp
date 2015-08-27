@@ -154,38 +154,35 @@ class TerragenDataset : public GDALPamDataset
 {
     friend class TerragenRasterBand;
 
+    double		m_dScale,
+                        m_dOffset,
+                        m_dSCAL, // 30.0 normally, from SCAL chunk
+                        m_adfTransform[6],
+                        m_dGroundScale,
+                        m_dMetersPerGroundUnit,
+                        m_dMetersPerElevUnit,
+                        m_dLogSpan[2],
+                        m_span_m[2],
+                        m_span_px[2];
 
-	double		m_dScale,
-				m_dOffset,
-				m_dSCAL, // 30.0 normally, from SCAL chunk
-	   			m_adfTransform[6],
-				m_dGroundScale,
-				m_dMetersPerGroundUnit,
-				m_dMetersPerElevUnit,
-				m_dLogSpan[2], 
-				m_span_m[2], 
-				m_span_px[2];
-
-    VSILFILE*			m_fp;
+    VSILFILE*           m_fp;
     vsi_l_offset	m_nDataOffset;
 
     GInt16		m_nHeightScale;
     GInt16		m_nBaseHeight;
 
-	char*		m_pszFilename;
+    char*		m_pszFilename;
     char*		m_pszProjection;
     char		m_szUnits[32];
 
-	bool		m_bIsGeo;
-
+    bool		m_bIsGeo;
 
     int         LoadFromFile();
-
 
 	public:
 		TerragenDataset();
 		~TerragenDataset();
-    
+
 		static GDALDataset* Open( GDALOpenInfo* );
 		static GDALDataset* Create( const char* pszFilename,
 									int nXSize, int nYSize, int nBands,
@@ -454,17 +451,14 @@ CPLErr TerragenRasterBand::SetUnitType( const char* psz )
 /*                          TerragenDataset()                           */
 /************************************************************************/
 
-TerragenDataset::TerragenDataset()
+TerragenDataset::TerragenDataset() :
+    m_dScale(0.0), m_dOffset(0.0), m_dSCAL(30.0), m_dGroundScale(0.0),
+    m_dMetersPerGroundUnit(1.0), m_dMetersPerElevUnit(0.0), m_fp(NULL),
+    m_nDataOffset(0),  m_nHeightScale(0), m_nBaseHeight(0), m_pszFilename(NULL),
+    m_pszProjection(NULL), m_bIsGeo(false)
 {
-	m_pszFilename = NULL;
-    m_fp = NULL;
-	m_bIsGeo = false;
-	m_pszProjection = NULL;
-	m_nHeightScale = 0; // fix for ticket 2119
-	m_nBaseHeight = 0;
-	m_dMetersPerGroundUnit = 1.0;
-	m_dSCAL = 30.0;
-	m_dLogSpan[0] = m_dLogSpan[1] = 0.0;
+    m_dLogSpan[0] = 0.0;
+    m_dLogSpan[1] = 0.0;
 
     m_adfTransform[0] = 0.0;
     m_adfTransform[1] = m_dSCAL;
@@ -483,13 +477,12 @@ TerragenDataset::~TerragenDataset()
 {
     FlushCache();
 
-	CPLFree(m_pszProjection);
-	CPLFree(m_pszFilename);
+    CPLFree(m_pszProjection);
+    CPLFree(m_pszFilename);
 
     if( m_fp != NULL )
         VSIFCloseL( m_fp );
 }
-
 
 
 bool TerragenDataset::write_header()
