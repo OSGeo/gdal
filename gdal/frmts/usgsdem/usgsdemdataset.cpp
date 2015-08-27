@@ -459,12 +459,10 @@ const char *USGSDEMRasterBand::GetUnitType()
 /*                           USGSDEMDataset()                           */
 /************************************************************************/
 
-USGSDEMDataset::USGSDEMDataset()
-
-{
-    fp = NULL;
-    pszProjection = NULL;
-}
+USGSDEMDataset::USGSDEMDataset() :
+    nDataStartOffset(0), eNaturalDataFormat(GDT_Unknown), pszProjection(NULL),
+    fVRes(0.0), pszUnits(NULL), fp(NULL)
+{ }
 
 /************************************************************************/
 /*                            ~USGSDEMDataset()                         */
