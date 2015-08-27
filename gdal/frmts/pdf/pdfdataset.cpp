@@ -1252,7 +1252,8 @@ PDFDataset::PDFDataset()
     nBlockXSize = 0;
     nBlockYSize = 0;
     papszOpenOptions = NULL;
-    
+
+    bHasLoadedLayers = FALSE;
     nLayers = 0;
     papoLayers = NULL;
 
@@ -3417,13 +3418,11 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
             poDS->SetBand(iBand, new PDFRasterBand(poDS, iBand));
     }
 
-    int bHasNonEmptyVectorLayers = poDS->OpenVectorLayers(poPageDict);
-
-    /* Check if this is a raster-only PCIDSK file and that we are */
+    /* Check if this is a raster-only PDF file and that we are */
     /* opened in vector-only mode */
     if( (poOpenInfo->nOpenFlags & GDAL_OF_RASTER) == 0 &&
         (poOpenInfo->nOpenFlags & GDAL_OF_VECTOR) != 0 &&
-        !bHasNonEmptyVectorLayers )
+        !poDS->OpenVectorLayers(poPageDict) )
     {
         CPLDebug("PCIDSK", "This is a raster-only PDF dataset, "
                     "but it has been opened in vector-only mode");
