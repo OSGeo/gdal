@@ -101,10 +101,7 @@ class LOSLASDataset : public RawDataset
 /*                             LOSLASDataset()                          */
 /************************************************************************/
 
-LOSLASDataset::LOSLASDataset()
-{
-    fpImage = NULL;
-}
+LOSLASDataset::LOSLASDataset() : fpImage(NULL), nRecordLength(0) { }
 
 /************************************************************************/
 /*                            ~LOSLASDataset()                          */
@@ -284,4 +281,3 @@ void GDALRegister_LOSLAS()
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
-
