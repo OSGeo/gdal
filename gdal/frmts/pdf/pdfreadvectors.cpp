@@ -42,6 +42,17 @@ CPL_CVSID("$Id$");
 
 int PDFDataset::OpenVectorLayers(GDALPDFDictionary* poPageDict)
 {
+    if( bHasLoadedLayers )
+        return TRUE;
+    bHasLoadedLayers = TRUE;
+
+    if( poPageDict == NULL )
+    {
+        poPageDict = poPageObj->GetDictionary();
+        if ( poPageDict == NULL )
+            return FALSE;
+    }
+
     GetCatalog();
     if( poCatalogObject == NULL )
         return FALSE;
@@ -206,6 +217,7 @@ int PDFDataset::TestCapability( CPL_UNUSED const char * pszCap )
 OGRLayer *PDFDataset::GetLayer( int iLayer )
 
 {
+    OpenVectorLayers(NULL);
     if (iLayer < 0 || iLayer >= nLayers)
         return NULL;
 
@@ -218,6 +230,7 @@ OGRLayer *PDFDataset::GetLayer( int iLayer )
 
 int PDFDataset::GetLayerCount()
 {
+    OpenVectorLayers(NULL);
     return nLayers;
 }
 

@@ -26,7 +26,8 @@ to avoid the libpoppler dependency. This is sufficient to get the georeferencing
 getting the imagery, the pdftoppm utility that comes with the poppler distribution must be available in the system PATH.
 A temporary file will be generated in a directory determined by the following configuration options : CPL_TMPDIR,
 TMPDIR or TEMP (in that order). If none are defined, the current directory will be used.
-Successfully tested versions are libpodofo 0.8.4 and 0.9.1.
+Successfully tested versions are libpodofo 0.8.4 and 0.9.1. Important note: using PoDoFo 0.9.0 is strongly discouraged,
+as it could cause crashes in GDAL due to a bug in PoDoFo.
 <p>
 The driver supports reading georeferencing encoded in either of the 2 current existing ways : according to the OGC
 encoding best practice, or according to the Adobe Supplement to ISO 32000.
@@ -145,7 +146,7 @@ the whole page will be rasterized, which can be a slow operation.
 <p>
 Note: starting with GDAL 1.10, some raster-only PDF files (such as some USGS GeoPDF files), that are regularly
 tiled are exposed as tiled dataset by the GDAL PDF driver, and can be rendered with either the Poppler or the
-Podofo backends.
+PoDoFo backends.
 <p>
 Only a few of the possible Datums available in the OGC best practice spec have been currently mapped
 in the driver. Unrecognized datums will be considered as being based on the WGS84 ellipsoid.
