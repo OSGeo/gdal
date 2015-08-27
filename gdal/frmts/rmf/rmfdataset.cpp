@@ -752,14 +752,12 @@ GDALColorInterp RMFRasterBand::GetColorInterpretation()
 /*                           RMFDataset()                               */
 /************************************************************************/
 
-RMFDataset::RMFDataset()
+RMFDataset::RMFDataset() :
+    nXTiles(0), nYTiles(0), paiTiles(NULL), nColorTableSize(0),
+    pabyColorTable(NULL), poColorTable(NULL), bBigEndian(FALSE),
+    bHeaderDirty(FALSE), pszFilename(NULL), fp(NULL)
 {
-    pszFilename = NULL;
-    fp = NULL;
     nBands = 0;
-    nXTiles = 0;
-    nYTiles = 0;
-    paiTiles = NULL;
     pszProjection = CPLStrdup( "" );
     pszUnitType = CPLStrdup( RMF_UnitsEmpty );
     adfGeoTransform[0] = 0.0;
@@ -768,16 +766,11 @@ RMFDataset::RMFDataset()
     adfGeoTransform[3] = 0.0;
     adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = 1.0;
-    pabyColorTable = NULL;
-    poColorTable = NULL;
     eRMFType = RMFT_RSW;
     memset( &sHeader, 0, sizeof(sHeader) );
     memset( &sExtHeader, 0, sizeof(sExtHeader) );
 
     Decompress = NULL;
-
-    bBigEndian = FALSE;
-    bHeaderDirty = FALSE;
 }
 
 /************************************************************************/
@@ -788,18 +781,13 @@ RMFDataset::~RMFDataset()
 {
     FlushCache();
 
-    if ( paiTiles )
-        CPLFree( paiTiles );
-    if ( pszProjection )
-        CPLFree( pszProjection );
-    if ( pszUnitType )
-        CPLFree( pszUnitType );
-    if ( pabyColorTable )
-        CPLFree( pabyColorTable );
+    CPLFree( paiTiles );
+    CPLFree( pszProjection );
+    CPLFree( pszUnitType );
+    CPLFree( pabyColorTable );
     if ( poColorTable != NULL )
         delete poColorTable;
-    if( fp != NULL )
-        VSIFCloseL( fp );
+    VSIFCloseL( fp );
 }
 
 /************************************************************************/
@@ -1877,4 +1865,3 @@ void GDALRegister_RMF()
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
-
