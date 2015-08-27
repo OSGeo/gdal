@@ -532,7 +532,8 @@ VSILFILE *VSIFOpenL( const char * pszFilename, const char * pszAccess )
  *
  * Analog of the POSIX fclose() function.
  *
- * @param fp file handle opened with VSIFOpenL().
+ * @param fp file handle opened with VSIFOpenL().  Passing a nullptr produces
+ * undefined behavior.
  *
  * @return 0 on success or -1 on failure.
  */
