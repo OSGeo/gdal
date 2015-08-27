@@ -216,6 +216,7 @@ class PDFDataset : public GDALPamDataset
                                   const char* pszOptionName,
                                   const char* pszDefaultVal);
 
+    int                 bHasLoadedLayers;
     int                 nLayers;
     OGRLayer          **papoLayers;
 
