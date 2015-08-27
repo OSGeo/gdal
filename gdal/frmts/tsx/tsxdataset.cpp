@@ -219,9 +219,10 @@ CPLErr TSXRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /*                             TSXDataset()                             */
 /************************************************************************/
 
-TSXDataset::TSXDataset() {
-    nGCPCount = 0;
-    pasGCPList = NULL;
+TSXDataset::TSXDataset() :
+    nGCPCount(0), pasGCPList(NULL), pszGCPProjection(NULL), pszProjection(NULL),
+    bHaveGeoTransform(false), nProduct(eUnknown)
+{
     pszGCPProjection = CPLStrdup("");
     pszProjection = CPLStrdup("");
     adfGeoTransform[0] = 0.0;
@@ -230,7 +231,6 @@ TSXDataset::TSXDataset() {
     adfGeoTransform[3] = 0.0;
     adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = 1.0;
-    bHaveGeoTransform = FALSE;
 }
 
 /************************************************************************/
@@ -813,4 +813,3 @@ void GDALRegister_TSX() {
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
-
