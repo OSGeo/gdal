@@ -325,7 +325,7 @@ int VSICachedFile::LoadBlocks( vsi_l_offset nStartBlock, size_t nBlockCount,
 /*      io request in two in order to avoid allocating a large          */
 /*      temporary buffer.                                               */
 /* -------------------------------------------------------------------- */
-    if( nBufferSize > nChunkSize * 20 
+    if( nBufferSize > nChunkSize * 20
         && nBufferSize < nBlockCount * nChunkSize )
     {
         if( !LoadBlocks( nStartBlock, 2, pBuffer, nBufferSize ) )
@@ -333,6 +333,9 @@ int VSICachedFile::LoadBlocks( vsi_l_offset nStartBlock, size_t nBlockCount,
 
         return LoadBlocks( nStartBlock+2, nBlockCount-2, pBuffer, nBufferSize );
     }
+
+    if( poBase->Seek( (vsi_l_offset)nStartBlock * nChunkSize, SEEK_SET ) != 0 )
+        return 0;
 
 /* -------------------------------------------------------------------- */
 /*      Do we need to allocate our own buffer?                          */
@@ -345,8 +348,6 @@ int VSICachedFile::LoadBlocks( vsi_l_offset nStartBlock, size_t nBlockCount,
 /* -------------------------------------------------------------------- */
 /*      Read the whole request into the working buffer.                 */
 /* -------------------------------------------------------------------- */
-    if( poBase->Seek( (vsi_l_offset)nStartBlock * nChunkSize, SEEK_SET ) != 0 )
-        return 0;
 
     size_t nDataRead = poBase->Read( pabyWorkBuffer, 1, nBlockCount*nChunkSize);
 
