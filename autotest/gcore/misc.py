@@ -81,11 +81,13 @@ def misc_2():
 
 def misc_3():
 
-    ds = gdal.OpenShared('../gdrivers/data/small16.aux')
+    with gdaltest.error_handler():
+        ds = gdal.OpenShared('../gdrivers/data/small16.aux')
     ds.GetRasterBand(1).Checksum()
     cache_size = gdal.GetCacheUsed()
 
-    ds2 = gdal.OpenShared('../gdrivers/data/small16.aux')
+    with gdaltest.error_handler():
+        ds2 = gdal.OpenShared('../gdrivers/data/small16.aux')
     ds2.GetRasterBand(1).Checksum()
     cache_size2 = gdal.GetCacheUsed()
 
@@ -168,8 +170,10 @@ def misc_5_internal(drv, datatype, nBands):
     ds = None
     ds = gdal.Open(filename)
     if ds is None:
-        reason = 'Cannot reopen %s for drv = %s, nBands = %d, datatype = %s' % (dirname, drv.ShortName, nBands, gdal.GetDataTypeName(datatype))
-        gdaltest.post_reason(reason)
+        # reason = 'Cannot reopen %s for drv = %s, nBands = %d, datatype = %s' % (dirname, drv.ShortName, nBands, gdal.GetDataTypeName(datatype))
+        # gdaltest.post_reason(reason)
+        # TODO: Why not return -1?
+        pass
     #else:
     #    if ds.RasterCount > 0:
     #        print ds.GetRasterBand(1).Checksum()
@@ -649,4 +653,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-
