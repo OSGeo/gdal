@@ -148,28 +148,39 @@ bool IVFKFeature::SetGeometry(OGRGeometry *poGeom, const char *ftype)
             OGRPoint pt;
             OGRGeometry *poGeomCurved;
             OGRCircularString poGeomString;
-                
+
             poGeomCurved = NULL;
             if (EQUAL(ftype, "15") || EQUAL(ftype, "16")) {         /* -> circle or arc */
-                int npoints;
-                
-                npoints = ((OGRLineString *) poGeom)->getNumPoints();
+                int npoints = ((OGRLineString *) poGeom)->getNumPoints();
                 for (int i = 0; i < npoints; i++) {
                     ((OGRLineString *) poGeom)->getPoint(i, &pt);
                     poGeomString.addPoint(&pt);
                 }
                 if (EQUAL(ftype, "15")) {
+                    if (npoints < 3) {
+                      CPLError(CE_Warning, CPLE_AppDefined,
+                               "npoints is %d.  expected 3", npoints);
+                    }
+                    if (npoints > 3) {
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                 "npoints is %d.  Will overflow buffers.  "
+                                 "Cannot continue.", npoints);
+                        m_bValid = FALSE;
+                        return false;
+                    }
+
                     /* compute center and radius of a circle */
-                    double x[3], y[3];
+                    double x[3] = { 0.0, 0.0, 0.0 };
+                    double y[3] = { 0.0, 0.0, 0.0 };
                     double m1, n1, m2, n2, c1, c2, mx;
                     double c_x, c_y;
-                    
+
                     for (int i = 0; i < npoints; i++) {
                         ((OGRLineString *) poGeom)->getPoint(i, &pt);
                         x[i] = pt.getX();
                         y[i] = pt.getY();
                     }
-                                        
+
                     m1 = (x[0] + x[1]) / 2.0;
                     n1 = (y[0] + y[1]) / 2.0;
 
