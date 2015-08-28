@@ -613,6 +613,16 @@ vsi_l_offset VSIFTellL( VSILFILE * fp )
 /*                             VSIRewindL()                             */
 /************************************************************************/
 
+/**
+ * \brief Rewind the file pointer to the beginning of the file.
+ *
+ * This is equivalent to VSIFSeekL( fp, 0, SEEK_SET )
+ *
+ * Analog of the POSIX rewind() call.
+ *
+ * @param fp file handle opened with VSIFOpenL(). 
+ */
+
 void VSIRewindL( VSILFILE * fp )
 
 {
@@ -838,6 +848,24 @@ int VSIFPrintfL( VSILFILE *fp, const char *pszFormat, ... )
 /************************************************************************/
 /*                              VSIFPutcL()                              */
 /************************************************************************/
+
+// TODO: should we put in conformance with POSIX regarding the return
+// value. As of today (2015-08-29), no code in GDAL sources actually
+// check the return value.
+
+/**
+ * \brief Write a single byte to the file
+ *
+ * Writes the character nChar, cast to an unsigned char, to file.
+ *
+ * Almost an analog of the POSIX fputc() call, except that it returns
+ * the number of character written (1 or 0), and not the (cast) character itself or EOF.
+ *
+ * @param nChar character to write.
+ * @param fp file handle opened with VSIFOpenL(). 
+ * 
+ * @return 1 in case of success, 0 on error.
+ */
 
 int VSIFPutcL( int nChar, VSILFILE * fp )
 
