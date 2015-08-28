@@ -755,8 +755,10 @@ extern int ZEXPORT cpl_zipOpenNewFileInZip3 (
       zi->ci.flag |= 4;
     if (level==1)
       zi->ci.flag |= 6;
+#ifndef NOCRYPT
     if (password != NULL)
       zi->ci.flag |= 1;
+#endif
 
     zi->ci.crc32 = 0;
     zi->ci.method = method;
