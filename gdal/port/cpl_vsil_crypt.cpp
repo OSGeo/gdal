@@ -1206,7 +1206,7 @@ int VSICryptFileHandle::Flush()
 
 int VSICryptFileHandle::Close()
 {
-    int nRet;
+    int nRet = 0;
     if( poBaseHandle != NULL && poHeader != NULL )
     {
         if( Flush() != 0 )
