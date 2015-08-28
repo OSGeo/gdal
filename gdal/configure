@@ -631,6 +631,8 @@ ac_includes_default="\
 
 ac_subst_vars='LTLIBOBJS
 LIBOBJS
+USE_ONLY_CRYPTODLL_ALG
+HAVE_CRYPTOPP
 HAVE_ARMADILLO
 RASDAMAN_LIB
 RASDAMAN_INC
@@ -1013,6 +1015,7 @@ with_jvm_lib
 with_jvm_lib_add_rpath
 with_rasdaman
 with_armadillo
+with_cryptopp
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1769,6 +1772,7 @@ Optional Packages:
   --with-jvm-lib-add-rpath    Add the libjvm path to the RPATH (no by default)
   --with-rasdaman=DIR        Include rasdaman support (DIR is rasdaman's install dir).
   --with-armadillo=ARG       Include Armadillo support for faster TPS transform computation (ARG=yes/no/path to armadillo install root) [default=no]
+  --with-cryptopp=ARG       Include cryptopp support (ARG=yes, no or path)
 
 Some influential environment variables:
   CC          C compiler command
@@ -30061,6 +30065,117 @@ HAVE_ARMADILLO=$HAVE_ARMADILLO
 
 
 
+
+# Check whether --with-cryptopp was given.
+if test "${with_cryptopp+set}" = set; then :
+  withval=$with_cryptopp;
+fi
+
+
+HAVE_CRYPTOPP=no
+USE_ONLY_CRYPTODLL_ALG=yes
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for cryptopp" >&5
+$as_echo_n "checking for cryptopp... " >&6; }
+
+if test "$with_cryptopp" = "no" ; then
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: disabled" >&5
+$as_echo "disabled" >&6; }
+
+elif test "$with_cryptopp" = "yes" -o "$with_cryptopp" = "" ; then
+
+    rm -f testcryptopp.*
+    echo '#include <cryptopp/aes.h>' > testcryptopp.cpp
+    echo 'int main(int argc, char** argv) { CryptoPP::AES::Encryption oEnc; return 0; } ' >> testcryptopp.cpp
+    ${CXX} testcryptopp.cpp -o testcryptopp -lcryptopp 2>/dev/null
+    RETVAL=$?
+    if test $RETVAL -eq 0; then
+        HAVE_CRYPTOPP=yes
+        LIBS="-lcryptopp ${LIBS}"
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+    else
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+        if test "$with_cryptopp" = "yes"; then
+            as_fn_error $? "--with-cryptopp was requested, but not available" "$LINENO" 5
+        fi
+    fi
+    rm -f testcryptopp.*
+    rm -f testcryptopp
+
+    if test "$HAVE_CRYPTOPP" = "yes"; then
+
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking if cryptopp has all cipher methods builtin" >&5
+$as_echo_n "checking if cryptopp has all cipher methods builtin... " >&6; }
+        rm -f testcryptopp.*
+        echo '#include <cryptopp/blowfish.h>' > testcryptopp.cpp
+        echo 'int main(int argc, char** argv) { CryptoPP::Blowfish::Encryption oEnc; return 0; } ' >> testcryptopp.cpp
+        ${CXX} testcryptopp.cpp -o testcryptopp -lcryptopp 2>/dev/null
+        RETVAL=$?
+        if test $RETVAL -eq 0; then
+            USE_ONLY_CRYPTODLL_ALG=no
+            { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+        else
+            USE_ONLY_CRYPTODLL_ALG=yes
+            { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+        fi
+        rm -f testcryptopp.*
+        rm -f testcryptopp
+    fi
+
+else
+
+    rm -f testcryptopp.*
+    echo '#include <cryptopp/aes.h>' > testcryptopp.cpp
+    echo 'int main(int argc, char** argv) { CryptoPP::AES::Encryption oEnc; return 0; } ' >> testcryptopp.cpp
+    ${CXX} testcryptopp.cpp -I$with_cryptopp/include -o testcryptopp -L$with_cryptopp/lib -lcryptopp 2>/dev/null
+    RETVAL=$?
+    if test $RETVAL -eq 0; then
+        HAVE_CRYPTOPP=yes
+        LIBS="-L$with_cryptopp/lib -lcryptopp ${LIBS}"
+        EXTRA_INCLUDES="-I$with_cryptopp/include $EXTRA_INCLUDES"
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+    else
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+    fi
+    rm -f testcryptopp.*
+    rm -f testcryptopp
+
+    if test "$HAVE_CRYPTOPP" = "yes"; then
+
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking if cryptopp has all cipher methods builtin" >&5
+$as_echo_n "checking if cryptopp has all cipher methods builtin... " >&6; }
+        rm -f testcryptopp.*
+        echo '#include <cryptopp/blowfish.h>' > testcryptopp.cpp
+        echo 'int main(int argc, char** argv) { CryptoPP::Blowfish::Encryption oEnc; return 0; } ' >> testcryptopp.cpp
+        ${CXX} testcryptopp.cpp -I$with_cryptopp/include -o testcryptopp -L$with_cryptopp/lib -lcryptopp 2>/dev/null
+        RETVAL=$?
+        if test $RETVAL -eq 0; then
+            USE_ONLY_CRYPTODLL_ALG=no
+            { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+        else
+            USE_ONLY_CRYPTODLL_ALG=yes
+            { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+        fi
+        rm -f testcryptopp.*
+        rm -f testcryptopp
+    fi
+
+fi
+
+HAVE_CRYPTOPP=$HAVE_CRYPTOPP
+
+USE_ONLY_CRYPTODLL_ALG=$USE_ONLY_CRYPTODLL_ALG
+
+
 ac_config_files="$ac_config_files GDALmake.opt"
 
 
@@ -32487,6 +32602,9 @@ echo "  LIBZ support:              ${LIBZ_SETTING}"
 
 
 echo "  LIBLZMA support:           ${LIBLZMA_SETTING}"
+
+
+echo "  cryptopp support:          ${HAVE_CRYPTOPP}"
 
 
 echo "  GRASS support:             ${GRASS_SETTING}"

@@ -45,6 +45,10 @@ def vsifile_generic(filename):
     start_time = time.time()
 
     fp = gdal.VSIFOpenL(filename, 'wb+')
+    if fp is None:
+        gdaltest.post_reason('failure')
+        return 'fail'
+
     if gdal.VSIFWriteL('0123456789', 1, 10, fp) != 10:
         gdaltest.post_reason('failure')
         return 'fail'
@@ -90,6 +94,7 @@ def vsifile_generic(filename):
 
     if buf.decode('ascii') != '01234XX':
         gdaltest.post_reason('failure')
+        print(buf.decode('ascii'))
         return 'fail'
 
     # Test append mode on existing file

@@ -232,6 +232,8 @@ void VSIInstallStdinHandler(void); /* No reason to export that */
 void VSIInstallStdoutHandler(void); /* No reason to export that */
 void CPL_DLL VSIInstallSparseFileHandler(void);
 void VSIInstallTarFileHandler(void); /* No reason to export that */
+void CPL_DLL VSIInstallCryptFileHandler(void);
+void CPL_DLL VSISetCryptKey(const GByte* pabyKey, int nKeySize);
 void CPL_DLL VSICleanupFileManager(void);
 
 VSILFILE CPL_DLL *VSIFileFromMemBuffer( const char *pszFilename,
