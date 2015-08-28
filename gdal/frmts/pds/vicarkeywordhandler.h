@@ -36,7 +36,6 @@ class VICARKeywordHandler
     const char *pszHeaderNext;
 
     int     LabelSize;
-    int     Eol;
 
     void    SkipWhite();
     int     ReadWord( CPLString &osWord );
