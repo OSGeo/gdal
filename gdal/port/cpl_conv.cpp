@@ -186,27 +186,27 @@ void *CPLMalloc( size_t nSize )
 void * CPLRealloc( void * pData, size_t nNewSize )
 
 {
-    void        *pReturn;
-
     if ( nNewSize == 0 )
     {
         VSIFree(pData);
         return NULL;
     }
 
-    if( long(nNewSize) < 0 )
+    if( static_cast<long>(nNewSize) < 0 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "CPLRealloc(%ld): Silly size requested.\n",
                   (long) nNewSize );
         return NULL;
     }
-    
+
+    void        *pReturn;
+
     if( pData == NULL )
         pReturn = VSIMalloc( nNewSize );
     else
         pReturn = VSIRealloc( pData, nNewSize );
-    
+
     if( pReturn == NULL )
     {
         if( nNewSize > 0 && nNewSize < 2000 )
