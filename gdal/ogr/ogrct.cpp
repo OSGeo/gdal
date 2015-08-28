@@ -127,7 +127,6 @@ class OGRProj4CT : public OGRCoordinateTransformation
     double      dfSourceToRadians;
     int         bSourceWrap;
     double      dfSourceWrapLong;
-    
 
     OGRSpatialReference *poSRSTarget;
     void        *psPJTarget;
@@ -172,7 +171,6 @@ public:
     virtual int TransformEx( int nCount, 
                              double *x, double *y, double *z = NULL,
                              int *panSuccess = NULL );
-
 };
 
 /************************************************************************/
@@ -488,34 +486,18 @@ OCTNewCoordinateTransformation(
 /*                             OGRProj4CT()                             */
 /************************************************************************/
 
-OGRProj4CT::OGRProj4CT()
-
+OGRProj4CT::OGRProj4CT() :
+    poSRSSource(NULL), psPJSource(NULL), bSourceLatLong(FALSE),
+    dfSourceToRadians(0.0), bSourceWrap(FALSE), dfSourceWrapLong(0.0),
+    poSRSTarget(NULL), psPJTarget(NULL), bTargetLatLong(FALSE),
+    dfTargetFromRadians(0.0), bTargetWrap(FALSE), dfTargetWrapLong(0.0),
+    bIdentityTransform(FALSE), bWebMercatorToWGS84(FALSE), nErrorCount(0),
+    bCheckWithInvertProj(FALSE), dfThreshold(0.0), pjctx(NULL), nMaxCount(0),
+    padfOriX(NULL), padfOriY(NULL), padfOriZ(NULL), padfTargetX(NULL),
+    padfTargetY(NULL), padfTargetZ(NULL)
 {
-    poSRSSource = NULL;
-    poSRSTarget = NULL;
-    psPJSource = NULL;
-    psPJTarget = NULL;
-    
-    bIdentityTransform = FALSE;
-    //bWGS84ToWebMercator = FALSE;
-    bWebMercatorToWGS84 = FALSE;
-    nErrorCount = 0;
-    
-    bCheckWithInvertProj = FALSE;
-    dfThreshold = 0;
-
-    nMaxCount = 0;
-    padfOriX = NULL;
-    padfOriY = NULL;
-    padfOriZ = NULL;
-    padfTargetX = NULL;
-    padfTargetY = NULL;
-    padfTargetZ = NULL;
-
     if (pfn_pj_ctx_alloc != NULL)
         pjctx = pfn_pj_ctx_alloc();
-    else
-        pjctx = NULL;
 }
 
 /************************************************************************/
@@ -1227,4 +1209,3 @@ int CPL_STDCALL OCTTransformEx( OGRCoordinateTransformationH hTransform,
     return ((OGRCoordinateTransformation*) hTransform)->
         TransformEx( nCount, x, y, z, pabSuccess );
 }
-
