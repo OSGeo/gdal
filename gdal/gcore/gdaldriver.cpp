@@ -1487,6 +1487,7 @@ int GDALValidateOptions( const char* pszOptionList,
         if( EQUAL(pszKey, "VALIDATE_OPEN_OPTIONS") )
         {
             papszOptionsToValidate ++;
+            CPLFree(pszKey);
             continue;
         }
 
@@ -1667,6 +1668,7 @@ int GDALValidateOptions( const char* pszOptionList,
                         CPLError(CE_Warning, CPLE_NotSupported,
                              "'%s' is an unexpected value for %s %s that should be >= %s.",
                              pszValue, pszKey, pszErrorMessageOptionType, pszMin);
+                        CPLFree(pszKey);
                         break;
                     }
                     if( pszMax && dfVal > CPLAtof(pszMax) )
@@ -1674,6 +1676,7 @@ int GDALValidateOptions( const char* pszOptionList,
                         CPLError(CE_Warning, CPLE_NotSupported,
                              "'%s' is an unexpected value for %s %s that should be <= %s.",
                              pszValue, pszKey, pszErrorMessageOptionType, pszMax);
+                        CPLFree(pszKey);
                         break;
                     }
                 }
