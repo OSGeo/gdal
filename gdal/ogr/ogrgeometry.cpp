@@ -873,11 +873,6 @@ int OGR_G_Equals( OGRGeometryH hGeom, OGRGeometryH hOther )
 {
     VALIDATE_POINTER1( hGeom, "OGR_G_Equals", FALSE );
 
-    if (hGeom == NULL) {
-        CPLError ( CE_Failure, CPLE_ObjectNull, "hGeom was NULL in OGR_G_Equals");
-        return 0;
-    }
-
     if (hOther == NULL) {
         CPLError ( CE_Failure, CPLE_ObjectNull, "hOther was NULL in OGR_G_Equals");
         return 0;
