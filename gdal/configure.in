@@ -4605,6 +4605,8 @@ elif test "$with_cryptopp" = "yes" -o "$with_cryptopp" = "" ; then
         AC_MSG_CHECKING([if cryptopp has all cipher methods builtin])
         rm -f testcryptopp.*
         echo '#include <cryptopp/blowfish.h>' > testcryptopp.cpp
+        # Catch issue with clang++ (https://groups.google.com/forum/#!topic/cryptopp-users/DfWHy3bT0KI)
+        echo '#include <cryptopp/osrng.h>' >> testcryptopp.cpp
         echo 'int main(int argc, char** argv) { CryptoPP::Blowfish::Encryption oEnc; return 0; } ' >> testcryptopp.cpp
         ${CXX} testcryptopp.cpp -o testcryptopp -lcryptopp 2>/dev/null
         RETVAL=$?
@@ -4623,6 +4625,8 @@ else
 
     rm -f testcryptopp.*
     echo '#include <cryptopp/aes.h>' > testcryptopp.cpp
+    # Catch issue with clang++ (https://groups.google.com/forum/#!topic/cryptopp-users/DfWHy3bT0KI)
+    echo '#include <cryptopp/osrng.h>' >> testcryptopp.cpp
     echo 'int main(int argc, char** argv) { CryptoPP::AES::Encryption oEnc; return 0; } ' >> testcryptopp.cpp
     ${CXX} testcryptopp.cpp -I$with_cryptopp/include -o testcryptopp -L$with_cryptopp/lib -lcryptopp 2>/dev/null
     RETVAL=$?
