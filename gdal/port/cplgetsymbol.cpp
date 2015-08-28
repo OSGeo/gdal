@@ -63,14 +63,14 @@ CPL_CVSID("$Id$");
  * Currently CPLGetSymbol() doesn't try to:
  * <ul>
  *  <li> prevent the reference count on the library from going up
- *    for every request, or given any opportunity to unload      
- *    the library.                                            
- *  <li> Attempt to look for the library in non-standard         
- *    locations.                                              
- *  <li> Attempt to try variations on the symbol name, like      
+ *    for every request, or given any opportunity to unload
+ *    the library.
+ *  <li> Attempt to look for the library in non-standard
+ *    locations.
+ *  <li> Attempt to try variations on the symbol name, like
  *    pre-prending or post-pending an underscore.
  * </ul>
- * 
+ *
  * Some of these issues may be worked on in the future.
  *
  * @param pszLibrary the name of the shared library or DLL containing
@@ -100,7 +100,7 @@ void *CPLGetSymbol( const char * pszLibrary, const char * pszSymbolName )
 #if (defined(__APPLE__) && defined(__MACH__))
     /* On mach-o systems, C symbols have a leading underscore and depending
      * on how dlcompat is configured it may or may not add the leading
-     * underscore.  So if dlsym() fails add an underscore and try again.
+     * underscore.  If dlsym() fails, add an underscore and try again.
      */
     if( pSymbol == NULL )
     {
@@ -115,9 +115,14 @@ void *CPLGetSymbol( const char * pszLibrary, const char * pszSymbolName )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "%s", dlerror() );
+        // Do not call dlclose here.  misc.py:misc_6() demonstrates the crash.
+        // coverity[leaked_storage]
         return NULL;
     }
-    
+
+    if (dlclose(pLibrary)) {
+        CPLError( CE_Failure, CPLE_AppDefined, "dlclose failed" );
+    }
     return( pSymbol );
 }
 
