@@ -800,7 +800,7 @@ void OGRCSVLayer::BuildFeatureDefn( const char* pszNfdcGeomField,
     else if ( iLatitudeField != -1 && iLongitudeField != -1 )
     {
         if( poFeatureDefn->GetGeomFieldCount() == 0 )
-            poFeatureDefn->SetGeomType( (iZField) ? wkbPoint25D : wkbPoint );
+            poFeatureDefn->SetGeomType( (iZField >= 0) ? wkbPoint25D : wkbPoint );
         else
             iLatitudeField = iLongitudeField = -1;
     }

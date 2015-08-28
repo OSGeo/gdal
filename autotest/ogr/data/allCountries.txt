@@ -1,4 +1,4 @@
-3038814	Costa de Xurius	Costa de Xurius		42.5	1.48333	T	SLP	AD		00				0		1434	Europe/Andorra	1993-12-23
+3038814	Costa de Xurius	Costa de Xurius,added comma		42.5	1.48333	T	SLP	AD		00				0		1434	Europe/Andorra	1993-12-23
 3038815	Font de la Xona	Font de la Xona		42.55003	1.44986	H	SPNG	AD		04				0		1976	Europe/Andorra	2010-01-11
 3038816	Xixerella	Xixerella		42.55327	1.48736	P	PPL	AD		04				0		1417	Europe/Andorra	2009-04-24
 3038817	Xixerella	Xixerella	Xixerella	42.55294	1.48764	A	ADMD	AD		00				0		1417	Europe/Andorra	2012-04-13
