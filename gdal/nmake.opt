@@ -624,6 +624,19 @@ QHULL_SETTING = INTERNAL
 # To be defined if QHULL_SETTING=EXTERNAL
 # QHULL_INC = -I....
 
+# Cryptopp stuff.
+# Make sure cryptopp is compiled with /MD ( Properties | Configuration properties | C/C++ |  Code Generation | Runtime Library: Multi-threaded DLL (/MD))
+# The headers file must be in $(CRYPTOPP_INC)/cryptopp (the /cryptopp part must not be in the following variable then)
+# CRYPTOPP_INC = -Ic:/install-cryptopp-x64/include 
+#
+# Define USE_ONLY_CRYPTODLL_ALG is running against cryptopp.dll, but not if statically linking
+# USE_ONLY_CRYPTODLL_ALG=YES
+#
+# When linking against the DLL:
+# CRYPTOPP_LIB = c:/install-cryptopp-x64/lib/cryptopp.lib
+#
+# When linking against the static lib:
+# CRYPTOPP_LIB = c:/install-cryptopp-x64/lib/cryptlib.lib
 
 # Any extra libraries needed on this platform?
 ADD_LIBS	= 
@@ -797,5 +810,5 @@ EXTERNAL_LIBS =	$(OGDILIB) $(XERCES_LIB) $(EXPAT_LIB) $(OCI_LIB) $(PG_LIB) \
 	$(ODBCLIB) $(JASPER_LIB) $(PNG_LIB) $(ADD_LIBS) $(OPENJPEG_LIB) \
 	$(MRSID_LIDAR_LIB) $(LIBKML_LIBS) $(SOSI_LIBS) $(PDF_LIB_LINK) $(LZMA_LIBS) \
 	$(LIBICONV_LIBRARY) $(WEBP_LIBS) $(FGDB_LIB_LINK) $(FREEXL_LIBS) $(GTA_LIBS) \
-	$(INGRES_LIB) $(LIBXML2_LIB) $(PCRE_LIB) $(MONGODB_LIB_LINK) ws2_32.lib
+	$(INGRES_LIB) $(LIBXML2_LIB) $(PCRE_LIB) $(MONGODB_LIB_LINK) $(CRYPTOPP_LIB) ws2_32.lib
 		
