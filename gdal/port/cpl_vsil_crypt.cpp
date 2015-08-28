@@ -1784,8 +1784,10 @@ void VSIInstallCryptFileHandler(void)
         GDALDriver      *poDriver = new GDALDriver();
 
         poDriver->SetDescription( "VSICRYPT" );
+#ifdef GDAL_DCAP_RASTER
         poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
+#endif
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Wrapper for /vsicrypt/ files" );
 
         poDriver->pfnOpen = VSICryptOpen;
