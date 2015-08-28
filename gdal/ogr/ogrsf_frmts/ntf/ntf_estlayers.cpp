@@ -957,25 +957,27 @@ static OGRFeature *TranslateBL2000Collection( NTFFileReader *poReader,
     poFeature->SetField( 1, nNumLinks );
 
     // POLY_ID / COLL_ID_REFS
-    int         i, anList[MAX_LINK], anCollList[MAX_LINK];
+    int         anList[MAX_LINK], anCollList[MAX_LINK];
     int         nPolys=0, nCollections=0;
 
-    for( i = 0; i < nNumLinks; i++ )
+    for( int i = 0; i < nNumLinks; i++ )
     {
         if( atoi(papoGroup[0]->GetField( 13+i*8, 14+i*8 )) == 34 )
-            anCollList[nCollections++] = 
+            anCollList[nCollections++] =
                 atoi(papoGroup[0]->GetField( 15+i*8, 20+i*8 ));
         else
-            anList[nPolys++] = 
+            anList[nPolys++] =
                 atoi(papoGroup[0]->GetField( 15+i*8, 20+i*8 ));
     }
 
+    // coverity[uninit_use_in_call]
     poFeature->SetField( 2, nPolys, anList );
+    // coverity[uninit_use_in_call]
     poFeature->SetField( 10, nCollections, anCollList );
 
     // Attributes
     // Node that _CODE_DESC values are automatically applied if
-    // the target fields exist. 
+    // the target fields exist.
     poReader->ApplyAttributeValues( poFeature, papoGroup,
                                     "AI", 3, "OP", 4, "NM", 5, "TY", 6, 
                                     "AC", 7, "NB", 8, "NA", 9,
