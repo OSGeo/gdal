@@ -363,14 +363,10 @@ def tiff_write_8():
 def tiff_write_9():
 
     src_ds = gdal.Open( 'data/byte.tif' )
-
     new_ds = gdaltest.tiff_drv.CreateCopy( 'tmp/test_9.tif', src_ds,
-                                           options = [ 'NBITS=5' ] )
-
-    new_ds = None
-    src_ds = None
-
-    # hopefully it's closed now!
+                                            options = [ 'NBITS=5' ] )
+    with gdaltest.error_handler():
+      new_ds = None
 
     new_ds = gdal.Open( 'tmp/test_9.tif' )
     bnd = new_ds.GetRasterBand(1)
