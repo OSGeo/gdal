@@ -1820,7 +1820,10 @@ int CPLSetXMLValue( CPLXMLNode *psRoot,  const char *pszPath,
         }
 
         if( psRoot->eType != CXT_Element )
+        {
+            CSLDestroy( papszTokens );
             return FALSE;
+        }
 
         for( psChild = psRoot->psChild; psChild != NULL; 
              psChild = psChild->psNext ) 
