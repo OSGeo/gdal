@@ -50,6 +50,7 @@ OBJ	=	cpl_conv.obj \
 		cpl_progress.obj \
 		cpl_virtualmem.obj \
 		cpl_worker_thread_pool.obj \
+		cpl_vsil_crypt.obj \
 		$(ODBC_OBJ)
 
 LIB	=	cpl.lib

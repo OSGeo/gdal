@@ -1133,6 +1133,8 @@ VSIFileManager *VSIFileManager::Get()
         VSIInstallStdoutHandler();
         VSIInstallSparseFileHandler();
         VSIInstallTarFileHandler();
+        VSIInstallCryptFileHandler();
+
         //printf("Thread %d: VSIFileManager construction finished\n", nConstructerPID);
         nConstructerPID = 0;
     }

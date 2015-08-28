@@ -4565,6 +4565,101 @@ fi
 
 AC_SUBST(HAVE_ARMADILLO,$HAVE_ARMADILLO)
 
+dnl ---------------------------------------------------------------------------
+dnl libcryptopp
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(cryptopp,[  --with-cryptopp[=ARG]       Include cryptopp support (ARG=yes, no or path)],,)
+
+HAVE_CRYPTOPP=no
+USE_ONLY_CRYPTODLL_ALG=yes
+
+AC_MSG_CHECKING([for cryptopp])
+
+if test "$with_cryptopp" = "no" ; then
+
+  AC_MSG_RESULT([disabled])
+
+elif test "$with_cryptopp" = "yes" -o "$with_cryptopp" = "" ; then
+
+    rm -f testcryptopp.*
+    echo '#include <cryptopp/aes.h>' > testcryptopp.cpp
+    echo 'int main(int argc, char** argv) { CryptoPP::AES::Encryption oEnc; return 0; } ' >> testcryptopp.cpp
+    ${CXX} testcryptopp.cpp -o testcryptopp -lcryptopp 2>/dev/null
+    RETVAL=$?
+    if test $RETVAL -eq 0; then
+        HAVE_CRYPTOPP=yes
+        LIBS="-lcryptopp ${LIBS}"
+        AC_MSG_RESULT([yes])
+    else
+        AC_MSG_RESULT([no])
+        if test "$with_cryptopp" = "yes"; then
+            AC_MSG_ERROR([--with-cryptopp was requested, but not available])
+        fi
+    fi
+    rm -f testcryptopp.*
+    rm -f testcryptopp
+
+    if test "$HAVE_CRYPTOPP" = "yes"; then
+
+        AC_MSG_CHECKING([if cryptopp has all cipher methods builtin])
+        rm -f testcryptopp.*
+        echo '#include <cryptopp/blowfish.h>' > testcryptopp.cpp
+        echo 'int main(int argc, char** argv) { CryptoPP::Blowfish::Encryption oEnc; return 0; } ' >> testcryptopp.cpp
+        ${CXX} testcryptopp.cpp -o testcryptopp -lcryptopp 2>/dev/null
+        RETVAL=$?
+        if test $RETVAL -eq 0; then
+            USE_ONLY_CRYPTODLL_ALG=no
+            AC_MSG_RESULT([yes])
+        else
+            USE_ONLY_CRYPTODLL_ALG=yes
+            AC_MSG_RESULT([no])
+        fi
+        rm -f testcryptopp.*
+        rm -f testcryptopp
+    fi
+
+else
+
+    rm -f testcryptopp.*
+    echo '#include <cryptopp/aes.h>' > testcryptopp.cpp
+    echo 'int main(int argc, char** argv) { CryptoPP::AES::Encryption oEnc; return 0; } ' >> testcryptopp.cpp
+    ${CXX} testcryptopp.cpp -I$with_cryptopp/include -o testcryptopp -L$with_cryptopp/lib -lcryptopp 2>/dev/null
+    RETVAL=$?
+    if test $RETVAL -eq 0; then
+        HAVE_CRYPTOPP=yes
+        LIBS="-L$with_cryptopp/lib -lcryptopp ${LIBS}"
+        EXTRA_INCLUDES="-I$with_cryptopp/include $EXTRA_INCLUDES"
+        AC_MSG_RESULT([yes])
+    else
+        AC_MSG_RESULT([no])
+    fi
+    rm -f testcryptopp.*
+    rm -f testcryptopp
+
+    if test "$HAVE_CRYPTOPP" = "yes"; then
+
+        AC_MSG_CHECKING([if cryptopp has all cipher methods builtin])
+        rm -f testcryptopp.*
+        echo '#include <cryptopp/blowfish.h>' > testcryptopp.cpp
+        echo 'int main(int argc, char** argv) { CryptoPP::Blowfish::Encryption oEnc; return 0; } ' >> testcryptopp.cpp
+        ${CXX} testcryptopp.cpp -I$with_cryptopp/include -o testcryptopp -L$with_cryptopp/lib -lcryptopp 2>/dev/null
+        RETVAL=$?
+        if test $RETVAL -eq 0; then
+            USE_ONLY_CRYPTODLL_ALG=no
+            AC_MSG_RESULT([yes])
+        else
+            USE_ONLY_CRYPTODLL_ALG=yes
+            AC_MSG_RESULT([no])
+        fi
+        rm -f testcryptopp.*
+        rm -f testcryptopp
+    fi
+
+fi
+
+AC_SUBST(HAVE_CRYPTOPP,$HAVE_CRYPTOPP)
+AC_SUBST(USE_ONLY_CRYPTODLL_ALG,$USE_ONLY_CRYPTODLL_ALG)
 
 AC_OUTPUT(GDALmake.opt)
 
@@ -4583,6 +4678,7 @@ LOC_MSG([  LIBTOOL support:           ${with_libtool}])
 LOC_MSG()
 LOC_MSG([  LIBZ support:              ${LIBZ_SETTING}])
 LOC_MSG([  LIBLZMA support:           ${LIBLZMA_SETTING}])
+LOC_MSG([  cryptopp support:          ${HAVE_CRYPTOPP}])
 LOC_MSG([  GRASS support:             ${GRASS_SETTING}])
 LOC_MSG([  CFITSIO support:           ${FITS_SETTING}])
 LOC_MSG([  PCRaster support:          ${PCRASTER_SETTING}])

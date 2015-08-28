@@ -502,6 +502,12 @@ HAVE_FREEXL = @HAVE_FREEXL@
 FREEXL_INCLUDE = @FREEXL_INCLUDE@
 
 #
+# cryptopp stuff
+#
+HAVE_CRYPTOPP    =       @HAVE_CRYPTOPP@
+USE_ONLY_CRYPTODLL_ALG        =       @USE_ONLY_CRYPTODLL_ALG@
+
+#
 #	Note these codes have to exactly match the format directory names, 
 #	and their uppercase form should be the format portion of the
 #	format registration entry point.  eg. gdb -> GDALRegister_GDB().
