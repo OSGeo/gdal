@@ -378,6 +378,7 @@ OGRErr OGRMultiPoint::importFromWkt_Bracketed( char ** ppszInput, int bHasM, int
         eErr = addGeometryDirectly( poGeom );
         if( eErr != OGRERR_NONE )
         {
+            OGRFree( paoPoints );
             delete poGeom;
             return eErr;
         }
