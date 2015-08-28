@@ -66,10 +66,12 @@ def osr_validate_3():
 
     # No DATUM child in GEOGCS
     srs = osr.SpatialReference()
-    
+
     srs.ImportFromWkt("""COMPD_CS[]""")
-    print(srs.Validate())
-    
+    # 5 is OGRERR_CORRUPT_DATA.
+    if srs.Validate() == 0:
+        return 'fail'
+
     srs.ImportFromWkt("""COMPD_CS["MYNAME",GEOGCS[]]""")
     if srs.Validate() == 0:
         return 'fail'
@@ -304,4 +306,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-
