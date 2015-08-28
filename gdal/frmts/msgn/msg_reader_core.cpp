@@ -68,7 +68,9 @@ const Blackbody_lut_type Msg_reader_core::Blackbody_LUT[MSG_NUM_CHANNELS+1] = {
 };
 
 
-Msg_reader_core::Msg_reader_core(const char* fname) {
+Msg_reader_core::Msg_reader_core(const char* fname) :
+    _f_data_offset(0)
+{
 
     FILE* fin = fopen(fname, "rb");
     if (!fin) {
@@ -78,7 +80,9 @@ Msg_reader_core::Msg_reader_core(const char* fname) {
     read_metadata_block(fin);
 }
 
-Msg_reader_core::Msg_reader_core(FILE* fp) {
+Msg_reader_core::Msg_reader_core(FILE* fp) :
+    _f_data_offset(0)
+{
     read_metadata_block(fp);
 }
 
@@ -281,4 +285,3 @@ double Msg_reader_core::compute_pixel_area_sqkm(double line, double column) {
 #endif // GDAL_SUPPORT
 
 } // namespace msg_native_format
-
