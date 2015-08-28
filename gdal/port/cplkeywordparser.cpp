@@ -46,11 +46,9 @@ CPL_CVSID("$Id");
 /*                         CPLKeywordParser()                          */
 /************************************************************************/
 
-CPLKeywordParser::CPLKeywordParser()
-
-{
-    papszKeywordList = NULL;
-}
+CPLKeywordParser::CPLKeywordParser() :
+    papszKeywordList(NULL), pszHeaderNext(NULL)
+{ }
 
 /************************************************************************/
 /*                        ~CPLKeywordParser()                          */
