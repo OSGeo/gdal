@@ -534,7 +534,7 @@ int VizGeorefSpline2D::solve(void)
         arma::mat matCoefs(_nof_vars, _nof_eqs);
         if( !arma::solve(matCoefs, matA, matRHS) )
         {
-            CPLError(CE_Failure, CPLE_AppDefined, "There is a problem to invert the interpolation matrix.");
+            CPLError(CE_Failure, CPLE_AppDefined, "There is a problem inverting the interpolation matrix.");
             ret = 0;
         }
         else
@@ -546,16 +546,15 @@ int VizGeorefSpline2D::solve(void)
     }
     catch(...)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "There is a problem to invert the interpolation matrix.");
+        CPLError(CE_Failure, CPLE_AppDefined, "There is a problem inverting the interpolation matrix.");
         ret = 0;
     }
 #else
-    // Invert the matrix
     int status = matrixInvert( _nof_eqs, _AA, _Ainv );
-			
+
     if ( !status )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "There is a problem to invert the interpolation matrix.");
+        CPLError(CE_Failure, CPLE_AppDefined, "There is a problem inverting the interpolation matrix.");
         ret = 0;
     }
     else
