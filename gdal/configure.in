@@ -4585,7 +4585,7 @@ elif test "$with_cryptopp" = "yes" -o "$with_cryptopp" = "" ; then
     rm -f testcryptopp.*
     echo '#include <cryptopp/aes.h>' > testcryptopp.cpp
     echo 'int main(int argc, char** argv) { CryptoPP::AES::Encryption oEnc; return 0; } ' >> testcryptopp.cpp
-    ${CXX} testcryptopp.cpp -o testcryptopp -lcryptopp 2>/dev/null
+    ${CXX} ${CXXFLAGS} testcryptopp.cpp -o testcryptopp -lcryptopp 2>/dev/null
     RETVAL=$?
     if test $RETVAL -eq 0; then
         HAVE_CRYPTOPP=yes
@@ -4608,7 +4608,7 @@ elif test "$with_cryptopp" = "yes" -o "$with_cryptopp" = "" ; then
         # Catch issue with clang++ (https://groups.google.com/forum/#!topic/cryptopp-users/DfWHy3bT0KI)
         echo '#include <cryptopp/osrng.h>' >> testcryptopp.cpp
         echo 'int main(int argc, char** argv) { CryptoPP::Blowfish::Encryption oEnc; return 0; } ' >> testcryptopp.cpp
-        ${CXX} testcryptopp.cpp -o testcryptopp -lcryptopp 2>/dev/null
+        ${CXX} ${CXXFLAGS} testcryptopp.cpp -o testcryptopp -lcryptopp 2>/dev/null
         RETVAL=$?
         if test $RETVAL -eq 0; then
             USE_ONLY_CRYPTODLL_ALG=no
@@ -4628,7 +4628,7 @@ else
     # Catch issue with clang++ (https://groups.google.com/forum/#!topic/cryptopp-users/DfWHy3bT0KI)
     echo '#include <cryptopp/osrng.h>' >> testcryptopp.cpp
     echo 'int main(int argc, char** argv) { CryptoPP::AES::Encryption oEnc; return 0; } ' >> testcryptopp.cpp
-    ${CXX} testcryptopp.cpp -I$with_cryptopp/include -o testcryptopp -L$with_cryptopp/lib -lcryptopp 2>/dev/null
+    ${CXX} ${CXXFLAGS} testcryptopp.cpp -I$with_cryptopp/include -o testcryptopp -L$with_cryptopp/lib -lcryptopp 2>/dev/null
     RETVAL=$?
     if test $RETVAL -eq 0; then
         HAVE_CRYPTOPP=yes
@@ -4647,7 +4647,7 @@ else
         rm -f testcryptopp.*
         echo '#include <cryptopp/blowfish.h>' > testcryptopp.cpp
         echo 'int main(int argc, char** argv) { CryptoPP::Blowfish::Encryption oEnc; return 0; } ' >> testcryptopp.cpp
-        ${CXX} testcryptopp.cpp -I$with_cryptopp/include -o testcryptopp -L$with_cryptopp/lib -lcryptopp 2>/dev/null
+        ${CXX} ${CXXFLAGS} testcryptopp.cpp -I$with_cryptopp/include -o testcryptopp -L$with_cryptopp/lib -lcryptopp 2>/dev/null
         RETVAL=$?
         if test $RETVAL -eq 0; then
             USE_ONLY_CRYPTODLL_ALG=no
