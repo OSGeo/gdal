@@ -72,6 +72,36 @@ CPL_CVSID("$Id$");
 #include "cryptopp/osrng.h"
 /* End of crypto++ headers */
 
+// I don't really understand why this is necessary, especially
+// when cryptopp.dll and GDAL have been compiled with the same
+// VC version and /MD. But otherwise you'll get crashes
+// Borrowed from dlltest.cpp of crypto++
+#if defined(WIN32) && defined(USE_ONLY_CRYPTODLL_ALG)
+
+static CryptoPP::PNew s_pNew = NULL;
+static CryptoPP::PDelete s_pDelete = NULL;
+
+extern "C" __declspec(dllexport)
+void __cdecl SetNewAndDeleteFromCryptoPP(CryptoPP::PNew pNew,
+                                         CryptoPP::PDelete pDelete,
+                                         CryptoPP::PSetNewHandler pSetNewHandler)
+{
+	s_pNew = pNew;
+	s_pDelete = pDelete;
+}
+
+void * __cdecl operator new (size_t size)
+{
+	return s_pNew(size);
+}
+
+void __cdecl operator delete (void * p)
+{
+	s_pDelete(p);
+}
+
+#endif //  defined(WIN32) && defined(USE_ONLY_CRYPTODLL_ALG)
+
 static GByte* pabyGlobalKey = NULL;
 static int nGlobalKeySize = 0;
 
