@@ -53,13 +53,14 @@ def tps_1():
     ds.SetGCPs(gcp_list, osr.GetUserInputAsWKT('WGS84'))
     utm_wkt = osr.GetUserInputAsWKT('+proj=utm +zone=11 +datum=WGS84')
 
-    transformer = gdal.Transformer(ds, None,
-                                          ['DST_SRS='+utm_wkt,
-                                           'METHOD=GCP_TPS'] )
+    with gdaltest.error_handler():
+        transformer = gdal.Transformer(ds, None,
+                                       ['DST_SRS='+utm_wkt,
+                                        'METHOD=GCP_TPS'] )
     if transformer is None or gdal.GetLastErrorType() == 0:
         return 'fail'
 
-    return 'success' 
+    return 'success'
 
 
 gdaltest_list = [
@@ -73,4 +74,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-
