@@ -1020,8 +1020,7 @@ void HFABand::NullBlock( void *pData )
     }
     else
     {
-        GByte abyTmp[16];
-        int i;
+        GByte abyTmp[16] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
         switch( nDataType )
         {
@@ -1126,9 +1125,9 @@ void HFABand::NullBlock( void *pData )
             break;
           }
         }
-            
-        for( i = 0; i < nWords; i++ )
-            memcpy( ((GByte *) pData) + nChunkSize * i, 
+
+        for( int i = 0; i < nWords; i++ )
+            memcpy( ((GByte *) pData) + nChunkSize * i,
                     abyTmp, nChunkSize );
     }
 
