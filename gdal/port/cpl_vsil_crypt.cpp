@@ -1835,6 +1835,7 @@ void VSISetCryptKey(CPL_UNUSED const GByte* pabyKey, CPL_UNUSED int nKeySize)
 
 #endif /* HAVE_CRYPTOPP */
 
+/* Below is only useful if using as a plugin over GDAL 1.11 or GDAL 2.0 */
 #ifdef VSICRYPT_AUTOLOAD
 
 CPL_C_START
@@ -1843,7 +1844,20 @@ CPL_C_END
 
 void GDALRegisterMe()
 {
-    VSIInstallCryptFileHandler();
+    if( VSIFileManager::GetHandler("/vsicrypt/") == VSIFileManager::GetHandler(".") )
+        VSIInstallCryptFileHandler();
 }
+
+#ifndef GDAL_DCAP_RASTER
+CPL_C_START
+void CPL_DLL RegisterOGRCRYPT();
+CPL_C_END
+
+void RegisterOGRCRYPT()
+{
+    if( VSIFileManager::GetHandler("/vsicrypt/") == VSIFileManager::GetHandler(".") )
+        VSIInstallCryptFileHandler();
+}
+#endif
 
 #endif /* VSICRYPT_AUTOLOAD */
