@@ -159,13 +159,14 @@ CPLString &CPLString::FormatC( double dfValue, const char *pszFormat )
     if( pszFormat == NULL )
         pszFormat = "%g";
 
-    char szWork[512]; // presumably long enough for any number?
+    // presumably long enough for any number.
+    const size_t buf_size = 512;
+    char szWork[buf_size];
 
-    CPLsprintf( szWork, pszFormat, dfValue );
-    CPLAssert( strlen(szWork) < sizeof(szWork) );
+    CPLsnprintf( szWork, buf_size, pszFormat, dfValue );
 
     *this += szWork;
-    
+
     return *this;
 }
 
