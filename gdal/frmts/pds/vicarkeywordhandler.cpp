@@ -30,7 +30,7 @@
 ****************************************************************************/
 
 
-#include "cpl_string.h" 
+#include "cpl_string.h"
 #include "vicarkeywordhandler.h"
 
 /************************************************************************/
@@ -43,11 +43,9 @@
 /*                         VICARKeywordHandler()                         */
 /************************************************************************/
 
-VICARKeywordHandler::VICARKeywordHandler()
-
-{
-    papszKeywordList = NULL;
-}
+VICARKeywordHandler::VICARKeywordHandler() :
+    papszKeywordList(NULL), pszHeaderNext(NULL), LabelSize(0)
+{ }
 
 /************************************************************************/
 /*                        ~VICARKeywordHandler()                         */
@@ -57,7 +55,6 @@ VICARKeywordHandler::~VICARKeywordHandler()
 
 {
     CSLDestroy( papszKeywordList );
-    papszKeywordList = NULL;
 }
 
 /************************************************************************/
@@ -352,4 +349,3 @@ char **VICARKeywordHandler::GetKeywordList()
 {
     return papszKeywordList;
 }
-

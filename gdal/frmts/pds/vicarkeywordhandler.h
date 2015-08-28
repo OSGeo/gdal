@@ -35,12 +35,13 @@ class VICARKeywordHandler
     CPLString osHeaderText;
     const char *pszHeaderNext;
 
+    int     LabelSize;
+    int     Eol;
+
     void    SkipWhite();
     int     ReadWord( CPLString &osWord );
     int     ReadPair( CPLString &osName, CPLString &osValue );
     int     ReadGroup( const char *pszPathPrefix );
-    int     LabelSize;
-    int     Eol;
 
 public:
     VICARKeywordHandler();
