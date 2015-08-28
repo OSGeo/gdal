@@ -149,9 +149,9 @@ def osr_compd_3():
     if gdaltest.equal_srs_from_wkt( exp_wkt, wkt ) == 0:
         gdaltest.post_reason( 'did not get expected compound cs for EPSG:7401')
         return 'fail'
-    elif exp_wkt != wkt:
-        print('warning they are equivalent, but not completely the same')
-        print(wkt)
+    # elif exp_wkt != wkt:
+    #    print('warning they are equivalent, but not completely the same')
+    #    print(wkt)
 
     return 'success'
 
@@ -192,9 +192,9 @@ def osr_compd_4():
     if gdaltest.equal_srs_from_wkt( exp_wkt, wkt ) == 0:
         gdaltest.post_reason( 'did not get expected compound cs for EPSG:7400')
         return 'fail'
-    elif exp_wkt != wkt:
-        print('warning they are equivalent, but not completely the same')
-        print(wkt)
+    # elif exp_wkt != wkt:
+    #    print('warning they are equivalent, but not completely the same')
+    #    print(wkt)
 
     return 'success'
 
@@ -405,4 +405,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-
