@@ -393,13 +393,15 @@ wchar_t *CPLRecodeToWCharStub( const char *pszSource,
 /* -------------------------------------------------------------------- */
     if( strcmp(pszDstEncoding,"WCHAR_T") != 0
         && strcmp(pszDstEncoding,CPL_ENC_UCS2) != 0
-        && strcmp(pszDstEncoding,CPL_ENC_UCS4) != 0 
+        && strcmp(pszDstEncoding,CPL_ENC_UCS4) != 0
         && strcmp(pszDstEncoding,CPL_ENC_UTF16) != 0 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Stub recoding implementation does not support\n"
-                  "CPLRecodeToWCharStub(...,%s,%s)", 
+                  "CPLRecodeToWCharStub(...,%s,%s)",
                   pszSrcEncoding, pszDstEncoding );
+        if( pszUTF8Source != pszSource )
+            CPLFree( pszUTF8Source );
         return NULL;
     }
 
