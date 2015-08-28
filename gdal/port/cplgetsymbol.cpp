@@ -120,9 +120,7 @@ void *CPLGetSymbol( const char * pszLibrary, const char * pszSymbolName )
         return NULL;
     }
 
-    if (dlclose(pLibrary)) {
-        CPLError( CE_Failure, CPLE_AppDefined, "dlclose failed" );
-    }
+    // coverity[leaked_storage]  It is not safe to call dlclose.
     return( pSymbol );
 }
 
