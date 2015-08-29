@@ -558,7 +558,7 @@ def vsicrypt_6():
     testnonboundtoswig.gdal_handle.VSISetCryptKey.restype = None
 
     # Set a valid key
-    testnonboundtoswig.gdal_handle.VSISetCryptKey('DONT_USE_IN_PROD', 16)
+    testnonboundtoswig.gdal_handle.VSISetCryptKey('DONT_USE_IN_PROD'.encode('ASCII'), 16)
     
     if not gdaltest.has_vsicrypt:
         return 'skip'
@@ -594,7 +594,7 @@ def vsicrypt_6():
         return 'fail'
 
     # Set a too short key
-    testnonboundtoswig.gdal_handle.VSISetCryptKey('bbc', 3)
+    testnonboundtoswig.gdal_handle.VSISetCryptKey('bbc'.encode('ASCII'), 3)
     with gdaltest.error_handler():
         fp = gdal.VSIFOpenL('/vsicrypt//vsimem/file.bin', 'rb')
     if fp is not None:
