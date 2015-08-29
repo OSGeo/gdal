@@ -1,4 +1,4 @@
-/* $Id: tif_print.c,v 1.61 2012-12-12 22:50:18 tgl Exp $ */
+/* $Id: tif_print.c,v 1.62 2015-08-19 02:31:04 bfriesen Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -35,7 +35,7 @@
 #include <ctype.h>
 
 static void
-_TIFFprintAsciiBounded(FILE* fd, const char* cp, int max_chars);
+_TIFFprintAsciiBounded(FILE* fd, const char* cp, size_t max_chars);
 
 static const char *photoNames[] = {
     "min-is-white",				/* PHOTOMETRIC_MINISWHITE */
@@ -395,7 +395,7 @@ TIFFPrintDirectory(TIFF* tif, FILE* fd, long flags)
 		for (cp = td->td_inknames; 
 		     i > 0 && cp < td->td_inknames + td->td_inknameslen; 
 		     cp = strchr(cp,'\0')+1, i--) {
-			int max_chars = 
+			size_t max_chars = 
 				td->td_inknameslen - (cp - td->td_inknames);
 			fputs(sep, fd);
 			_TIFFprintAsciiBounded(fd, cp, max_chars);
@@ -679,7 +679,7 @@ _TIFFprintAscii(FILE* fd, const char* cp)
 }
 
 static void
-_TIFFprintAsciiBounded(FILE* fd, const char* cp, int max_chars)
+_TIFFprintAsciiBounded(FILE* fd, const char* cp, size_t max_chars)
 {
 	for (; max_chars > 0 && *cp != '\0'; cp++, max_chars--) {
 		const char* tp;
