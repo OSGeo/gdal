@@ -525,7 +525,7 @@ int ROIPACDataset::Identify( GDALOpenInfo *poOpenInfo )
 GDALDataset *ROIPACDataset::Create( const char *pszFilename,
                                     int nXSize, int nYSize, int nBands,
                                     GDALDataType eType,
-                                    char **papszOptions )
+                                    CPL_UNUSED char **papszOptions )
 {
 /* -------------------------------------------------------------------- */
 /*      Verify input options.                                           */
