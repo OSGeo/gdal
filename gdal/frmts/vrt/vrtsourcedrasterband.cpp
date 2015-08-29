@@ -635,7 +635,7 @@ CPLErr VRTSourcedRasterBand::GetHistogram( double dfMin, double dfMax,
 
 {
     if( nSources != 1 )
-        return GDALRasterBand::GetHistogram( dfMin, dfMax,
+        return VRTRasterBand::GetHistogram( dfMin, dfMax,
                                              nBuckets, panHistogram,
                                              bIncludeOutOfRange, bApproxOK,
                                              pfnProgress, pProgressData );
@@ -689,6 +689,8 @@ CPLErr VRTSourcedRasterBand::GetHistogram( double dfMin, double dfMax,
     }
 
     nRecursionCounter --;
+    
+    SetDefaultHistogram( dfMin, dfMax, nBuckets, panHistogram );
 
     return CE_None;
 }
