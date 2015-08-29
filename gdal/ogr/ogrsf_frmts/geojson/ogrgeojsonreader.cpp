@@ -1779,3 +1779,25 @@ OGRGeometryH OGR_G_CreateGeometryFromJson( const char* pszJson )
     /* Translation failed */
     return NULL;
 }
+
+/************************************************************************/
+/*                       json_ex_get_object_by_path()                   */
+/************************************************************************/
+
+json_object* json_ex_get_object_by_path(json_object* poObj, const char* pszPath )
+{
+    if( poObj == NULL || json_object_get_type(poObj) != json_type_object ||
+        pszPath == NULL || *pszPath == '\0' )
+    {
+        return poObj;
+    }
+    char** papszTokens = CSLTokenizeString2( pszPath, ".", 0 );
+    for( int i = 0; papszTokens[i] != NULL; i++ )
+    {
+        poObj = json_object_object_get(poObj, papszTokens[i]);
+        if( poObj == NULL || json_object_get_type(poObj) != json_type_object )
+            break;
+    }
+    CSLDestroy(papszTokens);
+    return poObj;
+}
