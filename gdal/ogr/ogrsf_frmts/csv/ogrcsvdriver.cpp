@@ -304,6 +304,7 @@ void RegisterOGRCSV()
 "    <Value>NO</Value>"
 "    <Value>AUTO</Value>"
 "  </Option>"
+"  <Option name='EMPTY_STRING_AS_NULL' type='boolean' description='Whether to consider empty strings as null fields on reading' default='NO'/>"
 "</OpenOptionList>");
 
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );

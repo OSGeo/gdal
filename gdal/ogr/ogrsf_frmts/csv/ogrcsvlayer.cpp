@@ -263,6 +263,7 @@ OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn,
     bKeepGeomColumns = TRUE;
     
     bMergeDelimiter = FALSE;
+    bEmptyStringNull = FALSE;
 }
 
 /************************************************************************/
@@ -326,6 +327,7 @@ void OGRCSVLayer::BuildFeatureDefn( const char* pszNfdcGeomField,
 {
 
     bMergeDelimiter = CSLFetchBoolean(papszOpenOptions, "MERGE_SEPARATOR", FALSE);
+    bEmptyStringNull = CSLFetchBoolean(papszOpenOptions, "EMPTY_STRING_AS_NULL", FALSE);
 
 /* -------------------------------------------------------------------- */
 /*      If this is not a new file, read ahead to establish if it is     */
@@ -1317,7 +1319,7 @@ OGRFeature * OGRCSVLayer::GetNextUnfilteredFeature()
     int         iOGRField = 0;
     int         nAttrCount = MIN(CSLCount(papszTokens), nCSVFieldCount );
     CPLValueType eType;
-    
+
     for( iAttr = 0; !bIsEurostatTSV && iAttr < nAttrCount; iAttr++)
     {
         if( (iAttr == iLongitudeField || iAttr == iLatitudeField || iAttr == iZField ) &&
@@ -1467,7 +1469,8 @@ OGRFeature * OGRCSVLayer::GetNextUnfilteredFeature()
         }
         else
         {
-            if( !poFieldDefn->IsIgnored() )
+            if( !poFieldDefn->IsIgnored() &&
+                (!bEmptyStringNull || papszTokens[iAttr][0] != '\0') )
             {
                 poFeature->SetField( iOGRField, papszTokens[iAttr] );
                 if( !bWarningBadTypeOrWidth && poFieldDefn->GetWidth() > 0 &&

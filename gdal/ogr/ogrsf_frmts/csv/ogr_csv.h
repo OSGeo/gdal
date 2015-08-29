@@ -101,6 +101,8 @@ class OGRCSVLayer : public OGRLayer
     
     int                 bMergeDelimiter;
     
+    int                 bEmptyStringNull;
+    
     char              **GetNextLineTokens();
     
     static int          Matches(const char* pszFieldName, char** papszPossibleNames);
