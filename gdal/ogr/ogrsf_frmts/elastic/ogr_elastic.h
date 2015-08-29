@@ -92,6 +92,8 @@ class OGRElasticLayer : public OGRLayer {
     int                                   m_bIgnoreSourceID;
     int                                   m_bDotAsNestedField;
 
+    int                                   m_bAddPretty;
+
     int                                   PushIndex();
     CPLString                             BuildMap();
 

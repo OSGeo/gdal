@@ -550,7 +550,7 @@ def ogr_elasticsearch_4():
         return 'fail'
 
 
-    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100&pretty""", """{
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100""", """{
 
 }""")
     lyr.ResetReading()
@@ -559,25 +559,25 @@ def ogr_elasticsearch_4():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100&pretty""", """{
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100""", """{
     "hits": null
 }""")
     lyr.ResetReading()
     lyr.GetNextFeature()
 
-    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100&pretty""", """{
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100""", """{
     "hits": { "hits": null }
 }""")
     lyr.ResetReading()
     lyr.GetNextFeature()
 
-    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100&pretty""", """{
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100""", """{
     "hits": { "hits": [ null, {}, { "_source":null } ] }
 }""")
     lyr.ResetReading()
     lyr.GetNextFeature()
 
-    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100&pretty""", """{
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100""", """{
     "_scroll_id": "my_scrollid",
     "hits":
     {
@@ -615,7 +615,7 @@ def ogr_elasticsearch_4():
         }]
     }
 }""")
-    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/_search/scroll?scroll=1m&size=100&scroll_id=my_scrollid&pretty""", "{}")
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/_search/scroll?scroll=1m&size=100&scroll_id=my_scrollid""", "{}")
     gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/_search/scroll?scroll_id=my_scrollid&CUSTOMREQUEST=DELETE""", '{}')
 
     ds = ogr.Open('ES:/vsimem/fakeelasticsearch')
@@ -626,7 +626,7 @@ def ogr_elasticsearch_4():
         print(lyr.GetLayerDefn().GetFieldCount())
         return 'fail'
 
-    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100&pretty""", """{
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100""", """{
     "_scroll_id": "my_scrollid",
     "hits":
     {
@@ -700,7 +700,7 @@ def ogr_elasticsearch_4():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/_search/scroll?scroll=1m&size=100&scroll_id=my_scrollid&pretty""", """{
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/_search/scroll?scroll=1m&size=100&scroll_id=my_scrollid""", """{
     "hits":
     {
         "hits":[
@@ -721,7 +721,7 @@ def ogr_elasticsearch_4():
         return 'fail'
 
 
-    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/_search/scroll?scroll=1m&size=100&scroll_id=my_scrollid&pretty""", """{
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/_search/scroll?scroll=1m&size=100&scroll_id=my_scrollid""", """{
     "hits":
     {
         "hits":[]
@@ -738,7 +738,7 @@ def ogr_elasticsearch_4():
 
     lyr.SetSpatialFilterRect(1,48,3,50)
     lyr.ResetReading()
-    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100&pretty&POSTFIELDS={ "query": { "filtered" : { "query" : { "match_all" : {} }, "filter": { "geo_shape": { "a_geoshape": { "shape": { "type": "envelope", "coordinates": [ [ 1.000000, 50.000000 ], [ 3.000000, 48.000000 ] ] } } } } } } }""", """{
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100&POSTFIELDS={ "query": { "filtered" : { "query" : { "match_all" : {} }, "filter": { "geo_shape": { "a_geoshape": { "shape": { "type": "envelope", "coordinates": [ [ 1.000000, 50.000000 ], [ 3.000000, 48.000000 ] ] } } } } } } }""", """{
     "hits":
     {
         "hits":[
@@ -760,7 +760,7 @@ def ogr_elasticsearch_4():
 
     lyr.SetSpatialFilterRect(1,1,48,3,50)
     lyr.ResetReading()
-    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100&pretty&POSTFIELDS={ "query": { "filtered" : { "query" : { "match_all" : {} }, "filter": { "geo_bounding_box": { "a_geopoint.coordinates": { "top_left": { "lat": 50.000000, "lon": 1.000000 }, "bottom_right": { "lat": 48.000000, "lon": 3.000000 } } } } } } }""", """{
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100&POSTFIELDS={ "query": { "filtered" : { "query" : { "match_all" : {} }, "filter": { "geo_bounding_box": { "a_geopoint.coordinates": { "top_left": { "lat": 50.000000, "lon": 1.000000 }, "bottom_right": { "lat": 48.000000, "lon": 3.000000 } } } } } } }""", """{
     "hits":
     {
         "hits":[
@@ -799,7 +799,7 @@ def ogr_elasticsearch_4():
 
     lyr.SetAttributeFilter("{ 'FOO' : 'BAR' }")
     lyr.ResetReading()
-    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100&pretty&POSTFIELDS={ 'FOO' : 'BAR' }""", """{
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100&POSTFIELDS={ 'FOO' : 'BAR' }""", """{
     "hits":
     {
         "hits":[
@@ -821,7 +821,7 @@ def ogr_elasticsearch_4():
     lyr.SetAttributeFilter(None)
 
     sql_lyr = ds.ExecuteSQL("{ 'FOO' : 'BAR' }", dialect = 'ES')
-    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/_search?scroll=1m&size=100&pretty&POSTFIELDS={ 'FOO' : 'BAR' }""", """{
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/_search?scroll=1m&size=100&POSTFIELDS={ 'FOO' : 'BAR' }""", """{
     "hits":
     {
         "hits":[
@@ -937,7 +937,7 @@ def ogr_elasticsearch_5():
     ds = gdal.OpenEx("ES:/vsimem/fakeelasticsearch", gdal.OF_UPDATE, open_options = ['BULK_INSERT=NO'])
     lyr = ds.GetLayer(0)
     
-    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/non_geojson/my_mapping/_search?scroll=1m&size=100&pretty""", """{
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/non_geojson/my_mapping/_search?scroll=1m&size=100""", """{
     "hits":
     {
         "hits":[
@@ -1126,7 +1126,7 @@ def ogr_elasticsearch_6():
     ds = gdal.OpenEx("ES:/vsimem/fakeelasticsearch")
     lyr = ds.GetLayer(0)
     
-    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/non_standard_geometries/my_mapping/_search?scroll=1m&size=100&pretty""", """{
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/non_standard_geometries/my_mapping/_search?scroll=1m&size=100""", """{
     "hits":
     {
         "hits":[
