@@ -531,15 +531,24 @@ int VSICryptFileHeader::ReadFromFile(VSIVirtualHandle* fp, const CPLString& osKe
 
         int nMaxKeySize = poEncCipher->MaxKeyLength();
 
-        if( osKey.size() )
+        try
         {
-            int nKeySize = MIN(nMaxKeySize, (int)osKey.size());
-            poEncCipher->SetKey((const byte*)osKey.c_str(), nKeySize);
+            if( osKey.size() )
+            {
+                int nKeySize = MIN(nMaxKeySize, (int)osKey.size());
+                poEncCipher->SetKey((const byte*)osKey.c_str(), nKeySize);
+            }
+            else if( pabyGlobalKey )
+            {
+                int nKeySize = MIN(nMaxKeySize, nGlobalKeySize);
+                poEncCipher->SetKey(pabyGlobalKey, nKeySize);
+            }
         }
-        else if( pabyGlobalKey )
+        catch( const std::exception& e )
         {
-            int nKeySize = MIN(nMaxKeySize, nGlobalKeySize);
-            poEncCipher->SetKey(pabyGlobalKey, nKeySize);
+            CPLError(CE_Failure, CPLE_AppDefined,
+                    "CryptoPP exception: %s", e.what());
+            return FALSE;
         }
 
         std::string osKeyCheckRes = CryptKeyCheck(poEncCipher);
@@ -758,20 +767,29 @@ int VSICryptFileHandle::Init(const CPLString& osKey, int bWriteHeader)
     nBlockSize = poEncCipher->BlockSize();
     int nMaxKeySize = poEncCipher->MaxKeyLength();
     
-    if( osKey.size() )
+    try
     {
-        int nKeySize = MIN(nMaxKeySize, (int)osKey.size());
-        poEncCipher->SetKey((const byte*)osKey.c_str(), nKeySize);
-        poDecCipher->SetKey((const byte*)osKey.c_str(), nKeySize);
+        if( osKey.size() )
+        {
+            int nKeySize = MIN(nMaxKeySize, (int)osKey.size());
+            poEncCipher->SetKey((const byte*)osKey.c_str(), nKeySize);
+            poDecCipher->SetKey((const byte*)osKey.c_str(), nKeySize);
+        }
+        else if( pabyGlobalKey )
+        {
+            int nKeySize = MIN(nMaxKeySize, nGlobalKeySize);
+            poEncCipher->SetKey(pabyGlobalKey, nKeySize);
+            poDecCipher->SetKey(pabyGlobalKey, nKeySize);
+        }
+        else
+            return FALSE;
     }
-    else if( pabyGlobalKey )
+    catch( const std::exception& e )
     {
-        int nKeySize = MIN(nMaxKeySize, nGlobalKeySize);
-        poEncCipher->SetKey(pabyGlobalKey, nKeySize);
-        poDecCipher->SetKey(pabyGlobalKey, nKeySize);
-    }
-    else
+        CPLError(CE_Failure, CPLE_AppDefined,
+                "CryptoPP exception: %s", e.what());
         return FALSE;
+    }
 
     pabyWB = (GByte*)CPLCalloc(1, poHeader->nSectorSize);
 
@@ -863,7 +881,7 @@ int VSICryptFileHandle::DecryptBlock(GByte* pabyData, vsi_l_offset nOffset)
         delete poDec;
         delete poMode;
     }
-    catch( const CryptoPP::Exception& e )
+    catch( const std::exception& e )
     {
         delete poDec;
         delete poMode;
@@ -1473,11 +1491,12 @@ VSIVirtualHandle *VSICryptFilesystemHandler::Open( const char *pszFilename,
             CPLFree(pszB64);
         }
 
-        if( (int)osKey.size() < nMinKeySize )
+        int nKeyLength = ( osKey.size() ) ? (int)osKey.size() : nGlobalKeySize;
+        if( nKeyLength < nMinKeySize )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Key is too short: %d bytes. Should be at least %d bytes",
-                     (int)osKey.size(), nMinKeySize);
+                     nKeyLength, nMinKeySize);
             memset((void*)osKey.c_str(), 0, osKey.size());
             return NULL;
         }
@@ -1530,12 +1549,12 @@ VSIVirtualHandle *VSICryptFilesystemHandler::Open( const char *pszFilename,
                                                                VSICRYPT_READ | VSICRYPT_WRITE );
         if( !poHandle->Init(osKey) )
         {
-            memset((void*)osKey.c_str(), 0, osKey.size());
             delete poHandle;
             poHandle = NULL;
         }
         memset((void*)osKey.c_str(), 0, osKey.size());
-        poHandle->Seek(0, SEEK_END);
+        if( poHandle != NULL )
+            poHandle->Seek(0, SEEK_END);
         return poHandle;
     }
 

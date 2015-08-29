@@ -159,6 +159,14 @@ def vsicrypt_2():
             if fp is not None:
                 gdal.VSIFCloseL(fp)
 
+
+    gdal.SetConfigOption('VSICRYPT_IV', 'TOO_SHORT')
+    with gdaltest.error_handler():
+        fp = gdal.VSIFOpenL('/vsicrypt/key=DONT_USE_IN_PROD,file=/vsimem/file.bin', 'wb')
+    gdal.SetConfigOption('VSICRYPT_IV', None)
+    if fp is not None:
+        gdal.VSIFCloseL(fp)
+
     # Inconsistant initial vector
     header = struct.pack('B' * 38,
                        86, 83, 73, 67, 82, 89, 80, 84, # signature
@@ -225,6 +233,12 @@ def vsicrypt_2():
         gdaltest.post_reason('fail')
         return 'fail'
 
+    with gdaltest.error_handler():
+        fp = gdal.VSIFOpenL('/vsicrypt/key=short_key,file=/vsimem/file.bin', 'ab')
+    if fp is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
     # Test reading with wrong key with add_key_check
     fp = gdal.VSIFOpenL('/vsicrypt/key=DONT_USE_IN_PROD,add_key_check=yes,file=/vsimem/file.bin', 'wb')
     gdal.VSIFWriteL('hello', 1, 5, fp)
@@ -232,6 +246,18 @@ def vsicrypt_2():
     
     with gdaltest.error_handler():
         fp = gdal.VSIFOpenL('/vsicrypt/key=dont_use_in_prod,file=/vsimem/file.bin', 'rb')
+    if fp is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    with gdaltest.error_handler():
+        fp = gdal.VSIFOpenL('/vsicrypt/key=short_key,file=/vsimem/file.bin', 'ab')
+    if fp is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    with gdaltest.error_handler():
+        fp = gdal.VSIFOpenL('/vsicrypt/key=dont_use_in_prod,file=/vsimem/file.bin', 'ab')
     if fp is not None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -287,7 +313,7 @@ def vsicrypt_3():
         gdal.VSIFWriteL('hello', 1, 5, fp)
         gdal.VSIFCloseL(fp)
 
-        fp = gdal.VSIFOpenL('/vsicrypt/key=DONT_USE_IN_PRODDONT_USE_IN_PROD,file=/vsimem/file.bin', 'rb')
+        fp = gdal.VSIFOpenL('/vsicrypt/key=DONT_USE_IN_PRODDONT_USE_IN_PROD,file=/vsimem/file.bin', 'r')
         content = gdal.VSIFReadL(1, 5, fp).decode('latin1')
         gdal.VSIFCloseL(fp)
 
@@ -320,7 +346,7 @@ def vsicrypt_3():
 
     # Do NOT set VSICRYPT_CRYPTO_RANDOM=NO in production. This is just to speed up tests !
     gdal.SetConfigOption("VSICRYPT_CRYPTO_RANDOM", "NO")
-    fp = gdal.VSIFOpenL('/vsicrypt/key=GENERATE_IT,%s,file=/vsimem/file.bin', 'wb')
+    fp = gdal.VSIFOpenL('/vsicrypt/key=GENERATE_IT,%s,add_key_check=yes,file=/vsimem/file.bin', 'wb')
     gdal.SetConfigOption("VSICRYPT_CRYPTO_RANDOM", None)
 
     # Get the generated random key
@@ -352,7 +378,31 @@ def vsicrypt_3():
         print(options)
         return 'fail'
 
-    gdal.Unlink('/vsimem/file.bin')
+    with gdaltest.error_handler():
+        statRes = gdal.VSIStatL('/vsicrypt//vsimem/file.bin')
+    if statRes is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ret = gdal.Rename('/vsicrypt//vsimem/file.bin' , '/vsicrypt//vsimem/subdir_crypt/file.bin')
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        print(ret)
+        return 'fail'
+
+    ret = gdal.Rename('/vsicrypt//vsimem/subdir_crypt/file.bin' , '/vsimem/subdir_crypt/file2.bin')
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        print(ret)
+        return 'fail'
+
+    dir_content = gdal.ReadDir('/vsicrypt//vsimem/subdir_crypt')
+    if dir_content != ['file2.bin']:
+        gdaltest.post_reason('fail')
+        print(dir_content)
+        return 'fail'
+
+    gdal.Unlink('/vsimem/subdir_crypt/file2.bin')
 
     return 'success'
 
@@ -488,11 +538,93 @@ def vsicrypt_5():
     
     return 'success'
 
+###############################################################################
+# Test VSISetCryptKey
+
+def vsicrypt_6():
+
+    try:
+        import ctypes
+    except:
+        return 'skip'
+    import testnonboundtoswig
+
+    testnonboundtoswig.testnonboundtoswig_init()
+
+    if testnonboundtoswig.gdal_handle is None:
+        return 'skip'
+
+    testnonboundtoswig.gdal_handle.VSISetCryptKey.argtypes = [ ctypes.c_char_p, ctypes.c_int]
+    testnonboundtoswig.gdal_handle.VSISetCryptKey.restype = None
+
+    # Set a valid key
+    testnonboundtoswig.gdal_handle.VSISetCryptKey('DONT_USE_IN_PROD', 16)
+    
+    if not gdaltest.has_vsicrypt:
+        return 'skip'
+        
+    fp = gdal.VSIFOpenL('/vsicrypt/add_key_check=yes,file=/vsimem/file.bin', 'wb+')
+    if fp is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.VSIFWriteL('hello', 1, 5, fp)
+    gdal.VSIFCloseL(fp)
+        
+    fp = gdal.VSIFOpenL('/vsicrypt//vsimem/file.bin', 'rb')
+    content = gdal.VSIFReadL(1, 5, fp).decode('latin1')
+    gdal.VSIFCloseL(fp)
+
+    if content != 'hello':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    fp = gdal.VSIFOpenL('/vsicrypt//vsimem/file.bin', 'wb+')
+    if fp is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.VSIFWriteL('hello', 1, 5, fp)
+    gdal.VSIFCloseL(fp)
+    
+    fp = gdal.VSIFOpenL('/vsicrypt//vsimem/file.bin', 'rb')
+    content = gdal.VSIFReadL(1, 5, fp).decode('latin1')
+    gdal.VSIFCloseL(fp)
+
+    if content != 'hello':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Set a too short key
+    testnonboundtoswig.gdal_handle.VSISetCryptKey('bbc', 3)
+    with gdaltest.error_handler():
+        fp = gdal.VSIFOpenL('/vsicrypt//vsimem/file.bin', 'rb')
+    if fp is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+        
+    with gdaltest.error_handler():
+        fp = gdal.VSIFOpenL('/vsicrypt//vsimem/file.bin', 'wb+')
+    if fp is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Erase key
+    testnonboundtoswig.gdal_handle.VSISetCryptKey(None, 0)
+    with gdaltest.error_handler():
+        fp = gdal.VSIFOpenL('/vsicrypt//vsimem/file.bin', 'wb+')
+    if fp is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    
+    gdal.Unlink('/vsimem/file.bin')
+
+    return 'success'
+
 gdaltest_list = [ vsicrypt_1,
                   vsicrypt_2,
                   vsicrypt_3,
                   vsicrypt_4,
-                  vsicrypt_5 ]
+                  vsicrypt_5,
+                  vsicrypt_6 ]
 
 if __name__ == '__main__':
 
