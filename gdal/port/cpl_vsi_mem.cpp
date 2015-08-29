@@ -343,7 +343,8 @@ size_t VSIMemHandle::Read( void * pBuffer, size_t nSize, size_t nCount )
         bEOF = TRUE;
     }
 
-    memcpy( pBuffer, poFile->pabyData + nOffset, (size_t)nBytesToRead );
+    if( nBytesToRead )
+        memcpy( pBuffer, poFile->pabyData + nOffset, (size_t)nBytesToRead );
     nOffset += nBytesToRead;
 
     return nCount;
@@ -379,7 +380,8 @@ size_t VSIMemHandle::Write( const void * pBuffer, size_t nSize, size_t nCount )
             return 0;
     }
 
-    memcpy( poFile->pabyData + nOffset, pBuffer, nBytesToWrite );
+    if( nBytesToWrite )
+        memcpy( poFile->pabyData + nOffset, pBuffer, nBytesToWrite );
     nOffset += nBytesToWrite;
 
     time(&poFile->mTime);

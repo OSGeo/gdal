@@ -490,7 +490,6 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom,
              || hSHP->nShapeType == SHPT_POINTZ )
     {
         SHPObject       *psShape;
-        OGRPoint        *poPoint = (OGRPoint *) poGeom;
         double          dfX, dfY, dfZ = 0;
 
         if( poGeom->getGeometryType() != wkbPoint
@@ -504,6 +503,7 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom,
             return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
         }
 
+        OGRPoint        *poPoint = (OGRPoint *) poGeom;
         dfX = poPoint->getX();
         dfY = poPoint->getY();
         dfZ = poPoint->getZ();
@@ -522,7 +522,6 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom,
              || hSHP->nShapeType == SHPT_MULTIPOINTM
              || hSHP->nShapeType == SHPT_MULTIPOINTZ )
     {
-        OGRMultiPoint   *poMP = (OGRMultiPoint *) poGeom;
         double          *padfX, *padfY, *padfZ;
         int             iPoint;
         SHPObject       *psShape;
@@ -537,6 +536,7 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom,
             return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
         }
 
+        OGRMultiPoint   *poMP = (OGRMultiPoint *) poGeom;
         padfX = (double *) CPLMalloc(sizeof(double)*poMP->getNumGeometries());
         padfY = (double *) CPLMalloc(sizeof(double)*poMP->getNumGeometries());
         padfZ = (double *) CPLCalloc(sizeof(double),poMP->getNumGeometries());
@@ -615,19 +615,18 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom,
              || hSHP->nShapeType == SHPT_ARCM
              || hSHP->nShapeType == SHPT_ARCZ )
     {
-        OGRMultiLineString *poML;
+        OGRGeometry     *poForcedGeom;
         double          *padfX=NULL, *padfY=NULL, *padfZ=NULL;
         int             iGeom, iPoint, nPointCount = 0;
         SHPObject       *psShape;
         int             *panRingStart;
         int             nParts = 0;
 
-        poML = (OGRMultiLineString *) 
-            OGRGeometryFactory::forceToMultiLineString( poGeom->clone() );
+        poForcedGeom = OGRGeometryFactory::forceToMultiLineString( poGeom->clone() );
 
-        if( wkbFlatten(poML->getGeometryType()) != wkbMultiLineString )
+        if( wkbFlatten(poForcedGeom->getGeometryType()) != wkbMultiLineString )
         {
-            delete poML;
+            delete poForcedGeom;
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Attempt to write non-linestring (%s) geometry to "
                       "ARC type shapefile.",
@@ -635,6 +634,7 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom,
 
             return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
         }
+        OGRMultiLineString *poML = (OGRMultiLineString *)poForcedGeom;
 
         panRingStart = (int *) 
             CPLMalloc(sizeof(int) * poML->getNumGeometries());
@@ -747,18 +747,19 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom,
             nRings = 0;
             for( iGeom=0; iGeom < poGC->getNumGeometries(); iGeom++ )
             {
-                poPoly =  (OGRPolygon *) poGC->getGeometryRef( iGeom );
+                OGRGeometry* poSubGeom = poGC->getGeometryRef( iGeom );
 
-                if( wkbFlatten(poPoly->getGeometryType()) != wkbPolygon )
+                if( wkbFlatten(poSubGeom->getGeometryType()) != wkbPolygon )
                 {
                     CPLFree( papoRings );
                     CPLError( CE_Failure, CPLE_AppDefined,
                               "Attempt to write non-polygon (%s) geometry to "
                               "POLYGON type shapefile.",
-                              poGeom->getGeometryName());
+                              poSubGeom->getGeometryName());
 
                     return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
                 }
+                OGRPolygon* poPoly =  (OGRPolygon *) poSubGeom;
 
                 /* Ignore POLYGON EMPTY */
                 if( poPoly->getExteriorRing() == NULL ||

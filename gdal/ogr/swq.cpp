@@ -362,8 +362,11 @@ swq_select_summarize( swq_select *select_info,
             
             summary->distinct_list = (char **) 
                 CPLMalloc(sizeof(char *) * (size_t)(summary->count+1));
-            memcpy( summary->distinct_list, old_list, 
-                    sizeof(char *) * (size_t)summary->count );
+            if( summary->count )
+            {
+                memcpy( summary->distinct_list, old_list, 
+                        sizeof(char *) * (size_t)summary->count );
+            }
             summary->distinct_list[(summary->count)++] = 
                 (value != NULL) ? CPLStrdup( value ) : NULL;
 

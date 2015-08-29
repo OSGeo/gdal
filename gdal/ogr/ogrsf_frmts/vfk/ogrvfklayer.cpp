@@ -158,7 +158,7 @@ GIntBig OGRVFKLayer::GetFeatureCount(CPL_UNUSED int bForce)
 */
 OGRFeature *OGRVFKLayer::GetNextFeature()
 {
-    VFKFeature  *poVFKFeature;
+    IVFKFeature  *poVFKFeature;
     
     OGRFeature  *poOGRFeature;
     OGRGeometry *poOGRGeom;
@@ -176,7 +176,7 @@ OGRFeature *OGRVFKLayer::GetNextFeature()
             poOGRGeom = NULL;
         }
         
-        poVFKFeature = (VFKFeature *) poDataBlock->GetNextFeature();
+        poVFKFeature = (IVFKFeature *) poDataBlock->GetNextFeature();
         if (!poVFKFeature)
             return NULL;        
         

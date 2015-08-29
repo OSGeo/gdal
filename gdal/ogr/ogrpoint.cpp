@@ -565,9 +565,7 @@ void OGRPoint::getEnvelope( OGREnvelope3D * psEnvelope ) const
 OGRBoolean OGRPoint::Equals( OGRGeometry * poOther ) const
 
 {
-    OGRPoint    *poOPoint = (OGRPoint *) poOther;
-    
-    if( poOPoint== this )
+    if( poOther== this )
         return TRUE;
     
     if( poOther->getGeometryType() != getGeometryType() )
@@ -578,6 +576,7 @@ OGRBoolean OGRPoint::Equals( OGRGeometry * poOther ) const
 
     // we should eventually test the SRS.
     
+    OGRPoint    *poOPoint = (OGRPoint *) poOther;
     if( poOPoint->getX() != getX()
         || poOPoint->getY() != getY()
         || poOPoint->getZ() != getZ() )

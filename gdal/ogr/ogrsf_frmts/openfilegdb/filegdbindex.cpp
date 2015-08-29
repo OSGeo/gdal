@@ -1054,6 +1054,7 @@ int FileGDBIndexIterator::FindPages(int iLevel, int nPage)
                 for(int j=0;j<nStrLen;j++)
                     CPL_LSBPTR16(&asMax[j]);
 #else
+                // FIXME: unaligned deferencing. might cause issues on some platforms
                 pasMax = (GUInt16*)(abyPage[iLevel] + nOffsetFirstValInPage +
                                                 nStrLen * sizeof(GUInt16) * i);
 #endif

@@ -1923,9 +1923,9 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
                                 && (EQUAL(BareGMLElement(psChild2->pszValue),"interior")))
                             {
                                 const CPLXMLNode* psInteriorChild = GetChildElement(psChild2);
-                                OGRLinearRing* poRing;
+                                OGRGeometry* poRing;
                                 if (psInteriorChild != NULL)
-                                    poRing = (OGRLinearRing *) 
+                                    poRing =
                                         GML2OGRGeometry_XMLNode_Internal(
                                             psInteriorChild, bGetSecondaryGeometryOption,
                                             nRecLevel + 1, nSRSDimension, pszSRSName );
@@ -1949,7 +1949,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
 
                                 bReconstructTopology = TRUE;
                                 OGRPolygon *poPolygon = new OGRPolygon();
-                                poPolygon->addRingDirectly( poRing );
+                                poPolygon->addRingDirectly( (OGRLinearRing*)poRing );
                                 poMS->addGeometryDirectly( poPolygon );
                             }
                         }
@@ -2054,26 +2054,26 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
                 && EQUAL(BareGMLElement(psChild->pszValue),"pointMember") )
             {
                 const CPLXMLNode* psPointChild = GetChildElement(psChild);
-                OGRPoint *poPoint;
+                OGRGeometry *poPointMember;
 
                 if (psPointChild != NULL)
                 {
-                    poPoint = (OGRPoint *) 
+                    poPointMember =
                         GML2OGRGeometry_XMLNode_Internal( psPointChild,
                               bGetSecondaryGeometryOption,
                               nRecLevel + 1, nSRSDimension, pszSRSName );
-                    if( poPoint == NULL 
-                        || wkbFlatten(poPoint->getGeometryType()) != wkbPoint )
+                    if( poPointMember == NULL 
+                        || wkbFlatten(poPointMember->getGeometryType()) != wkbPoint )
                     {
                         CPLError( CE_Failure, CPLE_AppDefined, 
                                 "MultiPoint: Got %.500s geometry as pointMember instead of POINT",
-                                poPoint ? poPoint->getGeometryName() : "NULL" );
-                        delete poPoint;
+                                poPointMember ? poPointMember->getGeometryName() : "NULL" );
+                        delete poPointMember;
                         delete poMP;
                         return NULL;
                     }
 
-                    poMP->addGeometryDirectly( poPoint );
+                    poMP->addGeometryDirectly( poPointMember );
                 }
             }
             else if (psChild->eType == CXT_Element
@@ -2614,19 +2614,19 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
             return NULL;
         }
 
-        poLineString = (OGRLineString *)GML2OGRGeometry_XMLNode_Internal(
+        OGRGeometry* poLineStringBeforeCast = GML2OGRGeometry_XMLNode_Internal(
             psCurve, bGetSecondaryGeometryOption,
             nRecLevel + 1, nSRSDimension, pszSRSName, TRUE );
-        if( poLineString == NULL 
-            || wkbFlatten(poLineString->getGeometryType()) != wkbLineString )
+        if( poLineStringBeforeCast == NULL 
+            || wkbFlatten(poLineStringBeforeCast->getGeometryType()) != wkbLineString )
         {
             CPLError( CE_Failure, CPLE_AppDefined, 
                       "Got %.500s geometry as Member instead of LINESTRING.",
-                      poLineString ? poLineString->getGeometryName() : "NULL" );
-            if( poLineString != NULL )
-                delete poLineString;
+                      poLineStringBeforeCast ? poLineStringBeforeCast->getGeometryName() : "NULL" );
+            delete poLineStringBeforeCast;
             return NULL;
         }
+        poLineString = (OGRLineString *)poLineStringBeforeCast;
 
         if( bGetSecondaryGeometry )
         {
@@ -3178,7 +3178,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
             if( psChild->eType == CXT_Element
                 && EQUAL(BareGMLElement(psChild->pszValue),"Triangle") )
             {
-                OGRPolygon *poPolygon = (OGRPolygon *)
+                OGRGeometry *poPolygon =
                     GML2OGRGeometry_XMLNode_Internal(
                         psChild, bGetSecondaryGeometryOption,
                         nRecLevel + 1, nSRSDimension, pszSRSName );

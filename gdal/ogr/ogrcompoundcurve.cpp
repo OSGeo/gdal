@@ -368,14 +368,13 @@ OGRLineString* OGRCompoundCurve::CurveToLine(double dfMaxAngleStepSizeDegrees,
 
 OGRBoolean  OGRCompoundCurve::Equals( OGRGeometry *poOther ) const
 {
-    OGRCompoundCurve *poOCC = (OGRCompoundCurve *) poOther;
-
-    if( poOCC == this )
+    if( poOther == this )
         return TRUE;
     
     if( poOther->getGeometryType() != getGeometryType() )
         return FALSE;
     
+    OGRCompoundCurve *poOCC = (OGRCompoundCurve *) poOther;
     return oCC.Equals(&(poOCC->oCC));
 }
 
