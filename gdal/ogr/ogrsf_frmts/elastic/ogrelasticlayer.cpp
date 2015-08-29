@@ -2385,30 +2385,30 @@ OGRErr OGRElasticLayer::GetExtent(int iGeomField, OGREnvelope *psExtent, int bFo
     if( !m_abIsGeoPoint[iGeomField] )
         return OGRLayer::GetExtentInternal(iGeomField, psExtent, bForce);
 
-    while(TRUE) // dummy loop. Just to have a fail over code path
+    json_object* poResponse;
+    CPLString osFilter = CPLSPrintf("{ \"aggs\" : { \"bbox\" : { \"geo_bounds\" : { \"field\" : \"%s\" } } } }",
+                                    BuildPathFromArray(m_aaosGeomFieldPaths[iGeomField]).c_str() );
+    poResponse = m_poDS->RunRequest(
+        CPLSPrintf("%s/%s/%s/_search?search_type=count&pretty",
+                    m_poDS->GetURL(), m_osIndexName.c_str(), m_osMappingName.c_str()),
+        osFilter.c_str());
+
+    json_object* poBounds = json_ex_get_object_by_path(poResponse, "aggregations.bbox.bounds");
+    json_object* poTopLeft = json_ex_get_object_by_path(poBounds, "top_left");
+    json_object* poBottomRight = json_ex_get_object_by_path(poBounds, "bottom_right");
+    json_object* poTopLeftLon = json_ex_get_object_by_path(poTopLeft, "lon");
+    json_object* poTopLeftLat = json_ex_get_object_by_path(poTopLeft, "lat");
+    json_object* poBottomRightLon = json_ex_get_object_by_path(poBottomRight, "lon");
+    json_object* poBottomRightLat = json_ex_get_object_by_path(poBottomRight, "lat");
+    
+    OGRErr eErr;
+    if( poTopLeftLon == NULL || poTopLeftLat == NULL ||
+        poBottomRightLon == NULL || poBottomRightLat == NULL )
     {
-        json_object* poResponse;
-        CPLString osFilter = CPLSPrintf("{ \"aggs\" : { \"bbox\" : { \"geo_bounds\" : { \"field\" : \"%s\" } } } }",
-                                        BuildPathFromArray(m_aaosGeomFieldPaths[iGeomField]).c_str() );
-        poResponse = m_poDS->RunRequest(
-            CPLSPrintf("%s/%s/%s/_search?search_type=count&pretty",
-                       m_poDS->GetURL(), m_osIndexName.c_str(), m_osMappingName.c_str()),
-            osFilter.c_str());
-
-        json_object* poBounds = json_ex_get_object_by_path(poResponse, "aggregations.bbox.bounds");
-        json_object* poTopLeft = json_ex_get_object_by_path(poBounds, "top_left");
-        json_object* poBottomRight = json_ex_get_object_by_path(poBounds, "bottom_right");
-        json_object* poTopLeftLon = json_ex_get_object_by_path(poTopLeft, "lon");
-        json_object* poTopLeftLat = json_ex_get_object_by_path(poTopLeft, "lat");
-        json_object* poBottomRightLon = json_ex_get_object_by_path(poBottomRight, "lon");
-        json_object* poBottomRightLat = json_ex_get_object_by_path(poBottomRight, "lat");
-        if( poTopLeftLon == NULL || poTopLeftLat == NULL ||
-            poBottomRightLon == NULL || poBottomRightLat == NULL )
-        {
-            json_object_put(poResponse);
-            break;
-        }
-
+        eErr = OGRLayer::GetExtentInternal(iGeomField, psExtent, bForce);
+    }
+    else
+    {
         double dfMinX = json_object_get_double( poTopLeftLon );
         double dfMaxY = json_object_get_double( poTopLeftLat );
         double dfMaxX = json_object_get_double( poBottomRightLon );
@@ -2419,8 +2419,9 @@ OGRErr OGRElasticLayer::GetExtent(int iGeomField, OGREnvelope *psExtent, int bFo
         psExtent->MaxX = dfMaxX;
         psExtent->MinY = dfMinY;
 
-        return OGRERR_NONE;
+        eErr = OGRERR_NONE;
     }
+    json_object_put(poResponse);
 
-    return OGRLayer::GetExtentInternal(iGeomField, psExtent, bForce);
+    return eErr;
 }
