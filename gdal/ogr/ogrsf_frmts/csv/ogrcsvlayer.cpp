@@ -445,7 +445,6 @@ void OGRCSVLayer::BuildFeatureDefn( const char* pszNfdcGeomField,
             CPLAtof(papszTokens[4]) >= -90 && CPLAtof(papszTokens[4]) <= 90 &&
             CPLAtof(papszTokens[5]) >= -180 && CPLAtof(papszTokens[4]) <= 180)
         {
-            bHasFieldNames = TRUE;
             CSLDestroy(papszTokens);
             papszTokens = NULL;
 
@@ -486,6 +485,8 @@ void OGRCSVLayer::BuildFeatureDefn( const char* pszNfdcGeomField,
             iLongitudeField = 5;
 
             nFieldCount = 0;
+
+            bDontHonourStrings = TRUE;
         }
     }
 
