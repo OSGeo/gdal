@@ -418,17 +418,21 @@ int OGRCSVDataSource::OpenTable( const char * pszFilename,
         }
         else
         {
-            // Read the first 2 lines to see if they have the same number of fields, if using tabulation
-            VSIRewindL( fp );
-            char** papszTokens = OGRCSVReadParseLineL( fp, '\t', FALSE );
-            int nTokens1 = CSLCount(papszTokens);
-            CSLDestroy(papszTokens);
-            papszTokens = OGRCSVReadParseLineL( fp, '\t', FALSE );
-            int nTokens2 = CSLCount(papszTokens);
-            CSLDestroy(papszTokens);
-            if( nTokens1 >= 2 && nTokens1 == nTokens2 )
+            for(int bDontHonourStrings=0; bDontHonourStrings<=1; bDontHonourStrings++)
             {
-                chDelimiter = '\t';
+                // Read the first 2 lines to see if they have the same number of fields, if using tabulation
+                VSIRewindL( fp );
+                char** papszTokens = OGRCSVReadParseLineL( fp, '\t', bDontHonourStrings );
+                int nTokens1 = CSLCount(papszTokens);
+                CSLDestroy(papszTokens);
+                papszTokens = OGRCSVReadParseLineL( fp, '\t', bDontHonourStrings );
+                int nTokens2 = CSLCount(papszTokens);
+                CSLDestroy(papszTokens);
+                if( nTokens1 >= 2 && nTokens1 == nTokens2 )
+                {
+                    chDelimiter = '\t';
+                    break;
+                }
             }
         }
     }
