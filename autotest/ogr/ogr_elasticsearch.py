@@ -858,6 +858,65 @@ def ogr_elasticsearch_4():
         f.DumpReadable()
         return 'fail'
     ds.ReleaseResultSet(sql_lyr)
+    
+    # Invalid index
+    with gdaltest.error_handler():
+        bbox = lyr.GetExtent(geom_field = -1)
+
+    # geo_shape
+    bbox = lyr.GetExtent(geom_field = 0)
+
+    # Invalid index
+    with gdaltest.error_handler():
+        bbox = lyr.GetExtent(geom_field = 2)
+
+    # No response
+    with gdaltest.error_handler():
+        bbox = lyr.GetExtent(geom_field = 1)
+
+    # Invalid response
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?search_type=count&pretty&POSTFIELDS={ "aggs" : { "bbox" : { "geo_bounds" : { "field" : "a_geopoint.coordinates" } } } }""",
+"""{
+  "aggregations" : {
+    "bbox" : {
+      "bounds" : {
+        "top_left" : {
+
+        },
+        "bottom_right" : {
+
+        }
+      }
+    }
+  }
+}""")
+    
+    with gdaltest.error_handler():
+        bbox = lyr.GetExtent(geom_field = 1)
+
+    # Valid response
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?search_type=count&pretty&POSTFIELDS={ "aggs" : { "bbox" : { "geo_bounds" : { "field" : "a_geopoint.coordinates" } } } }""",
+"""{
+  "aggregations" : {
+    "bbox" : {
+      "bounds" : {
+        "top_left" : {
+          "lat" : 10,
+          "lon" : 1
+        },
+        "bottom_right" : {
+          "lat" : 9,
+          "lon" : 2
+        }
+      }
+    }
+  }
+}""")
+    bbox = lyr.GetExtent(geom_field = 1)
+    if bbox != (1.0, 2.0, 9.0, 10.0):
+        gdaltest.post_reason('fail')
+        print(bbox)
+        return 'fail'
 
     return 'success'
 

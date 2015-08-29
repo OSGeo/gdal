@@ -152,7 +152,10 @@ public:
     virtual void        SetSpatialFilter( OGRGeometry *poGeom ) { SetSpatialFilter(0, poGeom); }
     virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom );
     virtual OGRErr      SetAttributeFilter(const char* pszFilter);
-    
+
+    virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE) { return GetExtent(0, psExtent, bForce); }
+    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce = TRUE);
+
     virtual OGRErr      SyncToDisk();
     
     void                FinalizeFeatureDefn(int bReadFeatures = TRUE);

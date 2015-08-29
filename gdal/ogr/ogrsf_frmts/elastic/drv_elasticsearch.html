@@ -167,6 +167,13 @@ Aggregations are not supported.<p>
 
 Standard SQL requests will be executed on client-side.<p>
 
+<h2>Getting metadata</h2>
+
+Getting feature count is efficent.<p>
+
+Getting extent is efficient, only on geometry columns mapped to ElasticSearch type geo_point.
+On geo_shape fields, feature retrieval of the whole layer is done, which might be slow.<p>
+
 <h2>Write support</h2>
 
 Index/type creation and deletion is possible.<p>
