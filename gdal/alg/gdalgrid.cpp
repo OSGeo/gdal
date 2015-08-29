@@ -2657,3 +2657,158 @@ CPLErr ParseAlgorithmAndOptions( const char *pszAlgorithm,
     CSLDestroy( papszParms );
     return CE_None;
 }
+
+#ifdef HAVE_SSE_AT_COMPILE_TIME
+
+/************************************************************************/
+/*                          CPLHaveRuntimeSSE()                         */
+/************************************************************************/
+
+#define CPUID_SSE_EDX_BIT     25
+
+#if (defined(_M_X64) || defined(__x86_64))
+
+int CPLHaveRuntimeSSE()
+{
+    return TRUE;
+}
+
+#elif defined(__GNUC__) && defined(__i386__)
+
+int CPLHaveRuntimeSSE()
+{
+    int cpuinfo[4] = {0,0,0,0};
+    GCC_CPUID(1, cpuinfo[0], cpuinfo[1], cpuinfo[2], cpuinfo[3]);
+    return (cpuinfo[3] & (1 << CPUID_SSE_EDX_BIT)) != 0;
+}
+
+#elif defined(_MSC_VER) && defined(_M_IX86)
+
+#if _MSC_VER <= 1310
+static void inline __cpuid(int cpuinfo[4], int level)
+{
+    __asm 
+    {
+        push   ebx
+        push   esi
+
+        mov    esi,cpuinfo
+        mov    eax,level  
+        cpuid  
+        mov    dword ptr [esi], eax
+        mov    dword ptr [esi+4],ebx  
+        mov    dword ptr [esi+8],ecx  
+        mov    dword ptr [esi+0Ch],edx 
+
+        pop    esi
+        pop    ebx
+    }
+}
+#else
+#include <intrin.h>
+#endif
+
+int CPLHaveRuntimeSSE()
+{
+    int cpuinfo[4] = {0,0,0,0};
+    __cpuid(cpuinfo, 1);
+    return (cpuinfo[3] & (1 << CPUID_SSE_EDX_BIT)) != 0;
+}
+
+#else
+
+int CPLHaveRuntimeSSE()
+{
+    return FALSE;
+}
+#endif
+
+#endif // HAVE_SSE_AT_COMPILE_TIME
+
+#ifdef HAVE_AVX_AT_COMPILE_TIME
+
+/************************************************************************/
+/*                          CPLHaveRuntimeAVX()                         */
+/************************************************************************/
+
+#define CPUID_OSXSAVE_ECX_BIT   27
+#define CPUID_AVX_ECX_BIT       28
+
+#define BIT_XMM_STATE           (1 << 1)
+#define BIT_YMM_STATE           (2 << 1)
+
+#if defined(__GNUC__) && (defined(__i386__) ||defined(__x86_64))
+
+int CPLHaveRuntimeAVX()
+{
+    int cpuinfo[4] = {0,0,0,0};
+    GCC_CPUID(1, cpuinfo[0], cpuinfo[1], cpuinfo[2], cpuinfo[3]);
+
+    /* Check OSXSAVE feature */
+    if( (cpuinfo[2] & (1 << CPUID_OSXSAVE_ECX_BIT)) == 0 )
+    {
+        return FALSE;
+    }
+
+    /* Check AVX feature */
+    if( (cpuinfo[2] & (1 << CPUID_AVX_ECX_BIT)) == 0 )
+    {
+        return FALSE;
+    }
+
+    /* Issue XGETBV and check the XMM and YMM state bit */
+    unsigned int nXCRLow;
+    unsigned int nXCRHigh;
+    __asm__ ("xgetbv" : "=a" (nXCRLow), "=d" (nXCRHigh) : "c" (0));
+    if( (nXCRLow & ( BIT_XMM_STATE | BIT_YMM_STATE )) !=
+                   ( BIT_XMM_STATE | BIT_YMM_STATE ) )
+    {
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+#elif defined(_MSC_FULL_VER) && (_MSC_FULL_VER >= 160040219) && (defined(_M_IX86) || defined(_M_X64))
+// _xgetbv available only in Visual Studio 2010 SP1 or later
+
+#include <intrin.h>
+
+int CPLHaveRuntimeAVX()
+{
+    int cpuinfo[4] = {0,0,0,0};
+    __cpuid(cpuinfo, 1);
+
+    /* Check OSXSAVE feature */
+    if( (cpuinfo[2] & (1 << CPUID_OSXSAVE_ECX_BIT)) == 0 )
+    {
+        return FALSE;
+    }
+
+    /* Check AVX feature */
+    if( (cpuinfo[2] & (1 << CPUID_AVX_ECX_BIT)) == 0 )
+    {
+        return FALSE;
+    }
+
+    /* Issue XGETBV and check the XMM and YMM state bit */
+    unsigned __int64 xcrFeatureMask = _xgetbv(_XCR_XFEATURE_ENABLED_MASK);
+    if( (xcrFeatureMask & ( BIT_XMM_STATE | BIT_YMM_STATE )) !=
+                          ( BIT_XMM_STATE | BIT_YMM_STATE ) )
+    {
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+#else
+
+int CPLHaveRuntimeAVX()
+{
+    return FALSE;
+}
+
+#endif
+
+#endif //  HAVE_AVX_AT_COMPILE_TIME
