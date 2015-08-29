@@ -1,4 +1,4 @@
-/* $Id: tif_jpeg.c,v 1.118 2015-06-10 13:17:41 bfriesen Exp $ */
+/* $Id: tif_jpeg.c,v 1.119 2015-08-15 20:13:07 bfriesen Exp $ */
 
 /*
  * Copyright (c) 1994-1997 Sam Leffler
@@ -252,6 +252,9 @@ TIFFjpeg_create_compress(JPEGState* sp)
 	sp->err.error_exit = TIFFjpeg_error_exit;
 	sp->err.output_message = TIFFjpeg_output_message;
 
+	/* set client_data to avoid UMR warning from tools like Purify */
+	sp->cinfo.c.client_data = NULL;
+
 	return CALLVJPEG(sp, jpeg_create_compress(&sp->cinfo.c));
 }
 
@@ -262,6 +265,9 @@ TIFFjpeg_create_decompress(JPEGState* sp)
 	sp->cinfo.d.err = jpeg_std_error(&sp->err);
 	sp->err.error_exit = TIFFjpeg_error_exit;
 	sp->err.output_message = TIFFjpeg_output_message;
+
+	/* set client_data to avoid UMR warning from tools like Purify */
+	sp->cinfo.d.client_data = NULL;
 
 	return CALLVJPEG(sp, jpeg_create_decompress(&sp->cinfo.d));
 }
@@ -1889,7 +1895,14 @@ JPEGEncode(TIFF* tif, uint8* buf, tmsize_t cc, uint16 s)
         {
             line16_count = (sp->bytesperline * 2) / 3;
             line16 = (short *) _TIFFmalloc(sizeof(short) * line16_count);
-	    // FIXME: undiagnosed malloc failure
+            if (!line16)
+            {
+                TIFFErrorExt(tif->tif_clientdata,
+			     "JPEGEncode",
+                             "Failed to allocate memory");
+
+                return 0;
+            }
         }
             
 	while (nrows-- > 0) {
@@ -2379,8 +2392,17 @@ here hopefully is harmless.
 */
             sp->jpegtables_length = SIZE_OF_JPEGTABLES;
             sp->jpegtables = (void *) _TIFFmalloc(sp->jpegtables_length);
-	    // FIXME: NULL-deref after malloc failure
-	    _TIFFmemset(sp->jpegtables, 0, SIZE_OF_JPEGTABLES);
+            if (sp->jpegtables)
+            {
+                _TIFFmemset(sp->jpegtables, 0, SIZE_OF_JPEGTABLES);
+            }
+            else
+            {
+                TIFFErrorExt(tif->tif_clientdata,
+			     "TIFFInitJPEG",
+                             "Failed to allocate memory for JPEG tables");
+                return 0;
+            }
 #undef SIZE_OF_JPEGTABLES
         }
 
