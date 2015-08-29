@@ -376,7 +376,7 @@ def vrt_read_9():
     return 'success'
 
 ###############################################################################
-# Test GetHistogram()
+# Test GetHistogram() & GetDefaultHistogram()
 
 def vrt_read_10():
 
@@ -389,15 +389,82 @@ def vrt_read_10():
 
     mem_ds = None
     vrt_ds = None
-
-    gdal.GetDriverByName('GTiff').Delete('/vsimem/vrt_read_10.tif')
-    gdal.GetDriverByName('VRT').Delete('/vsimem/vrt_read_10.vrt')
     
+    f = gdal.VSIFOpenL('/vsimem/vrt_read_10.vrt', 'rb')
+    content = gdal.VSIFReadL(1, 10000, f)
+    gdal.VSIFCloseL(f)
+
     if vrt_hist != mem_hist:
+        gdaltest.post_reason('fail')
         print(vrt_hist)
         print(mem_hist)
         return 'fail'
 
+    if content.find('<Histograms>') < 0:
+        gdaltest.post_reason('fail')
+        print(content)
+        return 'fail'
+
+    # Single source optimization
+    for i in range(2):
+        gdal.FileFromMemBuffer('/vsimem/vrt_read_10.vrt',
+    """<VRTDataset rasterXSize="20" rasterYSize="20">
+    <VRTRasterBand dataType="Byte" band="1">
+        <SimpleSource>
+        <SourceFilename relativeToVRT="1">vrt_read_10.tif</SourceFilename>
+        </SimpleSource>
+    </VRTRasterBand>
+    </VRTDataset>""")
+
+        ds = gdal.Open('/vsimem/vrt_read_10.vrt')
+        if i == 0:
+            ds.GetRasterBand(1).GetDefaultHistogram()
+        else:
+            ds.GetRasterBand(1).GetHistogram()
+        ds = None
+        
+        f = gdal.VSIFOpenL('/vsimem/vrt_read_10.vrt', 'rb')
+        content = gdal.VSIFReadL(1, 10000, f)
+        gdal.VSIFCloseL(f)
+
+        if content.find('<Histograms>') < 0:
+            gdaltest.post_reason('fail')
+            print(content)
+            return 'fail'
+
+    # Two sources general case
+    for i in range(2):
+        gdal.FileFromMemBuffer('/vsimem/vrt_read_10.vrt',
+    """<VRTDataset rasterXSize="20" rasterYSize="20">
+    <VRTRasterBand dataType="Byte" band="1">
+        <SimpleSource>
+        <SourceFilename relativeToVRT="1">vrt_read_10.tif</SourceFilename>
+        </SimpleSource>
+        <SimpleSource>
+        <SourceFilename relativeToVRT="1">vrt_read_10.tif</SourceFilename>
+        </SimpleSource>
+    </VRTRasterBand>
+    </VRTDataset>""")
+
+        ds = gdal.Open('/vsimem/vrt_read_10.vrt')
+        if i == 0:
+            ds.GetRasterBand(1).GetDefaultHistogram()
+        else:
+            ds.GetRasterBand(1).GetHistogram()
+        ds = None
+        
+        f = gdal.VSIFOpenL('/vsimem/vrt_read_10.vrt', 'rb')
+        content = gdal.VSIFReadL(1, 10000, f)
+        gdal.VSIFCloseL(f)
+
+        if content.find('<Histograms>') < 0:
+            gdaltest.post_reason('fail')
+            print(content)
+            return 'fail'
+
+    gdal.GetDriverByName('GTiff').Delete('/vsimem/vrt_read_10.tif')
+    gdal.GetDriverByName('VRT').Delete('/vsimem/vrt_read_10.vrt')
+    
     return 'success'
 
 ###############################################################################
