@@ -41,9 +41,9 @@ static CPLString OGRPGDumpEscapeStringList(
                                        OGRPGCommonEscapeStringCbk pfnEscapeString,
                                        void* userdata);
 
-static CPLString OGRPGDumpEscapeStringWithUserData(   void* user_data,
+static CPLString OGRPGDumpEscapeStringWithUserData(   CPL_UNUSED void* user_data,
                                    const char* pszStrValue, int nMaxLength,
-                                   const char* pszLayerName,
+                                   CPL_UNUSED const char* pszLayerName,
                                    const char* pszFieldName)
 {
     return OGRPGDumpEscapeString(pszStrValue, nMaxLength, pszFieldName);

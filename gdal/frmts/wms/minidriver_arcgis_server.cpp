@@ -176,7 +176,7 @@ void GDALWMSMiniDriver_AGS::ImageRequest(CPLString *url, const GDALWMSImageReque
 
 void GDALWMSMiniDriver_AGS::TiledImageRequest(CPLString *url, 
                                       const GDALWMSImageRequestInfo &iri, 
-                                      const GDALWMSTiledImageRequestInfo &tiri) 
+                                      CPL_UNUSED const GDALWMSTiledImageRequestInfo &tiri) 
 {
 	ImageRequest(url, iri);
 }
@@ -184,7 +184,7 @@ void GDALWMSMiniDriver_AGS::TiledImageRequest(CPLString *url,
 
 void GDALWMSMiniDriver_AGS::GetTiledImageInfo(CPLString *url,
                                               const GDALWMSImageRequestInfo &iri,
-                                              const GDALWMSTiledImageRequestInfo &tiri,
+                                              CPL_UNUSED const GDALWMSTiledImageRequestInfo &tiri,
                                               int nXInBlock,
                                               int nYInBlock)
 {

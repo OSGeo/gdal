@@ -2013,7 +2013,7 @@ static int FloorPowerOfTwo(int nVal)
 
 GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
                                            GDALDataset *poSrcDS, 
-                                           int bStrict, char ** papszOptions, 
+                                           CPL_UNUSED int bStrict, char ** papszOptions, 
                                            GDALProgressFunc pfnProgress,
                                            void * pProgressData )
 

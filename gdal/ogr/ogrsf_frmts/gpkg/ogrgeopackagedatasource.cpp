@@ -1967,7 +1967,7 @@ char **GDALGeoPackageDataset::GetMetadata( const char *pszDomain )
 /*                            WriteMetadata()                           */
 /************************************************************************/
 
-void GDALGeoPackageDataset::WriteMetadata(CPLXMLNode* psXMLNode, /* will be destroyed by the method /*/
+void GDALGeoPackageDataset::WriteMetadata(CPLXMLNode* psXMLNode, /* will be destroyed by the method */
                                           const char* pszTableName)
 {
     int bIsEmpty = (psXMLNode == NULL);
