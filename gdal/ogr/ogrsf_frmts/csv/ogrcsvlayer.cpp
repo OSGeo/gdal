@@ -2143,6 +2143,9 @@ OGRErr OGRCSVLayer::ICreateFeature( OGRFeature *poNewFeature )
         VSIFPutcL( 13, fpCSV );
     VSIFPutcL( '\n', fpCSV );
 
+    if( nTotalFeatures >= 0 )
+        nTotalFeatures ++;
+
     return OGRERR_NONE;
 }
 
@@ -2203,7 +2206,7 @@ void OGRCSVLayer::SetWriteBOM(int bWriteBOM)
 
 GIntBig OGRCSVLayer::GetFeatureCount( int bForce )
 {
-    if (bInWriteMode || m_poFilterGeom != NULL || m_poAttrQuery != NULL)
+    if (m_poFilterGeom != NULL || m_poAttrQuery != NULL)
         return OGRLayer::GetFeatureCount(bForce);
 
     if (nTotalFeatures >= 0)
@@ -2213,18 +2216,50 @@ GIntBig OGRCSVLayer::GetFeatureCount( int bForce )
         return 0;
 
     ResetReading();
-
-    char **papszTokens;
-    nTotalFeatures = 0;
-    while(TRUE)
+    
+    if( chDelimiter == '\t' && bDontHonourStrings )
     {
-        papszTokens = GetNextLineTokens();
-        if( papszTokens == NULL )
-            break;
+        char szBuffer[4096+1];
 
-        nTotalFeatures ++;
+        nTotalFeatures = 0;
+        int bLastWasNewLine = FALSE;
+        while( TRUE )
+        {
+            int nRead = VSIFReadL(szBuffer, 1, 4096, fpCSV);
+            szBuffer[nRead] = 0;
+            if( nTotalFeatures == 0 && szBuffer[0] != 13 && szBuffer[0] != 10 )
+                nTotalFeatures = 1;
+            for(int i=0;i<nRead;i++)
+            {
+                if( szBuffer[i] == 13 || szBuffer[i] == 10 )
+                {
+                    bLastWasNewLine = TRUE;
+                }
+                else if( bLastWasNewLine )
+                {
+                    nTotalFeatures ++;
+                    bLastWasNewLine = FALSE;
+                }
+            }
 
-        CSLDestroy(papszTokens);
+            if( nRead < 4096 )
+                break;
+        }
+    }
+    else
+    {
+        char **papszTokens;
+        nTotalFeatures = 0;
+        while(TRUE)
+        {
+            papszTokens = GetNextLineTokens();
+            if( papszTokens == NULL )
+                break;
+
+            nTotalFeatures ++;
+
+            CSLDestroy(papszTokens);
+        }
     }
 
     ResetReading();
