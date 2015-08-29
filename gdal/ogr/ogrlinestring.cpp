@@ -123,16 +123,16 @@ void OGRSimpleCurve::flattenTo2D()
 OGRGeometry *OGRSimpleCurve::clone() const
 
 {
-    OGRLineString       *poNewLineString;
+    OGRSimpleCurve       *poCurve;
 
-    poNewLineString = (OGRLineString*)
+    poCurve = (OGRSimpleCurve*)
             OGRGeometryFactory::createGeometry(getGeometryType());
 
-    poNewLineString->assignSpatialReference( getSpatialReference() );
-    poNewLineString->setPoints( nPointCount, paoPoints, padfZ );
-    poNewLineString->setCoordinateDimension( getCoordinateDimension() );
+    poCurve->assignSpatialReference( getSpatialReference() );
+    poCurve->setPoints( nPointCount, paoPoints, padfZ );
+    poCurve->setCoordinateDimension( getCoordinateDimension() );
     
-    return poNewLineString;
+    return poCurve;
 }
 
 /************************************************************************/
@@ -545,7 +545,8 @@ void OGRSimpleCurve::setPoints( int nPointsIn, OGRRawPoint * paoPointsIn,
     if (nPointCount < nPointsIn)
         return;
 
-    memcpy( paoPoints, paoPointsIn, sizeof(OGRRawPoint) * nPointsIn);
+    if( nPointsIn )
+        memcpy( paoPoints, paoPointsIn, sizeof(OGRRawPoint) * nPointsIn);
 
 /* -------------------------------------------------------------------- */
 /*      Check 2D/3D.                                                    */
@@ -557,7 +558,8 @@ void OGRSimpleCurve::setPoints( int nPointsIn, OGRRawPoint * paoPointsIn,
     else if( padfZ )
     {
         Make3D();
-        memcpy( this->padfZ, padfZ, sizeof(double) * nPointsIn );
+        if( nPointsIn )
+            memcpy( this->padfZ, padfZ, sizeof(double) * nPointsIn );
     }
 }
 
@@ -607,7 +609,7 @@ void OGRSimpleCurve::setPoints( int nPointsIn, double * padfX, double * padfY,
         paoPoints[i].y = padfY[i];
     }
 
-    if( this->padfZ != NULL )
+    if( this->padfZ != NULL && nPointsIn )
         memcpy( this->padfZ, padfZ, sizeof(double) * nPointsIn );
 }
 
@@ -630,7 +632,7 @@ void OGRSimpleCurve::setPoints( int nPointsIn, double * padfX, double * padfY,
 
 void OGRSimpleCurve::getPoints( OGRRawPoint * paoPointsOut, double * padfZ ) const
 {
-    if ( ! paoPointsOut )
+    if ( ! paoPointsOut || nPointCount == 0 )
         return;
         
     memcpy( paoPointsOut, paoPoints, sizeof(OGRRawPoint) * nPointCount );
@@ -891,7 +893,7 @@ OGRErr OGRSimpleCurve::importFromWkb( unsigned char * pabyData,
             memcpy( padfZ + i, pabyData + 9 + 16 + i*24, 8 );
         }
     }
-    else
+    else if( nPointCount )
     {
         memcpy( paoPoints, pabyData + 9, 16 * nPointCount );
     }
@@ -970,7 +972,7 @@ OGRErr  OGRSimpleCurve::exportToWkb( OGRwkbByteOrder eByteOrder,
             memcpy( pabyData + 9 + 16 + 24*i, padfZ+i, 8 );
         }
     }
-    else
+    else if( nPointCount )
         memcpy( pabyData+9, paoPoints, 16 * nPointCount );
 
 /* -------------------------------------------------------------------- */
@@ -1591,9 +1593,7 @@ void OGRSimpleCurve::getEnvelope( OGREnvelope3D * psEnvelope ) const
 OGRBoolean OGRSimpleCurve::Equals( OGRGeometry * poOther ) const
 
 {
-    OGRLineString       *poOLine = (OGRLineString *) poOther;
-    
-    if( poOLine == this )
+    if( poOther == this )
         return TRUE;
     
     if( poOther->getGeometryType() != getGeometryType() )
@@ -1604,6 +1604,7 @@ OGRBoolean OGRSimpleCurve::Equals( OGRGeometry * poOther ) const
     
     // we should eventually test the SRS.
 
+    OGRSimpleCurve       *poOLine = (OGRSimpleCurve *) poOther;
     if( getNumPoints() != poOLine->getNumPoints() )
         return FALSE;
 

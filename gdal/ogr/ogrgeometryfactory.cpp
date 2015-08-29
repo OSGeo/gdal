@@ -2958,11 +2958,11 @@ OGRGeometry *OGRGeometryFactory::forceToLineString( OGRGeometry *poGeom, bool bO
 
     if ( poGC->getNumGeometries() == 1 )
     {
-        OGRLineString *poLineString = (OGRLineString *) poGC->getGeometryRef(0);
+        OGRGeometry *poSingleGeom = poGC->getGeometryRef(0);
         poGC->removeGeometry( 0, FALSE );
         delete poGC;
 
-        return poLineString;
+        return poSingleGeom;
     }
 
     return poGC;

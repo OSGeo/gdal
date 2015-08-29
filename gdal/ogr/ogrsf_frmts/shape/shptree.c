@@ -1144,7 +1144,8 @@ static void SHPWriteTreeNode( SAFile fp, SHPTreeNode *node, SAHooks* psHooks)
 
     memcpy( pabyRec+36, &node->nShapeCount, 4);
     j = node->nShapeCount * sizeof(int);
-    memcpy( pabyRec+40, node->panShapeIds, j);
+    if( j )
+        memcpy( pabyRec+40, node->panShapeIds, j);
     memcpy( pabyRec+j+40, &node->nSubNodes, 4);
 
     psHooks->FWrite( pabyRec, 44+j, 1, fp );

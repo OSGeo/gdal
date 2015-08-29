@@ -568,9 +568,7 @@ void OGRCurvePolygon::getEnvelope( OGREnvelope3D * psEnvelope ) const
 OGRBoolean OGRCurvePolygon::Equals( OGRGeometry * poOther ) const
 
 {
-    OGRCurvePolygon *poOPoly = (OGRCurvePolygon *) poOther;
-
-    if( poOPoly == this )
+    if( poOther == this )
         return TRUE;
     
     if( poOther->getGeometryType() != getGeometryType() )
@@ -579,6 +577,7 @@ OGRBoolean OGRCurvePolygon::Equals( OGRGeometry * poOther ) const
     if ( IsEmpty() && poOther->IsEmpty() )
         return TRUE;
     
+    OGRCurvePolygon *poOPoly = (OGRCurvePolygon *) poOther;
     return oCC.Equals( &(poOPoly->oCC) );
 }
 
