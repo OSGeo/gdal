@@ -1259,8 +1259,21 @@ def ogr_csv_31():
     f = lyr.GetNextFeature()
     if f.GetField('GEONAMEID') != '3038814' or f.GetField('LATITUDE') != 42.5 or \
        f.GetGeometryRef().ExportToWkt() != 'POINT (1.48333 42.5)':
+           gdaltest.post_reason('fail')
            f.DumpReadable()
            return 'fail'
+
+    lyr.ResetReading()
+    f = lyr.GetNextFeature()
+    if f.GetField('GEONAMEID') != '3038814':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    if lyr.GetFeatureCount() != 10:
+        gdaltest.post_reason('fail')
+        print(lyr.GetFeatureCount())
+        return 'fail'
 
     return 'success'
 
