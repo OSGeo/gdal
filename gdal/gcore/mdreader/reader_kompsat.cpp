@@ -59,7 +59,7 @@ GDALMDReaderKompsat::~GDALMDReaderKompsat()
 /**
  * HasRequiredFiles()
  */
-const bool GDALMDReaderKompsat::HasRequiredFiles() const
+bool GDALMDReaderKompsat::HasRequiredFiles() const
 {
     if (!m_osIMDSourceFilename.empty() && !m_osRPBSourceFilename.empty())
         return true;
@@ -245,7 +245,7 @@ char** GDALMDReaderKompsat::ReadTxtToList()
 /**
  * GetAcqisitionTimeFromString()
  */
-const time_t GDALMDReaderKompsat::GetAcquisitionTimeFromString(
+time_t GDALMDReaderKompsat::GetAcquisitionTimeFromString(
         const char* pszDateTime)
 {
     if(NULL == pszDateTime)

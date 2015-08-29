@@ -90,7 +90,7 @@ GDALMDReaderLandsat::~GDALMDReaderLandsat()
 /**
  * HasRequiredFiles()
  */
-const bool GDALMDReaderLandsat::HasRequiredFiles() const
+bool GDALMDReaderLandsat::HasRequiredFiles() const
 {
     if (!m_osIMDSourceFilename.empty())
         return true;

@@ -225,7 +225,7 @@ void GDALMDReaderBase::LoadMetadata()
 /**
  * GetAcqisitionTimeFromString()
  */
-const time_t GDALMDReaderBase::GetAcquisitionTimeFromString(
+time_t GDALMDReaderBase::GetAcquisitionTimeFromString(
         const char* pszDateTime)
 {
     if(NULL == pszDateTime)
@@ -414,7 +414,7 @@ char** GDALMDReaderBase::ReadXMLToList(CPLXMLNode* psNode, char** papszList,
 /**
  * GDALCheckFileHeader()
  */
-const bool GDALCheckFileHeader(const CPLString& soFilePath,
+bool GDALCheckFileHeader(const CPLString& soFilePath,
                                const char * pszTestString, int nBufferSize)
 {
     VSILFILE* fpL = VSIFOpenL( soFilePath, "r" );

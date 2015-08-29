@@ -51,7 +51,7 @@ class GDALMDReaderPleiades: public GDALMDReaderBase
 public:
     GDALMDReaderPleiades(const char *pszPath, char **papszSiblingFiles);
     virtual ~GDALMDReaderPleiades();
-    virtual const bool HasRequiredFiles() const;
+    virtual bool HasRequiredFiles() const;
     virtual char** GetMetadataFiles() const;
 protected:
     virtual void LoadMetadata();

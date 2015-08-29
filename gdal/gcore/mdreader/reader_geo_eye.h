@@ -52,11 +52,11 @@ class GDALMDReaderGeoEye: public GDALMDReaderBase
 public:
     GDALMDReaderGeoEye(const char *pszPath, char **papszSiblingFiles);
     virtual ~GDALMDReaderGeoEye();
-    virtual const bool HasRequiredFiles() const;
+    virtual bool HasRequiredFiles() const;
     virtual char** GetMetadataFiles() const;
 protected:
     virtual void LoadMetadata();
-    virtual const time_t GetAcquisitionTimeFromString(const char* pszDateTime);
+    virtual time_t GetAcquisitionTimeFromString(const char* pszDateTime);
     char **LoadRPCWktFile() const;
     char **LoadIMDWktFile() const;
 protected:

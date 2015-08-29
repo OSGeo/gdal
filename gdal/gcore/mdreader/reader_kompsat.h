@@ -50,12 +50,12 @@ class GDALMDReaderKompsat: public GDALMDReaderBase
 public:
     GDALMDReaderKompsat(const char *pszPath, char **papszSiblingFiles);
     virtual ~GDALMDReaderKompsat();
-    virtual const bool HasRequiredFiles() const;
+    virtual bool HasRequiredFiles() const;
     virtual char** GetMetadataFiles() const;
 protected:
     virtual void LoadMetadata();
     char** ReadTxtToList();
-    virtual const time_t GetAcquisitionTimeFromString(const char* pszDateTime);
+    virtual time_t GetAcquisitionTimeFromString(const char* pszDateTime);
 protected:
     CPLString m_osIMDSourceFilename;
     CPLString m_osRPBSourceFilename;

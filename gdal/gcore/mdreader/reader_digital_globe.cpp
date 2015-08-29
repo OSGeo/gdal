@@ -67,7 +67,7 @@ GDALMDReaderDigitalGlobe::~GDALMDReaderDigitalGlobe()
 /**
  * HasRequiredFiles()
  */
-const bool GDALMDReaderDigitalGlobe::HasRequiredFiles() const
+bool GDALMDReaderDigitalGlobe::HasRequiredFiles() const
 {
     if (!m_osIMDSourceFilename.empty())
         return true;

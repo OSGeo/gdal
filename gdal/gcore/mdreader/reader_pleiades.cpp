@@ -108,7 +108,7 @@ GDALMDReaderPleiades::~GDALMDReaderPleiades()
 /**
  * HasRequiredFiles()
  */
-const bool GDALMDReaderPleiades::HasRequiredFiles() const
+bool GDALMDReaderPleiades::HasRequiredFiles() const
 {
     if (!m_osIMDSourceFilename.empty())
         return true;
