@@ -61,6 +61,11 @@ CPL_CVSID("$Id$");
 #define _MSC_VER 1
 #endif
 
+// To avoid issue with icc that defines a template in qhull_a.h
+#if defined(__INTEL_COMPILER)
+#define QHULL_OS_WIN
+#endif
+
 /* Below a lot of renames and static definition of the symbols so as */
 /* to avoid "contaminating" with a potential external qhull */
 typedef struct setT gdal_setT;
