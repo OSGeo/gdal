@@ -346,7 +346,7 @@ def vsicrypt_3():
 
     # Do NOT set VSICRYPT_CRYPTO_RANDOM=NO in production. This is just to speed up tests !
     gdal.SetConfigOption("VSICRYPT_CRYPTO_RANDOM", "NO")
-    fp = gdal.VSIFOpenL('/vsicrypt/key=GENERATE_IT,%s,add_key_check=yes,file=/vsimem/file.bin', 'wb')
+    fp = gdal.VSIFOpenL('/vsicrypt/key=GENERATE_IT,add_key_check=yes,file=/vsimem/file.bin', 'wb')
     gdal.SetConfigOption("VSICRYPT_CRYPTO_RANDOM", None)
 
     # Get the generated random key
