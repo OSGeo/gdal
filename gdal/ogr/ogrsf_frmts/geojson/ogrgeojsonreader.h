@@ -155,6 +155,8 @@ void OGRGeoJSONReaderAddOrUpdateField(OGRFeatureDefn* poDefn,
 json_object* OGRGeoJSONFindMemberByName(json_object* poObj,  const char* pszName );
 GeoJSONObject::Type OGRGeoJSONGetType( json_object* poObj );
 
+json_object* json_ex_get_object_by_path(json_object* poObj, const char* pszPath );
+
 /************************************************************************/
 /*                 GeoJSON Geometry Translators                         */
 /************************************************************************/
