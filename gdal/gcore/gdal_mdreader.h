@@ -114,7 +114,7 @@ public:
       *        provider of remote sensing data completely
       * @return True if all needed sources files found
       */
-    virtual const bool HasRequiredFiles() const = 0;
+    virtual bool HasRequiredFiles() const = 0;
     /**
      * @brief Get metadata file names. The caller become owner of returned list
      *        and have to free it via CSLDestroy.
@@ -132,7 +132,7 @@ protected:
      * @param pszDateTime String to convert
      * @return value in time_t
      */
-    virtual const time_t GetAcquisitionTimeFromString(const char* pszDateTime);
+    virtual time_t GetAcquisitionTimeFromString(const char* pszDateTime);
     /**
      * @brief ReadXMLToList Transform xml to list of NULL terminated name=value
      *        strings
@@ -196,7 +196,7 @@ CPLString CPLStripQuotes(const CPLString& osString);
 char** GDALLoadRPBFile( const CPLString& osFilePath );
 char** GDALLoadRPCFile( const CPLString& osFilePath );
 char** GDALLoadIMDFile( const CPLString& osFilePath );
-const bool GDALCheckFileHeader(const CPLString& soFilePath,
+bool GDALCheckFileHeader(const CPLString& soFilePath,
                                const char * pszTestString,
                                int nBufferSize = 256);
 

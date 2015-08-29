@@ -72,7 +72,7 @@ GDALMDReaderRapidEye::~GDALMDReaderRapidEye()
 /**
  * HasRequiredFiles()
  */
-const bool GDALMDReaderRapidEye::HasRequiredFiles() const
+bool GDALMDReaderRapidEye::HasRequiredFiles() const
 {
     // check re:EarthObservation
     if (!m_osXMLSourceFilename.empty() &&

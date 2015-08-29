@@ -53,12 +53,12 @@ class GDALMDReaderALOS: public GDALMDReaderBase
 public:
     GDALMDReaderALOS(const char *pszPath, char **papszSiblingFiles);
     virtual ~GDALMDReaderALOS();
-    virtual const bool HasRequiredFiles() const;
+    virtual bool HasRequiredFiles() const;
     virtual char** GetMetadataFiles() const;
 protected:
     virtual void LoadMetadata();
     char** LoadRPCTxtFile();
-    virtual const time_t GetAcquisitionTimeFromString(const char* pszDateTime);
+    virtual time_t GetAcquisitionTimeFromString(const char* pszDateTime);
 protected:
     CPLString m_osIMDSourceFilename;
     CPLString m_osHDRSourceFilename;

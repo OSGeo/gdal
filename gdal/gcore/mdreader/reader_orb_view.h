@@ -50,7 +50,7 @@ class GDALMDReaderOrbView: public GDALMDReaderBase
 public:
     GDALMDReaderOrbView(const char *pszPath, char **papszSiblingFiles);
     virtual ~GDALMDReaderOrbView();
-    virtual const bool HasRequiredFiles() const;
+    virtual bool HasRequiredFiles() const;
     virtual char** GetMetadataFiles() const;
 protected:
     virtual void LoadMetadata();

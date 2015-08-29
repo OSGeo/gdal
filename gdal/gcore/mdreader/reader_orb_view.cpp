@@ -80,7 +80,7 @@ GDALMDReaderOrbView::~GDALMDReaderOrbView()
 /**
  * HasRequiredFiles()
  */
-const bool GDALMDReaderOrbView::HasRequiredFiles() const
+bool GDALMDReaderOrbView::HasRequiredFiles() const
 {
     if (!m_osIMDSourceFilename.empty() && !m_osRPBSourceFilename.empty())
         return true;

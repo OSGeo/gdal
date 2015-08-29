@@ -118,7 +118,7 @@ GDALMDReaderEROS::~GDALMDReaderEROS()
 /**
  * HasRequiredFiles()
  */
-const bool GDALMDReaderEROS::HasRequiredFiles() const
+bool GDALMDReaderEROS::HasRequiredFiles() const
 {
     if (!m_osIMDSourceFilename.empty())
         return true;
@@ -252,7 +252,7 @@ char** GDALMDReaderEROS::LoadImdTxtFile()
 /**
  * GetAcqisitionTimeFromString()
  */
-const time_t GDALMDReaderEROS::GetAcquisitionTimeFromString(
+time_t GDALMDReaderEROS::GetAcquisitionTimeFromString(
         const char* pszDateTime)
 {
     if(NULL == pszDateTime)

@@ -55,7 +55,7 @@ GDALMDReaderResursDK1::~GDALMDReaderResursDK1()
 /**
  * HasRequiredFiles()
  */
-const bool GDALMDReaderResursDK1::HasRequiredFiles() const
+bool GDALMDReaderResursDK1::HasRequiredFiles() const
 {
     // check <MSP_ROOT>
     if (!m_osXMLSourceFilename.empty() &&
@@ -144,7 +144,7 @@ void GDALMDReaderResursDK1::LoadMetadata()
 /**
  * GetAcqisitionTimeFromString()
  */
-const time_t GDALMDReaderResursDK1::GetAcquisitionTimeFromString(
+time_t GDALMDReaderResursDK1::GetAcquisitionTimeFromString(
         const char* pszDateTime)
 {
     if(NULL == pszDateTime)

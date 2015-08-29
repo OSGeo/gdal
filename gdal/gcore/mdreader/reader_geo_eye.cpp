@@ -115,7 +115,7 @@ GDALMDReaderGeoEye::~GDALMDReaderGeoEye()
 /**
  * HasRequiredFiles()
  */
-const bool GDALMDReaderGeoEye::HasRequiredFiles() const
+bool GDALMDReaderGeoEye::HasRequiredFiles() const
 {
     if (!m_osIMDSourceFilename.empty())
         return true;
@@ -202,7 +202,7 @@ void GDALMDReaderGeoEye::LoadMetadata()
 /**
  * GetAcqisitionTimeFromString()
  */
-const time_t GDALMDReaderGeoEye::GetAcquisitionTimeFromString(
+time_t GDALMDReaderGeoEye::GetAcquisitionTimeFromString(
         const char* pszDateTime)
 {
     if(NULL == pszDateTime)
