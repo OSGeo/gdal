@@ -36,46 +36,6 @@
 CPL_CVSID("$Id$");
 
 /************************************************************************/
-/*                          CPLHaveRuntimeAVX()                         */
-/************************************************************************/
-
-#define CPUID_OSXSAVE_ECX_BIT   27
-#define CPUID_AVX_ECX_BIT       28
-
-#define BIT_XMM_STATE           (1 << 1)
-#define BIT_YMM_STATE           (2 << 1)
-
-int CPLHaveRuntimeAVX()
-{
-    int cpuinfo[4] = {0,0,0,0};
-    GCC_CPUID(1, cpuinfo[0], cpuinfo[1], cpuinfo[2], cpuinfo[3]);
-
-    /* Check OSXSAVE feature */
-    if( (cpuinfo[2] & (1 << CPUID_OSXSAVE_ECX_BIT)) == 0 )
-    {
-        return FALSE;
-    }
-
-    /* Check AVX feature */
-    if( (cpuinfo[2] & (1 << CPUID_AVX_ECX_BIT)) == 0 )
-    {
-        return FALSE;
-    }
-
-    /* Issue XGETBV and check the XMM and YMM state bit */
-    unsigned int nXCRLow;
-    unsigned int nXCRHigh;
-    __asm__ ("xgetbv" : "=a" (nXCRLow), "=d" (nXCRHigh) : "c" (0));
-    if( (nXCRLow & ( BIT_XMM_STATE | BIT_YMM_STATE )) !=
-                   ( BIT_XMM_STATE | BIT_YMM_STATE ) )
-    {
-        return FALSE;
-    }
-
-    return TRUE;
-}
-
-/************************************************************************/
 /*         GDALGridInverseDistanceToAPower2NoSmoothingNoSearchAVX()     */
 /************************************************************************/
 
