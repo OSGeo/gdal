@@ -103,6 +103,9 @@ OGRElasticLayer::OGRElasticLayer(const char* pszLayerName,
     m_poSpatialFilter = NULL;
     m_bIgnoreSourceID = FALSE;
 
+    // Undocumented. Only usefull for developers
+    m_bAddPretty = CSLTestBoolean(CPLGetConfigOption("ES_ADD_PRETTY", "FALSE"));
+
     ResetReading();
     return;
 }
@@ -403,29 +406,32 @@ void OGRElasticLayer::FinalizeFeatureDefn(int bReadFeatures)
         while( TRUE )
         {
             json_object* poResponse;
+            CPLString osRequest, osPostData;
             if( bFirst )
             {
                 bFirst = FALSE;
                 if(  m_osESSearch.size() )
-                    poResponse = m_poDS->RunRequest(
-                    CPLSPrintf("%s/_search?scroll=1m&size=%d&pretty",
-                           m_poDS->GetURL(), m_poDS->m_nBatchSize),
-                           m_osESSearch.c_str());
+                {
+                    osRequest = CPLSPrintf("%s/_search?scroll=1m&size=%d",
+                           m_poDS->GetURL(), m_poDS->m_nBatchSize);
+                    osPostData = m_osESSearch;
+                }
                 else
-                    poResponse = m_poDS->RunRequest(
-                    CPLSPrintf("%s/%s/%s/_search?scroll=1m&size=%d&pretty",
+                    osRequest = CPLSPrintf("%s/%s/%s/_search?scroll=1m&size=%d",
                            m_poDS->GetURL(), m_osIndexName.c_str(),
-                           m_osMappingName.c_str(), m_poDS->m_nBatchSize));
+                           m_osMappingName.c_str(), m_poDS->m_nBatchSize);
             }
             else
             {
                 if( m_osScrollID.size() == 0 )
                     break;
-                poResponse = m_poDS->RunRequest(
-                    CPLSPrintf("%s/_search/scroll?scroll=1m&size=%d&scroll_id=%s&pretty",
-                               m_poDS->GetURL(), m_poDS->m_nBatchSize, m_osScrollID.c_str()));
+                osRequest = CPLSPrintf("%s/_search/scroll?scroll=1m&size=%d&scroll_id=%s",
+                               m_poDS->GetURL(), m_poDS->m_nBatchSize, m_osScrollID.c_str());
             }
 
+            if( m_bAddPretty )
+                osRequest += "&pretty";
+            poResponse = m_poDS->RunRequest(osRequest, osPostData);
             if( poResponse == NULL )
             {
                 break;
@@ -831,41 +837,43 @@ OGRFeature *OGRElasticLayer::GetNextRawFeature()
     m_apoCachedFeatures.resize(0);
     m_iCurFeatureInPage = 0;
 
+    CPLString osRequest, osPostData;
     if( m_osScrollID.size() == 0 )
     {
         if( m_osESSearch.size() )
         {
-            poResponse = m_poDS->RunRequest(
-                CPLSPrintf("%s/_search?scroll=1m&size=%d&pretty",
-                           m_poDS->GetURL(), m_poDS->m_nBatchSize),
-                m_osESSearch.c_str());
+           osRequest = CPLSPrintf("%s/_search?scroll=1m&size=%d",
+                           m_poDS->GetURL(), m_poDS->m_nBatchSize);
+            osPostData = m_osESSearch;
         }
         else if( m_poSpatialFilter && m_osJSONFilter.size() == 0 )
         {
             CPLString osFilter = CPLSPrintf("{ \"query\": { \"filtered\" : { \"query\" : { \"match_all\" : {} }, \"filter\": %s } } }",
                                             json_object_to_json_string( m_poSpatialFilter ));
-            poResponse = m_poDS->RunRequest(
-                CPLSPrintf("%s/%s/%s/_search?scroll=1m&size=%d&pretty",
+            osRequest = CPLSPrintf("%s/%s/%s/_search?scroll=1m&size=%d",
                            m_poDS->GetURL(), m_osIndexName.c_str(),
-                           m_osMappingName.c_str(), m_poDS->m_nBatchSize),
-                osFilter.c_str());
+                           m_osMappingName.c_str(), m_poDS->m_nBatchSize);
+            osPostData = osFilter;
         }
         else
         {
-            poResponse = m_poDS->RunRequest(
-                CPLSPrintf("%s/%s/%s/_search?scroll=1m&size=%d&pretty",
+            osRequest =
+                CPLSPrintf("%s/%s/%s/_search?scroll=1m&size=%d",
                            m_poDS->GetURL(), m_osIndexName.c_str(),
-                           m_osMappingName.c_str(), m_poDS->m_nBatchSize),
-                m_osJSONFilter.c_str());
+                           m_osMappingName.c_str(), m_poDS->m_nBatchSize);
+            osPostData = m_osJSONFilter;
         }
     }
     else
     {
-        poResponse = m_poDS->RunRequest(
-            CPLSPrintf("%s/_search/scroll?scroll=1m&size=%d&scroll_id=%s&pretty",
-                       m_poDS->GetURL(), m_poDS->m_nBatchSize, m_osScrollID.c_str()));
+        osRequest =
+            CPLSPrintf("%s/_search/scroll?scroll=1m&size=%d&scroll_id=%s",
+                       m_poDS->GetURL(), m_poDS->m_nBatchSize, m_osScrollID.c_str());
     }
 
+    if( m_bAddPretty )
+        osRequest += "&pretty";
+    poResponse = m_poDS->RunRequest(osRequest, osPostData);
     if( poResponse == NULL )
     {
         m_bEOF = TRUE;
