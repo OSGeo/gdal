@@ -391,7 +391,7 @@ def vrt_read_10():
     vrt_ds = None
     
     f = gdal.VSIFOpenL('/vsimem/vrt_read_10.vrt', 'rb')
-    content = gdal.VSIFReadL(1, 10000, f)
+    content = gdal.VSIFReadL(1, 10000, f).decode('ascii')
     gdal.VSIFCloseL(f)
 
     if vrt_hist != mem_hist:
@@ -424,7 +424,7 @@ def vrt_read_10():
         ds = None
         
         f = gdal.VSIFOpenL('/vsimem/vrt_read_10.vrt', 'rb')
-        content = gdal.VSIFReadL(1, 10000, f)
+        content = gdal.VSIFReadL(1, 10000, f).decode('ascii')
         gdal.VSIFCloseL(f)
 
         if content.find('<Histograms>') < 0:
@@ -454,7 +454,7 @@ def vrt_read_10():
         ds = None
         
         f = gdal.VSIFOpenL('/vsimem/vrt_read_10.vrt', 'rb')
-        content = gdal.VSIFReadL(1, 10000, f)
+        content = gdal.VSIFReadL(1, 10000, f).decode('ascii')
         gdal.VSIFCloseL(f)
 
         if content.find('<Histograms>') < 0:
