@@ -598,8 +598,10 @@ def ogr_geos_DelaunayTriangulation():
 
     gdal.ErrorReset()
     triangulation = g1.DelaunayTriangulation()
-    if triangulation is None and gdal.GetLastErrorMsg() == '':
-        return 'fail'
+    if triangulation is None:
+        if gdal.GetLastErrorMsg() == '':
+            return 'fail'
+        return 'skip'
 
     if triangulation.ExportToWkt() != 'GEOMETRYCOLLECTION (POLYGON ((0 1,0 0,1 0,0 1)),POLYGON ((0 1,1 0,1 1,0 1)))':
         gdaltest.post_reason('Got: %s' % triangulation.ExportToWkt())
