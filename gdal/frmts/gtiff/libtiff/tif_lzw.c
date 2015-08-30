@@ -1,4 +1,4 @@
-/* $Id: tif_lzw.c,v 1.47 2015-06-13 05:03:50 faxguy Exp $ */
+/* $Id: tif_lzw.c,v 1.48 2015-08-30 20:49:55 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -836,13 +836,15 @@ LZWPreEncode(TIFF* tif, uint16 s)
 	} else							\
 		rat = (incount<<8) / outcount;			\
 }
+
+/* Explicit 0xff masking to make icc -check=conversions happy */
 #define	PutNextCode(op, c) {					\
 	nextdata = (nextdata << nbits) | c;			\
 	nextbits += nbits;					\
-	*op++ = (unsigned char)(nextdata >> (nextbits-8));		\
+	*op++ = (unsigned char)((nextdata >> (nextbits-8))&0xff);		\
 	nextbits -= 8;						\
 	if (nextbits >= 8) {					\
-		*op++ = (unsigned char)(nextdata >> (nextbits-8));	\
+		*op++ = (unsigned char)((nextdata >> (nextbits-8))&0xff);	\
 		nextbits -= 8;					\
 	}							\
 	outcount += nbits;					\
@@ -1048,8 +1050,9 @@ LZWPostEncode(TIFF* tif)
 		sp->enc_oldcode = (hcode_t) -1;
 	}
 	PutNextCode(op, CODE_EOI);
+        /* Explicit 0xff masking to make icc -check=conversions happy */
 	if (nextbits > 0) 
-		*op++ = (unsigned char)(nextdata << (8-nextbits));
+		*op++ = (unsigned char)((nextdata << (8-nextbits))&0xff);
 	tif->tif_rawcc = (tmsize_t)(op - tif->tif_rawdata);
 	return (1);
 }
