@@ -300,13 +300,12 @@ void GDALPamDataset::PamInitialize()
     
     for( iBand = 0; iBand < GetRasterCount(); iBand++ )
     {
-        GDALPamRasterBand *poBand = (GDALPamRasterBand *)
-            GetRasterBand(iBand+1);
+        GDALRasterBand *poBand = GetRasterBand(iBand+1);
         
         if( poBand == NULL || !(poBand->GetMOFlags() & GMO_PAM_CLASS) )
             continue;
 
-        poBand->PamInitialize();
+        ((GDALPamRasterBand *)poBand)->PamInitialize();
     }
 }
 
