@@ -416,7 +416,8 @@ int     TABRawBinBlock::InitNewBlock(VSILFILE *fpSrc, int nBlockSize,
     m_nBlockType = -1;
 
     m_pabyBuf = (GByte*)CPLRealloc(m_pabyBuf, m_nBlockSize*sizeof(GByte));
-    memset(m_pabyBuf, 0, m_nBlockSize);
+    if( m_nBlockSize )
+        memset(m_pabyBuf, 0, m_nBlockSize);
 
     return 0;
 }
