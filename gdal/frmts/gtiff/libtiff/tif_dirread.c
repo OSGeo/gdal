@@ -1,4 +1,4 @@
-/* $Id: tif_dirread.c,v 1.187 2015-05-31 21:09:33 bfriesen Exp $ */
+/* $Id: tif_dirread.c,v 1.188 2015-08-29 20:39:17 bfriesen Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -3221,7 +3221,7 @@ TIFFReadDirEntryCheckRangeSlongLong8(uint64 value)
 static enum TIFFReadDirEntryErr
 TIFFReadDirEntryCheckRangeSlongSlong8(int64 value)
 {
-	if ((value < 0L-0x80000000L) || (value > 0x7FFFFFFFL))
+	if ((value < 0L-0x80000000UL) || (value > 0x7FFFFFFFL))
 		return(TIFFReadDirEntryErrRange);
 	else
 		return(TIFFReadDirEntryErrOk);
