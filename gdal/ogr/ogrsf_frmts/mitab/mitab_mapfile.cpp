@@ -1860,6 +1860,12 @@ int   TABMAPFile::PrepareNewObjViaObjBlock(TABMAPObjHdr *poObjHdr)
  **********************************************************************/
 int   TABMAPFile::CommitNewObj(TABMAPObjHdr *poObjHdr)
 {
+    // Nothing to do for NONE objects
+    if (poObjHdr->m_nType == TAB_GEOM_NONE)
+    {
+        return 0;
+    }
+
     /* Update this now so that PrepareCoordBlock() doesn't try to old an older */
     /* block */
     if( m_poCurCoordBlock != NULL )

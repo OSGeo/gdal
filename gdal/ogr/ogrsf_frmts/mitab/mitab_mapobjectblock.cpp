@@ -686,6 +686,8 @@ int     TABMAPObjectBlock::CommitNewObject(TABMAPObjHdr *poObjHdr)
 {
     int nStatus = 0;
 
+    CPLAssert (poObjHdr->m_nType != TAB_GEOM_NONE);
+
     // Nothing to do for NONE objects
     if (poObjHdr->m_nType == TAB_GEOM_NONE)
     {
