@@ -879,7 +879,7 @@ TABFeature *TABView::GetFeatureRef(GIntBig nFeatureId)
         return NULL;
     }
 
-    if( (GIntBig)(int)nFeatureId != nFeatureId )
+    if( !CPL_INT64_FITS_ON_INT32(nFeatureId) )
         return NULL;
 
     if(m_poCurFeature)

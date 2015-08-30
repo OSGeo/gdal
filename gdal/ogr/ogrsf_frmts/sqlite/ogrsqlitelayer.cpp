@@ -231,7 +231,7 @@ void OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
             else
             {
                 GIntBig nVal = sqlite3_column_int64(hStmt, iCol);
-                if( (GIntBig)(int)nVal == nVal )
+                if( CPL_INT64_FITS_ON_INT32(nVal) )
                     oField.SetType( OFTInteger );
                 else
                     oField.SetType( OFTInteger64 );

@@ -864,7 +864,7 @@ int OGRGenSQLResultsLayer::PrepareSummary()
         GIntBig nRes = poSrcLayer->GetFeatureCount( TRUE );
         poSummaryFeature->SetField( 0, nRes );
 
-        if( (GIntBig)(int)nRes == nRes )
+        if( CPL_INT64_FITS_ON_INT32(nRes) )
         {
             poDefn->GetFieldDefn(0)->SetType(OFTInteger);
             delete poSummaryFeature;
@@ -971,7 +971,7 @@ int OGRGenSQLResultsLayer::PrepareSummary()
                 swq_summary *psSummary = psSelectInfo->column_summary + iField;
                 if( psColDef->col_func == SWQCF_COUNT )
                 {
-                    if( (GIntBig)(int)psSummary->count == psSummary->count ) 
+                    if( CPL_INT64_FITS_ON_INT32(psSummary->count) ) 
                     {
                         delete poSummaryFeature;
                         poSummaryFeature = NULL;

@@ -263,6 +263,12 @@ typedef int              GPtrDiff_t;
 #define GUINTBIG_TO_DOUBLE(x) (double)(x)
 #endif
 
+#ifdef COMPAT_WITH_ICC_CONVERSION_CHECK
+#define CPL_INT64_FITS_ON_INT32(x) ((x) >= INT_MIN && (x) <= INT_MAX)
+#else
+#define CPL_INT64_FITS_ON_INT32(x) (((GIntBig)(int)(x)) == (x))
+#endif
+
 /* ==================================================================== */
 /*      Other standard services.                                        */
 /* ==================================================================== */

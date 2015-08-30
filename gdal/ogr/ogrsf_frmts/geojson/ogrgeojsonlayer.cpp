@@ -206,8 +206,8 @@ void OGRGeoJSONLayer::AddFeature( OGRFeature* poFeature )
         }
     }
     
-        
-    if( (GIntBig)(int)poNewFeature->GetFID() != poNewFeature->GetFID() )
+    GIntBig nFID = poNewFeature->GetFID();    
+    if( !CPL_INT64_FITS_ON_INT32(nFID) )
         SetMetadataItem(OLMD_FID64, "YES");
 
     seqFeatures_.push_back( poNewFeature );

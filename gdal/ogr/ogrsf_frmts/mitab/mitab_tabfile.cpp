@@ -1191,7 +1191,7 @@ GIntBig TABFile::GetNextFeatureId(GIntBig nPrevId)
         ResetReading();
     m_bLastOpWasRead = TRUE;
 
-    if( (GIntBig)(int)nPrevId != nPrevId )
+    if( !CPL_INT64_FITS_ON_INT32(nPrevId) )
         return -1;
 
     /*-----------------------------------------------------------------

@@ -1153,10 +1153,11 @@ OGRErr OGRMSSQLSpatialTableLayer::ICreateFeature( OGRFeature *poFeature )
     OGRMSSQLGeometryValidator oValidator(poFeature->GetGeometryRef());
     OGRGeometry *poGeom = oValidator.GetValidGeometryRef();
 
+    GIntBig nFID = poFeature->GetFID();
     if (poFeature->GetGeometryRef() != poGeom)
     {
         CPLError( CE_Warning, CPLE_NotSupported,
-                  "Geometry with FID = " CPL_FRMT_GIB " has been modified.", poFeature->GetFID() );
+                  "Geometry with FID = " CPL_FRMT_GIB " has been modified.", nFID );
     }
 
     int bNeedComma = FALSE;
@@ -1169,9 +1170,9 @@ OGRErr OGRMSSQLSpatialTableLayer::ICreateFeature( OGRFeature *poFeature )
         bNeedComma = TRUE;
     }
 
-    if( poFeature->GetFID() != OGRNullFID && pszFIDColumn != NULL )
+    if( nFID != OGRNullFID && pszFIDColumn != NULL )
     {
-        if( (GIntBig)(int)poFeature->GetFID() != poFeature->GetFID() &&
+        if( !CPL_INT64_FITS_ON_INT32(nFID) &&
             GetMetadataItem(OLMD_FID64) == NULL )
         {
             /* MSSQL server doesn't support modifying pk columns without recreating the field */
@@ -1308,13 +1309,13 @@ OGRErr OGRMSSQLSpatialTableLayer::ICreateFeature( OGRFeature *poFeature )
         }
 
         /* Set the FID */
-        if( poFeature->GetFID() != OGRNullFID && pszFIDColumn != NULL )
+        if( nFID != OGRNullFID && pszFIDColumn != NULL )
         {
             if (bNeedComma)
-                oStatement.Appendf( ", " CPL_FRMT_GIB, poFeature->GetFID() );
+                oStatement.Appendf( ", " CPL_FRMT_GIB, nFID );
             else
             {
-                oStatement.Appendf( CPL_FRMT_GIB, poFeature->GetFID() );
+                oStatement.Appendf( CPL_FRMT_GIB, nFID );
                 bNeedComma = TRUE;
             }
         }
@@ -1335,7 +1336,7 @@ OGRErr OGRMSSQLSpatialTableLayer::ICreateFeature( OGRFeature *poFeature )
         oStatement.Append( ");" );
     }
 
-    if( poFeature->GetFID() != OGRNullFID && pszFIDColumn != NULL && bIsIdentityFid )
+    if( nFID != OGRNullFID && pszFIDColumn != NULL && bIsIdentityFid )
         oStatement.Appendf("SET IDENTITY_INSERT [%s].[%s] OFF;", pszSchemaName, pszTableName );
 
 /* -------------------------------------------------------------------- */

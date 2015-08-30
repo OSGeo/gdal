@@ -803,7 +803,8 @@ OGRErr OGRMySQLTableLayer::ICreateFeature( OGRFeature *poFeature )
     // Set the FID 
     if( poFeature->GetFID() != OGRNullFID && pszFIDColumn != NULL )
     {
-        if( (GIntBig)(int)poFeature->GetFID() != poFeature->GetFID() &&
+        GIntBig nFID = poFeature->GetFID();
+        if( !CPL_INT64_FITS_ON_INT32(nFID) &&
             GetMetadataItem(OLMD_FID64) == NULL )
         {
             CPLString osCommand2;
@@ -828,7 +829,7 @@ OGRErr OGRMySQLTableLayer::ICreateFeature( OGRFeature *poFeature )
         
         if( bNeedComma )
             osCommand += ", ";
-        osCommand += CPLString().Printf( CPL_FRMT_GIB, poFeature->GetFID() );
+        osCommand += CPLString().Printf( CPL_FRMT_GIB, nFID );
         bNeedComma = TRUE;
     }
 
