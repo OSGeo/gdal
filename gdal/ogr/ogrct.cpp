@@ -859,15 +859,17 @@ int OGRProj4CT::InitializeNoLock( OGRSpatialReference * poSourceIn,
     /* Determine if we really have a transformation to do */
     bIdentityTransform = (strcmp(pszSrcProj4Defn, pszDstProj4Defn) == 0);
 
+#if 0
     /* In case of identity transform, under the following conditions, */
     /* we can also avoid transforming from deegrees <--> radians. */
     if( bIdentityTransform && bSourceLatLong && !bSourceWrap &&
         bTargetLatLong && !bTargetWrap &&
-        abs(dfSourceToRadians * dfTargetFromRadians - 1.0) < 1e-10 )
+        fabs(dfSourceToRadians * dfTargetFromRadians - 1.0) < 1e-10 )
     {
         /*bSourceLatLong = FALSE;
         bTargetLatLong = FALSE;*/
     }
+#endif
 
     CPLFree( pszSrcProj4Defn );
     CPLFree( pszDstProj4Defn );
