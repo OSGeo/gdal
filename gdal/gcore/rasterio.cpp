@@ -2120,6 +2120,49 @@ GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelStride,
                int nWordCount )
 
 {
+    // On platforms where alignment matters, be careful
+#ifdef CPL_CPU_REQUIRES_ALIGNED_ACCESS
+    int nSrcDataTypeSize = GDALGetDataTypeSize(eSrcType) / 8;
+    int nDstDataTypeSize = GDALGetDataTypeSize(eDstType) / 8;
+    if( !(eSrcType == eDstType && nSrcPixelStride == nDstPixelStride) &&
+        ( (((GPtrDiff_t)pSrcData) % nSrcDataTypeSize) != 0 ||
+          (((GPtrDiff_t)pDstData) % nDstDataTypeSize) != 0 ||
+          ( nSrcPixelStride % nSrcDataTypeSize) != 0 ||
+          ( nDstPixelStride % nDstDataTypeSize) != 0 ) )
+    {
+        if( eSrcType == eDstType )
+        {
+            for( int i = 0; i < nWordCount; i++ )
+            {
+                memcpy( (GByte*)pDstData + nDstPixelStride * i,
+                        (GByte*)pSrcData + nSrcPixelStride * i,
+                        nDstDataTypeSize );
+            }
+        }
+        else
+        {
+#define ALIGN_PTR(ptr, align) ((ptr) + ((align) - ((size_t)(ptr) % (align))) % (align))
+            GByte abySrcBuffer[32]; /* the largest we need is for CFloat64 (16 bytes), so 32 bytes to be sure to get correctly aligned pointer */
+            GByte abyDstBuffer[32];
+            GByte* pabySrcBuffer = ALIGN_PTR(abySrcBuffer, nSrcDataTypeSize);
+            GByte* pabyDstBuffer = ALIGN_PTR(abyDstBuffer, nDstDataTypeSize);
+            for( int i = 0; i < nWordCount; i++ )
+            {
+                memcpy(pabySrcBuffer, (GByte*)pSrcData + nSrcPixelStride * i, nSrcDataTypeSize);
+                GDALCopyWords( pabySrcBuffer,
+                            eSrcType,
+                            0,
+                            pabyDstBuffer,
+                            eSrcType,
+                            0,
+                            1 );
+                memcpy( (GByte*)pDstData + nDstPixelStride * i, pabyDstBuffer, nDstDataTypeSize );
+            }
+        }
+        return;
+    }
+#endif
+
     // Deal with the case where we're replicating a single word into the
     // provided buffer
     if (nSrcPixelStride == 0 && nWordCount > 1)

@@ -641,4 +641,8 @@ int snprintf(char *str, size_t size, const char* fmt, ...) CPL_PRINT_FUNC_FORMAT
 int sprintf(char *str, const char* fmt, ...) CPL_PRINT_FUNC_FORMAT(2, 3) CPL_WARN_DEPRECATED("Use CPLsprintf() instead");
 #endif
 
+#if defined(MAKE_SANITIZE_HAPPY) || !(defined(__i386__) || defined(__x86_64__) || defined(_M_IX86) || defined(_M_X64))
+#define CPL_CPU_REQUIRES_ALIGNED_ACCESS
+#endif
+
 #endif /* ndef CPL_BASE_H_INCLUDED */

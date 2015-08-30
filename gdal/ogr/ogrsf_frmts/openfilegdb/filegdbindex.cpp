@@ -1046,7 +1046,7 @@ int FileGDBIndexIterator::FindPages(int iLevel, int nPage)
             case FGFT_STRING:
             {
                 GUInt16* pasMax;
-#ifdef CPL_MSB
+#if defined(CPL_MSB) || defined(CPL_CPU_REQUIRES_ALIGNED_ACCESS)
                 GUInt16 asMax[MAX_CAR_COUNT_STR];
                 pasMax = asMax;
                 memcpy(asMax, abyPage[iLevel] + nOffsetFirstValInPage +
@@ -1054,7 +1054,6 @@ int FileGDBIndexIterator::FindPages(int iLevel, int nPage)
                 for(int j=0;j<nStrLen;j++)
                     CPL_LSBPTR16(&asMax[j]);
 #else
-                // FIXME: unaligned deferencing. might cause issues on some platforms
                 pasMax = (GUInt16*)(abyPage[iLevel] + nOffsetFirstValInPage +
                                                 nStrLen * sizeof(GUInt16) * i);
 #endif
@@ -1347,7 +1346,7 @@ int FileGDBIndexIterator::GetNextRow()
 
                 case FGFT_STRING:
                 {
-#ifdef CPL_MSB
+#if defined(CPL_MSB) || defined(CPL_CPU_REQUIRES_ALIGNED_ACCESS)
                     GUInt16 asVal[MAX_CAR_COUNT_STR];
                     memcpy(asVal, abyPageFeature + nOffsetFirstValInPage +
                                     nStrLen * 2 * iCurFeatureInPage, nStrLen * 2);
