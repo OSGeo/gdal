@@ -70,10 +70,10 @@ class NITFDataset : public GDALPamDataset
     NITFFile    *psFile;
     NITFImage   *psImage;
 
-    GDALPamDataset *poJ2KDataset;
+    GDALDataset *poJ2KDataset;
     int         bJP2Writing;
 
-    GDALPamDataset *poJPEGDataset;
+    GDALDataset *poJPEGDataset;
 
     int         bGotGeoTransform;
     double      adfGeoTransform[6];

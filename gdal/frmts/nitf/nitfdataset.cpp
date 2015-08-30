@@ -221,10 +221,12 @@ void NITFDataset::FlushCache()
     // If the JPEG/JP2K dataset has dirty pam info, then we should consider 
     // ourselves to as well.
     if( poJPEGDataset != NULL 
-        && (poJPEGDataset->GetPamFlags() & GPF_DIRTY) )
+        && (poJPEGDataset->GetMOFlags() & GMO_PAM_CLASS)
+        && (((GDALPamDataset*)poJPEGDataset)->GetPamFlags() & GPF_DIRTY) )
         MarkPamDirty();
     if( poJ2KDataset != NULL 
-        && (poJ2KDataset->GetPamFlags() & GPF_DIRTY) )
+        && (poJ2KDataset->GetMOFlags() & GMO_PAM_CLASS)
+        && (((GDALPamDataset*)poJ2KDataset)->GetPamFlags() & GPF_DIRTY) )
         MarkPamDirty();
 
     if( poJ2KDataset != NULL && bJP2Writing)
@@ -592,18 +594,17 @@ GDALDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
     
         if( poWritableJ2KDataset != NULL )
         {
-            poDS->poJ2KDataset = (GDALPamDataset *) poWritableJ2KDataset; 
+            poDS->poJ2KDataset = poWritableJ2KDataset; 
             poDS->bJP2Writing = TRUE;
             poWritableJ2KDataset = NULL;
         }
         else
         {
             /* We explicitly list the allowed drivers to avoid hostile content */
-            /* to be opened by a random driver, and also to make sure that */
-            /* a future new JPEG2000 compatible driver derives from GDALPamDataset */
+            /* to be opened by a random driver */
             static const char * const apszDrivers[] = { "JP2KAK", "JP2ECW", "JP2MRSID",
                                                         "JPEG2000", "JP2OPENJPEG", NULL };
-            poDS->poJ2KDataset = (GDALPamDataset *)
+            poDS->poJ2KDataset = (GDALDataset*)
                 GDALOpenEx( osDSName, GDAL_OF_RASTER, apszDrivers, NULL, NULL);
 
             if( poDS->poJ2KDataset == NULL )
@@ -625,8 +626,11 @@ GDALDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
                 return NULL;
             }
 
-            poDS->poJ2KDataset->SetPamFlags( 
-                poDS->poJ2KDataset->GetPamFlags() | GPF_NOSAVE );
+            if (poDS->poJ2KDataset->GetMOFlags() & GMO_PAM_CLASS)
+            {
+                ((GDALPamDataset*)poDS->poJ2KDataset)->SetPamFlags( 
+                    ((GDALPamDataset*)poDS->poJ2KDataset)->GetPamFlags() | GPF_NOSAVE );
+            }
         }
 
         if( poDS->GetRasterXSize() != poDS->poJ2KDataset->GetRasterXSize()
@@ -698,7 +702,7 @@ GDALDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
         CPLDebug( "GDAL", 
                   "NITFDataset::Open() as IC=C3 (JPEG compressed)\n");
 
-        poDS->poJPEGDataset = (GDALPamDataset*) GDALOpen(osDSName,GA_ReadOnly);
+        poDS->poJPEGDataset = (GDALDataset*) GDALOpen(osDSName,GA_ReadOnly);
         if( poDS->poJPEGDataset == NULL )
         {
             int bFoundJPEGDriver = GDALGetDriverByName("JPEG") != NULL;
@@ -724,8 +728,11 @@ GDALDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
             return NULL;
         }
 
-        poDS->poJPEGDataset->SetPamFlags( 
-            poDS->poJPEGDataset->GetPamFlags() | GPF_NOSAVE );
+        if (poDS->poJPEGDataset->GetMOFlags() & GMO_PAM_CLASS)
+        {
+            ((GDALPamDataset*)poDS->poJPEGDataset)->SetPamFlags( 
+                ((GDALPamDataset*)poDS->poJPEGDataset)->GetPamFlags() | GPF_NOSAVE );
+        }
 
         if( poDS->poJPEGDataset->GetRasterCount() < nUsableBands )
         {
@@ -1579,12 +1586,12 @@ GDALDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
 /*      If we have jpeg, or jpeg2000 bands we may need to clear         */
 /*      their PAM dirty flag too.                                       */
 /* -------------------------------------------------------------------- */
-    if( poDS->poJ2KDataset != NULL )
-        poDS->poJ2KDataset->SetPamFlags( 
-            poDS->poJ2KDataset->GetPamFlags() & ~GPF_DIRTY );
-    if( poDS->poJPEGDataset != NULL )
-        poDS->poJPEGDataset->SetPamFlags( 
-            poDS->poJPEGDataset->GetPamFlags() & ~GPF_DIRTY );
+    if( poDS->poJ2KDataset != NULL && (poDS->poJ2KDataset->GetMOFlags() & GMO_PAM_CLASS) )
+        ((GDALPamDataset*)poDS->poJ2KDataset)->SetPamFlags( 
+            ((GDALPamDataset*)poDS->poJ2KDataset)->GetPamFlags() & ~GPF_DIRTY );
+    if( poDS->poJPEGDataset != NULL && (poDS->poJPEGDataset->GetMOFlags() & GMO_PAM_CLASS) )
+        ((GDALPamDataset*)poDS->poJPEGDataset)->SetPamFlags( 
+            ((GDALPamDataset*)poDS->poJPEGDataset)->GetPamFlags() & ~GPF_DIRTY );
 
 /* -------------------------------------------------------------------- */
 /*      Check for overviews.                                            */
@@ -3251,7 +3258,7 @@ CPLErr NITFDataset::IBuildOverviews( const char *pszResampling,
 /* -------------------------------------------------------------------- */
     if( poJ2KDataset != NULL 
         && !poJ2KDataset->GetMetadataItem( "OVERVIEW_FILE", "OVERVIEWS" ) )
-        poJ2KDataset->IBuildOverviews( pszResampling, 0, NULL, 
+        poJ2KDataset->BuildOverviews( pszResampling, 0, NULL, 
                                        nListBands, panBandList, 
                                        GDALDummyProgress, NULL );
 
