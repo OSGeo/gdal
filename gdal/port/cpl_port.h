@@ -522,11 +522,11 @@ char * strdup (char *instr);
 #endif
 
 /** Return a Int16 from the 2 bytes ordered in LSB order at address x */
-#define CPL_LSBINT16PTR(x)    ((*(GByte*)(x)) | ((*(GByte*)((x)+1)) << 8))
+#define CPL_LSBINT16PTR(x)    ((*(GByte*)(x)) | (*(((GByte*)(x))+1) << 8))
 
 /** Return a Int32 from the 4 bytes ordered in LSB order at address x */
-#define CPL_LSBINT32PTR(x)    ((*(GByte*)(x)) | ((*(GByte*)((x)+1)) << 8) | \
-                              ((*(GByte*)((x)+2)) << 16) | ((*(GByte*)((x)+3)) << 24))
+#define CPL_LSBINT32PTR(x)    ((*(GByte*)(x)) | (*(((GByte*)(x))+1) << 8) | \
+                              (*(((GByte*)(x))+2) << 16) | (*(((GByte*)(x))+3) << 24))
 
 /** Return a signed Int16 from the 2 bytes ordered in LSB order at address x */
 #define CPL_LSBSINT16PTR(x) ((GInt16) CPL_LSBINT16PTR(x))
