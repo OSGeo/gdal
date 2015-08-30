@@ -3388,16 +3388,17 @@ OGRErr S57Reader::GetExtent( OGREnvelope *psExtent, int bForce )
             if( poSG3D != NULL )
             {
                 int     i, nVCount = poSG3D->GetRepeatCount();
-                GInt32  *panData, nX, nY;
+                GInt32  nX, nY;
+                const GByte   *pabyData;
 
-                panData = (GInt32 *) poSG3D->GetData();
+                pabyData = (const GByte*)poSG3D->GetData();
                 if( poSG3D->GetDataSize() < 3 * nVCount * (int)sizeof(int) )
                     return OGRERR_FAILURE;
 
                 for( i = 0; i < nVCount; i++ )
                 {
-                    nX = CPL_LSBWORD32(panData[i*3+1]);
-                    nY = CPL_LSBWORD32(panData[i*3+0]);
+                    nX = CPL_LSBINT32PTR(pabyData + 4*(i*3+1));
+                    nY = CPL_LSBINT32PTR(pabyData + 4*(i*3+0));
 
                     if( bGotExtents )
                     {
@@ -3417,16 +3418,17 @@ OGRErr S57Reader::GetExtent( OGREnvelope *psExtent, int bForce )
             else if( poSG2D != NULL )
             {
                 int     i, nVCount = poSG2D->GetRepeatCount();
-                GInt32  *panData, nX, nY;
+                GInt32  nX, nY;
+                const GByte   *pabyData;
 
-                panData = (GInt32 *) poSG2D->GetData();
+                pabyData = (const GByte*)poSG2D->GetData();
                 if( poSG2D->GetDataSize() < 2 * nVCount * (int)sizeof(int) )
                     return OGRERR_FAILURE;
 
                 for( i = 0; i < nVCount; i++ )
                 {
-                    nX = CPL_LSBWORD32(panData[i*2+1]);
-                    nY = CPL_LSBWORD32(panData[i*2+0]);
+                    nX = CPL_LSBINT32PTR(pabyData + 4*(i*2+1));
+                    nY = CPL_LSBINT32PTR(pabyData + 4*(i*2+0));
 
                     if( bGotExtents )
                     {
