@@ -126,11 +126,10 @@ int getGeometryTypeOfElem(DOMElement* elem) {
 }
 
 char *getObjValue(DOMElement *elem) {
-  DOMElement *textElem = (DOMElement *)elem->getFirstChild();
-
-  if ((textElem != NULL) && (textElem->getNodeType() == DOMNode::TEXT_NODE))
+  DOMNode* child = elem->getFirstChild();
+  if ((child != NULL) && (child->getNodeType() == DOMNode::TEXT_NODE))
   {
-    char* pszNodeValue = tr_strdup(textElem->getNodeValue());
+    char* pszNodeValue = tr_strdup(child->getNodeValue());
     return pszNodeValue;
   }
 
