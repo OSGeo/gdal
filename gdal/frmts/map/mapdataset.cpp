@@ -360,7 +360,7 @@ GDALDataset *MAPDataset::Open( GDALOpenInfo * poOpenInfo )
             OGRErr eErr;
             char *pszWKT = poDS->pszWKT;
 
-            if ( &poDS->pszWKT != NULL )
+            if ( pszWKT != NULL )
             {
                 eErr = oSRS.importFromWkt ( &pszWKT );
                 if ( eErr == OGRERR_NONE )

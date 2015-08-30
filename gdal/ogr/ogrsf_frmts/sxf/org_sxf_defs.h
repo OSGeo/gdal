@@ -197,9 +197,9 @@ enum SXFCoordinateMeasUnit
 
 typedef struct
 {
-    long double stProjCoords[8]; //X(0) & Y(1) South West, X(2) & Y(3) North West, X(4) & Y(5) North East, X(6) & Y(7) South East
-    long double stGeoCoords[8];
-    long double stFrameCoords[8];
+    double stProjCoords[8]; //X(0) & Y(1) South West, X(2) & Y(3) North West, X(4) & Y(5) North East, X(6) & Y(7) South East
+    double stGeoCoords[8];
+    double stFrameCoords[8];
     OGREnvelope Env;
     OGRSpatialReference *pSpatRef;
     SXFCoordinateMeasUnit eUnitInPlan;
@@ -208,7 +208,7 @@ typedef struct
     double dfFalseNorthing;
     double dfFalseEasting;
     GUInt32 nResolution;
-    long double dfScale;
+    double dfScale;
     bool bIsRealCoordinates;
     SXFCoordinatesAccuracy stCoordAcc;
 
