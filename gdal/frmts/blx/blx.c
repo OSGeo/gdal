@@ -931,7 +931,15 @@ STATIC blxdata *decode_celldata(blxcontext_t *ctx, unsigned char *inbuf, int len
 
     /* Scale data */
     for(i=0; i<cellsize; i++)
-	outbuf[i] = outbuf[i] * (blxdata)ctx->zscale;
+    {
+        int val = outbuf[i] * (blxdata)ctx->zscale;
+        if( val < SHRT_MIN )
+            outbuf[i] = SHRT_MIN;
+        else if( val > SHRT_MAX )
+            outbuf[i] = SHRT_MAX;
+        else
+            outbuf[i] = (blxdata)val;
+    }
 
 
  error:

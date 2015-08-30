@@ -3195,7 +3195,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
 
         GUIntBig nTileSize = (GUIntBig)nBlockXSize * nBlockYSize * nBands * nDataTypeSize;
         GByte* pTempBuffer;
-        if( nTileSize != (GUIntBig)(GUInt32)nTileSize )
+        if( nTileSize > UINT_MAX )
         {
             CPLError(CE_Failure, CPLE_NotSupported, "Tile size exceeds 4GB");
             pTempBuffer = NULL;

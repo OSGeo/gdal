@@ -386,7 +386,7 @@ static std::string VSICryptGenerateSectorIV(const std::string& osIV,
     size_t nLength = MIN(sizeof(vsi_l_offset), osSectorIV.size());
     for( size_t i=0; i < nLength; i++ )
     {
-        osSectorIV[i] ^= (nOffset & 0xff);
+        osSectorIV[i] = (char)((osSectorIV[i] ^ nOffset) & 0xff);
         nOffset >>= 8;
     }
     return osSectorIV;

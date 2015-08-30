@@ -1121,12 +1121,12 @@ static CPLMutex* hVSIFileManagerMutex = NULL;
 VSIFileManager *VSIFileManager::Get()
 
 {
-    static volatile int nConstructerPID = 0;
+    static volatile GPtrDiff_t nConstructerPID = 0;
     if( poManager != NULL )
     {
         if( nConstructerPID != 0 )
         {
-            int nCurrentPID = (int)CPLGetPID();
+            GPtrDiff_t nCurrentPID = (GPtrDiff_t)CPLGetPID();
             if( nConstructerPID != nCurrentPID )
             {
                 //printf("Thread %d: Waiting for VSIFileManager to be finished by other thread.\n", nCurrentPID);
@@ -1143,7 +1143,7 @@ VSIFileManager *VSIFileManager::Get()
     CPLMutexHolder oHolder2( &hVSIFileManagerMutex );
     if( poManager == NULL )
     {
-        nConstructerPID = (int)CPLGetPID();
+        nConstructerPID = (GPtrDiff_t)CPLGetPID();
         //printf("Thread %d: VSIFileManager in construction\n", nConstructerPID);
         poManager = new VSIFileManager;
         VSIInstallLargeFileHandler();
