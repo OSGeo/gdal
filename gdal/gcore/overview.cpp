@@ -226,9 +226,11 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
     int nOXSize, nOYSize;
     T    *pDstScanline;
 
-    T      tNoDataValue = (T)fNoDataValue;
+    T tNoDataValue;
     if (!bHasNoData)
         tNoDataValue = 0;
+    else
+        tNoDataValue = (T)fNoDataValue;
 
     nOXSize = poOverview->GetXSize();
     nOYSize = poOverview->GetYSize();
