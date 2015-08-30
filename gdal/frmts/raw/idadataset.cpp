@@ -993,7 +993,7 @@ static void c2tp(double x, GByte *r)
   }
   // stuff mantissa into Turbo Pascal real
   mant = modf(mant * 128, &temp);
-  r[5] = (unsigned char) temp;
+  r[5] = (unsigned char) (((int)temp) & 0xff);
   for (i = 4; i >= 1; i--)
   {
     mant = modf(mant * 256, &temp);
