@@ -58,10 +58,10 @@ putu32 (
         cvs_uint32 data,
         unsigned char *addr)
 {
-    addr[0] = (unsigned char)data;
-    addr[1] = (unsigned char)(data >> 8);
-    addr[2] = (unsigned char)(data >> 16);
-    addr[3] = (unsigned char)(data >> 24);
+    addr[0] = (unsigned char)(data & 0xff);
+    addr[1] = (unsigned char)((data >> 8) & 0xff);
+    addr[2] = (unsigned char)((data >> 16) & 0xff);
+    addr[3] = (unsigned char)((data >> 24) & 0xff); /* cvs_uint32 might be 64bit wide */
 }
 
 /*

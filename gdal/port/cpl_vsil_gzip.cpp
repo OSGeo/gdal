@@ -594,7 +594,7 @@ int VSIGZipHandle::gzseek( vsi_l_offset offset, int whence )
 
         in = out = offset - startOff;
         if (ENABLE_DEBUG) CPLDebug("GZIP", "return " CPL_FRMT_GUIB, in);
-        return (int) in;
+        return (in > INT_MAX) ? INT_MAX : (int) in;
     }
 
     /* whence == SEEK_END is unsuppored in original gzseek. */

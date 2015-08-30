@@ -997,7 +997,7 @@ const char *CPLGenerateTempFilename( const char *pszStem )
         pszStem = "";
 
     osFilename.Printf( "%s%u_%d", pszStem, 
-                       (int) CPLGetPID(), nTempFileCounter++ );
+                       (unsigned int)(CPLGetPID() & 0xFFFFFFFFU), nTempFileCounter++ );
 
     return CPLFormFilename( pszDir, osFilename, NULL );
 }
