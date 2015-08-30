@@ -138,6 +138,7 @@ void ods_formula_node::Initialize()
     int_value = 0;
     float_value = 0;
     string_value = NULL;
+    eOp = ODS_INVALID;
     papoSubExpr = NULL;
     nSubExprCount = 0;
 }

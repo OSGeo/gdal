@@ -95,6 +95,8 @@ typedef enum {
 
     ODS_CELL,
     ODS_CELL_RANGE,
+
+    ODS_INVALID
 } ods_formula_op;
 
 typedef enum {
