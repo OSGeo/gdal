@@ -526,7 +526,7 @@ GDALOverviewBand::~GDALOverviewBand()
 
 CPLErr GDALOverviewBand::FlushCache()
 {
-    if( ((GDALOverviewDataset*)poDS)->poMainDS )
+    if( poUnderlyingBand )
         return poUnderlyingBand->FlushCache();
     return CE_None;
 }
@@ -537,7 +537,7 @@ CPLErr GDALOverviewBand::FlushCache()
 
 GDALRasterBand* GDALOverviewBand::RefUnderlyingRasterBand()
 {
-    if( ((GDALOverviewDataset*)poDS)->poMainDS )
+    if( poUnderlyingBand )
         return poUnderlyingBand;
     else
         return NULL;
