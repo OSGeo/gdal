@@ -30,6 +30,8 @@
 #ifndef GDALSSE_PRIV_H_INCLUDED
 #define GDALSSE_PRIV_H_INCLUDED
 
+#include "cpl_port.h"
+
 /* We restrict to 64bit processors because they are guaranteed to have SSE2 */
 /* Could possibly be used too on 32bit, but we would need to check at runtime */
 #if (defined(__x86_64) || defined(_M_X64)) && !defined(USE_SSE2_EMULATION)
@@ -171,7 +173,13 @@ class XMMReg2Double
 
     inline void nsLoad2Val(const unsigned char* ptr)
     {
+#ifdef CPL_CPU_REQUIRES_ALIGNED_ACCESS
+        unsigned short s;
+        memcpy(&s, ptr, 2);
+        __m128i xmm_i = _mm_cvtsi32_si128(s);
+#else
         __m128i xmm_i = _mm_cvtsi32_si128(*(unsigned short*)(ptr));
+#endif
         xmm_i = _mm_unpacklo_epi8(xmm_i, _mm_setzero_si128());
         xmm_i = _mm_unpacklo_epi16(xmm_i, _mm_setzero_si128());
         xmm = _mm_cvtepi32_pd(xmm_i);
@@ -199,7 +207,13 @@ class XMMReg2Double
     
     static inline void Load4Val(const unsigned char* ptr, XMMReg2Double& low, XMMReg2Double& high)
     {
+#ifdef CPL_CPU_REQUIRES_ALIGNED_ACCESS
+        int i;
+        memcpy(&i, ptr, 4);
+        __m128i xmm_i = _mm_cvtsi32_si128(i);
+#else
         __m128i xmm_i = _mm_cvtsi32_si128(*(int*)(ptr));
+#endif
         xmm_i = _mm_unpacklo_epi8(xmm_i, _mm_setzero_si128());
         xmm_i = _mm_unpacklo_epi16(xmm_i, _mm_setzero_si128());
         low.xmm = _mm_cvtepi32_pd(xmm_i);
