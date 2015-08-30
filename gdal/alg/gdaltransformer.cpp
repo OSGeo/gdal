@@ -587,8 +587,8 @@ retry:
             double x_out_before = padfX[i-1];
             double x_out_after = padfX[i];
             int nIter = 0;
-            double x_in_before = (x_i - 1) * nInXSize * 1.0 / nSteps;
-            double x_in_after = x_i * nInXSize * 1.0 / nSteps;
+            double x_in_before = (double)(x_i - 1) * nInXSize / nSteps;
+            double x_in_after = (double)x_i * nInXSize / nSteps;
             int valid_before = pabSuccess[i-1];
             int valid_after = pabSuccess[i];
             
@@ -600,7 +600,7 @@ retry:
                      x_out_before * x_out_after < 0) && nIter < 16 )
             {
                 double x = (x_in_before + x_in_after) / 2;
-                double y = y_i * nInYSize * 1.0 / nSteps;
+                double y = (double)y_i * nInYSize / nSteps;
                 double z= 0;
                 //fprintf(stderr, "[%d] (%f, %f) -> ", nIter, x, y);
                 int bSuccess = TRUE;
