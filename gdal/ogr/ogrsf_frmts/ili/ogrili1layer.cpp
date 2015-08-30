@@ -539,7 +539,14 @@ OGRMultiPolygon* OGRILI1Layer::Polygonize( OGRGeometryCollection* poLines, bool 
     GEOSGeom_destroy_r( hGEOSCtxt, hResultGeom );
     OGRGeometry::freeGEOSContext( hGEOSCtxt );
 
-    return (OGRMultiPolygon *) poMP;
+    poMP = OGRGeometryFactory::forceToMultiPolygon( poMP );
+    if( poMP && wkbFlatten(poMP->getGeometryType()) == wkbMultiPolygon )
+        return (OGRMultiPolygon *) poMP;
+    else
+    {
+        delete poMP;
+        return NULL;
+    }
 
 #endif
 
