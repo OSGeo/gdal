@@ -839,7 +839,7 @@ OGRFeature *  OGRBNALayer::GetFeature( GIntBig nFID )
     BNARecord* record;
     int ok;
     
-    if (nFID < 0 || (GIntBig)(int)nFID != nFID)
+    if (nFID < 0 || !CPL_INT64_FITS_ON_INT32(nFID))
         return NULL;
 
     FastParseUntil((int)nFID);

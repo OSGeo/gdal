@@ -984,7 +984,7 @@ OGRFeatureDefn *SHPReadOGRFeatureDefn( const char * pszName,
                                             &nWidth, &nPrecision );
                            poDefn->GetFieldDefn(iField)->SetWidth(nWidth);*/
                        }
-                       else if( (GIntBig)(int)nVal != nVal )
+                       else if( !CPL_INT64_FITS_ON_INT32(nVal) )
                        {
                            poDefn->GetFieldDefn(iField)->SetType(OFTInteger64);
                            if( poDefn->GetFieldDefn(iField)->GetWidth() <= 18 )

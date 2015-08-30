@@ -1049,16 +1049,15 @@ OGRErr FGdbLayer::ICreateFeature( OGRFeature *poFeature )
     if( !m_pDS->GetUpdate() || m_pTable == NULL )
         return OGRERR_FAILURE;
 
-    if( poFeature->GetFID() < -1 ||
-        poFeature->GetFID() == 0 ||
-        (GIntBig)(int)poFeature->GetFID() != poFeature->GetFID() )
+    GIntBig nFID = poFeature->GetFID();
+    if( nFID < -1 || nFID == 0 || !CPL_INT64_FITS_ON_INT32(nFID) )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Only 32 bit positive integers FID supported by FileGDB");
         return OGRERR_FAILURE;
     }
 
-    if( poFeature->GetFID() > 0 )
+    if( nFID > 0 )
     {
         if( m_pDS->GetOpenFileGDBDrv() == NULL )
         {
@@ -1422,7 +1421,7 @@ OGRErr FGdbLayer::GetRow( EnumRows& enumRows, Row& row, GIntBig nFID )
     CPLString      osQuery;
     
     /* Querying a 64bit FID causes a runtime exception in FileGDB... */
-    if( (GIntBig)(int)nFID != nFID )
+    if( !CPL_INT64_FITS_ON_INT32(nFID) )
     {
         return OGRERR_FAILURE;
     }
@@ -1460,7 +1459,7 @@ OGRErr FGdbLayer::DeleteFeature( GIntBig nFID )
 
     if( !m_pDS->GetUpdate() || m_pTable == NULL )
         return OGRERR_FAILURE;
-    if( (GIntBig)(int)nFID != nFID )
+    if( !CPL_INT64_FITS_ON_INT32(nFID) )
         return OGRERR_NON_EXISTING_FEATURE;
 
     if( m_bSymlinkFlag && !CreateRealCopy() )
@@ -1506,13 +1505,14 @@ OGRErr FGdbLayer::ISetFeature( OGRFeature* poFeature )
     if( !m_pDS->GetUpdate()|| m_pTable == NULL )
         return OGRERR_FAILURE;
 
-    if( poFeature->GetFID() == OGRNullFID )
+    GIntBig nFID64 = poFeature->GetFID();
+    if( nFID64 == OGRNullFID )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "SetFeature() with unset FID fails." );
         return OGRERR_FAILURE;
     }
-    if( (GIntBig)(int)poFeature->GetFID() != poFeature->GetFID() )
+    if( !CPL_INT64_FITS_ON_INT32(nFID64) )
         return OGRERR_NON_EXISTING_FEATURE;
 
     EndBulkLoad();
@@ -1520,7 +1520,7 @@ OGRErr FGdbLayer::ISetFeature( OGRFeature* poFeature )
     if( m_bSymlinkFlag && !CreateRealCopy() )
         return OGRERR_FAILURE;
 
-    int nFID = (int)poFeature->GetFID();
+    int nFID = (int)nFID64;
     std::map<int,int>::iterator oIter = m_oMapOGRFIDToFGDBFID.find(nFID);
     if( oIter != m_oMapOGRFIDToFGDBFID.end() )
         nFID = oIter->second;
@@ -3416,7 +3416,7 @@ OGRFeature *FGdbLayer::GetFeature( GIntBig oid )
     // do query to fetch individual row
     EnumRows       enumRows;
     Row            row;
-    if( (GIntBig)(int)oid != oid || m_pTable == NULL )
+    if( !CPL_INT64_FITS_ON_INT32(oid) || m_pTable == NULL )
         return NULL;
 
     EndBulkLoad();

@@ -1013,7 +1013,7 @@ char** OGRCSVLayer::AutodetectFieldTypes(char** papszOpenOptions, int nFieldCoun
                 if( eType == CPL_VALUE_INTEGER )
                 {
                     GIntBig nVal = CPLAtoGIntBig(papszTokens[iField]);
-                    if( (GIntBig)(int)nVal != nVal )
+                    if( !CPL_INT64_FITS_ON_INT32(nVal) )
                         eOGRFieldType = OFTInteger64;
                     else
                         eOGRFieldType = OFTInteger;

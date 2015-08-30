@@ -1303,9 +1303,10 @@ OGRErr OGRPGTableLayer::ICreateFeature( OGRFeature *poFeature )
         return OGRERR_FAILURE;
 
     /* In case the FID column has also been created as a regular field */
+    GIntBig nFID = poFeature->GetFID();
     if( iFIDAsRegularColumnIndex >= 0 )
     {
-        if( poFeature->GetFID() == OGRNullFID )
+        if( nFID == OGRNullFID )
         {
             if( poFeature->IsFieldSet( iFIDAsRegularColumnIndex ) )
             {
@@ -1316,7 +1317,7 @@ OGRErr OGRPGTableLayer::ICreateFeature( OGRFeature *poFeature )
         else
         {
             if( !poFeature->IsFieldSet( iFIDAsRegularColumnIndex ) ||
-                poFeature->GetFieldAsInteger64(iFIDAsRegularColumnIndex) != poFeature->GetFID() )
+                poFeature->GetFieldAsInteger64(iFIDAsRegularColumnIndex) != nFID )
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                             "Inconsistent values of FID and field of same name");
@@ -1327,7 +1328,7 @@ OGRErr OGRPGTableLayer::ICreateFeature( OGRFeature *poFeature )
 
     /* Auto-promote FID column to 64bit if necessary */
     if( pszFIDColumn != NULL &&
-        (GIntBig)(int)poFeature->GetFID() != poFeature->GetFID() &&
+        !CPL_INT64_FITS_ON_INT32(nFID) &&
         GetMetadataItem(OLMD_FID64) == NULL )
     {
         poDS->EndCopy();

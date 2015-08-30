@@ -185,7 +185,7 @@ int swqlex( YYSTYPE *ppNode, swq_parse_context *context )
         else
         {
             GIntBig nVal = CPLAtoGIntBig(osToken);
-            if( (GIntBig)(int)nVal == nVal )
+            if( CPL_INT64_FITS_ON_INT32(nVal) )
                 *ppNode = new swq_expr_node( (int)nVal );
             else
                 *ppNode = new swq_expr_node( nVal );

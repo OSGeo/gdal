@@ -184,7 +184,7 @@ OGRFieldType GeoJSONPropertyToFieldType( json_object* poObject,
     else if( json_type_int == type )
     {
         GIntBig nVal = json_object_get_int64(poObject);
-        if( nVal != (GIntBig)(int) nVal )
+        if( !CPL_INT64_FITS_ON_INT32(nVal) )
         {
             if( nVal == MY_INT64_MIN || nVal == MY_INT64_MAX )
             {
@@ -228,7 +228,7 @@ OGRFieldType GeoJSONPropertyToFieldType( json_object* poObject,
                          type == json_type_int)
                 {
                     GIntBig nVal = json_object_get_int64(poRow);
-                    if( nVal != (GIntBig)(int)nVal )
+                    if( !CPL_INT64_FITS_ON_INT32(nVal) )
                         eType = OFTInteger64List;
                 }
                 else if (type != json_type_int &&

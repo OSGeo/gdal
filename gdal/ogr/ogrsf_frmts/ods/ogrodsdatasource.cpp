@@ -430,7 +430,7 @@ OGRFieldType OGRODSDataSource::GetOGRFieldType(const char* pszValue,
         if (CPLGetValueType(pszValue) == CPL_VALUE_INTEGER)
         {
             GIntBig nVal = CPLAtoGIntBig(pszValue);
-            if( (GIntBig)(int)nVal != nVal )
+            if( !CPL_INT64_FITS_ON_INT32(nVal) )
                 return OFTInteger64;
             else
                 return OFTInteger;
