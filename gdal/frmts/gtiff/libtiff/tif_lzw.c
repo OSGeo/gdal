@@ -1,4 +1,4 @@
-/* $Id: tif_lzw.c,v 1.48 2015-08-30 20:49:55 erouault Exp $ */
+/* $Id: tif_lzw.c,v 1.49 2015-08-30 21:07:44 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -94,7 +94,7 @@ typedef struct {
 	unsigned short  nbits;          /* # of bits/code */
 	unsigned short  maxcode;        /* maximum code for lzw_nbits */
 	unsigned short  free_ent;       /* next free entry in hash table */
-	long            nextdata;       /* next bits of i/o */
+	unsigned long   nextdata;       /* next bits of i/o */
 	long            nextbits;       /* # of valid bits in lzw_nextdata */
 
 	int             rw_mode;        /* preserve rw_mode from init */
@@ -367,7 +367,8 @@ LZWDecode(TIFF* tif, uint8* op0, tmsize_t occ0, uint16 s)
 	unsigned char *bp;
 	hcode_t code;
 	int len;
-	long nbits, nextbits, nextdata, nbitsmask;
+	long nbits, nextbits, nbitsmask;
+        unsigned long nextdata;
 	code_t *codep, *free_entp, *maxcodep, *oldcodep;
 
 	(void) s;
@@ -874,7 +875,8 @@ LZWEncode(TIFF* tif, uint8* bp, tmsize_t cc, uint16 s)
 	hcode_t ent;
 	long disp;
 	long incount, outcount, checkpoint;
-	long nextdata, nextbits;
+	unsigned long nextdata;
+        long nextbits;
 	int free_ent, maxcode, nbits;
 	uint8* op;
 	uint8* limit;
@@ -1036,7 +1038,7 @@ LZWPostEncode(TIFF* tif)
 	register LZWCodecState *sp = EncoderState(tif);
 	uint8* op = tif->tif_rawcp;
 	long nextbits = sp->lzw_nextbits;
-	long nextdata = sp->lzw_nextdata;
+	unsigned long nextdata = sp->lzw_nextdata;
 	long outcount = sp->enc_outcount;
 	int nbits = sp->lzw_nbits;
 
