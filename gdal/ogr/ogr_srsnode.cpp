@@ -155,9 +155,6 @@ OGR_SRSNode *OGR_SRSNode::GetNode( const char * pszName )
 
 {
     int  i;
-
-    if( this == NULL )
-        return NULL;
     
     if( nChildren > 0 && EQUAL(pszName,pszValue) )
         return this;

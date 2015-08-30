@@ -396,7 +396,7 @@ OGRBoolean OGRGeometry::Intersects( const OGRGeometry *poOtherGeom ) const
 {
     OGREnvelope         oEnv1, oEnv2;
 
-    if( this == NULL || poOtherGeom == NULL )
+    if( poOtherGeom == NULL )
         return TRUE;
 
     this->getEnvelope( &oEnv1 );
