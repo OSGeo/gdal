@@ -1805,8 +1805,9 @@ double ILWISRasterBand::GetNoDataValue( int *pbSuccess )
         return shUNDEF;
     else if( eDataType == GDT_Float32)
         return flUNDEF;
-    else if( EQUAL(psInfo.stDomain.c_str(),"image") 
-             || EQUAL(psInfo.stDomain.c_str(),"colorcmp")) 
+    else if( pbSuccess &&
+             (EQUAL(psInfo.stDomain.c_str(),"image")
+              || EQUAL(psInfo.stDomain.c_str(),"colorcmp")))
     {
         *pbSuccess = false;
         return 0;
