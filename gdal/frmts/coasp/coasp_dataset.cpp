@@ -444,6 +444,7 @@ GDALDataset *COASPDataset::Open( GDALOpenInfo *poOpenInfo )
     free(nValue);
 
     poReader->GotoMetadataItem("number_samples");
+    delete poItem;
     poItem = poReader->GetNextItem();
     nValue = poItem->GetItemValue();
     poDS->nRasterXSize = atoi(nValue);
