@@ -234,6 +234,11 @@ ogrinfo ES:http://example.com:9200
 ogrinfo -ro ES: my_type -where '{ "filter": { "term": { "EAS_ID": 168 } } }'
 </pre>
 
+<b>Using "match" query on Windows:</b><br>
+On Windows the query must be between double quotes and double quotes inside the query must be escaped.
+<pre>
+C:\GDAL_on_Windows>ogrinfo ES: my_type -where "{\"query\": { \"match\": { \"NAME\": \"Helsinki\" } } }"
+</pre>
 <b>Load an ElasticSearch index with a shapefile:</b> </br>
 <pre>
 ogr2ogr -f "ElasticSearch" http://localhost:9200 my_shapefile.shp
