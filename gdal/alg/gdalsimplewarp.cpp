@@ -314,11 +314,11 @@ GDALSimpleImageWarp( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
 /*      data before warping.  Two kinds are support ... REMAP           */
 /*      commands which remap selected pixel values for any band and     */
 /*      REMAP_MULTI which only remap pixels matching the input in       */
-/*      all bands at once (ie. to remap an RGB value to another).       */
+/*      all bands at once (i.e. to remap an RGB value to another).       */
 /************************************************************************/
 
-static void 
-GDALSimpleWarpRemapping( int nBandCount, GByte **papabySrcData, 
+static void
+GDALSimpleWarpRemapping( int nBandCount, GByte **papabySrcData,
                          int nSrcXSize, int nSrcYSize,
                          char **papszWarpOptions )
 
@@ -327,19 +327,17 @@ GDALSimpleWarpRemapping( int nBandCount, GByte **papabySrcData,
 /* ==================================================================== */
 /*      Process any and all single value REMAP commands.                */
 /* ==================================================================== */
-    int  iRemap;
     char **papszRemaps = CSLFetchNameValueMultiple( papszWarpOptions, 
                                                     "REMAP" );
 
-    for( iRemap = 0; iRemap < CSLCount(papszRemaps); iRemap++ )
+    for( int iRemap = 0; iRemap < CSLCount(papszRemaps); iRemap++ )
     {
 
 /* -------------------------------------------------------------------- */
 /*      What are the pixel values to map from and to?                   */
 /* -------------------------------------------------------------------- */
         char **papszTokens = CSLTokenizeString( papszRemaps[iRemap] );
-        int  nFromValue, nToValue;
-        
+
         if( CSLCount(papszTokens) != 2 )
         {
             CPLError( CE_Warning, CPLE_AppDefined,
@@ -349,9 +347,9 @@ GDALSimpleWarpRemapping( int nBandCount, GByte **papabySrcData,
             continue;
         }
 
-        nFromValue = atoi(papszTokens[0]);
-        nToValue = atoi(papszTokens[1]);
-        
+        int nFromValue = atoi(papszTokens[0]);
+        int nToValue = atoi(papszTokens[1]);
+
         CSLDestroy( papszTokens );
 
 /* -------------------------------------------------------------------- */
@@ -361,7 +359,7 @@ GDALSimpleWarpRemapping( int nBandCount, GByte **papabySrcData,
         {
             GByte *pabyData = papabySrcData[iBand];
             int   nPixelCount = nSrcXSize * nSrcYSize;
-            
+
             while( nPixelCount != 0 )
             {
                 if( *pabyData == nFromValue )
@@ -381,31 +379,29 @@ GDALSimpleWarpRemapping( int nBandCount, GByte **papabySrcData,
     papszRemaps = CSLFetchNameValueMultiple( papszWarpOptions, 
                                              "REMAP_MULTI" );
 
-    for( iRemap = 0; iRemap < CSLCount(papszRemaps); iRemap++ )
+    for( int iRemap = 0; iRemap < CSLCount(papszRemaps); iRemap++ )
     {
 /* -------------------------------------------------------------------- */
 /*      What are the pixel values to map from and to?                   */
 /* -------------------------------------------------------------------- */
         char **papszTokens = CSLTokenizeString( papszRemaps[iRemap] );
-        int *panFromValue, *panToValue;
-        int  nMapBandCount, iBand;
 
-        if( CSLCount(papszTokens) % 2 == 1 
-            || CSLCount(papszTokens) == 0 
+        if( CSLCount(papszTokens) % 2 == 1
+            || CSLCount(papszTokens) == 0
             || CSLCount(papszTokens) > nBandCount * 2 )
         {
             CPLError( CE_Warning, CPLE_AppDefined,
-                      "Ill formed REMAP_MULTI `%s' ignored in GDALSimpleWarpRemapping()", 
+                      "Ill formed REMAP_MULTI `%s' ignored in GDALSimpleWarpRemapping()",
                       papszRemaps[iRemap] );
             continue;
         }
 
-        nMapBandCount = CSLCount(papszTokens) / 2;
-        
-        panFromValue = (int *) CPLMalloc(sizeof(int) * nMapBandCount );
-        panToValue = (int *) CPLMalloc(sizeof(int) * nMapBandCount );
+        int nMapBandCount = CSLCount(papszTokens) / 2;
 
-        for( iBand = 0; iBand < nMapBandCount; iBand++ )
+        int *panFromValue = (int *) CPLMalloc(sizeof(int) * nMapBandCount );
+        int *panToValue = (int *) CPLMalloc(sizeof(int) * nMapBandCount );
+
+        for( int iBand = 0; iBand < nMapBandCount; iBand++ )
         {
             panFromValue[iBand] = atoi(papszTokens[iBand]);
             panToValue[iBand] = atoi(papszTokens[iBand+nMapBandCount]);
@@ -417,25 +413,24 @@ GDALSimpleWarpRemapping( int nBandCount, GByte **papabySrcData,
 /*      Search for matching values to replace.                          */
 /* -------------------------------------------------------------------- */
         int   nPixelCount = nSrcXSize * nSrcYSize;
-        int   iPixel;
 
-        for( iPixel = 0; iPixel < nPixelCount; iPixel++ )
+        for( int iPixel = 0; iPixel < nPixelCount; iPixel++ )
         {
             if( papabySrcData[0][iPixel] != panFromValue[0] )
                 continue;
 
-            int bMatch = TRUE;
+            bool bMatch = true;
 
-            for( iBand = 1; iBand < nMapBandCount; iBand++ )
+            for( int iBand = 1; iBand < nMapBandCount; iBand++ )
             {
                 if( papabySrcData[iBand][iPixel] != panFromValue[iBand] )
-                    bMatch = FALSE;
+                    bMatch = false;
             }
 
             if( !bMatch )
                 continue;
 
-            for( iBand = 0; iBand < nMapBandCount; iBand++ )
+            for( int iBand = 0; iBand < nMapBandCount; iBand++ )
                 papabySrcData[iBand][iPixel] = (GByte) panToValue[iBand];
         }
 
