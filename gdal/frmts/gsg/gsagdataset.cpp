@@ -1154,9 +1154,8 @@ CPLErr GSAGDataset::SetGeoTransform( double *padfGeoTransform )
     /*if( padfGeoTransform[2] != 0.0 || padfGeoTransform[4] != 0.0
 	|| padfGeoTransform[1] < 0.0 || padfGeoTransform[5] < 0.0 )
 	eErr = GDALPamDataset::SetGeoTransform( padfGeoTransform );*/
-
-    if( eErr != CE_None )
-	return eErr;
+    // if( eErr != CE_None )
+    //     return eErr;
 
     double dfOldMinX = poGRB->dfMinX;
     double dfOldMaxX = poGRB->dfMaxX;
