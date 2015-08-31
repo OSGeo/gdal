@@ -96,7 +96,7 @@ private:
 
 struct ILWISInfo
 {
-    ILWISInfo() : bUseValueRange(false), vr(0, 0) {}
+    ILWISInfo() : bUseValueRange(false), vr(0, 0), stStoreType(stByte) {}
     bool bUseValueRange;
     ValueRange vr;
     ilwisStoreType stStoreType;
@@ -210,5 +210,3 @@ private:
     void Load();
     void Store();
 };
-
-
