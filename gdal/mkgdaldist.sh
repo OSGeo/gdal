@@ -4,13 +4,23 @@
 #
 # mkgdaldist.sh - prepares GDAL source distribution package
 #
+
+# Doxgen 1.7.1 has a bug related to man pages. See https://trac.osgeo.org/gdal/ticket/6048
+echo $(doxygen --version) | xargs python -c "import sys; v = sys.argv[1].split('.'); v=int(v[0])*10000+int(v[1])*100+int(v[2]); sys.exit(v < 10704)"
+rc=$?
+if test $rc != 0; then
+    echo "Wrong Doxygen version. 1.7.4 or later required"
+    exit $rc;
+fi
+
 if [ $# -lt 1 ] ; then
   echo "Usage: mkgdaldist.sh <version> [-date date] [-branch branch] [-rc n]"
   echo " <version> - version number used in name of generated archive."
   echo " -date     - date of package generation, current date used if not provided"
   echo " -branch   - path to SVN branch, trunk is used if not provided"
   echo " -rc       - gives a release candidate id to embed in filenames"
-  echo "Example: mkgdaldist.sh 1.1.4 -branch branches/1.8 -rc RC2"
+  echo "Example: mkgdaldist.sh 1.8.0 -branch branches/1.8 -rc RC2"
+  echo "or       mkgdaldist.sh 1.10.0beta2"
   exit
 fi
 
