@@ -611,6 +611,7 @@ static int EnvisatFile_RewriteHeader( EnvisatFile *self )
                    SEEK_SET ) != 0 )
         {
             SendError( "VSIFSeekL() failed in EnvisatFile_RewriteHeader()" );
+            CPLFree(dsd_text);
             return FAILURE;
         }
         
