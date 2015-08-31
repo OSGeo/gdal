@@ -209,29 +209,30 @@ GDALDataset *MAPDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Try to load and parse the .MAP file.                            */
 /* -------------------------------------------------------------------- */
 
-    int bOziFileOK = 
+    int bOziFileOK =
          GDALLoadOziMapFile( poOpenInfo->pszFilename,
-                             poDS->adfGeoTransform, 
+                             poDS->adfGeoTransform,
                              &poDS->pszWKT,
                              &poDS->nGCPCount, &poDS->pasGCPList );
 
     if ( bOziFileOK && poDS->nGCPCount == 0 )
          poDS->bGeoTransformValid = TRUE;
 
-   /* We need to read again the .map file because the GDALLoadOziMapFile function
-      does not returns all required data . An API change is necessary : maybe in GDAL 2.0 ? */
+    /* We need to read again the .map file because the GDALLoadOziMapFile function
+       does not returns all required data . An API change is necessary : maybe in GDAL 2.0 ? */
 
-    char	**papszLines;
-    int		iLine, nLines=0;
-
-    papszLines = CSLLoad2( poOpenInfo->pszFilename, 200, 200, NULL );
+    char **papszLines = CSLLoad2( poOpenInfo->pszFilename, 200, 200, NULL );
 
     if ( !papszLines )
+    {
+        delete poDS;
         return NULL;
+    }
 
-    nLines = CSLCount( papszLines );
+    int nLines = CSLCount( papszLines );
     if( nLines < 2 )
     {
+        delete poDS;
         CSLDestroy(papszLines);
         return NULL;
     }
@@ -292,7 +293,7 @@ GDALDataset *MAPDataset::Open( GDALOpenInfo * poOpenInfo )
     /* First, we need to check if it is necessary to define a neatline */
     bool bNeatLine = false;
     char **papszTok;
-    for ( iLine = 10; iLine < nLines; iLine++ )
+    for ( int iLine = 10; iLine < nLines; iLine++ )
     {
         if ( EQUALN(papszLines[iLine], "MMPXY,", 6) )
         {
@@ -326,7 +327,7 @@ GDALDataset *MAPDataset::Open( GDALOpenInfo * poOpenInfo )
 
         if ( poDS->bGeoTransformValid )        /* Compute the projected coordinates of the corners */
         {
-            for ( iLine = 10; iLine < nLines; iLine++ )
+            for ( int iLine = 10; iLine < nLines; iLine++ )
             {
                 if ( EQUALN(papszLines[iLine], "MMPXY,", 6) )
                 {
@@ -369,7 +370,7 @@ GDALDataset *MAPDataset::Open( GDALOpenInfo * poOpenInfo )
                         poTransform = OGRCreateCoordinateTransformation( poLatLong, &oSRS );
             }
 
-            for ( iLine = 10; iLine < nLines; iLine++ )
+            for ( int iLine = 10; iLine < nLines; iLine++ )
             {
                 if ( EQUALN(papszLines[iLine], "MMPLL,", 6) )
                 {
