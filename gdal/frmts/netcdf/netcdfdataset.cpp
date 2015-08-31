@@ -1819,7 +1819,6 @@ void netCDFDataset::SetProjectionFromVar( int nVarId )
     int          bGotGdalSRS = FALSE;
     int          bGotCfGT = FALSE;
     int          bGotGdalGT = FALSE;
-    int          bLookForWellKnownGCS = FALSE;  //this could be a Config Option
 
     /* These values from CF metadata */
     OGRSpatialReference oSRS;
@@ -3050,12 +3049,15 @@ void netCDFDataset::SetProjectionFromVar( int nVarId )
 /*     For example, WGS84 vs. GDA94 (EPSG:3577) - AEA in netcdf_cf.py   */
 /* -------------------------------------------------------------------- */
     /* disabled for now, but could be set in a config option */
-    bLookForWellKnownGCS = FALSE; 
+#if 0
+    int          bLookForWellKnownGCS = FALSE;  //this could be a Config Option
+
+    bLookForWellKnownGCS = FALSE;
     if ( bLookForWellKnownGCS && bGotCfSRS && ! bGotGdalSRS ) {
         /* ET - could use a more exhaustive method by scanning all EPSG codes in data/gcs.csv */
         /* as proposed by Even in the gdal-dev mailing list "help for comparing two WKT" */
         /* this code could be contributed to a new function */
-        /* OGRSpatialReference * OGRSpatialReference::FindMatchingGeogCS( const OGRSpatialReference *poOther ) */ 
+        /* OGRSpatialReference * OGRSpatialReference::FindMatchingGeogCS( const OGRSpatialReference *poOther ) */
         CPLDebug( "GDAL_netCDF", "Searching for Well-known GeogCS" );
         const char *pszWKGCSList[] = { "WGS84", "WGS72", "NAD27", "NAD83" };
         char *pszWKGCS = NULL;
@@ -3081,6 +3083,7 @@ void netCDFDataset::SetProjectionFromVar( int nVarId )
             }
         }
     }
+#endif
 }
 
 
