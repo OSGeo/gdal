@@ -719,6 +719,7 @@ INGR_MinMax CPL_STDCALL INGR_SetMinMax( GDALDataType eType, double dValue )
         break;
     case GDT_Float64:
         uResult.AsReal64  = (real64) dValue;
+        break;
     default:
         uResult.AsUint8   = (uint8) 0;
     }
