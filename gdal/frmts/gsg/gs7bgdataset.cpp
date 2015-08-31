@@ -720,6 +720,7 @@ GDALDataset *GS7BGDataset::Open( GDALOpenInfo * poOpenInfo )
         delete poDS;
         CPLError( CE_Failure, CPLE_FileIO,
             "Unable to read minimum X value.\n" );
+        delete poBand;
         return NULL;
     }
     CPL_LSBPTR64( &dfTemp );
@@ -731,6 +732,7 @@ GDALDataset *GS7BGDataset::Open( GDALOpenInfo * poOpenInfo )
         delete poDS;
         CPLError( CE_Failure, CPLE_FileIO,
             "Unable to read minimum X value.\n" );
+        delete poBand;
         return NULL;
     }
     CPL_LSBPTR64( &dfTemp );
@@ -743,6 +745,7 @@ GDALDataset *GS7BGDataset::Open( GDALOpenInfo * poOpenInfo )
         delete poDS;
         CPLError( CE_Failure, CPLE_FileIO,
             "Unable to read spacing in X value.\n" );
+        delete poBand;
         return NULL;
     }
     CPL_LSBPTR64( &dfTemp );
@@ -755,6 +758,7 @@ GDALDataset *GS7BGDataset::Open( GDALOpenInfo * poOpenInfo )
         delete poDS;
         CPLError( CE_Failure, CPLE_FileIO,
             "Unable to read spacing in Y value.\n" );
+        delete poBand;
         return NULL;
     }
     CPL_LSBPTR64( &dfTemp );
@@ -766,6 +770,7 @@ GDALDataset *GS7BGDataset::Open( GDALOpenInfo * poOpenInfo )
         delete poDS;
         CPLError( CE_Failure, CPLE_FileIO,
             "Unable to read Z min value.\n" );
+        delete poBand;
         return NULL;
     }
     CPL_LSBPTR64( &dfTemp );
@@ -777,6 +782,7 @@ GDALDataset *GS7BGDataset::Open( GDALOpenInfo * poOpenInfo )
         delete poDS;
         CPLError( CE_Failure, CPLE_FileIO,
             "Unable to read Z max value.\n" );
+        delete poBand;
         return NULL;
     }
     CPL_LSBPTR64( &dfTemp );
