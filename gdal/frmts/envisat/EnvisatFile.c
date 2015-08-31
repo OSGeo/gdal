@@ -1835,6 +1835,7 @@ int S_NameValueList_Parse( const char *text, int text_offset,
         if( *entries == NULL )
         {
             *entry_count = 0;
+            CPLFree(entry);
             return FAILURE;
         }
 
