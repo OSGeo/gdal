@@ -1511,14 +1511,12 @@ GDALDataset *LevellerDataset::Open( GDALOpenInfo * poOpenInfo )
 {
     // The file should have at least 5 header bytes
     // and hf_w, hf_b, and hf_data tags.
-#ifdef DEBUG
 
-#endif
     if( poOpenInfo->nHeaderBytes < 5+13+13+16 )
         return NULL;
 
-	if( !LevellerDataset::Identify(poOpenInfo))
-		return NULL;
+    if( !LevellerDataset::Identify(poOpenInfo))
+        return NULL;
 
     const int version = poOpenInfo->pabyHeader[4];
     if(version < 4 || version > 7)
@@ -1529,7 +1527,7 @@ GDALDataset *LevellerDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
 
-	LevellerDataset* poDS = new LevellerDataset();
+    LevellerDataset* poDS = new LevellerDataset();
 
     poDS->m_version = version;
 
@@ -1544,13 +1542,14 @@ GDALDataset *LevellerDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "Failed to re-open %s within Leveller driver.",
                   poOpenInfo->pszFilename );
+        delete poDS;
         return NULL;
     }
     poDS->eAccess = poOpenInfo->eAccess;
 
-    
+
 /* -------------------------------------------------------------------- */
-/*	Read the file.							                            */
+/*	Read the file.                                                  */
 /* -------------------------------------------------------------------- */
     if( !poDS->load_from_file( poDS->m_fp, poOpenInfo->pszFilename ) )
     {
