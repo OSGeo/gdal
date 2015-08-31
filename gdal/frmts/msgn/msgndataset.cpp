@@ -358,34 +358,48 @@ GDALDataset *MSGNDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      least one "\n#keyword" type signature in the first chunk of     */
 /*      the file.                                                       */
 /* -------------------------------------------------------------------- */
-    if( open_info->fpL == NULL || open_info->nHeaderBytes < 50 )
+    if( open_info->fpL == NULL || open_info->nHeaderBytes < 50 ) {
+        if (open_info != poOpenInfo) {
+            delete open_info;
+        }
         return NULL;
+    }
 
     /* check if this is a "NATIVE" MSG format image */
     if( !EQUALN((char *)open_info->pabyHeader,
                 "FormatName                  : NATIVE", 36) )
     {
+        if (open_info != poOpenInfo) {
+            delete open_info;
+        }
         return NULL;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Confirm the requested access is supported.                      */
 /* -------------------------------------------------------------------- */
     if( poOpenInfo->eAccess == GA_Update )
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "The MSGN driver does not support update access to existing"
                   " datasets.\n" );
+        if (open_info != poOpenInfo) {
+            delete open_info;
+        }
         return NULL;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
     MSGNDataset        *poDS;
     FILE* fp = VSIFOpen( open_info->pszFilename, "rb" );
-    if( fp == NULL )
+    if( fp == NULL ) {
+        if (open_info != poOpenInfo) {
+            delete open_info;
+        }
         return NULL;
+    }
 
     poDS = new MSGNDataset();
 
@@ -400,6 +414,9 @@ GDALDataset *MSGNDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->msg_reader_core = new Msg_reader_core(poDS->fp);
 
     if (!poDS->msg_reader_core->get_open_success()) {
+        if (open_info != poOpenInfo) {
+            delete open_info;
+        }
         delete poDS;
         return NULL;
     }
@@ -509,7 +526,6 @@ GDALDataset *MSGNDataset::Open( GDALOpenInfo * poOpenInfo )
          poDS->msg_reader_core->get_col_start()
     );
     poDS->SetMetadataItem("Origin", field);
-
 
     if (open_info != poOpenInfo) {
         delete open_info;
