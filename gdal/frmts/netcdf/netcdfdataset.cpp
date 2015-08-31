@@ -6964,18 +6964,15 @@ int NCDFDoesVarContainAttribVal2( int nCdfId,
 
 int NCDFEqual( const char * papszName, const char ** papszValues )
 {
-    int bFound = FALSE;
-
     if ( papszName == NULL || EQUAL(papszName,"") )
         return FALSE;
 
-    for( int i=0; i<CSLCount((char**)papszValues); i++ ) {
+    for( int i=0; i<CSLCount((char**)papszValues); ++i ) {
         if( EQUAL( papszName, papszValues[i] ) )
-            bFound = TRUE;
-        break;
+            return TRUE;
     }
-     
-    return bFound;
+
+    return FALSE;
 }
 
 /* test that a variable is longitude/latitude coordinate, following CF 4.1 and 4.2 */
@@ -6984,31 +6981,31 @@ int NCDFIsVarLongitude( int nCdfId, int nVarId,
 {
     /* check for matching attributes */
     int bVal = NCDFDoesVarContainAttribVal( nCdfId,
-                                            papszCFLongitudeAttribNames, 
+                                            papszCFLongitudeAttribNames,
                                             papszCFLongitudeAttribValues,
                                             nVarId, pszVarName );
     /* if not found using attributes then check using var name */
     /* unless GDAL_NETCDF_VERIFY_DIMS=STRICT */
     if ( bVal == -1 ) {
-        if ( ! EQUAL( CPLGetConfigOption( "GDAL_NETCDF_VERIFY_DIMS", "YES" ), 
+        if ( ! EQUAL( CPLGetConfigOption( "GDAL_NETCDF_VERIFY_DIMS", "YES" ),
                       "STRICT" ) )
-            bVal = NCDFEqual(pszVarName, papszCFLongitudeVarNames );
+            bVal = NCDFEqual( pszVarName, papszCFLongitudeVarNames );
         else
             bVal = FALSE;
     }
     return bVal;
 }
- 
+
 int NCDFIsVarLatitude( int nCdfId, int nVarId, const char * pszVarName )
 {
     int bVal = NCDFDoesVarContainAttribVal( nCdfId,
-                                            papszCFLatitudeAttribNames, 
+                                            papszCFLatitudeAttribNames,
                                             papszCFLatitudeAttribValues,
                                             nVarId, pszVarName );
     if ( bVal == -1 ) {
-        if ( ! EQUAL( CPLGetConfigOption( "GDAL_NETCDF_VERIFY_DIMS", "YES" ), 
+        if ( ! EQUAL( CPLGetConfigOption( "GDAL_NETCDF_VERIFY_DIMS", "YES" ),
                       "STRICT" ) )
-            bVal = NCDFEqual(pszVarName, papszCFLatitudeVarNames );
+            bVal = NCDFEqual( pszVarName, papszCFLatitudeVarNames );
         else
             bVal = FALSE;
     }
@@ -7018,13 +7015,13 @@ int NCDFIsVarLatitude( int nCdfId, int nVarId, const char * pszVarName )
 int NCDFIsVarProjectionX( int nCdfId, int nVarId, const char * pszVarName )
 {
     int bVal = NCDFDoesVarContainAttribVal( nCdfId,
-                                            papszCFProjectionXAttribNames, 
+                                            papszCFProjectionXAttribNames,
                                             papszCFProjectionXAttribValues,
                                             nVarId, pszVarName );
     if ( bVal == -1 ) {
-        if ( ! EQUAL( CPLGetConfigOption( "GDAL_NETCDF_VERIFY_DIMS", "YES" ), 
+        if ( ! EQUAL( CPLGetConfigOption( "GDAL_NETCDF_VERIFY_DIMS", "YES" ),
                       "STRICT" ) )
-            bVal = NCDFEqual(pszVarName, papszCFProjectionXVarNames );
+            bVal = NCDFEqual( pszVarName, papszCFProjectionXVarNames );
         else
             bVal = FALSE;
 
@@ -7035,13 +7032,13 @@ int NCDFIsVarProjectionX( int nCdfId, int nVarId, const char * pszVarName )
 int NCDFIsVarProjectionY( int nCdfId, int nVarId, const char * pszVarName )
 {
     int bVal = NCDFDoesVarContainAttribVal( nCdfId,
-                                            papszCFProjectionYAttribNames, 
+                                            papszCFProjectionYAttribNames,
                                             papszCFProjectionYAttribValues,
                                             nVarId, pszVarName );
     if ( bVal == -1 ) {
-        if ( ! EQUAL( CPLGetConfigOption( "GDAL_NETCDF_VERIFY_DIMS", "YES" ), 
+        if ( ! EQUAL( CPLGetConfigOption( "GDAL_NETCDF_VERIFY_DIMS", "YES" ),
                       "STRICT" ) )
-            bVal = NCDFEqual(pszVarName, papszCFProjectionYVarNames );
+            bVal = NCDFEqual( pszVarName, papszCFProjectionYVarNames );
         else
             bVal = FALSE;
     }
