@@ -319,6 +319,7 @@ int EnvisatFile_Open( EnvisatFile **self_ptr,
     {
         SendError( "File does not appear to have SPH,"
                    " SPH_SIZE not set, or zero." );
+        CPLFree( self );
         return FAILURE;
     }
 
@@ -344,7 +345,10 @@ int EnvisatFile_Open( EnvisatFile **self_ptr,
     if( S_NameValueList_Parse( sph_data, MPH_SIZE,
                                &(self->sph_count), 
                                &(self->sph_entries) ) == FAILURE )
+    {
+        CPLFree( self );
         return FAILURE;
+    }
 
     /*
      * Parse the Dataset Definitions.
@@ -355,6 +359,7 @@ int EnvisatFile_Open( EnvisatFile **self_ptr,
     if( num_dsd > 0 && ds_data == NULL )
     {
         SendError( "DSDs indicated in MPH, but not found in SPH." );
+        CPLFree( self );
         return FAILURE;
     }
 
@@ -378,7 +383,10 @@ int EnvisatFile_Open( EnvisatFile **self_ptr,
         
         if( S_NameValueList_Parse( dsd_data, 0, 
                                    &dsdh_count, &dsdh_entries ) == FAILURE )
+        {
+            CPLFree( self );
             return FAILURE;
+        }
 
         /* 
          * Then build the dataset into structure from that. 
