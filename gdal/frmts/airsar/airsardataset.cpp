@@ -394,14 +394,13 @@ char ** AirSARDataset::ReadHeader( VSILFILE * fp, int nFileOffset,
 {
     char **papszHeadInfo = NULL;
     char szLine[51];
-    int  iLine;
 
     VSIFSeekL( fp, nFileOffset, SEEK_SET );
 
 /* ==================================================================== */
 /*      Loop collecting one line at a time.                             */
 /* ==================================================================== */
-    for( iLine = 0; iLine < nMaxLines; iLine++ )
+    for( int iLine = 0; iLine < nMaxLines; iLine++ )
     {
 /* -------------------------------------------------------------------- */
 /*      Read a 50 byte header record.                                   */
@@ -410,6 +409,7 @@ char ** AirSARDataset::ReadHeader( VSILFILE * fp, int nFileOffset,
         {
             CPLError( CE_Failure, CPLE_FileIO,
                       "Read error collecting AirSAR header." );
+            CSLDestroy( papszHeadInfo );
             return NULL;
         }
 
@@ -551,9 +551,10 @@ GDALDataset *AirSARDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     if( poOpenInfo->eAccess == GA_Update )
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "The AIRSAR driver does not support update access to existing"
                   " datasets.\n" );
+        CSLDestroy( papszMD );
         return NULL;
     }
 /* -------------------------------------------------------------------- */
