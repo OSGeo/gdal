@@ -196,6 +196,25 @@ char *CPLRecodeStub( const char *pszSource,
         int nCharCount = strlen(pszSource);
         char *pszResult = (char *) CPLCalloc(1,nCharCount*2+1);
 
+        if( EQUAL( pszSrcEncoding, "CP437") ) /* For ZIP file handling */
+        {
+            int bIsAllPrintableASCII = TRUE;
+            for(int i=0;i<nCharCount;i++)
+            {
+                if( pszSource[i] < 32 || pszSource[i] > 126 )
+                {
+                    bIsAllPrintableASCII = FALSE;
+                    break;
+                }
+            }
+            if( bIsAllPrintableASCII )
+            {
+                if( nCharCount )
+                    memcpy( pszResult, pszSource, nCharCount );
+                return pszResult;
+            }
+        }
+        
         if( !bHaveWarned1 )
         {
             bHaveWarned1 = 1;
