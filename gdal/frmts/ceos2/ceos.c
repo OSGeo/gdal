@@ -367,7 +367,8 @@ void CeosUpdateHeaderFromBuffer(CeosRecord_t *record)
 	memcpy(&(record->TypeCode.Int32Code),record->Buffer+__TYPE_OFF,sizeof(record->TypeCode.Int32Code));
 	CeosToNative(&(record->Sequence),record->Buffer+__SEQUENCE_OFF,sizeof(record->Sequence ), sizeof( record->Sequence ) );
     }
-    record->Subsequence = 0;
+    if(record)
+        record->Subsequence = 0;
 }
 
 #ifdef CPL_LSB
