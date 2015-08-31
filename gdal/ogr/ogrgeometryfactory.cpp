@@ -78,6 +78,7 @@ OGRErr OGRGeometryFactory::createFromWkb(unsigned char *pabyData,
 
 {
     OGRwkbGeometryType eGeometryType;
+    int             nByteOrder;
     OGRwkbByteOrder eByteOrder;
     OGRErr      eErr;
     OGRGeometry *poGeom;
@@ -91,10 +92,8 @@ OGRErr OGRGeometryFactory::createFromWkb(unsigned char *pabyData,
 /*      Get the byte order byte.  The extra tests are to work around    */
 /*      bug sin the WKB of DB2 v7.2 as identified by Safe Software.     */
 /* -------------------------------------------------------------------- */
-    eByteOrder = DB2_V72_FIX_BYTE_ORDER((OGRwkbByteOrder) *pabyData);
-
-
-    if( eByteOrder != wkbXDR && eByteOrder != wkbNDR )
+    nByteOrder = DB2_V72_FIX_BYTE_ORDER(*pabyData);
+    if( nByteOrder != wkbXDR && nByteOrder != wkbNDR )
     {
         CPLDebug( "OGR", 
                   "OGRGeometryFactory::createFromWkb() - got corrupt data.\n"
@@ -110,6 +109,7 @@ OGRErr OGRGeometryFactory::createFromWkb(unsigned char *pabyData,
                   pabyData[8]);
         return OGRERR_CORRUPT_DATA;
     }
+    eByteOrder = (OGRwkbByteOrder) nByteOrder;
 
 /* -------------------------------------------------------------------- */
 /*      Get the geometry feature type.  For now we assume that          */
