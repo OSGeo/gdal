@@ -649,6 +649,10 @@ int sprintf(char *str, const char* fmt, ...) CPL_PRINT_FUNC_FORMAT(2, 3) CPL_WAR
 
 #if defined(MAKE_SANITIZE_HAPPY) || !(defined(__i386__) || defined(__x86_64__) || defined(_M_IX86) || defined(_M_X64))
 #define CPL_CPU_REQUIRES_ALIGNED_ACCESS
+#define CPL_IS_DOUBLE_A_INT(d)  ( (d) >= INT_MIN && (d) <= INT_MAX && (double)(int)(d) == (d) )
+#else
+/* This is technically unspecified behaviour if the double is out of range, but works OK on x86 */
+#define CPL_IS_DOUBLE_A_INT(d)  ( (double)(int)(d) == (d) )
 #endif
 
 #endif /* ndef CPL_BASE_H_INCLUDED */
