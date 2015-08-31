@@ -185,7 +185,7 @@ void OGRMakeWktCoordinate( char *pszTarget, double x, double y, double z,
 
     int nLenX, nLenY;
 
-    if( x == (int) x && y == (int) y )
+    if( CPL_IS_DOUBLE_A_INT(x) && CPL_IS_DOUBLE_A_INT(y) )
     {
         snprintf( szX, bufSize, "%d", (int) x );
         snprintf( szY, bufSize, "%d", (int) y );
@@ -201,7 +201,7 @@ void OGRMakeWktCoordinate( char *pszTarget, double x, double y, double z,
 
     if( nDimension == 3 )
     {
-        if( z == (int) z )
+        if( CPL_IS_DOUBLE_A_INT(z) )
         {
             snprintf( szZ, bufSize, "%d", (int) z );
         }
