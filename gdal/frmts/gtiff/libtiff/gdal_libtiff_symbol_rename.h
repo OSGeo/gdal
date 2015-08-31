@@ -279,6 +279,8 @@
 #define setupMap gdal_setupMap
 #define swabHorAcc16 gdal_swabHorAcc16
 #define swabHorAcc32 gdal_swabHorAcc32
+#define swabHorDiff16 gdal_swabHorDiff16
+#define swabHorDiff32 gdal_swabHorDiff32
 #define tagCompare gdal_tagCompare
 #define tagNameCompare gdal_tagNameCompare
 #define td_lfind gdal_td_lfind
