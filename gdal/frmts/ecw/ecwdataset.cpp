@@ -1036,7 +1036,10 @@ ECWDataset::~ECWDataset()
     {
         VSIIOStream *poUnderlyingIOStream = (VSIIOStream *)NULL;
 
-        poUnderlyingIOStream = ((VSIIOStream *)(poFileView->GetStream()));
+        if( bUsingCustomStream )
+        {
+            poUnderlyingIOStream = ((VSIIOStream *)(poFileView->GetStream()));
+        }
         delete poFileView;
 
         if( bUsingCustomStream )
