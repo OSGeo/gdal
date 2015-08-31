@@ -1545,7 +1545,14 @@ const Eprj_Datum *HFAGetDatum( HFAHandle hHFA )
 /*      Fetch the fields.                                               */
 /* -------------------------------------------------------------------- */
     psDatum->datumname = CPLStrdup(poMIEntry->GetStringField("datumname"));
-    psDatum->type = (Eprj_DatumType) poMIEntry->GetIntField("type");
+    int nDatumType = poMIEntry->GetIntField("type");
+    if( nDatumType < 0 || nDatumType > EPRJ_DATUM_NONE )
+    {
+        CPLDebug("HFA", "Invalid value for datum type: %d", nDatumType);
+        psDatum->type = EPRJ_DATUM_NONE;
+    }
+    else
+        psDatum->type = (Eprj_DatumType) nDatumType;
 
     for( i = 0; i < 7; i++ )
     {
@@ -3627,8 +3634,15 @@ char **HFAReadCameraModel( HFAHandle hHFA )
 
         sDatum.datumname = 
             (char *) poProjInfo->GetStringField("earthModel.datum.datumname");
-        sDatum.type = (Eprj_DatumType) poProjInfo->GetIntField(
-            "earthModel.datum.type");
+            
+        int nDatumType = poProjInfo->GetIntField("earthModel.datum.type");
+        if( nDatumType < 0 || nDatumType > EPRJ_DATUM_NONE )
+        {
+            CPLDebug("HFA", "Invalid value for datum type: %d", nDatumType);
+            sDatum.type = EPRJ_DATUM_NONE;
+        }
+        else
+            sDatum.type = (Eprj_DatumType) nDatumType;
 
         for( i = 0; i < 7; i++ )
         {
