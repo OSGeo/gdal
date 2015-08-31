@@ -787,7 +787,7 @@ INGR_VirtualFile CPL_STDCALL INGR_CreateVirtualFile( const char *pszFilename,
                                                      int nBufferSize,
                                                      int nBand )
 {
-  INGR_VirtualFile hVirtual = {NULL, NULL, NULL};
+    INGR_VirtualFile hVirtual = {NULL, NULL, NULL};
 
     hVirtual.pszFileName = CPLSPrintf( "/vsimem/%s.virtual",
         CPLGetBasename( pszFilename ) );
@@ -798,6 +798,7 @@ INGR_VirtualFile CPL_STDCALL INGR_CreateVirtualFile( const char *pszFilename,
     {
     case JPEGRGB:
         nJPGComponents = 3;
+        // fallthrough
     case JPEGGRAY:
         {
             GByte *pabyHeader = (GByte*) CPLCalloc( 1, 2048 );
