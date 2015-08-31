@@ -4958,9 +4958,11 @@ unsigned char* GDALRasterBand::GetIndexColorTranslationTo(GDALRasterBand* poRefe
             int nEntries = srcColorTable->GetColorEntryCount();
             int nRefEntries = destColorTable->GetColorEntryCount();
             int bHasNoDataValueSrc;
-            int noDataValueSrc = (int)GetNoDataValue(&bHasNoDataValueSrc);
+            double dfNoDataValueSrc = GetNoDataValue(&bHasNoDataValueSrc);
+            int noDataValueSrc = (bHasNoDataValueSrc) ? (int)dfNoDataValueSrc : 0;
             int bHasNoDataValueRef;
-            int noDataValueRef = (int)poReferenceBand->GetNoDataValue(&bHasNoDataValueRef);
+            double dfNoDataValueRef = poReferenceBand->GetNoDataValue(&bHasNoDataValueRef);
+            int noDataValueRef = (bHasNoDataValueRef) ? (int)dfNoDataValueRef : 0;
             int samePalette;
             int i, j;
 
