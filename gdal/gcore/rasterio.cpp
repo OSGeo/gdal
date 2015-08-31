@@ -2153,7 +2153,7 @@ GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelStride,
                             eSrcType,
                             0,
                             pabyDstBuffer,
-                            eSrcType,
+                            eDstType,
                             0,
                             1 );
                 memcpy( (GByte*)pDstData + nDstPixelStride * i, pabyDstBuffer, nDstDataTypeSize );
