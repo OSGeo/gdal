@@ -1794,32 +1794,32 @@ CPLErr ILWISRasterBand::IWriteBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
 double ILWISRasterBand::GetNoDataValue( int *pbSuccess )
 
 {
-    if( pbSuccess != NULL )
+    if( pbSuccess )
         *pbSuccess = TRUE;
 
     if( eDataType == GDT_Float64 )
         return rUNDEF;
-    else if( eDataType == GDT_Int32)
+    if( eDataType == GDT_Int32)
         return iUNDEF;
-    else if( eDataType == GDT_Int16)
+    if( eDataType == GDT_Int16)
         return shUNDEF;
-    else if( eDataType == GDT_Float32)
+    if( eDataType == GDT_Float32)
         return flUNDEF;
-    else if( pbSuccess &&
+    if( pbSuccess &&
              (EQUAL(psInfo.stDomain.c_str(),"image")
               || EQUAL(psInfo.stDomain.c_str(),"colorcmp")))
     {
-        *pbSuccess = false;
-        return 0;
+        *pbSuccess = FALSE;
     }
-    else
-        return 0;
+
+    // TODO: Defaults to pbSuccess TRUE.  Is the unhandled case really success?
+    return 0.0;
 }
 
 /************************************************************************/
 /*                      ValueRange()                                    */
 /************************************************************************/
-double Max(double a, double b) 
+double Max(double a, double b)
 { return (a>=b && a!=rUNDEF) ? a : b; }
 
 static double doubleConv(const char* s)
