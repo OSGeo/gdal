@@ -276,8 +276,8 @@ GDALDataset *MAPDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->nRasterYSize = poDS->poImageDS->GetRasterYSize();
     if (!GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize))
     {
-        delete poDS;
         GDALClose( poDS->poImageDS );
+        delete poDS;
         return NULL;
     }
 
@@ -507,5 +507,3 @@ void GDALRegister_MAP()
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
-
-
