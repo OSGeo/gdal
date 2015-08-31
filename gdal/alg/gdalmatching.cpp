@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  GDAL
- * Purpose:  GDAL Wrapper for image matching via corellation algorithm.
+ * Purpose:  GDAL Wrapper for image matching via correlation algorithm.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  * Author:   Andrew Migal, migal.drew@gmail.com
  *
@@ -57,7 +57,7 @@ CPL_CVSID("$Id");
  * @param dfThreshold Value from 0 to 1. Threshold for feature point recognition.
  * Number of detected points is larger if threshold is lower
  *
- * @see GDALFeaturePoint, GDALSimpleSURF class for detailes.
+ * @see GDALFeaturePoint, GDALSimpleSURF class for details.
  *
  * @note Every octave finds points in specific size. For small images
  * use small octave numbers, for high resolution - large.
