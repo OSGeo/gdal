@@ -2461,7 +2461,7 @@ GDALDeserializeReprojectionTransformer( CPLXMLNode *psTree )
 
 {
     const char *pszSourceSRS = CPLGetXMLValue( psTree, "SourceSRS", NULL );
-    const char *pszTargetSRS= CPLGetXMLValue( psTree, "TargetSRS", NULL );
+    const char *pszTargetSRS = CPLGetXMLValue( psTree, "TargetSRS", NULL );
     char *pszSourceWKT = NULL, *pszTargetWKT = NULL;
     void *pResult = NULL;
 
