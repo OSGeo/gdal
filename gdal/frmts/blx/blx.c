@@ -340,30 +340,42 @@ STATIC void decimate_vert(blxdata *in, unsigned int rows, unsigned int cols, blx
 	     
 }
 
-static int get_short_le(unsigned char **data) {
-    int result;
+typedef union
+{
+  short s;
+  unsigned short u;
+} unionshort;
 
-    result = *(*data) | (*((char *)*data+1)<<8);
+static int get_short_le(unsigned char **data) {
+    /* We assume two's complement representation for this to work */
+    unionshort result;
+    result.u = (unsigned short)(*(*data) | (*(*data+1)<<8));
     *data+=2;
-    return result;
+    return result.s;
 }
 
 static int get_short_be(unsigned char **data) {
-    int result;
-
-    result = *(*data+1) | (*((char *)*data)<<8);
+    /* We assume two's complement representation for this to work */
+    unionshort result;
+    result.u = (unsigned short)(*(*data+1) | (*(*data)<<8));
     *data+=2;
-    return result; 
+    return result.s;
 }
 
 static void put_short_le(short data, unsigned char **bufptr) {
-    *(*bufptr)++ = (unsigned char)(data & 0xff);
-    *(*bufptr)++ = (unsigned char)((data>>8) & 0xff);
+    /* We assume two's complement representation for this to work */
+    unionshort us;
+    us.s = data;
+    *(*bufptr)++ = (unsigned char)(us.u & 0xff);
+    *(*bufptr)++ = (unsigned char)((us.u>>8) & 0xff);
 }
 
 static void put_short_be(short data, unsigned char **bufptr) {
-    *(*bufptr)++ = (unsigned char)((data>>8) & 0xff);
-    *(*bufptr)++ = (unsigned char)(data & 0xff);
+    /* We assume two's complement representation for this to work */
+    unionshort us;
+    us.s = data;
+    *(*bufptr)++ = (unsigned char)((us.u>>8) & 0xff);
+    *(*bufptr)++ = (unsigned char)(us.u & 0xff);
 }
 
 
@@ -423,28 +435,38 @@ static void put_unsigned_short(blxcontext_t *ctx, unsigned short data, unsigned 
 	put_unsigned_short_be(data, bufptr);
 }
 
+typedef union
+{
+  int i;
+  unsigned int u;
+} unionint;
+
 static int get_int32(blxcontext_t *ctx, unsigned char **data) {
-    int result;
+    /* We assume two's complement representation for this to work */
+    unionint result;
 
     if(ctx->endian == LITTLEENDIAN)
-	result = *(*data) | (*(*data+1)<<8) | (*(*data+2)<<16) | (*((char *)*data+3)<<24);
+	result.u = *(*data) | (*(*data+1)<<8) | (*(*data+2)<<16) | (*(*data+3)<<24);
     else 
-	result = *(*data+3) | (*(*data+2)<<8) | (*(*data+1)<<16) | (*((char *)*data)<<24);
+	result.u = *(*data+3) | (*(*data+2)<<8) | (*(*data+1)<<16) | (*(*data)<<24);
     *data+=4;
-    return result;
+    return result.i;
 }
 
 static void put_int32(blxcontext_t *ctx, int data, unsigned char **bufptr) {
+    /* We assume two's complement representation for this to work */
+    unionint ui;
+    ui.i = data;
     if(ctx->endian == LITTLEENDIAN) {
-	*(*bufptr)++ = (unsigned char)(data & 0xff);
-	*(*bufptr)++ = (unsigned char)((data>>8) & 0xff);
-	*(*bufptr)++ = (unsigned char)((data>>16) & 0xff);
-	*(*bufptr)++ = (unsigned char)((data>>24) & 0xff);
+	*(*bufptr)++ = (unsigned char)(ui.u & 0xff);
+	*(*bufptr)++ = (unsigned char)((ui.u>>8) & 0xff);
+	*(*bufptr)++ = (unsigned char)((ui.u>>16) & 0xff);
+	*(*bufptr)++ = (unsigned char)((ui.u>>24) & 0xff);
     } else {
-	*(*bufptr)++ = (unsigned char)((data>>24) & 0xff);
-	*(*bufptr)++ = (unsigned char)((data>>16) & 0xff);
-	*(*bufptr)++ = (unsigned char)((data>>8) & 0xff);
-	*(*bufptr)++ = (unsigned char)(data & 0xff);
+	*(*bufptr)++ = (unsigned char)((ui.u>>24) & 0xff);
+	*(*bufptr)++ = (unsigned char)((ui.u>>16) & 0xff);
+	*(*bufptr)++ = (unsigned char)((ui.u>>8) & 0xff);
+	*(*bufptr)++ = (unsigned char)(ui.u & 0xff);
     }
 }
 
