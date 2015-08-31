@@ -71,13 +71,13 @@ const Blackbody_lut_type Msg_reader_core::Blackbody_LUT[MSG_NUM_CHANNELS+1] = {
 Msg_reader_core::Msg_reader_core(const char* fname) :
     _f_data_offset(0)
 {
-
     FILE* fin = fopen(fname, "rb");
     if (!fin) {
         fprintf(stderr, "Could not open file %s\n", fname);
         return;
     }
     read_metadata_block(fin);
+    fclose(fin);
 }
 
 Msg_reader_core::Msg_reader_core(FILE* fp) :
