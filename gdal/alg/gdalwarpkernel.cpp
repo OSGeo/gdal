@@ -932,6 +932,7 @@ GDALWarpKernel::GDALWarpKernel()
     pfnTransformer = NULL;
     pTransformerArg = NULL;
     papszWarpOptions = NULL;
+    padfDstNoDataReal = NULL;
     psThreadData = NULL;
 }
 
