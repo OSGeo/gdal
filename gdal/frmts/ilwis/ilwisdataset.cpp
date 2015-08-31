@@ -1059,25 +1059,23 @@ ILWISDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Create the output raster files for each band                    */
 /* -------------------------------------------------------------------- */
-		
+
     for( iBand = 0; iBand < nBands; iBand++ )
     {
-        VSILFILE *fpData;
-        GByte *pData;
-        
+        VSILFILE *fpData = NULL;
+
         GDALRasterBand *poBand = poSrcDS->GetRasterBand( iBand+1 );
         ILWISRasterBand *desBand = (ILWISRasterBand *) poDS->GetRasterBand( iBand+1 );
-        
+
 /* -------------------------------------------------------------------- */
 /*      Translate the data type.                                        */
 /* -------------------------------------------------------------------- */
         int nLineSize =  nXSize * GDALGetDataTypeSize(eType) / 8;
-        pData = (GByte *) CPLMalloc( nLineSize );
 
         //Determine the nodata value
         int bHasNoDataValue;
         double dNoDataValue = poBand->GetNoDataValue(&bHasNoDataValue); 
-        				
+
         //Determine store type of ILWIS raster
         string sStoreType = GDALType2ILWIS( eType );
         double stepsize = 1;
@@ -1104,7 +1102,7 @@ ILWISDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Write data definition file for each band (.mpr)                 */
 /* -------------------------------------------------------------------- */
-				
+
         double adfMinMax[2];
         int    bGotMin, bGotMax;
 
@@ -1121,15 +1119,15 @@ ILWISDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             WriteElement("BaseMap", "Range", pszODFName, range);
         }
         WriteElement("Map", "GeoRef", pszODFName, georef);
-				
+
 /* -------------------------------------------------------------------- */
 /*      Loop over image, copy the image data.                           */
 /* -------------------------------------------------------------------- */
         CPLErr      eErr = CE_None;
-			
+
         //For file name for raw data, and create binary files. 
         string pszDataFileName = CPLResetExtension(pszODFName.c_str(), "mp#" );
-				
+
         fpData = desBand->fpRaw;
         if( fpData == NULL )
         {
@@ -1139,10 +1137,12 @@ ILWISDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             return NULL;
         }
 
+        GByte *pData = (GByte *) CPLMalloc( nLineSize );
+
         for( int iLine = 0; iLine < nYSize && eErr == CE_None; iLine++ )
         {
-            eErr = poBand->RasterIO( GF_Read, 0, iLine, nXSize, 1, 
-                                     pData, nXSize, 1, eType, 
+            eErr = poBand->RasterIO( GF_Read, 0, iLine, nXSize, 1,
+                                     pData, nXSize, 1, eType,
                                      0, 0, NULL );
 
             if( eErr == CE_None )
