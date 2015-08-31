@@ -6077,6 +6077,23 @@ def tiff_write_139():
 
         gdal.Unlink('/vsimem/tiff_write_139.tif')
 
+    # Test floating-point predictor
+    # Seems to be broken with ENDIANNESS=INVERTED
+    ds = drv.Create('/vsimem/tiff_write_139.tif', 4, 1, 1, gdal.GDT_Float64,
+                                    options = [ 'PREDICTOR=3', 'COMPRESS=DEFLATE' ])
+    ref_content = struct.pack('d' * 4, 1, -1e100, 1e10, -1e5)
+    ds.GetRasterBand(1).WriteRaster(0,0,4,1,ref_content)
+    ds = None
+    ds = gdal.Open('/vsimem/tiff_write_139.tif')
+    content = ds.GetRasterBand(1).ReadRaster()
+    if ref_content != content:
+        gdaltest.post_reason('fail')
+        print(struct.unpack('d'*4,content))
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/tiff_write_139.tif')
+
     return 'success'
 
 ###############################################################################
