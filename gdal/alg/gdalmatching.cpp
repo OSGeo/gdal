@@ -121,14 +121,17 @@ GatherFeaturePoints(GDALDataset* poDataset, int* panBands,
     GDALRasterBand *poRstGreenBand = poDataset->GetRasterBand(panBands[1]);
     GDALRasterBand *poRstBlueBand = poDataset->GetRasterBand(panBands[2]);
 
-    int nWidth = poRstRedBand->GetXSize();
-    int nHeight = poRstRedBand->GetYSize();
+    const int nWidth = poRstRedBand->GetXSize();
+    const int nHeight = poRstRedBand->GetYSize();
 
     // Allocate memory for grayscale image
-    double **padfImg = NULL;
-    padfImg = new double*[nHeight];
-    for (int i = 0; i < nHeight; i++)
+    double **padfImg = new double*[nHeight];
+    for (int i = 0; i < nHeight; ++i)
+    {
         padfImg[i] = new double[nWidth];
+        for (int j = 0; j < nWidth; ++j)
+          padfImg[i][j] = 0.0;
+    }
 
     // Create grayscale image
     GDALSimpleSURF::ConvertRGBToLuminosity(
@@ -141,15 +144,15 @@ GatherFeaturePoints(GDALDataset* poDataset, int* panBands,
 
     // Get feature points
     GDALSimpleSURF *poSurf = new GDALSimpleSURF(nOctaveStart, nOctaveEnd);
-    
-    std::vector<GDALFeaturePoint> *poCollection = 
+
+    std::vector<GDALFeaturePoint> *poCollection =
         poSurf->ExtractFeaturePoints(poImg, dfThreshold);
 
     // Clean up
     delete poImg;
     delete poSurf;
 
-    for (int i = 0; i < nHeight; i++)
+    for (int i = 0; i < nHeight; ++i)
         delete[] padfImg[i];
 
     delete[] padfImg;
