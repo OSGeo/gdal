@@ -5983,6 +5983,103 @@ def tiff_write_138():
     return 'success'
 
 ###############################################################################
+# Test that pixel-interleaved writing generates optimal size
+
+def tiff_write_139():
+    import struct
+
+    drv = gdal.GetDriverByName('GTiff')
+    # Only post 4.0.5 has the fix for non-byte swabing case
+    has_inverted_swab_fix = drv.GetMetadataItem('LIBTIFF') == 'INTERNAL'
+
+    # In the byte case, there are optimizations for the 3 and 4 case. 1 is the general case
+    for nbands in (1,3,4):
+
+        ds = drv.Create('/vsimem/tiff_write_139.tif', 4, 1, nbands,
+                                        options = [ 'PREDICTOR=2', 'COMPRESS=DEFLATE' ])
+        ref_content = struct.pack('B' * 4, 255, 0, 255, 0)
+        for i in range(nbands):
+            ds.GetRasterBand(i+1).WriteRaster(0,0,4,1,ref_content)
+        ds = None
+        ds = gdal.Open('/vsimem/tiff_write_139.tif')
+        for i in range(nbands):
+            content = ds.GetRasterBand(i+1).ReadRaster()
+            if ref_content != content:
+                gdaltest.post_reason('fail')
+                return 'fail'
+        ds = None
+
+        gdal.Unlink('/vsimem/tiff_write_139.tif')
+
+    # Int16
+    for endianness in [ 'NATIVE', 'INVERTED' ]:
+
+        if endianness == 'INVERTED' and not has_inverted_swab_fix:
+            continue
+
+        ds = drv.Create('/vsimem/tiff_write_139.tif', 6, 1, 1, gdal.GDT_Int16,
+                                        options = [ 'PREDICTOR=2', 'COMPRESS=DEFLATE', 'ENDIANNESS=%s' % endianness ])
+        ref_content = struct.pack('h' * 6, -32768,32767, -32768,32767, -32768,32767)
+        ds.GetRasterBand(1).WriteRaster(0,0,6,1,ref_content)
+        ds = None
+        ds = gdal.Open('/vsimem/tiff_write_139.tif')
+        content = ds.GetRasterBand(1).ReadRaster()
+        if ref_content != content:
+            gdaltest.post_reason('fail')
+            print(endianness)
+            print(struct.unpack('h'*6,content))
+            return 'fail'
+        ds = None
+
+        gdal.Unlink('/vsimem/tiff_write_139.tif')
+
+    # UInt16 (same code path)
+    for endianness in [ 'NATIVE', 'INVERTED' ]:
+
+        if endianness == 'INVERTED' and not has_inverted_swab_fix:
+            continue
+
+        ds = drv.Create('/vsimem/tiff_write_139.tif', 6, 1, 1, gdal.GDT_UInt16,
+                                        options = [ 'PREDICTOR=2', 'COMPRESS=DEFLATE', 'ENDIANNESS=%s' % endianness ])
+        ref_content = struct.pack('H' * 6, 0, 65535, 0, 65535, 0, 65535)
+        ds.GetRasterBand(1).WriteRaster(0,0,6,1,ref_content)
+        ds = None
+        ds = gdal.Open('/vsimem/tiff_write_139.tif')
+        content = ds.GetRasterBand(1).ReadRaster()
+        if ref_content != content:
+            gdaltest.post_reason('fail')
+            print(endianness)
+            print(struct.unpack('H'*6,content))
+            return 'fail'
+        ds = None
+
+        gdal.Unlink('/vsimem/tiff_write_139.tif')
+
+    # Int32
+    for endianness in [ 'NATIVE', 'INVERTED' ]:
+
+        if endianness == 'INVERTED' and not has_inverted_swab_fix:
+            continue
+
+        ds = drv.Create('/vsimem/tiff_write_139.tif', 6, 1, 1, gdal.GDT_UInt32,
+                                        options = [ 'PREDICTOR=2', 'COMPRESS=DEFLATE', 'ENDIANNESS=%s' % endianness ])
+        ref_content = struct.pack('I' * 6, 0, 2000000000, 0, 2000000000, 0, 2000000000)
+        ds.GetRasterBand(1).WriteRaster(0,0,6,1,ref_content)
+        ds = None
+        ds = gdal.Open('/vsimem/tiff_write_139.tif')
+        content = ds.GetRasterBand(1).ReadRaster()
+        if ref_content != content:
+            gdaltest.post_reason('fail')
+            print(endianness)
+            print(struct.unpack('I'*6,content))
+            return 'fail'
+        ds = None
+
+        gdal.Unlink('/vsimem/tiff_write_139.tif')
+
+    return 'success'
+
+###############################################################################
 # Ask to run again tests with GDAL_API_PROXY=YES
 
 def tiff_write_api_proxy():
@@ -6153,12 +6250,13 @@ gdaltest_list = [
     tiff_write_136,
     tiff_write_137,
     tiff_write_138,
+    tiff_write_139,
     #tiff_write_api_proxy,
     tiff_write_cleanup ]
 
 disabled_gdaltest_list = [
     tiff_write_1,
-    tiff_write_138 ]
+    tiff_write_139 ]
 
 if __name__ == '__main__':
 
