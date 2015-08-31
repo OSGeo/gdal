@@ -712,6 +712,7 @@ GDALDataset *GS7BGDataset::Open( GDALOpenInfo * poOpenInfo )
     /*      Create band information objects.                               */
     /* --------------------------------------------------------------------*/
     GS7BGRasterBand *poBand = new GS7BGRasterBand( poDS, 1 );
+    poDS->SetBand( 1, poBand );
 
     // find the min X Value of the grid
     double dfTemp;
@@ -720,7 +721,6 @@ GDALDataset *GS7BGDataset::Open( GDALOpenInfo * poOpenInfo )
         delete poDS;
         CPLError( CE_Failure, CPLE_FileIO,
             "Unable to read minimum X value.\n" );
-        delete poBand;
         return NULL;
     }
     CPL_LSBPTR64( &dfTemp );
@@ -732,7 +732,6 @@ GDALDataset *GS7BGDataset::Open( GDALOpenInfo * poOpenInfo )
         delete poDS;
         CPLError( CE_Failure, CPLE_FileIO,
             "Unable to read minimum X value.\n" );
-        delete poBand;
         return NULL;
     }
     CPL_LSBPTR64( &dfTemp );
@@ -745,7 +744,6 @@ GDALDataset *GS7BGDataset::Open( GDALOpenInfo * poOpenInfo )
         delete poDS;
         CPLError( CE_Failure, CPLE_FileIO,
             "Unable to read spacing in X value.\n" );
-        delete poBand;
         return NULL;
     }
     CPL_LSBPTR64( &dfTemp );
@@ -758,7 +756,6 @@ GDALDataset *GS7BGDataset::Open( GDALOpenInfo * poOpenInfo )
         delete poDS;
         CPLError( CE_Failure, CPLE_FileIO,
             "Unable to read spacing in Y value.\n" );
-        delete poBand;
         return NULL;
     }
     CPL_LSBPTR64( &dfTemp );
@@ -770,7 +767,6 @@ GDALDataset *GS7BGDataset::Open( GDALOpenInfo * poOpenInfo )
         delete poDS;
         CPLError( CE_Failure, CPLE_FileIO,
             "Unable to read Z min value.\n" );
-        delete poBand;
         return NULL;
     }
     CPL_LSBPTR64( &dfTemp );
@@ -782,12 +778,10 @@ GDALDataset *GS7BGDataset::Open( GDALOpenInfo * poOpenInfo )
         delete poDS;
         CPLError( CE_Failure, CPLE_FileIO,
             "Unable to read Z max value.\n" );
-        delete poBand;
         return NULL;
     }
     CPL_LSBPTR64( &dfTemp );
     poBand->dfMaxZ = dfTemp;
-    poDS->SetBand( 1, poBand );
 
     // read and ignore the rotation value
     //(This is not used in the current version).
