@@ -88,6 +88,7 @@ typedef void OSRSpatialReferenceShadow;
 //%include gnm_java.i
 #elif defined(SWIGPERL)
 //%include gnm_perl.i
+%include typemaps_perl.i
 #else
 %include gdal_typemaps.i
 #endif
