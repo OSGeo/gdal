@@ -34,7 +34,7 @@
 
 CPL_CVSID("$Id$");
 
-#if defined(HAVE_POPPLER) || defined(HAVE_PODOFO)
+#if defined(HAVE_POPPLER) || defined(HAVE_PODOFO) || defined(HAVE_PDFIUM)
 
 /************************************************************************/
 /*                        OpenVectorLayers()                            */
@@ -1676,4 +1676,4 @@ void PDFDataset::ExploreContentsNonStructured(GDALPDFObject* poContents,
     }
 }
 
-#endif /* defined(HAVE_POPPLER) || defined(HAVE_PODOFO) */
+#endif /* defined(HAVE_POPPLER) || defined(HAVE_PODOFO) || defined(HAVE_PDFIUM) */

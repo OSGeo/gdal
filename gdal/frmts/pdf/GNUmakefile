@@ -2,6 +2,15 @@ include ../../GDALmake.opt
 
 OBJ	=	pdfdataset.o pdfio.o pdfobject.o pdfcreatecopy.o ogrpdflayer.o pdfwritabledataset.o pdfreadvectors.o
 
+PLUGIN_DL =	gdal_PDF.so
+
+ifeq ($(MACOSX_FRAMEWORK),yes)
+PLUGIN_DL = gdal_PDF.dylib
+LDFLAGS += -Wl,-undefined -Wl,dynamic_lookup -stdlib=libstdc++
+CPPFLAGS += -stdlib=libstdc++
+LD_SHARED = $(LD) -bundle
+endif
+
 ifeq ($(HAVE_POPPLER),yes)
 CPPFLAGS +=  -DHAVE_POPPLER
 endif
@@ -26,13 +35,23 @@ ifeq ($(HAVE_PODOFO),yes)
 CPPFLAGS +=  -DHAVE_PODOFO
 endif
 
+ifeq ($(HAVE_PDFIUM),yes)
+CPPFLAGS +=  -DHAVE_PDFIUM
+endif
+
 $(O_OBJ):       pdfobject.h pdfio.h pdfcreatecopy.h gdal_pdf.h
 
-CPPFLAGS	:=	 $(CPPFLAGS) -I../vrt -I../mem -I../../ogr/ogrsf_frmts/mem $(POPPLER_INC) $(PODOFO_INC)
+CPPFLAGS	:=	 $(CPPFLAGS) -I../vrt -I../mem -I../../ogr/ogrsf_frmts/mem $(POPPLER_INC) $(PODOFO_INC) $(PDFIUM_INC)
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
 
 clean:
 	rm -f *.o $(O_OBJ)
+	rm -f $(PLUGIN_DL)
 
 install-obj:	$(O_OBJ:.o=.$(OBJ_EXT))
+
+plugin: $(PLUGIN_DL)
+
+$(PLUGIN_DL):  $(OBJ)
+	$(LD_SHARED) $(OBJ) ..\..\ogr\ogrsf_frmts\mem\ogrmemdatasource.obj ..\..\ogr\ogrsf_frmts\mem\ogrmemdriver.obj ..\..\ogr\ogrsf_frmts\mem\ogrmemlayer.obj $(LDFLAGS) $(CONFIG_LIBS_INS) -o $(PLUGIN_DL) $(PDFIUM_PLUGIN_LIB)

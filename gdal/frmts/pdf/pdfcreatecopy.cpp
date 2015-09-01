@@ -4731,7 +4731,7 @@ GDALDataset *GDALPDFCreateCopy( const char * pszFilename,
     }
     else
     {
-#if defined(HAVE_POPPLER) || defined(HAVE_PODOFO)
+#if defined(HAVE_POPPLER) || defined(HAVE_PODOFO) || defined(HAVE_PDFIUM)
         return GDALPDFOpen(pszFilename, GA_ReadOnly);
 #else
         return new GDALFakePDFDataset();

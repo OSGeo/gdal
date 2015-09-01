@@ -55,7 +55,7 @@ def pdf_init():
         return 'skip'
 
     md = gdaltest.pdf_drv.GetMetadata()
-    if not 'HAVE_POPPLER' in md and not 'HAVE_PODOFO' in md:
+    if not 'HAVE_POPPLER' in md and not 'HAVE_PODOFO' in md and not 'HAVE_PDFIUM' in md:
         gdaltest.pdf_drv = None
         return 'skip'
 
@@ -69,6 +69,18 @@ def pdf_is_poppler():
     md = gdaltest.pdf_drv.GetMetadata()
     val = gdal.GetConfigOption("GDAL_PDF_LIB", "POPPLER")
     if val == 'POPPLER' and 'HAVE_POPPLER' in md:
+        return True
+    else:
+        return False
+
+###############################################################################
+# Returns True if we run with pdfium
+
+def pdf_is_pdfium():
+
+    md = gdaltest.pdf_drv.GetMetadata()
+    val = gdal.GetConfigOption("GDAL_PDF_LIB", "PDFIUM")
+    if val == 'PDFIUM' and 'HAVE_PDFIUM' in md:
         return True
     else:
         return False
@@ -1699,11 +1711,16 @@ def pdf_write_huge():
     if gdaltest.pdf_drv is None:
         return 'skip'
 
+    if gdaltest.pdf_drv.GetMetadataItem('HAVE_POPPLER') is not None:
+        tmp_filename = '/vsimem/pdf_write_huge.pdf'
+    else:
+        tmp_filename = 'tmp/pdf_write_huge.pdf'
+
     for (xsize, ysize) in [ (19200,1), (1,19200) ]:
         src_ds = gdal.GetDriverByName('MEM').Create('', xsize, ysize, 1)
-        ds = gdaltest.pdf_drv.CreateCopy('/vsimem/pdf_write_huge.pdf', src_ds)
+        ds = gdaltest.pdf_drv.CreateCopy(tmp_filename, src_ds)
         ds = None
-        ds = gdal.Open('/vsimem/pdf_write_huge.pdf')
+        ds = gdal.Open(tmp_filename)
         if int(ds.GetMetadataItem('DPI')) != 96:
             gdaltest.post_reason('failure')
             print(ds.GetMetadataItem('DPI'))
@@ -1718,14 +1735,14 @@ def pdf_write_huge():
 
         gdal.ErrorReset()
         gdal.PushErrorHandler('CPLQuietErrorHandler')
-        ds = gdaltest.pdf_drv.CreateCopy('/vsimem/pdf_write_huge.pdf', src_ds, options = ['DPI=72'])
+        ds = gdaltest.pdf_drv.CreateCopy(tmp_filename, src_ds, options = ['DPI=72'])
         gdal.PopErrorHandler()
         msg = gdal.GetLastErrorMsg()
         if msg == '':
             gdaltest.post_reason('failure')
             return 'fail'
         ds = None
-        ds = gdal.Open('/vsimem/pdf_write_huge.pdf')
+        ds = gdal.Open(tmp_filename)
         if int(ds.GetMetadataItem('DPI')) != 72:
             gdaltest.post_reason('failure')
             print(ds.GetMetadataItem('DPI'))
@@ -1738,14 +1755,14 @@ def pdf_write_huge():
         src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1, 1)
         gdal.ErrorReset()
         gdal.PushErrorHandler('CPLQuietErrorHandler')
-        ds = gdaltest.pdf_drv.CreateCopy('/vsimem/pdf_write_huge.pdf', src_ds, options = [ option ])
+        ds = gdaltest.pdf_drv.CreateCopy(tmp_filename, src_ds, options = [ option ])
         gdal.PopErrorHandler()
         msg = gdal.GetLastErrorMsg()
         if msg == '':
             gdaltest.post_reason('failure')
             return 'fail'
         ds = None
-        ds = gdal.Open('/vsimem/pdf_write_huge.pdf')
+        ds = gdal.Open(tmp_filename)
         if int(ds.GetMetadataItem('DPI')) != 72:
             gdaltest.post_reason('failure')
             print(ds.GetMetadataItem('DPI'))
@@ -1754,7 +1771,7 @@ def pdf_write_huge():
 
         src_ds = None
 
-    gdal.Unlink('/vsimem/pdf_write_huge.pdf')
+    gdal.Unlink(tmp_filename)
 
     return 'success'
 

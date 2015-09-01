@@ -6,6 +6,13 @@
  * Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
  *
  ******************************************************************************
+ *
+ * Support for open-source PDFium library
+ *
+ * Copyright (C) 2015 Klokan Technologies GmbH (http://www.klokantech.com/)
+ * Author: Martin Mikita <martin.mikita@klokantech.com>, xmikit00 @ FIT VUT Brno
+ *
+ ******************************************************************************
  * Copyright (c) 2011-2013, Even Rouault <even dot rouault at mines-paris dot org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -1830,3 +1837,411 @@ char* GDALPDFStreamPodofo::GetBytes()
 }
 
 #endif // HAVE_PODOFO
+
+#ifdef HAVE_PDFIUM
+
+/************************************************************************/
+/* ==================================================================== */
+/*                         GDALPDFDictionaryPdfium                      */
+/* ==================================================================== */
+/************************************************************************/
+
+class GDALPDFDictionaryPdfium: public GDALPDFDictionary
+{
+    private:
+        CPDF_Dictionary* m_poDict;
+        std::map<CPLString, GDALPDFObject*> m_map;
+
+    public:
+        GDALPDFDictionaryPdfium(CPDF_Dictionary* poDict) : m_poDict(poDict) {}
+        virtual ~GDALPDFDictionaryPdfium();
+
+        virtual GDALPDFObject* Get(const char* pszKey);
+        virtual std::map<CPLString, GDALPDFObject*>& GetValues();
+};
+
+/************************************************************************/
+/* ==================================================================== */
+/*                           GDALPDFArrayPdfium                         */
+/* ==================================================================== */
+/************************************************************************/
+
+class GDALPDFArrayPdfium : public GDALPDFArray
+{
+    private:
+        CPDF_Array* m_poArray;
+        std::vector<GDALPDFObject*> m_v;
+
+    public:
+        GDALPDFArrayPdfium(CPDF_Array* poArray) : m_poArray(poArray) {}
+        virtual ~GDALPDFArrayPdfium();
+
+        virtual int GetLength();
+        virtual GDALPDFObject* Get(int nIndex);
+};
+
+/************************************************************************/
+/* ==================================================================== */
+/*                          GDALPDFStreamPdfium                         */
+/* ==================================================================== */
+/************************************************************************/
+
+class GDALPDFStreamPdfium : public GDALPDFStream
+{
+    private:
+        CPDF_Stream* m_pStream;
+
+    public:
+        GDALPDFStreamPdfium(CPDF_Stream* pStream) : m_pStream(pStream) { }
+        virtual ~GDALPDFStreamPdfium() {}
+
+        virtual int GetLength();
+        virtual char* GetBytes();
+};
+
+/************************************************************************/
+/* ==================================================================== */
+/*                          GDALPDFObjectPdfium                         */
+/* ==================================================================== */
+/************************************************************************/
+
+/************************************************************************/
+/*                          GDALPDFObjectPdfium()                       */
+/************************************************************************/
+
+GDALPDFObjectPdfium::GDALPDFObjectPdfium(CPDF_Object *po) :
+        m_po(po), m_poDict(NULL), m_poArray(NULL), m_poStream(NULL)
+{
+}
+
+/************************************************************************/
+/*                         ~GDALPDFObjectPdfium()                       */
+/************************************************************************/
+
+GDALPDFObjectPdfium::~GDALPDFObjectPdfium()
+{
+    delete m_poDict;
+    delete m_poArray;
+    delete m_poStream;
+}
+
+/************************************************************************/
+/*                               GetType()                              */
+/************************************************************************/
+
+GDALPDFObjectType GDALPDFObjectPdfium::GetType()
+{
+    if(m_po == NULL || m_po->GetDirect() == NULL) {
+      return PDFObjectType_Null;
+    }
+    switch(m_po->GetDirect()->GetType())
+    {
+        case PDFOBJ_NULL:                     return PDFObjectType_Null;
+        case PDFOBJ_BOOLEAN:                  return PDFObjectType_Bool;
+        case PDFOBJ_NUMBER:
+          return (reinterpret_cast<CPDF_Number*>(m_po->GetDirect()))->IsInteger()
+              ? PDFObjectType_Int
+              : PDFObjectType_Real;
+        case PDFOBJ_STRING:                   return PDFObjectType_String;
+        case PDFOBJ_NAME:                     return PDFObjectType_Name;
+        case PDFOBJ_ARRAY:                    return PDFObjectType_Array;
+        case PDFOBJ_DICTIONARY:               return PDFObjectType_Dictionary;
+//         case PDFOBJ_STREAM:                   return PDFObjectType_
+        default:
+          return PDFObjectType_Unknown;
+    }
+}
+
+/************************************************************************/
+/*                          GetTypeNameNative()                         */
+/************************************************************************/
+
+const char* GDALPDFObjectPdfium::GetTypeNameNative()
+{
+    if(m_po->GetDirect()->GetType() == PDFOBJ_STREAM)
+      return "stream";
+    else
+      return "";
+}
+
+/************************************************************************/
+/*                              GetBool()                               */
+/************************************************************************/
+
+int GDALPDFObjectPdfium::GetBool()
+{
+    return m_po->GetInteger();
+}
+
+/************************************************************************/
+/*                              GetInt()                                */
+/************************************************************************/
+
+int GDALPDFObjectPdfium::GetInt()
+{
+    return m_po->GetInteger();
+}
+
+/************************************************************************/
+/*                              GetReal()                               */
+/************************************************************************/
+
+double GDALPDFObjectPdfium::GetReal()
+{
+    return m_po->GetNumber();
+}
+
+/************************************************************************/
+/*                              GetString()                             */
+/************************************************************************/
+
+const CPLString& GDALPDFObjectPdfium::GetString()
+{
+    if (GetType() == PDFObjectType_String) {
+        CFX_ByteStringC bs = m_po->GetConstString();
+        // If empty string, code crashes
+        if(bs.IsEmpty())
+          return (osStr = "");
+        return (osStr = bs.GetCStr());
+    }
+    else
+        return (osStr = "");
+}
+
+/************************************************************************/
+/*                              GetName()                               */
+/************************************************************************/
+
+const CPLString&  GDALPDFObjectPdfium::GetName()
+{
+    if (GetType() == PDFObjectType_Name)
+        return (osStr = m_po->GetConstString().GetCStr());
+    else
+        return (osStr = "");
+}
+
+/************************************************************************/
+/*                             GetDictionary()                          */
+/************************************************************************/
+
+GDALPDFDictionary* GDALPDFObjectPdfium::GetDictionary()
+{
+    if (GetType() != PDFObjectType_Dictionary)
+        return NULL;
+
+    if (m_poDict)
+        return m_poDict;
+
+    m_poDict = new GDALPDFDictionaryPdfium(m_po->GetDict());
+    return m_poDict;
+}
+
+/************************************************************************/
+/*                                GetArray()                            */
+/************************************************************************/
+
+GDALPDFArray* GDALPDFObjectPdfium::GetArray()
+{
+    if (GetType() != PDFObjectType_Array)
+        return NULL;
+
+    if (m_poArray)
+        return m_poArray;
+
+    m_poArray = new GDALPDFArrayPdfium(reinterpret_cast<CPDF_Array*>(m_po->GetDirect()));
+    return m_poArray;
+}
+
+/************************************************************************/
+/*                               GetStream()                            */
+/************************************************************************/
+
+GDALPDFStream* GDALPDFObjectPdfium::GetStream()
+{
+    if (m_po->GetDirectType() != PDFOBJ_STREAM)
+        return NULL;
+
+    if (m_poStream)
+        return m_poStream;
+    CPDF_Stream* pStream = reinterpret_cast<CPDF_Stream*>(m_po->GetDirect());
+    if (pStream)
+    {
+        m_poStream = new GDALPDFStreamPdfium(pStream);
+        return m_poStream;
+    }
+    else
+        return NULL;
+}
+
+/************************************************************************/
+/*                               GetRefNum()                            */
+/************************************************************************/
+
+int GDALPDFObjectPdfium::GetRefNum()
+{
+    return m_po->GetObjNum();   // Reference().ObjectNumber();
+}
+
+/************************************************************************/
+/*                               GetRefGen()                            */
+/************************************************************************/
+
+int GDALPDFObjectPdfium::GetRefGen()
+{
+    return m_po->GetGenNum();   // Reference().GenerationNumber();
+}
+
+/************************************************************************/
+/* ==================================================================== */
+/*                         GDALPDFDictionaryPdfium                      */
+/* ==================================================================== */
+/************************************************************************/
+
+/************************************************************************/
+/*                         ~GDALPDFDictionaryPdfium()                   */
+/************************************************************************/
+
+GDALPDFDictionaryPdfium::~GDALPDFDictionaryPdfium()
+{
+    std::map<CPLString, GDALPDFObject*>::iterator oIter = m_map.begin();
+    std::map<CPLString, GDALPDFObject*>::iterator oEnd = m_map.end();
+    for(; oIter != oEnd; ++oIter)
+        delete oIter->second;
+}
+
+/************************************************************************/
+/*                                  Get()                               */
+/************************************************************************/
+
+GDALPDFObject* GDALPDFDictionaryPdfium::Get(const char* pszKey)
+{
+    std::map<CPLString, GDALPDFObject*>::iterator oIter = m_map.find(pszKey);
+    if (oIter != m_map.end())
+        return oIter->second;
+
+    CFX_ByteStringC pdfiumKey(pszKey);
+    CPDF_Object* poVal = m_poDict->GetElementValue(pdfiumKey);
+    if (poVal)
+    {
+         GDALPDFObjectPdfium* poObj = new GDALPDFObjectPdfium(poVal);
+         m_map[pszKey] = poObj;
+         return poObj;
+    }
+    else
+    {
+        return NULL;
+    }
+}
+
+/************************************************************************/
+/*                              GetValues()                             */
+/************************************************************************/
+
+std::map<CPLString, GDALPDFObject*>& GDALPDFDictionaryPdfium::GetValues()
+{
+    FX_POSITION pos = m_poDict->GetStartPos();
+    while(pos)
+    {
+        CFX_ByteString key;
+        CPDF_Object* poVal = m_poDict->GetNextElement(pos, key);
+        // No object for this key
+        if(!poVal)
+          continue;
+        const char* pszKey = key.c_str();
+        // Objects exists in the map
+        if(m_map.find(pszKey) != m_map.end())
+          continue;
+        GDALPDFObjectPdfium* poObj = new GDALPDFObjectPdfium(poVal);
+        m_map[pszKey] = poObj;
+    }
+    return m_map;
+}
+
+/************************************************************************/
+/* ==================================================================== */
+/*                           GDALPDFArrayPdfium                         */
+/* ==================================================================== */
+/************************************************************************/
+
+GDALPDFArrayPdfium::~GDALPDFArrayPdfium()
+{
+    for(int i=0;i<(int)m_v.size();i++)
+    {
+        delete m_v[i];
+    }
+}
+
+/************************************************************************/
+/*                              GetLength()                             */
+/************************************************************************/
+
+int GDALPDFArrayPdfium::GetLength()
+{
+    return (int)m_poArray->GetCount();
+}
+
+/************************************************************************/
+/*                                Get()                                 */
+/************************************************************************/
+
+GDALPDFObject* GDALPDFArrayPdfium::Get(int nIndex)
+{
+    if (nIndex < 0 || nIndex >= GetLength())
+        return NULL;
+
+    int nOldSize = (int)m_v.size();
+    if (nIndex >= nOldSize)
+    {
+        m_v.resize(nIndex+1);
+        for(int i=nOldSize;i<=nIndex;i++)
+        {
+            m_v[i] = NULL;
+        }
+    }
+
+    if (m_v[nIndex] != NULL)
+        return m_v[nIndex];
+
+    CPDF_Object* oVal = m_poArray->GetElement(nIndex);
+    GDALPDFObjectPdfium* poObj = new GDALPDFObjectPdfium(oVal);
+    m_v[nIndex] = poObj;
+    return poObj;
+}
+
+/************************************************************************/
+/* ==================================================================== */
+/*                           GDALPDFStreamPdfium                        */
+/* ==================================================================== */
+/************************************************************************/
+
+/************************************************************************/
+/*                              GetLength()                             */
+/************************************************************************/
+
+int GDALPDFStreamPdfium::GetLength()
+{
+    return (int)m_pStream->GetRawSize();
+}
+
+/************************************************************************/
+/*                               GetBytes()                             */
+/************************************************************************/
+
+char* GDALPDFStreamPdfium::GetBytes()
+{
+    int nLength = GetLength();
+    if(nLength == 0)
+      return NULL;
+    unsigned char* pszContent = (unsigned char*) VSIMalloc(sizeof(unsigned char)*(nLength + 1));
+    if (!pszContent)
+        return NULL;
+    //memcpy(pszContent, m_pStream->Get(), nLength);
+    if(!m_pStream->ReadRawData(0, pszContent, nLength)) {
+      VSIFree(pszContent);
+      return NULL;
+    }
+    pszContent[nLength] = '\0';
+    return (char*) pszContent;
+}
+
+#endif // HAVE_PDFIUM
