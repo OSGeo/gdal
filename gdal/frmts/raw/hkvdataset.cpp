@@ -750,24 +750,13 @@ CPLErr HKVDataset::SetGeoTransform( double * padfTransform )
     CPLFree( pasGCPList[nGCPCount].pszId );
     pasGCPList[nGCPCount].pszId = CPLStrdup( "centre" );
 
-    if (MFF2version > 1.0)
-    {
-        temp_lat = padfTransform[3] + GetRasterXSize() * padfTransform[4] * 0.5 +
-          GetRasterYSize() * padfTransform[5] * 0.5;
-        temp_long = padfTransform[0] + GetRasterXSize() * padfTransform[1] * 0.5 +
-                 GetRasterYSize() * padfTransform[2] * 0.5; 
-        pasGCPList[nGCPCount].dfGCPPixel = GetRasterXSize()/2.0;
-        pasGCPList[nGCPCount].dfGCPLine = GetRasterYSize()/2.0;
-    }
-    else
-    {
-        temp_lat = padfTransform[3] + GetRasterXSize() * padfTransform[4] * 0.5 +
-          GetRasterYSize() * padfTransform[5] * 0.5;
-        temp_long = padfTransform[0] + GetRasterXSize() * padfTransform[1] * 0.5 +
-                 GetRasterYSize() * padfTransform[2] * 0.5; 
-        pasGCPList[nGCPCount].dfGCPPixel = GetRasterXSize()/2.0;
-        pasGCPList[nGCPCount].dfGCPLine = GetRasterYSize()/2.0;
-    }
+    temp_lat = padfTransform[3] + GetRasterXSize() * padfTransform[4] * 0.5 +
+      GetRasterYSize() * padfTransform[5] * 0.5;
+    temp_long = padfTransform[0] + GetRasterXSize() * padfTransform[1] * 0.5 +
+             GetRasterYSize() * padfTransform[2] * 0.5;
+    pasGCPList[nGCPCount].dfGCPPixel = GetRasterXSize()/2.0;
+    pasGCPList[nGCPCount].dfGCPLine = GetRasterYSize()/2.0;
+
     pasGCPList[nGCPCount].dfGCPX = temp_long;
     pasGCPList[nGCPCount].dfGCPY = temp_lat;
     pasGCPList[nGCPCount].dfGCPZ = 0.0;
