@@ -774,6 +774,7 @@ GDALDataset *BTDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "Failed to re-open %s within BT driver.\n",
                   poOpenInfo->pszFilename );
+        delete poDS;
         return NULL;
     }
     poDS->eAccess = poOpenInfo->eAccess;
