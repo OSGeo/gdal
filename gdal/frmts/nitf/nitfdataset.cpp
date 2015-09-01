@@ -2813,18 +2813,20 @@ void NITFDataset::InitializeTREMetadata()
                 NITFGetField(szTemp, pszTREData, 0, 6 );
                 CPLError(CE_Failure, CPLE_AppDefined, "Invalid size (%d) for TRE %s",
                         nThisTRESize, szTemp);
+                CPLDestroyXMLNode(psTresNode);
                 return;
             }
             if (nThisTRESize > nTREBytes - 11)
             {
                 CPLError(CE_Failure, CPLE_AppDefined, "Not enough bytes in TRE");
+                CPLDestroyXMLNode(psTresNode);
                 return;
             }
 
             strncpy( szTag, pszTREData, 6 );
             szTag[6] = '\0';
 
-            // trim white off tag. 
+            // trim white off tag.
             while( strlen(szTag) > 0 && szTag[strlen(szTag)-1] == ' ' )
                 szTag[strlen(szTag)-1] = '\0';
 
@@ -2836,7 +2838,7 @@ void NITFDataset::InitializeTREMetadata()
                 CPLAddXMLChild(psTresNode, psTreNode);
             }
 
-            // escape data. 
+            // escape data.
             pszEscapedData = CPLEscapeString( pszTREData + 11,
                                               nThisTRESize,
                                               CPLES_BackslashQuotable );
@@ -2856,7 +2858,7 @@ void NITFDataset::InitializeTREMetadata()
             }
             oSpecialMD.SetMetadataItem( szUniqueTag, pszEscapedData, "TRE" );
             CPLFree( pszEscapedData );
-            
+
             nTREBytes -= (nThisTRESize + 11);
             pszTREData += (nThisTRESize + 11);
         }
