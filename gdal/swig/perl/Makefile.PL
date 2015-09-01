@@ -1,4 +1,5 @@
 use ExtUtils::MakeMaker;
+use Config;
 
 # pick up our parameters from @ARGV
 my %ARGV;
@@ -120,6 +121,8 @@ for my $module (keys %object) {
 		   MAKEFILE => 'Makefile_'.$add,
 		   LIBS => $LIB,
 		   INC => $INC,
+                   OPTIMIZE => "$ENV{CFLAGS} $ENV{CPPFLAGS}",
+                   LD => "$Config{ld} $ENV{CFLAGS} $ENV{LDFLAGS}",
 		   OBJECT => $object{$module},
 		   PM => {'lib/Geo/GDAL.pm' => '$(INST_LIBDIR)/GDAL.pm',
 			  'lib/Geo/OGR.pm' => '$(INST_LIBDIR)/OGR.pm',
