@@ -41,9 +41,9 @@ def nwt_grd_1():
 
     tst1 = gdaltest.GDALTest( 'NWT_GRD', 'nwt_grd.grd', 1, 28093 )
     status1 = tst1.testOpen()
-    tst2 = gdaltest.GDALTest( 'NWT_GRD', 'nwt_grd.grd', 2, 33626 )
+    tst2 = gdaltest.GDALTest( 'NWT_GRD', 'nwt_grd.grd', 2, 33690 )
     status2 = tst2.testOpen()
-    tst3 = gdaltest.GDALTest( 'NWT_GRD', 'nwt_grd.grd', 3, 20260 )
+    tst3 = gdaltest.GDALTest( 'NWT_GRD', 'nwt_grd.grd', 3, 20365 )
     status3 = tst3.testOpen()
     if status1 == 'success' and status2 == 'success' and status3 == 'success':
         return 'success'
