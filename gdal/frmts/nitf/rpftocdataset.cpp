@@ -455,7 +455,9 @@ class RPFTOCProxyRasterBandPalette : public GDALPamRasterBand
 
     public:
         RPFTOCProxyRasterBandPalette(GDALProxyPoolDataset* poDS, int nBand,
-                                     int nBlockXSize, int nBlockYSize)
+                                     int nBlockXSize, int nBlockYSize) :
+            initDone(FALSE), blockByteSize(nBlockXSize * nBlockYSize),
+            samePalette(0)
         {
             this->poDS = poDS;
             nRasterXSize = poDS->GetRasterXSize();
@@ -464,8 +466,7 @@ class RPFTOCProxyRasterBandPalette : public GDALPamRasterBand
             this->nBlockYSize = nBlockYSize;
             eDataType = GDT_Byte;
             this->nBand = nBand;
-            blockByteSize = nBlockXSize * nBlockYSize;
-            initDone = FALSE;
+            ;
         }
 
         virtual GDALColorInterp GetColorInterpretation()
