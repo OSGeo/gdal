@@ -617,8 +617,8 @@ void PDSDataset::ParseSRS()
             CSLDestroy( papszLines );
         }
     }
-    
-    if( dfULYMap != 0.5 || dfULYMap != 0.5 || dfXDim != 1.0 || dfYDim != 1.0 )
+
+    if( dfULXMap != 0.5 || dfULYMap != 0.5 || dfXDim != 1.0 || dfYDim != 1.0 )
     {
         bGotTransform = TRUE;
         adfGeoTransform[0] = dfULXMap;
@@ -628,7 +628,7 @@ void PDSDataset::ParseSRS()
         adfGeoTransform[4] = 0.0;
         adfGeoTransform[5] = dfYDim;
     }
-    
+
     if( !bGotTransform )
         bGotTransform = 
             GDALReadWorldFile( pszFilename, "psw", 
@@ -1428,4 +1428,3 @@ void GDALRegister_PDS()
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
-
