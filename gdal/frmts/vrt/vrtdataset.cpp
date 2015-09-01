@@ -1010,8 +1010,9 @@ CPLErr VRTDataset::AddBand( GDALDataType eType, char **papszOptions )
 
                 if( CSLCount(papszTokens) < 1 )
                 {
-                    CPLError( CE_Failure, CPLE_AppDefined, 
+                    CPLError( CE_Failure, CPLE_AppDefined,
                               "AddFuncSource() ... required argument missing." );
+                    // TODO: How should this errpr be handled?  Return CE_Failure?
                 }
 
                 sscanf( papszTokens[0], "%p", &pfnReadFunc );
@@ -1021,6 +1022,8 @@ CPLErr VRTDataset::AddBand( GDALDataType eType, char **papszOptions )
                     dfNoDataValue = CPLAtof( papszTokens[2] );
 
                 poBand->AddFuncSource( pfnReadFunc, pCBData, dfNoDataValue );
+
+                CSLDestroy( papszTokens );
             }
         }
 
