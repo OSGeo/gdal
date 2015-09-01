@@ -1501,15 +1501,16 @@ int NITFReadImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
             || VSIFReadL(pabyRawData, 1, nRawBytes, psImage->psFile->fp ) !=  
             nRawBytes )
         {
-            CPLError( CE_Failure, CPLE_FileIO, 
-                      "Unable to read %d byte block from " CPL_FRMT_GUIB ".", 
+            CPLError( CE_Failure, CPLE_FileIO,
+                      "Unable to read %d byte block from " CPL_FRMT_GUIB ".",
                       (int) nRawBytes, psImage->panBlockStart[iFullBlock] );
+            CPLFree( pabyRawData );
             return BLKREAD_FAIL;
         }
-        
-        success = NITFUncompressBILEVEL( psImage, pabyRawData, (int)nRawBytes, 
+
+        success = NITFUncompressBILEVEL( psImage, pabyRawData, (int)nRawBytes,
                                          pData );
-        
+
         CPLFree( pabyRawData );
 
         if( success )
