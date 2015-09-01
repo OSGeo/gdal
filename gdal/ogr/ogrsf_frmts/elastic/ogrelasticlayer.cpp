@@ -1371,7 +1371,7 @@ CPLString OGRElasticLayer::BuildMap() {
                 break;
             case OFTDateTime:
             case OFTDate:
-                json_object_object_add(poContainer, pszLastComponent, AddPropertyMap("date", "yyyy/MM/dd HH:mm:ss.SSS||yyyy/MM/dd"));
+                json_object_object_add(poContainer, pszLastComponent, AddPropertyMap("date", "yyyy/MM/dd HH:mm:ss.SSSZZ||yyyy/MM/dd HH:mm:ss.SSS||yyyy/MM/dd"));
                 break;
             case OFTTime:
                 json_object_object_add(poContainer, pszLastComponent, AddPropertyMap("date", "HH:mm:ss.SSS"));
@@ -1903,6 +1903,34 @@ CPLString OGRElasticLayer::BuildJSonFromFeature(OGRFeature *poFeature)
                             pszLastComponent,
                             json_object_new_string(pszVal));
                     CPLFree(pszVal);
+                    break;
+                }
+                case OFTDateTime:
+                {
+                    int nYear, nMonth, nDay, nHour, nMin, nTZ;
+                    float fSec;
+                    poFeature->GetFieldAsDateTime(i, &nYear, &nMonth, &nDay,
+                                                  &nHour, &nMin, &fSec, &nTZ);
+                    if( nTZ == 0 )
+                    {
+                        json_object_object_add(poContainer,
+                                pszLastComponent,
+                                json_object_new_string(
+                                    CPLSPrintf("%04d/%02d/%02d %02d:%02d:%06.3f",
+                                            nYear, nMonth, nDay, nHour, nMin, fSec)));
+                    }
+                    else
+                    {
+                        int TZOffset = ABS(nTZ - 100) * 15;
+                        int TZHour = TZOffset / 60;
+                        int TZMinute = TZOffset - TZHour * 60;
+                        json_object_object_add(poContainer,
+                                pszLastComponent,
+                                json_object_new_string(
+                                    CPLSPrintf("%04d/%02d/%02d %02d:%02d:%06.3f%c%02d:%02d",
+                                            nYear, nMonth, nDay, nHour, nMin, fSec,
+                                            (nTZ >= 100) ? '+' : '-', TZHour, TZMinute)));
+                    }
                     break;
                 }
                 default:
