@@ -936,7 +936,10 @@ USGSDEM_LookupNTSByTile( const char *pszTile, char *pszName,
            && (papszTokens = CSVReadParseLine( fpNTS )) != NULL )
     {
         if( CSLCount( papszTokens ) != 4 )
+        {
+            CSLDestroy( papszTokens );
             continue;
+        }
 
         if( EQUAL(pszTile,papszTokens[0]) )
         {
