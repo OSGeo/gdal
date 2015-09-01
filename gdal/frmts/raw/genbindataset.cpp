@@ -280,13 +280,14 @@ CPLErr GenBinBitRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 /* -------------------------------------------------------------------- */
     pabyBuffer = (GByte *) CPLCalloc(nLineBytes,1);
 
-    if( VSIFSeekL( poGDS->fpImage, nLineStart, SEEK_SET ) != 0 
+    if( VSIFSeekL( poGDS->fpImage, nLineStart, SEEK_SET ) != 0
         || VSIFReadL( pabyBuffer, 1, nLineBytes, poGDS->fpImage) != nLineBytes )
     {
         CPLError( CE_Failure, CPLE_FileIO,
                   "Failed to read %u bytes at offset %lu.\n%s",
-                  nLineBytes, (unsigned long)nLineStart, 
+                  nLineBytes, (unsigned long)nLineStart,
                   VSIStrerror( errno ) );
+        CPLFree( pabyBuffer );
         return CE_Failure;
     }
 
