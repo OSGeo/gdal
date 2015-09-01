@@ -1336,9 +1336,12 @@ GDALDataset *HKVDataset::Open( GDALOpenInfo * poOpenInfo )
     int bNative, bComplex;
     int nRawBands = 0;
 
-    if( CSLFetchNameValue( papszAttrib, "extent.cols" ) == NULL 
+    if( CSLFetchNameValue( papszAttrib, "extent.cols" ) == NULL
         || CSLFetchNameValue( papszAttrib, "extent.rows" ) == NULL )
+    {
+        delete poDS;
         return NULL;
+    }
 
     poDS->nRasterXSize = atoi(CSLFetchNameValue(papszAttrib,"extent.cols"));
     poDS->nRasterYSize = atoi(CSLFetchNameValue(papszAttrib,"extent.rows"));
