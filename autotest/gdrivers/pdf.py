@@ -55,7 +55,7 @@ def pdf_init():
         return 'skip'
 
     md = gdaltest.pdf_drv.GetMetadata()
-    if not 'HAVE_POPPLER' in md and not 'HAVE_PODOFO' in md:
+    if not 'HAVE_POPPLER' in md and not 'HAVE_PODOFO' in md and not 'HAVE_PDFIUM' in md:
         gdaltest.pdf_drv = None
         return 'skip'
 
@@ -69,6 +69,18 @@ def pdf_is_poppler():
     md = gdaltest.pdf_drv.GetMetadata()
     val = gdal.GetConfigOption("GDAL_PDF_LIB", "POPPLER")
     if val == 'POPPLER' and 'HAVE_POPPLER' in md:
+        return True
+    else:
+        return False
+
+###############################################################################
+# Returns True if we run with pdfium
+
+def pdf_is_pdfium():
+
+    md = gdaltest.pdf_drv.GetMetadata()
+    val = gdal.GetConfigOption("GDAL_PDF_LIB", "PDFIUM")
+    if val == 'PDFIUM' and 'HAVE_PDFIUM' in md:
         return True
     else:
         return False

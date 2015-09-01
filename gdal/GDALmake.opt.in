@@ -454,6 +454,14 @@ HAVE_PODOFO = @HAVE_PODOFO@
 PODOFO_INC = @PODOFO_INC@
 
 #
+# Pdfium stuff
+#
+
+HAVE_PDFIUM = @HAVE_PDFIUM@
+PDFIUM_INC = @PDFIUM_INC@
+PDFIUM_PLUGIN_LIB = @PDFIUM_PLUGIN_LIB@
+
+#
 # CharLs stuff
 # Uncomment and adapt paths to enable JPEGLS driver
 #
