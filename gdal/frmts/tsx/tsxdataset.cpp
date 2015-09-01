@@ -567,6 +567,7 @@ GDALDataset *TSXDataset::Open( GDALOpenInfo *poOpenInfo ) {
             }
             else if (EQUALN(pszType, "GEOREF", 6)) {
                 /* save the path to the georef data for later use */
+                CPLFree( pszGeorefFile );
                 pszGeorefFile = CPLStrdup( pszPath );
             }
         }
