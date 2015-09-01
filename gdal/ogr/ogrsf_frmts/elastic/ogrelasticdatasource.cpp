@@ -503,7 +503,8 @@ int OGRElasticDataSource::UploadFile(const CPLString &url, const CPLString &data
     CSLDestroy(papszOptions);
     if (psResult) {
         if( psResult->pszErrBuf != NULL ||
-            (psResult->pabyData && strncmp((const char*) psResult->pabyData, "{\"error\":", strlen("{\"error\":")) == 0) )
+            (psResult->pabyData && strncmp((const char*) psResult->pabyData, "{\"error\":", strlen("{\"error\":")) == 0) ||
+            (psResult->pabyData && strstr((const char*) psResult->pabyData, "\"errors\":true,") != NULL) )
         {
             bRet = FALSE;
             CPLError(CE_Failure, CPLE_AppDefined, "%s",
