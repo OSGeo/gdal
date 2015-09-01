@@ -104,23 +104,35 @@ def ogr_elasticsearch_1():
     if lyr is None:
         gdaltest.post_reason('fail')
         return 'fail'
+    if gdal.GetLastErrorType() != gdal.CE_None:
+        gdaltest.post_reason('fail')
+        return 'fail'
 
     gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo/FeatureCollection/_mapping&POSTFIELDS={ "FeatureCollection": { "properties": { "type": { "store": "yes", "type": "string" }, "properties": { } } } }', '{}')
 
     # OVERWRITE an inexisting layer
     lyr = ds.CreateLayer('foo', srs = ogrtest.srs_wgs84, geom_type = ogr.wkbNone, options = ['OVERWRITE=TRUE', 'FID='])
+    if gdal.GetLastErrorType() != gdal.CE_None:
+        gdaltest.post_reason('fail')
+        return 'fail'
 
     # Simulate failed overwrite
+    gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo/_mapping/FeatureCollection', '{"foo":{"mappings":{"FeatureCollection":{}}}}')
     gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo', '{}')
     with gdaltest.error_handler():
         lyr = ds.CreateLayer('foo', srs = ogrtest.srs_wgs84, geom_type = ogr.wkbNone, options = ['OVERWRITE=TRUE'])
+    if gdal.GetLastErrorType() != gdal.CE_Failure:
+        gdaltest.post_reason('fail')
+        return 'fail'
 
     # Successful overwrite
-    gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo/_mapping/FeatureCollection', '{"foo":{"mappings":{"FeatureCollection":{}}}}')
     gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo/_mapping/FeatureCollection&CUSTOMREQUEST=DELETE', '{}')
     gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo/FeatureCollection/&POSTFIELDS={ }', '{}')
     lyr = ds.CreateLayer('foo', srs = ogrtest.srs_wgs84, geom_type = ogr.wkbNone, options = ['OVERWRITE=TRUE', 'BULK_INSERT=NO', 'FID='])
-    
+    if gdal.GetLastErrorType() != gdal.CE_None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
     if lyr.TestCapability(ogr.OLCFastFeatureCount) == 0:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -149,6 +161,9 @@ def ogr_elasticsearch_1():
     gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo&POSTFIELDS=', '{"error":"IndexAlreadyExistsException[[foo] already exists]","status":400}')
     with gdaltest.error_handler():
         lyr = ds.CreateLayer('foo', srs = ogrtest.srs_wgs84)
+    if gdal.GetLastErrorType() != gdal.CE_Failure:
+        gdaltest.post_reason('fail')
+        return 'fail'
     if lyr is not None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -1290,6 +1305,63 @@ def ogr_elasticsearch_7():
     return 'success'
 
 ###############################################################################
+# Test SRS support
+
+def ogr_elasticsearch_8():
+    if ogrtest.elasticsearch_drv is None:
+        return 'skip'
+
+    gdal.FileFromMemBuffer("/vsimem/fakeelasticsearch/_status", """{"_shards":{"total":0,"successful":0,"failed":0},"indices":{}}""")
+
+    ds = ogrtest.elasticsearch_drv.CreateDataSource("/vsimem/fakeelasticsearch")
+    
+    # No SRS
+    gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/no_srs&POSTFIELDS=', '{}')
+    # Will emit a warning
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        lyr = ds.CreateLayer('no_srs')
+    if gdal.GetLastErrorType() != gdal.CE_Warning:
+        gdaltest.post_reason('warning expected')
+        return 'fail'
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POINT (-100 -200)'))
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/no_srs/FeatureCollection/_mapping&POSTFIELDS={ "FeatureCollection": { "properties": { "type": { "store": "yes", "type": "string" }, "properties": { "properties": { } }, "geometry": { "type": "geo_shape" } }, "_meta": { "fid": "ogc_fid" } } }""", '{}')
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/_bulk&POSTFIELDS={"index" :{"_index":"no_srs", "_type":"FeatureCollection"}}
+{ "ogc_fid": 1, "geometry": { "type": "point", "coordinates": [ -100.0, -200.0 ] }, "type": "Feature", "properties": { } }
+
+""", "{}")
+    # Will emit a warning
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        ret = lyr.CreateFeature(f)
+    if gdal.GetLastErrorType() != gdal.CE_Warning:
+        gdaltest.post_reason('warning expected')
+        return 'fail'
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Non EPSG-4326 SRS
+    other_srs = osr.SpatialReference()
+    other_srs.ImportFromEPSG(32631)
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/other_srs&POSTFIELDS=""", "{}")
+    lyr = ds.CreateLayer('other_srs', srs = other_srs)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POINT (500000 0)'))
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/other_srs/FeatureCollection/_mapping&POSTFIELDS={ "FeatureCollection": { "properties": { "type": { "store": "yes", "type": "string" }, "properties": { "properties": { } }, "geometry": { "type": "geo_shape" } }, "_meta": { "fid": "ogc_fid" } } }""", '{}')
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/_bulk&POSTFIELDS={"index" :{"_index":"other_srs", "_type":"FeatureCollection"}}
+{ "ogc_fid": 1, "geometry": { "type": "point", "coordinates": [ 3.0, 0.0 ] }, "type": "Feature", "properties": { } }
+
+""", "{}")
+    ret = lyr.CreateFeature(f)
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+    
+###############################################################################
 # Cleanup
 
 def ogr_elasticsearch_cleanup():
@@ -1314,6 +1386,7 @@ gdaltest_list = [
     ogr_elasticsearch_5,
     ogr_elasticsearch_6,
     ogr_elasticsearch_7,
+    ogr_elasticsearch_8,
     ogr_elasticsearch_cleanup,
     ]
 

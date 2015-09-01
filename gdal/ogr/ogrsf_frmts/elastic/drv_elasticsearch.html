@@ -183,6 +183,13 @@ Write support is only enabled when the datasource is opened in update mode.<p>
 When inserting a new feature with CreateFeature() in non-bulk mode, and if the command is successful, OGR will fetch the
 returned _id and use it for the SetFeature() operation.<p>
 
+<h2>Spatial reference system</h2>
+
+Geometries stored in Elastic Search are supposed to be referenced as longitude/latitude
+over WGS84 datum (EPSG:4326). On creation, the driver will automatically reproject
+from the layer (or geometry field) SRS to EPSG:4326, provided that the input SRS
+is set and that is not already EPSG:4326.<p>
+
 <h2>Layer creation options</h2>
 
 Starting with GDAL 2.1, the driver supports the following layer creation options:

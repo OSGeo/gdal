@@ -173,6 +173,11 @@ OGRLayer * OGRElasticDataSource::ICreateLayer(const char * pszLayerName,
     if( strcmp(osLaunderedName.c_str(), pszLayerName) != 0 )
         CPLDebug("ES", "Laundered layer name to %s", osLaunderedName.c_str());
 
+    // Backup error state
+    CPLErr eLastErrorType = CPLGetLastErrorType();
+    int nLastErrorNo = CPLGetLastErrorNo();
+    CPLString osLastErrorMsg = CPLGetLastErrorMsg();
+
     // Check if the index exists
     int bIndexExists = FALSE;
     CPLPushErrorHandler(CPLQuietErrorHandler);
@@ -198,6 +203,9 @@ OGRLayer * OGRElasticDataSource::ICreateLayer(const char * pszLayerName,
                          !EQUALN((const char*)psResult->pabyData, "{}", 2);
         CPLHTTPDestroyResult(psResult);
     }
+    
+    // Restore error state
+    CPLErrorSetState( eLastErrorType, nLastErrorNo, osLastErrorMsg );
 
     if( m_bOverwrite || CSLFetchBoolean(papszOptions, "OVERWRITE", FALSE) )
     {
