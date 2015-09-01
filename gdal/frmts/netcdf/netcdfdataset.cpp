@@ -952,27 +952,22 @@ CPLXMLNode *netCDFRasterBand::SerializeToXML( CPL_UNUSED const char *pszUnused )
 /*                         CreateBandMetadata()                         */
 /************************************************************************/
 
-CPLErr netCDFRasterBand::CreateBandMetadata( int *paDimIds ) 
+CPLErr netCDFRasterBand::CreateBandMetadata( int *paDimIds )
 
 {
     char     szVarName[NC_MAX_NAME];
     char     szMetaName[NC_MAX_NAME];
     char     szMetaTemp[NCDF_MAX_STR_LEN];
-    char     *pszMetaValue = NULL;
-    char     szTemp[NC_MAX_NAME];
 
     int      nd;
-    int      i,j;
     int      Sum  = 1;
     int      Taken = 0;
     int      result = 0;
     int      status;
     int      nVarID = -1;
-    int      nDims;
     size_t   start[1];
     size_t   count[1];
     nc_type  nVarType = NC_NAT;
-    int      nAtt=0;
 
     netCDFDataset *poDS = (netCDFDataset *) this->poDS;
 
@@ -1002,11 +997,11 @@ CPLErr netCDFRasterBand::CreateBandMetadata( int *paDimIds )
 /* -------------------------------------------------------------------- */
 /*      Loop over non-spatial dimensions                                */
 /* -------------------------------------------------------------------- */
-    for( i=0; i < nd-2 ; i++ ) {
+    for( int i=0; i < nd-2 ; i++ ) {
 
         if( i != nd - 2 -1 ) {
             Sum = 1;
-            for( j=i+1; j < nd-2; j++ ) {
+            for( int j=i+1; j < nd-2; j++ ) {
                 Sum *= panBandZLev[j];
             }
             result = (int) ( ( nLevel-Taken) / Sum );
@@ -1020,7 +1015,7 @@ CPLErr netCDFRasterBand::CreateBandMetadata( int *paDimIds )
 
         // TODO: Make sure all the status checks make sense.
 
-        status=nc_inq_varid( cdfid, szVarName, &nVarID );
+        status = nc_inq_varid( cdfid, szVarName, &nVarID );
         if( status != NC_NOERR ) {
             /* Try to uppercase the first letter of the variable */
             /* Note: why is this needed? leaving for safety */
@@ -1030,8 +1025,8 @@ CPLErr netCDFRasterBand::CreateBandMetadata( int *paDimIds )
 
         /* status = */ nc_inq_vartype( cdfid, nVarID, &nVarType );
 
-        nDims = 0;
-        status = nc_inq_varndims( cdfid, nVarID, &nDims );
+        int nDims = 0;
+        /* status = */ nc_inq_varndims( cdfid, nVarID, &nDims );
 
         if( nDims == 1 ) {
             count[0]=1;
@@ -1088,16 +1083,19 @@ CPLErr netCDFRasterBand::CreateBandMetadata( int *paDimIds )
 /* -------------------------------------------------------------------- */
 /*      Get all other metadata                                          */
 /* -------------------------------------------------------------------- */
+    int nAtt=0;
+    char *pszMetaValue = NULL;
+    char szTemp[NC_MAX_NAME];
+
     nc_inq_varnatts( cdfid, nZId, &nAtt );
 
-    for( i=0; i < nAtt ; i++ ) {
+    for( int i=0; i < nAtt ; i++ ) {
 
     	status = nc_inq_attname( cdfid, nZId, i, szTemp);
     	// if(strcmp(szTemp,_FillValue) ==0) continue;
-    	sprintf( szMetaName,"%s",szTemp);       
+    	sprintf( szMetaName,"%s",szTemp);
 
-        if ( NCDFGetAttr( cdfid, nZId, szMetaName, &pszMetaValue) 
-             == CE_None ) {
+        if ( NCDFGetAttr( cdfid, nZId, szMetaName, &pszMetaValue) == CE_None ) {
             SetMetadataItem( szMetaName, pszMetaValue );
         }
         else {
