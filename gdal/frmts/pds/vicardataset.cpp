@@ -232,13 +232,14 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
     
     value = poDS->GetKeyword( "INTFMT" );
     if (!EQUAL(value,"LOW") ) {
-        CPLError( CE_Failure, CPLE_OpenFailed, 
+        CPLError( CE_Failure, CPLE_OpenFailed,
                   "%s layout not supported. Abort\n\n", value);
+        delete poDS;
         return FALSE;
     }
     value = poDS->GetKeyword( "REALFMT" );
     if (!EQUAL(value,"RIEEE") ) {
-        CPLError( CE_Failure, CPLE_OpenFailed, 
+        CPLError( CE_Failure, CPLE_OpenFailed,
                   "%s layout not supported. Abort\n\n", value);
         return FALSE;
     }
@@ -832,4 +833,3 @@ void GDALRegister_VICAR()
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
-
