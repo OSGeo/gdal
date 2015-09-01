@@ -1397,7 +1397,7 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
             dfULYMap = dfYLLCorner + nRows * dfYDim;
     }
 
-    if( dfULYMap != 0.5 || dfULYMap != 0.5 || dfXDim != 1.0 || dfYDim != 1.0 )
+    if( dfULXMap != 0.5 || dfULYMap != 0.5 || dfXDim != 1.0 || dfYDim != 1.0 )
     {
         poDS->bGotTransform = TRUE;
 
