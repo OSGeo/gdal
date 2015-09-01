@@ -99,6 +99,17 @@ def ogr_elasticsearch_1():
         gdaltest.post_reason('fail')
         return 'fail'
 
+    # Failed index creation
+    with gdaltest.error_handler():
+        lyr = ds.CreateLayer('foo', srs = ogrtest.srs_wgs84, options = ['FID='])
+    if lyr is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if gdal.GetLastErrorType() != gdal.CE_Failure:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Successful index creation
     gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo&POSTFIELDS=', '{}')
     lyr = ds.CreateLayer('foo', srs = ogrtest.srs_wgs84, options = ['FID='])
     if lyr is None:
