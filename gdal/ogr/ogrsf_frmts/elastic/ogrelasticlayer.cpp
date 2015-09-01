@@ -1745,10 +1745,25 @@ CPLString OGRElasticLayer::BuildJSonFromFeature(OGRFeature *poFeature)
         for(int i=0;i<poFeature->GetGeomFieldCount();i++)
         {
             OGRGeometry* poGeom = poFeature->GetGeomFieldRef(i);
-            if( poGeom != NULL )
+            if( poGeom != NULL && !poGeom->IsEmpty() )
             {
+                OGREnvelope env;
+                poGeom->getEnvelope(&env);
+
                 if( m_apoCT[i] != NULL )
                     poGeom->transform( m_apoCT[i] );
+                else if( env.MinX < -180 || env.MinY < -90 ||
+                         env.MaxX > 180 || env.MaxY > 90 )
+                {
+                    static int bHasWarned = FALSE;
+                    if( !bHasWarned )
+                    {
+                        bHasWarned = TRUE;
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                 "At least one geometry has a bounding box outside "
+                                 "of [-180,180] longitude range and/or [-90,90] latitude range. Undefined behaviour");
+                    }
+                }
 
                 std::vector<CPLString> aosPath = m_aaosGeomFieldPaths[i];
                 int bAddGeoJSONType = FALSE;
@@ -1765,9 +1780,6 @@ CPLString OGRElasticLayer::BuildJSonFromFeature(OGRFeature *poFeature)
 
                 if( m_abIsGeoPoint[i] )
                 {
-                    OGREnvelope env;
-                    poGeom->getEnvelope(&env);
-
                     json_object *coordinates = json_object_new_array();
                     json_object_array_add(coordinates, json_object_new_double((env.MaxX + env.MinX)*0.5));
                     json_object_array_add(coordinates, json_object_new_double((env.MaxY + env.MinY)*0.5));
