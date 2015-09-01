@@ -733,8 +733,7 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
         CSLDestroy( papszLines );
     }
 
-    
-    if( dfULYMap != 0.5 || dfULYMap != 0.5 || dfXDim != 1.0 || dfYDim != 1.0 )
+    if( dfULXMap != 0.5 || dfULYMap != 0.5 || dfXDim != 1.0 || dfYDim != 1.0 )
     {
         poDS->bGotTransform = TRUE;
         poDS->adfGeoTransform[0] = dfULXMap;
@@ -744,7 +743,7 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->adfGeoTransform[4] = 0.0;
         poDS->adfGeoTransform[5] = dfYDim;
     }
-    
+
     if( !poDS->bGotTransform )
         poDS->bGotTransform = 
             GDALReadWorldFile( poOpenInfo->pszFilename, "cbw", 
