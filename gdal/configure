@@ -654,6 +654,9 @@ GDAL_VERSION_MINOR
 GDAL_VERSION_MAJOR
 PROJ_INCLUDE
 PROJ_STATIC
+PDFIUM_PLUGIN_LIB
+PDFIUM_INC
+HAVE_PDFIUM
 PODOFO_INC
 HAVE_PODOFO
 POPPLER_INC
@@ -1003,6 +1006,9 @@ with_poppler
 with_podofo
 with_podofo_lib
 with_podofo_extra_lib_for_test
+with_pdfium
+with_pdfium_lib
+with_pdfium_extra_lib_for_test
 with_static_proj4
 with_gdal_ver
 with_
@@ -1760,6 +1766,9 @@ Optional Packages:
   --with-podofo=ARG    Include podofo(for PDF) support (ARG=no(default), yes or podofo install path)
   --with-podofo-lib=ARG   podofo Link Flags (ie. -L/xxx -lpodofo ...). Mainly for static libpodofo
   --with-podofo-extra-lib-for-test=ARG   Additional libraries to pass the detection test, but not used for libgdal linking (ie. -ljpeg ...). Mainly for static libpodofo
+  --with-pdfium=ARG    Include pdfium (for PDF) support (ARG=no(default), yes or pdfium install path)
+  --with-pdfium-lib=ARG   pdfium Link Flags (ie. -L/xxx -lpdfium ...). Mainly for static libpdfium
+  --with-pdfium-extra-lib-for-test=ARG   Additional libraries to pass the detection test, but not used for libgdal linking (ie. -ljpeg ...). Mainly for static libpdfium
   --with-static-proj4=ARG Compile with PROJ.4 statically (ARG=no or path)
   --with-gdal-ver=ARG   Override GDAL version
   --with-macosx-framework         Build and install GDAL as a Mac OS X Framework
@@ -3870,7 +3879,7 @@ ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
  ac_save_CFLAGS="$CFLAGS"
-for ac_arg in "-pedantic -Wdeclaration-after-statement -Wunused-parameter %        -Wall -Wdeclaration-after-statement -Wunused-parameter"    "-pedantic -Wdeclaration-after-statement %        -Wall -Wdeclaration-after-statement"    "-pedantic  % -Wall"          "-xstrconst % -v"             "-std1      % -verbose -w0 -warnprotos"    "-qlanglvl=ansi % -qsrcmsg -qinfo=all:noppt:noppc:noobs:nocnd"    "-ansi -ansiE % -fullwarn"    "+ESlit     % +w1"            "-Xc        % -pvctl,fullmsg"    "-h conform % -h msglevel 2"    #
+for ac_arg in "-pedantic -Wdeclaration-after-statement %        -Wall -Wdeclaration-after-statement"    "-pedantic  % -Wall"          "-xstrconst % -v"             "-std1      % -verbose -w0 -warnprotos"    "-qlanglvl=ansi % -qsrcmsg -qinfo=all:noppt:noppc:noobs:nocnd"    "-ansi -ansiE % -fullwarn"    "+ESlit     % +w1"            "-Xc        % -pvctl,fullmsg"    "-h conform % -h msglevel 2"    #
 do CFLAGS="$ac_save_CFLAGS "`echo $ac_arg | sed -e 's,%%.*,,' -e 's,%,,'`
    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -4192,7 +4201,7 @@ ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ex
 ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
 
  ac_save_CXXFLAGS="$CXXFLAGS"
-for ac_arg in "-pedantic  % -Wall -Wunused-parameter"          "-pedantic  % -Wall"          "-xstrconst % -v"             "-std1      % -verbose -w0 -warnprotos"    "-qlanglvl=ansi % -qsrcmsg -qinfo=all:noppt:noppc:noobs:nocnd"    "-ansi -ansiE % -fullwarn"    "+ESlit     % +w1"            "-Xc        % -pvctl,fullmsg"    "-h conform % -h msglevel 2"    #
+for ac_arg in "-pedantic  % -Wall"          "-xstrconst % -v"             "-std1      % -verbose -w0 -warnprotos"    "-qlanglvl=ansi % -qsrcmsg -qinfo=all:noppt:noppc:noobs:nocnd"    "-ansi -ansiE % -fullwarn"    "+ESlit     % +w1"            "-Xc        % -pvctl,fullmsg"    "-h conform % -h msglevel 2"    #
 do CXXFLAGS="$ac_save_CXXFLAGS "`echo $ac_arg | sed -e 's,%%.*,,' -e 's,%,,'`
    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -28827,6 +28836,125 @@ PODOFO_INC=$PODOFO_INC
 
 
 
+
+# Check whether --with-pdfium was given.
+if test "${with_pdfium+set}" = set; then :
+  withval=$with_pdfium;
+fi
+
+
+HAVE_PDFIUM=no
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for pdfium" >&5
+$as_echo_n "checking for pdfium... " >&6; }
+
+if test "$with_pdfium" != "no" -a "$with_pdfium" != ""; then
+
+
+# Check whether --with-pdfium-lib was given.
+if test "${with_pdfium_lib+set}" = set; then :
+  withval=$with_pdfium_lib;
+fi
+
+
+    if test "$with_pdfium" = "yes" ; then
+        TEST_PDFIUM_INC="-I/usr/include -I/usr/include/pdfium"
+        PDFIUM_LIB="-lpdfium"
+        PDFIUM_LIBDIR="/usr"
+    else
+        TEST_PDFIUM_INC="-I$with_pdfium -I$with_pdfium/include -I$with_pdfium/include/pdfium"
+        PDFIUM_LIB="-L$with_pdfium -L$with_pdfium/lib -lpdfium"
+        PDFIUM_LIBDIR="$with_pdfium"
+    fi
+
+    if test ! -z "`uname | grep Darwin`" ; then
+        PDFIUM_LIB="-stdlib=libstdc++ $PDFIUM_LIB"
+    fi
+
+    if test "x$with_pdfium_lib" = "x" ; then
+        rm -f testpdfium.*
+        echo '#include <fpdfview.h>' > testpdfium.cpp
+        echo '#include <core/include/fpdfapi/fpdf_page.h>' >> testpdfium.cpp
+        echo 'int main(int argc, char** argv) { FPDF_InitLibrary(); FPDF_DestroyLibrary(); return 0; } ' >> testpdfium.cpp
+        TEST_CXX_FLAGS="-std=c++0x"
+        if test ! -z "`uname | grep Darwin`" ; then
+          TEST_CXX_FLAGS="$TEST_CXX_FLAGS -stdlib=libstdc++"
+        fi
+        if test -z "`${CXX} $TEST_CXX_FLAGS testpdfium.cpp -o testpdfium ${TEST_PDFIUM_INC} ${PDFIUM_LIB}  2>&1`" ; then
+            HAVE_PDFIUM=yes
+            CXXFLAGS="$TEST_CXX_FLAGS $CXXFLAGS"
+            LIBS="${PDFIUM_LIB} ${LIBS}"
+            PDFIUM_PLUGIN_LIB="${PDFIUM_LIB}"
+            PDFIUM_INC=$TEST_PDFIUM_INC
+            { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+        fi
+        rm -f testpdfium.*
+        rm -f testpdfium
+    fi
+
+    if test "$HAVE_PDFIUM" = "no"; then
+        if test "x$with_pdfium_lib" != "x" ; then
+            PDFIUM_LIB="$with_pdfium_lib"
+        else
+            # This may be a static libpdfium.a, so add dependant libraries
+            PDFIUM_LIB="-L$PDFIUM_LIBDIR -L$PDFIUM_LIBDIR/lib/pdfium -lpdfium -lfpdfdoc -lfpdfapi -lfpdftext -lformfiller -lpdfwindow"
+            PDFIUM_LIB="$PDFIUM_LIB -lfxedit -lfpdfdoc -lfxcodec -lfx_libopenjpeg -lfx_lcms2 -lfx_libjpeg -lfx_zlib"
+            PDFIUM_LIB="$PDFIUM_LIB -lfdrm -lfxge -lfreetype -lfx_agg -lfxcrt -lbigint"
+            if test ! -z "`uname | grep Darwin`" ; then
+                PDFIUM_LIB="-framework AppKit -framework CoreFoundation $PDFIUM_LIB"
+            fi
+        fi
+
+
+# Check whether --with-pdfium-extra-lib-for-test was given.
+if test "${with_pdfium_extra_lib_for_test+set}" = set; then :
+  withval=$with_pdfium_extra_lib_for_test;
+fi
+
+
+        if test "x$with_pdfium_extra_lib_for_test" = "x" ; then
+            TEST_PDFIUM_LIB="$PDFIUM_LIB"
+        else
+            TEST_PDFIUM_LIB="$PDFIUM_LIB $with_pdfium_extra_lib_for_test"
+        fi
+
+        rm -f testpdfium.*
+        echo '#include <fpdfview.h>' > testpdfium.cpp
+        echo '#include <core/include/fpdfapi/fpdf_page.h>' >> testpdfium.cpp
+        echo 'int main(int argc, char** argv) { FPDF_InitLibrary(); FPDF_DestroyLibrary(); return 0; } ' >> testpdfium.cpp
+        TEST_CXX_FLAGS="-std=c++0x"
+        if test ! -z "`uname | grep Darwin`" ; then
+          TEST_CXX_FLAGS="$TEST_CXX_FLAGS -stdlib=libstdc++"
+        fi
+        if test -z "`${CXX} $TEST_CXX_FLAGS testpdfium.cpp -o testpdfium ${TEST_PDFIUM_INC} ${TEST_PDFIUM_LIB} 2>&1`" ; then
+            HAVE_PDFIUM=yes
+            CXXFLAGS="$TEST_CXX_FLAGS $CXXFLAGS"
+            LIBS="${PDFIUM_LIB} ${LIBS}"
+            PDFIUM_PLUGIN_LIB="${PDFIUM_LIB}"
+            PDFIUM_INC=$TEST_PDFIUM_INC
+            { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+        else
+            { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+        fi
+        rm -f testpdfium.*
+        rm -f testpdfium
+    fi
+else
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: disabled" >&5
+$as_echo "disabled" >&6; }
+fi
+
+HAVE_PDFIUM=$HAVE_PDFIUM
+
+PDFIUM_INC=$PDFIUM_INC
+
+PDFIUM_PLUGIN_LIB=$PDFIUM_PLUGIN_LIB
+
+
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking how to link PROJ.4 library" >&5
 $as_echo_n "checking how to link PROJ.4 library... " >&6; }
 
@@ -32780,6 +32908,9 @@ echo "  Poppler support:           ${HAVE_POPPLER}"
 
 
 echo "  Podofo support:            ${HAVE_PODOFO}"
+
+
+echo "  PDFium support:            ${HAVE_PDFIUM}"
 
 
 echo "  OpenCL support:            ${OPENCL_SETTING}"

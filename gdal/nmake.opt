@@ -565,6 +565,17 @@ OCI_INCLUDE =	-I$(ORACLE_HOME)\oci\include
 #PODOFO_ENABLED = YES
 #PODOFO_CFLAGS = -Ie:/podofo-svn/install/include -Ie:/podofo-svn/install/include/podofo
 #PODOFO_LIBS = e:/podofo-svn/install/lib/podofo.lib E:/release-1500-dev/release-1500/lib/freetype239.lib gdi32.lib
+
+# Uncomment for PDF support with PDFium
+#
+# Copyright (C) 2015 Klokan Technologies GmbH (http://www.klokantech.com/)
+# Author: Martin Mikita <martin.mikita@klokantech.com>, xmikit00 @ FIT VUT Brno
+#
+#PDFIUM_ENABLED = YES
+#PDFIUM_CFLAGS = -Ie:/pdfium-svn/
+#PDFIUM_LIB_DIR = e:/pdfium-svn/build/Release/lib
+#PDFIUM_LIBS = $(PDFIUM_LIB_DIR)/pdfium.lib $(PDFIUM_LIB_DIR)/bigint.lib $(PDFIUM_LIB_DIR)/fdrm.lib $(PDFIUM_LIB_DIR)/formfiller.lib $(PDFIUM_LIB_DIR)/fpdfapi.lib $(PDFIUM_LIB_DIR)/fpdfdoc.lib $(PDFIUM_LIB_DIR)/fpdftext.lib $(PDFIUM_LIB_DIR)/freetype.lib $(PDFIUM_LIB_DIR)/fxcodec.lib $(PDFIUM_LIB_DIR)/fxcrt.lib $(PDFIUM_LIB_DIR)/fxedit.lib $(PDFIUM_LIB_DIR)/fxge.lib $(PDFIUM_LIB_DIR)/pdfwindow.lib
+
 # Build PDF driver as plugin
 #PDF_PLUGIN = NO
 
@@ -736,6 +747,14 @@ PDF_LIB_LINK =
 !IFDEF PODOFO_LIBS
 !IF "$(PDF_PLUGIN)" != "YES"
 PDF_LIB_LINK = $(PODOFO_LIBS)
+!ELSE
+PDF_LIB_LINK =
+!ENDIF
+!ENDIF
+
+!IFDEF PDFIUM_LIBS
+!IF "$(PDF_PLUGIN)" != "YES"
+PDF_LIB_LINK = $(PDFIUM_LIBS)
 !ELSE
 PDF_LIB_LINK =
 !ENDIF
