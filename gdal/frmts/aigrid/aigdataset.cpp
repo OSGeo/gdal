@@ -1007,7 +1007,12 @@ static CPLErr AIGRename( const char *pszNewName, const char *pszOldName )
     }
 
     if( VSIStatL( osOldPath, &sStatBuf ) == 0 )
-        CPLUnlinkTree( osOldPath );
+    {
+        if ( CPLUnlinkTree( osOldPath ) != 0 )
+        {
+          CPLError( CE_Warning, CPLE_AppDefined, "Unable to cleanup old path.");
+        }
+    }
 
     CSLDestroy(papszFileList);
     CSLDestroy(papszNewFileList);
