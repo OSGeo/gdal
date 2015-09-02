@@ -817,6 +817,74 @@ def rasterio_11():
 
     return 'success'
 
+###############################################################################
+# Test cubic resampling on dataset RasterIO with an alpha channel
+
+def rasterio_12_progress_callback(pct, message, user_data):
+    if pct < user_data[0]:
+        print('Got %f, last pct was %f' % (pct, user_data[0]))
+        return 0
+    user_data[0] = pct
+    return 1 # 1 to continue, 0 to stop
+
+def rasterio_12():
+    
+    try:
+        from osgeo import gdalnumeric
+        gdalnumeric.zeros
+        import numpy
+    except:
+        return 'skip'
+
+    mem_ds = gdal.GetDriverByName('MEM').Create('', 4, 3, 4)
+    for i in range(3):
+        mem_ds.GetRasterBand(i+1).SetColorInterpretation(gdal.GCI_GrayIndex)
+    mem_ds.GetRasterBand(4).SetColorInterpretation(gdal.GCI_AlphaBand)
+    for i in range(4):
+        mem_ds.GetRasterBand(i+1).WriteArray(numpy.array([[0,0,0,0],[0,255,0,0],[0,0,0,0]]))
+
+    tab = [ 0 ]
+    ar_ds = mem_ds.ReadAsArray(0,0,4,3,buf_xsize = 8, buf_ysize = 3, resample_alg = gdal.GRIORA_Cubic, \
+                               callback = rasterio_12_progress_callback, \
+                               callback_data = tab)
+    if tab[0] != 1.0:
+        gdaltest.post_reason('failure')
+        print(tab)
+        return 'fail'
+
+    ar_ds2 = mem_ds.ReadAsArray(0,0,4,3,buf_xsize = 8, buf_ysize = 3, resample_alg = gdal.GRIORA_Cubic)
+    if not numpy.array_equal(ar_ds, ar_ds2):
+        gdaltest.post_reason('failure')
+        print(ar_ds)
+        print(ar_ds2)
+        return 'fail'
+
+    ar_bands = [mem_ds.GetRasterBand(i+1).ReadAsArray(0,0,4,3,buf_xsize = 8, buf_ysize = 3, resample_alg = gdal.GRIORA_Cubic) for i in range(4) ]
+
+    # Results of band or dataset RasterIO should be the same
+    for i in range(4):
+        if not numpy.array_equal(ar_ds[i],ar_bands[i]):
+            gdaltest.post_reason('failure')
+            print(ar_ds)
+            print(ar_bands[i])
+            return 'fail'
+
+    # First, second and third band should have identical content
+    if not numpy.array_equal(ar_ds[0],ar_ds[1]):
+        gdaltest.post_reason('failure')
+        print(ar_ds[0])
+        print(ar_ds[1])
+        return 'fail'
+
+    # Alpha band should be different
+    if numpy.array_equal(ar_ds[0],ar_ds[3]):
+        gdaltest.post_reason('failure')
+        print(ar_ds[0])
+        print(ar_ds[3])
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     rasterio_1,
     rasterio_2,
@@ -829,6 +897,7 @@ gdaltest_list = [
     rasterio_9,
     rasterio_10,
     rasterio_11,
+    rasterio_12
     ]
 
 if __name__ == '__main__':

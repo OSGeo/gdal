@@ -1525,9 +1525,10 @@ CPLErr GDALDataset::IRasterIO( GDALRWFlag eRWFlag,
          psExtraArg->eResampleAlg == GRIORA_Lanczos) &&
         !(nXSize == nBufXSize && nYSize == nBufYSize) && nBandCount > 1 )
     {
-        
-        int bUseDatasetRasterIOResampled = TRUE;
         GDALDataType eFirstBandDT = GDT_Unknown;
+        int nFirstMaskFlags = 0;
+        GDALRasterBand* poFirstMaskBand = NULL;
+        int nOKBands = 0;
         for(int i=0;i<nBandCount;i++)
         {
             GDALRasterBand* poBand = GetRasterBand(panBandMap[i]);
@@ -1535,43 +1536,103 @@ CPLErr GDALDataset::IRasterIO( GDALRWFlag eRWFlag,
                 poBand->GetOverviewCount() )
             {
                 // Could be improved to select the appropriate overview
-                bUseDatasetRasterIOResampled = FALSE;
                 break;
             }
             if( poBand->GetColorTable() != NULL )
             {
-                bUseDatasetRasterIOResampled = FALSE;
                 break;
             }
             GDALDataType eDT = poBand->GetRasterDataType();
             if( GDALDataTypeIsComplex( eDT ) )
             {
-                bUseDatasetRasterIOResampled = FALSE;
                 break;
             }
             if( i == 0 )
+            {
                 eFirstBandDT = eDT;
-            else if( eDT != eFirstBandDT )
-            {
-                bUseDatasetRasterIOResampled = FALSE;
-                break;
+                nFirstMaskFlags = poBand->GetMaskFlags();
+                poFirstMaskBand = poBand->GetMaskBand();
             }
-            int nMaskFlags = poBand->GetMaskFlags();
-            if( (nMaskFlags & GMF_PER_DATASET) == 0 && nMaskFlags != GMF_ALL_VALID )
+            else
             {
-                bUseDatasetRasterIOResampled = FALSE;
-                break;
+                if( eDT != eFirstBandDT )
+                {
+                    break;
+                }
+                int nMaskFlags = poBand->GetMaskFlags();
+                GDALRasterBand* poMaskBand = poBand->GetMaskBand();
+                if( nFirstMaskFlags == GMF_ALL_VALID && nMaskFlags == GMF_ALL_VALID )
+                {
+                    /* ok */
+                }
+                else if( poFirstMaskBand == poMaskBand )
+                {
+                    /* ok */
+                }
+                else
+                {
+                    break;
+                }
             }
-        }
-        if( bUseDatasetRasterIOResampled )
-        {
-            return RasterIOResampled( eRWFlag, nXOff, nYOff, nXSize, nYSize, 
-                                   pData, nBufXSize, nBufYSize,
-                                   eBufType, nBandCount, panBandMap,
-                                   nPixelSpace, nLineSpace, nBandSpace,
-                                   psExtraArg );
+
+            nOKBands ++;
         }
 
+        GDALProgressFunc  pfnProgressGlobal = psExtraArg->pfnProgress;
+        void             *pProgressDataGlobal = psExtraArg->pProgressData;
+
+        CPLErr eErr = CE_None;
+        if( nOKBands > 0 )
+        {
+            if( nOKBands < nBandCount )
+            {
+                psExtraArg->pfnProgress = GDALScaledProgress;
+                psExtraArg->pProgressData = 
+                    GDALCreateScaledProgress( 0.0, (double)nOKBands / nBandCount,
+                                            pfnProgressGlobal,
+                                            pProgressDataGlobal );
+                if( psExtraArg->pProgressData == NULL )
+                    psExtraArg->pfnProgress = NULL;
+            }
+
+            eErr = RasterIOResampled( eRWFlag, nXOff, nYOff, nXSize, nYSize, 
+                                   pData, nBufXSize, nBufYSize,
+                                   eBufType, nOKBands, panBandMap,
+                                   nPixelSpace, nLineSpace, nBandSpace,
+                                   psExtraArg );
+
+            if( nOKBands < nBandCount )
+            {
+                GDALDestroyScaledProgress( psExtraArg->pProgressData );
+            }
+        }
+        if( eErr == CE_None && nOKBands < nBandCount )
+        {
+            if( nOKBands > 0 )
+            {
+                psExtraArg->pfnProgress = GDALScaledProgress;
+                psExtraArg->pProgressData = 
+                    GDALCreateScaledProgress( (double)nOKBands / nBandCount, 1.0,
+                                            pfnProgressGlobal,
+                                            pProgressDataGlobal );
+                if( psExtraArg->pProgressData == NULL )
+                    psExtraArg->pfnProgress = NULL;
+            }
+            eErr = BandBasedRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize, 
+                                   (GByte*)pData + nBandSpace * nOKBands, nBufXSize, nBufYSize,
+                                   eBufType, nBandCount - nOKBands, panBandMap + nOKBands,
+                                   nPixelSpace, nLineSpace, nBandSpace,
+                                   psExtraArg );
+            if( nOKBands > 0 )
+            {
+                GDALDestroyScaledProgress( psExtraArg->pProgressData );
+            }
+        }
+
+        psExtraArg->pfnProgress = pfnProgressGlobal;
+        psExtraArg->pProgressData = pProgressDataGlobal;
+
+        return eErr;
     }
         
     return BandBasedRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize, 
