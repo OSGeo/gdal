@@ -2462,7 +2462,10 @@ CPLErr ParseAlgorithmAndOptions( const char *pszAlgorithm,
     char **papszParms = CSLTokenizeString2( pszAlgorithm, ":", FALSE );
 
     if ( CSLCount(papszParms) < 1 )
+    {
+        CSLDestroy( papszParms );
         return CE_Failure;
+    }
 
     if ( EQUAL(papszParms[0], szAlgNameInvDist) )
         *peAlgorithm = GGA_InverseDistanceToAPower;
