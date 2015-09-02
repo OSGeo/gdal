@@ -120,7 +120,7 @@ swq_expr_node::swq_expr_node( swq_op eOp )
     Initialize();
 
     eNodeType = SNT_OPERATION;
-    
+
     nOperation = (int) eOp;
     nSubExprCount = 0;
     papoSubExpr = NULL;
@@ -133,16 +133,21 @@ swq_expr_node::swq_expr_node( swq_op eOp )
 void swq_expr_node::Initialize()
 
 {
+    nOperation = 0;
+    nSubExprCount = 0;
+    papoSubExpr = NULL;
+
+    field_index = 0;
+    table_index = 0;
+    table_name = NULL;
     eNodeType = SNT_CONSTANT;
     field_type = SWQ_INTEGER;
-    int_value = 0;
 
     is_null = FALSE;
-    table_name = NULL;
     string_value = NULL;
+    int_value = 0;
+    float_value = 0;
     geometry_value = NULL;
-    papoSubExpr = NULL;
-    nSubExprCount = 0;
 }
 
 /************************************************************************/
