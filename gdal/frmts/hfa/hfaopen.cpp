@@ -1552,7 +1552,7 @@ const Eprj_Datum *HFAGetDatum( HFAHandle hHFA )
         psDatum->type = EPRJ_DATUM_NONE;
     }
     else
-        psDatum->type = (Eprj_DatumType) nDatumType;
+        psDatum->type = static_cast<Eprj_DatumType>(nDatumType);
 
     for( i = 0; i < 7; i++ )
     {
@@ -3632,9 +3632,9 @@ char **HFAReadCameraModel( HFAHandle hHFA )
 
         memset( &sDatum, 0, sizeof(sDatum));
 
-        sDatum.datumname = 
+        sDatum.datumname =
             (char *) poProjInfo->GetStringField("earthModel.datum.datumname");
-            
+
         int nDatumType = poProjInfo->GetIntField("earthModel.datum.type");
         if( nDatumType < 0 || nDatumType > EPRJ_DATUM_NONE )
         {
@@ -3642,7 +3642,7 @@ char **HFAReadCameraModel( HFAHandle hHFA )
             sDatum.type = EPRJ_DATUM_NONE;
         }
         else
-            sDatum.type = (Eprj_DatumType) nDatumType;
+            sDatum.type = static_cast<Eprj_DatumType>(nDatumType);
 
         for( i = 0; i < 7; i++ )
         {
