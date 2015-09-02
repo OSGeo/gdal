@@ -989,15 +989,15 @@ static CPLErr AIGRename( const char *pszNewName, const char *pszOldName )
 
     for( i = 0; papszFileList[i] != NULL; i++ )
     {
-        if( VSIStatL( papszFileList[i], &sStatBuf ) == 0 
+        if( VSIStatL( papszFileList[i], &sStatBuf ) == 0
             && VSI_ISREG( sStatBuf.st_mode ) )
         {
             if( CPLMoveFile( papszNewFileList[i], papszFileList[i] ) != 0 )
             {
-                CPLError( CE_Failure, CPLE_AppDefined, 
+                CPLError( CE_Failure, CPLE_AppDefined,
                           "Unable to move %s to %s:\n%s",
                           papszFileList[i],
-                          papszNewFileList[i], 
+                          papszNewFileList[i],
                           VSIStrerror(errno) );
                 return CE_Failure;
             }
@@ -1008,7 +1008,7 @@ static CPLErr AIGRename( const char *pszNewName, const char *pszOldName )
         CPLUnlinkTree( osOldPath );
 
     CSLDestroy(papszFileList);
-
+    CSLDestroy(papszNewFileList);
     return CE_None;
 }
 
