@@ -393,6 +393,7 @@ GDALSimpleWarpRemapping( int nBandCount, GByte **papabySrcData,
             CPLError( CE_Warning, CPLE_AppDefined,
                       "Ill formed REMAP_MULTI `%s' ignored in GDALSimpleWarpRemapping()",
                       papszRemaps[iRemap] );
+            CSLDestroy( papszTokens );
             continue;
         }
 
