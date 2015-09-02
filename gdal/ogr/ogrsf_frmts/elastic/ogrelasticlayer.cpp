@@ -2188,6 +2188,13 @@ OGRErr OGRElasticLayer::CreateGeomField( OGRGeomFieldDefn *poFieldIn, CPL_UNUSED
             }
         }
     }
+    else
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "No SRS given for geometry column %s. SRS is assumed to be EPSG:4326 (WGS84 long/lat)",
+                 oFieldDefn.GetNameRef());
+    }
+    
     m_apoCT.push_back(poCT);
     
     m_bSerializeMapping = TRUE;
