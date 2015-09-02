@@ -918,10 +918,10 @@ ADRGDataset* ADRGDataset::OpenDataset(
     if( field == NULL )
         return NULL;
     fieldDefn = field->GetFieldDefn();
-    
-    int isGIN = TRUE;
-    
-    if (isGIN)
+
+    // TODO: Support on GIN things.  And what is GIN?
+    // GIN might mean generial information and might be a typo of GEN.
+    // if (isGIN)
     {
         if (!(strcmp(fieldDefn->GetName(), "GEN") == 0 &&
                 fieldDefn->GetSubfieldCount() == 21))
@@ -959,6 +959,7 @@ ADRGDataset* ADRGDataset::OpenDataset(
         PSO = GetLatitudeFromString(pszPSO);
         CPLDebug("ADRG", "PSO=%f", PSO);
     }
+#if 0
     else
     {
         if (!(strcmp(fieldDefn->GetName(), "OVI") == 0 &&
@@ -966,16 +967,16 @@ ADRGDataset* ADRGDataset::OpenDataset(
         {
             return NULL;
         }
-        
+
         if( record->GetIntSubfield("OVI", 0, "STR", 0) != 3 )
             return NULL;
-        
+
         ARV = record->GetIntSubfield("OVI", 0, "ARV", 0);
         CPLDebug("ADRG", "ARV=%d", ARV);
-        
+
         BRV = record->GetIntSubfield("OVI", 0, "BRV", 0);
         CPLDebug("ADRG", "BRV=%d", BRV);
-        
+
         const char* pszLSO = record->GetStringSubfield("OVI", 0, "LSO", 0);
         if( pszLSO == NULL || strlen(pszLSO) != 11 )
             return NULL;
@@ -988,6 +989,7 @@ ADRGDataset* ADRGDataset::OpenDataset(
         PSO = GetLatitudeFromString(pszPSO);
         CPLDebug("ADRG", "PSO=%f", PSO);
     }
+#endif
 
     field = record->GetField(3);
     if( field == NULL )
@@ -1182,7 +1184,7 @@ ADRGDataset* ADRGDataset::OpenDataset(
     poDS->adfGeoTransform[4] = 0.0;
     poDS->adfGeoTransform[5] = - 360. / BRV;
 
-    if (isGIN)
+    // if (isGIN)
     {
         char pszValue[32];
         sprintf(pszValue, "%d", SCA);
@@ -1353,7 +1355,8 @@ char** ADRGDataset::GetIMGListFromGEN(const char* pszFileName,
             /* Ignore overviews */
             if ( strcmp(RTY, "OVV") == 0 )
                 continue;
-            
+
+            // TODO: Fix the non-GIN section or remove it.
             if ( strcmp(RTY, "GIN") != 0 )
                 continue;
 
