@@ -700,7 +700,10 @@ static int ProxyMain( int argc, char ** argv )
             char* pszSRS = NULL;
             oSRS.exportToWkt( &pszSRS );
             if( pszSRS )
+            {
                 osProjSRS = pszSRS;
+                CPLFree(pszSRS);
+            }
             i++;
         }
 
@@ -2011,5 +2014,3 @@ int main( int argc, char ** argv )
 {
     return ProxyMain( argc, argv );
 }
-
-
