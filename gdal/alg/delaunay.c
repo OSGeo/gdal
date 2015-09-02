@@ -988,7 +988,6 @@ static void qh_printstats();
 #define qh_stddev gdal_qh_stddev
 static gdal_realT qh_stddev();
 
-#if INTERNAL_QHULL
 static void gdal_qh_symbols_unused()
 {
     dvertex();
@@ -1013,7 +1012,6 @@ static void gdal_qh_symbols_unused()
     qh_setfree2();
     qh_argv_to_command_size();
 }
-#endif
 
 #include "libqhull.h"
 #include "libqhull.c"
