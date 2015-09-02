@@ -237,9 +237,9 @@ int ARGDataset::Identify( GDALOpenInfo *poOpenInfo )
 /************************************************************************/
 GDALDataset *ARGDataset::Open( GDALOpenInfo * poOpenInfo )
 {
-    json_object * pJSONObject;
-    const char * pszJSONStr;
-    char * pszLayer;
+    json_object *pJSONObject = NULL;
+    const char *pszJSONStr = NULL;
+    char *pszLayer = NULL;
     /***** items from the json metadata *****/
     GDALDataType eType = GDT_Unknown;
     double fXmin = 0.0;
@@ -257,7 +257,7 @@ GDALDataset *ARGDataset::Open( GDALOpenInfo * poOpenInfo )
     int nPixelOffset = 0;
     double fNoDataValue = NAN;
 
-    char * pszWKT = NULL;
+    char *pszWKT = NULL;
     OGRSpatialReference oSRS;
     OGRErr nErr = OGRERR_NONE;
 
@@ -495,6 +495,7 @@ GDALDataset *ARGDataset::Open( GDALOpenInfo * poOpenInfo )
             "The ARG 'layer' is missing from the JSON file.");
         json_object_put(pJSONObject);
         pJSONObject = NULL;
+        CPLFree(pszWKT);
         return NULL;
     }
 
