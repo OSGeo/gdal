@@ -44,15 +44,13 @@ static void CopyBandInfo( GDALRasterBand * poSrcBand, GDALRasterBand * poDstBand
                             int bCanCopyStatsMetadata, int bCopyScale, int bCopyNoData );
 static int bSubCall = FALSE;
 
-/*  ******************************************************************* */
+/* ******************************************************************** */
 /*                               Usage()                                */
 /* ******************************************************************** */
 
 static void Usage(const char* pszErrorMsg = NULL, int bShort = TRUE)
 
 {
-    int	iDr;
-        
     printf( "Usage: gdal_translate [--help-general] [--long-usage]\n"
             "       [-ot {Byte/Int16/UInt16/UInt32/Int32/Float32/Float64/\n"
             "             CInt16/CInt32/CFloat32/CFloat64}] [-strict]\n"
@@ -73,10 +71,10 @@ static void Usage(const char* pszErrorMsg = NULL, int bShort = TRUE)
     {
         printf( "\n%s\n\n", GDALVersionInfo( "--version" ) );
         printf( "The following format drivers are configured and support output:\n" );
-        for( iDr = 0; iDr < GDALGetDriverCount(); iDr++ )
+        for( int iDr = 0; iDr < GDALGetDriverCount(); ++iDr )
         {
             GDALDriverH hDriver = GDALGetDriver(iDr);
-            
+
             if( GDALGetMetadataItem( hDriver, GDAL_DCAP_RASTER, NULL) != NULL &&
                 (GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATE, NULL ) != NULL
                 || GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATECOPY, NULL ) != NULL) )
@@ -278,7 +276,6 @@ static int ProxyMain( int argc, char ** argv )
 
 {
     GDALDatasetH	hDataset, hOutDS;
-    int			i;
     int			nRasterXSize, nRasterYSize;
     const char		*pszSource=NULL, *pszDest=NULL, *pszFormat = "GTiff";
     int bFormatExplicitlySet = FALSE;
@@ -365,7 +362,7 @@ static int ProxyMain( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
 /*      Handle command line arguments.                                  */
 /* -------------------------------------------------------------------- */
-    for( i = 1; i < argc; i++ )
+    for( int i = 1; i < argc; i++ )
     {
         if( EQUAL(argv[i], "--utility_version") )
         {
@@ -949,12 +946,12 @@ static int ProxyMain( int argc, char ** argv )
         }
 
         panBandList = (int *) CPLMalloc(sizeof(int)*nBandCount);
-        for( i = 0; i < nBandCount; i++ )
+        for( int i = 0; i < nBandCount; i++ )
             panBandList[i] = i+1;
     }
     else
     {
-        for( i = 0; i < nBandCount; i++ )
+        for( int i = 0; i < nBandCount; i++ )
         {
             if( ABS(panBandList[i]) > GDALGetRasterCount(hDataset) )
             {
@@ -1320,12 +1317,11 @@ static int ProxyMain( int argc, char ** argv )
 
     else if( GDALGetGCPCount( hDataset ) > 0 )
     {
-        GDAL_GCP *pasGCPs;
         int       nGCPs = GDALGetGCPCount( hDataset );
 
-        pasGCPs = GDALDuplicateGCPs( nGCPs, GDALGetGCPs( hDataset ) );
+        GDAL_GCP *pasGCPs = GDALDuplicateGCPs( nGCPs, GDALGetGCPs( hDataset ) );
 
-        for( i = 0; i < nGCPs; i++ )
+        for( int i = 0; i < nGCPs; i++ )
         {
             pasGCPs[i].dfGCPPixel -= anSrcWin[0];
             pasGCPs[i].dfGCPLine  -= anSrcWin[1];
@@ -1495,7 +1491,7 @@ static int ProxyMain( int argc, char ** argv )
 /* ==================================================================== */
 /*      Process all bands.                                              */
 /* ==================================================================== */
-    for( i = 0; i < nBandCount; i++ )
+    for( int i = 0; i < nBandCount; i++ )
     {
         VRTSourcedRasterBand   *poVRTBand;
         GDALRasterBand  *poSrcBand;
@@ -1866,7 +1862,7 @@ static int ProxyMain( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
     if (bStats)
     {
-        for( i = 0; i < poVDS->GetRasterCount(); i++ )
+        for( int i = 0; i < poVDS->GetRasterCount(); i++ )
         {
             double dfMin, dfMax, dfMean, dfStdDev;
             poVDS->GetRasterBand(i+1)->ComputeStatistics( bApproxStats,
@@ -1939,9 +1935,7 @@ static void AttachMetadata( GDALDatasetH hDS, char **papszMetadataOptions )
     for( i = 0; i < nCount; i++ )
     {
         char    *pszKey = NULL;
-        const char *pszValue;
-        
-        pszValue = CPLParseNameValue( papszMetadataOptions[i], &pszKey );
+        const char *pszValue = CPLParseNameValue( papszMetadataOptions[i], &pszKey );
         GDALSetMetadataItem(hDS,pszKey,pszValue,NULL);
         CPLFree( pszKey );
     }
