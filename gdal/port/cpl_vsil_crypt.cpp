@@ -32,7 +32,10 @@
 /* Increase Major in case of backward incompatible changes */
 #define VSICRYPT_CURRENT_MAJOR          1
 #define VSICRYPT_CURRENT_MINOR          0
-#define VSICRYPT_SIGNATURE              "VSICRYPT"
+#define VSICRYPT_SIGNATURE              "VSICRYPT" /* Must be 8 cars */
+
+#define VSICRYPT_PREFIX_WITHOUT_SLASH   "/vsicrypt"
+#define VSICRYPT_PREFIX                 "/vsicrypt/"
 
 #define VSICRYPT_READ  0x1
 #define VSICRYPT_WRITE 0x2
@@ -1309,11 +1312,11 @@ VSICryptFilesystemHandler::~VSICryptFilesystemHandler()
 
 static CPLString GetFilename(const char* pszFilename)
 {
-    if( strcmp(pszFilename, "/vsicrypt") == 0 )
-        pszFilename = "/vsicrypt/";
+    if( strcmp(pszFilename, VSICRYPT_PREFIX_WITHOUT_SLASH) == 0 )
+        pszFilename = VSICRYPT_PREFIX;
 
-    CPLAssert( strncmp(pszFilename, "/vsicrypt/", strlen("/vsicrypt/")) == 0 );
-    pszFilename += strlen("/vsicrypt/");
+    CPLAssert( strncmp(pszFilename, VSICRYPT_PREFIX, strlen(VSICRYPT_PREFIX)) == 0 );
+    pszFilename += strlen(VSICRYPT_PREFIX);
     const char* pszFileArg = strstr(pszFilename, "file=");
     if( pszFileArg == NULL )
         return pszFilename;
@@ -1615,7 +1618,7 @@ int VSICryptFilesystemHandler::Unlink( const char *pszFilename )
 int VSICryptFilesystemHandler::Rename( const char *oldpath, const char* newpath )
 {
     CPLString osNewPath;
-    if( strncmp(newpath, "/vsicrypt/", strlen("/vsicrypt/")) == 0 )
+    if( strncmp(newpath, VSICRYPT_PREFIX, strlen(VSICRYPT_PREFIX)) == 0 )
         osNewPath = GetFilename(newpath);
     else
         osNewPath = newpath;
@@ -1649,7 +1652,7 @@ static GDALDataset* VSICryptOpen(GDALOpenInfo* poOpenInfo)
 {
     if( !VSICryptIdentify(poOpenInfo) )
         return NULL;
-    return (GDALDataset*)GDALOpen( (CPLString("/vsicrypt/") + poOpenInfo->pszFilename).c_str(),
+    return (GDALDataset*)GDALOpen( (CPLString(VSICRYPT_PREFIX) + poOpenInfo->pszFilename).c_str(),
                      poOpenInfo->eAccess );
 }
 
@@ -1795,7 +1798,7 @@ static GDALDataset* VSICryptOpen(GDALOpenInfo* poOpenInfo)
 void VSIInstallCryptFileHandler(void)
 
 {
-    VSIFileManager::InstallHandler( "/vsicrypt/", new VSICryptFilesystemHandler );
+    VSIFileManager::InstallHandler( VSICRYPT_PREFIX, new VSICryptFilesystemHandler );
 
 #ifdef VSICRYPT_DRIVER
     if( GDALGetDriverByName( "VSICRYPT" ) == NULL )
@@ -1807,7 +1810,8 @@ void VSIInstallCryptFileHandler(void)
         poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
 #endif
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Wrapper for /vsicrypt/ files" );
+        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                                   CPLSPrintf("Wrapper for %s files", VSICRYPT_PREFIX) );
 
         poDriver->pfnOpen = VSICryptOpen;
         poDriver->pfnIdentify = VSICryptIdentify;
@@ -1828,7 +1832,7 @@ public:
                                     CPL_UNUSED const char *pszAccess)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
-                 "/vsicrypt/ support not available in this build");
+                 "%s support not available in this build", VSICRYPT_PREFIX);
         return NULL;
     }
 
@@ -1836,14 +1840,14 @@ public:
                       CPL_UNUSED VSIStatBufL *pStatBuf, CPL_UNUSED int nFlags )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
-                 "/vsicrypt/ support not available in this build");
+                 "%s support not available in this build", VSICRYPT_PREFIX);
         return -1;
     }
 };
 
 void VSIInstallCryptFileHandler(void)
 {
-    VSIFileManager::InstallHandler( "/vsicrypt/", new VSIDummyCryptFilesystemHandler );
+    VSIFileManager::InstallHandler( VSICRYPT_PREFIX, new VSIDummyCryptFilesystemHandler );
 }
 
 void VSISetCryptKey(CPL_UNUSED const GByte* pabyKey, CPL_UNUSED int nKeySize)
@@ -1863,7 +1867,7 @@ CPL_C_END
 
 void GDALRegisterMe()
 {
-    if( VSIFileManager::GetHandler("/vsicrypt/") == VSIFileManager::GetHandler(".") )
+    if( VSIFileManager::GetHandler(VSICRYPT_PREFIX) == VSIFileManager::GetHandler(".") )
         VSIInstallCryptFileHandler();
 }
 
@@ -1874,7 +1878,7 @@ CPL_C_END
 
 void RegisterOGRCRYPT()
 {
-    if( VSIFileManager::GetHandler("/vsicrypt/") == VSIFileManager::GetHandler(".") )
+    if( VSIFileManager::GetHandler(VSICRYPT_PREFIX) == VSIFileManager::GetHandler(".") )
         VSIInstallCryptFileHandler();
 }
 #endif
