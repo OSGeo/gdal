@@ -122,7 +122,7 @@ def ogr_elasticsearch_1():
     gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo/FeatureCollection/_mapping&POSTFIELDS={ "FeatureCollection": { "properties": { "type": { "store": "yes", "type": "string" }, "properties": { } } } }', '{}')
 
     # OVERWRITE an inexisting layer
-    lyr = ds.CreateLayer('foo', srs = ogrtest.srs_wgs84, geom_type = ogr.wkbNone, options = ['OVERWRITE=TRUE', 'FID='])
+    lyr = ds.CreateLayer('foo', geom_type = ogr.wkbNone, options = ['OVERWRITE=TRUE', 'FID='])
     if gdal.GetLastErrorType() != gdal.CE_None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -131,7 +131,7 @@ def ogr_elasticsearch_1():
     gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo/_mapping/FeatureCollection', '{"foo":{"mappings":{"FeatureCollection":{}}}}')
     gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo', '{}')
     with gdaltest.error_handler():
-        lyr = ds.CreateLayer('foo', srs = ogrtest.srs_wgs84, geom_type = ogr.wkbNone, options = ['OVERWRITE=TRUE'])
+        lyr = ds.CreateLayer('foo', geom_type = ogr.wkbNone, options = ['OVERWRITE=TRUE'])
     if gdal.GetLastErrorType() != gdal.CE_Failure:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -139,7 +139,7 @@ def ogr_elasticsearch_1():
     # Successful overwrite
     gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo/_mapping/FeatureCollection&CUSTOMREQUEST=DELETE', '{}')
     gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo/FeatureCollection/&POSTFIELDS={ }', '{}')
-    lyr = ds.CreateLayer('foo', srs = ogrtest.srs_wgs84, geom_type = ogr.wkbNone, options = ['OVERWRITE=TRUE', 'BULK_INSERT=NO', 'FID='])
+    lyr = ds.CreateLayer('foo', geom_type = ogr.wkbNone, options = ['OVERWRITE=TRUE', 'BULK_INSERT=NO', 'FID='])
     if gdal.GetLastErrorType() != gdal.CE_None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -1134,7 +1134,8 @@ def ogr_elasticsearch_5():
 
     f = None
     lyr.CreateField(ogr.FieldDefn('superobject.subfield2', ogr.OFTString))
-    lyr.CreateGeomField(ogr.GeomFieldDefn('superobject.another_geoshape3', ogr.wkbPoint))
+    with gdaltest.error_handler():
+        lyr.CreateGeomField(ogr.GeomFieldDefn('superobject.another_geoshape3', ogr.wkbPoint))
     f = ogr.Feature(lyr.GetLayerDefn())
     f['superobject.subfield2'] = 'foo'
     f['superobject.another_geoshape3'] = ogr.CreateGeometryFromWkt('POINT (3 50)')

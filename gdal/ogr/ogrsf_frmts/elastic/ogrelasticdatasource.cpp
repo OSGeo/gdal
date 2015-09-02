@@ -150,13 +150,7 @@ OGRLayer * OGRElasticDataSource::ICreateLayer(const char * pszLayerName,
         CPLError(CE_Failure, CPLE_AppDefined, "Dataset opened in read-only mode");
         return NULL;
     }
-    
-    if( poSRS == NULL )
-    {
-        CPLError(CE_Warning, CPLE_AppDefined,
-                 "No SRS given at layer creation. SRS is assumed to be EPSG:4326 (WGS84 long/lat)");
-    }
-    
+
     CPLString osLaunderedName(pszLayerName);
 
     const char* pszIndexName = CSLFetchNameValue(papszOptions, "INDEX_NAME");
