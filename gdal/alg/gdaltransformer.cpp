@@ -395,7 +395,6 @@ retry:
     padfYRevert = padfXRevert + nSampleMax;
     padfZRevert = padfXRevert + nSampleMax * 2;
 
-
     // Take N_STEPS steps
     int iStep;
     for( iStep = 0; iStep <= nSteps; iStep ++ )
@@ -499,9 +498,9 @@ retry:
                     dfExpectedX   = nInXSize;
                     dfExpectedY   = dfRatio * nInYSize;
                 }
-                
-                if (fabs(padfXRevert[i] - dfExpectedX) > nInXSize / nSteps ||
-                    fabs(padfYRevert[i] - dfExpectedY) > nInYSize / nSteps)
+
+                if (fabs(padfXRevert[i] - dfExpectedX) > nInXSize / static_cast<double>(nSteps) ||
+                    fabs(padfYRevert[i] - dfExpectedY) > nInYSize / static_cast<double>(nSteps))
                     nFailedCount ++;
             }
             if( nFailedCount != 0 )
