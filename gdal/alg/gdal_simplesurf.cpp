@@ -511,6 +511,7 @@ CPLErr GDALSimpleSURF::MatchFeaturePoints(
 
     // Clean up
     delete[] alreadyMatched;
+    delete poPairInfoList;
 
     return CE_None;
 }
@@ -519,4 +520,3 @@ GDALSimpleSURF::~GDALSimpleSURF()
 {
     delete poOctMap;
 }
-
