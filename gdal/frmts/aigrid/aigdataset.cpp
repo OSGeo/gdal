@@ -978,6 +978,7 @@ static CPLErr AIGRename( const char *pszNewName, const char *pszOldName )
                       "Unable to create directory %s:\n%s",
                       osNewPath.c_str(),
                       VSIStrerror(errno) );
+            CSLDestroy(papszNewFileList);
             return CE_Failure;
         }
     }
@@ -999,6 +1000,7 @@ static CPLErr AIGRename( const char *pszNewName, const char *pszOldName )
                           papszFileList[i],
                           papszNewFileList[i],
                           VSIStrerror(errno) );
+                CSLDestroy(papszNewFileList);
                 return CE_Failure;
             }
         }
