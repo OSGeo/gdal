@@ -3433,6 +3433,7 @@ void *GDALCloneTransformer( void *pTransformArg )
             CE_None )
         {
             CPLDestroyXMLNode(pSerialized);
+            CPLFree(pClonedTransformArg);
             return NULL;
         }
         CPLDestroyXMLNode(pSerialized);
