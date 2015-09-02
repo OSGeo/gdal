@@ -57,35 +57,35 @@ static float CPLNaN(void)
 
 /************************************************************************/
 /* ==================================================================== */
-/*				ARGDataset				                                */
+/*				ARGDataset                              */
 /* ==================================================================== */
 /************************************************************************/
 
 class ARGDataset : public RawDataset
 {
-        VSILFILE	*fpImage;	// image data file.
-    
-        double	adfGeoTransform[6];
-        char * pszFilename;
+        VSILFILE *fpImage;	// image data file.
+        double adfGeoTransform[6];
+        char *pszFilename;
 
     public:
         ARGDataset();
         ~ARGDataset();
 
         CPLErr 	GetGeoTransform( double * padfTransform );
-   
+
         static int Identify( GDALOpenInfo * );
         static GDALDataset *Open( GDALOpenInfo * );
-        static GDALDataset *CreateCopy( const char *, GDALDataset *, int, 
+        static GDALDataset *CreateCopy( const char *, GDALDataset *, int,
             char **, GDALProgressFunc, void *);
         virtual char ** GetFileList(void);
-}; 
+};
 
 /************************************************************************/
 /*                            ARGDataset()                              */
 /************************************************************************/
 
-ARGDataset::ARGDataset()
+ARGDataset::ARGDataset() :
+    fpImage(NULL), pszFilename(NULL)
 {
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
@@ -93,7 +93,6 @@ ARGDataset::ARGDataset()
     adfGeoTransform[3] = 0.0;
     adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = 1.0;
-    fpImage = NULL;
 }
 
 /************************************************************************/
