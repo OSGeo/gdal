@@ -246,14 +246,11 @@ GDALComputeMatchingPoints( GDALDatasetH hFirstImage,
 /* -------------------------------------------------------------------- */
 /*      Try to find corresponding locations.                            */
 /* -------------------------------------------------------------------- */
-    CPLErr eErr;
     std::vector<GDALFeaturePoint *> oMatchPairs;
 
-    eErr = GDALSimpleSURF::MatchFeaturePoints(
+    if( CE_None != GDALSimpleSURF::MatchFeaturePoints(
         &oMatchPairs, poFPCollection1, poFPCollection2,
-        dfMatchingThreshold );
-
-    if( eErr != CE_None )
+        dfMatchingThreshold ))
     {
         delete poFPCollection1;
         delete poFPCollection2;
