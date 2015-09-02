@@ -7,6 +7,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2008, Frank Warmerdam
+ * Copyright (c) 2015, Even Rouault <even.rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -82,19 +83,31 @@ void GDALRasterPolygonEnumerator::Clear()
 /*      Update the polygon map to indicate the merger of two polygons.  */
 /************************************************************************/
 
-void GDALRasterPolygonEnumerator::MergePolygon( int nSrcId, int nDstId )
+void GDALRasterPolygonEnumerator::MergePolygon( int nSrcId, int nDstIdInit )
 
 {
-    while( panPolyIdMap[nDstId] != nDstId )
-        nDstId = panPolyIdMap[nDstId];
+    // Figure out the final dest id
+    int nDstIdFinal = nDstIdInit;
+    while( panPolyIdMap[nDstIdFinal] != nDstIdFinal )
+        nDstIdFinal = panPolyIdMap[nDstIdFinal];
 
+    // Map the whole intermediate chain to it
+    int nDstIdCur = nDstIdInit;
+    while( panPolyIdMap[nDstIdCur] != nDstIdCur )
+    {
+        int nNextDstId = panPolyIdMap[nDstIdCur];
+        panPolyIdMap[nDstIdCur] = nDstIdFinal;
+        nDstIdCur = nNextDstId;
+    }
+
+    // And map hwole the source chain to it too (can be done in one pass)
     while( panPolyIdMap[nSrcId] != nSrcId )
-        nSrcId = panPolyIdMap[nSrcId];
-
-    if( nSrcId == nDstId )
-        return;
-
-    panPolyIdMap[nSrcId] = nDstId;
+    {
+        int nNextSrcId = panPolyIdMap[nSrcId];
+        panPolyIdMap[nSrcId] = nDstIdFinal;
+        nSrcId = nNextSrcId;
+    }
+    panPolyIdMap[nSrcId] = nDstIdFinal;
 }
 
 /************************************************************************/
@@ -112,8 +125,8 @@ int GDALRasterPolygonEnumerator::NewPolygon( GInt32 nValue )
     if( nNextPolygonId >= nPolyAlloc )
     {
         nPolyAlloc = nPolyAlloc * 2 + 20;
-        panPolyIdMap = (GInt32 *) CPLRealloc(panPolyIdMap,nPolyAlloc*4);
-        panPolyValue = (GInt32 *) CPLRealloc(panPolyValue,nPolyAlloc*4);
+        panPolyIdMap = (GInt32 *) CPLRealloc(panPolyIdMap,nPolyAlloc*sizeof(GInt32));
+        panPolyValue = (GInt32 *) CPLRealloc(panPolyValue,nPolyAlloc*sizeof(GInt32));
     }
 
     nNextPolygonId++;
@@ -140,9 +153,22 @@ void GDALRasterPolygonEnumerator::CompleteMerges()
 
     for( iPoly = 0; iPoly < nNextPolygonId; iPoly++ )
     {
-        while( panPolyIdMap[iPoly] 
-               != panPolyIdMap[panPolyIdMap[iPoly]] )
-            panPolyIdMap[iPoly] = panPolyIdMap[panPolyIdMap[iPoly]];
+        // Figure out the final id
+        int nId = panPolyIdMap[iPoly];
+        while( nId != panPolyIdMap[nId] )
+        {
+            nId = panPolyIdMap[nId];
+        }
+
+        // Then map the whole intermediate chain to it
+        int nIdCur = panPolyIdMap[iPoly];
+        panPolyIdMap[iPoly] = nId;
+        while( nIdCur != panPolyIdMap[nIdCur] )
+        {
+            int nNextId = panPolyIdMap[nIdCur];
+            panPolyIdMap[nIdCur] = nId;
+            nIdCur = nNextId;
+        }
 
         if( panPolyIdMap[iPoly] == iPoly )
             nFinalPolyCount++;

@@ -194,12 +194,53 @@ def sieve_5():
     else:
         return 'success' 
 
+###############################################################################
+# Peformance test. When increasing the 'size' parameter, performance
+# should stay roughly linear with the number of pixels (ie size^2)
+
+def sieve_6():
+
+    try:
+        import numpy
+    except:
+        return 'skip'
+
+    # Try 3002. Should run in less than 10 seconds
+    #size = 3002
+    size = 102
+    ds = gdal.GetDriverByName('MEM').Create('', size+1, size)
+    ar = numpy.zeros((size,size+1), dtype = numpy.uint8)
+    for i in range(size):
+        for j in range(size/3):
+            ar[i][size+1-1-i-1-3*j] = 255
+            ar[i][size+1-1-i-3*j] = 255
+        ar[i][0] = 255
+    ar[size-1] = 255
+    ds.GetRasterBand(1).WriteArray(ar)
+    
+    band = ds.GetRasterBand(1)
+
+    gdal.SieveFilter( band, None, band, 2, 4 )
+    
+    #ar = band.ReadAsArray()
+    #print(ar)
+    
+    cs = band.Checksum()
+    if (size == 102 and cs != 60955) or (size == 3002 and cs != 63178):
+        print('Got: ', cs)
+        gdaltest.post_reason( 'got wrong checksum' )
+        return 'fail'
+    
+    return 'success'
+
+
 gdaltest_list = [
     sieve_1,
     sieve_2,
     sieve_3,
     sieve_4,
-    sieve_5
+    sieve_5,
+    sieve_6
     ]
 
 if __name__ == '__main__':
