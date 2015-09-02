@@ -1475,6 +1475,11 @@ int main( int nArgc, char ** papszArgv )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             OGRSpatialReferenceH hOutputSRS = OSRNewSpatialReference(NULL);
+            if (iArg + 1 == nArgc) {
+                fprintf( stderr, "Missing SRS definition.\n");
+                GDALDestroyDriverManager();
+                exit( 1 );
+            }
 
             if( OSRSetFromUserInput( hOutputSRS, papszArgv[iArg+1] ) != OGRERR_NONE )
             {
