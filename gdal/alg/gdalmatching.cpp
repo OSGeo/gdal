@@ -124,6 +124,13 @@ GatherFeaturePoints(GDALDataset* poDataset, int* panBands,
     const int nWidth = poRstRedBand->GetXSize();
     const int nHeight = poRstRedBand->GetYSize();
 
+    if (nWidth == 0 && nHeight == 0)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Must have non-zero width and height.");
+        return NULL;
+    }
+
     // Allocate memory for grayscale image
     double **padfImg = new double*[nHeight];
     for (int i = 0; i < nHeight; ++i)
