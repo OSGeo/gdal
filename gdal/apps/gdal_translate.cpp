@@ -577,6 +577,7 @@ static int ProxyMain( int argc, char ** argv )
                         sizeof(ScaleParams) * (nIndex - nScaleRepeat));
                 nScaleRepeat = nIndex + 1;
             }
+            // TODO: else pasScaleParams is NULL and there is an error.
             pasScaleParams[nIndex].bScale = TRUE;
             if( i < argc-2 && ArgIsNumeric(argv[i+1]) )
             {
