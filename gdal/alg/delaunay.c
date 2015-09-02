@@ -1174,10 +1174,10 @@ GDALTriangulation* GDALTriangulationCreateDelaunay(int nPoints,
             goto end;
         }
 
-        CPLAssert(facet->id >= 0 && facet->id < qh facet_id);
+        CPLAssert(facet->id < qh facet_id);
         panMapQHFacetIdToFacetIdx[facet->id] = j++;
     }
-    
+
     pasFacets = (GDALTriFacet*) VSIMalloc2( j, sizeof(GDALTriFacet) );
     if(pasFacets == NULL )
     {
