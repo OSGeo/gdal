@@ -324,10 +324,10 @@ CPLErr GDALContourGenerator::ProcessPixel( int iPixel )
 /* -------------------------------------------------------------------- */
 /*      Prepare subdivisions.                                           */
 /* -------------------------------------------------------------------- */
-    int nGoodCount = 0; 
+    int nGoodCount = 0;
     double dfASum = 0.0;
-    double dfCenter, dfTop=0.0, dfRight=0.0, dfLeft=0.0, dfBottom=0.0;
-    
+    double dfTop=0.0, dfRight=0.0, dfLeft=0.0, dfBottom=0.0;
+
     if( dfUpLeft != dfNoDataValue )
     {
         dfASum += dfUpLeft;
@@ -352,10 +352,10 @@ CPLErr GDALContourGenerator::ProcessPixel( int iPixel )
         nGoodCount++;
     }
 
-    if( nGoodCount == 0.0 )
+    if( nGoodCount == 0 )
         return CE_None;
 
-    dfCenter = dfASum / nGoodCount;
+    double dfCenter = dfASum / nGoodCount;
 
     if( dfUpLeft != dfNoDataValue )
     {
