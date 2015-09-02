@@ -630,6 +630,7 @@ static int ProxyMain( int argc, char ** argv )
                         sizeof(double) * (nIndex - nExponentRepeat));
                 nExponentRepeat = nIndex + 1;
             }
+            // TODO: else padfExport is NULL.
             double dfExponent = CPLAtofM(argv[++i]);
             padfExponent[nIndex] = dfExponent;
         }
