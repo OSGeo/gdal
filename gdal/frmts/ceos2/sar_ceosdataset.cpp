@@ -146,7 +146,7 @@ class SAR_CEOSDataset : public GDALPamDataset
     VSILFILE	*fpImage;
 
     char        **papszTempMD;
-    
+
     int         nGCPCount;
     GDAL_GCP    *pasGCPList;
 
@@ -649,13 +649,41 @@ CPLErr PALSARRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 /************************************************************************/
 
 SAR_CEOSDataset::SAR_CEOSDataset()
-
+    : fpImage(NULL), papszTempMD(NULL), nGCPCount(0), pasGCPList(NULL)
 {
-    fpImage = NULL;
-    nGCPCount = 0;
-    pasGCPList = NULL;
+    sVolume.Flavour = 0;
+    sVolume.Sensor = 0;
+    sVolume.ProductType = 0;
+    sVolume.FileNamingConvention = 0;
 
-    papszTempMD = NULL;
+    sVolume.VolumeDirectoryFile = 0;
+    sVolume.SARLeaderFile = 0;
+    sVolume.ImagryOptionsFile = 0;
+    sVolume.SARTrailerFile = 0;
+    sVolume.NullVolumeDirectoryFile = 0;
+
+    sVolume.ImageDesc.ImageDescValid = 0;
+    sVolume.ImageDesc.NumChannels = 0;
+    sVolume.ImageDesc.ChannelInterleaving = 0;
+    sVolume.ImageDesc.DataType = 0;
+    sVolume.ImageDesc.BytesPerRecord = 0;
+    sVolume.ImageDesc.Lines = 0;
+    sVolume.ImageDesc.TopBorderPixels = 0;
+    sVolume.ImageDesc.BottomBorderPixels = 0;
+    sVolume.ImageDesc.PixelsPerLine = 0;
+    sVolume.ImageDesc.LeftBorderPixels = 0;
+    sVolume.ImageDesc.RightBorderPixels = 0;
+    sVolume.ImageDesc.BytesPerPixel = 0;
+    sVolume.ImageDesc.RecordsPerLine = 0;
+    sVolume.ImageDesc.PixelsPerRecord = 0;
+    sVolume.ImageDesc.ImageDataStart = 0;
+    sVolume.ImageDesc.ImageSuffixData = 0;
+    sVolume.ImageDesc.FileDescriptorLength = 0;
+    sVolume.ImageDesc.PixelOrder = 0;
+    sVolume.ImageDesc.LineOrder = 0;
+    sVolume.ImageDesc.PixelDataBytesPerRecord = 0;
+
+    sVolume.RecordList = NULL;
 }
 
 /************************************************************************/
