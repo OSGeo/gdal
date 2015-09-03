@@ -685,9 +685,8 @@ void EnvisatDataset::CollectDSDMetadata()
 
 {
     char	*pszDSName, *pszFilename;
-    int		iDSD;
 
-    for( iDSD = 0;
+    for( int iDSD = 0;
          EnvisatFile_GetDatasetInfo( hEnvisatFile, iDSD, &pszDSName, NULL,
                              &pszFilename, NULL, NULL, NULL, NULL ) == SUCCESS;
          iDSD++ )
@@ -698,18 +697,18 @@ void EnvisatDataset::CollectDSDMetadata()
             || EQUALN(pszFilename,"        ",8))
             continue;
 
-        char	szKey[128], szTrimmedName[128];
-        int	i;
+        const int max_len = 128;
+        char szKey[max_len], szTrimmedName[max_len];
 
-        strcpy( szKey, "DS_" );
-        strcat( szKey, pszDSName );
+        strcpy( szKey, "DS_");
+        strncat( szKey, pszDSName, max_len - strlen(szKey) - 1 );
 
         // strip trailing spaces.
-        for( i = strlen(szKey)-1; i && szKey[i] == ' '; i-- )
+        for( int i = strlen(szKey)-1; i && szKey[i] == ' '; i-- )
             szKey[i] = '\0';
 
         // convert spaces into underscores.
-        for( i = 0; szKey[i] != '\0'; i++ )
+        for( int i = 0; szKey[i] != '\0'; i++ )
         {
             if( szKey[i] == ' ' )
                 szKey[i] = '_';
@@ -718,7 +717,7 @@ void EnvisatDataset::CollectDSDMetadata()
         strcat( szKey, "_NAME" );
 
         strcpy( szTrimmedName, pszFilename );
-        for( i = strlen(szTrimmedName)-1; i && szTrimmedName[i] == ' '; i--)
+        for( int i = strlen(szTrimmedName)-1; i && szTrimmedName[i] == ' '; i--)
             szTrimmedName[i] = '\0';
 
         SetMetadataItem( szKey, szTrimmedName );
