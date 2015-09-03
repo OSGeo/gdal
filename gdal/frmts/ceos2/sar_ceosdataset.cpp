@@ -44,17 +44,13 @@ static GInt16 CastToGInt16(float val);
 
 static GInt16 CastToGInt16(float val)
 {
-    float temp;
+    if ( val < -32768.0 )
+        val = -32768.0;
 
-    temp = val;
+    if ( val > 32767 )
+        val = 32767.0;
 
-    if ( temp < -32768.0 )
-        temp = -32768.0;
-
-    if ( temp > 32767 )
-        temp = 32767.0;
-
-    return (GInt16) temp;    
+    return static_cast<GInt16>(val);
 }
 
 static const char *CeosExtension[][6] = { 
