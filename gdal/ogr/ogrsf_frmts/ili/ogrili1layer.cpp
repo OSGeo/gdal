@@ -547,10 +547,9 @@ OGRMultiPolygon* OGRILI1Layer::Polygonize( OGRGeometryCollection* poLines, bool 
         delete poMP;
         return NULL;
     }
-
-#endif
-
+#else
     return poPolygon;
+#endif
 }
 
 
