@@ -214,12 +214,11 @@ void GetCeosField(CeosRecord_t *record, int32 start_byte,
 	break;
 
     default:
-	/* Unknown format */
-	return;
+	/* Unknown format.  Do nothing. */
+        break;
     }
 
     HFree(mod_buf);
-
 }
 
 void SetCeosField(CeosRecord_t *record, int32 start_byte, char *format, void *value)
