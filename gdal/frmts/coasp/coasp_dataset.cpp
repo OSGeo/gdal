@@ -87,7 +87,8 @@ protected:
 	char *pszItemName;
 	char *pszItemValue;
 public:
-  COASPMetadataItem() : pszItemName(NULL), pszItemValue(NULL) { }
+    COASPMetadataItem() : pszItemName(NULL), pszItemValue(NULL) { }
+    ~COASPMetadataItem();
 	COASPMetadataItem(char *pszItemName, char *pszItemValue);
 	char *GetItemName();
 	char *GetItemValue();
@@ -118,10 +119,16 @@ public:
  * ================================================================ *
  ********************************************************************/
 
-COASPMetadataItem::COASPMetadataItem(char *pszItemName, char *pszItemValue) 
+COASPMetadataItem::COASPMetadataItem(char *pszItemName, char *pszItemValue)
 {
-	this->pszItemName = VSIStrdup(pszItemName);
-	this->pszItemValue = VSIStrdup(pszItemValue);
+    pszItemName = VSIStrdup(pszItemName);
+    pszItemValue = VSIStrdup(pszItemValue);
+}
+
+COASPMetadataItem::~COASPMetadataItem()
+{
+    CPLFree(pszItemName);
+    CPLFree(pszItemValue);
 }
 
 char *COASPMetadataItem::GetItemName() 
