@@ -1042,7 +1042,11 @@ GDALDataset *BMPDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
-    VSIStatL(poOpenInfo->pszFilename, &sStat);
+    if (VSIStatL(poOpenInfo->pszFilename, &sStat) != 0)
+    {
+        delete poDS;
+        return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Read the BMPFileHeader. We need iOffBits value only             */
