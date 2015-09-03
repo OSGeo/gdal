@@ -51,7 +51,6 @@ OGRErr OGR_SRS_ImportFromISO19115( OGRSpatialReference *poThis,
 /************************************************************************/
 class BAGDataset : public GDALPamDataset
 {
-
     friend class BAGRasterBand;
 
     hid_t        hHDF5;
@@ -63,11 +62,11 @@ class BAGDataset : public GDALPamDataset
 
     char        *pszXMLMetadata;
     char        *apszMDList[2];
-    
+
 public:
     BAGDataset();
     ~BAGDataset();
-    
+
     virtual CPLErr GetGeoTransform( double * );
     virtual const char *GetProjectionRef(void);
     virtual char      **GetMetadataDomainList();
@@ -401,18 +400,18 @@ CPLErr BAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /*                             BAGDataset()                             */
 /************************************************************************/
 
-BAGDataset::BAGDataset()
+BAGDataset::BAGDataset() :
+    hHDF5(-1), pszProjection(NULL), pszXMLMetadata(NULL)
 {
-    hHDF5 = -1;
-    pszXMLMetadata = NULL;
-    pszProjection = NULL;
-
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
     adfGeoTransform[2] = 0.0;
     adfGeoTransform[3] = 0.0;
     adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = 1.0;
+
+    apszMDList[0] = NULL;
+    apszMDList[1] = NULL;
 }
 
 /************************************************************************/
@@ -425,8 +424,8 @@ BAGDataset::~BAGDataset( )
     if( hHDF5 >= 0 )
         H5Fclose( hHDF5 );
 
-    CPLFree( pszXMLMetadata );
     CPLFree( pszProjection );
+    CPLFree( pszXMLMetadata );
 }
 
 /************************************************************************/
