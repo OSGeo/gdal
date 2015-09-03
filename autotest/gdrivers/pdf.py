@@ -142,10 +142,14 @@ def pdf_online_1():
     expected_gt = (-77.112328333299999, 9.1666559999999995e-06, 0.0, 38.897842488372, -0.0, -9.1666559999999995e-06)
     for i in range(6):
         if abs(gt[i] - expected_gt[i]) > 1e-15:
-            gdaltest.post_reason('bad geotransform')
-            print(gt)
-            print(expected_gt)
-            return 'fail'
+            # The remote file has been updated...
+            other_expected_gt = (-77.112328333299928, 9.1666560000165691e-06, 0.0, 38.897842488371978, 0.0, -9.1666560000046903e-06)
+            for j in range(6):
+                if abs(gt[j] - other_expected_gt[j]) > 1e-15:
+                    gdaltest.post_reason('bad geotransform')
+                    print(gt)
+                    print(other_expected_gt)
+                    return 'fail'
 
     if wkt.find('GEOGCS["WGS 84"') != 0:
         gdaltest.post_reason('bad WKT')
@@ -182,9 +186,14 @@ def pdf_online_2():
     expected_gt = (-77.112328333299999, 9.1666559999999995e-06, 0.0, 38.897842488372, -0.0, -9.1666559999999995e-06)
     for i in range(6):
         if abs(gt[i] - expected_gt[i]) > 1e-15:
-            print(gt)
-            print(expected_gt)
-            return 'fail'
+            # The remote file has been updated...
+            other_expected_gt = (-77.112328333299928, 9.1666560000165691e-06, 0.0, 38.897842488371978, 0.0, -9.1666560000046903e-06)
+            for j in range(6):
+                if abs(gt[j] - other_expected_gt[j]) > 1e-15:
+                    gdaltest.post_reason('bad geotransform')
+                    print(gt)
+                    print(other_expected_gt)
+                    return 'fail'
 
     if wkt.find('GEOGCS["WGS 84"') != 0:
         print(wkt)
