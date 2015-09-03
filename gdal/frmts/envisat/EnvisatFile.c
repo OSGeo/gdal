@@ -1741,21 +1741,24 @@ int S_NameValueList_Parse( const char *text, int text_offset,
     while( *next_text != '\0' )
     {
         char	line[1024];
-        int     line_len = 0, equal_index, src_char, line_offset;
-        EnvisatNameValue *entry;
+        int     line_len = 0;
+        int     equal_index = 0;
+        int     src_char = 0;
+        int     line_offset = 0;
+        EnvisatNameValue *entry = NULL;
 
         /*
          * Extract one line of text into the "line" buffer, and remove the
          * newline character.  Eat leading spaces.
          */
-        while( *next_text == ' ' ) 
+        while( *next_text == ' ' )
         {
             next_text++;
         }
         line_offset = (int) (next_text - text) + text_offset;
         while( *next_text != '\0' && *next_text != '\n' )
         {
-          if( line_len > ((int)sizeof(line) - 1) )
+          if( line_len > ((int)sizeof(line) - 2) )
             {
                 SendError( "S_NameValueList_Parse(): "
                            "Corrupt line, longer than 1024 characters." );
@@ -1778,7 +1781,7 @@ int S_NameValueList_Parse( const char *text, int text_offset,
             continue;
 
         /*
-         * Create the name/value info structure. 
+         * Create the name/value info structure.
          */
         entry = (EnvisatNameValue *) CPLCalloc(sizeof(EnvisatNameValue),1);
         entry->literal_line = CPLStrdup(line);
