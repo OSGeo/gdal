@@ -93,7 +93,7 @@ class HDF5ImageDataset : public HDF5Dataset
     HDF5CSKProductEnum iCSKProductType;
     double       adfGeoTransform[6];
     bool         bHasGeoTransform;
-    
+
     CPLErr CreateODIMH5Projection();
 
 public:
@@ -107,7 +107,7 @@ public:
     const char          *GetProjectionRef();
     virtual int         GetGCPCount( );
     virtual const char  *GetGCPProjection();
-    virtual const GDAL_GCP *GetGCPs( ); 
+    virtual const GDAL_GCP *GetGCPs( );
     virtual CPLErr GetGeoTransform( double * padfTransform );
 
     Hdf5ProductType GetSubdatasetType() const {return iSubdatasetType;}
@@ -132,7 +132,7 @@ public:
     /**
      * Captures Geolocation information from a COSMO-SKYMED
      * file.
-     * The geoid will allways be WGS84
+     * The geoid will always be WGS84
      * The projection type may be UTM or UPS, depending on the
      * latitude from the center of the image.
      * @param iProductType type of HDF5 subproduct, see HDF5CSKProduct
@@ -141,17 +141,17 @@ public:
 
     /**
     * Get Geotransform information for COSMO-SKYMED files
-    * In case of sucess it stores the transformation
+    * In case of success it stores the transformation
     * in adfGeoTransform. In case of failure it doesn't
     * modify adfGeoTransform
     * @param iProductType type of HDF5 subproduct, see HDF5CSKProduct
     */
     void CaptureCSKGeoTransform(int iProductType);
-    
+
     /**
      * @param iProductType type of HDF5 subproduct, see HDF5CSKProduct
      */
-    void CaptureCSKGCPs(int iProductType);    
+    void CaptureCSKGCPs(int iProductType);
 };
 
 /************************************************************************/
@@ -163,30 +163,34 @@ public:
 /************************************************************************/
 /*                           HDF5ImageDataset()                         */
 /************************************************************************/
-HDF5ImageDataset::HDF5ImageDataset()
+HDF5ImageDataset::HDF5ImageDataset() :
+    pszProjection(NULL),
+    pszGCPProjection(NULL),
+    pasGCPList(NULL),
+    nGCPCount(0),
+    dims(NULL),
+    maxdims(NULL),
+    poH5Objects(NULL),
+    ndims(0), dimensions(0),
+    dataset_id(-1),
+    dataspace_id(-1),
+    size(0),
+    address(0),
+    datatype(-1),
+    native(-1),
+    clas(H5T_NO_CLASS),
+    iSubdatasetType(UNKNOWN_PRODUCT),
+    iCSKProductType(PROD_UNKNOWN),
+    bHasGeoTransform(false)
 {
-    nGCPCount       = 0;
-    pszProjection   = NULL;
-    pszGCPProjection= NULL;
-    pasGCPList      = NULL;
-    poH5Objects     = NULL;
-    poH5RootGroup   = NULL;
-    dims            = NULL;
-    maxdims         = NULL;
-    papszMetadata   = NULL;
+    poH5RootGroup = NULL;
+    papszMetadata = NULL;
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
     adfGeoTransform[2] = 0.0;
     adfGeoTransform[3] = 0.0;
     adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = 1.0;
-    iSubdatasetType    = UNKNOWN_PRODUCT;
-    iCSKProductType    = PROD_UNKNOWN;
-    bHasGeoTransform   = false;
-    dataset_id         = -1;
-    dataspace_id       = -1;
-    datatype           = -1;
-    native             = -1;
 }
 
 /************************************************************************/
@@ -195,7 +199,7 @@ HDF5ImageDataset::HDF5ImageDataset()
 HDF5ImageDataset::~HDF5ImageDataset( )
 {
     FlushCache();
-    
+
     if( dataset_id > 0 )
         H5Dclose(dataset_id);
     if( dataspace_id > 0 )
@@ -208,22 +212,16 @@ HDF5ImageDataset::~HDF5ImageDataset( )
     CPLFree(pszProjection);
     CPLFree(pszGCPProjection);
 
-    if( dims )
-        CPLFree( dims );
-
-    if( maxdims )
-        CPLFree( maxdims );
+    CPLFree( dims );
+    CPLFree( maxdims );
 
     if( nGCPCount > 0 )
     {
         for( int i = 0; i < nGCPCount; i++ )
         {
-            if( pasGCPList[i].pszId )
-                CPLFree( pasGCPList[i].pszId );
-            if( pasGCPList[i].pszInfo )
-                CPLFree( pasGCPList[i].pszInfo );
+            CPLFree( pasGCPList[i].pszId );
+            CPLFree( pasGCPList[i].pszInfo );
         }
-
         CPLFree( pasGCPList );
     }
 }
