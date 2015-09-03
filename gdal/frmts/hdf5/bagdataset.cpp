@@ -302,19 +302,16 @@ CPLErr BAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     herr_t      status;
     hsize_t     count[3];
     H5OFFSET_TYPE offset[3];
-    int         nSizeOfData;
     hid_t       memspace;
     hsize_t     col_dims[3];
-    hsize_t     rank;
-
-    rank=2;
+    hsize_t     rank = 2;
 
     offset[0] = MAX(0,nRasterYSize - (nBlockYOff+1)*nBlockYSize);
-    offset[1] = nBlockXOff*nBlockXSize;
+    offset[1] = nBlockXOff*static_cast<hsize_t>(nBlockXSize);
     count[0]  = nBlockYSize;
     count[1]  = nBlockXSize;
 
-    nSizeOfData = H5Tget_size( native );
+    int nSizeOfData = H5Tget_size( native );
     memset( pImage,0,nBlockXSize*nBlockYSize*nSizeOfData );
 
 /*  blocksize may not be a multiple of imagesize */
