@@ -363,10 +363,13 @@ int EnvisatFile_Open( EnvisatFile **self_ptr,
         return FAILURE;
     }
 
-    self->ds_info = (EnvisatDatasetInfo **) 
+    self->ds_info = (EnvisatDatasetInfo **)
         CPLCalloc(sizeof(EnvisatDatasetInfo*),num_dsd);
     if( self->ds_info == NULL )
+    {
+        CPLFree( self );
         return FAILURE;
+    }
 
     for( i = 0; i < num_dsd; i++ )
     {
