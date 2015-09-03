@@ -367,14 +367,14 @@ CPLErr HDF5ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
     if( poGDS->IsComplexCSKL1A() )
     {
-        rank = 3; 
+        rank = 3;
         offset[2]   = nBand-1;
         count[2]    = 1;
         col_dims[2] = 1;
     }
     else if( poGDS->ndims == 3 )
     {
-        rank=3;
+        rank = 3;
         offset[0]   = nBand-1;
         count[0]    = 1;
         col_dims[0] = 1;
@@ -382,8 +382,8 @@ CPLErr HDF5ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     else
         rank = 2;
 
-    offset[poGDS->GetYIndex()] = nBlockYOff*nBlockYSize;
-    offset[poGDS->GetXIndex()] = nBlockXOff*nBlockXSize;
+    offset[poGDS->GetYIndex()] = nBlockYOff*static_cast<hsize_t>(nBlockYSize);
+    offset[poGDS->GetXIndex()] = nBlockXOff*static_cast<hsize_t>(nBlockXSize);
     count[poGDS->GetYIndex()]  = nBlockYSize;
     count[poGDS->GetXIndex()]  = nBlockXSize;
 
