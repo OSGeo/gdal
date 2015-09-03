@@ -781,15 +781,14 @@ OGRErr BAGDataset::ParseWKTFromXML( const char *pszISOXML )
     if( EQUALN(pszSRCodeString, "VERTCS", 6 ) )
     {
         CPLString oString( pszProjection );
+        CPLFree( pszProjection );
         oString += ",";
         oString += pszSRCodeString;
-        if ( pszProjection )
-            CPLFree( pszProjection );
         pszProjection = CPLStrdup( oString );
     }
 
     CPLDestroyXMLNode( psRoot );
-    
+
     return eOGRErr;
 }
 
