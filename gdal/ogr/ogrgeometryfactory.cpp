@@ -79,7 +79,6 @@ OGRErr OGRGeometryFactory::createFromWkb(unsigned char *pabyData,
 {
     OGRwkbGeometryType eGeometryType;
     int             nByteOrder;
-    OGRwkbByteOrder eByteOrder;
     OGRErr      eErr;
     OGRGeometry *poGeom;
 
@@ -109,7 +108,6 @@ OGRErr OGRGeometryFactory::createFromWkb(unsigned char *pabyData,
                   pabyData[8]);
         return OGRERR_CORRUPT_DATA;
     }
-    eByteOrder = (OGRwkbByteOrder) nByteOrder;
 
 /* -------------------------------------------------------------------- */
 /*      Get the geometry feature type.  For now we assume that          */
