@@ -97,32 +97,28 @@ class BAGRasterBand : public GDALPamRasterBand
     double      dfMaximum;
 
 public:
-  
+
     BAGRasterBand( BAGDataset *, int );
     ~BAGRasterBand();
 
     bool                    Initialize( hid_t hDataset, const char *pszName );
 
     virtual CPLErr          IReadBlock( int, int, void * );
-    virtual double	    GetNoDataValue( int * ); 
+    virtual double	    GetNoDataValue( int * );
 
     virtual double GetMinimum( int *pbSuccess = NULL );
-    virtual double GetMaximum(int *pbSuccess = NULL );
+    virtual double GetMaximum( int *pbSuccess = NULL );
 };
 
 /************************************************************************/
 /*                           BAGRasterBand()                            */
 /************************************************************************/
-BAGRasterBand::BAGRasterBand( BAGDataset *poDS, int nBand )
-
+BAGRasterBand::BAGRasterBand( BAGDataset *poDS_, int nBand_ ) :
+    hDatasetID(-1), native(-1), dataspace(-1), bMinMaxSet(false),
+    dfMinimum(0.0), dfMaximum(0.0)
 {
-    this->poDS       = poDS;
-    this->nBand      = nBand;
-    
-    hDatasetID = -1;
-    dataspace = -1;
-    native = -1;
-    bMinMaxSet = false;
+    poDS = poDS_;
+    nBand = nBand_;
 }
 
 /************************************************************************/
