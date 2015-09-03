@@ -84,19 +84,21 @@ public:
 class COASPMetadataItem
 {
 protected:
-	char *pszItemName;
-	char *pszItemValue;
+    char *pszItemName;
+    char *pszItemValue;
+
 public:
     COASPMetadataItem() : pszItemName(NULL), pszItemValue(NULL) { }
+    COASPMetadataItem(char *pszItemName, char *pszItemValue);
     ~COASPMetadataItem();
-	COASPMetadataItem(char *pszItemName, char *pszItemValue);
-	char *GetItemName();
-	char *GetItemValue();
-	int GetType() { return TYPE_GENERIC; }
+
+    char *GetItemName();
+    char *GetItemValue();
+    int GetType() { return TYPE_GENERIC; }
 };
 
 /* Same as MetadataItem class except parses GCP properly and returns
- * a GDAL_GCP struct 
+ * a GDAL_GCP struct
  */
 class COASPMetadataGeorefGridItem : public COASPMetadataItem
 {
@@ -105,8 +107,9 @@ class COASPMetadataGeorefGridItem : public COASPMetadataItem
 	int nLines;
 	double ndLat;
 	double ndLong;
+
 public:
-	COASPMetadataGeorefGridItem(int nId, int nPixels, int nLines, 
+	COASPMetadataGeorefGridItem(int nId, int nPixels, int nLines,
 		double ndLat, double ndLong);
 	const char *GetItemName() { return "georef_grid"; }
 	GDAL_GCP *GetItemValue();
@@ -119,10 +122,10 @@ public:
  * ================================================================ *
  ********************************************************************/
 
-COASPMetadataItem::COASPMetadataItem(char *pszItemName, char *pszItemValue)
+COASPMetadataItem::COASPMetadataItem(char *pszItemName_, char *pszItemValue_)
 {
-    pszItemName = VSIStrdup(pszItemName);
-    pszItemValue = VSIStrdup(pszItemValue);
+    pszItemName = VSIStrdup(pszItemName_);
+    pszItemValue = VSIStrdup(pszItemValue_);
 }
 
 COASPMetadataItem::~COASPMetadataItem()
