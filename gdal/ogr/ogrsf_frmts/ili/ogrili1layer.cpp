@@ -494,13 +494,13 @@ void OGRILI1Layer::JoinSurfaceLayer( OGRILI1Layer* poSurfaceLineLayer, int nSurf
 
 OGRMultiPolygon* OGRILI1Layer::Polygonize( OGRGeometryCollection* poLines, bool fix_crossing_lines )
 {
-    OGRMultiPolygon *poPolygon = new OGRMultiPolygon();
-
-    if (poLines->getNumGeometries() == 0) return poPolygon;
+    if (poLines->getNumGeometries() == 0)
+    {
+        return new OGRMultiPolygon();
+    }
 
 #if defined(HAVE_GEOS)
     GEOSGeom *ahInGeoms = NULL;
-    int       i = 0;
     OGRGeometryCollection *poNoncrossingLines = poLines;
     GEOSGeom hResultGeom = NULL;
     OGRGeometry *poMP = NULL;
@@ -512,18 +512,18 @@ OGRMultiPolygon* OGRILI1Layer::Polygonize( OGRGeometryCollection* poLines, bool 
         poNoncrossingLines = (OGRGeometryCollection*)poLines->Union(poLines->getGeometryRef(0));
         CPLDebug( "OGR_ILI", "Fixed lines: %d", poNoncrossingLines->getNumGeometries()-poLines->getNumGeometries());
     }
-    
+
     GEOSContextHandle_t hGEOSCtxt = OGRGeometry::createGEOSContext();
 
     ahInGeoms = (GEOSGeom *) CPLCalloc(sizeof(void*),poNoncrossingLines->getNumGeometries());
-    for( i = 0; i < poNoncrossingLines->getNumGeometries(); i++ )
+    for( int i = 0; i < poNoncrossingLines->getNumGeometries(); i++ )
           ahInGeoms[i] = poNoncrossingLines->getGeometryRef(i)->exportToGEOS(hGEOSCtxt);
 
     hResultGeom = GEOSPolygonize_r( hGEOSCtxt,
                                     ahInGeoms,
                                    poNoncrossingLines->getNumGeometries() );
 
-    for( i = 0; i < poNoncrossingLines->getNumGeometries(); i++ )
+    for( int i = 0; i < poNoncrossingLines->getNumGeometries(); i++ )
         GEOSGeom_destroy_r( hGEOSCtxt, ahInGeoms[i] );
     CPLFree( ahInGeoms );
     if (poNoncrossingLines != poLines) delete poNoncrossingLines;
@@ -541,14 +541,14 @@ OGRMultiPolygon* OGRILI1Layer::Polygonize( OGRGeometryCollection* poLines, bool 
 
     poMP = OGRGeometryFactory::forceToMultiPolygon( poMP );
     if( poMP && wkbFlatten(poMP->getGeometryType()) == wkbMultiPolygon )
-        return (OGRMultiPolygon *) poMP;
+        return dynamic_cast<OGRMultiPolygon *>(poMP);
     else
     {
         delete poMP;
         return NULL;
     }
 #else
-    return poPolygon;
+    return new OGRMultiPolygon();
 #endif
 }
 
