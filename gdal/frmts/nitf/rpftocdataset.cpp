@@ -466,7 +466,6 @@ class RPFTOCProxyRasterBandPalette : public GDALPamRasterBand
             this->nBlockYSize = nBlockYSize;
             eDataType = GDT_Byte;
             this->nBand = nBand;
-            ;
         }
 
         virtual GDALColorInterp GetColorInterpretation()
