@@ -80,23 +80,16 @@ void GDALRegister_HDF5()
 #ifdef HDF5_PLUGIN
     GDALRegister_HDF5Image();
 #endif
-
 }
 
 /************************************************************************/
 /*                           HDF5Dataset()                      	*/
 /************************************************************************/
-HDF5Dataset::HDF5Dataset()
-{
-    papszSubDatasets    = NULL;
-    papszMetadata       = NULL;
-    poH5RootGroup       = NULL;
-    nSubDataCount       = 0;
-    hHDF5               = -1;
-    hGroupID            = -1;
-    bIsHDFEOS           = FALSE;
-    nDatasetType        = -1;
-}
+HDF5Dataset::HDF5Dataset() :
+    hHDF5(-1), hGroupID(-1), papszSubDatasets(NULL), bIsHDFEOS(FALSE),
+    nDatasetType(-1), nSubDataCount(0), poH5RootGroup(NULL),
+    papszMetadata(NULL), poH5CurrentObject(NULL)
+{ }
 
 /************************************************************************/
 /*                            ~HDF5Dataset()                            */
