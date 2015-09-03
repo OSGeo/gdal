@@ -412,11 +412,9 @@ CPLErr CCPRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 /* -------------------------------------------------------------------- */
     if( !bPowTableInitialized )
     {
-        int i;
-
         bPowTableInitialized = TRUE;
 
-        for( i = 0; i < 256; i++ )
+        for( int i = 0; i < 256; i++ )
         {
             afPowTable[i] = (float)pow( 2.0, i-128 );
         }
@@ -426,17 +424,16 @@ CPLErr CCPRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 /*      Copy the desired band out based on the size of the type, and    */
 /*      the interleaving mode.                                          */
 /* -------------------------------------------------------------------- */
-    int iX;
-
-    for( iX = 0; iX < nBlockXSize; iX++ )
+    for( int iX = 0; iX < nBlockXSize; iX++ )
     {
         unsigned char *pabyGroup = pabyRecord + iX * ImageDesc->BytesPerPixel;
         signed char *Byte = (signed char*)pabyGroup-1; /* A ones based alias */
-        double dfReSHH, dfImSHH, dfReSHV, dfImSHV, 
-            dfReSVH, dfImSVH, dfReSVV, dfImSVV, dfScale;
+        double dfReSHH, dfImSHH, dfReSHV, dfImSHV,
+            dfReSVH, dfImSVH, dfReSVV, dfImSVV;
 
-        dfScale = sqrt( (Byte[2] / 254 + 1.5) * afPowTable[Byte[1] + 128] );
-        
+        const double dfScale = sqrt( (Byte[2] / 254.0 + 1.5)
+                                     * afPowTable[Byte[1] + 128] );
+
         if( nBand == 1 )
         {
             dfReSHH = Byte[3] * dfScale / 127.0;
