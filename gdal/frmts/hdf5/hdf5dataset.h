@@ -62,7 +62,7 @@ herr_t HDF5CreateGroupObjs(hid_t, const char *,void *);
 /************************************************************************/
 class HDF5Dataset : public GDALPamDataset
 {
-  protected:
+protected:
 
   hid_t            hHDF5;
   hid_t            hGroupID; /* H handler interface */
@@ -70,7 +70,6 @@ class HDF5Dataset : public GDALPamDataset
   int              bIsHDFEOS;
   int              nDatasetType;
   int              nSubDataCount;
-
 
   HDF5GroupObjects *poH5RootGroup; /* Contain hdf5 Groups information */
 
@@ -97,14 +96,14 @@ class HDF5Dataset : public GDALPamDataset
    * 			the attribute name must be the form:
    * 					root attribute name
    * 					SUBDATASET/subdataset attribute name
-   * @param pdfValues pointer wich will store the array of doubles read.
+   * @param pdfValues pointer which will store the array of doubles read.
    * @param nLen it stores the length of the array read. If NULL it doesn't inform
-   *        the lenght of the array.
+   *        the length of the array.
    * @return CPLErr CE_None in case of success, CE_Failure in case of failure
    */
   CPLErr HDF5ReadDoubleAttr(const char* pszAttrName,double **pdfValues,int *nLen=NULL);
 
-  public:
+public:
 
   char	           **papszMetadata;
   HDF5GroupObjects *poH5CurrentObject;
@@ -116,7 +115,4 @@ class HDF5Dataset : public GDALPamDataset
   static int Identify(GDALOpenInfo *);
 };
 
-
-
 #endif /* _HDF5DATASET_H_INCLUDED_ */
-
