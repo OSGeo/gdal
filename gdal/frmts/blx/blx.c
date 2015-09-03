@@ -1257,10 +1257,13 @@ int blxclose(blxcontext_t *ctx) {
 
     if(ctx->write) {
 	/* Write updated header and cellindex */
-	BLXfseek(ctx->fh, 0, SEEK_SET);
+        if (BLXfseek(ctx->fh, 0, SEEK_SET) != 0) {
+            status=-1;
+            goto error;
+        }
 
 	blx_generate_header(ctx, header);
-	
+
 	if(BLXfwrite(header, 1, 102, ctx->fh) != 102) {
 	    status=-1;
 	    goto error;
@@ -1270,17 +1273,17 @@ int blxclose(blxcontext_t *ctx) {
 		hptr = header;
 		put_cellindex_entry(ctx, ctx->cellindex+i*ctx->cell_cols+j, &hptr);
 		if((int)BLXfwrite(header, 1, hptr-header, ctx->fh) != (int)(hptr-header)) {
-		    status=-1;	
+		    status=-1;
 		    break;
 		}
 	    }
     }
     ctx->open = 1;
 
- error:	
+ error:
     if(ctx->fh)
 	BLXfclose(ctx->fh);
-    
+
     return status;
 }
 
