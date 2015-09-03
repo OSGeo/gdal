@@ -72,6 +72,7 @@ class COASPMetadataReader
 	int nCurrentItem;
 public:
 	COASPMetadataReader(char *pszFname);
+        ~COASPMetadataReader();
 	COASPMetadataItem *GetNextItem();
 	COASPMetadataItem *GetItem(int nItem);
 	int GotoMetadataItem(int nItemNumber);
@@ -157,12 +158,18 @@ GDAL_GCP *COASPMetadataGeorefGridItem::GetItemValue()
  * ================================================================ *
  ********************************************************************/
 
-COASPMetadataReader::COASPMetadataReader(char *pszFname) 
+COASPMetadataReader::COASPMetadataReader(char *pszFname) :
+    fp(NULL), papszMetadata(NULL), nMetadataCount(0), nCurrentItem(0)
 {
-	this->fp = NULL;
-	this->nCurrentItem = 0;
-	this->papszMetadata = CSLLoad(pszFname);
-	this->nMetadataCount = CSLCount(this->papszMetadata);
+    papszMetadata = CSLLoad(pszFname);
+    nMetadataCount = CSLCount(papszMetadata);
+}
+
+COASPMetadataReader::~COASPMetadataReader()
+{
+    if (fp)
+        VSIFCloseL(fp);
+    CSLDestroy(papszMetadata);
 }
 
 COASPMetadataItem *COASPMetadataReader::GetNextItem() 
