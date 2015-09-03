@@ -880,22 +880,21 @@ CPLErr BMPComprRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 /*                           BMPDataset()                               */
 /************************************************************************/
 
-BMPDataset::BMPDataset()
+BMPDataset::BMPDataset() :
+    nColorTableSize(0), nColorElems(0), pabyColorTable(NULL),
+    poColorTable(NULL), bGeoTransformValid(FALSE), pszFilename(NULL), fp(NULL)
 {
-    pszFilename = NULL;
-    fp = NULL;
     nBands = 0;
-    bGeoTransformValid = FALSE;
+
+    memset( &sFileHeader, 0, sizeof(sFileHeader) );
+    memset( &sInfoHeader, 0, sizeof(sInfoHeader) );
+
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
     adfGeoTransform[2] = 0.0;
     adfGeoTransform[3] = 0.0;
     adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = 1.0;
-    pabyColorTable = NULL;
-    poColorTable = NULL;
-    memset( &sFileHeader, 0, sizeof(sFileHeader) );
-    memset( &sInfoHeader, 0, sizeof(sInfoHeader) );
 }
 
 /************************************************************************/
@@ -906,13 +905,12 @@ BMPDataset::~BMPDataset()
 {
     FlushCache();
 
-    if ( pabyColorTable )
-        CPLFree( pabyColorTable );
-    if ( poColorTable != NULL )
+    CPLFree( pabyColorTable );
+    if ( poColorTable )
         delete poColorTable;
-    if( fp != NULL )
-        VSIFCloseL( fp );
     CPLFree( pszFilename );
+    if( fp )
+        VSIFCloseL( fp );
 }
 
 /************************************************************************/
