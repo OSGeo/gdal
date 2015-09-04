@@ -97,8 +97,7 @@ OGRErr OGRCreateFromGeomedia( GByte *pabyGeom,
 
         OGRLineString* poLS = new OGRLineString();
         poLS->setNumPoints(nPoints);
-        int i;
-        for(i=0;i<nPoints;i++)
+        for(int i=0;i<nPoints;i++)
         {
             double dfX, dfY, dfZ;
             memcpy(&dfX, pabyGeom, 8);
@@ -134,8 +133,7 @@ OGRErr OGRCreateFromGeomedia( GByte *pabyGeom,
 
         OGRLinearRing* poRing = new OGRLinearRing();
         poRing->setNumPoints(nPoints);
-        int i;
-        for(i=0;i<nPoints;i++)
+        for(int i=0;i<nPoints;i++)
         {
             double dfX, dfY, dfZ;
             memcpy(&dfX, pabyGeom, 8);
@@ -217,10 +215,10 @@ OGRErr OGRCreateFromGeomedia( GByte *pabyGeom,
         }
         else if ( interiorGeomType == wkbMultiPolygon )
         {
-            int numGeom = ((OGRMultiPolygon*)poInteriorGeom)->getNumGeometries();
+            const int numGeom = ((OGRMultiPolygon*)poInteriorGeom)->getNumGeometries();
             for ( int i = 0; i < numGeom; ++i )
             {
-                OGRPolygon* poInteriorPolygon = 
+                OGRPolygon* poInteriorPolygon =
                     (OGRPolygon*)((OGRMultiPolygon*)poInteriorGeom)->getGeometryRef(i);
                 ((OGRPolygon*)poExteriorGeom)->addRing( poInteriorPolygon->getExteriorRing() );
             }
@@ -244,7 +242,6 @@ OGRErr OGRCreateFromGeomedia( GByte *pabyGeom,
         if (nBytes < 4)
             return OGRERR_FAILURE;
 
-        int i;
         int nParts;
         memcpy(&nParts, pabyGeom, 4);
         CPL_LSBPTR32(&nParts);
@@ -264,7 +261,7 @@ OGRErr OGRCreateFromGeomedia( GByte *pabyGeom,
             int bAllPolyline = TRUE;
             int bAllPolygon = TRUE;
 
-            for(i=0;i<nParts;i++)
+            for(int i=0;i<nParts;i++)
             {
                 if (nBytes < 4)
                     return OGRERR_FAILURE;
@@ -314,7 +311,7 @@ OGRErr OGRCreateFromGeomedia( GByte *pabyGeom,
                                         (nGeomType == GEOMEDIA_MULTIPOLYGON) ? new OGRMultiPolygon() :
                                                               new OGRGeometryCollection();
 
-        for(i=0;i<nParts;i++)
+        for(int i=0;i<nParts;i++)
         {
             if (nBytes < 4)
             {
