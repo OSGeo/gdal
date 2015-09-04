@@ -108,6 +108,76 @@ static CPLString GDALPDFGetPDFString(const char* pszStr)
     return osStr;
 }
 
+#if defined(HAVE_POPPLER) || defined(HAVE_PDFIUM)
+
+/************************************************************************/
+/*                     GDALPDFGetUTF8StringFromBytes()                  */
+/************************************************************************/
+
+static CPLString GDALPDFGetUTF8StringFromBytes(const GByte* pabySrc, int nLen)
+{
+    int bLEUnicodeMarker = nLen > 2 && pabySrc[0] == 0xFE && pabySrc[1] == 0xFF;
+    int bBEUnicodeMarker = nLen > 2 && pabySrc[0] == 0xFF && pabySrc[1] == 0xFE;
+    if (!bLEUnicodeMarker && !bBEUnicodeMarker)
+    {
+        CPLString osStr;
+        osStr.resize( nLen + 1 );
+        osStr.assign( (const char*)pabySrc, (size_t)nLen );
+        osStr[nLen] = 0;
+        const char* pszStr = osStr.c_str();
+        if (CPLIsUTF8(pszStr, -1))
+            return osStr;
+        else
+        {
+            char* pszUTF8 = CPLRecode( pszStr, CPL_ENC_ISO8859_1, CPL_ENC_UTF8 );
+            CPLString osRet = pszUTF8;
+            CPLFree(pszUTF8);
+            return osRet;
+        }
+    }
+
+    /* This is UTF-16 content */
+    pabySrc += 2;
+    nLen = (nLen - 2) / 2;
+    wchar_t *pwszSource = new wchar_t[nLen + 1];
+    int j = 0;
+    for(int i=0; i<nLen; i++, j++)
+    {
+        if (!bBEUnicodeMarker)
+            pwszSource[j] = (pabySrc[2 * i] << 8) + pabySrc[2 * i + 1];
+        else
+            pwszSource[j] = (pabySrc[2 * i + 1] << 8) + pabySrc[2 * i];
+#ifndef _WIN32
+        /* Is there a surrogate pair ? See http://en.wikipedia.org/wiki/UTF-16 */
+        /* On Windows, CPLRecodeFromWChar does this for us, because wchar_t is only */
+        /* 2 bytes wide, whereas on Unix it is 32bits */
+        if (pwszSource[j] >= 0xD800 && pwszSource[j] <= 0xDBFF && i + 1 < nLen)
+        {
+            /* should be in the range 0xDC00... 0xDFFF */
+            wchar_t nTrailSurrogate;
+            if (!bBEUnicodeMarker)
+                nTrailSurrogate = (pabySrc[2 * (i+1)] << 8) + pabySrc[2 * (i+1) + 1];
+            else
+                nTrailSurrogate = (pabySrc[2 * (i+1) + 1] << 8) + pabySrc[2 * (i+1)];
+            if (nTrailSurrogate >= 0xDC00 && nTrailSurrogate <= 0xDFFF)
+            {
+                pwszSource[j] = ((pwszSource[j] - 0xD800) << 10) + (nTrailSurrogate - 0xDC00) + 0x10000;
+                i++;
+            }
+        }
+#endif
+    }
+    pwszSource[j] = 0;
+
+    char* pszUTF8 = CPLRecodeFromWChar( pwszSource, CPL_ENC_UCS2, CPL_ENC_UTF8 );
+    delete[] pwszSource;
+    CPLString osStrUTF8(pszUTF8);
+    CPLFree(pszUTF8);
+    return osStrUTF8;
+}
+
+#endif // defined(HAVE_POPPLER) || defined(HAVE_PDFIUM)
+
 /************************************************************************/
 /*                          GDALPDFGetPDFName()                         */
 /************************************************************************/
@@ -785,7 +855,7 @@ GDALPDFArrayRW::GDALPDFArrayRW()
 
 GDALPDFArrayRW::~GDALPDFArrayRW()
 {
-    for(int i=0; i < (int)m_array.size(); i++)
+    for(size_t i=0; i < m_array.size(); i++)
         delete m_array[i];
 }
 
@@ -795,7 +865,7 @@ GDALPDFArrayRW::~GDALPDFArrayRW()
 
 int GDALPDFArrayRW::GetLength()
 {
-    return (int)m_array.size();
+    return static_cast<int>(m_array.size());
 }
 
 /************************************************************************/
@@ -980,76 +1050,17 @@ double GDALPDFObjectPoppler::GetReal()
 }
 
 /************************************************************************/
-/*                         GDALPDFPopplerGetUTF8()                      */
-/************************************************************************/
-
-static CPLString GDALPDFPopplerGetUTF8(GooString* poStr)
-{
-    GByte* pabySrc = (GByte*)poStr->getCString();
-    int nLen = poStr->getLength();
-    int bBEUnicodeMarker = nLen > 2 && pabySrc[0] == 0xFF && pabySrc[1] == 0xFE;
-    if (!poStr->hasUnicodeMarker() && !bBEUnicodeMarker)
-    {
-        const char* pszStr = poStr->getCString();
-        if (CPLIsUTF8(pszStr, -1))
-            return pszStr;
-        else
-        {
-            char* pszUTF8 = CPLRecode( pszStr, CPL_ENC_ISO8859_1, CPL_ENC_UTF8 );
-            CPLString osRet = pszUTF8;
-            CPLFree(pszUTF8);
-            return osRet;
-        }
-    }
-
-    /* This is UTF-16 content */
-    pabySrc += 2;
-    nLen = (nLen - 2) / 2;
-    wchar_t *pwszSource = new wchar_t[nLen + 1];
-    int j = 0;
-    for(int i=0; i<nLen; i++, j++)
-    {
-        if (!bBEUnicodeMarker)
-            pwszSource[j] = (pabySrc[2 * i] << 8) + pabySrc[2 * i + 1];
-        else
-            pwszSource[j] = (pabySrc[2 * i + 1] << 8) + pabySrc[2 * i];
-#ifndef _WIN32
-        /* Is there a surrogate pair ? See http://en.wikipedia.org/wiki/UTF-16 */
-        /* On Windows, CPLRecodeFromWChar does this for us, because wchar_t is only */
-        /* 2 bytes wide, whereas on Unix it is 32bits */
-        if (pwszSource[j] >= 0xD800 && pwszSource[j] <= 0xDBFF && i + 1 < nLen)
-        {
-            /* should be in the range 0xDC00... 0xDFFF */
-            wchar_t nTrailSurrogate;
-            if (!bBEUnicodeMarker)
-                nTrailSurrogate = (pabySrc[2 * (i+1)] << 8) + pabySrc[2 * (i+1) + 1];
-            else
-                nTrailSurrogate = (pabySrc[2 * (i+1) + 1] << 8) + pabySrc[2 * (i+1)];
-            if (nTrailSurrogate >= 0xDC00 && nTrailSurrogate <= 0xDFFF)
-            {
-                pwszSource[j] = ((pwszSource[j] - 0xD800) << 10) + (nTrailSurrogate - 0xDC00) + 0x10000;
-                i++;
-            }
-        }
-#endif
-    }
-    pwszSource[j] = 0;
-
-    char* pszUTF8 = CPLRecodeFromWChar( pwszSource, CPL_ENC_UCS2, CPL_ENC_UTF8 );
-    delete[] pwszSource;
-    CPLString osStrUTF8(pszUTF8);
-    CPLFree(pszUTF8);
-    return osStrUTF8;
-}
-
-/************************************************************************/
 /*                              GetString()                             */
 /************************************************************************/
 
 const CPLString& GDALPDFObjectPoppler::GetString()
 {
     if (GetType() == PDFObjectType_String)
-        return (osStr = GDALPDFPopplerGetUTF8(m_po->getString()));
+    {
+        GooString* gooString = m_po->getString();
+        return (osStr = GDALPDFGetUTF8StringFromBytes(reinterpret_cast<const GByte*>(gooString->getCString()),
+                                                      static_cast<int>(gooString->getLength())));
+    }
     else
         return (osStr = "");
 }
@@ -1241,7 +1252,7 @@ GDALPDFArray* GDALPDFCreateArray(Array* array)
 
 GDALPDFArrayPoppler::~GDALPDFArrayPoppler()
 {
-    for(int i=0;i<(int)m_v.size();i++)
+    for(size_t i=0;i<m_v.size();i++)
     {
         delete m_v[i];
     }
@@ -1265,7 +1276,7 @@ GDALPDFObject* GDALPDFArrayPoppler::Get(int nIndex)
     if (nIndex < 0 || nIndex >= GetLength())
         return NULL;
 
-    int nOldSize = (int)m_v.size();
+    int nOldSize = static_cast<int>(m_v.size());
     if (nIndex >= nOldSize)
     {
         m_v.resize(nIndex+1);
@@ -1562,7 +1573,7 @@ int GDALPDFObjectPodofo::GetBool()
 int GDALPDFObjectPodofo::GetInt()
 {
     if (m_po->GetDataType() == PoDoFo::ePdfDataType_Number)
-        return (int)m_po->GetNumber();
+        return static_cast<int>(m_po->GetNumber());
     else
         return 0;
 }
@@ -1763,7 +1774,7 @@ std::map<CPLString, GDALPDFObject*>& GDALPDFDictionaryPodofo::GetValues()
 
 GDALPDFArrayPodofo::~GDALPDFArrayPodofo()
 {
-    for(int i=0;i<(int)m_v.size();i++)
+    for(size_t i=0;i<m_v.size();i++)
     {
         delete m_v[i];
     }
@@ -1775,7 +1786,7 @@ GDALPDFArrayPodofo::~GDALPDFArrayPodofo()
 
 int GDALPDFArrayPodofo::GetLength()
 {
-    return (int)m_poArray->GetSize();
+    return static_cast<int>(m_poArray->GetSize());
 }
 
 /************************************************************************/
@@ -1787,7 +1798,7 @@ GDALPDFObject* GDALPDFArrayPodofo::Get(int nIndex)
     if (nIndex < 0 || nIndex >= GetLength())
         return NULL;
 
-    int nOldSize = (int)m_v.size();
+    int nOldSize = static_cast<int>(m_v.size());
     if (nIndex >= nOldSize)
     {
         m_v.resize(nIndex+1);
@@ -1818,7 +1829,7 @@ GDALPDFObject* GDALPDFArrayPodofo::Get(int nIndex)
 
 int GDALPDFStreamPodofo::GetLength()
 {
-    return (int)m_pStream->GetLength();
+    return static_cast<int>(m_pStream->GetLength());
 }
 
 /************************************************************************/
@@ -1890,10 +1901,14 @@ class GDALPDFStreamPdfium : public GDALPDFStream
 {
     private:
         CPDF_Stream* m_pStream;
+        int m_nSize;
+        void* m_pData;
+
+        void Decompress();
 
     public:
-        GDALPDFStreamPdfium(CPDF_Stream* pStream) : m_pStream(pStream) { }
-        virtual ~GDALPDFStreamPdfium() {}
+        GDALPDFStreamPdfium(CPDF_Stream* pStream) : m_pStream(pStream), m_nSize(0), m_pData(NULL) { }
+        virtual ~GDALPDFStreamPdfium() { FX_Free(m_pData); }
 
         virtual int GetLength();
         virtual char* GetBytes();
@@ -1912,6 +1927,7 @@ class GDALPDFStreamPdfium : public GDALPDFStream
 GDALPDFObjectPdfium::GDALPDFObjectPdfium(CPDF_Object *po) :
         m_po(po), m_poDict(NULL), m_poArray(NULL), m_poStream(NULL)
 {
+    CPLAssert(m_po != NULL);
 }
 
 /************************************************************************/
@@ -1926,28 +1942,46 @@ GDALPDFObjectPdfium::~GDALPDFObjectPdfium()
 }
 
 /************************************************************************/
+/*                               Build()                                */
+/************************************************************************/
+
+GDALPDFObjectPdfium* GDALPDFObjectPdfium::Build(CPDF_Object *poVal)
+{
+    if( poVal == NULL )
+        return NULL;
+    if( poVal->GetType() == PDFOBJ_REFERENCE )
+    {
+        poVal = poVal->GetDirect();
+        if( poVal == NULL )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Cannot resolve indirect object");
+            return NULL;
+        }
+    }
+    return new GDALPDFObjectPdfium(poVal);
+}
+
+/************************************************************************/
 /*                               GetType()                              */
 /************************************************************************/
 
 GDALPDFObjectType GDALPDFObjectPdfium::GetType()
 {
-    if(m_po == NULL || m_po->GetDirect() == NULL) {
-      return PDFObjectType_Null;
-    }
-    switch(m_po->GetDirect()->GetType())
+    switch(m_po->GetType())
     {
         case PDFOBJ_NULL:                     return PDFObjectType_Null;
         case PDFOBJ_BOOLEAN:                  return PDFObjectType_Bool;
         case PDFOBJ_NUMBER:
-          return (reinterpret_cast<CPDF_Number*>(m_po->GetDirect()))->IsInteger()
+          return (reinterpret_cast<CPDF_Number*>(m_po))->IsInteger()
               ? PDFObjectType_Int
               : PDFObjectType_Real;
         case PDFOBJ_STRING:                   return PDFObjectType_String;
         case PDFOBJ_NAME:                     return PDFObjectType_Name;
         case PDFOBJ_ARRAY:                    return PDFObjectType_Array;
         case PDFOBJ_DICTIONARY:               return PDFObjectType_Dictionary;
-//         case PDFOBJ_STREAM:                   return PDFObjectType_
+        case PDFOBJ_STREAM:                   return PDFObjectType_Dictionary;
         default:
+          CPLAssert(FALSE);
           return PDFObjectType_Unknown;
     }
 }
@@ -1958,7 +1992,7 @@ GDALPDFObjectType GDALPDFObjectPdfium::GetType()
 
 const char* GDALPDFObjectPdfium::GetTypeNameNative()
 {
-    if(m_po->GetDirect()->GetType() == PDFOBJ_STREAM)
+    if(m_po->GetType() == PDFOBJ_STREAM)
       return "stream";
     else
       return "";
@@ -1982,13 +2016,56 @@ int GDALPDFObjectPdfium::GetInt()
     return m_po->GetInteger();
 }
 
+
+/************************************************************************/
+/*                       CPLRoundToMoreLikelyDouble()                   */
+/************************************************************************/
+
+// We try to compensate for rounding errors when converting the number
+// in the PDF expressed as a string (e.g 297.84) to float32 by pdfium : 297.8399963378906
+// Which is technically correct per the PDF spec, but in practice poppler or podofo use double
+// and Geospatial PDF are often encoded with double precision.
+
+static double CPLRoundToMoreLikelyDouble(float f)
+{
+    if( (float)(int)f == f )
+        return f;
+
+    char szBuffer[80];
+    CPLsnprintf(szBuffer, 80, "%f\n", f);
+    double d = f;
+    char* pszDot = strchr(szBuffer, '.');
+    if( pszDot == NULL )
+        return d;
+    pszDot ++;
+    if( pszDot[0] == 0 || pszDot[1] == 0 )
+        return d;
+    if( strncmp(pszDot + 2, "99", 2) == 0 )
+    {
+        pszDot[2] = 0;
+        double d2 = CPLAtof(szBuffer) + 0.01;
+        float f2 = (float)d2;
+        if( f == f2 || nextafterf(f,f+1.0f) == f2 || nextafterf(f,f-1.0f) == f2 )
+            d = d2;
+    }
+    else if( strncmp(pszDot + 2, "00", 2) == 0 )
+    {
+        pszDot[2] = 0;
+        double d2 = CPLAtof(szBuffer);
+        float f2 = (float)d2;
+        if( f == f2 || nextafterf(f,f+1.0f) == f2 || nextafterf(f,f-1.0f) == f2 )
+            d = d2;
+    }
+    return d;
+}
+
 /************************************************************************/
 /*                              GetReal()                               */
 /************************************************************************/
 
 double GDALPDFObjectPdfium::GetReal()
 {
-    return m_po->GetNumber();
+    return CPLRoundToMoreLikelyDouble(m_po->GetNumber());
 }
 
 /************************************************************************/
@@ -2002,7 +2079,8 @@ const CPLString& GDALPDFObjectPdfium::GetString()
         // If empty string, code crashes
         if(bs.IsEmpty())
           return (osStr = "");
-        return (osStr = bs.GetCStr());
+        return (osStr = GDALPDFGetUTF8StringFromBytes(static_cast<const GByte*>(bs.GetPtr()),
+                                                      static_cast<int>(bs.GetLength())));
     }
     else
         return (osStr = "");
@@ -2048,7 +2126,7 @@ GDALPDFArray* GDALPDFObjectPdfium::GetArray()
     if (m_poArray)
         return m_poArray;
 
-    m_poArray = new GDALPDFArrayPdfium(reinterpret_cast<CPDF_Array*>(m_po->GetDirect()));
+    m_poArray = new GDALPDFArrayPdfium(reinterpret_cast<CPDF_Array*>(m_po));
     return m_poArray;
 }
 
@@ -2058,12 +2136,12 @@ GDALPDFArray* GDALPDFObjectPdfium::GetArray()
 
 GDALPDFStream* GDALPDFObjectPdfium::GetStream()
 {
-    if (m_po->GetDirectType() != PDFOBJ_STREAM)
+    if (m_po->GetType() != PDFOBJ_STREAM)
         return NULL;
 
     if (m_poStream)
         return m_poStream;
-    CPDF_Stream* pStream = reinterpret_cast<CPDF_Stream*>(m_po->GetDirect());
+    CPDF_Stream* pStream = reinterpret_cast<CPDF_Stream*>(m_po);
     if (pStream)
     {
         m_poStream = new GDALPDFStreamPdfium(pStream);
@@ -2079,7 +2157,7 @@ GDALPDFStream* GDALPDFObjectPdfium::GetStream()
 
 int GDALPDFObjectPdfium::GetRefNum()
 {
-    return m_po->GetObjNum();   // Reference().ObjectNumber();
+    return m_po->GetObjNum();
 }
 
 /************************************************************************/
@@ -2088,7 +2166,7 @@ int GDALPDFObjectPdfium::GetRefNum()
 
 int GDALPDFObjectPdfium::GetRefGen()
 {
-    return m_po->GetGenNum();   // Reference().GenerationNumber();
+    return m_po->GetGenNum();
 }
 
 /************************************************************************/
@@ -2120,12 +2198,12 @@ GDALPDFObject* GDALPDFDictionaryPdfium::Get(const char* pszKey)
         return oIter->second;
 
     CFX_ByteStringC pdfiumKey(pszKey);
-    CPDF_Object* poVal = m_poDict->GetElementValue(pdfiumKey);
-    if (poVal)
+    CPDF_Object* poVal = m_poDict->GetElement(pdfiumKey);
+    GDALPDFObjectPdfium* poObj = GDALPDFObjectPdfium::Build(poVal);
+    if (poObj)
     {
-         GDALPDFObjectPdfium* poObj = new GDALPDFObjectPdfium(poVal);
-         m_map[pszKey] = poObj;
-         return poObj;
+        m_map[pszKey] = poObj;
+        return poObj;
     }
     else
     {
@@ -2147,11 +2225,14 @@ std::map<CPLString, GDALPDFObject*>& GDALPDFDictionaryPdfium::GetValues()
         // No object for this key
         if(!poVal)
           continue;
+        
         const char* pszKey = key.c_str();
         // Objects exists in the map
         if(m_map.find(pszKey) != m_map.end())
           continue;
-        GDALPDFObjectPdfium* poObj = new GDALPDFObjectPdfium(poVal);
+        GDALPDFObjectPdfium* poObj = GDALPDFObjectPdfium::Build(poVal);
+        if( poObj == NULL )
+            continue;
         m_map[pszKey] = poObj;
     }
     return m_map;
@@ -2165,7 +2246,7 @@ std::map<CPLString, GDALPDFObject*>& GDALPDFDictionaryPdfium::GetValues()
 
 GDALPDFArrayPdfium::~GDALPDFArrayPdfium()
 {
-    for(int i=0;i<(int)m_v.size();i++)
+    for(size_t i=0;i<m_v.size();i++)
     {
         delete m_v[i];
     }
@@ -2177,7 +2258,7 @@ GDALPDFArrayPdfium::~GDALPDFArrayPdfium()
 
 int GDALPDFArrayPdfium::GetLength()
 {
-    return (int)m_poArray->GetCount();
+    return static_cast<int>(m_poArray->GetCount());
 }
 
 /************************************************************************/
@@ -2189,7 +2270,7 @@ GDALPDFObject* GDALPDFArrayPdfium::Get(int nIndex)
     if (nIndex < 0 || nIndex >= GetLength())
         return NULL;
 
-    int nOldSize = (int)m_v.size();
+    int nOldSize = static_cast<int>(m_v.size());
     if (nIndex >= nOldSize)
     {
         m_v.resize(nIndex+1);
@@ -2202,8 +2283,10 @@ GDALPDFObject* GDALPDFArrayPdfium::Get(int nIndex)
     if (m_v[nIndex] != NULL)
         return m_v[nIndex];
 
-    CPDF_Object* oVal = m_poArray->GetElement(nIndex);
-    GDALPDFObjectPdfium* poObj = new GDALPDFObjectPdfium(oVal);
+    CPDF_Object* poVal = m_poArray->GetElement(nIndex);
+    GDALPDFObjectPdfium* poObj = GDALPDFObjectPdfium::Build(poVal);
+    if( poObj == NULL )
+        return NULL;
     m_v[nIndex] = poObj;
     return poObj;
 }
@@ -2214,13 +2297,24 @@ GDALPDFObject* GDALPDFArrayPdfium::Get(int nIndex)
 /* ==================================================================== */
 /************************************************************************/
 
+void GDALPDFStreamPdfium::Decompress()
+{
+    if( m_pData != NULL )
+        return;
+    CPDF_StreamAcc acc;
+    acc.LoadAllData(m_pStream);
+    m_nSize = static_cast<int>(acc.GetSize());
+    m_pData = acc.DetachData();
+}
+
 /************************************************************************/
 /*                              GetLength()                             */
 /************************************************************************/
 
 int GDALPDFStreamPdfium::GetLength()
 {
-    return (int)m_pStream->GetRawSize();
+    Decompress();
+    return m_nSize;
 }
 
 /************************************************************************/
@@ -2232,16 +2326,12 @@ char* GDALPDFStreamPdfium::GetBytes()
     int nLength = GetLength();
     if(nLength == 0)
       return NULL;
-    unsigned char* pszContent = (unsigned char*) VSIMalloc(sizeof(unsigned char)*(nLength + 1));
+    char* pszContent = (char*) VSIMalloc(sizeof(char)*(nLength + 1));
     if (!pszContent)
         return NULL;
-    //memcpy(pszContent, m_pStream->Get(), nLength);
-    if(!m_pStream->ReadRawData(0, pszContent, nLength)) {
-      VSIFree(pszContent);
-      return NULL;
-    }
+    memcpy( pszContent, m_pData, nLength);
     pszContent[nLength] = '\0';
-    return (char*) pszContent;
+    return pszContent;
 }
 
 #endif // HAVE_PDFIUM

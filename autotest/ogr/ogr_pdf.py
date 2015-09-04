@@ -108,7 +108,7 @@ def ogr_pdf_2(name = 'tmp/ogr_pdf_1.pdf', has_attributes = True):
     # Check read support
     gdal_pdf_drv = gdal.GetDriverByName('PDF')
     md = gdal_pdf_drv.GetMetadata()
-    if not 'HAVE_POPPLER' in md and not 'HAVE_PODOFO' in md:
+    if not 'HAVE_POPPLER' in md and not 'HAVE_PODOFO' in md and not 'HAVE_PDFIUM' in md:
         return 'skip'
 
     ds = ogr.Open(name)
@@ -226,7 +226,7 @@ def ogr_pdf_online_1():
     # Check read support
     gdal_pdf_drv = gdal.GetDriverByName('PDF')
     md = gdal_pdf_drv.GetMetadata()
-    if not 'HAVE_POPPLER' in md and not 'HAVE_PODOFO' in md:
+    if not 'HAVE_POPPLER' in md and not 'HAVE_PODOFO' in md and not 'HAVE_PDFIUM' in md:
         return 'skip'
 
     if not gdaltest.download_file('http://www.terragotech.com/system/files/geopdf/webmap_urbansample.pdf', 'webmap_urbansample.pdf'):

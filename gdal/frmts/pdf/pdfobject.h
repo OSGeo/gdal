@@ -359,11 +359,13 @@ class GDALPDFObjectPdfium : public GDALPDFObject
         GDALPDFStream* m_poStream;
         CPLString osStr;
 
+                GDALPDFObjectPdfium(CPDF_Object *po);
+
     protected:
         virtual const char*       GetTypeNameNative();
 
     public:
-        GDALPDFObjectPdfium(CPDF_Object *po);
+        static GDALPDFObjectPdfium* Build(CPDF_Object *po);
 
         virtual ~GDALPDFObjectPdfium();
 
@@ -378,6 +380,7 @@ class GDALPDFObjectPdfium : public GDALPDFObject
         virtual GDALPDFStream*      GetStream();
         virtual int                 GetRefNum();
         virtual int                 GetRefGen();
+
 };
 
 #endif // HAVE_PDFIUM

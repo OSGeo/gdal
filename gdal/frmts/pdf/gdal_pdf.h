@@ -39,20 +39,25 @@
 
 #ifdef HAVE_POPPLER
 
+/* Horrible hack because there's a conflict between struct FlateDecode of */
+/* include/poppler/Stream.h and the FlateDecode() function of */
+/* pdfium/core/include/fpdfapi/fpdf_parser.h. */
+/* The part of Stream.h where struct FlateDecode is defined isn't needed */
+/* by GDAL, and is luckily protected by a #ifndef ENABLE_ZLIB section */
+#ifdef HAVE_PDFIUM
+#define ENABLE_ZLIB
+#endif /* HAVE_PDFIUM */
+
 /* hack for PDF driver and poppler >= 0.15.0 that defines incompatible "typedef bool GBool" */
 /* in include/poppler/goo/gtypes.h with the one defined in cpl_port.h */
 #define CPL_GBOOL_DEFINED
 #define OGR_FEATURESTYLE_INCLUDE
 
 #include <goo/gtypes.h>
-#endif
+#endif /* HAVE_POPPLER */
 
 #ifdef HAVE_PDFIUM
 #include "cpl_multiproc.h"
-// Defined in GDAL 2.0
-#ifndef CPLMutex
-#define CPLMutex void
-#endif  // ~ CPLMutex
 
 #if (!defined(CPL_MULTIPROC_WIN32) && !defined(CPL_MULTIPROC_PTHREAD)) || defined(CPL_MULTIPROC_STUB) || defined(CPL_MULTIPROC_NONE)
 #error PDF driver compiled with PDFium library requires working threads with mutex locking!
@@ -180,6 +185,7 @@ typedef struct {
   char* filename;
   CPDF_Document* doc;
   TMapPdfiumPages pages;
+  FPDF_FILEACCESS* psFileAccess;
 } TPdfiumDocumentStruct;
 
 #endif  // ~ HAVE_PDFIUM
@@ -206,6 +212,8 @@ class PDFDataset : public GDALPamDataset
 {
     friend class PDFRasterBand;
     friend class PDFImageRasterBand;
+    
+    PDFDataset*  poParentDS;
 
     CPLString    osFilename;
     CPLString    osUserPwd;
@@ -235,6 +243,7 @@ class PDFDataset : public GDALPamDataset
 #ifdef HAVE_PDFIUM
     TPdfiumDocumentStruct*  poDocPdfium;
     TPdfiumPageStruct*      poPagePdfium;
+    std::vector<PDFDataset*> apoOvrDS, apoOvrDSBackup;
 #endif
     GDALPDFObject* poPageObj;
 
@@ -255,9 +264,6 @@ class PDFDataset : public GDALPamDataset
     int          bTried;
     GByte       *pabyCachedData;
     int          nLastBlockXOff, nLastBlockYOff;
-#ifdef HAVE_PDFIUM
-    int          nLastBlockResolution;
-#endif
 
     OGRPolygon*  poNeatLine;
 
@@ -340,8 +346,12 @@ class PDFDataset : public GDALPamDataset
 
     int                 OpenVectorLayers(GDALPDFDictionary* poPageDict);
 
+#ifdef HAVE_PDFIUM
+    void    InitOverviews();
+#endif  // ~ HAVE_PDFIUM
+
   public:
-                 PDFDataset();
+                 PDFDataset(PDFDataset* poParentDS = NULL, int nXSize = 0, int nYSize = 0);
     virtual     ~PDFDataset();
 
     virtual const char* GetProjectionRef();
@@ -378,8 +388,7 @@ class PDFDataset : public GDALPamDataset
                        GSpacing nPixelSpace,
                        GSpacing nLineSpace,
                        GSpacing nBandSpace,
-                       GByte* pabyData,
-                       int scaleFactor = 1 );
+                       GByte* pabyData );
 
     virtual int                 GetLayerCount();
     virtual OGRLayer*           GetLayer( int );
@@ -409,12 +418,7 @@ class PDFRasterBand : public GDALPamRasterBand
 {
     friend class PDFDataset;
 
-    int arbOvs;
-#ifdef HAVE_PDFIUM
     int   nResolutionLevel;
-    int   nOverviewCount;
-    PDFRasterBand **papoOverviewBand;
-#endif  // ~ HAVE_PDFIUM
 
     CPLErr IReadBlockFromTile( int, int, void * );
 
@@ -426,16 +430,20 @@ class PDFRasterBand : public GDALPamRasterBand
 #ifdef HAVE_PDFIUM
     virtual int    GetOverviewCount();
     virtual GDALRasterBand *GetOverview( int );
-    virtual void    InitOverviews();
 #endif  // ~ HAVE_PDFIUM
 
     virtual CPLErr IReadBlock( int, int, void * );
     virtual GDALColorInterp GetColorInterpretation();
 
-    virtual int HasArbitraryOverviews() { return arbOvs; }
+#ifdef notdef
+    virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
+                              void *, int, int, GDALDataType,
+                              GSpacing nPixelSpace, GSpacing nLineSpace,
+                              GDALRasterIOExtraArg* psExtraArg);
+#endif
 };
 
-#endif /*  defined(HAVE_POPPLER) || defined(HAVE_PODOFO) */
+#endif /*  defined(HAVE_POPPLER) || defined(HAVE_PODOFO)|| defined(HAVE_PDFIUM) */
 
 /************************************************************************/
 /*                          PDFWritableDataset                          */

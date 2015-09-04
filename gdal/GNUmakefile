@@ -21,6 +21,9 @@ LIBGDAL-$(HAVE_LD_SHARED)	+=	$(GDAL_SLIB)
 LIBGDAL-$(HAVE_LIBTOOL)	:= $(LIBGDAL)
 
 default:	lib-target apps-target swig-target gdal.pc
+ifeq ($(PDF_PLUGIN),yes)
+	(cd frmts/pdf; $(MAKE) plugin)
+endif
 
 lib-target:	check-lib;
 
@@ -98,7 +101,9 @@ clean:	lclean
 ifneq ($(BINDINGS),)
 	(cd swig; $(MAKE) clean)
 endif
-
+ifeq ($(PDF_PLUGIN),yes)
+	(cd frmts/pdf; $(MAKE) clean)
+endif
 
 
 lclean:
