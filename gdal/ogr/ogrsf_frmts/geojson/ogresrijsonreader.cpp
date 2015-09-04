@@ -952,7 +952,8 @@ OGRSpatialReference* OGRESRIJSONReadSpatialReference( json_object* poObj )
             if (poObjWkt == NULL)
                 return NULL;
 
-            char* pszWKT = (char*) json_object_get_string( poObjWkt );
+            char* pszWKT
+                = const_cast<char*>(json_object_get_string( poObjWkt ));
             poSRS = new OGRSpatialReference();
             if( OGRERR_NONE != poSRS->importFromWkt( &pszWKT ) ||
                 poSRS->morphFromESRI() != OGRERR_NONE )
@@ -964,7 +965,7 @@ OGRSpatialReference* OGRESRIJSONReadSpatialReference( json_object* poObj )
             return poSRS;
         }
 
-        int nEPSG = json_object_get_int( poObjWkid );
+        const int nEPSG = json_object_get_int( poObjWkid );
 
         poSRS = new OGRSpatialReference();
         if( OGRERR_NONE != poSRS->importFromEPSG( nEPSG ) )
