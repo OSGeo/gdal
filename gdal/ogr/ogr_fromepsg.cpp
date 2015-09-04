@@ -206,11 +206,6 @@ int EPSGGetUOMAngleInfo( int nUOMAngleCode,
                          double * pdfInDegrees )
 
 {
-    const char  *pszUOMName = NULL;
-    double      dfInDegrees = 1.0;
-    const char *pszFilename;
-    char        szSearchKey[24];
-
     /* We do a special override of some of the DMS formats name */
     /* This will also solve accuracy problems when computing */
     /* the dfInDegree value from the CSV values (#3643) */
@@ -225,10 +220,12 @@ int EPSGGetUOMAngleInfo( int nUOMAngleCode,
         return TRUE;
     }
 
-    pszFilename = CSVFilename( "unit_of_measure.csv" );
+    const char *pszFilename = CSVFilename( "unit_of_measure.csv" );
 
+    char szSearchKey[24];
     sprintf( szSearchKey, "%d", nUOMAngleCode );
-    pszUOMName = CSVGetField( pszFilename,
+
+    const char *pszUOMName = CSVGetField( pszFilename,
                               "UOM_CODE", szSearchKey, CC_Integer,
                               "UNIT_OF_MEAS_NAME" );
 
@@ -238,16 +235,16 @@ int EPSGGetUOMAngleInfo( int nUOMAngleCode,
 /*      case we really want to return the default InDegrees value       */
 /*      (1.0) from above.                                               */
 /* -------------------------------------------------------------------- */
+    double dfInDegrees = 1.0;
+
     if( pszUOMName != NULL )
     {
-        double dfFactorB, dfFactorC;
-        
-        dfFactorB = 
+        const double dfFactorB =
             CPLAtof(CSVGetField( pszFilename,
                               "UOM_CODE", szSearchKey, CC_Integer,
                               "FACTOR_B" ));
-        
-        dfFactorC = 
+
+        const double dfFactorC =
             CPLAtof(CSVGetField( pszFilename,
                               "UOM_CODE", szSearchKey, CC_Integer,
                               "FACTOR_C" ));
@@ -273,15 +270,6 @@ int EPSGGetUOMAngleInfo( int nUOMAngleCode,
             dfInDegrees = 180.0 / PI;
             break;
 
-          case 9102:
-          case 9107:
-          case 9108:
-          case 9110:
-          case 9122:
-            pszUOMName = "degree";
-            dfInDegrees = 1.0;
-            break;
-
           case 9103:
             pszUOMName = "arc-minute";
             dfInDegrees = 1 / 60.0;
@@ -291,7 +279,7 @@ int EPSGGetUOMAngleInfo( int nUOMAngleCode,
             pszUOMName = "arc-second";
             dfInDegrees = 1 / 3600.0;
             break;
-        
+
           case 9105:
             pszUOMName = "grad";
             dfInDegrees = 180.0 / 200.0;
@@ -301,7 +289,7 @@ int EPSGGetUOMAngleInfo( int nUOMAngleCode,
             pszUOMName = "gon";
             dfInDegrees = 180.0 / 200.0;
             break;
-        
+
           case 9109:
             pszUOMName = "microradian";
             dfInDegrees = 180.0 / (3.14159265358979 * 1000000.0);
