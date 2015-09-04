@@ -1660,26 +1660,23 @@ CPLErr HFABand::SetRasterBlock( int nXBlock, int nYBlock, void * pData )
 /*                                                                      */
 /*      Return the Layer Name                                           */
 /************************************************************************/
- 
+
 const char * HFABand::GetBandName()
 {
     if( strlen(poNode->GetName()) > 0 )
         return( poNode->GetName() );
-    else
-    {
-        int iBand; 
-        for( iBand = 0; iBand < psInfo->nBands; iBand++ )
-        {
-            if( psInfo->papoBand[iBand] == this )
-            {
-                osOverName.Printf( "Layer_%d", iBand+1 );
-                return osOverName;
-            }
-        }
 
-        osOverName.Printf( "Layer_%x", poNode->GetFilePos() );
-        return osOverName;
+    for( int iBand = 0; iBand < psInfo->nBands; iBand++ )
+    {
+        if( psInfo->papoBand[iBand] == this )
+        {
+            osOverName.Printf( "Layer_%d", iBand+1 );
+            return osOverName;
+        }
     }
+
+    osOverName.Printf( "Layer_%x", poNode->GetFilePos() );
+    return osOverName;
 }
 
 /************************************************************************/
