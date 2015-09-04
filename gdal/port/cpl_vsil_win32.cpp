@@ -377,12 +377,17 @@ VSIVirtualHandle *VSIWin32FilesystemHandler::Open( const char *pszFilename,
     DWORD dwDesiredAccess, dwCreationDisposition, dwFlagsAndAttributes;
     HANDLE hFile;
 
-    if( strchr(pszAccess, '+') != NULL ||
-        strchr(pszAccess, 'w') != 0 ||
-        strchr(pszAccess, 'a') != 0 )
-        dwDesiredAccess = GENERIC_READ | GENERIC_WRITE;
-    else
-        dwDesiredAccess = GENERIC_READ;
+    // GENERICs are used instead of FILE_GENERIC_READ
+    dwDesiredAccess = GENERIC_READ;
+    if (strchr(pszAccess, '+') != NULL || strchr(pszAccess, 'w') != NULL)
+        dwDesiredAccess |= GENERIC_WRITE;
+
+    // Append mode only makes sense on files and pipes, have to use FILE_ access
+    // these are very different from the GENERICs
+    // Append is read and write but not overwrite data (only append data)
+    if (strchr(pszAccess, 'a') != NULL )
+        dwDesiredAccess = 
+            FILE_GENERIC_READ | (FILE_GENERIC_WRITE ^ FILE_WRITE_DATA);
 
     if( strstr(pszAccess, "w") != NULL )
         dwCreationDisposition = CREATE_ALWAYS;
