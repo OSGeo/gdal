@@ -433,9 +433,6 @@ OGRErr OGRGeometryCollection::importFromWkbInternal( unsigned char * pabyData,
                                                      OGRwkbVariant eWkbVariant )
 
 {
-    OGRwkbByteOrder     eByteOrder;
-    int                 nDataOffset;
-
     /* Arbitrary value, but certainly large enough for reasonable usages ! */
     if( nRecLevel == 32 )
     {
@@ -446,6 +443,8 @@ OGRErr OGRGeometryCollection::importFromWkbInternal( unsigned char * pabyData,
     }
 
     nGeomCount = 0;
+    OGRwkbByteOrder eByteOrder = wkbXDR;
+    int nDataOffset = 0;
     OGRErr eErr = importPreambuleOfCollectionFromWkb( pabyData,
                                                       nSize,
                                                       nDataOffset,
@@ -453,6 +452,7 @@ OGRErr OGRGeometryCollection::importFromWkbInternal( unsigned char * pabyData,
                                                       9,
                                                       nGeomCount,
                                                       eWkbVariant );
+    // eErr of -1 is success.
     if( eErr >= 0 )
         return eErr;
 
@@ -468,9 +468,6 @@ OGRErr OGRGeometryCollection::importFromWkbInternal( unsigned char * pabyData,
 /* -------------------------------------------------------------------- */
     for( int iGeom = 0; iGeom < nGeomCount; iGeom++ )
     {
-        OGRErr  eErr;
-        OGRGeometry* poSubGeom = NULL;
-
         /* Parses sub-geometry */
         unsigned char* pabySubData = pabyData + nDataOffset;
         if( nSize < 9 && nSize != -1 )
@@ -478,7 +475,7 @@ OGRErr OGRGeometryCollection::importFromWkbInternal( unsigned char * pabyData,
 
         OGRwkbGeometryType eSubGeomType;
         OGRBoolean bIs3D;
-        eErr = OGRReadWKBGeometryType( pabySubData, eWkbVariant, &eSubGeomType, &bIs3D );
+        OGRErr eErr = OGRReadWKBGeometryType( pabySubData, eWkbVariant, &eSubGeomType, &bIs3D );
         if( eErr != OGRERR_NONE )
             return eErr;
 
@@ -490,6 +487,7 @@ OGRErr OGRGeometryCollection::importFromWkbInternal( unsigned char * pabyData,
             return OGRERR_CORRUPT_DATA;
         }
 
+        OGRGeometry* poSubGeom = NULL;
         if( OGR_GT_IsSubClassOf(eSubGeomType, wkbGeometryCollection) )
         {
             poSubGeom = OGRGeometryFactory::createGeometry( eSubGeomType );
@@ -551,8 +549,6 @@ OGRErr  OGRGeometryCollection::exportToWkb( OGRwkbByteOrder eByteOrder,
                                             OGRwkbVariant eWkbVariant ) const
 
 {
-    int         nOffset;
-    
     if( eWkbVariant == wkbVariantOldOgc &&
         (wkbFlatten(getGeometryType()) == wkbMultiCurve ||
          wkbFlatten(getGeometryType()) == wkbMultiSurface) ) /* does not make sense for new geometries, so patch it */
@@ -597,18 +593,16 @@ OGRErr  OGRGeometryCollection::exportToWkb( OGRwkbByteOrder eByteOrder,
 /* -------------------------------------------------------------------- */
     if( OGR_SWAP( eByteOrder ) )
     {
-        int     nCount;
-
-        nCount = CPL_SWAP32( nGeomCount );
+        int nCount = CPL_SWAP32( nGeomCount );
         memcpy( pabyData+5, &nCount, 4 );
     }
     else
     {
         memcpy( pabyData+5, &nGeomCount, 4 );
     }
-    
-    nOffset = 9;
-    
+
+    int nOffset = 9;
+
 /* ==================================================================== */
 /*      Serialize each of the Geoms.                                    */
 /* ==================================================================== */
