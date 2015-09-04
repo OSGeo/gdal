@@ -815,18 +815,15 @@ EPSGGetProjTRFInfo( int nPCS, int * pnProjMethod,
                     int *panParmIds, double * padfProjParms )
 
 {
-    int         nProjMethod, i;
-    double      adfProjParms[7];
-    char        szTRFCode[16];
-    CPLString   osFilename;
-
 /* -------------------------------------------------------------------- */
 /*      Get the proj method.  If this fails to return a meaningful      */
 /*      number, then the whole function fails.                          */
 /* -------------------------------------------------------------------- */
-    osFilename = CSVFilename( "pcs.override.csv" );
+    CPLString osFilename = CSVFilename( "pcs.override.csv" );
+
+    char szTRFCode[16];
     sprintf( szTRFCode, "%d", nPCS );
-    nProjMethod =
+    int nProjMethod =
         atoi( CSVGetField( osFilename,
                            "COORD_REF_SYS_CODE", szTRFCode, CC_Integer,
                            "COORD_OP_METHOD_CODE" ) );
@@ -838,33 +835,36 @@ EPSGGetProjTRFInfo( int nPCS, int * pnProjMethod,
             atoi( CSVGetField( osFilename,
                                "COORD_REF_SYS_CODE", szTRFCode, CC_Integer,
                                "COORD_OP_METHOD_CODE" ) );
+        if( nProjMethod == 0 )
+            return FALSE;
     }
-
-    if( nProjMethod == 0 )
-        return FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      Get the parameters for this projection.                         */
 /* -------------------------------------------------------------------- */
+    double      adfProjParms[7] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 
-    for( i = 0; i < 7; i++ )
+    for( int i = 0; i < 7; i++ )
     {
         char    szParamUOMID[32], szParamValueID[32], szParamCodeID[32];
-        char    *pszValue;
-        int     nUOM;
-        
+
         sprintf( szParamCodeID, "PARAMETER_CODE_%d", i+1 );
         sprintf( szParamUOMID, "PARAMETER_UOM_%d", i+1 );
         sprintf( szParamValueID, "PARAMETER_VALUE_%d", i+1 );
 
-        if( panParmIds != NULL )
-            panParmIds[i] = 
-                atoi(CSVGetField( osFilename, "COORD_REF_SYS_CODE", szTRFCode,
-                                  CC_Integer, szParamCodeID ));
+        if( panParmIds == NULL )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "panParmIds cannot be NULL." );
+            return FALSE;
+        }
+        panParmIds[i] =
+            atoi(CSVGetField( osFilename, "COORD_REF_SYS_CODE", szTRFCode,
+                              CC_Integer, szParamCodeID ));
 
-        nUOM = atoi(CSVGetField( osFilename, "COORD_REF_SYS_CODE", szTRFCode,
+        int nUOM = atoi(CSVGetField( osFilename, "COORD_REF_SYS_CODE", szTRFCode,
                                  CC_Integer, szParamUOMID ));
-        pszValue = CPLStrdup(
+        char *pszValue = CPLStrdup(
             CSVGetField( osFilename, "COORD_REF_SYS_CODE", szTRFCode,
                          CC_Integer, szParamValueID ));
 
@@ -910,7 +910,7 @@ EPSGGetProjTRFInfo( int nPCS, int * pnProjMethod,
 
     if( padfProjParms != NULL )
     {
-        for( i = 0; i < 7; i++ )
+        for( int i = 0; i < 7; i++ )
             padfProjParms[i] = adfProjParms[i];
     }
 
