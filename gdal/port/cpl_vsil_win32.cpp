@@ -367,6 +367,24 @@ int VSIWin32Handle::Truncate( vsi_l_offset nNewSize )
 /************************************************************************/
 
 /************************************************************************/
+/*                          CPLGetWineVersion()                         */
+/************************************************************************/
+
+static const char* CPLGetWineVersion()
+{
+    HMODULE hntdll = GetModuleHandle("ntdll.dll");
+    if( hntdll == NULL )
+        return NULL;
+
+    static const char * (CDECL *pwine_get_version)(void);
+    pwine_get_version = ( const char* (*)(void) ) GetProcAddress(hntdll, "wine_get_version");
+    if( pwine_get_version == NULL )
+        return NULL;
+
+    return pwine_get_version();
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
@@ -386,8 +404,36 @@ VSIVirtualHandle *VSIWin32FilesystemHandler::Open( const char *pszFilename,
     // these are very different from the GENERICs
     // Append is read and write but not overwrite data (only append data)
     if (strchr(pszAccess, 'a') != NULL )
+    {
         dwDesiredAccess = 
             FILE_GENERIC_READ | (FILE_GENERIC_WRITE ^ FILE_WRITE_DATA);
+
+        // Wine < 1.7.4 doesn't work properly without FILE_WRITE_DATA bit
+        // (it refuses to write at all), so we'd better re-add it even if the
+        // resulting semantics isn't completely conformant.
+        // See https://bugs.winehq.org/show_bug.cgi?id=33232
+        const char* pszWineVersion = CPLGetWineVersion();
+        if( pszWineVersion != NULL )
+        {
+            int nVersion = atoi(pszWineVersion) * 10000;
+            const char* pszDot = strchr(pszWineVersion, '.');
+            if( pszDot )
+            {
+                nVersion += atoi(pszDot + 1) * 100;
+                pszDot = strchr(pszDot + 1, '.');
+                if( pszDot )
+                {
+                    nVersion += atoi(pszDot + 1);
+                }
+            }
+            if( nVersion < 1 * 10000 + 7 * 100 + 4 )
+            {
+                //CPLDebug("VSI", "Wine %s detected. Append mode needs FILE_WRITE_DATA",
+                //         pszWineVersion);
+                dwDesiredAccess |= FILE_WRITE_DATA;
+            }
+        }
+    }
 
     if( strstr(pszAccess, "w") != NULL )
         dwCreationDisposition = CREATE_ALWAYS;
