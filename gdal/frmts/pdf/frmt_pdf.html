@@ -16,39 +16,16 @@ Non-geospatial PDF documents will also be recognized by the driver.
 Starting with GDAL &gt;= 1.10.0, PDF documents can be created from other GDAL raster datasets, and OGR datasources can
 also optionally be drawn on top of the raster layer (see OGR_* creation options in the below section).
 <p>
-GDAL must be compiled with libpoppler support (GPL-licensed), and libpoppler itself must have been configured with
---enable-xpdf-headers so that the xpdf C++ headers are available. Note: the poppler C++ API isn't
-stable, so the driver compilation may fail with too old or too recent poppler versions.
-Successfully tested versions are poppler &gt;= 0.12.X and &lt;= 0.26.0.
-<p>
-Starting with GDAL 1.9.0, as an alternative, the PDF driver can be compiled against libpodofo (LGPL-licensed)
-to avoid the libpoppler dependency. This is sufficient to get the georeferencing and vector information. However, for
-getting the imagery, the pdftoppm utility that comes with the poppler distribution must be available in the system PATH.
-A temporary file will be generated in a directory determined by the following configuration options : CPL_TMPDIR,
-TMPDIR or TEMP (in that order). If none are defined, the current directory will be used.
-Successfully tested versions are libpodofo 0.8.4 and 0.9.1. Important note: using PoDoFo 0.9.0 is strongly discouraged,
-as it could cause crashes in GDAL due to a bug in PoDoFo.
-<p>
 The driver supports reading georeferencing encoded in either of the 2 current existing ways : according to the OGC
 encoding best practice, or according to the Adobe Supplement to ISO 32000.
 <p>
 Multipage documents are exposed as subdatasets, one subdataset par page of the document.
-<p>
-The neatline (for OGC best practice) or the bounding box (Adobe style) will be reported as a NEATLINE metadata item,
-so that it can be later used as a cutline for the warping algorithm.
-<p>
-Starting with GDAL 1.9.0, XMP metadata can be extracted from the file, and will be
-stored as XML raw content in the xml:XMP metadata domain.
-<p>
-Starting with GDAL 1.10.0, additional metadata, such as found in USGS Topo PDF can be extracted from the file, and will be
-stored as XML raw content in the EMBEDDED_METADATA metadata domain.
-<p>
 
 <h2>Vector support</h2>
 
 <p>
 Starting with GDAL 1.10, this driver can read and write geospatial PDF with vector features.
-Vector read support requires linking to podofo or poppler libraries, but write support does not.
+Vector read support requires linking to one of the above mentionned dependent libraries, but write support does not.
 
 The driver can read vector features encoded according to PDF's logical structure facilities (as described by "§10.6 - Logical Structure" of PDF spec),
 or retrieve only vector geometries for other vector PDF files.<p>
@@ -87,6 +64,19 @@ Alpha values are supported for colors to control the opacity. If not specified, 
 
 For SYMBOL with a bitmap name, only the alpha value of the color specified with 'c' is taken into account.<p>
 
+<h2>Metadata</h2>
+
+<p>
+The neatline (for OGC best practice) or the bounding box (Adobe style) will be reported as a NEATLINE metadata item,
+so that it can be later used as a cutline for the warping algorithm.
+<p>
+Starting with GDAL 1.9.0, XMP metadata can be extracted from the file, and will be
+stored as XML raw content in the xml:XMP metadata domain.
+<p>
+Starting with GDAL 1.10.0, additional metadata, such as found in USGS Topo PDF can be extracted from the file, and will be
+stored as XML raw content in the EMBEDDED_METADATA metadata domain.
+<p>
+
 <h2>Configuration options</h2>
 
 <ul>
@@ -97,7 +87,7 @@ from the raster images inside the PDF (in simple cases).</li>
 <li><i>GDAL_PDF_NEATLINE</i> : (GDAL &gt;= 1.10.0 ) The name of the neatline to select (only available for geospatial PDF, encoded
 according to OGC Best Practice). This defaults to "Map Layers" for USGS Topo PDF. If not found, the neatline that
 covers the largest area.</li>
-
+<li><i>GDAL_USER_PWD</i> : User password for protected PDFs.</li>
 <p>
 Starting with GDAL &gt;= 1.10.0 and when GDAL is compiled against libpoppler, the following options are also
 available :
@@ -112,6 +102,21 @@ The layer names can be obtained by querying the LAYERS metadata domain. When thi
 layers not explicitly listed will be turned off.</li>
 <li><i>GDAL_PDF_LAYERS_OFF</i> = list of layers (comma separated) to turn OFF. The layer names can be obtained by
 querying the LAYERS metadata domain.</li>
+</ul>
+
+<h3>Open Options</h3>
+
+Since GDAL 2.0, above configuration options are also available as open options.
+
+<ul>
+<li><p><b>RENDERING_OPTIONS</b>=[RASTER,VECTOR,TEXT / RASTER,VECTOR / RASTER,TEXT / RASTER / VECTOR,TEXT / VECTOR / TEXT]</p></li>
+<li><p><b>DPI</b>=value</p></li>
+<li><p><b>USER_PWD</b>=password</p></li>
+<li><p><b>PDF_LIB</b>=[POPPLER/PODOFO/PDFIUM]: only available for builds with multiple backends</li>
+<li><p><b>LAYERS</b>=string: list of layers (comma separated) to turn ON</li>
+<li><p><b>GDAL_PDF_LAYERS_OFF</b>=string: list of layers (comma separated) to turn OFF</li>
+<li><p><b>BANDS</b>=3 or 4</li>
+<li><p><b>NEATLINE</b>=name of neatline</li>
 </ul>
 
 <h2>LAYERS Metadata domain</h2>
@@ -142,11 +147,10 @@ $ gdal_translate ../autotest/gdrivers/data/adobe_style_geospatial.pdf out.tif --
 <h2>Restrictions</h2>
 
 The opening of a PDF document (to get the georeferencing) is fast, but at the first access to a raster block,
-the whole page will be rasterized, which can be a slow operation.
+the whole page will be rasterized (with Poppler), which can be a slow operation.
 <p>
 Note: starting with GDAL 1.10, some raster-only PDF files (such as some USGS GeoPDF files), that are regularly
-tiled are exposed as tiled dataset by the GDAL PDF driver, and can be rendered with either the Poppler or the
-PoDoFo backends.
+tiled are exposed as tiled dataset by the GDAL PDF driver, and can be rendered with any backends.
 <p>
 Only a few of the possible Datums available in the OGC best practice spec have been currently mapped
 in the driver. Unrecognized datums will be considered as being based on the WGS84 ellipsoid.
@@ -164,7 +168,7 @@ have 1 band (graylevel or with color table), 3 bands (RGB) or 4 bands (RGBA).</p
 the ISO32000 specification. It is also possible to write it according to the
 OGC Best Practice conventions (but limited to a few datum and projection types).</p>
 
-<p>Note: PDF write support does not require linking to poppler or podofo.</p>
+<p>Note: PDF write support does not require linking to any backend.</p>
 
 <h3>Creation Options</h3>
 
@@ -305,6 +309,70 @@ selected by setting the GDAL_PDF_GEO_ENCODING configuration option to OGC_BP.<p>
 Updated elements are written at the end of the file, following the incremental update method described in
 the PDF specification.<p>
 
+<h2>Build dependencies</h2>
+
+<p>For read support, GDAL must be built against one of the following libraries :
+<ul>
+<li><a href="http://poppler.freedesktop.org/">Poppler</a> (GPL-licensed)</li>
+<li><a href="http://podofo.sourceforge.net/">PoDoFo</a> (LGPL-licensed)</li>
+<li><a href="https://code.google.com/p/pdfium/">PDFium</a> (New BSD-licensed, supported since GDAL 2.1.0)</li>
+</ul>
+
+<p>Note: it is also possible to build against a combination of several of the
+above libraries. PDFium will be used in priority over Poppler, itself used in
+priority over PoDoFo.</p>
+
+<h3>Unix build</h3>
+<p>
+The relevant configure options are --with-poppler, --with-podofo, --with-podofo-lib
+and --with-podofo-extra-lib-for-test.
+</p>
+<p>
+Starting with GDAL 2.1.0, --with-pdfium, --with-pdfium-lib, --with-pdfium-extra-lib-for-test
+and --enable-pdf-plugin are also available.
+</p>
+
+<h3>Poppler</h3>
+<p>
+libpoppler itself must have been configured with
+--enable-xpdf-headers so that the xpdf C++ headers are available. Note: the poppler C++ API isn't
+stable, so the driver compilation may fail with too old or too recent poppler versions.
+Successfully tested versions are poppler &gt;= 0.12.X and &lt;= 0.31.0.
+</p>
+
+<h3>PoDoFo</h3>
+<p>
+As a partial alternative, the PDF driver can be compiled against libpodofo
+to avoid the libpoppler dependency. This is sufficient to get the georeferencing and vector information. However, for
+getting the imagery, the pdftoppm utility that comes with the poppler distribution must be available in the system PATH.
+A temporary file will be generated in a directory determined by the following configuration options : CPL_TMPDIR,
+TMPDIR or TEMP (in that order). If none are defined, the current directory will be used.
+Successfully tested versions are libpodofo 0.8.4, 0.9.1 and 0.9.3. Important note: using PoDoFo 0.9.0 is strongly discouraged,
+as it could cause crashes in GDAL due to a bug in PoDoFo.
+</p>
+
+<h3>PDFium (GDAL &gt; 2.1.0)</h3>
+<p>
+Using PDFium as a backend allows access to raster, vector, georeferencing and other metadata.
+The PDFium backend has also support for arbitrary overviews, for fast zoom-out.
+</p>
+<p>
+Only GDAL builds against static builds of PDFium have been tested. Building PDFium
+can be challenging. A <a href="https://github.com/rouault/pdfium">PDFium forked version for simpler builds</a>
+is available (for Windows, a dedicated <a href="https://github.com/rouault/pdfium/tree/win_gdal_build">win_gdal_build</a>
+branch is recommended).
+A <a href="https://github.com/rouault/pdfium/tree/build">build repository</a> is available
+with a few scripts that can be used as a template to build PDFium for Linux/MacOSX/Windows.
+Those forked versions remove the dependency to the V8 JavaScript engine,
+and have also a few changes to avoid symbol clashes, on Linux, with libjpeg and libopenjpeg.
+Building the PDF driver has a GDAL plugin is also a way of avoiding such issues.
+PDFium build requires a C++11 compatible compiler, as well as for building GDAL itself
+against PDFium. Successfully tested versions are GCC 4.7.0
+(previous versions aren't compatible) and Visual Studio 12 / VS2013.
+</p>
+
+</p>
+
 <h2>Examples</h2>
 
 <ul>
@@ -349,6 +417,8 @@ Libraries :
 <ul>
 <li><a href="http://poppler.freedesktop.org/">Poppler homepage</a></li>
 <li><a href="http://podofo.sourceforge.net/">PoDoFo homepage</a></li>
+<li><a href="https://code.google.com/p/pdfium/">PDFium homepage</a></li>
+<li><a href="https://github.com/rouault/pdfium">PDFium forked version for simpler builds</a></li>
 </ul>
 
 <p>
