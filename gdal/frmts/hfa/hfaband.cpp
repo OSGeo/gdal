@@ -1356,9 +1356,6 @@ void HFABand::ReAllocBlock( int iBlock, int nSize )
 CPLErr HFABand::SetRasterBlock( int nXBlock, int nYBlock, void * pData )
 
 {
-    int		iBlock;
-    VSILFILE	*fpData;
-
     if( psInfo->eAccess == HFA_ReadOnly )
     {
         CPLError( CE_Failure, CPLE_NoWriteAccess,
@@ -1369,8 +1366,8 @@ CPLErr HFABand::SetRasterBlock( int nXBlock, int nYBlock, void * pData )
     if( LoadBlockInfo() != CE_None )
         return CE_Failure;
 
-    iBlock = nXBlock + nYBlock * nBlocksPerRow;
-    
+    const int iBlock = nXBlock + nYBlock * nBlocksPerRow;
+
 /* -------------------------------------------------------------------- */
 /*      For now we don't support write invalid uncompressed blocks.     */
 /*      To do so we will need logic to make space at the end of the     */
@@ -1392,7 +1389,8 @@ CPLErr HFABand::SetRasterBlock( int nXBlock, int nYBlock, void * pData )
 /* -------------------------------------------------------------------- */
 /*      Move to the location that the data sits.                        */
 /* -------------------------------------------------------------------- */
-    vsi_l_offset    nBlockOffset;
+    VSILFILE *fpData = NULL;
+    vsi_l_offset nBlockOffset = 0;
 
     // Calculate block offset in case we have spill file. Use predefined
     // block map otherwise.
@@ -1443,8 +1441,6 @@ CPLErr HFABand::SetRasterBlock( int nXBlock, int nYBlock, void * pData )
             /* Compensate for the header info */
             GUInt32 nDataOffset = nSizeCount + 13;
             int nTotalSize  = nSizeCount + nSizeValues + 13;
-     
-            //fprintf( stderr, "sizecount = %d sizevalues = %d min = %d numruns = %d numbits = %d\n", nSizeCount, nSizeValues, nMin, nNumRuns, (int)nNumBits );
 
             // Allocate space for the compressed block and seek to it.
             ReAllocBlock( iBlock, nTotalSize );
