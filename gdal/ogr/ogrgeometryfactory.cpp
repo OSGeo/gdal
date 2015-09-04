@@ -1888,13 +1888,6 @@ OGRErr OGRGeometryFactory::createFromFgfInternal( unsigned char *pabyData,
                                                   int *pnBytesConsumed,
                                                   int nRecLevel )
 {
-    OGRGeometry *poGeom = NULL;
-    GInt32       nGType, nGDim;
-    int          nTupleSize = 0;
-    int          iOrdinal = 0;
-    
-    (void) iOrdinal;
-
     /* Arbitrary value, but certainly large enough for reasonable usages ! */
     if( nRecLevel == 32 )
     {
@@ -1912,6 +1905,7 @@ OGRErr OGRGeometryFactory::createFromFgfInternal( unsigned char *pabyData,
 /* -------------------------------------------------------------------- */
 /*      Decode the geometry type.                                       */
 /* -------------------------------------------------------------------- */
+    GInt32 nGType;
     memcpy( &nGType, pabyData + 0, 4 );
     CPL_LSBPTR32( &nGType );
 
@@ -1921,18 +1915,22 @@ OGRErr OGRGeometryFactory::createFromFgfInternal( unsigned char *pabyData,
 /* -------------------------------------------------------------------- */
 /*      Decode the dimentionality if appropriate.                       */
 /* -------------------------------------------------------------------- */
+    OGRGeometry *poGeom = NULL;
+    int          nTupleSize = 0;
+    GInt32       nGDim = 0;
+
+    // TODO: Why is this a switch?
     switch( nGType )
     {
       case 1: // Point
       case 2: // LineString
       case 3: // Polygon
-        
         if( nBytes < 8 )
             return OGRERR_NOT_ENOUGH_DATA;
 
         memcpy( &nGDim, pabyData + 4, 4 );
         CPL_LSBPTR32( &nGDim );
-        
+
         if( nGDim < 0 || nGDim > 3 )
             return OGRERR_CORRUPT_DATA;
 
@@ -1951,7 +1949,7 @@ OGRErr OGRGeometryFactory::createFromFgfInternal( unsigned char *pabyData,
 /* -------------------------------------------------------------------- */
 /*      None                                                            */
 /* -------------------------------------------------------------------- */
-    if( nGType == 0 ) 
+    if( nGType == 0 )
     {
         if( pnBytesConsumed )
             *pnBytesConsumed = 4;
@@ -1962,14 +1960,13 @@ OGRErr OGRGeometryFactory::createFromFgfInternal( unsigned char *pabyData,
 /* -------------------------------------------------------------------- */
     else if( nGType == 1 )
     {
-        double  adfTuple[4];
-
         if( nBytes < nTupleSize * 8 + 8 )
             return OGRERR_NOT_ENOUGH_DATA;
 
+        double  adfTuple[4];
         memcpy( adfTuple, pabyData + 8, nTupleSize*8 );
 #ifdef CPL_MSB
-        for( iOrdinal = 0; iOrdinal < nTupleSize; iOrdinal++ )
+        for( int iOrdinal = 0; iOrdinal < nTupleSize; iOrdinal++ )
             CPL_SWAP64PTR( adfTuple + iOrdinal );
 #endif
         if( nTupleSize > 2 )
@@ -1986,14 +1983,10 @@ OGRErr OGRGeometryFactory::createFromFgfInternal( unsigned char *pabyData,
 /* -------------------------------------------------------------------- */
     else if( nGType == 2 )
     {
-        double adfTuple[4];
-        GInt32 nPointCount;
-        int    iPoint;
-        OGRLineString *poLS;
-
         if( nBytes < 12 )
             return OGRERR_NOT_ENOUGH_DATA;
 
+        GInt32 nPointCount;
         memcpy( &nPointCount, pabyData + 8, 4 );
         CPL_LSBPTR32( &nPointCount );
 
@@ -2003,15 +1996,17 @@ OGRErr OGRGeometryFactory::createFromFgfInternal( unsigned char *pabyData,
         if( nBytes - 12 < nTupleSize * 8 * nPointCount )
             return OGRERR_NOT_ENOUGH_DATA;
 
-        poGeom = poLS = new OGRLineString();
+        OGRLineString *poLS = new OGRLineString();
+        poGeom = poLS;
         poLS->setNumPoints( nPointCount );
 
-        for( iPoint = 0; iPoint < nPointCount; iPoint++ )
+        for( int iPoint = 0; iPoint < nPointCount; iPoint++ )
         {
-            memcpy( adfTuple, pabyData + 12 + 8*nTupleSize*iPoint, 
+            double adfTuple[4];
+            memcpy( adfTuple, pabyData + 12 + 8*nTupleSize*iPoint,
                     nTupleSize*8 );
 #ifdef CPL_MSB
-            for( iOrdinal = 0; iOrdinal < nTupleSize; iOrdinal++ )
+            for( int iOrdinal = 0; iOrdinal < nTupleSize; iOrdinal++ )
                 CPL_SWAP64PTR( adfTuple + iOrdinal );
 #endif
             if( nTupleSize > 2 )
@@ -2029,17 +2024,10 @@ OGRErr OGRGeometryFactory::createFromFgfInternal( unsigned char *pabyData,
 /* -------------------------------------------------------------------- */
     else if( nGType == 3 )
     {
-        double adfTuple[4];
-        GInt32 nPointCount;
-        GInt32 nRingCount;
-        int    iPoint, iRing;
-        OGRLinearRing *poLR;
-        OGRPolygon *poPoly;
-        int    nNextByte;
-
         if( nBytes < 12 )
             return OGRERR_NOT_ENOUGH_DATA;
 
+        GInt32 nRingCount;
         memcpy( &nRingCount, pabyData + 8, 4 );
         CPL_LSBPTR32( &nRingCount );
 
@@ -2050,11 +2038,12 @@ OGRErr OGRGeometryFactory::createFromFgfInternal( unsigned char *pabyData,
         if (nBytes - 12 < nRingCount * 4)
             return OGRERR_NOT_ENOUGH_DATA;
 
-        nNextByte = 12;
-        
-        poGeom = poPoly = new OGRPolygon();
+        int nNextByte = 12;
 
-        for( iRing = 0; iRing < nRingCount; iRing++ )
+        OGRPolygon * poPoly = new OGRPolygon();
+        poGeom = poPoly;
+
+        for( int iRing = 0; iRing < nRingCount; iRing++ )
         {
             if( nBytes - nNextByte < 4 )
             {
@@ -2062,6 +2051,7 @@ OGRErr OGRGeometryFactory::createFromFgfInternal( unsigned char *pabyData,
                 return OGRERR_NOT_ENOUGH_DATA;
             }
 
+            GInt32 nPointCount;
             memcpy( &nPointCount, pabyData + nNextByte, 4 );
             CPL_LSBPTR32( &nPointCount );
 
@@ -2079,16 +2069,17 @@ OGRErr OGRGeometryFactory::createFromFgfInternal( unsigned char *pabyData,
                 return OGRERR_NOT_ENOUGH_DATA;
             }
 
-            poLR = new OGRLinearRing();
+            OGRLinearRing *poLR = new OGRLinearRing();
             poLR->setNumPoints( nPointCount );
-            
-            for( iPoint = 0; iPoint < nPointCount; iPoint++ )
+
+            for( int iPoint = 0; iPoint < nPointCount; iPoint++ )
             {
+                double adfTuple[4];
                 memcpy( adfTuple, pabyData + nNextByte, nTupleSize*8 );
                 nNextByte += nTupleSize * 8;
 
 #ifdef CPL_MSB
-                for( iOrdinal = 0; iOrdinal < nTupleSize; iOrdinal++ )
+                for( int iOrdinal = 0; iOrdinal < nTupleSize; iOrdinal++ )
                     CPL_SWAP64PTR( adfTuple + iOrdinal );
 #endif
                 if( nTupleSize > 2 )
@@ -2112,13 +2103,10 @@ OGRErr OGRGeometryFactory::createFromFgfInternal( unsigned char *pabyData,
              || nGType == 6      // MultiPolygon
              || nGType == 7 )    // MultiGeometry
     {
-        OGRGeometryCollection *poGC = NULL;
-        GInt32 nGeomCount;
-        int iGeom, nBytesUsed;
-
         if( nBytes < 8 )
             return OGRERR_NOT_ENOUGH_DATA;
 
+        GInt32 nGeomCount;
         memcpy( &nGeomCount, pabyData + 4, 4 );
         CPL_LSBPTR32( &nGeomCount );
 
@@ -2129,8 +2117,7 @@ OGRErr OGRGeometryFactory::createFromFgfInternal( unsigned char *pabyData,
         if (nBytes - 8 < 4 * nGeomCount)
             return OGRERR_NOT_ENOUGH_DATA;
 
-        nBytesUsed = 8;
-
+        OGRGeometryCollection *poGC = NULL;
         if( nGType == 4 )
             poGC = new OGRMultiPoint();
         else if( nGType == 5 )
@@ -2139,8 +2126,10 @@ OGRErr OGRGeometryFactory::createFromFgfInternal( unsigned char *pabyData,
             poGC = new OGRMultiPolygon();
         else if( nGType == 7 )
             poGC = new OGRGeometryCollection();
-        
-        for( iGeom = 0; iGeom < nGeomCount; iGeom++ )
+
+        int nBytesUsed = 8;
+
+        for( int iGeom = 0; iGeom < nGeomCount; iGeom++ )
         {
             int nThisGeomSize;
             OGRGeometry *poThisGeom = NULL;
