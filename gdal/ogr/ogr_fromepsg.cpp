@@ -699,22 +699,20 @@ EPSGGetGCSInfo( int nGCSCode, char ** ppszName,
  * @return OGRERR_NONE on success or an error code in case of failure.
  **/
 
-OGRErr 
+OGRErr
 OSRGetEllipsoidInfo( int nCode, char ** ppszName,
                      double * pdfSemiMajor, double * pdfInvFlattening )
 
 {
-    char        szSearchKey[24];
-    double      dfSemiMajor, dfToMeters = 1.0;
-    int         nUOMLength;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Get the semi major axis.                                        */
 /* -------------------------------------------------------------------- */
+    char szSearchKey[24];
     snprintf( szSearchKey, sizeof(szSearchKey), "%d", nCode );
     szSearchKey[sizeof(szSearchKey) - 1] = '\n';
 
-    dfSemiMajor =
+    double dfSemiMajor =
         CPLAtof(CSVGetField( CSVFilename("ellipsoid.csv" ),
                              "ELLIPSOID_CODE", szSearchKey, CC_Integer,
                              "SEMI_MAJOR_AXIS" ) );
@@ -724,16 +722,20 @@ OSRGetEllipsoidInfo( int nCode, char ** ppszName,
 /* -------------------------------------------------------------------- */
 /*      Get the translation factor into meters.                         */
 /* -------------------------------------------------------------------- */
-    nUOMLength = atoi(CSVGetField( CSVFilename("ellipsoid.csv" ),
-                                   "ELLIPSOID_CODE", szSearchKey, CC_Integer,
-                                   "UOM_CODE" ));
-    EPSGGetUOMLengthInfo( nUOMLength, NULL, &dfToMeters );
+    int nUOMLength = atoi(CSVGetField( CSVFilename("ellipsoid.csv" ),
+                                       "ELLIPSOID_CODE", szSearchKey, CC_Integer,
+                                       "UOM_CODE" ));
+    double dfToMeters = 1.0;
+    if ( !EPSGGetUOMLengthInfo( nUOMLength, NULL, &dfToMeters ) )
+    {
+      dfToMeters = 1.0;
+    }
 
     dfSemiMajor *= dfToMeters;
-    
+
     if( pdfSemiMajor != NULL )
         *pdfSemiMajor = dfSemiMajor;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Get the semi-minor if requested.  If the Semi-minor axis        */
 /*      isn't available, compute it based on the inverse flattening.    */
