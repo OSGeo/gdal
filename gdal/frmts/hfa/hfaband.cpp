@@ -511,7 +511,8 @@ CPLErr	HFABand::LoadExternalBlockInfo()
 /*      Validity is determined from the validity bitmap.                */
 /* -------------------------------------------------------------------- */
     nBlockStart = poDMS->GetBigIntField( "layerStackDataOffset" );
-    nBlockSize = (nBlockXSize*nBlockYSize*HFAGetDataTypeBits(nDataType)+7) / 8;
+    nBlockSize = (nBlockXSize*static_cast<vsi_l_offset>(nBlockYSize)
+                  *HFAGetDataTypeBits(nDataType)+7) / 8;
 
     for( iBlock = 0; iBlock < nBlocks; iBlock++ )
     {
