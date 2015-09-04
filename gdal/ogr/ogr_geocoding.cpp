@@ -412,8 +412,9 @@ static OGRLayer* OGRGeocodeGetCacheLayer(OGRGeocodingSessionH hSession,
         if( OGRGetDriverCount() == 0 )
             OGRRegisterAll();
 
-        char* pszOldVal = CPLGetConfigOption("OGR_SQLITE_SYNCHRONOUS", NULL) ?
-            CPLStrdup(CPLGetConfigOption("OGR_SQLITE_SYNCHRONOUS", NULL)) : NULL;
+        bool bHadValue = (CPLGetConfigOption("OGR_SQLITE_SYNCHRONOUS", NULL) != NULL);
+        std::string oOldVal(CPLGetConfigOption("OGR_SQLITE_SYNCHRONOUS", ""));
+
         CPLSetThreadLocalConfigOption("OGR_SQLITE_SYNCHRONOUS", "OFF");
 
         poDS = (OGRDataSource*) OGROpen(hSession->pszCacheFilename, TRUE, NULL);
@@ -474,7 +475,7 @@ static OGRLayer* OGRGeocodeGetCacheLayer(OGRGeocodingSessionH hSession,
             }
         }
 
-        CPLSetThreadLocalConfigOption("OGR_SQLITE_SYNCHRONOUS", pszOldVal);
+        CPLSetThreadLocalConfigOption("OGR_SQLITE_SYNCHRONOUS", bHadValue ? oOldVal.c_str() : NULL);
 
         if( poDS == NULL )
             return NULL;
