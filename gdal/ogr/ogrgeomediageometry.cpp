@@ -317,7 +317,10 @@ OGRErr OGRCreateFromGeomedia( GByte *pabyGeom,
         for(i=0;i<nParts;i++)
         {
             if (nBytes < 4)
+            {
+                delete poColl;
                 return OGRERR_FAILURE;
+            }
             int nSubBytes;
             memcpy(&nSubBytes, pabyGeom, 4);
             CPL_LSBPTR32(&nSubBytes);
