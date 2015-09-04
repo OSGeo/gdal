@@ -2379,7 +2379,7 @@ OGRErr OGRSpatialReference::ImportFromESRIStatePlaneWKT(  int code, const char* 
     }
     else /* Find state plane prj str by all inputs. */
     {
-        /* Need to have a specail EPSG-ESRI zone code mapping first. */
+        /* Need to have a special EPSG-ESRI zone code mapping first. */
         for(int i=0; statePlaneZoneMapping[i] != 0; i+=3)
         {
             if( code == statePlaneZoneMapping[i]
@@ -2390,6 +2390,11 @@ OGRErr OGRSpatialReference::ImportFromESRIStatePlaneWKT(  int code, const char* 
             }
         }
         searchCode = (long)code * 10;
+        if (!datumName)
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, "datumName is NULL.");
+            return OGRERR_FAILURE;
+        }
         if(EQUAL(datumName, "HARN"))
         {
             if( EQUAL(unitsName, "international_feet") )
