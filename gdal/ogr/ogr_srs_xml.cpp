@@ -344,22 +344,25 @@ static void addProjArg( const OGRSpatialReference *poSRS, CPLXMLNode *psBase,
 /*      Added the <usesAxis> element and down.                          */
 /************************************************************************/
 
-static CPLXMLNode *addAxis( CPLXMLNode *psXMLParent, 
+static CPLXMLNode *addAxis( CPLXMLNode *psXMLParent,
                             const char *pszAxis, // "Lat", "Long", "E" or "N"
                             const OGR_SRSNode * /* poUnitsSrc */ )
 
 {
-    CPLXMLNode *psAxisXML;
-
-    psAxisXML = 
-        CPLCreateXMLNode( 
+    CPLXMLNode *psAxisXML =
+        CPLCreateXMLNode(
             CPLCreateXMLNode( psXMLParent, CXT_Element, "gml:usesAxis" ),
             CXT_Element, "gml:CoordinateSystemAxis" );
+    if (!psAxisXML)
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, "addAxis failed." );
+        return NULL;
+    }
     addGMLId( psAxisXML );
 
     if( EQUAL(pszAxis,"Lat") )
     {
-        CPLCreateXMLNode( 
+        CPLCreateXMLNode(
             CPLCreateXMLNode( psAxisXML, CXT_Attribute, "gml:uom" ),
             CXT_Text, "urn:ogc:def:uom:EPSG::9102" );
 
