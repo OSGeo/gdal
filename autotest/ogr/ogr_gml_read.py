@@ -570,7 +570,8 @@ def ogr_gml_14():
 
     gdal.SetConfigOption( 'GML_SKIP_RESOLVE_ELEMS', 'NONE' )
     gdal.SetConfigOption( 'GML_SAVE_RESOLVED_TO', 'tmp/cache/xlink1resolved.gml' )
-    gml_ds = ogr.Open( 'tmp/cache/xlink1.gml' )
+    with gdaltest.error_handler():
+        gml_ds = ogr.Open( 'tmp/cache/xlink1.gml' )
     gml_ds = None
     gdal.SetConfigOption( 'GML_SKIP_RESOLVE_ELEMS', 'gml:directedNode' )
     gdal.SetConfigOption( 'GML_SAVE_RESOLVED_TO', 'tmp/cache/xlink2resolved.gml' )
