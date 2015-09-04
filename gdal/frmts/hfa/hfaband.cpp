@@ -1332,16 +1332,22 @@ void HFABand::ReAllocBlock( int iBlock, int nSize )
     else
     {
         panBlockStart[iBlock] = HFAAllocateSpace( psInfo, nSize );
-	
+
         panBlockSize[iBlock] = nSize;
-	
+
         // need to re - write this info to the RasterDMS node
         HFAEntry	*poDMS = poNode->GetNamedChild( "RasterDMS" );
-	 	
+
+        if (!poDMS)
+        {
+            CPLError(CE_Failure, CPLE_FileIO, "Unable to load RasterDMS");
+            return;
+        }
+
         char	szVarName[64];
         sprintf( szVarName, "blockinfo[%d].offset", iBlock );
         poDMS->SetIntField( szVarName, (int) panBlockStart[iBlock] );
-		
+
         sprintf( szVarName, "blockinfo[%d].size", iBlock );
         poDMS->SetIntField( szVarName, panBlockSize[iBlock] );
     }
