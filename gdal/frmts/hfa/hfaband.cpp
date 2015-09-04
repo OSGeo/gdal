@@ -1502,13 +1502,19 @@ CPLErr HFABand::SetRasterBlock( int nXBlock, int nYBlock, void * pData )
             panBlockFlag[iBlock] ^= BFLG_COMPRESSED;
             // alloc more space for the uncompressed block
             ReAllocBlock( iBlock, nInBlockSize );
-			 
+
             nBlockOffset = panBlockStart[iBlock];
             nBlockSize = panBlockSize[iBlock];
 
             /* Need to change the RasterDMS entry */
             HFAEntry	*poDMS = poNode->GetNamedChild( "RasterDMS" );
- 	
+
+            if (!poDMS)
+            {
+                CPLError(CE_Failure, CPLE_FileIO, "Unable to load RasterDMS");
+                return CE_Failure;
+            }
+
             char	szVarName[64];
             sprintf( szVarName, "blockinfo[%d].compressionType", iBlock );
             poDMS->SetIntField( szVarName, 0 );
@@ -1522,13 +1528,19 @@ CPLErr HFABand::SetRasterBlock( int nXBlock, int nYBlock, void * pData )
             char	szVarName[64];
             HFAEntry	*poDMS = poNode->GetNamedChild( "RasterDMS" );
 
+            if (!poDMS)
+            {
+                CPLError(CE_Failure, CPLE_FileIO, "Unable to load RasterDMS");
+                return CE_Failure;
+            }
+
             sprintf( szVarName, "blockinfo[%d].logvalid", iBlock );
             poDMS->SetStringField( szVarName, "true" );
 
             panBlockFlag[iBlock] |= BFLG_VALID;
         }
     }
- 
+
 /* ==================================================================== */
 /*      Uncompressed TILE handling.                                     */
 /* ==================================================================== */
