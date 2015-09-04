@@ -1888,7 +1888,6 @@ OGRErr OGRGeometryFactory::createFromFgfInternal( unsigned char *pabyData,
                                                   int *pnBytesConsumed,
                                                   int nRecLevel )
 {
-    OGRErr       eErr = OGRERR_NONE;
     OGRGeometry *poGeom = NULL;
     GInt32       nGType, nGDim;
     int          nTupleSize = 0;
@@ -2145,9 +2144,9 @@ OGRErr OGRGeometryFactory::createFromFgfInternal( unsigned char *pabyData,
         {
             int nThisGeomSize;
             OGRGeometry *poThisGeom = NULL;
-         
-            eErr = createFromFgfInternal( pabyData + nBytesUsed, poSR, &poThisGeom,
-                                  nBytes - nBytesUsed, &nThisGeomSize, nRecLevel + 1);
+
+            OGRErr eErr = createFromFgfInternal( pabyData + nBytesUsed, poSR, &poThisGeom,
+                                                 nBytes - nBytesUsed, &nThisGeomSize, nRecLevel + 1);
             if( eErr != OGRERR_NONE )
             {
                 delete poGC;
@@ -2182,18 +2181,11 @@ OGRErr OGRGeometryFactory::createFromFgfInternal( unsigned char *pabyData,
 /* -------------------------------------------------------------------- */
 /*      Assign spatial reference system.                                */
 /* -------------------------------------------------------------------- */
-    if( eErr == OGRERR_NONE )
-    {
-        if( poGeom != NULL && poSR )
-            poGeom->assignSpatialReference( poSR );
-        *ppoReturn = poGeom;
-    }
-    else
-    {
-        delete poGeom;
-    }
+    if( poGeom != NULL && poSR )
+        poGeom->assignSpatialReference( poSR );
+    *ppoReturn = poGeom;
 
-    return eErr;
+    return OGRERR_NONE;
 }
 
 /************************************************************************/
