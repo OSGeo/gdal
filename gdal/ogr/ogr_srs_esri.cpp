@@ -2316,9 +2316,6 @@ int RemapGeogCSName( OGRSpatialReference* pOgr, const char *pszGeogCSName )
 
 OGRErr OGRSpatialReference::ImportFromESRIStatePlaneWKT(  int code, const char* datumName, const char* unitsName, int pcsCode, const char* csName )
 {
-    int i;
-    long searchCode = -1;
-
     /* if the CS name is known */
     if (code == 0 && !datumName && !unitsName && pcsCode == 32767 && csName)
     {
@@ -2328,26 +2325,28 @@ OGRErr OGRSpatialReference::ImportFromESRIStatePlaneWKT(  int code, const char* 
         return importFromDict( "esri_StatePlane_extra.wkt", codeS);
     }
 
+    long searchCode = -1;
+
     /* Find state plane prj str by pcs code only */
     if( code == 0 && !datumName && pcsCode != 32767 )
     {
-
         int unitCode = 1;
         if( EQUAL(unitsName, "international_feet") )
             unitCode = 3;
         else if( strstr(unitsName, "feet") || strstr(unitsName, "foot") )
             unitCode = 2;
-        for(i=0; statePlanePcsCodeToZoneCode[i] != 0; i+=2)
+
+        for(int i=0; statePlanePcsCodeToZoneCode[i] != 0; i+=2)
         {
             if( pcsCode == statePlanePcsCodeToZoneCode[i] )
             {
                 searchCode = statePlanePcsCodeToZoneCode[i+1];
                 int unitIndex =  searchCode % 10;
-                if( (unitCode == 1 && !(unitIndex == 0 || unitIndex == 1)) 
+                if( (unitCode == 1 && !(unitIndex == 0 || unitIndex == 1))
                     || (unitCode == 2 && !(unitIndex == 2 || unitIndex == 3 || unitIndex == 4 ))
                     || (unitCode == 3 && !(unitIndex == 5 || unitIndex == 6 )) )
                 {
-                    searchCode -= unitIndex; 
+                    searchCode -= unitIndex;
                     switch (unitIndex)
                     {
                       case 0:
@@ -2381,9 +2380,9 @@ OGRErr OGRSpatialReference::ImportFromESRIStatePlaneWKT(  int code, const char* 
     else /* Find state plane prj str by all inputs. */
     {
         /* Need to have a specail EPSG-ESRI zone code mapping first. */
-        for(i=0; statePlaneZoneMapping[i] != 0; i+=3)
+        for(int i=0; statePlaneZoneMapping[i] != 0; i+=3)
         {
-            if( code == statePlaneZoneMapping[i] 
+            if( code == statePlaneZoneMapping[i]
                 && (statePlaneZoneMapping[i+1] == -1 || pcsCode == statePlaneZoneMapping[i+1]))
             {
                 code = statePlaneZoneMapping[i+2];
