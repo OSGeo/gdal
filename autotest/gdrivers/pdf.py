@@ -1855,6 +1855,62 @@ def pdf_overviews():
 
     return 'success'
 
+###############################################################################
+# Test password
+
+def pdf_password():
+
+    if gdaltest.pdf_drv is None:
+        return 'skip'
+
+    # User password of this test file is user_password and owner password is
+    # owner_password
+
+    # No password
+    with gdaltest.error_handler():
+        ds = gdal.Open('data/byte_enc.pdf')
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Wrong password
+    with gdaltest.error_handler():
+        ds = gdal.OpenEx('data/byte_enc.pdf', open_options = ['USER_PWD=wrong_password'])
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Correct password
+    ds = gdal.OpenEx('data/byte_enc.pdf', open_options = ['USER_PWD=user_password'])
+    if ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    import test_cli_utilities  
+    if test_cli_utilities.get_gdal_translate_path() is None:
+        return 'skip'
+
+    # Test ASK_INTERACTIVE with wrong password
+    cmd_line = test_cli_utilities.get_gdal_translate_path() + ' data/byte_enc.pdf /vsimem/out.tif -q -oo USER_PWD=ASK_INTERACTIVE < tmp/password.txt'
+    if sys.platform != 'win32':
+        cmd_line += ' >/dev/null 2>/dev/null'
+
+    open('tmp/password.txt', 'wb').write('wrong_password'.encode('ASCII'))
+    ret = os.system(cmd_line)
+    os.unlink('tmp/password.txt')
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Test ASK_INTERACTIVE with correct password
+    open('tmp/password.txt', 'wb').write('user_password'.encode('ASCII'))
+    ret = os.system(cmd_line)
+    os.unlink('tmp/password.txt')
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
 
 gdaltest_list_for_full_backend = [
     pdf_online_1,
@@ -1904,7 +1960,8 @@ gdaltest_list_for_full_backend = [
     pdf_georef_on_image,
     pdf_georef_on_image_rgb,
     pdf_write_huge,
-    pdf_overviews ]
+    pdf_overviews,
+    pdf_password ]
 
 gdaltest_list_for_short_backend = [
     pdf_iso32000,
@@ -1913,6 +1970,7 @@ gdaltest_list_for_short_backend = [
     pdf_update_info,
     pdf_update_xmp,
     pdf_rgba_default_compression_tiled,
+    pdf_password
 ]
 
 def pdf_run_all():
