@@ -218,52 +218,48 @@ char **OGRCSVReadParseLineL( VSILFILE * fp, char chDelimiter,
 /*      file pointer.                                                   */
 /************************************************************************/
 
-OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn, 
+OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn,
                           VSILFILE * fp, const char *pszFilename,
                           int bNew, int bInWriteMode,
-                          char chDelimiter )
-
+                          char chDelimiter ) :
+    poFeatureDefn(NULL),
+    fpCSV(fp),
+    nNextFID(1),
+    bHasFieldNames(FALSE),
+    bUseCRLF(FALSE),
+    bNeedRewindBeforeRead(FALSE),
+    eGeometryFormat(OGR_CSV_GEOM_NONE),
+    pszFilename(NULL),
+    bCreateCSVT(FALSE),
+    bWriteBOM(FALSE),
+    nCSVFieldCount(0),
+    panGeomFieldIndex(NULL),
+    bFirstFeatureAppendedDuringSession(TRUE),
+    bHiddenWKTColumn(FALSE),
+    iNfdcLongitudeS(-1),
+    iNfdcLatitudeS(-1),
+    bDontHonourStrings(FALSE),
+    iLongitudeField(-1),
+    iLatitudeField(-1),
+    iZField(-1),
+    bIsEurostatTSV(FALSE),
+    nEurostatDims(0),
+    nTotalFeatures(-1),
+    bWarningBadTypeOrWidth(FALSE),
+    bKeepSourceColumns(FALSE),
+    bKeepGeomColumns(TRUE),
+    bMergeDelimiter(FALSE),
+    bEmptyStringNull(FALSE)
 {
-    fpCSV = fp;
-
-    nCSVFieldCount = 0;
-    panGeomFieldIndex = NULL;
-    iNfdcLatitudeS = iNfdcLongitudeS = -1;
-    iLatitudeField = iLongitudeField = -1;
-    iZField = -1;
-    bHasFieldNames = FALSE;
-    this->bInWriteMode = bInWriteMode;
     this->bNew = bNew;
+    this->bInWriteMode = bInWriteMode;
     this->pszFilename = CPLStrdup(pszFilename);
     this->chDelimiter = chDelimiter;
-
-    bFirstFeatureAppendedDuringSession = TRUE;
-    bHiddenWKTColumn = FALSE;
-    bUseCRLF = FALSE;
-    bNeedRewindBeforeRead = FALSE;
-    eGeometryFormat = OGR_CSV_GEOM_NONE;
-
-    nNextFID = 1;
 
     poFeatureDefn = new OGRFeatureDefn( pszLayerNameIn );
     SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType( wkbNone );
-
-    bCreateCSVT = FALSE;
-    bDontHonourStrings = FALSE;
-    bWriteBOM = FALSE;
-
-    bIsEurostatTSV = FALSE;
-    nEurostatDims = 0;
-
-    nTotalFeatures = -1;
-    bWarningBadTypeOrWidth = FALSE;
-    bKeepSourceColumns = FALSE;
-    bKeepGeomColumns = TRUE;
-    
-    bMergeDelimiter = FALSE;
-    bEmptyStringNull = FALSE;
 }
 
 /************************************************************************/
@@ -1203,7 +1199,7 @@ char** OGRCSVLayer::AutodetectFieldTypes(char** papszOpenOptions, int nFieldCoun
 OGRCSVLayer::~OGRCSVLayer()
 
 {
-    if( m_nFeaturesRead > 0 && poFeatureDefn != NULL )
+    if( m_nFeaturesRead > 0 )
     {
         CPLDebug( "CSV", "%d features read on layer '%s'.",
                   (int) m_nFeaturesRead,
@@ -1211,7 +1207,7 @@ OGRCSVLayer::~OGRCSVLayer()
     }
 
     // Make sure the header file is written even if no features are written.
-    if (bNew && bInWriteMode && poFeatureDefn)
+    if ( bNew && bInWriteMode )
         WriteHeader();
 
     CPLFree( panGeomFieldIndex );
