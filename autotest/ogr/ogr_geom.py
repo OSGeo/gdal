@@ -3215,6 +3215,54 @@ def ogr_geom_gt_functions():
     return 'success'
 
 ###############################################################################
+# Limit cases
+
+def ogr_geom_api_limit_tests():
+
+    p = ogr.Geometry(ogr.wkbPoint)
+    l = ogr.Geometry(ogr.wkbLineString)
+    poly = ogr.Geometry(ogr.wkbPolygon)
+
+    with gdaltest.error_handler():
+        p.GetX(1)
+        p.GetY(1)
+        p.GetZ(1)
+
+        l.GetX(1)
+        l.GetY(1)
+        l.GetZ(1)
+
+        poly.GetX()
+        poly.GetY()
+        poly.GetZ()
+
+        poly.GetPoints()
+
+        p.GetPoint(1)
+        l.GetPoint(1)
+        poly.GetPoint(1)
+
+        p.SetPoint(1, 0, 0)
+        l.SetPoint(-1, 0, 0)
+        poly.SetPoint(0, 0, 0)
+
+        p.SetPoint_2D(1, 0, 0)
+        l.SetPoint_2D(-1, 0, 0)
+        poly.SetPoint_2D(0, 0, 0)
+
+        poly.AddPoint(0, 0)
+
+        poly.AddPoint_2D(0, 0)
+
+        p.GetGeometryRef(1)
+
+        p.AddGeometry(p)
+
+        p.AddGeometryDirectly(p)
+
+    return 'success'
+
+###############################################################################
 # cleanup
 
 def ogr_geom_cleanup():
@@ -3263,6 +3311,7 @@ gdaltest_list = [
     ogr_geom_multisurface,
     ogr_geom_getcurvegeometry,
     ogr_geom_gt_functions,
+    ogr_geom_api_limit_tests,
     ogr_geom_cleanup ]
 
 if __name__ == '__main__':
