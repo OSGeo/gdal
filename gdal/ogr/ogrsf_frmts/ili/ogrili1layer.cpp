@@ -509,8 +509,20 @@ OGRMultiPolygon* OGRILI1Layer::Polygonize( OGRGeometryCollection* poLines, bool 
     {
         CPLDebug( "OGR_ILI", "Fixing crossing lines");
         //A union of the geometry collection with one line fixes invalid geometries
-        poNoncrossingLines = (OGRGeometryCollection*)poLines->Union(poLines->getGeometryRef(0));
-        CPLDebug( "OGR_ILI", "Fixed lines: %d", poNoncrossingLines->getNumGeometries()-poLines->getNumGeometries());
+        OGRGeometry* poUnion = poLines->Union(poLines->getGeometryRef(0));
+        if( poUnion != NULL )
+        {
+            if( wkbFlatten(poUnion->getGeometryType()) == wkbGeometryCollection ||
+                wkbFlatten(poUnion->getGeometryType()) == wkbMultiLineString )
+            {
+                poNoncrossingLines = dynamic_cast<OGRGeometryCollection*>(poUnion);
+                CPLDebug( "OGR_ILI", "Fixed lines: %d", poNoncrossingLines->getNumGeometries()-poLines->getNumGeometries());
+            }
+            else
+            {
+                delete poUnion;
+            }
+        }
     }
 
     GEOSContextHandle_t hGEOSCtxt = OGRGeometry::createGEOSContext();
@@ -531,7 +543,7 @@ OGRMultiPolygon* OGRILI1Layer::Polygonize( OGRGeometryCollection* poLines, bool 
     if( hResultGeom == NULL )
     {
         OGRGeometry::freeGEOSContext( hGEOSCtxt );
-        return NULL;
+        return new OGRMultiPolygon();
     }
 
     poMP = OGRGeometryFactory::createFromGEOS( hGEOSCtxt, hResultGeom );
@@ -545,7 +557,7 @@ OGRMultiPolygon* OGRILI1Layer::Polygonize( OGRGeometryCollection* poLines, bool 
     else
     {
         delete poMP;
-        return NULL;
+        return new OGRMultiPolygon();
     }
 #else
     return new OGRMultiPolygon();
