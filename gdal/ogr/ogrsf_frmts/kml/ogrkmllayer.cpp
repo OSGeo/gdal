@@ -45,14 +45,24 @@ char *OGR_G_ExportToKML( OGRGeometryH hGeometry, const char* pszAltitudeMode );
 OGRKMLLayer::OGRKMLLayer( const char * pszName,
                           OGRSpatialReference *poSRSIn, int bWriterIn,
                           OGRwkbGeometryType eReqType,
-                          OGRKMLDataSource *poDSIn )
-{    	
-    poCT_ = NULL;
+                          OGRKMLDataSource *poDSIn ) :
+    poDS_(NULL),
+    poSRS_(NULL),
+    poCT_(NULL),
+    iNextKMLId_(0),
+    nTotalKMLCount_(-1),
+    bWriter_(bWriterIn),
+    nLayerNumber_(0),
+    nWroteFeatureCount_(0),
+    bSchemaWritten_(FALSE),
+    nLastAsked(-1),
+    nLastCount(-1)
+{
 
     /* KML should be created as WGS84. */
     if( poSRSIn != NULL )
     {
-        poSRS_ = new OGRSpatialReference(NULL);   
+        poSRS_ = new OGRSpatialReference(NULL);
         poSRS_->SetWellKnownGeogCS( "WGS84" );
         if (!poSRS_->IsSame(poSRSIn))
         {
@@ -68,29 +78,20 @@ OGRKMLLayer::OGRKMLLayer( const char * pszName,
                         "Failed to create coordinate transformation between the\n"
                         "input coordinate system and WGS84.  This may be because they\n"
                         "are not transformable, or because projection services\n"
-                        "(PROJ.4 DLL/.so) could not be loaded.\n" 
+                        "(PROJ.4 DLL/.so) could not be loaded.\n"
                         "KML geometries may not render correctly.\n"
                         "This message will not be issued any more. \n"
-                        "\nSource:\n%s\n", 
+                        "\nSource:\n%s\n",
                         pszWKT );
 
                 CPLFree( pszWKT );
-                poDSIn->IssuedFirstCTError(); 
+                poDSIn->IssuedFirstCTError();
             }
         }
     }
-    else
-    {
-        poSRS_ = NULL;
-    }
-
-    iNextKMLId_ = 0;
-    nTotalKMLCount_ = -1;
-    nLastAsked = -1;
-    nLastCount = -1;
 
     poDS_ = poDSIn;
-    
+
     poFeatureDefn_ = new OGRFeatureDefn( pszName );
     SetDescription( poFeatureDefn_->GetName() );
     poFeatureDefn_->Reference();
@@ -100,14 +101,11 @@ OGRKMLLayer::OGRKMLLayer( const char * pszName,
 
     OGRFieldDefn oFieldName( "Name", OFTString );
     poFeatureDefn_->AddFieldDefn( &oFieldName );
-    
+
     OGRFieldDefn oFieldDesc( "Description", OFTString );
     poFeatureDefn_->AddFieldDefn( &oFieldDesc );
 
-    bWriter_ = bWriterIn;
-    nWroteFeatureCount_ = 0;
     bClosedForWriting = (bWriterIn == FALSE);
-    bSchemaWritten_ = FALSE;
 
     pszName_ = CPLStrdup(pszName);
 }
