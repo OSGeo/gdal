@@ -871,7 +871,7 @@ OGRErr OGR_G_AddGeometryDirectly( OGRGeometryH hGeom,
 OGRErr OGR_G_RemoveGeometry( OGRGeometryH hGeom, int iGeom, int bDelete )
 
 {
-    VALIDATE_POINTER1( hGeom, "OGR_G_RemoveGeometry", 0 );
+    VALIDATE_POINTER1( hGeom, "OGR_G_RemoveGeometry", OGRERR_FAILURE );
 
     OGRwkbGeometryType eType = wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType());
     if( OGR_GT_IsSubClassOf(eType, wkbCurvePolygon) )

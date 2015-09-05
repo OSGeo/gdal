@@ -134,7 +134,7 @@ OGRErr OSRImportFromPCI( OGRSpatialReferenceH hSRS, const char *pszProj,
                          const char *pszUnits, double *padfPrjParams )
 
 {
-    VALIDATE_POINTER1( hSRS, "OSRImportFromPCI", CE_Failure );
+    VALIDATE_POINTER1( hSRS, "OSRImportFromPCI", OGRERR_FAILURE );
 
     return ((OGRSpatialReference *) hSRS)->importFromPCI( pszProj,
                                                           pszUnits,
@@ -745,7 +745,7 @@ OGRErr OSRExportToPCI( OGRSpatialReferenceH hSRS,
                        double **ppadfPrjParams )
 
 {
-    VALIDATE_POINTER1( hSRS, "OSRExportToPCI", CE_Failure );
+    VALIDATE_POINTER1( hSRS, "OSRExportToPCI", OGRERR_FAILURE );
 
     *ppszProj = NULL;
     *ppszUnits = NULL;

@@ -1213,7 +1213,8 @@ OGRErr OGR_G_ImportFromWkt( OGRGeometryH hGeom, char ** ppszSrcText )
 
 /* Returns -1 if processing must continue */
 OGRErr OGRGeometry::importPreambuleFromWkt( char ** ppszInput,
-                                            int* pbHasZ, int* pbHasM )
+                                            int* pbHasZ, int* pbHasM,
+                                            bool* pbIsEmpty )
 {
     char        szToken[OGR_WKT_TOKEN_MAX];
     const char  *pszInput = *ppszInput;
@@ -1222,6 +1223,7 @@ OGRErr OGRGeometry::importPreambuleFromWkt( char ** ppszInput,
 /*      Clear existing Geoms.                                           */
 /* -------------------------------------------------------------------- */
     empty();
+    *pbIsEmpty = false;
 
 /* -------------------------------------------------------------------- */
 /*      Read and verify the type keyword, and ensure it matches the     */
@@ -1242,6 +1244,7 @@ OGRErr OGRGeometry::importPreambuleFromWkt( char ** ppszInput,
     if( EQUAL(szToken,"EMPTY") )
     {
         *ppszInput = (char *) pszPreScan;
+        *pbIsEmpty = true;
         empty();
         return OGRERR_NONE;
     }
@@ -1275,6 +1278,7 @@ OGRErr OGRGeometry::importPreambuleFromWkt( char ** ppszInput,
             empty();
             if( bHasZ )
                 setCoordinateDimension(3);
+            *pbIsEmpty = true;
 
             /* FIXME?: In theory we should store the M presence */
             /* if we want to allow round-trip with ExportToWKT v1.2 */
@@ -1303,6 +1307,7 @@ OGRErr OGRGeometry::importPreambuleFromWkt( char ** ppszInput,
             {
                 *ppszInput = (char *) pszPreScan;
                 empty();
+                *pbIsEmpty = true;
                 return OGRERR_NONE;
             }
         }
@@ -1310,7 +1315,7 @@ OGRErr OGRGeometry::importPreambuleFromWkt( char ** ppszInput,
     
     *ppszInput = (char*) pszInput;
 
-    return -1;
+    return OGRERR_NONE;
 }
 
 
@@ -4021,7 +4026,7 @@ void OGR_G_CloseRings( OGRGeometryH hGeom )
  * @since OGR 1.8.0 as a OGRGeometry method (previously was restricted to OGRPolygon)
  */
 
-int OGRGeometry::Centroid( OGRPoint *poPoint ) const
+OGRErr OGRGeometry::Centroid( OGRPoint *poPoint ) const
 
 {
     if( poPoint == NULL )
@@ -5045,8 +5050,9 @@ OGRErr OGRGeometry::importCurveCollectionFromWkt( char ** ppszInput,
 
 {
     int bHasZ = FALSE, bHasM = FALSE;
-    OGRErr      eErr = importPreambuleFromWkt(ppszInput, &bHasZ, &bHasM);
-    if( eErr >= 0 )
+    bool bIsEmpty = false;
+    OGRErr      eErr = importPreambuleFromWkt(ppszInput, &bHasZ, &bHasM, &bIsEmpty);
+    if( eErr != OGRERR_NONE || bIsEmpty )
         return eErr;
 
     if( bHasZ )

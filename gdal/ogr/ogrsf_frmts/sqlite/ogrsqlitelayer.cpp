@@ -3060,7 +3060,7 @@ OGRErr OGRSQLiteLayer::ExportSpatiaLiteGeometry( const OGRGeometry *poGeometry,
         *ppabyData = NULL;
         *pnDataLenght = 0;
         if( poWorkGeom != poGeometry ) delete poWorkGeom;
-        return CE_Failure;
+        return OGRERR_FAILURE;
     }
     memcpy( *ppabyData + 39, &nCode, 4 );
 
@@ -3076,7 +3076,7 @@ OGRErr OGRSQLiteLayer::ExportSpatiaLiteGeometry( const OGRGeometry *poGeometry,
         CPLFree(*ppabyData);
         *ppabyData = NULL;
         *pnDataLenght = 0;
-        return CE_Failure;
+        return OGRERR_FAILURE;
     }
 
     (*ppabyData)[nDataLen - 1] = 0xFE;
@@ -3093,7 +3093,7 @@ OGRErr OGRSQLiteLayer::ExportSpatiaLiteGeometry( const OGRGeometry *poGeometry,
 
     *pnDataLenght = nDataLen;
 
-    return CE_None;
+    return OGRERR_NONE;
 }
 
 /************************************************************************/

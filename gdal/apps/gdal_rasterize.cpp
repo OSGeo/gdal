@@ -164,7 +164,7 @@ static void ProcessLayer(
             pszProjection = (char *) GDALGetProjectionRef( hDstDS );
     
             hDstSRS = OSRNewSpatialReference(NULL);
-            if( OSRImportFromWkt( hDstSRS, &pszProjection ) != CE_None )
+            if( OSRImportFromWkt( hDstSRS, &pszProjection ) != OGRERR_NONE )
             {
                 OSRDestroySpatialReference(hDstSRS);
                 hDstSRS = NULL;

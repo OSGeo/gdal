@@ -61,7 +61,7 @@ OGRErr OSRImportFromOzi( OGRSpatialReferenceH hSRS,
                          const char * const* papszLines )
 
 {
-    VALIDATE_POINTER1( hSRS, "OSRImportFromOzi", CE_Failure );
+    VALIDATE_POINTER1( hSRS, "OSRImportFromOzi", OGRERR_FAILURE );
 
     return ((OGRSpatialReference *) hSRS)->importFromOzi( papszLines );
 }

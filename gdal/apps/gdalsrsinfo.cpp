@@ -268,7 +268,7 @@ int FindSRS( const char *pszInput, OGRSpatialReference &oSRS )
     const char    *pszProjection = NULL;
     CPLErrorHandler oErrorHandler = NULL;
     int bIsFile = FALSE;
-    OGRErr eErr = CE_None;
+    OGRErr eErr = OGRERR_NONE;
     int bDebug  = FALSE;
 
     /* temporarily suppress error messages we may get from xOpen() */
@@ -296,7 +296,7 @@ int FindSRS( const char *pszInput, OGRSpatialReference &oSRS )
         if( pszProjection != NULL && pszProjection[0] != '\0' )
         {
             char* pszProjectionTmp = (char*) pszProjection;
-            if( oSRS.importFromWkt( &pszProjectionTmp ) == CE_None ) {
+            if( oSRS.importFromWkt( &pszProjectionTmp ) == OGRERR_NONE ) {
                 CPLDebug( "gdalsrsinfo", "got SRS from GDAL" );
                 bGotSRS = TRUE;
             }

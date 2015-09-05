@@ -229,7 +229,7 @@ class GDALGeoPackageDataset : public OGRSQLiteBaseDataSource
                                     GDALDataType eDT,
                                     char **papszOptions );
         OGRLayer*           GetLayer( int iLayer );
-        int                 DeleteLayer( int iLayer );
+        OGRErr              DeleteLayer( int iLayer );
         OGRLayer*           ICreateLayer( const char * pszLayerName,
                                          OGRSpatialReference * poSpatialRef,
                                          OGRwkbGeometryType eGType,

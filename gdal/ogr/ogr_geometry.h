@@ -112,7 +112,8 @@ class CPL_DLL OGRGeometry
     int                   nCoordDimension;
 
     OGRErr                importPreambuleFromWkt( char ** ppszInput,
-                                                  int* pbHasZ, int* pbHasM );
+                                                  int* pbHasZ, int* pbHasM,
+                                                  bool* pbIsEmpty );
     OGRErr                importCurveCollectionFromWkt( char ** ppszInput,
                                                   int bAllowEmptyComponent,
                                                   int bAllowLineString,
@@ -886,7 +887,7 @@ class CPL_DLL OGRCurvePolygon : public OGRSurface
 
     // ISurface Interface
     virtual double      get_Area() const;
-    virtual int         PointOnSurface( OGRPoint * poPoint ) const;
+    virtual OGRErr      PointOnSurface( OGRPoint * poPoint ) const;
     
     // IWks Interface
     virtual int WkbSize() const;
@@ -970,7 +971,7 @@ class CPL_DLL OGRPolygon : public OGRCurvePolygon
                                              const char* const* papszOptions = NULL) const;
 
     // ISurface Interface
-    virtual int         PointOnSurface( OGRPoint * poPoint ) const;
+    virtual OGRErr        PointOnSurface( OGRPoint * poPoint ) const;
     
     // IWks Interface
     virtual int WkbSize() const;

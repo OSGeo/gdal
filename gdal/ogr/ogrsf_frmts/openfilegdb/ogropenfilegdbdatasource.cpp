@@ -921,7 +921,7 @@ OGRLayer* OGROpenFileGDBDataSource::ExecuteSQL( const char *pszSQLCommand,
         CSLTestBoolean(CPLGetConfigOption("OPENFILEGDB_USE_INDEX", "YES")) )
     {
         swq_select oSelect;
-        if( oSelect.preparse(pszSQLCommand) != OGRERR_NONE )
+        if( oSelect.preparse(pszSQLCommand) != CE_None )
             return NULL;
 
 /* -------------------------------------------------------------------- */

@@ -1135,7 +1135,7 @@ static void OGR2SQLITE_ExportGeometry(OGRGeometry* poGeom, int nSRSId,
     if( OGRSQLiteLayer::ExportSpatiaLiteGeometry(
             poGeom, nSRSId, wkbNDR, FALSE, FALSE, FALSE,
             &pabyGeomBLOB,
-            &nGeomBLOBLen ) != CE_None )
+            &nGeomBLOBLen ) != OGRERR_NONE )
     {
         nGeomBLOBLen = 0;
     }
@@ -1463,7 +1463,7 @@ static OGRFeature* OGR2SQLITE_FeatureFromArgs(OGRLayer* poLayer,
             int nLen = sqlite3_value_bytes (argv[nGeomFieldIdx]);
             OGRGeometry* poGeom = NULL;
             if( OGRSQLiteLayer::ImportSpatiaLiteGeometry(
-                            pabyBlob, nLen, &poGeom ) == CE_None )
+                            pabyBlob, nLen, &poGeom ) == OGRERR_NONE )
             {
 /*                OGRwkbGeometryType eGeomFieldType =
                     poFeature->GetDefnRef()->GetGeomFieldDefn(i)->GetType();
@@ -1673,7 +1673,7 @@ void OGR2SQLITE_ogr_layer_Extent(sqlite3_context* pContext,
     int nSRID = poModule->FetchSRSId(poLayer->GetSpatialRef());
     if( OGRSQLiteLayer::ExportSpatiaLiteGeometry(
                     &oPoly, nSRID, wkbNDR, FALSE,
-                    FALSE, FALSE, &pabySLBLOB, &nBLOBLen ) == CE_None )
+                    FALSE, FALSE, &pabySLBLOB, &nBLOBLen ) == OGRERR_NONE )
     {
         sqlite3_result_blob(pContext, pabySLBLOB, nBLOBLen, CPLFree);
     }

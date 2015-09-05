@@ -158,7 +158,7 @@ OGRErr OSRImportFromUSGS( OGRSpatialReferenceH hSRS, long iProjsys,
                           long iZone, double *padfPrjParams, long iDatum )
 
 {
-    VALIDATE_POINTER1( hSRS, "OSRImportFromUSGS", CE_Failure );
+    VALIDATE_POINTER1( hSRS, "OSRImportFromUSGS", OGRERR_FAILURE );
 
     return ((OGRSpatialReference *) hSRS)->importFromUSGS( iProjsys, iZone,
                                                            padfPrjParams,
@@ -784,7 +784,7 @@ OGRErr OSRExportToUSGS( OGRSpatialReferenceH hSRS,
                         double **ppadfPrjParams, long *piDatum )
 
 {
-    VALIDATE_POINTER1( hSRS, "OSRExportToUSGS", CE_Failure );
+    VALIDATE_POINTER1( hSRS, "OSRExportToUSGS", OGRERR_FAILURE );
 
     *ppadfPrjParams = NULL;
 

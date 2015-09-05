@@ -282,6 +282,21 @@ void CPL_DLL *OGRRealloc( void *, size_t );
 char CPL_DLL *OGRStrdup( const char * );
 void CPL_DLL OGRFree( void * );
 
+#ifdef STRICT_OGRERR_TYPE
+typedef enum
+{
+    OGRERR_NONE,
+    OGRERR_NOT_ENOUGH_DATA,
+    OGRERR_NOT_ENOUGH_MEMORY,
+    OGRERR_UNSUPPORTED_GEOMETRY_TYPE,
+    OGRERR_UNSUPPORTED_OPERATION,
+    OGRERR_CORRUPT_DATA,
+    OGRERR_FAILURE,
+    OGRERR_UNSUPPORTED_SRS,
+    OGRERR_INVALID_HANDLE,
+    OGRERR_NON_EXISTING_FEATURE
+} OGRErr;
+#else
 typedef int OGRErr;
 
 #define OGRERR_NONE                0
@@ -294,6 +309,8 @@ typedef int OGRErr;
 #define OGRERR_UNSUPPORTED_SRS     7
 #define OGRERR_INVALID_HANDLE      8
 #define OGRERR_NON_EXISTING_FEATURE 9   /* added in GDAL 2.0 */
+
+#endif
 
 typedef int     OGRBoolean;
 

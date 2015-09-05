@@ -47,7 +47,7 @@ OGRErr OSRImportFromERM( OGRSpatialReferenceH hSRS, const char *pszProj,
                          const char *pszDatum, const char *pszUnits )
 
 {
-    VALIDATE_POINTER1( hSRS, "OSRImportFromERM", CE_Failure );
+    VALIDATE_POINTER1( hSRS, "OSRImportFromERM", OGRERR_FAILURE );
 
     return ((OGRSpatialReference *) hSRS)->importFromERM( pszProj,
                                                           pszDatum,
@@ -146,7 +146,7 @@ OGRErr OSRExportToERM( OGRSpatialReferenceH hSRS,
                        char *pszProj, char *pszDatum, char *pszUnits )
 
 {
-    VALIDATE_POINTER1( hSRS, "OSRExportToERM", CE_Failure );
+    VALIDATE_POINTER1( hSRS, "OSRExportToERM", OGRERR_FAILURE );
 
     return ((OGRSpatialReference *) hSRS)->exportToERM( pszProj, pszDatum,
                                                         pszUnits );
@@ -176,7 +176,7 @@ OGRErr OGRSpatialReference::exportToERM( char *pszProj, char *pszDatum,
     strcpy( pszUnits, "METERS" );
 
     if( !IsProjected() && !IsGeographic() )
-        return TRUE;
+        return OGRERR_NONE; /* not sure what to return. We returned TRUE before... */
 
 /* -------------------------------------------------------------------- */
 /*      Try to find the EPSG code.                                      */

@@ -288,7 +288,7 @@ OGRErr OGRILI2Layer::ICreateFeature( OGRFeature *poFeature ) {
 
     VSILFILE* fp = poDS->GetOutputFP();
     if (fp == NULL)
-        return CE_Failure;
+        return OGRERR_FAILURE;
 
     VSIFPrintfL(fp, "<%s TID=\"%s\">\n", poFeatureDefn->GetName(), tid);
 

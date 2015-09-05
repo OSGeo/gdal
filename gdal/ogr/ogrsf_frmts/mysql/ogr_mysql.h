@@ -203,7 +203,7 @@ class OGRMySQLDataSource : public OGRDataSource
 
     MYSQL              *hConn;
 
-    int                DeleteLayer( int iLayer );
+    OGRErr              DeleteLayer( int iLayer );
 
     // We maintain a list of known SRID to reduce the number of trips to
     // the database to get SRSes. 

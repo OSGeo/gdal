@@ -777,7 +777,7 @@ static int TestCreateLayer( GDALDriver* poDriver, OGRwkbGeometryType eGeomType )
         CPLPushErrorHandler(CPLQuietErrorHandler);
         eErr = LOG_ACTION(poDS->DeleteLayer(0));
         CPLPopErrorHandler();
-        if( eErr == CE_None )
+        if( eErr == OGRERR_NONE )
         {
             if( !bDeleteLayerCap )
             {

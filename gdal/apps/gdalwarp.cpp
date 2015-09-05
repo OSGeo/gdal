@@ -434,7 +434,7 @@ static void CropToCutline( void* hCutline, char** papszTO, char** papszSrcFiles,
     if( pszThisSourceSRS != NULL )
     {
         hSrcSRS = OSRNewSpatialReference(NULL);
-        if( OSRImportFromWkt( hSrcSRS, (char **)&pszThisSourceSRS ) != CE_None )
+        if( OSRImportFromWkt( hSrcSRS, (char **)&pszThisSourceSRS ) != OGRERR_NONE )
         {
             fprintf(stderr, "Cannot compute bounding box of cutline.\n");
             GDALExit(1);
@@ -465,7 +465,7 @@ static void CropToCutline( void* hCutline, char** papszTO, char** papszSrcFiles,
         }
 
         hSrcSRS = OSRNewSpatialReference(NULL);
-        if( OSRImportFromWkt( hSrcSRS, (char **)&pszProjection ) != CE_None )
+        if( OSRImportFromWkt( hSrcSRS, (char **)&pszProjection ) != OGRERR_NONE )
         {
             fprintf(stderr, "Cannot compute bounding box of cutline.\n");
             GDALExit(1);
@@ -482,7 +482,7 @@ static void CropToCutline( void* hCutline, char** papszTO, char** papszSrcFiles,
     if ( pszThisTargetSRS != NULL )
     {
         hDstSRS = OSRNewSpatialReference(NULL);
-        if( OSRImportFromWkt( hDstSRS, (char **)&pszThisTargetSRS ) != CE_None )
+        if( OSRImportFromWkt( hDstSRS, (char **)&pszThisTargetSRS ) != OGRERR_NONE )
         {
             fprintf(stderr, "Cannot compute bounding box of cutline.\n");
             GDALExit(1);
@@ -2660,7 +2660,7 @@ TransformCutlineToSource( GDALDatasetH hSrcDS, void *hCutline,
     if( pszProjection != NULL )
     {
         hRasterSRS = OSRNewSpatialReference(NULL);
-        if( OSRImportFromWkt( hRasterSRS, (char **)&pszProjection ) != CE_None )
+        if( OSRImportFromWkt( hRasterSRS, (char **)&pszProjection ) != OGRERR_NONE )
         {
             OSRDestroySpatialReference(hRasterSRS);
             hRasterSRS = NULL;

@@ -335,7 +335,7 @@ OGRErr OGRFeature::SetGeometryDirectly( OGRGeometry * poGeomIn )
 OGRErr OGR_F_SetGeometryDirectly( OGRFeatureH hFeat, OGRGeometryH hGeom )
 
 {
-    VALIDATE_POINTER1( hFeat, "OGR_F_SetGeometryDirectly", CE_Failure );
+    VALIDATE_POINTER1( hFeat, "OGR_F_SetGeometryDirectly", OGRERR_FAILURE );
 
     return ((OGRFeature *) hFeat)->SetGeometryDirectly((OGRGeometry *) hGeom);
 }
@@ -395,7 +395,7 @@ OGRErr OGRFeature::SetGeometry( OGRGeometry * poGeomIn )
 OGRErr OGR_F_SetGeometry( OGRFeatureH hFeat, OGRGeometryH hGeom )
 
 {
-    VALIDATE_POINTER1( hFeat, "OGR_F_SetGeometry", CE_Failure );
+    VALIDATE_POINTER1( hFeat, "OGR_F_SetGeometry", OGRERR_FAILURE );
 
     return ((OGRFeature *) hFeat)->SetGeometry((OGRGeometry *) hGeom);
 }
@@ -684,7 +684,7 @@ OGRErr OGR_F_SetGeomFieldDirectly( OGRFeatureH hFeat, int iField,
                                    OGRGeometryH hGeom )
 
 {
-    VALIDATE_POINTER1( hFeat, "OGR_F_SetGeomFieldDirectly", CE_Failure );
+    VALIDATE_POINTER1( hFeat, "OGR_F_SetGeomFieldDirectly", OGRERR_FAILURE );
 
     return ((OGRFeature *) hFeat)->SetGeomFieldDirectly(iField,
                                                         (OGRGeometry *) hGeom);
@@ -758,7 +758,7 @@ OGRErr OGRFeature::SetGeomField( int iField, OGRGeometry * poGeomIn )
 OGRErr OGR_F_SetGeomField( OGRFeatureH hFeat, int iField, OGRGeometryH hGeom )
 
 {
-    VALIDATE_POINTER1( hFeat, "OGR_F_SetGeomField", CE_Failure );
+    VALIDATE_POINTER1( hFeat, "OGR_F_SetGeomField", OGRERR_FAILURE );
 
     return ((OGRFeature *) hFeat)->SetGeomField(iField, (OGRGeometry *) hGeom);
 }
@@ -4121,7 +4121,7 @@ OGRErr OGRFeature::SetFID( GIntBig nFID )
 OGRErr OGR_F_SetFID( OGRFeatureH hFeat, GIntBig nFID )
 
 {
-    VALIDATE_POINTER1( hFeat, "OGR_F_SetFID", CE_Failure );
+    VALIDATE_POINTER1( hFeat, "OGR_F_SetFID", OGRERR_FAILURE );
 
     return ((OGRFeature *) hFeat)->SetFID(nFID);
 }
@@ -4442,8 +4442,8 @@ OGRErr OGR_F_SetFrom( OGRFeatureH hFeat, OGRFeatureH hOtherFeat,
                       int bForgiving )
 
 {
-    VALIDATE_POINTER1( hFeat, "OGR_F_SetFrom", CE_Failure );
-    VALIDATE_POINTER1( hOtherFeat, "OGR_F_SetFrom", CE_Failure );
+    VALIDATE_POINTER1( hFeat, "OGR_F_SetFrom", OGRERR_FAILURE );
+    VALIDATE_POINTER1( hOtherFeat, "OGR_F_SetFrom", OGRERR_FAILURE );
 
     return ((OGRFeature *) hFeat)->SetFrom( (OGRFeature *) hOtherFeat, 
                                            bForgiving );
@@ -4576,9 +4576,9 @@ OGRErr OGR_F_SetFromWithMap( OGRFeatureH hFeat, OGRFeatureH hOtherFeat,
                       int bForgiving, int *panMap )
 
 {
-    VALIDATE_POINTER1( hFeat, "OGR_F_SetFrom", CE_Failure );
-    VALIDATE_POINTER1( hOtherFeat, "OGR_F_SetFrom", CE_Failure );
-    VALIDATE_POINTER1( panMap, "OGR_F_SetFrom", CE_Failure);
+    VALIDATE_POINTER1( hFeat, "OGR_F_SetFrom", OGRERR_FAILURE );
+    VALIDATE_POINTER1( hOtherFeat, "OGR_F_SetFrom", OGRERR_FAILURE );
+    VALIDATE_POINTER1( panMap, "OGR_F_SetFrom", OGRERR_FAILURE);
 
     return ((OGRFeature *) hFeat)->SetFrom( (OGRFeature *) hOtherFeat, 
                                            panMap, bForgiving );

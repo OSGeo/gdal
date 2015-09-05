@@ -618,7 +618,7 @@ OGRErr OGRSQLiteTableLayer::RecomputeOrdinals()
                   "Unable to query table %s for column definitions : %s.",
                   pszTableName, sqlite3_errmsg(hDB) );
         
-        return CE_Failure;
+        return OGRERR_FAILURE;
     }
 
     rc = sqlite3_step( hColStmt );
@@ -628,7 +628,7 @@ OGRErr OGRSQLiteTableLayer::RecomputeOrdinals()
                   "In Initialize(): sqlite3_step(%s):\n  %s", 
                   pszSQL, sqlite3_errmsg(hDB) );
         sqlite3_finalize( hColStmt );
-        return CE_Failure;
+        return OGRERR_FAILURE;
     }
 
     int    nRawColumns = sqlite3_column_count( hColStmt );
@@ -1338,7 +1338,7 @@ OGRErr OGRSQLiteTableLayer::CreateField( OGRFieldDefn *poFieldIn,
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Wrong field type for %s",
                  oField.GetNameRef());
-        return CE_Failure;
+        return OGRERR_FAILURE;
     }
 
     ClearInsertStmt();
@@ -2586,7 +2586,7 @@ OGRErr OGRSQLiteTableLayer::ISetFeature( OGRFeature *poFeature )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                         "Inconsistent values of FID and field of same name");
-            return CE_Failure;
+            return OGRERR_FAILURE;
         }
     }
 
@@ -2947,7 +2947,7 @@ OGRErr OGRSQLiteTableLayer::ICreateFeature( OGRFeature *poFeature )
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                             "Inconsistent values of FID and field of same name");
-                return CE_Failure;
+                return OGRERR_FAILURE;
             }
         }
     }
@@ -3352,7 +3352,7 @@ OGRErr OGRSQLiteTableLayer::RunDeferredCreationIfNecessary()
         if( rc != SQLITE_OK )
         {
             sqlite3_free( pszErrMsg );
-            return FALSE;
+            return OGRERR_FAILURE;
         }
 
         for(i = 0; i < poFeatureDefn->GetGeomFieldCount(); i++ )

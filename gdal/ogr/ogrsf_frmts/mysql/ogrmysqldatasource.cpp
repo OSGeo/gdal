@@ -780,7 +780,7 @@ void OGRMySQLDataSource::InterruptLongResult()
 /*                            DeleteLayer()                             */
 /************************************************************************/
 
-int OGRMySQLDataSource::DeleteLayer( int iLayer)
+OGRErr OGRMySQLDataSource::DeleteLayer( int iLayer)
 
 {
     if( iLayer < 0 || iLayer >= nLayers )

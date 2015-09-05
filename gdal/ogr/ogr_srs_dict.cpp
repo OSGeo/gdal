@@ -127,7 +127,7 @@ OGRErr OSRImportFromDict( OGRSpatialReferenceH hSRS,
                           const char *pszCode )
 
 {
-    VALIDATE_POINTER1( hSRS, "OSRImportFromDict", CE_Failure );
+    VALIDATE_POINTER1( hSRS, "OSRImportFromDict", OGRERR_FAILURE );
 
     return ((OGRSpatialReference *) hSRS)->importFromDict( pszDictFile,
                                                            pszCode );
