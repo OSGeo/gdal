@@ -79,8 +79,8 @@ typedef struct {
 static CPLErrorContext *CPLGetErrorContext()
 
 {
-    CPLErrorContext *psCtx = 
-        (CPLErrorContext *) CPLGetTLS( CTLS_ERRORCONTEXT );
+    CPLErrorContext *psCtx =
+        static_cast<CPLErrorContext *>( CPLGetTLS( CTLS_ERRORCONTEXT ) );
 
     if( psCtx == NULL )
     {
@@ -135,8 +135,8 @@ void* CPL_STDCALL CPLGetErrorHandlerUserData(void)
  * The eErrClass argument can have the value CE_Warning indicating that the
  * message is an informational warning, CE_Failure indicating that the
  * action failed, but that normal recover mechanisms will be used or
- * CE_Fatal meaning that a fatal error has occured, and that CPLError()
- * should not return.  
+ * CE_Fatal meaning that a fatal error has occurred, and that CPLError()
+ * should not return.
  *
  * The default behaviour of CPLError() is to report errors to stderr,
  * and to abort() after reporting a CE_Fatal error.  It is expected that
@@ -159,8 +159,7 @@ void    CPLError(CPLErr eErrClass, int err_no, const char *fmt, ...)
 {
     va_list args;
 
-    /* Expand the error message 
-     */
+    // Expand the error message
     va_start(args, fmt);
     CPLErrorV( eErrClass, err_no, fmt, args );
     va_end(args);
@@ -182,7 +181,6 @@ void    CPLErrorV(CPLErr eErrClass, int err_no, const char *fmt, va_list args )
 /* -------------------------------------------------------------------- */
 #if defined(HAVE_VSNPRINTF)
     {
-        int nPR;
         va_list wrk_args;
 
 #ifdef va_copy
@@ -205,8 +203,8 @@ void    CPLErrorV(CPLErr eErrClass, int err_no, const char *fmt, va_list args )
                 if (nPreviousSize + 1 + 1 >= psCtx->nLastErrMsgMax)
                 {
                     psCtx->nLastErrMsgMax *= 3;
-                    psCtx = (CPLErrorContext *) 
-                        CPLRealloc(psCtx, sizeof(CPLErrorContext) - DEFAULT_LAST_ERR_MSG_SIZE + psCtx->nLastErrMsgMax + 1);
+                    psCtx = static_cast<CPLErrorContext *> (
+                        CPLRealloc(psCtx, sizeof(CPLErrorContext) - DEFAULT_LAST_ERR_MSG_SIZE + psCtx->nLastErrMsgMax + 1));
                     CPLSetTLS( CTLS_ERRORCONTEXT, psCtx, TRUE );
                 }
                 psCtx->szLastErrMsg[nPreviousSize] = '\n';
@@ -215,7 +213,8 @@ void    CPLErrorV(CPLErr eErrClass, int err_no, const char *fmt, va_list args )
             }
         }
 
-        while( ((nPR = CPLvsnprintf( psCtx->szLastErrMsg+nPreviousSize, 
+        int nPR;
+        while( ((nPR = CPLvsnprintf( psCtx->szLastErrMsg+nPreviousSize,
                                  psCtx->nLastErrMsgMax-nPreviousSize, fmt, wrk_args )) == -1
                 || nPR >= psCtx->nLastErrMsgMax-nPreviousSize-1)
                && psCtx->nLastErrMsgMax < 1000000 )
@@ -227,8 +226,8 @@ void    CPLErrorV(CPLErr eErrClass, int err_no, const char *fmt, va_list args )
             wrk_args = args;
 #endif
             psCtx->nLastErrMsgMax *= 3;
-            psCtx = (CPLErrorContext *) 
-                CPLRealloc(psCtx, sizeof(CPLErrorContext) - DEFAULT_LAST_ERR_MSG_SIZE + psCtx->nLastErrMsgMax + 1);
+            psCtx = static_cast<CPLErrorContext *> (
+                CPLRealloc(psCtx, sizeof(CPLErrorContext) - DEFAULT_LAST_ERR_MSG_SIZE + psCtx->nLastErrMsgMax + 1) );
             CPLSetTLS( CTLS_ERRORCONTEXT, psCtx, TRUE );
         }
 
