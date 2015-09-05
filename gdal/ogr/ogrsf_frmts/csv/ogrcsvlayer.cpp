@@ -1206,12 +1206,12 @@ OGRCSVLayer::~OGRCSVLayer()
     if( m_nFeaturesRead > 0 && poFeatureDefn != NULL )
     {
         CPLDebug( "CSV", "%d features read on layer '%s'.",
-                  (int) m_nFeaturesRead, 
+                  (int) m_nFeaturesRead,
                   poFeatureDefn->GetName() );
     }
 
     // Make sure the header file is written even if no features are written.
-    if (bNew && bInWriteMode)
+    if (bNew && bInWriteMode && poFeatureDefn)
         WriteHeader();
 
     CPLFree( panGeomFieldIndex );
