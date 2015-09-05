@@ -89,31 +89,23 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( GDALDataset *poSrcDS,
                                               OGRGeometry *poSpatFilter,
                                               const char *pszWHERE,
                                               const char *pszDialect ) :
-    poSrcLayer(NULL), pszWHERE(NULL), iFIDFieldIndex()
+    poSrcLayer(NULL), pszWHERE(NULL), papoTableLayers(NULL), poDefn(NULL),
+    panGeomFieldToSrcGeomField(NULL), nIndexSize(0),
+    panFIDIndex(NULL), bOrderByValid(FALSE), nNextIndexFID(0),
+    poSummaryFeature(NULL), iFIDFieldIndex(), nExtraDSCount(0), papoExtraDS(NULL)
 {
     swq_select *psSelectInfo = (swq_select *) pSelectInfo;
 
     this->poSrcDS = poSrcDS;
     this->pSelectInfo = pSelectInfo;
-    poDefn = NULL;
-    poSummaryFeature = NULL;
-    panFIDIndex = NULL;
-    bOrderByValid = FALSE;
-    nIndexSize = 0;
-    nNextIndexFID = 0;
-    nExtraDSCount = 0;
-    papoExtraDS = NULL;
-    panGeomFieldToSrcGeomField = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Identify all the layers involved in the SELECT.                 */
 /* -------------------------------------------------------------------- */
-    int iTable;
-
-    papoTableLayers = (OGRLayer **) 
+    papoTableLayers = (OGRLayer **)
         CPLCalloc( sizeof(OGRLayer *), psSelectInfo->table_count );
 
-    for( iTable = 0; iTable < psSelectInfo->table_count; iTable++ )
+    for( int iTable = 0; iTable < psSelectInfo->table_count; iTable++ )
     {
         swq_table_def *psTableDef = psSelectInfo->table_defs + iTable;
         GDALDataset *poTableDS = poSrcDS;
