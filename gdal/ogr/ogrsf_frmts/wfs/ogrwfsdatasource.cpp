@@ -2235,7 +2235,7 @@ OGRLayer * OGRWFSDataSource::ExecuteSQL( const char *pszSQLCommand,
     if (EQUALN(pszSQLCommand, "SELECT", 6))
     {
         swq_select* psSelectInfo = new swq_select();
-        if( psSelectInfo->preparse( pszSQLCommand, TRUE ) != CPLE_None )
+        if( psSelectInfo->preparse( pszSQLCommand, TRUE ) != CE_None )
         {
             delete psSelectInfo;
             return NULL;

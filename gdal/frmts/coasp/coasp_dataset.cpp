@@ -314,7 +314,7 @@ CPLErr COASPRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
                                     void *pImage )
 {
 	if (this->fp == NULL) {
-		CPLError(CE_Fatal, 1, "file pointer freed unexpectedly\n");
+		CPLError(CE_Fatal, CPLE_AppDefined, "file pointer freed unexpectedly\n");
 		return CE_Fatal;
 	}
 
@@ -440,7 +440,7 @@ GDALDataset *COASPDataset::Open( GDALOpenInfo *poOpenInfo )
 	}
 
 	if (psChan == NULL) {
-		CPLError(CE_Fatal, 1, "unable to recognize file as COASP.\n");
+		CPLError(CE_Fatal, CPLE_AppDefined, "unable to recognize file as COASP.\n");
 		free(poDS->pszFileName);
 		free(pszBase);
 		free(pszDir);
@@ -523,7 +523,7 @@ GDALDataset *COASPDataset::Open( GDALOpenInfo *poOpenInfo )
 	if (poDS->fpBinHH == NULL && poDS->fpBinHV == NULL 
 		&& poDS->fpBinVH == NULL && poDS->fpBinVV == NULL) 
 	{
-		CPLError(CE_Fatal,1,"Unable to find any data! Aborting.");
+		CPLError(CE_Fatal,CPLE_AppDefined,"Unable to find any data! Aborting.");
 		free(pszBase);
 		free(pszDir);
 		delete poDS;

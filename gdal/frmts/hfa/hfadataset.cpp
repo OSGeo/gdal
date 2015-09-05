@@ -819,7 +819,7 @@ const char *HFARasterAttributeTable::GetValueAsString( int iRow, int iField ) co
     // Get ValuesIO do do the work
     char *apszStrList[1];
     if( ((HFARasterAttributeTable*)this)->
-                ValuesIO(GF_Read, iField, iRow, 1, apszStrList ) != CPLE_None )
+                ValuesIO(GF_Read, iField, iRow, 1, apszStrList ) != CE_None )
     {
         return "";
     }

@@ -736,7 +736,7 @@ class OGRCouchDBOneLineLayer : public OGRLayer
 OGRLayer * OGRCouchDBDataSource::ExecuteSQLStats( const char *pszSQLCommand )
 {
     swq_select sSelectInfo;
-    if( sSelectInfo.preparse( pszSQLCommand ) != CPLE_None )
+    if( sSelectInfo.preparse( pszSQLCommand ) != CE_None )
     {
         return NULL;
     }
