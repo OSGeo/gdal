@@ -132,6 +132,9 @@ OGRErr OGRGeoconceptLayer::Open( GCSubType* Subclass )
       SetSubTypeFeatureDefn_GCIO(_gcFeature, (OGRFeatureDefnH) _poFeatureDefn);
       _poFeatureDefn->Reference();
     }
+    
+    if( _poFeatureDefn->GetGeomFieldCount() > 0 )
+        _poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(GetSpatialRef());
 
     return OGRERR_NONE;
 }
