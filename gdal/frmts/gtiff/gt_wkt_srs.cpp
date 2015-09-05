@@ -723,7 +723,7 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
         CSLTestBoolean(CPLGetConfigOption("GTIFF_IMPORT_FROM_EPSG", "YES")) )
     {
         // Save error state as importFromEPSGA() will call CPLReset()
-        int errNo = CPLGetLastErrorNo();
+        CPLErrorNum errNo = CPLGetLastErrorNo();
         CPLErr eErr = CPLGetLastErrorType();
         const char* pszTmp = CPLGetLastErrorMsg();
         char* pszLastErrorMsg = CPLStrdup(pszTmp ? pszTmp : "");

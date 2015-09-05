@@ -63,7 +63,7 @@ typedef struct errHandler
 } CPLErrorHandlerNode;
 
 typedef struct {
-    int     nLastErrNo;
+    CPLErrorNum nLastErrNo;
     CPLErr  eLastErrType;
     CPLErrorHandlerNode *psHandlerStack;
     int     nLastErrMsgMax;
@@ -155,7 +155,7 @@ void* CPL_STDCALL CPLGetErrorHandlerUserData(void)
  * similar to printf().
  */
 
-void    CPLError(CPLErr eErrClass, int err_no, const char *fmt, ...)
+void    CPLError(CPLErr eErrClass, CPLErrorNum err_no, const char *fmt, ...)
 {
     va_list args;
 
@@ -169,7 +169,7 @@ void    CPLError(CPLErr eErrClass, int err_no, const char *fmt, ...)
 /*                             CPLErrorV()                              */
 /************************************************************************/
 
-void    CPLErrorV(CPLErr eErrClass, int err_no, const char *fmt, va_list args )
+void    CPLErrorV(CPLErr eErrClass, CPLErrorNum err_no, const char *fmt, va_list args )
 {
     CPLErrorContext *psCtx = CPLGetErrorContext();
 
@@ -542,7 +542,7 @@ void CPL_STDCALL CPLErrorReset()
  * @since GDAL 2.0
  */
 
-void CPL_DLL CPLErrorSetState( CPLErr eErrClass, int err_no, const char* pszMsg )
+void CPL_DLL CPLErrorSetState( CPLErr eErrClass, CPLErrorNum err_no, const char* pszMsg )
 {
     CPLErrorContext *psCtx = CPLGetErrorContext();
 
@@ -566,7 +566,7 @@ void CPL_DLL CPLErrorSetState( CPLErr eErrClass, int err_no, const char* pszMsg 
  * if there are no posted errors.
  */
 
-int CPL_STDCALL CPLGetLastErrorNo()
+CPLErrorNum CPL_STDCALL CPLGetLastErrorNo()
 {
     CPLErrorContext *psCtx = CPLGetErrorContext();
 
@@ -620,7 +620,7 @@ const char* CPL_STDCALL CPLGetLastErrorMsg()
 /*                       CPLDefaultErrorHandler()                       */
 /************************************************************************/
 
-void CPL_STDCALL CPLDefaultErrorHandler( CPLErr eErrClass, int nError, 
+void CPL_STDCALL CPLDefaultErrorHandler( CPLErr eErrClass, CPLErrorNum nError, 
                              const char * pszErrorMsg )
 
 {
@@ -682,7 +682,7 @@ void CPL_STDCALL CPLDefaultErrorHandler( CPLErr eErrClass, int nError,
 /*                        CPLQuietErrorHandler()                        */
 /************************************************************************/
 
-void CPL_STDCALL CPLQuietErrorHandler( CPLErr eErrClass , int nError, 
+void CPL_STDCALL CPLQuietErrorHandler( CPLErr eErrClass , CPLErrorNum nError, 
                            const char * pszErrorMsg )
 
 {
@@ -694,7 +694,7 @@ void CPL_STDCALL CPLQuietErrorHandler( CPLErr eErrClass , int nError,
 /*                       CPLLoggingErrorHandler()                       */
 /************************************************************************/
 
-void CPL_STDCALL CPLLoggingErrorHandler( CPLErr eErrClass, int nError, 
+void CPL_STDCALL CPLLoggingErrorHandler( CPLErr eErrClass, CPLErrorNum nError, 
                              const char * pszErrorMsg )
 
 {

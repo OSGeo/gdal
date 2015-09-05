@@ -1415,7 +1415,7 @@ static void GDALConsumeErrors(GDALPipe* p)
             !GDALPipeRead(p, &nErrNo) ||
             !GDALPipeRead(p, &pszErrorMsg) )
             return;
-        CPLError((CPLErr)eErr, nErrNo, "%s", pszErrorMsg ? pszErrorMsg : "unknown");
+        CPLError((CPLErr)eErr, (CPLErrorNum)nErrNo, "%s", pszErrorMsg ? pszErrorMsg : "unknown");
         CPLFree(pszErrorMsg);
     }
 }
@@ -1835,11 +1835,11 @@ class GDALServerErrorDesc
         GDALServerErrorDesc() {}
 
         CPLErr    eErr;
-        int       nErrNo;
+        CPLErrorNum       nErrNo;
         CPLString osErrorMsg;
 };
 
-static void CPL_STDCALL RunErrorHandler(CPLErr eErr, int nErrNo,
+static void CPL_STDCALL RunErrorHandler(CPLErr eErr, CPLErrorNum nErrNo,
                                         const char* pszErrorMsg)
 {
     GDALServerErrorDesc oDesc;

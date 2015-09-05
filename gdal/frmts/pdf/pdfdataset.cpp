@@ -1287,7 +1287,7 @@ const char* PDFDataset::GetOption(char** papszOpenOptions,
                                   const char* pszDefaultVal)
 {
     CPLErr eLastErrType = CPLGetLastErrorType();
-    int nLastErrno = CPLGetLastErrorNo();
+    CPLErrorNum nLastErrno = CPLGetLastErrorNo();
     CPLString osLastErrorMsg(CPLGetLastErrorMsg());
     CPLXMLNode* psNode = CPLParseXMLString(pszOpenOptionList);
     CPLErrorSetState(eLastErrType, nLastErrno, osLastErrorMsg);

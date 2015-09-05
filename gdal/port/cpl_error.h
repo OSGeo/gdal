@@ -54,22 +54,64 @@ typedef enum
     CE_Fatal = 4
 } CPLErr;
 
-void CPL_DLL CPLError(CPLErr eErrClass, int err_no, const char *fmt, ...)  CPL_PRINT_FUNC_FORMAT (3, 4);
-void CPL_DLL CPLErrorV(CPLErr, int, const char *, va_list );
+/* ==================================================================== */
+/*      Well known error codes.                                         */
+/* ==================================================================== */
+
+#ifdef STRICT_CPLERRORNUM_TYPE
+
+/* This is not appropriate for the general case, as there are parts */
+/* of GDAL which use custom error codes, but this can help diagnose confusions */
+/* between CPLErr and CPLErrorNum */
+typedef enum
+{
+ CPLE_None,
+ CPLE_AppDefined,
+ CPLE_OutOfMemory,
+ CPLE_FileIO,
+ CPLE_OpenFailed,
+ CPLE_IllegalArg,
+ CPLE_NotSupported,
+ CPLE_AssertionFailed,
+ CPLE_NoWriteAccess,
+ CPLE_UserInterrupt,
+ CPLE_ObjectNull,
+} CPLErrorNum;
+
+#else
+
+typedef int CPLErrorNum;
+
+#define CPLE_None                       0
+#define CPLE_AppDefined                 1
+#define CPLE_OutOfMemory                2
+#define CPLE_FileIO                     3
+#define CPLE_OpenFailed                 4
+#define CPLE_IllegalArg                 5
+#define CPLE_NotSupported               6
+#define CPLE_AssertionFailed            7
+#define CPLE_NoWriteAccess              8
+#define CPLE_UserInterrupt              9
+#define CPLE_ObjectNull                 10
+
+#endif
+
+void CPL_DLL CPLError(CPLErr eErrClass, CPLErrorNum err_no, const char *fmt, ...)  CPL_PRINT_FUNC_FORMAT (3, 4);
+void CPL_DLL CPLErrorV(CPLErr, CPLErrorNum, const char *, va_list );
 void CPL_DLL CPLEmergencyError( const char * );
 void CPL_DLL CPL_STDCALL CPLErrorReset( void );
-int CPL_DLL CPL_STDCALL CPLGetLastErrorNo( void );
+CPLErrorNum CPL_DLL CPL_STDCALL CPLGetLastErrorNo( void );
 CPLErr CPL_DLL CPL_STDCALL CPLGetLastErrorType( void );
 const char CPL_DLL * CPL_STDCALL CPLGetLastErrorMsg( void );
 void CPL_DLL * CPL_STDCALL CPLGetErrorHandlerUserData(void);
-void CPL_DLL CPLErrorSetState( CPLErr eErrClass, int err_no, const char* pszMsg );
+void CPL_DLL CPLErrorSetState( CPLErr eErrClass, CPLErrorNum err_no, const char* pszMsg );
 void CPL_DLL CPLCleanupErrorMutex( void );
 
-typedef void (CPL_STDCALL *CPLErrorHandler)(CPLErr, int, const char*);
+typedef void (CPL_STDCALL *CPLErrorHandler)(CPLErr, CPLErrorNum, const char*);
 
-void CPL_DLL CPL_STDCALL CPLLoggingErrorHandler( CPLErr, int, const char * );
-void CPL_DLL CPL_STDCALL CPLDefaultErrorHandler( CPLErr, int, const char * );
-void CPL_DLL CPL_STDCALL CPLQuietErrorHandler( CPLErr, int, const char * );
+void CPL_DLL CPL_STDCALL CPLLoggingErrorHandler( CPLErr, CPLErrorNum, const char * );
+void CPL_DLL CPL_STDCALL CPLDefaultErrorHandler( CPLErr, CPLErrorNum, const char * );
+void CPL_DLL CPL_STDCALL CPLQuietErrorHandler( CPLErr, CPLErrorNum, const char * );
 void CPLTurnFailureIntoWarning(int bOn );
 
 CPLErrorHandler CPL_DLL CPL_STDCALL CPLSetErrorHandler(CPLErrorHandler);
@@ -113,22 +155,6 @@ CPL_C_END
           CPLError( ret, CPLE_ObjectNull, \
            "Pointer \'%s\' is NULL in \'%s\'.\n", #ptr, (func)); \
         return (rc); }} while(0)
-
-/* ==================================================================== */
-/*      Well known error codes.                                         */
-/* ==================================================================== */
-
-#define CPLE_None                       0
-#define CPLE_AppDefined                 1
-#define CPLE_OutOfMemory                2
-#define CPLE_FileIO                     3
-#define CPLE_OpenFailed                 4
-#define CPLE_IllegalArg                 5
-#define CPLE_NotSupported               6
-#define CPLE_AssertionFailed            7
-#define CPLE_NoWriteAccess              8
-#define CPLE_UserInterrupt              9
-#define CPLE_ObjectNull                 10
 
 /* 100 - 299 reserved for GDAL */
 

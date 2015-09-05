@@ -5088,7 +5088,7 @@ void GDALRasterBand::SetFlushBlockErr( CPLErr eErr )
  * @since GDAL 1.9.0
  */
 
-void GDALRasterBand::ReportError(CPLErr eErrClass, int err_no, const char *fmt, ...)
+void GDALRasterBand::ReportError(CPLErr eErrClass, CPLErrorNum err_no, const char *fmt, ...)
 {
     va_list args;
 

@@ -620,7 +620,7 @@ char *TABCleanFieldName(const char *pszSrcName)
     if (strlen(pszNewName) > 31)
     {
         pszNewName[31] = '\0';
-        CPLError(CE_Warning, TAB_WarningInvalidFieldName,
+        CPLError(CE_Warning, (CPLErrorNum)TAB_WarningInvalidFieldName,
                  "Field name '%s' is longer than the max of 31 characters. "
                  "'%s' will be used instead.", pszSrcName, pszNewName);
     }
@@ -671,7 +671,7 @@ char *TABCleanFieldName(const char *pszSrcName)
 
     if (numInvalidChars > 0)
     {
-        CPLError(CE_Warning, TAB_WarningInvalidFieldName,
+        CPLError(CE_Warning, (CPLErrorNum)TAB_WarningInvalidFieldName,
                  "Field name '%s' contains invalid characters. "
                  "'%s' will be used instead.", pszSrcName, pszNewName);
     }

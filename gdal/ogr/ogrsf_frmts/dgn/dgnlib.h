@@ -30,6 +30,8 @@
 #ifndef _DGNLIB_H_INCLUDED
 #define _DGNLIB_H_INCLUDED
 
+#undef STRICT_CPLERRORNUM_TYPE
+
 #include "cpl_conv.h"
 
 CPL_C_START
