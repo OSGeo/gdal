@@ -161,7 +161,10 @@ static int OGRExpatUnknownEncodingHandler (CPL_UNUSED void *unused_encodingHandl
     else if( EQUAL(name, "ISO-8859-15") )
         FillISO885915(info);
     else
+    {
+        CPLDebug("OGR", "Unhandled encoding %s", name);
         return XML_STATUS_ERROR;
+    }
 
     info->data    = NULL;
     info->convert = NULL;
