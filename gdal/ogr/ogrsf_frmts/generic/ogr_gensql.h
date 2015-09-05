@@ -62,8 +62,6 @@ class CPL_DLL OGRGenSQLResultsLayer : public OGRLayer
 
     OGRFeatureDefn *poDefn;
 
-    int         PrepareSummary();
-    
     int        *panGeomFieldToSrcGeomField;
 
     GIntBig     nIndexSize;
@@ -77,6 +75,8 @@ class CPL_DLL OGRGenSQLResultsLayer : public OGRLayer
 
     int         nExtraDSCount;
     GDALDataset **papoExtraDS;
+
+    int         PrepareSummary();
 
     OGRFeature *TranslateFeature( OGRFeature * );
     void        CreateOrderByIndex();
@@ -126,4 +126,3 @@ class CPL_DLL OGRGenSQLResultsLayer : public OGRLayer
 };
 
 #endif /* ndef _OGR_GENSQL_H_INCLUDED */
-
