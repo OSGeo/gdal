@@ -237,9 +237,6 @@ int ARGDataset::Identify( GDALOpenInfo *poOpenInfo )
 /************************************************************************/
 GDALDataset *ARGDataset::Open( GDALOpenInfo * poOpenInfo )
 {
-    json_object *pJSONObject = NULL;
-    const char *pszJSONStr = NULL;
-    char *pszLayer = NULL;
     /***** items from the json metadata *****/
     GDALDataType eType = GDT_Unknown;
     double fXmin = 0.0;
@@ -257,7 +254,6 @@ GDALDataset *ARGDataset::Open( GDALOpenInfo * poOpenInfo )
     int nPixelOffset = 0;
     double fNoDataValue = NAN;
 
-    char *pszWKT = NULL;
     OGRSpatialReference oSRS;
     OGRErr nErr = OGRERR_NONE;
 
@@ -268,7 +264,7 @@ GDALDataset *ARGDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Check metadata settings in JSON.                                */
 /* -------------------------------------------------------------------- */
 
-    pJSONObject = GetJsonObject(poOpenInfo->pszFilename);
+    json_object *pJSONObject = GetJsonObject(poOpenInfo->pszFilename);
 
     if (pJSONObject == NULL) {
         CPLError(CE_Failure, CPLE_AppDefined, "Error parsing JSON.");
@@ -276,7 +272,7 @@ GDALDataset *ARGDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
     // get the type (always 'arg')
-    pszJSONStr = GetJsonValueStr(pJSONObject, "type");
+    const char *pszJSONStr = GetJsonValueStr(pJSONObject, "type");
     if (pszJSONStr == NULL ) {
         CPLError(CE_Failure, CPLE_AppDefined,
             "The ARG 'type' is missing from the JSON file.");
@@ -476,6 +472,7 @@ GDALDataset *ARGDataset::Open( GDALOpenInfo * poOpenInfo )
         }
     }
 
+    char *pszWKT = NULL;
     nErr = oSRS.exportToWkt(&pszWKT);
     if (nErr != OGRERR_NONE) {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -499,7 +496,7 @@ GDALDataset *ARGDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
-    pszLayer = CPLStrdup(pszJSONStr);
+    char *pszLayer = CPLStrdup(pszJSONStr);
 
     // done with the json object now
     json_object_put(pJSONObject);
