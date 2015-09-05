@@ -94,6 +94,8 @@ typedef int CPLErrorNum;
 #define CPLE_UserInterrupt              9
 #define CPLE_ObjectNull                 10
 
+/* 100 - 299 reserved for GDAL */
+
 #endif
 
 void CPL_DLL CPLError(CPLErr eErrClass, CPLErrorNum err_no, const char *fmt, ...)  CPL_PRINT_FUNC_FORMAT (3, 4);
@@ -155,7 +157,5 @@ CPL_C_END
           CPLError( ret, CPLE_ObjectNull, \
            "Pointer \'%s\' is NULL in \'%s\'.\n", #ptr, (func)); \
         return (rc); }} while(0)
-
-/* 100 - 299 reserved for GDAL */
 
 #endif /* CPL_ERROR_H_INCLUDED */
