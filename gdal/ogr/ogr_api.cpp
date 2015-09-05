@@ -89,8 +89,8 @@ void OGR_G_SetPointCount( OGRGeometryH hGeom, int nNewPointCount )
       case wkbLineString:
       case wkbCircularString:
       {
-        OGRLineString *poLine = (OGRLineString *) hGeom;
-        poLine->setNumPoints( nNewPointCount );
+        OGRSimpleCurve* poSC = (OGRSimpleCurve *)hGeom;
+        poSC->setNumPoints( nNewPointCount );
         break;
       }
       default:
@@ -131,13 +131,13 @@ double OGR_G_GetX( OGRGeometryH hGeom, int i )
       case wkbLineString:
       case wkbCircularString:
       {
-          OGRLineString* poLS = (OGRLineString *) hGeom;
-          if (i < 0 || i >= poLS->getNumPoints())
+          OGRSimpleCurve* poSC = (OGRSimpleCurve *)hGeom;
+          if (i < 0 || i >= poSC->getNumPoints())
           {
               CPLError(CE_Failure, CPLE_NotSupported, "Index out of bounds");
               return 0.0;
           }
-          return poLS->getX( i );
+          return poSC->getX( i );
       }
 
       default:
@@ -178,13 +178,13 @@ double OGR_G_GetY( OGRGeometryH hGeom, int i )
       case wkbLineString:
       case wkbCircularString:
       {
-          OGRLineString* poLS = (OGRLineString *) hGeom;
-          if (i < 0 || i >= poLS->getNumPoints())
+          OGRSimpleCurve* poSC = (OGRSimpleCurve *)hGeom;
+          if (i < 0 || i >= poSC->getNumPoints())
           {
               CPLError(CE_Failure, CPLE_NotSupported, "Index out of bounds");
               return 0.0;
           }
-          return poLS->getY( i );
+          return poSC->getY( i );
       }
 
       default:
@@ -225,13 +225,13 @@ double OGR_G_GetZ( OGRGeometryH hGeom, int i )
       case wkbLineString:
       case wkbCircularString:
       {
-          OGRLineString* poLS = (OGRLineString *) hGeom;
-          if (i < 0 || i >= poLS->getNumPoints())
+          OGRSimpleCurve* poSC = (OGRSimpleCurve *)hGeom;
+          if (i < 0 || i >= poSC->getNumPoints())
           {
               CPLError(CE_Failure, CPLE_NotSupported, "Index out of bounds");
               return 0.0;
           }
-          return poLS->getZ( i );
+          return poSC->getZ( i );
       }
 
       default:
@@ -286,9 +286,9 @@ int OGR_G_GetPoints( OGRGeometryH hGeom,
       case wkbLineString:
       case wkbCircularString:
       {
-          OGRLineString* poLS = (OGRLineString *) hGeom;
-          poLS->getPoints(pabyX, nXStride, pabyY, nYStride, pabyZ, nZStride);
-          return poLS->getNumPoints();
+          OGRSimpleCurve* poSC = (OGRSimpleCurve *)hGeom;
+          poSC->getPoints(pabyX, nXStride, pabyY, nYStride, pabyZ, nZStride);
+          return poSC->getNumPoints();
       }
       break;
 
@@ -341,8 +341,8 @@ void OGR_G_GetPoint( OGRGeometryH hGeom, int i,
       case wkbLineString:
       case wkbCircularString:
       {
-          OGRLineString* poLS = (OGRLineString *) hGeom;
-          if (i < 0 || i >= poLS->getNumPoints())
+          OGRSimpleCurve* poSC = (OGRSimpleCurve *)hGeom;
+          if (i < 0 || i >= poSC->getNumPoints())
           {
               CPLError(CE_Failure, CPLE_NotSupported, "Index out of bounds");
               *pdfX = *pdfY = 0;
@@ -351,10 +351,10 @@ void OGR_G_GetPoint( OGRGeometryH hGeom, int i,
           }
           else
           {
-            *pdfX = poLS->getX( i );
-            *pdfY = poLS->getY( i );
+            *pdfX = poSC->getX( i );
+            *pdfY = poSC->getY( i );
             if( pdfZ != NULL )
-                *pdfZ =  poLS->getZ( i );
+                *pdfZ =  poSC->getZ( i );
           }
       }
       break;
@@ -404,17 +404,17 @@ void CPL_DLL OGR_G_SetPoints( OGRGeometryH hGeom, int nPointsIn,
       case wkbLineString:
       case wkbCircularString:
       {
-        OGRLineString* poLine = (OGRLineString *) hGeom;
+        OGRSimpleCurve* poSC = (OGRSimpleCurve *)hGeom;
 
         if( nXStride == 0 && nYStride == 0 && nZStride == 0 )
         {
-          poLine->setPoints( nPointsIn, (double *)pabyX, (double *)pabyY, (double *)pabyZ ); 
+          poSC->setPoints( nPointsIn, (double *)pabyX, (double *)pabyY, (double *)pabyZ ); 
         }
         else
         {
           double x, y, z;		  
           x = y = z = 0;
-          poLine->setNumPoints( nPointsIn );
+          poSC->setNumPoints( nPointsIn );
 
           for (int i = 0; i < nPointsIn; ++i)
           {
@@ -422,7 +422,7 @@ void CPL_DLL OGR_G_SetPoints( OGRGeometryH hGeom, int nPointsIn,
             if( pabyY ) y = *(double*)((char*)pabyY + i * nYStride);
             if( pabyZ ) z = *(double*)((char*)pabyZ + i * nZStride);
 
-            poLine->setPoint( i, x, y, z );
+            poSC->setPoint( i, x, y, z );
           }
         }
         break;
@@ -482,7 +482,7 @@ void OGR_G_SetPoint( OGRGeometryH hGeom, int i,
               CPLError(CE_Failure, CPLE_NotSupported, "Index out of bounds");
               return;
           }
-          ((OGRLineString *) hGeom)->setPoint( i, dfX, dfY, dfZ );
+          ((OGRSimpleCurve *) hGeom)->setPoint( i, dfX, dfY, dfZ );
           break;
       }
 
@@ -539,7 +539,7 @@ void OGR_G_SetPoint_2D( OGRGeometryH hGeom, int i,
               CPLError(CE_Failure, CPLE_NotSupported, "Index out of bounds");
               return;
           }
-          ((OGRLineString *) hGeom)->setPoint( i, dfX, dfY );
+          ((OGRSimpleCurve *) hGeom)->setPoint( i, dfX, dfY );
           break;
       }
 
@@ -582,7 +582,7 @@ void OGR_G_AddPoint( OGRGeometryH hGeom,
 
       case wkbLineString:
       case wkbCircularString:
-        ((OGRLineString *) hGeom)->addPoint( dfX, dfY, dfZ );
+        ((OGRSimpleCurve *) hGeom)->addPoint( dfX, dfY, dfZ );
         break;
 
       default:
@@ -622,7 +622,7 @@ void OGR_G_AddPoint_2D( OGRGeometryH hGeom,
 
       case wkbLineString:
       case wkbCircularString:
-        ((OGRLineString *) hGeom)->addPoint( dfX, dfY );
+        ((OGRSimpleCurve *) hGeom)->addPoint( dfX, dfY );
         break;
 
       default:
@@ -723,7 +723,7 @@ OGRGeometryH OGR_G_GetGeometryRef( OGRGeometryH hGeom, int iSubGeom )
     else
     {
         CPLError(CE_Failure, CPLE_NotSupported, "Incompatible geometry for operation");
-        return 0;
+        return NULL;
     }
 }
 
