@@ -1338,7 +1338,7 @@ OGRErr OGRGPXLayer::CheckAndFixCoordinatesValidity( double* pdfLatitude, double*
                      *pdfLatitude);
             bFirstWarning = FALSE;
         }
-        return CE_Failure;
+        return OGRERR_FAILURE;
     }
 
     if (pdfLongitude != NULL && (*pdfLongitude < -180 || *pdfLongitude > 180))
@@ -1357,10 +1357,10 @@ OGRErr OGRGPXLayer::CheckAndFixCoordinatesValidity( double* pdfLatitude, double*
         else if (*pdfLongitude < -180)
             *pdfLongitude += ((int) (180 - *pdfLongitude)/360)*360;
 
-        return CE_None;
+        return OGRERR_NONE;
     }
 
-    return CE_None;
+    return OGRERR_NONE;
 }
 
 /************************************************************************/
@@ -1372,7 +1372,7 @@ OGRErr OGRGPXLayer::ICreateFeature( OGRFeature *poFeature )
 {
     VSILFILE* fp = poDS->GetOutputFP();
     if (fp == NULL)
-        return CE_Failure;
+        return OGRERR_FAILURE;
     
     char szLat[64];
     char szLon[64];

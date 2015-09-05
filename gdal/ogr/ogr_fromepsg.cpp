@@ -2138,7 +2138,7 @@ OGRErr OGRSpatialReference::importFromEPSG( int nCode )
 OGRErr CPL_STDCALL OSRImportFromEPSG( OGRSpatialReferenceH hSRS, int nCode )
 
 {
-    VALIDATE_POINTER1( hSRS, "OSRImportFromEPSG", CE_Failure );
+    VALIDATE_POINTER1( hSRS, "OSRImportFromEPSG", OGRERR_FAILURE );
 
     return ((OGRSpatialReference *) hSRS)->importFromEPSG( nCode );
 }
@@ -2297,7 +2297,7 @@ OGRErr OGRSpatialReference::importFromEPSGA( int nCode )
 OGRErr CPL_STDCALL OSRImportFromEPSGA( OGRSpatialReferenceH hSRS, int nCode )
 
 {
-    VALIDATE_POINTER1( hSRS, "OSRImportFromEPSGA", CE_Failure );
+    VALIDATE_POINTER1( hSRS, "OSRImportFromEPSGA", OGRERR_FAILURE );
 
     return ((OGRSpatialReference *) hSRS)->importFromEPSGA( nCode );
 }
@@ -2439,7 +2439,7 @@ OGRErr OGRSpatialReference::SetStatePlane( int nZone, int bNAD83,
 OGRErr OSRSetStatePlane( OGRSpatialReferenceH hSRS, int nZone, int bNAD83 )
 
 {
-    VALIDATE_POINTER1( hSRS, "OSRSetStatePlane", CE_Failure );
+    VALIDATE_POINTER1( hSRS, "OSRSetStatePlane", OGRERR_FAILURE );
 
     return ((OGRSpatialReference *) hSRS)->SetStatePlane( nZone, bNAD83 );
 }
@@ -2460,7 +2460,7 @@ OGRErr OSRSetStatePlaneWithUnits( OGRSpatialReferenceH hSRS,
                                   double dfOverrideUnit )
 
 {
-    VALIDATE_POINTER1( hSRS, "OSRSetStatePlaneWithUnits", CE_Failure );
+    VALIDATE_POINTER1( hSRS, "OSRSetStatePlaneWithUnits", OGRERR_FAILURE );
 
     return ((OGRSpatialReference *) hSRS)->SetStatePlane( nZone, bNAD83,
                                                           pszOverrideUnitName,
@@ -2650,7 +2650,7 @@ OGRErr OGRSpatialReference::AutoIdentifyEPSG()
 OGRErr OSRAutoIdentifyEPSG( OGRSpatialReferenceH hSRS )
 
 {
-    VALIDATE_POINTER1( hSRS, "OSRAutoIdentifyEPSG", CE_Failure );
+    VALIDATE_POINTER1( hSRS, "OSRAutoIdentifyEPSG", OGRERR_FAILURE );
 
     return ((OGRSpatialReference *) hSRS)->AutoIdentifyEPSG();
 }
@@ -2713,7 +2713,7 @@ int OGRSpatialReference::EPSGTreatsAsLatLong()
 int OSREPSGTreatsAsLatLong( OGRSpatialReferenceH hSRS )
 
 {
-    VALIDATE_POINTER1( hSRS, "OSREPSGTreatsAsLatLong", CE_Failure );
+    VALIDATE_POINTER1( hSRS, "OSREPSGTreatsAsLatLong", OGRERR_FAILURE );
 
     return ((OGRSpatialReference *) hSRS)->EPSGTreatsAsLatLong();
 }
@@ -2778,7 +2778,7 @@ int OGRSpatialReference::EPSGTreatsAsNorthingEasting()
 int OSREPSGTreatsAsNorthingEasting( OGRSpatialReferenceH hSRS )
 
 {
-    VALIDATE_POINTER1( hSRS, "OSREPSGTreatsAsNorthingEasting", CE_Failure );
+    VALIDATE_POINTER1( hSRS, "OSREPSGTreatsAsNorthingEasting", OGRERR_FAILURE );
 
     return ((OGRSpatialReference *) hSRS)->EPSGTreatsAsNorthingEasting();
 }

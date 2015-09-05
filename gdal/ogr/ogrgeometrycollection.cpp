@@ -633,8 +633,9 @@ OGRErr OGRGeometryCollection::importFromWktInternal( char ** ppszInput, int nRec
     }
 
     int bHasZ = FALSE, bHasM = FALSE;
-    OGRErr      eErr = importPreambuleFromWkt(ppszInput, &bHasZ, &bHasM);
-    if( eErr >= 0 )
+    bool bIsEmpty = false;
+    OGRErr      eErr = importPreambuleFromWkt(ppszInput, &bHasZ, &bHasM, &bIsEmpty);
+    if( eErr != OGRERR_NONE || bIsEmpty )
         return eErr;
 
     char        szToken[OGR_WKT_TOKEN_MAX];

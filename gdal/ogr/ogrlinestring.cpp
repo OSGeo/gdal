@@ -1003,8 +1003,9 @@ OGRErr OGRSimpleCurve::importFromWkt( char ** ppszInput )
 
 {
     int bHasZ = FALSE, bHasM = FALSE;
-    OGRErr      eErr = importPreambuleFromWkt(ppszInput, &bHasZ, &bHasM);
-    if( eErr >= 0 )
+    bool bIsEmpty = false;
+    OGRErr      eErr = importPreambuleFromWkt(ppszInput, &bHasZ, &bHasM, &bIsEmpty);
+    if( eErr != OGRERR_NONE || bIsEmpty )
         return eErr;
 
     const char  *pszInput = *ppszInput;

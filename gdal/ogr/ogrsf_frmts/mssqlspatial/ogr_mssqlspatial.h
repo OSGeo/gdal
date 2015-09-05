@@ -352,7 +352,7 @@ class OGRMSSQLSpatialDataSource : public OGRDataSource
     int                 GetGeometryFormat() { return nGeometryFormat; }
     int                 UseGeometryColumns() { return bUseGeometryColumns; }
 
-    virtual int         DeleteLayer( int iLayer );
+    virtual OGRErr       DeleteLayer( int iLayer );
     virtual OGRLayer    *ICreateLayer( const char *,
                                       OGRSpatialReference * = NULL,
                                       OGRwkbGeometryType = wkbUnknown,

@@ -386,7 +386,7 @@ OGRErr OGRMILayerAttrIndex::IndexAllFeatures( int iField )
         
         delete poFeature;
 
-        if( eErr != CE_None )
+        if( eErr != OGRERR_NONE )
             return eErr;
     }
 

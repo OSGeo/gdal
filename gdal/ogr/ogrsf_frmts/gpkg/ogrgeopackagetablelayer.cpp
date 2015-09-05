@@ -329,8 +329,8 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindUpdateParameters( OGRFeature *poFeatu
         return err;
 
     /* Bind the FID to the "WHERE" clause */
-    err = sqlite3_bind_int64(poStmt, nColCount, poFeature->GetFID());    
-    if ( err != SQLITE_OK )
+    int sqlite_err = sqlite3_bind_int64(poStmt, nColCount, poFeature->GetFID());    
+    if ( sqlite_err != SQLITE_OK )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "failed to bind FID '" CPL_FRMT_GIB "' to statement", poFeature->GetFID());
@@ -926,7 +926,7 @@ OGRErr OGRGeoPackageTableLayer::CreateField( OGRFieldDefn *poField,
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Wrong field type for %s",
                  oFieldDefn.GetNameRef());
-        return CE_Failure;
+        return OGRERR_FAILURE;
     }
 
     if( !m_bDeferredCreation )
@@ -1131,7 +1131,7 @@ OGRErr OGRGeoPackageTableLayer::ICreateFeature( OGRFeature *poFeature )
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                             "Inconsistent values of FID and field of same name");
-                return CE_Failure;
+                return OGRERR_FAILURE;
             }
         }
     }
@@ -1252,7 +1252,7 @@ OGRErr OGRGeoPackageTableLayer::ISetFeature( OGRFeature *poFeature )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                         "Inconsistent values of FID and field of same name");
-            return CE_Failure;
+            return OGRERR_FAILURE;
         }
     }
 

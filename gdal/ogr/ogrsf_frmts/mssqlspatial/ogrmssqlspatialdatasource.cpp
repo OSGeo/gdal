@@ -159,7 +159,7 @@ OGRLayer *OGRMSSQLSpatialDataSource::GetLayerByName( const char* pszLayerName )
 /*                            DeleteLayer()                             */
 /************************************************************************/
 
-int OGRMSSQLSpatialDataSource::DeleteLayer( int iLayer )
+OGRErr OGRMSSQLSpatialDataSource::DeleteLayer( int iLayer )
 
 {
     if( iLayer < 0 || iLayer >= nLayers )
@@ -470,7 +470,7 @@ OGRLayer * OGRMSSQLSpatialDataSource::ICreateLayer( const char * pszLayerName,
     if( bFID64 )
         poLayer->SetMetadataItem(OLMD_FID64, "YES");
     
-    if (poLayer->Initialize(pszSchemaName, pszTableName, pszGeomColumn, nCoordDimension, nSRSId, pszWKT, eType) == OGRERR_FAILURE)
+    if (poLayer->Initialize(pszSchemaName, pszTableName, pszGeomColumn, nCoordDimension, nSRSId, pszWKT, eType) == CE_Failure)
     {
         CPLFree( pszSchemaName );
         CPLFree( pszTableName );

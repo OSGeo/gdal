@@ -487,7 +487,7 @@ static void InitDatumMappingTable()
 OGRErr OSRImportFromESRI( OGRSpatialReferenceH hSRS, char **papszPrj )
 
 {
-    VALIDATE_POINTER1( hSRS, "OSRImportFromESRI", CE_Failure );
+    VALIDATE_POINTER1( hSRS, "OSRImportFromESRI", OGRERR_FAILURE );
 
     return ((OGRSpatialReference *) hSRS)->importFromESRI( papszPrj );
 }
@@ -1488,7 +1488,7 @@ OGRErr OGRSpatialReference::morphToESRI()
 OGRErr OSRMorphToESRI( OGRSpatialReferenceH hSRS )
 
 {
-    VALIDATE_POINTER1( hSRS, "OSRMorphToESRI", CE_Failure );
+    VALIDATE_POINTER1( hSRS, "OSRMorphToESRI", OGRERR_FAILURE );
 
     return ((OGRSpatialReference *) hSRS)->morphToESRI();
 }
@@ -1951,7 +1951,7 @@ OGRErr OGRSpatialReference::morphFromESRI()
 OGRErr OSRMorphFromESRI( OGRSpatialReferenceH hSRS )
 
 {
-    VALIDATE_POINTER1( hSRS, "OSRMorphFromESRI", CE_Failure );
+    VALIDATE_POINTER1( hSRS, "OSRMorphFromESRI", OGRERR_FAILURE );
 
     return ((OGRSpatialReference *) hSRS)->morphFromESRI();
 }

@@ -758,7 +758,7 @@ OGRErr OSRExportToXML( OGRSpatialReferenceH hSRS, char **ppszRawXML,
                        const char *pszDialect )
 
 {
-    VALIDATE_POINTER1( hSRS, "OSRExportToXML", CE_Failure );
+    VALIDATE_POINTER1( hSRS, "OSRExportToXML", OGRERR_FAILURE );
 
     return ((OGRSpatialReference *) hSRS)->exportToXML( ppszRawXML, 
                                                         pszDialect );
@@ -1340,8 +1340,8 @@ OGRErr OGRSpatialReference::importFromXML( const char *pszXML )
 OGRErr OSRImportFromXML( OGRSpatialReferenceH hSRS, const char *pszXML )
 
 {
-    VALIDATE_POINTER1( hSRS, "OSRImportFromXML", CE_Failure );
-    VALIDATE_POINTER1( pszXML, "OSRImportFromXML", CE_Failure );
+    VALIDATE_POINTER1( hSRS, "OSRImportFromXML", OGRERR_FAILURE );
+    VALIDATE_POINTER1( pszXML, "OSRImportFromXML", OGRERR_FAILURE );
 
     return ((OGRSpatialReference *) hSRS)->importFromXML( pszXML );
 }

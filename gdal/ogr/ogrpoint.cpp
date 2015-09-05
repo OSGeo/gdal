@@ -385,13 +385,14 @@ OGRErr OGRPoint::importFromWkt( char ** ppszInput )
 
 {
     int bHasZ = FALSE, bHasM = FALSE;
-    OGRErr      eErr = importPreambuleFromWkt(ppszInput, &bHasZ, &bHasM);
-    if( eErr >= 0 )
-    {
-        if( eErr == OGRERR_NONE ) /* only the case for an EMPTY case */
-            nCoordDimension = (bHasZ) ? -3 : -2;
-
+    bool bIsEmpty = false;
+    OGRErr      eErr = importPreambuleFromWkt(ppszInput, &bHasZ, &bHasM, &bIsEmpty);
+    if( eErr != OGRERR_NONE )
         return eErr;
+    if( bIsEmpty )
+    {
+        nCoordDimension = (bHasZ) ? -3 : -2;
+        return OGRERR_NONE;
     }
 
     const char  *pszInput = *ppszInput;

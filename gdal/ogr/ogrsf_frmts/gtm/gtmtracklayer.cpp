@@ -223,11 +223,11 @@ OGRErr GTMTrackLayer::ICreateFeature (OGRFeature *poFeature)
 {
     VSILFILE* fpTmpTrackpoints = poDS->getTmpTrackpointsFP();
     if (fpTmpTrackpoints == NULL)
-        return CE_Failure;
+        return OGRERR_FAILURE;
 
     VSILFILE* fpTmpTracks = poDS->getTmpTracksFP();
     if (fpTmpTracks == NULL)
-        return CE_Failure;
+        return OGRERR_FAILURE;
 
     OGRGeometry *poGeom = poFeature->GetGeometryRef();
     if ( poGeom == NULL )

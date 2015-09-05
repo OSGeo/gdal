@@ -207,7 +207,7 @@ class IMapInfoFile : public OGRLayer
     virtual OGRFeature *GetFeature(GIntBig nFeatureId);
     virtual OGRErr      ICreateFeature(OGRFeature *poFeature);
     virtual int         TestCapability( const char * pszCap ) =0;
-    virtual int         GetExtent(OGREnvelope *psExtent, int bForce) =0;
+    virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce) =0;
 
     ///////////////
     // Read access specific stuff
@@ -332,7 +332,7 @@ class TABFile: public IMapInfoFile
     virtual void        ResetReading();
     virtual int         TestCapability( const char * pszCap );
     virtual GIntBig     GetFeatureCount (int bForce);
-    virtual int         GetExtent(OGREnvelope *psExtent, int bForce);
+    virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce);
 
     /* Implement OGRLayer's SetFeature() for random write, only with TABFile */
     virtual OGRErr      ISetFeature( OGRFeature * );
@@ -478,7 +478,7 @@ class TABView: public IMapInfoFile
     virtual void        ResetReading();
     virtual int         TestCapability( const char * pszCap );
     virtual GIntBig     GetFeatureCount (int bForce);
-    virtual int         GetExtent(OGREnvelope *psExtent, int bForce);
+    virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce);
     
     ///////////////
     // Read access specific stuff
@@ -593,7 +593,7 @@ class TABSeamless: public IMapInfoFile
     virtual void        ResetReading();
     virtual int         TestCapability( const char * pszCap );
     virtual GIntBig     GetFeatureCount (int bForce);
-    virtual int         GetExtent(OGREnvelope *psExtent, int bForce);
+    virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce);
     
     ///////////////
     // Read access specific stuff
@@ -744,7 +744,7 @@ class MIFFile: public IMapInfoFile
     virtual int         TestCapability( const char * pszCap ) ;
     virtual GIntBig     GetFeatureCount (int bForce);
     virtual void        ResetReading();
-    virtual int         GetExtent(OGREnvelope *psExtent, int bForce);
+    virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce);
 
     ///////////////
     // Read access specific stuff

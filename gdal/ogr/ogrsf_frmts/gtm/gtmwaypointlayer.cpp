@@ -234,7 +234,7 @@ OGRErr GTMWaypointLayer::ICreateFeature (OGRFeature *poFeature)
 {
     VSILFILE* fp = poDS->getOutputFP();
     if (fp == NULL)
-        return CE_Failure;
+        return OGRERR_FAILURE;
 
     OGRGeometry *poGeom = poFeature->GetGeometryRef();
     if ( poGeom == NULL )

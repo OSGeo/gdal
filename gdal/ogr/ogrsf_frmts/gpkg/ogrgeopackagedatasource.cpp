@@ -3425,7 +3425,7 @@ OGRLayer* GDALGeoPackageDataset::ICreateLayer( const char * pszLayerName,
 /*                            DeleteLayer()                             */
 /************************************************************************/
 
-int GDALGeoPackageDataset::DeleteLayer( int iLayer )
+OGRErr GDALGeoPackageDataset::DeleteLayer( int iLayer )
 {
     char *pszSQL;
 

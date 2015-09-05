@@ -192,11 +192,11 @@ void OGR2SQLITE_Transform(sqlite3_context* pContext,
     int nBLOBLen = sqlite3_value_bytes (argv[0]);
     OGRGeometry* poGeom = NULL;
     if( OGRSQLiteLayer::ImportSpatiaLiteGeometry(
-                    pabySLBLOB, nBLOBLen, &poGeom ) == CE_None &&
+                    pabySLBLOB, nBLOBLen, &poGeom ) == OGRERR_NONE &&
         poGeom->transform(poCT) == OGRERR_NONE &&
         OGRSQLiteLayer::ExportSpatiaLiteGeometry(
                     poGeom, nDstSRSId, wkbNDR, FALSE,
-                    FALSE, FALSE, &pabySLBLOB, &nBLOBLen ) == CE_None )
+                    FALSE, FALSE, &pabySLBLOB, &nBLOBLen ) == OGRERR_NONE )
     {
         sqlite3_result_blob(pContext, pabySLBLOB, nBLOBLen, CPLFree);
     }
@@ -319,7 +319,7 @@ void OGR2SQLITE_ogr_geocode_set_result(sqlite3_context* pContext,
             if( OGRSQLiteLayer::ExportSpatiaLiteGeometry(
                     poFeature->GetGeometryRef(), 4326, wkbNDR, FALSE, FALSE, FALSE,
                     &pabyGeomBLOB,
-                    &nGeomBLOBLen ) != CE_None )
+                    &nGeomBLOBLen ) != OGRERR_NONE )
             {
                 sqlite3_result_null (pContext);
             }
@@ -456,7 +456,7 @@ static OGRGeometry* OGR2SQLITE_GetGeom(CPL_UNUSED sqlite3_context* pContext,
     int nBLOBLen = sqlite3_value_bytes (argv[0]);
     OGRGeometry* poGeom = NULL;
     if( OGRSQLiteLayer::ImportSpatiaLiteGeometry(
-                        pabySLBLOB, nBLOBLen, &poGeom, pnSRSId) != CE_None )
+                        pabySLBLOB, nBLOBLen, &poGeom, pnSRSId) != OGRERR_NONE )
     {
         return NULL;
     }
@@ -756,7 +756,7 @@ static void OGR2SQLITE_SetGeom_AndDestroy(sqlite3_context* pContext,
     int nBLOBLen = 0;
     if( poGeom != NULL && OGRSQLiteLayer::ExportSpatiaLiteGeometry(
                     poGeom, nSRSId, wkbNDR, FALSE,
-                    FALSE, FALSE, &pabySLBLOB, &nBLOBLen ) == CE_None )
+                    FALSE, FALSE, &pabySLBLOB, &nBLOBLen ) == OGRERR_NONE )
     {
         sqlite3_result_blob(pContext, pabySLBLOB, nBLOBLen, CPLFree);
     }

@@ -448,7 +448,7 @@ class OGRPGDataSource : public OGRDataSource
 
     PGconn              *hPGConn;
 
-    int                 DeleteLayer( int iLayer );
+    OGRErr              DeleteLayer( int iLayer );
 
     Oid                 nGeometryOID;
     Oid                 nGeographyOID;

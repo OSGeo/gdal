@@ -1251,13 +1251,13 @@ int OGRVRTLayer::ResetSourceReading()
 /*      Install spatial + attr filter query on source layer.            */
 /* -------------------------------------------------------------------- */
     if( pszFilter == NULL && pszAttrFilter == NULL )
-        bSuccess = (poSrcLayer->SetAttributeFilter( NULL ) == CE_None);
+        bSuccess = (poSrcLayer->SetAttributeFilter( NULL ) == OGRERR_NONE);
 
     else if( pszFilter != NULL && pszAttrFilter == NULL )
-        bSuccess = (poSrcLayer->SetAttributeFilter( pszFilter ) == CE_None);
+        bSuccess = (poSrcLayer->SetAttributeFilter( pszFilter ) == OGRERR_NONE);
 
     else if( pszFilter == NULL && pszAttrFilter != NULL )
-        bSuccess = (poSrcLayer->SetAttributeFilter( pszAttrFilter ) == CE_None);
+        bSuccess = (poSrcLayer->SetAttributeFilter( pszAttrFilter ) == OGRERR_NONE);
 
     else
     {
@@ -1267,7 +1267,7 @@ int OGRVRTLayer::ResetSourceReading()
         osMerged += pszAttrFilter;
         osMerged += ")";
 
-        bSuccess = (poSrcLayer->SetAttributeFilter(osMerged) == CE_None);
+        bSuccess = (poSrcLayer->SetAttributeFilter(osMerged) == OGRERR_NONE);
     }
 
     CPLFree( pszFilter );

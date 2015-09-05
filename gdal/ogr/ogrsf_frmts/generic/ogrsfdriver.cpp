@@ -112,7 +112,11 @@ OGRErr OGR_Dr_DeleteDataSource( OGRSFDriverH hDriver,
     OGRAPISpyDeleteDataSource(hDriver, pszDataSource);
 #endif
 
-    return ((GDALDriver *) hDriver)->Delete( pszDataSource );
+    CPLErr eErr = ((GDALDriver *) hDriver)->Delete( pszDataSource );
+    if( eErr == CE_None )
+        return OGRERR_NONE;
+    else
+        return OGRERR_FAILURE;
 }
 
 /************************************************************************/

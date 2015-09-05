@@ -1671,7 +1671,7 @@ OGRErr TABFile::ISetFeature( OGRFeature *poFeature )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "SetFeature() cannot be used in read-only access.");
-        return -1;
+        return OGRERR_FAILURE;
     }
 
     /*-----------------------------------------------------------------

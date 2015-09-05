@@ -1290,7 +1290,7 @@ OGRPGTableLayer* OGRPGDataSource::OpenTable( CPLString& osCurrentSchema,
 /*                            DeleteLayer()                             */
 /************************************************************************/
 
-int OGRPGDataSource::DeleteLayer( int iLayer )
+OGRErr OGRPGDataSource::DeleteLayer( int iLayer )
 
 {
     /* Force loading of all registered tables */
