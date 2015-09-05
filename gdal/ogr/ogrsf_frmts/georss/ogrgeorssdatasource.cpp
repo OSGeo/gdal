@@ -38,21 +38,23 @@ CPL_CVSID("$Id$");
 /*                          OGRGeoRSSDataSource()                          */
 /************************************************************************/
 
-OGRGeoRSSDataSource::OGRGeoRSSDataSource()
-
-{
-    papoLayers = NULL;
-    nLayers = 0;
-
-    fpOutput = NULL;
-
-    pszName = NULL;
-
-    eFormat = GEORSS_RSS;
-    eGeomDialect = GEORSS_SIMPLE;
-    bUseExtensions = FALSE;
-    bWriteHeaderAndFooter = TRUE;
-}
+OGRGeoRSSDataSource::OGRGeoRSSDataSource() :
+    pszName(NULL),
+    papoLayers(NULL),
+    nLayers(0),
+    fpOutput(NULL),
+#ifdef HAVE_EXPAT
+    validity(GEORSS_VALIDITY_UNKNOWN),
+#endif
+    eFormat(GEORSS_RSS),
+    eGeomDialect(GEORSS_SIMPLE),
+    bUseExtensions(FALSE),
+    bWriteHeaderAndFooter(TRUE),
+#ifdef HAVE_EXPAT
+    oCurrentParser(NULL),
+    nDataHandlerCounter(0)
+#endif
+{ }
 
 /************************************************************************/
 /*                         ~OGRGeoRSSDataSource()                          */
