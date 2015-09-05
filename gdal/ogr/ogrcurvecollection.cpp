@@ -64,7 +64,7 @@ OGRCurveCollection::OGRCurveCollection( const OGRCurveCollection& other ) :
     if( other.nCurveCount > 0 )
     {
         nCurveCount = other.nCurveCount;
-        papoCurves = (OGRCurve **) VSIMalloc2(sizeof(void*), nCurveCount);
+        papoCurves = (OGRCurve **) VSICalloc(sizeof(void*), nCurveCount);
         
         if( papoCurves )
         {
@@ -187,7 +187,7 @@ OGRErr OGRCurveCollection::importPreambuleFromWkb( OGRGeometry* poGeom,
     if( eErr != OGRERR_NONE )
         return eErr;
 
-    papoCurves = (OGRCurve **) VSIMalloc2(sizeof(void*), nCurveCount);
+    papoCurves = (OGRCurve **) VSICalloc(sizeof(void*), nCurveCount);
     if (nCurveCount != 0 && papoCurves == NULL)
     {
         nCurveCount = 0;
