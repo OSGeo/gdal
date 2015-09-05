@@ -4190,7 +4190,7 @@ OGRLayer * OGROSMDataSource::ExecuteSQL( const char *pszSQLCommand,
             CPLErr eErr = sSelectInfo.preparse( pszSQLCommand );
             CPLPopErrorHandler();
 
-            if( eErr == CPLE_None )
+            if( eErr == CE_None )
             {
                 swq_select* pCurSelect = &sSelectInfo;
                 while(pCurSelect != NULL)
