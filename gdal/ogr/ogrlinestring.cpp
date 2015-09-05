@@ -39,13 +39,9 @@ CPL_CVSID("$Id$");
 /*                           OGRSimpleCurve()                           */
 /************************************************************************/
 
-OGRSimpleCurve::OGRSimpleCurve()
-
-{
-    nPointCount = 0;
-    paoPoints = NULL;
-    padfZ = NULL;
-}
+OGRSimpleCurve::OGRSimpleCurve() :
+    nPointCount(0), paoPoints(NULL), padfZ(NULL)
+{ }
 
 /************************************************************************/
 /*                OGRSimpleCurve( const OGRSimpleCurve& )               */
@@ -53,10 +49,10 @@ OGRSimpleCurve::OGRSimpleCurve()
 
 /**
  * \brief Copy constructor.
- * 
+ *
  * Note: before GDAL 2.1, only the default implementation of the constructor
  * existed, which could be unsafe to use.
- * 
+ *
  * @since GDAL 2.1
  */
 
