@@ -1524,7 +1524,7 @@ GDALWarpOptions * CPL_STDCALL GDALDeserializeWarpOptions( CPLXMLNode *psTree )
 /* -------------------------------------------------------------------- */
 /*      If any error has occured, cleanup else return success.          */
 /* -------------------------------------------------------------------- */
-    if( CPLGetLastErrorNo() != CE_None )
+    if( CPLGetLastErrorType() != CE_None )
     {
         if ( psWO->pTransformerArg )
         {
