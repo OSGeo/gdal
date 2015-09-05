@@ -61,15 +61,13 @@ void OGRCreateFromMultiPatchPart(OGRMultiPolygon *poMP,
 
     if( nPartType == SHPP_TRISTRIP )
     {
-        int iBaseVert;
-
         if( poLastPoly != NULL )
         {
             poMP->addGeometryDirectly( poLastPoly );
             poLastPoly = NULL;
         }
 
-        for( iBaseVert = 0; iBaseVert < nPartPoints-2; iBaseVert++ )
+        for( int iBaseVert = 0; iBaseVert < nPartPoints-2; iBaseVert++ )
         {
             OGRPolygon *poPoly = new OGRPolygon();
             OGRLinearRing *poRing = new OGRLinearRing();
@@ -99,15 +97,13 @@ void OGRCreateFromMultiPatchPart(OGRMultiPolygon *poMP,
     }
     else if( nPartType == SHPP_TRIFAN )
     {
-        int iBaseVert;
-
         if( poLastPoly != NULL )
         {
             poMP->addGeometryDirectly( poLastPoly );
             poLastPoly = NULL;
         }
 
-        for( iBaseVert = 0; iBaseVert < nPartPoints-2; iBaseVert++ )
+        for( int iBaseVert = 0; iBaseVert < nPartPoints-2; iBaseVert++ )
         {
             OGRPolygon *poPoly = new OGRPolygon();
             OGRLinearRing *poRing = new OGRLinearRing();
@@ -164,15 +160,13 @@ void OGRCreateFromMultiPatchPart(OGRMultiPolygon *poMP,
     }
     else if ( nPartType == SHPP_TRIANGLES )
     {
-        int iBaseVert;
-
         if( poLastPoly != NULL )
         {
             poMP->addGeometryDirectly( poLastPoly );
             poLastPoly = NULL;
         }
 
-        for( iBaseVert = 0; iBaseVert < nPartPoints-2; iBaseVert+=3 )
+        for( int iBaseVert = 0; iBaseVert < nPartPoints-2; iBaseVert+=3 )
         {
             OGRPolygon *poPoly = new OGRPolygon();
             OGRLinearRing *poRing = new OGRLinearRing();
@@ -271,11 +265,10 @@ static OGRGeometry* OGRCreateFromMultiPatch(int nParts,
 /*      Translate OGR geometry to a shapefile binary representation     */
 /************************************************************************/
 
-OGRErr OGRWriteToShapeBin( OGRGeometry *poGeom, 
+OGRErr OGRWriteToShapeBin( OGRGeometry *poGeom,
                            GByte **ppabyShape,
                            int *pnBytes )
 {
-    GUInt32 nGType = SHPT_NULL;
     int nShpSize = 4; /* All types start with integer type number */
     int nShpZSize = 0; /* Z gets tacked onto the end */
     GUInt32 nPoints = 0;
@@ -424,6 +417,8 @@ OGRErr OGRWriteToShapeBin( OGRGeometry *poGeom,
 /* -------------------------------------------------------------------- */
 /*      Write in the Shape type number now                              */
 /* -------------------------------------------------------------------- */
+    GUInt32 nGType = SHPT_NULL;
+
     switch(nOGRType)
     {
         case wkbPoint:
@@ -486,7 +481,7 @@ OGRErr OGRWriteToShapeBin( OGRGeometry *poGeom,
                 CPL_SWAPDOUBLE( pabyPtr+8+8 );
         }
 
-        return OGRERR_NONE;    
+        return OGRERR_NONE;
     }
 
 /* -------------------------------------------------------------------- */
@@ -558,8 +553,7 @@ OGRErr OGRWriteToShapeBin( OGRGeometry *poGeom,
                     CPL_SWAPDOUBLE( pabyPtrZ + 8*k );
             }
         }
-        return OGRERR_NONE;    
-
+        return OGRERR_NONE;
     }
 /* -------------------------------------------------------------------- */
 /*      POLYGON and POLYGONZ                                            */
@@ -645,7 +639,6 @@ OGRErr OGRWriteToShapeBin( OGRGeometry *poGeom,
         }
 
         return OGRERR_NONE;
-
     }
 /* -------------------------------------------------------------------- */
 /*      MULTIPOINT and MULTIPOINTZ                                      */
@@ -698,7 +691,7 @@ OGRErr OGRWriteToShapeBin( OGRGeometry *poGeom,
             pabyPtr += 16;
             if ( b3d )
                 pabyPtrZ += 8; 
-        }    
+        }
 
         return OGRERR_NONE;
     }
@@ -763,8 +756,7 @@ OGRErr OGRWriteToShapeBin( OGRGeometry *poGeom,
                 pabyPtrZ += 8 * nLineNumPoints; 
         }
 
-        return OGRERR_NONE;      
-
+        return OGRERR_NONE;
     }
 /* -------------------------------------------------------------------- */
 /*      MULTIPOLYGON and MULTIPOLYGONZ                                  */
@@ -856,26 +848,23 @@ OGRErr OGRWriteToShapeBin( OGRGeometry *poGeom,
                 pabyPtr += 4;
                 pabyPoints += 16 * nRingNumPoints;
                 if ( b3d )
-                    pabyPtrZ += 8 * nRingNumPoints; 
+                    pabyPtrZ += 8 * nRingNumPoints;
             }
         }
 
         return OGRERR_NONE;
-
-    }
-    else
-    {
-        return OGRERR_UNSUPPORTED_OPERATION;
     }
 
-}  
+    // Should not be able to get here.
+    return OGRERR_UNSUPPORTED_OPERATION;
+}
 
 
 /************************************************************************/
 /*                   OGRWriteMultiPatchToShapeBin()                     */
 /************************************************************************/
 
-OGRErr OGRWriteMultiPatchToShapeBin( OGRGeometry *poGeom, 
+OGRErr OGRWriteMultiPatchToShapeBin( OGRGeometry *poGeom,
                                      GByte **ppabyShape,
                                      int *pnBytes )
 {
