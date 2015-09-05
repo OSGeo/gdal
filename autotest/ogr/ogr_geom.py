@@ -3263,6 +3263,76 @@ def ogr_geom_api_limit_tests():
     return 'success'
 
 ###############################################################################
+# Test Equals
+
+def ogr_geom_equals():
+
+    p_empty = ogr.Geometry(ogr.wkbPoint)
+    p_0 = ogr.CreateGeometryFromWkt('POINT (0 0)')
+    p_1 = ogr.CreateGeometryFromWkt('POINT (1 1)')
+    if not p_empty.Equals(p_empty):
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if not p_0.Equals(p_0):
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if not p_0.Equals(p_0.Clone()):
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if p_empty.Equals(p_0):
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if p_0.Equals(p_empty):
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if p_0.Equals(p_1):
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    l_empty = ogr.Geometry(ogr.wkbLineString)
+    l_0_1 = ogr.CreateGeometryFromWkt('LINESTRING (0 0,1 1)')
+    l_0_1_2 = ogr.CreateGeometryFromWkt('LINESTRING (0 0,1 1,2 2)')
+    if not l_0_1.Equals(l_0_1):
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if not l_0_1.Equals(l_0_1.Clone()):
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if l_empty.Equals(l_0_1):
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if l_0_1.Equals(l_empty):
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if l_0_1.Equals(l_0_1_2):
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gc_empty = ogr.Geometry(ogr.wkbGeometryCollection)
+    gc_p_0 = ogr.CreateGeometryFromWkt('GEOMETRYCOLLECTION (POINT (0 0))')
+    gc_p_1 = ogr.CreateGeometryFromWkt('GEOMETRYCOLLECTION (POINT (1 1))')
+    if not gc_empty.Equals(gc_empty):
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if not gc_p_0.Equals(gc_p_0):
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if not gc_p_0.Equals(gc_p_0.Clone()):
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if gc_empty.Equals(gc_p_0):
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if gc_p_0.Equals(gc_empty):
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if gc_p_0.Equals(gc_p_1):
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # cleanup
 
 def ogr_geom_cleanup():
@@ -3312,6 +3382,7 @@ gdaltest_list = [
     ogr_geom_getcurvegeometry,
     ogr_geom_gt_functions,
     ogr_geom_api_limit_tests,
+    ogr_geom_equals,
     ogr_geom_cleanup ]
 
 if __name__ == '__main__':

@@ -572,12 +572,14 @@ OGRBoolean OGRPoint::Equals( OGRGeometry * poOther ) const
     if( poOther->getGeometryType() != getGeometryType() )
         return FALSE;
 
-    if ( IsEmpty() && poOther->IsEmpty() )
+    OGRPoint    *poOPoint = (OGRPoint *) poOther;
+    if ( nCoordDimension != poOPoint->nCoordDimension )
+        return FALSE;
+    
+    if ( IsEmpty() )
         return TRUE;
 
     // we should eventually test the SRS.
-    
-    OGRPoint    *poOPoint = (OGRPoint *) poOther;
     if( poOPoint->getX() != getX()
         || poOPoint->getY() != getY()
         || poOPoint->getZ() != getZ() )
