@@ -500,6 +500,26 @@ def test_gdalbuildvrt_14():
     return 'success'
 
 ###############################################################################
+# Test -b
+
+def test_gdalbuildvrt_15():
+    if test_cli_utilities.get_gdalbuildvrt_path() is None:
+        return 'skip'
+
+    gdaltest.runexternal(test_cli_utilities.get_gdalbuildvrt_path() + ' tmp/test_gdalbuildvrt_15.vrt ../gcore/data/byte.tif -b 1')
+
+    ds = gdal.Open('tmp/test_gdalbuildvrt_15.vrt')
+    cs = ds.GetRasterBand(1).Checksum()
+    ds = None
+
+    if cs != 4672:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def test_gdalbuildvrt_cleanup():
@@ -556,6 +576,7 @@ gdaltest_list = [
     test_gdalbuildvrt_12,
     test_gdalbuildvrt_13,
     test_gdalbuildvrt_14,
+    test_gdalbuildvrt_15,
     test_gdalbuildvrt_cleanup
     ]
 

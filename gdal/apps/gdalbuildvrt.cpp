@@ -256,7 +256,7 @@ class VRTBuilder
     public:
                 VRTBuilder(const char* pszOutputFilename,
                            int nInputFiles, const char* const * ppszInputFilenames,
-                           int *panBandList, int nBandCount, int nMaxBandNo,
+                           const int *panBandListIn, int nBandCount, int nMaxBandNo,
                            ResolutionStrategy resolutionStrategy,
                            double we_res, double ns_res,
                            int bTargetAlignedPixels,
@@ -279,7 +279,7 @@ class VRTBuilder
 
 VRTBuilder::VRTBuilder(const char* pszOutputFilename,
                        int nInputFiles, const char* const * ppszInputFilenames,
-                       int *panBandList, int nBandCount, int nMaxBandNo,
+                       const int *panBandListIn, int nBandCount, int nMaxBandNo,
                        ResolutionStrategy resolutionStrategy,
                        double we_res, double ns_res,
                        int bTargetAlignedPixels,
@@ -294,14 +294,18 @@ VRTBuilder::VRTBuilder(const char* pszOutputFilename,
     this->nInputFiles = nInputFiles;
 
     this->ppszInputFilenames = (char**) CPLMalloc(nInputFiles * sizeof(char*));
-    int i;
-    for(i=0;i<nInputFiles;i++)
+    for(int i=0;i<nInputFiles;i++)
     {
         this->ppszInputFilenames[i] = CPLStrdup(ppszInputFilenames[i]);
     }
 
     this->nBands = nBandCount;
-    this->panBandList = panBandList;    
+    panBandList = NULL;
+    if( nBandCount )
+    {
+        panBandList = (int*) CPLMalloc(nBands * sizeof(int));
+        memcpy(panBandList, panBandListIn, nBands * sizeof(int));
+    }
     this->nMaxBandNo = nMaxBandNo;    
 
     this->resolutionStrategy = resolutionStrategy;
@@ -349,8 +353,7 @@ VRTBuilder::~VRTBuilder()
     CPLFree(pszOutputFilename);
     CPLFree(pszSrcNoData);
     CPLFree(pszVRTNoData);
-    if (panBandList)
-        delete[] panBandList;
+    CPLFree(panBandList);
 
     int i;
     for(i=0;i<nInputFiles;i++)
@@ -625,13 +628,12 @@ int VRTBuilder::AnalyseRaster( GDALDatasetH hDS, const char* dsFileName,
             maxY = ds_maxY;
         }
 
-        //if provided band list
+        //if not provided an explicit band list, take the one of the first dataset
         if(nBands == 0)
         {
             nBands = _nBands;
-            if(panBandList != NULL)
-                CPLFree(panBandList);
-            panBandList = new int[nBands];
+            CPLFree(panBandList);
+            panBandList = (int*) CPLMalloc(nBands * sizeof(int));
             for(j=0;j<nBands;j++)
             {
                 panBandList[j] = j + 1;
