@@ -40,8 +40,12 @@ CPL_CVSID("$Id$");
 /*                          OGRGPXDataSource()                          */
 /************************************************************************/
 
-OGRGPXDataSource::OGRGPXDataSource()
-
+OGRGPXDataSource::OGRGPXDataSource() :
+    validity(GPX_VALIDITY_UNKNOWN), nElementsRead(0),
+#ifdef HAVE_EXPAT
+    oCurrentParser(NULL),
+#endif
+    nDataHandlerCounter(0)
 {
     lastGPXGeomTypeWritten = GPX_NONE;
     bUseExtensions = FALSE;
@@ -49,7 +53,7 @@ OGRGPXDataSource::OGRGPXDataSource()
 
     papoLayers = NULL;
     nLayers = 0;
-    
+
     fpOutput = NULL;
     nOffsetBounds = -1;
     dfMinLat = 90;
