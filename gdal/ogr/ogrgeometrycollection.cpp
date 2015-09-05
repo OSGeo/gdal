@@ -456,7 +456,7 @@ OGRErr OGRGeometryCollection::importFromWkbInternal( unsigned char * pabyData,
     if( eErr != OGRERR_NONE )
         return eErr;
 
-    papoGeoms = (OGRGeometry **) VSIMalloc2(sizeof(void*), nGeomCount);
+    papoGeoms = (OGRGeometry **) VSICalloc(sizeof(void*), nGeomCount);
     if (nGeomCount != 0 && papoGeoms == NULL)
     {
         nGeomCount = 0;
