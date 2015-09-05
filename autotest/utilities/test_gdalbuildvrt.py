@@ -539,6 +539,7 @@ def test_gdalbuildvrt_cleanup():
     gdal.GetDriverByName('VRT').Delete('tmp/gdalbuildvrt13.vrt')
     gdal.GetDriverByName('VRT').Delete('tmp/test_gdalbuildvrt_14.vrt')
     gdal.GetDriverByName('VRT').Delete('tmp/test_gdalbuildvrt_14_ref.vrt')
+    gdal.GetDriverByName('VRT').Delete('tmp/test_gdalbuildvrt_15.vrt')
 
     drv = gdal.GetDriverByName('GTiff')
 
