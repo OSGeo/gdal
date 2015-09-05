@@ -285,10 +285,7 @@ OGRBoolean OGRMultiSurface::hasCurveGeometry(int bLookForNonLinear) const
 
 OGRErr OGRMultiSurface::PointOnSurface( OGRPoint * poPoint ) const
 {
-    OGRMultiPolygon* poMPoly = (OGRMultiPolygon*) getLinearGeometry();
-    OGRErr ret = poMPoly->PointOnSurface(poPoint);
-    delete poMPoly;
-    return ret;
+    return PointOnSurfaceInternal(poPoint);
 }
 
 /************************************************************************/

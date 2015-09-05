@@ -133,6 +133,8 @@ class CPL_DLL OGRGeometry
                                                         int nMinSubGeomSize,
                                                         int& nGeomCount,
                                                         OGRwkbVariant eWkbVariant );
+    OGRErr                PointOnSurfaceInternal( OGRPoint * poPoint ) const;
+
   public:
                 OGRGeometry();
                 OGRGeometry( const OGRGeometry& other );
