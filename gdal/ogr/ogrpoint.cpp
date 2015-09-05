@@ -267,7 +267,7 @@ OGRErr OGRPoint::importFromWkb( unsigned char * pabyData,
     OGRBoolean          bIs3D = FALSE;
 
     OGRErr eErr = importPreambuleFromWkb( pabyData, nSize, eByteOrder, bIs3D, eWkbVariant );
-    if( eErr >= 0 )
+    if( eErr != OGRERR_NONE )
         return eErr;
 
     if ( nSize < ((bIs3D) ? 29 : 21) && nSize != -1 )

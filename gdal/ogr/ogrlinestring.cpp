@@ -855,7 +855,7 @@ OGRErr OGRSimpleCurve::importFromWkb( unsigned char * pabyData,
                                                       16,
                                                       nNewNumPoints,
                                                       eWkbVariant );
-    if( eErr >= 0 )
+    if( eErr != OGRERR_NONE )
         return eErr;
 
     /* Check if the wkb stream buffer is big enough to store

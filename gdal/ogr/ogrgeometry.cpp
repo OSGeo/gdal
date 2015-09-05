@@ -4966,7 +4966,7 @@ OGRErr OGRGeometry::importPreambuleFromWkb( unsigned char * pabyData,
     if( err != OGRERR_NONE || eGeometryType != wkbFlatten(getGeometryType()) )
         return OGRERR_CORRUPT_DATA;
 
-    return -1;
+    return OGRERR_NONE;
 }
 
 /************************************************************************/
@@ -4988,7 +4988,7 @@ OGRErr OGRGeometry::importPreambuleOfCollectionFromWkb( unsigned char * pabyData
     OGRBoolean b3D = FALSE;
 
     OGRErr eErr = importPreambuleFromWkb( pabyData, nSize, eByteOrder, b3D, eWkbVariant );
-    if( eErr >= 0 )
+    if( eErr != OGRERR_NONE )
         return eErr;
 
 /* -------------------------------------------------------------------- */
@@ -5026,7 +5026,7 @@ OGRErr OGRGeometry::importPreambuleOfCollectionFromWkb( unsigned char * pabyData
     if( nSize != -1 )
         nSize -= nDataOffset;
 
-    return -1;
+    return OGRERR_NONE;
 }
 
 /************************************************************************/

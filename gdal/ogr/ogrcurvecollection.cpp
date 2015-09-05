@@ -184,7 +184,7 @@ OGRErr OGRCurveCollection::importPreambuleFromWkb( OGRGeometry* poGeom,
                                                         nMinSubGeomSize,
                                                         nCurveCount,
                                                         eWkbVariant );
-    if( eErr >= 0 )
+    if( eErr != OGRERR_NONE )
         return eErr;
 
     papoCurves = (OGRCurve **) VSIMalloc2(sizeof(void*), nCurveCount);
@@ -194,7 +194,7 @@ OGRErr OGRCurveCollection::importPreambuleFromWkb( OGRGeometry* poGeom,
         return OGRERR_NOT_ENOUGH_MEMORY;
     }
 
-    return -1;
+    return OGRERR_NONE;
 }
 
 /************************************************************************/

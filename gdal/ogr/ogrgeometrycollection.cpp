@@ -452,8 +452,8 @@ OGRErr OGRGeometryCollection::importFromWkbInternal( unsigned char * pabyData,
                                                       9,
                                                       nGeomCount,
                                                       eWkbVariant );
-    // eErr of -1 is success.
-    if( eErr >= 0 )
+
+    if( eErr != OGRERR_NONE )
         return eErr;
 
     papoGeoms = (OGRGeometry **) VSIMalloc2(sizeof(void*), nGeomCount);

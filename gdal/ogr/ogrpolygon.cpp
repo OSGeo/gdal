@@ -287,7 +287,7 @@ OGRErr OGRPolygon::importFromWkb( unsigned char * pabyData,
     int nDataOffset = 0;
     OGRErr eErr = oCC.importPreambuleFromWkb(this, pabyData, nSize, nDataOffset,
                                              eByteOrder, 4, eWkbVariant);
-    if( eErr >= 0 )
+    if( eErr != OGRERR_NONE )
         return eErr;
 
     int b3D = (nCoordDimension == 3);
