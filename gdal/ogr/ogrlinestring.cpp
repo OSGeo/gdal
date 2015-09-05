@@ -583,11 +583,9 @@ void OGRSimpleCurve::setPoints( int nPointsIn, OGRRawPoint * paoPointsIn,
  */
 
 void OGRSimpleCurve::setPoints( int nPointsIn, double * padfX, double * padfY,
-                               double * padfZ )
+                                double * padfZ )
 
 {
-    int         i;
-
 /* -------------------------------------------------------------------- */
 /*      Check 2D/3D.                                                    */
 /* -------------------------------------------------------------------- */
@@ -595,7 +593,7 @@ void OGRSimpleCurve::setPoints( int nPointsIn, double * padfX, double * padfY,
         Make2D();
     else
         Make3D();
-    
+
 /* -------------------------------------------------------------------- */
 /*      Assign values.                                                  */
 /* -------------------------------------------------------------------- */
@@ -603,14 +601,18 @@ void OGRSimpleCurve::setPoints( int nPointsIn, double * padfX, double * padfY,
     if (nPointCount < nPointsIn)
         return;
 
-    for( i = 0; i < nPointsIn; i++ )
+    for( int i = 0; i < nPointsIn; i++ )
     {
         paoPoints[i].x = padfX[i];
         paoPoints[i].y = padfY[i];
     }
 
-    if( this->padfZ != NULL && nPointsIn )
-        memcpy( this->padfZ, padfZ, sizeof(double) * nPointsIn );
+    if( !padfZ || !nPointsIn )
+    {
+        return;
+    }
+
+    memcpy( this->padfZ, padfZ, sizeof(double) * nPointsIn );
 }
 
 /************************************************************************/
