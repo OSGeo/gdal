@@ -152,23 +152,7 @@ OGRBoolean OGRMultiPolygon::hasCurveGeometry(CPL_UNUSED int bLookForNonLinear) c
 
 OGRErr OGRMultiPolygon::PointOnSurface( OGRPoint * poPoint ) const
 {
-    if( poPoint == NULL || poPoint->IsEmpty() )
-        return OGRERR_FAILURE;
-
-    OGRGeometryH hInsidePoint = OGR_G_PointOnSurface( (OGRGeometryH) this );
-    if( hInsidePoint == NULL )
-        return OGRERR_FAILURE;
-
-    OGRPoint *poInsidePoint = (OGRPoint *) hInsidePoint;
-    if( poInsidePoint->IsEmpty() )
-        poPoint->empty();
-    else
-    {
-        poPoint->setX( poInsidePoint->getX() );
-        poPoint->setY( poInsidePoint->getY() );
-    }
-
-    return OGRERR_NONE;
+    return PointOnSurfaceInternal(poPoint);
 }
 
 /************************************************************************/

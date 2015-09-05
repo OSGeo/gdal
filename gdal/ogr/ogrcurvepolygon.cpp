@@ -535,10 +535,7 @@ OGRGeometry* OGRCurvePolygon::getLinearGeometry(double dfMaxAngleStepSizeDegrees
 OGRErr OGRCurvePolygon::PointOnSurface( OGRPoint *poPoint ) const
 
 {
-    OGRPolygon* poPoly = CurvePolyToPoly();
-    OGRErr ret = poPoly->PointOnSurface(poPoint);
-    delete poPoly;
-    return ret;
+    return PointOnSurfaceInternal(poPoint);
 }
 
 /************************************************************************/
