@@ -38,7 +38,7 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 static void CPL_STDCALL OGRVRTErrorHandler(CPL_UNUSED CPLErr eErr,
-                                           CPL_UNUSED int nType,
+                                           CPL_UNUSED CPLErrorNum nType,
                                            const char* pszMsg)
 {
     std::vector<CPLString>* paosErrors = (std::vector<CPLString>* )CPLGetErrorHandlerUserData();

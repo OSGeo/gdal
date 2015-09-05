@@ -675,7 +675,7 @@ int DDFFieldDefn::ApplyFormats()
         || _formatControls[0] != '('
         || _formatControls[strlen(_formatControls)-1] != ')' )
     {
-        CPLError( CE_Warning, CPLE_DiscardedFormat,
+        CPLError( CE_Warning, (CPLErrorNum)CPLE_DiscardedFormat,
                   "Format controls for `%s' field missing brackets:%s",
                   pszTag, _formatControls );
         
@@ -719,7 +719,7 @@ int DDFFieldDefn::ApplyFormats()
         
         if( iFormatItem >= nSubfieldCount )
         {
-            CPLError( CE_Warning, CPLE_DiscardedFormat,
+            CPLError( CE_Warning, (CPLErrorNum)CPLE_DiscardedFormat,
                       "Got more formats than subfields for field `%s'.",
                       pszTag );
             break;
@@ -739,7 +739,7 @@ int DDFFieldDefn::ApplyFormats()
 
     if( iFormatItem < nSubfieldCount )
     {
-        CPLError( CE_Warning, CPLE_DiscardedFormat,
+        CPLError( CE_Warning, (CPLErrorNum)CPLE_DiscardedFormat,
                   "Got less formats than subfields for field `%s'.",
                   pszTag );
         return FALSE;

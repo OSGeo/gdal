@@ -3252,7 +3252,7 @@ int GDALDataset::CloseDependentDatasets()
  * @since GDAL 1.9.0
  */
 
-void GDALDataset::ReportError(CPLErr eErrClass, int err_no, const char *fmt, ...)
+void GDALDataset::ReportError(CPLErr eErrClass, CPLErrorNum err_no, const char *fmt, ...)
 {
     va_list args;
 
@@ -5263,7 +5263,7 @@ OGRLayer * GDALDataset::ExecuteSQL( const char *pszStatement,
     if( poSelectParseOptions != NULL )
         poCustomFuncRegistrar = poSelectParseOptions->poCustomFuncRegistrar;
     if( psSelectInfo->preparse( pszStatement,
-                                poCustomFuncRegistrar != NULL ) != CPLE_None )
+                                poCustomFuncRegistrar != NULL ) != CE_None )
     {
         delete psSelectInfo;
         return NULL;

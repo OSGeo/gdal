@@ -292,7 +292,7 @@ int OGRGPSBabelDataSource::Open( const char * pszDatasourceName,
         argv = NULL;
 
         CPLErr nLastErrorType = CPLGetLastErrorType();
-        int nLastErrorNo = CPLGetLastErrorNo();
+        CPLErrorNum nLastErrorNo = CPLGetLastErrorNo();
         CPLString osLastErrorMsg = CPLGetLastErrorMsg();
 
         VSIFCloseL(tmpfp);

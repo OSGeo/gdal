@@ -1275,7 +1275,7 @@ int GDALJP2Metadata::GetGMLJP2GeoreferencingInfo( int& nEPSGCode,
     }
 
     // Save error state as importFromEPSGA() will call CPLReset()
-    int errNo = CPLGetLastErrorNo();
+    CPLErrorNum errNo = CPLGetLastErrorNo();
     CPLErr eErr = CPLGetLastErrorType();
     CPLString osLastErrorMsg = CPLGetLastErrorMsg();
 

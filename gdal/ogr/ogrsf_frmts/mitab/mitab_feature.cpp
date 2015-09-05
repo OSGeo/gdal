@@ -297,7 +297,7 @@ TABFeature *TABFeature::CreateFromMapInfoType(int nMapInfoType,
 //        poFeature = new TABDebugFeature(poDefn);
         poFeature = new TABFeature(poDefn);
 
-        CPLError(CE_Warning, TAB_WarningFeatureTypeNotSupported,
+        CPLError(CE_Warning, (CPLErrorNum)TAB_WarningFeatureTypeNotSupported,
                  "Unsupported object type %d (0x%2.2x).  Feature will be "
                  "returned with NONE geometry.",
                  nMapInfoType, nMapInfoType);

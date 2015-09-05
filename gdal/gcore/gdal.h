@@ -214,7 +214,7 @@ const char CPL_DLL *GDALGetPaletteInterpretationName( GDALPaletteInterp );
 /*                                                                      */
 /*      error codes 100 to 299 reserved for GDAL.                       */
 /* -------------------------------------------------------------------- */
-#define CPLE_WrongFormat        200
+#define CPLE_WrongFormat        (CPLErrorNum)200
 
 /* -------------------------------------------------------------------- */
 /*      Define handle types related to various internal classes.        */

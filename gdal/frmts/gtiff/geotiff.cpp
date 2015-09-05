@@ -8470,15 +8470,15 @@ class GTIFFErrorStruct
 {
 public:
     CPLErr type;
-    int    no;
+    CPLErrorNum    no;
     CPLString msg;
     
         GTIFFErrorStruct() {}
-        GTIFFErrorStruct(CPLErr eErr, int no, const char* msg) :
+        GTIFFErrorStruct(CPLErr eErr, CPLErrorNum no, const char* msg) :
             type(eErr), no(no), msg(msg) {}
 };
 
-static void CPL_STDCALL GTIFFErrorHandler(CPLErr eErr, int no, const char* msg)
+static void CPL_STDCALL GTIFFErrorHandler(CPLErr eErr, CPLErrorNum no, const char* msg)
 {
     std::vector<GTIFFErrorStruct>* paoErrors =
         (std::vector<GTIFFErrorStruct>*) CPLGetErrorHandlerUserData();

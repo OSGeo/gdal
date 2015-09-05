@@ -559,7 +559,7 @@ int TABMAPHeaderBlock::Coordsys2Int(double dX, double dY,
     {
         m_bIntBoundsOverflow = TRUE;
 #ifdef DEBUG
-        CPLError(CE_Warning, TAB_WarningBoundsOverflow, 
+        CPLError(CE_Warning, (CPLErrorNum)TAB_WarningBoundsOverflow, 
                  "Integer bounds overflow: (%f, %f) -> (%d, %d)\n",
                  dX, dY, nX, nY);
 #endif

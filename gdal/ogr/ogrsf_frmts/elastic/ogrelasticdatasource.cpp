@@ -169,7 +169,7 @@ OGRLayer * OGRElasticDataSource::ICreateLayer(const char * pszLayerName,
 
     // Backup error state
     CPLErr eLastErrorType = CPLGetLastErrorType();
-    int nLastErrorNo = CPLGetLastErrorNo();
+    CPLErrorNum nLastErrorNo = CPLGetLastErrorNo();
     CPLString osLastErrorMsg = CPLGetLastErrorMsg();
 
     // Check if the index exists
