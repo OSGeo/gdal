@@ -41,11 +41,11 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 OGRGPXDataSource::OGRGPXDataSource() :
-    validity(GPX_VALIDITY_UNKNOWN), nElementsRead(0),
+    validity(GPX_VALIDITY_UNKNOWN), nElementsRead(0)
 #ifdef HAVE_EXPAT
-    oCurrentParser(NULL),
-#endif
+    ,oCurrentParser(NULL),
     nDataHandlerCounter(0)
+#endif
 {
     lastGPXGeomTypeWritten = GPX_NONE;
     bUseExtensions = FALSE;
