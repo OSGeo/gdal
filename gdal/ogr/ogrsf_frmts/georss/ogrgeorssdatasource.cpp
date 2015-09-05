@@ -49,8 +49,9 @@ OGRGeoRSSDataSource::OGRGeoRSSDataSource() :
     eFormat(GEORSS_RSS),
     eGeomDialect(GEORSS_SIMPLE),
     bUseExtensions(FALSE),
-    bWriteHeaderAndFooter(TRUE),
+    bWriteHeaderAndFooter(TRUE)
 #ifdef HAVE_EXPAT
+    ,
     oCurrentParser(NULL),
     nDataHandlerCounter(0)
 #endif
