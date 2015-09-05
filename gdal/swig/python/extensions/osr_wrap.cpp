@@ -14062,7 +14062,7 @@ SWIG_init(void) {
   
   SWIG_InstallConstants(d,swig_const_table);
   
-  SWIG_Python_SetConstant(d, "SRS_WKT_WGS84",SWIG_FromCharPtr("GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9108\"]],AUTHORITY[\"EPSG\",\"4326\"]]"));
+  SWIG_Python_SetConstant(d, "SRS_WKT_WGS84",SWIG_FromCharPtr("GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4326\"]]"));
   SWIG_Python_SetConstant(d, "SRS_PT_ALBERS_CONIC_EQUAL_AREA",SWIG_FromCharPtr("Albers_Conic_Equal_Area"));
   SWIG_Python_SetConstant(d, "SRS_PT_AZIMUTHAL_EQUIDISTANT",SWIG_FromCharPtr("Azimuthal_Equidistant"));
   SWIG_Python_SetConstant(d, "SRS_PT_CASSINI_SOLDNER",SWIG_FromCharPtr("Cassini_Soldner"));
