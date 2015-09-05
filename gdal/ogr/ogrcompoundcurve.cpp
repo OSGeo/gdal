@@ -152,7 +152,7 @@ OGRErr OGRCompoundCurve::importFromWkb( unsigned char * pabyData,
     int nDataOffset = 0;
     OGRErr eErr = oCC.importPreambuleFromWkb(this, pabyData, nSize, nDataOffset,
                                              eByteOrder, 9, eWkbVariant);
-    if( eErr >= 0 )
+    if( eErr != OGRERR_NONE )
         return eErr;
 
     return oCC.importBodyFromWkb(this, pabyData, nSize, nDataOffset,
