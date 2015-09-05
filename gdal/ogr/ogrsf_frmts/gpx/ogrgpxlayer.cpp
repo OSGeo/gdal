@@ -55,34 +55,51 @@ OGRGPXLayer::OGRGPXLayer( const char* pszFilename,
                           const char* pszLayerName,
                           GPXGeometryType gpxGeomType,
                           OGRGPXDataSource* poDS,
-                          int bWriteMode)
-
+                          int bWriteMode) :
+    nFeatures(0),
+    eof(FALSE),
+    nNextFID(0),
+    pszElementToScan(pszLayerName),
+#ifdef HAVE_EXPAT
+    oSchemaParser(NULL),
+#endif
+    inInterestingElement(0),
+    hasFoundLat(FALSE),
+    hasFoundLon(FALSE),
+    latVal(0.0),
+    lonVal(0.0),
+    iCurrentField(0),
+    multiLineString(NULL),
+    lineString(NULL),
+    depthLevel(0),
+    interestingDepthLevel(0),
+    currentFieldDefn(NULL),
+    inExtensions(FALSE),
+    inLink(FALSE),
+    iCountLink(0),
+    trkFID(0),
+    trkSegId(0),
+    trkSegPtId(0),
+    rteFID(0),
+    nWithoutEventCounter(0),
+    nDataHandlerCounter(0)
 {
     const char* gpxVersion = poDS->GetVersion();
-
-    int i;
-
-    eof = FALSE;
-    nNextFID = 0;
 
     this->poDS = poDS;
     this->bWriteMode = bWriteMode;
     this->gpxGeomType = gpxGeomType;
-    
-    pszElementToScan = pszLayerName;
-    
+
     nMaxLinks = atoi(CPLGetConfigOption("GPX_N_MAX_LINKS", "2"));
     if (nMaxLinks < 0)
         nMaxLinks = 2;
     if (nMaxLinks > 100)
         nMaxLinks = 100;
 
-    nFeatures = 0;
-    
-    bEleAs25D =  CSLTestBoolean(CPLGetConfigOption("GPX_ELE_AS_25D", "NO"));
-    
-    int bShortNames  = CSLTestBoolean(CPLGetConfigOption("GPX_SHORT_NAMES", "NO"));
-    
+    bEleAs25D = CSLTestBoolean(CPLGetConfigOption("GPX_ELE_AS_25D", "NO"));
+
+    int bShortNames = CSLTestBoolean(CPLGetConfigOption("GPX_SHORT_NAMES", "NO"));
+
     poFeatureDefn = new OGRFeatureDefn( pszLayerName );
     SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->Reference();
@@ -177,7 +194,7 @@ OGRGPXLayer::OGRGPXLayer( const char* pszFilename,
         }
         else
         {
-            for(i=1;i<=nMaxLinks;i++)
+            for(int i=1;i<=nMaxLinks;i++)
             {
                 char szFieldName[32];
                 sprintf(szFieldName, "link%d_href", i);
@@ -242,7 +259,7 @@ OGRGPXLayer::OGRGPXLayer( const char* pszFilename,
         OGRFieldDefn oFieldSrc("src", OFTString );
         poFeatureDefn->AddFieldDefn( &oFieldSrc );
         
-        for(i=1;i<=nMaxLinks;i++)
+        for(int i=1;i<=nMaxLinks;i++)
         {
             char szFieldName[32];
             sprintf(szFieldName, "link%d_href", i);
