@@ -85,11 +85,11 @@ int OGRGenSQLResultsLayerHasSpecialField(swq_expr_node* expr,
 /************************************************************************/
 
 OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( GDALDataset *poSrcDS,
-                                              void *pSelectInfo, 
+                                              void *pSelectInfo,
                                               OGRGeometry *poSpatFilter,
                                               const char *pszWHERE,
-                                              const char *pszDialect )
-
+                                              const char *pszDialect ) :
+    poSrcLayer(NULL), pszWHERE(NULL), iFIDFieldIndex()
 {
     swq_select *psSelectInfo = (swq_select *) pSelectInfo;
 
