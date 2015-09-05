@@ -48,9 +48,7 @@ OGRGeoJSONDataSource::OGRGeoJSONDataSource()
         bOtherPages_(FALSE),
         bFpOutputIsSeekable_( FALSE ),
         nBBOXInsertLocation_(0)
-{
-    // I've got constructed. Lunch time!
-}
+{ }
 
 /************************************************************************/
 /*                           ~OGRGeoJSONDataSource()                    */
@@ -59,12 +57,6 @@ OGRGeoJSONDataSource::OGRGeoJSONDataSource()
 OGRGeoJSONDataSource::~OGRGeoJSONDataSource()
 {
     Clear();
-    
-    if( NULL != fpOut_ )
-    {
-        VSIFCloseL( fpOut_ );
-        fpOut_ = NULL;
-    }
 }
 
 /************************************************************************/
@@ -354,7 +346,7 @@ void OGRGeoJSONDataSource::Clear()
     pszGeoData_ = NULL;
     nGeoDataLen_ = 0;
 
-    if( NULL != fpOut_ )
+    if( fpOut_ )
     {
         VSIFCloseL( fpOut_ );
     }
