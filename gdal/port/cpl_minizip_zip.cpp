@@ -1022,32 +1022,34 @@ extern int ZEXPORT cpl_zipCloseFileInZipRaw (
     uLong uncompressed_size,
     uLong crc32 )
 {
-    zip_internal* zi;
-    uLong compressed_size;
-    int err=ZIP_OK;
-
     if (file == NULL)
         return ZIP_PARAMERROR;
-    zi = (zip_internal*)file;
+
+    zip_internal* zi = (zip_internal*)file;
 
     if (zi->in_opened_file_inzip == 0)
         return ZIP_PARAMERROR;
     zi->ci.stream.avail_in = 0;
 
+    int err=ZIP_OK;
     if ((zi->ci.method == Z_DEFLATED) && (!zi->ci.raw))
-        while (err==ZIP_OK)
     {
-        uLong uTotalOutBefore;
-        if (zi->ci.stream.avail_out == 0)
+        while (err==ZIP_OK)
         {
-            if (zipFlushWriteBuffer(zi) == ZIP_ERRNO)
-                err = ZIP_ERRNO;
-            zi->ci.stream.avail_out = (uInt)Z_BUFSIZE;
-            zi->ci.stream.next_out = zi->ci.buffered_data;
+            if (zi->ci.stream.avail_out == 0)
+            {
+                if (zipFlushWriteBuffer(zi) == ZIP_ERRNO)
+                {
+                    err = ZIP_ERRNO;
+                    break;
+                }
+                zi->ci.stream.avail_out = (uInt)Z_BUFSIZE;
+                zi->ci.stream.next_out = zi->ci.buffered_data;
+            }
+            uLong uTotalOutBefore = zi->ci.stream.total_out;
+            err=deflate(&zi->ci.stream,  Z_FINISH);
+            zi->ci.pos_in_buffered_data += (uInt)(zi->ci.stream.total_out - uTotalOutBefore) ;
         }
-        uTotalOutBefore = zi->ci.stream.total_out;
-        err=deflate(&zi->ci.stream,  Z_FINISH);
-        zi->ci.pos_in_buffered_data += (uInt)(zi->ci.stream.total_out - uTotalOutBefore) ;
     }
 
     if (err==Z_STREAM_END)
@@ -1068,10 +1070,10 @@ extern int ZEXPORT cpl_zipCloseFileInZipRaw (
         crc32 = (uLong)zi->ci.crc32;
         uncompressed_size = (uLong)zi->ci.stream.total_in;
     }
-    compressed_size = (uLong)zi->ci.stream.total_out;
-#    ifndef NOCRYPT
+    uLong compressed_size = (uLong)zi->ci.stream.total_out;
+#ifndef NOCRYPT
     compressed_size += zi->ci.crypt_header_size;
-#    endif
+#endif
 
     ziplocal_putValue_inmemory(zi->ci.central_header+16,crc32,4); /*crc*/
     ziplocal_putValue_inmemory(zi->ci.central_header+20,
