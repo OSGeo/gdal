@@ -139,12 +139,12 @@ def pdf_online_1():
     gt = ds.GetGeoTransform()
     wkt = ds.GetProjectionRef()
 
-    if ds.GetMetadataItem('PDF_LIB', '_INTERNAL_') == 'PDFIUM':
+    if pdf_is_pdfium():
         expected_gt = (-77.11232757568358, 9.1663393281356228e-06, 0.0, 38.897842406247477, 0.0, -9.1665025563464202e-06)
-    elif ds.GetMetadataItem('PDF_LIB', '_INTERNAL_') == 'PODOFO':
-        expected_gt = (-77.112328333299956, 9.1666560000051172e-06, 0.0, 38.897842488371978, 0.0, -9.1666560000046903e-06)
-    else:
+    elif pdf_is_poppler():
         expected_gt = (-77.112328333299999, 9.1666559999999995e-06, 0.0, 38.897842488372, -0.0, -9.1666559999999995e-06)
+    else:
+        expected_gt = (-77.112328333299956, 9.1666560000051172e-06, 0.0, 38.897842488371978, 0.0, -9.1666560000046903e-06)
 
     for i in range(6):
         if abs(gt[i] - expected_gt[i]) > 1e-15:
@@ -189,13 +189,12 @@ def pdf_online_2():
     gt = ds.GetGeoTransform()
     wkt = ds.GetProjectionRef()
 
-    if ds.GetMetadataItem('PDF_LIB', '_INTERNAL_') == 'PDFIUM':
+    if pdf_is_pdfium():
         expected_gt = (-77.11232757568358, 9.1663393281356228e-06, 0.0, 38.897842406247477, 0.0, -9.1665025563464202e-06)
-    elif ds.GetMetadataItem('PDF_LIB', '_INTERNAL_') == 'PODOFO':
-        expected_gt = (-77.112328333299956, 9.1666560000051172e-06, 0.0, 38.897842488371978, 0.0, -9.1666560000046903e-06)
-
-    else:
+    elif pdf_is_poppler():
         expected_gt = (-77.112328333299999, 9.1666559999999995e-06, 0.0, 38.897842488372, -0.0, -9.1666559999999995e-06)
+    else:
+        expected_gt = (-77.112328333299956, 9.1666560000051172e-06, 0.0, 38.897842488371978, 0.0, -9.1666560000046903e-06)
 
     for i in range(6):
         if abs(gt[i] - expected_gt[i]) > 1e-15:
@@ -231,7 +230,7 @@ def pdf_1():
     gt = ds.GetGeoTransform()
     wkt = ds.GetProjectionRef()
 
-    if ds.GetMetadataItem('PDF_LIB', '_INTERNAL_') == 'PDFIUM':
+    if pdf_is_pdfium():
         expected_gt = (333275.12406585668, 31.764450118407499, 0.0, 4940392.1233656602, 0.0, -31.794983670894396)
     else:
         expected_gt = (333274.61654367246, 31.764802242655662, 0.0, 4940391.7593506984, 0.0, -31.794745501708238)
@@ -259,7 +258,7 @@ def pdf_1():
 
     neatline = ds.GetMetadataItem('NEATLINE')
     got_geom = ogr.CreateGeometryFromWkt(neatline)
-    if ds.GetMetadataItem('PDF_LIB', '_INTERNAL_') == 'PDFIUM':
+    if pdf_is_pdfium():
         expected_geom = ogr.CreateGeometryFromWkt('POLYGON ((338304.28536533244187 4896674.10591614805162,338304.812550922040828 4933414.853961281478405,382774.246895745047368 4933414.855149634182453,382774.983309225703124 4896673.95723026804626,338304.28536533244187 4896674.10591614805162))')
     else:
         expected_geom = ogr.CreateGeometryFromWkt('POLYGON ((338304.150125828920864 4896673.639421294443309,338304.177293475600891 4933414.799376524984837,382774.271384406310972 4933414.546264361590147,382774.767329963855445 4896674.273581005632877,338304.150125828920864 4896673.639421294443309))')
@@ -924,7 +923,7 @@ def pdf_update_gcps(dpi = 300):
     got_gcp_wkt = ds.GetGCPProjection()
     got_neatline = ds.GetMetadataItem('NEATLINE')
 
-    if ds.GetMetadataItem('PDF_LIB', '_INTERNAL_') == 'PDFIUM':
+    if pdf_is_pdfium():
         max_error = 1
     else:
         max_error = 0.0001
@@ -1124,7 +1123,7 @@ def pdf_set_neatline(geo_encoding, dpi = 300):
     got_gt = ds.GetGeoTransform()
     got_neatline = ds.GetMetadataItem('NEATLINE')
 
-    if ds.GetMetadataItem('PDF_LIB', '_INTERNAL_') == 'PDFIUM':
+    if pdf_is_pdfium():
         if geo_encoding == 'ISO32000':
             expected_gt = (440722.21886505646, 59.894520395349709, 0.020450745157516229, 3751318.6133243339, 0.077268565258743135, -60.009312694035692)
         max_error = 1
@@ -1160,7 +1159,7 @@ def pdf_set_neatline(geo_encoding, dpi = 300):
     got_gt = ds.GetGeoTransform()
     got_neatline = ds.GetMetadataItem('NEATLINE')
 
-    if ds.GetMetadataItem('PDF_LIB', '_INTERNAL_') == 'PDFIUM':
+    if pdf_is_pdfium():
         if geo_encoding == 'ISO32000':
             expected_gt = (440722.36151923181, 59.93217744208814, 0.0, 3751318.7819266757, 0.0, -59.941906300000845)
 
@@ -1264,12 +1263,10 @@ def pdf_layers():
     if gdaltest.pdf_drv is None:
         return 'skip'
 
-    if gdaltest.pdf_drv.GetMetadataItem('HAVE_POPPLER') == None:
+    if not pdf_is_poppler() and not pdf_is_pdfium():
         return 'skip'
 
     ds = gdal.Open('data/adobe_style_geospatial.pdf')
-    if ds.GetMetadataItem('PDF_LIB') != 'POPPLER':
-        return 'skip'
     layers = ds.GetMetadata_List('LAYERS')
     cs1 = ds.GetRasterBand(1).Checksum()
     ds = None
@@ -1344,7 +1341,7 @@ if (button == 4) app.launchURL('http://gdal.org/');"""
     ds = None
     src_ds = None
 
-    if pdf_is_poppler():
+    if pdf_is_poppler() or pdf_is_pdfium():
         ds = gdal.Open('tmp/pdf_custom_layout.pdf')
         ds.GetRasterBand(1).Checksum()
         layers = ds.GetMetadata_List('LAYERS')
@@ -1352,7 +1349,7 @@ if (button == 4) app.launchURL('http://gdal.org/');"""
 
     gdal.Unlink('tmp/pdf_custom_layout.pdf')
 
-    if pdf_is_poppler():
+    if pdf_is_poppler() or pdf_is_pdfium():
         if layers != ['LAYER_00_NAME=byte_tif', 'LAYER_01_NAME=Footpage_and_logo']:
             gdaltest.post_reason('did not get expected layers')
             print(layers)
@@ -1408,7 +1405,7 @@ def pdf_extra_rasters():
     ds = None
     src_ds = None
 
-    if pdf_is_poppler():
+    if pdf_is_poppler() or pdf_is_pdfium():
         ds = gdal.Open('tmp/pdf_extra_rasters.pdf')
         cs = ds.GetRasterBand(1).Checksum()
         layers = ds.GetMetadata_List('LAYERS')
@@ -1417,15 +1414,15 @@ def pdf_extra_rasters():
     gdal.Unlink('tmp/pdf_extra_rasters.pdf')
     os.unlink('tmp/subbyte.vrt')
 
-    if pdf_is_poppler():
+    if pdf_is_poppler() or pdf_is_pdfium():
         if layers != ['LAYER_00_NAME=byte_tif', 'LAYER_01_NAME=subbyte']:
             gdaltest.post_reason('did not get expected layers')
             print(layers)
             return 'fail'
-        if cs != 7926 and cs != 8177 and cs != 8174:
-            gdaltest.post_reason('bad checksum')
-            print(cs)
-            return 'fail'
+    if pdf_is_poppler() and (cs != 7926 and cs != 8177 and cs != 8174):
+        gdaltest.post_reason('bad checksum')
+        print(cs)
+        return 'fail'
 
     return 'success'
 
@@ -1471,7 +1468,7 @@ def pdf_write_ogr():
     ds = None
     src_ds = None
 
-    if pdf_is_poppler():
+    if pdf_is_poppler() or pdf_is_pdfium():
         ds = gdal.Open('tmp/pdf_write_ogr.pdf')
         cs_ref = ds.GetRasterBand(1).Checksum()
         layers = ds.GetMetadata_List('LAYERS')
@@ -1519,7 +1516,7 @@ def pdf_write_ogr():
     gdal.Unlink('tmp/test.csv')
     gdal.Unlink('tmp/test.vrt')
 
-    if pdf_is_poppler():
+    if pdf_is_poppler() or pdf_is_pdfium():
         if layers != ['LAYER_00_NAME=A_Layer', 'LAYER_01_NAME=A_Layer.Text']:
             gdaltest.post_reason('did not get expected layers')
             print(layers)
