@@ -1459,11 +1459,11 @@ class GDALPDFArrayPodofo : public GDALPDFArray
 class GDALPDFStreamPodofo : public GDALPDFStream
 {
     private:
-        PoDoFo::PdfMemStream* m_pStream;
+        PoDoFo::PdfStream* m_pStream;
 
     public:
-        GDALPDFStreamPodofo(PoDoFo::PdfMemStream* pStream) : m_pStream(pStream) { }
-        virtual ~GDALPDFStreamPodofo() { delete m_pStream; }
+        GDALPDFStreamPodofo(PoDoFo::PdfStream* pStream) : m_pStream(pStream) { }
+        virtual ~GDALPDFStreamPodofo() { }
 
         virtual int GetLength();
         virtual char* GetBytes();
@@ -1668,26 +1668,9 @@ GDALPDFStream* GDALPDFObjectPodofo::GetStream()
         return NULL;
     }
 
-    if (m_poStream)
-        return m_poStream;
-    PoDoFo::PdfMemStream* pStream = NULL;
-    try
-    {
-        pStream = new PoDoFo::PdfMemStream(*(dynamic_cast<PoDoFo::PdfMemStream*>(m_po->GetStream())));
-        pStream->Uncompress();
-    }
-    catch( const PoDoFo::PdfError & e )
-    {
-        e.PrintErrorMsg();
-        pStream = NULL;
-    }
-    if (pStream)
-    {
-        m_poStream = new GDALPDFStreamPodofo(pStream);
-        return m_poStream;
-    }
-    else
-        return NULL;
+    if (m_poStream == NULL)
+        m_poStream = new GDALPDFStreamPodofo(m_po->GetStream());
+    return m_poStream;
 }
 
 /************************************************************************/
@@ -1829,7 +1812,18 @@ GDALPDFObject* GDALPDFArrayPodofo::Get(int nIndex)
 
 int GDALPDFStreamPodofo::GetLength()
 {
-    return static_cast<int>(m_pStream->GetLength());
+    char* pBuffer = NULL;
+    PoDoFo::pdf_long nLen = 0;
+    try
+    {
+        m_pStream->GetFilteredCopy( &pBuffer, &nLen );
+        PoDoFo::podofo_free(pBuffer);
+        return (int)nLen;
+    }
+    catch( PoDoFo::PdfError & e )
+    {
+    }
+    return 0;
 }
 
 /************************************************************************/
@@ -1838,12 +1832,25 @@ int GDALPDFStreamPodofo::GetLength()
 
 char* GDALPDFStreamPodofo::GetBytes()
 {
-    int nLength = GetLength();
-    char* pszContent = (char*) VSIMalloc(nLength + 1);
-    if (!pszContent)
+    char* pBuffer = NULL;
+    PoDoFo::pdf_long nLen = 0;
+    try
+    {
+        m_pStream->GetFilteredCopy( &pBuffer, &nLen );
+    }
+    catch( PoDoFo::PdfError & e )
+    {
         return NULL;
-    memcpy(pszContent, m_pStream->Get(), nLength);
-    pszContent[nLength] = '\0';
+    }
+    char* pszContent = (char*) VSIMalloc(nLen + 1);
+    if (!pszContent)
+    {
+        PoDoFo::podofo_free(pBuffer);
+        return NULL;
+    }
+    memcpy(pszContent, pBuffer, nLen);
+    PoDoFo::podofo_free(pBuffer);
+    pszContent[nLen] = '\0';
     return pszContent;
 }
 
