@@ -327,7 +327,12 @@ size_t VSIUnixStdioHandle::Read( void * pBuffer, size_t nSize, size_t nCount )
 /*      skipped a flushing seek that we may need to do now.             */
 /* -------------------------------------------------------------------- */
     if( bLastOpWrite )
-        VSI_FSEEK64( fp, nOffset, SEEK_SET );
+    {
+        if( VSI_FSEEK64( fp, nOffset, SEEK_SET ) != 0 )
+        {
+            VSIDebug1("Write calling seek failed. %d", nOffset);
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Perform the read.                                               */
@@ -370,7 +375,7 @@ size_t VSIUnixStdioHandle::Read( void * pBuffer, size_t nSize, size_t nCount )
 /*                               Write()                                */
 /************************************************************************/
 
-size_t VSIUnixStdioHandle::Write( const void * pBuffer, size_t nSize, 
+size_t VSIUnixStdioHandle::Write( const void * pBuffer, size_t nSize,
                                   size_t nCount )
 
 {
@@ -382,7 +387,12 @@ size_t VSIUnixStdioHandle::Write( const void * pBuffer, size_t nSize,
 /*      skipped a flushing seek that we may need to do now.             */
 /* -------------------------------------------------------------------- */
     if( bLastOpRead )
-        VSI_FSEEK64( fp, nOffset, SEEK_SET );
+    {
+        if( VSI_FSEEK64( fp, nOffset, SEEK_SET ) != 0 )
+        {
+            VSIDebug1("Write calling seek failed. %d", nOffset);
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Perform the write.                                              */
@@ -390,7 +400,7 @@ size_t VSIUnixStdioHandle::Write( const void * pBuffer, size_t nSize,
     size_t  nResult = fwrite( pBuffer, nSize, nCount, fp );
     int     nError = errno;
 
-    VSIDebug4( "VSIUnixStdioHandle::Write(%p,%ld,%ld) = %ld", 
+    VSIDebug4( "VSIUnixStdioHandle::Write(%p,%ld,%ld) = %ld",
                fp, (long)nSize, (long)nCount, (long)nResult );
 
     errno = nError;
@@ -401,7 +411,7 @@ size_t VSIUnixStdioHandle::Write( const void * pBuffer, size_t nSize,
     nOffset += nSize * nResult;
     bLastOpWrite = TRUE;
     bLastOpRead = FALSE;
-    
+
     return nResult;
 }
 
