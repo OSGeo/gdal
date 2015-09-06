@@ -359,9 +359,24 @@ class GDALPDFDumper
         void DumpSimplified(GDALPDFObject* poObj);
 
     public:
-        GDALPDFDumper(FILE* fIn, int nDepthLimitIn = -1) : f(fIn), nDepthLimit(nDepthLimitIn)
+        GDALPDFDumper(const char* pszFilename,
+                      const char* pszDumpFile, int nDepthLimitIn = -1) : nDepthLimit(nDepthLimitIn)
         {
             bDumpParent = CSLTestBoolean(CPLGetConfigOption("PDF_DUMP_PARENT", "FALSE"));
+            if (strcmp(pszDumpFile, "stderr") == 0)
+                f = stderr;
+            else if (EQUAL(pszDumpFile, "YES"))
+                f = fopen(CPLSPrintf("dump_%s.txt", CPLGetFilename(pszFilename)), "wt");
+            else
+                f = fopen(pszDumpFile, "wt");
+            if (f == NULL)
+                f = stderr;
+        }
+
+        ~GDALPDFDumper()
+        {
+            if( f != stderr )
+                fclose(f);
         }
 
         void Dump(GDALPDFObject* poObj, int nDepth = 0);
@@ -1321,6 +1336,116 @@ const char* PDFDataset::GetOption(char** papszOpenOptions,
     return pszDefaultVal;
 }
 
+#ifdef HAVE_PDFIUM
+
+#include "fpdfsdk/include/fsdk_rendercontext.h"
+
+/************************************************************************/
+/*                         GDALPDFiumOCContext                          */
+/************************************************************************/
+
+class GDALPDFiumOCContext : public IPDF_OCContext
+{
+    PDFDataset* m_poDS;
+    CPDF_OCContext m_DefaultOCContext;
+public:
+
+    GDALPDFiumOCContext(PDFDataset* poDS, CPDF_Document *pDoc) :
+                                m_poDS(poDS), m_DefaultOCContext(pDoc) {}
+
+    virtual FX_BOOL CheckOCGVisible(const CPDF_Dictionary *pOCGDict)
+    {
+        PDFDataset::VisibilityState eVisibility =
+            m_poDS->GetVisibilityStateForOGCPdfium(
+                                pOCGDict->GetObjNum(), pOCGDict->GetGenNum() );
+        if( eVisibility == PDFDataset::VISIBILITY_ON )
+            return TRUE;
+        if( eVisibility == PDFDataset::VISIBILITY_OFF )
+            return FALSE;
+        return m_DefaultOCContext.CheckOCGVisible(pOCGDict);
+    }
+};
+
+/************************************************************************/
+/*                         PDFiumRenderPageBitmap()                     */
+/************************************************************************/
+
+/* This method is a customization of FPDF_RenderPageBitmap() and FPDF_RenderPage_Retail()
+   from pdfium/fpdfsdk/src/fpdfview.cpp to allow selection of which OGC/layer are
+   active. Thus it inherits the following license */
+// Copyright 2014 PDFium Authors. All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
+//
+//    * Redistributions of source code must retain the above copyright
+// notice, this list of conditions and the following disclaimer.
+//    * Redistributions in binary form must reproduce the above
+// copyright notice, this list of conditions and the following disclaimer
+// in the documentation and/or other materials provided with the
+// distribution.
+//    * Neither the name of Google Inc. nor the names of its
+// contributors may be used to endorse or promote products derived from
+// this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+void PDFDataset::PDFiumRenderPageBitmap(FPDF_BITMAP bitmap, FPDF_PAGE page, 
+                                        int start_x, int start_y,
+                                        int size_x, int size_y)
+{
+    CPDF_Page* pPage = (CPDF_Page*)page;
+
+    CRenderContext* pContext = new CRenderContext;
+    pPage->SetPrivateData((void*)1, pContext, DropContext);
+
+    CFX_FxgeDevice* pDevice = new CFX_FxgeDevice;
+    pDevice->Attach((CFX_DIBitmap*)bitmap);
+    pContext->m_pDevice = pDevice;
+
+    CPLAssert(pContext->m_pOptions == NULL);
+    pContext->m_pOptions = new CPDF_RenderOptions;
+
+    pContext->m_pOptions->m_pOCContext = new GDALPDFiumOCContext(
+        poParentDS ? poParentDS: this, pPage->m_pDocument);
+
+    CFX_AffineMatrix matrix;
+    pPage->GetDisplayMatrix(matrix, start_x, start_y, size_x, size_y, 0);
+
+    FX_RECT clip;
+    clip.left = start_x;
+    clip.right = start_x + size_x;
+    clip.top = start_y;
+    clip.bottom = start_y + size_y;
+    pContext->m_pDevice->SaveState();
+    pContext->m_pDevice->SetClip_Rect(&clip);
+
+    pContext->m_pContext = new CPDF_RenderContext;
+    pContext->m_pContext->Create(pPage);
+    pContext->m_pContext->AppendObjectList(pPage, &matrix);
+
+    pContext->m_pRenderer = new CPDF_ProgressiveRenderer(
+        pContext->m_pContext, pContext->m_pDevice, pContext->m_pOptions);
+    pContext->m_pRenderer->Start(NULL);
+    pContext->m_pDevice->RestoreState();
+
+    delete pContext;
+    pPage->RemovePrivateData((void*)1);
+}
+
+#endif /* HAVE_PDFIUM */
+
 /************************************************************************/
 /*                             ReadPixels()                             */
 /************************************************************************/
@@ -1655,8 +1780,8 @@ CPLErr PDFDataset::ReadPixels( int nReqXOff, int nReqYOff,
 
         // Part of PDF is render with -x, -y, page_width, page_height
         // (not requested size!)
-        FPDF_RenderPageBitmap(bitmap, poPagePdfium->page,
-              -nReqXOff, -nReqYOff, nRasterXSize, nRasterYSize, 0, 0);
+        PDFiumRenderPageBitmap(bitmap, poPagePdfium->page,
+              -nReqXOff, -nReqYOff, nRasterXSize, nRasterYSize);
 
         int stride = FPDFBitmap_GetStride(bitmap);
         const GByte* buffer = reinterpret_cast<const GByte*>(FPDFBitmap_GetBuffer(bitmap));
@@ -2950,13 +3075,13 @@ void PDFDataset::ParseInfo(GDALPDFObject* poInfoObj)
     }
 }
 
-#ifdef HAVE_POPPLER
+#if defined(HAVE_POPPLER) || defined(HAVE_PDFIUM)
 
 /************************************************************************/
 /*                               AddLayer()                             */
 /************************************************************************/
 
-void PDFDataset::AddLayer(const char* pszLayerName, OptionalContentGroup* ocg)
+void PDFDataset::AddLayer(const char* pszLayerName)
 {
     int nNewIndex = osLayerList.size() /*/ 2*/;
 
@@ -2967,32 +3092,27 @@ void PDFDataset::AddLayer(const char* pszLayerName, OptionalContentGroup* ocg)
         {
             osNewLayerList.AddNameValue(CPLSPrintf("LAYER_%03d_NAME", i),
                                         osLayerList[/*2 * */ i] + strlen("LAYER_00_NAME="));
-            /*osNewLayerList.AddNameValue(CPLSPrintf("LAYER_%03d_INIT_STATE", i),
-                                        osLayerList[i * 2 + 1] + strlen("LAYER_00_INIT_STATE="));*/
         }
         osLayerList = osNewLayerList;
     }
 
     char szFormatName[64];
-    /* char szFormatInitState[64]; */
     sprintf(szFormatName, "LAYER_%%0%dd_NAME",  nNewIndex >= 100 ? 3 : 2);
-    /* sprintf(szFormatInitState, "LAYER_%%0%dd_INIT_STATE", nNewIndex >= 100 ? 3 : 2); */
 
     osLayerList.AddNameValue(CPLSPrintf(szFormatName, nNewIndex),
                              pszLayerName);
-    /*osLayerList.AddNameValue(CPLSPrintf(szFormatInitState, nNewIndex),
-                             (ocg == NULL || ocg->getState() == OptionalContentGroup::On) ? "ON" : "OFF");*/
-    oLayerOCGMap[pszLayerName] = ocg;
 
-    //if (ocg != NULL && ocg->getState() == OptionalContentGroup::Off)
-    //    bUseOCG = TRUE;
 }
 
+#endif//  defined(HAVE_POPPLER) || defined(HAVE_PDFIUM)
+
+#ifdef HAVE_POPPLER
+
 /************************************************************************/
-/*                             ExploreLayers()                          */
+/*                       ExploreLayersPoppler()                         */
 /************************************************************************/
 
-void PDFDataset::ExploreLayers(GDALPDFArray* poArray,
+void PDFDataset::ExploreLayersPoppler(GDALPDFArray* poArray,
                                int nRecLevel,
                                CPLString osTopLayer)
 {
@@ -3011,11 +3131,12 @@ void PDFDataset::ExploreLayers(GDALPDFArray* poArray,
                 osTopLayer = osTopLayer + "." + osName;
             else
                 osTopLayer = osName;
-            AddLayer(osTopLayer.c_str(), NULL);
+            AddLayer(osTopLayer.c_str());
+            oLayerOCGMapPoppler[osTopLayer.c_str()] = NULL;
         }
         else if (poObj->GetType() == PDFObjectType_Array)
         {
-            ExploreLayers(poObj->GetArray(), nRecLevel + 1, osCurLayer);
+            ExploreLayersPoppler(poObj->GetArray(), nRecLevel + 1, osCurLayer);
             osCurLayer = "";
         }
         else if (poObj->GetType() == PDFObjectType_Dictionary)
@@ -3038,7 +3159,8 @@ void PDFDataset::ExploreLayers(GDALPDFArray* poArray,
                 OptionalContentGroup* ocg = optContentConfig->findOcgByRef(r);
                 if (ocg)
                 {
-                    AddLayer(osCurLayer.c_str(), ocg);
+                    AddLayer(osCurLayer.c_str());
+                    oLayerOCGMapPoppler[osCurLayer.c_str()] = ocg;
                     osLayerWithRefList.AddString(
                         CPLSPrintf("%s %d %d", osCurLayer.c_str(), r.num, r.gen));
                 }
@@ -3048,10 +3170,10 @@ void PDFDataset::ExploreLayers(GDALPDFArray* poArray,
 }
 
 /************************************************************************/
-/*                              FindLayers()                            */
+/*                         FindLayersPoppler()                          */
 /************************************************************************/
 
-void PDFDataset::FindLayers()
+void PDFDataset::FindLayersPoppler()
 {
     OCGs* optContentConfig = poDocPoppler->getOptContentConfig();
     if (optContentConfig == NULL || !optContentConfig->isOk() )
@@ -3061,7 +3183,7 @@ void PDFDataset::FindLayers()
     if (array)
     {
         GDALPDFArray* poArray = GDALPDFCreateArray(array);
-        ExploreLayers(poArray, 0);
+        ExploreLayersPoppler(poArray, 0);
         delete poArray;
     }
     else
@@ -3071,7 +3193,11 @@ void PDFDataset::FindLayers()
         {
             OptionalContentGroup* ocg = (OptionalContentGroup*) ocgList->get(i);
             if( ocg != NULL && ocg->getName() != NULL )
-                AddLayer((const char*)ocg->getName()->getCString(), ocg);
+            {
+                const char* pszLayerName = (const char*)ocg->getName()->getCString();
+                AddLayer(pszLayerName);
+                oLayerOCGMapPoppler[pszLayerName] = ocg;
+            }
         }
     }
 
@@ -3079,10 +3205,10 @@ void PDFDataset::FindLayers()
 }
 
 /************************************************************************/
-/*                            TurnLayersOnOff()                         */
+/*                       TurnLayersOnOffPoppler()                       */
 /************************************************************************/
 
-void PDFDataset::TurnLayersOnOff()
+void PDFDataset::TurnLayersOnOffPoppler()
 {
     OCGs* optContentConfig = poDocPoppler->getOptContentConfig();
     if (optContentConfig == NULL || !optContentConfig->isOk() )
@@ -3105,8 +3231,8 @@ void PDFDataset::TurnLayersOnOff()
         for(i=0;!bAll && papszLayers[i] != NULL;i++)
         {
             std::map<CPLString, OptionalContentGroup*>::iterator oIter =
-                oLayerOCGMap.find(papszLayers[i]);
-            if (oIter != oLayerOCGMap.end())
+                oLayerOCGMapPoppler.find(papszLayers[i]);
+            if (oIter != oLayerOCGMapPoppler.end())
             {
                 if (oIter->second)
                 {
@@ -3118,8 +3244,8 @@ void PDFDataset::TurnLayersOnOff()
                 // in the list.
                 size_t nLen = strlen(papszLayers[i]);
                 int bFoundChildLayer = FALSE;
-                oIter = oLayerOCGMap.begin();
-                for( ; oIter != oLayerOCGMap.end() && !bFoundChildLayer; oIter ++)
+                oIter = oLayerOCGMapPoppler.begin();
+                for( ; oIter != oLayerOCGMapPoppler.end() && !bFoundChildLayer; oIter ++)
                 {
                     if (oIter->first.size() > nLen &&
                         strncmp(oIter->first.c_str(), papszLayers[i], nLen) == 0 &&
@@ -3135,8 +3261,8 @@ void PDFDataset::TurnLayersOnOff()
 
                 if( !bFoundChildLayer )
                 {
-                    oIter = oLayerOCGMap.begin();
-                    for( ; oIter != oLayerOCGMap.end() && !bFoundChildLayer; oIter ++)
+                    oIter = oLayerOCGMapPoppler.begin();
+                    for( ; oIter != oLayerOCGMapPoppler.end() && !bFoundChildLayer; oIter ++)
                     {
                         if (oIter->first.size() > nLen &&
                             strncmp(oIter->first.c_str(), papszLayers[i], nLen) == 0 &&
@@ -3156,8 +3282,8 @@ void PDFDataset::TurnLayersOnOff()
                 while( (pszLastDot = strrchr(papszLayers[i], '.')) != NULL)
                 {
                     *pszLastDot = '\0';
-                    oIter = oLayerOCGMap.find(papszLayers[i]);
-                    if (oIter != oLayerOCGMap.end())
+                    oIter = oLayerOCGMapPoppler.find(papszLayers[i]);
+                    if (oIter != oLayerOCGMapPoppler.end())
                     {
                         if (oIter->second)
                         {
@@ -3186,8 +3312,8 @@ void PDFDataset::TurnLayersOnOff()
         for(int i=0;papszLayersOFF[i] != NULL;i++)
         {
             std::map<CPLString, OptionalContentGroup*>::iterator oIter =
-                oLayerOCGMap.find(papszLayersOFF[i]);
-            if (oIter != oLayerOCGMap.end())
+                oLayerOCGMapPoppler.find(papszLayersOFF[i]);
+            if (oIter != oLayerOCGMapPoppler.end())
             {
                 if (oIter->second)
                 {
@@ -3197,8 +3323,8 @@ void PDFDataset::TurnLayersOnOff()
 
                 // Turn child layers off too
                 size_t nLen = strlen(papszLayersOFF[i]);
-                oIter = oLayerOCGMap.begin();
-                for( ; oIter != oLayerOCGMap.end(); oIter ++)
+                oIter = oLayerOCGMapPoppler.begin();
+                for( ; oIter != oLayerOCGMapPoppler.end(); oIter ++)
                 {
                     if (oIter->first.size() > nLen &&
                         strncmp(oIter->first.c_str(), papszLayersOFF[i], nLen) == 0 &&
@@ -3225,6 +3351,268 @@ void PDFDataset::TurnLayersOnOff()
 }
 
 #endif
+
+#ifdef HAVE_PDFIUM
+
+/************************************************************************/
+/*                       ExploreLayersPdfium()                          */
+/************************************************************************/
+
+void PDFDataset::ExploreLayersPdfium(GDALPDFArray* poArray,
+                               int nRecLevel,
+                               CPLString osTopLayer)
+{
+    if( nRecLevel == 16 )
+        return;
+
+    int nLength = poArray->GetLength();
+    CPLString osCurLayer;
+    for(int i=0;i<nLength;i++)
+    {
+        GDALPDFObject* poObj = poArray->Get(i);
+        if (i == 0 && poObj->GetType() == PDFObjectType_String)
+        {
+            CPLString osName = PDFSanitizeLayerName(poObj->GetString().c_str());
+            if (osTopLayer.size())
+                osTopLayer = osTopLayer + "." + osName;
+            else
+                osTopLayer = osName;
+            AddLayer(osTopLayer.c_str());
+            oMapLayerNameToOCGNumGenPdfium[osTopLayer] =
+                    std::pair<int,int>(-1, -1);
+        }
+        else if (poObj->GetType() == PDFObjectType_Array)
+        {
+            ExploreLayersPdfium(poObj->GetArray(), nRecLevel + 1, osCurLayer);
+            osCurLayer = "";
+        }
+        else if (poObj->GetType() == PDFObjectType_Dictionary)
+        {
+            GDALPDFDictionary* poDict = poObj->GetDictionary();
+            GDALPDFObject* poName = poDict->Get("Name");
+            if (poName != NULL && poName->GetType() == PDFObjectType_String)
+            {
+                CPLString osName = PDFSanitizeLayerName(poName->GetString().c_str());
+                if (osTopLayer.size())
+                    osCurLayer = osTopLayer + "." + osName;
+                else
+                    osCurLayer = osName;
+                //CPLDebug("PDF", "Layer %s", osCurLayer.c_str());
+
+                AddLayer(osCurLayer.c_str());
+                osLayerWithRefList.AddString(
+                    CPLSPrintf("%s %d %d", osCurLayer.c_str(), poObj->GetRefNum(), poObj->GetRefGen()));
+                oMapLayerNameToOCGNumGenPdfium[osCurLayer] =
+                    std::pair<int,int>(poObj->GetRefNum(), poObj->GetRefGen());
+            }
+        }
+    }
+}
+
+/************************************************************************/
+/*                         FindLayersPdfium()                          */
+/************************************************************************/
+
+void PDFDataset::FindLayersPdfium()
+{
+    GDALPDFObject* poCatalog = GetCatalog();
+    if( poCatalog == NULL || poCatalog->GetType() != PDFObjectType_Dictionary )
+        return;
+    GDALPDFObject* poOrder = poCatalog->LookupObject("OCProperties.D.Order");
+    if( poOrder != NULL && poOrder->GetType() == PDFObjectType_Array )
+    {
+        ExploreLayersPdfium(poOrder->GetArray(), 0);
+    }
+#if 0
+    else
+    {
+        GDALPDFObject* poOCGs = poD->GetDictionary()->Get("OCGs");
+        if( poOCGs != NULL && poOCGs->GetType() == PDFObjectType_Array )
+        {
+            GDALPDFArray* poArray = poOCGs->GetArray();
+            int nLength = poArray->GetLength();
+            for(int i=0;i<nLength;i++)
+            {
+                GDALPDFObject* poObj = poArray->Get(i);
+                if( poObj != NULL )
+                {
+                    // TODO ?
+                }
+            }
+        }
+    }
+#endif
+
+    oMDMD.SetMetadata(osLayerList.List(), "LAYERS");
+}
+
+
+/************************************************************************/
+/*                       TurnLayersOnOffPdfium()                       */
+/************************************************************************/
+
+void PDFDataset::TurnLayersOnOffPdfium()
+{
+    GDALPDFObject* poCatalog = GetCatalog();
+    if( poCatalog == NULL || poCatalog->GetType() != PDFObjectType_Dictionary )
+        return;
+    GDALPDFObject* poOCGs = poCatalog->LookupObject("OCProperties.OCGs");
+    if( poOCGs == NULL || poOCGs->GetType() != PDFObjectType_Array )
+        return;
+
+    // Which layers to turn ON ?
+    const char* pszLayers = GetOption(papszOpenOptions, "LAYERS", NULL);
+    if (pszLayers)
+    {
+        int i;
+        int bAll = EQUAL(pszLayers, "ALL");
+        
+        GDALPDFArray* poOCGsArray = poOCGs->GetArray();
+        int nLength = poOCGsArray->GetLength();
+        for(i=0;i<nLength;i++)
+        {
+            GDALPDFObject* poOCG = poOCGsArray->Get(i);
+            oMapOCGNumGenToVisibilityStatePdfium[ std::pair<int,int>(poOCG->GetRefNum(), poOCG->GetRefGen()) ] = 
+                (bAll) ? VISIBILITY_ON : VISIBILITY_OFF;
+        }
+
+        char** papszLayers = CSLTokenizeString2(pszLayers, ",", 0);
+        for(i=0;!bAll && papszLayers[i] != NULL;i++)
+        {
+            std::map< CPLString, std::pair<int,int> >::iterator oIter =
+                oMapLayerNameToOCGNumGenPdfium.find(papszLayers[i]);
+            if (oIter != oMapLayerNameToOCGNumGenPdfium.end())
+            {
+                if (oIter->second.first >= 0)
+                {
+                    //CPLDebug("PDF", "Turn '%s' on", papszLayers[i]);
+                    oMapOCGNumGenToVisibilityStatePdfium[ oIter->second ] = VISIBILITY_ON;
+                }
+
+                // Turn child layers on, unless there's one of them explicitly listed
+                // in the list.
+                size_t nLen = strlen(papszLayers[i]);
+                int bFoundChildLayer = FALSE;
+                oIter = oMapLayerNameToOCGNumGenPdfium.begin();
+                for( ; oIter != oMapLayerNameToOCGNumGenPdfium.end() && !bFoundChildLayer; oIter ++)
+                {
+                    if (oIter->first.size() > nLen &&
+                        strncmp(oIter->first.c_str(), papszLayers[i], nLen) == 0 &&
+                        oIter->first[nLen] == '.')
+                    {
+                        for(int j=0;papszLayers[j] != NULL;j++)
+                        {
+                            if (strcmp(papszLayers[j], oIter->first.c_str()) == 0)
+                                bFoundChildLayer = TRUE;
+                        }
+                    }
+                }
+
+                if( !bFoundChildLayer )
+                {
+                    oIter = oMapLayerNameToOCGNumGenPdfium.begin();
+                    for( ; oIter != oMapLayerNameToOCGNumGenPdfium.end() && !bFoundChildLayer; oIter ++)
+                    {
+                        if (oIter->first.size() > nLen &&
+                            strncmp(oIter->first.c_str(), papszLayers[i], nLen) == 0 &&
+                            oIter->first[nLen] == '.')
+                        {
+                            if (oIter->second.first >= 0 )
+                            {
+                                //CPLDebug("PDF", "Turn '%s' on too", oIter->first.c_str());
+                                oMapOCGNumGenToVisibilityStatePdfium[ oIter->second ] = VISIBILITY_ON;
+                            }
+                        }
+                    }
+                }
+
+                // Turn parent layers on too
+                char* pszLastDot;
+                while( (pszLastDot = strrchr(papszLayers[i], '.')) != NULL)
+                {
+                    *pszLastDot = '\0';
+                    oIter = oMapLayerNameToOCGNumGenPdfium.find(papszLayers[i]);
+                    if (oIter != oMapLayerNameToOCGNumGenPdfium.end())
+                    {
+                        if (oIter->second.first >= 0 )
+                        {
+                            //CPLDebug("PDF", "Turn '%s' on too", papszLayers[i]);
+                            oMapOCGNumGenToVisibilityStatePdfium[ oIter->second ] = VISIBILITY_ON;
+                        }
+                    }
+                }
+            }
+            else
+            {
+                CPLError(CE_Warning, CPLE_AppDefined, "Unknown layer '%s'",
+                            papszLayers[i]);
+            }
+        }
+        CSLDestroy(papszLayers);
+
+        bUseOCG = TRUE;
+    }
+
+    // Which layers to turn OFF ?
+    const char* pszLayersOFF = GetOption(papszOpenOptions, "LAYERS_OFF", NULL);
+    if (pszLayersOFF)
+    {
+        char** papszLayersOFF = CSLTokenizeString2(pszLayersOFF, ",", 0);
+        for(int i=0;papszLayersOFF[i] != NULL;i++)
+        {
+            std::map< CPLString, std::pair<int,int> >::iterator oIter =
+                oMapLayerNameToOCGNumGenPdfium.find(papszLayersOFF[i]);
+            if (oIter != oMapLayerNameToOCGNumGenPdfium.end())
+            {
+                if (oIter->second.first >= 0 )
+                {
+                    //CPLDebug("PDF", "Turn '%s' off", papszLayersOFF[i]);
+                    oMapOCGNumGenToVisibilityStatePdfium[ oIter->second ] = VISIBILITY_OFF;
+                }
+
+                // Turn child layers off too
+                size_t nLen = strlen(papszLayersOFF[i]);
+                oIter = oMapLayerNameToOCGNumGenPdfium.begin();
+                for( ; oIter != oMapLayerNameToOCGNumGenPdfium.end(); oIter ++)
+                {
+                    if (oIter->first.size() > nLen &&
+                        strncmp(oIter->first.c_str(), papszLayersOFF[i], nLen) == 0 &&
+                        oIter->first[nLen] == '.')
+                    {
+                        if (oIter->second.first >= 0 )
+                        {
+                            //CPLDebug("PDF", "Turn '%s' off too", oIter->first.c_str());
+                            oMapOCGNumGenToVisibilityStatePdfium[ oIter->second ] = VISIBILITY_OFF;
+                        }
+                    }
+                }
+            }
+            else
+            {
+                CPLError(CE_Warning, CPLE_AppDefined, "Unknown layer '%s'",
+                            papszLayersOFF[i]);
+            }
+        }
+        CSLDestroy(papszLayersOFF);
+
+        bUseOCG = TRUE;
+    }
+}
+
+/************************************************************************/
+/*                    GetVisibilityStateForOGCPdfium()                  */
+/************************************************************************/
+
+PDFDataset::VisibilityState PDFDataset::GetVisibilityStateForOGCPdfium(int nNum, int nGen)
+{
+    std::map< std::pair<int,int>, VisibilityState >::iterator oIter =
+            oMapOCGNumGenToVisibilityStatePdfium.find(std::pair<int,int>(nNum,nGen));
+    if( oIter == oMapOCGNumGenToVisibilityStatePdfium.end() )
+        return VISIBILITY_DEFAULT;
+    return oIter->second;
+}
+
+#endif /* HAVE_PDFIUM */
 
 /************************************************************************/
 /*                           FindLayerOCG()                             */
@@ -3497,16 +3885,6 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
-#ifdef dump_catalog
-    {
-        ObjectAutoFree oCatalog;
-        poDocPoppler->getXRef()->getCatalog(&oCatalog);
-        GDALPDFObjectPoppler oCatalogGDAL(&oCatalog, FALSE);
-        GDALPDFDumper oDumper(stderr);
-        oDumper.Dump(&oCatalogGDAL);
-    }
-#endif
-
     nPages = poDocPoppler->getNumPages();
     if (iPage < 1 || iPage > nPages)
     {
@@ -3708,20 +4086,8 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
     const char* pszDumpObject = CPLGetConfigOption("PDF_DUMP_OBJECT", NULL);
     if (pszDumpObject != NULL)
     {
-        FILE* f;
-        if (strcmp(pszDumpObject, "stderr") == 0)
-            f = stderr;
-        else if (EQUAL(pszDumpObject, "YES"))
-            f = fopen(CPLSPrintf("dump_%s.txt", CPLGetFilename(pszFilename)), "wt");
-        else
-            f = fopen(pszDumpObject, "wt");
-        if (f == NULL)
-            f = stderr;
-
-        GDALPDFDumper oDumper(f);
+        GDALPDFDumper oDumper(pszFilename, pszDumpObject);
         oDumper.Dump(poPageObj);
-        if (f != stderr)
-            fclose(f);
     }
 
     PDFDataset* poDS = new PDFDataset();
@@ -3758,6 +4124,13 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->poPageObj = poPageObj;
     poDS->osUserPwd = pszUserPwd ? pszUserPwd : "";
     poDS->iPage = iPage;
+    
+    const char* pszDumpCatalog = CPLGetConfigOption("PDF_DUMP_CATALOG", NULL);
+    if (pszDumpCatalog != NULL)
+    {
+        GDALPDFDumper oDumper(pszFilename, pszDumpCatalog);
+        oDumper.Dump(poDS->GetCatalog());
+    }
 
     int nBandsGuessed = 0;
     if (nImageNum < 0)
@@ -3847,13 +4220,11 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
          dfRotation == -90 ||
          dfRotation == 270 )
     {
-/* FIXME: the non poppler case should be implemented. This needs to rotate */
+/* FIXME: the podofo case should be implemented. This needs to rotate */
 /* the output of pdftoppm */
 #if defined(HAVE_POPPLER) || defined(HAVE_PDFIUM)
       if (bUseLib.test(PDFLIB_POPPLER) || bUseLib.test(PDFLIB_PDFIUM))
       {
-        /* Wondering how it would work with a georeferenced image */
-        /* Has only been tested with ungeoreferenced image */
         int nTmp = poDS->nRasterXSize;
         poDS->nRasterXSize = poDS->nRasterYSize;
         poDS->nRasterYSize = nTmp;
@@ -4141,10 +4512,10 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
     /* Find layers */
-    poDS->FindLayers();
+    poDS->FindLayersPoppler();
 
     /* Turn user specified layers on or off */
-    poDS->TurnLayersOnOff();
+    poDS->TurnLayersOnOffPoppler();
   }
 #endif
 
@@ -4197,7 +4568,10 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
         delete poRoot;
 
         /* Find layers */
-        poDS->FindLayersGeneric(poPageDict);
+        poDS->FindLayersPdfium();
+
+        /* Turn user specified layers on or off */
+        poDS->TurnLayersOnOffPdfium();
 
         GDALPDFObjectPdfium* poInfo = GDALPDFObjectPdfium::Build(poDocPdfium->doc->GetInfo());
         if( poInfo )

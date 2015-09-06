@@ -89,19 +89,18 @@ according to OGC Best Practice). This defaults to "Map Layers" for USGS Topo PDF
 covers the largest area.</li>
 <li><i>GDAL_USER_PWD</i> : User password for protected PDFs.</li>
 <p>
-Starting with GDAL &gt;= 1.10.0 and when GDAL is compiled against libpoppler, the following options are also
-available :
+Starting with GDAL &gt;= 1.10.0, the following options are also available :
 
 <li><i>GDAL_PDF_RENDERING_OPTIONS</i> : a combination of VECTOR, RASTER and TEXT separated
 by comma, to select whether vector, raster or text features should be rendered. If the option is not
-specified, all features are rendered.</li>
+specified, all features are rendered (Poppler only).</li>
 <li><i>GDAL_PDF_BANDS</i> = 3 or 4 : whether the PDF should be rendered as a RGB (3) or RGBA (4) image.
 Defaults to 3.</li>
 <li><i>GDAL_PDF_LAYERS</i> = list of layers (comma separated) to turn ON (or "ALL" to turn all layers ON).
 The layer names can be obtained by querying the LAYERS metadata domain. When this option is specified,
-layers not explicitly listed will be turned off.</li>
+layers not explicitly listed will be turned off (Poppler and PDFium).</li>
 <li><i>GDAL_PDF_LAYERS_OFF</i> = list of layers (comma separated) to turn OFF. The layer names can be obtained by
-querying the LAYERS metadata domain.</li>
+querying the LAYERS metadata domain (Poppler and PDFium).</li>
 </ul>
 
 <h3>Open Options</h3>
@@ -121,7 +120,8 @@ Since GDAL 2.0, above configuration options are also available as open options.
 
 <h2>LAYERS Metadata domain</h2>
 
-Starting with GDAL &gt;= 1.10.0 and when GDAL is compiled against libpoppler, the LAYERS metadata domain can be queried
+Starting with GDAL &gt;= 1.10.0 and when GDAL is compiled against Poppler or PDFium,
+the LAYERS metadata domain can be queried
 to retrieve layer names that can be turned ON or OFF. This is useful to know which values to specify for the
 <i>GDAL_PDF_LAYERS</i> or <i>GDAL_PDF_LAYERS_OFF</i> configuration options.<p>
 

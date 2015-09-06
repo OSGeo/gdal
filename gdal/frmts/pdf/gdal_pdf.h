@@ -283,14 +283,40 @@ class PDFDataset : public GDALPamDataset
     GDALPDFObject* poCatalogObject;
     GDALPDFObject* GetCatalog();
 
-#ifdef HAVE_POPPLER
-    void         AddLayer(const char* pszLayerName, OptionalContentGroup* ocg);
-    void         ExploreLayers(GDALPDFArray* poArray, int nRecLevel, CPLString osTopLayer = "");
-    void         FindLayers();
-    void         TurnLayersOnOff();
-    CPLStringList osLayerList;
-    std::map<CPLString, OptionalContentGroup*> oLayerOCGMap;
+#if defined(HAVE_POPPLER) || defined(HAVE_PDFIUM)
+    void         AddLayer(const char* pszLayerName);
 #endif
+
+#if defined(HAVE_POPPLER) 
+    void         ExploreLayersPoppler(GDALPDFArray* poArray, int nRecLevel, CPLString osTopLayer = "");
+    void         FindLayersPoppler();
+    void         TurnLayersOnOffPoppler();
+    std::map<CPLString, OptionalContentGroup*> oLayerOCGMapPoppler;
+#endif
+
+#ifdef HAVE_PDFIUM
+    void         ExploreLayersPdfium(GDALPDFArray* poArray, int nRecLevel, CPLString osTopLayer = "");
+    void         FindLayersPdfium();
+    void         PDFiumRenderPageBitmap(FPDF_BITMAP bitmap, FPDF_PAGE page, int start_x, int start_y,
+                                        int size_x, int size_y);
+    void         TurnLayersOnOffPdfium();
+
+public:
+    typedef enum
+    {
+        VISIBILITY_DEFAULT,
+        VISIBILITY_ON,
+        VISIBILITY_OFF
+    } VisibilityState;
+
+    VisibilityState GetVisibilityStateForOGCPdfium(int nNum, int nGen);
+
+private:
+    std::map< CPLString, std::pair<int,int> > oMapLayerNameToOCGNumGenPdfium;
+    std::map< std::pair<int,int>, VisibilityState > oMapOCGNumGenToVisibilityStatePdfium;
+#endif
+
+    CPLStringList osLayerList;
 
     CPLStringList osLayerWithRefList;
     CPLString     FindLayerOCG(GDALPDFDictionary* poPageDict,
