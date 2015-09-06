@@ -1463,7 +1463,7 @@ class GDALPDFStreamPodofo : public GDALPDFStream
 
     public:
         GDALPDFStreamPodofo(PoDoFo::PdfMemStream* pStream) : m_pStream(pStream) { }
-        virtual ~GDALPDFStreamPodofo() {}
+        virtual ~GDALPDFStreamPodofo() { delete m_pStream; }
 
         virtual int GetLength();
         virtual char* GetBytes();
@@ -1673,7 +1673,7 @@ GDALPDFStream* GDALPDFObjectPodofo::GetStream()
     PoDoFo::PdfMemStream* pStream = NULL;
     try
     {
-        pStream = dynamic_cast<PoDoFo::PdfMemStream*>(m_po->GetStream());
+        pStream = new PoDoFo::PdfMemStream(*(dynamic_cast<PoDoFo::PdfMemStream*>(m_po->GetStream())));
         pStream->Uncompress();
     }
     catch( const PoDoFo::PdfError & e )

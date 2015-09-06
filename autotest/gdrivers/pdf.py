@@ -473,7 +473,13 @@ def pdf_rgba_default_compression(options_param = []):
     out_ds = None
 
     #gdal.SetConfigOption('GDAL_PDF_BANDS', '4')
+    gdal.SetConfigOption('PDF_DUMP_OBJECT', 'tmp/rgba.pdf.txt')
+    gdal.SetConfigOption('PDF_DUMP_PARENT', 'YES')
     out_ds = gdal.Open('tmp/rgba.pdf')
+    gdal.SetConfigOption('PDF_DUMP_OBJECT', None)
+    gdal.SetConfigOption('PDF_DUMP_PARENT', None)
+    content = open('tmp/rgba.pdf.txt', 'rt').read()
+    os.unlink('tmp/rgba.pdf.txt')
     cs1 = out_ds.GetRasterBand(1).Checksum()
     cs2 = out_ds.GetRasterBand(2).Checksum()
     cs3 = out_ds.GetRasterBand(3).Checksum()
@@ -493,6 +499,12 @@ def pdf_rgba_default_compression(options_param = []):
 
     if cs4 < 0:
         return 'skip'
+
+    if content.find('Type = dictionary, Num = 3, Gen = 0') != 0 or \
+       content.find('      Type = dictionary, Num = 3, Gen = 0') < 0:
+        gdaltest.post_reason('wrong object dump')
+        print(content)
+        return 'fail'
 
     if cs4 == 0:
         gdaltest.post_reason('wrong checksum')
