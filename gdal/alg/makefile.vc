@@ -29,7 +29,7 @@ OBJ =	gdaldither.obj gdalmediancut.obj gdal_crs.obj gdaltransformer.obj \
 	gdalwarpoperation.obj gdalchecksum.obj gdal_rpc.obj gdalgeoloc.obj \
 	gdalgrid.obj gdalgridsse.obj gdalcutline.obj gdalproximity.obj rasterfill.obj \
 	gdalsievefilter.obj gdalrasterpolygonenumerator.obj polygonize.obj \
-	gdalrasterfpolygonenumerator.obj fpolygonize.obj contour.obj \
+	contour.obj \
 	gdal_octave.obj gdal_simplesurf.obj gdalmatching.obj \
 	gdaltransformgeolocs.obj delaunay.obj gdalgridavx.obj gdalpansharpen.obj
 	

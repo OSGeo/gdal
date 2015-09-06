@@ -96,17 +96,17 @@ CPL_C_END
 
 #define GP_NODATA_MARKER -51502112
 
-class GDALRasterPolygonEnumerator
+template<class DataType, class EqualityTest> class GDALRasterPolygonEnumeratorT
 
 {
 private:
     void     MergePolygon( int nSrcId, int nDstId );
-    int      NewPolygon( GInt32 nValue );
+    int      NewPolygon( DataType nValue );
 
 public:  // these are intended to be readonly.
 
     GInt32   *panPolyIdMap;
-    GInt32   *panPolyValue;
+    DataType   *panPolyValue;
 
     int      nNextPolygonId;
     int      nPolyAlloc;
@@ -114,10 +114,10 @@ public:  // these are intended to be readonly.
     int      nConnectedness;
 
 public:
-             GDALRasterPolygonEnumerator( int nConnectedness=4 );
-            ~GDALRasterPolygonEnumerator();
+             GDALRasterPolygonEnumeratorT( int nConnectedness=4 );
+            ~GDALRasterPolygonEnumeratorT();
 
-    void     ProcessLine( GInt32 *panLastLineVal, GInt32 *panThisLineVal,
+    void     ProcessLine( DataType *panLastLineVal, DataType *panThisLineVal,
                           GInt32 *panLastLineId,  GInt32 *panThisLineId, 
                           int nXSize );
 
@@ -126,42 +126,12 @@ public:
     void     Clear();
 };
 
-#ifdef OGR_ENABLED
-/************************************************************************/
-/*                          Polygon Enumerator                          */
-/*                                                                      */
-/*              Buffers has float values instead og GInt32              */
-/************************************************************************/
-class GDALRasterFPolygonEnumerator
-
+struct IntEqualityTest
 {
-private:
-    void     MergePolygon( int nSrcId, int nDstId );
-    int      NewPolygon( float fValue );
-
-public:  // these are intended to be readonly.
-
-    GInt32   *panPolyIdMap;
-    float    *pafPolyValue;
-
-    int      nNextPolygonId;
-    int      nPolyAlloc;
-
-    int      nConnectedness;
-
-public:
-             GDALRasterFPolygonEnumerator( int nConnectedness=4 );
-            ~GDALRasterFPolygonEnumerator();
-
-    void     ProcessLine( float *pafLastLineVal, float *pafThisLineVal,
-                          GInt32 *panLastLineId,  GInt32 *panThisLineId,
-                          int nXSize );
-
-    void     CompleteMerges();
-
-    void     Clear();
+    bool operator()(GInt32 a, GInt32 b) { return a == b; }
 };
-#endif
+
+typedef GDALRasterPolygonEnumeratorT<GInt32, IntEqualityTest> GDALRasterPolygonEnumerator;
 
 typedef void* (*GDALTransformDeserializeFunc)( CPLXMLNode *psTree );
 
@@ -212,6 +182,9 @@ int GDALDitherRGB2PCTInternal( GDALRasterBandH hRed,
 #define PRIME_FOR_65536                                 98317
 #define MEDIAN_CUT_AND_DITHER_BUFFER_SIZE_65536         (6 * sizeof(int) * PRIME_FOR_65536)
 
+
+#ifdef OGR_ENABLED
+
 /************************************************************************/
 /*      Float comparison function.                                      */
 /************************************************************************/
@@ -225,5 +198,12 @@ int GDALDitherRGB2PCTInternal( GDALRasterBandH hRed,
 #define MAX_ULPS 10
 
 GBool GDALFloatEquals(float A, float B);
+
+struct FloatEqualityTest
+{
+    bool operator()(float a, float b) { return GDALFloatEquals(a,b); }
+};
+
+#endif /* OGR_ENABLED */
 
 #endif /* ndef GDAL_ALG_PRIV_H_INCLUDED */

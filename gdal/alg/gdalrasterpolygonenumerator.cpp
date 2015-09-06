@@ -35,10 +35,11 @@
 CPL_CVSID("$Id$");
 
 /************************************************************************/
-/*                    GDALRasterPolygonEnumerator()                     */
+/*                    GDALRasterPolygonEnumeratorT()                    */
 /************************************************************************/
 
-GDALRasterPolygonEnumerator::GDALRasterPolygonEnumerator( 
+template<class DataType, class EqualityTest> 
+GDALRasterPolygonEnumeratorT<DataType,EqualityTest>::GDALRasterPolygonEnumeratorT( 
     int nConnectedness )
 
 {
@@ -51,10 +52,11 @@ GDALRasterPolygonEnumerator::GDALRasterPolygonEnumerator(
 }
 
 /************************************************************************/
-/*                    ~GDALRasterPolygonEnumerator()                    */
+/*                    ~GDALRasterPolygonEnumeratorT()                    */
 /************************************************************************/
 
-GDALRasterPolygonEnumerator::~GDALRasterPolygonEnumerator()
+template<class DataType, class EqualityTest> 
+GDALRasterPolygonEnumeratorT<DataType,EqualityTest>::~GDALRasterPolygonEnumeratorT()
 
 {
     Clear();
@@ -64,7 +66,8 @@ GDALRasterPolygonEnumerator::~GDALRasterPolygonEnumerator()
 /*                               Clear()                                */
 /************************************************************************/
 
-void GDALRasterPolygonEnumerator::Clear()
+template<class DataType, class EqualityTest> 
+void GDALRasterPolygonEnumeratorT<DataType,EqualityTest>::Clear()
 
 {
     CPLFree( panPolyIdMap );
@@ -83,7 +86,8 @@ void GDALRasterPolygonEnumerator::Clear()
 /*      Update the polygon map to indicate the merger of two polygons.  */
 /************************************************************************/
 
-void GDALRasterPolygonEnumerator::MergePolygon( int nSrcId, int nDstIdInit )
+template<class DataType, class EqualityTest> 
+void GDALRasterPolygonEnumeratorT<DataType,EqualityTest>::MergePolygon( int nSrcId, int nDstIdInit )
 
 {
     // Figure out the final dest id
@@ -117,7 +121,8 @@ void GDALRasterPolygonEnumerator::MergePolygon( int nSrcId, int nDstIdInit )
 /*      if needed.                                                      */
 /************************************************************************/
 
-int GDALRasterPolygonEnumerator::NewPolygon( GInt32 nValue )
+template<class DataType, class EqualityTest> 
+int GDALRasterPolygonEnumeratorT<DataType,EqualityTest>::NewPolygon( DataType nValue )
 
 {
     int nPolyId = nNextPolygonId;
@@ -126,7 +131,7 @@ int GDALRasterPolygonEnumerator::NewPolygon( GInt32 nValue )
     {
         nPolyAlloc = nPolyAlloc * 2 + 20;
         panPolyIdMap = (GInt32 *) CPLRealloc(panPolyIdMap,nPolyAlloc*sizeof(GInt32));
-        panPolyValue = (GInt32 *) CPLRealloc(panPolyValue,nPolyAlloc*sizeof(GInt32));
+        panPolyValue = (DataType *) CPLRealloc(panPolyValue,nPolyAlloc*sizeof(DataType));
     }
 
     nNextPolygonId++;
@@ -145,7 +150,8 @@ int GDALRasterPolygonEnumerator::NewPolygon( GInt32 nValue )
 /*      value.                                                          */
 /************************************************************************/
 
-void GDALRasterPolygonEnumerator::CompleteMerges()
+template<class DataType, class EqualityTest> 
+void GDALRasterPolygonEnumeratorT<DataType,EqualityTest>::CompleteMerges()
 
 {
     int iPoly;
@@ -185,13 +191,15 @@ void GDALRasterPolygonEnumerator::CompleteMerges()
 /*      Assign ids to polygons, one line at a time.                     */
 /************************************************************************/
 
-void GDALRasterPolygonEnumerator::ProcessLine( 
-    GInt32 *panLastLineVal, GInt32 *panThisLineVal,
+template<class DataType, class EqualityTest> 
+void GDALRasterPolygonEnumeratorT<DataType,EqualityTest>::ProcessLine( 
+    DataType *panLastLineVal, DataType *panThisLineVal,
     GInt32 *panLastLineId,  GInt32 *panThisLineId,
     int nXSize )
 
 {
     int i;
+    EqualityTest eq;
 
 /* -------------------------------------------------------------------- */
 /*      Special case for the first line.                                */
@@ -204,7 +212,7 @@ void GDALRasterPolygonEnumerator::ProcessLine(
             {
                 panThisLineId[i] = -1;
             }
-            else if( i == 0 || panThisLineVal[i] != panThisLineVal[i-1] )
+            else if( i == 0 || !(eq.operator()(panThisLineVal[i], panThisLineVal[i-1])) )
             {
                 panThisLineId[i] = NewPolygon( panThisLineVal[i] );
             }
@@ -225,11 +233,11 @@ void GDALRasterPolygonEnumerator::ProcessLine(
         {
             panThisLineId[i] = -1;
         }
-        else if( i > 0 && panThisLineVal[i] == panThisLineVal[i-1] )
+        else if( i > 0 && eq.operator()(panThisLineVal[i], panThisLineVal[i-1]) )
         {
             panThisLineId[i] = panThisLineId[i-1];        
 
-            if( panLastLineVal[i] == panThisLineVal[i] 
+            if( eq.operator()(panLastLineVal[i], panThisLineVal[i]) 
                 && (panPolyIdMap[panLastLineId[i]]
                     != panPolyIdMap[panThisLineId[i]]) )
             {
@@ -237,7 +245,7 @@ void GDALRasterPolygonEnumerator::ProcessLine(
             }
 
             if( nConnectedness == 8 
-                && panLastLineVal[i-1] == panThisLineVal[i] 
+                && eq.operator()(panLastLineVal[i-1], panThisLineVal[i]) 
                 && (panPolyIdMap[panLastLineId[i-1]]
                     != panPolyIdMap[panThisLineId[i]]) )
             {
@@ -245,23 +253,23 @@ void GDALRasterPolygonEnumerator::ProcessLine(
             }
 
             if( nConnectedness == 8 && i < nXSize-1 
-                && panLastLineVal[i+1] == panThisLineVal[i] 
+                && eq.operator()(panLastLineVal[i+1], panThisLineVal[i]) 
                 && (panPolyIdMap[panLastLineId[i+1]]
                     != panPolyIdMap[panThisLineId[i]]) )
             {
                 MergePolygon( panLastLineId[i+1], panThisLineId[i] );
             }
         }
-        else if( panLastLineVal[i] == panThisLineVal[i] )
+        else if( eq.operator()(panLastLineVal[i], panThisLineVal[i]) )
         {
             panThisLineId[i] = panLastLineId[i];
         }
         else if( i > 0 && nConnectedness == 8 
-                 && panLastLineVal[i-1] == panThisLineVal[i] )
+                 && eq.operator()(panLastLineVal[i-1], panThisLineVal[i]) )
         {
             panThisLineId[i] = panLastLineId[i-1];
 
-            if( i < nXSize-1 && panLastLineVal[i+1] == panThisLineVal[i]
+            if( i < nXSize-1 && eq.operator()(panLastLineVal[i+1], panThisLineVal[i])
                 && (panPolyIdMap[panLastLineId[i+1]]
                 != panPolyIdMap[panThisLineId[i]]) )
             {
@@ -269,7 +277,7 @@ void GDALRasterPolygonEnumerator::ProcessLine(
             }
         }
         else if( i < nXSize-1 && nConnectedness == 8 
-                 && panLastLineVal[i+1] == panThisLineVal[i] )
+                 && eq.operator()(panLastLineVal[i+1], panThisLineVal[i]) )
         {
             panThisLineId[i] = panLastLineId[i+1];
         }
@@ -279,3 +287,8 @@ void GDALRasterPolygonEnumerator::ProcessLine(
     }
 }
 
+template class GDALRasterPolygonEnumeratorT<GInt32, IntEqualityTest>;
+
+#ifdef OGR_ENABLED
+template class GDALRasterPolygonEnumeratorT<float, FloatEqualityTest>;
+#endif
