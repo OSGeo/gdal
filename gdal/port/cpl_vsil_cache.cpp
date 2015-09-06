@@ -41,13 +41,14 @@ CPL_CVSID("$Id$");
 class VSICacheChunk
 {
 public:
-    VSICacheChunk() 
-    { 
-        poLRUPrev = poLRUNext = NULL;
-        nDataFilled = 0;
-        bDirty = FALSE;
-        pabyData = NULL;
-    }
+  VSICacheChunk() :
+      bDirty(FALSE),
+      iBlock(0),
+      poLRUPrev(NULL),
+      poLRUNext(NULL),
+      nDataFilled(0),
+      pabyData(NULL)
+    { }
 
     virtual ~VSICacheChunk()
     {
