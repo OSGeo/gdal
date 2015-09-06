@@ -1381,6 +1381,8 @@ int CPLprintf(const char* fmt, ...)
 #endif
 
     char szBuffer[4096];
+    // Quiet coverity my staring off nul terminated.
+    szBuffer[0] = '\0';
     int ret = CPLvsnprintf( szBuffer, sizeof(szBuffer), fmt, wrk_args );
 
 #ifdef va_copy
