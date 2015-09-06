@@ -32,6 +32,8 @@
 #include "cpl_vsi_virtual.h"
 #include "cpl_multiproc.h"
 #include "cpl_string.h"
+
+#include <cassert>
 #include <string>
 
 CPL_CVSID("$Id$");
@@ -1129,12 +1131,14 @@ VSIFileManager *VSIFileManager::Get()
             GPtrDiff_t nCurrentPID = (GPtrDiff_t)CPLGetPID();
             if( nConstructerPID != nCurrentPID )
             {
-                //printf("Thread %d: Waiting for VSIFileManager to be finished by other thread.\n", nCurrentPID);
                 {
                     CPLMutexHolder oHolder( &hVSIFileManagerMutex );
                 }
-                //printf("Thread %d: End of wait for VSIFileManager construction to be finished\n", nCurrentPID);
-                CPLAssert(nConstructerPID == 0);
+                if ( nConstructerPID != 0 )
+                {
+                    VSIDebug1( "nConstructerPID != 0: %d", nConstructerPID);
+                    assert(false);
+                }
             }
         }
         return poManager;
