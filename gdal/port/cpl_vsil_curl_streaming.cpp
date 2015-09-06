@@ -1394,7 +1394,7 @@ VSIVirtualHandle* VSICurlStreamingFSHandler::Open( const char *pszFilename,
     if (!poHandle->Exists())
     {
         delete poHandle;
-        poHandle = NULL;
+        return NULL;
     }
 
     if( CSLTestBoolean( CPLGetConfigOption( "VSI_CACHE", "FALSE" ) ) )
