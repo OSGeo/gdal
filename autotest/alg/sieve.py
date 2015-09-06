@@ -233,6 +233,64 @@ def sieve_6():
     
     return 'success'
 
+###############################################################################
+# Test with nodata
+
+def sieve_7():
+
+    gdal.FileFromMemBuffer('/vsimem/sieve_7.asc', """ncols        7
+nrows        7
+xllcorner    440720.000000000000
+yllcorner    3750120.000000000000
+cellsize     60.000000000000
+NODATA_value 0
+ 0 0 0 0 0 0 0
+ 0 1 1 1 1 1 1
+ 0 1 0 0 1 1 1
+ 0 1 0 2 2 2 1
+ 0 1 1 2 1 2 1
+ 0 1 1 2 2 2 1
+ 0 1 1 1 1 1 1
+ """)
+
+
+    drv = gdal.GetDriverByName( 'GTiff' )
+    src_ds = gdal.Open('/vsimem/sieve_7.asc')
+    src_band = src_ds.GetRasterBand(1)
+    
+    dst_ds = drv.Create('/vsimem/sieve_7.tif', 7, 7, 1, gdal.GDT_Byte )
+    dst_band = dst_ds.GetRasterBand(1)
+    
+    gdal.SieveFilter( src_band, src_band.GetMaskBand(), dst_band, 4, 4 )
+
+    cs_expected = 42
+    cs = dst_band.Checksum()
+
+    dst_band = None
+    dst_ds = None
+    
+    gdal.Unlink('/vsimem/sieve_7.asc')
+
+    if cs == cs_expected \
+       or gdal.GetConfigOption( 'CPL_DEBUG', 'OFF' ) != 'ON':
+        drv.Delete( '/vsimem/sieve_7.tif' )
+    
+    # Expeced:
+    #[[0 0 0 0 0 0 0]
+    # [0 1 1 1 1 1 1]
+    # [0 1 0 0 1 1 1]
+    # [0 1 0 2 2 2 1]
+    # [0 1 1 2 2 2 1]
+    # [0 1 1 2 2 2 1]
+    # [0 1 1 1 1 1 1]]
+
+    if cs != cs_expected:
+        print('Got: ', cs)
+        gdaltest.post_reason( 'got wrong checksum' )
+        return 'fail'
+    else:
+        return 'success' 
+
 
 gdaltest_list = [
     sieve_1,
@@ -240,7 +298,8 @@ gdaltest_list = [
     sieve_3,
     sieve_4,
     sieve_5,
-    sieve_6
+    sieve_6,
+    sieve_7
     ]
 
 if __name__ == '__main__':
