@@ -41,7 +41,7 @@ from osgeo import gdal, ogr
 ###############################################################################
 # Test a fairly simple case, with nodata masking.
 
-def polygonize_1():
+def polygonize_1(is_int_polygonize = True):
 
     src_ds = gdal.Open('data/polygonize_in.grd')
     src_band = src_ds.GetRasterBand(1)
@@ -56,7 +56,10 @@ def polygonize_1():
     mem_layer.CreateField( fd )
 
     # run the algorithm.
-    result = gdal.Polygonize( src_band, src_band.GetMaskBand(), mem_layer, 0 )
+    if is_int_polygonize:
+        result = gdal.Polygonize( src_band, src_band.GetMaskBand(), mem_layer, 0 )
+    else:
+        result = gdal.FPolygonize( src_band, src_band.GetMaskBand(), mem_layer, 0 )
     if result != 0:
         gdaltest.post_reason( 'Polygonize failed' )
         return 'fail'
@@ -85,6 +88,9 @@ def polygonize_1():
         return 'success'
     else:
         return 'fail'
+
+def polygonize_1_float():
+    return polygonize_1(is_int_polygonize = False)
 
 ###############################################################################
 # Test a simple case without masking.
@@ -214,6 +220,7 @@ def polygonize_4():
 
 gdaltest_list = [
     polygonize_1,
+    polygonize_1_float,
     polygonize_2,
     polygonize_3,
     polygonize_4
