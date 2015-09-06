@@ -34,7 +34,6 @@
 
 CPL_CVSID("$Id$");
 
-#define GP_NODATA_MARKER -51502112
 #define MY_MAX_INT 2147483647
 
 /*
@@ -107,6 +106,11 @@ static inline void CompareNeighbour( int nPolyId1, int nPolyId2,
                                      std::vector<int> &anBigNeighbour )
 
 {
+    // nodata polygon do not need neighbours, and cannot be neighbours
+    // to valid polygons. 
+    if( nPolyId1 < 0 || nPolyId2 < 0 )
+        return;
+
     // make sure we are working with the final merged polygon ids. 
     nPolyId1 = panPolyIdMap[nPolyId1];
     nPolyId2 = panPolyIdMap[nPolyId2];
@@ -116,9 +120,10 @@ static inline void CompareNeighbour( int nPolyId1, int nPolyId2,
 
     // nodata polygon do not need neighbours, and cannot be neighbours
     // to valid polygons. 
-    if( panPolyValue[nPolyId1] == GP_NODATA_MARKER
-        || panPolyValue[nPolyId2] == GP_NODATA_MARKER )
-        return;
+    // should no longer happen with r28826 optim
+    //if( panPolyValue[nPolyId1] == GP_NODATA_MARKER
+    //    || panPolyValue[nPolyId2] == GP_NODATA_MARKER )
+    //    return;
 
     if( anBigNeighbour[nPolyId1] == -1
         || anPolySizes[anBigNeighbour[nPolyId1]] < anPolySizes[nPolyId2] )
@@ -259,8 +264,7 @@ GDALSieveFilter( GDALRasterBandH hSrcBand, GDALRasterBandH hMaskBand,
         {
             iPoly = panThisLineId[iX]; 
 
-            CPLAssert( iPoly >= 0 );
-            if( anPolySizes[iPoly] < MY_MAX_INT )
+            if( iPoly >= 0 && anPolySizes[iPoly] < MY_MAX_INT )
                 anPolySizes[iPoly] += 1;
         }
 
@@ -524,13 +528,17 @@ GDALSieveFilter( GDALRasterBandH hSrcBand, GDALRasterBandH hMaskBand,
 /* -------------------------------------------------------------------- */
         for( iX = 0; iX < nXSize; iX++ )
         {
-            int iThisPoly = oFirstEnum.panPolyIdMap[panThisLineId[iX]];
-
-            if( anBigNeighbour[iThisPoly] != -1 )
+            int iThisPoly = panThisLineId[iX];
+            if( iThisPoly >= 0 )
             {
-                panThisLineWriteVal[iX] = 
-                    oFirstEnum.panPolyValue[
-                        anBigNeighbour[iThisPoly]];
+                iThisPoly = oFirstEnum.panPolyIdMap[iThisPoly];
+
+                if( anBigNeighbour[iThisPoly] != -1 )
+                {
+                    panThisLineWriteVal[iX] = 
+                        oFirstEnum.panPolyValue[
+                            anBigNeighbour[iThisPoly]];
+                }
             }
         }
 
