@@ -503,9 +503,6 @@ extern zipFile ZEXPORT cpl_zipOpen2 (
     zlib_filefunc_def* pzlib_filefunc_def )
 {
     zip_internal ziinit;
-    zip_internal* zi;
-    int err=ZIP_OK;
-
 
     if (pzlib_filefunc_def==NULL)
         cpl_fill_fopen_filefunc(&ziinit.z_filefunc);
@@ -528,8 +525,7 @@ extern zipFile ZEXPORT cpl_zipOpen2 (
     ziinit.add_position_when_writing_offset = 0;
     init_linkedlist(&(ziinit.central_dir));
 
-
-    zi = (zip_internal*)ALLOC(sizeof(zip_internal));
+    zip_internal* zi = (zip_internal*)ALLOC(sizeof(zip_internal));
     if (zi==NULL)
     {
         ZCLOSE(ziinit.z_filefunc,ziinit.filestream);
@@ -539,6 +535,8 @@ extern zipFile ZEXPORT cpl_zipOpen2 (
     /* now we add file in a zipfile */
 #    ifndef NO_ADDFILEINEXISTINGZIP
     ziinit.globalcomment = NULL;
+
+    int err=ZIP_OK;
     if (append == APPEND_STATUS_ADDINZIP)
     {
         uLong byte_before_the_zipfile;/* byte before the zipfile, (>0 for sfx)*/
@@ -610,6 +608,7 @@ extern zipFile ZEXPORT cpl_zipOpen2 (
         if (err!=ZIP_OK)
         {
             ZCLOSE(ziinit.z_filefunc, ziinit.filestream);
+            TRYFREE(zi);
             return NULL;
         }
 
