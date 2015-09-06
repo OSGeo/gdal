@@ -1577,6 +1577,14 @@ def Polygonize(*args, **kwargs):
   return _gdal.Polygonize(*args, **kwargs)
 Polygonize = _gdal.Polygonize
 
+def FPolygonize(*args, **kwargs):
+  """
+    FPolygonize(Band srcBand, Band maskBand, Layer outLayer, int iPixValField, char ** options=None, 
+        GDALProgressFunc callback=0, void * callback_data=None) -> int
+    """
+  return _gdal.FPolygonize(*args, **kwargs)
+FPolygonize = _gdal.FPolygonize
+
 def FillNodata(*args, **kwargs):
   """
     FillNodata(Band targetBand, Band maskBand, double maxSearchDist, int smoothingIterations, char ** options=None, 

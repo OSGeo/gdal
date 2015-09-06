@@ -5387,6 +5387,21 @@ int  Polygonize( GDALRasterBandShadow *srcBand,
 }
 
 
+int  FPolygonize( GDALRasterBandShadow *srcBand,
+                 GDALRasterBandShadow *maskBand,
+                 OGRLayerShadow *outLayer, 
+                 int iPixValField,
+                 char **options = NULL,
+                 GDALProgressFunc callback=NULL,
+                 void* callback_data=NULL) {
+
+    CPLErrorReset();
+
+    return GDALFPolygonize( srcBand, maskBand, outLayer, iPixValField,
+                           options, callback, callback_data );
+}
+
+
 int  FillNodata( GDALRasterBandShadow *targetBand,
      		 GDALRasterBandShadow *maskBand,
                  double maxSearchDist,
@@ -21250,6 +21265,191 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_FPolygonize(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
+  PyObject *resultobj = 0;
+  GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
+  GDALRasterBandShadow *arg2 = (GDALRasterBandShadow *) 0 ;
+  OGRLayerShadow *arg3 = (OGRLayerShadow *) 0 ;
+  int arg4 ;
+  char **arg5 = (char **) NULL ;
+  GDALProgressFunc arg6 = (GDALProgressFunc) NULL ;
+  void *arg7 = (void *) NULL ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  void *argp2 = 0 ;
+  int res2 = 0 ;
+  void *argp3 = 0 ;
+  int res3 = 0 ;
+  int val4 ;
+  int ecode4 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
+  PyObject * obj4 = 0 ;
+  PyObject * obj5 = 0 ;
+  PyObject * obj6 = 0 ;
+  char *  kwnames[] = {
+    (char *) "srcBand",(char *) "maskBand",(char *) "outLayer",(char *) "iPixValField",(char *) "options",(char *) "callback",(char *) "callback_data", NULL 
+  };
+  int result;
+  
+  /* %typemap(arginit) ( const char* callback_data=NULL)  */
+  PyProgressData *psProgressInfo;
+  psProgressInfo = (PyProgressData *) CPLCalloc(1,sizeof(PyProgressData));
+  psProgressInfo->nLastReported = -1;
+  psProgressInfo->psPyCallback = NULL;
+  psProgressInfo->psPyCallbackData = NULL;
+  arg7 = psProgressInfo;
+  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OOOO|OOO:FPolygonize",kwnames,&obj0,&obj1,&obj2,&obj3,&obj4,&obj5,&obj6)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "FPolygonize" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALRasterBandShadow * >(argp1);
+  res2 = SWIG_ConvertPtr(obj1, &argp2,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "FPolygonize" "', argument " "2"" of type '" "GDALRasterBandShadow *""'"); 
+  }
+  arg2 = reinterpret_cast< GDALRasterBandShadow * >(argp2);
+  res3 = SWIG_ConvertPtr(obj2, &argp3,SWIGTYPE_p_OGRLayerShadow, 0 |  0 );
+  if (!SWIG_IsOK(res3)) {
+    SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "FPolygonize" "', argument " "3"" of type '" "OGRLayerShadow *""'"); 
+  }
+  arg3 = reinterpret_cast< OGRLayerShadow * >(argp3);
+  ecode4 = SWIG_AsVal_int(obj3, &val4);
+  if (!SWIG_IsOK(ecode4)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "FPolygonize" "', argument " "4"" of type '" "int""'");
+  } 
+  arg4 = static_cast< int >(val4);
+  if (obj4) {
+    {
+      /* %typemap(in) char **options */
+      /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
+      if ( ! PySequence_Check(obj4) || PyUnicode_Check(obj4)
+  #if PY_VERSION_HEX < 0x03000000
+        || PyString_Check(obj4)
+  #endif
+        ) {
+        PyErr_SetString(PyExc_TypeError,"not a sequence");
+        SWIG_fail;
+      }
+      
+      int size = PySequence_Size(obj4);
+      for (int i = 0; i < size; i++) {
+        PyObject* pyObj = PySequence_GetItem(obj4,i);
+        if (PyUnicode_Check(pyObj))
+        {
+          char *pszStr;
+          Py_ssize_t nLen;
+          PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
+#if PY_VERSION_HEX >= 0x03000000
+          PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
+#else
+          PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
+#endif
+          arg5 = CSLAddString( arg5, pszStr );
+          Py_XDECREF(pyUTF8Str);
+        }
+#if PY_VERSION_HEX >= 0x03000000
+        else if (PyBytes_Check(pyObj))
+        arg5 = CSLAddString( arg5, PyBytes_AsString(pyObj) );
+#else
+        else if (PyString_Check(pyObj))
+        arg5 = CSLAddString( arg5, PyString_AsString(pyObj) );
+#endif
+        else
+        {
+          Py_DECREF(pyObj);
+          PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
+          SWIG_fail;
+        }
+        Py_DECREF(pyObj);
+      }
+    }
+  }
+  if (obj5) {
+    {
+      /* %typemap(in) (GDALProgressFunc callback = NULL) */
+      /* callback_func typemap */
+      if (obj5 && obj5 != Py_None ) {
+        void* cbfunction = NULL;
+        SWIG_ConvertPtr( obj5, 
+          (void**)&cbfunction,
+          SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
+          SWIG_POINTER_EXCEPTION | 0 );
+        
+        if ( cbfunction == GDALTermProgress ) {
+          arg6 = GDALTermProgress;
+        } else {
+          if (!PyCallable_Check(obj5)) {
+            PyErr_SetString( PyExc_RuntimeError, 
+              "Object given is not a Python function" );
+            SWIG_fail;
+          }
+          psProgressInfo->psPyCallback = obj5;
+          arg6 = PyProgressProxy;
+        }
+        
+      }
+      
+    }
+  }
+  if (obj6) {
+    {
+      /* %typemap(in) ( void* callback_data=NULL)  */
+      psProgressInfo->psPyCallbackData = obj6 ;
+    }
+  }
+  {
+    if (!arg1) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    if (!arg3) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      CPLErrorReset();
+    }
+    result = (int)FPolygonize(arg1,arg2,arg3,arg4,arg5,arg6,arg7);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_From_int(static_cast< int >(result));
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg5 );
+  }
+  {
+    /* %typemap(freearg) ( void* callback_data=NULL)  */
+    
+    CPLFree(psProgressInfo);
+    
+  }
+  return resultobj;
+fail:
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg5 );
+  }
+  {
+    /* %typemap(freearg) ( void* callback_data=NULL)  */
+    
+    CPLFree(psProgressInfo);
+    
+  }
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_FillNodata(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
   PyObject *resultobj = 0;
   GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
@@ -24935,6 +25135,10 @@ static PyMethodDef SwigMethods[] = {
 		""},
 	 { (char *)"Polygonize", (PyCFunction) _wrap_Polygonize, METH_VARARGS | METH_KEYWORDS, (char *)"\n"
 		"Polygonize(Band srcBand, Band maskBand, Layer outLayer, int iPixValField, char ** options=None, \n"
+		"    GDALProgressFunc callback=0, void * callback_data=None) -> int\n"
+		""},
+	 { (char *)"FPolygonize", (PyCFunction) _wrap_FPolygonize, METH_VARARGS | METH_KEYWORDS, (char *)"\n"
+		"FPolygonize(Band srcBand, Band maskBand, Layer outLayer, int iPixValField, char ** options=None, \n"
 		"    GDALProgressFunc callback=0, void * callback_data=None) -> int\n"
 		""},
 	 { (char *)"FillNodata", (PyCFunction) _wrap_FillNodata, METH_VARARGS | METH_KEYWORDS, (char *)"\n"

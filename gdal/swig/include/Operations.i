@@ -307,6 +307,26 @@ int  Polygonize( GDALRasterBandShadow *srcBand,
                            options, callback, callback_data );
 }
 %} 
+
+#ifndef SWIGJAVA
+%feature( "kwargs" ) FPolygonize;
+#endif
+%inline %{
+int  FPolygonize( GDALRasterBandShadow *srcBand,
+                 GDALRasterBandShadow *maskBand,
+                 OGRLayerShadow *outLayer, 
+                 int iPixValField,
+                 char **options = NULL,
+                 GDALProgressFunc callback=NULL,
+                 void* callback_data=NULL) {
+
+    CPLErrorReset();
+
+    return GDALFPolygonize( srcBand, maskBand, outLayer, iPixValField,
+                           options, callback, callback_data );
+}
+%} 
+
 %clear GDALRasterBandShadow *srcBand, OGRLayerShadow *outLayer;
 
 /************************************************************************/
