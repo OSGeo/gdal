@@ -144,7 +144,7 @@ class VSIGZipHandle : public VSIVirtualHandle
     vsi_l_offset  in;      /* bytes into deflate or inflate */
     vsi_l_offset  out;     /* bytes out of deflate or inflate */
     vsi_l_offset  nLastReadOffset;
-    
+
     GZipSnapshot* snapshots;
     vsi_l_offset snapshot_byte_interval; /* number of compressed bytes at which we create a "snapshot" */
 
@@ -380,8 +380,7 @@ VSIGZipHandle::~VSIGZipHandle()
 
     if (snapshots != NULL)
     {
-        unsigned int i;
-        for(i=0;i<compressed_size / snapshot_byte_interval + 1;i++)
+        for(size_t i=0;i<compressed_size / snapshot_byte_interval + 1;i++)
         {
             if (snapshots[i].uncompressed_pos)
             {
@@ -402,15 +401,10 @@ VSIGZipHandle::~VSIGZipHandle()
 
 void VSIGZipHandle::check_header()
 {
-    int method; /* method byte */
-    int flags;  /* flags byte */
-    uInt len;
-    int c;
-
     /* Assure two bytes in the buffer so we can peek ahead -- handle case
     where first byte of header is at the end of the buffer after the last
     gzip segment */
-    len = stream.avail_in;
+    uInt len = stream.avail_in;
     if (len < 2) {
         if (len) inbuf[0] = stream.next_in[0];
         errno = 0;
@@ -445,8 +439,8 @@ void VSIGZipHandle::check_header()
     stream.next_in += 2;
 
     /* Check the rest of the gzip header */
-    method = get_byte();
-    flags = get_byte();
+    int method = get_byte();
+    int flags = get_byte();
     if (method != Z_DEFLATED || (flags & RESERVED) != 0) {
         z_err = Z_DATA_ERROR;
         return;
@@ -461,6 +455,8 @@ void VSIGZipHandle::check_header()
         /* len is garbage if EOF but the loop below will quit anyway */
         while (len-- != 0 && get_byte() != EOF) ;
     }
+
+    int c;
     if ((flags & ORIG_NAME) != 0) { /* skip the original file name */
         while ((c = get_byte()) != 0 && c != EOF) ;
     }
