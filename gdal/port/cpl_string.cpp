@@ -1370,8 +1370,6 @@ int CPLsprintf(char *str, const char* fmt, ...)
   */
 int CPLprintf(const char* fmt, ...)
 {
-    char szBuffer[4096];
-    int ret;
     va_list wrk_args, args;
 
     va_start( args, fmt );
@@ -1382,22 +1380,31 @@ int CPLprintf(const char* fmt, ...)
     wrk_args = args;
 #endif
 
-    ret = CPLvsnprintf( szBuffer, sizeof(szBuffer), fmt, wrk_args );
+    char szBuffer[4096];
+    int ret = CPLvsnprintf( szBuffer, sizeof(szBuffer), fmt, wrk_args );
+
+#ifdef va_copy
+        va_end( wrk_args );
+#endif
 
     if( ret < (int)sizeof(szBuffer)-1 )
         ret = printf("%s", szBuffer);
     else
     {
 #ifdef va_copy
-        va_end( wrk_args );
         va_copy( wrk_args, args );
 #else
         wrk_args = args;
 #endif
+
         ret = vfprintf(stdout, fmt, wrk_args);
+
+#ifdef va_copy
+        va_end( wrk_args );
+#endif
     }
 
-    va_end( wrk_args );
+    va_end( args );
 
     return ret;
 }
