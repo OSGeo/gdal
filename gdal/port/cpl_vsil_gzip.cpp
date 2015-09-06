@@ -278,7 +278,8 @@ VSIGZipHandle::VSIGZipHandle(VSIVirtualHandle* poBaseHandle,
                              vsi_l_offset compressed_size,
                              vsi_l_offset uncompressed_size,
                              unsigned int expected_crc,
-                             int transparent)
+                             int transparent) :
+    snapshot_byte_interval(0)
 {
     this->poBaseHandle = poBaseHandle;
     this->expected_crc = expected_crc;
