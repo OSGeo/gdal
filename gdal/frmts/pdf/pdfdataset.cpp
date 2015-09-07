@@ -1039,7 +1039,7 @@ static TMapPdfiumDatasets g_mPdfiumDatasets;
 
 static
 int LoadPdfiumDocumentPage(const char* pszFilename, const char* pszUserPwd,
-    int pageNum, TPdfiumDocumentStruct** doc, TPdfiumPageStruct** page)
+    int pageNum, TPdfiumDocumentStruct** doc, TPdfiumPageStruct** page, int *pnPageCount)
 {
   TPdfiumDocumentStruct *poDoc;
   TPdfiumPageStruct *poPage;
@@ -1049,6 +1049,8 @@ int LoadPdfiumDocumentPage(const char* pszFilename, const char* pszUserPwd,
     *doc = NULL;
   if(page)
     *page = NULL;
+  if(pnPageCount)
+    *pnPageCount = 0;
 
   // Loading document and page must be only in one thread!
   CPLCreateOrAcquireMutex(&g_oPdfiumLoadDocMutex, PDFIUM_MUTEX_TIMEOUT);
@@ -1160,6 +1162,17 @@ int LoadPdfiumDocumentPage(const char* pszFilename, const char* pszUserPwd,
       return FALSE;
   }
 
+  /* Sanity check to validate page count */
+  if( pageNum != nPages )
+  {
+      if( poDoc->doc->GetPage(nPages - 1) == NULL )
+      {
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid PDF : invalid page count");
+        CPLReleaseMutex(g_oPdfiumLoadDocMutex);
+        return FALSE;
+      }
+  }
+
   TMapPdfiumPages::iterator itPage;
   itPage = poDoc->pages.find(pageNum);
   // Page not loaded
@@ -1206,6 +1219,8 @@ int LoadPdfiumDocumentPage(const char* pszFilename, const char* pszUserPwd,
     *doc = poDoc;
   if(page)
     *page = poPage;
+  if(pnPageCount)
+    *pnPageCount = nPages;
 
   CPLReleaseMutex(g_oPdfiumLoadDocMutex);
 
@@ -4276,7 +4291,7 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
   if (bUseLib.test(PDFLIB_PDFIUM))
   {
     if(!LoadPdfiumDocumentPage(pszFilename, pszUserPwd, iPage,
-      &poDocPdfium, &poPagePdfium)) {
+      &poDocPdfium, &poPagePdfium, &nPages)) {
         // CPLError is called inside function
         return NULL;
     }

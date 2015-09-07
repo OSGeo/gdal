@@ -1915,6 +1915,61 @@ def pdf_password():
 
     return 'success'
 
+###############################################################################
+# Test multi page support
+
+def pdf_multipage():
+
+    if gdaltest.pdf_drv is None:
+        return 'skip'
+        
+    # byte_and_rgbsmall_2pages.pdf was generated with :
+    # 1) gdal_translate gcore/data/byte.tif byte.pdf -of PDF
+    # 2) gdal_translate gcore/data/rgbsmall.tif rgbsmall.pdf -of PDF
+    # 3)  ~/install-podofo-0.9.3/bin/podofomerge byte.pdf rgbsmall.pdf byte_and_rgbsmall_2pages.pdf
+
+    ds = gdal.Open('data/byte_and_rgbsmall_2pages.pdf')
+    subdatasets = ds.GetSubDatasets()
+    expected_subdatasets = [('PDF:1:data/byte_and_rgbsmall_2pages.pdf', 'Page 1 of data/byte_and_rgbsmall_2pages.pdf'), ('PDF:2:data/byte_and_rgbsmall_2pages.pdf', 'Page 2 of data/byte_and_rgbsmall_2pages.pdf')]
+    if subdatasets != expected_subdatasets:
+        gdaltest.post_reason('did not get expected subdatasets')
+        print(subdatasets)
+        print(expected_subdatasets)
+        return 'fail'
+    ds = None
+
+    ds = gdal.Open('PDF:1:data/byte_and_rgbsmall_2pages.pdf')
+    if ds.RasterXSize != 20:
+        gdaltest.post_reason('wrong width')
+        print(ds.RasterXSize)
+        return 'fail'
+
+    ds2 = gdal.Open('PDF:2:data/byte_and_rgbsmall_2pages.pdf')
+    if ds2.RasterXSize != 50:
+        gdaltest.post_reason('wrong width')
+        print(ds2.RasterXSize)
+        return 'fail'
+    
+    with gdaltest.error_handler():
+        ds3 = gdal.Open('PDF:0:data/byte_and_rgbsmall_2pages.pdf')
+    if ds3 is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    with gdaltest.error_handler():
+        ds3 = gdal.Open('PDF:3:data/byte_and_rgbsmall_2pages.pdf')
+    if ds3 is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    with gdaltest.error_handler():
+        ds = gdal.Open('PDF:1:/does/not/exist.pdf')
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list_for_full_backend = [
     pdf_online_1,
     pdf_online_2,
@@ -1964,7 +2019,8 @@ gdaltest_list_for_full_backend = [
     pdf_georef_on_image_rgb,
     pdf_write_huge,
     pdf_overviews,
-    pdf_password ]
+    pdf_password,
+    pdf_multipage ]
 
 gdaltest_list_for_short_backend = [
     pdf_iso32000,
@@ -1973,7 +2029,8 @@ gdaltest_list_for_short_backend = [
     pdf_update_info,
     pdf_update_xmp,
     pdf_rgba_default_compression_tiled,
-    pdf_password
+    pdf_password,
+    pdf_multipage
 ]
 
 def pdf_run_all():
