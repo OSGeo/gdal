@@ -298,7 +298,7 @@ class PDFDataset : public GDALPamDataset
     void         ExploreLayersPdfium(GDALPDFArray* poArray, int nRecLevel, CPLString osTopLayer = "");
     void         FindLayersPdfium();
     void         PDFiumRenderPageBitmap(FPDF_BITMAP bitmap, FPDF_PAGE page, int start_x, int start_y,
-                                        int size_x, int size_y);
+                                        int size_x, int size_y, const char* pszRenderingOptions);
     void         TurnLayersOnOffPdfium();
 
 public:
