@@ -1475,13 +1475,13 @@ double OSRGetPrimeMeridian( OGRSpatialReferenceH hSRS, char **ppszName )
  * @param dfSemiMajor the semi major axis of the spheroid.
  * 
  * @param dfInvFlattening the inverse flattening for the spheroid.
- * This can be computed from the semi minor axis as 
+ * This can be computed from the semi minor axis as
  * 1/f = 1.0 / (1.0 - semiminor/semimajor).
  *
- * @param pszPMName the name of the prime merdidian (not to serve as a key)
- * If this is NULL a default value of "Greenwich" will be used. 
- * 
- * @param dfPMOffset the longitude of greenwich relative to this prime
+ * @param pszPMName the name of the prime meridian (not to serve as a key)
+ * If this is NULL a default value of "Greenwich" will be used.
+ *
+ * @param dfPMOffset the longitude of Greenwich relative to this prime
  * meridian.
  *
  * @param pszAngularUnits the angular units name (see ogr_srs_api.h for some
@@ -1564,18 +1564,16 @@ OGRSpatialReference::SetGeogCS( const char * pszGeogName,
 /* -------------------------------------------------------------------- */
 /*      Build the GEOGCS object.                                        */
 /* -------------------------------------------------------------------- */
-    char                szValue[128];
-    OGR_SRSNode         *poGeogCS, *poSpheroid, *poDatum, *poPM, *poUnits;
-
-    poGeogCS = new OGR_SRSNode( "GEOGCS" );
+    OGR_SRSNode *poGeogCS = new OGR_SRSNode( "GEOGCS" );
     poGeogCS->AddChild( new OGR_SRSNode( pszGeogName ) );
-    
+
 /* -------------------------------------------------------------------- */
 /*      Setup the spheroid.                                             */
 /* -------------------------------------------------------------------- */
-    poSpheroid = new OGR_SRSNode( "SPHEROID" );
+    OGR_SRSNode *poSpheroid = new OGR_SRSNode( "SPHEROID" );
     poSpheroid->AddChild( new OGR_SRSNode( pszSpheroidName ) );
 
+    char szValue[128];
     OGRPrintDouble( szValue, dfSemiMajor );
     poSpheroid->AddChild( new OGR_SRSNode(szValue) );
 
@@ -1585,7 +1583,7 @@ OGRSpatialReference::SetGeogCS( const char * pszGeogName,
 /* -------------------------------------------------------------------- */
 /*      Setup the Datum.                                                */
 /* -------------------------------------------------------------------- */
-    poDatum = new OGR_SRSNode( "DATUM" );
+    OGR_SRSNode *poDatum = new OGR_SRSNode( "DATUM" );
     poDatum->AddChild( new OGR_SRSNode(pszDatumName) );
     poDatum->AddChild( poSpheroid );
 
@@ -1596,8 +1594,8 @@ OGRSpatialReference::SetGeogCS( const char * pszGeogName,
         strcpy( szValue, "0" );
     else
         OGRPrintDouble( szValue, dfPMOffset );
-    
-    poPM = new OGR_SRSNode( "PRIMEM" );
+
+    OGR_SRSNode *poPM = new OGR_SRSNode( "PRIMEM" );
     poPM->AddChild( new OGR_SRSNode( pszPMName ) );
     poPM->AddChild( new OGR_SRSNode( szValue ) );
 
@@ -1605,11 +1603,11 @@ OGRSpatialReference::SetGeogCS( const char * pszGeogName,
 /*      Setup the rotational units.                                     */
 /* -------------------------------------------------------------------- */
     OGRPrintDouble( szValue, dfConvertToRadians );
-    
-    poUnits = new OGR_SRSNode( "UNIT" );
+
+    OGR_SRSNode *poUnits = new OGR_SRSNode( "UNIT" );
     poUnits->AddChild( new OGR_SRSNode(pszAngularUnits) );
     poUnits->AddChild( new OGR_SRSNode(szValue) );
-    
+
 /* -------------------------------------------------------------------- */
 /*      Complete the GeogCS                                             */
 /* -------------------------------------------------------------------- */
