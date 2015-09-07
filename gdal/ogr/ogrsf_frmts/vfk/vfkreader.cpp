@@ -460,19 +460,15 @@ int VFKReader::LoadGeometry()
 */
 void VFKReader::AddInfo(const char *pszLine)
 {
-    int         i, iKeyLength, iValueLength;
-    int         nSkip, nOffset;
-    char       *pszKey, *pszValue, *pszValueEnc;
-    const char *poChar, *poKey;
-    CPLString   key, value;
-    
+    int         nOffset;
     if (pszLine[1] == 'H')
         nOffset = 2;
     else
         nOffset = 1; /* &DKATUZE */
-    
-    poChar = poKey = pszLine + nOffset; /* &H */
-    iKeyLength = 0;
+
+    const char *poKey = pszLine + nOffset; /* &H */
+    const char *poChar = poKey;
+    int iKeyLength = 0;
     while (*poChar != '\0' && *poChar != ';') {
         iKeyLength++;
         poChar ++;
@@ -480,28 +476,28 @@ void VFKReader::AddInfo(const char *pszLine)
     if (*poChar == '\0')
         return;
 
-    pszKey = (char *) CPLMalloc(iKeyLength + 1);
+    char *pszKey = (char *) CPLMalloc(iKeyLength + 1);
     strncpy(pszKey, poKey, iKeyLength);
     pszKey[iKeyLength] = '\0';
 
     poChar++; /* skip ; */
 
-    iValueLength = 0;
-    nSkip = 3; /* &H + ; */
+    int iValueLength = 0;
+    int nSkip = 3; /* &H + ; */
     while (*poChar != '\0') {
         if (*poChar == '"' && iValueLength == 0) {
             nSkip++;
         }
         else {
-            iValueLength++; 
+            iValueLength++;
         }
         poChar++;
     }
     if (nSkip > 3)
         iValueLength--;
-    
-    pszValue = (char *) CPLMalloc(iValueLength + 1);
-    for (i = 0; i < iValueLength; i++) {
+
+    char *pszValue = (char *) CPLMalloc(iValueLength + 1);
+    for (int i = 0; i < iValueLength; i++) {
         pszValue[i] = pszLine[iKeyLength+nSkip+i];
         if (pszValue[i] == '"') {
             pszValue[i] = '\''; /* " -> ' */
@@ -510,31 +506,26 @@ void VFKReader::AddInfo(const char *pszLine)
 
     pszValue[iValueLength] = '\0';
 
-
     /* recode values, assuming Latin2 */
     if (EQUAL(pszKey, "CODEPAGE")) {
         if (!EQUAL(pszValue, "WE8ISO8859P2"))
             m_bLatin2 = FALSE;
     }
 
-    pszValueEnc = CPLRecode(pszValue,
+    char *pszValueEnc = CPLRecode(pszValue,
                             m_bLatin2 ? "ISO-8859-2" : "WINDOWS-1250",
                             CPL_ENC_UTF8);
     if (poInfo.find(pszKey) == poInfo.end() ) {
         poInfo[pszKey] = pszValueEnc;
     }
     else {
-        int nCount;
-        size_t iFound;
-        char *pszKeyUniq;
-        
         /* max. number of duplicated keys can be 101 */
-        pszKeyUniq = (char *) CPLMalloc(strlen(pszKey) + 5); 
+        char *pszKeyUniq = (char *) CPLMalloc(strlen(pszKey) + 5);
 
-        nCount = 1; /* assuming at least one match */
+        int nCount = 1; /* assuming at least one match */
         for(std::map<CPLString, CPLString>::iterator i = poInfo.begin();
             i != poInfo.end(); ++i) {
-            iFound = i->first.find("_");
+            size_t iFound = i->first.find("_");
             if (iFound != std::string::npos &&
                 EQUALN(pszKey, i->first.c_str(), iFound))
                 nCount += 1;
