@@ -72,33 +72,25 @@ OGRVRTGeomFieldProps::~OGRVRTGeomFieldProps()
 /*                            OGRVRTLayer()                             */
 /************************************************************************/
 
-OGRVRTLayer::OGRVRTLayer(OGRVRTDataSource* poDSIn)
-
-{
-    poDS = poDSIn;
-
-    bHasFullInitialized = FALSE;
-    psLTree = NULL;
-
-    poFeatureDefn = NULL;
-    poSrcLayer = NULL;
-    poSrcDS = NULL;
-    poSrcFeatureDefn = NULL;
-
-    iFIDField = -1;
-    iStyleField = -1;
-
-    pszAttrFilter = NULL;
-
-    bNeedReset = TRUE;
-    bSrcLayerFromSQL = FALSE;
-
-    bUpdate = FALSE;
-    bAttrFilterPassThrough = FALSE;
-
-    nFeatureCount = -1;
-    bError = FALSE;
-}
+OGRVRTLayer::OGRVRTLayer(OGRVRTDataSource* poDSIn) :
+    poDS(poDSIn),
+    bHasFullInitialized(FALSE),
+    psLTree(NULL),
+    poFeatureDefn(NULL),
+    poSrcDS(NULL),
+    poSrcLayer(NULL),
+    poSrcFeatureDefn(NULL),
+    bNeedReset(TRUE),
+    bSrcLayerFromSQL(FALSE),
+    bSrcDSShared(FALSE),
+    bAttrFilterPassThrough(FALSE),
+    pszAttrFilter(NULL),
+    iFIDField(-1),  // -1 means pass through.
+    iStyleField(-1),  // -1 means pass through.
+    bUpdate(FALSE),
+    nFeatureCount(-1),
+    bError(FALSE)
+{ }
 
 /************************************************************************/
 /*                            ~OGRVRTLayer()                            */
