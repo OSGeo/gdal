@@ -91,13 +91,14 @@ void OGRPrintDouble( char * pszStrBuf, double dfValue )
  * be initialized, or NULL (the default). 
  */
 
-OGRSpatialReference::OGRSpatialReference( const char * pszWKT )
-
+OGRSpatialReference::OGRSpatialReference( const char * pszWKT ) :
+    dfFromGreenwich(0.0),
+    dfToMeter(0.0),
+    dfToDegrees(0.0),
+    poRoot(NULL),
+    nRefCount(1),
+    bNormInfoSet(FALSE)
 {
-    bNormInfoSet = FALSE;
-    nRefCount = 1;
-    poRoot = NULL;
-
     if( pszWKT != NULL )
         importFromWkt( (char **) &pszWKT );
 }
