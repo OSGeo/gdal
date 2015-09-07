@@ -108,12 +108,8 @@ VFKPropertyDefn *IVFKDataBlock::GetProperty(int iIndex) const
 */
 void IVFKDataBlock::SetProperties(const char *poLine)
 {
-    const char *poChar, *poProp;
-    char *pszName, *pszType;
-    int   nLength;
-    
-    pszName = pszType = NULL;
-    
+    const char *poChar;
+
     /* skip data block name */
     for (poChar = poLine; *poChar != '0' && *poChar != ';'; poChar++)
         ;
@@ -123,14 +119,16 @@ void IVFKDataBlock::SetProperties(const char *poLine)
     poChar++;
 
     /* read property name/type */
-    poProp  = poChar;
-    nLength = 0;
+    const char *poProp  = poChar;
+    char *pszName = NULL;
+    char *pszType = NULL;
+    int nLength = 0;
     while(*poChar != '\0') {
         if (*poChar == ' ') {
             pszName = (char *) CPLRealloc(pszName, nLength + 1);
             strncpy(pszName, poProp, nLength);
             pszName[nLength] = '\0';
-            
+
             poProp = ++poChar;
             nLength = 0;
         }
@@ -138,12 +136,12 @@ void IVFKDataBlock::SetProperties(const char *poLine)
             pszType = (char *) CPLRealloc(pszType, nLength + 1);
             strncpy(pszType, poProp, nLength);
             pszType[nLength] = '\0';
-            
+
             /* add property */
             if (pszName && *pszName != '\0' &&
                 pszType && *pszType != '\0')
                 AddProperty(pszName, pszType);
-            
+
             poProp = ++poChar;
             nLength = 0;
         }
@@ -154,12 +152,12 @@ void IVFKDataBlock::SetProperties(const char *poLine)
     pszType = (char *) CPLRealloc(pszType, nLength + 1);
     strncpy(pszType, poProp, nLength);
     pszType[nLength] = '\0';
-    
+
     /* add property */
     if (pszName && *pszName != '\0' &&
         pszType && *pszType != '\0')
         AddProperty(pszName, pszType);
-    
+
     CPLFree(pszName);
     CPLFree(pszType);
 }
