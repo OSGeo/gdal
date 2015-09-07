@@ -539,9 +539,10 @@ void VFKReader::AddInfo(const char *pszLine)
                 EQUALN(pszKey, i->first.c_str(), iFound))
                 nCount += 1;
         }
-        
+
         sprintf(pszKeyUniq, "%s_%d", pszKey, nCount);
         poInfo[pszKeyUniq] = pszValueEnc;
+        CPLFree(pszKeyUniq);
     }
 
     CPLFree(pszKey);
