@@ -357,8 +357,13 @@ static void CSVIngest( const char *pszFilename )
 
 {
     CSVTable *psTable = CSVAccess( pszFilename );
-    int       nFileLen, i, nMaxLineCount, iLine = 0;
-    char *pszThisLine;
+
+    if( psTable == NULL )
+    {
+        CPLError( CE_Failure, CPLE_FileIO, "Open of file %s failed.",
+                  psTable->pszFilename );
+        return;
+    }
 
     if( psTable->pszRawData != NULL )
         return;
@@ -367,7 +372,7 @@ static void CSVIngest( const char *pszFilename )
 /*      Ingest whole file.                                              */
 /* -------------------------------------------------------------------- */
     VSIFSeek( psTable->fp, 0, SEEK_END );
-    nFileLen = VSIFTell( psTable->fp );
+    int nFileLen = VSIFTell( psTable->fp );
     VSIRewind( psTable->fp );
 
     psTable->pszRawData = (char *) CPLMalloc(nFileLen+1);
@@ -377,7 +382,7 @@ static void CSVIngest( const char *pszFilename )
         CPLFree( psTable->pszRawData );
         psTable->pszRawData = NULL;
 
-        CPLError( CE_Failure, CPLE_FileIO, "Read of file %s failed.", 
+        CPLError( CE_Failure, CPLE_FileIO, "Read of file %s failed.",
                   psTable->pszFilename );
         return;
     }
@@ -387,23 +392,24 @@ static void CSVIngest( const char *pszFilename )
 /* -------------------------------------------------------------------- */
 /*      Get count of newlines so we can allocate line array.            */
 /* -------------------------------------------------------------------- */
-    nMaxLineCount = 0;
-    for( i = 0; i < nFileLen; i++ )
+    int nMaxLineCount = 0;
+    for( int i = 0; i < nFileLen; i++ )
     {
         if( psTable->pszRawData[i] == 10 )
             nMaxLineCount++;
     }
 
     psTable->papszLines = (char **) CPLCalloc(sizeof(char*),nMaxLineCount);
-    
+
 /* -------------------------------------------------------------------- */
 /*      Build a list of record pointers into the raw data buffer        */
 /*      based on line terminators.  Zero terminate the line             */
 /*      strings.                                                        */
 /* -------------------------------------------------------------------- */
     /* skip header line */
-    pszThisLine = CSVFindNextLine( psTable->pszRawData );
+    char *pszThisLine = CSVFindNextLine( psTable->pszRawData );
 
+    int iLine = 0;
     while( pszThisLine != NULL && iLine < nMaxLineCount )
     {
         psTable->papszLines[iLine++] = pszThisLine;
@@ -418,7 +424,7 @@ static void CSVIngest( const char *pszFilename )
 /*      array.                                                          */
 /* -------------------------------------------------------------------- */
     psTable->panLineIndex = (int *) CPLMalloc(sizeof(int)*psTable->nLineCount);
-    for( i = 0; i < psTable->nLineCount; i++ )
+    for( int i = 0; i < psTable->nLineCount; i++ )
     {
         psTable->panLineIndex[i] = atoi(psTable->papszLines[i]);
 
