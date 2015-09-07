@@ -3075,34 +3075,6 @@ void FGdbLayer::SetSpatialFilter( OGRGeometry* pOGRGeom )
 }
 
 /************************************************************************/
-/*                         SetSpatialFilterRect()                       */
-/************************************************************************/
-
-void FGdbLayer::SetSpatialFilterRect (double dfMinX, double dfMinY, double dfMaxX, double dfMaxY)
-{
-
-    //TODO: can optimize this by changing how the filter gets generated -
-    //this will work for now
-
-    OGRGeometry* pTemp = OGRGeometryFactory::createGeometry(wkbPolygon);
-
-    pTemp->assignSpatialReference(m_pSRS);
-
-    OGRLinearRing ring;
-
-    ring.addPoint( dfMinX, dfMinY );
-    ring.addPoint( dfMinX, dfMaxY );
-    ring.addPoint( dfMaxX, dfMaxY );
-    ring.addPoint( dfMaxX, dfMinY );
-    ring.addPoint( dfMinX, dfMinY );
-    ((OGRPolygon *) pTemp)->addRing( &ring );
-
-    SetSpatialFilter(pTemp);
-
-    OGRGeometryFactory::destroyGeometry(pTemp);
-}
-
-/************************************************************************/
 /*                             ResyncIDs()                              */
 /************************************************************************/
 

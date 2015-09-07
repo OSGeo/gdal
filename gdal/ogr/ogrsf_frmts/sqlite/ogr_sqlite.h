@@ -510,6 +510,8 @@ class OGRSQLiteViewLayer : public OGRSQLiteLayer
     virtual GIntBig     GetFeatureCount( int );
 
     virtual void        SetSpatialFilter( OGRGeometry * );
+    virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom )
+                { OGRSQLiteLayer::SetSpatialFilter(iGeomField, poGeom); }
     virtual OGRErr      SetAttributeFilter( const char * );
 
     virtual OGRFeature *GetFeature( GIntBig nFeatureId );

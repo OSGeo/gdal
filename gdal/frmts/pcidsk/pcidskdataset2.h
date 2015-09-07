@@ -197,6 +197,8 @@ class OGRPCIDSKLayer : public OGRLayer
 
     GIntBig             GetFeatureCount( int );
     OGRErr              GetExtent( OGREnvelope *psExtent, int bForce );
+    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+                { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
 };
 
 #endif /*  PCIDSKDATASET2_H_INCLUDED */

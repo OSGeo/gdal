@@ -200,6 +200,8 @@ class OGRShapeLayer : public OGRAbstractProxiedLayer
 
     GIntBig             GetFeatureCount( int );
     OGRErr              GetExtent(OGREnvelope *psExtent, int bForce);
+    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+                { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
 
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
                                      int bApproxOK = TRUE );
@@ -209,6 +211,9 @@ class OGRShapeLayer : public OGRAbstractProxiedLayer
 
     virtual int         TestCapability( const char * );
     virtual void        SetSpatialFilter( OGRGeometry * );
+    virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom )
+                { OGRLayer::SetSpatialFilter(iGeomField, poGeom); }
+
     virtual OGRErr      SetAttributeFilter( const char * );
     
     void                AddToFileList( CPLStringList& oFileList );

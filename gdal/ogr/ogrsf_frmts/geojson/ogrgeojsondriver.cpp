@@ -53,6 +53,8 @@ class OGRESRIFeatureServiceLayer: public OGRLayer
         OGRFeature* GetNextFeature();
         GIntBig GetFeatureCount( int bForce = TRUE );
         OGRErr              GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
+        virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+                { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
         int TestCapability( const char* pszCap );
         OGRFeatureDefn* GetLayerDefn() { return poFeatureDefn; }
 };

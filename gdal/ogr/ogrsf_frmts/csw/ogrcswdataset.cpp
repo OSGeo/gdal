@@ -75,6 +75,8 @@ class OGRCSWLayer : public OGRLayer
     virtual int                 TestCapability( const char * ) { return FALSE; }
 
     virtual void                SetSpatialFilter( OGRGeometry * );
+    virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom )
+                { OGRLayer::SetSpatialFilter(iGeomField, poGeom); }
     virtual OGRErr              SetAttributeFilter( const char * );
 };
 

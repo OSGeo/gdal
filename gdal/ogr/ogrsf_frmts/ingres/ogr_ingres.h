@@ -169,6 +169,8 @@ class OGRIngresTableLayer : public OGRIngresLayer
 //    virtual GIntBig     GetFeatureCount( int );
 
     void                SetSpatialFilter( OGRGeometry * );
+    virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom )
+                { OGRLayer::SetSpatialFilter(iGeomField, poGeom); }
 
     virtual OGRErr      SetAttributeFilter( const char * );
 
@@ -185,7 +187,6 @@ class OGRIngresTableLayer : public OGRIngresLayer
                                 { bPreservePrecision = bFlag; }    
 
     virtual int         TestCapability( const char * );
-//    virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
 };
 
 /************************************************************************/

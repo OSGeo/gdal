@@ -124,6 +124,8 @@ class OGRSDELayer : public OGRLayer
     virtual OGRFeature *GetNextFeature();
     virtual OGRFeature *GetFeature( GIntBig nFeatureId );
     virtual OGRErr      GetExtent( OGREnvelope *psExtent, int bForce );
+    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+                { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
     virtual GIntBig     GetFeatureCount( int bForce );
 
     virtual OGRErr      SetAttributeFilter( const char *pszQuery );

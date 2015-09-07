@@ -88,6 +88,8 @@ public:
 
     virtual GIntBig     GetFeatureCount(int bForce = TRUE);
     virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
+    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+                { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
     virtual OGRSpatialReference *GetSpatialRef();
     virtual const char* GetFIDColumn();
 

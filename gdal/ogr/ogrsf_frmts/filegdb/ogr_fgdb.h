@@ -189,10 +189,15 @@ public:
   virtual OGRErr      DeleteFeature( GIntBig nFID );
 
   virtual OGRErr      GetExtent( OGREnvelope *psExtent, int bForce );
+  virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+                { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
+
   virtual GIntBig     GetFeatureCount( int bForce );
   virtual OGRErr      SetAttributeFilter( const char *pszQuery );
-  virtual void 	      SetSpatialFilterRect (double dfMinX, double dfMinY, double dfMaxX, double dfMaxY);
+
   virtual void        SetSpatialFilter( OGRGeometry * );
+  virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom )
+                { OGRLayer::SetSpatialFilter(iGeomField, poGeom); }
 
 //  virtual OGRErr        StartTransaction( );
 //  virtual OGRErr        CommitTransaction( );
