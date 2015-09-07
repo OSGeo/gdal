@@ -326,6 +326,7 @@ int VFKReader::ReadDataRecords(IVFKDataBlock *poDataBlock)
                     CPLDebug("OGR-VFK", 
                              "Invalid VFK data record skipped (line %d).\n%s\n", iLine, pszLine);
                     poDataBlockCurrent->SetIncRecordCount(RecordSkipped);
+                    delete poNewFeature;
                 }
             }
             CPLFree(pszBlockName);
