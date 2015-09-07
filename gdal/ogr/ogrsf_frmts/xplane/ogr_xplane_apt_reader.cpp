@@ -577,7 +577,7 @@ void    OGRXPlaneAptReader::ParseRunwayTaxiwayV810Record()
                             RunwayMarkingEnumeration.GetText(eMarkings),
                             RunwayApproachLightingEnumerationV810.GetText(aeApproachLightingCode[i]),
                             (aeRunwayLightingCode[i] == 5) /* bHasTouchdownLights */,
-                            (abReil[i] && abReil[i-1]) ? "Omni-directional" :
+                            (abReil[i] && abReil[1-i]) ? "Omni-directional" :
                             (abReil[i] && !abReil[1-i]) ? "Unidirectional" : "None" /* eReil */);
                     poRunwayThresholdLayer->SetRunwayLengthAndHeading(poFeature, dfLength,
                             (i == 0) ? dfTrueHeading : (dfTrueHeading < 180) ? dfTrueHeading + 180 : dfTrueHeading - 180);
