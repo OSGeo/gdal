@@ -92,16 +92,11 @@ static void CSVFreeTLS(void* pData)
 static CSVTable *CSVAccess( const char * pszFilename )
 
 {
-    CSVTable    *psTable;
-    FILE        *fp;
-
 /* -------------------------------------------------------------------- */
 /*      Fetch the table, and allocate the thread-local pointer to it    */
 /*      if there isn't already one.                                     */
 /* -------------------------------------------------------------------- */
-    CSVTable **ppsCSVTableList;
-
-    ppsCSVTableList = (CSVTable **) CPLGetTLS( CTLS_CSVTABLEPTR );
+    CSVTable **ppsCSVTableList = (CSVTable **) CPLGetTLS( CTLS_CSVTABLEPTR );
     if( ppsCSVTableList == NULL )
     {
         ppsCSVTableList = (CSVTable **) CPLCalloc(1,sizeof(CSVTable*));
@@ -111,8 +106,8 @@ static CSVTable *CSVAccess( const char * pszFilename )
 /* -------------------------------------------------------------------- */
 /*      Is the table already in the list.                               */
 /* -------------------------------------------------------------------- */
-    for( psTable = *ppsCSVTableList; 
-         psTable != NULL; 
+    for( CSVTable *psTable = *ppsCSVTableList;
+         psTable != NULL;
          psTable = psTable->psNext )
     {
         if( EQUAL(psTable->pszFilename,pszFilename) )
@@ -121,7 +116,6 @@ static CSVTable *CSVAccess( const char * pszFilename )
              * Eventually we should consider promoting to the front of
              * the list to accelerate frequently accessed tables.
              */
-
             return( psTable );
         }
     }
@@ -129,7 +123,7 @@ static CSVTable *CSVAccess( const char * pszFilename )
 /* -------------------------------------------------------------------- */
 /*      If not, try to open it.                                         */
 /* -------------------------------------------------------------------- */
-    fp = VSIFOpen( pszFilename, "rb" );
+    FILE *fp = VSIFOpen( pszFilename, "rb" );
     if( fp == NULL )
         return NULL;
 
@@ -137,13 +131,13 @@ static CSVTable *CSVAccess( const char * pszFilename )
 /*      Create an information structure about this table, and add to    */
 /*      the front of the list.                                          */
 /* -------------------------------------------------------------------- */
-    psTable = (CSVTable *) CPLCalloc(sizeof(CSVTable),1);
+    CSVTable *psTable = (CSVTable *) CPLCalloc(sizeof(CSVTable),1);
 
     psTable->fp = fp;
     psTable->pszFilename = CPLStrdup( pszFilename );
     psTable->bNonUniqueKey = FALSE; /* as far as we know now */
     psTable->psNext = *ppsCSVTableList;
-    
+
     *ppsCSVTableList = psTable;
 
 /* -------------------------------------------------------------------- */
