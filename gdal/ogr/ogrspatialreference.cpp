@@ -3468,8 +3468,6 @@ int OGRSpatialReference::FindProjParm( const char *pszParameter,
                                        const OGR_SRSNode *poPROJCS ) const
 
 {
-    const OGR_SRSNode *poParameter = NULL;
-
     if( poPROJCS == NULL )
         poPROJCS = GetAttrNode( "PROJCS" );
 
@@ -3479,14 +3477,12 @@ int OGRSpatialReference::FindProjParm( const char *pszParameter,
 /* -------------------------------------------------------------------- */
 /*      Search for requested parameter.                                 */
 /* -------------------------------------------------------------------- */
-    int iChild;
-
-    for( iChild = 0; iChild < poPROJCS->GetChildCount(); iChild++ )
+    for( int iChild = 0; iChild < poPROJCS->GetChildCount(); iChild++ )
     {
-        poParameter = poPROJCS->GetChild(iChild);
-        
+        const OGR_SRSNode *poParameter = poPROJCS->GetChild(iChild);
+
         if( EQUAL(poParameter->GetValue(),"PARAMETER")
-            && poParameter->GetChildCount() == 2 
+            && poParameter->GetChildCount() == 2
             && EQUAL(poPROJCS->GetChild(iChild)->GetChild(0)->GetValue(),
                      pszParameter) )
         {
@@ -3497,20 +3493,20 @@ int OGRSpatialReference::FindProjParm( const char *pszParameter,
 /* -------------------------------------------------------------------- */
 /*      Try similar names, for selected parameters.                     */
 /* -------------------------------------------------------------------- */
-    iChild = -1;
-
     if( EQUAL(pszParameter,SRS_PP_LATITUDE_OF_ORIGIN) )
     {
-        iChild = FindProjParm( SRS_PP_LATITUDE_OF_CENTER, poPROJCS );
-    }
-    else if( EQUAL(pszParameter,SRS_PP_CENTRAL_MERIDIAN) )
-    {
-        iChild = FindProjParm(SRS_PP_LONGITUDE_OF_CENTER, poPROJCS );
-        if( iChild == -1 )
-            iChild = FindProjParm(SRS_PP_LONGITUDE_OF_ORIGIN, poPROJCS );
+        return FindProjParm( SRS_PP_LATITUDE_OF_CENTER, poPROJCS );
     }
 
-    return iChild;
+    if( EQUAL(pszParameter,SRS_PP_CENTRAL_MERIDIAN) )
+    {
+        int iChild = FindProjParm(SRS_PP_LONGITUDE_OF_CENTER, poPROJCS );
+        if( iChild == -1 )
+            iChild = FindProjParm(SRS_PP_LONGITUDE_OF_ORIGIN, poPROJCS );
+        return iChild;
+    }
+
+    return -1;
 }
 
 /************************************************************************/
@@ -3525,7 +3521,7 @@ int OGRSpatialReference::FindProjParm( const char *pszParameter,
  *
  * This method is the same as the C function OSRGetProjParm().
  *
- * @param pszName the name of the parameter to fetch, from the set of 
+ * @param pszName the name of the parameter to fetch, from the set of
  * SRS_PP codes in ogr_srs_api.h.
  *
  * @param dfDefaultValue the value to return if this parameter doesn't exist.
@@ -3540,30 +3536,30 @@ double OGRSpatialReference::GetProjParm( const char * pszName,
                                          OGRErr *pnErr ) const
 
 {
-    const OGR_SRSNode *poPROJCS = GetAttrNode( "PROJCS" );
-
     if( pnErr != NULL )
         *pnErr = OGRERR_NONE;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Find the desired parameter.                                     */
 /* -------------------------------------------------------------------- */
-    int iChild = FindProjParm( pszName, poPROJCS );
-
-    if( iChild != -1 )
+    const OGR_SRSNode *poPROJCS = GetAttrNode( "PROJCS" );
+    if ( poPROJCS == NULL )
     {
-        const OGR_SRSNode *poParameter = NULL;
-        poParameter = poPROJCS->GetChild(iChild);
-        return CPLAtof(poParameter->GetChild(1)->GetValue());
+        if( pnErr != NULL )
+            *pnErr = OGRERR_FAILURE;
+        return dfDefaultValue;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Return default value on failure.                                */
-/* -------------------------------------------------------------------- */
-    if( pnErr != NULL )
-        *pnErr = OGRERR_FAILURE;
+    const int iChild = FindProjParm( pszName, poPROJCS );
+    if( iChild == -1 )
+    {
+        if( pnErr != NULL )
+            *pnErr = OGRERR_FAILURE;
+        return dfDefaultValue;
+    }
 
-    return dfDefaultValue;
+    const OGR_SRSNode *poParameter = poPROJCS->GetChild(iChild);
+    return CPLAtof(poParameter->GetChild(1)->GetValue());
 }
 
 /************************************************************************/
