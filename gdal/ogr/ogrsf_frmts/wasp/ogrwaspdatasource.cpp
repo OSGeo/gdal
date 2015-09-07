@@ -315,21 +315,19 @@ OGRLayer *OGRWAsPDataSource::ICreateLayer(const char *pszName,
                                     pdfPointToCircleRadius.release() ) );
 
     char * ppszWktSpatialRef = NULL ;
-    if ( poSpatialRef 
+    if ( poSpatialRef
             && poSpatialRef->exportToProj4( &ppszWktSpatialRef ) == OGRERR_NONE )
     {
         VSIFPrintfL( hFile, "%s\n", ppszWktSpatialRef );
-        OGRFree( ppszWktSpatialRef );
     }
     else
     {
         VSIFPrintfL( hFile, "no spatial ref sys\n" );
     }
+    OGRFree( ppszWktSpatialRef );
 
     VSIFPrintfL( hFile, "  0.0 0.0 0.0 0.0\n" );
     VSIFPrintfL( hFile, "  1.0 0.0 1.0 0.0\n" );
     VSIFPrintfL( hFile, "  1.0 0.0\n" );
     return oLayer.get();
 }
-
-
