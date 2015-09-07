@@ -73,17 +73,17 @@ CPL_C_END
 
 static const char* pszOpenOptionList =
 "<OpenOptionList>"
+#if defined(HAVE_POPPLER) || defined(HAVE_PDFIUM)
 "  <Option name='RENDERING_OPTIONS' type='string-select' description='Which graphical elements to render' default='RASTER,VECTOR,TEXT' alt_config_option='GDAL_PDF_RENDERING_OPTIONS'>"
 "     <Value>RASTER,VECTOR,TEXT</Value>\n"
-#if defined(HAVE_POPPLER)
 "     <Value>RASTER,VECTOR</Value>\n"
 "     <Value>RASTER,TEXT</Value>\n"
 "     <Value>RASTER</Value>\n"
 "     <Value>VECTOR,TEXT</Value>\n"
 "     <Value>VECTOR</Value>\n"
 "     <Value>TEXT</Value>\n"
-#endif
 "  </Option>"
+#endif
 "  <Option name='DPI' type='float' description='Resolution in Dot Per Inch' default='72' alt_config_option='GDAL_PDF_DPI'/>"
 "  <Option name='USER_PWD' type='string' description='Password' alt_config_option='PDF_USER_PWD'/>"
 #ifdef HAVE_MULTIPLE_PDF_BACKENDS
@@ -1353,7 +1353,7 @@ public:
     GDALPDFiumOCContext(PDFDataset* poDS, CPDF_Document *pDoc) :
                                 m_poDS(poDS), m_DefaultOCContext(pDoc) {}
 
-    virtual FX_BOOL CheckOCGVisible(const CPDF_Dictionary *pOCGDict)
+    virtual FX_BOOL CheckOCGVisible(const CPDF_Dictionary *pOCGDict) override
     {
         PDFDataset::VisibilityState eVisibility =
             m_poDS->GetVisibilityStateForOGCPdfium(
@@ -1364,6 +1364,201 @@ public:
             return FALSE;
         return m_DefaultOCContext.CheckOCGVisible(pOCGDict);
     }
+};
+
+/************************************************************************/
+/*                      GDALPDFiumRenderDeviceDriver                    */
+/************************************************************************/
+
+class GDALPDFiumRenderDeviceDriver: public IFX_RenderDeviceDriver
+{
+        IFX_RenderDeviceDriver* m_poParent;
+        CFX_RenderDevice* m_pDevice;
+
+        int bEnableVector;
+        int bEnableText;
+        int bEnableBitmap;
+        int bTemporaryEnableVectorForTextStroking;
+
+public:
+
+    GDALPDFiumRenderDeviceDriver(IFX_RenderDeviceDriver* poParent, CFX_RenderDevice* pDevice):
+                                                        m_poParent(poParent),
+                                                        m_pDevice(pDevice),
+                                                        bEnableVector(TRUE),
+                                                        bEnableText(TRUE),
+                                                        bEnableBitmap(TRUE),
+                                                        bTemporaryEnableVectorForTextStroking(FALSE) {}
+    ~GDALPDFiumRenderDeviceDriver() { delete m_poParent; }
+
+    void SetEnableVector(int bFlag) { bEnableVector = bFlag; }
+    void SetEnableText(int bFlag) { bEnableText = bFlag; }
+    void SetEnableBitmap(int bFlag) { bEnableBitmap = bFlag; }
+
+    virtual void Begin() override { m_poParent->Begin(); }
+    virtual void End() override { m_poParent->End(); }
+    virtual int         GetDeviceCaps(int caps_id) override { return m_poParent->GetDeviceCaps(caps_id); }
+    virtual CFX_Matrix  GetCTM() const override { return m_poParent->GetCTM(); }
+    virtual FX_BOOL IsPSPrintDriver() override { return m_poParent->IsPSPrintDriver(); }
+    virtual FX_BOOL     StartRendering() override { return m_poParent->StartRendering(); }
+    virtual void        EndRendering() override { m_poParent->EndRendering(); }
+    virtual void        SaveState() override { m_poParent->SaveState(); }
+    virtual void        RestoreState(FX_BOOL bKeepSaved = FALSE) override { m_poParent->RestoreState(bKeepSaved); }
+
+    virtual FX_BOOL     SetClip_PathFill(const CFX_PathData* pPathData,
+                                     const CFX_AffineMatrix* pObject2Device,
+                                     int fill_mode
+                                    ) override
+    {
+        if( !bEnableVector && !bTemporaryEnableVectorForTextStroking )
+            return TRUE;
+        return m_poParent->SetClip_PathFill(pPathData, pObject2Device, fill_mode);
+    }
+
+    virtual FX_BOOL     SetClip_PathStroke(const CFX_PathData* pPathData,
+                                       const CFX_AffineMatrix* pObject2Device,
+                                       const CFX_GraphStateData* pGraphState
+                                      ) override
+    {
+        if( !bEnableVector && !bTemporaryEnableVectorForTextStroking )
+            return TRUE;
+        return m_poParent->SetClip_PathStroke(pPathData, pObject2Device, pGraphState); 
+    }
+
+    virtual FX_BOOL     DrawPath(const CFX_PathData* pPathData,
+                             const CFX_AffineMatrix* pObject2Device,
+                             const CFX_GraphStateData* pGraphState,
+                             FX_DWORD fill_color,
+                             FX_DWORD stroke_color,
+                             int fill_mode,
+                             int alpha_flag = 0,
+                             void* pIccTransform = NULL,
+                             int blend_type = FXDIB_BLEND_NORMAL
+                            )  override
+    {
+        if( !bEnableVector && !bTemporaryEnableVectorForTextStroking )
+            return TRUE;
+        return m_poParent->DrawPath(pPathData, pObject2Device, pGraphState ,
+                                    fill_color, stroke_color, fill_mode,
+                                    alpha_flag, pIccTransform, blend_type);
+    }
+
+    virtual FX_BOOL     SetPixel(int x, int y, FX_DWORD color,
+                             int alpha_flag = 0, void* pIccTransform = NULL) override
+    {
+        if( !bEnableBitmap && !bTemporaryEnableVectorForTextStroking )
+            return TRUE;
+        return m_poParent->SetPixel(x,y,color,alpha_flag,pIccTransform);
+    }
+
+    virtual FX_BOOL FillRect(const FX_RECT* pRect, FX_DWORD fill_color,
+                             int alpha_flag = 0, void* pIccTransform = NULL, int blend_type = FXDIB_BLEND_NORMAL) override
+    {
+        return m_poParent->FillRect(pRect,fill_color,alpha_flag,pIccTransform,blend_type);
+    }
+
+    virtual FX_BOOL     DrawCosmeticLine(FX_FLOAT x1, FX_FLOAT y1, FX_FLOAT x2, FX_FLOAT y2, FX_DWORD color,
+                                     int alpha_flag = 0, void* pIccTransform = NULL, int blend_type = FXDIB_BLEND_NORMAL) override
+    {
+        if( !bEnableVector && !bTemporaryEnableVectorForTextStroking )
+            return TRUE;
+        return m_poParent->DrawCosmeticLine(x1,y1,x2,y2,color,alpha_flag,pIccTransform,blend_type);
+    }
+
+    virtual FX_BOOL GetClipBox(FX_RECT* pRect)  override
+    {
+        return m_poParent->GetClipBox(pRect);
+    }
+
+    virtual FX_BOOL     GetDIBits(CFX_DIBitmap* pBitmap, int left, int top, void* pIccTransform = NULL, FX_BOOL bDEdge = FALSE) override
+    {
+        return m_poParent->GetDIBits(pBitmap,left,top, pIccTransform, bDEdge);
+    }
+    virtual CFX_DIBitmap*   GetBackDrop() override
+    {
+        return m_poParent->GetBackDrop();
+    }
+
+    virtual FX_BOOL     SetDIBits(const CFX_DIBSource* pBitmap, FX_DWORD color, const FX_RECT* pSrcRect,
+                              int dest_left, int dest_top, int blend_type,
+                              int alpha_flag = 0, void* pIccTransform = NULL) override
+    {
+        if( !bEnableBitmap && !bTemporaryEnableVectorForTextStroking )
+            return TRUE;
+        return m_poParent->SetDIBits(pBitmap, color, pSrcRect,
+                                     dest_left, dest_top, blend_type,
+                                     alpha_flag, pIccTransform);
+    }
+
+    virtual FX_BOOL     StretchDIBits(const CFX_DIBSource* pBitmap, FX_DWORD color, int dest_left, int dest_top,
+                                  int dest_width, int dest_height, const FX_RECT* pClipRect, FX_DWORD flags,
+                                  int alpha_flag = 0, void* pIccTransform = NULL, int blend_type = FXDIB_BLEND_NORMAL) override
+    {
+        if( !bEnableBitmap && !bTemporaryEnableVectorForTextStroking )
+            return TRUE;
+        return m_poParent->StretchDIBits(pBitmap, color, dest_left, dest_top,
+                                     dest_width, dest_height, pClipRect, flags,
+                                     alpha_flag, pIccTransform, blend_type);
+    }
+
+    virtual FX_BOOL     StartDIBits(const CFX_DIBSource* pBitmap, int bitmap_alpha, FX_DWORD color,
+                                const CFX_AffineMatrix* pMatrix, FX_DWORD flags, void*& handle,
+                                int alpha_flag = 0, void* pIccTransform = NULL, int blend_type = FXDIB_BLEND_NORMAL) override
+    {
+        if( !bEnableBitmap && !bTemporaryEnableVectorForTextStroking )
+            return TRUE;
+        return m_poParent->StartDIBits(pBitmap, bitmap_alpha, color, pMatrix, flags,
+                                       handle, alpha_flag, pIccTransform, blend_type);
+    }
+    
+    virtual FX_BOOL     ContinueDIBits(void* handle, IFX_Pause* pPause) override
+    {
+        return m_poParent->ContinueDIBits(handle, pPause);
+    }
+
+    virtual void        CancelDIBits(void* handle) override
+    {
+        m_poParent->CancelDIBits(handle);
+    }
+
+    virtual FX_BOOL DrawDeviceText(int nChars, const FXTEXT_CHARPOS* pCharPos, CFX_Font* pFont,
+                                   CFX_FontCache* pCache, const CFX_AffineMatrix* pObject2Device, FX_FLOAT font_size, FX_DWORD color,
+                                   int alpha_flag = 0, void* pIccTransform = NULL) override
+    {
+        if( bEnableText )
+        {
+            // This is quite tricky. We call again the guy who called us (CFX_RenderDevice::DrawNormalText())
+            // but we set a special flag to allow vector&raster operations so
+            // that the rendering will happen in the next phase
+            if( bTemporaryEnableVectorForTextStroking )
+                return FALSE; // this is the default behaviour of the parent
+            bTemporaryEnableVectorForTextStroking = TRUE;
+            FX_BOOL bRet = m_pDevice->DrawNormalText(nChars, pCharPos,
+                                                     pFont, pCache,
+                                                     font_size, pObject2Device,
+                                                     color, 0 /* text_flags */,
+                                                     alpha_flag, pIccTransform);
+            bTemporaryEnableVectorForTextStroking = FALSE;
+            return bRet;
+        }
+        else
+            return TRUE; // pretend that we did the job
+        //return m_poParent->DrawDeviceText(nChars, pCharPos, pFont,
+        //                                  pCache, pObject2Device, font_size, color,
+        //                                  alpha_flag, pIccTransform);
+    }
+
+    virtual void*       GetPlatformSurface() override
+    {
+        return m_poParent->GetPlatformSurface();
+    }
+
+    virtual int         GetDriverType() override
+    {
+        return m_poParent->GetDriverType();
+    }
+
+    virtual void    ClearDriver() override { m_poParent->ClearDriver(); }
 };
 
 /************************************************************************/
@@ -1403,7 +1598,8 @@ public:
 
 void PDFDataset::PDFiumRenderPageBitmap(FPDF_BITMAP bitmap, FPDF_PAGE page, 
                                         int start_x, int start_y,
-                                        int size_x, int size_y)
+                                        int size_x, int size_y,
+                                        const char* pszRenderingOptions)
 {
     CPDF_Page* pPage = (CPDF_Page*)page;
 
@@ -1411,7 +1607,48 @@ void PDFDataset::PDFiumRenderPageBitmap(FPDF_BITMAP bitmap, FPDF_PAGE page,
     pPage->SetPrivateData((void*)1, pContext, DropContext);
 
     CFX_FxgeDevice* pDevice = new CFX_FxgeDevice;
-    pDevice->Attach((CFX_DIBitmap*)bitmap);
+    
+    // The 3 following lines are basically CFX_FxgeDevice::Attach()
+    // except that we wrap the RenderDeviceDriver with our own class
+    pDevice->SetBitmap((CFX_DIBitmap*)bitmap);
+    IFX_RenderDeviceDriver* pDriver = IFX_RenderDeviceDriver::CreateFxgeDriver((CFX_DIBitmap*)bitmap);
+    if (pszRenderingOptions != NULL)
+    {
+        int bEnableVector = FALSE;
+        int bEnableText = FALSE;
+        int bEnableBitmap = FALSE;
+
+        char** papszTokens = CSLTokenizeString2( pszRenderingOptions, " ,", 0 );
+        for(int i=0;papszTokens[i] != NULL;i++)
+        {
+            if (EQUAL(papszTokens[i], "VECTOR"))
+                bEnableVector = TRUE;
+            else if (EQUAL(papszTokens[i], "TEXT"))
+                bEnableText = TRUE;
+            else if (EQUAL(papszTokens[i], "RASTER") ||
+                        EQUAL(papszTokens[i], "BITMAP"))
+                bEnableBitmap = TRUE;
+            else
+            {
+                CPLError(CE_Warning, CPLE_NotSupported,
+                            "Value %s is not a valid value for GDAL_PDF_RENDERING_OPTIONS",
+                            papszTokens[i]);
+            }
+        }
+        CSLDestroy(papszTokens);
+        
+        if( !bEnableVector || !bEnableText || !bEnableBitmap )
+        {
+            GDALPDFiumRenderDeviceDriver* poGDALRDDriver = new GDALPDFiumRenderDeviceDriver(pDriver, pDevice);
+            poGDALRDDriver->SetEnableVector(bEnableVector);
+            poGDALRDDriver->SetEnableText(bEnableText);
+            poGDALRDDriver->SetEnableBitmap(bEnableBitmap);
+            pDriver = poGDALRDDriver;
+        }
+    }
+
+    pDevice->SetDeviceDriver(pDriver);
+
     pContext->m_pDevice = pDevice;
 
     CPLAssert(pContext->m_pOptions == NULL);
@@ -1703,12 +1940,6 @@ CPLErr PDFDataset::ReadPixels( int nReqXOff, int nReqYOff,
         // can takes too long for PDF with large number of objects/layers
         poPagePdfium->page->ParseContent();
 
-        if( pszRenderingOptions != NULL && !EQUAL(pszRenderingOptions,"RASTER,VECTOR,TEXT") )
-        {
-            CPLError(CE_Warning, CPLE_NotSupported,
-                        "GDAL_PDF_RENDERING_OPTIONS only supported "
-                        "when PDF lib is Poppler.");
-        }
         FPDF_BITMAP bitmap = FPDFBitmap_Create(nReqXSize, nReqYSize, nBands == 4/*alpha*/);
         // As coded now, FPDFBitmap_Create cannot allocate more than 1 GB
         if( bitmap == NULL )
@@ -1781,7 +2012,7 @@ CPLErr PDFDataset::ReadPixels( int nReqXOff, int nReqYOff,
         // Part of PDF is render with -x, -y, page_width, page_height
         // (not requested size!)
         PDFiumRenderPageBitmap(bitmap, poPagePdfium->page,
-              -nReqXOff, -nReqYOff, nRasterXSize, nRasterYSize);
+              -nReqXOff, -nReqYOff, nRasterXSize, nRasterYSize, pszRenderingOptions);
 
         int stride = FPDFBitmap_GetStride(bitmap);
         const GByte* buffer = reinterpret_cast<const GByte*>(FPDFBitmap_GetBuffer(bitmap));

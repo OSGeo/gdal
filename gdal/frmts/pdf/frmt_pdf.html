@@ -93,7 +93,7 @@ Starting with GDAL &gt;= 1.10.0, the following options are also available :
 
 <li><i>GDAL_PDF_RENDERING_OPTIONS</i> : a combination of VECTOR, RASTER and TEXT separated
 by comma, to select whether vector, raster or text features should be rendered. If the option is not
-specified, all features are rendered (Poppler only).</li>
+specified, all features are rendered (Poppler and PDFium).</li>
 <li><i>GDAL_PDF_BANDS</i> = 3 or 4 : whether the PDF should be rendered as a RGB (3) or RGBA (4) image.
 Defaults to 3.</li>
 <li><i>GDAL_PDF_LAYERS</i> = list of layers (comma separated) to turn ON (or "ALL" to turn all layers ON).
@@ -108,14 +108,15 @@ querying the LAYERS metadata domain (Poppler and PDFium).</li>
 Since GDAL 2.0, above configuration options are also available as open options.
 
 <ul>
-<li><p><b>RENDERING_OPTIONS</b>=[RASTER,VECTOR,TEXT / RASTER,VECTOR / RASTER,TEXT / RASTER / VECTOR,TEXT / VECTOR / TEXT]</p></li>
-<li><p><b>DPI</b>=value</p></li>
-<li><p><b>USER_PWD</b>=password</p></li>
-<li><p><b>PDF_LIB</b>=[POPPLER/PODOFO/PDFIUM]: only available for builds with multiple backends</li>
-<li><p><b>LAYERS</b>=string: list of layers (comma separated) to turn ON</li>
-<li><p><b>GDAL_PDF_LAYERS_OFF</b>=string: list of layers (comma separated) to turn OFF</li>
-<li><p><b>BANDS</b>=3 or 4</li>
-<li><p><b>NEATLINE</b>=name of neatline</li>
+<li><p><b>RENDERING_OPTIONS</b>=[RASTER,VECTOR,TEXT / RASTER,VECTOR / RASTER,TEXT / RASTER / VECTOR,TEXT / VECTOR / TEXT]</p>:
+same as GDAL_PDF_RENDERING_OPTIONS configuration option</li>
+<li><p><b>DPI</b>=value</p>: same as GDAL_PDF_DPI configuration option</li>
+<li><p><b>USER_PWD</b>=password</p>: same as GDAL_USER_PWD configuration option</li>
+<li><p><b>PDF_LIB</b>=[POPPLER/PODOFO/PDFIUM]: only available for builds with multiple backends./li>
+<li><p><b>LAYERS</b>=string: list of layers (comma separated) to turn ON. Same as GDAL_PDF_LAYERS configuration option</li>
+<li><p><b>GDAL_PDF_LAYERS_OFF</b>=string: list of layers (comma separated) to turn OFF. Same as GDAL_PDF_LAYERS_OFF configuration option</li>
+<li><p><b>BANDS</b>=3 or 4. Same as GDAL_PDF_BANDS configuration option</li>
+<li><p><b>NEATLINE</b>=name of neatline. Same as GDAL_PDF_NEATLINE configuration option</li>
 </ul>
 
 <h2>LAYERS Metadata domain</h2>

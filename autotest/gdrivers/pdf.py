@@ -1479,36 +1479,30 @@ def pdf_write_ogr():
     feature_count = ogr_lyr.GetFeatureCount()
     ogr_ds = None
 
-    if pdf_is_poppler():
-        gdal.SetConfigOption('GDAL_PDF_RENDERING_OPTIONS', 'RASTER')
-        ds = gdal.Open('tmp/pdf_write_ogr.pdf')
-        cs_raster = ds.GetRasterBand(1).Checksum()
-        ds = None
-        ds = gdal.OpenEx('tmp/pdf_write_ogr.pdf', open_options = ['RENDERING_OPTIONS=VECTOR'])
-        cs_vector = ds.GetRasterBand(1).Checksum()
-        ds = None
-        gdal.SetConfigOption('GDAL_PDF_RENDERING_OPTIONS', 'RASTER,VECTOR,TEXT')
-        ds = gdal.Open('tmp/pdf_write_ogr.pdf')
-        cs_raster_vector_text = ds.GetRasterBand(1).Checksum()
-        ds = None
-        gdal.SetConfigOption('GDAL_PDF_RENDERING_OPTIONS', None)
+    if pdf_is_poppler() or pdf_is_pdfium():
 
-        if cs_raster == cs_ref:
+        cs_tab = []
+        rendering_options = ['RASTER', 'VECTOR', 'TEXT', 'RASTER,VECTOR', 'RASTER,TEXT', 'VECTOR,TEXT', 'RASTER,VECTOR,TEXT' ]
+        for opt in rendering_options:
+            ds = gdal.OpenEx('tmp/pdf_write_ogr.pdf', open_options = ['RENDERING_OPTIONS=%s' % opt])
+            cs_tab.append(ds.GetRasterBand(1).Checksum())
+            ds = None
+
+        # Test that all combinations give a different result
+        for i in range(len(rendering_options)):
+            #print('Checksum %s: %d' % (rendering_options[i], cs_tab[i]) )
+            for j in range(i+1, len(rendering_options)):
+                if cs_tab[i] == cs_tab[j]:
+                    gdaltest.post_reason('fail')
+                    print('Checksum %s: %d' % (rendering_options[i], cs_tab[i]) )
+                    print('Checksum %s: %d' % (rendering_options[j], cs_tab[j]) )
+                    return 'fail'
+
+        # And test that RASTER,VECTOR,TEXT is the default rendering
+        if cs_tab[len(rendering_options)-1] != cs_ref:
             gdaltest.post_reason('fail')
             print(cs_ref)
-            print(cs_raster)
-            return 'fail'
-
-        if cs_vector == cs_ref:
-            gdaltest.post_reason('fail')
-            print(cs_ref)
-            print(cs_vector)
-            return 'fail'
-
-        if cs_raster_vector_text != cs_ref:
-            gdaltest.post_reason('fail')
-            print(cs_ref)
-            print(cs_raster_vector_text)
+            print(cs_tab[len(rendering_options)-1])
             return 'fail'
 
     gdal.Unlink('tmp/pdf_write_ogr.pdf')
