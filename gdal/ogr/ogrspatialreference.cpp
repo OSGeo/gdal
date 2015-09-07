@@ -6682,28 +6682,25 @@ int OSRIsSame( OGRSpatialReferenceH hSRS1, OGRSpatialReferenceH hSRS2 )
  */ 
 
 OGRErr OGRSpatialReference::SetTOWGS84( double dfDX, double dfDY, double dfDZ,
-                                        double dfEX, double dfEY, double dfEZ, 
+                                        double dfEX, double dfEY, double dfEZ,
                                         double dfPPM )
 
 {
-    OGR_SRSNode     *poDatum, *poTOWGS84;
-    int             iPosition;
-    char            szValue[64];
-
-    poDatum = GetAttrNode( "DATUM" );
+    OGR_SRSNode *poDatum = GetAttrNode( "DATUM" );
     if( poDatum == NULL )
         return OGRERR_FAILURE;
-    
+
     if( poDatum->FindChild( "TOWGS84" ) != -1 )
         poDatum->DestroyChild( poDatum->FindChild( "TOWGS84" ) );
 
-    iPosition = poDatum->GetChildCount();
+    int iPosition = poDatum->GetChildCount();
     if( poDatum->FindChild("AUTHORITY") != -1 )
     {
         iPosition = poDatum->FindChild("AUTHORITY");
     }
 
-    poTOWGS84 = new OGR_SRSNode("TOWGS84");
+    OGR_SRSNode *poTOWGS84 = new OGR_SRSNode("TOWGS84");
+    char szValue[64];
 
     OGRPrintDouble( szValue, dfDX );
     poTOWGS84->AddChild( new OGR_SRSNode( szValue ) );
