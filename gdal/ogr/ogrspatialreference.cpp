@@ -790,11 +790,7 @@ OGRErr OGRSpatialReference::SetNode( const char * pszNodePath,
                                      const char * pszNewNodeValue )
 
 {
-    char        **papszPathTokens;
-    int         i;
-    OGR_SRSNode *poNode;
-
-    papszPathTokens = CSLTokenizeStringComplex(pszNodePath, "|", TRUE, FALSE);
+    char **papszPathTokens = CSLTokenizeStringComplex(pszNodePath, "|", TRUE, FALSE);
 
     if( CSLCount( papszPathTokens ) < 1 )
     {
@@ -807,11 +803,11 @@ OGRErr OGRSpatialReference::SetNode( const char * pszNodePath,
         SetRoot( new OGR_SRSNode( papszPathTokens[0] ) );
     }
 
-    poNode = GetRoot();
-    for( i = 1; papszPathTokens[i] != NULL; i++ )
+    OGR_SRSNode *poNode = GetRoot();
+    for( int i = 1; papszPathTokens[i] != NULL; i++ )
     {
-        int     j;
-        
+        int j;
+
         for( j = 0; j < poNode->GetChildCount(); j++ )
         {
             if( EQUAL(poNode->GetChild( j )->GetValue(),papszPathTokens[i]) )
