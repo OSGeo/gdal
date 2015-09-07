@@ -148,6 +148,8 @@ class OGROSMLayer : public OGRLayer
     virtual OGRErr      SetAttributeFilter( const char* pszAttrQuery );
 
     virtual OGRErr      GetExtent( OGREnvelope *psExtent, int bForce );
+    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+                { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
 
     const OGREnvelope*  GetSpatialFilterEnvelope();
 

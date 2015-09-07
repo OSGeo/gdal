@@ -140,6 +140,8 @@ class OGRMySQLTableLayer : public OGRMySQLLayer
     virtual GIntBig     GetFeatureCount( int );
 
     void                SetSpatialFilter( OGRGeometry * );
+    virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom )
+                { OGRLayer::SetSpatialFilter(iGeomField, poGeom); }
 
     virtual OGRErr      SetAttributeFilter( const char * );
     virtual OGRErr      ICreateFeature( OGRFeature *poFeature );
@@ -155,7 +157,9 @@ class OGRMySQLTableLayer : public OGRMySQLLayer
                                 { bPreservePrecision = bFlag; }    
 
     virtual int         TestCapability( const char * );
-	virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
+    virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
+    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+                { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
 };
 
 /************************************************************************/

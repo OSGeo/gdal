@@ -74,8 +74,6 @@ class OGRRECLayer : public OGRLayer
 
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
 
-    void                SetSpatialFilter( OGRGeometry * ) {}
-
     int                 TestCapability( const char * );
 
     int                 IsValid() { return bIsValid; }

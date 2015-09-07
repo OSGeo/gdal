@@ -115,6 +115,8 @@ class OGRGMELayer : public OGRLayer
     virtual int         TestCapability( const char * );
 
     virtual void        SetSpatialFilter( OGRGeometry * );
+    virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom )
+                { OGRLayer::SetSpatialFilter(iGeomField, poGeom); }
 
     virtual OGRErr      SetAttributeFilter( const char * pszWhere );
 
@@ -157,8 +159,6 @@ class OGRGMEDataSource : public OGRDataSource
     CPLString           osSelect;
     CPLString           osWhere;
     CPLString           osProjectId;
-
-    void                DeleteLayer( const char *pszLayerName );
 
     int                 bMustCleanPersistant;
     int                 nRetries;

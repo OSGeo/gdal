@@ -282,6 +282,8 @@ class OGRMDBLayer : public OGRLayer
     virtual const char *GetFIDColumn();
 
     virtual OGRErr      GetExtent( OGREnvelope *psExtent, int bForce );
+    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+                { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
 };
 
 /************************************************************************/

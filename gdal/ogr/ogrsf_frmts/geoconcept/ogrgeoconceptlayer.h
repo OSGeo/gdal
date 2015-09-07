@@ -66,6 +66,8 @@ class OGRGeoconceptLayer : public OGRLayer
     OGRSpatialReference* GetSpatialRef( );
     GIntBig              GetFeatureCount( int bForce = TRUE );
     OGRErr               GetExtent( OGREnvelope *psExtent, int bForce = TRUE );
+    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+                { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
     int                  TestCapability( const char* pszCap );
 //    const char*          GetInfo( const char* pszTag );
     OGRErr               CreateField( OGRFieldDefn* poField, int bApproxOK = TRUE );

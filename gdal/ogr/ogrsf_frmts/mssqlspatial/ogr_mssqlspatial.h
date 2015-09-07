@@ -297,6 +297,8 @@ class OGRMSSQLSpatialSelectLayer : public OGRMSSQLSpatialLayer
     virtual OGRFeature *GetFeature( GIntBig nFeatureId );
     
     virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
+    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+                { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
 
     virtual int         TestCapability( const char * );
 };

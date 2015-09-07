@@ -432,6 +432,8 @@ class OGRNTFFeatureClassLayer : public OGRLayer
 
     OGRGeometry *       GetSpatialFilter() { return poFilterGeom; }
     void                SetSpatialFilter( OGRGeometry * );
+    virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom )
+                { OGRLayer::SetSpatialFilter(iGeomField, poGeom); }
 
     void                ResetReading();
     OGRFeature *        GetNextFeature();
@@ -473,6 +475,8 @@ class OGRNTFRasterLayer : public OGRLayer
 
     OGRGeometry *       GetSpatialFilter() { return poFilterGeom; }
     void                SetSpatialFilter( OGRGeometry * );
+    virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom )
+                { OGRLayer::SetSpatialFilter(iGeomField, poGeom); }
 
     void                ResetReading();
     OGRFeature *        GetNextFeature();

@@ -82,6 +82,8 @@ class OGRGMLLayer : public OGRLayer
 
     GIntBig             GetFeatureCount( int bForce = TRUE );
     OGRErr              GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
+    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+                { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
 
     OGRErr              ICreateFeature( OGRFeature *poFeature );
     

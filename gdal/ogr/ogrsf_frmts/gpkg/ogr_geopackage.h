@@ -399,6 +399,9 @@ class OGRGeoPackageTableLayer : public OGRGeoPackageLayer
     OGRErr              ISetFeature( OGRFeature *poFeature );
     OGRErr              DeleteFeature(GIntBig nFID);
     virtual void        SetSpatialFilter( OGRGeometry * );
+    virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom )
+                { OGRGeoPackageLayer::SetSpatialFilter(iGeomField, poGeom); }
+
     OGRErr              SetAttributeFilter( const char *pszQuery );
     OGRErr              SyncToDisk();
     OGRFeature*         GetNextFeature();
@@ -408,8 +411,8 @@ class OGRGeoPackageTableLayer : public OGRGeoPackageLayer
     OGRErr              RollbackTransaction();
     GIntBig             GetFeatureCount( int );
     OGRErr              GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
-    
-    // void                SetSpatialFilter( int iGeomField, OGRGeometry * poGeomIn );
+    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+                { return OGRGeoPackageLayer::GetExtent(iGeomField, psExtent, bForce); }
 
     OGRErr              ReadTableDefinition(int bIsSpatial);
     void                SetCreationParameters( OGRwkbGeometryType eGType,

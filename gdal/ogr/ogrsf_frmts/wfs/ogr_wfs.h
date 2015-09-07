@@ -167,6 +167,8 @@ class OGRWFSLayer : public OGRLayer
     virtual int                 TestCapability( const char * );
 
     virtual void        SetSpatialFilter( OGRGeometry * );
+    virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom )
+                { OGRLayer::SetSpatialFilter(iGeomField, poGeom); }
 
     virtual OGRErr      SetAttributeFilter( const char * );
 
@@ -174,6 +176,8 @@ class OGRWFSLayer : public OGRLayer
 
     void                SetExtents(double dfMinX, double dfMinY, double dfMaxX, double dfMaxY);
     virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
+    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+                { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
 
     virtual OGRErr      ICreateFeature( OGRFeature *poFeature );
     virtual OGRErr      ISetFeature( OGRFeature *poFeature );
@@ -258,6 +262,8 @@ class OGRWFSJoinLayer : public OGRLayer
     virtual GIntBig             GetFeatureCount( int bForce = TRUE );
 
     virtual void        SetSpatialFilter( OGRGeometry * );
+    virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom )
+                { OGRLayer::SetSpatialFilter(iGeomField, poGeom); }
 
     virtual OGRErr      SetAttributeFilter( const char * );
 };

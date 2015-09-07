@@ -208,6 +208,8 @@ class IMapInfoFile : public OGRLayer
     virtual OGRErr      ICreateFeature(OGRFeature *poFeature);
     virtual int         TestCapability( const char * pszCap ) =0;
     virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce) =0;
+    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+                { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
 
     ///////////////
     // Read access specific stuff
@@ -333,6 +335,8 @@ class TABFile: public IMapInfoFile
     virtual int         TestCapability( const char * pszCap );
     virtual GIntBig     GetFeatureCount (int bForce);
     virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce);
+    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+                { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
 
     /* Implement OGRLayer's SetFeature() for random write, only with TABFile */
     virtual OGRErr      ISetFeature( OGRFeature * );
@@ -479,6 +483,8 @@ class TABView: public IMapInfoFile
     virtual int         TestCapability( const char * pszCap );
     virtual GIntBig     GetFeatureCount (int bForce);
     virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce);
+    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+                { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
     
     ///////////////
     // Read access specific stuff
@@ -589,11 +595,15 @@ class TABSeamless: public IMapInfoFile
            {return m_poFeatureDefnRef?m_poFeatureDefnRef->GetName():"";};
 
     virtual void        SetSpatialFilter( OGRGeometry * );
+    virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom )
+                { OGRLayer::SetSpatialFilter(iGeomField, poGeom); }
 
     virtual void        ResetReading();
     virtual int         TestCapability( const char * pszCap );
     virtual GIntBig     GetFeatureCount (int bForce);
     virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce);
+    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+                { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
     
     ///////////////
     // Read access specific stuff
@@ -745,6 +755,8 @@ class MIFFile: public IMapInfoFile
     virtual GIntBig     GetFeatureCount (int bForce);
     virtual void        ResetReading();
     virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce);
+    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+                { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
 
     ///////////////
     // Read access specific stuff

@@ -660,6 +660,8 @@ class OGROpenFileGDBSimpleSQLLayer: public OGRLayer
        virtual const char* GetFIDColumn() { return poBaseLayer->GetFIDColumn(); }
        virtual OGRErr      GetExtent( OGREnvelope *psExtent, int bForce )
                             { return poBaseLayer->GetExtent(psExtent, bForce); }
+       virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+                { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
        virtual GIntBig     GetFeatureCount(int bForce);
 };
 

@@ -370,6 +370,8 @@ class OGROCILoaderLayer : public OGROCIWritableLayer
     virtual GIntBig     GetFeatureCount( int );
 
     virtual void        SetSpatialFilter( OGRGeometry * ) {}
+    virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom )
+                { OGRLayer::SetSpatialFilter(iGeomField, poGeom); }
 
     virtual OGRErr      SetAttributeFilter( const char * ) 
                                 { return OGRERR_UNSUPPORTED_OPERATION; }
@@ -450,6 +452,8 @@ class OGROCITableLayer : public OGROCIWritableLayer
     virtual GIntBig     GetFeatureCount( int );
 
     virtual void        SetSpatialFilter( OGRGeometry * );
+    virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom )
+                { OGRLayer::SetSpatialFilter(iGeomField, poGeom); }
 
     virtual OGRErr      SetAttributeFilter( const char * );
 
@@ -461,6 +465,8 @@ class OGROCITableLayer : public OGROCIWritableLayer
     virtual OGRErr      DeleteFeature( GIntBig nFID );
     
     virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
+    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+                { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
 
     virtual int         TestCapability( const char * );
 

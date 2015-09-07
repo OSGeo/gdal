@@ -80,6 +80,8 @@ class OGRGmtLayer : public OGRLayer
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
 
     OGRErr              GetExtent(OGREnvelope *psExtent, int bForce);
+    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+                { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
 
     OGRErr              ICreateFeature( OGRFeature *poFeature );
     
