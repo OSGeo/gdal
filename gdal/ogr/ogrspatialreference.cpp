@@ -6013,9 +6013,6 @@ OGRErr OGRSpatialReference::StripCTParms( OGR_SRSNode * poCurrent )
 
         return OGRERR_NONE;
     }
-    
-    if( poCurrent == NULL )
-        return OGRERR_NONE;
 
     poCurrent->StripNodes( "AUTHORITY" );
     poCurrent->StripNodes( "TOWGS84" );
