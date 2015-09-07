@@ -4132,6 +4132,18 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
     nPages = poDocPoppler->getNumPages();
+
+    if( iPage == 1 && nPages > 10000 &&
+        CSLTestBoolean(CPLGetConfigOption("GDAL_PDF_LIMIT_PAGE_COUNT", "YES")) )
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "This PDF document reports %d pages. "
+                 "Limiting count to 10000 for performance reasons. "
+                 "You may remove this limit by setting the GDAL_PDF_LIMIT_PAGE_COUNT configuration option to NO",
+                 nPages);
+        nPages = 10000;
+    }
+
     if (iPage < 1 || iPage > nPages)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Invalid page number (%d/%d)",
@@ -4141,7 +4153,7 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
     /* Sanity check to validate page count */
-    if( iPage != nPages )
+    if( iPage > 1 && nPages <= 10000 && iPage != nPages )
     {
         poPagePoppler = poCatalogPoppler->getPage(nPages);
         if ( poPagePoppler == NULL || !poPagePoppler->isOk() )
