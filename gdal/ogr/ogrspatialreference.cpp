@@ -797,7 +797,10 @@ OGRErr OGRSpatialReference::SetNode( const char * pszNodePath,
     papszPathTokens = CSLTokenizeStringComplex(pszNodePath, "|", TRUE, FALSE);
 
     if( CSLCount( papszPathTokens ) < 1 )
+    {
+        CSLDestroy(papszPathTokens);
         return OGRERR_FAILURE;
+    }
 
     if( GetRoot() == NULL || !EQUAL(papszPathTokens[0],GetRoot()->GetValue()) )
     {
