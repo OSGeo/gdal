@@ -185,6 +185,7 @@ SHPTree SHPAPI_CALL1(*)
     psTree->psRoot = SHPTreeNodeCreate( padfBoundsMin, padfBoundsMax );
     if( NULL == psTree->psRoot )
     {
+        free( psTree );
         return NULL;
     }
 
@@ -195,7 +196,7 @@ SHPTree SHPAPI_CALL1(*)
 /* -------------------------------------------------------------------- */
     assert( NULL != psTree );
     assert( NULL != psTree->psRoot );
-	
+
     if( padfBoundsMin == NULL )
     {
         SHPGetInfo( hSHP, NULL, NULL,
