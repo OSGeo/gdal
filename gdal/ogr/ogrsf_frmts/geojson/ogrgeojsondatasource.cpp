@@ -349,8 +349,8 @@ void OGRGeoJSONDataSource::Clear()
     if( fpOut_ )
     {
         VSIFCloseL( fpOut_ );
+        fpOut_ = NULL;
     }
-    fpOut_ = NULL;
 }
 
 /************************************************************************/
