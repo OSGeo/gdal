@@ -354,8 +354,8 @@ static void CSVIngest( const char *pszFilename )
 
     if( psTable == NULL )
     {
-        CPLError( CE_Failure, CPLE_FileIO, "Open of file %s failed.",
-                  psTable->pszFilename );
+        CPLError( CE_Failure, CPLE_FileIO, "Failed to open file: %s",
+                  pszFilename );
         return;
     }
 
