@@ -571,8 +571,9 @@ OCI_INCLUDE =	-I$(ORACLE_HOME)\oci\include
 # Copyright (C) 2015 Klokan Technologies GmbH (http://www.klokantech.com/)
 # Author: Martin Mikita <martin.mikita@klokantech.com>, xmikit00 @ FIT VUT Brno
 #
-# Pdfium must be built from https://github.com/klokantech/pdfium with
-# the following patch to ensure /MD (MultiThreadedDLL) linking consistant with GDAL one
+# Pdfium can be built from the win_gdal_build branch at https://github.com/rouault/pdfium that
+# has the following patch to ensure /MD (MultiThreadedDLL) linking consistant with GDAL one.
+# Build script from PDFium is available at https://github.com/rouault/pdfium/tree/build
 #
 #diff --git a/build/standalone.gypi b/build/standalone.gypi
 #index ecf849b..0e567e4 100644
