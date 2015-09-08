@@ -2075,6 +2075,11 @@ OGRErr OGRElasticLayer::ISetFeature(OGRFeature *poFeature)
         CPLError(CE_Failure, CPLE_AppDefined, "_id field not set");
         return OGRERR_FAILURE;
     }
+    if( poFeature->GetFID() < 0 && m_osFID.size() )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid FID");
+        return OGRERR_FAILURE;
+    }
     
     if( WriteMapIfNecessary() != OGRERR_NONE )
         return OGRERR_FAILURE;
@@ -2091,6 +2096,7 @@ OGRErr OGRElasticLayer::ISetFeature(OGRFeature *poFeature)
     {
         return OGRERR_FAILURE;
     }
+    //CPLDebug("ES", "SetFeature(): %s", json_object_to_json_string(poRes));
     json_object_put(poRes);
     
     return OGRERR_NONE;
