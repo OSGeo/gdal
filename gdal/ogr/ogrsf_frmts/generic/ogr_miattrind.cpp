@@ -706,12 +706,15 @@ OGRMIAttrIndex::~OGRMIAttrIndex()
 OGRErr OGRMIAttrIndex::AddEntry( OGRField *psKey, GIntBig nFID )
 
 {
-    GByte *pabyKey = BuildKey( psKey );
-
     if( psKey == NULL )
         return OGRERR_FAILURE;
 
     if( nFID >= INT_MAX )
+        return OGRERR_FAILURE;
+
+    GByte *pabyKey = BuildKey( psKey );
+
+    if( pabyKey == NULL )
         return OGRERR_FAILURE;
 
     if( poINDFile->AddEntry( iIndex, pabyKey, (int)nFID+1 ) != 0 )
