@@ -218,20 +218,20 @@ In other cases, geo_shape is used.</li>
 For a geo_point geometry field, this causes a compressed geometry format to be used.
 This option is without effect if MAPPING is specified.</li>
 <li><b>STORE_FIELDS</b>=YES/NO. Whether fields should be stored in the index.
-Setting to YES sets the "store" property of the field mapping to "true" for all fields. Defaults to NO.
+Setting to YES sets the <a href="https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-core-types.html">"store" property</a> of the field mapping to "true" for all fields. Defaults to NO.
 (Note: prior to GDAL 2.1, the default behaviour was to store fields)
 This option is without effect if MAPPING is specified.</li>
 <li><b>STORED_FIELDS</b>=List of comma separted field names that should be stored in the index.
-Those fields will have their "store" property of the field mapping set to "true".
+Those fields will have their <a href="https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-core-types.html">"store" property</a> of the field mapping set to "true".
 If all fields must be stored, then using STORE_FIELDS=YES is a shortcut.
 This option is without effect if MAPPING is specified.</li>
 <li><b>NOT_ANALYZED_FIELDS</b>=List of comma separted field names that should not be analyzed during indexing.
-Those fields will have their "index" property of the field mapping set to "not_analyed"
+Those fields will have their <a href="https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-core-types.html">"index" property</a> of the field mapping set to "not_analyed"
 (the default in ElasticSearch is "analyzed"). A same field should not be
 specified both in NOT_ANALYZED_FIELDS and NOT_INDEXED_FIELDS.
 This option is without effect if MAPPING is specified.</li>
 <li><b>NOT_INDEXED_FIELDS</b>=List of comma separted field names that should not be indexed.
-Those fields will have their "index" property of the field mapping set to "no"
+Those fields will have their <a href="https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-core-types.html">"index" property</a> of the field mapping set to "no"
 (the default in ElasticSearch is "analyzed"). A same field should not be
 specified both in NOT_ANALYZED_FIELDS and NOT_INDEXED_FIELDS.
 This option is without effect if MAPPING is specified.</li>
