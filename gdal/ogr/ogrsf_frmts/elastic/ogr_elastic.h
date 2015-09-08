@@ -61,6 +61,10 @@ class OGRElasticLayer : public OGRLayer {
     int                                  m_bManualMapping;
     int                                  m_bSerializeMapping;
     CPLString                            m_osWriteMapFilename;
+    bool                                 m_bStoreFields;
+    char                               **m_papszStoredFields;
+    char                               **m_papszNotAnalyzedFields;
+    char                               **m_papszNotIndexedFields;
 
     CPLString                            m_osESSearch;
 
@@ -124,6 +128,7 @@ class OGRElasticLayer : public OGRLayer {
                                             OGRwkbGeometryType eType,
                                             const std::vector<CPLString>& aosPath,
                                             int bIsGeoPoint );
+
 public:
                         OGRElasticLayer( const char* pszLayerName,
                                          const char* pszIndexName,

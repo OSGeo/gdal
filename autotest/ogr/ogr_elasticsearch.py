@@ -119,7 +119,7 @@ def ogr_elasticsearch_1():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo/FeatureCollection/_mapping&POSTFIELDS={ "FeatureCollection": { "properties": { "type": { "store": "yes", "type": "string" }, "properties": { } } } }', '{}')
+    gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo/FeatureCollection/_mapping&POSTFIELDS={ "FeatureCollection": { "properties": { "type": { "type": "string" }, "properties": { } } } }', '{}')
 
     # OVERWRITE an inexisting layer
     lyr = ds.CreateLayer('foo', geom_type = ogr.wkbNone, options = ['OVERWRITE=TRUE', 'FID='])
@@ -180,7 +180,7 @@ def ogr_elasticsearch_1():
         return 'fail'
     
     
-    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/foo/FeatureCollection/_mapping&POSTFIELDS={ "FeatureCollection": { "properties": { "type": { "store": "yes", "type": "string" }, "properties": { "properties": { } }, "geometry": { "type": "geo_shape" } } } }""", "")
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/foo/FeatureCollection/_mapping&POSTFIELDS={ "FeatureCollection": { "properties": { "type": { "type": "string" }, "properties": { "properties": { } }, "geometry": { "type": "geo_shape" } } } }""", "")
     
     ds.DeleteLayer(-1)
     ds.DeleteLayer(10)
@@ -190,8 +190,9 @@ def ogr_elasticsearch_1():
         return 'fail'
     
     gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo2&POSTFIELDS=', '{}')
-    gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo2/FeatureCollection/_mapping&POSTFIELDS={ "FeatureCollection": { "properties": { "type": { "store": "yes", "type": "string" }, "properties": { "properties": { "str_field": { "store": "yes", "type": "string" }, "int_field": { "store": "yes", "type": "integer" }, "int64_field": { "store": "yes", "type": "long" }, "real_field": { "store": "yes", "type": "double" }, "real_field_unset": { "store": "yes", "type": "double" }, "boolean_field": { "store": "yes", "type": "boolean" }, "strlist_field": { "store": "yes", "type": "string" }, "intlist_field": { "store": "yes", "type": "integer" }, "int64list_field": { "store": "yes", "type": "long" }, "reallist_field": { "store": "yes", "type": "double" }, "date_field": { "store": "yes", "type": "date", "format": "yyyy\/MM\/dd HH:mm:ss.SSSZZ||yyyy\/MM\/dd HH:mm:ss.SSS||yyyy\/MM\/dd" }, "datetime_field": { "store": "yes", "type": "date", "format": "yyyy\/MM\/dd HH:mm:ss.SSSZZ||yyyy\/MM\/dd HH:mm:ss.SSS||yyyy\/MM\/dd" }, "time_field": { "store": "yes", "type": "date", "format": "HH:mm:ss.SSS" }, "binary_field": { "store": "yes", "type": "binary" } } }, "geometry": { "properties": { "type": { "store": "yes", "type": "string" }, "coordinates": { "store": "yes", "type": "geo_point" } } } }, "_meta": { "fields": { "strlist_field": "StringList", "intlist_field": "IntegerList", "int64list_field": "Integer64List", "reallist_field": "RealList" } } } }', '{}')
-    lyr = ds.CreateLayer('foo2', srs = ogrtest.srs_wgs84, geom_type = ogr.wkbPoint, options = ['BULK_INSERT=NO', 'FID='])
+    gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo2/FeatureCollection/_mapping&POSTFIELDS={ "FeatureCollection": { "properties": { "type": { "type": "string" }, "properties": { "properties": { "str_field": { "type": "string", "index": "not_analyzed" }, "int_field": { "type": "integer", "store": "yes" }, "int64_field": { "type": "long", "index": "no" }, "real_field": { "type": "double" }, "real_field_unset": { "type": "double" }, "boolean_field": { "type": "boolean" }, "strlist_field": { "type": "string" }, "intlist_field": { "type": "integer" }, "int64list_field": { "type": "long" }, "reallist_field": { "type": "double" }, "date_field": { "type": "date", "format": "yyyy\/MM\/dd HH:mm:ss.SSSZZ||yyyy\/MM\/dd HH:mm:ss.SSS||yyyy\/MM\/dd" }, "datetime_field": { "type": "date", "format": "yyyy\/MM\/dd HH:mm:ss.SSSZZ||yyyy\/MM\/dd HH:mm:ss.SSS||yyyy\/MM\/dd" }, "time_field": { "type": "date", "format": "HH:mm:ss.SSS" }, "binary_field": { "type": "binary" } } }, "geometry": { "properties": { "type": { "type": "string" }, "coordinates": { "type": "geo_point" } } } }, "_meta": { "fields": { "strlist_field": "StringList", "intlist_field": "IntegerList", "int64list_field": "Integer64List", "reallist_field": "RealList" } } } }', '{}')
+    lyr = ds.CreateLayer('foo2', srs = ogrtest.srs_wgs84, geom_type = ogr.wkbPoint, \
+        options = ['BULK_INSERT=NO', 'FID=', 'STORED_FIELDS=int_field', 'NOT_ANALYZED_FIELDS=str_field', 'NOT_INDEXED_FIELDS=int64_field'])
     lyr.CreateField(ogr.FieldDefn('str_field', ogr.OFTString))
     lyr.CreateField(ogr.FieldDefn('int_field', ogr.OFTInteger))
     lyr.CreateField(ogr.FieldDefn('int64_field', ogr.OFTInteger64))
@@ -289,7 +290,7 @@ def ogr_elasticsearch_1():
 
     # With explicit GEOM_MAPPING_TYPE=GEO_POINT
     gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo3&POSTFIELDS=', '{}')
-    gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo3/FeatureCollection/_mapping&POSTFIELDS={ "FeatureCollection": { "properties": { "type": { "store": "yes", "type": "string" }, "properties": { "properties": { } }, "geometry": { "properties": { "type": { "store": "yes", "type": "string" }, "coordinates": { "store": "yes", "type": "geo_point", "fielddata": { "format": "compressed", "precision": "1m" } } } } }, "_meta": { "fid": "ogc_fid" } } }', '{}')
+    gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo3/FeatureCollection/_mapping&POSTFIELDS={ "FeatureCollection": { "properties": { "type": { "type": "string" }, "properties": { "properties": { } }, "geometry": { "properties": { "type": { "type": "string" }, "coordinates": { "type": "geo_point", "fielddata": { "format": "compressed", "precision": "1m" } } } } }, "_meta": { "fid": "ogc_fid" } } }', '{}')
     lyr = ds.CreateLayer('foo3', srs = ogrtest.srs_wgs84, options = ['GEOM_MAPPING_TYPE=GEO_POINT', 'GEOM_PRECISION=1m', 'BULK_INSERT=NO'])
 
     gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo3/FeatureCollection/&POSTFIELDS={ "ogc_fid": 1, "geometry": { "type": "POINT", "coordinates": [ 0.500000, 0.500000 ] }, "type": "Feature", "properties": { } }', '{}')
@@ -341,7 +342,7 @@ def ogr_elasticsearch_2():
     
     gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo&POSTFIELDS=', '{}')
     gdal.Unlink('/vsimem/fakeelasticsearch/foo/_mapping/FeatureCollection')
-    gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo/FeatureCollection/_mapping&POSTFIELDS={ "FeatureCollection": { "properties": { "type": { "store": "yes", "type": "string" }, "properties": { }, "geometry": { "type": "geo_shape" } } } }', '{}')
+    gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo/FeatureCollection/_mapping&POSTFIELDS={ "FeatureCollection": { "properties": { "type": { "type": "string" }, "properties": { }, "geometry": { "type": "geo_shape" } } } }', '{}')
    
     lyr = ds.CreateLayer('foo', srs = ogrtest.srs_wgs84, options = ['BULK_INSERT=NO', 'FID='])
     feat = ogr.Feature(lyr.GetLayerDefn())
@@ -359,7 +360,7 @@ def ogr_elasticsearch_2():
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetGeometry(ogr.CreateGeometryFromWkt('GEOMETRYCOLLECTION(POINT(0 1),LINESTRING(0 1,2 3),POLYGON((0 0,0 10,10 10,0 0),(1 1,1 9,9 9,1 1)),MULTIPOINT(0 1, 2 3),MULTILINESTRING((0 1,2 3),(4 5,6 7)),MULTIPOLYGON(((0 0,0 10,10 10,0 0),(1 1,1 9,9 9,1 1)),((-1 -1,-1 -9,-9 -9,-1 -1))))'))
 
-    gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo/FeatureCollection/_mapping&POSTFIELDS={ "FeatureCollection": { "properties": { "type": { "store": "yes", "type": "string" }, "properties": { "properties": { } }, "geometry": { "type": "geo_shape", "precision": "1m" } } } }', '{}')
+    gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo/FeatureCollection/_mapping&POSTFIELDS={ "FeatureCollection": { "properties": { "type": { "type": "string" }, "properties": { "properties": { } }, "geometry": { "type": "geo_shape", "precision": "1m" } } } }', '{}')
 
     ret = lyr.CreateFeature(feat)
     if ret != 0:
@@ -383,7 +384,7 @@ def ogr_elasticsearch_3():
         return 'fail'
     
     gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/name_laundering&POSTFIELDS=', '{}')
-    gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/name_laundering/FeatureCollection/_mapping&POSTFIELDS={ "FeatureCollection": { "properties": { "type": { "store": "yes", "type": "string" }, "properties": { "properties": { } }, "geometry": { "type": "geo_shape" } } } }', '{}')
+    gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/name_laundering/FeatureCollection/_mapping&POSTFIELDS={ "FeatureCollection": { "properties": { "type": { "type": "string" }, "properties": { "properties": { } }, "geometry": { "type": "geo_shape" } } } }', '{}')
    
     lyr = ds.CreateLayer('NAME/laundering', srs = ogrtest.srs_wgs84, options = ['FID='])
     feat = ogr.Feature(lyr.GetLayerDefn())
@@ -970,9 +971,9 @@ def ogr_elasticsearch_5():
     ds = ogrtest.elasticsearch_drv.CreateDataSource("/vsimem/fakeelasticsearch")
 
     gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/non_geojson&POSTFIELDS=', '')
-    gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/non_geojson/my_mapping/_mapping&POSTFIELDS={ "my_mapping": { "properties": { "str": { "store": "yes", "type": "string" }, "geometry": { "type": "geo_shape" } }, "_meta": { "fid": "ogc_fid" } } }', '{}')
+    gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/non_geojson/my_mapping/_mapping&POSTFIELDS={ "my_mapping": { "properties": { "str": { "type": "string", "store": "yes" }, "geometry": { "type": "geo_shape" } }, "_meta": { "fid": "ogc_fid" } } }', '{}')
 
-    lyr = ds.CreateLayer('non_geojson', srs = ogrtest.srs_wgs84, options = ['MAPPING_NAME=my_mapping', 'BULK_INSERT=NO'])
+    lyr = ds.CreateLayer('non_geojson', srs = ogrtest.srs_wgs84, options = ['MAPPING_NAME=my_mapping', 'BULK_INSERT=NO', 'STORE_FIELDS=YES'])
     lyr.CreateField(ogr.FieldDefn('str', ogr.OFTString))
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetFID(5)
@@ -1139,7 +1140,7 @@ def ogr_elasticsearch_5():
     f = ogr.Feature(lyr.GetLayerDefn())
     f['superobject.subfield2'] = 'foo'
     f['superobject.another_geoshape3'] = ogr.CreateGeometryFromWkt('POINT (3 50)')
-    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/non_geojson/my_mapping/_mapping&POSTFIELDS={ "my_mapping": { "properties": { "str_field": { "store": "yes", "type": "string" }, "superobject": { "properties": { "subfield": { "store": "yes", "type": "string" }, "subobject": { "properties": { "subfield": { "store": "yes", "type": "string" }, "another_subfield": { "store": "yes", "type": "integer" } } }, "subfield2": { "store": "yes", "type": "string" }, "another_geoshape": { "type": "geo_shape" }, "another_geoshape2": { "type": "geo_shape" }, "another_geoshape3": { "type": "geo_shape" } } }, "another_field": { "store": "yes", "type": "string" }, "a_geoshape": { "type": "geo_shape" }, "a_geopoint": { "properties": { "type": { "store": "yes", "type": "string" }, "coordinates": { "store": "yes", "type": "geo_point" } } }, "another_geopoint": { "store": "yes", "type": "geo_point" } }, "_meta": { "geomfields": { "superobject.another_geoshape2": "POINT", "superobject.another_geoshape3": "POINT" } } } }""", '{}')
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/non_geojson/my_mapping/_mapping&POSTFIELDS={ "my_mapping": { "properties": { "str_field": { "type": "string" }, "superobject": { "properties": { "subfield": { "type": "string" }, "subobject": { "properties": { "subfield": { "type": "string" }, "another_subfield": { "type": "integer" } } }, "subfield2": { "type": "string" }, "another_geoshape": { "type": "geo_shape" }, "another_geoshape2": { "type": "geo_shape" }, "another_geoshape3": { "type": "geo_shape" } } }, "another_field": { "type": "string" }, "a_geoshape": { "type": "geo_shape" }, "a_geopoint": { "properties": { "type": { "type": "string" }, "coordinates": { "type": "geo_point" } } }, "another_geopoint": { "type": "geo_point" } }, "_meta": { "geomfields": { "superobject.another_geoshape2": "POINT", "superobject.another_geoshape3": "POINT" } } } }""", '{}')
     gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/non_geojson/my_mapping/&POSTFIELDS={ "superobject": { "another_geoshape3": { "type": "point", "coordinates": [ 3.0, 50.0 ] }, "subfield2": "foo" } }""", "{}")
     gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/non_geojson/my_mapping/_search?search_type=count&pretty""", "{}")
     lyr.CreateFeature(f)
@@ -1319,7 +1320,7 @@ def ogr_elasticsearch_7():
 
     gdal.Unlink('/vsimem/map.txt')
     
-    if data != '{ "FeatureCollection": { "properties": { "type": { "store": "yes", "type": "string" }, "properties": { "properties": { } }, "geometry": { "type": "geo_shape" } } } }':
+    if data != '{ "FeatureCollection": { "properties": { "type": { "type": "string" }, "properties": { "properties": { } }, "geometry": { "type": "geo_shape" } } } }':
         gdaltest.post_reason('fail')
         print(data)
         return 'fail'
@@ -1348,7 +1349,7 @@ def ogr_elasticsearch_8():
         return 'fail'
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt('POINT (-100 -200)'))
-    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/no_srs/FeatureCollection/_mapping&POSTFIELDS={ "FeatureCollection": { "properties": { "type": { "store": "yes", "type": "string" }, "properties": { "properties": { } }, "geometry": { "type": "geo_shape" } }, "_meta": { "fid": "ogc_fid" } } }""", '{}')
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/no_srs/FeatureCollection/_mapping&POSTFIELDS={ "FeatureCollection": { "properties": { "type": { "type": "string" }, "properties": { "properties": { } }, "geometry": { "type": "geo_shape" } }, "_meta": { "fid": "ogc_fid" } } }""", '{}')
     gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/_bulk&POSTFIELDS={"index" :{"_index":"no_srs", "_type":"FeatureCollection"}}
 { "ogc_fid": 1, "geometry": { "type": "point", "coordinates": [ -100.0, -200.0 ] }, "type": "Feature", "properties": { } }
 
@@ -1371,7 +1372,7 @@ def ogr_elasticsearch_8():
     lyr = ds.CreateLayer('other_srs', srs = other_srs)
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt('POINT (500000 0)'))
-    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/other_srs/FeatureCollection/_mapping&POSTFIELDS={ "FeatureCollection": { "properties": { "type": { "store": "yes", "type": "string" }, "properties": { "properties": { } }, "geometry": { "type": "geo_shape" } }, "_meta": { "fid": "ogc_fid" } } }""", '{}')
+    gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/other_srs/FeatureCollection/_mapping&POSTFIELDS={ "FeatureCollection": { "properties": { "type": { "type": "string" }, "properties": { "properties": { } }, "geometry": { "type": "geo_shape" } }, "_meta": { "fid": "ogc_fid" } } }""", '{}')
     gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/_bulk&POSTFIELDS={"index" :{"_index":"other_srs", "_type":"FeatureCollection"}}
 { "ogc_fid": 1, "geometry": { "type": "point", "coordinates": [ 3.0, 0.0 ] }, "type": "Feature", "properties": { } }
 
