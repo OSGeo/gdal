@@ -215,8 +215,26 @@ mapping type, compatible of all geometry types.
 When using AUTO, if there is a single geometry field of type Point, a geo_point is used.
 In other cases, geo_shape is used.</li>
 <li><b>GEOM_PRECISION</b>={value}{unit}'. Desired geometry precision. Number followed by unit. For example 1m.
-For a geo_point geometry field, this causes a compressed geometry format to be used.</li>
-</li>
+For a geo_point geometry field, this causes a compressed geometry format to be used.
+This option is without effect if MAPPING is specified.</li>
+<li><b>STORE_FIELDS</b>=YES/NO. Whether fields should be stored in the index.
+Setting to YES sets the "store" property of the field mapping to "true" for all fields. Defaults to NO.
+(Note: prior to GDAL 2.1, the default behaviour was to store fields)
+This option is without effect if MAPPING is specified.</li>
+<li><b>STORED_FIELDS</b>=List of comma separted field names that should be stored in the index.
+Those fields will have their "store" property of the field mapping set to "true".
+If all fields must be stored, then using STORE_FIELDS=YES is a shortcut.
+This option is without effect if MAPPING is specified.</li>
+<li><b>NOT_ANALYZED_FIELDS</b>=List of comma separted field names that should not be analyzed during indexing.
+Those fields will have their "index" property of the field mapping set to "not_analyed"
+(the default in ElasticSearch is "analyzed"). A same field should not be
+specified both in NOT_ANALYZED_FIELDS and NOT_INDEXED_FIELDS.
+This option is without effect if MAPPING is specified.</li>
+<li><b>NOT_INDEXED_FIELDS</b>=List of comma separted field names that should not be indexed.
+Those fields will have their "index" property of the field mapping set to "no"
+(the default in ElasticSearch is "analyzed"). A same field should not be
+specified both in NOT_ANALYZED_FIELDS and NOT_INDEXED_FIELDS.
+This option is without effect if MAPPING is specified.</li>
 <li><b>BULK_INSERT</b>=YES/NO. Whether to use bulk insert for feature creation. Defaults to YES.</li>
 <li><b>BULK_SIZE</b>=value. Size in bytes of the buffer for bulk upload. Defaults to 1000000 (1 million).</li>
 <li><b>FID</b>=string. Field name, with integer values, to use as FID. Can be set to empty to disable the writing of the FID value. Defaults to 'ogc_fid'</li>

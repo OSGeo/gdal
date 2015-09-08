@@ -77,6 +77,25 @@ OGRElasticLayer::OGRElasticLayer(const char* pszLayerName,
     }
     
     m_osPrecision = CSLFetchNameValueDef(papszOptions, "GEOM_PRECISION", "");
+    m_bStoreFields = CSLFetchBoolean(papszOptions, "STORE_FIELDS", false);
+    
+    const char* pszStoredFields = CSLFetchNameValue(papszOptions, "STORED_FIELDS");
+    if( pszStoredFields )
+        m_papszStoredFields = CSLTokenizeString2(pszStoredFields, ",", 0);
+    else
+        m_papszStoredFields = NULL;
+    
+    const char* pszNotAnalyzedFields = CSLFetchNameValue(papszOptions, "NOT_ANALYZED_FIELDS");
+    if( pszNotAnalyzedFields )
+        m_papszNotAnalyzedFields = CSLTokenizeString2(pszNotAnalyzedFields, ",", 0);
+    else
+        m_papszNotAnalyzedFields = NULL;
+    
+    const char* pszNotIndexedFields = CSLFetchNameValue(papszOptions, "NOT_INDEXED_FIELDS");
+    if( pszNotIndexedFields )
+        m_papszNotIndexedFields = CSLTokenizeString2(pszNotIndexedFields, ",", 0);
+    else
+        m_papszNotIndexedFields = NULL;
 
     m_poFeatureDefn = new OGRFeatureDefn(pszLayerName);
     SetDescription( m_poFeatureDefn->GetName() );
@@ -125,6 +144,10 @@ OGRElasticLayer::~OGRElasticLayer() {
         delete m_apoCT[i];
 
     m_poFeatureDefn->Release();
+    
+    CSLDestroy(m_papszStoredFields);
+    CSLDestroy(m_papszNotAnalyzedFields);
+    CSLDestroy(m_papszNotIndexedFields);
 }
 
 /************************************************************************/
@@ -1258,6 +1281,7 @@ void OGRElasticLayer::BuildFeature(OGRFeature* poFeature, json_object* poSource,
 /*                            AppendGroup()                             */
 /************************************************************************/
 
+static
 json_object *AppendGroup(json_object *parent, const CPLString &name) {
     json_object *obj = json_object_new_object();
     json_object *properties = json_object_new_object();
@@ -1270,16 +1294,11 @@ json_object *AppendGroup(json_object *parent, const CPLString &name) {
 /*                           AddPropertyMap()                           */
 /************************************************************************/
 
-json_object *AddPropertyMap(const CPLString &type, const CPLString &format = "") {
+static json_object* AddPropertyMap(const CPLString &type) {
     json_object *obj = json_object_new_object();
-    json_object_object_add(obj, "store", json_object_new_string("yes"));
     json_object_object_add(obj, "type", json_object_new_string(type.c_str()));
-    if (!format.empty()) {
-        json_object_object_add(obj, "format", json_object_new_string(format.c_str()));
-    }
     return obj;
 }
-
 
 /************************************************************************/
 /*                      GetContainerForMapping()                        */
@@ -1345,43 +1364,58 @@ CPLString OGRElasticLayer::BuildMap() {
                                                           m_aaosFieldPaths[i],
                                                           oMap);
         const char* pszLastComponent = m_aaosFieldPaths[i][(int)m_aaosFieldPaths[i].size()-1];
-        
+
+        const char* pszType = "string";
+        const char* pszFormat = NULL;
+
         switch (poFieldDefn->GetType())
         {
             case OFTInteger:
             case OFTIntegerList:
             {
                 if( poFieldDefn->GetSubType() == OFSTBoolean )
-                    json_object_object_add(poContainer, pszLastComponent, AddPropertyMap("boolean"));
+                    pszType = "boolean";
                 else
-                    json_object_object_add(poContainer, pszLastComponent, AddPropertyMap("integer"));
+                    pszType = "integer";
                 break;
             }
             case OFTInteger64:
             case OFTInteger64List:
-                json_object_object_add(poContainer, pszLastComponent, AddPropertyMap("long"));
+                pszType = "long";
                 break;
             case OFTReal:
             case OFTRealList:
-                json_object_object_add(poContainer, pszLastComponent, AddPropertyMap("double"));
-                break;
-            case OFTString:
-            case OFTStringList:
-                json_object_object_add(poContainer, pszLastComponent, AddPropertyMap("string"));
+                pszType = "double";
                 break;
             case OFTDateTime:
             case OFTDate:
-                json_object_object_add(poContainer, pszLastComponent, AddPropertyMap("date", "yyyy/MM/dd HH:mm:ss.SSSZZ||yyyy/MM/dd HH:mm:ss.SSS||yyyy/MM/dd"));
+                pszType = "date";
+                pszFormat = "yyyy/MM/dd HH:mm:ss.SSSZZ||yyyy/MM/dd HH:mm:ss.SSS||yyyy/MM/dd";
                 break;
             case OFTTime:
-                json_object_object_add(poContainer, pszLastComponent, AddPropertyMap("date", "HH:mm:ss.SSS"));
+                pszType = "date";
+                pszFormat = "HH:mm:ss.SSS";
                 break;
             case OFTBinary:
-                json_object_object_add(poContainer, pszLastComponent, AddPropertyMap("binary"));
+                pszType = "binary";
                 break;
             default:
                 break;
         }
+
+        json_object* poPropertyMap = json_object_new_object();
+        json_object_object_add(poPropertyMap, "type", json_object_new_string(pszType));
+        if( pszFormat )
+            json_object_object_add(poPropertyMap, "format", json_object_new_string(pszFormat));
+        if( m_bStoreFields || CSLFindString(m_papszStoredFields, poFieldDefn->GetNameRef()) >= 0 )
+            json_object_object_add(poPropertyMap, "store", json_object_new_string("yes"));
+        if( CSLFindString(m_papszNotAnalyzedFields, poFieldDefn->GetNameRef()) >= 0 )
+            json_object_object_add(poPropertyMap, "index", json_object_new_string("not_analyzed"));
+        else if( CSLFindString(m_papszNotIndexedFields, poFieldDefn->GetNameRef()) >= 0 )
+            json_object_object_add(poPropertyMap, "index", json_object_new_string("no"));
+
+        json_object_object_add(poContainer, pszLastComponent, poPropertyMap);
+
     }
 
     for(int i=0;i<m_poFeatureDefn->GetGeomFieldCount();i++)
@@ -1485,6 +1519,16 @@ CPLString OGRElasticLayer::BuildMap() {
 
     CPLString jsonMap(json_object_to_json_string(map));
     json_object_put(map);
+    
+    // Got personnaly caught by that...
+    if( CSLCount(m_papszStoredFields) == 1 &&
+        (EQUAL(m_papszStoredFields[0], "YES") || EQUAL(m_papszStoredFields[0], "TRUE")) &&
+        m_poFeatureDefn->GetFieldIndex(m_papszStoredFields[0]) < 0 )
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "STORED_FIELDS=%s was specified. Perhaps you meant STORE_FIELDS=%s instead?",
+                 m_papszStoredFields[0], m_papszStoredFields[0]);
+    }
 
     return jsonMap;
 }
