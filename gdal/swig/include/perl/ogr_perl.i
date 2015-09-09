@@ -610,6 +610,8 @@ sub RELEASE_PARENTS {
 
 %feature("shadow") OGRFeatureDefnShadow(const char* name_null_ok=NULL)
 %{
+use strict;
+use warnings;
 use Carp;
 use Scalar::Util 'blessed';
 sub new {
@@ -1199,16 +1201,16 @@ sub new {
     if (@_ == 0) {
     } elsif (@_ == 1) {
         $name = shift;
-    } elsif (@_ == 2 and not $SCHEMA_KEYS{$_[0]}) {
+    } elsif (@_ == 2 and not $Geo::OGR::FieldDefn::SCHEMA_KEYS{$_[0]}) {
         $name = shift;
         $type = shift;
     } else {
         my %named = @_;
         for my $key (keys %named) {
-            if ($SCHEMA_KEYS{$key}) {
+            if ($Geo::OGR::FieldDefn::SCHEMA_KEYS{$key}) {
                 $args{$key} = $named{$key};
             } else {
-                carp "Unrecognized argument: '$key'." if $key ne 'Index';
+                carp "Unrecognized argument: '$key'.";
             }
         }
         $name = $args{Name} if exists $args{Name};
@@ -1216,8 +1218,8 @@ sub new {
         $type = $args{Type} if exists $args{Type};
         delete $args{Type};
     }
-    confess "Unknown field type: '$type'." unless exists $TYPE_STRING2INT{$type};
-    $type = $TYPE_STRING2INT{$type};
+    confess "Unknown field type: '$type'." unless exists $Geo::OGR::FieldDefn::TYPE_STRING2INT{$type};
+    $type = $Geo::OGR::FieldDefn::TYPE_STRING2INT{$type};
     my $self = Geo::OGRc::new_FieldDefn($name, $type);
     if (defined($self)) {
         bless $self, $pkg;
@@ -1335,16 +1337,16 @@ sub new {
     if (@_ == 0) {
     } elsif (@_ == 1) {
         $name = shift;
-    } elsif (@_ == 2 and not $SCHEMA_KEYS{$_[0]}) {
+    } elsif (@_ == 2 and not $Geo::OGR::GeomFieldDefn::SCHEMA_KEYS{$_[0]}) {
         $name = shift;
         $type = shift;
     } else {
         my %named = @_;
         for my $key (keys %named) {
-            if ($SCHEMA_KEYS{$key}) {
+            if ($Geo::OGR::GeomFieldDefn::SCHEMA_KEYS{$key}) {
                 $args{$key} = $named{$key};
             } else {
-                carp "Unrecognized argument: '$key'." if $key ne 'Index';
+                carp "Unrecognized argument: '$key'.";
             }
         }
         $name = $args{Name} if exists $args{Name};
@@ -1513,8 +1515,8 @@ sub new {
     } elsif (defined $json) {
         $self = Geo::OGRc::CreateGeometryFromJson($json);
     } elsif (defined $type) {
-        confess "Unknown geometry type: '$type'." unless exists $TYPE_STRING2INT{$type};
-        $type = $TYPE_STRING2INT{$type};
+        confess "Unknown geometry type: '$type'." unless exists $Geo::OGR::Geometry::TYPE_STRING2INT{$type};
+        $type = $Geo::OGR::Geometry::TYPE_STRING2INT{$type};
         $self = Geo::OGRc::new_Geometry($type); # flattens the type
         SetCoordinateDimension($self, 3) if Geo::OGR::GT_HasZ($type);
     } elsif (defined $arc) {

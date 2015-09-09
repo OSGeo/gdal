@@ -1,6 +1,7 @@
 use strict;
 use Test::More qw(no_plan);
 BEGIN { use_ok('Geo::GDAL') };
+Geo::GDAL::PushFinderLocation('../../data');
 
 # Documented subs in Geo::GDAL 
 
@@ -31,6 +32,7 @@ eval {
     Geo::GDAL::PushFinderLocation('abc');
     Geo::GDAL::PopFinderLocation();
     Geo::GDAL::FinderClean();
+    Geo::GDAL::PushFinderLocation('../../data');
 };
 ok($@ eq '', "FinderClean, PushFinderLocation and PopFinderLocation, got $@");
 
