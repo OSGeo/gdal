@@ -296,11 +296,9 @@ OGRErr OGRPolygon::importFromWkb( unsigned char * pabyData,
 /* -------------------------------------------------------------------- */
     for( int iRing = 0; iRing < oCC.nCurveCount; iRing++ )
     {
-        OGRErr  eErr;
-        
         OGRLinearRing* poLR = new OGRLinearRing();
         oCC.papoCurves[iRing] = poLR;
-        eErr = poLR->_importFromWkb( eByteOrder, b3D,
+        OGRErr eErr = poLR->_importFromWkb( eByteOrder, b3D,
                                                  pabyData + nDataOffset,
                                                  nSize );
         if( eErr != OGRERR_NONE )
@@ -330,9 +328,7 @@ OGRErr  OGRPolygon::exportToWkb( OGRwkbByteOrder eByteOrder,
                                  OGRwkbVariant eWkbVariant ) const
 
 {
-    int         nOffset;
-    int         b3D = getCoordinateDimension() == 3;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Set the byte order.                                             */
 /* -------------------------------------------------------------------- */
@@ -367,12 +363,13 @@ OGRErr  OGRPolygon::exportToWkb( OGRwkbByteOrder eByteOrder,
     {
         memcpy( pabyData+5, &oCC.nCurveCount, 4 );
     }
-    
-    nOffset = 9;
-    
+
 /* ==================================================================== */
 /*      Serialize each of the rings.                                    */
 /* ==================================================================== */
+    int nOffset = 9;
+    const int b3D = getCoordinateDimension() == 3;
+
     for( int iRing = 0; iRing < oCC.nCurveCount; iRing++ )
     {
         OGRLinearRing* poLR = (OGRLinearRing*) oCC.papoCurves[iRing];
@@ -381,7 +378,7 @@ OGRErr  OGRPolygon::exportToWkb( OGRwkbByteOrder eByteOrder,
 
         nOffset += poLR->_WkbSize(b3D);
     }
-    
+
     return OGRERR_NONE;
 }
 
@@ -449,7 +446,6 @@ OGRErr OGRPolygon::importFromWKTListOnly( char ** ppszInput, int bHasZ, int bHas
     
     do
     {
-        int     nPoints = 0;
 
         const char* pszNext = OGRWktReadToken( pszInput, szToken );
         if (EQUAL(szToken,"EMPTY"))
@@ -476,6 +472,7 @@ OGRErr OGRPolygon::importFromWKTListOnly( char ** ppszInput, int bHasZ, int bHas
 /* -------------------------------------------------------------------- */
 /*      Read points for one ring from input.                            */
 /* -------------------------------------------------------------------- */
+        int nPoints = 0;
         pszInput = OGRWktReadPoints( pszInput, &paoPoints, &padfZ, &nMaxPoints,
                                      &nPoints );
 
@@ -483,7 +480,7 @@ OGRErr OGRPolygon::importFromWKTListOnly( char ** ppszInput, int bHasZ, int bHas
         {
             return OGRERR_CORRUPT_DATA;
         }
-        
+
 /* -------------------------------------------------------------------- */
 /*      Do we need to grow the ring array?                              */
 /* -------------------------------------------------------------------- */
@@ -539,8 +536,6 @@ OGRErr OGRPolygon::exportToWkt( char ** ppszDstText,
                                 OGRwkbVariant eWkbVariant ) const
 
 {
-    char        **papszRings;
-    int         iRing, nCumulativeLength = 0, nNonEmptyRings = 0;
     OGRErr      eErr;
     int         bMustWriteComma = FALSE;
 
@@ -560,9 +555,11 @@ OGRErr OGRPolygon::exportToWkt( char ** ppszDstText,
 /* -------------------------------------------------------------------- */
 /*      Build a list of strings containing the stuff for each ring.     */
 /* -------------------------------------------------------------------- */
-    papszRings = (char **) CPLCalloc(sizeof(char *),oCC.nCurveCount);
+    char **papszRings = (char **) CPLCalloc(sizeof(char *),oCC.nCurveCount);
+    int nCumulativeLength = 0;
+    int nNonEmptyRings = 0;
 
-    for( iRing = 0; iRing < oCC.nCurveCount; iRing++ )
+    for( int iRing = 0; iRing < oCC.nCurveCount; iRing++ )
     {
         OGRLinearRing* poLR = (OGRLinearRing*) oCC.papoCurves[iRing];
         poLR->setCoordinateDimension( getCoordinateDimension() );
@@ -603,8 +600,8 @@ OGRErr OGRPolygon::exportToWkt( char ** ppszDstText,
         strcpy( *ppszDstText, "POLYGON (" );
     nCumulativeLength = strlen(*ppszDstText);
 
-    for( iRing = 0; iRing < oCC.nCurveCount; iRing++ )
-    {                                                           
+    for( int iRing = 0; iRing < oCC.nCurveCount; iRing++ )
+    {
         if( papszRings[iRing] == NULL )
         {
             CPLDebug( "OGR", "OGRPolygon::exportToWkt() - skipping empty ring.");
@@ -629,7 +626,7 @@ OGRErr OGRPolygon::exportToWkt( char ** ppszDstText,
     return OGRERR_NONE;
 
 error:
-    for( iRing = 0; iRing < oCC.nCurveCount; iRing++ )
+    for( int iRing = 0; iRing < oCC.nCurveCount; iRing++ )
         CPLFree(papszRings[iRing]);
     CPLFree(papszRings);
     return eErr;
