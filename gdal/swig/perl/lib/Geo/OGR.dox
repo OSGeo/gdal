@@ -978,7 +978,7 @@
 #
 # This method supports both an argument list and named arguments.
 #
-# @param name Field name.
+# @param name Field name (please do not try to name the field as Name or Type etc.).
 # @param type One of supported field types
 # (see Geo::OGR::FieldDefn::Types). Optional. Default is String.
 #

@@ -1,5 +1,6 @@
 use Test::More qw(no_plan);
 BEGIN { use_ok('Geo::GDAL') };
+Geo::GDAL::PushFinderLocation('../../data');
 
 use strict;
 use vars qw/%available_driver %test_driver $loaded $verbose @types %pack_types @fails @tested_drivers/;
@@ -189,7 +190,7 @@ system "rm -rf tmp_ds_*" unless $^O eq 'MSWin32';
 {
     my $g2;
     {
-	my $d = Geo::OGR::FeatureDefn->new(Fields=>[Geo::OGR::FieldDefn->new(Name=>'Foo')]);
+	my $d = Geo::OGR::FeatureDefn->new(Fields=>[Geo::OGR::FieldDefn->new(Name => 'Foo', Index => 1)]);
         $d->AddField(Type => 'Point');
 	my $f = Geo::OGR::Feature->new($d);
 	my $g = Geo::OGR::Geometry->new('Point');

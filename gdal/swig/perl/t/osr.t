@@ -1,5 +1,6 @@
 use Test::More qw(no_plan);
 BEGIN { use_ok('Geo::GDAL') };
+Geo::GDAL::PushFinderLocation('../../data');
 
 $srs1 = Geo::OSR::SpatialReference->new(EPSG=>2936);
 $srs2 = Geo::OSR::SpatialReference->new(Text=>$srs1->AsText);
