@@ -1721,9 +1721,8 @@ void CPLAddXMLAttributeAndValue( CPLXMLNode *psParent,
                                  const char *pszName,
                                  const char *pszValue )
 {
-    CPLXMLNode *psAttributeNode;
-
-    psAttributeNode = CPLCreateXMLNode( psParent, CXT_Attribute, pszName );
+    CPLXMLNode *psAttributeNode
+        = CPLCreateXMLNode( psParent, CXT_Attribute, pszName );
     CPLCreateXMLNode( psAttributeNode, CXT_Text, pszValue );
 }
 
