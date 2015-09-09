@@ -6097,6 +6097,87 @@ def tiff_write_139():
     return 'success'
 
 ###############################################################################
+# Test setting a band to alpha
+
+def tiff_write_140():
+
+    # Nominal case: set alpha to last band
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_140.tif',1,1,5)
+    ds.GetRasterBand(5).SetColorInterpretation(gdal.GCI_AlphaBand)
+    ds = None
+    statBuf = gdal.VSIStatL('/vsimem/tiff_write_140.tif.aux.xml', gdal.VSI_STAT_EXISTS_FLAG | gdal.VSI_STAT_NATURE_FLAG | gdal.VSI_STAT_SIZE_FLAG)
+    if statBuf is not None:
+        gdaltest.post_reason('did not expect PAM file')
+        return 'fail'
+    ds = gdal.Open('/vsimem/tiff_write_140.tif')
+    if ds.GetRasterBand(5).GetColorInterpretation() != gdal.GCI_AlphaBand:
+        gdaltest.post_reason('fail')
+        print(ds.GetRasterBand(5).GetColorInterpretation())
+        return 'fail'
+    ds = None
+
+    # Strange case: set alpha to a band, but it is already set on another one
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_140.tif',1,1,5)
+    ds.GetRasterBand(2).SetColorInterpretation(gdal.GCI_AlphaBand)
+    # Should emit a warning
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        ret = ds.GetRasterBand(5).SetColorInterpretation(gdal.GCI_AlphaBand)
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+    statBuf = gdal.VSIStatL('/vsimem/tiff_write_140.tif.aux.xml', gdal.VSI_STAT_EXISTS_FLAG | gdal.VSI_STAT_NATURE_FLAG | gdal.VSI_STAT_SIZE_FLAG)
+    if statBuf is not None:
+        gdaltest.post_reason('did not expect PAM file')
+        return 'fail'
+    ds = gdal.Open('/vsimem/tiff_write_140.tif')
+    if ds.GetRasterBand(2).GetColorInterpretation() != gdal.GCI_AlphaBand:
+        gdaltest.post_reason('fail')
+        print(ds.GetRasterBand(5).GetColorInterpretation())
+        return 'fail'
+    if ds.GetRasterBand(5).GetColorInterpretation() != gdal.GCI_AlphaBand:
+        gdaltest.post_reason('fail')
+        print(ds.GetRasterBand(5).GetColorInterpretation())
+        return 'fail'
+    ds = None
+
+    # Strange case: set alpha to a band, but it is already set on another one (because of ALPHA=YES)
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_140.tif',1,1,5, options = ['ALPHA=YES'])
+    # Should emit a warning mentionning ALPHA creation option
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        ret = ds.GetRasterBand(5).SetColorInterpretation(gdal.GCI_AlphaBand)
+    if gdal.GetLastErrorMsg().find('ALPHA') < 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+    statBuf = gdal.VSIStatL('/vsimem/tiff_write_140.tif.aux.xml', gdal.VSI_STAT_EXISTS_FLAG | gdal.VSI_STAT_NATURE_FLAG | gdal.VSI_STAT_SIZE_FLAG)
+    if statBuf is not None:
+        gdaltest.post_reason('did not expect PAM file')
+        return 'fail'
+    ds = gdal.Open('/vsimem/tiff_write_140.tif')
+    if ds.GetRasterBand(2).GetColorInterpretation() != gdal.GCI_AlphaBand:
+        gdaltest.post_reason('fail')
+        print(ds.GetRasterBand(5).GetColorInterpretation())
+        return 'fail'
+    if ds.GetRasterBand(5).GetColorInterpretation() != gdal.GCI_AlphaBand:
+        gdaltest.post_reason('fail')
+        print(ds.GetRasterBand(5).GetColorInterpretation())
+        return 'fail'
+    ds = None
+
+    gdaltest.tiff_drv.Delete('/vsimem/tiff_write_140.tif')
+
+    return 'success'
+
+###############################################################################
 # Ask to run again tests with GDAL_API_PROXY=YES
 
 def tiff_write_api_proxy():
@@ -6268,12 +6349,13 @@ gdaltest_list = [
     tiff_write_137,
     tiff_write_138,
     tiff_write_139,
+    tiff_write_140,
     #tiff_write_api_proxy,
     tiff_write_cleanup ]
 
 disabled_gdaltest_list = [
     tiff_write_1,
-    tiff_write_139 ]
+    tiff_write_140 ]
 
 if __name__ == '__main__':
 
