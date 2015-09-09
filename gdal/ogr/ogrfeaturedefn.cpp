@@ -49,20 +49,21 @@ CPL_CVSID("$Id$");
  * This method is the same as the C function OGR_FD_Create().
  *
  * @param pszName the name to be assigned to this layer/class.  It does not
- * need to be unique. 
+ * need to be unique.
  */
 
-OGRFeatureDefn::OGRFeatureDefn( const char * pszName )
-
+OGRFeatureDefn::OGRFeatureDefn( const char * pszName ) :
+    nRefCount(0),
+    nFieldCount(0),
+    papoFieldDefn(NULL),
+    nGeomFieldCount(1),
+    papoGeomFieldDefn(NULL),
+    pszFeatureClassName(NULL),
+    bIgnoreStyle(FALSE)
 {
     pszFeatureClassName = CPLStrdup( pszName );
-    nRefCount = 0;
-    nFieldCount = 0;
-    papoFieldDefn = NULL;
-    nGeomFieldCount = 1;
     papoGeomFieldDefn = (OGRGeomFieldDefn**) CPLMalloc(sizeof(OGRGeomFieldDefn*));
     papoGeomFieldDefn[0] = new OGRGeomFieldDefn("", wkbUnknown);
-    bIgnoreStyle = FALSE;
 }
 
 /************************************************************************/
