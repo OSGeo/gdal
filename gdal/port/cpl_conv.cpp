@@ -1911,28 +1911,21 @@ const char *CPLDecToDMS( double dfAngle, const char * pszAxis,
 {
     VALIDATE_POINTER1( pszAxis, "CPLDecToDMS", "" );
 
-    int         nDegrees, nMinutes;
-    double      dfSeconds, dfABSAngle, dfEpsilon;
-    char        szFormat[30];
-    const char  *pszHemisphere;
-    static CPL_THREADLOCAL char szBuffer[50] = { 0 };
-    
-    
-    dfEpsilon = (0.5/3600.0) * pow(0.1,nPrecision);
-
-    dfABSAngle = ABS(dfAngle) + dfEpsilon;
+    const double dfEpsilon = (0.5/3600.0) * pow(0.1,nPrecision);
+    const double dfABSAngle = ABS(dfAngle) + dfEpsilon;
     if (dfABSAngle > 361)
     {
         return "Invalid angle";
     }
 
-    nDegrees = (int) dfABSAngle;
-    nMinutes = (int) ((dfABSAngle - nDegrees) * 60);
-    dfSeconds = dfABSAngle * 3600 - nDegrees*3600 - nMinutes*60;
+    const int nDegrees = (int) dfABSAngle;
+    const int nMinutes = (int) ((dfABSAngle - nDegrees) * 60);
+    double dfSeconds = dfABSAngle * 3600 - nDegrees*3600 - nMinutes*60;
 
     if( dfSeconds > dfEpsilon * 3600.0 )
         dfSeconds -= dfEpsilon * 3600.0;
 
+    const char  *pszHemisphere;
     if( EQUAL(pszAxis,"Long") && dfAngle < 0.0 )
         pszHemisphere = "W";
     else if( EQUAL(pszAxis,"Long") )
@@ -1942,7 +1935,10 @@ const char *CPLDecToDMS( double dfAngle, const char * pszAxis,
     else
         pszHemisphere = "N";
 
+    char szFormat[30];
     CPLsprintf( szFormat, "%%3dd%%2d\'%%%d.%df\"%s", nPrecision+3, nPrecision, pszHemisphere );
+
+    static CPL_THREADLOCAL char szBuffer[50] = { 0 };
     CPLsprintf( szBuffer, szFormat, nDegrees, nMinutes, dfSeconds );
 
     return( szBuffer );
@@ -1997,14 +1993,12 @@ const char *CPLDecToDMS( double dfAngle, const char * pszAxis,
 
 double CPLPackedDMSToDec( double dfPacked )
 {
-    double  dfDegrees, dfMinutes, dfSeconds, dfSign;
+    const double dfSign = ( dfPacked < 0.0 )? -1 : 1;
 
-    dfSign = ( dfPacked < 0.0 )? -1 : 1;
-        
-    dfSeconds = ABS( dfPacked );
-    dfDegrees = floor(dfSeconds / 1000000.0);
+    double dfSeconds = ABS( dfPacked );
+    double dfDegrees = floor(dfSeconds / 1000000.0);
     dfSeconds = dfSeconds - dfDegrees * 1000000.0;
-    dfMinutes = floor(dfSeconds / 1000.0);
+    double dfMinutes = floor(dfSeconds / 1000.0);
     dfSeconds = dfSeconds - dfMinutes * 1000.0;
     dfSeconds = dfSign * ( dfDegrees * 3600.0 + dfMinutes * 60.0 + dfSeconds);
     dfDegrees = dfSeconds / 3600.0;
