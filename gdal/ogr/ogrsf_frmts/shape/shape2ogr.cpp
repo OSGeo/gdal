@@ -1376,6 +1376,7 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
                         p--;
                     }
 
+                    // TODO: This can dereference a nullptr.  CID 1291944
                     pszEncoded[nStrLen] = 0;
                 }
               }
