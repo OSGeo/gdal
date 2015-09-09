@@ -841,7 +841,7 @@
 # @return a new Geo::OGR::FieldDefn object
 
 ## @cmethod Geo::OGR::FieldDefn create(%parameters)
-# @param parameters named parameters: Name, Type, Justify, Width,
+# @param parameters two or more named parameters: Name, Type, Justify, Width,
 # Precision
 #
 # Usage:

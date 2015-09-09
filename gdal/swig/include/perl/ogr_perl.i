@@ -879,28 +879,31 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	}
 	sub create {
 	    my $pkg = shift;
+            # documented forms of this constructor are
+            # 1) create($name)
+            # 2) create($name, $type)
+            # 3) create(%named_parameters)
+            # let us assume the case 3 is true only if @_ >= 4 and @_ % 2 == 0;
 	    my %param = ( Name => 'unnamed', Type => 'String' );
 	    if (@_ == 0) {
 	    } elsif (@_ == 1) {
 		$param{Name} = shift;
+            } elsif (@_ == 2) {
+                $param{Name} = shift;
+                $param{Type} = shift;
+            } elsif (@_ >= 4 and @_ % 2 == 0) {
+                my %p = @_;
+                for my $k (keys %p) {
+                    $param{$k} = $p{$k};
+                }
 	    } else {
-		my %known = map {$_ => 1} qw/Name Type Justify Width Precision/;
-		unless ($known{$_[0]}) {
-		    $param{Name} = shift;
-		    $param{Type} = shift;
-		} else {
-		    my %p = @_;
-		    for my $k (keys %known) {
-			$param{$k} = $p{$k} if exists $p{$k};
-		    }
-		}
-	    }
-	    croak "usage: Geo::OGR::FieldDefn->create(%params)" if ref($param{Name});
+                croak "usage: Geo::OGR::FieldDefn->create(\$name | \$name, \$type | \%named_params)";
+            }
 	    $param{Type} = $TYPE_STRING2INT{$param{Type}} 
 	    if defined $param{Type} and exists $TYPE_STRING2INT{$param{Type}};
 	    $param{Justify} = $JUSTIFY_STRING2INT{$param{Justify}} 
 	    if defined $param{Justify} and exists $JUSTIFY_STRING2INT{$param{Justify}};
-	    my $self = Geo::OGRc::new_FieldDefn($param{Name}, $param{Type});
+            my $self = Geo::OGRc::new_FieldDefn($param{Name}, $param{Type});
 	    if (defined($self)) {
 		bless $self, $pkg;
 		$self->Justify($param{Justify}) if exists $param{Justify};
