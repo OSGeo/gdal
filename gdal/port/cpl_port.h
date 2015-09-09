@@ -577,7 +577,7 @@ char * strdup (char *instr);
 
 /***********************************************************************
  * Define CPL_CVSID() macro.  It can be disabled during a build by
- * defining DISABLE_CPLID in the compiler options.
+ * defining DISABLE_CVSID in the compiler options.
  *
  * The cvsid_aw() function is just there to prevent reports of cpl_cvsid()
  * being unused.
