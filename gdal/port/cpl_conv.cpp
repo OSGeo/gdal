@@ -328,8 +328,6 @@ char *CPLStrlwr( char *pszString )
 char *CPLFGets( char *pszBuffer, int nBufferSize, FILE * fp )
 
 {
-    int nActuallyRead, nOriginalOffset;
-
     if ( nBufferSize == 0 || pszBuffer == NULL || fp == NULL )
         return NULL;
 
@@ -340,11 +338,11 @@ char *CPLFGets( char *pszBuffer, int nBufferSize, FILE * fp )
 /*      just the newline (LF).  If it is in binary mode it may well     */
 /*      have both.                                                      */
 /* -------------------------------------------------------------------- */
-    nOriginalOffset = VSIFTell( fp );
+    int nOriginalOffset = VSIFTell( fp );
     if( VSIFGets( pszBuffer, nBufferSize, fp ) == NULL )
         return NULL;
-    
-    nActuallyRead = strlen(pszBuffer);
+
+    int nActuallyRead = strlen(pszBuffer);
     if ( nActuallyRead == 0 )
         return NULL;
 
@@ -355,8 +353,7 @@ char *CPLFGets( char *pszBuffer, int nBufferSize, FILE * fp )
     if( nBufferSize == nActuallyRead+1
         && pszBuffer[nActuallyRead-1] == 13 )
     {
-        int chCheck;
-        chCheck = fgetc( fp );
+        int chCheck = fgetc( fp );
         if( chCheck != 10 )
         {
             // unget the character.
@@ -389,29 +386,27 @@ char *CPLFGets( char *pszBuffer, int nBufferSize, FILE * fp )
     
     if( pszExtraNewline != NULL )
     {
-        int chCheck;
-
         nActuallyRead = pszExtraNewline - pszBuffer + 1;
-        
+
         *pszExtraNewline = '\0';
         VSIFSeek( fp, nOriginalOffset + nActuallyRead - 1, SEEK_SET );
 
-        /* 
+        /*
          * This hackery is necessary to try and find our correct
          * spot on win32 systems with text mode line translation going 
          * on.  Sometimes the fseek back overshoots, but it doesn't
          * "realize it" till a character has been read. Try to read till
-         * we get to the right spot and get our CR. 
-         */ 
-        chCheck = fgetc( fp );
+         * we get to the right spot and get our CR.
+         */
+        int chCheck = fgetc( fp );
         while( (chCheck != 13 && chCheck != EOF)
                || VSIFTell(fp) < nOriginalOffset + nActuallyRead )
         {
-            static volatile int bWarned = FALSE;
+            static volatile bool bWarned = false;
 
             if( !bWarned )
             {
-                bWarned = TRUE;
+                bWarned = true;
                 CPLDebug( "CPL", "CPLFGets() correcting for DOS text mode translation seek problem." );
             }
             chCheck = fgetc( fp );
