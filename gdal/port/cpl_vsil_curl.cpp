@@ -1738,7 +1738,7 @@ CachedFileProp*  VSICurlFilesystemHandler::GetCachedFileProp(const char* pszURL)
 /*                                Open()                                */
 /************************************************************************/
 
-VSIVirtualHandle* VSICurlFilesystemHandler::Open( const char *pszFilename, 
+VSIVirtualHandle* VSICurlFilesystemHandler::Open( const char *pszFilename,
                                                   const char *pszAccess)
 {
     if (strchr(pszAccess, 'w') != NULL ||
@@ -1751,8 +1751,8 @@ VSIVirtualHandle* VSICurlFilesystemHandler::Open( const char *pszFilename,
 
     const char* pszOptionVal =
         CPLGetConfigOption( "GDAL_DISABLE_READDIR_ON_OPEN", "NO" );
-    int bSkipReadDir = EQUAL(pszOptionVal, "EMPTY_DIR") ||
-                       CSLTestBoolean(pszOptionVal);
+    const bool bSkipReadDir = EQUAL(pszOptionVal, "EMPTY_DIR") ||
+                              CSLTestBoolean(pszOptionVal);
 
     CPLString osFilename(pszFilename);
     int bGotFileList = TRUE;
@@ -1760,7 +1760,7 @@ VSIVirtualHandle* VSICurlFilesystemHandler::Open( const char *pszFilename,
         strncmp(CPLGetExtension(osFilename), "zip", 3) != 0 && !bSkipReadDir)
     {
         char** papszFileList = ReadDir(CPLGetDirname(osFilename), &bGotFileList);
-        int bFound = (VSICurlIsFileInList(papszFileList, CPLGetFilename(osFilename)) != -1);
+        const bool bFound = (VSICurlIsFileInList(papszFileList, CPLGetFilename(osFilename)) != -1);
         CSLDestroy(papszFileList);
         if (bGotFileList && !bFound)
         {
@@ -1820,8 +1820,7 @@ static int VSICurlParseHTMLDateTimeFileSize(const char* pszStr,
                                             GUIntBig& nFileSize,
                                             GIntBig& mTime)
 {
-    int iMonth;
-    for(iMonth=0;iMonth<12;iMonth++)
+    for(int iMonth=0;iMonth<12;iMonth++)
     {
         char szMonth[32];
         szMonth[0] = '-';
@@ -1966,20 +1965,9 @@ static int VSICurlParseHTMLDateTimeFileSize(const char* pszStr,
 /************************************************************************/
 
 char** VSICurlFilesystemHandler::ParseHTMLFileList(const char* pszFilename,
-                                       char* pszData,
-                                       int* pbGotFileList)
+                                                   char* pszData,
+                                                   int* pbGotFileList)
 {
-    CPLStringList oFileList;
-    char* pszLine = pszData;
-    char* c;
-    int nCount = 0;
-    int bIsHTMLDirList = FALSE;
-    CPLString osExpectedString;
-    CPLString osExpectedString2;
-    CPLString osExpectedString3;
-    CPLString osExpectedString4;
-    CPLString osExpectedString_unescaped;
-    
     *pbGotFileList = FALSE;
 
     const char* pszDir;
@@ -1991,20 +1979,21 @@ char** VSICurlFilesystemHandler::ParseHTMLFileList(const char* pszFilename,
         pszDir = strchr(pszFilename + strlen("/vsicurl/ftp://"), '/');
     if (pszDir == NULL)
         pszDir = "";
+
     /* Apache */
-    osExpectedString = "<title>Index of ";
+    CPLString osExpectedString = "<title>Index of ";
     osExpectedString += pszDir;
     osExpectedString += "</title>";
     /* shttpd */
-    osExpectedString2 = "<title>Index of ";
+    CPLString osExpectedString2 = "<title>Index of ";
     osExpectedString2 += pszDir;
     osExpectedString2 += "/</title>";
     /* FTP */
-    osExpectedString3 = "FTP Listing of ";
+    CPLString osExpectedString3 = "FTP Listing of ";
     osExpectedString3 += pszDir;
     osExpectedString3 += "/";
     /* Apache 1.3.33 */
-    osExpectedString4 = "<TITLE>Index of ";
+    CPLString osExpectedString4 = "<TITLE>Index of ";
     osExpectedString4 += pszDir;
     osExpectedString4 += "</TITLE>";
 
@@ -2012,6 +2001,7 @@ char** VSICurlFilesystemHandler::ParseHTMLFileList(const char* pszFilename,
     /* has "<title>Index of /srtm/SRTM_image_sample/picture examples</title>" so we must */
     /* try unescaped %20 also */
     /* Similar with http://datalib.usask.ca/gis/Data/Central_America_goodbutdoweown%3f/ */
+    CPLString osExpectedString_unescaped;
     if (strchr(pszDir, '%'))
     {
         char* pszUnescapedDir = CPLUnescapeString(pszDir, NULL, CPLES_URL);
@@ -2021,8 +2011,13 @@ char** VSICurlFilesystemHandler::ParseHTMLFileList(const char* pszFilename,
         CPLFree(pszUnescapedDir);
     }
 
+    char* c;
+    int nCount = 0;
     int nCountTable = 0;
-    
+    CPLStringList oFileList;
+    char* pszLine = pszData;
+    bool bIsHTMLDirList = false;
+
     while( (c = VSICurlParserFindEOL( pszLine )) != NULL )
     {
         *c = 0;
@@ -2046,7 +2041,7 @@ char** VSICurlFilesystemHandler::ParseHTMLFileList(const char* pszFilename,
              strstr(pszLine, osExpectedString4.c_str()) ||
              (osExpectedString_unescaped.size() != 0 && strstr(pszLine, osExpectedString_unescaped.c_str()))))
         {
-            bIsHTMLDirList = TRUE;
+            bIsHTMLDirList = true;
             *pbGotFileList = TRUE;
         }
         /* Subversion HTTP listing */
@@ -2071,7 +2066,7 @@ char** VSICurlFilesystemHandler::ParseHTMLFileList(const char* pszFilename,
                         *pszTmp = 0;
                     if (strstr(pszDir, pszSubDir))
                     {
-                        bIsHTMLDirList = TRUE;
+                        bIsHTMLDirList = true;
                         *pbGotFileList = TRUE;
                     }
                 }
@@ -2198,8 +2193,7 @@ static int VSICurlParseFullFTPLine(char* pszLine,
         return FALSE;
     bIsDirectory = (pszPermissions[0] == 'd');
 
-    int i;
-    for(i = 0; i < 3; i++)
+    for(int i = 0; i < 3; i++)
     {
         if (VSICurlGetToken(pszNextToken, &pszNextToken) == NULL)
             return FALSE;
@@ -2224,6 +2218,7 @@ static int VSICurlParseFullFTPLine(char* pszLine,
     if (pszMonth == NULL || strlen(pszMonth) != 3)
         return FALSE;
 
+    int i;
     for(i = 0; i < 12; i++)
     {
         if (EQUALN(pszMonth, apszMonths[i], 3))
@@ -2497,14 +2492,14 @@ char** VSICurlFilesystemHandler::GetFileList(const char *pszDirname, int* pbGotF
 int VSICurlFilesystemHandler::Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
                                     int nFlags )
 {
-    CPLString osFilename(pszFilename);
-    
+    const CPLString osFilename(pszFilename);
+
     memset(pStatBuf, 0, sizeof(VSIStatBufL));
 
     const char* pszOptionVal =
         CPLGetConfigOption( "GDAL_DISABLE_READDIR_ON_OPEN", "NO" );
-    int bSkipReadDir = EQUAL(pszOptionVal, "EMPTY_DIR") ||
-                       CSLTestBoolean(pszOptionVal);
+    const bool bSkipReadDir = EQUAL(pszOptionVal, "EMPTY_DIR") ||
+                              CSLTestBoolean(pszOptionVal);
 
     /* Does it look like a FTP directory ? */
     if (strncmp(osFilename, "/vsicurl/ftp", strlen("/vsicurl/ftp")) == 0 &&
@@ -2530,7 +2525,7 @@ int VSICurlFilesystemHandler::Stat( const char *pszFilename, VSIStatBufL *pStatB
     {
         int bGotFileList;
         char** papszFileList = ReadDir(CPLGetDirname(osFilename), &bGotFileList);
-        int bFound = (VSICurlIsFileInList(papszFileList, CPLGetFilename(osFilename)) != -1);
+        const bool bFound = (VSICurlIsFileInList(papszFileList, CPLGetFilename(osFilename)) != -1);
         CSLDestroy(papszFileList);
         if (bGotFileList && !bFound)
         {
