@@ -112,7 +112,7 @@ Coordinate* ParseCoordinate(std::string const& text)
 
 KMLNode::KMLNode() :
     poParent_(NULL),
-    nLevel_(),
+    nLevel_(0),
     eType_(Unknown),
     b25D_(FALSE),
     nLayerNumber_(-1),
