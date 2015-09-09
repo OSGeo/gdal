@@ -1817,11 +1817,7 @@ DGNElemCore *
 DGNCreateSolidHeaderElem( DGNHandle hDGN, int nType, int nSurfType,
                           int nBoundElems, int nTotLength, int nNumElems )
 {
-    DGNElemComplexHeader *psCH;
-    DGNElemCore *psCore;
-    unsigned char abyRawZeroLinkage[8] = {0,0,0,0,0,0,0,0};
-
-    CPLAssert( nType == DGNT_3DSURFACE_HEADER 
+    CPLAssert( nType == DGNT_3DSURFACE_HEADER
                || nType == DGNT_3DSOLID_HEADER );
 
     DGNLoadTCB( hDGN );
@@ -1829,9 +1825,9 @@ DGNCreateSolidHeaderElem( DGNHandle hDGN, int nType, int nSurfType,
 /* -------------------------------------------------------------------- */
 /*      Allocate element.                                               */
 /* -------------------------------------------------------------------- */
-    psCH = (DGNElemComplexHeader *) 
+    DGNElemComplexHeader *psCH = (DGNElemComplexHeader *)
         CPLCalloc( sizeof(DGNElemComplexHeader), 1 );
-    psCore = &(psCH->core);
+    DGNElemCore *psCore = &(psCH->core);
 
     DGNInitializeElemCore( hDGN, psCore );
     psCore->complex = TRUE;
@@ -1869,6 +1865,7 @@ DGNCreateSolidHeaderElem( DGNHandle hDGN, int nType, int nSurfType,
 /*      Elements have to be at least 48 bytes long, so we have to       */
 /*      add a dummy bit of attribute data to fill out the length.       */
 /* -------------------------------------------------------------------- */
+    unsigned char abyRawZeroLinkage[8] = {0, 0, 0, 0, 0, 0, 0, 0};
     DGNAddRawAttrLink( hDGN, psCore, 8, abyRawZeroLinkage );
 
     CPLFree(psCH);
