@@ -2157,22 +2157,25 @@ void  CPLDestroyLock( CPLLock* psLock )
 /*                       CPLLockSetDebugPerf()                          */
 /************************************************************************/
 
-void CPLLockSetDebugPerf( CPLLock* psLock, int bEnableIn )
-{
 #ifdef DEBUG_CONTENTION
+void CPLLockSetDebugPerf(CPLLock* psLock, int bEnableIn)
+{
     psLock->bDebugPerf = bEnableIn;
-#else
-    if( bEnableIn )
-    {
-        static int bOnce = FALSE;
-        if( !bOnce )
-        {
-            bOnce = TRUE;
-            CPLDebug("LOCK", "DEBUG_CONTENTION not available");
-        }
-    }
-#endif
 }
+#else
+void CPLLockSetDebugPerf(CPLLock* /* psLock */, int bEnableIn)
+{
+    if( !bEnableIn )
+        return;
+
+    static bool bOnce = false;
+    if( !bOnce )
+    {
+        bOnce = true;
+        CPLDebug("LOCK", "DEBUG_CONTENTION not available");
+    }
+}
+#endif
 
 /************************************************************************/
 /*                           CPLLockHolder()                            */
