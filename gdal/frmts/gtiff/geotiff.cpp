@@ -3413,6 +3413,61 @@ CPLErr GTiffRasterBand::SetColorInterpretation( GDALColorInterp eInterp )
                 }
             }
             poGDS->nSetPhotometricFromBandColorInterp = -1;
+
+            if( eInterp == GCI_AlphaBand )
+            {
+                uint16 *v;
+                uint16 count = 0;
+                if( TIFFGetField( poGDS->hTIFF, TIFFTAG_EXTRASAMPLES, &count, &v ) )
+                {
+                    int nBaseSamples = poGDS->nSamplesPerPixel - count;
+
+                    for(int i=1;i<=poGDS->nBands;i++)
+                    {
+                        if( i != nBand &&
+                            poGDS->GetRasterBand(i)->GetColorInterpretation()  == GCI_AlphaBand )
+                        {
+                            if( i == nBaseSamples + 1 &&
+                                CSLFetchNameValue(poGDS->papszCreationOptions, "ALPHA") != NULL )
+                            {
+                                CPLError(CE_Warning, CPLE_AppDefined,
+                                        "Band %d was already identified as alpha band, "
+                                        "and band %d is now marked as alpha too. "
+                                        "Presumably ALPHA creation option is not needed",
+                                        i, nBand);
+                            }
+                            else
+                            {
+                                CPLError(CE_Warning, CPLE_AppDefined,
+                                        "Band %d was already identified as alpha band, "
+                                        "and band %d is now marked as alpha too",
+                                        i, nBand);
+                            }
+                        }
+                    }
+
+                    if( nBand > nBaseSamples )
+                    {
+                        // We need to allocate a new array as (current) libtiff
+                        // versions will not like that we reuse the array we got from
+                        // TIFFGetField().
+
+                        uint16* pasNewExtraSamples =
+                            (uint16*)CPLMalloc( count * sizeof(uint16) );
+                        memcpy( pasNewExtraSamples, v, count * sizeof(uint16) );
+                        pasNewExtraSamples[nBand - nBaseSamples - 1] =
+                            GTiffGetAlphaValue(CPLGetConfigOption("GTIFF_ALPHA", NULL),
+                                                  DEFAULT_ALPHA_TYPE);
+
+                        TIFFSetField(poGDS->hTIFF, TIFFTAG_EXTRASAMPLES, count, pasNewExtraSamples);
+
+                        CPLFree(pasNewExtraSamples);
+
+                        return CE_None;
+                    }
+                }
+            }
+
             CPLDebug("GTIFF", "ColorInterpretation %s for band %d goes to PAM instead of TIFF tag",
                      GDALGetColorInterpretationName(eInterp), nBand);
             return GDALPamRasterBand::SetColorInterpretation( eInterp );
