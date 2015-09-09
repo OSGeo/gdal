@@ -626,6 +626,29 @@ static char *cvsid_aw() { return( cvsid_aw() ? ((char *) NULL) : cpl_cvsid ); }
 #define CPL_NO_RETURN
 #endif
 
+/* Helper to remove the copy and assignment constructors so that the compiler
+   will not generate the default versions.
+
+   Must be placed in the private section of a class and should be at the end.
+*/
+#ifdef __cplusplus
+#if 0 /* Initially disabled */
+
+#if __cplusplus >= 201103L
+#define CPL_DISALLOW_COPY_ASSIGN(ClassName) \
+    ClassName( const ClassName & ) = delete; \
+    void &operator=( const ClassName & ) = delete;
+#else
+#define CPL_DISALLOW_COPY_ASSIGN(ClassName) \
+    ClassName( const ClassName & ); \
+    void &operator=( const ClassName & );
+#endif
+
+#else
+#define CPL_DISALLOW_COPY_ASSIGN(ClassName)
+#endif
+#endif /* __cplusplus */
+
 #if !defined(DOXYGEN_SKIP)
 #if defined(__has_extension)
   #if __has_extension(attribute_deprecated_with_message)
