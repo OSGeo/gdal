@@ -366,7 +366,14 @@ static void CSVIngest( const char *pszFilename )
 /*      Ingest whole file.                                              */
 /* -------------------------------------------------------------------- */
     VSIFSeek( psTable->fp, 0, SEEK_END );
-    int nFileLen = VSIFTell( psTable->fp );
+    const int nFileLen = VSIFTell( psTable->fp );
+    if( nFileLen == -1 )
+    {
+        CPLError( CE_Failure, CPLE_FileIO,
+                  "Failed using seek end and tell to get file length: %s",
+                  pszFilename );
+        return;
+    }
     VSIRewind( psTable->fp );
 
     psTable->pszRawData = (char *) CPLMalloc(nFileLen+1);
