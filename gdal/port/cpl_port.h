@@ -641,7 +641,7 @@ static char *cvsid_aw() { return( cvsid_aw() ? ((char *) NULL) : cpl_cvsid ); }
 #else
 #define CPL_DISALLOW_COPY_ASSIGN(ClassName) \
     ClassName( const ClassName & ); \
-    void &operator=( const ClassName & );
+    ClassName &operator=( const ClassName & );
 #endif
 
 #else
