@@ -82,8 +82,6 @@ CPLString &CPLString::vPrintf( const char *pszFormat, va_list args )
 /*      result.                                                         */
 /* -------------------------------------------------------------------- */
 #else
-    char szModestBuffer[500];
-    int nPR;
     va_list wrk_args;
 
 #ifdef va_copy
@@ -91,9 +89,11 @@ CPLString &CPLString::vPrintf( const char *pszFormat, va_list args )
 #else
     wrk_args = args;
 #endif
-    
-    nPR = CPLvsnprintf( szModestBuffer, sizeof(szModestBuffer), pszFormat, 
-                     wrk_args );
+
+    char szModestBuffer[500];
+    szModestBuffer[0] = '\0';
+    int nPR = CPLvsnprintf( szModestBuffer, sizeof(szModestBuffer), pszFormat,
+                             wrk_args );
     if( nPR == -1 || nPR >= (int) sizeof(szModestBuffer)-1 )
     {
         int nWorkBufferSize = 2000;
