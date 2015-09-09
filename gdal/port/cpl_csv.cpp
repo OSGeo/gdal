@@ -249,7 +249,7 @@ static char **CSVSplitLine( const char *pszString, char chDelimiter )
     
     while( pszString != NULL && *pszString != '\0' )
     {
-        int     bInString = FALSE;
+        bool bInString = false;
 
         nTokenLen = 0;
         
@@ -459,7 +459,7 @@ static void CSVIngest( const char *pszFilename )
  */
 char CSVDetectSeperator (const char* pszLine)
 {
-    int     bInString = FALSE;
+    bool    bInString = false;
     char    chDelimiter = '\0';
     int     nCountSpace = 0;
 
@@ -624,15 +624,14 @@ char **CSVScanLines( FILE *fp, int iKeyField, const char * pszValue,
                      CSVCompareCriteria eCriteria )
 
 {
-    char        **papszFields = NULL;
-    int         bSelected = FALSE, nTestValue;
-
     CPLAssert( pszValue != NULL );
     CPLAssert( iKeyField >= 0 );
     CPLAssert( fp != NULL );
-    
-    nTestValue = atoi(pszValue);
-    
+
+    bool bSelected = false;
+    const int nTestValue = atoi(pszValue);
+    char **papszFields = NULL;
+
     while( !bSelected ) {
         papszFields = CSVReadParseLine( fp );
         if( papszFields == NULL )
@@ -645,7 +644,7 @@ char **CSVScanLines( FILE *fp, int iKeyField, const char * pszValue,
         else if( eCriteria == CC_Integer
                  && atoi(papszFields[iKeyField]) == nTestValue )
         {
-            bSelected = TRUE;
+            bSelected = true;
         }
         else
         {
@@ -659,7 +658,7 @@ char **CSVScanLines( FILE *fp, int iKeyField, const char * pszValue,
             papszFields = NULL;
         }
     }
-    
+
     return( papszFields );
 }
 
