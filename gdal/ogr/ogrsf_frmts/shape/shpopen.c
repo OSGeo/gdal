@@ -1159,10 +1159,10 @@ SHPCreateObject( int nSHPType, int nShapeId, int nParts,
 
         psObject->panPartStart[0] = 0;
         psObject->panPartType[0] = SHPP_RING;
-        
+
         for( i = 0; i < nParts; i++ )
         {
-            if( psObject->panPartStart != NULL )
+            if( panPartStart != NULL )
                 psObject->panPartStart[i] = panPartStart[i];
 
             if( panPartType != NULL )
