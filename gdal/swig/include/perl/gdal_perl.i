@@ -129,6 +129,7 @@ use Geo::OSR;
 # build.
 # For GDAL 2.0 or above, GDAL X.Y.Z should then
 # VERSION = X + Y / 100.0 + Z / 10000.0
+# Note also the $VERSION in ogr_perl.i (required by pause.perl.org)
 
 our $VERSION = '2.0100';
 our $GDAL_VERSION = '2.1.0';
