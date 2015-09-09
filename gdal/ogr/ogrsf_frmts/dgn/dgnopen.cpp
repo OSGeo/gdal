@@ -117,13 +117,12 @@ DGNHandle DGNOpen( const char * pszFilename, int bUpdate )
 /* -------------------------------------------------------------------- */
 /*      Verify the format ... add later.                                */
 /* -------------------------------------------------------------------- */
-    GByte       abyHeader[512];
-
-    VSIFRead( abyHeader, 1, sizeof(abyHeader), fp );
-    if( !DGNTestOpen( abyHeader, sizeof(abyHeader) ) )
+    GByte abyHeader[512];
+    const size_t nHeaderBytes = VSIFRead( abyHeader, 1, sizeof(abyHeader), fp );
+    if( !DGNTestOpen( abyHeader, nHeaderBytes ) )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "File `%s' does not have expected DGN header.\n", 
+                  "File `%s' does not have expected DGN header.\n",
                   pszFilename );
         VSIFClose( fp );
         return NULL;
