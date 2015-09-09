@@ -1775,7 +1775,7 @@ VSIVirtualHandle* VSICurlFilesystemHandler::Open( const char *pszFilename,
         if (!poHandle->Exists())
         {
             delete poHandle;
-            poHandle = NULL;
+            return NULL;
         }
     }
 
