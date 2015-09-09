@@ -2,7 +2,7 @@
 
 \section index_version Version
 
-These pages document the development version of the GDAL Perl API,
+These pages document the version 2.0 of the GDAL Perl API,
 which is extended from the released versions APIs. Old versions: 
 <a href="../1.4/index.html">1.4</a>
 <a href="../1.5/index.html">1.5</a>
