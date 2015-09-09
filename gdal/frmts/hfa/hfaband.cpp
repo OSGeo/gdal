@@ -1663,15 +1663,15 @@ CPLErr HFABand::SetRasterBlock( int nXBlock, int nYBlock, void * pData )
 }
 
 /************************************************************************/
-/*                         GetBandName()                                */
-/*                                                                      */
-/*      Return the Layer Name                                           */
+/*                         GetBandName()                                                         */
+/*                                                                                                         */
+/*      Return the Layer Name                                                                  */
 /************************************************************************/
 
 const char * HFABand::GetBandName()
 {
     if( strlen(poNode->GetName()) > 0 )
-        return( poNode->GetName() );
+        return poNode->GetName();
 
     for( int iBand = 0; iBand < psInfo->nBands; iBand++ )
     {
@@ -1687,11 +1687,11 @@ const char * HFABand::GetBandName()
 }
 
 /************************************************************************/
-/*                         SetBandName()                                */
-/*                                                                      */
-/*      Set the Layer Name                                              */
+/*                         SetBandName()                                                          */
+/*                                                                                                         */
+/*      Set the Layer Name                                                                       */
 /************************************************************************/
- 
+
 void HFABand::SetBandName(const char *pszName)
 {
     if( psInfo->eAccess == HFA_Update )
@@ -1700,43 +1700,40 @@ void HFABand::SetBandName(const char *pszName)
     }
 }
 
-/************************************************************************/ 
-/*                         SetNoDataValue()                             */ 
-/*                                                                      */ 
-/*      Set the band no-data value                                      */ 
-/************************************************************************/ 
+/************************************************************************/
+/*                         SetNoDataValue()                                                       */
+/*                                                                                                         */
+/*      Set the band no-data value                                                             */
+/************************************************************************/
 
-CPLErr HFABand::SetNoDataValue( double dfValue ) 
-{ 
-    CPLErr eErr = CE_Failure; 
-    
-    if ( psInfo->eAccess == HFA_Update ) 
-    { 
-        HFAEntry *poNDNode = poNode->GetNamedChild( "Eimg_NonInitializedValue" ); 
-        
-        if ( poNDNode == NULL ) 
-        { 
-            poNDNode = new HFAEntry( psInfo, 
-                                     "Eimg_NonInitializedValue",
-                                     "Eimg_NonInitializedValue",
-                                     poNode ); 
-        } 
-        
-        poNDNode->MakeData( 8 + 12 + 8 ); 
-        poNDNode->SetPosition(); 
+CPLErr HFABand::SetNoDataValue( double dfValue )
+{
+    if ( psInfo->eAccess != HFA_Update )
+        return CE_Failure;
 
-        poNDNode->SetIntField( "valueBD[-3]", EPT_f64 );
-        poNDNode->SetIntField( "valueBD[-2]", 1 );
-        poNDNode->SetIntField( "valueBD[-1]", 1 );
-        if ( poNDNode->SetDoubleField( "valueBD[0]", dfValue) != CE_Failure ) 
-        { 
-            bNoDataSet = TRUE; 
-            dfNoData = dfValue; 
-            eErr = CE_None; 
-        } 
-    } 
-    
-    return eErr;     
+    HFAEntry *poNDNode = poNode->GetNamedChild( "Eimg_NonInitializedValue" );
+
+    if ( poNDNode == NULL )
+    {
+        poNDNode = new HFAEntry( psInfo,
+                                 "Eimg_NonInitializedValue",
+                                 "Eimg_NonInitializedValue",
+                                 poNode );
+    }
+
+    poNDNode->MakeData( 8 + 12 + 8 );
+    poNDNode->SetPosition();
+
+    poNDNode->SetIntField( "valueBD[-3]", EPT_f64 );
+    poNDNode->SetIntField( "valueBD[-2]", 1 );
+    poNDNode->SetIntField( "valueBD[-1]", 1 );
+
+    if ( poNDNode->SetDoubleField( "valueBD[0]", dfValue) == CE_Failure )
+        return CE_Failure;
+
+    bNoDataSet = TRUE;
+    dfNoData = dfValue;
+    return CE_None;
 }
 
 /************************************************************************/
