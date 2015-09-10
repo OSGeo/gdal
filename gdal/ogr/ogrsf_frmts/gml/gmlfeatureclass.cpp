@@ -39,25 +39,28 @@
 /*                          GMLFeatureClass()                           */
 /************************************************************************/
 
-GMLFeatureClass::GMLFeatureClass( const char *pszName )
-
+GMLFeatureClass::GMLFeatureClass( const char *pszName ) :
+    m_pszName(NULL),
+    m_pszElementName(NULL),
+    n_nNameLen(0),
+    n_nElementNameLen(0),
+    m_nPropertyCount(0),
+    m_papoProperty(NULL),
+    m_nGeometryPropertyCount(0),
+    m_papoGeometryProperty(NULL),
+    m_bSchemaLocked(FALSE),
+    m_nFeatureCount(-1), // unknown
+    m_pszExtraInfo(NULL),
+    m_bHaveExtents(FALSE),
+    m_dfXMin(0.0),
+    m_dfXMax(0.0),
+    m_dfYMin(0.0),
+    m_dfYMax(0.0),
+    m_pszSRSName(NULL),
+    m_bSRSNameConsistent(TRUE)
 {
     m_pszName = CPLStrdup( pszName );
     n_nNameLen = strlen( m_pszName );
-    m_pszElementName = NULL;
-    n_nElementNameLen = 0;
-    m_nPropertyCount = 0;
-    m_papoProperty = NULL;
-    m_nGeometryPropertyCount = 0;
-    m_papoGeometryProperty = NULL;
-    m_bSchemaLocked = FALSE;
-
-    m_pszExtraInfo = NULL;
-    m_bHaveExtents = FALSE;
-    m_nFeatureCount = -1; // unknown
-
-    m_pszSRSName = NULL;
-    m_bSRSNameConsistent = TRUE;
 }
 
 /************************************************************************/
@@ -945,4 +948,3 @@ CPLXMLNode *GMLFeatureClass::SerializeToXML()
 
     return psRoot;
 }
-
