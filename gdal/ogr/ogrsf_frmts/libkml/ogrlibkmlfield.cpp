@@ -1764,26 +1764,26 @@ int kmlAltitudeModeFromString(const char* pszAltitudeMode,
                               int& isGX)
 {
     isGX = FALSE;
-    int iAltitudeMode = kmldom::ALTITUDEMODE_CLAMPTOGROUND;
+    int iAltitudeMode = static_cast<int>(kmldom::ALTITUDEMODE_CLAMPTOGROUND);
 
     if ( EQUAL ( pszAltitudeMode, "clampToGround" ) )
-        iAltitudeMode = kmldom::ALTITUDEMODE_CLAMPTOGROUND;
+        iAltitudeMode = static_cast<int>(kmldom::ALTITUDEMODE_CLAMPTOGROUND);
 
     else if ( EQUAL ( pszAltitudeMode, "relativeToGround" ) )
-        iAltitudeMode = kmldom::ALTITUDEMODE_RELATIVETOGROUND;
+        iAltitudeMode = static_cast<int>(kmldom::ALTITUDEMODE_RELATIVETOGROUND);
 
     else if ( EQUAL ( pszAltitudeMode, "absolute" ) )
-        iAltitudeMode = kmldom::ALTITUDEMODE_ABSOLUTE;
+        iAltitudeMode = static_cast<int>(kmldom::ALTITUDEMODE_ABSOLUTE);
 
     else if ( EQUAL ( pszAltitudeMode, "relativeToSeaFloor" ) ) {
         iAltitudeMode =
-            kmldom::GX_ALTITUDEMODE_RELATIVETOSEAFLOOR;
+            static_cast<int>(kmldom::GX_ALTITUDEMODE_RELATIVETOSEAFLOOR);
         isGX = TRUE;
     }
 
     else if ( EQUAL ( pszAltitudeMode, "clampToSeaFloor" ) ) {
         iAltitudeMode =
-            kmldom::GX_ALTITUDEMODE_CLAMPTOSEAFLOOR;
+            static_cast<int>(kmldom::GX_ALTITUDEMODE_CLAMPTOSEAFLOOR);
         isGX = TRUE;
     }
     else
