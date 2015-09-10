@@ -2200,6 +2200,11 @@ def ogr_spatialite_8():
     feat = None
     ds.ReleaseResultSet(sql_lyr)
 
+    with gdaltest.error_handler():
+        lyr = ds.GetLayerByName('invalid_layer_name(geom1)')
+    if lyr is not None:
+        gdaltest.post_reason('failed')
+        return 'fail'
 
     lyr = ds.GetLayerByName('test')
     if lyr.GetLayerDefn().GetFieldCount() != 1:
