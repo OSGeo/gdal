@@ -523,7 +523,6 @@ int GMLFeatureClass::InitializeFromXML( CPLXMLNode *psRoot )
                 bHasValidGeometryElementPath = FALSE;
                 bHasFoundGeomType = FALSE;
                 pszGName = "";
-                pszGPath = "";
                 nGeomType = wkbUnknown;
             }
             pszGPath = CPLGetXMLValue( psThis, NULL, "" );
