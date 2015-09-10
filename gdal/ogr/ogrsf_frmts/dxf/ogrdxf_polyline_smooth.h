@@ -114,13 +114,9 @@ private:
     bool                                    m_bClosed;
     int										m_dim;
 
-       
 public:
-    DXFSmoothPolyline()
-        {
-            m_bClosed = false;
-            m_dim = 2;
-        }
+    DXFSmoothPolyline() : m_blinestringstarted(false), m_bClosed(false),
+                          m_dim(2) { }
 
     OGRGeometry* Tesselate() const;
 
@@ -153,4 +149,3 @@ private:
 };
 
 #endif  /* __OGRDXF_SMOOTH_POLYLINE_H__ */
-
