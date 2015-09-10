@@ -120,7 +120,7 @@ class OGREDIGEOObjectDescriptor
 class OGREDIGEOAttributeDescriptor
 {
     public:
-        OGREDIGEOAttributeDescriptor() {}
+        OGREDIGEOAttributeDescriptor() : nWidth(0) {}
 
         CPLString osRID;        /* e.g. TEX2_id */
         CPLString osNameRID;    /* e.g. ID_N_ATT_TEX2 */
