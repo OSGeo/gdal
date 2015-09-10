@@ -153,23 +153,22 @@ void featurestyle2kml (
                 /***** is the name in the layer style table *****/
 
                 OGRStyleTable *poOgrSTBLLayer;
-                const char *pszTest = NULL;
+                // const char *pszTest = NULL;
 
                 if ( ( poOgrSTBLLayer = poOgrLayer->GetStyleTable (  ) ) )
                     poOgrSTBLLayer->Find ( pszStyleName );
 
-                if ( pszTest ) {
-                    string oTmp = "#";
-
-                    oTmp.append ( pszStyleName );
-
-                    poKmlFeature->set_styleurl ( oTmp );
-                }
+                // if ( pszTest ) {
+                //     string oTmp = "#";
+                //     oTmp.append ( pszStyleName );
+                //     poKmlFeature->set_styleurl ( oTmp );
+                // }
 
                 /***** assume its a dataset style,      *****/
                 /***** mayby the user will add it later *****/
 
-                else {
+                /* else */
+                {
                     string oTmp;
 
                     if ( poOgrDS->GetStylePath (  ) )
