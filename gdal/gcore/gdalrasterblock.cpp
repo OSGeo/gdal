@@ -620,9 +620,10 @@ void GDALRasterBlock::Detach_unlocked()
 
 /**
  * Confirms (via assertions) that the block cache linked list is in a
- * consistent state. 
+ * consistent state.
  */
 
+#ifdef ENABLE_DEBUG
 void GDALRasterBlock::Verify()
 
 {
@@ -635,9 +636,9 @@ void GDALRasterBlock::Verify()
     {
         CPLAssert( poNewest->poPrevious == NULL );
         CPLAssert( poOldest->poNext == NULL );
-        
+
         GDALRasterBlock* poLast = NULL;
-        for( GDALRasterBlock *poBlock = poNewest; 
+        for( GDALRasterBlock *poBlock = poNewest;
              poBlock != NULL;
              poBlock = poBlock->poNext )
         {
@@ -649,6 +650,10 @@ void GDALRasterBlock::Verify()
         CPLAssert( poOldest == poLast );
     }
 }
+
+#else
+void GDALRasterBlock::Verify() {}
+#endif
 
 #ifdef notdef
 void GDALRasterBlock::CheckNonOrphanedBlocks(GDALRasterBand* poBand)
