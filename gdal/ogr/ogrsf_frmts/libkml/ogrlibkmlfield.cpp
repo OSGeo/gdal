@@ -694,8 +694,8 @@ void field2kml (
                         && -1 < poOgrFeat->GetFieldAsInteger ( i ) ) {
                         int iTesselate = poOgrFeat->GetFieldAsInteger ( i );
                         if( iTesselate &&
-                            !(isGX == FALSE && iAltitudeMode == kmldom::ALTITUDEMODE_CLAMPTOGROUND) &&
-                            !(isGX == TRUE && iAltitudeMode == kmldom::GX_ALTITUDEMODE_CLAMPTOSEAFLOOR) &&
+                            !(isGX == FALSE && static_cast<kmldom::AltitudeModeEnum>(iAltitudeMode) == kmldom::ALTITUDEMODE_CLAMPTOGROUND) &&
+                            !(isGX == TRUE && static_cast<kmldom::GxAltitudeModeEnum>(iAltitudeMode) == kmldom::GX_ALTITUDEMODE_CLAMPTOSEAFLOOR) &&
                             CSLTestBoolean(CPLGetConfigOption("LIBKML_STRICT_COMPLIANCE", "TRUE")) )
                         {
                             CPLError(CE_Warning, CPLE_NotSupported,
