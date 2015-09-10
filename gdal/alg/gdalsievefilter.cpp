@@ -85,6 +85,8 @@ GPMaskImageData( GDALRasterBandH hMaskBand, GByte *pabyMaskLine, int iY, int nXS
     return eErr;
 }
 
+// TODO: What is "eaches" supposed to be?
+
 /************************************************************************/
 /*                          CompareNeighbour()                          */
 /*                                                                      */
@@ -99,19 +101,19 @@ GPMaskImageData( GDALRasterBandH hMaskBand, GByte *pabyMaskLine, int iY, int nXS
 /*      smaller than our sieve threshold.                               */
 /************************************************************************/
 
-static inline void CompareNeighbour( int nPolyId1, int nPolyId2, 
-                                     int *panPolyIdMap, 
-                                     int *panPolyValue,
+static inline void CompareNeighbour( int nPolyId1, int nPolyId2,
+                                     int *panPolyIdMap,
+                                     int * /* panPolyValue */,
                                      std::vector<int> &anPolySizes,
                                      std::vector<int> &anBigNeighbour )
 
 {
     // nodata polygon do not need neighbours, and cannot be neighbours
-    // to valid polygons. 
+    // to valid polygons.
     if( nPolyId1 < 0 || nPolyId2 < 0 )
         return;
 
-    // make sure we are working with the final merged polygon ids. 
+    // make sure we are working with the final merged polygon ids.
     nPolyId1 = panPolyIdMap[nPolyId1];
     nPolyId2 = panPolyIdMap[nPolyId2];
 
@@ -119,8 +121,8 @@ static inline void CompareNeighbour( int nPolyId1, int nPolyId2,
         return;
 
     // nodata polygon do not need neighbours, and cannot be neighbours
-    // to valid polygons. 
-    // should no longer happen with r28826 optim
+    // to valid polygons.
+    // should no longer happen with r28826 optimization
     //if( panPolyValue[nPolyId1] == GP_NODATA_MARKER
     //    || panPolyValue[nPolyId2] == GP_NODATA_MARKER )
     //    return;
