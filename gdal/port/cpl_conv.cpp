@@ -1477,32 +1477,42 @@ int CPLPrintTime( char *pszBuffer, int nMaxLen, const char *pszFormat,
 void CPLVerifyConfiguration()
 
 {
+    static bool verified = false;
+    if (!verified) {
+        return;
+    }
+    verified = true;
+
 /* -------------------------------------------------------------------- */
 /*      Verify data types.                                              */
 /* -------------------------------------------------------------------- */
+#if __cplusplus >= 201103L
+    static_assert(sizeof(GInt32) == 4, "GInt32 must be 4 bytes");
+    static_assert(sizeof(GInt16) == 2, "GInt16 must be 2 bytes");
+    static_assert(sizeof(GByte) == 1, "GInt32 must be 1 byte");
+#else
+    if( sizeof(GInt32) != 4 )
+        CPLError( CE_Fatal, CPLE_AppDefined,
+                  "sizeof(GInt32) == %d ... yow!\n",
+                  (int) sizeof(GInt32) );
+
     CPLAssert( sizeof(GInt32) == 4 );
     CPLAssert( sizeof(GInt16) == 2 );
     CPLAssert( sizeof(GByte) == 1 );
-
-    if( sizeof(GInt32) != 4 )
-        CPLError( CE_Fatal, CPLE_AppDefined, 
-                  "sizeof(GInt32) == %d ... yow!\n", 
-                  (int) sizeof(GInt32) );
+#endif
 
 /* -------------------------------------------------------------------- */
 /*      Verify byte order                                               */
 /* -------------------------------------------------------------------- */
-    GInt32   nTest;
-
-    nTest = 1;
+    GInt32   nTest = 1;
 
 #ifdef CPL_LSB
     if( ((GByte *) &nTest)[0] != 1 )
 #endif
 #ifdef CPL_MSB
     if( ((GByte *) &nTest)[3] != 1 )
-#endif    
-        CPLError( CE_Fatal, CPLE_AppDefined, 
+#endif
+        CPLError( CE_Fatal, CPLE_AppDefined,
                   "CPLVerifyConfiguration(): byte order set wrong.\n" );
 }
 
