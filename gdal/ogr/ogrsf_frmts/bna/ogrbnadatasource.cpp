@@ -37,20 +37,21 @@
 /*                          OGRBNADataSource()                          */
 /************************************************************************/
 
-OGRBNADataSource::OGRBNADataSource()
+OGRBNADataSource::OGRBNADataSource() :
+    pszName(NULL),
+    papoLayers(NULL),
+    nLayers(0),
+    bUpdate(FALSE),
+    fpOutput(NULL),
+    bUseCRLF(FALSE),
+    bMultiLine(FALSE),
+    nbOutID(0),
+    bEllipsesAsEllipses(FALSE),
+    nbPairPerLine(FALSE),
+    coordinatePrecision(0),
+    pszCoordinateSeparator(NULL)
 
-{
-    papoLayers = NULL;
-    nLayers = 0;
-    
-    fpOutput = NULL;
-
-    pszName = NULL;
-    
-    pszCoordinateSeparator = NULL;
-
-    bUpdate = FALSE;
-}
+{ }
 
 /************************************************************************/
 /*                         ~OGRBNADataSource()                          */
@@ -67,7 +68,7 @@ OGRBNADataSource::~OGRBNADataSource()
     for( int i = 0; i < nLayers; i++ )
         delete papoLayers[i];
     CPLFree( papoLayers );
-    
+
     CPLFree( pszCoordinateSeparator );
 
     CPLFree( pszName );
