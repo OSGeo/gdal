@@ -37,12 +37,12 @@ CPL_CVSID("$Id$");
 /*                        OGRAVCBinDataSource()                         */
 /************************************************************************/
 
-OGRAVCBinDataSource::OGRAVCBinDataSource()
-
+OGRAVCBinDataSource::OGRAVCBinDataSource() :
+    papoLayers(NULL),
+    nLayers(0),
+    pszName(NULL),
+    psAVC(NULL)
 {
-    pszName = NULL;
-    papoLayers = NULL;
-    nLayers = 0;
     poSRS = NULL;
 }
 
@@ -63,7 +63,7 @@ OGRAVCBinDataSource::~OGRAVCBinDataSource()
 
     for( int i = 0; i < nLayers; i++ )
         delete papoLayers[i];
-    
+
     CPLFree( papoLayers );
 }
 
