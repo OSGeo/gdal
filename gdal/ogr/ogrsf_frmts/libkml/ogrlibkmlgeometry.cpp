@@ -223,6 +223,8 @@ ElementPtr geom2kml (
             poKmlInnerRing->set_linearring ( poKmlLinearRing );
         }
 
+        break;
+
     case wkbLineString25D:
 
         poOgrLineString = ( OGRLineString * ) poOgrGeom;
