@@ -38,11 +38,11 @@ CPL_CVSID("$Id$");
 /*                          OGRDXFDataSource()                          */
 /************************************************************************/
 
-OGRDXFDataSource::OGRDXFDataSource()
-
-{
-    fp = NULL;
-}
+OGRDXFDataSource::OGRDXFDataSource() :
+    fp(NULL),
+    iEntitiesSectionOffset(0),
+    bInlineBlocks(FALSE)
+{ }
 
 /************************************************************************/
 /*                         ~OGRDXFDataSource()                          */
