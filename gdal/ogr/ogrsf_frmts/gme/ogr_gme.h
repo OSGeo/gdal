@@ -6,6 +6,9 @@
  * Author:   Frank Warmerdam <warmerdam@pobox.com>
  *           (derived from GFT driver by Even)
  *
+ * GME will be turned down January 2016.  This driver will be removed from GDAL
+ * at that time.
+ *
  ******************************************************************************
  * Copyright (c) 2013, Frank Warmerdam <warmerdam@pobox.com>
  *
