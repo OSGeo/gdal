@@ -123,37 +123,30 @@ void *CPLCalloc( size_t nCount, size_t nSize )
 void *CPLMalloc( size_t nSize )
 
 {
-    void        *pReturn;
-
-    CPLVerifyConfiguration();
-
     if( nSize == 0 )
         return NULL;
 
-    if( long(nSize) < 0 )
+    CPLVerifyConfiguration();
+
+    if( static_cast<long>(nSize) < 0 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "CPLMalloc(%ld): Silly size requested.\n",
-                  (long) nSize );
+                  static_cast<long>(nSize) );
         return NULL;
     }
-    
-    pReturn = VSIMalloc( nSize );
+
+    void *pReturn = VSIMalloc( nSize );
     if( pReturn == NULL )
     {
         if( nSize > 0 && nSize < 2000 )
         {
-            char szSmallMsg[60];
-
-            sprintf( szSmallMsg, 
-                     "CPLMalloc(): Out of memory allocating %ld bytes.", 
-                     (long) nSize );
-            CPLEmergencyError( szSmallMsg ); 
+            CPLEmergencyError( "CPLMalloc(): Out of memory allocating a small number of bytes." );
         }
-        else
-            CPLError( CE_Fatal, CPLE_OutOfMemory,
-                      "CPLMalloc(): Out of memory allocating %ld bytes.\n",
-                      (long) nSize );
+
+        CPLError( CE_Fatal, CPLE_OutOfMemory,
+                  "CPLMalloc(): Out of memory allocating %ld bytes.\n",
+                  static_cast<long>(nSize) );
     }
 
     return pReturn;
