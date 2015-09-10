@@ -40,8 +40,8 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 OGRDGNLayer::OGRDGNLayer( const char * pszName, DGNHandle hDGN,
-                          int bUpdate )
-    
+                          int bUpdate ) :
+    iNextShapeId(0)
 {
     this->hDGN = hDGN;
     this->bUpdate = bUpdate;
