@@ -98,13 +98,12 @@ int OGRAVCBinDataSource::Open( const char * pszNewName, int bTestOpen )
 /* -------------------------------------------------------------------- */
 /*      Create layers for the "interesting" sections of the coverage.   */
 /* -------------------------------------------------------------------- */
-    int		iSection;
 
     papoLayers = (OGRLayer **)
         CPLCalloc( sizeof(OGRLayer *), psAVC->numSections );
     nLayers = 0;
 
-    for( iSection = 0; iSection < psAVC->numSections; iSection++ )
+    for( int iSection = 0; iSection < psAVC->numSections; iSection++ )
     {
         AVCE00Section *psSec = psAVC->pasSections + iSection;
 
@@ -122,26 +121,26 @@ int OGRAVCBinDataSource::Open( const char * pszNewName, int bTestOpen )
 
           case AVCFilePRJ:
           {
-              char 	**papszPRJ;
-              AVCBinFile *hFile;
-              
-              hFile = AVCBinReadOpen(psAVC->pszCoverPath, 
-                                     psSec->pszFilename, 
-                                     psAVC->eCoverType, 
-                                     psSec->eType,
-                                     psAVC->psDBCSInfo);
+              AVCBinFile *hFile = AVCBinReadOpen(psAVC->pszCoverPath,
+                                                 psSec->pszFilename,
+                                                 psAVC->eCoverType,
+                                                 psSec->eType,
+                                                 psAVC->psDBCSInfo);
               if( hFile && poSRS == NULL )
               {
-                  papszPRJ = AVCBinReadNextPrj( hFile );
+                  char **papszPRJ = AVCBinReadNextPrj( hFile );
 
                   poSRS = new OGRSpatialReference();
                   if( poSRS->importFromESRI( papszPRJ ) != OGRERR_NONE )
                   {
-                      CPLError( CE_Warning, CPLE_AppDefined, 
+                      CPLError( CE_Warning, CPLE_AppDefined,
                                 "Failed to parse PRJ section, ignoring." );
                       delete poSRS;
                       poSRS = NULL;
                   }
+              }
+              if( hFile )
+              {
                   AVCBinReadClose( hFile );
               }
           }
@@ -151,7 +150,7 @@ int OGRAVCBinDataSource::Open( const char * pszNewName, int bTestOpen )
             ;
         }
     }
-    
+
     return nLayers > 0;
 }
 
