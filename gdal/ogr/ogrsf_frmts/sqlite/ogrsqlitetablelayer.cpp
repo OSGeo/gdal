@@ -197,7 +197,7 @@ CPLErr OGRSQLiteTableLayer::Initialize( const char *pszTableName,
             pszEscapedTableName = CPLStrdup(OGRSQLiteEscape(pszTableName));
             EstablishFeatureDefn(pszGeomCol);
             CPLFree(pszGeomCol);
-            if( poFeatureDefn->GetGeomFieldCount() == 0 )
+            if( poFeatureDefn == NULL || poFeatureDefn->GetGeomFieldCount() == 0 )
                 return CE_Failure;
         }
     }
