@@ -91,12 +91,10 @@ static volatile CPLSharedFileInfoExtra *pasSharedFileListExtra = NULL;
 void *CPLCalloc( size_t nCount, size_t nSize )
 
 {
-    void        *pReturn;
-
     if( nSize * nCount == 0 )
         return NULL;
-    
-    pReturn = CPLMalloc( nCount * nSize );
+
+    void *pReturn = CPLMalloc( nCount * nSize );
     memset( pReturn, 0, nCount * nSize );
     return pReturn;
 }
