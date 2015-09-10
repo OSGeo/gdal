@@ -71,36 +71,32 @@ using kmlbase::Attributes;
  OGRLIBKMLDataSource Constructor
 
  Args:          none
- 
+
  Returns:       nothing
-                
+
 ******************************************************************************/
 
-OGRLIBKMLDataSource::OGRLIBKMLDataSource ( KmlFactory * poKmlFactory )
+OGRLIBKMLDataSource::OGRLIBKMLDataSource ( KmlFactory * poKmlFactory ) :
+    pszName(NULL),
+    papoLayers(NULL),
+    nLayers(0),
+    nAlloced(0),
+    bUpdate(FALSE),
+    bUpdated(FALSE),
+    m_papszOptions(NULL),
+    m_isKml(FALSE),
+    m_poKmlDSKml(NULL),
+    m_poKmlDSContainer(NULL),
+    m_poKmlUpdate(NULL),
+    m_isKmz(FALSE),
+    m_poKmlDocKml(NULL),
+    m_poKmlDocKmlRoot(NULL),
+    m_poKmlStyleKml(NULL),
+    pszStylePath(NULL),
+    m_isDir(FALSE),
+    m_poKmlFactory(poKmlFactory)
 {
-    pszName = NULL;
-    papoLayers = NULL;
-    nLayers = 0;
-    nAlloced = 0;
-    m_papszOptions = NULL;
-
-    bUpdated = FALSE;
-
-    m_isKml = FALSE;
-    m_poKmlDSKml = NULL;
-    m_poKmlDSContainer = NULL;
-    m_poKmlUpdate = NULL;
-
-    m_isKmz = FALSE;
-    m_poKmlDocKml = NULL;
     pszStylePath = (char *) "";
-
-    m_isDir = FALSE;
-    
-    m_poKmlFactory = poKmlFactory;
-
-    //m_poStyleTable = NULL;
-
 }
 
 /************************************************************************/
