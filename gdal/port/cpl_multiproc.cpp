@@ -637,14 +637,13 @@ void CPLJoinThread(CPL_UNUSED CPLJoinableThread* hJoinableThread)
 void CPLSleep( double dfWaitInSeconds )
 {
     time_t  ltime;
-    time_t  ttime;
 
     time( &ltime );
-    ttime = ltime + (int) (dfWaitInSeconds+0.5);
+    time_t ttime = ltime + (int) (dfWaitInSeconds+0.5);
 
     for( ; ltime < ttime; time(&ltime) )
     {
-        /* currently we just busy wait.  Perhaps we could at least block on 
+        /* currently we just busy wait.  Perhaps we could at least block on
            io? */
     }
 }
@@ -994,14 +993,11 @@ void  CPLDestroyCond( CPLCond *hCond )
 void *CPLLockFile( const char *pszPath, double dfWaitInSeconds )
 
 {
-    char      *pszLockFilename;
-    HANDLE    hLockFile;
-    
-    pszLockFilename = (char *) CPLMalloc(strlen(pszPath) + 30);
+    char *pszLockFilename = (char *) CPLMalloc(strlen(pszPath) + 30);
     sprintf( pszLockFilename, "%s.lock", pszPath );
 
-    hLockFile = 
-        CreateFile( pszLockFilename, GENERIC_WRITE, 0, NULL,CREATE_NEW, 
+    HANDLE hLockFile =
+        CreateFile( pszLockFilename, GENERIC_WRITE, 0, NULL,CREATE_NEW,
                     FILE_ATTRIBUTE_NORMAL|FILE_FLAG_DELETE_ON_CLOSE, NULL );
 
     while( GetLastError() == ERROR_ALREADY_EXISTS
