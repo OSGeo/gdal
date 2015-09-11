@@ -239,13 +239,19 @@ if (0) {
 
 gdal_tests();
 
-$src = Geo::OSR::SpatialReference->new(EPSG => 2392);
+SKIP: {
+    eval {
+        $src = Geo::OSR::SpatialReference->new(EPSG => 2392);
+    };
+    
+    skip "GDAL support files not found. Please set GDAL_DATA.", 1 if $@;
 
-$xml = $src->ExportToXML();
-$a = Geo::GDAL::ParseXMLString($xml);
-$xml = Geo::GDAL::SerializeXMLTree($a);
-$b = Geo::GDAL::ParseXMLString($xml);
-ok(is_deeply($a, $b), "xml parsing");
+    $xml = $src->ExportToXML();
+    $a = Geo::GDAL::ParseXMLString($xml);
+    $xml = Geo::GDAL::SerializeXMLTree($a);
+    $b = Geo::GDAL::ParseXMLString($xml);
+    ok(is_deeply($a, $b), "xml parsing");
+}
 
 my @tmp = sort keys %available_driver;
 
