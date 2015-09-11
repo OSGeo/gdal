@@ -3283,6 +3283,68 @@ def ogr_sqlite_41():
     return 'success'
 
 ###############################################################################
+# Test ExecuteSQL() heuristics (#6107)
+
+def ogr_sqlite_42():
+
+    if gdaltest.sl_ds is None:
+        return 'skip'
+        
+    ds = ogr.GetDriverByName('SQLite').CreateDataSource('/vsimem/ogr_sqlite_42.sqlite')
+    lyr = ds.CreateLayer("aab")
+    lyr.CreateField(ogr.FieldDefn("id", ogr.OFTInteger))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f['id'] = 1
+    lyr.CreateFeature(f)
+    lyr = None
+
+    sql_lyr = ds.ExecuteSQL('SELECT id FROM aab')
+    sql_lyr.SetAttributeFilter('id = 1')
+    f = sql_lyr.GetNextFeature()
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+
+    sql_lyr = ds.ExecuteSQL('SELECT id FROM "aab"')
+    sql_lyr.SetAttributeFilter('id = 1')
+    f = sql_lyr.GetNextFeature()
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+    
+    lyr = ds.CreateLayer('with"quotes')
+    lyr.CreateField(ogr.FieldDefn("id", ogr.OFTInteger))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f['id'] = 1
+    lyr.CreateFeature(f)
+    lyr = None
+
+    sql_lyr = ds.ExecuteSQL('SELECT id FROM "with""quotes"')
+    sql_lyr.SetAttributeFilter('id = 1')
+    f = sql_lyr.GetNextFeature()
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+    
+    # Too complex to analyze
+    sql_lyr = ds.ExecuteSQL('SELECT id FROM "with""quotes" UNION ALL SELECT id FROM aab')
+    sql_lyr.SetAttributeFilter('id = 1')
+    f = sql_lyr.GetNextFeature()
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+
+    ds = None
+    
+    ogr.GetDriverByName('SQLite').DeleteDataSource('/vsimem/ogr_sqlite_42.sqlite')
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_sqlite_cleanup():
@@ -3464,6 +3526,7 @@ gdaltest_list = [
     ogr_sqlite_39,
     ogr_sqlite_40,
     ogr_sqlite_41,
+    ogr_sqlite_42,
     ogr_sqlite_cleanup,
     ogr_sqlite_without_spatialite,
 ]
