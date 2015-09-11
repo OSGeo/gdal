@@ -252,7 +252,7 @@ int OGRNTFDataSource::Open( const char * pszFilename, int bTestOpen,
                           "No candidate NTF files (.ntf) found in\n"
                           "directory: %s",
                           pszFilename );
-
+            CSLDestroy(papszFileList);
             return FALSE;
         }
     }
