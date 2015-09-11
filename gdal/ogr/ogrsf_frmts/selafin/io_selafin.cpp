@@ -60,11 +60,32 @@ namespace Selafin {
     /****************************************************************/
     /*                         Header                               */
     /****************************************************************/
-    Header::Header():nMinxIndex(-1),nMaxxIndex(-1),nMinyIndex(-1),nMaxyIndex(-1),bTreeUpdateNeeded(true),fp(0),pszFilename(0),pszTitle(0),papszVariables(0),nPointsPerElement(0),panConnectivity(0),poTree(0),panBorder(0),panStartDate(0),nEpsg(0) {
+    Header::Header() :
+        nHeaderSize(0),
+        nStepSize(0),
+        nMinxIndex(-1),
+        nMaxxIndex(-1),
+        nMinyIndex(-1),
+        nMaxyIndex(-1),
+        bTreeUpdateNeeded(true),
+        fp(0),
+        pszFilename(0),
+        pszTitle(0),
+        nVar(0),
+        papszVariables(0),
+        nPoints(0),
+        nElements(0),
+        nPointsPerElement(0),
+        panConnectivity(0),
+        poTree(0),
+        panBorder(0),
+        panStartDate(0),
+        nSteps(0),
+        nEpsg(0) {
         paadfCoords[0]=0;
         paadfCoords[1]=0;
         for (size_t i=0;i<7;++i) anUnused[i]=0;
-    } 
+    }
 
     Header::~Header() {
         if (pszFilename!=0) CPLFree(pszFilename);
