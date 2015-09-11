@@ -303,8 +303,14 @@ int EPSGGetUOMAngleInfo( int nUOMAngleCode,
 /* -------------------------------------------------------------------- */
 /*      Return to caller.                                               */
 /* -------------------------------------------------------------------- */
-    if( ppszUOMName != NULL && pszUOMName != NULL )
-        *ppszUOMName = CPLStrdup( pszUOMName );
+    if( ppszUOMName != NULL )
+    {
+        // CPLStrdup returns a copy of "" if given a nullptr.
+        if( pszUOMName != NULL )
+            *ppszUOMName = CPLStrdup( pszUOMName );
+        else
+            *ppszUOMName = NULL;
+    }
 
     if( pdfInDegrees != NULL )
         *pdfInDegrees = dfInDegrees;
