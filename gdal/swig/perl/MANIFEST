@@ -11,6 +11,10 @@ lib/Geo/GDAL/Const.dox
 lib/Geo/GDAL.dox
 lib/Geo/OGR.dox
 lib/Geo/OSR.dox
+t/00.t
+t/01.t
+t/02.t
+t/03.t
 t/gdal.t
 t/ogr.t
 Makefile.PL
@@ -21,8 +25,12 @@ osr_wrap.cpp
 cr.dox
 cv.dox
 index.dox
+pdl.dox
 rr.dox
 rv.dox
 transform.dox
 check_dox.pl
-META.yml                                 Module meta-data (added by MakeMaker)
+parse-for-doxygen.pl
+Changes-in-the-API-in-2.0
+MYMETA.yml
+MYMETA.json

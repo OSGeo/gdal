@@ -37,7 +37,7 @@ eval {
 ok($@ eq '', "FinderClean, PushFinderLocation and PopFinderLocation, got $@");
 
 $s = Geo::GDAL::FindFile('', 'gcs.csv');
-ok($s, "FindFile, got $s");
+print STDERR "Can't find GDAL support files. Expect an error below. Please set GDAL_DATA.\n" unless $s;
 
 my @list;
 
