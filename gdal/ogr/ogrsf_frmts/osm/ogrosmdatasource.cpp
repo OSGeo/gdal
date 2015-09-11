@@ -754,11 +754,13 @@ int OGROSMDataSource::IndexPointCustom(OSMNode* psNode)
 
     if( !bCompressNodes )
     {
-        int nBitmapIndex = nOffInBucketReduced / 8;
-        int nBitmapRemainer = nOffInBucketReduced % 8;
+        const int nBitmapIndex = nOffInBucketReduced / 8;
+        const int nBitmapRemainer = nOffInBucketReduced % 8;
         if( psBucket->u.pabyBitmap == NULL && !AllocBucket(nBucket) )
             return FALSE;
-        psBucket->u.pabyBitmap[nBitmapIndex] |= (1 << nBitmapRemainer);
+        if( psBucket->u.pabyBitmap != NULL )
+            psBucket->u.pabyBitmap[nBitmapIndex] |= (1 << nBitmapRemainer);
+        // TODO: What if psBucket->u.pabyBitmap is a nullptr?
     }
 
     if( nBucket != nBucketOld )
