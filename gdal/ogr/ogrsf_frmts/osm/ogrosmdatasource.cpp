@@ -674,6 +674,7 @@ int OGROSMDataSource::FlushCurrentSectorCompressedCase()
         Bucket* psBucket = &papsBuckets[nBucketOld];
         if( psBucket->u.panSectorSize == NULL && !AllocBucket(nBucketOld) )
             return FALSE;
+        CPLAssert( psBucket->u.panSectorSize != NULL );
         psBucket->u.panSectorSize[nOffInBucketReducedOld] =
                                     COMPRESS_SIZE_TO_BYTE(nCompressSize);
 
@@ -751,9 +752,8 @@ int OGROSMDataSource::IndexPointCustom(OSMNode* psNode)
         const int nBitmapRemainer = nOffInBucketReduced % 8;
         if( psBucket->u.pabyBitmap == NULL && !AllocBucket(nBucket) )
             return FALSE;
-        if( psBucket->u.pabyBitmap != NULL )
-            psBucket->u.pabyBitmap[nBitmapIndex] |= (1 << nBitmapRemainer);
-        // TODO: What if psBucket->u.pabyBitmap is a nullptr?
+        CPLAssert( psBucket->u.pabyBitmap != NULL );
+        psBucket->u.pabyBitmap[nBitmapIndex] |= (1 << nBitmapRemainer);
     }
 
     if( nBucket != nBucketOld )
