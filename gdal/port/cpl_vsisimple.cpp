@@ -447,10 +447,18 @@ void *VSICalloc( size_t nCount, size_t nSize )
 /*                             VSIMalloc()                              */
 /************************************************************************/
 
+#ifndef DEBUG_VSIMALLOC
 void *VSIMalloc( size_t nSize )
 
 {
-#ifdef DEBUG_VSIMALLOC
+    return( malloc( nSize ) );
+}
+
+#else  // DEBUG_VSIMALLOC
+
+void *VSIMalloc( size_t nSize )
+
+{
     if (nMaxPeakAllocSize < 0)
     {
         char* pszMaxPeakAllocSize = getenv("CPL_MAX_PEAK_ALLOC_SIZE");
@@ -463,7 +471,7 @@ void *VSIMalloc( size_t nSize )
 #ifdef DEBUG_VSIMALLOC_STATS
     if (nMaxCumulAllocSize > 0 && (GIntBig)nCurrentTotalAllocs + (GIntBig)nSize > nMaxCumulAllocSize)
         return NULL;
-#endif
+#endif  // DEBUG_VSIMALLOC_STATS
 
 #ifdef DEBUG_VSIMALLOC_MPROTECT
     char* ptr = NULL;
@@ -471,7 +479,7 @@ void *VSIMalloc( size_t nSize )
     posix_memalign((void**)&ptr, nPageSize, (3 * sizeof(void*) + nSize + nPageSize - 1) & ~(nPageSize - 1));
 #else
     char* ptr = (char*) malloc(3 * sizeof(void*) + nSize);
-#endif
+#endif  // DEBUG_VSIMALLOC_MPROTECT
     if (ptr == NULL)
         return NULL;
     ptr[0] = 'V';
@@ -489,7 +497,7 @@ void *VSIMalloc( size_t nSize )
 #ifdef DEBUG_VSIMALLOC_VERBOSE
         fprintf(stderr, "Thread[%p] VSIMalloc(%d) = %p\n",
                 (void*)CPLGetPID(), (int)nSize, ptr + 2 * sizeof(void*));
-#endif
+#endif  // DEBUG_VSIMALLOC_VERBOSE
 #ifdef DEBUG_VSIMALLOC_STATS
         nVSIMallocs ++;
         if (nMaxTotalAllocs == 0)
@@ -497,16 +505,12 @@ void *VSIMalloc( size_t nSize )
         nCurrentTotalAllocs += nSize;
         if (nCurrentTotalAllocs > nMaxTotalAllocs)
             nMaxTotalAllocs = nCurrentTotalAllocs;
-#endif
+#endif  // DEBUG_VSIMALLOC_STATS
     }
-#endif
+#endif  // DEBUG_VSIMALLOC_STATS || DEBUG_VSIMALLOC_VERBOSE
     return ptr + 2 * sizeof(void*);
-#else
-    return( malloc( nSize ) );
-#endif
 }
 
-#ifdef DEBUG_VSIMALLOC
 void VSICheckMarkerBegin(char* ptr)
 {
     if (memcmp(ptr, "VSIM", 4) != 0)
@@ -526,11 +530,11 @@ void VSICheckMarkerEnd(char* ptr, size_t nEnd)
     }
 }
 
-#endif
+#endif  // DEBUG_VSIMALLOC
 
 /************************************************************************/
 /*                             VSIRealloc()                             */
-/************************************************************************/      
+/************************************************************************/
 
 void * VSIRealloc( void * pData, size_t nNewSize )
 
@@ -538,7 +542,7 @@ void * VSIRealloc( void * pData, size_t nNewSize )
 #ifdef DEBUG_VSIMALLOC
     if (pData == NULL)
         return VSIMalloc(nNewSize);
-        
+
     char* ptr = ((char*)pData) - 2 * sizeof(void*);
     VSICheckMarkerBegin(ptr);
 
