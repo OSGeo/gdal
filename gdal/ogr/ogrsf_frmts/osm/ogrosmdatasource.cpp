@@ -519,7 +519,7 @@ int OGROSMDataSource::FlushCurrentSector()
 
 int OGROSMDataSource::AllocBucket(int iBucket)
 {
-    int bOOM = FALSE;
+    bool bOOM = false;
     if( bCompressNodes )
     {
         int nRem = iBucket % (PAGE_SIZE / BUCKET_SECTOR_SIZE_ARRAY_SIZE);
@@ -528,7 +528,7 @@ int OGROSMDataSource::AllocBucket(int iBucket)
         if( papsBuckets[iBucket - nRem].u.panSectorSize == NULL )
         {
             papsBuckets[iBucket].u.panSectorSize = NULL;
-            bOOM = TRUE;
+            bOOM = true;
         }
         else
             papsBuckets[iBucket].u.panSectorSize = papsBuckets[iBucket - nRem].u.panSectorSize + nRem * BUCKET_SECTOR_SIZE_ARRAY_SIZE;
@@ -541,7 +541,7 @@ int OGROSMDataSource::AllocBucket(int iBucket)
         if( papsBuckets[iBucket - nRem].u.pabyBitmap == NULL )
         {
             papsBuckets[iBucket].u.pabyBitmap = NULL;
-            bOOM = TRUE;
+            bOOM = true;
         }
         else
             papsBuckets[iBucket].u.pabyBitmap = papsBuckets[iBucket - nRem].u.pabyBitmap + nRem * BUCKET_BITMAP_SIZE;
