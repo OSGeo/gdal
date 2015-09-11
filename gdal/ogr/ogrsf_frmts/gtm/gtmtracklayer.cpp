@@ -111,7 +111,6 @@ GTMTrackLayer::~GTMTrackLayer()
 /************************************************************************/
 void GTMTrackLayer::WriteFeatureAttributes( OGRFeature *poFeature )
 {
-    void* pBuffer = NULL;
     char* psztrackname = NULL;
     int type = 1;
     unsigned int color = 0;
@@ -124,6 +123,7 @@ void GTMTrackLayer::WriteFeatureAttributes( OGRFeature *poFeature )
             /* track name */
             if (strncmp(pszName, "name", 4) == 0)
             {
+                CPLFree(psztrackname);
                 psztrackname = CPLStrdup( poFeature->GetFieldAsString( i ) );
             }
             /* track type */
@@ -147,12 +147,10 @@ void GTMTrackLayer::WriteFeatureAttributes( OGRFeature *poFeature )
     if (psztrackname == NULL)
         psztrackname = CPLStrdup( "" );
 
-    int trackNameLength = 0;
-    if (psztrackname != NULL)
-        trackNameLength = strlen(psztrackname);
+    const int trackNameLength = strlen(psztrackname);
 
-    int bufferSize = 14 + trackNameLength;
-    pBuffer = CPLMalloc(bufferSize);
+    const int bufferSize = 14 + trackNameLength;
+    void* pBuffer = CPLMalloc(bufferSize);
     void* pBufferAux = pBuffer;
     /* Write track string name size to buffer */
     appendUShort(pBufferAux, (unsigned short) trackNameLength);
@@ -165,11 +163,11 @@ void GTMTrackLayer::WriteFeatureAttributes( OGRFeature *poFeature )
     /* Write track type */
     appendUChar(pBufferAux, (unsigned char) type);
     pBufferAux = (char*)pBufferAux + 1;
-  
+
     /* Write track color */
     appendInt(pBufferAux, color);
     pBufferAux = (char*)pBufferAux + 4;
-  
+
     /* Write track scale */
     appendFloat(pBufferAux, 0);
     pBufferAux = (char*)pBufferAux + 4;
@@ -184,8 +182,7 @@ void GTMTrackLayer::WriteFeatureAttributes( OGRFeature *poFeature )
     VSIFWriteL(pBuffer, bufferSize, 1, poDS->getTmpTracksFP());
     poDS->incNumTracks();
 
-    if (psztrackname != NULL)
-        CPLFree(psztrackname);
+    CPLFree(psztrackname);
     CPLFree(pBuffer);
 }
 
