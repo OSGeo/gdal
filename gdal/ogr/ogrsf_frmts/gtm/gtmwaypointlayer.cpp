@@ -104,7 +104,7 @@ GTMWaypointLayer::GTMWaypointLayer( const char* pszName,
 
 GTMWaypointLayer::~GTMWaypointLayer()
 {
-  
+
 }
 
 
@@ -113,8 +113,6 @@ GTMWaypointLayer::~GTMWaypointLayer()
 /************************************************************************/
 void GTMWaypointLayer::WriteFeatureAttributes( OGRFeature *poFeature, float altitude )
 {
-    void* pBuffer = NULL;
-    void* pBufferAux = NULL;
     char psNameField[] = "          ";
     char* pszcomment = NULL;
     int icon = 48;
@@ -134,6 +132,7 @@ void GTMWaypointLayer::WriteFeatureAttributes( OGRFeature *poFeature, float alti
             /* Waypoint comment */
             else if (strncmp(pszName, "comment", 7) == 0)
             {
+                CPLFree(pszcomment);
                 pszcomment = CPLStrdup( poFeature->GetFieldAsString( i ) );
             }
             /* Waypoint icon */
@@ -178,13 +177,11 @@ void GTMWaypointLayer::WriteFeatureAttributes( OGRFeature *poFeature, float alti
     if (pszcomment == NULL)
         pszcomment = CPLStrdup( "" );
 
-    int commentLength = 0;
-    if (pszcomment != NULL)
-        commentLength = strlen(pszcomment);
+    const int commentLength = strlen(pszcomment);
 
-    int bufferSize = 27 + commentLength;
-    pBuffer = CPLMalloc(bufferSize);
-    pBufferAux = pBuffer;
+    const int bufferSize = 27 + commentLength;
+    void* pBuffer = CPLMalloc(bufferSize);
+    void* pBufferAux = pBuffer;
     /* Write waypoint name to buffer */
     strncpy((char*)pBufferAux, psNameField, 10);
 
@@ -222,8 +219,7 @@ void GTMWaypointLayer::WriteFeatureAttributes( OGRFeature *poFeature, float alti
     VSIFWriteL(pBuffer, bufferSize, 1, poDS->getOutputFP());
     poDS->incNumWaypoints();
 
-    if (pszcomment != NULL)
-        CPLFree(pszcomment);
+    CPLFree(pszcomment);
     CPLFree(pBuffer);
 }
 
