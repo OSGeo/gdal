@@ -183,8 +183,6 @@ HDF5ImageDataset::HDF5ImageDataset() :
     iCSKProductType(PROD_UNKNOWN),
     bHasGeoTransform(false)
 {
-    poH5RootGroup = NULL;
-    papszMetadata = NULL;
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
     adfGeoTransform[2] = 0.0;
