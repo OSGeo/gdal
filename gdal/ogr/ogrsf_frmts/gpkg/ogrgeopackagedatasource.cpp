@@ -405,7 +405,9 @@ int GDALGeoPackageDataset::GetSrsId(const OGRSpatialReference * cpoSRS)
 /*                        GDALGeoPackageDataset()                       */
 /************************************************************************/
 
-GDALGeoPackageDataset::GDALGeoPackageDataset()
+GDALGeoPackageDataset::GDALGeoPackageDataset() :
+    m_dfTMSMinX(0.0),
+    m_dfTMSMaxY(0.0)
 {
     m_bNew = FALSE;
     m_papoLayers = NULL;
@@ -4376,4 +4378,3 @@ const char* GDALGeoPackageDataset::GetGeometryTypeString(OGRwkbGeometryType eTyp
     }
     return pszGPKGGeomType;
 }
-
