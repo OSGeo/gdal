@@ -519,42 +519,35 @@ int OGROSMDataSource::FlushCurrentSector()
 
 int OGROSMDataSource::AllocBucket(int iBucket)
 {
-    bool bOOM = false;
     if( bCompressNodes )
     {
         int nRem = iBucket % (PAGE_SIZE / BUCKET_SECTOR_SIZE_ARRAY_SIZE);
         if( papsBuckets[iBucket - nRem].u.panSectorSize == NULL )
             papsBuckets[iBucket - nRem].u.panSectorSize = (GByte*)VSICalloc(1, PAGE_SIZE);
-        if( papsBuckets[iBucket - nRem].u.panSectorSize == NULL )
+        if( papsBuckets[iBucket - nRem].u.panSectorSize != NULL )
         {
-            papsBuckets[iBucket].u.panSectorSize = NULL;
-            bOOM = true;
-        }
-        else
             papsBuckets[iBucket].u.panSectorSize = papsBuckets[iBucket - nRem].u.panSectorSize + nRem * BUCKET_SECTOR_SIZE_ARRAY_SIZE;
+            return TRUE;
+        }
+        papsBuckets[iBucket].u.panSectorSize = NULL;
     }
     else
     {
         int nRem = iBucket % (PAGE_SIZE / BUCKET_BITMAP_SIZE);
         if( papsBuckets[iBucket - nRem].u.pabyBitmap == NULL )
             papsBuckets[iBucket - nRem].u.pabyBitmap = (GByte*)VSICalloc(1, PAGE_SIZE);
-        if( papsBuckets[iBucket - nRem].u.pabyBitmap == NULL )
+        if( papsBuckets[iBucket - nRem].u.pabyBitmap != NULL )
         {
-            papsBuckets[iBucket].u.pabyBitmap = NULL;
-            bOOM = true;
-        }
-        else
             papsBuckets[iBucket].u.pabyBitmap = papsBuckets[iBucket - nRem].u.pabyBitmap + nRem * BUCKET_BITMAP_SIZE;
+            return TRUE;
+        }
+        papsBuckets[iBucket].u.pabyBitmap = NULL;
     }
 
-    if( bOOM )
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "AllocBucket() failed. Use OSM_USE_CUSTOM_INDEXING=NO");
-        bStopParsing = TRUE;
-        return FALSE;
-    }
-
-    return TRUE;
+    // Out of memory.
+    CPLError(CE_Failure, CPLE_AppDefined, "AllocBucket() failed. Use OSM_USE_CUSTOM_INDEXING=NO");
+    bStopParsing = TRUE;
+    return FALSE;
 }
 
 /************************************************************************/
