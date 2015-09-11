@@ -36,15 +36,14 @@ CPL_CVSID("$Id$");
 /*                          OGRSVGDataSource()                          */
 /************************************************************************/
 
-OGRSVGDataSource::OGRSVGDataSource()
-
+OGRSVGDataSource::OGRSVGDataSource() :
+    pszName(NULL),
+    papoLayers(NULL),
+    nLayers(0),
+    bIsCloudmade(FALSE)
 {
-    papoLayers = NULL;
-    nLayers = 0;
 
-    bIsCloudmade = FALSE;
 
-    pszName = NULL;
 }
 
 /************************************************************************/
