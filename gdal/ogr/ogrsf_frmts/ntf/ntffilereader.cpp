@@ -47,73 +47,59 @@ static int DefaultNTFRecordGrouper( NTFFileReader *, NTFRecord **,
 /*                            NTFFileReader                             */
 /************************************************************************/
 
-NTFFileReader::NTFFileReader( OGRNTFDataSource * poDataSource )
-
+NTFFileReader::NTFFileReader( OGRNTFDataSource * poDataSource ) :
+    pszFilename(NULL),
+    poDS(poDataSource),
+    fp(NULL),
+    nFCCount(0),
+    papszFCNum(NULL),
+    papszFCName(NULL),
+    nAttCount(0),
+    pasAttDesc(NULL),
+    pszTileName(NULL),
+    nCoordWidth(6),
+    nZWidth(6),
+    nNTFLevel(0),
+    dfXYMult(1.0),
+    dfZMult(1.0),
+    dfXOrigin(0),
+    dfYOrigin(0),
+    dfTileXSize(0),
+    dfTileYSize(0),
+    dfScale(0.0),
+    dfPaperToGround(0.0),
+    nStartPos(0),
+    nPreSavedPos(0),
+    nPostSavedPos(0),
+    poSavedRecord(NULL),
+    nSavedFeatureId(1),
+    nBaseFeatureId(1),
+    nFeatureCount(-1),
+    pszProduct(NULL),
+    pszPVName(NULL),
+    nProduct(NPC_UNKNOWN),
+    pfnRecordGrouper(DefaultNTFRecordGrouper),
+    bIndexBuilt(FALSE),
+    bIndexNeeded(FALSE),
+    nRasterXSize(1),
+    nRasterYSize(1),
+    nRasterDataType(1),
+    poRasterLayer(NULL),
+    panColumnOffset(NULL),
+    bCacheLines(TRUE),
+    nLineCacheSize(0),
+    papoLineCache(NULL)
 {
-    fp = NULL;
-
-    nFCCount = 0;
-    papszFCNum = NULL;
-    papszFCName = NULL;
-
-    nPreSavedPos = nPostSavedPos = 0;
-    nSavedFeatureId = nBaseFeatureId = 1;
-    nFeatureCount = -1;
-    poSavedRecord = NULL;
-
-    nAttCount = 0;
-    pasAttDesc = NULL;
-
-    pszTileName = NULL;
-    pszProduct = NULL;
-    pszPVName = NULL;
-    pszFilename = NULL;
-
     apoCGroup[0] = NULL;
-
-    poDS = poDataSource;
-
     memset( apoTypeTranslation, 0, sizeof(apoTypeTranslation) );
-
-    nProduct = NPC_UNKNOWN;
-
-    pfnRecordGrouper = DefaultNTFRecordGrouper;
-
-    dfXYMult = 1.0;
-    dfZMult = 1.0;
-    dfXOrigin = 0;
-    dfYOrigin = 0;
-    nNTFLevel = 0;
-    dfTileXSize = 0;
-    dfTileYSize = 0;
-
-    dfScale = 0.0;
-    dfPaperToGround = 0.0;
-
-    nCoordWidth = 6;
-    nZWidth = 6;
-
     for( int i = 0; i < 100; i++ )
     {
         anIndexSize[i] = 0;
         apapoRecordIndex[i] = NULL;
     }
-
-    panColumnOffset = NULL;
-    poRasterLayer = NULL;
-    nRasterXSize = nRasterYSize = nRasterDataType = 1;
-
-    bIndexBuilt = FALSE;
-    bIndexNeeded = FALSE;
-
     if( poDS->GetOption("CACHE_LINES") != NULL
         && EQUAL(poDS->GetOption("CACHE_LINES"),"OFF") )
         bCacheLines = FALSE;
-    else
-        bCacheLines = TRUE;
-
-    nLineCacheSize = 0;
-    papoLineCache = NULL;
 }
 
 /************************************************************************/
