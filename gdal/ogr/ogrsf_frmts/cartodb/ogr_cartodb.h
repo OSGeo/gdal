@@ -165,9 +165,10 @@ class OGRCARTODBTableLayer : public OGRCARTODBLayer
                                             int bCartoDBify);
     OGRErr              RunDeferedCreationIfNecessary();
     int                 GetDeferedCreation() const { return bDeferedCreation; }
-    void                CancelDeferedCreation() { bDeferedCreation = FALSE; }
+    void                CancelDeferedCreation() { bDeferedCreation = FALSE; bCartoDBify = FALSE; }
 
     void                FlushDeferedInsert();
+    void                RunDeferedCartoDBfy();
 };
 
 /************************************************************************/

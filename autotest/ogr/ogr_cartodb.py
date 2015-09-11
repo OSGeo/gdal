@@ -637,6 +637,12 @@ Error""")
         gdaltest.post_reason('fail')
         return 'fail'
 
+    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=SELECT cdb_cartodbfytable('my_layer')&api_key=foo""",
+        """{"rows":[],
+            "fields":{}}""")
+    ds = None
+    gdal.Unlink("""/vsimem/cartodb&POSTFIELDS=q=SELECT cdb_cartodbfytable('my_layer')&api_key=foo""")
+
     ds = ogr.Open('CARTODB:foo', update = 1)
     gdal.SetConfigOption('CARTODB_MAX_CHUNK_SIZE', '0')
     sr = osr.SpatialReference()
@@ -651,10 +657,7 @@ Error""")
     gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=CREATE TABLE "my_layer" ( cartodb_id SERIAL,the_geom GEOMETRY(GEOMETRY, 4326), the_geom_webmercator GEOMETRY(GEOMETRY, 3857),"strfield" VARCHAR NOT NULL DEFAULT 'DEFAULT VAL',PRIMARY KEY (cartodb_id) );DROP SEQUENCE IF EXISTS "my_layer_cartodb_id_seq" CASCADE;CREATE SEQUENCE "my_layer_cartodb_id_seq" START 1;ALTER TABLE "my_layer" ALTER COLUMN cartodb_id SET DEFAULT nextval('"my_layer_cartodb_id_seq"')&api_key=foo""",
         """{"rows":[],
             "fields":{}}""")
-    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=SELECT cdb_cartodbfytable('my_layer')&api_key=foo""",
-        """{"rows":[],
-            "fields":{}}""")
-    
+
     f = ogr.Feature(lyr.GetLayerDefn())
     gdal.PushErrorHandler()
     ret = lyr.CreateFeature(f)
@@ -777,6 +780,10 @@ Error""")
         gdaltest.post_reason('fail')
         return 'fail'
 
+    gdal.FileFromMemBuffer("""/vsimem/cartodb&POSTFIELDS=q=SELECT cdb_cartodbfytable('my_layer')&api_key=foo""",
+        """{"rows":[],
+            "fields":{}}""")
+    ds = None
 
     gdal.SetConfigOption('CARTODB_MAX_CHUNK_SIZE', None)
     ds = ogr.Open('CARTODB:foo', update = 1)
@@ -958,11 +965,13 @@ def ogr_cartodb_rw_1():
     lyr_name = "LAYER_" + a_uuid
 
     # No-op
-    lyr = ds.CreateLayer(lyr_name)
+    with gdaltest.error_handler():
+        lyr = ds.CreateLayer(lyr_name)
     ds.DeleteLayer(ds.GetLayerCount()-1)
 
     # Differed table creation
-    lyr = ds.CreateLayer(lyr_name)
+    with gdaltest.error_handler():
+        lyr = ds.CreateLayer(lyr_name)
     lyr.CreateField(ogr.FieldDefn("STRFIELD", ogr.OFTString))
     lyr.CreateField(ogr.FieldDefn("intfield", ogr.OFTInteger))
     lyr.CreateField(ogr.FieldDefn("int64field", ogr.OFTInteger64))
@@ -1060,20 +1069,26 @@ def ogr_cartodb_rw_1():
     f.SetField('not_nullable', 'foo')
     lyr.CreateFeature(f)
     f = None
+
     ds = None
 
     ds = ogr.Open(ogrtest.cartodb_connection, update = 1)
+
     lyr = ds.GetLayerByName(lyr_name)
     if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('nullable')).IsNullable() != 1:
+        ds.ExecuteSQL("DELLAYER:" + lyr_name)
         gdaltest.post_reason('fail')
         return 'fail'
     if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('not_nullable')).IsNullable() != 0:
+        ds.ExecuteSQL("DELLAYER:" + lyr_name)
         gdaltest.post_reason('fail')
         return 'fail'
     if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_string')).GetDefault() != "'a''b'":
+        ds.ExecuteSQL("DELLAYER:" + lyr_name)
         gdaltest.post_reason('fail')
         return 'fail'
     if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_datetime_with_default')).GetDefault() != 'CURRENT_TIMESTAMP':
+        ds.ExecuteSQL("DELLAYER:" + lyr_name)
         gdaltest.post_reason('fail')
         return 'fail'
     f = lyr.GetNextFeature()
