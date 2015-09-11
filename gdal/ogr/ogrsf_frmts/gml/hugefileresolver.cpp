@@ -1705,6 +1705,7 @@ static int gmlHugeFileWriteResolved ( struct huge_helper *helper,
                       "ResolvedNodes QUERY: sqlite3_step(%s)", 
             sqlite3_errmsg(hDB) );
             sqlite3_finalize ( hStmtNodes );
+            delete pCC;
             return FALSE;
         }
     }
