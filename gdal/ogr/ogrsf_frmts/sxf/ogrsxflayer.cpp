@@ -68,22 +68,22 @@ OGRSXFLayer::OGRSXFLayer(VSILFILE* fp, CPLMutex** hIOMutex, GByte nID, const cha
     //oGeomFieldDefn.SetSpatialRef(stSXFMapDescription.pSpatRef);
     //poFeatureDefn->AddGeomFieldDefn(&oGeomFieldDefn);
 
-    OGRFieldDefn oFIDField = OGRFieldDefn(sFIDColumn_, OFTInteger);
+    OGRFieldDefn oFIDField(sFIDColumn_, OFTInteger);
     poFeatureDefn->AddFieldDefn(&oFIDField);
 
-    OGRFieldDefn oClCodeField = OGRFieldDefn( "CLCODE", OFTInteger );
+    OGRFieldDefn oClCodeField( "CLCODE", OFTInteger );
     oClCodeField.SetWidth(10);
     poFeatureDefn->AddFieldDefn( &oClCodeField );
 
-    OGRFieldDefn oClNameField = OGRFieldDefn( "CLNAME", OFTString );
+    OGRFieldDefn oClNameField( "CLNAME", OFTString );
     oClNameField.SetWidth(32);
     poFeatureDefn->AddFieldDefn( &oClNameField );
 
-    OGRFieldDefn oNumField = OGRFieldDefn( "OBJECTNUMB", OFTInteger );
+    OGRFieldDefn oNumField( "OBJECTNUMB", OFTInteger );
     oNumField.SetWidth(10);
     poFeatureDefn->AddFieldDefn( &oNumField );
 
-    OGRFieldDefn oAngField = OGRFieldDefn("ANGLE", OFTReal);
+    OGRFieldDefn oAngField("ANGLE", OFTReal);
     poFeatureDefn->AddFieldDefn(&oAngField);
 
     OGRFieldDefn  oTextField( "TEXT", OFTString );
