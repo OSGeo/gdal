@@ -75,12 +75,14 @@ OGRGPXLayer::OGRGPXLayer( const char* pszFilename,
     interestingDepthLevel(0),
     currentFieldDefn(NULL),
     inExtensions(FALSE),
+    extensionsDepthLevel(0),
     inLink(FALSE),
     iCountLink(0),
     trkFID(0),
     trkSegId(0),
     trkSegPtId(0),
     rteFID(0),
+    rtePtId(0),
     nWithoutEventCounter(0),
     nDataHandlerCounter(0)
 {
@@ -103,7 +105,7 @@ OGRGPXLayer::OGRGPXLayer( const char* pszFilename,
     poFeatureDefn = new OGRFeatureDefn( pszLayerName );
     SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->Reference();
-    
+
     if (gpxGeomType == GPX_TRACK_POINT)
     {
         /* Don't move this code. This fields must be number 0, 1 and 2 */
