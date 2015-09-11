@@ -632,7 +632,7 @@ static char *cvsid_aw() { return( cvsid_aw() ? ((char *) NULL) : cpl_cvsid ); }
    Must be placed in the private section of a class and should be at the end.
 */
 #ifdef __cplusplus
-#if 0 /* Initially disabled */
+#if 1
 
 #if __cplusplus >= 201103L
 #define CPL_DISALLOW_COPY_ASSIGN(ClassName) \
