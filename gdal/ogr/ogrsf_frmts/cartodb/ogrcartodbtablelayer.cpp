@@ -1242,6 +1242,7 @@ void OGRCARTODBTableLayer::SetDeferedCreation (OGRwkbGeometryType eGType,
     osFIDColName = "cartodb_id";
     osBaseSQL.Printf("SELECT * FROM %s",
                      OGRCARTODBEscapeIdentifier(osName).c_str());
+    osSELECTWithoutWHERE = osBaseSQL;
 }
 
 /************************************************************************/
