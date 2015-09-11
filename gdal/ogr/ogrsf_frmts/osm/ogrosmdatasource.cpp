@@ -174,8 +174,8 @@ static CPLString GetInterestLayersForDSName(const CPLString& osDSName)
 /*                        OGROSMDataSource()                            */
 /************************************************************************/
 
-OGROSMDataSource::OGROSMDataSource()
-
+OGROSMDataSource::OGROSMDataSource() :
+    hSelectNodeBetweenStmt(NULL)
 {
     nLayers = 0;
     papoLayers = NULL;
