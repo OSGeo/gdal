@@ -212,14 +212,15 @@ size_t Range::getSize() const {
 /*                          OGRSelafinDataSource()                      */
 /************************************************************************/
 
-OGRSelafinDataSource::OGRSelafinDataSource() {
-    papoLayers = NULL;
-    nLayers = 0;
-    pszName = NULL;
-    poHeader=0;
-    pszLockName=0;
-    poSpatialRef=0;
-}
+OGRSelafinDataSource::OGRSelafinDataSource() :
+    pszName(NULL),
+    pszLockName(0),
+    papoLayers(NULL),
+    nLayers(0),
+    bUpdate(FALSE),
+    poHeader(0),
+    poSpatialRef(0)
+{ }
 
 /************************************************************************/
 /*                         ~OGRSelafinDataSource()                      */
@@ -455,7 +456,7 @@ int OGRSelafinDataSource::OpenTable(const char * pszFilename) {
                     return FALSE;
                 }
                 if (poHeader->panStartDate==0) snprintf(szTemp,29,"%li",i); else {
-                    struct tm sDate={0};
+                  struct tm sDate={0};
                     sDate.tm_year=poHeader->panStartDate[0]-1900;
                     sDate.tm_mon=poHeader->panStartDate[1]-1;
                     sDate.tm_mday=poHeader->panStartDate[2];
