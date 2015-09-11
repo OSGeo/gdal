@@ -60,7 +60,7 @@ OGRPLScenesDataset::~OGRPLScenesDataset()
     {
         char** papszOptions = NULL;
         papszOptions = CSLSetNameValue(papszOptions, "CLOSE_PERSISTENT", CPLSPrintf("PLSCENES:%p", this));
-        CPLHTTPFetch( osBaseURL, papszOptions);
+        CPLHTTPDestroyResult(CPLHTTPFetch(osBaseURL, papszOptions));
         CSLDestroy(papszOptions);
     }
 }
@@ -611,4 +611,3 @@ void RegisterOGRPLSCENES()
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
-
