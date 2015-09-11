@@ -68,16 +68,16 @@ DBFHandle OGRShapeDataSource::DS_DBFOpen( const char * pszDBFFile, const char * 
 /*                         OGRShapeDataSource()                         */
 /************************************************************************/
 
-OGRShapeDataSource::OGRShapeDataSource()
-
+OGRShapeDataSource::OGRShapeDataSource() :
+    papoLayers(NULL),
+    nLayers(0),
+    pszName(NULL),
+    bDSUpdate(FALSE),
+    bSingleFileDataSource(FALSE),
+    papszOpenOptions(NULL)
 {
-    pszName = NULL;
-    papoLayers = NULL;
-    nLayers = 0;
-    bSingleFileDataSource = FALSE;
     poPool = new OGRLayerPool();
     b2GBLimit = CSLTestBoolean(CPLGetConfigOption("SHAPE_2GB_LIMIT", "FALSE"));
-    papszOpenOptions = NULL;
 }
 
 
