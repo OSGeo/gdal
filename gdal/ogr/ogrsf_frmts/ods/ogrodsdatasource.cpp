@@ -153,8 +153,8 @@ OGRErr OGRODSLayer::DeleteFeature( GIntBig nFID )
 /*                          OGRODSDataSource()                          */
 /************************************************************************/
 
-OGRODSDataSource::OGRODSDataSource()
-
+OGRODSDataSource::OGRODSDataSource() :
+    nFlags(0)
 {
     pszName = NULL;
     fpContent = NULL;
