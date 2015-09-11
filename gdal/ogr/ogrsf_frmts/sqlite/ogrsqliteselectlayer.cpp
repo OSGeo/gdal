@@ -419,22 +419,26 @@ std::pair<OGRLayer*, IOGRSQLiteGetSpatialWhere*> OGRSQLiteSelectLayerCommonBehav
         return std::pair<OGRLayer*, IOGRSQLiteGetSpatialWhere*>((OGRLayer*)NULL, (IOGRSQLiteGetSpatialWhere*)NULL);
     }
 
-    char chQuote = osSQLBase[nFromPos + 6];
-    int bInQuotes = (chQuote == '\'' || chQuote == '"' );
+    /* Remove potential quotes around layer name */
+    char chFirst = osSQLBase[nFromPos + 6];
+    int bInQuotes = (chFirst == '\'' || chFirst == '"' );
     CPLString osBaseLayerName;
     for( i = nFromPos + 6 + (bInQuotes ? 1 : 0);
          i < osSQLBase.size(); i++ )
     {
-        if (osSQLBase[i] == chQuote && i + 1 < osSQLBase.size() &&
-            osSQLBase[i + 1] == chQuote )
+        if (osSQLBase[i] == chFirst && bInQuotes )
         {
-            osBaseLayerName += osSQLBase[i];
-            i++;
-        }
-        else if (osSQLBase[i] == chQuote && bInQuotes)
-        {
-            i++;
-            break;
+            if( i + 1 < osSQLBase.size() &&
+                osSQLBase[i + 1] == chFirst )
+            {
+                osBaseLayerName += osSQLBase[i];
+                i++;
+            }
+            else
+            {
+                i++;
+                break;
+            }
         }
         else if (osSQLBase[i] == ' ' && !bInQuotes)
             break;
