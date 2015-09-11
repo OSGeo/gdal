@@ -246,7 +246,7 @@ static OGRLayer* SetupTargetLayer(OGRLayer * poSrcLayer, GDALDataset *poDstDS, c
     }
 
     //create beg, end, scale factor fields
-    OGRFieldDefn oFieldDefn_Beg = OGRFieldDefn(FIELD_START, OFTReal);
+    OGRFieldDefn oFieldDefn_Beg(FIELD_START, OFTReal);
     if (poDstLayer->CreateField(&oFieldDefn_Beg) != OGRERR_NONE)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Create %s field failed!",
@@ -254,7 +254,7 @@ static OGRLayer* SetupTargetLayer(OGRLayer * poSrcLayer, GDALDataset *poDstDS, c
         return NULL;
     }
 
-    OGRFieldDefn oFieldDefn_End = OGRFieldDefn(FIELD_FINISH, OFTReal);
+    OGRFieldDefn oFieldDefn_End(FIELD_FINISH, OFTReal);
     if (poDstLayer->CreateField(&oFieldDefn_End) != OGRERR_NONE)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Create %s field failed!",
@@ -262,7 +262,7 @@ static OGRLayer* SetupTargetLayer(OGRLayer * poSrcLayer, GDALDataset *poDstDS, c
         return NULL;
     }
 
-    OGRFieldDefn oFieldDefn_SF = OGRFieldDefn(FIELD_SCALE_FACTOR, OFTReal);
+    OGRFieldDefn oFieldDefn_SF(FIELD_SCALE_FACTOR, OFTReal);
     if (poDstLayer->CreateField(&oFieldDefn_SF) != OGRERR_NONE)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Create %s field failed!",
