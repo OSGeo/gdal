@@ -39,16 +39,14 @@ CPL_CVSID("$Id$");
 /*                             S57Writer()                              */
 /************************************************************************/
 
-S57Writer::S57Writer()
-
-{
-    poModule = NULL;
-    poRegistrar = NULL;
-    poClassContentExplorer = NULL;
-
-    nCOMF = 10000000;
-    nSOMF = 10;
-}
+S57Writer::S57Writer() :
+    poModule(NULL),
+    nNext0001Index(0),
+    poRegistrar(NULL),
+    poClassContentExplorer(NULL),
+    nCOMF(10000000),
+    nSOMF(10)
+{ }
 
 /************************************************************************/
 /*                             ~S57Writer()                             */
