@@ -102,6 +102,7 @@ OGRFeature *OGRCARTODBLayer::BuildFeature(json_object* poRowObj)
     if( poRowObj != NULL &&
         json_object_get_type(poRowObj) == json_type_object )
     {
+        //CPLDebug("CartoDB", "Row: %s", json_object_to_json_string(poRowObj));
         poFeature = new OGRFeature(poFeatureDefn);
 
         if( osFIDColName.size() )

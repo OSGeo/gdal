@@ -103,6 +103,7 @@ OGRCARTODBTableLayer::~OGRCARTODBTableLayer()
 {
     if( bDeferedCreation ) RunDeferedCreationIfNecessary();
     FlushDeferedInsert();
+    RunDeferedCartoDBfy();
 }
 
 /************************************************************************/
@@ -388,6 +389,33 @@ void OGRCARTODBTableLayer::SetSpatialFilter( int iGeomField, OGRGeometry * poGeo
         BuildWhere();
 
         ResetReading();
+    }
+}
+
+/************************************************************************/
+/*                         RunDeferedCartoDBfy()                         */
+/************************************************************************/
+
+
+void OGRCARTODBTableLayer::RunDeferedCartoDBfy()
+
+{
+    if( bCartoDBify )
+    {
+        bCartoDBify = FALSE;
+
+        CPLString osSQL;
+        if( poDS->GetCurrentSchema() == "public" )
+            osSQL.Printf("SELECT cdb_cartodbfytable('%s')",
+                                OGRCARTODBEscapeLiteral(osName).c_str());
+        else
+            osSQL.Printf("SELECT cdb_cartodbfytable('%s', '%s')",
+                                OGRCARTODBEscapeLiteral(poDS->GetCurrentSchema()).c_str(),
+                                OGRCARTODBEscapeLiteral(osName).c_str());
+
+        json_object* poObj = poDS->RunSQL(osSQL);
+        if( poObj != NULL )
+            json_object_put(poObj);
     }
 }
 
@@ -1319,34 +1347,6 @@ OGRErr OGRCARTODBTableLayer::RunDeferedCreationIfNecessary()
     if( poObj == NULL )
         return OGRERR_FAILURE;
     json_object_put(poObj);
-
-    if( bCartoDBify )
-    {
-        if( nSRID != 4326 )
-        {
-            if( eGType != wkbNone )
-            {
-                CPLError(CE_Warning, CPLE_AppDefined,
-                        "Cannot register table in dashboard with "
-                        "cdb_cartodbfytable() since its SRS is not EPSG:4326");
-            }
-        }
-        else
-        {
-            if( poDS->GetCurrentSchema() == "public" )
-                osSQL.Printf("SELECT cdb_cartodbfytable('%s')",
-                                    OGRCARTODBEscapeLiteral(osName).c_str());
-            else
-                osSQL.Printf("SELECT cdb_cartodbfytable('%s', '%s')",
-                                    OGRCARTODBEscapeLiteral(poDS->GetCurrentSchema()).c_str(),
-                                    OGRCARTODBEscapeLiteral(osName).c_str());
-
-            poObj = poDS->RunSQL(osSQL);
-            if( poObj == NULL )
-                return OGRERR_FAILURE;
-            json_object_put(poObj);
-        }
-    }
 
     return OGRERR_NONE;
 }
