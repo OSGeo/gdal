@@ -321,7 +321,7 @@ public:
 class digital_axis
 {
 	public:
-		digital_axis() : m_eStyle(LEV_DA_PIXEL_SIZED) {}
+  digital_axis() : m_eStyle(LEV_DA_PIXEL_SIZED), m_fixedEnd(0) {}
 
 		bool get(LevellerDataset& ds, VSILFILE* fp, int n)
 		{
@@ -352,7 +352,7 @@ class digital_axis
 
 					case LEV_DA_PIXEL_SIZED:
 						return m_d[1] + (m_d[0] * (pixels-1));
-				}					
+				}
 			}
 			return m_d[0];
 		}
@@ -388,7 +388,7 @@ class digital_axis
 
 
 	protected:
-		int		m_eStyle;
+		int	m_eStyle;
 		size_t	m_fixedEnd;
 		double	m_d[2];
 };
