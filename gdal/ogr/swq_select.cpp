@@ -3,7 +3,7 @@
  * Component: OGR SQL Engine
  * Purpose: swq_select class implementation.
  * Author: Frank Warmerdam <warmerdam@pobox.com>
- * 
+ *
  ******************************************************************************
  * Copyright (C) 2010 Frank Warmerdam <warmerdam@pobox.com>
  * Copyright (c) 2010-2014, Even Rouault <even dot rouault at mines-paris dot org>
@@ -35,29 +35,21 @@
 /*                             swq_select()                             */
 /************************************************************************/
 
-swq_select::swq_select()
-
-{
-    query_mode = 0;
-    raw_select = NULL;
-
-    result_columns = 0;
-    column_defs = NULL;
-    column_summary = NULL;
-    
-    table_count = 0;
-    table_defs = NULL;
-    
-    join_count = 0;
-    join_defs = NULL;
-    
-    where_expr = NULL;
-
-    order_specs = 0;
-    order_defs = NULL;
-
-    poOtherSelect = NULL;
-}
+swq_select::swq_select() :
+    query_mode(0),
+    raw_select(NULL),
+    result_columns(0),
+    column_defs(NULL),
+    column_summary(NULL),
+    table_count(0),
+    table_defs(NULL),
+    join_count(0),
+    join_defs(NULL),
+    where_expr(NULL),
+    order_specs(0),
+    order_defs(NULL),
+    poOtherSelect(NULL)
+{ }
 
 /************************************************************************/
 /*                            ~swq_select()                             */
@@ -66,12 +58,10 @@ swq_select::swq_select()
 swq_select::~swq_select()
 
 {
-    int i;
-
     delete where_expr;
     CPLFree( raw_select );
 
-    for( i = 0; i < table_count; i++ )
+    for( int i = 0; i < table_count; i++ )
     {
         swq_table_def *table_def = table_defs + i;
 
@@ -82,7 +72,7 @@ swq_select::~swq_select()
     if( table_defs != NULL )
         CPLFree( table_defs );
 
-    for( i = 0; i < result_columns; i++ )
+    for( int i = 0; i < result_columns; i++ )
     {
         CPLFree( column_defs[i].table_name );
         CPLFree( column_defs[i].field_name );
@@ -90,12 +80,10 @@ swq_select::~swq_select()
 
         delete column_defs[i].expr;
 
-        if( column_summary != NULL 
+        if( column_summary != NULL
             && column_summary[i].distinct_list != NULL )
         {
-            int j;
-            
-            for( j = 0; j < column_summary[i].count; j++ )
+            for( int j = 0; j < column_summary[i].count; j++ )
                 CPLFree( column_summary[i].distinct_list[j] );
 
             CPLFree( column_summary[i].distinct_list );
@@ -106,15 +94,15 @@ swq_select::~swq_select()
 
     CPLFree( column_summary );
 
-    for( i = 0; i < order_specs; i++ )
+    for( int i = 0; i < order_specs; i++ )
     {
         CPLFree( order_defs[i].table_name );
         CPLFree( order_defs[i].field_name );
     }
-    
+
     CPLFree( order_defs );
 
-    for( i = 0; i < join_count; i++ )
+    for( int i = 0; i < join_count; i++ )
     {
         delete join_defs[i].poExpr;
     }
@@ -169,8 +157,7 @@ void swq_select::postpreparse()
 /* -------------------------------------------------------------------- */
 /*      Reorder the joins in the order they appear in the SQL string.   */
 /* -------------------------------------------------------------------- */
-    int i;
-    for(i = 0; i < join_count / 2; i++)
+    for(int i = 0; i < join_count / 2; i++)
     {
         swq_join_def sTmp;
         memcpy(&sTmp, &join_defs[i], sizeof(swq_join_def));
@@ -179,7 +166,7 @@ void swq_select::postpreparse()
     }
 
     /* We make that strong assumption in ogr_gensql */
-    for(i = 0; i < join_count; i++)
+    for(int i = 0; i < join_count; i++)
     {
         CPLAssert(join_defs[i].secondary_table == i + 1);
     }
