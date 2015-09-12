@@ -730,6 +730,7 @@ extern unzFile ZEXPORT cpl_unzOpen2 (const char *path,
     us.pfile_in_zip_read = NULL;
     us.encrypted = 0;
     us.num_file = 0;
+    us.pos_in_central_dir = 0;
 
     s=(unz_s*)ALLOC(sizeof(unz_s));
     *s=us;
