@@ -1571,7 +1571,12 @@ static const struct sqlite3_module sOGR2SQLITEModule =
     NULL, /* xCommit */
     NULL, /* xFindFunctionRollback */
     NULL, /* xFindFunction */  // OGR2SQLITE_FindFunction;
-    OGR2SQLITE_Rename
+    OGR2SQLITE_Rename,
+#if SQLITE_VERSION_NUMBER >= 3008002L
+    NULL,  // xSavepoint
+    NULL,  // xRelease
+    NULL,  // xRollbackTo
+#endif
 };
 
 /************************************************************************/
