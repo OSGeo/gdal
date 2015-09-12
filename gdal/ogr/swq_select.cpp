@@ -481,12 +481,12 @@ int swq_select::PushField( swq_expr_node *poExpr, const char *pszAlias,
         col_def->field_alias = CPLStrdup( pszAlias );
     else if( pszAlias == NULL && poExpr->eNodeType == SNT_OPERATION
              && poExpr->nSubExprCount >= 1
-             && ( poExpr->nOperation == SWQ_CONCAT ||
-                  poExpr->nOperation == SWQ_SUBSTR )
+             && ( static_cast<swq_op>(poExpr->nOperation) == SWQ_CONCAT ||
+                  static_cast<swq_op>(poExpr->nOperation) == SWQ_SUBSTR )
              && poExpr->papoSubExpr[0]->eNodeType == SNT_COLUMN )
     {
-        const swq_operation *op = swq_op_registrar::GetOperator( 
-                (swq_op) poExpr->nOperation );
+        const swq_operation *op = swq_op_registrar::GetOperator(
+            static_cast<swq_op>(poExpr->nOperation) );
 
         col_def->field_alias = CPLStrdup( CPLSPrintf("%s_%s", op->pszName, 
                                     poExpr->papoSubExpr[0]->string_value));
@@ -639,13 +639,13 @@ int swq_select::PushField( swq_expr_node *poExpr, const char *pszAlias,
 /* -------------------------------------------------------------------- */
 /*      Do we have a special column function in play?                   */
 /* -------------------------------------------------------------------- */
-    if( poExpr->eNodeType == SNT_OPERATION 
-        && poExpr->nOperation >= SWQ_AVG
-        && poExpr->nOperation <= SWQ_SUM )
+    if( poExpr->eNodeType == SNT_OPERATION
+        && static_cast<swq_op>(poExpr->nOperation) >= SWQ_AVG
+        && static_cast<swq_op>(poExpr->nOperation) <= SWQ_SUM )
     {
         if( poExpr->nSubExprCount != 1 )
         {
-            const swq_operation *poOp = 
+            const swq_operation *poOp =
                     swq_op_registrar::GetOperator( (swq_op)poExpr->nOperation );
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Column Summary Function '%s' has wrong number of arguments.", 
