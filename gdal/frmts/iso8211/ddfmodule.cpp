@@ -41,8 +41,8 @@ CPL_CVSID("$Id$");
  * The constructor.
  */
 
-DDFModule::DDFModule()
-
+DDFModule::DDFModule() :
+    nFirstRecordOffset(0)
 {
     nFieldDefnCount = 0;
     papoFieldDefns = NULL;
