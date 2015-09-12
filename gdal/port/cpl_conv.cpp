@@ -1626,11 +1626,11 @@ CPLGetConfigOption( const char *pszKey, const char *pszDefault )
         pszResult = CSLFetchNameValue( (char **) papszConfigOptions, pszKey );
     }
 
-#if !defined(WIN32CE) 
+#if !defined(WIN32CE)
     if( pszResult == NULL )
         pszResult = getenv( pszKey );
 #endif
-    
+
     if( pszResult == NULL )
         return pszDefault;
     else
@@ -1937,7 +1937,9 @@ const char *CPLDecToDMS( double dfAngle, const char * pszAxis,
         pszHemisphere = "N";
 
     char szFormat[30];
-    CPLsprintf( szFormat, "%%3dd%%2d\'%%%d.%df\"%s", nPrecision+3, nPrecision, pszHemisphere );
+    CPLsnprintf( szFormat, sizeof(szFormat),
+                 "%%3dd%%2d\'%%%d.%df\"%s",
+                 nPrecision+3, nPrecision, pszHemisphere );
 
     static CPL_THREADLOCAL char szBuffer[50] = { 0 };
     CPLsprintf( szBuffer, szFormat, nDegrees, nMinutes, dfSeconds );
@@ -2772,13 +2774,12 @@ int CPLCheckForFile( char *pszFilename, char **papszSiblingFiles )
 /*      of pszFilename too all entries.                                 */
 /* -------------------------------------------------------------------- */
     CPLString osFileOnly = CPLGetFilename( pszFilename );
-    int i;
 
-    for( i = 0; papszSiblingFiles[i] != NULL; i++ )
+    for( int i = 0; papszSiblingFiles[i] != NULL; i++ )
     {
         if( EQUAL(papszSiblingFiles[i],osFileOnly) )
         {
-            strcpy( pszFilename + strlen(pszFilename) - strlen(osFileOnly), 
+            strcpy( pszFilename + strlen(pszFilename) - strlen(osFileOnly),
                     papszSiblingFiles[i] );
             return TRUE;
         }
