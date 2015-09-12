@@ -1,3 +1,4 @@
+# -*- Makefile -*- for emacs.
 GDAL_ROOT	=	@abs_top_builddir@
 top_builddir	=	$(GDAL_ROOT)
 
@@ -70,6 +71,14 @@ INST_HTML	=	$(HOME)/www/gdal
 CPPFLAGS	= @CPPFLAGS@ -I$(GDAL_ROOT)/port @EXTRA_INCLUDES@ -DGDAL_COMPILATION
 CFLAGS		= @CFLAGS@ @C_WFLAGS@ $(USER_DEFS)
 CXXFLAGS	= @CXXFLAGS@ @CXX_WFLAGS@ $(USER_DEFS)
+
+# TODO(schwehr): Make these be configure flags.
+# CFLAGS += -std=c11
+
+# CXXFLAGS += -Wextra
+# CXXFLAGS += -Werror
+# CXXFLAGS += -std=c++11
+
 LDFLAGS     = @LDFLAGS@
 
 RANLIB		=	@RANLIB@
