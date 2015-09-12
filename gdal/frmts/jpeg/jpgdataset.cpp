@@ -1143,9 +1143,12 @@ int JPGRasterBand::GetOverviewCount()
 /* ==================================================================== */
 /************************************************************************/
 
-JPGDatasetCommon::JPGDatasetCommon()
-
+JPGDatasetCommon::JPGDatasetCommon() :
+    nSubfileOffset(0),
+    bigendian(1),
+    bSwabflag(FALSE)
 {
+  // TODO: How should sErrorStruct.setjmp_buffer be initialized?
     fpImage = NULL;
 
     nScaleFactor = 1;
