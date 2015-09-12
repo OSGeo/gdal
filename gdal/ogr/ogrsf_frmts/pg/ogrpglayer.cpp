@@ -1204,7 +1204,7 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
                     unsigned int nVal[2];
                     GIntBig llVal;
                     int nYear, nMonth, nDay, nHour, nMinute;
-                    double dfSecond;
+                    double dfSecond = 0.0;
                     CPLAssert(PQgetlength(hResult, iRecord, iField) == 8);
                     memcpy( nVal, PQgetvalue( hResult, iRecord, iField ), 8 );
                     CPL_MSBPTR32(&nVal[0]);
