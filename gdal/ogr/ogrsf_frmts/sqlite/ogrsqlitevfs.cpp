@@ -209,7 +209,15 @@ static const sqlite3_io_methods OGRSQLiteIOMethods =
     OGRSQLiteIOCheckReservedLock,
     OGRSQLiteIOFileControl,
     OGRSQLiteIOSectorSize,
-    OGRSQLiteIODeviceCharacteristics
+    OGRSQLiteIODeviceCharacteristics,
+#if SQLITE_VERSION_NUMBER >= 3008002L
+    NULL,  // xShmMap
+    NULL,  // xShmLock
+    NULL,  // xShmBarrier
+    NULL,  // xShmUnmap
+    NULL,  // xFetch
+    NULL,  // xUnfetch
+#endif
 };
 
 static int OGRSQLiteVFSOpen(sqlite3_vfs* pVFS,
