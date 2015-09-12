@@ -510,7 +510,9 @@ protected:
 /*                     HFARasterAttributeTable()                        */
 /************************************************************************/
 
-HFARasterAttributeTable::HFARasterAttributeTable(HFARasterBand *poBand, const char *pszName)
+HFARasterAttributeTable::HFARasterAttributeTable(HFARasterBand *poBand, const char *pszName) :
+    dfRow0Min(0.0),
+    dfBinSize(0.0)
 {
     this->hHFA = poBand->hHFA;
     this->poDT = poBand->hHFA->papoBand[poBand->nBand-1]->poNode->GetNamedChild(pszName);
