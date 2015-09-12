@@ -46,7 +46,9 @@ CPL_CVSID("$Id$");
 OGRVFKLayer::OGRVFKLayer(const char *pszName,
                          OGRSpatialReference *poSRSIn,
                          OGRwkbGeometryType eReqType,
-                         OGRVFKDataSource *poDSIn)
+                         OGRVFKDataSource *poDSIn) :
+    poDS(poDSIn),
+    m_iNextFeature(0)
 {
     /* set spatial reference */
     if( poSRSIn == NULL ) {
@@ -60,9 +62,6 @@ OGRVFKLayer::OGRVFKLayer(const char *pszName,
     else {
         poSRS = poSRSIn->Clone();
     }
-
-    /* layer datasource */
-    poDS = poDSIn;
 
     /* feature definition */
     poFeatureDefn = new OGRFeatureDefn(pszName);
