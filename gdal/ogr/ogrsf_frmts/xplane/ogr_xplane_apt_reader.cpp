@@ -45,7 +45,9 @@ OGRXPlaneReader* OGRXPlaneCreateAptFileReader( OGRXPlaneDataSource* poDataSource
 /************************************************************************/
 /*                         OGRXPlaneAptReader()                         */
 /************************************************************************/
-OGRXPlaneAptReader::OGRXPlaneAptReader()
+OGRXPlaneAptReader::OGRXPlaneAptReader() :
+    dfElevation(0.0),
+    bControlTower(FALSE)
 {
     poDataSource = NULL;
     nVersion = APT_V_UNKNOWN;
@@ -69,7 +71,7 @@ OGRXPlaneAptReader::OGRXPlaneAptReader()
     poTaxiwaySignLayer = NULL;
     poVASI_PAPI_WIGWAG_Layer = NULL;
     poTaxiLocationLayer = NULL;
-    
+
     Rewind();
 }
 
