@@ -2271,7 +2271,22 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
         OGRGeometryCollection *poGC = NULL;
         GInt32 nGeomCount = 0;
         int iGeom = 0;
-        int nBytesUsed = 0;
+
+        if( nBytes < 8 )
+            return OGRERR_NOT_ENOUGH_DATA;
+
+        memcpy( &nGeomCount, pabyData + 4, 4 );
+        if (NEED_SWAP_SPATIALITE())
+            CPL_SWAP32PTR( &nGeomCount );
+
+        if (nGeomCount < 0 || nGeomCount > INT_MAX / 9)
+            return OGRERR_CORRUPT_DATA;
+
+        // Each sub geometry takes at least 9 bytes
+        if (nBytes - 8 < nGeomCount * 9)
+            return OGRERR_NOT_ENOUGH_DATA;
+
+        int nBytesUsed = 8;
 
         switch ( nGType )
         {
@@ -2314,22 +2329,6 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
         }
 
         assert(NULL != poGC);
-
-        if( nBytes < 8 )
-            return OGRERR_NOT_ENOUGH_DATA;
-
-        memcpy( &nGeomCount, pabyData + 4, 4 );
-        if (NEED_SWAP_SPATIALITE())
-            CPL_SWAP32PTR( &nGeomCount );
-
-        if (nGeomCount < 0 || nGeomCount > INT_MAX / 9)
-            return OGRERR_CORRUPT_DATA;
-
-        // Each sub geometry takes at least 9 bytes
-        if (nBytes - 8 < nGeomCount * 9)
-            return OGRERR_NOT_ENOUGH_DATA;
-
-        nBytesUsed = 8;
 
         for( iGeom = 0; iGeom < nGeomCount; iGeom++ )
         {
