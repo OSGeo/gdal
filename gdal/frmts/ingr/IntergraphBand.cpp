@@ -45,10 +45,11 @@
 //                                  IntergraphRasterBand::IntergraphRasterBand()
 //  ----------------------------------------------------------------------------
 
-IntergraphRasterBand::IntergraphRasterBand( IntergraphDataset *poDS, 
+IntergraphRasterBand::IntergraphRasterBand( IntergraphDataset *poDS,
                                             int nBand,
                                             int nBandOffset,
-                                            GDALDataType eType )
+                                            GDALDataType eType ) :
+    nRLEOffset(0)
 {
     this->poColorTable  = new GDALColorTable();
 
