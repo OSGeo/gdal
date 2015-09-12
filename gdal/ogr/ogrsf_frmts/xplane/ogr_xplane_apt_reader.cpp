@@ -77,7 +77,9 @@ OGRXPlaneAptReader::OGRXPlaneAptReader()
 /*                         OGRXPlaneAptReader()                         */
 /************************************************************************/
 
-OGRXPlaneAptReader::OGRXPlaneAptReader( OGRXPlaneDataSource* poDataSourceIn )
+OGRXPlaneAptReader::OGRXPlaneAptReader( OGRXPlaneDataSource* poDataSourceIn ) :
+    dfElevation(0.0),
+    bControlTower(FALSE)
 {
     poDataSource = poDataSourceIn;
     nVersion = APT_V_UNKNOWN;
@@ -120,7 +122,7 @@ OGRXPlaneAptReader::OGRXPlaneAptReader( OGRXPlaneDataSource* poDataSourceIn )
     poDataSource->RegisterLayer(poAPTWindsockLayer);
     poDataSource->RegisterLayer(poTaxiwaySignLayer);
     poDataSource->RegisterLayer(poVASI_PAPI_WIGWAG_Layer);
-    
+
     Rewind();
 }
 
