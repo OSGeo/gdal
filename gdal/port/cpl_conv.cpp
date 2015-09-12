@@ -1942,7 +1942,9 @@ const char *CPLDecToDMS( double dfAngle, const char * pszAxis,
                  nPrecision+3, nPrecision, pszHemisphere );
 
     static CPL_THREADLOCAL char szBuffer[50] = { 0 };
-    CPLsprintf( szBuffer, szFormat, nDegrees, nMinutes, dfSeconds );
+    CPLsnprintf( szBuffer, sizeof(szBuffer),
+                 szFormat,
+                 nDegrees, nMinutes, dfSeconds );
 
     return( szBuffer );
 }
