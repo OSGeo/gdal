@@ -405,7 +405,7 @@ bool VFKFeature::SetProperties(const char *pszLine)
             inString = inString ? FALSE : TRUE;
             if (inString) {
                 poProp = poChar;
-                if (*poChar == '"' && (*(poChar+1) == ';' || *(poChar+1) == '\0')) { 
+                if (*poChar == '"' && (*(poChar+1) == ';' || *(poChar+1) == '\0')) {
                     poChar++;
                     inString = FALSE;
                 }
@@ -441,10 +441,11 @@ bool VFKFeature::SetProperties(const char *pszLine)
     /* set properties from the list */
     if (oPropList.size() != (size_t) m_poDataBlock->GetPropertyCount()) {
         /* try to read also invalid records */
-        CPLError(CE_Warning, CPLE_AppDefined, 
+        CPLError(CE_Warning, CPLE_AppDefined,
                  "%s: invalid number of properties %d should be %d",
                  m_poDataBlock->GetName(),
 		 (int) oPropList.size(), m_poDataBlock->GetPropertyCount());
+        CPLFree(pszProp);
         return FALSE;
    }
     iIndex = 0;
@@ -452,8 +453,9 @@ bool VFKFeature::SetProperties(const char *pszLine)
 	 ip != oPropList.end(); ++ip) {
 	SetProperty(iIndex++, (*ip).c_str());
     }
-    
-    /* set fid 
+
+    // TODO(martinl): What was this block disabled?
+    /* set fid
     if (EQUAL(m_poDataBlock->GetName(), "SBP")) {
         GUIntBig id;
         const VFKProperty *poVfkProperty;
@@ -463,13 +465,13 @@ bool VFKFeature::SetProperties(const char *pszLine)
         {
             id = strtoul(poVfkProperty->GetValueS(), NULL, 0);
             if (id == 1)
-                SetFID(0); 
+                SetFID(0);
             else
-                SetFID(-1); 
+                SetFID(-1);
         }
     }
     else {
-        SetFID(0); 
+        SetFID(0);
     }
     */
     CPLFree(pszProp);
