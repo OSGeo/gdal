@@ -60,6 +60,8 @@ class CPL_DLL RawDataset : public GDALPamDataset
                  RawDataset();
                  ~RawDataset() = 0;
 
+  private:
+    CPL_DISALLOW_COPY_ASSIGN(RawDataset);
 };
 
 /************************************************************************/
@@ -169,6 +171,9 @@ public:
     FILE        *GetFP() { return (bIsVSIL) ? (FILE*)fpRawL : fpRaw; }
     VSILFILE    *GetFPL() { CPLAssert(bIsVSIL); return fpRawL; }
     int          GetOwnsFP() { return bOwnsFP; }
+
+  private:
+    CPL_DISALLOW_COPY_ASSIGN(RawRasterBand);
 };
 
 #endif // GDAL_FRMTS_RAW_RAWDATASET_H_INCLUDED

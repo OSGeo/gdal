@@ -181,6 +181,9 @@ class CPL_DLL GDALPamDataset : public GDALDataset
     GDALDatasetPamInfo *GetPamInfo() { return psPam; }
     int    GetPamFlags() { return nPamFlags; }
     void   SetPamFlags(int nValue ) { nPamFlags = nValue; }
+
+  private:
+    CPL_DISALLOW_COPY_ASSIGN(GDALPamDataset);
 };
 
 /* ==================================================================== */
@@ -293,6 +296,9 @@ class CPL_DLL GDALPamRasterBand : public GDALRasterBand
 
     // "semi private" methods.
     GDALRasterBandPamInfo *GetPamInfo() { return psPam; }
+
+  private:
+    CPL_DISALLOW_COPY_ASSIGN(GDALPamRasterBand);
 };
 
 // These are mainly helper functions for internal use.
