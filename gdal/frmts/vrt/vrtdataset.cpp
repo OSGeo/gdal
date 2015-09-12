@@ -1572,7 +1572,7 @@ void VRTDataset::BuildVirtualOverviews()
         {
             VRTSourcedRasterBand* poVRTBand = (VRTSourcedRasterBand* )GetRasterBand(i+1);
             VRTSourcedRasterBand* poOvrVRTBand = new VRTSourcedRasterBand(
-                poOvrVDS, poOvrVDS->GetRasterCount() + 1, poVRTBand->GetRasterDataType(), 
+                poOvrVDS, poOvrVDS->GetRasterCount() + 1, poVRTBand->GetRasterDataType(),
                 nOvrXSize, nOvrYSize);
             poOvrVDS->SetBand( poOvrVDS->GetRasterCount() + 1, poOvrVRTBand );
 
@@ -1583,7 +1583,9 @@ void VRTDataset::BuildVirtualOverviews()
             else if( EQUAL(poSrcSource->GetType(), "ComplexSource") )
                 poNewSource = new VRTComplexSource((VRTComplexSource*)poSrcSource, dfXRatio, dfYRatio);
             else
+            {
                 CPLAssert(FALSE);
+            }
             if( poNewSource->GetBand()->GetDataset() )
                 poNewSource->GetBand()->GetDataset()->Reference();
             poOvrVRTBand->AddSource(poNewSource);
