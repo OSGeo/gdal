@@ -140,7 +140,8 @@ CPL_C_END
 enum eFileType {
 	level_11 = 0,
 	level_15,
-    level_10
+        level_10,
+        level_unknown = 999,
 };
 
 enum ePolarization {
@@ -176,18 +177,18 @@ public:
     static void ReadMetadata( PALSARJaxaDataset *poDS, VSILFILE *fp );
 };
 
-PALSARJaxaDataset::PALSARJaxaDataset()
-{
-    pasGCPList = NULL;
-    nGCPCount = 0;
-}
+PALSARJaxaDataset::PALSARJaxaDataset() :
+    pasGCPList(NULL),
+    nGCPCount(0),
+    nFileType(level_unknown)
+{ }
 
 PALSARJaxaDataset::~PALSARJaxaDataset()
 {
-    if( nGCPCount > 0 ) 
+    if( nGCPCount > 0 )
     {
-        GDALDeinitGCPs( nGCPCount, pasGCPList ); 
-        CPLFree( pasGCPList ); 
+        GDALDeinitGCPs( nGCPCount, pasGCPList );
+        CPLFree( pasGCPList );
     }
 }
 
