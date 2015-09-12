@@ -34,6 +34,8 @@ OBJ :=	jcapimin12.o jcapistd12.o jccoefct12.o jccolor12.o jcdctmgr12.o jchuff12.
 endif
 
 CPPFLAGS	:=	$(XTRA_OPT)  $(CPPFLAGS) -I../mem
+# # Enable this to compile with -Wextra -Werror and get around the jump complaint.
+# CPPFLAGS += -Wno-clobbered
 
 default:	install-obj
 
