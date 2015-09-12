@@ -508,8 +508,6 @@ int OGR2SQLITEDealWithSpatialColumn(OGRLayer* poLayer,
                                         WHEN_SPATIALITE(oSetSpatialIndex)
                                    )
 {
-    int rc;
-
     OGRGeomFieldDefn* poGeomField =
         poLayer->GetLayerDefn()->GetGeomFieldDefn(iGeomCol);
     CPLString osGeomColRaw;
@@ -624,7 +622,7 @@ int OGR2SQLITEDealWithSpatialColumn(OGRLayer* poLayer,
         }
     }
 #endif // HAVE_SPATIALITE
-    rc = sqlite3_exec( hDB, osSQL.c_str(), NULL, NULL, NULL );
+    int rc = sqlite3_exec( hDB, osSQL.c_str(), NULL, NULL, NULL );
 
 #ifdef HAVE_SPATIALITE
 /* -------------------------------------------------------------------- */
