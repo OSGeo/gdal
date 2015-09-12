@@ -1647,11 +1647,12 @@ class VSIZipReader : public VSIArchiveReader
 /*                           VSIZipReader()                             */
 /************************************************************************/
 
-VSIZipReader::VSIZipReader(const char* pszZipFileName)
+VSIZipReader::VSIZipReader(const char* pszZipFileName) :
+    nNextFileSize(0),
+    nModifiedTime(0)
 {
     unzF = cpl_unzOpen(pszZipFileName);
-    nNextFileSize = 0;
-    nModifiedTime = 0;
+    file_pos = {0, 0};
 }
 
 /************************************************************************/
