@@ -764,16 +764,16 @@ CPLErr IntergraphRLEBand::IReadBlock( int nBlockXOff,
 //                                  IntergraphBitmapBand::IntergraphBitmapBand()
 //  ----------------------------------------------------------------------------
 
-IntergraphBitmapBand::IntergraphBitmapBand( IntergraphDataset *poDS, 
+IntergraphBitmapBand::IntergraphBitmapBand( IntergraphDataset *poDS,
                                             int nBand,
                                             int nBandOffset,
                                             int nRGorB )
-    : IntergraphRasterBand( poDS, nBand, nBandOffset, GDT_Byte )
+    : IntergraphRasterBand( poDS, nBand, nBandOffset, GDT_Byte ),
+      pabyBMPBlock(NULL),
+      nBMPSize(0),
+      nQuality(0),
+      nRGBBand(nRGorB)
 {
-    nBMPSize    = 0;
-    nRGBBand    = nRGorB;
-    pabyBMPBlock = NULL;
-
     if (pabyBlockBuf == NULL)
         return;
 
@@ -785,7 +785,7 @@ IntergraphBitmapBand::IntergraphBitmapBand( IntergraphDataset *poDS,
         // ------------------------------------------------------------
 
         nBlockYSize = nRasterYSize;
-        nBMPSize    = INGR_GetDataBlockSize( poDS->pszFilename, 
+        nBMPSize    = INGR_GetDataBlockSize( poDS->pszFilename,
                                              hHeaderTwo.CatenatedFilePointer,
                                              nDataOffset);
     }
