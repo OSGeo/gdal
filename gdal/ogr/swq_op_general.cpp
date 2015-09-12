@@ -954,10 +954,10 @@ static int SWQCheckSubExprAreNotGeometries( swq_expr_node *poNode )
 swq_field_type SWQGeneralChecker( swq_expr_node *poNode,
                                   int bAllowMismatchTypeOnFieldComparison  )
 
-{									
+{
     swq_field_type eRetType = SWQ_ERROR;
     swq_field_type eArgType = SWQ_OTHER;
-    int nArgCount = -1;
+    // int nArgCount = -1;
 
     switch( (swq_op) poNode->nOperation )
     {
@@ -1097,12 +1097,10 @@ swq_field_type SWQGeneralChecker( swq_expr_node *poNode,
 /* -------------------------------------------------------------------- */
     if( eArgType != SWQ_OTHER )
     {
-        int i;
-
         if( SWQ_IS_INTEGER(eArgType) || eArgType == SWQ_BOOLEAN )
             eArgType = SWQ_FLOAT;
 
-        for( i = 0; i < poNode->nSubExprCount; i++ )
+        for( int i = 0; i < poNode->nSubExprCount; i++ )
         {
             swq_field_type eThisArgType = poNode->papoSubExpr[i]->field_type;
             if( SWQ_IS_INTEGER(eThisArgType) ||  eThisArgType == SWQ_BOOLEAN )
@@ -1141,10 +1139,10 @@ swq_field_type SWQGeneralChecker( swq_expr_node *poNode,
                     break;
                 }
 
-                const swq_operation *poOp = 
+                const swq_operation *poOp =
                     swq_op_registrar::GetOperator((swq_op)poNode->nOperation);
-                
-                CPLError( CE_Failure, CPLE_AppDefined, 
+
+                CPLError( CE_Failure, CPLE_AppDefined,
                           "Type mismatch or improper type of arguments to %s operator.",
                           poOp->pszName );
                 return SWQ_ERROR;
@@ -1155,19 +1153,22 @@ swq_field_type SWQGeneralChecker( swq_expr_node *poNode,
 /* -------------------------------------------------------------------- */
 /*      Validate the arg count if requested.                            */
 /* -------------------------------------------------------------------- */
-    if( nArgCount != -1 
+#if 0
+    // nArgCount was always -1, so this block was never executed.
+    if( nArgCount != -1
         && nArgCount != poNode->nSubExprCount )
     {
-        const swq_operation *poOp = 
+        const swq_operation *poOp =
             swq_op_registrar::GetOperator((swq_op)poNode->nOperation);
-                
-        CPLError( CE_Failure, CPLE_AppDefined, 
+
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Expected %d arguments to %s, but got %d arguments.",
                   nArgCount,
                   poOp->pszName,
                   poNode->nSubExprCount );
         return SWQ_ERROR;
     }
+#endif
 
     return eRetType;
 }
