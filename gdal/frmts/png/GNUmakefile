@@ -36,6 +36,8 @@ XTRA_OPT	:=	$(XTRA_OPT) -I../zlib
 endif
 
 CPPFLAGS	:=	$(XTRA_OPT)  $(CPPFLAGS)
+# Enable this to compile with -Wextra -Werror and get around the jump complaint.
+# CPPFLAGS += -Wno-clobbered
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
 
