@@ -966,7 +966,9 @@ CPLErr GDALGeoPackageDataset::WriteTileInternal()
         bTileDriverSupports4Bands = WEBPSupports4Bands();
     }
     else
+    {
         CPLAssert(0);
+    }
 
     GDALDriver* poDriver = (GDALDriver*) GDALGetDriverByName(pszDriverName);
     if( poDriver != NULL)
