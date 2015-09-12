@@ -2842,6 +2842,14 @@ int OGRSQLiteLayer::ExportSpatiaLiteGeometryInternal(const OGRGeometry *poGeomet
             if (NEED_SWAP_SPATIALITE())
                 CPL_SWAP32PTR( pabyData );
 
+            if( !bUseComprGeom && !NEED_SWAP_SPATIALITE() &&
+                poGeometry->getCoordinateDimension() == 2 && !bHasM )
+            {
+                poLineString->getPoints((OGRRawPoint*)(pabyData + 4), NULL);
+                nTotalSize += nPointCount * 16;
+                return nTotalSize;
+            }
+
             for(int i=0;i<nPointCount;i++)
             {
                 double x = poLineString->getX(i);
