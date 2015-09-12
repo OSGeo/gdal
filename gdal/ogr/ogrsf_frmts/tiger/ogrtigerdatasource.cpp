@@ -336,11 +336,10 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
     else
     {
         char      **candidateFileList = CPLReadDir( pszFilename );
-        int         i;
 
         pszPath = CPLStrdup( pszFilename );
 
-        for( i = 0; 
+        for( int i = 0;
              candidateFileList != NULL && candidateFileList[i] != NULL; 
              i++ ) 
         {
@@ -377,7 +376,7 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
                           "No candidate Tiger files (TGR*.RT1) found in\n"
                           "directory: %s",
                           pszFilename );
-
+            CSLDestroy(papszFileList);
             return FALSE;
         }
     }
