@@ -348,7 +348,11 @@ char *CPLFGets( char *pszBuffer, int nBufferSize, FILE * fp )
         if( chCheck != 10 )
         {
             // unget the character.
-            VSIFSeek( fp, nOriginalOffset+nActuallyRead, SEEK_SET );
+            if (VSIFSeek( fp, nOriginalOffset+nActuallyRead, SEEK_SET ) == -1)
+            {
+                CPLError( CE_Failure, CPLE_FileIO,
+                          "Unable to unget a character");
+            }
         }
     }
 
@@ -356,13 +360,13 @@ char *CPLFGets( char *pszBuffer, int nBufferSize, FILE * fp )
 /*      Trim off \n, \r or \r\n if it appears at the end.  We don't     */
 /*      need to do any "seeking" since we want the newline eaten.       */
 /* -------------------------------------------------------------------- */
-    if( nActuallyRead > 1 
-        && pszBuffer[nActuallyRead-1] == 10 
+    if( nActuallyRead > 1
+        && pszBuffer[nActuallyRead-1] == 10
         && pszBuffer[nActuallyRead-2] == 13 )
     {
         pszBuffer[nActuallyRead-2] = '\0';
     }
-    else if( pszBuffer[nActuallyRead-1] == 10 
+    else if( pszBuffer[nActuallyRead-1] == 10
              || pszBuffer[nActuallyRead-1] == 13 )
     {
         pszBuffer[nActuallyRead-1] = '\0';
