@@ -189,23 +189,22 @@ TigerVersion OGRTigerDataSource::TigerCheckVersion( TigerVersion nOldVersion,
 /*                         OGRTigerDataSource()                         */
 /************************************************************************/
 
-OGRTigerDataSource::OGRTigerDataSource()
-
+OGRTigerDataSource::OGRTigerDataSource() :
+    pszName(NULL),
+    nLayers(0),
+    papoLayers(NULL),
+    papszOptions(NULL),
+    pszPath(NULL),
+    nModules(0),
+    papszModules(NULL),
+    nVersionCode(0),
+    nVersion(TIGER_Unknown),
+    bWriteMode(FALSE)
 {
-    bWriteMode = FALSE;
-
-    nLayers = 0;
-    papoLayers = NULL;
-
-    nModules = 0;
-    papszModules = NULL;
-
-    pszName = NULL;
-    pszPath = NULL;
-
-    papszOptions = NULL;
-
-    poSpatialRef = new OGRSpatialReference( "GEOGCS[\"NAD83\",DATUM[\"North_American_Datum_1983\",SPHEROID[\"GRS 1980\",6378137,298.257222101]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433]]" );
+    poSpatialRef = new OGRSpatialReference(
+        "GEOGCS[\"NAD83\",DATUM[\"North_American_Datum_1983\","
+        "SPHEROID[\"GRS 1980\",6378137,298.257222101]],PRIMEM[\"Greenwich\",0],"
+        "UNIT[\"degree\",0.0174532925199433]]" );
 }
 
 /************************************************************************/
@@ -215,11 +214,9 @@ OGRTigerDataSource::OGRTigerDataSource()
 OGRTigerDataSource::~OGRTigerDataSource()
 
 {
-    int         i;
-
-    for( i = 0; i < nLayers; i++ )
+    for( int i = 0; i < nLayers; i++ )
         delete papoLayers[i];
-    
+
     CPLFree( papoLayers );
 
     CPLFree( pszName );
