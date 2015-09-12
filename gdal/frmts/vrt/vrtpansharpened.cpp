@@ -1671,8 +1671,11 @@ int VRTPansharpenedRasterBand::GetOverviewCount()
                     }
                 }
                 poOvrDS->poPansharpener = new GDALPansharpenOperation();
-                CPLErr eErr = poOvrDS->poPansharpener->Initialize(psPanOvrOptions);
-                CPLAssert( eErr == CE_None );
+                if (poOvrDS->poPansharpener->Initialize(psPanOvrOptions) != CE_None)
+                {
+                    CPLError( CE_Warning, CPLE_AppDefined,
+                              "Unable to initialize pansharpener." );
+                }
                 GDALDestroyPansharpenOptions(psPanOvrOptions);
 
                 poOvrDS->SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
