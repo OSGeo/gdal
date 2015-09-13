@@ -71,7 +71,7 @@ int CPLKeywordParser::Ingest( VSILFILE *fp )
 /* -------------------------------------------------------------------- */
 /*      Read in buffer till we find END all on it's own line.           */
 /* -------------------------------------------------------------------- */
-    for( ; TRUE; ) 
+    for( ; true; )
     {
         const char *pszCheck;
         char szChunk[513];
@@ -89,7 +89,7 @@ int CPLKeywordParser::Ingest( VSILFILE *fp )
         else
             pszCheck = szChunk;
 
-        if( strstr(pszCheck,"\r\nEND;\r\n") != NULL 
+        if( strstr(pszCheck,"\r\nEND;\r\n") != NULL
             || strstr(pszCheck,"\nEND;\n") != NULL )
             break;
     }
@@ -111,7 +111,7 @@ int CPLKeywordParser::ReadGroup( const char *pszPathPrefix )
 {
     CPLString osName, osValue;
 
-    for( ; TRUE; )
+    for( ; true; )
     {
         if( !ReadPair( osName, osValue ) )
             return FALSE;
@@ -185,7 +185,7 @@ int CPLKeywordParser::ReadPair( CPLString &osName, CPLString &osValue )
 
             osValue += osWord;
             const char* pszIter = osWord.c_str();
-            int bInQuote = FALSE;
+            bool bInQuote = false;
             while(*pszIter != '\0')
             {
                 if (*pszIter == '"')
@@ -303,16 +303,16 @@ int CPLKeywordParser::ReadWord( CPLString &osWord )
 void CPLKeywordParser::SkipWhite()
 
 {
-    for( ; TRUE; )
+    for( ; true; )
     {
         // Skip white space (newline, space, tab, etc )
         if( isspace( (unsigned char)*pszHeaderNext ) )
         {
-            pszHeaderNext++; 
+            pszHeaderNext++;
             continue;
         }
-        
-        // Skip C style comments 
+
+        // Skip C style comments
         if( *pszHeaderNext == '/' && pszHeaderNext[1] == '*' )
         {
             pszHeaderNext += 2;

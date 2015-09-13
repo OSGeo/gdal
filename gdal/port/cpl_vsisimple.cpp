@@ -1002,10 +1002,10 @@ GIntBig CPLGetPhysicalRAM(void)
 
 GIntBig CPLGetPhysicalRAM(void)
 {
-    static int bOnce = FALSE;
+    static bool bOnce = false;
     if( !bOnce )
     {
-        bOnce = TRUE;
+        bOnce = true;
         CPLDebug("PORT", "No implementation for CPLGetPhysicalRAM()");
     }
     return 0;

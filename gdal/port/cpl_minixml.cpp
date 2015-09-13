@@ -223,11 +223,11 @@ static XMLTokenType ReadToken( ParseContext *psContext )
     else if( chNext == '<' 
           && EQUALN(psContext->pszInput+psContext->nInputOffset,"!DOCTYPE",8) )
     {
-        int   bInQuotes = FALSE;
+        bool bInQuotes = false;
         psContext->eTokenType = TLiteral;
-        
+
         AddToToken( psContext, '<' );
-        do { 
+        do {
             chNext = ReadChar(psContext);
             if( chNext == '\0' )
             {
@@ -290,7 +290,7 @@ static XMLTokenType ReadToken( ParseContext *psContext )
             }
 
             AddToToken( psContext, chNext );
-        } while( TRUE );
+        } while( true );
     }
 /* -------------------------------------------------------------------- */
 /*      Handle CDATA.                                                   */
@@ -1009,9 +1009,9 @@ CPLSerializeXMLNode( const CPLXMLNode *psNode, int nIndent,
 /* -------------------------------------------------------------------- */
     else if( psNode->eType == CXT_Element )
     {
-        int             bHasNonAttributeChildren = FALSE;
+        bool            bHasNonAttributeChildren = false;
         CPLXMLNode      *psChild;
-        
+
         memset( *ppszText + *pnLength, ' ', nIndent );
         *pnLength += nIndent;
         (*ppszText)[*pnLength] = '\0';
@@ -1042,12 +1042,12 @@ CPLSerializeXMLNode( const CPLXMLNode *psNode, int nIndent,
         }
         else
         {
-            int         bJustText = TRUE;
+            bool bJustText = true;
 
             strcat( *ppszText + *pnLength, ">" );
 
-            for( psChild = psNode->psChild; 
-                 psChild != NULL; 
+            for( psChild = psNode->psChild;
+                 psChild != NULL;
                  psChild = psChild->psNext )
             {
                 if( psChild->eType == CXT_Attribute )
@@ -1055,7 +1055,7 @@ CPLSerializeXMLNode( const CPLXMLNode *psNode, int nIndent,
 
                 if( psChild->eType != CXT_Text && bJustText )
                 {
-                    bJustText = FALSE;
+                    bJustText = false;
                     strcat( *ppszText + *pnLength, "\n" );
                 }
 
@@ -1292,7 +1292,7 @@ void CPLDestroyXMLNode( CPLXMLNode *psNode )
 CPLXMLNode *CPLSearchXMLNode( CPLXMLNode *psRoot, const char *pszElement )
 
 {
-    int         bSideSearch = FALSE;
+    bool        bSideSearch = false;
     CPLXMLNode *psChild, *psResult;
 
     if( psRoot == NULL || pszElement == NULL )
@@ -1300,7 +1300,7 @@ CPLXMLNode *CPLSearchXMLNode( CPLXMLNode *psRoot, const char *pszElement )
 
     if( *pszElement == '=' )
     {
-        bSideSearch = TRUE;
+        bSideSearch = true;
         pszElement++;
     }
 
@@ -1384,14 +1384,14 @@ CPLXMLNode *CPLGetXMLNode( CPLXMLNode *psRoot, const char *pszPath )
     char        *apszTokens[2];
     char        **papszTokens;
     int         iToken = 0;
-    int         bSideSearch = FALSE;
+    bool        bSideSearch = false;
 
     if( psRoot == NULL || pszPath == NULL )
         return NULL;
 
     if( *pszPath == '=' )
     {
-        bSideSearch = TRUE;
+        bSideSearch = true;
         pszPath++;
     }
 
@@ -1413,7 +1413,7 @@ CPLXMLNode *CPLGetXMLNode( CPLXMLNode *psRoot, const char *pszPath )
         if( bSideSearch )
         {
             psChild = psRoot;
-            bSideSearch = FALSE;
+            bSideSearch = false;
         }
         else
             psChild = psRoot->psChild;
@@ -1808,12 +1808,12 @@ int CPLSetXMLValue( CPLXMLNode *psRoot,  const char *pszPath,
     while( papszTokens[iToken] != NULL && psRoot != NULL )
     {
         CPLXMLNode *psChild;
-        int        bIsAttribute = FALSE;
+        bool        bIsAttribute = false;
         const char *pszName = papszTokens[iToken];
 
         if( pszName[0] == '#' )
         {
-            bIsAttribute = TRUE;
+            bIsAttribute = true;
             pszName++;
         }
 

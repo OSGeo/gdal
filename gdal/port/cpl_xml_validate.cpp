@@ -78,7 +78,7 @@ static void CPLFixPath(char* pszPath)
             pszPath[i] = '/';
     }
 
-    while(TRUE)
+    while(true)
     {
         char* pszSlashDotDot = strstr(pszPath, "/../");
         if (pszSlashDotDot == NULL || pszSlashDotDot == pszPath)
@@ -373,7 +373,7 @@ CPLXMLNode* CPLLoadSchemaStrInternal(CPLHashSet* hSetSchemas,
     psIter = psSchema->psChild;
     while(psIter)
     {
-        int bDestroyCurrentNode = FALSE;
+        bool bDestroyCurrentNode = false;
 
 #ifdef HAS_VALIDATION_BUG
         if (bHasLibXMLBug)
@@ -444,7 +444,7 @@ CPLXMLNode* CPLLoadSchemaStrInternal(CPLHashSet* hSetSchemas,
             {
                 /* We have already included that file, */
                 /* so just remove the <include/> node */
-                bDestroyCurrentNode = TRUE;
+                bDestroyCurrentNode = true;
             }
         }
 
@@ -1085,7 +1085,7 @@ int CPLValidateXML(const char* pszXMLFilename,
                             CPLLibXMLWarningErrorCallback,
                             (void*) pszXMLFilename);
 
-    int bValid = FALSE;
+    bool bValid = false;
     if( pszXMLFilename[0] == '<' )
     {
         xmlDocPtr pDoc = xmlParseDoc((const xmlChar *)pszXMLFilename);

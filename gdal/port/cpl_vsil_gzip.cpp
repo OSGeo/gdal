@@ -2530,7 +2530,7 @@ void* CPLZLibInflate( const void* ptr, size_t nBytes,
     strm.avail_out = nTmpSize;
     strm.next_out = (Bytef*) pszTmp;
 
-    while(TRUE)
+    while(true)
     {
         ret = inflate(&strm, Z_FINISH);
         if( ret == Z_BUF_ERROR )

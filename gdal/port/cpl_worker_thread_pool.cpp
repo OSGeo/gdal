@@ -96,7 +96,7 @@ void CPLWorkerThreadPool::WorkerThreadFunction(void* user_data)
     if( psWT->pfnInitFunc )
         psWT->pfnInitFunc( psWT->pInitData );
 
-    while( TRUE )
+    while( true )
     {
         CPLWorkerThreadJob* psJob = poTP->GetNextJob(psWT);
         if( psJob == NULL )
@@ -254,7 +254,7 @@ void CPLWorkerThreadPool::WaitCompletion(int nMaxRemainingJobs)
 {
     if( nMaxRemainingJobs < 0 )
         nMaxRemainingJobs = 0;
-    while( TRUE )
+    while( true )
     {
         CPLAcquireMutex(hMutex, 1000.0);
         int nPendingJobsLocal = nPendingJobs;
@@ -306,7 +306,7 @@ int CPLWorkerThreadPool::Setup(int nThreads,
     }
     
     // Wait all threads to be started
-    while( TRUE )
+    while( true )
     {
         CPLAcquireMutex(hMutex, 1000.0);
         int nWaitingWorkerThreadsLocal = nWaitingWorkerThreads;
@@ -338,7 +338,7 @@ void CPLWorkerThreadPool::DeclareJobFinished()
 
 CPLWorkerThreadJob* CPLWorkerThreadPool::GetNextJob(CPLWorkerThread* psWorkerThread)
 {
-    while(TRUE)
+    while(true)
     {
         CPLAcquireMutex(hMutex, 1000.0);
         if( bStop )

@@ -137,7 +137,7 @@ static int VSICurlFindStringSensitiveExceptEscapeSequences( char ** papszList,
         /* The comparison is case-sensitive, escape for escaped */
         /* sequences where letters of the hexadecimal sequence */
         /* can be uppercase or lowercase depending on the quoting algorithm */
-        while(TRUE)
+        while(true)
         {
             ch1 = *pszIter1;
             ch2 = *pszIter2;
@@ -595,7 +595,7 @@ vsi_l_offset VSICurlHandle::GetFileSize()
     {
         char** papszExtensions = CSLTokenizeString2( pszAllowedExtensions, ", ", 0 );
         int nURLLen = strlen(pszURL);
-        int bFound = FALSE;
+        bool bFound = false;
         for(int i=0;papszExtensions[i] != NULL;i++)
         {
             int nExtensionLen = strlen(papszExtensions[i]);
@@ -603,14 +603,14 @@ vsi_l_offset VSICurlHandle::GetFileSize()
             {
                 if( nURLLen > 4 && strchr(pszURL + nURLLen - 4, '.') == NULL )
                 {
-                    bFound = TRUE;
+                    bFound = true;
                     break;
                 }
             }
             else if (nURLLen > nExtensionLen &&
                 EQUAL(pszURL + nURLLen - nExtensionLen, papszExtensions[i]))
             {
-                bFound = TRUE;
+                bFound = true;
                 break;
             }
         }
@@ -1325,7 +1325,7 @@ int VSICurlHandle::ReadMultiRange( int nRanges, void ** ppData,
 /* -------------------------------------------------------------------- */
         size_t nBytesAvail = nSize - (pszNext - pBuffer);
 
-        while(TRUE)
+        while(true)
         {
             if (nBytesAvail < panSizes[iRange])
             {
@@ -1555,7 +1555,7 @@ VSICurlFilesystemHandler::GetRegionFromCacheDisk(const char* pszURL,
         unsigned long   pszURLHashCached;
         vsi_l_offset    nFileOffsetStartCached;
         size_t          nSizeCached;
-        while(TRUE)
+        while(true)
         {
             if (VSIFReadL(&pszURLHashCached, 1, sizeof(unsigned long), fp) == 0)
                 break;
@@ -1603,7 +1603,7 @@ void VSICurlFilesystemHandler::AddRegionToCacheDisk(CachedRegion* psRegion)
         unsigned long   pszURLHashCached;
         vsi_l_offset    nFileOffsetStartCached;
         size_t          nSizeCached;
-        while(TRUE)
+        while(true)
         {
             if (VSIFReadL(&pszURLHashCached, 1, sizeof(unsigned long), fp) == 0)
                 break;
@@ -2212,7 +2212,7 @@ static int VSICurlParseFullFTPLine(char* pszLine,
 
     struct tm brokendowntime;
     memset(&brokendowntime, 0, sizeof(brokendowntime));
-    int bBrokenDownTimeValid = TRUE;
+    bool bBrokenDownTimeValid = true;
 
     char* pszMonth = VSICurlGetToken(pszNextToken, &pszNextToken);
     if (pszMonth == NULL || strlen(pszMonth) != 3)
@@ -2227,7 +2227,7 @@ static int VSICurlParseFullFTPLine(char* pszLine,
     if (i < 12)
         brokendowntime.tm_mon = i;
     else
-        bBrokenDownTimeValid = FALSE;
+        bBrokenDownTimeValid = false;
 
     char* pszDay = VSICurlGetToken(pszNextToken, &pszNextToken);
     if (pszDay == NULL || (strlen(pszDay) != 1 && strlen(pszDay) != 2))
@@ -2236,7 +2236,7 @@ static int VSICurlParseFullFTPLine(char* pszLine,
     if (nDay >= 1 && nDay <= 31)
         brokendowntime.tm_mday = nDay;
     else
-        bBrokenDownTimeValid = FALSE;
+        bBrokenDownTimeValid = false;
 
     char* pszHourOrYear = VSICurlGetToken(pszNextToken, &pszNextToken);
     if (pszHourOrYear == NULL || (strlen(pszHourOrYear) != 4 && strlen(pszHourOrYear) != 5))

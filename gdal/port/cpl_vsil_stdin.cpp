@@ -207,7 +207,7 @@ int VSIStdinHandle::Seek( vsi_l_offset nOffset, int nWhence )
 
     char abyTemp[8192];
     nCurOff = nRealPos;
-    while(TRUE)
+    while(true)
     {
         int nToRead = (int) MIN(8192, nOffset - nCurOff);
         int nRead = ReadAndCache( abyTemp, nToRead );

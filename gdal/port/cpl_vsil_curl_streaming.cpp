@@ -622,14 +622,14 @@ int VSICurlStreamingHandle::Exists()
         {
             char** papszExtensions = CSLTokenizeString2( pszAllowedExtensions, ", ", 0 );
             int nURLLen = strlen(pszURL);
-            int bFound = FALSE;
+            bool bFound = false;
             for(int i=0;papszExtensions[i] != NULL;i++)
             {
                 int nExtensionLen = strlen(papszExtensions[i]);
                 if (nURLLen > nExtensionLen &&
                     EQUAL(pszURL + nURLLen - nExtensionLen, papszExtensions[i]))
                 {
-                    bFound = TRUE;
+                    bFound = true;
                     break;
                 }
             }
@@ -716,7 +716,7 @@ int VSICurlStreamingHandle::ReceivedBytes(GByte *buffer, size_t count, size_t nm
         return 0;
     }
 
-    while(TRUE)
+    while(true)
     {
         size_t nFree = oRingBuffer.GetCapacity() - oRingBuffer.GetSize();
         if (nSize <= nFree)
@@ -882,12 +882,12 @@ void VSICurlStreamingHandle::DownloadInThread()
 {
     VSICurlSetOptions(hCurlHandle, pszURL);
 
-    static int bHasCheckVersion = FALSE;
-    static int bSupportGZip = FALSE;
+    static bool bHasCheckVersion = false;
+    static bool bSupportGZip = false;
     if (!bHasCheckVersion)
     {
         bSupportGZip = strstr(curl_version(), "zlib/") != NULL;
-        bHasCheckVersion = TRUE;
+        bHasCheckVersion = true;
     }
     if (bSupportGZip && CSLTestBoolean(CPLGetConfigOption("CPL_CURL_GZIP", "YES")))
     {

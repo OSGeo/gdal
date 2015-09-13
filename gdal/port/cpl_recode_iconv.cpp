@@ -43,13 +43,13 @@ CPL_CVSID("$Id$");
 /*                 CPLClearRecodeIconvWarningFlags()                    */
 /************************************************************************/
 
-static int bHaveWarned1 = FALSE;
-static int bHaveWarned2 = FALSE;
+static bool bHaveWarned1 = false;
+static bool bHaveWarned2 = false;
 
 void CPLClearRecodeIconvWarningFlags()
 {
-    bHaveWarned1 = FALSE;
-    bHaveWarned2 = FALSE;
+    bHaveWarned1 = false;
+    bHaveWarned2 = false;
 }
 
 /************************************************************************/
@@ -112,7 +112,7 @@ char *CPLRecodeIconv( const char *pszSource,
                 // Skip the invalid sequence in the input string.
                 if (!bHaveWarned1)
                 {
-                    bHaveWarned1 = TRUE;
+                    bHaveWarned1 = true;
                     CPLError(CE_Warning, CPLE_AppDefined,
                             "One or several characters couldn't be converted correctly from %s to %s.\n"
                             "This warning will not be emitted anymore",
@@ -264,7 +264,7 @@ char *CPLRecodeFromWCharIconv( const wchar_t *pwszSource,
                 pszSrcBuf += sizeof(wchar_t);
                 if (!bHaveWarned2)
                 {
-                    bHaveWarned2 = TRUE;
+                    bHaveWarned2 = true;
                     CPLError(CE_Warning, CPLE_AppDefined,
                             "One or several characters couldn't be converted correctly from %s to %s.\n"
                             "This warning will not be emitted anymore",
