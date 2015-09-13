@@ -370,11 +370,6 @@ static double OSR_GDV( char **papszNV, const char * pszField,
 OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
 
 {
-    char **papszNV = NULL;
-    char **papszTokens;
-    char *pszCleanCopy;
-    bool bAddProj4Extension = false;
-
 /* -------------------------------------------------------------------- */
 /*      Clear any existing definition.                                  */
 /* -------------------------------------------------------------------- */
@@ -384,7 +379,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
 /*      Strip any newlines or other "funny" stuff that might occur      */
 /*      if this string just came from reading a file.                   */
 /* -------------------------------------------------------------------- */
-    pszCleanCopy = CPLStrdup( pszProj4 );
+    char *pszCleanCopy = CPLStrdup( pszProj4 );
     for( int i = 0; pszCleanCopy[i] != '\0'; i++ )
     {
         if( pszCleanCopy[i] == 10
@@ -397,9 +392,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
 /*      Try to normalize the definition.  This should expand +init=     */
 /*      clauses and so forth.                                           */
 /* -------------------------------------------------------------------- */
-    char *pszNormalized;
-
-    pszNormalized = OCTProj4Normalize( pszCleanCopy );
+    char *pszNormalized = OCTProj4Normalize( pszCleanCopy );
 
     /* Workaround proj.4 bug (#239) by manually re-adding no_off/no_uoff */
     if( strstr(pszCleanCopy, "+no_off") != NULL && 
@@ -418,7 +411,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
     }
 
     CPLFree( pszCleanCopy );
-    
+
 /* -------------------------------------------------------------------- */
 /*      If we have an EPSG based init string, and no existing +proj     */
 /*      portion then try to normalize into into a PROJ.4 string.        */
@@ -440,8 +433,9 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
 /*      Parse the PROJ.4 string into a cpl_string.h style name/value    */
 /*      list.                                                           */
 /* -------------------------------------------------------------------- */
-    papszTokens = OSRProj4Tokenize( pszNormalized );
+    char **papszTokens = OSRProj4Tokenize( pszNormalized );
     CPLFree( pszNormalized );
+    char **papszNV = NULL;
 
     for( int i = 0; papszTokens != NULL && papszTokens[i] != NULL; i++ )
     {
@@ -487,6 +481,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
 /*      Operate on the basis of the projection name.                    */
 /* -------------------------------------------------------------------- */
     const char *pszProj = CSLFetchNameValue(papszNV,"proj");
+    bool bAddProj4Extension = false;
 
     if( pszProj == NULL )
     {
@@ -498,12 +493,12 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
     else if( EQUAL(pszProj,"longlat") || EQUAL(pszProj,"latlong") )
     {
     }
-    
+
     else if( EQUAL(pszProj,"geocent") )
     {
         SetGeocCS( "Geocentric" );
     }
-    
+
     else if( EQUAL(pszProj,"bonne") )
     {
         SetBonne( OSR_GDV( papszNV, "lat_1", 0.0 ), 
@@ -1493,11 +1488,6 @@ OGRErr CPL_STDCALL OSRExportToProj4( OGRSpatialReferenceH hSRS,
 OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 
 {
-    const char *pszProjection = GetAttrValue("PROJECTION");
-
-    char szProj4[512];
-    szProj4[0] = '\0';
-
     if( GetRoot() == NULL )
     {
         *ppszProj4 = CPLStrdup("");
@@ -1509,7 +1499,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 /* -------------------------------------------------------------------- */
 /*      Do we have a PROJ.4 override definition?                        */
 /* -------------------------------------------------------------------- */
-    const char *pszPredefProj4 = GetExtension( GetRoot()->GetValue(), 
+    const char *pszPredefProj4 = GetExtension( GetRoot()->GetValue(),
                                                "PROJ4", NULL );
     if( pszPredefProj4 != NULL )
     {
@@ -1523,7 +1513,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
     const OGR_SRSNode *poPRIMEM = GetAttrNode( "PRIMEM" );
     double dfFromGreenwich = 0.0;
 
-    if( poPRIMEM != NULL && poPRIMEM->GetChildCount() >= 2 
+    if( poPRIMEM != NULL && poPRIMEM->GetChildCount() >= 2
         && CPLAtof(poPRIMEM->GetChild(1)->GetValue()) != 0.0 )
     {
         dfFromGreenwich = CPLAtof(poPRIMEM->GetChild(1)->GetValue());
@@ -1532,6 +1522,11 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 /* ==================================================================== */
 /*      Handle the projection definition.                               */
 /* ==================================================================== */
+
+    const char *pszProjection = GetAttrValue("PROJECTION");
+
+    char szProj4[512];
+    szProj4[0] = '\0';
 
     if( pszProjection == NULL && IsGeographic() )
     {
