@@ -2542,11 +2542,10 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 /* -------------------------------------------------------------------- */
 /*      Is there prime meridian info to apply?                          */
 /* -------------------------------------------------------------------- */
-    if( poPRIMEM != NULL && poPRIMEM->GetChildCount() >= 2 
+    if( poPRIMEM != NULL && poPRIMEM->GetChildCount() >= 2
         && CPLAtof(poPRIMEM->GetChild(1)->GetValue()) != 0.0 )
     {
         const char *pszAuthority = GetAuthorityName( "PRIMEM" );
-        char szPMValue[128];
         int  nCode = -1;
 
         if( pszAuthority != NULL && EQUAL(pszAuthority,"EPSG") )
@@ -2558,20 +2557,21 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
         if (psProj4PM == NULL)
             psProj4PM = OGRGetProj4PMFromVal(dfFromGreenwich);
 
+        char szPMValue[128];
         if (psProj4PM != NULL)
         {
             strcpy( szPMValue, psProj4PM->pszProj4PMName );
         }
         else
         {
-            CPLsprintf( szPMValue, "%.16g", dfFromGreenwich );
+            CPLsnprintf( szPMValue, sizeof(szPMValue), "%.16g", dfFromGreenwich );
         }
 
         SAFE_PROJ4_STRCAT( "+pm=" );
         SAFE_PROJ4_STRCAT( szPMValue );
         SAFE_PROJ4_STRCAT( " " );
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Handle linear units.                                            */
 /* -------------------------------------------------------------------- */
