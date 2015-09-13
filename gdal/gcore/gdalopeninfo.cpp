@@ -83,7 +83,7 @@ GDALOpenInfo::GDALOpenInfo( const char * pszFilenameIn, int nOpenFlagsIn,
     papszOpenOptions = NULL;
 
 #ifdef HAVE_READLINK
-    int  bHasRetried = FALSE;
+    bool bHasRetried = false;
 #endif
 
 /* -------------------------------------------------------------------- */
@@ -94,7 +94,7 @@ GDALOpenInfo::GDALOpenInfo( const char * pszFilenameIn, int nOpenFlagsIn,
 #ifdef HAVE_READLINK
 retry:
 #endif
-    int bPotentialDirectory = FALSE;
+    bool bPotentialDirectory = false;
 
     /* Check if the filename might be a directory of a special virtual file system */
     if( strncmp(pszFilename, "/vsizip/", strlen("/vsizip/")) == 0 ||
@@ -102,11 +102,11 @@ retry:
     {
         const char* pszExt = CPLGetExtension(pszFilename);
         if( EQUAL(pszExt, "zip") || EQUAL(pszExt, "tar") || EQUAL(pszExt, "gz") )
-            bPotentialDirectory = TRUE;
+            bPotentialDirectory = true;
     }
     else if( strncmp(pszFilename, "/vsicurl/", strlen("/vsicurl/")) == 0 )
     {
-        bPotentialDirectory = TRUE;
+        bPotentialDirectory = true;
     }
 
     if( bPotentialDirectory )
@@ -169,7 +169,7 @@ retry:
                 CPLFree(pszFilename);
                 pszFilename = CPLStrdup(szPointerFilename);
                 papszSiblingsIn = NULL;
-                bHasRetried = TRUE;
+                bHasRetried = true;
                 goto retry;
             }
         }

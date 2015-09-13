@@ -113,7 +113,7 @@ CPLErr GDALParseGMLCoverage( CPLXMLNode *psXML,
 
     if( psOriginPoint != NULL )
     {
-        int bOldWrap = FALSE;
+        bool bOldWrap = false;
 
         // old coverages (ie. WCS) just have <pos> under <origin> so we
         // may need to temporarily force <origin> to <Point>
@@ -121,7 +121,7 @@ CPLErr GDALParseGMLCoverage( CPLXMLNode *psXML,
             && EQUAL(psOriginPoint->pszValue,"origin") )
         {
             strcpy( psOriginPoint->pszValue, "Point");
-            bOldWrap = TRUE;
+            bOldWrap = true;
         }
         poOriginGeometry = (OGRPoint *) 
             OGR_G_CreateFromGMLTree( psOriginPoint );
@@ -145,11 +145,11 @@ CPLErr GDALParseGMLCoverage( CPLXMLNode *psXML,
 /* -------------------------------------------------------------------- */
     char **papszOffset1Tokens = NULL;
     char **papszOffset2Tokens = NULL;
-    int bSuccess = FALSE;
+    bool bSuccess = false;
 
-    papszOffset1Tokens = 
+    papszOffset1Tokens =
         CSLTokenizeStringComplex( pszOffset1, " ,", FALSE, FALSE );
-    papszOffset2Tokens = 
+    papszOffset2Tokens =
         CSLTokenizeStringComplex( pszOffset2, " ,", FALSE, FALSE );
 
     if( CSLCount(papszOffset1Tokens) >= 2
@@ -169,7 +169,7 @@ CPLErr GDALParseGMLCoverage( CPLXMLNode *psXML,
         padfGeoTransform[3] -= padfGeoTransform[4]*0.5;
         padfGeoTransform[3] -= padfGeoTransform[5]*0.5;
 
-        bSuccess = TRUE;
+        bSuccess = true;
         //bHaveGeoTransform = TRUE;
     }
 
@@ -209,4 +209,3 @@ CPLErr GDALParseGMLCoverage( CPLXMLNode *psXML,
 
     return CE_None;
 }
-

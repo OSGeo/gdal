@@ -285,8 +285,8 @@ CPLXMLNode *GDALMultiDomainMetadata::Serialize()
             continue;
 
         CPLXMLNode *psMD;
-        int bFormatXML = FALSE;
-        
+        bool bFormatXML = false;
+
         psMD = CPLCreateXMLNode( NULL, CXT_Element, "Metadata" );
 
         if( strlen( papszDomainList[iDomain] ) > 0 )
@@ -300,12 +300,12 @@ CPLXMLNode *GDALMultiDomainMetadata::Serialize()
             CPLXMLNode *psValueAsXML = CPLParseXMLString( papszMD[0] );
             if( psValueAsXML != NULL )
             {
-                bFormatXML = TRUE;
+                bFormatXML = true;
 
-                CPLCreateXMLNode( 
+                CPLCreateXMLNode(
                     CPLCreateXMLNode( psMD, CXT_Attribute, "format" ), 
                     CXT_Text, "xml" );
-                
+
                 CPLAddXMLChild( psMD, psValueAsXML );
             }
         }

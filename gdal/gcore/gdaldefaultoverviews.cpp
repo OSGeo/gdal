@@ -77,10 +77,10 @@ GDALDefaultOverviews::~GDALDefaultOverviews()
 
 int GDALDefaultOverviews::CloseDependentDatasets()
 {
-    int bHasDroppedRef = FALSE;
+    bool bHasDroppedRef = false;
     if( poODS != NULL )
     {
-        bHasDroppedRef = TRUE;
+        bHasDroppedRef = true;
         poODS->FlushCache();
         GDALClose( poODS );
         poODS = NULL;
@@ -90,7 +90,7 @@ int GDALDefaultOverviews::CloseDependentDatasets()
     {
         if( bOwnMaskDS )
         {
-            bHasDroppedRef = TRUE;
+            bHasDroppedRef = true;
             poMaskDS->FlushCache();
             GDALClose( poMaskDS );
         }
@@ -226,7 +226,7 @@ void GDALDefaultOverviews::OverviewScan()
 /* -------------------------------------------------------------------- */
     if( !poODS && !EQUAL(pszInitName,":::VIRTUAL:::") )
     {
-        int bTryFindAssociatedAuxFile = TRUE;
+        bool bTryFindAssociatedAuxFile = true;
         if( papszInitSiblingFiles )
         {
             CPLString osAuxFilename = CPLResetExtension( pszInitName, "aux");
@@ -239,7 +239,7 @@ void GDALDefaultOverviews::OverviewScan()
                 iSibling = CSLFindString( papszInitSiblingFiles,
                                         CPLGetFilename(osAuxFilename) );
                 if( iSibling < 0 )
-                    bTryFindAssociatedAuxFile = FALSE;
+                    bTryFindAssociatedAuxFile = false;
             }
         }
 
@@ -252,7 +252,7 @@ void GDALDefaultOverviews::OverviewScan()
         if( poODS )
         {
             int bUseRRD = CSLTestBoolean(CPLGetConfigOption("USE_RRD","NO"));
-            
+
             bOvrIsAux = TRUE;
             if( GetOverviewCount(1) == 0 && !bUseRRD )
             {
@@ -469,10 +469,10 @@ CPLErr GDALDefaultOverviews::CleanOverviews()
     else
         eErr = CE_None;
 
-    // Reset the saved overview filename. 
+    // Reset the saved overview filename.
     if( !EQUAL(poDS->GetDescription(),":::VIRTUAL:::") )
     {
-        int bUseRRD = CSLTestBoolean(CPLGetConfigOption("USE_RRD","NO"));
+        const bool bUseRRD = CSLTestBoolean(CPLGetConfigOption("USE_RRD","NO"));
 
         if( bUseRRD )
             osOvrFilename = CPLResetExtension( poDS->GetDescription(), "aux" );
