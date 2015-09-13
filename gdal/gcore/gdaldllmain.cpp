@@ -64,12 +64,12 @@ void CPLFinalizeTLS();
  * @since GDAL 2.0
  */
 
-static int bGDALDestroyAlreadyCalled = FALSE;
+static bool bGDALDestroyAlreadyCalled = FALSE;
 void GDALDestroy(void)
 {
     if( bGDALDestroyAlreadyCalled )
         return;
-    bGDALDestroyAlreadyCalled = TRUE;
+    bGDALDestroyAlreadyCalled = true;
 
     CPLDebug("GDAL", "In GDALDestroy - unloading GDAL shared library.");
     bInGDALGlobalDestructor = TRUE;
@@ -161,4 +161,3 @@ extern "C" int WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpRese
 }
 
 #endif // _MSC_VER
-

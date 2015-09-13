@@ -541,7 +541,7 @@ int GDALJP2Metadata::ParseJP2GeoTIFF()
     if(! CSLTestBoolean(CPLGetConfigOption("GDAL_USE_GEOJP2", "TRUE")) )
         return FALSE;
 
-    int abValidProjInfo[MAX_JP2GEOTIFF_BOXES] = { FALSE };
+    bool abValidProjInfo[MAX_JP2GEOTIFF_BOXES] = { false };
     char* apszProjection[MAX_JP2GEOTIFF_BOXES] = { NULL };
     double aadfGeoTransform[MAX_JP2GEOTIFF_BOXES][6];
     int anGCPCount[MAX_JP2GEOTIFF_BOXES] = { 0 };
@@ -569,7 +569,7 @@ int GDALJP2Metadata::ParseJP2GeoTIFF()
                                &abPixelIsPoint[i], &apapszRPCMD[i] ) == CE_None )
         {
             if( apszProjection[i] != NULL && strlen(apszProjection[i]) != 0 ) 
-                abValidProjInfo[i] = TRUE;
+                abValidProjInfo[i] = true;
         }
     }
 
@@ -929,11 +929,11 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
 /* -------------------------------------------------------------------- */
     char **papszOffset1Tokens = NULL;
     char **papszOffset2Tokens = NULL;
-    int bSuccess = FALSE;
+    bool bSuccess = false;
 
-    papszOffset1Tokens = 
+    papszOffset1Tokens =
         CSLTokenizeStringComplex( pszOffset1, " ,", FALSE, FALSE );
-    papszOffset2Tokens = 
+    papszOffset2Tokens =
         CSLTokenizeStringComplex( pszOffset2, " ,", FALSE, FALSE );
 
     if( CSLCount(papszOffset1Tokens) >= 2
@@ -953,7 +953,7 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
         adfGeoTransform[3] -= adfGeoTransform[4]*0.5;
         adfGeoTransform[3] -= adfGeoTransform[5]*0.5;
 
-        bSuccess = TRUE;
+        bSuccess = true;
         bHaveGeoTransform = TRUE;
     }
 
@@ -989,7 +989,7 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
 /*      If we have gotten a geotransform, then try to interprete the    */
 /*      srsName.                                                        */
 /* -------------------------------------------------------------------- */
-    int bNeedAxisFlip = FALSE;
+    bool bNeedAxisFlip = false;
 
     OGRSpatialReference oSRS;
     if( bSuccess && pszSRSName != NULL 
@@ -1016,7 +1016,7 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
             {
                 CPLDebug( "GMLJP2", "Request axis flip for SRS=%s",
                           pszSRSName );
-                bNeedAxisFlip = TRUE;
+                bNeedAxisFlip = true;
             }
         }
         else if( !GMLSRSLookup( pszSRSName ) )
@@ -1039,7 +1039,7 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
         && CSLTestBoolean( CPLGetConfigOption( "GDAL_IGNORE_AXIS_ORIENTATION",
                                                "FALSE" ) ) )
     {
-        bNeedAxisFlip = FALSE;
+        bNeedAxisFlip = false;
         CPLDebug( "GMLJP2", "Suppressed axis flipping based on GDAL_IGNORE_AXIS_ORIENTATION." );
     }
     
@@ -1065,7 +1065,8 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
     if( bNeedAxisFlip && psRG != NULL )
     {
         int nAxisCount = 0;
-        int bFirstAxisIsEastOrLong = FALSE, bSecondAxisIsNorthOrLat = FALSE;
+        bool bFirstAxisIsEastOrLong = false;
+        bool bSecondAxisIsNorthOrLat = false;
         for(CPLXMLNode* psIter = psRG->psChild; psIter != NULL; psIter = psIter->psNext )
         {
             if( psIter->eType == CXT_Element && strcmp(psIter->pszValue, "axisName") == 0 &&
@@ -1089,7 +1090,7 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
         if( bFirstAxisIsEastOrLong && bSecondAxisIsNorthOrLat )
         {
             CPLDebug( "GMLJP2", "Disable axis flip because of explicit axisName disabling it" );
-            bNeedAxisFlip = FALSE;
+            bNeedAxisFlip = false;
         }
     }
 
@@ -1692,7 +1693,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
     CPLString osRootGMLId = "ID_GMLJP2_0";
     CPLString osGridCoverage;
     CPLString osGridCoverageFile;
-    int bCRSURL = TRUE;
+    bool bCRSURL = true;
     std::vector<GMLJP2V2MetadataDesc> aoMetadata;
     std::vector<GMLJP2V2AnnotationDesc> aoAnnotations;
     std::vector<GMLJP2V2GMLFileDesc> aoGMLFiles;
@@ -2183,7 +2184,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
             {
                 const char* pszLookedLabel =
                     aoGMLFiles[i].osSchemaLocation.c_str() + strlen("gmljp2://xml/");
-                int bFound = FALSE;
+                bool bFound = false;
                 for(int j=0; !bFound && j<(int)aoBoxes.size();j++)
                     bFound = (strcmp(pszLookedLabel, aoBoxes[j].osLabel) == 0);
                 if( !bFound )
@@ -2319,7 +2320,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
 /*      Process metadata, annotations and features collections.         */
 /* -------------------------------------------------------------------- */
     std::vector<CPLString> aosTmpFiles;
-    int bRootHasXLink = FALSE;
+    bool bRootHasXLink = false;
     if( aoMetadata.size() || aoAnnotations.size() || aoGMLFiles.size() ||
         aoStyles.size() || aoExtensions.size() )
     {
@@ -2522,7 +2523,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                 {
                     if( !bRootHasXLink )
                     {
-                        bRootHasXLink = TRUE;
+                        bRootHasXLink = true;
                         CPLSetXMLValue(psGMLJP2CoverageCollection, "#xmlns:xlink",
                                        "http://www.w3.org/1999/xlink");
                     }
@@ -2934,10 +2935,10 @@ CPLXMLNode* GDALJP2Metadata::CreateGDALMultiDomainMetadataXML(
         papszSrcMD = CSLSetNameValue(papszSrcMD, "VERSION", NULL);
     }
 
-    int bHasMD = FALSE;
+    bool bHasMD = false;
     if( papszSrcMD && *papszSrcMD )
     {
-        bHasMD = TRUE;
+        bHasMD = true;
         oLocalMDMD.SetMetadata(papszSrcMD);
     }
     CSLDestroy(papszSrcMD);

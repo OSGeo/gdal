@@ -121,7 +121,7 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                 /* the raster, and that is going to be completely written ? */
                 /* If so, don't load it from storage, but zeroized it so that */
                 /* the content outsize of the validity area is initialized */
-                int bMemZeroBuffer = FALSE;
+                bool bMemZeroBuffer = false;
                 if( eRWFlag == GF_Write && !bJustInitialize &&
                     nXOff == 0 && nXSize == nBlockXSize &&
                     nYOff <= nLBlockY * nBlockYSize &&
@@ -129,7 +129,7 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                     (nLBlockY+1) * nBlockYSize > GetYSize() )
                 {
                     bJustInitialize = TRUE;
-                    bMemZeroBuffer = TRUE;
+                    bMemZeroBuffer = true;
                 }
 
                 if( poBlock )
@@ -299,7 +299,7 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                 /* the raster, and that is going to be completely written ? */
                 /* If so, don't load it from storage, but zeroized it so that */
                 /* the content outsize of the validity area is initialized */
-                int bMemZeroBuffer = FALSE;
+                bool bMemZeroBuffer = false;
                 if( eRWFlag == GF_Write && !bJustInitialize &&
                     nXOff <= nLBlockX * nBlockXSize &&
                     nYOff <= nLBlockY * nBlockYSize &&
@@ -309,7 +309,7 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                      (nYOff + nYSize == GetYSize() && (nLBlockY+1) * nBlockYSize > GetYSize())) )
                 {
                     bJustInitialize = TRUE;
-                    bMemZeroBuffer = TRUE;
+                    bMemZeroBuffer = true;
                 }
 //                printf( "bJustInitialize = %d (%d,%d,%d,%d)\n", 
 //                        bJustInitialize,
@@ -479,7 +479,7 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                         && nYOff + nYSize >= (nLBlockY+1) * nBlockYSize
                         && nXOff <= nLBlockX * nBlockXSize
                         && nXOff + nXSize >= (nLBlockX+1) * nBlockXSize;
-                    /*int bMemZeroBuffer = FALSE;
+                    /*bool bMemZeroBuffer = FALSE;
                     if( !bJustInitialize &&
                         nXOff <= nLBlockX * nBlockXSize &&
                         nYOff <= nLBlockY * nBlockYSize &&
@@ -931,7 +931,7 @@ CPLErr GDALRasterBand::RasterIOResampled( CPL_UNUSED GDALRWFlag eRWFlag,
 
         GDALRasterBand* poMaskBand = NULL;
         int nMaskFlags = 0;
-        int bUseNoDataMask = FALSE;
+        bool bUseNoDataMask = false;
 
         poMaskBand = GetMaskBand();
         nMaskFlags = GetMaskFlags();
@@ -1020,7 +1020,7 @@ CPLErr GDALRasterBand::RasterIOResampled( CPL_UNUSED GDALRWFlag eRWFlag,
                                 nChunkXSizeQueried, nChunkYSizeQueried,
                                 eWrkDataType, 0, 0, NULL );
 
-                int bSkipResample = FALSE;
+                bool bSkipResample = false;
                 int bNoDataMaskFullyOpaque = FALSE;
                 if (eErr == CE_None && bUseNoDataMask)
                 {
@@ -1055,7 +1055,7 @@ CPLErr GDALRasterBand::RasterIOResampled( CPL_UNUSED GDALRWFlag eRWFlag,
                                             eBufType, (int)nPixelSpace,
                                             nDstXCount);
                             }
-                            bSkipResample = TRUE;
+                            bSkipResample = true;
                         }
                         else
                         {
@@ -1160,21 +1160,21 @@ CPLErr GDALDataset::RasterIOResampled( CPL_UNUSED GDALRWFlag eRWFlag,
     /* so that subwindow extracts give the exact same results as entire raster */
     /* scaling */
     double dfDestXOff = dfXOff / dfXRatioDstToSrc;
-    int bHasXOffVirtual = FALSE;
+    bool bHasXOffVirtual = false;
     int nDestXOffVirtual = 0;
     if( fabs(dfDestXOff - (int)(dfDestXOff + 0.5)) < 1e-8 )
     {
-        bHasXOffVirtual = TRUE;
+        bHasXOffVirtual = true;
         dfXOff = nXOff;
         nDestXOffVirtual = (int)(dfDestXOff + 0.5);
     }
 
     double dfDestYOff = dfYOff / dfYRatioDstToSrc;
-    int bHasYOffVirtual = FALSE;
+    bool bHasYOffVirtual = false;
     int nDestYOffVirtual = 0;
     if( fabs(dfDestYOff - (int)(dfDestYOff + 0.5)) < 1e-8 )
     {
-        bHasYOffVirtual = TRUE;
+        bHasYOffVirtual = true;
         dfYOff = nYOff;
         nDestYOffVirtual = (int)(dfDestYOff + 0.5);
     }
@@ -1342,7 +1342,7 @@ CPLErr GDALDataset::RasterIOResampled( CPL_UNUSED GDALRWFlag eRWFlag,
 
         GDALRasterBand* poMaskBand = NULL;
         int nMaskFlags = 0;
-        int bUseNoDataMask = FALSE;
+        bool bUseNoDataMask = false;
 
         poMaskBand = poFirstSrcBand->GetMaskBand();
         nMaskFlags = poFirstSrcBand->GetMaskFlags();
@@ -1423,7 +1423,7 @@ CPLErr GDALDataset::RasterIOResampled( CPL_UNUSED GDALRWFlag eRWFlag,
                     nChunkXSizeQueried = nRasterXSize - nChunkXOffQueried;
                 CPLAssert(nChunkXSizeQueried <= nFullResXSizeQueried);
 
-                int bSkipResample = FALSE;
+                bool bSkipResample = false;
                 int bNoDataMaskFullyOpaque = FALSE;
                 if (eErr == CE_None && bUseNoDataMask)
                 {
@@ -1463,7 +1463,7 @@ CPLErr GDALDataset::RasterIOResampled( CPL_UNUSED GDALRWFlag eRWFlag,
                                                 nDstXCount);
                                 }
                             }
-                            bSkipResample = TRUE;
+                            bSkipResample = true;
                         }
                         else
                         {
@@ -3631,7 +3631,7 @@ GDALDataset::BlockBasedRasterIO( GDALRWFlag eRWFlag,
                     && nYOff + nYSize >= (nLBlockY+1) * nBlockYSize
                     && nXOff <= nLBlockX * nBlockXSize
                     && nXOff + nXSize >= (nLBlockX+1) * nBlockXSize;
-                /*int bMemZeroBuffer = FALSE;
+                /*bool bMemZeroBuffer = FALSE;
                 if( eRWFlag == GF_Write && !bJustInitialize &&
                     nXOff <= nLBlockX * nBlockXSize &&
                     nYOff <= nLBlockY * nBlockYSize &&

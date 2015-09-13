@@ -839,7 +839,7 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
         if( abyMarker[1] == 0x93 )
         {
             GIntBig nMarkerSize = 0;
-            int bBreak = FALSE;
+            bool bBreak = false;
             if( nNextTileOffset == 0 )
             {
                 nMarkerSize = (nBoxDataOffset + nBoxDataLength - 2) - nOffset - 2;
@@ -850,7 +850,7 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
                     /* autotest/gdrivers/data/rgb16_ecwsdk.jp2 does not end */
                     /* with a EOC... */
                     nMarkerSize += 2;
-                    bBreak = TRUE;
+                    bBreak = true;
                 }
             }
             else if( nNextTileOffset >= nOffset + 2 )
@@ -1012,13 +1012,13 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
         }
         else if( abyMarker[1] == 0x52 ) /* COD */
         {
-            int bHasPrecincts = TRUE;
+            bool bHasPrecincts = true;
             if( nRemainingMarkerSize >= 1 ) {
                 nLastVal = *pabyMarkerDataIter;
                 CPLString osInterp;
                 if( nLastVal & 0x1 )
                 {
-                    bHasPrecincts = TRUE;
+                    bHasPrecincts = true;
                     osInterp += "User defined precincts";
                 }
                 else

@@ -995,7 +995,7 @@ int CPL_STDCALL GDALLoadOziMapFile( const char *pszFilename,
              && !EQUAL(papszTok[3], "")
              && nCoordinateCount < MAX_GCP )
         {
-            int     bReadOk = FALSE;
+            bool bReadOk = false;
             double  dfLon = 0., dfLat = 0.;
 
             if ( !EQUAL(papszTok[6], "")
@@ -1037,7 +1037,7 @@ int CPL_STDCALL GDALLoadOziMapFile( const char *pszFilename,
                 // Set cartesian coordinates of the pixels.
                 dfLon = CPLAtofM(papszTok[14]);
                 dfLat = CPLAtofM(papszTok[15]);
-                bReadOk = TRUE;
+                bReadOk = true;
 
                 //if ( EQUAL(papszTok[16], "S") )
                 //    dfLat = -dfLat;
@@ -1155,12 +1155,12 @@ int CPL_STDCALL GDALLoadTabFile( const char *pszFilename,
 {
     char	**papszLines;
     char        **papszTok=NULL;
-    int	        bTypeRasterFound = FALSE;
-    int		bInsideTableDef = FALSE;
+    bool        bTypeRasterFound = false;
+    bool        bInsideTableDef = false;
     int		iLine, numLines=0;
     int	        nCoordinateCount = 0;
     GDAL_GCP    asGCPs[MAX_GCP];
-    
+
     papszLines = CSLLoad2( pszFilename, 1000, 200, NULL );
 
     if ( !papszLines )
@@ -1188,7 +1188,7 @@ int CPL_STDCALL GDALLoadTabFile( const char *pszFilename,
             // Only RASTER-type will be handled
             if (EQUAL(papszTok[1], "RASTER"))
             {
-                bTypeRasterFound = TRUE;
+                bTypeRasterFound = true;
             }
             else
             {

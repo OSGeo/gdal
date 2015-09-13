@@ -272,7 +272,7 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
 /*      Precompute inner loop constants.                                */
 /* ==================================================================== */
     int iDstPixel;
-    int bSrcXSpacingIsTwo = TRUE;
+    bool bSrcXSpacingIsTwo = true;
     for( iDstPixel = nDstXOff; iDstPixel < nDstXOff2; iDstPixel++ )
     {
         int   nSrcXOff, nSrcXOff2;
@@ -296,7 +296,7 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
         panSrcXOffShifted[2 * (iDstPixel - nDstXOff)] = nSrcXOff - nChunkXOff;
         panSrcXOffShifted[2 * (iDstPixel - nDstXOff) + 1] = nSrcXOff2 - nChunkXOff;
         if (nSrcXOff2 - nSrcXOff != 2)
-            bSrcXSpacingIsTwo = FALSE;
+            bSrcXSpacingIsTwo = false;
     }
 
 /* ==================================================================== */
@@ -2395,7 +2395,7 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
 
     GDALRasterBand* poMaskBand = NULL;
     int nMaskFlags = 0;
-    int bUseNoDataMask = FALSE;
+    bool bUseNoDataMask = false;
 
     if( !EQUALN(pszResampling,"NEAR",4) )
     {
@@ -2830,7 +2830,7 @@ GDALRegenerateOverviewsMultiBand(int nBands, GDALRasterBand** papoSrcBands,
 
     /* If we have a nodata mask and we are doing something more complicated */
     /* than nearest neighbouring, we have to fetch to nodata mask */ 
-    int bUseNoDataMask = (!EQUALN(pszResampling,"NEAR",4) &&
+    bool bUseNoDataMask = (!EQUALN(pszResampling,"NEAR",4) &&
                           (papoSrcBands[0]->GetMaskFlags() & GMF_ALL_VALID) == 0);
 
     int* pabHasNoData = (int*)CPLMalloc(nBands * sizeof(int));

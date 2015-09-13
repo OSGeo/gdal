@@ -1875,9 +1875,9 @@ CPLErr GDALDataset::RasterIO( GDALRWFlag eRWFlag,
 
 {
     int i = 0;
-    int bNeedToFreeBandMap = FALSE;
+    bool bNeedToFreeBandMap = false;
     CPLErr eErr = CE_None;
-    
+
     GDALRasterIOExtraArg sExtraArg;
     if( psExtraArg == NULL )
     {
@@ -1954,7 +1954,7 @@ CPLErr GDALDataset::RasterIO( GDALRWFlag eRWFlag,
             for( i = 0; i < nBandCount; i++ )
                 panBandMap[i] = i+1;
 
-            bNeedToFreeBandMap = TRUE;
+            bNeedToFreeBandMap = true;
         }
         else
             panBandMap = anBandMap;
@@ -4123,7 +4123,7 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
 
     if( nGroupTransactions <= 0 )
     {
-      while( TRUE )
+      while( true )
       {
         OGRFeature      *poDstFeature = NULL;
 
@@ -4189,7 +4189,9 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
     }
     else
     {
-      int i, bStopTransfer = FALSE, bStopTransaction = FALSE;
+      int i;
+      bool bStopTransfer = false;
+      bool bStopTransaction = false;
       int nFeatCount = 0; // Number of features in the temporary array
       int nFeaturesToAdd = 0;
       OGRFeature **papoDstFeature =
@@ -4205,7 +4207,7 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
 
             if( poFeature == NULL )
             {
-                bStopTransfer = 1;
+                bStopTransfer = true;
                 break;
             }
 
@@ -4219,7 +4221,7 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
                           "Unable to translate feature " CPL_FRMT_GIB " from layer %s.\n",
                           poFeature->GetFID(), poSrcDefn->GetName() );
                 OGRFeature::DestroyFeature( poFeature );
-                bStopTransfer = TRUE;
+                bStopTransfer = true;
                 break;
             }
 
@@ -4238,7 +4240,7 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
                                       " from layer %s.\n",
                                       poFeature->GetFID(), poSrcDefn->GetName() );
                             OGRFeature::DestroyFeature( poFeature );
-                            bStopTransfer = TRUE;
+                            bStopTransfer = true;
                             break;
                         }
                     }
@@ -4252,18 +4254,18 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
         nFeaturesToAdd = nFeatCount;
 
         CPLErrorReset();
-        bStopTransaction = FALSE;
+        bStopTransaction = false;
         while( !bStopTransaction )
         {
-            bStopTransaction = TRUE;
+            bStopTransaction = true;
             poDstLayer->StartTransaction();
             for( i = 0; i < nFeaturesToAdd; i++ )
             {
                 if( poDstLayer->CreateFeature( papoDstFeature[i] ) != OGRERR_NONE )
                 {
                     nFeaturesToAdd = i;
-                    bStopTransfer = TRUE;
-                    bStopTransaction = FALSE;
+                    bStopTransfer = true;
+                    bStopTransaction = false;
                 }
             }
             if( bStopTransaction )

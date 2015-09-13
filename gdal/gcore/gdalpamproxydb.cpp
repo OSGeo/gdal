@@ -60,7 +60,7 @@ class GDALPamProxyDB
     void        SaveDB();
 }; 
 
-static int bProxyDBInitialized = FALSE;
+static bool bProxyDBInitialized = FALSE;
 static GDALPamProxyDB *poProxyDB = NULL;
 static CPLMutex *hProxyDBLock = NULL;
 
@@ -270,7 +270,7 @@ static void InitProxyDB()
             }
         }
 
-        bProxyDBInitialized = TRUE;
+        bProxyDBInitialized = true;
     }
 }
 
@@ -283,9 +283,9 @@ void PamCleanProxyDB()
 {
     {
         CPLMutexHolderD( &hProxyDBLock );
-        
-        bProxyDBInitialized = FALSE;
-        
+
+        bProxyDBInitialized = false;
+
         delete poProxyDB;
         poProxyDB = NULL;
     }

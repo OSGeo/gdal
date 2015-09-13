@@ -1191,7 +1191,7 @@ static int GDALSkipUntilEndOfJunkMarker(GDALPipe* p)
         return FALSE;
     if( memcmp(abyEndOfJunkMarker, abyBuffer, sizeof(abyBuffer)) == 0 )
         return TRUE;
-    while(TRUE)
+    while(true)
     {
         if( nIter < sizeof(abyBuffer) )
             c = abyBuffer[nIter ++];
@@ -1778,7 +1778,7 @@ static GDALServerSpawnedProcess* GDALServerSpawnAsync()
     if( strstr(pszSpawnServer, "gdalserver") == NULL )
         apszGDALServer[1] = NULL;
 #endif
-    int bCheckVersions = TRUE;
+    bool bCheckVersions = true;
 
     CPLSpawnedProcess* sp;
 #ifndef WIN32
@@ -1786,7 +1786,7 @@ static GDALServerSpawnedProcess* GDALServerSpawnAsync()
         EQUAL(pszSpawnServer, "FALSE")  || EQUAL(pszSpawnServer, "0") )
     {
         sp = CPLSpawnAsync(GDALServerLoopForked, NULL, TRUE, TRUE, FALSE, NULL);
-        bCheckVersions = FALSE;
+        bCheckVersions = false;
     }
     else
 #endif
@@ -2020,7 +2020,7 @@ static int GDALServerLoopInternal(GDALServerInstance* poSrvInstance,
     // fprintf(stderr, "[%d] started\n", (int)getpid());
     int nIter = 0;
     //fprintf(stderr, "Beginning of loop: poSrcDS = %p, poDS = %p\n", poSrcDS, poDS);
-    while(TRUE)
+    while(true)
     {
         nIter ++;
         if( !bIterateForever && nIter != 1 )
@@ -5845,7 +5845,7 @@ int GDALClientDataset::Init(const char* pszFilename, GDALAccess eAccess,
         CPLFree(pszDriverName);
         pszDriverName = NULL;
 
-        while(TRUE)
+        while(true)
         {
             char* pszKey = NULL, *pszVal = NULL;
             if( !GDALPipeRead(p, &pszKey) )
