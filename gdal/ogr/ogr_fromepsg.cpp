@@ -40,7 +40,7 @@ CPL_CVSID("$Id$");
 #  define PI 3.14159265358979323846
 #endif
 
-void OGRPrintDouble( char * pszStrBuf, double dfValue );
+void OGRsnPrintDouble( char * pszStrBuf, size_t size, double dfValue );
 
 static const char *papszDatumEquiv[] =
 {
@@ -1961,10 +1961,10 @@ static OGRErr SetEPSGGeocCS( OGRSpatialReference * poSRS, int nGCSCode )
     OGR_SRSNode *poSpheroid = new OGR_SRSNode( "SPHEROID" );
     poSpheroid->AddChild( new OGR_SRSNode( pszEllipsoidName ) );
 
-    OGRPrintDouble( szValue, dfSemiMajor );
+    OGRsnPrintDouble( szValue, sizeof(szValue), dfSemiMajor );
     poSpheroid->AddChild( new OGR_SRSNode(szValue) );
 
-    OGRPrintDouble( szValue, dfInvFlattening );
+    OGRsnPrintDouble( szValue, sizeof(szValue), dfInvFlattening );
     poSpheroid->AddChild( new OGR_SRSNode(szValue) );
 
     CPLFree( pszEllipsoidName );
@@ -1986,8 +1986,8 @@ static OGRErr SetEPSGGeocCS( OGRSpatialReference * poSRS, int nGCSCode )
     if( dfPMOffset == 0.0 )
         strcpy( szValue, "0" );
     else
-        OGRPrintDouble( szValue, dfPMOffset );
-    
+        OGRsnPrintDouble( szValue, sizeof(szValue), dfPMOffset );
+
     OGR_SRSNode *poPM = new OGR_SRSNode( "PRIMEM" );
     poPM->AddChild( new OGR_SRSNode( pszPMName ) );
     poPM->AddChild( new OGR_SRSNode( szValue ) );
