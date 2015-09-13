@@ -625,7 +625,7 @@ const char *CPLReadLine2L( VSILFILE * fp, int nMaxCars, char** papszOptions )
     int nBufLength = 0;
     size_t nChunkBytesConsumed = 0;
 
-    while( TRUE )
+    while( true )
     {
 /* -------------------------------------------------------------------- */
 /*      Read a chunk from the input file.                               */
@@ -665,11 +665,11 @@ const char *CPLReadLine2L( VSILFILE * fp, int nMaxCars, char** papszOptions )
                     break;
             }
         }
-        
+
 /* -------------------------------------------------------------------- */
 /*      copy over characters watching for end-of-line.                  */
 /* -------------------------------------------------------------------- */
-        int bBreak = FALSE;
+        bool bBreak = false;
         while( nChunkBytesConsumed < nChunkBytesRead-1 && !bBreak )
         {
             if( (szChunk[nChunkBytesConsumed] == 13
@@ -678,13 +678,13 @@ const char *CPLReadLine2L( VSILFILE * fp, int nMaxCars, char** papszOptions )
                     && szChunk[nChunkBytesConsumed+1] == 13) )
             {
                 nChunkBytesConsumed += 2;
-                bBreak = TRUE;
+                bBreak = true;
             }
             else if( szChunk[nChunkBytesConsumed] == 10
                      || szChunk[nChunkBytesConsumed] == 13 )
             {
                 nChunkBytesConsumed += 1;
-                bBreak = TRUE;
+                bBreak = true;
             }
             else
             {
