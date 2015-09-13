@@ -118,7 +118,7 @@ char **VSIReadDirRecursive( const char *pszPathIn )
     char* pszPath = CPLStrdup(pszPathIn);
     char* pszDisplayedPath = NULL;
 
-    while(TRUE)
+    while(true)
     {
         if( nCount < 0 )
         {
@@ -912,7 +912,7 @@ int VSIIngestFile( VSILFILE* fp,
                    GIntBig nMaxSize)
 {
     vsi_l_offset nDataLen = 0;
-    int bFreeFP = FALSE;
+    bool bFreeFP = false;
 
     if( fp == NULL && pszFilename == NULL )
         return FALSE;
@@ -932,7 +932,7 @@ int VSIIngestFile( VSILFILE* fp,
                       "Cannot open file '%s'", pszFilename );
             return FALSE;
         }
-        bFreeFP = TRUE;
+        bFreeFP = true;
     }
     else
         VSIFSeekL(fp, 0, SEEK_SET);
@@ -942,7 +942,7 @@ int VSIIngestFile( VSILFILE* fp,
     {
         vsi_l_offset nDataAlloc = 0;
         VSIFSeekL( fp, 0, SEEK_SET );
-        while(TRUE)
+        while(true)
         {
             if( nDataLen + 8192 + 1 > nDataAlloc )
             {

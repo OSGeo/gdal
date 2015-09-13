@@ -52,7 +52,7 @@ static void FillFileFromPipe(CPL_FILE_HANDLE pipe_fd, VSILFILE* fout);
 static void FillPipeFromFile(VSILFILE* fin, CPL_FILE_HANDLE pipe_fd)
 {
     char buf[PIPE_BUFFER_SIZE];
-    while(TRUE)
+    while(true)
     {
         int nRead = (int)VSIFReadL(buf, 1, PIPE_BUFFER_SIZE, fin);
         if( nRead <= 0 )
@@ -234,7 +234,7 @@ int CPLPipeWrite(CPL_FILE_HANDLE fout, const void* data, int length)
 static void FillFileFromPipe(CPL_FILE_HANDLE pipe_fd, VSILFILE* fout)
 {
     char buf[PIPE_BUFFER_SIZE];
-    while(TRUE)
+    while(true)
     {
         DWORD nRead;
         if (!ReadFile( pipe_fd, buf, PIPE_BUFFER_SIZE, &nRead, NULL))
@@ -531,7 +531,7 @@ int CPLPipeRead(CPL_FILE_HANDLE fin, void* data, int length)
     int nRemain = length;
     while( nRemain > 0 )
     {
-        while(TRUE)
+        while(true)
         {
             int n = read(fin, pabyData, nRemain);
             if( n < 0 )
@@ -572,7 +572,7 @@ int CPLPipeWrite(CPL_FILE_HANDLE fout, const void* data, int length)
     int nRemain = length;
     while( nRemain > 0 )
     {
-        while(TRUE)
+        while(true)
         {
             int n = write(fout, pabyData, nRemain);
             if( n < 0 )
@@ -597,7 +597,7 @@ int CPLPipeWrite(CPL_FILE_HANDLE fout, const void* data, int length)
 static void FillFileFromPipe(CPL_FILE_HANDLE pipe_fd, VSILFILE* fout)
 {
     char buf[PIPE_BUFFER_SIZE];
-    while(TRUE)
+    while(true)
     {
         int nRead = read(pipe_fd, buf, PIPE_BUFFER_SIZE);
         if (nRead <= 0)
@@ -661,9 +661,9 @@ CPLSpawnedProcess* CPLSpawnAsync(int (*pfnMain)(CPL_FILE_HANDLE, CPL_FILE_HANDLE
     int pipe_err[2] = { -1, -1 };
     int i;
     char** papszArgvDup = CSLDuplicate((char**)papszArgv);
-    int bDup2In = bCreateInputPipe,
-        bDup2Out = bCreateOutputPipe,
-        bDup2Err = bCreateErrorPipe;
+    bool bDup2In = bCreateInputPipe;
+    bool bDup2Out = bCreateOutputPipe;
+    bool bDup2Err = bCreateErrorPipe;
 
     if ((bCreateInputPipe && pipe(pipe_in)) ||
         (bCreateOutputPipe && pipe(pipe_out)) ||
@@ -683,21 +683,21 @@ CPLSpawnedProcess* CPLSpawnAsync(int (*pfnMain)(CPL_FILE_HANDLE, CPL_FILE_HANDLE
                 CPLFree(papszArgvDup[i]);
                 papszArgvDup[i] = CPLStrdup(CPLSPrintf("%d,%d",
                     pipe_in[IN_FOR_PARENT], pipe_in[OUT_FOR_PARENT]));
-                bDup2In = FALSE;
+                bDup2In = false;
             }
             else if( bCreateOutputPipe && strcmp(papszArgvDup[i], "{pipe_out}") == 0 )
             {
                 CPLFree(papszArgvDup[i]);
                 papszArgvDup[i] = CPLStrdup(CPLSPrintf("%d,%d",
                     pipe_out[OUT_FOR_PARENT], pipe_out[IN_FOR_PARENT]));
-                bDup2Out = FALSE;
+                bDup2Out = false;
             }
             else if( bCreateErrorPipe && strcmp(papszArgvDup[i], "{pipe_err}") == 0 )
             {
                 CPLFree(papszArgvDup[i]);
                 papszArgvDup[i] = CPLStrdup(CPLSPrintf("%d,%d",
                     pipe_err[OUT_FOR_PARENT], pipe_err[IN_FOR_PARENT]));
-                bDup2Err = FALSE;
+                bDup2Err = false;
             }
         }
     }

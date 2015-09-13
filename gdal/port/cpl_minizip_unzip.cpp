@@ -828,7 +828,7 @@ local int unzlocal_GetCurrentFileInfoInternal (unzFile file,
     uLong uMagic;
     long lSeek=0;
     uLong uL;
-    int bHasUTF8Filename = FALSE;
+    bool bHasUTF8Filename = false;
 
     if (file==NULL)
         return UNZ_PARAMERROR;
@@ -1025,7 +1025,7 @@ local int unzlocal_GetCurrentFileInfoInternal (unzFile file,
                         uLong utf8Size = dataSize - 1 - 4;
                         uLong uSizeRead ;
 
-                        bHasUTF8Filename = TRUE;
+                        bHasUTF8Filename = true;
 
                         if (utf8Size<fileNameBufferSize)
                         {

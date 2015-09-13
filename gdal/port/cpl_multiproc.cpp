@@ -1153,7 +1153,7 @@ void CPLSleep( double dfWaitInSeconds )
     Sleep( (DWORD) (dfWaitInSeconds * 1000.0) );
 }
 
-static int           bTLSKeySetup = FALSE;
+static bool          bTLSKeySetup = false;
 static DWORD         nTLSKey;
 
 /************************************************************************/
@@ -1172,7 +1172,7 @@ static void **CPLGetTLSList()
         {
             CPLEmergencyError( "CPLGetTLSList(): TlsAlloc() failed!" );
         }
-        bTLSKeySetup = TRUE;
+        bTLSKeySetup = true;
     }
 
     papTLSList = (void **) TlsGetValue( nTLSKey );

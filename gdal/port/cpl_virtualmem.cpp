@@ -179,7 +179,7 @@ static void fprintfstderr(const char* fmt, ...)
     vsnprintf(buffer, sizeof(buffer), fmt, ap);
     va_end(ap);
     int offset = 0;
-    while(TRUE)
+    while(true)
     {
         int ret = write(2, buffer + offset, strlen(buffer + offset));
         if( ret < 0 && errno == EINTR )
@@ -310,7 +310,7 @@ CPLVirtualMem* CPLVirtualMemNew(size_t nSize,
         fclose(f);
     }
 
-    while(TRUE)
+    while(true)
     {
         /* /proc/self/maps must not have more than 65K lines */
         nCacheMaxSizeInPages = (nCacheSize + 2 * nPageSize - 1) / nPageSize;
@@ -1586,7 +1586,7 @@ static int CPLVirtualMemManagerPinAddrInternal(CPLVirtualMemMsgToWorkerThread* m
     char response_buf[4];
 
     /* Wait for the helper thread to be ready to process another request */
-    while(TRUE)
+    while(true)
     {
         int ret = read(pVirtualMemManager->pipefd_wait_thread[0], &wait_ready, 1);
         if( ret < 0 && errno == EINTR )
@@ -1603,7 +1603,7 @@ static int CPLVirtualMemManagerPinAddrInternal(CPLVirtualMemMsgToWorkerThread* m
             == sizeof(*msg));
 
     /* Wait that the helper thread has fixed the fault */
-    while(TRUE)
+    while(true)
     {
         int ret = read(pVirtualMemManager->pipefd_from_thread[0], response_buf, 4);
         if( ret < 0 && errno == EINTR )
@@ -1701,10 +1701,10 @@ static void CPLVirtualMemManagerSIGSEGVHandler(int the_signal,
 #ifdef DEBUG_VIRTUALMEM
     else if( msg.opType == OP_UNKNOWN )
     {
-        static int bHasWarned = FALSE;
+        static bool bHasWarned = false;
         if( !bHasWarned )
         {
-            bHasWarned = TRUE;
+            bHasWarned = true;
             fprintfstderr("at rip %p, unknown bytes: %02x %02x %02x %02x\n",
                           rip, rip[0], rip[1], rip[2], rip[3]);
         }
@@ -1739,12 +1739,12 @@ static void CPLVirtualMemManagerThread(void* unused_param)
 {
     (void)unused_param;
 
-    while(TRUE)
+    while(true)
     {
         char i_m_ready = 1;
         int i;
         CPLVirtualMem* ctxt = NULL;
-        int bMappingFound = FALSE;
+        bool bMappingFound = false;
         CPLVirtualMemMsgToWorkerThread msg;
 
         /* Signal that we are ready to process a new request */
@@ -1767,7 +1767,7 @@ static void CPLVirtualMemManagerThread(void* unused_param)
             if( (char*)msg.pFaultAddr >= (char*) ctxt->pData &&
                 (char*)msg.pFaultAddr < (char*) ctxt->pData + ctxt->nSize )
             {
-                bMappingFound = TRUE;
+                bMappingFound = true;
                 break;
             }
         }

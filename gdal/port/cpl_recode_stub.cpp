@@ -69,12 +69,12 @@ static int utf8bytes(unsigned ucs);
 /* ==================================================================== */
 /************************************************************************/
 
-static int bHaveWarned1 = FALSE;
-static int bHaveWarned2 = FALSE;
-static int bHaveWarned3 = FALSE;
-static int bHaveWarned4 = FALSE;
-static int bHaveWarned5 = FALSE;
-static int bHaveWarned6 = FALSE;
+static bool bHaveWarned1 = false;
+static bool bHaveWarned2 = false;
+static bool bHaveWarned3 = false;
+static bool bHaveWarned4 = false;
+static bool bHaveWarned5 = false;
+static bool bHaveWarned6 = false;
 
 /************************************************************************/
 /*                 CPLClearRecodeStubWarningFlags()                     */
@@ -82,12 +82,12 @@ static int bHaveWarned6 = FALSE;
 
 void CPLClearRecodeStubWarningFlags()
 {
-    bHaveWarned1 = FALSE;
-    bHaveWarned2 = FALSE;
-    bHaveWarned3 = FALSE;
-    bHaveWarned4 = FALSE;
-    bHaveWarned5 = FALSE;
-    bHaveWarned6 = FALSE;
+    bHaveWarned1 = false;
+    bHaveWarned2 = false;
+    bHaveWarned3 = false;
+    bHaveWarned4 = false;
+    bHaveWarned5 = false;
+    bHaveWarned6 = false;
 }
 
 /************************************************************************/
@@ -198,12 +198,12 @@ char *CPLRecodeStub( const char *pszSource,
 
         if( EQUAL( pszSrcEncoding, "CP437") ) /* For ZIP file handling */
         {
-            int bIsAllPrintableASCII = TRUE;
+            bool bIsAllPrintableASCII = true;
             for(int i=0;i<nCharCount;i++)
             {
                 if( pszSource[i] < 32 || pszSource[i] > 126 )
                 {
-                    bIsAllPrintableASCII = FALSE;
+                    bIsAllPrintableASCII = false;
                     break;
                 }
             }
@@ -214,12 +214,12 @@ char *CPLRecodeStub( const char *pszSource,
                 return pszResult;
             }
         }
-        
+
         if( !bHaveWarned1 )
         {
-            bHaveWarned1 = 1;
-            CPLError( CE_Warning, CPLE_AppDefined, 
-                      "Recode from %s to UTF-8 not supported, treated as ISO8859-1 to UTF-8.", 
+            bHaveWarned1 = true;
+            CPLError( CE_Warning, CPLE_AppDefined,
+                      "Recode from %s to UTF-8 not supported, treated as ISO8859-1 to UTF-8.",
                       pszSrcEncoding );
         }
 
@@ -240,7 +240,7 @@ char *CPLRecodeStub( const char *pszSource,
 
         if( !bHaveWarned2 )
         {
-            bHaveWarned2 = 1;
+            bHaveWarned2 = true;
             CPLError( CE_Warning, CPLE_AppDefined, 
                       "Recode from UTF-8 to %s not supported, treated as UTF-8 to ISO8859-1.", 
                       pszDstEncoding );
@@ -257,9 +257,9 @@ char *CPLRecodeStub( const char *pszSource,
     {
         if( !bHaveWarned3 )
         {
-            bHaveWarned3 = 1;
-            CPLError( CE_Warning, CPLE_AppDefined, 
-                      "Recode from %s to %s not supported, no change applied.", 
+            bHaveWarned3 = true;
+            CPLError( CE_Warning, CPLE_AppDefined,
+                      "Recode from %s to %s not supported, no change applied.",
                       pszSrcEncoding, pszDstEncoding );
         }
         
@@ -344,7 +344,7 @@ char *CPLRecodeFromWCharStub( const wchar_t *pwszSource,
     nDstLen = utf8fromwc( pszResult, nDstBufSize, pwszSource, nSrcLen );
     if( nDstLen >= nDstBufSize )
     {
-        CPLAssert( FALSE ); // too small!
+        CPLAssert( false ); // too small!
         return NULL;
     }
 
@@ -892,7 +892,7 @@ static unsigned utf8toa(const char* src, unsigned srclen,
       {
           if (!bHaveWarned4)
           {
-              bHaveWarned4 = TRUE;
+              bHaveWarned4 = true;
               CPLError(CE_Warning, CPLE_AppDefined,
                        "One or several characters couldn't be converted correctly from UTF-8 to ISO-8859-1.\n"
                        "This warning will not be emitted anymore.");
@@ -1135,7 +1135,7 @@ char* CPLWin32Recode( const char* src, unsigned src_code_page, unsigned dst_code
     {
         if (!bHaveWarned5)
         {
-            bHaveWarned5 = TRUE;
+            bHaveWarned5 = true;
             CPLError(CE_Warning, CPLE_AppDefined,
                     "One or several characters could not be translated from CP%d. "
                     "This warning will not be emitted anymore.", src_code_page);
@@ -1163,7 +1163,7 @@ char* CPLWin32Recode( const char* src, unsigned src_code_page, unsigned dst_code
     {
         if (!bHaveWarned6)
         {
-            bHaveWarned6 = TRUE;
+            bHaveWarned6 = true;
             CPLError(CE_Warning, CPLE_AppDefined,
                     "One or several characters could not be translated to CP%d. "
                     "This warning will not be emitted anymore.", dst_code_page);

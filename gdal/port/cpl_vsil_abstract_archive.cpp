@@ -302,7 +302,7 @@ char* VSIArchiveFilesystemHandler::SplitFilename(const char *pszFilename,
         {
             VSIStatBufL statBuf;
             char* archiveFilename = CPLStrdup(pszFilename);
-            int bArchiveFileExists = FALSE;
+            bool bArchiveFileExists = false;
 
             if (archiveFilename[i + nToSkip] == '/' ||
                 archiveFilename[i + nToSkip] == '\\')
@@ -312,7 +312,7 @@ char* VSIArchiveFilesystemHandler::SplitFilename(const char *pszFilename,
 
             if (!bCheckMainFileExists)
             {
-                bArchiveFileExists = TRUE;
+                bArchiveFileExists = true;
             }
             else
             {
@@ -320,7 +320,7 @@ char* VSIArchiveFilesystemHandler::SplitFilename(const char *pszFilename,
 
                 if (oFileList.find(archiveFilename) != oFileList.end() )
                 {
-                    bArchiveFileExists = TRUE;
+                    bArchiveFileExists = true;
                 }
             }
 
@@ -332,7 +332,7 @@ char* VSIArchiveFilesystemHandler::SplitFilename(const char *pszFilename,
                                       VSI_STAT_EXISTS_FLAG | VSI_STAT_NATURE_FLAG) == 0 &&
                     !VSI_ISDIR(statBuf.st_mode))
                 {
-                    bArchiveFileExists = TRUE;
+                    bArchiveFileExists = true;
                 }
             }
 
@@ -344,7 +344,7 @@ char* VSIArchiveFilesystemHandler::SplitFilename(const char *pszFilename,
                     char* pszArchiveInFileName = CPLStrdup(pszFilename + i + nToSkip + 1);
 
                     /* Replace a/../b by b and foo/a/../b by foo/b */
-                    while(TRUE)
+                    while(true)
                     {
                         char* pszPrevDir = strstr(pszArchiveInFileName, "/../");
                         if (pszPrevDir == NULL || pszPrevDir == pszArchiveInFileName)

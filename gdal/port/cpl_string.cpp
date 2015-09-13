@@ -843,8 +843,8 @@ char ** CSLTokenizeString2( const char * pszString,
     
     while( pszString != NULL && *pszString != '\0' )
     {
-        int     bInString = FALSE;
-        int     bStartString = TRUE;
+        bool bInString = false;
+        bool bStartString = true;
 
         nTokenLen = 0;
         
@@ -872,12 +872,12 @@ char ** CSLTokenizeString2( const char * pszString,
 
                 if( bInString )
                 {
-                    bInString = FALSE;
+                    bInString = false;
                     continue;
                 }
                 else
                 {
-                    bInString = TRUE;
+                    bInString = true;
                     continue;
                 }
             }
@@ -908,7 +908,7 @@ char ** CSLTokenizeString2( const char * pszString,
                  && bStartString && isspace((unsigned char)*pszString) )
                 continue;
 
-            bStartString = FALSE;
+            bStartString = false;
 
             /*
              * Extend token buffer if we are running close to its end.
@@ -1143,7 +1143,7 @@ int CPLvsnprintf(char *str, size_t size, const char* fmt, va_list args)
     size_t offset_out = 0;
     va_list wrk_args;
     char ch;
-    int bFormatUnknown = FALSE;
+    bool bFormatUnknown = false;
 
     if( size == 0 )
         return vsnprintf(str, size, fmt, args);
@@ -1161,7 +1161,7 @@ int CPLvsnprintf(char *str, size_t size, const char* fmt, va_list args)
             const char* ptrend = CPLvsnprintf_get_end_of_formatting(fmt+1);
             if( ptrend == NULL || ptrend - fmt >= 20 )
             {
-                bFormatUnknown = TRUE;
+                bFormatUnknown = true;
                 break;
             }
             char end = *ptrend;
@@ -1194,7 +1194,7 @@ int CPLvsnprintf(char *str, size_t size, const char* fmt, va_list args)
                 else if( (end_m1 >= 'a' && end_m1 <= 'z') ||
                          (end_m1 >= 'A' && end_m1 <= 'Z') )
                 {
-                    bFormatUnknown = TRUE;
+                    bFormatUnknown = true;
                     break;
                 }
                 else
@@ -1215,7 +1215,7 @@ int CPLvsnprintf(char *str, size_t size, const char* fmt, va_list args)
                 else if( (end_m1 >= 'a' && end_m1 <= 'z') ||
                          (end_m1 >= 'A' && end_m1 <= 'Z') )
                 {
-                    bFormatUnknown = TRUE;
+                    bFormatUnknown = true;
                     break;
                 }
                 else
@@ -1254,7 +1254,7 @@ int CPLvsnprintf(char *str, size_t size, const char* fmt, va_list args)
             }
             else
             {
-                bFormatUnknown = TRUE;
+                bFormatUnknown = true;
                 break;
             }
             /* MSVC vsnprintf() returns -1... */
@@ -1432,7 +1432,7 @@ int CPLprintf(const char* fmt, ...)
   */
 int CPL_DLL CPLsscanf(const char* str, const char* fmt, ...)
 {
-    int error = FALSE;
+    bool error = false;
     int ret = 0;
     const char* fmt_ori = fmt;
     va_list args;
@@ -1457,7 +1457,7 @@ int CPL_DLL CPLsscanf(const char* str, const char* fmt, ...)
             }
             else
             {
-                error = TRUE;
+                error = true;
                 break;
             }
         }
@@ -2193,7 +2193,7 @@ char *CPLUnescapeString( const char *pszInput, int *pnLength, int nScheme )
                 wchar_t anVal[2] = {0 , 0};
                 iIn += 3;
 
-                while(TRUE)
+                while(true)
                 {
                     ch = pszInput[iIn ++];
                     if (ch >= 'a' && ch <= 'f')
@@ -2221,7 +2221,7 @@ char *CPLUnescapeString( const char *pszInput, int *pnLength, int nScheme )
                 wchar_t anVal[2] = {0 , 0};
                 iIn += 2;
 
-                while(TRUE)
+                while(true)
                 {
                     ch = pszInput[iIn ++];
                     if (ch >= '0' && ch <= '9')
@@ -2458,10 +2458,10 @@ CPLValueType CPLGetValueType(const char* pszValue)
     not doubles: "25e 3", "25e.3", "-2-5e3", "2-5e3", "25.25.3", "-3d"
     */
 
-    int bFoundDot = FALSE;
-    int bFoundExponent = FALSE;
-    int bIsLastCharExponent = FALSE;
-    int bIsReal = FALSE;
+    bool bFoundDot = false;
+    bool bFoundExponent = false;
+    bool bIsLastCharExponent = false;
+    bool bIsReal = false;
 
     if (pszValue == NULL)
         return CPL_VALUE_STRING;
@@ -2481,7 +2481,7 @@ CPLValueType CPLGetValueType(const char* pszValue)
     {
         if( isdigit( *pszValue))
         {
-            bIsLastCharExponent = FALSE;
+            bIsLastCharExponent = false;
             /* do nothing */
         }
         else if ( isspace ((unsigned char)*pszValue) )
@@ -2502,16 +2502,16 @@ CPLValueType CPLGetValueType(const char* pszValue)
             }
             else
                 return CPL_VALUE_STRING;
-            bIsLastCharExponent = FALSE;
+            bIsLastCharExponent = false;
         }
         else if ( *pszValue == '.')
         {
-            bIsReal = TRUE;
-            if (!bFoundDot && bIsLastCharExponent == FALSE)
-                bFoundDot = TRUE;
+            bIsReal = true;
+            if (!bFoundDot && !bIsLastCharExponent)
+                bFoundDot = true;
             else
                 return CPL_VALUE_STRING;
-            bIsLastCharExponent = FALSE;
+            bIsLastCharExponent = false;
         }
         else if (*pszValue == 'D' || *pszValue == 'd'
                  || *pszValue == 'E' || *pszValue == 'e' )
@@ -2520,14 +2520,14 @@ CPLValueType CPLGetValueType(const char* pszValue)
                   isdigit(pszValue[1])))
                 return CPL_VALUE_STRING;
 
-            bIsReal = TRUE;
+            bIsReal = true;
             if (!bFoundExponent)
-                bFoundExponent = TRUE;
+                bFoundExponent = true;
             else
                 return CPL_VALUE_STRING;
-            bIsLastCharExponent = TRUE;
+            bIsLastCharExponent = true;
         }
-        else 
+        else
         {
             return CPL_VALUE_STRING;
         }

@@ -788,10 +788,9 @@ int CPLHTTPParseMultipartMime( CPLHTTPResult *psResult )
 /* -------------------------------------------------------------------- */
 /*      Find the start of the first chunk.                              */
 /* -------------------------------------------------------------------- */
-    char *pszNext;
-    pszNext = (char *) 
+    char *pszNext = (char *)
         strstr((const char *) psResult->pabyData,osBoundary.c_str());
-    
+
     if( pszNext == NULL )
     {
         CPLError( CE_Failure, CPLE_AppDefined, "No parts found." );
@@ -809,7 +808,7 @@ int CPLHTTPParseMultipartMime( CPLHTTPResult *psResult )
 /* -------------------------------------------------------------------- */
 /*      Loop over parts...                                              */
 /* -------------------------------------------------------------------- */
-    while( TRUE )
+    while( true )
     {
         psResult->nMimePartCount++;
         psResult->pasMimePart = (CPLMimePart *)
@@ -835,18 +834,18 @@ int CPLHTTPParseMultipartMime( CPLHTTPResult *psResult )
             }
 
             *pszEOL = '\0';
-            int bRestoreAntislashR = FALSE;
+            bool bRestoreAntislashR = false;
             if (pszEOL - pszNext > 1 && pszEOL[-1] == '\r')
             {
-                bRestoreAntislashR = TRUE;
+                bRestoreAntislashR = true;
                 pszEOL[-1] = '\0';
             }
-            psPart->papszHeaders = 
+            psPart->papszHeaders =
                 CSLAddString( psPart->papszHeaders, pszNext );
             if (bRestoreAntislashR)
                 pszEOL[-1] = '\r';
             *pszEOL = '\n';
-            
+
             pszNext = pszEOL + 1;
         }
 
@@ -854,7 +853,7 @@ int CPLHTTPParseMultipartMime( CPLHTTPResult *psResult )
             pszNext++;
         if( *pszNext == '\n' )
             pszNext++;
-            
+
 /* -------------------------------------------------------------------- */
 /*      Work out the data block size.                                   */
 /* -------------------------------------------------------------------- */

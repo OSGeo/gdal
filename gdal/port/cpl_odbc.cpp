@@ -922,7 +922,7 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
             m_papszColValues[iCol][cbDataLen+1] = '\0';
             m_panColValueLengths[iCol] = cbDataLen;
 
-            while( TRUE )
+            while( true )
             {
                 _SQLLEN nChunkLen;
 
