@@ -624,7 +624,6 @@ void CPL_STDCALL CPLDefaultErrorHandler( CPLErr eErrClass, CPLErrorNum nError,
                              const char * pszErrorMsg )
 
 {
-    static int       bLogInit = FALSE;
     static FILE *    fpLog = stderr;
     static int       nCount = 0;
     static int       nMaxErrors = -1;
@@ -633,7 +632,7 @@ void CPL_STDCALL CPLDefaultErrorHandler( CPLErr eErrClass, CPLErrorNum nError,
     {
         if( nMaxErrors == -1 )
         {
-            nMaxErrors = 
+            nMaxErrors =
                 atoi(CPLGetConfigOption( "CPL_MAX_ERROR_REPORTS", "1000" ));
         }
 
@@ -642,9 +641,10 @@ void CPL_STDCALL CPLDefaultErrorHandler( CPLErr eErrClass, CPLErrorNum nError,
             return;
     }
 
+    static bool bLogInit = false;
     if( !bLogInit )
     {
-        bLogInit = TRUE;
+        bLogInit = true;
 
         fpLog = stderr;
         if( CPLGetConfigOption( "CPL_LOG", NULL ) != NULL )
@@ -698,16 +698,16 @@ void CPL_STDCALL CPLLoggingErrorHandler( CPLErr eErrClass, CPLErrorNum nError,
                              const char * pszErrorMsg )
 
 {
-    static int       bLogInit = FALSE;
+    static bool      bLogInit = false;
     static FILE *    fpLog = stderr;
 
     if( !bLogInit )
     {
+        bLogInit = true;
+
         const char *cpl_log = NULL;
 
         CPLSetConfigOption( "CPL_TIMESTAMP", "ON" );
-
-        bLogInit = TRUE;
 
         cpl_log = CPLGetConfigOption("CPL_LOG", NULL );
 
@@ -718,13 +718,12 @@ void CPL_STDCALL CPLLoggingErrorHandler( CPLErr eErrClass, CPLErrorNum nError,
         }
         else if( cpl_log != NULL )
         {
-            char*     pszPath;
-            int       i = 0;
 
-            pszPath = (char*)CPLMalloc(strlen(cpl_log) + 20);
+            char* pszPath = (char*)CPLMalloc(strlen(cpl_log) + 20);
             strcpy(pszPath, cpl_log);
 
-            while( (fpLog = fopen( pszPath, "rt" )) != NULL ) 
+            int i = 0;
+            while( (fpLog = fopen( pszPath, "rt" )) != NULL )
             {
                 fclose( fpLog );
 

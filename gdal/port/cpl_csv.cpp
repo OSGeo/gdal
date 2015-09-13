@@ -548,7 +548,7 @@ char **CSVReadParseLine2( FILE * fp, char chDelimiter )
     int i = 0, nCount = 0;
     int nWorkLineLength = strlen(pszWorkLine);
 
-    while( TRUE )
+    while( true )
     {
         for( ; pszWorkLine[i] != '\0'; i++ )
         {
@@ -577,7 +577,7 @@ char **CSVReadParseLine2( FILE * fp, char chDelimiter )
 
         nWorkLineLength += nLineLen + 1;
     }
-    
+
     papszReturn = CSVSplitLine( pszWorkLine, chDelimiter );
 
     CPLFree( pszWorkLine );
@@ -729,24 +729,24 @@ CSVScanLinesIngested( CSVTable *psTable, int iKeyField, const char * pszValue,
                       CSVCompareCriteria eCriteria )
 
 {
-    char        **papszFields = NULL;
-    int         bSelected = FALSE, nTestValue;
-
     CPLAssert( pszValue != NULL );
     CPLAssert( iKeyField >= 0 );
 
-    nTestValue = atoi(pszValue);
-    
+    int nTestValue = atoi(pszValue);
+
 /* -------------------------------------------------------------------- */
 /*      Short cut for indexed files.                                    */
 /* -------------------------------------------------------------------- */
-    if( iKeyField == 0 && eCriteria == CC_Integer 
+    if( iKeyField == 0 && eCriteria == CC_Integer
         && psTable->panLineIndex != NULL )
         return CSVScanLinesIndexed( psTable, nTestValue );
-    
+
 /* -------------------------------------------------------------------- */
 /*      Scan from in-core lines.                                        */
 /* -------------------------------------------------------------------- */
+    char **papszFields = NULL;
+    bool bSelected = false;
+
     while( !bSelected && psTable->iLastLine+1 < psTable->nLineCount ) {
         psTable->iLastLine++;
         papszFields = CSVSplitLine( psTable->papszLines[psTable->iLastLine], ',' );
@@ -758,7 +758,7 @@ CSVScanLinesIngested( CSVTable *psTable, int iKeyField, const char * pszValue,
         else if( eCriteria == CC_Integer
                  && atoi(papszFields[iKeyField]) == nTestValue )
         {
-            bSelected = TRUE;
+            bSelected = true;
         }
         else
         {
@@ -772,7 +772,7 @@ CSVScanLinesIngested( CSVTable *psTable, int iKeyField, const char * pszValue,
             papszFields = NULL;
         }
     }
-    
+
     return( papszFields );
 }
 

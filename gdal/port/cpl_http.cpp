@@ -339,7 +339,7 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
     // capture response headers
     curl_easy_setopt(http_handle, CURLOPT_HEADERDATA, psResult);
     curl_easy_setopt(http_handle, CURLOPT_HEADERFUNCTION, CPLHdrWriteFct);
- 
+
     curl_easy_setopt(http_handle, CURLOPT_WRITEDATA, psResult );
     curl_easy_setopt(http_handle, CURLOPT_WRITEFUNCTION, CPLWriteFct );
 
@@ -347,17 +347,17 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
 
     curl_easy_setopt(http_handle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
 
-    static int bHasCheckVersion = FALSE;
-    static int bSupportGZip = FALSE;
+    static bool bHasCheckVersion = false;
+    static bool bSupportGZip = false;
     if (!bHasCheckVersion)
     {
         bSupportGZip = strstr(curl_version(), "zlib/") != NULL;
-        bHasCheckVersion = TRUE;
+        bHasCheckVersion = true;
     }
-    int bGZipRequested = FALSE;
+    int bGZipRequested = false;
     if (bSupportGZip && CSLTestBoolean(CPLGetConfigOption("CPL_CURL_GZIP", "YES")))
     {
-        bGZipRequested = TRUE;
+        bGZipRequested = true;
         curl_easy_setopt(http_handle, CURLOPT_ENCODING, "gzip");
     }
 
@@ -378,7 +378,7 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
 
     do
     {
-        bRequestRetry = FALSE;
+        bRequestRetry = false;
 
 /* -------------------------------------------------------------------- */
 /*      Execute the request, waiting for results.                       */
@@ -399,7 +399,7 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
 /* -------------------------------------------------------------------- */
         if( strlen(szCurlErrBuf) > 0 )
         {
-            int bSkipError = FALSE;
+            bool bSkipError = false;
 
             /* Some servers such as http://115.113.193.14/cgi-bin/world/qgis_mapserv.fcgi?VERSION=1.1.1&SERVICE=WMS&REQUEST=GetCapabilities */
             /* invalidly return Content-Length as the uncompressed size, with makes curl to wait for more data */
@@ -422,7 +422,7 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
                                  pszURL);
                     }
                     psResult->nStatus = 0;
-                    bSkipError = TRUE;
+                    bSkipError = true;
                 }
             }
             if (!bSkipError)
@@ -459,7 +459,7 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
                     psResult->nDataLen = 0;
                     psResult->nDataAlloc = 0;
 
-                    bRequestRetry = TRUE;
+                    bRequestRetry = true;
                 }
                 else
                 {
