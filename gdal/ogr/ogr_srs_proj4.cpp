@@ -2419,7 +2419,6 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 /* -------------------------------------------------------------------- */
     const char *pszPROJ4Datum = NULL;
     const OGR_SRSNode *poTOWGS84 = GetAttrNode( "TOWGS84" );
-    char  szTOWGS84[256];
     int nEPSGDatum = -1;
     int nEPSGGeogCS = -1;
     const char *pszProj4Grids = GetExtension( "DATUM", "PROJ4_GRIDS" );
@@ -2507,14 +2506,16 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
             std::vector<CPLString> asBursaTransform;
             if( EPSGGetWGS84Transform( nEPSGGeogCS, asBursaTransform ) )
             {
-                CPLsprintf( szTOWGS84, "+towgs84=%s,%s,%s,%s,%s,%s,%s",
-                         asBursaTransform[0].c_str(),
-                         asBursaTransform[1].c_str(),
-                         asBursaTransform[2].c_str(),
-                         asBursaTransform[3].c_str(),
-                         asBursaTransform[4].c_str(),
-                         asBursaTransform[5].c_str(),
-                         asBursaTransform[6].c_str() );
+                char szTOWGS84[256];
+                CPLsnprintf( szTOWGS84, sizeof(szTOWGS84),
+                             "+towgs84=%s,%s,%s,%s,%s,%s,%s",
+                             asBursaTransform[0].c_str(),
+                             asBursaTransform[1].c_str(),
+                             asBursaTransform[2].c_str(),
+                             asBursaTransform[3].c_str(),
+                             asBursaTransform[4].c_str(),
+                             asBursaTransform[5].c_str(),
+                             asBursaTransform[6].c_str() );
                 SAFE_PROJ4_STRCAT( szEllipseDef );
                 szEllipseDef[0] = '\0';
 
