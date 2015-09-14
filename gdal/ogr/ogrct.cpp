@@ -861,7 +861,7 @@ int OGRProj4CT::InitializeNoLock( OGRSpatialReference * poSourceIn,
 
 #if 0
     /* In case of identity transform, under the following conditions, */
-    /* we can also avoid transforming from deegrees <--> radians. */
+    /* we can also avoid transforming from degrees <--> radians. */
     if( bIdentityTransform && bSourceLatLong && !bSourceWrap &&
         bTargetLatLong && !bTargetWrap &&
         fabs(dfSourceToRadians * dfTargetFromRadians - 1.0) < 1e-10 )
