@@ -248,6 +248,7 @@ def run_all( dirlist, run_as_external = False ):
                     if sys.platform == 'win32':
                         python_exe = python_exe.replace('\\', '/')
 
+                    print('Running %s/%s...' % (dir_name,file))
                     ret = runexternal(python_exe + ' ' + file, display_live_on_parent_stdout = True)
                     global success_counter, failure_counter, failure_summary
                     if ret.find('Failed:    0') < 0:
