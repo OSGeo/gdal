@@ -44,7 +44,7 @@
 
 #ifdef OGRAPISPY_ENABLED
 
-bool bOGRAPISpyEnabled = false;
+int bOGRAPISpyEnabled = FALSE;
 static CPLString osSnapshotPath, osSpyFile;
 static FILE* fpSpyFile = NULL;
 extern "C" int CPL_DLL GDALIsInGlobalDestructor(void);
