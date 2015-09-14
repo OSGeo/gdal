@@ -1921,12 +1921,12 @@ OGRErr OSRCopyGeogCSFrom( OGRSpatialReferenceH hSRS,
 OGRErr OGRSpatialReference::SetFromUserInput( const char * pszDefinition )
 
 {
-    int     bESRI = FALSE;
-    OGRErr  err;
+    bool bESRI = false;
+    OGRErr err;
 
     if( EQUALN(pszDefinition,"ESRI::",6) )
     {
-        bESRI = TRUE;
+        bESRI = true;
         pszDefinition += 6;
     }
 
@@ -2102,7 +2102,7 @@ OGRErr OGRSpatialReference::SetFromUserInput( const char * pszDefinition )
     {
         if( EQUALN(pszBufPtr,"ESRI::",6) )
         {
-            bESRI = TRUE;
+            bESRI = true;
             pszBufPtr += 6;
         }
 

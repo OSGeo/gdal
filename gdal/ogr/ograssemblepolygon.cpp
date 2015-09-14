@@ -178,7 +178,7 @@ OGRGeometryH OGRBuildPolygonFromEdges( OGRGeometryH hLines,
         return NULL;
     }
 
-    int         bSuccess = TRUE;
+    bool bSuccess = true;
     OGRGeometryCollection *poLines = (OGRGeometryCollection *) hLines;
     std::vector<OGRLinearRing*> aoRings;
 
@@ -227,16 +227,17 @@ OGRGeometryH OGRBuildPolygonFromEdges( OGRGeometryH hLines,
 /*      Loop adding edges to this ring until we make a whole pass       */
 /*      within finding anything to add.                                 */
 /* ==================================================================== */
-        int             bWorkDone = TRUE;
+        bool            bWorkDone = true;
         double          dfBestDist = dfTolerance;
 
         while( !CheckPoints(poRing,0,poRing,poRing->getNumPoints()-1,NULL)
                && nRemainingEdges > 0
                && bWorkDone )
         {
-            int         iBestEdge = -1, bReverse = FALSE;
+            int         iBestEdge = -1;
+            int         bReverse = FALSE;
 
-            bWorkDone = FALSE;
+            bWorkDone = false;
             dfBestDist = dfTolerance;
 
             // We consider linking the end to the beginning.  If this is
@@ -282,7 +283,7 @@ OGRGeometryH OGRBuildPolygonFromEdges( OGRGeometryH hLines,
                     
                 panEdgeConsumed[iBestEdge] = TRUE;
                 nRemainingEdges--;
-                bWorkDone = TRUE;
+                bWorkDone = true;
             }
         }
 
@@ -302,7 +303,7 @@ OGRGeometryH OGRBuildPolygonFromEdges( OGRGeometryH hLines,
                       poRing->getX(poRing->getNumPoints()-1), 
                       poRing->getY(poRing->getNumPoints()-1) );
 
-            bSuccess = FALSE;
+            bSuccess = false;
         }
 
 /* -------------------------------------------------------------------- */
@@ -364,6 +365,3 @@ OGRGeometryH OGRBuildPolygonFromEdges( OGRGeometryH hLines,
     
     return (OGRGeometryH) poPolygon;
 }
-
-
-

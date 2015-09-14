@@ -79,9 +79,9 @@ static void    (*pfn_pj_ctx_free)( projCtx ) = NULL;
 
 // Locale-safe proj starts with 4.10
 #if defined(PJ_LOCALE_SAFE)
-static int      bProjLocaleSafe = PJ_LOCALE_SAFE;
+static bool      bProjLocaleSafe = PJ_LOCALE_SAFE;
 #else
-static int      bProjLocaleSafe = FALSE;
+static bool      bProjLocaleSafe = false;
 #endif
 
 #if (defined(WIN32) || defined(WIN32CE)) && !defined(__MINGW32__)
@@ -194,13 +194,13 @@ static const char* GetProjLibraryName()
 static int LoadProjLibrary_unlocked()
 
 {
-    static int  bTriedToLoad = FALSE;
+    static bool bTriedToLoad = false;
     const char *pszLibName;
-    
+
     if( bTriedToLoad )
         return( pfn_pj_transform != NULL );
 
-    bTriedToLoad = TRUE;
+    bTriedToLoad = true;
 
     pszLibName = GetProjLibraryName();
 
@@ -981,7 +981,7 @@ int OGRProj4CT::TransformEx( int nCount, double *x, double *y, double *z,
 /* -------------------------------------------------------------------- */
 /*      Optimized transform from WebMercator to WGS84                   */
 /* -------------------------------------------------------------------- */
-    int bTransformDone = FALSE;
+    bool bTransformDone = false;
     if( bWebMercatorToWGS84 )
     {
 #define REVERSE_SPHERE_RADIUS  (1. / 6378137.)
@@ -1034,10 +1034,10 @@ int OGRProj4CT::TransformEx( int nCount, double *x, double *y, double *z,
             }
         }
 
-        bTransformDone = TRUE;
+        bTransformDone = true;
     }
     else if( bIdentityTransform )
-        bTransformDone = TRUE;
+        bTransformDone = true;
 
 /* -------------------------------------------------------------------- */
 /*      Do the transformation (or not...) using PROJ.4.                 */

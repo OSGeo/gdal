@@ -465,7 +465,7 @@ void OGRCurveCollection::getEnvelope( OGREnvelope * psEnvelope ) const
 void OGRCurveCollection::getEnvelope( OGREnvelope3D * psEnvelope ) const
 {
     OGREnvelope3D       oGeomEnv;
-    int                 bExtentSet = FALSE;
+    bool                bExtentSet = false;
 
     for( int iGeom = 0; iGeom < nCurveCount; iGeom++ )
     {
@@ -474,7 +474,7 @@ void OGRCurveCollection::getEnvelope( OGREnvelope3D * psEnvelope ) const
             if (!bExtentSet)
             {
                 papoCurves[iGeom]->getEnvelope( psEnvelope );
-                bExtentSet = TRUE;
+                bExtentSet = true;
             }
             else
             {

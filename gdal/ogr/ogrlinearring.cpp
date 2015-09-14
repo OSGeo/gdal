@@ -375,7 +375,7 @@ int OGRLinearRing::isClockwise() const
 {
     int    i, v, next;
     double  dx0, dy0, dx1, dy1, crossproduct;
-    int    bUseFallback = FALSE;
+    bool bUseFallback = false;
 
     if( nPointCount < 2 )
         return TRUE;
@@ -390,14 +390,14 @@ int OGRLinearRing::isClockwise() const
                paoPoints[i].x > paoPoints[v].x ) )
         {
             v = i;
-            bUseFallback = FALSE;
+            bUseFallback = false;
         }
         else if ( paoPoints[i].y == paoPoints[v].y &&
                   paoPoints[i].x == paoPoints[v].x )
         {
             /* Two vertex with same coordinates are the lowest rightmost */
             /* vertex! We cannot use that point as the pivot (#5342) */
-            bUseFallback = TRUE;
+            bUseFallback = true;
         }
     }
 
@@ -413,7 +413,7 @@ int OGRLinearRing::isClockwise() const
     {
         /* Don't try to be too clever by retrying with a next point */
         /* This can lead to false results as in the case of #3356 */
-        bUseFallback = TRUE;
+        bUseFallback = true;
     }
 
     dx0 = paoPoints[next].x - paoPoints[v].x;
@@ -432,7 +432,7 @@ int OGRLinearRing::isClockwise() const
     {
         /* Don't try to be too clever by retrying with a next point */
         /* This can lead to false results as in the case of #3356 */
-        bUseFallback = TRUE;
+        bUseFallback = true;
     }
 
     dx1 = paoPoints[next].x - paoPoints[v].x;
