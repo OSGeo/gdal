@@ -188,10 +188,10 @@ OGRFieldType GeoJSONPropertyToFieldType( json_object* poObject,
         {
             if( nVal == MY_INT64_MIN || nVal == MY_INT64_MAX )
             {
-                static int bWarned = FALSE;
+                static bool bWarned = false;
                 if( !bWarned )
                 {
-                    bWarned = TRUE;
+                    bWarned = true;
                     CPLError(CE_Warning, CPLE_AppDefined,
                              "Integer values probably ranging out of 64bit integer range "
                              "have been found. Will be clamped to INT64_MIN/INT64_MAX");
@@ -300,4 +300,3 @@ const char* OGRGeoJSONGetGeometryName( OGRGeometry const* poGeometry )
     else
         return "Unknown";
 }
-

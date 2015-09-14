@@ -103,25 +103,25 @@ int OGRGeoJSONDataSource::Open( GDALOpenInfo* poOpenInfo,
     LoadLayers(poOpenInfo->papszOpenOptions);
     if( nLayers_ == 0 )
     {
-        int bEmitError = TRUE;
+        bool bEmitError = true;
         if( eGeoJSONSourceService == nSrcType )
         {
             CPLString osTmpFilename = CPLSPrintf("/vsimem/%p/%s", this,
                                         CPLGetFilename(poOpenInfo->pszFilename));
             VSIFCloseL(VSIFileFromMemBuffer( osTmpFilename,
                                              (GByte*)pszGeoData_,
-                                             nGeoDataLen_, 
+                                             nGeoDataLen_,
                                              TRUE ));
             pszGeoData_ = NULL;
             if( GDALIdentifyDriver(osTmpFilename, NULL) )
-                bEmitError = FALSE;
+                bEmitError = false;
             VSIUnlink(osTmpFilename);
         }
         Clear();
 
         if( bEmitError )
         {
-            CPLError( CE_Failure, CPLE_OpenFailed, 
+            CPLError( CE_Failure, CPLE_OpenFailed,
                     "Failed to read GeoJSON data" );
         }
         return FALSE;
