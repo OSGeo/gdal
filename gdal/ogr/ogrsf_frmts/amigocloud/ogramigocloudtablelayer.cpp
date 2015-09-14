@@ -84,7 +84,7 @@ OGRAMIGOCLOUDTableLayer::OGRAMIGOCLOUDTableLayer(OGRAMIGOCLOUDDataSource* poDS,
                                            OGRAMIGOCLOUDLayer(poDS)
 
 {
-    osName = pszName;
+    osName = CPLString("dataset_") + CPLString(pszName);
     SetDescription( osName );
     bLaunderColumnNames = TRUE;
     bInDeferedInsert = poDS->DoBatchInsert();
@@ -118,30 +118,30 @@ OGRFeatureDefn * OGRAMIGOCLOUDTableLayer::GetLayerDefnInternal(CPL_UNUSED json_o
     if( poDS->IsAuthenticatedConnection() )
     {
         // Get everything !
-        osCommand.Printf(
-                 "SELECT a.attname, t.typname, a.attlen, "
-                        "format_type(a.atttypid,a.atttypmod), "
-                        "a.attnum, "
-                        "a.attnotnull, "
-                        "i.indisprimary, "
-                        "pg_get_expr(def.adbin, c.oid) AS defaultexpr, "
-                        "postgis_typmod_dims(a.atttypmod) dim, "
-                        "postgis_typmod_srid(a.atttypmod) srid, "
-                        "postgis_typmod_type(a.atttypmod)::text geomtyp, "
-                        "srtext "
-                 "FROM pg_class c "
-                 "JOIN pg_attribute a ON a.attnum > 0 AND "
-                                        "a.attrelid = c.oid AND c.relname = '%s' "
-                 "JOIN pg_type t ON a.atttypid = t.oid "
-                 "JOIN pg_namespace n ON c.relnamespace=n.oid AND n.nspname= '%s' "
-                 "LEFT JOIN pg_index i ON c.oid = i.indrelid AND "
-                                         "i.indisprimary = 't' AND a.attnum = ANY(i.indkey) "
-                 "LEFT JOIN pg_attrdef def ON def.adrelid = c.oid AND "
-                                              "def.adnum = a.attnum "
-                 "LEFT JOIN spatial_ref_sys srs ON srs.srid = postgis_typmod_srid(a.atttypmod) "
-                 "ORDER BY a.attnum",
-                 OGRAMIGOCLOUDEscapeLiteral(osName).c_str(),
-                 OGRAMIGOCLOUDEscapeLiteral(poDS->GetCurrentSchema()).c_str());
+//        osCommand.Printf(
+//                 "SELECT a.attname, t.typname, a.attlen, "
+//                        "format_type(a.atttypid,a.atttypmod), "
+//                        "a.attnum, "
+//                        "a.attnotnull, "
+//                        "i.indisprimary, "
+//                        "pg_get_expr(def.adbin, c.oid) AS defaultexpr, "
+//                        "postgis_typmod_dims(a.atttypmod) dim, "
+//                        "postgis_typmod_srid(a.atttypmod) srid, "
+//                        "postgis_typmod_type(a.atttypmod)::text geomtyp, "
+//                        "srtext "
+//                 "FROM pg_class c "
+//                 "JOIN pg_attribute a ON a.attnum > 0 AND "
+//                                        "a.attrelid = c.oid AND c.relname = '%s' "
+//                 "JOIN pg_type t ON a.atttypid = t.oid "
+//                 "JOIN pg_namespace n ON c.relnamespace=n.oid AND n.nspname= '%s' "
+//                 "LEFT JOIN pg_index i ON c.oid = i.indrelid AND "
+//                                         "i.indisprimary = 't' AND a.attnum = ANY(i.indkey) "
+//                 "LEFT JOIN pg_attrdef def ON def.adrelid = c.oid AND "
+//                                              "def.adnum = a.attnum "
+//                 "LEFT JOIN spatial_ref_sys srs ON srs.srid = postgis_typmod_srid(a.atttypmod) "
+//                 "ORDER BY a.attnum",
+//                 OGRAMIGOCLOUDEscapeLiteral(osName).c_str(),
+//                 OGRAMIGOCLOUDEscapeLiteral(poDS->GetCurrentSchema()).c_str());
     }
     else if( poDS->HasOGRMetadataFunction() != FALSE )
     {
@@ -1239,7 +1239,7 @@ void OGRAMIGOCLOUDTableLayer::SetDeferedCreation (OGRwkbGeometryType eGType,
                 poFeatureDefn->GetGeomFieldCount() - 1)->SetSpatialRef(poSRS);
         }
     }
-    osFIDColName = "amigocloud_id";
+    osFIDColName = "amigo_id";
     osBaseSQL.Printf("SELECT * FROM %s",
                      OGRAMIGOCLOUDEscapeIdentifier(osName).c_str());
 }

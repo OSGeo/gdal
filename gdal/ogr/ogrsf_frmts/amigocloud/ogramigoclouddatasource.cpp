@@ -543,13 +543,13 @@ json_object* OGRAMIGOCLOUDDataSource::RunSQL(const char* pszUnescapedSQL)
 
     pszAPIURL += osSQL;
 
-    printf("pszAPIURL: %s\n", pszAPIURL.c_str());
+//    printf("pszAPIURL: %s\n", pszAPIURL.c_str());
 
     CPLHTTPResult * psResult = CPLHTTPFetch( pszAPIURL.c_str(), papszOptions);
     CSLDestroy(papszOptions);
 
-    if(psResult->pabyData)
-        printf("%s\n", psResult->pabyData);
+//    if(psResult->pabyData)
+//        printf("Result: %s\n", psResult->pabyData);
 
 /* -------------------------------------------------------------------- */
 /*      Check for some error conditions and report.  HTML Messages      */
@@ -639,7 +639,7 @@ json_object* OGRAMIGOCLOUDGetSingleRow(json_object* poObj)
         return NULL;
     }
 
-    json_object* poRows = json_object_object_get(poObj, "rows");
+    json_object* poRows = json_object_object_get(poObj, "data");
     if( poRows == NULL ||
         json_object_get_type(poRows) != json_type_array ||
         json_object_array_length(poRows) != 1 )

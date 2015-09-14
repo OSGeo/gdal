@@ -102,12 +102,10 @@ OGRFeature *OGRAMIGOCLOUDLayer::BuildFeature(json_object* poRowObj)
     if( poRowObj != NULL &&
         json_object_get_type(poRowObj) == json_type_object )
     {
-        printf("-1-\n");
         poFeature = new OGRFeature(poFeatureDefn);
 
         if( osFIDColName.size() )
         {
-            printf("-2-\n");
             json_object* poVal = json_object_object_get(poRowObj, osFIDColName);
             if( poVal != NULL &&
                 json_object_get_type(poVal) == json_type_int )
@@ -117,35 +115,28 @@ OGRFeature *OGRAMIGOCLOUDLayer::BuildFeature(json_object* poRowObj)
         }
         else
         {
-            printf("-3-\n");
             poFeature->SetFID(iNext);
         }
-        printf("-4-\n");
 
         for(int i=0;i<poFeatureDefn->GetFieldCount();i++)
         {
             json_object* poVal = json_object_object_get(poRowObj,
                             poFeatureDefn->GetFieldDefn(i)->GetNameRef());
-            printf("-5-\n");
 
             if( poVal != NULL &&
                 json_object_get_type(poVal) == json_type_string )
             {
-                printf("-6-\n");
                 if( poFeatureDefn->GetFieldDefn(i)->GetType() == OFTDateTime )
                 {
-                    printf("-7-\n");
                     OGRField sField;
                     if( OGRParseXMLDateTime( json_object_get_string(poVal),
                                              &sField) )
                     {
-                        printf("-8-\n");
                         poFeature->SetField(i, &sField);
                     }
                 }
                 else
                 {
-                    printf("-9-\n");
                     poFeature->SetField(i, json_object_get_string(poVal));
                 }
             }
@@ -153,28 +144,23 @@ OGRFeature *OGRAMIGOCLOUDLayer::BuildFeature(json_object* poRowObj)
                 (json_object_get_type(poVal) == json_type_int ||
                  json_object_get_type(poVal) == json_type_boolean) )
             {
-                printf("-10-\n");
                 poFeature->SetField(i, (GIntBig)json_object_get_int64(poVal));
             }
             else if( poVal != NULL &&
                 json_object_get_type(poVal) == json_type_double )
             {
-                printf("-11-\n");
                 poFeature->SetField(i, json_object_get_double(poVal));
             }
         }
 
-        printf("-12-\n");
         for(int i=0;i<poFeatureDefn->GetGeomFieldCount();i++)
         {
-            printf("-13-\n");
             OGRGeomFieldDefn* poGeomFldDefn = poFeatureDefn->GetGeomFieldDefn(i);
             json_object* poVal = json_object_object_get(poRowObj,
                             poGeomFldDefn->GetNameRef());
             if( poVal != NULL &&
                 json_object_get_type(poVal) == json_type_string )
             {
-                printf("-14-\n");
                 OGRGeometry* poGeom = OGRGeometryFromHexEWKB(
                                         json_object_get_string(poVal), NULL, FALSE);
                 if( poGeom != NULL )
@@ -183,7 +169,6 @@ OGRFeature *OGRAMIGOCLOUDLayer::BuildFeature(json_object* poRowObj)
             }
         }
     }
-    printf("-15-\n");
     return poFeature;
 }
 
@@ -249,8 +234,6 @@ OGRFeature *OGRAMIGOCLOUDLayer::GetNextRawFeature()
             return NULL;
         }
 
-        printf("poRows : '%s'\n", json_object_to_json_string(poRows));
-
         if( poCachedObj != NULL )
             json_object_put(poCachedObj);
         poCachedObj = poObj;
@@ -261,8 +244,6 @@ OGRFeature *OGRAMIGOCLOUDLayer::GetNextRawFeature()
 
     json_object* poRows = json_object_object_get(poCachedObj, "data");
     json_object* poRowObj = json_object_array_get_idx(poRows, iNextInFetchedObjects);
-
-    printf("poRowObj : '%s'\n", json_object_to_json_string(poRowObj));
 
     iNextInFetchedObjects ++;
 
@@ -356,8 +337,6 @@ void OGRAMIGOCLOUDLayer::EstablishLayerDefn(const char* pszLayerName,
         return;
     }
 
-    printf("poFields: '%s'\n", json_object_to_json_string(poFields));
-
     int size = json_object_array_length(poFields);
 
     for(int i=0; i< size; i++)
@@ -421,6 +400,9 @@ void OGRAMIGOCLOUDLayer::EstablishLayerDefn(const char* pszLayerName,
                         poFeatureDefn->GetGeomFieldDefn(
                                 poFeatureDefn->GetGeomFieldCount() - 1)->SetSpatialRef(poSRS);
                         poSRS->Release();
+                    } else {
+                        poFeatureDefn->GetGeomFieldDefn(
+                                poFeatureDefn->GetGeomFieldCount() - 1)->SetSpatialRef(poSRS);
                     }
                 }
                 else if(EQUAL(fieldType.c_str(), "boolean"))
@@ -436,20 +418,6 @@ void OGRAMIGOCLOUDLayer::EstablishLayerDefn(const char* pszLayerName,
                     poFeatureDefn->AddFieldDefn(&oFieldDefn);
                 }
             }
-//                    else if( poType != NULL && json_object_get_type(poType) == json_type_int )
-//                    {
-//                        /* FIXME? manual creations of geometry columns return integer types */
-//                        OGRAmigoCloudGeomFieldDefn *poFieldDefn =
-//                                new OGRAmigoCloudGeomFieldDefn(pszColName, wkbUnknown);
-//                        poFeatureDefn->AddGeomFieldDefn(poFieldDefn, FALSE);
-//                        OGRSpatialReference* poSRS = GetSRS(pszColName, &poFieldDefn->nSRID);
-//                        if( poSRS != NULL )
-//                        {
-//                            poFeatureDefn->GetGeomFieldDefn(
-//                                    poFeatureDefn->GetGeomFieldCount() - 1)->SetSpatialRef(poSRS);
-//                            poSRS->Release();
-//                        }
-//                    }
         }
     }
     if( poObjIn == NULL )
