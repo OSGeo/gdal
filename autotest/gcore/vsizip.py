@@ -402,6 +402,9 @@ def vsizip_10():
             ok = 1
 
     if ok == 0:
+        if gdal.GetLastErrorMsg().find('Recode from CP866 to UTF-8 not supported') >= 0:
+            return 'skip'
+
         gdaltest.post_reason('bad content')
         print(content)
         return 'fail'
