@@ -35,6 +35,8 @@
 GNMRule::GNMRule() : CPLString()
 {
     m_bValid = false;
+    m_bAllow = false;
+    m_bAny = false;
 }
 
 GNMRule::GNMRule(const std::string &oRule) : CPLString(oRule)
