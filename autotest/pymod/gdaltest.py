@@ -247,7 +247,6 @@ def run_all( dirlist, run_as_external = False ):
                     python_exe = sys.executable
                     if sys.platform == 'win32':
                         python_exe = python_exe.replace('\\', '/')
-                        script_file_path = script_file_path.replace('\\', '/')
 
                     ret = runexternal(python_exe + ' ' + file, display_live_on_parent_stdout = True)
                     global success_counter, failure_counter, failure_summary
