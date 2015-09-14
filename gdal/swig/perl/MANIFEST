@@ -32,5 +32,5 @@ transform.dox
 check_dox.pl
 parse-for-doxygen.pl
 Changes-in-the-API-in-2.0
-MYMETA.yml
-MYMETA.json
+META.yml
+META.json
