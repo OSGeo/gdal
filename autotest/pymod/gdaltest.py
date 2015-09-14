@@ -249,7 +249,8 @@ def run_all( dirlist, run_as_external = False ):
                         python_exe = python_exe.replace('\\', '/')
 
                     print('Running %s/%s...' % (dir_name,file))
-                    ret = runexternal(python_exe + ' ' + file, display_live_on_parent_stdout = True)
+                    #ret = runexternal(python_exe + ' ' + file, display_live_on_parent_stdout = True)
+                    ret = runexternal(python_exe + """ -c "import %s; import sys; sys.path.append('../pymod'); import gdaltest; gdaltest.run_tests( %s.gdaltest_list ); gdaltest.summarize()" """ % (module, module) , display_live_on_parent_stdout = True)
                     global success_counter, failure_counter, failure_summary
                     if ret.find('Failed:    0') < 0:
                         failure_counter += 1
