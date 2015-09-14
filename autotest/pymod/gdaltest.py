@@ -253,7 +253,19 @@ def run_all( dirlist, run_as_external = False ):
 
                     print('Running %s/%s...' % (dir_name,file))
                     #ret = runexternal(python_exe + ' ' + file, display_live_on_parent_stdout = True)
+                    if 'GDALTEST_ASAN_OPTIONS' in os.environ:
+                        if 'ASAN_OPTIONS' in os.environ:
+                            backup_asan_options = os.environ['ASAN_OPTIONS'] 
+                        else:
+                            backup_asan_options = None
+                        os.environ['ASAN_OPTIONS'] = os.environ['GDALTEST_ASAN_OPTIONS']
                     ret = runexternal(python_exe + """ -c "import %s; import sys; sys.path.append('../pymod'); import gdaltest; gdaltest.run_tests( %s.gdaltest_list ); gdaltest.summarize()" """ % (module, module) , display_live_on_parent_stdout = True)
+                    if 'GDALTEST_ASAN_OPTIONS' in os.environ:
+                        if backup_asan_options is None:
+                            del os.environ['ASAN_OPTIONS']
+                        else:
+                            os.environ['ASAN_OPTIONS'] = backup_asan_options
+
                     global success_counter, failure_counter, failure_summary
                     if ret.find('Failed:    0') < 0:
                         failure_counter += 1
