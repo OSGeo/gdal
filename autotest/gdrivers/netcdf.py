@@ -797,7 +797,7 @@ def netcdf_21():
         #create large gtiff
         if test_cli_utilities.get_gdalwarp_path() is None:
             gdaltest.post_reason('gdalwarp not found')
-            return 'fail'
+            return 'skip'
     
         warp_cmd = test_cli_utilities.get_gdalwarp_path() +\
             ' -q -overwrite -r bilinear -ts 7680 7680 -of gtiff ' +\
@@ -1062,14 +1062,14 @@ def netcdf_29():
     if gdaltest.netcdf_drv is None:
         return 'skip'
 
-    ifile = 'data/netcdf-4d.nc'
-    ofile1 = 'tmp/netcdf_29.vrt'
-    ofile = 'tmp/netcdf_29.nc'
-
     # create tif file using gdalwarp
     if test_cli_utilities.get_gdalwarp_path() is None:
         gdaltest.post_reason('gdalwarp not found')
-        return 'fail'
+        return 'skip'
+
+    ifile = 'data/netcdf-4d.nc'
+    ofile1 = 'tmp/netcdf_29.vrt'
+    ofile = 'tmp/netcdf_29.nc'
 
     warp_cmd = '%s -q -overwrite -of vrt %s %s' %\
         ( test_cli_utilities.get_gdalwarp_path(), ifile, ofile1 )
