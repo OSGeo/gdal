@@ -32,6 +32,11 @@
 #include "gdaljp2metadata.h"
 #include "ogr_spatialref.h"
 
+#if ECWSDK_VERSION<50
+/* For NCSStrDup */
+#include "NCSUtil.h"
+#endif
+
 CPL_CVSID("$Id$");
 
 #if defined(FRMT_ecw) && defined(HAVE_COMPRESS)
@@ -173,11 +178,7 @@ CPLErr GDALECWCompressor::CloseDown()
 #if ECWSDK_VERSION>=50
     NCSFreeFileInfo(&sFileInfo);
 #else
-    for( int i = 0; i < sFileInfo.nBands; i++ ) 
-    { 
-        CPLFree( sFileInfo.pBands[i].szDesc ); 
-    } 
-    CPLFree( sFileInfo.pBands ); 
+    NCSFreeFileInfoEx(&sFileInfo);
 #endif
 
     Close( true );
@@ -733,21 +734,16 @@ CPLErr GDALECWCompressor::Initialize(
 /* -------------------------------------------------------------------- */
     int iBand;
 
-#if ECWSDK_VERSION>=50
     psClient->pBands = (NCSFileBandInfo *) 
         NCSMalloc( sizeof(NCSFileBandInfo) * nBands, true );
-#else
-    psClient->pBands = (NCSFileBandInfo *) 
-        CPLMalloc( sizeof(NCSFileBandInfo) * nBands );
-#endif
     for( iBand = 0; iBand < nBands; iBand++ )
     {
         psClient->pBands[iBand].nBits = (UINT8) nBits;
         psClient->pBands[iBand].bSigned = (BOOLEAN)bSigned;
-#if ECWSDK_VERSION>=50
+#if ECWSDK_VERSION >=50
         psClient->pBands[iBand].szDesc = NCSStrDup(papszBandDescriptions[iBand]);
 #else
-        psClient->pBands[iBand].szDesc = CPLStrdup(papszBandDescriptions[iBand]);
+        psClient->pBands[iBand].szDesc = NCSStrDup((char*)papszBandDescriptions[iBand]);
 #endif
     }
 
@@ -923,15 +919,10 @@ CPLErr GDALECWCompressor::Initialize(
         psClient->eCellSizeUnits = ECWTranslateToCellSizeUnits(szUnits);
     }
 
-#if ECWSDK_VERSION>=50
     NCSFree(psClient->szDatum);
     psClient->szDatum = NCSStrDup(szDatum);
     NCSFree(psClient->szProjection);
     psClient->szProjection = NCSStrDup(szProjection);
-#else
-    psClient->szDatum = szDatum;
-    psClient->szProjection = szProjection;
-#endif
 
     CPLDebug( "ECW", "Writing with PROJ=%s, DATUM=%s, UNITS=%s", 
               szProjection, szDatum, ECWTranslateFromCellSizeUnits(psClient->eCellSizeUnits) );
