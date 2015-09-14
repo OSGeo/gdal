@@ -270,7 +270,7 @@ def gnm_delete():
            
            
 
-gnmtest_list = [
+gdaltest_list = [
     gnm_filenetwork_create,
     gnm_filenetwork_open,
     gnm_import,
@@ -285,7 +285,7 @@ if __name__ == '__main__':
 
     gdaltest.setup_run( 'gnm_test' )
 
-    gdaltest.run_tests( gnmtest_list )
+    gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
 
