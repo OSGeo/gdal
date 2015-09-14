@@ -244,6 +244,9 @@ def run_all( dirlist, run_as_external = False ):
                 exec("import " + module)
 
                 if run_as_external:
+
+                    exec("%s.gdaltest_list" % module)
+
                     python_exe = sys.executable
                     if sys.platform == 'win32':
                         python_exe = python_exe.replace('\\', '/')
