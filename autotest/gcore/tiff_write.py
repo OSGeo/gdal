@@ -2388,6 +2388,9 @@ def tiff_write_65():
 # Verify that we can write and read a band-interleaved GeoTIFF with 65535 bands (#2838)
 
 def tiff_write_66():
+    
+    if gdal.GetConfigOption('SKIP_MEM_INTENSIVE_TEST') is not None:
+        return 'skip'
 
     ds = gdaltest.tiff_drv.Create('tmp/tiff_write_66.tif',1,1,65535, options = ['INTERLEAVE=BAND'])
     ds = None
@@ -2413,6 +2416,9 @@ def tiff_write_66():
 # Verify that we can write and read a pixel-interleaved GeoTIFF with 65535 bands (#2838)
 
 def tiff_write_67():
+    
+    if gdal.GetConfigOption('SKIP_MEM_INTENSIVE_TEST') is not None:
+        return 'skip'
 
     ds = gdaltest.tiff_drv.Create('tmp/tiff_write_67.tif',1,1,65535, options = ['INTERLEAVE=PIXEL'])
     ds = None
@@ -4914,6 +4920,9 @@ def tiff_write_124():
 # Test out-of-memory conditions with SplitBand and SplitBitmapBand
 
 def tiff_write_125():
+    
+    if gdal.GetConfigOption('SKIP_MEM_INTENSIVE_TEST') is not None:
+        return 'skip'
 
     ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_125.tif', 2147000000, 5000, 65535, options = ['SPARSE_OK=YES', 'BLOCKYSIZE=5000', 'COMPRESS=LZW', 'BIGTIFF=NO'])
     ds = None

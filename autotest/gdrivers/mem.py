@@ -282,6 +282,9 @@ def mem_5():
 # Test out-of-memory situations (simulated by multiplication overflows)
 
 def mem_6():
+    
+    if gdal.GetConfigOption('SKIP_MEM_INTENSIVE_TEST') is not None:
+        return 'skip'
 
     drv = gdal.GetDriverByName('MEM')
 

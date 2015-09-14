@@ -331,7 +331,10 @@ def vsifile_6():
 # Test limit cases on /vsimem
 
 def vsifile_7():
-    
+
+    if gdal.GetConfigOption('SKIP_MEM_INTENSIVE_TEST') is not None:
+        return 'skip'
+
     # Test extending file beyond reasonable limits in write mode
     fp = gdal.VSIFOpenL('/vsimem/vsifile_7.bin', 'wb')
     if gdal.VSIFSeekL(fp, 0x7FFFFFFFFFFFFFFF, 0) != 0:
