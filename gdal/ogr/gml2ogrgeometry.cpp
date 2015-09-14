@@ -1095,7 +1095,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
                     {
                         double dfRadius = CPLAtof(CPLGetXMLValue((CPLXMLNode*)psRadius, NULL, "0"));
                         const char* pszUnits = CPLGetXMLValue((CPLXMLNode*)psRadius, "uom", NULL);
-                        bool bSRSUnitIsDeegree = false;  // TODO: Is deegree a mispelling of degree?
+                        bool bSRSUnitIsDegree = false;  // TODO: Is degree a mispelling of degree?
                         bool bInvertedAxisOrder = false;
                         if( pszSRSName != NULL )
                         {
@@ -1105,11 +1105,11 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
                                 if( oSRS.IsGeographic() )
                                 {
                                     bInvertedAxisOrder = oSRS.EPSGTreatsAsLatLong();
-                                    bSRSUnitIsDeegree = fabs(oSRS.GetAngularUnits(NULL) - CPLAtof(SRS_UA_DEGREE_CONV)) < 1e-8;
+                                    bSRSUnitIsDegree = fabs(oSRS.GetAngularUnits(NULL) - CPLAtof(SRS_UA_DEGREE_CONV)) < 1e-8;
                                 }
                             }
                         }
-                        if( bSRSUnitIsDeegree && pszUnits != NULL &&
+                        if( bSRSUnitIsDegree && pszUnits != NULL &&
                             (EQUAL(pszUnits, "m") || EQUAL(pszUnits, "nm") ||
                              EQUAL(pszUnits, "mi") || EQUAL(pszUnits, "ft")) )
                         {
@@ -1595,7 +1595,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
             return NULL;
         }
 
-        bool bSRSUnitIsDeegree = false;
+        bool bSRSUnitIsDegree = false;
         bool bInvertedAxisOrder = false;
         if( pszSRSName != NULL )
         {
@@ -1605,7 +1605,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
                 if( oSRS.IsGeographic() )
                 {
                     bInvertedAxisOrder = oSRS.EPSGTreatsAsLatLong();
-                    bSRSUnitIsDeegree = fabs(oSRS.GetAngularUnits(NULL) - CPLAtof(SRS_UA_DEGREE_CONV)) < 1e-8;
+                    bSRSUnitIsDegree = fabs(oSRS.GetAngularUnits(NULL) - CPLAtof(SRS_UA_DEGREE_CONV)) < 1e-8;
                 }
             }
         }
@@ -1613,7 +1613,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
         double dfCenterX = p.getX();
         double dfCenterY = p.getY();
         
-        if( bSRSUnitIsDeegree && pszUnits != NULL &&
+        if( bSRSUnitIsDegree && pszUnits != NULL &&
             (EQUAL(pszUnits, "m") || EQUAL(pszUnits, "nm") ||
              EQUAL(pszUnits, "mi") || EQUAL(pszUnits, "ft")) )
         {
@@ -1707,7 +1707,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
             return NULL;
         }
 
-        bool bSRSUnitIsDeegree = false;
+        bool bSRSUnitIsDegree = false;
         bool bInvertedAxisOrder = false;
         if( pszSRSName != NULL )
         {
@@ -1717,7 +1717,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
                 if( oSRS.IsGeographic() )
                 {
                     bInvertedAxisOrder = oSRS.EPSGTreatsAsLatLong();
-                    bSRSUnitIsDeegree = fabs(oSRS.GetAngularUnits(NULL) - CPLAtof(SRS_UA_DEGREE_CONV)) < 1e-8;
+                    bSRSUnitIsDegree = fabs(oSRS.GetAngularUnits(NULL) - CPLAtof(SRS_UA_DEGREE_CONV)) < 1e-8;
                 }
             }
         }
@@ -1725,7 +1725,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
         double dfCenterX = p.getX();
         double dfCenterY = p.getY();
         
-        if( bSRSUnitIsDeegree && pszUnits != NULL &&
+        if( bSRSUnitIsDegree && pszUnits != NULL &&
             (EQUAL(pszUnits, "m") || EQUAL(pszUnits, "nm") ||
              EQUAL(pszUnits, "mi") || EQUAL(pszUnits, "ft")) )
         {
