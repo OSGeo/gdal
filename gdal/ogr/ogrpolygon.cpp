@@ -537,7 +537,7 @@ OGRErr OGRPolygon::exportToWkt( char ** ppszDstText,
 
 {
     OGRErr      eErr;
-    int         bMustWriteComma = FALSE;
+    bool        bMustWriteComma = false;
 
 /* -------------------------------------------------------------------- */
 /*      If we have no valid exterior ring, return POLYGON EMPTY.        */
@@ -610,8 +610,8 @@ OGRErr OGRPolygon::exportToWkt( char ** ppszDstText,
 
         if( bMustWriteComma )
             (*ppszDstText)[nCumulativeLength++] = ',';
-        bMustWriteComma = TRUE;
-        
+        bMustWriteComma = true;
+
         int nRingLen = strlen(papszRings[iRing] + 11);
         memcpy( *ppszDstText + nCumulativeLength, papszRings[iRing] + 11, nRingLen );
         nCumulativeLength += nRingLen;
@@ -710,12 +710,12 @@ OGRGeometry* OGRPolygon::getCurveGeometry(const char* const* papszOptions) const
 {
     OGRCurvePolygon* poCC = new OGRCurvePolygon();
     poCC->assignSpatialReference( getSpatialReference() );
-    int bHasCurveGeometry = FALSE;
+    bool bHasCurveGeometry = false;
     for( int iRing = 0; iRing < oCC.nCurveCount; iRing++ )
     {
         OGRCurve* poSubGeom = (OGRCurve* )oCC.papoCurves[iRing]->getCurveGeometry(papszOptions);
         if( wkbFlatten(poSubGeom->getGeometryType()) != wkbLineString )
-            bHasCurveGeometry = TRUE;
+            bHasCurveGeometry = true;
         poCC->addRingDirectly( poSubGeom );
     }
     if( !bHasCurveGeometry )

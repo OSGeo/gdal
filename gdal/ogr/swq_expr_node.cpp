@@ -735,7 +735,7 @@ swq_expr_node *swq_expr_node::Evaluate( swq_field_fetcher pfnFetcher,
 /* -------------------------------------------------------------------- */
     std::vector<swq_expr_node*> apoValues;
     std::vector<int> anValueNeedsFree;
-    int bError = FALSE;
+    bool bError = false;
 
     for( int i = 0; i < nSubExprCount && !bError; i++ )
     {
@@ -749,7 +749,7 @@ swq_expr_node *swq_expr_node::Evaluate( swq_field_fetcher pfnFetcher,
         {
             swq_expr_node* poSubExprVal = papoSubExpr[i]->Evaluate(pfnFetcher,pRecord);
             if( poSubExprVal == NULL )
-                bError = TRUE;
+                bError = true;
             else
             {
                 apoValues.push_back(poSubExprVal);

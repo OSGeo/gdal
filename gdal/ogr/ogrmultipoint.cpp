@@ -171,7 +171,7 @@ OGRErr OGRMultiPoint::exportToWkt( char ** ppszDstText,
     else
         sprintf( *ppszDstText, "%s (", getGeometryName() );
 
-    int bMustWriteComma = FALSE;
+    bool bMustWriteComma = false;
     for( int i = 0; i < getNumGeometries(); i++ )
     {
         OGRPoint        *poPoint = (OGRPoint *) getGeometryRef( i );
@@ -184,7 +184,7 @@ OGRErr OGRMultiPoint::exportToWkt( char ** ppszDstText,
 
         if( bMustWriteComma )
             strcat( *ppszDstText + nRetLen, "," );
-        bMustWriteComma = TRUE;
+        bMustWriteComma = true;
 
         nRetLen += strlen(*ppszDstText + nRetLen);
 

@@ -139,7 +139,7 @@ static char* OGRHStoreGetNextString(char* pszIter,
                                     int bIsKey)
 {
     char ch;
-    int bInString = FALSE;
+    bool bInString = false;
     char* pszOut = NULL;
     *ppszOut = NULL;
     for( ; (ch = *pszIter) != '\0'; pszIter ++ )
@@ -189,7 +189,7 @@ static char* OGRHStoreGetNextString(char* pszIter,
             else if( ch == '"' )
             {
                 pszOut = *ppszOut = pszIter + 1;
-                bInString = TRUE;
+                bInString = true;
             }
             else if( pszOut == NULL )
                 pszOut = *ppszOut = pszIter;

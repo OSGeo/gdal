@@ -2368,12 +2368,12 @@ OGRErr OGRSpatialReference::SetStatePlane( int nZone, int bNAD83,
     if( nPCSCode < 1 )
     {
         char    szName[128];
-        static int bFailureReported = FALSE;
+        static bool bFailureReported = FALSE;
 
         if( !bFailureReported )
         {
-            bFailureReported = TRUE;
-            CPLError( CE_Warning, CPLE_OpenFailed, 
+            bFailureReported = true;
+            CPLError( CE_Warning, CPLE_OpenFailed,
                       "Unable to find state plane zone in stateplane.csv,\n"
                       "likely because the GDAL data files cannot be found.  Using\n"
                       "incomplete definition of state plane zone.\n" );

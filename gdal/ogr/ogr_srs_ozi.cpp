@@ -203,7 +203,7 @@ OGRErr OGRSpatialReference::importFromOzi( const char * const* papszLines )
             float fMaxLongitude = INT_MIN;
             float fMinLatitude = INT_MAX;
             float fMaxLatitude = INT_MIN;
-            int bFoundMMPLL = FALSE;
+            bool bFoundMMPLL = false;
             for ( iLine = 5; iLine < nLines; iLine++ )
             {
                 if ( EQUALN(papszLines[iLine], "MMPLL", 5) )
@@ -222,7 +222,7 @@ OGRErr OGRSpatialReference::importFromOzi( const char * const* papszLines )
                     float fLatitude = CPLAtofM(papszTok[3]);
                     CSLDestroy(papszTok);
 
-                    bFoundMMPLL = TRUE;
+                    bFoundMMPLL = true;
 
                     if ( fMinLongitude > fLongitude )
                         fMinLongitude = fLongitude;
@@ -506,4 +506,3 @@ other_error:
 
     return OGRERR_FAILURE;
 }
-

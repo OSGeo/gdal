@@ -1753,7 +1753,7 @@ OGRErr OGRSpatialReference::morphFromESRI()
 /*      Peru96 DATUM, but in ESRI world, both Peru96 and SIRGAS-Chile   */
 /*      are translated as D_SIRGAS-Chile.                               */
 /* -------------------------------------------------------------------- */
-    int bPeru96Datum = FALSE;
+    bool bPeru96Datum = false;
     if( poDatum != NULL && EQUAL(poDatum->GetValue(), "SIRGAS_Chile") )
     {
         const char* pszSRSName = GetAttrValue("PROJCS");
@@ -1761,7 +1761,7 @@ OGRErr OGRSpatialReference::morphFromESRI()
             pszSRSName = GetAttrValue("GEOGCS");
         if( strstr(pszSRSName, "Peru96") )
         {
-            bPeru96Datum = TRUE;
+            bPeru96Datum = true;
             poDatum->SetValue( "Peru96" );
         }
     }
@@ -1819,7 +1819,7 @@ OGRErr OGRSpatialReference::morphFromESRI()
                         {                        
                             /* make clone of GEOGCS and strip CT parms for testing */
                             OGRSpatialReference *poSRSTemp2 = NULL;
-                            int bIsSame = FALSE;
+                            bool bIsSame = false;
                             char *pszOtherValue = NULL;
                             double dfThisValue, dfOtherValue;
                             OGR_SRSNode *poNode = NULL;
@@ -1856,20 +1856,20 @@ OGRErr OGRSpatialReference::morphFromESRI()
                                    but different spheroids (e.g. EPSG:4618 and EPSG:4291) - see bug #4345 */
                                 /* instead of testing for matching SPHEROID name (which can be error-prone), test
                                    for matching parameters (semi-major and inverse flattening ) - see bug #4673 */
-                                bIsSame = TRUE;
+                                bIsSame = true;
                                 dfThisValue = this->GetSemiMajor();
                                 dfOtherValue = oSRSTemp.GetSemiMajor();
                                 if ( ABS( dfThisValue - dfOtherValue ) > 0.01 )
-                                    bIsSame = FALSE;
-                                CPLDebug( "OGR_ESRI", 
-                                          "morphFromESRI() SemiMajor: this = %.15g other = %.15g", 
+                                    bIsSame = false;
+                                CPLDebug( "OGR_ESRI",
+                                          "morphFromESRI() SemiMajor: this = %.15g other = %.15g",
                                           dfThisValue, dfOtherValue );
                                 dfThisValue = this->GetInvFlattening();
                                 dfOtherValue = oSRSTemp.GetInvFlattening();
                                 if ( ABS( dfThisValue - dfOtherValue ) > 0.0001 )
-                                    bIsSame = FALSE;
-                                CPLDebug( "OGR_ESRI", 
-                                          "morphFromESRI() InvFlattening: this = %g other = %g", 
+                                    bIsSame = false;
+                                CPLDebug( "OGR_ESRI",
+                                          "morphFromESRI() InvFlattening: this = %g other = %g",
                                           dfThisValue, dfOtherValue );
 
                                 if ( bIsSame )
@@ -1884,7 +1884,7 @@ OGRErr OGRSpatialReference::morphFromESRI()
                                               "morphFromESRI() PRIMEM: this = %.15g other = %.15g", 
                                               dfThisValue, dfOtherValue );
                                     if ( ABS( dfThisValue - dfOtherValue ) > 0.0001 )
-                                        bIsSame = FALSE;
+                                        bIsSame = false;
                                 }
                 
                                 /* found a matching spheroid */ 

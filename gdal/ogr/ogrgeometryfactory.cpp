@@ -693,7 +693,7 @@ OGRGeometry *OGRGeometryFactory::forceToMultiPolygon( OGRGeometry *poGeom )
         eGeomType == wkbMultiSurface )
     {
         int iGeom;
-        int bAllPoly = TRUE;
+        bool bAllPoly = true;
         OGRGeometryCollection *poGC = (OGRGeometryCollection *) poGeom;
         if( poGeom->hasCurveGeometry() )
         {
@@ -706,7 +706,7 @@ OGRGeometry *OGRGeometryFactory::forceToMultiPolygon( OGRGeometry *poGeom )
         {
             OGRwkbGeometryType eSubGeomType = wkbFlatten(poGC->getGeometryRef(iGeom)->getGeometryType());
             if( eSubGeomType != wkbPolygon )
-                bAllPoly = FALSE;
+                bAllPoly = false;
         }
 
         if( !bAllPoly )
@@ -811,14 +811,14 @@ OGRGeometry *OGRGeometryFactory::forceToMultiPoint( OGRGeometry *poGeom )
     if( eGeomType == wkbGeometryCollection )
     {
         int iGeom;
-        int bAllPoint = TRUE;
+        bool bAllPoint = true;
         OGRGeometryCollection *poGC = (OGRGeometryCollection *) poGeom;
 
         for( iGeom = 0; iGeom < poGC->getNumGeometries(); iGeom++ )
         {
             if( wkbFlatten(poGC->getGeometryRef(iGeom)->getGeometryType())
                 != wkbPoint )
-                bAllPoint = FALSE;
+                bAllPoint = false;
         }
 
         if( !bAllPoint )
@@ -917,7 +917,7 @@ OGRGeometry *OGRGeometryFactory::forceToMultiLineString( OGRGeometry *poGeom )
     if( eGeomType == wkbGeometryCollection )
     {
         int iGeom;
-        int bAllLines = TRUE;
+        bool bAllLines = true;
         OGRGeometryCollection *poGC = (OGRGeometryCollection *) poGeom;
         if( poGeom->hasCurveGeometry() )
         {
@@ -929,7 +929,7 @@ OGRGeometry *OGRGeometryFactory::forceToMultiLineString( OGRGeometry *poGeom )
         for( iGeom = 0; iGeom < poGC->getNumGeometries(); iGeom++ )
         {
             if( poGC->getGeometryRef(iGeom)->getGeometryType() != wkbLineString )
-                bAllLines = FALSE;
+                bAllLines = false;
         }
 
         if( !bAllLines )
@@ -1266,10 +1266,10 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
 /* -------------------------------------------------------------------- */
     sPolyExtended* asPolyEx = new sPolyExtended[nPolygonCount];
 
-    int go_on = TRUE;
-    int bMixedUpGeometries = FALSE;
-    int bNonPolygon = FALSE;
-    int bFoundCCW = FALSE;
+    bool go_on = true;
+    bool bMixedUpGeometries = false;
+    bool bNonPolygon = false;
+    bool bFoundCCW = false;
 
     const char* pszMethodValue = CSLFetchNameValue( (char**)papszOptions, "METHOD" );
     const char* pszMethodValueOption = CPLGetConfigOption("OGR_ORGANIZE_POLYGONS", NULL);
@@ -1281,7 +1281,7 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
         if (EQUAL(pszMethodValue, "SKIP"))
         {
             method = METHOD_SKIP;
-            bMixedUpGeometries = TRUE;
+            bMixedUpGeometries = true;
         }
         else if (EQUAL(pszMethodValue, "ONLY_CCW"))
         {
@@ -1328,15 +1328,15 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
         {
             if( !bMixedUpGeometries )
             {
-                CPLError( 
-                    CE_Warning, CPLE_AppDefined, 
+                CPLError(
+                    CE_Warning, CPLE_AppDefined,
                     "organizePolygons() received an unexpected geometry.\n"
                     "Either a polygon with interior rings, or a polygon with less than 4 points,\n"
                     "or a non-Polygon geometry.  Return arguments as a collection." );
-                bMixedUpGeometries = TRUE;
+                bMixedUpGeometries = true;
             }
             if( wkbFlatten(papoPolygons[i]->getGeometryType()) != wkbPolygon )
-                bNonPolygon = TRUE;
+                bNonPolygon = true;
         }
     }
 
@@ -1498,7 +1498,7 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
 
         for(j=i-1; go_on && j>=0;j--)
         {
-            int b_i_inside_j = FALSE;
+            bool b_i_inside_j = false;
 
             if (method == METHOD_ONLY_CCW && asPolyEx[j].bIsCW == FALSE)
             {
@@ -1516,7 +1516,7 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
                         /* We are testing if a CCW ring is in the biggest CW ring */
                         /* It *must* be inside as this is the last candidate, otherwise */
                         /* the winding order rules is broken */
-                        b_i_inside_j = TRUE;
+                        b_i_inside_j = true;
                     }
                     else if (asPolyEx[j].poExteriorRing->isPointOnRingBoundary(&asPolyEx[i].poAPoint, FALSE))
                     {
@@ -1533,7 +1533,7 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
                             else if (asPolyEx[j].poExteriorRing->isPointInRing(&point, FALSE))
                             {
                                 /* If then point is strictly included in j, then i is considered inside j */
-                                b_i_inside_j = TRUE;
+                                b_i_inside_j = true;
                                 break;
                             }
                             else 
@@ -1561,7 +1561,7 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
                                 else if (asPolyEx[j].poExteriorRing->isPointInRing(&pointMiddle, FALSE))
                                 {
                                     /* If then point is strictly included in j, then i is considered inside j */
-                                    b_i_inside_j = TRUE;
+                                    b_i_inside_j = true;
                                     break;
                                 }
                                 else 
@@ -1575,12 +1575,12 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
                     /* Note that isPointInRing only test strict inclusion in the ring */
                     else if (asPolyEx[j].poExteriorRing->isPointInRing(&asPolyEx[i].poAPoint, FALSE))
                     {
-                        b_i_inside_j = TRUE;
+                        b_i_inside_j = true;
                     }
                 }
                 else if (asPolyEx[j].poPolygon->Contains(asPolyEx[i].poPolygon))
                 {
-                    b_i_inside_j = TRUE;
+                    b_i_inside_j = true;
                 }
             }
 
@@ -1616,7 +1616,7 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
                    contained inside the other one. This is a really broken
                    case. We just make a multipolygon with the whole set of
                    polygons */
-                go_on = FALSE;
+                go_on = false;
 #ifdef DEBUG
                 char* wkt1;
                 char* wkt2;
@@ -2312,7 +2312,7 @@ static void FixPolygonCoordinatesAtDateLine(OGRPolygon* poPoly, double dfDateLin
     {
         OGRLineString* poLS = (iPart == 0) ? poPoly->getExteriorRing() :
                                              poPoly->getInteriorRing(iPart-1);
-        int bGoEast = FALSE;
+        bool bGoEast = false;
         int bIs3D = poLS->getCoordinateDimension() == 3;
         for(i=1;i<poLS->getNumPoints();i++)
         {
@@ -2324,7 +2324,7 @@ static void FixPolygonCoordinatesAtDateLine(OGRPolygon* poPoly, double dfDateLin
                 if ((dfPrevX > dfLeftBorderX && dfX < dfRightBorderX) || (dfX < 0 && bGoEast))
                 {
                     dfX += 360;
-                    bGoEast = TRUE;
+                    bGoEast = true;
                     if( bIs3D )
                         poLS->setPoint(i, dfX, poLS->getY(i), poLS->getZ(i));
                     else
@@ -2344,11 +2344,11 @@ static void FixPolygonCoordinatesAtDateLine(OGRPolygon* poPoly, double dfDateLin
                                 poLS->setPoint(j, dfX + 360, poLS->getY(j));
                         }
                     }
-                    bGoEast = FALSE;
+                    bGoEast = false;
                 }
                 else
                 {
-                    bGoEast = FALSE;
+                    bGoEast = false;
                 }
             }
         }
@@ -2450,26 +2450,26 @@ static void CutGeometryOnDateLineAndAddToMulti(OGRGeometryCollection* poMulti,
         case wkbPolygon:
         case wkbLineString:
         {
-            int bWrapDateline = FALSE;
-            int bSplitLineStringAtDateline = FALSE;
+            bool bWrapDateline = false;
+            bool bSplitLineStringAtDateline = false;
             OGREnvelope oEnvelope;
-            
+
             poGeom->getEnvelope(&oEnvelope);
-            
+
             /* Naive heuristics... Place to improvement... */
             OGRGeometry* poDupGeom = NULL;
-            
+
             double dfLeftBorderX = 180 - dfDateLineOffset;
             double dfRightBorderX = -180 + dfDateLineOffset;
             double dfDiffSpace = 360 - dfDateLineOffset;
-            
+
             if (oEnvelope.MinX > dfLeftBorderX && oEnvelope.MaxX > 180)
             {
 #ifndef HAVE_GEOS
-                CPLError( CE_Failure, CPLE_NotSupported, 
+                CPLError( CE_Failure, CPLE_NotSupported,
                         "GEOS support not enabled." );
 #else
-                bWrapDateline = TRUE;
+                bWrapDateline = true;
 #endif
             }
             else
@@ -2483,7 +2483,7 @@ static void CutGeometryOnDateLineAndAddToMulti(OGRGeometryCollection* poMulti,
                 {
                     int i;
                     double dfMaxSmallDiffLong = 0;
-                    int bHasBigDiff = FALSE;
+                    bool bHasBigDiff = false;
                     /* Detect big gaps in longitude */
                     for(i=1;i<poLS->getNumPoints();i++)
                     {
@@ -2492,21 +2492,21 @@ static void CutGeometryOnDateLineAndAddToMulti(OGRGeometryCollection* poMulti,
                         double dfDiffLong = fabs(dfX - dfPrevX);
                         if (dfDiffLong > dfDiffSpace &&
                             ((dfX > dfLeftBorderX && dfPrevX < dfRightBorderX) || (dfPrevX > dfLeftBorderX && dfX < dfRightBorderX)))
-                            bHasBigDiff = TRUE;
+                            bHasBigDiff = true;
                         else if (dfDiffLong > dfMaxSmallDiffLong)
                             dfMaxSmallDiffLong = dfDiffLong;
                     }
                     if (bHasBigDiff && dfMaxSmallDiffLong < dfDateLineOffset)
                     {
                         if (eGeomType == wkbLineString)
-                            bSplitLineStringAtDateline = TRUE;
+                            bSplitLineStringAtDateline = true;
                         else
                         {
 #ifndef HAVE_GEOS
-                            CPLError( CE_Failure, CPLE_NotSupported, 
+                            CPLError( CE_Failure, CPLE_NotSupported,
                                     "GEOS support not enabled." );
 #else
-                            bWrapDateline = TRUE;
+                            bWrapDateline = true;
                             poDupGeom = poGeom->clone();
                             FixPolygonCoordinatesAtDateLine((OGRPolygon*)poDupGeom, dfDateLineOffset);
 #endif
@@ -3496,11 +3496,11 @@ OGRLineString* OGRGeometryFactory::curveToLineString(
     }
 
     OGRLineString* poLine = new OGRLineString();
-    int bIsArc = TRUE;
+    bool bIsArc = true;
     if( !GetCurveParmeters(x0, y0, x1, y1, x2, y2,
                            R, cx, cy, alpha0, alpha1, alpha2)) 
     {
-        bIsArc = FALSE;
+        bIsArc = false;
         cx = cy = R = alpha0 = alpha1 = alpha2 = 0.0;
     }
 
@@ -3527,7 +3527,7 @@ OGRLineString* OGRGeometryFactory::curveToLineString(
     else
         poLine->addPoint(x0, y0);
 
-    int bAddIntermediatePoint = FALSE;
+    bool bAddIntermediatePoint = false;
     int bStealth = TRUE;
     for(const char* const* papszIter = papszOptions; papszIter && *papszIter; papszIter++)
     {
@@ -3537,12 +3537,12 @@ OGRLineString* OGRGeometryFactory::curveToLineString(
         {
             if( EQUAL(pszValue, "YES") || EQUAL(pszValue, "TRUE") || EQUAL(pszValue, "ON") )
             {
-                bAddIntermediatePoint = TRUE;
+                bAddIntermediatePoint = true;
                 bStealth = FALSE;
             }
             else if( EQUAL(pszValue, "NO") || EQUAL(pszValue, "FALSE") || EQUAL(pszValue, "OFF") )
             {
-                bAddIntermediatePoint = FALSE;
+                bAddIntermediatePoint = false;
                 bStealth = FALSE;
             }
             else if( EQUAL(pszValue, "STEALTH") )
@@ -3690,8 +3690,8 @@ static int OGRGF_DetectArc(const OGRLineString* poLS, int i,
     GUInt32 nAlphaRatioRef =
             OGRGF_GetHiddenValue(p1.getX(), p1.getY()) |
         (OGRGF_GetHiddenValue(p2.getX(), p2.getY()) << HIDDEN_ALPHA_HALF_WIDTH);
-    int bFoundFFFFFFFFPattern = FALSE;
-    int bFoundReversedAlphaRatioRef = FALSE;
+    bool bFoundFFFFFFFFPattern = false;
+    bool bFoundReversedAlphaRatioRef = false;
     int bValidAlphaRatio = (nAlphaRatioRef > 0 && nAlphaRatioRef < 0xFFFFFFFF);
     int nCountValidAlphaRatio = 1;
 
@@ -3810,7 +3810,7 @@ static int OGRGF_DetectArc(const OGRLineString* poLS, int i,
 #endif
             if( !bFoundFFFFFFFFPattern && nAlphaRatioReversed == 0xFFFFFFFF )
             {
-                bFoundFFFFFFFFPattern = TRUE;
+                bFoundFFFFFFFFPattern = true;
                 nCountValidAlphaRatio ++;
             }
             else if( bFoundFFFFFFFFPattern && !bFoundReversedAlphaRatioRef &&
@@ -3821,7 +3821,7 @@ static int OGRGF_DetectArc(const OGRLineString* poLS, int i,
             else if( bFoundFFFFFFFFPattern && !bFoundReversedAlphaRatioRef &&
                         nAlphaRatioReversed == nAlphaRatioRef )
             {
-                bFoundReversedAlphaRatioRef = TRUE;
+                bFoundReversedAlphaRatioRef = true;
                 nCountValidAlphaRatio ++;
             }
             else

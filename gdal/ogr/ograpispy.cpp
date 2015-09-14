@@ -44,7 +44,7 @@
 
 #ifdef OGRAPISPY_ENABLED
 
-int bOGRAPISpyEnabled = FALSE;
+bool bOGRAPISpyEnabled = false;
 static CPLString osSnapshotPath, osSpyFile;
 static FILE* fpSpyFile = NULL;
 extern "C" int CPL_DLL GDALIsInGlobalDestructor(void);
@@ -86,7 +86,7 @@ static std::map<OGRDataSourceH, DatasetDescription> oMapDS;
 static std::map<OGRLayerH, CPLString> oGlobalMapLayer;
 static OGRLayerH hLayerGetNextFeature = NULL;
 static OGRLayerH hLayerGetLayerDefn = NULL;
-static int bDeferGetFieldCount = FALSE;
+static bool bDeferGetFieldCount = false;
 static int nGetNextFeatureCalls = 0;
 static std::set<CPLString> aoSetCreatedDS;
 static std::map<OGRFeatureDefnH, FeatureDefnDescription> oMapFDefn;
@@ -359,7 +359,7 @@ static void OGRAPISpyFlushDefered()
         {
             fprintf(fpSpyFile, "%s.GetFieldCount()\n",
                     OGRAPISpyGetFeatureDefnVar(hDefn).c_str());
-            bDeferGetFieldCount = FALSE;
+            bDeferGetFieldCount = false;
         }
 
         hLayerGetLayerDefn = NULL;
@@ -983,7 +983,7 @@ void OGRAPISpy_FD_GetFieldCount(OGRFeatureDefnH hDefn)
     if( hLayerGetLayerDefn != NULL &&
         (OGRFeatureDefnH)(((OGRLayer*)hLayerGetLayerDefn)->GetLayerDefn()) == hDefn )
     {
-        bDeferGetFieldCount = TRUE;
+        bDeferGetFieldCount = true;
     }
     else
     {

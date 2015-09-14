@@ -583,7 +583,7 @@ OGRErr OGR_SRSNode::importFromWkt( char ** ppszInput, int nRecLevel, int* pnNode
 
 {
     const char  *pszInput = *ppszInput;
-    int         bInQuotedString = FALSE;
+    bool bInQuotedString = false;
 
     /* Sanity checks */
     if( nRecLevel == 10 )
@@ -934,11 +934,12 @@ OGRErr OGR_SRSNode::FixupOrdering()
 /*      Sort - Note we don't try to do anything with the first child    */
 /*      which we assume is a name string.                               */
 /* -------------------------------------------------------------------- */
-    int j, bChange = TRUE;
+    int j;
+    bool bChange = true;
 
     for( i = 1; bChange && i < GetChildCount()-1; i++ )
     {
-        bChange = FALSE;
+        bChange = false;
         for( j = 1; j < GetChildCount()-i; j++ )
         {
             if( panChildKey[j] == -1 || panChildKey[j+1] == -1 )
@@ -956,7 +957,7 @@ OGRErr OGR_SRSNode::FixupOrdering()
                 panChildKey[j] = panChildKey[j+1];
                 panChildKey[j+1] = nKeyTemp;
 
-                bChange = TRUE;
+                bChange = true;
             }
         }
     }
@@ -965,5 +966,3 @@ OGRErr OGR_SRSNode::FixupOrdering()
 
     return OGRERR_NONE;
 }
-
-

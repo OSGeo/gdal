@@ -203,7 +203,7 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
 /* -------------------------------------------------------------------- */
 /*      Use safe defaults if projection parameters are not supplied.    */
 /* -------------------------------------------------------------------- */
-    int     bProjAllocated = FALSE;
+    bool bProjAllocated = false;
 
     if( padfPrjParams == NULL )
     {
@@ -214,7 +214,7 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
             return OGRERR_NOT_ENOUGH_MEMORY;
         for ( i = 0; i < 17; i++ )
             padfPrjParams[i] = 0.0;
-        bProjAllocated = TRUE;
+        bProjAllocated = true;
     }
 
 /* -------------------------------------------------------------------- */

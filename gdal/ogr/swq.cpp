@@ -97,7 +97,7 @@ int swqlex( YYSTYPE *ppNode, swq_parse_context *context )
         char *token;
         int i_token;
         char chQuote = *pszInput;
-        int bFoundEndQuote = FALSE;
+        bool bFoundEndQuote = false;
 
         int nRet = *pszInput == '"' ? SWQT_IDENTIFIER : SWQT_STRING;
 
@@ -117,7 +117,7 @@ int swqlex( YYSTYPE *ppNode, swq_parse_context *context )
             else if( *pszInput == chQuote )
             {
                 pszInput++;
-                bFoundEndQuote = TRUE;
+                bFoundEndQuote = true;
                 break;
             }
             

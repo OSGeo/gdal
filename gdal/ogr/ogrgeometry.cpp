@@ -1848,13 +1848,13 @@ int OGR_G_IsRing( OGRGeometryH hGeom )
 OGRwkbGeometryType OGRFromOGCGeomType( const char *pszGeomType )
 {
     OGRwkbGeometryType eType;
-    int bConvertTo3D = FALSE;
+    bool bConvertTo3D = false;
     if( *pszGeomType != '\0' )
     {
         char ch = pszGeomType[strlen(pszGeomType)-1];
         if( ch == 'z' || ch == 'Z' )
         {
-            bConvertTo3D = TRUE;
+            bConvertTo3D = true;
         }
     }
     if ( EQUALN_CST(pszGeomType, "POINT") )
@@ -1886,7 +1886,7 @@ OGRwkbGeometryType OGRFromOGCGeomType( const char *pszGeomType )
 
     if( bConvertTo3D )
         eType = wkbSetZ(eType);
-    
+
     return eType;
 }
 
@@ -4573,7 +4573,7 @@ OGRGeometry *OGRGeometry::Polygonize() const
     GEOSGeom *hGeosGeomList = NULL;
     GEOSGeom hGeosPolygs = NULL;
     OGRGeometry *poPolygsOGRGeom = NULL;
-    int bError = FALSE;
+    bool bError = false;
 
     GEOSContextHandle_t hGEOSCtxt = createGEOSContext();
 
@@ -4584,17 +4584,17 @@ OGRGeometry *OGRGeometry::Polygonize() const
         OGRGeometry * poChild = (OGRGeometry*)poColl->getGeometryRef(ig);
         if( poChild == NULL ||
             wkbFlatten(poChild->getGeometryType()) != wkbLineString )
-            bError = TRUE;
+            bError = true;
         else
         {
             hGeosGeom = poChild->exportToGEOS(hGEOSCtxt);
             if( hGeosGeom == NULL)
-                bError = TRUE;
+                bError = true;
         }
         *(hGeosGeomList + ig) = hGeosGeom;
     }
 
-    if( bError == FALSE )
+    if( !bError )
     {
         hGeosPolygs = GEOSPolygonize_r( hGEOSCtxt, hGeosGeomList, iCount );
 

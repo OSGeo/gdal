@@ -565,7 +565,7 @@ int OGRParseDate( const char *pszInput,
                   OGRField *psField,
                   CPL_UNUSED int nOptions )
 {
-    int bGotSomething = FALSE;
+    bool bGotSomething = false;
 
     psField->Date.Year = 0;
     psField->Date.Month = 0;
@@ -622,8 +622,8 @@ int OGRParseDate( const char *pszInput,
         while( *pszInput >= '0' && *pszInput <= '9' )
             pszInput++;
 
-        bGotSomething = TRUE;
-        
+        bGotSomething = true;
+
         /* If ISO 8601 format */
         if( *pszInput == 'T' )
             pszInput ++;
@@ -675,7 +675,7 @@ int OGRParseDate( const char *pszInput,
             }
         }
 
-        bGotSomething = TRUE;
+        bGotSomething = true;
     }
 
     // No date or time!
@@ -1009,10 +1009,10 @@ char* OGRGetXML_UTF8_EscapedString(const char* pszString)
     if (!CPLIsUTF8(pszString, -1) &&
          CSLTestBoolean(CPLGetConfigOption("OGR_FORCE_ASCII", "YES")))
     {
-        static int bFirstTime = TRUE;
+        static bool bFirstTime = true;
         if (bFirstTime)
         {
-            bFirstTime = FALSE;
+            bFirstTime = false;
             CPLError(CE_Warning, CPLE_AppDefined,
                     "%s is not a valid UTF-8 string. Forcing it to ASCII.\n"
                     "If you still want the original string and change the XML file encoding\n"
