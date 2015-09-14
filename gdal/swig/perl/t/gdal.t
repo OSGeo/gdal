@@ -206,21 +206,20 @@ if (0) {
     my $n2 = @t * @u;
     ok($n == $n2, "create rat column");
     $r->SetRowCount(scalar(@t));
-    my $i = 0;
-    my $c = 0;
-    for (@t) {
-	if (/Integer/) {
-	    my $v = $r->Value($i, $c, 12);
-	    ok($v == 12, "rat int");
-	} elsif (/Real/) {
-	    my $v = $r->Value($i, $c, 1.23);
-	    ok($v == 1.23, "rat int");
-	} elsif (/String/) {
-	    my $v = $r->Value($i, $c, "abc");
-	    ok($v eq 'abc', "rat str");
+    for (my $i = 0; $i < 10; $i++) {
+    	for (my $c = 0; $c < $n; $c++) {
+	    my $t = $r->GetTypeOfCol($c);
+	    if ($t =~ /Integer/) {
+		my $v = $r->Value($i, $c, 12);
+		ok($v == 12, "rat int");
+	    } elsif ($t =~ /Real/) {
+		my $v = $r->Value($i, $c, 1.23);
+		ok($v == 1.23, "$n ($i,$c) rat real '$v'");
+	    } elsif ($t =~ /String/) {
+		my $v = $r->Value($i, $c, "abc");
+		ok($v eq 'abc', "$n ($i,$c) rat str '$v'");
+	    }
 	}
-	$i++;
-	$c++;
     }
 }
 
