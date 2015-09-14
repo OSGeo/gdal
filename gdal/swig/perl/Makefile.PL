@@ -5,9 +5,9 @@ use Config;
 my %ARGV;
 for (@ARGV) {
     if (/^(.*?)\=(.*)/) {
-	$ARGV{$1} = $2;
+        $ARGV{$1} = $2;
     } else {
-	$ARGV{$_} = 1;
+        $ARGV{$_} = 1;
     }
     $_ = '' if /^--gdal-config/;
     $_ = '' if /^--no-version-check/;
@@ -98,7 +98,7 @@ if ($config eq '../../apps/gdal-config' or $config eq 'c:/msys/1.0/local/bin/gda
 my $pm_version;
 if (open($fh, "lib/Geo/GDAL.pm")) {
     for (<$fh>) {
-	($pm_version) = /(\d+\.\d+\.\d+)/ if /GDAL_VERSION/;
+        ($pm_version) = /(\d+\.\d+\.\d+)/ if /GDAL_VERSION/;
     }
     close $fh;
 } else {
@@ -119,9 +119,9 @@ die "=======================================================\n".
     if ($gdal_version ne $pm_version) and !$ARGV{'--no-version-check'};
 
 %object = ( 'Geo::GDAL' => 'gdal_wrap.o',
-	    'Geo::GDAL::Const' => 'gdalconst_wrap.o',
-	    'Geo::OGR' => 'ogr_wrap.o',
-	    'Geo::OSR' => 'osr_wrap.o' );
+            'Geo::GDAL::Const' => 'gdalconst_wrap.o',
+            'Geo::OGR' => 'ogr_wrap.o',
+            'Geo::OSR' => 'osr_wrap.o' );
 
 if ($ARGV{'--debug'}) {
     print "LIB = $LIB\n";
@@ -132,18 +132,31 @@ for my $module (keys %object) {
     my $add = $module;
     $add =~ s/:/_/g;
     WriteMakefile( NAME => $module,
-		   VERSION_FROM => 'lib/Geo/GDAL.pm',
-		   MAKEFILE => 'Makefile_'.$add,
-		   LIBS => $LIB,
-		   INC => $INC,
+                   VERSION_FROM => 'lib/Geo/GDAL.pm',
+                   ABSTRACT_FROM => 'lib/Geo/GDAL.pm',
+                   AUTHOR => 'Ari Jolma <https://trac.osgeo.org/gdal/wiki/GdalOgrInPerl>',
+                   LICENSE => 'mit',
+                   META_MERGE => {
+                       'meta-spec' => { version => 2 },
+                       resources => {
+                           repository => {
+                               type => 'svn',
+                               url  => 'https://svn.osgeo.org/gdal/trunk/gdal/swig/perl',
+                               web  => 'https://trac.osgeo.org/gdal/browser/trunk/gdal/swig/perl',
+                           },
+                       },
+                   },
+                   MAKEFILE => 'Makefile_'.$add,
+                   LIBS => $LIB,
+                   INC => $INC,
                    OPTIMIZE => "$ENV{CFLAGS} $ENV{CPPFLAGS}",
                    LD => "$Config{ld} $ENV{CFLAGS} $ENV{LDFLAGS}",
-		   OBJECT => $object{$module},
-		   PM => {'lib/Geo/GDAL.pm' => '$(INST_LIBDIR)/GDAL.pm',
-			  'lib/Geo/OGR.pm' => '$(INST_LIBDIR)/OGR.pm',
-			  'lib/Geo/OSR.pm' => '$(INST_LIBDIR)/OSR.pm',
-			  'lib/Geo/GDAL/Const.pm' => '$(INST_LIBDIR)/GDAL/Const.pm'}
-	);
+                   OBJECT => $object{$module},
+                   PM => {'lib/Geo/GDAL.pm' => '$(INST_LIBDIR)/GDAL.pm',
+                          'lib/Geo/OGR.pm' => '$(INST_LIBDIR)/OGR.pm',
+                          'lib/Geo/OSR.pm' => '$(INST_LIBDIR)/OSR.pm',
+                          'lib/Geo/GDAL/Const.pm' => '$(INST_LIBDIR)/GDAL/Const.pm'}
+        );
 }
 
 sub parse_libtool_library_file_for_l {
@@ -151,16 +164,16 @@ sub parse_libtool_library_file_for_l {
     my $fh;
     my $l = '';
     if (open($fh, $fn)) {
-	while (<$fh>) {
-	    if (/^dlname=(.*)/) {
-		$l = $1;
-		$l =~ s/^'//;
-		$l =~ s/^lib/\-l/;
-		$l =~ s/\..*$//;
-		last;
-	    }
-	}
-	close $fh;
+        while (<$fh>) {
+            if (/^dlname=(.*)/) {
+                $l = $1;
+                $l =~ s/^'//;
+                $l =~ s/^lib/\-l/;
+                $l =~ s/\..*$//;
+                last;
+            }
+        }
+        close $fh;
     }
     return $l;
 }

@@ -130,8 +130,70 @@ use Geo::OSR;
 # For GDAL 2.0 or above, GDAL X.Y.Z should then
 # VERSION = X + Y / 100.0 + Z / 10000.0
 
-our $VERSION = '2.0000';
+our $VERSION = '2.00004';
 our $GDAL_VERSION = '2.0.0';
+
+=pod
+
+=head1 NAME
+
+Geo::GDAL - Perl extension for the GDAL library for geospatial data
+
+=head1 SYNOPSIS
+
+  use Geo::GDAL;
+
+  my $raster_file = shift @ARGV;
+
+  my $raster_dataset = Geo::GDAL::Open($file);
+
+  my $raster_data = $dataset->GetRasterBand(1)->ReadTile;
+
+  my $vector_datasource = Geo::OGR::Open('./');
+ 
+  my $vector_layer = $datasource->Layer('borders'); # e.g. a shapefile borders.shp in current directory
+
+  $vector_layer->ResetReading();
+  while (my $feature = $vector_layer->GetNextFeature()) {  
+      my $geometry = $feature->GetGeometry(); 
+      my $value = $feature->GetField($field);
+  }
+
+=head1 DESCRIPTION
+
+This Perl module lets you to manage (read, analyse, write) geospatial
+data stored in several formats.
+
+=head2 EXPORT
+
+None by default.
+
+=head1 SEE ALSO
+
+The GDAL home page is L<http://gdal.org/>
+
+The documentation of this module is written in Doxygen format. See
+L<http://ajolma.net/Geo-GDAL/snapshot/>
+
+=head1 AUTHOR
+
+Ari Jolma
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright (C) 2005- by Ari Jolma and GDAL bindings developers.
+
+This library is free software; you can redistribute it and/or modify
+it under the terms of MIT License
+
+L<https://opensource.org/licenses/MIT>
+
+=head1 REPOSITORY
+
+L<https://trac.osgeo.org/gdal>
+
+=cut
+
 use vars qw/
     @DATA_TYPES @ACCESS_TYPES @RESAMPLING_TYPES @RIO_RESAMPLING_TYPES @NODE_TYPES
     %TYPE_STRING2INT %TYPE_INT2STRING
