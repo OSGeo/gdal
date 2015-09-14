@@ -39,22 +39,27 @@ from osgeo import gdal
 
 all_test_list = [ 'ogr', 'gcore', 'gdrivers', 'osr' , 'alg', 'gnm', 'utilities', 'pyscripts' ]
 
-if len(sys.argv) == 2:
-    if sys.argv[1] == '-l':
+run_as_external = False
+
+test_list = []
+
+for arg in gdaltest.argv[1:]:
+    if arg  == '-l':
         print('List of GDAL Autotest modules')
         for test in all_test_list:
             print('* ' + test)
         sys.exit(0)
-    elif sys.argv[1] == '-h' or sys.argv[1][0] == '-':
+    elif arg == '-run_as_external':
+        run_as_external = True
+    elif arg == '-h' or arg[0] == '-':
         print('Usage: ' + sys.argv[0] + ' [OPTION]')
-        print('\t<tests> - list of test modules to run, run all if none specified')
-        print('\t-l      - list available test modules')
-        print('\t-h      - print this usage message')
+        print('\t<tests>          - list of test modules to run, run all if none specified')
+        print('\t-l               - list available test modules')
+        print('\t-h               - print this usage message')
+        print('\t-run_as_external - run each test script in a dedicated Python instance')
         sys.exit(0)
-
-test_list = []
-for i in range(1,len(gdaltest.argv)):
-    test_list.append( gdaltest.argv[i] )
+    else:
+        test_list.append( arg )
 
 if len(test_list) == 0:
     test_list = all_test_list
@@ -64,7 +69,7 @@ gdal.SetConfigOption("ECW_DO_NOT_RESOLVE_DATUM_PROJECTION", "YES")
 
 gdaltest.setup_run( 'gdalautotest_all' )
 
-gdaltest.run_all( test_list, [] )
+gdaltest.run_all( test_list, run_as_external = run_as_external )
 
 errors = gdaltest.summarize()
 
