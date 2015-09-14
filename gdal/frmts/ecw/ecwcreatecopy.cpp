@@ -1434,9 +1434,6 @@ ECWCreateCopyJPEG2000( const char * pszFilename, GDALDataset *poSrcDS,
 
     GDALDataType eDataType = poSrcDS->GetRasterBand(1)->GetRasterDataType();
     if( eDataType != GDT_Byte
-        //  TODO: Assume that this was supposed to be signed 8 bit.
-        //    That does not currently exist.
-        // && eDataType != GDT_Byte
         && eDataType != GDT_Int16
         && eDataType != GDT_UInt16
         && eDataType != GDT_Int32
