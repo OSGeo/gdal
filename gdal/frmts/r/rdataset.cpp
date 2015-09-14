@@ -149,11 +149,12 @@ CPLErr RRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 /*                              RDataset()                              */
 /************************************************************************/
 
-RDataset::RDataset()
-{
-    fp = NULL;
-    padfMatrixValues = NULL;
-}
+RDataset::RDataset() :
+    fp(NULL),
+    bASCII(FALSE),
+    nStartOfData(0),
+    padfMatrixValues(NULL)
+{ }
 
 /************************************************************************/
 /*                             ~RDataset()                              */
@@ -163,7 +164,7 @@ RDataset::~RDataset()
 {
     FlushCache();
     CPLFree(padfMatrixValues);
-    
+
     if( fp )
         VSIFCloseL( fp );
 }
