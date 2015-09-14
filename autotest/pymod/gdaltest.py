@@ -217,7 +217,7 @@ def summarize():
 
 ###############################################################################
 
-def run_all( dirlist, option_list ):
+def run_all( dirlist, run_as_external = False ):
 
     global start_time, end_time
     global cur_name
@@ -238,15 +238,32 @@ def run_all( dirlist, option_list ):
             try:
                 wd = os.getcwd()
                 os.chdir( dir_name )
-                
+
+                # Even try to import as module in run_as_external case
+                # so as to be able to detect ImportError and skip them
                 exec("import " + module)
-                try:
-                    print('Running tests from %s/%s' % (dir_name,file))
-                    setup_run( '%s/%s' % (dir_name,file) )
-                    exec("run_tests( " + module + ".gdaltest_list)")
-                except:
-                    pass
-                
+
+                if run_as_external:
+                    python_exe = sys.executable
+                    if sys.platform == 'win32':
+                        python_exe = python_exe.replace('\\', '/')
+                        script_file_path = script_file_path.replace('\\', '/')
+
+                    ret = runexternal(python_exe + ' ' + file, display_live_on_parent_stdout = True)
+                    global success_counter, failure_counter, failure_summary
+                    if ret.find('Failed:    0') < 0:
+                        failure_counter += 1
+                        failure_summary.append( dir_name + '/' + file )
+                    else:
+                        success_counter += 1
+                else:
+                    try:
+                        print('Running tests from %s/%s' % (dir_name,file))
+                        setup_run( '%s/%s' % (dir_name,file) )
+                        exec("run_tests( " + module + ".gdaltest_list)")
+                    except:
+                        pass
+
                 os.chdir( wd )
 
             except:
