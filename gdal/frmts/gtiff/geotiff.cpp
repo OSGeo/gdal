@@ -10814,7 +10814,7 @@ void GTiffDataset::ScanDirectories()
 /* -------------------------------------------------------------------- */
     if( aosSubdatasets.size() > 2 )
     {
-        oGTiffMDMD.SetMetadata( aosSubdatasets.StealList(), "SUBDATASETS" );
+        oGTiffMDMD.SetMetadata( aosSubdatasets.List(), "SUBDATASETS" );
     }
 }
 
