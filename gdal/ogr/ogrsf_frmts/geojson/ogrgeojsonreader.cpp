@@ -602,7 +602,7 @@ bool OGRGeoJSONReader::GenerateFeatureDefn( OGRGeoJSONLayer* poLayer, json_objec
         json_object* poObjId = OGRGeoJSONFindMemberByName( poObj, "id" );
         if( poObjId && json_object_get_type(poObjId) == json_type_string )
         {
-            int bHasRegularIdProp = FALSE;
+            bool bHasRegularIdProp = false;
             if( NULL != poObjProps &&
                 json_object_get_type(poObjProps) == json_type_object )
             {
@@ -1069,10 +1069,10 @@ OGRFeature* OGRGeoJSONReader::ReadFeature( OGRGeoJSONLayer* poLayer, json_object
     }
     else
     {
-        static int bWarned = FALSE;
+        static bool bWarned = false;
         if( !bWarned )
         {
-            bWarned = TRUE;
+            bWarned = true;
             CPLDebug("GeoJSON", "Non conformant Feature object. Missing \'geometry\' member." );
         }
     }
