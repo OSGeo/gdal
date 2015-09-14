@@ -1433,8 +1433,10 @@ ECWCreateCopyJPEG2000( const char * pszFilename, GDALDataset *poSrcDS,
     }
 
     GDALDataType eDataType = poSrcDS->GetRasterBand(1)->GetRasterDataType();
-    if( eDataType != GDT_Byte 
-        && eDataType != GDT_Byte 
+    if( eDataType != GDT_Byte
+        //  TODO: Assume that this was supposed to be signed 8 bit.
+        //    That does not currently exist.
+        // && eDataType != GDT_Byte
         && eDataType != GDT_Int16
         && eDataType != GDT_UInt16
         && eDataType != GDT_Int32
@@ -1443,7 +1445,7 @@ ECWCreateCopyJPEG2000( const char * pszFilename, GDALDataset *poSrcDS,
         && eDataType != GDT_Float64
         && bStrict )
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "JP2ECW driver doesn't support data type %s. ",
                   GDALGetDataTypeName(eDataType) );
 
