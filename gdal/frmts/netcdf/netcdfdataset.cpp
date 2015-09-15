@@ -6495,7 +6495,7 @@ CPLErr NCDFGetAttr1( int nCdfId, int nVarId, const char *pszAttrName,
             nc_get_att_double( nCdfId, nVarId, pszAttrName, pdfTemp );
             dfValue = pdfTemp[0];
             for(m=0; m < nAttrLen-1; m++) {
-                CPLsprintf( szTemp, "%.16g,", pdfTemp[m] );
+                CPLsnprintf( szTemp, sizeof(szTemp), "%.16g,", pdfTemp[m] );
                 NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
             }
             CPLsprintf( szTemp, "%.16g", pdfTemp[m] );
