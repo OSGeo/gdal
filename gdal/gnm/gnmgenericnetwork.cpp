@@ -439,7 +439,9 @@ CPLErr GNMGenericNetwork::CreateRule(const char *pszRuleStr)
 
     if(!oRule.IsAcceptAny())
     {
-        bool bSrcExist, bTgtExist, bConnExist;
+        bool bSrcExist;
+        bool bTgtExist = false;
+        bool bConnExist;
         // check layers exist
         for(size_t i = 0; i < m_apoLayers.size(); ++i)
         {
