@@ -39,13 +39,12 @@ CPL_CVSID("$Id$");
 /*                         OGRPGeoDataSource()                          */
 /************************************************************************/
 
-OGRPGeoDataSource::OGRPGeoDataSource()
-
-{
-    pszName = NULL;
-    papoLayers = NULL;
-    nLayers = 0;
-}
+OGRPGeoDataSource::OGRPGeoDataSource() :
+    papoLayers(NULL),
+    nLayers(0),
+    pszName(NULL),
+    bDSUpdate(FALSE)
+{ }
 
 /************************************************************************/
 /*                         ~OGRPGeoDataSource()                         */
@@ -54,13 +53,11 @@ OGRPGeoDataSource::OGRPGeoDataSource()
 OGRPGeoDataSource::~OGRPGeoDataSource()
 
 {
-    int         i;
-
     CPLFree( pszName );
 
-    for( i = 0; i < nLayers; i++ )
+    for( int i = 0; i < nLayers; i++ )
         delete papoLayers[i];
-    
+
     CPLFree( papoLayers );
 }
 
