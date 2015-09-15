@@ -540,7 +540,10 @@ GIFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     pabyScanline = (GByte *) CPLMalloc( nXSize );
 
     if( !pfnProgress( 0.0, NULL, pProgressData ) )
-        eErr = CE_Failure;
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Unable to setup progress." );
+    }
 
     if( !bInterlace )
     {
