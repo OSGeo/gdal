@@ -107,8 +107,6 @@ SQLite driver:
 Perl bindings:
  * Fix creation of Field Definition object (#6099)
 
-A Field Definition object is sometimes created with wrong attributes
-
 = GDAL/OGR 1.11.2 Release Notes = 
 
 The 1.11.2 release is a bug fix release.
