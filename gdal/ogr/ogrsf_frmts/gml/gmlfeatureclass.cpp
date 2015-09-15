@@ -504,7 +504,6 @@ int GMLFeatureClass::InitializeFromXML( CPLXMLNode *psRoot )
                 bHasValidGeometryName = FALSE;
                 bHasValidGeometryElementPath = FALSE;
                 bHasFoundGeomType = FALSE;
-                pszGName = "";
                 pszGPath = "";
                 nGeomType = wkbUnknown;
             }
