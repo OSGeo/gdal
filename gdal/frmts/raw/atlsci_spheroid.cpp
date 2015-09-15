@@ -68,9 +68,11 @@ SpheroidItem :: ~SpheroidItem()
       CPLFree(spheroid_name);
 }
 
-SpheroidList :: SpheroidList()
+SpheroidList :: SpheroidList() :
+    num_spheroids(0),
+    epsilonR(0.0),
+    epsilonI(0.0)
 {
-  num_spheroids=0;
 }
 
 SpheroidList :: ~SpheroidList()
@@ -168,4 +170,3 @@ double SpheroidList :: GetSpheroidPolarRadius( const char *spheroid_name )
   return -1.0;
 
 }
-
