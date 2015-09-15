@@ -678,4 +678,11 @@ int sprintf(char *str, const char* fmt, ...) CPL_PRINT_FUNC_FORMAT(2, 3) CPL_WAR
 #define CPL_IS_DOUBLE_A_INT(d)  ( (double)(int)(d) == (d) )
 #endif
 
+#ifdef __cplusplus
+/* The size of C style arrays. */
+#define CPL_ARRAYSIZE(array) \
+  ((sizeof(array) / sizeof(*(array))) / \
+  static_cast<size_t>(!(sizeof(array) % sizeof(*(array)))))
+#endif  /* __cplusplus */
+
 #endif /* ndef CPL_BASE_H_INCLUDED */
