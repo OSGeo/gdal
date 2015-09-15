@@ -1,3 +1,114 @@
+= GDAL/OGR 1.11.3 Release Notes = 
+
+The 1.11.3 release is a bug fix release.
+
+== Build (Unix) ==
+ * Support custom buildflags in GRASS plugin (#5850)
+ * GRASS 7.0.0 support (#5852)
+ * fix detection of ECW SDK 5.1 on Mac (#5867, #5390)
+
+== Port ==
+ * /vsitar/: remove useless validation test that prevents from opening valid .tar files (#5864)
+
+== Algorithms ==
+ * gdal_grid: fix crash in optimized mode with GCC 4.4 on 64bit (#5987)
+ * Fix failure in GDALSuggestedWarpOut2() when computing output image size in case the top-left and bottom-right corners tranform to the same point (#5980)
+ * Rasterize: add check to avoid burning negative x values (#5641)
+
+== GDAL core ==
+ * GMLJP2 reader: add compatibility with OGC CRS URL as found in GMLJP2v2 (#5940)
+ * GMLJP2: on reading, don't do axis inversation if there's an explicit axisName requesting easting, northing order (#5960)
+ * GMLJP2: add missing rangeParameters element to validate against GMLJP2 schema (#5707)
+
+== Utilities ==
+ * gdalbuildvrt: fix potential crash when using -b switch (#6095)
+ * gdalserver: fix compilation with recent GNU libc (such as in Arch Linux) (#6073)
+ * gdalwarp: emit error message if file specified with -cutline cannot be opened (#5921)
+ * gdalwarp: fix 1.11.2 regression when invoking several times gdalwarp with several input files on the same target file, and when the input files have a nodata setting: only the last input file was warped onto the target dataset (#5909)
+ * ogr2ogr: fix crash with -clipdst when a reprojection fails before (#5973)
+ * ogr_layer_algebra.py: for Update, Clip and Erase, only creates attribute of input layer by default (#5976)
+
+== GDAL drivers ==
+
+ECRG driver:
+ * change subdataset definition to make sure that they only consist of frames of same scale (#6043)
+
+ERS driver:
+ * fix SetProjection() (#5840)
+
+GeoRaster driver:
+ * New SRID search (#5911)
+ * Fix user-defined SRID issue (#5881)
+
+GTiff driver:
+ * fix GTiffDataset::IsBlockAvailable() wrong behaviour when compiling against internal libtiff, when a BigTIFF file has a TileByteCounts with LONG/4-byte counts and not LONG8 (#6001)
+ * avoid generated corrupted  right-most and bottom-most tiles for 12-bit JPEG-compressed (#5971)
+
+HDF4 driver:
+ * fix AnyTypeToDouble() to use proper type (int instead of long) to work with DFNT_INT32/DFNT_UINT32 on 64-bit Linux (#5965)
+
+HF2 driver:
+ * fix reading side of the driver to work on architectures where char is unsigned, like PPC or ARM (#6082)
+
+NetCDF driver:
+ * fix crash on opening a NOAA dataset (#5962)
+ * fix computation of inverse flattening (#5858)
+
+Northwoord driver:
+ * Fix computation of intermediate color table values on non-Intel platforms (#6091)
+ * NWT_GRD: don't advertize scale/offset as they are transparently applied in IReadBlock() (#5839).
+
+RPFTOC driver:
+ * add tweak for weird relative directory names in the A.TOC file (#5979)
+
+TIL driver:
+ * fix half pixel shift in geo registration (#5961)
+
+VRT driver:
+ * add more checks to CheckCompatibleForDatasetIO() to avoid issues with overview bands (#5954)
+ * fix rounding of output window size on VRTSimpleSource (#5874)
+
+== OGR drivers ==
+
+EDIGEO driver:
+ * backport conversion of atof() to CPLAtof() to avoid truncation of floating point numbers including coordinates on a non C locale (#6070)
+
+GML driver:
+ * accept choice between gml:polygonProperty and gml:multiPolygonProperty (#5977)
+ * fix GML_ATTRIBUTES_TO_OGR_FIELDS=YES to work correctly with xlink:href too (#5970); and also backport a trunk fix for writing the correctly path to attributes in nested elements
+ * VFR: add support for OriginalniHraniceOmpv (#5853)
+
+GeoJSON driver:
+ * avoid truncation of real numbers on reading (#5882)
+ * TopoJSON: fix segfault when reading https://raw.githubusercontent.com/mbostock/topojson/master/test/topojson/properties-id-computed.json (#5919)
+ * GeoJSON writer: make string comparison for authority name case insensitive so as to recognize lowercase 'epsg' (#4995)
+
+GPKG driver:
+ * on reading, recognize GEOMCOLLECTION to be compatible of GDAL 2.0. Still writing GEOMETRYCOLLECTION in 1.11 branch (#5937)
+ * escape column names on reading/insert/update (#5879)
+
+MSSQLSpatial driver:
+ * Add support for creating features with default values (#5957)
+
+OpenFileGDB driver:
+ * fix 1.11.2 regression with FileGDB v9 where the presence of a non spatial table can cause other layers not to be listed (#5875)
+
+PG/PGDump drivers:
+ * fix truncation of fields to work with multi-byte UTF-8 characters (#5854)
+
+Shape driver:
+ * SHPReadOGRFeature() should free the passed psShape when not NULL and if the DBF record is deleted, so as to avoid later reads to faild (linked to #5974)
+
+SQLite driver:
+ * Fix issue with consecutive identical characters in layer name with ExecuteSQL() (#6107)
+
+== SWIG Language Bindings ==
+
+Perl bindings:
+ * Fix creation of Field Definition object (#6099)
+
+A Field Definition object is sometimes created with wrong attributes
+
 = GDAL/OGR 1.11.2 Release Notes = 
 
 The 1.11.2 release is a bug fix release.
