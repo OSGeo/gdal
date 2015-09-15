@@ -3191,9 +3191,12 @@ const char* ECWGetColorInterpretationName(GDALColorInterp eColorInterpretation, 
                 result = "Blue";
             }
         }
-        result = CPLSPrintf(NCS_BANDDESC_Band,nBandNumber + 1);
+        else
+        {
+            result = CPLSPrintf(NCS_BANDDESC_Band,nBandNumber + 1);
+        }
         break;
-    default: 
+    default:
         result = CPLSPrintf(NCS_BANDDESC_Band,nBandNumber + 1);
     }
     return result;
