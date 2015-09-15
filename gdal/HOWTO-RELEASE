@@ -42,8 +42,9 @@ Process :
      And the version of libgdal in ./swig/python/README.txt
 
 3.2) Update ./swig/include/perl/gdal_perl.i $VERSION and $GDAL_VERSION
-strings to current version. Kick Perl module maintainer to make a CPAN
-release.
+strings to current version. Update also $VERSION in
+./swig/include/perl/ogr_perl.i to the same as the other $VERSION. Kick
+Perl module maintainer to make a CPAN release.
 
 3.3) For major releases update the VERSION macro in nmake.opt (for 1.6, 1.7etc)
 
