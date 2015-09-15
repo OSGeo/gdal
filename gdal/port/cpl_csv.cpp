@@ -155,11 +155,9 @@ static CSVTable *CSVAccess( const char * pszFilename )
 static void CSVDeaccessInternal( CSVTable **ppsCSVTableList, int bCanUseTLS, const char * pszFilename )
 
 {
-    CSVTable    *psLast, *psTable;
-    
     if( ppsCSVTableList == NULL )
         return;
-    
+
 /* -------------------------------------------------------------------- */
 /*      A NULL means deaccess all tables.                               */
 /* -------------------------------------------------------------------- */
@@ -167,15 +165,16 @@ static void CSVDeaccessInternal( CSVTable **ppsCSVTableList, int bCanUseTLS, con
     {
         while( *ppsCSVTableList != NULL )
             CSVDeaccessInternal( ppsCSVTableList, bCanUseTLS, (*ppsCSVTableList)->pszFilename );
-        
+
         return;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Find this table.                                                */
 /* -------------------------------------------------------------------- */
-    psLast = NULL;
-    for( psTable = *ppsCSVTableList;
+    CSVTable    *psLast = NULL;
+    CSVTable    *psTable = *ppsCSVTableList;
+    for( ;
          psTable != NULL && !EQUAL(psTable->pszFilename,pszFilename);
          psTable = psTable->psNext )
     {
@@ -218,12 +217,11 @@ static void CSVDeaccessInternal( CSVTable **ppsCSVTableList, int bCanUseTLS, con
 
 void CSVDeaccess( const char * pszFilename )
 {
-    CSVTable **ppsCSVTableList;
 /* -------------------------------------------------------------------- */
 /*      Fetch the table, and allocate the thread-local pointer to it    */
 /*      if there isn't already one.                                     */
 /* -------------------------------------------------------------------- */
-    ppsCSVTableList = (CSVTable **) CPLGetTLS( CTLS_CSVTABLEPTR );
+    CSVTable **ppsCSVTableList = (CSVTable **) CPLGetTLS( CTLS_CSVTABLEPTR );
 
     CSVDeaccessInternal(ppsCSVTableList, TRUE, pszFilename);
 }
@@ -241,18 +239,17 @@ static char **CSVSplitLine( const char *pszString, char chDelimiter )
 
 {
     char        **papszRetList = NULL;
-    char        *pszToken;
-    int         nTokenMax, nTokenLen;
 
-    pszToken = (char *) CPLCalloc(10,1);
-    nTokenMax = 10;
-    
+    char        *pszToken = (char *) CPLCalloc(10,1);
+    int         nTokenMax = 10;
+    int         nTokenLen;
+
     while( pszString != NULL && *pszString != '\0' )
     {
         bool bInString = false;
 
         nTokenLen = 0;
-        
+
         /* Try to find the next delimeter, marking end of token */
         for( ; *pszString != '\0'; pszString++ )
         {
@@ -263,7 +260,7 @@ static char **CSVSplitLine( const char *pszString, char chDelimiter )
                 pszString++;
                 break;
             }
-            
+
             if( *pszString == '"' )
             {
                 if( !bInString || pszString[1] != '"' )
@@ -319,7 +316,8 @@ static char **CSVSplitLine( const char *pszString, char chDelimiter )
 static char *CSVFindNextLine( char *pszThisLine )
 
 {
-    int  nQuoteCount = 0, i;
+    int  nQuoteCount = 0;
+    int i;
 
     for( i = 0; pszThisLine[i] != '\0'; i++ )
     {
@@ -520,15 +518,11 @@ char **CSVReadParseLine( FILE * fp )
 char **CSVReadParseLine2( FILE * fp, char chDelimiter )
 
 {
-    const char  *pszLine;
-    char        *pszWorkLine;
-    char        **papszReturn;
-
     CPLAssert( fp != NULL );
     if( fp == NULL )
         return( NULL );
-    
-    pszLine = CPLReadLine( fp );
+
+    const char  *pszLine = CPLReadLine( fp );
     if( pszLine == NULL )
         return( NULL );
 
@@ -543,7 +537,7 @@ char **CSVReadParseLine2( FILE * fp, char chDelimiter )
 /*      We must now count the quotes in our working string, and as      */
 /*      long as it is odd, keep adding new lines.                       */
 /* -------------------------------------------------------------------- */
-    pszWorkLine = CPLStrdup( pszLine );
+    char        *pszWorkLine = CPLStrdup( pszLine );
 
     int i = 0, nCount = 0;
     int nWorkLineLength = strlen(pszWorkLine);
@@ -578,7 +572,7 @@ char **CSVReadParseLine2( FILE * fp, char chDelimiter )
         nWorkLineLength += nLineLen + 1;
     }
 
-    papszReturn = CSVSplitLine( pszWorkLine, chDelimiter );
+    char **papszReturn = CSVSplitLine( pszWorkLine, chDelimiter );
 
     CPLFree( pszWorkLine );
 
