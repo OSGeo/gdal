@@ -1508,13 +1508,13 @@ CPLErr netCDFRasterBand::IWriteBlock( CPL_UNUSED int nBlockXOff,
 /*                           netCDFDataset()                            */
 /************************************************************************/
 
-netCDFDataset::netCDFDataset()
-
+netCDFDataset::netCDFDataset() :
+    bChunking(FALSE)
 {
     /* basic dataset vars */
     cdfid            = -1;
     papszSubDatasets = NULL;
-    papszMetadata    = NULL;	
+    papszMetadata    = NULL;
     bBottomUp        = TRUE;
     nFormat          = NCDF_FORMAT_NONE;
     bIsGdalFile      = FALSE;
