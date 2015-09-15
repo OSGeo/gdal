@@ -36,8 +36,8 @@ CPL_CVSID("$Id$");
 /*                          OGRMSSQLSpatialDataSource()                 */
 /************************************************************************/
 
-OGRMSSQLSpatialDataSource::OGRMSSQLSpatialDataSource()
-
+OGRMSSQLSpatialDataSource::OGRMSSQLSpatialDataSource() :
+    bDSUpdate(FALSE)
 {
     pszName = NULL;
     pszCatalog = NULL;
@@ -61,17 +61,15 @@ OGRMSSQLSpatialDataSource::OGRMSSQLSpatialDataSource()
 OGRMSSQLSpatialDataSource::~OGRMSSQLSpatialDataSource()
 
 {
-    int         i;
-
-    for( i = 0; i < nLayers; i++ )
+    for( int i = 0; i < nLayers; i++ )
         delete papoLayers[i];
-    
+
     CPLFree( papoLayers );
 
     CPLFree( pszName );
     CPLFree( pszCatalog );
 
-    for( i = 0; i < nKnownSRID; i++ )
+    for( int i = 0; i < nKnownSRID; i++ )
     {
         if( papoSRS[i] != NULL )
             papoSRS[i]->Release();
