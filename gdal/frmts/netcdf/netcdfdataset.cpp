@@ -462,20 +462,23 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
 /* constructor in create mode */
 /* if nZId and following variables are not passed, the band will have 2 dimensions */
 /* TODO get metadata, missing val from band #1 if nZDim>2 */
-netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS, 
+netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
                                     GDALDataType eType,
                                     int nBand,
                                     int bSigned,
                                     char *pszBandName,
-                                    char *pszLongName, 
-                                    int nZId, 
+                                    char *pszLongName,
+                                    int nZId,
                                     int nZDim,
-                                    int nLevel, 
-                                    int *panBandZLev, 
-                                    int *panBandZPos, 
-                                    int *paDimIds )
+                                    int nLevel,
+                                    int *panBandZLev,
+                                    int *panBandZPos,
+                                    int *paDimIds ) :
+    nc_datatype(NC_NAT),
+    dfScale(0.0),
+    dfOffset(0.0)
 {
-    int      status;  
+    int      status;
     double   dfNoData = 0.0;
     char szTemp[NCDF_MAX_STR_LEN];
     int bDefineVar = FALSE;
