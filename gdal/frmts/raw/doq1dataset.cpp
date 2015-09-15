@@ -141,8 +141,6 @@ const char *DOQ1Dataset::GetProjectionRef()
 GDALDataset *DOQ1Dataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-    int		nWidth, nHeight, nBandStorage, nBandTypes;
-    
 /* -------------------------------------------------------------------- */
 /*	We assume the user is pointing to the binary (ie. .bil) file.	*/
 /* -------------------------------------------------------------------- */
@@ -152,10 +150,10 @@ GDALDataset *DOQ1Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*	Attempt to extract a few key values from the header.		*/
 /* -------------------------------------------------------------------- */
-    nWidth = (int) DOQGetField(poOpenInfo->pabyHeader + 150, 6);
-    nHeight = (int) DOQGetField(poOpenInfo->pabyHeader + 144, 6);
-    nBandStorage = (int) DOQGetField(poOpenInfo->pabyHeader + 162, 3);
-    nBandTypes = (int) DOQGetField(poOpenInfo->pabyHeader + 156, 3);
+    const int nWidth = (int) DOQGetField(poOpenInfo->pabyHeader + 150, 6);
+    const int nHeight = (int) DOQGetField(poOpenInfo->pabyHeader + 144, 6);
+    const int nBandStorage = (int) DOQGetField(poOpenInfo->pabyHeader + 162, 3);
+    const int nBandTypes = (int) DOQGetField(poOpenInfo->pabyHeader + 156, 3);
 
 /* -------------------------------------------------------------------- */
 /*      Do these values look coherent for a DOQ file?  It would be      */
@@ -193,9 +191,7 @@ GDALDataset *DOQ1Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    DOQ1Dataset 	*poDS;
-
-    poDS = new DOQ1Dataset();
+    DOQ1Dataset *poDS = new DOQ1Dataset();
 
 /* -------------------------------------------------------------------- */
 /*      Capture some information from the file that is of interest.     */
@@ -249,9 +245,7 @@ GDALDataset *DOQ1Dataset::Open( GDALOpenInfo * poOpenInfo )
     {
         const char *pszDatumLong, *pszDatumShort;
         const char *pszUnits;
-        int	   nZone;
-
-        nZone = (int) DOQGetField(poOpenInfo->pabyHeader + 198, 6);
+        int nZone = (int) DOQGetField(poOpenInfo->pabyHeader + 198, 6);
 
         if( ((int) DOQGetField(poOpenInfo->pabyHeader + 204, 3)) == 1 )
             pszUnits = "UNIT[\"US survey foot\",0.304800609601219]";
@@ -371,12 +365,11 @@ static double DOQGetField( unsigned char *pabyData, int nBytes )
 
 {
     char	szWork[128];
-    int		i;
 
     strncpy( szWork, (const char *) pabyData, nBytes );
     szWork[nBytes] = '\0';
 
-    for( i = 0; i < nBytes; i++ )
+    for( int i = 0; i < nBytes; i++ )
     {
         if( szWork[i] == 'D' || szWork[i] == 'd' )
             szWork[i] = 'E';
