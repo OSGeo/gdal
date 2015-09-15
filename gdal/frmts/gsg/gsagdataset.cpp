@@ -302,11 +302,11 @@ CPLErr GSAGRasterBand::ScanForMinMaxZ()
 CPLErr GSAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 				   void * pImage )
 {
+    GSAGDataset *poGDS = (GSAGDataset *)poDS;
+    assert( poGDS != NULL );
+
     static size_t nMaxLineSize = 128;
     double *pdfImage = (double *)pImage;
-    GSAGDataset *poGDS = (GSAGDataset *)poDS;
-
-    assert( poGDS != NULL );
 
     if( nBlockYOff < 0 || nBlockYOff > nRasterYSize - 1 || nBlockXOff != 0 )
         return CE_Failure;
@@ -331,10 +331,7 @@ CPLErr GSAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         return CE_Failure;
     }
 
-    size_t nLineBufSize;
-    char *szLineBuf = NULL;
-    size_t nCharsRead;
-    size_t nCharsExamined = 0;
+    size_t nLineBufSize = nMaxLineSize;
     /* If we know the offsets, we can just read line directly */
     if( (nBlockYOff > 0) && ( panLineOffset[nBlockYOff-1] != 0 ) )
     {
@@ -342,12 +339,8 @@ CPLErr GSAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 	nLineBufSize = (size_t) (panLineOffset[nBlockYOff-1]
                                  - panLineOffset[nBlockYOff] + 1);
     }
-    else
-    {
-	nLineBufSize = nMaxLineSize;
-    }
 
-    szLineBuf = (char *)VSIMalloc( nLineBufSize );
+    char *szLineBuf = (char *)VSIMalloc( nLineBufSize );
     if( szLineBuf == NULL )
     {
 	CPLError( CE_Failure, CPLE_OutOfMemory,
@@ -355,7 +348,7 @@ CPLErr GSAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 	return CE_Failure;
     }
 
-    nCharsRead = VSIFReadL( szLineBuf, 1, nLineBufSize - 1, poGDS->fp );
+    size_t nCharsRead = VSIFReadL( szLineBuf, 1, nLineBufSize - 1, poGDS->fp );
     if( nCharsRead == 0 )
     {
 	VSIFree( szLineBuf );
@@ -366,6 +359,7 @@ CPLErr GSAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     }
     szLineBuf[nCharsRead] = '\0';
 
+    size_t nCharsExamined = 0;
     char *szStart = szLineBuf;
     char *szEnd = szStart;
     for( int iCell=0; iCell<nBlockXSize; szStart = szEnd )
@@ -510,7 +504,6 @@ CPLErr GSAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 	    }
 
 	    /* This is really the last value and has no tailing newline */
-	    szStart = szLineBuf;
 	    szEnd = szLineBuf + nCharsRead;
 	}
 
