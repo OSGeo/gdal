@@ -130,6 +130,8 @@ use Geo::OSR;
 # For GDAL 2.0 or above, GDAL X.Y.Z should then
 # VERSION = X + Y / 100.0 + Z / 10000.0
 # Note also the $VERSION in ogr_perl.i (required by pause.perl.org)
+# Note that the 1/100000 digits may be used to create more than one
+# CPAN release from one GDAL release.
 
 our $VERSION = '2.0100';
 our $GDAL_VERSION = '2.1.0';
