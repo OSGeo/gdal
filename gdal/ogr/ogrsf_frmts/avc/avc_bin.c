@@ -1895,6 +1895,8 @@ AVCBinFile *_AVCBinReadOpenTable(const char *pszInfoPath,
     GBool          bFound;
     int            i;
 
+    sTableDef.pasFieldDef = NULL;
+
     /* Alloc a buffer big enough for the longest possible filename...
      */
     pszFname = (char*)CPLMalloc((strlen(pszInfoPath)+81)*sizeof(char));
