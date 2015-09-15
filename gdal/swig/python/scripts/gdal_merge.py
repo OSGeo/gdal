@@ -306,9 +306,6 @@ def main( argv=None ):
         elif arg == '-separate':
             separate = 1
 
-        elif arg == '-seperate':
-            separate = 1
-
         elif arg == '-pct':
             copy_pct = 1
 
