@@ -75,18 +75,20 @@
 /*                             NASHandler()                             */
 /************************************************************************/
 
-NASHandler::NASHandler( NASReader *poReader )
-
-{
-    m_poReader = poReader;
-    m_pszCurField = NULL;
-    m_pszGeometry = NULL;
-    m_nGeomAlloc = m_nGeomLen = 0;
-    m_nDepthFeature = m_nDepthElement = m_nDepth = 0;
-    m_bIgnoreFeature = FALSE;
-    m_bInUpdate = FALSE;
-    m_bInUpdateProperty = FALSE;
-}
+NASHandler::NASHandler( NASReader *poReader ) :
+    m_poReader(poReader),
+    m_pszCurField(NULL),
+    m_pszGeometry(NULL),
+    m_nGeomAlloc(0),
+    m_nGeomLen(0),
+    m_nGeometryDepth(0),
+    m_nDepth(0),
+    m_nDepthFeature(0),
+    m_bIgnoreFeature(FALSE),
+    m_bInUpdate(FALSE),
+    m_bInUpdateProperty(FALSE),
+    m_nDepthElement(0)
+{ }
 
 /************************************************************************/
 /*                            ~NASHandler()                             */
