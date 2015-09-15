@@ -64,19 +64,19 @@ CPL_C_END
 class DOQ1Dataset : public RawDataset
 {
     VSILFILE	*fpImage;	// image data file.
-    
+
     double	dfULX, dfULY;
     double	dfXPixelSize, dfYPixelSize;
 
     char	*pszProjection;
-    
+
   public:
     		DOQ1Dataset();
     	        ~DOQ1Dataset();
 
     CPLErr 	GetGeoTransform( double * padfTransform );
     const char  *GetProjectionRef( void );
-    
+
     static GDALDataset *Open( GDALOpenInfo * );
 };
 
@@ -84,11 +84,14 @@ class DOQ1Dataset : public RawDataset
 /*                            DOQ1Dataset()                             */
 /************************************************************************/
 
-DOQ1Dataset::DOQ1Dataset()
-{
-    pszProjection = NULL;
-    fpImage = NULL;
-}
+DOQ1Dataset::DOQ1Dataset() :
+    fpImage(NULL),
+    dfULX(0.0),
+    dfULY(0.0),
+    dfXPixelSize(0.0),
+    dfYPixelSize(0.0),
+    pszProjection(NULL)
+{ }
 
 /************************************************************************/
 /*                            ~DOQ1Dataset()                            */
@@ -117,7 +120,7 @@ CPLErr DOQ1Dataset::GetGeoTransform( double * padfTransform )
     padfTransform[3] = dfULY;
     padfTransform[4] = 0.0;
     padfTransform[5] = -1 * dfYPixelSize;
-    
+
     return( CE_None );
 }
 
