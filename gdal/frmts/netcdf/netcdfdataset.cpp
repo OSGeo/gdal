@@ -6582,12 +6582,12 @@ CPLErr NCDFPutAttr( int nCdfId, int nVarId,
                 /* test for float instead of double */
                 /* strtof() is C89, which is not available in MSVC */
                 /* see if we loose precision if we cast to float and write to char* */
-                fValue = (float)dfValue; 
-                CPLsprintf( szTemp,"%.8g",fValue); 
+                fValue = float(dfValue);
+                CPLsnprintf( szTemp, sizeof(szTemp), "%.8g",fValue);
                 if ( EQUAL(szTemp, papszValues[i] ) )
                     nTmpAttrType = NC_FLOAT;
                 else
-                    nTmpAttrType = NC_DOUBLE;                   
+                    nTmpAttrType = NC_DOUBLE;
             }
         }
         if ( nTmpAttrType > nAttrType )
