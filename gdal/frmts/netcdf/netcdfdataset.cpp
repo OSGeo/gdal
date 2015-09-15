@@ -6078,7 +6078,6 @@ void NCDFAddGDALHistory( int fpImage,
 //void cdoDefHistory(int fileID, char *histstring)
 void NCDFAddHistory(int fpImage, const char *pszAddHist, const char *pszOldHist)
 {
-    char strtime[32];
     time_t tp;
     struct tm *ltime;
 
@@ -6093,6 +6092,9 @@ void NCDFAddHistory(int fpImage, const char *pszAddHist, const char *pszOldHist)
         pszOldHist = "";
     }
 
+    char strtime[32];
+    strtime[0] = '\0';
+
     tp = time(NULL);
     if ( tp != -1 )
     {
@@ -6100,13 +6102,13 @@ void NCDFAddHistory(int fpImage, const char *pszAddHist, const char *pszOldHist)
         (void) strftime(strtime, sizeof(strtime), "%a %b %d %H:%M:%S %Y: ", ltime);
     }
 
-    // status = nc_get_att_text( fpImage, NC_GLOBAL, 
+    // status = nc_get_att_text( fpImage, NC_GLOBAL,
     //                           "history", pszOldHist );
     // printf("status: %d pszOldHist: [%s]\n",status,pszOldHist);
-    
+
     nNewHistSize = strlen(pszOldHist)+strlen(strtime)+strlen(pszAddHist)+1+1;
     pszNewHist = (char *) CPLMalloc(nNewHistSize * sizeof(char));
-    
+
     strcpy(pszNewHist, strtime);
     strcat(pszNewHist, pszAddHist);
 
