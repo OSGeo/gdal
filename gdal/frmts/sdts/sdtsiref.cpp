@@ -70,18 +70,17 @@ int SDTS_IREF::Read( const char * pszFilename )
 
 {
     DDFModule   oIREFFile;
-    DDFRecord   *poRecord;
 
 /* -------------------------------------------------------------------- */
 /*      Open the file, and read the header.                             */
 /* -------------------------------------------------------------------- */
     if( !oIREFFile.Open( pszFilename ) )
         return FALSE;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Read the first record, and verify that this is an IREF record.  */
 /* -------------------------------------------------------------------- */
-    poRecord = oIREFFile.ReadRecord();
+    DDFRecord *poRecord = oIREFFile.ReadRecord();
     if( poRecord == NULL )
         return FALSE;
 
