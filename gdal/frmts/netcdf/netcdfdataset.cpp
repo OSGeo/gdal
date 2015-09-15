@@ -1051,7 +1051,7 @@ CPLErr netCDFRasterBand::CreateBandMetadata( int *paDimIds )
                     /* status = */nc_get_vara_float( cdfid, nVarID,
                                                  start,
                                                  count, &fData );
-                    CPLsprintf( szMetaTemp,"%.8g", fData );
+                    CPLsnprintf( szMetaTemp, sizeof(szMetaTemp), "%.8g", fData );
                     break;
                 case NC_DOUBLE:
                     double dfData;
