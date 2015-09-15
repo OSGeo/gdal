@@ -32,10 +32,6 @@
 #include "cpl_string.h"
 #include "ogr_spatialref.h"
 
-#include <algorithm>
-
-using std::fill;
-
 CPL_CVSID("$Id$");
 
 CPL_C_START
@@ -108,6 +104,7 @@ class DIPExDataset : public GDALPamDataset
 /*                            DIPExDataset()                             */
 /************************************************************************/
 
+
 DIPExDataset::DIPExDataset() :
     fp(NULL),
     eRasterDataType(GDT_Unknown)
@@ -120,15 +117,11 @@ DIPExDataset::DIPExDataset() :
     sHeader.LE = 0;
     sHeader.NC = 0;
     sHeader.H4322 = 0;
-
-    fill( std::begin(sHeader.unused1), std::end(sHeader.unused1), 0 );
-    fill( std::begin(sHeader.IH19), std::end(sHeader.IH19), 0 );
-
+    memset( sHeader.unused1, 0, 40 * sizeof(char));
+    memset( sHeader.IH19, 0,  4 * sizeof(GByte));
     sHeader.IH20 = 0;
     sHeader.SRID = 0;
-
-    fill( std::begin(sHeader.unused2), std::end(sHeader.unused2), 0 );
-
+    memset( sHeader.unused2, 0,  12 * sizeof(char));
     sHeader.YOffset = 0.0;
     sHeader.XOffset = 0.0;
     sHeader.YPixSize = 0.0;
@@ -137,10 +130,9 @@ DIPExDataset::DIPExDataset() :
     sHeader.Matrix[1] = 0.0;
     sHeader.Matrix[2] = 0.0;
     sHeader.Matrix[3] = 0.0;
-
-    fill( std::begin(sHeader.unused3), std::end(sHeader.unused3), 0 );
-    fill( std::begin(sHeader.ColorTable), std::end(sHeader.ColorTable), 0 );
-    fill( std::begin(sHeader.unused4), std::end(sHeader.unused4), 0 );
+    memset( sHeader.unused3, 0,  344 * sizeof(char));
+    memset( sHeader.ColorTable, 0,  256 * sizeof(GUInt16));
+    memset( sHeader.unused4, 0,  32 * sizeof(char));
 
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
