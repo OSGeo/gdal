@@ -42,21 +42,18 @@ CPL_CVSID("$Id$");
 /*                         OGRMySQLDataSource()                         */
 /************************************************************************/
 
-OGRMySQLDataSource::OGRMySQLDataSource()
-
-{
-    pszName = NULL;
-    papoLayers = NULL;
-    nLayers = 0;
-    hConn = 0;
-    nSoftTransactionLevel = 0;
-
-    nKnownSRID = 0;
-    panSRID = NULL;
-    papoSRS = NULL;
-
+OGRMySQLDataSource::OGRMySQLDataSource() :
+    papoLayers(NULL),
+    nLayers(0),
+    pszName(NULL),
+    bDSUpdate(FALSE)
+    nSoftTransactionLevel(0),
+    hConn(0),
+    nKnownSRID(0),
+    panSRID(NULL),
+    papoSRS(NULL),
     poLongResultLayer = NULL;
-}
+{ }
 
 /************************************************************************/
 /*                        ~OGRMySQLDataSource()                         */
@@ -65,21 +62,19 @@ OGRMySQLDataSource::OGRMySQLDataSource()
 OGRMySQLDataSource::~OGRMySQLDataSource()
 
 {
-    int         i;
-
     InterruptLongResult();
 
     CPLFree( pszName );
 
-    for( i = 0; i < nLayers; i++ )
+    for( int i = 0; i < nLayers; i++ )
         delete papoLayers[i];
-    
+
     CPLFree( papoLayers );
 
     if( hConn != NULL )
         mysql_close( hConn );
 
-    for( i = 0; i < nKnownSRID; i++ )
+    for( int i = 0; i < nKnownSRID; i++ )
     {
         if( papoSRS[i] != NULL )
             papoSRS[i]->Release();
