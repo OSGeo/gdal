@@ -35,16 +35,15 @@ CPL_CVSID("$Id$");
 /*                             SDTS_IREF()                              */
 /************************************************************************/
 
-SDTS_IREF::SDTS_IREF()
-
+SDTS_IREF::SDTS_IREF() :
+    nDefaultSADRFormat(0),
+    dfXScale(1.0),
+    dfYScale(1.0),
+    dfXOffset(0.0),
+    dfYOffset(0.0),
+    dfXRes(1.0),
+    dfYRes(1.0)
 {
-    dfXScale = 1.0;
-    dfYScale = 1.0;
-    dfXOffset = 0.0;
-    dfYOffset = 0.0;
-    dfXRes = 1.0;
-    dfYRes = 1.0;
-
     pszXAxisName = CPLStrdup("");
     pszYAxisName = CPLStrdup("");
     pszCoordinateFormat = CPLStrdup("");
@@ -285,4 +284,3 @@ int SDTS_IREF::GetSADR( DDFField * poField, int nVertices,
     
     return TRUE;
 }
-
