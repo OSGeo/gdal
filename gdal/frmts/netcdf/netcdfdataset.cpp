@@ -3590,15 +3590,15 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
 
         /*  Optional GDAL custom projection tags */
         if ( bWriteGDALTags == TRUE ) {
-            
+
             *szGeoTransform = '\0';
             for( int i=0; i<6; i++ ) {
-                CPLsprintf( szTemp, "%.16g ",
+                CPLsnprintf( szTemp, sizeof(szTemp), "%.16g ",
                          adfGeoTransform[i] );
                 strcat( szGeoTransform, szTemp );
             }
             CPLDebug( "GDAL_netCDF", "szGeoTranform = %s", szGeoTransform );
-            
+
             // if ( strlen(pszProj4Defn) > 0 ) {
             //     nc_put_att_text( cdfid, NCDFVarID, "proj4",
             //                      strlen( pszProj4Defn ), pszProj4Defn );
