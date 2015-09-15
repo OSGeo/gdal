@@ -44,8 +44,10 @@ CPL_CVSID("$Id$");
 /*                            SDTSRawPoint()                            */
 /************************************************************************/
 
-SDTSRawPoint::SDTSRawPoint()
-
+SDTSRawPoint::SDTSRawPoint() :
+    dfX(0.0),
+    dfY(0.0),
+    dfZ(0.0)
 {
     nAttributes = 0;
 }
@@ -208,4 +210,3 @@ SDTSRawPoint * SDTSPointReader::GetNextPoint()
         return NULL;
     }
 }
-
