@@ -52,7 +52,7 @@ OGRMySQLDataSource::OGRMySQLDataSource() :
     nKnownSRID(0),
     panSRID(NULL),
     papoSRS(NULL),
-    poLongResultLayer = NULL;
+    poLongResultLayer(NULL)
 { }
 
 /************************************************************************/
