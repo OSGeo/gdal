@@ -674,19 +674,18 @@ static char **
 CSVScanLinesIndexed( CSVTable *psTable, int nKeyValue )
 
 {
-    int         iTop, iBottom, iMiddle, iResult = -1;
-
     CPLAssert( psTable->panLineIndex != NULL );
 
 /* -------------------------------------------------------------------- */
 /*      Find target record with binary search.                          */
 /* -------------------------------------------------------------------- */
-    iTop = psTable->nLineCount-1;
-    iBottom = 0;
+    int iTop = psTable->nLineCount-1;
+    int iBottom = 0;
+    int iResult = -1;
 
     while( iTop >= iBottom )
     {
-        iMiddle = (iTop + iBottom) / 2;
+        int iMiddle = (iTop + iBottom) / 2;
         if( psTable->panLineIndex[iMiddle] > nKeyValue )
             iTop = iMiddle - 1;
         else if( psTable->panLineIndex[iMiddle] < nKeyValue )
@@ -695,10 +694,10 @@ CSVScanLinesIndexed( CSVTable *psTable, int nKeyValue )
         {
             iResult = iMiddle;
             // if a key is not unique, select the first instance of it.
-            while( iResult > 0 
+            while( iResult > 0
                    && psTable->panLineIndex[iResult-1] == nKeyValue )
             {
-                psTable->bNonUniqueKey = TRUE; 
+                psTable->bNonUniqueKey = TRUE;
                 iResult--;
             }
             break;
@@ -712,7 +711,7 @@ CSVScanLinesIndexed( CSVTable *psTable, int nKeyValue )
 /*      Parse target line, and update iLastLine indicator.              */
 /* -------------------------------------------------------------------- */
     psTable->iLastLine = iResult;
-    
+
     return CSVSplitLine( psTable->papszLines[iResult], ',' );
 }
 
@@ -830,8 +829,6 @@ char **CSVScanFile( const char * pszFilename, int iKeyField,
                     const char * pszValue, CSVCompareCriteria eCriteria )
 
 {
-    CSVTable    *psTable;
-
 /* -------------------------------------------------------------------- */
 /*      Get access to the table.                                        */
 /* -------------------------------------------------------------------- */
@@ -840,10 +837,10 @@ char **CSVScanFile( const char * pszFilename, int iKeyField,
     if( iKeyField < 0 )
         return NULL;
 
-    psTable = CSVAccess( pszFilename );
+    CSVTable *psTable = CSVAccess( pszFilename );
     if( psTable == NULL )
         return NULL;
-    
+
     CSVIngest( pszFilename );
 
 /* -------------------------------------------------------------------- */
@@ -866,13 +863,13 @@ char **CSVScanFile( const char * pszFilename, int iKeyField,
     CSLDestroy( psTable->papszRecFields );
 
     if( psTable->pszRawData != NULL )
-        psTable->papszRecFields = 
+        psTable->papszRecFields =
             CSVScanLinesIngested( psTable, iKeyField, pszValue, eCriteria );
     else
     {
         VSIRewind( psTable->fp );
         CPLReadLine( psTable->fp );         /* throw away the header line */
-    
+
         psTable->papszRecFields =
             CSVScanLines( psTable->fp, iKeyField, pszValue, eCriteria );
     }
@@ -968,9 +965,7 @@ char **CSVScanFileByName( const char * pszFilename,
                           const char * pszValue, CSVCompareCriteria eCriteria )
 
 {
-    int         iKeyField;
-
-    iKeyField = CSVGetFileFieldId( pszFilename, pszKeyFieldName );
+    int iKeyField = CSVGetFileFieldId( pszFilename, pszKeyFieldName );
     if( iKeyField == -1 )
         return NULL;
 
@@ -994,30 +989,25 @@ const char *CSVGetField( const char * pszFilename,
                          const char * pszTargetField )
 
 {
-    CSVTable    *psTable;
-    char        **papszRecord;
-    int         iTargetField;
-    
 /* -------------------------------------------------------------------- */
 /*      Find the table.                                                 */
 /* -------------------------------------------------------------------- */
-    psTable = CSVAccess( pszFilename );
+    CSVTable    *psTable = CSVAccess( pszFilename );
     if( psTable == NULL )
         return "";
 
 /* -------------------------------------------------------------------- */
 /*      Find the correct record.                                        */
 /* -------------------------------------------------------------------- */
-    papszRecord = CSVScanFileByName( pszFilename, pszKeyFieldName,
-                                     pszKeyFieldValue, eCriteria );
-
+    char **papszRecord = CSVScanFileByName( pszFilename, pszKeyFieldName,
+                                            pszKeyFieldValue, eCriteria );
     if( papszRecord == NULL )
         return "";
 
 /* -------------------------------------------------------------------- */
 /*      Figure out which field we want out of this.                     */
 /* -------------------------------------------------------------------- */
-    iTargetField = CSVGetFileFieldId( pszFilename, pszTargetField );
+    const int iTargetField = CSVGetFileFieldId( pszFilename, pszTargetField );
     if( iTargetField < 0 )
         return "";
 
