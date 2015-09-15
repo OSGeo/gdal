@@ -392,16 +392,11 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
     if( chPointer != '\0' )
     {
         GUInt32		nCount;
-        GUInt32		nOffset;
 
-         /* set the count for fixed sized arrays */
-        if( nBytes > -1 )
-            nCount = nItemCount;
-
-        // The count returned for BASEDATA's are the contents, 
+        // The count returned for BASEDATA's are the contents,
         // but here we really want to mark it as one BASEDATA instance
         // (see #2144)
-        if( chItemType == 'b' ) 
+        if( chItemType == 'b' )
             nCount = 1;
 
         /* Set the size from string length */
@@ -427,6 +422,7 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
         }
 
         // we will update the object count iff we are writing beyond the end
+        GUInt32		nOffset;
         memcpy( &nOffset, pabyData, 4 );
         HFAStandard( 4, &nOffset );
         if( nOffset < nCount )
