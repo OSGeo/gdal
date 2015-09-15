@@ -376,30 +376,28 @@ GIFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                GDALProgressFunc pfnProgress, void * pProgressData )
 
 {
-    int  nBands = poSrcDS->GetRasterCount();
-    int  nXSize = poSrcDS->GetRasterXSize();
-    int  nYSize = poSrcDS->GetRasterYSize();
-    int	 bInterlace = FALSE;
-
 /* -------------------------------------------------------------------- */
 /*      Check for interlaced option.                                    */
 /* -------------------------------------------------------------------- */
-    bInterlace = CSLFetchBoolean(papszOptions, "INTERLACING", FALSE);
+    int bInterlace = CSLFetchBoolean(papszOptions, "INTERLACING", FALSE);
 
 /* -------------------------------------------------------------------- */
 /*      Some some rudimentary checks                                    */
 /* -------------------------------------------------------------------- */
+    const int nBands = poSrcDS->GetRasterCount();
     if( nBands != 1 )
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "GIF driver only supports one band images.\n" );
 
         return NULL;
     }
 
+    const int nXSize = poSrcDS->GetRasterXSize();
+    const int nYSize = poSrcDS->GetRasterYSize();
     if (nXSize > 65535 || nYSize > 65535)
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "GIF driver only supports datasets up to 65535x65535 size.\n" );
 
         return NULL;
@@ -451,12 +449,11 @@ GIFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
     GDALRasterBand	*poBand = poSrcDS->GetRasterBand(1);
     ColorMapObject	*psGifCT;
-    int			iColor;
 
     if( poBand->GetColorTable() == NULL )
     {
         psGifCT = GifMakeMapObject( 256, NULL );
-        for( iColor = 0; iColor < 256; iColor++ )
+        for( int iColor = 0; iColor < 256; iColor++ )
         {
             psGifCT->Colors[iColor].Red = (GifByteType) iColor;
             psGifCT->Colors[iColor].Green = (GifByteType) iColor;
@@ -472,7 +469,8 @@ GIFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             nFullCount = nFullCount * 2;
 
         psGifCT = GifMakeMapObject( nFullCount, NULL );
-        for( iColor = 0; iColor < poCT->GetColorEntryCount(); iColor++ )
+        int iColor = 0;
+        for( ; iColor < poCT->GetColorEntryCount(); iColor++ )
         {
             GDALColorEntry	sEntry;
 
