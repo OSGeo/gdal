@@ -1,3 +1,132 @@
+= GDAL/OGR 2.0.1 Release Notes = 
+
+The 2.0.1 release is a bug fix release.
+
+== Build ==
+ * Build support for Kakadu 7.5 (note: require KAKOBJDIR and KAKFLAGS to be defined in nmake.opt) (#6052)
+
+== Build(Unix) ==
+ * Add plugin option for GeoRaster, HDF4, HDF5, FileGDB, OCI and PG drivers (#6012)
+
+== Port ==
+ * Fix CPL_LSBINT16PTR() and CPL_LSBINT32PTR() to work with non-byte pointer (#6090)
+ * /vsistdin/: fix caching of first 1MB / VRT driver: read XML content from /vsistdin/ in a streaming compatible way (#6061)
+ * /vsimem/: implement append mode (#6049)
+ * /vsizip/: avoid returning the previous file list of an already opened .zip if it has changed afterwards (#6005)
+ * cpl_config.h.in: set svn:eol-style LF to avoid issues with msys mingw (#6013)
+
+== GDAL Core ==
+ * Honour NBITS metadata item when doing RasterIO() with non-nearest resampling (#6024)
+
+== GDAL Algorithms ==
+ * Sieve filter: fix crash on nodata polygons (#6096)
+ * Fix crash on gdalgrid when compiled with ICC when AVX isn't available at runtime (#6089)
+ * RPC: fix off-by-half pixel computation of (pixel, line), and in bilinear and bicubic RPC DEM interpolation; fix off-by-one pixel registration for Pleaiades RPC (#5993)
+
+== Utilities ==
+ * gdalinfo: workaround bug in released proj versions on datasets with a SRS with a vertical shift grid (#6083)
+ * gdalbuildvrt: fix potential crash when using -b switch (#6095)
+ * gdalserver: fix compilation with recent GNU libc (such as in Arch Linux) (#6073)
+ * gdaldem: correctly deal with NaN as nodata value (#6066)
+ * gdal_merge.py: takes again into account -n flag (#6067)
+
+== GDAL drivers ==
+
+AAIGrid:
+ * When writing with floating-point values, ensure at least one value has a decimal point to avoid issues with some readers (#6060)
+
+ECRG driver:
+ * change subdataset definition to make sure that they only consist of frames of same scale (#6043)
+
+GTiff driver:
+ * Fix GTiffDataset::IsBlockAvailable() wrong behaviour when compiling against internal libtiff, when a BigTIFF file has a TileByteCounts with LONG/4-byte counts and not LONG8 (#6001)
+
+HF2 driver:
+ * fix reading side of the driver to work on architectures where char is unsigned, like PPC or ARM (#6082)
+
+HFA driver:
+ * when reading projection, preserve EPSG code if AutoIdentifyEPSG() identified the SRS, even if a PE string is present (#6079)
+
+JP2ECW driver:
+* Honour psExtraArg->eResampleAlg when upsampling (#6022)
+
+JP2KAK driver:
+ * Honour psExtraArg->eResampleAlg when upsampling (#6022)
+
+Northwood driver:
+ * fix computation of intermediate color table values on non-Intel platforms (#6091)
+
+PDF driver:
+ * workaround a bug of PoDoFo 0.9.0 by avoiding loading of vector content in raster-only mode (doesn't prevent the crash if reading the vector layers) (#6069)
+
+PDS driver:
+ * fix nodata value for UInt16 to be 0 (#6064)
+
+PostgisRaster driver:
+ * avoid Identify() to recognize OGR PostgreSQL connection strings with schemas option and cause loud 'QuietDelete' (#6034)
+
+Rasterlite driver:
+
+RIK driver:
+ * fix Identify() method to recognize again non-RIK3 RIK datasets (#6078)
+
+VRT driver:
+ * Make GetDefaultHistogram() on a sourced raster band save the result in the VRT (#6088)
+ * VRT warp: fix crash with implicit overviews and destination alpha band (#6081)
+ * VRTDataset::GetSingleSimpleSource(): check there's a single source (#6025)
+ * Fix crash on Windows and Mac that may occur with 2 levels of VRT opened in non-shared mode (#6017)
+
+== OGR core ==
+ * OGR SQL: do not silently skip NULL values in the first records when evaluating a SELECT DISTINCT (#6020)
+
+== OGRSpatialReference == 
+ * morphToESRI(): use GCS_WGS_1972 as GCS name for EPSG:4322 (#6027)
+ * EPSGGetPCSInfo(): use pcs.override.csv in priority over pcs.csv to read projection name, UOM, UOMAngle, GeogCS, etc... (#6026)
+ * Correctly transform Mercator_2SP and _1SP to ESRI Mercator, and back from ESRI Mercator to Mercator_2SP (#4861)
+
+== OGR Utilities == 
+
+CSV driver:
+ * Fix issues with leading single quote, and missing first line after ResetReading(), when parsing allCountries.txt (#6087)
+ * fix detection of TAB delimiter in allCountries.csv when the first line has a comma (#6086)
+
+CartoDB driver:
+ * fix GetNextFeature() on a newly create table (#6109)
+ * fix invalid read of memory in OGRCARTODBTableLayer::GetLayerDefnInternal() (#6007)
+
+DXF driver:
+ * make it compatible with C++11/C++14 (#6002)
+
+GeoJSON driver:
+ * Internal libjson: fix for C11 compatibility (fix runtime crash, #6008)
+
+PG driver:
+ * Fix 2.0 regression when overwriting several existing PostGIS layers with ogr2ogr (#6018)
+
+Shapefile driver:
+ * accept opening standalone .dbf files whose header length is not a multiple of 32 bytes (#6035)
+
+SQLite/Spatialite driver:
+ * Fix issue with consecutive identical characters in layer name with ExecuteSQL() (#6107)
+ * Fix crash on GetLayerByName('non_existing_table(geom_column)') (#6103)
+ * fix heuristics in OGRSQLiteSelectLayer::GetExtent() to not be used when there's a sub SELECT (#6062)
+
+XPlane driver:
+ * extend ICAO identifiers to 5 digits (#6003)
+
+== SWIG Language Bindings ==
+
+Perl bindings:
+ * Add basic POD to GDAL.pm.
+ * Add some basic module info for CPAN.
+ * Add missing files to MANIFEST
+ * Use strict and warnings in overridden constructors.
+ * string formatting in croak (#6050)
+ * Use standard C comments in swig bindings (#6039)
+
+Python bindings:
+ * Fix build with SWIG 3.0.6 (#6045)
+
 = GDAL/OGR 2.0 Release Notes =
 
 == In a nutshell... ==
