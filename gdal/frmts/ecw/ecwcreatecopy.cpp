@@ -124,13 +124,12 @@ public:
     GDALProgressFunc  pfnProgress;
     void             *pProgressData;
 
-    
     GDALDataType eWorkDT;
 
     JP2UserBox** papoJP2UserBox;
     int          nJP2UserBox;
-    
-private : 
+
+private:
     NCSFileViewFileInfoEx sFileInfo;
 };
 
@@ -138,8 +137,8 @@ private :
 /*                         GDALECWCompressor()                          */
 /************************************************************************/
 
-GDALECWCompressor::GDALECWCompressor()
-
+GDALECWCompressor::GDALECWCompressor() :
+    eWorkDT(GDT_Unknown)
 {
     m_poSrcDS = NULL;
     m_nPercentComplete = -1;
