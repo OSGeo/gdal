@@ -88,11 +88,11 @@ class ISCEDataset : public RawDataset
     enum Scheme eScheme;
 
   public:
-                ISCEDataset( void );
-                ~ISCEDataset( void );
+                ISCEDataset();
+                ~ISCEDataset();
 
-    virtual void        FlushCache( void );
-    virtual char      **GetFileList( void );
+    virtual void        FlushCache();
+    virtual char      **GetFileList();
     
     static int          Identify( GDALOpenInfo *poOpenInfo );
     static GDALDataset *Open( GDALOpenInfo *poOpenInfo );
@@ -162,11 +162,11 @@ static CPLString getXMLFilename( GDALOpenInfo *poOpenInfo )
 /*                             ISCEDataset()                            */
 /************************************************************************/
 
-ISCEDataset::ISCEDataset( void )
-{
-    fpImage = NULL;
-    pszXMLFilename = NULL;
-}
+ISCEDataset::ISCEDataset() :
+    fpImage(NULL),
+    pszXMLFilename(NULL),
+    eScheme(BIL)
+{ }
 
 /************************************************************************/
 /*                            ~ISCEDataset()                          */
