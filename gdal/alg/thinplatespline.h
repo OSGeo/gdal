@@ -53,25 +53,33 @@ class VizGeorefSpline2D
 {
   public:
 
-    VizGeorefSpline2D(int nof_vars = 1){
-        x = y = u = NULL;
-        unused = index = NULL;
+    VizGeorefSpline2D(int nof_vars = 1) :
+        type(VIZ_GEOREF_SPLINE_ZERO_POINTS),
+        _nof_vars(nof_vars),
+        _nof_points(0),
+        _max_nof_points(0),
+        _nof_eqs(0),
+        _tx(0.0),
+        _ty(0.0),
+        _ta(10.0,
+        _dx(0.0),
+        _dy(0.0),
+        x(NULL),
+        y(NULL),
+        u(NULL),
+        unused(NULL),
+        index(NULL)
+    {
         for( int i = 0; i < nof_vars; i++ )
         {
             rhs[i] = NULL;
             coef[i] = NULL;
         }
-          
-        _tx = _ty = 0.0;		
-        _ta = 10.0;
-        _nof_points = 0;
-        _nof_vars = nof_vars;
-        _max_nof_points = 0;
+
         grow_points();
-        type = VIZ_GEOREF_SPLINE_ZERO_POINTS;
     }
 
-    ~VizGeorefSpline2D(){
+    ~VizGeorefSpline2D() {
         CPLFree( x );
         CPLFree( y );
         CPLFree( u );
