@@ -1652,7 +1652,8 @@ VSIZipReader::VSIZipReader(const char* pszZipFileName) :
     nModifiedTime(0)
 {
     unzF = cpl_unzOpen(pszZipFileName);
-    // TODO: Initialize file_pos = {0, 0};
+    file_pos.pos_in_zip_directory = 0;
+    file_pos.num_of_file = 0;
 }
 
 /************************************************************************/
