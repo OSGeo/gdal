@@ -39,13 +39,25 @@
 
 CPL_CVSID("$Id$");
 
+
+#ifdef POPPLER_BASE_STREAM_HAS_TWO_ARGS
+/* Poppler 0.31.0 is the first one that needs to know the file size */
+static vsi_l_offset VSIPDFFileStreamGetSize(VSILFILE* f)
+{
+    VSIFSeekL(f, 0, SEEK_END);
+    vsi_l_offset nSize = VSIFTellL(f);
+    VSIFSeekL(f, 0, SEEK_SET);
+    return nSize;
+}
+#endif
+
 /************************************************************************/
 /*                         VSIPDFFileStream()                           */
 /************************************************************************/
 
 VSIPDFFileStream::VSIPDFFileStream(VSILFILE* f, const char* pszFilename, Object *dictA):
 #ifdef POPPLER_BASE_STREAM_HAS_TWO_ARGS
-                                                        BaseStream(dictA, 0)
+                                                        BaseStream(dictA, (setPos_offset_type)VSIPDFFileStreamGetSize(f))
 #else
                                                         BaseStream(dictA)
 #endif
@@ -188,6 +200,27 @@ int VSIPDFFileStream::FillBuffer()
     if (nBufferLength == 0)
         return FALSE;
 
+    // Since we now report a non-zero length (as BaseStream::length member),
+    // PDFDoc::getPage() can go to the linearized mode if the file is linearized,
+    // and thus create a pageCache. If so, in PDFDoc::~PDFDoc(),
+    // if pageCache is not null, it would try to access the stream (str) through
+    // getPageCount(), but we have just freed and nullify str before in PDFFreeDoc().
+    // So make as if the file is not linearized to avoid those issues...
+    // All this is due to our attempt of avoiding cross-heap issues with allocation
+    // and liberation of VSIPDFFileStream as PDFDoc::str member.
+    if( nCurrentPos <= 0 )
+    {
+        for(int i=0;i<nToRead-(int)strlen("/Linearized ");i++)
+        {
+            if( memcmp(abyBuffer + i, "/Linearized ",
+                       strlen("/Linearized ")) == 0 )
+            {
+                memcpy(abyBuffer + i, "/XXXXXXXXXX ", strlen("/Linearized "));
+                break;
+            }
+        }
+    }
+
     return TRUE;
 }
 
@@ -195,7 +228,7 @@ int VSIPDFFileStream::FillBuffer()
 /*                                getChar()                             */
 /************************************************************************/
 
-/* The unoptimized version performs a bit well since we must go through */
+/* The unoptimized version performs a bit less since we must go through */
 /* the whole virtual I/O chain for each character reading. We save a few */
 /* percent with this extra internal caching */
 
@@ -324,6 +357,49 @@ void VSIPDFFileStream::moveStart(moveStart_delta_type delta)
     nStart += delta;
     VSIFSeekL(f, nCurrentPos = nStart, SEEK_SET);
     nPosInBuffer = nBufferLength = -1;
+}
+
+/************************************************************************/
+/*                          hasGetChars()                               */
+/************************************************************************/
+
+GBool VSIPDFFileStream::hasGetChars()
+{
+    return true;
+}
+
+/************************************************************************/
+/*                            getChars()                                */
+/************************************************************************/
+
+int VSIPDFFileStream::getChars(int nChars, Guchar *buffer)
+{
+    int nRead = 0;
+    while (nRead < nChars)
+    {
+        int nToRead = nChars - nRead;
+        if (nPosInBuffer == nBufferLength)
+        {
+            if (!bLimited && nToRead > BUFFER_SIZE)
+            {
+                int nJustRead = (int) VSIFReadL(buffer + nRead, 1, nToRead, f);
+                nPosInBuffer = nBufferLength = -1;
+                nCurrentPos += nJustRead;
+                nRead += nJustRead;
+                break;
+            }
+            else if (!FillBuffer() || nPosInBuffer >= nBufferLength)
+                break;
+        }
+        if( nToRead > nBufferLength - nPosInBuffer )
+            nToRead = nBufferLength - nPosInBuffer;
+
+        memcpy( buffer + nRead, abyBuffer + nPosInBuffer, nToRead );
+        nPosInBuffer += nToRead;
+        nCurrentPos += nToRead;
+        nRead += nToRead;
+    }
+    return nRead;
 }
 
 #endif
