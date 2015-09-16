@@ -316,25 +316,23 @@ class ENVIRasterBand : public RawRasterBand
 /*                            ENVIDataset()                             */
 /************************************************************************/
 
-ENVIDataset::ENVIDataset()
+ENVIDataset::ENVIDataset() :
+    fpImage(NULL),
+    fp(NULL),
+    pszHDRFilename(NULL),
+    bFoundMapinfo(FALSE),
+    bHeaderDirty(FALSE),
+    papszHeader(NULL),
+    interleave(BSQ)
 {
-    fpImage = NULL;
-    fp = NULL;
-    pszHDRFilename = NULL;
-    pszProjection = CPLStrdup("");
-
-    papszHeader = NULL;
-
-    bFoundMapinfo = FALSE;
-
-    bHeaderDirty = FALSE;
-
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
     adfGeoTransform[2] = 0.0;
     adfGeoTransform[3] = 0.0;
     adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = 1.0;
+
+    pszProjection = CPLStrdup("");
 }
 
 /************************************************************************/
