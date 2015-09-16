@@ -453,7 +453,7 @@ PNGDataset::PNGDataset() :
     bHasTriedLoadWorldFile = FALSE;
     bHasReadXMPMetadata = FALSE;
     bHasReadICCMetadata = FALSE;
-    // TODO: Handle sSetJmpContext not yet initializef.
+    memset(&sSetJmpContext, 0, sizeof(sSetJmpContext));
 }
 
 /************************************************************************/
