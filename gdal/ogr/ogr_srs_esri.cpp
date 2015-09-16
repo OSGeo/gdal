@@ -1614,6 +1614,12 @@ OGRErr OGRSpatialReference::morphFromESRI()
         pszProjection = GetAttrValue("PROJECTION");
     }
 
+    if( pszProjection != NULL &&
+             EQUAL(pszProjection, SRS_PT_MERCATOR_AUXILIARY_SPHERE) )
+    {
+       return importFromEPSG(3857);
+    }
+
 /* -------------------------------------------------------------------- */
 /*      If we are remapping Hotine_Oblique_Mercator_Azimuth_Center      */
 /*      add a rectified_grid_angle parameter - to match the azimuth     */
