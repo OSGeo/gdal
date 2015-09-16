@@ -102,14 +102,32 @@ public:
 
 class GDALWMSRasterIOHint {
 public:
-    int m_x0, m_y0;
-    int m_sx, m_sy;
+  GDALWMSRasterIOHint() :
+      m_x0(0),
+      m_y0(0),
+      m_sx(0),
+      m_sy(0),
+      m_overview(0),
+      m_valid(false)
+  {}
+    int m_x0;
+    int m_y0;
+    int m_sx;
+    int m_sy;
     int m_overview;
     bool m_valid;
 };
 
 class GDALWMSMiniDriverCapabilities {
 public:
+  GDALWMSMiniDriverCapabilities() : 
+      m_capabilities_version(0),
+      m_has_image_request(0),
+      m_has_tiled_image_requeset(0),
+      m_has_arb_overviews(0),
+      m_max_overview_count(-1)
+  {}
+
 /* Version N capabilities require all version N and earlier variables to be set to correct values */
     int m_capabilities_version;
 
@@ -362,7 +380,8 @@ protected:
     GDALColorTable *m_poColorTable;
     std::vector<double> vNoData, vMin, vMax;
     GDALDataType m_data_type;
-    int m_block_size_x, m_block_size_y;
+    int m_block_size_x;
+    int m_block_size_y;
     GDALWMSRasterIOHint m_hint;
     int m_use_advise_read;
     int m_verify_advise_read;
