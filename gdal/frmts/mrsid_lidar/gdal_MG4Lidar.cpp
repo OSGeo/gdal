@@ -79,12 +79,14 @@ static double MaxBlockSideSize = 1024.0;
 class MG4LidarDataset : public GDALPamDataset
 {
 friend class MG4LidarRasterBand;
+
 public:
    MG4LidarDataset();
    ~MG4LidarDataset();
    static GDALDataset *Open( GDALOpenInfo * );
    CPLErr 	GetGeoTransform( double * padfTransform );
    const char *GetProjectionRef();
+
 protected:
    MG4PointReader *reader;
    FileIO *fileIO;
@@ -94,7 +96,8 @@ protected:
    MG4LidarDataset **papoOverviewDS;
    CPLXMLNode *poXMLPCView;
    bool ownsXML;
-   int nBlockXSize, nBlockYSize;
+   int nBlockXSize;
+   int nBlockYSize;
    int iLevel;
 };
 
@@ -520,11 +523,14 @@ double MG4LidarRasterBand::GetNoDataValue( int *pbSuccess )
    return nodatavalue;
 }
 
-
 /************************************************************************/
 /*                            MG4LidarDataset()                             */
 /************************************************************************/
-MG4LidarDataset::MG4LidarDataset()
+
+MG4LidarDataset::MG4LidarDataset() :
+    nBlockXSize(0),
+    nBlockYSize(0),
+    iLevel(0)
 {
    reader = NULL;
    fileIO = NULL;
@@ -533,8 +539,8 @@ MG4LidarDataset::MG4LidarDataset()
    ownsXML = false;
    nOverviewCount = 0;
    papoOverviewDS = NULL;
-
 }
+
 /************************************************************************/
 /*                            ~MG4LidarDataset()                             */
 /************************************************************************/
