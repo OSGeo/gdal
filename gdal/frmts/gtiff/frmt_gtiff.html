@@ -307,6 +307,15 @@ also exist, provided that the GDAL_TIFF_INTERNAL_MASK configuration option is se
 Note that this creation option will have <a href="http://trac.osgeo.org/gdal/ticket/3917">no effect</a> if general options
 (i.e. options which are not creation options) of gdal_translate are used.</p></li>
 
+<li><p><b>GEOTIFF_KEYS_FLAVOR=[STANDARD/ESRI_PE]</b>: (GDAL &gt;= 2.1.0) Determine
+which "flavor" of GeoTIFF keys must be used to write the SRS information. The STANDARD
+way (default choice) will use the general accepted formulations of GeoTIFF keys, including
+extensions of the values accepted for ProjectedCSTypeGeoKey to new EPSG codes.
+The ESRI_PE flavor will write formulations that are (more) compatible of ArcGIS. At the time
+of writing, the ESRI_PE choice has mostly an effect when writing the EPSG:3857 (Web Mercator)
+SRS. For other SRS, the standard way will be used, with the addition of a ESRI_PE WKT
+string as the value of PCSCitationGeoKey.</p></li>
+
 </ul>
 
 <h3>About JPEG compression of RGB images </h3>

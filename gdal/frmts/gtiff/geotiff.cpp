@@ -364,6 +364,8 @@ class GTiffDataset : public GDALPamDataset
     CPLVirtualMem* psVirtualMemIOMapping;
 
     int           nSetPhotometricFromBandColorInterp;
+    
+    GTIFFKeysFlavorEnum eGeoTIFFKeysFlavor;
 
     CPLVirtualMem *pBaseMapping;
     int            nRefBaseMapping;
@@ -377,6 +379,7 @@ class GTiffDataset : public GDALPamDataset
     std::vector<GTiffCompressionJob> asCompressionJobs;
     CPLMutex      *hCompressThreadPoolMutex;
     void           InitCompressionThreads(char** papszOptions);
+    void           InitCreationOrOpenOptions(char** papszOptions);
     static void    ThreadCompressionFunc(void* pData);
     void           WaitCompletionForBlock(int nBlockId);
     void           WriteRawStripOrTile(int nStripOrTile,
@@ -5765,6 +5768,31 @@ void GTiffDataset::InitCompressionThreads(char** papszOptions)
 }
 
 /************************************************************************/
+/*                       GetGTIFFKeysFlavor()                           */
+/************************************************************************/
+
+static GTIFFKeysFlavorEnum GetGTIFFKeysFlavor(char** papszOptions)
+{
+    const char* pszGeoTIFFKeysFlavor = CSLFetchNameValueDef(papszOptions,
+                                                            "GEOTIFF_KEYS_FLAVOR",
+                                                            "STANDARD");
+    if( EQUAL(pszGeoTIFFKeysFlavor, "ESRI_PE") )
+        return GEOTIFF_KEYS_ESRI_PE;
+    return GEOTIFF_KEYS_STANDARD;
+}
+
+/************************************************************************/
+/*                      InitCreationOrOpenOptions()                     */
+/************************************************************************/
+
+void GTiffDataset::InitCreationOrOpenOptions(char** papszOptions)
+{
+    InitCompressionThreads(papszOptions);
+
+    eGeoTIFFKeysFlavor = GetGTIFFKeysFlavor(papszOptions);
+}
+
+/************************************************************************/
 /*                      ThreadCompressionFunc()                         */
 /************************************************************************/
 
@@ -7728,7 +7756,7 @@ void GTiffDataset::WriteGeoTIFFInfo()
         psGTIF = GTIFNew( hTIFF );  
 
         // set according to coordinate system.
-        GTIFSetFromOGISDefn( psGTIF, pszProjection );
+        GTIFSetFromOGISDefnEx( psGTIF, pszProjection, eGeoTIFFKeysFlavor );
 
         if( bPixelIsPoint )
         {
@@ -8947,7 +8975,9 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
     if( poOpenInfo->eAccess == GA_Update )
-        poDS->InitCompressionThreads(poOpenInfo->papszOpenOptions);
+    {
+        poDS->InitCreationOrOpenOptions(poOpenInfo->papszOpenOptions);
+    }
 
     if( nCompression == COMPRESSION_JPEG && poOpenInfo->eAccess == GA_Update )
     {
@@ -11959,7 +11989,7 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
     poDS->nLZMAPreset = GTiffGetLZMAPreset(papszParmList);
     poDS->nJpegQuality = GTiffGetJpegQuality(papszParmList);
     poDS->nJpegTablesMode = GTiffGetJpegTablesMode(papszParmList);
-    poDS->InitCompressionThreads(papszParmList);
+    poDS->InitCreationOrOpenOptions(papszParmList);
 
 #if !defined(BIGTIFF_SUPPORT)
 /* -------------------------------------------------------------------- */
@@ -12619,7 +12649,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         GTIF	*psGTIF;
 
         psGTIF = GTIFNew( hTIFF );
-        GTIFSetFromOGISDefn( psGTIF, pszProjection );
+        GTIFSetFromOGISDefnEx( psGTIF, pszProjection, GetGTIFFKeysFlavor(papszOptions) );
 
         if( poSrcDS->GetMetadataItem( GDALMD_AREA_OR_POINT ) 
             && EQUAL(poSrcDS->GetMetadataItem(GDALMD_AREA_OR_POINT),
@@ -12851,7 +12881,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     poDS->nJpegQuality = GTiffGetJpegQuality(papszOptions);
     poDS->nJpegTablesMode = GTiffGetJpegTablesMode(papszOptions);
     poDS->GetDiscardLsbOption(papszOptions);
-    poDS->InitCompressionThreads(papszOptions);
+    poDS->InitCreationOrOpenOptions(papszOptions);
 
     if (nCompression == COMPRESSION_ADOBE_DEFLATE)
     {
@@ -14178,6 +14208,10 @@ void GDALRegister_GTiff()
 "   <Option name='TIFFTAG_TRANSFERRANGE_BLACK' type='string' description='Transfer range for black'/>"
 "   <Option name='TIFFTAG_TRANSFERRANGE_WHITE' type='string' description='Transfer range for white'/>"
 "   <Option name='STREAMABLE_OUTPUT' type='boolean' default='NO' description='Enforce a mode compatible with a streamable file'/>"
+"   <Option name='GEOTIFF_KEYS_FLAVOR' type='string-select' default='STANDARD' description='Which flavor of GeoTIFF keys must be used'>"
+"       <Value>STANDARD</Value>"
+"       <Value>ESRI_PE</Value>"
+"   </Option>"
 "</CreationOptionList>" );
 
 /* -------------------------------------------------------------------- */
@@ -14198,6 +14232,10 @@ void GDALRegister_GTiff()
         poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST, 
 "<OpenOptionList>"
 "   <Option name='NUM_THREADS' type='string' description='Number of worker threads for compression. Can be set to ALL_CPUS' default='1'/>"
+"   <Option name='GEOTIFF_KEYS_FLAVOR' type='string-select' default='STANDARD' description='Which flavor of GeoTIFF keys must be used (for writing)'>"
+"       <Value>STANDARD</Value>"
+"       <Value>ESRI_PE</Value>"
+"   </Option>"
 "</OpenOptionList>" );
         poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );

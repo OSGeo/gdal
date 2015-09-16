@@ -6187,6 +6187,36 @@ def tiff_write_140():
     return 'success'
 
 ###############################################################################
+# Test GEOTIFF_KEYS_FLAVOR=ESRI_PE with EPSG:3857
+
+def tiff_write_141():
+
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_141.tif',1,1,options = ['GEOTIFF_KEYS_FLAVOR=ESRI_PE'])
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(3857)
+    ds.SetProjection(srs.ExportToWkt())
+    ds = None
+    
+    ds = gdal.Open('/vsimem/tiff_write_141.tif')
+    wkt = ds.GetProjectionRef()
+    ds = None
+
+    if wkt.find('PROJCS["WGS_1984_Web_Mercator_Auxiliary_Sphere"') != 0:
+        gdaltest.post_reason('fail')
+        print(wkt)
+        return 'fail'
+
+    if wkt.find('EXTENSION["PROJ4"') < 0:
+        gdaltest.post_reason('fail')
+        print(wkt)
+        return 'fail'
+
+    gdaltest.tiff_drv.Delete('/vsimem/tiff_write_141.tif')
+
+    return 'success'
+
+
+###############################################################################
 # Ask to run again tests with GDAL_API_PROXY=YES
 
 def tiff_write_api_proxy():
@@ -6359,6 +6389,7 @@ gdaltest_list = [
     tiff_write_138,
     tiff_write_139,
     tiff_write_140,
+    tiff_write_141,
     #tiff_write_api_proxy,
     tiff_write_cleanup ]
 

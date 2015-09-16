@@ -1296,6 +1296,12 @@ static int OGCDatumName2EPSGDatumCode( const char * pszOGCName )
 int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
 
 {
+    return GTIFSetFromOGISDefnEx(psGTIF, pszOGCWKT, GEOTIFF_KEYS_STANDARD);
+}
+
+int GTIFSetFromOGISDefnEx( GTIF * psGTIF, const char *pszOGCWKT,
+                           GTIFFKeysFlavorEnum eFlavor )
+{
     OGRSpatialReference *poSRS;
     int		nPCS = KvUserDefined;
     OGRErr      eErr;
@@ -1413,9 +1419,19 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
     
     if( nPCS != KvUserDefined )
     {
-        GTIFKeySet(psGTIF, GTModelTypeGeoKey, TYPE_SHORT, 1,
-                   ModelTypeProjected);
-        GTIFKeySet(psGTIF, ProjectedCSTypeGeoKey, TYPE_SHORT, 1, nPCS );
+        // If ESRI_PE flavor is explicitly required, then for EPSG:3857
+        // we will have to write a completely non-standard definition
+        // that requires not setting GTModelTypeGeoKey to ProjectedCSTypeGeoKey
+        if( eFlavor == GEOTIFF_KEYS_ESRI_PE && nPCS == 3857 )
+        {
+            bWritePEString = TRUE;
+        }
+        else
+        {
+            GTIFKeySet(psGTIF, GTModelTypeGeoKey, TYPE_SHORT, 1,
+                    ModelTypeProjected);
+            GTIFKeySet(psGTIF, ProjectedCSTypeGeoKey, TYPE_SHORT, 1, nPCS );
+        }
     }
     else if( poSRS->IsGeocentric() )
     {
@@ -2169,10 +2185,13 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
     // Note that VERTCS is an ESRI "spelling" of VERT_CS so we assume if
     // we find it that we should try to treat this as a PE string.
     bWritePEString |= (poSRS->GetAttrValue("VERTCS") != NULL);
+    
+    bWritePEString |= (eFlavor == GEOTIFF_KEYS_ESRI_PE);
+    
+    bWritePEString &= CSLTestBoolean( CPLGetConfigOption("GTIFF_ESRI_CITATION",
+                                              "YES") );
 
-    if( bWritePEString 
-        && CSLTestBoolean( CPLGetConfigOption("GTIFF_ESRI_CITATION",
-                                              "YES") ) )
+    if( bWritePEString )
     {
         /* Anyhing we can't map, we store as an ESRI PE string with a citation key */
         char *pszPEString = NULL;
@@ -2192,6 +2211,18 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
             CPLFree( pszPEString );
         GTIFKeySet(psGTIF, GTModelTypeGeoKey, TYPE_SHORT, 1,
                    KvUserDefined );
+
+        /* Not completely sure we really need to imitate ArcGIS to that point */
+        /* but that cannot hurt */
+        if( nPCS == 3857 )
+        {
+            GTIFKeySet(psGTIF, GTCitationGeoKey, TYPE_ASCII, 0,
+                       "PCS Name = WGS_1984_Web_Mercator_Auxiliary_Sphere");
+            GTIFKeySet( psGTIF, GeographicTypeGeoKey, TYPE_SHORT,
+                        1, GCS_WGS_84 );
+            GTIFKeySet( psGTIF, GeogSemiMajorAxisGeoKey, TYPE_DOUBLE, 1, 6378137.0);
+            GTIFKeySet( psGTIF, GeogInvFlatteningGeoKey, TYPE_DOUBLE, 1, 298.257223563);
+        }
     }
     
 /* -------------------------------------------------------------------- */
@@ -2269,8 +2300,11 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
         && poSRS->GetRoot()->GetChild(0) != NULL 
         && (poSRS->IsProjected() || poSRS->IsLocal() || poSRS->IsGeocentric()) )
     {
-        GTIFKeySet( psGTIF, GTCitationGeoKey, TYPE_ASCII, 0, 
-                    poSRS->GetRoot()->GetChild(0)->GetValue() );
+        if( !(bWritePEString && nPCS == 3857) )
+        {
+            GTIFKeySet( psGTIF, GTCitationGeoKey, TYPE_ASCII, 0, 
+                        poSRS->GetRoot()->GetChild(0)->GetValue() );
+        }
     }
 
 /* -------------------------------------------------------------------- */
