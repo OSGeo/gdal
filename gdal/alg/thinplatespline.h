@@ -61,7 +61,7 @@ class VizGeorefSpline2D
         _nof_eqs(0),
         _tx(0.0),
         _ty(0.0),
-        _ta(10.0,
+        _ta(10.0),
         _dx(0.0),
         _dy(0.0),
         x(NULL),
