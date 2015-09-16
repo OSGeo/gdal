@@ -519,9 +519,7 @@ CPLErr BTDataset::SetProjection( const char *pszNewProjection )
 /*      Write out the projection to a .prj file.                        */
 /* -------------------------------------------------------------------- */
     const char  *pszPrjFile = CPLResetExtension( GetDescription(), "prj" );
-    VSILFILE * fp;
-
-    fp = VSIFOpenL( pszPrjFile, "wt" );
+    VSILFILE * fp = VSIFOpenL( pszPrjFile, "wt" );
     if( fp != NULL )
     {
         VSIFPrintfL( fp, "%s\n", pszProjection );
@@ -558,9 +556,7 @@ GDALDataset *BTDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create the dataset.                                             */
 /* -------------------------------------------------------------------- */
-    BTDataset  *poDS;
-
-    poDS = new BTDataset();
+    BTDataset  *poDS = new BTDataset();
  
     memcpy( poDS->abyHeader, poOpenInfo->pabyHeader, 256 );
 
@@ -842,9 +838,7 @@ GDALDataset *BTDataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Try to create the file.                                         */
 /* -------------------------------------------------------------------- */
-    VSILFILE        *fp;
-
-    fp = VSIFOpenL( pszFilename, "wb" );
+    VSILFILE *fp = VSIFOpenL( pszFilename, "wb" );
 
     if( fp == NULL )
     {
