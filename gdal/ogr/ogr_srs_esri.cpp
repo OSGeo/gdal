@@ -985,6 +985,22 @@ OGRErr OGRSpatialReference::morphToESRI()
     OGRErr      eErr;
 
 /* -------------------------------------------------------------------- */
+/*      Special case for EPSG:3857. Hard to deal with in the general    */
+/*      case as GDAL (at the time of writing) uses regular Mercator_1SP */
+/*      to model it.                                                    */
+/* -------------------------------------------------------------------- */
+    const char* pszAuthName = GetAuthorityName(NULL);
+    const char* pszAuthCode = GetAuthorityCode(NULL);
+    if( (pszAuthName != NULL && EQUAL(pszAuthName,"EPSG") && pszAuthCode != NULL &&
+         atoi(pszAuthCode) == 3857) ||
+        (GetAttrValue("PROJCS") != NULL && EQUAL(GetAttrValue("PROJCS"), "WGS 84 / Pseudo-Mercator")) )
+    {
+        Clear();
+        const char* pszESRI_PE_WebMercator = "PROJCS[\"WGS_1984_Web_Mercator_Auxiliary_Sphere\",GEOGCS[\"GCS_WGS_1984\",DATUM[\"D_WGS_1984\",SPHEROID[\"WGS_1984\",6378137.0,298.257223563]],PRIMEM[\"Greenwich\",0.0],UNIT[\"Degree\",0.0174532925199433]],PROJECTION[\"Mercator_Auxiliary_Sphere\"],PARAMETER[\"False_Easting\",0.0],PARAMETER[\"False_Northing\",0.0],PARAMETER[\"Central_Meridian\",0.0],PARAMETER[\"Standard_Parallel_1\",0.0],PARAMETER[\"Auxiliary_Sphere_Type\",0.0],UNIT[\"Meter\",1.0]]";
+        return importFromWkt( (char**) &pszESRI_PE_WebMercator );
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Fixup ordering, missing linear units, etc.                      */
 /* -------------------------------------------------------------------- */
     eErr = Fixup();
@@ -1612,6 +1628,13 @@ OGRErr OGRSpatialReference::morphFromESRI()
                      SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP );
 
         pszProjection = GetAttrValue("PROJECTION");
+    }
+
+    if( pszProjection != NULL &&
+             EQUAL(pszProjection, SRS_PT_MERCATOR_AUXILIARY_SPHERE) )
+    {
+       CPLString osAuxiliarySphereType;
+       return importFromEPSG(3857);
     }
 
 /* -------------------------------------------------------------------- */
