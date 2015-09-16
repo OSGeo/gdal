@@ -93,6 +93,10 @@ class VSIPDFFileStream: public BaseStream
         virtual void       close();
 
     private:
+        /* Added in poppler 0.15.0 */
+        virtual GBool hasGetChars();
+        virtual int getChars(int nChars, Guchar *buffer);
+
         VSIPDFFileStream  *poParent;
         GooString         *poFilename;
         VSILFILE          *f;
