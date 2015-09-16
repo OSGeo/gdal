@@ -1230,7 +1230,7 @@ void OGRAMIGOCLOUDTableLayer::SetDeferedCreation(OGRwkbGeometryType eGType,
     if( eGType != wkbNone )
     {
         OGRAmigoCloudGeomFieldDefn *poFieldDefn =
-            new OGRAmigoCloudGeomFieldDefn("the_geom", eGType);
+            new OGRAmigoCloudGeomFieldDefn("wkb_geometry", eGType);
         poFieldDefn->SetNullable(bGeomNullable);
         poFeatureDefn->AddGeomFieldDefn(poFieldDefn, FALSE);
         if( poSRS != NULL )
@@ -1318,7 +1318,33 @@ OGRErr OGRAMIGOCLOUDTableLayer::RunDeferedCreationIfNecessary()
     json << "{ \"name\":\"" << osName << "\",";
 
     json << "\"schema\": \"[";
+
     int counter=0;
+
+    OGRwkbGeometryType eGType = GetGeomType();
+    if( eGType != wkbNone )
+    {
+        CPLString osGeomType = OGRToOGCGeomType(eGType);
+        if( wkbHasZ(eGType) )
+            osGeomType += "Z";
+
+        OGRAmigoCloudGeomFieldDefn *poFieldDefn =
+                (OGRAmigoCloudGeomFieldDefn *)poFeatureDefn->GetGeomFieldDefn(0);
+
+        json << "{\\\"name\\\":\\\"" << poFieldDefn->GetNameRef() << "\\\",";
+        json << "\\\"type\\\":\\\"geometry\\\",";
+        json << "\\\"geometry_type\\\":\\\"" << osGeomType << "\\\",";
+
+        if( !poFieldDefn->IsNullable() )
+            json << "\\\"nullable\\\":false,";
+        else
+            json << "\\\"nullable\\\":true,";
+
+        json << "\\\"visible\\\": true}";
+
+        counter++;
+    }
+
     for( int i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
     {
         OGRFieldDefn* poFieldDefn = poFeatureDefn->GetFieldDefn(i);
