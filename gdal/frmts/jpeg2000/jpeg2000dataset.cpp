@@ -415,14 +415,15 @@ GDALColorInterp JPEG2000RasterBand::GetColorInterpretation()
 /*                           JPEG2000Dataset()                          */
 /************************************************************************/
 
-JPEG2000Dataset::JPEG2000Dataset()
+JPEG2000Dataset::JPEG2000Dataset() :
+    iFormat(0)
 {
     psStream = NULL;
     psImage = NULL;
     nBands = 0;
     bAlreadyDecoded = FALSE;
     bPromoteTo8Bit = FALSE;
-    
+
     poDriver = (GDALDriver *)GDALGetDriverByName("JPEG2000");
 }
 
@@ -1415,4 +1416,3 @@ void GDALRegister_JPEG2000()
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
-
