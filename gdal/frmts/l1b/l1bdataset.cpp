@@ -201,6 +201,8 @@ class TimeCode {
     char        pszString[L1B_TIMECODE_LENGTH];
 
   public:
+    TimeCode() : lYear(0), lDay(0), lMillisecond(0) {}
+
     void SetYear(long year)
     {
         lYear = year;
