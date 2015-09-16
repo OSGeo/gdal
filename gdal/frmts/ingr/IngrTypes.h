@@ -319,7 +319,8 @@ typedef     struct {
 //    Tile Directory Header
 //  ----------------------------------------------------------------------------
 
-typedef    struct {
+typedef struct INGR_TileHeader {
+    INGR_TileHeader();
     uint16              ApplicationType;
     uint16              SubTypeCode;
     uint32              WordsToFollow;
@@ -329,7 +330,7 @@ typedef    struct {
     uint16              Properties;
     uint16              DataTypeCode;
     uint8               Reserved2[100];
-    uint32              TileSize; 
+    uint32              TileSize;
     uint32              Reserved3;
     INGR_TileItem       First;
 } INGR_TileHeader;
@@ -572,4 +573,3 @@ void CPL_STDCALL INGR_TileItemDiskToMem(INGR_TileItem* pTileItem, const GByte *p
 void CPL_STDCALL INGR_JPEGAppDataDiskToMem(INGR_JPEGAppData* pJPEGAppData, const GByte *pabyBuf);
 
 #endif
-
