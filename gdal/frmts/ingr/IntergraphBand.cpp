@@ -41,14 +41,39 @@
 #include "IntergraphBand.h"
 #include "IngrTypes.h"
 
+#include <algorithm>
+
+using std::fill;
+
 //  ----------------------------------------------------------------------------
 //                                  IntergraphRasterBand::IntergraphRasterBand()
 //  ----------------------------------------------------------------------------
+
+INGR_TileHeader::INGR_TileHeader() :
+    ApplicationType(0),
+    SubTypeCode(0),
+    WordsToFollow(0),
+    PacketVersion(0),
+    Identifier(0),
+    Properties(0),
+    DataTypeCode(0),
+    TileSize(0),
+    Reserved3(0)
+{
+    fill( Reserved, Reserved + CPL_ARRAYSIZE(Reserved), 0 );
+    fill( Reserved2, Reserved2 + CPL_ARRAYSIZE(Reserved2), 0 );
+    First.Start = 0;
+    First.Allocated = 0;
+    First.Used = 0;
+}
 
 IntergraphRasterBand::IntergraphRasterBand( IntergraphDataset *poDS,
                                             int nBand,
                                             int nBandOffset,
                                             GDALDataType eType ) :
+    nBlockBufSize(0),
+    nFullBlocksX(0),
+    nFullBlocksY(0),
     nRLEOffset(0)
 {
     this->poColorTable  = new GDALColorTable();
