@@ -6,6 +6,7 @@ The 1.11.3 release is a bug fix release.
  * Support custom buildflags in GRASS plugin (#5850)
  * GRASS 7.0.0 support (#5852)
  * fix detection of ECW SDK 5.1 on Mac (#5867, #5390)
+ * Add support for Poppler >= 0.31.0 (#6118)
 
 == Port ==
  * /vsitar/: remove useless validation test that prevents from opening valid .tar files (#5864)
@@ -43,6 +44,7 @@ GeoRaster driver:
 GTiff driver:
  * fix GTiffDataset::IsBlockAvailable() wrong behaviour when compiling against internal libtiff, when a BigTIFF file has a TileByteCounts with LONG/4-byte counts and not LONG8 (#6001)
  * avoid generated corrupted  right-most and bottom-most tiles for 12-bit JPEG-compressed (#5971)
+ * on reading attach PROJ4 extension node for Mercator_Auxiliary_Sphere / WebMercator (#5924)
 
 HDF4 driver:
  * fix AnyTypeToDouble() to use proper type (int instead of long) to work with DFNT_INT32/DFNT_UINT32 on 64-bit Linux (#5965)
@@ -67,6 +69,9 @@ TIL driver:
 VRT driver:
  * add more checks to CheckCompatibleForDatasetIO() to avoid issues with overview bands (#5954)
  * fix rounding of output window size on VRTSimpleSource (#5874)
+
+== OGRSpatialReference ==
+ * morphFromESRI(): map Mercator_Auxiliary_Sphere to EPSG:3857 (#5924)
 
 == OGR drivers ==
 
@@ -106,6 +111,9 @@ SQLite driver:
 
 Perl bindings:
  * Fix creation of Field Definition object (#6099)
+
+Python bindings:
+ * Fix build with SWIG 3.0.6 (#6045)
 
 = GDAL/OGR 1.11.2 Release Notes = 
 
