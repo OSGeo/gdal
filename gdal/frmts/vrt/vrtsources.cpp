@@ -76,8 +76,15 @@ void VRTSource::GetFileList(CPL_UNUSED char*** ppapszFileList,
 /*                          VRTSimpleSource()                           */
 /************************************************************************/
 
-VRTSimpleSource::VRTSimpleSource()
-
+VRTSimpleSource::VRTSimpleSource() :
+    nSrcXOff(0),
+    nSrcYOff(0),
+    nSrcXSize(0),
+    nSrcYSize(0),
+    nDstXOff(0),
+    nDstYOff(0),
+    nDstXSize(0),
+    nDstYSize(0)
 {
     poRasterBand = NULL;
     poMaskBandMainBand = NULL;
