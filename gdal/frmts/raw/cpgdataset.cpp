@@ -95,10 +95,12 @@ class CPGDataset : public RawDataset
 /************************************************************************/
 
 CPGDataset::CPGDataset() :
+    nGCPCount(0),
+    pasGCPList(NULL),
+    nLoadedStokesLine(-1),
+    padfStokesMatrix(NULL),
     nInterleave(0)
 {
-    nGCPCount = 0;
-    pasGCPList = NULL;
     pszProjection = CPLStrdup("");
     pszGCPProjection = CPLStrdup("");
     adfGeoTransform[0] = 0.0;
@@ -107,9 +109,6 @@ CPGDataset::CPGDataset() :
     adfGeoTransform[3] = 0.0;
     adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = 1.0;
-
-    nLoadedStokesLine = -1;
-    padfStokesMatrix = NULL;
 
     for( int iBand = 0; iBand < 4; iBand++ )
         afpImage[iBand] = NULL;
@@ -122,11 +121,9 @@ CPGDataset::CPGDataset() :
 CPGDataset::~CPGDataset()
 
 {
-    int iBand;
-
     FlushCache();
 
-    for( iBand = 0; iBand < 4; iBand++ )
+    for( int iBand = 0; iBand < 4; iBand++ )
     {
         if( afpImage[iBand] != NULL )
             VSIFClose( afpImage[iBand] );
@@ -140,10 +137,7 @@ CPGDataset::~CPGDataset()
 
     CPLFree( pszProjection );
     CPLFree( pszGCPProjection );
-
-    if (padfStokesMatrix != NULL)
-        CPLFree( padfStokesMatrix );
-
+    CPLFree( padfStokesMatrix );
 }
 
 /************************************************************************/
@@ -215,9 +209,7 @@ int CPGDataset::AdjustFilename( char **pszFilename,
                                 const char *pszExtension )
 
 {
-    VSIStatBuf  sStatBuf;
     const char *pszNewName;
-    char *subptr;
 
     /* eventually we should handle upper/lower case ... */
 
@@ -229,8 +221,8 @@ int CPGDataset::AdjustFilename( char **pszFilename,
         *pszFilename = CPLStrdup(pszNewName);
     }
     else if (strlen(pszPolarization) == 2)
-    { 
-        subptr = strstr(*pszFilename,"hh");
+    {
+        char *subptr = strstr(*pszFilename,"hh");
         if (subptr == NULL)
             subptr = strstr(*pszFilename,"hv");
         if (subptr == NULL)
@@ -245,7 +237,6 @@ int CPGDataset::AdjustFilename( char **pszFilename,
                                                 (const char *) pszExtension);
         CPLFree(*pszFilename);
         *pszFilename = CPLStrdup(pszNewName);
-    
     }
     else
     {
@@ -254,6 +245,7 @@ int CPGDataset::AdjustFilename( char **pszFilename,
         CPLFree(*pszFilename);
         *pszFilename = CPLStrdup(pszNewName);
     }
+    VSIStatBuf sStatBuf;
     return VSIStat( *pszFilename, &sStatBuf ) == 0;
 }
 
@@ -263,9 +255,7 @@ int CPGDataset::AdjustFilename( char **pszFilename,
 /************************************************************************/
 int CPGDataset::FindType1( const char *pszFilename )
 {
-  int nNameLen;
-
-  nNameLen = strlen(pszFilename);
+  const int nNameLen = strlen(pszFilename);
 
   if ((strstr(pszFilename,"sso") == NULL) && 
       (strstr(pszFilename,"polgasp") == NULL))
@@ -298,9 +288,7 @@ int CPGDataset::FindType1( const char *pszFilename )
 
 int CPGDataset::FindType2( const char *pszFilename )
 {
-  int nNameLen;
-
-  nNameLen = strlen( pszFilename );
+  const int nNameLen = strlen( pszFilename );
 
   if (( strlen(pszFilename) < 9) ||
       (!EQUAL(pszFilename+nNameLen-8,"SIRC.hdr")
@@ -320,9 +308,7 @@ int CPGDataset::FindType2( const char *pszFilename )
 
 int CPGDataset::FindType3( const char *pszFilename )
 {
-  int nNameLen;
-
-  nNameLen = strlen( pszFilename );
+  const int nNameLen = strlen( pszFilename );
 
   if ((strstr(pszFilename,"sso") == NULL) && 
       (strstr(pszFilename,"polgasp") == NULL))
@@ -1421,17 +1407,16 @@ CPLErr CPG_STOKESRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
                                          void * pImage )
 
 {
+    CPLAssert( nBlockXOff == 0 );
+
     int iPixel;
     int m11, /* m12, */ m13, m14, /* m21, */ m22, m23, m24, step;
     int m31, m32, m33, m34, m41, m42, m43, m44;
     CPGDataset *poGDS = (CPGDataset *) poDS;
     float *M;
     float *pafLine;
-    CPLErr eErr;
 
-    CPLAssert( nBlockXOff == 0 );
-
-    eErr = poGDS->LoadStokesLine(nBlockYOff, bNativeOrder);
+    CPLErr eErr = poGDS->LoadStokesLine(nBlockYOff, bNativeOrder);
     if( eErr != CE_None )
         return eErr;
 
