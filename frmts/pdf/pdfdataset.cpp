@@ -108,12 +108,9 @@ class GDALPDFOutputDev : public SplashOutputDev
 
     public:
         GDALPDFOutputDev(SplashColorMode colorModeA, int bitmapRowPadA,
-                         GBool reverseVideoA, SplashColorPtr paperColorA,
-                         GBool bitmapTopDownA = gTrue,
-                         GBool allowAntialiasA = gTrue) :
+                         GBool reverseVideoA, SplashColorPtr paperColorA) :
                 SplashOutputDev(colorModeA, bitmapRowPadA,
-                                reverseVideoA, paperColorA,
-                                bitmapTopDownA, allowAntialiasA),
+                                reverseVideoA, paperColorA),
                 bEnableVector(TRUE),
                 bEnableText(TRUE),
                 bEnableBitmap(TRUE) {}
@@ -1371,6 +1368,7 @@ static void PDFFreeDoc(PDFDoc* poDoc)
     {
         /* hack to avoid potential cross heap issues on Win32 */
         /* str is the VSIPDFFileStream object passed in the constructor of PDFDoc */
+        // NOTE: This is potentially very dangerous. See comment in VSIPDFFileStream::FillBuffer() */
         delete poDoc->str;
         poDoc->str = NULL;
 
