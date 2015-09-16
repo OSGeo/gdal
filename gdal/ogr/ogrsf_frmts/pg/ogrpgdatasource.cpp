@@ -45,8 +45,8 @@ static void OGRPGNoticeProcessor( void *arg, const char * pszMessage );
 /*                          OGRPGDataSource()                           */
 /************************************************************************/
 
-OGRPGDataSource::OGRPGDataSource()
-
+OGRPGDataSource::OGRPGDataSource() :
+    bDSUpdate(FALSE)
 {
     pszName = NULL;
     pszDBName = NULL;
@@ -55,13 +55,19 @@ OGRPGDataSource::OGRPGDataSource()
     hPGConn = NULL;
     bHavePostGIS = FALSE;
     bHaveGeography = FALSE;
+    sPostgreSQLVersion.nMajor = 0;
+    sPostgreSQLVersion.nMinor = 0;
+    sPostgreSQLVersion.nRelease = 0;
+    sPostGISVersion.nMajor = 0;
+    sPostGISVersion.nMinor = 0;
+    sPostGISVersion.nRelease = 0;
     bUseBinaryCursor = FALSE;
     bUserTransactionActive = FALSE;
     bSavePointActive = FALSE;
     nSoftTransactionLevel = 0;
     bBinaryTimeFormatIsInt8 = FALSE;
     bUseEscapeStringSyntax = FALSE;
-    
+
     nGeometryOID = (Oid) 0;
     nGeographyOID = (Oid) 0;
 
@@ -2844,4 +2850,3 @@ OGRErr OGRPGDataSource::EndCopy( )
     else
         return OGRERR_NONE;
 }
-
