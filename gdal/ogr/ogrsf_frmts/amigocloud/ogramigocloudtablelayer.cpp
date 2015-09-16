@@ -30,6 +30,7 @@
 #include "ogr_amigocloud.h"
 #include "ogr_p.h"
 #include "ogr_pgdump.h"
+#include <sstream>
 
 CPL_CVSID("$Id$");
 
@@ -84,7 +85,7 @@ OGRAMIGOCLOUDTableLayer::OGRAMIGOCLOUDTableLayer(OGRAMIGOCLOUDDataSource* poDS,
                                            OGRAMIGOCLOUDLayer(poDS)
 
 {
-    osName = CPLString("dataset_") + CPLString(pszName);
+    osName = pszName;
     SetDescription( osName );
     bLaunderColumnNames = TRUE;
     bInDeferedInsert = poDS->DoBatchInsert();
@@ -1207,13 +1208,13 @@ int OGRAMIGOCLOUDTableLayer::TestCapability( const char * pszCap )
 }
 
 /************************************************************************/
-/*                        SetDeferedCreation()                          */
+/*                        Create()                          */
 /************************************************************************/
 
-void OGRAMIGOCLOUDTableLayer::SetDeferedCreation (OGRwkbGeometryType eGType,
-                                               OGRSpatialReference* poSRS,
-                                               int bGeomNullable,
-                                               int bAmigoCloudify)
+void OGRAMIGOCLOUDTableLayer::SetDeferedCreation(OGRwkbGeometryType eGType,
+                                     OGRSpatialReference *poSRS,
+                                     int bGeomNullable,
+                                     int bAmigoCloudify)
 {
     bDeferedCreation = TRUE;
     nNextFID = 1;
@@ -1240,8 +1241,66 @@ void OGRAMIGOCLOUDTableLayer::SetDeferedCreation (OGRwkbGeometryType eGType,
         }
     }
     osFIDColName = "amigo_id";
+
     osBaseSQL.Printf("SELECT * FROM %s",
                      OGRAMIGOCLOUDEscapeIdentifier(osName).c_str());
+}
+
+static CPLString GetType(OGRFieldDefn& oField,
+                                  int bPreservePrecision,
+                                  int bApproxOK)
+{
+    char                szFieldType[256];
+
+/* -------------------------------------------------------------------- */
+/*      AmigoCloud supported types.                                   */
+/* -------------------------------------------------------------------- */
+    if( oField.GetType() == OFTInteger ||  oField.GetType() == OFTInteger64 )
+    {
+            strcpy( szFieldType, "integer" );
+    }
+    else if( oField.GetType() == OFTReal )
+    {
+       strcpy( szFieldType, "float" );
+    }
+    else if( oField.GetType() == OFTString )
+    {
+        strcpy( szFieldType, "string");
+    }
+    else if( oField.GetType() == OFTDate )
+    {
+        strcpy( szFieldType, "date" );
+    }
+    else if( oField.GetType() == OFTTime )
+    {
+        strcpy( szFieldType, "time" );
+    }
+    else if( oField.GetType() == OFTDateTime )
+    {
+        strcpy( szFieldType, "timestamp with time zone" );
+    }
+    else if( oField.GetType() == OFTBinary )
+    {
+        strcpy( szFieldType, "bytea" );
+    }
+    else if( bApproxOK )
+    {
+        CPLError( CE_Warning, CPLE_NotSupported,
+                  "Can't create field %s with type %s on PostgreSQL layers.  Creating as VARCHAR.",
+                  oField.GetNameRef(),
+                  OGRFieldDefn::GetFieldTypeName(oField.GetType()) );
+        strcpy( szFieldType, "VARCHAR" );
+    }
+    else
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "Can't create field %s with type %s on PostgreSQL layers.",
+                  oField.GetNameRef(),
+                  OGRFieldDefn::GetFieldTypeName(oField.GetType()) );
+        strcpy( szFieldType, "");
+    }
+
+    return szFieldType;
 }
 
 /************************************************************************/
@@ -1254,6 +1313,48 @@ OGRErr OGRAMIGOCLOUDTableLayer::RunDeferedCreationIfNecessary()
         return OGRERR_NONE;
     bDeferedCreation = FALSE;
 
+    std::stringstream json;
+
+    json << "{ \"name\":\"" << osName << "\",";
+
+    json << "\"schema\": \"[";
+    int counter=0;
+    for( int i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
+    {
+        OGRFieldDefn* poFieldDefn = poFeatureDefn->GetFieldDefn(i);
+        if( strcmp(poFieldDefn->GetNameRef(), osFIDColName) != 0 )
+        {
+            if(counter>0)
+                json << ",";
+
+            json << "{\\\"name\\\":\\\"" << poFieldDefn->GetNameRef() << "\\\",";
+            json << "\\\"type\\\":\\\"" << GetType(*poFieldDefn, FALSE, TRUE) << "\\\",";
+            if( !poFieldDefn->IsNullable() )
+                json << "\\\"nullable\\\":false,";
+            else
+                json << "\\\"nullable\\\":true,";
+
+            if( poFieldDefn->GetDefault() != NULL && !poFieldDefn->IsDefaultDriverSpecific() )
+            {
+                json << "\\\"default\\\":\\\"" << poFieldDefn->GetDefault() << "\\\",";
+            }
+            json << "\\\"visible\\\": true}";
+            counter++;
+        }
+    }
+
+    json << " ] \" }";
+
+    std::stringstream url;
+    url << std::string(poDS->GetAPIURL()) << "/users/0/projects/" + std::string(poDS->GetProjetcId()) + "/datasets/create";
+
+    printf("url: %s\n", url.str().c_str());
+    printf("json: %s\n", json.str().c_str());
+
+    poDS->RunPOST(url.str().c_str(), json.str().c_str());
+    return OGRERR_NONE;
+
+#if 0
     CPLString osSQL;
     osSQL.Printf("CREATE TABLE %s ( %s SERIAL,",
                  OGRAMIGOCLOUDEscapeIdentifier(osName).c_str(),
@@ -1348,4 +1449,5 @@ OGRErr OGRAMIGOCLOUDTableLayer::RunDeferedCreationIfNecessary()
     }
 
     return OGRERR_NONE;
+#endif
 }

@@ -415,7 +415,7 @@ OGRLayer   *OGRAMIGOCLOUDDataSource::ICreateLayer( const char *pszName,
 
     OGRAMIGOCLOUDTableLayer* poLayer = new OGRAMIGOCLOUDTableLayer(this, osName);
     int bGeomNullable = CSLFetchBoolean(papszOptions, "GEOMETRY_NULLABLE", TRUE);
-    int bAmigoCloudify = CSLFetchBoolean(papszOptions, "AMIGOCLOUDFY",
+    int bAmigoCloudify = CSLFetchBoolean(papszOptions, "AMIGOCLOUDIFY",
                                       CSLFetchBoolean(papszOptions, "AMIGOCLOUDIFY", TRUE));
     poLayer->SetLaunderFlag( CSLFetchBoolean(papszOptions,"LAUNDER",TRUE) );
     poLayer->SetDeferedCreation(eGType, poSpatialRef, bGeomNullable, bAmigoCloudify);
@@ -511,6 +511,106 @@ static std::string url_encode(const std::string &value) {
 
     return escaped.str();
 }
+
+
+/************************************************************************/
+/*                               RunPOST()                               */
+/************************************************************************/
+
+json_object* OGRAMIGOCLOUDDataSource::RunPOST(const char*pszURL, const char *pszPostData)
+{
+    CPLString osURL(pszURL);
+
+    /* -------------------------------------------------------------------- */
+    /*      Provide the API Key                                             */
+    /* -------------------------------------------------------------------- */
+    if( osAPIKey.size() )
+    {
+        osURL += "?token=";
+        osURL += osAPIKey;
+    }
+    char** papszOptions;
+    CPLString osPOSTFIELDS("POSTFIELDS=");
+    if (pszPostData)
+        osPOSTFIELDS += pszPostData;
+    papszOptions = CSLAddString(papszOptions, osPOSTFIELDS);
+    papszOptions = CSLAddString(papszOptions, "HEADERS=Content-Type: application/json");
+
+    CPLHTTPResult * psResult = CPLHTTPFetch( osURL.c_str(), papszOptions);
+
+    if (psResult && psResult->pszContentType &&
+        strncmp(psResult->pszContentType, "text/html", 9) == 0)
+    {
+        CPLDebug( "AMIGOCLOUD", "RunSQL HTML Response:%s", psResult->pabyData );
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "HTML error page returned by server");
+        CPLHTTPDestroyResult(psResult);
+        return NULL;
+    }
+    if (psResult && psResult->pszErrBuf != NULL)
+    {
+        CPLDebug( "AMIGOCLOUD", "RunSQL Error Message:%s", psResult->pszErrBuf );
+    }
+    else if (psResult && psResult->nStatus != 0)
+    {
+        CPLDebug( "AMIGOCLOUD", "RunSQL Error Status:%d", psResult->nStatus );
+    }
+
+    if( psResult->pabyData == NULL )
+    {
+        CPLHTTPDestroyResult(psResult);
+        return NULL;
+    }
+
+    if( strlen((const char*)psResult->pabyData) < 1000 )
+        CPLDebug( "AMIGOCLOUD", "RunSQL Response:%s", psResult->pabyData );
+
+    json_tokener* jstok = NULL;
+    json_object* poObj = NULL;
+
+    jstok = json_tokener_new();
+    poObj = json_tokener_parse_ex(jstok, (const char*) psResult->pabyData, -1);
+    if( jstok->err != json_tokener_success)
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "JSON parsing error: %s (at offset %d)",
+                  json_tokener_error_desc(jstok->err), jstok->char_offset);
+        json_tokener_free(jstok);
+        CPLHTTPDestroyResult(psResult);
+        return NULL;
+    }
+    json_tokener_free(jstok);
+
+    CPLHTTPDestroyResult(psResult);
+
+    if( poObj != NULL )
+    {
+        if( json_object_get_type(poObj) == json_type_object )
+        {
+            json_object* poError = json_object_object_get(poObj, "error");
+            if( poError != NULL && json_object_get_type(poError) == json_type_array &&
+                json_object_array_length(poError) > 0 )
+            {
+                poError = json_object_array_get_idx(poError, 0);
+                if( poError != NULL && json_object_get_type(poError) == json_type_string )
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Error returned by server : %s", json_object_get_string(poError));
+                    json_object_put(poObj);
+                    return NULL;
+                }
+            }
+        }
+        else
+        {
+            json_object_put(poObj);
+            return NULL;
+        }
+    }
+
+    return poObj;
+}
+
 /************************************************************************/
 /*                               RunSQL()                               */
 /************************************************************************/
@@ -543,13 +643,8 @@ json_object* OGRAMIGOCLOUDDataSource::RunSQL(const char* pszUnescapedSQL)
 
     pszAPIURL += osSQL;
 
-//    printf("pszAPIURL: %s\n", pszAPIURL.c_str());
-
     CPLHTTPResult * psResult = CPLHTTPFetch( pszAPIURL.c_str(), papszOptions);
     CSLDestroy(papszOptions);
-
-//    if(psResult->pabyData)
-//        printf("Result: %s\n", psResult->pabyData);
 
 /* -------------------------------------------------------------------- */
 /*      Check for some error conditions and report.  HTML Messages      */

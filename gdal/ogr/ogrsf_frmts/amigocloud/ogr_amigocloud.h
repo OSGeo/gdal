@@ -159,10 +159,11 @@ class OGRAMIGOCLOUDTableLayer : public OGRAMIGOCLOUDLayer
 
     void                SetLaunderFlag( int bFlag )
                                 { bLaunderColumnNames = bFlag; }
-    void                SetDeferedCreation( OGRwkbGeometryType eGType,
-                                            OGRSpatialReference* poSRS,
-                                            int bGeomNullable,
-                                            int bAmigoCloudify);
+    void                SetDeferedCreation(OGRwkbGeometryType eGType,
+                               OGRSpatialReference *poSRS,
+                               int bGeomNullable,
+                               int bAmigoCloudify);
+
     OGRErr              RunDeferedCreationIfNecessary();
     int                 GetDeferedCreation() const { return bDeferedCreation; }
     void                CancelDeferedCreation() { bDeferedCreation = FALSE; }
@@ -245,7 +246,9 @@ class OGRAMIGOCLOUDDataSource : public OGRDataSource
     const char*                 GetAPIURL() const;
     int                         IsReadWrite() const { return bReadWrite; }
     int                         DoBatchInsert() const { return bBatchInsert; }
+    const char*                 GetProjetcId() { return pszProjetctId;}
     char**                      AddHTTPOptions();
+    json_object*                RunPOST(const char*pszURL, const char *pszPostData);
     json_object*                RunSQL(const char* pszUnescapedSQL);
     const CPLString&            GetCurrentSchema() { return osCurrentSchema; }
     int                         FetchSRSId( OGRSpatialReference * poSRS );
