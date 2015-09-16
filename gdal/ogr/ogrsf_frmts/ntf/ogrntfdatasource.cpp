@@ -37,30 +37,23 @@ CPL_CVSID("$Id$");
 /*                          OGRNTFDataSource()                          */
 /************************************************************************/
 
-OGRNTFDataSource::OGRNTFDataSource()
-
+OGRNTFDataSource::OGRNTFDataSource() :
+    pszName(NULL),
+    nLayers(0),
+    papoLayers(NULL),
+    poFCLayer(NULL),
+    iCurrentFC(0),
+    iCurrentReader(-1),
+    nCurrentPos(0),
+    nCurrentFID(0),
+    nNTFFileCount(0),
+    papoNTFFileReader(NULL),
+    nFCCount(0),
+    papszFCNum(NULL),
+    papszFCName(NULL),
+    papszOptions(NULL)
 {
-    nLayers = 0;
-    papoLayers = NULL;
-
-    nNTFFileCount = 0;
-    papoNTFFileReader = NULL;
-
-    pszName = NULL;
-
-    iCurrentReader = -1;
-    iCurrentFC = 0;
-
-    nFCCount = 0;
-    papszFCNum = NULL;
-    papszFCName = NULL;
-
-    poFCLayer = NULL;
-
-    papszOptions = NULL;
-
     poSpatialRef = new OGRSpatialReference( "PROJCS[\"OSGB 1936 / British National Grid\",GEOGCS[\"OSGB 1936\",DATUM[\"OSGB_1936\",SPHEROID[\"Airy 1830\",6377563.396,299.3249646,AUTHORITY[\"EPSG\",\"7001\"]],AUTHORITY[\"EPSG\",\"6277\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433],AUTHORITY[\"EPSG\",\"4277\"]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",49],PARAMETER[\"central_meridian\",-2],PARAMETER[\"scale_factor\",0.999601272],PARAMETER[\"false_easting\",400000],PARAMETER[\"false_northing\",-100000],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AUTHORITY[\"EPSG\",\"27700\"]]" );
-
 
 /* -------------------------------------------------------------------- */
 /*      Allow initialization of options from the environment.           */
@@ -80,19 +73,17 @@ OGRNTFDataSource::OGRNTFDataSource()
 OGRNTFDataSource::~OGRNTFDataSource()
 
 {
-    int         i;
-
-    for( i = 0; i < nNTFFileCount; i++ )
+    for( int i = 0; i < nNTFFileCount; i++ )
         delete papoNTFFileReader[i];
 
     CPLFree( papoNTFFileReader );
 
-    for( i = 0; i < nLayers; i++ )
+    for( int i = 0; i < nLayers; i++ )
         delete papoLayers[i];
 
     if( poFCLayer != NULL )
         delete poFCLayer;
-    
+
     CPLFree( papoLayers );
 
     CPLFree( pszName );
