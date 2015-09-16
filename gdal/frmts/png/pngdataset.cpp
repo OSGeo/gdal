@@ -428,8 +428,9 @@ double PNGRasterBand::GetNoDataValue( int *pbSuccess )
 /*                            PNGDataset()                            */
 /************************************************************************/
 
-PNGDataset::PNGDataset()
-
+PNGDataset::PNGDataset() :
+    nColorType(0),
+    bInterlaced(FALSE)
 {
     fpImage = NULL;
     hPNG = NULL;
@@ -452,6 +453,7 @@ PNGDataset::PNGDataset()
     bHasTriedLoadWorldFile = FALSE;
     bHasReadXMPMetadata = FALSE;
     bHasReadICCMetadata = FALSE;
+    // TODO: Handle sSetJmpContext not yet initializef.
 }
 
 /************************************************************************/
