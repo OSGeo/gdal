@@ -164,10 +164,15 @@ EHdrRasterBand::EHdrRasterBand( GDALDataset *poDS,
 : RawRasterBand( poDS, nBand, fpRaw, nImgOffset, nPixelOffset, nLineOffset, 
                          eDataType, bNativeOrder, TRUE ),
   nBits(nBits),
+  nStartBit(0),
+  nPixelOffsetBits(0),
+  nLineOffsetBits(0),
   bNoDataSet(FALSE),
-  dfNoData(0),
-  dfMin(0),
-  dfMax(0),
+  dfNoData(0.0),
+  dfMin(0.0),
+  dfMax(0.0),
+  dfMean(0.0),
+  dfStdDev(0.0),
   minmaxmeanstddev(0)
 {
     EHdrDataset* poEDS = (EHdrDataset*)poDS;
