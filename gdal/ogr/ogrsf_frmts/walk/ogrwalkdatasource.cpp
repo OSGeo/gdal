@@ -34,13 +34,12 @@
 /*                         OGRWalkDataSource()                          */
 /************************************************************************/
 
-OGRWalkDataSource::OGRWalkDataSource()
-
-{
-    pszName = NULL;
-    papoLayers = NULL;
-    nLayers = 0;
-}
+OGRWalkDataSource::OGRWalkDataSource() :
+    pszName(NULL),
+    papoLayers(NULL),
+    nLayers(0),
+    bDSUpdate(FALSE)
+{ }
 
 /************************************************************************/
 /*                        ~OGRWalkDataSource()                          */
@@ -49,14 +48,11 @@ OGRWalkDataSource::OGRWalkDataSource()
 OGRWalkDataSource::~OGRWalkDataSource()
 
 {
-    int i;
-
     CPLFree( pszName );
 
-    for( i = 0; i < nLayers; i++ )
+    for( int i = 0; i < nLayers; i++ )
     {
         CPLAssert( NULL != papoLayers[i] );
-
         delete papoLayers[i];
     }
 
