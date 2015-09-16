@@ -120,7 +120,7 @@ class GSAGRasterBand : public GDALPamRasterBand
     double dfMaxZ;
 
     vsi_l_offset *panLineOffset;
-	int nLastReadLine;
+    int nLastReadLine;
 
     double *padfRowMinZ;
     double *padfRowMaxZ;
@@ -165,17 +165,21 @@ bool AlmostEqual( double dfVal1, double dfVal2 )
 
 GSAGRasterBand::GSAGRasterBand( GSAGDataset *poDS, int nBand,
 				vsi_l_offset nDataStart ) :
-    dfMinX(0.0), dfMaxX(0.0), dfMinY(0.0), dfMaxY(0.0), dfMinZ(0.0),
+    dfMinX(0.0),
+    dfMaxX(0.0),
+    dfMinY(0.0),
+    dfMaxY(0.0),
+    dfMinZ(0.0),
     dfMaxZ(0.0),
+    nLastReadLine(0),
     padfRowMinZ(NULL),
     padfRowMaxZ(NULL),
     nMinZRow(-1),
     nMaxZRow(-1)
-
 {
     this->poDS = poDS;
     this->nBand = nBand;
-    
+
     eDataType = GDT_Float64;
 
     nBlockXSize = poDS->GetRasterXSize();
