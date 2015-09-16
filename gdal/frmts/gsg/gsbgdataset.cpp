@@ -142,7 +142,7 @@ class GSBGRasterBand : public GDALPamRasterBand
 
     		GSBGRasterBand( GSBGDataset *, int );
 		~GSBGRasterBand();
-    
+
     CPLErr IReadBlock( int, int, void * );
     CPLErr IWriteBlock( int, int, void * );
 
@@ -156,15 +156,20 @@ class GSBGRasterBand : public GDALPamRasterBand
 /************************************************************************/
 
 GSBGRasterBand::GSBGRasterBand( GSBGDataset *poDS, int nBand ) :
+    dfMinX(0.0),
+    dfMaxX(0.0),
+    dfMinY(0.0),
+    dfMaxY(0.0),
+    dfMinZ(0.0),
+    dfMaxZ(0.0),
     pafRowMinZ(NULL),
     pafRowMaxZ(NULL),
     nMinZRow(-1),
     nMaxZRow(-1)
-
 {
     this->poDS = poDS;
     this->nBand = nBand;
-    
+
     eDataType = GDT_Float32;
 
     nBlockXSize = poDS->GetRasterXSize();
