@@ -333,19 +333,20 @@ CPLErr BTRasterBand::SetUnitType(const char* psz)
 /*                             BTDataset()                              */
 /************************************************************************/
 
-BTDataset::BTDataset()
+BTDataset::BTDataset() :
+    fpImage(NULL),
+    bGeoTransformValid(FALSE),
+    pszProjection(NULL),
+    nVersionCode(0),
+    bHeaderModified(FALSE),
+    m_fVscale(0.0)
 {
-    fpImage = NULL;
-    bGeoTransformValid = FALSE;
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
     adfGeoTransform[2] = 0.0;
     adfGeoTransform[3] = 0.0;
     adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = 1.0;
-    pszProjection = NULL;
-
-    bHeaderModified = FALSE;
 }
 
 /************************************************************************/
