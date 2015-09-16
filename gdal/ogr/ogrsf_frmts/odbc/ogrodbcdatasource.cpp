@@ -37,8 +37,8 @@ CPL_CVSID("$Id$");
 /*                         OGRODBCDataSource()                          */
 /************************************************************************/
 
-OGRODBCDataSource::OGRODBCDataSource()
-
+OGRODBCDataSource::OGRODBCDataSource() :
+    bDSUpdate(FALSE)
 {
     pszName = NULL;
     papoLayers = NULL;
