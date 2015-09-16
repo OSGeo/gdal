@@ -232,7 +232,8 @@ class MrSIDDataset : public GDALJP2AbstractDataset
     const LTIPixel      *poNDPixel;
 
     LTIDLLBuffer<LTISceneBuffer>  *poBuffer;
-    int                 nBlockXSize, nBlockYSize;
+    int                 nBlockXSize;
+    int                 nBlockYSize;
     int                 bPrevBlockRead;
     int                 nPrevBlockXOff, nPrevBlockYOff;
 
@@ -733,7 +734,10 @@ GDALRasterBand *MrSIDRasterBand::GetOverview( int i )
 /*                           MrSIDDataset()                             */
 /************************************************************************/
 
-MrSIDDataset::MrSIDDataset(int bIsJPEG2000)
+MrSIDDataset::MrSIDDataset(int bIsJPEG2000) :
+    nBlockXSize(0),
+    nBlockYSize(0),
+    eColorSpace(LTI_COLORSPACE_INVALID)
 {
     poStream = NULL;
     poImageReader = NULL;
