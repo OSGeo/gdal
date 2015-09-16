@@ -48,7 +48,15 @@
 /************************************************************************/
 /*                           GDALWMSDataset()                           */
 /************************************************************************/
-GDALWMSDataset::GDALWMSDataset() {
+GDALWMSDataset::GDALWMSDataset() :
+    m_block_size_x(0),
+    m_block_size_y(0),
+    m_use_advise_read(0),
+    m_verify_advise_read(0),
+    m_offline_mode(0),
+    m_http_max_conn(0),
+    m_http_timeout(0)
+{
     m_mini_driver = 0;
     m_cache = 0;
     m_hint.m_valid = false;
