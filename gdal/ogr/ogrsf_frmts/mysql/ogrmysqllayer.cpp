@@ -38,8 +38,8 @@ CPL_CVSID("$Id$");
 /*                           OGRMySQLLayer()                            */
 /************************************************************************/
 
-OGRMySQLLayer::OGRMySQLLayer()
-
+OGRMySQLLayer::OGRMySQLLayer() :
+    nGeomType(0)
 {
     poDS = NULL;
 
