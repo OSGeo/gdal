@@ -94,10 +94,9 @@ class CPGDataset : public RawDataset
 /*                            CPGDataset()                             */
 /************************************************************************/
 
-CPGDataset::CPGDataset()
+CPGDataset::CPGDataset() :
+    nInterleave(0)
 {
-    int iBand;
-
     nGCPCount = 0;
     pasGCPList = NULL;
     pszProjection = CPLStrdup("");
@@ -112,7 +111,7 @@ CPGDataset::CPGDataset()
     nLoadedStokesLine = -1;
     padfStokesMatrix = NULL;
 
-    for( iBand = 0; iBand < 4; iBand++ )
+    for( int iBand = 0; iBand < 4; iBand++ )
         afpImage[iBand] = NULL;
 }
 
