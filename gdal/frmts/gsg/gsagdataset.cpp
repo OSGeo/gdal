@@ -863,7 +863,7 @@ GDALDataset *GSAGDataset::Open( GDALOpenInfo * poOpenInfo )
 	delete poDS;
         return NULL;
     }
- 
+
 /* -------------------------------------------------------------------- */
 /*      Read the header.                                                */
 /* -------------------------------------------------------------------- */
@@ -880,7 +880,8 @@ GDALDataset *GSAGDataset::Open( GDALOpenInfo * poOpenInfo )
 	if( pabyHeader == NULL )
 	{
 	    CPLError( CE_Failure, CPLE_OutOfMemory,
-		      "Unable to open dataset, unable to header buffer.\n" );
+		      "Unable to open dataset, unable to malloc header buffer.\n" );
+            delete poDS;
 	    return NULL;
 	}
 
