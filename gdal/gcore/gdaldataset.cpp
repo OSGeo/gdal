@@ -4221,6 +4221,7 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
                           "Unable to translate feature " CPL_FRMT_GIB " from layer %s.\n",
                           poFeature->GetFID(), poSrcDefn->GetName() );
                 OGRFeature::DestroyFeature( poFeature );
+                poFeature = NULL;
                 bStopTransfer = true;
                 break;
             }
@@ -4241,15 +4242,19 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
                                       poFeature->GetFID(), poSrcDefn->GetName() );
                             OGRFeature::DestroyFeature( poFeature );
                             bStopTransfer = true;
+                            poFeature = NULL;
                             break;
                         }
                     }
                 }
             }
 
-            papoDstFeature[nFeatCount]->SetFID( poFeature->GetFID() );
-
-            OGRFeature::DestroyFeature( poFeature );
+            if (poFeature)
+            {
+                papoDstFeature[nFeatCount]->SetFID( poFeature->GetFID() );
+                OGRFeature::DestroyFeature( poFeature );
+                poFeature = NULL;
+            }
         }
         nFeaturesToAdd = nFeatCount;
 
