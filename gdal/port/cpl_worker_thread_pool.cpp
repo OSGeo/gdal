@@ -39,16 +39,16 @@
  * The pool is in an uninitialized state after this call. The Setup() method
  * must be called.
  */
-CPLWorkerThreadPool::CPLWorkerThreadPool()
+CPLWorkerThreadPool::CPLWorkerThreadPool() :
+    hCond(NULL),
+    bStop(FALSE),
+    psJobQueue(NULL),
+    nPendingJobs(0),
+    psWaitingWorkerThreadsList(NULL),
+    nWaitingWorkerThreads(0)
 {
-    hCond = NULL;
     hMutex = CPLCreateMutexEx(CPL_MUTEX_REGULAR);
     CPLReleaseMutex(hMutex);
-    bStop = FALSE;
-    psJobQueue = NULL;
-    nPendingJobs = 0;
-    psWaitingWorkerThreadsList = NULL;
-    nWaitingWorkerThreads = 0;
 }
 
 /************************************************************************/
@@ -76,7 +76,7 @@ CPLWorkerThreadPool::~CPLWorkerThreadPool()
             CPLDestroyCond(aWT[i].hCond);
             CPLDestroyMutex(aWT[i].hMutex);
         }
-        
+
         CPLListDestroy(psWaitingWorkerThreadsList);
 
         CPLDestroyCond(hCond);
@@ -131,7 +131,7 @@ void CPLWorkerThreadPool::SubmitJob(CPLThreadFunc pfnFunc, void* pData)
 
     CPLList* psItem = (CPLList*) CPLMalloc(sizeof(CPLList));
     psItem->pData = psJob;
-    
+
     CPLAcquireMutex(hMutex, 1000.0);
 
     psItem->psNext = psJobQueue;
@@ -143,10 +143,10 @@ void CPLWorkerThreadPool::SubmitJob(CPLThreadFunc pfnFunc, void* pData)
         CPLWorkerThread* psWorkerThread;
 
         psWorkerThread = (CPLWorkerThread*)psWaitingWorkerThreadsList->pData;
-        
+
         CPLAssert( psWorkerThread->bMarkedAsWaiting );
         psWorkerThread->bMarkedAsWaiting = FALSE;
-        
+
         CPLList* psNext = psWaitingWorkerThreadsList->psNext;
         CPLList* psToFree = psWaitingWorkerThreadsList;
         psWaitingWorkerThreadsList = psNext;
@@ -159,12 +159,11 @@ void CPLWorkerThreadPool::SubmitJob(CPLThreadFunc pfnFunc, void* pData)
         CPLReleaseMutex(hMutex);
         CPLCondSignal(psWorkerThread->hCond);
         CPLReleaseMutex(psWorkerThread->hMutex);
-        
+
         CPLFree(psToFree);
     }
     else
         CPLReleaseMutex(hMutex);
-    
 }
 
 /************************************************************************/
