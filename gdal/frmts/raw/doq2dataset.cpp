@@ -81,11 +81,14 @@ class DOQ2Dataset : public RawDataset
 /*                            DOQ2Dataset()                             */
 /************************************************************************/
 
-DOQ2Dataset::DOQ2Dataset()
-{
-    pszProjection = NULL;
-    fpImage = NULL;
-}
+DOQ2Dataset::DOQ2Dataset() :
+    fpImage(NULL),
+    dfULX(0.0),
+    dfULY(0.0),
+    dfXPixelSize(0.0),
+    dfYPixelSize(0.0),
+    pszProjection(NULL)
+{ }
 
 /************************************************************************/
 /*                            ~DOQ2Dataset()                            */
@@ -444,4 +447,3 @@ void GDALRegister_DOQ2()
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
-
