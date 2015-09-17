@@ -2009,12 +2009,18 @@ CPLErr JPGDatasetCommon::IRasterIO( GDALRWFlag eRWFlag,
                               int nXOff, int nYOff, int nXSize, int nYSize,
                               void *pData, int nBufXSize, int nBufYSize, 
                               GDALDataType eBufType,
-                              int nBandCount, int *panBandMap, 
+                              int nBandCount, int *panBandMap,
                               GSpacing nPixelSpace, GSpacing nLineSpace,
                               GSpacing nBandSpace,
                               GDALRasterIOExtraArg* psExtraArg )
 
 {
+    // Coverity says that we cannot pass a nullptr to IRasterIO.
+    if (panBandMap == NULL)
+    {
+      return CE_Failure;
+    }
+
     if((eRWFlag == GF_Read) &&
        (nBandCount == 3) &&
        (nBands == 3) &&
@@ -2029,16 +2035,13 @@ CPLErr JPGDatasetCommon::IRasterIO( GDALRWFlag eRWFlag,
        GetOutColorSpace() != JCS_YCCK && GetOutColorSpace() != JCS_CMYK )
     {
         Restart();
-        int y;
-        CPLErr tmpError;
-        int x;
 
         // Pixel interleaved case
         if( nBandSpace == 1 )
         {
-            for(y = 0; y < nYSize; ++y)
+            for(int y = 0; y < nYSize; ++y)
             {
-                tmpError = LoadScanline(y);
+                CPLErr tmpError = LoadScanline(y);
                 if(tmpError != CE_None) return tmpError;
 
                 if( nPixelSpace == 3 )
@@ -2048,7 +2051,7 @@ CPLErr JPGDatasetCommon::IRasterIO( GDALRWFlag eRWFlag,
                 }
                 else
                 {
-                    for(x = 0; x < nXSize; ++x)
+                    for(int x = 0; x < nXSize; ++x)
                     {
                         memcpy(&(((GByte*)pData)[(y*nLineSpace) + (x*nPixelSpace)]), 
                                (const GByte*)&(pabyScanline[x*3]), 3);
@@ -2058,11 +2061,11 @@ CPLErr JPGDatasetCommon::IRasterIO( GDALRWFlag eRWFlag,
         }
         else
         {
-            for(y = 0; y < nYSize; ++y)
+            for(int y = 0; y < nYSize; ++y)
             {
-                tmpError = LoadScanline(y);
+                CPLErr tmpError = LoadScanline(y);
                 if(tmpError != CE_None) return tmpError;
-                for(x = 0; x < nXSize; ++x)
+                for(int x = 0; x < nXSize; ++x)
                 {
                     ((GByte*)pData)[(y*nLineSpace) + (x*nPixelSpace)] = pabyScanline[x*3];
                     ((GByte*)pData)[(y*nLineSpace) + (x*nPixelSpace) + nBandSpace] = pabyScanline[x*3+1];
@@ -2075,8 +2078,8 @@ CPLErr JPGDatasetCommon::IRasterIO( GDALRWFlag eRWFlag,
     }
 
     return GDALPamDataset::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
-                                     pData, nBufXSize, nBufYSize, eBufType, 
-                                     nBandCount, panBandMap, 
+                                     pData, nBufXSize, nBufYSize, eBufType,
+                                     nBandCount, panBandMap,
                                      nPixelSpace, nLineSpace, nBandSpace,
                                      psExtraArg);
 }
