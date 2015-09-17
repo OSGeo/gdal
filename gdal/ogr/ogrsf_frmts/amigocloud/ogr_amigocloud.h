@@ -77,6 +77,8 @@ protected:
     GIntBig              iNext;
     json_object         *poCachedObj;
 
+    std::map<GIntBig, std::string>  mFIDs;
+
     virtual OGRFeature  *GetNextRawFeature();
     OGRFeature          *BuildFeature(json_object* poRowObj);
 

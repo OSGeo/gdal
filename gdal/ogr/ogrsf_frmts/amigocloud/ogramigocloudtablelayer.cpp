@@ -443,7 +443,6 @@ void OGRAMIGOCLOUDTableLayer::FlushDeferedInsert()
     if(vsDeferedInsertChangesets.size()==0)
         return;
 
-#if 1
     std::stringstream url;
     url << std::string(poDS->GetAPIURL()) << "/users/0/projects/" + std::string(poDS->GetProjetcId()) + "/datasets/"+ osDatasetId +"/submit_change";
 
@@ -476,23 +475,10 @@ void OGRAMIGOCLOUDTableLayer::FlushDeferedInsert()
 
     vsDeferedInsertChangesets.clear();
 
-#endif
-
-
-#if 0
-    if( bInDeferedInsert && osDeferedInsertSQL.size() > 0 )
-    {
-        osDeferedInsertSQL = "BEGIN;" + osDeferedInsertSQL + "COMMIT;";
-        json_object* poObj = poDS->RunSQL(osDeferedInsertSQL);
-        if( poObj != NULL )
-        {
-            json_object_put(poObj);
-        }
-    }
-    osDeferedInsertSQL = "";
-#endif
     bInDeferedInsert = FALSE;
     nNextFID = -1;
+
+//    DeleteFeature( 1 );
 }
 
 /************************************************************************/
@@ -566,7 +552,7 @@ OGRErr OGRAMIGOCLOUDTableLayer::ICreateFeature( OGRFeature *poFeature )
 
     GetLayerDefn();
     int bHasUserFieldMatchingFID = FALSE;
-    if( osFIDColName.size() )
+    if( osFIDColName.size() > 0 )
         bHasUserFieldMatchingFID = poFeatureDefn->GetFieldIndex(osFIDColName) >= 0;
 
     if (!poDS->IsReadWrite())
@@ -795,6 +781,7 @@ OGRErr OGRAMIGOCLOUDTableLayer::ISetFeature( OGRFeature *poFeature )
 OGRErr OGRAMIGOCLOUDTableLayer::DeleteFeature( GIntBig nFID )
 
 {
+    OGRErr eRet = OGRERR_FAILURE;
 
     if( bDeferedCreation && RunDeferedCreationIfNecessary() != OGRERR_NONE )
         return OGRERR_FAILURE;
@@ -811,31 +798,36 @@ OGRErr OGRAMIGOCLOUDTableLayer::DeleteFeature( GIntBig nFID )
     
     if( osFIDColName.size() == 0 )
         return OGRERR_FAILURE;
-    
-    CPLString osSQL;
-    osSQL.Printf("DELETE FROM %s WHERE %s = " CPL_FRMT_GIB,
-                    OGRAMIGOCLOUDEscapeIdentifier(osTableName).c_str(),
-                    OGRAMIGOCLOUDEscapeIdentifier(osFIDColName).c_str(),
-                    nFID);
 
-    OGRErr eRet = OGRERR_FAILURE;
-    json_object* poObj = poDS->RunSQL(osSQL);
-    if( poObj != NULL )
+    std::map<GIntBig, std::string>::iterator it = mFIDs.find(nFID);
+    if(it!=mFIDs.end())
     {
-        json_object* poTotalRows = json_object_object_get(poObj, "total_rows");
-        if( poTotalRows != NULL && json_object_get_type(poTotalRows) == json_type_int )
-        {
-            int nTotalRows = json_object_get_int(poTotalRows);
-            if( nTotalRows > 0 )
-            {
-                eRet = OGRERR_NONE;
-            }
-            else
-                eRet = OGRERR_NON_EXISTING_FEATURE;
-        }
-        json_object_put(poObj);
-    }
+        std::string fid = it->second;
 
+        CPLString osSQL;
+        osSQL.Printf("DELETE FROM %s WHERE %s = %s" ,
+                     OGRAMIGOCLOUDEscapeIdentifier(osTableName).c_str(),
+                     OGRAMIGOCLOUDEscapeIdentifier(osFIDColName).c_str(),
+                     OGRAMIGOCLOUDEscapeIdentifier(fid.c_str()).c_str());
+
+        json_object *poObj = poDS->RunSQL(osSQL);
+        if(poObj != NULL)
+        {
+//            json_object *poTotalRows = json_object_object_get(poObj, "total_rows");
+//            if(poTotalRows != NULL && json_object_get_type(poTotalRows) == json_type_int)
+//            {
+//                int nTotalRows = json_object_get_int(poTotalRows);
+//                if(nTotalRows > 0)
+//                {
+//                    eRet = OGRERR_NONE;
+//                }
+//                else
+//                    eRet = OGRERR_NON_EXISTING_FEATURE;
+//            }
+            json_object_put(poObj);
+            eRet = OGRERR_NONE;
+        }
+    }
     return eRet;
 }
 

@@ -108,15 +108,13 @@ OGRFeature *OGRAMIGOCLOUDLayer::BuildFeature(json_object* poRowObj)
         {
             json_object* poVal = json_object_object_get(poRowObj, osFIDColName);
             if( poVal != NULL &&
-                json_object_get_type(poVal) == json_type_int )
+                json_object_get_type(poVal) == json_type_string )
             {
-                poFeature->SetFID(json_object_get_int64(poVal));
+                mFIDs[iNext] = json_object_get_string(poVal);
+//                poFeature->SetFID(json_object_get_int64(poVal));
             }
         }
-        else
-        {
-            poFeature->SetFID(iNext);
-        }
+        poFeature->SetFID(iNext);
 
         for(int i=0;i<poFeatureDefn->GetFieldCount();i++)
         {
