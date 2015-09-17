@@ -1536,10 +1536,37 @@ void JPGDatasetCommon::FlushCache()
 /*                            JPGDataset()                              */
 /************************************************************************/
 
-JPGDataset::JPGDataset()
-
+JPGDataset::JPGDataset() :
+    nQLevel(0)
 {
     sDInfo.data_precision = 8;
+
+    sDInfo.unread_marker = 0;
+    sDInfo.master = 0;
+    sDInfo.main = 0;
+    sDInfo.coef = 0;
+    sDInfo.post = 0;
+    sDInfo.inputctl = 0;
+    sDInfo.marker = 0;
+    sDInfo.entropy = 0;
+    sDInfo.idct = 0;
+    sDInfo.upsample = 0;
+    sDInfo.cconvert = 0;
+    sDInfo.cquantize = 0;
+
+    sJErr.error_exit = 0;
+    sJErr.emit_message = 0;
+    sJErr.output_message = 0;
+    sJErr.format_message = 0;
+    sJErr.reset_error_mgr = 0;
+    sJErr.msg_code = 0;
+    sJErr.trace_level = 0;
+    sJErr.num_warnings = 0;
+    sJErr.jpeg_message_table = 0;
+    sJErr.last_jpeg_message = 0;
+    sJErr.addon_message_table = 0;
+    sJErr.first_addon_message = 0;
+    sJErr.last_addon_message = 0;
 }
 
 /************************************************************************/
