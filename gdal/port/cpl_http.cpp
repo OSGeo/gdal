@@ -66,9 +66,8 @@ CPLWriteFct(void *buffer, size_t size, size_t nmemb, void *reqInfo)
 
 {
     CPLHTTPResult *psResult = (CPLHTTPResult *) reqInfo;
-    int  nNewSize;
 
-    nNewSize = psResult->nDataLen + nmemb*size + 1;
+    int  nNewSize = psResult->nDataLen + nmemb*size + 1;
     if( nNewSize > psResult->nDataAlloc )
     {
         psResult->nDataAlloc = (int) (nNewSize * 1.25 + 100);
@@ -742,13 +741,12 @@ void CPLHTTPDestroyResult( CPLHTTPResult *psResult )
         CPLFree( psResult->pszContentType );
         CSLDestroy( psResult->papszHeaders );
 
-        int i;
-        for(i=0;i<psResult->nMimePartCount;i++)
+        for(int i=0;i<psResult->nMimePartCount;i++)
         {
             CSLDestroy( psResult->pasMimePart[i].papszHeaders );
         }
         CPLFree(psResult->pasMimePart);
-        
+
         CPLFree( psResult );
     }
 }
@@ -791,7 +789,7 @@ int CPLHTTPParseMultipartMime( CPLHTTPResult *psResult )
     }
 
     CPLString osBoundary;
-    char **papszTokens = 
+    char **papszTokens =
         CSLTokenizeStringComplex( pszBound + 9, "\n ;", 
                                   TRUE, FALSE );
 
@@ -802,7 +800,7 @@ int CPLHTTPParseMultipartMime( CPLHTTPResult *psResult )
         CSLDestroy( papszTokens );
         return FALSE;
     }
-    
+
     osBoundary = "--";
     osBoundary += papszTokens[0];
     CSLDestroy( papszTokens );
@@ -891,7 +889,7 @@ int CPLHTTPParseMultipartMime( CPLHTTPResult *psResult )
             pszNext++;
             nBytesAvail--;
         }
-        
+
         if( nBytesAvail == 0 )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
