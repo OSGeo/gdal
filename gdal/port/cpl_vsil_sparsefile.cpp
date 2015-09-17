@@ -127,9 +127,7 @@ public:
 int VSISparseFileHandle::Close()
 
 {
-    unsigned int i;
-
-    for( i = 0; i < aoRegions.size(); i++ )
+    for( unsigned int i = 0; i < aoRegions.size(); i++ )
     {
         if( aoRegions[i].fp != NULL )
             VSIFCloseL( aoRegions[i].fp );
@@ -219,7 +217,7 @@ size_t VSISparseFileHandle::Read( void * pBuffer, size_t nSize, size_t nCount )
         size_t nExtraBytes = 
             (size_t) (nCurOffset + nBytesRequested - nBytesAvailable);
         // Recurse to get the rest of the request.
-        
+
         GUIntBig nCurOffsetSave = nCurOffset;
         nCurOffset += nBytesRequested - nExtraBytes;
         size_t nBytesRead = 
@@ -406,7 +404,7 @@ VSISparseFileFilesystemHandler::Open( const char *pszFilename,
         oRegion.nDstOffset = 
             CPLScanUIntBig( CPLGetXMLValue(psRegion,"DestinationOffset","0" ),
                             32 );
-                            
+
         oRegion.nSrcOffset = 
             CPLScanUIntBig( CPLGetXMLValue(psRegion,"SourceOffset","0" ), 32);
 
@@ -426,9 +424,7 @@ VSISparseFileFilesystemHandler::Open( const char *pszFilename,
         CPLScanUIntBig( CPLGetXMLValue(psXMLRoot,"Length","0" ), 32);
     if( poHandle->nOverallLength == 0 )
     {
-        unsigned int i;
-
-        for( i = 0; i < poHandle->aoRegions.size(); i++ )
+        for( unsigned int i = 0; i < poHandle->aoRegions.size(); i++ )
         {
             poHandle->nOverallLength = MAX(poHandle->nOverallLength,
                                            poHandle->aoRegions[i].nDstOffset
@@ -448,7 +444,7 @@ VSISparseFileFilesystemHandler::Open( const char *pszFilename,
 int VSISparseFileFilesystemHandler::Stat( const char * pszFilename, 
                                           VSIStatBufL * psStatBuf,
                                           int nFlags )
-    
+
 {
     VSIVirtualHandle *poFile = Open( pszFilename, "r" );
 
@@ -529,7 +525,7 @@ char **VSISparseFileFilesystemHandler::ReadDir( CPL_UNUSED const char *pszPath )
  * The file referenced by /vsisparse/ should be an XML control file 
  * formatted something like:
  *
- * 
+ *
 \verbatim
 <VSISparseFile>
   <Length>87629264</Length>
@@ -572,4 +568,3 @@ void VSIInstallSparseFileHandler()
     VSIFileManager::InstallHandler( "/vsisparse/", 
                                     new VSISparseFileFilesystemHandler );
 }
-                            
