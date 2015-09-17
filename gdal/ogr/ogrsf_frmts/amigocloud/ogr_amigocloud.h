@@ -34,6 +34,7 @@
 #include "cpl_http.h"
 
 #include <vector>
+#include <string>
 #include <json.h>
 
 json_object* OGRAMIGOCLOUDGetSingleRow(json_object* poObj);
@@ -109,7 +110,8 @@ protected:
 
 class OGRAMIGOCLOUDTableLayer : public OGRAMIGOCLOUDLayer
 {
-    CPLString           osName;
+    CPLString           osTableName;
+    CPLString           osDatasetId;
     CPLString           osQuery;
     CPLString           osWHERE;
     CPLString           osSELECTWithoutWHERE;
@@ -117,7 +119,8 @@ class OGRAMIGOCLOUDTableLayer : public OGRAMIGOCLOUDLayer
     int                 bLaunderColumnNames;
 
     int                 bInDeferedInsert;
-    CPLString           osDeferedInsertSQL;
+
+    std::vector<std::string> vsDeferedInsertChangesets;
     GIntBig             nNextFID;
     
     int                 bDeferedCreation;
@@ -132,7 +135,7 @@ class OGRAMIGOCLOUDTableLayer : public OGRAMIGOCLOUDLayer
                          OGRAMIGOCLOUDTableLayer(OGRAMIGOCLOUDDataSource* poDS, const char* pszName);
                         ~OGRAMIGOCLOUDTableLayer();
 
-    virtual const char*         GetName() { return osName.c_str(); }
+    virtual const char*         GetName() { return osTableName.c_str(); }
     virtual OGRFeatureDefn *    GetLayerDefnInternal(json_object* poObjIn);
     virtual json_object*        FetchNewFeatures(GIntBig iNext);
 
@@ -164,11 +167,16 @@ class OGRAMIGOCLOUDTableLayer : public OGRAMIGOCLOUDLayer
                                int bGeomNullable,
                                int bAmigoCloudify);
 
+    CPLString           GetAmigoCloudType(OGRFieldDefn& oField,
+                                int bPreservePrecision,
+                                int bApproxOK);
+
     OGRErr              RunDeferedCreationIfNecessary();
     int                 GetDeferedCreation() const { return bDeferedCreation; }
     void                CancelDeferedCreation() { bDeferedCreation = FALSE; }
 
     void                FlushDeferedInsert();
+    bool                IsDatasetExists();
 };
 
 /************************************************************************/
@@ -248,7 +256,8 @@ class OGRAMIGOCLOUDDataSource : public OGRDataSource
     int                         DoBatchInsert() const { return bBatchInsert; }
     const char*                 GetProjetcId() { return pszProjetctId;}
     char**                      AddHTTPOptions();
-    json_object*                RunPOST(const char*pszURL, const char *pszPostData);
+    json_object*                RunPOST(const char*pszURL, const char *pszPostData, const char *pszHeaders="HEADERS=Content-Type: application/json");
+    json_object*                RunGET(const char*pszURL);
     json_object*                RunSQL(const char* pszUnescapedSQL);
     const CPLString&            GetCurrentSchema() { return osCurrentSchema; }
     int                         FetchSRSId( OGRSpatialReference * poSRS );

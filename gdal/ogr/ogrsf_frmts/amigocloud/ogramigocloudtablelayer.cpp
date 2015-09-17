@@ -76,6 +76,46 @@ CPLString OGRAMIGOCLOUDEscapeLiteral(const char* pszStr)
     return osStr;
 }
 
+static std::string url_encode(const std::string &value) {
+    std::stringstream escaped;
+    escaped.fill('0');
+    escaped << std::hex;
+
+    for (std::string::const_iterator i = value.begin(), n = value.end(); i != n; ++i) {
+        std::string::value_type c = (*i);
+
+        // Keep alphanumeric and other accepted characters intact
+        if (isalnum(c) || c == '-' || c == '_' || c == '.' || c == '~') {
+            escaped << c;
+            continue;
+        }
+
+        // Any other characters are percent-encoded
+        escaped << '%' << int((unsigned char) c);
+    }
+
+    return escaped.str();
+}
+
+static std::string json_encode(const std::string &value) {
+    std::stringstream escaped;
+    escaped.fill('0');
+    escaped << std::hex;
+
+    for (std::string::const_iterator i = value.begin(), n = value.end(); i != n; ++i) {
+        std::string::value_type c = (*i);
+
+        if ( c == '"') {
+            escaped << "\\\"";
+            continue;
+        }
+
+        escaped << c;
+    }
+
+    return escaped.str();
+}
+
 /************************************************************************/
 /*                        OGRAMIGOCLOUDTableLayer()                        */
 /************************************************************************/
@@ -85,8 +125,9 @@ OGRAMIGOCLOUDTableLayer::OGRAMIGOCLOUDTableLayer(OGRAMIGOCLOUDDataSource* poDS,
                                            OGRAMIGOCLOUDLayer(poDS)
 
 {
-    osName = pszName;
-    SetDescription( osName );
+    osDatasetId = CPLString(pszName);
+    osTableName = CPLString("dataset_") + osDatasetId;
+    SetDescription( osDatasetId );
     bLaunderColumnNames = TRUE;
     bInDeferedInsert = poDS->DoBatchInsert();
     nNextFID = -1;
@@ -148,7 +189,7 @@ OGRFeatureDefn * OGRAMIGOCLOUDTableLayer::GetLayerDefnInternal(CPL_UNUSED json_o
     {
         osCommand.Printf( "SELECT * FROM ogr_table_metadata('%s', '%s')",
                           OGRAMIGOCLOUDEscapeLiteral(poDS->GetCurrentSchema()).c_str(),
-                          OGRAMIGOCLOUDEscapeLiteral(osName).c_str() );
+                          OGRAMIGOCLOUDEscapeLiteral(osDatasetId).c_str() );
     }
 
     if( osCommand.size() )
@@ -183,7 +224,7 @@ OGRFeatureDefn * OGRAMIGOCLOUDTableLayer::GetLayerDefnInternal(CPL_UNUSED json_o
                     // by doing that here, we are somewhat robust to
                     // ogr_table_metadata() returning suddenly an empty result set
                     // for example if CDB_UserTables() no longer works
-                    poFeatureDefn = new OGRFeatureDefn(osName);
+                    poFeatureDefn = new OGRFeatureDefn(osTableName);
                     poFeatureDefn->Reference();
                     poFeatureDefn->SetGeomType(wkbNone);
                 }
@@ -270,8 +311,8 @@ OGRFeatureDefn * OGRAMIGOCLOUDTableLayer::GetLayerDefnInternal(CPL_UNUSED json_o
 
     if( poFeatureDefn == NULL )
     {
-        osBaseSQL.Printf("SELECT * FROM %s", OGRAMIGOCLOUDEscapeIdentifier(osName).c_str());
-        EstablishLayerDefn(osName, NULL);
+        osBaseSQL.Printf("SELECT * FROM %s", OGRAMIGOCLOUDEscapeIdentifier(osTableName).c_str());
+        EstablishLayerDefn(osTableName, NULL);
         osBaseSQL = "";
     }
 
@@ -299,7 +340,7 @@ OGRFeatureDefn * OGRAMIGOCLOUDTableLayer::GetLayerDefnInternal(CPL_UNUSED json_o
     if( osBaseSQL.size() == 0 )
         osBaseSQL = "SELECT *";
     osBaseSQL += " FROM ";
-    osBaseSQL += OGRAMIGOCLOUDEscapeIdentifier(osName);
+    osBaseSQL += OGRAMIGOCLOUDEscapeIdentifier(osTableName);
 
     osSELECTWithoutWHERE = osBaseSQL;
 
@@ -399,6 +440,46 @@ void OGRAMIGOCLOUDTableLayer::SetSpatialFilter( int iGeomField, OGRGeometry * po
 void OGRAMIGOCLOUDTableLayer::FlushDeferedInsert()
 
 {
+    if(vsDeferedInsertChangesets.size()==0)
+        return;
+
+#if 1
+    std::stringstream url;
+    url << std::string(poDS->GetAPIURL()) << "/users/0/projects/" + std::string(poDS->GetProjetcId()) + "/datasets/"+ osDatasetId +"/submit_change";
+
+    std::stringstream query;
+
+    query << "{\"type\":\"DML\",\"entity\":\"" << osTableName << "\",";
+    query << "\"parent\":null,\"action\":\"INSERT\",\"data\":[";
+
+    int counter=0;
+    for(int i=0; i < vsDeferedInsertChangesets.size(); i++)
+    {
+        if(counter>0)
+            query << ",";
+        query << vsDeferedInsertChangesets[i].c_str();
+        counter++;
+    }
+    query << "]}";
+
+    std::srand(std::time(0));
+    int random_variable = std::rand();
+
+    std::stringstream changeset;
+    changeset << "{\"change\": \"" << json_encode(query.str()) << "\"}";
+
+    json_object* poObj = poDS->RunPOST(url.str().c_str(), changeset.str().c_str());
+    if( poObj != NULL )
+        json_object_put(poObj);
+
+    bInDeferedInsert = FALSE;
+
+    vsDeferedInsertChangesets.clear();
+
+#endif
+
+
+#if 0
     if( bInDeferedInsert && osDeferedInsertSQL.size() > 0 )
     {
         osDeferedInsertSQL = "BEGIN;" + osDeferedInsertSQL + "COMMIT;";
@@ -408,9 +489,9 @@ void OGRAMIGOCLOUDTableLayer::FlushDeferedInsert()
             json_object_put(poObj);
         }
     }
-
-    bInDeferedInsert = FALSE;
     osDeferedInsertSQL = "";
+#endif
+    bInDeferedInsert = FALSE;
     nNextFID = -1;
 }
 
@@ -446,7 +527,7 @@ OGRErr OGRAMIGOCLOUDTableLayer::CreateField( OGRFieldDefn *poFieldIn,
     {
         CPLString osSQL;
         osSQL.Printf( "ALTER TABLE %s ADD COLUMN %s %s",
-                    OGRAMIGOCLOUDEscapeIdentifier(osName).c_str(),
+                    OGRAMIGOCLOUDEscapeIdentifier(osTableName).c_str(),
                     OGRAMIGOCLOUDEscapeIdentifier(oField.GetNameRef()).c_str(),
                     OGRPGCommonLayerGetType(oField, FALSE, TRUE).c_str() );
         if( !oField.IsNullable() )
@@ -495,262 +576,96 @@ OGRErr OGRAMIGOCLOUDTableLayer::ICreateFeature( OGRFeature *poFeature )
         return OGRERR_FAILURE;
     }
 
-    CPLString osSQL;
 
-    int bHasJustGotNextFID = FALSE;
-    if( !bHasUserFieldMatchingFID && bInDeferedInsert && nNextFID < 0 && osFIDColName.size() )
-    {
-        osSQL.Printf("SELECT nextval('%s') AS nextid",
-                     OGRAMIGOCLOUDEscapeLiteral(CPLSPrintf("%s_%s_seq", osName.c_str(), osFIDColName.c_str())).c_str());
+    std::stringstream record;
 
-        json_object* poObj = poDS->RunSQL(osSQL);
-        json_object* poRowObj = OGRAMIGOCLOUDGetSingleRow(poObj);
-        if( poRowObj != NULL )
-        {
-            json_object* poID = json_object_object_get(poRowObj, "nextid");
-            if( poID != NULL && json_object_get_type(poID) == json_type_int )
-            {
-                nNextFID = json_object_get_int64(poID);
-                bHasJustGotNextFID = TRUE;
-            }
-        }
+    record << "{\"new\":{";
 
-        if( poObj != NULL )
-            json_object_put(poObj);
-    }
+    int counter=0;
 
-    osSQL.Printf("INSERT INTO %s ", OGRAMIGOCLOUDEscapeIdentifier(osName).c_str());
-    int bMustComma = FALSE;
-    for(i = 0; i < poFeatureDefn->GetFieldCount(); i++)
-    {
-        if( !poFeature->IsFieldSet(i) )
-            continue;
-
-        if( bMustComma )
-            osSQL += ", ";
-        else
-        {
-            osSQL += "(";
-            bMustComma = TRUE;
-        }
-
-        osSQL += OGRAMIGOCLOUDEscapeIdentifier(poFeatureDefn->GetFieldDefn(i)->GetNameRef());
-    }
-
+    // Add geometry field
     for(i = 0; i < poFeatureDefn->GetGeomFieldCount(); i++)
     {
         if( poFeature->GetGeomFieldRef(i) == NULL )
             continue;
 
-        if( bMustComma )
-            osSQL += ", ";
-        else
+        record << "\"" << OGRAMIGOCLOUDEscapeLiteral(poFeatureDefn->GetGeomFieldDefn(i)->GetNameRef()) << "\":";
+
+        OGRGeometry* poGeom = poFeature->GetGeomFieldRef(i);
+        if( poGeom == NULL )
+            continue;
+
+        OGRAmigoCloudGeomFieldDefn* poGeomFieldDefn =
+                (OGRAmigoCloudGeomFieldDefn *)poFeatureDefn->GetGeomFieldDefn(i);
+        int nSRID = poGeomFieldDefn->nSRID;
+        if( nSRID == 0 )
+            nSRID = 4326;
+        char* pszEWKB;
+        if( wkbFlatten(poGeom->getGeometryType()) == wkbPolygon &&
+            wkbFlatten(GetGeomType()) == wkbMultiPolygon )
         {
-            osSQL += "(";
-            bMustComma = TRUE;
+            OGRMultiPolygon* poNewGeom = new OGRMultiPolygon();
+            poNewGeom->addGeometry(poGeom);
+            pszEWKB = OGRGeometryToHexEWKB(poNewGeom, nSRID, FALSE);
+            delete poNewGeom;
+        }
+        else
+            pszEWKB = OGRGeometryToHexEWKB(poGeom, nSRID, FALSE);
+        record << "\"" << pszEWKB << "\"";
+        CPLFree(pszEWKB);
+
+        counter++;
+    }
+
+    std::string amigo_id_value;
+
+    // Add non-geometry field
+    for(i = 0; i < poFeatureDefn->GetFieldCount(); i++)
+    {
+        std::string name = poFeatureDefn->GetFieldDefn(i)->GetNameRef();
+        std::string value = poFeature->GetFieldAsString(i);
+
+        if(name=="amigo_id")
+        {
+            amigo_id_value = value;
+            continue;
         }
 
-        osSQL += OGRAMIGOCLOUDEscapeIdentifier(poFeatureDefn->GetGeomFieldDefn(i)->GetNameRef());
-    }
-    
-    if( !bHasUserFieldMatchingFID &&
-        osFIDColName.size() && (poFeature->GetFID() != OGRNullFID || nNextFID >= 0) )
-    {
-        if( bMustComma )
-            osSQL += ", ";
-        else
-        {
-            osSQL += "(";
-            bMustComma = TRUE;
-        }
+        if(counter > 0)
+            record << ",";
 
-        osSQL += OGRAMIGOCLOUDEscapeIdentifier(osFIDColName);
-    }
+        record << OGRAMIGOCLOUDEscapeIdentifier(name.c_str()) << ":";
 
-    if( !bMustComma )
-        osSQL += " DEFAULT VALUES";
-    else
-    {
-        osSQL += ") VALUES (";
-        
-        bMustComma = FALSE;
-        for(i = 0; i < poFeatureDefn->GetFieldCount(); i++)
+        if(!value.empty())
         {
-            if( !poFeature->IsFieldSet(i) )
-                continue;
-        
-            if( bMustComma )
-                osSQL += ", ";
-            else
-                bMustComma = TRUE;
-            
             OGRFieldType eType = poFeatureDefn->GetFieldDefn(i)->GetType();
             if( eType == OFTString || eType == OFTDateTime || eType == OFTDate || eType == OFTTime )
             {
-                osSQL += "'";
-                osSQL += OGRAMIGOCLOUDEscapeLiteral(poFeature->GetFieldAsString(i));
-                osSQL += "'";
-            }
-            else if( (eType == OFTInteger || eType == OFTInteger64) &&
-                     poFeatureDefn->GetFieldDefn(i)->GetSubType() == OFSTBoolean )
-            {
-                osSQL += poFeature->GetFieldAsInteger(i) ? "'t'" : "'f'";
-            }
-            else
-                osSQL += poFeature->GetFieldAsString(i);
+                record << "\"" << OGRAMIGOCLOUDEscapeLiteral(value.c_str()) << "\"";
+            } else
+                record << OGRAMIGOCLOUDEscapeLiteral(value.c_str());
         }
-        
-        for(i = 0; i < poFeatureDefn->GetGeomFieldCount(); i++)
-        {
-            OGRGeometry* poGeom = poFeature->GetGeomFieldRef(i);
-            if( poGeom == NULL )
-                continue;
-        
-            if( bMustComma )
-                osSQL += ", ";
-            else
-                bMustComma = TRUE;
+        else
+            record << "null";
 
-            OGRAmigoCloudGeomFieldDefn* poGeomFieldDefn =
-                (OGRAmigoCloudGeomFieldDefn *)poFeatureDefn->GetGeomFieldDefn(i);
-            int nSRID = poGeomFieldDefn->nSRID;
-            if( nSRID == 0 )
-                nSRID = 4326;
-            char* pszEWKB;
-            if( wkbFlatten(poGeom->getGeometryType()) == wkbPolygon &&
-                wkbFlatten(GetGeomType()) == wkbMultiPolygon )
-            {
-                OGRMultiPolygon* poNewGeom = new OGRMultiPolygon();
-                poNewGeom->addGeometry(poGeom);
-                pszEWKB = OGRGeometryToHexEWKB(poNewGeom, nSRID, FALSE);
-                delete poNewGeom;
-            }
-            else
-                pszEWKB = OGRGeometryToHexEWKB(poGeom, nSRID, FALSE);
-            osSQL += "'";
-            osSQL += pszEWKB;
-            osSQL += "'";
-            CPLFree(pszEWKB);
-        }
-
-        if( !bHasUserFieldMatchingFID )
-        {
-            if( osFIDColName.size() && nNextFID >= 0 )
-            {
-                if( bMustComma )
-                    osSQL += ", ";
-                else
-                    bMustComma = TRUE;
-
-                if( bHasJustGotNextFID )
-                {
-                    osSQL += CPLSPrintf(CPL_FRMT_GIB, nNextFID);
-                }
-                else
-                {
-                    osSQL += CPLSPrintf("nextval('%s')",
-                            OGRAMIGOCLOUDEscapeLiteral(CPLSPrintf("%s_%s_seq", osName.c_str(), osFIDColName.c_str())).c_str());
-                }
-                poFeature->SetFID(nNextFID);
-                nNextFID ++;
-            }
-            else if( osFIDColName.size() && poFeature->GetFID() != OGRNullFID )
-            {
-                if( bMustComma )
-                    osSQL += ", ";
-                else
-                    bMustComma = TRUE;
-
-                osSQL += CPLSPrintf(CPL_FRMT_GIB, poFeature->GetFID());
-            }
-        }
-
-        osSQL += ")";
+        counter++;
     }
 
-    if( bInDeferedInsert )
+    record << "},";
+
+    if(!amigo_id_value.empty())
     {
-        OGRErr eRet = OGRERR_NONE;
-        if( osDeferedInsertSQL.size() != 0 &&
-            (int)osDeferedInsertSQL.size() + (int)osSQL.size() > nMaxChunkSize )
-        {
-            osDeferedInsertSQL = "BEGIN;" + osDeferedInsertSQL + "COMMIT;";
-            json_object* poObj = poDS->RunSQL(osDeferedInsertSQL);
-            if( poObj != NULL )
-                json_object_put(poObj);
-            else
-            {
-                bInDeferedInsert = FALSE;
-                eRet = OGRERR_FAILURE;
-            }
-            osDeferedInsertSQL = "";
-        }
-
-        osDeferedInsertSQL += osSQL;
-        osDeferedInsertSQL += ";";
-
-        if( (int)osDeferedInsertSQL.size() > nMaxChunkSize )
-        {
-            osDeferedInsertSQL = "BEGIN;" + osDeferedInsertSQL + "COMMIT;";
-            json_object* poObj = poDS->RunSQL(osDeferedInsertSQL);
-            if( poObj != NULL )
-                json_object_put(poObj);
-            else
-            {
-                bInDeferedInsert = FALSE;
-                eRet = OGRERR_FAILURE;
-            }
-            osDeferedInsertSQL = "";
-        }
-
-        return eRet;
-    }
-    
-    if( osFIDColName.size() )
+        record << "\"amigo_id\":\"" << amigo_id_value << "\"";
+    } else
     {
-        osSQL += " RETURNING ";
-        osSQL += OGRAMIGOCLOUDEscapeIdentifier(osFIDColName);
-
-        json_object* poObj = poDS->RunSQL(osSQL);
-        json_object* poRowObj = OGRAMIGOCLOUDGetSingleRow(poObj);
-        if( poRowObj == NULL )
-        {
-            if( poObj != NULL )
-                json_object_put(poObj);
-            return OGRERR_FAILURE;
-        }
-
-        json_object* poID = json_object_object_get(poRowObj, osFIDColName);
-        if( poID != NULL && json_object_get_type(poID) == json_type_int )
-        {
-            poFeature->SetFID(json_object_get_int64(poID));
-        }
-
-        if( poObj != NULL )
-            json_object_put(poObj);
-
-        return OGRERR_NONE;
+        record << "\"amigo_id\":null";
     }
-    else
-    {
-        OGRErr eRet = OGRERR_FAILURE;
-        json_object* poObj = poDS->RunSQL(osSQL);
-        if( poObj != NULL )
-        {
-            json_object* poTotalRows = json_object_object_get(poObj, "total_rows");
-            if( poTotalRows != NULL && json_object_get_type(poTotalRows) == json_type_int )
-            {
-                int nTotalRows = json_object_get_int(poTotalRows);
-                if( nTotalRows == 1 )
-                {
-                    eRet = OGRERR_NONE;
-                }
-            }
-            json_object_put(poObj);
-        }
 
-        return eRet;
-    }
+    record << "}";
+
+    vsDeferedInsertChangesets.push_back(record.str());
+
+    return OGRERR_NONE;
 }
 
 /************************************************************************/
@@ -783,7 +698,7 @@ OGRErr OGRAMIGOCLOUDTableLayer::ISetFeature( OGRFeature *poFeature )
     }
     
     CPLString osSQL;
-    osSQL.Printf("UPDATE %s SET ", OGRAMIGOCLOUDEscapeIdentifier(osName).c_str());
+    osSQL.Printf("UPDATE %s SET ", OGRAMIGOCLOUDEscapeIdentifier(osTableName).c_str());
     int bMustComma = FALSE;
     for(i = 0; i < poFeatureDefn->GetFieldCount(); i++)
     {
@@ -899,7 +814,7 @@ OGRErr OGRAMIGOCLOUDTableLayer::DeleteFeature( GIntBig nFID )
     
     CPLString osSQL;
     osSQL.Printf("DELETE FROM %s WHERE %s = " CPL_FRMT_GIB,
-                    OGRAMIGOCLOUDEscapeIdentifier(osName).c_str(),
+                    OGRAMIGOCLOUDEscapeIdentifier(osTableName).c_str(),
                     OGRAMIGOCLOUDEscapeIdentifier(osFIDColName).c_str(),
                     nFID);
 
@@ -935,7 +850,7 @@ CPLString OGRAMIGOCLOUDTableLayer::GetSRS_SQL(const char* pszGeomCol)
     osSQL.Printf("SELECT srid, srtext FROM spatial_ref_sys WHERE srid IN "
                 "(SELECT Find_SRID('%s', '%s', '%s'))",
                 OGRAMIGOCLOUDEscapeLiteral(poDS->GetCurrentSchema()).c_str(),
-                OGRAMIGOCLOUDEscapeLiteral(osName).c_str(),
+                OGRAMIGOCLOUDEscapeLiteral(osTableName).c_str(),
                 OGRAMIGOCLOUDEscapeLiteral(pszGeomCol).c_str());
 
     return osSQL;
@@ -1047,7 +962,7 @@ GIntBig OGRAMIGOCLOUDTableLayer::GetFeatureCount(int bForce)
     GetLayerDefn();
 
     CPLString osSQL(CPLSPrintf("SELECT COUNT(*) FROM %s",
-                               OGRAMIGOCLOUDEscapeIdentifier(osName).c_str()));
+                               OGRAMIGOCLOUDEscapeIdentifier(osTableName).c_str()));
     if( osWHERE.size() )
     {
         osSQL += " WHERE ";
@@ -1109,7 +1024,7 @@ OGRErr OGRAMIGOCLOUDTableLayer::GetExtent( int iGeomField, OGREnvelope *psExtent
     /* Do not take the spatial filter into account */
     osSQL.Printf( "SELECT ST_Extent(%s) FROM %s",
                   OGRAMIGOCLOUDEscapeIdentifier(poGeomFieldDefn->GetNameRef()).c_str(),
-                  OGRAMIGOCLOUDEscapeIdentifier(osName).c_str());
+                  OGRAMIGOCLOUDEscapeIdentifier(osTableName).c_str());
 
     json_object* poObj = poDS->RunSQL(osSQL);
     json_object* poRowObj = OGRAMIGOCLOUDGetSingleRow(poObj);
@@ -1208,7 +1123,7 @@ int OGRAMIGOCLOUDTableLayer::TestCapability( const char * pszCap )
 }
 
 /************************************************************************/
-/*                        Create()                          */
+/*                        SetDeferedCreation()                          */
 /************************************************************************/
 
 void OGRAMIGOCLOUDTableLayer::SetDeferedCreation(OGRwkbGeometryType eGType,
@@ -1220,7 +1135,7 @@ void OGRAMIGOCLOUDTableLayer::SetDeferedCreation(OGRwkbGeometryType eGType,
     nNextFID = 1;
     CPLAssert(poFeatureDefn == NULL);
     this->bAmigoCloudify = bAmigoCloudify;
-    poFeatureDefn = new OGRFeatureDefn(osName);
+    poFeatureDefn = new OGRFeatureDefn(osTableName);
     poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType(wkbNone);
     if( eGType == wkbPolygon )
@@ -1243,10 +1158,10 @@ void OGRAMIGOCLOUDTableLayer::SetDeferedCreation(OGRwkbGeometryType eGType,
     osFIDColName = "amigo_id";
 
     osBaseSQL.Printf("SELECT * FROM %s",
-                     OGRAMIGOCLOUDEscapeIdentifier(osName).c_str());
+                     OGRAMIGOCLOUDEscapeIdentifier(osTableName).c_str());
 }
 
-static CPLString GetType(OGRFieldDefn& oField,
+CPLString OGRAMIGOCLOUDTableLayer::GetAmigoCloudType(OGRFieldDefn& oField,
                                   int bPreservePrecision,
                                   int bApproxOK)
 {
@@ -1303,6 +1218,37 @@ static CPLString GetType(OGRFieldDefn& oField,
     return szFieldType;
 }
 
+bool OGRAMIGOCLOUDTableLayer::IsDatasetExists()
+{
+    std::stringstream url;
+
+    url << std::string(poDS->GetAPIURL()) << "/users/0/projects/" + std::string(poDS->GetProjetcId()) + "/datasets/"+ osDatasetId;
+
+    json_object* result = poDS->RunGET(url.str().c_str());
+    if( result == NULL )
+        return false;
+
+    if( result != NULL )
+    {
+        int type = json_object_get_type(result);
+        if(type == json_type_object)
+        {
+            json_object *poId = json_object_object_get(result, "id");
+            if(poId != NULL)
+            {
+                json_object_put(result);
+                return true;
+            }
+        }
+        json_object_put(result);
+    }
+
+    // Sleep 1 sec
+    usleep(1000);
+
+    return false;
+}
+
 /************************************************************************/
 /*                      RunDeferedCreationIfNecessary()                 */
 /************************************************************************/
@@ -1315,7 +1261,7 @@ OGRErr OGRAMIGOCLOUDTableLayer::RunDeferedCreationIfNecessary()
 
     std::stringstream json;
 
-    json << "{ \"name\":\"" << osName << "\",";
+    json << "{ \"name\":\"" << osDatasetId << "\",";
 
     json << "\"schema\": \"[";
 
@@ -1354,7 +1300,7 @@ OGRErr OGRAMIGOCLOUDTableLayer::RunDeferedCreationIfNecessary()
                 json << ",";
 
             json << "{\\\"name\\\":\\\"" << poFieldDefn->GetNameRef() << "\\\",";
-            json << "\\\"type\\\":\\\"" << GetType(*poFieldDefn, FALSE, TRUE) << "\\\",";
+            json << "\\\"type\\\":\\\"" << GetAmigoCloudType(*poFieldDefn, FALSE, TRUE) << "\\\",";
             if( !poFieldDefn->IsNullable() )
                 json << "\\\"nullable\\\":false,";
             else
@@ -1374,106 +1320,25 @@ OGRErr OGRAMIGOCLOUDTableLayer::RunDeferedCreationIfNecessary()
     std::stringstream url;
     url << std::string(poDS->GetAPIURL()) << "/users/0/projects/" + std::string(poDS->GetProjetcId()) + "/datasets/create";
 
-    printf("url: %s\n", url.str().c_str());
-    printf("json: %s\n", json.str().c_str());
-
-    poDS->RunPOST(url.str().c_str(), json.str().c_str());
-    return OGRERR_NONE;
-
-#if 0
-    CPLString osSQL;
-    osSQL.Printf("CREATE TABLE %s ( %s SERIAL,",
-                 OGRAMIGOCLOUDEscapeIdentifier(osName).c_str(),
-                 osFIDColName.c_str());
-
-    int nSRID = 0;
-    OGRwkbGeometryType eGType = GetGeomType();
-    if( eGType != wkbNone )
+    json_object* result = poDS->RunPOST(url.str().c_str(), json.str().c_str());
+    if( result != NULL )
     {
-        CPLString osGeomType = OGRToOGCGeomType(eGType);
-        if( wkbHasZ(eGType) )
-            osGeomType += "Z";
-
-        OGRAmigoCloudGeomFieldDefn *poFieldDefn =
-            (OGRAmigoCloudGeomFieldDefn *)poFeatureDefn->GetGeomFieldDefn(0);
-        nSRID = poFieldDefn->nSRID;
-
-        osSQL += CPLSPrintf("%s GEOMETRY(%s, %d)%s, %s GEOMETRY(%s, %d),",
-                 "the_geom",
-                 osGeomType.c_str(),
-                 nSRID,
-                 (!poFieldDefn->IsNullable()) ? " NOT NULL" : "",
-                 "the_geom_webmercator",
-                 osGeomType.c_str(),
-                 3857);
-    }
-
-    for( int i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
-    {
-        OGRFieldDefn* poFieldDefn = poFeatureDefn->GetFieldDefn(i);
-        if( strcmp(poFieldDefn->GetNameRef(), osFIDColName) != 0 )
+        if(json_object_get_type(result) == json_type_object)
         {
-            osSQL += OGRAMIGOCLOUDEscapeIdentifier(poFieldDefn->GetNameRef());
-            osSQL += " ";
-            osSQL += OGRPGCommonLayerGetType(*poFieldDefn, FALSE, TRUE);
-            if( !poFieldDefn->IsNullable() )
-                osSQL += " NOT NULL";
-            if( poFieldDefn->GetDefault() != NULL && !poFieldDefn->IsDefaultDriverSpecific() )
+            json_object *poId = json_object_object_get(result, "id");
+            if(poId!=NULL)
             {
-                osSQL += " DEFAULT ";
-                osSQL += poFieldDefn->GetDefault();
-            }
-            osSQL += ",";
-        }
-    }
-
-    osSQL += CPLSPrintf("PRIMARY KEY (%s) )", osFIDColName.c_str());
-    
-    CPLString osSeqName(OGRAMIGOCLOUDEscapeIdentifier(CPLSPrintf("%s_%s_seq",
-                                osName.c_str(), osFIDColName.c_str())));
-
-    osSQL += ";";
-    osSQL += CPLSPrintf("DROP SEQUENCE IF EXISTS %s CASCADE", osSeqName.c_str());
-    osSQL += ";";
-    osSQL += CPLSPrintf("CREATE SEQUENCE %s START 1", osSeqName.c_str());
-    osSQL += ";";
-    osSQL += CPLSPrintf("ALTER TABLE %s ALTER COLUMN %s SET DEFAULT nextval('%s')",
-                        OGRAMIGOCLOUDEscapeIdentifier(osName).c_str(),
-                        osFIDColName.c_str(), osSeqName.c_str());
-
-    json_object* poObj = poDS->RunSQL(osSQL);
-    if( poObj == NULL )
-        return OGRERR_FAILURE;
-    json_object_put(poObj);
-
-    if( bAmigoCloudify )
-    {
-        if( nSRID != 4326 )
-        {
-            if( eGType != wkbNone )
-            {
-                CPLError(CE_Warning, CPLE_AppDefined,
-                        "Cannot register table in dashboard with "
-                        "cdb_amigocloudfytable() since its SRS is not EPSG:4326");
+                osTableName = CPLString("dataset_") + json_object_to_json_string(poId);
+                osDatasetId = json_object_to_json_string(poId);
+                int retry=10;
+                while(!IsDatasetExists() && retry >= 0)
+                {
+                    retry--;
+                }
+                json_object_put(result);
+                return OGRERR_NONE;
             }
         }
-        else
-        {
-            if( poDS->GetCurrentSchema() == "public" )
-                osSQL.Printf("SELECT cdb_amigocloudfytable('%s')",
-                                    OGRAMIGOCLOUDEscapeLiteral(osName).c_str());
-            else
-                osSQL.Printf("SELECT cdb_amigocloudfytable('%s', '%s')",
-                                    OGRAMIGOCLOUDEscapeLiteral(poDS->GetCurrentSchema()).c_str(),
-                                    OGRAMIGOCLOUDEscapeLiteral(osName).c_str());
-
-            poObj = poDS->RunSQL(osSQL);
-            if( poObj == NULL )
-                return OGRERR_FAILURE;
-            json_object_put(poObj);
-        }
     }
-
-    return OGRERR_NONE;
-#endif
+    return OGRERR_FAILURE;
 }
