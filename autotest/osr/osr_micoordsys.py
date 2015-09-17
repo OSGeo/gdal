@@ -109,6 +109,14 @@ def osr_micoordsys_3():
         print(wkt)
         return 'fail'
 
+    # Transform again to MITAB (we no longer have the EPSG code, so we rely on PROJ4 extension node)
+    proj = srs.ExportToMICoordSys()
+
+    if proj != 'Earth Projection 10, 157, "m", 0':
+        gdaltest.post_reason('failure')
+        print(proj)
+        return 'fail'
+
     return 'success'
 
 
