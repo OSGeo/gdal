@@ -16,10 +16,10 @@
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
@@ -33,7 +33,7 @@
  *   Completed audit of this module. All functions may be used without buffer
  *   overflows and stack corruptions with any kind of input data strings with
  *   except of CPLSPrintf() and CSLAppendPrintf() (see note below).
- * 
+ *
  * Security Audit 2003/03/28 warmerda:
  *   Completed security audit.  I believe that this module may be safely used 
  *   to parse tokenize arbitrary input strings, assemble arbitrary sets of
@@ -74,10 +74,10 @@ CPL_CVSID("$Id$");
  **********************************************************************/
 char **CSLAddString(char **papszStrList, const char *pszNewString)
 {
-    int nItems=0;
-
     if (pszNewString == NULL)
         return papszStrList;    /* Nothing to do!*/
+
+    int nItems=0;
 
     /* Allocate room for the new string */
     if (papszStrList == NULL)
@@ -113,20 +113,20 @@ char **CSLAddString(char **papszStrList, const char *pszNewString)
  * behavior. 
  *
  * @param papszStrList the string list to count.
- * 
+ *
  * @return the number of entries.
  */
 int CSLCount(char **papszStrList)
 {
+    if (!papszStrList)
+        return 0;
+
     int nItems=0;
 
-    if (papszStrList)
+    while(*papszStrList != NULL)
     {
-        while(*papszStrList != NULL)
-        {
-            nItems++;
-            papszStrList++;
-        }
+        ++nItems;
+        ++papszStrList;
     }
 
     return nItems;
@@ -142,15 +142,13 @@ int CSLCount(char **papszStrList)
 /*      necessarily last long.                                          */
 /************************************************************************/
 
-const char * CSLGetField( char ** papszStrList, int iField )
+const char *CSLGetField( char ** papszStrList, int iField )
 
 {
-    int         i;
-
     if( papszStrList == NULL || iField < 0 )
         return( "" );
 
-    for( i = 0; i < iField+1; i++ )
+    for( int i = 0; i < iField+1; i++ )
     {
         if( papszStrList[i] == NULL )
             return "";
@@ -165,7 +163,7 @@ const char * CSLGetField( char ** papszStrList, int iField )
 
 /**
  * Free string list.
- * 
+ *
  * Frees the passed string list (null terminated array of strings).
  * It is safe to pass NULL. 
  *
@@ -173,19 +171,15 @@ const char * CSLGetField( char ** papszStrList, int iField )
  */
 void CPL_STDCALL CSLDestroy(char **papszStrList)
 {
-    char **papszPtr;
+    if (!papszStrList)
+        return;
 
-    if (papszStrList)
+    for( char **papszPtr = papszStrList; *papszPtr != NULL; ++papszPtr )
     {
-        papszPtr = papszStrList;
-        while(*papszPtr != NULL)
-        {
-            CPLFree(*papszPtr);
-            papszPtr++;
-        }
-
-        CPLFree(papszStrList);
+      CPLFree(*papszPtr);
     }
+
+    CPLFree(papszStrList);
 }
 
 /************************************************************************/
@@ -199,30 +193,25 @@ void CPL_STDCALL CSLDestroy(char **papszStrList)
  * owned by the caller and should be freed with CSLDestroy().
  *
  * @param papszStrList the input string list.
- * 
+ *
  * @return newly allocated copy.
  */
 
 char **CSLDuplicate(char **papszStrList)
 {
-    char **papszNewList, **papszSrc, **papszDst;
-    int  nLines;
-
-    nLines = CSLCount(papszStrList);
+    const int nLines = CSLCount(papszStrList);
 
     if (nLines == 0)
         return NULL;
 
-    papszNewList = (char **)CPLMalloc((nLines+1)*sizeof(char*));
-    papszSrc = papszStrList;
-    papszDst = papszNewList;
+    char **papszSrc = papszStrList;
 
-    while(*papszSrc != NULL)
+    char **papszNewList = (char **)CPLMalloc((nLines+1)*sizeof(char*));
+    char **papszDst = papszNewList;
+
+    for( ; *papszSrc != NULL; ++papszSrc, ++papszDst)
     {
         *papszDst = CPLStrdup(*papszSrc);
-
-        papszSrc++;
-        papszDst++;
     }
     *papszDst = NULL;
 
@@ -249,15 +238,13 @@ char **CSLDuplicate(char **papszStrList)
 char **CSLMerge( char **papszOrig, char **papszOverride )
 
 {
-    int i;
-
     if( papszOrig == NULL && papszOverride != NULL )
         return CSLDuplicate( papszOverride );
-    
+
     if( papszOverride == NULL )
         return papszOrig;
 
-    for( i = 0; papszOverride[i] != NULL; i++ )
+    for( int i = 0; papszOverride[i] != NULL; ++i )
     {
         char *pszKey = NULL;
         const char *pszValue = CPLParseNameValue( papszOverride[i], &pszKey );
@@ -287,7 +274,7 @@ char **CSLMerge( char **papszOrig, char **papszOverride )
  * @param nMaxLines maximum number of lines to read before stopping, or -1 for no limit.
  * @param nMaxCols  maximum number of characters in a line before stopping, or -1 for no limit.
  * @param papszOptions NULL-terminated array of options. Unused for now.
- * 
+ *
  * @return a string list with the files lines, now owned by caller. To be freed with CSLDestroy()
  *
  * @since GDAL 1.7.0
@@ -295,13 +282,12 @@ char **CSLMerge( char **papszOrig, char **papszOverride )
 
 char **CSLLoad2(const char *pszFname, int nMaxLines, int nMaxCols, char** papszOptions)
 {
-    VSILFILE    *fp;
     const char  *pszLine;
     char        **papszStrList=NULL;
     int          nLines = 0;
     int          nAllocatedLines = 0;
 
-    fp = VSIFOpenL(pszFname, "rb");
+    VSILFILE *fp = VSIFOpenL(pszFname, "rb");
 
     if (fp)
     {
@@ -329,7 +315,7 @@ char **CSLLoad2(const char *pszFname, int nMaxLines, int nMaxCols, char** papszO
                 }
                 papszStrList[nLines] = CPLStrdup(pszLine);
                 papszStrList[nLines + 1] = NULL;
-                nLines ++;
+                ++nLines;
             }
             else
                 break;
@@ -368,10 +354,10 @@ char **CSLLoad2(const char *pszFname, int nMaxLines, int nMaxCols, char** papszO
  * If reading the file fails a CPLError() will be issued and NULL returned.
  *
  * @param pszFname the name of the file to read.
- * 
+ *
  * @return a string list with the files lines, now owned by caller. To be freed with CSLDestroy()
  */
- 
+
 char **CSLLoad(const char *pszFname)
 {
     return CSLLoad2(pszFname, -1, -1, NULL);
@@ -404,8 +390,8 @@ int  CSLSave(char **papszStrList, const char *pszFname)
                     break;  /* A Problem happened... abort */
                 }
 
-                nLines++;
-                papszStrList++;
+                ++nLines;
+                ++papszStrList;
             }
 
             VSIFCloseL(fp);
@@ -432,19 +418,19 @@ int  CSLSave(char **papszStrList, const char *pszFname)
  **********************************************************************/
 int  CSLPrint(char **papszStrList, FILE *fpOut)
 {
-    int     nLines=0;
+    if (!papszStrList)
+        return 0;
 
     if (fpOut == NULL)
         fpOut = stdout;
 
-    if (papszStrList)
+    int nLines=0;
+
+    while(*papszStrList != NULL)
     {
-        while(*papszStrList != NULL)
-        {
-            VSIFPrintf(fpOut, "%s\n", *papszStrList);
-            nLines++;
-            papszStrList++;
-        }
+        VSIFPrintf(fpOut, "%s\n", *papszStrList);
+        ++nLines;
+        ++papszStrList;
     }
 
     return nLines;
@@ -464,10 +450,10 @@ int  CSLPrint(char **papszStrList, FILE *fpOut)
  *
  * Returns the modified StringList.
  **********************************************************************/
-char **CSLInsertStrings(char **papszStrList, int nInsertAtLineNo, 
+char **CSLInsertStrings(char **papszStrList, int nInsertAtLineNo,
                         char **papszNewLines)
 {
-    int     i, nSrcLines, nDstLines, nToInsert;
+    int     nSrcLines, nDstLines, nToInsert;
     char    **ppszSrc, **ppszDst;
 
     if (papszNewLines == NULL ||
@@ -496,7 +482,7 @@ char **CSLInsertStrings(char **papszStrList, int nInsertAtLineNo,
     ppszSrc = papszStrList + nSrcLines;
     ppszDst = papszStrList + nDstLines;
 
-    for (i=nSrcLines; i>=nInsertAtLineNo; i--)
+    for (int i=nSrcLines; i>=nInsertAtLineNo; i--)
     {
         *ppszDst = *ppszSrc;
         ppszDst--;
@@ -507,11 +493,11 @@ char **CSLInsertStrings(char **papszStrList, int nInsertAtLineNo,
     ppszSrc = papszNewLines;
     ppszDst = papszStrList + nInsertAtLineNo;
 
-    for (; *ppszSrc != NULL; ppszSrc++, ppszDst++)
+    for (; *ppszSrc != NULL; ++ppszSrc, ++ppszDst)
     {
         *ppszDst = CPLStrdup(*ppszSrc);
     }
-    
+
     return papszStrList;
 }
 
@@ -530,12 +516,7 @@ char **CSLInsertStrings(char **papszStrList, int nInsertAtLineNo,
 char **CSLInsertString(char **papszStrList, int nInsertAtLineNo, 
                        const char *pszNewLine)
 {
-    char *apszList[2];
-
-    /* Create a temporary StringList and call CSLInsertStrings()
-     */
-    apszList[0] = (char *) pszNewLine;
-    apszList[1] = NULL;
+    char *apszList[2] = {const_cast<char *>(pszNewLine), NULL};
 
     return CSLInsertStrings(papszStrList, nInsertAtLineNo, apszList);
 }
@@ -560,11 +541,8 @@ char **CSLInsertString(char **papszStrList, int nInsertAtLineNo,
 char **CSLRemoveStrings(char **papszStrList, int nFirstLineToDelete,
                         int nNumToRemove, char ***ppapszRetStrings)
 {
-    int     i, nSrcLines, nDstLines;
-    char    **ppszSrc, **ppszDst;
-
-    nSrcLines = CSLCount(papszStrList);
-    nDstLines = nSrcLines - nNumToRemove;
+    int nSrcLines = CSLCount(papszStrList);
+    int nDstLines = nSrcLines - nNumToRemove;
 
     if (nNumToRemove < 1 || nSrcLines == 0)
         return papszStrList;    /* Nothing to do!*/
@@ -578,18 +556,17 @@ char **CSLRemoveStrings(char **papszStrList, int nFirstLineToDelete,
         return NULL;
     }
 
-    
     /* Remove lines from the source StringList...
      * Either free() each line or store them to a new StringList depending on
      * the caller's choice.
      */
-    ppszDst = papszStrList + nFirstLineToDelete;
+    char **ppszDst = papszStrList + nFirstLineToDelete;
 
     if (ppapszRetStrings == NULL)
     {
         /* free() all the strings that will be removed.
          */
-        for (i=0; i < nNumToRemove; i++)
+        for (int i=0; i < nNumToRemove; ++i)
         {
             CPLFree(*ppszDst);
             *ppszDst = NULL;
@@ -601,11 +578,11 @@ char **CSLRemoveStrings(char **papszStrList, int nFirstLineToDelete,
          */
         *ppapszRetStrings = (char **)CPLCalloc(nNumToRemove+1, sizeof(char*));
 
-        for (i=0; i < nNumToRemove; i++)
+        for (int i=0; i < nNumToRemove; ++i)
         {
             (*ppapszRetStrings)[i] = *ppszDst;
             *ppszDst = NULL;
-            ppszDst++;
+            ++ppszDst;
         }
     }
 
@@ -615,15 +592,15 @@ char **CSLRemoveStrings(char **papszStrList, int nFirstLineToDelete,
     if (nFirstLineToDelete == -1 || nFirstLineToDelete > nSrcLines)
         nFirstLineToDelete = nDstLines;
 
-    ppszSrc = papszStrList + nFirstLineToDelete + nNumToRemove;
+    char **ppszSrc = papszStrList + nFirstLineToDelete + nNumToRemove;
     ppszDst = papszStrList + nFirstLineToDelete;
 
-    for ( ; *ppszSrc != NULL; ppszSrc++, ppszDst++)
+    for ( ; *ppszSrc != NULL; ++ppszSrc, ++ppszDst)
     {
         *ppszDst = *ppszSrc;
     }
     /* Move the NULL pointer at the end of the StringList     */
-    *ppszDst = *ppszSrc; 
+    *ppszDst = *ppszSrc;
 
     /* At this point, we could realloc() papszStrList to a smaller size, but
      * since this array will likely grow again in further operations on the
@@ -643,22 +620,20 @@ char **CSLRemoveStrings(char **papszStrList, int nFirstLineToDelete,
  * Returns the index of the entry in the string list that contains the 
  * target string.  The string in the string list must be a full match for
  * the target, but the search is case insensitive. 
- * 
+ *
  * @param papszList the string list to be searched.
  * @param pszTarget the string to be searched for. 
- * 
+ *
  * @return the index of the string within the list or -1 on failure.
  */
 
 int CSLFindString( char ** papszList, const char * pszTarget )
 
 {
-    int         i;
-
     if( papszList == NULL )
         return -1;
 
-    for( i = 0; papszList[i] != NULL; i++ )
+    for( int i = 0; papszList[i] != NULL; ++i )
     {
         if( EQUAL(papszList[i],pszTarget) )
             return i;
@@ -677,10 +652,10 @@ int CSLFindString( char ** papszList, const char * pszTarget )
  * Returns the index of the entry in the string list that contains the 
  * target string.  The string in the string list must be a full match for
  * the target. 
- * 
+ *
  * @param papszList the string list to be searched.
  * @param pszTarget the string to be searched for. 
- * 
+ *
  * @return the index of the string within the list or -1 on failure.
  *
  * @since GDAL 2.0
@@ -689,12 +664,10 @@ int CSLFindString( char ** papszList, const char * pszTarget )
 int CSLFindStringCaseSensitive( char ** papszList, const char * pszTarget )
 
 {
-    int         i;
-
     if( papszList == NULL )
         return -1;
 
-    for( i = 0; papszList[i] != NULL; i++ )
+    for( int i = 0; papszList[i] != NULL; ++i )
     {
         if( strcmp(papszList[i],pszTarget) == 0 )
             return i;
@@ -713,22 +686,21 @@ int CSLFindStringCaseSensitive( char ** papszList, const char * pszTarget )
  * Returns the index of the entry in the string list that contains the 
  * target string as a substring.  The search is case sensitive (unlike 
  * CSLFindString()). 
- * 
+ *
  * @param papszHaystack the string list to be searched.
  * @param pszNeedle the substring to be searched for. 
- * 
+ *
  * @return the index of the string within the list or -1 on failure.
  */
 
 int CSLPartialFindString( char **papszHaystack, const char * pszNeedle )
 {
-    int i;
     if (papszHaystack == NULL || pszNeedle == NULL)
         return -1;
 
-    for (i = 0; papszHaystack[i] != NULL; i++) 
+    for (int i = 0; papszHaystack[i] != NULL; ++i)
     {
-        if (strstr(papszHaystack[i],pszNeedle))
+        if (strstr(papszHaystack[i], pszNeedle))
             return i;
     }
 
@@ -742,7 +714,7 @@ int CSLPartialFindString( char **papszHaystack, const char * pszNeedle )
  * Tokenizes a string and returns a StringList with one string for
  * each token.
  **********************************************************************/
-char    **CSLTokenizeString( const char *pszString )
+char **CSLTokenizeString( const char *pszString )
 {
     return CSLTokenizeString2( pszString, " ", CSLT_HONOURSTRINGS );
 }
@@ -756,9 +728,8 @@ char    **CSLTokenizeString( const char *pszString )
 char ** CSLTokenizeStringComplex( const char * pszString,
                                   const char * pszDelimiters,
                                   int bHonourStrings, int bAllowEmptyTokens )
-
 {
-    int         nFlags = 0;
+    int nFlags = 0;
 
     if( bHonourStrings )
         nFlags |= CSLT_HONOURSTRINGS;
@@ -779,9 +750,9 @@ char ** CSLTokenizeStringComplex( const char * pszString,
  * delimeter(s) with a variety of options.  The returned result is a
  * string list that should be freed with CSLDestroy() when no longer
  * needed.
- * 
+ *
  * The available parsing options are:
- * 
+ *
  * - CSLT_ALLOWEMPTYTOKENS: allow the return of empty tokens when two 
  * delimiters in a row occur with no other text between them.  If not set, 
  * empty tokens will be discarded;
@@ -798,7 +769,7 @@ char ** CSLTokenizeStringComplex( const char * pszString,
  * the backslashes will be removed in processing.
  *
  * \b Example:
- * 
+ *
  * Parse a string into tokens based on various white space (space, newline, 
  * tab) and then print out results and cleanup.  Quotes may be used to hold 
  * white space in tokens.
@@ -826,39 +797,38 @@ char ** CSLTokenizeStringComplex( const char * pszString,
 char ** CSLTokenizeString2( const char * pszString,
                             const char * pszDelimiters,
                             int nCSLTFlags )
-
 {
     if( pszString == NULL )
         return (char **) CPLCalloc(sizeof(char *),1);
-    CPLStringList oRetList;
-    char        *pszToken;
-    int         nTokenMax, nTokenLen;
-    int         bHonourStrings = (nCSLTFlags & CSLT_HONOURSTRINGS);
-    int         bAllowEmptyTokens = (nCSLTFlags & CSLT_ALLOWEMPTYTOKENS);
-    int         bStripLeadSpaces = (nCSLTFlags & CSLT_STRIPLEADSPACES);
-    int         bStripEndSpaces = (nCSLTFlags & CSLT_STRIPENDSPACES);
 
-    pszToken = (char *) CPLCalloc(10,1);
-    nTokenMax = 10;
-    
+    CPLStringList oRetList;
+    const bool bHonourStrings = (nCSLTFlags & CSLT_HONOURSTRINGS) != 0;
+    const bool bAllowEmptyTokens = (nCSLTFlags & CSLT_ALLOWEMPTYTOKENS) != 0;
+    const bool bStripLeadSpaces = (nCSLTFlags & CSLT_STRIPLEADSPACES) != 0;
+    const bool bStripEndSpaces = (nCSLTFlags & CSLT_STRIPENDSPACES) != 0;
+
+    char *pszToken = (char *) CPLCalloc(10,1);
+    int nTokenLen;
+    int nTokenMax = 10;
+
     while( pszString != NULL && *pszString != '\0' )
     {
         bool bInString = false;
         bool bStartString = true;
 
         nTokenLen = 0;
-        
+
         /* Try to find the next delimeter, marking end of token */
-        for( ; *pszString != '\0'; pszString++ )
+        for( ; *pszString != '\0'; ++pszString )
         {
 
             /* End if this is a delimeter skip it and break. */
             if( !bInString && strchr(pszDelimiters, *pszString) != NULL )
             {
-                pszString++;
+                ++pszString;
                 break;
             }
-            
+
             /* If this is a quote, and we are honouring constant
                strings, then process the constant strings, with out delim
                but don't copy over the quotes */
@@ -867,19 +837,11 @@ char ** CSLTokenizeString2( const char * pszString,
                 if( nCSLTFlags & CSLT_PRESERVEQUOTES )
                 {
                     pszToken[nTokenLen] = *pszString;
-                    nTokenLen++;
+                    ++nTokenLen;
                 }
 
-                if( bInString )
-                {
-                    bInString = false;
-                    continue;
-                }
-                else
-                {
-                    bInString = true;
-                    continue;
-                }
+                bInString = !bInString;
+                continue;
             }
 
             /*
@@ -894,10 +856,10 @@ char ** CSLTokenizeString2( const char * pszString,
                     if( nCSLTFlags & CSLT_PRESERVEESCAPES )
                     {
                         pszToken[nTokenLen] = *pszString;
-                        nTokenLen++;
+                        ++nTokenLen;
                     }
 
-                    pszString++;
+                    ++pszString;
                 }
             }
 
@@ -920,7 +882,7 @@ char ** CSLTokenizeString2( const char * pszString,
             }
 
             pszToken[nTokenLen] = *pszString;
-            nTokenLen++;
+            ++nTokenLen;
         }
 
         /*
@@ -1017,7 +979,7 @@ const char *CPLSPrintf(const char *fmt, ...)
     }
 
     va_end(args);
-    
+
     return pachBuffer;
 }
 
@@ -1069,7 +1031,7 @@ static const char* CPLvsnprintf_get_end_of_formatting(const char* fmt)
 {
     char ch;
     /*flag */
-    for( ; (ch = *fmt) != '\0'; fmt ++ )
+    for( ; (ch = *fmt) != '\0'; ++fmt )
     {
         if( ch == '\'' )
             continue; /* bad idea as this is locale specific */
@@ -1077,9 +1039,9 @@ static const char* CPLvsnprintf_get_end_of_formatting(const char* fmt)
             continue;
         break;
     }
-    
+
     /* field width */
-    for( ; (ch = *fmt) != '\0'; fmt ++ )
+    for( ; (ch = *fmt) != '\0'; ++fmt )
     {
         if( ch == '$' )
             return NULL; /* we don't want to support this */
@@ -1091,8 +1053,8 @@ static const char* CPLvsnprintf_get_end_of_formatting(const char* fmt)
     /* precision */
     if( ch == '.' )
     {
-        fmt ++;
-        for( ; (ch = *fmt) != '\0'; fmt ++ )
+        ++fmt;
+        for( ; (ch = *fmt) != '\0'; ++fmt )
         {
             if( ch == '$' )
                 return NULL; /* we don't want to support this */
@@ -1103,7 +1065,7 @@ static const char* CPLvsnprintf_get_end_of_formatting(const char* fmt)
     }
 
     /* length modifier */
-    for( ; (ch = *fmt) != '\0'; fmt ++ )
+    for( ; (ch = *fmt) != '\0'; ++fmt )
     {
         if( ch == 'h' || ch == 'l' || ch == 'j' || ch == 'z' ||
             ch == 't' || ch == 'L' )
@@ -1154,7 +1116,7 @@ int CPLvsnprintf(char *str, size_t size, const char* fmt, va_list args)
     wrk_args = args;
 #endif
 
-    for( ; (ch = *fmt) != '\0'; fmt ++ )
+    for( ; (ch = *fmt) != '\0'; ++fmt )
     {
         if( ch == '%' )
         {
@@ -1233,7 +1195,7 @@ int CPLvsnprintf(char *str, size_t size, const char* fmt, va_list args)
                 /* MSVC vsnprintf() returns -1... */
                 if( local_ret <  0 || offset_out + local_ret >= size )
                     break;
-                for( int j = 0; j < local_ret; j ++ )
+                for( int j = 0; j < local_ret; ++j )
                 {
                     if( str[offset_out + j] == ',' )
                     {
@@ -1438,7 +1400,7 @@ int CPL_DLL CPLsscanf(const char* str, const char* fmt, ...)
     va_list args;
 
     va_start( args, fmt );
-    for( ; *fmt != '\0' && *str != '\0'; fmt++ )
+    for( ; *fmt != '\0' && *str != '\0'; ++fmt )
     {
         if( *fmt == '%' )
         {
@@ -1449,7 +1411,7 @@ int CPL_DLL CPLsscanf(const char* str, const char* fmt, ...)
                 *(va_arg(args, double*)) = CPLStrtod(str, &end);
                 if( end > str )
                 {
-                    ret ++;
+                    ++ret;
                     str = end;
                 }
                 else
@@ -1464,7 +1426,7 @@ int CPL_DLL CPLsscanf(const char* str, const char* fmt, ...)
         else if( *str != *fmt )
             break;
         else
-            str ++;
+            ++str;
     }
     va_end( args );
 
@@ -1489,7 +1451,7 @@ int CPL_DLL CPLsscanf(const char* str, const char* fmt, ...)
  * Otherwise, TRUE will be returned.
  *
  * @param pszValue the string should be tested.
- * 
+ *
  * @return TRUE or FALSE.
  */
 
@@ -1515,34 +1477,32 @@ int CSLTestBoolean( const char *pszValue )
  * If the value is NO, FALSE or 0 it will be considered FALSE otherwise
  * if the key appears in the list it will be considered TRUE.  If the key
  * doesn't appear at all, the indicated default value will be returned. 
- * 
+ *
  * @param papszStrList the string list to search.
  * @param pszKey the key value to look for (case insensitive).
  * @param bDefault the value to return if the key isn't found at all. 
- * 
+ *
  * @return TRUE or FALSE 
  **********************************************************************/
 
 int CSLFetchBoolean( char **papszStrList, const char *pszKey, int bDefault )
 
 {
-    const char *pszValue;
-
     if( CSLFindString( papszStrList, pszKey ) != -1 )
         return TRUE;
 
-    pszValue = CSLFetchNameValue(papszStrList, pszKey );
+    const char *pszValue = CSLFetchNameValue( papszStrList, pszKey );
     if( pszValue == NULL )
         return bDefault;
-    else 
-        return CSLTestBoolean( pszValue );
+
+    return CSLTestBoolean( pszValue );
 }
 
 /************************************************************************/
 /*                     CSLFetchNameValueDefaulted()                     */
 /************************************************************************/
 
-const char *CSLFetchNameValueDef( char **papszStrList, 
+const char *CSLFetchNameValueDef( char **papszStrList,
                                   const char *pszName,
                                   const char *pszDefault )
 
@@ -1550,8 +1510,8 @@ const char *CSLFetchNameValueDef( char **papszStrList,
     const char *pszResult = CSLFetchNameValue( papszStrList, pszName );
     if( pszResult )
         return pszResult;
-    else
-        return pszDefault;
+
+    return pszDefault;
 }
 
 /**********************************************************************
@@ -1562,7 +1522,7 @@ const char *CSLFetchNameValueDef( char **papszStrList,
  * case sensitive.
  * ("Name:Value" pairs are also supported for backward compatibility
  * with older stuff.)
- * 
+ *
  * Returns a reference to the value in the StringList that the caller
  * should not attempt to free.
  *
@@ -1570,12 +1530,10 @@ const char *CSLFetchNameValueDef( char **papszStrList,
  **********************************************************************/
 const char *CSLFetchNameValue(char **papszStrList, const char *pszName)
 {
-    size_t nLen;
-
     if (papszStrList == NULL || pszName == NULL)
         return NULL;
 
-    nLen = strlen(pszName);
+    size_t nLen = strlen(pszName);
     while(*papszStrList != NULL)
     {
         if (EQUALN(*papszStrList, pszName, nLen)
@@ -1584,7 +1542,7 @@ const char *CSLFetchNameValue(char **papszStrList, const char *pszName)
         {
             return (*papszStrList)+nLen+1;
         }
-        papszStrList++;
+        ++papszStrList;
     }
     return NULL;
 }
@@ -1605,23 +1563,21 @@ const char *CSLFetchNameValue(char **papszStrList, const char *pszName)
 
 int CSLFindName(char **papszStrList, const char *pszName)
 {
-    size_t nLen;
-    int    iIndex = 0;
-
     if (papszStrList == NULL || pszName == NULL)
         return -1;
 
-    nLen = strlen(pszName);
+    const size_t nLen = strlen(pszName);
+    int iIndex = 0;
     while(*papszStrList != NULL)
     {
         if (EQUALN(*papszStrList, pszName, nLen)
-            && ( (*papszStrList)[nLen] == '=' || 
+            && ( (*papszStrList)[nLen] == '=' ||
                  (*papszStrList)[nLen] == ':' ) )
         {
             return iIndex;
         }
-        iIndex++;
-        papszStrList++;
+        ++iIndex;
+        ++papszStrList;
     }
     return -1;
 }
@@ -1643,7 +1599,7 @@ int CSLFindName(char **papszStrList, const char *pszName)
  *
  * Eventually CSLFetchNameValue() and friends may be modified to use 
  * CPLParseNameValue(). 
- * 
+ *
  * @param pszNameValue string in "NAME=VALUE" format. 
  * @param ppszKey optional pointer though which to return the name
  * portion. 
@@ -1651,25 +1607,23 @@ int CSLFindName(char **papszStrList, const char *pszName)
  */
 
 const char *CPLParseNameValue(const char *pszNameValue, char **ppszKey )
-
 {
-    int  i;
     const char *pszValue;
 
-    for( i = 0; pszNameValue[i] != '\0'; i++ )
+    for( int i = 0; pszNameValue[i] != '\0'; ++i )
     {
         if( pszNameValue[i] == '=' || pszNameValue[i] == ':' )
         {
             pszValue = pszNameValue + i + 1;
             while( *pszValue == ' ' || *pszValue == '\t' )
-                pszValue++;
+                ++pszValue;
 
             if( ppszKey != NULL )
             {
                 *ppszKey = (char *) CPLMalloc(i+1);
                 strncpy( *ppszKey, pszNameValue, i );
                 (*ppszKey)[i] = '\0';
-                while( i > 0 && 
+                while( i > 0 &&
                        ( (*ppszKey)[i] == ' ' || (*ppszKey)[i] == '\t') )
                 {
                     (*ppszKey)[i] = '\0';
@@ -1692,7 +1646,7 @@ const char *CPLParseNameValue(const char *pszNameValue, char **ppszKey )
  * sensitive.
  * ("Name:Value" pairs are also supported for backward compatibility
  * with older stuff.)
- * 
+ *
  * Returns stringlist with one entry for each occurence of the
  * specified name.  The stringlist should eventually be destroyed
  * by calling CSLDestroy().
@@ -1701,23 +1655,21 @@ const char *CPLParseNameValue(const char *pszNameValue, char **ppszKey )
  **********************************************************************/
 char **CSLFetchNameValueMultiple(char **papszStrList, const char *pszName)
 {
-    size_t nLen;
-    char **papszValues = NULL;
-
     if (papszStrList == NULL || pszName == NULL)
         return NULL;
 
-    nLen = strlen(pszName);
+    const size_t nLen = strlen(pszName);
+    char **papszValues = NULL;
     while(*papszStrList != NULL)
     {
         if (EQUALN(*papszStrList, pszName, nLen)
-            && ( (*papszStrList)[nLen] == '=' || 
+            && ( (*papszStrList)[nLen] == '=' ||
                  (*papszStrList)[nLen] == ':' ) )
         {
-            papszValues = CSLAddString(papszValues, 
-                                          (*papszStrList)+nLen+1);
+            papszValues = CSLAddString(papszValues,
+                                       (*papszStrList)+nLen+1);
         }
-        papszStrList++;
+        ++papszStrList;
     }
 
     return papszValues;
@@ -1730,22 +1682,21 @@ char **CSLFetchNameValueMultiple(char **papszStrList, const char *pszName)
  * Add a new entry to a StringList of "Name=Value" pairs,
  * ("Name:Value" pairs are also supported for backward compatibility
  * with older stuff.)
- * 
+ *
  * This function does not check if a "Name=Value" pair already exists
  * for that name and can generate multiple entryes for the same name.
  * Use CSLSetNameValue() if you want each name to have only one value.
  *
  * Returns the modified stringlist.
  **********************************************************************/
-char **CSLAddNameValue(char **papszStrList, 
-                    const char *pszName, const char *pszValue)
+char **CSLAddNameValue(char **papszStrList,
+                       const char *pszName, const char *pszValue)
 {
-    char *pszLine;
 
     if (pszName == NULL || pszValue==NULL)
         return papszStrList;
 
-    pszLine = (char *) CPLMalloc(strlen(pszName)+strlen(pszValue)+2);
+    char *pszLine = (char *) CPLMalloc(strlen(pszName)+strlen(pszValue)+2);
     CPLsprintf( pszLine, "%s=%s", pszName, pszValue );
     papszStrList = CSLAddString(papszStrList, pszLine);
     CPLFree( pszLine );
@@ -1763,7 +1714,7 @@ char **CSLAddNameValue(char **papszStrList,
  * Set the value for a given name in a StringList of "Name=Value" pairs
  * ("Name:Value" pairs are also supported for backward compatibility
  * with older stuff.)
- * 
+ *
  * If there is already a value for that name in the list then the value
  * is changed, otherwise a new "Name=Value" pair is added.
  *
@@ -1780,14 +1731,12 @@ char **CSLAddNameValue(char **papszStrList,
 char **CSLSetNameValue(char **papszList, 
                        const char *pszName, const char *pszValue)
 {
-    char **papszPtr;
-    size_t nLen;
 
     if (pszName == NULL )
         return papszList;
 
-    nLen = strlen(pszName);
-    papszPtr = papszList;
+    const size_t nLen = strlen(pszName);
+    char **papszPtr = papszList;
     while(papszPtr && *papszPtr != NULL)
     {
         if (EQUALN(*papszPtr, pszName, nLen)
@@ -1802,7 +1751,7 @@ char **CSLSetNameValue(char **papszList,
 
             CPLFree(*papszPtr);
 
-            /* 
+            /*
              * If the value is NULL, remove this entry completely/
              */
             if( pszValue == NULL )
@@ -1810,7 +1759,7 @@ char **CSLSetNameValue(char **papszList,
                 while( papszPtr[1] != NULL )
                 {
                     *papszPtr = papszPtr[1];
-                    papszPtr++;
+                    ++papszPtr;
                 }
                 *papszPtr = NULL;
             }
@@ -1825,7 +1774,7 @@ char **CSLSetNameValue(char **papszList,
             }
             return papszList;
         }
-        papszPtr++;
+        ++papszPtr;
     }
 
     if( pszValue == NULL )
@@ -1852,7 +1801,7 @@ char **CSLSetNameValue(char **papszList,
  * the old separator, and any white space will be replaced by the new
  * separator.  For formatting purposes it may be desireable to include some
  * white space in the new separator.  eg. ": " or " = ".
- * 
+ *
  * @param papszList the list to update.  Component strings may be freed
  * but the list array will remain at the same location.
  *
@@ -1863,20 +1812,17 @@ char **CSLSetNameValue(char **papszList,
 void CSLSetNameValueSeparator( char ** papszList, const char *pszSeparator )
 
 {
-    int         nLines = CSLCount(papszList), iLine;
+    const int nLines = CSLCount(papszList);
 
-    for( iLine = 0; iLine < nLines; iLine++ )
+    for( int iLine = 0; iLine < nLines; ++iLine )
     {
-        char        *pszKey = NULL;
-        const char  *pszValue;
-        char        *pszNewLine;
-
-        pszValue = CPLParseNameValue( papszList[iLine], &pszKey );
+        char *pszKey = NULL;
+        const char *pszValue = CPLParseNameValue( papszList[iLine], &pszKey );
         if( pszValue == NULL || pszKey == NULL )
             continue;
-        
-        pszNewLine = (char *) CPLMalloc( strlen(pszValue) + strlen(pszKey)
-                                         + strlen(pszSeparator) + 1 );
+
+        char *pszNewLine = (char *) CPLMalloc( strlen(pszValue) + strlen(pszKey)
+                                               + strlen(pszSeparator) + 1 );
         strcpy( pszNewLine, pszKey );
         strcat( pszNewLine, pszSeparator );
         strcat( pszNewLine, pszValue );
@@ -1933,18 +1879,14 @@ void CSLSetNameValueSeparator( char ** papszList, const char *pszSeparator )
  * CPLFree() when no longer needed.
  */
 
-char *CPLEscapeString( const char *pszInput, int nLength, 
+char *CPLEscapeString( const char *pszInput, int nLength,
                        int nScheme )
-
 {
-    char        *pszOutput;
-    char        *pszShortOutput;
-
     if( nLength == -1 )
         nLength = strlen(pszInput);
 
-    pszOutput = (char *) CPLMalloc( nLength * 6 + 1 );
-    
+    char *pszOutput = (char *) CPLMalloc( nLength * 6 + 1 );
+
     if( nScheme == CPLES_BackslashQuotable )
     {
         int iOut = 0, iIn;
@@ -1980,7 +1922,7 @@ char *CPLEscapeString( const char *pszInput, int nLength,
     {
         int iOut = 0, iIn;
 
-        for( iIn = 0; iIn < nLength; iIn++ )
+        for( iIn = 0; iIn < nLength; ++iIn )
         {
             if( (pszInput[iIn] >= 'a' && pszInput[iIn] <= 'z')
                 || (pszInput[iIn] >= 'A' && pszInput[iIn] <= 'Z')
@@ -2001,7 +1943,7 @@ char *CPLEscapeString( const char *pszInput, int nLength,
     {
         int iOut = 0, iIn;
 
-        for( iIn = 0; iIn < nLength; iIn++ )
+        for( iIn = 0; iIn < nLength; ++iIn )
         {
             if( pszInput[iIn] == '<' )
             {
@@ -2067,7 +2009,7 @@ char *CPLEscapeString( const char *pszInput, int nLength,
     {
         int iOut = 0, iIn;
 
-        for( iIn = 0; iIn < nLength; iIn++ )
+        for( iIn = 0; iIn < nLength; ++iIn )
         {
             if( pszInput[iIn] == '\'' )
             {
@@ -2096,7 +2038,7 @@ char *CPLEscapeString( const char *pszInput, int nLength,
 
             pszOutput[0] = '\"';
 
-            for( iIn = 0; iIn < nLength; iIn++ )
+            for( iIn = 0; iIn < nLength; ++iIn )
             {
                 if( pszInput[iIn] == '\"' )
                 {
@@ -2113,12 +2055,13 @@ char *CPLEscapeString( const char *pszInput, int nLength,
     else
     {
         pszOutput[0] = '\0';
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Undefined escaping scheme (%d) in CPLEscapeString()",
                   nScheme );
     }
 
-    pszShortOutput = CPLStrdup( pszOutput );
+    // TODO: Was pszShortOutput supposed to start part way through pszOutput?
+    char *pszShortOutput = CPLStrdup( pszOutput );
     CPLFree( pszOutput );
 
     return pszShortOutput;
@@ -2140,7 +2083,7 @@ char *CPLEscapeString( const char *pszInput, int nLength,
  * which may in some cases include embedded '\\0' characters.
  * @param nScheme the escaped scheme to undo (see CPLEscapeString() for a
  * list). 
- * 
+ *
  * @return a copy of the unescaped string that should be freed by the 
  * application using CPLFree() when no longer needed.
  */
@@ -2148,16 +2091,15 @@ char *CPLEscapeString( const char *pszInput, int nLength,
 char *CPLUnescapeString( const char *pszInput, int *pnLength, int nScheme )
 
 {
-    char *pszOutput;
     int iOut=0, iIn;
 
-    pszOutput = (char *) CPLMalloc(4 * strlen(pszInput)+1);
+    char *pszOutput = (char *) CPLMalloc(4 * strlen(pszInput)+1);
     pszOutput[0] = '\0';
 
     if( nScheme == CPLES_XML || nScheme == CPLES_XML_BUT_QUOTES  )
     {
         char ch;
-        for( iIn = 0; (ch = pszInput[iIn]) != '\0'; iIn++ )
+        for( iIn = 0; (ch = pszInput[iIn]) != '\0'; ++iIn )
         {
             if( ch != '&' )
             {
@@ -2195,7 +2137,7 @@ char *CPLUnescapeString( const char *pszInput, int *pnLength, int nScheme )
 
                 while(true)
                 {
-                    ch = pszInput[iIn ++];
+                    ch = pszInput[iIn++];
                     if (ch >= 'a' && ch <= 'f')
                         anVal[0] = anVal[0] * 16 + ch - 'a' + 10;
                     else if (ch >= 'A' && ch <= 'F')
@@ -2250,7 +2192,7 @@ char *CPLUnescapeString( const char *pszInput, int *pnLength, int nScheme )
     }
     else if( nScheme == CPLES_URL )
     {
-        for( iIn = 0; pszInput[iIn] != '\0'; iIn++ )
+        for( iIn = 0; pszInput[iIn] != '\0'; ++iIn )
         {
             if( pszInput[iIn] == '%' 
                 && pszInput[iIn+1] != '\0' 
@@ -2295,11 +2237,11 @@ char *CPLUnescapeString( const char *pszInput, int *pnLength, int nScheme )
     }
     else if( nScheme == CPLES_SQL )
     {
-        for( iIn = 0; pszInput[iIn] != '\0'; iIn++ )
+        for( iIn = 0; pszInput[iIn] != '\0'; ++iIn )
         {
             if( pszInput[iIn] == '\'' && pszInput[iIn+1] == '\'' )
             {
-                iIn++;
+                ++iIn;
                 pszOutput[iOut++] = pszInput[iIn];
             }
             else
@@ -2310,11 +2252,11 @@ char *CPLUnescapeString( const char *pszInput, int *pnLength, int nScheme )
     }
     else /* if( nScheme == CPLES_BackslashQuoteable ) */
     {
-        for( iIn = 0; pszInput[iIn] != '\0'; iIn++ )
+        for( iIn = 0; pszInput[iIn] != '\0'; ++iIn )
         {
             if( pszInput[iIn] == '\\' )
             {
-                iIn++;
+                ++iIn;
                 if( pszInput[iIn] == 'n' )
                     pszOutput[iOut++] = '\n';
                 else if( pszInput[iIn] == '0' )
@@ -2346,7 +2288,7 @@ char *CPLUnescapeString( const char *pszInput, int *pnLength, int nScheme )
  *
  * @param nBytes number of bytes of binary data in pabyData.
  * @param pabyData array of data bytes to translate. 
- * 
+ *
  * @return hexadecimal translation, zero terminated.  Free with CPLFree().
  */
 
@@ -2354,12 +2296,11 @@ char *CPLBinaryToHex( int nBytes, const GByte *pabyData )
 
 {
     char *pszHex = (char *) CPLMalloc(nBytes * 2 + 1 );
-    int i;
-    static const char achHex[] = "0123456789ABCDEF";
-
     pszHex[nBytes*2] = '\0';
 
-    for( i = 0; i < nBytes; i++ )
+    static const char achHex[] = "0123456789ABCDEF";
+
+    for( int i = 0; i < nBytes; ++i )
     {
         int nLow = pabyData[i] & 0x0f;
         int nHigh = (pabyData[i] & 0xf0) >> 4;
@@ -2411,14 +2352,12 @@ static const unsigned char hex2char[256] = {
 
 GByte *CPLHexToBinary( const char *pszHex, int *pnBytes )
 {
-    size_t  nHexLen = strlen(pszHex);
-    size_t i;
-    register unsigned char h1, h2;
-    GByte *pabyWKB; 
+    size_t nHexLen = strlen(pszHex);
 
-    pabyWKB = (GByte *) CPLMalloc(nHexLen / 2 + 2);
-            
-    for( i = 0; i < nHexLen/2; i++ )
+    register unsigned char h1, h2;
+    GByte *pabyWKB = (GByte *) CPLMalloc(nHexLen / 2 + 2);
+
+    for( size_t i = 0; i < nHexLen/2; ++i )
     {
         h1 = hex2char[(int)pszHex[2*i]];
         h2 = hex2char[(int)pszHex[2*i+1]];
@@ -2428,7 +2367,7 @@ GByte *CPLHexToBinary( const char *pszHex, int *pnBytes )
     }
     pabyWKB[nHexLen/2] = 0;
     *pnBytes = nHexLen/2;
-    
+
     return pabyWKB;
 
 }
@@ -2468,16 +2407,16 @@ CPLValueType CPLGetValueType(const char* pszValue)
 
     /* Skip leading spaces */
     while( isspace( (unsigned char)*pszValue ) )
-        pszValue ++;
+        ++pszValue;
 
     if (*pszValue == '\0')
         return CPL_VALUE_STRING;
 
     /* Skip leading + or - */
     if (*pszValue == '+' || *pszValue == '-')
-        pszValue ++;
+        ++pszValue;
 
-    for(; *pszValue != '\0'; pszValue++ )
+    for(; *pszValue != '\0'; ++pszValue )
     {
         if( isdigit( *pszValue))
         {
@@ -2488,7 +2427,7 @@ CPLValueType CPLGetValueType(const char* pszValue)
         {
             const char* pszTmp = pszValue;
             while( isspace( (unsigned char)*pszTmp ) )
-                pszTmp ++;
+                ++pszTmp;
             if (*pszTmp == 0)
                 break;
             else
@@ -2568,19 +2507,19 @@ if (CPLStrlcpy(szDest, "abcde", sizeof(szDest)) >= sizeof(szDest))
  */
 size_t CPLStrlcpy(char* pszDest, const char* pszSrc, size_t nDestSize)
 {
-    char* pszDestIter = pszDest;
-    const char* pszSrcIter = pszSrc;
-
     if (nDestSize == 0)
         return strlen(pszSrc);
 
-    nDestSize --;
+    char* pszDestIter = pszDest;
+    const char* pszSrcIter = pszSrc;
+
+    --nDestSize;
     while(nDestSize != 0 && *pszSrcIter != '\0')
     {
         *pszDestIter = *pszSrcIter;
-        pszDestIter ++;
-        pszSrcIter ++;
-        nDestSize --;
+        ++pszDestIter;
+        ++pszSrcIter;
+        --nDestSize;
     }
     *pszDestIter = '\0';
     return pszSrcIter - pszSrc + strlen(pszSrcIter);
@@ -2626,8 +2565,8 @@ size_t CPLStrlcat(char* pszDest, const char* pszSrc, size_t nDestSize)
 
     while(nDestSize != 0 && *pszDestIter != '\0')
     {
-        pszDestIter ++;
-        nDestSize --;
+        ++pszDestIter;
+        --nDestSize;
     }
 
     return pszDestIter - pszDest + CPLStrlcpy(pszDestIter, pszSrc, nDestSize);
@@ -2660,8 +2599,8 @@ size_t CPLStrnlen (const char *pszStr, size_t nMaxLen)
     size_t nLen = 0;
     while(nLen < nMaxLen && *pszStr != '\0')
     {
-        nLen ++;
-        pszStr ++;
+        ++nLen;
+        ++pszStr;
     }
     return nLen;
 }
