@@ -124,12 +124,10 @@ static int VSICurlFindStringSensitiveExceptEscapeSequences( char ** papszList,
                                                             const char * pszTarget )
 
 {
-    int         i;
-
     if( papszList == NULL )
         return -1;
 
-    for( i = 0; papszList[i] != NULL; i++ )
+    for( int i = 0; papszList[i] != NULL; i++ )
     {
         const char* pszIter1 = papszList[i];
         const char* pszIter2 = pszTarget;
@@ -307,28 +305,24 @@ class VSICurlHandle : public VSIVirtualHandle
 /*                           VSICurlHandle()                            */
 /************************************************************************/
 
-VSICurlHandle::VSICurlHandle(VSICurlFilesystemHandler* poFS, const char* pszURL)
+VSICurlHandle::VSICurlHandle(VSICurlFilesystemHandler* poFSIn, const char* pszURLIn) :
+    poFS(poFSIn),
+    curOffset(0),
+    lastDownloadedOffset(-1),
+    nBlocksToDownload(1),
+    bEOF(FALSE),
+    pfnReadCbk(NULL),
+    pReadCbkUserData(NULL),
+    bStopOnInterrruptUntilUninstall(FALSE),
+    bInterrupted(FALSE)
 {
-    this->poFS = poFS;
-    this->pszURL = CPLStrdup(pszURL);
-
-    curOffset = 0;
-
+    pszURL = CPLStrdup(pszURLIn);
     CachedFileProp* cachedFileProp = poFS->GetCachedFileProp(pszURL);
     eExists = cachedFileProp->eExists;
     fileSize = cachedFileProp->fileSize;
     bHastComputedFileSize = cachedFileProp->bHastComputedFileSize;
     bIsDirectory = cachedFileProp->bIsDirectory;
     mTime = cachedFileProp->mTime;
-
-    lastDownloadedOffset = -1;
-    nBlocksToDownload = 1;
-    bEOF = FALSE;
-
-    pfnReadCbk = NULL;
-    pReadCbkUserData = NULL;
-    bStopOnInterrruptUntilUninstall = FALSE;
-    bInterrupted = FALSE;
 }
 
 /************************************************************************/
@@ -490,7 +484,7 @@ static void VSICURLInitWriteFuncStruct(WriteFuncStruct   *psStruct,
 static int VSICurlHandleWriteFunc(void *buffer, size_t count, size_t nmemb, void *req)
 {
     WriteFuncStruct* psStruct = (WriteFuncStruct*) req;
-    size_t nSize = count * nmemb;
+    const size_t nSize = count * nmemb;
 
     char* pNewBuffer = (char*) VSIRealloc(psStruct->pBuffer,
                                           psStruct->nSize + nSize + 1);
@@ -594,7 +588,7 @@ vsi_l_offset VSICurlHandle::GetFileSize()
     if (pszAllowedExtensions)
     {
         char** papszExtensions = CSLTokenizeString2( pszAllowedExtensions, ", ", 0 );
-        int nURLLen = strlen(pszURL);
+        const int nURLLen = strlen(pszURL);
         bool bFound = false;
         for(int i=0;papszExtensions[i] != NULL;i++)
         {
@@ -676,7 +670,6 @@ vsi_l_offset VSICurlHandle::GetFileSize()
     szCurlErrBuf[0] = '\0';
     curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
 
-    double dfSize = 0;
     curl_easy_perform(hCurlHandle);
 
     eExists = EXIST_UNKNOWN;
@@ -694,7 +687,8 @@ vsi_l_offset VSICurlHandle::GetFileSize()
                         pszURL, fileSize);
         }
     }
-    
+
+    double dfSize = 0;
     if (eExists != EXIST_YES)
     {
         CURLcode code = curl_easy_getinfo(hCurlHandle, CURLINFO_CONTENT_LENGTH_DOWNLOAD, &dfSize );
