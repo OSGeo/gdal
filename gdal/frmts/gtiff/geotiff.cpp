@@ -8554,10 +8554,10 @@ class GTIFFErrorStruct
 {
 public:
     CPLErr type;
-    CPLErrorNum    no;
+    CPLErrorNum no;
     CPLString msg;
-    
-        GTIFFErrorStruct() {}
+
+        GTIFFErrorStruct() : type(CE_None), no(CPLE_None) {}
         GTIFFErrorStruct(CPLErr eErr, CPLErrorNum no, const char* msg) :
             type(eErr), no(no), msg(msg) {}
 };
