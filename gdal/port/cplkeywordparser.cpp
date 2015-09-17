@@ -73,10 +73,8 @@ int CPLKeywordParser::Ingest( VSILFILE *fp )
 /* -------------------------------------------------------------------- */
     for( ; true; )
     {
-        const char *pszCheck;
         char szChunk[513];
-
-        int nBytesRead = VSIFReadL( szChunk, 1, 512, fp );
+        const int nBytesRead = VSIFReadL( szChunk, 1, 512, fp );
 
         szChunk[nBytesRead] = '\0';
         osHeaderText += szChunk;
@@ -84,6 +82,7 @@ int CPLKeywordParser::Ingest( VSILFILE *fp )
         if( nBytesRead < 512 )
             break;
 
+        const char *pszCheck;
         if( osHeaderText.size() > 520 )
             pszCheck = osHeaderText.c_str() + (osHeaderText.size() - 520);
         else
@@ -163,11 +162,11 @@ int CPLKeywordParser::ReadPair( CPLString &osName, CPLString &osValue )
         else
             return FALSE;
     }
-    
+
     pszHeaderNext++;
-    
+
     SkipWhite();
-    
+
     osValue = "";
 
     // Handle value lists like:     Name   = (Red, Red)
@@ -214,7 +213,7 @@ int CPLKeywordParser::ReadPair( CPLString &osName, CPLString &osValue )
             return FALSE;
 
     }
-        
+
     SkipWhite();
 
     // No units keyword?   
@@ -223,20 +222,20 @@ int CPLKeywordParser::ReadPair( CPLString &osName, CPLString &osValue )
 
     // Append units keyword.  For lines that like like this:
     //  MAP_RESOLUTION               = 4.0 <PIXEL/DEGREE>
-    
+
     CPLString osWord;
-    
+
     osValue += " ";
-    
+
     while( ReadWord( osWord ) )
     {
         SkipWhite();
-        
+
         osValue += osWord;
         if( osWord[strlen(osWord)-1] == '>' )
             break;
     }
-    
+
     return TRUE;
 }
 
@@ -316,7 +315,7 @@ void CPLKeywordParser::SkipWhite()
         if( *pszHeaderNext == '/' && pszHeaderNext[1] == '*' )
         {
             pszHeaderNext += 2;
-            
+
             while( *pszHeaderNext != '\0' 
                    && (*pszHeaderNext != '*' 
                        || pszHeaderNext[1] != '/' ) )
@@ -356,11 +355,9 @@ const char *CPLKeywordParser::GetKeyword( const char *pszPath,
                                             const char *pszDefault )
 
 {
-    const char *pszResult;
-
-    pszResult = CSLFetchNameValue( papszKeywordList, pszPath );
+    const char *pszResult = CSLFetchNameValue( papszKeywordList, pszPath );
     if( pszResult == NULL )
         return pszDefault;
-    else
-        return pszResult;
+
+    return pszResult;
 }
