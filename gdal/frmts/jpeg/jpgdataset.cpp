@@ -121,11 +121,17 @@ void JPGAddICCProfile( struct jpeg_compress_struct *pInfo,
                        void (*p_jpeg_write_m_header) (j_compress_ptr cinfo, int marker, unsigned int datalen),
                        void (*p_jpeg_write_m_byte) (j_compress_ptr cinfo, int val));
 
-typedef struct
+typedef struct GDALJPEGErrorStruct
 {
     jmp_buf     setjmp_buffer;
     int         bNonFatalErrorEncountered;
     void      (*p_previous_emit_message)(j_common_ptr cinfo, int msg_level);
+    GDALJPEGErrorStruct() :
+        bNonFatalErrorEncountered(FALSE),
+        p_previous_emit_message(NULL)
+    {
+        memset(&setjmp_buffer, 0, sizeof(setjmp_buffer));
+    }
 } GDALJPEGErrorStruct;
 
 /************************************************************************/
@@ -213,7 +219,7 @@ protected:
     CPLString osWldFilename;
 
     virtual int         CloseDependentDatasets();
-    
+
     virtual CPLErr IBuildOverviews( const char *, int, int *,
                                     int, int *, GDALProgressFunc, void * );
 
@@ -1144,61 +1150,49 @@ int JPGRasterBand::GetOverviewCount()
 /************************************************************************/
 
 JPGDatasetCommon::JPGDatasetCommon() :
+    nScaleFactor(1),
+    bHasInitInternalOverviews(FALSE),
+    nInternalOverviewsCurrent(0),
+    nInternalOverviewsToFree(0),
+    papoInternalOverviews(NULL),
+    pszProjection(NULL),
+    bGeoTransformValid(FALSE),
+    nGCPCount(0),
+    pasGCPList(NULL),
+    fpImage(NULL),
     nSubfileOffset(0),
+    nLoadedScanline(-1),
+    pabyScanline(NULL),
+    bHasReadEXIFMetadata(FALSE),
+    bHasReadXMPMetadata(FALSE),
+    bHasReadICCMetadata(FALSE),
+    papszMetadata(NULL),
+    papszSubDatasets(NULL),
     bigendian(1),
-    bSwabflag(FALSE)
+    nExifOffset(-1),
+    nInterOffset(-1),
+    nGPSOffset(-1),
+    bSwabflag(FALSE),
+    nTiffDirStart(-1),
+    nTIFFHEADER(-1),
+    bHasDoneJpegCreateDecompress(FALSE),
+    bHasDoneJpegStartDecompress(FALSE),
+    bHasCheckedForMask(FALSE),
+    poMaskBand(NULL),
+    pabyBitMask(NULL),
+    bMaskLSBOrder(TRUE),
+    pabyCMask(NULL),
+    nCMaskSize(0),
+    eGDALColorSpace(JCS_UNKNOWN),
+    bIsSubfile(FALSE),
+    bHasTriedLoadWorldFileOrTab(FALSE)
 {
-  // TODO: How should sErrorStruct.setjmp_buffer be initialized?
-    fpImage = NULL;
-
-    nScaleFactor = 1;
-    bHasInitInternalOverviews = FALSE;
-    nInternalOverviewsCurrent = 0;
-    nInternalOverviewsToFree = 0;
-    papoInternalOverviews = NULL;
-
-    pabyScanline = NULL;
-    nLoadedScanline = -1;
-
-    bHasReadEXIFMetadata = FALSE;
-    bHasReadXMPMetadata = FALSE;
-    bHasReadICCMetadata = FALSE;
-    papszMetadata   = NULL;
-    papszSubDatasets= NULL;
-    nExifOffset     = -1;
-    nInterOffset    = -1;
-    nGPSOffset      = -1;
-    nTiffDirStart   = -1;
-    nTIFFHEADER     = -1;
-
-    pszProjection = NULL;
-    bGeoTransformValid = FALSE;
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
     adfGeoTransform[2] = 0.0;
     adfGeoTransform[3] = 0.0;
     adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = 1.0;
-    nGCPCount = 0;
-    pasGCPList = NULL;
-
-    bHasDoneJpegCreateDecompress = FALSE;
-    bHasDoneJpegStartDecompress = FALSE;
-
-    bHasCheckedForMask = FALSE;
-    poMaskBand = NULL;
-    pabyBitMask = NULL;
-    bMaskLSBOrder = TRUE;
-    pabyCMask = NULL;
-    nCMaskSize = 0;
-
-    eGDALColorSpace = JCS_UNKNOWN;
-
-    bIsSubfile = FALSE;
-    bHasTriedLoadWorldFileOrTab = FALSE;
-
-    sErrorStruct.bNonFatalErrorEncountered = FALSE;
-    sErrorStruct.p_previous_emit_message = NULL;
 }
 
 /************************************************************************/
