@@ -81,8 +81,8 @@ int CPLGetExecPath( char *pszPathBuf, int nMaxLength )
 #else
     if( CE_GetModuleFileNameA( NULL, pszPathBuf, nMaxLength ) == 0 )
         return FALSE;
-    else
-        return TRUE;
+
+    return TRUE;
 #endif
 }
 
@@ -102,10 +102,9 @@ int CPLGetExecPath( char *pszPathBuf, int nMaxLength )
 {
     long nPID = getpid();
     CPLString osExeLink;
-    ssize_t nResultLen;
 
     osExeLink.Printf( "/proc/%ld/exe", nPID );
-    nResultLen = readlink( osExeLink, pszPathBuf, nMaxLength );
+    ssize_t nResultLen = readlink( osExeLink, pszPathBuf, nMaxLength );
     if( nResultLen >= 0 )
         pszPathBuf[nResultLen] = '\0';
     else
@@ -141,4 +140,3 @@ int CPLGetExecPath( CPL_UNUSED char *pszPathBuf, CPL_UNUSED int nMaxLength )
 }
 
 #endif
-
