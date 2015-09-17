@@ -2207,8 +2207,7 @@ int GTIFSetFromOGISDefnEx( GTIF * psGTIF, const char *pszOGCWKT,
             peStrStored = TRUE;
             CPLFree( outPeStr );
         }
-        if(pszPEString)
-            CPLFree( pszPEString );
+        CPLFree( pszPEString );
         GTIFKeySet(psGTIF, GTModelTypeGeoKey, TYPE_SHORT, 1,
                    KvUserDefined );
 
