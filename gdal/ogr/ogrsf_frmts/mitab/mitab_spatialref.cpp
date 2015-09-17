@@ -2056,6 +2056,16 @@ int TABFile::GetTABProjFromSpatialRef(const OGRSpatialReference* poSpatialRef,
             }
         }
     }
+
+    // Google Merc
+    if( poSpatialRef->GetAuthorityName(NULL) != NULL &&
+        EQUAL(poSpatialRef->GetAuthorityName(NULL), "EPSG") &&
+        poSpatialRef->GetAuthorityCode(NULL) != NULL &&
+        atoi(poSpatialRef->GetAuthorityCode(NULL)) == 3857 )
+    {
+        sTABProj.nDatumId = 157;
+        sTABProj.nEllipsoidId = 54;
+    }
     
     /*-----------------------------------------------------------------
      * Translate the units
