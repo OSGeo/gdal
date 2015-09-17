@@ -5134,6 +5134,7 @@ GTiffDataset::GTiffDataset() :
     psVirtualMemIOMapping = NULL;
     
     nSetPhotometricFromBandColorInterp = 0;
+    eGeoTIFFKeysFlavor = GEOTIFF_KEYS_STANDARD;
 
     pBaseMapping = NULL;
     nRefBaseMapping = 0;
