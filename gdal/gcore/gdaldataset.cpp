@@ -225,9 +225,7 @@ void GDALDataset::Init(int bForceCachedIOIn)
 GDALDataset::~GDALDataset()
 
 {
-    int         i;
-
-    // we don't want to report destruction of datasets that 
+    // we don't want to report destruction of datasets that
     // were never really open or meant as internal
     if( !bIsInternal && ( nBands != 0 || !EQUAL(GetDescription(),"") ) )
     {
@@ -293,7 +291,7 @@ GDALDataset::~GDALDataset()
 /* -------------------------------------------------------------------- */
 /*      Destroy the raster bands if they exist.                         */
 /* -------------------------------------------------------------------- */
-    for( i = 0; i < nBands && papoBands != NULL; i++ )
+    for( int i = 0; i < nBands && papoBands != NULL; i++ )
     {
         if( papoBands[i] != NULL )
             delete papoBands[i];
@@ -357,25 +355,23 @@ void GDALDataset::AddToDatasetOpenList()
 void GDALDataset::FlushCache()
 
 {
-    int         i;
-
     // This sometimes happens if a dataset is destroyed before completely
     // built. 
 
     if( papoBands != NULL )
     {
-        for( i = 0; i < nBands; i++ )
+        for( int i = 0; i < nBands; i++ )
         {
             if( papoBands[i] != NULL )
                 papoBands[i]->FlushCache();
         }
     }
 
-    int nLayers = GetLayerCount();
+    const int nLayers = GetLayerCount();
     if( nLayers > 0 )
     {
         CPLMutexHolderD( &m_hMutex );
-        for( i = 0; i < nLayers ; i++ )
+        for( int i = 0; i < nLayers ; i++ )
         {
             OGRLayer *poLayer = GetLayer(i);
 
@@ -419,26 +415,24 @@ void CPL_STDCALL GDALFlushCache( GDALDatasetH hDS )
 void GDALDataset::BlockBasedFlushCache()
 
 {
-    GDALRasterBand *poBand1;
-    int  nBlockXSize, nBlockYSize, iBand;
-    
-    poBand1 = GetRasterBand( 1 );
+    GDALRasterBand *poBand1 = GetRasterBand( 1 );
     if( poBand1 == NULL )
     {
         GDALDataset::FlushCache();
         return;
     }
 
+    int  nBlockXSize, nBlockYSize;
     poBand1->GetBlockSize( &nBlockXSize, &nBlockYSize );
-    
+
 /* -------------------------------------------------------------------- */
 /*      Verify that all bands match.                                    */
 /* -------------------------------------------------------------------- */
-    for( iBand = 1; iBand < nBands; iBand++ )
+    for( int iBand = 1; iBand < nBands; iBand++ )
     {
-        int nThisBlockXSize, nThisBlockYSize;
         GDALRasterBand *poBand = GetRasterBand( iBand+1 );
-        
+
+        int nThisBlockXSize, nThisBlockYSize;
         poBand->GetBlockSize( &nThisBlockXSize, &nThisBlockYSize );
         if( nThisBlockXSize != nBlockXSize && nThisBlockYSize != nBlockYSize )
         {
@@ -454,7 +448,7 @@ void GDALDataset::BlockBasedFlushCache()
     {
         for( int iX = 0; iX < poBand1->nBlocksPerRow; iX++ )
         {
-            for( iBand = 0; iBand < nBands; iBand++ )
+            for( int iBand = 0; iBand < nBands; iBand++ )
             {
                 GDALRasterBand *poBand = GetRasterBand( iBand+1 );
 
@@ -479,7 +473,7 @@ void GDALDataset::RasterInitialize( int nXSize, int nYSize )
 
 {
     CPLAssert( nXSize > 0 && nYSize > 0 );
-    
+
     nRasterXSize = nXSize;
     nRasterYSize = nYSize;
 }
@@ -552,7 +546,6 @@ void GDALDataset::SetBand( int nNewBand, GDALRasterBand * poBand )
 /*      Do we need to grow the bands list?                              */
 /* -------------------------------------------------------------------- */
     if( nBands < nNewBand || papoBands == NULL ) {
-        int             i;
         GDALRasterBand** papoNewBands;
 
         if( papoBands == NULL )
@@ -570,7 +563,7 @@ void GDALDataset::SetBand( int nNewBand, GDALRasterBand * poBand )
         }
         papoBands = papoNewBands;
 
-        for( i = nBands; i < nNewBand; i++ )
+        for( int i = nBands; i < nNewBand; i++ )
             papoBands[i] = NULL;
 
         nBands = MAX(nBands,nNewBand);
@@ -4189,7 +4182,6 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
     }
     else
     {
-      int i;
       bool bStopTransfer = false;
       bool bStopTransaction = false;
       int nFeatCount = 0; // Number of features in the temporary array
@@ -4264,7 +4256,7 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
         {
             bStopTransaction = true;
             poDstLayer->StartTransaction();
-            for( i = 0; i < nFeaturesToAdd; i++ )
+            for( int i = 0; i < nFeaturesToAdd; i++ )
             {
                 if( poDstLayer->CreateFeature( papoDstFeature[i] ) != OGRERR_NONE )
                 {
@@ -4279,7 +4271,7 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
                 poDstLayer->RollbackTransaction();
         }
 
-        for( i = 0; i < nFeatCount; i++ )
+        for( int i = 0; i < nFeatCount; i++ )
             OGRFeature::DestroyFeature( papoDstFeature[i] );
       }
       CPLFree(papoDstFeature);
