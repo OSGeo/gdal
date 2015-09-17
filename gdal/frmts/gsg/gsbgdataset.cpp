@@ -616,6 +616,7 @@ GDALDataset *GSBGDataset::Open( GDALOpenInfo * poOpenInfo )
     if( VSIFReadL( (void *)&dfTemp, 8, 1, poDS->fp ) != 1 )
     {
 	delete poDS;
+        delete poBand;
 	CPLError( CE_Failure, CPLE_FileIO,
 		  "Unable to read minimum X value.\n" );
 	return NULL;
@@ -626,6 +627,7 @@ GDALDataset *GSBGDataset::Open( GDALOpenInfo * poOpenInfo )
     if( VSIFReadL( (void *)&dfTemp, 8, 1, poDS->fp ) != 1 )
     {
 	delete poDS;
+        delete poBand;
 	CPLError( CE_Failure, CPLE_FileIO,
 		  "Unable to read maximum X value.\n" );
 	return NULL;
@@ -636,6 +638,7 @@ GDALDataset *GSBGDataset::Open( GDALOpenInfo * poOpenInfo )
     if( VSIFReadL( (void *)&dfTemp, 8, 1, poDS->fp ) != 1 )
     {
 	delete poDS;
+        delete poBand;
 	CPLError( CE_Failure, CPLE_FileIO,
 		  "Unable to read minimum Y value.\n" );
 	return NULL;
@@ -646,6 +649,7 @@ GDALDataset *GSBGDataset::Open( GDALOpenInfo * poOpenInfo )
     if( VSIFReadL( (void *)&dfTemp, 8, 1, poDS->fp ) != 1 )
     {
 	delete poDS;
+        delete poBand;
 	CPLError( CE_Failure, CPLE_FileIO,
 		  "Unable to read maximum Y value.\n" );
 	return NULL;
@@ -656,6 +660,7 @@ GDALDataset *GSBGDataset::Open( GDALOpenInfo * poOpenInfo )
     if( VSIFReadL( (void *)&dfTemp, 8, 1, poDS->fp ) != 1 )
     {
 	delete poDS;
+        delete poBand;
 	CPLError( CE_Failure, CPLE_FileIO,
 		  "Unable to read minimum Z value.\n" );
 	return NULL;
@@ -666,6 +671,7 @@ GDALDataset *GSBGDataset::Open( GDALOpenInfo * poOpenInfo )
     if( VSIFReadL( (void *)&dfTemp, 8, 1, poDS->fp ) != 1 )
     {
 	delete poDS;
+        delete poBand;
 	CPLError( CE_Failure, CPLE_FileIO,
 		  "Unable to read maximum Z value.\n" );
 	return NULL;
