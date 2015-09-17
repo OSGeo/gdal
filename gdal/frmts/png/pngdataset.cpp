@@ -503,6 +503,12 @@ CPLErr PNGDataset::IRasterIO( GDALRWFlag eRWFlag,
                               GDALRasterIOExtraArg* psExtraArg )
 
 {
+    // Coverity says that we cannot pass a nullptr to IRasterIO.
+    if (panBandMap == NULL)
+    {
+      return CE_Failure;
+    }
+
     if((eRWFlag == GF_Read) &&
        (nBandCount == nBands) &&
        (nXOff == 0) && (nYOff == 0) &&
@@ -513,16 +519,13 @@ CPLErr PNGDataset::IRasterIO( GDALRWFlag eRWFlag,
        (pData != NULL) &&
        (panBandMap != NULL) && IsFullBandMap(panBandMap, nBands))
     {
-        int y;
-        CPLErr tmpError;
-        int x;
 
         // Pixel interleaved case
         if( nBandSpace == 1 )
         {
-            for(y = 0; y < nYSize; ++y)
+            for(int y = 0; y < nYSize; ++y)
             {
-                tmpError = LoadScanline(y);
+                CPLErr tmpError = LoadScanline(y);
                 if(tmpError != CE_None) return tmpError;
                 GByte* pabyScanline = pabyBuffer 
                     + (y - nBufferStartLine) * nBands * nXSize;
@@ -533,7 +536,7 @@ CPLErr PNGDataset::IRasterIO( GDALRWFlag eRWFlag,
                 }
                 else
                 {
-                    for(x = 0; x < nXSize; ++x)
+                    for(int x = 0; x < nXSize; ++x)
                     {
                         memcpy(&(((GByte*)pData)[(y*nLineSpace) + (x*nPixelSpace)]), 
                                (const GByte*)&(pabyScanline[x* nBandCount]), nBandCount);
@@ -543,13 +546,13 @@ CPLErr PNGDataset::IRasterIO( GDALRWFlag eRWFlag,
         }
         else
         {
-            for(y = 0; y < nYSize; ++y)
+            for(int y = 0; y < nYSize; ++y)
             {
-                tmpError = LoadScanline(y);
+                CPLErr tmpError = LoadScanline(y);
                 if(tmpError != CE_None) return tmpError;
                 GByte* pabyScanline = pabyBuffer 
                     + (y - nBufferStartLine) * nBands * nXSize;
-                for(x = 0; x < nXSize; ++x)
+                for(int x = 0; x < nXSize; ++x)
                 {
                     for(int iBand=0;iBand<nBands;iBand++)
                         ((GByte*)pData)[(y*nLineSpace) + (x*nPixelSpace) + iBand * nBandSpace] = pabyScanline[x*nBands+iBand];
