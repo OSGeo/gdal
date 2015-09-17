@@ -1632,7 +1632,8 @@ OGRErr OGRSpatialReference::morphFromESRI()
     if( pszProjection != NULL &&
              EQUAL(pszProjection, SRS_PT_MERCATOR_AUXILIARY_SPHERE) )
     {
-       return importFromEPSG(3857);
+        CPLFree( pszDatumOrig );
+        return importFromEPSG(3857);
     }
 
 /* -------------------------------------------------------------------- */
