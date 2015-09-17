@@ -57,7 +57,7 @@ typedef struct
     CPLJoinableThread   *hThread;
     int                  bMarkedAsWaiting;
     //CPLWorkerThreadJob  *psNextJob;
-    
+
     CPLMutex            *hMutex;
     CPLCond             *hCond;
 } CPLWorkerThread;
@@ -70,7 +70,7 @@ class CPL_DLL CPLWorkerThreadPool
         volatile int bStop;
         CPLList* psJobQueue;
         volatile int nPendingJobs;
-        
+
         CPLList* psWaitingWorkerThreadsList;
         int nWaitingWorkerThreads;
 
