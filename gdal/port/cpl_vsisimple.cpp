@@ -95,7 +95,6 @@ FILE *VSIFOpen( const char * pszFilename, const char * pszAccess )
 
 {
     FILE *fp = NULL;
-    int     nError;
 
 #if defined(WIN32) && !defined(WIN32CE)
     if( CSLTestBoolean(
@@ -115,7 +114,7 @@ FILE *VSIFOpen( const char * pszFilename, const char * pszAccess )
 #endif
     fp = fopen( (char *) pszFilename, (char *) pszAccess );
 
-    nError = errno;
+    int nError = errno;  // Save errno from VSIDebug possible errors.
     VSIDebug3( "VSIFOpen(%s,%s) = %p", pszFilename, pszAccess, fp );
     errno = nError;
 
@@ -141,10 +140,11 @@ int VSIFClose( FILE * fp )
 int VSIFSeek( FILE * fp, long nOffset, int nWhence )
 
 {
-    int     nResult = fseek( fp, nOffset, nWhence );
-    int     nError = errno;
+    int nResult = fseek( fp, nOffset, nWhence );
 
 #ifdef VSI_DEBUG
+    int nError = errno;  // Save errorno from VSIDebug possible errors.
+
     if( nWhence == SEEK_SET )
     {
         VSIDebug3( "VSIFSeek(%p,%ld,SEEK_SET) = %d", fp, nOffset, nResult );
@@ -162,9 +162,10 @@ int VSIFSeek( FILE * fp, long nOffset, int nWhence )
         VSIDebug4( "VSIFSeek(%p,%ld,%d-Unknown) = %d",
                    fp, nOffset, nWhence, nResult );
     }
-#endif 
 
     errno = nError;
+#endif
+
     return nResult;
 }
 
@@ -175,12 +176,16 @@ int VSIFSeek( FILE * fp, long nOffset, int nWhence )
 long VSIFTell( FILE * fp )
 
 {
-    long    nOffset = ftell(fp);
-    int     nError = errno;
+    long nOffset = ftell(fp);
+
+#ifdef VSI_DEBUG
+    int nError = errno;
 
     VSIDebug2( "VSIFTell(%p) = %ld", fp, nOffset );
 
     errno = nError;
+#endif
+
     return nOffset;
 }
 
@@ -203,12 +208,16 @@ size_t VSIFRead( void * pBuffer, size_t nSize, size_t nCount, FILE * fp )
 
 {
     size_t  nResult = fread( pBuffer, nSize, nCount, fp );
+
+#ifdef VSI_DEBUG
     int     nError = errno;
 
-    VSIDebug4( "VSIFRead(%p,%ld,%ld) = %ld", 
+    VSIDebug4( "VSIFRead(%p,%ld,%ld) = %ld",
                fp, (long)nSize, (long)nCount, (long)nResult );
 
     errno = nError;
+#endif
+
     return nResult;
 }
 
@@ -220,12 +229,16 @@ size_t VSIFWrite( const void *pBuffer, size_t nSize, size_t nCount, FILE * fp )
 
 {
     size_t  nResult = fwrite( pBuffer, nSize, nCount, fp );
+
+#ifdef VSI_DEBUG
     int     nError = errno;
 
-    VSIDebug4( "VSIFWrite(%p,%ld,%ld) = %ld", 
+    VSIDebug4( "VSIFWrite(%p,%ld,%ld) = %ld",
                fp, (long)nSize, (long)nCount, (long)nResult );
 
     errno = nError;
+#endif
+
     return nResult;
 }
 
@@ -685,7 +698,7 @@ void VSIFree( void * pData )
 char *VSIStrdup( const char * pszString )
 
 {
-    int nSize = strlen(pszString) + 1;
+    const int nSize = strlen(pszString) + 1;
     char* ptr = (char*) VSIMalloc(nSize);
     if (ptr == NULL)
         return NULL;
@@ -699,7 +712,7 @@ char *VSIStrdup( const char * pszString )
 
 static size_t VSICheckMul2( size_t mul1, size_t mul2, int *pbOverflowFlag)
 {
-    size_t res = mul1 * mul2;
+    const size_t res = mul1 * mul2;
     if (mul1 != 0)
     {
         if (res / mul1 == mul2)
@@ -733,10 +746,10 @@ static size_t VSICheckMul3( size_t mul1, size_t mul2, size_t mul3, int *pbOverfl
 {
     if (mul1 != 0)
     {
-        size_t res = mul1 * mul2;
+        const size_t res = mul1 * mul2;
         if (res / mul1 == mul2)
         {
-            size_t res2 = res * mul3;
+            const size_t res2 = res * mul3;
             if (mul3 != 0)
             {
                 if (res2 / mul3 == res)
@@ -822,17 +835,15 @@ void CPL_DLL *VSIMalloc3( size_t nSize1, size_t nSize2, size_t nSize3 )
 {
     int bOverflowFlag = FALSE;
 
-    size_t nSizeToAllocate;
-    void* pReturn;
-
-    nSizeToAllocate = VSICheckMul3( nSize1, nSize2, nSize3, &bOverflowFlag );
+    const size_t nSizeToAllocate
+        = VSICheckMul3( nSize1, nSize2, nSize3, &bOverflowFlag );
     if (bOverflowFlag)
         return NULL;
 
     if (nSizeToAllocate == 0)
         return NULL;
 
-    pReturn = VSIMalloc(nSizeToAllocate);
+    void* pReturn = VSIMalloc(nSizeToAllocate);
 
     if( pReturn == NULL )
     {
@@ -866,9 +877,9 @@ int VSIStat( const char * pszFilename, VSIStatBuf * pStatBuf )
 
         return nResult;
     }
-    else
-#endif 
-        return( stat( pszFilename, pStatBuf ) );
+
+#endif
+    return( stat( pszFilename, pStatBuf ) );
 }
 
 /************************************************************************/
@@ -879,7 +890,7 @@ unsigned long VSITime( unsigned long * pnTimeToSet )
 
 {
     time_t tTime;
-        
+
     tTime = time( NULL );
 
     if( pnTimeToSet != NULL )
@@ -910,8 +921,7 @@ struct tm *VSIGMTime( const time_t *pnTime, struct tm *poBrokenTime )
 #if HAVE_GMTIME_R
     gmtime_r( pnTime, poBrokenTime );
 #else
-    struct tm   *poTime;
-    poTime = gmtime( pnTime );
+    struct tm *poTime = gmtime( pnTime );
     memcpy( poBrokenTime, poTime, sizeof(tm) );
 #endif
 
@@ -928,8 +938,7 @@ struct tm *VSILocalTime( const time_t *pnTime, struct tm *poBrokenTime )
 #if HAVE_LOCALTIME_R
     localtime_r( pnTime, poBrokenTime );
 #else
-    struct tm   *poTime;
-    poTime = localtime( pnTime );
+    struct tm *poTime = localtime( pnTime );
     memcpy( poBrokenTime, poTime, sizeof(tm) );
 #endif
 
