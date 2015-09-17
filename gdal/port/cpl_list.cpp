@@ -16,10 +16,10 @@
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
@@ -45,7 +45,7 @@ CPL_CVSID("$Id$");
 /**
  * Append an object list and return a pointer to the modified list.
  * If the input list is NULL, then a new list is created.
- * 
+ *
  * @param psList pointer to list head.
  * @param pData pointer to inserted data object. May be NULL.
  *
@@ -175,12 +175,11 @@ CPLList *CPLListGetLast( CPLList *psList )
 
 CPLList *CPLListGet( CPLList *psList, int nPosition )
 {
-    int     iItem = 0;
-    CPLList *psCurrent = psList;
-
     if ( nPosition < 0 )
         return NULL;
 
+    CPLList *psCurrent = psList;
+    int     iItem = 0;
     while ( iItem < nPosition && psCurrent )
     {
         psCurrent = psCurrent->psNext;
@@ -196,7 +195,7 @@ CPLList *CPLListGet( CPLList *psList, int nPosition )
 
 /**
  * Return the number of elements in a list.
- * 
+ *
  * @param psList pointer to list head.
  *
  * @return number of elements in a list.
@@ -223,7 +222,7 @@ int CPLListCount( CPLList *psList )
 /**
  * Remove the element from the specified position (zero based) in a list. Data
  * object contained in removed element must be freed by the caller first.
- * 
+ *
  * @param psList pointer to list head.
  * @param nPosition position number to delet an element.
  *
@@ -232,40 +231,36 @@ int CPLListCount( CPLList *psList )
 
 CPLList *CPLListRemove( CPLList *psList, int nPosition )
 {
-    CPLList *psCurrent, *psRemoved;
-    int     i;
 
     if ( psList == NULL)
-    {
         return NULL;
-    }
-    else if ( nPosition < 0)
-    {
-        return psList;      /* Nothing to do!*/
-    }
-    else if ( nPosition == 0 )
+
+    if ( nPosition < 0)
+        return psList;      /* Nothing to do. */
+
+    CPLList *psCurrent, *psRemoved;
+    if ( nPosition == 0 )
     {
         psCurrent = psList->psNext;
         CPLFree( psList );
         psList = psCurrent;
+        return psList;
     }
-    else
+
+    psCurrent = psList;
+    for ( int i = 0; i < nPosition - 1; i++ )
     {
-        psCurrent = psList;
-        for ( i = 0; i < nPosition - 1; i++ )
-        {
-            psCurrent = psCurrent->psNext;
-            /* psCurrent == NULL if nPosition >= CPLListCount(psList) */
-            if (psCurrent == NULL)
-                return psList;
-        }
-        psRemoved = psCurrent->psNext;
-        /* psRemoved == NULL if nPosition >= CPLListCount(psList) */
-        if (psRemoved == NULL)
+        psCurrent = psCurrent->psNext;
+        /* psCurrent == NULL if nPosition >= CPLListCount(psList) */
+        if (psCurrent == NULL)
             return psList;
-        psCurrent->psNext = psRemoved->psNext;
-        CPLFree( psRemoved );
     }
+    psRemoved = psCurrent->psNext;
+    /* psRemoved == NULL if nPosition >= CPLListCount(psList) */
+    if (psRemoved == NULL)
+        return psList;
+    psCurrent->psNext = psRemoved->psNext;
+    CPLFree( psRemoved );
 
     return psList;
 }
@@ -277,7 +272,7 @@ CPLList *CPLListRemove( CPLList *psList, int nPosition )
 /**
  * Destroy a list. Caller responsible for freeing data objects contained in
  * list elements.
- * 
+ *
  * @param psList pointer to list head.
  *
  */
@@ -301,7 +296,7 @@ void CPLListDestroy( CPLList *psList )
 
 /**
  * Return the pointer to next element in a list.
- * 
+ *
  * @param psElement pointer to list element.
  *
  * @return pointer to the list element preceded by the given element.
@@ -311,8 +306,8 @@ CPLList *CPLListGetNext( CPLList *psElement )
 {
     if ( psElement == NULL )
         return NULL;
-    else
-        return psElement->psNext;
+
+    return psElement->psNext;
 }
 
 /************************************************************************/
@@ -321,7 +316,7 @@ CPLList *CPLListGetNext( CPLList *psElement )
 
 /**
  * Return pointer to the data object contained in given list element.
- * 
+ *
  * @param psElement pointer to list element.
  *
  * @return pointer to the data object contained in given list element.
@@ -331,6 +326,6 @@ void *CPLListGetData( CPLList *psElement )
 {
     if ( psElement == NULL )
         return NULL;
-    else
-        return psElement->pData;
+
+    return psElement->pData;
 }
