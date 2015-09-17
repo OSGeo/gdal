@@ -166,15 +166,14 @@ public:
 /*                             VSIMemFile()                             */
 /************************************************************************/
 
-VSIMemFile::VSIMemFile()
-
+VSIMemFile::VSIMemFile() :
+    nRefCount(0),
+    bIsDirectory(FALSE),
+    bOwnData(TRUE),
+    pabyData(NULL),
+    nLength(0),
+    nAllocLength(0)
 {
-    nRefCount = 0;
-    bIsDirectory = FALSE;
-    bOwnData = TRUE;
-    pabyData = NULL;
-    nLength = 0;
-    nAllocLength = 0;
     time(&mTime);
 }
 
@@ -215,9 +214,9 @@ bool VSIMemFile::SetLength( vsi_l_offset nNewLength )
                      "Cannot extended in-memory file whose ownership was not transferred");
             return false;
         }
-        
+
         GByte *pabyNewData;
-        vsi_l_offset nNewAlloc = (nNewLength + nNewLength / 10) + 5000;
+        const vsi_l_offset nNewAlloc = (nNewLength + nNewLength / 10) + 5000;
         if( (vsi_l_offset)(size_t)nNewAlloc != nNewAlloc )
             pabyNewData = NULL;
         else
@@ -229,7 +228,7 @@ bool VSIMemFile::SetLength( vsi_l_offset nNewLength )
                      nNewAlloc);
             return false;
         }
-            
+
         /* Clear the new allocated part of the buffer */
         memset(pabyNewData + nAllocLength, 0, 
                (size_t) (nNewAlloc - nAllocLength));
@@ -328,7 +327,7 @@ size_t VSIMemHandle::Read( void * pBuffer, size_t nSize, size_t nCount )
 
 {
     // FIXME: Integer overflow check should be placed here:
-    size_t nBytesToRead = nSize * nCount; 
+    size_t nBytesToRead = nSize * nCount;
 
     if( nBytesToRead + nOffset > poFile->nLength )
     {
@@ -370,9 +369,7 @@ size_t VSIMemHandle::Write( const void * pBuffer, size_t nSize, size_t nCount )
     }
 
     // FIXME: Integer overflow check should be placed here:
-    size_t nBytesToWrite = nSize * nCount; 
-    //if( CSLTestBoolean(CPLGetConfigOption("VERBOSE_IO", "FALSE")) )
-    //    CPLDebug("MEM", "Write(%d bytes in [%d,%d[)", (int)nBytesToWrite, (int)nOffset, (int)(nOffset+nBytesToWrite));
+    const size_t nBytesToWrite = nSize * nCount;
 
     if( nBytesToWrite + nOffset > poFile->nLength )
     {
@@ -428,11 +425,9 @@ int VSIMemHandle::Truncate( vsi_l_offset nNewSize )
 /*                      VSIMemFilesystemHandler()                       */
 /************************************************************************/
 
-VSIMemFilesystemHandler::VSIMemFilesystemHandler()
-
-{
-    hMutex = NULL;
-}
+VSIMemFilesystemHandler::VSIMemFilesystemHandler() :
+    hMutex(NULL)
+{ }
 
 /************************************************************************/
 /*                      ~VSIMemFilesystemHandler()                      */
@@ -441,9 +436,9 @@ VSIMemFilesystemHandler::VSIMemFilesystemHandler()
 VSIMemFilesystemHandler::~VSIMemFilesystemHandler()
 
 {
-    std::map<CPLString,VSIMemFile*>::const_iterator iter;
-
-    for( iter = oFileList.begin(); iter != oFileList.end(); ++iter )
+    for( std::map<CPLString,VSIMemFile*>::const_iterator iter = oFileList.begin();
+         iter != oFileList.end();
+         ++iter )
     {
         iter->second->nRefCount--;
         delete iter->second;
