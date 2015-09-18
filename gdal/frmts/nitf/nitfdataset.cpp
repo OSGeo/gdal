@@ -1382,13 +1382,13 @@ GDALDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
             CPLsprintf( szValue+strlen(szValue), "%.16g ",  
                      sRPCInfo.LINE_DEN_COEFF[i] );
         poDS->SetMetadataItem( "LINE_DEN_COEFF", szValue, "RPC" );
-        
+
         szValue[0] = '\0'; 
         for( i = 0; i < 20; i++ )
             CPLsprintf( szValue+strlen(szValue), "%.16g ",  
                      sRPCInfo.SAMP_NUM_COEFF[i] );
         poDS->SetMetadataItem( "SAMP_NUM_COEFF", szValue, "RPC" );
-        
+
         szValue[0] = '\0'; 
         for( i = 0; i < 20; i++ )
             CPLsprintf( szValue+strlen(szValue), "%.16g ",  
@@ -1476,7 +1476,7 @@ GDALDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
         CPLsprintf( szValue, "%.16g", sChipInfo.FI_ROW_22 );
         poDS->SetMetadataItem( "ICHIP_FI_ROW_22", szValue );
 
-        CPLsprintf( szValue, "%.16g", sChipInfo.FI_COL_22 );
+        CPLsnprintf( szValue, sizeof(szValue), "%.16g", sChipInfo.FI_COL_22 );
         poDS->SetMetadataItem( "ICHIP_FI_COL_22", szValue );
 
         sprintf( szValue, "%d", sChipInfo.FI_ROW );
@@ -1486,7 +1486,7 @@ GDALDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
         poDS->SetMetadataItem( "ICHIP_FI_COL", szValue );
 
     }
-    
+
     const NITFSeries* series = NITFGetSeriesInfo(pszFilename);
     if (series)
     {
