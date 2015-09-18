@@ -139,13 +139,11 @@ double NWT_GRDRasterBand::GetNoDataValue( int *pbSuccess )
 
         return (float)-1.e37;
     }
-    else
-    {
-        if( pbSuccess != NULL )
-            *pbSuccess = FALSE;
 
-        return 0;
-    }
+    if( pbSuccess != NULL )
+        *pbSuccess = FALSE;
+
+    return 0;
 }
 
 GDALColorInterp NWT_GRDRasterBand::GetColorInterpretation()
@@ -159,8 +157,8 @@ GDALColorInterp NWT_GRDRasterBand::GetColorInterpretation()
         return GCI_GreenBand;
     else if( nBand == 3 )
         return GCI_BlueBand;
-    else
-        return GCI_Undefined;
+
+    return GCI_Undefined;
 }
 
 /************************************************************************/
@@ -171,19 +169,17 @@ CPLErr NWT_GRDRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
                                       void *pImage )
 {
     NWT_GRDDataset *poGDS = (NWT_GRDDataset *) poDS;
-    char *pszRecord;
     int nRecordSize = nBlockXSize * 2;
-    int i;
     unsigned short raw1;
 
     VSIFSeekL( poGDS->fp, 1024 + nRecordSize * (vsi_l_offset)nBlockYOff, SEEK_SET );
 
-    pszRecord = (char *) CPLMalloc( nRecordSize );
+    char *pszRecord = (char *) CPLMalloc( nRecordSize );
     VSIFReadL( pszRecord, 1, nRecordSize, poGDS->fp );
 
     if( nBand == 4 )                //Z values
     {
-        for( i = 0; i < nBlockXSize; i++ )
+        for( int i = 0; i < nBlockXSize; i++ )
         {
             memcpy( (void *) &raw1, (void *)(pszRecord + 2 * i), 2 );
             CPL_LSBPTR16(&raw1);
@@ -199,7 +195,7 @@ CPLErr NWT_GRDRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
     }
     else if( nBand == 1 )            // red values
     {
-        for( i = 0; i < nBlockXSize; i++ )
+        for( int i = 0; i < nBlockXSize; i++ )
         {
             memcpy( (void *) &raw1, (void *)(pszRecord + 2 * i), 2 );
             CPL_LSBPTR16(&raw1);
@@ -208,7 +204,7 @@ CPLErr NWT_GRDRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
     }
     else if( nBand == 2 )            // green
     {
-        for( i = 0; i < nBlockXSize; i++ )
+        for( int i = 0; i < nBlockXSize; i++ )
         {
             memcpy( (void *) &raw1, (void *)(pszRecord + 2 * i), 2 );
             CPL_LSBPTR16(&raw1);
@@ -217,7 +213,7 @@ CPLErr NWT_GRDRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
     }
     else if( nBand == 3 )            // blue
     {
-        for( i = 0; i < nBlockXSize; i++ )
+        for( int i = 0; i < nBlockXSize; i++ )
         {
             memcpy( (void *) &raw1, (void *) (pszRecord + 2 * i), 2 );
             CPL_LSBPTR16(&raw1);
@@ -267,7 +263,7 @@ NWT_GRDDataset::NWT_GRDDataset() :
 NWT_GRDDataset::~NWT_GRDDataset()
 {
     FlushCache();
-    pGrd->fp = NULL;       // this prevents nwtCloseGrid from closing the fp 
+    pGrd->fp = NULL;       // this prevents nwtCloseGrid from closing the fp
     nwtCloseGrid( pGrd );
 
     if( fp != NULL )
@@ -412,23 +408,22 @@ GDALDataset *NWT_GRDDataset::Open( GDALOpenInfo * poOpenInfo )
 /************************************************************************/
 void GDALRegister_NWT_GRD()
 {
-    GDALDriver *poDriver;
 
-    if( GDALGetDriverByName( "NWT_GRD" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    if( GDALGetDriverByName( "NWT_GRD" ) != NULL )
+      return;
 
-        poDriver->SetDescription( "NWT_GRD" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                 "Northwood Numeric Grid Format .grd/.tab" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_various.html#grd");
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "grd" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->pfnOpen = NWT_GRDDataset::Open;
-        poDriver->pfnIdentify = NWT_GRDDataset::Identify;
+    poDriver->SetDescription( "NWT_GRD" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                             "Northwood Numeric Grid Format .grd/.tab" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_various.html#grd");
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "grd" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    poDriver->pfnOpen = NWT_GRDDataset::Open;
+    poDriver->pfnIdentify = NWT_GRDDataset::Identify;
+
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }
