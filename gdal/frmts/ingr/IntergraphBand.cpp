@@ -72,6 +72,7 @@ IntergraphRasterBand::IntergraphRasterBand( IntergraphDataset *poDS,
                                             int nBandOffset,
                                             GDALDataType eType ) :
     nBlockBufSize(0),
+    eFormat(IngrUnknownFrmt),
     nFullBlocksX(0),
     nFullBlocksY(0),
     nRLEOffset(0)
