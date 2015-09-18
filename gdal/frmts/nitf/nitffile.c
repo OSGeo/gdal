@@ -1468,7 +1468,7 @@ NITFCollectSegmentInfo( NITFFile *psFile, int nFileHeaderLen, int nOffset, const
     for( iSegment = 0; iSegment < nCount; iSegment++ )
     {
         NITFSegmentInfo *psInfo = psFile->pasSegmentInfo+psFile->nSegmentCount;
-        
+
         psInfo->nDLVL = -1;
         psInfo->nALVL = -1;
         psInfo->nLOC_R = -1;
@@ -1477,11 +1477,12 @@ NITFCollectSegmentInfo( NITFFile *psFile, int nFileHeaderLen, int nOffset, const
         psInfo->nCCS_C = -1;
 
         psInfo->hAccess = NULL;
-        strcpy( psInfo->szSegmentType, szType );
-        
-        psInfo->nSegmentHeaderSize = 
-            atoi(NITFGetField(szTemp, psFile->pachHeader, 
-                              nOffset + 3 + iSegment * (nHeaderLenSize+nDataLenSize), 
+        strncpy( psInfo->szSegmentType, szType, sizeof(psInfo->szSegmentType) );
+        psInfo->szSegmentType[sizeof(psInfo->szSegmentType)-1] = '\0';
+
+        psInfo->nSegmentHeaderSize =
+            atoi(NITFGetField(szTemp, psFile->pachHeader,
+                              nOffset + 3 + iSegment * (nHeaderLenSize+nDataLenSize),
                               nHeaderLenSize));
         if (strchr(szTemp, '-') != NULL) /* Avoid negative values being mapped to huge unsigned values */
         {
