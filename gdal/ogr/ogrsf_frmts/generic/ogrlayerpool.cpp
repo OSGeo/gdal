@@ -35,12 +35,12 @@ CPL_CVSID("$Id$");
 /*                      OGRAbstractProxiedLayer()                       */
 /************************************************************************/
 
-OGRAbstractProxiedLayer::OGRAbstractProxiedLayer(OGRLayerPool* poPool)
+OGRAbstractProxiedLayer::OGRAbstractProxiedLayer(OGRLayerPool* poPool) :
+    poPrevLayer(NULL),
+    poNextLayer(NULL)
 {
     CPLAssert(poPool != NULL);
     this->poPool = poPool;
-    poPrevLayer = NULL;
-    poNextLayer = NULL;
 }
 
 /************************************************************************/
@@ -59,11 +59,11 @@ OGRAbstractProxiedLayer::~OGRAbstractProxiedLayer()
 /*                            OGRLayerPool()                            */
 /************************************************************************/
 
-OGRLayerPool::OGRLayerPool(int nMaxSimultaneouslyOpened)
+OGRLayerPool::OGRLayerPool(int nMaxSimultaneouslyOpened) :
+    poMRULayer(NULL),
+    poLRULayer(NULL),
+    nMRUListSize(0)
 {
-    poMRULayer = NULL;
-    poLRULayer = NULL;
-    nMRUListSize = 0;
     this->nMaxSimultaneouslyOpened = nMaxSimultaneouslyOpened;
 }
 
@@ -223,6 +223,9 @@ void OGRProxiedLayer::CloseUnderlyingLayer()
 OGRLayer* OGRProxiedLayer::GetUnderlyingLayer()
 {
     if( poUnderlyingLayer == NULL )
+        //  If the open fails, poUnderlyingLayer will still be a nullptr
+        // and the user will be warned by the open call.
+        // coverity[checked_return]
         OpenUnderlyingLayer();
     return poUnderlyingLayer;
 }
@@ -577,4 +580,3 @@ OGRErr      OGRProxiedLayer::SetIgnoredFields( const char **papszFields )
     if( poUnderlyingLayer == NULL && !OpenUnderlyingLayer() ) return OGRERR_FAILURE;
     return poUnderlyingLayer->SetIgnoredFields(papszFields);
 }
-
