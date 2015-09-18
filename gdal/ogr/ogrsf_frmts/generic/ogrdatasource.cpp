@@ -70,7 +70,7 @@ void OGR_DS_Destroy( OGRDataSourceH hDS )
     //VALIDATE_POINTER0( hDS, "OGR_DS_Destroy" );
 #ifdef OGRAPISPY_ENABLED
     if( bOGRAPISpyEnabled )
-        OGRAPISpyPostClose(hDS);
+      OGRAPISpyPostClose( NULL /* hDS */ );
 #endif
 }
 

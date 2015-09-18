@@ -163,7 +163,7 @@ OGRErr OGRReleaseDataSource( OGRDataSourceH hDS )
 
 #ifdef OGRAPISPY_ENABLED
     if( bOGRAPISpyEnabled )
-        OGRAPISpyPostClose(hDS);
+        OGRAPISpyPostClose( NULL /* hDS */ );
 #endif
 
     return OGRERR_NONE;
