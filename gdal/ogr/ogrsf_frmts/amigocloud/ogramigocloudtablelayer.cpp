@@ -404,7 +404,7 @@ json_object* OGRAMIGOCLOUDTableLayer::FetchNewFeatures(GIntBig iNext)
         {
             osSQL.Printf("%s WHERE %s ",
                          osSELECTWithoutWHERE.c_str(),
-                         (osWHERE.size() > 0) ? CPLSPrintf("%s AND ", osWHERE.c_str()) : "");
+                         (osWHERE.size() > 0) ? CPLSPrintf("%s", osWHERE.c_str()) : "");
         } else
         {
             osSQL.Printf("%s", osSELECTWithoutWHERE.c_str());
