@@ -287,7 +287,10 @@ HKVRasterBand::~HKVRasterBand()
 /*                            HKVDataset()                             */
 /************************************************************************/
 
-HKVDataset::HKVDataset()
+HKVDataset::HKVDataset() :
+    fpBlob(NULL),
+    eRasterType(GDT_Unknown),
+    dfNoDataValue(0.0)
 {
     pszPath = NULL;
     papszAttrib = NULL;
