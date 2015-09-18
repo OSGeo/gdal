@@ -154,8 +154,10 @@ OGRAMIGOCLOUDTableLayer::~OGRAMIGOCLOUDTableLayer()
 
 OGRFeatureDefn * OGRAMIGOCLOUDTableLayer::GetLayerDefnInternal(CPL_UNUSED json_object* poObjIn)
 {
-    if( poFeatureDefn != NULL )
-        return poFeatureDefn;
+//    if( poFeatureDefn != NULL )
+//    {
+//        return poFeatureDefn;
+//    }
 
     if( poFeatureDefn == NULL )
     {
@@ -164,7 +166,6 @@ OGRFeatureDefn * OGRAMIGOCLOUDTableLayer::GetLayerDefnInternal(CPL_UNUSED json_o
         osBaseSQL = "";
     }
 
-#if 1
     if( osFIDColName.size() > 0 )
     {
         CPLString sql;
@@ -176,6 +177,7 @@ OGRFeatureDefn * OGRAMIGOCLOUDTableLayer::GetLayerDefnInternal(CPL_UNUSED json_o
 
             if(poRows!=NULL && json_object_get_type(poRows) == json_type_array)
             {
+                mFIDs.clear();
                 for(GIntBig i = 0; i < json_object_array_length(poRows); i++)
                 {
                     json_object *obj = json_object_array_get_idx(poRows, i);
@@ -191,10 +193,6 @@ OGRFeatureDefn * OGRAMIGOCLOUDTableLayer::GetLayerDefnInternal(CPL_UNUSED json_o
                         {
                             if(EQUAL(pszColName, osFIDColName.c_str()))
                             {
-//                                std::string fieldValue;
-//                                fieldValue = json_object_get_string(it.val);
-//                                mFIDs[i] = fieldValue;
-
                                 std::string amigo_id = json_object_get_string(it.val);
                                 OGRAmigoCloudFID aFID(amigo_id, iNext);
                                 mFIDs[aFID.iFID] = aFID;
@@ -206,7 +204,6 @@ OGRFeatureDefn * OGRAMIGOCLOUDTableLayer::GetLayerDefnInternal(CPL_UNUSED json_o
             json_object_put(poObj);
         }
     }
-#endif
 
     if( osFIDColName.size() > 0 )
     {
