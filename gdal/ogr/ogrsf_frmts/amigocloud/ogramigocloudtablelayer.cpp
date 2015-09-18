@@ -157,161 +157,6 @@ OGRFeatureDefn * OGRAMIGOCLOUDTableLayer::GetLayerDefnInternal(CPL_UNUSED json_o
     if( poFeatureDefn != NULL )
         return poFeatureDefn;
 
-#if 0
-    CPLString osCommand;
-    if( poDS->IsAuthenticatedConnection() )
-    {
-        // Get everything !
-//        osCommand.Printf(
-//                 "SELECT a.attname, t.typname, a.attlen, "
-//                        "format_type(a.atttypid,a.atttypmod), "
-//                        "a.attnum, "
-//                        "a.attnotnull, "
-//                        "i.indisprimary, "
-//                        "pg_get_expr(def.adbin, c.oid) AS defaultexpr, "
-//                        "postgis_typmod_dims(a.atttypmod) dim, "
-//                        "postgis_typmod_srid(a.atttypmod) srid, "
-//                        "postgis_typmod_type(a.atttypmod)::text geomtyp, "
-//                        "srtext "
-//                 "FROM pg_class c "
-//                 "JOIN pg_attribute a ON a.attnum > 0 AND "
-//                                        "a.attrelid = c.oid AND c.relname = '%s' "
-//                 "JOIN pg_type t ON a.atttypid = t.oid "
-//                 "JOIN pg_namespace n ON c.relnamespace=n.oid AND n.nspname= '%s' "
-//                 "LEFT JOIN pg_index i ON c.oid = i.indrelid AND "
-//                                         "i.indisprimary = 't' AND a.attnum = ANY(i.indkey) "
-//                 "LEFT JOIN pg_attrdef def ON def.adrelid = c.oid AND "
-//                                              "def.adnum = a.attnum "
-//                 "LEFT JOIN spatial_ref_sys srs ON srs.srid = postgis_typmod_srid(a.atttypmod) "
-//                 "ORDER BY a.attnum",
-//                 OGRAMIGOCLOUDEscapeLiteral(osName).c_str(),
-//                 OGRAMIGOCLOUDEscapeLiteral(poDS->GetCurrentSchema()).c_str());
-    }
-    else if( poDS->HasOGRMetadataFunction() != FALSE )
-    {
-        osCommand.Printf( "SELECT * FROM ogr_table_metadata('%s', '%s')",
-                          OGRAMIGOCLOUDEscapeLiteral(poDS->GetCurrentSchema()).c_str(),
-                          OGRAMIGOCLOUDEscapeLiteral(osDatasetId).c_str() );
-    }
-
-    if( osCommand.size() > 0 )
-    {
-        if( !poDS->IsAuthenticatedConnection() && poDS->HasOGRMetadataFunction() < 0 )
-            CPLPushErrorHandler(CPLQuietErrorHandler);
-        OGRLayer* poLyr = poDS->ExecuteSQLInternal(osCommand);
-        if( !poDS->IsAuthenticatedConnection() && poDS->HasOGRMetadataFunction() < 0 )
-        {
-            CPLPopErrorHandler();
-            if( poLyr == NULL )
-            {
-                CPLDebug("AMIGOCLOUD", "ogr_table_metadata(text, text) not available");
-                CPLErrorReset();
-            }
-            else if( poLyr->GetLayerDefn()->GetFieldCount() != 12 )
-            {
-                CPLDebug("AMIGOCLOUD", "ogr_table_metadata(text, text) has unexpected column count");
-                poDS->ReleaseResultSet(poLyr);
-                poLyr = NULL;
-            }
-            poDS->SetOGRMetadataFunction(poLyr != NULL);
-        }
-        if( poLyr )
-        {
-            OGRFeature* poFeat;
-            while( (poFeat = poLyr->GetNextFeature()) != NULL )
-            {
-                if( poFeatureDefn == NULL )
-                {
-                    // We could do that outside of the while() loop, but
-                    // by doing that here, we are somewhat robust to
-                    // ogr_table_metadata() returning suddenly an empty result set
-                    // for example if CDB_UserTables() no longer works
-                    poFeatureDefn = new OGRFeatureDefn(osTableName);
-                    poFeatureDefn->Reference();
-                    poFeatureDefn->SetGeomType(wkbNone);
-                }
-
-                const char* pszAttname = poFeat->GetFieldAsString("attname");
-                const char* pszType = poFeat->GetFieldAsString("typname");
-                int nWidth = poFeat->GetFieldAsInteger("attlen");
-                const char* pszFormatType = poFeat->GetFieldAsString("format_type");
-                int bNotNull = poFeat->GetFieldAsInteger("attnotnull");
-                int bIsPrimary = poFeat->GetFieldAsInteger("indisprimary");
-                int iDefaultExpr = poLyr->GetLayerDefn()->GetFieldIndex("defaultexpr");
-                const char* pszDefault = (iDefaultExpr >= 0 && poFeat->IsFieldSet(iDefaultExpr)) ?
-                            poFeat->GetFieldAsString(iDefaultExpr) : NULL;
-
-//                if( bIsPrimary &&
-//                    (EQUAL(pszType, "int2") ||
-//                     EQUAL(pszType, "int4") ||
-//                     EQUAL(pszType, "int8") ||
-//                     EQUAL(pszType, "serial") ||
-//                     EQUAL(pszType, "bigserial")) )
-//                {
-//                    osFIDColName = pszAttname;
-//                }
-//                else if( strcmp(pszAttname, "created_at") == 0 ||
-//                         strcmp(pszAttname, "updated_at") == 0 ||
-//                         strcmp(pszAttname, "the_geom_webmercator") == 0)
-//                {
-//                    /* ignored */
-//                }
-//                else
-//                {
-                    if( EQUAL(pszType,"geometry") )
-                    {
-                        int nDim = poFeat->GetFieldAsInteger("dim");
-                        int nSRID = poFeat->GetFieldAsInteger("srid");
-                        const char* pszGeomType = poFeat->GetFieldAsString("geomtyp");
-                        const char* pszSRText = (poFeat->IsFieldSet(
-                            poLyr->GetLayerDefn()->GetFieldIndex("srtext"))) ?
-                                    poFeat->GetFieldAsString("srtext") : NULL;
-                        OGRwkbGeometryType eType = OGRFromOGCGeomType(pszGeomType);
-                        if( nDim == 3 )
-                            eType = wkbSetZ(eType);
-                        OGRAmigoCloudGeomFieldDefn *poFieldDefn =
-                            new OGRAmigoCloudGeomFieldDefn(pszAttname, eType);
-                        if( bNotNull )
-                            poFieldDefn->SetNullable(FALSE);
-                        OGRSpatialReference* poSRS = NULL;
-                        if( pszSRText != NULL )
-                        {
-                            poSRS = new OGRSpatialReference();
-                            char* pszTmp = (char* )pszSRText;
-                            if( poSRS->importFromWkt(&pszTmp) != OGRERR_NONE )
-                            {
-                                delete poSRS;
-                                poSRS = NULL;
-                            }
-                            if( poSRS != NULL )
-                            {
-                                poFieldDefn->SetSpatialRef(poSRS);
-                                poSRS->Release();
-                            }
-                        }
-                        poFieldDefn->nSRID = nSRID;
-                        poFeatureDefn->AddGeomFieldDefn(poFieldDefn, FALSE);
-                    }
-                    else
-                    {
-                        OGRFieldDefn oField(pszAttname, OFTString);
-                        if( bNotNull )
-                            oField.SetNullable(FALSE);
-                        OGRPGCommonLayerSetType(oField, pszType, pszFormatType, nWidth);
-                        if( pszDefault )
-                            OGRPGCommonLayerNormalizeDefault(&oField, pszDefault);
-
-                        poFeatureDefn->AddFieldDefn( &oField );
-                    }
-//                }
-                delete poFeat;
-            }
-
-            poDS->ReleaseResultSet(poLyr);
-        }
-    }
-#endif
-
     if( poFeatureDefn == NULL )
     {
         osBaseSQL.Printf("SELECT * FROM %s", OGRAMIGOCLOUDEscapeIdentifier(osTableName).c_str());
@@ -319,6 +164,7 @@ OGRFeatureDefn * OGRAMIGOCLOUDTableLayer::GetLayerDefnInternal(CPL_UNUSED json_o
         osBaseSQL = "";
     }
 
+#if 0
     if( osFIDColName.size() > 0 )
     {
         CPLString sql;
@@ -345,9 +191,14 @@ OGRFeatureDefn * OGRAMIGOCLOUDTableLayer::GetLayerDefnInternal(CPL_UNUSED json_o
                         {
                             if(EQUAL(pszColName, osFIDColName.c_str()))
                             {
-                                std::string fieldValue;
-                                fieldValue = json_object_get_string(it.val);
-                                mFIDs[i] = fieldValue;
+//                                std::string fieldValue;
+//                                fieldValue = json_object_get_string(it.val);
+//                                mFIDs[i] = fieldValue;
+
+                                std::string amigo_id = json_object_get_string(it.val);
+                                OGRAmigoCloudFID aFID(amigo_id, iNext);
+                                mFIDs[aFID.iFID] = aFID;
+                                poFeature->SetFID(aFID.iFID);
                             }
                         }
                     }
@@ -356,6 +207,7 @@ OGRFeatureDefn * OGRAMIGOCLOUDTableLayer::GetLayerDefnInternal(CPL_UNUSED json_o
             json_object_put(poObj);
         }
     }
+#endif
 
     if( osFIDColName.size() > 0 )
     {
@@ -397,8 +249,6 @@ json_object* OGRAMIGOCLOUDTableLayer::FetchNewFeatures(GIntBig iNext)
     if( osFIDColName.size() > 0 )
     {
         CPLString osSQL;
-
-        std::map<GIntBig, std::string>::iterator it = mFIDs.find(iNext);
 
         if(osWHERE.size() > 0)
         {
@@ -851,16 +701,16 @@ OGRErr OGRAMIGOCLOUDTableLayer::DeleteFeature( GIntBig nFID )
     if( osFIDColName.size() == 0 )
         return OGRERR_FAILURE;
 
-    std::map<GIntBig, std::string>::iterator it = mFIDs.find(nFID);
+    std::map<GIntBig, OGRAmigoCloudFID>::iterator it = mFIDs.find(nFID);
     if(it!=mFIDs.end())
     {
-        std::string fid = it->second;
+        OGRAmigoCloudFID &aFID = it->second;
 
         CPLString osSQL;
         osSQL.Printf("DELETE FROM %s WHERE %s = '%s'" ,
                      OGRAMIGOCLOUDEscapeIdentifier(osTableName).c_str(),
                      OGRAMIGOCLOUDEscapeIdentifier(osFIDColName).c_str(),
-                     fid.c_str());
+                     aFID.amigo_id.c_str());
 
         std::stringstream changeset;
         changeset << "{\"query\": \"" << json_encode(osSQL) << "\"}";

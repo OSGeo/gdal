@@ -114,11 +114,14 @@ OGRFeature *OGRAMIGOCLOUDLayer::BuildFeature(json_object* poRowObj)
             if( poVal != NULL &&
                 json_object_get_type(poVal) == json_type_string )
             {
-                mFIDs[iNext] = json_object_get_string(poVal);
+                std::string amigo_id = json_object_get_string(poVal);
+                OGRAmigoCloudFID aFID(amigo_id, iNext);
+                mFIDs[aFID.iFID] = aFID;
+                poFeature->SetFID(aFID.iFID);
+
 //                poFeature->SetFID(json_object_get_int64(poVal));
             }
         }
-        poFeature->SetFID(iNext);
 
 
         for(int i=0;i<poFeatureDefn->GetFieldCount();i++)
@@ -253,7 +256,13 @@ OGRFeature *OGRAMIGOCLOUDLayer::GetNextRawFeature()
     iNextInFetchedObjects ++;
 
     OGRFeature* poFeature = BuildFeature(poRowObj);
-    iNext = poFeature->GetFID() + 1;
+
+    std::map<GIntBig, OGRAmigoCloudFID>::iterator it = mFIDs.find(poFeature->GetFID());
+    if(it!=mFIDs.end())
+    {
+//        iNext = poFeature->GetFID() + 1;
+        iNext = it->second.iIndex + 1;
+    }
 
     return poFeature;
 }

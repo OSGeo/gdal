@@ -36,6 +36,7 @@
 #include <vector>
 #include <string>
 #include <json.h>
+#include <cpl_hash_set.h>
 
 json_object* OGRAMIGOCLOUDGetSingleRow(json_object* poObj);
 CPLString OGRAMIGOCLOUDEscapeIdentifier(const char* pszStr);
@@ -54,6 +55,34 @@ class OGRAmigoCloudGeomFieldDefn: public OGRGeomFieldDefn
                 OGRGeomFieldDefn(pszName, eType), nSRID(0)
         {
         }
+};
+
+class OGRAmigoCloudFID
+{
+public:
+    GIntBig iIndex;
+    GIntBig iFID;
+    std::string amigo_id;
+
+    OGRAmigoCloudFID(const std::string &amigo_id, GIntBig index)
+    {
+        iIndex = index;
+        OGRAmigoCloudFID::amigo_id = amigo_id.c_str();
+        iFID = (GIntBig)CPLHashSetHashStr(amigo_id.c_str());
+    }
+
+    OGRAmigoCloudFID()
+    {
+        iIndex=0;
+        iFID=0;
+    }
+
+    OGRAmigoCloudFID(const OGRAmigoCloudFID& fid)
+    {
+        iIndex = fid.iIndex;
+        iFID = fid.iFID;
+        amigo_id = fid.amigo_id.c_str();
+    }
 };
 
 /************************************************************************/
@@ -77,7 +106,7 @@ protected:
     GIntBig              iNext;
     json_object         *poCachedObj;
 
-    std::map<GIntBig, std::string>  mFIDs;
+    std::map<GIntBig, OGRAmigoCloudFID>  mFIDs;
 
     virtual OGRFeature  *GetNextRawFeature();
     OGRFeature          *BuildFeature(json_object* poRowObj);
