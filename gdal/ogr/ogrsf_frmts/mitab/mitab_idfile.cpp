@@ -18,10 +18,10 @@
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
@@ -72,12 +72,14 @@
  *
  * Constructor.
  **********************************************************************/
-TABIDFile::TABIDFile()
+TABIDFile::TABIDFile() :
+    m_pszFname(NULL),
+    m_fp(NULL),
+    m_eAccessMode(TABRead),
+    m_poIDBlock(NULL),
+    m_nBlockSize(0),
+    m_nMaxId(-1)
 {
-    m_fp = NULL;
-    m_pszFname = NULL;
-    m_poIDBlock = NULL;
-    m_nMaxId = -1;
 }
 
 /**********************************************************************
@@ -433,8 +435,3 @@ void TABIDFile::Dump(FILE *fpOut /*=NULL*/)
 }
 
 #endif // DEBUG
-
-
-
-
-
