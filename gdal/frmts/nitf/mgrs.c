@@ -688,7 +688,8 @@ long Set_MGRS_Parameters (double a,
     MGRS_a = a;
     MGRS_f = f;
     MGRS_recpf = inv_f;
-    strcpy (MGRS_Ellipsoid_Code, Ellipsoid_Code);
+    strncpy (MGRS_Ellipsoid_Code, Ellipsoid_Code, sizeof(MGRS_Ellipsoid_Code));
+    MGRS_Ellipsoid_Code[sizeof(MGRS_Ellipsoid_Code) - 1] = '\0';
   }
   return (Error_Code);
 }  /* Set_MGRS_Parameters  */
@@ -1100,6 +1101,3 @@ long Convert_MGRS_To_UPS ( char   *MGRS,
   }
   return (error_code);
 } /* Convert_MGRS_To_UPS */
-
-
-
