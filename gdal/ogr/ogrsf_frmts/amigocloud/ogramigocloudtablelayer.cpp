@@ -856,7 +856,12 @@ OGRErr OGRAMIGOCLOUDTableLayer::DeleteFeature( GIntBig nFID )
                      OGRAMIGOCLOUDEscapeIdentifier(osFIDColName).c_str(),
                      OGRAMIGOCLOUDEscapeIdentifier(fid.c_str()).c_str());
 
-        json_object *poObj = poDS->RunSQL(osSQL);
+        std::stringstream changeset;
+        changeset << "{\"query\": \"" << json_encode(osSQL) << "\"}";
+        std::stringstream url;
+        url << std::string(poDS->GetAPIURL()) << "/users/0/projects/" + std::string(poDS->GetProjetcId()) + "/sql";
+        json_object *poObj = poDS->RunPOST(url.str().c_str(), changeset.str().c_str());
+//        json_object *poObj = poDS->RunSQL(osSQL);
         if(poObj != NULL)
         {
 //            json_object *poTotalRows = json_object_object_get(poObj, "total_rows");

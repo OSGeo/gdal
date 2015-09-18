@@ -540,6 +540,8 @@ json_object* OGRAMIGOCLOUDDataSource::RunPOST(const char*pszURL, const char *psz
 
     CPLHTTPResult * psResult = CPLHTTPFetch( osURL.c_str(), papszOptions);
 
+    printf("RunPOST result: %s\n", psResult->pabyData);
+
     if (psResult && psResult->pszContentType &&
         strncmp(psResult->pszContentType, "text/html", 9) == 0)
     {
