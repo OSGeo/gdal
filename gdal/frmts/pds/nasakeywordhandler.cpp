@@ -32,10 +32,10 @@
  * and other NASA data systems. Refer to Chapter 12 of "PDS Standards
  * Reference" at http://pds.jpl.nasa.gov/tools/standards-reference.shtml for
  * further details about ODL.
- * 
+ *
  * This is also known as PVL (Parameter Value Language) which is written
  * about at http://www.orrery.us/node/44 where it notes:
- * 
+ *
  * The PVL syntax that the PDS uses is specified by the Consultative Committee 
  * for Space Data Systems in their Blue Book publication: "Parameter Value 
  * Language Specification (CCSD0006 and CCSD0008)", June 2000 
@@ -47,10 +47,10 @@
  * --
  * also of interest, on PDS ODL:
  *  http://pds.jpl.nasa.gov/documents/sr/Chapter12.pdf
- *  
+ *
  ****************************************************************************/
 
-#include "cpl_string.h" 
+#include "cpl_string.h"
 #include "nasakeywordhandler.h"
 
 /************************************************************************/
@@ -63,10 +63,10 @@
 /*                         NASAKeywordHandler()                         */
 /************************************************************************/
 
-NASAKeywordHandler::NASAKeywordHandler()
-
+NASAKeywordHandler::NASAKeywordHandler() :
+    papszKeywordList(NULL),
+    pszHeaderNext(NULL)
 {
-    papszKeywordList = NULL;
 }
 
 /************************************************************************/
@@ -438,4 +438,3 @@ char **NASAKeywordHandler::GetKeywordList()
 {
     return papszKeywordList;
 }
-
