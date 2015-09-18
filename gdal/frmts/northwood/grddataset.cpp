@@ -245,10 +245,18 @@ CPLErr NWT_GRDRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 /*                             NWT_GRDDataset                           */
 /* ==================================================================== */
 /************************************************************************/
-NWT_GRDDataset::NWT_GRDDataset()
+NWT_GRDDataset::NWT_GRDDataset() :
+    fp(NULL),
+    pGrd(NULL),
+    pszProjection(NULL)
 {
-    pszProjection = NULL;
     //poCT = NULL;
+    for( size_t i=0; i < CPL_ARRAYSIZE(ColorMap); ++i )
+    {
+        ColorMap[i].r = 0;
+        ColorMap[i].g = 0;
+        ColorMap[i].b = 0;
+    }
 }
 
 
