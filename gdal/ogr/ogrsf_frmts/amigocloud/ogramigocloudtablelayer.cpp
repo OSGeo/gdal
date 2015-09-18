@@ -683,7 +683,7 @@ OGRErr OGRAMIGOCLOUDTableLayer::DeleteFeature( GIntBig nFID )
 {
     OGRErr eRet = OGRERR_FAILURE;
 
-    printf("DeleteFeature: %lld\n" , nFID);
+    printf("DeleteFeature: %lld, mFIDs size=%d\n" , nFID, mFIDs.size());
 
     if( bDeferedCreation && RunDeferedCreationIfNecessary() != OGRERR_NONE )
         return OGRERR_FAILURE;
@@ -734,6 +734,9 @@ OGRErr OGRAMIGOCLOUDTableLayer::DeleteFeature( GIntBig nFID )
             json_object_put(poObj);
             eRet = OGRERR_NONE;
         }
+    } else
+    {
+        printf("DeleteFeature: nFID:%lld not found\n" , nFID, mFIDs.size());
     }
     return eRet;
 }
