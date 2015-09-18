@@ -27,7 +27,6 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
-
 #include "cpl_string.h"
 #include "cpl_conv.h"
 #include "ogr_spatialref.h"
@@ -94,8 +93,9 @@ CPL_C_END
 
 enum FASTSatellite  // Satellites:
 {
-    LANDSAT,	    // Landsat 7
-    IRS		    // IRS 1C/1D
+    LANDSAT,        // Landsat 7
+    IRS,            // IRS 1C/1D
+    FAST_UNKNOWN
 };
 
 /************************************************************************/
@@ -118,20 +118,20 @@ class FASTDataset : public GDALPamDataset
     char	*pszDirname;
     GDALDataType eDataType;
     FASTSatellite iSatellite;
-    
+
     int         OpenChannel( const char *pszFilename, int iBand );
 
   public:
                 FASTDataset();
 		~FASTDataset();
-    
+
     static GDALDataset *Open( GDALOpenInfo * );
 
     CPLErr 	GetGeoTransform( double * );
     const char	*GetProjectionRef();
     VSILFILE	*FOpenChannel( const char *, int iBand, int iFASTBand );
     void        TryEuromap_IRS_1C_1D_ChannelNameConvention();
-    
+
     virtual  char** GetFileList();
 };
 
@@ -176,12 +176,18 @@ FASTRasterBand::FASTRasterBand( FASTDataset *poDS, int nBand, VSILFILE * fpRaw,
 /*                           FASTDataset()                              */
 /************************************************************************/
 
-FASTDataset::FASTDataset()
-
+FASTDataset::FASTDataset() :
+    fpHeader(NULL),
+    pszFilename(NULL),
+    pszDirname(NULL),
+    eDataType(GDT_Unknown),
+    iSatellite(FAST_UNKNOWN)
 {
-    fpHeader = NULL;
-    pszDirname = NULL;
     pszProjection = CPLStrdup( "" );
+    // TODO: Why does this not work?
+    //   fill( fpChannels, fpChannels + CPL_ARRAYSIZE(fpChannels), NULL );
+    for (int i=0; i < 7; ++i)
+        fpChannels[i] = NULL;
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
     adfGeoTransform[2] = 0.0;
@@ -198,15 +204,13 @@ FASTDataset::FASTDataset()
 FASTDataset::~FASTDataset()
 
 {
-    int i;
-
     FlushCache();
 
     if ( pszDirname )
 	CPLFree( pszDirname );
     if ( pszProjection )
 	CPLFree( pszProjection );
-    for ( i = 0; i < nBands; i++ )
+    for ( int i = 0; i < nBands; i++ )
 	if ( fpChannels[i] )
 	    VSIFCloseL( fpChannels[i] );
     if( fpHeader != NULL )
@@ -251,7 +255,7 @@ char** FASTDataset::GetFileList()
             papszFileList =
                 CSLAddString(papszFileList, apoChannelFilenames[i].c_str());
     }
-    
+
     return papszFileList;
 }
 
@@ -1143,4 +1147,3 @@ void GDALRegister_FAST()
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
-
