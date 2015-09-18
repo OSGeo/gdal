@@ -126,8 +126,6 @@ int TABIDFile::Open(const char *pszFname, const char* pszAccess)
  **********************************************************************/
 int TABIDFile::Open(const char *pszFname, TABAccess eAccess)
 {
-    int         nLen;
-
     if (m_fp)
     {
         CPLError(CE_Failure, CPLE_FileIO,
@@ -168,7 +166,7 @@ int TABIDFile::Open(const char *pszFname, TABAccess eAccess)
      *----------------------------------------------------------------*/
     m_pszFname = CPLStrdup(pszFname);
 
-    nLen = strlen(m_pszFname);
+    int nLen = strlen(m_pszFname);
     if (nLen > 4 && strcmp(m_pszFname+nLen-4, ".MAP")==0)
         strcpy(m_pszFname+nLen-4, ".ID");
     else if (nLen > 4 && strcmp(m_pszFname+nLen-4, ".map")==0)
@@ -264,7 +262,7 @@ int TABIDFile::Close()
      *---------------------------------------------------------------*/
     if (m_eAccessMode != TABRead)
         SyncToDisk();
-    
+
     // Delete all structures 
     delete m_poIDBlock;
     m_poIDBlock = NULL;
