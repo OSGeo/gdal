@@ -34,16 +34,18 @@
 
 #include <set>
 
-GNMGenericNetwork::GNMGenericNetwork() : GNMNetwork()
+GNMGenericNetwork::GNMGenericNetwork() :
+    GNMNetwork(),
+    m_nVersion(0),
+    m_nGID(0),
+    m_nVirtualConnectionGID(-1),
+    m_poMetadataLayer(NULL),
+    m_poGraphLayer(NULL),
+    m_poFeaturesLayer(NULL),
+    m_poLayerDriver(NULL),
+    m_bIsRulesChanged(false),
+    m_bIsGraphLoaded(false)
 {
-    m_poMetadataLayer = NULL;
-    m_poGraphLayer = NULL;
-    m_poFeaturesLayer = NULL;
-    m_poLayerDriver = NULL;
-    m_nGID = 0;
-    m_nVirtualConnectionGID = -1;
-    m_bIsRulesChanged = false;
-    m_bIsGraphLoaded = false;
 }
 
 GNMGenericNetwork::~GNMGenericNetwork()
