@@ -2179,7 +2179,7 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
                 if (*pnMDSize + 1 >= *pnMDAlloc)
                 {
                     *pnMDAlloc = (*pnMDAlloc * 4 / 3) + 32;
-                    papszMD = (char**)CPLRealloc(papszMD, *pnMDAlloc * sizeof(char**));
+                    papszMD = (char**)CPLRealloc(papszMD, *pnMDAlloc * sizeof(char*));
                 }
                 papszMD[*pnMDSize] = papszTmp[0];
                 papszMD[(*pnMDSize) + 1] = NULL;
