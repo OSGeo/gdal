@@ -47,6 +47,8 @@ OGRAMIGOCLOUDLayer::OGRAMIGOCLOUDLayer(OGRAMIGOCLOUDDataSource* poDS)
     
     poCachedObj = NULL;
 
+    osFIDColName = "amigo_id";
+
     ResetReading();
 }
 
@@ -104,7 +106,9 @@ OGRFeature *OGRAMIGOCLOUDLayer::BuildFeature(json_object* poRowObj)
     {
         poFeature = new OGRFeature(poFeatureDefn);
 
-        if( osFIDColName.size() )
+        printf("poRowObj: %s\n", json_object_get_string(poRowObj));
+
+        if( osFIDColName.size() > 0 )
         {
             json_object* poVal = json_object_object_get(poRowObj, osFIDColName);
             if( poVal != NULL &&
@@ -223,6 +227,7 @@ OGRFeature *OGRAMIGOCLOUDLayer::GetNextRawFeature()
         }
 
         json_object* poRows = json_object_object_get(poObj, "data");
+
         if( poRows == NULL ||
             json_object_get_type(poRows) != json_type_array ||
             json_object_array_length(poRows) == 0 )

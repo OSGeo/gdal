@@ -524,7 +524,7 @@ json_object* OGRAMIGOCLOUDDataSource::RunPOST(const char*pszURL, const char *psz
     /* -------------------------------------------------------------------- */
     /*      Provide the API Key                                             */
     /* -------------------------------------------------------------------- */
-    if( osAPIKey.size() )
+    if( osAPIKey.size() > 0 )
     {
         osURL += "?token=";
         osURL += osAPIKey;
@@ -622,7 +622,7 @@ json_object* OGRAMIGOCLOUDDataSource::RunGET(const char*pszURL)
     /* -------------------------------------------------------------------- */
     /*      Provide the API Key                                             */
     /* -------------------------------------------------------------------- */
-    if( osAPIKey.size() )
+    if( osAPIKey.size() > 0 )
     {
         osURL += "?token=";
         osURL += osAPIKey;
@@ -715,7 +715,7 @@ json_object* OGRAMIGOCLOUDDataSource::RunSQL(const char* pszUnescapedSQL)
     /* -------------------------------------------------------------------- */
     /*      Provide the API Key                                             */
     /* -------------------------------------------------------------------- */
-    if( osAPIKey.size() )
+    if( osAPIKey.size() > 0 )
     {
         osSQL += "?token=";
         osSQL += osAPIKey;

@@ -133,6 +133,7 @@ OGRAMIGOCLOUDTableLayer::OGRAMIGOCLOUDTableLayer(OGRAMIGOCLOUDDataSource* poDS,
     nNextFID = -1;
     bDeferedCreation = FALSE;
     bAmigoCloudify = FALSE;
+
     nMaxChunkSize = atoi(CPLGetConfigOption("AMIGOCLOUD_MAX_CHUNK_SIZE", "15")) * 1024 * 1024;
 }
 
@@ -156,6 +157,7 @@ OGRFeatureDefn * OGRAMIGOCLOUDTableLayer::GetLayerDefnInternal(CPL_UNUSED json_o
     if( poFeatureDefn != NULL )
         return poFeatureDefn;
 
+#if 0
     CPLString osCommand;
     if( poDS->IsAuthenticatedConnection() )
     {
@@ -192,7 +194,7 @@ OGRFeatureDefn * OGRAMIGOCLOUDTableLayer::GetLayerDefnInternal(CPL_UNUSED json_o
                           OGRAMIGOCLOUDEscapeLiteral(osDatasetId).c_str() );
     }
 
-    if( osCommand.size() )
+    if( osCommand.size() > 0 )
     {
         if( !poDS->IsAuthenticatedConnection() && poDS->HasOGRMetadataFunction() < 0 )
             CPLPushErrorHandler(CPLQuietErrorHandler);
@@ -239,23 +241,23 @@ OGRFeatureDefn * OGRAMIGOCLOUDTableLayer::GetLayerDefnInternal(CPL_UNUSED json_o
                 const char* pszDefault = (iDefaultExpr >= 0 && poFeat->IsFieldSet(iDefaultExpr)) ?
                             poFeat->GetFieldAsString(iDefaultExpr) : NULL;
 
-                if( bIsPrimary &&
-                    (EQUAL(pszType, "int2") ||
-                     EQUAL(pszType, "int4") ||
-                     EQUAL(pszType, "int8") ||
-                     EQUAL(pszType, "serial") ||
-                     EQUAL(pszType, "bigserial")) )
-                {
-                    osFIDColName = pszAttname;
-                }
-                else if( strcmp(pszAttname, "created_at") == 0 ||
-                         strcmp(pszAttname, "updated_at") == 0 ||
-                         strcmp(pszAttname, "the_geom_webmercator") == 0)
-                {
-                    /* ignored */
-                }
-                else
-                {
+//                if( bIsPrimary &&
+//                    (EQUAL(pszType, "int2") ||
+//                     EQUAL(pszType, "int4") ||
+//                     EQUAL(pszType, "int8") ||
+//                     EQUAL(pszType, "serial") ||
+//                     EQUAL(pszType, "bigserial")) )
+//                {
+//                    osFIDColName = pszAttname;
+//                }
+//                else if( strcmp(pszAttname, "created_at") == 0 ||
+//                         strcmp(pszAttname, "updated_at") == 0 ||
+//                         strcmp(pszAttname, "the_geom_webmercator") == 0)
+//                {
+//                    /* ignored */
+//                }
+//                else
+//                {
                     if( EQUAL(pszType,"geometry") )
                     {
                         int nDim = poFeat->GetFieldAsInteger("dim");
@@ -301,19 +303,58 @@ OGRFeatureDefn * OGRAMIGOCLOUDTableLayer::GetLayerDefnInternal(CPL_UNUSED json_o
 
                         poFeatureDefn->AddFieldDefn( &oField );
                     }
-                }
+//                }
                 delete poFeat;
             }
 
             poDS->ReleaseResultSet(poLyr);
         }
     }
+#endif
 
     if( poFeatureDefn == NULL )
     {
         osBaseSQL.Printf("SELECT * FROM %s", OGRAMIGOCLOUDEscapeIdentifier(osTableName).c_str());
         EstablishLayerDefn(osTableName, NULL);
         osBaseSQL = "";
+    }
+
+    if( osFIDColName.size() > 0 )
+    {
+        CPLString sql;
+        sql.Printf("SELECT %s FROM %s", OGRAMIGOCLOUDEscapeIdentifier(osFIDColName).c_str(), OGRAMIGOCLOUDEscapeIdentifier(osTableName).c_str());
+        json_object* poObj = poDS->RunSQL(sql);
+        if( poObj != NULL && json_object_get_type(poObj) == json_type_object)
+        {
+            json_object* poRows = json_object_object_get(poObj, "data");
+
+            if(poRows!=NULL && json_object_get_type(poRows) == json_type_array)
+            {
+                for(GIntBig i = 0; i < json_object_array_length(poRows); i++)
+                {
+                    json_object *obj = json_object_array_get_idx(poRows, i);
+
+                    json_object_iter it;
+                    it.key = NULL;
+                    it.val = NULL;
+                    it.entry = NULL;
+                    json_object_object_foreachC(obj, it)
+                    {
+                        const char *pszColName = it.key;
+                        if(it.val != NULL)
+                        {
+                            if(EQUAL(pszColName, osFIDColName.c_str()))
+                            {
+                                std::string fieldValue;
+                                fieldValue = json_object_get_string(it.val);
+                                mFIDs[i] = fieldValue;
+                            }
+                        }
+                    }
+                }
+            }
+            json_object_put(poObj);
+        }
     }
 
     if( osFIDColName.size() > 0 )
@@ -358,7 +399,7 @@ json_object* OGRAMIGOCLOUDTableLayer::FetchNewFeatures(GIntBig iNext)
         CPLString osSQL;
         osSQL.Printf("%s WHERE %s%s >= " CPL_FRMT_GIB " ORDER BY %s ASC LIMIT %d",
                      osSELECTWithoutWHERE.c_str(),
-                     ( osWHERE.size() ) ? CPLSPrintf("%s AND ", osWHERE.c_str()) : "",
+                     ( osWHERE.size() > 0 ) ? CPLSPrintf("%s AND ", osWHERE.c_str()) : "",
                      OGRAMIGOCLOUDEscapeIdentifier(osFIDColName).c_str(),
                      iNext,
                      OGRAMIGOCLOUDEscapeIdentifier(osFIDColName).c_str(),
@@ -895,7 +936,7 @@ void OGRAMIGOCLOUDTableLayer::BuildWhere()
     if( osFIDColName.size() == 0 )
     {
         osBaseSQL = osSELECTWithoutWHERE;
-        if( osWHERE.size() )
+        if( osWHERE.size() > 0 )
         {
             osBaseSQL += " WHERE ";
             osBaseSQL += osWHERE;
@@ -955,7 +996,7 @@ GIntBig OGRAMIGOCLOUDTableLayer::GetFeatureCount(int bForce)
 
     CPLString osSQL(CPLSPrintf("SELECT COUNT(*) FROM %s",
                                OGRAMIGOCLOUDEscapeIdentifier(osTableName).c_str()));
-    if( osWHERE.size() )
+    if( osWHERE.size() > 0 )
     {
         osSQL += " WHERE ";
         osSQL += osWHERE;
@@ -1147,7 +1188,6 @@ void OGRAMIGOCLOUDTableLayer::SetDeferedCreation(OGRwkbGeometryType eGType,
                 poFeatureDefn->GetGeomFieldCount() - 1)->SetSpatialRef(poSRS);
         }
     }
-    osFIDColName = "amigo_id";
 
     osBaseSQL.Printf("SELECT * FROM %s",
                      OGRAMIGOCLOUDEscapeIdentifier(osTableName).c_str());
