@@ -142,6 +142,8 @@ Msg_reader_core::Msg_reader_core(FILE* fp) :
     _minute(0),
     _open_success(false)
 {
+    memset(&_main_header, 0, sizeof(_main_header));
+
     SecondaryProdHeaderInit(&_sec_header);
     for (size_t i=0; i < MSG_NUM_CHANNELS; ++i) {
       _calibration[i].cal_slope = 0.0;
