@@ -304,7 +304,7 @@ double SAGARasterBand::GetNoDataValue( int * pbSuccess )
 
 
 SAGADataset::SAGADataset()
-
+    : fp(NULL)
 {
     pszProjection = CPLStrdup("");
 }
