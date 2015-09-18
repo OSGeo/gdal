@@ -2499,6 +2499,7 @@ void NITFDataset::InitializeNITFMetadata()
     {
         CPLError(CE_Failure, CPLE_AppDefined, 
                  "Failed to encode NITF file header!");
+        CPLFree(encodedHeader);
         return;
     }
 
