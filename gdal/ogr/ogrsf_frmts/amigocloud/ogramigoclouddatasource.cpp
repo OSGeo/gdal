@@ -744,6 +744,7 @@ json_object* OGRAMIGOCLOUDDataSource::RunSQL(const char* pszUnescapedSQL)
     CPLHTTPResult * psResult = CPLHTTPFetch( pszAPIURL.c_str(), papszOptions);
     CSLDestroy(papszOptions);
 
+    printf("RunSQL result: %s\n", psResult->pabyData);
 /* -------------------------------------------------------------------- */
 /*      Check for some error conditions and report.  HTML Messages      */
 /*      are transformed info failure.                                   */
