@@ -40,6 +40,7 @@ CPL_CVSID("$Id$");
 OGRAMIGOCLOUDDataSource::OGRAMIGOCLOUDDataSource()
 
 {
+    printf("OGRAMIGOCLOUDDataSource() constructor\n");
     papoLayers = NULL;
     nLayers = 0;
 
@@ -61,6 +62,7 @@ OGRAMIGOCLOUDDataSource::OGRAMIGOCLOUDDataSource()
 OGRAMIGOCLOUDDataSource::~OGRAMIGOCLOUDDataSource()
 
 {
+    printf("~OGRAMIGOCLOUDDataSource() destructor\n");
     for( int i = 0; i < nLayers; i++ )
         delete papoLayers[i];
     CPLFree( papoLayers );
@@ -144,6 +146,8 @@ int OGRAMIGOCLOUDDataSource::Open( const char * pszFilename,
                                 int bUpdateIn )
 
 {
+    printf("OGRAMIGOCLOUDDataSource::Open()\n");
+
     bReadWrite = bUpdateIn;
     bBatchInsert = CSLTestBoolean(CSLFetchNameValueDef(papszOpenOptions, "BATCH_INSERT", "YES"));
 
@@ -240,6 +244,7 @@ int OGRAMIGOCLOUDDataSource::Open( const char * pszFilename,
         return TRUE;
     }
 
+#if 0
     OGRLayer* poTableListLayer = ExecuteSQLInternal("SELECT CDB_UserTables()");
     if( poTableListLayer )
     {
@@ -287,6 +292,7 @@ int OGRAMIGOCLOUDDataSource::Open( const char * pszFilename,
         else
             return FALSE;
     }
+#endif
 
     return TRUE;
 }
