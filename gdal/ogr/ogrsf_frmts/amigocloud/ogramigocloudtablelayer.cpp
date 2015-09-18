@@ -409,6 +409,7 @@ json_object* OGRAMIGOCLOUDTableLayer::FetchNewFeatures(GIntBig iNext)
         {
             osSQL.Printf("%s", osSELECTWithoutWHERE.c_str());
         }
+        printf("FetchNewFeatures(2) %lld\n", iNext);
         return poDS->RunSQL(osSQL);
     }
     else
@@ -800,6 +801,9 @@ OGRErr OGRAMIGOCLOUDTableLayer::ISetFeature( OGRFeature *poFeature )
                     poFeature->GetFID());
 
     OGRErr eRet = OGRERR_FAILURE;
+
+    printf("ISetFeature() %lld\n", poFeature->GetFID());
+
     json_object* poObj = poDS->RunSQL(osSQL);
     if( poObj != NULL )
     {
@@ -853,10 +857,10 @@ OGRErr OGRAMIGOCLOUDTableLayer::DeleteFeature( GIntBig nFID )
         std::string fid = it->second;
 
         CPLString osSQL;
-        osSQL.Printf("DELETE FROM %s WHERE %s LIKE %s" ,
+        osSQL.Printf("DELETE FROM %s WHERE %s = '%s'" ,
                      OGRAMIGOCLOUDEscapeIdentifier(osTableName).c_str(),
                      OGRAMIGOCLOUDEscapeIdentifier(osFIDColName).c_str(),
-                     OGRAMIGOCLOUDEscapeIdentifier(fid.c_str()).c_str());
+                     fid.c_str());
 
         std::stringstream changeset;
         changeset << "{\"query\": \"" << json_encode(osSQL) << "\"}";
@@ -978,6 +982,7 @@ OGRFeature* OGRAMIGOCLOUDTableLayer::GetFeature( GIntBig nFeatureId )
     osSQL += " = ";
     osSQL += CPLSPrintf(CPL_FRMT_GIB, nFeatureId);
 
+    printf("GetFeature() %lld\n", nFeatureId);
     json_object* poObj = poDS->RunSQL(osSQL);
     json_object* poRowObj = OGRAMIGOCLOUDGetSingleRow(poObj);
     if( poRowObj == NULL )

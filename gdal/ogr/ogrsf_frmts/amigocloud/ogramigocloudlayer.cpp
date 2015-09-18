@@ -190,6 +190,7 @@ json_object* OGRAMIGOCLOUDLayer::FetchNewFeatures(GIntBig iNext)
         osSQL += " OFFSET ";
         osSQL += CPLSPrintf(CPL_FRMT_GIB, iNext);
     }
+    printf("FetchNewFeatures() %lld\n", iNext);
     return poDS->RunSQL(osSQL);
 }
 
@@ -326,6 +327,7 @@ void OGRAMIGOCLOUDLayer::EstablishLayerDefn(const char* pszLayerName,
         poObj = poObjIn;
     else
     {
+        printf("EstablishLayerDefn() %s\n", pszLayerName);
         poObj = poDS->RunSQL(osSQL);
         if( poObj == NULL )
         {

@@ -871,6 +871,7 @@ OGRLayer * OGRAMIGOCLOUDDataSource::ExecuteSQLInternal( const char *pszSQLComman
                                                      int bRunDeferedActions )
 
 {
+    printf("ExecuteSQLInternal() %s\n", pszSQLCommand);
     if( bRunDeferedActions )
     {
         for( int iLayer = 0; iLayer < nLayers; iLayer++ )
