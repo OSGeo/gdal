@@ -83,38 +83,35 @@ OGRUnionLayerGeomFieldDefn::~OGRUnionLayerGeomFieldDefn()
 OGRUnionLayer::OGRUnionLayer( const char* pszName,
                               int nSrcLayersIn,
                               OGRLayer** papoSrcLayersIn,
-                              int bTakeLayerOwnership )
+                              int bTakeLayerOwnership ) :
+    osName(pszName),
+    nSrcLayers(nSrcLayersIn),
+    papoSrcLayers(papoSrcLayersIn),
+    bHasLayerOwnership(bTakeLayerOwnership),
+    poFeatureDefn(NULL),
+    nFields(0),
+    papoFields(NULL),
+    nGeomFields(0),
+    papoGeomFields(NULL),
+    eFieldStrategy(FIELD_UNION_ALL_LAYERS),
+    bPreserveSrcFID(FALSE),
+    nFeatureCount(-1),
+    iCurLayer(-1),
+    pszAttributeFilter(NULL),
+    nNextFID(0),
+    panMap(NULL),
+    papszIgnoredFields(NULL),
+    bAttrFilterPassThroughValue(-1),
+    poGlobalSRS(NULL)
 {
     CPLAssert(nSrcLayersIn > 0);
-    
+
     SetDescription( pszName );
 
-    osName = pszName;
-    nSrcLayers = nSrcLayersIn;
-    papoSrcLayers = papoSrcLayersIn;
-    bHasLayerOwnership = bTakeLayerOwnership;
-
-    poFeatureDefn = NULL;
-    nFields = 0;
-    papoFields = NULL;
-    nGeomFields = 0;
-    papoGeomFields = NULL;
-    eFieldStrategy = FIELD_UNION_ALL_LAYERS;
-
-    bPreserveSrcFID = FALSE;
-
-    nFeatureCount = -1;
-
-    iCurLayer = -1;
-    pszAttributeFilter = NULL;
-    nNextFID = 0;
-    panMap = NULL;
-    papszIgnoredFields = NULL;
-    bAttrFilterPassThroughValue = -1;
-    poGlobalSRS = NULL;
-
-    pabModifiedLayers = (int*)CPLCalloc(sizeof(int), nSrcLayers);
-    pabCheckIfAutoWrap = (int*)CPLCalloc(sizeof(int), nSrcLayers);
+    pabModifiedLayers
+        = reinterpret_cast<int*>(CPLCalloc(sizeof(int), nSrcLayers));
+    pabCheckIfAutoWrap
+        = reinterpret_cast<int*>(CPLCalloc(sizeof(int), nSrcLayers));
 }
 
 /************************************************************************/
@@ -123,19 +120,17 @@ OGRUnionLayer::OGRUnionLayer( const char* pszName,
 
 OGRUnionLayer::~OGRUnionLayer()
 {
-    int i;
-
     if( bHasLayerOwnership )
     {
-        for(i = 0; i < nSrcLayers; i++)
+        for(int i = 0; i < nSrcLayers; i++)
             delete papoSrcLayers[i];
     }
     CPLFree(papoSrcLayers);
 
-    for(i = 0; i < nFields; i++)
+    for(int i = 0; i < nFields; i++)
         delete papoFields[i];
     CPLFree(papoFields);
-    for(i = 0; i < nGeomFields; i++)
+    for(int i = 0; i < nGeomFields; i++)
         delete papoGeomFields[i];
     CPLFree(papoGeomFields);
 
