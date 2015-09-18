@@ -556,11 +556,13 @@ json_object* OGRCARTODBDataSource::RunSQL(const char* pszUnescapedSQL)
     }
     if (psResult && psResult->pszErrBuf != NULL) 
     {
-        CPLDebug( "CARTODB", "RunSQL Error Message:%s", psResult->pszErrBuf );
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "RunSQL Error Message:%s", psResult->pszErrBuf );
     }
     else if (psResult && psResult->nStatus != 0) 
     {
-        CPLDebug( "CARTODB", "RunSQL Error Status:%d", psResult->nStatus );
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "RunSQL Error Status:%d", psResult->nStatus );
     }
 
     if( psResult->pabyData == NULL )
