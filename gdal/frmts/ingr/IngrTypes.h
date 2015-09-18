@@ -96,12 +96,13 @@ typedef union
 //  ----------------------------------------------------------------------------
 
 typedef enum {
-    PackedBinary                     = 1,   // 1 bit / pixel  
-    ByteInteger                      = 2,   // 8 bits / pixel  
-    WordIntegers                     = 3,   // 16 bits / pixel  
-    Integers32Bit                    = 4,     
-    FloatingPoint32Bit               = 5,     
-    FloatingPoint64Bit               = 6,     
+    IngrUnknownFrmt                  = 0,
+    PackedBinary                     = 1,   // 1 bit / pixel
+    ByteInteger                      = 2,   // 8 bits / pixel
+    WordIntegers                     = 3,   // 16 bits / pixel
+    Integers32Bit                    = 4,
+    FloatingPoint32Bit               = 5,
+    FloatingPoint64Bit               = 6,
     Complex                          = 7,   // 64 bits / pixel  
     DoublePrecisionComplex           = 8,     
     RunLengthEncoded                 = 9,   // Bi-level Images  
