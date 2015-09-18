@@ -106,7 +106,7 @@ OGRFeature *OGRAMIGOCLOUDLayer::BuildFeature(json_object* poRowObj)
     {
         poFeature = new OGRFeature(poFeatureDefn);
 
-        printf("poRowObj: %s\n", json_object_get_string(poRowObj));
+        printf("poRowObj: FID=%d,  %s\n", iNext, json_object_get_string(poRowObj));
 
         if( osFIDColName.size() > 0 )
         {
@@ -119,6 +119,7 @@ OGRFeature *OGRAMIGOCLOUDLayer::BuildFeature(json_object* poRowObj)
             }
         }
         poFeature->SetFID(iNext);
+
 
         for(int i=0;i<poFeatureDefn->GetFieldCount();i++)
         {

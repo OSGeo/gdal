@@ -829,6 +829,8 @@ OGRErr OGRAMIGOCLOUDTableLayer::DeleteFeature( GIntBig nFID )
 {
     OGRErr eRet = OGRERR_FAILURE;
 
+    printf("DeleteFeature: %lld\n" , nFID);
+
     if( bDeferedCreation && RunDeferedCreationIfNecessary() != OGRERR_NONE )
         return OGRERR_FAILURE;
     FlushDeferedInsert();
@@ -851,7 +853,7 @@ OGRErr OGRAMIGOCLOUDTableLayer::DeleteFeature( GIntBig nFID )
         std::string fid = it->second;
 
         CPLString osSQL;
-        osSQL.Printf("DELETE FROM %s WHERE %s = %s" ,
+        osSQL.Printf("DELETE FROM %s WHERE %s LIKE %s" ,
                      OGRAMIGOCLOUDEscapeIdentifier(osTableName).c_str(),
                      OGRAMIGOCLOUDEscapeIdentifier(osFIDColName).c_str(),
                      OGRAMIGOCLOUDEscapeIdentifier(fid.c_str()).c_str());
