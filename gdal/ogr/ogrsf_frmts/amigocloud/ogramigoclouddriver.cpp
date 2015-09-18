@@ -35,8 +35,6 @@ CPL_CVSID("$Id$");
 
 extern "C" void RegisterOGRAmigoCloud();
 
-static OGRAMIGOCLOUDDataSource   *poDS=NULL;
-
 /************************************************************************/
 /*                        OGRAmigoCloudDriverIdentify()                    */
 /************************************************************************/
@@ -56,8 +54,7 @@ static GDALDataset *OGRAmigoCloudDriverOpen( GDALOpenInfo* poOpenInfo )
     if( !OGRAmigoCloudDriverIdentify(poOpenInfo) )
         return NULL;
 
-    if(poDS==NULL)
-        poDS = new OGRAMIGOCLOUDDataSource();
+    OGRAMIGOCLOUDDataSource   *poDS = new OGRAMIGOCLOUDDataSource();
 
     if( !poDS->Open( poOpenInfo->pszFilename, poOpenInfo->papszOpenOptions,
                      poOpenInfo->eAccess == GA_Update ) )
@@ -81,8 +78,7 @@ static GDALDataset *OGRAmigoCloudDriverCreate( const char * pszName,
                                             CPL_UNUSED char **papszOptions )
 
 {
-    if(poDS==NULL)
-        poDS = new OGRAMIGOCLOUDDataSource();
+    OGRAMIGOCLOUDDataSource   *poDS = new OGRAMIGOCLOUDDataSource();
 
     if( !poDS->Open( pszName, NULL, TRUE ) )
     {

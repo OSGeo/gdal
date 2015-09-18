@@ -164,7 +164,7 @@ OGRFeatureDefn * OGRAMIGOCLOUDTableLayer::GetLayerDefnInternal(CPL_UNUSED json_o
         osBaseSQL = "";
     }
 
-#if 0
+#if 1
     if( osFIDColName.size() > 0 )
     {
         CPLString sql;
@@ -198,7 +198,6 @@ OGRFeatureDefn * OGRAMIGOCLOUDTableLayer::GetLayerDefnInternal(CPL_UNUSED json_o
                                 std::string amigo_id = json_object_get_string(it.val);
                                 OGRAmigoCloudFID aFID(amigo_id, iNext);
                                 mFIDs[aFID.iFID] = aFID;
-                                poFeature->SetFID(aFID.iFID);
                             }
                         }
                     }
