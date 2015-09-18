@@ -520,6 +520,8 @@ static std::string url_encode(const std::string &value) {
 json_object* OGRAMIGOCLOUDDataSource::RunPOST(const char*pszURL, const char *pszPostData, const char *pszHeaders)
 {
     CPLString osURL(pszURL);
+    printf("RunPOST 1 %s\n", pszURL);
+    printf("RunPOST 2 %s\n", pszPostData);
 
     /* -------------------------------------------------------------------- */
     /*      Provide the API Key                                             */
@@ -618,6 +620,7 @@ json_object* OGRAMIGOCLOUDDataSource::RunPOST(const char*pszURL, const char *psz
 json_object* OGRAMIGOCLOUDDataSource::RunGET(const char*pszURL)
 {
     CPLString osURL(pszURL);
+    printf("RunGET %s\n", pszURL);
 
     /* -------------------------------------------------------------------- */
     /*      Provide the API Key                                             */
@@ -734,6 +737,9 @@ json_object* OGRAMIGOCLOUDDataSource::RunSQL(const char* pszUnescapedSQL)
     char** papszOptions = NULL;
 
     pszAPIURL += osSQL;
+
+    printf("RunSQL url %s\n", pszAPIURL.c_str());
+    printf("RunSQL sql %s\n", pszUnescapedSQL);
 
     CPLHTTPResult * psResult = CPLHTTPFetch( pszAPIURL.c_str(), papszOptions);
     CSLDestroy(papszOptions);
