@@ -397,13 +397,18 @@ json_object* OGRAMIGOCLOUDTableLayer::FetchNewFeatures(GIntBig iNext)
     if( osFIDColName.size() > 0 )
     {
         CPLString osSQL;
-        osSQL.Printf("%s WHERE %s%s >= " CPL_FRMT_GIB " ORDER BY %s ASC LIMIT %d",
-                     osSELECTWithoutWHERE.c_str(),
-                     ( osWHERE.size() > 0 ) ? CPLSPrintf("%s AND ", osWHERE.c_str()) : "",
-                     OGRAMIGOCLOUDEscapeIdentifier(osFIDColName).c_str(),
-                     iNext,
-                     OGRAMIGOCLOUDEscapeIdentifier(osFIDColName).c_str(),
-                     GetFeaturesToFetch());
+
+        std::map<GIntBig, std::string>::iterator it = mFIDs.find(iNext);
+
+        if(osWHERE.size() > 0)
+        {
+            osSQL.Printf("%s WHERE %s ",
+                         osSELECTWithoutWHERE.c_str(),
+                         (osWHERE.size() > 0) ? CPLSPrintf("%s AND ", osWHERE.c_str()) : "");
+        } else
+        {
+            osSQL.Printf("%s", osSELECTWithoutWHERE.c_str());
+        }
         return poDS->RunSQL(osSQL);
     }
     else
