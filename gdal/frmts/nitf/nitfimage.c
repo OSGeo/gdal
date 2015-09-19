@@ -1554,7 +1554,8 @@ int NITFWriteImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
         + psImage->nWordSize;
 
     if (nWrkBufSize == 0)
-      nWrkBufSize = (psImage->nBlockWidth*psImage->nBlockHeight*psImage->nBitsPerSample+7)/8;
+      nWrkBufSize = ((GUIntBig)psImage->nBlockWidth
+                     * psImage->nBlockHeight * psImage->nBitsPerSample+7)/8;
 
 /* -------------------------------------------------------------------- */
 /*      Can we do a direct read into our buffer?                        */
