@@ -1983,9 +1983,9 @@ int NITFWriteIGEOLO( NITFImage *psImage, char chICORDS,
             return FALSE;
         }
 
-        CPLsprintf(szIGEOLO + 0, "%+#07.3f%+#08.3f", dfULY, dfULX);
-        CPLsprintf(szIGEOLO + 15, "%+#07.3f%+#08.3f", dfURY, dfURX);
-        CPLsprintf(szIGEOLO + 30, "%+#07.3f%+#08.3f", dfLRY, dfLRX);
+        CPLsnprintf(szIGEOLO + 0, sizeof(szIGEOLO), "%+#07.3f%+#08.3f", dfULY, dfULX);
+        CPLsnprintf(szIGEOLO + 15, sizeof(szIGEOLO) - 15, "%+#07.3f%+#08.3f", dfURY, dfURX);
+        CPLsnprintf(szIGEOLO + 30, sizeof(szIGEOLO) - 30, "%+#07.3f%+#08.3f", dfLRY, dfLRX);
         CPLsnprintf(szIGEOLO + 45, sizeof(szIGEOLO) - 45, "%+#07.3f%+#08.3f", dfLLY, dfLLX);
     }
 
