@@ -1434,6 +1434,7 @@ int WCSDataset::ExtractGridInfo()
                   "Unrecognised GridCRS.GridType value '%s',\n"
                   "unable to process WCS coverage.",
                   pszGridType );
+        CSLDestroy( papszOriginTokens );
         return FALSE;
     }
 
