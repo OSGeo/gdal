@@ -10385,7 +10385,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
             pszTabWKT = NULL;
             bLookedForProjection = TRUE;
         }
-        
+
         CPLFree( pszTabWKT );
         bGeoTIFFInfoChanged = FALSE;
         bForceUnsetGTOrGCPs = FALSE;
@@ -10411,7 +10411,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
             float   fVal;
             if( TIFFGetField( hTIFF, asTIFFTags[iTag].nTagVal, &fVal ) )
             {
-                CPLsprintf( szWorkMDI, "%.8g", fVal );
+                CPLsnprintf( szWorkMDI, sizeof(szWorkMDI), "%.8g", fVal );
                 SetMetadataItem( asTIFFTags[iTag].pszTagName, szWorkMDI );
             }
         }
