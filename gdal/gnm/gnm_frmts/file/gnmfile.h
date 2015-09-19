@@ -50,15 +50,15 @@ protected:
                                    char ** papszOptions = NULL );
     virtual int CheckNetworkExist( const char* pszFilename, char** papszOptions );
 protected:
-    virtual CPLErr CreateMetadataLayer( const char* pszFilename, int nVersion,
+    virtual CPLErr CreateMetadataLayerFromFile( const char* pszFilename, int nVersion,
                                         char** papszOptions );    
     virtual CPLErr StoreNetworkSrs();
     virtual CPLErr LoadNetworkSrs();
     virtual CPLErr DeleteMetadataLayer();
-    virtual CPLErr CreateGraphLayer( const char* pszFilename,
+    virtual CPLErr CreateGraphLayerFromFile( const char* pszFilename,
                                      char** papszOptions );
     virtual CPLErr DeleteGraphLayer();
-    virtual CPLErr CreateFeaturesLayer( const char* pszFilename,
+    virtual CPLErr CreateFeaturesLayerFromFile( const char* pszFilename,
                                         char** papszOptions );
     virtual CPLErr DeleteFeaturesLayer();
     virtual CPLErr DeleteNetworkLayers();

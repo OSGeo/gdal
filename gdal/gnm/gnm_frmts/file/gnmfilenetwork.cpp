@@ -226,7 +226,7 @@ CPLErr GNMFileNetwork::Delete()
     return VSIRmdir(m_soNetworkFullName) == 0 ? CE_None : CE_Failure;
 }
 
-CPLErr GNMFileNetwork::CreateMetadataLayer( const char* pszFilename, int nVersion,
+CPLErr GNMFileNetwork::CreateMetadataLayerFromFile( const char* pszFilename, int nVersion,
                                          char** papszOptions )
 {
     CPLErr eResult = CheckLayerDriver(GNM_MD_DEFAULT_FILE_FORMAT, papszOptions);
@@ -302,7 +302,7 @@ CPLErr GNMFileNetwork::DeleteMetadataLayer()
     return CE_Failure;
 }
 
-CPLErr GNMFileNetwork::CreateGraphLayer( const char* pszFilename, char** papszOptions )
+CPLErr GNMFileNetwork::CreateGraphLayerFromFile( const char* pszFilename, char** papszOptions )
 {
     CPLErr eResult = CheckLayerDriver(GNM_MD_DEFAULT_FILE_FORMAT, papszOptions);
     if(CE_None != eResult)
@@ -338,7 +338,7 @@ CPLErr GNMFileNetwork::DeleteGraphLayer()
     return CE_Failure;
 }
 
-CPLErr GNMFileNetwork::CreateFeaturesLayer( const char* pszFilename, char** papszOptions )
+CPLErr GNMFileNetwork::CreateFeaturesLayerFromFile( const char* pszFilename, char** papszOptions )
 {
     CPLErr eResult = CheckLayerDriver(GNM_MD_DEFAULT_FILE_FORMAT, papszOptions);
     if(CE_None != eResult)
@@ -626,7 +626,7 @@ CPLErr GNMFileNetwork::Create( const char* pszFilename, char** papszOptions )
 
     // Create meta layer
 
-    CPLErr eResult = CreateMetadataLayer(pszFilename, GNM_VERSION_NUM, papszOptions);
+    CPLErr eResult = CreateMetadataLayerFromFile(pszFilename, GNM_VERSION_NUM, papszOptions);
 
     if(CE_None != eResult)
     {
@@ -636,7 +636,7 @@ CPLErr GNMFileNetwork::Create( const char* pszFilename, char** papszOptions )
 
     // Create graph layer
 
-    eResult = CreateGraphLayer(pszFilename, papszOptions);
+    eResult = CreateGraphLayerFromFile(pszFilename, papszOptions);
 
     if(CE_None != eResult)
     {
@@ -646,7 +646,7 @@ CPLErr GNMFileNetwork::Create( const char* pszFilename, char** papszOptions )
 
     // Create features layer
 
-    eResult = CreateFeaturesLayer(pszFilename, papszOptions);
+    eResult = CreateFeaturesLayerFromFile(pszFilename, papszOptions);
 
     if(CE_None != eResult)
     {
