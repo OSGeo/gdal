@@ -453,7 +453,8 @@ NWT_GRID *nwtOpenGrid( char *filename )
         return NULL;
     }
 
-    strcpy( pGrd->szFileName, filename );
+    strncpy( pGrd->szFileName, filename, sizeof(pGrd->szFileName) );
+    pGrd->szFileName[sizeof(pGrd->szFileName) - 1] = '\0';
     pGrd->fp = fp;
     nwt_ParseHeader( pGrd, nwtHeader );
 
