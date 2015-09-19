@@ -122,7 +122,7 @@ static int IsPowerOfTwo(unsigned int i)
 
 void GTIFFGetOverviewBlockSize(int* pnBlockXSize, int* pnBlockYSize)
 {
-    static int bHasWarned = FALSE;
+    static bool bHasWarned = false;
     const char* pszVal = CPLGetConfigOption("GDAL_TIFF_OVR_BLOCKSIZE", "128");
     int nOvrBlockSize = atoi(pszVal);
     if (nOvrBlockSize < 64 || nOvrBlockSize > 4096 ||
@@ -134,7 +134,7 @@ void GTIFFGetOverviewBlockSize(int* pnBlockXSize, int* pnBlockYSize)
                     "Wrong value for GDAL_TIFF_OVR_BLOCKSIZE : %s. "
                     "Should be a power of 2 between 64 and 4096. Defaulting to 128",
                     pszVal);
-            bHasWarned = TRUE;
+            bHasWarned = true;
         }
         nOvrBlockSize = 128;
     }
@@ -874,8 +874,7 @@ void    GTIFFSetJpegQuality(GDALDatasetH hGTIFFDS, int nJpegQuality)
 
     poDS->ScanDirectories();
 
-    int i;
-    for(i=0;i<poDS->nOverviewCount;i++)
+    for(int i=0;i<poDS->nOverviewCount;i++)
         poDS->papoOverviewDS[i]->nJpegQuality = nJpegQuality;
 }
 
@@ -14044,13 +14043,15 @@ void GDALRegister_GTiff()
 {
     if( GDALGetDriverByName( "GTiff" ) == NULL )
     {
-        GDALDriver	*poDriver;
         char szCreateOptions[5000];
         char szOptionalCompressItems[500];
-        int bHasJPEG = FALSE, bHasLZW = FALSE, bHasDEFLATE = FALSE, bHasLZMA = FALSE;
+        bool bHasJPEG = false;
+        bool bHasLZW = false;
+        bool bHasDEFLATE = false;
+        bool bHasLZMA = false;
 
-        poDriver = new GDALDriver();
-        
+        GDALDriver *poDriver = new GDALDriver();
+
 /* -------------------------------------------------------------------- */
 /*      Determine which compression codecs are available that we        */
 /*      want to advertise.  If we are using an old libtiff we won't     */
@@ -14065,7 +14066,7 @@ void GDALRegister_GTiff()
                 "       <Value>JPEG</Value>"
                 "       <Value>LZW</Value>"
                 "       <Value>DEFLATE</Value>" );
-        bHasLZW = bHasDEFLATE = TRUE;
+        bHasLZW = bHasDEFLATE = true;
 #else
         TIFFCodec	*c, *codecs = TIFFGetConfiguredCODECs();
 
@@ -14076,7 +14077,7 @@ void GDALRegister_GTiff()
                         "       <Value>PACKBITS</Value>" );
             else if( c->scheme == COMPRESSION_JPEG )
             {
-                bHasJPEG = TRUE;
+                bHasJPEG = true;
                 strcat( szOptionalCompressItems,
                         "       <Value>JPEG</Value>" );
             }
@@ -14103,13 +14104,13 @@ void GDALRegister_GTiff()
                         "       <Value>CCITTFAX4</Value>" );
             else if( c->scheme == COMPRESSION_LZMA )
             {
-                bHasLZMA = TRUE;
+                bHasLZMA = true;
                 strcat( szOptionalCompressItems,
                         "       <Value>LZMA</Value>" );
             }
         }
         _TIFFfree( codecs );
-#endif        
+#endif
 
 /* -------------------------------------------------------------------- */
 /*      Build full creation option list.                                */
