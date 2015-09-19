@@ -285,7 +285,9 @@ double MSGNRasterBand::GetMaximum(int *pbSuccess ) {
 /* ==================================================================== */
 /************************************************************************/
 
-MSGNDataset::MSGNDataset() {
+MSGNDataset::MSGNDataset() :
+    fp(NULL)
+{
     pszProjection = CPLStrdup("");
     msg_reader_core = 0;
 }
