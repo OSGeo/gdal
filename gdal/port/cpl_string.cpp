@@ -81,12 +81,12 @@ char **CSLAddString(char **papszStrList, const char *pszNewString)
 
     /* Allocate room for the new string */
     if (papszStrList == NULL)
-        papszStrList = (char**) CPLCalloc(2,sizeof(char*));
+        papszStrList = reinterpret_cast<char**>(CPLCalloc(2,sizeof(char*)));
     else
     {
         nItems = CSLCount(papszStrList);
-        papszStrList = (char**)CPLRealloc(papszStrList, 
-                                          (nItems+2)*sizeof(char*));
+        papszStrList = reinterpret_cast<char**>(
+            CPLRealloc(papszStrList, (nItems+2)*sizeof(char*)));
     }
 
     /* Copy the string in the list */
@@ -165,7 +165,7 @@ const char *CSLGetField( char ** papszStrList, int iField )
  * Free string list.
  *
  * Frees the passed string list (null terminated array of strings).
- * It is safe to pass NULL. 
+ * It is safe to pass NULL.
  *
  * @param papszStrList the list to free.
  */
@@ -206,7 +206,9 @@ char **CSLDuplicate(char **papszStrList)
 
     char **papszSrc = papszStrList;
 
-    char **papszNewList = (char **)CPLMalloc((nLines+1)*sizeof(char*));
+    char **papszNewList = reinterpret_cast<char**>(
+        CPLMalloc((nLines+1)*sizeof(char*)));
+
     char **papszDst = papszNewList;
 
     for( ; *papszSrc != NULL; ++papszSrc, ++papszDst)
@@ -266,7 +268,7 @@ char **CSLMerge( char **papszOrig, char **papszOverride )
  * The VSI*L API is used, so VSIFOpenL() supported objects that aren't
  * physical files can also be accessed.  Files are returned as a string list,
  * with one item in the string list per line.  End of line markers are
- * stripped (by CPLReadLineL()). 
+ * stripped (by CPLReadLineL()).
  *
  * If reading the file fails a CPLError() will be issued and NULL returned.
  *
