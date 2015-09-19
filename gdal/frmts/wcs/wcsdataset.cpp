@@ -1379,9 +1379,11 @@ int WCSDataset::ExtractGridInfo()
         }
         else
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_AppDefined,
                       "2dGridIn2dCrs does not have expected GridOrigin or\n"
                       "GridOffsets values - unable to process WCS coverage.");
+            CSLDestroy( papszOffsetTokens );
+            CSLDestroy( papszOriginTokens );
             return FALSE;
         }
     }
@@ -1400,13 +1402,15 @@ int WCSDataset::ExtractGridInfo()
         }
         else
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_AppDefined,
                       "2dGridIn3dCrs does not have expected GridOrigin or\n"
                       "GridOffsets values - unable to process WCS coverage.");
+            CSLDestroy( papszOffsetTokens );
+            CSLDestroy( papszOriginTokens );
             return FALSE;
         }
     }
-    
+
     else if( strstr(pszGridType,":2dSimpleGrid") )
     {
         if( CSLCount(papszOffsetTokens) == 2
@@ -1421,19 +1425,22 @@ int WCSDataset::ExtractGridInfo()
         }
         else
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_AppDefined,
                       "2dSimpleGrid does not have expected GridOrigin or\n"
                       "GridOffsets values - unable to process WCS coverage.");
+            CSLDestroy( papszOffsetTokens );
+            CSLDestroy( papszOriginTokens );
             return FALSE;
         }
     }
 
     else
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "Unrecognised GridCRS.GridType value '%s',\n"
                   "unable to process WCS coverage.",
                   pszGridType );
+        CSLDestroy( papszOffsetTokens );
         CSLDestroy( papszOriginTokens );
         return FALSE;
     }
