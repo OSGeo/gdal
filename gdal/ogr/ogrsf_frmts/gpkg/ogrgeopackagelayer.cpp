@@ -100,7 +100,7 @@ void OGRGeoPackageLayer::ClearStatement()
 OGRFeature *OGRGeoPackageLayer::GetNextFeature()
 
 {
-    for( ; TRUE; )
+    for( ; true; )
     {
         OGRFeature      *poFeature;
 
@@ -320,8 +320,7 @@ void OGRGeoPackageLayer::BuildFeatureDefn( const char *pszLayerName,
 
     panFieldOrdinals = (int *) CPLMalloc( sizeof(int) * nRawColumns );
 
-    int iCol;
-    for( iCol = 0; iCol < nRawColumns; iCol++ )
+    for( int iCol = 0; iCol < nRawColumns; iCol++ )
     {
         OGRFieldDefn    oField( OGRSQLiteParamsUnquote(sqlite3_column_name( hStmt, iCol )),
                                 OFTString );
