@@ -95,7 +95,7 @@ OGRFeatureDefn * OGRAMIGOCLOUDLayer::GetLayerDefn()
 }
 
 /************************************************************************/
-/*                           BuildFeature()                             */
+/*                            BuildFeature()                            */
 /************************************************************************/
 
 OGRFeature *OGRAMIGOCLOUDLayer::BuildFeature(json_object* poRowObj)
@@ -117,8 +117,8 @@ OGRFeature *OGRAMIGOCLOUDLayer::BuildFeature(json_object* poRowObj)
                 mFIDs[aFID.iFID] = aFID;
                 poFeature->SetFID(aFID.iFID);
 
-//                printf("poRowObj--- iNext=%lld FID=%lld, %s\n", iNext, aFID.iFID, json_object_get_string(poRowObj));
-                printf("poRowObj--- iNext=%lld FID=%lld\n", iNext, aFID.iFID);
+//               printf("poRowObj--- iNext=%lld FID=%lld, %s\n", iNext, aFID.iFID, json_object_get_string(poRowObj));
+                printf("poRowObj--- iNext=%lld FID=%ld\n", iNext, aFID.iFID);
 
             }
         }
@@ -198,7 +198,7 @@ json_object* OGRAMIGOCLOUDLayer::FetchNewFeatures(GIntBig iNext)
 }
 
 /************************************************************************/
-/*                        GetNextRawFeature()                           */
+/*                       GetNextRawFeature()                            */
 /************************************************************************/
 
 OGRFeature *OGRAMIGOCLOUDLayer::GetNextRawFeature()

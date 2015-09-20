@@ -37,6 +37,7 @@
 #include <string>
 #include <json.h>
 #include <cpl_hash_set.h>
+#include <cstdlib>
 
 json_object* OGRAMIGOCLOUDGetSingleRow(json_object* poObj);
 CPLString OGRAMIGOCLOUDEscapeIdentifier(const char* pszStr);
@@ -68,7 +69,7 @@ public:
     {
         iIndex = index;
         OGRAmigoCloudFID::amigo_id = amigo_id.c_str();
-        iFID = (GIntBig)CPLHashSetHashStr(amigo_id.c_str());
+        iFID = std::abs((long)CPLHashSetHashStr(amigo_id.c_str()));
     }
 
     OGRAmigoCloudFID()

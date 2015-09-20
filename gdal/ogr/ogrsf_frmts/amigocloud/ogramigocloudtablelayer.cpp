@@ -149,7 +149,7 @@ OGRAMIGOCLOUDTableLayer::~OGRAMIGOCLOUDTableLayer()
 }
 
 /************************************************************************/
-/*                          GetLayerDefnInternal()                      */
+/*                        GetLayerDefnInternal()                        */
 /************************************************************************/
 
 OGRFeatureDefn * OGRAMIGOCLOUDTableLayer::GetLayerDefnInternal(CPL_UNUSED json_object* poObjIn)
