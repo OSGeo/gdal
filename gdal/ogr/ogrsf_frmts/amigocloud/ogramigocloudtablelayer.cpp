@@ -154,10 +154,10 @@ OGRAMIGOCLOUDTableLayer::~OGRAMIGOCLOUDTableLayer()
 
 OGRFeatureDefn * OGRAMIGOCLOUDTableLayer::GetLayerDefnInternal(CPL_UNUSED json_object* poObjIn)
 {
-//    if( poFeatureDefn != NULL )
-//    {
-//        return poFeatureDefn;
-//    }
+    if( poFeatureDefn != NULL )
+    {
+        return poFeatureDefn;
+    }
 
     if( poFeatureDefn == NULL )
     {

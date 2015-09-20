@@ -117,7 +117,8 @@ OGRFeature *OGRAMIGOCLOUDLayer::BuildFeature(json_object* poRowObj)
                 mFIDs[aFID.iFID] = aFID;
                 poFeature->SetFID(aFID.iFID);
 
-                printf("poRowObj--- iNext=%lld FID=%lld, %s\n", iNext, aFID.iFID, json_object_get_string(poRowObj));
+//                printf("poRowObj--- iNext=%lld FID=%lld, %s\n", iNext, aFID.iFID, json_object_get_string(poRowObj));
+                printf("poRowObj--- iNext=%lld FID=%lld\n", iNext, aFID.iFID);
 
             }
         }

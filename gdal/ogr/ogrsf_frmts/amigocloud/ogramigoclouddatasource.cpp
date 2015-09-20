@@ -546,7 +546,7 @@ json_object* OGRAMIGOCLOUDDataSource::RunPOST(const char*pszURL, const char *psz
 
     CPLHTTPResult * psResult = CPLHTTPFetch( osURL.c_str(), papszOptions);
 
-    printf("RunPOST result: %s\n", psResult->pabyData);
+//    printf("RunPOST result: %s\n", psResult->pabyData);
 
     if (psResult && psResult->pszContentType &&
         strncmp(psResult->pszContentType, "text/html", 9) == 0)
@@ -752,7 +752,7 @@ json_object* OGRAMIGOCLOUDDataSource::RunSQL(const char* pszUnescapedSQL)
     CPLHTTPResult * psResult = CPLHTTPFetch( pszAPIURL.c_str(), papszOptions);
     CSLDestroy(papszOptions);
 
-    printf("RunSQL result: %s\n", psResult->pabyData);
+//    printf("RunSQL result: %s\n", psResult->pabyData);
 /* -------------------------------------------------------------------- */
 /*      Check for some error conditions and report.  HTML Messages      */
 /*      are transformed info failure.                                   */
