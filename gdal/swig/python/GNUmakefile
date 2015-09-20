@@ -6,10 +6,6 @@ ifndef PYTHON
         PYTHON=python
 endif
 
-ifndef DESTDIR
-    DESTDIR=/
-endif
-
 all: build
 
 BINDING = python
@@ -76,6 +72,25 @@ ifeq ($(PY_HAVE_SETUPTOOLS),1)
     setup_opts=--single-version-externally-managed --record=record.txt
 endif
 
+ifdef DESTDIR
+    setup_opts+=--root=$(DESTDIR)
+endif
+
+ifdef prefix
+    ifeq ($(shell uname),Darwin)
+        STD_UNIX_LAYOUT=$(shell $(PYTHON) -c "from __future__ import print_function;import sys;print(\"FALSE\" if \"framework\" in sys.prefix.lower() else \"TRUE\")")
+        ifeq ($(STD_UNIX_LAYOUT),"TRUE")
+            setup_opts+=--prefix=$(prefix)
+        else
+            ifdef PYTHON_INSTALL_LIB
+                setup_opts+=--install-lib=$(PYTHON_INSTALL_LIB)
+            endif
+        endif
+    else
+        setup_opts+=--prefix=$(prefix)
+    endif
+endif
+
 ifdef INSTALL_LAYOUT
     setup_opts+=--install-layout=$(INSTALL_LAYOUT)
 else
@@ -95,7 +110,7 @@ install:
 		echo "----------------------------------------------------------------------";\
 	fi
 	env PYTHONPATH=$(site_package_dir)$${PYTHONPATH:+:$$PYTHONPATH} \
-		$(PYTHON) setup.py install --root=$(DESTDIR) --prefix=$(prefix) ${setup_opts}
+		$(PYTHON) setup.py install ${setup_opts}
 	for f in $(SCRIPTS) ; do $(INSTALL) ./scripts/$$f $(DESTDIR)$(INST_BIN) ; done
 
 docs:
