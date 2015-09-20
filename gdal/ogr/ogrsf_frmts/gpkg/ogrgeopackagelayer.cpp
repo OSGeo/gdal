@@ -419,11 +419,16 @@ void OGRGeoPackageLayer::BuildFeatureDefn( const char *pszLayerName,
                         poSRS->Dereference();
                     }
                     delete poGeom;
+                    poGeom = NULL;
 
                     m_poFeatureDefn->AddGeomFieldDefn(&oGeomField);
                     iGeomCol = iCol;
                     continue;
                 }
+                // Unlikely to have poGeom be valid, but just in case, check
+                // if we need to delete it.
+                if (poGeom != NULL)
+                    delete poGeom;
             }
         }
 
