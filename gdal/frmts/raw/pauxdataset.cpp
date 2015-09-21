@@ -730,6 +730,7 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLError( CE_Failure, CPLE_AppDefined,
                   "RawDefinition missing or corrupt in %s.",
                   poOpenInfo->pszFilename );
+        delete poDS;
         CSLDestroy( papszTokens );
         return NULL;
     }
@@ -1136,4 +1137,3 @@ void GDALRegister_PAux()
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
-
