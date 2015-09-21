@@ -1005,10 +1005,13 @@ int OGRAMIGOCLOUDTableLayer::TestCapability( const char * pszCap )
         return osFIDColName.size() != 0;
     }
 
-    if( EQUAL(pszCap,OLCSequentialWrite)
+    if(
+        EQUAL(pszCap,OLCSequentialWrite)
      || EQUAL(pszCap,OLCRandomWrite)
      || EQUAL(pszCap,OLCDeleteFeature)
-     || EQUAL(pszCap,OLCCreateField) )
+     || EQUAL(pszCap,ODsCCreateLayer)
+     || EQUAL(pszCap,ODsCDeleteLayer)
+       )
     {
         return poDS->IsReadWrite();
     }

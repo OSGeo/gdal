@@ -114,7 +114,7 @@ void RegisterOGRAmigoCloud()
         poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
     "<OpenOptionList>"
     "  <Option name='API_KEY' type='string' description='Account API key'/>"
-    "  <Option name='ACCOUNT' type='string' description='Account name' required='true'/>"
+    "  <Option name='PROJECTID' type='string' description='Project id' required='true'/>"
     "  <Option name='BATCH_INSERT' type='boolean' description='Whether to group features to be inserted in a batch' default='YES'/>"
     "</OpenOptionList>");
 
