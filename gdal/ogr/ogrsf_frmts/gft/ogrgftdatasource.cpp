@@ -67,7 +67,7 @@ OGRGFTDataSource::~OGRGFTDataSource()
     {
         char** papszOptions = NULL;
         papszOptions = CSLSetNameValue(papszOptions, "CLOSE_PERSISTENT", CPLSPrintf("GFT:%p", this));
-        CPLHTTPFetch( GetAPIURL(), papszOptions);
+        CPLHTTPDestroyResult( CPLHTTPFetch( GetAPIURL(), papszOptions) );
         CSLDestroy(papszOptions);
     }
 
