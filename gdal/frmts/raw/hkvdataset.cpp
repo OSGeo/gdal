@@ -773,11 +773,11 @@ CPLErr HKVDataset::SetGeoTransform( double * padfTransform )
 
     if (bSuccess)
     {
-        CPLsprintf( szValue, "%.10f", temp_lat );
+        CPLsnprintf( szValue, sizeof(szValue), "%.10f", temp_lat );
         papszGeoref = CSLSetNameValue( papszGeoref, "centre.latitude", 
                                        szValue );
 
-        CPLsprintf( szValue, "%.10f", temp_long );
+        CPLsnprintf( szValue, sizeof(szValue), "%.10f", temp_long );
         papszGeoref = CSLSetNameValue( papszGeoref, "centre.longitude", 
                                        szValue );
     }
