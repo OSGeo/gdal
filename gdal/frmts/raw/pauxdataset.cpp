@@ -230,11 +230,11 @@ CPLErr PAuxRasterBand::SetNoDataValue( double dfNewValue )
         return CE_Failure;
     }
 
-    sprintf( szTarget, "METADATA_IMG_%d_NO_DATA_VALUE", nBand );
-    CPLsprintf( szValue, "%24.12f", dfNewValue );
-    poPDS->papszAuxLines = 
+    snprintf( szTarget, sizeof(szTarget), "METADATA_IMG_%d_NO_DATA_VALUE", nBand );
+    CPLsnprintf( szValue, sizeof(szValue), "%24.12f", dfNewValue );
+    poPDS->papszAuxLines =
         CSLSetNameValue( poPDS->papszAuxLines, szTarget, szValue );
-    
+
     poPDS->bAuxUpdated = TRUE;
 
     return CE_None;
