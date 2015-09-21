@@ -412,10 +412,7 @@ CPLErr VRTDerivedRasterBand::XMLInit(CPLXMLNode *psTree,
 				     const char *pszVRTPath)
 
 {
-    CPLErr eErr;
-    const char *pszTypeName;
-
-    eErr = VRTSourcedRasterBand::XMLInit( psTree, pszVRTPath );
+    CPLErr eErr = VRTSourcedRasterBand::XMLInit( psTree, pszVRTPath );
     if( eErr != CE_None )
         return eErr;
 
@@ -424,7 +421,7 @@ CPLErr VRTDerivedRasterBand::XMLInit(CPLXMLNode *psTree,
 	(CPLGetXMLValue(psTree, "PixelFunctionType", NULL));
 
     /* ---- Read optional source transfer data type ---- */
-    pszTypeName = CPLGetXMLValue(psTree, "SourceTransferType", NULL);
+    const char *pszTypeName = CPLGetXMLValue(psTree, "SourceTransferType", NULL);
     if (pszTypeName != NULL) {
 	this->eSourceTransferType = GDALGetDataTypeByName(pszTypeName);
     }
@@ -438,9 +435,7 @@ CPLErr VRTDerivedRasterBand::XMLInit(CPLXMLNode *psTree,
 
 CPLXMLNode *VRTDerivedRasterBand::SerializeToXML(const char *pszVRTPath)
 {
-    CPLXMLNode *psTree;
-
-    psTree = VRTSourcedRasterBand::SerializeToXML( pszVRTPath );
+    CPLXMLNode *psTree = VRTSourcedRasterBand::SerializeToXML( pszVRTPath );
 
 /* -------------------------------------------------------------------- */
 /*      Set subclass.                                                   */
