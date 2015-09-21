@@ -36,16 +36,17 @@
 /*                      OGRGeoPackageLayer()                            */
 /************************************************************************/
 
-OGRGeoPackageLayer::OGRGeoPackageLayer(GDALGeoPackageDataset *poDS) : m_poDS(poDS)
+OGRGeoPackageLayer::OGRGeoPackageLayer(GDALGeoPackageDataset *poDS) :
+    m_poDS(poDS),
+    m_poFeatureDefn(NULL),
+    iNextShapeId(0),
+    m_poQueryStatement(NULL),
+    bDoStep(TRUE),
+    m_pszFidColumn(NULL),
+    iFIDCol(-1),
+    iGeomCol(-1),
+    panFieldOrdinals(NULL)
 {
-    m_poFeatureDefn = NULL;
-    iNextShapeId = 0;
-    m_poQueryStatement = NULL;
-    bDoStep = TRUE;
-    m_pszFidColumn = NULL;
-    iFIDCol = -1;
-    iGeomCol = -1;
-    panFieldOrdinals = NULL;
 }
 
 /************************************************************************/
@@ -162,7 +163,6 @@ OGRFeature *OGRGeoPackageLayer::TranslateFeature( sqlite3_stmt* hStmt )
 /* -------------------------------------------------------------------- */
 /*      Create a feature from the current result.                       */
 /* -------------------------------------------------------------------- */
-    int         iField;
     OGRFeature *poFeature = new OGRFeature( m_poFeatureDefn );
 
 /* -------------------------------------------------------------------- */
@@ -202,17 +202,17 @@ OGRFeature *OGRGeoPackageLayer::TranslateFeature( sqlite3_stmt* hStmt )
             poFeature->SetGeometryDirectly( poGeom );
         }
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      set the fields.                                                 */
 /* -------------------------------------------------------------------- */
-    for( iField = 0; iField < m_poFeatureDefn->GetFieldCount(); iField++ )
+    for( int iField = 0; iField < m_poFeatureDefn->GetFieldCount(); iField++ )
     {
         OGRFieldDefn *poFieldDefn = m_poFeatureDefn->GetFieldDefn( iField );
         if ( poFieldDefn->IsIgnored() )
             continue;
 
-        int iRawField = panFieldOrdinals[iField];
+        const int iRawField = panFieldOrdinals[iField];
 
         if( sqlite3_column_type( hStmt, iRawField ) == SQLITE_NULL )
             continue;
