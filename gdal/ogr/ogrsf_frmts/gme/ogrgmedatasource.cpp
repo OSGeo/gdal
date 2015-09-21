@@ -72,7 +72,7 @@ OGRGMEDataSource::~OGRGMEDataSource()
     {
         char** papszOptions = NULL;
         papszOptions = CSLSetNameValue(papszOptions, "CLOSE_PERSISTENT", CPLSPrintf("GME:%p", this));
-        CPLHTTPFetch( GetAPIURL(), papszOptions);
+        CPLHTTPDestroyResult( CPLHTTPFetch( GetAPIURL(), papszOptions ) );
         CSLDestroy(papszOptions);
     }
 
