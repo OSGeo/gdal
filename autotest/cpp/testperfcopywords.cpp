@@ -26,41 +26,41 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
- 
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
 
 #include "gdal.h"
 
-int main(int argc, char* argv[])
+int main(int /* argc */, char* /* argv */ [])
 {
     void* in = calloc(1, 256 * 256 * 16);
     void* out = malloc(256 * 256 * 16);
-    
+
     int i;
     int intype, outtype;
 
     clock_t start, end;
-    
+
     for(intype=GDT_Byte;intype<=GDT_CFloat64;intype++)
     {
         for(outtype=GDT_Byte;outtype<=GDT_CFloat64;outtype++)
         {
             start = clock();
-            
+
             for(i=0;i<1000;i++)
                 GDALCopyWords(in, (GDALDataType)intype, 16, out, (GDALDataType)outtype, 16, 256 * 256);
-                
+
             end = clock();
-            
+
             printf("%s -> %s : %.2f s\n",
                    GDALGetDataTypeName((GDALDataType)intype),
                    GDALGetDataTypeName((GDALDataType)outtype),
                    (end - start) * 1.0 / CLOCKS_PER_SEC);
-            
+
             start = clock();
-            
+
             for(i=0;i<1000;i++)
                 GDALCopyWords(in,
                               (GDALDataType)intype,
@@ -69,9 +69,9 @@ int main(int argc, char* argv[])
                               (GDALDataType)outtype, 
                               GDALGetDataTypeSize((GDALDataType)outtype) / 8,
                               256 * 256);
-                
+
             end = clock();
-            
+
             printf("%s -> %s (packed) : %.2f s\n",
                    GDALGetDataTypeName((GDALDataType)intype),
                    GDALGetDataTypeName((GDALDataType)outtype),
@@ -81,4 +81,3 @@ int main(int argc, char* argv[])
 
     return 0;
 }
-
