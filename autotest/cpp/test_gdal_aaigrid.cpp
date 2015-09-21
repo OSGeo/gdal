@@ -4,21 +4,21 @@
 // Project:  C++ Test Suite for GDAL/OGR
 // Purpose:  Test Arc/Info ASCII Grid support. Ported from gdrivers/aaigrid.py.
 // Author:   Mateusz Loskot <mateusz@loskot.net>
-// 
+//
 ///////////////////////////////////////////////////////////////////////////////
 // Copyright (c) 2006, Mateusz Loskot <mateusz@loskot.net>
 // Copyright (c) 2010, Even Rouault <even dot rouault at mines-paris dot org>
-//  
+//
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Library General Public
 // License as published by the Free Software Foundation; either
 // version 2 of the License, or (at your option) any later version.
-// 
+//
 // This library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 // Library General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU Library General Public
 // License along with this library; if not, write to the
 // Free Software Foundation, Inc., 59 Temple Place - Suite 330,
@@ -46,7 +46,6 @@
 
 namespace tut
 {
-
     // Common fixture with test data
     struct test_aaigrid_data
     {
@@ -80,7 +79,7 @@ namespace tut
             // Collection of test AAIGrid grids
             grids_.push_back(raster_t("byte.tif.grd", 1, 4672));
             grids_.push_back(raster_t("pixel_per_line.asc", 1, 1123));
-            
+
             // Collection of non-AAIGrid rasters
             rasters_.push_back(raster_t("byte.tif", 1, 4672));
         }
@@ -193,7 +192,8 @@ namespace tut
         std::string proj(GDALGetProjectionRef(ds));
         ensure_equals("Projection definition is not available", proj.empty(), false);
 
-        std::string expect("PROJCS[\"unnamed\",GEOGCS[\"NAD83\",DATUM[\"North_American_Datum_1983\""
+        std::string expect(
+            "PROJCS[\"unnamed\",GEOGCS[\"NAD83\",DATUM[\"North_American_Datum_1983\""
             ",SPHEROID[\"GRS 1980\",6378137,298.257222101,AUTHORITY[\"EPSG\",\"7019\"]],"
             "TOWGS84[0,0,0,0,0,0,0],AUTHORITY[\"EPSG\",\"6269\"]],PRIMEM[\"Greenwich\",0,"
             "AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,"
@@ -290,7 +290,7 @@ namespace tut
     {
         // Index of test file being tested
         const std::size_t fileIdx = 1;
-        
+
         std::string file(data_ + SEP);
         file += grids_.at(fileIdx).file_;
 
