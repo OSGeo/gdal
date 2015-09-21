@@ -370,7 +370,7 @@ PLMosaicDataset::~PLMosaicDataset()
     {
         char** papszOptions = NULL;
         papszOptions = CSLSetNameValue(papszOptions, "CLOSE_PERSISTENT", CPLSPrintf("PLMOSAIC:%p", this));
-        CPLHTTPFetch( osBaseURL, papszOptions);
+        CPLHTTPDestroyResult( CPLHTTPFetch( osBaseURL, papszOptions) );
         CSLDestroy(papszOptions);
     }
 
