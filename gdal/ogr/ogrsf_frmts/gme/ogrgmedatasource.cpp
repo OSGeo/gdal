@@ -42,19 +42,15 @@ CPL_CVSID("$Id$");
 /*                          OGRGMEDataSource()                          */
 /************************************************************************/
 
-OGRGMEDataSource::OGRGMEDataSource()
-
+OGRGMEDataSource::OGRGMEDataSource() :
+    pszName(NULL),
+    papoLayers(NULL),
+    nLayers(0),
+    bReadWrite(FALSE),
+    bUseHTTPS(FALSE),
+    bMustCleanPersistant(FALSE),
+    nRetries(0)
 {
-    papoLayers = NULL;
-    nLayers = 0;
-
-    pszName = NULL;
-
-    bReadWrite = FALSE;
-    bUseHTTPS = FALSE;
-
-    bMustCleanPersistant = FALSE;
-    nRetries = 0;
 }
 
 /************************************************************************/
@@ -86,11 +82,8 @@ OGRGMEDataSource::~OGRGMEDataSource()
 int OGRGMEDataSource::TestCapability( const char * pszCap )
 
 {
-    if( EQUAL(pszCap,ODsCCreateLayer) )
+    if( EQUAL(pszCap, ODsCCreateLayer) )
         return TRUE;
-    //else if( bReadWrite && EQUAL(pszCap,ODsCDeleteLayer) )
-    //    return TRUE;
-    //else
     return FALSE;
 }
 
