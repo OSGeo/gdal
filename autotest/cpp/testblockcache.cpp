@@ -206,7 +206,7 @@ static void ThreadFuncDedicatedDataset(void* _psThreadDescription)
     CPLFree(pBuffer);
 }
 
-static void ThreadFuncWithMigration(void* _unused)
+static void ThreadFuncWithMigration(void* /* _unused */)
 {
     Request* psRequest;
     while( (psRequest = GetNextRequest(psGlobalRequestList)) != NULL )
@@ -580,4 +580,3 @@ int main(int argc, char* argv[])
 
     return 0;
 }
-
