@@ -75,7 +75,7 @@ class MyDataset: public GDALDataset
         }
 };
 
-void thread_func(void* unused)
+void thread_func(void* /* unused */ )
 {
     printf("begin thread\n");
     GDALFlushCacheBlock();
@@ -85,19 +85,19 @@ void thread_func(void* unused)
 int main(int argc, char* argv[])
 {
     CPLJoinableThread* hThread;
-    
+
     printf("main thread %p\n", (void*)CPLGetPID());
 
     argc = GDALGeneralCmdLineProcessor( argc, &argv, 0 );
 
     CPLSetConfigOption("GDAL_CACHEMAX", "0");
     CPLSetConfigOption("GDAL_DEBUG_BLOCK_CACHE", "ON");
-    
+
     MyDataset* poDS = new MyDataset();
-    
+
     char buf1[] = { 1 } ;
     GDALRasterIO(GDALGetRasterBand(poDS, 1), GF_Write, 0, 0, 1, 1, buf1, 1, 1, GDT_Byte, 0, 0);
-   
+
     hThread = CPLCreateJoinableThread(thread_func, NULL);
     CPLSleep(0.3);
     GDALRasterIO(GDALGetRasterBand(poDS, 1), GF_Write, 1, 0, 1, 1, buf1, 1, 1, GDT_Byte, 0, 0);
@@ -108,6 +108,6 @@ int main(int argc, char* argv[])
     delete poDS;
     GDALDestroyDriverManager();
     CSLDestroy( argv );
-   
+
     return 0;
 }
