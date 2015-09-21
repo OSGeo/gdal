@@ -379,6 +379,7 @@ GDALDataset *ELASDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLError( CE_Failure, CPLE_FileIO,
                   "Attempt to read 1024 byte header filed on file %s\n",
                   poOpenInfo->pszFilename );
+        delete poDS;
         return NULL;
     }
 
