@@ -1,6 +1,22 @@
+# This Makefile requires GNU Make.
+
 CXX = g++
-CXXFLAGS =`gdal-config --cflags` -Wall -I. -Itut $(CPPFLAGS)
-LDFLAGS = `gdal-config --libs`
+CXXFLAGS := $(shell gdal-config --cflags) -I. -Itut $(CPPFLAGS)
+CXXFLAGS += -Wall
+CXXFLAGS += -Wextra
+# CXXFLAGS += -Werror
+
+ifdef HARDEN
+CXXFLAGS += -O2 -g
+CXXFLAGS += -D_FORTIFY_SOURCE=2
+CXXFLAGS += -fstack-protector-all
+CXXFLAGS += -Wformat -Werror=format-security
+CXXFLAGS += -ftrapv -fwrapv
+# Clashes with current build strategy.
+# CXXFLAGS += -fPIE -pie
+endif
+
+LDFLAGS = $(shell gdal-config --libs)
 
 PROGS = gdal_unit_test testperfcopywords testcopywords testclosedondestroydm testthreadcond test_virtualmem testblockcache testblockcachewrite testblockcachelimits
 
@@ -46,7 +62,7 @@ gdal_unit_test: $(OBJ)
 
 testperfcopywords: testperfcopywords.cpp
 	$(CXX) -O2 $(CXXFLAGS) $< $(LDFLAGS) -o $@
-	
+
 testcopywords: testcopywords.cpp
 	$(CXX) -O2 $(CXXFLAGS) $< $(LDFLAGS) -o $@
 
