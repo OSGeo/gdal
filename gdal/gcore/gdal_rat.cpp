@@ -778,8 +778,6 @@ CPLErr GDALRasterAttributeTable::InitializeFromColorTable(
     const GDALColorTable *poTable )
 
 {
-    int iRow;
-
     if( GetRowCount() > 0 || GetColumnCount() > 0 )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
@@ -796,7 +794,7 @@ CPLErr GDALRasterAttributeTable::InitializeFromColorTable(
 
     SetRowCount( poTable->GetColorEntryCount() );
 
-    for( iRow = 0; iRow < poTable->GetColorEntryCount(); iRow++ )
+    for( int iRow = 0; iRow < poTable->GetColorEntryCount(); iRow++ )
     {
         GDALColorEntry sEntry;
 
@@ -857,12 +855,10 @@ GDALColorTable *GDALRasterAttributeTable::TranslateToColorTable(
 /* -------------------------------------------------------------------- */
 /*      Establish which fields are red, green, blue and alpha.          */
 /* -------------------------------------------------------------------- */
-    int iRed, iGreen, iBlue, iAlpha;
-
-    iRed = GetColOfUsage( GFU_Red );
-    iGreen = GetColOfUsage( GFU_Green );
-    iBlue = GetColOfUsage( GFU_Blue );
-    iAlpha = GetColOfUsage( GFU_Alpha );
+    int iRed = GetColOfUsage( GFU_Red );
+    int iGreen = GetColOfUsage( GFU_Green );
+    int iBlue = GetColOfUsage( GFU_Blue );
+    int iAlpha = GetColOfUsage( GFU_Alpha );
 
     if( iRed == -1 || iGreen == -1 || iBlue == -1 )
         return NULL;
@@ -897,9 +893,8 @@ GDALColorTable *GDALRasterAttributeTable::TranslateToColorTable(
 /*      Assign values to color table.                                   */
 /* -------------------------------------------------------------------- */
     GDALColorTable *poCT = new GDALColorTable();
-    int iEntry;
 
-    for( iEntry = 0; iEntry < nEntryCount; iEntry++ )
+    for( int iEntry = 0; iEntry < nEntryCount; iEntry++ )
     {
         GDALColorEntry sColor;
         int iRow = GetRowOfValue( iEntry );
@@ -937,7 +932,6 @@ GDALColorTable *GDALRasterAttributeTable::TranslateToColorTable(
 GDALColorTableH CPL_STDCALL 
 GDALRATTranslateToColorTable( GDALRasterAttributeTableH hRAT,
                               int nEntryCount )
-                                 
 
 {
     VALIDATE_POINTER1( hRAT, "GDALRATTranslateToColorTable", NULL );
@@ -1666,12 +1660,12 @@ void GDALDefaultRasterAttributeTable::SetValue( int iRow, int iField,
       case GFT_Real:
         aoFields[iField].adfValues[iRow] = dfValue;
         break;
-        
+
       case GFT_String:
       {
           char szValue[100];
 
-          CPLsprintf( szValue, "%.15g", dfValue );
+          CPLsnprintf( szValue, sizeof(szValue), "%.15g", dfValue );
           aoFields[iField].aosValues[iRow] = szValue;
       }
       break;
