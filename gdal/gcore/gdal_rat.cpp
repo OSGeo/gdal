@@ -500,13 +500,13 @@ GDALRATGetLinearBinning( GDALRasterAttributeTableH hRAT,
 CPLXMLNode *GDALRasterAttributeTable::Serialize() const
 
 {
-    CPLXMLNode *psTree = NULL;
     CPLXMLNode *psRow = NULL;
 
-    if( ( GetColumnCount() == 0 ) && ( GetRowCount() == 0 ) ) 
+    if( ( GetColumnCount() == 0 ) && ( GetRowCount() == 0 ) )
  	    return NULL;
 
-    psTree = CPLCreateXMLNode( NULL, CXT_Element, "GDALRasterAttributeTable" );
+    CPLXMLNode *psTree
+        = CPLCreateXMLNode( NULL, CXT_Element, "GDALRasterAttributeTable" );
 
 /* -------------------------------------------------------------------- */
 /*      Add attributes with regular binning info if appropriate.        */
@@ -530,15 +530,13 @@ CPLXMLNode *GDALRasterAttributeTable::Serialize() const
 /* -------------------------------------------------------------------- */
 /*      Define each column.                                             */
 /* -------------------------------------------------------------------- */
-    int iCol;
     int iColCount = GetColumnCount();
 
-    for( iCol = 0; iCol < iColCount; iCol++ )
+    for( int iCol = 0; iCol < iColCount; iCol++ )
     {
-        CPLXMLNode *psCol;
+        CPLXMLNode *psCol
+            = CPLCreateXMLNode( psTree, CXT_Element, "FieldDefn" );
 
-        psCol = CPLCreateXMLNode( psTree, CXT_Element, "FieldDefn" );
-        
         sprintf( szValue, "%d", iCol );
         CPLCreateXMLNode( 
             CPLCreateXMLNode( psCol, CXT_Attribute, "index" ), 
@@ -557,11 +555,10 @@ CPLXMLNode *GDALRasterAttributeTable::Serialize() const
 /* -------------------------------------------------------------------- */
 /*      Write out each row.                                             */
 /* -------------------------------------------------------------------- */
-    int iRow;
-    int iRowCount = GetRowCount();
+    const int iRowCount = GetRowCount();
     CPLXMLNode *psTail = NULL;
 
-    for( iRow = 0; iRow < iRowCount; iRow++ )
+    for( int iRow = 0; iRow < iRowCount; iRow++ )
     {
         psRow = CPLCreateXMLNode( NULL, CXT_Element, "Row" );
         if( psTail == NULL )
@@ -575,7 +572,7 @@ CPLXMLNode *GDALRasterAttributeTable::Serialize() const
             CPLCreateXMLNode( psRow, CXT_Attribute, "index" ), 
             CXT_Text, szValue );
 
-        for( iCol = 0; iCol < iColCount; iCol++ )
+        for( int iCol = 0; iCol < iColCount; iCol++ )
         {
             const char *pszValue = szValue;
 
