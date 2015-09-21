@@ -50,7 +50,7 @@ int nThreadTotal = 0;
 int bProducedFinished = 0;
 int bVerbose = FALSE;
 
-void ProducerThread(void *unused)
+void ProducerThread(void * /* unused */)
 {
     int i;
     int jobNumber = 0;
