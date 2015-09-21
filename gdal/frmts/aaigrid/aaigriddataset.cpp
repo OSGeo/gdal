@@ -958,16 +958,16 @@ GDALDataset * AAIGDataset::CreateCopy(
     char ** papszOptions,
     GDALProgressFunc pfnProgress, void * pProgressData )
 {
-    int  nBands = poSrcDS->GetRasterCount();
-    int  nXSize = poSrcDS->GetRasterXSize();
-    int  nYSize = poSrcDS->GetRasterYSize();
+    const int nBands = poSrcDS->GetRasterCount();
+    const int nXSize = poSrcDS->GetRasterXSize();
+    const int nYSize = poSrcDS->GetRasterYSize();
 
 /* -------------------------------------------------------------------- */
 /*      Some rudimentary checks                                         */
 /* -------------------------------------------------------------------- */
     if( nBands != 1 )
     {
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "AAIG driver doesn't support %d bands.  Must be 1 band.\n",
                   nBands );
 
@@ -980,9 +980,7 @@ GDALDataset * AAIGDataset::CreateCopy(
 /* -------------------------------------------------------------------- */
 /*      Create the dataset.                                             */
 /* -------------------------------------------------------------------- */
-    VSILFILE        *fpImage;
-
-    fpImage = VSIFOpenL( pszFilename, "wt" );
+    VSILFILE *fpImage = VSIFOpenL( pszFilename, "wt" );
     if( fpImage == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed, 
