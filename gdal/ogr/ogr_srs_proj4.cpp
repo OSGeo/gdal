@@ -2403,10 +2403,10 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
     char szEllipseDef[128];
 
     if( pszPROJ4Ellipse == NULL )
-        CPLsprintf( szEllipseDef, "+a=%.16g +b=%.16g ",
+      CPLsnprintf( szEllipseDef, sizeof(szEllipseDef), "+a=%.16g +b=%.16g ",
                  GetSemiMajor(), GetSemiMinor() );
     else
-        CPLsprintf( szEllipseDef, "+ellps=%s ",
+        CPLsnprintf( szEllipseDef, sizeof(szEllipseDef), "+ellps=%s ",
                  pszPROJ4Ellipse );
 
 /* -------------------------------------------------------------------- */
