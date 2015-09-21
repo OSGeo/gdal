@@ -343,13 +343,14 @@ CPLErr VRTDerivedRasterBand::IRasterIO(GDALRWFlag eRWFlag,
     /* ---- Get buffers for each source ---- */
     pBuffers = (void **) CPLMalloc(sizeof(void *) * nSources);
     for (iSource = 0; iSource < nSources; iSource++) {
-        pBuffers[iSource] = (void *) 
+        pBuffers[iSource] = (void *)
             VSIMalloc(sourcesize * nBufXSize * nBufYSize);
         if (pBuffers[iSource] == NULL)
         {
             for (ii = 0; ii < iSource; ii++) {
                 VSIFree(pBuffers[iSource]);
             }
+            CPLFree(pBuffers);
             CPLError( CE_Failure, CPLE_OutOfMemory,
                 "VRTDerivedRasterBand::IRasterIO:" \
                 "Out of memory allocating " CPL_FRMT_GIB " bytes.\n",
@@ -457,4 +458,3 @@ CPLXMLNode *VRTDerivedRasterBand::SerializeToXML(const char *pszVRTPath)
 
     return psTree;
 }
-
