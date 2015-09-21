@@ -611,11 +611,6 @@ CPLErr PAuxDataset::SetGeoTransform( double * padfGeoTransform )
 GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-    int		i;
-    CPLString   osAuxFilename;
-    char	**papszTokens;
-    CPLString   osTarget;
-    
     if( poOpenInfo->nHeaderBytes < 1 )
         return NULL;
 
@@ -624,7 +619,8 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      file it references.                                             */
 /* -------------------------------------------------------------------- */
 
-    osTarget = poOpenInfo->pszFilename;
+    int i;
+    CPLString osTarget = poOpenInfo->pszFilename;
 
     if( EQUAL(CPLGetExtension( poOpenInfo->pszFilename ),"aux")
         && EQUALN((const char *) poOpenInfo->pabyHeader,"AuxilaryTarget: ",16))
@@ -633,7 +629,7 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
         char    *pszPath;
         const char *pszSrc = (const char *) poOpenInfo->pabyHeader+16;
 
-        for( i = 0; 
+        for( i = 0;
              pszSrc[i] != 10 && pszSrc[i] != 13 && pszSrc[i] != '\0'
                  && i < (int) sizeof(szAuxTarget)-1;
              i++ )
@@ -651,7 +647,7 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Now we need to tear apart the filename to form a .aux           */
 /*      filename.                                                       */
 /* -------------------------------------------------------------------- */
-    osAuxFilename = CPLResetExtension(osTarget,"aux");
+    CPLString osAuxFilename = CPLResetExtension(osTarget,"aux");
 
 /* -------------------------------------------------------------------- */
 /*      Do we have a .aux file?                                         */
@@ -663,10 +659,8 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         return NULL;
     }
-    
-    VSILFILE	*fp;
 
-    fp = VSIFOpenL( osAuxFilename, "r" );
+    VSILFILE *fp = VSIFOpenL( osAuxFilename, "r" );
     if( fp == NULL )
     {
         osAuxFilename = CPLResetExtension(osTarget,"AUX");
@@ -683,25 +677,21 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
 /*	At this point we should be verifying that it refers to our	*/
 /*	binary file, but that is a pretty involved test.		*/
 /* -------------------------------------------------------------------- */
-    const char *	pszLine;
-
-    pszLine = CPLReadLineL( fp );
+    const char *pszLine = CPLReadLineL( fp );
 
     VSIFCloseL( fp );
 
-    if( pszLine == NULL 
-        || (!EQUALN(pszLine,"AuxilaryTarget",14) 
-            && !EQUALN(pszLine,"AuxiliaryTarget",15)) ) 
+    if( pszLine == NULL
+        || (!EQUALN(pszLine,"AuxilaryTarget",14)
+            && !EQUALN(pszLine,"AuxiliaryTarget",15)) )
     {
         return NULL;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    PAuxDataset 	*poDS;
-
-    poDS = new PAuxDataset();
+    PAuxDataset *poDS = new PAuxDataset();
 
 /* -------------------------------------------------------------------- */
 /*      Load the .aux file into a string list suitable to be            */
@@ -709,13 +699,13 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->papszAuxLines = CSLLoad( osAuxFilename );
     poDS->pszAuxFilename = CPLStrdup(osAuxFilename);
-    
+
 /* -------------------------------------------------------------------- */
 /*      Find the RawDefinition line to establish overall parameters.    */
 /* -------------------------------------------------------------------- */
     pszLine = CSLFetchNameValue(poDS->papszAuxLines, "RawDefinition");
 
-    // It seems PCI now writes out .aux files without RawDefinition in 
+    // It seems PCI now writes out .aux files without RawDefinition in
     // some cases.  See bug 947.
     if( pszLine == NULL )
     {
@@ -723,7 +713,7 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
-    papszTokens = CSLTokenizeString(pszLine);
+    char **papszTokens = CSLTokenizeString(pszLine);
 
     if( CSLCount(papszTokens) < 3 )
     {
@@ -761,7 +751,6 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
             CPLError( CE_Failure, CPLE_OpenFailed,
                       "File %s is missing or read-only, check permissions.",
                       osTarget.c_str() );
-            
             delete poDS;
             return NULL;
         }
@@ -775,7 +764,6 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
             CPLError( CE_Failure, CPLE_OpenFailed,
                       "File %s is missing or unreadable.",
                       osTarget.c_str() );
-            
             delete poDS;
             return NULL;
         }
