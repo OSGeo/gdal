@@ -1422,67 +1422,69 @@ GDALDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
     {
         char szValue[1280];
 
-        CPLsprintf( szValue, "%.16g", sChipInfo.SCALE_FACTOR );
+        CPLsnprintf( szValue, sizeof(szValue), "%.16g", sChipInfo.SCALE_FACTOR );
         poDS->SetMetadataItem( "ICHIP_SCALE_FACTOR", szValue );
 
-        sprintf( szValue, "%d", sChipInfo.ANAMORPH_CORR );
+        // TODO: Why do these two not use CPLsnprintf?
+        snprintf( szValue, sizeof(szValue), "%d", sChipInfo.ANAMORPH_CORR );
         poDS->SetMetadataItem( "ICHIP_ANAMORPH_CORR", szValue );
 
-        sprintf( szValue, "%d", sChipInfo.SCANBLK_NUM );
+        snprintf( szValue, sizeof(szValue), "%d", sChipInfo.SCANBLK_NUM );
         poDS->SetMetadataItem( "ICHIP_SCANBLK_NUM", szValue );
 
-        CPLsprintf( szValue, "%.16g", sChipInfo.OP_ROW_11 );
+        CPLsnprintf( szValue, sizeof(szValue), "%.16g", sChipInfo.OP_ROW_11 );
         poDS->SetMetadataItem( "ICHIP_OP_ROW_11", szValue );
 
-        CPLsprintf( szValue, "%.16g", sChipInfo.OP_COL_11 );
+        CPLsnprintf( szValue, sizeof(szValue), "%.16g", sChipInfo.OP_COL_11 );
         poDS->SetMetadataItem( "ICHIP_OP_COL_11", szValue );
 
-        CPLsprintf( szValue, "%.16g", sChipInfo.OP_ROW_12 );
+        CPLsnprintf( szValue, sizeof(szValue), "%.16g", sChipInfo.OP_ROW_12 );
         poDS->SetMetadataItem( "ICHIP_OP_ROW_12", szValue );
 
-        CPLsprintf( szValue, "%.16g", sChipInfo.OP_COL_12 );
+        CPLsnprintf( szValue, sizeof(szValue), "%.16g", sChipInfo.OP_COL_12 );
         poDS->SetMetadataItem( "ICHIP_OP_COL_12", szValue );
 
-        CPLsprintf( szValue, "%.16g", sChipInfo.OP_ROW_21 );
+        CPLsnprintf( szValue, sizeof(szValue), "%.16g", sChipInfo.OP_ROW_21 );
         poDS->SetMetadataItem( "ICHIP_OP_ROW_21", szValue );
 
-        CPLsprintf( szValue, "%.16g", sChipInfo.OP_COL_21 );
+        CPLsnprintf( szValue, sizeof(szValue), "%.16g", sChipInfo.OP_COL_21 );
         poDS->SetMetadataItem( "ICHIP_OP_COL_21", szValue );
 
-        CPLsprintf( szValue, "%.16g", sChipInfo.OP_ROW_22 );
+        CPLsnprintf( szValue, sizeof(szValue), "%.16g", sChipInfo.OP_ROW_22 );
         poDS->SetMetadataItem( "ICHIP_OP_ROW_22", szValue );
 
-        CPLsprintf( szValue, "%.16g", sChipInfo.OP_COL_22 );
+        CPLsnprintf( szValue, sizeof(szValue), "%.16g", sChipInfo.OP_COL_22 );
         poDS->SetMetadataItem( "ICHIP_OP_COL_22", szValue );
 
-        CPLsprintf( szValue, "%.16g", sChipInfo.FI_ROW_11 );
+        CPLsnprintf( szValue, sizeof(szValue), "%.16g", sChipInfo.FI_ROW_11 );
         poDS->SetMetadataItem( "ICHIP_FI_ROW_11", szValue );
 
-        CPLsprintf( szValue, "%.16g", sChipInfo.FI_COL_11 );
+        CPLsnprintf( szValue, sizeof(szValue), "%.16g", sChipInfo.FI_COL_11 );
         poDS->SetMetadataItem( "ICHIP_FI_COL_11", szValue );
 
-        CPLsprintf( szValue, "%.16g", sChipInfo.FI_ROW_12 );
+        CPLsnprintf( szValue, sizeof(szValue), "%.16g", sChipInfo.FI_ROW_12 );
         poDS->SetMetadataItem( "ICHIP_FI_ROW_12", szValue );
 
-        CPLsprintf( szValue, "%.16g", sChipInfo.FI_COL_12 );
+        CPLsnprintf( szValue, sizeof(szValue), "%.16g", sChipInfo.FI_COL_12 );
         poDS->SetMetadataItem( "ICHIP_FI_COL_12", szValue );
 
-        CPLsprintf( szValue, "%.16g", sChipInfo.FI_ROW_21 );
+        CPLsnprintf( szValue, sizeof(szValue), "%.16g", sChipInfo.FI_ROW_21 );
         poDS->SetMetadataItem( "ICHIP_FI_ROW_21", szValue );
 
-        CPLsprintf( szValue, "%.16g", sChipInfo.FI_COL_21 );
+        CPLsnprintf( szValue, sizeof(szValue), "%.16g", sChipInfo.FI_COL_21 );
         poDS->SetMetadataItem( "ICHIP_FI_COL_21", szValue );
 
-        CPLsprintf( szValue, "%.16g", sChipInfo.FI_ROW_22 );
+        CPLsnprintf( szValue, sizeof(szValue), "%.16g", sChipInfo.FI_ROW_22 );
         poDS->SetMetadataItem( "ICHIP_FI_ROW_22", szValue );
 
         CPLsnprintf( szValue, sizeof(szValue), "%.16g", sChipInfo.FI_COL_22 );
         poDS->SetMetadataItem( "ICHIP_FI_COL_22", szValue );
 
-        sprintf( szValue, "%d", sChipInfo.FI_ROW );
+        // Why not CPLsnprintf?
+        snprintf( szValue, sizeof(szValue), "%d", sChipInfo.FI_ROW );
         poDS->SetMetadataItem( "ICHIP_FI_ROW", szValue );
 
-        sprintf( szValue, "%d", sChipInfo.FI_COL );
+        snprintf( szValue, sizeof(szValue), "%d", sChipInfo.FI_COL );
         poDS->SetMetadataItem( "ICHIP_FI_COL", szValue );
 
     }
