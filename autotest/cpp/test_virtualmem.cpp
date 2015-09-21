@@ -46,11 +46,11 @@ static void test_huge_mapping()
 }
 #endif
 
-static void test_two_pages_cbk(CPLVirtualMem* ctxt, 
+static void test_two_pages_cbk(CPLVirtualMem* /* ctxt */,
                   size_t nOffset,
                   void* pPageToFill,
                   size_t nPageSize,
-                  void* pUserData)
+                  void* /* pUserData */)
 {
     /*fprintfstderr("requesting page %lu (nPageSize=%d), nLRUSize=%d\n",
             (unsigned long)(nOffset / nPageSize),
@@ -169,21 +169,21 @@ static void test_raw_auto(int bFileMapping)
     CPLVirtualMemFree(pVMem1);
     CPLVirtualMemFree(pVMem2);
     GDALClose(hDS);
-    
+
     hDS = GDALOpen(osTmpFile.c_str(), GA_ReadOnly);
     assert(GDALChecksumImage(GDALGetRasterBand(hDS, 1), 0, 0, 400, 300) == 52906);
     assert(GDALChecksumImage(GDALGetRasterBand(hDS, 2), 0, 0, 400, 300) == 30926);
     GDALClose(hDS);
-    
+
     GDALDeleteDataset(NULL, osTmpFile.c_str());
 
 }
 
-int main(int argc, char* argv[])
+int main(int /* argc */, char* /* argv */[])
 {
     /*printf("test_huge_mapping\n");
     test_huge_mapping();*/
-    
+
     printf("Physical memory : " CPL_FRMT_GIB " bytes\n", CPLGetPhysicalRAM());
 
     if( !test_two_pages() )
