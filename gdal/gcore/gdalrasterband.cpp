@@ -3968,29 +3968,29 @@ CPLErr CPL_STDCALL GDALComputeRasterStatistics(
  * 
  * @param dfMax maximum pixel value.
  *
- * @param dfMean mean (average) of all pixel values.		
+ * @param dfMean mean (average) of all pixel values.
  *
  * @param dfStdDev Standard deviation of all pixel values.
  *
- * @return CE_None on success or CE_Failure on failure. 
+ * @return CE_None on success or CE_Failure on failure.
  */
 
-CPLErr GDALRasterBand::SetStatistics( double dfMin, double dfMax, 
+CPLErr GDALRasterBand::SetStatistics( double dfMin, double dfMax,
                                       double dfMean, double dfStdDev )
 
 {
     char szValue[128] = { 0 };
 
-    CPLsprintf( szValue, "%.14g", dfMin );
+    CPLsnprintf( szValue, sizeof(szValue), "%.14g", dfMin );
     SetMetadataItem( "STATISTICS_MINIMUM", szValue );
 
-    CPLsprintf( szValue, "%.14g", dfMax );
+    CPLsnprintf( szValue, sizeof(szValue), "%.14g", dfMax );
     SetMetadataItem( "STATISTICS_MAXIMUM", szValue );
 
-    CPLsprintf( szValue, "%.14g", dfMean );
+    CPLsnprintf( szValue, sizeof(szValue), "%.14g", dfMean );
     SetMetadataItem( "STATISTICS_MEAN", szValue );
 
-    CPLsprintf( szValue, "%.14g", dfStdDev );
+    CPLsnprintf( szValue, sizeof(szValue), "%.14g", dfStdDev );
     SetMetadataItem( "STATISTICS_STDDEV", szValue );
 
     return CE_None;
