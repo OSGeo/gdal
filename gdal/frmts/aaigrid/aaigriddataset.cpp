@@ -1001,17 +1001,17 @@ GDALDataset * AAIGDataset::CreateCopy(
 
     poSrcDS->GetGeoTransform( adfGeoTransform );
 
-    if( ABS(adfGeoTransform[1]+adfGeoTransform[5]) < 0.0000001 
-        || ABS(adfGeoTransform[1]-adfGeoTransform[5]) < 0.0000001 
+    if( ABS(adfGeoTransform[1]+adfGeoTransform[5]) < 0.0000001
+        || ABS(adfGeoTransform[1]-adfGeoTransform[5]) < 0.0000001
         || (pszForceCellsize && CSLTestBoolean(pszForceCellsize)) )
-        CPLsprintf( szHeader, 
-                 "ncols        %d\n" 
+        CPLsnprintf( szHeader, sizeof(szHeader),
+                 "ncols        %d\n"
                  "nrows        %d\n"
                  "xllcorner    %.12f\n"
                  "yllcorner    %.12f\n"
-                 "cellsize     %.12f\n", 
-                 nXSize, nYSize, 
-                 adfGeoTransform[0], 
+                 "cellsize     %.12f\n",
+                 nXSize, nYSize,
+                 adfGeoTransform[0],
                  adfGeoTransform[3] - nYSize * adfGeoTransform[1],
                  adfGeoTransform[1] );
     else
