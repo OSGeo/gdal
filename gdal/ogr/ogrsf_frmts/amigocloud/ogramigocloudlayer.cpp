@@ -117,9 +117,6 @@ OGRFeature *OGRAMIGOCLOUDLayer::BuildFeature(json_object* poRowObj)
                 mFIDs[aFID.iFID] = aFID;
                 poFeature->SetFID(aFID.iFID);
 
-//               printf("poRowObj--- iNext=%lld FID=%lld, %s\n", iNext, aFID.iFID, json_object_get_string(poRowObj));
-                printf("poRowObj--- iNext=%lld FID=%ld\n", iNext, aFID.iFID);
-
             }
         }
 
@@ -193,7 +190,6 @@ json_object* OGRAMIGOCLOUDLayer::FetchNewFeatures(GIntBig iNext)
         osSQL += " OFFSET ";
         osSQL += CPLSPrintf(CPL_FRMT_GIB, iNext);
     }
-    printf("FetchNewFeatures() %lld\n", iNext);
     return poDS->RunSQL(osSQL);
 }
 
@@ -336,7 +332,6 @@ void OGRAMIGOCLOUDLayer::EstablishLayerDefn(const char* pszLayerName,
         poObj = poObjIn;
     else
     {
-        printf("EstablishLayerDefn() %s\n", pszLayerName);
         poObj = poDS->RunSQL(osSQL);
         if( poObj == NULL )
         {

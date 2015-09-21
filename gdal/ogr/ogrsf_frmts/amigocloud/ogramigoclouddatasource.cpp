@@ -40,7 +40,6 @@ CPL_CVSID("$Id$");
 OGRAMIGOCLOUDDataSource::OGRAMIGOCLOUDDataSource()
 
 {
-    printf("OGRAMIGOCLOUDDataSource() constructor\n");
     papoLayers = NULL;
     nLayers = 0;
 
@@ -62,7 +61,6 @@ OGRAMIGOCLOUDDataSource::OGRAMIGOCLOUDDataSource()
 OGRAMIGOCLOUDDataSource::~OGRAMIGOCLOUDDataSource()
 
 {
-    printf("~OGRAMIGOCLOUDDataSource() destructor\n");
     for( int i = 0; i < nLayers; i++ )
         delete papoLayers[i];
     CPLFree( papoLayers );
@@ -146,7 +144,6 @@ int OGRAMIGOCLOUDDataSource::Open( const char * pszFilename,
                                 int bUpdateIn )
 
 {
-    printf("OGRAMIGOCLOUDDataSource::Open()\n");
 
     bReadWrite = bUpdateIn;
     bBatchInsert = CSLTestBoolean(CSLFetchNameValueDef(papszOpenOptions, "BATCH_INSERT", "YES"));
@@ -243,56 +240,6 @@ int OGRAMIGOCLOUDDataSource::Open( const char * pszFilename,
         CSLDestroy(papszTables);
         return TRUE;
     }
-
-#if 0
-    OGRLayer* poTableListLayer = ExecuteSQLInternal("SELECT CDB_UserTables()");
-    if( poTableListLayer )
-    {
-        OGRFeature* poFeat;
-        while( (poFeat = poTableListLayer->GetNextFeature()) != NULL )
-        {
-            if( poFeat->GetFieldCount() == 1 )
-            {
-                papoLayers = (OGRAMIGOCLOUDTableLayer**) CPLRealloc(
-                    papoLayers, (nLayers + 1) * sizeof(OGRAMIGOCLOUDTableLayer*));
-                papoLayers[nLayers ++] = new OGRAMIGOCLOUDTableLayer(
-                            this, poFeat->GetFieldAsString(0));
-            }
-            delete poFeat;
-        }
-        ReleaseResultSet(poTableListLayer);
-    }
-    else if( osCurrentSchema == "public" )
-        return FALSE;
-
-    /* There's currently a bug with CDB_UserTables() on multi-user accounts */
-    if( nLayers == 0 && osCurrentSchema != "public" )
-    {
-        CPLString osSQL;
-        osSQL.Printf("SELECT c.relname FROM pg_class c, pg_namespace n "
-                     "WHERE c.relkind in ('r', 'v') AND c.relname !~ '^pg_' AND c.relnamespace=n.oid AND n.nspname = '%s'",
-                     OGRAMIGOCLOUDEscapeLiteral(osCurrentSchema).c_str());
-        poTableListLayer = ExecuteSQLInternal(osSQL);
-        if( poTableListLayer )
-        {
-            OGRFeature* poFeat;
-            while( (poFeat = poTableListLayer->GetNextFeature()) != NULL )
-            {
-                if( poFeat->GetFieldCount() == 1 )
-                {
-                    papoLayers = (OGRAMIGOCLOUDTableLayer**) CPLRealloc(
-                        papoLayers, (nLayers + 1) * sizeof(OGRAMIGOCLOUDTableLayer*));
-                    papoLayers[nLayers ++] = new OGRAMIGOCLOUDTableLayer(
-                                this, poFeat->GetFieldAsString(0));
-                }
-                delete poFeat;
-            }
-            ReleaseResultSet(poTableListLayer);
-        }
-        else
-            return FALSE;
-    }
-#endif
 
     return TRUE;
 }
@@ -526,8 +473,6 @@ static std::string url_encode(const std::string &value) {
 json_object* OGRAMIGOCLOUDDataSource::RunPOST(const char*pszURL, const char *pszPostData, const char *pszHeaders)
 {
     CPLString osURL(pszURL);
-    printf("RunPOST 1 %s\n", pszURL);
-    printf("RunPOST 2 %s\n", pszPostData);
 
     /* -------------------------------------------------------------------- */
     /*      Provide the API Key                                             */
@@ -545,8 +490,6 @@ json_object* OGRAMIGOCLOUDDataSource::RunPOST(const char*pszURL, const char *psz
     papszOptions = CSLAddString(papszOptions, pszHeaders);
 
     CPLHTTPResult * psResult = CPLHTTPFetch( osURL.c_str(), papszOptions);
-
-//    printf("RunPOST result: %s\n", psResult->pabyData);
 
     if (psResult && psResult->pszContentType &&
         strncmp(psResult->pszContentType, "text/html", 9) == 0)
@@ -628,7 +571,6 @@ json_object* OGRAMIGOCLOUDDataSource::RunPOST(const char*pszURL, const char *psz
 json_object* OGRAMIGOCLOUDDataSource::RunGET(const char*pszURL)
 {
     CPLString osURL(pszURL);
-    printf("RunGET %s\n", pszURL);
 
     /* -------------------------------------------------------------------- */
     /*      Provide the API Key                                             */
@@ -746,13 +688,9 @@ json_object* OGRAMIGOCLOUDDataSource::RunSQL(const char* pszUnescapedSQL)
 
     pszAPIURL += osSQL;
 
-    printf("RunSQL url %s\n", pszAPIURL.c_str());
-    printf("RunSQL sql %s\n", pszUnescapedSQL);
-
     CPLHTTPResult * psResult = CPLHTTPFetch( pszAPIURL.c_str(), papszOptions);
     CSLDestroy(papszOptions);
 
-//    printf("RunSQL result: %s\n", psResult->pabyData);
 /* -------------------------------------------------------------------- */
 /*      Check for some error conditions and report.  HTML Messages      */
 /*      are transformed info failure.                                   */
@@ -877,7 +815,6 @@ OGRLayer * OGRAMIGOCLOUDDataSource::ExecuteSQLInternal( const char *pszSQLComman
                                                      int bRunDeferedActions )
 
 {
-    printf("ExecuteSQLInternal() %s\n", pszSQLCommand);
     if( bRunDeferedActions )
     {
         for( int iLayer = 0; iLayer < nLayers; iLayer++ )

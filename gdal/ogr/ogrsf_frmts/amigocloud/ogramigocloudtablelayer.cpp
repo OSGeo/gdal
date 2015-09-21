@@ -255,7 +255,6 @@ json_object* OGRAMIGOCLOUDTableLayer::FetchNewFeatures(GIntBig iNext)
         {
             osSQL.Printf("%s", osSELECTWithoutWHERE.c_str());
         }
-        printf("FetchNewFeatures(2) %lld\n", iNext);
         return poDS->RunSQL(osSQL);
     }
     else
@@ -652,7 +651,7 @@ OGRErr OGRAMIGOCLOUDTableLayer::ISetFeature( OGRFeature *poFeature )
 
         osSQL += CPLSPrintf(" WHERE %s = '%s'",
                             OGRAMIGOCLOUDEscapeIdentifier(osFIDColName).c_str(),
-                            aFID.amigo_id.c_str());
+                            aFID.osAmigoId.c_str());
 
 
 //        printf("ISetFeature() %lld\n", poFeature->GetFID());
@@ -693,8 +692,6 @@ OGRErr OGRAMIGOCLOUDTableLayer::DeleteFeature( GIntBig nFID )
 {
     OGRErr eRet = OGRERR_FAILURE;
 
-    printf("DeleteFeature: %lld, mFIDs size=%d\n" , nFID, mFIDs.size());
-
     if( bDeferedCreation && RunDeferedCreationIfNecessary() != OGRERR_NONE )
         return OGRERR_FAILURE;
     FlushDeferedInsert();
@@ -720,7 +717,7 @@ OGRErr OGRAMIGOCLOUDTableLayer::DeleteFeature( GIntBig nFID )
         osSQL.Printf("DELETE FROM %s WHERE %s = '%s'" ,
                      OGRAMIGOCLOUDEscapeIdentifier(osTableName).c_str(),
                      OGRAMIGOCLOUDEscapeIdentifier(osFIDColName).c_str(),
-                     aFID.amigo_id.c_str());
+                     aFID.osAmigoId.c_str());
 
         std::stringstream changeset;
         changeset << "{\"query\": \"" << json_encode(osSQL) << "\"}";
@@ -732,9 +729,6 @@ OGRErr OGRAMIGOCLOUDTableLayer::DeleteFeature( GIntBig nFID )
             json_object_put(poObj);
             eRet = OGRERR_NONE;
         }
-    } else
-    {
-        printf("DeleteFeature: nFID:%lld not found\n" , nFID, mFIDs.size());
     }
     return eRet;
 }
@@ -833,7 +827,6 @@ OGRFeature* OGRAMIGOCLOUDTableLayer::GetFeature( GIntBig nFeatureId )
     osSQL += " = ";
     osSQL += CPLSPrintf(CPL_FRMT_GIB, nFeatureId);
 
-    printf("GetFeature() %lld\n", nFeatureId);
     json_object* poObj = poDS->RunSQL(osSQL);
     json_object* poRowObj = OGRAMIGOCLOUDGetSingleRow(poObj);
     if( poRowObj == NULL )
