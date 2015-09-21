@@ -112,7 +112,7 @@ const char *USGSDEMDecToPackedDMS( double dfDec )
     nMinutes = (int) floor( ( dfDec - nDegrees ) * 60.0 );
     dfSeconds = (dfDec - nDegrees) * 3600.0 - nMinutes * 60.0;
 
-    CPLsprintf( szPackBuf, "%4d%2d%7.4f", 
+    CPLsnprintf( szPackBuf, sizeof(szPackBuf), "%4d%2d%7.4f",
              nSign * nDegrees, nMinutes, dfSeconds );
     return szPackBuf;
 }
