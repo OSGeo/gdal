@@ -744,13 +744,16 @@ GDALDataset *ILWISDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     ILWISDataset 	*poDS;
     poDS = new ILWISDataset();
-		
+
 /* -------------------------------------------------------------------- */
 /*      Capture raster size from ILWIS file (.mpr).                     */
 /* -------------------------------------------------------------------- */
     int Row = 0, Col = 0;
     if ( GetRowCol(mapsize, Row, Col) != CE_None)
+    {
+        delete poDS;
         return FALSE;
+    }
     poDS->nRasterXSize = Col;
     poDS->nRasterYSize = Row;
     poDS->osFileName = poOpenInfo->pszFilename;
