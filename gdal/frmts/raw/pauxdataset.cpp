@@ -219,19 +219,19 @@ double PAuxRasterBand::GetNoDataValue( int *pbSuccess )
 CPLErr PAuxRasterBand::SetNoDataValue( double dfNewValue )
 
 {
-    PAuxDataset *poPDS = (PAuxDataset *) poDS;
-    char	szTarget[128];
-    char	szValue[128];
-
     if( GetAccess() == GA_ReadOnly )
     {
-        CPLError( CE_Failure, CPLE_NoWriteAccess, 
+        CPLError( CE_Failure, CPLE_NoWriteAccess,
                   "Can't update readonly dataset." );
         return CE_Failure;
     }
 
+    char szTarget[128];
+    char szValue[128];
     snprintf( szTarget, sizeof(szTarget), "METADATA_IMG_%d_NO_DATA_VALUE", nBand );
     CPLsnprintf( szValue, sizeof(szValue), "%24.12f", dfNewValue );
+
+    PAuxDataset *poPDS = (PAuxDataset *) poDS;
     poPDS->papszAuxLines =
         CSLSetNameValue( poPDS->papszAuxLines, szTarget, szValue );
 
@@ -250,17 +250,16 @@ CPLErr PAuxRasterBand::SetNoDataValue( double dfNewValue )
 void PAuxRasterBand::SetDescription( const char *pszNewDescription )
 
 {
-    PAuxDataset *poPDS = (PAuxDataset *) poDS;
-
     if( GetAccess() == GA_Update )
     {
         char	szTarget[128];
-
         sprintf( szTarget, "ChanDesc-%d", nBand );
-        poPDS->papszAuxLines = 
-            CSLSetNameValue( poPDS->papszAuxLines, 
+
+        PAuxDataset *poPDS = (PAuxDataset *) poDS;
+        poPDS->papszAuxLines =
+            CSLSetNameValue( poPDS->papszAuxLines,
                              szTarget, pszNewDescription  );
-    
+
         poPDS->bAuxUpdated = TRUE;
     }
 
