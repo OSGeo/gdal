@@ -193,23 +193,30 @@ namespace tut
     template<>
     void object::test<4>()
     {
-#define HASH_SET_SIZE   1000
+        const int HASH_SET_SIZE = 1000;
+
+        int data[HASH_SET_SIZE];
+        for(int i=0; i<HASH_SET_SIZE; ++i)
+        {
+          data[i] = i;
+        }
+
         CPLHashSet* set = CPLHashSetNew(NULL, NULL, NULL);
         for(int i=0;i<HASH_SET_SIZE;i++)
         {
-            ensure(CPLHashSetInsert(set, (void*)i) == TRUE);
+            ensure(CPLHashSetInsert(set, (void*)&data[i]) == TRUE);
         }
         ensure(CPLHashSetSize(set) == HASH_SET_SIZE);
 
         for(int i=0;i<HASH_SET_SIZE;i++)
         {
-            ensure(CPLHashSetInsert(set, (void*)i) == FALSE);
+            ensure(CPLHashSetInsert(set, (void*)&data[i]) == FALSE);
         }
         ensure(CPLHashSetSize(set) == HASH_SET_SIZE);
 
         for(int i=0;i<HASH_SET_SIZE;i++)
         {
-            ensure(CPLHashSetLookup(set, (const void*)i) == (const void*)i);
+            ensure(CPLHashSetLookup(set, (const void*)&data[i]) == (const void*)&data[i]);
         }
 
         int sum = 0;
@@ -218,7 +225,7 @@ namespace tut
 
         for(int i=0;i<HASH_SET_SIZE;i++)
         {
-            ensure(CPLHashSetRemove(set, (void*)i) == TRUE);
+            ensure(CPLHashSetRemove(set, (void*)&data[i]) == TRUE);
         }
         ensure(CPLHashSetSize(set) == 0);
 
@@ -661,4 +668,3 @@ namespace tut
     }
 
 } // namespace tut
-
