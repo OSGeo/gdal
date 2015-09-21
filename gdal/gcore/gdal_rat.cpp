@@ -516,14 +516,14 @@ CPLXMLNode *GDALRasterAttributeTable::Serialize() const
 
     if( GetLinearBinning(&dfRow0Min, &dfBinSize) )
     {
-        CPLsprintf( szValue, "%.16g", dfRow0Min );
-        CPLCreateXMLNode( 
-            CPLCreateXMLNode( psTree, CXT_Attribute, "Row0Min" ), 
+        CPLsnprintf( szValue, sizeof(szValue), "%.16g", dfRow0Min );
+        CPLCreateXMLNode(
+            CPLCreateXMLNode( psTree, CXT_Attribute, "Row0Min" ),
             CXT_Text, szValue );
 
-        CPLsprintf( szValue, "%.16g", dfBinSize );
-        CPLCreateXMLNode( 
-            CPLCreateXMLNode( psTree, CXT_Attribute, "BinSize" ), 
+        CPLsnprintf( szValue, sizeof(szValue), "%.16g", dfBinSize );
+        CPLCreateXMLNode(
+            CPLCreateXMLNode( psTree, CXT_Attribute, "BinSize" ),
             CXT_Text, szValue );
     }
 
