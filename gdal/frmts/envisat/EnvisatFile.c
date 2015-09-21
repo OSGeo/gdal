@@ -1186,7 +1186,7 @@ int EnvisatFile_SetKeyValueAsDouble( EnvisatFile *self,
             decimals++;
         }
 
-        sprintf( format, "%%+0%d.%df", length, decimals );
+        snprintf( format, sizeof(format), "%%+0%d.%df", length, decimals );
         CPLsprintf( string_value, format, value );
 
         if( (int)strlen(string_value) > length )
