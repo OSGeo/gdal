@@ -2822,7 +2822,7 @@ void OGRFeature::SetField( int iField, double dfValue )
     {
         char    szTempBuffer[128];
 
-        CPLsprintf( szTempBuffer, "%.16g", dfValue );
+        CPLsnprintf( szTempBuffer, sizeof(szTempBuffer), "%.16g", dfValue );
 
         if( IsFieldSet( iField) )
             CPLFree( pauFields[iField].String );
@@ -2833,7 +2833,7 @@ void OGRFeature::SetField( int iField, double dfValue )
     {
         char    szTempBuffer[64];
 
-        CPLsprintf( szTempBuffer, "%.16g", dfValue );
+        CPLsnprintf( szTempBuffer, sizeof(szTempBuffer), "%.16g", dfValue );
         char   *apszValues[2];
         apszValues[0] = szTempBuffer;
         apszValues[1] = NULL;
