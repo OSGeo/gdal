@@ -91,11 +91,7 @@ static void USGSDEMWriteCleanup( USGSDEMWriteInfo *psWInfo )
 /************************************************************************/
 const char *USGSDEMDecToPackedDMS( double dfDec )
 {
-    double  dfSeconds;
-    int nDegrees, nMinutes, nSign;
-    static char szPackBuf[100];
-
-    nSign = ( dfDec < 0.0 )? -1 : 1;
+    int nSign = ( dfDec < 0.0 )? -1 : 1;
 
     dfDec = ABS( dfDec );
     /* If the difference between the value and the nearest degree
@@ -105,13 +101,15 @@ const char *USGSDEMDecToPackedDMS( double dfDec )
        Valgrind bug when running usgsdem_6 where the value of psDInfo->dfULCornerY
        computed in DTEDOpen() differ between Valgrind and non-Valgrind executions.
     */
+    int nDegrees;
     if (fabs(dfDec - (int) floor( dfDec + .5)) < 1e-5 / 3600)
         dfDec = nDegrees = (int) floor( dfDec + .5);
     else
         nDegrees = (int) floor( dfDec );
-    nMinutes = (int) floor( ( dfDec - nDegrees ) * 60.0 );
-    dfSeconds = (dfDec - nDegrees) * 3600.0 - nMinutes * 60.0;
+    int nMinutes = (int) floor( ( dfDec - nDegrees ) * 60.0 );
+    double dfSeconds = (dfDec - nDegrees) * 3600.0 - nMinutes * 60.0;
 
+    static char szPackBuf[100];
     CPLsnprintf( szPackBuf, sizeof(szPackBuf), "%4d%2d%7.4f",
              nSign * nDegrees, nMinutes, dfSeconds );
     return szPackBuf;
