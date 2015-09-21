@@ -241,6 +241,7 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
     if (!EQUAL(value,"RIEEE") ) {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "%s layout not supported. Abort\n\n", value);
+        delete poDS;
         return FALSE;
     }
     value = poDS->GetKeyword( "BREALFMT" );
