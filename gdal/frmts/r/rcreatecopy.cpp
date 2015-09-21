@@ -91,11 +91,11 @@ RCreateCopy( const char * pszFilename,
              GDALProgressFunc pfnProgress,
              void * pProgressData )
 {
-    int  nBands = poSrcDS->GetRasterCount();
-    int  nXSize = poSrcDS->GetRasterXSize();
-    int  nYSize = poSrcDS->GetRasterYSize();
-    int  bASCII = CSLFetchBoolean( papszOptions, "ASCII", FALSE );
-    int  bCompressed = CSLFetchBoolean( papszOptions, "COMPRESS", !bASCII );
+    const int nBands = poSrcDS->GetRasterCount();
+    const int nXSize = poSrcDS->GetRasterXSize();
+    const int nYSize = poSrcDS->GetRasterYSize();
+    const int bASCII = CSLFetchBoolean( papszOptions, "ASCII", FALSE );
+    const int bCompressed = CSLFetchBoolean( papszOptions, "COMPRESS", !bASCII );
 
 /* -------------------------------------------------------------------- */
 /*      Some some rudimentary checks                                    */
@@ -115,12 +115,10 @@ RCreateCopy( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Create the file.                                                */
 /* -------------------------------------------------------------------- */
-    VSILFILE	*fp;
-
-    fp = VSIFOpenL( osAdjustedFilename, "wb" );
+    VSILFILE *fp = VSIFOpenL( osAdjustedFilename, "wb" );
     if( fp == NULL )
     {
-        CPLError( CE_Failure, CPLE_OpenFailed, 
+        CPLError( CE_Failure, CPLE_OpenFailed,
                   "Unable to create file %s.\n", 
                   pszFilename );
         return NULL;
@@ -148,7 +146,7 @@ RCreateCopy( const char * pszFilename,
 /*      Establish the primary pairlist with one component object.       */
 /* -------------------------------------------------------------------- */
     RWriteInteger( fp, bASCII, 1026 );
-    RWriteInteger( fp, bASCII, 1 );  
+    RWriteInteger( fp, bASCII, 1 );
 
 /* -------------------------------------------------------------------- */
 /*      Write the object name.  Eventually we should derive this        */
@@ -167,17 +165,15 @@ RCreateCopy( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Write the raster data.                                          */
 /* -------------------------------------------------------------------- */
-    double 	*padfScanline;
     CPLErr      eErr = CE_None;
-    int         iLine;
 
-    padfScanline = (double *) CPLMalloc( nXSize * sizeof(double) );
+    double *padfScanline = (double *) CPLMalloc( nXSize * sizeof(double) );
 
     for( int iBand = 0; iBand < nBands; iBand++ )
     {
         GDALRasterBand * poBand = poSrcDS->GetRasterBand( iBand+1 );
 
-        for( iLine = 0; iLine < nYSize && eErr == CE_None; iLine++ )
+        for( int iLine = 0; iLine < nYSize && eErr == CE_None; iLine++ )
         {
             int iValue;
 
@@ -202,7 +198,7 @@ RCreateCopy( const char * pszFilename,
 
                 VSIFWriteL( padfScanline, 8, nXSize, fp );
             }
-            
+
             if( eErr == CE_None
                 && !pfnProgress( (iLine+1) / (double) nYSize,
                                  NULL, pProgressData ) )
@@ -221,7 +217,7 @@ RCreateCopy( const char * pszFilename,
 /* -------------------------------------------------------------------- */
     RWriteInteger( fp, bASCII, 1026 );
     RWriteInteger( fp, bASCII, 1 );  
-    
+
     RWriteString( fp, bASCII, "dim" );
 
     RWriteInteger( fp, bASCII, 13 );
