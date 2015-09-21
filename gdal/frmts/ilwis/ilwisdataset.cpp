@@ -673,14 +673,14 @@ GDALDataset *ILWISDataset::Open( GDALOpenInfo * poOpenInfo )
     string ilwistype = ReadElement("Ilwis", "Type", poOpenInfo->pszFilename);
     if( ilwistype.length() == 0)
         return NULL;
-		
+
     string sFileType;	//map or map list
     int    iBandCount;
     string mapsize;
     string maptype = ReadElement("BaseMap", "Type", poOpenInfo->pszFilename);
     string sBaseName = string(CPLGetBasename(poOpenInfo->pszFilename) );
     string sPath = string(CPLGetPath( poOpenInfo->pszFilename));
-							
+
     //Verify whether it is a map list or a map
     if( EQUAL(ilwistype.c_str(),"MapList") )
     {
@@ -742,8 +742,7 @@ GDALDataset *ILWISDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    ILWISDataset 	*poDS;
-    poDS = new ILWISDataset();
+    ILWISDataset *poDS = new ILWISDataset();
 
 /* -------------------------------------------------------------------- */
 /*      Capture raster size from ILWIS file (.mpr).                     */
@@ -757,7 +756,7 @@ GDALDataset *ILWISDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->nRasterXSize = Col;
     poDS->nRasterYSize = Row;
     poDS->osFileName = poOpenInfo->pszFilename;
-    poDS->pszFileType = sFileType;  
+    poDS->pszFileType = sFileType;
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
@@ -767,7 +766,7 @@ GDALDataset *ILWISDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         poDS->SetBand( iBand+1, new ILWISRasterBand( poDS, iBand+1 ) );
     }
-		
+
 /* -------------------------------------------------------------------- */
 /*      Collect the geotransform coefficients                           */
 /* -------------------------------------------------------------------- */
@@ -779,7 +778,7 @@ GDALDataset *ILWISDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     if( (pszGeoRef.length() != 0) && !EQUAL(pszGeoRef.c_str(),"none"))
     {
-		
+
         //	Fetch coordinate system
         string csy = ReadElement("GeoRef", "CoordSystem", pszGeoRef);
         string pszProj;
@@ -803,7 +802,7 @@ GDALDataset *ILWISDataset::Open( GDALOpenInfo * poOpenInfo )
             {
                 pszProj = "LatLon";
             }
-					
+
             if( (EQUALN( pszProj.c_str(), "LatLon", 6 )) || 
                 (EQUALN( pszProj.c_str(), "Projection", 10 )))			
                 poDS->ReadProjection( csy );
@@ -834,11 +833,11 @@ void ILWISDataset::FlushCache()
     GDALDataset::FlushCache();
 
     if( bGeoDirty == TRUE )
-		{
-				WriteGeoReference();
+    {
+        WriteGeoReference();
         WriteProjection();
-				bGeoDirty = FALSE;
-		}
+        bGeoDirty = FALSE;
+    }
 }
 
 /************************************************************************/
@@ -852,7 +851,6 @@ GDALDataset *ILWISDataset::Create(const char* pszFilename,
                                   int nBands, GDALDataType eType,
                                   CPL_UNUSED char** papszParmList)
 {
-    ILWISDataset	*poDS;
     int 		iBand;
 
 /* -------------------------------------------------------------------- */
@@ -940,17 +938,15 @@ GDALDataset *ILWISDataset::Create(const char* pszFilename,
         // For now write-out a "Range" that is as broad as possible.
         // If later a better range is found (by inspecting metadata in the source dataset),
         // the "Range" will be overwritten by a better version.
-        double adfMinMax[2];
-        adfMinMax[0] = -9999999.9;
-        adfMinMax[1] = 9999999.9;
+        double adfMinMax[2] = {-9999999.9, 9999999.9};
         char strdouble[45];
-        CPLsprintf(strdouble, "%.3f:%.3f:%3f:offset=0", adfMinMax[0], adfMinMax[1],stepsize);
-        string range = string(strdouble);
+        CPLsnprintf(strdouble, sizeof(strdouble), "%.3f:%.3f:%3f:offset=0", adfMinMax[0], adfMinMax[1],stepsize);
+        string range(strdouble);
         WriteElement("BaseMap", "Range", pszODFName, range);
 
         WriteElement("Map", "GeoRef", pszODFName, "none.grf");
         WriteElement("Map", "Size", pszODFName, string(strsize));
-							
+
 /* -------------------------------------------------------------------- */
 /*      Try to create the data file.                                    */
 /* -------------------------------------------------------------------- */
@@ -966,7 +962,7 @@ GDALDataset *ILWISDataset::Create(const char* pszFilename,
         }
         VSIFCloseL( fp );
     }
-    poDS = new ILWISDataset();
+    ILWISDataset *poDS = new ILWISDataset();
     poDS->nRasterXSize = nXSize;
     poDS->nRasterYSize = nYSize;
     poDS->nBands = nBands;
@@ -999,17 +995,13 @@ GDALDataset *ILWISDataset::Create(const char* pszFilename,
 
 GDALDataset *
 ILWISDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
-                        int bStrict, char ** papszOptions,
-                        GDALProgressFunc pfnProgress, void * pProgressData )
+                          int /* bStrict */, char ** papszOptions,
+                          GDALProgressFunc pfnProgress, void * pProgressData )
 
 {
-    
-    ILWISDataset	*poDS;
     GDALDataType eType = GDT_Byte;
     int iBand;
-    (void) bStrict;
 
-		
     int   nXSize = poSrcDS->GetRasterXSize();
     int   nYSize = poSrcDS->GetRasterYSize();
     int   nBands = poSrcDS->GetRasterCount();
@@ -1026,17 +1018,17 @@ ILWISDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         eType = GDALDataTypeUnion( eType, poBand->GetRasterDataType() );
     }
 
-    poDS = (ILWISDataset *) Create( pszFilename,
-                                    poSrcDS->GetRasterXSize(),
-                                    poSrcDS->GetRasterYSize(),
-                                    nBands,
-                                    eType, papszOptions );
+    ILWISDataset *poDS = (ILWISDataset *) Create( pszFilename,
+                                                  poSrcDS->GetRasterXSize(),
+                                                  poSrcDS->GetRasterYSize(),
+                                                  nBands,
+                                                  eType, papszOptions );
 
     if( poDS == NULL )
         return NULL;
     string pszBaseName = string(CPLGetBasename( pszFilename ));
     string pszPath = string(CPLGetPath( pszFilename ));
-				
+
 /* -------------------------------------------------------------------- */
 /*  Copy and geo-transform and projection information.                  */
 /* -------------------------------------------------------------------- */
