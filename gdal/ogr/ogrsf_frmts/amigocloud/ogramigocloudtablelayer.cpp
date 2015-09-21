@@ -555,6 +555,7 @@ OGRErr OGRAMIGOCLOUDTableLayer::ISetFeature( OGRFeature *poFeature )
 
 {
     int i;
+    OGRErr eRet = OGRERR_FAILURE;
 
     if( bDeferedCreation && RunDeferedCreationIfNecessary() != OGRERR_NONE )
         return OGRERR_FAILURE;
@@ -575,98 +576,111 @@ OGRErr OGRAMIGOCLOUDTableLayer::ISetFeature( OGRFeature *poFeature )
                   "FID required on features given to SetFeature()." );
         return OGRERR_FAILURE;
     }
-    
-    CPLString osSQL;
-    osSQL.Printf("UPDATE %s SET ", OGRAMIGOCLOUDEscapeIdentifier(osTableName).c_str());
-    int bMustComma = FALSE;
-    for(i = 0; i < poFeatureDefn->GetFieldCount(); i++)
+
+
+    std::map<GIntBig, OGRAmigoCloudFID>::iterator it = mFIDs.find( poFeature->GetFID() );
+    if(it!=mFIDs.end())
     {
-        if( bMustComma )
-            osSQL += ", ";
-        else
-            bMustComma = TRUE;
+        OGRAmigoCloudFID &aFID = it->second;
 
-        osSQL += OGRAMIGOCLOUDEscapeIdentifier(poFeatureDefn->GetFieldDefn(i)->GetNameRef());
-        osSQL += " = ";
+        CPLString osSQL;
+        osSQL.Printf("UPDATE %s SET ", OGRAMIGOCLOUDEscapeIdentifier(osTableName).c_str());
+        int bMustComma = FALSE;
+        for(i = 0; i < poFeatureDefn->GetFieldCount(); i++)
+        {
+            if(bMustComma)
+                osSQL += ", ";
+            else
+                bMustComma = TRUE;
 
-        if( !poFeature->IsFieldSet(i) )
-        {
-            osSQL += "NULL";
-        }
-        else
-        {
-            OGRFieldType eType = poFeatureDefn->GetFieldDefn(i)->GetType();
-            if( eType == OFTString || eType == OFTDateTime || eType == OFTDate || eType == OFTTime )
+            osSQL += OGRAMIGOCLOUDEscapeIdentifier(poFeatureDefn->GetFieldDefn(i)->GetNameRef());
+            osSQL += " = ";
+
+            if(!poFeature->IsFieldSet(i))
             {
-                osSQL += "'";
-                osSQL += OGRAMIGOCLOUDEscapeLiteral(poFeature->GetFieldAsString(i));
-                osSQL += "'";
-            }
-            else if( (eType == OFTInteger || eType == OFTInteger64) &&
-                poFeatureDefn->GetFieldDefn(i)->GetSubType() == OFSTBoolean )
-            {
-                osSQL += poFeature->GetFieldAsInteger(i) ? "'t'" : "'f'";
+                osSQL += "NULL";
             }
             else
-                osSQL += poFeature->GetFieldAsString(i);
-        }
-    }
-
-    for(i = 0; i < poFeatureDefn->GetGeomFieldCount(); i++)
-    {
-        if( bMustComma )
-            osSQL += ", ";
-        else
-            bMustComma = TRUE;
-
-        osSQL += OGRAMIGOCLOUDEscapeIdentifier(poFeatureDefn->GetGeomFieldDefn(i)->GetNameRef());
-        osSQL += " = ";
-
-        OGRGeometry* poGeom = poFeature->GetGeomFieldRef(i);
-        if( poGeom == NULL )
-        {
-            osSQL += "NULL";
-        }
-        else
-        {
-            OGRAmigoCloudGeomFieldDefn* poGeomFieldDefn =
-                (OGRAmigoCloudGeomFieldDefn *)poFeatureDefn->GetGeomFieldDefn(i);
-            int nSRID = poGeomFieldDefn->nSRID;
-            if( nSRID == 0 )
-                nSRID = 4326;
-            char* pszEWKB = OGRGeometryToHexEWKB(poGeom, nSRID, FALSE);
-            osSQL += "'";
-            osSQL += pszEWKB;
-            osSQL += "'";
-            CPLFree(pszEWKB);
-        }
-    }
-
-    osSQL += CPLSPrintf(" WHERE %s = " CPL_FRMT_GIB,
-                    OGRAMIGOCLOUDEscapeIdentifier(osFIDColName).c_str(),
-                    poFeature->GetFID());
-
-    OGRErr eRet = OGRERR_FAILURE;
-
-    printf("ISetFeature() %lld\n", poFeature->GetFID());
-
-    json_object* poObj = poDS->RunSQL(osSQL);
-    if( poObj != NULL )
-    {
-        json_object* poTotalRows = json_object_object_get(poObj, "total_rows");
-        if( poTotalRows != NULL && json_object_get_type(poTotalRows) == json_type_int )
-        {
-            int nTotalRows = json_object_get_int(poTotalRows);
-            if( nTotalRows > 0 )
             {
-                eRet = OGRERR_NONE;
+                OGRFieldType eType = poFeatureDefn->GetFieldDefn(i)->GetType();
+                if(eType == OFTString || eType == OFTDateTime || eType == OFTDate || eType == OFTTime)
+                {
+                    osSQL += "'";
+                    osSQL += OGRAMIGOCLOUDEscapeLiteral(poFeature->GetFieldAsString(i));
+                    osSQL += "'";
+                }
+                else if((eType == OFTInteger || eType == OFTInteger64) &&
+                        poFeatureDefn->GetFieldDefn(i)->GetSubType() == OFSTBoolean)
+                {
+                    osSQL += poFeature->GetFieldAsInteger(i) ? "'t'" : "'f'";
+                }
+                else
+                    osSQL += poFeature->GetFieldAsString(i);
+            }
+        }
+
+        for(i = 0; i < poFeatureDefn->GetGeomFieldCount(); i++)
+        {
+            if(bMustComma)
+                osSQL += ", ";
+            else
+                bMustComma = TRUE;
+
+            osSQL += OGRAMIGOCLOUDEscapeIdentifier(poFeatureDefn->GetGeomFieldDefn(i)->GetNameRef());
+            osSQL += " = ";
+
+            OGRGeometry *poGeom = poFeature->GetGeomFieldRef(i);
+            if(poGeom == NULL)
+            {
+                osSQL += "NULL";
             }
             else
-                eRet = OGRERR_NON_EXISTING_FEATURE;
+            {
+                OGRAmigoCloudGeomFieldDefn *poGeomFieldDefn =
+                        (OGRAmigoCloudGeomFieldDefn *) poFeatureDefn->GetGeomFieldDefn(i);
+                int nSRID = poGeomFieldDefn->nSRID;
+                if(nSRID == 0)
+                    nSRID = 4326;
+                char *pszEWKB = OGRGeometryToHexEWKB(poGeom, nSRID, FALSE);
+                osSQL += "'";
+                osSQL += pszEWKB;
+                osSQL += "'";
+                CPLFree(pszEWKB);
+            }
         }
-        json_object_put(poObj);
-    }
 
+
+        osSQL += CPLSPrintf(" WHERE %s = '%s'",
+                            OGRAMIGOCLOUDEscapeIdentifier(osFIDColName).c_str(),
+                            aFID.amigo_id.c_str());
+
+
+//        printf("ISetFeature() %lld\n", poFeature->GetFID());
+
+//        json_object *poObj = poDS->RunSQL(osSQL);
+        std::stringstream changeset;
+        changeset << "{\"query\": \"" << json_encode(osSQL) << "\"}";
+        std::stringstream url;
+        url << std::string(poDS->GetAPIURL()) << "/users/0/projects/" + std::string(poDS->GetProjetcId()) + "/sql";
+        json_object *poObj = poDS->RunPOST(url.str().c_str(), changeset.str().c_str());
+
+
+        if(poObj != NULL)
+        {
+            json_object *poTotalRows = json_object_object_get(poObj, "total_rows");
+            if(poTotalRows != NULL && json_object_get_type(poTotalRows) == json_type_int)
+            {
+                int nTotalRows = json_object_get_int(poTotalRows);
+                if(nTotalRows > 0)
+                {
+                    eRet = OGRERR_NONE;
+                }
+                else
+                    eRet = OGRERR_NON_EXISTING_FEATURE;
+            }
+            json_object_put(poObj);
+        }
+    }
     return eRet;
 }
 
@@ -713,20 +727,8 @@ OGRErr OGRAMIGOCLOUDTableLayer::DeleteFeature( GIntBig nFID )
         std::stringstream url;
         url << std::string(poDS->GetAPIURL()) << "/users/0/projects/" + std::string(poDS->GetProjetcId()) + "/sql";
         json_object *poObj = poDS->RunPOST(url.str().c_str(), changeset.str().c_str());
-//        json_object *poObj = poDS->RunSQL(osSQL);
         if(poObj != NULL)
         {
-//            json_object *poTotalRows = json_object_object_get(poObj, "total_rows");
-//            if(poTotalRows != NULL && json_object_get_type(poTotalRows) == json_type_int)
-//            {
-//                int nTotalRows = json_object_get_int(poTotalRows);
-//                if(nTotalRows > 0)
-//                {
-//                    eRet = OGRERR_NONE;
-//                }
-//                else
-//                    eRet = OGRERR_NON_EXISTING_FEATURE;
-//            }
             json_object_put(poObj);
             eRet = OGRERR_NONE;
         }
@@ -1142,7 +1144,7 @@ bool OGRAMIGOCLOUDTableLayer::IsDatasetExists()
     }
 
     // Sleep 1 sec
-    usleep(1000);
+    usleep(3000000);
 
     return false;
 }
