@@ -5,20 +5,20 @@
 // Purpose:  Test some PCI specific translation issues.
 //           Ported from osr/osr_pci.py.
 // Author:   Mateusz Loskot <mateusz@loskot.net>
-// 
+//
 ///////////////////////////////////////////////////////////////////////////////
 // Copyright (c) 2006, Mateusz Loskot <mateusz@loskot.net>
-//  
+//
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Library General Public
 // License as published by the Free Software Foundation; either
 // version 2 of the License, or (at your option) any later version.
-// 
+//
 // This library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 // Library General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU Library General Public
 // License along with this library; if not, write to the
 // Free Software Foundation, Inc., 59 Temple Place - Suite 330,
@@ -34,7 +34,9 @@
 
 // See Bronek Kozicki's comments posted here:
 // http://lists.boost.org/Archives/boost/2005/07/89697.php
+#if defined(_MSC_VER) || defined(_WIN32_WCE)
 #pragma warning(disable: 4996)
+#endif
 
 #include <tut.h>
 #include <tut_gdal.h>
@@ -45,7 +47,7 @@
 #include <algorithm>
 #include <cmath>
 #include <string>
-    
+
 namespace tut
 {
 
@@ -148,14 +150,13 @@ namespace tut
         char* proj = NULL;
         char* units = NULL;
         double* params = NULL;
-        const int size = 17;
 
         err_ = OSRExportToPCI(srs_, &proj, &units, &params);
         ensure_equals("OSRExportToPCI() failed", err_, OGRERR_NONE);
 
         ensure_equals("Invalid projection definition",
             std::string(proj), std::string("LCC         D-01"));
-        
+
         ensure_equals("Invalid projection units",
             std::string(units), std::string("METRE"));
 
