@@ -570,33 +570,33 @@ CPLErr PAuxDataset::SetGeoTransform( double * padfGeoTransform )
     char	szLoRightX[128];
     char	szLoRightY[128];
 
-    if( ABS(padfGeoTransform[0]) < 181 
+    if( ABS(padfGeoTransform[0]) < 181
         && ABS(padfGeoTransform[1]) < 1 )
     {
-        CPLsprintf( szUpLeftX, "%.12f", padfGeoTransform[0] );
-        CPLsprintf( szUpLeftY, "%.12f", padfGeoTransform[3] );
-        CPLsprintf( szLoRightX, "%.12f", 
+        CPLsnprintf( szUpLeftX, sizeof(szUpLeftX), "%.12f", padfGeoTransform[0] );
+        CPLsnprintf( szUpLeftY, sizeof(szUpLeftY), "%.12f", padfGeoTransform[3] );
+        CPLsnprintf( szLoRightX, sizeof(szLoRightX), "%.12f",
                padfGeoTransform[0] + padfGeoTransform[1] * GetRasterXSize() );
-        CPLsprintf( szLoRightY, "%.12f", 
+        CPLsnprintf( szLoRightY, sizeof(szLoRightY), "%.12f",
                padfGeoTransform[3] + padfGeoTransform[5] * GetRasterYSize() );
     }
     else
     {
-        CPLsprintf( szUpLeftX, "%.3f", padfGeoTransform[0] );
-        CPLsprintf( szUpLeftY, "%.3f", padfGeoTransform[3] );
-        CPLsprintf( szLoRightX, "%.3f", 
+        CPLsnprintf( szUpLeftX, sizeof(szUpLeftX), "%.3f", padfGeoTransform[0] );
+        CPLsnprintf( szUpLeftY, sizeof(szUpLeftY), "%.3f", padfGeoTransform[3] );
+        CPLsnprintf( szLoRightX, sizeof(szLoRightX), "%.3f",
                padfGeoTransform[0] + padfGeoTransform[1] * GetRasterXSize() );
-        CPLsprintf( szLoRightY, "%.3f", 
+        CPLsnprintf( szLoRightY, sizeof(szLoRightY), "%.3f",
                padfGeoTransform[3] + padfGeoTransform[5] * GetRasterYSize() );
     }
-        
-    papszAuxLines = CSLSetNameValue( papszAuxLines, 
+
+    papszAuxLines = CSLSetNameValue( papszAuxLines,
                                      "UpLeftX", szUpLeftX );
-    papszAuxLines = CSLSetNameValue( papszAuxLines, 
+    papszAuxLines = CSLSetNameValue( papszAuxLines,
                                      "UpLeftY", szUpLeftY );
-    papszAuxLines = CSLSetNameValue( papszAuxLines, 
+    papszAuxLines = CSLSetNameValue( papszAuxLines,
                                      "LoRightX", szLoRightX );
-    papszAuxLines = CSLSetNameValue( papszAuxLines, 
+    papszAuxLines = CSLSetNameValue( papszAuxLines,
                                      "LoRightY", szLoRightY );
 
     bAuxUpdated = TRUE;
