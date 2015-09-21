@@ -228,13 +228,14 @@ VRTFilteredSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
     if( nPixelSpace != nPixelOffset || nLineSpace != nLineOffset
         || eOperDataType != eBufType )
     {
-        pabyOutData = (GByte *) 
+        pabyOutData = (GByte *)
             VSIMalloc3(nOutXSize, nOutYSize, nPixelOffset );
 
         if( pabyOutData == NULL )
         {
-            CPLError( CE_Failure, CPLE_OutOfMemory, 
+            CPLError( CE_Failure, CPLE_OutOfMemory,
                       "Work buffer allocation failed." );
+            CPLFree( pabyWorkData );
             return CE_Failure;
         }
     }
