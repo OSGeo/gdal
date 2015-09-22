@@ -68,7 +68,7 @@ OGRCARTODBDataSource::~OGRCARTODBDataSource()
     {
         char** papszOptions = NULL;
         papszOptions = CSLSetNameValue(papszOptions, "CLOSE_PERSISTENT", CPLSPrintf("CARTODB:%p", this));
-        CPLHTTPFetch( GetAPIURL(), papszOptions);
+        CPLHTTPDestroyResult( CPLHTTPFetch( GetAPIURL(), papszOptions) );
         CSLDestroy(papszOptions);
     }
 
