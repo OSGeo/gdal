@@ -1019,6 +1019,7 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "File %s. Read past end of file.\n",
                   poOpenInfo->pszFilename );
+        CPLFree(offsets);
         return NULL;
     }
 
