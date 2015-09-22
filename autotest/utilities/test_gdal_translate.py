@@ -876,7 +876,7 @@ def test_gdal_translate_31():
         gdaltest.post_reason('Bad checksum')
         return 'fail'
 
-    if not gdaltest.geotransform_equals(gdal.Open('../gcore/data/byte.tif').GetGeoTransform(), ds.GetGeoTransform(), 1e-9) :
+    if not gdaltest.geotransform_equals(gdal.Open('../gcore/data/byte.tif').GetGeoTransform(), ds.GetGeoTransform(), 1e-7) :
         gdaltest.post_reason('Bad geotransform')
         return 'fail'
 
