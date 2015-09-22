@@ -1,5 +1,5 @@
 /******************************************************************************
- * 
+ *
  * Project:  VICAR Driver; JPL/MIPL VICAR Format
  * Purpose:  Implementation of VICARDataset
  * Author:   Sebastian Walter <sebastian dot walter at fu-berlin dot de>
@@ -36,9 +36,9 @@
 #  define PI 3.1415926535897932384626433832795
 #endif
 
-#include "rawdataset.h"
+#include "cpl_string.h"
 #include "ogr_spatialref.h"
-#include "cpl_string.h" 
+#include "rawdataset.h"
 #include "vicarkeywordhandler.h"
 
 #include <string>
@@ -61,24 +61,24 @@ class VICARDataset : public RawDataset
 
     GByte	abyHeader[10000];
     CPLString   osExternalCube;
-    
+
     VICARKeywordHandler  oKeywords;
-  
+
     int         bGotTransform;
     double      adfGeoTransform[6];
-  
+
     CPLString   osProjection;
 
     const char *GetKeyword( const char *pszPath, 
                             const char *pszDefault = "");
-    
+
 public:
     VICARDataset();
     ~VICARDataset();
-  
+
     virtual CPLErr GetGeoTransform( double * padfTransform );
     virtual const char *GetProjectionRef(void);
-  
+
     virtual char **GetFileList();
 
     static int          Identify( GDALOpenInfo * );
@@ -89,16 +89,14 @@ public:
 
 };
 
-
-
 /************************************************************************/
 /*                            VICARDataset()                            */
 /************************************************************************/
 
-VICARDataset::VICARDataset()
+VICARDataset::VICARDataset() :
+    fpImage(NULL),
+    bGotTransform(FALSE)
 {
-    fpImage = NULL;
-    bGotTransform = FALSE;
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
     adfGeoTransform[2] = 0.0;
@@ -126,9 +124,7 @@ VICARDataset::~VICARDataset()
 char **VICARDataset::GetFileList()
 
 {
-    char **papszFileList = NULL;
-
-    papszFileList = GDALPamDataset::GetFileList();
+    char **papszFileList = GDALPamDataset::GetFileList();
 
     if( strlen(osExternalCube) > 0 )
         papszFileList = CSLAddString( papszFileList, osExternalCube );
@@ -145,8 +141,8 @@ const char *VICARDataset::GetProjectionRef()
 {
     if( strlen(osProjection) > 0 )
         return osProjection;
-    else
-        return GDALPamDataset::GetProjectionRef();
+
+    return GDALPamDataset::GetProjectionRef();
 }
 
 /************************************************************************/
@@ -161,10 +157,8 @@ CPLErr VICARDataset::GetGeoTransform( double * padfTransform )
         memcpy( padfTransform, adfGeoTransform, sizeof(double) * 6 );
         return CE_None;
     }
-    else
-    {
-        return GDALPamDataset::GetGeoTransform( padfTransform );
-    }
+
+    return GDALPamDataset::GetGeoTransform( padfTransform );
 }
 
 /************************************************************************/
@@ -204,15 +198,13 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
     if( fpQube == NULL )
         return NULL;
 
-    VICARDataset 	*poDS;
-
-    poDS = new VICARDataset();
+    VICARDataset *poDS = new VICARDataset();
     if( ! poDS->oKeywords.Ingest( fpQube, poOpenInfo->pabyHeader ) ) {
         VSIFCloseL( fpQube );
         delete poDS;
         return NULL;
     }
-    
+
     VSIFCloseL( fpQube );
 
     CPLString osQubeFile;
@@ -336,21 +328,16 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
         dfYDim = dfYDim * 1000.0;
     }
 
-    double   dfSampleOffset_Shift;
-    double   dfLineOffset_Shift;
-    double   dfSampleOffset_Mult;
-    double   dfLineOffset_Mult;
-    
-    dfSampleOffset_Shift = 
+    double dfSampleOffset_Shift =
         CPLAtof(CPLGetConfigOption( "PDS_SampleProjOffset_Shift", "-0.5" ));
-    
-    dfLineOffset_Shift = 
+
+    double dfLineOffset_Shift =
         CPLAtof(CPLGetConfigOption( "PDS_LineProjOffset_Shift", "-0.5" ));
 
-    dfSampleOffset_Mult =
+    double dfSampleOffset_Mult =
         CPLAtof(CPLGetConfigOption( "PDS_SampleProjOffset_Mult", "-1.0") );
 
-    dfLineOffset_Mult = 
+    double dfLineOffset_Mult =
         CPLAtof( CPLGetConfigOption( "PDS_LineProjOffset_Mult", "1.0") );
 
     /***********   Grab LINE_PROJECTION_OFFSET ************/
@@ -365,7 +352,7 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
         xulcenter = CPLAtof(value);
         dfULXMap = ((xulcenter + dfSampleOffset_Shift) * dfXDim * dfSampleOffset_Mult);
     }
-    
+
 /* ==================================================================== */
 /*      Get the coordinate system.                                      */
 /* ==================================================================== */
@@ -376,41 +363,41 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
     double center_lat = 0.0;
     double center_lon = 0.0;
     double first_std_parallel = 0.0;
-    double second_std_parallel = 0.0;    
+    double second_std_parallel = 0.0;
     OGRSpatialReference oSRS;
-    
+
     /***********  Grab TARGET_NAME  ************/
     /**** This is the planets name i.e. MARS ***/
     CPLString target_name = poDS->GetKeyword("MAP.TARGET_NAME");
-     
+
     /**********   Grab MAP_PROJECTION_TYPE *****/
-    CPLString map_proj_name = 
+    CPLString map_proj_name =
         poDS->GetKeyword( "MAP.MAP_PROJECTION_TYPE");
-     
+
     /******  Grab semi_major & convert to KM ******/
-    semi_major = 
+    semi_major =
         CPLAtof(poDS->GetKeyword( "MAP.A_AXIS_RADIUS")) * 1000.0;
-    
+
     /******  Grab semi-minor & convert to KM ******/
-    semi_minor = 
+    semi_minor =
         CPLAtof(poDS->GetKeyword( "MAP.C_AXIS_RADIUS")) * 1000.0;
 
     /***********   Grab CENTER_LAT ************/
-    center_lat = 
+    center_lat =
         CPLAtof(poDS->GetKeyword( "MAP.CENTER_LATITUDE"));
 
     /***********   Grab CENTER_LON ************/
-    center_lon = 
+    center_lon =
         CPLAtof(poDS->GetKeyword( "MAP.CENTER_LONGITUDE"));
 
     /**********   Grab 1st std parallel *******/
-    first_std_parallel = 
+    first_std_parallel =
         CPLAtof(poDS->GetKeyword( "MAP.FIRST_STANDARD_PARALLEL"));
 
     /**********   Grab 2nd std parallel *******/
-    second_std_parallel = 
+    second_std_parallel =
         CPLAtof(poDS->GetKeyword( "MAP.SECOND_STANDARD_PARALLEL"));
-     
+
     /*** grab  PROJECTION_LATITUDE_TYPE = "PLANETOCENTRIC" ****/
     // Need to further study how ocentric/ographic will effect the gdal library.
     // So far we will use this fact to define a sphere or ellipse for some projections
@@ -492,21 +479,21 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
         //Create projection name, i.e. MERCATOR MARS and set as ProjCS keyword
         CPLString proj_target_name = map_proj_name + " " + target_name;
         oSRS.SetProjCS(proj_target_name); //set ProjCS keyword
-     
+
         //The geographic/geocentric name will be the same basic name as the body name
         //'GCS' = Geographic/Geocentric Coordinate System
         CPLString geog_name = "GCS_" + target_name;
-        
+
         //The datum and sphere names will be the same basic name aas the planet
         CPLString datum_name = "D_" + target_name;
         CPLString sphere_name = target_name; // + "_IAU_IAG");  //Might not be IAU defined so don't add
-          
+
         //calculate inverse flattening from major and minor axis: 1/f = a/(a-b)
         if ((semi_major - semi_minor) < 0.0000001) 
             iflattening = 0;
         else
             iflattening = semi_major / (semi_major - semi_minor);
-     
+
         //Set the body size but take into consideration which proj is being used to help w/ compatibility
         //Notice that most PDS projections are spherical based on the fact that ISIS/PICS are spherical 
         //Set the body size but take into consideration which proj is being used to help w/ proj4 compatibility
@@ -574,7 +561,7 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->adfGeoTransform[4] = 0.0;
         poDS->adfGeoTransform[5] = dfYDim;
     }
-    
+
     if( !poDS->bGotTransform )
         poDS->bGotTransform = 
             GDALReadWorldFile( osQubeFile, "psw", 
@@ -584,7 +571,6 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->bGotTransform = 
             GDALReadWorldFile( osQubeFile, "wld", 
                                poDS->adfGeoTransform );
-
 
 /* -------------------------------------------------------------------- */
 /*      Open target binary file.                                        */
@@ -625,11 +611,10 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
 
     for( i = 0; i < nBands; i++ )
     {
-        GDALRasterBand	*poBand;
-
-        poBand = new RawRasterBand( poDS, i+1, poDS->fpImage, nSkipBytes + nBandOffset * i, 
-                                   nPixelOffset, nLineOffset, eDataType,
-#ifdef CPL_LSB                               
+        GDALRasterBand	*poBand
+            = new RawRasterBand( poDS, i+1, poDS->fpImage, nSkipBytes + nBandOffset * i,
+                                 nPixelOffset, nLineOffset, eDataType,
+#ifdef CPL_LSB
                                    chByteOrder == 'I' || chByteOrder == 'L',
 #else
                                    chByteOrder == 'M',
@@ -674,11 +659,11 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 
 /******************   HRSC    ******************************/
-   
+
     if (EQUAL( poDS->GetKeyword( "BLTYPE"), "M94_HRSC" ) ) {
         poDS->SetMetadataItem( "SPACECRAFT_NAME", poDS->GetKeyword( "M94_INSTRUMENT.INSTRUMENT_HOST_NAME") );
         poDS->SetMetadataItem( "PRODUCT_TYPE", poDS->GetKeyword( "TYPE"));
-    	
+
         if (EQUAL( poDS->GetKeyword( "M94_INSTRUMENT.DETECTOR_ID"), "MEX_HRSC_SRC" )) {
             static const char *apszKeywords[] =  {
                         "M94_ORBIT.IMAGE_TIME",
@@ -756,7 +741,7 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
             if( pszKeywordValue != NULL )
                 poDS->SetMetadataItem( apszKeywords[i], pszKeywordValue );
         }
-        
+
     }
     else if (bIsDTM==TRUE && EQUAL( poDS->GetKeyword( "TARGET_NAME"), "VESTA" )) {
         poDS->SetMetadataItem( "SPACECRAFT_NAME", "DAWN" );
@@ -808,8 +793,6 @@ const char *VICARDataset::GetKeyword( const char *pszPath,
     return oKeywords.GetKeyword( pszPath, pszDefault );
 }
 
-
-
 /************************************************************************/
 /*                         GDALRegister_VICAR()                         */
 /************************************************************************/
@@ -817,12 +800,11 @@ const char *VICARDataset::GetKeyword( const char *pszPath,
 void GDALRegister_VICAR()
 
 {
-    GDALDriver	*poDriver;
 
     if( GDALGetDriverByName( "VICAR" ) == NULL )
     {
-        poDriver = new GDALDriver();
-        
+        GDALDriver *poDriver = new GDALDriver();
+
         poDriver->SetDescription( "VICAR" );
         poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "MIPL VICAR file" );
