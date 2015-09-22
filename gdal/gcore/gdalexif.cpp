@@ -133,10 +133,10 @@ static void EXIFPrintData(char* pszData, GUInt16 type,
       //      TIFFSwabArrayOfLong((GUInt32*) data, 2*count);
     for(;count>0;count--) {
       if( (lp[0]==0) && (lp[1] == 0) ) {
-          sprintf(pszTemp,"%s(0)",sep);
+          snprintf(pszTemp, sizeof(pszTemp), "%s(0)",sep);
       }
       else{
-          CPLsprintf(pszTemp, "%s(%g)", sep,
+          CPLsnprintf(pszTemp, sizeof(pszTemp), "%s(%g)", sep,
               (double) lp[0]/ (double)lp[1]);
       }
       sep = " ";
