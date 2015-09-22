@@ -243,6 +243,7 @@ static void FindChangePattern( char *cdata,char **substs, char **keys, CPLString
                     if (std::string::npos==ret.find(key))
                     {
                         matches=false;
+                        CPLFree(found_key);
                         break;
                     }
                     // Execute the substitution on the "ret" string
