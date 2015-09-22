@@ -2392,12 +2392,13 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
                 if( CPLCopyFile( osNewPath, osOldPath ) != 0 )
                 {
                     CPLError( CE_Failure, CPLE_AppDefined,
-                              "Failed to copy %s to /vsimem", 
+                              "Failed to copy %s to /vsimem",
                               osOldPath.c_str() );
+                    CSLDestroy( papszReturn );
                     return -1;
                 }
             }
-            
+
             CSLDestroy( papszFiles );
             iArg += 1;
         }
