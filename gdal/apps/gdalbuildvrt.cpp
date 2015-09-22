@@ -145,8 +145,8 @@ static void Usage(const char* pszErrorMsg = NULL)
 int  GetSrcDstWin(DatasetProperty* psDP,
                   double we_res, double ns_res,
                   double minX, double minY, double maxX, double maxY,
-                  int* pnSrcXOff, int* pnSrcYOff, int* pnSrcXSize, int* pnSrcYSize,
-                  int* pnDstXOff, int* pnDstYOff, int* pnDstXSize, int* pnDstYSize)
+                  double* pdfSrcXOff, double* pdfSrcYOff, double* pdfSrcXSize, double* pdfSrcYSize,
+                  double* pdfDstXOff, double* pdfDstYOff, double* pdfDstXSize, double* pdfDstYSize)
 {
     /* Check that the destination bounding box intersects the source bounding box */
     if ( psDP->adfGeoTransform[GEOTRSFRM_TOPLEFT_X] +
@@ -162,37 +162,35 @@ int  GetSrcDstWin(DatasetProperty* psDP,
     if ( psDP->adfGeoTransform[GEOTRSFRM_TOPLEFT_Y] < minY )
          return FALSE;
 
-    *pnSrcXSize = psDP->nRasterXSize;
-    *pnSrcYSize = psDP->nRasterYSize;
+    *pdfSrcXSize = psDP->nRasterXSize;
+    *pdfSrcYSize = psDP->nRasterYSize;
     if ( psDP->adfGeoTransform[GEOTRSFRM_TOPLEFT_X] < minX )
     {
-        *pnSrcXOff = (int)((minX - psDP->adfGeoTransform[GEOTRSFRM_TOPLEFT_X]) /
-            psDP->adfGeoTransform[GEOTRSFRM_WE_RES] + 0.5);
-        *pnDstXOff = 0;
+        *pdfSrcXOff = (minX - psDP->adfGeoTransform[GEOTRSFRM_TOPLEFT_X]) /
+            psDP->adfGeoTransform[GEOTRSFRM_WE_RES];
+        *pdfDstXOff = 0.0;
     }
     else
     {
-        *pnSrcXOff = 0;
-        *pnDstXOff = (int)
-            (0.5 + (psDP->adfGeoTransform[GEOTRSFRM_TOPLEFT_X] - minX) / we_res);
+        *pdfSrcXOff = 0.0;
+        *pdfDstXOff = 
+            ((psDP->adfGeoTransform[GEOTRSFRM_TOPLEFT_X] - minX) / we_res);
     }
     if ( maxY < psDP->adfGeoTransform[GEOTRSFRM_TOPLEFT_Y])
     {
-        *pnSrcYOff = (int)((psDP->adfGeoTransform[GEOTRSFRM_TOPLEFT_Y] - maxY) /
-            -psDP->adfGeoTransform[GEOTRSFRM_NS_RES] + 0.5);
-        *pnDstYOff = 0;
+        *pdfSrcYOff = (psDP->adfGeoTransform[GEOTRSFRM_TOPLEFT_Y] - maxY) /
+            -psDP->adfGeoTransform[GEOTRSFRM_NS_RES];
+        *pdfDstYOff = 0.0;
     }
     else
     {
-        *pnSrcYOff = 0;
-        *pnDstYOff = (int)
-            (0.5 + (maxY - psDP->adfGeoTransform[GEOTRSFRM_TOPLEFT_Y]) / -ns_res);
+        *pdfSrcYOff = 0.0;
+        *pdfDstYOff = 
+            ((maxY - psDP->adfGeoTransform[GEOTRSFRM_TOPLEFT_Y]) / -ns_res);
     }
-    *pnDstXSize = (int)
-        (0.5 + psDP->nRasterXSize *
+    *pdfDstXSize = (psDP->nRasterXSize *
          psDP->adfGeoTransform[GEOTRSFRM_WE_RES] / we_res);
-    *pnDstYSize = (int)
-        (0.5 + psDP->nRasterYSize *
+    *pdfDstYSize = (psDP->nRasterYSize *
          psDP->adfGeoTransform[GEOTRSFRM_NS_RES] / ns_res);
          
     return TRUE;
@@ -809,21 +807,21 @@ void VRTBuilder::CreateVRTSeparate(VRTDatasetH hVRTDS)
         if (psDatasetProperties->isFileOK == FALSE)
             continue;
 
-        int nSrcXOff, nSrcYOff, nSrcXSize, nSrcYSize,
-            nDstXOff, nDstYOff, nDstXSize, nDstYSize;
+        double dfSrcXOff, dfSrcYOff, dfSrcXSize, dfSrcYSize,
+               dfDstXOff, dfDstYOff, dfDstXSize, dfDstYSize;
         if (bHasGeoTransform)
         {
             if ( ! GetSrcDstWin(psDatasetProperties,
                         we_res, ns_res, minX, minY, maxX, maxY,
-                        &nSrcXOff, &nSrcYOff, &nSrcXSize, &nSrcYSize,
-                        &nDstXOff, &nDstYOff, &nDstXSize, &nDstYSize) )
+                        &dfSrcXOff, &dfSrcYOff, &dfSrcXSize, &dfSrcYSize,
+                        &dfDstXOff, &dfDstYOff, &dfDstXSize, &dfDstYSize) )
                 continue;
         }
         else
         {
-            nSrcXOff = nSrcYOff = nDstXOff = nDstYOff = 0;
-            nSrcXSize = nDstXSize = nRasterXSize;
-            nSrcYSize = nDstYSize = nRasterYSize;
+            dfSrcXOff = dfSrcYOff = dfDstXOff = dfDstYOff = 0;
+            dfSrcXSize = dfDstXSize = nRasterXSize;
+            dfSrcYSize = dfDstYSize = nRasterYSize;
         }
 
         const char* dsFileName = ppszInputFilenames[i];
@@ -863,10 +861,10 @@ void VRTBuilder::CreateVRTSeparate(VRTDatasetH hVRTDS)
         poVRTBand->ConfigureSource( poSimpleSource,
                                     (GDALRasterBand*)GDALGetRasterBand((GDALDatasetH)hProxyDS, 1),
                                     FALSE,
-                                    nSrcXOff, nSrcYOff,
-                                    nSrcXSize, nSrcYSize,
-                                    nDstXOff, nDstYOff,
-                                    nDstXSize, nDstYSize );
+                                    dfSrcXOff, dfSrcYOff,
+                                    dfSrcXSize, dfSrcYSize,
+                                    dfDstXOff, dfDstYOff,
+                                    dfDstXSize, dfDstYSize );
 
         poVRTBand->AddSource( poSimpleSource );
 
@@ -923,12 +921,12 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDatasetH hVRTDS)
         if (psDatasetProperties->isFileOK == FALSE)
             continue;
 
-        int nSrcXOff, nSrcYOff, nSrcXSize, nSrcYSize,
-            nDstXOff, nDstYOff, nDstXSize, nDstYSize;
+        double dfSrcXOff, dfSrcYOff, dfSrcXSize, dfSrcYSize,
+            dfDstXOff, dfDstYOff, dfDstXSize, dfDstYSize;
         if ( ! GetSrcDstWin(psDatasetProperties,
                         we_res, ns_res, minX, minY, maxX, maxY,
-                        &nSrcXOff, &nSrcYOff, &nSrcXSize, &nSrcYSize,
-                        &nDstXOff, &nDstYOff, &nDstXSize, &nDstYSize) )
+                        &dfSrcXOff, &dfSrcYOff, &dfSrcXSize, &dfSrcYSize,
+                        &dfDstXOff, &dfDstYOff, &dfDstXSize, &dfDstYSize) )
             continue;
 
         const char* dsFileName = ppszInputFilenames[i];
@@ -977,10 +975,10 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDatasetH hVRTDS)
             poVRTBand->ConfigureSource( poSimpleSource,
                                         (GDALRasterBand*)GDALGetRasterBand((GDALDatasetH)hProxyDS, nSelBand + 1),
                                         FALSE,
-                                        nSrcXOff, nSrcYOff,
-                                        nSrcXSize, nSrcYSize,
-                                        nDstXOff, nDstYOff,
-                                        nDstXSize, nDstYSize );
+                                        dfSrcXOff, dfSrcYOff,
+                                        dfSrcXSize, dfSrcYSize,
+                                        dfDstXOff, dfDstYOff,
+                                        dfDstXSize, dfDstYSize );
 
             poVRTBand->AddSource( poSimpleSource );
         }
@@ -991,10 +989,13 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDatasetH hVRTDS)
                     (VRTSourcedRasterBandH)GDALGetRasterBand(hVRTDS, nBands + 1);
             /* Little trick : we use an offset of 255 and a scaling of 0, so that in areas covered */
             /* by the source, the value of the alpha band will be 255, otherwise it will be 0 */
-            VRTAddComplexSource(hVRTBand, GDALGetRasterBand((GDALDatasetH)hProxyDS, 1),
-                                nSrcXOff, nSrcYOff, nSrcXSize, nSrcYSize,
-                                nDstXOff, nDstYOff, nDstXSize, nDstYSize,
-                                255, 0, VRT_NODATA_UNSET);
+            ((VRTSourcedRasterBand *) hVRTBand)->AddComplexSource(
+                                            (GDALRasterBand*)GDALGetRasterBand((GDALDatasetH)hProxyDS, 1),
+                                            dfSrcXOff, dfSrcYOff, 
+                                            dfSrcXSize, dfSrcYSize, 
+                                            dfDstXOff, dfDstYOff, 
+                                            dfDstXSize, dfDstYSize,
+                                            255, 0, VRT_NODATA_UNSET);
         }
         else if (bHasDatasetMask)
         {
@@ -1004,10 +1005,10 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDatasetH hVRTDS)
             poMaskVRTBand->ConfigureSource( poSimpleSource,
                                             (GDALRasterBand*)GDALGetRasterBand((GDALDatasetH)hProxyDS, 1),
                                             TRUE,
-                                            nSrcXOff, nSrcYOff,
-                                            nSrcXSize, nSrcYSize,
-                                            nDstXOff, nDstYOff,
-                                            nDstXSize, nDstYSize );
+                                            dfSrcXOff, dfSrcYOff,
+                                            dfSrcXSize, dfSrcYSize,
+                                            dfDstXOff, dfDstYOff,
+                                            dfDstXSize, dfDstYSize );
 
             poMaskVRTBand->AddSource( poSimpleSource );
         }

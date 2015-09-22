@@ -97,71 +97,71 @@ static void Usage(const char* pszErrorMsg = NULL, int bShort = TRUE)
 /************************************************************************/
 
 static void SrcToDst( double dfX, double dfY,
-                      int nSrcXOff, int nSrcYOff,
-                      int nSrcXSize, int nSrcYSize,
-                      int nDstXOff, int nDstYOff,
-                      int nDstXSize, int nDstYSize,
+                      double dfSrcXOff, double dfSrcYOff,
+                      double dfSrcXSize, double dfSrcYSize,
+                      double dfDstXOff, double dfDstYOff,
+                      double dfDstXSize, double dfDstYSize,
                       double &dfXOut, double &dfYOut )
 
 {
-    dfXOut = ((dfX - nSrcXOff) / nSrcXSize) * nDstXSize + nDstXOff;
-    dfYOut = ((dfY - nSrcYOff) / nSrcYSize) * nDstYSize + nDstYOff;
+    dfXOut = ((dfX - dfSrcXOff) / dfSrcXSize) * dfDstXSize + dfDstXOff;
+    dfYOut = ((dfY - dfSrcYOff) / dfSrcYSize) * dfDstYSize + dfDstYOff;
 }
 
 /************************************************************************/
 /*                          GetSrcDstWindow()                           */
 /************************************************************************/
 
-static int FixSrcDstWindow( int* panSrcWin, int* panDstWin,
+static int FixSrcDstWindow( double* padfSrcWin, double* padfDstWin,
                             int nSrcRasterXSize,
                             int nSrcRasterYSize )
 
 {
-    const int nSrcXOff = panSrcWin[0];
-    const int nSrcYOff = panSrcWin[1];
-    const int nSrcXSize = panSrcWin[2];
-    const int nSrcYSize = panSrcWin[3];
+    const double dfSrcXOff = padfSrcWin[0];
+    const double dfSrcYOff = padfSrcWin[1];
+    const double dfSrcXSize = padfSrcWin[2];
+    const double dfSrcYSize = padfSrcWin[3];
 
-    const int nDstXOff = panDstWin[0];
-    const int nDstYOff = panDstWin[1];
-    const int nDstXSize = panDstWin[2];
-    const int nDstYSize = panDstWin[3];
+    const double dfDstXOff = padfDstWin[0];
+    const double dfDstYOff = padfDstWin[1];
+    const double dfDstXSize = padfDstWin[2];
+    const double dfDstYSize = padfDstWin[3];
 
     int bModifiedX = FALSE, bModifiedY = FALSE;
 
-    int nModifiedSrcXOff = nSrcXOff;
-    int nModifiedSrcYOff = nSrcYOff;
+    double dfModifiedSrcXOff = dfSrcXOff;
+    double dfModifiedSrcYOff = dfSrcYOff;
 
-    int nModifiedSrcXSize = nSrcXSize;
-    int nModifiedSrcYSize = nSrcYSize;
+    double dfModifiedSrcXSize = dfSrcXSize;
+    double dfModifiedSrcYSize = dfSrcYSize;
 
 /* -------------------------------------------------------------------- */
 /*      Clamp within the bounds of the available source data.           */
 /* -------------------------------------------------------------------- */
-    if( nModifiedSrcXOff < 0 )
+    if( dfModifiedSrcXOff < 0 )
     {
-        nModifiedSrcXSize += nModifiedSrcXOff;
-        nModifiedSrcXOff = 0;
+        dfModifiedSrcXSize += dfModifiedSrcXOff;
+        dfModifiedSrcXOff = 0;
 
         bModifiedX = TRUE;
     }
 
-    if( nModifiedSrcYOff < 0 )
+    if( dfModifiedSrcYOff < 0 )
     {
-        nModifiedSrcYSize += nModifiedSrcYOff;
-        nModifiedSrcYOff = 0;
+        dfModifiedSrcYSize += dfModifiedSrcYOff;
+        dfModifiedSrcYOff = 0;
         bModifiedY = TRUE;
     }
 
-    if( nModifiedSrcXOff + nModifiedSrcXSize > nSrcRasterXSize )
+    if( dfModifiedSrcXOff + dfModifiedSrcXSize > nSrcRasterXSize )
     {
-        nModifiedSrcXSize = nSrcRasterXSize - nModifiedSrcXOff;
+        dfModifiedSrcXSize = nSrcRasterXSize - dfModifiedSrcXOff;
         bModifiedX = TRUE;
     }
 
-    if( nModifiedSrcYOff + nModifiedSrcYSize > nSrcRasterYSize )
+    if( dfModifiedSrcYOff + dfModifiedSrcYSize > nSrcRasterYSize )
     {
-        nModifiedSrcYSize = nSrcRasterYSize - nModifiedSrcYOff;
+        dfModifiedSrcYSize = nSrcRasterYSize - dfModifiedSrcYOff;
         bModifiedY = TRUE;
     }
 
@@ -169,17 +169,17 @@ static int FixSrcDstWindow( int* panSrcWin, int* panDstWin,
 /*      Don't do anything if the requesting region is completely off    */
 /*      the source image.                                               */
 /* -------------------------------------------------------------------- */
-    if( nModifiedSrcXOff >= nSrcRasterXSize
-        || nModifiedSrcYOff >= nSrcRasterYSize
-        || nModifiedSrcXSize <= 0 || nModifiedSrcYSize <= 0 )
+    if( dfModifiedSrcXOff >= nSrcRasterXSize
+        || dfModifiedSrcYOff >= nSrcRasterYSize
+        || dfModifiedSrcXSize <= 0 || dfModifiedSrcYSize <= 0 )
     {
         return FALSE;
     }
 
-    panSrcWin[0] = nModifiedSrcXOff;
-    panSrcWin[1] = nModifiedSrcYOff;
-    panSrcWin[2] = nModifiedSrcXSize;
-    panSrcWin[3] = nModifiedSrcYSize;
+    padfSrcWin[0] = dfModifiedSrcXOff;
+    padfSrcWin[1] = dfModifiedSrcYOff;
+    padfSrcWin[2] = dfModifiedSrcXSize;
+    padfSrcWin[3] = dfModifiedSrcYSize;
 
 /* -------------------------------------------------------------------- */
 /*      If we haven't had to modify the source rectangle, then the      */
@@ -195,54 +195,52 @@ static int FixSrcDstWindow( int* panSrcWin, int* panDstWin,
 /* -------------------------------------------------------------------- */
     double dfDstULX, dfDstULY, dfDstLRX, dfDstLRY;
 
-    SrcToDst( nModifiedSrcXOff, nModifiedSrcYOff,
-              nSrcXOff, nSrcYOff,
-              nSrcXSize, nSrcYSize,
-              nDstXOff, nDstYOff,
-              nDstXSize, nDstYSize,
+    SrcToDst( dfModifiedSrcXOff, dfModifiedSrcYOff,
+              dfSrcXOff, dfSrcYOff,
+              dfSrcXSize, dfSrcYSize,
+              dfDstXOff, dfDstYOff,
+              dfDstXSize, dfDstYSize,
               dfDstULX, dfDstULY );
-    SrcToDst( nModifiedSrcXOff + nModifiedSrcXSize, nModifiedSrcYOff + nModifiedSrcYSize,
-              nSrcXOff, nSrcYOff,
-              nSrcXSize, nSrcYSize,
-              nDstXOff, nDstYOff,
-              nDstXSize, nDstYSize,
+    SrcToDst( dfModifiedSrcXOff + dfModifiedSrcXSize, dfModifiedSrcYOff + dfModifiedSrcYSize,
+              dfSrcXOff, dfSrcYOff,
+              dfSrcXSize, dfSrcYSize,
+              dfDstXOff, dfDstYOff,
+              dfDstXSize, dfDstYSize,
               dfDstLRX, dfDstLRY );
 
-    int nModifiedDstXOff = nDstXOff;
-    int nModifiedDstYOff = nDstYOff;
-    int nModifiedDstXSize = nDstXSize;
-    int nModifiedDstYSize = nDstYSize;
+    double dfModifiedDstXOff = dfDstXOff;
+    double dfModifiedDstYOff = dfDstYOff;
+    double dfModifiedDstXSize = dfDstXSize;
+    double dfModifiedDstYSize = dfDstYSize;
 
     if( bModifiedX )
     {
-        nModifiedDstXOff = (int) ((dfDstULX - nDstXOff)+0.001);
-        nModifiedDstXSize = (int) ((dfDstLRX - nDstXOff)+0.001)
-            - nModifiedDstXOff;
+        dfModifiedDstXOff = dfDstULX - dfDstXOff;
+        dfModifiedDstXSize = (dfDstLRX - dfDstXOff) - dfModifiedDstXOff;
 
-        nModifiedDstXOff = MAX(0,nModifiedDstXOff);
-        if( nModifiedDstXOff + nModifiedDstXSize > nDstXSize )
-            nModifiedDstXSize = nDstXSize - nModifiedDstXOff;
+        dfModifiedDstXOff = MAX(0,dfModifiedDstXOff);
+        if( dfModifiedDstXOff + dfModifiedDstXSize > dfDstXSize )
+            dfModifiedDstXSize = dfDstXSize - dfModifiedDstXOff;
     }
 
     if( bModifiedY )
     {
-        nModifiedDstYOff = (int) ((dfDstULY - nDstYOff)+0.001);
-        nModifiedDstYSize = (int) ((dfDstLRY - nDstYOff)+0.001)
-            - nModifiedDstYOff;
+        dfModifiedDstYOff = dfDstULY - dfDstYOff;
+        dfModifiedDstYSize = (dfDstLRY - dfDstYOff) - dfModifiedDstYOff;
 
-        nModifiedDstYOff = MAX(0,nModifiedDstYOff);
-        if( nModifiedDstYOff + nModifiedDstYSize > nDstYSize )
-            nModifiedDstYSize = nDstYSize - nModifiedDstYOff;
+        dfModifiedDstYOff = MAX(0,dfModifiedDstYOff);
+        if( dfModifiedDstYOff + dfModifiedDstYSize > dfDstYSize )
+            dfModifiedDstYSize = dfDstYSize - dfModifiedDstYOff;
     }
 
-    if( nModifiedDstXSize < 1 || nModifiedDstYSize < 1 )
+    if( dfModifiedDstXSize <= 0.0 || dfModifiedDstYSize <= 0.0 )
         return FALSE;
     else
     {
-        panDstWin[0] = nModifiedDstXOff;
-        panDstWin[1] = nModifiedDstYOff;
-        panDstWin[2] = nModifiedDstXSize;
-        panDstWin[3] = nModifiedDstYSize;
+        padfDstWin[0] = dfModifiedDstXOff;
+        padfDstWin[1] = dfModifiedDstYOff;
+        padfDstWin[2] = dfModifiedDstXSize;
+        padfDstWin[3] = dfModifiedDstYSize;
 
         return TRUE;
     }
@@ -287,7 +285,7 @@ static int ProxyMain( int argc, char ** argv )
     int			nOXSize = 0, nOYSize = 0;
     char		*pszOXSize=NULL, *pszOYSize=NULL;
     char                **papszCreateOptions = NULL;
-    int                 anSrcWin[4], bStrict = FALSE;
+    double              adfSrcWin[4], bStrict = FALSE;
     const char          *pszProjection;
 
     int                 bUnscale=FALSE;
@@ -324,10 +322,10 @@ static int ProxyMain( int argc, char ** argv )
     double              dfXRes = 0.0, dfYRes = 0.0;
     CPLString           osProjSRS;
 
-    anSrcWin[0] = 0;
-    anSrcWin[1] = 0;
-    anSrcWin[2] = 0;
-    anSrcWin[3] = 0;
+    adfSrcWin[0] = 0.0;
+    adfSrcWin[1] = 0.0;
+    adfSrcWin[2] = 0.0;
+    adfSrcWin[3] = 0.0;
 
     dfULX = dfULY = dfLRX = dfLRY = 0.0;
     
@@ -668,10 +666,10 @@ static int ProxyMain( int argc, char ** argv )
         else if( EQUAL(argv[i],"-srcwin") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(4);
-            anSrcWin[0] = atoi(argv[++i]);
-            anSrcWin[1] = atoi(argv[++i]);
-            anSrcWin[2] = atoi(argv[++i]);
-            anSrcWin[3] = atoi(argv[++i]);
+            adfSrcWin[0] = CPLAtofM(argv[++i]);
+            adfSrcWin[1] = CPLAtofM(argv[++i]);
+            adfSrcWin[2] = CPLAtofM(argv[++i]);
+            adfSrcWin[3] = CPLAtofM(argv[++i]);
         }   
 
         else if( EQUAL(argv[i],"-projwin") )
@@ -928,10 +926,10 @@ static int ProxyMain( int argc, char ** argv )
     if( !bQuiet )
         printf( "Input file size is %d, %d\n", nRasterXSize, nRasterYSize );
 
-    if( anSrcWin[2] == 0 && anSrcWin[3] == 0 )
+    if( adfSrcWin[2] == 0 && adfSrcWin[3] == 0 )
     {
-        anSrcWin[2] = nRasterXSize;
-        anSrcWin[3] = nRasterYSize;
+        adfSrcWin[2] = nRasterXSize;
+        adfSrcWin[3] = nRasterYSize;
     }
 
 /* -------------------------------------------------------------------- */
@@ -988,7 +986,7 @@ static int ProxyMain( int argc, char ** argv )
 /*      Compute the source window from the projected source window      */
 /*      if the projected coordinates were provided.  Note that the      */
 /*      projected coordinates are in ulx, uly, lrx, lry format,         */
-/*      while the anSrcWin is xoff, yoff, xsize, ysize with the         */
+/*      while the adfSrcWin is xoff, yoff, xsize, ysize with the        */
 /*      xoff,yoff being the ulx, uly in pixel/line.                     */
 /* -------------------------------------------------------------------- */
     if( dfULX != 0.0 || dfULY != 0.0 
@@ -1042,60 +1040,58 @@ static int ProxyMain( int argc, char ** argv )
             }
         }
 
-        anSrcWin[0] = (int) 
-            floor((dfULX - adfGeoTransform[0]) / adfGeoTransform[1] + 0.001);
-        anSrcWin[1] = (int) 
-            floor((dfULY - adfGeoTransform[3]) / adfGeoTransform[5] + 0.001);
+        adfSrcWin[0] = (dfULX - adfGeoTransform[0]) / adfGeoTransform[1];
+        adfSrcWin[1] = (dfULY - adfGeoTransform[3]) / adfGeoTransform[5];
 
-        anSrcWin[2] = (int) ((dfLRX - dfULX) / adfGeoTransform[1] + 0.5);
-        anSrcWin[3] = (int) ((dfLRY - dfULY) / adfGeoTransform[5] + 0.5);
+        adfSrcWin[2] = (dfLRX - dfULX) / adfGeoTransform[1];
+        adfSrcWin[3] = (dfLRY - dfULY) / adfGeoTransform[5];
 
         if( !bQuiet )
             fprintf( stdout, 
-                     "Computed -srcwin %d %d %d %d from projected window.\n",
-                     anSrcWin[0], 
-                     anSrcWin[1], 
-                     anSrcWin[2], 
-                     anSrcWin[3] );
+                     "Computed -srcwin %g %g %g %g from projected window.\n",
+                     adfSrcWin[0], 
+                     adfSrcWin[1], 
+                     adfSrcWin[2], 
+                     adfSrcWin[3] );
     }
 
 /* -------------------------------------------------------------------- */
 /*      Verify source window dimensions.                                */
 /* -------------------------------------------------------------------- */
-    if( anSrcWin[2] <= 0 || anSrcWin[3] <= 0 )
+    if( adfSrcWin[2] <= 0 || adfSrcWin[3] <= 0 )
     {
         fprintf( stderr,
-                 "Error: %s-srcwin %d %d %d %d has negative width and/or height.\n",
+                 "Error: %s-srcwin %g %g %g %g has negative width and/or height.\n",
                  ( dfULX != 0.0 || dfULY != 0.0 || dfLRX != 0.0 || dfLRY != 0.0 ) ? "Computed " : "",
-                 anSrcWin[0],
-                 anSrcWin[1],
-                 anSrcWin[2],
-                 anSrcWin[3] );
+                 adfSrcWin[0],
+                 adfSrcWin[1],
+                 adfSrcWin[2],
+                 adfSrcWin[3] );
         exit( 1 );
     }
 
 /* -------------------------------------------------------------------- */
 /*      Verify source window dimensions.                                */
 /* -------------------------------------------------------------------- */
-    else if( anSrcWin[0] < 0 || anSrcWin[1] < 0 
-        || anSrcWin[0] + anSrcWin[2] > GDALGetRasterXSize(hDataset)
-        || anSrcWin[1] + anSrcWin[3] > GDALGetRasterYSize(hDataset) )
+    else if( adfSrcWin[0] < 0 || adfSrcWin[1] < 0 
+        || adfSrcWin[0] + adfSrcWin[2] > GDALGetRasterXSize(hDataset)
+        || adfSrcWin[1] + adfSrcWin[3] > GDALGetRasterYSize(hDataset) )
     {
-        int bCompletelyOutside = anSrcWin[0] + anSrcWin[2] <= 0 ||
-                                    anSrcWin[1] + anSrcWin[3] <= 0 ||
-                                    anSrcWin[0] >= GDALGetRasterXSize(hDataset) ||
-                                    anSrcWin[1] >= GDALGetRasterYSize(hDataset);
+        int bCompletelyOutside = adfSrcWin[0] + adfSrcWin[2] <= 0 ||
+                                    adfSrcWin[1] + adfSrcWin[3] <= 0 ||
+                                    adfSrcWin[0] >= GDALGetRasterXSize(hDataset) ||
+                                    adfSrcWin[1] >= GDALGetRasterYSize(hDataset);
         int bIsError = bErrorOnPartiallyOutside || (bCompletelyOutside && bErrorOnCompletelyOutside);
         if( !bQuiet || bIsError )
         {
             fprintf( stderr,
-                 "%s: %s-srcwin %d %d %d %d falls %s outside raster extent.%s\n",
+                 "%s: %s-srcwin %g %g %g %g falls %s outside raster extent.%s\n",
                  (bIsError) ? "Error" : "Warning",
                  ( dfULX != 0.0 || dfULY != 0.0 || dfLRX != 0.0 || dfLRY != 0.0 ) ? "Computed " : "",
-                 anSrcWin[0],
-                 anSrcWin[1],
-                 anSrcWin[2],
-                 anSrcWin[3],
+                 adfSrcWin[0],
+                 adfSrcWin[1],
+                 adfSrcWin[2],
+                 adfSrcWin[3],
                  (bCompletelyOutside) ? "completely" : "partially",
                  (bIsError) ? "" : " Going on however." );
         }
@@ -1147,9 +1143,9 @@ static int ProxyMain( int argc, char ** argv )
 
 
     int bSpatialArrangementPreserved = (
-           anSrcWin[0] == 0 && anSrcWin[1] == 0
-        && anSrcWin[2] == GDALGetRasterXSize(hDataset)
-        && anSrcWin[3] == GDALGetRasterYSize(hDataset)
+           adfSrcWin[0] == 0 && adfSrcWin[1] == 0
+        && adfSrcWin[2] == GDALGetRasterXSize(hDataset)
+        && adfSrcWin[3] == GDALGetRasterYSize(hDataset)
         && pszOXSize == NULL && pszOYSize == NULL && dfXRes == 0.0 );
 
     if( eOutputType == GDT_Unknown 
@@ -1203,13 +1199,13 @@ static int ProxyMain( int argc, char ** argv )
             GDALDestroyDriverManager();
             exit( 1 );
         }
-        nOXSize = int(anSrcWin[2] / dfXRes * adfGeoTransform[1] + 0.5);
-        nOYSize = int(anSrcWin[3] / dfYRes * fabs(adfGeoTransform[5]) + 0.5);
+        nOXSize = int(adfSrcWin[2] / dfXRes * adfGeoTransform[1] + 0.5);
+        nOYSize = int(adfSrcWin[3] / dfYRes * fabs(adfGeoTransform[5]) + 0.5);
     }
     else if( pszOXSize == NULL )
     {
-        nOXSize = anSrcWin[2];
-        nOYSize = anSrcWin[3];
+        nOXSize = int(ceil(adfSrcWin[2]-0.001));
+        nOYSize = int(ceil(adfSrcWin[3]-0.001));
     }
     else
     {
@@ -1225,14 +1221,14 @@ static int ProxyMain( int argc, char ** argv )
         }
         if( !bXAuto )
             nOXSize = (int) ((pszOXSize[strlen(pszOXSize)-1]=='%' 
-                            ? CPLAtofM(pszOXSize)/100*anSrcWin[2] : atoi(pszOXSize)));
+                            ? CPLAtofM(pszOXSize)/100*adfSrcWin[2] : atoi(pszOXSize)));
         if( !bYAuto )
             nOYSize = (int) ((pszOYSize[strlen(pszOYSize)-1]=='%' 
-                            ? CPLAtofM(pszOYSize)/100*anSrcWin[3] : atoi(pszOYSize)));
+                            ? CPLAtofM(pszOYSize)/100*adfSrcWin[3] : atoi(pszOYSize)));
         if( bXAuto )
-            nOXSize = (int)((double)nOYSize * anSrcWin[2] / anSrcWin[3] + 0.5);
+            nOXSize = (int)((double)nOYSize * adfSrcWin[2] / adfSrcWin[3] + 0.5);
         else if( bYAuto )
-            nOYSize = (int)((double)nOXSize * anSrcWin[3] / anSrcWin[2] + 0.5);
+            nOYSize = (int)((double)nOXSize * adfSrcWin[3] / adfSrcWin[2] + 0.5);
     }
 
     if( nOXSize == 0 || nOYSize == 0 )
@@ -1283,15 +1279,15 @@ static int ProxyMain( int argc, char ** argv )
     else if( GDALGetGeoTransform( hDataset, adfGeoTransform ) == CE_None 
         && nGCPCount == 0 )
     {
-        adfGeoTransform[0] += anSrcWin[0] * adfGeoTransform[1]
-            + anSrcWin[1] * adfGeoTransform[2];
-        adfGeoTransform[3] += anSrcWin[0] * adfGeoTransform[4]
-            + anSrcWin[1] * adfGeoTransform[5];
+        adfGeoTransform[0] += adfSrcWin[0] * adfGeoTransform[1]
+            + adfSrcWin[1] * adfGeoTransform[2];
+        adfGeoTransform[3] += adfSrcWin[0] * adfGeoTransform[4]
+            + adfSrcWin[1] * adfGeoTransform[5];
         
-        adfGeoTransform[1] *= anSrcWin[2] / (double) nOXSize;
-        adfGeoTransform[2] *= anSrcWin[3] / (double) nOYSize;
-        adfGeoTransform[4] *= anSrcWin[2] / (double) nOXSize;
-        adfGeoTransform[5] *= anSrcWin[3] / (double) nOYSize;
+        adfGeoTransform[1] *= adfSrcWin[2] / (double) nOXSize;
+        adfGeoTransform[2] *= adfSrcWin[3] / (double) nOYSize;
+        adfGeoTransform[4] *= adfSrcWin[2] / (double) nOXSize;
+        adfGeoTransform[5] *= adfSrcWin[3] / (double) nOYSize;
         
         if( dfXRes != 0.0 )
         {
@@ -1325,10 +1321,10 @@ static int ProxyMain( int argc, char ** argv )
 
         for( int i = 0; i < nGCPs; i++ )
         {
-            pasGCPs[i].dfGCPPixel -= anSrcWin[0];
-            pasGCPs[i].dfGCPLine  -= anSrcWin[1];
-            pasGCPs[i].dfGCPPixel *= (nOXSize / (double) anSrcWin[2] );
-            pasGCPs[i].dfGCPLine  *= (nOYSize / (double) anSrcWin[3] );
+            pasGCPs[i].dfGCPPixel -= adfSrcWin[0];
+            pasGCPs[i].dfGCPLine  -= adfSrcWin[1];
+            pasGCPs[i].dfGCPPixel *= (nOXSize / (double) adfSrcWin[2] );
+            pasGCPs[i].dfGCPLine  *= (nOYSize / (double) adfSrcWin[3] );
         }
             
         poVDS->SetGCPs( nGCPs, pasGCPs,
@@ -1342,13 +1338,13 @@ static int ProxyMain( int argc, char ** argv )
 /*      To make the VRT to look less awkward (but this is optional      */
 /*      in fact), avoid negative values.                                */
 /* -------------------------------------------------------------------- */
-    int anDstWin[4];
-    anDstWin[0] = 0;
-    anDstWin[1] = 0;
-    anDstWin[2] = nOXSize;
-    anDstWin[3] = nOYSize;
+    double adfDstWin[4];
+    adfDstWin[0] = 0;
+    adfDstWin[1] = 0;
+    adfDstWin[2] = nOXSize;
+    adfDstWin[3] = nOYSize;
 
-    FixSrcDstWindow( anSrcWin, anDstWin,
+    FixSrcDstWindow( adfSrcWin, adfDstWin,
                      GDALGetRasterXSize(hDataset),
                      GDALGetRasterYSize(hDataset) );
 
@@ -1411,12 +1407,12 @@ static int ProxyMain( int argc, char ** argv )
             double dfSAMP_SCALE = CPLAtof(CSLFetchNameValueDef(papszMD, "SAMP_SCALE", "1"));
             double dfLINE_SCALE = CPLAtof(CSLFetchNameValueDef(papszMD, "LINE_SCALE", "1"));
 
-            dfSAMP_OFF -= anSrcWin[0];
-            dfLINE_OFF -= anSrcWin[1];
-            dfSAMP_OFF *= (nOXSize / (double) anSrcWin[2] );
-            dfLINE_OFF *= (nOYSize / (double) anSrcWin[3] );
-            dfSAMP_SCALE *= (nOXSize / (double) anSrcWin[2] );
-            dfLINE_SCALE *= (nOYSize / (double) anSrcWin[3] );
+            dfSAMP_OFF -= adfSrcWin[0];
+            dfLINE_OFF -= adfSrcWin[1];
+            dfSAMP_OFF *= (nOXSize / (double) adfSrcWin[2] );
+            dfLINE_OFF *= (nOYSize / (double) adfSrcWin[3] );
+            dfSAMP_SCALE *= (nOXSize / (double) adfSrcWin[2] );
+            dfLINE_SCALE *= (nOYSize / (double) adfSrcWin[3] );
 
             CPLString osField;
             osField.Printf( "%.15g", dfLINE_OFF );
@@ -1595,10 +1591,10 @@ static int ProxyMain( int argc, char ** argv )
         if (nSrcBand < 0)
         {
             poVRTBand->AddMaskBandSource(poSrcBand,
-                                         anSrcWin[0], anSrcWin[1],
-                                         anSrcWin[2], anSrcWin[3],
-                                         anDstWin[0], anDstWin[1],
-                                         anDstWin[2], anDstWin[3]);
+                                         adfSrcWin[0], adfSrcWin[1],
+                                         adfSrcWin[2], adfSrcWin[3],
+                                         adfDstWin[0], adfDstWin[1],
+                                         adfDstWin[2], adfDstWin[3]);
             continue;
         }
 
@@ -1720,10 +1716,10 @@ static int ProxyMain( int argc, char ** argv )
         poVRTBand->ConfigureSource( poSimpleSource,
                                     poSrcBand,
                                     FALSE,
-                                    anSrcWin[0], anSrcWin[1],
-                                    anSrcWin[2], anSrcWin[3],
-                                    anDstWin[0], anDstWin[1],
-                                    anDstWin[2], anDstWin[3] );
+                                    adfSrcWin[0], adfSrcWin[1],
+                                    adfSrcWin[2], adfSrcWin[3],
+                                    adfDstWin[0], adfDstWin[1],
+                                    adfDstWin[2], adfDstWin[3] );
 
         poVRTBand->AddSource( poSimpleSource );
 
@@ -1813,10 +1809,10 @@ static int ProxyMain( int argc, char ** argv )
                 VRTSourcedRasterBand* hMaskVRTBand =
                     (VRTSourcedRasterBand*)poVRTBand->GetMaskBand();
                 hMaskVRTBand->AddMaskBandSource(poSrcBand,
-                                        anSrcWin[0], anSrcWin[1],
-                                        anSrcWin[2], anSrcWin[3],
-                                        anDstWin[0], anDstWin[1],
-                                        anDstWin[2], anDstWin[3] );
+                                        adfSrcWin[0], adfSrcWin[1],
+                                        adfSrcWin[2], adfSrcWin[3],
+                                        adfDstWin[0], adfDstWin[1],
+                                        adfDstWin[2], adfDstWin[3] );
             }
         }
     }
@@ -1831,16 +1827,16 @@ static int ProxyMain( int argc, char ** argv )
                 GDALGetMaskBand(GDALGetRasterBand((GDALDatasetH)poVDS, 1));
             if (nMaskBand > 0)
                 hMaskVRTBand->AddSimpleSource(poSrcBand,
-                                        anSrcWin[0], anSrcWin[1],
-                                        anSrcWin[2], anSrcWin[3],
-                                        anDstWin[0], anDstWin[1],
-                                        anDstWin[2], anDstWin[3] );
+                                        adfSrcWin[0], adfSrcWin[1],
+                                        adfSrcWin[2], adfSrcWin[3],
+                                        adfDstWin[0], adfDstWin[1],
+                                        adfDstWin[2], adfDstWin[3] );
             else
                 hMaskVRTBand->AddMaskBandSource(poSrcBand,
-                                        anSrcWin[0], anSrcWin[1],
-                                        anSrcWin[2], anSrcWin[3],
-                                        anDstWin[0], anDstWin[1],
-                                        anDstWin[2], anDstWin[3] );
+                                        adfSrcWin[0], adfSrcWin[1],
+                                        adfSrcWin[2], adfSrcWin[3],
+                                        adfDstWin[0], adfDstWin[1],
+                                        adfDstWin[2], adfDstWin[3] );
         }
     }
     else
@@ -1852,10 +1848,10 @@ static int ProxyMain( int argc, char ** argv )
             VRTSourcedRasterBand* hMaskVRTBand = (VRTSourcedRasterBand*)
                 GDALGetMaskBand(GDALGetRasterBand((GDALDatasetH)poVDS, 1));
             hMaskVRTBand->AddMaskBandSource((GDALRasterBand*)GDALGetRasterBand(hDataset, 1),
-                                        anSrcWin[0], anSrcWin[1],
-                                        anSrcWin[2], anSrcWin[3],
-                                        anDstWin[0], anDstWin[1],
-                                        anDstWin[2], anDstWin[3] );
+                                        adfSrcWin[0], adfSrcWin[1],
+                                        adfSrcWin[2], adfSrcWin[3],
+                                        adfDstWin[0], adfDstWin[1],
+                                        adfDstWin[2], adfDstWin[3] );
         }
     }
 

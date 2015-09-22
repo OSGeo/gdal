@@ -416,10 +416,16 @@
     </xs:complexType>
 
     <xs:complexType name="RectType">
-        <xs:attribute name="xOff" type="xs:int" />
-        <xs:attribute name="yOff" type="xs:int" />
-        <xs:attribute name="xSize" type="xs:unsignedInt" />
-        <xs:attribute name="ySize" type="xs:unsignedInt" />
+        <xs:attribute name="xOff" type="xs:double" />
+        <xs:attribute name="yOff" type="xs:double" />
+        <xs:attribute name="xSize" type="nonNegativeDouble" />
+        <xs:attribute name="ySize" type="nonNegativeDouble" />
     </xs:complexType>
+
+    <xs:simpleType name="nonNegativeDouble">
+        <xs:restriction base="xs:double">
+            <xs:minExclusive value="0.0"/>
+        </xs:restriction>
+    </xs:simpleType>
 
 </xs:schema>

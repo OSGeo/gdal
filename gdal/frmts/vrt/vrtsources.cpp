@@ -77,14 +77,14 @@ void VRTSource::GetFileList(CPL_UNUSED char*** ppapszFileList,
 /************************************************************************/
 
 VRTSimpleSource::VRTSimpleSource() :
-    nSrcXOff(0),
-    nSrcYOff(0),
-    nSrcXSize(0),
-    nSrcYSize(0),
-    nDstXOff(0),
-    nDstYOff(0),
-    nDstXSize(0),
-    nDstYSize(0)
+    dfSrcXOff(0.0),
+    dfSrcYOff(0.0),
+    dfSrcXSize(0.0),
+    dfSrcYSize(0.0),
+    dfDstXOff(0.0),
+    dfDstYOff(0.0),
+    dfDstXSize(0.0),
+    dfDstYSize(0.0)
 {
     poRasterBand = NULL;
     poMaskBandMainBand = NULL;
@@ -105,14 +105,14 @@ VRTSimpleSource::VRTSimpleSource(const VRTSimpleSource* poSrcSource,
     poMaskBandMainBand = poSrcSource->poMaskBandMainBand;
     bNoDataSet = poSrcSource->bNoDataSet;
     dfNoDataValue = poSrcSource->dfNoDataValue;
-    nSrcXOff = poSrcSource->nSrcXOff;
-    nSrcYOff = poSrcSource->nSrcYOff;
-    nSrcXSize = poSrcSource->nSrcXSize;
-    nSrcYSize = poSrcSource->nSrcYSize;
-    nDstXOff = (int)(poSrcSource->nDstXOff * dfXDstRatio);
-    nDstYOff = (int)(poSrcSource->nDstYOff * dfYDstRatio);
-    nDstXSize = (int)(poSrcSource->nDstXSize * dfXDstRatio + 0.5);
-    nDstYSize = (int)(poSrcSource->nDstYSize * dfYDstRatio + 0.5);
+    dfSrcXOff = poSrcSource->dfSrcXOff;
+    dfSrcYOff = poSrcSource->dfSrcYOff;
+    dfSrcXSize = poSrcSource->dfSrcXSize;
+    dfSrcYSize = poSrcSource->dfSrcYSize;
+    dfDstXOff = poSrcSource->dfDstXOff * dfXDstRatio;
+    dfDstYOff = poSrcSource->dfDstYOff * dfYDstRatio;
+    dfDstXSize = poSrcSource->dfDstXSize * dfXDstRatio;
+    dfDstYSize = poSrcSource->dfDstYSize * dfYDstRatio;
     bRelativeToVRTOri = -1;
     nMaxValue = poSrcSource->nMaxValue;
 }
@@ -183,28 +183,28 @@ void VRTSimpleSource::SetSrcMaskBand( GDALRasterBand *poNewSrcBand )
 /*                            SetSrcWindow()                            */
 /************************************************************************/
 
-void VRTSimpleSource::SetSrcWindow( int nNewXOff, int nNewYOff, 
-                                    int nNewXSize, int nNewYSize )
+void VRTSimpleSource::SetSrcWindow( double dfNewXOff, double dfNewYOff, 
+                                    double dfNewXSize, double dfNewYSize )
 
 {
-    nSrcXOff = nNewXOff;
-    nSrcYOff = nNewYOff;
-    nSrcXSize = nNewXSize;
-    nSrcYSize = nNewYSize;
+    dfSrcXOff = dfNewXOff;
+    dfSrcYOff = dfNewYOff;
+    dfSrcXSize = dfNewXSize;
+    dfSrcYSize = dfNewYSize;
 }
 
 /************************************************************************/
 /*                            SetDstWindow()                            */
 /************************************************************************/
 
-void VRTSimpleSource::SetDstWindow( int nNewXOff, int nNewYOff, 
-                                    int nNewXSize, int nNewYSize )
+void VRTSimpleSource::SetDstWindow( double dfNewXOff, double dfNewYOff, 
+                                    double dfNewXSize, double dfNewYSize )
 
 {
-    nDstXOff = nNewXOff;
-    nDstYOff = nNewYOff;
-    nDstXSize = nNewXSize;
-    nDstYSize = nNewYSize;
+    dfDstXOff = dfNewXOff;
+    dfDstYOff = dfNewYOff;
+    dfDstXSize = dfNewXSize;
+    dfDstYSize = dfNewYSize;
 }
 
 /************************************************************************/
@@ -391,30 +391,30 @@ CPLXMLNode *VRTSimpleSource::SerializeToXML( const char *pszVRTPath )
     CPLSetXMLValue( psSrc, "SourceProperties.#BlockYSize", 
                     CPLSPrintf("%d",nBlockYSize) );
 
-    if( nSrcXOff != -1 
-        || nSrcYOff != -1 
-        || nSrcXSize != -1 
-        || nSrcYSize != -1 )
+    if( dfSrcXOff != -1 
+        || dfSrcYOff != -1 
+        || dfSrcXSize != -1 
+        || dfSrcYSize != -1 )
     {
         CPLSetXMLValue( psSrc, "SrcRect.#xOff", 
-                        CPLSPrintf( "%d", nSrcXOff ) );
+                        CPLSPrintf( "%g", dfSrcXOff ) );
         CPLSetXMLValue( psSrc, "SrcRect.#yOff", 
-                        CPLSPrintf( "%d", nSrcYOff ) );
+                        CPLSPrintf( "%g", dfSrcYOff ) );
         CPLSetXMLValue( psSrc, "SrcRect.#xSize", 
-                        CPLSPrintf( "%d", nSrcXSize ) );
+                        CPLSPrintf( "%g", dfSrcXSize ) );
         CPLSetXMLValue( psSrc, "SrcRect.#ySize", 
-                        CPLSPrintf( "%d", nSrcYSize ) );
+                        CPLSPrintf( "%g", dfSrcYSize ) );
     }
 
-    if( nDstXOff != -1 
-        || nDstYOff != -1 
-        || nDstXSize != -1 
-        || nDstYSize != -1 )
+    if( dfDstXOff != -1 
+        || dfDstYOff != -1 
+        || dfDstXSize != -1 
+        || dfDstYSize != -1 )
     {
-        CPLSetXMLValue( psSrc, "DstRect.#xOff", CPLSPrintf( "%d", nDstXOff ) );
-        CPLSetXMLValue( psSrc, "DstRect.#yOff", CPLSPrintf( "%d", nDstYOff ) );
-        CPLSetXMLValue( psSrc, "DstRect.#xSize",CPLSPrintf( "%d", nDstXSize ));
-        CPLSetXMLValue( psSrc, "DstRect.#ySize",CPLSPrintf( "%d", nDstYSize ));
+        CPLSetXMLValue( psSrc, "DstRect.#xOff", CPLSPrintf( "%g", dfDstXOff ) );
+        CPLSetXMLValue( psSrc, "DstRect.#yOff", CPLSPrintf( "%g", dfDstYOff ) );
+        CPLSetXMLValue( psSrc, "DstRect.#xSize",CPLSPrintf( "%g", dfDstXSize ));
+        CPLSetXMLValue( psSrc, "DstRect.#ySize",CPLSPrintf( "%g", dfDstYSize ));
     }
 
     return psSrc;
@@ -630,27 +630,27 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath )
     CPLXMLNode* psSrcRect = CPLGetXMLNode(psSrc,"SrcRect");
     if (psSrcRect)
     {
-        nSrcXOff = atoi(CPLGetXMLValue(psSrcRect,"xOff","-1"));
-        nSrcYOff = atoi(CPLGetXMLValue(psSrcRect,"yOff","-1"));
-        nSrcXSize = atoi(CPLGetXMLValue(psSrcRect,"xSize","-1"));
-        nSrcYSize = atoi(CPLGetXMLValue(psSrcRect,"ySize","-1"));
+        dfSrcXOff = CPLAtof(CPLGetXMLValue(psSrcRect,"xOff","-1"));
+        dfSrcYOff = CPLAtof(CPLGetXMLValue(psSrcRect,"yOff","-1"));
+        dfSrcXSize = CPLAtof(CPLGetXMLValue(psSrcRect,"xSize","-1"));
+        dfSrcYSize = CPLAtof(CPLGetXMLValue(psSrcRect,"ySize","-1"));
     }
     else
     {
-        nSrcXOff = nSrcYOff = nSrcXSize = nSrcYSize = -1;
+        dfSrcXOff = dfSrcYOff = dfSrcXSize = dfSrcYSize = -1;
     }
 
     CPLXMLNode* psDstRect = CPLGetXMLNode(psSrc,"DstRect");
     if (psDstRect)
     {
-        nDstXOff = atoi(CPLGetXMLValue(psDstRect,"xOff","-1"));
-        nDstYOff = atoi(CPLGetXMLValue(psDstRect,"yOff","-1"));
-        nDstXSize = atoi(CPLGetXMLValue(psDstRect,"xSize","-1"));
-        nDstYSize = atoi(CPLGetXMLValue(psDstRect,"ySize","-1"));
+        dfDstXOff = CPLAtof(CPLGetXMLValue(psDstRect,"xOff","-1"));
+        dfDstYOff = CPLAtof(CPLGetXMLValue(psDstRect,"yOff","-1"));
+        dfDstXSize = CPLAtof(CPLGetXMLValue(psDstRect,"xSize","-1"));
+        dfDstYSize = CPLAtof(CPLGetXMLValue(psDstRect,"ySize","-1"));
     }
     else
     {
-        nDstXOff = nDstYOff = nDstXSize = nDstYSize = -1;
+        dfDstXOff = dfDstYOff = dfDstXSize = dfDstYSize = -1;
     }
 
     return CE_None;
@@ -725,14 +725,14 @@ GDALRasterBand* VRTSimpleSource::GetBand()
 
 int VRTSimpleSource::IsSameExceptBandNumber(VRTSimpleSource* poOtherSource)
 {
-    return nSrcXOff == poOtherSource->nSrcXOff &&
-           nSrcYOff == poOtherSource->nSrcYOff &&
-           nSrcXSize == poOtherSource->nSrcXSize &&
-           nSrcYSize == poOtherSource->nSrcYSize &&
-           nDstXOff == poOtherSource->nDstXOff &&
-           nDstYOff == poOtherSource->nDstYOff &&
-           nDstXSize == poOtherSource->nDstXSize &&
-           nDstYSize == poOtherSource->nDstYSize &&
+    return dfSrcXOff == poOtherSource->dfSrcXOff &&
+           dfSrcYOff == poOtherSource->dfSrcYOff &&
+           dfSrcXSize == poOtherSource->dfSrcXSize &&
+           dfSrcYSize == poOtherSource->dfSrcYSize &&
+           dfDstXOff == poOtherSource->dfDstXOff &&
+           dfDstYOff == poOtherSource->dfDstYOff &&
+           dfDstXSize == poOtherSource->dfDstXSize &&
+           dfDstYSize == poOtherSource->dfDstYSize &&
            bNoDataSet == poOtherSource->bNoDataSet &&
            dfNoDataValue == poOtherSource->dfNoDataValue &&
            GetBand() != NULL && poOtherSource->GetBand() != NULL &&
@@ -752,8 +752,8 @@ void VRTSimpleSource::SrcToDst( double dfX, double dfY,
                                 double &dfXOut, double &dfYOut )
 
 {
-    dfXOut = ((dfX - nSrcXOff) / nSrcXSize) * nDstXSize + nDstXOff;
-    dfYOut = ((dfY - nSrcYOff) / nSrcYSize) * nDstYSize + nDstYOff;
+    dfXOut = ((dfX - dfSrcXOff) / dfSrcXSize) * dfDstXSize + dfDstXOff;
+    dfYOut = ((dfY - dfSrcYOff) / dfSrcYSize) * dfDstYSize + dfDstYOff;
 }
 
 /************************************************************************/
@@ -766,8 +766,8 @@ void VRTSimpleSource::DstToSrc( double dfX, double dfY,
                                 double &dfXOut, double &dfYOut )
 
 {
-    dfXOut = ((dfX - nDstXOff) / nDstXSize) * nSrcXSize + nSrcXOff;
-    dfYOut = ((dfY - nDstYOff) / nDstYSize) * nSrcYSize + nSrcYOff;
+    dfXOut = ((dfX - dfDstXOff) / dfDstXSize) * dfSrcXSize + dfSrcXOff;
+    dfYOut = ((dfY - dfDstYOff) / dfDstYSize) * dfSrcYSize + dfSrcYOff;
 }
 
 /************************************************************************/
@@ -785,12 +785,12 @@ VRTSimpleSource::GetSrcDstWindow( int nXOff, int nYOff, int nXSize, int nYSize,
                                   int *pnOutXSize, int *pnOutYSize )
 
 {
-    int bDstWinSet = nDstXOff != -1 || nDstXSize != -1 
-        || nDstYOff != -1 || nDstYSize != -1;
+    int bDstWinSet = dfDstXOff != -1 || dfDstXSize != -1 
+        || dfDstYOff != -1 || dfDstYSize != -1;
 
 #ifdef DEBUG
-    int bSrcWinSet = nSrcXOff != -1 || nSrcXSize != -1 
-        || nSrcYOff != -1 || nSrcYSize != -1;
+    int bSrcWinSet = dfSrcXOff != -1 || dfSrcXSize != -1 
+        || dfSrcYOff != -1 || dfSrcYSize != -1;
 
     if( bSrcWinSet != bDstWinSet )
     {
@@ -804,10 +804,10 @@ VRTSimpleSource::GetSrcDstWindow( int nXOff, int nYOff, int nXSize, int nYSize,
 /* -------------------------------------------------------------------- */
     if( bDstWinSet )
     {
-        if( nXOff >= nDstXOff + nDstXSize
-            || nYOff >= nDstYOff + nDstYSize
-            || nXOff + nXSize < nDstXOff
-            || nYOff + nYSize < nDstYOff )
+        if( nXOff >= dfDstXOff + dfDstXSize
+            || nYOff >= dfDstYOff + dfDstYSize
+            || nXOff + nXSize < dfDstXOff
+            || nYOff + nYSize < dfDstYOff )
             return FALSE;
     }
 
@@ -825,37 +825,37 @@ VRTSimpleSource::GetSrcDstWindow( int nXOff, int nYOff, int nXSize, int nYSize,
 /*      the requested window.                                           */
 /* -------------------------------------------------------------------- */
     int bModifiedX = FALSE, bModifiedY = FALSE;
-    int nRXOff = nXOff;
-    int nRYOff = nYOff;
-    int nRXSize = nXSize;
-    int nRYSize = nYSize;
+    double dfRXOff = nXOff;
+    double dfRYOff = nYOff;
+    double dfRXSize = nXSize;
+    double dfRYSize = nYSize;
 
 
     if( bDstWinSet )
     {
-        if( nRXOff < nDstXOff )
+        if( dfRXOff < dfDstXOff )
         {
-            nRXSize = nRXSize + nRXOff - nDstXOff;
-            nRXOff = nDstXOff;
+            dfRXSize = dfRXSize + dfRXOff - dfDstXOff;
+            dfRXOff = dfDstXOff;
             bModifiedX = TRUE;
         }
 
-        if( nRYOff < nDstYOff )
+        if( dfRYOff < dfDstYOff )
         {
-            nRYSize = nRYSize + nRYOff - nDstYOff;
-            nRYOff = nDstYOff;
+            dfRYSize = dfRYSize + dfRYOff - dfDstYOff;
+            dfRYOff = dfDstYOff;
             bModifiedY = TRUE;
         }
 
-        if( nRXOff + nRXSize > nDstXOff + nDstXSize )
+        if( dfRXOff + dfRXSize > dfDstXOff + dfDstXSize )
         {
-            nRXSize = nDstXOff + nDstXSize - nRXOff;
+            dfRXSize = dfDstXOff + dfDstXSize - dfRXOff;
             bModifiedX = TRUE;
         }
 
-        if( nRYOff + nRYSize > nDstYOff + nDstYSize )
+        if( dfRYOff + dfRYSize > dfDstYOff + dfDstYSize )
         {
-            nRYSize = nDstYOff + nDstYSize - nRYOff;
+            dfRYSize = dfDstYOff + dfDstYSize - dfRYOff;
             bModifiedY = TRUE;
         }
     }
@@ -864,13 +864,13 @@ VRTSimpleSource::GetSrcDstWindow( int nXOff, int nYOff, int nXSize, int nYSize,
 /*      Translate requested region in virtual file into the source      */
 /*      band coordinates.                                               */
 /* -------------------------------------------------------------------- */
-    double      dfScaleX = nSrcXSize / (double) nDstXSize;
-    double      dfScaleY = nSrcYSize / (double) nDstYSize;
+    double      dfScaleX = dfSrcXSize / dfDstXSize;
+    double      dfScaleY = dfSrcYSize / dfDstYSize;
     
-    *pdfReqXOff = (nRXOff - nDstXOff) * dfScaleX + nSrcXOff;
-    *pdfReqYOff = (nRYOff - nDstYOff) * dfScaleY + nSrcYOff;
-    *pdfReqXSize = nRXSize * dfScaleX;
-    *pdfReqYSize = nRYSize * dfScaleY;
+    *pdfReqXOff = (dfRXOff - dfDstXOff) * dfScaleX + dfSrcXOff;
+    *pdfReqYOff = (dfRYOff - dfDstYOff) * dfScaleY + dfSrcYOff;
+    *pdfReqXSize = dfRXSize * dfScaleX;
+    *pdfReqYSize = dfRYSize * dfScaleY;
 
 /* -------------------------------------------------------------------- */
 /*      Clamp within the bounds of the available source data.           */
@@ -951,16 +951,18 @@ VRTSimpleSource::GetSrcDstWindow( int nXOff, int nYOff, int nXSize, int nYSize,
     double dfDstULX, dfDstULY, dfDstLRX, dfDstLRY;
     double dfScaleWinToBufX, dfScaleWinToBufY;
 
-    SrcToDst( (double) *pnReqXOff, (double) *pnReqYOff, dfDstULX, dfDstULY );
-    SrcToDst( *pnReqXOff + *pnReqXSize, *pnReqYOff + *pnReqYSize, 
+    SrcToDst( *pdfReqXOff, *pdfReqYOff, dfDstULX, dfDstULY );
+    SrcToDst( *pdfReqXOff + *pdfReqXSize, *pdfReqYOff + *pdfReqYSize, 
               dfDstLRX, dfDstLRY );
+    //CPLDebug("VRT", "dfDstULX=%g dfDstULY=%g dfDstLRX=%g dfDstLRY=%g",
+    //         dfDstULX, dfDstULY, dfDstLRX, dfDstLRY);
 
     if( bModifiedX )
     {
         dfScaleWinToBufX = nBufXSize / (double) nXSize;
 
         *pnOutXOff = (int) ((dfDstULX - nXOff) * dfScaleWinToBufX+0.001);
-        *pnOutXSize = (int) ((dfDstLRX - nXOff) * dfScaleWinToBufX+0.5) 
+        *pnOutXSize = (int) ceil((dfDstLRX - nXOff) * dfScaleWinToBufX-0.001) 
             - *pnOutXOff;
 
         *pnOutXOff = MAX(0,*pnOutXOff);
@@ -973,7 +975,7 @@ VRTSimpleSource::GetSrcDstWindow( int nXOff, int nYOff, int nXSize, int nYSize,
         dfScaleWinToBufY = nBufYSize / (double) nYSize;
 
         *pnOutYOff = (int) ((dfDstULY - nYOff) * dfScaleWinToBufY+0.001);
-        *pnOutYSize = (int) ((dfDstLRY - nYOff) * dfScaleWinToBufY+0.5) 
+        *pnOutYSize = (int) ceil((dfDstLRY - nYOff) * dfScaleWinToBufY-0.001) 
             - *pnOutYOff;
 
         *pnOutYOff = MAX(0,*pnOutYOff);
@@ -1039,6 +1041,13 @@ VRTSimpleSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
     {
         return CE_None;
     }
+    /*CPLDebug("VRT", "nXOff=%d, nYOff=%d, nXSize=%d, nYSize=%d, nBufXSize=%d, nBufYSize=%d, "
+                    "dfReqXOff=%g, dfReqYOff=%g, dfReqXSize=%g, dfReqYSize=%g, "
+                    "nOutXOff=%d, nOutYOff=%d, nOutXSize=%d, nOutYSize=%d",
+                    nXOff, nYOff, nXSize, nYSize,
+                    nBufXSize, nBufYSize, 
+                    dfReqXOff, dfReqYOff, dfReqXSize, dfReqYSize,
+                    nOutXOff, nOutYOff, nOutXSize, nOutYSize);*/
 
 /* -------------------------------------------------------------------- */
 /*      Actually perform the IO request.                                */

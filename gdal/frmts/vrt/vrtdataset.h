@@ -503,27 +503,27 @@ class CPL_DLL VRTSourcedRasterBand : public VRTRasterBand
 
     CPLErr         AddSource( VRTSource * );
     CPLErr         AddSimpleSource( GDALRasterBand *poSrcBand, 
-                                    int nSrcXOff=-1, int nSrcYOff=-1, 
-                                    int nSrcXSize=-1, int nSrcYSize=-1, 
-                                    int nDstXOff=-1, int nDstYOff=-1, 
-                                    int nDstXSize=-1, int nDstYSize=-1,
+                                    double dfSrcXOff=-1, double dfSrcYOff=-1, 
+                                    double dfSrcXSize=-1, double dfSrcYSize=-1, 
+                                    double dfDstXOff=-1, double dfDstYOff=-1, 
+                                    double dfDstXSize=-1, double dfDstYSize=-1,
                                     const char *pszResampling = "near",
                                     double dfNoDataValue = VRT_NODATA_UNSET);
     CPLErr         AddComplexSource( GDALRasterBand *poSrcBand, 
-                                     int nSrcXOff=-1, int nSrcYOff=-1, 
-                                     int nSrcXSize=-1, int nSrcYSize=-1, 
-                                     int nDstXOff=-1, int nDstYOff=-1, 
-                                     int nDstXSize=-1, int nDstYSize=-1,
+                                     double dfSrcXOff=-1, double dfSrcYOff=-1, 
+                                     double dfSrcXSize=-1, double dfSrcYSize=-1, 
+                                     double dfDstXOff=-1, double dfDstYOff=-1, 
+                                     double dfDstXSize=-1, double dfDstYSize=-1,
                                      double dfScaleOff=0.0, 
                                      double dfScaleRatio=1.0,
                                      double dfNoDataValue = VRT_NODATA_UNSET,
                                      int nColorTableComponent = 0);
 
     CPLErr         AddMaskBandSource( GDALRasterBand *poSrcBand,
-                                      int nSrcXOff=-1, int nSrcYOff=-1,
-                                      int nSrcXSize=-1, int nSrcYSize=-1,
-                                      int nDstXOff=-1, int nDstYOff=-1,
-                                      int nDstXSize=-1, int nDstYSize=-1 );
+                                      double dfSrcXOff=-1, double dfSrcYOff=-1,
+                                      double dfSrcXSize=-1, double dfSrcYSize=-1,
+                                      double dfDstXOff=-1, double dfDstYOff=-1,
+                                      double dfDstXSize=-1, double dfDstYSize=-1 );
 
     CPLErr         AddFuncSource( VRTImageReadFunc pfnReadFunc, void *hCBData,
                                   double dfNoDataValue = VRT_NODATA_UNSET );
@@ -531,10 +531,10 @@ class CPL_DLL VRTSourcedRasterBand : public VRTRasterBand
     void           ConfigureSource(VRTSimpleSource *poSimpleSource,
                                            GDALRasterBand *poSrcBand,
                                            int bAddAsMaskBand,
-                                           int nSrcXOff, int nSrcYOff,
-                                           int nSrcXSize, int nSrcYSize,
-                                           int nDstXOff, int nDstYOff,
-                                           int nDstXSize, int nDstYSize);
+                                           double dfSrcXOff, double dfSrcYOff,
+                                           double dfSrcXSize, double dfSrcYSize,
+                                           double dfDstXOff, double dfDstYOff,
+                                           double dfDstXSize, double dfDstYSize);
 
     virtual CPLErr IReadBlock( int, int, void * );
     
@@ -712,15 +712,15 @@ protected:
     /* from which the mask band is taken */
     GDALRasterBand      *poMaskBandMainBand; 
 
-    int                 nSrcXOff;
-    int                 nSrcYOff;
-    int                 nSrcXSize;
-    int                 nSrcYSize;
+    double              dfSrcXOff;
+    double              dfSrcYOff;
+    double              dfSrcXSize;
+    double              dfSrcYSize;
 
-    int                 nDstXOff;
-    int                 nDstYOff;
-    int                 nDstXSize;
-    int                 nDstYSize;
+    double              dfDstXOff;
+    double              dfDstYOff;
+    double              dfDstXSize;
+    double              dfDstYSize;
 
     int                 bNoDataSet;
     double              dfNoDataValue;
@@ -744,8 +744,8 @@ public:
 
     void           SetSrcBand( GDALRasterBand * );
     void           SetSrcMaskBand( GDALRasterBand * );
-    void           SetSrcWindow( int, int, int, int );
-    void           SetDstWindow( int, int, int, int );
+    void           SetSrcWindow( double, double, double, double );
+    void           SetDstWindow( double, double, double, double );
     void           SetNoDataValue( double dfNoDataValue );
     const CPLString& GetResampling() const { return osResampling; }
     void           SetResampling( const char* pszResampling );
