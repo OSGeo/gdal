@@ -1403,7 +1403,10 @@ bool LevellerDataset::load_from_file(VSILFILE* file, const char* pszFilename)
                                 unitcode = (UNITLABEL) unitcode_int;
 				const char* pszUnitID = this->code_to_id(unitcode);
 				if(pszUnitID != NULL)
-					strcpy(m_szElevUnits, pszUnitID);
+                                {
+                                    strncpy(m_szElevUnits, pszUnitID, sizeof(m_szElevUnits));
+                                    m_szElevUnits[sizeof(m_szElevUnits) - 1] = '\0';
+                                }
 				else
 				{
 					CPLError( CE_Failure, CPLE_OpenFailed,
