@@ -2347,8 +2347,6 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
 /* -------------------------------------------------------------------- */
         else if( EQUAL(papszArgv[iArg],"--mempreload") )
         {
-            int i;
-
             if( iArg + 1 >= nArgc )
             {
                 CPLError( CE_Failure, CPLE_AppDefined, 
@@ -2356,7 +2354,7 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
                 CSLDestroy( papszReturn );
                 return -1;
             }
-            
+
             char **papszFiles = CPLReadDir( papszArgv[iArg+1] );
             if( CSLCount(papszFiles) == 0 )
             {
@@ -2365,19 +2363,18 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
                 CSLDestroy( papszReturn );
                 return -1;
             }
-                
-            for( i = 0; papszFiles[i] != NULL; i++ )
+
+            for( int i = 0; papszFiles[i] != NULL; i++ )
             {
-                CPLString osOldPath, osNewPath;
-                VSIStatBufL sStatBuf;
-                
                 if( EQUAL(papszFiles[i],".") || EQUAL(papszFiles[i],"..") )
                     continue;
 
+                CPLString osOldPath, osNewPath;
                 osOldPath = CPLFormFilename( papszArgv[iArg+1], 
                                              papszFiles[i], NULL );
                 osNewPath.Printf( "/vsimem/%s", papszFiles[i] );
 
+                VSIStatBufL sStatBuf;
                 if( VSIStatL( osOldPath, &sStatBuf ) != 0
                     || VSI_ISDIR( sStatBuf.st_mode ) )
                 {
@@ -2428,9 +2425,6 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
 /* -------------------------------------------------------------------- */
         else if( EQUAL(papszArgv[iArg],"--optfile") )
         {
-            const char *pszLine;
-            FILE *fpOptFile;
-
             if( iArg + 1 >= nArgc )
             {
                 CPLError( CE_Failure, CPLE_AppDefined, 
@@ -2439,7 +2433,7 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
                 return -1;
             }
 
-            fpOptFile = VSIFOpen( papszArgv[iArg+1], "rb" );
+            FILE *fpOptFile = VSIFOpen( papszArgv[iArg+1], "rb" );
 
             if( fpOptFile == NULL )
             {
@@ -2449,23 +2443,21 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
                 CSLDestroy( papszReturn );
                 return -1;
             }
-            
+
+            const char *pszLine;
             while( (pszLine = CPLReadLine( fpOptFile )) != NULL )
             {
-                char **papszTokens;
-                int i;
-
                 if( pszLine[0] == '#' || strlen(pszLine) == 0 )
                     continue;
 
-                papszTokens = CSLTokenizeString( pszLine );
-                for( i = 0; papszTokens != NULL && papszTokens[i] != NULL; i++)
+                char **papszTokens = CSLTokenizeString( pszLine );
+                for( int i = 0; papszTokens != NULL && papszTokens[i] != NULL; i++)
                     papszReturn = CSLAddString( papszReturn, papszTokens[i] );
                 CSLDestroy( papszTokens );
             }
 
             VSIFClose( fpOptFile );
-                
+
             iArg += 1;
         }
 
@@ -2474,13 +2466,11 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
 /* -------------------------------------------------------------------- */
         else if( EQUAL(papszArgv[iArg], "--formats") )
         {
-            int iDr;
-            
             if( nOptions == 0 )
                 nOptions = GDAL_OF_RASTER;
 
             printf( "Supported Formats:\n" );
-            for( iDr = 0; iDr < GDALGetDriverCount(); iDr++ )
+            for( int iDr = 0; iDr < GDALGetDriverCount(); iDr++ )
             {
                 GDALDriverH hDriver = GDALGetDriver(iDr);
 
@@ -2591,7 +2581,7 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
             if( CSLFetchNameValue( papszMD, GDAL_DMD_HELPTOPIC ) )
                 printf( "  Help Topic: %s\n", 
                         CSLFetchNameValue( papszMD, GDAL_DMD_HELPTOPIC ) );
-            
+
             if( CSLFetchBoolean( papszMD, GDAL_DMD_SUBDATASETS, FALSE ) )
                 printf( "  Supports: Subdatasets\n" );
             if( CSLFetchBoolean( papszMD, GDAL_DCAP_OPEN, FALSE ) )
@@ -2624,7 +2614,7 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
                     CPLSerializeXMLTree( psCOL );
 
                 CPLDestroyXMLNode( psCOL );
-                
+
                 printf( "\n%s\n", pszFormattedXML );
                 CPLFree( pszFormattedXML );
             }
@@ -2638,7 +2628,7 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
                     CPLSerializeXMLTree( psCOL );
 
                 CPLDestroyXMLNode( psCOL );
-                
+
                 printf( "\n%s\n", pszFormattedXML );
                 CPLFree( pszFormattedXML );
             }
@@ -2657,7 +2647,7 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
                     CPLSerializeXMLTree( psCOL );
 
                 CPLDestroyXMLNode( psCOL );
-                
+
                 printf( "%s\n", pszFormattedXML );
                 CPLFree( pszFormattedXML );
             }
@@ -2729,9 +2719,8 @@ static int _FetchDblFromMD( char **papszMD, const char *pszKey,
     sprintf( szFullKey, "%s", pszKey );
 
     const char *pszValue = CSLFetchNameValue( papszMD, szFullKey );
-    int i;
-    
-    for( i = 0; i < nCount; i++ )
+
+    for( int i = 0; i < nCount; i++ )
         padfTarget[i] = dfDefault;
 
     if( pszValue == NULL )
@@ -2752,7 +2741,7 @@ static int _FetchDblFromMD( char **papszMD, const char *pszKey,
         return FALSE;
     }
 
-    for( i = 0; i < nCount; i++ )
+    for( int i = 0; i < nCount; i++ )
         padfTarget[i] = CPLAtofM(papszTokens[i]);
 
     CSLDestroy( papszTokens );
@@ -2845,10 +2834,8 @@ GDALDataset *GDALFindAssociatedAuxFile( const char *pszBasename,
     CPLString osAuxFilename = CPLResetExtension(pszBasename, pszAuxSuffixLC);
     GDALDataset *poODS = NULL;
     GByte abyHeader[32];
-    VSILFILE *fp;
 
-    fp = VSIFOpenL( osAuxFilename, "rb" );
-
+    VSILFILE *fp = VSIFOpenL( osAuxFilename, "rb" );
 
     if ( fp == NULL && VSIIsCaseSensitiveFS(osAuxFilename)) 
     {
@@ -2935,7 +2922,7 @@ GDALDataset *GDALFindAssociatedAuxFile( const char *pszBasename,
             poODS = NULL;
         }
     }
-        
+
 /* -------------------------------------------------------------------- */
 /*      Try appending .aux to the end of the filename.                  */
 /* -------------------------------------------------------------------- */
