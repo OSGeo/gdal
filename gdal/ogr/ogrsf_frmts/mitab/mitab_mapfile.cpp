@@ -2168,13 +2168,19 @@ TABMAPObjectBlock *TABMAPFile::SplitObjBlock(TABMAPObjHdr *poObjHdrToAdd,
     poObjHdr = papoSrcObjHdrs[nSeed1];
     if (MoveObjToBlock(poObjHdr, poSrcCoordBlock,
                        m_poCurObjBlock, &m_poCurCoordBlock) <= 0)
+    {
+        delete poNewObjBlock;
         return NULL;
+    }
 
     // Move nSeed2 to 2nd block
     poObjHdr = papoSrcObjHdrs[nSeed2];
     if (MoveObjToBlock(poObjHdr, poSrcCoordBlock,
                        poNewObjBlock, &poNewCoordBlock) <= 0)
+    {
+        delete poNewObjBlock;
         return NULL;
+    }
 
     /*-----------------------------------------------------------------
      * Go through the rest of the entries and assign them to one 
