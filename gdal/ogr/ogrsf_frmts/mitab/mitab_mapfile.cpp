@@ -1679,6 +1679,12 @@ int   TABMAPFile::PrepareNewObjViaSpatialIndex(TABMAPObjHdr *poObjHdr)
                     CPLError(CE_Failure, CPLE_FileIO,
                             "Failed writing object header for feature id %d",
                             papoSrcObjHdrs[i]->m_nId);
+                    for(i=0; i<numSrcObj; i++)
+                    {
+                      delete papoSrcObjHdrs[i];
+                    }
+                    CPLFree(papoSrcObjHdrs);
+                    papoSrcObjHdrs = NULL;
                     return -1;
                 }
 
