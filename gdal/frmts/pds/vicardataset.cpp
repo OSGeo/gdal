@@ -263,9 +263,9 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLError( CE_Failure, CPLE_OpenFailed, 
                   "%s instrument not tested. Continue with caution!\n\n", value);
     }
-    
+
     /***********   Grab layout type (BSQ, BIP, BIL) ************/
-    
+
     char szLayout[10] = "BSQ"; //default to band seq.
     value = poDS->GetKeyword( "ORG" );
     if (EQUAL(value,"BSQ") ) {
@@ -277,12 +277,13 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
     else {
         CPLError( CE_Failure, CPLE_OpenFailed, 
                   "%s layout not supported. Abort\n\n", value);
+        delete poDS;
         return FALSE;
     }
-    
+
     /***********   Grab record bytes  **********/
     nSkipBytes = atoi(poDS->GetKeyword("NBB"));
-    
+
     if (EQUAL( poDS->GetKeyword( "FORMAT" ), "BYTE" )) {
         eDataType = GDT_Byte;
         dfNoData = NULL1;
