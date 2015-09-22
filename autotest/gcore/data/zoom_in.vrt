@@ -1,0 +1,16 @@
+<VRTDataset rasterXSize="100" rasterYSize="100">
+  <VRTRasterBand dataType="Byte" band="1">
+    <SimpleSource resampling="bilinear">
+      <SourceFilename relativeToVRT="1">byte.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SrcRect xOff="0" yOff="0" xSize="20" ySize="20"/>
+      <DstRect xOff="11" yOff="20" xSize="60" ySize="60"/>
+    </SimpleSource>
+    <SimpleSource resampling="bilinear">
+      <SourceFilename relativeToVRT="1">byte.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SrcRect xOff="0" yOff="0" xSize="20" ySize="20"/>
+      <DstRect xOff="71" yOff="20" xSize="60" ySize="60"/>
+    </SimpleSource>
+  </VRTRasterBand>
+</VRTDataset>
