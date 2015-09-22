@@ -273,11 +273,11 @@ void GDALPDFObject::Serialize(CPLString& osStr)
             else if (CanRepresentRealAsString())
             {
                 /* Used for OGC BP numeric values */
-                CPLsprintf(szReal, "(%.16g)", dfReal);
+                CPLsnprintf(szReal, sizeof(szReal), "(%.16g)", dfReal);
             }
             else
             {
-                CPLsprintf(szReal, "%.16f", dfReal);
+                CPLsnprintf(szReal, sizeof(szReal), "%.16f", dfReal);
 
                 /* Remove non significant trailing zeroes */
                 char* pszDot = strchr(szReal, '.');
