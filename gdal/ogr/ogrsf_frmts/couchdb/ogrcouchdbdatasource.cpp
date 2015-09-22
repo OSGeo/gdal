@@ -64,7 +64,7 @@ OGRCouchDBDataSource::~OGRCouchDBDataSource()
     {
         char** papszOptions = NULL;
         papszOptions = CSLSetNameValue(papszOptions, "CLOSE_PERSISTENT", CPLSPrintf("CouchDB:%p", this));
-        CPLHTTPFetch( osURL, papszOptions);
+        CPLHTTPDestroyResult( CPLHTTPFetch( osURL, papszOptions ) );
         CSLDestroy(papszOptions);
     }
 
