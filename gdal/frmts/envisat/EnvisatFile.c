@@ -1182,12 +1182,12 @@ int EnvisatFile_SetKeyValueAsDouble( EnvisatFile *self,
         {
             if( prototype_value[i] == '.' )
                 break;
-            
+
             decimals++;
         }
 
         snprintf( format, sizeof(format), "%%+0%d.%df", length, decimals );
-        CPLsprintf( string_value, format, value );
+        CPLsnprintf( string_value, sizeof(string_value), format, value );
 
         if( (int)strlen(string_value) > length )
             string_value[length] = '\0';
