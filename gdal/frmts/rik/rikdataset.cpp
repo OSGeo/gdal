@@ -206,9 +206,7 @@ static int GetNextLZWCode( int codeBits,
 
     while( bitsLeftToGo > 0 )
     {
-        int tmp;
-
-        tmp = blockData[filePos];
+        int tmp = blockData[filePos];
         tmp = tmp >> bitsTaken;
 
         if( bitsLeftToGo < 8 )
@@ -279,17 +277,12 @@ CPLErr RIKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
 {
     RIKDataset *poRDS = (RIKDataset *) poDS;
-    GByte *blockData;
-    GUInt32 blocks;
-    GUInt32 nBlockIndex;
-    GUInt32 nBlockOffset;
-    GUInt32 nBlockSize;
 
-    blocks = poRDS->nHorBlocks * poRDS->nVertBlocks;
-    nBlockIndex = nBlockXOff + nBlockYOff * poRDS->nHorBlocks;
-    nBlockOffset = poRDS->pOffsets[nBlockIndex];
+    GUInt32 blocks = poRDS->nHorBlocks * poRDS->nVertBlocks;
+    GUInt32 nBlockIndex = nBlockXOff + nBlockYOff * poRDS->nHorBlocks;
+    GUInt32 nBlockOffset = poRDS->pOffsets[nBlockIndex];
 
-    nBlockSize = poRDS->nFileSize;
+    GUInt32 nBlockSize = poRDS->nFileSize;
     for( GUInt32 bi = nBlockIndex + 1; bi < blocks; bi++ )
     {
         if( poRDS->pOffsets[bi] )
@@ -328,7 +321,7 @@ CPLErr RIKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     }
 
     // Read block to memory
-    blockData = (GByte *) CPLMalloc(nBlockSize);
+    GByte *blockData = (GByte *) CPLMalloc(nBlockSize);
     VSIFReadL( blockData, 1, nBlockSize, poRDS->fp );
 
     GUInt32 filePos = 0;
@@ -965,11 +958,8 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Find block offsets.                                             */
 /* -------------------------------------------------------------------- */
 
-    GUInt32 blocks;
-    GUInt32 *offsets;
-
-    blocks = header.iHorBlocks * header.iVertBlocks;
-    offsets = (GUInt32 *)CPLMalloc( blocks * sizeof(GUInt32) );
+    GUInt32 blocks = header.iHorBlocks * header.iVertBlocks;
+    GUInt32 *offsets = (GUInt32 *)CPLMalloc( blocks * sizeof(GUInt32) );
 
     if( !offsets )
     {
@@ -1190,7 +1180,7 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
                   " datasets.\n" );
         return NULL;
     }
-    
+
     return( poDS );
 }
 
@@ -1201,11 +1191,10 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
 void GDALRegister_RIK()
 
 {
-    GDALDriver	*poDriver;
 
     if( GDALGetDriverByName( "RIK" ) == NULL )
     {
-        poDriver = new GDALDriver();
+        GDALDriver *poDriver = new GDALDriver();
 
         poDriver->SetDescription( "RIK" );
         poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
