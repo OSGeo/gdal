@@ -2003,6 +2003,8 @@ int NITFWriteIGEOLO( NITFImage *psImage, char chICORDS,
         CHECK_IGEOLO_UTM_Y("dfLRY", dfLRY);
         CHECK_IGEOLO_UTM_X("dfLLX", dfLLX);
         CHECK_IGEOLO_UTM_Y("dfLLY", dfLLY);
+#if 1
+        // Works:
         CPLsprintf( szIGEOLO + 0, "%02d%06d%07d",
                  nZone, (int) floor(dfULX+0.5), (int) floor(dfULY+0.5) );
         CPLsprintf( szIGEOLO + 15, "%02d%06d%07d",
@@ -2011,6 +2013,17 @@ int NITFWriteIGEOLO( NITFImage *psImage, char chICORDS,
                  nZone, (int) floor(dfLRX+0.5), (int) floor(dfLRY+0.5) );
         CPLsprintf( szIGEOLO + 45, "%02d%06d%07d",
                  nZone, (int) floor(dfLLX+0.5), (int) floor(dfLLY+0.5) );
+#else
+        // Does not work.  CID 1254470
+        CPLsnprintf( szIGEOLO + 0, sizeof(szIGEOLO), "%02d%06d%07d",
+                 nZone, (int) floor(dfULX+0.5), (int) floor(dfULY+0.5) );
+        CPLsnprintf( szIGEOLO + 15, sizeof(szIGEOLO - 15), "%02d%06d%07d",
+                 nZone, (int) floor(dfURX+0.5), (int) floor(dfURY+0.5) );
+        CPLsnprintf( szIGEOLO + 30, sizeof(szIGEOLO - 30), "%02d%06d%07d",
+                 nZone, (int) floor(dfLRX+0.5), (int) floor(dfLRY+0.5) );
+        CPLsnprintf( szIGEOLO + 45, sizeof(szIGEOLO - 45), "%02d%06d%07d",
+                 nZone, (int) floor(dfLLX+0.5), (int) floor(dfLLY+0.5) );
+#endif
     }
 
 /* -------------------------------------------------------------------- */
