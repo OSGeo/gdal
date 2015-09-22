@@ -1246,10 +1246,10 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
             /* not go here, but that can happen if the file is corrupted */
             /* so reserve the first 8 bytes before the string to contain null bytes */
             memset(szNumberString, 0, 8);
-            CPLsprintf( szNumberString + 8, "%.14g", dfDoubleRet );
+            CPLsnprintf( szNumberString + 8, sizeof(szNumberString) - 8, "%.14g", dfDoubleRet );
             pszStringRet = szNumberString + 8;
         }
-        
+
         *((char **) pReqReturn) = pszStringRet;
         return( TRUE );
     }
