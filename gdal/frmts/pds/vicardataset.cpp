@@ -227,9 +227,9 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
     char chByteOrder = 'M';
     double dfNoData = 0.0;
     const char *value;
-    
+
     /***** CHECK ENDIANNESS **************/
-    
+
     value = poDS->GetKeyword( "INTFMT" );
     if (!EQUAL(value,"LOW") ) {
         CPLError( CE_Failure, CPLE_OpenFailed,
@@ -248,16 +248,15 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
     if (EQUAL(value,"VAX") ) {
         chByteOrder = 'I';
     }
-    
+
     /************ CHECK INSTRUMENT *****************/
     /************ ONLY HRSC TESTED *****************/
-    
+
     value = poDS->GetKeyword( "DTM.DTM_OFFSET" );
     if (!EQUAL(value,"") ) {
         bIsDTM = TRUE;
     }
-    
-    
+
     value = poDS->GetKeyword( "BLTYPE" );
     if (!EQUAL(value,"M94_HRSC") && bIsDTM==FALSE ) {
         CPLError( CE_Failure, CPLE_OpenFailed, 
@@ -268,18 +267,18 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
 
     char szLayout[10] = "BSQ"; //default to band seq.
     value = poDS->GetKeyword( "ORG" );
-    if (EQUAL(value,"BSQ") ) {
-        strcpy(szLayout,"BSQ");
-        nCols = atoi(poDS->GetKeyword("NS"));
-        nRows = atoi(poDS->GetKeyword("NL"));
-        nBands = atoi(poDS->GetKeyword("NB"));
-    }
-    else {
-        CPLError( CE_Failure, CPLE_OpenFailed, 
+    if (!EQUAL(value,"BSQ") )
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed,
                   "%s layout not supported. Abort\n\n", value);
         delete poDS;
         return FALSE;
     }
+
+    strcpy(szLayout,"BSQ");
+    nCols = atoi(poDS->GetKeyword("NS"));
+    nRows = atoi(poDS->GetKeyword("NL"));
+    nBands = atoi(poDS->GetKeyword("NB"));
 
     /***********   Grab record bytes  **********/
     nSkipBytes = atoi(poDS->GetKeyword("NBB"));
@@ -303,7 +302,8 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
         chByteOrder = 'I';
     }
     else {
-	    printf("Could not find known VICAR label entries!\n");
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Could not find known VICAR label entries!\n");
         delete poDS;
         return NULL;
     }
