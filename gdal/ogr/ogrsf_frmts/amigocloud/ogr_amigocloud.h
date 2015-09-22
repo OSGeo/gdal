@@ -148,15 +148,10 @@ class OGRAMIGOCLOUDTableLayer : public OGRAMIGOCLOUDLayer
     CPLString           osWHERE;
     CPLString           osSELECTWithoutWHERE;
 
-    int                 bLaunderColumnNames;
-
-    int                 bInDeferedInsert;
-
     std::vector<std::string> vsDeferedInsertChangesets;
     GIntBig             nNextFID;
     
     int                 bDeferedCreation;
-    int                 bAmigoCloudify;
     int                 nMaxChunkSize;
 
     void                BuildWhere();
@@ -192,12 +187,9 @@ class OGRAMIGOCLOUDTableLayer : public OGRAMIGOCLOUDLayer
     virtual OGRErr      GetExtent( OGREnvelope *psExtent, int bForce ) { return GetExtent(0, psExtent, bForce); }
     virtual OGRErr      GetExtent( int iGeomField, OGREnvelope *psExtent, int bForce );
 
-    void                SetLaunderFlag( int bFlag )
-                                { bLaunderColumnNames = bFlag; }
     void                SetDeferedCreation(OGRwkbGeometryType eGType,
                                OGRSpatialReference *poSRS,
-                               int bGeomNullable,
-                               int bAmigoCloudify);
+                               int bGeomNullable);
 
     CPLString           GetAmigoCloudType(OGRFieldDefn& oField,
                                 int bPreservePrecision,
@@ -244,7 +236,6 @@ class OGRAMIGOCLOUDDataSource : public OGRDataSource
     OGRAMIGOCLOUDTableLayer**  papoLayers;
     int                 nLayers;
     int                 bReadWrite;
-    int                 bBatchInsert;
 
     int                 bUseHTTPS;
 
@@ -285,7 +276,6 @@ class OGRAMIGOCLOUDDataSource : public OGRDataSource
 
     const char*                 GetAPIURL() const;
     int                         IsReadWrite() const { return bReadWrite; }
-    int                         DoBatchInsert() const { return bBatchInsert; }
     const char*                 GetProjetcId() { return pszProjetctId;}
     char**                      AddHTTPOptions();
     json_object*                RunPOST(const char*pszURL, const char *pszPostData, const char *pszHeaders="HEADERS=Content-Type: application/json");

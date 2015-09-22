@@ -47,7 +47,6 @@ OGRAMIGOCLOUDDataSource::OGRAMIGOCLOUDDataSource()
     pszProjetctId = NULL;
 
     bReadWrite = FALSE;
-    bBatchInsert = TRUE;
     bUseHTTPS = FALSE;
 
     bMustCleanPersistant = FALSE;
@@ -146,7 +145,6 @@ int OGRAMIGOCLOUDDataSource::Open( const char * pszFilename,
 {
 
     bReadWrite = bUpdateIn;
-    bBatchInsert = CSLTestBoolean(CSLFetchNameValueDef(papszOpenOptions, "BATCH_INSERT", "YES"));
 
     pszName = CPLStrdup( pszFilename );
     if( CSLFetchNameValue(papszOpenOptions, "PROJECTID") )
@@ -169,13 +167,6 @@ int OGRAMIGOCLOUDDataSource::Open( const char * pszFilename,
 
     CPLString osTables = OGRAMIGOCLOUDGetOptionValue(pszFilename, "tables");
     
-    /*if( osTables.size() == 0 && osAPIKey.size() == 0 )
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "When not specifying tables option, AMIGOCLOUD_API_KEY must be defined");
-        return FALSE;
-    }*/
-
     bUseHTTPS = CSLTestBoolean(CPLGetConfigOption("AMIGOCLOUD_HTTPS", "YES"));
 
     OGRLayer* poSchemaLayer = ExecuteSQLInternal("SELECT current_schema()");
@@ -195,39 +186,6 @@ int OGRAMIGOCLOUDDataSource::Open( const char * pszFilename,
     if( osCurrentSchema.size() == 0 )
         return FALSE;
 
-    if(false && osAPIKey.size() && bUpdateIn )
-    {
-        ExecuteSQLInternal(
-                "DROP FUNCTION IF EXISTS ogr_table_metadata(TEXT,TEXT); "
-                "CREATE OR REPLACE FUNCTION ogr_table_metadata(schema_name TEXT, table_name TEXT) RETURNS TABLE "
-                "(attname TEXT, typname TEXT, attlen INT, format_type TEXT, "
-                "attnum INT, attnotnull BOOLEAN, indisprimary BOOLEAN, "
-                "defaultexpr TEXT, dim INT, srid INT, geomtyp TEXT, srtext TEXT) AS $$ "
-                "SELECT a.attname::text, t.typname::text, a.attlen::int, "
-                        "format_type(a.atttypid,a.atttypmod)::text, "
-                        "a.attnum::int, "
-                        "a.attnotnull::boolean, "
-                        "i.indisprimary::boolean, "
-                        "pg_get_expr(def.adbin, c.oid)::text AS defaultexpr, "
-                        "(CASE WHEN t.typname = 'geometry' THEN postgis_typmod_dims(a.atttypmod) ELSE NULL END)::int dim, "
-                        "(CASE WHEN t.typname = 'geometry' THEN postgis_typmod_srid(a.atttypmod) ELSE NULL END)::int srid, "
-                        "(CASE WHEN t.typname = 'geometry' THEN postgis_typmod_type(a.atttypmod) ELSE NULL END)::text geomtyp, "
-                        "srtext "
-                "FROM pg_class c "
-                "JOIN pg_attribute a ON a.attnum > 0 AND "
-                                        "a.attrelid = c.oid AND c.relname = $2 "
-                                        "AND c.relname IN (SELECT CDB_UserTables())"
-                "JOIN pg_type t ON a.atttypid = t.oid "
-                "JOIN pg_namespace n ON c.relnamespace=n.oid AND n.nspname = $1 "
-                "LEFT JOIN pg_index i ON c.oid = i.indrelid AND "
-                                        "i.indisprimary = 't' AND a.attnum = ANY(i.indkey) "
-                "LEFT JOIN pg_attrdef def ON def.adrelid = c.oid AND "
-                                            "def.adnum = a.attnum "
-                "LEFT JOIN spatial_ref_sys srs ON srs.srid = postgis_typmod_srid(a.atttypmod) "
-                "ORDER BY a.attnum "
-                "$$ LANGUAGE SQL");
-    }
-    
     if (osTables.size() != 0)
     {
         char** papszTables = CSLTokenizeString2(osTables, ",", 0);
@@ -359,19 +317,10 @@ OGRLayer   *OGRAMIGOCLOUDDataSource::ICreateLayer( const char *pszName,
     }
     
     CPLString osName(pszName);
-    if( CSLFetchBoolean(papszOptions,"LAUNDER", TRUE) )
-    {
-        char* pszTmp = OGRPGCommonLaunderName(pszName);
-        osName = pszTmp;
-        CPLFree(pszTmp);
-    }
 
     OGRAMIGOCLOUDTableLayer* poLayer = new OGRAMIGOCLOUDTableLayer(this, osName);
     int bGeomNullable = CSLFetchBoolean(papszOptions, "GEOMETRY_NULLABLE", TRUE);
-    int bAmigoCloudify = CSLFetchBoolean(papszOptions, "AMIGOCLOUDIFY",
-                                      CSLFetchBoolean(papszOptions, "AMIGOCLOUDIFY", TRUE));
-    poLayer->SetLaunderFlag( CSLFetchBoolean(papszOptions,"LAUNDER",TRUE) );
-    poLayer->SetDeferedCreation(eGType, poSpatialRef, bGeomNullable, bAmigoCloudify);
+    poLayer->SetDeferedCreation(eGType, poSpatialRef, bGeomNullable);
     papoLayers = (OGRAMIGOCLOUDTableLayer**) CPLRealloc(
                     papoLayers, (nLayers + 1) * sizeof(OGRAMIGOCLOUDTableLayer*));
     papoLayers[nLayers ++] = poLayer;
@@ -828,36 +777,7 @@ OGRLayer * OGRAMIGOCLOUDDataSource::ExecuteSQLInternal( const char *pszSQLComman
     while(*pszSQLCommand == ' ')
         pszSQLCommand ++;
 
-/* -------------------------------------------------------------------- */
-/*      Use generic implementation for recognized dialects              */
-/* -------------------------------------------------------------------- */
-    if( IsGenericSQLDialect(pszDialect) )
-        return OGRDataSource::ExecuteSQL( pszSQLCommand,
-                                          poSpatialFilter,
-                                          pszDialect );
 
-/* -------------------------------------------------------------------- */
-/*      Special case DELLAYER: command.                                 */
-/* -------------------------------------------------------------------- */
-    if( EQUALN(pszSQLCommand,"DELLAYER:",9) )
-    {
-        const char *pszLayerName = pszSQLCommand + 9;
-
-        while( *pszLayerName == ' ' )
-            pszLayerName++;
-        
-        for( int iLayer = 0; iLayer < nLayers; iLayer++ )
-        {
-            if( EQUAL(papoLayers[iLayer]->GetName(), 
-                      pszLayerName ))
-            {
-                DeleteLayer( iLayer );
-                break;
-            }
-        }
-        return NULL;
-    }
-    
     if( !EQUALN(pszSQLCommand, "SELECT", strlen("SELECT")) &&
         !EQUALN(pszSQLCommand, "EXPLAIN", strlen("EXPLAIN")) &&
         !EQUALN(pszSQLCommand, "WITH", strlen("WITH")) )

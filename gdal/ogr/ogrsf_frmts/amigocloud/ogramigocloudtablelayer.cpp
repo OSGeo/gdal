@@ -128,11 +128,8 @@ OGRAMIGOCLOUDTableLayer::OGRAMIGOCLOUDTableLayer(OGRAMIGOCLOUDDataSource* poDS,
     osDatasetId = CPLString(pszName);
     osTableName = CPLString("dataset_") + osDatasetId;
     SetDescription( osDatasetId );
-    bLaunderColumnNames = TRUE;
-    bInDeferedInsert = poDS->DoBatchInsert();
     nNextFID = -1;
     bDeferedCreation = FALSE;
-    bAmigoCloudify = FALSE;
 
     nMaxChunkSize = atoi(CPLGetConfigOption("AMIGOCLOUD_MAX_CHUNK_SIZE", "15")) * 1024 * 1024;
 }
@@ -363,14 +360,10 @@ void OGRAMIGOCLOUDTableLayer::FlushDeferedInsert()
     if( poObj != NULL )
         json_object_put(poObj);
 
-    bInDeferedInsert = FALSE;
-
     vsDeferedInsertChangesets.clear();
 
-    bInDeferedInsert = FALSE;
     nNextFID = -1;
 
-//    DeleteFeature( 1 );
 }
 
 /************************************************************************/
@@ -390,13 +383,6 @@ OGRErr OGRAMIGOCLOUDTableLayer::CreateField( OGRFieldDefn *poFieldIn,
     }
 
     OGRFieldDefn oField(poFieldIn);
-    if( bLaunderColumnNames )
-    {
-        char* pszName = OGRPGCommonLaunderName(oField.GetNameRef());
-        oField.SetName(pszName);
-        CPLFree(pszName);
-    }
-
 /* -------------------------------------------------------------------- */
 /*      Create the new field.                                           */
 /* -------------------------------------------------------------------- */
@@ -654,9 +640,6 @@ OGRErr OGRAMIGOCLOUDTableLayer::ISetFeature( OGRFeature *poFeature )
                             aFID.osAmigoId.c_str());
 
 
-//        printf("ISetFeature() %lld\n", poFeature->GetFID());
-
-//        json_object *poObj = poDS->RunSQL(osSQL);
         std::stringstream changeset;
         changeset << "{\"query\": \"" << json_encode(osSQL) << "\"}";
         std::stringstream url;
@@ -1025,13 +1008,11 @@ int OGRAMIGOCLOUDTableLayer::TestCapability( const char * pszCap )
 
 void OGRAMIGOCLOUDTableLayer::SetDeferedCreation(OGRwkbGeometryType eGType,
                                      OGRSpatialReference *poSRS,
-                                     int bGeomNullable,
-                                     int bAmigoCloudify)
+                                     int bGeomNullable)
 {
     bDeferedCreation = TRUE;
     nNextFID = 1;
     CPLAssert(poFeatureDefn == NULL);
-    this->bAmigoCloudify = bAmigoCloudify;
     poFeatureDefn = new OGRFeatureDefn(osTableName);
     poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType(wkbNone);
