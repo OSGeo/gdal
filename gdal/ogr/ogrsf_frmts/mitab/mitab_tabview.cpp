@@ -603,6 +603,7 @@ int TABView::ParseTABFile(const char *pszDatasetPath,
                     CPLError(CE_Failure, CPLE_NotSupported,
                      "WHERE clause in %s is not in a supported format: \"%s\"",
                              m_pszFname, m_papszTABFile[iLine]);
+                CSLDestroy(papszTok);
                 return -1;
             }
         }
