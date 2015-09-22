@@ -81,8 +81,8 @@ int OGRMemDriver::TestCapability( const char * pszCap )
 {
     if( EQUAL(pszCap,ODrCCreateDataSource) )
         return TRUE;
-    else
-        return FALSE;
+
+    return FALSE;
 }
 
 /************************************************************************/
@@ -92,14 +92,22 @@ int OGRMemDriver::TestCapability( const char * pszCap )
 void RegisterOGRMEM()
 
 {
-    OGRSFDriver* poDriver = new OGRMemDriver;
-    
-    poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES, "Integer Integer64 Real String Date DateTime Time IntegerList Integer64List RealList StringList Binary" );
+    if( GDALGetDriverByName( "Memory" ) != NULL )
+      return;
 
-    poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
-    "<LayerCreationOptionList>"
-    "  <Option name='ADVERTIZE_UTF8' type='boolean' description='Whether the layer will contain UTF-8 strings' default='NO'/>"
-    "</LayerCreationOptionList>");
-        
+    OGRSFDriver* poDriver = new OGRMemDriver;
+
+    poDriver->SetMetadataItem(
+        GDAL_DMD_CREATIONFIELDDATATYPES,
+        "Integer Integer64 Real String Date DateTime Time IntegerList "
+        "Integer64List RealList StringList Binary" );
+
+    poDriver->SetMetadataItem(
+        GDAL_DS_LAYER_CREATIONOPTIONLIST,
+        "<LayerCreationOptionList>"
+        "  <Option name='ADVERTIZE_UTF8' type='boolean' description='Whether "
+        "the layer will contain UTF-8 strings' default='NO'/>"
+        "</LayerCreationOptionList>" );
+
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( poDriver );
 }
