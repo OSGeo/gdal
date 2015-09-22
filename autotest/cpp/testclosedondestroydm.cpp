@@ -2,6 +2,7 @@
 #include <cpl_string.h>
 #include <gdal.h>
 #include <gdal_alg.h>
+#include <cassert>
 
 static void OpenJPEG2000(const char* pszFilename)
 {
@@ -25,6 +26,7 @@ static void OpenJPEG2000(const char* pszFilename)
         }
 
         hDS = GDALOpen(pszFilename, GA_ReadOnly);
+        assert( hDS != NULL );
         for(j=0;j<5;j++)
         {
             if( i == j || aphDrivers[j] == NULL )
@@ -34,7 +36,7 @@ static void OpenJPEG2000(const char* pszFilename)
     }
 }
 
-int main(int argc, char* argv[])
+int main(int /* argc*/ , char* /* argv */[])
 {
     int nOvrLevel;
     int nBandNum;

@@ -98,8 +98,8 @@ testperfcopywords.exe: testperfcopywords.cpp
 	$(CC) testperfcopywords.cpp $(CFLAGS) $(GDAL_LIB)
     if exist testperfcopywords.exe.manifest mt -manifest testperfcopywords.exe.manifest -outputresource:testperfcopywords.exe;1
 
-testclosedondestroydm.exe: testclosedondestroydm.c
-	$(CC) testclosedondestroydm.c $(CFLAGS) $(GDAL_LIB)
+testclosedondestroydm.exe: testclosedondestroydm.cpp
+	$(CC) testclosedondestroydm.cpp $(CFLAGS) $(GDAL_LIB)
     if exist testclosedondestroydm.exe.manifest mt -manifest testclosedondestroydm.exe.manifest -outputresource:testclosedondestroydm.exe;1
 
 testthreadcond.exe: testthreadcond.c
