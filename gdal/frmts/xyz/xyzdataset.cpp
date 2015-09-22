@@ -1119,9 +1119,9 @@ GDALDataset* XYZDataset::CreateCopy( const char * pszFilename,
             char szBuf[256];
             double dfX = adfGeoTransform[0] + (i + 0.5) * adfGeoTransform[1];
             if (eReqDT == GDT_Int32)
-                CPLsprintf(szBuf, "%.18g%c%.18g%c%d\n", dfX, pszColSep[0], dfY, pszColSep[0], ((int*)pLineBuffer)[i]);
+                CPLsnprintf(szBuf, sizeof(szBuf), "%.18g%c%.18g%c%d\n", dfX, pszColSep[0], dfY, pszColSep[0], ((int*)pLineBuffer)[i]);
             else
-                CPLsprintf(szBuf, "%.18g%c%.18g%c%.18g\n", dfX, pszColSep[0], dfY, pszColSep[0], ((float*)pLineBuffer)[i]);
+                CPLsnprintf(szBuf, sizeof(szBuf), "%.18g%c%.18g%c%.18g\n", dfX, pszColSep[0], dfY, pszColSep[0], ((float*)pLineBuffer)[i]);
             osBuf += szBuf;
             if( (i & 1023) == 0 || i == nXSize - 1 )
             {
