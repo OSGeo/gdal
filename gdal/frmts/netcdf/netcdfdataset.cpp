@@ -6501,7 +6501,7 @@ CPLErr NCDFGetAttr1( int nCdfId, int nVarId, const char *pszAttrName,
                 CPLsnprintf( szTemp, sizeof(szTemp), "%.16g,", pdfTemp[m] );
                 NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
             }
-            CPLsprintf( szTemp, "%.16g", pdfTemp[m] );
+            CPLsnprintf( szTemp, sizeof(szTemp), "%.16g", pdfTemp[m] );
             NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
             CPLFree(pdfTemp);
             break;
