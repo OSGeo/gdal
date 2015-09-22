@@ -955,7 +955,7 @@ int DDFSubfieldDefn::FormatFloatValue( char *pachData, int nBytesAvailable,
     int nSize;
     char szWork[120];
 
-    CPLsprintf( szWork, "%.16g", dfNewValue );
+    CPLsnprintf( szWork, sizeof(szWork), "%.16g", dfNewValue );
 
     if( bIsVariable )
     {
