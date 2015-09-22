@@ -577,9 +577,9 @@ CPLXMLNode *GDALRasterAttributeTable::Serialize() const
             const char *pszValue = szValue;
 
             if( GetTypeOfCol(iCol) == GFT_Integer )
-                sprintf( szValue, "%d", GetValueAsInt(iRow, iCol) );
+                snprintf( szValue, sizeof(szValue), "%d", GetValueAsInt(iRow, iCol) );
             else if( GetTypeOfCol(iCol) == GFT_Real )
-                CPLsprintf( szValue, "%.16g", GetValueAsDouble(iRow, iCol) );
+                CPLsnprintf( szValue, sizeof(szValue), "%.16g", GetValueAsDouble(iRow, iCol) );
             else
                 pszValue = GetValueAsString(iRow, iCol);
 
