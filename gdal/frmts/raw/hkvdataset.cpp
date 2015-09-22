@@ -737,12 +737,12 @@ CPLErr HKVDataset::SetGeoTransform( double * padfTransform )
 
     if (bSuccess)
     {
-        CPLsprintf( szValue, "%.10f", temp_lat );
-        papszGeoref = CSLSetNameValue( papszGeoref, "bottom_right.latitude", 
+        CPLsnprintf( szValue, sizeof(szValue), "%.10f", temp_lat );
+        papszGeoref = CSLSetNameValue( papszGeoref, "bottom_right.latitude",
                                        szValue );
 
-        CPLsprintf( szValue, "%.10f", temp_long );
-        papszGeoref = CSLSetNameValue( papszGeoref, "bottom_right.longitude", 
+        CPLsnprintf( szValue, sizeof(szValue), "%.10f", temp_long );
+        papszGeoref = CSLSetNameValue( papszGeoref, "bottom_right.longitude",
                                        szValue );
     }
 
