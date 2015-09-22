@@ -2037,14 +2037,11 @@ GDALSerializeGenImgProjTransformer( void *pTransformArg )
 /* -------------------------------------------------------------------- */
     else if( psInfo->pDstTPSTransformArg != NULL )
     {
-        CPLXMLNode *psTransformerContainer;
-        CPLXMLNode *psTransformer;
+        CPLXMLNode *psTransformerContainer
+            = CPLCreateXMLNode( psTree, CXT_Element, "DstTPSTransformer" );
 
-        psTransformerContainer = 
-            CPLCreateXMLNode( psTree, CXT_Element, "DstTPSTransformer" );
-
-        psTransformer = 
-            GDALSerializeTransformer( NULL, psInfo->pDstTPSTransformArg);
+        CPLXMLNode *psTransformer
+            = GDALSerializeTransformer( NULL, psInfo->pDstTPSTransformArg);
         if( psTransformer != NULL )
             CPLAddXMLChild( psTransformerContainer, psTransformer );
     }
@@ -2054,14 +2051,11 @@ GDALSerializeGenImgProjTransformer( void *pTransformArg )
 /* -------------------------------------------------------------------- */
     else if( psInfo->pDstRPCTransformArg != NULL )
     {
-        CPLXMLNode *psTransformerContainer;
-        CPLXMLNode *psTransformer;
+        CPLXMLNode *psTransformerContainer
+            = CPLCreateXMLNode( psTree, CXT_Element, "DstRPCTransformer" );
 
-        psTransformerContainer = 
-            CPLCreateXMLNode( psTree, CXT_Element, "DstRPCTransformer" );
-
-        psTransformer = 
-            GDALSerializeTransformer( NULL, psInfo->pDstRPCTransformArg);
+        CPLXMLNode *psTransformer
+            = GDALSerializeTransformer( NULL, psInfo->pDstRPCTransformArg);
         if( psTransformer != NULL )
             CPLAddXMLChild( psTransformerContainer, psTransformer );
     }
@@ -2095,18 +2089,17 @@ GDALSerializeGenImgProjTransformer( void *pTransformArg )
 /* -------------------------------------------------------------------- */
     if( psInfo->pReprojectArg != NULL )
     {
-        CPLXMLNode *psTransformerContainer;
-        CPLXMLNode *psTransformer;
 
-        psTransformerContainer = 
-            CPLCreateXMLNode( psTree, CXT_Element, "ReprojectTransformer" );
+        CPLXMLNode *psTransformerContainer
+            = CPLCreateXMLNode( psTree, CXT_Element, "ReprojectTransformer" );
 
-        psTransformer = GDALSerializeTransformer( GDALReprojectionTransform,
+        CPLXMLNode *psTransformer
+            = GDALSerializeTransformer( GDALReprojectionTransform,
                                                   psInfo->pReprojectArg );
         if( psTransformer != NULL )
             CPLAddXMLChild( psTransformerContainer, psTransformer );
     }
-    
+
     return psTree;
 }
 
@@ -2853,7 +2846,7 @@ static int GDALApproxTransformInternal( void *pCBData, int bDstToSrc, int nPoint
                 GDALApproxTransformInternal( psATInfo, bDstToSrc, nMiddle, 
                                             x, y, z, panSuccess,
                                             x2, y2, z2);
-    
+
         }
         else
         {
@@ -2941,7 +2934,7 @@ static int GDALApproxTransformInternal( void *pCBData, int bDstToSrc, int nPoint
 #endif
         panSuccess[i] = TRUE;
     }
-    
+
     return TRUE;
 }
 
@@ -2964,9 +2957,9 @@ int GDALApproxTransform( void *pCBData, int bDstToSrc, int nPoints,
 {
     ApproxTransformInfo *psATInfo = (ApproxTransformInfo *) pCBData;
     double x2[3], y2[3], z2[3];
-    int nMiddle, anSuccess2[3], bSuccess;
+    int anSuccess2[3], bSuccess;
 
-    nMiddle = (nPoints-1)/2;
+    int nMiddle = (nPoints-1)/2;
 
 /* -------------------------------------------------------------------- */
 /*      Bail if our preconditions are not met, or if error is not       */
@@ -3029,20 +3022,18 @@ GDALDeserializeApproxTransformer( CPLXMLNode *psTree )
 
 {
     double dfMaxError = CPLAtof(CPLGetXMLValue( psTree, "MaxError",  "0.25" ));
-    CPLXMLNode *psContainer;
     GDALTransformerFunc pfnBaseTransform = NULL;
     void *pBaseCBData = NULL;
 
-    psContainer = CPLGetXMLNode( psTree, "BaseTransformer" );
+    CPLXMLNode *psContainer = CPLGetXMLNode( psTree, "BaseTransformer" );
 
     if( psContainer != NULL && psContainer->psChild != NULL )
     {
         GDALDeserializeTransformer( psContainer->psChild, 
                                     &pfnBaseTransform, 
                                     &pBaseCBData );
-        
     }
-    
+
     if( pfnBaseTransform == NULL )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -3111,8 +3102,6 @@ void CPL_STDCALL GDALApplyGeoTransform( double *padfGeoTransform,
 int CPL_STDCALL GDALInvGeoTransform( double *gt_in, double *gt_out )
 
 {
-    double	det, inv_det;
-
     /* Special case - no rotation - to avoid computing determinate */
     /* and potential precision issues. */
     if( gt_in[2] == 0.0 && gt_in[4] == 0.0 &&
@@ -3137,12 +3126,12 @@ int CPL_STDCALL GDALInvGeoTransform( double *gt_in, double *gt_out )
 
     /* Compute determinate */
 
-    det = gt_in[1] * gt_in[5] - gt_in[2] * gt_in[4];
+    const double det = gt_in[1] * gt_in[5] - gt_in[2] * gt_in[4];
 
     if( fabs(det) < 0.000000000000001 )
         return 0;
 
-    inv_det = 1.0 / det;
+    const double inv_det = 1.0 / det;
 
     /* compute adjoint, and devide by determinate */
 
