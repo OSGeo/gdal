@@ -6746,7 +6746,7 @@ CPLErr NCDFGet1DVar( int nCdfId, int nVarId, char **pszValue )
             pdfTemp = (double *) CPLCalloc(nVarLen, sizeof(double));
             nc_get_vara_double( nCdfId, nVarId, start, count, pdfTemp );
             for(m=0; m < nVarLen-1; m++) {
-                CPLsprintf( szTemp, "%.16g,", pdfTemp[m] );
+              CPLsnprintf( szTemp, sizeof(szTemp), "%.16g,", pdfTemp[m] );
                 NCDFSafeStrcat(&pszVarValue, szTemp, &nVarValueSize);
             }
             CPLsprintf( szTemp, "%.16g", pdfTemp[m] );
