@@ -2596,6 +2596,7 @@ GCExportFileH GCIOAPI_CALL1(*) Open_GCIO (
       _Destroy_GCIO(&hGXT,FALSE);
       return NULL;
     }
+    VSIFClose(h);
   }
 
   SetGCHandle_GCIO(hGXT, VSIFOpen(CPLFormFilename(GetGCPath_GCIO(hGXT),GetGCBasename_GCIO(hGXT),GetGCExtension_GCIO(hGXT)), mode));
