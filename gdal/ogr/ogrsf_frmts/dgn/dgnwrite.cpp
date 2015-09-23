@@ -1609,7 +1609,8 @@ DGNCreateColorTableElem( DGNHandle hDGN, int nScreenFlag,
 /*      Set the core raw data.                                          */
 /* -------------------------------------------------------------------- */
     DGNUpdateElemCoreExtended( hDGN, psCore );
-    
+
+    CPLFree(psCT);
     return psCore;
 }
 
