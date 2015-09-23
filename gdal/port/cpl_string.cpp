@@ -2447,10 +2447,13 @@ CPLValueType CPLGetValueType(const char* pszValue)
     not doubles: "25e 3", "25e.3", "-2-5e3", "2-5e3", "25.25.3", "-3d"
     */
 
+    const char* pszValueInit = pszValue;
     int bFoundDot = FALSE;
     int bFoundExponent = FALSE;
     int bIsLastCharExponent = FALSE;
     int bIsReal = FALSE;
+    const char* pszAfterExponent = NULL;
+
 
     if (pszValue == NULL)
         return CPL_VALUE_STRING;
@@ -2514,12 +2517,19 @@ CPLValueType CPLGetValueType(const char* pszValue)
                 bFoundExponent = TRUE;
             else
                 return CPL_VALUE_STRING;
+            pszAfterExponent = pszValue + 1;
             bIsLastCharExponent = TRUE;
         }
         else 
         {
             return CPL_VALUE_STRING;
         }
+    }
+
+    if( bIsReal && pszAfterExponent && strlen(pszAfterExponent) > 3 &&
+        CPLIsInf(CPLAtof(pszValueInit)) )
+    {
+        return CPL_VALUE_STRING;
     }
 
     return (bIsReal) ? CPL_VALUE_REAL : CPL_VALUE_INTEGER;
