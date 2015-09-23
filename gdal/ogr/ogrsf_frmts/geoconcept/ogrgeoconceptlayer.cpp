@@ -646,8 +646,16 @@ void OGRGeoconceptLayer::SetSpatialRef( OGRSpatialReference *poSpatialRef )
     if( !poSpatialRef ) return;
 
     poSRS= poSpatialRef->Clone();
-    if( !(hGXT= GetSubTypeGCHandle_GCIO(_gcFeature)) ) return;
-    if( !(Meta= GetGCMeta_GCIO(hGXT)) ) return;
+    if( !(hGXT= GetSubTypeGCHandle_GCIO(_gcFeature)) )
+    {
+        // TODO: CID 1074346 - Free poSRS.
+        return;
+    }
+    if( !(Meta= GetGCMeta_GCIO(hGXT)) )
+    {
+        // TODO: CID 1074346 - Free poSRS.
+        return;
+    }
     os= GetMetaSysCoord_GCIO(Meta);
     ns= OGRSpatialReference2SysCoord_GCSRS((OGRSpatialReferenceH)poSRS);
 
