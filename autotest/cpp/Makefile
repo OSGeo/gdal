@@ -69,7 +69,7 @@ testcopywords: testcopywords.cpp
 testclosedondestroydm: testclosedondestroydm.cpp
 	$(CXX) -g $(CXXFLAGS) $< $(LDFLAGS) -o $@
 
-testthreadcond: testthreadcond.c
+testthreadcond: testthreadcond.cpp
 	$(CXX) -g $(CXXFLAGS) $< $(LDFLAGS) -o $@
 
 test_virtualmem: test_virtualmem.cpp
