@@ -1222,10 +1222,11 @@ DGNCreateArcElem( DGNHandle hDGN, int nType,
     sMax.z = dfOriginZ + MAX(dfPrimaryAxis,dfSecondaryAxis);
 
     DGNWriteBounds( psDGN, psCore, &sMin, &sMax );
-    
+
+    CPLFree(psArc);
     return psCore;
 }
-                                 
+
 /************************************************************************/
 /*                          DGNCreateConeElem()                         */
 /************************************************************************/
