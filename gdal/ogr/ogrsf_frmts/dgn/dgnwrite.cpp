@@ -2126,7 +2126,8 @@ DGNCreateCellHeaderElem( DGNHandle hDGN, int nTotLength, const char *pszName,
 /*      Set the core raw data.                                          */
 /* -------------------------------------------------------------------- */
     DGNUpdateElemCoreExtended( hDGN, psCore );
-    
+
+    CPLFree(psCH);
     return psCore;
 }
 
