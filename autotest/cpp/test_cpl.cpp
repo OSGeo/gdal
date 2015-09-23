@@ -147,6 +147,7 @@ namespace tut
             { "2-5e3", CPL_VALUE_STRING },
             { "25.25.3", CPL_VALUE_STRING },
             { "25e25e3", CPL_VALUE_STRING },
+            { "25e2500", CPL_VALUE_STRING }, /* #6128 */
         };
     
         size_t i;
