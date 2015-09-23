@@ -94,8 +94,10 @@ CPLErr GDALParseGMLCoverage( CPLXMLNode *psXML,
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "Unable to find or parse GridEnvelope.low/high." );
+        CSLDestroy( papszLow );
+        CSLDestroy( papszHigh );
         return CE_Failure;
-    }        
+    }
 
     if( pnXSize != NULL )
         *pnXSize = atoi(papszHigh[0]) - atoi(papszLow[0]) + 1;
