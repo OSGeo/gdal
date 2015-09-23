@@ -102,8 +102,8 @@ testclosedondestroydm.exe: testclosedondestroydm.cpp
 	$(CC) testclosedondestroydm.cpp $(CFLAGS) $(GDAL_LIB)
     if exist testclosedondestroydm.exe.manifest mt -manifest testclosedondestroydm.exe.manifest -outputresource:testclosedondestroydm.exe;1
 
-testthreadcond.exe: testthreadcond.c
-	$(CC) testthreadcond.c $(CFLAGS) $(GDAL_LIB)
+testthreadcond.exe: testthreadcond.cpp
+	$(CC) testthreadcond.cpp $(CFLAGS) $(GDAL_LIB)
     if exist testthreadcond.exe.manifest mt -manifest testthreadcond.exe.manifest -outputresource:testthreadcond.exe;1
 
 testblockcache.exe: testblockcache.cpp
