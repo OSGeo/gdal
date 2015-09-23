@@ -221,6 +221,8 @@ namespace tut
      * Called when all tests in run completed.
      */
     virtual void run_completed(){};
+    
+    virtual bool all_ok() const { return true; }
   };
 
   /**
@@ -307,8 +309,9 @@ namespace tut
     /**
      * Runs all tests in all groups.
      * @param callback Callback object if exists; null otherwise
+     * @return true if everything's OK
      */
-    void run_tests() const
+    bool run_tests() const
     {
       callback_->run_started();
 
@@ -330,6 +333,8 @@ namespace tut
       }
 
       callback_->run_completed();
+      
+      return callback_->all_ok();
     }
 
     /**

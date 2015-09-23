@@ -184,7 +184,7 @@ namespace tut
     int sumValues(void* elt, void* user_data)
     {
         int* pnSum = (int*)user_data;
-        *pnSum += (int)(long)elt;
+        *pnSum += *(int*)elt;
         return TRUE;
     }
 
