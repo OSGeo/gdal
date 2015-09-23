@@ -2894,17 +2894,21 @@ static int GDALServerLoopInternal(GDALServerInstance* poSrvInstance,
             int nExpectedSize = nBufXSize * nBufYSize * nBandCount *
                 (GDALGetDataTypeSize(eBufType) / 8);
             int nSize;
-            if( !GDALPipeRead(p, &nSize) )
+            if( !GDALPipeRead(p, &nSize) || nSize != nExpectedSize )
+            {
+                CPLFree(panBandMap);
                 break;
-            if( nSize != nExpectedSize )
-                break;
+            }
             if( nSize > nBufferSize )
             {
                 nBufferSize = nSize;
                 pBuffer = CPLRealloc(pBuffer, nSize);
             }
             if( !GDALPipeRead_nolength(p, nSize, pBuffer) )
+            {
+                CPLFree(panBandMap);
                 break;
+            }
 
             CPLErr eErr = poDS->RasterIO(GF_Write,
                                          nXOff, nYOff, nXSize, nYSize,
