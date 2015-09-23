@@ -1692,7 +1692,8 @@ DGNCreateComplexHeaderElem( DGNHandle hDGN, int nType,
 /*      add a dummy bit of attribute data to fill out the length.       */
 /* -------------------------------------------------------------------- */
     DGNAddRawAttrLink( hDGN, psCore, 8, abyRawZeroLinkage );
-    
+
+    CPLFree(psCH);
     return psCore;
 }
 
