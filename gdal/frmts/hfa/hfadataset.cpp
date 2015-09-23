@@ -5058,7 +5058,7 @@ CPLErr HFADataset::IBuildOverviews( const char *pszResampling,
                                     int nListBands, int *panBandList,
                                     GDALProgressFunc pfnProgress, 
                                     void * pProgressData )
-    
+
 {
     int i;
 
@@ -5090,16 +5090,17 @@ CPLErr HFADataset::IBuildOverviews( const char *pszResampling,
                 pfnProgress, pProgressData);
 
         poBand = GetRasterBand( panBandList[i] );
-        
+
         //GetRasterBand can return NULL
         if(poBand == NULL)
         {
             CPLError(CE_Failure, CPLE_ObjectNull,
-                        "GetRasterBand failed");        
-            return CE_Failure; 
+                        "GetRasterBand failed");
+            GDALDestroyScaledProgress(pScaledProgressData);
+            return CE_Failure;
         }
-        
-        eErr = 
+
+        eErr =
             poBand->BuildOverviews( pszResampling, nOverviews, panOverviewList,
                                     GDALScaledProgress, pScaledProgressData );
 
