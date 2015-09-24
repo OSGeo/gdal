@@ -1072,7 +1072,12 @@ int main( int nArgc, char ** papszArgv )
                  EQUAL(papszArgv[iArg],"-gt") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            nGroupTransactions = atoi(papszArgv[++iArg]);
+            /* If skipfailures is already set we should not
+            modify nGroupTransactions = 1  #2409 */
+            if ( bSkipFailures )
+                ++iArg;
+            else
+                nGroupTransactions = atoi(papszArgv[++iArg]);
         }
         else if( EQUAL(papszArgv[iArg],"-s_srs") )
         {
