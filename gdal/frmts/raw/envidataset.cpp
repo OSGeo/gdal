@@ -1620,33 +1620,33 @@ void ENVIDataset::ProcessRPCinfo( const char *pszRPCinfo,
 
     sVal[0] = '\0';
     for(int i = 0; i < 20; i++ )
-       CPLsnprintf(sVal+strlen(sVal), sizeof(sVal),  "%.16g ",
+        CPLsnprintf(sVal+strlen(sVal), sizeof(sVal)-strlen(sVal),  "%.16g ",
            CPLAtof(papszFields[10+i]));
     SetMetadataItem("LINE_NUM_COEFF",sVal,"RPC");
 
     sVal[0] = '\0';
     for(int i = 0; i < 20; i++ )
-       CPLsnprintf(sVal+strlen(sVal), sizeof(sVal),  "%.16g ",
+       CPLsnprintf(sVal+strlen(sVal), sizeof(sVal)-strlen(sVal),  "%.16g ",
            CPLAtof(papszFields[30+i]));
     SetMetadataItem("LINE_DEN_COEFF",sVal,"RPC");
 
     sVal[0] = '\0';
     for(int i = 0; i < 20; i++ )
-       CPLsnprintf(sVal+strlen(sVal), sizeof(sVal),  "%.16g ",
+       CPLsnprintf(sVal+strlen(sVal), sizeof(sVal)-strlen(sVal),  "%.16g ",
            CPLAtof(papszFields[50+i]));
     SetMetadataItem("SAMP_NUM_COEFF",sVal,"RPC");
 
     sVal[0] = '\0';
     for(int i = 0; i < 20; i++ )
-       CPLsnprintf(sVal+strlen(sVal), sizeof(sVal),  "%.16g ",
+       CPLsnprintf(sVal+strlen(sVal), sizeof(sVal)-strlen(sVal),  "%.16g ",
            CPLAtof(papszFields[70+i]));
     SetMetadataItem("SAMP_DEN_COEFF",sVal,"RPC");
 
-    CPLsnprintf(sVal, sizeof(sVal), "%.16g", 
+    CPLsnprintf(sVal, sizeof(sVal), "%.16g",
         CPLAtof(papszFields[3]) - CPLAtof(papszFields[8]));
     SetMetadataItem("MIN_LONG",sVal,"RPC");
 
-    CPLsnprintf(sVal, sizeof(sVal), "%.16g", 
+    CPLsnprintf(sVal, sizeof(sVal), "%.16g",
         CPLAtof(papszFields[3]) + CPLAtof(papszFields[8]) );
     SetMetadataItem("MAX_LONG",sVal,"RPC");
 
