@@ -58,7 +58,7 @@ static void EXIFPrintData(char* pszData, GUInt16 type,
   case TIFF_UNDEFINED:
   case TIFF_BYTE:
     for(;count>0;count--) {
-      sprintf(pszTemp, "%s%#02x", sep, *data++), sep = " ";
+      snprintf(pszTemp, sizeof(pszTemp), "%s%#02x", sep, *data++), sep = " ";
       if (strlen(pszTemp) + pszDataEnd - pszData >= MAXSTRINGLENGTH)
           break;
       strcat(pszDataEnd,pszTemp);
@@ -68,7 +68,7 @@ static void EXIFPrintData(char* pszData, GUInt16 type,
 
   case TIFF_SBYTE:
     for(;count>0;count--) {
-      sprintf(pszTemp, "%s%d", sep, *(char *)data++), sep = " ";
+      snprintf(pszTemp, sizeof(pszTemp), "%s%d", sep, *(char *)data++), sep = " ";
       if (strlen(pszTemp) + pszDataEnd - pszData >= MAXSTRINGLENGTH)
           break;
       strcat(pszDataEnd,pszTemp);
@@ -84,7 +84,7 @@ static void EXIFPrintData(char* pszData, GUInt16 type,
   case TIFF_SHORT: {
     register GUInt16 *wp = (GUInt16*)data;
     for(;count>0;count--) {
-      sprintf(pszTemp, "%s%u", sep, *wp++), sep = " ";
+      snprintf(pszTemp, sizeof(pszTemp), "%s%u", sep, *wp++), sep = " ";
       if (strlen(pszTemp) + pszDataEnd - pszData >= MAXSTRINGLENGTH)
           break;
       strcat(pszDataEnd,pszTemp);
@@ -95,7 +95,7 @@ static void EXIFPrintData(char* pszData, GUInt16 type,
   case TIFF_SSHORT: {
     register GInt16 *wp = (GInt16*)data;
     for(;count>0;count--) {
-      sprintf(pszTemp, "%s%d", sep, *wp++);
+      snprintf(pszTemp, sizeof(pszTemp), "%s%d", sep, *wp++);
       sep = " ";
       if (strlen(pszTemp) + pszDataEnd - pszData >= MAXSTRINGLENGTH)
           break;
@@ -107,7 +107,7 @@ static void EXIFPrintData(char* pszData, GUInt16 type,
   case TIFF_LONG: {
     register GUInt32 *lp = (GUInt32*)data;
     for(;count>0;count--) {
-      sprintf(pszTemp, "%s%lu", sep, (unsigned long) *lp++);
+      snprintf(pszTemp, sizeof(pszTemp), "%s%lu", sep, (unsigned long) *lp++);
       sep = " ";
       if (strlen(pszTemp) + pszDataEnd - pszData >= MAXSTRINGLENGTH)
           break;
@@ -119,7 +119,7 @@ static void EXIFPrintData(char* pszData, GUInt16 type,
   case TIFF_SLONG: {
     register GInt32 *lp = (GInt32*)data;
     for(;count>0;count--) {
-      sprintf(pszTemp, "%s%ld", sep, (long) *lp++), sep = " ";
+      snprintf(pszTemp, sizeof(pszTemp), "%s%ld", sep, (long) *lp++), sep = " ";
       if (strlen(pszTemp) + pszDataEnd - pszData >= MAXSTRINGLENGTH)
           break;
       strcat(pszDataEnd,pszTemp);
@@ -151,7 +151,7 @@ static void EXIFPrintData(char* pszData, GUInt16 type,
   case TIFF_SRATIONAL: {
     register GInt32 *lp = (GInt32*)data;
     for(;count>0;count--) {
-      CPLsprintf(pszTemp, "%s(%g)", sep,
+      CPLsnprintf(pszTemp, sizeof(pszTemp), "%s(%g)", sep,
           (float) lp[0]/ (float) lp[1]);
       sep = " ";
       lp += 2;
@@ -165,7 +165,7 @@ static void EXIFPrintData(char* pszData, GUInt16 type,
   case TIFF_FLOAT: {
     register float *fp = (float *)data;
     for(;count>0;count--) {
-      CPLsprintf(pszTemp, "%s%g", sep, *fp++), sep = " ";
+      CPLsnprintf(pszTemp, sizeof(pszTemp), "%s%g", sep, *fp++), sep = " ";
       if (strlen(pszTemp) + pszDataEnd - pszData >= MAXSTRINGLENGTH)
           break;
       strcat(pszDataEnd,pszTemp);
@@ -176,7 +176,7 @@ static void EXIFPrintData(char* pszData, GUInt16 type,
   case TIFF_DOUBLE: {
     register double *dp = (double *)data;
     for(;count>0;count--) {
-      CPLsprintf(pszTemp, "%s%g", sep, *dp++), sep = " ";
+      CPLsnprintf(pszTemp, sizeof(pszTemp), "%s%g", sep, *dp++), sep = " ";
       if (strlen(pszTemp) + pszDataEnd - pszData >= MAXSTRINGLENGTH)
           break;
       strcat(pszDataEnd,pszTemp);
