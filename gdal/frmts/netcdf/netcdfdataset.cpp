@@ -6749,7 +6749,7 @@ CPLErr NCDFGet1DVar( int nCdfId, int nVarId, char **pszValue )
               CPLsnprintf( szTemp, sizeof(szTemp), "%.16g,", pdfTemp[m] );
                 NCDFSafeStrcat(&pszVarValue, szTemp, &nVarValueSize);
             }
-            CPLsprintf( szTemp, "%.16g", pdfTemp[m] );
+            CPLsnprintf( szTemp, sizeof(szTemp), "%.16g", pdfTemp[m] );
             NCDFSafeStrcat(&pszVarValue, szTemp, &nVarValueSize);
             CPLFree(pdfTemp);
             break;
@@ -6761,7 +6761,7 @@ CPLErr NCDFGet1DVar( int nCdfId, int nVarId, char **pszValue )
             break;
     }
 
-    if ( nVarLen > 1  && nVarType!= NC_CHAR )    
+    if ( nVarLen > 1  && nVarType!= NC_CHAR )
         NCDFSafeStrcat(&pszVarValue, (char *)"}", &nVarValueSize);
 
     /* set return values */
