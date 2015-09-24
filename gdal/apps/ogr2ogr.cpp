@@ -1189,10 +1189,15 @@ int main( int nArgc, char ** papszArgv )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             ++iArg;
-            if( EQUAL(papszArgv[iArg], "unlimited") )
-                nGroupTransactions = -1;
-            else
-                nGroupTransactions = atoi(papszArgv[iArg]);
+            /* If skipfailures is already set we should not
+            modify nGroupTransactions = 1  #2409 */
+            if ( !bSkipFailures )
+            {
+                if( EQUAL(papszArgv[iArg], "unlimited") )
+                    nGroupTransactions = -1;
+                else
+                    nGroupTransactions = atoi(papszArgv[iArg]);
+            }
         }
         else if ( EQUAL(papszArgv[iArg],"-ds_transaction") )
         {
