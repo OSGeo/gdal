@@ -4443,6 +4443,7 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
     double dfUserUnit = poDS->dfDPI * USER_UNIT_IN_INCH;
     poDS->dfPageWidth = dfX2 - dfX1;
     poDS->dfPageHeight = dfY2 - dfY1;
+    //CPLDebug("PDF", "left=%f right=%f bottom=%f top=%f", dfX1, dfX2, dfY1, dfY2);
     poDS->nRasterXSize = (int) floor((dfX2 - dfX1) * dfUserUnit+0.5);
     poDS->nRasterYSize = (int) floor((dfY2 - dfY1) * dfUserUnit+0.5);
 
@@ -4531,10 +4532,10 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
                 }
                 else
                 {
-                    poDS->adfGeoTransform[0] = poDS->adfCTM[4] + poDS->adfCTM[2] * poDS->dfPageHeight;
+                    poDS->adfGeoTransform[0] = poDS->adfCTM[4] + poDS->adfCTM[2] * dfY2;
                     poDS->adfGeoTransform[1] = poDS->adfCTM[0] / dfUserUnit;
                     poDS->adfGeoTransform[2] = - poDS->adfCTM[2] / dfUserUnit;
-                    poDS->adfGeoTransform[3] = poDS->adfCTM[5] + poDS->adfCTM[3] * poDS->dfPageHeight;
+                    poDS->adfGeoTransform[3] = poDS->adfCTM[5] + poDS->adfCTM[3] * dfY2;
                     poDS->adfGeoTransform[4] = poDS->adfCTM[1] / dfUserUnit;
                     poDS->adfGeoTransform[5] = - poDS->adfCTM[3] / dfUserUnit;
                 }
@@ -4564,7 +4565,7 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
                 else
                 {
                     poDS->pasGCPList[i].dfGCPPixel = poDS->pasGCPList[i].dfGCPPixel * dfUserUnit;
-                    poDS->pasGCPList[i].dfGCPLine = poDS->nRasterYSize - poDS->pasGCPList[i].dfGCPLine * dfUserUnit;
+                    poDS->pasGCPList[i].dfGCPLine = (dfY2 - poDS->pasGCPList[i].dfGCPLine) * dfUserUnit;
                 }
             }
         }
@@ -4721,7 +4722,7 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
                 else
                 {
                     x = poRing->getX(i) * dfUserUnit;
-                    y = poDS->nRasterYSize - poRing->getY(i) * dfUserUnit;
+                    y = (dfY2 - poRing->getY(i)) * dfUserUnit;
                 }
                 double X = poDS->adfGeoTransform[0] + x * poDS->adfGeoTransform[1] +
                                                       y * poDS->adfGeoTransform[2];
@@ -5222,7 +5223,8 @@ int PDFDataset::ParseLGIDictDictSecondPass(GDALPDFDictionary* poLGIDict)
     GDALPDFObject* poCTM;
     bHasCTM = FALSE;
     if ((poCTM = poLGIDict->Get("CTM")) != NULL &&
-        poCTM->GetType() == PDFObjectType_Array)
+        poCTM->GetType() == PDFObjectType_Array &&
+        CSLTestBoolean(CPLGetConfigOption("PDF_USE_CTM", "YES")) )
     {
         int nLength = poCTM->GetArray()->GetLength();
         if ( nLength != 6 )
