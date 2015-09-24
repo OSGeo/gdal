@@ -76,27 +76,6 @@ CPLString OGRAMIGOCLOUDEscapeLiteral(const char* pszStr)
     return osStr;
 }
 
-static std::string url_encode(const std::string &value) {
-    std::stringstream escaped;
-    escaped.fill('0');
-    escaped << std::hex;
-
-    for (std::string::const_iterator i = value.begin(), n = value.end(); i != n; ++i) {
-        std::string::value_type c = (*i);
-
-        // Keep alphanumeric and other accepted characters intact
-        if (isalnum(c) || c == '-' || c == '_' || c == '.' || c == '~') {
-            escaped << c;
-            continue;
-        }
-
-        // Any other characters are percent-encoded
-        escaped << '%' << int((unsigned char) c);
-    }
-
-    return escaped.str();
-}
-
 static std::string json_encode(const std::string &value) {
     std::stringstream escaped;
     escaped.fill('0');
