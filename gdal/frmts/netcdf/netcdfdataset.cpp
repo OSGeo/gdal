@@ -393,7 +393,7 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
     if ( nc_datatype == NC_UBYTE )
         this->bSignedData = FALSE;
 #endif
-    
+
     CPLDebug( "GDAL_netCDF", "netcdf type=%d gdal type=%d signedByte=%d",
               nc_datatype, eDataType, bSignedData );
 
@@ -446,7 +446,7 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
             nBlockXSize = (int) chunksize[nZDim-1];
             nBlockYSize = (int) chunksize[nZDim-2];
         }
-	} 		
+	}
 #endif
 
 /* -------------------------------------------------------------------- */
@@ -511,7 +511,7 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
                   "Dataset is not in update mode, wrong netCDFRasterBand constructor" );
         return;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Take care of all other dimmensions                              */
 /* ------------------------------------------------------------------ */
@@ -576,12 +576,12 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
 
         /* make sure we are in define mode */
         ( ( netCDFDataset * ) poDS )->SetDefineMode( TRUE );
-        
+
         if ( !pszBandName || EQUAL(pszBandName,"")  )
             sprintf( szTemp, "Band%d", nBand );
         else 
             strcpy( szTemp, pszBandName );
-        
+
         if ( nZDim > 2 && paDimIds != NULL ) {
             status = nc_def_var( cdfid, szTemp, nc_datatype, 
                                  nZDim, paDimIds, &nZId );
@@ -597,7 +597,7 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
         CPLDebug( "GDAL_netCDF", "nc_def_var(%d,%s,%d) id=%d",
                   cdfid, szTemp, nc_datatype, nZId );
         this->nZId = nZId;
-        
+
         if ( !pszLongName || EQUAL(pszLongName,"")  )
             sprintf( szTemp, "GDAL Band Number %d", nBand );
         else 
@@ -605,7 +605,7 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
         status =  nc_put_att_text( cdfid, nZId, CF_LNG_NAME, 
                                    strlen( szTemp ), szTemp );
         NCDF_ERR(status);
-        
+
         poNCDFDS->DefVarDeflate(nZId, TRUE);
     }
 
@@ -6775,10 +6775,9 @@ CPLErr NCDFPut1DVar( int nCdfId, int nVarId, const char *pszValue )
     nc_type nVarType = NC_CHAR;
     size_t  nVarLen = 0;
     int     status = 0;
-    size_t  i;
     char    *pszTemp = NULL;
     char    **papszValues = NULL;
-    
+
     int     nVarDimId=-1;
     size_t start[1], count[1];
 
@@ -6803,7 +6802,7 @@ CPLErr NCDFPut1DVar( int nCdfId, int nVarId, const char *pszValue )
 
     /* get the values as tokens */
     papszValues = NCDFTokenizeArray( pszValue );
-    if ( papszValues == NULL ) 
+    if ( papszValues == NULL )
         return CE_Failure;
 
     nVarLen = CSLCount(papszValues);
@@ -6815,13 +6814,13 @@ CPLErr NCDFPut1DVar( int nCdfId, int nVarId, const char *pszValue )
         NCDF_ERR(status);                        
     }
     else {
-        
+
         switch( nVarType ) {
             /* TODO add other types */
             case  NC_INT:
                 int *pnTemp;
                 pnTemp = (int *) CPLCalloc( nVarLen, sizeof( int ) );
-                for(i=0; i < nVarLen; i++) {
+                for(size_t i=0; i < nVarLen; i++) {
                     pnTemp[i] = strtol( papszValues[i], &pszTemp, 10 );
                 }
                 status = nc_put_vara_int( nCdfId, nVarId, start, count, pnTemp );  
@@ -6831,7 +6830,7 @@ CPLErr NCDFPut1DVar( int nCdfId, int nVarId, const char *pszValue )
             case  NC_FLOAT:
                 float *pfTemp;
                 pfTemp = (float *) CPLCalloc( nVarLen, sizeof( float ) );
-                for(i=0; i < nVarLen; i++) {
+                for(size_t i=0; i < nVarLen; i++) {
                     pfTemp[i] = (float)CPLStrtod( papszValues[i], &pszTemp );
                 }
                 status = nc_put_vara_float( nCdfId, nVarId, start, count, 
@@ -6842,7 +6841,7 @@ CPLErr NCDFPut1DVar( int nCdfId, int nVarId, const char *pszValue )
             case  NC_DOUBLE:
                 double *pdfTemp;
                 pdfTemp = (double *) CPLCalloc( nVarLen, sizeof( double ) );
-                for(i=0; i < nVarLen; i++) {
+                for(size_t i=0; i < nVarLen; i++) {
                     pdfTemp[i] = CPLStrtod( papszValues[i], &pszTemp );
                 }
                 status = nc_put_vara_double( nCdfId, nVarId, start, count, 
@@ -6854,12 +6853,13 @@ CPLErr NCDFPut1DVar( int nCdfId, int nVarId, const char *pszValue )
             if ( papszValues ) CSLDestroy( papszValues );
             return CE_Failure;
             break;
-        }   
+        }
     }
 
-    if ( papszValues ) CSLDestroy( papszValues );
+    if ( papszValues )
+        CSLDestroy( papszValues );
 
-     return CE_None;
+    return CE_None;
 }
 
 
@@ -6876,7 +6876,7 @@ double NCDFGetDefaultNoDataValue( int nVarType )
         case NC_BYTE:
 #ifdef NETCDF_HAS_NC4
         case NC_UBYTE:
-#endif    
+#endif
             /* don't do default fill-values for bytes, too risky */
             dfNoData = 0.0;
             break;
@@ -6901,7 +6901,7 @@ double NCDFGetDefaultNoDataValue( int nVarType )
     }
 
     return dfNoData;
-} 
+}
 
 
 int NCDFDoesVarContainAttribVal( int nCdfId,
@@ -6916,7 +6916,7 @@ int NCDFDoesVarContainAttribVal( int nCdfId,
 
     if ( (nVarId == -1) && (pszVarName != NULL) )
         nc_inq_varid( nCdfId, pszVarName, &nVarId );
-    
+
     if ( nVarId == -1 ) return -1;
 
     for( int i=0; !bFound && i<CSLCount((char**)papszAttribNames); i++ ) {
@@ -6948,7 +6948,7 @@ int NCDFDoesVarContainAttribVal2( int nCdfId,
 
     if ( (nVarId == -1) && (pszVarName != NULL) )
         nc_inq_varid( nCdfId, pszVarName, &nVarId );
-    
+
     if ( nVarId == -1 ) return -1;
 
     if ( NCDFGetAttr( nCdfId, nVarId, papszAttribName, &pszTemp ) 
@@ -7104,14 +7104,12 @@ int NCDFIsVarTimeCoord( int nCdfId, int nVarId,
 /* else return a copy */
 char **NCDFTokenizeArray( const char *pszValue )
 {
-    char **papszValues = NULL;
-    char *pszTemp = NULL;
-    int nLen = 0;
-
-    if ( pszValue==NULL || EQUAL( pszValue, "" ) ) 
+    if ( pszValue==NULL || EQUAL( pszValue, "" ) )
         return NULL;
 
-    nLen = strlen(pszValue);
+    char **papszValues = NULL;
+    char *pszTemp = NULL;
+    int nLen = strlen(pszValue);
 
     if ( ( pszValue[0] == '{' ) && ( pszValue[nLen-1] == '}' ) ) {
         pszTemp = (char *) CPLCalloc(nLen-2,sizeof(char*));
@@ -7125,6 +7123,6 @@ char **NCDFTokenizeArray( const char *pszValue )
         papszValues[0] = CPLStrdup( pszValue );
         papszValues[1] = NULL;
     }
-    
+
     return papszValues;
 }
