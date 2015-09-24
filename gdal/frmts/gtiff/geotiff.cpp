@@ -8088,12 +8088,12 @@ int  GTiffDataset::WriteMetadata( GDALDataset *poSrcDS, TIFF *hTIFF,
         else
         {
             char **papszMD = poBand->GetMetadata();
-            
+
             if( CSLCount(papszMD) > 0 )
             {
                 GDALMultiDomainMetadata oMDMD;
                 oMDMD.SetMetadata( papszMD );
-                
+
                 WriteMDMetadata( &oMDMD, hTIFF, &psRoot, &psTail, nBand,
                                  pszProfile );
             }
@@ -8106,24 +8106,24 @@ int  GTiffDataset::WriteMetadata( GDALDataset *poSrcDS, TIFF *hTIFF,
         {
             char szValue[128];
 
-            CPLsprintf( szValue, "%.18g", dfOffset );
-            AppendMetadataItem( &psRoot, &psTail, "OFFSET", szValue, nBand, 
+            CPLsnprintf( szValue, sizeof(szValue), "%.18g", dfOffset );
+            AppendMetadataItem( &psRoot, &psTail, "OFFSET", szValue, nBand,
                                 "offset", "" );
-            CPLsprintf( szValue, "%.18g", dfScale );
-            AppendMetadataItem( &psRoot, &psTail, "SCALE", szValue, nBand, 
+            CPLsnprintf( szValue, sizeof(szValue), "%.18g", dfScale );
+            AppendMetadataItem( &psRoot, &psTail, "SCALE", szValue, nBand,
                                 "scale", "" );
         }
 
         const char* pszUnitType = poBand->GetUnitType();
         if (pszUnitType != NULL && pszUnitType[0] != '\0')
-            AppendMetadataItem( &psRoot, &psTail, "UNITTYPE", pszUnitType, nBand, 
+            AppendMetadataItem( &psRoot, &psTail, "UNITTYPE", pszUnitType, nBand,
                                 "unittype", "" );
 
 
         if (strlen(poBand->GetDescription()) > 0) 
         {
-            AppendMetadataItem( &psRoot, &psTail, "DESCRIPTION", 
-                                poBand->GetDescription(), nBand, 
+            AppendMetadataItem( &psRoot, &psTail, "DESCRIPTION",
+                                poBand->GetDescription(), nBand,
                                 "description", "" );
         }
     }
