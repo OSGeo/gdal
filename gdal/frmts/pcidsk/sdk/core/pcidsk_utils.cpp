@@ -452,13 +452,13 @@ std::string PCIDSK::ProjParmsToText( std::vector<double> dparms )
             dvalue = 0.0;
 
         if( dvalue == floor(dvalue) )
-            sprintf( value, "%d", (int) dvalue );
+          snprintf( value, sizeof(value), "%d", (int) dvalue );
         else
-            CPLsprintf( value, "%.15g", dvalue );
-        
+            CPLsnprintf( value, sizeof(value), "%.15g", dvalue );
+
         if( i > 0 )
             sparms += " ";
-        
+
         sparms += value;
     }
 
