@@ -140,13 +140,17 @@ typedef struct
     GIntBig       nModifiedTime;
 } VSIArchiveEntry;
 
-typedef struct
+class VSIArchiveContent
 {
+public:
     time_t       mTime;
     vsi_l_offset nFileSize;
     int nEntries;
     VSIArchiveEntry* entries;
-} VSIArchiveContent;
+    
+    VSIArchiveContent() : mTime(0), nFileSize(0), nEntries(0), entries(NULL) {}
+    ~VSIArchiveContent();
+};
 
 class VSIArchiveReader
 {

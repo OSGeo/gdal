@@ -2088,14 +2088,7 @@ VSIVirtualHandle* VSIZipFilesystemHandler::OpenForWrite_unlocked( const char *ps
     std::map<CPLString,VSIArchiveContent*>::iterator iter = oFileList.find(osZipFilename);
     if (iter != oFileList.end())
     {
-        VSIArchiveContent* content = iter->second;
-        for(int i=0;i<content->nEntries;i++)
-        {
-            delete content->entries[i].file_pos;
-            CPLFree(content->entries[i].fileName);
-        }
-        CPLFree(content->entries);
-        delete content;
+        delete iter->second;
 
         oFileList.erase(iter);
     }
