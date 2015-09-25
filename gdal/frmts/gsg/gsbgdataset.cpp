@@ -90,6 +90,7 @@ class GSBGDataset : public GDALPamDataset
     VSILFILE	*fp;
 
   public:
+                 GSBGDataset() : fp(NULL) {}
 		~GSBGDataset();
 
     static int          Identify( GDALOpenInfo * );
