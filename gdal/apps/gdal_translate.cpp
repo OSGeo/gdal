@@ -1073,9 +1073,9 @@ static int ProxyMain( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
 /*      Verify source window dimensions.                                */
 /* -------------------------------------------------------------------- */
-    else if( adfSrcWin[0] < 0 || adfSrcWin[1] < 0 
-        || adfSrcWin[0] + adfSrcWin[2] > GDALGetRasterXSize(hDataset)
-        || adfSrcWin[1] + adfSrcWin[3] > GDALGetRasterYSize(hDataset) )
+    else if( adfSrcWin[0] <= -1 || adfSrcWin[1] <= -1
+        || adfSrcWin[0] + adfSrcWin[2] >= GDALGetRasterXSize(hDataset) + 1
+        || adfSrcWin[1] + adfSrcWin[3] >= GDALGetRasterYSize(hDataset) + 1 )
     {
         int bCompletelyOutside = adfSrcWin[0] + adfSrcWin[2] <= 0 ||
                                     adfSrcWin[1] + adfSrcWin[3] <= 0 ||
