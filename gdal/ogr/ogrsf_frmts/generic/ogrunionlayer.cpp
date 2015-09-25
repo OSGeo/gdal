@@ -663,8 +663,6 @@ void OGRUnionLayer::AutoWarpLayerIfNecessary(int iLayer)
                         CPLError(CE_Warning, CPLE_AppDefined,
                                  "AutoWarpLayerIfNecessary failed to create "
                                  "poCT or poReversedCT.");
-                        if ( poCT != NULL )
-                            delete poCT;
                         if ( poReversedCT != NULL )
                             delete poReversedCT;
                     }
