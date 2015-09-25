@@ -44,8 +44,13 @@ def pds_1():
     tst = gdaltest.GDALTest( 'PDS', 'mc02_truncated.img', 1, 47151 )
     expected_prj = """PROJCS["SIMPLE_CYLINDRICAL "MARS"",GEOGCS["GCS_"MARS"",DATUM["D_"MARS"",SPHEROID[""MARS"",3396000,0]],PRIMEM["Reference_Meridian",0],UNIT["degree",0.0174532925199433]],PROJECTION["Equirectangular"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",0],PARAMETER["false_easting",0],PARAMETER["false_northing",0],PARAMETER["pseudo_standard_parallel_1",0]]"""
     expected_gt = (-10668384.903788566589355,926.115274429321289,0,3852176.483988761901855,0,-926.115274429321289)
-    return tst.testOpen( check_prj = expected_prj,
+    gdal.SetConfigOption('PDS_SampleProjOffset_Shift', '-0.5')
+    gdal.SetConfigOption('PDS_LineProjOffset_Shift', '-0.5')
+    ret = tst.testOpen( check_prj = expected_prj,
                          check_gt = expected_gt )
+    gdal.SetConfigOption('PDS_SampleProjOffset_Shift', None)
+    gdal.SetConfigOption('PDS_LineProjOffset_Shift', None)
+    return ret
 
 
 ###############################################################################
@@ -65,8 +70,13 @@ def pds_2():
     PARAMETER["false_easting",0],
     PARAMETER["false_northing",0]]"""
     expected_gt = (587861.55900404998, 75.000002980232239, 0.0, -7815243.4746123618, 0.0, -75.000002980232239)
-    if tst.testOpen( check_prj = expected_prj,
-                     check_gt = expected_gt ) != 'success':
+    gdal.SetConfigOption('PDS_SampleProjOffset_Shift', '-0.5')
+    gdal.SetConfigOption('PDS_LineProjOffset_Shift', '-0.5')
+    ret = tst.testOpen( check_prj = expected_prj,
+                     check_gt = expected_gt )
+    gdal.SetConfigOption('PDS_SampleProjOffset_Shift', None)
+    gdal.SetConfigOption('PDS_LineProjOffset_Shift', None)
+    if ret != 'success':
         return 'fail'
 
     ds = gdal.Open('data/fl73n003_truncated.img')
@@ -114,7 +124,12 @@ def pds_4():
 
     tst = gdaltest.GDALTest( 'PDS', 'pds_3177.lbl', 1, 3418 )
     gt_expected = (6119184.3590369327, 1.0113804322107001, 0.0, -549696.39009125973, 0.0, -1.0113804322107001)
-    return tst.testOpen( check_gt = gt_expected )
+    gdal.SetConfigOption('PDS_SampleProjOffset_Shift', '-0.5')
+    gdal.SetConfigOption('PDS_LineProjOffset_Shift', '-0.5')
+    ret = tst.testOpen( check_gt = gt_expected )
+    gdal.SetConfigOption('PDS_SampleProjOffset_Shift', None)
+    gdal.SetConfigOption('PDS_LineProjOffset_Shift', None)
+    return ret
 
 ###############################################################################
 # Read a hacked example of reading a detached file with an offset #3355.
@@ -134,7 +149,12 @@ def pds_6():
 
     gt_expected = (-6139197.5, 0.5, 0.0, 936003.0, 0.0, -0.5)
     
-    if tst.testOpen( check_gt=gt_expected ) != 'success':
+    gdal.SetConfigOption('PDS_SampleProjOffset_Shift', '-0.5')
+    gdal.SetConfigOption('PDS_LineProjOffset_Shift', '-0.5')
+    ret = tst.testOpen( check_gt=gt_expected )
+    gdal.SetConfigOption('PDS_SampleProjOffset_Shift', None)
+    gdal.SetConfigOption('PDS_LineProjOffset_Shift', None)
+    if ret != 'success':
         return 'fail'
 
     ds = gdal.Open('data/ESP_013951_1955_RED.LBL')
@@ -174,8 +194,13 @@ def pds_7():
     PARAMETER["false_easting",0],
     PARAMETER["false_northing",0]]"""
     
-    if tst.testOpen( check_prj=prj_expected,
-                     check_gt=gt_expected ) != 'success':
+    gdal.SetConfigOption('PDS_SampleProjOffset_Shift', '-0.5')
+    gdal.SetConfigOption('PDS_LineProjOffset_Shift', '-0.5')
+    ret = tst.testOpen( check_prj=prj_expected,
+                        check_gt=gt_expected )
+    gdal.SetConfigOption('PDS_SampleProjOffset_Shift', None)
+    gdal.SetConfigOption('PDS_LineProjOffset_Shift', None)
+    if ret != 'success':
         return 'fail'
 
     return 'success'

@@ -357,11 +357,13 @@ void PDSDataset::ParseSRS()
     double   dfSampleOffset_Mult;
     double   dfLineOffset_Mult;
 
+    /* See https://trac.osgeo.org/gdal/ticket/5941 for the history of the default */
+    /* value of PDS_SampleProjOffset_Shift and PDS_LineProjOffset_Shift */
     dfSampleOffset_Shift = 
-        CPLAtof(CPLGetConfigOption( "PDS_SampleProjOffset_Shift", "-0.5" ));
+        CPLAtof(CPLGetConfigOption( "PDS_SampleProjOffset_Shift", "0.5" ));
     
     dfLineOffset_Shift = 
-        CPLAtof(CPLGetConfigOption( "PDS_LineProjOffset_Shift", "-0.5" ));
+        CPLAtof(CPLGetConfigOption( "PDS_LineProjOffset_Shift", "0.5" ));
 
     dfSampleOffset_Mult =
         CPLAtof(CPLGetConfigOption( "PDS_SampleProjOffset_Mult", "-1.0") );
