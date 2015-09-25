@@ -1042,6 +1042,7 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
                     CPLError( CE_Failure, CPLE_OpenFailed,
                               "File %s too short.\n",
                               poOpenInfo->pszFilename );
+                    CPLFree( offsets );
                     return NULL;
                 }
                 header.iVertBlocks = y;
@@ -1055,6 +1056,7 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
                     CPLError( CE_Failure, CPLE_OpenFailed,
                               "File %s. Corrupt offset table.\n",
                               poOpenInfo->pszFilename );
+                    CPLFree( offsets );
                     return NULL;
                 }
                 header.iVertBlocks = y;
