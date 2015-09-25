@@ -207,6 +207,7 @@ def vsifile_4():
     data = gdal.VSIFReadL(1, 1000000, fp)
     if len(data) == 0:
         return 'fail'
+    gdal.VSIFCloseL(fp)
 
     return 'success'
 
