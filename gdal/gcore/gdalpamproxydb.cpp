@@ -212,9 +212,7 @@ void GDALPamProxyDB::SaveDB()
 /* -------------------------------------------------------------------- */
 /*      Write names.                                                    */
 /* -------------------------------------------------------------------- */
-    unsigned int i;
-
-    for( i = 0; i < aosOriginalFiles.size(); i++ )
+    for( unsigned int i = 0; i < aosOriginalFiles.size(); i++ )
     {
         size_t nBytesWritten;
         const char *pszProxyFile;
@@ -234,6 +232,9 @@ void GDALPamProxyDB::SaveDB()
                       VSIStrerror( errno ) );
             VSIFCloseL( fpDB );
             VSIUnlink( osDBName );
+            // TODO: Test Unlock.  CID 1086722
+            // if( hLock )
+            //     CPLUnlockFile( hLock );
             return;
         }
     }
