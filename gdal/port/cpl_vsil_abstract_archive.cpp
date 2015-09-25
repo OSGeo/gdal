@@ -54,6 +54,20 @@ VSIArchiveReader::~VSIArchiveReader()
 }
 
 /************************************************************************/
+/*                        ~VSIArchiveContent()                          */
+/************************************************************************/
+
+VSIArchiveContent::~VSIArchiveContent()
+{
+    for(int i=0;i<nEntries;i++)
+    {
+        delete entries[i].file_pos;
+        CPLFree(entries[i].fileName);
+    }
+    CPLFree(entries);
+}
+
+/************************************************************************/
 /*                   VSIArchiveFilesystemHandler()                      */
 /************************************************************************/
 
@@ -73,15 +87,7 @@ VSIArchiveFilesystemHandler::~VSIArchiveFilesystemHandler()
 
     for( iter = oFileList.begin(); iter != oFileList.end(); ++iter )
     {
-        VSIArchiveContent* content = iter->second;
-        int i;
-        for(i=0;i<content->nEntries;i++)
-        {
-            delete content->entries[i].file_pos;
-            CPLFree(content->entries[i].fileName);
-        }
-        CPLFree(content->entries);
-        delete content;
+        delete iter->second;
     }
 
     if( hMutex != NULL )
