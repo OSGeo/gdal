@@ -2869,9 +2869,9 @@ int OGRSQLiteDataSource::FetchSRSId( OGRSpatialReference * poSRS )
         if( oSRS.exportToProj4( &pszProj4 ) == OGRERR_NONE )
         {
             osProj4 = pszProj4;
-            CPLFree( pszProj4 );
-            pszProj4 = NULL;
         }
+        CPLFree( pszProj4 );
+        pszProj4 = NULL;
     }
 
 /* -------------------------------------------------------------------- */
