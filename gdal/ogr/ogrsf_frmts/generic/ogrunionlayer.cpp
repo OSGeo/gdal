@@ -668,7 +668,7 @@ void OGRUnionLayer::AutoWarpLayerIfNecessary(int iLayer)
                         if ( poReversedCT == NULL )
                             delete poReversedCT;
                     }
-                    if ( poCT == NULL )
+                    if ( poCT != NULL )
                         delete poCT;
                 }
             }
