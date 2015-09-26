@@ -232,9 +232,8 @@ void GDALPamProxyDB::SaveDB()
                       VSIStrerror( errno ) );
             VSIFCloseL( fpDB );
             VSIUnlink( osDBName );
-            // TODO: Test Unlock.  CID 1086722
-            // if( hLock )
-            //     CPLUnlockFile( hLock );
+            if( hLock )
+                CPLUnlockFile( hLock );
             return;
         }
     }
