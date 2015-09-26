@@ -496,7 +496,12 @@ GDALDataset *CALSDataset::CreateCopy( const char *pszFilename,
     poDS->SetMetadataItem("TIFFTAG_DOCUMENTNAME", INITIAL_PADDING); // to adjust padding
     GDALClose(poDS);
     VSIStatBufL sStat;
-    VSIStatL(osTmpFilename, &sStat);
+    if( VSIStatL(osTmpFilename, &sStat) != 0 )
+    {
+        // Shoudln't happen really... Just to make Coverity happy
+        CSLDestroy(papszOptions);
+        return NULL;
+    }
     int nTIFFHeaderSize = sStat.st_size;
     VSIUnlink(osTmpFilename);
 
